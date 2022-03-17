@@ -550,7 +550,7 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
 
     switch(prop->type) {
     case PROP_BUILTIN: {
-        vdisp_t vthis;
+        jsval_t vthis;
 
         if(flags == DISPATCH_CONSTRUCT && (prop->flags & PROPF_METHOD)) {
             WARN("%s is not a constructor\n", debugstr_w(prop->name));
@@ -560,13 +560,10 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
         if(This->builtin_info->class != JSCLASS_FUNCTION && prop->u.p->invoke != JSGlobal_eval)
             flags &= ~DISPATCH_JSCRIPT_INTERNAL_MASK;
         if(jsthis)
-            set_disp(&vthis, jsthis);
+            vthis = jsval_disp(jsthis);
         else
-            set_jsdisp(&vthis, This);
-        hres = prop->u.p->invoke(This->ctx, &vthis, flags, argc, argv, r);
-        vdisp_release(&vthis);
-
-        return hres;
+            vthis = jsval_obj(This);
+        return prop->u.p->invoke(This->ctx, vthis, flags, argc, argv, r);
     }
     case PROP_PROTREF:
         return invoke_prop_func(This->prototype, jsthis ? jsthis : (IDispatch *)&This->IDispatchEx_iface,
@@ -1979,17 +1976,13 @@ HRESULT jsdisp_call_value(jsdisp_t *jsfunc, IDispatch *jsthis, WORD flags, unsig
     if(is_class(jsfunc, JSCLASS_FUNCTION)) {
         hres = Function_invoke(jsfunc, jsthis, flags, argc, argv, r);
     }else {
-        vdisp_t vdisp;
-
         if(!jsfunc->builtin_info->call) {
             WARN("Not a function\n");
             return JS_E_FUNCTION_EXPECTED;
         }
 
-        set_disp(&vdisp, jsthis);
         flags &= ~DISPATCH_JSCRIPT_INTERNAL_MASK;
-        hres = jsfunc->builtin_info->call(jsfunc->ctx, &vdisp, flags, argc, argv, r);
-        vdisp_release(&vdisp);
+        hres = jsfunc->builtin_info->call(jsfunc->ctx, jsval_disp(jsthis), flags, argc, argv, r);
     }
     return hres;
 }

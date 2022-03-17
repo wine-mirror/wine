@@ -138,7 +138,7 @@ static IUnknown *create_activex_object(script_ctx_t *ctx, const WCHAR *progid)
     return obj;
 }
 
-static HRESULT ActiveXObject_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT ActiveXObject_value(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     jsstr_t * progid_str;

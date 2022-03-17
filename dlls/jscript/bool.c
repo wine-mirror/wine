@@ -36,14 +36,16 @@ static inline BoolInstance *bool_from_jsdisp(jsdisp_t *jsdisp)
     return CONTAINING_RECORD(jsdisp, BoolInstance, dispex);
 }
 
-static inline BoolInstance *bool_from_vdisp(vdisp_t *vdisp)
+static inline HRESULT boolval_this(jsval_t vthis, BOOL *ret)
 {
-    return bool_from_jsdisp(vdisp->u.jsdisp);
-}
-
-static inline BoolInstance *bool_this(vdisp_t *jsthis)
-{
-    return is_vclass(jsthis, JSCLASS_BOOLEAN) ? bool_from_vdisp(jsthis) : NULL;
+    jsdisp_t *jsdisp;
+    if(is_bool(vthis))
+        *ret = get_bool(vthis);
+    else if(is_object_instance(vthis) && (jsdisp = to_jsdisp(get_object(vthis))) && is_class(jsdisp, JSCLASS_BOOLEAN))
+        *ret = bool_from_jsdisp(jsdisp)->val;
+    else
+        return JS_E_BOOLEAN_EXPECTED;
+    return S_OK;
 }
 
 BOOL bool_obj_value(jsdisp_t *obj)
@@ -53,19 +55,21 @@ BOOL bool_obj_value(jsdisp_t *obj)
 }
 
 /* ECMA-262 3rd Edition    15.6.4.2 */
-static HRESULT Bool_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+static HRESULT Bool_toString(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
-    BoolInstance *bool;
+    BOOL boolval;
+    HRESULT hres;
 
     TRACE("\n");
 
-    if(!(bool = bool_this(jsthis)))
-        return JS_E_BOOLEAN_EXPECTED;
+    hres = boolval_this(vthis, &boolval);
+    if(FAILED(hres))
+        return hres;
 
     if(r) {
         jsstr_t *val;
 
-        val = jsstr_alloc(bool->val ? L"true" : L"false");
+        val = jsstr_alloc(boolval ? L"true" : L"false");
         if(!val)
             return E_OUTOFMEMORY;
 
@@ -76,21 +80,23 @@ static HRESULT Bool_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
 }
 
 /* ECMA-262 3rd Edition    15.6.4.3 */
-static HRESULT Bool_valueOf(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+static HRESULT Bool_valueOf(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
-    BoolInstance *bool;
+    BOOL boolval;
+    HRESULT hres;
 
     TRACE("\n");
 
-    if(!(bool = bool_this(jsthis)))
-        return JS_E_BOOLEAN_EXPECTED;
+    hres = boolval_this(vthis, &boolval);
+    if(FAILED(hres))
+        return hres;
 
     if(r)
-        *r = jsval_bool(bool->val);
+        *r = jsval_bool(boolval);
     return S_OK;
 }
 
-static HRESULT Bool_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT Bool_value(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     TRACE("\n");
@@ -129,7 +135,7 @@ static const builtin_info_t BoolInst_info = {
     NULL
 };
 
-static HRESULT BoolConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT BoolConstr_value(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     BOOL value = FALSE;

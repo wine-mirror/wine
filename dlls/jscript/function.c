@@ -77,14 +77,10 @@ static inline FunctionInstance *function_from_jsdisp(jsdisp_t *jsdisp)
     return CONTAINING_RECORD(jsdisp, FunctionInstance, dispex);
 }
 
-static inline FunctionInstance *function_from_vdisp(vdisp_t *vdisp)
+static inline FunctionInstance *function_this(jsval_t vthis)
 {
-    return function_from_jsdisp(vdisp->u.jsdisp);
-}
-
-static inline FunctionInstance *function_this(vdisp_t *jsthis)
-{
-    return is_vclass(jsthis, JSCLASS_FUNCTION) ? function_from_vdisp(jsthis) : NULL;
+    jsdisp_t *jsdisp = is_object_instance(vthis) ? to_jsdisp(get_object(vthis)) : NULL;
+    return (jsdisp && is_class(jsdisp, JSCLASS_FUNCTION)) ? function_from_jsdisp(jsdisp) : NULL;
 }
 
 static inline ArgumentsInstance *arguments_from_jsdisp(jsdisp_t *jsdisp)
@@ -92,7 +88,7 @@ static inline ArgumentsInstance *arguments_from_jsdisp(jsdisp_t *jsdisp)
     return CONTAINING_RECORD(jsdisp, ArgumentsInstance, jsdisp);
 }
 
-static HRESULT Arguments_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT Arguments_value(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     FIXME("\n");
@@ -271,7 +267,7 @@ static HRESULT Function_get_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t 
     return S_OK;
 }
 
-static HRESULT Function_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT Function_toString(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     FunctionInstance *function;
@@ -280,7 +276,7 @@ static HRESULT Function_toString(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
 
     TRACE("\n");
 
-    if(!(function = function_this(jsthis)))
+    if(!(function = function_this(vthis)))
         return JS_E_FUNCTION_EXPECTED;
 
     hres = function->vtbl->toString(function, &str);
@@ -330,7 +326,7 @@ static HRESULT array_to_args(script_ctx_t *ctx, jsdisp_t *arg_array, unsigned *a
     return S_OK;
 }
 
-static HRESULT Function_apply(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+static HRESULT Function_apply(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     FunctionInstance *function;
     jsval_t *args = NULL;
@@ -340,7 +336,7 @@ static HRESULT Function_apply(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
 
     TRACE("\n");
 
-    if(!(function = function_this(jsthis)) && (jsthis->flags & VDISP_JSDISP))
+    if(!is_object_instance(vthis) || (!(function = function_this(vthis)) && to_jsdisp(get_object(vthis))))
         return JS_E_FUNCTION_EXPECTED;
 
     if(argc) {
@@ -377,7 +373,7 @@ static HRESULT Function_apply(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
             hres = function->vtbl->call(ctx, function, this_obj, flags, cnt, args, r);
         }else {
             jsval_t res;
-            hres = disp_call_value(ctx, jsthis->u.disp, this_obj, DISPATCH_METHOD, cnt, args, &res);
+            hres = disp_call_value(ctx, get_object(vthis), this_obj, DISPATCH_METHOD, cnt, args, &res);
             if(SUCCEEDED(hres)) {
                 if(r)
                     *r = res;
@@ -395,7 +391,7 @@ static HRESULT Function_apply(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, un
     return hres;
 }
 
-static HRESULT Function_call(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT Function_call(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     FunctionInstance *function;
@@ -405,7 +401,7 @@ static HRESULT Function_call(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
 
     TRACE("\n");
 
-    if(!(function = function_this(jsthis)))
+    if(!(function = function_this(vthis)))
         return JS_E_FUNCTION_EXPECTED;
 
     if(argc) {
@@ -425,7 +421,7 @@ static HRESULT Function_call(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
     return hres;
 }
 
-static HRESULT Function_bind(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT Function_bind(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     IDispatch *bound_this = NULL;
@@ -435,7 +431,7 @@ static HRESULT Function_bind(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
 
     TRACE("\n");
 
-    if(!(function = function_this(jsthis)))
+    if(!(function = function_this(vthis)))
         return JS_E_FUNCTION_EXPECTED;
 
     if(argc < 1) {
@@ -461,19 +457,18 @@ static HRESULT Function_bind(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, uns
     return S_OK;
 }
 
-HRESULT Function_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+HRESULT Function_value(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     FunctionInstance *function;
 
     TRACE("\n");
 
-    if(!is_vclass(jsthis, JSCLASS_FUNCTION)) {
+    if(!(function = function_this(vthis))) {
         ERR("dispex is not a function\n");
         return E_FAIL;
     }
 
-    function = function_from_jsdisp(jsthis->u.jsdisp);
     return function->vtbl->call(ctx, function, NULL, flags, argc, argv, r);
 }
 
@@ -599,18 +594,14 @@ static HRESULT NativeFunction_call(script_ctx_t *ctx, FunctionInstance *func, ID
         unsigned argc, jsval_t *argv, jsval_t *r)
 {
     NativeFunction *function = (NativeFunction*)func;
-    vdisp_t vthis;
-    HRESULT hres;
+    jsval_t vthis;
 
     if(this_disp)
-        set_disp(&vthis, this_disp);
+        vthis = jsval_disp(this_disp);
     else
-        set_disp(&vthis, lookup_global_host(ctx));
+        vthis = jsval_disp(lookup_global_host(ctx));
 
-    hres = function->proc(ctx, &vthis, flags & ~DISPATCH_JSCRIPT_INTERNAL_MASK, argc, argv, r);
-
-    vdisp_release(&vthis);
-    return hres;
+    return function->proc(ctx, vthis, flags & ~DISPATCH_JSCRIPT_INTERNAL_MASK, argc, argv, r);
 }
 
 static HRESULT NativeFunction_toString(FunctionInstance *func, jsstr_t **ret)
@@ -984,7 +975,7 @@ static HRESULT construct_function(script_ctx_t *ctx, unsigned argc, jsval_t *arg
     return S_OK;
 }
 
-static HRESULT FunctionConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT FunctionConstr_value(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     HRESULT hres;
@@ -1011,7 +1002,7 @@ static HRESULT FunctionConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
     return S_OK;
 }
 
-static HRESULT FunctionProt_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT FunctionProt_value(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     FIXME("\n");

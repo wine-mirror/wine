@@ -268,7 +268,7 @@ static HRESULT parse_json_value(json_parse_ctx_t *ctx, jsval_t *r)
 }
 
 /* ECMA-262 5.1 Edition    15.12.2 */
-static HRESULT JSON_parse(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+static HRESULT JSON_parse(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     json_parse_ctx_t parse_ctx;
     const WCHAR *buf;
@@ -749,7 +749,7 @@ static HRESULT stringify(stringify_ctx_t *ctx, jsdisp_t *object, const WCHAR *na
 }
 
 /* ECMA-262 5.1 Edition    15.12.3 */
-static HRESULT JSON_stringify(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+static HRESULT JSON_stringify(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     stringify_ctx_t stringify_ctx = { ctx };
     jsdisp_t *obj = NULL, *replacer;

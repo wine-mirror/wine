@@ -37,42 +37,42 @@ typedef struct {
     size_t size;
 } MapInstance;
 
-static HRESULT Set_add(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT Set_add(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    FIXME("%p\n", jsthis);
+    FIXME("%p\n", debugstr_jsval(vthis));
     return E_NOTIMPL;
 }
 
-static HRESULT Set_clear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT Set_clear(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    FIXME("%p\n", jsthis);
+    FIXME("%p\n", debugstr_jsval(vthis));
     return E_NOTIMPL;
 }
 
-static HRESULT Set_delete(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT Set_delete(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    FIXME("%p\n", jsthis);
+    FIXME("%p\n", debugstr_jsval(vthis));
     return E_NOTIMPL;
 }
 
-static HRESULT Set_forEach(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT Set_forEach(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    FIXME("%p\n", jsthis);
+    FIXME("%p\n", debugstr_jsval(vthis));
     return E_NOTIMPL;
 }
 
-static HRESULT Set_has(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT Set_has(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    FIXME("%p\n", jsthis);
+    FIXME("%p\n", debugstr_jsval(vthis));
     return E_NOTIMPL;
 }
 
-static HRESULT Set_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT Set_value(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     FIXME("\n");
@@ -104,7 +104,7 @@ static const builtin_info_t Set_info = {
     NULL
 };
 
-static HRESULT Set_constructor(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT Set_constructor(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     SetInstance *set;
@@ -176,14 +176,19 @@ static int jsval_map_compare(const void *k, const struct wine_rb_entry *e)
     }
 }
 
-static MapInstance *get_map_this(vdisp_t *jsthis)
+static HRESULT get_map_this(jsval_t vthis, MapInstance **ret)
 {
-    if(!(jsthis->flags & VDISP_JSDISP) || !is_class(jsthis->u.jsdisp, JSCLASS_MAP)) {
+    jsdisp_t *jsdisp;
+
+    if(!is_object_instance(vthis))
+        return JS_E_OBJECT_EXPECTED;
+    if(!(jsdisp = to_jsdisp(get_object(vthis))) || !is_class(jsdisp, JSCLASS_MAP)) {
         WARN("not a Map object passed as 'this'\n");
-        return NULL;
+        return JS_E_MAP_EXPECTED;
     }
 
-    return CONTAINING_RECORD(jsthis->u.jsdisp, MapInstance, dispex);
+    *ret = CONTAINING_RECORD(jsdisp, MapInstance, dispex);
+    return S_OK;
 }
 
 static struct jsval_map_entry *get_map_entry(MapInstance *map, jsval_t key)
@@ -215,12 +220,15 @@ static void delete_map_entry(MapInstance *map, struct jsval_map_entry *entry)
     release_map_entry(entry);
 }
 
-static HRESULT Map_clear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT Map_clear(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     MapInstance *map;
+    HRESULT hres;
 
-    if(!(map = get_map_this(jsthis))) return JS_E_MAP_EXPECTED;
+    hres = get_map_this(vthis, &map);
+    if(FAILED(hres))
+        return hres;
 
     TRACE("%p\n", map);
 
@@ -233,14 +241,17 @@ static HRESULT Map_clear(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigne
     return S_OK;
 }
 
-static HRESULT Map_delete(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT Map_delete(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     jsval_t key = argc >= 1 ? argv[0] : jsval_undefined();
     struct jsval_map_entry *entry;
     MapInstance *map;
+    HRESULT hres;
 
-    if(!(map = get_map_this(jsthis))) return JS_E_MAP_EXPECTED;
+    hres = get_map_this(vthis, &map);
+    if(FAILED(hres))
+        return hres;
 
     TRACE("%p (%s)\n", map, debugstr_jsval(key));
 
@@ -249,7 +260,7 @@ static HRESULT Map_delete(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsign
     return S_OK;
 }
 
-static HRESULT Map_forEach(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT Map_forEach(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     jsval_t callback = argc ? argv[0] : jsval_undefined();
@@ -257,7 +268,9 @@ static HRESULT Map_forEach(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsig
     MapInstance *map;
     HRESULT hres;
 
-    if(!(map = get_map_this(jsthis))) return JS_E_MAP_EXPECTED;
+    hres = get_map_this(vthis, &map);
+    if(FAILED(hres))
+        return hres;
 
     TRACE("%p (%s)\n", map, debugstr_jsval(argc >= 1 ? argv[0] : jsval_undefined()));
 
@@ -290,14 +303,17 @@ static HRESULT Map_forEach(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsig
     return S_OK;
 }
 
-static HRESULT Map_get(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT Map_get(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     jsval_t key = argc >= 1 ? argv[0] : jsval_undefined();
     struct jsval_map_entry *entry;
     MapInstance *map;
+    HRESULT hres;
 
-    if(!(map = get_map_this(jsthis))) return JS_E_MAP_EXPECTED;
+    hres = get_map_this(vthis, &map);
+    if(FAILED(hres))
+        return hres;
 
     TRACE("%p (%s)\n", map, debugstr_jsval(key));
 
@@ -309,7 +325,7 @@ static HRESULT Map_get(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned 
     return r ? jsval_copy(entry->value, r) : S_OK;
 }
 
-static HRESULT Map_set(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT Map_set(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     jsval_t key = argc >= 1 ? argv[0] : jsval_undefined();
@@ -318,7 +334,9 @@ static HRESULT Map_set(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned 
     MapInstance *map;
     HRESULT hres;
 
-    if(!(map = get_map_this(jsthis))) return JS_E_MAP_EXPECTED;
+    hres = get_map_this(vthis, &map);
+    if(FAILED(hres))
+        return hres;
 
     TRACE("%p (%s %s)\n", map, debugstr_jsval(key), debugstr_jsval(value));
 
@@ -353,14 +371,17 @@ static HRESULT Map_set(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned 
     return S_OK;
 }
 
-static HRESULT Map_has(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT Map_has(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     jsval_t key = argc >= 1 ? argv[0] : jsval_undefined();
     struct jsval_map_entry *entry;
     MapInstance *map;
+    HRESULT hres;
 
-    if(!(map = get_map_this(jsthis))) return JS_E_MAP_EXPECTED;
+    hres = get_map_this(vthis, &map);
+    if(FAILED(hres))
+        return hres;
 
     TRACE("%p (%s)\n", map, debugstr_jsval(key));
 
@@ -379,7 +400,7 @@ static HRESULT Map_get_size(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
     return S_OK;
 }
 
-static HRESULT Map_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT Map_value(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     FIXME("\n");
@@ -430,7 +451,7 @@ static const builtin_info_t Map_info = {
     NULL
 };
 
-static HRESULT Map_constructor(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, unsigned argc, jsval_t *argv,
+static HRESULT Map_constructor(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
     MapInstance *map;

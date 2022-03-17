@@ -29,17 +29,21 @@
 WINE_DEFAULT_DEBUG_CHANNEL(jscript);
 
 /* ECMA-262 3rd Edition    15.11.4.4 */
-static HRESULT Error_toString(script_ctx_t *ctx, vdisp_t *vthis, WORD flags,
+static HRESULT Error_toString(script_ctx_t *ctx, jsval_t vthis, WORD flags,
         unsigned argc, jsval_t *argv, jsval_t *r)
 {
-    jsdisp_t *jsthis;
     jsstr_t *name = NULL, *msg = NULL, *ret = NULL;
+    jsdisp_t *jsthis = NULL;
     jsval_t v;
     HRESULT hres;
 
     TRACE("\n");
 
-    jsthis = get_jsdisp(vthis);
+    if(is_object_instance(vthis))
+        jsthis = to_jsdisp(get_object(vthis));
+    else if(ctx->version >= SCRIPTLANGUAGEVERSION_ES5)
+        return JS_E_OBJECT_EXPECTED;
+
     if(!jsthis || ctx->version < 2) {
         if(r) {
             jsstr_t *str;
@@ -114,7 +118,7 @@ static HRESULT Error_toString(script_ctx_t *ctx, vdisp_t *vthis, WORD flags,
     return S_OK;
 }
 
-static HRESULT Error_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+static HRESULT Error_value(script_ctx_t *ctx, jsval_t vthis, WORD flags,
         unsigned argc, jsval_t *argv, jsval_t *r)
 {
     TRACE("\n");
@@ -260,56 +264,56 @@ static HRESULT error_constr(script_ctx_t *ctx, WORD flags, unsigned argc, jsval_
     }
 }
 
-static HRESULT ErrorConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+static HRESULT ErrorConstr_value(script_ctx_t *ctx, jsval_t vthis, WORD flags,
         unsigned argc, jsval_t *argv, jsval_t *r)
 {
     TRACE("\n");
     return error_constr(ctx, flags, argc, argv, r, ctx->error_constr);
 }
 
-static HRESULT EvalErrorConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+static HRESULT EvalErrorConstr_value(script_ctx_t *ctx, jsval_t vthis, WORD flags,
         unsigned argc, jsval_t *argv, jsval_t *r)
 {
     TRACE("\n");
     return error_constr(ctx, flags, argc, argv, r, ctx->eval_error_constr);
 }
 
-static HRESULT RangeErrorConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+static HRESULT RangeErrorConstr_value(script_ctx_t *ctx, jsval_t vthis, WORD flags,
         unsigned argc, jsval_t *argv, jsval_t *r)
 {
     TRACE("\n");
     return error_constr(ctx, flags, argc, argv, r, ctx->range_error_constr);
 }
 
-static HRESULT ReferenceErrorConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+static HRESULT ReferenceErrorConstr_value(script_ctx_t *ctx, jsval_t vthis, WORD flags,
         unsigned argc, jsval_t *argv, jsval_t *r)
 {
     TRACE("\n");
     return error_constr(ctx, flags, argc, argv, r, ctx->reference_error_constr);
 }
 
-static HRESULT RegExpErrorConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+static HRESULT RegExpErrorConstr_value(script_ctx_t *ctx, jsval_t vthis, WORD flags,
         unsigned argc, jsval_t *argv, jsval_t *r)
 {
     TRACE("\n");
     return error_constr(ctx, flags, argc, argv, r, ctx->regexp_error_constr);
 }
 
-static HRESULT SyntaxErrorConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+static HRESULT SyntaxErrorConstr_value(script_ctx_t *ctx, jsval_t vthis, WORD flags,
         unsigned argc, jsval_t *argv, jsval_t *r)
 {
     TRACE("\n");
     return error_constr(ctx, flags, argc, argv, r, ctx->syntax_error_constr);
 }
 
-static HRESULT TypeErrorConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+static HRESULT TypeErrorConstr_value(script_ctx_t *ctx, jsval_t vthis, WORD flags,
         unsigned argc, jsval_t *argv, jsval_t *r)
 {
     TRACE("\n");
     return error_constr(ctx, flags, argc, argv, r, ctx->type_error_constr);
 }
 
-static HRESULT URIErrorConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags,
+static HRESULT URIErrorConstr_value(script_ctx_t *ctx, jsval_t vthis, WORD flags,
         unsigned argc, jsval_t *argv, jsval_t *r)
 {
     TRACE("\n");
