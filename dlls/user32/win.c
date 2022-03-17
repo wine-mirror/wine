@@ -559,38 +559,6 @@ HWND WIN_GetFullHandle( HWND hwnd )
 
 
 /***********************************************************************
- *           WIN_SetOwner
- *
- * Change the owner of a window.
- */
-static HWND WIN_SetOwner( HWND hwnd, HWND owner )
-{
-    WND *win = WIN_GetPtr( hwnd );
-    HWND ret = 0;
-
-    if (!win || win == WND_DESKTOP) return 0;
-    if (win == WND_OTHER_PROCESS)
-    {
-        if (IsWindow(hwnd)) ERR( "cannot set owner %p on other process window %p\n", owner, hwnd );
-        return 0;
-    }
-    SERVER_START_REQ( set_window_owner )
-    {
-        req->handle = wine_server_user_handle( hwnd );
-        req->owner  = wine_server_user_handle( owner );
-        if (!wine_server_call( req ))
-        {
-            win->owner = wine_server_ptr_handle( reply->full_owner );
-            ret = wine_server_ptr_handle( reply->prev_owner );
-        }
-    }
-    SERVER_END_REQ;
-    WIN_ReleasePtr( win );
-    return ret;
-}
-
-
-/***********************************************************************
  *           WIN_SetStyle
  *
  * Change the style of a window.
@@ -736,87 +704,6 @@ other_process:
     }
     SERVER_END_REQ;
     return ret;
-}
-
-
-/***********************************************************************
- *           WIN_DestroyWindow
- *
- * Destroy storage associated to a window. "Internals" p.358
- */
-LRESULT WIN_DestroyWindow( HWND hwnd )
-{
-    WND *wndPtr;
-    HWND *list;
-    HMENU menu = 0, sys_menu;
-    struct window_surface *surface;
-
-    TRACE("%p\n", hwnd );
-
-    /* destroy default IME window */
-    if (win_set_flags( hwnd, 0, WIN_HAS_IME_WIN ) & WIN_HAS_IME_WIN)
-    {
-        TRACE("unregister IME window for %p\n", hwnd);
-        imm_unregister_window( hwnd );
-    }
-
-    /* free child windows */
-    if ((list = WIN_ListChildren( hwnd )))
-    {
-        int i;
-        for (i = 0; list[i]; i++)
-        {
-            if (WIN_IsCurrentThread( list[i] )) WIN_DestroyWindow( list[i] );
-            else SendNotifyMessageW( list[i], WM_WINE_DESTROYWINDOW, 0, 0 );
-        }
-        HeapFree( GetProcessHeap(), 0, list );
-    }
-
-    /* Unlink now so we won't bother with the children later on */
-    SERVER_START_REQ( set_parent )
-    {
-        req->handle = wine_server_user_handle( hwnd );
-        req->parent = 0;
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
-    /*
-     * Send the WM_NCDESTROY to the window being destroyed.
-     */
-    SendMessageW( hwnd, WM_NCDESTROY, 0, 0 );
-
-    /* FIXME: do we need to fake QS_MOUSEMOVE wakebit? */
-
-    /* free resources associated with the window */
-
-    if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) return 0;
-    if ((wndPtr->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD)
-        menu = (HMENU)wndPtr->wIDmenu;
-    sys_menu = wndPtr->hSysMenu;
-    free_dce( wndPtr->dce, hwnd );
-    wndPtr->dce = NULL;
-    HeapFree( GetProcessHeap(), 0, wndPtr->text );
-    wndPtr->text = NULL;
-    HeapFree( GetProcessHeap(), 0, wndPtr->pScroll );
-    wndPtr->pScroll = NULL;
-    DestroyIcon( wndPtr->hIconSmall2 );
-    surface = wndPtr->surface;
-    wndPtr->surface = NULL;
-    WIN_ReleasePtr( wndPtr );
-
-    if (menu) DestroyMenu( menu );
-    if (sys_menu) DestroyMenu( sys_menu );
-    if (surface)
-    {
-        register_window_surface( surface, NULL );
-        window_surface_release( surface );
-    }
-
-    USER_Driver->pDestroyWindow( hwnd );
-
-    free_window_handle( hwnd );
-    return 0;
 }
 
 
@@ -1435,7 +1322,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     return hwnd;
 
 failed:
-    WIN_DestroyWindow( hwnd );
+    NtUserCallHwnd( hwnd, NtUserDestroyWindowHandle );
     SetThreadDpiAwarenessContext( context );
     return 0;
 }
@@ -1503,139 +1390,6 @@ HWND WINAPI DECLSPEC_HOTPATCH CreateWindowExW( DWORD exStyle, LPCWSTR className,
     cs.dwExStyle      = exStyle;
 
     return wow_handlers.create_window( &cs, className, instance, TRUE );
-}
-
-
-/***********************************************************************
- *           WIN_SendDestroyMsg
- */
-static void WIN_SendDestroyMsg( HWND hwnd )
-{
-    GUITHREADINFO info;
-
-    info.cbSize = sizeof(info);
-    if (NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info ))
-    {
-        if (hwnd == info.hwndCaret) DestroyCaret();
-        if (hwnd == info.hwndActive) WINPOS_ActivateOtherWindow( hwnd );
-    }
-
-    if (hwnd == NtUserGetClipboardOwner()) CLIPBOARD_ReleaseOwner( hwnd );
-
-    /*
-     * Send the WM_DESTROY to the window.
-     */
-    SendMessageW( hwnd, WM_DESTROY, 0, 0);
-
-    /*
-     * This WM_DESTROY message can trigger re-entrant calls to DestroyWindow
-     * make sure that the window still exists when we come back.
-     */
-    if (IsWindow(hwnd))
-    {
-        HWND* pWndArray;
-        int i;
-
-        if (!(pWndArray = WIN_ListChildren( hwnd ))) return;
-
-        for (i = 0; pWndArray[i]; i++)
-        {
-            if (IsWindow( pWndArray[i] )) WIN_SendDestroyMsg( pWndArray[i] );
-        }
-        HeapFree( GetProcessHeap(), 0, pWndArray );
-    }
-    else
-      WARN("\tdestroyed itself while in WM_DESTROY!\n");
-}
-
-
-/***********************************************************************
- *		DestroyWindow (USER32.@)
- */
-BOOL WINAPI DestroyWindow( HWND hwnd )
-{
-    BOOL is_child;
-
-    if (!(hwnd = WIN_IsCurrentThread( hwnd )) || is_desktop_window( hwnd ))
-    {
-        SetLastError( ERROR_ACCESS_DENIED );
-        return FALSE;
-    }
-
-    TRACE("(%p)\n", hwnd);
-
-      /* Call hooks */
-
-    if (HOOK_CallHooks( WH_CBT, HCBT_DESTROYWND, (WPARAM)hwnd, 0, TRUE )) return FALSE;
-
-    if (MENU_IsMenuActive() == hwnd)
-        EndMenu();
-
-    is_child = (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD) != 0;
-
-    if (is_child)
-    {
-        if (!USER_IsExitingThread( GetCurrentThreadId() ))
-            send_parent_notify( hwnd, WM_DESTROY );
-    }
-    else if (!GetWindow( hwnd, GW_OWNER ))
-    {
-        HOOK_CallHooks( WH_SHELL, HSHELL_WINDOWDESTROYED, (WPARAM)hwnd, 0L, TRUE );
-        /* FIXME: clean up palette - see "Internals" p.352 */
-    }
-
-    if (!IsWindow(hwnd)) return TRUE;
-
-      /* Hide the window */
-    if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE)
-    {
-        /* Only child windows receive WM_SHOWWINDOW in DestroyWindow() */
-        if (is_child)
-            ShowWindow( hwnd, SW_HIDE );
-        else
-            NtUserSetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE |
-                                SWP_NOZORDER | SWP_NOACTIVATE | SWP_HIDEWINDOW );
-    }
-
-    if (!IsWindow(hwnd)) return TRUE;
-
-      /* Recursively destroy owned windows */
-
-    if (!is_child)
-    {
-        for (;;)
-        {
-            int i;
-            BOOL got_one = FALSE;
-            HWND *list = WIN_ListChildren( GetDesktopWindow() );
-            if (list)
-            {
-                for (i = 0; list[i]; i++)
-                {
-                    if (GetWindow( list[i], GW_OWNER ) != hwnd) continue;
-                    if (WIN_IsCurrentThread( list[i] ))
-                    {
-                        DestroyWindow( list[i] );
-                        got_one = TRUE;
-                        continue;
-                    }
-                    WIN_SetOwner( list[i], 0 );
-                }
-                HeapFree( GetProcessHeap(), 0, list );
-            }
-            if (!got_one) break;
-        }
-    }
-
-      /* Send destroy messages */
-
-    WIN_SendDestroyMsg( hwnd );
-    if (!IsWindow( hwnd )) return TRUE;
-
-      /* Destroy the window storage */
-
-    WIN_DestroyWindow( hwnd );
-    return TRUE;
 }
 
 

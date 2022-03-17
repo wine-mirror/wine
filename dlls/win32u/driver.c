@@ -1190,6 +1190,7 @@ static const struct user_driver_funcs lazy_load_driver =
     .pUpdateDisplayDevices = loaderdrv_UpdateDisplayDevices,
     /* windowing functions */
     .pCreateDesktopWindow = loaderdrv_CreateDesktopWindow,
+    .pDestroyWindow = nulldrv_DestroyWindow,
     .pFlashWindowEx = loaderdrv_FlashWindowEx,
     .pGetDC = loaderdrv_GetDC,
     .pSetCapture = nulldrv_SetCapture,

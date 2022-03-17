@@ -580,7 +580,7 @@ static LRESULT MDIDestroyChild( HWND client, MDICLIENTINFO *ci,
     {
         SendMessageW(client, WM_MDIREFRESHMENU, 0, 0);
         MDI_PostUpdate(GetParent(child), ci, SB_BOTH+1);
-        DestroyWindow(child);
+        NtUserDestroyWindow(child);
     }
 
     TRACE("child destroyed - %p\n", child);

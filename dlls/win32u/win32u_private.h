@@ -199,6 +199,7 @@ struct unix_funcs
                                                      INT x, INT y, INT cx, INT cy,
                                                      UINT flags, UINT unk1, UINT unk2 );
     BOOL     (WINAPI *pNtUserDestroyCursor)( HCURSOR cursor, ULONG arg );
+    BOOL     (WINAPI *pNtUserDestroyWindow)( HWND hwnd );
     BOOL     (WINAPI *pNtUserDrawIconEx)( HDC hdc, INT x0, INT y0, HICON icon, INT width,
                                           INT height, UINT istep, HBRUSH hbr, UINT flags );
     BOOL     (WINAPI *pNtUserEndDeferWindowPosEx)( HDWP hdwp, BOOL async );
@@ -286,6 +287,9 @@ struct unix_funcs
                                       struct window_surface *surface );
 };
 
+/* clipboard.c */
+extern void release_clipboard_owner( HWND hwnd ) DECLSPEC_HIDDEN;
+
 /* cursoricon.c */
 extern HICON alloc_cursoricon_handle( BOOL is_icon ) DECLSPEC_HIDDEN;
 extern BOOL get_clip_cursor( RECT *rect ) DECLSPEC_HIDDEN;
@@ -327,6 +331,7 @@ extern UINT get_system_dpi(void) DECLSPEC_HIDDEN;
 extern int get_system_metrics( int index ) DECLSPEC_HIDDEN;
 extern UINT get_thread_dpi(void) DECLSPEC_HIDDEN;
 extern RECT get_virtual_screen_rect( UINT dpi ) DECLSPEC_HIDDEN;
+extern BOOL is_exiting_thread( DWORD tid ) DECLSPEC_HIDDEN;
 extern POINT map_dpi_point( POINT pt, UINT dpi_from, UINT dpi_to ) DECLSPEC_HIDDEN;
 extern RECT map_dpi_rect( RECT rect, UINT dpi_from, UINT dpi_to ) DECLSPEC_HIDDEN;
 extern HMONITOR monitor_from_point( POINT pt, DWORD flags, UINT dpi ) DECLSPEC_HIDDEN;
@@ -344,6 +349,7 @@ extern void erase_now( HWND hwnd, UINT rdw_flags ) DECLSPEC_HIDDEN;
 struct tagWND;
 extern HDWP begin_defer_window_pos( INT count ) DECLSPEC_HIDDEN;
 extern void destroy_thread_windows(void) DECLSPEC_HIDDEN;
+extern LRESULT destroy_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND get_desktop_window(void) DECLSPEC_HIDDEN;
 extern UINT get_dpi_for_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND get_full_window_handle( HWND hwnd ) DECLSPEC_HIDDEN;

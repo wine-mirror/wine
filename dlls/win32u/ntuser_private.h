@@ -31,7 +31,9 @@ struct tagWND;
 struct user_callbacks
 {
     HANDLE (WINAPI *pCopyImage)( HANDLE, UINT, INT, INT, UINT );
+    BOOL (WINAPI *pDestroyCaret)(void);
     BOOL (WINAPI *pDestroyMenu)( HMENU );
+    BOOL (WINAPI *pEndMenu)(void);
     BOOL (WINAPI *pHideCaret)( HWND hwnd );
     BOOL (WINAPI *pPostMessageW)( HWND, UINT, WPARAM, LPARAM );
     UINT (WINAPI *pSendInput)( UINT count, INPUT *inputs, int size );
@@ -42,6 +44,7 @@ struct user_callbacks
     BOOL (WINAPI *pShowWindow)( HWND, INT );
     DWORD (WINAPI *pWaitForInputIdle)( HANDLE, DWORD );
     void (CDECL *free_win_ptr)( struct tagWND *win );
+    HWND (CDECL *is_menu_active)(void);
     void (CDECL *notify_ime)( HWND hwnd, UINT param );
     void (CDECL *register_builtin_classes)(void);
     LRESULT (WINAPI *send_ll_message)( DWORD, DWORD, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
@@ -50,6 +53,7 @@ struct user_callbacks
     BOOL (CDECL *set_window_pos)( HWND hwnd, HWND insert_after, UINT swp_flags,
                                   const RECT *window_rect, const RECT *client_rect,
                                   const RECT *valid_rects );
+    void (WINAPI *unregister_imm)( HWND hwnd );
 };
 
 #define WM_SYSTIMER         0x0118

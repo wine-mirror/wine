@@ -616,29 +616,6 @@ static HANDLE render_synthesized_format( UINT format, UINT from )
     return data;
 }
 
-/**************************************************************************
- *	CLIPBOARD_ReleaseOwner
- */
-void CLIPBOARD_ReleaseOwner( HWND hwnd )
-{
-    HWND viewer = 0, owner = 0;
-
-    SendMessageW( hwnd, WM_RENDERALLFORMATS, 0, 0 );
-
-    SERVER_START_REQ( release_clipboard )
-    {
-        req->owner = wine_server_user_handle( hwnd );
-        if (!wine_server_call( req ))
-        {
-            viewer = wine_server_ptr_handle( reply->viewer );
-            owner = wine_server_ptr_handle( reply->owner );
-        }
-    }
-    SERVER_END_REQ;
-
-    if (viewer) SendNotifyMessageW( viewer, WM_DRAWCLIPBOARD, (WPARAM)owner, 0 );
-}
-
 
 /**************************************************************************
  *		RegisterClipboardFormatW (USER32.@)

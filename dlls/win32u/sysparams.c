@@ -4591,6 +4591,16 @@ static BOOL message_beep( UINT i )
     return TRUE;
 }
 
+static DWORD exiting_thread_id;
+
+/**********************************************************************
+ *           is_exiting_thread
+ */
+BOOL is_exiting_thread( DWORD tid )
+{
+    return tid == exiting_thread_id;
+}
+
 static void thread_detach(void)
 {
     struct user_thread_info *thread_info = get_user_thread_info();
@@ -4602,6 +4612,8 @@ static void thread_detach(void)
 
     destroy_thread_windows();
     NtClose( thread_info->server_queue );
+
+    exiting_thread_id = 0;
 }
 
 /***********************************************************************
@@ -4618,6 +4630,9 @@ ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
     case NtUserReleaseCapture:
         return release_capture();
     /* temporary exports */
+    case NtUserExitingThread:
+        exiting_thread_id = GetCurrentThreadId();
+        return 0;
     case NtUserThreadDetach:
         thread_detach();
         return 0;
@@ -4724,9 +4739,6 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
         return HandleToUlong( alloc_user_handle( (struct user_object *)arg1, arg2 ));
     case NtUserAllocWinProc:
         return (UINT_PTR)alloc_winproc( (WNDPROC)arg1, arg2 );
-    case NtUserFreeDCE:
-        free_dce( (struct dce *)arg1, UlongToHandle(arg2) );
-        return 0;
     case NtUserFreeHandle:
         return (UINT_PTR)free_user_handle( UlongToHandle(arg1), arg2 );
     case NtUserGetHandlePtr:

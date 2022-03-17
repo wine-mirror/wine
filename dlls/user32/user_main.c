@@ -140,6 +140,11 @@ static void CDECL notify_ime( HWND hwnd, UINT param )
     if (ime_default) SendMessageW( ime_default, WM_IME_INTERNAL, param, HandleToUlong(hwnd) );
 }
 
+void WINAPI unregister_imm( HWND hwnd )
+{
+    imm_unregister_window( hwnd );
+}
+
 static void CDECL free_win_ptr( WND *win )
 {
     HeapFree( GetProcessHeap(), 0, win->text );
@@ -150,7 +155,9 @@ static void CDECL free_win_ptr( WND *win )
 static const struct user_callbacks user_funcs =
 {
     CopyImage,
+    DestroyCaret,
     DestroyMenu,
+    EndMenu,
     HideCaret,
     PostMessageW,
     SendInput,
@@ -161,12 +168,14 @@ static const struct user_callbacks user_funcs =
     ShowWindow,
     WaitForInputIdle,
     free_win_ptr,
+    MENU_IsMenuActive,
     notify_ime,
     register_builtin_classes,
     MSG_SendInternalMessageTimeout,
     SCROLL_SetStandardScrollPainted,
     (void *)__wine_set_user_driver,
     set_window_pos,
+    unregister_imm,
 };
 
 static void WINAPI User32CallFreeIcon( ULONG *param, ULONG size )
@@ -227,6 +236,7 @@ static void thread_detach(void)
     struct user_thread_info *thread_info = get_user_thread_info();
 
     exiting_thread_id = GetCurrentThreadId();
+    NtUserCallNoParam( NtUserExitingThread );
 
     WDML_NotifyThreadDetach();
 

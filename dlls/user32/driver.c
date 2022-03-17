@@ -79,10 +79,6 @@ static BOOL CDECL nulldrv_CreateWindow( HWND hwnd )
     return TRUE;
 }
 
-static void CDECL nulldrv_DestroyWindow( HWND hwnd )
-{
-}
-
 static DWORD CDECL nulldrv_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
                                                         DWORD mask, DWORD flags )
 {
@@ -174,7 +170,7 @@ static struct user_driver_funcs lazy_load_driver =
     /* windowing functions */
     NULL,
     loaderdrv_CreateWindow,
-    nulldrv_DestroyWindow,
+    NULL,
     NULL,
     NULL,
     nulldrv_MsgWaitForMultipleObjectsEx,
@@ -223,7 +219,6 @@ void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT v
     SET_USER_FUNC(SetCursorPos);
     SET_USER_FUNC(UpdateClipboard);
     SET_USER_FUNC(CreateWindow);
-    SET_USER_FUNC(DestroyWindow);
     SET_USER_FUNC(MsgWaitForMultipleObjectsEx);
     SET_USER_FUNC(SetWindowIcon);
     SET_USER_FUNC(SetWindowText);

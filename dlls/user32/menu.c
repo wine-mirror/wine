@@ -2333,7 +2333,7 @@ static void MENU_HideSubPopups( HWND hwndOwner, HMENU hmenu,
 	if (!(submenu = MENU_GetMenu( hsubmenu ))) return;
 	MENU_HideSubPopups( hwndOwner, hsubmenu, FALSE, wFlags );
 	MENU_SelectItem( hwndOwner, hsubmenu, NO_SELECTED_ITEM, sendMenuSelect, 0 );
-        DestroyWindow( submenu->hWnd );
+        NtUserDestroyWindow( submenu->hWnd );
         submenu->hWnd = 0;
 
         if (!(wFlags & TPM_NONOTIFY))
@@ -3319,7 +3319,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
 
 	    if (menu && (menu->wFlags & MF_POPUP))
 	    {
-                DestroyWindow( menu->hWnd );
+                NtUserDestroyWindow( menu->hWnd );
                 menu->hWnd = 0;
 
                 if (!(wFlags & TPM_NONOTIFY))
@@ -3531,7 +3531,7 @@ BOOL WINAPI TrackPopupMenuEx( HMENU hMenu, UINT wFlags, INT x, INT y,
 
         if (menu->hWnd)
         {
-            DestroyWindow( menu->hWnd );
+            NtUserDestroyWindow( menu->hWnd );
             menu->hWnd = 0;
 
             if (!(wFlags & TPM_NONOTIFY))
@@ -4269,7 +4269,7 @@ BOOL WINAPI DestroyMenu( HMENU hMenu )
     /* DestroyMenu should not destroy system menu popup owner */
     if ((lppop->wFlags & (MF_POPUP | MF_SYSMENU)) == MF_POPUP && lppop->hWnd)
     {
-        DestroyWindow( lppop->hWnd );
+        NtUserDestroyWindow( lppop->hWnd );
         lppop->hWnd = 0;
     }
 

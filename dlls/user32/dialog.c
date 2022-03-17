@@ -707,7 +707,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
         return hwnd;
     }
     if (disabled_owner) EnableWindow( disabled_owner, TRUE );
-    if( IsWindow(hwnd) ) DestroyWindow( hwnd );
+    if (IsWindow(hwnd)) NtUserDestroyWindow( hwnd );
     return 0;
 }
 
@@ -827,7 +827,7 @@ INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
         }
     }
     retval = dlgInfo->idResult;
-    DestroyWindow( hwnd );
+    NtUserDestroyWindow( hwnd );
     return retval;
 }
 

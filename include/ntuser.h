@@ -91,6 +91,7 @@ enum
     NtUserGetInputState,
     NtUserReleaseCapture,
     /* temporary exports */
+    NtUserExitingThread,
     NtUserThreadDetach,
 };
 
@@ -134,7 +135,6 @@ enum
     /* temporary exports */
     NtUserAllocHandle,
     NtUserAllocWinProc,
-    NtUserFreeDCE,
     NtUserFreeHandle,
     NtUserGetHandlePtr,
     NtUserInvalidateDCE,
@@ -154,6 +154,7 @@ enum
     NtUserIsWindowVisible,
     /* temporary exports */
     NtUserCreateDesktopWindow,
+    NtUserDestroyWindowHandle,
     NtUserGetDummySurface,
 };
 
@@ -302,6 +303,7 @@ HDWP    WINAPI NtUserDeferWindowPosAndBand( HDWP hdwp, HWND hwnd, HWND after, IN
 BOOL    WINAPI NtUserDestroyAcceleratorTable( HACCEL handle );
 BOOL    WINAPI NtUserDestroyCursor( HCURSOR cursor, ULONG arg );
 BOOL    WINAPI NtUserDestroyMenu( HMENU menu );
+BOOL    WINAPI NtUserDestroyWindow( HWND hwnd );
 BOOL    WINAPI NtUserDrawIconEx( HDC hdc, INT x0, INT y0, HICON icon, INT width,
                                  INT height, UINT istep, HBRUSH hbr, UINT flags );
 BOOL    WINAPI NtUserEndDeferWindowPosEx( HDWP hdwp, BOOL async );

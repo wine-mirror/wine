@@ -116,57 +116,57 @@ static void MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
     hItem = 0;
     switch(lpmb->dwStyle & MB_TYPEMASK) {
     case MB_OK:
-	DestroyWindow(GetDlgItem(hwnd, IDCANCEL));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDCANCEL));
 	/* fall through */
     case MB_OKCANCEL:
 	hItem = GetDlgItem(hwnd, IDOK);
-	DestroyWindow(GetDlgItem(hwnd, IDABORT));
-	DestroyWindow(GetDlgItem(hwnd, IDRETRY));
-	DestroyWindow(GetDlgItem(hwnd, IDIGNORE));
-	DestroyWindow(GetDlgItem(hwnd, IDYES));
-	DestroyWindow(GetDlgItem(hwnd, IDNO));
-	DestroyWindow(GetDlgItem(hwnd, IDTRYAGAIN));
-	DestroyWindow(GetDlgItem(hwnd, IDCONTINUE));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDABORT));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDRETRY));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDIGNORE));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDYES));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDNO));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDTRYAGAIN));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDCONTINUE));
 	break;
     case MB_ABORTRETRYIGNORE:
 	hItem = GetDlgItem(hwnd, IDABORT);
-	DestroyWindow(GetDlgItem(hwnd, IDOK));
-	DestroyWindow(GetDlgItem(hwnd, IDCANCEL));
-	DestroyWindow(GetDlgItem(hwnd, IDYES));
-	DestroyWindow(GetDlgItem(hwnd, IDNO));
-	DestroyWindow(GetDlgItem(hwnd, IDCONTINUE));
-	DestroyWindow(GetDlgItem(hwnd, IDTRYAGAIN));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDOK));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDCANCEL));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDYES));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDNO));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDCONTINUE));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDTRYAGAIN));
 	break;
     case MB_YESNO:
-	DestroyWindow(GetDlgItem(hwnd, IDCANCEL));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDCANCEL));
 	/* fall through */
     case MB_YESNOCANCEL:
 	hItem = GetDlgItem(hwnd, IDYES);
-	DestroyWindow(GetDlgItem(hwnd, IDOK));
-	DestroyWindow(GetDlgItem(hwnd, IDABORT));
-	DestroyWindow(GetDlgItem(hwnd, IDRETRY));
-	DestroyWindow(GetDlgItem(hwnd, IDIGNORE));
-	DestroyWindow(GetDlgItem(hwnd, IDCONTINUE));
-	DestroyWindow(GetDlgItem(hwnd, IDTRYAGAIN));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDOK));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDABORT));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDRETRY));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDIGNORE));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDCONTINUE));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDTRYAGAIN));
 	break;
     case MB_RETRYCANCEL:
 	hItem = GetDlgItem(hwnd, IDRETRY);
-	DestroyWindow(GetDlgItem(hwnd, IDOK));
-	DestroyWindow(GetDlgItem(hwnd, IDABORT));
-	DestroyWindow(GetDlgItem(hwnd, IDIGNORE));
-	DestroyWindow(GetDlgItem(hwnd, IDYES));
-	DestroyWindow(GetDlgItem(hwnd, IDNO));
-	DestroyWindow(GetDlgItem(hwnd, IDCONTINUE));
-	DestroyWindow(GetDlgItem(hwnd, IDTRYAGAIN));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDOK));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDABORT));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDIGNORE));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDYES));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDNO));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDCONTINUE));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDTRYAGAIN));
 	break;
     case MB_CANCELTRYCONTINUE:
 	hItem = GetDlgItem(hwnd, IDCANCEL);
-	DestroyWindow(GetDlgItem(hwnd, IDOK));
-	DestroyWindow(GetDlgItem(hwnd, IDABORT));
-	DestroyWindow(GetDlgItem(hwnd, IDIGNORE));
-	DestroyWindow(GetDlgItem(hwnd, IDYES));
-	DestroyWindow(GetDlgItem(hwnd, IDNO));
-	DestroyWindow(GetDlgItem(hwnd, IDRETRY));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDOK));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDABORT));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDIGNORE));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDYES));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDNO));
+	NtUserDestroyWindow(GetDlgItem(hwnd, IDRETRY));
     }
 
     if (hItem) SetWindowLongW(hItem, GWL_STYLE, GetWindowLongW(hItem, GWL_STYLE) | WS_GROUP);
@@ -202,7 +202,7 @@ static void MSGBOX_OnInit(HWND hwnd, LPMSGBOXPARAMSW lpmb)
 
     /* Remove Help button unless MB_HELP supplied */
     if (!(lpmb->dwStyle & MB_HELP)) {
-        DestroyWindow(GetDlgItem(hwnd, IDHELP));
+        NtUserDestroyWindow(GetDlgItem(hwnd, IDHELP));
     }
 
     /* Position everything */

@@ -36,18 +36,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 
 /***********************************************************************
- *           free_dce
- *
- * Free a class or window DCE.
- */
-void free_dce( struct dce *dce, HWND hwnd )
-{
-    /* FIXME: move callers to win32u */
-    NtUserCallTwoParam( (UINT_PTR)dce, HandleToUlong(hwnd), NtUserFreeDCE );
-}
-
-
-/***********************************************************************
  *   invalidate_dce
  *
  * It is called from SetWindowPos() - we have to

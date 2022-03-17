@@ -783,6 +783,12 @@ BOOL WINAPI NtUserDestroyCursor( HCURSOR cursor, ULONG arg )
     return unix_funcs->pNtUserDestroyCursor( cursor, arg );
 }
 
+BOOL WINAPI NtUserDestroyWindow( HWND hwnd )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserDestroyWindow( hwnd );
+}
+
 BOOL WINAPI NtUserDrawIconEx( HDC hdc, INT x0, INT y0, HICON icon, INT width,
                               INT height, UINT istep, HBRUSH hbr, UINT flags )
 {

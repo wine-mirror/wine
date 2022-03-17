@@ -1859,8 +1859,6 @@ LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 {
     switch(msg)
     {
-    case WM_WINE_DESTROYWINDOW:
-        return WIN_DestroyWindow( hwnd );
     case WM_WINE_SHOWWINDOW:
         if (is_desktop_window( hwnd )) return 0;
         return ShowWindow( hwnd, wparam );

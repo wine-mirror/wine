@@ -173,7 +173,7 @@ static LRESULT COMBO_NCDestroy( LPHEADCOMBO lphc )
        TRACE("[%p]: freeing storage\n", lphc->self);
 
        if( (CB_GETTYPE(lphc) != CBS_SIMPLE) && lphc->hWndLBox )
-   	   DestroyWindow( lphc->hWndLBox );
+           NtUserDestroyWindow( lphc->hWndLBox );
 
        SetWindowLongPtrW( lphc->self, 0, 0 );
        HeapFree( GetProcessHeap(), 0, lphc );

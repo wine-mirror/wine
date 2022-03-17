@@ -161,7 +161,7 @@
 @ stdcall DestroyIcon(long)
 @ stdcall DestroyMenu(long)
 # @ stub DestroyReasons
-@ stdcall DestroyWindow(long)
+@ stdcall DestroyWindow(long) NtUserDestroyWindow
 # @ stub DeviceEventWorker
 @ stdcall DialogBoxIndirectParamA(long ptr long ptr long)
 @ stdcall DialogBoxIndirectParamAorW(long ptr long ptr long long)

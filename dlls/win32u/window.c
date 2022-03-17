@@ -3174,6 +3174,99 @@ BOOL WINAPI NtUserEndDeferWindowPosEx( HDWP hdwp, BOOL async )
     return TRUE;
 }
 
+/***********************************************************************
+ *           win_set_flags
+ *
+ * Set the flags of a window and return the previous value.
+ */
+static UINT win_set_flags( HWND hwnd, UINT set_mask, UINT clear_mask )
+{
+    WND *win = get_win_ptr( hwnd );
+    UINT ret;
+
+    if (!win || win == WND_OTHER_PROCESS || win == WND_DESKTOP) return 0;
+    ret = win->flags;
+    win->flags = (ret & ~clear_mask) | set_mask;
+    release_win_ptr( win );
+    return ret;
+}
+
+/*******************************************************************
+ *         can_activate_window
+ *
+ * Check if we can activate the specified window.
+ */
+static BOOL can_activate_window( HWND hwnd )
+{
+    LONG style;
+
+    if (!hwnd) return FALSE;
+    style = get_window_long( hwnd, GWL_STYLE );
+    if (!(style & WS_VISIBLE)) return FALSE;
+    if ((style & (WS_POPUP|WS_CHILD)) == WS_CHILD) return FALSE;
+    return !(style & WS_DISABLED);
+}
+
+/*******************************************************************
+ *         activate_other_window
+ *
+ * Activates window other than hwnd.
+ */
+static void activate_other_window( HWND hwnd )
+{
+    HWND hwnd_to, fg;
+
+    if ((get_window_long( hwnd, GWL_STYLE ) & WS_POPUP) &&
+        (hwnd_to = get_window_relative( hwnd, GW_OWNER )))
+    {
+        hwnd_to = NtUserGetAncestor( hwnd_to, GA_ROOT );
+        if (can_activate_window( hwnd_to )) goto done;
+    }
+
+    hwnd_to = hwnd;
+    for (;;)
+    {
+        if (!(hwnd_to = get_window_relative( hwnd_to, GW_HWNDNEXT ))) break;
+        if (can_activate_window( hwnd_to )) goto done;
+    }
+
+    hwnd_to = get_window_relative( get_desktop_window(), GW_CHILD );
+    for (;;)
+    {
+        if (hwnd_to == hwnd)
+        {
+            hwnd_to = 0;
+            break;
+        }
+        if (can_activate_window( hwnd_to )) goto done;
+        if (!(hwnd_to = get_window_relative( hwnd_to, GW_HWNDNEXT ))) break;
+    }
+
+ done:
+    fg = NtUserGetForegroundWindow();
+    TRACE( "win = %p fg = %p\n", hwnd_to, fg );
+    if (!fg || hwnd == fg)
+    {
+        if (set_foreground_window( hwnd_to, FALSE )) return;
+    }
+    if (NtUserSetActiveWindow( hwnd_to )) NtUserSetActiveWindow( 0 );
+}
+
+/*******************************************************************
+ *           send_parent_notify
+ */
+static void send_parent_notify( HWND hwnd, UINT msg )
+{
+    if ((get_window_long( hwnd, GWL_STYLE ) & (WS_CHILD | WS_POPUP)) == WS_CHILD &&
+        !(get_window_long( hwnd, GWL_EXSTYLE ) & WS_EX_NOPARENTNOTIFY))
+    {
+        HWND parent = get_parent( hwnd );
+        if (parent && parent != get_desktop_window())
+            send_message( parent, WM_PARENTNOTIFY,
+                          MAKEWPARAM( msg, get_window_long( hwnd, GWLP_ID )), (LPARAM)hwnd );
+    }
+}
+
 /*******************************************************************
  *           update_window_state
  *
@@ -3260,6 +3353,226 @@ BOOL WINAPI NtUserFlashWindowEx( FLASHWINFO *info )
 }
 
 /***********************************************************************
+ *           send_destroy_message
+ */
+static void send_destroy_message( HWND hwnd )
+{
+    GUITHREADINFO info;
+
+    info.cbSize = sizeof(info);
+    if (NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info ))
+    {
+        if (hwnd == info.hwndCaret && user_callbacks) user_callbacks->pDestroyCaret();
+        if (hwnd == info.hwndActive) activate_other_window( hwnd );
+    }
+
+    if (hwnd == NtUserGetClipboardOwner()) release_clipboard_owner( hwnd );
+
+    send_message( hwnd, WM_DESTROY, 0, 0);
+
+    /*
+     * This WM_DESTROY message can trigger re-entrant calls to DestroyWindow
+     * make sure that the window still exists when we come back.
+     */
+    if (is_window(hwnd))
+    {
+        HWND *children;
+        int i;
+
+        if (!(children = list_window_children( 0, hwnd, NULL, 0 ))) return;
+
+        for (i = 0; children[i]; i++)
+        {
+            if (is_window( children[i] )) send_destroy_message( children[i] );
+        }
+        free( children );
+    }
+    else
+        WARN( "\tdestroyed itself while in WM_DESTROY!\n" );
+}
+
+/***********************************************************************
+ *           free_window_handle
+ *
+ * Free a window handle.
+ */
+static void free_window_handle( HWND hwnd )
+{
+    WND *win;
+
+    TRACE( "\n" );
+
+    if ((win = get_user_handle_ptr( hwnd, NTUSER_OBJ_WINDOW )) && win != OBJ_OTHER_PROCESS)
+    {
+        SERVER_START_REQ( destroy_window )
+        {
+            req->handle = wine_server_user_handle( hwnd );
+            wine_server_call( req );
+            set_user_handle_ptr( hwnd, NULL );
+        }
+        SERVER_END_REQ;
+        user_unlock();
+        if (user_callbacks) user_callbacks->free_win_ptr( win );
+    }
+}
+
+/***********************************************************************
+ *           destroy_window
+ */
+LRESULT destroy_window( HWND hwnd )
+{
+    struct window_surface *surface;
+    HMENU menu = 0, sys_menu;
+    WND *win;
+    HWND *children;
+
+    TRACE( "%p\n", hwnd );
+
+    /* destroy default IME window */
+    if (win_set_flags( hwnd, 0, WIN_HAS_IME_WIN ) & WIN_HAS_IME_WIN)
+    {
+        TRACE("unregister IME window for %p\n", hwnd);
+        if (user_callbacks) user_callbacks->unregister_imm( hwnd );
+    }
+
+    /* free child windows */
+    if ((children = list_window_children( 0, hwnd, NULL, 0 )))
+    {
+        int i;
+        for (i = 0; children[i]; i++)
+        {
+            if (is_current_thread_window( children[i] ))
+                destroy_window( children[i] );
+            else
+                NtUserMessageCall( children[i], WM_WINE_DESTROYWINDOW, 0, 0,
+                                   0, FNID_SENDNOTIFYMESSAGE, FALSE );
+        }
+        free( children );
+    }
+
+    /* Unlink now so we won't bother with the children later on */
+    SERVER_START_REQ( set_parent )
+    {
+        req->handle = wine_server_user_handle( hwnd );
+        req->parent = 0;
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    send_message( hwnd, WM_NCDESTROY, 0, 0 );
+
+    /* FIXME: do we need to fake QS_MOUSEMOVE wakebit? */
+
+    /* free resources associated with the window */
+
+    if (!(win = get_win_ptr( hwnd )) || win == WND_OTHER_PROCESS) return 0;
+    if ((win->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD)
+        menu = (HMENU)win->wIDmenu;
+    sys_menu = win->hSysMenu;
+    free_dce( win->dce, hwnd );
+    win->dce = NULL;
+    NtUserDestroyCursor( win->hIconSmall2, 0 );
+    surface = win->surface;
+    win->surface = NULL;
+    release_win_ptr( win );
+
+    NtUserDestroyMenu( menu );
+    NtUserDestroyMenu( sys_menu );
+    if (surface)
+    {
+        register_window_surface( surface, NULL );
+        window_surface_release( surface );
+    }
+
+    user_driver->pDestroyWindow( hwnd );
+
+    free_window_handle( hwnd );
+    return 0;
+}
+
+/***********************************************************************
+ *           NtUserDestroyWindow (win32u.@)
+ */
+BOOL WINAPI NtUserDestroyWindow( HWND hwnd )
+{
+    BOOL is_child;
+
+    if (!(hwnd = is_current_thread_window( hwnd )) || is_desktop_window( hwnd ))
+    {
+        SetLastError( ERROR_ACCESS_DENIED );
+        return FALSE;
+    }
+
+    TRACE( "(%p)\n", hwnd );
+
+    if (call_hooks( WH_CBT, HCBT_DESTROYWND, (WPARAM)hwnd, 0, TRUE )) return FALSE;
+
+    if (user_callbacks && user_callbacks->is_menu_active() == hwnd)
+        user_callbacks->pEndMenu();
+
+    is_child = (get_window_long( hwnd, GWL_STYLE ) & WS_CHILD) != 0;
+
+    if (is_child)
+    {
+        if (!is_exiting_thread( GetCurrentThreadId() ))
+            send_parent_notify( hwnd, WM_DESTROY );
+    }
+    else if (!get_window_relative( hwnd, GW_OWNER ))
+    {
+        call_hooks( WH_SHELL, HSHELL_WINDOWDESTROYED, (WPARAM)hwnd, 0L, TRUE );
+        /* FIXME: clean up palette - see "Internals" p.352 */
+    }
+
+    if (!is_window( hwnd )) return TRUE;
+
+    /* Hide the window */
+    if (get_window_long( hwnd, GWL_STYLE ) & WS_VISIBLE)
+    {
+        /* Only child windows receive WM_SHOWWINDOW in DestroyWindow() */
+        if (is_child)
+            NtUserShowWindow( hwnd, SW_HIDE );
+        else
+            NtUserSetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE |
+                                SWP_NOZORDER | SWP_NOACTIVATE | SWP_HIDEWINDOW );
+    }
+
+    if (!is_window( hwnd )) return TRUE;
+
+    /* Recursively destroy child windows */
+    if (!is_child)
+    {
+        for (;;)
+        {
+            BOOL got_one = FALSE;
+            HWND *children;
+            unsigned int i;
+
+            if (!(children = list_window_children( 0, get_desktop_window(), NULL, 0 ))) break;
+
+            for (i = 0; children[i]; i++)
+            {
+                if (get_window_relative( children[i], GW_OWNER ) != hwnd) continue;
+                if (is_current_thread_window( children[i] ))
+                {
+                    NtUserDestroyWindow( children[i] );
+                    got_one = TRUE;
+                    continue;
+                }
+                set_window_owner( children[i], 0 );
+            }
+            free( children );
+            if (!got_one) break;
+        }
+    }
+
+    send_destroy_message( hwnd );
+    if (!is_window( hwnd )) return TRUE;
+
+    destroy_window( hwnd );
+    return TRUE;
+}
+
+/*****************************************************************************
  *           destroy_thread_windows
  *
  * Destroy all window owned by the current thread.
@@ -3329,6 +3642,8 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
     /* temporary exports */
     case NtUserCreateDesktopWindow:
         return user_driver->pCreateDesktopWindow( hwnd );
+    case NtUserDestroyWindowHandle:
+        return destroy_window( hwnd );
     case NtUserGetDummySurface:
         return (UINT_PTR)&dummy_surface;
     default:

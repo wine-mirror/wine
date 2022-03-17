@@ -400,7 +400,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         return 0;
 
     case WM_CLOSE:
-        DestroyWindow( hwnd );
+        NtUserDestroyWindow( hwnd );
         return 0;
 
     case WM_MOUSEACTIVATE:

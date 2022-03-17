@@ -288,3 +288,28 @@ BOOL WINAPI NtUserRemoveClipboardFormatListener( HWND hwnd )
     SERVER_END_REQ;
     return ret;
 }
+
+/**************************************************************************
+ *           release_clipboard_owner
+ */
+void release_clipboard_owner( HWND hwnd )
+{
+    HWND viewer = 0, owner = 0;
+
+    send_message( hwnd, WM_RENDERALLFORMATS, 0, 0 );
+
+    SERVER_START_REQ( release_clipboard )
+    {
+        req->owner = wine_server_user_handle( hwnd );
+        if (!wine_server_call( req ))
+        {
+            viewer = wine_server_ptr_handle( reply->viewer );
+            owner = wine_server_ptr_handle( reply->owner );
+        }
+    }
+    SERVER_END_REQ;
+
+    if (viewer)
+        NtUserMessageCall( viewer, WM_DRAWCLIPBOARD, (WPARAM)owner, 0,
+                           0, FNID_SENDNOTIFYMESSAGE, FALSE );
+}

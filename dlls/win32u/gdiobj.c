@@ -1162,6 +1162,7 @@ static struct unix_funcs unix_funcs =
     NtUserCountClipboardFormats,
     NtUserDeferWindowPosAndBand,
     NtUserDestroyCursor,
+    NtUserDestroyWindow,
     NtUserDrawIconEx,
     NtUserEndDeferWindowPosEx,
     NtUserEndPaint,

@@ -834,7 +834,7 @@
 @ stub NtUserDestroyInputContext
 @ stub NtUserDestroyMenu
 @ stub NtUserDestroyPalmRejectionDelayZone
-@ stub NtUserDestroyWindow
+@ stdcall NtUserDestroyWindow(long)
 @ stub NtUserDisableImmersiveOwner
 @ stub NtUserDisableProcessWindowFiltering
 @ stub NtUserDisableThreadIme
