@@ -791,6 +791,15 @@ static UINT midi_out_get_devcaps(WORD dev_id, MIDIOUTCAPSW *caps, UINT size)
     return MMSYSERR_NOERROR;
 }
 
+static UINT midi_out_get_volume(WORD dev_id, UINT* volume)
+{
+    if (!volume) return MMSYSERR_INVALPARAM;
+    if (dev_id >= num_dests) return MMSYSERR_BADDEVICEID;
+
+    *volume = 0xFFFFFFFF;
+    return (dests[dev_id].caps.dwSupport & MIDICAPS_VOLUME) ? 0 : MMSYSERR_NOTSUPPORTED;
+}
+
 NTSTATUS midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
@@ -828,6 +837,12 @@ NTSTATUS midi_out_message(void *args)
         break;
     case MODM_GETNUMDEVS:
         *params->err = num_dests;
+        break;
+    case MODM_GETVOLUME:
+        *params->err = midi_out_get_volume(params->dev_id, (UINT *)params->param_1);
+        break;
+    case MODM_SETVOLUME:
+        *params->err = 0;
         break;
     default:
         TRACE("Unsupported message\n");
