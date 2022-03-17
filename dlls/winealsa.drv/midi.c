@@ -122,16 +122,6 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg,
 	  wDevID, wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
-    case MOM_DONE:
-    case MOM_POSITIONCB:
-	if (wDevID > MODM_NumDevs) return;
-
-	dwCallBack = MidiOutDev[wDevID].midiDesc.dwCallback;
-	uFlags = MidiOutDev[wDevID].wFlags;
-	hDev = MidiOutDev[wDevID].midiDesc.hMidi;
-	dwInstance = MidiOutDev[wDevID].midiDesc.dwInstance;
-	break;
-
     case MIM_OPEN:
     case MIM_CLOSE:
     case MIM_DATA:
@@ -631,100 +621,6 @@ static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPSW lpCaps, DWORD dwSize)
 }
 
 /**************************************************************************
- *		modLongData					[internal]
- */
-static DWORD modLongData(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
-{
-    int len_add = 0;
-    BYTE *lpData, *lpNewData = NULL;
-    snd_seq_event_t event;
-
-    TRACE("(%04X, %p, %08X);\n", wDevID, lpMidiHdr, dwSize);
-
-    /* Note: MS doc does not say much about the dwBytesRecorded member of the MIDIHDR structure
-     * but it seems to be used only for midi input.
-     * Taking a look at the WAVEHDR structure (which is quite similar) confirms this assumption.
-     */
-
-    if (wDevID >= MODM_NumDevs) return MMSYSERR_BADDEVICEID;
-    if (!MidiOutDev[wDevID].bEnabled) return MIDIERR_NODEVICE;
-
-    if (MidiOutDev[wDevID].seq == NULL) {
-	WARN("can't play !\n");
-	return MIDIERR_NODEVICE;
-    }
-
-    lpData = (BYTE*)lpMidiHdr->lpData;
-
-    if (lpData == NULL)
-	return MIDIERR_UNPREPARED;
-    if (!(lpMidiHdr->dwFlags & MHDR_PREPARED))
-	return MIDIERR_UNPREPARED;
-    if (lpMidiHdr->dwFlags & MHDR_INQUEUE)
-	return MIDIERR_STILLPLAYING;
-    lpMidiHdr->dwFlags &= ~MHDR_DONE;
-    lpMidiHdr->dwFlags |= MHDR_INQUEUE;
-
-    /* FIXME: MS doc is not 100% clear. Will lpData only contain system exclusive
-     * data, or can it also contain raw MIDI data, to be split up and sent to
-     * modShortData() ?
-     * If the latest is true, then the following WARNing will fire up
-     */
-    if (lpData[0] != 0xF0 || lpData[lpMidiHdr->dwBufferLength - 1] != 0xF7) {
-	WARN("Alleged system exclusive buffer is not correct\n\tPlease report with MIDI file\n");
-	lpNewData = HeapAlloc(GetProcessHeap(), 0, lpMidiHdr->dwBufferLength + 2);
-    }
-
-    TRACE("dwBufferLength=%u !\n", lpMidiHdr->dwBufferLength);
-    TRACE("                 %02X %02X %02X ... %02X %02X %02X\n",
-	  lpData[0], lpData[1], lpData[2], lpData[lpMidiHdr->dwBufferLength-3],
-	  lpData[lpMidiHdr->dwBufferLength-2], lpData[lpMidiHdr->dwBufferLength-1]);
-
-    switch (MidiOutDev[wDevID].caps.wTechnology) {
-    case MOD_FMSYNTH:
-        /* FIXME: I don't think there is much to do here */
-        HeapFree(GetProcessHeap(), 0, lpNewData);
-        break;
-    case MOD_MIDIPORT:
-        if (lpData[0] != 0xF0) {
-            /* Send start of System Exclusive */
-            len_add = 1;
-            lpNewData[0] = 0xF0;
-            memcpy(lpNewData + 1, lpData, lpMidiHdr->dwBufferLength);
-            WARN("Adding missing 0xF0 marker at the beginning of system exclusive byte stream\n");
-        }
-        if (lpData[lpMidiHdr->dwBufferLength-1] != 0xF7) {
-            /* Send end of System Exclusive */
-            if (!len_add)
-                memcpy(lpNewData, lpData, lpMidiHdr->dwBufferLength);
-            lpNewData[lpMidiHdr->dwBufferLength + len_add] = 0xF7;
-            len_add++;
-            WARN("Adding missing 0xF7 marker at the end of system exclusive byte stream\n");
-        }
-	snd_seq_ev_clear(&event);
-	snd_seq_ev_set_direct(&event);
-	snd_seq_ev_set_source(&event, MidiOutDev[wDevID].port_out);
-	snd_seq_ev_set_subs(&event);
-	snd_seq_ev_set_sysex(&event, lpMidiHdr->dwBufferLength + len_add, lpNewData ? lpNewData : lpData);
-        seq_lock();
-        snd_seq_event_output_direct(MidiOutDev[wDevID].seq, &event);
-        seq_unlock();
-        HeapFree(GetProcessHeap(), 0, lpNewData);
-        break;
-    default:
-	WARN("Technology not supported (yet) %d !\n",
-	     MidiOutDev[wDevID].caps.wTechnology);
-	HeapFree(GetProcessHeap(), 0, lpNewData);
-	return MMSYSERR_NOTENABLED;
-    }
-
-    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
-    lpMidiHdr->dwFlags |= MHDR_DONE;
-    MIDI_NotifyClient(wDevID, MOM_DONE, (DWORD_PTR)lpMidiHdr, 0L);
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
  * 			modPrepare				[internal]
  */
 static DWORD modPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
@@ -886,8 +782,6 @@ DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     case DRVM_INIT:
         ALSA_MidiInit();
         return 0;
-    case MODM_LONGDATA:
-	return modLongData(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
     case MODM_PREPARE:
 	return modPrepare(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
     case MODM_UNPREPARE:

@@ -651,6 +651,104 @@ static UINT midi_out_data(WORD dev_id, UINT data)
     return MMSYSERR_NOERROR;
 }
 
+static UINT midi_out_long_data(WORD dev_id, MIDIHDR *hdr, UINT hdr_size, struct notify_context *notify)
+{
+    struct midi_dest *dest;
+    int len_add = 0;
+    BYTE *data, *new_data = NULL;
+    snd_seq_event_t event;
+
+    TRACE("(%04X, %p, %08X);\n", dev_id, hdr, hdr_size);
+
+    /* Note: MS doc does not say much about the dwBytesRecorded member of the MIDIHDR structure
+     * but it seems to be used only for midi input.
+     * Taking a look at the WAVEHDR structure (which is quite similar) confirms this assumption.
+     */
+
+    if (dev_id >= num_dests) return MMSYSERR_BADDEVICEID;
+    dest = dests + dev_id;
+
+    if (!dest->bEnabled) return MIDIERR_NODEVICE;
+
+    if (dest->seq == NULL)
+    {
+        WARN("can't play !\n");
+        return MIDIERR_NODEVICE;
+    }
+
+    data = (BYTE*)hdr->lpData;
+
+    if (data == NULL)
+        return MIDIERR_UNPREPARED;
+    if (!(hdr->dwFlags & MHDR_PREPARED))
+        return MIDIERR_UNPREPARED;
+    if (hdr->dwFlags & MHDR_INQUEUE)
+        return MIDIERR_STILLPLAYING;
+    hdr->dwFlags &= ~MHDR_DONE;
+    hdr->dwFlags |= MHDR_INQUEUE;
+
+    /* FIXME: MS doc is not 100% clear. Will lpData only contain system exclusive
+     * data, or can it also contain raw MIDI data, to be split up and sent to
+     * modShortData() ?
+     * If the latest is true, then the following WARNing will fire up
+     */
+    if (data[0] != 0xF0 || data[hdr->dwBufferLength - 1] != 0xF7)
+    {
+        WARN("Alleged system exclusive buffer is not correct\n\tPlease report with MIDI file\n");
+        new_data = malloc(hdr->dwBufferLength + 2);
+    }
+
+    TRACE("dwBufferLength=%u !\n", hdr->dwBufferLength);
+    TRACE("                 %02X %02X %02X ... %02X %02X %02X\n",
+          data[0], data[1], data[2], data[hdr->dwBufferLength-3],
+          data[hdr->dwBufferLength-2], data[hdr->dwBufferLength-1]);
+
+    switch (dest->caps.wTechnology)
+    {
+    case MOD_FMSYNTH:
+        /* FIXME: I don't think there is much to do here */
+        free(new_data);
+        break;
+    case MOD_MIDIPORT:
+        if (data[0] != 0xF0)
+        {
+            /* Send start of System Exclusive */
+            len_add = 1;
+            new_data[0] = 0xF0;
+            memcpy(new_data + 1, data, hdr->dwBufferLength);
+            WARN("Adding missing 0xF0 marker at the beginning of system exclusive byte stream\n");
+        }
+        if (data[hdr->dwBufferLength-1] != 0xF7)
+        {
+            /* Send end of System Exclusive */
+            if (!len_add)
+                memcpy(new_data, data, hdr->dwBufferLength);
+            new_data[hdr->dwBufferLength + len_add] = 0xF7;
+            len_add++;
+            WARN("Adding missing 0xF7 marker at the end of system exclusive byte stream\n");
+        }
+        snd_seq_ev_clear(&event);
+        snd_seq_ev_set_direct(&event);
+        snd_seq_ev_set_source(&event, dest->port_out);
+        snd_seq_ev_set_subs(&event);
+        snd_seq_ev_set_sysex(&event, hdr->dwBufferLength + len_add, new_data ? new_data : data);
+        seq_lock();
+        snd_seq_event_output_direct(dest->seq, &event);
+        seq_unlock();
+        free(new_data);
+        break;
+    default:
+        WARN("Technology not supported (yet) %d !\n", dest->caps.wTechnology);
+        free(new_data);
+        return MMSYSERR_NOTENABLED;
+    }
+
+    hdr->dwFlags &= ~MHDR_INQUEUE;
+    hdr->dwFlags |= MHDR_DONE;
+    set_out_notify(notify, dest, dev_id, MOM_DONE, (DWORD_PTR)hdr, 0);
+    return MMSYSERR_NOERROR;
+}
+
 NTSTATUS midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
@@ -673,6 +771,9 @@ NTSTATUS midi_out_message(void *args)
         break;
     case MODM_DATA:
         *params->err = midi_out_data(params->dev_id, params->param_1);
+        break;
+    case MODM_LONGDATA:
+        *params->err = midi_out_long_data(params->dev_id, (MIDIHDR *)params->param_1, params->param_2, params->notify);
         break;
     default:
         TRACE("Unsupported message\n");
