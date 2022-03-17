@@ -4735,7 +4735,7 @@ static void test_CreateProcessCUI(void)
     res = check_whether_child_attached(cuiexec, DETACHED_PROCESS);
     ok(!res, "Don't expecting child to be attached to a console\n");
     res = check_whether_child_attached(cuiexec, 0);
-    todo_wine ok(res, "Expecting child to be attached to a console\n");
+    ok(res, "Expecting child to be attached to a console\n");
 
     DeleteFileA(guiexec);
     DeleteFileA(cuiexec);
