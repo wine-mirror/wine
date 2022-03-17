@@ -4662,6 +4662,85 @@ static void test_pseudo_console(void)
     pClosePseudoConsole(pseudo_console);
 }
 
+/* copy an executable, but changing its subsystem */
+static void copy_change_subsystem(const char* in, const char* out, DWORD subsyst)
+{
+    BOOL ret;
+    HANDLE hFile, hMap;
+    void* mapping;
+    IMAGE_NT_HEADERS *nthdr;
+
+    ret = CopyFileA(in, out, FALSE);
+    ok(ret, "Failed to copy executable %s in %s (%lu)\n", in, out, GetLastError());
+
+    hFile = CreateFileA(out, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, NULL,
+                         OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    ok(hFile != INVALID_HANDLE_VALUE, "Couldn't open file %s (%lu)\n", out, GetLastError());
+    hMap = CreateFileMappingW(hFile, NULL, PAGE_READWRITE, 0, 0, NULL);
+    ok(hMap != NULL, "Couldn't create map (%lu)\n", GetLastError());
+    mapping = MapViewOfFile(hMap, FILE_MAP_ALL_ACCESS, 0, 0, 0);
+    ok(mapping != NULL, "Couldn't map (%lu)\n", GetLastError());
+    nthdr = RtlImageNtHeader(mapping);
+    ok(nthdr != NULL, "Cannot get NT headers out of %s\n", out);
+    if (nthdr) nthdr->OptionalHeader.Subsystem = subsyst;
+    ret = UnmapViewOfFile(mapping);
+    ok(ret, "Couldn't unmap (%lu)\n", GetLastError());
+    CloseHandle(hMap);
+    CloseHandle(hFile);
+}
+
+static BOOL check_whether_child_attached(const char* exec, DWORD flags)
+{
+    STARTUPINFOA si = { sizeof(si) };
+    PROCESS_INFORMATION info;
+    char buf[MAX_PATH];
+    DWORD exit_code;
+    BOOL res;
+    DWORD ret;
+
+    sprintf(buf, "\"%s\" console check_console", exec);
+    res = CreateProcessA(NULL, buf, NULL, NULL, FALSE, flags, NULL, NULL, &si, &info);
+    ok(res, "CreateProcess failed: %lu %s\n", GetLastError(), buf);
+    CloseHandle(info.hThread);
+    ret = WaitForSingleObject(info.hProcess, 30000);
+    ok(ret == WAIT_OBJECT_0, "Could not wait for the child process: %ld le=%lu\n",
+        ret, GetLastError());
+    ret = GetExitCodeProcess(info.hProcess, &exit_code);
+    ok(ret && exit_code <= 255, "Couldn't get exit_code\n");
+    CloseHandle(info.hProcess);
+    return exit_code != 0;
+}
+
+static void test_CreateProcessCUI(void)
+{
+    char guiexec[MAX_PATH];
+    char cuiexec[MAX_PATH];
+    char **argv;
+    BOOL res;
+
+    winetest_get_mainargs(&argv);
+    GetTempPathA(ARRAY_SIZE(guiexec), guiexec);
+    strcat(guiexec, "console_gui.exe");
+    copy_change_subsystem(argv[0], guiexec, IMAGE_SUBSYSTEM_WINDOWS_GUI);
+    GetTempPathA(ARRAY_SIZE(cuiexec), cuiexec);
+    strcat(cuiexec, "console_cui.exe");
+    copy_change_subsystem(argv[0], cuiexec, IMAGE_SUBSYSTEM_WINDOWS_CUI);
+
+    FreeConsole();
+
+    res = check_whether_child_attached(guiexec, DETACHED_PROCESS);
+    ok(!res, "Don't expecting child to be attached to a console\n");
+    res = check_whether_child_attached(guiexec, 0);
+    ok(!res, "Don't expecting child to be attached to a console\n");
+    res = check_whether_child_attached(cuiexec, DETACHED_PROCESS);
+    ok(!res, "Don't expecting child to be attached to a console\n");
+    res = check_whether_child_attached(cuiexec, 0);
+    todo_wine ok(res, "Expecting child to be attached to a console\n");
+
+    DeleteFileA(guiexec);
+    DeleteFileA(cuiexec);
+}
+
 START_TEST(console)
 {
     HANDLE hConIn, hConOut, revert_output = NULL, unbound_output;
@@ -4688,6 +4767,11 @@ START_TEST(console)
     {
         test_AllocConsole_child();
         return;
+    }
+
+    if (argc == 3 && !strcmp(argv[2], "check_console"))
+    {
+        ExitProcess(GetConsoleCP() != 0);
     }
 
     test_current = argc >= 3 && !strcmp(argv[2], "--current");
@@ -4880,6 +4964,7 @@ START_TEST(console)
         test_AttachConsole(hConOut);
         test_AllocConsole();
         test_FreeConsole();
+        test_CreateProcessCUI();
     }
     else if (revert_output) SetConsoleActiveScreenBuffer(revert_output);
 
