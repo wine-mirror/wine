@@ -42,7 +42,6 @@ struct user_callbacks
     LRESULT (WINAPI *pSendMessageW)( HWND, UINT, WPARAM, LPARAM );
     BOOL (WINAPI *pSendNotifyMessageW)( HWND, UINT, WPARAM, LPARAM );
     BOOL (WINAPI *pShowCaret)( HWND hwnd );
-    BOOL (WINAPI *pShowWindow)( HWND, INT );
     DWORD (WINAPI *pWaitForInputIdle)( HANDLE, DWORD );
     void (CDECL *free_win_ptr)( struct tagWND *win );
     HWND (CDECL *is_menu_active)(void);
@@ -278,6 +277,12 @@ HANDLE alloc_user_handle( struct user_object *ptr, unsigned int type ) DECLSPEC_
 void *free_user_handle( HANDLE handle, unsigned int type ) DECLSPEC_HIDDEN;
 void *get_user_handle_ptr( HANDLE handle, unsigned int type ) DECLSPEC_HIDDEN;
 void release_user_handle_ptr( void *ptr ) DECLSPEC_HIDDEN;
+UINT win_set_flags( HWND hwnd, UINT set_mask, UINT clear_mask ) DECLSPEC_HIDDEN;
+
+static inline UINT win_get_flags( HWND hwnd )
+{
+    return win_set_flags( hwnd, 0, 0 );
+}
 
 WND *get_win_ptr( HWND hwnd ) DECLSPEC_HIDDEN;
 BOOL is_child( HWND parent, HWND child );

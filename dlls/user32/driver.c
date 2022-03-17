@@ -95,11 +95,6 @@ static void CDECL nulldrv_SetWindowText( HWND hwnd, LPCWSTR text )
 {
 }
 
-static UINT CDECL nulldrv_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
-{
-    return ~0; /* use default implementation */
-}
-
 static LRESULT CDECL nulldrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
     return -1;
@@ -184,7 +179,7 @@ static struct user_driver_funcs lazy_load_driver =
     nulldrv_SetWindowIcon,
     NULL,
     nulldrv_SetWindowText,
-    nulldrv_ShowWindow,
+    NULL,
     nulldrv_SysCommand,
     NULL,
     NULL,
@@ -222,7 +217,6 @@ void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT v
     SET_USER_FUNC(MsgWaitForMultipleObjectsEx);
     SET_USER_FUNC(SetWindowIcon);
     SET_USER_FUNC(SetWindowText);
-    SET_USER_FUNC(ShowWindow);
     SET_USER_FUNC(SysCommand);
     SET_USER_FUNC(WindowPosChanging);
     SET_USER_FUNC(WindowPosChanged);

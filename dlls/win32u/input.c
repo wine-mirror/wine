@@ -1162,7 +1162,7 @@ HWND get_active_window(void)
 }
 
 /* see GetFocus */
-static HWND get_focus(void)
+HWND get_focus(void)
 {
     GUITHREADINFO info;
     info.cbSize = sizeof(info);

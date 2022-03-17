@@ -916,6 +916,11 @@ BOOL is_iconic( HWND hwnd )
     return (get_window_long( hwnd, GWL_STYLE ) & WS_MINIMIZE) != 0;
 }
 
+static BOOL is_zoomed( HWND hwnd )
+{
+    return (get_window_long( hwnd, GWL_STYLE ) & WS_MAXIMIZE) != 0;
+}
+
 static LONG_PTR get_window_long_size( HWND hwnd, INT offset, UINT size, BOOL ansi )
 {
     LONG_PTR retval = 0;
@@ -1655,7 +1660,7 @@ BOOL get_window_rect( HWND hwnd, RECT *rect, UINT dpi )
 }
 
 /* see GetClientRect */
-static BOOL get_client_rect( HWND hwnd, RECT *rect )
+BOOL get_client_rect( HWND hwnd, RECT *rect )
 {
     return get_window_rects( hwnd, COORDS_CLIENT, NULL, rect, get_thread_dpi() );
 }
@@ -2172,14 +2177,6 @@ BOOL get_window_placement( HWND hwnd, WINDOWPLACEMENT *placement )
            placement->ptMaxPosition.x, placement->ptMaxPosition.y,
            wine_dbgstr_rect(&placement->rcNormalPosition) );
     return TRUE;
-}
-
-/*****************************************************************************
- *           NtUserShowWindow (win32u.@)
- */
-BOOL WINAPI NtUserShowWindow( HWND hwnd, INT cmd )
-{
-    return user_callbacks && user_callbacks->pShowWindow( hwnd, cmd );
 }
 
 /*****************************************************************************
@@ -3179,7 +3176,7 @@ BOOL WINAPI NtUserEndDeferWindowPosEx( HDWP hdwp, BOOL async )
  *
  * Set the flags of a window and return the previous value.
  */
-static UINT win_set_flags( HWND hwnd, UINT set_mask, UINT clear_mask )
+UINT win_set_flags( HWND hwnd, UINT set_mask, UINT clear_mask )
 {
     WND *win = get_win_ptr( hwnd );
     UINT ret;
@@ -3361,6 +3358,255 @@ static MINMAXINFO get_min_max_info( HWND hwnd )
     return minmax;
 }
 
+static POINT get_first_minimized_child_pos( const RECT *parent, const MINIMIZEDMETRICS *mm,
+                                            int width, int height )
+{
+    POINT ret;
+
+    if (mm->iArrange & ARW_STARTRIGHT)
+        ret.x = parent->right - mm->iHorzGap - width;
+    else
+        ret.x = parent->left + mm->iHorzGap;
+    if (mm->iArrange & ARW_STARTTOP)
+        ret.y = parent->top + mm->iVertGap;
+    else
+        ret.y = parent->bottom - mm->iVertGap - height;
+
+    return ret;
+}
+
+static void get_next_minimized_child_pos( const RECT *parent, const MINIMIZEDMETRICS *mm,
+                                          int width, int height, POINT *pos )
+{
+    BOOL next;
+
+    if (mm->iArrange & ARW_UP) /* == ARW_DOWN */
+    {
+        if (mm->iArrange & ARW_STARTTOP)
+        {
+            pos->y += height + mm->iVertGap;
+            if ((next = pos->y + height > parent->bottom))
+                pos->y = parent->top + mm->iVertGap;
+        }
+        else
+        {
+            pos->y -= height + mm->iVertGap;
+            if ((next = pos->y < parent->top))
+                pos->y = parent->bottom - mm->iVertGap - height;
+        }
+
+        if (next)
+        {
+            if (mm->iArrange & ARW_STARTRIGHT)
+                pos->x -= width + mm->iHorzGap;
+            else
+                pos->x += width + mm->iHorzGap;
+        }
+    }
+    else
+    {
+        if (mm->iArrange & ARW_STARTRIGHT)
+        {
+            pos->x -= width + mm->iHorzGap;
+            if ((next = pos->x < parent->left))
+                pos->x = parent->right - mm->iHorzGap - width;
+        }
+        else
+        {
+            pos->x += width + mm->iHorzGap;
+            if ((next = pos->x + width > parent->right))
+                pos->x = parent->left + mm->iHorzGap;
+        }
+
+        if (next)
+        {
+            if (mm->iArrange & ARW_STARTTOP)
+                pos->y += height + mm->iVertGap;
+            else
+                pos->y -= height + mm->iVertGap;
+        }
+    }
+}
+
+static POINT get_minimized_pos( HWND hwnd, POINT pt )
+{
+    RECT rect, parent_rect;
+    HWND parent, child;
+    HRGN hrgn, tmp;
+    MINIMIZEDMETRICS metrics;
+    int width, height;
+
+    parent = NtUserGetAncestor( hwnd, GA_PARENT );
+    if (parent == get_desktop_window())
+    {
+        MONITORINFO mon_info;
+        HMONITOR monitor = monitor_from_window( hwnd, MONITOR_DEFAULTTOPRIMARY, get_thread_dpi() );
+
+        mon_info.cbSize = sizeof( mon_info );
+        get_monitor_info( monitor, &mon_info );
+        parent_rect = mon_info.rcWork;
+    }
+    else get_client_rect( parent, &parent_rect );
+
+    if (pt.x >= parent_rect.left && (pt.x + get_system_metrics( SM_CXMINIMIZED ) < parent_rect.right) &&
+        pt.y >= parent_rect.top  && (pt.y + get_system_metrics( SM_CYMINIMIZED ) < parent_rect.bottom))
+        return pt;  /* The icon already has a suitable position */
+
+    width  = get_system_metrics( SM_CXMINIMIZED );
+    height = get_system_metrics( SM_CYMINIMIZED );
+
+    metrics.cbSize = sizeof(metrics);
+    NtUserSystemParametersInfo( SPI_GETMINIMIZEDMETRICS, sizeof(metrics), &metrics, 0 );
+
+    /* Check if another icon already occupies this spot */
+    /* FIXME: this is completely inefficient */
+
+    hrgn = NtGdiCreateRectRgn( 0, 0, 0, 0 );
+    tmp = NtGdiCreateRectRgn( 0, 0, 0, 0 );
+    for (child = get_window_relative( parent, GW_CHILD );
+         child;
+         child = get_window_relative( child, GW_HWNDNEXT ))
+    {
+        if (child == hwnd) continue;
+        if ((get_window_long( child, GWL_STYLE ) & (WS_VISIBLE|WS_MINIMIZE)) != (WS_VISIBLE|WS_MINIMIZE))
+            continue;
+        if (get_window_rects( child, COORDS_PARENT, &rect, NULL, get_thread_dpi() ))
+        {
+            NtGdiSetRectRgn( tmp, rect.left, rect.top, rect.right, rect.bottom );
+            NtGdiCombineRgn( hrgn, hrgn, tmp, RGN_OR );
+        }
+    }
+    NtGdiDeleteObjectApp( tmp );
+
+    pt = get_first_minimized_child_pos( &parent_rect, &metrics, width, height );
+    for (;;)
+    {
+        set_rect( &rect, pt.x, pt.y, pt.x + width, pt.y + height );
+        if (!NtGdiRectInRegion( hrgn, &rect ))
+            break;
+
+        get_next_minimized_child_pos( &parent_rect, &metrics, width, height, &pt );
+    }
+
+    NtGdiDeleteObjectApp( hrgn );
+    return pt;
+}
+
+/***********************************************************************
+ *           window_min_maximize
+ */
+static UINT window_min_maximize( HWND hwnd, UINT cmd, RECT *rect )
+{
+    UINT swp_flags = 0;
+    LONG old_style;
+    MINMAXINFO minmax;
+    WINDOWPLACEMENT wpl;
+
+    TRACE( "%p %u\n", hwnd, cmd );
+
+    wpl.length = sizeof(wpl);
+    get_window_placement( hwnd, &wpl );
+
+    if (call_hooks( WH_CBT, HCBT_MINMAX, (WPARAM)hwnd, cmd, TRUE ))
+        return SWP_NOSIZE | SWP_NOMOVE;
+
+    if (is_iconic( hwnd ))
+    {
+        switch (cmd)
+        {
+        case SW_SHOWMINNOACTIVE:
+        case SW_SHOWMINIMIZED:
+        case SW_FORCEMINIMIZE:
+        case SW_MINIMIZE:
+            wpl.ptMinPosition = get_minimized_pos( hwnd, wpl.ptMinPosition );
+
+            set_rect( rect, wpl.ptMinPosition.x, wpl.ptMinPosition.y,
+                      wpl.ptMinPosition.x + get_system_metrics( SM_CXMINIMIZED ),
+                      wpl.ptMinPosition.y + get_system_metrics( SM_CYMINIMIZED ));
+            return SWP_NOSIZE | SWP_NOMOVE;
+        }
+        if (!send_message( hwnd, WM_QUERYOPEN, 0, 0 )) return SWP_NOSIZE | SWP_NOMOVE;
+        swp_flags |= SWP_NOCOPYBITS;
+    }
+
+    switch( cmd )
+    {
+    case SW_SHOWMINNOACTIVE:
+    case SW_SHOWMINIMIZED:
+    case SW_FORCEMINIMIZE:
+    case SW_MINIMIZE:
+        if (is_zoomed( hwnd )) win_set_flags( hwnd, WIN_RESTORE_MAX, 0 );
+        else win_set_flags( hwnd, 0, WIN_RESTORE_MAX );
+
+        if (get_focus() == hwnd)
+        {
+            if (get_window_long( hwnd, GWL_STYLE ) & WS_CHILD)
+                NtUserSetFocus( NtUserGetAncestor( hwnd, GA_PARENT ));
+            else
+                NtUserSetFocus( 0 );
+        }
+
+        old_style = set_window_style( hwnd, WS_MINIMIZE, WS_MAXIMIZE );
+
+        wpl.ptMinPosition = get_minimized_pos( hwnd, wpl.ptMinPosition );
+
+        if (!(old_style & WS_MINIMIZE)) swp_flags |= SWP_STATECHANGED;
+        set_rect( rect, wpl.ptMinPosition.x, wpl.ptMinPosition.y,
+                  wpl.ptMinPosition.x + get_system_metrics(SM_CXMINIMIZED),
+                  wpl.ptMinPosition.y + get_system_metrics(SM_CYMINIMIZED) );
+        swp_flags |= SWP_NOCOPYBITS;
+        break;
+
+    case SW_MAXIMIZE:
+        old_style = get_window_long( hwnd, GWL_STYLE );
+        if ((old_style & WS_MAXIMIZE) && (old_style & WS_VISIBLE)) return SWP_NOSIZE | SWP_NOMOVE;
+
+        minmax = get_min_max_info( hwnd );
+
+        old_style = set_window_style( hwnd, WS_MAXIMIZE, WS_MINIMIZE );
+        if (old_style & WS_MINIMIZE)
+            win_set_flags( hwnd, WIN_RESTORE_MAX, 0 );
+
+        if (!(old_style & WS_MAXIMIZE)) swp_flags |= SWP_STATECHANGED;
+        set_rect( rect, minmax.ptMaxPosition.x, minmax.ptMaxPosition.y,
+                  minmax.ptMaxPosition.x + minmax.ptMaxSize.x,
+                  minmax.ptMaxPosition.y + minmax.ptMaxSize.y );
+        break;
+
+    case SW_SHOWNOACTIVATE:
+        win_set_flags( hwnd, 0, WIN_RESTORE_MAX );
+        /* fall through */
+    case SW_SHOWNORMAL:
+    case SW_RESTORE:
+    case SW_SHOWDEFAULT: /* FIXME: should have its own handler */
+        old_style = set_window_style( hwnd, 0, WS_MINIMIZE | WS_MAXIMIZE );
+        if (old_style & WS_MINIMIZE)
+        {
+            if (win_get_flags( hwnd ) & WIN_RESTORE_MAX)
+            {
+                /* Restore to maximized position */
+                minmax = get_min_max_info( hwnd );
+                set_window_style( hwnd, WS_MAXIMIZE, 0 );
+                swp_flags |= SWP_STATECHANGED;
+                set_rect( rect, minmax.ptMaxPosition.x, minmax.ptMaxPosition.y,
+                          minmax.ptMaxPosition.x + minmax.ptMaxSize.x,
+                          minmax.ptMaxPosition.y + minmax.ptMaxSize.y );
+                break;
+            }
+        }
+        else if (!(old_style & WS_MAXIMIZE)) break;
+
+        swp_flags |= SWP_STATECHANGED;
+
+        /* Restore to normal position */
+
+        *rect = wpl.rcNormalPosition;
+        break;
+    }
+
+    return swp_flags;
+}
+
 /*******************************************************************
  *           update_window_state
  *
@@ -3385,6 +3631,227 @@ void update_window_state( HWND hwnd )
                                         SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW,
                                         &window_rect, &client_rect, valid_rects );
     set_thread_dpi_awareness_context( context );
+}
+
+/***********************************************************************
+ *              show_window
+ *
+ * Implementation of ShowWindow and ShowWindowAsync.
+ */
+static BOOL show_window( HWND hwnd, INT cmd )
+{
+    WND *win;
+    HWND parent;
+    DPI_AWARENESS_CONTEXT context;
+    LONG style = get_window_long( hwnd, GWL_STYLE );
+    BOOL was_visible = (style & WS_VISIBLE) != 0;
+    BOOL show_flag = TRUE;
+    RECT newPos = {0, 0, 0, 0};
+    UINT new_swp, swp = 0;
+
+    TRACE( "hwnd=%p, cmd=%d, was_visible %d\n", hwnd, cmd, was_visible );
+
+    context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( hwnd ));
+
+    switch(cmd)
+    {
+    case SW_HIDE:
+        if (!was_visible) goto done;
+        show_flag = FALSE;
+        swp |= SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOMOVE;
+        if (style & WS_CHILD) swp |= SWP_NOACTIVATE | SWP_NOZORDER;
+        break;
+
+    case SW_SHOWMINNOACTIVE:
+    case SW_MINIMIZE:
+    case SW_FORCEMINIMIZE: /* FIXME: Does not work if thread is hung. */
+        swp |= SWP_NOACTIVATE | SWP_NOZORDER;
+        /* fall through */
+    case SW_SHOWMINIMIZED:
+        swp |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
+        swp |= window_min_maximize( hwnd, cmd, &newPos );
+        if ((style & WS_MINIMIZE) && was_visible) goto done;
+        break;
+
+    case SW_SHOWMAXIMIZED: /* same as SW_MAXIMIZE */
+        if (!was_visible) swp |= SWP_SHOWWINDOW;
+        swp |= SWP_FRAMECHANGED;
+        swp |= window_min_maximize( hwnd, SW_MAXIMIZE, &newPos );
+        if ((style & WS_MAXIMIZE) && was_visible) goto done;
+        break;
+
+    case SW_SHOWNA:
+        swp |= SWP_NOACTIVATE | SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE;
+        if (style & WS_CHILD) swp |= SWP_NOZORDER;
+        break;
+
+    case SW_SHOW:
+        if (was_visible) goto done;
+        swp |= SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE;
+        if (style & WS_CHILD) swp |= SWP_NOACTIVATE | SWP_NOZORDER;
+        break;
+
+    case SW_SHOWNOACTIVATE:
+        swp |= SWP_NOACTIVATE | SWP_NOZORDER;
+        /* fall through */
+    case SW_RESTORE:
+        /* fall through */
+    case SW_SHOWNORMAL:  /* same as SW_NORMAL: */
+    case SW_SHOWDEFAULT: /* FIXME: should have its own handler */
+        if (!was_visible) swp |= SWP_SHOWWINDOW;
+        if (style & (WS_MINIMIZE | WS_MAXIMIZE))
+        {
+            swp |= SWP_FRAMECHANGED;
+            swp |= window_min_maximize( hwnd, cmd, &newPos );
+        }
+        else
+        {
+            if (was_visible) goto done;
+            swp |= SWP_NOSIZE | SWP_NOMOVE;
+        }
+        if (style & WS_CHILD && !(swp & SWP_STATECHANGED)) swp |= SWP_NOACTIVATE | SWP_NOZORDER;
+        break;
+
+    default:
+        goto done;
+    }
+
+    if ((show_flag != was_visible || cmd == SW_SHOWNA) && cmd != SW_SHOWMAXIMIZED && !(swp & SWP_STATECHANGED))
+    {
+        send_message( hwnd, WM_SHOWWINDOW, show_flag, 0 );
+        if (!is_window( hwnd )) goto done;
+    }
+
+    if (IsRectEmpty( &newPos )) new_swp = swp;
+    else if ((new_swp = user_driver->pShowWindow( hwnd, cmd, &newPos, swp )) == ~0)
+    {
+        if (get_window_long( hwnd, GWL_STYLE ) & WS_CHILD) new_swp = swp;
+        else if (is_iconic( hwnd ) && (newPos.left != -32000 || newPos.top != -32000))
+        {
+            offset_rect( &newPos, -32000 - newPos.left, -32000 - newPos.top );
+            new_swp = swp & ~(SWP_NOMOVE | SWP_NOCLIENTMOVE);
+        }
+        else new_swp = swp;
+    }
+    swp = new_swp;
+
+    parent = NtUserGetAncestor( hwnd, GA_PARENT );
+    if (parent && !is_window_visible( parent ) && !(swp & SWP_STATECHANGED))
+    {
+        /* if parent is not visible simply toggle WS_VISIBLE and return */
+        if (show_flag) set_window_style( hwnd, WS_VISIBLE, 0 );
+        else set_window_style( hwnd, 0, WS_VISIBLE );
+    }
+    else
+        NtUserSetWindowPos( hwnd, HWND_TOP, newPos.left, newPos.top,
+                            newPos.right - newPos.left, newPos.bottom - newPos.top, swp );
+
+    if (cmd == SW_HIDE)
+    {
+        HWND hFocus;
+
+        /* FIXME: This will cause the window to be activated irrespective
+         * of whether it is owned by the same thread. Has to be done
+         * asynchronously.
+         */
+
+        if (hwnd == get_active_window()) activate_other_window( hwnd );
+
+        /* Revert focus to parent */
+        hFocus = get_focus();
+        if (hwnd == hFocus)
+        {
+            HWND parent = NtUserGetAncestor(hwnd, GA_PARENT);
+            if (parent == get_desktop_window()) parent = 0;
+            NtUserSetFocus(parent);
+        }
+        goto done;
+    }
+
+    if (!(win = get_win_ptr( hwnd )) || win == WND_OTHER_PROCESS) goto done;
+
+    if (win->flags & WIN_NEED_SIZE)
+    {
+        /* should happen only in CreateWindowEx() */
+        int wParam = SIZE_RESTORED;
+        RECT client;
+        LPARAM lparam;
+
+        get_window_rects( hwnd, COORDS_PARENT, NULL, &client, get_thread_dpi() );
+        lparam = MAKELONG( client.right - client.left, client.bottom - client.top );
+        win->flags &= ~WIN_NEED_SIZE;
+        if (win->dwStyle & WS_MAXIMIZE) wParam = SIZE_MAXIMIZED;
+        else if (win->dwStyle & WS_MINIMIZE)
+        {
+            wParam = SIZE_MINIMIZED;
+            lparam = 0;
+        }
+        release_win_ptr( win );
+
+        send_message( hwnd, WM_SIZE, wParam, lparam );
+        send_message( hwnd, WM_MOVE, 0, MAKELONG( client.left, client.top ));
+    }
+    else release_win_ptr( win );
+
+    /* if previous state was minimized Windows sets focus to the window */
+    if (style & WS_MINIMIZE)
+    {
+        NtUserSetFocus( hwnd );
+        /* Send a WM_ACTIVATE message for a top level window, even if the window is already active */
+        if (NtUserGetAncestor( hwnd, GA_ROOT ) == hwnd && !(swp & SWP_NOACTIVATE))
+            send_message( hwnd, WM_ACTIVATE, WA_ACTIVE, 0 );
+    }
+
+done:
+    set_thread_dpi_awareness_context( context );
+    return was_visible;
+}
+
+/***********************************************************************
+ *           NtUserShowWindowAsync (win32u.@)
+ *
+ * doesn't wait; returns immediately.
+ * used by threads to toggle windows in other (possibly hanging) threads
+ */
+BOOL WINAPI NtUserShowWindowAsync( HWND hwnd, INT cmd )
+{
+    HWND full_handle;
+
+    if (is_broadcast(hwnd))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    if ((full_handle = is_current_thread_window( hwnd )))
+        return show_window( full_handle, cmd );
+
+    return NtUserMessageCall( hwnd, WM_WINE_SHOWWINDOW, cmd, 0, 0,
+                              FNID_SENDNOTIFYMESSAGE, FALSE );
+}
+
+/***********************************************************************
+ *           NtUserShowWindow (win32u.@)
+ */
+BOOL WINAPI NtUserShowWindow( HWND hwnd, INT cmd )
+{
+    HWND full_handle;
+
+    if (is_broadcast(hwnd))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+    if ((full_handle = is_current_thread_window( hwnd )))
+        return show_window( full_handle, cmd );
+
+    if ((cmd == SW_HIDE) && !(get_window_long( hwnd, GWL_STYLE ) & WS_VISIBLE))
+        return FALSE;
+
+    if ((cmd == SW_SHOW) && (get_window_long( hwnd, GWL_STYLE ) & WS_VISIBLE))
+        return TRUE;
+
+    return send_message( hwnd, WM_WINE_SHOWWINDOW, cmd, 0 );
 }
 
 /*******************************************************************

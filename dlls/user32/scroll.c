@@ -1973,7 +1973,7 @@ static BOOL SCROLL_ShowScrollBar( HWND hwnd, INT nBar, BOOL fShowH, BOOL fShowV 
     switch(nBar)
     {
     case SB_CTL:
-        ShowWindow( hwnd, fShowH ? SW_SHOW : SW_HIDE );
+        NtUserShowWindow( hwnd, fShowH ? SW_SHOW : SW_HIDE );
         return TRUE;
 
     case SB_BOTH:

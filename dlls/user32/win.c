@@ -1023,10 +1023,10 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
                 {
                     /* if the new window is maximized don't bother repainting */
                     SendMessageW( top_child, WM_SETREDRAW, FALSE, 0 );
-                    ShowWindow( top_child, SW_SHOWNORMAL );
+                    NtUserShowWindow( top_child, SW_SHOWNORMAL );
                     SendMessageW( top_child, WM_SETREDRAW, TRUE, 0 );
                 }
-                else ShowWindow( top_child, SW_SHOWNORMAL );
+                else NtUserShowWindow( top_child, SW_SHOWNORMAL );
             }
         }
     }
@@ -1303,7 +1303,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
         else if (cs->style & WS_MINIMIZE)
             sw = SW_SHOWMINIMIZED;
 
-        ShowWindow( hwnd, sw );
+        NtUserShowWindow( hwnd, sw );
         if (cs->dwExStyle & WS_EX_MDICHILD)
         {
             SendMessageW(cs->hwndParent, WM_MDIREFRESHMENU, 0, 0);
@@ -1399,7 +1399,7 @@ HWND WINAPI DECLSPEC_HOTPATCH CreateWindowExW( DWORD exStyle, LPCWSTR className,
 BOOL WINAPI CloseWindow( HWND hwnd )
 {
     if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD) return FALSE;
-    ShowWindow( hwnd, SW_MINIMIZE );
+    NtUserShowWindow( hwnd, SW_MINIMIZE );
     return TRUE;
 }
 
@@ -1410,7 +1410,7 @@ BOOL WINAPI CloseWindow( HWND hwnd )
 BOOL WINAPI OpenIcon( HWND hwnd )
 {
     if (!IsIconic( hwnd )) return FALSE;
-    ShowWindow( hwnd, SW_SHOWNORMAL );
+    NtUserShowWindow( hwnd, SW_SHOWNORMAL );
     return TRUE;
 }
 

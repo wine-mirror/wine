@@ -514,13 +514,13 @@ static void MDI_SwitchActiveChild( MDICLIENTINFO *ci, HWND hwndTo, BOOL activate
         {
             /* restore old MDI child */
             SendMessageW( hwndPrev, WM_SETREDRAW, FALSE, 0 );
-            ShowWindow( hwndPrev, SW_RESTORE );
+            NtUserShowWindow( hwndPrev, SW_RESTORE );
             SendMessageW( hwndPrev, WM_SETREDRAW, TRUE, 0 );
 
             /* activate new MDI child */
             NtUserSetWindowPos( hwndTo, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE );
             /* maximize new MDI child */
-            ShowWindow( hwndTo, SW_MAXIMIZE );
+            NtUserShowWindow( hwndTo, SW_MAXIMIZE );
         }
         /* activate new MDI child */
         NtUserSetWindowPos( hwndTo, HWND_TOP, 0, 0, 0, 0,
@@ -547,7 +547,7 @@ static LRESULT MDIDestroyChild( HWND client, MDICLIENTINFO *ci,
             MDI_SwitchActiveChild(ci, next, TRUE);
         else
         {
-            ShowWindow(child, SW_HIDE);
+            NtUserShowWindow( child, SW_HIDE );
             if (child == ci->hwndChildMaximized)
             {
                 HWND frame = GetParent(client);
@@ -1133,7 +1133,7 @@ LRESULT MDIClientWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
         return 0;
 
       case WM_MDIMAXIMIZE:
-	ShowWindow( (HWND)wParam, SW_MAXIMIZE );
+	NtUserShowWindow( (HWND)wParam, SW_MAXIMIZE );
         return 0;
 
       case WM_MDINEXT: /* lParam != 0 means previous window */
@@ -1147,7 +1147,7 @@ LRESULT MDIClientWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
       }
 
       case WM_MDIRESTORE:
-        ShowWindow( (HWND)wParam, SW_SHOWNORMAL );
+        NtUserShowWindow( (HWND)wParam, SW_SHOWNORMAL );
         return 0;
 
       case WM_MDISETMENU:
@@ -1518,7 +1518,7 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
                 SendMessageW( hMaxChild, WM_SETREDRAW, FALSE, 0 );
 
                 MDI_RestoreFrameMenu( GetParent(client), hMaxChild );
-                ShowWindow( hMaxChild, SW_SHOWNOACTIVATE );
+                NtUserShowWindow( hMaxChild, SW_SHOWNOACTIVATE );
 
                 SendMessageW( hMaxChild, WM_SETREDRAW, TRUE, 0 );
             }

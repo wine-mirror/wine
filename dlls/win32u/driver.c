@@ -1202,6 +1202,7 @@ static const struct user_driver_funcs lazy_load_driver =
     .pReleaseDC =  nulldrv_ReleaseDC,
     .pScrollDC = nulldrv_ScrollDC,
     .pSetFocus = nulldrv_SetFocus,
+    .pShowWindow = nulldrv_ShowWindow,
     .pUpdateLayeredWindow = loaderdrv_UpdateLayeredWindow,
     .pWindowMessage = nulldrv_WindowMessage,
     /* system parameters */

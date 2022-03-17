@@ -740,8 +740,8 @@
 @ stdcall ShowOwnedPopups(long long)
 @ stdcall ShowScrollBar(long long long)
 @ stub ShowStartGlass
-@ stdcall ShowWindow(long long)
-@ stdcall ShowWindowAsync(long long)
+@ stdcall ShowWindow(long long) NtUserShowWindow
+@ stdcall ShowWindowAsync(long long) NtUserShowWindowAsync
 @ stdcall ShutdownBlockReasonCreate(long wstr)
 @ stdcall ShutdownBlockReasonDestroy(long)
 # @ stub SoftModalMessageBox

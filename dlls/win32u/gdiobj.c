@@ -1210,6 +1210,8 @@ static struct unix_funcs unix_funcs =
     NtUserSetWindowRgn,
     NtUserSetWindowWord,
     NtUserShowCursor,
+    NtUserShowWindow,
+    NtUserShowWindowAsync,
     NtUserSystemParametersInfo,
     NtUserSystemParametersInfoForDpi,
     NtUserToUnicodeEx,

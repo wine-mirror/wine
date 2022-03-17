@@ -258,6 +258,8 @@ struct unix_funcs
     int      (WINAPI *pNtUserSetWindowRgn)( HWND hwnd, HRGN hrgn, BOOL redraw );
     WORD     (WINAPI *pNtUserSetWindowWord)( HWND hwnd, INT offset, WORD newval );
     INT      (WINAPI *pNtUserShowCursor)( BOOL show );
+    BOOL     (WINAPI *pNtUserShowWindow)( HWND hwnd, INT cmd );
+    BOOL     (WINAPI *pNtUserShowWindowAsync)( HWND hwnd, INT cmd );
     BOOL     (WINAPI *pNtUserSystemParametersInfo)( UINT action, UINT val, PVOID ptr, UINT winini );
     BOOL     (WINAPI *pNtUserSystemParametersInfoForDpi)( UINT action, UINT val, PVOID ptr,
                                                          UINT winini, UINT dpi );
@@ -311,6 +313,7 @@ extern BOOL unhook_windows_hook( INT id, HOOKPROC proc ) DECLSPEC_HIDDEN;
 extern LONG global_key_state_counter DECLSPEC_HIDDEN;
 extern HWND get_active_window(void) DECLSPEC_HIDDEN;
 extern BOOL get_cursor_pos( POINT *pt ) DECLSPEC_HIDDEN;
+extern HWND get_focus(void) DECLSPEC_HIDDEN;
 extern DWORD get_input_state(void) DECLSPEC_HIDDEN;
 extern BOOL WINAPI release_capture(void) DECLSPEC_HIDDEN;
 extern BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret ) DECLSPEC_HIDDEN;
@@ -353,6 +356,7 @@ struct tagWND;
 extern HDWP begin_defer_window_pos( INT count ) DECLSPEC_HIDDEN;
 extern void destroy_thread_windows(void) DECLSPEC_HIDDEN;
 extern LRESULT destroy_window( HWND hwnd ) DECLSPEC_HIDDEN;
+extern BOOL get_client_rect( HWND hwnd, RECT *rect ) DECLSPEC_HIDDEN;
 extern HWND get_desktop_window(void) DECLSPEC_HIDDEN;
 extern UINT get_dpi_for_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND get_full_window_handle( HWND hwnd ) DECLSPEC_HIDDEN;

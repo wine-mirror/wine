@@ -1261,8 +1261,8 @@
 @ stdcall NtUserShowCursor(long)
 @ stub NtUserShowScrollBar
 @ stub NtUserShowSystemCursor
-@ stub NtUserShowWindow
-@ stub NtUserShowWindowAsync
+@ stdcall NtUserShowWindow(long long)
+@ stdcall NtUserShowWindowAsync(long long)
 @ stub NtUserShutdownBlockReasonCreate
 @ stub NtUserShutdownBlockReasonQuery
 @ stub NtUserShutdownReasonDestroy

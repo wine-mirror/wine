@@ -1857,21 +1857,12 @@ static void reply_message( struct received_message_info *info, LRESULT result, B
  */
 LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    switch(msg)
-    {
-    case WM_WINE_SHOWWINDOW:
-        if (is_desktop_window( hwnd )) return 0;
-        return ShowWindow( hwnd, wparam );
-    default:
-        {
-            MSG m;
-            m.hwnd    = hwnd;
-            m.message = msg;
-            m.wParam  = wparam;
-            m.lParam  = lparam;
-            return NtUserCallOneParam( (UINT_PTR)&m, NtUserHandleInternalMessage );
-        }
-    }
+    MSG m;
+    m.hwnd    = hwnd;
+    m.message = msg;
+    m.wParam  = wparam;
+    m.lParam  = lparam;
+    return NtUserCallOneParam( (UINT_PTR)&m, NtUserHandleInternalMessage );
 }
 
 /* since the WM_DDE_ACK response to a WM_DDE_EXECUTE message should contain the handle

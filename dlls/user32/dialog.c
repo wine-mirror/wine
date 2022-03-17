@@ -702,7 +702,7 @@ static HWND DIALOG_CreateIndirect( HINSTANCE hInst, LPCVOID dlgTemplate,
 
         if (template.style & WS_VISIBLE && !(GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE))
         {
-           ShowWindow( hwnd, SW_SHOWNORMAL );   /* SW_SHOW doesn't always work */
+           NtUserShowWindow( hwnd, SW_SHOWNORMAL );   /* SW_SHOW doesn't always work */
         }
         return hwnd;
     }
@@ -793,7 +793,7 @@ INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
                 if (bFirstEmpty)
                 {
                     /* ShowWindow the first time the queue goes empty */
-                    ShowWindow( hwnd, SW_SHOWNORMAL );
+                    NtUserShowWindow( hwnd, SW_SHOWNORMAL );
                     bFirstEmpty = FALSE;
                 }
                 if (!(GetWindowLongW( hwnd, GWL_STYLE ) & DS_NOIDLEMSG))
@@ -821,7 +821,7 @@ INT DIALOG_DoDialogBox( HWND hwnd, HWND owner )
 
             if (bFirstEmpty && msg.message == WM_TIMER)
             {
-                ShowWindow( hwnd, SW_SHOWNORMAL );
+                NtUserShowWindow( hwnd, SW_SHOWNORMAL );
                 bFirstEmpty = FALSE;
             }
         }

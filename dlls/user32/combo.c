@@ -1030,7 +1030,7 @@ static void CBRollUp( LPHEADCOMBO lphc, BOOL ok, BOOL bButton )
 	   RECT	rect;
 
 	   lphc->wState &= ~CBF_DROPPED;
-	   ShowWindow( lphc->hWndLBox, SW_HIDE );
+	   NtUserShowWindow( lphc->hWndLBox, SW_HIDE );
 
            if(GetCapture() == lphc->hWndLBox)
            {
@@ -1419,7 +1419,7 @@ static void CBResetPos(HEADCOMBO *combo, BOOL redraw)
         if (combo->wState & CBF_DROPPED)
         {
            combo->wState &= ~CBF_DROPPED;
-           ShowWindow(combo->hWndLBox, SW_HIDE);
+           NtUserShowWindow( combo->hWndLBox, SW_HIDE );
         }
 
         if (redraw && !(combo->wState & CBF_NOREDRAW))

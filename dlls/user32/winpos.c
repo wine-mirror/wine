@@ -67,7 +67,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(win);
  */
 void WINAPI SwitchToThisWindow( HWND hwnd, BOOL alt_tab )
 {
-    if (IsIconic( hwnd )) ShowWindow( hwnd, SW_RESTORE );
+    if (IsIconic( hwnd )) NtUserShowWindow( hwnd, SW_RESTORE );
     else BringWindowToTop( hwnd );
 }
 
@@ -800,228 +800,6 @@ UINT WINPOS_MinMaximize( HWND hwnd, UINT cmd, LPRECT rect )
 
 
 /***********************************************************************
- *              show_window
- *
- * Implementation of ShowWindow and ShowWindowAsync.
- */
-static BOOL show_window( HWND hwnd, INT cmd )
-{
-    WND *wndPtr;
-    HWND parent;
-    DPI_AWARENESS_CONTEXT context;
-    LONG style = GetWindowLongW( hwnd, GWL_STYLE );
-    BOOL wasVisible = (style & WS_VISIBLE) != 0;
-    BOOL showFlag = TRUE;
-    RECT newPos = {0, 0, 0, 0};
-    UINT new_swp, swp = 0;
-
-    TRACE("hwnd=%p, cmd=%d, wasVisible %d\n", hwnd, cmd, wasVisible);
-
-    context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
-
-    switch(cmd)
-    {
-        case SW_HIDE:
-            if (!wasVisible) goto done;
-            showFlag = FALSE;
-            swp |= SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOMOVE;
-            if (style & WS_CHILD) swp |= SWP_NOACTIVATE | SWP_NOZORDER;
-	    break;
-
-	case SW_SHOWMINNOACTIVE:
-        case SW_MINIMIZE:
-        case SW_FORCEMINIMIZE: /* FIXME: Does not work if thread is hung. */
-            swp |= SWP_NOACTIVATE | SWP_NOZORDER;
-            /* fall through */
-	case SW_SHOWMINIMIZED:
-            swp |= SWP_SHOWWINDOW | SWP_FRAMECHANGED;
-            swp |= WINPOS_MinMaximize( hwnd, cmd, &newPos );
-            if ((style & WS_MINIMIZE) && wasVisible) goto done;
-	    break;
-
-	case SW_SHOWMAXIMIZED: /* same as SW_MAXIMIZE */
-            if (!wasVisible) swp |= SWP_SHOWWINDOW;
-            swp |= SWP_FRAMECHANGED;
-            swp |= WINPOS_MinMaximize( hwnd, SW_MAXIMIZE, &newPos );
-            if ((style & WS_MAXIMIZE) && wasVisible) goto done;
-            break;
-
-	case SW_SHOWNA:
-            swp |= SWP_NOACTIVATE | SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE;
-            if (style & WS_CHILD) swp |= SWP_NOZORDER;
-            break;
-	case SW_SHOW:
-            if (wasVisible) goto done;
-	    swp |= SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE;
-            if (style & WS_CHILD) swp |= SWP_NOACTIVATE | SWP_NOZORDER;
-	    break;
-
-	case SW_SHOWNOACTIVATE:
-            swp |= SWP_NOACTIVATE | SWP_NOZORDER;
-            /* fall through */
-	case SW_RESTORE:
-            /* fall through */
-	case SW_SHOWNORMAL:  /* same as SW_NORMAL: */
-	case SW_SHOWDEFAULT: /* FIXME: should have its own handler */
-            if (!wasVisible) swp |= SWP_SHOWWINDOW;
-            if (style & (WS_MINIMIZE | WS_MAXIMIZE))
-            {
-                swp |= SWP_FRAMECHANGED;
-                swp |= WINPOS_MinMaximize( hwnd, cmd, &newPos );
-            }
-            else
-            {
-                if (wasVisible) goto done;
-                swp |= SWP_NOSIZE | SWP_NOMOVE;
-            }
-            if (style & WS_CHILD && !(swp & SWP_STATECHANGED)) swp |= SWP_NOACTIVATE | SWP_NOZORDER;
-	    break;
-        default:
-            goto done;
-    }
-
-    if ((showFlag != wasVisible || cmd == SW_SHOWNA) && cmd != SW_SHOWMAXIMIZED && !(swp & SWP_STATECHANGED))
-    {
-        SendMessageW( hwnd, WM_SHOWWINDOW, showFlag, 0 );
-        if (!IsWindow( hwnd )) goto done;
-    }
-
-    if (IsRectEmpty( &newPos )) new_swp = swp;
-    else if ((new_swp = USER_Driver->pShowWindow( hwnd, cmd, &newPos, swp )) == ~0)
-    {
-        if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD) new_swp = swp;
-        else if (IsIconic( hwnd ) && (newPos.left != -32000 || newPos.top != -32000))
-        {
-            OffsetRect( &newPos, -32000 - newPos.left, -32000 - newPos.top );
-            new_swp = swp & ~(SWP_NOMOVE | SWP_NOCLIENTMOVE);
-        }
-        else new_swp = swp;
-    }
-    swp = new_swp;
-
-    parent = NtUserGetAncestor( hwnd, GA_PARENT );
-    if (parent && !IsWindowVisible( parent ) && !(swp & SWP_STATECHANGED))
-    {
-        /* if parent is not visible simply toggle WS_VISIBLE and return */
-        if (showFlag) WIN_SetStyle( hwnd, WS_VISIBLE, 0 );
-        else WIN_SetStyle( hwnd, 0, WS_VISIBLE );
-    }
-    else
-        NtUserSetWindowPos( hwnd, HWND_TOP, newPos.left, newPos.top,
-                            newPos.right - newPos.left, newPos.bottom - newPos.top, swp );
-
-    if (cmd == SW_HIDE)
-    {
-        HWND hFocus;
-
-        /* FIXME: This will cause the window to be activated irrespective
-         * of whether it is owned by the same thread. Has to be done
-         * asynchronously.
-         */
-
-        if (hwnd == GetActiveWindow())
-            WINPOS_ActivateOtherWindow(hwnd);
-
-        /* Revert focus to parent */
-        hFocus = GetFocus();
-        if (hwnd == hFocus)
-        {
-            HWND parent = NtUserGetAncestor(hwnd, GA_PARENT);
-            if (parent == GetDesktopWindow()) parent = 0;
-            NtUserSetFocus( parent );
-        }
-        goto done;
-    }
-
-    if (!(wndPtr = WIN_GetPtr( hwnd )) || wndPtr == WND_OTHER_PROCESS) goto done;
-
-    if (wndPtr->flags & WIN_NEED_SIZE)
-    {
-        /* should happen only in CreateWindowEx() */
-	int wParam = SIZE_RESTORED;
-        RECT client;
-        LPARAM lparam;
-
-        WIN_GetRectangles( hwnd, COORDS_PARENT, NULL, &client );
-        lparam = MAKELONG( client.right - client.left, client.bottom - client.top );
-	wndPtr->flags &= ~WIN_NEED_SIZE;
-	if (wndPtr->dwStyle & WS_MAXIMIZE) wParam = SIZE_MAXIMIZED;
-        else if (wndPtr->dwStyle & WS_MINIMIZE)
-        {
-            wParam = SIZE_MINIMIZED;
-            lparam = 0;
-        }
-        WIN_ReleasePtr( wndPtr );
-
-        SendMessageW( hwnd, WM_SIZE, wParam, lparam );
-        SendMessageW( hwnd, WM_MOVE, 0, MAKELONG( client.left, client.top ));
-    }
-    else WIN_ReleasePtr( wndPtr );
-
-    /* if previous state was minimized Windows sets focus to the window */
-    if (style & WS_MINIMIZE)
-    {
-        NtUserSetFocus( hwnd );
-        /* Send a WM_ACTIVATE message for a top level window, even if the window is already active */
-        if (NtUserGetAncestor( hwnd, GA_ROOT ) == hwnd && !(swp & SWP_NOACTIVATE))
-            SendMessageW( hwnd, WM_ACTIVATE, WA_ACTIVE, 0 );
-    }
-
-done:
-    SetThreadDpiAwarenessContext( context );
-    return wasVisible;
-}
-
-
-/***********************************************************************
- *		ShowWindowAsync (USER32.@)
- *
- * doesn't wait; returns immediately.
- * used by threads to toggle windows in other (possibly hanging) threads
- */
-BOOL WINAPI ShowWindowAsync( HWND hwnd, INT cmd )
-{
-    HWND full_handle;
-
-    if (is_broadcast(hwnd))
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-
-    if ((full_handle = WIN_IsCurrentThread( hwnd )))
-        return show_window( full_handle, cmd );
-
-    return SendNotifyMessageW( hwnd, WM_WINE_SHOWWINDOW, cmd, 0 );
-}
-
-
-/***********************************************************************
- *		ShowWindow (USER32.@)
- */
-BOOL WINAPI ShowWindow( HWND hwnd, INT cmd )
-{
-    HWND full_handle;
-
-    if (is_broadcast(hwnd))
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-    if ((full_handle = WIN_IsCurrentThread( hwnd )))
-        return show_window( full_handle, cmd );
-
-    if ((cmd == SW_HIDE) && !(GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE))
-        return FALSE;
-
-    if ((cmd == SW_SHOW) && (GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE))
-        return TRUE;
-
-    return SendMessageW( hwnd, WM_WINE_SHOWWINDOW, cmd, 0 );
-}
-
-
-/***********************************************************************
  *		GetInternalWindowPos (USER32.@)
  */
 UINT WINAPI GetInternalWindowPos( HWND hwnd, LPRECT rectWnd,
@@ -1190,7 +968,7 @@ static BOOL WINPOS_SetPlacement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT f
                             wp.rcNormalPosition.bottom - wp.rcNormalPosition.top,
                             SWP_NOZORDER | SWP_NOACTIVATE );
 
-    ShowWindow( hwnd, wndpl->showCmd );
+    NtUserShowWindow( hwnd, wndpl->showCmd );
 
     if (IsIconic( hwnd ))
     {
@@ -1237,7 +1015,7 @@ BOOL WINAPI AnimateWindow(HWND hwnd, DWORD dwTime, DWORD dwFlags)
 		return FALSE;
 	}
 
-	ShowWindow(hwnd, (dwFlags & AW_HIDE) ? SW_HIDE : ((dwFlags & AW_ACTIVATE) ? SW_SHOW : SW_SHOWNA));
+	NtUserShowWindow( hwnd, (dwFlags & AW_HIDE) ? SW_HIDE : ((dwFlags & AW_ACTIVATE) ? SW_SHOW : SW_SHOWNA) );
 
 	return TRUE;
 }

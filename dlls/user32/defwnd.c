@@ -562,7 +562,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             }
             else pWnd->flags |= WIN_NEEDS_SHOW_OWNEDPOPUP;
             WIN_ReleasePtr( pWnd );
-            ShowWindow( hwnd, wParam ? SW_SHOWNOACTIVATE : SW_HIDE );
+            NtUserShowWindow( hwnd, wParam ? SW_SHOWNOACTIVATE : SW_HIDE );
             break;
         }
 

@@ -1075,6 +1075,18 @@ INT WINAPI NtUserShowCursor( BOOL show )
     return unix_funcs->pNtUserShowCursor( show );
 }
 
+BOOL WINAPI NtUserShowWindowAsync( HWND hwnd, INT cmd )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserShowWindowAsync( hwnd, cmd );
+}
+
+BOOL WINAPI NtUserShowWindow( HWND hwnd, INT cmd )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserShowWindow( hwnd, cmd );
+}
+
 BOOL WINAPI NtUserSystemParametersInfo( UINT action, UINT val, PVOID ptr, UINT winini )
 {
     if (!unix_funcs) return FALSE;
