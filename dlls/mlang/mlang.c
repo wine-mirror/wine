@@ -55,12 +55,12 @@ static HRESULT EnumRfc1766_create(LANGID LangId, IEnumRfc1766 **ppEnum);
 
 typedef struct
 {
-    const char *description;
+    const WCHAR *description;
     UINT cp;
     DWORD flags;
-    const char *web_charset;
-    const char *header_charset;
-    const char *body_charset;
+    const WCHAR *web_charset;
+    const WCHAR *header_charset;
+    const WCHAR *body_charset;
     const WCHAR *alias;
 } MIME_CP_INFO;
 
@@ -69,454 +69,454 @@ typedef struct
 
 static const MIME_CP_INFO arabic_cp[] =
 {
-    { "Arabic (864)",
+    { L"Arabic (864)",
       864, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID_NLS |
            MIMECONTF_MIME_LATEST,
-      "ibm864", "ibm864", "ibm864" },
-    { "Arabic (1006)",
+      L"ibm864", L"ibm864", L"ibm864" },
+    { L"Arabic (1006)",
       1006, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID_NLS |
             MIMECONTF_MIME_LATEST,
-      "ibm1006", "ibm1006", "ibm1006" },
-    { "Arabic (Windows)",
+      L"ibm1006", L"ibm1006", L"ibm1006" },
+    { L"Arabic (Windows)",
       1256, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_IMPORT |
             MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER |
             MIMECONTF_EXPORT | MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "windows-1256", "windows-1256", "windows-1256" },
-    { "Arabic (ISO)",
+      L"windows-1256", L"windows-1256", L"windows-1256" },
+    { L"Arabic (ISO)",
       28596, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL |
              MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
              MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT |
              MIMECONTF_VALID_NLS | MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
-      "iso-8859-6", "iso-8859-6", "iso-8859-6" }
+      L"iso-8859-6", L"iso-8859-6", L"iso-8859-6" }
 };
 static const MIME_CP_INFO baltic_cp[] =
 {
-    { "Baltic (DOS)",
+    { L"Baltic (DOS)",
       775, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
            MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "ibm775", "ibm775", "ibm775" },
-    { "Baltic (Windows)",
+      L"ibm775", L"ibm775", L"ibm775" },
+    { L"Baltic (Windows)",
       1257, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL |
             MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
             MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID |
             MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "windows-1257", "windows-1257", "windows-1257" },
-    { "Baltic (ISO)",
+      L"windows-1257", L"windows-1257", L"windows-1257" },
+    { L"Baltic (ISO)",
       28594, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_IMPORT |
              MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER |
              MIMECONTF_EXPORT | MIMECONTF_VALID | MIMECONTF_VALID_NLS |
              MIMECONTF_MIME_LATEST,
-      "iso-8859-4", "iso-8859-4", "iso-8859-4" },
-    { "Estonian (ISO)",
+      L"iso-8859-4", L"iso-8859-4", L"iso-8859-4" },
+    { L"Estonian (ISO)",
       28603, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
              MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "iso-8859-13", "iso-8859-13", "iso-8859-13" }
+      L"iso-8859-13", L"iso-8859-13", L"iso-8859-13" }
 };
 static const MIME_CP_INFO chinese_simplified_cp[] =
 {
-    { "Chinese Simplified (Auto-Select)",
+    { L"Chinese Simplified (Auto-Select)",
       50936, MIMECONTF_IMPORT | MIMECONTF_VALID | MIMECONTF_VALID_NLS |
              MIMECONTF_MIME_LATEST,
-      "_autodetect_chs", "_autodetect_chs", "_autodetect_chs" },
-    { "Chinese Simplified (GB2312)",
+      L"_autodetect_chs", L"_autodetect_chs", L"_autodetect_chs" },
+    { L"Chinese Simplified (GB2312)",
       936, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL |
            MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_VALID |
            MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID_NLS |
            MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
-      "gb2312", "gb2312", "gb2312" },
-    { "Chinese Simplified (GB2312-80)",
+      L"gb2312", L"gb2312", L"gb2312" },
+    { L"Chinese Simplified (GB2312-80)",
       20936, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
              MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "x-cp20936", "x-cp20936", "x-cp20936" },
-    { "Chinese Simplified (HZ)",
+      L"x-cp20936", L"x-cp20936", L"x-cp20936" },
+    { L"Chinese Simplified (HZ)",
       52936, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_IMPORT |
              MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT |
              MIMECONTF_VALID | MIMECONTF_VALID_NLS | MIMECONTF_MIME_IE4 |
              MIMECONTF_MIME_LATEST,
-      "hz-gb-2312", "hz-gb-2312", "hz-gb-2312" },
-    { "Chinese Simplified (GB18030)",
+      L"hz-gb-2312", L"hz-gb-2312", L"hz-gb-2312" },
+    { L"Chinese Simplified (GB18030)",
       54936, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL |
              MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER |
              MIMECONTF_EXPORT | MIMECONTF_VALID | MIMECONTF_VALID_NLS |
              MIMECONTF_MIME_LATEST,
-      "GB18030", "GB18030", "GB18030" },
-    { "Chinese Simplified (GBK)",
+      L"GB18030", L"GB18030", L"GB18030" },
+    { L"Chinese Simplified (GBK)",
       936, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL |
            MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
            MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID_NLS |
            MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
-      "gbk", "gbk", "gbk" }
+      L"gbk", L"gbk", L"gbk" }
 };
 static const MIME_CP_INFO chinese_traditional_cp[] =
 {
-    { "Chinese Traditional (Auto-Select)",
+    { L"Chinese Traditional (Auto-Select)",
       50950, MIMECONTF_IMPORT | MIMECONTF_VALID | MIMECONTF_VALID_NLS |
              MIMECONTF_MIME_LATEST,
-      "_autodetect_cht", "_autodetect_cht", "_autodetect_cht" },
-    { "Chinese Traditional (Big5)",
+      L"_autodetect_cht", L"_autodetect_cht", L"_autodetect_cht" },
+    { L"Chinese Traditional (Big5)",
       950, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL |
            MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
            MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID |
            MIMECONTF_VALID_NLS | MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
-      "big5", "big5", "big5" },
-    { "Chinese Traditional (CNS)",
+      L"big5", L"big5", L"big5" },
+    { L"Chinese Traditional (CNS)",
       20000, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
              MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "x-Chinese-CNS", "x-Chinese-CNS", "x-Chinese-CNS" }
+      L"x-Chinese-CNS", L"x-Chinese-CNS", L"x-Chinese-CNS" }
 };
 static const MIME_CP_INFO central_european_cp[] =
 {
-    { "Central European (DOS)",
+    { L"Central European (DOS)",
       852, MIMECONTF_BROWSER | MIMECONTF_IMPORT | MIMECONTF_SAVABLE_BROWSER |
            MIMECONTF_EXPORT | MIMECONTF_VALID | MIMECONTF_VALID_NLS |
            MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
-      "ibm852", "ibm852", "ibm852" },
-    { "Central European (Windows)",
+      L"ibm852", L"ibm852", L"ibm852" },
+    { L"Central European (Windows)",
       1250, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_IMPORT |
             MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER |
             MIMECONTF_EXPORT | MIMECONTF_VALID | MIMECONTF_VALID_NLS |
             MIMECONTF_MIME_LATEST,
-      "windows-1250", "windows-1250", "windows-1250" },
-    { "Central European (Mac)",
+      L"windows-1250", L"windows-1250", L"windows-1250" },
+    { L"Central European (Mac)",
       10029, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
              MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "x-mac-ce", "x-mac-ce", "x-mac-ce" },
-    { "Central European (ISO)",
+      L"x-mac-ce", L"x-mac-ce", L"x-mac-ce" },
+    { L"Central European (ISO)",
       28592, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL |
              MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
              MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID |
              MIMECONTF_VALID_NLS | MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
-      "iso-8859-2", "iso-8859-2", "iso-8859-2" }
+      L"iso-8859-2", L"iso-8859-2", L"iso-8859-2" }
 };
 static const MIME_CP_INFO cyrillic_cp[] =
 {
-    { "OEM Cyrillic",
+    { L"OEM Cyrillic",
       855, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
            MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "ibm855", "ibm855", "ibm855" },
-    { "Cyrillic (DOS)",
+      L"ibm855", L"ibm855", L"ibm855" },
+    { L"Cyrillic (DOS)",
       866, MIMECONTF_BROWSER | MIMECONTF_IMPORT | MIMECONTF_SAVABLE_BROWSER |
            MIMECONTF_EXPORT | MIMECONTF_VALID_NLS | MIMECONTF_MIME_IE4 |
            MIMECONTF_MIME_LATEST,
-      "cp866", "cp866", "cp866" },
+      L"cp866", L"cp866", L"cp866" },
 #if 0 /* Windows has 20866 as an official code page for KOI8-R */
-    { "Cyrillic (KOI8-R)",
+    { L"Cyrillic (KOI8-R)",
       878, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
            MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "koi8-r", "koi8-r", "koi8-r" },
+      L"koi8-r", L"koi8-r", L"koi8-r" },
 #endif
-    { "Cyrillic (Windows)",
+    { L"Cyrillic (Windows)",
       1251, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_IMPORT |
             MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER |
             MIMECONTF_EXPORT | MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "windows-1251", "windows-1251", "windows-1251" },
-    { "Cyrillic (Mac)",
+      L"windows-1251", L"windows-1251", L"windows-1251" },
+    { L"Cyrillic (Mac)",
       10007, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID_NLS |
              MIMECONTF_MIME_LATEST,
-      "x-mac-cyrillic", "x-mac-cyrillic", "x-mac-cyrillic" },
-    { "Cyrillic (KOI8-R)",
+      L"x-mac-cyrillic", L"x-mac-cyrillic", L"x-mac-cyrillic" },
+    { L"Cyrillic (KOI8-R)",
       20866, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL |
              MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
              MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT |
              MIMECONTF_VALID_NLS | MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
-      "koi8-r", "koi8-r", "koi8-r" },
-    { "Cyrillic (KOI8-U)",
+      L"koi8-r", L"koi8-r", L"koi8-r" },
+    { L"Cyrillic (KOI8-U)",
       21866, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL |
              MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
              MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT |
              MIMECONTF_VALID_NLS | MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
-      "koi8-u", "koi8-u", "koi8-u" },
-    { "Cyrillic (ISO)",
+      L"koi8-u", L"koi8-u", L"koi8-u" },
+    { L"Cyrillic (ISO)",
       28595, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL |
              MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
              MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT |
              MIMECONTF_VALID_NLS | MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
-      "iso-8859-5", "iso-8859-5", "iso-8859-5" }
+      L"iso-8859-5", L"iso-8859-5", L"iso-8859-5" }
 };
 static const MIME_CP_INFO greek_cp[] =
 {
-    { "Greek (DOS)",
+    { L"Greek (DOS)",
       737, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID_NLS |
            MIMECONTF_MIME_LATEST,
-      "ibm737", "ibm737", "ibm737" },
-    { "Greek, Modern (DOS)",
+      L"ibm737", L"ibm737", L"ibm737" },
+    { L"Greek, Modern (DOS)",
       869, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID_NLS |
            MIMECONTF_MIME_LATEST,
-      "ibm869", "ibm869", "ibm869" },
-    { "IBM EBCDIC (Greek Modern)",
+      L"ibm869", L"ibm869", L"ibm869" },
+    { L"IBM EBCDIC (Greek Modern)",
       875, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID_NLS |
            MIMECONTF_MIME_LATEST,
-      "cp875", "cp875", "cp875" },
-    { "Greek (Windows)",
+      L"cp875", L"cp875", L"cp875" },
+    { L"Greek (Windows)",
       1253, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_IMPORT |
             MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER |
             MIMECONTF_EXPORT | MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "windows-1253", "windows-1253", "windows-1253" },
-    { "Greek (Mac)",
+      L"windows-1253", L"windows-1253", L"windows-1253" },
+    { L"Greek (Mac)",
       10006, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID_NLS |
              MIMECONTF_MIME_LATEST,
-      "x-mac-greek", "x-mac-greek", "x-mac-greek" },
-    { "Greek (ISO)",
+      L"x-mac-greek", L"x-mac-greek", L"x-mac-greek" },
+    { L"Greek (ISO)",
       28597, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL |
              MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
              MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT |
              MIMECONTF_VALID_NLS | MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
-      "iso-8859-7", "iso-8859-7", "iso-8859-7" }
+      L"iso-8859-7", L"iso-8859-7", L"iso-8859-7" }
 };
 static const MIME_CP_INFO hebrew_cp[] =
 {
-    { "Hebrew (424)",
+    { L"Hebrew (424)",
       424, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID_NLS |
            MIMECONTF_MIME_LATEST,
-      "ibm424", "ibm424", "ibm424" },
-    { "Hebrew (856)",
+      L"ibm424", L"ibm424", L"ibm424" },
+    { L"Hebrew (856)",
       856, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID_NLS |
            MIMECONTF_MIME_LATEST,
-      "cp856", "cp856", "cp856" },
-    { "Hebrew (DOS)",
+      L"cp856", L"cp856", L"cp856" },
+    { L"Hebrew (DOS)",
       862, MIMECONTF_BROWSER | MIMECONTF_MINIMAL | MIMECONTF_IMPORT |
            MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID_NLS |
            MIMECONTF_MIME_LATEST,
-      "dos-862", "dos-862", "dos-862" },
-    { "Hebrew (Windows)",
+      L"dos-862", L"dos-862", L"dos-862" },
+    { L"Hebrew (Windows)",
       1255, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_IMPORT |
             MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER |
             MIMECONTF_EXPORT | MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "windows-1255", "windows-1255", "windows-1255" },
-    { "Hebrew (ISO-Visual)",
+      L"windows-1255", L"windows-1255", L"windows-1255" },
+    { L"Hebrew (ISO-Visual)",
       28598, MIMECONTF_BROWSER | MIMECONTF_MINIMAL | MIMECONTF_IMPORT |
              MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT |
              MIMECONTF_VALID_NLS | MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
-      "iso-8859-8", "iso-8859-8", "iso-8859-8" }
+      L"iso-8859-8", L"iso-8859-8", L"iso-8859-8" }
 };
 static const MIME_CP_INFO japanese_cp[] =
 {
-    { "Japanese (Auto-Select)",
+    { L"Japanese (Auto-Select)",
       50932, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL |
              MIMECONTF_IMPORT | MIMECONTF_VALID | MIMECONTF_VALID_NLS |
              MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
-      "_autodetect", "_autodetect", "_autodetect" },
-    { "Japanese (EUC)",
+      L"_autodetect", L"_autodetect", L"_autodetect" },
+    { L"Japanese (EUC)",
       51932, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL |
              MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
              MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID |
              MIMECONTF_VALID_NLS | MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
-      "euc-jp", "euc-jp", "euc-jp" },
-    { "Japanese (JIS)",
+      L"euc-jp", L"euc-jp", L"euc-jp" },
+    { L"Japanese (JIS)",
       50220, MIMECONTF_IMPORT | MIMECONTF_MAILNEWS | MIMECONTF_EXPORT |
              MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_VALID_NLS |
              MIMECONTF_PRIVCONVERTER | MIMECONTF_MIME_LATEST |
              MIMECONTF_MIME_IE4,
-      "iso-2022-jp","iso-2022-jp","iso-2022-jp"},
-    { "Japanese (JIS 0208-1990 and 0212-1990)",
+      L"iso-2022-jp", L"iso-2022-jp", L"iso-2022-jp"},
+    { L"Japanese (JIS 0208-1990 and 0212-1990)",
       20932, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID_NLS |
              MIMECONTF_VALID | MIMECONTF_PRIVCONVERTER | MIMECONTF_MIME_LATEST,
-      "EUC-JP","EUC-JP","EUC-JP"},
-    { "Japanese (JIS-Allow 1 byte Kana)",
+      L"EUC-JP", L"EUC-JP", L"EUC-JP"},
+    { L"Japanese (JIS-Allow 1 byte Kana)",
       50221, MIMECONTF_MAILNEWS | MIMECONTF_EXPORT | MIMECONTF_SAVABLE_BROWSER |
              MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_VALID_NLS |
              MIMECONTF_VALID | MIMECONTF_PRIVCONVERTER | MIMECONTF_MIME_LATEST,
-      "csISO2022JP","iso-2022-jp","iso-2022-jp"},
-    { "Japanese (JIS-Allow 1 byte Kana - SO/SI)",
+      L"csISO2022JP", L"iso-2022-jp", L"iso-2022-jp"},
+    { L"Japanese (JIS-Allow 1 byte Kana - SO/SI)",
       50222, MIMECONTF_EXPORT | MIMECONTF_VALID_NLS | MIMECONTF_VALID |
              MIMECONTF_PRIVCONVERTER | MIMECONTF_MIME_LATEST,
-      "iso-2022-jp","iso-2022-jp","iso-2022-jp"},
-    { "Japanese (Mac)",
+      L"iso-2022-jp", L"iso-2022-jp", L"iso-2022-jp"},
+    { L"Japanese (Mac)",
       10001, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID_NLS |
              MIMECONTF_VALID | MIMECONTF_PRIVCONVERTER | MIMECONTF_MIME_LATEST,
-      "x-mac-japanese","x-mac-japanese","x-mac-japanese"},
-    { "Japanese (Shift-JIS)",
+      L"x-mac-japanese", L"x-mac-japanese", L"x-mac-japanese"},
+    { L"Japanese (Shift-JIS)",
       932, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL |
            MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
            MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID |
            MIMECONTF_VALID_NLS | MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
-      "shift_jis", "iso-2022-jp", "iso-2022-jp" }
+      L"shift_jis", L"iso-2022-jp", L"iso-2022-jp" }
 };
 static const MIME_CP_INFO korean_cp[] =
 {
-    { "Korean",
+    { L"Korean",
       949, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL |
            MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
            MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID_NLS |
            MIMECONTF_MIME_LATEST,
-      "ks_c_5601-1987", "ks_c_5601-1987", "ks_c_5601-1987" }
+      L"ks_c_5601-1987", L"ks_c_5601-1987", L"ks_c_5601-1987" }
 };
 static const MIME_CP_INFO thai_cp[] =
 {
-    { "Thai (Windows)",
+    { L"Thai (Windows)",
       874, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_MIME_LATEST,
-      "ibm-thai", "ibm-thai", "ibm-thai" }
+      L"ibm-thai", L"ibm-thai", L"ibm-thai" }
 };
 static const MIME_CP_INFO turkish_cp[] =
 {
-    { "Turkish (DOS)",
+    { L"Turkish (DOS)",
       857, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
            MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "ibm857", "ibm857", "ibm857" },
-    { "IBM EBCDIC (Turkish Latin-5)",
+      L"ibm857", L"ibm857", L"ibm857" },
+    { L"IBM EBCDIC (Turkish Latin-5)",
       1026, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
             MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "ibm1026", "ibm1026", "ibm1026" },
-    { "Turkish (Windows)",
+      L"ibm1026", L"ibm1026", L"ibm1026" },
+    { L"Turkish (Windows)",
       1254, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL |
             MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
             MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID |
             MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "windows-1254", "windows-1254", "windows-1254" },
-    { "Turkish (Mac)",
+      L"windows-1254", L"windows-1254", L"windows-1254" },
+    { L"Turkish (Mac)",
       10081, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
              MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "x-mac-turkish", "x-mac-turkish", "x-mac-turkish" },
-    { "Latin 3 (ISO)",
+      L"x-mac-turkish", L"x-mac-turkish", L"x-mac-turkish" },
+    { L"Latin 3 (ISO)",
       28593, MIMECONTF_MAILNEWS | MIMECONTF_IMPORT |
              MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_EXPORT | MIMECONTF_VALID |
              MIMECONTF_VALID_NLS | MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
-      "iso-8859-3", "iso-8859-3", "iso-8859-3" },
-    { "Turkish (ISO)",
+      L"iso-8859-3", L"iso-8859-3", L"iso-8859-3" },
+    { L"Turkish (ISO)",
       28599, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL |
              MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
              MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID |
              MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "iso-8859-9", "iso-8859-9", "iso-8859-9" }
+      L"iso-8859-9", L"iso-8859-9", L"iso-8859-9" }
 };
 static const MIME_CP_INFO vietnamese_cp[] =
 {
-    { "Vietnamese (Windows)",
+    { L"Vietnamese (Windows)",
       1258, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_IMPORT |
             MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER |
             MIMECONTF_EXPORT | MIMECONTF_VALID_NLS | MIMECONTF_MIME_IE4 |
             MIMECONTF_MIME_LATEST,
-      "windows-1258", "windows-1258", "windows-1258" }
+      L"windows-1258", L"windows-1258", L"windows-1258" }
 };
 
 static const MIME_CP_INFO western_cp[] =
 {
-    { "IBM EBCDIC (US-Canada)",
+    { L"IBM EBCDIC (US-Canada)",
       37, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
           MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "ibm037", "ibm037", "ibm037" },
-    { "OEM United States",
+      L"ibm037", L"ibm037", L"ibm037" },
+    { L"OEM United States",
       437, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
            MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "ibm437", "ibm437", "ibm437" },
-    { "IBM EBCDIC (International)",
+      L"ibm437", L"ibm437", L"ibm437" },
+    { L"IBM EBCDIC (International)",
       500, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
            MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "ibm500", "ibm500", "ibm500" },
-    { "Western European (DOS)",
+      L"ibm500", L"ibm500", L"ibm500" },
+    { L"Western European (DOS)",
       850, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
            MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "ibm850", "ibm850", "ibm850" },
-    { "Portuguese (DOS)",
+      L"ibm850", L"ibm850", L"ibm850" },
+    { L"Portuguese (DOS)",
       860, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
            MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "ibm860", "ibm860", "ibm860" },
-    { "Icelandic (DOS)",
+      L"ibm860", L"ibm860", L"ibm860" },
+    { L"Icelandic (DOS)",
       861, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
            MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "ibm861", "ibm861", "ibm861" },
-    { "French Canadian (DOS)",
+      L"ibm861", L"ibm861", L"ibm861" },
+    { L"French Canadian (DOS)",
       863, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
            MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "ibm863", "ibm863", "ibm863" },
-    { "Nordic (DOS)",
+      L"ibm863", L"ibm863", L"ibm863" },
+    { L"Nordic (DOS)",
       865, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
            MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "ibm865", "ibm865", "ibm865" },
-    { "Western European (Windows)",
+      L"ibm865", L"ibm865", L"ibm865" },
+    { L"Western European (Windows)",
       1252, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_MINIMAL |
             MIMECONTF_IMPORT | MIMECONTF_SAVABLE_MAILNEWS |
             MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT | MIMECONTF_VALID |
             MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "windows-1252", "windows-1252", "iso-8859-1" },
-    { "Western European (Mac)",
+      L"windows-1252", L"windows-1252", L"iso-8859-1" },
+    { L"Western European (Mac)",
       10000, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
              MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "macintosh", "macintosh", "macintosh" },
-    { "Icelandic (Mac)",
+      L"macintosh", L"macintosh", L"macintosh" },
+    { L"Icelandic (Mac)",
       10079, MIMECONTF_IMPORT | MIMECONTF_EXPORT | MIMECONTF_VALID |
              MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "x-mac-icelandic", "x-mac-icelandic", "x-mac-icelandic" },
-    { "US-ASCII",
+      L"x-mac-icelandic", L"x-mac-icelandic", L"x-mac-icelandic" },
+    { L"US-ASCII",
       20127, MIMECONTF_MAILNEWS | MIMECONTF_IMPORT | MIMECONTF_EXPORT |
              MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_VALID |
              MIMECONTF_VALID_NLS | MIMECONTF_MIME_LATEST,
-      "us-ascii", "us-ascii", "us-ascii", L"ascii" },
-    { "Western European (ISO)",
+      L"us-ascii", L"us-ascii", L"us-ascii", L"ascii" },
+    { L"Western European (ISO)",
       28591, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_IMPORT |
              MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER |
              MIMECONTF_EXPORT | MIMECONTF_VALID | MIMECONTF_VALID_NLS |
              MIMECONTF_MIME_LATEST,
-      "iso-8859-1", "iso-8859-1", "iso-8859-1" },
-    { "Latin 9 (ISO)",
+      L"iso-8859-1", L"iso-8859-1", L"iso-8859-1" },
+    { L"Latin 9 (ISO)",
       28605, MIMECONTF_MAILNEWS | MIMECONTF_IMPORT |
              MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER |
              MIMECONTF_EXPORT | MIMECONTF_VALID | MIMECONTF_VALID_NLS |
              MIMECONTF_MIME_LATEST,
-      "iso-8859-15", "iso-8859-15", "iso-8859-15" }
+      L"iso-8859-15", L"iso-8859-15", L"iso-8859-15" }
 };
 static const MIME_CP_INFO unicode_cp[] =
 {
-    { "Unicode",
+    { L"Unicode",
       CP_UNICODE, MIMECONTF_MINIMAL | MIMECONTF_IMPORT |
                   MIMECONTF_SAVABLE_BROWSER | MIMECONTF_EXPORT |
                   MIMECONTF_VALID | MIMECONTF_VALID_NLS | MIMECONTF_MIME_IE4 |
                   MIMECONTF_MIME_LATEST,
-      "unicode", "unicode", "unicode" },
-    { "Unicode (UTF-7)",
+      L"unicode", L"unicode", L"unicode" },
+    { L"Unicode (UTF-7)",
       CP_UTF7, MIMECONTF_MAILNEWS | MIMECONTF_IMPORT |
                MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_EXPORT | MIMECONTF_VALID |
                MIMECONTF_VALID_NLS | MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
-      "utf-7", "utf-7", "utf-7" },
-    { "Unicode (UTF-8)",
+      L"utf-7", L"utf-7", L"utf-7" },
+    { L"Unicode (UTF-8)",
       CP_UTF8, MIMECONTF_MAILNEWS | MIMECONTF_BROWSER | MIMECONTF_IMPORT |
                MIMECONTF_SAVABLE_MAILNEWS | MIMECONTF_SAVABLE_BROWSER |
                MIMECONTF_EXPORT | MIMECONTF_VALID | MIMECONTF_VALID_NLS |
                MIMECONTF_MIME_IE4 | MIMECONTF_MIME_LATEST,
-      "utf-8", "utf-8", "utf-8" }
+      L"utf-8", L"utf-8", L"utf-8" }
 };
 
 static const struct mlang_data
 {
-    const char *description;
+    const WCHAR *description;
     UINT family_codepage;
     UINT number_of_cp;
     const MIME_CP_INFO *mime_cp_info;
-    const char *fixed_font;
-    const char *proportional_font;
+    const WCHAR *fixed_font;
+    const WCHAR *proportional_font;
     SCRIPT_ID sid;
 } mlang_data[] =
 {
-    { "Arabic", 1256, ARRAY_SIZE(arabic_cp), arabic_cp,
-      "Simplified Arabic Fixed","Simplified Arabic", sidArabic },
-    { "Baltic",  1257, ARRAY_SIZE(baltic_cp), baltic_cp,
-      "Courier New","Arial", sidAsciiLatin },
-    { "Chinese Simplified", 936, ARRAY_SIZE(chinese_simplified_cp), chinese_simplified_cp,
-      "Simsun","Simsun", sidHan },
-    { "Chinese Traditional", 950, ARRAY_SIZE(chinese_traditional_cp), chinese_traditional_cp,
-      "MingLiu","New MingLiu", sidBopomofo },
-    { "Central European", 1250, ARRAY_SIZE(central_european_cp), central_european_cp,
-      "Courier New","Arial", sidAsciiLatin },
-    { "Cyrillic", 1251, ARRAY_SIZE(cyrillic_cp), cyrillic_cp,
-      "Courier New","Arial", sidCyrillic },
-    { "Greek", 1253, ARRAY_SIZE(greek_cp), greek_cp,
-      "Courier New","Arial", sidGreek },
-    { "Hebrew", 1255, ARRAY_SIZE(hebrew_cp), hebrew_cp,
-      "Miriam Fixed","David", sidHebrew },
-    { "Japanese", 932, ARRAY_SIZE(japanese_cp), japanese_cp,
-      "MS Gothic","MS PGothic", sidKana },
-    { "Korean", 949, ARRAY_SIZE(korean_cp), korean_cp,
-      "GulimChe","Gulim", sidHangul },
-    { "Thai", 874, ARRAY_SIZE(thai_cp), thai_cp,
-      "Tahoma","Tahoma", sidThai },
-    { "Turkish", 1254, ARRAY_SIZE(turkish_cp), turkish_cp,
-      "Courier New","Arial", sidAsciiLatin },
-    { "Vietnamese", 1258, ARRAY_SIZE(vietnamese_cp), vietnamese_cp,
-      "Courier New","Arial", sidAsciiLatin },
-    { "Western European", 1252, ARRAY_SIZE(western_cp), western_cp,
-      "Courier New","Arial", sidAsciiLatin },
-    { "Unicode", CP_UNICODE, ARRAY_SIZE(unicode_cp), unicode_cp,
-      "Courier New","Arial" }
+    { L"Arabic", 1256, ARRAY_SIZE(arabic_cp), arabic_cp,
+      L"Simplified Arabic Fixed", L"Simplified Arabic", sidArabic },
+    { L"Baltic",  1257, ARRAY_SIZE(baltic_cp), baltic_cp,
+      L"Courier New", L"Arial", sidAsciiLatin },
+    { L"Chinese Simplified", 936, ARRAY_SIZE(chinese_simplified_cp), chinese_simplified_cp,
+      L"Simsun", L"Simsun", sidHan },
+    { L"Chinese Traditional", 950, ARRAY_SIZE(chinese_traditional_cp), chinese_traditional_cp,
+      L"MingLiu", L"New MingLiu", sidBopomofo },
+    { L"Central European", 1250, ARRAY_SIZE(central_european_cp), central_european_cp,
+      L"Courier New", L"Arial", sidAsciiLatin },
+    { L"Cyrillic", 1251, ARRAY_SIZE(cyrillic_cp), cyrillic_cp,
+      L"Courier New", L"Arial", sidCyrillic },
+    { L"Greek", 1253, ARRAY_SIZE(greek_cp), greek_cp,
+      L"Courier New", L"Arial", sidGreek },
+    { L"Hebrew", 1255, ARRAY_SIZE(hebrew_cp), hebrew_cp,
+      L"Miriam Fixed", L"David", sidHebrew },
+    { L"Japanese", 932, ARRAY_SIZE(japanese_cp), japanese_cp,
+      L"MS Gothic", L"MS PGothic", sidKana },
+    { L"Korean", 949, ARRAY_SIZE(korean_cp), korean_cp,
+      L"GulimChe", L"Gulim", sidHangul },
+    { L"Thai", 874, ARRAY_SIZE(thai_cp), thai_cp,
+      L"Tahoma", L"Tahoma", sidThai },
+    { L"Turkish", 1254, ARRAY_SIZE(turkish_cp), turkish_cp,
+      L"Courier New", L"Arial", sidAsciiLatin },
+    { L"Vietnamese", 1258, ARRAY_SIZE(vietnamese_cp), vietnamese_cp,
+      L"Courier New", L"Arial", sidAsciiLatin },
+    { L"Western European", 1252, ARRAY_SIZE(western_cp), western_cp,
+      L"Courier New", L"Arial", sidAsciiLatin },
+    { L"Unicode", CP_UNICODE, ARRAY_SIZE(unicode_cp), unicode_cp,
+      L"Courier New", L"Arial" }
 };
 
 struct font_list
@@ -1928,12 +1928,9 @@ static HRESULT EnumScript_create( MLang_impl* mlang, DWORD dwFlags,
     {
         es->script_info[i].ScriptId = i;
         es->script_info[i].uiCodePage = mlang_data[i].family_codepage;
-        MultiByteToWideChar(CP_ACP, 0, mlang_data[i].description, -1,
-            es->script_info[i].wszDescription, MAX_SCRIPT_NAME);
-        MultiByteToWideChar(CP_ACP, 0, mlang_data[i].fixed_font, -1,
-            es->script_info[i].wszFixedWidthFont, MAX_MIMEFACE_NAME);
-        MultiByteToWideChar(CP_ACP, 0, mlang_data[i].proportional_font, -1,
-            es->script_info[i].wszProportionalFont, MAX_MIMEFACE_NAME);
+        wcscpy( es->script_info[i].wszDescription, mlang_data[i].description );
+        wcscpy( es->script_info[i].wszFixedWidthFont, mlang_data[i].fixed_font );
+        wcscpy( es->script_info[i].wszProportionalFont, mlang_data[i].proportional_font );
     }
 
     TRACE("enumerated %ld scripts with flags %08lx\n", es->total, dwFlags);
@@ -2641,19 +2638,12 @@ static void fill_cp_info(const struct mlang_data *ml_data, UINT index, MIMECPINF
     mime_cp_info->dwFlags = ml_data->mime_cp_info[index].flags;
     mime_cp_info->uiCodePage = ml_data->mime_cp_info[index].cp;
     mime_cp_info->uiFamilyCodePage = ml_data->family_codepage;
-    MultiByteToWideChar(CP_ACP, 0, ml_data->mime_cp_info[index].description, -1,
-                        mime_cp_info->wszDescription, ARRAY_SIZE(mime_cp_info->wszDescription));
-    MultiByteToWideChar(CP_ACP, 0, ml_data->mime_cp_info[index].web_charset, -1,
-                        mime_cp_info->wszWebCharset, ARRAY_SIZE(mime_cp_info->wszWebCharset));
-    MultiByteToWideChar(CP_ACP, 0, ml_data->mime_cp_info[index].header_charset, -1,
-                        mime_cp_info->wszHeaderCharset, ARRAY_SIZE(mime_cp_info->wszHeaderCharset));
-    MultiByteToWideChar(CP_ACP, 0, ml_data->mime_cp_info[index].body_charset, -1,
-                        mime_cp_info->wszBodyCharset, ARRAY_SIZE(mime_cp_info->wszBodyCharset));
-
-    MultiByteToWideChar(CP_ACP, 0, ml_data->fixed_font, -1,
-        mime_cp_info->wszFixedWidthFont, ARRAY_SIZE(mime_cp_info->wszFixedWidthFont));
-    MultiByteToWideChar(CP_ACP, 0, ml_data->proportional_font, -1,
-        mime_cp_info->wszProportionalFont, ARRAY_SIZE(mime_cp_info->wszProportionalFont));
+    wcscpy( mime_cp_info->wszDescription, ml_data->mime_cp_info[index].description );
+    wcscpy( mime_cp_info->wszWebCharset, ml_data->mime_cp_info[index].web_charset );
+    wcscpy( mime_cp_info->wszHeaderCharset, ml_data->mime_cp_info[index].header_charset );
+    wcscpy( mime_cp_info->wszBodyCharset, ml_data->mime_cp_info[index].body_charset );
+    wcscpy( mime_cp_info->wszFixedWidthFont, ml_data->fixed_font );
+    wcscpy( mime_cp_info->wszProportionalFont, ml_data->proportional_font );
 
     TRACE("%08lx %u %u %s %s %s %s %s %s %d\n",
           mime_cp_info->dwFlags, mime_cp_info->uiCodePage,
@@ -2730,14 +2720,11 @@ static HRESULT WINAPI fnIMultiLanguage3_GetCharsetInfo(
     {
         for (n = 0; n < mlang_data[i].number_of_cp; n++)
         {
-            WCHAR csetW[MAX_MIMECSET_NAME];
-
-            MultiByteToWideChar(CP_ACP, 0, mlang_data[i].mime_cp_info[n].web_charset, -1, csetW, MAX_MIMECSET_NAME);
-            if (!lstrcmpiW(Charset, csetW))
+            if (!lstrcmpiW(Charset, mlang_data[i].mime_cp_info[n].web_charset))
             {
                 pCharsetInfo->uiCodePage = mlang_data[i].family_codepage;
                 pCharsetInfo->uiInternetEncoding = mlang_data[i].mime_cp_info[n].cp;
-                lstrcpyW(pCharsetInfo->wszCharset, csetW);
+                lstrcpyW(pCharsetInfo->wszCharset, mlang_data[i].mime_cp_info[n].web_charset);
                 return S_OK;
             }
             if (mlang_data[i].mime_cp_info[n].alias && !lstrcmpiW(Charset, mlang_data[i].mime_cp_info[n].alias))
@@ -2759,14 +2746,11 @@ static HRESULT WINAPI fnIMultiLanguage3_GetCharsetInfo(
     {
         for (n = 0; n < mlang_data[i].number_of_cp; n++)
         {
-            WCHAR csetW[MAX_MIMECSET_NAME];
-
-            MultiByteToWideChar(CP_ACP, 0, mlang_data[i].mime_cp_info[n].header_charset, -1, csetW, MAX_MIMECSET_NAME);
-            if (!lstrcmpiW(Charset, csetW))
+            if (!lstrcmpiW(Charset, mlang_data[i].mime_cp_info[n].header_charset))
             {
                 pCharsetInfo->uiCodePage = mlang_data[i].family_codepage;
                 pCharsetInfo->uiInternetEncoding = mlang_data[i].mime_cp_info[n].cp;
-                lstrcpyW(pCharsetInfo->wszCharset, csetW);
+                lstrcpyW(pCharsetInfo->wszCharset, mlang_data[i].mime_cp_info[n].header_charset);
                 return S_OK;
             }
         }
@@ -3099,9 +3083,7 @@ static HRESULT WINAPI fnIMultiLanguage3_GetCodePageDescription(
         {
             if (mlang_data[i].mime_cp_info[n].cp == uiCodePage)
             {
-                MultiByteToWideChar(CP_ACP, 0,
-                                    mlang_data[i].mime_cp_info[n].description,
-                                    -1, lpWideCharStr, cchWideChar);
+                lstrcpynW( lpWideCharStr, mlang_data[i].mime_cp_info[n].description, cchWideChar);
                 return S_OK;
             }
         }
@@ -3542,15 +3524,9 @@ static HRESULT WINAPI fnIMLangFontLink2_GetScriptFontInfo(IMLangFontLink2* This,
 
                 pScriptFont[j].scripts = (SCRIPT_IDS)1 << mlang_data[i].sid;
                 if (dwFlags == SCRIPTCONTF_FIXED_FONT)
-                {
-                    MultiByteToWideChar(CP_ACP, 0, mlang_data[i].fixed_font, -1,
-                        pScriptFont[j].wszFont, MAX_MIMEFACE_NAME);
-                }
+                    wcscpy( pScriptFont[j].wszFont, mlang_data[i].fixed_font );
                 else if (dwFlags == SCRIPTCONTF_PROPORTIONAL_FONT)
-                {
-                    MultiByteToWideChar(CP_ACP, 0, mlang_data[i].proportional_font, -1,
-                        pScriptFont[j].wszFont, MAX_MIMEFACE_NAME);
-                }
+                    wcscpy( pScriptFont[j].wszFont, mlang_data[i].proportional_font );
             }
             j++;
         }
