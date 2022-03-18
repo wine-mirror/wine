@@ -515,7 +515,7 @@ static HRESULT WINAPI vector_InsertAt( IVector_IInspectable *iface, UINT32 index
         }
     }
 
-    memmove( impl->elements + index + 1, impl->elements + index, impl->size++ * sizeof(*impl->elements) );
+    memmove( impl->elements + index + 1, impl->elements + index, (impl->size++ - index) * sizeof(*impl->elements) );
     IInspectable_AddRef( (impl->elements[index] = value) );
     return S_OK;
 }
@@ -528,7 +528,7 @@ static HRESULT WINAPI vector_RemoveAt( IVector_IInspectable *iface, UINT32 index
 
     if (index >= impl->size) return E_BOUNDS;
     IInspectable_Release( impl->elements[index] );
-    memmove( impl->elements + index, impl->elements + index + 1, --impl->size * sizeof(*impl->elements) );
+    memmove( impl->elements + index, impl->elements + index + 1, (--impl->size - index) * sizeof(*impl->elements) );
     return S_OK;
 }
 
