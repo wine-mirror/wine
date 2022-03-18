@@ -3,7 +3,7 @@ IMPORTLIB = mlang
 IMPORTS   = uuid ole32 gdi32 advapi32
 DELAYIMPORTS = oleaut32
 
-C_SRCS = \
-	mlang.c
-
-IDL_SRCS = mlang_classes.idl
+SOURCES = \
+	mlang.c \
+	mlang.rc \
+	mlang_classes.idl

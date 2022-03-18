@@ -1,0 +1,372 @@
+HKCR
+{
+    NoRemove MIME
+    {
+        NoRemove Database
+        {
+            Codepage
+            {
+                37
+                {
+                    val 'BodyCharset' = s 'ibm037'
+                    val 'Family' = d 1252
+                }
+                424
+                {
+                    val 'BodyCharset' = s 'ibm424'
+                    val 'Family' = d 1255
+                }
+                437
+                {
+                    val 'BodyCharset' = s 'ibm437'
+                    val 'Family' = d 1252
+                }
+                500
+                {
+                    val 'BodyCharset' = s 'ibm500'
+                    val 'Family' = d 1252
+                }
+                708
+                {
+                    val 'BodyCharset' = s 'ASMO-708'
+                    val 'Family' = d 1256
+                }
+                720
+                {
+                    val 'BodyCharset' = s 'DOS-720'
+                    val 'Family' = d 1256
+                }
+                737
+                {
+                    val 'BodyCharset' = s 'ibm737'
+                    val 'Family' = d 1253
+                }
+                775
+                {
+                    val 'BodyCharset' = s 'ibm775'
+                    val 'Family' = d 1257
+                }
+                850
+                {
+                    val 'BodyCharset' = s 'ibm850'
+                    val 'Family' = d 1252
+                }
+                852
+                {
+                    val 'BodyCharset' = s 'ibm852'
+                    val 'Family' = d 1250
+                }
+                855
+                {
+                    val 'BodyCharset' = s 'ibm855'
+                    val 'Family' = d 1251
+                }
+                856
+                {
+                    val 'BodyCharset' = s 'cp856'
+                    val 'Family' = d 1255
+                }
+                857
+                {
+                    val 'BodyCharset' = s 'ibm857'
+                    val 'Family' = d 1254
+                }
+                860
+                {
+                    val 'BodyCharset' = s 'ibm860'
+                    val 'Family' = d 1252
+                }
+                861
+                {
+                    val 'BodyCharset' = s 'ibm861'
+                    val 'Family' = d 1252
+                }
+                862
+                {
+                    val 'BodyCharset' = s 'dos-862'
+                    val 'Family' = d 1255
+                }
+                863
+                {
+                    val 'BodyCharset' = s 'ibm863'
+                    val 'Family' = d 1252
+                }
+                864
+                {
+                    val 'BodyCharset' = s 'ibm864'
+                    val 'Family' = d 1256
+                }
+                865
+                {
+                    val 'BodyCharset' = s 'ibm865'
+                    val 'Family' = d 1252
+                }
+                866
+                {
+                    val 'BodyCharset' = s 'cp866'
+                    val 'Family' = d 1251
+                }
+                869
+                {
+                    val 'BodyCharset' = s 'ibm869'
+                    val 'Family' = d 1253
+                }
+                874
+                {
+                    val 'BodyCharset' = s 'ibm-thai'
+                    val 'FixedWidthFont' = s 'Tahoma'
+                    val 'ProportionalFont' = s 'Tahoma'
+                }
+                875
+                {
+                    val 'BodyCharset' = s 'cp875'
+                    val 'Family' = d 1253
+                }
+                932
+                {
+                    val 'BodyCharset' = s 'iso-2022-jp'
+                    val 'FixedWidthFont' = s 'MS Gothic'
+                    val 'ProportionalFont' = s 'MS PGothic'
+                }
+                936
+                {
+                    val 'BodyCharset' = s 'gbk'
+                    val 'FixedWidthFont' = s 'Simsun'
+                    val 'ProportionalFont' = s 'Simsun'
+                }
+                949
+                {
+                    val 'BodyCharset' = s 'euc-kr'
+                    val 'FixedWidthFont' = s 'GulimChe'
+                    val 'ProportionalFont' = s 'Gulim'
+                }
+                950
+                {
+                    val 'BodyCharset' = s 'big5'
+                    val 'FixedWidthFont' = s 'MingLiu'
+                    val 'ProportionalFont' = s 'New MingLiu'
+                }
+                1006
+                {
+                    val 'BodyCharset' = s 'ibm1006'
+                    val 'Family' = d 1256
+                }
+                1026
+                {
+                    val 'BodyCharset' = s 'ibm1026'
+                    val 'Family' = d 1254
+                }
+                1200
+                {
+                    val 'BodyCharset' = s 'unicode'
+                    val 'FixedWidthFont' = s 'Courier New'
+                    val 'ProportionalFont' = s 'Arial'
+                }
+                1250
+                {
+                    val 'BodyCharset' = s 'iso-8859-2'
+                    val 'FixedWidthFont' = s 'Courier New'
+                    val 'ProportionalFont' = s 'Arial'
+                }
+                1251
+                {
+                    val 'BodyCharset' = s 'koi8-r'
+                    val 'FixedWidthFont' = s 'Courier New'
+                    val 'ProportionalFont' = s 'Arial'
+                }
+                1252
+                {
+                    val 'BodyCharset' = s 'iso-8859-1'
+                    val 'FixedWidthFont' = s 'Courier New'
+                    val 'ProportionalFont' = s 'Arial'
+                }
+                1253
+                {
+                    val 'BodyCharset' = s 'iso-8859-7'
+                    val 'FixedWidthFont' = s 'Courier New'
+                    val 'ProportionalFont' = s 'Arial'
+                }
+                1254
+                {
+                    val 'BodyCharset' = s 'iso-8859-9'
+                    val 'FixedWidthFont' = s 'Courier New'
+                    val 'ProportionalFont' = s 'Arial'
+                }
+                1255
+                {
+                    val 'BodyCharset' = s 'windows-1255'
+                    val 'FixedWidthFont' = s 'Miriam Fixed'
+                    val 'ProportionalFont' = s 'David'
+                }
+                1256
+                {
+                    val 'BodyCharset' = s 'iso-8859-6'
+                    val 'FixedWidthFont' = s 'Simplified Arabic Fixed'
+                    val 'ProportionalFont' = s 'Simplified Arabic'
+                }
+                1257
+                {
+                    val 'BodyCharset' = s 'iso-8859-4'
+                    val 'FixedWidthFont' = s 'Courier New'
+                    val 'ProportionalFont' = s 'Arial'
+                }
+                1258
+                {
+                    val 'BodyCharset' = s 'windows-1258'
+                    val 'FixedWidthFont' = s 'Courier New'
+                    val 'ProportionalFont' = s 'Arial'
+                }
+                20000
+                {
+                    val 'BodyCharset' = s 'x-Chinese-CNS'
+                    val 'Family' = d 950
+                }
+                20127
+                {
+                    val 'BodyCharset' = s 'us-ascii'
+                    val 'Family' = d 1252
+                }
+                20866
+                {
+                    val 'BodyCharset' = s 'koi8-r'
+                    val 'Family' = d 1251
+                }
+                20932
+                {
+                    val 'BodyCharset' = s 'EUC-JP'
+                    val 'Family' = d 932
+                }
+                20936
+                {
+                    val 'BodyCharset' = s 'x-cp20936'
+                    val 'Family' = d 936
+                }
+                21866
+                {
+                    val 'BodyCharset' = s 'koi8-ru'
+                    val 'Family' = d 1251
+                }
+                28591
+                {
+                    val 'BodyCharset' = s 'iso-8859-1'
+                    val 'Family' = d 1252
+                }
+                28592
+                {
+                    val 'BodyCharset' = s 'iso-8859-2'
+                    val 'Family' = d 1250
+                }
+                28593
+                {
+                    val 'BodyCharset' = s 'iso-8859-3'
+                    val 'Family' = d 1254
+                }
+                28594
+                {
+                    val 'BodyCharset' = s 'iso-8859-4'
+                    val 'Family' = d 1257
+                }
+                28595
+                {
+                    val 'BodyCharset' = s 'iso-8859-5'
+                    val 'Family' = d 1251
+                }
+                28596
+                {
+                    val 'BodyCharset' = s 'iso-8859-6'
+                    val 'Family' = d 1256
+                }
+                28597
+                {
+                    val 'BodyCharset' = s 'iso-8859-7'
+                    val 'Family' = d 1253
+                }
+                28598
+                {
+                    val 'BodyCharset' = s 'iso-8859-8'
+                    val 'Family' = d 1255
+                }
+                28599
+                {
+                    val 'BodyCharset' = s 'iso-8859-9'
+                    val 'Family' = d 1254
+                }
+                28603
+                {
+                    val 'BodyCharset' = s 'iso-8859-13'
+                    val 'Family' = d 1257
+                }
+                28605
+                {
+                    val 'BodyCharset' = s 'iso-8859-15'
+                    val 'Family' = d 1252
+                }
+                50220
+                {
+                    val 'BodyCharset' = s 'iso-2022-jp'
+                    val 'Family' = d 932
+                }
+                50221
+                {
+                    val 'BodyCharset' = s 'iso-2022-jp'
+                    val 'Family' = d 932
+                }
+                50222
+                {
+                    val 'BodyCharset' = s 'iso-2022-jp'
+                    val 'Family' = d 932
+                }
+                50932
+                {
+                    val 'BodyCharset' = s '_autodetect'
+                    val 'Family' = d 932
+                }
+                50936
+                {
+                    val 'BodyCharset' = s '_autodetect_chs'
+                    val 'Family' = d 936
+                }
+                50949
+                {
+                    val 'BodyCharset' = s '_autodetect_kr'
+                    val 'Family' = d 949
+                }
+                50950
+                {
+                    val 'BodyCharset' = s '_autodetect_cht'
+                    val 'Family' = d 950
+                }
+                51932
+                {
+                    val 'BodyCharset' = s 'euc-jp'
+                    val 'Family' = d 932
+                }
+                51949
+                {
+                    val 'BodyCharset' = s 'euc-kr'
+                    val 'Family' = d 951
+                }
+                52936
+                {
+                    val 'BodyCharset' = s 'hz-gb-2312'
+                    val 'Family' = d 936
+                }
+                54936
+                {
+                    val 'BodyCharset' = s 'GB18030'
+                    val 'Family' = d 936
+                }
+                65000
+                {
+                    val 'BodyCharset' = s 'utf-7'
+                    val 'Family' = d 1200
+                }
+                65001
+                {
+                    val 'BodyCharset' = s 'utf-8'
+                    val 'Family' = d 1200
+                }
+            }
+        }
+    }
+}

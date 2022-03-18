@@ -3922,69 +3922,6 @@ HRESULT WINAPI DllCanUnloadNow(void)
     return dll_count == 0 ? S_OK : S_FALSE;
 }
 
-static BOOL register_codepages(void)
-{
-    const struct mlang_data *family;
-    const MIME_CP_INFO *info;
-    HKEY db_key, key;
-    WCHAR buf[32];
-    LSTATUS status;
-
-    status = RegCreateKeyW(HKEY_CLASSES_ROOT, L"MIME\\Database\\Codepage", &db_key);
-    if (status != ERROR_SUCCESS)
-        return FALSE;
-
-    for (family = mlang_data; family < mlang_data + ARRAY_SIZE(mlang_data); family++)
-    {
-        for (info = family->mime_cp_info; info < family->mime_cp_info + family->number_of_cp; info++)
-        {
-            swprintf(buf, ARRAY_SIZE(buf), L"%u", info->cp);
-            status = RegCreateKeyW(db_key, buf, &key);
-            if (status != ERROR_SUCCESS)
-                continue;
-
-            RegSetValueExA(key, "BodyCharset", 0, REG_SZ, (BYTE*)info->body_charset,
-                           strlen(info->body_charset) + 1);
-
-            if (info->cp == family->family_codepage)
-            {
-                RegSetValueExA(key, "FixedWidthFont", 0, REG_SZ, (BYTE*)family->fixed_font,
-                               strlen(family->fixed_font) + 1);
-                RegSetValueExA(key, "ProportionalFont", 0, REG_SZ, (BYTE*)family->proportional_font,
-                               strlen(family->proportional_font) + 1);
-            }
-            else
-            {
-                RegSetValueExW(key, L"Family", 0, REG_DWORD, (BYTE*)&family->family_codepage,
-                               sizeof(family->family_codepage));
-            }
-
-            RegCloseKey(key);
-        }
-    }
-
-    RegCloseKey(db_key);
-    return TRUE;
-}
-
-/***********************************************************************
- *		DllRegisterServer (MLANG.@)
- */
-HRESULT WINAPI DllRegisterServer(void)
-{
-    if(!register_codepages())
-        return E_FAIL;
-    return __wine_register_resources();
-}
-
-/***********************************************************************
- *		DllUnregisterServer (MLANG.@)
- */
-HRESULT WINAPI DllUnregisterServer(void)
-{
-    return __wine_unregister_resources();
-}
-
 HRESULT WINAPI GetGlobalFontLinkObject(void **unknown)
 {
     if (!unknown) return E_INVALIDARG;
