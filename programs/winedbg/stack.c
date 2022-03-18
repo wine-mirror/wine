@@ -407,9 +407,8 @@ static void backtrace_all(void)
                 dbg_active_wait_for_first_exception();
             }
 
-            dbg_printf("\nBacktracing for thread %04lx in process %04lx (%s):\n",
-                       entry.th32ThreadID, dbg_curr_pid,
-                       dbg_W2A(dbg_curr_process->imageName, -1));
+            dbg_printf("\nBacktracing for thread %04lx in process %04lx (%ls):\n",
+                       entry.th32ThreadID, dbg_curr_pid, dbg_curr_process->imageName);
             backtrace_tid(dbg_curr_process, entry.th32ThreadID);
         }
         while (Thread32Next(snapshot, &entry));

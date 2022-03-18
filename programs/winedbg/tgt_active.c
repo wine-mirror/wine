@@ -484,8 +484,8 @@ static unsigned dbg_handle_debug_event(DEBUG_EVENT* de)
         break_set_xpoints(TRUE);
         if (DBG_IVAR(BreakOnDllLoad))
         {
-            dbg_printf("Stopping on DLL %s loading at %p\n",
-                       dbg_W2A(u.buffer, -1), de->u.LoadDll.lpBaseOfDll);
+            dbg_printf("Stopping on DLL %ls loading at %p\n",
+                       u.buffer, de->u.LoadDll.lpBaseOfDll);
             if (dbg_fetch_context()) cont = 0;
         }
         break;

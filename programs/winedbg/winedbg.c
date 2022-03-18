@@ -113,28 +113,6 @@ static void dbg_outputA(const char* buffer, int len)
     }
 }
 
-const char* dbg_W2A(const WCHAR* buffer, unsigned len)
-{
-    static unsigned ansilen;
-    static char* ansi;
-    unsigned newlen;
-
-    newlen = WideCharToMultiByte(CP_ACP, 0, buffer, len, NULL, 0, NULL, NULL);
-    if (newlen > ansilen)
-    {
-        static char* newansi;
-        if (ansi)
-            newansi = HeapReAlloc(GetProcessHeap(), 0, ansi, newlen);
-        else
-            newansi = HeapAlloc(GetProcessHeap(), 0, newlen);
-        if (!newansi) return NULL;
-        ansilen = newlen;
-        ansi = newansi;
-    }
-    WideCharToMultiByte(CP_ACP, 0, buffer, len, ansi, newlen, NULL, NULL);
-    return ansi;
-}
-
 int WINAPIV dbg_printf(const char* format, ...)
 {
     static    char	buf[4*1024];

@@ -538,9 +538,9 @@ static BOOL handle_debug_event(struct gdb_context* gdbctx, BOOL stop_on_dll_load
         QueryFullProcessImageNameW( gdbctx->process->handle, 0, u.buffer, &size );
         dbg_set_process_name(gdbctx->process, u.buffer);
 
-        fprintf(stderr, "%04lx:%04lx: create process '%s'/%p @%p (%lu<%lu>)\n",
+        fprintf(stderr, "%04lx:%04lx: create process '%ls'/%p @%p (%lu<%lu>)\n",
                     de->dwProcessId, de->dwThreadId,
-                    dbg_W2A(u.buffer, -1),
+                    u.buffer,
                     de->u.CreateProcessInfo.lpImageName,
                     de->u.CreateProcessInfo.lpStartAddress,
                     de->u.CreateProcessInfo.dwDebugInfoFileOffset,
@@ -564,9 +564,9 @@ static BOOL handle_debug_event(struct gdb_context* gdbctx, BOOL stop_on_dll_load
     case LOAD_DLL_DEBUG_EVENT:
         fetch_module_name( de->u.LoadDll.lpImageName, de->u.LoadDll.lpBaseOfDll,
                            u.buffer, ARRAY_SIZE(u.buffer) );
-        fprintf(stderr, "%04lx:%04lx: loads DLL %s @%p (%lu<%lu>)\n",
+        fprintf(stderr, "%04lx:%04lx: loads DLL %ls @%p (%lu<%lu>)\n",
                 de->dwProcessId, de->dwThreadId,
-                dbg_W2A(u.buffer, -1),
+                u.buffer,
                 de->u.LoadDll.lpBaseOfDll,
                 de->u.LoadDll.dwDebugInfoFileOffset,
                 de->u.LoadDll.nDebugInfoSize);

@@ -307,8 +307,8 @@ static enum dbg_start minidump_do_reload(struct tgt_process_minidump_data* data)
             str = "???";
             break;
         }
-        dbg_printf("  %s was running on #%d %s CPU%s",
-                   dbg_W2A(exec_name, -1), msi->u.s.NumberOfProcessors, str,
+        dbg_printf("  %ls was running on #%d %s CPU%s",
+                   exec_name, msi->u.s.NumberOfProcessors, str,
                    msi->u.s.NumberOfProcessors < 2 ? "" : "s");
         switch (msi->MajorVersion)
         {
