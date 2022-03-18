@@ -1773,35 +1773,7 @@ static void load_mac_fonts(void)
         CFStringRef path;
 
         desc = CFArrayGetValueAtIndex(descs, i);
-
-#if defined(MAC_OS_X_VERSION_10_6) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6
         url = CTFontDescriptorCopyAttribute(desc, kCTFontURLAttribute);
-#else
-        /* CTFontDescriptor doesn't support kCTFontURLAttribute prior to 10.6, so
-           we have to go CFFontDescriptor -> CTFont -> ATSFont -> FSRef -> CFURL. */
-        {
-            CTFontRef font;
-            ATSFontRef atsFont;
-            OSStatus status;
-            FSRef fsref;
-
-            font = CTFontCreateWithFontDescriptor(desc, 0, NULL);
-            if (!font) continue;
-
-            atsFont = CTFontGetPlatformFont(font, NULL);
-            if (!atsFont)
-            {
-                CFRelease(font);
-                continue;
-            }
-
-            status = ATSFontGetFileReference(atsFont, &fsref);
-            CFRelease(font);
-            if (status != noErr) continue;
-
-            url = CFURLCreateFromFSRef(NULL, &fsref);
-        }
-#endif
         if (!url) continue;
 
         ext = CFURLCopyPathExtension(url);
