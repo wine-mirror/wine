@@ -565,7 +565,7 @@ void info_win32_processes(void)
     }
 }
 
-static BOOL get_process_name(DWORD pid, PROCESSENTRY32* entry)
+static BOOL get_process_name(DWORD pid, PROCESSENTRY32W* entry)
 {
     BOOL   ret = FALSE;
     HANDLE snap = CreateToolhelp32Snapshot(TH32CS_SNAPPROCESS, 0);
@@ -573,9 +573,9 @@ static BOOL get_process_name(DWORD pid, PROCESSENTRY32* entry)
     if (snap != INVALID_HANDLE_VALUE)
     {
         entry->dwSize = sizeof(*entry);
-        if (Process32First(snap, entry))
+        if (Process32FirstW(snap, entry))
             while (!(ret = (entry->th32ProcessID == pid)) &&
-                   Process32Next(snap, entry));
+                   Process32NextW(snap, entry));
         CloseHandle(snap);
     }
     return ret;
@@ -607,18 +607,18 @@ void info_win32_threads(void)
 		 */
 		if (entry.th32OwnerProcessID != lastProcessId)
 		{
-                    PROCESSENTRY32 pcs_entry;
-                    const char* exename;
+                    PROCESSENTRY32W pcs_entry;
+                    const WCHAR* exename;
 
                     p = dbg_get_process(entry.th32OwnerProcessID);
                     if (p)
-                        exename = dbg_W2A(p->imageName, -1);
+                        exename = p->imageName;
                     else if (get_process_name(entry.th32OwnerProcessID, &pcs_entry))
                         exename = pcs_entry.szExeFile;
                     else
-                        exename = "";
+                        exename = L"";
 
-		    dbg_printf("%08lx%s %s\n",
+		    dbg_printf("%08lx%s %ls\n",
                                entry.th32OwnerProcessID, p ? " (D)" : "", exename);
                     lastProcessId = entry.th32OwnerProcessID;
 		}
