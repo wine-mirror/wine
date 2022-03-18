@@ -3312,7 +3312,7 @@ static HRESULT WINAPI fnIMLangFontLink2_GetCharCodePages( IMLangFontLink2* iface
 
     *ret_codepages = 0;
 
-    for (i = 0; i < ARRAY_SIZE(mlang_data); i++)
+    for (i = 0; i < ARRAY_SIZE(mlang_data) - 1 /* skip unicode codepages */; i++)
     {
         BOOL used_dc;
         CHAR buf;
