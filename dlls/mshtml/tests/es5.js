@@ -805,7 +805,6 @@ sync_test("toString", function() {
     todo_wine.
     ok(tmp === "[object Window]", "toString.call(null) = " + tmp);
     tmp = Object.prototype.toString.call(null);
-    todo_wine.
     ok(tmp === "[object Null]", "toString.call(null) = " + tmp);
     tmp = Object.prototype.toString.call(undefined);
     todo_wine.

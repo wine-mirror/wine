@@ -1243,7 +1243,7 @@ sync_test("elem_attr", function() {
     r = elem.removeAttribute("ondblclick");
     ok(r === (v < 8 ? false : (v < 9 ? true : undefined)), "ondblclick removeAttribute returned " + r);
     r = Object.prototype.toString.call(elem.ondblclick);
-    todo_wine_if(v >= 9).
+    todo_wine_if(v >= 11).
     ok(r === (v < 8 ? "[object Array]" : (v < 9 ? "[object Object]" : (v < 11 ? "[object Null]" : "[object Function]"))),
         "removed ondblclick Object.toString returned " + r);
 

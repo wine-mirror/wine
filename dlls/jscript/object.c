@@ -57,7 +57,10 @@ static HRESULT Object_toString(script_ctx_t *ctx, jsval_t vthis, WORD flags, uns
     TRACE("\n");
 
     if(is_undefined(vthis) || is_null(vthis)) {
-        str = L"[object Object]";
+        if(ctx->version < SCRIPTLANGUAGEVERSION_ES5)
+            str = L"[object Object]";
+        else
+            str = is_null(vthis) ? L"[object Null]" : L"[object Object]";
         goto set_output;
     }
 
