@@ -3104,6 +3104,14 @@ ok(String.length == 1, "String.length = " + String.length);
     ok(r === "[object Error]", "Error.toString with undefined context returned " + r);
     r = String.prototype.slice.call(null, 1, 3);
     ok(r === "ul", "String.slice with null context returned " + r);
+    r = String.prototype.slice.call(undefined, 2, 5);
+    ok(r === "def", "String.slice with undefined context returned " + r);
+    r = (function() { return this; }).call(null);
+    ok(r === test, "wrong 'this' of function with null context");
+    r = (function() { return this; }).call(undefined);
+    ok(r === test, "wrong 'this' of function with undefined context");
+    r = (function() { return this; }).call(42);
+    ok(r.valueOf() === 42, "'this' of function with 42 context = " + r);
 })();
 
 var tmp = createArray();

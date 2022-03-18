@@ -1272,6 +1272,10 @@ sync_test("builtin_context", function() {
 
     var obj = (function() { return this; }).call(null);
     ok(obj === window, "obj = " + obj);
+    var obj = (function() { return this; }).call(undefined);
+    ok(obj === window, "obj = " + obj);
+    obj = (function() { return this; }).call(42);
+    ok(obj.valueOf() === 42, "obj = " + obj);
 });
 
 sync_test("head_setter", function() {
