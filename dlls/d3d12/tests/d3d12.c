@@ -90,7 +90,7 @@ static IDXGIAdapter *create_adapter(void)
         return NULL;
 
     hr = CreateDXGIFactory2(0, &IID_IDXGIFactory4, (void **)&factory);
-    ok(hr == S_OK, "Failed to create factory, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     adapter = NULL;
     if (use_warp_adapter)
@@ -103,7 +103,7 @@ static IDXGIAdapter *create_adapter(void)
     }
     IDXGIFactory4_Release(factory);
     if (FAILED(hr))
-        trace("Failed to get adapter, hr %#x.\n", hr);
+        trace("Failed to get adapter, hr %#lx.\n", hr);
     return adapter;
 }
 
@@ -138,16 +138,16 @@ static void print_adapter_info(void)
     ID3D12Device_Release(device);
 
     hr = CreateDXGIFactory2(0, &IID_IDXGIFactory4, (void **)&factory);
-    ok(hr == S_OK, "Failed to create factory, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDXGIFactory4_EnumAdapterByLuid(factory, luid, &IID_IDXGIAdapter, (void **)&adapter);
-    ok(hr == S_OK, "Failed to enum adapter by LUID, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     IDXGIFactory4_Release(factory);
 
     if (FAILED(hr))
         return;
 
     hr = IDXGIAdapter_GetDesc(adapter, &adapter_desc);
-    ok(hr == S_OK, "Failed to get adapter desc, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     IDXGIAdapter_Release(adapter);
 
     trace("Adapter: %s, %04x:%04x.\n", wine_dbgstr_w(adapter_desc.Description),
@@ -171,7 +171,7 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
     expected_hr = supported ? S_OK : E_NOINTERFACE;
 
     hr = IUnknown_QueryInterface(iface, iid, (void **)&unk);
-    ok_(__FILE__, line)(hr == expected_hr, "Got hr %#x, expected %#x.\n", hr, expected_hr);
+    ok_(__FILE__, line)(hr == expected_hr, "Got unexpected hr %#lx, expected %#lx.\n", hr, expected_hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(unk);
 }
@@ -210,7 +210,7 @@ static ID3D12RootSignature *create_default_root_signature(ID3D12Device *device)
     root_signature_desc.pStaticSamplers = NULL;
     root_signature_desc.Flags = D3D12_ROOT_SIGNATURE_FLAG_NONE;
     hr = create_root_signature(device, &root_signature_desc, &root_signature);
-    ok(hr == S_OK, "Failed to create root signature, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     return root_signature;
 }
@@ -282,7 +282,7 @@ static ID3D12PipelineState *create_pipeline_state_(unsigned int line, ID3D12Devi
     pipeline_state_desc.SampleDesc.Count = 1;
     hr = ID3D12Device_CreateGraphicsPipelineState(device, &pipeline_state_desc,
             &IID_ID3D12PipelineState, (void **)&pipeline_state);
-    ok_(__FILE__, line)(hr == S_OK, "Failed to create graphics pipeline state, hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to create graphics pipeline state, hr %#lx.\n", hr);
 
     return pipeline_state;
 }
@@ -301,7 +301,7 @@ static ID3D12CommandQueue *create_command_queue_(unsigned int line,
     command_queue_desc.NodeMask = 0;
     hr = ID3D12Device_CreateCommandQueue(device, &command_queue_desc,
             &IID_ID3D12CommandQueue, (void **)&queue);
-    ok_(__FILE__, line)(hr == S_OK, "Failed to create command queue, hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to create command queue, hr %#lx.\n", hr);
 
     return queue;
 }
@@ -342,9 +342,9 @@ static void reset_command_list_(unsigned int line, struct test_context *context,
     assert(index < MAX_FRAME_COUNT);
 
     hr = ID3D12CommandAllocator_Reset(context->allocator[index]);
-    ok_(__FILE__, line)(hr == S_OK, "Failed to reset command allocator, hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to reset command allocator, hr %#lx.\n", hr);
     hr = ID3D12GraphicsCommandList_Reset(context->list[index], context->allocator[index], NULL);
-    ok_(__FILE__, line)(hr == S_OK, "Failed to reset command list, hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to reset command list, hr %#lx.\n", hr);
 }
 
 static void destroy_render_targets(struct test_context *context)
@@ -394,7 +394,7 @@ static void create_render_target_(unsigned int line, struct test_context *contex
             &heap_properties, D3D12_HEAP_FLAG_NONE, &resource_desc,
             D3D12_RESOURCE_STATE_RENDER_TARGET, &clear_value,
             &IID_ID3D12Resource, (void **)&context->render_target[0]);
-    ok_(__FILE__, line)(hr == S_OK, "Failed to create texture, hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to create texture, hr %#lx.\n", hr);
 
     set_viewport(&context->viewport, 0.0f, 0.0f, resource_desc.Width, resource_desc.Height, 0.0f, 1.0f);
     SetRect(&context->scissor_rect, 0, 0, resource_desc.Width, resource_desc.Height);
@@ -427,14 +427,14 @@ static BOOL init_test_context_(unsigned int line, struct test_context *context,
     {
         hr = ID3D12Device_CreateCommandAllocator(device, D3D12_COMMAND_LIST_TYPE_DIRECT,
                 &IID_ID3D12CommandAllocator, (void **)&context->allocator[i]);
-        ok_(__FILE__, line)(hr == S_OK, "Failed to create command allocator %u, hr %#x.\n", i, hr);
+        ok_(__FILE__, line)(hr == S_OK, "Failed to create command allocator %u, hr %#lx.\n", i, hr);
     }
 
     for (i = 0; i < ARRAY_SIZE(context->list); ++i)
     {
         hr = ID3D12Device_CreateCommandList(device, 0, D3D12_COMMAND_LIST_TYPE_DIRECT,
                 context->allocator[i], NULL, &IID_ID3D12GraphicsCommandList, (void **)&context->list[i]);
-        ok_(__FILE__, line)(hr == S_OK, "Failed to create command list %u, hr %#x.\n", i, hr);
+        ok_(__FILE__, line)(hr == S_OK, "Failed to create command list %u, hr %#lx.\n", i, hr);
     }
 
     if (desc && desc->no_render_target)
@@ -446,7 +446,7 @@ static BOOL init_test_context_(unsigned int line, struct test_context *context,
     rtv_heap_desc.NodeMask = 0;
     hr = ID3D12Device_CreateDescriptorHeap(device, &rtv_heap_desc,
             &IID_ID3D12DescriptorHeap, (void **)&context->rtv_heap);
-    ok_(__FILE__, line)(hr == S_OK, "Failed to create descriptor heap, hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to create descriptor heap, hr %#lx.\n", hr);
 
     rtv_size = ID3D12Device_GetDescriptorHandleIncrementSize(device, D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     for (i = 0; i < ARRAY_SIZE(context->rtv); ++i)
@@ -528,12 +528,12 @@ static void wait_queue_idle_(unsigned int line, ID3D12Device *device, ID3D12Comm
 
     hr = ID3D12Device_CreateFence(device, 0, D3D12_FENCE_FLAG_NONE,
             &IID_ID3D12Fence, (void **)&fence);
-    ok_(__FILE__, line)(hr == S_OK, "Failed to create fence, hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to create fence, hr %#lx.\n", hr);
 
     hr = ID3D12CommandQueue_Signal(queue, fence, 1);
-    ok_(__FILE__, line)(hr == S_OK, "Failed to signal fence, hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to signal fence, hr %#lx.\n", hr);
     hr = wait_for_fence(fence, 1);
-    ok_(__FILE__, line)(hr == S_OK, "Failed to wait for fence, hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to wait for fence, hr %#lx.\n", hr);
 
     ID3D12Fence_Release(fence);
 }
@@ -581,7 +581,7 @@ static ID3D12Resource *create_buffer_(unsigned int line, ID3D12Device *device,
     hr = ID3D12Device_CreateCommittedResource(device, &heap_properties,
             D3D12_HEAP_FLAG_NONE, &resource_desc, initial_resource_state,
             NULL, &IID_ID3D12Resource, (void **)&buffer);
-    ok_(__FILE__, line)(hr == S_OK, "Failed to create buffer, hr %#x.\n", hr);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to create buffer, hr %#lx.\n", hr);
     return buffer;
 }
 
@@ -614,7 +614,7 @@ static IDXGISwapChain3 *create_swapchain(struct test_context *context, ID3D12Com
         destroy_render_targets(context);
 
     hr = CreateDXGIFactory2(0, &IID_IDXGIFactory4, (void **)&factory);
-    ok(hr == S_OK, "Failed to create factory, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     desc.Width = width;
     desc.Height = height;
@@ -629,12 +629,12 @@ static IDXGISwapChain3 *create_swapchain(struct test_context *context, ID3D12Com
     desc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
     desc.Flags = 0;
     hr = IDXGIFactory4_CreateSwapChainForHwnd(factory, (IUnknown *)queue, window, &desc, NULL, NULL, &swapchain1);
-    ok(hr == S_OK, "Failed to create swapchain, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     IDXGIFactory4_Release(factory);
 
     hr = IDXGISwapChain1_QueryInterface(swapchain1, &IID_IDXGISwapChain3, (void **)&swapchain);
-    ok(hr == S_OK, "Failed to query IDXGISwapChain3, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     IDXGISwapChain1_Release(swapchain1);
 
     if (context)
@@ -645,7 +645,7 @@ static IDXGISwapChain3 *create_swapchain(struct test_context *context, ID3D12Com
         for (i = 0; i < buffer_count; ++i)
         {
             hr = IDXGISwapChain3_GetBuffer(swapchain, i, &IID_ID3D12Resource, (void **)&context->render_target[i]);
-            ok(hr == S_OK, "Failed to get swapchain buffer %u, hr %#x.\n", i, hr);
+            ok(hr == S_OK, "Failed to get swapchain buffer %u, hr %#lx.\n", i, hr);
             ID3D12Device_CreateRenderTargetView(context->device, context->render_target[i], NULL, context->rtv[i]);
         }
     }
@@ -674,7 +674,7 @@ static void get_texture_readback_with_command_list(ID3D12Resource *texture, unsi
     HRESULT hr;
 
     hr = ID3D12Resource_GetDevice(texture, &IID_ID3D12Device, (void **)&device);
-    ok(hr == S_OK, "Failed to get device, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     resource_desc = ID3D12Resource_GetDesc(texture);
     ok(resource_desc.Dimension != D3D12_RESOURCE_DIMENSION_BUFFER,
@@ -707,7 +707,7 @@ static void get_texture_readback_with_command_list(ID3D12Resource *texture, unsi
 
     ID3D12GraphicsCommandList_CopyTextureRegion(command_list, &dst_location, 0, 0, 0, &src_location, NULL);
     hr = ID3D12GraphicsCommandList_Close(command_list);
-    ok(hr == S_OK, "Failed to close command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     exec_command_list(queue, command_list);
     wait_queue_idle(device, queue);
@@ -716,7 +716,7 @@ static void get_texture_readback_with_command_list(ID3D12Resource *texture, unsi
     read_range.Begin = 0;
     read_range.End = resource_desc.Width;
     hr = ID3D12Resource_Map(rb->resource, 0, &read_range, &rb->data);
-    ok(hr == S_OK, "Failed to map readback buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 }
 
 static void *get_readback_data(struct resource_readback *rb, unsigned int x, unsigned int y,
@@ -825,7 +825,7 @@ static void test_interfaces(void)
     desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
     desc.NodeMask = 0;
     hr = ID3D12Device_CreateCommandQueue(device, &desc, &IID_ID3D12CommandQueue, (void **)&queue);
-    ok(hr == S_OK, "Failed to create command queue, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     check_interface(queue, &IID_ID3D12Object, TRUE);
     check_interface(queue, &IID_ID3D12DeviceChild, TRUE);
@@ -841,9 +841,9 @@ static void test_interfaces(void)
     check_interface(queue, &IID_IDXGIDevice4, FALSE);
 
     refcount = ID3D12CommandQueue_Release(queue);
-    ok(!refcount, "Command queue has %u references left.\n", refcount);
+    ok(!refcount, "Command queue has %lu references left.\n", refcount);
     refcount = ID3D12Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_create_device(void)
@@ -868,28 +868,28 @@ static void test_create_device(void)
         return;
     }
     refcount = ID3D12Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 
     hr = CreateDXGIFactory2(0, &IID_IDXGIFactory4, (void **)&factory);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDXGIFactory4_EnumAdapters(factory, 0, &adapter);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     IDXGIFactory4_Release(factory);
 
     hr = IDXGIAdapter_GetDesc(adapter, &adapter_desc);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     adapter_luid = adapter_desc.AdapterLuid;
 
     refcount = get_refcount(adapter);
-    ok(refcount == 1, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount == 1, "Got unexpected refcount %lu.\n", refcount);
     hr = D3D12CreateDevice((IUnknown *)adapter, D3D_FEATURE_LEVEL_11_0, &IID_ID3D12Device, (void **)&device);
-    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = IDXGIAdapter_Release(adapter);
-    ok(refcount >= 1, "Got unexpected refcount %u.\n", refcount);
+    ok(refcount >= 1, "Got unexpected refcount %lu.\n", refcount);
     adapter = NULL;
 
     luid = ID3D12Device_GetAdapterLuid(device);
-    ok(equal_luid(luid, adapter_luid), "Got LUID %08x:%08x, expected %08x:%08x.\n",
+    ok(equal_luid(luid, adapter_luid), "Got unexpected LUID %08lx:%08lx, expected %08lx:%08lx.\n",
             luid.HighPart, luid.LowPart, adapter_luid.HighPart, adapter_luid.LowPart);
 
     queue = create_command_queue(device, D3D12_COMMAND_LIST_TYPE_DIRECT);
@@ -901,18 +901,18 @@ static void test_create_device(void)
     hr = IDXGISwapChain3_GetContainingOutput(swapchain, &output);
     if (hr != DXGI_ERROR_UNSUPPORTED)
     {
-        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         hr = IDXGIOutput_GetParent(output, &IID_IDXGIAdapter, (void **)&adapter);
-        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         IDXGIOutput_Release(output);
 
         memset(&adapter_desc, 0, sizeof(adapter_desc));
         hr = IDXGIAdapter_GetDesc(adapter, &adapter_desc);
-        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         IDXGIAdapter_Release(adapter);
 
         ok(equal_luid(adapter_desc.AdapterLuid, adapter_luid),
-                "Got LUID %08x:%08x, expected %08x:%08x.\n",
+                "Got unexpected LUID %08lx:%08lx, expected %08lx:%08lx.\n",
                 adapter_desc.AdapterLuid.HighPart, adapter_desc.AdapterLuid.LowPart,
                 adapter_luid.HighPart, adapter_luid.LowPart);
     }
@@ -922,12 +922,12 @@ static void test_create_device(void)
     }
 
     refcount = IDXGISwapChain3_Release(swapchain);
-    ok(!refcount, "Swapchain has %u references left.\n", refcount);
+    ok(!refcount, "Swapchain has %lu references left.\n", refcount);
     DestroyWindow(window);
     ID3D12CommandQueue_Release(queue);
 
     refcount = ID3D12Device_Release(device);
-    ok(!refcount, "Device has %u references left.\n", refcount);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
 }
 
 static void test_draw(void)
@@ -1059,17 +1059,17 @@ static void test_swapchain_draw(void)
         transition_sub_resource_state(command_list, backbuffer, 0,
                 D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_PRESENT);
         hr = ID3D12GraphicsCommandList_Close(command_list);
-        ok(hr == S_OK, "Failed to close command list, hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         exec_command_list(queue, command_list);
 
         hr = IDXGISwapChain3_Present(swapchain, 0, 0);
-        ok(hr == S_OK, "Failed to present, hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         wait_queue_idle(device, queue);
 
         destroy_render_targets(&context);
         refcount = IDXGISwapChain3_Release(swapchain);
-        ok(!refcount, "Swapchain has %u references left.\n", refcount);
+        ok(!refcount, "Swapchain has %lu references left.\n", refcount);
         ID3D12PipelineState_Release(context.pipeline_state);
         context.pipeline_state = NULL;
 
@@ -1107,45 +1107,45 @@ static void test_swapchain_refcount(void)
     for (i = 0; i < buffer_count; ++i)
     {
         refcount = get_refcount(swapchain);
-        todo_wine ok(refcount == 2, "Got refcount %u.\n", refcount);
+        todo_wine ok(refcount == 2, "Got refcount %lu.\n", refcount);
         ID3D12Resource_Release(context.render_target[i]);
         context.render_target[i] = NULL;
     }
     refcount = get_refcount(swapchain);
-    ok(refcount == 1, "Got refcount %u.\n", refcount);
+    ok(refcount == 1, "Got refcount %lu.\n", refcount);
 
     refcount = IDXGISwapChain3_AddRef(swapchain);
-    ok(refcount == 2, "Got refcount %u.\n", refcount);
+    ok(refcount == 2, "Got refcount %lu.\n", refcount);
     hr = IDXGISwapChain3_GetBuffer(swapchain, 0, &IID_ID3D12Resource, (void **)&context.render_target[0]);
-    ok(hr == S_OK, "Failed to get swapchain buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = get_refcount(swapchain);
-    todo_wine ok(refcount == 3, "Got refcount %u.\n", refcount);
+    todo_wine ok(refcount == 3, "Got refcount %lu.\n", refcount);
 
     refcount = ID3D12Resource_AddRef(context.render_target[0]);
-    ok(refcount == 2, "Got refcount %u.\n", refcount);
+    ok(refcount == 2, "Got refcount %lu.\n", refcount);
     refcount = get_refcount(swapchain);
-    todo_wine ok(refcount == 3, "Got refcount %u.\n", refcount);
+    todo_wine ok(refcount == 3, "Got refcount %lu.\n", refcount);
 
     hr = IDXGISwapChain3_GetBuffer(swapchain, 1, &IID_ID3D12Resource, (void **)&context.render_target[1]);
-    ok(hr == S_OK, "Failed to get swapchain buffer, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     refcount = get_refcount(swapchain);
-    todo_wine ok(refcount == 3, "Got refcount %u.\n", refcount);
+    todo_wine ok(refcount == 3, "Got refcount %lu.\n", refcount);
 
     ID3D12Resource_Release(context.render_target[0]);
     ID3D12Resource_Release(context.render_target[0]);
     context.render_target[0] = NULL;
     refcount = get_refcount(swapchain);
-    todo_wine ok(refcount == 3, "Got refcount %u.\n", refcount);
+    todo_wine ok(refcount == 3, "Got refcount %lu.\n", refcount);
 
     refcount = IDXGISwapChain3_Release(swapchain);
-    todo_wine ok(refcount == 2, "Got refcount %u.\n", refcount);
+    todo_wine ok(refcount == 2, "Got refcount %lu.\n", refcount);
     ID3D12Resource_Release(context.render_target[1]);
     context.render_target[1] = NULL;
     refcount = get_refcount(swapchain);
-    ok(refcount == 1, "Got refcount %u.\n", refcount);
+    ok(refcount == 1, "Got refcount %lu.\n", refcount);
 
     refcount = IDXGISwapChain3_Release(swapchain);
-    ok(!refcount, "Swapchain has %u references left.\n", refcount);
+    ok(!refcount, "Swapchain has %lu references left.\n", refcount);
     DestroyWindow(window);
     destroy_test_context(&context);
 }
@@ -1196,18 +1196,18 @@ static void test_swapchain_size_mismatch(void)
     transition_sub_resource_state(command_list, backbuffer, 0,
             D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_PRESENT);
     hr = ID3D12GraphicsCommandList_Close(command_list);
-    ok(hr == S_OK, "Failed to close command list, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     exec_command_list(queue, command_list);
 
     hr = IDXGISwapChain3_Present(swapchain, 1, 0);
-    ok(hr == S_OK, "Failed to present, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     wait_queue_idle(device, queue);
     reset_command_list(&context, 0);
 
     destroy_render_targets(&context);
     refcount = IDXGISwapChain3_Release(swapchain);
-    ok(!refcount, "Swapchain has %u references left.\n", refcount);
+    ok(!refcount, "Swapchain has %lu references left.\n", refcount);
     DestroyWindow(window);
 
     window = create_window(WS_VISIBLE);
@@ -1216,12 +1216,12 @@ static void test_swapchain_size_mismatch(void)
     swapchain = create_swapchain(&context, queue, window, 4, DXGI_FORMAT_B8G8R8A8_UNORM, rect.right, rect.bottom);
 
     hr = ID3D12Device_CreateFence(device, 0, D3D12_FENCE_FLAG_NONE, &IID_ID3D12Fence, (void **)&fence);
-    ok(hr == S_OK, "Failed to create fence, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(context.list); ++i)
     {
         hr = ID3D12GraphicsCommandList_Close(context.list[i]);
-        ok(hr == S_OK, "Failed to close command list %u, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Failed to close command list %u, hr %#lx.\n", i, hr);
     }
 
     fence_value = 1;
@@ -1230,7 +1230,7 @@ static void test_swapchain_size_mismatch(void)
         index = IDXGISwapChain3_GetCurrentBackBufferIndex(swapchain);
 
         hr = wait_for_fence(fence, frame_fence_value[index]);
-        ok(hr == S_OK, "Failed to wait for fence, hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         reset_command_list(&context, index);
         backbuffer = context.render_target[index];
@@ -1243,11 +1243,11 @@ static void test_swapchain_size_mismatch(void)
         transition_sub_resource_state(command_list, backbuffer, 0,
                 D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
         hr = ID3D12GraphicsCommandList_Close(command_list);
-        ok(hr == S_OK, "Failed to close command list, hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         exec_command_list(queue, command_list);
 
         hr = IDXGISwapChain3_Present(swapchain, 1, 0);
-        ok(hr == S_OK, "Failed to present, hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         if (i == 6)
         {
@@ -1257,7 +1257,7 @@ static void test_swapchain_size_mismatch(void)
 
         frame_fence_value[index] = fence_value;
         hr = ID3D12CommandQueue_Signal(queue, fence, fence_value);
-        ok(hr == S_OK, "Failed to signal fence, hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         ++fence_value;
     }
 
@@ -1266,7 +1266,7 @@ static void test_swapchain_size_mismatch(void)
     ID3D12Fence_Release(fence);
     destroy_render_targets(&context);
     refcount = IDXGISwapChain3_Release(swapchain);
-    ok(!refcount, "Swapchain has %u references left.\n", refcount);
+    ok(!refcount, "Swapchain has %lu references left.\n", refcount);
     DestroyWindow(window);
     destroy_test_context(&context);
 }
@@ -1308,12 +1308,12 @@ static void test_swapchain_backbuffer_index(void)
             buffer_count, DXGI_FORMAT_B8G8R8A8_UNORM, rect.right, rect.bottom);
 
     hr = ID3D12Device_CreateFence(device, 0, D3D12_FENCE_FLAG_NONE, &IID_ID3D12Fence, (void **)&fence);
-    ok(hr == S_OK, "Failed to create fence, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(context.list); ++i)
     {
         hr = ID3D12GraphicsCommandList_Close(context.list[i]);
-        ok(hr == S_OK, "Failed to close command list %u, hr %#x.\n", i, hr);
+        ok(hr == S_OK, "Failed to close command list %u, hr %#lx.\n", i, hr);
     }
 
     index = 1;
@@ -1325,7 +1325,7 @@ static void test_swapchain_backbuffer_index(void)
         ok(index == expected_index, "Test %u: Got index %u, expected %u.\n", i, index, expected_index);
 
         hr = wait_for_fence(fence, frame_fence_value[index]);
-        ok(hr == S_OK, "Failed to wait for fence, hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         reset_command_list(&context, index);
         backbuffer = context.render_target[index];
@@ -1338,7 +1338,7 @@ static void test_swapchain_backbuffer_index(void)
         transition_sub_resource_state(command_list, backbuffer, 0,
                 D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
         hr = ID3D12GraphicsCommandList_Close(command_list);
-        ok(hr == S_OK, "Failed to close command list, hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         exec_command_list(queue, command_list);
 
         if (i <= 4 || (8 <= i && i <= 14))
@@ -1347,11 +1347,11 @@ static void test_swapchain_backbuffer_index(void)
             sync_interval = 0;
 
         hr = IDXGISwapChain3_Present(swapchain, sync_interval, 0);
-        ok(hr == S_OK, "Failed to present, hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         frame_fence_value[index] = fence_value;
         hr = ID3D12CommandQueue_Signal(queue, fence, fence_value);
-        ok(hr == S_OK, "Failed to signal fence, hr %#x.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         ++fence_value;
     }
 
@@ -1360,7 +1360,7 @@ static void test_swapchain_backbuffer_index(void)
     ID3D12Fence_Release(fence);
     destroy_render_targets(&context);
     refcount = IDXGISwapChain3_Release(swapchain);
-    ok(!refcount, "Swapchain has %u references left.\n", refcount);
+    ok(!refcount, "Swapchain has %lu references left.\n", refcount);
     DestroyWindow(window);
     destroy_test_context(&context);
 }
@@ -1389,7 +1389,7 @@ static void test_desktop_window(void)
     ok(ret, "Failed to get client rect.\n");
 
     hr = CreateDXGIFactory2(0, &IID_IDXGIFactory4, (void **)&factory);
-    ok(hr == S_OK, "Failed to create factory, hr %#x.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     swapchain_desc.Width = 640;
     swapchain_desc.Height = 480;
@@ -1404,12 +1404,12 @@ static void test_desktop_window(void)
     swapchain_desc.AlphaMode = DXGI_ALPHA_MODE_UNSPECIFIED;
     swapchain_desc.Flags = 0;
     hr = IDXGIFactory4_CreateSwapChainForHwnd(factory, queue, window, &swapchain_desc, NULL, NULL, &swapchain);
-    ok(hr == E_ACCESSDENIED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_ACCESSDENIED, "Got unexpected hr %#lx.\n", hr);
 
     swapchain_desc.Width = rect.right;
     swapchain_desc.Height = rect.bottom;
     hr = IDXGIFactory4_CreateSwapChainForHwnd(factory, queue, window, &swapchain_desc, NULL, NULL, &swapchain);
-    ok(hr == E_ACCESSDENIED, "Got unexpected hr %#x.\n", hr);
+    ok(hr == E_ACCESSDENIED, "Got unexpected hr %#lx.\n", hr);
 
     IDXGIFactory4_Release(factory);
     destroy_test_context(&context);
