@@ -28,7 +28,6 @@
  * strangeness, especially since most are in situations that would not
  * normally be met.
  */
-#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <assert.h>
 #include <stdio.h>

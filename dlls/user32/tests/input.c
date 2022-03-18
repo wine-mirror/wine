@@ -17,7 +17,6 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
-#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 /* test whether the right type of messages:
  * WM_KEYUP/DOWN vs WM_SYSKEYUP/DOWN  are sent in case of combined
