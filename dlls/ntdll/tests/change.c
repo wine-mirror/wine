@@ -17,6 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <ntstatus.h>
 #define WIN32_NO_STATUS
@@ -301,9 +302,9 @@ static void test_ntncdf_async(void)
 
     CloseHandle(hdir);
 
-    ok(U(iosb).Status == STATUS_CANCELLED, "status wrong %x\n",U(iosb).Status);
-    ok(U(iosb2).Status == STATUS_CANCELLED, "status wrong %x\n",U(iosb2).Status);
-    ok(U(iosb3).Status == STATUS_SUCCESS, "status wrong %x\n",U(iosb3).Status);
+    ok(U(iosb).Status == STATUS_CANCELLED, "status wrong %lx\n",U(iosb).Status);
+    ok(U(iosb2).Status == STATUS_CANCELLED, "status wrong %lx\n",U(iosb2).Status);
+    ok(U(iosb3).Status == STATUS_SUCCESS, "status wrong %lx\n",U(iosb3).Status);
 
     ok(iosb.Information == 0, "info wrong\n");
     ok(iosb2.Information == 0, "info wrong\n");
@@ -312,8 +313,8 @@ static void test_ntncdf_async(void)
     U(iosb3).Status   = 0x111111;
     iosb3.Information = 0x222222;
     r = pNtCancelIoFile(hdir, &iosb3);
-    ok( r == STATUS_INVALID_HANDLE, "cancel failed %x\n", r);
-    ok(U(iosb3).Status == 0x111111, "status wrong %x\n",U(iosb3).Status);
+    ok( r == STATUS_INVALID_HANDLE, "cancel failed %lx\n", r);
+    ok(U(iosb3).Status == 0x111111, "status wrong %lx\n",U(iosb3).Status);
     ok(iosb3.Information == 0x222222, "info wrong\n");
 
     r = RemoveDirectoryW( path );
