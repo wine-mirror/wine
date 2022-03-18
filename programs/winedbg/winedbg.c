@@ -135,13 +135,6 @@ const char* dbg_W2A(const WCHAR* buffer, unsigned len)
     return ansi;
 }
 
-void	dbg_outputW(const WCHAR* buffer, int len)
-{
-    const char* ansi = dbg_W2A(buffer, len);
-    if (ansi) dbg_outputA(ansi, strlen(ansi));
-    /* FIXME: should CP_ACP be GetConsoleCP()? */
-}
-
 int WINAPIV dbg_printf(const char* format, ...)
 {
     static    char	buf[4*1024];

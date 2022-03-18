@@ -501,7 +501,6 @@ extern BOOL             types_is_integral_type(const struct dbg_lvalue*);
 extern BOOL             types_is_float_type(const struct dbg_lvalue*);
 
   /* winedbg.c */
-extern void	        dbg_outputW(const WCHAR* buffer, int len);
 extern const char*      dbg_W2A(const WCHAR* buffer, unsigned len);
 #ifdef __GNUC__
 extern int WINAPIV      dbg_printf(const char* format, ...) __attribute__((format (printf,1,2)));

@@ -641,7 +641,6 @@ void print_basic(const struct dbg_lvalue* lvalue, char format)
     {
         unsigned size;
         dbg_lgint_t res = types_extract_as_lgint(lvalue, &size, NULL);
-        WCHAR wch;
 
         switch (format)
         {
@@ -658,10 +657,7 @@ void print_basic(const struct dbg_lvalue* lvalue, char format)
             return;
 
         case 'u':
-            wch = (WCHAR)(res & 0xFFFF);
-            dbg_printf("%d = '", wch);
-            dbg_outputW(&wch, 1);
-            dbg_printf("'");
+            dbg_printf("%d = '%lc'", (WCHAR)(res & 0xFFFF), (WCHAR)(res & 0xFFFF));
             return;
 
         case 'i':
