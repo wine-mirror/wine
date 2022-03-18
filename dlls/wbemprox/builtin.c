@@ -4060,8 +4060,8 @@ static enum fill_status fill_videocontroller( struct table *table, const struct 
     rec->current_verticalres   = vres;
     rec->description           = heap_strdupW( name );
     rec->device_id             = L"VideoController1";
-    rec->driverdate            = L"20170101000000.000000+000";
-    rec->driverversion         = L"1.0";
+    rec->driverdate            = L"20220118000000.000000-000";
+    rec->driverversion         = L"30.0.14023.3004";
     rec->installeddriver       = get_videocontroller_installeddriver( desc.VendorId );
     rec->name                  = heap_strdupW( name );
     rec->pnpdevice_id          = get_videocontroller_pnpdeviceid( &desc );
