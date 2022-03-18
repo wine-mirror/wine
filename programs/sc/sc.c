@@ -58,44 +58,44 @@ static BOOL parse_create_params( int argc, const WCHAR *argv[], struct create_pa
 
     for (i = 0; i < argc; i++)
     {
-        if (!wcsicmp( argv[i], L"displayname=" ) && i < argc - 1) cp->displayname = argv[i + 1];
-        if (!wcsicmp( argv[i], L"binpath=" ) && i < argc - 1) cp->binpath = argv[i + 1];
-        if (!wcsicmp( argv[i], L"group=" ) && i < argc - 1) cp->group = argv[i + 1];
-        if (!wcsicmp( argv[i], L"depend=" ) && i < argc - 1) cp->depend = argv[i + 1];
-        if (!wcsicmp( argv[i], L"obj=" ) && i < argc - 1) cp->obj = argv[i + 1];
-        if (!wcsicmp( argv[i], L"password=" ) && i < argc - 1) cp->password = argv[i + 1];
+        if (!wcsnicmp( argv[i], L"displayname=", 12 )) cp->displayname = argv[i] + 12;
+        if (!wcsnicmp( argv[i], L"binpath=", 8 )) cp->binpath = argv[i] + 8;
+        if (!wcsnicmp( argv[i], L"group=", 6 )) cp->group = argv[i] + 6;
+        if (!wcsnicmp( argv[i], L"depend=", 7 )) cp->depend = argv[i] + 7;
+        if (!wcsnicmp( argv[i], L"obj=", 4 )) cp->obj = argv[i] + 4;
+        if (!wcsnicmp( argv[i], L"password=", 9 )) cp->password = argv[i] + 9;
 
-        if (!wcsicmp( argv[i], L"tag=" ) && i < argc - 1)
+        if (!wcsnicmp( argv[i], L"tag=", 4 ))
         {
-            if (!wcsicmp( argv[i], L"yes" ))
+            if (!wcsicmp( argv[i] + 4, L"yes" ))
             {
                 WINE_FIXME("tag argument not supported\n");
                 cp->tag = TRUE;
             }
         }
-        if (!wcsicmp( argv[i], L"type=" ) && i < argc - 1)
+        if (!wcsnicmp( argv[i], L"type=", 5 ))
         {
-            if (!wcsicmp( argv[i + 1], L"own" )) cp->type = SERVICE_WIN32_OWN_PROCESS;
-            if (!wcsicmp( argv[i + 1], L"share" )) cp->type = SERVICE_WIN32_SHARE_PROCESS;
-            if (!wcsicmp( argv[i + 1], L"kernel" )) cp->type = SERVICE_KERNEL_DRIVER;
-            if (!wcsicmp( argv[i + 1], L"filesys" )) cp->type = SERVICE_FILE_SYSTEM_DRIVER;
-            if (!wcsicmp( argv[i + 1], L"rec" )) cp->type = SERVICE_RECOGNIZER_DRIVER;
-            if (!wcsicmp( argv[i + 1], L"interact" )) cp->type |= SERVICE_INTERACTIVE_PROCESS;
+            if (!wcsicmp( argv[i] + 5, L"own" )) cp->type = SERVICE_WIN32_OWN_PROCESS;
+            if (!wcsicmp( argv[i] + 5, L"share" )) cp->type = SERVICE_WIN32_SHARE_PROCESS;
+            if (!wcsicmp( argv[i] + 5, L"kernel" )) cp->type = SERVICE_KERNEL_DRIVER;
+            if (!wcsicmp( argv[i] + 5, L"filesys" )) cp->type = SERVICE_FILE_SYSTEM_DRIVER;
+            if (!wcsicmp( argv[i] + 5, L"rec" )) cp->type = SERVICE_RECOGNIZER_DRIVER;
+            if (!wcsicmp( argv[i] + 5, L"interact" )) cp->type |= SERVICE_INTERACTIVE_PROCESS;
         }
-        if (!wcsicmp( argv[i], L"start=" ) && i < argc - 1)
+        if (!wcsnicmp( argv[i], L"start=", 6 ))
         {
-            if (!wcsicmp( argv[i + 1], L"boot" )) cp->start = SERVICE_BOOT_START;
-            if (!wcsicmp( argv[i + 1], L"system" )) cp->start = SERVICE_SYSTEM_START;
-            if (!wcsicmp( argv[i + 1], L"auto" )) cp->start = SERVICE_AUTO_START;
-            if (!wcsicmp( argv[i + 1], L"demand" )) cp->start = SERVICE_DEMAND_START;
-            if (!wcsicmp( argv[i + 1], L"disabled" )) cp->start = SERVICE_DISABLED;
+            if (!wcsicmp( argv[i] + 6, L"boot" )) cp->start = SERVICE_BOOT_START;
+            if (!wcsicmp( argv[i] + 6, L"system" )) cp->start = SERVICE_SYSTEM_START;
+            if (!wcsicmp( argv[i] + 6, L"auto" )) cp->start = SERVICE_AUTO_START;
+            if (!wcsicmp( argv[i] + 6, L"demand" )) cp->start = SERVICE_DEMAND_START;
+            if (!wcsicmp( argv[i] + 6, L"disabled" )) cp->start = SERVICE_DISABLED;
         }
-        if (!wcsicmp( argv[i], L"error=" ) && i < argc - 1)
+        if (!wcsnicmp( argv[i], L"error=", 6 ))
         {
-            if (!wcsicmp( argv[i + 1], L"normal" )) cp->error = SERVICE_ERROR_NORMAL;
-            if (!wcsicmp( argv[i + 1], L"severe" )) cp->error = SERVICE_ERROR_SEVERE;
-            if (!wcsicmp( argv[i + 1], L"critical" )) cp->error = SERVICE_ERROR_CRITICAL;
-            if (!wcsicmp( argv[i + 1], L"ignore" )) cp->error = SERVICE_ERROR_IGNORE;
+            if (!wcsicmp( argv[i] + 6, L"normal" )) cp->error = SERVICE_ERROR_NORMAL;
+            if (!wcsicmp( argv[i] + 6, L"severe" )) cp->error = SERVICE_ERROR_SEVERE;
+            if (!wcsicmp( argv[i] + 6, L"critical" )) cp->error = SERVICE_ERROR_CRITICAL;
+            if (!wcsicmp( argv[i] + 6, L"ignore" )) cp->error = SERVICE_ERROR_IGNORE;
         }
     }
     if (!cp->binpath) return FALSE;
@@ -158,13 +158,12 @@ static BOOL parse_failure_params( int argc, const WCHAR *argv[], SERVICE_FAILURE
 
     for (i = 0; i < argc; i++)
     {
-        if (!wcsicmp( argv[i], L"reset=" ) && i < argc - 1) fa->dwResetPeriod = wcstol( argv[i + 1], NULL, 10 );
-        if (!wcsicmp( argv[i], L"reboot=" ) && i < argc - 1) fa->lpRebootMsg = (WCHAR *)argv[i + 1];
-        if (!wcsicmp( argv[i], L"command=" ) && i < argc - 1) fa->lpCommand = (WCHAR *)argv[i + 1];
-        if (!wcsicmp( argv[i], L"actions=" ))
+        if (!wcsnicmp( argv[i], L"reset=", 6 )) fa->dwResetPeriod = wcstol( argv[i] + 6, NULL, 10 );
+        if (!wcsnicmp( argv[i], L"reboot=", 7 )) fa->lpRebootMsg = (WCHAR *)argv[i] + 7;
+        if (!wcsnicmp( argv[i], L"command=", 8 )) fa->lpCommand = (WCHAR *)argv[i] + 8;
+        if (!wcsnicmp( argv[i], L"actions=", 8 ))
         {
-            if (i == argc - 1) return FALSE;
-            if (!parse_failure_actions( argv[i + 1], fa )) return FALSE;
+            if (!parse_failure_actions( argv[i] + 8, fa )) return FALSE;
         }
     }
     return TRUE;
