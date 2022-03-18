@@ -2214,7 +2214,7 @@ static void test_IsCodePageInstallable(IMultiLanguage2 *ml2)
     UINT i;
     HRESULT hr;
 
-    for (i = 0; i < 0xffff; i++)
+    for (i = 0; i < 1000; i++)
     {
         hr = IMultiLanguage2_IsCodePageInstallable(ml2, i);
 
