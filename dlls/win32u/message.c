@@ -231,12 +231,23 @@ BOOL kill_system_timer( HWND hwnd, UINT_PTR id )
     return ret;
 }
 
+static BOOL send_window_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
+                                 LRESULT *result, BOOL ansi )
+{
+    /* FIXME: move implementation from user32 */
+    if (!user_callbacks) return FALSE;
+    *result = ansi
+        ? user_callbacks->pSendMessageA( hwnd, msg, wparam, lparam )
+        : user_callbacks->pSendMessageW( hwnd, msg, wparam, lparam );
+    return TRUE;
+}
+
 /* see SendMessageW */
 LRESULT send_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    /* FIXME: move implementation from user32 */
-    if (!user_callbacks) return 0;
-    return user_callbacks->pSendMessageW( hwnd, msg, wparam, lparam );
+    LRESULT result = 0;
+    send_window_message( hwnd, msg, wparam, lparam, &result, FALSE );
+    return result;
 }
 
 /* see SendNotifyMessageW */
@@ -258,6 +269,8 @@ BOOL WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 {
     switch (type)
     {
+    case FNID_SENDMESSAGE:
+        return send_window_message( hwnd, msg, wparam, lparam, (LRESULT *)result_info, ansi );
     case FNID_SENDNOTIFYMESSAGE:
         return send_notify_message( hwnd, msg, wparam, lparam, ansi );
     default:

@@ -42,8 +42,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(class);
 
 static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
 
-#define CLASS_OTHER_PROCESS ((CLASS *)1)
-
 static inline const char *debugstr_us( const UNICODE_STRING *us )
 {
     if (!us) return "<null>";
@@ -348,15 +346,6 @@ void register_desktop_class(void)
 {
     register_builtin( &DESKTOP_builtin_class );
     register_builtin( &MESSAGE_builtin_class );
-}
-
-
-/***********************************************************************
- *           get_class_winproc
- */
-WNDPROC get_class_winproc( CLASS *class )
-{
-    return class->winproc;
 }
 
 

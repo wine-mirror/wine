@@ -119,3 +119,11 @@ BOOL WINAPI NtUserDestroyMenu( HMENU menu )
 {
     return user_callbacks && user_callbacks->pDestroyMenu( menu );
 }
+
+/*******************************************************************
+ *           NtUserSetSystemMenu    (win32u.@)
+ */
+BOOL WINAPI NtUserSetSystemMenu( HWND hwnd, HMENU menu )
+{
+    return user_callbacks && user_callbacks->pSetSystemMenu( hwnd, menu );
+}

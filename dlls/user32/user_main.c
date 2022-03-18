@@ -140,7 +140,12 @@ static void CDECL notify_ime( HWND hwnd, UINT param )
     if (ime_default) SendMessageW( ime_default, WM_IME_INTERNAL, param, HandleToUlong(hwnd) );
 }
 
-void WINAPI unregister_imm( HWND hwnd )
+static BOOL WINAPI register_imm( HWND hwnd )
+{
+    return imm_register_window( hwnd );
+}
+
+static void WINAPI unregister_imm( HWND hwnd )
 {
     imm_unregister_window( hwnd );
 }
@@ -149,7 +154,6 @@ static void CDECL free_win_ptr( WND *win )
 {
     HeapFree( GetProcessHeap(), 0, win->text );
     HeapFree( GetProcessHeap(), 0, win->pScroll );
-    HeapFree( GetProcessHeap(), 0, win );
 }
 
 static const struct user_callbacks user_funcs =
@@ -163,8 +167,10 @@ static const struct user_callbacks user_funcs =
     PostMessageW,
     SendInput,
     SendMessageTimeoutW,
+    SendMessageA,
     SendMessageW,
     SendNotifyMessageW,
+    SetSystemMenu,
     ShowCaret,
     WaitForInputIdle,
     free_win_ptr,
@@ -172,9 +178,11 @@ static const struct user_callbacks user_funcs =
     notify_ime,
     register_builtin_classes,
     MSG_SendInternalMessageTimeout,
+    MENU_SetMenu,
     SCROLL_SetStandardScrollPainted,
     (void *)__wine_set_user_driver,
     set_window_pos,
+    register_imm,
     unregister_imm,
 };
 

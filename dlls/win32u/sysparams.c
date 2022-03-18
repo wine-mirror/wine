@@ -1391,7 +1391,7 @@ UINT get_win_monitor_dpi( HWND hwnd )
 /**********************************************************************
  *           get_thread_dpi_awareness
  */
-static DPI_AWARENESS get_thread_dpi_awareness(void)
+DPI_AWARENESS get_thread_dpi_awareness(void)
 {
     struct user_thread_info *info = get_user_thread_info();
     ULONG_PTR context = info->dpi_awareness;
@@ -4748,9 +4748,6 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
         return 0;
     case NtUserRegisterWindowSurface:
         register_window_surface( (struct window_surface *)arg1, (struct window_surface *)arg2 );
-        return 0;
-    case NtUserSetHandlePtr:
-        set_user_handle_ptr( UlongToHandle(arg1), (struct user_object *)arg2 );
         return 0;
     default:
         FIXME( "invalid code %u\n", code );

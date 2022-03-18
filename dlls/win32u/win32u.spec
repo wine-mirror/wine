@@ -814,7 +814,7 @@
 @ stub NtUserCreateInputContext
 @ stub NtUserCreateLocalMemHandle
 @ stub NtUserCreatePalmRejectionDelayZone
-@ stub NtUserCreateWindowEx
+@ stdcall NtUserCreateWindowEx(long ptr ptr ptr long long long long long long long long ptr long long long long)
 @ stub NtUserCreateWindowGroup
 @ stdcall -syscall NtUserCreateWindowStation(ptr long long long long long long)
 @ stub NtUserCtxDisplayIOCtl

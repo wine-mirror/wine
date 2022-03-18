@@ -162,29 +162,6 @@ static LRESULT call_dialog_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, LRES
 
 
 /**********************************************************************
- *	     WINPROC_GetProc
- *
- * Get a window procedure pointer that can be passed to the Windows program.
- */
-WNDPROC WINPROC_GetProc( WNDPROC proc, BOOL unicode )
-{
-    WINDOWPROC *ptr = handle_to_proc( proc );
-
-    if (!ptr || ptr == WINPROC_PROC16) return proc;
-    if (unicode)
-    {
-        if (ptr->procW) return ptr->procW;
-        return proc;
-    }
-    else
-    {
-        if (ptr->procA) return ptr->procA;
-        return proc;
-    }
-}
-
-
-/**********************************************************************
  *	     WINPROC_AllocProc
  *
  * Allocate a window procedure for a window or class.
@@ -196,22 +173,6 @@ WNDPROC WINPROC_GetProc( WNDPROC proc, BOOL unicode )
 static WNDPROC WINPROC_AllocProc( WNDPROC func, BOOL unicode )
 {
     return (WNDPROC)NtUserCallTwoParam( (UINT_PTR)func, !unicode, NtUserAllocWinProc );
-}
-
-
-/**********************************************************************
- *	     WINPROC_IsUnicode
- *
- * Return the window procedure type, or the default value if not a winproc handle.
- */
-BOOL WINPROC_IsUnicode( WNDPROC proc, BOOL def_val )
-{
-    WINDOWPROC *ptr = handle_to_proc( proc );
-
-    if (!ptr) return def_val;
-    if (ptr == WINPROC_PROC16) return FALSE;  /* 16-bit is always A */
-    if (ptr->procA && ptr->procW) return def_val;  /* can be both */
-    return (ptr->procW != NULL);
 }
 
 

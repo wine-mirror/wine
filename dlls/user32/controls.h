@@ -114,7 +114,6 @@ struct tagWND;
 extern ATOM get_int_atom_value( UNICODE_STRING *name ) DECLSPEC_HIDDEN;
 extern void register_builtin_classes(void) DECLSPEC_HIDDEN;
 extern void register_desktop_class(void) DECLSPEC_HIDDEN;
-extern WNDPROC get_class_winproc( struct tagCLASS *class ) DECLSPEC_HIDDEN;
 
 /* defwnd proc */
 extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType ) DECLSPEC_HIDDEN;

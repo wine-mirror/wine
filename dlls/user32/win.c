@@ -76,124 +76,6 @@ void *free_user_handle( HANDLE handle, unsigned int type )
 }
 
 
-/***********************************************************************
- *           create_window_handle
- *
- * Create a window handle with the server.
- */
-static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
-                                  HINSTANCE instance, BOOL unicode,
-                                  DWORD style, DWORD ex_style )
-{
-    WND *win;
-    HWND handle = 0, full_parent = 0, full_owner = 0;
-    struct tagCLASS *class = NULL;
-    int extra_bytes = 0;
-    DPI_AWARENESS awareness = GetAwarenessFromDpiAwarenessContext( GetThreadDpiAwarenessContext() );
-    UINT dpi = 0;
-
-    SERVER_START_REQ( create_window )
-    {
-        req->parent   = wine_server_user_handle( parent );
-        req->owner    = wine_server_user_handle( owner );
-        req->instance = wine_server_client_ptr( instance );
-        req->dpi      = GetDpiForSystem();
-        req->awareness = awareness;
-        req->style    = style;
-        req->ex_style = ex_style;
-        if (!(req->atom = get_int_atom_value( name )) && name->Length)
-            wine_server_add_data( req, name->Buffer, name->Length );
-        if (!wine_server_call_err( req ))
-        {
-            handle      = wine_server_ptr_handle( reply->handle );
-            full_parent = wine_server_ptr_handle( reply->parent );
-            full_owner  = wine_server_ptr_handle( reply->owner );
-            extra_bytes = reply->extra;
-            dpi         = reply->dpi;
-            awareness   = reply->awareness;
-            class       = wine_server_get_ptr( reply->class_ptr );
-        }
-    }
-    SERVER_END_REQ;
-
-    if (!handle)
-    {
-        WARN( "error %d creating window\n", GetLastError() );
-        return NULL;
-    }
-
-    if (!(win = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                           sizeof(WND) + extra_bytes - sizeof(win->wExtra) )))
-    {
-        SERVER_START_REQ( destroy_window )
-        {
-            req->handle = wine_server_user_handle( handle );
-            wine_server_call( req );
-        }
-        SERVER_END_REQ;
-        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
-        return NULL;
-    }
-
-    if (!parent)  /* if parent is 0 we don't have a desktop window yet */
-    {
-        struct user_thread_info *thread_info = get_user_thread_info();
-
-        if (name->Buffer == (LPCWSTR)DESKTOP_CLASS_ATOM)
-        {
-            if (!thread_info->top_window) thread_info->top_window = full_parent ? full_parent : handle;
-            else assert( full_parent == thread_info->top_window );
-            if (full_parent && !NtUserCallHwnd( thread_info->top_window, NtUserCreateDesktopWindow ))
-                ERR( "failed to create desktop window\n" );
-            register_builtin_classes();
-        }
-        else  /* HWND_MESSAGE parent */
-        {
-            if (!thread_info->msg_window && !full_parent) thread_info->msg_window = handle;
-        }
-    }
-
-    USER_Lock();
-
-    win->obj.handle = handle;
-    win->obj.type   = NTUSER_OBJ_WINDOW;
-    win->parent     = full_parent;
-    win->owner      = full_owner;
-    win->class      = class;
-    win->winproc    = get_class_winproc( class );
-    win->cbWndExtra = extra_bytes;
-    win->dpi        = dpi;
-    win->dpi_awareness = awareness;
-    NtUserCallTwoParam( HandleToUlong(handle), (UINT_PTR)win, NtUserSetHandlePtr );
-    if (WINPROC_IsUnicode( win->winproc, unicode )) win->flags |= WIN_ISUNICODE;
-    return win;
-}
-
-
-/***********************************************************************
- *           free_window_handle
- *
- * Free a window handle.
- */
-static void free_window_handle( HWND hwnd )
-{
-    struct user_object *ptr;
-
-    if ((ptr = get_user_handle_ptr( hwnd, NTUSER_OBJ_WINDOW )) && ptr != OBJ_OTHER_PROCESS)
-    {
-        SERVER_START_REQ( destroy_window )
-        {
-            req->handle = wine_server_user_handle( hwnd );
-            wine_server_call( req );
-            NtUserCallTwoParam( HandleToUlong(hwnd), 0, NtUserSetHandlePtr );
-        }
-        SERVER_END_REQ;
-        USER_Unlock();
-        HeapFree( GetProcessHeap(), 0, ptr );
-    }
-}
-
-
 /*******************************************************************
  *           list_window_children
  *
@@ -239,22 +121,6 @@ static HWND *list_window_children( HDESK desktop, HWND hwnd, UNICODE_STRING *cla
         size = count + 1;  /* restart with a large enough buffer */
     }
     return NULL;
-}
-
-
-/*******************************************************************
- *           send_parent_notify
- */
-static void send_parent_notify( HWND hwnd, UINT msg )
-{
-    if ((GetWindowLongW( hwnd, GWL_STYLE ) & (WS_CHILD | WS_POPUP)) == WS_CHILD &&
-        !(GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_NOPARENTNOTIFY))
-    {
-        HWND parent = GetParent(hwnd);
-        if (parent && parent != GetDesktopWindow())
-            SendMessageW( parent, WM_PARENTNOTIFY,
-                          MAKEWPARAM( msg, GetWindowLongPtrW( hwnd, GWLP_ID )), (LPARAM)hwnd );
-    }
 }
 
 
@@ -708,66 +574,6 @@ other_process:
 
 
 /***********************************************************************
- *           WIN_FixCoordinates
- *
- * Fix the coordinates - Helper for WIN_CreateWindowEx.
- * returns default show mode in sw.
- */
-static void WIN_FixCoordinates( CREATESTRUCTW *cs, INT *sw)
-{
-#define IS_DEFAULT(x)  ((x) == CW_USEDEFAULT || (x) == (SHORT)0x8000)
-    if (cs->style & (WS_CHILD | WS_POPUP))
-    {
-        if (IS_DEFAULT(cs->x)) cs->x = cs->y = 0;
-        if (IS_DEFAULT(cs->cx)) cs->cx = cs->cy = 0;
-    }
-    else  /* overlapped window */
-    {
-        HMONITOR monitor;
-        MONITORINFO mon_info;
-        STARTUPINFOW info;
-
-        if (!IS_DEFAULT(cs->x) && !IS_DEFAULT(cs->cx) && !IS_DEFAULT(cs->cy)) return;
-
-        monitor = MonitorFromWindow( cs->hwndParent, MONITOR_DEFAULTTOPRIMARY );
-        mon_info.cbSize = sizeof(mon_info);
-        GetMonitorInfoW( monitor, &mon_info );
-        GetStartupInfoW( &info );
-
-        if (IS_DEFAULT(cs->x))
-        {
-            if (!IS_DEFAULT(cs->y)) *sw = cs->y;
-            cs->x = (info.dwFlags & STARTF_USEPOSITION) ? info.dwX : mon_info.rcWork.left;
-            cs->y = (info.dwFlags & STARTF_USEPOSITION) ? info.dwY : mon_info.rcWork.top;
-        }
-
-        if (IS_DEFAULT(cs->cx))
-        {
-            if (info.dwFlags & STARTF_USESIZE)
-            {
-                cs->cx = info.dwXSize;
-                cs->cy = info.dwYSize;
-            }
-            else
-            {
-                cs->cx = (mon_info.rcWork.right - mon_info.rcWork.left) * 3 / 4 - cs->x;
-                cs->cy = (mon_info.rcWork.bottom - mon_info.rcWork.top) * 3 / 4 - cs->y;
-            }
-        }
-        /* neither x nor cx are default. Check the y values .
-         * In the trace we see Outlook and Outlook Express using
-         * cy set to CW_USEDEFAULT when opening the address book.
-         */
-        else if (IS_DEFAULT(cs->cy))
-        {
-            FIXME("Strange use of CW_USEDEFAULT in nHeight\n");
-            cs->cy = (mon_info.rcWork.bottom - mon_info.rcWork.top) * 3 / 4 - cs->y;
-        }
-    }
-#undef IS_DEFAULT
-}
-
-/***********************************************************************
  *           dump_window_styles
  */
 static void dump_window_styles( DWORD style, DWORD exstyle )
@@ -886,59 +692,20 @@ static BOOL is_default_coord( int x )
 }
 
 /***********************************************************************
- *           map_dpi_create_struct
- */
-static void map_dpi_create_struct( CREATESTRUCTW *cs, UINT dpi_from, UINT dpi_to )
-{
-    if (!dpi_from && !dpi_to) return;
-    if (!dpi_from || !dpi_to)
-    {
-        POINT pt = { cs->x, cs->y };
-        UINT mon_dpi = get_monitor_dpi( MonitorFromPoint( pt, MONITOR_DEFAULTTONEAREST ));
-        if (!dpi_from) dpi_from = mon_dpi;
-        else dpi_to = mon_dpi;
-    }
-    if (dpi_from == dpi_to) return;
-    cs->x = MulDiv( cs->x, dpi_to, dpi_from );
-    cs->y = MulDiv( cs->y, dpi_to, dpi_from );
-    cs->cx = MulDiv( cs->cx, dpi_to, dpi_from );
-    cs->cy = MulDiv( cs->cy, dpi_to, dpi_from );
-}
-
-/***********************************************************************
- *           fix_exstyle
- */
-static DWORD fix_exstyle( DWORD style, DWORD exstyle )
-{
-    if ((exstyle & WS_EX_DLGMODALFRAME) ||
-            (!(exstyle & WS_EX_STATICEDGE) &&
-             (style & (WS_DLGFRAME | WS_THICKFRAME))))
-        exstyle |= WS_EX_WINDOWEDGE;
-    else
-        exstyle &= ~WS_EX_WINDOWEDGE;
-    return exstyle;
-}
-
-/***********************************************************************
  *           WIN_CreateWindowEx
  *
  * Implementation of CreateWindowEx().
  */
 HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module, BOOL unicode )
 {
-    INT cx, cy, style, ex_style, sw = SW_SHOW;
-    LRESULT result;
-    RECT rect;
-    WND *wndPtr;
-    HWND hwnd, parent, owner, top_child = 0;
-    UINT win_dpi, thread_dpi = get_thread_dpi();
-    DPI_AWARENESS_CONTEXT context;
+    HWND hwnd, top_child = 0;
     MDICREATESTRUCTW mdi_cs;
     UNICODE_STRING class;
     CBT_CREATEWNDW cbtc;
-    CREATESTRUCTW cbcs;
+    WNDCLASSEXW info;
+    HMENU menu;
 
-    if (!get_class_info( module, className, NULL, &class, FALSE )) return FALSE;
+    if (!get_class_info( module, className, &info, &class, FALSE )) return FALSE;
 
     TRACE("%s %s%s%s ex=%08x style=%08x %d,%d %dx%d parent=%p menu=%p inst=%p params=%p\n",
           unicode ? debugstr_w(cs->lpszName) : debugstr_a((LPCSTR)cs->lpszName),
@@ -1030,300 +797,25 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
         }
     }
 
-    /* Find the parent window */
-
-    parent = cs->hwndParent;
-    owner = 0;
-
-    if (cs->hwndParent == HWND_MESSAGE)
+    /* FIXME: move to win32u */
+    if (!cs->hwndParent && className != (const WCHAR *)DESKTOP_CLASS_ATOM &&
+        (IS_INTRESOURCE(className) || wcsicmp( className, L"Message" )))
     {
-        cs->hwndParent = parent = get_hwnd_message_parent();
-    }
-    else if (cs->hwndParent)
-    {
-        if ((cs->style & (WS_CHILD|WS_POPUP)) != WS_CHILD)
-        {
-            parent = GetDesktopWindow();
-            owner = cs->hwndParent;
-        }
-        else
-        {
-            DWORD parent_style = GetWindowLongW( parent, GWL_EXSTYLE );
-            if ((parent_style & WS_EX_LAYOUTRTL) && !(parent_style & WS_EX_NOINHERITLAYOUT))
-                cs->dwExStyle |= WS_EX_LAYOUTRTL;
-        }
-    }
-    else
-    {
-        if ((cs->style & (WS_CHILD|WS_POPUP)) == WS_CHILD)
-        {
-            WARN("No parent for child window\n" );
-            SetLastError(ERROR_TLW_WITH_WSCHILD);
-            return 0;  /* WS_CHILD needs a parent, but WS_POPUP doesn't */
-        }
-
-        /* are we creating the desktop or HWND_MESSAGE parent itself? */
-        if (className != (LPCWSTR)DESKTOP_CLASS_ATOM &&
-            (IS_INTRESOURCE(className) || wcsicmp( className, L"Message" )))
-        {
-            DWORD layout;
-            GetProcessDefaultLayout( &layout );
-            if (layout & LAYOUT_RTL) cs->dwExStyle |= WS_EX_LAYOUTRTL;
-            parent = GetDesktopWindow();
-        }
+        DWORD layout;
+        GetProcessDefaultLayout( &layout );
+        if (layout & LAYOUT_RTL) cs->dwExStyle |= WS_EX_LAYOUTRTL;
     }
 
-    WIN_FixCoordinates(cs, &sw); /* fix default coordinates */
-    cs->dwExStyle = fix_exstyle(cs->style, cs->dwExStyle);
+    menu = cs->hMenu;
+    if (!menu && info.lpszMenuName && (cs->style & (WS_CHILD | WS_POPUP)) != WS_CHILD)
+        menu = LoadMenuW( cs->hInstance, info.lpszMenuName );
 
-    /* Create the window structure */
-
-    style = cs->style & ~WS_VISIBLE;
-    ex_style = cs->dwExStyle & ~WS_EX_LAYERED;
-    if (!(wndPtr = create_window_handle( parent, owner, &class, module,
-                                         unicode, style, ex_style )))
-        return 0;
-    hwnd = wndPtr->obj.handle;
-
-    /* Fill the window structure */
-
-    wndPtr->tid            = GetCurrentThreadId();
-    wndPtr->hInstance      = cs->hInstance;
-    wndPtr->text           = NULL;
-    wndPtr->dwStyle        = style;
-    wndPtr->dwExStyle      = ex_style;
-    wndPtr->wIDmenu        = 0;
-    wndPtr->helpContext    = 0;
-    wndPtr->pScroll        = NULL;
-    wndPtr->userdata       = 0;
-    wndPtr->hIcon          = 0;
-    wndPtr->hIconSmall     = 0;
-    wndPtr->hIconSmall2    = 0;
-    wndPtr->hSysMenu       = 0;
-
-    wndPtr->min_pos.x = wndPtr->min_pos.y = -1;
-    wndPtr->max_pos.x = wndPtr->max_pos.y = -1;
-    SetRect( &wndPtr->normal_rect, cs->x, cs->y, cs->x + cs->cx, cs->y + cs->cy );
-
-    if (wndPtr->dwStyle & WS_SYSMENU) SetSystemMenu( hwnd, 0 );
-
-    /* call the WH_CBT hook */
-
-    WIN_ReleasePtr( wndPtr );
-    cbcs = *cs;
-    cbtc.lpcs = &cbcs;
-    cbtc.hwndInsertAfter = HWND_TOP;
-    if (HOOK_CallHooks( WH_CBT, HCBT_CREATEWND, (WPARAM)hwnd, (LPARAM)&cbtc, unicode ) ||
-            !(wndPtr = WIN_GetPtr( hwnd )))
-    {
-        free_window_handle( hwnd );
-        return 0;
-    }
-
-    /*
-     * Correct the window styles.
-     *
-     * It affects only the style loaded into the WIN structure.
-     */
-
-    if ((wndPtr->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD)
-    {
-        wndPtr->dwStyle |= WS_CLIPSIBLINGS;
-        if (!(wndPtr->dwStyle & WS_POPUP))
-            wndPtr->dwStyle |= WS_CAPTION;
-    }
-
-    wndPtr->dwExStyle = cs->dwExStyle;
-    /* WS_EX_WINDOWEDGE depends on some other styles */
-    if ((wndPtr->dwStyle & (WS_DLGFRAME | WS_THICKFRAME)) &&
-            !(wndPtr->dwStyle & (WS_CHILD | WS_POPUP)))
-        wndPtr->dwExStyle |= WS_EX_WINDOWEDGE;
-
-    if (!(wndPtr->dwStyle & (WS_CHILD | WS_POPUP)))
-        wndPtr->flags |= WIN_NEED_SIZE;
-
-    SERVER_START_REQ( set_window_info )
-    {
-        req->handle    = wine_server_user_handle( hwnd );
-        req->flags     = SET_WIN_STYLE | SET_WIN_EXSTYLE | SET_WIN_INSTANCE | SET_WIN_UNICODE;
-        req->style     = wndPtr->dwStyle;
-        req->ex_style  = wndPtr->dwExStyle;
-        req->instance  = wine_server_client_ptr( wndPtr->hInstance );
-        req->is_unicode = (wndPtr->flags & WIN_ISUNICODE) != 0;
-        req->extra_offset = -1;
-        wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
-    /* Set the window menu */
-
-    if ((wndPtr->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD)
-    {
-        if (cs->hMenu)
-        {
-            if (!MENU_SetMenu(hwnd, cs->hMenu))
-            {
-                WIN_ReleasePtr( wndPtr );
-                free_window_handle( hwnd );
-                return 0;
-            }
-        }
-        else
-        {
-            LPCWSTR menuName = (LPCWSTR)GetClassLongPtrW( hwnd, GCLP_MENUNAME );
-            if (menuName)
-            {
-                cs->hMenu = LoadMenuW( cs->hInstance, menuName );
-                if (cs->hMenu) MENU_SetMenu( hwnd, cs->hMenu );
-            }
-        }
-    }
-    else SetWindowLongPtrW( hwnd, GWLP_ID, (ULONG_PTR)cs->hMenu );
-
-    win_dpi = wndPtr->dpi;
-    WIN_ReleasePtr( wndPtr );
-
-    if (parent) map_dpi_create_struct( cs, thread_dpi, win_dpi );
-
-    context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
-
-    /* send the WM_GETMINMAXINFO message and fix the size if needed */
-
-    cx = cs->cx;
-    cy = cs->cy;
-    if ((cs->style & WS_THICKFRAME) || !(cs->style & (WS_POPUP | WS_CHILD)))
-    {
-        MINMAXINFO info = WINPOS_GetMinMaxInfo( hwnd );
-        cx = max( min( cx, info.ptMaxTrackSize.x ), info.ptMinTrackSize.x );
-        cy = max( min( cy, info.ptMaxTrackSize.y ), info.ptMinTrackSize.y );
-    }
-
-    if (cx < 0) cx = 0;
-    if (cy < 0) cy = 0;
-    SetRect( &rect, cs->x, cs->y, cs->x + cx, cs->y + cy );
-    /* check for wraparound */
-    if (cs->x > 0x7fffffff - cx) rect.right = 0x7fffffff;
-    if (cs->y > 0x7fffffff - cy) rect.bottom = 0x7fffffff;
-    if (!set_window_pos( hwnd, 0, SWP_NOZORDER | SWP_NOACTIVATE, &rect, &rect, NULL )) goto failed;
-
-    /* send WM_NCCREATE */
-
-    TRACE( "hwnd %p cs %d,%d %dx%d %s\n", hwnd, cs->x, cs->y, cs->cx, cs->cy, wine_dbgstr_rect(&rect) );
-    if (unicode)
-        result = SendMessageW( hwnd, WM_NCCREATE, 0, (LPARAM)cs );
-    else
-        result = SendMessageA( hwnd, WM_NCCREATE, 0, (LPARAM)cs );
-    if (!result)
-    {
-        WARN( "%p: aborted by WM_NCCREATE\n", hwnd );
-        goto failed;
-    }
-
-    /* create default IME window */
-
-    if (imm_register_window && !is_desktop_window( hwnd ) &&
-        parent != get_hwnd_message_parent() && imm_register_window( hwnd ))
-    {
-        TRACE("register IME window for %p\n", hwnd);
-        win_set_flags( hwnd, WIN_HAS_IME_WIN, 0 );
-    }
-
-    /* send WM_NCCALCSIZE */
-
-    if (WIN_GetRectangles( hwnd, COORDS_PARENT, &rect, NULL ))
-    {
-        /* yes, even if the CBT hook was called with HWND_TOP */
-        HWND insert_after = (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD) ? HWND_BOTTOM : HWND_TOP;
-        RECT client_rect = rect;
-
-        /* the rectangle is in screen coords for WM_NCCALCSIZE when wparam is FALSE */
-        MapWindowPoints( parent, 0, (POINT *)&client_rect, 2 );
-        SendMessageW( hwnd, WM_NCCALCSIZE, FALSE, (LPARAM)&client_rect );
-        MapWindowPoints( 0, parent, (POINT *)&client_rect, 2 );
-        set_window_pos( hwnd, insert_after, SWP_NOACTIVATE, &rect, &client_rect, NULL );
-    }
-    else goto failed;
-
-    /* send WM_CREATE */
-
-    if (unicode)
-        result = SendMessageW( hwnd, WM_CREATE, 0, (LPARAM)cs );
-    else
-        result = SendMessageA( hwnd, WM_CREATE, 0, (LPARAM)cs );
-    if (result == -1) goto failed;
-
-    /* call the driver */
-
-    if (!USER_Driver->pCreateWindow( hwnd )) goto failed;
-
-    NtUserNotifyWinEvent( EVENT_OBJECT_CREATE, hwnd, OBJID_WINDOW, 0 );
-
-    /* send the size messages */
-
-    if (!(win_get_flags( hwnd ) & WIN_NEED_SIZE))
-    {
-        WIN_GetRectangles( hwnd, COORDS_PARENT, NULL, &rect );
-        SendMessageW( hwnd, WM_SIZE, SIZE_RESTORED,
-                      MAKELONG(rect.right-rect.left, rect.bottom-rect.top));
-        SendMessageW( hwnd, WM_MOVE, 0, MAKELONG( rect.left, rect.top ) );
-    }
-
-    /* Show the window, maximizing or minimizing if needed */
-
-    style = WIN_SetStyle( hwnd, 0, WS_MAXIMIZE | WS_MINIMIZE );
-    if (style & (WS_MINIMIZE | WS_MAXIMIZE))
-    {
-        RECT newPos;
-        UINT swFlag = (style & WS_MINIMIZE) ? SW_MINIMIZE : SW_MAXIMIZE;
-
-        swFlag = WINPOS_MinMaximize( hwnd, swFlag, &newPos );
-        swFlag |= SWP_FRAMECHANGED; /* Frame always gets changed */
-        if (!(style & WS_VISIBLE) || (style & WS_CHILD) || GetActiveWindow()) swFlag |= SWP_NOACTIVATE;
-        NtUserSetWindowPos( hwnd, 0, newPos.left, newPos.top, newPos.right - newPos.left,
-                            newPos.bottom - newPos.top, swFlag );
-    }
-
-    /* Notify the parent window only */
-
-    send_parent_notify( hwnd, WM_CREATE );
-    if (!IsWindow( hwnd ))
-    {
-        SetThreadDpiAwarenessContext( context );
-        return 0;
-    }
-
-    if (parent == GetDesktopWindow())
-        PostMessageW( parent, WM_PARENTNOTIFY, WM_CREATE, (LPARAM)hwnd );
-
-    if (cs->style & WS_VISIBLE)
-    {
-        if (cs->style & WS_MAXIMIZE)
-            sw = SW_SHOW;
-        else if (cs->style & WS_MINIMIZE)
-            sw = SW_SHOWMINIMIZED;
-
-        NtUserShowWindow( hwnd, sw );
-        if (cs->dwExStyle & WS_EX_MDICHILD)
-        {
-            SendMessageW(cs->hwndParent, WM_MDIREFRESHMENU, 0, 0);
-            /* ShowWindow won't activate child windows */
-            NtUserSetWindowPos( hwnd, HWND_TOP, 0, 0, 0, 0, SWP_SHOWWINDOW | SWP_NOMOVE | SWP_NOSIZE );
-        }
-    }
-
-    /* Call WH_SHELL hook */
-
-    if (!(GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD) && !GetWindow( hwnd, GW_OWNER ))
-        HOOK_CallHooks( WH_SHELL, HSHELL_WINDOWCREATED, (WPARAM)hwnd, 0, TRUE );
-
-    TRACE("created window %p\n", hwnd);
-    SetThreadDpiAwarenessContext( context );
+    cbtc.lpcs = cs;
+    hwnd = NtUserCreateWindowEx( cs->dwExStyle, &class, NULL, NULL, cs->style, cs->x, cs->y,
+                                 cs->cx, cs->cy, cs->hwndParent, menu, module,
+                                 cs->lpCreateParams, 0, &cbtc, 0, !unicode );
+    if (!hwnd && menu && menu != cs->hMenu) DestroyMenu( menu );
     return hwnd;
-
-failed:
-    NtUserCallHwnd( hwnd, NtUserDestroyWindowHandle );
-    SetThreadDpiAwarenessContext( context );
-    return 0;
 }
 
 

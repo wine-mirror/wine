@@ -39,8 +39,10 @@ struct user_callbacks
     BOOL (WINAPI *pPostMessageW)( HWND, UINT, WPARAM, LPARAM );
     UINT (WINAPI *pSendInput)( UINT count, INPUT *inputs, int size );
     LRESULT (WINAPI *pSendMessageTimeoutW)( HWND, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
+    LRESULT (WINAPI *pSendMessageA)( HWND, UINT, WPARAM, LPARAM );
     LRESULT (WINAPI *pSendMessageW)( HWND, UINT, WPARAM, LPARAM );
     BOOL (WINAPI *pSendNotifyMessageW)( HWND, UINT, WPARAM, LPARAM );
+    BOOL (WINAPI *pSetSystemMenu)( HWND hwnd, HMENU menu );
     BOOL (WINAPI *pShowCaret)( HWND hwnd );
     DWORD (WINAPI *pWaitForInputIdle)( HANDLE, DWORD );
     void (CDECL *free_win_ptr)( struct tagWND *win );
@@ -48,11 +50,13 @@ struct user_callbacks
     void (CDECL *notify_ime)( HWND hwnd, UINT param );
     void (CDECL *register_builtin_classes)(void);
     LRESULT (WINAPI *send_ll_message)( DWORD, DWORD, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
+    BOOL (CDECL *set_menu)( HWND hwnd, HMENU menu );
     void (WINAPI *set_standard_scroll_painted)( HWND hwnd, INT bar, BOOL visible );
     void (CDECL *set_user_driver)( void *, UINT );
     BOOL (CDECL *set_window_pos)( HWND hwnd, HWND insert_after, UINT swp_flags,
                                   const RECT *window_rect, const RECT *client_rect,
                                   const RECT *valid_rects );
+    BOOL (WINAPI *register_imm)( HWND hwnd );
     void (WINAPI *unregister_imm)( HWND hwnd );
 };
 
@@ -69,7 +73,6 @@ struct user_object
 
 HANDLE alloc_user_handle( struct user_object *ptr, unsigned int type ) DECLSPEC_HIDDEN;
 void *get_user_handle_ptr( HANDLE handle, unsigned int type ) DECLSPEC_HIDDEN;
-void set_user_handle_ptr( HANDLE handle, struct user_object *ptr ) DECLSPEC_HIDDEN;
 void release_user_handle_ptr( void *ptr ) DECLSPEC_HIDDEN;
 void *free_user_handle( HANDLE handle, unsigned int type ) DECLSPEC_HIDDEN;
 
@@ -210,18 +213,6 @@ typedef struct tagWINDOWPROC
 
 #define MAX_ATOM_LEN 255
 
-/* FIXME: make it private to dce.c */
-struct dce
-{
-    struct list entry;         /* entry in global DCE list */
-    HDC         hdc;
-    HWND        hwnd;
-    HRGN        clip_rgn;
-    DWORD       flags;
-    LONG        count;         /* usage count; 0 or 1 for cache DCEs, always 1 for window DCEs,
-                                  always >= 1 for class DCEs */
-};
-
 /* Built-in class names (see _Undocumented_Windows_ p.418) */
 #define POPUPMENU_CLASS_ATOM MAKEINTATOM(32768)  /* PopupMenu */
 #define DESKTOP_CLASS_ATOM   MAKEINTATOM(32769)  /* Desktop */
@@ -229,32 +220,12 @@ struct dce
 #define WINSWITCH_CLASS_ATOM MAKEINTATOM(32771)  /* WinSwitch */
 #define ICONTITLE_CLASS_ATOM MAKEINTATOM(32772)  /* IconTitle */
 
-typedef struct tagCLASS
-{
-    struct list      entry;         /* Entry in class list */
-    UINT             style;         /* Class style */
-    BOOL             local;         /* Local class? */
-    WNDPROC          winproc;       /* Window procedure */
-    INT              cbClsExtra;    /* Class extra bytes */
-    INT              cbWndExtra;    /* Window extra bytes */
-    struct client_menu_name menu_name; /* Default menu name */
-    struct dce      *dce;           /* Opaque pointer to class DCE */
-    UINT_PTR         instance;      /* Module that created the task */
-    HICON            hIcon;         /* Default icon */
-    HICON            hIconSm;       /* Default small icon */
-    HICON            hIconSmIntern; /* Internal small icon, derived from hIcon */
-    HCURSOR          hCursor;       /* Default cursor */
-    HBRUSH           hbrBackground; /* Default background */
-    ATOM             atomName;      /* Name of the class */
-    WCHAR            name[MAX_ATOM_LEN + 1];
-    WCHAR           *basename;      /* Base name for redirected classes, pointer within 'name'. */
-} CLASS;
-
 /* class.c */
 WNDPROC alloc_winproc( WNDPROC func, BOOL ansi ) DECLSPEC_HIDDEN;
 WINDOWPROC *get_winproc_ptr( WNDPROC handle ) DECLSPEC_HIDDEN;
 BOOL is_winproc_unicode( WNDPROC proc, BOOL def_val ) DECLSPEC_HIDDEN;
 DWORD get_class_long( HWND hwnd, INT offset, BOOL ansi ) DECLSPEC_HIDDEN;
+WNDPROC get_class_winproc( struct tagCLASS *class ) DECLSPEC_HIDDEN;
 ULONG_PTR get_class_long_ptr( HWND hwnd, INT offset, BOOL ansi ) DECLSPEC_HIDDEN;
 WORD get_class_word( HWND hwnd, INT offset ) DECLSPEC_HIDDEN;
 ATOM get_int_atom_value( UNICODE_STRING *name ) DECLSPEC_HIDDEN;

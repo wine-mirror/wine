@@ -128,9 +128,6 @@ extern BOOL USER_IsExitingThread( DWORD tid ) DECLSPEC_HIDDEN;
 typedef LRESULT (*winproc_callback_t)( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp,
                                        LRESULT *result, void *arg );
 
-extern WNDPROC WINPROC_GetProc( WNDPROC proc, BOOL unicode ) DECLSPEC_HIDDEN;
-extern BOOL WINPROC_IsUnicode( WNDPROC proc, BOOL def_val ) DECLSPEC_HIDDEN;
-
 extern LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg,
                                      WPARAM wParam, LPARAM lParam, LRESULT *result, void *arg,
                                      enum wm_char_mapping mapping ) DECLSPEC_HIDDEN;

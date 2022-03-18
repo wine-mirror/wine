@@ -34,6 +34,17 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
+struct dce
+{
+    struct list entry;         /* entry in global DCE list */
+    HDC         hdc;
+    HWND        hwnd;
+    HRGN        clip_rgn;
+    DWORD       flags;
+    LONG        count;         /* usage count; 0 or 1 for cache DCEs, always 1 for window DCEs,
+                                  always >= 1 for class DCEs */
+};
+
 static struct list dce_list = LIST_INIT(dce_list);
 
 #define DCE_CACHE_SIZE 64

@@ -195,6 +195,11 @@ struct unix_funcs
                                                      DWORD flags, void *lparam );
     BOOL     (WINAPI *pNtUserClipCursor)( const RECT *rect );
     INT      (WINAPI *pNtUserCountClipboardFormats)(void);
+    HWND     (WINAPI *pNtUserCreateWindowEx)( DWORD ex_style, UNICODE_STRING *class_name,
+                                              UNICODE_STRING *version, UNICODE_STRING *window_name,
+                                              DWORD style, INT x, INT y, INT width, INT height,
+                                              HWND parent, HMENU menu, HINSTANCE instance, void *params,
+                                              DWORD flags, CBT_CREATEWNDW *cbtc, DWORD unk, BOOL ansi );
     HDWP     (WINAPI *pNtUserDeferWindowPosAndBand)( HDWP hdwp, HWND hwnd, HWND after,
                                                      INT x, INT y, INT cx, INT cy,
                                                      UINT flags, UINT unk1, UINT unk2 );
@@ -300,6 +305,7 @@ extern ULONG_PTR set_icon_param( HICON handle, ULONG_PTR param ) DECLSPEC_HIDDEN
 
 /* dce.c */
 extern struct window_surface dummy_surface DECLSPEC_HIDDEN;
+extern void erase_now( HWND hwnd, UINT rdw_flags ) DECLSPEC_HIDDEN;
 extern void flush_window_surfaces( BOOL idle ) DECLSPEC_HIDDEN;
 extern void register_window_surface( struct window_surface *old,
                                      struct window_surface *new ) DECLSPEC_HIDDEN;
@@ -336,6 +342,7 @@ extern RECT get_primary_monitor_rect( UINT dpi ) DECLSPEC_HIDDEN;
 extern UINT get_system_dpi(void) DECLSPEC_HIDDEN;
 extern int get_system_metrics( int index ) DECLSPEC_HIDDEN;
 extern UINT get_thread_dpi(void) DECLSPEC_HIDDEN;
+extern DPI_AWARENESS get_thread_dpi_awareness(void) DECLSPEC_HIDDEN;
 extern RECT get_virtual_screen_rect( UINT dpi ) DECLSPEC_HIDDEN;
 extern BOOL is_exiting_thread( DWORD tid ) DECLSPEC_HIDDEN;
 extern POINT map_dpi_point( POINT pt, UINT dpi_from, UINT dpi_to ) DECLSPEC_HIDDEN;
@@ -347,9 +354,6 @@ extern DPI_AWARENESS_CONTEXT set_thread_dpi_awareness_context( DPI_AWARENESS_CON
 extern void user_lock(void) DECLSPEC_HIDDEN;
 extern void user_unlock(void) DECLSPEC_HIDDEN;
 extern void user_check_not_lock(void) DECLSPEC_HIDDEN;
-
-/* windc.c */
-extern void erase_now( HWND hwnd, UINT rdw_flags ) DECLSPEC_HIDDEN;
 
 /* window.c */
 struct tagWND;

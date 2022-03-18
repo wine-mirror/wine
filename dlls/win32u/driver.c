@@ -1132,6 +1132,11 @@ static BOOL CDECL loaderdrv_CreateDesktopWindow( HWND hwnd )
     return load_driver()->pCreateDesktopWindow( hwnd );
 }
 
+static BOOL CDECL loaderdrv_CreateWindow( HWND hwnd )
+{
+    return load_driver()->pCreateWindow( hwnd );
+}
+
 static void CDECL loaderdrv_GetDC( HDC hdc, HWND hwnd, HWND top_win, const RECT *win_rect,
                                    const RECT *top_rect, DWORD flags )
 {
@@ -1190,6 +1195,7 @@ static const struct user_driver_funcs lazy_load_driver =
     .pUpdateDisplayDevices = loaderdrv_UpdateDisplayDevices,
     /* windowing functions */
     .pCreateDesktopWindow = loaderdrv_CreateDesktopWindow,
+    .pCreateWindow = loaderdrv_CreateWindow,
     .pDestroyWindow = nulldrv_DestroyWindow,
     .pFlashWindowEx = loaderdrv_FlashWindowEx,
     .pGetDC = loaderdrv_GetDC,

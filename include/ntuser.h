@@ -139,7 +139,6 @@ enum
     NtUserGetHandlePtr,
     NtUserInvalidateDCE,
     NtUserRegisterWindowSurface,
-    NtUserSetHandlePtr,
 };
 
 /* NtUserCallHwnd codes, not compatible with Windows */
@@ -154,8 +153,6 @@ enum
     NtUserIsWindowUnicode,
     NtUserIsWindowVisible,
     /* temporary exports */
-    NtUserCreateDesktopWindow,
-    NtUserDestroyWindowHandle,
     NtUserGetDummySurface,
 };
 
@@ -193,6 +190,7 @@ enum
 /* NtUserMessageCall codes */
 enum
 {
+    FNID_SENDMESSAGE        = 0x02b1,
     FNID_SENDNOTIFYMESSAGE  = 0x02b7,
 };
 
@@ -298,6 +296,11 @@ HACCEL  WINAPI NtUserCreateAcceleratorTable( ACCEL *table, INT count );
 HDESK   WINAPI NtUserCreateDesktopEx( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *device,
                                       DEVMODEW *devmode, DWORD flags, ACCESS_MASK access,
                                       ULONG heap_size );
+HWND    WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
+                                     UNICODE_STRING *version, UNICODE_STRING *window_name,
+                                     DWORD style, INT x, INT y, INT cx, INT cy,
+                                     HWND parent, HMENU menu, HINSTANCE instance, void *params,
+                                     DWORD flags, CBT_CREATEWNDW *cbtc, DWORD unk, BOOL ansi );
 HWINSTA WINAPI NtUserCreateWindowStation( OBJECT_ATTRIBUTES *attr, ACCESS_MASK mask, ULONG arg3,
                                           ULONG arg4, ULONG arg5, ULONG arg6, ULONG arg7 );
 HDWP    WINAPI NtUserDeferWindowPosAndBand( HDWP hdwp, HWND hwnd, HWND after, INT x, INT y,
@@ -408,6 +411,7 @@ BOOL    WINAPI NtUserSetProcessDpiAwarenessContext( ULONG awareness, ULONG unkno
 BOOL    WINAPI NtUserSetProcessWindowStation( HWINSTA handle );
 BOOL    WINAPI NtUserSetProp( HWND hwnd, const WCHAR *str, HANDLE handle );
 BOOL    WINAPI NtUserSetSysColors( INT count, const INT *colors, const COLORREF *values );
+BOOL    WINAPI NtUserSetSystemMenu( HWND hwnd, HMENU menu );
 UINT_PTR WINAPI NtUserSetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc );
 BOOL    WINAPI NtUserSetThreadDesktop( HDESK handle );
 UINT_PTR WINAPI NtUserSetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc, ULONG tolerance );
