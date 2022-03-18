@@ -48,8 +48,6 @@ static HRESULT MultiLanguage_create(IUnknown *pUnkOuter, LPVOID *ppObj);
 static HRESULT MLangConvertCharset_create(IUnknown *outer, void **obj);
 static HRESULT EnumRfc1766_create(LANGID LangId, IEnumRfc1766 **ppEnum);
 
-static DWORD MLANG_tls_index; /* to store various per thead data */
-
 /* FIXME:
  * Under what circumstances HKEY_CLASSES_ROOT\MIME\Database\Codepage and
  * HKEY_CLASSES_ROOT\MIME\Database\Charset are used?
@@ -928,21 +926,6 @@ static void LockModule(void)
 static void UnlockModule(void)
 {
     InterlockedDecrement(&dll_count);
-}
-
-BOOL WINAPI DllMain(HINSTANCE hInstDLL, DWORD fdwReason, LPVOID lpv)
-{
-    switch(fdwReason) {
-        case DLL_PROCESS_ATTACH:
-            MLANG_tls_index = TlsAlloc();
-            DisableThreadLibraryCalls(hInstDLL);
-	    break;
-	case DLL_PROCESS_DETACH:
-            if (lpv) break;
-            TlsFree(MLANG_tls_index);
-	    break;
-    }
-    return TRUE;
 }
 
 HRESULT WINAPI ConvertINetMultiByteToUnicode(
@@ -2403,26 +2386,24 @@ struct enum_locales_data
     DWORD total, allocated;
 };
 
-static BOOL CALLBACK enum_locales_proc(LPWSTR locale)
+static BOOL CALLBACK enum_locales_proc(LPWSTR locale, DWORD flags, LPARAM lparam)
 {
-    WCHAR *end;
-    struct enum_locales_data *data = TlsGetValue(MLANG_tls_index);
+    struct enum_locales_data *data = (struct enum_locales_data *)lparam;
     RFC1766INFO *info;
 
     TRACE("%s\n", debugstr_w(locale));
 
     if (data->total >= data->allocated)
     {
-        data->allocated += 32;
+        data->allocated *= 2;
         data->info = HeapReAlloc(GetProcessHeap(), 0, data->info, data->allocated * sizeof(RFC1766INFO));
         if (!data->info) return FALSE;
     }
 
     info = &data->info[data->total];
 
-    info->lcid = wcstol(locale, &end, 16);
-    if (*end) /* invalid number */
-        return FALSE;
+    info->lcid = LocaleNameToLCID( locale, 0 );
+    if (info->lcid == LOCALE_CUSTOM_UNSPECIFIED) return TRUE;
 
     info->wszRfc1766[0] = 0;
     lcid_to_rfc1766W( info->lcid, info->wszRfc1766, MAX_RFC1766_NAME );
@@ -2458,9 +2439,7 @@ static HRESULT EnumRfc1766_create(LANGID LangId, IEnumRfc1766 **ppEnum)
         return E_OUTOFMEMORY;
     }
 
-    TlsSetValue(MLANG_tls_index, &data);
-    EnumSystemLocalesW(enum_locales_proc, 0/*LOCALE_SUPPORTED*/);
-    TlsSetValue(MLANG_tls_index, NULL);
+    EnumSystemLocalesEx(enum_locales_proc, LOCALE_WINDOWS, (LPARAM)&data, NULL);
 
     TRACE("enumerated %ld rfc1766 structures\n", data.total);
 
