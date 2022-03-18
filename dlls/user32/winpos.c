@@ -31,19 +31,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
-#define SWP_AGG_NOGEOMETRYCHANGE \
-    (SWP_NOSIZE | SWP_NOCLIENTSIZE | SWP_NOZORDER)
-#define SWP_AGG_NOPOSCHANGE \
-    (SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE | SWP_NOZORDER)
-#define SWP_AGG_STATUSFLAGS \
-    (SWP_AGG_NOPOSCHANGE | SWP_FRAMECHANGED | SWP_HIDEWINDOW | SWP_SHOWWINDOW)
-#define SWP_AGG_NOCLIENTCHANGE \
-        (SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE)
-
-#define HAS_DLGFRAME(style,exStyle) \
-    (((exStyle) & WS_EX_DLGMODALFRAME) || \
-     (((style) & WS_DLGFRAME) && !((style) & WS_BORDER)))
-
 #define HAS_THICKFRAME(style) \
     (((style) & WS_THICKFRAME) && \
      !(((style) & (WS_DLGFRAME|WS_BORDER)) == WS_DLGFRAME))
@@ -551,78 +538,6 @@ MINMAXINFO WINPOS_GetMinMaxInfo( HWND hwnd )
     return info;
 }
 
-
-static POINT get_first_minimized_child_pos( const RECT *parent, const MINIMIZEDMETRICS *mm,
-                                            int width, int height )
-{
-    POINT ret;
-
-    if (mm->iArrange & ARW_STARTRIGHT)
-        ret.x = parent->right - mm->iHorzGap - width;
-    else
-        ret.x = parent->left + mm->iHorzGap;
-    if (mm->iArrange & ARW_STARTTOP)
-        ret.y = parent->top + mm->iVertGap;
-    else
-        ret.y = parent->bottom - mm->iVertGap - height;
-
-    return ret;
-}
-
-static void get_next_minimized_child_pos( const RECT *parent, const MINIMIZEDMETRICS *mm,
-                                          int width, int height, POINT *pos )
-{
-    BOOL next;
-
-    if (mm->iArrange & ARW_UP) /* == ARW_DOWN */
-    {
-        if (mm->iArrange & ARW_STARTTOP)
-        {
-            pos->y += height + mm->iVertGap;
-            if ((next = pos->y + height > parent->bottom))
-                pos->y = parent->top + mm->iVertGap;
-        }
-        else
-        {
-            pos->y -= height + mm->iVertGap;
-            if ((next = pos->y < parent->top))
-                pos->y = parent->bottom - mm->iVertGap - height;
-        }
-
-        if (next)
-        {
-            if (mm->iArrange & ARW_STARTRIGHT)
-                pos->x -= width + mm->iHorzGap;
-            else
-                pos->x += width + mm->iHorzGap;
-        }
-    }
-    else
-    {
-        if (mm->iArrange & ARW_STARTRIGHT)
-        {
-            pos->x -= width + mm->iHorzGap;
-            if ((next = pos->x < parent->left))
-                pos->x = parent->right - mm->iHorzGap - width;
-        }
-        else
-        {
-            pos->x += width + mm->iHorzGap;
-            if ((next = pos->x + width > parent->right))
-                pos->x = parent->left + mm->iHorzGap;
-        }
-
-        if (next)
-        {
-            if (mm->iArrange & ARW_STARTTOP)
-                pos->y += height + mm->iVertGap;
-            else
-                pos->y -= height + mm->iVertGap;
-        }
-    }
-}
-
-
 /***********************************************************************
  *		GetInternalWindowPos (USER32.@)
  */
@@ -992,43 +907,7 @@ BOOL WINAPI EndDeferWindowPos( HDWP hdwp )
  */
 UINT WINAPI ArrangeIconicWindows( HWND parent )
 {
-    int width, height, count = 0;
-    RECT rectParent;
-    HWND hwndChild;
-    POINT pt;
-    MINIMIZEDMETRICS metrics;
-
-    metrics.cbSize = sizeof(metrics);
-    SystemParametersInfoW( SPI_GETMINIMIZEDMETRICS, sizeof(metrics), &metrics, 0 );
-    width = GetSystemMetrics( SM_CXMINIMIZED );
-    height = GetSystemMetrics( SM_CYMINIMIZED );
-
-    if (parent == GetDesktopWindow())
-    {
-        MONITORINFO mon_info;
-        HMONITOR monitor = MonitorFromWindow( 0, MONITOR_DEFAULTTOPRIMARY );
-
-        mon_info.cbSize = sizeof( mon_info );
-        GetMonitorInfoW( monitor, &mon_info );
-        rectParent = mon_info.rcWork;
-    }
-    else GetClientRect( parent, &rectParent );
-
-    pt = get_first_minimized_child_pos( &rectParent, &metrics, width, height );
-
-    hwndChild = GetWindow( parent, GW_CHILD );
-    while (hwndChild)
-    {
-        if( IsIconic( hwndChild ) )
-        {
-            NtUserSetWindowPos( hwndChild, 0, pt.x, pt.y, 0, 0,
-                                SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
-            get_next_minimized_child_pos( &rectParent, &metrics, width, height, &pt );
-            count++;
-        }
-        hwndChild = GetWindow( hwndChild, GW_HWNDNEXT );
-    }
-    return count;
+    return NtUserCallHwnd( parent, NtUserArrangeIconicWindows );
 }
 
 

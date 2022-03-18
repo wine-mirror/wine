@@ -142,6 +142,7 @@ enum
 /* NtUserCallHwnd codes, not compatible with Windows */
 enum
 {
+    NtUserArrangeIconicWindows,
     NtUserGetDpiForWindow,
     NtUserGetParent,
     NtUserGetWindowContextHelpId,

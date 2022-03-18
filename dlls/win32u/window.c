@@ -3830,6 +3830,48 @@ static UINT window_min_maximize( HWND hwnd, UINT cmd, RECT *rect )
     return swp_flags;
 }
 
+/* see ArrangeIconicWindows */
+static UINT arrange_iconic_windows( HWND parent )
+{
+    int width, height, count = 0;
+    MINIMIZEDMETRICS metrics;
+    RECT parent_rect;
+    HWND child;
+    POINT pt;
+
+    metrics.cbSize = sizeof(metrics);
+    NtUserSystemParametersInfo( SPI_GETMINIMIZEDMETRICS, sizeof(metrics), &metrics, 0 );
+    width  = get_system_metrics( SM_CXMINIMIZED );
+    height = get_system_metrics( SM_CYMINIMIZED );
+
+    if (parent == get_desktop_window())
+    {
+        MONITORINFO mon_info;
+        HMONITOR monitor = monitor_from_window( 0, MONITOR_DEFAULTTOPRIMARY, get_thread_dpi() );
+
+        mon_info.cbSize = sizeof( mon_info );
+        get_monitor_info( monitor, &mon_info );
+        parent_rect = mon_info.rcWork;
+    }
+    else get_client_rect( parent, &parent_rect );
+
+    pt = get_first_minimized_child_pos( &parent_rect, &metrics, width, height );
+
+    child = get_window_relative( parent, GW_CHILD );
+    while (child)
+    {
+        if (is_iconic( child ))
+        {
+            NtUserSetWindowPos( child, 0, pt.x, pt.y, 0, 0,
+                                SWP_NOSIZE | SWP_NOZORDER | SWP_NOACTIVATE );
+            get_next_minimized_child_pos( &parent_rect, &metrics, width, height, &pt );
+            count++;
+        }
+        child = get_window_relative( child, GW_HWNDNEXT );
+    }
+    return count;
+}
+
 /*******************************************************************
  *           update_window_state
  *
@@ -4905,6 +4947,8 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
 {
     switch (code)
     {
+    case NtUserArrangeIconicWindows:
+        return arrange_iconic_windows( hwnd );
     case NtUserGetDpiForWindow:
         return get_dpi_for_window( hwnd );
     case NtUserGetParent:
