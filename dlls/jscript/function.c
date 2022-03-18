@@ -599,7 +599,7 @@ static HRESULT NativeFunction_call(script_ctx_t *ctx, FunctionInstance *func, ID
     if(this_disp)
         vthis = jsval_disp(this_disp);
     else
-        vthis = jsval_disp(lookup_global_host(ctx));
+        vthis = jsval_null();
 
     return function->proc(ctx, vthis, flags & ~DISPATCH_JSCRIPT_INTERNAL_MASK, argc, argv, r);
 }
