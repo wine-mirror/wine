@@ -56,7 +56,7 @@ static ULONG STDMETHODCALLTYPE dxgi_surface_inner_AddRef(IUnknown *iface)
     struct dxgi_surface *surface = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedIncrement(&surface->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", surface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", surface, refcount);
 
     return refcount;
 }
@@ -66,7 +66,7 @@ static ULONG STDMETHODCALLTYPE dxgi_surface_inner_Release(IUnknown *iface)
     struct dxgi_surface *surface = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedDecrement(&surface->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", surface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", surface, refcount);
 
     if (!refcount)
     {

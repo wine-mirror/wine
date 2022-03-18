@@ -146,7 +146,7 @@ static HRESULT dxgi_output_get_display_mode_list(struct dxgi_output *output,
         if (FAILED(hr = wined3d_output_get_mode(output->wined3d_output, wined3d_format,
                 WINED3D_SCANLINE_ORDERING_UNKNOWN, i, &mode)))
         {
-            WARN("Failed to get output mode %u, hr %#x.\n", i, hr);
+            WARN("Failed to get output mode %u, hr %#lx.\n", i, hr);
             wined3d_mutex_unlock();
             return hr;
         }
@@ -220,7 +220,7 @@ static ULONG STDMETHODCALLTYPE dxgi_output_AddRef(IDXGIOutput6 *iface)
     struct dxgi_output *output = impl_from_IDXGIOutput6(iface);
     ULONG refcount = InterlockedIncrement(&output->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", output, refcount);
+    TRACE("%p increasing refcount to %lu.\n", output, refcount);
 
     return refcount;
 }
@@ -230,7 +230,7 @@ static ULONG STDMETHODCALLTYPE dxgi_output_Release(IDXGIOutput6 *iface)
     struct dxgi_output *output = impl_from_IDXGIOutput6(iface);
     ULONG refcount = InterlockedDecrement(&output->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", output, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", output, refcount);
 
     if (!refcount)
     {
@@ -303,7 +303,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDesc(IDXGIOutput6 *iface, DXGI_O
     hr = wined3d_output_get_desc(output->wined3d_output, &wined3d_desc);
     if (FAILED(hr))
     {
-        WARN("Failed to get output desc, hr %#x.\n", hr);
+        WARN("Failed to get output desc, hr %#lx.\n", hr);
         wined3d_mutex_unlock();
         return hr;
     }
@@ -311,7 +311,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDesc(IDXGIOutput6 *iface, DXGI_O
     hr = wined3d_output_get_display_mode(output->wined3d_output, &mode, &rotation);
     if (FAILED(hr))
     {
-        WARN("Failed to get output display mode, hr %#x.\n", hr);
+        WARN("Failed to get output display mode, hr %#lx.\n", hr);
         wined3d_mutex_unlock();
         return hr;
     }
@@ -610,7 +610,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDesc1(IDXGIOutput6 *iface,
     hr = wined3d_output_get_desc(output->wined3d_output, &wined3d_desc);
     if (FAILED(hr))
     {
-        WARN("Failed to get output desc, hr %#x.\n", hr);
+        WARN("Failed to get output desc, hr %#lx.\n", hr);
         wined3d_mutex_unlock();
         return hr;
     }
@@ -618,7 +618,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDesc1(IDXGIOutput6 *iface,
     hr = wined3d_output_get_display_mode(output->wined3d_output, &mode, &rotation);
     if (FAILED(hr))
     {
-        WARN("Failed to get output display mode, hr %#x.\n", hr);
+        WARN("Failed to get output display mode, hr %#lx.\n", hr);
         wined3d_mutex_unlock();
         return hr;
     }
@@ -626,7 +626,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_output_GetDesc1(IDXGIOutput6 *iface,
 
     if (FAILED(hr))
     {
-        WARN("Failed to get output desc, hr %#x.\n", hr);
+        WARN("Failed to get output desc, hr %#lx.\n", hr);
         return hr;
     }
 

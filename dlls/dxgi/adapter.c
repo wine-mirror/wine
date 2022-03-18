@@ -55,7 +55,7 @@ static ULONG STDMETHODCALLTYPE dxgi_adapter_AddRef(IWineDXGIAdapter *iface)
     struct dxgi_adapter *adapter = impl_from_IWineDXGIAdapter(iface);
     ULONG refcount = InterlockedIncrement(&adapter->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -65,7 +65,7 @@ static ULONG STDMETHODCALLTYPE dxgi_adapter_Release(IWineDXGIAdapter *iface)
     struct dxgi_adapter *adapter = impl_from_IWineDXGIAdapter(iface);
     ULONG refcount = InterlockedDecrement(&adapter->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -165,7 +165,7 @@ static HRESULT dxgi_adapter_get_desc(struct dxgi_adapter *adapter, DXGI_ADAPTER_
     if (!MultiByteToWideChar(CP_ACP, 0, description, -1, desc->Description, ARRAY_SIZE(description)))
     {
         DWORD err = GetLastError();
-        ERR("Failed to translate description %s (%#x).\n", debugstr_a(description), err);
+        ERR("Failed to translate description %s (%#lx).\n", debugstr_a(description), err);
         hr = E_FAIL;
     }
 
@@ -285,7 +285,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_RegisterHardwareContentProtectionT
 static void STDMETHODCALLTYPE dxgi_adapter_UnregisterHardwareContentProtectionTeardownStatus(
         IWineDXGIAdapter *iface, DWORD cookie)
 {
-    FIXME("iface %p, cookie %#x stub!\n", iface, cookie);
+    FIXME("iface %p, cookie %#lx stub!\n", iface, cookie);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_QueryVideoMemoryInfo(IWineDXGIAdapter *iface,
@@ -354,7 +354,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_RegisterVideoMemoryBudgetChangeNot
 static void STDMETHODCALLTYPE dxgi_adapter_UnregisterVideoMemoryBudgetChangeNotification(
         IWineDXGIAdapter *iface, DWORD cookie)
 {
-    FIXME("iface %p, cookie %#x stub!\n", iface, cookie);
+    FIXME("iface %p, cookie %#lx stub!\n", iface, cookie);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetDesc3(IWineDXGIAdapter *iface, DXGI_ADAPTER_DESC3 *desc)
@@ -431,7 +431,7 @@ struct dxgi_adapter *unsafe_impl_from_IDXGIAdapter(IDXGIAdapter *iface)
         return NULL;
     if (FAILED(hr = IDXGIAdapter_QueryInterface(iface, &IID_IWineDXGIAdapter, (void **)&wine_adapter)))
     {
-        ERR("Failed to get IWineDXGIAdapter interface, hr %#x.\n", hr);
+        ERR("Failed to get IWineDXGIAdapter interface, hr %#lx.\n", hr);
         return NULL;
     }
     assert(wine_adapter->lpVtbl == &dxgi_adapter_vtbl);

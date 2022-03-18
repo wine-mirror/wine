@@ -71,7 +71,7 @@ static ULONG STDMETHODCALLTYPE dxgi_device_AddRef(IWineDXGIDevice *iface)
     struct dxgi_device *device = impl_from_IWineDXGIDevice(iface);
     ULONG refcount = InterlockedIncrement(&device->refcount);
 
-    TRACE("%p increasing refcount to %u\n", device, refcount);
+    TRACE("%p increasing refcount to %lu\n", device, refcount);
 
     return refcount;
 }
@@ -81,7 +81,7 @@ static ULONG STDMETHODCALLTYPE dxgi_device_Release(IWineDXGIDevice *iface)
     struct dxgi_device *device = impl_from_IWineDXGIDevice(iface);
     ULONG refcount = InterlockedDecrement(&device->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", device, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", device, refcount);
 
     if (!refcount)
     {
@@ -141,7 +141,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_GetParent(IWineDXGIDevice *iface, R
     hr = IWineDXGIDevice_GetAdapter(iface, &adapter);
     if (FAILED(hr))
     {
-        ERR("Failed to get adapter, hr %#x.\n", hr);
+        ERR("Failed to get adapter, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -209,7 +209,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_CreateSurface(IWineDXGIDevice *ifac
         if (FAILED(hr = device_parent->ops->create_swapchain_texture(device_parent,
                 NULL, &surface_desc, 0, &wined3d_texture)))
         {
-            ERR("Failed to create surface, hr %#x.\n", hr);
+            ERR("Failed to create surface, hr %#lx.\n", hr);
             goto fail;
         }
 
@@ -344,7 +344,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_device_create_surface(IWineDXGIDevice *ifa
 
     if (FAILED(hr = dxgi_surface_init(object, (IDXGIDevice *)iface, outer, wined3d_texture)))
     {
-        WARN("Failed to initialize surface, hr %#x.\n", hr);
+        WARN("Failed to initialize surface, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -440,7 +440,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_factory_create_swapchain(IWineDX
 
     if (FAILED(hr = dxgi_get_output_from_window(&dxgi_factory->IWineDXGIFactory_iface, window, &containing_output)))
     {
-        WARN("Failed to get output from window %p, hr %#x.\n", window, hr);
+        WARN("Failed to get output from window %p, hr %#lx.\n", window, hr);
         return hr;
     }
 
@@ -458,7 +458,7 @@ static HRESULT STDMETHODCALLTYPE dxgi_swapchain_factory_create_swapchain(IWineDX
 
     if (FAILED(hr = d3d11_swapchain_init(object, device, &wined3d_desc)))
     {
-        WARN("Failed to initialise swapchain, hr %#x.\n", hr);
+        WARN("Failed to initialise swapchain, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -517,7 +517,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
     if (FAILED(hr = layer->create(layer->id, &layer_base, 0,
             device, &IID_IUnknown, (void **)&device->child_layer)))
     {
-        WARN("Failed to create device, returning %#x.\n", hr);
+        WARN("Failed to create device, returning %#lx.\n", hr);
         wined3d_private_store_cleanup(&device->private_store);
         wined3d_mutex_unlock();
         return hr;
@@ -540,7 +540,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
             (const enum wined3d_feature_level *)feature_levels, level_count,
             wined3d_device_parent, &device->wined3d_device)))
     {
-        WARN("Failed to create a wined3d device, returning %#x.\n", hr);
+        WARN("Failed to create a wined3d device, returning %#lx.\n", hr);
         IUnknown_Release(device->child_layer);
         wined3d_private_store_cleanup(&device->private_store);
         wined3d_mutex_unlock();
@@ -579,7 +579,7 @@ HRESULT dxgi_device_init(struct dxgi_device *device, struct dxgi_device_layer *l
 
     if (FAILED(hr = d3d11_swapchain_init(swapchain, device, &swapchain_desc)))
     {
-        WARN("Failed to initialize swapchain, hr %#x.\n", hr);
+        WARN("Failed to initialize swapchain, hr %#lx.\n", hr);
         heap_free(swapchain);
         wined3d_device_decref(device->wined3d_device);
         IUnknown_Release(device->child_layer);
