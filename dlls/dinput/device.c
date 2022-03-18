@@ -1009,6 +1009,8 @@ static HRESULT check_property( struct dinput_device *impl, const GUID *guid, con
         switch (LOWORD( guid ))
         {
         case (DWORD_PTR)DIPROP_AUTOCENTER:
+            if (impl->status == STATUS_ACQUIRED && !is_exclusively_acquired( impl )) return DIERR_ACQUIRED;
+            break;
         case (DWORD_PTR)DIPROP_AXISMODE:
         case (DWORD_PTR)DIPROP_BUFFERSIZE:
         case (DWORD_PTR)DIPROP_PHYSICALRANGE:

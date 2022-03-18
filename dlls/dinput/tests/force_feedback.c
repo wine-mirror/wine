@@ -2924,6 +2924,9 @@ static BOOL test_force_feedback_joystick( DWORD version )
     ok( hr == DI_OK, "Unacquire returned: %#lx\n", hr );
     hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_BACKGROUND | DISCL_EXCLUSIVE );
     ok( hr == DI_OK, "SetCooperativeLevel returned: %#lx\n", hr );
+    prop_dword.dwData = DIPROPAUTOCENTER_ON;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_AUTOCENTER, &prop_dword.diph );
+    ok( hr == DI_OK, "SetProperty DIPROP_AUTOCENTER returned %#lx\n", hr );
 
     set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IDirectInputDevice8_Acquire( device );
