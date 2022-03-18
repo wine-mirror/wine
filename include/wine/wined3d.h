@@ -1774,7 +1774,7 @@ struct wined3d_swapchain_desc
     unsigned int backbuffer_count;
     unsigned int backbuffer_bind_flags;
     enum wined3d_multisample_type multisample_type;
-    DWORD multisample_quality;
+    unsigned int multisample_quality;
     enum wined3d_swap_effect swap_effect;
     HWND device_window;
     BOOL windowed;
