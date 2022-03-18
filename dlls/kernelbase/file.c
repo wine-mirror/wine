@@ -3621,7 +3621,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetFilePointerEx( HANDLE file, LARGE_INTEGER dista
     LONGLONG pos;
     IO_STATUS_BLOCK io;
     FILE_POSITION_INFORMATION info;
-    FILE_END_OF_FILE_INFORMATION eof;
+    FILE_STANDARD_INFORMATION eof;
 
     switch(method)
     {
@@ -3634,7 +3634,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetFilePointerEx( HANDLE file, LARGE_INTEGER dista
         pos = info.CurrentByteOffset.QuadPart + distance.QuadPart;
         break;
     case FILE_END:
-        if (NtQueryInformationFile( file, &io, &eof, sizeof(eof), FileEndOfFileInformation ))
+        if (NtQueryInformationFile( file, &io, &eof, sizeof(eof), FileStandardInformation ))
             goto error;
         pos = eof.EndOfFile.QuadPart + distance.QuadPart;
         break;
