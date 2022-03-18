@@ -752,12 +752,13 @@ static void check_device_effects_state(struct sdl_device *impl)
     unsigned int i, ret;
 
     if (!impl->sdl_haptic) return;
-    if (!(impl->effect_support & SDL_HAPTIC_STATUS)) return;
+    if (!(impl->effect_support & EFFECT_SUPPORT_PHYSICAL)) return;
 
     for (i = 0; i < ARRAY_SIZE(impl->effect_ids); ++i)
     {
         if (impl->effect_ids[i] == -1) continue;
-        ret = pSDL_HapticGetEffectStatus(impl->sdl_haptic, impl->effect_ids[i]);
+        if (!(impl->effect_support & SDL_HAPTIC_STATUS)) ret = 1;
+        else ret = pSDL_HapticGetEffectStatus(impl->sdl_haptic, impl->effect_ids[i]);
         if (impl->effect_state[i] == ret) continue;
         impl->effect_state[i] = ret;
         hid_device_set_effect_state(iface, i, effect_flags | (ret == 1 ? EFFECT_STATE_EFFECT_PLAYING : 0));
