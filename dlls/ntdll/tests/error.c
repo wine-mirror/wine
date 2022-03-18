@@ -18,6 +18,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -75,7 +76,7 @@ static void cmp_call(NTSTATUS win_nt, ULONG win32, const char* message)
 
     err = pRtlNtStatusToDosError(win_nt);
     ok(err == win32,
-       "%s (%x): got %u, expected %u\n",
+       "%s (%lx): got %lu, expected %lu\n",
             message, win_nt, err, win32);
 }
 
@@ -86,7 +87,7 @@ static void cmp_call2(NTSTATUS win_nt, ULONG win32, const char* message)
     err = pRtlNtStatusToDosError(win_nt);
     ok(err == win32 ||
        (!strict && err == ERROR_MR_MID_NOT_FOUND),
-       "%s (%x): got %u, expected %u (or MID_NOT_FOUND)\n",
+       "%s (%lx): got %lu, expected %lu (or MID_NOT_FOUND)\n",
        message, win_nt, err, win32);
 }
 
@@ -96,7 +97,7 @@ static void cmp_call3(NTSTATUS win_nt, ULONG win32_1, ULONG win32_2, const char*
 
     err = pRtlNtStatusToDosError(win_nt);
     ok(err == win32_1 || (!strict && err == win32_2),
-       "%s (%x): got %u, expected %u or %u\n",
+       "%s (%lx): got %lu, expected %lu or %lu\n",
             message, win_nt, err, win32_1, win32_2);
 }
 
@@ -107,7 +108,7 @@ static void cmp_call4(NTSTATUS win_nt, ULONG win32_1, ULONG win32_2, const char*
     err = pRtlNtStatusToDosError(win_nt);
     ok(err == win32_1 ||
        (!strict && (err == win32_2 || err == ERROR_MR_MID_NOT_FOUND)),
-       "%s (%x): got %u, expected %u or %u\n",
+       "%s (%lx): got %lu, expected %lu or %lu\n",
             message, win_nt, err, win32_1, win32_2);
 }
 
