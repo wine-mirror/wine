@@ -807,10 +807,8 @@ sync_test("toString", function() {
     tmp = Object.prototype.toString.call(null);
     ok(tmp === "[object Null]", "toString.call(null) = " + tmp);
     tmp = Object.prototype.toString.call(undefined);
-    todo_wine.
     ok(tmp === "[object Undefined]", "toString.call(undefined) = " + tmp);
     tmp = Object.prototype.toString.call();
-    todo_wine.
     ok(tmp === "[object Undefined]", "toString.call() = " + tmp);
 
     obj = Object.create(null);
