@@ -89,13 +89,13 @@ static HRESULT d3d12_get_adapter(IWineDXGIAdapter **wine_adapter, IUnknown *adap
     {
         if (FAILED(hr = CreateDXGIFactory2(0, &IID_IDXGIFactory4, (void **)&factory)))
         {
-            WARN("Failed to create DXGI factory, hr %#x.\n", hr);
+            WARN("Failed to create DXGI factory, hr %#lx.\n", hr);
             goto done;
         }
 
         if (FAILED(hr = IDXGIFactory4_EnumAdapters(factory, 0, &dxgi_adapter)))
         {
-            WARN("Failed to enumerate primary adapter, hr %#x.\n", hr);
+            WARN("Failed to enumerate primary adapter, hr %#lx.\n", hr);
             goto done;
         }
 
@@ -103,7 +103,7 @@ static HRESULT d3d12_get_adapter(IWineDXGIAdapter **wine_adapter, IUnknown *adap
     }
 
     if (FAILED(hr = IUnknown_QueryInterface(adapter, &IID_IWineDXGIAdapter, (void **)wine_adapter)))
-        WARN("Invalid adapter %p, hr %#x.\n", adapter, hr);
+        WARN("Invalid adapter %p, hr %#lx.\n", adapter, hr);
 
 done:
     if (dxgi_adapter)
@@ -284,7 +284,7 @@ HRESULT WINAPI D3D12CreateDevice(IUnknown *adapter, D3D_FEATURE_LEVEL minimum_fe
 
     if (FAILED(hr = IWineDXGIAdapter_get_adapter_info(wine_adapter, &adapter_info)))
     {
-        WARN("Failed to get adapter info, hr %#x.\n", hr);
+        WARN("Failed to get adapter info, hr %#lx.\n", hr);
         goto done;
     }
 
@@ -305,7 +305,7 @@ HRESULT WINAPI D3D12CreateDevice(IUnknown *adapter, D3D_FEATURE_LEVEL minimum_fe
 
     if (FAILED(hr = vkd3d_create_instance(&instance_create_info, &instance)))
     {
-        WARN("Failed to create vkd3d instance, hr %#x.\n", hr);
+        WARN("Failed to create vkd3d instance, hr %#lx.\n", hr);
         goto done;
     }
 
@@ -332,7 +332,7 @@ done:
 HRESULT WINAPI D3D12CreateRootSignatureDeserializer(const void *data, SIZE_T data_size,
         REFIID iid, void **deserializer)
 {
-    TRACE("data %p, data_size %lu, iid %s, deserializer %p.\n",
+    TRACE("data %p, data_size %Iu, iid %s, deserializer %p.\n",
             data, data_size, debugstr_guid(iid), deserializer);
 
     return vkd3d_create_root_signature_deserializer(data, data_size, iid, deserializer);
@@ -341,7 +341,7 @@ HRESULT WINAPI D3D12CreateRootSignatureDeserializer(const void *data, SIZE_T dat
 HRESULT WINAPI D3D12CreateVersionedRootSignatureDeserializer(const void *data, SIZE_T data_size,
         REFIID iid, void **deserializer)
 {
-    TRACE("data %p, data_size %lu, iid %s, deserializer %p.\n",
+    TRACE("data %p, data_size %Iu, iid %s, deserializer %p.\n",
             data, data_size, debugstr_guid(iid), deserializer);
 
     return vkd3d_create_versioned_root_signature_deserializer(data, data_size, iid, deserializer);
