@@ -716,35 +716,10 @@ other_process:
 static void WIN_FixCoordinates( CREATESTRUCTW *cs, INT *sw)
 {
 #define IS_DEFAULT(x)  ((x) == CW_USEDEFAULT || (x) == (SHORT)0x8000)
-    POINT pos[2];
-
-    if (cs->dwExStyle & WS_EX_MDICHILD)
-    {
-        UINT id = 0;
-
-        MDI_CalcDefaultChildPos(cs->hwndParent, -1, pos, 0, &id);
-        if (!(cs->style & WS_POPUP)) cs->hMenu = ULongToHandle(id);
-
-        TRACE("MDI child id %04x\n", id);
-    }
-
     if (cs->style & (WS_CHILD | WS_POPUP))
     {
-        if (cs->dwExStyle & WS_EX_MDICHILD)
-        {
-            if (IS_DEFAULT(cs->x))
-            {
-                cs->x = pos[0].x;
-                cs->y = pos[0].y;
-            }
-            if (IS_DEFAULT(cs->cx) || !cs->cx) cs->cx = pos[1].x;
-            if (IS_DEFAULT(cs->cy) || !cs->cy) cs->cy = pos[1].y;
-        }
-        else
-        {
-            if (IS_DEFAULT(cs->x)) cs->x = cs->y = 0;
-            if (IS_DEFAULT(cs->cx)) cs->cx = cs->cy = 0;
-        }
+        if (IS_DEFAULT(cs->x)) cs->x = cs->y = 0;
+        if (IS_DEFAULT(cs->cx)) cs->cx = cs->cy = 0;
     }
     else  /* overlapped window */
     {
@@ -905,6 +880,11 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
 #undef DUMPED_EX_STYLES
 }
 
+static BOOL is_default_coord( int x )
+{
+    return x == CW_USEDEFAULT || x == 0x8000;
+}
+
 /***********************************************************************
  *           map_dpi_create_struct
  */
@@ -971,6 +951,9 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     /* Fix the styles for MDI children */
     if (cs->dwExStyle & WS_EX_MDICHILD)
     {
+        POINT pos[2];
+        UINT id = 0;
+
         if (!(win_get_flags( cs->hwndParent ) & WIN_ISMDICLIENT))
         {
             WARN("WS_EX_MDICHILD, but parent %p is not MDIClient\n", cs->hwndParent);
@@ -1028,6 +1011,22 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
                 }
                 else NtUserShowWindow( top_child, SW_SHOWNORMAL );
             }
+        }
+
+        MDI_CalcDefaultChildPos( cs->hwndParent, -1, pos, 0, &id );
+        if (!(cs->style & WS_POPUP)) cs->hMenu = ULongToHandle(id);
+
+        TRACE( "MDI child id %04x\n", id );
+
+        if (cs->style & (WS_CHILD | WS_POPUP))
+        {
+            if (is_default_coord( cs->x ))
+            {
+                cs->x = pos[0].x;
+                cs->y = pos[0].y;
+            }
+            if (is_default_coord( cs->cx ) || !cs->cx) cs->cx = pos[1].x;
+            if (is_default_coord( cs->cy ) || !cs->cy) cs->cy = pos[1].y;
         }
     }
 
