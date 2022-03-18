@@ -181,7 +181,6 @@ static const struct user_callbacks user_funcs =
     MENU_SetMenu,
     SCROLL_SetStandardScrollPainted,
     (void *)__wine_set_user_driver,
-    set_window_pos,
     register_imm,
     unregister_imm,
 };

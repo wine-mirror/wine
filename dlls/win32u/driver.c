@@ -1211,6 +1211,8 @@ static const struct user_driver_funcs lazy_load_driver =
     .pShowWindow = nulldrv_ShowWindow,
     .pUpdateLayeredWindow = loaderdrv_UpdateLayeredWindow,
     .pWindowMessage = nulldrv_WindowMessage,
+    .pWindowPosChanging = nulldrv_WindowPosChanging,
+    .pWindowPosChanged = nulldrv_WindowPosChanged,
     /* system parameters */
     .pSystemParametersInfo = nulldrv_SystemParametersInfo,
     /* vulkan support */

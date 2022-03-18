@@ -119,6 +119,133 @@ static const struct window_surface_funcs dummy_surface_funcs =
 struct window_surface dummy_surface = { &dummy_surface_funcs, { NULL, NULL }, 1, { 0, 0, 1, 1 } };
 
 /*******************************************************************
+ * Off-screen window surface.
+ */
+
+struct offscreen_window_surface
+{
+    struct window_surface header;
+    pthread_mutex_t mutex;
+    RECT bounds;
+    char *bits;
+    BITMAPINFO info;
+};
+
+static const struct window_surface_funcs offscreen_window_surface_funcs;
+
+static struct offscreen_window_surface *impl_from_window_surface( struct window_surface *base )
+{
+    if (!base || base->funcs != &offscreen_window_surface_funcs) return NULL;
+    return CONTAINING_RECORD( base, struct offscreen_window_surface, header );
+}
+
+static void CDECL offscreen_window_surface_lock( struct window_surface *base )
+{
+    struct offscreen_window_surface *impl = impl_from_window_surface( base );
+    pthread_mutex_lock( &impl->mutex );
+}
+
+static void CDECL offscreen_window_surface_unlock( struct window_surface *base )
+{
+    struct offscreen_window_surface *impl = impl_from_window_surface( base );
+    pthread_mutex_unlock( &impl->mutex );
+}
+
+static RECT *CDECL offscreen_window_surface_get_bounds( struct window_surface *base )
+{
+    struct offscreen_window_surface *impl = impl_from_window_surface( base );
+    return &impl->bounds;
+}
+
+static void *CDECL offscreen_window_surface_get_bitmap_info( struct window_surface *base, BITMAPINFO *info )
+{
+    struct offscreen_window_surface *impl = impl_from_window_surface( base );
+    info->bmiHeader = impl->info.bmiHeader;
+    return impl->bits;
+}
+
+static void CDECL offscreen_window_surface_set_region( struct window_surface *base, HRGN region )
+{
+}
+
+static void CDECL offscreen_window_surface_flush( struct window_surface *base )
+{
+    struct offscreen_window_surface *impl = impl_from_window_surface( base );
+    base->funcs->lock( base );
+    reset_bounds( &impl->bounds );
+    base->funcs->unlock( base );
+}
+
+static void CDECL offscreen_window_surface_destroy( struct window_surface *base )
+{
+    struct offscreen_window_surface *impl = impl_from_window_surface( base );
+    free( impl );
+}
+
+static const struct window_surface_funcs offscreen_window_surface_funcs =
+{
+    offscreen_window_surface_lock,
+    offscreen_window_surface_unlock,
+    offscreen_window_surface_get_bitmap_info,
+    offscreen_window_surface_get_bounds,
+    offscreen_window_surface_set_region,
+    offscreen_window_surface_flush,
+    offscreen_window_surface_destroy
+};
+
+void create_offscreen_window_surface( const RECT *visible_rect, struct window_surface **surface )
+{
+    struct offscreen_window_surface *impl;
+    SIZE_T size;
+    RECT surface_rect = *visible_rect;
+    pthread_mutexattr_t attr;
+
+    TRACE( "visible_rect %s, surface %p.\n", wine_dbgstr_rect( visible_rect ), surface );
+
+    offset_rect( &surface_rect, -surface_rect.left, -surface_rect.top );
+    surface_rect.right  = (surface_rect.right + 0x1f) & ~0x1f;
+    surface_rect.bottom = (surface_rect.bottom + 0x1f) & ~0x1f;
+
+    /* check that old surface is an offscreen_window_surface, or release it */
+    if ((impl = impl_from_window_surface( *surface )))
+    {
+        /* if the rect didn't change, keep the same surface */
+        if (EqualRect( &surface_rect, &impl->header.rect )) return;
+        window_surface_release( &impl->header );
+    }
+    else if (*surface) window_surface_release( *surface );
+
+    /* create a new window surface */
+    *surface = NULL;
+    size = surface_rect.right * surface_rect.bottom * 4;
+    if (!(impl = calloc(1, offsetof( struct offscreen_window_surface, info.bmiColors[0] ) + size))) return;
+
+    impl->header.funcs = &offscreen_window_surface_funcs;
+    impl->header.ref = 1;
+    impl->header.rect = surface_rect;
+
+    pthread_mutexattr_init( &attr );
+    pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
+    pthread_mutex_init( &impl->mutex, &attr );
+    pthread_mutexattr_destroy( &attr );
+
+    reset_bounds( &impl->bounds );
+
+    impl->bits = (char *)&impl->info.bmiColors[0];
+    impl->info.bmiHeader.biSize        = sizeof( impl->info );
+    impl->info.bmiHeader.biWidth       = surface_rect.right;
+    impl->info.bmiHeader.biHeight      = surface_rect.bottom;
+    impl->info.bmiHeader.biPlanes      = 1;
+    impl->info.bmiHeader.biBitCount    = 32;
+    impl->info.bmiHeader.biCompression = BI_RGB;
+    impl->info.bmiHeader.biSizeImage   = size;
+
+    TRACE( "created window surface %p\n", &impl->header );
+
+    *surface = &impl->header;
+}
+
+/*******************************************************************
  *           register_window_surface
  *
  * Register a window surface in the global list, possibly replacing another one.
@@ -988,6 +1115,90 @@ static BOOL send_erase( HWND hwnd, UINT flags, HRGN client_rgn,
     }
     if (!hdc) NtGdiDeleteObjectApp( client_rgn );
     return need_erase;
+}
+
+/***********************************************************************
+ *           copy_bits_from_surface
+ *
+ * Copy bits from a window surface; helper for move_window_bits and move_window_bits_parent.
+ */
+static void copy_bits_from_surface( HWND hwnd, struct window_surface *surface,
+                                    const RECT *dst, const RECT *src )
+{
+    char buffer[FIELD_OFFSET( BITMAPINFO, bmiColors[256] )];
+    BITMAPINFO *info = (BITMAPINFO *)buffer;
+    void *bits;
+    UINT flags = UPDATE_NOCHILDREN | UPDATE_CLIPCHILDREN;
+    HRGN rgn = get_update_region( hwnd, &flags, NULL );
+    HDC hdc = NtUserGetDCEx( hwnd, rgn, DCX_CACHE | DCX_WINDOW | DCX_EXCLUDERGN );
+
+    bits = surface->funcs->get_info( surface, info );
+    surface->funcs->lock( surface );
+    NtGdiSetDIBitsToDeviceInternal( hdc, dst->left, dst->top, dst->right - dst->left, dst->bottom - dst->top,
+                                    src->left - surface->rect.left, surface->rect.bottom - src->bottom,
+                                    0, surface->rect.bottom - surface->rect.top,
+                                    bits, info, DIB_RGB_COLORS, 0, 0, FALSE, NULL );
+    surface->funcs->unlock( surface );
+    NtUserReleaseDC( hwnd, hdc );
+}
+
+/***********************************************************************
+ *           move_window_bits
+ *
+ * Move the window bits when a window is resized or its surface recreated.
+ */
+void move_window_bits( HWND hwnd, struct window_surface *old_surface,
+                       struct window_surface *new_surface,
+                       const RECT *visible_rect, const RECT *old_visible_rect,
+                       const RECT *window_rect, const RECT *valid_rects )
+{
+    RECT dst = valid_rects[0];
+    RECT src = valid_rects[1];
+
+    if (new_surface != old_surface ||
+        src.left - old_visible_rect->left != dst.left - visible_rect->left ||
+        src.top - old_visible_rect->top != dst.top - visible_rect->top)
+    {
+        TRACE( "copying %s -> %s\n", wine_dbgstr_rect( &src ), wine_dbgstr_rect( &dst ));
+        OffsetRect( &src, -old_visible_rect->left, -old_visible_rect->top );
+        OffsetRect( &dst, -window_rect->left, -window_rect->top );
+        copy_bits_from_surface( hwnd, old_surface, &dst, &src );
+    }
+}
+
+
+/***********************************************************************
+ *           move_window_bits_parent
+ *
+ * Move the window bits in the parent surface when a child is moved.
+ */
+void move_window_bits_parent( HWND hwnd, HWND parent, const RECT *window_rect, const RECT *valid_rects )
+{
+    struct window_surface *surface;
+    RECT dst = valid_rects[0];
+    RECT src = valid_rects[1];
+    WND *win;
+
+    if (src.left == dst.left && src.top == dst.top) return;
+
+    if (!(win = get_win_ptr( parent ))) return;
+    if (win == WND_DESKTOP || win == WND_OTHER_PROCESS) return;
+    if (!(surface = win->surface))
+    {
+        release_win_ptr( win );
+        return;
+    }
+
+    TRACE( "copying %s -> %s\n", wine_dbgstr_rect( &src ), wine_dbgstr_rect( &dst ));
+    map_window_points( NtUserGetAncestor( hwnd, GA_PARENT ), parent, (POINT *)&src, 2, get_thread_dpi() );
+    offset_rect( &src, win->client_rect.left - win->visible_rect.left,
+                 win->client_rect.top - win->visible_rect.top );
+    offset_rect( &dst, -window_rect->left, -window_rect->top );
+    window_surface_add_ref( surface );
+    release_win_ptr( win );
+
+    copy_bits_from_surface( hwnd, surface, &dst, &src );
+    window_surface_release( surface );
 }
 
 /***********************************************************************

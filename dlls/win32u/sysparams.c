@@ -4743,12 +4743,6 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
         return (UINT_PTR)free_user_handle( UlongToHandle(arg1), arg2 );
     case NtUserGetHandlePtr:
         return (UINT_PTR)get_user_handle_ptr( UlongToHandle(arg1), arg2 );
-    case NtUserInvalidateDCE:
-        invalidate_dce( (void *)arg1, (const RECT *)arg2 );
-        return 0;
-    case NtUserRegisterWindowSurface:
-        register_window_surface( (struct window_surface *)arg1, (struct window_surface *)arg2 );
-        return 0;
     default:
         FIXME( "invalid code %u\n", code );
         return 0;

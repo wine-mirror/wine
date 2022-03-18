@@ -53,9 +53,6 @@ struct user_callbacks
     BOOL (CDECL *set_menu)( HWND hwnd, HMENU menu );
     void (WINAPI *set_standard_scroll_painted)( HWND hwnd, INT bar, BOOL visible );
     void (CDECL *set_user_driver)( void *, UINT );
-    BOOL (CDECL *set_window_pos)( HWND hwnd, HWND insert_after, UINT swp_flags,
-                                  const RECT *window_rect, const RECT *client_rect,
-                                  const RECT *valid_rects );
     BOOL (WINAPI *register_imm)( HWND hwnd );
     void (WINAPI *unregister_imm)( HWND hwnd );
 };

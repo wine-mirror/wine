@@ -95,20 +95,6 @@ static LRESULT CDECL nulldrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam
     return -1;
 }
 
-static BOOL CDECL nulldrv_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
-                                             const RECT *window_rect, const RECT *client_rect,
-                                             RECT *visible_rect, struct window_surface **surface )
-{
-    return FALSE;
-}
-
-static void CDECL nulldrv_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
-                                            const RECT *window_rect, const RECT *client_rect,
-                                            const RECT *visible_rect, const RECT *valid_rects,
-                                            struct window_surface *surface )
-{
-}
-
 
 /**********************************************************************
  * Lazy loading user driver
@@ -173,8 +159,8 @@ static struct user_driver_funcs lazy_load_driver =
     nulldrv_SysCommand,
     NULL,
     NULL,
-    nulldrv_WindowPosChanging,
-    nulldrv_WindowPosChanged,
+    NULL,
+    NULL,
     /* system parameters */
     NULL,
     /* vulkan support */
@@ -207,8 +193,6 @@ void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT v
     SET_USER_FUNC(SetWindowIcon);
     SET_USER_FUNC(SetWindowText);
     SET_USER_FUNC(SysCommand);
-    SET_USER_FUNC(WindowPosChanging);
-    SET_USER_FUNC(WindowPosChanged);
 #undef SET_USER_FUNC
 
     prev = InterlockedCompareExchangePointer( (void **)&USER_Driver, driver, &lazy_load_driver );

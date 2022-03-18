@@ -36,7 +36,6 @@ struct tagDIALOGINFO;
   /* Window functions */
 extern HWND get_hwnd_message_parent(void) DECLSPEC_HIDDEN;
 extern BOOL is_desktop_window( HWND hwnd ) DECLSPEC_HIDDEN;
-extern void register_window_surface( struct window_surface *old, struct window_surface *new ) DECLSPEC_HIDDEN;
 extern void flush_window_surfaces( BOOL idle ) DECLSPEC_HIDDEN;
 extern WND *WIN_GetPtr( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND WIN_GetFullHandle( HWND hwnd ) DECLSPEC_HIDDEN;
@@ -79,10 +78,6 @@ extern POINT point_thread_to_win_dpi( HWND hwnd, POINT pt ) DECLSPEC_HIDDEN;
 extern RECT map_dpi_rect( RECT rect, UINT dpi_from, UINT dpi_to ) DECLSPEC_HIDDEN;
 extern RECT rect_win_to_thread_dpi( HWND hwnd, RECT rect ) DECLSPEC_HIDDEN;
 extern RECT rect_thread_to_win_dpi( HWND hwnd, RECT rect ) DECLSPEC_HIDDEN;
-
-extern BOOL set_window_pos( HWND hwnd, HWND insert_after, UINT swp_flags,
-                            const RECT *window_rect, const RECT *client_rect,
-                            const RECT *valid_rects ) DECLSPEC_HIDDEN;
 
 static inline void mirror_rect( const RECT *window_rect, RECT *rect )
 {

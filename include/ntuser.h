@@ -137,8 +137,6 @@ enum
     NtUserAllocWinProc,
     NtUserFreeHandle,
     NtUserGetHandlePtr,
-    NtUserInvalidateDCE,
-    NtUserRegisterWindowSurface,
 };
 
 /* NtUserCallHwnd codes, not compatible with Windows */
@@ -152,8 +150,6 @@ enum
     NtUserIsWindow,
     NtUserIsWindowUnicode,
     NtUserIsWindowVisible,
-    /* temporary exports */
-    NtUserGetDummySurface,
 };
 
 /* NtUserCallHwndParam codes, not compatible with Windows */
