@@ -302,12 +302,8 @@ struct async *create_async( struct fd *fd, struct thread *thread, const async_da
  * the initial status may be STATUS_PENDING */
 void async_set_initial_status( struct async *async, unsigned int status )
 {
-    assert( async->unknown_status );
-    if (!async->terminated)
-    {
-        async->initial_status = status;
-        async->unknown_status = 0;
-    }
+    async->initial_status = status;
+    async->unknown_status = 0;
 }
 
 void set_async_pending( struct async *async )
