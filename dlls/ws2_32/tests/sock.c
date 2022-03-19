@@ -5666,14 +5666,11 @@ static void test_write_events(struct event_test_ctx *ctx)
 
     if (!broken(1))
     {
-        while ((ret = send(server, buffer, buffer_size, 0)) == buffer_size);
         /* Windows will never send less than buffer_size bytes here, but Linux
          * may do a short write. */
-        todo_wine_if (ret > 0)
-        {
-            ok(ret == -1, "got %d\n", ret);
-            ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
-        }
+        while ((ret = send(server, buffer, buffer_size, 0)) > 0);
+        ok(ret == -1, "got %d\n", ret);
+        ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
 
         while (recv(client, buffer, buffer_size, 0) > 0);
         ok(WSAGetLastError() == WSAEWOULDBLOCK, "got error %u\n", WSAGetLastError());
