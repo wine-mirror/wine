@@ -20,6 +20,7 @@
  * We use function pointers here as there is no import library for NTDLL on
  * windows.
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <stdlib.h>
 
@@ -297,7 +298,7 @@ static void one_RtlInt64ToUnicodeString_test(int test_num, const largeint2str_t 
 #ifdef _WIN64
     if (largeint2str->value >> 32 == 0xffffffff)  /* this crashes on 64-bit Vista */
     {
-        skip( "Value ffffffff%08x broken on 64-bit windows\n", (DWORD)largeint2str->value );
+        skip( "Value ffffffff%08lx broken on 64-bit windows\n", (DWORD)largeint2str->value );
         return;
     }
 #endif
@@ -340,7 +341,7 @@ static void one_RtlInt64ToUnicodeString_test(int test_num, const largeint2str_t 
 	} /* if */
     } else {
 	ok(result == largeint2str->result,
-           "(test %d): RtlInt64ToUnicodeString(0x%s, %d, [out]) has result %x, expected: %x\n",
+           "(test %d): RtlInt64ToUnicodeString(0x%s, %d, [out]) has result %lx, expected: %lx\n",
 	   test_num, wine_dbgstr_longlong(largeint2str->value), largeint2str->base, result, largeint2str->result);
 	if (result == STATUS_SUCCESS) {
 	    ok(unicode_string.Buffer[unicode_string.Length/sizeof(WCHAR)] == '\0',
@@ -349,7 +350,7 @@ static void one_RtlInt64ToUnicodeString_test(int test_num, const largeint2str_t 
 	} /* if */
     } /* if */
     ok(memcmp(unicode_string.Buffer, expected_unicode_string.Buffer, LARGE_STRI_BUFFER_LENGTH * sizeof(WCHAR)) == 0,
-       "(test %d): RtlInt64ToUnicodeString(0x%x%08x, %d, [out]) assigns string \"%s\", expected: \"%s\"\n",
+       "(test %d): RtlInt64ToUnicodeString(0x%lx%08lx, %d, [out]) assigns string \"%s\", expected: \"%s\"\n",
        test_num, (DWORD)(largeint2str->value >>32), (DWORD)largeint2str->value, largeint2str->base, 
        ansi_str.Buffer, expected_ansi_str.Buffer);
     ok(unicode_string.Length == expected_unicode_string.Length,
@@ -384,7 +385,7 @@ static void one_RtlLargeIntegerToChar_test(int test_num, const largeint2str_t *l
 #ifdef _WIN64
     if (largeint2str->value >> 32 == 0xffffffff)  /* this crashes on 64-bit Vista */
     {
-        skip( "Value ffffffff%08x broken on 64-bit windows\n", (DWORD)largeint2str->value );
+        skip( "Value ffffffff%08lx broken on 64-bit windows\n", (DWORD)largeint2str->value );
         return;
     }
 #endif
@@ -398,7 +399,7 @@ static void one_RtlLargeIntegerToChar_test(int test_num, const largeint2str_t *l
 	result = pRtlLargeIntegerToChar(&value, largeint2str->base, largeint2str->MaximumLength, dest_str);
     } /* if */
     ok(result == largeint2str->result,
-       "(test %d): RtlLargeIntegerToChar(0x%s, %d, %d, [out]) has result %x, expected: %x\n",
+       "(test %d): RtlLargeIntegerToChar(0x%s, %d, %d, [out]) has result %lx, expected: %lx\n",
        test_num, wine_dbgstr_longlong(largeint2str->value), largeint2str->base,
        largeint2str->MaximumLength, result, largeint2str->result);
     ok(memcmp(dest_str, largeint2str->Buffer, LARGE_STRI_BUFFER_LENGTH) == 0,
@@ -421,24 +422,24 @@ static void test_RtlLargeIntegerToChar(void)
     value = largeint2str[0].value;
     result = pRtlLargeIntegerToChar(&value, 20, largeint2str[0].MaximumLength, NULL);
     ok(result == STATUS_INVALID_PARAMETER,
-       "(test a): RtlLargeIntegerToChar(0x%s, %d, %d, NULL) has result %x, expected: %x\n",
+       "(test a): RtlLargeIntegerToChar(0x%s, %d, %d, NULL) has result %lx, expected: %lx\n",
        wine_dbgstr_longlong(largeint2str[0].value), 20,
        largeint2str[0].MaximumLength, result, STATUS_INVALID_PARAMETER);
 
     result = pRtlLargeIntegerToChar(&value, 20, 0, NULL);
     ok(result == STATUS_INVALID_PARAMETER,
-       "(test b): RtlLargeIntegerToChar(0x%s, %d, %d, NULL) has result %x, expected: %x\n",
+       "(test b): RtlLargeIntegerToChar(0x%s, %d, %d, NULL) has result %lx, expected: %lx\n",
        wine_dbgstr_longlong(largeint2str[0].value), 20,
        largeint2str[0].MaximumLength, result, STATUS_INVALID_PARAMETER);
 
     result = pRtlLargeIntegerToChar(&value, largeint2str[0].base, 0, NULL);
     ok(result == STATUS_BUFFER_OVERFLOW,
-       "(test c): RtlLargeIntegerToChar(0x%s, %d, %d, NULL) has result %x, expected: %x\n",
+       "(test c): RtlLargeIntegerToChar(0x%s, %d, %d, NULL) has result %lx, expected: %lx\n",
        wine_dbgstr_longlong(largeint2str[0].value), largeint2str[0].base, 0, result, STATUS_BUFFER_OVERFLOW);
 
     result = pRtlLargeIntegerToChar(&value, largeint2str[0].base, largeint2str[0].MaximumLength, NULL);
     ok(result == STATUS_ACCESS_VIOLATION,
-       "(test d): RtlLargeIntegerToChar(0x%s, %d, %d, NULL) has result %x, expected: %x\n",
+       "(test d): RtlLargeIntegerToChar(0x%s, %d, %d, NULL) has result %lx, expected: %lx\n",
        wine_dbgstr_longlong(largeint2str[0].value),
        largeint2str[0].base, largeint2str[0].MaximumLength, result, STATUS_ACCESS_VIOLATION);
 }
