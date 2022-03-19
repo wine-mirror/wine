@@ -481,6 +481,8 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
 
     assert( async->terminated );  /* it must have been woken up if we get a result */
 
+    if (async->unknown_status) async_set_initial_status( async, status );
+
     if (async->alerted && status == STATUS_PENDING)  /* restart it */
     {
         async->terminated = 0;
@@ -764,8 +766,6 @@ DECL_HANDLER(set_async_direct_result)
         release_object( &async->obj );
         return;
     }
-
-    async_set_initial_status( async, status );
 
     if (status == STATUS_PENDING)
     {
