@@ -767,7 +767,7 @@ static NTSTATUS sock_recv( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
         release_fileio( &async->io );
     }
 
-    if (alerted) set_async_direct_result( &wait_handle, status, information );
+    if (alerted) set_async_direct_result( &wait_handle, status, information, FALSE );
     if (wait_handle) status = wait_async( wait_handle, options & FILE_SYNCHRONOUS_IO_ALERT );
     return status;
 }

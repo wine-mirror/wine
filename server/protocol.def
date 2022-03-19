@@ -2168,6 +2168,7 @@ enum message_type
     obj_handle_t   handle;        /* wait handle */
     apc_param_t    information;   /* IO_STATUS_BLOCK Information */
     unsigned int   status;        /* completion status */
+    int            mark_pending;  /* set async to pending before completion? */
 @REPLY
     obj_handle_t   handle;        /* wait handle, or NULL if closed */
 @END

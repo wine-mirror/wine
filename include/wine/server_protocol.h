@@ -2913,7 +2913,7 @@ struct set_async_direct_result_request
     obj_handle_t   handle;
     apc_param_t    information;
     unsigned int   status;
-    char __pad_28[4];
+    int            mark_pending;
 };
 struct set_async_direct_result_reply
 {
@@ -6284,7 +6284,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 746
+#define SERVER_PROTOCOL_VERSION 747
 
 /* ### protocol_version end ### */
 

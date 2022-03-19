@@ -2763,6 +2763,7 @@ static void dump_set_async_direct_result_request( const struct set_async_direct_
     fprintf( stderr, " handle=%04x", req->handle );
     dump_uint64( ", information=", &req->information );
     fprintf( stderr, ", status=%08x", req->status );
+    fprintf( stderr, ", mark_pending=%d", req->mark_pending );
 }
 
 static void dump_set_async_direct_result_reply( const struct set_async_direct_result_reply *req )

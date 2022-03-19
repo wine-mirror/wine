@@ -1401,6 +1401,7 @@ C_ASSERT( sizeof(struct get_async_result_reply) == 8 );
 C_ASSERT( FIELD_OFFSET(struct set_async_direct_result_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct set_async_direct_result_request, information) == 16 );
 C_ASSERT( FIELD_OFFSET(struct set_async_direct_result_request, status) == 24 );
+C_ASSERT( FIELD_OFFSET(struct set_async_direct_result_request, mark_pending) == 28 );
 C_ASSERT( sizeof(struct set_async_direct_result_request) == 32 );
 C_ASSERT( FIELD_OFFSET(struct set_async_direct_result_reply, handle) == 8 );
 C_ASSERT( sizeof(struct set_async_direct_result_reply) == 16 );
