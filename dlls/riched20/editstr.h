@@ -147,11 +147,13 @@ typedef enum {
 /******************************** structures *************************/
 
 struct tagME_DisplayItem;
+struct tagME_Run;
 
 struct re_object
 {
   struct list entry;
   REOBJECT obj;
+  struct tagME_Run *run; /* ptr to the reobj's run */
 };
 
 typedef struct tagME_Run
