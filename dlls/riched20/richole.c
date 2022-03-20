@@ -1320,6 +1320,7 @@ IRichEditOle_fnGetObject(IRichEditOle *iface, LONG iob,
         }
     }
     ME_CopyReObject(lpreobject, &reobj->obj, dwFlags);
+    lpreobject->cp = run_char_ofs( reobj->run, 0 );
     return S_OK;
 }
 
