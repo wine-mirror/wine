@@ -457,18 +457,6 @@ static NTSTATUS WINAPI driver_pnp( DEVICE_OBJECT *device, IRP *irp )
     return IoCallDriver( ext->NextDeviceObject, irp );
 }
 
-static NTSTATUS WINAPI driver_power( DEVICE_OBJECT *device, IRP *irp )
-{
-    HID_DEVICE_EXTENSION *ext = device->DeviceExtension;
-
-    /* We do not expect power IRPs as part of normal operation. */
-    ok( 0, "unexpected call\n" );
-
-    PoStartNextPowerIrp( irp );
-    IoSkipCurrentIrpStackLocation( irp );
-    return PoCallDriver( ext->NextDeviceObject, irp );
-}
-
 #define check_buffer( a, b ) check_buffer_( __LINE__, a, b )
 static void check_buffer_( int line, HID_XFER_PACKET *packet, struct hid_expect *expect )
 {
@@ -889,7 +877,6 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *registry )
     driver->DriverExtension->AddDevice = driver_add_device;
     driver->DriverUnload = driver_unload;
     driver->MajorFunction[IRP_MJ_PNP] = driver_pnp;
-    driver->MajorFunction[IRP_MJ_POWER] = driver_power;
     driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = driver_ioctl;
     driver->MajorFunction[IRP_MJ_INTERNAL_DEVICE_CONTROL] = driver_internal_ioctl;
     driver->MajorFunction[IRP_MJ_CREATE] = driver_create;
