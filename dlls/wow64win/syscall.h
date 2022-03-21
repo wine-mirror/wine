@@ -101,6 +101,7 @@
     SYSCALL_ENTRY( NtUserFindExistingCursorIcon ) \
     SYSCALL_ENTRY( NtUserGetAncestor ) \
     SYSCALL_ENTRY( NtUserGetAtomName ) \
+    SYSCALL_ENTRY( NtUserGetClassName ) \
     SYSCALL_ENTRY( NtUserGetClipboardFormatName ) \
     SYSCALL_ENTRY( NtUserGetClipboardOwner ) \
     SYSCALL_ENTRY( NtUserGetClipboardSequenceNumber ) \
