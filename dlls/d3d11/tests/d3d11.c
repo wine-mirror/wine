@@ -21,6 +21,7 @@
 #include <float.h>
 #include <limits.h>
 #include <math.h>
+#include <stdbool.h>
 #include <stdlib.h>
 #define COBJMACROS
 #include "initguid.h"
@@ -1644,6 +1645,16 @@ static BOOL check_compute_shaders_via_sm4_support(ID3D11Device *device)
             D3D11_FEATURE_D3D10_X_HARDWARE_OPTIONS, &options, sizeof(options))))
         return FALSE;
     return options.ComputeShaders_Plus_RawAndStructuredBuffers_Via_Shader_4_x;
+}
+
+static bool check_stencil_ref_export_support(ID3D11Device *device)
+{
+    D3D11_FEATURE_DATA_D3D11_OPTIONS2 options;
+
+    if (FAILED(ID3D11Device_CheckFeatureSupport(device,
+            D3D11_FEATURE_D3D11_OPTIONS2, &options, sizeof(options))))
+        return false;
+    return options.PSSpecifiedStencilRefSupported;
 }
 
 static BOOL check_viewport_array_index_from_any_shader_support(ID3D11Device *device)
@@ -35452,6 +35463,154 @@ static void test_clear_during_render(void)
     release_test_context(&test_context);
 }
 
+static void test_stencil_export(void)
+{
+    D3D11_SHADER_RESOURCE_VIEW_DESC srv_desc;
+    D3D11_DEPTH_STENCIL_VIEW_DESC dsv_desc;
+    struct d3d11_test_context test_context;
+    D3D11_DEPTH_STENCIL_DESC ds_desc = {0};
+    ID3D11DepthStencilState *ds_state;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11PixelShader *ps, *ps_sample;
+    ID3D11ShaderResourceView *srv;
+    ID3D11DeviceContext *context;
+    struct resource_readback rb;
+    ID3D11DepthStencilView *dsv;
+    ID3D11RenderTargetView *rtv;
+    ID3D11Texture2D *rt, *ds;
+    ID3D11Device *device;
+    ID3D11Buffer *cb;
+    HRESULT hr;
+
+    static const DWORD ps_code[] =
+    {
+#if 0
+        uint stencil_ref;
+
+        uint main() : SV_StencilRef
+        {
+            return stencil_ref;
+        }
+#endif
+        0x43425844, 0x3980cb16, 0xbbe87d38, 0xb93f7c61, 0x200c41ed, 0x00000001, 0x000000cc, 0x00000004,
+        0x00000030, 0x00000040, 0x00000078, 0x000000bc, 0x4e475349, 0x00000008, 0x00000000, 0x00000008,
+        0x4e47534f, 0x00000030, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000001,
+        0xffffffff, 0x00000e01, 0x535f5653, 0x636e6574, 0x65526c69, 0xabab0066, 0x58454853, 0x0000003c,
+        0x00000050, 0x0000000f, 0x0100086a, 0x04000059, 0x00208e46, 0x00000000, 0x00000001, 0x02000065,
+        0x00029001, 0x05000036, 0x00029001, 0x0020800a, 0x00000000, 0x00000000, 0x0100003e, 0x30494653,
+        0x00000008, 0x00000200, 0x00000000,
+    };
+    static const DWORD ps_sample_code[] =
+    {
+#if 0
+        Texture2D<uint4> tex : register(t0);
+
+        uint4 main(float4 pos : SV_Position) : SV_TARGET
+        {
+            return tex[uint2(pos.xy)].g;
+        }
+#endif
+        0x43425844, 0xdd1e98d4, 0x53c81701, 0x576f6b2e, 0x040b18bb, 0x00000001, 0x0000014c, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x7469736f, 0x006e6f69,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000001,
+        0x00000000, 0x0000000f, 0x545f5653, 0x45475241, 0xabab0054, 0x58454853, 0x000000b0, 0x00000050,
+        0x0000002c, 0x0100086a, 0x04001858, 0x00107000, 0x00000000, 0x00004444, 0x04002064, 0x00101032,
+        0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000001, 0x0500001c,
+        0x00100032, 0x00000000, 0x00101046, 0x00000000, 0x08000036, 0x001000c2, 0x00000000, 0x00004002,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x8900002d, 0x800000c2, 0x00111103, 0x00100012,
+        0x00000000, 0x00100e46, 0x00000000, 0x00107e16, 0x00000000, 0x05000036, 0x001020f2, 0x00000000,
+        0x00100006, 0x00000000, 0x0100003e,
+    };
+    static const float black[] = {0.0f, 0.0f, 0.0f, 0.0f};
+    static const DWORD cb_data[4] = {0xff};
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    if (!check_stencil_ref_export_support(device))
+    {
+        skip("The device does not support stencil ref export.\n");
+        release_test_context(&test_context);
+        return;
+    }
+
+    ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+    texture_desc.Format = DXGI_FORMAT_R8_UINT;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rt, NULL, &rtv);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+    texture_desc.Format = DXGI_FORMAT_R32G8X24_TYPELESS;
+    texture_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL | D3D11_BIND_SHADER_RESOURCE;
+    hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &ds);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    dsv_desc.Format = DXGI_FORMAT_D32_FLOAT_S8X24_UINT;
+    dsv_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
+    dsv_desc.Flags = 0;
+    dsv_desc.Texture2D.MipSlice = 0;
+    hr = ID3D11Device_CreateDepthStencilView(device, (ID3D11Resource *)ds, &dsv_desc, &dsv);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    srv_desc.Format = DXGI_FORMAT_X32_TYPELESS_G8X24_UINT;
+    srv_desc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
+    srv_desc.Texture2D.MostDetailedMip = 0;
+    srv_desc.Texture2D.MipLevels = 1;
+    hr = ID3D11Device_CreateShaderResourceView(device, (ID3D11Resource *)ds, &srv_desc, &srv);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    ds_desc.DepthFunc = D3D11_COMPARISON_NEVER;
+    ds_desc.StencilEnable = TRUE,
+    ds_desc.StencilReadMask = D3D11_DEFAULT_STENCIL_READ_MASK,
+    ds_desc.StencilWriteMask = D3D11_DEFAULT_STENCIL_WRITE_MASK,
+    ds_desc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_REPLACE,
+    ds_desc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_REPLACE,
+    ds_desc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_REPLACE,
+    ds_desc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS,
+    ds_desc.BackFace = ds_desc.FrontFace;
+    hr = ID3D11Device_CreateDepthStencilState(device, &ds_desc, &ds_state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = ID3D11Device_CreatePixelShader(device, ps_sample_code, sizeof(ps_sample_code), NULL, &ps_sample);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    cb = create_buffer(device, D3D11_BIND_CONSTANT_BUFFER, sizeof(cb_data), cb_data);
+
+    ID3D11DeviceContext_ClearDepthStencilView(context, dsv, D3D11_CLEAR_STENCIL, 0.0f, 0x80);
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, dsv);
+    ID3D11DeviceContext_OMSetDepthStencilState(context, ds_state, 0);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+    ID3D11DeviceContext_PSSetConstantBuffers(context, 0, 1, &cb);
+    draw_quad(&test_context);
+
+    ID3D11DeviceContext_OMSetRenderTargets(context, 1, &rtv, NULL);
+    ID3D11DeviceContext_ClearRenderTargetView(context, rtv, black);
+    ID3D11DeviceContext_PSSetShaderResources(context, 0, 1, &srv);
+    ID3D11DeviceContext_PSSetShader(context, ps_sample, NULL, 0);
+    draw_quad(&test_context);
+
+    get_texture_readback(rt, 0, &rb);
+    check_readback_data_u8(&rb, NULL, 0xff, 0);
+    release_resource_readback(&rb);
+
+    ID3D11ShaderResourceView_Release(srv);
+    ID3D11Buffer_Release(cb);
+    ID3D11PixelShader_Release(ps);
+    ID3D11PixelShader_Release(ps_sample);
+    ID3D11DepthStencilState_Release(ds_state);
+    ID3D11Texture2D_Release(rt);
+    ID3D11Texture2D_Release(ds);
+    ID3D11RenderTargetView_Release(rtv);
+    ID3D11DepthStencilView_Release(dsv);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     unsigned int argc, i;
@@ -35649,6 +35808,7 @@ START_TEST(d3d11)
     queue_for_each_feature_level(test_shared_resource);
     queue_test(test_keyed_mutex);
     queue_test(test_clear_during_render);
+    queue_test(test_stencil_export);
 
     run_queued_tests();
 
