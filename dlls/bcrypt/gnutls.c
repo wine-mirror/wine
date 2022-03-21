@@ -647,6 +647,7 @@ static NTSTATUS export_gnutls_pubkey_rsa( gnutls_privkey_t gnutls_key, ULONG bit
     free( e.data ); free( m.data );
     return STATUS_SUCCESS;
 }
+#undef EXPORT_SIZE
 
 static NTSTATUS export_gnutls_pubkey_ecc( gnutls_privkey_t gnutls_key, enum alg_id alg_id, void *pubkey,
                                           unsigned *pubkey_len )
@@ -836,6 +837,194 @@ static NTSTATUS export_gnutls_pubkey_dsa_capi( gnutls_privkey_t gnutls_key, cons
     return STATUS_SUCCESS;
 }
 
+#define EXPORT_SIZE(d,f,p) export_gnutls_datum( NULL, key->u.a.bitlen / f, &d, p )
+static NTSTATUS key_export_rsa_public( struct key *key, UCHAR *buf, ULONG len, ULONG *ret_len )
+{
+    BCRYPT_RSAKEY_BLOB *rsa_blob = (BCRYPT_RSAKEY_BLOB *)buf;
+    gnutls_datum_t m, e;
+    UCHAR *dst;
+    int ret;
+
+    if ((ret = pgnutls_privkey_export_rsa_raw( key_data(key)->privkey, &m, &e, NULL, NULL, NULL, NULL, NULL, NULL )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    *ret_len = sizeof(*rsa_blob) + EXPORT_SIZE(e,8,0) + EXPORT_SIZE(m,8,1);
+    if (len >= *ret_len && buf)
+    {
+        dst = (UCHAR *)(rsa_blob + 1);
+        rsa_blob->cbPublicExp = export_gnutls_datum( dst, key->u.a.bitlen / 8, &e, 0 );
+
+        dst += rsa_blob->cbPublicExp;
+        rsa_blob->cbModulus = export_gnutls_datum( dst, key->u.a.bitlen / 8, &m, 1 );
+
+        rsa_blob->Magic     = BCRYPT_RSAPUBLIC_MAGIC;
+        rsa_blob->BitLength = key->u.a.bitlen;
+        rsa_blob->cbPrime1  = 0;
+        rsa_blob->cbPrime2  = 0;
+    }
+
+    free( e.data ); free( m.data );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS key_export_ecc_public( struct key *key, UCHAR *buf, ULONG len, ULONG *ret_len )
+{
+    BCRYPT_ECCKEY_BLOB *ecc_blob = (BCRYPT_ECCKEY_BLOB *)buf;
+    gnutls_ecc_curve_t curve;
+    gnutls_datum_t x, y;
+    DWORD magic, size;
+    UCHAR *dst;
+    int ret;
+
+    switch (key->alg_id)
+    {
+    case ALG_ID_ECDH_P256:
+        magic = BCRYPT_ECDH_PUBLIC_P256_MAGIC;
+        size = 32;
+        break;
+    case ALG_ID_ECDSA_P256:
+        magic = BCRYPT_ECDSA_PUBLIC_P256_MAGIC;
+        size = 32;
+        break;
+    default:
+        FIXME( "algorithm %u not supported\n", key->alg_id );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    if ((ret = pgnutls_privkey_export_ecc_raw( key_data(key)->privkey, &curve, &x, &y, NULL )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if (curve != GNUTLS_ECC_CURVE_SECP256R1)
+    {
+        FIXME( "curve %u not supported\n", curve );
+        free( x.data ); free( y.data );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    *ret_len = sizeof(*ecc_blob) + size * 2;
+    if (len >= *ret_len && buf)
+    {
+        ecc_blob->dwMagic = magic;
+        ecc_blob->cbKey   = size;
+
+        dst = (UCHAR *)(ecc_blob + 1);
+        export_gnutls_datum( dst, size, &x, 1 );
+
+        dst += size;
+        export_gnutls_datum( dst, size, &y, 1 );
+    }
+
+    free( x.data ); free( y.data );
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS key_export_dsa_public( struct key *key, UCHAR *buf, ULONG len, ULONG *ret_len )
+{
+    BCRYPT_DSA_KEY_BLOB *dsa_blob = (BCRYPT_DSA_KEY_BLOB *)buf;
+    gnutls_datum_t p, q, g, y;
+    UCHAR *dst;
+    int ret;
+
+    if ((ret = pgnutls_privkey_export_dsa_raw( key_data(key)->privkey, &p, &q, &g, &y, NULL )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    if (key->u.a.bitlen > 1024)
+    {
+        FIXME( "bitlen > 1024 not supported\n" );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    *ret_len = sizeof(*dsa_blob) + key->u.a.bitlen / 8 * 3;
+    if (len >= *ret_len && buf)
+    {
+        dst = (UCHAR *)(dsa_blob + 1);
+        export_gnutls_datum( dst, key->u.a.bitlen / 8, &p, 1 );
+
+        dst += key->u.a.bitlen / 8;
+        export_gnutls_datum( dst, key->u.a.bitlen / 8, &g, 1 );
+
+        dst += key->u.a.bitlen / 8;
+        export_gnutls_datum( dst, key->u.a.bitlen / 8, &y, 1 );
+
+        dst = dsa_blob->q;
+        export_gnutls_datum( dst, sizeof(dsa_blob->q), &q, 1 );
+
+        dsa_blob->dwMagic = BCRYPT_DSA_PUBLIC_MAGIC;
+        dsa_blob->cbKey   = key->u.a.bitlen / 8;
+        memset( dsa_blob->Count, 0, sizeof(dsa_blob->Count) ); /* FIXME */
+        memset( dsa_blob->Seed, 0, sizeof(dsa_blob->Seed) ); /* FIXME */
+    }
+
+    free( p.data ); free( q.data ); free( g.data ); free( y.data );
+    return STATUS_SUCCESS;
+}
+
+#define Q_SIZE 20
+static NTSTATUS key_export_dsa_capi_public( struct key *key, UCHAR *buf, ULONG len, ULONG *ret_len )
+{
+    BLOBHEADER *hdr = (BLOBHEADER *)buf;
+    DSSPUBKEY *dsskey;
+    gnutls_datum_t p, q, g, y;
+    UCHAR *dst;
+    int ret, size = sizeof(*hdr) + sizeof(*dsskey) + sizeof(key->u.a.dss_seed);
+
+    if (key->u.a.bitlen > 1024)
+    {
+        FIXME( "bitlen > 1024 not supported\n" );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+
+    if ((ret = pgnutls_privkey_export_dsa_raw( key_data(key)->privkey, &p, &q, &g, &y, NULL )))
+    {
+        pgnutls_perror( ret );
+        return STATUS_INTERNAL_ERROR;
+    }
+
+    *ret_len = size + key->u.a.bitlen / 8 * 3 + Q_SIZE;
+    if (len >= *ret_len && buf)
+    {
+        hdr->bType    = PUBLICKEYBLOB;
+        hdr->bVersion = 2;
+        hdr->reserved = 0;
+        hdr->aiKeyAlg = CALG_DSS_SIGN;
+
+        dsskey = (DSSPUBKEY *)(hdr + 1);
+        dsskey->magic  = MAGIC_DSS1;
+        dsskey->bitlen = key->u.a.bitlen;
+
+        dst = (UCHAR *)(dsskey + 1);
+        export_gnutls_datum( dst, key->u.a.bitlen / 8, &p, 1 );
+        reverse_bytes( dst, key->u.a.bitlen / 8 );
+        dst += key->u.a.bitlen / 8;
+
+        export_gnutls_datum( dst, Q_SIZE, &q, 1 );
+        reverse_bytes( dst, Q_SIZE );
+        dst += Q_SIZE;
+
+        export_gnutls_datum( dst, key->u.a.bitlen / 8, &g, 1 );
+        reverse_bytes( dst, key->u.a.bitlen / 8 );
+        dst += key->u.a.bitlen / 8;
+
+        export_gnutls_datum( dst, key->u.a.bitlen / 8, &y, 1 );
+        reverse_bytes( dst, key->u.a.bitlen / 8 );
+        dst += key->u.a.bitlen / 8;
+
+        memcpy( dst, &key->u.a.dss_seed, sizeof(key->u.a.dss_seed) );
+    }
+
+    free( p.data ); free( q.data ); free( g.data ); free( y.data );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS key_asymmetric_generate( void *args )
 {
     struct key *key = args;
@@ -914,10 +1103,8 @@ static NTSTATUS key_asymmetric_generate( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS key_export_ecc( void *args )
+static NTSTATUS key_export_ecc( struct key *key, UCHAR *buf, ULONG len, ULONG *ret_len )
 {
-    const struct key_export_params *params = args;
-    struct key *key = params->key;
     BCRYPT_ECCKEY_BLOB *ecc_blob;
     gnutls_ecc_curve_t curve;
     gnutls_datum_t x, y, d;
@@ -954,10 +1141,10 @@ static NTSTATUS key_export_ecc( void *args )
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    *params->ret_len = sizeof(*ecc_blob) + size * 3;
-    if (params->len >= *params->ret_len && params->buf)
+    *ret_len = sizeof(*ecc_blob) + size * 3;
+    if (len >= *ret_len && buf)
     {
-        ecc_blob = (BCRYPT_ECCKEY_BLOB *)params->buf;
+        ecc_blob = (BCRYPT_ECCKEY_BLOB *)buf;
         ecc_blob->dwMagic = magic;
         ecc_blob->cbKey   = size;
 
@@ -1029,13 +1216,12 @@ static NTSTATUS key_import_ecc( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS key_export_rsa( void *args )
+static NTSTATUS key_export_rsa( struct key *key, ULONG flags, UCHAR *buf, ULONG len, ULONG *ret_len )
 {
-    const struct key_export_params *params = args;
-    struct key *key = params->key;
     BCRYPT_RSAKEY_BLOB *rsa_blob;
     gnutls_datum_t m, e, d, p, q, u, e1, e2;
     ULONG bitlen = key->u.a.bitlen;
+    BOOL full = (flags & KEY_EXPORT_FLAG_RSA_FULL);
     UCHAR *dst;
     int ret;
 
@@ -1045,13 +1231,13 @@ static NTSTATUS key_export_rsa( void *args )
         return STATUS_INTERNAL_ERROR;
     }
 
-    *params->ret_len = sizeof(*rsa_blob) + EXPORT_SIZE(e,8,0) + EXPORT_SIZE(m,8,1) + EXPORT_SIZE(p,16,1) + EXPORT_SIZE(q,16,1);
-    if (params->full) *params->ret_len += EXPORT_SIZE(e1,16,1) + EXPORT_SIZE(e2,16,1) + EXPORT_SIZE(u,16,1) + EXPORT_SIZE(d,8,1);
+    *ret_len = sizeof(*rsa_blob) + EXPORT_SIZE(e,8,0) + EXPORT_SIZE(m,8,1) + EXPORT_SIZE(p,16,1) + EXPORT_SIZE(q,16,1);
+    if (full) *ret_len += EXPORT_SIZE(e1,16,1) + EXPORT_SIZE(e2,16,1) + EXPORT_SIZE(u,16,1) + EXPORT_SIZE(d,8,1);
 
-    if (params->len >= *params->ret_len && params->buf)
+    if (len >= *ret_len && buf)
     {
-        rsa_blob = (BCRYPT_RSAKEY_BLOB *)params->buf;
-        rsa_blob->Magic     = params->full ? BCRYPT_RSAFULLPRIVATE_MAGIC : BCRYPT_RSAPRIVATE_MAGIC;
+        rsa_blob = (BCRYPT_RSAKEY_BLOB *)buf;
+        rsa_blob->Magic     = full ? BCRYPT_RSAFULLPRIVATE_MAGIC : BCRYPT_RSAPRIVATE_MAGIC;
         rsa_blob->BitLength = bitlen;
 
         dst = (UCHAR *)(rsa_blob + 1);
@@ -1066,7 +1252,7 @@ static NTSTATUS key_export_rsa( void *args )
         dst += rsa_blob->cbPrime1;
         rsa_blob->cbPrime2 = export_gnutls_datum( dst, bitlen / 16, &q, 1 );
 
-        if (params->full)
+        if (full)
         {
             dst += rsa_blob->cbPrime2;
             export_gnutls_datum( dst, bitlen / 16, &e1, 1 );
@@ -1121,10 +1307,8 @@ static NTSTATUS key_import_rsa( void *args )
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS key_export_dsa_capi( void *args )
+static NTSTATUS key_export_dsa_capi( struct key *key, UCHAR *buf, ULONG len, ULONG *ret_len )
 {
-    const struct key_export_params *params = args;
-    struct key *key = params->key;
     BLOBHEADER *hdr;
     DSSPUBKEY *pubkey;
     gnutls_datum_t p, q, g, y, x;
@@ -1145,10 +1329,10 @@ static NTSTATUS key_export_dsa_capi( void *args )
     }
 
     size = key->u.a.bitlen / 8;
-    *params->ret_len = sizeof(*hdr) + sizeof(*pubkey) + size * 2 + 40 + sizeof(key->u.a.dss_seed);
-    if (params->len >= *params->ret_len && params->buf)
+    *ret_len = sizeof(*hdr) + sizeof(*pubkey) + size * 2 + 40 + sizeof(key->u.a.dss_seed);
+    if (len >= *ret_len && buf)
     {
-        hdr = (BLOBHEADER *)params->buf;
+        hdr = (BLOBHEADER *)buf;
         hdr->bType    = PRIVATEKEYBLOB;
         hdr->bVersion = 2;
         hdr->reserved = 0;
@@ -1424,6 +1608,44 @@ static NTSTATUS import_gnutls_pubkey( struct key *key, gnutls_pubkey_t *gnutls_k
 
     default:
         FIXME("algorithm %u not yet supported\n", key->alg_id );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+}
+
+static NTSTATUS key_asymmetric_export( void *args )
+{
+    const struct key_asymmetric_export_params *params = args;
+    struct key *key = params->key;
+    unsigned flags = params->flags;
+
+    switch (key->alg_id)
+    {
+    case ALG_ID_ECDH_P256:
+    case ALG_ID_ECDSA_P256:
+    case ALG_ID_ECDSA_P384:
+        if (flags & KEY_EXPORT_FLAG_PUBLIC)
+            return key_export_ecc_public( key, params->buf, params->len, params->ret_len );
+        return key_export_ecc( key, params->buf, params->len, params->ret_len );
+
+    case ALG_ID_RSA:
+    case ALG_ID_RSA_SIGN:
+        if (flags & KEY_EXPORT_FLAG_PUBLIC)
+            return key_export_rsa_public( key, params->buf, params->len, params->ret_len );
+        return key_export_rsa( key, flags, params->buf, params->len, params->ret_len );
+
+    case ALG_ID_DSA:
+        if (flags & KEY_EXPORT_FLAG_PUBLIC)
+        {
+            if (key->u.a.flags & KEY_FLAG_LEGACY_DSA_V2)
+                return key_export_dsa_capi_public( key, params->buf, params->len, params->ret_len );
+            return key_export_dsa_public( key, params->buf, params->len, params->ret_len );
+        }
+        if (key->u.a.flags & KEY_FLAG_LEGACY_DSA_V2)
+            return key_export_dsa_capi( key, params->buf, params->len, params->ret_len );
+        return STATUS_NOT_IMPLEMENTED;
+
+    default:
+        FIXME( "algorithm %u not yet supported\n", key->alg_id );
         return STATUS_NOT_IMPLEMENTED;
     }
 }
@@ -1862,9 +2084,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     key_asymmetric_sign,
     key_asymmetric_verify,
     key_asymmetric_destroy,
-    key_export_dsa_capi,
-    key_export_ecc,
-    key_export_rsa,
+    key_asymmetric_export,
     key_import_dsa_capi,
     key_import_ecc,
     key_import_rsa
@@ -2229,11 +2449,12 @@ static NTSTATUS wow64_key_asymmetric_destroy( void *args )
     return key_asymmetric_destroy( get_asymmetric_key( key32, &key ));
 }
 
-static NTSTATUS wow64_key_export_dsa_capi( void *args )
+static NTSTATUS wow64_key_asymmetric_export( void *args )
 {
     struct
     {
         PTR32 key;
+        ULONG flags;
         PTR32 buf;
         ULONG len;
         PTR32 ret_len;
@@ -2242,41 +2463,16 @@ static NTSTATUS wow64_key_export_dsa_capi( void *args )
     NTSTATUS ret;
     struct key key;
     struct key32 *key32 = ULongToPtr( params32->key );
-    struct key_export_params params =
+    struct key_asymmetric_export_params params =
     {
         get_asymmetric_key( key32, &key ),
+        params32->flags,
         ULongToPtr(params32->buf),
         params32->len,
-        ULongToPtr(params32->ret_len)
+        ULongToPtr(params32->ret_len),
     };
 
-    ret = key_export_dsa_capi( &params );
-    put_asymmetric_key32( &key, key32 );
-    return ret;
-}
-
-static NTSTATUS wow64_key_export_ecc( void *args )
-{
-    struct
-    {
-        PTR32 key;
-        PTR32 buf;
-        ULONG len;
-        PTR32 ret_len;
-    } const *params32 = args;
-
-    NTSTATUS ret;
-    struct key key;
-    struct key32 *key32 = ULongToPtr( params32->key );
-    struct key_export_params params =
-    {
-        get_asymmetric_key( key32, &key ),
-        ULongToPtr(params32->buf),
-        params32->len,
-        ULongToPtr(params32->ret_len)
-    };
-
-    ret = key_export_ecc( &params );
+    ret = key_asymmetric_export( &params );
     put_asymmetric_key32( &key, key32 );
     return ret;
 }
@@ -2329,34 +2525,6 @@ static NTSTATUS wow64_key_import_ecc( void *args )
     return ret;
 }
 
-static NTSTATUS wow64_key_export_rsa( void *args )
-{
-    struct
-    {
-        PTR32 key;
-        PTR32 buf;
-        ULONG len;
-        PTR32 ret_len;
-        BOOL  full;
-    } const *params32 = args;
-
-    NTSTATUS ret;
-    struct key key;
-    struct key32 *key32 = ULongToPtr( params32->key );
-    struct key_export_params params =
-    {
-        get_asymmetric_key( key32, &key ),
-        ULongToPtr(params32->buf),
-        params32->len,
-        ULongToPtr(params32->ret_len),
-        params32->full
-    };
-
-    ret = key_export_rsa( &params );
-    put_asymmetric_key32( &key, key32 );
-    return ret;
-}
-
 static NTSTATUS wow64_key_import_rsa( void *args )
 {
     struct
@@ -2397,9 +2565,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_key_asymmetric_sign,
     wow64_key_asymmetric_verify,
     wow64_key_asymmetric_destroy,
-    wow64_key_export_dsa_capi,
-    wow64_key_export_ecc,
-    wow64_key_export_rsa,
+    wow64_key_asymmetric_export,
     wow64_key_import_dsa_capi,
     wow64_key_import_ecc,
     wow64_key_import_rsa

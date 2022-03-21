@@ -268,13 +268,15 @@ struct key_asymmetric_verify_params
     unsigned    flags;
 };
 
-struct key_export_params
+#define KEY_EXPORT_FLAG_PUBLIC   0x00000001
+#define KEY_EXPORT_FLAG_RSA_FULL 0x00000002
+struct key_asymmetric_export_params
 {
     struct key  *key;
+    ULONG        flags;
     UCHAR       *buf;
     ULONG        len;
     ULONG       *ret_len;
-    BOOL         full;
 };
 
 struct key_import_params
@@ -300,9 +302,7 @@ enum key_funcs
     unix_key_asymmetric_sign,
     unix_key_asymmetric_verify,
     unix_key_asymmetric_destroy,
-    unix_key_export_dsa_capi,
-    unix_key_export_ecc,
-    unix_key_export_rsa,
+    unix_key_asymmetric_export,
     unix_key_import_dsa_capi,
     unix_key_import_ecc,
     unix_key_import_rsa,
