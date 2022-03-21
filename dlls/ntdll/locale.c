@@ -702,6 +702,29 @@ void WINAPI RtlResetRtlTranslations( const NLSTABLEINFO *info )
 
 
 /**************************************************************************
+ *      RtlGetLocaleFileMappingAddress   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlGetLocaleFileMappingAddress( void **ptr, LCID *lcid, LARGE_INTEGER *size )
+{
+    static void *cached_ptr;
+    static LCID cached_lcid;
+
+    if (!cached_ptr)
+    {
+        void *addr;
+        NTSTATUS status = NtInitializeNlsFiles( &addr, &cached_lcid, size );
+
+        if (status) return status;
+        if (InterlockedCompareExchangePointer( &cached_ptr, addr, NULL ))
+            NtUnmapViewOfSection( GetCurrentProcess(), addr );
+    }
+    *ptr = cached_ptr;
+    *lcid = cached_lcid;
+    return STATUS_SUCCESS;
+}
+
+
+/**************************************************************************
  *      RtlAnsiCharToUnicodeChar   (NTDLL.@)
  */
 WCHAR WINAPI RtlAnsiCharToUnicodeChar( char **ansi )
