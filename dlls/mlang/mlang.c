@@ -2403,7 +2403,7 @@ static BOOL CALLBACK enum_locales_proc(LPWSTR locale, DWORD flags, LPARAM lparam
     if (info->lcid == LOCALE_CUSTOM_UNSPECIFIED) return TRUE;
 
     info->wszRfc1766[0] = 0;
-    lcid_to_rfc1766W( info->lcid, info->wszRfc1766, MAX_RFC1766_NAME );
+    if (FAILED( lcid_to_rfc1766W( info->lcid, info->wszRfc1766, MAX_RFC1766_NAME ))) return TRUE;
 
     info->wszLocaleName[0] = 0;
     GetLocaleInfoW(info->lcid, LOCALE_SLANGUAGE, info->wszLocaleName, MAX_LOCALE_NAME);
