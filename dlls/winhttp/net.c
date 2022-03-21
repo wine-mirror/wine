@@ -293,6 +293,7 @@ DWORD netconn_secure_connect( struct netconn *conn, WCHAR *hostname, DWORD secur
 
     if (!(read_buf = malloc( read_buf_size ))) return ERROR_OUTOFMEMORY;
 
+    memset( &ctx, 0, sizeof(ctx) );
     status = InitializeSecurityContextW(cred_handle, NULL, hostname, isc_req_flags, 0, 0, NULL, 0,
             &ctx, &out_desc, &attrs, NULL);
 
