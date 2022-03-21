@@ -189,6 +189,16 @@ NTSTATUS WINAPI wow64_NtUserRemoveProp( UINT *args )
     return HandleToUlong( NtUserRemoveProp( hwnd, str ));
 }
 
+NTSTATUS WINAPI wow64_NtUserGetAtomName( UINT *args )
+{
+    ATOM atom = get_ulong( &args );
+    UNICODE_STRING32 *str32 = get_ptr( &args );
+
+    UNICODE_STRING str;
+
+    return NtUserGetAtomName( atom, unicode_str_32to64( &str, str32 ));
+}
+
 NTSTATUS WINAPI wow64_NtUserGetAncestor( UINT *args )
 {
     HWND hwnd = get_handle( &args );
