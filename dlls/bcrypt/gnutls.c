@@ -1162,10 +1162,8 @@ static NTSTATUS key_export_ecc( struct key *key, UCHAR *buf, ULONG len, ULONG *r
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS key_import_ecc( void *args )
+static NTSTATUS key_import_ecc( struct key *key, UCHAR *buf, ULONG len )
 {
-    const struct key_import_params *params = args;
-    struct key *key = params->key;
     BCRYPT_ECCKEY_BLOB *ecc_blob;
     gnutls_ecc_curve_t curve;
     gnutls_privkey_t handle;
@@ -1191,7 +1189,7 @@ static NTSTATUS key_import_ecc( void *args )
         return STATUS_INTERNAL_ERROR;
     }
 
-    ecc_blob = (BCRYPT_ECCKEY_BLOB *)params->buf;
+    ecc_blob = (BCRYPT_ECCKEY_BLOB *)buf;
     x.data = (unsigned char *)(ecc_blob + 1);
     x.size = ecc_blob->cbKey;
     y.data = x.data + ecc_blob->cbKey;
@@ -1212,6 +1210,7 @@ static NTSTATUS key_import_ecc( void *args )
         return status;
     }
 
+    if (key_data(key)->privkey) pgnutls_privkey_deinit( key_data(key)->privkey );
     key_data(key)->privkey = handle;
     return STATUS_SUCCESS;
 }
@@ -1273,10 +1272,9 @@ static NTSTATUS key_export_rsa( struct key *key, ULONG flags, UCHAR *buf, ULONG 
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS key_import_rsa( void *args )
+static NTSTATUS key_import_rsa( struct key *key, UCHAR *buf, ULONG len )
 {
-    const struct key_import_params *params = args;
-    BCRYPT_RSAKEY_BLOB *rsa_blob = (BCRYPT_RSAKEY_BLOB *)params->buf;
+    BCRYPT_RSAKEY_BLOB *rsa_blob = (BCRYPT_RSAKEY_BLOB *)buf;
     gnutls_datum_t m, e, p, q;
     gnutls_privkey_t handle;
     int ret;
@@ -1303,7 +1301,8 @@ static NTSTATUS key_import_rsa( void *args )
         return STATUS_INTERNAL_ERROR;
     }
 
-    key_data(params->key)->privkey = handle;
+    if (key_data(key)->privkey) pgnutls_privkey_deinit( key_data(key)->privkey );
+    key_data(key)->privkey = handle;
     return STATUS_SUCCESS;
 }
 
@@ -1366,11 +1365,9 @@ static NTSTATUS key_export_dsa_capi( struct key *key, UCHAR *buf, ULONG len, ULO
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS key_import_dsa_capi( void *args )
+static NTSTATUS key_import_dsa_capi( struct key *key, UCHAR *buf, ULONG len )
 {
-    const struct key_import_params *params = args;
-    struct key *key = params->key;
-    BLOBHEADER *hdr = (BLOBHEADER *)params->buf;
+    BLOBHEADER *hdr = (BLOBHEADER *)buf;
     DSSPUBKEY *pubkey;
     gnutls_privkey_t handle;
     gnutls_datum_t p, q, g, y, x;
@@ -1435,9 +1432,8 @@ static NTSTATUS key_import_dsa_capi( void *args )
 
     memcpy( &key->u.a.dss_seed, data, sizeof(key->u.a.dss_seed) );
 
-    key->u.a.flags |= KEY_FLAG_LEGACY_DSA_V2;
+    if (key_data(key)->privkey) pgnutls_privkey_deinit( key_data(key)->privkey );
     key_data(key)->privkey = handle;
-
     return STATUS_SUCCESS;
 }
 
@@ -1642,6 +1638,50 @@ static NTSTATUS key_asymmetric_export( void *args )
         }
         if (key->u.a.flags & KEY_FLAG_LEGACY_DSA_V2)
             return key_export_dsa_capi( key, params->buf, params->len, params->ret_len );
+        return STATUS_NOT_IMPLEMENTED;
+
+    default:
+        FIXME( "algorithm %u not yet supported\n", key->alg_id );
+        return STATUS_NOT_IMPLEMENTED;
+    }
+}
+
+static NTSTATUS key_asymmetric_import( void *args )
+{
+    const struct key_asymmetric_import_params *params = args;
+    struct key *key = params->key;
+    unsigned flags = params->flags;
+
+    switch (key->alg_id)
+    {
+    case ALG_ID_ECDH_P256:
+    case ALG_ID_ECDSA_P256:
+    case ALG_ID_ECDSA_P384:
+        if (flags & KEY_IMPORT_FLAG_PUBLIC)
+        {
+            FIXME("\n");
+            return STATUS_SUCCESS;
+        }
+        return key_import_ecc( key, params->buf, params->len );
+
+    case ALG_ID_RSA:
+    case ALG_ID_RSA_SIGN:
+        if (flags & KEY_IMPORT_FLAG_PUBLIC)
+        {
+            FIXME("\n");
+            return STATUS_SUCCESS;
+        }
+        return key_import_rsa( key, params->buf, params->len );
+
+    case ALG_ID_DSA:
+        if (flags & KEY_IMPORT_FLAG_PUBLIC)
+        {
+            FIXME("\n");
+            return STATUS_SUCCESS;
+        }
+        if (key->u.a.flags & KEY_FLAG_LEGACY_DSA_V2)
+            return key_import_dsa_capi( key, params->buf, params->len );
+        FIXME( "DSA private key not supported\n" );
         return STATUS_NOT_IMPLEMENTED;
 
     default:
@@ -2085,9 +2125,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     key_asymmetric_verify,
     key_asymmetric_destroy,
     key_asymmetric_export,
-    key_import_dsa_capi,
-    key_import_ecc,
-    key_import_rsa
+    key_asymmetric_import
 };
 
 #ifdef _WIN64
@@ -2477,11 +2515,12 @@ static NTSTATUS wow64_key_asymmetric_export( void *args )
     return ret;
 }
 
-static NTSTATUS wow64_key_import_dsa_capi( void *args )
+static NTSTATUS wow64_key_asymmetric_import( void *args )
 {
     struct
     {
         PTR32 key;
+        ULONG flags;
         PTR32 buf;
         ULONG len;
     } const *params32 = args;
@@ -2489,62 +2528,15 @@ static NTSTATUS wow64_key_import_dsa_capi( void *args )
     NTSTATUS ret;
     struct key key;
     struct key32 *key32 = ULongToPtr( params32->key );
-    struct key_import_params params =
+    struct key_asymmetric_import_params params =
     {
         get_asymmetric_key( key32, &key ),
+        params32->flags,
         ULongToPtr(params32->buf),
         params32->len
     };
 
-    ret = key_import_dsa_capi( &params );
-    put_asymmetric_key32( &key, key32 );
-    return ret;
-}
-
-static NTSTATUS wow64_key_import_ecc( void *args )
-{
-    struct
-    {
-        PTR32 key;
-        PTR32 buf;
-        ULONG len;
-    } const *params32 = args;
-
-    NTSTATUS ret;
-    struct key key;
-    struct key32 *key32 = ULongToPtr( params32->key );
-    struct key_import_params params =
-    {
-        get_asymmetric_key( key32, &key ),
-        ULongToPtr(params32->buf),
-        params32->len
-    };
-
-    ret = key_import_ecc( &params );
-    put_asymmetric_key32( &key, key32 );
-    return ret;
-}
-
-static NTSTATUS wow64_key_import_rsa( void *args )
-{
-    struct
-    {
-        PTR32 key;
-        PTR32 buf;
-        ULONG len;
-    } const *params32 = args;
-
-    NTSTATUS ret;
-    struct key key;
-    struct key32 *key32 = ULongToPtr( params32->key );
-    struct key_import_params params =
-    {
-        get_asymmetric_key( key32, &key ),
-        ULongToPtr(params32->buf),
-        params32->len
-    };
-
-    ret = key_import_rsa( &params );
+    ret = key_asymmetric_import( &params );
     put_asymmetric_key32( &key, key32 );
     return ret;
 }
@@ -2566,9 +2558,7 @@ const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_key_asymmetric_verify,
     wow64_key_asymmetric_destroy,
     wow64_key_asymmetric_export,
-    wow64_key_import_dsa_capi,
-    wow64_key_import_ecc,
-    wow64_key_import_rsa
+    wow64_key_asymmetric_import
 };
 
 #endif  /* _WIN64 */

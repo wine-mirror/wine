@@ -1339,7 +1339,7 @@ static void key_destroy( struct key *key )
 static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYPT_KEY_HANDLE *ret_key, UCHAR *input,
                                  ULONG input_len )
 {
-    struct key_import_params params;
+    struct key_asymmetric_import_params params;
     struct key *key;
     NTSTATUS status;
     ULONG size;
@@ -1378,7 +1378,19 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
             return STATUS_INVALID_PARAMETER;
 
         size = sizeof(*ecc_blob) + ecc_blob->cbKey * 2;
-        return key_asymmetric_create( (struct key **)ret_key, alg->id, key_size * 8, (BYTE *)ecc_blob, size );
+        if ((status = key_asymmetric_create( &key, alg->id, key_size * 8, (BYTE *)ecc_blob, size ))) return status;
+        params.key   = key;
+        params.flags = KEY_IMPORT_FLAG_PUBLIC;
+        params.buf   = input;
+        params.len   = input_len;
+        if ((status = UNIX_CALL( key_asymmetric_import, &params )))
+        {
+            key_destroy( key );
+            return status;
+        }
+
+        *ret_key = key;
+        return STATUS_SUCCESS;
     }
     else if (!wcscmp( type, BCRYPT_ECCPRIVATE_BLOB ))
     {
@@ -1409,11 +1421,11 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
 
         size = sizeof(*ecc_blob) + key_size * 2;
         if ((status = key_asymmetric_create( &key, alg->id, key_size * 8, NULL, size ))) return status;
-
-        params.key = key;
-        params.buf = input;
-        params.len = input_len;
-        if ((status = UNIX_CALL( key_import_ecc, &params )))
+        params.key   = key;
+        params.flags = 0;
+        params.buf   = input;
+        params.len   = input_len;
+        if ((status = UNIX_CALL( key_asymmetric_import, &params )))
         {
             key_destroy( key );
             return status;
@@ -1432,7 +1444,20 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
 
         size = sizeof(*rsa_blob) + rsa_blob->cbPublicExp + rsa_blob->cbModulus;
         if (size != input_len) return NTE_BAD_DATA;
-        return key_asymmetric_create( (struct key **)ret_key, alg->id, rsa_blob->BitLength, (BYTE *)rsa_blob, size );
+
+        if ((status = key_asymmetric_create( &key, alg->id, rsa_blob->BitLength, (BYTE *)rsa_blob, size ))) return status;
+        params.key   = key;
+        params.flags = KEY_IMPORT_FLAG_PUBLIC;
+        params.buf   = input;
+        params.len   = input_len;
+        if ((status = UNIX_CALL( key_asymmetric_import, &params )))
+        {
+            key_destroy( key );
+            return status;
+        }
+
+        *ret_key = key;
+        return STATUS_SUCCESS;
     }
     else if (!wcscmp( type, BCRYPT_RSAPRIVATE_BLOB ) || !wcscmp( type, BCRYPT_RSAFULLPRIVATE_BLOB ))
     {
@@ -1443,12 +1468,12 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
             rsa_blob->Magic != BCRYPT_RSAFULLPRIVATE_MAGIC)) return STATUS_NOT_SUPPORTED;
 
         size = sizeof(*rsa_blob) + rsa_blob->cbPublicExp + rsa_blob->cbModulus;
-        if ((status = key_asymmetric_create( &key, alg->id, rsa_blob->BitLength, (BYTE *)rsa_blob, size )))
-            return status;
-        params.key = key;
-        params.buf = input;
-        params.len = input_len;
-        if ((status = UNIX_CALL( key_import_rsa, &params )))
+        if ((status = key_asymmetric_create( &key, alg->id, rsa_blob->BitLength, (BYTE *)rsa_blob, size ))) return status;
+        params.key   = key;
+        params.flags = 0;
+        params.buf   = input;
+        params.len   = input_len;
+        if ((status = UNIX_CALL( key_asymmetric_import, &params )))
         {
             key_destroy( key );
             return status;
@@ -1466,7 +1491,19 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
             return STATUS_NOT_SUPPORTED;
 
         size = sizeof(*dsa_blob) + dsa_blob->cbKey * 3;
-        return key_asymmetric_create( (struct key **)ret_key, alg->id, dsa_blob->cbKey * 8, (BYTE *)dsa_blob, size );
+        if ((status = key_asymmetric_create( &key, alg->id, dsa_blob->cbKey * 8, (BYTE *)dsa_blob, size ))) return status;
+        params.key   = key;
+        params.flags = KEY_IMPORT_FLAG_PUBLIC;
+        params.buf   = input;
+        params.len   = input_len;
+        if ((status = UNIX_CALL( key_asymmetric_import, &params )))
+        {
+            key_destroy( key );
+            return status;
+        }
+
+        *ret_key = key;
+        return STATUS_SUCCESS;
     }
     else if (!wcscmp( type, LEGACY_DSA_V2_PRIVATE_BLOB ))
     {
@@ -1495,11 +1532,12 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
 
         size = sizeof(*hdr) + sizeof(*pubkey) + (pubkey->bitlen / 8) * 3 + 20 + sizeof(DSSSEED);
         if ((status = key_asymmetric_create( &key, alg->id, pubkey->bitlen, NULL, size ))) return status;
-
-        params.key = key;
-        params.buf = input;
-        params.len = input_len;
-        if ((status = UNIX_CALL( key_import_dsa_capi, &params )))
+        key->u.a.flags |= KEY_FLAG_LEGACY_DSA_V2;
+        params.key   = key;
+        params.flags = 0;
+        params.buf   = input;
+        params.len   = input_len;
+        if ((status = UNIX_CALL( key_asymmetric_import, &params )))
         {
             key_destroy( key );
             return status;
@@ -1531,6 +1569,15 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
 
         if ((status = key_asymmetric_create( &key, alg->id, pubkey->bitlen, (BYTE *)hdr, size ))) return status;
         key->u.a.flags |= KEY_FLAG_LEGACY_DSA_V2;
+        params.key   = key;
+        params.flags = KEY_IMPORT_FLAG_PUBLIC;
+        params.buf   = input;
+        params.len   = input_len;
+        if ((status = UNIX_CALL( key_asymmetric_import, &params )))
+        {
+            key_destroy( key );
+            return status;
+        }
 
         *ret_key = key;
         return STATUS_SUCCESS;

@@ -279,9 +279,11 @@ struct key_asymmetric_export_params
     ULONG       *ret_len;
 };
 
-struct key_import_params
+#define KEY_IMPORT_FLAG_PUBLIC   0x00000001
+struct key_asymmetric_import_params
 {
     struct key  *key;
+    ULONG        flags;
     UCHAR       *buf;
     ULONG        len;
 };
@@ -303,9 +305,7 @@ enum key_funcs
     unix_key_asymmetric_verify,
     unix_key_asymmetric_destroy,
     unix_key_asymmetric_export,
-    unix_key_import_dsa_capi,
-    unix_key_import_ecc,
-    unix_key_import_rsa,
+    unix_key_asymmetric_import,
 };
 
 #endif /* __BCRYPT_INTERNAL_H */
