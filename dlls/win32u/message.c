@@ -273,6 +273,12 @@ BOOL WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
         return send_window_message( hwnd, msg, wparam, lparam, (LRESULT *)result_info, ansi );
     case FNID_SENDNOTIFYMESSAGE:
         return send_notify_message( hwnd, msg, wparam, lparam, ansi );
+    case FNID_SPYENTER:
+        spy_enter_message( ansi, hwnd, msg, wparam, lparam );
+        return 0;
+    case FNID_SPYEXIT:
+        spy_exit_message( ansi, hwnd, msg, result_info, wparam, lparam );
+        return 0;
     default:
         FIXME( "%p %x %lx %lx %lx %x %x\n", hwnd, msg, wparam, lparam, result_info, type, ansi );
     }

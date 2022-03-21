@@ -4709,6 +4709,8 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         }
     case NtUserSetCallbacks:
         return (UINT_PTR)InterlockedExchangePointer( (void **)&user_callbacks, (void *)arg );
+    case NtUserSpyGetVKeyName:
+        return (UINT_PTR)debugstr_vkey_name( arg );
     default:
         FIXME( "invalid code %u\n", code );
         return 0;

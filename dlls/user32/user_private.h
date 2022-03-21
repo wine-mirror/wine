@@ -143,13 +143,6 @@ BOOL WINAPI User32CallWindowsHook( const struct win_hook_params *params, ULONG s
 
 /* message spy definitions */
 
-#define SPY_DISPATCHMESSAGE       0x0100
-#define SPY_SENDMESSAGE           0x0101
-#define SPY_DEFWNDPROC            0x0102
-
-#define SPY_RESULT_OK             0x0001
-#define SPY_RESULT_DEFWND         0x0002
-
 extern const char *SPY_GetMsgName( UINT msg, HWND hWnd ) DECLSPEC_HIDDEN;
 extern const char *SPY_GetVKeyName(WPARAM wParam) DECLSPEC_HIDDEN;
 extern void SPY_EnterMessage( INT iFlag, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;

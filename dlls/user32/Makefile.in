@@ -39,7 +39,6 @@ C_SRCS = \
 	rawinput.c \
 	resource.c \
 	scroll.c \
-	spy.c \
 	static.c \
 	sysparams.c \
 	text.c \

@@ -781,7 +781,7 @@ static BOOL is_window_drawable( HWND hwnd, BOOL icon )
 }
 
 /* see IsWindowUnicode */
-static BOOL is_window_unicode( HWND hwnd )
+BOOL is_window_unicode( HWND hwnd )
 {
     WND *win;
     BOOL ret = FALSE;
@@ -5033,6 +5033,8 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
             STYLESTRUCT *style = (void *)param;
             return set_window_style( hwnd, style->styleNew, style->styleOld );
         }
+    case NtUserSpyGetMsgName:
+        return (UINT_PTR)debugstr_msg_name( param, hwnd );
     default:
         FIXME( "invalid code %u\n", code );
         return 0;

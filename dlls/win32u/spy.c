@@ -19,20 +19,16 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdarg.h>
-#include <stdio.h>
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winreg.h"
-#include "win.h"
-#include "user_private.h"
-#include "wine/debug.h"
+#if 0
+#pragma makedep unix
+#endif
+
+#include "win32u_private.h"
+#include "ntuser_private.h"
 #include "commctrl.h"
 #include "commdlg.h"
 #include "richedit.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(message);
 
@@ -2023,7 +2019,7 @@ typedef struct
     WPARAM     wParam;           /* message parameter                  */
     LPARAM     lParam;           /* message parameter                  */
     INT        data_len;         /* length of data to dump             */
-    char       msg_name[60];     /* message name (see SPY_GetMsgName)  */
+    char       msg_name[60];     /* message name (see debugstr_msg_name) */
     WCHAR      wnd_class[60];    /* window class name (full)           */
     WCHAR      wnd_name[16];     /* window name for message            */
 } SPY_INSTANCE;
@@ -2104,13 +2100,16 @@ static const USER_MSG *SPY_Bsearch_Msg( const USER_MSG *msgs, UINT count, UINT c
  */
 static void SPY_GetClassName( SPY_INSTANCE *sp_e )
 {
+    static const WCHAR property_sheet_infoW[] =
+        {'P','r','o','p','e','r','t','y','S','h','e','e','t','I','n','f','o',0};
     /* special code to detect a property sheet dialog   */
-    if ((GetClassLongW(sp_e->msg_hwnd, GCW_ATOM) == WC_DIALOG) &&
-        (GetPropW(sp_e->msg_hwnd, L"PropertySheetInfo"))) {
+    if ((get_class_long( sp_e->msg_hwnd, GCW_ATOM, FALSE ) == WC_DIALOG) &&
+        (NtUserGetProp( sp_e->msg_hwnd, property_sheet_infoW ))) {
         lstrcpyW(sp_e->wnd_class, WC_PROPSHEETW);
     }
     else {
-        GetClassNameW(sp_e->msg_hwnd, sp_e->wnd_class, ARRAY_SIZE(sp_e->wnd_class));
+        UNICODE_STRING str = { .Buffer = sp_e->wnd_class, .MaximumLength = sizeof(sp_e->wnd_class) };
+        NtUserGetClassName( sp_e->msg_hwnd, FALSE, &str );
     }
 }
 
@@ -2131,10 +2130,16 @@ static void SPY_GetMsgStuff( SPY_INSTANCE *sp_e )
 
         if (sp_e->msgnum >= 0xc000)
         {
-            if (GlobalGetAtomNameA( sp_e->msgnum, sp_e->msg_name+1, sizeof(sp_e->msg_name)-2 ))
+            char buf[sizeof(ATOM_BASIC_INFORMATION) + MAX_ATOM_LEN * sizeof(WCHAR)];
+            ATOM_BASIC_INFORMATION *abi = (ATOM_BASIC_INFORMATION *)buf;
+            if (!NtQueryInformationAtom( sp_e->msgnum, AtomBasicInformation, abi, sizeof(buf), NULL ))
             {
-                sp_e->msg_name[0] = '\"';
-                strcat( sp_e->msg_name, "\"" );
+                unsigned int j = 0;
+                sp_e->msg_name[j++] = '\"';
+                j += ntdll_wcstoumbs( abi->Name, abi->NameLength / sizeof(WCHAR),
+                                      sp_e->msg_name + j,  sizeof(sp_e->msg_name) - 3, FALSE );
+                sp_e->msg_name[j++] = '\"';
+                sp_e->msg_name[j] = 0;
                 return;
             }
         }
@@ -2199,13 +2204,13 @@ static void SPY_GetWndName( SPY_INSTANCE *sp_e )
 }
 
 /***********************************************************************
- *           SPY_GetMsgName
+ *           debugstr_msg_name
  *
  *  ****  External function  ****
  *
  *  Get message name
  */
-const char *SPY_GetMsgName( UINT msg, HWND hWnd )
+const char *debugstr_msg_name( UINT msg, HWND hWnd )
 {
     SPY_INSTANCE ext_sp_e;
     DWORD save_error = GetLastError();
@@ -2221,9 +2226,9 @@ const char *SPY_GetMsgName( UINT msg, HWND hWnd )
 }
 
 /***********************************************************************
- *           SPY_GetVKeyName
+ *           debugstr_vkey_name
  */
-const char *SPY_GetVKeyName(WPARAM wParam)
+const char *debugstr_vkey_name(WPARAM wParam)
 {
     const char *vk_key_name;
 
@@ -2431,7 +2436,7 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
 
             if (!enter) break;
 
-            unicode = IsWindowUnicode(sp_e->msg_hwnd);
+            unicode = is_window_unicode( sp_e->msg_hwnd );
             cs = (CREATESTRUCTA *)sp_e->lParam;
             TRACE("%s %s ex=%08x style=%08x %d,%d %dx%d parent=%p menu=%p inst=%p params=%p\n",
                   unicode ? debugstr_w((LPCWSTR)cs->lpszName) : debugstr_a(cs->lpszName),
@@ -2488,6 +2493,7 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
                 const SPY_NOTIFY *p;
                 WCHAR from_class[60];
                 DWORD save_error;
+                UNICODE_STRING str = { .Buffer = from_class, .MaximumLength = sizeof(from_class) };
 
                 p = SPY_Bsearch_Notify( pnmh->code );
                 if (p) {
@@ -2499,7 +2505,7 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
                     if (pnmh->code == NM_CUSTOMDRAW) {
                         /* save and restore error code over the next call */
                         save_error = GetLastError();
-                        GetClassNameW(pnmh->hwndFrom, from_class, ARRAY_SIZE(from_class));
+                        NtUserGetClassName( pnmh->hwndFrom, FALSE, &str );
                         SetLastError(save_error);
                         if (wcscmp(TOOLBARCLASSNAMEW, from_class) == 0)
                             dumplen = sizeof(NMTBCUSTOMDRAW)-sizeof(NMHDR);
@@ -2530,61 +2536,64 @@ static void SPY_DumpStructure(const SPY_INSTANCE *sp_e, BOOL enter)
  */
 static BOOL spy_init(void)
 {
-    int i;
-    char buffer[1024];
     HKEY hkey;
     char *exclude;
 
     if (!TRACE_ON(message)) return FALSE;
 
     if (spy_exclude) return TRUE;
-    exclude = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, SPY_MAX_MSGNUM + 2 );
+    exclude = calloc( 1, SPY_MAX_MSGNUM + 2 );
 
     /* @@ Wine registry key: HKCU\Software\Wine\Debug */
-    if(!RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Debug", &hkey))
+    if ((hkey = reg_open_hkcu_key( "Software\\Wine\\Debug" )))
     {
-        DWORD type, count = sizeof(buffer);
+        char buffer[2048];
+        KEY_VALUE_PARTIAL_INFORMATION *info = (void *)buffer;
+        unsigned int i, size;
 
-        buffer[0] = 0;
-        if (!RegQueryValueExA(hkey, "SpyInclude", 0, &type, (LPBYTE) buffer, &count) &&
-            strcmp( buffer, "INCLUDEALL" ))
+        if ((size = query_reg_ascii_value( hkey, "SpyInclude", info, sizeof(buffer) )))
         {
+            const WCHAR *data = (const WCHAR *)info->Data;
+            for (i = 0; i < size / sizeof(WCHAR); i++) buffer[i] = data[i];
+            buffer[i] = 0;
             TRACE("Include=%s\n", buffer );
-            for (i = 0; i <= SPY_MAX_MSGNUM; i++)
-                exclude[i] = (MessageTypeNames[i] && !strstr(buffer,MessageTypeNames[i]));
+            if (strcmp( buffer, "INCLUDEALL" ))
+            {
+                for (i = 0; i <= SPY_MAX_MSGNUM; i++)
+                    exclude[i] = MessageTypeNames[i] && !strstr(buffer,MessageTypeNames[i]);
+            }
         }
 
-        count = sizeof(buffer);
-        buffer[0] = 0;
-        if (!RegQueryValueExA(hkey, "SpyExclude", 0, &type, (LPBYTE) buffer, &count))
+        if ((size = query_reg_ascii_value( hkey, "SpyExclude", info, sizeof(buffer) )))
         {
+            const WCHAR *data = (const WCHAR *)info->Data;
+            for (i = 0; i < size / sizeof(WCHAR); i++) buffer[i] = data[i];
+            buffer[i] = 0;
             TRACE("Exclude=%s\n", buffer );
             if (!strcmp( buffer, "EXCLUDEALL" ))
                 for (i = 0; i <= SPY_MAX_MSGNUM; i++) exclude[i] = TRUE;
             else
                 for (i = 0; i <= SPY_MAX_MSGNUM; i++)
-                    exclude[i] = (MessageTypeNames[i] && strstr(buffer,MessageTypeNames[i]));
+                    exclude[i] = MessageTypeNames[i] && strstr(buffer,MessageTypeNames[i]);
         }
 
-        count = sizeof(buffer);
-        if(!RegQueryValueExA(hkey, "SpyExcludeDWP", 0, &type, (LPBYTE) buffer, &count))
-            exclude[SPY_MAX_MSGNUM + 1] = atoi(buffer);
+        if (query_reg_ascii_value( hkey, "SpyExcludeDWP", info, sizeof(buffer) ))
+            exclude[SPY_MAX_MSGNUM + 1] = wcstol( (const WCHAR *)info->Data, NULL, 0 );
 
-        RegCloseKey(hkey);
+        NtClose( hkey );
     }
 
     if (InterlockedCompareExchangePointer( (void **)&spy_exclude, exclude, NULL ))
-        HeapFree( GetProcessHeap(), 0, exclude );
+        free( exclude );
 
     return TRUE;
 }
 
 
 /***********************************************************************
- *           SPY_EnterMessage
+ *           spy_enter_message
  */
-void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
-                       WPARAM wParam, LPARAM lParam )
+void spy_enter_message( INT iFlag, HWND hWnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
     SPY_INSTANCE sp_e;
     int indent;
@@ -2600,7 +2609,7 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
     SPY_GetMsgStuff(&sp_e);
     indent = get_indent_level();
 
-    /* each SPY_SENDMESSAGE must be complemented by call to SPY_ExitMessage */
+    /* each SPY_SENDMESSAGE must be complemented by call to spy_exit_message */
     switch(iFlag)
     {
     case SPY_DISPATCHMESSAGE:
@@ -2612,7 +2621,7 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
     case SPY_SENDMESSAGE:
         {
             char taskName[20];
-            DWORD tid = GetWindowThreadProcessId( hWnd, NULL );
+            DWORD tid = get_window_thread( hWnd, NULL );
 
             if (tid == GetCurrentThreadId()) strcpy( taskName, "self" );
             else sprintf( taskName, "tid %04x", GetCurrentThreadId() );
@@ -2636,9 +2645,9 @@ void SPY_EnterMessage( INT iFlag, HWND hWnd, UINT msg,
 
 
 /***********************************************************************
- *           SPY_ExitMessage
+ *           spy_exit_message
  */
-void SPY_ExitMessage( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
+void spy_exit_message( INT iFlag, HWND hWnd, UINT msg, LRESULT lReturn,
                        WPARAM wParam, LPARAM lParam )
 {
     SPY_INSTANCE sp_e;

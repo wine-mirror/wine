@@ -121,6 +121,7 @@ enum
     NtUserIncrementKeyStateCounter,
     NtUserLock,
     NtUserSetCallbacks,
+    NtUserSpyGetVKeyName,
 };
 
 /* NtUserCallTwoParam codes, not compatible with Windows */
@@ -182,6 +183,7 @@ enum
     /* temporary exports */
     NtUserIsWindowDrawable,
     NtUserSetWindowStyle,
+    NtUserSpyGetMsgName,
 };
 
 /* NtUserMessageCall codes */
@@ -189,6 +191,9 @@ enum
 {
     FNID_SENDMESSAGE        = 0x02b1,
     FNID_SENDNOTIFYMESSAGE  = 0x02b7,
+    /* Wine-specific exports */
+    FNID_SPYENTER           = 0x0300,
+    FNID_SPYEXIT            = 0x0301,
 };
 
 /* color index used to retrieve system 55aa brush */

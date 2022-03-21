@@ -43,6 +43,7 @@ C_SRCS = \
 	pen.c \
 	printdrv.c \
 	region.c \
+	spy.c \
 	syscall.c \
 	sysparams.c \
 	vertical.c \
