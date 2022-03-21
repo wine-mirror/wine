@@ -2122,6 +2122,17 @@ static void compare_addrinfo(ADDRINFO *a, ADDRINFO *b)
     ok(!a && !b, "Expected both addresses null (%p != %p)\n", a, b);
 }
 
+static BOOL ipv6_found(ADDRINFOA *addr)
+{
+    ADDRINFOA *p;
+    for (p = addr; p; p = p->ai_next)
+    {
+        if (p->ai_family == AF_INET6)
+            return TRUE;
+    }
+    return FALSE;
+}
+
 static void test_getaddrinfo(void)
 {
     int i, ret;
@@ -2129,6 +2140,7 @@ static void test_getaddrinfo(void)
     SOCKADDR_IN *sockaddr;
     CHAR name[256], *ip;
     DWORD size = sizeof(name);
+    BOOL has_ipv6_addr;
 
     memset(&hint, 0, sizeof(ADDRINFOA));
     GetComputerNameExA( ComputerNamePhysicalDnsHostname, name, &size );
@@ -2396,6 +2408,59 @@ static void test_getaddrinfo(void)
     ok(sockaddr->sin_family == AF_INET, "ai_addr->sin_family == %d\n", sockaddr->sin_family);
     ok(sockaddr->sin_port == 0, "ai_addr->sin_port == %d\n", sockaddr->sin_port);
     freeaddrinfo(result);
+
+    /* Check whether we have global IPv6 address */
+    result = NULL;
+    ret = getaddrinfo("", NULL, NULL, &result);
+    ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
+    has_ipv6_addr = FALSE;
+    for (p = result; p; p = p->ai_next)
+    {
+        if (p->ai_family == AF_INET6)
+        {
+            IN6_ADDR *a = &((SOCKADDR_IN6 *)p->ai_addr)->sin6_addr;
+            if (!IN6_IS_ADDR_LINKLOCAL(a) && !IN6_IS_ADDR_LOOPBACK(a) && !IN6_IS_ADDR_UNSPECIFIED(a))
+            {
+                has_ipv6_addr = TRUE;
+                break;
+            }
+        }
+    }
+    freeaddrinfo(result);
+
+    result = NULL;
+    ret = getaddrinfo("www.kernel.org", NULL, NULL, &result);
+    ok(!ret, "getaddrinfo failed with %d\n", WSAGetLastError());
+    if (!has_ipv6_addr)
+        todo_wine ok(!ipv6_found(result), "IPv6 address is returned.\n");
+    freeaddrinfo(result);
+
+    for (i = 0; i < ARRAY_SIZE(hinttests); i++)
+    {
+        if (hinttests[i].family != AF_UNSPEC || hinttests[i].error) continue;
+        winetest_push_context("Test %u", i);
+
+        hint.ai_flags = 0;
+        hint.ai_family = hinttests[i].family;
+        hint.ai_socktype = hinttests[i].socktype;
+        hint.ai_protocol = hinttests[i].protocol;
+
+        result = NULL;
+        ret = getaddrinfo("www.kernel.org", NULL, &hint, &result);
+        ok(!ret, "Got unexpected ret %d\n", ret);
+        if (!has_ipv6_addr)
+            todo_wine ok(!ipv6_found(result), "IPv6 address is returned.\n");
+        freeaddrinfo(result);
+
+        hint.ai_family = AF_INET6;
+        result = NULL;
+        ret = getaddrinfo("www.kernel.org", NULL, &hint, &result);
+        if (!has_ipv6_addr)
+            todo_wine ok(ret == WSANO_DATA, "Got unexpected ret %d\n", ret);
+        freeaddrinfo(result);
+
+        winetest_pop_context();
+    }
 }
 
 static void test_dns(void)
