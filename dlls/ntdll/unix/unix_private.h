@@ -450,4 +450,12 @@ static inline void init_unicode_string( UNICODE_STRING *str, const WCHAR *data )
     str->Buffer = (WCHAR *)data;
 }
 
+static inline NTSTATUS map_section( HANDLE mapping, void **ptr, SIZE_T *size, ULONG protect )
+{
+    *ptr = NULL;
+    *size = 0;
+    return NtMapViewOfSection( mapping, NtCurrentProcess(), ptr, is_win64 && wow_peb ? 0x7fffffff : 0,
+                               0, NULL, size, ViewShare, 0, protect );
+}
+
 #endif /* __NTDLL_UNIX_PRIVATE_H */

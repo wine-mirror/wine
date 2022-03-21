@@ -2458,10 +2458,9 @@ NTSTATUS WINAPI NtGetNlsSectionPtr( ULONG type, ULONG id, void *unknown, void **
     }
     if (!status)
     {
-        *ptr = NULL;
-        *size = 0;
-        status = NtMapViewOfSection( handle, GetCurrentProcess(), ptr, 0, 0, NULL, size,
-                                     ViewShare, 0, PAGE_READONLY );
+        status = map_section( handle, ptr, size, PAGE_READONLY );
+        NtClose( handle );
+    }
     }
     NtClose( handle );
     return status;
