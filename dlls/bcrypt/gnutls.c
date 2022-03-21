@@ -1145,8 +1145,7 @@ static NTSTATUS key_import_dsa_capi( struct key *key, UCHAR *buf, ULONG len )
     BLOBHEADER *hdr = (BLOBHEADER *)buf;
     DSSPUBKEY *pubkey;
     gnutls_privkey_t handle;
-    gnutls_datum_t p, q, g, y, x;
-    unsigned char dummy[128];
+    gnutls_datum_t p, q, g, x;
     unsigned char *data, p_data[128], q_data[20], g_data[128], x_data[20];
     int i, ret, size;
 
@@ -1185,12 +1184,7 @@ static NTSTATUS key_import_dsa_capi( struct key *key, UCHAR *buf, ULONG len )
     for (i = 0; i < x.size; i++) x.data[i] = data[x.size - i - 1];
     data += x.size;
 
-    WARN( "using dummy public key\n" );
-    memset( dummy, 1, sizeof(dummy) );
-    y.data = dummy;
-    y.size = min( p.size, sizeof(dummy) );
-
-    if ((ret = pgnutls_privkey_import_dsa_raw( handle, &p, &q, &g, &y, &x )))
+    if ((ret = pgnutls_privkey_import_dsa_raw( handle, &p, &q, &g, NULL, &x )))
     {
         pgnutls_perror( ret );
         pgnutls_privkey_deinit( handle );
