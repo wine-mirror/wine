@@ -406,6 +406,33 @@ struct hid_device
     KSPIN_LOCK lock;
 };
 
+static DRIVER_OBJECT *expect_driver;
+static DEVICE_OBJECT *expect_bus_pdo;
+static DEVICE_OBJECT *expect_hid_fdo;
+static DEVICE_OBJECT *expect_hid_pdo;
+static struct hid_device *expect_hid_ext;
+
+static void check_device( DEVICE_OBJECT *device )
+{
+    static int checked_fdo, checked_pdo;
+    HID_DEVICE_EXTENSION *ext = device->DeviceExtension;
+
+    ok( device == expect_hid_pdo || device == expect_hid_fdo, "got device %p\n", device );
+    ok( device->DriverObject == expect_driver, "got DriverObject %p\n", device->DriverObject );
+    if (!device->NextDevice) ok( device == expect_hid_fdo, "got device %p\n", device );
+    else ok( device->NextDevice == expect_hid_fdo, "got NextDevice %p\n", device->NextDevice );
+    ok( !device->AttachedDevice, "got AttachedDevice %p\n", device->AttachedDevice );
+
+    if (device == expect_hid_pdo && checked_pdo++) return;
+    if (device == expect_hid_fdo && checked_fdo++) return;
+
+    todo_wine_if( device != expect_hid_fdo )
+    ok( ext->MiniDeviceExtension == expect_hid_ext, "got MiniDeviceExtension %p\n", ext->MiniDeviceExtension );
+    if (ext->MiniDeviceExtension != expect_hid_ext) return;
+    ok( ext->PhysicalDeviceObject == expect_bus_pdo, "got PhysicalDeviceObject %p\n", ext->PhysicalDeviceObject );
+    ok( ext->NextDeviceObject == expect_bus_pdo, "got NextDeviceObject %p\n", ext->NextDeviceObject );
+}
+
 static NTSTATUS WINAPI driver_pnp( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
@@ -492,6 +519,9 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     LONG index;
 
     if (winetest_debug > 1) trace( "%s: device %p, code %#lx %s\n", __func__, device, code, debugstr_ioctl(code) );
+
+    ok( expect_hid_fdo == device, "got device %p\n", device );
+    check_device( device );
 
     ok( got_start_device, "expected IRP_MN_START_DEVICE before any ioctls\n" );
 
@@ -706,7 +736,7 @@ static NTSTATUS WINAPI driver_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     return ret;
 }
 
-static NTSTATUS( WINAPI *hidclass_driver_ioctl )(DEVICE_OBJECT *device, IRP *irp);
+static NTSTATUS (WINAPI *hidclass_driver_ioctl)( DEVICE_OBJECT *device, IRP *irp );
 static NTSTATUS WINAPI driver_ioctl( DEVICE_OBJECT *device, IRP *irp )
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
@@ -715,6 +745,10 @@ static NTSTATUS WINAPI driver_ioctl( DEVICE_OBJECT *device, IRP *irp )
     KIRQL irql;
 
     if (winetest_debug > 1) trace( "%s: device %p, code %#lx %s\n", __func__, device, code, debugstr_ioctl(code) );
+
+    if (!expect_hid_pdo) expect_hid_pdo = device;
+    else ok( expect_hid_pdo == device, "got device %p\n", device );
+    check_device( device );
 
     switch (code)
     {
@@ -750,12 +784,14 @@ static NTSTATUS WINAPI driver_add_device( DRIVER_OBJECT *driver, DEVICE_OBJECT *
 
     if (winetest_debug > 1) trace( "%s: driver %p, device %p\n", __func__, driver, device );
 
-    /* We should be given the FDO, not the PDO. */
-    ok( !!ext->PhysicalDeviceObject, "expected non-NULL pdo\n" );
-    ok( ext->NextDeviceObject == ext->PhysicalDeviceObject, "got pdo %p, next %p\n",
-        ext->PhysicalDeviceObject, ext->NextDeviceObject );
+    expect_hid_fdo = device;
+    expect_bus_pdo = ext->PhysicalDeviceObject;
+    expect_hid_ext = ext->MiniDeviceExtension;
+
     todo_wine
-    ok( ext->NextDeviceObject->AttachedDevice == device, "wrong attached device\n" );
+    ok( expect_bus_pdo->AttachedDevice == device, "got AttachedDevice %p\n", expect_bus_pdo->AttachedDevice );
+    ok( driver == expect_driver, "got driver %p\n", driver );
+    check_device( device );
 
     ret = IoRegisterDeviceInterface( ext->PhysicalDeviceObject, &control_class, NULL, &control_symlink );
     ok( !ret, "got %#lx\n", ret );
@@ -808,6 +844,8 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *registry )
     char *buffer;
     HANDLE hkey;
     DWORD size;
+
+    expect_driver = driver;
 
     if ((ret = winetest_init())) return ret;
     if (winetest_debug > 1) trace( "%s: driver %p\n", __func__, driver );
