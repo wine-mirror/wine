@@ -3853,15 +3853,15 @@ msgstr "조건부 컴파일이 해제되었습니다"
 msgid "Expected '@'"
 msgstr "'@'가 필요합니다"
 
-#: dlls/jscript/jscript.rc:80
+#: dlls/jscript/jscript.rc:82
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript 컴파일 오류"
 
-#: dlls/jscript/jscript.rc:81
+#: dlls/jscript/jscript.rc:83
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript 런타임 오류"
 
-#: dlls/jscript/jscript.rc:82 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:84 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "알 수 없는 런타임 오류"
 
@@ -3953,22 +3953,32 @@ msgstr ""
 "속성 설명자의 'writable' 특성은 이 개체에서 'true'로 설정할 수 없습니다"
 
 #: dlls/jscript/jscript.rc:74
+msgid "Cyclic __proto__ value"
+msgstr ""
+
+#: dlls/jscript/jscript.rc:75
+#, fuzzy
+#| msgid "Cannot define property '|': object is not extensible"
+msgid "Cannot create property for a non-extensible object"
+msgstr "확장 가능하지 않은 속성 '|'을(를) 정의할 수 없습니다"
+
+#: dlls/jscript/jscript.rc:76
 msgid "Cannot define property '|': object is not extensible"
 msgstr "확장 가능하지 않은 속성 '|'을(를) 정의할 수 없습니다"
 
-#: dlls/jscript/jscript.rc:75
+#: dlls/jscript/jscript.rc:77
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "구성 가능하지 않은 속성 '|'을(를) 재정의할 수 없습니다"
 
-#: dlls/jscript/jscript.rc:76
+#: dlls/jscript/jscript.rc:78
 msgid "Cannot modify non-writable property '|'"
 msgstr "쓰기 가능하지 않은 속성 '|'을(를) 수정할 수 없습니다"
 
-#: dlls/jscript/jscript.rc:77
+#: dlls/jscript/jscript.rc:79
 msgid "'this' is not a Map object"
 msgstr "'this'는 Map 개체가 아닙니다"
 
-#: dlls/jscript/jscript.rc:78
+#: dlls/jscript/jscript.rc:80
 msgid "Property cannot have both accessors and a value"
 msgstr "속성에 접근자와 값을 둘 다 지정할 수는 없습니다"
 

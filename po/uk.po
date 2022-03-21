@@ -3883,15 +3883,15 @@ msgstr "Умовна компіляція вимкнена"
 msgid "Expected '@'"
 msgstr "Очікується ';'"
 
-#: dlls/jscript/jscript.rc:80
+#: dlls/jscript/jscript.rc:82
 msgid "Microsoft JScript compilation error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:81
+#: dlls/jscript/jscript.rc:83
 msgid "Microsoft JScript runtime error"
 msgstr ""
 
-#: dlls/jscript/jscript.rc:82 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:84 dlls/vbscript/vbscript.rc:64
 #, fuzzy
 #| msgid "Unknown error"
 msgid "Unknown runtime error"
@@ -3985,22 +3985,32 @@ msgstr ""
 "Властивість 'writable' не може бути встановлена на 'true' для цього об'єкта"
 
 #: dlls/jscript/jscript.rc:74
+msgid "Cyclic __proto__ value"
+msgstr ""
+
+#: dlls/jscript/jscript.rc:75
+#, fuzzy
+#| msgid "Cannot define property '|': object is not extensible"
+msgid "Cannot create property for a non-extensible object"
+msgstr "Неможливо визначити властивість '|': об'єкт не є розширюваним"
+
+#: dlls/jscript/jscript.rc:76
 msgid "Cannot define property '|': object is not extensible"
 msgstr "Неможливо визначити властивість '|': об'єкт не є розширюваним"
 
-#: dlls/jscript/jscript.rc:75
+#: dlls/jscript/jscript.rc:77
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "Неможливо перевизначити властивість, яка не підлягає налаштуванню '|'"
 
-#: dlls/jscript/jscript.rc:76
+#: dlls/jscript/jscript.rc:78
 msgid "Cannot modify non-writable property '|'"
 msgstr "Неможливо змінити властивість, яка не підлягає запису '|'"
 
-#: dlls/jscript/jscript.rc:77
+#: dlls/jscript/jscript.rc:79
 msgid "'this' is not a Map object"
 msgstr "'це' не є Map об'єкта"
 
-#: dlls/jscript/jscript.rc:78
+#: dlls/jscript/jscript.rc:80
 msgid "Property cannot have both accessors and a value"
 msgstr "Властивість не може одночасно мати доступ і значення"
 

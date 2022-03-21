@@ -3874,15 +3874,15 @@ msgstr "Sąlyginis kompiliavimas išjungtas"
 msgid "Expected '@'"
 msgstr "Tikėtasi „@“"
 
-#: dlls/jscript/jscript.rc:80
+#: dlls/jscript/jscript.rc:82
 msgid "Microsoft JScript compilation error"
 msgstr "Microsoft JScript kompiliavimo klaida"
 
-#: dlls/jscript/jscript.rc:81
+#: dlls/jscript/jscript.rc:83
 msgid "Microsoft JScript runtime error"
 msgstr "Microsoft JScript vykdymo klaida"
 
-#: dlls/jscript/jscript.rc:82 dlls/vbscript/vbscript.rc:64
+#: dlls/jscript/jscript.rc:84 dlls/vbscript/vbscript.rc:64
 msgid "Unknown runtime error"
 msgstr "Nežinoma vykdymo klaida"
 
@@ -3975,22 +3975,32 @@ msgstr ""
 "objektui"
 
 #: dlls/jscript/jscript.rc:74
+msgid "Cyclic __proto__ value"
+msgstr ""
+
+#: dlls/jscript/jscript.rc:75
+#, fuzzy
+#| msgid "Cannot define property '|': object is not extensible"
+msgid "Cannot create property for a non-extensible object"
+msgstr "Negalima apibrėžti savybės „|“: objektas nėra išplečiamas"
+
+#: dlls/jscript/jscript.rc:76
 msgid "Cannot define property '|': object is not extensible"
 msgstr "Negalima apibrėžti savybės „|“: objektas nėra išplečiamas"
 
-#: dlls/jscript/jscript.rc:75
+#: dlls/jscript/jscript.rc:77
 msgid "Cannot redefine non-configurable property '|'"
 msgstr "Negalima iš naujo apibrėžti nekonfigūruojamos savybės „|“"
 
-#: dlls/jscript/jscript.rc:76
+#: dlls/jscript/jscript.rc:78
 msgid "Cannot modify non-writable property '|'"
 msgstr "Negalima modifikuoti nerašomos savybės „|“"
 
-#: dlls/jscript/jscript.rc:77
+#: dlls/jscript/jscript.rc:79
 msgid "'this' is not a Map object"
 msgstr "„Šis“ nėra atvaizdžio objektas"
 
-#: dlls/jscript/jscript.rc:78
+#: dlls/jscript/jscript.rc:80
 msgid "Property cannot have both accessors and a value"
 msgstr "Savybė negali turėti ir kreipiklių, ir reikšmės"
 
