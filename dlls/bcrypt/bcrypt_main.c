@@ -1324,6 +1324,22 @@ static NTSTATUS key_symmetric_decrypt( struct key *key, UCHAR *input, ULONG inpu
     return status;
 }
 
+static void key_destroy( struct key *key )
+{
+    if (key_is_symmetric( key ))
+    {
+        UNIX_CALL( key_symmetric_destroy, key );
+        free( key->u.s.vector );
+        free( key->u.s.secret );
+        DeleteCriticalSection( &key->u.s.cs );
+    }
+    else
+        UNIX_CALL( key_asymmetric_destroy, key );
+
+    key->hdr.magic = 0;
+    free( key );
+}
+
 static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYPT_KEY_HANDLE *ret_key, UCHAR *input,
                                  ULONG input_len )
 {
@@ -1403,7 +1419,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         params.len = input_len;
         if ((status = UNIX_CALL( key_import_ecc, &params )))
         {
-            BCryptDestroyKey( key );
+            key_destroy( key );
             return status;
         }
 
@@ -1438,7 +1454,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         params.len = input_len;
         if ((status = UNIX_CALL( key_import_rsa, &params )))
         {
-            BCryptDestroyKey( key );
+            key_destroy( key );
             return status;
         }
 
@@ -1489,7 +1505,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         params.len = input_len;
         if ((status = UNIX_CALL( key_import_dsa_capi, &params )))
         {
-            BCryptDestroyKey( key );
+            key_destroy( key );
             return status;
         }
 
@@ -1722,24 +1738,6 @@ static NTSTATUS key_duplicate( struct key *key_orig, struct key *key_copy )
     }
 
     return STATUS_SUCCESS;
-}
-
-static void key_destroy( struct key *key )
-{
-    if (key_is_symmetric( key ))
-    {
-        UNIX_CALL( key_symmetric_destroy, key );
-        free( key->u.s.vector );
-        free( key->u.s.secret );
-        DeleteCriticalSection( &key->u.s.cs );
-    }
-    else
-    {
-        UNIX_CALL( key_asymmetric_destroy, key );
-        free( key->u.a.pubkey );
-    }
-    key->hdr.magic = 0;
-    free( key );
 }
 
 NTSTATUS WINAPI BCryptDuplicateKey( BCRYPT_KEY_HANDLE handle, BCRYPT_KEY_HANDLE *handle_copy,
