@@ -105,6 +105,7 @@ struct wined3d_shader_spirv_compile_args
 {
     struct vkd3d_shader_varying_map_info varying_map;
     struct vkd3d_shader_spirv_target_info spirv_target;
+    enum vkd3d_shader_spirv_extension extensions[1];
     struct vkd3d_shader_parameter sample_count;
     unsigned int ps_alpha_swizzle[WINED3D_MAX_RENDER_TARGETS];
 };
@@ -187,7 +188,8 @@ static void shader_spirv_compile_arguments_init(struct shader_spirv_compile_argu
     }
 }
 
-static void shader_spirv_init_compile_args(struct wined3d_shader_spirv_compile_args *args,
+static void shader_spirv_init_compile_args(const struct wined3d_vk_info *vk_info,
+        struct wined3d_shader_spirv_compile_args *args,
         struct vkd3d_shader_interface_info *vkd3d_interface, enum vkd3d_shader_spirv_environment environment,
         enum wined3d_shader_type shader_type, enum vkd3d_shader_source_type source_type,
         const struct shader_spirv_compile_arguments *compile_args)
@@ -199,6 +201,12 @@ static void shader_spirv_init_compile_args(struct wined3d_shader_spirv_compile_a
     args->spirv_target.next = vkd3d_interface;
     args->spirv_target.entry_point = "main";
     args->spirv_target.environment = environment;
+
+    args->spirv_target.extensions = args->extensions;
+
+    if (vk_info->supported[WINED3D_VK_EXT_SHADER_STENCIL_EXPORT])
+        args->extensions[args->spirv_target.extension_count++] = VKD3D_SHADER_SPIRV_EXTENSION_EXT_STENCIL_EXPORT;
+    assert(args->spirv_target.extension_count <= ARRAY_SIZE(args->extensions));
 
     if (shader_type == WINED3D_SHADER_TYPE_PIXEL)
     {
@@ -272,12 +280,12 @@ static VkShaderModule shader_spirv_compile_shader(struct wined3d_context_vk *con
         enum wined3d_shader_type shader_type, const struct shader_spirv_compile_arguments *args,
         const struct shader_spirv_resource_bindings *bindings, const struct wined3d_stream_output_desc *so_desc)
 {
+    struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
+    const struct wined3d_vk_info *vk_info = &device_vk->vk_info;
     struct wined3d_shader_spirv_compile_args compile_args;
     struct wined3d_shader_spirv_shader_interface iface;
     VkShaderModuleCreateInfo shader_create_info;
     struct vkd3d_shader_compile_info info;
-    const struct wined3d_vk_info *vk_info;
-    struct wined3d_device_vk *device_vk;
     struct vkd3d_shader_code spirv;
     VkShaderModule module;
     char *messages;
@@ -285,7 +293,7 @@ static VkShaderModule shader_spirv_compile_shader(struct wined3d_context_vk *con
     int ret;
 
     shader_spirv_init_shader_interface_vk(&iface, bindings, so_desc);
-    shader_spirv_init_compile_args(&compile_args, &iface.vkd3d_interface,
+    shader_spirv_init_compile_args(vk_info, &compile_args, &iface.vkd3d_interface,
             VKD3D_SHADER_SPIRV_ENVIRONMENT_VULKAN_1_0, shader_type, source_type, args);
 
     info.type = VKD3D_SHADER_STRUCTURE_TYPE_COMPILE_INFO;
@@ -320,9 +328,6 @@ static VkShaderModule shader_spirv_compile_shader(struct wined3d_context_vk *con
         ERR("Failed to compile DXBC, ret %d.\n", ret);
         return VK_NULL_HANDLE;
     }
-
-    device_vk = wined3d_device_vk(context_vk->c.device);
-    vk_info = &device_vk->vk_info;
 
     shader_create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     shader_create_info.pNext = NULL;
