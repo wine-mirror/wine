@@ -94,6 +94,8 @@ static DWORD (WINAPI *pIsValidNLSVersion)(NLS_FUNCTION,LPCWSTR,NLSVERSIONINFOEX*
 static NTSTATUS (WINAPI *pRtlNormalizeString)(ULONG, LPCWSTR, INT, LPWSTR, INT*);
 static NTSTATUS (WINAPI *pRtlIsNormalizedString)(ULONG, LPCWSTR, INT, BOOLEAN*);
 static NTSTATUS (WINAPI *pNtGetNlsSectionPtr)(ULONG,ULONG,void*,void**,SIZE_T*);
+static NTSTATUS (WINAPI *pNtInitializeNlsFiles)(void**,LCID*,LARGE_INTEGER*);
+static NTSTATUS (WINAPI *pRtlGetLocaleFileMappingAddress)(void**,LCID*,LARGE_INTEGER*);
 static void (WINAPI *pRtlInitCodePageTable)(USHORT*,CPTABLEINFO*);
 static NTSTATUS (WINAPI *pRtlCustomCPToUnicodeN)(CPTABLEINFO*,WCHAR*,DWORD,DWORD*,const char*,DWORD);
 static NTSTATUS (WINAPI *pRtlGetSystemPreferredUILanguages)(DWORD,ULONG,ULONG*,WCHAR*,ULONG*);
@@ -146,8 +148,10 @@ static void InitFunctionPointers(void)
   X(RtlNormalizeString);
   X(RtlIsNormalizedString);
   X(NtGetNlsSectionPtr);
+  X(NtInitializeNlsFiles);
   X(RtlInitCodePageTable);
   X(RtlCustomCPToUnicodeN);
+  X(RtlGetLocaleFileMappingAddress);
   X(RtlGetSystemPreferredUILanguages);
   X(RtlGetThreadPreferredUILanguages);
   X(RtlGetUserPreferredUILanguages);
@@ -6804,6 +6808,55 @@ static void test_NLSVersion(void)
     else win_skip( "IsValidNLSVersion not available\n" );
 }
 
+static void test_locale_nls(void)
+{
+    NTSTATUS status;
+    void *addr, *addr2;
+    UINT *ptr;
+    LCID lcid;
+    LARGE_INTEGER size;
+
+    if (!pNtInitializeNlsFiles || !pRtlGetLocaleFileMappingAddress)
+    {
+        win_skip( "locale.nls functions not supported\n" );
+        return;
+    }
+    size.QuadPart = 0xdeadbeef;
+    status = pNtInitializeNlsFiles( &addr, &lcid, &size );
+    ok( !status, "NtInitializeNlsFiles failed %lx\n", status );
+    trace( "locale %04lx size %I64x\n", lcid, size.QuadPart );
+    ptr = addr;
+    ok( size.QuadPart == 0xdeadbeef || size.QuadPart == ptr[4] || size.QuadPart == ptr[4] + 8,
+        "wrong offset %x / %I64x\n", ptr[4], size.QuadPart );
+    ptr = (UINT *)((char *)addr + ptr[4]);
+    ok( ptr[0] == 8, "wrong offset %u\n", ptr[0] );
+    ok( ptr[3] == 0x5344534e, "wrong magic %x\n", ptr[3] );
+
+    status = pNtInitializeNlsFiles( &addr2, &lcid, &size );
+    ok( !status, "NtInitializeNlsFiles failed %lx\n", status );
+    ok( addr != addr2, "got same address %p\n", addr );
+    ok( !memcmp( addr, addr2, ptr[4] ), "contents differ\n" );
+    status = NtUnmapViewOfSection( GetCurrentProcess(), addr );
+    ok( !status, "NtUnmapViewOfSection failed %lx\n", status );
+    status = NtUnmapViewOfSection( GetCurrentProcess(), addr2 );
+    ok( !status, "NtUnmapViewOfSection failed %lx\n", status );
+
+    size.QuadPart = 0xdeadbeef;
+    status = pRtlGetLocaleFileMappingAddress( &addr, &lcid, &size );
+    ok( !status, "NtInitializeNlsFiles failed %lx\n", status );
+    ptr = addr;
+    ok( size.QuadPart == 0xdeadbeef || size.QuadPart == ptr[4] || size.QuadPart == ptr[4] + 8,
+        "wrong offset %x / %I64x\n", ptr[4], size.QuadPart );
+    ptr = (UINT *)((char *)addr + ptr[4]);
+    ok( ptr[0] == 8, "wrong offset %u\n", ptr[0] );
+    ok( ptr[3] == 0x5344534e, "wrong magic %x\n", ptr[3] );
+
+    /* RtlGetLocaleFileMappingAddress caches the pointer */
+    status = pRtlGetLocaleFileMappingAddress( &addr2, &lcid, &size );
+    ok( !status, "NtInitializeNlsFiles failed %lx\n", status );
+    ok( addr == addr2, "got different address %p / %p\n", addr, addr2 );
+}
+
 static void test_geo_name(void)
 {
     WCHAR reg_name[32], buf[32], set_name[32], nation[32], region[32];
@@ -7192,6 +7245,7 @@ START_TEST(locale)
   test_NormalizeString();
   test_SpecialCasing();
   test_NLSVersion();
+  test_locale_nls();
   test_geo_name();
   test_sorting();
   test_EnumCalendarInfoA();
