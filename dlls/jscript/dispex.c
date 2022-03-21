@@ -495,6 +495,12 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val)
 
     switch(prop->type) {
     case PROP_BUILTIN:
+        if(prop->u.p->invoke) {
+            prop->type = PROP_JSVAL;
+            prop->flags = PROPF_CONFIGURABLE | PROPF_WRITABLE;
+            prop->u.val = jsval_undefined();
+            break;
+        }
         if(!prop->u.p->setter) {
             TRACE("getter with no setter\n");
             return S_OK;

@@ -2955,7 +2955,6 @@ static void test_script_exprs(void)
     hres = parse_script_expr(L"var o=new Object(); Object.prototype.toString = function() {return \"wine\";}; Object.prototype.toLocaleString.call(o)", &v, NULL);
     ok(hres == S_OK, "parse_script_expr failed: %08lx\n", hres);
     ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
-    todo_wine
     ok(!lstrcmpW(V_BSTR(&v), L"wine"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
