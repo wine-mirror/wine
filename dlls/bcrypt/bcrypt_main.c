@@ -968,7 +968,7 @@ NTSTATUS WINAPI BCryptHash( BCRYPT_ALG_HANDLE algorithm, UCHAR *secret, ULONG se
     return status;
 }
 
-static NTSTATUS key_asymmetric_create( struct key **ret_key, struct algorithm *alg, ULONG bitlen,
+static NTSTATUS key_asymmetric_create( struct key **ret_key, enum alg_id alg_id, ULONG bitlen,
                                        const UCHAR *pubkey, ULONG pubkey_len )
 {
     struct key *key;
@@ -981,7 +981,7 @@ static NTSTATUS key_asymmetric_create( struct key **ret_key, struct algorithm *a
 
     if (!(key = calloc( 1, sizeof(*key) ))) return STATUS_NO_MEMORY;
     key->hdr.magic  = MAGIC_KEY;
-    key->alg_id     = alg->id;
+    key->alg_id     = alg_id;
     key->u.a.bitlen = bitlen;
     key->u.a.pubkey_len = pubkey_len;
 
@@ -1366,7 +1366,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
             return STATUS_INVALID_PARAMETER;
 
         size = sizeof(*ecc_blob) + ecc_blob->cbKey * 2;
-        return key_asymmetric_create( (struct key **)ret_key, alg, key_size * 8, (BYTE *)ecc_blob, size );
+        return key_asymmetric_create( (struct key **)ret_key, alg->id, key_size * 8, (BYTE *)ecc_blob, size );
     }
     else if (!wcscmp( type, BCRYPT_ECCPRIVATE_BLOB ))
     {
@@ -1396,7 +1396,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
             return STATUS_INVALID_PARAMETER;
 
         size = sizeof(*ecc_blob) + key_size * 2;
-        if ((status = key_asymmetric_create( &key, alg, key_size * 8, NULL, size ))) return status;
+        if ((status = key_asymmetric_create( &key, alg->id, key_size * 8, NULL, size ))) return status;
 
         params.key = key;
         params.buf = input;
@@ -1420,7 +1420,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
 
         size = sizeof(*rsa_blob) + rsa_blob->cbPublicExp + rsa_blob->cbModulus;
         if (size != input_len) return NTE_BAD_DATA;
-        return key_asymmetric_create( (struct key **)ret_key, alg, rsa_blob->BitLength, (BYTE *)rsa_blob, size );
+        return key_asymmetric_create( (struct key **)ret_key, alg->id, rsa_blob->BitLength, (BYTE *)rsa_blob, size );
     }
     else if (!wcscmp( type, BCRYPT_RSAPRIVATE_BLOB ) || !wcscmp( type, BCRYPT_RSAFULLPRIVATE_BLOB ))
     {
@@ -1431,7 +1431,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
             rsa_blob->Magic != BCRYPT_RSAFULLPRIVATE_MAGIC)) return STATUS_NOT_SUPPORTED;
 
         size = sizeof(*rsa_blob) + rsa_blob->cbPublicExp + rsa_blob->cbModulus;
-        if ((status = key_asymmetric_create( &key, alg, rsa_blob->BitLength, (BYTE *)rsa_blob, size )))
+        if ((status = key_asymmetric_create( &key, alg->id, rsa_blob->BitLength, (BYTE *)rsa_blob, size )))
             return status;
         params.key = key;
         params.buf = input;
@@ -1454,7 +1454,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
             return STATUS_NOT_SUPPORTED;
 
         size = sizeof(*dsa_blob) + dsa_blob->cbKey * 3;
-        return key_asymmetric_create( (struct key **)ret_key, alg, dsa_blob->cbKey * 8, (BYTE *)dsa_blob, size );
+        return key_asymmetric_create( (struct key **)ret_key, alg->id, dsa_blob->cbKey * 8, (BYTE *)dsa_blob, size );
     }
     else if (!wcscmp( type, LEGACY_DSA_V2_PRIVATE_BLOB ))
     {
@@ -1482,7 +1482,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
             return STATUS_INVALID_PARAMETER;
 
         size = sizeof(*hdr) + sizeof(*pubkey) + (pubkey->bitlen / 8) * 3 + 20 + sizeof(DSSSEED);
-        if ((status = key_asymmetric_create( &key, alg, pubkey->bitlen, NULL, size ))) return status;
+        if ((status = key_asymmetric_create( &key, alg->id, pubkey->bitlen, NULL, size ))) return status;
 
         params.key = key;
         params.buf = input;
@@ -1517,7 +1517,7 @@ static NTSTATUS key_import_pair( struct algorithm *alg, const WCHAR *type, BCRYP
         size = sizeof(*hdr) + sizeof(*pubkey) + (pubkey->bitlen / 8) * 3 + 20 + sizeof(DSSSEED);
         if (input_len < size) return STATUS_INVALID_PARAMETER;
 
-        if ((status = key_asymmetric_create( &key, alg, pubkey->bitlen, (BYTE *)hdr, size ))) return status;
+        if ((status = key_asymmetric_create( &key, alg->id, pubkey->bitlen, (BYTE *)hdr, size ))) return status;
         key->u.a.flags |= KEY_FLAG_LEGACY_DSA_V2;
 
         *ret_key = key;
@@ -1629,7 +1629,7 @@ NTSTATUS WINAPI BCryptGenerateKeyPair( BCRYPT_ALG_HANDLE algorithm, BCRYPT_KEY_H
         return STATUS_NOT_SUPPORTED;
     }
 
-    if (!(status = key_asymmetric_create( &key, alg, key_len, NULL, size ))) *handle = key;
+    if (!(status = key_asymmetric_create( &key, alg->id, key_len, NULL, size ))) *handle = key;
     return status;
 }
 
