@@ -2000,6 +2000,7 @@ struct wined3d_caps
 
     BOOL shader_double_precision;
     BOOL viewport_array_index_any_shader;
+    BOOL stencil_export;
 
     enum wined3d_feature_level max_feature_level;
 };

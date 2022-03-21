@@ -4171,7 +4171,16 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device2 
                 return E_INVALIDARG;
             }
 
-            options->PSSpecifiedStencilRefSupported = FALSE;
+            wined3d_mutex_lock();
+            hr = wined3d_device_get_device_caps(device->wined3d_device, &wined3d_caps);
+            wined3d_mutex_unlock();
+            if (FAILED(hr))
+            {
+                WARN("Failed to get device caps, hr %#lx.\n", hr);
+                return hr;
+            }
+
+            options->PSSpecifiedStencilRefSupported = wined3d_caps.stencil_export;
             options->TypedUAVLoadAdditionalFormats = FALSE;
             options->ROVsSupported = FALSE;
             options->ConservativeRasterizationTier = D3D11_CONSERVATIVE_RASTERIZATION_NOT_SUPPORTED;
