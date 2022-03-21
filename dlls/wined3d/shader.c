@@ -758,6 +758,10 @@ static BOOL shader_record_register_usage(struct wined3d_shader *shader, struct w
             reg_maps->sample_mask = 1;
             break;
 
+        case WINED3DSPR_STENCILREF:
+            reg_maps->stencil_ref = 1;
+            break;
+
         default:
             TRACE("Not recording register of type %#x and [%#x][%#x].\n",
                     reg->type, reg->idx[0].offset, reg->idx[1].offset);

@@ -3052,6 +3052,10 @@ static void shader_glsl_get_register_name(const struct wined3d_shader_register *
             string_buffer_sprintf(register_name, "sample_mask");
             break;
 
+        case WINED3DSPR_STENCILREF:
+            string_buffer_sprintf(register_name, "stencil_ref");
+            break;
+
         default:
             FIXME("Unhandled register type %#x.\n", reg->type);
             string_buffer_sprintf(register_name, "unrecognised_register");
@@ -7554,6 +7558,8 @@ static void shader_glsl_enable_extensions(struct wined3d_string_buffer *buffer,
         shader_addline(buffer, "#extension GL_ARB_shader_image_load_store : enable\n");
     if (gl_info->supported[ARB_SHADER_IMAGE_SIZE])
         shader_addline(buffer, "#extension GL_ARB_shader_image_size : enable\n");
+    if (gl_info->supported[ARB_SHADER_STENCIL_EXPORT])
+        shader_addline(buffer, "#extension GL_ARB_shader_stencil_export : enable\n");
     if (gl_info->supported[ARB_SHADER_STORAGE_BUFFER_OBJECT])
         shader_addline(buffer, "#extension GL_ARB_shader_storage_buffer_object : enable\n");
     if (gl_info->supported[ARB_SHADER_TEXTURE_IMAGE_SAMPLES])
@@ -7652,6 +7658,9 @@ static void shader_glsl_generate_ps_epilogue(const struct wined3d_gl_info *gl_in
 
     if (reg_maps->sample_mask)
         shader_addline(buffer, "gl_SampleMask[0] = floatBitsToInt(sample_mask);\n");
+
+    if (reg_maps->stencil_ref)
+        shader_addline(buffer, "gl_FragStencilRefARB = floatBitsToInt(stencil_ref);\n");
 
     if (!use_legacy_fragment_output(gl_info))
         shader_glsl_generate_color_output(buffer, gl_info, shader, args, string_buffers);
@@ -7898,6 +7907,9 @@ static GLuint shader_glsl_generate_fragment_shader(const struct wined3d_context_
 
     if (reg_maps->sample_mask)
         shader_addline(buffer, "float sample_mask = uintBitsToFloat(0xffffffffu);\n");
+
+    if (reg_maps->stencil_ref)
+        shader_addline(buffer, "float stencil_ref = uintBitsToFloat(0xffffffffu);\n");
 
     /* Direct3D applications expect integer vPos values, while OpenGL drivers
      * add approximately 0.5. This causes off-by-one problems as spotted by

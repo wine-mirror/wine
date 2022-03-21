@@ -357,6 +357,7 @@ enum wined3d_sm4_register_type
     WINED3D_SM5_RT_GS_INSTANCE_ID          = 0x25,
     WINED3D_SM5_RT_DEPTHOUT_GREATER_EQUAL  = 0x26,
     WINED3D_SM5_RT_DEPTHOUT_LESS_EQUAL     = 0x27,
+    WINED3D_SM5_RT_OUTPUT_STENCIL_REF      = 0x29,
 };
 
 enum wined3d_sm4_output_primitive_type
@@ -1184,6 +1185,8 @@ static const enum wined3d_shader_register_type register_type_table[] =
     /* WINED3D_SM5_RT_GS_INSTANCE_ID */          WINED3DSPR_GSINSTID,
     /* WINED3D_SM5_RT_DEPTHOUT_GREATER_EQUAL */  WINED3DSPR_DEPTHOUTGE,
     /* WINED3D_SM5_RT_DEPTHOUT_LESS_EQUAL */     WINED3DSPR_DEPTHOUTLE,
+    /* UNKNOWN */                                ~0u,
+    /* WINED3D_SM5_RT_OUTPUT_STENCIL_REF */      WINED3DSPR_STENCILREF,
 };
 
 static const struct wined3d_sm4_opcode_info *get_opcode_info(enum wined3d_sm4_opcode opcode)
