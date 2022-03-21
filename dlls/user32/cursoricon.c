@@ -79,16 +79,6 @@ static void free_icon_frame( struct cursoricon_frame *frame )
     if (frame->mask)  DeleteObject( frame->mask );
 }
 
-ULONG_PTR get_icon_param( HICON handle )
-{
-    return NtUserCallOneParam( HandleToUlong(handle), NtUserGetIconParam );
-}
-
-ULONG_PTR set_icon_param( HICON handle, ULONG_PTR param )
-{
-    return NtUserCallTwoParam( HandleToUlong(handle), param, NtUserSetIconParam );
-}
-
 
 /***********************************************************************
  *             map_fileW

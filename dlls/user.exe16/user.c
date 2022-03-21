@@ -31,6 +31,7 @@
 #include "winbase.h"
 #include "wownt32.h"
 #include "user_private.h"
+#include "ntuser.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 
@@ -299,7 +300,7 @@ static HICON store_icon_32( HICON16 icon16, HICON icon )
         {
             memcpy( &ret, (char *)(ptr + 1) + and_size + xor_size, sizeof(ret) );
             memcpy( (char *)(ptr + 1) + and_size + xor_size, &icon, sizeof(icon) );
-            wow_handlers32.set_icon_param( icon, icon16 );
+            NtUserCallTwoParam( HandleToUlong(icon), icon16, NtUserSetIconParam );
         }
         release_icon_ptr( icon16, ptr );
     }
@@ -341,7 +342,7 @@ HICON get_icon_32( HICON16 icon16 )
                 DeleteObject( iinfo.hbmMask );
                 DeleteObject( iinfo.hbmColor );
                 memcpy( (char *)(ptr + 1) + xor_size + and_size, &ret, sizeof(ret) );
-                wow_handlers32.set_icon_param( ret, icon16 );
+                NtUserCallTwoParam( HandleToUlong(ret), icon16, NtUserSetIconParam );
             }
         }
         release_icon_ptr( icon16, ptr );
@@ -352,7 +353,7 @@ HICON get_icon_32( HICON16 icon16 )
 /* retrieve the 16-bit counterpart of a 32-bit icon, creating it if needed */
 HICON16 get_icon_16( HICON icon )
 {
-    HICON16 ret = wow_handlers32.get_icon_param( icon );
+    HICON16 ret = NtUserCallOneParam( HandleToUlong(icon), NtUserGetIconParam );
 
     if (!ret)
     {

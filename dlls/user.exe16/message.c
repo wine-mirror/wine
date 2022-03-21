@@ -2590,17 +2590,15 @@ HWND create_window16( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE instance, 
 }
 
 
-/***********************************************************************
- *           free_icon_param
- */
-static void free_icon_param( ULONG_PTR param )
+static void WINAPI User16CallFreeIcon( ULONG *param, ULONG size )
 {
-    GlobalFree16( LOWORD(param) );
+    GlobalFree16( LOWORD(*param) );
 }
 
 
 void register_wow_handlers(void)
 {
+    void **callback_table = NtCurrentTeb()->Peb->KernelCallbackTable;
     static const struct wow_handlers16 handlers16 =
     {
         button_proc16,
@@ -2614,8 +2612,9 @@ void register_wow_handlers(void)
         create_window16,
         call_window_proc_Ato16,
         call_dialog_proc_Ato16,
-        free_icon_param
     };
+
+    callback_table[NtUserCallFreeIcon] = User16CallFreeIcon;
 
     UserRegisterWowHandlers( &handlers16, &wow_handlers32 );
 }

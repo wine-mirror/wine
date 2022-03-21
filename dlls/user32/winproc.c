@@ -1031,8 +1031,6 @@ void WINAPI UserRegisterWowHandlers( const struct wow_handlers16 *new, struct wo
     orig->alloc_winproc   = WINPROC_AllocProc;
     orig->get_dialog_info = DIALOG_get_info;
     orig->dialog_box_loop = DIALOG_DoDialogBox;
-    orig->get_icon_param  = get_icon_param;
-    orig->set_icon_param  = set_icon_param;
 
     wow_handlers = *new;
 }
@@ -1050,7 +1048,6 @@ struct wow_handlers16 wow_handlers =
     WIN_CreateWindowEx,
     NULL,  /* call_window_proc */
     NULL,  /* call_dialog_proc */
-    NULL,  /* free_icon_param */
 };
 
 static const struct user_client_procs client_procsA =
