@@ -2713,6 +2713,8 @@ HRESULT jsdisp_change_prototype(jsdisp_t *obj, jsdisp_t *proto)
 
     if(obj->prototype == proto)
         return S_OK;
+    if(!obj->extensible)
+        return JS_E_CANNOT_CREATE_FOR_NONEXTENSIBLE;
 
     for(iter = proto; iter; iter = iter->prototype)
         if(iter == obj)

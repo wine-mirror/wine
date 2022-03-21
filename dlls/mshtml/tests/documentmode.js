@@ -1403,6 +1403,16 @@ sync_test("__proto__", function() {
         ok(e.number === 0xa13b0 - 0x80000000 && e.name === "TypeError",
             "setting circular proto chain threw exception " + e.number + " (" + e.name + ")");
     }
+
+    Object.preventExtensions(x);
+    x.__proto__ = Object.prototype;  /* same prototype */
+    try {
+        x.__proto__ = Number.prototype;
+        ok(false, "expected exception changing __proto__ on non-extensible object");
+    }catch(e) {
+        ok(e.number === 0xa13b6 - 0x80000000 && e.name === "TypeError",
+            "changing __proto__ on non-extensible object threw exception " + e.number + " (" + e.name + ")");
+    }
 });
 
 async_test("postMessage", function() {
