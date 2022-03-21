@@ -415,8 +415,9 @@ static void unload_driver( SC_HANDLE service )
     CloseServiceHandle( service );
 }
 
-void pnp_driver_stop(void)
+static void pnp_driver_stop(void)
 {
+    const WCHAR *service_name = L"winetest";
     SP_DEVINFO_DATA device = {sizeof(SP_DEVINFO_DATA)};
     WCHAR path[MAX_PATH], dest[MAX_PATH], *filepart;
     SC_HANDLE manager, service;
@@ -453,7 +454,7 @@ void pnp_driver_stop(void)
     manager = OpenSCManagerW( NULL, NULL, SC_MANAGER_CONNECT );
     ok( !!manager, "failed to open service manager, error %lu\n", GetLastError() );
 
-    service = OpenServiceW( manager, L"winetest", SERVICE_STOP | DELETE );
+    service = OpenServiceW( manager, service_name, SERVICE_STOP | DELETE );
     if (service) unload_driver( service );
     else ok( GetLastError() == ERROR_SERVICE_DOES_NOT_EXIST, "got error %lu\n", GetLastError() );
 
@@ -488,11 +489,12 @@ void pnp_driver_stop(void)
     ok( ret || GetLastError() == ERROR_FILE_NOT_FOUND, "Failed to delete file, error %lu\n", GetLastError() );
 }
 
-BOOL pnp_driver_start( const WCHAR *resource )
+static BOOL pnp_driver_start(void)
 {
     static const WCHAR hardware_id[] = L"test_hardware_id\0";
     SP_DEVINFO_DATA device = {sizeof(SP_DEVINFO_DATA)};
     WCHAR path[MAX_PATH], filename[MAX_PATH];
+    const WCHAR *service_name = L"winetest";
     SC_HANDLE manager, service;
     const CERT_CONTEXT *cert;
     int old_mute_threshold;
@@ -504,7 +506,7 @@ BOOL pnp_driver_start( const WCHAR *resource )
     old_mute_threshold = winetest_mute_threshold;
     winetest_mute_threshold = 1;
 
-    load_resource( resource, filename );
+    load_resource( L"driver.dll", filename );
     ret = MoveFileExW( filename, L"winetest.sys", MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING );
     ok( ret, "failed to move file, error %lu\n", GetLastError() );
 
@@ -570,7 +572,7 @@ BOOL pnp_driver_start( const WCHAR *resource )
     manager = OpenSCManagerW( NULL, NULL, SC_MANAGER_CONNECT );
     ok( !!manager, "failed to open service manager, error %lu\n", GetLastError() );
 
-    service = OpenServiceW( manager, L"winetest", SERVICE_START );
+    service = OpenServiceW( manager, service_name, SERVICE_START );
     ok( !!service, "failed to open service, error %lu\n", GetLastError() );
 
     ret = StartServiceW( service, 0, NULL );
@@ -588,6 +590,16 @@ BOOL pnp_driver_start( const WCHAR *resource )
 
     winetest_mute_threshold = old_mute_threshold;
     return ret || GetLastError() == ERROR_SERVICE_ALREADY_RUNNING;
+}
+
+void hid_device_stop(void)
+{
+    pnp_driver_stop();
+}
+
+BOOL hid_device_start(void)
+{
+    return pnp_driver_start();
 }
 
 #define check_hidp_caps( a, b ) check_hidp_caps_( __LINE__, a, b )
@@ -2809,9 +2821,9 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
     status = RegSetValueExW( hkey, L"Context", 0, REG_BINARY, (void *)context, sizeof(context) );
     ok( !status, "RegSetValueExW returned %#lx\n", status );
 
-    if (pnp_driver_start( L"driver_hid.dll" )) test_hid_device( report_id, polled, &caps );
+    if (hid_device_start()) test_hid_device( report_id, polled, &caps );
+    hid_device_stop();
 
-    pnp_driver_stop();
     SetCurrentDirectoryW( cwd );
 }
 
@@ -3169,7 +3181,7 @@ static void test_hidp_kdr(void)
     status = RegSetValueExW( hkey, L"Context", 0, REG_BINARY, (void *)context, sizeof(context) );
     ok( !status, "RegSetValueExW returned %#lx\n", status );
 
-    if (!pnp_driver_start( L"driver_hid.dll" )) goto done;
+    if (!hid_device_start()) goto done;
 
     set = SetupDiGetClassDevsW( &GUID_DEVINTERFACE_HID, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT );
     ok( set != INVALID_HANDLE_VALUE, "failed to get device list, error %#lx\n", GetLastError() );
@@ -3286,7 +3298,7 @@ static void test_hidp_kdr(void)
     CloseHandle( file );
 
 done:
-    pnp_driver_stop();
+    hid_device_stop();
     SetCurrentDirectoryW( cwd );
 }
 
@@ -3360,7 +3372,7 @@ BOOL dinput_driver_start_( const char *file, int line, const BYTE *desc_buf, ULO
     status = RegSetValueExW( hkey, L"Context", 0, REG_BINARY, (void *)context, sizeof(context) );
     ok_(file, line)( !status, "RegSetValueExW returned %#lx\n", status );
 
-    return pnp_driver_start( L"driver_hid.dll" );
+    return hid_device_start();
 }
 
 BOOL dinput_test_init_( const char *file, int line )
@@ -3395,7 +3407,7 @@ BOOL dinput_test_init_( const char *file, int line )
                           FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, NULL );
     ok( okfile != INVALID_HANDLE_VALUE, "failed to create file, error %lu\n", GetLastError() );
 
-    subtest( "driver_hid" );
+    subtest( "driver" );
     return TRUE;
 }
 
@@ -3555,9 +3567,9 @@ DWORD WINAPI dinput_test_device_thread( void *stop_event )
     status = RegSetValueExW( hkey, L"Context", 0, REG_BINARY, (void *)context, sizeof(context) );
     ok( !status, "RegSetValueExW returned %#lx\n", status );
 
-    pnp_driver_start( L"driver_hid.dll" );
+    hid_device_start();
     WaitForSingleObject( stop_event, INFINITE );
-    pnp_driver_stop();
+    hid_device_stop();
 
     SetCurrentDirectoryW( cwd );
 

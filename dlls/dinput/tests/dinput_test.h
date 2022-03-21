@@ -52,8 +52,8 @@ extern const WCHAR expect_path_end[];
 extern HINSTANCE instance;
 extern BOOL localized; /* object names get translated */
 
-BOOL pnp_driver_start( const WCHAR *resource );
-void pnp_driver_stop(void);
+BOOL hid_device_start(void);
+void hid_device_stop(void);
 
 void cleanup_registry_keys(void);
 

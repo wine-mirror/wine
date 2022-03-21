@@ -2999,7 +2999,7 @@ static BOOL test_force_feedback_joystick( DWORD version )
     CloseHandle( file );
 
 done:
-    pnp_driver_stop();
+    hid_device_stop();
     cleanup_registry_keys();
     SetCurrentDirectoryW( cwd );
     winetest_pop_context();
@@ -4317,7 +4317,7 @@ static void test_device_managed_effect(void)
     CloseHandle( file );
 
 done:
-    pnp_driver_stop();
+    hid_device_stop();
     cleanup_registry_keys();
     SetCurrentDirectoryW( cwd );
     winetest_pop_context();

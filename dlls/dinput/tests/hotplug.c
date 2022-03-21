@@ -185,7 +185,7 @@ static BOOL test_input_lost( DWORD version )
     ok( hr == DI_OK, "GetDeviceData returned %#lx\n", hr );
     ok( count == 0, "got %lu expected 0\n", count );
 
-    pnp_driver_stop();
+    hid_device_stop();
 
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
     ok( hr == DIERR_INPUTLOST, "GetDeviceState returned %#lx\n", hr );
@@ -218,7 +218,7 @@ static BOOL test_input_lost( DWORD version )
     ok( ref == 0, "Release returned %ld\n", ref );
 
 done:
-    pnp_driver_stop();
+    hid_device_stop();
     cleanup_registry_keys();
     SetCurrentDirectoryW( cwd );
 

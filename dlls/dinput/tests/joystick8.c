@@ -2084,7 +2084,7 @@ static void test_simple_joystick( DWORD version )
     CloseHandle( file );
 
 done:
-    pnp_driver_stop();
+    hid_device_stop();
     cleanup_registry_keys();
     SetCurrentDirectoryW( cwd );
     winetest_pop_context();
@@ -2616,7 +2616,7 @@ static BOOL test_device_types( DWORD version )
         ok( ref == 0, "Release returned %ld\n", ref );
 
     done:
-        pnp_driver_stop();
+        hid_device_stop();
         cleanup_registry_keys();
         SetCurrentDirectoryW( cwd );
         winetest_pop_context();
@@ -2842,7 +2842,7 @@ static void test_driving_wheel_axes(void)
     ok( ref == 0, "Release returned %ld\n", ref );
 
 done:
-    pnp_driver_stop();
+    hid_device_stop();
     cleanup_registry_keys();
     SetCurrentDirectoryW( cwd );
     winetest_pop_context();
@@ -3200,7 +3200,7 @@ static BOOL test_winmm_joystick(void)
     CloseHandle( file );
 
 done:
-    pnp_driver_stop();
+    hid_device_stop();
     cleanup_registry_keys();
     SetCurrentDirectoryW( cwd );
 
@@ -3395,7 +3395,7 @@ static void test_windows_gaming_input(void)
     IRawGameControllerStatics_Release( controller_statics );
 
 done:
-    pnp_driver_stop();
+    hid_device_stop();
     cleanup_registry_keys();
     SetCurrentDirectoryW( cwd );
 }
