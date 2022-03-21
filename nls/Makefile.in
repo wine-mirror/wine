@@ -68,6 +68,7 @@ SOURCES = \
 	c_949.nls \
 	c_950.nls \
 	l_intl.nls \
+	locale.nls \
 	normidna.nls \
 	normnfc.nls \
 	normnfd.nls \

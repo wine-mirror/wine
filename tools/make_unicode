@@ -20,6 +20,8 @@
 #
 
 use strict;
+use XML::LibXML;
+use Encode;
 
 # base URLs for www.unicode.org files
 my $UNIVERSION = "14.0.0";
@@ -30,6 +32,14 @@ my $KSCDATA  = "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/KSC";
 my $REPORTS = "http://www.unicode.org/reports";
 my $MSDATA = "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498";
 my $MSCODEPAGES = "$MSDATA/Windows Supported Code Page Data Files.zip";
+
+#my $CLDRDATA = "https://www.unicode.org/Public/cldr/40/cldr-common-40.0.zip";
+my $CLDRVERSION = "40";
+my $CLDRDATA = "https://github.com/unicode-org/cldr/archive/refs/tags/release-$CLDRVERSION.zip";
+my $CLDR33DATA = "https://www.unicode.org/Public/cldr/33/cldr-common-33.0.zip";
+
+my $ISO639VERSION = "20220120";
+my $ISO639 =  "https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3_Code_Tables_$ISO639VERSION.zip";
 
 # Sort keys file
 my $SORTKEYS = "tr10/allkeys.txt";
@@ -429,6 +439,1054 @@ my %joining_types =
    "T" => 6,           # Transparent
 );
 
+my @locales =
+(
+ { name => "", lcid => 0x0000007f, file => "root", territory => "IV", sabbrevlangname => "IVL", sopentypelang =>"dflt" },
+ { name => "aa", dir => "seed", sopentypelang => "AFR" },
+ { name => "aa-DJ", dir => "seed" },
+ { name => "aa-ER", dir => "seed" },
+ { name => "aa-ET", dir => "seed" },
+ { name => "af", lcid => 0x00000036, oemcp => 850, sabbrevlangname => "AFK", sopentypelang => "AFK" },
+ { name => "af-NA" },
+ { name => "af-ZA", lcid => 0x00000436 },
+ { name => "agq" },
+ { name => "agq-CM" },
+ { name => "ak", sopentypelang => "TWI" },
+ { name => "ak-GH" },
+ { name => "am", lcid => 0x0000005e, sabbrevlangname => "AMH" },
+ { name => "am-ET", lcid => 0x0000045e },
+ { name => "ar", lcid => 0x00000001, territory => "SA", oemcp => 720, group => 13 },
+ { name => "ar-001" },
+ { name => "ar-AE", lcid => 0x00003801, sabbrevlangname => "ARU" },
+ { name => "ar-BH", lcid => 0x00003c01, sabbrevlangname => "ARH" },
+ { name => "ar-DJ" },
+ { name => "ar-DZ", lcid => 0x00001401, sabbrevlangname => "ARG" },
+ { name => "ar-EG", lcid => 0x00000c01, sabbrevlangname => "ARE" },
+ { name => "ar-EH" },
+ { name => "ar-ER" },
+ { name => "ar-IL" },
+ { name => "ar-IQ", lcid => 0x00000801, sabbrevlangname => "ARI" },
+ { name => "ar-JO", lcid => 0x00002c01, sabbrevlangname => "ARJ" },
+ { name => "ar-KM" },
+ { name => "ar-KW", lcid => 0x00003401, sabbrevlangname => "ARK" },
+ { name => "ar-LB", lcid => 0x00003001, sabbrevlangname => "ARB" },
+ { name => "ar-LY", lcid => 0x00001001, sabbrevlangname => "ARL" },
+ { name => "ar-MA", lcid => 0x00001801, sabbrevlangname => "ARM" },
+ { name => "ar-MR" },
+ { name => "ar-OM", lcid => 0x00002001, sabbrevlangname => "ARO" },
+ { name => "ar-PS" },
+ { name => "ar-QA", lcid => 0x00004001, sabbrevlangname => "ARQ" },
+ { name => "ar-SA", lcid => 0x00000401, sabbrevlangname => "ARA" },
+ { name => "ar-SD" },
+ { name => "ar-SO" },
+ { name => "ar-SS" },
+ { name => "ar-SY", lcid => 0x00002801, sabbrevlangname => "ARS" },
+ { name => "ar-TD" },
+ { name => "ar-TN", lcid => 0x00001c01, sabbrevlangname => "ART" },
+ { name => "ar-YE", lcid => 0x00002401, sabbrevlangname => "ARY" },
+ { name => "arn", lcid => 0x0000007a, oemcp => 850, ebcdiccp => 20284, slist => ",", dir => "seed", sabbrevlangname => "MPD", sopentypelang => "MAP" },
+ { name => "arn-CL", lcid => 0x0000047a, dir => "seed" },
+ { name => "arn-Latn", alias => "arn" },
+ { name => "arn-Latn-CL", alias => "arn-CL" },
+ { name => "as", lcid => 0x0000004d, slist => ",", group => 15 },
+ { name => "as-IN", lcid => 0x0000044d },
+ { name => "asa" },
+ { name => "asa-TZ" },
+ { name => "ast" },
+ { name => "ast-ES" },
+ { name => "az", lcid => 0x0000002c, oemcp => 857, ebcdiccp => 20905, group => 2 },
+ { name => "az-Cyrl", lcid => 0x0000742c, oemcp => 866, ebcdiccp => 20880, group => 5, sabbrevlangname => "AZC" },
+ { name => "az-Cyrl-AZ", lcid => 0x0000082c },
+ { name => "az-Latn", lcid => 0x0000782c },
+ { name => "az-Latn-AZ", lcid => 0x0000042c },
+ { name => "ba", lcid => 0x0000006d, oemcp => 866, group => 5, dir => "seed", sabbrevlangname => "BAS", sopentypelang => "BSH" },
+ { name => "ba-Cyrl", alias => "ba" },
+ { name => "ba-Cyrl-RU", alias => "ba-RU" },
+ { name => "ba-RU", lcid => 0x0000046d, dir => "seed" },
+ { name => "bas" },
+ { name => "bas-CM" },
+ { name => "be", lcid => 0x00000023, oemcp => 866, ebcdiccp => 500, group => 5 },
+ { name => "be-BY", lcid => 0x00000423 },
+ { name => "bem" },
+ { name => "bem-ZM" },
+ { name => "bez" },
+ { name => "bez-TZ" },
+ { name => "bg", lcid => 0x00000002, oemcp => 866, ebcdiccp => 21025, group => 5, sabbrevlangname => "BGR", sopentypelang => "BGR" },
+ { name => "bg-BG", lcid => 0x00000402 },
+ { name => "bin", lcid => 0x00000066, oemcp => 850, dir => "exemplars", sabbrevlangname => "ZZZ", sopentypelang => "EDO" },
+ { name => "bin-NG", lcid => 0x00000466, file => "bin", dir => "exemplars" },
+ { name => "bm", sopentypelang => "BMB" },
+ { name => "bm-Latn", file => "bm" },
+ { name => "bm-Latn-ML", file => "bm_ML" },
+ { name => "bm-ML", alias => "bm-Latn-ML" },
+ { name => "bn", lcid => 0x00000045, slist => ",", group => 15, sabbrevlangname => "BNB" },
+ { name => "bn-BD", lcid => 0x00000845 },
+ { name => "bn-IN", lcid => 0x00000445, sabbrevlangname => "BNG" },
+ { name => "bo", lcid => 0x00000051, slist => ",", group => 15, sabbrevlangname => "BOB", sopentypelang => "TIB" },
+ { name => "bo-CN", lcid => 0x00000451 },
+ { name => "bo-IN", slist => "," },
+ { name => "bo-Tibt", alias => "bo" },
+ { name => "bo-Tibt-CN", alias => "bo-CN" },
+ { name => "bo-Tibt-IN", alias => "bo-IN" },
+ { name => "br", lcid => 0x0000007e, oemcp => 850, ebcdiccp => 20297 },
+ { name => "br-FR", lcid => 0x0000047e },
+ { name => "br-Latn", alias => "br" },
+ { name => "br-Latn-FR", alias => "br-FR" },
+ { name => "brx" },
+ { name => "brx-IN" },
+ { name => "bs", lcid => 0x0000781a, oemcp => 852, maccp => 10082, ebcdiccp => 870, group => 2, sabbrevlangname => "BSB" },
+ { name => "bs-Cyrl", lcid => 0x0000641a, oemcp => 855, group => 5, sabbrevlangname => "BSC" },
+ { name => "bs-Cyrl-BA", lcid => 0x0000201a },
+ { name => "bs-Latn", lcid => 0x0000681a },
+ { name => "bs-Latn-BA", lcid => 0x0000141a },
+ { name => "byn", dir => "seed", sopentypelang => "BIL" },
+ { name => "byn-ER", dir => "seed" },
+ { name => "ca", lcid => 0x00000003, oemcp => 850 },
+ { name => "ca-AD", maccp => 65001 },
+ { name => "ca-ES", lcid => 0x00000403 },
+ { name => "ca-ES-valencia", lcid => 0x00000803, file => "ca_ES_VALENCIA", sabbrevlangname => "VAL" },
+ { name => "ca-FR", maccp => 65001 },
+ { name => "ca-IT", maccp => 65001 },
+ { name => "ccp" },
+ { name => "ccp-BD", alias => "ccp-Cakm-BD" },
+ { name => "ccp-Cakm", file => "ccp" },
+ { name => "ccp-Cakm-BD", file => "ccp_BD" },
+ { name => "ccp-Cakm-IN", file => "ccp_IN" },
+ { name => "ccp-IN", alias => "ccp-Cakm-IN" },
+ { name => "ce" },
+ { name => "ce-RU" },
+ { name => "ceb" },
+ { name => "ceb-Latn", file => "ceb" },
+ { name => "ceb-Latn-PH", file => "ceb_PH" },
+ { name => "ceb-PH", alias => "ceb-Latn-PH" },
+ { name => "cgg" },
+ { name => "cgg-UG" },
+ { name => "chr", lcid => 0x0000005c, slist => ",", sabbrevlangname => "CRE" },
+ { name => "chr-Cher", lcid => 0x00007c5c, file => "chr" },
+ { name => "chr-Cher-US", lcid => 0x0000045c, file => "chr_US" },
+ { name => "chr-US", alias => "chr-Cher-US" },
+ { name => "ckb", alias => "ku" },
+ { name => "ckb-IQ", alias => "ku-Arab-IQ" },
+ { name => "ckb-IR", alias => "ku-Arab-IR" },
+ { name => "co", lcid => 0x00000083, oemcp => 850, ebcdiccp => 20297, dir => "seed" },
+ { name => "co-FR", lcid => 0x00000483, dir => "seed" },
+ { name => "co-Latn", alias => "co" },
+ { name => "co-Latn-FR", alias => "co-FR" },
+ { name => "cs", lcid => 0x00000005, oemcp => 852, group => 2, sabbrevlangname => "CSY", sopentypelang => "CSY" },
+ { name => "cs-CZ", lcid => 0x00000405 },
+ { name => "cu", dir => "seed", sopentypelang => "CSL" },
+ { name => "cu-RU", dir => "seed" },
+ { name => "cy", lcid => 0x00000052, oemcp => 850, ebcdiccp => 20285, sabbrevlangname => "CYM", sopentypelang => "WEL" },
+ { name => "cy-GB", lcid => 0x00000452 },
+ { name => "da", lcid => 0x00000006, oemcp => 850, ebcdiccp => 20277 },
+ { name => "da-DK", lcid => 0x00000406 },
+ { name => "da-GL", maccp => 65001 },
+ { name => "dav" },
+ { name => "dav-KE" },
+ { name => "de", lcid => 0x00000007, oemcp => 850, ebcdiccp => 20273 },
+ { name => "de-AT", lcid => 0x00000c07, sabbrevlangname => "DEA" },
+ { name => "de-BE" },
+ { name => "de-CH", lcid => 0x00000807, sabbrevlangname => "DES" },
+ { name => "de-DE", lcid => 0x00000407 },
+ { name => "de-DE_phoneb", lcid => 0x00010407, alias => "de-DE" },
+ { name => "de-DE-u-co-phonebk", alias => "de-DE_phoneb" },
+ { name => "de-IT", oemcp => 65001 },
+ { name => "de-LI", lcid => 0x00001407, sabbrevlangname => "DEC" },
+ { name => "de-LU", lcid => 0x00001007, sabbrevlangname => "DEL" },
+ { name => "dje", sopentypelang => "DJR" },
+ { name => "dje-NE" },
+ { name => "doi" },
+ { name => "doi-IN" },
+ { name => "dsb", lcid => 0x00007c2e, sparent => "hsb", oemcp => 850, ebcdiccp => 870, sabbrevlangname => "DSB", sopentypelang => "LSB" },
+ { name => "dsb-DE", lcid => 0x0000082e },
+ { name => "dua" },
+ { name => "dua-CM" },
+ { name => "dv", lcid => 0x00000065, slist => "\x{060c}", group => 13, dir => "seed" },
+ { name => "dv-MV", lcid => 0x00000465, dir => "seed" },
+ { name => "dyo" },
+ { name => "dyo-SN" },
+ { name => "dz", sopentypelang => "DZN" },
+ { name => "dz-BT", lcid => 0x00000c51, sabbrevlangname => "ZZZ" },
+ { name => "ebu" },
+ { name => "ebu-KE" },
+ { name => "ee" },
+ { name => "ee-GH" },
+ { name => "ee-TG" },
+ { name => "el", lcid => 0x00000008, oemcp => 737, group => 4 },
+ { name => "el-CY" },
+ { name => "el-GR", lcid => 0x00000408 },
+ { name => "en", lcid => 0x00000009, oemcp => 437, slist => ",", sabbrevlangname => "ENU" },
+ { name => "en-001", oemcp => 850 },
+ { name => "en-029", lcid => 0x00002409, file => "en", oemcp => 850, sintlsymbol => "XCD", sabbrevlangname => "ENB" },
+ { name => "en-150", oemcp => 65001 },
+ { name => "en-AE", lcid => 0x00004c09, oemcp => 65001, sabbrevlangname => "ZZZ" },
+ { name => "en-AG", oemcp => 850 },
+ { name => "en-AI", oemcp => 850 },
+ { name => "en-AS", oemcp => 850 },
+ { name => "en-AT", oemcp => 65001 },
+ { name => "en-AU", lcid => 0x00000c09, oemcp => 850, sabbrevlangname => "ENA" },
+ { name => "en-BB", oemcp => 850 },
+ { name => "en-BE", oemcp => 850 },
+ { name => "en-BI", oemcp => 65001 },
+ { name => "en-BM", oemcp => 850 },
+ { name => "en-BS", oemcp => 850 },
+ { name => "en-BW", oemcp => 850 },
+ { name => "en-BZ", lcid => 0x00002809, oemcp => 850, sabbrevlangname => "ENL" },
+ { name => "en-CA", lcid => 0x00001009, oemcp => 850, ebcdiccp => 37, sabbrevlangname => "ENC" },
+ { name => "en-CC", oemcp => 850 },
+ { name => "en-CH", oemcp => 65001 },
+ { name => "en-CK", oemcp => 850 },
+ { name => "en-CM", oemcp => 850 },
+ { name => "en-CX", oemcp => 850 },
+ { name => "en-CY", oemcp => 65001 },
+ { name => "en-DE", oemcp => 65001 },
+ { name => "en-DG", oemcp => 850 },
+ { name => "en-DK", oemcp => 65001 },
+ { name => "en-DM", oemcp => 850 },
+ { name => "en-ER", oemcp => 850 },
+ { name => "en-FI", oemcp => 65001 },
+ { name => "en-FJ", oemcp => 850 },
+ { name => "en-FK", oemcp => 850 },
+ { name => "en-FM", oemcp => 850 },
+ { name => "en-GB", lcid => 0x00000809, oemcp => 850, ebcdiccp => 20285, sabbrevlangname => "ENG" },
+ { name => "en-GD", oemcp => 850 },
+ { name => "en-GG", oemcp => 850 },
+ { name => "en-GH", oemcp => 850 },
+ { name => "en-GI", oemcp => 850 },
+ { name => "en-GM", oemcp => 850 },
+ { name => "en-GU", oemcp => 850 },
+ { name => "en-GY", oemcp => 850 },
+ { name => "en-HK", lcid => 0x00003c09, oemcp => 850, sabbrevlangname => "ENH" },
+ { name => "en-ID", lcid => 0x00003809, file => "en", oemcp => 850, sabbrevlangname => "ZZZ" },
+ { name => "en-IE", lcid => 0x00001809, oemcp => 850, sabbrevlangname => "ENI" },
+ { name => "en-IL", oemcp => 65001 },
+ { name => "en-IM", oemcp => 850 },
+ { name => "en-IN", lcid => 0x00004009, sabbrevlangname => "ENN" },
+ { name => "en-IO", oemcp => 850 },
+ { name => "en-JE", oemcp => 850 },
+ { name => "en-JM", lcid => 0x00002009, oemcp => 850, sabbrevlangname => "ENJ" },
+ { name => "en-KE", oemcp => 850 },
+ { name => "en-KI", oemcp => 850 },
+ { name => "en-KN", oemcp => 850 },
+ { name => "en-KY", oemcp => 850 },
+ { name => "en-LC", oemcp => 850 },
+ { name => "en-LR", oemcp => 850 },
+ { name => "en-LS", oemcp => 850 },
+ { name => "en-MG", oemcp => 850 },
+ { name => "en-MH", oemcp => 850 },
+ { name => "en-MO", oemcp => 850 },
+ { name => "en-MP", oemcp => 850 },
+ { name => "en-MS", oemcp => 850 },
+ { name => "en-MT", oemcp => 850 },
+ { name => "en-MU", oemcp => 850 },
+ { name => "en-MW", oemcp => 850 },
+ { name => "en-MY", lcid => 0x00004409, sabbrevlangname => "ENM" },
+ { name => "en-NA", oemcp => 850 },
+ { name => "en-NF", oemcp => 850 },
+ { name => "en-NG", oemcp => 850 },
+ { name => "en-NL", oemcp => 65001 },
+ { name => "en-NR", oemcp => 850 },
+ { name => "en-NU", oemcp => 850 },
+ { name => "en-NZ", lcid => 0x00001409, oemcp => 850, sabbrevlangname => "ENZ" },
+ { name => "en-PG", oemcp => 850 },
+ { name => "en-PH", lcid => 0x00003409, ebcdiccp => 500, sabbrevlangname => "ENP" },
+ { name => "en-PK", oemcp => 850 },
+ { name => "en-PN", oemcp => 850 },
+ { name => "en-PR", oemcp => 850 },
+ { name => "en-PW", oemcp => 850 },
+ { name => "en-RW", oemcp => 850 },
+ { name => "en-SB", oemcp => 850 },
+ { name => "en-SC", oemcp => 850 },
+ { name => "en-SD", oemcp => 850 },
+ { name => "en-SE", oemcp => 65001 },
+ { name => "en-SG", lcid => 0x00004809, sabbrevlangname => "ENE" },
+ { name => "en-SH", oemcp => 850 },
+ { name => "en-SI", oemcp => 65001 },
+ { name => "en-SL", oemcp => 850 },
+ { name => "en-SS", oemcp => 850 },
+ { name => "en-SX", oemcp => 850 },
+ { name => "en-SZ", oemcp => 850 },
+ { name => "en-TC", oemcp => 850 },
+ { name => "en-TK", oemcp => 850 },
+ { name => "en-TO", oemcp => 850 },
+ { name => "en-TT", lcid => 0x00002c09, oemcp => 850, sabbrevlangname => "ENT" },
+ { name => "en-TV", oemcp => 850 },
+ { name => "en-TZ", oemcp => 850 },
+ { name => "en-UG", oemcp => 850 },
+ { name => "en-UM", oemcp => 850 },
+ { name => "en-US", lcid => 0x00000409 },
+ { name => "en-VC", oemcp => 850 },
+ { name => "en-VG", oemcp => 850 },
+ { name => "en-VI", oemcp => 850 },
+ { name => "en-VU", oemcp => 850 },
+ { name => "en-WS", oemcp => 850 },
+ { name => "en-ZA", lcid => 0x00001c09, ebcdiccp => 500, sabbrevlangname => "ENS" },
+ { name => "en-ZM", oemcp => 850 },
+ { name => "en-ZW", lcid => 0x00003009, ebcdiccp => 500, sabbrevlangname => "ENW" },
+ { name => "eo", sopentypelang => "NTO" },
+ { name => "eo-001" },
+ { name => "es", lcid => 0x0000000a, oemcp => 850, ebcdiccp => 20284, sabbrevlangname => "ESP", sopentypelang => "ESP" },
+ { name => "es-419", lcid => 0x0000580a, sabbrevlangname => "ESJ" },
+ { name => "es-AR", lcid => 0x00002c0a, sabbrevlangname => "ESS" },
+ { name => "es-BO", lcid => 0x0000400a, sabbrevlangname => "ESB" },
+ { name => "es-BR", oemcp => 65001 },
+ { name => "es-BZ", oemcp => 65001 },
+ { name => "es-CL", lcid => 0x0000340a, sabbrevlangname => "ESL" },
+ { name => "es-CO", lcid => 0x0000240a, sabbrevlangname => "ESO" },
+ { name => "es-CR", lcid => 0x0000140a, sabbrevlangname => "ESC" },
+ { name => "es-CU", lcid => 0x00005c0a, sabbrevlangname => "ESK" },
+ { name => "es-DO", lcid => 0x00001c0a, sabbrevlangname => "ESD" },
+ { name => "es-EA" },
+ { name => "es-EC", lcid => 0x0000300a, sabbrevlangname => "ESF" },
+ { name => "es-ES", lcid => 0x00000c0a, sabbrevlangname => "ESN" },
+ { name => "es-ES_tradnl", lcid => 0x0000040a, file => "es_ES" },
+ { name => "es-ES-u-co-trad", alias => "es-ES_tradnl" },
+ { name => "es-GQ" },
+ { name => "es-GT", lcid => 0x0000100a, sabbrevlangname => "ESG" },
+ { name => "es-HN", lcid => 0x0000480a, sabbrevlangname => "ESH" },
+ { name => "es-IC" },
+ { name => "es-MX", lcid => 0x0000080a, sabbrevlangname => "ESM" },
+ { name => "es-NI", lcid => 0x00004c0a, sabbrevlangname => "ESI" },
+ { name => "es-PA", lcid => 0x0000180a, sabbrevlangname => "ESA" },
+ { name => "es-PE", lcid => 0x0000280a, sabbrevlangname => "ESR" },
+ { name => "es-PH" },
+ { name => "es-PR", lcid => 0x0000500a, sabbrevlangname => "ESU" },
+ { name => "es-PY", lcid => 0x00003c0a, sabbrevlangname => "ESZ" },
+ { name => "es-SV", lcid => 0x0000440a, sabbrevlangname => "ESE" },
+ { name => "es-US", lcid => 0x0000540a, sabbrevlangname => "EST" },
+ { name => "es-UY", lcid => 0x0000380a, sabbrevlangname => "ESY" },
+ { name => "es-VE", lcid => 0x0000200a, sabbrevlangname => "ESV" },
+ { name => "et", lcid => 0x00000025, oemcp => 775, group => 3, sabbrevlangname => "ETI", sopentypelang => "ETI" },
+ { name => "et-EE", lcid => 0x00000425 },
+ { name => "eu", lcid => 0x0000002d, oemcp => 850, maccp => 65001, sabbrevlangname => "EUQ", sopentypelang => "EUQ" },
+ { name => "eu-ES", lcid => 0x0000042d },
+ { name => "ewo" },
+ { name => "ewo-CM" },
+ { name => "fa", lcid => 0x00000029, inegnumber => 3, oemcp => 720, slist => "\x{061b}", group => 13, sabbrevlangname => "FAR", sopentypelang => "FAR" },
+ { name => "fa-AF", alias => "prs-AF" },
+ { name => "fa-IR", lcid => 0x00000429 },
+ { name => "ff", lcid => 0x00000067, oemcp => 850, ebcdiccp => 20297 },
+ { name => "ff-CM", alias => "ff-Latn-CM" },
+ { name => "ff-GN", alias => "ff-Latn-GN" },
+ { name => "ff-MR", alias => "ff-Latn-MR" },
+ { name => "ff-NG", alias => "ff-Latn-NG" },
+ { name => "ff-SN", alias => "ff-Latn-SN" },
+ { name => "ff-Adlm" },
+ { name => "ff-Adlm-BF" },
+ { name => "ff-Adlm-CM" },
+ { name => "ff-Adlm-GH" },
+ { name => "ff-Adlm-GM" },
+ { name => "ff-Adlm-GN" },
+ { name => "ff-Adlm-GW" },
+ { name => "ff-Adlm-LR" },
+ { name => "ff-Adlm-MR" },
+ { name => "ff-Adlm-NE" },
+ { name => "ff-Adlm-NG" },
+ { name => "ff-Adlm-SL" },
+ { name => "ff-Adlm-SN" },
+ { name => "ff-Latn", lcid => 0x00007c67 },
+ { name => "ff-Latn-BF", oemcp => 65001 },
+ { name => "ff-Latn-CM" },
+ { name => "ff-Latn-GH", oemcp => 65001 },
+ { name => "ff-Latn-GM", oemcp => 65001 },
+ { name => "ff-Latn-GN" },
+ { name => "ff-Latn-GW", oemcp => 65001 },
+ { name => "ff-Latn-LR", oemcp => 65001 },
+ { name => "ff-Latn-MR" },
+ { name => "ff-Latn-NE", oemcp => 65001 },
+ { name => "ff-Latn-NG", lcid => 0x00000467, sabbrevlangname => "ZZZ" },
+ { name => "ff-Latn-SL", oemcp => 65001 },
+ { name => "ff-Latn-SN", lcid => 0x00000867 },
+ { name => "fi", lcid => 0x0000000b, oemcp => 850, ebcdiccp => 20278 },
+ { name => "fi-FI", lcid => 0x0000040b },
+ { name => "fil", lcid => 0x00000064, oemcp => 437, ebcdiccp => 500, sabbrevlangname => "FPO", sopentypelang => "PIL" },
+ { name => "fil-PH", lcid => 0x00000464 },
+ { name => "fil-Latn", alias => "fil" },
+ { name => "fil-Latn-PH", alias => "fil-PH" },
+ { name => "fo", lcid => 0x00000038, oemcp => 850, maccp => 10079, ebcdiccp => 20277, sabbrevlangname => "FOS", sopentypelang => "FOS" },
+ { name => "fo-DK", oemcp => 65001, maccp => 65001 },
+ { name => "fo-FO", lcid => 0x00000438 },
+ { name => "fr", lcid => 0x0000000c, oemcp => 850, ebcdiccp => 20297 },
+ { name => "fr-029", lcid => 0x00001c0c, file => "fr", sintlsymbol => "XCD", sabbrevlangname => "ZZZ" },
+ { name => "fr-BE", lcid => 0x0000080c, sabbrevlangname => "FRB" },
+ { name => "fr-BF" },
+ { name => "fr-BI" },
+ { name => "fr-BJ" },
+ { name => "fr-BL" },
+ { name => "fr-CA", lcid => 0x00000c0c, sabbrevlangname => "FRC" },
+ { name => "fr-CD", lcid => 0x0000240c, sabbrevlangname => "FRD" },
+ { name => "fr-CF" },
+ { name => "fr-CG" },
+ { name => "fr-CH", lcid => 0x0000100c, sabbrevlangname => "FRS" },
+ { name => "fr-CI", lcid => 0x0000300c, sabbrevlangname => "FRI" },
+ { name => "fr-CM", lcid => 0x00002c0c, sabbrevlangname => "FRE" },
+ { name => "fr-DJ" },
+ { name => "fr-DZ" },
+ { name => "fr-FR", lcid => 0x0000040c },
+ { name => "fr-GA" },
+ { name => "fr-GF" },
+ { name => "fr-GN" },
+ { name => "fr-GP" },
+ { name => "fr-GQ" },
+ { name => "fr-HT", lcid => 0x00003c0c, sabbrevlangname => "FRH" },
+ { name => "fr-KM" },
+ { name => "fr-LU", lcid => 0x0000140c, sabbrevlangname => "FRL" },
+ { name => "fr-MA", lcid => 0x0000380c, sabbrevlangname => "FRO" },
+ { name => "fr-MC", lcid => 0x0000180c, sabbrevlangname => "FRM" },
+ { name => "fr-MF" },
+ { name => "fr-MG" },
+ { name => "fr-ML", lcid => 0x0000340c, sabbrevlangname => "FRF" },
+ { name => "fr-MQ" },
+ { name => "fr-MR" },
+ { name => "fr-MU" },
+ { name => "fr-NC" },
+ { name => "fr-NE" },
+ { name => "fr-PF" },
+ { name => "fr-PM" },
+ { name => "fr-RE", lcid => 0x0000200c, sabbrevlangname => "FRR" },
+ { name => "fr-RW" },
+ { name => "fr-SC" },
+ { name => "fr-SN", lcid => 0x0000280c, sabbrevlangname => "FRN" },
+ { name => "fr-SY" },
+ { name => "fr-TD" },
+ { name => "fr-TG" },
+ { name => "fr-TN" },
+ { name => "fr-VU" },
+ { name => "fr-WF" },
+ { name => "fr-YT" },
+ { name => "fur", sopentypelang => "FRL" },
+ { name => "fur-IT" },
+ { name => "fy", lcid => 0x00000062, oemcp => 850, sabbrevlangname => "FYN", sopentypelang => "FRI" },
+ { name => "fy-NL", lcid => 0x00000462 },
+ { name => "ga", lcid => 0x0000003c, oemcp => 850, sabbrevlangname => "IRE", sopentypelang => "IRI" },
+ { name => "ga-GB" },
+ { name => "ga-IE", lcid => 0x0000083c },
+ { name => "gd", lcid => 0x00000091, oemcp => 850, ebcdiccp => 20285, sopentypelang => "GAE" },
+ { name => "gd-GB", lcid => 0x00000491 },
+ { name => "gd-Latn", alias => "gd" },
+ { name => "gl", lcid => 0x00000056, oemcp => 850, sabbrevlangname => "GLC", sopentypelang => "GAL" },
+ { name => "gl-ES", lcid => 0x00000456 },
+ { name => "gn", lcid => 0x00000074, oemcp => 850, ebcdiccp => 20284, slist => ",", dir => "seed", sopentypelang => "GUA" },
+ { name => "gn-PY", lcid => 0x00000474, dir => "seed" },
+ { name => "gsw", lcid => 0x00000084, oemcp => 850, ebcdiccp => 20297, sabbrevlangname => "ZZZ", sopentypelang => "ALS" },
+ { name => "gsw-CH" },
+ { name => "gsw-FR", lcid => 0x00000484, sabbrevlangname => "GSW" },
+ { name => "gsw-LI" },
+ { name => "gu", lcid => 0x00000047, slist => ",", group => 15 },
+ { name => "gu-IN", lcid => 0x00000447 },
+ { name => "guz" },
+ { name => "guz-KE" },
+ { name => "gv", sopentypelang => "MNX" },
+ { name => "gv-IM" },
+ { name => "ha", lcid => 0x00000068, oemcp => 437 },
+ { name => "ha-GH", alias => "ha-Latn-GH" },
+ { name => "ha-Latn", lcid => 0x00007c68, file => "ha" },
+ { name => "ha-Latn-GH", file => "ha_GH", ebcdiccp => 500 },
+ { name => "ha-Latn-NE", file => "ha_NE", ebcdiccp => 500 },
+ { name => "ha-Latn-NG", lcid => 0x00000468, file => "ha_NG" },
+ { name => "ha-NE", alias => "ha-Latn-NE" },
+ { name => "ha-NG", alias => "ha-Latn-NG" },
+ { name => "haw", lcid => 0x00000075, oemcp => 437 },
+ { name => "haw-Latn", alias => "haw" },
+ { name => "haw-Latn-US", alias => "haw-US" },
+ { name => "haw-US", lcid => 0x00000475 },
+ { name => "he", lcid => 0x0000000d, oemcp => 862, slist => ",", group => 12, sopentypelang => "IWR" },
+ { name => "he-IL", lcid => 0x0000040d },
+ { name => "hi", lcid => 0x00000039, slist => ",", group => 15 },
+ { name => "hi-IN", lcid => 0x00000439 },
+ { name => "hr", lcid => 0x0000001a, inegnumber => 2, oemcp => 852, maccp => 10082, group => 2 },
+ { name => "hr-BA", lcid => 0x0000101a, ebcdiccp => 870, inegnumber => 1, sabbrevlangname => "HRB" },
+ { name => "hr-HR", lcid => 0x0000041a },
+ { name => "hsb", lcid => 0x0000002e, oemcp => 850, ebcdiccp => 870, sopentypelang => "USB" },
+ { name => "hsb-DE", lcid => 0x0000042e },
+ { name => "hu", lcid => 0x0000000e, oemcp => 852, group => 2 },
+ { name => "hu-HU", lcid => 0x0000040e },
+ { name => "hu-HU_technl", lcid => 0x0001040e, alias => "hu-HU" },
+ { name => "hy", lcid => 0x0000002b, slist => ",", group => 17 },
+ { name => "hy-AM", lcid => 0x0000042b },
+ { name => "ia" },
+ { name => "ia-001" },
+## name => "ibb", lcid => 0x00000069 },
+## name => "ibb-NG", lcid => 0x00000469 },
+ { name => "id", lcid => 0x00000021, oemcp => 850 },
+ { name => "id-ID", lcid => 0x00000421 },
+ { name => "ig", lcid => 0x00000070, oemcp => 437 },
+ { name => "ig-Latn", alias => "ig" },
+ { name => "ig-Latn-NG", alias => "ig-NG" },
+ { name => "ig-NG", lcid => 0x00000470 },
+ { name => "ii", lcid => 0x00000078, group => 9, sopentypelang => "YIM" },
+ { name => "ii-CN", lcid => 0x00000478 },
+ { name => "ii-Yiii", alias => "ii" },
+ { name => "ii-Yiii-CN", alias => "ii-CN" },
+ { name => "is", lcid => 0x0000000f, oemcp => 850, maccp => 10079, ebcdiccp => 20871 },
+ { name => "is-IS", lcid => 0x0000040f },
+ { name => "it", lcid => 0x00000010, oemcp => 850, ebcdiccp => 20280 },
+ { name => "it-CH", lcid => 0x00000810, ebcdiccp => 500, sabbrevlangname => "ITS" },
+ { name => "it-IT", lcid => 0x00000410 },
+ { name => "it-SM" },
+ { name => "it-VA", oemcp => 65001 },
+ { name => "iu", lcid => 0x0000005d, oemcp => 437, slist => ",", sortlocale => "iu-Latn-CA", dir => "seed", sabbrevlangname => "IUK", sopentypelang => "INU" },
+ { name => "iu-Cans", lcid => 0x0000785d, file => "iu", oemcp => 65001, dir => "seed", sabbrevlangname => "IUS" },
+ { name => "iu-Cans-CA", lcid => 0x0000045d, file => "iu_CA", dir => "seed" },
+ { name => "iu-Latn", lcid => 0x00007c5d, dir => "seed" },
+ { name => "iu-Latn-CA", lcid => 0x0000085d, dir => "seed" },
+ { name => "ja", lcid => 0x00000011, ireadinglayout => 2, oemcp => 932, slist => ",",  sscripts => "Hani Hira Jpan Kana", group => 7, sopentypelang => "JAN" },
+ { name => "ja-JP", lcid => 0x00000411 },
+ { name => "ja-JP_radstr", lcid => 0x00040411, alias => "ja-JP" },
+ { name => "ja-JP-u-co-unihan", alias => "ja-JP_radstr" },
+ { name => "jgo" },
+ { name => "jgo-CM" },
+ { name => "jmc" },
+ { name => "jmc-TZ" },
+ { name => "jv", oemcp => 850 },
+ { name => "jv-ID", alias => "jv-Latn-ID" },
+## name => "jv-Java" },
+## name => "jv-Java-ID" },
+ { name => "jv-Latn", file => "jv" },
+ { name => "jv-Latn-ID", file => "jv_ID" },
+ { name => "ka", lcid => 0x00000037, group => 16 },
+ { name => "ka-GE", lcid => 0x00000437 },
+ { name => "ka-GE_modern", lcid => 0x00010437, alias => "ka-GE" },
+ { name => "kab", sopentypelang => "KAB0" },
+ { name => "kab-DZ" },
+ { name => "kam", sopentypelang => "KMB" },
+ { name => "kam-KE" },
+ { name => "kde" },
+ { name => "kde-TZ" },
+ { name => "kea" },
+ { name => "kea-CV" },
+ { name => "kgp" },
+ { name => "kgp-BR" },
+ { name => "khq" },
+ { name => "khq-ML" },
+ { name => "ki" },
+ { name => "ki-KE" },
+ { name => "kk", lcid => 0x0000003f, group => 5, sabbrevlangname => "KKZ" },
+ { name => "kk-Cyrl", alias => "kk" },
+ { name => "kk-Cyrl-KZ", alias => "kk-KZ" },
+ { name => "kk-KZ", lcid => 0x0000043f },
+ { name => "kkj" },
+ { name => "kkj-CM" },
+ { name => "kl", lcid => 0x0000006f, oemcp => 850, ebcdiccp => 20277, sopentypelang => "GRN" },
+ { name => "kl-GL", lcid => 0x0000046f },
+ { name => "kln", sopentypelang => "KAL" },
+ { name => "kln-KE" },
+ { name => "km", lcid => 0x00000053, inegnumber => 2, slist => ",", group => 15 },
+ { name => "km-KH", lcid => 0x00000453 },
+ { name => "kn", lcid => 0x0000004b, slist => ",", group => 15, sabbrevlangname => "KDI" },
+ { name => "kn-IN", lcid => 0x0000044b },
+ { name => "ko", lcid => 0x00000012, ireadinglayout => 2, slist => ",", oemcp => 949, ebcdiccp => 20833, sscripts => "Hang Hani Kore", group => 8 },
+ { name => "ko-KP", oemcp => 65001 },
+ { name => "ko-KR", lcid => 0x00000412 },
+ { name => "kok", lcid => 0x00000057, slist => ",", group => 15, sabbrevlangname => "KNK" },
+ { name => "kok-IN", lcid => 0x00000457 },
+ { name => "kr", lcid => 0x00000071, sortlocale => "kr-Latn-NG", oemcp => 850, dir => "exemplars", sabbrevlangname => "ZZZ", sopentypelang => "KNR" },
+ { name => "kr-Latn", file => "kr", dir => "exemplars" },
+ { name => "kr-Latn-NG", lcid => 0x00000471, file => "kr", dir => "exemplars" },
+ { name => "kr-NG", alias => "kr-Latn-NG" },
+ { name => "ks", lcid => 0x00000060, group => 15, sabbrevlangname => "ZZZ", sopentypelang => "KSH" },
+ { name => "ks-Arab", lcid => 0x00000460 },
+ { name => "ks-Arab-IN" },
+ { name => "ks-Deva", slist => ",", dir => "seed" },
+ { name => "ks-Deva-IN", lcid => 0x00000860, dir => "seed" },
+ { name => "ks-IN", alias => "ks-Arab-IN" },
+ { name => "ksb" },
+ { name => "ksb-TZ" },
+ { name => "ksf" },
+ { name => "ksf-CM" },
+ { name => "ksh", sopentypelang => "KSH0" },
+ { name => "ksh-DE" },
+ { name => "ku", lcid => 0x00000092, file => "ckb", slist => "\x{061b}", sortlocale => "ku-Arab-IQ", oemcp => 720 },
+ { name => "ku-Arab", lcid => 0x00007c92, file => "ckb", group => 13 },
+ { name => "ku-Arab-IQ", lcid => 0x00000492, file => "ckb_IQ" },
+ { name => "ku-Arab-IR", file => "ckb_IR", oemcp => 65001 },
+ { name => "kw" },
+ { name => "kw-GB" },
+ { name => "ky", lcid => 0x00000040, oemcp => 866, group => 5, sabbrevlangname => "KYR" },
+ { name => "ky-Cyrl", alias => "ky" },
+ { name => "ky-Cyrl-KG", alias => "ky-KG" },
+ { name => "ky-KG", lcid => 0x00000440 },
+ { name => "la", lcid => 0x00000076, oemcp => 437, slist => ",", dir => "seed", sabbrevlangname => "ZZZ" },
+ { name => "la-001", lcid => 0x00000476, file => "la", dir => "seed" },
+ { name => "lag" },
+ { name => "lag-TZ" },
+ { name => "lb", lcid => 0x0000006e, oemcp => 850, ebcdiccp => 20297, sabbrevlangname => "LBX" },
+ { name => "lb-LU", lcid => 0x0000046e },
+ { name => "lg" },
+ { name => "lg-UG" },
+ { name => "lkt" },
+ { name => "lkt-US" },
+ { name => "ln" },
+ { name => "ln-AO" },
+ { name => "ln-CD" },
+ { name => "ln-CF" },
+ { name => "ln-CG" },
+ { name => "lo", lcid => 0x00000054, group => 15 },
+ { name => "lo-LA", lcid => 0x00000454 },
+ { name => "lrc" },
+ { name => "lrc-IQ" },
+ { name => "lrc-IR" },
+ { name => "lt", lcid => 0x00000027, oemcp => 775, group => 3, sabbrevlangname => "LTH", sopentypelang => "LTH" },
+ { name => "lt-LT", lcid => 0x00000427 },
+ { name => "lu" },
+ { name => "lu-CD" },
+ { name => "luo" },
+ { name => "luo-KE" },
+ { name => "luy", sopentypelang => "LUH" },
+ { name => "luy-KE" },
+ { name => "lv", lcid => 0x00000026, oemcp => 775, group => 3, sabbrevlangname => "LVI", sopentypelang => "LVI" },
+ { name => "lv-LV", lcid => 0x00000426 },
+ { name => "mai" },
+ { name => "mai-IN" },
+ { name => "mas" },
+ { name => "mas-KE" },
+ { name => "mas-TZ" },
+ { name => "mer" },
+ { name => "mer-KE" },
+ { name => "mfe" },
+ { name => "mfe-MU" },
+ { name => "mg" },
+ { name => "mg-MG" },
+ { name => "mgh" },
+ { name => "mgh-MZ" },
+ { name => "mgo" },
+ { name => "mgo-CM" },
+ { name => "mi", lcid => 0x00000081, slist => "," },
+ { name => "mi-Latn", alias => "mi" },
+ { name => "mi-Latn-NZ", alias => "mi-NZ" },
+ { name => "mi-NZ", lcid => 0x00000481 },
+ { name => "mk", lcid => 0x0000002f, oemcp => 866, ebcdiccp => 500, group => 5, sabbrevlangname => "MKI" },
+ { name => "mk-MK", lcid => 0x0000042f },
+ { name => "ml", lcid => 0x0000004c, group => 15, sabbrevlangname => "MYM", sopentypelang => "MLR" },
+ { name => "ml-IN", lcid => 0x0000044c },
+ { name => "mn", lcid => 0x00000050, oemcp => 866, sopentypelang => "MNG" },
+ { name => "mn-Cyrl", lcid => 0x00007850, file => "mn", sabbrevlangname => "MNN" },
+ { name => "mn-Cyrl-MN", alias => "mn-MN" },
+ { name => "mn-MN", lcid => 0x00000450, sparent => "mn-Cyrl", group => 5 },
+ { name => "mn-Mong", lcid => 0x00007c50, oemcp => 65001, slist => ",", group => 15, dir => "seed", sabbrevlangname => "MNG" },
+ { name => "mn-Mong-CN", lcid => 0x00000850, dir => "seed" },
+ { name => "mn-Mong-MN", lcid => 0x00000c50, dir => "seed", sabbrevlangname => "MNM" },
+ { name => "mni", lcid => 0x00000058, slist => ",", sabbrevlangname => "ZZZ" },
+ { name => "mni-IN", lcid => 0x00000458, file => "mni_Beng_IN" },
+ { name => "moh", lcid => 0x0000007c, oemcp => 850, ebcdiccp => 37, slist => ",", dir => "seed", sabbrevlangname => "MWK" },
+ { name => "moh-CA", lcid => 0x0000047c, dir => "seed" },
+ { name => "moh-Latn", alias => "moh" },
+ { name => "moh-Latn-CA", alias => "moh-CA" },
+ { name => "mr", lcid => 0x0000004e, slist => ",", group => 15 },
+ { name => "mr-IN", lcid => 0x0000044e },
+ { name => "ms", lcid => 0x0000003e, oemcp => 850, sabbrevlangname => "MSL", sopentypelang => "MLY" },
+ { name => "ms-BN", lcid => 0x0000083e, sabbrevlangname => "MSB" },
+ { name => "ms-ID" },
+ { name => "ms-Latn", alias => "ms" },
+ { name => "ms-Latn-BN", alias => "ms-BN" },
+ { name => "ms-Latn-MY", alias => "ms-MY" },
+ { name => "ms-Latn-SG", alias => "ms-SG" },
+ { name => "ms-MY", lcid => 0x0000043e },
+ { name => "ms-SG" },
+ { name => "mt", lcid => 0x0000003a, sopentypelang => "MTS" },
+ { name => "mt-MT", lcid => 0x0000043a },
+ { name => "mua" },
+ { name => "mua-CM" },
+ { name => "my", lcid => 0x00000055, sopentypelang => "BRM" },
+ { name => "my-MM", lcid => 0x00000455 },
+ { name => "mzn" },
+ { name => "mzn-IR" },
+ { name => "naq" },
+ { name => "naq-NA" },
+ { name => "nb", lcid => 0x00007c14, oemcp => 850, ebcdiccp => 20277, sabbrevlangname => "NOR", sopentypelang => "NOR" },
+ { name => "nb-NO", lcid => 0x00000414 },
+ { name => "nb-SJ" },
+ { name => "nd", sopentypelang => "NDB" },
+ { name => "nd-ZW" },
+ { name => "nds" },
+ { name => "nds-DE" },
+ { name => "nds-NL" },
+ { name => "ne", lcid => 0x00000061, slist => "," },
+ { name => "ne-IN", lcid => 0x00000861, sabbrevlangname => "NEI" },
+ { name => "ne-NP", lcid => 0x00000461, group => 15 },
+ { name => "nl", lcid => 0x00000013, oemcp => 850 },
+ { name => "nl-AW" },
+ { name => "nl-BE", lcid => 0x00000813, sabbrevlangname => "NLB" },
+ { name => "nl-BQ" },
+ { name => "nl-CW" },
+ { name => "nl-NL", lcid => 0x00000413 },
+ { name => "nl-SR" },
+ { name => "nl-SX" },
+ { name => "nmg" },
+ { name => "nmg-CM" },
+ { name => "nn", lcid => 0x00007814, oemcp => 850, ebcdiccp => 20277, sabbrevlangname => "NON", sopentypelang => "NYN" },
+ { name => "nn-NO", lcid => 0x00000814 },
+ { name => "nnh" },
+ { name => "nnh-CM" },
+ { name => "no", lcid => 0x00000014, oemcp => 850, ebcdiccp => 20277, sortlocale => "nb-NO" },
+ { name => "nqo", idigits => 3, inegnumber => 3, slist => "\x{060c}", dir => "seed", sopentypelang => "NKO" },
+ { name => "nqo-GN", dir => "seed" },
+ { name => "nr", dir => "seed", sopentypelang => "NDB" },
+ { name => "nr-ZA", dir => "seed" },
+ { name => "nso", lcid => 0x0000006c, oemcp => 850, dir => "seed", sopentypelang => "SOT" },
+ { name => "nso-ZA", lcid => 0x0000046c, dir => "seed" },
+ { name => "nus" },
+ { name => "nus-SD", alias => "nus-SS" },
+ { name => "nus-SS" },
+ { name => "nyn", sopentypelang => "NKL" },
+ { name => "nyn-UG" },
+ { name => "oc", lcid => 0x00000082, oemcp => 850, ebcdiccp => 20297, dir => "seed" },
+ { name => "oc-FR", lcid => 0x00000482, dir => "seed" },
+ { name => "oc-Latn", alias => "oc" },
+ { name => "oc-Latn-FR", alias => "oc-FR" },
+ { name => "om", lcid => 0x00000072, sopentypelang => "ORO" },
+ { name => "om-ET", lcid => 0x00000472 },
+ { name => "om-KE" },
+ { name => "or", lcid => 0x00000048, slist => ",", group => 15 },
+ { name => "or-IN", lcid => 0x00000448 },
+ { name => "os" },
+ { name => "os-GE" },
+ { name => "os-RU" },
+ { name => "pa", lcid => 0x00000046, slist => "," },
+ { name => "pa-Arab", lcid => 0x00007c46, slist => ";", inegnumber => 2, oemcp => 720, group => 13, sabbrevlangname => "PAP" },
+ { name => "pa-Arab-PK", lcid => 0x00000846 },
+ { name => "pa-Guru" },
+ { name => "pa-Guru-IN", alias => "pa-IN" },
+ { name => "pa-IN", lcid => 0x00000446, sparent => "pa-Guru", file => "pa_Guru_IN", group => 15 },
+## name => "pap", lcid => 0x00000079 },
+## name => "pap-029", lcid => 0x00000479 },
+ { name => "pcm" },
+ { name => "pcm-NG" },
+ { name => "pl", lcid => 0x00000015, oemcp => 852, ebcdiccp => 20880, group => 2, sabbrevlangname => "PLK", sopentypelang => "PLK" },
+ { name => "pl-PL", lcid => 0x00000415 },
+## name => "prg" },
+## name => "prg-001" },
+ { name => "prs", lcid => 0x0000008c, file => "fa", inegnumber => 3, oemcp => 720, group => 13, sopentypelang => "DRI" },
+ { name => "prs-AF", lcid => 0x0000048c, file => "fa_AF" },
+ { name => "prs-Arab", alias => "prs" },
+ { name => "prs-Arab-AF", alias => "prs-AF" },
+ { name => "ps", lcid => 0x00000063, group => 13, sabbrevlangname => "PAS", sopentypelang => "PAS" },
+ { name => "ps-AF", lcid => 0x00000463 },
+ { name => "ps-PK" },
+ { name => "pt", lcid => 0x00000016, oemcp => 850, sabbrevlangname => "PTB", sopentypelang => "PTG" },
+ { name => "pt-AO" },
+ { name => "pt-BR", lcid => 0x00000416 },
+ { name => "pt-CH", oemcp => 65001 },
+ { name => "pt-CV" },
+ { name => "pt-GQ", oemcp => 65001 },
+ { name => "pt-GW" },
+ { name => "pt-LU", oemcp => 65001 },
+ { name => "pt-MO" },
+ { name => "pt-MZ" },
+ { name => "pt-PT", lcid => 0x00000816, sabbrevlangname => "PTG" },
+ { name => "pt-ST" },
+ { name => "pt-TL" },
+## name => qps-Latn-x-sh", lcid => 0x80000901 },
+## name => qps-ploc", lcid => 0x80000501 },
+## name => qps-ploca", lcid => 0x800005fe },
+## name => qps-plocm", lcid => 0x800009ff },
+ { name => "qu", alias => "quz" },
+ { name => "qu-BO", alias => "quz-BO" },
+ { name => "qu-EC", alias => "quz-EC" },
+ { name => "qu-PE", alias => "quz-PE" },
+ { name => "quc", lcid => 0x00000086, oemcp => 850, ebcdiccp => 20284, slist => ",", dir => "seed" },
+ { name => "quc-Latn", lcid => 0x00007c86, file => "quc", dir => "seed" },
+ { name => "quc-Latn-GT", lcid => 0x00000486, file => "quc_GT", dir => "seed" },
+ { name => "qut", alias => "quc" },
+ { name => "qut-GT", alias => "quc-Latn-GT" },
+ { name => "quz", lcid => 0x0000006b, file => "qu", territory => "BO", oemcp => 850, ebcdiccp => 20284, slist => "," },
+ { name => "quz-BO", lcid => 0x0000046b, file => "qu_BO" },
+ { name => "quz-EC", lcid => 0x0000086b, file => "qu_EC" },
+ { name => "quz-Latn", alias => "quz" },
+ { name => "quz-Latn-BO", alias => "quz-BO" },
+ { name => "quz-Latn-EC", alias => "quz-EC" },
+ { name => "quz-Latn-PE", alias => "quz-PE" },
+ { name => "quz-PE", lcid => 0x00000c6b, file => "qu_PE" },
+ { name => "rm", lcid => 0x00000017, oemcp => 850, ebcdiccp => 20273, sabbrevlangname => "RMC", sopentypelang => "RMS" },
+ { name => "rm-CH", lcid => 0x00000417 },
+ { name => "rn" },
+ { name => "rn-BI" },
+ { name => "ro", lcid => 0x00000018, oemcp => 852, ebcdiccp => 20880, sabbrevlangname => "ROM", sopentypelang => "ROM" },
+ { name => "ro-MD", lcid => 0x00000818, maccp => 65001, sabbrevlangname => "ROD" },
+ { name => "ro-RO", lcid => 0x00000418, group => 2 },
+ { name => "rof" },
+ { name => "rof-TZ" },
+ { name => "ru", lcid => 0x00000019, oemcp => 866 },
+ { name => "ru-BY", maccp => 65001 },
+ { name => "ru-KG", maccp => 65001 },
+ { name => "ru-KZ", maccp => 65001 },
+ { name => "ru-MD", lcid => 0x00000819, maccp => 65001, sabbrevlangname => "RUM" },
+ { name => "ru-RU", lcid => 0x00000419, group => 5 },
+ { name => "ru-UA", maccp => 65001 },
+ { name => "rw", lcid => 0x00000087, oemcp => 437, sopentypelang => "RUA" },
+ { name => "rw-RW", lcid => 0x00000487 },
+ { name => "rwk" },
+ { name => "rwk-TZ" },
+ { name => "sa", lcid => 0x0000004f, slist => ",", group => 15 },
+ { name => "sa-Deva", alias => "sa" },
+ { name => "sa-Deva-IN", alias => "sa-IN" },
+ { name => "sa-IN", lcid => 0x0000044f },
+ { name => "sah", lcid => 0x00000085, oemcp => 866, group => 5, sopentypelang => "YAK" },
+ { name => "sah-Cyrl", alias => "sah" },
+ { name => "sah-Cyrl-RU", alias => "sah-RU" },
+ { name => "sah-RU", lcid => 0x00000485 },
+ { name => "saq" },
+ { name => "saq-KE" },
+ { name => "sat" },
+ { name => "sat-Olck" },
+ { name => "sat-Olck-IN" },
+ { name => "sbp" },
+ { name => "sbp-TZ" },
+ { name => "sc" },
+ { name => "sc-IT" },
+ { name => "sd", lcid => 0x00000059, inegnumber => 3, oemcp => 720, sabbrevlangname => "SIP" },
+ { name => "sd-Arab", lcid => 0x00007c59, group => 13 },
+ { name => "sd-Arab-PK", lcid => 0x00000859 },
+ { name => "sd-Deva", inegnumber => 1, slist => ",", oemcp => 65001, group => 15 },
+ { name => "sd-Deva-IN", lcid => 0x00000459, sabbrevlangname => "ZZZ" },
+ { name => "sd-PK", alias => "sd-Arab-PK" },
+ { name => "se", lcid => 0x0000003b, oemcp => 850, ebcdiccp => 20277, sopentypelang => "NSM" },
+ { name => "se-FI", lcid => 0x00000c3b, ebcdiccp => 20278, sabbrevlangname => "SMG" },
+ { name => "se-NO", lcid => 0x0000043b },
+ { name => "se-SE", lcid => 0x0000083b, ebcdiccp => 20278, sabbrevlangname => "SMF" },
+ { name => "se-Latn", alias => "se" },
+ { name => "se-Latn-FI", alias => "se-FI" },
+ { name => "se-Latn-NO", alias => "se-NO" },
+ { name => "se-Latn-SE", alias => "se-SE" },
+ { name => "seh" },
+ { name => "seh-MZ" },
+ { name => "ses" },
+ { name => "ses-ML" },
+ { name => "sg", sopentypelang => "SGO" },
+ { name => "sg-CF" },
+ { name => "shi" },
+ { name => "shi-Latn" },
+ { name => "shi-Latn-MA" },
+ { name => "shi-Tfng" },
+ { name => "shi-Tfng-MA" },
+ { name => "si", lcid => 0x0000005b, group => 15, sopentypelang => "SNH" },
+ { name => "si-LK", lcid => 0x0000045b },
+ { name => "sk", lcid => 0x0000001b, oemcp => 852, ebcdiccp => 20880, group => 2, sabbrevlangname => "SKY", sopentypelang => "SKY" },
+ { name => "sk-SK", lcid => 0x0000041b },
+ { name => "sl", lcid => 0x00000024, oemcp => 852, ebcdiccp => 20880, group => 2 },
+ { name => "sl-SI", lcid => 0x00000424 },
+ { name => "sma", lcid => 0x0000783b, sparent => "se", ebcdiccp => 20278, dir => "seed", sabbrevlangname => "SMB", sopentypelang => "SSM" },
+ { name => "sma-Latn", alias => "sma" },
+ { name => "sma-Latn-NO", alias => "sma-NO" },
+ { name => "sma-Latn-SE", alias => "sma-SE" },
+ { name => "sma-NO", lcid => 0x0000183b, ebcdiccp => 20277, dir => "seed", sabbrevlangname => "SMA" },
+ { name => "sma-SE", lcid => 0x00001c3b, dir => "seed" },
+ { name => "smj", lcid => 0x00007c3b, sparent => "se", ebcdiccp => 20278, dir => "seed", sabbrevlangname => "SMK", sopentypelang => "LSM" },
+ { name => "smj-Latn", alias => "smj" },
+ { name => "smj-Latn-NO", alias => "smj-NO" },
+ { name => "smj-Latn-SE", alias => "smj-SE" },
+ { name => "smj-NO", lcid => 0x0000103b, ebcdiccp => 20277, dir => "seed", sabbrevlangname => "SMJ" },
+ { name => "smj-SE", lcid => 0x0000143b, dir => "seed" },
+ { name => "smn", lcid => 0x0000703b, sparent => "se", ebcdiccp => 20278, sopentypelang => "ISM" },
+ { name => "smn-FI", lcid => 0x0000243b },
+ { name => "smn-Latn", alias => "smn" },
+ { name => "smn-Latn-FI", alias => "smn-FI" },
+ { name => "sms", lcid => 0x0000743b, sparent => "se", ebcdiccp => 20278, dir => "seed", sopentypelang => "SKS" },
+ { name => "sms-FI", lcid => 0x0000203b, dir => "seed" },
+ { name => "sms-Latn", alias => "sms" },
+ { name => "sms-Latn-FI", alias => "sms-FI" },
+ { name => "sn", sopentypelang => "SNA0" },
+ { name => "sn-Latn", file => "sn" },
+ { name => "sn-Latn-ZW", file => "sn_ZW" },
+ { name => "sn-ZW", alias => "sn-Latn-ZW" },
+ { name => "so", lcid => 0x00000077, sopentypelang => "SML" },
+ { name => "so-DJ" },
+ { name => "so-ET" },
+ { name => "so-KE" },
+ { name => "so-SO", lcid => 0x00000477 },
+ { name => "sq", lcid => 0x0000001c, oemcp => 852, ebcdiccp => 20880, group => 2 },
+ { name => "sq-AL", lcid => 0x0000041c },
+ { name => "sq-MK" },
+ { name => "sq-XK" },
+ { name => "sr", lcid => 0x00007c1a, sortlocale => "sr-Latn-RS", oemcp => 852, group => 2, sabbrevlangname => "SRB", sopentypelang => "SRB" },
+ { name => "sr-Cyrl", lcid => 0x00006c1a, oemcp => 855, ebcdiccp => 21025, group => 5, sabbrevlangname => "SRO" },
+ { name => "sr-Cyrl-BA", lcid => 0x00001c1a, sabbrevlangname => "SRN" },
+ { name => "sr-Cyrl-ME", lcid => 0x0000301a, sabbrevlangname => "SRQ" },
+ { name => "sr-Cyrl-RS", lcid => 0x0000281a },
+ { name => "sr-Cyrl-XK" },
+ { name => "sr-Latn", lcid => 0x0000701a, sabbrevlangname => "SRM" },
+ { name => "sr-Latn-BA", lcid => 0x0000181a, maccp => 10082, ebcdiccp => 870, sabbrevlangname => "SRS" },
+ { name => "sr-Latn-ME", lcid => 0x00002c1a, sabbrevlangname => "SRP" },
+ { name => "sr-Latn-RS", lcid => 0x0000241a, sabbrevlangname => "SRM" },
+ { name => "sr-Latn-XK" },
+## name => "sr-Cyrl-CS", lcid => 0x00000c1a },
+## name => "sr-Latn-CS", lcid => 0x0000081a },
+ { name => "ss", dir => "seed", sopentypelang => "SWZ" },
+ { name => "ss-SZ", dir => "seed" },
+ { name => "ss-ZA", dir => "seed" },
+ { name => "ssy", dir => "seed" },
+ { name => "ssy-ER", dir => "seed" },
+ { name => "st", lcid => 0x00000030, dir => "seed" },
+ { name => "st-LS", dir => "seed" },
+ { name => "st-ZA", lcid => 0x00000430, dir => "seed" },
+ { name => "su" },
+ { name => "su-Latn" },
+ { name => "su-Latn-ID" },
+ { name => "sv", lcid => 0x0000001d, oemcp => 850, ebcdiccp => 20278, sabbrevlangname => "SVE", sopentypelang => "SVE" },
+ { name => "sv-AX" },
+ { name => "sv-FI", lcid => 0x0000081d, sabbrevlangname => "SVF" },
+ { name => "sv-SE", lcid => 0x0000041d, sabbrevlangname => "SVE" },
+ { name => "sw", lcid => 0x00000041, territory => "KE", oemcp => 437, ebcdiccp => 500, sabbrevlangname => "SWK", sopentypelang => "SWK" },
+ { name => "sw-CD" },
+ { name => "sw-KE", lcid => 0x00000441 },
+ { name => "sw-TZ" },
+ { name => "sw-UG" },
+ { name => "swc-CD", alias => "sw-CD" },
+ { name => "syr", lcid => 0x0000005a, slist => ",", group => 13, dir => "seed" },
+ { name => "syr-SY", lcid => 0x0000045a, dir => "seed" },
+ { name => "syr-Syrc", alias => "syr" },
+ { name => "syr-Syrc-SY", alias => "syr-SY" },
+ { name => "ta", lcid => 0x00000049, slist => ",", group => 15, sabbrevlangname => "TAI" },
+ { name => "ta-IN", lcid => 0x00000449 },
+ { name => "ta-LK", lcid => 0x00000849, sabbrevlangname => "TAM" },
+ { name => "ta-MY" },
+ { name => "ta-SG" },
+ { name => "te", lcid => 0x0000004a, group => 15 },
+ { name => "te-IN", lcid => 0x0000044a },
+ { name => "teo" },
+ { name => "teo-KE" },
+ { name => "teo-UG" },
+ { name => "tg", lcid => 0x00000028, oemcp => 866, group => 5, sabbrevlangname => "TAJ", sopentypelang => "TAJ" },
+ { name => "tg-Cyrl", lcid => 0x00007c28, file => "tg" },
+ { name => "tg-Cyrl-TJ", lcid => 0x00000428, file => "tg_TJ" },
+ { name => "tg-TJ", alias => "tg-Cyrl-TJ" },
+ { name => "th", lcid => 0x0000001e, oemcp => 874, ebcdiccp => 20838, slist => ",", group => 11 },
+ { name => "th-TH", lcid => 0x0000041e },
+ { name => "ti", lcid => 0x00000073, territory => "ER", sopentypelang => "TGY" },
+ { name => "ti-ER", lcid => 0x00000873 },
+ { name => "ti-ET", lcid => 0x00000473, sabbrevlangname => "TIE" },
+ { name => "tig", dir => "seed", sopentypelang => "TGR" },
+ { name => "tig-ER", dir => "seed" },
+ { name => "tk", lcid => 0x00000042, oemcp => 852, ebcdiccp => 20880, group => 2, sopentypelang => "TKM" },
+ { name => "tk-Latn", alias => "tk" },
+ { name => "tk-Latn-TM", alias => "tk-TM" },
+ { name => "tk-TM", lcid => 0x00000442 },
+ { name => "tn", lcid => 0x00000032, oemcp => 850, dir => "seed", sopentypelang => "TNA" },
+ { name => "tn-BW", lcid => 0x00000832, dir => "seed", sabbrevlangname => "TSB" },
+ { name => "tn-ZA", lcid => 0x00000432, dir => "seed" },
+ { name => "to", sopentypelang => "TGN" },
+ { name => "to-TO" },
+ { name => "tr", lcid => 0x0000001f, oemcp => 857, ebcdiccp => 20905, group => 6, sabbrevlangname => "TRK", sopentypelang => "TRK" },
+ { name => "tr-CY" },
+ { name => "tr-TR", lcid => 0x0000041f },
+ { name => "ts", lcid => 0x00000031, dir => "seed", sopentypelang => "TSG" },
+ { name => "ts-ZA", lcid => 0x00000431, dir => "seed" },
+ { name => "tt", lcid => 0x00000044, oemcp => 866, group => 5, sabbrevlangname => "TTT" },
+ { name => "tt-Cyrl", alias => "tt" },
+ { name => "tt-Cyrl-RU", alias => "tt-RU" },
+ { name => "tt-RU", lcid => 0x00000444 },
+ { name => "twq" },
+ { name => "twq-NE" },
+ { name => "tzm", lcid => 0x0000005f, sortlocale => "tzm-Latn-DZ", oemcp => 850, ebcdiccp => 20297, sabbrevlangname => "TZA" },
+ { name => "tzm-Latn", lcid => 0x00007c5f, territory => "DZ", file => "tzm" },
+ { name => "tzm-Latn-MA", file => "tzm_MA", oemcp => 65001 },
+ { name => "tzm-Latn-DZ", lcid => 0x0000085f, file => "tzm" },
+ { name => "tzm-MA", alias => "tzm-Latn-MA" },
+## name => "tzm-Arab", group => 13 },
+## name => "tzm-Arab-MA", lcid => 0x0000045f },
+## name => "tzm-Tfng", lcid => 0x0000785f },
+## name => "tzm-Tfng-MA", lcid => 0x0000105f },
+ { name => "ug", lcid => 0x00000080, oemcp => 720, slist => ",", group => 13, sopentypelang => "UYG" },
+ { name => "ug-Arab", alias => "ug" },
+ { name => "ug-Arab-CN", alias => "ug-CN" },
+ { name => "ug-CN", lcid => 0x00000480 },
+ { name => "uk", lcid => 0x00000022, oemcp => 866, maccp => 10017, ebcdiccp => 500, group => 5 },
+ { name => "uk-UA", lcid => 0x00000422 },
+ { name => "ur", lcid => 0x00000020, oemcp => 720 },
+ { name => "ur-IN", lcid => 0x00000820, maccp => 65001, sabbrevlangname => "URI" },
+ { name => "ur-PK", lcid => 0x00000420, group => 13 },
+ { name => "uz", lcid => 0x00000043, oemcp => 857, maccp => 10029, group => 2 },
+ { name => "uz-Arab", oemcp => 65001, maccp => 65001 },
+ { name => "uz-Arab-AF" },
+ { name => "uz-Cyrl", lcid => 0x00007843, oemcp => 866, maccp => 10007, group => 5, sabbrevlangname => "UZC" },
+ { name => "uz-Cyrl-UZ", lcid => 0x00000843 },
+ { name => "uz-Latn", lcid => 0x00007c43 },
+ { name => "uz-Latn-UZ", lcid => 0x00000443 },
+ { name => "vai" },
+ { name => "vai-Latn" },
+ { name => "vai-Latn-LR" },
+ { name => "vai-Vaii" },
+ { name => "vai-Vaii-LR" },
+ { name => "ve", lcid => 0x00000033, dir => "seed", sabbrevlangname => "ZZZ" },
+ { name => "ve-ZA", lcid => 0x00000433, dir => "seed" },
+ { name => "vi", lcid => 0x0000002a, oemcp => 1258, slist => ",", group => 14, sabbrevlangname => "VIT", sopentypelang => "VIT" },
+ { name => "vi-VN", lcid => 0x0000042a },
+ { name => "vo", dir => "seed" },
+ { name => "vo-001", dir => "seed" },
+ { name => "vun" },
+ { name => "vun-TZ" },
+ { name => "wae" },
+ { name => "wae-CH" },
+ { name => "wal", dir => "seed" },
+ { name => "wal-ET", dir => "seed" },
+ { name => "wo", lcid => 0x00000088, oemcp => 850, ebcdiccp => 20297, sopentypelang => "WLF" },
+ { name => "wo-Latn", alias => "wo" },
+ { name => "wo-Latn-SN", alias => "wo-SN" },
+ { name => "wo-SN", lcid => 0x00000488 },
+ { name => "x-IV_mathan", lcid => 0x0001007f, alias => "" },
+ { name => "xh", lcid => 0x00000034, oemcp => 850, sopentypelang => "XHS" },
+ { name => "xh-ZA", lcid => 0x00000434 },
+ { name => "xog" },
+ { name => "xog-UG" },
+ { name => "yav" },
+ { name => "yav-CM" },
+ { name => "yi", lcid => 0x0000003d, sabbrevlangname => "ZZZ", sopentypelang => "JII" },
+ { name => "yi-001", lcid => 0x0000043d },
+ { name => "yo", lcid => 0x0000006a, oemcp => 437, sopentypelang => "YBA" },
+ { name => "yo-BJ", ebcdiccp => 500 },
+ { name => "yo-Latn", alias => "yo" },
+ { name => "yo-Latn-NG", alias => "yo-NG" },
+ { name => "yo-NG", lcid => 0x0000046a },
+ { name => "yrl" },
+ { name => "yrl-BR" },
+ { name => "yrl-CO" },
+ { name => "yrl-VE" },
+ { name => "yue" },
+ { name => "yue-Hans" },
+ { name => "yue-Hans-CN" },
+ { name => "yue-Hant" },
+ { name => "yue-Hant-HK" },
+ { name => "zgh" },
+ { name => "zgh-MA", alias => "zgh-Tfng-MA" },
+ { name => "zgh-Tfng", file => "zgh" },
+ { name => "zgh-Tfng-MA", file => "zgh_MA" },
+ { name => "zh", lcid => 0x00007804, ireadinglayout => 2, oemcp => 936, slist => ",", sscripts => "Hani Hans", sabbrevlangname => "CHS", sopentypelang => "ZHS" },
+ { name => "zh-CN", lcid => 0x00000804, file => "zh_Hans_CN", sparent => "zh-Hans" },
+ { name => "zh-CN_phoneb", lcid => 0x00050804, alias => "zh-CN" },
+ { name => "zh-CN_stroke", lcid => 0x00020804, alias => "zh-CN" },
+ { name => "zh-Hans", lcid => 0x00000004, group => 10 },
+ { name => "zh-Hans-CN", alias => "zh-CN" },
+ { name => "zh-Hans-CN-u-co-phonebk", alias => "zh-CN_phoneb" },
+ { name => "zh-Hans-CN-u-co-stroke", alias => "zh-CN_stroke" },
+ { name => "zh-Hans-HK", slist => ";" },
+ { name => "zh-Hans-MO", slist => ";" },
+ { name => "zh-Hans-SG", alias => "zh-SG" },
+ { name => "zh-Hans-SG-u-co-phonebk", alias => "zh-SG_phoneb" },
+ { name => "zh-Hans-SG-u-co-stroke", alias => "zh-SG_stroke" },
+ { name => "zh-Hant", lcid => 0x00007c04, sortlocale => "zh-HK", ireadinglayout => 2, oemcp => 950, slist => ",", sscripts => "Hani Hant", group => 9, sabbrevlangname => "CHT", sopentypelang => "ZHH" },
+ { name => "zh-Hant-HK", alias => "zh-HK" },
+ { name => "zh-Hant-HK-u-co-unihan", alias => "zh-HK_radstr" },
+ { name => "zh-Hant-MO", alias => "zh-MO" },
+ { name => "zh-Hant-MO-u-co-stroke", alias => "zh-MO_stroke" },
+ { name => "zh-Hant-MO-u-co-unihan", alias => "zh-MO_radstr" },
+ { name => "zh-Hant-TW", alias => "zh-TW" },
+ { name => "zh-Hant-TW-u-co-phonetic", alias => "zh-TW_pronun" },
+ { name => "zh-Hant-TW-u-co-unihan", alias => "zh-TW_radstr" },
+ { name => "zh-HK", lcid => 0x00000c04, file => "zh_Hant_HK", sparent => "zh-Hant", sabbrevlangname => "ZHH" },
+ { name => "zh-HK_radstr", lcid => 0x00040c04, alias => "zh-HK" },
+ { name => "zh-MO", lcid => 0x00001404, file => "zh_Hant_MO", sparent => "zh-Hant", sabbrevlangname => "ZHM", sopentypelang => "ZHT" },
+ { name => "zh-MO_radstr", lcid => 0x00041404, alias => "zh-MO" },
+ { name => "zh-MO_stroke", lcid => 0x00021404, alias => "zh-MO" },
+ { name => "zh-SG", lcid => 0x00001004, file => "zh_Hans_SG", sparent => "zh-Hans", sabbrevlangname => "ZHI" },
+ { name => "zh-SG_phoneb", lcid => 0x00051004, alias => "zh-SG" },
+ { name => "zh-SG_stroke", lcid => 0x00021004, alias => "zh-SG" },
+ { name => "zh-TW", lcid => 0x00000404, file => "zh_Hant_TW", sparent => "zh-Hant", sopentypelang => "ZHT" },
+ { name => "zh-TW_pronun", lcid => 0x00030404, alias => "zh-TW" },
+ { name => "zh-TW_radstr", lcid => 0x00040404, alias => "zh-TW" },
+ { name => "zu", lcid => 0x00000035, oemcp => 850 },
+ { name => "zu-ZA", lcid => 0x00000435 },
+);
+
 my @cp2uni = ();
 my @glyph2uni = ();
 my @lead_bytes = ();
@@ -508,6 +1566,17 @@ sub open_data_file($$)
         open FILE, "<$dest" or die "cannot open $dest";
     }
     return *FILE;
+}
+
+################################################################
+# load a unicode.org file as XML data
+sub load_xml_data_file($$)
+{
+    my ($base, $name) = @_;
+    my $FILE = open_data_file( $base, $name );
+    my $xml = XML::LibXML->load_xml( IO => $FILE );
+    close FILE;
+    return $xml;
 }
 
 ################################################################
@@ -2761,6 +3830,808 @@ sub dump_sortkey_table($$)
     print OUTPUT $table, $casemaps, $chartypes, $sorttables;
     close OUTPUT;
     save_file($filename);
+    return $chartypes;
+}
+
+
+my %lcnames;
+
+sub locale_parent($)
+{
+    my $loc = shift;
+
+    return undef unless $loc;
+    return $lcnames{$loc}->{sparent} if defined $lcnames{$loc} && defined $lcnames{$loc}->{sparent};
+    return $lcnames{$loc}->{parent} if defined $lcnames{$loc} && defined $lcnames{$loc}->{parent};
+    if ($loc =~ /(.*)-[0-9A-Za-z]+/) { return $1; }
+    return "";
+}
+
+sub compare_locales
+{
+    (my $n1 = $a) =~ tr/A-Z_/a-z-/;
+    (my $n2 = $b) =~ tr/A-Z_/a-z-/;
+    return $n1 cmp $n2;
+}
+
+# query an xml key
+sub xml_query($$)
+{
+    my ($xml, $query) = @_;
+    my $ret = $xml->find( $query );
+    return undef unless $ret;
+    printf STDERR "multiple entries for %s\n", $query if (@{$ret} > 1);
+    return @{$ret}[0]->textContent;
+}
+
+# query an xml key for a locale, with fallback to the parents
+sub loc_query($$)
+{
+    my ($loc, $query) = @_;
+
+    $loc = $lcnames{"en-US"} unless $loc->{name};  # fallback to "en-US" for root locale
+
+    for (my $cur = $loc->{name}; defined $cur; $cur = locale_parent( $cur ))
+    {
+        next unless defined $lcnames{$cur};
+        my $xml = $lcnames{$cur}->{xml};
+        my $ret = $xml->find( $query );
+        next unless $ret;
+        printf STDERR "%s: multiple entries for %s\n", $cur, $query if (@{$ret} > 1);
+        next if @{$ret}[0]->textContent eq "\x{2191}\x{2191}\x{2191}"; # "↑↑↑"
+        return @{$ret}[0]->textContent;
+    }
+    return undef;
+}
+
+# retrieve a locale field entry by going up the parents tree
+sub locale_entry($$$)
+{
+    my ($loc, $field, $def) = @_;
+
+    return $loc->{$field} if defined $loc->{$field};
+
+    unless ($loc->{name})  # fallback to "en-US" for root locale
+    {
+        $loc = $lcnames{"en-US"};
+        return $loc->{$field} if defined $loc->{$field};
+    }
+    while (defined $loc->{alias})  # resolve aliases
+    {
+        $loc = $lcnames{$loc->{alias}};
+        return $loc->{$field} if defined $loc->{$field};
+    }
+    my $cur = $loc->{name};
+    while ($cur)
+    {
+        if (defined $lcnames{$cur} && defined $lcnames{$cur}->{sparent})
+        {
+            $cur = $lcnames{$cur}->{sparent};
+        }
+        elsif ($cur =~ /(.*)-[0-9A-Za-z]+/)
+        {
+            $cur = $1;
+        }
+        else
+        {
+            return $def;
+        }
+        return $lcnames{$cur}->{$field} if defined $lcnames{$cur} && defined $lcnames{$cur}->{$field};
+    }
+    return $def;
+}
+
+my $string_data;
+
+sub add_str_data($)
+{
+    my $txt = shift;
+    my $ret = index( $string_data, $txt );
+    if ($ret == -1)
+    {
+        $ret = length($string_data);
+        $string_data .= $txt
+    }
+    return $ret / 2;
+}
+
+sub add_string($)
+{
+    my $str = shift;
+    return 0 unless defined($str) && $str ne "";
+    my $utf = encode( "UTF16LE", $str );
+    return add_str_data( (pack "S<", length($utf) / 2) . $utf . (pack "S", 0) );
+}
+
+sub add_fontsig(@)
+{
+    return add_str_data( pack "S<L<*", scalar(@_) * 2, @_ );
+}
+
+sub add_strarray(@)
+{
+    return 0 unless @_;
+    return add_str_data( pack "S<L<*", scalar @_, map { add_string($_) } @_);
+}
+
+sub format_to_grouping($)
+{
+    my $format = shift;
+    if ($format =~ /#,(#+),(#+0)/) { return chr(length($2)) . chr(length($1)); }
+    if ($format =~ /#,(#+0)/) { return chr(length($1)); }
+#    printf STDERR "unknown format %s\n", $format;
+    return chr(3);
+}
+
+sub parse_currency_format($$)
+{
+    my $name = shift;
+    my ($posfmt, $negfmt) = split /;/, shift;
+    my @pospatterns = ( "\xa4[^\xa0]*#",      # $1.1
+                        "00[^\xa0]*\xa4",     # 1.1$
+                        "\xa4.*\xa0.*#",      # $ 1.1
+                        "00.*\xa0.*\xa4" );   # 1.1 $
+    my @negpatterns = ( "\\(\xa4[^\xa0]*#",   # ($1.1)
+                        "-\xa4[^\xa0]*#",     # -$1.1
+                        "\xa4[^\xa0]*-#",     # $-1.1
+                        "\xa4[^\xa0]*#.*00-", # $1.1-
+                        "00[^\xa0]*\xa4\\)",  # (1.1$)
+                        "-#.*00[^\xa0]*\xa4", # -1.1$
+                        "00-[^\xa0]*\xa4",    # 1.1-$
+                        "00[^\xa0]*\xa4-",    # 1.1$-
+                        "-#.*00.*\xa0.*\xa4", # -1.1 $
+                        "-\xa4.*\xa0.*#",     # -$ 1.1
+                        "00.*\xa0.*\xa4-",    # 1.1 $-
+                        "\xa4.*\xa0.*#.*00-", # $ 1.1-
+                        "\xa4.*\xa0.*-#",     # $ -1.1
+                        "00-.*\xa0.*\xa4",    # 1.1- $
+                        "\\(\xa4.*\xa0.*#",   # ($ 1.1)
+                        "00.*\xa0.*\xa4\\)"); # (1.1 $)
+    my ($pos, $neg);
+
+    for ($pos = 0; $pos < @pospatterns; $pos++)
+    {
+        last if ($posfmt =~ /$pospatterns[$pos]/);
+    }
+    #printf STDERR "$name: unknown format '%s'\n", $posfmt if ($pos == @pospatterns);
+    $pos = 0 if ($pos == @pospatterns);
+
+    if (defined $negfmt)
+    {
+        for ($neg = 0; $neg < @negpatterns; $neg++)
+        {
+            last if ($negfmt =~ /$negpatterns[$neg]/);
+        }
+        #printf STDERR "$name: unknown format '%s'\n", $negfmt if ($neg == @negpatterns);
+        $neg = 0 if ($neg == @negpatterns);
+    }
+    elsif ($pos == 0) { $neg = 1; }
+    elsif ($pos == 1) { $neg = 5; }
+    elsif ($pos == 2) { $neg = 9; }
+    elsif ($pos == 3) { $neg = 8; }
+
+    return ($pos, $neg);
+}
+
+sub parse_percent_format($)
+{
+    my $fmt = shift;
+    my @patterns = ( "0.+%",    # 1 %
+                     "0%",      # 1%
+                     "%#",      # %1
+                     "%.+#" );  # % 1
+    my $pos;
+    for ($pos = 0; $pos < @patterns; $pos++)
+    {
+        last if ($fmt =~ /$patterns[$pos]/);
+    }
+    printf STDERR "unknown format '%s'\n", $fmt if ($pos == @patterns);
+    return ($pos, ($pos == 3) ? 7 : $pos);
+}
+
+sub convert_date_format($)
+{
+    my $fmt = shift;
+    $fmt =~ s/G/g/;
+    $fmt =~ s/LLLL/MMMM/;
+    $fmt =~ s/LLL/MMM/;
+    $fmt =~ s/E+/dddd/;
+    $fmt =~ s/ccc+/dddd/;
+    $fmt =~ s/([^y])y([^y])/$1yyyy$2/;
+    $fmt =~ s/^y([^y])/yyyy$1/;
+    $fmt =~ s/([^y])y$/$1yyyy/;
+    return $fmt;
+}
+
+sub convert_time_format($)
+{
+    my $fmt = shift;
+    $fmt =~ s/a+/tt/;
+    $fmt =~ s/B+/tt/;
+    return $fmt;
+}
+
+sub load_iso639()
+{
+    my %iso639;
+    my $DATA = open_data_file( $ISO639, "iso-639-3_Code_Tables_$ISO639VERSION/iso-639-3.tab" );
+    while (<$DATA>)
+    {
+        if (/^\s*[a-z]{3}\s+[a-z]{3}\s+([a-z]{3})\s+([a-z]{2})\s/) { $iso639{$2} = $1; }
+    }
+    close $DATA;
+    return %iso639;
+}
+
+
+################################################################
+# build the locale table for locale.nls
+sub build_locale_data()
+{
+    my $base = "cldr-release-$CLDRVERSION";
+    my $suppl = load_xml_data_file( $CLDRDATA, "$base/common/supplemental/supplementalData.xml" );
+    my $subtags = load_xml_data_file( $CLDRDATA, "$base/common/supplemental/likelySubtags.xml" );
+    my $numbers = load_xml_data_file( $CLDRDATA, "$base/common/supplemental/numberingSystems.xml" );
+    # obsolete phone data from CLDR version 33
+    my $phone = load_xml_data_file( $CLDR33DATA, "common/supplemental/telephoneCodeData.xml" );
+    my %iso639 = load_iso639();
+    $string_data = pack "S2", 0, 0;  # offset 0 == empty string
+
+    %lcnames = map { $_->{name} => $_ } @locales;
+
+    my %lcids;
+    foreach my $loc (@locales) { $lcids{$loc->{lcid}} = $loc if defined $loc->{lcid}; }
+
+    my %days = ( "sun" => 0, "mon" => 1, "tue" => 2, "wed" => 3, "thu" => 4, "fri" => 5, "sat" => 6 );
+
+    # assign locale parents
+
+    foreach my $loc (@locales)
+    {
+        next if $loc->{name} eq "";
+        next if defined $loc->{parent};
+        (my $unix_name = $loc->{name}) =~ s/-/_/g;
+        my $parent = xml_query( $suppl, "/supplementalData/parentLocales/parentLocale[contains(concat(' ',\@locales,' '),' $unix_name ')]/\@parent" );
+        if ($parent)
+        {
+            $parent =~ s/_/-/g;
+            $parent = "" if $parent eq "root";
+        }
+        elsif ($loc->{name} =~ /(.*)-[0-9A-Za-z]+/) { $parent = $1; }
+        $loc->{parent} = $parent || "";
+    }
+
+    # load per-locale XML files
+
+    foreach my $loc (@locales)
+    {
+        next if defined $loc->{alias};
+        (my $file = $loc->{file} || $loc->{name}) =~ s/-/_/g;
+        $file = "$base/" . ($loc->{dir} || "common") . "/main/$file.xml";
+        my $xml = load_xml_data_file( $CLDRDATA, $file );
+        $loc->{xml} = $xml;
+        $loc->{language} ||= xml_query( $xml, "/ldml/identity/language/\@type" );
+        $loc->{territory} ||= xml_query( $xml, "/ldml/identity/territory/\@type" );
+        $loc->{script} = xml_query( $xml, "/ldml/identity/script/\@type" );
+        if (!defined($loc->{territory}) && $loc->{name} =~ /-([A-Z]{2}|[0-9]{3})$/) { $loc->{territory} = $1; }
+        if (!defined($loc->{script}) && $loc->{name} =~ /-([A-Z][a-z]{3})(-[A-Z]{2})?$/) { $loc->{script} = $1; }
+    }
+
+    # assign a default territory and sort locale
+
+    foreach my $loc (@locales)
+    {
+        next if defined $loc->{alias};
+        next if defined $loc->{territory};
+        my $id = $loc->{sortlocale};
+        if (defined $id && ($id =~ /[-_]([A-Z0-9]+)$/))
+        {
+            $loc->{territory} = $1;
+            next;
+        }
+        my @children = grep /^$loc->{name}-[A-Z0-9]+$/ && !defined $lcnames{$_}->{alias}, keys %lcnames;
+        if (@children == 1)
+        {
+            $id = $children[0];
+        }
+        else
+        {
+            my $name = $loc->{file} || $loc->{name};
+            $name =~ s/-(Arab|Cyrl|Deva|Guru|Hans|Hant|Latn|Tfng|Vaii)$//;
+            $name =~ s/-/_/g;
+            $id = xml_query( $subtags, "/supplementalData/likelySubtags/likelySubtag[\@from='$name']/\@to" );
+            $id =~ s/_/-/g if $id;
+        }
+        if ($id =~ /[-_]([A-Z0-9]+)$/)
+        {
+            $loc->{territory} = $1;
+            next if defined $loc->{sortlocale};
+            next unless $id =~ /^$loc->{name}/;
+            while (defined $lcnames{$id} && defined $lcnames{$id}->{alias}) { $id = $lcnames{$id}->{alias}; }
+            $loc->{sortlocale} = $id if defined $lcnames{$id};
+            next;
+        }
+        print STDERR "no territory found for $loc->{name}\n";
+    }
+
+    # assign default lcid to aliases
+
+    foreach my $loc (@locales)
+    {
+        next unless defined $loc->{alias};
+        next if defined $loc->{lcid};
+        my $alias = $loc->{alias};
+        my $lcid = $lcnames{$alias}->{lcid} || 0x1000;
+        $loc->{lcid} = $lcid | 0x80000000;
+    }
+
+    # assign sort aliases to parent locale
+
+    foreach my $loc (@locales)
+    {
+        next unless $loc->{name} =~ /_/;
+        next unless defined $loc->{alias};
+        my $alias = $loc->{alias};
+        my $parent = $lcnames{$alias};
+        my $basename = $parent->{name};
+        while (1)
+        {
+            @{$parent->{sortnames}}[($loc->{lcid} >> 16) - 1] = $loc->{name};
+            $alias = locale_parent( $alias );
+            last unless $alias && defined $lcnames{$alias};
+            $parent = $lcnames{$alias};
+            last if defined $parent->{sortbase} && $parent->{sortbase} ne $basename;
+            $parent->{sortbase} = $basename;
+        }
+    }
+
+    # assign an array index to all locales
+
+    my $idx = 0;
+    foreach my $loc (@locales)
+    {
+        next if defined $loc->{alias};
+        $loc->{idx} = $idx++;
+    }
+    foreach my $loc (@locales)
+    {
+        my $alias = $loc->{alias};
+        next unless defined $alias;
+        while (defined $lcnames{$alias}->{alias}) { $alias = $lcnames{$alias}->{alias}; }
+        $loc->{idx} = $lcnames{$alias}->{idx};
+    }
+
+    # output lcids table
+
+    my $lcid_data = "";
+    foreach my $id (sort { $a <=> $b } keys %lcids)
+    {
+        my $loc = $lcids{$id};
+        $lcid_data .= pack "L<S<2", $id, $loc->{idx}, add_string($loc->{name});
+    }
+
+    # output lcnames table
+
+    my $lcname_data = "";
+    foreach my $name (sort compare_locales keys %lcnames)
+    {
+        my $loc = $lcnames{$name};
+        $lcname_data .= pack "S<2L<", add_string($name), $loc->{idx}, $loc->{lcid} || 0x1000;
+    }
+
+    # output locales array
+
+    my $locale_data = "";
+    my $default_lcid = 0x8001;
+    foreach my $loc (@locales)
+    {
+        next if defined $loc->{alias};
+        my $sname = $loc->{name};
+        my $language = $loc->{language};
+        my $territory = $loc->{territory};
+        my $script = $loc->{script};
+        my $neutral = ($sname && $sname !~ /-$territory/);
+        my $sparent = $loc->{sparent} || (($sname =~ /(.*)-[0-9A-Za-z]+/) ? $1 : $loc->{parent});
+        my $unique_lcid = $loc->{lcid};
+        unless (defined $unique_lcid) { $unique_lcid = $default_lcid++; }
+        my $territory_match = "contains(concat(' ',normalize-space(\@territories),' '),' $territory ')";
+
+        # languages and scripts
+
+        my $ssortlocale = $loc->{sortlocale} || ($neutral ? "$sname-$territory" : $sname);
+        my $idefaultlanguage = defined $lcnames{$ssortlocale} ? $lcnames{$ssortlocale}->{lcid} : undef;
+        $idefaultlanguage = $lcnames{"en-US"}->{lcid} unless $ssortlocale;
+        (my $siso639langname = $sname) =~ s/-.*$//;
+        my $siso639langname2 = $iso639{$siso639langname} || $siso639langname;
+        my $sopentypelang = sprintf "%-4s", locale_entry( $loc, "sopentypelang", uc $siso639langname2 );
+        my $sabbrevlangname = defined $loc->{lcid} ? locale_entry( $loc, "sabbrevlangname", uc $siso639langname2 ) : "ZZZ";
+        my $siso3166ctryname2 = $territory =~ /^\d+$/ ? $territory : xml_query( $suppl, "/supplementalData/codeMappings/territoryCodes[\@type='$territory']/\@alpha3");
+        my $senglanguage = loc_query( $lcnames{en}, "/ldml/localeDisplayNames/languages/language[\@type='$language' and not(\@alt)]" ) || "";
+        my $sengcountry = loc_query( $lcnames{en}, "/ldml/localeDisplayNames/territories/territory[\@type='$territory' and not(\@alt)]" ) || "";
+        my $snativelangname = loc_query( $loc, "/ldml/localeDisplayNames/languages/language[\@type='$language' and not(\@alt)]" );
+        my $snativectryname = loc_query( $loc, "/ldml/localeDisplayNames/territories/territory[\@type='$territory' and not(\@alt)]" );
+        $sengcountry =~ s/South Korea/Korea/;
+        $snativelangname ||= $senglanguage;
+        $snativectryname ||= $sengcountry;
+        if ($script)
+        {
+            my $engscript = loc_query( $lcnames{en}, "/ldml/localeDisplayNames/scripts/script[\@type='$script' and not(\@alt)]" );
+            my $nativescript = loc_query( $loc, "/ldml/localeDisplayNames/scripts/script[\@type='$script' and not(\@alt)]" );
+            $senglanguage .= " ($engscript)" if $engscript;
+            $snativelangname .= " ($nativescript)" if $nativescript;
+        }
+        my $sengdisplayname = $neutral ? $senglanguage : "$senglanguage ($sengcountry)";
+        my $snativedisplayname = $neutral ? $snativelangname : "$snativelangname ($snativectryname)";
+        $sengdisplayname =~ s/\) \(/, /;
+        $snativedisplayname =~ s/\) \(/, /;
+        my $sscripts = locale_entry( $loc, "sscripts", $script ) || xml_query( $suppl, "/supplementalData/languageData/language[\@type='$language' and not(\@alt)]/\@scripts" );
+        $sscripts = (join ";", (sort split / /, ($sscripts || "Latn"))) . ";";
+        my $ireadinglayout = locale_entry( $loc, "ireadinglayout", 0 );
+        my $charlayout = loc_query( $loc, "/ldml/layout/orientation/characterOrder" );
+        if ($charlayout eq "right-to-left")
+        {
+            $ireadinglayout = 1;
+        }
+        elsif ($charlayout eq "top-to-bottom")
+        {
+            my $linelayout = loc_query( $loc, "/ldml/layout/orientation/lineOrder" );
+            $ireadinglayout = $linelayout eq "right-to-left" ? 2 : 3;
+        }
+        my $icountry = xml_query( $phone, "(/supplementalData/telephoneCodeData/codesByTerritory[\@territory='$territory']/telephoneCountryCode)[1]/\@code" ) || 1;
+
+        # numbers
+
+        my $sdecimal = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/decimal" );
+        my $slist = locale_entry( $loc, "slist", ";" );
+        my $smondecimalsep = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/currencyDecimal" ) || $sdecimal;
+        my $sthousand = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/group" );
+        $sthousand =~ s/\x{202f}/\x{00a0}/;
+        my $smonthousandsep = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/currencyGroup" ) || $sthousand;
+        my $spositivesign = "";
+        my $snegativesign = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/minusSign" );
+        my $spercent = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/percentSign" );
+        my $snan = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/nan" );
+        my $sposinfinity = loc_query( $loc, "/ldml/numbers/symbols[\@numberSystem='latn']/infinity" );
+        my $sneginfinity = $sposinfinity ? "-$sposinfinity" : "";
+        my $sgrouping = format_to_grouping( loc_query( $loc, "/ldml/numbers/decimalFormats[\@numberSystem='latn']/decimalFormatLength[not(\@type)]/decimalFormat/pattern" ));
+        my $percentformat = loc_query( $loc, "/ldml/numbers/percentFormats[\@numberSystem='latn']/percentFormatLength[not(\@type)]/percentFormat/pattern" );
+        my $currencyformat = loc_query( $loc, "/ldml/numbers/currencyFormats[\@numberSystem='latn']/currencyFormatLength[not(\@type)]/currencyFormat[\@type='accounting']/pattern" ) ||
+                             loc_query( $loc, "/ldml/numbers/currencyFormats[\@numberSystem='latn']/currencyFormatLength[not(\@type)]/currencyFormat[\@type='standard']/pattern" );
+        my $smongrouping = format_to_grouping( $currencyformat );
+        my ($icurrency, $inegcurr) = parse_currency_format( $sname, $currencyformat );
+        my ($ipospercent, $inegpercent) = parse_percent_format( $percentformat );
+        my $native_numbering = loc_query( $loc, "/ldml/numbers/otherNumberingSystems/native" );
+        my @snativedigits = split //, xml_query( $numbers, "/supplementalData/numberingSystems/numberingSystem[\@id='$native_numbering']/\@digits" );
+        my $digitsubstitution = !(ord($snativedigits[0]) >= 0x600 && ord($snativedigits[0]) <= 0x6ff);
+        my $measure = defined xml_query( $suppl, "/supplementalData/measurementData/measurementSystem[\@type='US' and $territory_match]" );
+        my $papersize = defined xml_query( $suppl, "/supplementalData/measurementData/paperSize[\@type='US-Letter' and $territory_match]" );
+
+        # currencies
+
+        my $sintlsymbol = $loc->{sintlsymbol} || xml_query( $suppl, "(/supplementalData/currencyData/region[\@iso3166='$territory']/currency[not(\@to)])[1]/\@iso4217") || "XDR";
+        my $scurrency = $loc->{scurrency} || loc_query( $loc, "/ldml/numbers/currencies/currency[\@type='$sintlsymbol']/symbol[\@alt='narrow']" );
+        $scurrency ||= loc_query( $loc, "/ldml/numbers/currencies/currency[\@type='$sintlsymbol']/symbol[not(\@alt)]" );
+        $scurrency ||= $sintlsymbol;
+        my $sengcurrname = $loc->{sengcurrname} || loc_query( $lcnames{en}, "/ldml/numbers/currencies/currency[\@type='$sintlsymbol']/displayName[not(\@count)]" );
+        my $snativecurrname = $loc->{sengcurrname} || loc_query( $loc, "/ldml/numbers/currencies/currency[\@type='$sintlsymbol']/displayName[not(\@count)]" ) || $sengcurrname;
+        my $icurrdigits = xml_query( $suppl, "/supplementalData/currencyData/fractions/info[\@iso4217='$sintlsymbol']/\@digits" );
+        $icurrdigits = 2 unless defined $icurrdigits;
+
+        # calendars
+
+        my $firstday = xml_query( $suppl, "/supplementalData/weekData/firstDay[not(\@alt) and $territory_match]/\@day" );
+        my $ifirstdayofweek = $firstday ? $days{$firstday} : 1;
+        my $firstweekofyear = (xml_query( $suppl, "/supplementalData/weekData/minDays[$territory_match]/\@count" ) || 0) == 4 ? 2 : 0;
+        my $serastring = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/eras/eraAbbr/era[\@type='1' and not(\@alt)]" );
+        my (@sdayname, @sabbrevdayname, @sshortestdayname);
+        foreach my $d (sort { $days{$a} <=> $days{$b} } keys %days)
+        {
+            my $n = $days{$d};
+            my %name;
+            foreach my $type (qw(wide abbreviated short))
+            {
+                $name{$type} = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/days/dayContext[\@type='format']/dayWidth[\@type='$type']/day[\@type='$d' and not(\@alt)]" );
+            }
+            push @sdayname, $name{wide};
+            push @sabbrevdayname, $name{abbreviated} || $name{wide};
+            push @sshortestdayname, $name{short} || $name{abbreviated} || $name{wide};
+        }
+        my (@smonthname, @sabbrevmonthname, @sgenitivemonth, @sabbrevgenitivemonth);
+        foreach my $n (1..13)
+        {
+            my $name = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/months/monthContext[\@type='stand-alone']/monthWidth[\@type='wide']/month[\@type='$n']" );
+            my $abbrev = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/months/monthContext[\@type='stand-alone']/monthWidth[\@type='abbreviated']/month[\@type='$n']" );
+            my $genitive = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/months/monthContext[\@type='format']/monthWidth[\@type='wide']/month[\@type='$n']" );
+            my $abbrevgen = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/months/monthContext[\@type='format']/monthWidth[\@type='abbreviated']/month[\@type='$n']" );
+            push @smonthname, $name || $genitive || "";
+            push @sabbrevmonthname, $abbrev || $abbrevgen || $name || $genitive || "";
+            push @sgenitivemonth, $genitive || "";
+            push @sabbrevgenitivemonth, $abbrevgen || $genitive || "";
+        }
+        @sgenitivemonth = () if join("|",@smonthname) eq join("|",@sgenitivemonth);
+        @sabbrevgenitivemonth = () if join("|",@sabbrevmonthname) eq join("|",@sabbrevgenitivemonth);
+        my %caltypes = ( "gregorian" => 1, "japanese" => 3, "chinese" => 4, "dangi" => 5, "islamic" => 6, "buddhist" => 7, "hebrew" => 8,
+                         "persian" => 22, "islamic-civil" => 23, "islamic-umalqura" => 23 );
+        my $calpref = xml_query( $suppl, "/supplementalData/calendarPreferenceData/calendarPreference[$territory_match]/\@ordering" ) || "gregorian";
+        my $icalendartype;
+        my @scalnames;
+        foreach my $c (split /\s+/, $calpref)
+        {
+            next unless defined $caltypes{$c};
+            $icalendartype .= chr($caltypes{$c});
+            $scalnames[$caltypes{$c} - 1] = loc_query( $loc, "/ldml/localeDisplayNames/types/type[\@key='calendar' and \@type='$c']" );
+        }
+
+        # date/time formats
+
+        my $s1159 = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/dayPeriods/dayPeriodContext[\@type='format']/dayPeriodWidth[\@type='abbreviated']/dayPeriod[\@type='am' and not(\@alt)]" );
+        my $s2359 = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/dayPeriods/dayPeriodContext[\@type='format']/dayPeriodWidth[\@type='abbreviated']/dayPeriod[\@type='pm' and not (\@alt)]" );
+        my $sshortestam = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/dayPeriods/dayPeriodContext[\@type='format']/dayPeriodWidth[\@type='narrow']/dayPeriod[\@type='am' and not(\@alt)]" );
+        my $sshortestpm = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/dayPeriods/dayPeriodContext[\@type='format']/dayPeriodWidth[\@type='narrow']/dayPeriod[\@type='pm' and not (\@alt)]" );
+        my @stimeformat = (loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/timeFormats/timeFormatLength[\@type='medium']/timeFormat/pattern[not(\@alt)]" ));
+        push @stimeformat, loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/dateTimeFormats/availableFormats/dateFormatItem[\@id='Hms' and not(\@alt)]" );
+        pop @stimeformat if $stimeformat[0] eq $stimeformat[1];
+        @stimeformat = map convert_time_format($_), @stimeformat;
+        my @sshorttime = (loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/timeFormats/timeFormatLength[\@type='short']/timeFormat/pattern[not(\@alt)]" ));
+        push @sshorttime, loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/dateTimeFormats/availableFormats/dateFormatItem[\@id='Hm' and not(\@alt)]" );
+        pop @sshorttime if $sshorttime[0] eq $sshorttime[1];
+        @sshorttime = map convert_time_format($_), @sshorttime;
+        my @sshortdate = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/dateTimeFormats/availableFormats/dateFormatItem[\@id='yMd' and not(\@alt)]" );
+        push @sshortdate, loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/dateTimeFormats/availableFormats/dateFormatItem[\@id='yMMMd' and not(\@alt)]" );
+        @sshortdate = map convert_date_format($_), @sshortdate;
+        my @slongdate = (loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/dateFormats/dateFormatLength[\@type='full']/dateFormat/pattern[not(\@alt)]" ));
+        push @slongdate, loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/dateFormats/dateFormatLength[\@type='long']/dateFormat/pattern[not(\@alt)]" );
+        @slongdate = map convert_date_format($_), @slongdate;
+        my @smonthday = (loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/dateTimeFormats/availableFormats/dateFormatItem[\@id='MMMMd' and not(\@alt)]" ));
+        push @smonthday, loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/dateTimeFormats/availableFormats/dateFormatItem[\@id='Md' and not(\@alt)]" );
+        push @smonthday, loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/dateTimeFormats/availableFormats/dateFormatItem[\@id='MMMd' and not(\@alt)]" );
+        @smonthday = map convert_date_format($_), @smonthday;
+        my @syearmonth = map convert_date_format($_), loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/dateTimeFormats/availableFormats/dateFormatItem[\@id='yMMMM' and not(\@alt)]" );
+        my @sduration = map convert_time_format( lc $_ ), loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/dateTimeFormats/availableFormats/dateFormatItem[\@id='Hms' and not(\@alt)]" );
+        my $srelativelongdate = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/dateTimeFormats/availableFormats/dateFormatItem[\@id='MMMMEd' and not(\@alt)]" ) ||
+                                loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/dateTimeFormats/availableFormats/dateFormatItem[\@id='MMMEd' and not(\@alt)]" );
+        $srelativelongdate = convert_date_format( $srelativelongdate );
+
+        # codepages
+
+        my %ansicpmap = ( 437 => 1252, 720 => 1256, 737 => 1253, 775 => 1257, 850 => 1252,
+                          852 => 1250, 855 => 1251, 866 => 1251, 857 => 1254, 862 => 1255 );
+        my %maccpmap = ( 437 => 10000, 720 => 10004, 737 => 10006, 775 => 10029, 850 => 10000,
+                         852 => 10029, 855 => 10007, 857 => 10081, 862 => 10005, 866 => 10007,
+                         874 => 10021, 932 => 10001, 936 => 10008, 949 => 10003, 950 => 10002,
+                         1258 => 10000 );
+        my %ebcdiccpmap = ( 437 => 37, 720 => 20420, 737 => 20273, 866 => 20880, 932 => 20290 );
+        my %codepagemasks = ( 874 =>   [ 0x01000000, 0x00000000, 0x00000000, 0, 0x00010000, 0x00000000, 0x00010000, 0x00000000 ],
+                              932 =>   [ 0x00000000, 0x28c70000, 0x00000010, 0, 0x00020000, 0x00000000, 0x00020000, 0x00000000 ],
+                              936 =>   [ 0x00000000, 0x28010000, 0x00000002, 0, 0x00040000, 0x00000000, 0x00040000, 0x00000000 ],
+                              949 =>   [ 0x00000000, 0x00000000, 0x00000000, 0, 0x00080000, 0x00000000, 0x00080000, 0x00000000 ],
+                              950 =>   [ 0x00000000, 0x28c10000, 0x00000012, 0, 0x00100000, 0x00000000, 0x00100000, 0x00000000 ],
+                              1258 =>  [ 0x2000000f, 0x00000000, 0x00000000, 0, 0x00000100, 0x00008000, 0x00000100, 0x00008000 ],
+                              866 =>   [ 0x00000200, 0x00000000, 0x00000000, 0, 0x00000004, 0x00020000, 0x00000004, 0x02020000 ],
+                              862 =>   [ 0x00000800, 0x40000000, 0x00000000, 0, 0x00000020, 0x00200000, 0x00000020, 0x00200000 ],
+                              857 =>   [ 0x0000001f, 0x00000000, 0x00000000, 0, 0x00000010, 0x01000000, 0x00000010, 0x01000000 ],
+                              855 =>   [ 0x00000200, 0x00000000, 0x00000000, 0, 0x00000004, 0x02000000, 0x00000004, 0x02000000 ],
+                              852 =>   [ 0x00000027, 0x00000000, 0x00000000, 0, 0x00000002, 0x04000000, 0x00000002, 0x04000000 ],
+                              775 =>   [ 0x00000007, 0x00000000, 0x00000000, 0, 0x00000080, 0x08000000, 0x00000080, 0x08000000 ],
+                              737 =>   [ 0x00000080, 0x00000000, 0x00000000, 0, 0x00000008, 0x10000000, 0x00000008, 0x10010000 ],
+                              720 =>   [ 0x00002000, 0x00000000, 0x00000000, 0, 0x00000040, 0x20000000, 0x00000040, 0x20080000 ],
+                              850 =>   [ 0x00000003, 0x00000000, 0x00000000, 0, 0x00000001, 0x40000000, 0x0000019f, 0xdfd70000 ],
+                              437 =>   [ 0x00000003, 0x00000000, 0x00000000, 0, 0x00000001, 0x80000000, 0x0000019f, 0xdfd70000 ],
+                              65001 => [ 0x00000000, 0x00000000, 0x00000000, 0, 0x00000000, 0x00000000, 0x0000019f, 0xdfd70000 ] );
+        my $oemcp = locale_entry( $loc, "oemcp", 65001 );
+        my $maccp = locale_entry( $loc, "maccp", undef ) || $maccpmap{$oemcp} || 65001;
+        my $ebcdiccp = locale_entry( $loc, "ebcdiccp", undef ) || $ebcdiccpmap{$oemcp} || 500;
+        $ebcdiccp = 500 if (defined $loc->{oemcp} && $loc->{oemcp} == 65001) || (defined $loc->{maccp} && $loc->{maccp} == 65001);
+        my $ansicp = $ansicpmap{$oemcp} || $oemcp;
+        my @fontsig = (0) x 8;
+        my $sig = locale_entry( $loc, "fontsig", [] );
+        foreach my $i (0..7) { $fontsig[$i] |= $codepagemasks{$oemcp}->[$i]; }
+        foreach my $i (0..$#{$sig}) { $fontsig[$i] |= $sig->[$i]; }
+        $fontsig[3] |= 1 << 31;
+        $fontsig[3] |= 1 << 27 if $ireadinglayout == 1;
+        $fontsig[3] |= 1 << 28 if $ireadinglayout == 3;
+
+        # special cases for invariant locale
+
+        unless ($loc->{name})
+        {
+            $siso639langname = "iv";
+            $siso639langname2 = "ivl";
+            $senglanguage = $snativelangname = "Invariant Language";
+            $sengcountry = $snativectryname = "Invariant Country";
+            $sengdisplayname = "Invariant Language (Invariant Country)";
+            $snativedisplayname = "Invariant Language (Invariant Region)";
+            $sengcurrname = $snativecurrname = "International Monetary Fund";
+            $scurrency = "\x{00a4}";
+            $ifirstdayofweek = 0;
+            @stimeformat = ("HH:mm:ss");
+            @sshortdate = ("MM/dd/yyyy", "yyyy-MM-dd");
+            @slongdate = ("dddd, dd MMMM yyyy");
+            @syearmonth = ("yyyy MMMM");
+            @smonthday = ("MMMM dd", "MMMM d", "M/d", "MMM d");
+            @sshorttime = ("HH:mm", "hh:mm tt", "H:mm", "h:mm tt");
+            $srelativelongdate = "dddd, MMMM dd";
+            $sposinfinity = "Infinity";
+            $sneginfinity = "-Infinity";
+            $spositivesign = "+";
+            $ipospercent = $inegpercent = 0;
+        }
+
+        # output data
+
+        $locale_data .= pack "L<2",
+            add_string( $sname ),                  # name
+            add_string( $sopentypelang );          # LOCALE_SOPENTYPELANGUAGETAG
+
+        $locale_data .= pack "S<14",
+            $loc->{lcid} || 0x1000,                # LOCALE_ILANGUAGE
+            $unique_lcid,                          # unique_lcid
+            locale_entry( $loc, "idigits", 2 ),    # LOCALE_IDIGITS
+            locale_entry( $loc, "inegnumber", 1 ), # LOCALE_INEGNUMBER
+            $icurrdigits,                          # LOCALE_ICURRDIGITS
+            $icurrency,                            # LOCALE_ICURRENCY
+            $inegcurr,                             # LOCALE_INEGCURR
+            locale_entry( $loc, "ilzero", 1 ),     # LOCALE_ILZERO
+            !$neutral,                             # LOCALE_INEUTRAL
+            $ifirstdayofweek,                      # LOCALE_IFIRSTDAYOFWEEK
+            $firstweekofyear,                      # LOCALE_IFIRSTWEEKOFYEAR
+            $icountry,                             # LOCALE_ICOUNTRY,
+            $measure,                              # LOCALE_IMEASURE
+            $digitsubstitution;                    # LOCALE_IDIGITSUBSTITUTION
+
+        $locale_data .= pack "L<18",
+            add_string( $sgrouping ),              # LOCALE_SGROUPING
+            add_string( $smongrouping ),           # LOCALE_SMONGROUPING
+            add_string( $slist ),                  # LOCALE_SLIST
+            add_string( $sdecimal ),               # LOCALE_SDECIMAL
+            add_string( $sthousand ),              # LOCALE_STHOUSAND
+            add_string( $scurrency ),              # LOCALE_SCURRENCY
+            add_string( $smondecimalsep ),         # LOCALE_SMONDECIMALSEP
+            add_string( $smonthousandsep ),        # LOCALE_SMONTHOUSANDSEP
+            add_string( $spositivesign ),          # LOCALE_SPOSITIVESIGN
+            add_string( $snegativesign ),          # LOCALE_SNEGATIVESIGN
+            add_string( $s1159 ),                  # LOCALE_S1159
+            add_string( $s2359 ),                  # LOCALE_S2359
+            add_strarray( @snativedigits ),        # LOCALE_SNATIVEDIGITS
+            add_strarray( @stimeformat ),          # LOCALE_STIMEFORMAT
+            add_strarray( @sshortdate ),           # LOCALE_SSHORTDATE
+            add_strarray( @slongdate ),            # LOCALE_SLONGDATE
+            add_strarray( @syearmonth ),           # LOCALE_SYEARMONTH
+            add_strarray( @sduration );            # LOCALE_SDURATION
+
+        $locale_data .= pack "S<8",
+            $idefaultlanguage || 0x1000,           # LOCALE_IDEFAULTLANGUAGE
+            $ansicp,                               # LOCALE_IDEFAULTANSICODEPAGE
+            $oemcp,                                # LOCALE_IDEFAULTCODEPAGE
+            $maccp,                                # LOCALE_IDEFAULTMACCODEPAGE
+            $ebcdiccp,                             # LOCALE_IDEFAULTEBCDICCODEPAGE
+            0,  # FIXME                            # LOCALE_IGEOID
+            $papersize ? 1 : 9,                    # LOCALE_IPAPERSIZE
+            0;  # FIXME                            # islamic_cal
+
+        $locale_data .= pack "L<24",
+            add_string( $icalendartype ),          # LOCALE_ICALENDARTYPE
+            add_string( $sabbrevlangname ),        # LOCALE_SABBREVLANGNAME
+            add_string( $siso639langname ),        # LOCALE_SISO639LANGNAME
+            add_string( $senglanguage ),           # LOCALE_SENGLANGUAGE
+            add_string( $snativelangname ),        # LOCALE_SNATIVELANGNAME
+            add_string( $sengcountry ),            # LOCALE_SENGCOUNTRY
+            add_string( $snativectryname ),        # LOCALE_SNATIVECTRYNAME
+            add_string( $siso3166ctryname2 ),      # LOCALE_SABBREVCTRYNAME
+            add_string( $territory ),              # LOCALE_SISO3166CTRYNAME
+            add_string( $sintlsymbol ),            # LOCALE_SINTLSYMBOL
+            add_string( $sengcurrname ),           # LOCALE_SENGCURRNAME
+            add_string( $snativecurrname ),        # LOCALE_SNATIVECURRNAME
+            add_fontsig( @fontsig ),               # LOCALE_FONTSIGNATURE
+            add_string( $siso639langname2 ),       # LOCALE_SISO639LANGNAME2
+            add_string( $siso3166ctryname2 ),      # LOCALE_SISO3166CTRYNAME2
+            add_string( $sparent ),                # LOCALE_SPARENT
+            add_strarray( @sdayname ),             # LOCALE_SDAYNAME
+            add_strarray( @sabbrevdayname ),       # LOCALE_SABBREVDAYNAME
+            add_strarray( @smonthname ),           # LOCALE_SMONTHNAME
+            add_strarray( @sabbrevmonthname ),     # LOCALE_SABBREVMONTHNAME
+            add_strarray( @sgenitivemonth ),       # LOCALE_SGENITIVEMONTH
+            add_strarray( @sabbrevgenitivemonth ), # LOCALE_SABBREVGENITIVEMONTH
+            add_strarray( @scalnames ),            # LOCALE_SCALNAMES
+            add_strarray( @{$loc->{sortnames}} );  # LOCALE_SSORTNAMES
+
+        $locale_data .= pack "S<6",
+            $inegpercent,                          # LOCALE_INEGATIVEPERCENT
+            $ipospercent,                          # LOCALE_IPOSITIVEPERCENT
+            0,                                     # unknown
+            $ireadinglayout,                       # LOCALE_IREADINGLAYOUT
+            0x2a,                                  # unknown
+            0x2a;                                  # unknown
+
+        $locale_data .= pack "L<24",
+            0,                                     # unknown
+            add_string( $sengdisplayname ),        # LOCALE_SENGLISHDISPLAYNAME
+            add_string( $snativedisplayname ),     # LOCALE_SNATIVEDISPLAYNAME
+            add_string( $spercent ),               # LOCALE_SPERCENT
+            add_string( $snan ),                   # LOCALE_SNAN
+            add_string( $sposinfinity ),           # LOCALE_SPOSINFINITY
+            add_string( $sneginfinity ),           # LOCALE_SNEGINFINITY
+            0,                                     # unknown
+            add_string( $serastring ),             # CAL_SERASTRING
+            add_string( $serastring ),             # CAL_SABBREVERASTRING
+            0,                                     # unknown
+            add_string( $ssortlocale ),            # LOCALE_SCONSOLEFALLBACKNAME
+            add_strarray( @sshorttime ),           # LOCALE_SSHORTTIME
+            add_strarray( @sshortestdayname ),     # CAL_SSHORTESTDAYNAME
+            0,                                     # unknown
+            add_string( $ssortlocale ),            # LOCALE_SSORTLOCALE
+            add_string( "0409:00000409" ), # FIXME # LOCALE_SKEYBOARDSTOINSTALL
+            add_string( $sscripts ),               # LOCALE_SSCRIPTS
+            add_string( $srelativelongdate ),      # LOCALE_SRELATIVELONGDATE
+            0,  # FIXME                            # LOCALE_IGEOID2
+            add_string( $sshortestam || "a" ),     # LOCALE_SSHORTESTAM
+            add_string( $sshortestpm || "p" ),     # LOCALE_SSHORTESTPM
+            add_strarray( @smonthday ),            # LOCALE_SMONTHDAY
+            add_string( "k0-windows-us" ) # FIXME  # keyboard_layout
+    }
+
+    my $nb_lcids = scalar keys %lcids;
+    my $nb_locales = scalar grep { !defined $_->{alias} } @locales;
+    my $nb_lcnames = scalar keys %lcnames;
+    my $locale_size = length($locale_data) / $nb_locales;
+    my $nb_calendars = 0;
+    my $lcids_offset = 19 * 4;  # size of header
+    my $lcnames_offset = $lcids_offset + length $lcid_data;
+    my $locales_offset = $lcnames_offset + length $lcname_data;
+    my $calendar_offset = $locales_offset + length $locale_data;
+    my $strings_offset = $calendar_offset;
+
+    my $locale_header = pack "L<7S<4L<S<2L<3S<2L<4",
+        8,  # offset
+        0,
+        7,  # version
+        0x5344534e,  # magic
+        0, 0, 0,
+        0,
+        $nb_lcids,
+        $nb_locales,
+        $locale_size,
+        $locales_offset,
+        $nb_lcnames,
+        0,
+        $lcids_offset,
+        $lcnames_offset,
+        0,
+        $nb_calendars,
+        0,
+        $calendar_offset,
+        $strings_offset,
+        0, 0;
+
+    return align_string( 4, $locale_header . $lcid_data . $lcname_data . $locale_data . $string_data );
+}
+
+
+################################################################
+# build a binary locale table
+sub dump_locales($$)
+{
+    my ($filename, $chartypes) = @_;
+
+    printf "Building $filename\n";
+
+    my $locale_data = build_locale_data();
+    my $charmaps_data = "";  # FIXME
+    my $geoids_data = "";  # FIXME
+    my $scripts_data = "";  # FIXME
+
+    my @header = ( 0 ) x 8;
+    $header[0] = 4 * scalar @header;  # chartypes offset
+    $header[4] = $header[0] + length $chartypes;  # locales offset
+    $header[5] = $header[4] + length $locale_data;  # charmaps offset
+    $header[6] = $header[5] + length $charmaps_data;  # geoids offset
+    $header[7] = $header[6] + length $geoids_data;  # scripts offset
+
+    open OUTPUT, ">$filename.new" or die "Cannot create $filename";
+    print OUTPUT pack "L<*", @header;
+    print OUTPUT $chartypes, $locale_data, $charmaps_data, $geoids_data, $scripts_data;
+    close OUTPUT;
+    save_file($filename);
 }
 
 
@@ -2841,7 +4712,8 @@ dump_norm_table( "nls/normnfd.nls" );
 dump_norm_table( "nls/normnfkc.nls" );
 dump_norm_table( "nls/normnfkd.nls" );
 dump_norm_table( "nls/normidna.nls" );
-dump_sortkey_table( "nls/sortdefault.nls", "Windows 10 Sorting Weight Table.txt" );
+my $chartypes = dump_sortkey_table( "nls/sortdefault.nls", "Windows 10 Sorting Weight Table.txt" );
+dump_locales( "nls/locale.nls", $chartypes );
 foreach my $file (@allfiles) { dump_msdata_codepage( $file ); }
 dump_eucjp_codepage();
 dump_registry_script( "dlls/kernelbase/kernelbase.rgs", %registry_keys );
