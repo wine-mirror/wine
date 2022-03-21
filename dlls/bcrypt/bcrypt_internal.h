@@ -175,8 +175,6 @@ struct key_asymmetric
 {
     ULONG             bitlen;     /* ignored for ECC keys */
     unsigned          flags;
-    UCHAR            *pubkey;
-    unsigned          pubkey_len;
     DSSSEED           dss_seed;
 };
 
