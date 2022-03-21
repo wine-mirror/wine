@@ -97,6 +97,7 @@
     SYSCALL_ENTRY( NtGetNlsSectionPtr ) \
     SYSCALL_ENTRY( NtGetWriteWatch ) \
     SYSCALL_ENTRY( NtImpersonateAnonymousToken ) \
+    SYSCALL_ENTRY( NtInitializeNlsFiles ) \
     SYSCALL_ENTRY( NtInitiatePowerAction  ) \
     SYSCALL_ENTRY( NtIsProcessInJob ) \
     SYSCALL_ENTRY( NtListenPort ) \

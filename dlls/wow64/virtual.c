@@ -209,6 +209,24 @@ NTSTATUS WINAPI wow64_NtGetWriteWatch( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtInitializeNlsFiles
+ */
+NTSTATUS WINAPI wow64_NtInitializeNlsFiles( UINT *args )
+{
+    ULONG *addr32 = get_ptr( &args );
+    LCID *lcid = get_ptr( &args );
+    LARGE_INTEGER *size = get_ptr( &args );
+
+    void *addr;
+    NTSTATUS status;
+
+    status = NtInitializeNlsFiles( addr_32to64( &addr, addr32 ), lcid, size );
+    if (!status) put_addr( addr32, addr );
+    return status;
+}
+
+
+/**********************************************************************
  *           wow64_NtLockVirtualMemory
  */
 NTSTATUS WINAPI wow64_NtLockVirtualMemory( UINT *args )
