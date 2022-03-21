@@ -1768,6 +1768,8 @@ BOOL WINAPI XcvDataW(HANDLE hXcv, LPCWSTR pszDataName, PBYTE pInputData,
 BOOL WINAPI IsValidDevmodeA(PDEVMODEA pDevMode, SIZE_T size);
 BOOL WINAPI IsValidDevmodeW(PDEVMODEW pDevMode, SIZE_T size);
 
+HANDLE WINAPI GetSpoolFileHandle(HANDLE printer);
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

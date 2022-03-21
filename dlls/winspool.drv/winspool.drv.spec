@@ -144,6 +144,7 @@
 @ stdcall GetPrinterDriverDirectoryW(wstr wstr long ptr long ptr)
 @ stdcall GetPrinterDriverW(long wstr long ptr long ptr)
 @ stdcall GetPrinterW(long long ptr long ptr)
+@ stdcall GetSpoolFileHandle(ptr)
 @ stdcall IsValidDevmodeA(ptr long)
 @ stdcall IsValidDevmodeW(ptr long)
 @ stdcall OpenPrinterA(str ptr ptr)

@@ -8076,3 +8076,12 @@ DWORD WINAPI PerfCollect(LPWSTR query, LPVOID *data, LPDWORD size, LPDWORD obj_c
     *obj_count = 0;
     return ERROR_SUCCESS;
 }
+
+/*****************************************************************************
+ *          GetSpoolFileHandle [WINSPOOL.@]
+ */
+HANDLE WINAPI GetSpoolFileHandle( HANDLE printer )
+{
+    FIXME( "%p: stub\n", printer );
+    return INVALID_HANDLE_VALUE;
+}
