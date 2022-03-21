@@ -56,17 +56,17 @@ static pthread_mutex_t surfaces_lock = PTHREAD_MUTEX_INITIALIZER;
  * Dummy window surface for windows that shouldn't get painted.
  */
 
-static void CDECL dummy_surface_lock( struct window_surface *window_surface )
+static void dummy_surface_lock( struct window_surface *window_surface )
 {
     /* nothing to do */
 }
 
-static void CDECL dummy_surface_unlock( struct window_surface *window_surface )
+static void dummy_surface_unlock( struct window_surface *window_surface )
 {
     /* nothing to do */
 }
 
-static void *CDECL dummy_surface_get_bitmap_info( struct window_surface *window_surface, BITMAPINFO *info )
+static void *dummy_surface_get_bitmap_info( struct window_surface *window_surface, BITMAPINFO *info )
 {
     static DWORD dummy_data;
 
@@ -84,23 +84,23 @@ static void *CDECL dummy_surface_get_bitmap_info( struct window_surface *window_
     return &dummy_data;
 }
 
-static RECT *CDECL dummy_surface_get_bounds( struct window_surface *window_surface )
+static RECT *dummy_surface_get_bounds( struct window_surface *window_surface )
 {
     static RECT dummy_bounds;
     return &dummy_bounds;
 }
 
-static void CDECL dummy_surface_set_region( struct window_surface *window_surface, HRGN region )
+static void dummy_surface_set_region( struct window_surface *window_surface, HRGN region )
 {
     /* nothing to do */
 }
 
-static void CDECL dummy_surface_flush( struct window_surface *window_surface )
+static void dummy_surface_flush( struct window_surface *window_surface )
 {
     /* nothing to do */
 }
 
-static void CDECL dummy_surface_destroy( struct window_surface *window_surface )
+static void dummy_surface_destroy( struct window_surface *window_surface )
 {
     /* nothing to do */
 }
@@ -139,36 +139,36 @@ static struct offscreen_window_surface *impl_from_window_surface( struct window_
     return CONTAINING_RECORD( base, struct offscreen_window_surface, header );
 }
 
-static void CDECL offscreen_window_surface_lock( struct window_surface *base )
+static void offscreen_window_surface_lock( struct window_surface *base )
 {
     struct offscreen_window_surface *impl = impl_from_window_surface( base );
     pthread_mutex_lock( &impl->mutex );
 }
 
-static void CDECL offscreen_window_surface_unlock( struct window_surface *base )
+static void offscreen_window_surface_unlock( struct window_surface *base )
 {
     struct offscreen_window_surface *impl = impl_from_window_surface( base );
     pthread_mutex_unlock( &impl->mutex );
 }
 
-static RECT *CDECL offscreen_window_surface_get_bounds( struct window_surface *base )
+static RECT *offscreen_window_surface_get_bounds( struct window_surface *base )
 {
     struct offscreen_window_surface *impl = impl_from_window_surface( base );
     return &impl->bounds;
 }
 
-static void *CDECL offscreen_window_surface_get_bitmap_info( struct window_surface *base, BITMAPINFO *info )
+static void *offscreen_window_surface_get_bitmap_info( struct window_surface *base, BITMAPINFO *info )
 {
     struct offscreen_window_surface *impl = impl_from_window_surface( base );
     info->bmiHeader = impl->info.bmiHeader;
     return impl->bits;
 }
 
-static void CDECL offscreen_window_surface_set_region( struct window_surface *base, HRGN region )
+static void offscreen_window_surface_set_region( struct window_surface *base, HRGN region )
 {
 }
 
-static void CDECL offscreen_window_surface_flush( struct window_surface *base )
+static void offscreen_window_surface_flush( struct window_surface *base )
 {
     struct offscreen_window_surface *impl = impl_from_window_surface( base );
     base->funcs->lock( base );
@@ -176,7 +176,7 @@ static void CDECL offscreen_window_surface_flush( struct window_surface *base )
     base->funcs->unlock( base );
 }
 
-static void CDECL offscreen_window_surface_destroy( struct window_surface *base )
+static void offscreen_window_surface_destroy( struct window_surface *base )
 {
     struct offscreen_window_surface *impl = impl_from_window_surface( base );
     free( impl );
@@ -264,7 +264,7 @@ static struct dib_window_surface *get_dib_surface( struct window_surface *surfac
 /***********************************************************************
  *           dib_surface_lock
  */
-static void CDECL dib_surface_lock( struct window_surface *window_surface )
+static void dib_surface_lock( struct window_surface *window_surface )
 {
     /* nothing to do */
 }
@@ -272,7 +272,7 @@ static void CDECL dib_surface_lock( struct window_surface *window_surface )
 /***********************************************************************
  *           dib_surface_unlock
  */
-static void CDECL dib_surface_unlock( struct window_surface *window_surface )
+static void dib_surface_unlock( struct window_surface *window_surface )
 {
     /* nothing to do */
 }
@@ -280,7 +280,7 @@ static void CDECL dib_surface_unlock( struct window_surface *window_surface )
 /***********************************************************************
  *           dib_surface_get_bitmap_info
  */
-static void *CDECL dib_surface_get_bitmap_info( struct window_surface *window_surface, BITMAPINFO *info )
+static void *dib_surface_get_bitmap_info( struct window_surface *window_surface, BITMAPINFO *info )
 {
     struct dib_window_surface *surface = get_dib_surface( window_surface );
 
@@ -291,7 +291,7 @@ static void *CDECL dib_surface_get_bitmap_info( struct window_surface *window_su
 /***********************************************************************
  *           dib_surface_get_bounds
  */
-static RECT *CDECL dib_surface_get_bounds( struct window_surface *window_surface )
+static RECT *dib_surface_get_bounds( struct window_surface *window_surface )
 {
     struct dib_window_surface *surface = get_dib_surface( window_surface );
 
@@ -301,7 +301,7 @@ static RECT *CDECL dib_surface_get_bounds( struct window_surface *window_surface
 /***********************************************************************
  *           dib_surface_set_region
  */
-static void CDECL dib_surface_set_region( struct window_surface *window_surface, HRGN region )
+static void dib_surface_set_region( struct window_surface *window_surface, HRGN region )
 {
     /* nothing to do */
 }
@@ -309,7 +309,7 @@ static void CDECL dib_surface_set_region( struct window_surface *window_surface,
 /***********************************************************************
  *           dib_surface_flush
  */
-static void CDECL dib_surface_flush( struct window_surface *window_surface )
+static void dib_surface_flush( struct window_surface *window_surface )
 {
     /* nothing to do */
 }
@@ -317,7 +317,7 @@ static void CDECL dib_surface_flush( struct window_surface *window_surface )
 /***********************************************************************
  *           dib_surface_destroy
  */
-static void CDECL dib_surface_destroy( struct window_surface *window_surface )
+static void dib_surface_destroy( struct window_surface *window_surface )
 {
     struct dib_window_surface *surface = get_dib_surface( window_surface );
 

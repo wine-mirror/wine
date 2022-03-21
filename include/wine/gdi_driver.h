@@ -165,7 +165,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 75
+#define WINE_GDI_DRIVER_VERSION 76
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */
@@ -195,15 +195,17 @@ static inline void push_dc_driver( PHYSDEV *dev, PHYSDEV physdev, const struct g
 
 struct window_surface;
 
+#ifndef __WINE_USE_MSVCRT
+
 struct window_surface_funcs
 {
-    void  (CDECL *lock)( struct window_surface *surface );
-    void  (CDECL *unlock)( struct window_surface *surface );
-    void* (CDECL *get_info)( struct window_surface *surface, BITMAPINFO *info );
-    RECT* (CDECL *get_bounds)( struct window_surface *surface );
-    void  (CDECL *set_region)( struct window_surface *surface, HRGN region );
-    void  (CDECL *flush)( struct window_surface *surface );
-    void  (CDECL *destroy)( struct window_surface *surface );
+    void  (*lock)( struct window_surface *surface );
+    void  (*unlock)( struct window_surface *surface );
+    void* (*get_info)( struct window_surface *surface, BITMAPINFO *info );
+    RECT* (*get_bounds)( struct window_surface *surface );
+    void  (*set_region)( struct window_surface *surface, HRGN region );
+    void  (*flush)( struct window_surface *surface );
+    void  (*destroy)( struct window_surface *surface );
 };
 
 struct window_surface
@@ -226,6 +228,8 @@ static inline ULONG window_surface_release( struct window_surface *surface )
     if (!ret) surface->funcs->destroy( surface );
     return ret;
 }
+
+#endif /* __WINE_USE_MSVCRT */
 
 /* display manager interface, used to initialize display device registry data */
 
