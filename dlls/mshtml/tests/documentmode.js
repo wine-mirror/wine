@@ -1390,6 +1390,19 @@ sync_test("__proto__", function() {
     }catch(e) {
         ok(e.number === 0xa138f - 0x80000000, "calling __proto__ setter on null threw exception " + e.number);
     }
+
+    x = {};
+    r = Object.create(x);
+    ok(r.__proto__ === x, "r.__proto__ = " + r.__proto__);
+    r = Object.create(r);
+    ok(r.__proto__.__proto__ === x, "r.__proto__.__proto__ = " + r.__proto__.__proto__);
+    try {
+        x.__proto__ = r;
+        ok(false, "expected exception setting circular proto chain");
+    }catch(e) {
+        ok(e.number === 0xa13b0 - 0x80000000 && e.name === "TypeError",
+            "setting circular proto chain threw exception " + e.number + " (" + e.name + ")");
+    }
 });
 
 async_test("postMessage", function() {
