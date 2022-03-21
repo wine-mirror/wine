@@ -201,10 +201,10 @@ INT WINAPI NtGdiExtSelectClipRgn( HDC hdc, HRGN rgn, INT mode )
 }
 
 /***********************************************************************
- *           __wine_set_visible_region   (win32u.@)
+ *           set_visible_region
  */
-void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect, const RECT *device_rect,
-                                      struct window_surface *surface )
+void set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect, const RECT *device_rect,
+                         struct window_surface *surface )
 {
     DC * dc;
 

@@ -1320,9 +1320,6 @@
 ################################################################
 # Wine internal extensions
 
-# user32
-@ cdecl __wine_set_visible_region(long long ptr ptr ptr)
-
 # Graphics drivers
 @ cdecl __wine_set_display_driver(ptr long)
 

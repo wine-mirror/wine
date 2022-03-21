@@ -183,6 +183,9 @@ struct font_enum_entry
 /* flag for NtGdiGetRandomRgn to respect LAYOUT_RTL */
 #define NTGDI_RGN_MIRROR_RTL   0x80000000
 
+/* magic driver version that we use for win16 DCs with DIB surfaces */
+#define NTGDI_WIN16_DIB  0xfafa000
+
 #endif /* __WINESRC__ */
 
 struct font_realization_info

@@ -23,11 +23,10 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "wingdi.h"
+#include "ntgdi.h"
 #include "wownt32.h"
 #include "wine/wingdi16.h"
 #include "wine/list.h"
-#include "wine/gdi_driver.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(gdi);
@@ -428,129 +427,6 @@ static void free_segptr_bits( HBITMAP16 bmp )
         HeapFree( GetProcessHeap(), 0, bits );
         return;
     }
-}
-
-/* window surface used to implement the DIB.DRV driver */
-
-struct dib_window_surface
-{
-    struct window_surface header;
-    RECT                  bounds;
-    void                 *bits;
-    UINT                  info_size;
-    BITMAPINFO            info;   /* variable size, must be last */
-};
-
-static struct dib_window_surface *get_dib_surface( struct window_surface *surface )
-{
-    return (struct dib_window_surface *)surface;
-}
-
-/***********************************************************************
- *           dib_surface_lock
- */
-static void CDECL dib_surface_lock( struct window_surface *window_surface )
-{
-    /* nothing to do */
-}
-
-/***********************************************************************
- *           dib_surface_unlock
- */
-static void CDECL dib_surface_unlock( struct window_surface *window_surface )
-{
-    /* nothing to do */
-}
-
-/***********************************************************************
- *           dib_surface_get_bitmap_info
- */
-static void *CDECL dib_surface_get_bitmap_info( struct window_surface *window_surface, BITMAPINFO *info )
-{
-    struct dib_window_surface *surface = get_dib_surface( window_surface );
-
-    memcpy( info, &surface->info, surface->info_size );
-    return surface->bits;
-}
-
-/***********************************************************************
- *           dib_surface_get_bounds
- */
-static RECT *CDECL dib_surface_get_bounds( struct window_surface *window_surface )
-{
-    struct dib_window_surface *surface = get_dib_surface( window_surface );
-
-    return &surface->bounds;
-}
-
-/***********************************************************************
- *           dib_surface_set_region
- */
-static void CDECL dib_surface_set_region( struct window_surface *window_surface, HRGN region )
-{
-    /* nothing to do */
-}
-
-/***********************************************************************
- *           dib_surface_flush
- */
-static void CDECL dib_surface_flush( struct window_surface *window_surface )
-{
-    /* nothing to do */
-}
-
-/***********************************************************************
- *           dib_surface_destroy
- */
-static void CDECL dib_surface_destroy( struct window_surface *window_surface )
-{
-    struct dib_window_surface *surface = get_dib_surface( window_surface );
-
-    TRACE( "freeing %p\n", surface );
-    HeapFree( GetProcessHeap(), 0, surface );
-}
-
-static const struct window_surface_funcs dib_surface_funcs =
-{
-    dib_surface_lock,
-    dib_surface_unlock,
-    dib_surface_get_bitmap_info,
-    dib_surface_get_bounds,
-    dib_surface_set_region,
-    dib_surface_flush,
-    dib_surface_destroy
-};
-
-/***********************************************************************
- *           create_surface
- */
-static struct window_surface *create_surface( const BITMAPINFO *info )
-{
-    struct dib_window_surface *surface;
-    int color = 0;
-
-    if (info->bmiHeader.biBitCount <= 8)
-        color = info->bmiHeader.biClrUsed ? info->bmiHeader.biClrUsed : (1 << info->bmiHeader.biBitCount);
-    else if (info->bmiHeader.biCompression == BI_BITFIELDS)
-        color = 3;
-
-    surface = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                         offsetof( struct dib_window_surface, info.bmiColors[color] ));
-    if (!surface) return NULL;
-
-    surface->header.funcs       = &dib_surface_funcs;
-    surface->header.rect.left   = 0;
-    surface->header.rect.top    = 0;
-    surface->header.rect.right  = info->bmiHeader.biWidth;
-    surface->header.rect.bottom = abs(info->bmiHeader.biHeight);
-    surface->header.ref         = 1;
-    surface->info_size          = offsetof( BITMAPINFO, bmiColors[color] );
-    surface->bits               = (char *)info + surface->info_size;
-    memcpy( &surface->info, info, surface->info_size );
-
-    TRACE( "created %p %lux%lu for info %p bits %p\n",
-           surface, surface->header.rect.right, surface->header.rect.bottom, info, surface->bits );
-    return &surface->header;
 }
 
 
@@ -1299,19 +1175,8 @@ HDC16 WINAPI CreateDC16( LPCSTR driver, LPCSTR device, LPCSTR output,
 {
     if (!lstrcmpiA( driver, "dib" ) || !lstrcmpiA( driver, "dirdib" ))
     {
-        struct window_surface *surface;
-        HDC hdc;
-
-        if (!(surface = create_surface( (const BITMAPINFO *)initData ))) return 0;
-
-        if ((hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL )))
-        {
-            __wine_set_visible_region( hdc, CreateRectRgnIndirect( &surface->rect ),
-                                       &surface->rect, &surface->rect, surface );
-            TRACE( "returning hdc %p surface %p\n", hdc, surface );
-        }
-        window_surface_release( surface );
-        return HDC_16( hdc );
+        DRIVER_INFO_2W driver_info = { .cVersion = NTGDI_WIN16_DIB };
+        return HDC_16( NtGdiOpenDCW( NULL, NULL, NULL, 0, TRUE, 0, &driver_info, (void *)initData ));
     }
     return HDC_16( CreateDCA( driver, device, output, initData ) );
 }

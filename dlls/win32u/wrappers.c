@@ -1166,13 +1166,6 @@ BOOL CDECL __wine_get_icm_profile( HDC hdc, BOOL allow_default, DWORD *size, WCH
     return unix_funcs->get_icm_profile( hdc, allow_default, size, filename );
 }
 
-void CDECL __wine_set_visible_region( HDC hdc, HRGN hrgn, const RECT *vis_rect, const RECT *device_rect,
-                                      struct window_surface *surface )
-{
-    if (!unix_funcs) return;
-    unix_funcs->set_visible_region( hdc, hrgn, vis_rect, device_rect, surface );
-}
-
 BOOL CDECL __wine_get_brush_bitmap_info( HBRUSH handle, BITMAPINFO *info, void *bits, UINT *usage )
 {
     if (!unix_funcs) return FALSE;
