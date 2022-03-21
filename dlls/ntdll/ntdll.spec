@@ -235,6 +235,7 @@
 @ stdcall -syscall NtImpersonateAnonymousToken(long)
 # @ stub NtImpersonateClientOfPort
 # @ stub NtImpersonateThread
+@ stdcall -syscall NtInitializeNlsFiles(ptr ptr ptr)
 # @ stub NtInitializeRegistry
 @ stdcall -syscall NtInitiatePowerAction (long long long long)
 @ stdcall -syscall NtIsProcessInJob(long long)
@@ -1257,6 +1258,7 @@
 @ stdcall -private -syscall ZwImpersonateAnonymousToken(long) NtImpersonateAnonymousToken
 # @ stub ZwImpersonateClientOfPort
 # @ stub ZwImpersonateThread
+@ stdcall -private -syscall ZwInitializeNlsFiles(ptr ptr ptr) NtInitializeNlsFiles
 # @ stub ZwInitializeRegistry
 @ stdcall -private -syscall ZwInitiatePowerAction(long long long long) NtInitiatePowerAction
 @ stdcall -private -syscall ZwIsProcessInJob(long long) NtIsProcessInJob

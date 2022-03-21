@@ -153,22 +153,15 @@ static void *read_nls_file( ULONG type, ULONG id )
     return ret;
 }
 
-static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
+static NTSTATUS open_nls_data_file( const char *path, const WCHAR *sysdir, HANDLE *file )
 {
-    static const WCHAR sortdirW[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
-                                     'g','l','o','b','a','l','i','z','a','t','i','o','n','\\',
-                                     's','o','r','t','i','n','g','\\',0};
-
     NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
     OBJECT_ATTRIBUTES attr;
     UNICODE_STRING valueW;
-    WCHAR buffer[ARRAY_SIZE(sortdirW) + 16];
-    char *p, *path = get_nls_file_path( type, id );
+    WCHAR buffer[64];
+    char *p, *ntpath;
 
-    if (!path) return STATUS_OBJECT_NAME_NOT_FOUND;
-
-    /* try to open file in system dir */
-    wcscpy( buffer, type == NLS_SECTION_SORTKEYS ? sortdirW : system_dir );
+    wcscpy( buffer, system_dir );
     p = strrchr( path, '/' ) + 1;
     ascii_to_unicode( buffer + wcslen(buffer), p, strlen(p) + 1 );
     init_unicode_string( &valueW, buffer );
@@ -176,13 +169,12 @@ static NTSTATUS open_nls_data_file( ULONG type, ULONG id, HANDLE *file )
 
     status = open_unix_file( file, path, GENERIC_READ, &attr, 0, FILE_SHARE_READ,
                              FILE_OPEN, FILE_SYNCHRONOUS_IO_ALERT, NULL, 0 );
-    free( path );
     if (status != STATUS_NO_SUCH_FILE) return status;
 
-    if ((status = nt_to_unix_file_name( &attr, &path, FILE_OPEN ))) return status;
-    status = open_unix_file( file, path, GENERIC_READ, &attr, 0, FILE_SHARE_READ,
+    if ((status = nt_to_unix_file_name( &attr, &ntpath, FILE_OPEN ))) return status;
+    status = open_unix_file( file, ntpath, GENERIC_READ, &attr, 0, FILE_SHARE_READ,
                              FILE_OPEN, FILE_SYNCHRONOUS_IO_ALERT, NULL, 0 );
-    free( path );
+    free( ntpath );
     return status;
 }
 
@@ -2438,6 +2430,9 @@ void *create_startup_info( const UNICODE_STRING *nt_image, const RTL_USER_PROCES
  */
 NTSTATUS WINAPI NtGetNlsSectionPtr( ULONG type, ULONG id, void *unknown, void **ptr, SIZE_T *size )
 {
+    static const WCHAR sortdirW[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
+                                     'g','l','o','b','a','l','i','z','a','t','i','o','n','\\',
+                                     's','o','r','t','i','n','g','\\',0};
     UNICODE_STRING nameW;
     OBJECT_ATTRIBUTES attr;
     WCHAR name[32];
@@ -2450,7 +2445,12 @@ NTSTATUS WINAPI NtGetNlsSectionPtr( ULONG type, ULONG id, void *unknown, void **
     InitializeObjectAttributes( &attr, &nameW, 0, 0, NULL );
     if ((status = NtOpenSection( &handle, SECTION_MAP_READ, &attr )))
     {
-        if ((status = open_nls_data_file( type, id, &file ))) return status;
+        char *path = get_nls_file_path( type, id );
+
+        if (!path) return STATUS_OBJECT_NAME_NOT_FOUND;
+        status = open_nls_data_file( path, type == NLS_SECTION_SORTKEYS ? sortdirW : system_dir, &file );
+        free( path );
+        if (status) return status;
         attr.Attributes = OBJ_OPENIF | OBJ_PERMANENT;
         status = NtCreateSection( &handle, SECTION_MAP_READ, &attr, NULL, PAGE_READONLY, SEC_COMMIT, file );
         NtClose( file );
@@ -2461,8 +2461,37 @@ NTSTATUS WINAPI NtGetNlsSectionPtr( ULONG type, ULONG id, void *unknown, void **
         status = map_section( handle, ptr, size, PAGE_READONLY );
         NtClose( handle );
     }
+    return status;
+}
+
+
+/**************************************************************************
+ *      NtInitializeNlsFiles  (NTDLL.@)
+ */
+NTSTATUS WINAPI NtInitializeNlsFiles( void **ptr, LCID *lcid, LARGE_INTEGER *size )
+{
+    const char *dir = build_dir ? build_dir : data_dir;
+    char *path;
+    HANDLE handle, file;
+    SIZE_T mapsize;
+    NTSTATUS status;
+
+    if (!(path = malloc( strlen(dir) + sizeof("/nls/locale.nls") ))) return STATUS_NO_MEMORY;
+    strcpy( path, dir );
+    strcat( path, "/nls/locale.nls" );
+    status = open_nls_data_file( path, system_dir, &file );
+    free( path );
+    if (!status)
+    {
+        status = NtCreateSection( &handle, SECTION_MAP_READ, NULL, NULL, PAGE_READONLY, SEC_COMMIT, file );
+        NtClose( file );
     }
-    NtClose( handle );
+    if (!status)
+    {
+        status = map_section( handle, ptr, &mapsize, PAGE_READONLY );
+        NtClose( handle );
+    }
+    *lcid = system_lcid;
     return status;
 }
 
