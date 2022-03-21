@@ -289,31 +289,69 @@ done:
     return hres;
 }
 
-static HRESULT Object_get_proto_(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
+HRESULT Object_get_proto_(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
-    TRACE("%p\n", jsthis);
+    jsdisp_t *jsthis;
+    IDispatch *disp;
+    HRESULT hres;
 
-    if(r)
-        *r = jsthis->prototype
-            ? jsval_obj(jsdisp_addref(jsthis->prototype))
-            : jsval_null();
-    return S_OK;
-}
+    TRACE("%s\n", debugstr_jsval(vthis));
 
-static HRESULT Object_set_proto_(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t value)
-{
-    jsdisp_t *proto;
+    hres = to_object(ctx, vthis, &disp);
+    if(FAILED(hres))
+        return hres;
 
-    TRACE("%p\n", jsthis);
+    if(!r)
+        goto done;
 
-    if(is_undefined(value) || is_null(value))
-        proto = NULL;
-    else if(!is_object_instance(value) || !(proto = to_jsdisp(get_object(value)))) {
-        FIXME("not an object\n");
-        return E_FAIL;
+    if(!(jsthis = to_jsdisp(disp))) {
+        FIXME("Host object this\n");
+        hres = E_FAIL;
+        goto done;
     }
 
-    return jsdisp_change_prototype(jsthis, proto);
+    *r = jsthis->prototype
+        ? jsval_obj(jsdisp_addref(jsthis->prototype))
+        : jsval_null();
+done:
+    IDispatch_Release(disp);
+    return hres;
+}
+
+HRESULT Object_set_proto_(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
+{
+    jsdisp_t *jsthis, *proto;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_jsval(vthis));
+
+    if(is_undefined(vthis) || is_null(vthis))
+        return JS_E_OBJECT_EXPECTED;
+    if(!argc) {
+        if(r)
+            *r = jsval_undefined();
+        return S_OK;
+    }
+    if(!is_object_instance(vthis) || !(jsthis = to_jsdisp(get_object(vthis))))
+        goto done;
+
+    if(is_null(argv[0])) {
+        proto = NULL;
+    }else if(is_object_instance(argv[0])) {
+        proto = to_jsdisp(get_object(argv[0]));
+        if(!proto) {
+            FIXME("Host object value\n");
+            return E_FAIL;
+        }
+    }else
+        goto done;
+
+    hres = jsdisp_change_prototype(jsthis, proto);
+    if(FAILED(hres))
+        return hres;
+
+done:
+    return r ? jsval_copy(argv[0], r) : S_OK;
 }
 
 static void Object_destructor(jsdisp_t *dispex)
@@ -322,7 +360,6 @@ static void Object_destructor(jsdisp_t *dispex)
 }
 
 static const builtin_prop_t Object_props[] = {
-    {L"__proto__",             NULL, PROPF_ES6,              Object_get_proto_, Object_set_proto_},
     {L"hasOwnProperty",        Object_hasOwnProperty,        PROPF_METHOD|1},
     {L"isPrototypeOf",         Object_isPrototypeOf,         PROPF_METHOD|1},
     {L"propertyIsEnumerable",  Object_propertyIsEnumerable,  PROPF_METHOD|1},

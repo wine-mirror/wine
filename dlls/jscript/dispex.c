@@ -488,8 +488,7 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val)
             prop_iter = prototype_iter->props + prop_iter->u.ref;
         } while(prop_iter->type == PROP_PROTREF);
 
-        if(prop_iter->type == PROP_ACCESSOR ||
-           (prop_iter->type == PROP_BUILTIN && prop_iter->u.p->setter))
+        if(prop_iter->type == PROP_ACCESSOR)
             prop = prop_iter;
     }
 

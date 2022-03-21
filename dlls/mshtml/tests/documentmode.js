@@ -1330,6 +1330,66 @@ sync_test("__proto__", function() {
     ok(Object.prototype.hasOwnProperty("__proto__"), "__proto__ is not a property of Object.prototype after delete");
     r = Object.getPrototypeOf(x);
     ok(r === ctor.prototype, "x.__proto__ after delete = " + r);
+
+    var desc = Object.getOwnPropertyDescriptor(Object.prototype, "__proto__");
+    ok(desc.value === undefined, "__proto__ value = " + desc.value);
+    ok(Object.getPrototypeOf(desc.get) === Function.prototype, "__proto__ getter not a function");
+    ok(Object.getPrototypeOf(desc.set) === Function.prototype, "__proto__ setter not a function");
+    ok(desc.get.length === 0, "__proto__ getter length = " + desc.get.length);
+    ok(desc.set.length === 1, "__proto__ setter length = " + desc.set.length);
+
+    r = desc.get.call(x, 1, 2, 3, 4);
+    ok(r === x.__proto__, "calling __proto__ getter on x returned " + r);
+
+    r = desc.set.call(x, obj);
+    ok(r === obj, "calling __proto__ setter(obj) on x returned " + r);
+    check(obj, "after set to obj via calling setter");
+    r = desc.set.call(x, 42);
+    ok(r === 42, "calling __proto__ setter(42) on x returned " + r);
+    check(obj, "after set to obj via calling setter(42)");
+    r = desc.set.call(x, "foo");
+    ok(r === "foo", "calling __proto__ setter('foo') on x returned " + r);
+    check(obj, "after set to obj via calling setter('foo')");
+    r = desc.set.call(x);
+    ok(r === undefined, "calling __proto__ setter() on x returned " + r);
+    r = desc.set.call(true, obj);
+    ok(r === obj, "calling __proto__ setter(obj) on true value returned " + r);
+    x = true;
+    r = desc.set.call(x, obj);
+    ok(r === obj, "calling __proto__ setter(obj) on x set to true returned " + r);
+    ok(x.__proto__ === Boolean.prototype, "true value __proto__ after set to obj = " + x.__proto__);
+    x = new Boolean(true);
+    r = desc.set.call(x, obj);
+    ok(r === obj, "calling __proto__ setter(obj) on x set to Boolean(true) returned " + r);
+    ok(x.__proto__ === obj, "Boolean(true) __proto__ after set to obj = " + x.__proto__);
+
+    r = desc.get.call(13);
+    ok(r === Number.prototype, "calling __proto__ getter on 13 returned " + r);
+    try {
+        r = desc.get.call(undefined);
+        ok(false, "expected exception calling __proto__ getter on undefined");
+    }catch(e) {
+        ok(e.number === 0xa138f - 0x80000000, "calling __proto__ getter on undefined threw exception " + e.number);
+    }
+    try {
+        r = desc.get.call(null);
+        ok(false, "expected exception calling __proto__ getter on null");
+    }catch(e) {
+        ok(e.number === 0xa138f - 0x80000000, "calling __proto__ getter on null threw exception " + e.number);
+    }
+
+    try {
+        r = desc.set.call(undefined, obj);
+        ok(false, "expected exception calling __proto__ setter on undefined");
+    }catch(e) {
+        ok(e.number === 0xa138f - 0x80000000, "calling __proto__ setter on undefined threw exception " + e.number);
+    }
+    try {
+        r = desc.set.call(null, obj);
+        ok(false, "expected exception calling __proto__ setter on null");
+    }catch(e) {
+        ok(e.number === 0xa138f - 0x80000000, "calling __proto__ setter on null threw exception " + e.number);
+    }
 });
 
 async_test("postMessage", function() {

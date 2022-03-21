@@ -911,6 +911,31 @@ static const builtin_info_t JSGlobal_info = {
     NULL
 };
 
+static HRESULT init_object_prototype_accessors(script_ctx_t *ctx, jsdisp_t *object_prototype)
+{
+    property_desc_t desc;
+    HRESULT hres = S_OK;
+
+    /* __proto__ is an actual accessor on native, despite being a builtin */
+    if(ctx->version >= SCRIPTLANGUAGEVERSION_ES6) {
+        desc.flags = PROPF_CONFIGURABLE;
+        desc.mask  = PROPF_CONFIGURABLE | PROPF_ENUMERABLE;
+        desc.explicit_getter = desc.explicit_setter = TRUE;
+        desc.explicit_value = FALSE;
+
+        hres = create_builtin_function(ctx, Object_get_proto_, NULL, NULL, PROPF_METHOD, NULL, &desc.getter);
+        if(SUCCEEDED(hres)) {
+            hres = create_builtin_function(ctx, Object_set_proto_, NULL, NULL, PROPF_METHOD|1, NULL, &desc.setter);
+            if(SUCCEEDED(hres)) {
+                hres = jsdisp_define_property(object_prototype, L"__proto__", &desc);
+                jsdisp_release(desc.setter);
+            }
+            jsdisp_release(desc.getter);
+        }
+    }
+    return hres;
+}
+
 static HRESULT init_constructors(script_ctx_t *ctx, jsdisp_t *object_prototype)
 {
     HRESULT hres;
@@ -1070,6 +1095,10 @@ HRESULT init_global(script_ctx_t *ctx)
         return hres;
 
     hres = init_constructors(ctx, ctx->object_prototype);
+    if(FAILED(hres))
+        return hres;
+
+    hres = init_object_prototype_accessors(ctx, ctx->object_prototype);
     if(FAILED(hres))
         return hres;
 
