@@ -63,6 +63,7 @@ static BOOL (WINAPI *pEnumSystemLocalesEx)(LOCALE_ENUMPROCEX, DWORD, LPARAM, LPV
 static INT (WINAPI *pLCMapStringEx)(LPCWSTR, DWORD, LPCWSTR, INT, LPWSTR, INT, LPNLSVERSIONINFO, LPVOID, LPARAM);
 static LCID (WINAPI *pLocaleNameToLCID)(LPCWSTR, DWORD);
 static NTSTATUS (WINAPI *pRtlLocaleNameToLcid)(LPCWSTR, LCID *, DWORD);
+static BOOLEAN (WINAPI *pRtlIsValidLocaleName)(const WCHAR *,ULONG);
 static INT  (WINAPI *pLCIDToLocaleName)(LCID, LPWSTR, INT, DWORD);
 static BOOL (WINAPI *pIsValidLanguageGroup)(LGRPID, DWORD);
 static INT (WINAPI *pIdnToNameprepUnicode)(DWORD, LPCWSTR, INT, LPWSTR, INT);
@@ -145,6 +146,7 @@ static void InitFunctionPointers(void)
   mod = GetModuleHandleA("ntdll");
   X(RtlUpcaseUnicodeChar);
   X(RtlLocaleNameToLcid);
+  X(RtlIsValidLocaleName);
   X(RtlNormalizeString);
   X(RtlIsNormalizedString);
   X(NtGetNlsSectionPtr);
@@ -4734,11 +4736,6 @@ static void test_GetLocaleInfoEx(void)
 
 static void test_IsValidLocaleName(void)
 {
-    static const WCHAR enusW[] = {'e','n','-','U','S',0};
-    static const WCHAR enW[] = {'e','n',0};
-    static const WCHAR zzW[] = {'z','z',0};
-    static const WCHAR zz_zzW[] = {'z','z','-','Z','Z',0};
-    static const WCHAR zzzzW[] = {'z','z','z','z',0};
     BOOL ret;
 
     if (!pIsValidLocaleName)
@@ -4747,20 +4744,79 @@ static void test_IsValidLocaleName(void)
         return;
     }
 
-    ret = pIsValidLocaleName(enusW);
+    ret = pIsValidLocaleName(L"en-US");
     ok(ret, "IsValidLocaleName failed\n");
-    ret = pIsValidLocaleName(enW);
+    ret = pIsValidLocaleName(L"en");
+    ok(ret, "IsValidLocaleName failed\n");
+    ret = pIsValidLocaleName(L"es-es");
+    ok(ret, "IsValidLocaleName failed\n");
+    ret = pIsValidLocaleName(L"de-DE_phoneb");
+    ok(ret, "IsValidLocaleName failed\n");
+    ret = pIsValidLocaleName(L"DE_de-phoneb");
     ok(ret || broken(!ret), "IsValidLocaleName failed\n");
-    ret = pIsValidLocaleName(zzW);
+    ret = pIsValidLocaleName(L"DE_de_PHONEB");
+    ok(ret || broken(!ret), "IsValidLocaleName failed\n");
+    ret = pIsValidLocaleName(L"DE_de+phoneb");
+    ok(!ret, "IsValidLocaleName should have failed\n");
+    ret = pIsValidLocaleName(L"zz");
     ok(!ret || broken(ret), "IsValidLocaleName should have failed\n");
-    ret = pIsValidLocaleName(zz_zzW);
+    ret = pIsValidLocaleName(L"zz-ZZ");
     ok(!ret || broken(ret), "IsValidLocaleName should have failed\n");
-    ret = pIsValidLocaleName(zzzzW);
+    ret = pIsValidLocaleName(L"zzz");
+    ok(!ret || broken(ret), "IsValidLocaleName should have failed\n");
+    ret = pIsValidLocaleName(L"zzz-ZZZ");
+    ok(!ret, "IsValidLocaleName should have failed\n");
+    ret = pIsValidLocaleName(L"zzzz");
     ok(!ret, "IsValidLocaleName should have failed\n");
     ret = pIsValidLocaleName(LOCALE_NAME_INVARIANT);
     ok(ret, "IsValidLocaleName failed\n");
-    ret = pIsValidLocaleName(NULL);
+    ret = pIsValidLocaleName(LOCALE_NAME_USER_DEFAULT);
     ok(!ret, "IsValidLocaleName should have failed\n");
+    ret = pIsValidLocaleName(LOCALE_NAME_SYSTEM_DEFAULT);
+    ok(!ret, "IsValidLocaleName should have failed\n");
+
+    if (!pRtlIsValidLocaleName)
+    {
+        win_skip( "RtlIsValidLocaleName not available\n" );
+        return;
+    }
+
+    ret = pRtlIsValidLocaleName( L"en-US", 0 );
+    ok(ret, "RtlIsValidLocaleName failed\n");
+    ret = pRtlIsValidLocaleName( L"en", 0 );
+    ok(!ret, "RtlIsValidLocaleName should have failed\n");
+    ret = pRtlIsValidLocaleName( L"en", 1 );
+    ok(!ret, "RtlIsValidLocaleName should have failed\n");
+    ret = pRtlIsValidLocaleName( L"en", 2 );
+    ok(ret, "RtlIsValidLocaleName failed\n");
+    ret = pRtlIsValidLocaleName( L"en-RR", 2 );
+    ok(!ret, "RtlIsValidLocaleName should have failed\n");
+    ret = pRtlIsValidLocaleName( L"es-es", 0 );
+    ok(ret, "RtlIsValidLocaleName failed\n");
+    ret = pRtlIsValidLocaleName( L"de-DE_phoneb", 0 );
+    ok(ret, "RtlIsValidLocaleName failed\n");
+    ret = pRtlIsValidLocaleName( L"DE_de_PHONEB", 0 );
+    ok(ret || broken(!ret), "RtlIsValidLocaleName failed\n");
+    ret = pRtlIsValidLocaleName( L"DE_de+phoneb", 0 );
+    ok(!ret, "RtlIsValidLocaleName should have failed\n");
+    ret = pRtlIsValidLocaleName( L"zz", 0 );
+    ok(!ret, "RtlIsValidLocaleName should have failed\n");
+    ret = pRtlIsValidLocaleName( L"zz", 2 );
+    ok(!ret, "RtlIsValidLocaleName should have failed\n");
+    ret = pRtlIsValidLocaleName( L"zz-ZZ", 0 );
+    ok(!ret, "RtlIsValidLocaleName should have failed\n");
+    ret = pRtlIsValidLocaleName( L"zzz", 0 );
+    ok(!ret, "RtlIsValidLocaleName should have failed\n");
+    ret = pRtlIsValidLocaleName( L"zzz-ZZZ", 0 );
+    ok(!ret, "RtlIsValidLocaleName should have failed\n");
+    ret = pRtlIsValidLocaleName( L"zzzz", 0 );
+    ok(!ret, "RtlIsValidLocaleName should have failed\n");
+    ret = pRtlIsValidLocaleName( LOCALE_NAME_INVARIANT, 0 );
+    ok(ret, "RtlIsValidLocaleName failed\n");
+    ret = pRtlIsValidLocaleName( LOCALE_NAME_USER_DEFAULT, 0 );
+    ok(!ret, "RtlIsValidLocaleName should have failed\n");
+    ret = pRtlIsValidLocaleName( LOCALE_NAME_SYSTEM_DEFAULT, 0 );
+    ok(!ret, "RtlIsValidLocaleName should have failed\n");
 }
 
 static void test_CompareStringOrdinal(void)

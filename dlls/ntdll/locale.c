@@ -1225,6 +1225,20 @@ WCHAR __cdecl towupper( WCHAR ch )
 
 
 /******************************************************************
+ *      RtlIsValidLocaleName   (NTDLL.@)
+ */
+BOOLEAN WINAPI RtlIsValidLocaleName( const WCHAR *name, ULONG flags )
+{
+    const NLS_LOCALE_LCNAME_INDEX *entry = find_lcname_entry( name );
+
+    if (!entry) return FALSE;
+    /* reject neutral locale unless flag 2 is set */
+    if (!(flags & 2) && !get_locale_data( entry->idx )->inotneutral) return FALSE;
+    return TRUE;
+}
+
+
+/******************************************************************
  *      RtlLocaleNameToLcid   (NTDLL.@)
  */
 NTSTATUS WINAPI RtlLocaleNameToLcid( const WCHAR *name, LCID *lcid, ULONG flags )

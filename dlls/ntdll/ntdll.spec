@@ -834,6 +834,7 @@
 # @ stub RtlIsThreadWithinLoaderCallout
 @ stdcall RtlIsValidHandle(ptr ptr)
 @ stdcall RtlIsValidIndexHandle(ptr long ptr)
+@ stdcall RtlIsValidLocaleName(wstr long)
 @ stdcall -arch=win32 -ret64 RtlLargeIntegerAdd(int64 int64)
 @ stdcall -arch=win32 -ret64 RtlLargeIntegerArithmeticShift(int64 long)
 @ stdcall -arch=win32 -ret64 RtlLargeIntegerDivide(int64 int64 ptr)
