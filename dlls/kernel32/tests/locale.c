@@ -2673,15 +2673,6 @@ static void test_LocaleNameToLCID(void)
     WCHAR buffer[LOCALE_NAME_MAX_LENGTH];
     const struct neutralsublang_name_t *ptr;
 
-    static const WCHAR enW[] = {'e','n',0};
-    static const WCHAR esesW[] = {'e','s','-','e','s',0};
-    static const WCHAR zhHansW[] = {'z','h','-','H','a','n','s',0};
-    static const WCHAR zhhansW[] = {'z','h','-','h','a','n','s',0};
-    static const WCHAR zhHantW[] = {'z','h','-','H','a','n','t',0};
-    static const WCHAR zhhantW[] = {'z','h','-','h','a','n','t',0};
-    static const WCHAR zhcnW[] = {'z','h','-','C','N',0};
-    static const WCHAR zhhkW[] = {'z','h','-','H','K',0};
-
     if (!pLocaleNameToLCID)
     {
         win_skip( "LocaleNameToLCID not available\n" );
@@ -2722,14 +2713,14 @@ static void test_LocaleNameToLCID(void)
        "Expected lcid == 0, got %08lx, error %ld\n", lcid, GetLastError());
 
     /* lower-case */
-    lcid = pLocaleNameToLCID(esesW, 0);
+    lcid = pLocaleNameToLCID(L"es-es", 0);
     ok(lcid == MAKELCID(MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH_MODERN), SORT_DEFAULT), "Got wrong lcid for es-es: 0x%lx\n", lcid);
 
     /* english neutral name */
-    lcid = pLocaleNameToLCID(enW, LOCALE_ALLOW_NEUTRAL_NAMES);
+    lcid = pLocaleNameToLCID(L"en", LOCALE_ALLOW_NEUTRAL_NAMES);
     ok(lcid == MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL), SORT_DEFAULT) ||
        broken(lcid == 0) /* Vista */, "got 0x%04lx\n", lcid);
-    lcid = pLocaleNameToLCID(enW, 0);
+    lcid = pLocaleNameToLCID(L"en", 0);
     ok(lcid == MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT) ||
        broken(lcid == 0) /* Vista */, "got 0x%04lx\n", lcid);
     if (lcid)
@@ -2749,52 +2740,52 @@ static void test_LocaleNameToLCID(void)
         }
 
         /* zh-Hant has LCID 0x7c04, but LocaleNameToLCID actually returns 0x0c04, which is the LCID of zh-HK */
-        lcid = pLocaleNameToLCID(zhHantW, 0);
+        lcid = pLocaleNameToLCID(L"zh-Hant", 0);
         ok(lcid == MAKELCID(MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_HONGKONG), SORT_DEFAULT),
-           "%s: got wrong lcid 0x%04lx\n", wine_dbgstr_w(zhHantW), lcid);
+           "%s: got wrong lcid 0x%04lx\n", wine_dbgstr_w(L"zh-Hant"), lcid);
         ret = pLCIDToLocaleName(lcid, buffer, ARRAY_SIZE(buffer), 0);
-        ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(zhHantW), ret);
-        ok(!lstrcmpW(zhhkW, buffer), "%s: got wrong locale name %s\n",
-           wine_dbgstr_w(zhHantW), wine_dbgstr_w(buffer));
+        ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(L"zh-Hant"), ret);
+        ok(!lstrcmpW(L"zh-HK", buffer), "%s: got wrong locale name %s\n",
+           wine_dbgstr_w(L"zh-Hant"), wine_dbgstr_w(buffer));
         /* check that 0x7c04 also works and is mapped to zh-HK */
         ret = pLCIDToLocaleName(MAKELANGID(LANG_CHINESE_TRADITIONAL, SUBLANG_CHINESE_TRADITIONAL),
                 buffer, ARRAY_SIZE(buffer), 0);
-        ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(zhHantW), ret);
-        ok(!lstrcmpW(zhhkW, buffer), "%s: got wrong locale name %s\n",
-           wine_dbgstr_w(zhHantW), wine_dbgstr_w(buffer));
+        ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(L"zh-Hant"), ret);
+        ok(!lstrcmpW(L"zh-HK", buffer), "%s: got wrong locale name %s\n",
+           wine_dbgstr_w(L"zh-Hant"), wine_dbgstr_w(buffer));
 
         /* zh-hant */
-        lcid = pLocaleNameToLCID(zhhantW, 0);
+        lcid = pLocaleNameToLCID(L"zh-hant", 0);
         ok(lcid == MAKELCID(MAKELANGID(LANG_CHINESE, SUBLANG_CHINESE_HONGKONG), SORT_DEFAULT),
-           "%s: got wrong lcid 0x%04lx\n", wine_dbgstr_w(zhhantW), lcid);
+           "%s: got wrong lcid 0x%04lx\n", wine_dbgstr_w(L"zh-hant"), lcid);
         ret = pLCIDToLocaleName(lcid, buffer, ARRAY_SIZE(buffer), 0);
-        ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(zhhantW), ret);
-        ok(!lstrcmpW(zhhkW, buffer), "%s: got wrong locale name %s\n",
-           wine_dbgstr_w(zhhantW), wine_dbgstr_w(buffer));
+        ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(L"zh-hant"), ret);
+        ok(!lstrcmpW(L"zh-HK", buffer), "%s: got wrong locale name %s\n",
+           wine_dbgstr_w(L"zh-hant"), wine_dbgstr_w(buffer));
 
         /* zh-Hans has LCID 0x0004, but LocaleNameToLCID actually returns 0x0804, which is the LCID of zh-CN */
-        lcid = pLocaleNameToLCID(zhHansW, 0);
+        lcid = pLocaleNameToLCID(L"zh-Hans", 0);
         /* check that LocaleNameToLCID actually returns 0x0804 */
         ok(lcid == MAKELCID(MAKELANGID(LANG_CHINESE_SIMPLIFIED, SUBLANG_CHINESE_SIMPLIFIED), SORT_DEFAULT),
-           "%s: got wrong lcid 0x%04lx\n", wine_dbgstr_w(zhHansW), lcid);
+           "%s: got wrong lcid 0x%04lx\n", wine_dbgstr_w(L"zh-Hans"), lcid);
         ret = pLCIDToLocaleName(lcid, buffer, ARRAY_SIZE(buffer), 0);
-        ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(zhHansW), ret);
-        ok(!lstrcmpW(zhcnW, buffer), "%s: got wrong locale name %s\n",
-           wine_dbgstr_w(zhHansW), wine_dbgstr_w(buffer));
+        ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(L"zh-Hans"), ret);
+        ok(!lstrcmpW(L"zh-CN", buffer), "%s: got wrong locale name %s\n",
+           wine_dbgstr_w(L"zh-Hans"), wine_dbgstr_w(buffer));
         /* check that 0x0004 also works and is mapped to zh-CN */
         ret = pLCIDToLocaleName(MAKELANGID(LANG_CHINESE, SUBLANG_NEUTRAL), buffer, ARRAY_SIZE(buffer), 0);
-        ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(zhHansW), ret);
-        ok(!lstrcmpW(zhcnW, buffer), "%s: got wrong locale name %s\n",
-           wine_dbgstr_w(zhHansW), wine_dbgstr_w(buffer));
+        ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(L"zh-Hans"), ret);
+        ok(!lstrcmpW(L"zh-CN", buffer), "%s: got wrong locale name %s\n",
+           wine_dbgstr_w(L"zh-Hans"), wine_dbgstr_w(buffer));
 
         /* zh-hans */
-        lcid = pLocaleNameToLCID(zhhansW, 0);
+        lcid = pLocaleNameToLCID(L"zh-hans", 0);
         ok(lcid == MAKELCID(MAKELANGID(LANG_CHINESE_SIMPLIFIED, SUBLANG_CHINESE_SIMPLIFIED), SORT_DEFAULT),
-           "%s: got wrong lcid 0x%04lx\n", wine_dbgstr_w(zhhansW), lcid);
+           "%s: got wrong lcid 0x%04lx\n", wine_dbgstr_w(L"zh-hans"), lcid);
         ret = pLCIDToLocaleName(lcid, buffer, ARRAY_SIZE(buffer), 0);
-        ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(zhhansW), ret);
-        ok(!lstrcmpW(zhcnW, buffer), "%s: got wrong locale name %s\n",
-           wine_dbgstr_w(zhhansW), wine_dbgstr_w(buffer));
+        ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(L"zh-hans"), ret);
+        ok(!lstrcmpW(L"zh-CN", buffer), "%s: got wrong locale name %s\n",
+           wine_dbgstr_w(L"zh-hans"), wine_dbgstr_w(buffer));
     }
 
     if (pRtlLocaleNameToLcid)
@@ -2817,16 +2808,31 @@ static void test_LocaleNameToLCID(void)
         ok( lcid == MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), "got %08lx\n", lcid );
 
         lcid = 0;
-        status = pRtlLocaleNameToLcid( esesW, &lcid, 0 );
+        status = pRtlLocaleNameToLcid( L"es-es", &lcid, 0 );
         ok( !status, "failed error %lx\n", status );
         ok( lcid == MAKELANGID(LANG_SPANISH, SUBLANG_SPANISH_MODERN), "got %08lx\n", lcid );
 
         lcid = 0;
-        status = pRtlLocaleNameToLcid( enW, &lcid, 0 );
+        status = pRtlLocaleNameToLcid( L"de-DE_phoneb", &lcid, 0 );
+        ok( !status, "failed error %lx\n", status );
+        ok( lcid == 0x00010407, "got %08lx\n", lcid );
+
+        lcid = 0;
+        status = pRtlLocaleNameToLcid( L"DE_de-PHONEB", &lcid, 0 );
+        ok( !status || broken( status == STATUS_INVALID_PARAMETER_1 ), "failed error %lx\n", status );
+        if (!status) ok( lcid == 0x00010407, "got %08lx\n", lcid );
+
+        lcid = 0xdeadbeef;
+        status = pRtlLocaleNameToLcid( L"de+de+phoneb", &lcid, 0 );
+        ok( status == STATUS_INVALID_PARAMETER_1, "failed error %lx\n", status );
+        ok( lcid == 0xdeadbeef, "got %08lx\n", lcid );
+
+        lcid = 0;
+        status = pRtlLocaleNameToLcid( L"en", &lcid, 0 );
         ok( status == STATUS_INVALID_PARAMETER_1, "wrong error %lx\n", status );
-        status = pRtlLocaleNameToLcid( enW, &lcid, 1 );
+        status = pRtlLocaleNameToLcid( L"en", &lcid, 1 );
         ok( status == STATUS_INVALID_PARAMETER_1, "wrong error %lx\n", status );
-        status = pRtlLocaleNameToLcid( enW, &lcid, 2 );
+        status = pRtlLocaleNameToLcid( L"en", &lcid, 2 );
         ok( !status, "failed error %lx\n", status );
         ok( lcid == MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL), "got %08lx\n", lcid );
         status = pRtlLocaleNameToLcid( L"en-RR", &lcid, 2 );

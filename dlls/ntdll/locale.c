@@ -238,6 +238,44 @@ invalid:
 }
 
 
+static int compare_locale_names( const WCHAR *n1, const WCHAR *n2 )
+{
+    for (;;)
+    {
+        WCHAR ch1 = casemap_ascii( *n1++ );
+        WCHAR ch2 = casemap_ascii( *n2++ );
+        if (ch1 == '_') ch1 = '-';
+        if (ch2 == '_') ch2 = '-';
+        if (!ch1 || ch1 != ch2) return ch1 - ch2;
+    }
+}
+
+
+static const NLS_LOCALE_LCNAME_INDEX *find_lcname_entry( const WCHAR *name )
+{
+    int min = 0, max = locale_table->nb_lcnames - 1;
+
+    if (!name) return NULL;
+    while (min <= max)
+    {
+        int res, pos = (min + max) / 2;
+        const WCHAR *str = locale_strings + lcnames_index[pos].name;
+        res = compare_locale_names( name, str + 1 );
+        if (res < 0) max = pos - 1;
+        else if (res > 0) min = pos + 1;
+        else return &lcnames_index[pos];
+    }
+    return NULL;
+}
+
+
+static const NLS_LOCALE_DATA *get_locale_data( UINT idx )
+{
+    ULONG offset = locale_table->locales_offset + idx * locale_table->locale_size;
+    return (const NLS_LOCALE_DATA *)((const char *)locale_table + offset);
+}
+
+
 void locale_init(void)
 {
     LARGE_INTEGER unused;
@@ -1191,110 +1229,12 @@ WCHAR __cdecl towupper( WCHAR ch )
  */
 NTSTATUS WINAPI RtlLocaleNameToLcid( const WCHAR *name, LCID *lcid, ULONG flags )
 {
-    /* locale name format is: lang[-script][-country][_modifier] */
+    const NLS_LOCALE_LCNAME_INDEX *entry = find_lcname_entry( name );
 
-    const IMAGE_RESOURCE_DIRECTORY *resdir;
-    const IMAGE_RESOURCE_DIRECTORY_ENTRY *et;
-    LDR_RESOURCE_INFO info;
-    WCHAR buf[LOCALE_NAME_MAX_LENGTH];
-    WCHAR lang[LOCALE_NAME_MAX_LENGTH]; /* language ("en") (note: buffer contains the other strings too) */
-    WCHAR *country = NULL; /* country ("US") */
-    WCHAR *script = NULL; /* script ("Latn") */
-    WCHAR *p;
-    int i;
-
-    if (!name) return STATUS_INVALID_PARAMETER_1;
-
-    if (!name[0])
-    {
-        *lcid = LANG_INVARIANT;
-        goto found;
-    }
-    if (wcslen( name ) >= LOCALE_NAME_MAX_LENGTH) return STATUS_INVALID_PARAMETER_1;
-    wcscpy( lang, name );
-
-    if ((p = wcspbrk( lang, L"-_" )) && *p == '-')
-    {
-        *p++ = 0;
-        country = p;
-        if ((p = wcspbrk( p, L"-_" )) && *p == '-')
-        {
-            *p++ = 0;
-            script = country;
-            country = p;
-            p = wcspbrk( p, L"-_" );
-        }
-        if (p) *p = 0;  /* FIXME: modifier is ignored */
-        /* second value can be script or country, check length to resolve the ambiguity */
-        if (!script && wcslen( country ) == 4)
-        {
-            script = country;
-            country = NULL;
-        }
-    }
-
-    info.Type = 6; /* RT_STRING */
-    info.Name = (LOCALE_SNAME >> 4) + 1;
-    if (LdrFindResourceDirectory_U( kernel32_handle, &info, 2, &resdir ))
-        return STATUS_INVALID_PARAMETER_1;
-
-    et = (const IMAGE_RESOURCE_DIRECTORY_ENTRY *)(resdir + 1);
-    for (i = 0; i < resdir->NumberOfNamedEntries + resdir->NumberOfIdEntries; i++)
-    {
-        LANGID id = et[i].u.Id;
-
-        if (PRIMARYLANGID(id) == LANG_NEUTRAL) continue;
-
-        if (!load_string( LOCALE_SNAME, id, buf, ARRAY_SIZE(buf) ) && !wcsicmp( name, buf ))
-        {
-            *lcid = MAKELCID( id, SORT_DEFAULT );  /* FIXME: handle sort order */
-            goto found;
-        }
-
-        if (load_string( LOCALE_SISO639LANGNAME, id, buf, ARRAY_SIZE(buf) ) || wcsicmp( lang, buf ))
-            continue;
-
-        if (script)
-        {
-            unsigned int len = wcslen( script );
-            if (load_string( LOCALE_SSCRIPTS, id, buf, ARRAY_SIZE(buf) )) continue;
-            p = buf;
-            while (*p)
-            {
-                if (!wcsnicmp( p, script, len ) && (!p[len] || p[len] == ';')) break;
-                if (!(p = wcschr( p, ';'))) break;
-                p++;
-            }
-            if (!p || !*p) continue;
-        }
-
-        if (!country && (flags & 2))
-        {
-            if (!script) id = MAKELANGID( PRIMARYLANGID(id), LANG_NEUTRAL );
-            switch (id)
-            {
-            case MAKELANGID( LANG_CHINESE, SUBLANG_NEUTRAL ):
-            case MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_SINGAPORE ):
-                *lcid = MAKELCID( 0x7804, SORT_DEFAULT );
-                break;
-            case MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_TRADITIONAL ):
-            case MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_MACAU ):
-            case MAKELANGID( LANG_CHINESE, SUBLANG_CHINESE_HONGKONG ):
-                *lcid = MAKELCID( 0x7c04, SORT_DEFAULT );
-                break;
-            case MAKELANGID( LANG_SERBIAN, SUBLANG_NEUTRAL ):
-                *lcid = LANG_SERBIAN_NEUTRAL;
-                break;
-            default:
-                *lcid = MAKELANGID( PRIMARYLANGID(id), SUBLANG_NEUTRAL );
-                break;
-            }
-            goto found;
-        }
-    }
-    return STATUS_INVALID_PARAMETER_1;
-
-found:
+    if (!entry) return STATUS_INVALID_PARAMETER_1;
+    /* reject neutral locale unless flag 2 is set */
+    if (!(flags & 2) && !get_locale_data( entry->idx )->inotneutral) return STATUS_INVALID_PARAMETER_1;
+    *lcid = entry->id;
     TRACE( "%s -> %04x\n", debugstr_w(name), *lcid );
     return STATUS_SUCCESS;
 }
