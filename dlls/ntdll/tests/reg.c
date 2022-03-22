@@ -21,6 +21,7 @@
  * helper function RTL_GetKeyHandle().--Brad DeMorrow
  *
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include "ntdll_test.h"
 #include "winternl.h"
@@ -337,7 +338,7 @@ static void test_RtlQueryRegistryValues(void)
     QueryTable[2].DefaultLength = 0;
 
     status = pRtlQueryRegistryValues(RelativeTo, winetestpath.Buffer, QueryTable, 0, 0);
-    ok(status == STATUS_SUCCESS, "RtlQueryRegistryValues return: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "RtlQueryRegistryValues return: 0x%08lx\n", status);
 
     pRtlFreeHeap(GetProcessHeap(), 0, QueryTable);
 }
@@ -352,30 +353,30 @@ static void test_NtOpenKey(void)
 
     /* All NULL */
     status = pNtOpenKey(NULL, 0, NULL);
-    ok(status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got: 0x%08x\n", status);
+    ok(status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got: 0x%08lx\n", status);
 
     /* NULL attributes */
     status = pNtOpenKey(&key, 0, NULL);
     ok(status == STATUS_ACCESS_VIOLATION /* W2K3/XP/W2K */ || status == STATUS_INVALID_PARAMETER /* NT4 */,
-        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_PARAMETER(NT4), got: 0x%08x\n", status);
+        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_PARAMETER(NT4), got: 0x%08lx\n", status);
 
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
 
     /* NULL key */
     status = pNtOpenKey(NULL, am, &attr);
-    ok(status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got: 0x%08x\n", status);
+    ok(status == STATUS_ACCESS_VIOLATION, "Expected STATUS_ACCESS_VIOLATION, got: 0x%08lx\n", status);
 
     /* Length > sizeof(OBJECT_ATTRIBUTES) */
     attr.Length *= 2;
     status = pNtOpenKey(&key, am, &attr);
-    ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got: 0x%08x\n", status);
+    ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got: 0x%08lx\n", status);
 
     /* Zero accessmask */
     attr.Length = sizeof(attr);
     key = (HANDLE)0xdeadbeef;
     status = pNtOpenKey(&key, 0, &attr);
     todo_wine
-    ok(status == STATUS_ACCESS_DENIED, "Expected STATUS_ACCESS_DENIED, got: 0x%08x\n", status);
+    ok(status == STATUS_ACCESS_DENIED, "Expected STATUS_ACCESS_DENIED, got: 0x%08lx\n", status);
     todo_wine
     ok(!key, "key = %p\n", key);
     if (status == STATUS_SUCCESS) NtClose(key);
@@ -385,7 +386,7 @@ static void test_NtOpenKey(void)
     InitializeObjectAttributes(&attr, &str, 0, 0, 0);
     key = (HANDLE)0xdeadbeef;
     status = pNtOpenKey(&key, KEY_READ, &attr);
-    todo_wine ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NtOpenKey Failed: 0x%08x\n", status);
+    todo_wine ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NtOpenKey Failed: 0x%08lx\n", status);
     todo_wine
     ok(!key, "key = %p\n", key);
     pRtlFreeUnicodeString( &str );
@@ -394,68 +395,68 @@ static void test_NtOpenKey(void)
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\Registry\\Machine" );
     status = pNtOpenKey(&key, KEY_READ, &attr);
     ok(status == STATUS_OBJECT_PATH_NOT_FOUND || status == STATUS_SUCCESS /* Win10 1607+ */,
-            "NtOpenKey Failed: 0x%08x\n", status);
+            "NtOpenKey Failed: 0x%08lx\n", status);
     if (!status) pNtClose( key );
 
     attr.Attributes = OBJ_CASE_INSENSITIVE;
     status = pNtOpenKey(&key, KEY_READ, &attr);
-    ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08lx\n", status);
     pNtClose(key);
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "" );
     status = pNtOpenKey(&key, KEY_READ, &attr);
     todo_wine
-    ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NtOpenKey failed: 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NtOpenKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\" );
     status = pNtOpenKey(&key, KEY_READ, &attr);
     todo_wine
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "NtOpenKey failed: 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "NtOpenKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\Registry" );
     status = pNtOpenKey(&key, KEY_READ, &attr);
     todo_wine
-    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
     pNtClose( key );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\Registry\\" );
     status = pNtOpenKey(&key, KEY_READ, &attr);
-    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
     pNtClose( key );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\Foobar" );
     status = pNtOpenKey(&key, KEY_READ, &attr);
     todo_wine
-    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey failed: 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\Foobar\\Machine" );
     status = pNtOpenKey(&key, KEY_READ, &attr);
     todo_wine
-    ok( status == STATUS_OBJECT_PATH_NOT_FOUND, "NtOpenKey failed: 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_PATH_NOT_FOUND, "NtOpenKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\Machine\\Software\\Classes" );
     status = pNtOpenKey(&key, KEY_READ, &attr);
     todo_wine
-    ok( status == STATUS_OBJECT_PATH_NOT_FOUND, "NtOpenKey failed: 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_PATH_NOT_FOUND, "NtOpenKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "Machine\\Software\\Classes" );
     status = pNtOpenKey(&key, KEY_READ, &attr);
     todo_wine
-    ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NtOpenKey failed: 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NtOpenKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\Device\\Null" );
     status = pNtOpenKey(&key, KEY_READ, &attr);
     todo_wine
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "NtOpenKey failed: 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "NtOpenKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
 
     if (!pNtOpenKeyEx)
@@ -466,7 +467,7 @@ static void test_NtOpenKey(void)
 
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
     status = pNtOpenKeyEx(&key, KEY_WRITE|KEY_READ, &attr, 0);
-    ok(status == STATUS_SUCCESS, "NtOpenKeyEx Failed: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtOpenKeyEx Failed: 0x%08lx\n", status);
 
     pNtClose(key);
 }
@@ -483,61 +484,61 @@ static void test_NtCreateKey(void)
     /* All NULL */
     status = pNtCreateKey(NULL, 0, NULL, 0, 0, 0, 0);
     ok(status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_PARAMETER,
-       "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_PARAMETER, got: 0x%08x\n", status);
+       "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_PARAMETER, got: 0x%08lx\n", status);
 
     /* Only the key */
     status = pNtCreateKey(&key, 0, NULL, 0, 0, 0, 0);
     ok(status == STATUS_ACCESS_VIOLATION /* W2K3/XP/W2K */ || status == STATUS_INVALID_PARAMETER /* NT4 */,
-        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_PARAMETER(NT4), got: 0x%08x\n", status);
+        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_PARAMETER(NT4), got: 0x%08lx\n", status);
 
     /* Only accessmask */
     status = pNtCreateKey(NULL, am, NULL, 0, 0, 0, 0);
     ok(status == STATUS_ACCESS_VIOLATION || status == STATUS_INVALID_PARAMETER,
-       "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_PARAMETER, got: 0x%08x\n", status);
+       "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_PARAMETER, got: 0x%08lx\n", status);
 
     /* Key and accessmask */
     status = pNtCreateKey(&key, am, NULL, 0, 0, 0, 0);
     ok(status == STATUS_ACCESS_VIOLATION /* W2K3/XP/W2K */ || status == STATUS_INVALID_PARAMETER /* NT4 */,
-        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_PARAMETER(NT4), got: 0x%08x\n", status);
+        "Expected STATUS_ACCESS_VIOLATION or STATUS_INVALID_PARAMETER(NT4), got: 0x%08lx\n", status);
 
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
 
     /* Only attributes */
     status = pNtCreateKey(NULL, 0, &attr, 0, 0, 0, 0);
     ok(status == STATUS_ACCESS_VIOLATION || status == STATUS_ACCESS_DENIED /* Win7 */,
-       "Expected STATUS_ACCESS_VIOLATION or STATUS_ACCESS_DENIED, got: 0x%08x\n", status);
+       "Expected STATUS_ACCESS_VIOLATION or STATUS_ACCESS_DENIED, got: 0x%08lx\n", status);
 
     /* Length > sizeof(OBJECT_ATTRIBUTES) */
     attr.Length *= 2;
     status = pNtCreateKey(&key, am, &attr, 0, 0, 0, 0);
-    ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got: 0x%08x\n", status);
+    ok(status == STATUS_INVALID_PARAMETER, "Expected STATUS_INVALID_PARAMETER, got: 0x%08lx\n", status);
 
     attr.Length = sizeof(attr);
     status = pNtCreateKey(&key, am, &attr, 0, 0, 0, 0);
-    ok(status == STATUS_SUCCESS, "NtCreateKey Failed: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtCreateKey Failed: 0x%08lx\n", status);
 
     attr.RootDirectory = key;
     attr.ObjectName = &str;
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "test\\sub\\key" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
-    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtCreateKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "test\\subkey" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
-    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtCreateKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "test\\subkey\\" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
-    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtCreateKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "test_subkey\\" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS || broken(status == STATUS_OBJECT_NAME_NOT_FOUND), /* nt4 */
-        "NtCreateKey failed: 0x%08x\n", status );
+        "NtCreateKey failed: 0x%08lx\n", status );
     if (status == STATUS_SUCCESS)
     {
         pNtDeleteKey( subkey );
@@ -547,7 +548,7 @@ static void test_NtCreateKey(void)
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "test_subkey" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
-    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
     pNtDeleteKey( subkey );
     pNtClose( subkey );
@@ -558,64 +559,64 @@ static void test_NtCreateKey(void)
     pRtlCreateUnicodeStringFromAsciiz( &str, "" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
     todo_wine
-    ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NtCreateKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
     todo_wine
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "NtCreateKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\Registry" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
     todo_wine
     ok( status == STATUS_SUCCESS || status == STATUS_ACCESS_DENIED,
-        "NtCreateKey failed: 0x%08x\n", status );
+        "NtCreateKey failed: 0x%08lx\n", status );
     if (!status) pNtClose( subkey );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\Registry\\" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS || status == STATUS_ACCESS_DENIED,
-        "NtCreateKey failed: 0x%08x\n", status );
+        "NtCreateKey failed: 0x%08lx\n", status );
     if (!status) pNtClose( subkey );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\Foobar" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
     todo_wine
-    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtCreateKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\Foobar\\Machine" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
     todo_wine
-    ok( status == STATUS_OBJECT_PATH_NOT_FOUND, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_PATH_NOT_FOUND, "NtCreateKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\Machine\\Software\\Classes" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
     todo_wine
-    ok( status == STATUS_OBJECT_PATH_NOT_FOUND, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_PATH_NOT_FOUND, "NtCreateKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "Machine\\Software\\Classes" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
     todo_wine
-    ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_PATH_SYNTAX_BAD, "NtCreateKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\Device\\Null" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
     todo_wine
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "NtCreateKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\Registry\\Machine\\Software\\Classes" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS || status == STATUS_ACCESS_DENIED,
-        "NtCreateKey failed: 0x%08x\n", status );
+        "NtCreateKey failed: 0x%08lx\n", status );
     if (!status) pNtClose( subkey );
     pRtlFreeUnicodeString( &str );
 
@@ -625,21 +626,21 @@ static void test_NtCreateKey(void)
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\Registry\\Machine\\Software\\Classes" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
     ok(status == STATUS_OBJECT_PATH_NOT_FOUND || status == STATUS_SUCCESS /* Win10 1607+ */,
-            "NtCreateKey failed: 0x%08x\n", status );
+            "NtCreateKey failed: 0x%08lx\n", status );
     if (!status) pNtClose( subkey );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\REGISTRY\\Machine\\Software\\Classes" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS,
-        "NtCreateKey failed: 0x%08x\n", status );
+        "NtCreateKey failed: 0x%08lx\n", status );
     if (!status) pNtClose( subkey );
     pRtlFreeUnicodeString( &str );
 
     pRtlCreateUnicodeStringFromAsciiz( &str, "\\REGISTRY\\MACHINE\\SOFTWARE\\CLASSES" );
     status = pNtCreateKey( &subkey, am, &attr, 0, 0, 0, 0 );
     ok( status == STATUS_SUCCESS,
-        "NtCreateKey failed: 0x%08x\n", status );
+        "NtCreateKey failed: 0x%08lx\n", status );
     if (!status) pNtClose( subkey );
     pRtlFreeUnicodeString( &str );
 
@@ -657,16 +658,16 @@ static void test_NtSetValueKey(void)
 
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
     status = pNtOpenKey(&key, am, &attr);
-    ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08lx\n", status);
 
     pRtlCreateUnicodeStringFromAsciiz(&ValName, "deletetest");
     status = pNtSetValueKey(key, &ValName, 0, REG_DWORD, &data, sizeof(data));
-    ok(status == STATUS_SUCCESS, "NtSetValueKey Failed: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtSetValueKey Failed: 0x%08lx\n", status);
     pRtlFreeUnicodeString(&ValName);
 
     pRtlCreateUnicodeStringFromAsciiz(&ValName, "stringtest");
     status = pNtSetValueKey(key, &ValName, 0, REG_SZ, (VOID*)stringW, STR_TRUNC_SIZE);
-    ok(status == STATUS_SUCCESS, "NtSetValueKey Failed: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtSetValueKey Failed: 0x%08lx\n", status);
     pRtlFreeUnicodeString(&ValName);
 
     pNtClose(key);
@@ -677,7 +678,7 @@ static void test_RtlOpenCurrentUser(void)
     NTSTATUS status;
     HANDLE handle;
     status=pRtlOpenCurrentUser(KEY_READ, &handle);
-    ok(status == STATUS_SUCCESS, "RtlOpenCurrentUser Failed: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "RtlOpenCurrentUser Failed: 0x%08lx\n", status);
     pNtClose(handle);
 }
 
@@ -687,22 +688,22 @@ static void test_RtlCheckRegistryKey(void)
     NTSTATUS status;
 
     status = pRtlCheckRegistryKey(RTL_REGISTRY_ABSOLUTE, winetestpath.Buffer);
-    ok(status == STATUS_SUCCESS, "RtlCheckRegistryKey with RTL_REGISTRY_ABSOLUTE: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "RtlCheckRegistryKey with RTL_REGISTRY_ABSOLUTE: 0x%08lx\n", status);
 
     status = pRtlCheckRegistryKey((RTL_REGISTRY_ABSOLUTE | RTL_REGISTRY_OPTIONAL), winetestpath.Buffer);
-    ok(status == STATUS_SUCCESS, "RtlCheckRegistryKey with RTL_REGISTRY_ABSOLUTE and RTL_REGISTRY_OPTIONAL: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "RtlCheckRegistryKey with RTL_REGISTRY_ABSOLUTE and RTL_REGISTRY_OPTIONAL: 0x%08lx\n", status);
 
     status = pRtlCheckRegistryKey(RTL_REGISTRY_ABSOLUTE, NULL);
-    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "RtlCheckRegistryKey with RTL_REGISTRY_ABSOLUTE and Path being NULL: 0x%08x\n", status);
+    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "RtlCheckRegistryKey with RTL_REGISTRY_ABSOLUTE and Path being NULL: 0x%08lx\n", status);
 
     status = pRtlCheckRegistryKey(RTL_REGISTRY_ABSOLUTE, empty);
-    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "RtlCheckRegistryKey with RTL_REGISTRY_ABSOLUTE and Path being empty: 0x%08x\n", status);
+    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "RtlCheckRegistryKey with RTL_REGISTRY_ABSOLUTE and Path being empty: 0x%08lx\n", status);
 
     status = pRtlCheckRegistryKey(RTL_REGISTRY_USER, NULL);
-    ok(status == STATUS_SUCCESS, "RtlCheckRegistryKey with RTL_REGISTRY_USER and Path being NULL: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "RtlCheckRegistryKey with RTL_REGISTRY_USER and Path being NULL: 0x%08lx\n", status);
 
     status = pRtlCheckRegistryKey(RTL_REGISTRY_USER, empty);
-    ok(status == STATUS_SUCCESS, "RtlCheckRegistryKey with RTL_REGISTRY_USER and Path being empty: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "RtlCheckRegistryKey with RTL_REGISTRY_USER and Path being empty: 0x%08lx\n", status);
 }
 
 static void test_NtFlushKey(void)
@@ -713,13 +714,13 @@ static void test_NtFlushKey(void)
     ACCESS_MASK am = KEY_ALL_ACCESS;
 
     status = pNtFlushKey(NULL);
-    ok(status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got: 0x%08x\n", status);
+    ok(status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got: 0x%08lx\n", status);
 
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
     pNtOpenKey(&hkey, am, &attr);
 
     status = pNtFlushKey(hkey);
-    ok(status == STATUS_SUCCESS, "NtDeleteKey Failed: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtDeleteKey Failed: 0x%08lx\n", status);
 
     pNtClose(hkey);
 }
@@ -739,67 +740,67 @@ static void test_NtQueryValueKey(void)
 
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
     status = pNtOpenKey(&key, KEY_READ|KEY_SET_VALUE, &attr);
-    ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08lx\n", status);
 
     len = FIELD_OFFSET(KEY_VALUE_BASIC_INFORMATION, Name[0]);
     basic_info = HeapAlloc(GetProcessHeap(), 0, sizeof(*basic_info));
     status = pNtQueryValueKey(key, &ValName, KeyValueBasicInformation, basic_info, len, &len);
-    ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryValueKey should have returned STATUS_BUFFER_OVERFLOW instead of 0x%08x\n", status);
-    ok(basic_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", basic_info->TitleIndex);
-    ok(basic_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %d\n", basic_info->Type);
-    ok(basic_info->NameLength == 20, "NtQueryValueKey returned wrong NameLength %d\n", basic_info->NameLength);
-    ok(len == FIELD_OFFSET(KEY_VALUE_BASIC_INFORMATION, Name[basic_info->NameLength/sizeof(WCHAR)]), "NtQueryValueKey returned wrong len %d\n", len);
+    ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryValueKey should have returned STATUS_BUFFER_OVERFLOW instead of 0x%08lx\n", status);
+    ok(basic_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %ld\n", basic_info->TitleIndex);
+    ok(basic_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %ld\n", basic_info->Type);
+    ok(basic_info->NameLength == 20, "NtQueryValueKey returned wrong NameLength %ld\n", basic_info->NameLength);
+    ok(len == FIELD_OFFSET(KEY_VALUE_BASIC_INFORMATION, Name[basic_info->NameLength/sizeof(WCHAR)]), "NtQueryValueKey returned wrong len %ld\n", len);
 
     basic_info = HeapReAlloc(GetProcessHeap(), 0, basic_info, len);
     status = pNtQueryValueKey(key, &ValName, KeyValueBasicInformation, basic_info, len, &len);
-    ok(status == STATUS_SUCCESS, "NtQueryValueKey should have returned STATUS_SUCCESS instead of 0x%08x\n", status);
-    ok(basic_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", basic_info->TitleIndex);
-    ok(basic_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %d\n", basic_info->Type);
-    ok(basic_info->NameLength == 20, "NtQueryValueKey returned wrong NameLength %d\n", basic_info->NameLength);
-    ok(len == FIELD_OFFSET(KEY_VALUE_BASIC_INFORMATION, Name[basic_info->NameLength/sizeof(WCHAR)]), "NtQueryValueKey returned wrong len %d\n", len);
+    ok(status == STATUS_SUCCESS, "NtQueryValueKey should have returned STATUS_SUCCESS instead of 0x%08lx\n", status);
+    ok(basic_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %ld\n", basic_info->TitleIndex);
+    ok(basic_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %ld\n", basic_info->Type);
+    ok(basic_info->NameLength == 20, "NtQueryValueKey returned wrong NameLength %ld\n", basic_info->NameLength);
+    ok(len == FIELD_OFFSET(KEY_VALUE_BASIC_INFORMATION, Name[basic_info->NameLength/sizeof(WCHAR)]), "NtQueryValueKey returned wrong len %ld\n", len);
     ok(!memcmp(basic_info->Name, ValName.Buffer, ValName.Length), "incorrect Name returned\n");
     HeapFree(GetProcessHeap(), 0, basic_info);
 
     len = FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[0]);
     partial_info = HeapAlloc(GetProcessHeap(), 0, sizeof(*partial_info));
     status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformation, partial_info, len, &len);
-    ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryValueKey should have returned STATUS_BUFFER_OVERFLOW instead of 0x%08x\n", status);
-    ok(partial_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", partial_info->TitleIndex);
-    ok(partial_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %d\n", partial_info->Type);
-    ok(partial_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %d\n", partial_info->DataLength);
-    ok(len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[partial_info->DataLength]), "NtQueryValueKey returned wrong len %d\n", len);
+    ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryValueKey should have returned STATUS_BUFFER_OVERFLOW instead of 0x%08lx\n", status);
+    ok(partial_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %ld\n", partial_info->TitleIndex);
+    ok(partial_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %ld\n", partial_info->Type);
+    ok(partial_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %ld\n", partial_info->DataLength);
+    ok(len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[partial_info->DataLength]), "NtQueryValueKey returned wrong len %ld\n", len);
 
     partial_info = HeapReAlloc(GetProcessHeap(), 0, partial_info, len);
     status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformation, partial_info, len, &len);
-    ok(status == STATUS_SUCCESS, "NtQueryValueKey should have returned STATUS_SUCCESS instead of 0x%08x\n", status);
-    ok(partial_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", partial_info->TitleIndex);
-    ok(partial_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %d\n", partial_info->Type);
-    ok(partial_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %d\n", partial_info->DataLength);
-    ok(len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[partial_info->DataLength]), "NtQueryValueKey returned wrong len %d\n", len);
-    ok(*(DWORD *)partial_info->Data == 711, "incorrect Data returned: 0x%x\n", *(DWORD *)partial_info->Data);
+    ok(status == STATUS_SUCCESS, "NtQueryValueKey should have returned STATUS_SUCCESS instead of 0x%08lx\n", status);
+    ok(partial_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %ld\n", partial_info->TitleIndex);
+    ok(partial_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %ld\n", partial_info->Type);
+    ok(partial_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %ld\n", partial_info->DataLength);
+    ok(len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[partial_info->DataLength]), "NtQueryValueKey returned wrong len %ld\n", len);
+    ok(*(DWORD *)partial_info->Data == 711, "incorrect Data returned: 0x%lx\n", *(DWORD *)partial_info->Data);
     HeapFree(GetProcessHeap(), 0, partial_info);
 
     len = FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name[0]);
     full_info = HeapAlloc(GetProcessHeap(), 0, sizeof(*full_info));
     status = pNtQueryValueKey(key, &ValName, KeyValueFullInformation, full_info, len, &len);
-    ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryValueKey should have returned STATUS_BUFFER_OVERFLOW instead of 0x%08x\n", status);
-    ok(full_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", full_info->TitleIndex);
-    ok(full_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %d\n", full_info->Type);
-    ok(full_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %d\n", full_info->DataLength);
-    ok(full_info->NameLength == 20, "NtQueryValueKey returned wrong NameLength %d\n", full_info->NameLength);
+    ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryValueKey should have returned STATUS_BUFFER_OVERFLOW instead of 0x%08lx\n", status);
+    ok(full_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %ld\n", full_info->TitleIndex);
+    ok(full_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %ld\n", full_info->Type);
+    ok(full_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %ld\n", full_info->DataLength);
+    ok(full_info->NameLength == 20, "NtQueryValueKey returned wrong NameLength %ld\n", full_info->NameLength);
     ok(len == FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name[0]) + full_info->DataLength + full_info->NameLength,
-        "NtQueryValueKey returned wrong len %d\n", len);
+        "NtQueryValueKey returned wrong len %ld\n", len);
     len = FIELD_OFFSET(KEY_VALUE_FULL_INFORMATION, Name[0]) + full_info->DataLength + full_info->NameLength;
 
     full_info = HeapReAlloc(GetProcessHeap(), 0, full_info, len);
     status = pNtQueryValueKey(key, &ValName, KeyValueFullInformation, full_info, len, &len);
-    ok(status == STATUS_SUCCESS, "NtQueryValueKey should have returned STATUS_SUCCESS instead of 0x%08x\n", status);
-    ok(full_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", full_info->TitleIndex);
-    ok(full_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %d\n", full_info->Type);
-    ok(full_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %d\n", full_info->DataLength);
-    ok(full_info->NameLength == 20, "NtQueryValueKey returned wrong NameLength %d\n", full_info->NameLength);
+    ok(status == STATUS_SUCCESS, "NtQueryValueKey should have returned STATUS_SUCCESS instead of 0x%08lx\n", status);
+    ok(full_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %ld\n", full_info->TitleIndex);
+    ok(full_info->Type == REG_DWORD, "NtQueryValueKey returned wrong Type %ld\n", full_info->Type);
+    ok(full_info->DataLength == 4, "NtQueryValueKey returned wrong DataLength %ld\n", full_info->DataLength);
+    ok(full_info->NameLength == 20, "NtQueryValueKey returned wrong NameLength %ld\n", full_info->NameLength);
     ok(!memcmp(full_info->Name, ValName.Buffer, ValName.Length), "incorrect Name returned\n");
-    ok(*(DWORD *)((char *)full_info + full_info->DataOffset) == 711, "incorrect Data returned: 0x%x\n",
+    ok(*(DWORD *)((char *)full_info + full_info->DataOffset) == 711, "incorrect Data returned: 0x%lx\n",
         *(DWORD *)((char *)full_info + full_info->DataOffset));
     HeapFree(GetProcessHeap(), 0, full_info);
 
@@ -807,42 +808,42 @@ static void test_NtQueryValueKey(void)
     pRtlCreateUnicodeStringFromAsciiz(&ValName, "stringtest");
 
     status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformation, NULL, 0, &len);
-    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryValueKey should have returned STATUS_BUFFER_TOO_SMALL instead of 0x%08x\n", status);
+    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryValueKey should have returned STATUS_BUFFER_TOO_SMALL instead of 0x%08lx\n", status);
     partial_info = HeapAlloc(GetProcessHeap(), 0, len+1);
     memset(partial_info, 0xbd, len+1);
     status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformation, partial_info, len, &len);
-    ok(status == STATUS_SUCCESS, "NtQueryValueKey should have returned STATUS_SUCCESS instead of 0x%08x\n", status);
-    ok(partial_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %d\n", partial_info->TitleIndex);
-    ok(partial_info->Type == REG_SZ, "NtQueryValueKey returned wrong Type %d\n", partial_info->Type);
-    ok(partial_info->DataLength == STR_TRUNC_SIZE, "NtQueryValueKey returned wrong DataLength %d\n", partial_info->DataLength);
+    ok(status == STATUS_SUCCESS, "NtQueryValueKey should have returned STATUS_SUCCESS instead of 0x%08lx\n", status);
+    ok(partial_info->TitleIndex == 0, "NtQueryValueKey returned wrong TitleIndex %ld\n", partial_info->TitleIndex);
+    ok(partial_info->Type == REG_SZ, "NtQueryValueKey returned wrong Type %ld\n", partial_info->Type);
+    ok(partial_info->DataLength == STR_TRUNC_SIZE, "NtQueryValueKey returned wrong DataLength %ld\n", partial_info->DataLength);
     ok(!memcmp(partial_info->Data, stringW, STR_TRUNC_SIZE), "incorrect Data returned\n");
     ok(*(partial_info->Data+STR_TRUNC_SIZE) == 0xbd, "string overflowed %02x\n", *(partial_info->Data+STR_TRUNC_SIZE));
 
     expected = len;
     status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformation, partial_info, 0, &len);
-    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryValueKey wrong status 0x%08x\n", status);
-    ok(len == expected, "NtQueryValueKey wrong len %u\n", len);
+    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryValueKey wrong status 0x%08lx\n", status);
+    ok(len == expected, "NtQueryValueKey wrong len %lu\n", len);
     status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformation, partial_info, 1, &len);
-    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryValueKey wrong status 0x%08x\n", status);
-    ok(len == expected, "NtQueryValueKey wrong len %u\n", len);
+    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryValueKey wrong status 0x%08lx\n", status);
+    ok(len == expected, "NtQueryValueKey wrong len %lu\n", len);
     status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformation, partial_info, FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data) - 1, &len);
-    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryValueKey wrong status 0x%08x\n", status);
-    ok(len == expected, "NtQueryValueKey wrong len %u\n", len);
+    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryValueKey wrong status 0x%08lx\n", status);
+    ok(len == expected, "NtQueryValueKey wrong len %lu\n", len);
     status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformation, partial_info, FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data), &len);
-    ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryValueKey wrong status 0x%08x\n", status);
-    ok(len == expected, "NtQueryValueKey wrong len %u\n", len);
+    ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryValueKey wrong status 0x%08lx\n", status);
+    ok(len == expected, "NtQueryValueKey wrong len %lu\n", len);
 
     HeapFree(GetProcessHeap(), 0, partial_info);
     pRtlFreeUnicodeString(&ValName);
 
     pRtlCreateUnicodeStringFromAsciiz(&ValName, "custtest");
     status = pNtSetValueKey(key, &ValName, 0, 0xff00ff00, NULL, 0);
-    ok(status == STATUS_SUCCESS, "NtSetValueKey Failed: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtSetValueKey Failed: 0x%08lx\n", status);
 
     status = pNtQueryValueKey(key, &ValName, KeyValuePartialInformation, &pi, sizeof(pi), &len);
-    ok(status == STATUS_SUCCESS, "NtQueryValueKey should have returned STATUS_SUCCESS instead of 0x%08x\n", status);
-    ok(pi.Type == 0xff00ff00, "Type=%x\n", pi.Type);
-    ok(pi.DataLength == 0, "DataLength=%u\n", pi.DataLength);
+    ok(status == STATUS_SUCCESS, "NtQueryValueKey should have returned STATUS_SUCCESS instead of 0x%08lx\n", status);
+    ok(pi.Type == 0xff00ff00, "Type=%lx\n", pi.Type);
+    ok(pi.DataLength == 0, "DataLength=%lu\n", pi.DataLength);
     pRtlFreeUnicodeString(&ValName);
 
     pNtClose(key);
@@ -858,53 +859,53 @@ static void test_NtDeleteKey(void)
     DWORD size;
 
     status = pNtDeleteKey(NULL);
-    ok(status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got: 0x%08x\n", status);
+    ok(status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got: 0x%08lx\n", status);
 
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
     status = pNtOpenKey(&hkey, KEY_ALL_ACCESS, &attr);
-    ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08lx\n", status);
 
     status = pNtDeleteKey(hkey);
-    ok(status == STATUS_SUCCESS, "NtDeleteKey Failed: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtDeleteKey Failed: 0x%08lx\n", status);
 
     status = pNtQueryKey(hkey, KeyNameInformation, buffer, sizeof(buffer), &size);
-    ok(status == STATUS_KEY_DELETED, "got %#x\n", status);
+    ok(status == STATUS_KEY_DELETED, "got %#lx\n", status);
 
     status = pNtEnumerateKey(hkey, 0, KeyFullInformation, buffer, sizeof(buffer), &size);
-    ok(status == STATUS_KEY_DELETED, "got %#x\n", status);
+    ok(status == STATUS_KEY_DELETED, "got %#lx\n", status);
 
     pRtlInitUnicodeString(&string, L"value");
     status = pNtQueryValueKey(hkey, &string, KeyValueBasicInformation, buffer, sizeof(buffer), &size);
-    ok(status == STATUS_KEY_DELETED, "got %#x\n", status);
+    ok(status == STATUS_KEY_DELETED, "got %#lx\n", status);
 
     status = pNtEnumerateValueKey(hkey, 0, KeyValuePartialInformation, buffer, sizeof(buffer), &size);
-    ok(status == STATUS_KEY_DELETED, "got %#x\n", status);
+    ok(status == STATUS_KEY_DELETED, "got %#lx\n", status);
 
     status = pNtSetValueKey(hkey, &string, 0, REG_SZ, "test", 5);
-    ok(status == STATUS_KEY_DELETED, "got %#x\n", status);
+    ok(status == STATUS_KEY_DELETED, "got %#lx\n", status);
 
     status = pNtDeleteValueKey(hkey, &string);
-    ok(status == STATUS_KEY_DELETED, "got %#x\n", status);
+    ok(status == STATUS_KEY_DELETED, "got %#lx\n", status);
 
     status = pNtDeleteKey(hkey);
-    todo_wine ok(!status, "got %#x\n", status);
+    todo_wine ok(!status, "got %#lx\n", status);
 
     RtlInitUnicodeString(&string, L"subkey");
     InitializeObjectAttributes(&attr, &string, OBJ_CASE_INSENSITIVE, hkey, NULL);
     status = pNtOpenKey(&hkey2, KEY_READ, &attr);
-    ok(status == STATUS_KEY_DELETED, "got %#x\n", status);
+    ok(status == STATUS_KEY_DELETED, "got %#lx\n", status);
 
     status = pNtCreateKey(&hkey2, KEY_ALL_ACCESS, &attr, 0, NULL, 0, NULL);
-    ok(status == STATUS_KEY_DELETED, "got %#x\n", status);
+    ok(status == STATUS_KEY_DELETED, "got %#lx\n", status);
 
     status = pNtQueryObject(hkey, ObjectNameInformation, buffer, sizeof(buffer), &size);
-    ok(status == STATUS_KEY_DELETED, "got %#x\n", status);
+    ok(status == STATUS_KEY_DELETED, "got %#lx\n", status);
 
     status = pNtQueryObject(hkey, ObjectBasicInformation, buffer, sizeof(OBJECT_BASIC_INFORMATION), &size);
-    ok(!status, "got %#x\n", status);
+    ok(!status, "got %#lx\n", status);
 
     status = pNtClose(hkey);
-    ok(status == STATUS_SUCCESS, "got %#x\n", status);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
 }
 
 static void test_NtQueryLicenseKey(void)
@@ -926,9 +927,9 @@ static void test_NtQueryLicenseKey(void)
     len = 0xbeef;
     memset(&name, 0, sizeof(name));
     status = pNtQueryLicenseValue(&name, &type, buffer, sizeof(buffer), &len);
-    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08x, expected STATUS_INVALID_PARAMETER\n", status);
-    ok(type == 0xdead, "expected unmodified value for type, got %u\n", type);
-    ok(len == 0xbeef, "expected unmodified value for len, got %u\n", len);
+    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08lx, expected STATUS_INVALID_PARAMETER\n", status);
+    ok(type == 0xdead, "expected unmodified value for type, got %lu\n", type);
+    ok(len == 0xbeef, "expected unmodified value for len, got %lu\n", len);
 
     /* test with empty key */
     pRtlCreateUnicodeStringFromAsciiz(&name, "");
@@ -936,26 +937,26 @@ static void test_NtQueryLicenseKey(void)
     type = 0xdead;
     len = 0xbeef;
     status = pNtQueryLicenseValue(NULL, &type, buffer, sizeof(buffer), &len);
-    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08x, expected STATUS_INVALID_PARAMETER\n", status);
-    ok(type == 0xdead, "expected unmodified value for type, got %u\n", type);
-    ok(len == 0xbeef, "expected unmodified value for len, got %u\n", len);
+    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08lx, expected STATUS_INVALID_PARAMETER\n", status);
+    ok(type == 0xdead, "expected unmodified value for type, got %lu\n", type);
+    ok(len == 0xbeef, "expected unmodified value for len, got %lu\n", len);
 
     type = 0xdead;
     status = pNtQueryLicenseValue(&name, &type, buffer, sizeof(buffer), NULL);
-    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08x, expected STATUS_INVALID_PARAMETER\n", status);
-    ok(type == 0xdead, "expected unmodified value for type, got %u\n", type);
+    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08lx, expected STATUS_INVALID_PARAMETER\n", status);
+    ok(type == 0xdead, "expected unmodified value for type, got %lu\n", type);
 
     len = 0xbeef;
     status = pNtQueryLicenseValue(&name, NULL, buffer, sizeof(buffer), &len);
-    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08x, expected STATUS_INVALID_PARAMETER\n", status);
-    ok(len == 0xbeef, "expected unmodified value for len, got %u\n", len);
+    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08lx, expected STATUS_INVALID_PARAMETER\n", status);
+    ok(len == 0xbeef, "expected unmodified value for len, got %lu\n", len);
 
     type = 0xdead;
     len = 0xbeef;
     status = pNtQueryLicenseValue(&name, &type, buffer, sizeof(buffer), &len);
-    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08x, expected STATUS_INVALID_PARAMETER\n", status);
-    ok(type == 0xdead, "expected unmodified value for type, got %u\n", type);
-    ok(len == 0xbeef, "expected unmodified value for len, got %u\n", len);
+    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08lx, expected STATUS_INVALID_PARAMETER\n", status);
+    ok(type == 0xdead, "expected unmodified value for type, got %lu\n", type);
+    ok(len == 0xbeef, "expected unmodified value for len, got %lu\n", len);
 
     pRtlFreeUnicodeString(&name);
 
@@ -965,26 +966,26 @@ static void test_NtQueryLicenseKey(void)
     type = 0xdead;
     len = 0xbeef;
     status = pNtQueryLicenseValue(NULL, &type, buffer, sizeof(buffer), &len);
-    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08x, expected STATUS_INVALID_PARAMETER\n", status);
-    ok(type == 0xdead, "expected unmodified value for type, got %u\n", type);
-    ok(len == 0xbeef, "expected unmodified value for len, got %u\n", len);
+    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08lx, expected STATUS_INVALID_PARAMETER\n", status);
+    ok(type == 0xdead, "expected unmodified value for type, got %lu\n", type);
+    ok(len == 0xbeef, "expected unmodified value for len, got %lu\n", len);
 
     type = 0xdead;
     status = pNtQueryLicenseValue(&name, &type, buffer, sizeof(buffer), NULL);
-    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08x, expected STATUS_INVALID_PARAMETER\n", status);
-    ok(type == 0xdead, "expected unmodified value for type, got %u\n", type);
+    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08lx, expected STATUS_INVALID_PARAMETER\n", status);
+    ok(type == 0xdead, "expected unmodified value for type, got %lu\n", type);
 
     len = 0xbeef;
     status = pNtQueryLicenseValue(&name, NULL, buffer, sizeof(buffer), &len);
-    ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryLicenseValue returned %08x, expected STATUS_OBJECT_NAME_NOT_FOUND\n", status);
-    ok(len == 0xbeef || broken(!len) /* Win10 1607 */, "expected unmodified value for len, got %u\n", len);
+    ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryLicenseValue returned %08lx, expected STATUS_OBJECT_NAME_NOT_FOUND\n", status);
+    ok(len == 0xbeef || broken(!len) /* Win10 1607 */, "expected unmodified value for len, got %lu\n", len);
 
     type = 0xdead;
     len = 0xbeef;
     status = pNtQueryLicenseValue(&name, &type, buffer, sizeof(buffer), &len);
     ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryLicenseValue unexpected succeeded\n");
-    ok(type == 0xdead, "expected unmodified value for type, got %u\n", type);
-    ok(len == 0xbeef || broken(!len) /* Win10 1607 */, "expected unmodified value for len, got %u\n", len);
+    ok(type == 0xdead, "expected unmodified value for type, got %lu\n", type);
+    ok(len == 0xbeef || broken(!len) /* Win10 1607 */, "expected unmodified value for len, got %lu\n", len);
 
     pRtlFreeUnicodeString(&name);
 
@@ -994,43 +995,43 @@ static void test_NtQueryLicenseKey(void)
     type = 0xdead;
     len = 0xbeef;
     status = pNtQueryLicenseValue(NULL, &type, buffer, sizeof(buffer), &len);
-    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08x, expected STATUS_INVALID_PARAMETER\n", status);
-    ok(type == 0xdead, "expected unmodified value for type, got %u\n", type);
-    ok(len == 0xbeef, "expected unmodified value for len, got %u\n", len);
+    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08lx, expected STATUS_INVALID_PARAMETER\n", status);
+    ok(type == 0xdead, "expected unmodified value for type, got %lu\n", type);
+    ok(len == 0xbeef, "expected unmodified value for len, got %lu\n", len);
 
     type = 0xdead;
     status = pNtQueryLicenseValue(&name, &type, buffer, sizeof(buffer), NULL);
-    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08x, expected STATUS_INVALID_PARAMETER\n", status);
-    ok(type == 0xdead, "expected unmodified value for type, got %u\n", type);
+    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08lx, expected STATUS_INVALID_PARAMETER\n", status);
+    ok(type == 0xdead, "expected unmodified value for type, got %lu\n", type);
 
     type = 0xdead;
     len = 0;
     status = pNtQueryLicenseValue(&name, &type, buffer, 0, &len);
-    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryLicenseValue returned %08x, expected STATUS_BUFFER_TOO_SMALL\n", status);
-    ok(type == REG_SZ, "expected type = REG_SZ, got %u\n", type);
-    ok(len == sizeof(emptyW), "expected len = %u, got %u\n", (DWORD)sizeof(emptyW), len);
+    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryLicenseValue returned %08lx, expected STATUS_BUFFER_TOO_SMALL\n", status);
+    ok(type == REG_SZ, "expected type = REG_SZ, got %lu\n", type);
+    ok(len == sizeof(emptyW), "expected len = %lu, got %lu\n", (DWORD)sizeof(emptyW), len);
 
     len = 0;
     status = pNtQueryLicenseValue(&name, NULL, buffer, 0, &len);
-    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryLicenseValue returned %08x, expected STATUS_BUFFER_TOO_SMALL\n", status);
-    ok(len == sizeof(emptyW), "expected len = %u, got %u\n", (DWORD)sizeof(emptyW), len);
+    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryLicenseValue returned %08lx, expected STATUS_BUFFER_TOO_SMALL\n", status);
+    ok(len == sizeof(emptyW), "expected len = %lu, got %lu\n", (DWORD)sizeof(emptyW), len);
 
     type = 0xdead;
     len = 0;
     memset(buffer, 0x11, sizeof(buffer));
     status = pNtQueryLicenseValue(&name, &type, buffer, sizeof(buffer), &len);
-    ok(status == STATUS_SUCCESS, "NtQueryLicenseValue returned %08x, expected STATUS_SUCCESS\n", status);
-    ok(type == REG_SZ, "expected type = REG_SZ, got %u\n", type);
-    ok(len == sizeof(emptyW), "expected len = %u, got %u\n", (DWORD)sizeof(emptyW), len);
+    ok(status == STATUS_SUCCESS, "NtQueryLicenseValue returned %08lx, expected STATUS_SUCCESS\n", status);
+    ok(type == REG_SZ, "expected type = REG_SZ, got %lu\n", type);
+    ok(len == sizeof(emptyW), "expected len = %lu, got %lu\n", (DWORD)sizeof(emptyW), len);
     ok(!memcmp(buffer, emptyW, sizeof(emptyW)), "unexpected buffer content\n");
 
     type = 0xdead;
     len = 0;
     memset(buffer, 0x11, sizeof(buffer));
     status = pNtQueryLicenseValue(&name, &type, buffer, 2, &len);
-    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryLicenseValue returned %08x, expected STATUS_BUFFER_TOO_SMALL\n", status);
-    ok(type == REG_SZ, "expected type REG_SZ, got %u\n", type);
-    ok(len == sizeof(emptyW), "expected len = %u, got %u\n", (DWORD)sizeof(emptyW), len);
+    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryLicenseValue returned %08lx, expected STATUS_BUFFER_TOO_SMALL\n", status);
+    ok(type == REG_SZ, "expected type REG_SZ, got %lu\n", type);
+    ok(len == sizeof(emptyW), "expected len = %lu, got %lu\n", (DWORD)sizeof(emptyW), len);
     ok(buffer[0] == 0x1111, "expected buffer[0] = 0x1111, got %u\n", buffer[0]);
 
     pRtlFreeUnicodeString(&name);
@@ -1041,42 +1042,42 @@ static void test_NtQueryLicenseKey(void)
     type = 0xdead;
     len = 0xbeef;
     status = pNtQueryLicenseValue(NULL, &type, &value, sizeof(value), &len);
-    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08x, expected STATUS_INVALID_PARAMETER\n", status);
-    ok(type == 0xdead, "expected unmodified value for type, got %u\n", type);
-    ok(len == 0xbeef, "expected unmodified value for len, got %u\n", len);
+    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08lx, expected STATUS_INVALID_PARAMETER\n", status);
+    ok(type == 0xdead, "expected unmodified value for type, got %lu\n", type);
+    ok(len == 0xbeef, "expected unmodified value for len, got %lu\n", len);
 
     type = 0xdead;
     status = pNtQueryLicenseValue(&name, &type, &value, sizeof(value), NULL);
-    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08x, expected STATUS_INVALID_PARAMETER\n", status);
-    ok(type == 0xdead, "expected unmodified value for type, got %u\n", type);
+    ok(status == STATUS_INVALID_PARAMETER, "NtQueryLicenseValue returned %08lx, expected STATUS_INVALID_PARAMETER\n", status);
+    ok(type == 0xdead, "expected unmodified value for type, got %lu\n", type);
 
     type = 0xdead;
     len = 0;
     status = pNtQueryLicenseValue(&name, &type, &value, 0, &len);
-    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryLicenseValue returned %08x, expected STATUS_BUFFER_TOO_SMALL\n", status);
-    ok(type == REG_DWORD, "expected type = REG_DWORD, got %u\n", type);
-    ok(len == sizeof(value), "expected len = %u, got %u\n", (DWORD)sizeof(value), len);
+    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryLicenseValue returned %08lx, expected STATUS_BUFFER_TOO_SMALL\n", status);
+    ok(type == REG_DWORD, "expected type = REG_DWORD, got %lu\n", type);
+    ok(len == sizeof(value), "expected len = %lu, got %lu\n", (DWORD)sizeof(value), len);
 
     len = 0;
     status = pNtQueryLicenseValue(&name, NULL, &value, 0, &len);
-    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryLicenseValue returned %08x, expected STATUS_BUFFER_TOO_SMALL\n", status);
-    ok(len == sizeof(value), "expected len = %u, got %u\n", (DWORD)sizeof(value), len);
+    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryLicenseValue returned %08lx, expected STATUS_BUFFER_TOO_SMALL\n", status);
+    ok(len == sizeof(value), "expected len = %lu, got %lu\n", (DWORD)sizeof(value), len);
 
     type = 0xdead;
     len = 0;
     value = 0xdeadbeef;
     status = pNtQueryLicenseValue(&name, &type, &value, sizeof(value), &len);
-    ok(status == STATUS_SUCCESS, "NtQueryLicenseValue returned %08x, expected STATUS_SUCCESS\n", status);
-    ok(type == REG_DWORD, "expected type = REG_DWORD, got %u\n", type);
-    ok(len == sizeof(value), "expected len = %u, got %u\n", (DWORD)sizeof(value), len);
+    ok(status == STATUS_SUCCESS, "NtQueryLicenseValue returned %08lx, expected STATUS_SUCCESS\n", status);
+    ok(type == REG_DWORD, "expected type = REG_DWORD, got %lu\n", type);
+    ok(len == sizeof(value), "expected len = %lu, got %lu\n", (DWORD)sizeof(value), len);
     ok(value != 0xdeadbeef, "expected value != 0xdeadbeef\n");
 
     type = 0xdead;
     len = 0;
     status = pNtQueryLicenseValue(&name, &type, &value, 2, &len);
-    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryLicenseValue returned %08x, expected STATUS_BUFFER_TOO_SMALL\n", status);
-    ok(type == REG_DWORD, "expected type REG_DWORD, got %u\n", type);
-    ok(len == sizeof(value), "expected len = %u, got %u\n", (DWORD)sizeof(value), len);
+    ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryLicenseValue returned %08lx, expected STATUS_BUFFER_TOO_SMALL\n", status);
+    ok(type == REG_DWORD, "expected type REG_DWORD, got %lu\n", type);
+    ok(len == sizeof(value), "expected len = %lu, got %lu\n", (DWORD)sizeof(value), len);
 
     pRtlFreeUnicodeString(&name);
 }
@@ -1086,7 +1087,7 @@ static void test_RtlpNtQueryValueKey(void)
     NTSTATUS status;
 
     status = pRtlpNtQueryValueKey(NULL, NULL, NULL, NULL, NULL);
-    ok(status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got: 0x%08x\n", status);
+    ok(status == STATUS_INVALID_HANDLE, "Expected STATUS_INVALID_HANDLE, got: 0x%08lx\n", status);
 }
 
 static void test_symlinks(void)
@@ -1123,75 +1124,75 @@ static void test_symlinks(void)
     attr.SecurityQualityOfService = NULL;
 
     status = pNtCreateKey( &root, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
 
     attr.RootDirectory = root;
     attr.ObjectName = &link_str;
     status = pNtCreateKey( &link, KEY_ALL_ACCESS, &attr, 0, 0, REG_OPTION_CREATE_LINK, 0 );
-    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
 
     /* REG_SZ is not allowed */
     status = pNtSetValueKey( link, &symlink_str, 0, REG_SZ, target, target_len );
-    ok( status == STATUS_ACCESS_DENIED, "NtSetValueKey wrong status 0x%08x\n", status );
+    ok( status == STATUS_ACCESS_DENIED, "NtSetValueKey wrong status 0x%08lx\n", status );
     status = pNtSetValueKey( link, &symlink_str, 0, REG_LINK, target, target_len - sizeof(WCHAR) );
-    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08lx\n", status );
     /* other values are not allowed */
     status = pNtSetValueKey( link, &link_str, 0, REG_LINK, target, target_len - sizeof(WCHAR) );
-    ok( status == STATUS_ACCESS_DENIED, "NtSetValueKey wrong status 0x%08x\n", status );
+    ok( status == STATUS_ACCESS_DENIED, "NtSetValueKey wrong status 0x%08lx\n", status );
 
     /* try opening the target through the link */
 
     attr.ObjectName = &link_str;
     key = (HANDLE)0xdeadbeef;
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
-    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey wrong status 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey wrong status 0x%08lx\n", status );
     ok( !key, "key = %p\n", key );
 
     attr.ObjectName = &target_str;
     status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
 
     dw = 0xbeef;
     status = pNtSetValueKey( key, &value_str, 0, REG_DWORD, &dw, sizeof(dw) );
-    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08lx\n", status );
     pNtClose( key );
 
     attr.ObjectName = &link_str;
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
-    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
 
     len = sizeof(buffer);
     status = pNtQueryValueKey( key, &value_str, KeyValuePartialInformation, info, len, &len );
-    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
-    ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + sizeof(DWORD), "wrong len %u\n", len );
+    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08lx\n", status );
+    ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + sizeof(DWORD), "wrong len %lu\n", len );
 
     status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
-    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryValueKey failed: 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryValueKey failed: 0x%08lx\n", status );
 
     /* REG_LINK can be created in non-link keys */
     status = pNtSetValueKey( key, &symlink_str, 0, REG_LINK, target, target_len - sizeof(WCHAR) );
-    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08lx\n", status );
     len = sizeof(buffer);
     status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
-    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08lx\n", status );
     ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
-        "wrong len %u\n", len );
+        "wrong len %lu\n", len );
     status = pNtDeleteValueKey( key, &symlink_str );
-    ok( status == STATUS_SUCCESS, "NtDeleteValueKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtDeleteValueKey failed: 0x%08lx\n", status );
 
     pNtClose( key );
 
     attr.Attributes = 0;
     status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
 
     len = sizeof(buffer);
     status = pNtQueryValueKey( key, &value_str, KeyValuePartialInformation, info, len, &len );
-    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
-    ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + sizeof(DWORD), "wrong len %u\n", len );
+    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08lx\n", status );
+    ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + sizeof(DWORD), "wrong len %lu\n", len );
 
     status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
-    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryValueKey failed: 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryValueKey failed: 0x%08lx\n", status );
     pNtClose( key );
 
     /* now open the symlink itself */
@@ -1200,87 +1201,87 @@ static void test_symlinks(void)
     attr.Attributes = OBJ_OPENLINK;
     attr.ObjectName = &link_str;
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
-    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
 
     len = sizeof(buffer);
     status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
-    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08lx\n", status );
     ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
-        "wrong len %u\n", len );
+        "wrong len %lu\n", len );
     pNtClose( key );
 
     if (pNtOpenKeyEx)
     {
         /* REG_OPTION_OPEN_LINK flag doesn't matter */
         status = pNtOpenKeyEx( &key, KEY_ALL_ACCESS, &attr, REG_OPTION_OPEN_LINK );
-        ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+        ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
 
         len = sizeof(buffer);
         status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
-        ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+        ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08lx\n", status );
         ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
-            "wrong len %u\n", len );
+            "wrong len %lu\n", len );
         pNtClose( key );
 
         status = pNtOpenKeyEx( &key, KEY_ALL_ACCESS, &attr, 0 );
-        ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+        ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
 
         len = sizeof(buffer);
         status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
-        ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+        ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08lx\n", status );
         ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
-            "wrong len %u\n", len );
+            "wrong len %lu\n", len );
         pNtClose( key );
 
         attr.Attributes = 0;
         status = pNtOpenKeyEx( &key, KEY_ALL_ACCESS, &attr, REG_OPTION_OPEN_LINK );
-        ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+        ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
 
         len = sizeof(buffer);
         status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
-        ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryValueKey failed: 0x%08x\n", status );
+        ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryValueKey failed: 0x%08lx\n", status );
         pNtClose( key );
     }
 
     attr.Attributes = OBJ_OPENLINK;
     status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
     len = sizeof(buffer);
     status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
-    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08lx\n", status );
     ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
-        "wrong len %u\n", len );
+        "wrong len %lu\n", len );
     pNtClose( key );
 
     /* delete target and create by NtCreateKey on link */
     attr.ObjectName = &target_str;
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
-    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
     status = pNtDeleteKey( key );
-    ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08lx\n", status );
     pNtClose( key );
 
     attr.ObjectName = &link_str;
     attr.Attributes = 0;
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
-    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey wrong status 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey wrong status 0x%08lx\n", status );
 
     status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-    todo_wine ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    todo_wine ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
     pNtClose( key );
     if (status) /* can be removed once todo_wine above is fixed */
     {
         attr.ObjectName = &target_str;
         attr.Attributes = OBJ_OPENLINK;
         status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
         pNtClose( key );
     }
 
     attr.ObjectName = &target_str;
     attr.Attributes = OBJ_OPENLINK;
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
-    ok( status == STATUS_SUCCESS, "NtOpenKey wrong status 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtOpenKey wrong status 0x%08lx\n", status );
 
     if (0)  /* crashes the Windows kernel on some Vista systems */
     {
@@ -1290,21 +1291,21 @@ static void test_symlinks(void)
         attr.Attributes = OBJ_OPENLINK;
         attr.ObjectName = &null_str;
         status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
-        ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+        ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
         len = sizeof(buffer);
         status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
-        ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+        ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08lx\n", status );
         ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
-            "wrong len %u\n", len );
+            "wrong len %lu\n", len );
         pNtClose( key );
 
         status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
         len = sizeof(buffer);
         status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
-        ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+        ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08lx\n", status );
         ok( len == FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION,Data) + target_len - sizeof(WCHAR),
-            "wrong len %u\n", len );
+            "wrong len %lu\n", len );
         pNtClose( key );
     }
 
@@ -1314,79 +1315,79 @@ static void test_symlinks(void)
         attr.Attributes = 0;
         attr.ObjectName = &null_str;
         status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
-        ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+        ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
         len = sizeof(buffer);
         status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
-        ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryValueKey failed: 0x%08x\n", status );
+        ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryValueKey failed: 0x%08lx\n", status );
         pNtClose( key );
 
         status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
         len = sizeof(buffer);
         status = pNtQueryValueKey( key, &symlink_str, KeyValuePartialInformation, info, len, &len );
-        ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryValueKey failed: 0x%08x\n", status );
+        ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryValueKey failed: 0x%08lx\n", status );
         pNtClose( key );
     }
 
     /* target with terminating null doesn't work */
     status = pNtSetValueKey( link, &symlink_str, 0, REG_LINK, target, target_len );
-    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08lx\n", status );
     attr.RootDirectory = root;
     attr.Attributes = 0;
     attr.ObjectName = &link_str;
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
-    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey wrong status 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKey wrong status 0x%08lx\n", status );
 
     /* relative symlink, works only on win2k */
     status = pNtSetValueKey( link, &symlink_str, 0, REG_LINK, targetW+1, sizeof(targetW)-2*sizeof(WCHAR) );
-    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08lx\n", status );
     attr.ObjectName = &link_str;
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
     ok( status == STATUS_OBJECT_NAME_NOT_FOUND || status == STATUS_OBJECT_NAME_INVALID /* Win10 1607+ */,
-        "NtOpenKey wrong status 0x%08x\n", status );
+        "NtOpenKey wrong status 0x%08lx\n", status );
 
     key = (HKEY)0xdeadbeef;
     status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, REG_OPTION_CREATE_LINK, NULL );
-    ok( status == STATUS_OBJECT_NAME_COLLISION, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_OBJECT_NAME_COLLISION, "NtCreateKey failed: 0x%08lx\n", status );
     ok( !key, "key = %p\n", key );
 
     status = pNtDeleteKey( link );
-    ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08lx\n", status );
     pNtClose( link );
 
     attr.ObjectName = &target_str;
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
-    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
     status = pNtDeleteKey( key );
-    ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08lx\n", status );
     pNtClose( key );
 
     /* symlink loop */
 
     status = pNtCreateKey( &link, KEY_ALL_ACCESS, &attr, 0, 0, REG_OPTION_CREATE_LINK, 0 );
-    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
     memcpy( target + target_len/sizeof(WCHAR) - 1, targetW, sizeof(targetW) );
     status = pNtSetValueKey( link, &symlink_str, 0, REG_LINK,
         target, target_len + sizeof(targetW) - sizeof(WCHAR) );
-    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08lx\n", status );
 
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
     ok( status == STATUS_OBJECT_NAME_NOT_FOUND /* XP */
             || status == STATUS_NAME_TOO_LONG
             || status == STATUS_INVALID_PARAMETER /* Win10 1607+ */,
-            "NtOpenKey failed: 0x%08x\n", status );
+            "NtOpenKey failed: 0x%08lx\n", status );
 
     attr.Attributes = OBJ_OPENLINK;
     status = pNtOpenKey( &key, KEY_ALL_ACCESS, &attr );
-    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status );
     pNtClose( key );
 
     status = pNtDeleteKey( link );
-    ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08lx\n", status );
     pNtClose( link );
 
     status = pNtDeleteKey( root );
-    ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08lx\n", status );
     pNtClose( root );
 
     pRtlFreeHeap(GetProcessHeap(), 0, target);
@@ -1416,14 +1417,14 @@ static DWORD get_key_value( HANDLE root, const char *name, DWORD flags )
 
     status = pNtCreateKey( &key, flags | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
     if (status == STATUS_OBJECT_NAME_NOT_FOUND) return 0;
-    ok( status == STATUS_SUCCESS, "%08x: NtCreateKey failed: 0x%08x\n", flags, status );
+    ok( status == STATUS_SUCCESS, "%08lx: NtCreateKey failed: 0x%08lx\n", flags, status );
 
     status = pNtQueryValueKey( key, &value_str, KeyValuePartialInformation, info, len, &len );
     if (status == STATUS_OBJECT_NAME_NOT_FOUND)
         dw = 0;
     else
     {
-        ok( status == STATUS_SUCCESS, "%08x: NtQueryValueKey failed: 0x%08x\n", flags, status );
+        ok( status == STATUS_SUCCESS, "%08lx: NtQueryValueKey failed: 0x%08lx\n", flags, status );
         dw = *(DWORD *)info->Data;
     }
     pNtClose( key );
@@ -1434,7 +1435,7 @@ static DWORD get_key_value( HANDLE root, const char *name, DWORD flags )
 static void _check_key_value( int line, HANDLE root, const char *name, DWORD flags, DWORD expect )
 {
     DWORD dw = get_key_value( root, name, flags );
-    ok_(__FILE__,line)( dw == expect, "%08x: wrong value %u/%u\n", flags, dw, expect );
+    ok_(__FILE__,line)( dw == expect, "%08lx: wrong value %lu/%lu\n", flags, dw, expect );
 }
 #define check_key_value(root,name,flags,expect) _check_key_value( __LINE__, root, name, flags, expect )
 
@@ -1511,43 +1512,43 @@ static void test_redirection(void)
         skip("Not authorized to modify KEY_WOW64_64KEY, no redirection\n");
         return;
     }
-    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
 
     pRtlInitUnicodeString( &str, wine32W );
     status = pNtCreateKey( &root32, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
 
     pRtlInitUnicodeString( &str, key64W );
     status = pNtCreateKey( &key64, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
 
     pRtlInitUnicodeString( &str, key32W );
     status = pNtCreateKey( &key32, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
 
     dw = 64;
     status = pNtSetValueKey( key64, &value_str, 0, REG_DWORD, &dw, sizeof(dw) );
-    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08lx\n", status );
 
     dw = 32;
     status = pNtSetValueKey( key32, &value_str, 0, REG_DWORD, &dw, sizeof(dw) );
-    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08lx\n", status );
 
     len = sizeof(buffer);
     status = pNtQueryValueKey( key32, &value_str, KeyValuePartialInformation, info, len, &len );
-    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08lx\n", status );
     dw = *(DWORD *)info->Data;
-    ok( dw == 32, "wrong value %u\n", dw );
+    ok( dw == 32, "wrong value %lu\n", dw );
 
     len = sizeof(buffer);
     status = pNtQueryValueKey( key64, &value_str, KeyValuePartialInformation, info, len, &len );
-    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08lx\n", status );
     dw = *(DWORD *)info->Data;
-    ok( dw == 64, "wrong value %u\n", dw );
+    ok( dw == 64, "wrong value %lu\n", dw );
 
     pRtlInitUnicodeString( &str, softwareW );
     status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
 
     if (ptr_size == 32)
     {
@@ -1575,19 +1576,19 @@ static void test_redirection(void)
     if (ptr_size == 32)
     {
         status = pNtCreateKey( &key, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
         dw = get_key_value( key, "Wine\\Winetest", 0 );
-        ok( dw == 64 || broken(dw == 32) /* xp64 */, "wrong value %u\n", dw );
+        ok( dw == 64 || broken(dw == 32) /* xp64 */, "wrong value %lu\n", dw );
         check_key_value( key, "Wine\\Winetest", KEY_WOW64_64KEY, 64 );
         check_key_value( key, "Wine\\Winetest", KEY_WOW64_32KEY, 32 );
         check_key_value( key, "Wow6432Node\\Wine\\Winetest", 0, 32 );
         dw = get_key_value( key, "Wow6432Node\\Wine\\Winetest", KEY_WOW64_64KEY );
-        ok( dw == 32 || broken(dw == 64) /* xp64 */, "wrong value %u\n", dw );
+        ok( dw == 32 || broken(dw == 64) /* xp64 */, "wrong value %lu\n", dw );
         check_key_value( key, "Wow6432Node\\Wine\\Winetest", KEY_WOW64_32KEY, 32 );
         pNtClose( key );
 
         status = pNtCreateKey( &key, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
         check_key_value( key, "Wine\\Winetest", 0, 32 );
         check_key_value( key, "Wine\\Winetest", KEY_WOW64_64KEY, is_vista ? 64 : 32 );
         check_key_value( key, "Wine\\Winetest", KEY_WOW64_32KEY, 32 );
@@ -1617,7 +1618,7 @@ static void test_redirection(void)
 
     pRtlInitUnicodeString( &str, wownodeW );
     status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
     check_key_value( key, "Wine\\Winetest", 0, 32 );
     check_key_value( key, "Wine\\Winetest", KEY_WOW64_64KEY, (ptr_size == 64) ? 32 : (is_vista ? 64 : 32) );
     check_key_value( key, "Wine\\Winetest", KEY_WOW64_32KEY, 32 );
@@ -1626,15 +1627,15 @@ static void test_redirection(void)
     if (ptr_size == 32)
     {
         status = pNtCreateKey( &key, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
         dw = get_key_value( key, "Wine\\Winetest", 0 );
-        ok( dw == (is_vista ? 64 : 32) || broken(dw == 32) /* xp64 */, "wrong value %u\n", dw );
+        ok( dw == (is_vista ? 64 : 32) || broken(dw == 32) /* xp64 */, "wrong value %lu\n", dw );
         check_key_value( key, "Wine\\Winetest", KEY_WOW64_64KEY, is_vista ? 64 : 32 );
         check_key_value( key, "Wine\\Winetest", KEY_WOW64_32KEY, 32 );
         pNtClose( key );
 
         status = pNtCreateKey( &key, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
         check_key_value( key, "Wine\\Winetest", 0, 32 );
         check_key_value( key, "Wine\\Winetest", KEY_WOW64_64KEY, is_vista ? 64 : 32 );
         check_key_value( key, "Wine\\Winetest", KEY_WOW64_32KEY, 32 );
@@ -1643,7 +1644,7 @@ static void test_redirection(void)
 
     pRtlInitUnicodeString( &str, wine32W );
     status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
     check_key_value( key, "Winetest", 0, 32 );
     check_key_value( key, "Winetest", KEY_WOW64_64KEY, (ptr_size == 32 && is_vista) ? 64 : 32 );
     check_key_value( key, "Winetest", KEY_WOW64_32KEY, 32 );
@@ -1652,15 +1653,15 @@ static void test_redirection(void)
     if (ptr_size == 32)
     {
         status = pNtCreateKey( &key, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
         dw = get_key_value( key, "Winetest", 0 );
-        ok( dw == 32 || (is_vista && dw == 64), "wrong value %u\n", dw );
+        ok( dw == 32 || (is_vista && dw == 64), "wrong value %lu\n", dw );
         check_key_value( key, "Winetest", KEY_WOW64_64KEY, is_vista ? 64 : 32 );
         check_key_value( key, "Winetest", KEY_WOW64_32KEY, 32 );
         pNtClose( key );
 
         status = pNtCreateKey( &key, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
         check_key_value( key, "Winetest", 0, 32 );
         check_key_value( key, "Winetest", KEY_WOW64_64KEY, is_vista ? 64 : 32 );
         check_key_value( key, "Winetest", KEY_WOW64_32KEY, 32 );
@@ -1669,7 +1670,7 @@ static void test_redirection(void)
 
     pRtlInitUnicodeString( &str, wine64W );
     status = pNtCreateKey( &key, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
     check_key_value( key, "Winetest", 0, ptr_size );
     check_key_value( key, "Winetest", KEY_WOW64_64KEY, is_vista ? 64 : ptr_size );
     check_key_value( key, "Winetest", KEY_WOW64_32KEY, ptr_size );
@@ -1678,16 +1679,16 @@ static void test_redirection(void)
     if (ptr_size == 32)
     {
         status = pNtCreateKey( &key, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
         dw = get_key_value( key, "Winetest", 0 );
-        ok( dw == 64 || broken(dw == 32) /* xp64 */, "wrong value %u\n", dw );
+        ok( dw == 64 || broken(dw == 32) /* xp64 */, "wrong value %lu\n", dw );
         check_key_value( key, "Winetest", KEY_WOW64_64KEY, 64 );
         dw = get_key_value( key, "Winetest", KEY_WOW64_32KEY );
-        todo_wine ok( dw == 32, "wrong value %u\n", dw );
+        todo_wine ok( dw == 32, "wrong value %lu\n", dw );
         pNtClose( key );
 
         status = pNtCreateKey( &key, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+        ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
         check_key_value( key, "Winetest", 0, 32 );
         check_key_value( key, "Winetest", KEY_WOW64_64KEY, is_vista ? 64 : 32 );
         check_key_value( key, "Winetest", KEY_WOW64_32KEY, 32 );
@@ -1695,11 +1696,11 @@ static void test_redirection(void)
     }
 
     status = pNtDeleteKey( key32 );
-    ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08lx\n", status );
     pNtClose( key32 );
 
     status = pNtDeleteKey( key64 );
-    ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtDeleteKey failed: 0x%08lx\n", status );
     pNtClose( key64 );
 
     pNtDeleteKey( root32 );
@@ -1716,39 +1717,39 @@ static void test_redirection(void)
         skip("Not authorized to modify the Classes key\n");
         return;
     }
-    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
 
     pRtlInitUnicodeString( &str, classes32W );
     status = pNtCreateKey( &key32, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
 
     dw = 64;
     status = pNtSetValueKey( key64, &value_str, 0, REG_DWORD, &dw, sizeof(dw) );
-    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08lx\n", status );
     pNtClose( key64 );
 
     dw = 32;
     status = pNtSetValueKey( key32, &value_str, 0, REG_DWORD, &dw, sizeof(dw) );
-    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08lx\n", status );
     pNtClose( key32 );
 
     pRtlInitUnicodeString( &str, classes64W );
     status = pNtCreateKey( &key64, KEY_WOW64_64KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
     len = sizeof(buffer);
     status = pNtQueryValueKey( key64, &value_str, KeyValuePartialInformation, info, len, &len );
-    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08lx\n", status );
     dw = *(DWORD *)info->Data;
-    ok( dw == ptr_size, "wrong value %u\n", dw );
+    ok( dw == ptr_size, "wrong value %lu\n", dw );
 
     pRtlInitUnicodeString( &str, classes32W );
     status = pNtCreateKey( &key32, KEY_WOW64_32KEY | KEY_ALL_ACCESS, &attr, 0, 0, 0, 0 );
-    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status );
     len = sizeof(buffer);
     status = pNtQueryValueKey( key32, &value_str, KeyValuePartialInformation, info, len, &len );
-    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtQueryValueKey failed: 0x%08lx\n", status );
     dw = *(DWORD *)info->Data;
-    ok( dw == 32, "wrong value %u\n", dw );
+    ok( dw == 32, "wrong value %lu\n", dw );
 
     pNtDeleteKey( key32 );
     pNtClose( key32 );
@@ -1766,7 +1767,7 @@ static void test_long_value_name(void)
 
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
     status = pNtOpenKey(&key, KEY_WRITE|KEY_READ, &attr);
-    ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08lx\n", status);
 
     ValName.MaximumLength = 0xfffc;
     ValName.Length = ValName.MaximumLength - sizeof(WCHAR);
@@ -1776,16 +1777,16 @@ static void test_long_value_name(void)
     ValName.Buffer[i] = 0;
 
     status = pNtDeleteValueKey(key, &ValName);
-    ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "NtDeleteValueKey with nonexistent long value name returned 0x%08x\n", status);
+    ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "NtDeleteValueKey with nonexistent long value name returned 0x%08lx\n", status);
     status = pNtSetValueKey(key, &ValName, 0, REG_DWORD, &i, sizeof(i));
     ok(status == STATUS_INVALID_PARAMETER || broken(status == STATUS_SUCCESS) /* nt4 */,
-       "NtSetValueKey with long value name returned 0x%08x\n", status);
+       "NtSetValueKey with long value name returned 0x%08lx\n", status);
     expected = (status == STATUS_SUCCESS) ? STATUS_SUCCESS : STATUS_OBJECT_NAME_NOT_FOUND;
     status = pNtDeleteValueKey(key, &ValName);
-    ok(status == expected, "NtDeleteValueKey with long value name returned 0x%08x\n", status);
+    ok(status == expected, "NtDeleteValueKey with long value name returned 0x%08lx\n", status);
 
     status = pNtQueryValueKey(key, &ValName, KeyValueBasicInformation, NULL, 0, &i);
-    ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryValueKey with nonexistent long value name returned 0x%08x\n", status);
+    ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "NtQueryValueKey with nonexistent long value name returned 0x%08lx\n", status);
 
     pRtlFreeUnicodeString(&ValName);
     pNtClose(key);
@@ -1804,7 +1805,7 @@ static void test_NtQueryKey(void)
 
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
     status = pNtOpenKey(&key, KEY_READ, &attr);
-    ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08lx\n", status);
 
     status = pNtQueryKey(key, KeyNameInformation, NULL, 0, &length);
     if (status == STATUS_INVALID_PARAMETER) {
@@ -1812,20 +1813,20 @@ static void test_NtQueryKey(void)
         pNtClose(key);
         return;
     }
-    todo_wine ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryKey Failed: 0x%08x\n", status);
+    todo_wine ok(status == STATUS_BUFFER_TOO_SMALL, "NtQueryKey Failed: 0x%08lx\n", status);
     info = HeapAlloc(GetProcessHeap(), 0, length);
 
     /* non-zero buffer size, but insufficient */
     status = pNtQueryKey(key, KeyNameInformation, info, sizeof(*info), &len);
-    ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryKey Failed: 0x%08x\n", status);
-    ok(length == len, "got %d, expected %d\n", len, length);
-    ok(info->NameLength == winetestpath.Length, "got %d, expected %d\n",
+    ok(status == STATUS_BUFFER_OVERFLOW, "NtQueryKey Failed: 0x%08lx\n", status);
+    ok(length == len, "got %ld, expected %ld\n", len, length);
+    ok(info->NameLength == winetestpath.Length, "got %ld, expected %d\n",
        info->NameLength, winetestpath.Length);
 
     /* correct buffer size */
     status = pNtQueryKey(key, KeyNameInformation, info, length, &len);
-    ok(status == STATUS_SUCCESS, "NtQueryKey Failed: 0x%08x\n", status);
-    ok(length == len, "got %d, expected %d\n", len, length);
+    ok(status == STATUS_SUCCESS, "NtQueryKey Failed: 0x%08lx\n", status);
+    ok(length == len, "got %ld, expected %ld\n", len, length);
 
     str.Buffer = info->Name;
     str.Length = info->NameLength;
@@ -1840,54 +1841,54 @@ static void test_NtQueryKey(void)
     attr.ObjectName = &str;
     pRtlCreateUnicodeStringFromAsciiz(&str, "test_subkey");
     status = pNtCreateKey(&subkey, GENERIC_ALL, &attr, 0, 0, 0, 0);
-    ok(status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status);
     pRtlFreeUnicodeString(&str);
 
     status = pNtQueryKey(subkey, KeyCachedInformation, &cached_info, sizeof(cached_info), &len);
-    ok(status == STATUS_SUCCESS, "NtQueryKey Failed: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtQueryKey Failed: 0x%08lx\n", status);
 
     if (status == STATUS_SUCCESS)
     {
-        ok(len == sizeof(cached_info), "got unexpected length %d\n", len);
-        ok(cached_info.SubKeys == 0, "cached_info.SubKeys = %u\n", cached_info.SubKeys);
-        ok(cached_info.MaxNameLen == 0, "cached_info.MaxNameLen = %u\n", cached_info.MaxNameLen);
-        ok(cached_info.Values == 0, "cached_info.Values = %u\n", cached_info.Values);
-        ok(cached_info.MaxValueNameLen == 0, "cached_info.MaxValueNameLen = %u\n", cached_info.MaxValueNameLen);
-        ok(cached_info.MaxValueDataLen == 0, "cached_info.MaxValueDataLen = %u\n", cached_info.MaxValueDataLen);
-        ok(cached_info.NameLength == 22, "cached_info.NameLength = %u\n", cached_info.NameLength);
+        ok(len == sizeof(cached_info), "got unexpected length %ld\n", len);
+        ok(cached_info.SubKeys == 0, "cached_info.SubKeys = %lu\n", cached_info.SubKeys);
+        ok(cached_info.MaxNameLen == 0, "cached_info.MaxNameLen = %lu\n", cached_info.MaxNameLen);
+        ok(cached_info.Values == 0, "cached_info.Values = %lu\n", cached_info.Values);
+        ok(cached_info.MaxValueNameLen == 0, "cached_info.MaxValueNameLen = %lu\n", cached_info.MaxValueNameLen);
+        ok(cached_info.MaxValueDataLen == 0, "cached_info.MaxValueDataLen = %lu\n", cached_info.MaxValueDataLen);
+        ok(cached_info.NameLength == 22, "cached_info.NameLength = %lu\n", cached_info.NameLength);
     }
 
     attr.RootDirectory = subkey;
     attr.ObjectName = &str;
     pRtlCreateUnicodeStringFromAsciiz(&str, "test_subkey2");
     status = pNtCreateKey(&subkey2, GENERIC_ALL, &attr, 0, 0, 0, 0);
-    ok(status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status);
     pRtlFreeUnicodeString(&str);
 
     pRtlCreateUnicodeStringFromAsciiz(&str, "val");
     dw = 64;
     status = pNtSetValueKey( subkey, &str, 0, REG_DWORD, &dw, sizeof(dw) );
-    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtSetValueKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString(&str);
 
     status = pNtQueryKey(subkey, KeyCachedInformation, &cached_info, sizeof(cached_info), &len);
-    ok(status == STATUS_SUCCESS, "NtQueryKey Failed: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtQueryKey Failed: 0x%08lx\n", status);
 
     if (status == STATUS_SUCCESS)
     {
-        ok(len == sizeof(cached_info), "got unexpected length %d\n", len);
-        ok(cached_info.SubKeys == 1, "cached_info.SubKeys = %u\n", cached_info.SubKeys);
-        ok(cached_info.MaxNameLen == 24, "cached_info.MaxNameLen = %u\n", cached_info.MaxNameLen);
-        ok(cached_info.Values == 1, "cached_info.Values = %u\n", cached_info.Values);
-        ok(cached_info.MaxValueNameLen == 6, "cached_info.MaxValueNameLen = %u\n", cached_info.MaxValueNameLen);
-        ok(cached_info.MaxValueDataLen == 4, "cached_info.MaxValueDataLen = %u\n", cached_info.MaxValueDataLen);
-        ok(cached_info.NameLength == 22, "cached_info.NameLength = %u\n", cached_info.NameLength);
+        ok(len == sizeof(cached_info), "got unexpected length %ld\n", len);
+        ok(cached_info.SubKeys == 1, "cached_info.SubKeys = %lu\n", cached_info.SubKeys);
+        ok(cached_info.MaxNameLen == 24, "cached_info.MaxNameLen = %lu\n", cached_info.MaxNameLen);
+        ok(cached_info.Values == 1, "cached_info.Values = %lu\n", cached_info.Values);
+        ok(cached_info.MaxValueNameLen == 6, "cached_info.MaxValueNameLen = %lu\n", cached_info.MaxValueNameLen);
+        ok(cached_info.MaxValueDataLen == 4, "cached_info.MaxValueDataLen = %lu\n", cached_info.MaxValueDataLen);
+        ok(cached_info.NameLength == 22, "cached_info.NameLength = %lu\n", cached_info.NameLength);
     }
 
     status = pNtDeleteKey(subkey2);
-    ok(status == STATUS_SUCCESS, "NtDeleteSubkey failed: %x\n", status);
+    ok(status == STATUS_SUCCESS, "NtDeleteSubkey failed: %lx\n", status);
     status = pNtDeleteKey(subkey);
-    ok(status == STATUS_SUCCESS, "NtDeleteSubkey failed: %x\n", status);
+    ok(status == STATUS_SUCCESS, "NtDeleteSubkey failed: %lx\n", status);
 
     pNtClose(subkey2);
     pNtClose(subkey);
@@ -1906,114 +1907,114 @@ static void test_notify(void)
 
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
     status = pNtOpenKey(&key, KEY_ALL_ACCESS, &attr);
-    ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08lx\n", status);
     status = pNtOpenKey(&key2, KEY_ALL_ACCESS, &attr);
-    ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08lx\n", status);
 
     for (i = 0; i < ARRAY_SIZE(events); ++i)
         events[i] = CreateEventW(NULL, TRUE, TRUE, NULL);
 
     status = pNtNotifyChangeKey(key, events[0], NULL, NULL, &iosb, REG_NOTIFY_CHANGE_NAME, FALSE, NULL, 0, TRUE);
-    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %x\n", status);
+    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %lx\n", status);
     status = pNtNotifyChangeKey(key, events[1], NULL, NULL, &iosb, 0, FALSE, NULL, 0, TRUE);
-    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %x\n", status);
+    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %lx\n", status);
     status = pNtNotifyChangeKey(key2, events[2], NULL, NULL, &iosb, 0, FALSE, NULL, 0, TRUE);
-    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %x\n", status);
+    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %lx\n", status);
     status = pNtNotifyChangeKey(key2, events[3], NULL, NULL, &iosb, REG_NOTIFY_CHANGE_NAME, FALSE, NULL, 0, TRUE);
-    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %x\n", status);
+    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %lx\n", status);
 
     status = WaitForMultipleObjects(4, events, FALSE, 0);
-    ok(status == WAIT_TIMEOUT, "got %d\n", status);
+    ok(status == WAIT_TIMEOUT, "got %ld\n", status);
 
     attr.RootDirectory = key;
     attr.ObjectName = &str;
 
     pRtlCreateUnicodeStringFromAsciiz(&str, "test_subkey");
     status = pNtCreateKey(&subkey, GENERIC_ALL, &attr, 0, 0, 0, 0);
-    ok(status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status);
     pRtlFreeUnicodeString(&str);
 
     status = pNtWaitForSingleObject(events[0], FALSE, &timeout);
-    ok(!status, "got %#x\n", status);
+    ok(!status, "got %#lx\n", status);
     status = pNtWaitForSingleObject(events[1], FALSE, &timeout);
-    ok(!status, "got %#x\n", status);
+    ok(!status, "got %#lx\n", status);
     status = pNtWaitForSingleObject(events[2], FALSE, &timeout);
-    ok(status == STATUS_TIMEOUT, "got %#x\n", status);
+    ok(status == STATUS_TIMEOUT, "got %#lx\n", status);
     status = pNtWaitForSingleObject(events[3], FALSE, &timeout);
-    ok(status == STATUS_TIMEOUT, "got %#x\n", status);
+    ok(status == STATUS_TIMEOUT, "got %#lx\n", status);
 
     status = pNtNotifyChangeKey(key, events[0], NULL, NULL, &iosb, 0, FALSE, NULL, 0, TRUE);
-    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %x\n", status);
+    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %lx\n", status);
 
     status = pNtWaitForSingleObject(events[0], FALSE, &timeout);
-    ok(status == STATUS_TIMEOUT, "got %#x\n", status);
+    ok(status == STATUS_TIMEOUT, "got %#lx\n", status);
     status = pNtWaitForSingleObject(events[1], FALSE, &timeout);
-    ok(!status, "got %#x\n", status);
+    ok(!status, "got %#lx\n", status);
     status = pNtWaitForSingleObject(events[2], FALSE, &timeout);
-    ok(status == STATUS_TIMEOUT, "got %#x\n", status);
+    ok(status == STATUS_TIMEOUT, "got %#lx\n", status);
     status = pNtWaitForSingleObject(events[3], FALSE, &timeout);
-    ok(status == STATUS_TIMEOUT, "got %#x\n", status);
+    ok(status == STATUS_TIMEOUT, "got %#lx\n", status);
 
     status = pNtNotifyChangeKey(key, events[1], NULL, NULL, &iosb, 0, FALSE, NULL, 0, TRUE);
-    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %x\n", status);
+    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %lx\n", status);
 
     status = WaitForMultipleObjects(4, events, FALSE, 0);
-    ok(status == WAIT_TIMEOUT, "got %d\n", status);
+    ok(status == WAIT_TIMEOUT, "got %ld\n", status);
 
     status = pNtDeleteKey(subkey);
-    ok(status == STATUS_SUCCESS, "NtDeleteSubkey failed: %x\n", status);
+    ok(status == STATUS_SUCCESS, "NtDeleteSubkey failed: %lx\n", status);
 
     status = pNtWaitForSingleObject(events[0], FALSE, &timeout);
-    ok(!status, "got %#x\n", status);
+    ok(!status, "got %#lx\n", status);
     status = pNtWaitForSingleObject(events[1], FALSE, &timeout);
-    ok(!status, "got %#x\n", status);
+    ok(!status, "got %#lx\n", status);
     status = pNtWaitForSingleObject(events[2], FALSE, &timeout);
-    ok(status == STATUS_TIMEOUT, "got %#x\n", status);
+    ok(status == STATUS_TIMEOUT, "got %#lx\n", status);
     status = pNtWaitForSingleObject(events[3], FALSE, &timeout);
-    ok(status == STATUS_TIMEOUT, "got %#x\n", status);
+    ok(status == STATUS_TIMEOUT, "got %#lx\n", status);
 
     pNtClose(subkey);
 
     status = pNtNotifyChangeKey(key, events[0], NULL, NULL, &iosb, 0, FALSE, NULL, 0, TRUE);
-    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %x\n", status);
+    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %lx\n", status);
     status = pNtNotifyChangeKey(key, events[1], NULL, NULL, &iosb, 0, FALSE, NULL, 0, TRUE);
-    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %x\n", status);
+    ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %lx\n", status);
 
     pNtClose(key);
 
     status = pNtWaitForSingleObject(events[0], FALSE, &timeout);
-    ok(!status, "got %#x\n", status);
+    ok(!status, "got %#lx\n", status);
     status = pNtWaitForSingleObject(events[1], FALSE, &timeout);
-    ok(!status, "got %#x\n", status);
+    ok(!status, "got %#lx\n", status);
     status = pNtWaitForSingleObject(events[2], FALSE, &timeout);
-    ok(status == STATUS_TIMEOUT, "got %#x\n", status);
+    ok(status == STATUS_TIMEOUT, "got %#lx\n", status);
     status = pNtWaitForSingleObject(events[3], FALSE, &timeout);
-    ok(status == STATUS_TIMEOUT, "got %#x\n", status);
+    ok(status == STATUS_TIMEOUT, "got %#lx\n", status);
 
     if (pNtNotifyChangeMultipleKeys)
     {
         InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
         status = pNtOpenKey(&key, KEY_ALL_ACCESS, &attr);
-        ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08x\n", status);
+        ok(status == STATUS_SUCCESS, "NtOpenKey Failed: 0x%08lx\n", status);
 
         status = pNtNotifyChangeMultipleKeys(key, 0, NULL, events[0], NULL, NULL, &iosb, REG_NOTIFY_CHANGE_NAME, FALSE, NULL, 0, TRUE);
-        ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %x\n", status);
+        ok(status == STATUS_PENDING, "NtNotifyChangeKey returned %lx\n", status);
 
         status = pNtWaitForSingleObject(events[0], FALSE, &timeout);
-        ok(status == STATUS_TIMEOUT, "NtWaitForSingleObject returned %x\n", status);
+        ok(status == STATUS_TIMEOUT, "NtWaitForSingleObject returned %lx\n", status);
 
         attr.RootDirectory = key;
         attr.ObjectName = &str;
         pRtlCreateUnicodeStringFromAsciiz(&str, "test_subkey");
         status = pNtCreateKey(&subkey, GENERIC_ALL, &attr, 0, 0, 0, 0);
-        ok(status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08x\n", status);
+        ok(status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status);
         pRtlFreeUnicodeString(&str);
 
         status = pNtWaitForSingleObject(events[0], FALSE, &timeout);
-        ok(status == STATUS_SUCCESS, "NtWaitForSingleObject returned %x\n", status);
+        ok(status == STATUS_SUCCESS, "NtWaitForSingleObject returned %lx\n", status);
 
         status = pNtDeleteKey(subkey);
-        ok(status == STATUS_SUCCESS, "NtDeleteSubkey failed: %x\n", status);
+        ok(status == STATUS_SUCCESS, "NtDeleteSubkey failed: %lx\n", status);
         pNtClose(subkey);
         pNtClose(key);
     }
@@ -2043,55 +2044,55 @@ static void test_RtlCreateRegistryKey(void)
 
     /* should work */
     status = pRtlCreateRegistryKey(RTL_REGISTRY_ABSOLUTE, winetestpath.Buffer);
-    ok(status == STATUS_SUCCESS, "RtlCreateRegistryKey failed: %08x\n", status);
+    ok(status == STATUS_SUCCESS, "RtlCreateRegistryKey failed: %08lx\n", status);
 
     status = pRtlCreateRegistryKey(RTL_REGISTRY_ABSOLUTE | RTL_REGISTRY_OPTIONAL, winetestpath.Buffer);
-    ok(status == STATUS_SUCCESS, "RtlCreateRegistryKey failed: %08x\n", status);
+    ok(status == STATUS_SUCCESS, "RtlCreateRegistryKey failed: %08lx\n", status);
 
     status = pRtlCreateRegistryKey(RTL_REGISTRY_USER, NULL);
-    ok(status == STATUS_SUCCESS, "RtlCreateRegistryKey failed: %08x\n", status);
+    ok(status == STATUS_SUCCESS, "RtlCreateRegistryKey failed: %08lx\n", status);
 
     status = pRtlCreateRegistryKey(RTL_REGISTRY_USER | RTL_REGISTRY_OPTIONAL, NULL);
-    ok(status == STATUS_SUCCESS, "RtlCreateRegistryKey failed: %08x\n", status);
+    ok(status == STATUS_SUCCESS, "RtlCreateRegistryKey failed: %08lx\n", status);
 
     status = pRtlCreateRegistryKey(RTL_REGISTRY_USER, empty);
-    ok(status == STATUS_SUCCESS, "RtlCreateRegistryKey failed: %08x\n", status);
+    ok(status == STATUS_SUCCESS, "RtlCreateRegistryKey failed: %08lx\n", status);
 
     status = pRtlCreateRegistryKey(RTL_REGISTRY_USER | RTL_REGISTRY_OPTIONAL, empty);
-    ok(status == STATUS_SUCCESS, "RtlCreateRegistryKey failed: %08x\n", status);
+    ok(status == STATUS_SUCCESS, "RtlCreateRegistryKey failed: %08lx\n", status);
 
     /* invalid first parameter */
     status = pRtlCreateRegistryKey(RTL_REGISTRY_USER+1, winetestpath.Buffer);
-    ok(status == STATUS_INVALID_PARAMETER, "RtlCreateRegistryKey unexpected return value: %08x, expected %08x\n", status, STATUS_INVALID_PARAMETER);
+    ok(status == STATUS_INVALID_PARAMETER, "RtlCreateRegistryKey unexpected return value: %08lx, expected %08lx\n", status, STATUS_INVALID_PARAMETER);
 
     status = pRtlCreateRegistryKey((RTL_REGISTRY_USER+1) | RTL_REGISTRY_OPTIONAL, winetestpath.Buffer);
-    ok(status == STATUS_INVALID_PARAMETER, "RtlCreateRegistryKey unexpected return value: %08x, expected %08x\n", status, STATUS_INVALID_PARAMETER);
+    ok(status == STATUS_INVALID_PARAMETER, "RtlCreateRegistryKey unexpected return value: %08lx, expected %08lx\n", status, STATUS_INVALID_PARAMETER);
 
     /* invalid second parameter */
     status = pRtlCreateRegistryKey(RTL_REGISTRY_ABSOLUTE, NULL);
-    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "RtlCreateRegistryKey unexpected return value: %08x, expected %08x\n", status, STATUS_OBJECT_PATH_SYNTAX_BAD);
+    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "RtlCreateRegistryKey unexpected return value: %08lx, expected %08lx\n", status, STATUS_OBJECT_PATH_SYNTAX_BAD);
 
     status = pRtlCreateRegistryKey(RTL_REGISTRY_ABSOLUTE | RTL_REGISTRY_OPTIONAL, NULL);
-    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "RtlCreateRegistryKey unexpected return value: %08x, expected %08x\n", status, STATUS_OBJECT_PATH_SYNTAX_BAD);
+    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "RtlCreateRegistryKey unexpected return value: %08lx, expected %08lx\n", status, STATUS_OBJECT_PATH_SYNTAX_BAD);
 
     status = pRtlCreateRegistryKey(RTL_REGISTRY_ABSOLUTE, empty);
-    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "RtlCreateRegistryKey unexpected return value: %08x, expected %08x\n", status, STATUS_OBJECT_PATH_SYNTAX_BAD);
+    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "RtlCreateRegistryKey unexpected return value: %08lx, expected %08lx\n", status, STATUS_OBJECT_PATH_SYNTAX_BAD);
 
     status = pRtlCreateRegistryKey(RTL_REGISTRY_ABSOLUTE | RTL_REGISTRY_OPTIONAL, empty);
-    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "RtlCreateRegistryKey unexpected return value: %08x, expected %08x\n", status, STATUS_OBJECT_PATH_SYNTAX_BAD);
+    ok(status == STATUS_OBJECT_PATH_SYNTAX_BAD, "RtlCreateRegistryKey unexpected return value: %08lx, expected %08lx\n", status, STATUS_OBJECT_PATH_SYNTAX_BAD);
 
     status = pRtlCreateRegistryKey(RTL_REGISTRY_ABSOLUTE, str.Buffer);
-    ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "RtlCreateRegistryKey unexpected return value: %08x, expected %08x\n", status, STATUS_OBJECT_NAME_NOT_FOUND);
+    ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "RtlCreateRegistryKey unexpected return value: %08lx, expected %08lx\n", status, STATUS_OBJECT_NAME_NOT_FOUND);
 
     status = pRtlCreateRegistryKey(RTL_REGISTRY_ABSOLUTE | RTL_REGISTRY_OPTIONAL, str.Buffer);
-    ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "RtlCreateRegistryKey unexpected return value: %08x, expected %08x\n", status, STATUS_OBJECT_NAME_NOT_FOUND);
+    ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "RtlCreateRegistryKey unexpected return value: %08lx, expected %08lx\n", status, STATUS_OBJECT_NAME_NOT_FOUND);
 
     /* both parameters invalid */
     status = pRtlCreateRegistryKey(RTL_REGISTRY_USER+1, NULL);
-    ok(status == STATUS_INVALID_PARAMETER, "RtlCreateRegistryKey unexpected return value: %08x, expected %08x\n", status, STATUS_INVALID_PARAMETER);
+    ok(status == STATUS_INVALID_PARAMETER, "RtlCreateRegistryKey unexpected return value: %08lx, expected %08lx\n", status, STATUS_INVALID_PARAMETER);
 
     status = pRtlCreateRegistryKey((RTL_REGISTRY_USER+1) | RTL_REGISTRY_OPTIONAL, NULL);
-    ok(status == STATUS_INVALID_PARAMETER, "RtlCreateRegistryKey unexpected return value: %08x, expected %08x\n", status, STATUS_INVALID_PARAMETER);
+    ok(status == STATUS_INVALID_PARAMETER, "RtlCreateRegistryKey unexpected return value: %08lx, expected %08lx\n", status, STATUS_INVALID_PARAMETER);
 
     pRtlFreeUnicodeString(&str);
 }
