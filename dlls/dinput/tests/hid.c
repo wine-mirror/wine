@@ -427,7 +427,8 @@ static void unload_driver( SC_HANDLE service )
         ret = QueryServiceStatus( service, &status );
         ok( ret, "QueryServiceStatus failed: %lu\n", GetLastError() );
     }
-    ok( status.dwCurrentState == SERVICE_STOPPED, "expected SERVICE_STOPPED, got %lu\n", status.dwCurrentState );
+    ok( status.dwCurrentState == SERVICE_STOPPED || !status.dwCurrentState,
+        "expected SERVICE_STOPPED, got %lu\n", status.dwCurrentState );
 
     DeleteService( service );
     CloseServiceHandle( service );
@@ -493,8 +494,8 @@ static void pnp_driver_stop( BOOL bus )
     GetFullPathNameW( L"winetest.inf", ARRAY_SIZE(path), path, NULL );
     ret = SetupCopyOEMInfW( path, NULL, 0, 0, dest, ARRAY_SIZE(dest), NULL, &filepart );
     ok( ret, "Failed to copy INF, error %lu\n", GetLastError() );
-    ret = SetupUninstallOEMInfW( filepart, 0, NULL );
-    ok( ret, "Failed to uninstall INF, error %lu\n", GetLastError() );
+    ret = SetupUninstallOEMInfW( filepart, SUOI_FORCEDELETE, NULL );
+    ok( ret, "Failed to uninstall INF, error %lx\n", GetLastError() );
 
     ret = DeleteFileW( L"winetest.cat" );
     ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
@@ -3611,7 +3612,12 @@ DWORD WINAPI dinput_test_device_thread( void *stop_event )
 
 static void test_bus_driver(void)
 {
+    struct bus_device_desc desc =
+    {
+        .vid = LOWORD(EXPECT_VIDPID), .pid = HIWORD(EXPECT_VIDPID),
+    };
     HANDLE control;
+    BOOL ret;
 
     if (!bus_device_start()) goto done;
 
@@ -3631,6 +3637,11 @@ static void test_bus_driver(void)
     control = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
                            NULL, OPEN_EXISTING, 0, NULL );
     ok( control != INVALID_HANDLE_VALUE, "CreateFile failed, error %lu\n", GetLastError() );
+    ret = sync_ioctl( control, IOCTL_WINETEST_CREATE_DEVICE, &desc, sizeof(desc), NULL, 0, INFINITE );
+    ok( ret, "IOCTL_WINETEST_CREATE_DEVICE failed, last error %lu\n", GetLastError() );
+
+    ret = sync_ioctl( control, IOCTL_WINETEST_REMOVE_DEVICE, &desc, sizeof(desc), NULL, 0, INFINITE );
+    ok( ret, "IOCTL_WINETEST_REMOVE_DEVICE failed, last error %lu\n", GetLastError() );
     CloseHandle( control );
 
 done:

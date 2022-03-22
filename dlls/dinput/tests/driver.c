@@ -772,6 +772,13 @@ static NTSTATUS WINAPI driver_ioctl( DEVICE_OBJECT *device, IRP *irp )
         irp->IoStatus.Status = STATUS_SUCCESS;
         IoCompleteRequest( irp, IO_NO_INCREMENT );
         return STATUS_SUCCESS;
+
+    case IOCTL_WINETEST_REMOVE_DEVICE:
+    case IOCTL_WINETEST_CREATE_DEVICE:
+        ok( 0, "unexpected call\n" );
+        irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+        return STATUS_NOT_SUPPORTED;
     }
 
     return hidclass_driver_ioctl( device, irp );
