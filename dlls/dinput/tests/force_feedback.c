@@ -1968,9 +1968,11 @@ static BOOL test_force_feedback_joystick( DWORD version )
 #undef REPORT_ID_OR_USAGE_PAGE
 #include "pop_hid_macros.h"
 
-    static const HIDP_CAPS hid_caps =
+    struct hid_device_desc desc =
     {
-        .InputReportByteLength = 5,
+        .use_report_id = TRUE,
+        .caps = { .InputReportByteLength = 5 },
+        .attributes = default_attributes,
     };
     const DIDEVCAPS expect_caps =
     {
@@ -2032,8 +2034,8 @@ static BOOL test_force_feedback_joystick( DWORD version )
         .guidProduct = expect_guid_product,
         .dwDevType = version >= 0x800 ? DIDEVTYPE_HID | (DI8DEVTYPEJOYSTICK_LIMITED << 8) | DI8DEVTYPE_JOYSTICK
                                       : DIDEVTYPE_HID | (DIDEVTYPEJOYSTICK_UNKNOWN << 8) | DIDEVTYPE_JOYSTICK,
-        .tszInstanceName = L"Wine test root driver",
-        .tszProductName = L"Wine test root driver",
+        .tszInstanceName = L"Wine Test",
+        .tszProductName = L"Wine Test",
         .guidFFDriver = IID_IDirectInputPIDDriver,
         .wUsagePage = HID_USAGE_PAGE_GENERIC,
         .wUsage = HID_USAGE_GENERIC_JOYSTICK,
@@ -2774,7 +2776,6 @@ static BOOL test_force_feedback_joystick( DWORD version )
         },
     };
     DIDEVICEINSTANCEW devinst = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
-    WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
     IDirectInputDevice8W *device = NULL;
     DIDEVICEOBJECTDATA objdata = {0};
     DIEFFECTINFOW effectinfo = {0};
@@ -2787,13 +2788,13 @@ static BOOL test_force_feedback_joystick( DWORD version )
     HWND hwnd;
 
     winetest_push_context( "%#lx", version );
-
-    GetCurrentDirectoryW( ARRAY_SIZE(cwd), cwd );
-    GetTempPathW( ARRAY_SIZE(tempdir), tempdir );
-    SetCurrentDirectoryW( tempdir );
-
     cleanup_registry_keys();
-    if (!dinput_driver_start( report_descriptor, sizeof(report_descriptor), &hid_caps, NULL, 0 )) goto done;
+
+    desc.report_descriptor_len = sizeof(report_descriptor);
+    memcpy( desc.report_descriptor_buf, report_descriptor, sizeof(report_descriptor) );
+    fill_context( __LINE__, desc.context, ARRAY_SIZE(desc.context) );
+
+    if (!hid_device_start( &desc )) goto done;
     if (FAILED(hr = dinput_test_create_device( version, &devinst, &device ))) goto done;
 
     check_dinput_devices( version, &devinst );
@@ -2805,9 +2806,7 @@ static BOOL test_force_feedback_joystick( DWORD version )
     check_member_guid( devinst, expect_devinst, guidInstance );
     check_member_guid( devinst, expect_devinst, guidProduct );
     check_member( devinst, expect_devinst, "%#lx", dwDevType );
-    todo_wine
     check_member_wstr( devinst, expect_devinst, tszInstanceName );
-    todo_wine
     check_member_wstr( devinst, expect_devinst, tszProductName );
     check_member_guid( devinst, expect_devinst, guidFFDriver );
     check_member( devinst, expect_devinst, "%04x", wUsagePage );
@@ -2999,9 +2998,8 @@ static BOOL test_force_feedback_joystick( DWORD version )
     CloseHandle( file );
 
 done:
-    hid_device_stop();
+    hid_device_stop( &desc );
     cleanup_registry_keys();
-    SetCurrentDirectoryW( cwd );
     winetest_pop_context();
 
     return device != NULL;
@@ -3424,9 +3422,11 @@ static void test_device_managed_effect(void)
     };
 #include "pop_hid_macros.h"
 
-    static const HIDP_CAPS hid_caps =
+    struct hid_device_desc desc =
     {
-        .InputReportByteLength = 5,
+        .use_report_id = TRUE,
+        .caps = { .InputReportByteLength = 5 },
+        .attributes = default_attributes,
     };
     struct hid_expect expect_acquire[] =
     {
@@ -3892,23 +3892,24 @@ static void test_device_managed_effect(void)
         },
     };
     DIDEVICEINSTANCEW devinst = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
-    WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
     IDirectInputDevice8W *device;
     IDirectInputEffect *effect, *effect2;
+    DIEFFECT effect_desc;
     HANDLE file, event;
     ULONG res, ref;
-    DIEFFECT desc;
     DWORD flags;
     HRESULT hr;
     HWND hwnd;
 
-    GetCurrentDirectoryW( ARRAY_SIZE(cwd), cwd );
-    GetTempPathW( ARRAY_SIZE(tempdir), tempdir );
-    SetCurrentDirectoryW( tempdir );
-
     cleanup_registry_keys();
-    if (!dinput_driver_start( report_descriptor, sizeof(report_descriptor), &hid_caps,
-                              expect_pool, sizeof(expect_pool) )) goto done;
+
+    desc.report_descriptor_len = sizeof(report_descriptor);
+    memcpy( desc.report_descriptor_buf, report_descriptor, sizeof(report_descriptor) );
+    desc.expect_size = sizeof(expect_pool);
+    memcpy( desc.expect, expect_pool, sizeof(expect_pool) );
+    fill_context( __LINE__, desc.context, ARRAY_SIZE(desc.context) );
+
+    if (!hid_device_start( &desc )) goto done;
     if (FAILED(hr = dinput_test_create_device( DIRECTINPUT_VERSION, &devinst, &device ))) goto done;
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GUIDANDPATH, &prop_guid_path.diph );
@@ -4255,10 +4256,10 @@ static void test_device_managed_effect(void)
     ok( ref == 0, "Release returned %ld\n", ref );
 
     /* start delay has no direct effect on effect status */
-    desc = expect_desc;
-    desc.dwStartDelay = 32767000;
+    effect_desc = expect_desc;
+    effect_desc.dwStartDelay = 32767000;
     set_hid_expect( file, expect_create_delay, sizeof(expect_create_delay) );
-    hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, &desc, &effect, NULL );
+    hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, &effect_desc, &effect, NULL );
     ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
     res = 0xdeadbeef;
@@ -4279,11 +4280,11 @@ static void test_device_managed_effect(void)
     set_hid_expect( file, NULL, 0 );
 
     /* duration has no direct effect on effect status */
-    desc = expect_desc;
-    desc.dwDuration = 100;
-    desc.dwStartDelay = 0;
+    effect_desc = expect_desc;
+    effect_desc.dwDuration = 100;
+    effect_desc.dwStartDelay = 0;
     set_hid_expect( file, expect_create_duration, sizeof(expect_create_duration) );
-    hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, &desc, &effect, NULL );
+    hr = IDirectInputDevice8_CreateEffect( device, &GUID_Spring, &effect_desc, &effect, NULL );
     ok( hr == DI_OK, "CreateEffect returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
     res = 0xdeadbeef;
@@ -4317,15 +4318,15 @@ static void test_device_managed_effect(void)
     CloseHandle( file );
 
 done:
-    hid_device_stop();
+    hid_device_stop( &desc );
     cleanup_registry_keys();
-    SetCurrentDirectoryW( cwd );
     winetest_pop_context();
 }
 
 START_TEST( force_feedback )
 {
     if (!dinput_test_init()) return;
+    if (!bus_device_start()) goto done;
 
     CoInitialize( NULL );
     if (test_force_feedback_joystick( 0x800 ))
@@ -4336,5 +4337,7 @@ START_TEST( force_feedback )
     }
     CoUninitialize();
 
+done:
+    bus_device_stop();
     dinput_test_exit();
 }

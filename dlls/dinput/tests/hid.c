@@ -62,9 +62,16 @@
 HINSTANCE instance;
 BOOL localized; /* object names get translated */
 
+const HID_DEVICE_ATTRIBUTES default_attributes =
+{
+    .Size = sizeof(HID_DEVICE_ATTRIBUTES),
+    .VendorID = LOWORD(EXPECT_VIDPID),
+    .ProductID = HIWORD(EXPECT_VIDPID),
+    .VersionNumber = 0x0100,
+};
 const WCHAR expect_vidpid_str[] = L"VID_1209&PID_0001";
 const GUID expect_guid_product = {EXPECT_VIDPID, 0x0000, 0x0000, {0x00, 0x00, 'P', 'I', 'D', 'V', 'I', 'D'}};
-const WCHAR expect_path[] = L"\\\\?\\hid#winetest#1&2fafeb0&";
+const WCHAR expect_path[] = L"\\\\?\\hid#vid_1209&pid_0001#2&";
 const WCHAR expect_path_end[] = L"&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}";
 HANDLE device_added, device_removed;
 static BOOL hid_device_created;
@@ -558,6 +565,7 @@ static void pnp_driver_stop( BOOL bus )
     todo_wine_if(!ret && GetLastError() == ERROR_ACCESS_DENIED) /* Wine doesn't unload device drivers correctly */
     ok( ret || GetLastError() == ERROR_FILE_NOT_FOUND, "Failed to delete file, error %lu\n", GetLastError() );
     ret = DeleteFileW( L"C:/windows/system32/drivers/winetest_hid_poll.sys" );
+    todo_wine_if(!ret && GetLastError() == ERROR_ACCESS_DENIED) /* Wine doesn't unload device drivers correctly */
     ok( ret || GetLastError() == ERROR_FILE_NOT_FOUND, "Failed to delete file, error %lu\n", GetLastError() );
 }
 
@@ -727,14 +735,41 @@ static BOOL pnp_driver_start( BOOL bus )
     return ret || GetLastError() == ERROR_SERVICE_ALREADY_RUNNING;
 }
 
-void hid_device_stop(void)
+void hid_device_stop( struct hid_device_desc *desc )
 {
-    pnp_driver_stop( FALSE );
+    HANDLE control;
+    BOOL ret;
+
+    ResetEvent( device_removed );
+
+    control = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
+                           NULL, OPEN_EXISTING, 0, NULL );
+    ok( control != INVALID_HANDLE_VALUE, "CreateFile failed, error %lu\n", GetLastError() );
+    ret = sync_ioctl( control, IOCTL_WINETEST_REMOVE_DEVICE, desc, sizeof(*desc), NULL, 0, INFINITE );
+    ok( ret || GetLastError() == ERROR_FILE_NOT_FOUND, "IOCTL_WINETEST_REMOVE_DEVICE failed, last error %lu\n", GetLastError() );
+    CloseHandle( control );
+
+    if (ret) WaitForSingleObject( device_removed, INFINITE );
 }
 
-BOOL hid_device_start(void)
+BOOL hid_device_start( struct hid_device_desc *desc )
 {
-    return pnp_driver_start( FALSE );
+    HANDLE control;
+    BOOL ret;
+
+    ResetEvent( device_added );
+
+    control = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
+                           NULL, OPEN_EXISTING, 0, NULL );
+    ok( control != INVALID_HANDLE_VALUE, "CreateFile failed, error %lu\n", GetLastError() );
+    ret = sync_ioctl( control, IOCTL_WINETEST_CREATE_DEVICE, desc, sizeof(*desc), NULL, 0, INFINITE );
+    ok( ret, "IOCTL_WINETEST_CREATE_DEVICE failed, last error %lu\n", GetLastError() );
+    CloseHandle( control );
+
+    WaitForSingleObject( device_added, INFINITE );
+    hid_device_created = TRUE;
+
+    return TRUE;
 }
 
 void bus_device_stop(void)
@@ -902,16 +937,6 @@ BOOL sync_ioctl_( const char *file, int line, HANDLE device, DWORD code, void *i
     if (ret_len) *ret_len = out_len;
     return ret;
 }
-
-#define fill_context( line, a, b ) \
-    do { \
-        const char *source_file; \
-        source_file = strrchr( __FILE__, '/' ); \
-        if (!source_file) source_file = strrchr( __FILE__, '\\' ); \
-        if (!source_file) source_file = __FILE__; \
-        else source_file++; \
-        snprintf( a, b, "%s:%d", source_file, line ); \
-    } while (0)
 
 void set_hid_expect_( const char *file, int line, HANDLE device, struct hid_expect *expect, DWORD expect_size )
 {
@@ -2480,20 +2505,16 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     HidD_FreePreparsedData( preparsed_data );
 }
 
-static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *expect_caps )
+static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *expect_caps, WORD vid, WORD pid )
 {
     ULONG count, poll_freq, out_len;
     WCHAR device_path[MAX_PATH];
     HANDLE file, async_file;
-    OBJECT_ATTRIBUTES attr;
-    UNICODE_STRING string;
-    IO_STATUS_BLOCK io;
-    NTSTATUS status;
     BOOL ret;
 
     winetest_push_context( "id %ld%s", report_id, polled ? " poll" : "" );
 
-    swprintf( device_path, MAX_PATH, L"\\\\?\\hid#winetest#" );
+    swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x", vid, pid );
     ret = find_hid_device_path( device_path );
     ok( ret, "Failed to find HID device matching %s\n", debugstr_w( device_path ) );
 
@@ -2611,12 +2632,6 @@ static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *exp
 
     CloseHandle( async_file );
     CloseHandle( file );
-
-    RtlInitUnicodeString( &string, L"\\??\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}" );
-    InitializeObjectAttributes( &attr, &string, OBJ_CASE_INSENSITIVE, NULL, NULL );
-    status = NtOpenFile( &file, SYNCHRONIZE, &attr, &io, 0, FILE_SYNCHRONOUS_IO_NONALERT );
-    todo_wine
-    ok( status == STATUS_UNSUCCESSFUL, "got %#lx\n", status );
 
     winetest_pop_context();
 }
@@ -2869,13 +2884,6 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
 #undef REPORT_ID_OR_USAGE_PAGE
 #include "pop_hid_macros.h"
 
-    static const HID_DEVICE_ATTRIBUTES attributes =
-    {
-        .Size = sizeof(HID_DEVICE_ATTRIBUTES),
-        .VendorID = 0x1209,
-        .ProductID = 0x0001,
-        .VersionNumber = 0x0100,
-    };
     const HIDP_CAPS caps =
     {
         .Usage = HID_USAGE_GENERIC_JOYSTICK,
@@ -2899,49 +2907,22 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
         .ret_length = 3,
         .ret_status = STATUS_SUCCESS,
     };
+    struct hid_device_desc desc =
+    {
+        .is_polled = polled,
+        .use_report_id = report_id,
+        .caps = caps,
+        .attributes = default_attributes,
+    };
 
-    WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
-    char context[64];
-    LSTATUS status;
-    HKEY hkey;
+    desc.report_descriptor_len = sizeof(report_desc);
+    memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
+    desc.input_size = polled ? sizeof(expect_in) : 0;
+    memcpy( desc.input, &expect_in, sizeof(expect_in) );
+    fill_context( __LINE__, desc.context, ARRAY_SIZE(desc.context) );
 
-    GetCurrentDirectoryW( ARRAY_SIZE(cwd), cwd );
-    GetTempPathW( ARRAY_SIZE(tempdir), tempdir );
-    SetCurrentDirectoryW( tempdir );
-
-    status = RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Services\\winetest",
-                              0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL );
-    ok( !status, "RegCreateKeyExW returned %#lx\n", status );
-
-    status = RegSetValueExW( hkey, L"ReportID", 0, REG_DWORD, (void *)&report_id, sizeof(report_id) );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-
-    status = RegSetValueExW( hkey, L"PolledMode", 0, REG_DWORD, (void *)&polled, sizeof(polled) );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-
-    status = RegSetValueExW( hkey, L"Descriptor", 0, REG_BINARY, (void *)report_desc, sizeof(report_desc) );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-
-    status = RegSetValueExW( hkey, L"Attributes", 0, REG_BINARY, (void *)&attributes, sizeof(attributes) );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-
-    status = RegSetValueExW( hkey, L"Caps", 0, REG_BINARY, (void *)&caps, sizeof(caps) );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-
-    status = RegSetValueExW( hkey, L"Expect", 0, REG_BINARY, NULL, 0 );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-
-    status = RegSetValueExW( hkey, L"Input", 0, REG_BINARY, (void *)&expect_in, polled ? sizeof(expect_in) : 0 );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-
-    fill_context( __LINE__, context, ARRAY_SIZE(context) );
-    status = RegSetValueExW( hkey, L"Context", 0, REG_BINARY, (void *)context, sizeof(context) );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-
-    if (hid_device_start()) test_hid_device( report_id, polled, &caps );
-    hid_device_stop();
-
-    SetCurrentDirectoryW( cwd );
+    if (hid_device_start( &desc )) test_hid_device( report_id, polled, &caps, desc.attributes.VendorID, desc.attributes.ProductID );
+    hid_device_stop( &desc );
 }
 
 /* undocumented HID internal preparsed data structure */
@@ -3111,18 +3092,10 @@ static void test_hidp_kdr(void)
     };
 #include "pop_hid_macros.h"
 
-    static const HIDP_CAPS expect_hidp_caps =
+    struct hid_device_desc desc =
     {
-        .Usage = HID_USAGE_GENERIC_JOYSTICK,
-        .UsagePage = HID_USAGE_PAGE_GENERIC,
-        .InputReportByteLength = 15,
-    };
-    static const HID_DEVICE_ATTRIBUTES attributes =
-    {
-        .Size = sizeof(HID_DEVICE_ATTRIBUTES),
-        .VendorID = 0x1209,
-        .ProductID = 0x0001,
-        .VersionNumber = 0x0100,
+        .caps = { .InputReportByteLength = 15 },
+        .attributes = default_attributes,
     };
     static const struct hidp_kdr expect_kdr =
     {
@@ -3250,53 +3223,21 @@ static void test_hidp_kdr(void)
         },
     };
 
-    WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
     PHIDP_PREPARSED_DATA preparsed_data;
-    DWORD i, report_id = 0, polled = 0;
     WCHAR device_path[MAX_PATH];
     struct hidp_kdr *kdr;
-    char context[64];
-    LSTATUS status;
     HANDLE file;
-    HKEY hkey;
     BOOL ret;
+    DWORD i;
 
-    GetCurrentDirectoryW( ARRAY_SIZE(cwd), cwd );
-    GetTempPathW( ARRAY_SIZE(tempdir), tempdir );
-    SetCurrentDirectoryW( tempdir );
+    desc.report_descriptor_len = sizeof(report_desc);
+    memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
+    fill_context( __LINE__, desc.context, ARRAY_SIZE(desc.context) );
 
-    status = RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Services\\winetest",
-                              0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL );
-    ok( !status, "RegCreateKeyExW returned %#lx\n", status );
+    if (!hid_device_start( &desc )) goto done;
 
-    status = RegSetValueExW( hkey, L"ReportID", 0, REG_DWORD, (void *)&report_id, sizeof(report_id) );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-
-    status = RegSetValueExW( hkey, L"PolledMode", 0, REG_DWORD, (void *)&polled, sizeof(polled) );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-
-    status = RegSetValueExW( hkey, L"Descriptor", 0, REG_BINARY, (void *)report_desc, sizeof(report_desc) );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-
-    status = RegSetValueExW( hkey, L"Attributes", 0, REG_BINARY, (void *)&attributes, sizeof(attributes) );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-
-    status = RegSetValueExW( hkey, L"Caps", 0, REG_BINARY, (void *)&expect_hidp_caps, sizeof(expect_hidp_caps) );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-
-    status = RegSetValueExW( hkey, L"Expect", 0, REG_BINARY, NULL, 0 );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-
-    status = RegSetValueExW( hkey, L"Input", 0, REG_BINARY, NULL, 0 );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-
-    fill_context( __LINE__, context, ARRAY_SIZE(context) );
-    status = RegSetValueExW( hkey, L"Context", 0, REG_BINARY, (void *)context, sizeof(context) );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-
-    if (!hid_device_start()) goto done;
-
-    swprintf( device_path, MAX_PATH, L"\\\\?\\hid#winetest#" );
+    swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x", desc.attributes.VendorID,
+              desc.attributes.ProductID );
     ret = find_hid_device_path( device_path );
     ok( ret, "Failed to find HID device matching %s\n", debugstr_w( device_path ) );
 
@@ -3397,8 +3338,7 @@ static void test_hidp_kdr(void)
     CloseHandle( file );
 
 done:
-    hid_device_stop();
-    SetCurrentDirectoryW( cwd );
+    hid_device_stop( &desc );
 }
 
 void cleanup_registry_keys(void)
@@ -3432,46 +3372,6 @@ void cleanup_registry_keys(void)
     RegCreateKeyExW( HKEY_LOCAL_MACHINE, dinput_path, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &root_key, NULL );
     RegDeleteTreeW( root_key, expect_vidpid_str );
     RegCloseKey( root_key );
-}
-
-BOOL dinput_driver_start_( const char *file, int line, const BYTE *desc_buf, ULONG desc_len,
-                           const HIDP_CAPS *caps, struct hid_expect *expect, ULONG expect_size )
-{
-    static const HID_DEVICE_ATTRIBUTES attributes =
-    {
-        .Size = sizeof(HID_DEVICE_ATTRIBUTES),
-        .VendorID = LOWORD( EXPECT_VIDPID ),
-        .ProductID = HIWORD( EXPECT_VIDPID ),
-        .VersionNumber = 0x0100,
-    };
-    DWORD report_id = 1;
-    DWORD polled = 0;
-    char context[64];
-    LSTATUS status;
-    HKEY hkey;
-
-    status = RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Services\\winetest",
-                              0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL );
-    ok_(file, line)( !status, "RegCreateKeyExW returned %#lx\n", status );
-    status = RegSetValueExW( hkey, L"ReportID", 0, REG_DWORD, (void *)&report_id, sizeof(report_id) );
-    ok_(file, line)( !status, "RegSetValueExW returned %#lx\n", status );
-    status = RegSetValueExW( hkey, L"PolledMode", 0, REG_DWORD, (void *)&polled, sizeof(polled) );
-    ok_(file, line)( !status, "RegSetValueExW returned %#lx\n", status );
-    status = RegSetValueExW( hkey, L"Descriptor", 0, REG_BINARY, (void *)desc_buf, desc_len );
-    ok_(file, line)( !status, "RegSetValueExW returned %#lx\n", status );
-    status = RegSetValueExW( hkey, L"Attributes", 0, REG_BINARY, (void *)&attributes, sizeof(attributes) );
-    ok_(file, line)( !status, "RegSetValueExW returned %#lx\n", status );
-    status = RegSetValueExW( hkey, L"Caps", 0, REG_BINARY, (void *)caps, sizeof(*caps) );
-    ok_(file, line)( !status, "RegSetValueExW returned %#lx\n", status );
-    status = RegSetValueExW( hkey, L"Expect", 0, REG_BINARY, (void *)expect, expect_size );
-    ok_(file, line)( !status, "RegSetValueExW returned %#lx\n", status );
-    status = RegSetValueExW( hkey, L"Input", 0, REG_BINARY, NULL, 0 );
-    ok_(file, line)( !status, "RegSetValueExW returned %#lx\n", status );
-    fill_context( line, context, ARRAY_SIZE(context) );
-    status = RegSetValueExW( hkey, L"Context", 0, REG_BINARY, (void *)context, sizeof(context) );
-    ok_(file, line)( !status, "RegSetValueExW returned %#lx\n", status );
-
-    return hid_device_start();
 }
 
 static LRESULT CALLBACK monitor_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
@@ -3708,43 +3608,20 @@ DWORD WINAPI dinput_test_device_thread( void *stop_event )
     {
         .InputReportByteLength = 3,
     };
+    struct hid_device_desc desc =
+    {
+        .use_report_id = TRUE,
+        .caps = caps,
+        .attributes = attributes,
+    };
 
-    WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
-    DWORD report_id = 1, polled = 0;
-    char context[64];
-    LSTATUS status;
-    HKEY hkey;
+    desc.report_descriptor_len = sizeof(gamepad_desc);
+    memcpy( desc.report_descriptor_buf, gamepad_desc, sizeof(gamepad_desc) );
+    fill_context( __LINE__, desc.context, ARRAY_SIZE(desc.context) );
 
-    GetCurrentDirectoryW( ARRAY_SIZE(cwd), cwd );
-    GetTempPathW( ARRAY_SIZE(tempdir), tempdir );
-    SetCurrentDirectoryW( tempdir );
-
-    status = RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Services\\winetest",
-                              0, NULL, REG_OPTION_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL );
-    ok( !status, "RegCreateKeyExW returned %#lx\n", status );
-    status = RegSetValueExW( hkey, L"ReportID", 0, REG_DWORD, (void *)&report_id, sizeof(report_id) );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-    status = RegSetValueExW( hkey, L"PolledMode", 0, REG_DWORD, (void *)&polled, sizeof(polled) );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-    status = RegSetValueExW( hkey, L"Descriptor", 0, REG_BINARY, (void *)gamepad_desc, sizeof(gamepad_desc) );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-    status = RegSetValueExW( hkey, L"Attributes", 0, REG_BINARY, (void *)&attributes, sizeof(attributes) );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-    status = RegSetValueExW( hkey, L"Caps", 0, REG_BINARY, (void *)&caps, sizeof(caps) );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-    status = RegSetValueExW( hkey, L"Expect", 0, REG_BINARY, NULL, 0 );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-    status = RegSetValueExW( hkey, L"Input", 0, REG_BINARY, NULL, 0 );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-    fill_context( __LINE__, context, ARRAY_SIZE(context) );
-    status = RegSetValueExW( hkey, L"Context", 0, REG_BINARY, (void *)context, sizeof(context) );
-    ok( !status, "RegSetValueExW returned %#lx\n", status );
-
-    hid_device_start();
+    hid_device_start( &desc );
     WaitForSingleObject( stop_event, INFINITE );
-    hid_device_stop();
-
-    SetCurrentDirectoryW( cwd );
+    hid_device_stop( &desc );
 
     return 0;
 }
@@ -3781,7 +3658,7 @@ static void test_bus_driver(void)
         .NumberInputValueCaps = 1,
         .NumberInputDataIndices = 1,
     };
-    struct bus_device_desc desc = { .caps = caps, .attributes = attributes, };
+    struct hid_device_desc desc = { .caps = caps, .attributes = attributes, };
 
     WCHAR device_path[MAX_PATH];
     HANDLE control;
@@ -3837,11 +3714,15 @@ START_TEST( hid )
     if (!dinput_test_init()) return;
 
     test_bus_driver();
+
+    if (!bus_device_start()) goto done;
     test_hidp_kdr();
     test_hid_driver( 0, FALSE );
     test_hid_driver( 1, FALSE );
     test_hid_driver( 0, TRUE );
     test_hid_driver( 1, TRUE );
 
+done:
+    bus_device_stop();
     dinput_test_exit();
 }

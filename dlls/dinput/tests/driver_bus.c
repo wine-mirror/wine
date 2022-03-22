@@ -500,7 +500,7 @@ static NTSTATUS append_child_device( struct func_device *impl, DEVICE_OBJECT *de
     return status;
 }
 
-static DEVICE_OBJECT *find_child_device( struct func_device *impl, struct bus_device_desc *desc )
+static DEVICE_OBJECT *find_child_device( struct func_device *impl, struct hid_device_desc *desc )
 {
     DEVICE_OBJECT *device = NULL, **devices;
     WCHAR device_id[MAX_PATH];
@@ -785,7 +785,7 @@ static NTSTATUS pdo_pnp( DEVICE_OBJECT *device, IRP *irp )
     return status;
 }
 
-static NTSTATUS create_child_pdo( DEVICE_OBJECT *device, struct bus_device_desc *desc )
+static NTSTATUS create_child_pdo( DEVICE_OBJECT *device, struct hid_device_desc *desc )
 {
     static ULONG index;
 
@@ -954,7 +954,8 @@ static NTSTATUS WINAPI pdo_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     KIRQL irql;
     LONG index;
 
-    if (winetest_debug > 1) trace( "%s: device %p, code %#lx %s\n", __func__, device, code, debugstr_ioctl(code) );
+    if ((!impl->input_queue.is_polled || code != IOCTL_HID_READ_REPORT) && winetest_debug > 1)
+        trace( "%s: device %p, code %#lx %s\n", __func__, device, code, debugstr_ioctl(code) );
 
     KeAcquireSpinLock( &impl->base.lock, &irql );
     removed = impl->base.state == PNP_DEVICE_REMOVED;
@@ -1252,7 +1253,7 @@ static NTSTATUS WINAPI fdo_ioctl( DEVICE_OBJECT *device, IRP *irp )
     switch (code)
     {
     case IOCTL_WINETEST_CREATE_DEVICE:
-        if (in_size < sizeof(struct bus_device_desc)) status = STATUS_INVALID_PARAMETER;
+        if (in_size < sizeof(struct hid_device_desc)) status = STATUS_INVALID_PARAMETER;
         else status = create_child_pdo( device, irp->AssociatedIrp.SystemBuffer );
         break;
     case IOCTL_WINETEST_REMOVE_DEVICE:
@@ -1263,7 +1264,7 @@ static NTSTATUS WINAPI fdo_ioctl( DEVICE_OBJECT *device, IRP *irp )
             IoInvalidateDeviceRelations( impl->pdo, BusRelations );
             return status;
         }
-        status = STATUS_SUCCESS;
+        status = STATUS_NO_SUCH_DEVICE;
         break;
     default:
         ok( 0, "unexpected call\n" );

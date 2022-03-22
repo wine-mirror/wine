@@ -44,6 +44,7 @@
 #include "driver_hid.h"
 
 #define EXPECT_VIDPID MAKELONG( 0x1209, 0x0001 )
+extern const HID_DEVICE_ATTRIBUTES default_attributes;
 extern const WCHAR expect_vidpid_str[];
 extern const GUID expect_guid_product;
 extern const WCHAR expect_path[];
@@ -53,16 +54,12 @@ extern HANDLE device_added, device_removed;
 extern HINSTANCE instance;
 extern BOOL localized; /* object names get translated */
 
-BOOL hid_device_start(void);
-void hid_device_stop(void);
+BOOL hid_device_start( struct hid_device_desc *desc );
+void hid_device_stop( struct hid_device_desc *desc );
 BOOL bus_device_start(void);
 void bus_device_stop(void);
 
 void cleanup_registry_keys(void);
-
-#define dinput_driver_start( a, b, c, d, e ) dinput_driver_start_( __FILE__, __LINE__, a, b, c, d, e )
-BOOL dinput_driver_start_( const char *file, int line, const BYTE *desc_buf, ULONG desc_len,
-                           const HIDP_CAPS *caps, struct hid_expect *expect, ULONG expect_size );
 
 #define dinput_test_init() dinput_test_init_( __FILE__, __LINE__ )
 BOOL dinput_test_init_( const char *file, int line );
@@ -70,6 +67,17 @@ void dinput_test_exit(void);
 
 HRESULT dinput_test_create_device( DWORD version, DIDEVICEINSTANCEW *devinst, IDirectInputDevice8W **device );
 DWORD WINAPI dinput_test_device_thread( void *stop_event );
+
+#define fill_context( line, a, b )                                                                 \
+    do                                                                                             \
+    {                                                                                              \
+        const char *source_file;                                                                   \
+        source_file = strrchr( __FILE__, '/' );                                                    \
+        if (!source_file) source_file = strrchr( __FILE__, '\\' );                                 \
+        if (!source_file) source_file = __FILE__;                                                  \
+        else source_file++;                                                                        \
+        snprintf( a, b, "%s:%d", source_file, line );                                              \
+    } while (0)
 
 #define check_member_( file, line, val, exp, fmt, member )                                         \
     ok_(file, line)( (val).member == (exp).member, "got " #member " " fmt "\n", (val).member )

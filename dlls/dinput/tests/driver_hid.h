@@ -62,7 +62,7 @@ struct hid_expect
 };
 
 /* create/remove device */
-struct bus_device_desc
+struct hid_device_desc
 {
     BOOL is_polled;
     BOOL use_report_id;

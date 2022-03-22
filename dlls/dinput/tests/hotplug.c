@@ -48,6 +48,7 @@
 #define WIDL_using_Windows_Gaming_Input
 #define WIDL_using_Windows_Gaming_Input_Custom
 #include "windows.gaming.input.custom.h"
+#undef Size
 
 #define MAKE_FUNC(f) static typeof(f) *p ## f
 MAKE_FUNC( RoGetActivationFactory );
@@ -134,9 +135,11 @@ static BOOL test_input_lost( DWORD version )
     };
 #include "pop_hid_macros.h"
 
-    static const HIDP_CAPS hid_caps =
+    struct hid_device_desc desc =
     {
-        .InputReportByteLength = 1,
+        .use_report_id = TRUE,
+        .caps = { .InputReportByteLength = 1 },
+        .attributes = default_attributes,
     };
     static const DIPROPDWORD buffer_size =
     {
@@ -152,7 +155,6 @@ static BOOL test_input_lost( DWORD version )
 
     DIDEVICEINSTANCEW devinst = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
     DIDEVICEOBJECTDATA objdata[32] = {{0}};
-    WCHAR cwd[MAX_PATH], tempdir[MAX_PATH];
     IDirectInputDevice8W *device = NULL;
     ULONG ref, count, size;
     DIJOYSTATE2 state;
@@ -160,12 +162,13 @@ static BOOL test_input_lost( DWORD version )
 
     winetest_push_context( "%#lx", version );
 
-    GetCurrentDirectoryW( ARRAY_SIZE(cwd), cwd );
-    GetTempPathW( ARRAY_SIZE(tempdir), tempdir );
-    SetCurrentDirectoryW( tempdir );
-
     cleanup_registry_keys();
-    if (!dinput_driver_start( report_desc, sizeof(report_desc), &hid_caps, NULL, 0 )) goto done;
+
+    desc.report_descriptor_len = sizeof(report_desc);
+    memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
+    fill_context( __LINE__, desc.context, ARRAY_SIZE(desc.context) );
+
+    if (!hid_device_start( &desc )) goto done;
     if (FAILED(hr = dinput_test_create_device( version, &devinst, &device ))) goto done;
 
     hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIJoystick2 );
@@ -185,7 +188,7 @@ static BOOL test_input_lost( DWORD version )
     ok( hr == DI_OK, "GetDeviceData returned %#lx\n", hr );
     ok( count == 0, "got %lu expected 0\n", count );
 
-    hid_device_stop();
+    hid_device_stop( &desc );
 
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
     ok( hr == DIERR_INPUTLOST, "GetDeviceState returned %#lx\n", hr );
@@ -205,22 +208,20 @@ static BOOL test_input_lost( DWORD version )
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_NOEFFECT, "Unacquire returned: %#lx\n", hr );
 
-    dinput_driver_start( report_desc, sizeof(report_desc), &hid_caps, NULL, 0 );
+    fill_context( __LINE__, desc.context, ARRAY_SIZE(desc.context) );
+    hid_device_start( &desc );
 
     hr = IDirectInputDevice8_Acquire( device );
-    todo_wine
-    ok( hr == DIERR_UNPLUGGED, "Acquire returned %#lx\n", hr );
+    ok( hr == S_OK, "Acquire returned %#lx\n", hr );
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
-    todo_wine
-    ok( hr == DIERR_NOTACQUIRED, "GetDeviceState returned %#lx\n", hr );
+    ok( hr == S_OK, "GetDeviceState returned %#lx\n", hr );
 
     ref = IDirectInputDevice8_Release( device );
     ok( ref == 0, "Release returned %ld\n", ref );
 
 done:
-    hid_device_stop();
+    hid_device_stop( &desc );
     cleanup_registry_keys();
-    SetCurrentDirectoryW( cwd );
 
     winetest_pop_context();
     return device != NULL;
@@ -255,7 +256,7 @@ static LRESULT CALLBACK devnotify_wndproc( HWND hwnd, UINT msg, WPARAM wparam, L
         if (device_change_all && (device_change_count == 0 || device_change_count == 3))
         {
             expect_guid = control_class;
-            expect_prefix = L"\\\\?\\ROOT#";
+            expect_prefix = L"\\\\?\\WINETEST#";
         }
         else
         {
@@ -1218,6 +1219,7 @@ next:
 START_TEST( hotplug )
 {
     if (!dinput_test_init()) return;
+    if (!bus_device_start()) goto done;
 
     CoInitialize( NULL );
     if (test_input_lost( 0x500 ))
@@ -1230,5 +1232,7 @@ START_TEST( hotplug )
     }
     CoUninitialize();
 
+done:
+    bus_device_stop();
     dinput_test_exit();
 }
