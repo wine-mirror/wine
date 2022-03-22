@@ -64,6 +64,7 @@ static INT (WINAPI *pLCMapStringEx)(LPCWSTR, DWORD, LPCWSTR, INT, LPWSTR, INT, L
 static LCID (WINAPI *pLocaleNameToLCID)(LPCWSTR, DWORD);
 static NTSTATUS (WINAPI *pRtlLocaleNameToLcid)(LPCWSTR, LCID *, DWORD);
 static BOOLEAN (WINAPI *pRtlIsValidLocaleName)(const WCHAR *,ULONG);
+static NTSTATUS (WINAPI *pRtlLcidToLocaleName)(LCID, UNICODE_STRING *,DWORD,BYTE);
 static INT  (WINAPI *pLCIDToLocaleName)(LCID, LPWSTR, INT, DWORD);
 static BOOL (WINAPI *pIsValidLanguageGroup)(LGRPID, DWORD);
 static INT (WINAPI *pIdnToNameprepUnicode)(DWORD, LPCWSTR, INT, LPWSTR, INT);
@@ -147,6 +148,7 @@ static void InitFunctionPointers(void)
   X(RtlUpcaseUnicodeChar);
   X(RtlLocaleNameToLcid);
   X(RtlIsValidLocaleName);
+  X(RtlLcidToLocaleName);
   X(RtlNormalizeString);
   X(RtlIsNormalizedString);
   X(NtGetNlsSectionPtr);
@@ -2866,6 +2868,96 @@ static void test_LocaleNameToLCID(void)
         }
     }
     else win_skip( "RtlLocaleNameToLcid not available\n" );
+
+    if (pRtlLcidToLocaleName)
+    {
+        WCHAR buffer[128], expect[128];
+        UNICODE_STRING str;
+
+        str.Buffer = buffer;
+        str.MaximumLength = sizeof( buffer );
+        memset( buffer, 0xcc, sizeof(buffer) );
+
+        status = pRtlLcidToLocaleName( LOCALE_NEUTRAL, &str, 0, 0 );
+        ok( status == STATUS_INVALID_PARAMETER_1, "wrong error %lx\n", status );
+        status = pRtlLcidToLocaleName( LOCALE_NEUTRAL, &str, 2, 0 );
+        ok( status == STATUS_INVALID_PARAMETER_1, "wrong error %lx\n", status );
+        status = pRtlLcidToLocaleName( LOCALE_INVARIANT, NULL, 0, 0 );
+        ok( status == STATUS_INVALID_PARAMETER_2, "wrong error %lx\n", status );
+
+        memset( buffer, 0xcc, sizeof(buffer) );
+        status = pRtlLcidToLocaleName( MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT), &str, 0, 0 );
+        ok( status == STATUS_SUCCESS, "wrong error %lx\n", status );
+        ok( !wcscmp( buffer, L"en-US" ), "wrong name %s\n", debugstr_w(buffer) );
+        ok( str.Length == wcslen(buffer) * sizeof(WCHAR), "wrong len %u\n", str.Length );
+        ok( str.MaximumLength == sizeof(buffer), "wrong max len %u\n", str.MaximumLength );
+
+        status = pRtlLcidToLocaleName( MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL), &str, 0, 0 );
+        ok( status == STATUS_INVALID_PARAMETER_1, "wrong error %lx\n", status );
+
+        memset( buffer, 0xcc, sizeof(buffer) );
+        status = pRtlLcidToLocaleName( MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL), &str, 2, 0 );
+        ok( status == STATUS_SUCCESS, "wrong error %lx\n", status );
+        ok( str.Length == wcslen(buffer) * sizeof(WCHAR), "wrong len %u\n", str.Length );
+        ok( !wcscmp( buffer, L"en" ), "wrong name %s\n", debugstr_w(buffer) );
+
+        memset( buffer, 0xcc, sizeof(buffer) );
+        status = pRtlLcidToLocaleName( 0x00010407, &str, 0, 0 );
+        ok( status == STATUS_SUCCESS, "wrong error %lx\n", status );
+        ok( str.Length == wcslen(buffer) * sizeof(WCHAR), "wrong len %u\n", str.Length );
+        ok( !wcscmp( buffer, L"de-DE_phoneb" ), "wrong name %s\n", debugstr_w(buffer) );
+
+        memset( buffer, 0xcc, sizeof(buffer) );
+        status = pRtlLcidToLocaleName( LOCALE_SYSTEM_DEFAULT, &str, 0, 0 );
+        ok( status == STATUS_SUCCESS, "wrong error %lx\n", status );
+        ok( str.Length == wcslen(buffer) * sizeof(WCHAR), "wrong len %u\n", str.Length );
+        LCIDToLocaleName( GetSystemDefaultLCID(), expect, ARRAY_SIZE(expect), 0 );
+        ok( !wcscmp( buffer, expect ), "wrong name %s / %s\n", debugstr_w(buffer), debugstr_w(expect) );
+
+        memset( buffer, 0xcc, sizeof(buffer) );
+        status = pRtlLcidToLocaleName( LOCALE_USER_DEFAULT, &str, 0, 0 );
+        ok( status == STATUS_SUCCESS, "wrong error %lx\n", status );
+        ok( str.Length == wcslen(buffer) * sizeof(WCHAR), "wrong len %u\n", str.Length );
+        LCIDToLocaleName( GetUserDefaultLCID(), expect, ARRAY_SIZE(expect), 0 );
+        ok( !wcscmp( buffer, expect ), "wrong name %s / %s\n", debugstr_w(buffer), debugstr_w(expect) );
+
+        memset( buffer, 0xcc, sizeof(buffer) );
+        status = pRtlLcidToLocaleName( LOCALE_INVARIANT, &str, 0, 0 );
+        ok( status == STATUS_SUCCESS, "wrong error %lx\n", status );
+        ok( str.Length == wcslen(buffer) * sizeof(WCHAR), "wrong len %u\n", str.Length );
+        ok( !wcscmp( buffer, L"" ), "wrong name %s\n", debugstr_w(buffer) );
+
+        memset( buffer, 0xcc, sizeof(buffer) );
+        status = pRtlLcidToLocaleName( LOCALE_CUSTOM_DEFAULT, &str, 0, 0 );
+        ok( status == STATUS_SUCCESS, "wrong error %lx\n", status );
+        ok( str.Length == wcslen(buffer) * sizeof(WCHAR), "wrong len %u\n", str.Length );
+        LCIDToLocaleName( GetUserDefaultLCID(), expect, ARRAY_SIZE(expect), 0 );
+        ok( !wcscmp( buffer, expect ), "wrong name %s / %s\n", debugstr_w(buffer), debugstr_w(expect) );
+
+        status = pRtlLcidToLocaleName( LOCALE_CUSTOM_UI_DEFAULT, &str, 0, 0 );
+        ok( status == STATUS_SUCCESS || status == STATUS_UNSUCCESSFUL, "wrong error %lx\n", status );
+
+        status = pRtlLcidToLocaleName( LOCALE_CUSTOM_UNSPECIFIED, &str, 0, 0 );
+        ok( status == STATUS_INVALID_PARAMETER_1, "wrong error %lx\n", status );
+
+        memset( buffer, 0xcc, sizeof(buffer) );
+        str.Length = 0xbeef;
+        str.MaximumLength = 5 * sizeof(WCHAR);
+        status = pRtlLcidToLocaleName( 0x00010407, &str, 0, 0 );
+        ok( status == STATUS_BUFFER_TOO_SMALL, "wrong error %lx\n", status );
+        ok( str.Length == 0xbeef, "wrong len %u\n", str.Length );
+        ok( str.MaximumLength == 5 * sizeof(WCHAR), "wrong len %u\n", str.MaximumLength );
+        ok( buffer[0] == 0xcccc, "wrong name %s\n", debugstr_w(buffer) );
+
+        memset( &str, 0xcc, sizeof(str) );
+        status = pRtlLcidToLocaleName( MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT), &str, 0, 1 );
+        ok( status == STATUS_SUCCESS, "wrong error %lx\n", status );
+        ok( str.Length == wcslen(str.Buffer) * sizeof(WCHAR), "wrong len %u\n", str.Length );
+        ok( str.MaximumLength == str.Length + sizeof(WCHAR), "wrong max len %u\n", str.MaximumLength );
+        ok( !wcscmp( str.Buffer, L"en-US" ), "wrong name %s\n", debugstr_w(str.Buffer) );
+        RtlFreeUnicodeString( &str );
+    }
+    else win_skip( "RtlLcidToLocaleName not available\n" );
 }
 
 /* this requires collation table patch to make it MS compatible */

@@ -269,6 +269,21 @@ static const NLS_LOCALE_LCNAME_INDEX *find_lcname_entry( const WCHAR *name )
 }
 
 
+static const NLS_LOCALE_LCID_INDEX *find_lcid_entry( LCID lcid )
+{
+    int min = 0, max = locale_table->nb_lcids - 1;
+
+    while (min <= max)
+    {
+        int pos = (min + max) / 2;
+        if (lcid < lcids_index[pos].id) max = pos - 1;
+        else if (lcid > lcids_index[pos].id) min = pos + 1;
+        else return &lcids_index[pos];
+    }
+    return NULL;
+}
+
+
 static const NLS_LOCALE_DATA *get_locale_data( UINT idx )
 {
     ULONG offset = locale_table->locales_offset + idx * locale_table->locale_size;
@@ -1235,6 +1250,54 @@ BOOLEAN WINAPI RtlIsValidLocaleName( const WCHAR *name, ULONG flags )
     /* reject neutral locale unless flag 2 is set */
     if (!(flags & 2) && !get_locale_data( entry->idx )->inotneutral) return FALSE;
     return TRUE;
+}
+
+
+/******************************************************************
+ *      RtlLcidToLocaleName   (NTDLL.@)
+ */
+NTSTATUS WINAPI RtlLcidToLocaleName( LCID lcid, UNICODE_STRING *str, ULONG flags, BOOLEAN alloc )
+{
+    const NLS_LOCALE_LCID_INDEX *entry;
+    const WCHAR *name;
+    ULONG len;
+
+    if (!str) return STATUS_INVALID_PARAMETER_2;
+
+    switch (lcid)
+    {
+    case LOCALE_USER_DEFAULT:
+        NtQueryDefaultLocale( TRUE, &lcid );
+        break;
+    case LOCALE_SYSTEM_DEFAULT:
+    case LOCALE_CUSTOM_DEFAULT:
+        NtQueryDefaultLocale( FALSE, &lcid );
+        break;
+    case LOCALE_CUSTOM_UI_DEFAULT:
+        return STATUS_UNSUCCESSFUL;
+    case LOCALE_CUSTOM_UNSPECIFIED:
+        return STATUS_INVALID_PARAMETER_1;
+    }
+
+    if (!(entry = find_lcid_entry( lcid ))) return STATUS_INVALID_PARAMETER_1;
+    /* reject neutral locale unless flag 2 is set */
+    if (!(flags & 2) && !get_locale_data( entry->idx )->inotneutral) return STATUS_INVALID_PARAMETER_1;
+
+    name = locale_strings + entry->name;
+    len = *name++;
+
+    if (alloc)
+    {
+        if (!(str->Buffer = RtlAllocateHeap( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) )))
+            return STATUS_NO_MEMORY;
+        str->MaximumLength = (len + 1) * sizeof(WCHAR);
+    }
+    else if (str->MaximumLength < (len + 1) * sizeof(WCHAR)) return STATUS_BUFFER_TOO_SMALL;
+
+    wcscpy( str->Buffer, name );
+    str->Length = len * sizeof(WCHAR);
+    TRACE( "%04x -> %s\n", lcid, debugstr_us(str) );
+    return STATUS_SUCCESS;
 }
 
 
