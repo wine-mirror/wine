@@ -656,6 +656,48 @@ static BOOL mode_is_preferred(CGDisplayModeRef new_mode, CGDisplayModeRef old_mo
 #endif
 
 
+static CFComparisonResult mode_compare(const void *p1, const void *p2, void *context)
+{
+    CGDisplayModeRef a = (CGDisplayModeRef)p1, b = (CGDisplayModeRef)p2;
+    size_t a_val, b_val;
+    double a_refresh_rate, b_refresh_rate;
+
+    /* Sort by bpp descending, */
+    a_val = display_mode_bits_per_pixel(a);
+    b_val = display_mode_bits_per_pixel(b);
+    if (a_val < b_val)
+        return kCFCompareGreaterThan;
+    else if (a_val > b_val)
+        return kCFCompareLessThan;
+
+    /* then width ascending, */
+    a_val = CGDisplayModeGetWidth(a);
+    b_val = CGDisplayModeGetWidth(b);
+    if (a_val < b_val)
+        return kCFCompareLessThan;
+    else if (a_val > b_val)
+        return kCFCompareGreaterThan;
+
+    /* then height ascending, */
+    a_val = CGDisplayModeGetHeight(a);
+    b_val = CGDisplayModeGetHeight(b);
+    if (a_val < b_val)
+        return kCFCompareLessThan;
+    else if (a_val > b_val)
+        return kCFCompareGreaterThan;
+
+    /* then refresh rate descending. */
+    a_refresh_rate = CGDisplayModeGetRefreshRate(a);
+    b_refresh_rate = CGDisplayModeGetRefreshRate(b);
+    if (a_refresh_rate < b_refresh_rate)
+        return kCFCompareGreaterThan;
+    else if (a_refresh_rate > b_refresh_rate)
+        return kCFCompareLessThan;
+
+    return kCFCompareEqualTo;
+}
+
+
 /***********************************************************************
  *              copy_display_modes
  *
@@ -725,7 +767,16 @@ static CFArrayRef copy_display_modes(CGDirectDisplayID display, BOOL include_uns
 #endif
         modes = CGDisplayCopyAllDisplayModes(display, NULL);
 
-    return modes;
+    if (modes)
+    {
+        CFIndex count = CFArrayGetCount(modes);
+        CFMutableArrayRef sorted_modes = CFArrayCreateMutableCopy(NULL, count, modes);
+        CFRelease(modes);
+        CFArraySortValues(sorted_modes, CFRangeMake(0, count), mode_compare, NULL);
+        return sorted_modes;
+    }
+
+    return NULL;
 }
 
 
