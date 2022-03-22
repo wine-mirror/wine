@@ -17,6 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include "ntdll_test.h"
 #include "winnls.h"
@@ -375,7 +376,7 @@ static void test_RtlGetFullPathName_U(void)
     file_part = (WCHAR *)0xdeadbeef;
     lstrcpyW(rbufferW, deadbeefW);
     ret = pRtlGetFullPathName_U(NULL, MAX_PATH, rbufferW, &file_part);
-    ok(!ret, "Expected RtlGetFullPathName_U to return 0, got %u\n", ret);
+    ok(!ret, "Expected RtlGetFullPathName_U to return 0, got %lu\n", ret);
     ok(!lstrcmpW(rbufferW, deadbeefW),
        "Expected the output buffer to be untouched, got %s\n", wine_dbgstr_w(rbufferW));
     ok(file_part == (WCHAR *)0xdeadbeef ||
@@ -385,7 +386,7 @@ static void test_RtlGetFullPathName_U(void)
     file_part = (WCHAR *)0xdeadbeef;
     lstrcpyW(rbufferW, deadbeefW);
     ret = pRtlGetFullPathName_U(emptyW, MAX_PATH, rbufferW, &file_part);
-    ok(!ret, "Expected RtlGetFullPathName_U to return 0, got %u\n", ret);
+    ok(!ret, "Expected RtlGetFullPathName_U to return 0, got %lu\n", ret);
     ok(!lstrcmpW(rbufferW, deadbeefW),
        "Expected the output buffer to be untouched, got %s\n", wine_dbgstr_w(rbufferW));
     ok(file_part == (WCHAR *)0xdeadbeef ||
@@ -398,7 +399,7 @@ static void test_RtlGetFullPathName_U(void)
         pRtlMultiByteToUnicodeN(pathbufW , sizeof(pathbufW), NULL, test->path, strlen(test->path)+1 );
         ret = pRtlGetFullPathName_U( pathbufW,MAX_PATH, rbufferW, &file_part);
         ok( ret == len || (test->alt_rname && ret == strlen(test->alt_rname)*sizeof(WCHAR)),
-            "Wrong result %d/%d for \"%s\"\n", ret, len, test->path );
+            "Wrong result %ld/%d for \"%s\"\n", ret, len, test->path );
         ok(pRtlUnicodeToMultiByteN(rbufferA,MAX_PATH,&reslen,rbufferW,(lstrlenW(rbufferW) + 1) * sizeof(WCHAR)) == STATUS_SUCCESS,
            "RtlUnicodeToMultiByteN failed\n");
         ok(!lstrcmpA(rbufferA,test->rname) || (test->alt_rname && !lstrcmpA(rbufferA,test->alt_rname)),
@@ -580,7 +581,7 @@ static void test_RtlDosPathNameToNtPathName_U(void)
         if (pRtlDosPathNameToNtPathName_U_WithStatus)
         {
             status = pRtlDosPathNameToNtPathName_U_WithStatus(error_paths[i], &nameW, &file_part, NULL);
-            ok(status == STATUS_OBJECT_NAME_INVALID, "Got status %#x.\n", status);
+            ok(status == STATUS_OBJECT_NAME_INVALID, "Got status %#lx.\n", status);
         }
 
         winetest_pop_context();
@@ -600,7 +601,7 @@ static void test_RtlDosPathNameToNtPathName_U(void)
         {
             RtlFreeUnicodeString(&nameW);
             status = pRtlDosPathNameToNtPathName_U_WithStatus(tests[i].dos, &nameW, &file_part, NULL);
-            ok(status == STATUS_SUCCESS, "%s: Got status %#x.\n", debugstr_w(tests[i].dos), status);
+            ok(status == STATUS_SUCCESS, "%s: Got status %#lx.\n", debugstr_w(tests[i].dos), status);
         }
 
         ok(!wcscmp(nameW.Buffer, tests[i].nt)
@@ -711,7 +712,7 @@ static void test_nt_names(void)
         if (handle) NtClose( handle );
         todo_wine_if( tests[i].todo )
         ok( status == tests[i].expect || broken( tests[i].broken && status == tests[i].broken ),
-            "%u: got %x / %x for %s + %s\n", i, status, tests[i].expect,
+            "%u: got %lx / %lx for %s + %s\n", i, status, tests[i].expect,
             debugstr_w( tests[i].root ), debugstr_w( tests[i].name ));
     }
 }
