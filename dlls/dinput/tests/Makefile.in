@@ -5,6 +5,10 @@ driver_IMPORTS = winecrt0 ntoskrnl hal hidclass
 driver_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
 driver_bus_IMPORTS = winecrt0 ntoskrnl hal
 driver_bus_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
+driver_hid_IMPORTS = winecrt0 ntoskrnl hal hidclass
+driver_hid_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
+driver_hid_poll_IMPORTS = winecrt0 ntoskrnl hal hidclass
+driver_hid_poll_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
 
 SOURCES = \
 	device.c \
@@ -14,6 +18,10 @@ SOURCES = \
 	driver.spec \
 	driver_bus.c \
 	driver_bus.spec \
+	driver_hid.c \
+	driver_hid.spec \
+	driver_hid_poll.c \
+	driver_hid_poll.spec \
 	force_feedback.c \
 	hid.c \
 	hotplug.c \

@@ -39,6 +39,7 @@
 #include "setupapi.h"
 #include "cfgmgr32.h"
 #include "newdev.h"
+#include "dbt.h"
 
 #include "objbase.h"
 
@@ -65,8 +66,11 @@ const WCHAR expect_vidpid_str[] = L"VID_1209&PID_0001";
 const GUID expect_guid_product = {EXPECT_VIDPID, 0x0000, 0x0000, {0x00, 0x00, 'P', 'I', 'D', 'V', 'I', 'D'}};
 const WCHAR expect_path[] = L"\\\\?\\hid#winetest#1&2fafeb0&";
 const WCHAR expect_path_end[] = L"&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}";
+HANDLE device_added, device_removed;
+static BOOL hid_device_created;
 
 static struct winetest_shared_data *test_data;
+static HANDLE monitor_thread, monitor_stop;
 static HANDLE test_data_mapping;
 static HANDLE okfile;
 
@@ -316,6 +320,8 @@ static const char inf_text[] =
     "[mfg_section.NT" EXT "]\n"
     "Wine test root driver=device_section,test_hardware_id\n"
     "Wine Test Bus Device=bus_section,WINETEST\\BUS\n"
+    "Wine Test HID Device=hid_section,WINETEST\\WINE_COMP_HID\n"
+    "Wine Test HID Polled Device=hid_poll_section,WINETEST\\WINE_COMP_POLLHID\n"
 
     "[device_section.NT" EXT "]\n"
     "CopyFiles=file_section\n"
@@ -329,17 +335,35 @@ static const char inf_text[] =
     "[bus_section.NT" EXT ".Services]\n"
     "AddService=winetest_bus,0x2,bus_service\n"
 
+    "[hid_section.NT" EXT "]\n"
+    "CopyFiles=file_section\n"
+
+    "[hid_section.NT" EXT ".Services]\n"
+    "AddService=winetest_hid,0x2,hid_service\n"
+
+    "[hid_poll_section.NT" EXT "]\n"
+    "CopyFiles=file_section\n"
+
+    "[hid_poll_section.NT" EXT ".Services]\n"
+    "AddService=winetest_hid_poll,0x2,hid_poll_service\n"
+
     "[file_section]\n"
     "winetest.sys\n"
     "winetest_bus.sys\n"
+    "winetest_hid.sys\n"
+    "winetest_hid_poll.sys\n"
 
     "[SourceDisksFiles]\n"
     "winetest.sys=1\n"
     "winetest_bus.sys=1\n"
+    "winetest_hid.sys=1\n"
+    "winetest_hid_poll.sys=1\n"
 
     "[SourceDisksNames]\n"
     "1=,winetest.sys\n"
     "1=,winetest_bus.sys\n"
+    "1=,winetest_hid.sys\n"
+    "1=,winetest_hid_poll.sys\n"
 
     "[DestinationDirs]\n"
     "DefaultDestDir=12\n"
@@ -359,6 +383,22 @@ static const char inf_text[] =
     "ErrorControl=1\n"
     "LoadOrderGroup=WinePlugPlay\n"
     "DisplayName=\"Wine Test Bus Driver\"\n"
+
+    "[hid_service]\n"
+    "ServiceBinary=%12%\\winetest_hid.sys\n"
+    "ServiceType=1\n"
+    "StartType=3\n"
+    "ErrorControl=1\n"
+    "LoadOrderGroup=WinePlugPlay\n"
+    "DisplayName=\"Wine Test HID Driver\"\n"
+
+    "[hid_poll_service]\n"
+    "ServiceBinary=%12%\\winetest_hid_poll.sys\n"
+    "ServiceType=1\n"
+    "StartType=3\n"
+    "ErrorControl=1\n"
+    "LoadOrderGroup=WinePlugPlay\n"
+    "DisplayName=\"Wine Test HID Polled Driver\"\n"
     "; they don't sleep anymore, on the beach\n";
 
 static void add_file_to_catalog( HANDLE catalog, const WCHAR *file )
@@ -505,10 +545,19 @@ static void pnp_driver_stop( BOOL bus )
     ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
     ret = DeleteFileW( L"winetest_bus.sys" );
     ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
+    ret = DeleteFileW( L"winetest_hid.sys" );
+    ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
+    ret = DeleteFileW( L"winetest_hid_poll.sys" );
+    ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
     /* Windows 10 apparently deletes the image in SetupUninstallOEMInf(). */
     ret = DeleteFileW( L"C:/windows/system32/drivers/winetest.sys" );
     ok( ret || GetLastError() == ERROR_FILE_NOT_FOUND, "Failed to delete file, error %lu\n", GetLastError() );
     ret = DeleteFileW( L"C:/windows/system32/drivers/winetest_bus.sys" );
+    ok( ret || GetLastError() == ERROR_FILE_NOT_FOUND, "Failed to delete file, error %lu\n", GetLastError() );
+    ret = DeleteFileW( L"C:/windows/system32/drivers/winetest_hid.sys" );
+    todo_wine_if(!ret && GetLastError() == ERROR_ACCESS_DENIED) /* Wine doesn't unload device drivers correctly */
+    ok( ret || GetLastError() == ERROR_FILE_NOT_FOUND, "Failed to delete file, error %lu\n", GetLastError() );
+    ret = DeleteFileW( L"C:/windows/system32/drivers/winetest_hid_poll.sys" );
     ok( ret || GetLastError() == ERROR_FILE_NOT_FOUND, "Failed to delete file, error %lu\n", GetLastError() );
 }
 
@@ -527,8 +576,11 @@ static BOOL find_hid_device_path( WCHAR *device_path )
 
     for (i = 0; SetupDiEnumDeviceInfo( set, i, &device ); ++i)
     {
+        SetLastError( 0xdeadbeef );
         ret = SetupDiEnumDeviceInterfaces( set, &device, &GUID_DEVINTERFACE_HID, 0, &iface );
+        todo_wine_if(!ret && GetLastError() == ERROR_NO_MORE_ITEMS) /* Wine doesn't unload device drivers correctly */
         ok( ret, "Failed to get interface, error %#lx\n", GetLastError() );
+        if (!ret) continue;
         ok( IsEqualGUID( &iface.InterfaceClassGuid, &GUID_DEVINTERFACE_HID ), "wrong class %s\n",
             debugstr_guid( &iface.InterfaceClassGuid ) );
         ok( iface.Flags == SPINT_ACTIVE, "got flags %#lx\n", iface.Flags );
@@ -574,6 +626,14 @@ static BOOL pnp_driver_start( BOOL bus )
     ret = MoveFileExW( filename, L"winetest_bus.sys", MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING );
     ok( ret, "failed to move file, error %lu\n", GetLastError() );
 
+    load_resource( L"driver_hid.dll", filename );
+    ret = MoveFileExW( filename, L"winetest_hid.sys", MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING );
+    ok( ret, "failed to move file, error %lu\n", GetLastError() );
+
+    load_resource( L"driver_hid_poll.dll", filename );
+    ret = MoveFileExW( filename, L"winetest_hid_poll.sys", MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING );
+    ok( ret, "failed to move file, error %lu\n", GetLastError() );
+
     f = fopen( "winetest.inf", "w" );
     ok( !!f, "failed to open winetest.inf: %s\n", strerror( errno ) );
     fputs( inf_text, f );
@@ -586,6 +646,8 @@ static BOOL pnp_driver_start( BOOL bus )
 
     add_file_to_catalog( catalog, L"winetest.sys" );
     add_file_to_catalog( catalog, L"winetest_bus.sys" );
+    add_file_to_catalog( catalog, L"winetest_hid.sys" );
+    add_file_to_catalog( catalog, L"winetest_hid_poll.sys" );
     add_file_to_catalog( catalog, L"winetest.inf" );
 
     ret = CryptCATPersistStore( catalog );
@@ -602,6 +664,10 @@ static BOOL pnp_driver_start( BOOL bus )
         ret = DeleteFileW( L"winetest.inf" );
         ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
         ret = DeleteFileW( L"winetest_bus.sys" );
+        ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
+        ret = DeleteFileW( L"winetest_hid.sys" );
+        ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
+        ret = DeleteFileW( L"winetest_hid_poll.sys" );
         ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
         ret = DeleteFileW( L"winetest.sys" );
         ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
@@ -3408,9 +3474,73 @@ BOOL dinput_driver_start_( const char *file, int line, const BYTE *desc_buf, ULO
     return hid_device_start();
 }
 
+static LRESULT CALLBACK monitor_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    if (msg == WM_DEVICECHANGE)
+    {
+        DEV_BROADCAST_DEVICEINTERFACE_W *iface = (DEV_BROADCAST_DEVICEINTERFACE_W *)lparam;
+        if (wparam == DBT_DEVICEREMOVECOMPLETE && IsEqualGUID( &iface->dbcc_classguid, &control_class ))
+            SetEvent( device_removed );
+        if (wparam == DBT_DEVICEARRIVAL && IsEqualGUID( &iface->dbcc_classguid, &GUID_DEVINTERFACE_HID ))
+            SetEvent( device_added );
+    }
+
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
+DWORD WINAPI monitor_thread_proc( void *stop_event )
+{
+    DEV_BROADCAST_DEVICEINTERFACE_A iface_filter_a =
+    {
+        .dbcc_size = sizeof(DEV_BROADCAST_DEVICEINTERFACE_A),
+        .dbcc_devicetype = DBT_DEVTYP_DEVICEINTERFACE,
+    };
+    WNDCLASSEXW class =
+    {
+        .cbSize = sizeof(WNDCLASSEXW),
+        .hInstance = GetModuleHandleW( NULL ),
+        .lpszClassName = L"device_monitor",
+        .lpfnWndProc = monitor_wndproc,
+    };
+    HDEVNOTIFY devnotify;
+    HANDLE hwnd;
+    MSG msg;
+
+    RegisterClassExW( &class );
+    hwnd = CreateWindowW( class.lpszClassName, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+    devnotify = RegisterDeviceNotificationA( hwnd, &iface_filter_a, DEVICE_NOTIFY_ALL_INTERFACE_CLASSES );
+    ok( !!devnotify, "RegisterDeviceNotificationA failed, error %lu\n", GetLastError() );
+
+    do
+    {
+        while (PeekMessageW( &msg, hwnd, 0, 0, PM_REMOVE ))
+        {
+            TranslateMessage( &msg );
+            DispatchMessageW( &msg );
+        }
+    } while (MsgWaitForMultipleObjects( 1, &stop_event, FALSE, INFINITE, QS_ALLINPUT ));
+
+    UnregisterDeviceNotification( devnotify );
+    DestroyWindow( hwnd );
+    UnregisterClassW( class.lpszClassName, class.hInstance );
+
+    CloseHandle( stop_event );
+    return 0;
+}
+
 BOOL dinput_test_init_( const char *file, int line )
 {
     BOOL is_wow64;
+
+    monitor_stop = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( !!monitor_stop, "CreateEventW failed, error %lu\n", GetLastError() );
+    device_added = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( !!device_added, "CreateEventW failed, error %lu\n", GetLastError() );
+    device_removed = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( !!device_removed, "CreateEventW failed, error %lu\n", GetLastError() );
+    monitor_thread = CreateThread( NULL, 0, monitor_thread_proc, monitor_stop, 0, NULL );
+    ok( !!monitor_thread, "CreateThread failed, error %lu\n", GetLastError() );
 
     subtest_(file, line)( "hid" );
     instance = GetModuleHandleW( NULL );
@@ -3442,6 +3572,8 @@ BOOL dinput_test_init_( const char *file, int line )
 
     subtest( "driver" );
     subtest( "driver_bus" );
+    subtest( "driver_hid" );
+    subtest( "driver_hid_poll" );
     return TRUE;
 }
 
@@ -3451,6 +3583,13 @@ void dinput_test_exit(void)
     CloseHandle( test_data_mapping );
     CloseHandle( okfile );
     DeleteFileW( L"C:\\windows\\winetest_dinput_okfile" );
+
+    SetEvent( monitor_stop );
+    WaitForSingleObject( monitor_thread, INFINITE );
+    CloseHandle( monitor_thread );
+    CloseHandle( monitor_stop );
+    CloseHandle( device_removed );
+    CloseHandle( device_added );
 }
 
 BOOL CALLBACK find_test_device( const DIDEVICEINSTANCEW *devinst, void *context )
@@ -3612,10 +3751,39 @@ DWORD WINAPI dinput_test_device_thread( void *stop_event )
 
 static void test_bus_driver(void)
 {
-    struct bus_device_desc desc =
+#include "psh_hid_macros.h"
+    const unsigned char report_desc[] =
     {
-        .vid = LOWORD(EXPECT_VIDPID), .pid = HIWORD(EXPECT_VIDPID),
+        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+        USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
+        COLLECTION(1, Application),
+            USAGE(1, HID_USAGE_GENERIC_X),
+            REPORT_SIZE(1, 8),
+            REPORT_COUNT(1, 1),
+            INPUT(1, Data|Var|Abs),
+        END_COLLECTION,
     };
+#include "pop_hid_macros.h"
+
+    static const HID_DEVICE_ATTRIBUTES attributes =
+    {
+        .Size = sizeof(HID_DEVICE_ATTRIBUTES),
+        .VendorID = LOWORD(EXPECT_VIDPID),
+        .ProductID = HIWORD(EXPECT_VIDPID),
+        .VersionNumber = 0x0100,
+    };
+    const HIDP_CAPS caps =
+    {
+        .Usage = HID_USAGE_GENERIC_JOYSTICK,
+        .UsagePage = HID_USAGE_PAGE_GENERIC,
+        .InputReportByteLength = 2,
+        .NumberLinkCollectionNodes = 1,
+        .NumberInputValueCaps = 1,
+        .NumberInputDataIndices = 1,
+    };
+    struct bus_device_desc desc = { .caps = caps, .attributes = attributes, };
+
+    WCHAR device_path[MAX_PATH];
     HANDLE control;
     BOOL ret;
 
@@ -3634,15 +3802,31 @@ static void test_bus_driver(void)
 
     bus_device_start();
 
+    desc.report_descriptor_len = sizeof(report_desc);
+    memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
+
+    ResetEvent( device_added );
+
     control = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
                            NULL, OPEN_EXISTING, 0, NULL );
     ok( control != INVALID_HANDLE_VALUE, "CreateFile failed, error %lu\n", GetLastError() );
     ret = sync_ioctl( control, IOCTL_WINETEST_CREATE_DEVICE, &desc, sizeof(desc), NULL, 0, INFINITE );
     ok( ret, "IOCTL_WINETEST_CREATE_DEVICE failed, last error %lu\n", GetLastError() );
 
+    WaitForSingleObject( device_added, INFINITE );
+    hid_device_created = TRUE;
+
+    swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x", LOWORD(EXPECT_VIDPID), HIWORD(EXPECT_VIDPID) );
+    ret = find_hid_device_path( device_path );
+    ok( ret, "Failed to find HID device matching %s\n", debugstr_w(device_path) );
+
+    ResetEvent( device_removed );
+
     ret = sync_ioctl( control, IOCTL_WINETEST_REMOVE_DEVICE, &desc, sizeof(desc), NULL, 0, INFINITE );
     ok( ret, "IOCTL_WINETEST_REMOVE_DEVICE failed, last error %lu\n", GetLastError() );
     CloseHandle( control );
+
+    WaitForSingleObject( device_removed, INFINITE );
 
 done:
     bus_device_stop();

@@ -35,6 +35,8 @@
 #include "winternl.h"
 
 #include "ddk/wdm.h"
+#include "ddk/hidsdi.h"
+#include "ddk/hidport.h"
 #include "ddk/hidclass.h"
 
 DEFINE_GUID(control_class,0xdeadbeef,0x29ef,0x4538,0xa5,0xfd,0xb6,0x95,0x73,0xa3,0x62,0xc0);
@@ -62,8 +64,21 @@ struct hid_expect
 /* create/remove device */
 struct bus_device_desc
 {
-    WORD vid;
-    WORD pid;
+    BOOL is_polled;
+    BOOL use_report_id;
+
+    DWORD report_descriptor_len;
+    char report_descriptor_buf[1024];
+
+    HIDP_CAPS caps;
+    HID_DEVICE_ATTRIBUTES attributes;
+
+    ULONG input_size;
+    struct hid_expect input[64];
+    ULONG expect_size;
+    struct hid_expect expect[64];
+    ULONG context_size;
+    char context[64];
 };
 
 /* kernel/user shared data */
