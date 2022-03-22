@@ -322,6 +322,7 @@ int __cdecl wmain( int argc, const WCHAR *argv[] )
         {
             ret = StartServiceW( service, argc - 3, argv + 3 );
             if (!ret) WINE_TRACE("failed to start service %lu\n", GetLastError());
+            else query_service( manager, argv[2] );
             CloseServiceHandle( service );
         }
         else WINE_ERR("failed to open service %lu\n", GetLastError());
@@ -333,6 +334,7 @@ int __cdecl wmain( int argc, const WCHAR *argv[] )
         {
             ret = ControlService( service, SERVICE_CONTROL_STOP, &status );
             if (!ret) WINE_TRACE("failed to stop service %lu\n", GetLastError());
+            else query_service( manager, argv[2] );
             CloseServiceHandle( service );
         }
         else WINE_ERR("failed to open service %lu\n", GetLastError());
