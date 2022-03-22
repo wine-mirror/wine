@@ -175,6 +175,58 @@ static void usage( void )
     exit( 1 );
 }
 
+static const WCHAR *service_type_string( DWORD type )
+{
+    switch (type)
+    {
+        case SERVICE_WIN32_OWN_PROCESS: return L"WIN32_OWN_PROCESS";
+        case SERVICE_WIN32_SHARE_PROCESS: return L"WIN32_SHARE_PROCESS";
+        case SERVICE_WIN32: return L"WIN32";
+        default: return L"";
+    }
+}
+
+static const WCHAR *service_state_string( DWORD state )
+{
+    static const WCHAR * const state_str[] = { L"", L"STOPPED", L"START_PENDING",
+        L"STOP_PENDING", L"RUNNING", L"CONTINUE_PENDING", L"PAUSE_PENDING", L"PAUSED" };
+
+    if (state < ARRAY_SIZE( state_str )) return state_str[ state ];
+    return L"";
+}
+
+static BOOL query_service( SC_HANDLE manager, const WCHAR *name )
+{
+    SC_HANDLE service;
+    SERVICE_STATUS status;
+    BOOL ret = FALSE;
+
+    service = OpenServiceW( manager, name, SERVICE_QUERY_STATUS );
+    if (service)
+    {
+        ret = QueryServiceStatus( service, &status );
+        if (!ret)
+            WINE_ERR("failed to query service status %lu\n", GetLastError());
+        else
+            printf( "SERVICE_NAME: %ls\n"
+                    "        TYPE               : %lx  %ls\n"
+                    "        STATE              : %lx  %ls\n"
+                    "        WIN32_EXIT_CODE    : %lu  (0x%lx)\n"
+                    "        SERVICE_EXIT_CODE  : %lu  (0x%lx)\n"
+                    "        CHECKPOINT         : 0x%lx\n"
+                    "        WAIT_HINT          : 0x%lx\n",
+                    name, status.dwServiceType, service_type_string( status.dwServiceType ),
+                    status.dwCurrentState, service_state_string( status.dwCurrentState ),
+                    status.dwWin32ExitCode, status.dwWin32ExitCode,
+                    status.dwServiceSpecificExitCode, status.dwServiceSpecificExitCode,
+                    status.dwCheckPoint, status.dwWaitHint );
+        CloseServiceHandle( service );
+    }
+    else WINE_ERR("failed to open service %lu\n", GetLastError());
+
+    return ret;
+}
+
 int __cdecl wmain( int argc, const WCHAR *argv[] )
 {
     SC_HANDLE manager, service;
@@ -284,6 +336,10 @@ int __cdecl wmain( int argc, const WCHAR *argv[] )
             CloseServiceHandle( service );
         }
         else WINE_ERR("failed to open service %lu\n", GetLastError());
+    }
+    else if (!wcsicmp( argv[1], L"query" ))
+    {
+        ret = query_service( manager, argv[2] );
     }
     else if (!wcsicmp( argv[1], L"sdset" ))
     {
