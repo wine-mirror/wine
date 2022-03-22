@@ -526,6 +526,16 @@ sync_test("defineProperty", function() {
     obj.no_setter = false;
     ok(obj.no_setter === true, "no_setter = " + obj.no_setter);
 
+    ok((delete obj.no_setter) === true, "delete no_setter returned false");
+    ok(!("no_setter" in obj), "no_setter still in obj after delete");
+
+    Object.defineProperty(child.prototype, "no_setter", desc);
+    test_accessor_prop_desc(child.prototype, "no_setter", desc);
+    ok(!obj.hasOwnProperty("no_setter"), "no_setter is a property of obj");
+    obj.no_setter = false;
+    ok(obj.no_setter === true, "no_setter = " + obj.no_setter);
+    ok(!obj.hasOwnProperty("no_setter"), "no_setter is a property of obj");
+
     /* call prop with getter */
     desc = {
         get: function() {
