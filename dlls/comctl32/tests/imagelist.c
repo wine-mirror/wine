@@ -948,8 +948,8 @@ static HBITMAP create_bitmap(INT cx, INT cy, COLORREF color, const char *comment
 
     memset(&bmi, 0, sizeof(bmi));
     bmi.bmiHeader.biSize = sizeof(bmi.bmiHeader);
-    bmi.bmiHeader.biHeight = cx;
-    bmi.bmiHeader.biWidth = cy;
+    bmi.bmiHeader.biWidth = cx;
+    bmi.bmiHeader.biHeight = cy;
     bmi.bmiHeader.biBitCount = 24;
     bmi.bmiHeader.biPlanes = 1;
     bmi.bmiHeader.biCompression = BI_RGB;
@@ -1156,7 +1156,7 @@ static void test_imagelist_storage(void)
     himl = pImageList_Create(BMP_CX, BMP_CX, ILC_COLOR24, 0, 32);
     ok(himl != 0, "ImageList_Create failed\n");
     check_iml_data(himl, BMP_CX, BMP_CX, 0, 1, 32, ILC_COLOR24, "init 0 grow 32");
-    hbm = create_bitmap(BMP_CX * 9, BMP_CX, 0, "9");
+    hbm = create_bitmap(BMP_CX, BMP_CX * 9, 0, "9");
     ret = pImageList_Add(himl, hbm, NULL);
     ok(ret == 0, "ImageList_Add returned %d, expected 0\n", ret);
     check_iml_data(himl, BMP_CX, BMP_CX, 1, 34, 32, ILC_COLOR24, "add 1 x 9");
@@ -1167,7 +1167,7 @@ static void test_imagelist_storage(void)
     himl = pImageList_Create(BMP_CX, BMP_CX, ILC_COLOR24, 4, 4);
     ok(himl != 0, "ImageList_Create failed\n");
     check_iml_data(himl, BMP_CX, BMP_CX, 0, 5, 4, ILC_COLOR24, "init 4 grow 4");
-    hbm = create_bitmap(BMP_CX, BMP_CX * 9, 0, "9");
+    hbm = create_bitmap(BMP_CX * 9, BMP_CX, 0, "9");
     ret = pImageList_Add(himl, hbm, NULL);
     ok(ret == 0, "ImageList_Add returned %d, expected 0\n", ret);
     check_iml_data(himl, BMP_CX, BMP_CX, 9, 15, 4, ILC_COLOR24, "add 9 x 1");
