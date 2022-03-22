@@ -1049,7 +1049,7 @@ BOOL CDECL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode,
         display_mode = NULL;
         if (modes)
         {
-            int default_bpp = get_default_bpp();
+            int default_bpp;
             DWORD seen_modes = 0;
 
             count = CFArrayGetCount(modes);
@@ -1064,33 +1064,41 @@ BOOL CDECL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode,
                     display_mode_bpp = display_mode_bits_per_pixel(display_mode);
                     break;
                 }
+            }
 
-                /* We only synthesize modes from those having the default bpp. */
-                if (display_mode_bits_per_pixel(candidate) != default_bpp)
-                    continue;
+            default_bpp = get_default_bpp();
 
-                if (!modes_has_8bpp)
+            /* If all the real modes are exhausted, synthesize lower bpp modes. */
+            if (!display_mode && (!modes_has_16bpp || !modes_has_8bpp))
+            {
+                /* We want to synthesize higher depths first. */
+                int synth_bpps[] = { modes_has_16bpp ? 0 : 16, modes_has_8bpp ? 0 : 8 };
+                size_t synth_bpp_idx;
+                for (synth_bpp_idx = 0; synth_bpp_idx < 2; synth_bpp_idx++)
                 {
-                    seen_modes++;
-                    if (seen_modes > mode)
-                    {
-                        display_mode = (CGDisplayModeRef)CFRetain(candidate);
-                        display_mode_bpp = 8;
-                        synthesized = TRUE;
-                        break;
-                    }
-                }
+                    int synth_bpp = synth_bpps[synth_bpp_idx];
+                    if (synth_bpp == 0)
+                        continue;
 
-                if (!modes_has_16bpp)
-                {
-                    seen_modes++;
-                    if (seen_modes > mode)
+                    for (i = 0; i < count; i++)
                     {
-                        display_mode = (CGDisplayModeRef)CFRetain(candidate);
-                        display_mode_bpp = 16;
-                        synthesized = TRUE;
-                        break;
+                        CGDisplayModeRef candidate = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, i);
+                        /* We only synthesize modes from those having the default bpp. */
+                        if (display_mode_bits_per_pixel(candidate) != default_bpp)
+                            continue;
+
+                        seen_modes++;
+                        if (seen_modes > mode)
+                        {
+                            display_mode = (CGDisplayModeRef)CFRetain(candidate);
+                            display_mode_bpp = synth_bpp;
+                            synthesized = TRUE;
+                            break;
+                        }
                     }
+
+                    if (display_mode)
+                        break;
                 }
             }
         }
