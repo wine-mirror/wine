@@ -100,9 +100,12 @@ struct norm_table
     /* WORD[]       composition character sequences */
 };
 
+static const WCHAR *locale_strings;
 static NLSTABLEINFO nls_info;
 static struct norm_table *norm_tables[16];
-
+static const NLS_LOCALE_LCID_INDEX *lcids_index;
+static const NLS_LOCALE_LCNAME_INDEX *lcnames_index;
+static const NLS_LOCALE_HEADER *locale_table;
 
 static NTSTATUS load_string( ULONG id, LANGID lang, WCHAR *buffer, ULONG len )
 {
@@ -232,6 +235,36 @@ static NTSTATUS load_norm_table( ULONG form, const struct norm_table **info )
 invalid:
     NtUnmapViewOfSection( GetCurrentProcess(), data );
     return STATUS_INVALID_PARAMETER;
+}
+
+
+void locale_init(void)
+{
+    LARGE_INTEGER unused;
+    LCID system_lcid;
+    NTSTATUS status;
+    struct
+    {
+        UINT ctypes;
+        UINT unknown1;
+        UINT unknown2;
+        UINT unknown3;
+        UINT locales;
+        UINT charmaps;
+        UINT geoids;
+        UINT scripts;
+    } *header;
+
+    status = RtlGetLocaleFileMappingAddress( (void **)&header, &system_lcid, &unused );
+    if (status)
+    {
+        ERR( "locale init failed %x\n", status );
+        return;
+    }
+    locale_table = (const NLS_LOCALE_HEADER *)((char *)header + header->locales);
+    lcids_index = (const NLS_LOCALE_LCID_INDEX *)((char *)locale_table + locale_table->lcids_offset);
+    lcnames_index = (const NLS_LOCALE_LCNAME_INDEX *)((char *)locale_table + locale_table->lcnames_offset);
+    locale_strings = (const WCHAR *)((char *)locale_table + locale_table->strings_offset);
 }
 
 
