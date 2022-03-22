@@ -315,6 +315,7 @@ static const char inf_text[] =
 
     "[mfg_section.NT" EXT "]\n"
     "Wine test root driver=device_section,test_hardware_id\n"
+    "Wine Test Bus Device=bus_section,WINETEST\\BUS\n"
 
     "[device_section.NT" EXT "]\n"
     "CopyFiles=file_section\n"
@@ -322,14 +323,23 @@ static const char inf_text[] =
     "[device_section.NT" EXT ".Services]\n"
     "AddService=winetest,0x2,svc_section\n"
 
+    "[bus_section.NT" EXT "]\n"
+    "CopyFiles=file_section\n"
+
+    "[bus_section.NT" EXT ".Services]\n"
+    "AddService=winetest_bus,0x2,bus_service\n"
+
     "[file_section]\n"
     "winetest.sys\n"
+    "winetest_bus.sys\n"
 
     "[SourceDisksFiles]\n"
     "winetest.sys=1\n"
+    "winetest_bus.sys=1\n"
 
     "[SourceDisksNames]\n"
     "1=,winetest.sys\n"
+    "1=,winetest_bus.sys\n"
 
     "[DestinationDirs]\n"
     "DefaultDestDir=12\n"
@@ -341,6 +351,14 @@ static const char inf_text[] =
     "ErrorControl=1\n"
     "LoadOrderGroup=WinePlugPlay\n"
     "DisplayName=\"winetest bus driver\"\n"
+
+    "[bus_service]\n"
+    "ServiceBinary=%12%\\winetest_bus.sys\n"
+    "ServiceType=1\n"
+    "StartType=3\n"
+    "ErrorControl=1\n"
+    "LoadOrderGroup=WinePlugPlay\n"
+    "DisplayName=\"Wine Test Bus Driver\"\n"
     "; they don't sleep anymore, on the beach\n";
 
 static void add_file_to_catalog( HANDLE catalog, const WCHAR *file )
@@ -415,9 +433,9 @@ static void unload_driver( SC_HANDLE service )
     CloseServiceHandle( service );
 }
 
-static void pnp_driver_stop(void)
+static void pnp_driver_stop( BOOL bus )
 {
-    const WCHAR *service_name = L"winetest";
+    const WCHAR *service_name = bus ? L"winetest_bus" : L"winetest";
     SP_DEVINFO_DATA device = {sizeof(SP_DEVINFO_DATA)};
     WCHAR path[MAX_PATH], dest[MAX_PATH], *filepart;
     SC_HANDLE manager, service;
@@ -484,8 +502,12 @@ static void pnp_driver_stop(void)
     ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
     ret = DeleteFileW( L"winetest.sys" );
     ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
+    ret = DeleteFileW( L"winetest_bus.sys" );
+    ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
     /* Windows 10 apparently deletes the image in SetupUninstallOEMInf(). */
     ret = DeleteFileW( L"C:/windows/system32/drivers/winetest.sys" );
+    ok( ret || GetLastError() == ERROR_FILE_NOT_FOUND, "Failed to delete file, error %lu\n", GetLastError() );
+    ret = DeleteFileW( L"C:/windows/system32/drivers/winetest_bus.sys" );
     ok( ret || GetLastError() == ERROR_FILE_NOT_FOUND, "Failed to delete file, error %lu\n", GetLastError() );
 }
 
@@ -525,12 +547,13 @@ static BOOL find_hid_device_path( WCHAR *device_path )
     return ret;
 }
 
-static BOOL pnp_driver_start(void)
+static BOOL pnp_driver_start( BOOL bus )
 {
     static const WCHAR hardware_id[] = L"test_hardware_id\0";
+    static const WCHAR bus_hardware_id[] = L"WINETEST\\BUS";
+    const WCHAR *service_name = bus ? L"winetest_bus" : L"winetest";
     SP_DEVINFO_DATA device = {sizeof(SP_DEVINFO_DATA)};
     WCHAR path[MAX_PATH], filename[MAX_PATH];
-    const WCHAR *service_name = L"winetest";
     SC_HANDLE manager, service;
     const CERT_CONTEXT *cert;
     int old_mute_threshold;
@@ -546,6 +569,10 @@ static BOOL pnp_driver_start(void)
     ret = MoveFileExW( filename, L"winetest.sys", MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING );
     ok( ret, "failed to move file, error %lu\n", GetLastError() );
 
+    load_resource( L"driver_bus.dll", filename );
+    ret = MoveFileExW( filename, L"winetest_bus.sys", MOVEFILE_COPY_ALLOWED | MOVEFILE_REPLACE_EXISTING );
+    ok( ret, "failed to move file, error %lu\n", GetLastError() );
+
     f = fopen( "winetest.inf", "w" );
     ok( !!f, "failed to open winetest.inf: %s\n", strerror( errno ) );
     fputs( inf_text, f );
@@ -557,6 +584,7 @@ static BOOL pnp_driver_start(void)
     ok( catalog != INVALID_HANDLE_VALUE, "Failed to create catalog, error %lu\n", GetLastError() );
 
     add_file_to_catalog( catalog, L"winetest.sys" );
+    add_file_to_catalog( catalog, L"winetest_bus.sys" );
     add_file_to_catalog( catalog, L"winetest.inf" );
 
     ret = CryptCATPersistStore( catalog );
@@ -572,6 +600,8 @@ static BOOL pnp_driver_start(void)
         ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
         ret = DeleteFileW( L"winetest.inf" );
         ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
+        ret = DeleteFileW( L"winetest_bus.sys" );
+        ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
         ret = DeleteFileW( L"winetest.sys" );
         ok( ret, "Failed to delete file, error %lu\n", GetLastError() );
         winetest_mute_threshold = old_mute_threshold;
@@ -586,8 +616,9 @@ static BOOL pnp_driver_start(void)
     ret = SetupDiCreateDeviceInfoW( set, L"root\\winetest\\0", &GUID_NULL, NULL, NULL, 0, &device );
     ok( ret, "failed to create device, error %#lx\n", GetLastError() );
 
-    ret = SetupDiSetDeviceRegistryPropertyW( set, &device, SPDRP_HARDWAREID, (const BYTE *)hardware_id,
-                                             sizeof(hardware_id) );
+    ret = SetupDiSetDeviceRegistryPropertyW( set, &device, SPDRP_HARDWAREID,
+                                             bus ? (const BYTE *)bus_hardware_id : (const BYTE *)hardware_id,
+                                             bus ? sizeof(bus_hardware_id) : sizeof(hardware_id) );
     ok( ret, "failed to create set hardware ID, error %lu\n", GetLastError() );
 
     ret = SetupDiCallClassInstaller( DIF_REGISTERDEVICE, set, &device );
@@ -598,7 +629,8 @@ static BOOL pnp_driver_start(void)
 
     GetFullPathNameW( L"winetest.inf", ARRAY_SIZE(path), path, NULL );
 
-    ret = UpdateDriverForPlugAndPlayDevicesW( NULL, hardware_id, path, INSTALLFLAG_FORCE, &need_reboot );
+    ret = UpdateDriverForPlugAndPlayDevicesW( NULL, bus ? bus_hardware_id : hardware_id, path,
+                                              INSTALLFLAG_FORCE, &need_reboot );
     ok( ret, "failed to install device, error %lu\n", GetLastError() );
     ok( !need_reboot, "expected no reboot necessary\n" );
 
@@ -630,12 +662,22 @@ static BOOL pnp_driver_start(void)
 
 void hid_device_stop(void)
 {
-    pnp_driver_stop();
+    pnp_driver_stop( FALSE );
 }
 
 BOOL hid_device_start(void)
 {
-    return pnp_driver_start();
+    return pnp_driver_start( FALSE );
+}
+
+void bus_device_stop(void)
+{
+    pnp_driver_stop( TRUE );
+}
+
+BOOL bus_device_start(void)
+{
+    return pnp_driver_start( TRUE );
 }
 
 #define check_hidp_caps( a, b ) check_hidp_caps_( __LINE__, a, b )
@@ -3398,6 +3440,7 @@ BOOL dinput_test_init_( const char *file, int line )
     ok( okfile != INVALID_HANDLE_VALUE, "failed to create file, error %lu\n", GetLastError() );
 
     subtest( "driver" );
+    subtest( "driver_bus" );
     return TRUE;
 }
 
@@ -3566,10 +3609,39 @@ DWORD WINAPI dinput_test_device_thread( void *stop_event )
     return 0;
 }
 
+static void test_bus_driver(void)
+{
+    HANDLE control;
+
+    if (!bus_device_start()) goto done;
+
+    control = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
+                           NULL, OPEN_EXISTING, 0, NULL );
+    ok( control != INVALID_HANDLE_VALUE, "CreateFile failed, error %lu\n", GetLastError() );
+    CloseHandle( control );
+
+    bus_device_stop();
+
+    control = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
+                           NULL, OPEN_EXISTING, 0, NULL );
+    ok( control == INVALID_HANDLE_VALUE, "CreateFile succeeded\n" );
+
+    bus_device_start();
+
+    control = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
+                           NULL, OPEN_EXISTING, 0, NULL );
+    ok( control != INVALID_HANDLE_VALUE, "CreateFile failed, error %lu\n", GetLastError() );
+    CloseHandle( control );
+
+done:
+    bus_device_stop();
+}
+
 START_TEST( hid )
 {
     if (!dinput_test_init()) return;
 
+    test_bus_driver();
     test_hidp_kdr();
     test_hid_driver( 0, FALSE );
     test_hid_driver( 1, FALSE );

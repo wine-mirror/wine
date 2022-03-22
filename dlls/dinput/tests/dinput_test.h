@@ -54,6 +54,8 @@ extern BOOL localized; /* object names get translated */
 
 BOOL hid_device_start(void);
 void hid_device_stop(void);
+BOOL bus_device_start(void);
+void bus_device_stop(void);
 
 void cleanup_registry_keys(void);
 

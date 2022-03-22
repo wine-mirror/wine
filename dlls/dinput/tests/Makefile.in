@@ -3,6 +3,8 @@ IMPORTS   = dinput dinput8 ole32 version user32 advapi32 hid uuid crypt32 newdev
 
 driver_IMPORTS = winecrt0 ntoskrnl hal hidclass
 driver_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
+driver_bus_IMPORTS = winecrt0 ntoskrnl hal
+driver_bus_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
 
 SOURCES = \
 	device.c \
@@ -10,6 +12,8 @@ SOURCES = \
 	dinput.c \
 	driver.c \
 	driver.spec \
+	driver_bus.c \
+	driver_bus.spec \
 	force_feedback.c \
 	hid.c \
 	hotplug.c \
