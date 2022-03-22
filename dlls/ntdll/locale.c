@@ -107,26 +107,6 @@ static const NLS_LOCALE_LCID_INDEX *lcids_index;
 static const NLS_LOCALE_LCNAME_INDEX *lcnames_index;
 static const NLS_LOCALE_HEADER *locale_table;
 
-static NTSTATUS load_string( ULONG id, LANGID lang, WCHAR *buffer, ULONG len )
-{
-    const IMAGE_RESOURCE_DATA_ENTRY *data;
-    LDR_RESOURCE_INFO info;
-    NTSTATUS status;
-    WCHAR *p;
-    int i;
-
-    info.Type = 6; /* RT_STRING */
-    info.Name = (id >> 4) + 1;
-    info.Language = lang;
-    if ((status = LdrFindResource_U( kernel32_handle, &info, 3, &data ))) return status;
-    p = (WCHAR *)((char *)kernel32_handle + data->OffsetToData);
-    for (i = 0; i < (id & 0x0f); i++) p += *p + 1;
-    if (*p >= len) return STATUS_BUFFER_TOO_SMALL;
-    memcpy( buffer, p + 1, *p * sizeof(WCHAR) );
-    buffer[*p] = 0;
-    return STATUS_SUCCESS;
-}
-
 
 static DWORD mbtowc_size( const CPTABLEINFO *info, LPCSTR str, UINT len )
 {
@@ -625,9 +605,16 @@ static NTSTATUS get_dummy_preferred_ui_language( DWORD flags, LANGID lang, ULONG
 
     FIXME("(0x%x %p %p %p) returning a dummy value (current locale)\n", flags, count, buffer, size);
 
-    status = load_string( (flags & MUI_LANGUAGE_ID) ? LOCALE_ILANGUAGE : LOCALE_SNAME,
-                          lang, name, ARRAY_SIZE(name) );
-    if (status) return status;
+    if (flags & MUI_LANGUAGE_ID) swprintf( name, ARRAY_SIZE(name), L"%04lx", lang );
+    else
+    {
+        UNICODE_STRING str;
+
+        str.Buffer = name;
+        str.MaximumLength = sizeof(name);
+        status = RtlLcidToLocaleName( lang, &str, 0, FALSE );
+        if (status) return status;
+    }
 
     len = wcslen( name ) + 2;
     name[len - 1] = 0;
