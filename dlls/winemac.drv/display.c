@@ -524,6 +524,13 @@ static int get_default_bpp(void)
 }
 
 
+static BOOL display_mode_is_supported(CGDisplayModeRef display_mode)
+{
+    uint32_t io_flags = CGDisplayModeGetIOFlags(display_mode);
+    return (io_flags & kDisplayModeValidFlag) && (io_flags & kDisplayModeSafeFlag);
+}
+
+
 #if defined(MAC_OS_X_VERSION_10_8) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_8
 static CFDictionaryRef create_mode_dict(CGDisplayModeRef display_mode, BOOL is_original)
 {
@@ -579,8 +586,10 @@ static CFDictionaryRef create_mode_dict(CGDisplayModeRef display_mode, BOOL is_o
 
 
 static BOOL mode_is_preferred(CGDisplayModeRef new_mode, CGDisplayModeRef old_mode,
-                              struct display_mode_descriptor *original_mode_desc)
+                              struct display_mode_descriptor *original_mode_desc,
+                              BOOL include_unsupported)
 {
+    BOOL new_is_supported;
     CFStringRef pixel_encoding;
     size_t width_points, height_points;
     size_t old_width_pixels, old_height_pixels, new_width_pixels, new_height_pixels;
@@ -590,6 +599,11 @@ static BOOL mode_is_preferred(CGDisplayModeRef new_mode, CGDisplayModeRef old_mo
        modes that may exist. */
     if (display_mode_matches_descriptor(new_mode, original_mode_desc))
         return TRUE;
+
+    /* Skip unsupported modes unless told to do otherwise. */
+    new_is_supported = display_mode_is_supported(new_mode);
+    if (!new_is_supported && !include_unsupported)
+        return FALSE;
 
     pixel_encoding = CGDisplayModeCopyPixelEncoding(new_mode);
     if (pixel_encoding)
@@ -613,6 +627,10 @@ static BOOL mode_is_preferred(CGDisplayModeRef new_mode, CGDisplayModeRef old_mo
 
     /* Prefer the original mode over any similar mode. */
     if (display_mode_matches_descriptor(old_mode, original_mode_desc))
+        return FALSE;
+
+    /* Prefer supported modes over similar unsupported ones. */
+    if (!new_is_supported && display_mode_is_supported(old_mode))
         return FALSE;
 
     /* Otherwise, prefer a mode whose pixel size equals its point size over one which
@@ -649,8 +667,11 @@ static BOOL mode_is_preferred(CGDisplayModeRef new_mode, CGDisplayModeRef old_mo
  * returned from CGDisplayCopyAllDisplayModes() without special options.
  * This is especially bad if that's the user's default mode, since then
  * no "available" mode matches the initial settings.
+ *
+ * If include_unsupported is FALSE, display modes with IO flags that
+ * indicate that they are invalid or unsafe are filtered.
  */
-static CFArrayRef copy_display_modes(CGDirectDisplayID display)
+static CFArrayRef copy_display_modes(CGDirectDisplayID display, BOOL include_unsupported)
 {
     CFArrayRef modes = NULL;
 
@@ -684,7 +705,7 @@ static CFArrayRef copy_display_modes(CGDirectDisplayID display)
             CFDictionaryRef key = create_mode_dict(new_mode, new_is_original);
             CGDisplayModeRef old_mode = (CGDisplayModeRef)CFDictionaryGetValue(modes_by_size, key);
 
-            if (mode_is_preferred(new_mode, old_mode, desc))
+            if (mode_is_preferred(new_mode, old_mode, desc, include_unsupported))
                 CFDictionarySetValue(modes_by_size, key, new_mode);
 
             CFRelease(key);
@@ -766,7 +787,7 @@ LONG CDECL macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
     int num_displays;
     CFArrayRef display_modes;
     struct display_mode_descriptor* desc;
-    CFIndex count, i, safe, best;
+    CFIndex count, i, best;
     CGDisplayModeRef best_display_mode;
     uint32_t best_io_flags;
     BOOL best_is_original;
@@ -801,7 +822,7 @@ LONG CDECL macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
     if (macdrv_get_displays(&displays, &num_displays))
         return DISP_CHANGE_FAILED;
 
-    display_modes = copy_display_modes(displays[0].displayID);
+    display_modes = copy_display_modes(displays[0].displayID, FALSE);
     if (!display_modes)
     {
         macdrv_free_displays(displays);
@@ -825,7 +846,6 @@ LONG CDECL macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
 
     desc = create_original_display_mode_descriptor(displays[0].displayID);
 
-    safe = -1;
     best_display_mode = NULL;
     count = CFArrayGetCount(display_modes);
     for (i = 0; i < count; i++)
@@ -842,11 +862,6 @@ LONG CDECL macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
             width *= 2;
             height *= 2;
         }
-
-        if (!(io_flags & kDisplayModeValidFlag) || !(io_flags & kDisplayModeSafeFlag))
-            continue;
-
-        safe++;
 
         if (bpp != mode_bpp)
             continue;
@@ -901,7 +916,7 @@ LONG CDECL macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
 
 better:
         best_display_mode = display_mode;
-        best = safe;
+        best = i;
         best_io_flags = io_flags;
         best_is_original = is_original;
     }
@@ -1013,7 +1028,7 @@ BOOL CDECL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode,
         if (mode == 0 || !modes)
         {
             if (modes) CFRelease(modes);
-            modes = copy_display_modes(displays[0].displayID);
+            modes = copy_display_modes(displays[0].displayID, (flags & EDS_RAWMODE) != 0);
             modes_has_8bpp = modes_has_16bpp = FALSE;
 
             if (modes)
@@ -1041,11 +1056,6 @@ BOOL CDECL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode,
             for (i = 0; i < count; i++)
             {
                 CGDisplayModeRef candidate = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, i);
-
-                io_flags = CGDisplayModeGetIOFlags(candidate);
-                if (!(flags & EDS_RAWMODE) &&
-                    (!(io_flags & kDisplayModeValidFlag) || !(io_flags & kDisplayModeSafeFlag)))
-                    continue;
 
                 seen_modes++;
                 if (seen_modes > mode)
