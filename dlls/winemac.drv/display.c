@@ -576,6 +576,65 @@ static CFDictionaryRef create_mode_dict(CGDisplayModeRef display_mode, BOOL is_o
 
     return ret;
 }
+
+
+static BOOL mode_is_preferred(CGDisplayModeRef new_mode, CGDisplayModeRef old_mode,
+                              struct display_mode_descriptor *original_mode_desc)
+{
+    CFStringRef pixel_encoding;
+    size_t width_points, height_points;
+    size_t old_width_pixels, old_height_pixels, new_width_pixels, new_height_pixels;
+    BOOL old_size_same, new_size_same;
+
+    /* If a given mode is the user's default, then always list it in preference to any similar
+       modes that may exist. */
+    if (display_mode_matches_descriptor(new_mode, original_mode_desc))
+        return TRUE;
+
+    pixel_encoding = CGDisplayModeCopyPixelEncoding(new_mode);
+    if (pixel_encoding)
+    {
+        BOOL bpp30 = CFEqual(pixel_encoding, CFSTR(kIO30BitDirectPixels));
+        CFRelease(pixel_encoding);
+        if (bpp30)
+        {
+            /* This is an odd pixel encoding.  It seems it's only returned
+               when using kCGDisplayShowDuplicateLowResolutionModes.  It's
+               32bpp in terms of the actual raster layout, but it's 10
+               bits per component.  I think that no Windows program is
+               likely to need it and they will probably be confused by it.
+               Skip it. */
+            return FALSE;
+        }
+    }
+
+    if (!old_mode)
+        return TRUE;
+
+    /* Prefer the original mode over any similar mode. */
+    if (display_mode_matches_descriptor(old_mode, original_mode_desc))
+        return FALSE;
+
+    /* Otherwise, prefer a mode whose pixel size equals its point size over one which
+       is scaled. */
+    width_points = CGDisplayModeGetWidth(new_mode);
+    height_points = CGDisplayModeGetHeight(new_mode);
+    new_width_pixels = CGDisplayModeGetPixelWidth(new_mode);
+    new_height_pixels = CGDisplayModeGetPixelHeight(new_mode);
+    old_width_pixels = CGDisplayModeGetPixelWidth(old_mode);
+    old_height_pixels = CGDisplayModeGetPixelHeight(old_mode);
+    new_size_same = (new_width_pixels == width_points && new_height_pixels == height_points);
+    old_size_same = (old_width_pixels == width_points && old_height_pixels == height_points);
+
+    if (new_size_same && !old_size_same)
+        return TRUE;
+
+    if (!new_size_same && old_size_same)
+        return FALSE;
+
+    /* Otherwise, prefer the mode with the smaller pixel size. */
+    return new_width_pixels < old_width_pixels && new_height_pixels < old_height_pixels;
+}
 #endif
 
 
@@ -620,72 +679,12 @@ static CFArrayRef copy_display_modes(CGDirectDisplayID display)
         count = CFArrayGetCount(modes);
         for (i = 0; i < count; i++)
         {
-            BOOL better = TRUE;
             CGDisplayModeRef new_mode = (CGDisplayModeRef)CFArrayGetValueAtIndex(modes, i);
             BOOL new_is_original = display_mode_matches_descriptor(new_mode, desc);
             CFDictionaryRef key = create_mode_dict(new_mode, new_is_original);
+            CGDisplayModeRef old_mode = (CGDisplayModeRef)CFDictionaryGetValue(modes_by_size, key);
 
-            /* If a given mode is the user's default, then always list it in preference to any similar
-               modes that may exist. */
-            if (new_is_original)
-                better = TRUE;
-            else
-            {
-                CFStringRef pixel_encoding = CGDisplayModeCopyPixelEncoding(new_mode);
-                CGDisplayModeRef old_mode;
-
-                if (pixel_encoding)
-                {
-                    BOOL bpp30 = CFEqual(pixel_encoding, CFSTR(kIO30BitDirectPixels));
-                    CFRelease(pixel_encoding);
-                    if (bpp30)
-                    {
-                        /* This is an odd pixel encoding.  It seems it's only returned
-                           when using kCGDisplayShowDuplicateLowResolutionModes.  It's
-                           32bpp in terms of the actual raster layout, but it's 10
-                           bits per component.  I think that no Windows program is
-                           likely to need it and they will probably be confused by it.
-                           Skip it. */
-                        CFRelease(key);
-                        continue;
-                    }
-                }
-
-                old_mode = (CGDisplayModeRef)CFDictionaryGetValue(modes_by_size, key);
-                if (old_mode)
-                {
-                    BOOL old_is_original = display_mode_matches_descriptor(old_mode, desc);
-
-                    if (old_is_original)
-                        better = FALSE;
-                    else
-                    {
-                        /* Otherwise, prefer a mode whose pixel size equals its point size over one which
-                           is scaled. */
-                        size_t width_points = CGDisplayModeGetWidth(new_mode);
-                        size_t height_points = CGDisplayModeGetHeight(new_mode);
-                        size_t new_width_pixels = CGDisplayModeGetPixelWidth(new_mode);
-                        size_t new_height_pixels = CGDisplayModeGetPixelHeight(new_mode);
-                        size_t old_width_pixels = CGDisplayModeGetPixelWidth(old_mode);
-                        size_t old_height_pixels = CGDisplayModeGetPixelHeight(old_mode);
-                        BOOL new_size_same = (new_width_pixels == width_points && new_height_pixels == height_points);
-                        BOOL old_size_same = (old_width_pixels == width_points && old_height_pixels == height_points);
-
-                        if (new_size_same && !old_size_same)
-                            better = TRUE;
-                        else if (!new_size_same && old_size_same)
-                            better = FALSE;
-                        else
-                        {
-                            /* Otherwise, prefer the mode with the smaller pixel size. */
-                            if (old_width_pixels < new_width_pixels || old_height_pixels < new_height_pixels)
-                                better = FALSE;
-                        }
-                    }
-                }
-            }
-
-            if (better)
+            if (mode_is_preferred(new_mode, old_mode, desc))
                 CFDictionarySetValue(modes_by_size, key, new_mode);
 
             CFRelease(key);
