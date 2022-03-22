@@ -301,6 +301,7 @@ enum alsa_funcs
     alsa_midi_in_message,
 
     alsa_midi_seq_lock, /* temporary */
+    alsa_midi_in_lock,
     alsa_midi_seq_open,
 };
 
@@ -309,6 +310,7 @@ NTSTATUS midi_out_message(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_in_message(void *args) DECLSPEC_HIDDEN;
 
 NTSTATUS midi_seq_lock(void *args) DECLSPEC_HIDDEN;
+NTSTATUS midi_in_lock(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_seq_open(void *args) DECLSPEC_HIDDEN;
 
 extern unixlib_handle_t alsa_handle;

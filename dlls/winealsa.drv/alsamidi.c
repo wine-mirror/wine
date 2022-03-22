@@ -60,6 +60,7 @@ struct midi_dest
 };
 
 static pthread_mutex_t seq_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t in_buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static unsigned int num_dests, num_srcs;
 static struct midi_dest dests[MAX_MIDIOUTDRV];
@@ -82,6 +83,24 @@ NTSTATUS midi_seq_lock(void *args)
 {
     if (args) seq_lock();
     else seq_unlock();
+
+    return STATUS_SUCCESS;
+}
+
+static void in_buffer_lock(void)
+{
+    pthread_mutex_lock(&in_buffer_mutex);
+}
+
+static void in_buffer_unlock(void)
+{
+    pthread_mutex_unlock(&in_buffer_mutex);
+}
+
+NTSTATUS midi_in_lock(void *args)
+{
+    if (args) in_buffer_lock();
+    else in_buffer_unlock();
 
     return STATUS_SUCCESS;
 }
