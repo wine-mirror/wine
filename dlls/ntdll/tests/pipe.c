@@ -16,6 +16,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <stdio.h>
 #include <stdarg.h>
@@ -128,8 +129,8 @@ static void _test_file_access(unsigned line, HANDLE handle, DWORD expected_acces
 
     memset(&info, 0x11, sizeof(info));
     status = NtQueryInformationFile(handle, &io, &info, sizeof(info), FileAccessInformation);
-    ok_(__FILE__,line)(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
-    ok_(__FILE__,line)(info.AccessFlags == expected_access, "got access %08x expected %08x\n",
+    ok_(__FILE__,line)(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08lx\n", status);
+    ok_(__FILE__,line)(info.AccessFlags == expected_access, "got access %08lx expected %08lx\n",
                        info.AccessFlags, expected_access);
 }
 
@@ -201,36 +202,36 @@ static void test_create_invalid(void)
 /* create a pipe with FILE_OVERWRITE */
     res = pNtCreateNamedPipeFile(&handle, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr, &iosb, FILE_SHARE_READ, 4 /*FILE_OVERWRITE*/,
                                  0, 1, 0, 0, 0xFFFFFFFF, 500, 500, &timeout);
-    todo_wine ok(res == STATUS_INVALID_PARAMETER, "NtCreateNamedPipeFile returned %x\n", res);
+    todo_wine ok(res == STATUS_INVALID_PARAMETER, "NtCreateNamedPipeFile returned %lx\n", res);
     if (!res)
         CloseHandle(handle);
 
 /* create a pipe with FILE_OVERWRITE_IF */
     res = pNtCreateNamedPipeFile(&handle, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr, &iosb, FILE_SHARE_READ, 5 /*FILE_OVERWRITE_IF*/,
                                  0, 1, 0, 0, 0xFFFFFFFF, 500, 500, &timeout);
-    todo_wine ok(res == STATUS_INVALID_PARAMETER, "NtCreateNamedPipeFile returned %x\n", res);
+    todo_wine ok(res == STATUS_INVALID_PARAMETER, "NtCreateNamedPipeFile returned %lx\n", res);
     if (!res)
         CloseHandle(handle);
 
 /* create a pipe with sharing = 0 */
     res = pNtCreateNamedPipeFile(&handle, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr, &iosb, 0, 2 /*FILE_CREATE*/,
                                  0, 1, 0, 0, 0xFFFFFFFF, 500, 500, &timeout);
-    ok(res == STATUS_INVALID_PARAMETER, "NtCreateNamedPipeFile returned %x\n", res);
+    ok(res == STATUS_INVALID_PARAMETER, "NtCreateNamedPipeFile returned %lx\n", res);
     if (!res)
         CloseHandle(handle);
 
 /* create a pipe without r/w access */
     res = pNtCreateNamedPipeFile(&handle, SYNCHRONIZE, &attr, &iosb, FILE_SHARE_READ | FILE_SHARE_WRITE, 2 /*FILE_CREATE*/,
                                  0, 1, 0, 0, 0xFFFFFFFF, 500, 500, &timeout);
-    ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
+    ok(!res, "NtCreateNamedPipeFile returned %lx\n", res);
 
     res = pNtQueryInformationFile(handle, &iosb, &info, sizeof(info), FilePipeLocalInformation);
-    ok(res == STATUS_ACCESS_DENIED, "NtQueryInformationFile returned %x\n", res);
+    ok(res == STATUS_ACCESS_DENIED, "NtQueryInformationFile returned %lx\n", res);
 
 /* test FILE_CREATE creation disposition */
     res = pNtCreateNamedPipeFile(&handle2, SYNCHRONIZE, &attr, &iosb, FILE_SHARE_READ | FILE_SHARE_WRITE, 2 /*FILE_CREATE*/,
                                  0, 1, 0, 0, 0xFFFFFFFF, 500, 500, &timeout);
-    todo_wine ok(res == STATUS_ACCESS_DENIED, "NtCreateNamedPipeFile returned %x\n", res);
+    todo_wine ok(res == STATUS_ACCESS_DENIED, "NtCreateNamedPipeFile returned %lx\n", res);
     if (!res)
         CloseHandle(handle2);
 
@@ -257,28 +258,28 @@ static void test_create(void)
 
             res  = create_pipe(&hserver, 0, sharing[j], 0);
             if (res) {
-                ok(0, "NtCreateNamedPipeFile returned %x, sharing: %x\n", res, sharing[j]);
+                ok(0, "NtCreateNamedPipeFile returned %lx, sharing: %lx\n", res, sharing[j]);
                 continue;
             }
 
             res = listen_pipe(hserver, hEvent, &iosb, FALSE);
-            ok(res == STATUS_PENDING, "NtFsControlFile returned %x\n", res);
+            ok(res == STATUS_PENDING, "NtFsControlFile returned %lx\n", res);
 
             res = pNtQueryInformationFile(hserver, &iosb, &info, sizeof(info), FilePipeLocalInformation);
-            ok(!res, "NtQueryInformationFile for server returned %x, sharing: %x\n", res, sharing[j]);
-            ok(info.NamedPipeConfiguration == pipe_config[j], "wrong duplex status for pipe: %d, expected %d\n",
+            ok(!res, "NtQueryInformationFile for server returned %lx, sharing: %lx\n", res, sharing[j]);
+            ok(info.NamedPipeConfiguration == pipe_config[j], "wrong duplex status for pipe: %ld, expected %ld\n",
                info.NamedPipeConfiguration, pipe_config[j]);
 
             hclient = CreateFileW(testpipe, access[k], 0, 0, OPEN_EXISTING, 0, 0);
             if (hclient != INVALID_HANDLE_VALUE) {
                 res = pNtQueryInformationFile(hclient, &iosb, &info, sizeof(info), FilePipeLocalInformation);
-                ok(!res, "NtQueryInformationFile for client returned %x, access: %x, sharing: %x\n",
+                ok(!res, "NtQueryInformationFile for client returned %lx, access: %lx, sharing: %lx\n",
                    res, access[k], sharing[j]);
-                ok(info.NamedPipeConfiguration == pipe_config[j], "wrong duplex status for pipe: %d, expected %d\n",
+                ok(info.NamedPipeConfiguration == pipe_config[j], "wrong duplex status for pipe: %ld, expected %ld\n",
                    info.NamedPipeConfiguration, pipe_config[j]);
 
                 res = listen_pipe(hclient, hEvent, &iosb, FALSE);
-                ok(res == STATUS_ILLEGAL_FUNCTION, "expected STATUS_ILLEGAL_FUNCTION, got %x\n", res);
+                ok(res == STATUS_ILLEGAL_FUNCTION, "expected STATUS_ILLEGAL_FUNCTION, got %lx\n", res);
                 CloseHandle(hclient);
             }
 
@@ -288,10 +289,10 @@ static void test_create(void)
                 should_succeed &= !!(sharing[j] & FILE_SHARE_READ);
 
             if (should_succeed)
-                ok(hclient != INVALID_HANDLE_VALUE, "CreateFile failed for sharing %x, access: %x, GetLastError: %d\n",
+                ok(hclient != INVALID_HANDLE_VALUE, "CreateFile failed for sharing %lx, access: %lx, GetLastError: %ld\n",
                    sharing[j], access[k], GetLastError());
             else
-                ok(hclient == INVALID_HANDLE_VALUE, "CreateFile succeeded for sharing %x, access: %x\n", sharing[j], access[k]);
+                ok(hclient == INVALID_HANDLE_VALUE, "CreateFile succeeded for sharing %lx, access: %lx\n", sharing[j], access[k]);
 
             CloseHandle(hserver);
         }
@@ -308,20 +309,20 @@ static void test_overlapped(void)
     NTSTATUS res;
 
     hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-    ok(hEvent != INVALID_HANDLE_VALUE, "can't create event, GetLastError: %x\n", GetLastError());
+    ok(hEvent != INVALID_HANDLE_VALUE, "can't create event, GetLastError: %lx\n", GetLastError());
 
     res = create_pipe(&hPipe, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 /* OVERLAPPED */);
-    ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
+    ok(!res, "NtCreateNamedPipeFile returned %lx\n", res);
 
     memset(&iosb, 0x55, sizeof(iosb));
     res = listen_pipe(hPipe, hEvent, &iosb, TRUE);
-    ok(res == STATUS_PENDING, "NtFsControlFile returned %x\n", res);
-    ok(U(iosb).Status == 0x55555555, "iosb.Status got changed to %x\n", U(iosb).Status);
+    ok(res == STATUS_PENDING, "NtFsControlFile returned %lx\n", res);
+    ok(U(iosb).Status == 0x55555555, "iosb.Status got changed to %lx\n", U(iosb).Status);
 
     hClient = CreateFileW(testpipe, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, 0, 0);
-    ok(hClient != INVALID_HANDLE_VALUE, "can't open pipe, GetLastError: %x\n", GetLastError());
+    ok(hClient != INVALID_HANDLE_VALUE, "can't open pipe, GetLastError: %lx\n", GetLastError());
 
-    ok(U(iosb).Status == 0, "Wrong iostatus %x\n", U(iosb).Status);
+    ok(U(iosb).Status == 0, "Wrong iostatus %lx\n", U(iosb).Status);
     ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
 
     ok(!ioapc_called, "IOAPC ran too early\n");
@@ -334,19 +335,19 @@ static void test_overlapped(void)
     CloseHandle(hClient);
 
     res = create_pipe(&hPipe, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 /* OVERLAPPED */);
-    ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
+    ok(!res, "NtCreateNamedPipeFile returned %lx\n", res);
 
     hClient = CreateFileW(testpipe, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, 0, 0);
     ok(hClient != INVALID_HANDLE_VALUE || broken(GetLastError() == ERROR_PIPE_BUSY) /* > Win 8 */,
-       "can't open pipe, GetLastError: %x\n", GetLastError());
+       "can't open pipe, GetLastError: %lx\n", GetLastError());
 
     if (hClient != INVALID_HANDLE_VALUE)
     {
         SetEvent(hEvent);
         memset(&iosb, 0x55, sizeof(iosb));
         res = listen_pipe(hPipe, hEvent, &iosb, TRUE);
-        ok(res == STATUS_PIPE_CONNECTED, "NtFsControlFile returned %x\n", res);
-        ok(U(iosb).Status == 0x55555555, "iosb.Status got changed to %x\n", U(iosb).Status);
+        ok(res == STATUS_PIPE_CONNECTED, "NtFsControlFile returned %lx\n", res);
+        ok(U(iosb).Status == 0x55555555, "iosb.Status got changed to %lx\n", U(iosb).Status);
         ok(!is_signaled(hEvent), "hEvent not signaled\n");
 
         CloseHandle(hClient);
@@ -373,7 +374,7 @@ static DWORD WINAPI thread(PVOID main_thread)
         DWORD ret;
         userapc_called = FALSE;
         ret = pQueueUserAPC(&userapc, main_thread, 0);
-        ok(ret, "can't queue user apc, GetLastError: %x\n", GetLastError());
+        ok(ret, "can't queue user apc, GetLastError: %lx\n", GetLastError());
         CloseHandle(main_thread);
     }
 
@@ -403,35 +404,35 @@ static void test_alertable(void)
     memset(&iosb, 0x55, sizeof(iosb));
 
     hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-    ok(hEvent != INVALID_HANDLE_VALUE, "can't create event, GetLastError: %x\n", GetLastError());
+    ok(hEvent != INVALID_HANDLE_VALUE, "can't create event, GetLastError: %lx\n", GetLastError());
 
     res = create_pipe(&hPipe, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_ALERT);
-    ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
+    ok(!res, "NtCreateNamedPipeFile returned %lx\n", res);
 
 /* queue an user apc before calling listen */
     userapc_called = FALSE;
     ret = pQueueUserAPC(&userapc, GetCurrentThread(), 0);
-    ok(ret, "can't queue user apc, GetLastError: %x\n", GetLastError());
+    ok(ret, "can't queue user apc, GetLastError: %lx\n", GetLastError());
 
     res = listen_pipe(hPipe, hEvent, &iosb, TRUE);
-    todo_wine ok(res == STATUS_CANCELLED, "NtFsControlFile returned %x\n", res);
+    todo_wine ok(res == STATUS_CANCELLED, "NtFsControlFile returned %lx\n", res);
 
     ok(userapc_called, "user apc didn't run\n");
-    ok(U(iosb).Status == 0x55555555, "iosb.Status got changed to %x\n", U(iosb).Status);
+    ok(U(iosb).Status == 0x55555555, "iosb.Status got changed to %lx\n", U(iosb).Status);
     ok(WaitForSingleObjectEx(hEvent, 0, TRUE) == WAIT_TIMEOUT, "hEvent signaled\n");
     ok(!ioapc_called, "IOAPC ran\n");
 
 /* queue an user apc from a different thread */
     hThread = CreateThread(NULL, 0, &thread, pOpenThread(MAXIMUM_ALLOWED, FALSE, GetCurrentThreadId()), 0, 0);
-    ok(hThread != INVALID_HANDLE_VALUE, "can't create thread, GetLastError: %x\n", GetLastError());
+    ok(hThread != INVALID_HANDLE_VALUE, "can't create thread, GetLastError: %lx\n", GetLastError());
 
     /* wine_todo: the earlier NtFsControlFile call gets cancelled after the pipe gets set into listen state
                   instead of before, so this NtFsControlFile will fail STATUS_INVALID_HANDLE */
     res = listen_pipe(hPipe, hEvent, &iosb, TRUE);
-    todo_wine ok(res == STATUS_CANCELLED, "NtFsControlFile returned %x\n", res);
+    todo_wine ok(res == STATUS_CANCELLED, "NtFsControlFile returned %lx\n", res);
 
     ok(userapc_called, "user apc didn't run\n");
-    ok(U(iosb).Status == 0x55555555, "iosb.Status got changed to %x\n", U(iosb).Status);
+    ok(U(iosb).Status == 0x55555555, "iosb.Status got changed to %lx\n", U(iosb).Status);
     ok(WaitForSingleObjectEx(hEvent, 0, TRUE) == WAIT_TIMEOUT, "hEvent signaled\n");
     ok(!ioapc_called, "IOAPC ran\n");
 
@@ -446,13 +447,13 @@ static void test_alertable(void)
 
 /* finally try without an apc */
     hThread = CreateThread(NULL, 0, &thread, 0, 0, 0);
-    ok(hThread != INVALID_HANDLE_VALUE, "can't create thread, GetLastError: %x\n", GetLastError());
+    ok(hThread != INVALID_HANDLE_VALUE, "can't create thread, GetLastError: %lx\n", GetLastError());
 
     res = listen_pipe(hPipe, hEvent, &iosb, TRUE);
-    ok(!res, "NtFsControlFile returned %x\n", res);
+    ok(!res, "NtFsControlFile returned %lx\n", res);
 
     ok(open_succeeded, "couldn't open client side pipe\n");
-    ok(!U(iosb).Status, "Wrong iostatus %x\n", U(iosb).Status);
+    ok(!U(iosb).Status, "Wrong iostatus %lx\n", U(iosb).Status);
     ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
 
     WaitForSingleObject(hThread, INFINITE);
@@ -473,23 +474,23 @@ static void test_nonalertable(void)
     memset(&iosb, 0x55, sizeof(iosb));
 
     hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-    ok(hEvent != INVALID_HANDLE_VALUE, "can't create event, GetLastError: %x\n", GetLastError());
+    ok(hEvent != INVALID_HANDLE_VALUE, "can't create event, GetLastError: %lx\n", GetLastError());
 
     res = create_pipe(&hPipe, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT);
-    ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
+    ok(!res, "NtCreateNamedPipeFile returned %lx\n", res);
 
     hThread = CreateThread(NULL, 0, &thread, 0, 0, 0);
-    ok(hThread != INVALID_HANDLE_VALUE, "can't create thread, GetLastError: %x\n", GetLastError());
+    ok(hThread != INVALID_HANDLE_VALUE, "can't create thread, GetLastError: %lx\n", GetLastError());
 
     userapc_called = FALSE;
     ret = pQueueUserAPC(&userapc, GetCurrentThread(), 0);
-    ok(ret, "can't queue user apc, GetLastError: %x\n", GetLastError());
+    ok(ret, "can't queue user apc, GetLastError: %lx\n", GetLastError());
 
     res = listen_pipe(hPipe, hEvent, &iosb, TRUE);
-    ok(!res, "NtFsControlFile returned %x\n", res);
+    ok(!res, "NtFsControlFile returned %lx\n", res);
 
     ok(open_succeeded, "couldn't open client side pipe\n");
-    ok(!U(iosb).Status, "Wrong iostatus %x\n", U(iosb).Status);
+    ok(!U(iosb).Status, "Wrong iostatus %lx\n", U(iosb).Status);
     ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
 
     ok(!ioapc_called, "IOAPC ran too early\n");
@@ -515,20 +516,20 @@ static void test_cancelio(void)
     NTSTATUS res;
 
     hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
-    ok(hEvent != INVALID_HANDLE_VALUE, "can't create event, GetLastError: %x\n", GetLastError());
+    ok(hEvent != INVALID_HANDLE_VALUE, "can't create event, GetLastError: %lx\n", GetLastError());
 
     res = create_pipe(&hPipe, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 /* OVERLAPPED */);
-    ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
+    ok(!res, "NtCreateNamedPipeFile returned %lx\n", res);
 
     memset(&iosb, 0x55, sizeof(iosb));
 
     res = listen_pipe(hPipe, hEvent, &iosb, TRUE);
-    ok(res == STATUS_PENDING, "NtFsControlFile returned %x\n", res);
+    ok(res == STATUS_PENDING, "NtFsControlFile returned %lx\n", res);
 
     res = pNtCancelIoFile(hPipe, &cancel_sb);
-    ok(!res, "NtCancelIoFile returned %x\n", res);
+    ok(!res, "NtCancelIoFile returned %lx\n", res);
 
-    ok(U(iosb).Status == STATUS_CANCELLED, "Wrong iostatus %x\n", U(iosb).Status);
+    ok(U(iosb).Status == STATUS_CANCELLED, "Wrong iostatus %lx\n", U(iosb).Status);
     ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
 
     ok(!ioapc_called, "IOAPC ran too early\n");
@@ -542,16 +543,16 @@ static void test_cancelio(void)
     if (pNtCancelIoFileEx)
     {
         res = create_pipe(&hPipe, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 /* OVERLAPPED */);
-        ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
+        ok(!res, "NtCreateNamedPipeFile returned %lx\n", res);
 
         memset(&iosb, 0x55, sizeof(iosb));
         res = listen_pipe(hPipe, hEvent, &iosb, FALSE);
-        ok(res == STATUS_PENDING, "NtFsControlFile returned %x\n", res);
+        ok(res == STATUS_PENDING, "NtFsControlFile returned %lx\n", res);
 
         res = pNtCancelIoFileEx(hPipe, &iosb, &cancel_sb);
-        ok(!res, "NtCancelIoFileEx returned %x\n", res);
+        ok(!res, "NtCancelIoFileEx returned %lx\n", res);
 
-        ok(U(iosb).Status == STATUS_CANCELLED, "Wrong iostatus %x\n", U(iosb).Status);
+        ok(U(iosb).Status == STATUS_CANCELLED, "Wrong iostatus %lx\n", U(iosb).Status);
         ok(WaitForSingleObject(hEvent, 0) == 0, "hEvent not signaled\n");
 
         CloseHandle(hPipe);
@@ -571,10 +572,10 @@ static void _check_pipe_handle_state(int line, HANDLE handle, ULONG read, ULONG 
     {
         memset(&fpi, 0x55, sizeof(fpi));
         res = pNtQueryInformationFile(handle, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
-        ok_(__FILE__, line)(!res, "NtQueryInformationFile returned %x\n", res);
-        ok_(__FILE__, line)(fpi.ReadMode == read, "Unexpected ReadMode, expected %x, got %x\n",
+        ok_(__FILE__, line)(!res, "NtQueryInformationFile returned %lx\n", res);
+        ok_(__FILE__, line)(fpi.ReadMode == read, "Unexpected ReadMode, expected %lx, got %lx\n",
                             read, fpi.ReadMode);
-        ok_(__FILE__, line)(fpi.CompletionMode == completion, "Unexpected CompletionMode, expected %x, got %x\n",
+        ok_(__FILE__, line)(fpi.CompletionMode == completion, "Unexpected CompletionMode, expected %lx, got %lx\n",
                             completion, fpi.CompletionMode);
     }
 }
@@ -604,24 +605,24 @@ static void test_filepipeinfo(void)
 
     /* test with INVALID_HANDLE_VALUE */
     res = pNtQueryInformationFile(INVALID_HANDLE_VALUE, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
-    ok(res == STATUS_OBJECT_TYPE_MISMATCH, "NtQueryInformationFile returned %x\n", res);
+    ok(res == STATUS_OBJECT_TYPE_MISMATCH, "NtQueryInformationFile returned %lx\n", res);
 
     fpi.ReadMode = 0;
     fpi.CompletionMode = 0;
     res = pNtSetInformationFile(INVALID_HANDLE_VALUE, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
-    ok(res == STATUS_OBJECT_TYPE_MISMATCH, "NtSetInformationFile returned %x\n", res);
+    ok(res == STATUS_OBJECT_TYPE_MISMATCH, "NtSetInformationFile returned %lx\n", res);
 
     /* server end with read-only attributes */
     res = pNtCreateNamedPipeFile(&hServer, FILE_READ_ATTRIBUTES | SYNCHRONIZE, &attr, &iosb,
                                  FILE_SHARE_READ | FILE_SHARE_WRITE,  2 /* FILE_CREATE */,
                                  0, 0, 0, 1, 0xFFFFFFFF, 500, 500, &timeout);
-    ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
+    ok(!res, "NtCreateNamedPipeFile returned %lx\n", res);
 
     check_pipe_handle_state(hServer, 0, 1);
 
     hClient = CreateFileW(testpipe, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, 0, 0);
     ok(hClient != INVALID_HANDLE_VALUE || broken(GetLastError() == ERROR_PIPE_BUSY) /* > Win 8 */,
-       "can't open pipe, GetLastError: %x\n", GetLastError());
+       "can't open pipe, GetLastError: %lx\n", GetLastError());
 
     check_pipe_handle_state(hServer, 0, 1);
     check_pipe_handle_state(hClient, 0, 0);
@@ -629,7 +630,7 @@ static void test_filepipeinfo(void)
     fpi.ReadMode = 0;
     fpi.CompletionMode = 0;
     res = pNtSetInformationFile(hServer, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
-    ok(res == STATUS_ACCESS_DENIED, "NtSetInformationFile returned %x\n", res);
+    ok(res == STATUS_ACCESS_DENIED, "NtSetInformationFile returned %lx\n", res);
 
     check_pipe_handle_state(hServer, 0, 1);
     check_pipe_handle_state(hClient, 0, 0);
@@ -637,7 +638,7 @@ static void test_filepipeinfo(void)
     fpi.ReadMode = 1; /* invalid on a byte stream pipe */
     fpi.CompletionMode = 1;
     res = pNtSetInformationFile(hServer, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
-    ok(res == STATUS_ACCESS_DENIED, "NtSetInformationFile returned %x\n", res);
+    ok(res == STATUS_ACCESS_DENIED, "NtSetInformationFile returned %lx\n", res);
 
     check_pipe_handle_state(hServer, 0, 1);
     check_pipe_handle_state(hClient, 0, 0);
@@ -647,7 +648,7 @@ static void test_filepipeinfo(void)
         fpi.ReadMode = 1; /* invalid on a byte stream pipe */
         fpi.CompletionMode = 1;
         res = pNtSetInformationFile(hClient, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
-        ok(res == STATUS_INVALID_PARAMETER, "NtSetInformationFile returned %x\n", res);
+        ok(res == STATUS_INVALID_PARAMETER, "NtSetInformationFile returned %lx\n", res);
     }
 
     check_pipe_handle_state(hServer, 0, 1);
@@ -658,7 +659,7 @@ static void test_filepipeinfo(void)
         fpi.ReadMode = 0;
         fpi.CompletionMode = 1;
         res = pNtSetInformationFile(hClient, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
-        ok(!res, "NtSetInformationFile returned %x\n", res);
+        ok(!res, "NtSetInformationFile returned %lx\n", res);
     }
 
     check_pipe_handle_state(hServer, 0, 1);
@@ -669,12 +670,12 @@ static void test_filepipeinfo(void)
         fpi.ReadMode = 0;
         fpi.CompletionMode = 2; /* not in range 0-1 */
         res = pNtSetInformationFile(hClient, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
-        ok(res == STATUS_INVALID_PARAMETER || broken(!res) /* < Vista */, "NtSetInformationFile returned %x\n", res);
+        ok(res == STATUS_INVALID_PARAMETER || broken(!res) /* < Vista */, "NtSetInformationFile returned %lx\n", res);
 
         fpi.ReadMode = 2; /* not in range 0-1 */
         fpi.CompletionMode = 0;
         res = pNtSetInformationFile(hClient, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
-        ok(res == STATUS_INVALID_PARAMETER || broken(!res) /* < Vista */, "NtSetInformationFile returned %x\n", res);
+        ok(res == STATUS_INVALID_PARAMETER || broken(!res) /* < Vista */, "NtSetInformationFile returned %lx\n", res);
     }
 
     CloseHandle(hClient);
@@ -684,7 +685,7 @@ static void test_filepipeinfo(void)
     fpi.ReadMode = 0;
     fpi.CompletionMode = 0;
     res = pNtSetInformationFile(hServer, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
-    ok(res == STATUS_ACCESS_DENIED, "NtSetInformationFile returned %x\n", res);
+    ok(res == STATUS_ACCESS_DENIED, "NtSetInformationFile returned %lx\n", res);
 
     CloseHandle(hServer);
 
@@ -692,13 +693,13 @@ static void test_filepipeinfo(void)
     res = pNtCreateNamedPipeFile(&hServer, FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE, &attr, &iosb,
                                  FILE_SHARE_READ | FILE_SHARE_WRITE,  2 /* FILE_CREATE */,
                                  0, 1, 1, 0, 0xFFFFFFFF, 500, 500, &timeout);
-    ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
+    ok(!res, "NtCreateNamedPipeFile returned %lx\n", res);
 
     check_pipe_handle_state(hServer, 1, 0);
 
     hClient = CreateFileW(testpipe, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING, 0, 0);
     ok(hClient != INVALID_HANDLE_VALUE || broken(GetLastError() == ERROR_PIPE_BUSY) /* > Win 8 */,
-       "can't open pipe, GetLastError: %x\n", GetLastError());
+       "can't open pipe, GetLastError: %lx\n", GetLastError());
 
     check_pipe_handle_state(hServer, 1, 0);
     check_pipe_handle_state(hClient, 0, 0);
@@ -708,7 +709,7 @@ static void test_filepipeinfo(void)
         fpi.ReadMode = 1;
         fpi.CompletionMode = 1;
         res = pNtSetInformationFile(hClient, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
-        ok(!res, "NtSetInformationFile returned %x\n", res);
+        ok(!res, "NtSetInformationFile returned %lx\n", res);
     }
 
     check_pipe_handle_state(hServer, 1, 0);
@@ -717,7 +718,7 @@ static void test_filepipeinfo(void)
     fpi.ReadMode = 0;
     fpi.CompletionMode = 1;
     res = pNtSetInformationFile(hServer, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
-    ok(!res, "NtSetInformationFile returned %x\n", res);
+    ok(!res, "NtSetInformationFile returned %lx\n", res);
 
     check_pipe_handle_state(hServer, 0, 1);
     check_pipe_handle_state(hClient, 1, 1);
@@ -727,12 +728,12 @@ static void test_filepipeinfo(void)
         fpi.ReadMode = 0;
         fpi.CompletionMode = 2; /* not in range 0-1 */
         res = pNtSetInformationFile(hClient, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
-        ok(res == STATUS_INVALID_PARAMETER || broken(!res) /* < Vista */, "NtSetInformationFile returned %x\n", res);
+        ok(res == STATUS_INVALID_PARAMETER || broken(!res) /* < Vista */, "NtSetInformationFile returned %lx\n", res);
 
         fpi.ReadMode = 2; /* not in range 0-1 */
         fpi.CompletionMode = 0;
         res = pNtSetInformationFile(hClient, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
-        ok(res == STATUS_INVALID_PARAMETER || broken(!res) /* < Vista */, "NtSetInformationFile returned %x\n", res);
+        ok(res == STATUS_INVALID_PARAMETER || broken(!res) /* < Vista */, "NtSetInformationFile returned %lx\n", res);
     }
 
     CloseHandle(hClient);
@@ -742,7 +743,7 @@ static void test_filepipeinfo(void)
     fpi.ReadMode = 1;
     fpi.CompletionMode = 0;
     res = pNtSetInformationFile(hServer, &iosb, &fpi, sizeof(fpi), FilePipeInformation);
-    ok(!res, "NtSetInformationFile returned %x\n", res);
+    ok(!res, "NtSetInformationFile returned %lx\n", res);
 
     check_pipe_handle_state(hServer, 1, 0);
 
@@ -752,27 +753,27 @@ static void test_filepipeinfo(void)
                                  FILE_READ_DATA | FILE_READ_ATTRIBUTES | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE,
                                  &attr, &iosb, FILE_SHARE_READ | FILE_SHARE_WRITE,  FILE_CREATE,
                                  0, 1, 1, 0, 0xFFFFFFFF, 500, 500, &timeout);
-    ok(!res, "NtCreateNamedPipeFile returned %x\n", res);
+    ok(!res, "NtCreateNamedPipeFile returned %lx\n", res);
 
     res = NtCreateFile(&hClient, SYNCHRONIZE, &attr, &iosb, NULL, 0,
                        FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0 );
-    ok(!res, "NtCreateFile returned %x\n", res);
+    ok(!res, "NtCreateFile returned %lx\n", res);
 
     test_file_access(hClient, SYNCHRONIZE);
 
     res = pNtQueryInformationFile(hClient, &iosb, &local_info, sizeof(local_info),
                                   FilePipeLocalInformation);
     ok(res == STATUS_ACCESS_DENIED,
-       "NtQueryInformationFile(FilePipeLocalInformation) returned: %x\n", res);
+       "NtQueryInformationFile(FilePipeLocalInformation) returned: %lx\n", res);
 
     res = pNtQueryInformationFile(hClient, &iosb, &local_info, sizeof(local_info),
                                   FilePipeInformation);
     ok(res == STATUS_ACCESS_DENIED,
-       "NtQueryInformationFile(FilePipeInformation) returned: %x\n", res);
+       "NtQueryInformationFile(FilePipeInformation) returned: %lx\n", res);
 
     res = pNtQueryInformationFile(hClient, &iosb, &local_info, sizeof(local_info),
                                   FileNameInformation);
-    ok(res == STATUS_SUCCESS, "NtQueryInformationFile(FileNameInformation) returned: %x\n", res);
+    ok(res == STATUS_SUCCESS, "NtQueryInformationFile(FileNameInformation) returned: %lx\n", res);
 
     CloseHandle(hClient);
     CloseHandle(hServer);
@@ -782,7 +783,7 @@ static void WINAPI apc( void *arg, IO_STATUS_BLOCK *iosb, ULONG reserved )
 {
     int *count = arg;
     (*count)++;
-    ok( !reserved, "reserved is not 0: %x\n", reserved );
+    ok( !reserved, "reserved is not 0: %lx\n", reserved );
 }
 
 static void test_peek(HANDLE pipe)
@@ -794,16 +795,16 @@ static void test_peek(HANDLE pipe)
 
     memset(&iosb, 0x55, sizeof(iosb));
     status = NtFsControlFile(pipe, NULL, NULL, NULL, &iosb, FSCTL_PIPE_PEEK, NULL, 0, &buf, sizeof(buf));
-    ok(!status || status == STATUS_PENDING, "NtFsControlFile failed: %x\n", status);
-    ok(!iosb.Status, "iosb.Status = %x\n", iosb.Status);
-    ok(buf.ReadDataAvailable == 1, "ReadDataAvailable = %u\n", buf.ReadDataAvailable);
+    ok(!status || status == STATUS_PENDING, "NtFsControlFile failed: %lx\n", status);
+    ok(!iosb.Status, "iosb.Status = %lx\n", iosb.Status);
+    ok(buf.ReadDataAvailable == 1, "ReadDataAvailable = %lu\n", buf.ReadDataAvailable);
 
     ResetEvent(event);
     memset(&iosb, 0x55, sizeof(iosb));
     status = NtFsControlFile(pipe, event, NULL, NULL, &iosb, FSCTL_PIPE_PEEK, NULL, 0, &buf, sizeof(buf));
-    ok(!status || status == STATUS_PENDING, "NtFsControlFile failed: %x\n", status);
-    ok(buf.ReadDataAvailable == 1, "ReadDataAvailable = %u\n", buf.ReadDataAvailable);
-    ok(!iosb.Status, "iosb.Status = %x\n", iosb.Status);
+    ok(!status || status == STATUS_PENDING, "NtFsControlFile failed: %lx\n", status);
+    ok(buf.ReadDataAvailable == 1, "ReadDataAvailable = %lu\n", buf.ReadDataAvailable);
+    ok(!iosb.Status, "iosb.Status = %lx\n", iosb.Status);
     ok(is_signaled(event), "event is not signaled\n");
 
     CloseHandle(event);
@@ -823,7 +824,7 @@ static BOOL create_pipe_pair( HANDLE *read, HANDLE *write, ULONG flags, ULONG ty
                          | (flags & PIPE_ACCESS_OUTBOUND ? GENERIC_READ : 0)
                          | FILE_WRITE_ATTRIBUTES, 0,
                          NULL, OPEN_EXISTING, flags & FILE_FLAG_OVERLAPPED, 0);
-    ok(client != INVALID_HANDLE_VALUE, "CreateFile failed (%d)\n", GetLastError());
+    ok(client != INVALID_HANDLE_VALUE, "CreateFile failed (%ld)\n", GetLastError());
 
     if ((type & PIPE_READMODE_MESSAGE) && (flags & PIPE_ACCESS_OUTBOUND))
     {
@@ -862,17 +863,17 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
     iosb.Information = 0xdeadbeef;
     ok( is_signaled( read ), "read handle is not signaled\n" );
     status = NtReadFile( read, event, apc, &apc_count, &iosb, buffer, 1, NULL, NULL );
-    ok( status == STATUS_PENDING, "wrong status %x\n", status );
+    ok( status == STATUS_PENDING, "wrong status %lx\n", status );
     ok( !is_signaled( read ), "read handle is signaled\n" );
     ok( !is_signaled( event ), "event is signaled\n" );
-    ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
-    ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
+    ok( U(iosb).Status == 0xdeadbabe, "wrong status %lx\n", U(iosb).Status );
+    ok( iosb.Information == 0xdeadbeef, "wrong info %Iu\n", iosb.Information );
     ok( !apc_count, "apc was called\n" );
     ret = WriteFile( write, buffer, 1, &written, NULL );
-    ok(ret && written == 1, "WriteFile error %d\n", GetLastError());
+    ok(ret && written == 1, "WriteFile error %ld\n", GetLastError());
     /* iosb updated here by async i/o */
-    ok( U(iosb).Status == 0, "wrong status %x\n", U(iosb).Status );
-    ok( iosb.Information == 1, "wrong info %lu\n", iosb.Information );
+    ok( U(iosb).Status == 0, "wrong status %lx\n", U(iosb).Status );
+    ok( iosb.Information == 1, "wrong info %Iu\n", iosb.Information );
     ok( !is_signaled( read ), "read handle is signaled\n" );
     ok( is_signaled( event ), "event is not signaled\n" );
     ok( !apc_count, "apc was called\n" );
@@ -888,16 +889,16 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
     iosb.Information = 0xdeadbeef;
     ok( !is_signaled( read ), "read handle is signaled\n" );
     status = NtReadFile( read, 0, apc, &apc_count, &iosb, buffer, 1, NULL, NULL );
-    ok( status == STATUS_PENDING, "wrong status %x\n", status );
+    ok( status == STATUS_PENDING, "wrong status %lx\n", status );
     ok( !is_signaled( read ), "read handle is signaled\n" );
-    ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
-    ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
+    ok( U(iosb).Status == 0xdeadbabe, "wrong status %lx\n", U(iosb).Status );
+    ok( iosb.Information == 0xdeadbeef, "wrong info %Iu\n", iosb.Information );
     ok( !apc_count, "apc was called\n" );
     ret = WriteFile( write, buffer, 1, &written, NULL );
-    ok(ret && written == 1, "WriteFile error %d\n", GetLastError());
+    ok(ret && written == 1, "WriteFile error %ld\n", GetLastError());
     /* iosb updated here by async i/o */
-    ok( U(iosb).Status == 0, "wrong status %x\n", U(iosb).Status );
-    ok( iosb.Information == 1, "wrong info %lu\n", iosb.Information );
+    ok( U(iosb).Status == 0, "wrong status %lx\n", U(iosb).Status );
+    ok( iosb.Information == 1, "wrong info %Iu\n", iosb.Information );
     ok( is_signaled( read ), "read handle is not signaled\n" );
     ok( !apc_count, "apc was called\n" );
     apc_count = 0;
@@ -912,14 +913,14 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
     iosb.Information = 0xdeadbeef;
     ResetEvent( event );
     ret = WriteFile( write, buffer, 1, &written, NULL );
-    ok(ret && written == 1, "WriteFile error %d\n", GetLastError());
+    ok(ret && written == 1, "WriteFile error %ld\n", GetLastError());
 
     test_peek(read);
 
     status = NtReadFile( read, event, apc, &apc_count, &iosb, buffer, 1, NULL, NULL );
-    ok( status == STATUS_SUCCESS, "wrong status %x\n", status );
-    ok( U(iosb).Status == 0, "wrong status %x\n", U(iosb).Status );
-    ok( iosb.Information == 1, "wrong info %lu\n", iosb.Information );
+    ok( status == STATUS_SUCCESS, "wrong status %lx\n", status );
+    ok( U(iosb).Status == 0, "wrong status %lx\n", U(iosb).Status );
+    ok( iosb.Information == 1, "wrong info %Iu\n", iosb.Information );
     ok( is_signaled( event ), "event is not signaled\n" );
     ok( !apc_count, "apc was called\n" );
     SleepEx( 1, FALSE ); /* non-alertable sleep */
@@ -933,7 +934,7 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
     iosb.Information = 0xdeadbeef;
     ResetEvent( event );
     ret = WriteFile( write, buffer, 2, &written, NULL );
-    ok(ret && written == 2, "WriteFile error %d\n", GetLastError());
+    ok(ret && written == 2, "WriteFile error %ld\n", GetLastError());
 
     memset( &iosb, 0xcc, sizeof(iosb) );
     status = NtFsControlFile( read, NULL, NULL, NULL, &iosb, FSCTL_PIPE_PEEK, NULL, 0, buffer,
@@ -941,29 +942,29 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
     if (pipe_type & PIPE_TYPE_MESSAGE)
     {
         ok( status == STATUS_BUFFER_OVERFLOW || status == STATUS_PENDING,
-            "FSCTL_PIPE_PEEK returned %x\n", status );
-        ok( U(iosb).Status == STATUS_BUFFER_OVERFLOW, "wrong status %x\n", U(iosb).Status );
+            "FSCTL_PIPE_PEEK returned %lx\n", status );
+        ok( U(iosb).Status == STATUS_BUFFER_OVERFLOW, "wrong status %lx\n", U(iosb).Status );
     }
     else
     {
-        ok( !status || status == STATUS_PENDING, "FSCTL_PIPE_PEEK returned %x\n", status );
-        ok( U(iosb).Status == 0, "wrong status %x\n", U(iosb).Status );
+        ok( !status || status == STATUS_PENDING, "FSCTL_PIPE_PEEK returned %lx\n", status );
+        ok( U(iosb).Status == 0, "wrong status %lx\n", U(iosb).Status );
     }
     ok( iosb.Information == FIELD_OFFSET(FILE_PIPE_PEEK_BUFFER, Data[1]),
-        "wrong info %lu\n", iosb.Information );
+        "wrong info %Iu\n", iosb.Information );
 
     status = NtReadFile( read, event, apc, &apc_count, &iosb, buffer, 1, NULL, NULL );
     if (pipe_type & PIPE_READMODE_MESSAGE)
     {
-        ok( status == STATUS_BUFFER_OVERFLOW, "wrong status %x\n", status );
-        ok( U(iosb).Status == STATUS_BUFFER_OVERFLOW, "wrong status %x\n", U(iosb).Status );
+        ok( status == STATUS_BUFFER_OVERFLOW, "wrong status %lx\n", status );
+        ok( U(iosb).Status == STATUS_BUFFER_OVERFLOW, "wrong status %lx\n", U(iosb).Status );
     }
     else
     {
-        ok( status == STATUS_SUCCESS, "wrong status %x\n", status );
-        ok( U(iosb).Status == 0, "wrong status %x\n", U(iosb).Status );
+        ok( status == STATUS_SUCCESS, "wrong status %lx\n", status );
+        ok( U(iosb).Status == 0, "wrong status %lx\n", U(iosb).Status );
     }
-    ok( iosb.Information == 1, "wrong info %lu\n", iosb.Information );
+    ok( iosb.Information == 1, "wrong info %Iu\n", iosb.Information );
     ok( is_signaled( event ), "event is not signaled\n" );
     ok( !apc_count, "apc was called\n" );
     SleepEx( 1, FALSE ); /* non-alertable sleep */
@@ -972,9 +973,9 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
     ok( apc_count == 1, "apc not called\n" );
     apc_count = 0;
     status = NtReadFile( read, event, apc, &apc_count, &iosb, buffer, 1, NULL, NULL );
-    ok( status == STATUS_SUCCESS, "wrong status %x\n", status );
-    ok( U(iosb).Status == 0, "wrong status %x\n", U(iosb).Status );
-    ok( iosb.Information == 1, "wrong info %lu\n", iosb.Information );
+    ok( status == STATUS_SUCCESS, "wrong status %lx\n", status );
+    ok( U(iosb).Status == 0, "wrong status %lx\n", U(iosb).Status );
+    ok( iosb.Information == 1, "wrong info %Iu\n", iosb.Information );
     ok( is_signaled( event ), "event is not signaled\n" );
     ok( !apc_count, "apc was called\n" );
     SleepEx( 1, FALSE ); /* non-alertable sleep */
@@ -988,18 +989,18 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
     iosb.Information = 0xdeadbeef;
     ok( is_signaled( event ), "event is not signaled\n" ); /* check that read resets the event */
     status = NtReadFile( read, event, apc, &apc_count, &iosb, buffer, 2, NULL, NULL );
-    ok( status == STATUS_PENDING, "wrong status %x\n", status );
+    ok( status == STATUS_PENDING, "wrong status %lx\n", status );
     ok( !is_signaled( event ), "event is signaled\n" );
-    ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
-    ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
+    ok( U(iosb).Status == 0xdeadbabe, "wrong status %lx\n", U(iosb).Status );
+    ok( iosb.Information == 0xdeadbeef, "wrong info %Iu\n", iosb.Information );
     ok( !apc_count, "apc was called\n" );
     ret = WriteFile( write, buffer, 1, &written, NULL );
-    ok(ret && written == 1, "WriteFile error %d\n", GetLastError());
+    ok(ret && written == 1, "WriteFile error %ld\n", GetLastError());
     /* partial read is good enough */
     Sleep(1);  /* FIXME: needed for wine to run the i/o apc  */
     ok( is_signaled( event ), "event is not signaled\n" );
-    ok( U(iosb).Status == 0, "wrong status %x\n", U(iosb).Status );
-    ok( iosb.Information == 1, "wrong info %lu\n", iosb.Information );
+    ok( U(iosb).Status == 0, "wrong status %lx\n", U(iosb).Status );
+    ok( iosb.Information == 1, "wrong info %Iu\n", iosb.Information );
     ok( !apc_count, "apc was called\n" );
     SleepEx( 1, TRUE ); /* alertable sleep */
     ok( apc_count == 1, "apc was not called\n" );
@@ -1010,9 +1011,9 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
     iosb.Information = 0xdeadbeef;
     CloseHandle( write );
     status = NtReadFile( read, event, apc, &apc_count, &iosb, buffer, 1, NULL, NULL );
-    ok( status == STATUS_PIPE_BROKEN, "wrong status %x\n", status );
-    ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
-    ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
+    ok( status == STATUS_PIPE_BROKEN, "wrong status %lx\n", status );
+    ok( U(iosb).Status == 0xdeadbabe, "wrong status %lx\n", U(iosb).Status );
+    ok( iosb.Information == 0xdeadbeef, "wrong info %Iu\n", iosb.Information );
     ok( !is_signaled( event ), "event is signaled\n" );
     ok( !apc_count, "apc was called\n" );
     SleepEx( 1, TRUE ); /* alertable sleep */
@@ -1024,9 +1025,9 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
     U(iosb).Status = 0xdeadbabe;
     iosb.Information = 0xdeadbeef;
     status = NtReadFile( read, (HANDLE)0xdeadbeef, apc, &apc_count, &iosb, buffer, 1, NULL, NULL );
-    ok( status == STATUS_INVALID_HANDLE, "wrong status %x\n", status );
-    ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
-    ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
+    ok( status == STATUS_INVALID_HANDLE, "wrong status %lx\n", status );
+    ok( U(iosb).Status == 0xdeadbabe, "wrong status %lx\n", U(iosb).Status );
+    ok( iosb.Information == 0xdeadbeef, "wrong info %Iu\n", iosb.Information );
     ok( !apc_count, "apc was called\n" );
     SleepEx( 1, TRUE ); /* alertable sleep */
     ok( !apc_count, "apc was called\n" );
@@ -1038,9 +1039,9 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
     iosb.Information = 0xdeadbeef;
     SetEvent( event );
     status = NtReadFile( read, event, apc, &apc_count, &iosb, buffer, 1, NULL, NULL );
-    ok( status == STATUS_INVALID_HANDLE, "wrong status %x\n", status );
-    ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
-    ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
+    ok( status == STATUS_INVALID_HANDLE, "wrong status %lx\n", status );
+    ok( U(iosb).Status == 0xdeadbabe, "wrong status %lx\n", U(iosb).Status );
+    ok( iosb.Information == 0xdeadbeef, "wrong info %Iu\n", iosb.Information );
     ok( is_signaled( event ), "event is not signaled\n" );  /* not reset on invalid handle */
     ok( !apc_count, "apc was called\n" );
     SleepEx( 1, TRUE ); /* alertable sleep */
@@ -1052,15 +1053,15 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
     U(iosb).Status = 0xdeadbabe;
     iosb.Information = 0xdeadbeef;
     status = NtReadFile( read, event, apc, &apc_count, &iosb, buffer, 2, NULL, NULL );
-    ok( status == STATUS_PENDING, "wrong status %x\n", status );
+    ok( status == STATUS_PENDING, "wrong status %lx\n", status );
     ok( !is_signaled( event ), "event is signaled\n" );
-    ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
-    ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
+    ok( U(iosb).Status == 0xdeadbabe, "wrong status %lx\n", U(iosb).Status );
+    ok( iosb.Information == 0xdeadbeef, "wrong info %Iu\n", iosb.Information );
     ok( !apc_count, "apc was called\n" );
     CloseHandle( write );
     Sleep(1);  /* FIXME: needed for wine to run the i/o apc  */
-    ok( U(iosb).Status == STATUS_PIPE_BROKEN, "wrong status %x\n", U(iosb).Status );
-    ok( iosb.Information == 0, "wrong info %lu\n", iosb.Information );
+    ok( U(iosb).Status == STATUS_PIPE_BROKEN, "wrong status %lx\n", U(iosb).Status );
+    ok( iosb.Information == 0, "wrong info %Iu\n", iosb.Information );
     ok( is_signaled( event ), "event is not signaled\n" );
     ok( !apc_count, "apc was called\n" );
     SleepEx( 1, TRUE ); /* alertable sleep */
@@ -1069,23 +1070,23 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
 
     if (!create_pipe_pair( &read, &write, FILE_FLAG_OVERLAPPED | pipe_flags, pipe_type, 4096 )) return;
     ret = DuplicateHandle(GetCurrentProcess(), read, GetCurrentProcess(), &handle, 0, TRUE, DUPLICATE_SAME_ACCESS);
-    ok(ret, "Failed to duplicate handle: %d\n", GetLastError());
+    ok(ret, "Failed to duplicate handle: %ld\n", GetLastError());
 
     apc_count = 0;
     U(iosb).Status = 0xdeadbabe;
     iosb.Information = 0xdeadbeef;
     status = NtReadFile( handle, event, apc, &apc_count, &iosb, buffer, 2, NULL, NULL );
-    ok( status == STATUS_PENDING, "wrong status %x\n", status );
+    ok( status == STATUS_PENDING, "wrong status %lx\n", status );
     ok( !is_signaled( event ), "event is signaled\n" );
-    ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
-    ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
+    ok( U(iosb).Status == 0xdeadbabe, "wrong status %lx\n", U(iosb).Status );
+    ok( iosb.Information == 0xdeadbeef, "wrong info %Iu\n", iosb.Information );
     ok( !apc_count, "apc was called\n" );
     /* Cancel by other handle */
     status = pNtCancelIoFile( read, &iosb2 );
-    ok(status == STATUS_SUCCESS, "failed to cancel by different handle: %x\n", status);
+    ok(status == STATUS_SUCCESS, "failed to cancel by different handle: %lx\n", status);
     Sleep(1);  /* FIXME: needed for wine to run the i/o apc  */
-    ok( U(iosb).Status == STATUS_CANCELLED, "wrong status %x\n", U(iosb).Status );
-    ok( iosb.Information == 0, "wrong info %lu\n", iosb.Information );
+    ok( U(iosb).Status == STATUS_CANCELLED, "wrong status %lx\n", U(iosb).Status );
+    ok( iosb.Information == 0, "wrong info %Iu\n", iosb.Information );
     ok( is_signaled( event ), "event is not signaled\n" );
     ok( !apc_count, "apc was called\n" );
     SleepEx( 1, TRUE ); /* alertable sleep */
@@ -1095,23 +1096,23 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
     U(iosb).Status = 0xdeadbabe;
     iosb.Information = 0xdeadbeef;
     status = NtReadFile( read, event, apc, &apc_count, &iosb, buffer, 2, NULL, NULL );
-    ok( status == STATUS_PENDING, "wrong status %x\n", status );
+    ok( status == STATUS_PENDING, "wrong status %lx\n", status );
     ok( !is_signaled( event ), "event is signaled\n" );
-    ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
-    ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
+    ok( U(iosb).Status == 0xdeadbabe, "wrong status %lx\n", U(iosb).Status );
+    ok( iosb.Information == 0xdeadbeef, "wrong info %Iu\n", iosb.Information );
     ok( !apc_count, "apc was called\n" );
     /* Close queued handle */
     CloseHandle( read );
     SleepEx( 1, TRUE ); /* alertable sleep */
-    ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
-    ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
+    ok( U(iosb).Status == 0xdeadbabe, "wrong status %lx\n", U(iosb).Status );
+    ok( iosb.Information == 0xdeadbeef, "wrong info %Iu\n", iosb.Information );
     status = pNtCancelIoFile( read, &iosb2 );
     ok(status == STATUS_INVALID_HANDLE, "cancelled by closed handle?\n");
     status = pNtCancelIoFile( handle, &iosb2 );
-    ok(status == STATUS_SUCCESS, "failed to cancel: %x\n", status);
+    ok(status == STATUS_SUCCESS, "failed to cancel: %lx\n", status);
     Sleep(1);  /* FIXME: needed for wine to run the i/o apc  */
-    ok( U(iosb).Status == STATUS_CANCELLED, "wrong status %x\n", U(iosb).Status );
-    ok( iosb.Information == 0, "wrong info %lu\n", iosb.Information );
+    ok( U(iosb).Status == STATUS_CANCELLED, "wrong status %lx\n", U(iosb).Status );
+    ok( iosb.Information == 0, "wrong info %Iu\n", iosb.Information );
     ok( is_signaled( event ), "event is not signaled\n" );
     ok( !apc_count, "apc was called\n" );
     SleepEx( 1, TRUE ); /* alertable sleep */
@@ -1128,16 +1129,16 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
         U(iosb).Status = 0xdeadbabe;
         iosb.Information = 0xdeadbeef;
         status = NtReadFile( read, event, apc, &apc_count, &iosb, buffer, 2, NULL, NULL );
-        ok( status == STATUS_PENDING, "wrong status %x\n", status );
+        ok( status == STATUS_PENDING, "wrong status %lx\n", status );
         ok( !is_signaled( event ), "event is signaled\n" );
-        ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
-        ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
+        ok( U(iosb).Status == 0xdeadbabe, "wrong status %lx\n", U(iosb).Status );
+        ok( iosb.Information == 0xdeadbeef, "wrong info %Iu\n", iosb.Information );
         ok( !apc_count, "apc was called\n" );
         status = pNtCancelIoFileEx( read, &iosb, &iosb2 );
         ok(status == STATUS_SUCCESS, "Failed to cancel I/O\n");
         Sleep(1);  /* FIXME: needed for wine to run the i/o apc  */
-        ok( U(iosb).Status == STATUS_CANCELLED, "wrong status %x\n", U(iosb).Status );
-        ok( iosb.Information == 0, "wrong info %lu\n", iosb.Information );
+        ok( U(iosb).Status == STATUS_CANCELLED, "wrong status %lx\n", U(iosb).Status );
+        ok( iosb.Information == 0, "wrong info %Iu\n", iosb.Information );
         ok( is_signaled( event ), "event is not signaled\n" );
         ok( !apc_count, "apc was called\n" );
         SleepEx( 1, TRUE ); /* alertable sleep */
@@ -1148,22 +1149,22 @@ static void read_pipe_test(ULONG pipe_flags, ULONG pipe_type)
         U(iosb).Status = 0xdeadbabe;
         iosb.Information = 0xdeadbeef;
         status = NtReadFile( read, event, apc, &apc_count, &iosb, buffer, 2, NULL, NULL );
-        ok( status == STATUS_PENDING, "wrong status %x\n", status );
+        ok( status == STATUS_PENDING, "wrong status %lx\n", status );
         ok( !is_signaled( event ), "event is signaled\n" );
-        ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
-        ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
+        ok( U(iosb).Status == 0xdeadbabe, "wrong status %lx\n", U(iosb).Status );
+        ok( iosb.Information == 0xdeadbeef, "wrong info %Iu\n", iosb.Information );
         ok( !apc_count, "apc was called\n" );
         status = NtReadFile( read, event, apc, &apc_count, &iosb, buffer, 2, NULL, NULL );
-        ok( status == STATUS_PENDING, "wrong status %x\n", status );
+        ok( status == STATUS_PENDING, "wrong status %lx\n", status );
         ok( !is_signaled( event ), "event is signaled\n" );
-        ok( U(iosb).Status == 0xdeadbabe, "wrong status %x\n", U(iosb).Status );
-        ok( iosb.Information == 0xdeadbeef, "wrong info %lu\n", iosb.Information );
+        ok( U(iosb).Status == 0xdeadbabe, "wrong status %lx\n", U(iosb).Status );
+        ok( iosb.Information == 0xdeadbeef, "wrong info %Iu\n", iosb.Information );
         ok( !apc_count, "apc was called\n" );
         status = pNtCancelIoFileEx( read, &iosb, &iosb2 );
         ok(status == STATUS_SUCCESS, "Failed to cancel I/O\n");
         Sleep(1);  /* FIXME: needed for wine to run the i/o apc  */
-        ok( U(iosb).Status == STATUS_CANCELLED, "wrong status %x\n", U(iosb).Status );
-        ok( iosb.Information == 0, "wrong info %lu\n", iosb.Information );
+        ok( U(iosb).Status == STATUS_CANCELLED, "wrong status %lx\n", U(iosb).Status );
+        ok( iosb.Information == 0, "wrong info %Iu\n", iosb.Information );
         ok( is_signaled( event ), "event is not signaled\n" );
         ok( !apc_count, "apc was called\n" );
         SleepEx( 1, TRUE ); /* alertable sleep */
@@ -1193,14 +1194,14 @@ static void test_transceive(void)
 
     status = NtFsControlFile( caller, event, NULL, NULL, &iosb, FSCTL_PIPE_TRANSCEIVE,
                               (BYTE*)"test", 4, buffer, sizeof(buffer) );
-    ok( status == STATUS_PENDING, "NtFsControlFile(FSCTL_PIPE_TRANSCEIVE) returned %x\n", status);
+    ok( status == STATUS_PENDING, "NtFsControlFile(FSCTL_PIPE_TRANSCEIVE) returned %lx\n", status);
     ok( !is_signaled( event ), "event is signaled\n" );
 
     ret = WriteFile( callee, buffer, 2, &written, NULL );
-    ok(ret && written == 2, "WriteFile error %d\n", GetLastError());
+    ok(ret && written == 2, "WriteFile error %ld\n", GetLastError());
 
-    ok( U(iosb).Status == 0, "wrong status %x\n", U(iosb).Status );
-    ok( iosb.Information == 2, "wrong info %lu\n", iosb.Information );
+    ok( U(iosb).Status == 0, "wrong status %lx\n", U(iosb).Status );
+    ok( iosb.Information == 2, "wrong info %Iu\n", iosb.Information );
     ok( is_signaled( event ), "event is not signaled\n" );
 
     CloseHandle( caller );
@@ -1218,7 +1219,7 @@ static void _test_no_queued_completion(unsigned line, HANDLE port)
     pov = (void *)0xdeadbeef;
     ret = GetQueuedCompletionStatus(port, &num_bytes, &key, &pov, 10);
     ok_(__FILE__,line)(!ret && GetLastError() == WAIT_TIMEOUT,
-                       "GetQueuedCompletionStatus returned %x(%u)\n", ret, GetLastError());
+                       "GetQueuedCompletionStatus returned %x(%lu)\n", ret, GetLastError());
 }
 
 #define test_queued_completion(a,b,c,d) _test_queued_completion(__LINE__,a,b,c,d)
@@ -1232,11 +1233,11 @@ static void _test_queued_completion(unsigned line, HANDLE port, IO_STATUS_BLOCK 
     NTSTATUS status;
 
     status = pNtRemoveIoCompletion(port, &key, &value, &iosb, &timeout);
-    ok_(__FILE__,line)(status == STATUS_SUCCESS, "NtRemoveIoCompletion returned %x\n", status);
-    ok_(__FILE__,line)(value == (ULONG_PTR)io, "value = %lx\n", value);
-    ok_(__FILE__,line)(io->Status == expected_status, "Status = %x\n", io->Status);
+    ok_(__FILE__,line)(status == STATUS_SUCCESS, "NtRemoveIoCompletion returned %lx\n", status);
+    ok_(__FILE__,line)(value == (ULONG_PTR)io, "value = %Ix\n", value);
+    ok_(__FILE__,line)(io->Status == expected_status, "Status = %lx\n", io->Status);
     ok_(__FILE__,line)(io->Information == expected_information,
-                       "Information = %lu\n", io->Information);
+                       "Information = %Iu\n", io->Information);
 }
 
 static void test_completion(void)
@@ -1258,7 +1259,7 @@ static void test_completion(void)
     status = pNtQueryInformationFile(pipe, &io, &info, sizeof(info),
                                      FileIoCompletionNotificationInformation);
     ok(status == STATUS_SUCCESS || broken(status == STATUS_INVALID_INFO_CLASS),
-       "status = %x\n", status);
+       "status = %lx\n", status);
     if (status)
     {
         win_skip("FileIoCompletionNotificationInformation not supported\n");
@@ -1269,52 +1270,52 @@ static void test_completion(void)
 
     memset(&ov, 0, sizeof(ov));
     ov.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
-    ok(ov.hEvent != INVALID_HANDLE_VALUE, "CreateEvent failed, error %u\n", GetLastError());
+    ok(ov.hEvent != INVALID_HANDLE_VALUE, "CreateEvent failed, error %lu\n", GetLastError());
 
     port = CreateIoCompletionPort(client, NULL, 0xdeadbeef, 0);
-    ok(port != NULL, "CreateIoCompletionPort failed, error %u\n", GetLastError());
+    ok(port != NULL, "CreateIoCompletionPort failed, error %lu\n", GetLastError());
 
     ret = WriteFile(client, buf, sizeof(buf), &num_bytes, &ov);
-    ok(ret, "WriteFile failed, error %u\n", GetLastError());
-    ok(num_bytes == sizeof(buf), "expected sizeof(buf), got %u\n", num_bytes);
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
+    ok(num_bytes == sizeof(buf), "expected sizeof(buf), got %lu\n", num_bytes);
     test_queued_completion(port, (IO_STATUS_BLOCK*)&ov, STATUS_SUCCESS, num_bytes);
 
     status = NtFsControlFile(client, NULL, NULL, &io, &io, FSCTL_PIPE_PEEK,
                              NULL, 0, &peek_buf, sizeof(peek_buf));
-    ok(status == STATUS_PENDING || status == STATUS_SUCCESS, "FSCTL_PIPE_PEEK returned %x\n", status);
+    ok(status == STATUS_PENDING || status == STATUS_SUCCESS, "FSCTL_PIPE_PEEK returned %lx\n", status);
     test_queued_completion(port, &io, STATUS_SUCCESS, FIELD_OFFSET(FILE_PIPE_PEEK_BUFFER, Data));
 
     info.Flags = FILE_SKIP_COMPLETION_PORT_ON_SUCCESS;
     status = pNtSetInformationFile(client, &io, &info, sizeof(info), FileIoCompletionNotificationInformation);
-    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
+    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08lx\n", status);
 
     ret = WriteFile(client, buf, sizeof(buf), &num_bytes, &ov);
-    ok(ret, "WriteFile failed, error %u\n", GetLastError());
-    ok(num_bytes == sizeof(buf), "expected sizeof(buf), got %u\n", num_bytes);
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
+    ok(num_bytes == sizeof(buf), "expected sizeof(buf), got %lu\n", num_bytes);
     test_no_queued_completion(port);
 
     ret = WriteFile(pipe, buf, sizeof(buf), &num_bytes, &ov);
-    ok(ret, "WriteFile failed, error %u\n", GetLastError());
-    ok(num_bytes == sizeof(buf), "expected sizeof(buf), got %u\n", num_bytes);
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
+    ok(num_bytes == sizeof(buf), "expected sizeof(buf), got %lu\n", num_bytes);
 
     status = NtReadFile(client, NULL, NULL, &io, &io, read_buf, 1, NULL, NULL);
-    ok(status == STATUS_BUFFER_OVERFLOW || status == STATUS_PENDING, "status = %x\n", status);
-    ok(io.Status == STATUS_BUFFER_OVERFLOW, "Status = %x\n", io.Status);
-    ok(io.Information == 1, "Information = %lu\n", io.Information);
+    ok(status == STATUS_BUFFER_OVERFLOW || status == STATUS_PENDING, "status = %lx\n", status);
+    ok(io.Status == STATUS_BUFFER_OVERFLOW, "Status = %lx\n", io.Status);
+    ok(io.Information == 1, "Information = %Iu\n", io.Information);
     if(status == STATUS_PENDING) /* win8+ */
         test_queued_completion(port, &io, STATUS_BUFFER_OVERFLOW, 1);
     else
         test_no_queued_completion(port);
 
     status = NtReadFile(client, NULL, NULL, &io, &io, read_buf, sizeof(read_buf), NULL, NULL);
-    ok(status == STATUS_SUCCESS, "status = %x\n", status);
-    ok(io.Status == STATUS_SUCCESS, "Status = %x\n", io.Status);
-    ok(io.Information == sizeof(buf)-1, "Information = %lu\n", io.Information);
+    ok(status == STATUS_SUCCESS, "status = %lx\n", status);
+    ok(io.Status == STATUS_SUCCESS, "Status = %lx\n", io.Status);
+    ok(io.Information == sizeof(buf)-1, "Information = %Iu\n", io.Information);
     test_no_queued_completion(port);
 
     status = NtFsControlFile(client, NULL, NULL, &io, &io, FSCTL_PIPE_PEEK,
                              NULL, 0, &peek_buf, sizeof(peek_buf));
-    ok(status == STATUS_PENDING || status == STATUS_SUCCESS, "FSCTL_PIPE_PEEK returned %x\n", status);
+    ok(status == STATUS_PENDING || status == STATUS_SUCCESS, "FSCTL_PIPE_PEEK returned %lx\n", status);
     if(status == STATUS_PENDING) /* win8+ */
         test_queued_completion(port, &io, STATUS_SUCCESS, FIELD_OFFSET(FILE_PIPE_PEEK_BUFFER, Data));
     else
@@ -1322,20 +1323,20 @@ static void test_completion(void)
 
     memset(&io, 0xcc, sizeof(io));
     status = NtReadFile(client, ov.hEvent, NULL, &io, &io, read_buf, sizeof(read_buf), NULL, NULL);
-    ok(status == STATUS_PENDING, "status = %x\n", status);
+    ok(status == STATUS_PENDING, "status = %lx\n", status);
     ok(!is_signaled(ov.hEvent), "event is signtaled\n");
     test_no_queued_completion(port);
 
     ret = WriteFile(pipe, buf, sizeof(buf), &num_bytes, NULL);
-    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
     test_queued_completion(port, &io, STATUS_SUCCESS, sizeof(buf));
 
     ret = WriteFile(pipe, buf, sizeof(buf), &num_bytes, NULL);
-    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
     status = NtFsControlFile(client, NULL, NULL, &io, &io, FSCTL_PIPE_PEEK,
                              NULL, 0, &peek_buf, sizeof(peek_buf));
     ok(status == STATUS_PENDING || status == STATUS_BUFFER_OVERFLOW,
-       "FSCTL_PIPE_PEEK returned %x\n", status);
+       "FSCTL_PIPE_PEEK returned %lx\n", status);
     if(status == STATUS_PENDING) /* win8+ */
         test_queued_completion(port, &io, STATUS_BUFFER_OVERFLOW, sizeof(peek_buf));
     else
@@ -1355,41 +1356,41 @@ static void test_completion(void)
     /* no event, APC nor completion: only signals on handle */
     memset(&io, 0xcc, sizeof(io));
     status = NtReadFile(client, NULL, NULL, NULL, &io, read_buf, sizeof(read_buf), NULL, NULL);
-    ok(status == STATUS_PENDING, "status = %x\n", status);
+    ok(status == STATUS_PENDING, "status = %lx\n", status);
     ok(!is_signaled(client), "client is signaled\n");
 
     ret = WriteFile(pipe, buf, sizeof(buf), &num_bytes, NULL);
-    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
     ok(is_signaled(client), "client is signaled\n");
-    ok(io.Status == STATUS_SUCCESS, "Status = %x\n", io.Status);
-    ok(io.Information == sizeof(buf), "Information = %lu\n", io.Information);
+    ok(io.Status == STATUS_SUCCESS, "Status = %lx\n", io.Status);
+    ok(io.Information == sizeof(buf), "Information = %Iu\n", io.Information);
 
     /* event with no APC nor completion: signals only event */
     memset(&io, 0xcc, sizeof(io));
     status = NtReadFile(client, event, NULL, NULL, &io, read_buf, sizeof(read_buf), NULL, NULL);
-    ok(status == STATUS_PENDING, "status = %x\n", status);
+    ok(status == STATUS_PENDING, "status = %lx\n", status);
     ok(!is_signaled(client), "client is signaled\n");
     ok(!is_signaled(event), "event is signaled\n");
 
     ret = WriteFile(pipe, buf, sizeof(buf), &num_bytes, NULL);
-    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
     ok(!is_signaled(client), "client is signaled\n");
     ok(is_signaled(event), "event is not signaled\n");
-    ok(io.Status == STATUS_SUCCESS, "Status = %x\n", io.Status);
-    ok(io.Information == sizeof(buf), "Information = %lu\n", io.Information);
+    ok(io.Status == STATUS_SUCCESS, "Status = %lx\n", io.Status);
+    ok(io.Information == sizeof(buf), "Information = %Iu\n", io.Information);
 
     /* APC with no event: handle is signaled */
     ioapc_called = FALSE;
     memset(&io, 0xcc, sizeof(io));
     status = NtReadFile(client, NULL, ioapc, &io, &io, read_buf, sizeof(read_buf), NULL, NULL);
-    ok(status == STATUS_PENDING, "status = %x\n", status);
+    ok(status == STATUS_PENDING, "status = %lx\n", status);
     ok(!is_signaled(client), "client is signaled\n");
 
     ret = WriteFile(pipe, buf, sizeof(buf), &num_bytes, NULL);
-    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
     ok(is_signaled(client), "client is signaled\n");
-    ok(io.Status == STATUS_SUCCESS, "Status = %x\n", io.Status);
-    ok(io.Information == sizeof(buf), "Information = %lu\n", io.Information);
+    ok(io.Status == STATUS_SUCCESS, "Status = %lx\n", io.Status);
+    ok(io.Information == sizeof(buf), "Information = %Iu\n", io.Information);
 
     ok(!ioapc_called, "ioapc called\n");
     SleepEx(0, TRUE);
@@ -1398,53 +1399,53 @@ static void test_completion(void)
     /* completion with no completion port: handle signaled */
     memset(&io, 0xcc, sizeof(io));
     status = NtReadFile(client, NULL, NULL, &io, &io, read_buf, sizeof(read_buf), NULL, NULL);
-    ok(status == STATUS_PENDING, "status = %x\n", status);
+    ok(status == STATUS_PENDING, "status = %lx\n", status);
     ok(!is_signaled(client), "client is signaled\n");
 
     ret = WriteFile(pipe, buf, sizeof(buf), &num_bytes, NULL);
-    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
     ok(is_signaled(client), "client is not signaled\n");
 
     port = CreateIoCompletionPort(client, NULL, 0xdeadbeef, 0);
-    ok(port != NULL, "CreateIoCompletionPort failed, error %u\n", GetLastError());
+    ok(port != NULL, "CreateIoCompletionPort failed, error %lu\n", GetLastError());
 
     /* skipping completion on success: handle is signaled */
     info.Flags = FILE_SKIP_COMPLETION_PORT_ON_SUCCESS;
     status = pNtSetInformationFile(client, &io, &info, sizeof(info), FileIoCompletionNotificationInformation);
-    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
+    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08lx\n", status);
     ok(is_signaled(client), "client is not signaled\n");
 
     memset(&io, 0xcc, sizeof(io));
     status = NtReadFile(client, NULL, NULL, &io, &io, read_buf, sizeof(read_buf), NULL, NULL);
-    ok(status == STATUS_PENDING, "status = %x\n", status);
+    ok(status == STATUS_PENDING, "status = %lx\n", status);
     ok(!is_signaled(client), "client is signaled\n");
 
     ret = WriteFile(client, buf, 1, &num_bytes, NULL);
-    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
     ok(is_signaled(client), "client is not signaled\n");
 
     /* skipping set event on handle: handle is never signaled */
     info.Flags = FILE_SKIP_SET_EVENT_ON_HANDLE;
     status = pNtSetInformationFile(client, &io, &info, sizeof(info), FileIoCompletionNotificationInformation);
-    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
+    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08lx\n", status);
     ok(!is_signaled(client), "client is not signaled\n");
 
     ret = WriteFile(pipe, buf, sizeof(buf), &num_bytes, NULL);
-    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
     ok(!is_signaled(client), "client is signaled\n");
     test_queued_completion(port, &io, STATUS_SUCCESS, sizeof(buf));
 
     memset(&io, 0xcc, sizeof(io));
     status = NtReadFile(client, NULL, NULL, NULL, &io, read_buf, sizeof(read_buf), NULL, NULL);
-    ok(status == STATUS_PENDING, "status = %x\n", status);
+    ok(status == STATUS_PENDING, "status = %lx\n", status);
     ok(!is_signaled(client), "client is signaled\n");
 
     ret = WriteFile(client, buf, 1, &num_bytes, NULL);
-    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
     ok(!is_signaled(client), "client is signaled\n");
 
     ret = WriteFile(pipe, buf, sizeof(buf), &num_bytes, NULL);
-    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
     ok(!is_signaled(client), "client is signaled\n");
 
     CloseHandle(port);
@@ -1477,7 +1478,7 @@ static DWORD WINAPI blocking_thread(void *arg)
     for (;;)
     {
         res = WaitForSingleObject(ctx->wait, 10000);
-        ok(res == WAIT_OBJECT_0, "wait returned %x\n", res);
+        ok(res == WAIT_OBJECT_0, "wait returned %lx\n", res);
         if (res != WAIT_OBJECT_0) break;
         switch(ctx->cmd) {
         case BLOCKING_THREAD_WRITE:
@@ -1488,7 +1489,7 @@ static DWORD WINAPI blocking_thread(void *arg)
             ok(!is_signaled(ctx->client), "client is signaled\n");
             ok(is_signaled(ctx->pipe), "pipe is not signaled\n");
             ret = WriteFile(ctx->pipe, buf, 1, &num_bytes, NULL);
-            ok(ret, "WriteFile failed, error %u\n", GetLastError());
+            ok(ret, "WriteFile failed, error %lu\n", GetLastError());
             break;
         case BLOCKING_THREAD_READ:
             Sleep(100);
@@ -1498,7 +1499,7 @@ static DWORD WINAPI blocking_thread(void *arg)
             ok(!is_signaled(ctx->client), "client is signaled\n");
             ok(is_signaled(ctx->pipe), "pipe is not signaled\n");
             ret = ReadFile(ctx->pipe, read_buf, 1, &num_bytes, NULL);
-            ok(ret, "WriteFile failed, error %u\n", GetLastError());
+            ok(ret, "WriteFile failed, error %lu\n", GetLastError());
             break;
         case BLOCKING_THREAD_QUIT:
             return 0;
@@ -1526,11 +1527,11 @@ static void test_blocking(ULONG options)
     ctx.wait = CreateEventW(NULL, FALSE, FALSE, NULL);
     ctx.done = CreateEventW(NULL, FALSE, FALSE, NULL);
     thread = CreateThread(NULL, 0, blocking_thread, &ctx, 0, 0);
-    ok(thread != INVALID_HANDLE_VALUE, "can't create thread, GetLastError: %x\n", GetLastError());
+    ok(thread != INVALID_HANDLE_VALUE, "can't create thread, GetLastError: %lx\n", GetLastError());
 
     status = create_pipe(&ctx.pipe, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
                          options);
-    ok(status == STATUS_SUCCESS, "NtCreateNamedPipeFile returned %x\n", status);
+    ok(status == STATUS_SUCCESS, "NtCreateNamedPipeFile returned %lx\n", status);
 
     pRtlInitUnicodeString(&name, testpipe_nt);
     attr.Length                   = sizeof(attr);
@@ -1542,7 +1543,7 @@ static void test_blocking(ULONG options)
     status = NtCreateFile(&ctx.client, SYNCHRONIZE | GENERIC_READ | GENERIC_WRITE, &attr, &io,
                           NULL, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN,
                           options, NULL, 0 );
-    ok(status == STATUS_SUCCESS, "NtCreateFile returned %x\n", status);
+    ok(status == STATUS_SUCCESS, "NtCreateFile returned %lx\n", status);
 
     ok(is_signaled(ctx.client), "client is not signaled\n");
     ok(is_signaled(ctx.pipe), "pipe is not signaled\n");
@@ -1554,14 +1555,14 @@ static void test_blocking(ULONG options)
     ctx.event = NULL;
     SetEvent(ctx.wait);
     status = NtReadFile(ctx.client, NULL, NULL, NULL, &io, read_buf, sizeof(read_buf), NULL, NULL);
-    ok(status == STATUS_SUCCESS, "status = %x\n", status);
-    ok(io.Status == STATUS_SUCCESS, "Status = %x\n", io.Status);
-    ok(io.Information == 1, "Information = %lu\n", io.Information);
+    ok(status == STATUS_SUCCESS, "status = %lx\n", status);
+    ok(io.Status == STATUS_SUCCESS, "Status = %lx\n", io.Status);
+    ok(io.Information == 1, "Information = %Iu\n", io.Information);
     ok(is_signaled(ctx.client), "client is not signaled\n");
     ok(is_signaled(ctx.pipe), "pipe is not signaled\n");
 
     res = WaitForSingleObject(ctx.done, 10000);
-    ok(res == WAIT_OBJECT_0, "wait returned %x\n", res);
+    ok(res == WAIT_OBJECT_0, "wait returned %lx\n", res);
 
     /* blocking read with event and APC */
     ioapc_called = FALSE;
@@ -1571,9 +1572,9 @@ static void test_blocking(ULONG options)
     SetEvent(ctx.wait);
     status = NtReadFile(ctx.client, ctx.event, ioapc, &io, &io, read_buf,
                         sizeof(read_buf), NULL, NULL);
-    ok(status == STATUS_SUCCESS, "status = %x\n", status);
-    ok(io.Status == STATUS_SUCCESS, "Status = %x\n", io.Status);
-    ok(io.Information == 1, "Information = %lu\n", io.Information);
+    ok(status == STATUS_SUCCESS, "status = %lx\n", status);
+    ok(io.Status == STATUS_SUCCESS, "Status = %lx\n", io.Status);
+    ok(io.Information == 1, "Information = %Iu\n", io.Information);
     ok(is_signaled(ctx.event), "event is not signaled\n");
     todo_wine
     ok(is_signaled(ctx.client), "client is not signaled\n");
@@ -1585,27 +1586,27 @@ static void test_blocking(ULONG options)
     ok(ioapc_called, "ioapc not called\n");
 
     res = WaitForSingleObject(ctx.done, 10000);
-    ok(res == WAIT_OBJECT_0, "wait returned %x\n", res);
+    ok(res == WAIT_OBJECT_0, "wait returned %lx\n", res);
     ioapc_called = FALSE;
     CloseHandle(ctx.event);
     ctx.event = NULL;
 
     /* blocking flush */
     ret = WriteFile(ctx.client, read_buf, 1, &num_bytes, NULL);
-    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
 
     ioapc_called = FALSE;
     memset(&io, 0xff, sizeof(io));
     ctx.cmd = BLOCKING_THREAD_READ;
     SetEvent(ctx.wait);
     status = NtFlushBuffersFile(ctx.client, &io);
-    ok(status == STATUS_SUCCESS, "status = %x\n", status);
-    ok(io.Status == STATUS_SUCCESS, "Status = %x\n", io.Status);
-    ok(io.Information == 0, "Information = %lu\n", io.Information);
+    ok(status == STATUS_SUCCESS, "status = %lx\n", status);
+    ok(io.Status == STATUS_SUCCESS, "Status = %lx\n", io.Status);
+    ok(io.Information == 0, "Information = %Iu\n", io.Information);
     ok(is_signaled(ctx.client), "client is not signaled\n");
 
     res = WaitForSingleObject(ctx.done, 10000);
-    ok(res == WAIT_OBJECT_0, "wait returned %x\n", res);
+    ok(res == WAIT_OBJECT_0, "wait returned %lx\n", res);
 
     ok(is_signaled(ctx.pipe), "pipe is not signaled\n");
     CloseHandle(ctx.pipe);
@@ -1619,7 +1620,7 @@ static void test_blocking(ULONG options)
     ok(is_signaled(ctx.pipe), "pipe is not signaled\n");
 
     ret = WriteFile(ctx.client, read_buf, 1, &num_bytes, NULL);
-    ok(ret, "WriteFile failed, error %u\n", GetLastError());
+    ok(ret, "WriteFile failed, error %lu\n", GetLastError());
 
     ok(is_signaled(ctx.client), "client is not signaled\n");
     ok(is_signaled(ctx.pipe), "pipe is not signaled\n");
@@ -1629,13 +1630,13 @@ static void test_blocking(ULONG options)
     ctx.cmd = BLOCKING_THREAD_READ;
     SetEvent(ctx.wait);
     status = NtFlushBuffersFile(ctx.client, &io);
-    ok(status == STATUS_SUCCESS, "status = %x\n", status);
-    ok(io.Status == STATUS_SUCCESS, "Status = %x\n", io.Status);
-    ok(io.Information == 0, "Information = %lu\n", io.Information);
+    ok(status == STATUS_SUCCESS, "status = %lx\n", status);
+    ok(io.Status == STATUS_SUCCESS, "Status = %lx\n", io.Status);
+    ok(io.Information == 0, "Information = %Iu\n", io.Information);
     /* client signaling is inconsistent in this case */
 
     res = WaitForSingleObject(ctx.done, 10000);
-    ok(res == WAIT_OBJECT_0, "wait returned %x\n", res);
+    ok(res == WAIT_OBJECT_0, "wait returned %lx\n", res);
 
     CloseHandle(ctx.pipe);
     CloseHandle(ctx.client);
@@ -1643,7 +1644,7 @@ static void test_blocking(ULONG options)
     ctx.cmd = BLOCKING_THREAD_QUIT;
     SetEvent(ctx.wait);
     res = WaitForSingleObject(thread, 10000);
-    ok(res == WAIT_OBJECT_0, "wait returned %x\n", res);
+    ok(res == WAIT_OBJECT_0, "wait returned %lx\n", res);
 
     CloseHandle(ctx.wait);
     CloseHandle(ctx.done);
@@ -1664,24 +1665,24 @@ static void test_volume_info(void)
     memset( buffer, 0xaa, sizeof(buffer) );
     memset( &iosb, 0xaa, sizeof(iosb) );
     status = pNtQueryVolumeInformationFile( read, &iosb, buffer, sizeof(buffer), FileFsDeviceInformation );
-    ok( status == STATUS_SUCCESS, "NtQueryVolumeInformationFile failed: %x\n", status );
-    ok( iosb.Status == STATUS_SUCCESS, "got status %#x\n", iosb.Status );
-    ok( iosb.Information == sizeof(*device_info), "Information = %lu\n", iosb.Information );
+    ok( status == STATUS_SUCCESS, "NtQueryVolumeInformationFile failed: %lx\n", status );
+    ok( iosb.Status == STATUS_SUCCESS, "got status %#lx\n", iosb.Status );
+    ok( iosb.Information == sizeof(*device_info), "Information = %Iu\n", iosb.Information );
     device_info = (FILE_FS_DEVICE_INFORMATION*)buffer;
-    ok( device_info->DeviceType == FILE_DEVICE_NAMED_PIPE, "DeviceType = %u\n", device_info->DeviceType );
+    ok( device_info->DeviceType == FILE_DEVICE_NAMED_PIPE, "DeviceType = %lu\n", device_info->DeviceType );
     ok( !(device_info->Characteristics & ~FILE_DEVICE_ALLOW_APPCONTAINER_TRAVERSAL),
-        "Characteristics = %x\n", device_info->Characteristics );
+        "Characteristics = %lx\n", device_info->Characteristics );
 
     memset( buffer, 0xaa, sizeof(buffer) );
     memset( &iosb, 0xaa, sizeof(iosb) );
     status = pNtQueryVolumeInformationFile( write, &iosb, buffer, sizeof(buffer), FileFsDeviceInformation );
-    ok( status == STATUS_SUCCESS, "NtQueryVolumeInformationFile failed: %x\n", status );
-    ok( iosb.Status == STATUS_SUCCESS, "got status %#x\n", iosb.Status );
-    ok( iosb.Information == sizeof(*device_info), "Information = %lu\n", iosb.Information );
+    ok( status == STATUS_SUCCESS, "NtQueryVolumeInformationFile failed: %lx\n", status );
+    ok( iosb.Status == STATUS_SUCCESS, "got status %#lx\n", iosb.Status );
+    ok( iosb.Information == sizeof(*device_info), "Information = %Iu\n", iosb.Information );
     device_info = (FILE_FS_DEVICE_INFORMATION*)buffer;
-    ok( device_info->DeviceType == FILE_DEVICE_NAMED_PIPE, "DeviceType = %u\n", device_info->DeviceType );
+    ok( device_info->DeviceType == FILE_DEVICE_NAMED_PIPE, "DeviceType = %lu\n", device_info->DeviceType );
     ok( !(device_info->Characteristics & ~FILE_DEVICE_ALLOW_APPCONTAINER_TRAVERSAL),
-        "Characteristics = %x\n", device_info->Characteristics );
+        "Characteristics = %lx\n", device_info->Characteristics );
 
     CloseHandle( read );
     CloseHandle( write );
@@ -1696,11 +1697,11 @@ static void _test_file_name_fail(unsigned line, HANDLE pipe, NTSTATUS expected_s
 
     status = NtQueryInformationFile( pipe, &iosb, buffer, 0, FileNameInformation );
     ok_(__FILE__,line)( status == STATUS_INFO_LENGTH_MISMATCH,
-            "expected STATUS_INFO_LENGTH_MISMATCH, got %#x\n", status );
+            "expected STATUS_INFO_LENGTH_MISMATCH, got %#lx\n", status );
 
     status = NtQueryInformationFile( pipe, &iosb, buffer, sizeof(buffer), FileNameInformation );
     todo_wine_if (todo)
-        ok_(__FILE__,line)( status == expected_status, "expected %#x, got %#x\n", expected_status, status );
+        ok_(__FILE__,line)( status == expected_status, "expected %#lx, got %#lx\n", expected_status, status );
 }
 
 #define test_file_name(a) _test_file_name(__LINE__,a)
@@ -1717,28 +1718,28 @@ static void _test_file_name(unsigned line, HANDLE pipe)
     memset( buffer, 0xaa, sizeof(buffer) );
     memset( &iosb, 0xaa, sizeof(iosb) );
     status = NtQueryInformationFile( pipe, &iosb, buffer, sizeof(buffer), FileNameInformation );
-    ok_(__FILE__,line)( status == STATUS_SUCCESS, "NtQueryInformationFile failed: %x\n", status );
-    ok_(__FILE__,line)( iosb.Status == STATUS_SUCCESS, "Status = %x\n", iosb.Status );
+    ok_(__FILE__,line)( status == STATUS_SUCCESS, "NtQueryInformationFile failed: %lx\n", status );
+    ok_(__FILE__,line)( iosb.Status == STATUS_SUCCESS, "Status = %lx\n", iosb.Status );
     ok_(__FILE__,line)( iosb.Information == sizeof(name_info->FileNameLength) + sizeof(nameW),
-        "Information = %lu\n", iosb.Information );
-    ok( name_info->FileNameLength == sizeof(nameW), "FileNameLength = %u\n", name_info->FileNameLength );
+        "Information = %Iu\n", iosb.Information );
+    ok( name_info->FileNameLength == sizeof(nameW), "FileNameLength = %lu\n", name_info->FileNameLength );
     ok( !memcmp(name_info->FileName, nameW, sizeof(nameW)), "FileName = %s\n", wine_dbgstr_w(name_info->FileName) );
 
     /* too small buffer */
     memset( buffer, 0xaa, sizeof(buffer) );
     memset( &iosb, 0xaa, sizeof(iosb) );
     status = NtQueryInformationFile( pipe, &iosb, buffer, 20, FileNameInformation );
-    ok( status == STATUS_BUFFER_OVERFLOW, "NtQueryInformationFile failed: %x\n", status );
-    ok( iosb.Status == STATUS_BUFFER_OVERFLOW, "Status = %x\n", iosb.Status );
-    ok( iosb.Information == 20, "Information = %lu\n", iosb.Information );
-    ok( name_info->FileNameLength == sizeof(nameW), "FileNameLength = %u\n", name_info->FileNameLength );
+    ok( status == STATUS_BUFFER_OVERFLOW, "NtQueryInformationFile failed: %lx\n", status );
+    ok( iosb.Status == STATUS_BUFFER_OVERFLOW, "Status = %lx\n", iosb.Status );
+    ok( iosb.Information == 20, "Information = %Iu\n", iosb.Information );
+    ok( name_info->FileNameLength == sizeof(nameW), "FileNameLength = %lu\n", name_info->FileNameLength );
     ok( !memcmp(name_info->FileName, nameW, 16), "FileName = %s\n", wine_dbgstr_w(name_info->FileName) );
 
     /* too small buffer */
     memset( buffer, 0xaa, sizeof(buffer) );
     memset( &iosb, 0xaa, sizeof(iosb) );
     status = NtQueryInformationFile( pipe, &iosb, buffer, 4, FileNameInformation );
-    ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtQueryInformationFile failed: %x\n", status );
+    ok( status == STATUS_INFO_LENGTH_MISMATCH, "NtQueryInformationFile failed: %lx\n", status );
 }
 
 static HANDLE create_pipe_server(void)
@@ -1747,7 +1748,7 @@ static HANDLE create_pipe_server(void)
     NTSTATUS status;
 
     status = create_pipe(&handle, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, 0);
-    ok(status == STATUS_SUCCESS, "create_pipe failed: %x\n", status);
+    ok(status == STATUS_SUCCESS, "create_pipe failed: %lx\n", status);
     return handle;
 }
 
@@ -1757,7 +1758,7 @@ static HANDLE connect_pipe(HANDLE server)
 
     client = CreateFileW(testpipe, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING,
                          FILE_FLAG_OVERLAPPED, 0);
-    ok(client != INVALID_HANDLE_VALUE, "can't open pipe: %u\n", GetLastError());
+    ok(client != INVALID_HANDLE_VALUE, "can't open pipe: %lu\n", GetLastError());
 
     return client;
 }
@@ -1772,9 +1773,9 @@ static HANDLE connect_and_write_pipe(HANDLE server)
     client = connect_pipe(server);
 
     res = WriteFile(client, buf, sizeof(buf), &written, NULL);
-    ok(res, "WriteFile failed: %u\n", GetLastError());
+    ok(res, "WriteFile failed: %lu\n", GetLastError());
     res = WriteFile(server, buf, sizeof(buf), &written, NULL);
-    ok(res, "WriteFile failed: %u\n", GetLastError());
+    ok(res, "WriteFile failed: %lu\n", GetLastError());
 
     return client;
 }
@@ -1806,10 +1807,10 @@ static void test_pipe_state(HANDLE pipe, BOOL is_server, DWORD state)
         expected_status = STATUS_PIPE_BROKEN;
         break;
     }
-    ok(status == expected_status, "status = %x, expected %x in %s state %u\n",
+    ok(status == expected_status, "status = %lx, expected %lx in %s state %lu\n",
        status, expected_status, is_server ? "server" : "client", state);
     if (!status)
-        ok(peek_buf.NamedPipeState == state, "NamedPipeState = %u, expected %u\n",
+        ok(peek_buf.NamedPipeState == state, "NamedPipeState = %lu, expected %lu\n",
            peek_buf.NamedPipeState, state);
 
     if (state != FILE_PIPE_CONNECTED_STATE)
@@ -1821,7 +1822,7 @@ static void test_pipe_state(HANDLE pipe, BOOL is_server, DWORD state)
         if (!status || status == STATUS_PENDING)
             status = io.Status;
         ok(status == expected_status,
-            "NtFsControlFile(FSCTL_PIPE_TRANSCEIVE) failed in %s state %u: %x\n",
+            "NtFsControlFile(FSCTL_PIPE_TRANSCEIVE) failed in %s state %lu: %lx\n",
             is_server ? "server" : "client", state, status);
     }
 
@@ -1829,15 +1830,15 @@ static void test_pipe_state(HANDLE pipe, BOOL is_server, DWORD state)
     status = NtFlushBuffersFile(pipe, &io);
     if (!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
     {
-        ok(status == STATUS_PIPE_DISCONNECTED, "status = %x in %s state %u\n",
+        ok(status == STATUS_PIPE_DISCONNECTED, "status = %lx in %s state %lu\n",
            status, is_server ? "server" : "client", state);
     }
     else
     {
-        ok(status == STATUS_SUCCESS, "status = %x in %s state %u\n",
+        ok(status == STATUS_SUCCESS, "status = %lx in %s state %lu\n",
            status, is_server ? "server" : "client", state);
-        ok(io.Status == status, "io.Status = %x\n", io.Status);
-        ok(!io.Information, "io.Information = %lx\n", io.Information);
+        ok(io.Status == status, "io.Status = %lx\n", io.Status);
+        ok(!io.Information, "io.Information = %Ix\n", io.Information);
     }
 
     if (state != FILE_PIPE_CONNECTED_STATE)
@@ -1855,7 +1856,7 @@ static void test_pipe_state(HANDLE pipe, BOOL is_server, DWORD state)
             break;
         }
         status = NtReadFile(pipe, NULL, NULL, NULL, &io, buf, 1, NULL, NULL);
-        ok(status == expected_status, "NtReadFile failed in %s state %u: %x\n",
+        ok(status == expected_status, "NtReadFile failed in %s state %lu: %lx\n",
             is_server ? "server" : "client", state, status);
     }
 
@@ -1864,7 +1865,7 @@ static void test_pipe_state(HANDLE pipe, BOOL is_server, DWORD state)
         memset(&io, 0xcc, sizeof(io));
         status = listen_pipe(pipe, NULL, &io, FALSE);
         ok(status == (state == FILE_PIPE_CLOSING_STATE ? STATUS_PIPE_CLOSING : STATUS_PIPE_CONNECTED),
-           "status = %x in %u state\n", status, state);
+           "status = %lx in %lu state\n", status, state);
     }
 }
 
@@ -1881,42 +1882,42 @@ static void test_pipe_with_data_state(HANDLE pipe, BOOL is_server, DWORD state)
     status = pNtQueryInformationFile(pipe, &io, &local_info, sizeof(local_info), FilePipeLocalInformation);
     if (!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
         ok(status == STATUS_PIPE_DISCONNECTED,
-            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
+            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %lu: %lx\n",
             is_server ? "server" : "client", state, status);
     else
         ok(status == STATUS_SUCCESS,
-            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
+            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %lu: %lx\n",
             is_server ? "server" : "client", state, status);
     if (!status)
     {
-        ok(local_info.NamedPipeState == state, "%s NamedPipeState = %u, expected %u\n",
+        ok(local_info.NamedPipeState == state, "%s NamedPipeState = %lu, expected %lu\n",
             is_server ? "server" : "client", local_info.NamedPipeState, state);
         if (state != FILE_PIPE_DISCONNECTED_STATE && state != FILE_PIPE_LISTENING_STATE)
-            ok(local_info.ReadDataAvailable != 0, "ReadDataAvailable, expected non-zero, in %s state %u\n",
+            ok(local_info.ReadDataAvailable != 0, "ReadDataAvailable, expected non-zero, in %s state %lu\n",
                 is_server ? "server" : "client", state);
         else
-            ok(local_info.ReadDataAvailable == 0, "ReadDataAvailable, expected zero, in %s state %u\n",
+            ok(local_info.ReadDataAvailable == 0, "ReadDataAvailable, expected zero, in %s state %lu\n",
                 is_server ? "server" : "client", state);
     }
 
     status = pNtQueryInformationFile(pipe, &io, &pipe_info, sizeof(pipe_info), FilePipeInformation);
     if (!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
         ok(status == STATUS_PIPE_DISCONNECTED,
-            "NtQueryInformationFile(FilePipeInformation) failed in %s state %u: %x\n",
+            "NtQueryInformationFile(FilePipeInformation) failed in %s state %lu: %lx\n",
             is_server ? "server" : "client", state, status);
     else
         ok(status == STATUS_SUCCESS,
-            "NtQueryInformationFile(FilePipeInformation) failed in %s state %u: %x\n",
+            "NtQueryInformationFile(FilePipeInformation) failed in %s state %lu: %lx\n",
             is_server ? "server" : "client", state, status);
 
     status = NtQueryInformationFile(pipe, &io, buf, sizeof(buf), FileNameInformation);
     if (!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
         ok(status == STATUS_PIPE_DISCONNECTED,
-           "NtQueryInformationFile(FileNameInformation) failed: %x\n", status);
+           "NtQueryInformationFile(FileNameInformation) failed: %lx\n", status);
     else
         todo_wine_if(!is_server && state == FILE_PIPE_CLOSING_STATE)
         ok(status == STATUS_SUCCESS,
-           "NtQueryInformationFile(FileNameInformation) failed: %x\n", status);
+           "NtQueryInformationFile(FileNameInformation) failed: %lx\n", status);
 
     memset(&peek_buf, 0xcc, sizeof(peek_buf));
     memset(&io, 0xcc, sizeof(io));
@@ -1935,10 +1936,10 @@ static void test_pipe_with_data_state(HANDLE pipe, BOOL is_server, DWORD state)
         expected_status = STATUS_BUFFER_OVERFLOW;
         break;
     }
-    ok(status == expected_status, "status = %x, expected %x in %s state %u\n",
+    ok(status == expected_status, "status = %lx, expected %lx in %s state %lu\n",
        status, expected_status, is_server ? "server" : "client", state);
     if (status == STATUS_BUFFER_OVERFLOW)
-        ok(peek_buf.NamedPipeState == state, "NamedPipeState = %u, expected %u\n",
+        ok(peek_buf.NamedPipeState == state, "NamedPipeState = %lu, expected %lu\n",
            peek_buf.NamedPipeState, state);
 
     switch (state)
@@ -1957,13 +1958,13 @@ static void test_pipe_with_data_state(HANDLE pipe, BOOL is_server, DWORD state)
         break;
     }
     status = NtWriteFile(pipe, NULL, NULL, NULL, &io, buf, 1, NULL, NULL);
-    ok(status == expected_status, "NtWriteFile failed in %s state %u: %x\n",
+    ok(status == expected_status, "NtWriteFile failed in %s state %lu: %lx\n",
         is_server ? "server" : "client", state, status);
 
     if (state == FILE_PIPE_CLOSING_STATE)
         expected_status = STATUS_SUCCESS;
     status = NtReadFile(pipe, NULL, NULL, NULL, &io, buf, 1, NULL, NULL);
-    ok(status == expected_status, "NtReadFile failed in %s state %u: %x\n",
+    ok(status == expected_status, "NtReadFile failed in %s state %lu: %lx\n",
         is_server ? "server" : "client", state, status);
 }
 
@@ -1983,7 +1984,7 @@ static void pipe_for_each_state(HANDLE (*create_server)(void),
     test(server, TRUE, FILE_PIPE_LISTENING_STATE);
 
     status = listen_pipe(server, event, &iosb, FALSE);
-    ok(status == STATUS_PENDING, "listen_pipe returned %x\n", status);
+    ok(status == STATUS_PENDING, "listen_pipe returned %lx\n", status);
     test(server, TRUE, FILE_PIPE_LISTENING_STATE);
 
     client = connect_client(server);
@@ -1997,11 +1998,11 @@ static void pipe_for_each_state(HANDLE (*create_server)(void),
 
     server = create_server();
     status = listen_pipe(server, event, &iosb, FALSE);
-    ok(status == STATUS_PENDING, "listen_pipe returned %x\n", status);
+    ok(status == STATUS_PENDING, "listen_pipe returned %lx\n", status);
 
     client = connect_client(server);
     ret = DisconnectNamedPipe(server);
-    ok(ret, "DisconnectNamedPipe failed: %u\n", GetLastError());
+    ok(ret, "DisconnectNamedPipe failed: %lu\n", GetLastError());
     test(server, TRUE, FILE_PIPE_DISCONNECTED_STATE);
     test(client, FALSE, FILE_PIPE_DISCONNECTED_STATE);
     CloseHandle(server);
@@ -2010,17 +2011,17 @@ static void pipe_for_each_state(HANDLE (*create_server)(void),
 
     server = create_server();
     status = listen_pipe(server, event, &iosb, FALSE);
-    ok(status == STATUS_PENDING, "listen_pipe returned %x\n", status);
+    ok(status == STATUS_PENDING, "listen_pipe returned %lx\n", status);
 
     client = connect_client(server);
     CloseHandle(client);
     test(server, TRUE, FILE_PIPE_CLOSING_STATE);
     ret = DisconnectNamedPipe(server);
-    ok(ret, "DisconnectNamedPipe failed: %u\n", GetLastError());
+    ok(ret, "DisconnectNamedPipe failed: %lu\n", GetLastError());
     test(server, TRUE, FILE_PIPE_DISCONNECTED_STATE);
 
     status = listen_pipe(server, event, &iosb, FALSE);
-    ok(status == STATUS_PENDING, "listen_pipe returned %x\n", status);
+    ok(status == STATUS_PENDING, "listen_pipe returned %lx\n", status);
     client = connect_client(server);
     test(server, TRUE, FILE_PIPE_CONNECTED_STATE);
     test(client, FALSE, FILE_PIPE_CONNECTED_STATE);
@@ -2053,7 +2054,7 @@ static HANDLE create_local_info_test_pipe(void)
     status = pNtCreateNamedPipeFile(&pipe, FILE_READ_ATTRIBUTES | SYNCHRONIZE | GENERIC_WRITE,
                                     &attr, &iosb, FILE_SHARE_READ, FILE_CREATE, 0, 1, 0, 0, 1,
                                     100, 200, &timeout);
-    ok(status == STATUS_SUCCESS, "NtCreateNamedPipeFile failed: %x\n", status);
+    ok(status == STATUS_SUCCESS, "NtCreateNamedPipeFile failed: %lx\n", status);
 
     return pipe;
 }
@@ -2064,7 +2065,7 @@ static HANDLE connect_pipe_reader(HANDLE server)
 
     client = CreateFileW(testpipe, GENERIC_READ | FILE_WRITE_ATTRIBUTES, 0, 0, OPEN_EXISTING,
                          FILE_FLAG_OVERLAPPED, 0);
-    ok(client != INVALID_HANDLE_VALUE, "can't open pipe: %u\n", GetLastError());
+    ok(client != INVALID_HANDLE_VALUE, "can't open pipe: %lu\n", GetLastError());
 
     return client;
 }
@@ -2085,34 +2086,34 @@ static void test_pipe_local_info(HANDLE pipe, BOOL is_server, DWORD state)
     status = pNtQueryInformationFile(pipe, &iosb, &local_info, sizeof(local_info), FilePipeLocalInformation);
     if (!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
         ok(status == STATUS_PIPE_DISCONNECTED,
-            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
+            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %lu: %lx\n",
             is_server ? "server" : "client", state, status);
     else
         ok(status == STATUS_SUCCESS,
-            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
+            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %lu: %lx\n",
             is_server ? "server" : "client", state, status);
     if (!status)
     {
-        ok(local_info.NamedPipeType == 1, "NamedPipeType = %u\n", local_info.NamedPipeType);
-        ok(local_info.NamedPipeConfiguration == 1, "NamedPipeConfiguration = %u\n",
+        ok(local_info.NamedPipeType == 1, "NamedPipeType = %lu\n", local_info.NamedPipeType);
+        ok(local_info.NamedPipeConfiguration == 1, "NamedPipeConfiguration = %lu\n",
            local_info.NamedPipeConfiguration);
-        ok(local_info.MaximumInstances == 1, "MaximumInstances = %u\n", local_info.MaximumInstances);
+        ok(local_info.MaximumInstances == 1, "MaximumInstances = %lu\n", local_info.MaximumInstances);
         if (!is_server && state == FILE_PIPE_CLOSING_STATE)
             ok(local_info.CurrentInstances == 0 || broken(local_info.CurrentInstances == 1 /* winxp */),
-               "CurrentInstances = %u\n", local_info.CurrentInstances);
+               "CurrentInstances = %lu\n", local_info.CurrentInstances);
         else
             ok(local_info.CurrentInstances == 1,
-               "CurrentInstances = %u\n", local_info.CurrentInstances);
-        ok(local_info.InboundQuota == 100, "InboundQuota = %u\n", local_info.InboundQuota);
-        ok(local_info.ReadDataAvailable == 0, "ReadDataAvailable = %u\n",
+               "CurrentInstances = %lu\n", local_info.CurrentInstances);
+        ok(local_info.InboundQuota == 100, "InboundQuota = %lu\n", local_info.InboundQuota);
+        ok(local_info.ReadDataAvailable == 0, "ReadDataAvailable = %lu\n",
            local_info.ReadDataAvailable);
-        ok(local_info.OutboundQuota == 200, "OutboundQuota = %u\n", local_info.OutboundQuota);
+        ok(local_info.OutboundQuota == 200, "OutboundQuota = %lu\n", local_info.OutboundQuota);
         todo_wine
-        ok(local_info.WriteQuotaAvailable == (is_server ? 200 : 100), "WriteQuotaAvailable = %u\n",
+        ok(local_info.WriteQuotaAvailable == (is_server ? 200 : 100), "WriteQuotaAvailable = %lu\n",
            local_info.WriteQuotaAvailable);
-        ok(local_info.NamedPipeState == state, "%s NamedPipeState = %u, expected %u\n",
+        ok(local_info.NamedPipeState == state, "%s NamedPipeState = %lu, expected %lu\n",
            is_server ? "server" : "client", local_info.NamedPipeState, state);
-        ok(local_info.NamedPipeEnd == is_server, "NamedPipeEnd = %u\n", local_info.NamedPipeEnd);
+        ok(local_info.NamedPipeEnd == is_server, "NamedPipeEnd = %lu\n", local_info.NamedPipeEnd);
 
         /* try to create another, incompatible, instance of pipe */
         pRtlInitUnicodeString(&name, testpipe_nt);
@@ -2130,41 +2131,41 @@ static void test_pipe_local_info(HANDLE pipe, BOOL is_server, DWORD state)
                                         &attr, &iosb, FILE_SHARE_WRITE, FILE_CREATE, 0, 0, 0, 0, 1,
                                         100, 200, &timeout);
         if (!local_info.CurrentInstances)
-            ok(status == STATUS_SUCCESS, "NtCreateNamedPipeFile failed: %x\n", status);
+            ok(status == STATUS_SUCCESS, "NtCreateNamedPipeFile failed: %lx\n", status);
         else
-            ok(status == STATUS_INSTANCE_NOT_AVAILABLE, "NtCreateNamedPipeFile failed: %x\n", status);
+            ok(status == STATUS_INSTANCE_NOT_AVAILABLE, "NtCreateNamedPipeFile failed: %lx\n", status);
         if (!status) CloseHandle(new_pipe);
 
         memset(&iosb, 0xcc, sizeof(iosb));
         status = pNtQueryInformationFile(pipe, &iosb, &local_info, sizeof(local_info),
                                          FilePipeLocalInformation);
         ok(status == STATUS_SUCCESS,
-           "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
+           "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %lu: %lx\n",
            is_server ? "server" : "client", state, status);
 
         if (!is_server && state == FILE_PIPE_CLOSING_STATE)
             ok(local_info.CurrentInstances == 0 || broken(local_info.CurrentInstances == 1 /* winxp */),
-               "CurrentInstances = %u\n", local_info.CurrentInstances);
+               "CurrentInstances = %lu\n", local_info.CurrentInstances);
         else
             ok(local_info.CurrentInstances == 1,
-               "CurrentInstances = %u\n", local_info.CurrentInstances);
+               "CurrentInstances = %lu\n", local_info.CurrentInstances);
     }
 
     memset(&iosb, 0xcc, sizeof(iosb));
     status = pNtQueryInformationFile(pipe, &iosb, &pipe_info, sizeof(pipe_info), FilePipeInformation);
     if (!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
         ok(status == STATUS_PIPE_DISCONNECTED,
-            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
+            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %lu: %lx\n",
             is_server ? "server" : "client", state, status);
     else
         ok(status == STATUS_SUCCESS,
-            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
+            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %lu: %lx\n",
             is_server ? "server" : "client", state, status);
 
     if (!status)
     {
-        ok(pipe_info.ReadMode == 0, "ReadMode = %u\n", pipe_info.ReadMode);
-        ok(pipe_info.CompletionMode == 0, "CompletionMode = %u\n", pipe_info.CompletionMode);
+        ok(pipe_info.ReadMode == 0, "ReadMode = %lu\n", pipe_info.ReadMode);
+        ok(pipe_info.CompletionMode == 0, "CompletionMode = %lu\n", pipe_info.CompletionMode);
     }
 
     pipe_info.ReadMode = 0;
@@ -2173,11 +2174,11 @@ static void test_pipe_local_info(HANDLE pipe, BOOL is_server, DWORD state)
     status = pNtSetInformationFile(pipe, &iosb, &pipe_info, sizeof(pipe_info), FilePipeInformation);
     if (!is_server && state == FILE_PIPE_DISCONNECTED_STATE)
         ok(status == STATUS_PIPE_DISCONNECTED,
-            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
+            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %lu: %lx\n",
             is_server ? "server" : "client", state, status);
     else
         ok(status == STATUS_SUCCESS,
-            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %u: %x\n",
+            "NtQueryInformationFile(FilePipeLocalInformation) failed in %s state %lu: %lx\n",
             is_server ? "server" : "client", state, status);
 }
 
@@ -2198,7 +2199,7 @@ static void test_file_info(void)
     CloseHandle( client );
 
     device = CreateFileA("\\\\.\\pipe", 0, 0, NULL, OPEN_EXISTING, 0, NULL);
-    ok(device != INVALID_HANDLE_VALUE, "got error %u\n", GetLastError());
+    ok(device != INVALID_HANDLE_VALUE, "got error %lu\n", GetLastError());
 
     test_file_name_fail( device, STATUS_INVALID_PARAMETER, TRUE );
 
@@ -2215,14 +2216,14 @@ static PSECURITY_DESCRIPTOR get_security_descriptor(HANDLE handle, BOOL todo)
                                    NULL, 0, &length);
     todo_wine_if(todo && status == STATUS_PIPE_DISCONNECTED)
     ok(status == STATUS_BUFFER_TOO_SMALL,
-       "Failed to query object security descriptor length: %08x\n", status);
+       "Failed to query object security descriptor length: %08lx\n", status);
     if(status != STATUS_BUFFER_TOO_SMALL) return NULL;
     ok(length != 0, "length = 0\n");
 
     sec_desc = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, length);
     status = NtQuerySecurityObject(handle, GROUP_SECURITY_INFORMATION | OWNER_SECURITY_INFORMATION,
                                    sec_desc, length, &length);
-    ok(status == STATUS_SUCCESS, "Failed to query object security descriptor: %08x\n", status);
+    ok(status == STATUS_SUCCESS, "Failed to query object security descriptor: %08lx\n", status);
 
     return sec_desc;
 }
@@ -2235,16 +2236,16 @@ static TOKEN_OWNER *get_current_owner(void)
     BOOL ret;
 
     ret = OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &token);
-    ok(ret, "Failed to get process token: %u\n", GetLastError());
+    ok(ret, "Failed to get process token: %lu\n", GetLastError());
 
     ret = GetTokenInformation(token, TokenOwner, NULL, 0, &length);
     ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-       "GetTokenInformation failed: %u\n", GetLastError());
-    ok(length != 0, "Failed to get token owner information length: %u\n", GetLastError());
+       "GetTokenInformation failed: %lu\n", GetLastError());
+    ok(length != 0, "Failed to get token owner information length: %lu\n", GetLastError());
 
     owner = HeapAlloc(GetProcessHeap(), 0, length);
     ret = GetTokenInformation(token, TokenOwner, owner, length, &length);
-    ok(ret, "Failed to get token owner information: %u)\n", GetLastError());
+    ok(ret, "Failed to get token owner information: %lu)\n", GetLastError());
 
     CloseHandle(token);
     return owner;
@@ -2258,16 +2259,16 @@ static TOKEN_PRIMARY_GROUP *get_current_group(void)
     BOOL ret;
 
     ret = OpenProcessToken(GetCurrentProcess(), TOKEN_ALL_ACCESS, &token);
-    ok(ret, "Failed to get process token: %u\n", GetLastError());
+    ok(ret, "Failed to get process token: %lu\n", GetLastError());
 
     ret = GetTokenInformation(token, TokenPrimaryGroup, NULL, 0, &length);
     ok(!ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-       "GetTokenInformation failed: %u\n", GetLastError());
-    ok(length != 0, "Failed to get primary group token information length: %u\n", GetLastError());
+       "GetTokenInformation failed: %lu\n", GetLastError());
+    ok(length != 0, "Failed to get primary group token information length: %lu\n", GetLastError());
 
     group = HeapAlloc(GetProcessHeap(), 0, length);
     ret = GetTokenInformation(token, TokenPrimaryGroup, group, length, &length);
-    ok(ret, "Failed to get primary group token information: %u\n", GetLastError());
+    ok(ret, "Failed to get primary group token information: %lu\n", GetLastError());
 
     CloseHandle(token);
     return group;
@@ -2281,7 +2282,7 @@ static SID *well_known_sid(WELL_KNOWN_SID_TYPE sid_type)
 
     sid = HeapAlloc(GetProcessHeap(), 0, size);
     ret = CreateWellKnownSid(sid_type, NULL, sid, &size);
-    ok(ret, "CreateWellKnownSid failed: %u\n", GetLastError());
+    ok(ret, "CreateWellKnownSid failed: %lu\n", GetLastError());
     return sid;
 }
 
@@ -2298,7 +2299,7 @@ static void _test_group(unsigned line, HANDLE handle, SID *expected_sid, BOOL to
 
     status = RtlGetGroupSecurityDescriptor(sec_desc, &group_sid, &defaulted);
     ok_(__FILE__,line)(status == STATUS_SUCCESS,
-                       "Failed to query group from security descriptor: %08x\n", status);
+                       "Failed to query group from security descriptor: %08lx\n", status);
     todo_wine_if(todo)
     ok_(__FILE__,line)(EqualSid(group_sid, expected_sid), "SIDs are not equal\n");
 
@@ -2335,10 +2336,10 @@ static void test_security_info(void)
 
     server = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX | WRITE_OWNER, PIPE_TYPE_BYTE, 10,
                               0x20000, 0x20000, 0, NULL);
-    ok(server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %u\n", GetLastError());
+    ok(server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %lu\n", GetLastError());
 
     client = CreateFileA(PIPENAME, GENERIC_ALL, 0, NULL, OPEN_EXISTING, 0, NULL);
-    ok(client != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+    ok(client != INVALID_HANDLE_VALUE, "CreateFile failed: %lu\n", GetLastError());
 
     test_group(server, process_group->PrimaryGroup, TRUE);
     test_group(client, process_group->PrimaryGroup, TRUE);
@@ -2347,7 +2348,7 @@ static void test_security_info(void)
     ret = SetSecurityDescriptorGroup(sec_desc, world_sid, FALSE);
     ok(ret, "SetSecurityDescriptorGroup failed\n");
     status = NtSetSecurityObject(server, GROUP_SECURITY_INFORMATION, sec_desc);
-    ok(status == STATUS_SUCCESS, "NtSetSecurityObject failed: %08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtSetSecurityObject failed: %08lx\n", status);
 
     test_group(server, world_sid, FALSE);
     test_group(client, world_sid, FALSE);
@@ -2355,14 +2356,14 @@ static void test_security_info(void)
     /* new instance of pipe server has the same security descriptor */
     server2 = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX, PIPE_TYPE_BYTE, 10,
                                0x20000, 0x20000, 0, NULL);
-    ok(server2 != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %u\n", GetLastError());
+    ok(server2 != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %lu\n", GetLastError());
     test_group(server2, world_sid, FALSE);
 
     /* set client group, server changes as well */
     ret = SetSecurityDescriptorGroup(sec_desc, local_sid, FALSE);
     ok(ret, "SetSecurityDescriptorGroup failed\n");
     status = NtSetSecurityObject(server, GROUP_SECURITY_INFORMATION, sec_desc);
-    ok(status == STATUS_SUCCESS, "NtSetSecurityObject failed: %08x\n", status);
+    ok(status == STATUS_SUCCESS, "NtSetSecurityObject failed: %08lx\n", status);
 
     test_group(server, local_sid, FALSE);
     test_group(client, local_sid, FALSE);
@@ -2375,20 +2376,20 @@ static void test_security_info(void)
 
     server = server2;
     client = CreateFileA(PIPENAME, GENERIC_ALL, 0, NULL, OPEN_EXISTING, 0, NULL);
-    ok(client != INVALID_HANDLE_VALUE, "CreateFile failed: %u\n", GetLastError());
+    ok(client != INVALID_HANDLE_VALUE, "CreateFile failed: %lu\n", GetLastError());
 
     test_group(client, local_sid, FALSE);
 
     ret = DisconnectNamedPipe(server);
-    ok(ret, "DisconnectNamedPipe failed: %u\n", GetLastError());
+    ok(ret, "DisconnectNamedPipe failed: %lu\n", GetLastError());
 
     /* disconnected server may be queried for security info, but client does not */
     test_group(server, local_sid, FALSE);
     status = NtQuerySecurityObject(client, GROUP_SECURITY_INFORMATION | OWNER_SECURITY_INFORMATION,
                                    NULL, 0, &length);
-    ok(status == STATUS_PIPE_DISCONNECTED, "NtQuerySecurityObject returned %08x\n", status);
+    ok(status == STATUS_PIPE_DISCONNECTED, "NtQuerySecurityObject returned %08lx\n", status);
     status = NtSetSecurityObject(client, GROUP_SECURITY_INFORMATION, sec_desc);
-    ok(status == STATUS_PIPE_DISCONNECTED, "NtQuerySecurityObject returned %08x\n", status);
+    ok(status == STATUS_PIPE_DISCONNECTED, "NtQuerySecurityObject returned %08lx\n", status);
 
     /* attempting to create another pipe instance with specified sd fails */
     sec_attr.nLength = sizeof(sec_attr);
@@ -2400,7 +2401,7 @@ static void test_security_info(void)
                                0x20000, 0x20000, 0, &sec_attr);
     todo_wine
     ok(server2 == INVALID_HANDLE_VALUE && GetLastError() == ERROR_ACCESS_DENIED,
-       "CreateNamedPipe failed: %u\n", GetLastError());
+       "CreateNamedPipe failed: %lu\n", GetLastError());
     if (server2 != INVALID_HANDLE_VALUE) CloseHandle(server2);
 
     CloseHandle(server);
@@ -2408,7 +2409,7 @@ static void test_security_info(void)
 
     server = CreateNamedPipeA(PIPENAME, PIPE_ACCESS_DUPLEX | WRITE_OWNER, PIPE_TYPE_BYTE, 10,
                               0x20000, 0x20000, 0, &sec_attr);
-    ok(server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %u\n", GetLastError());
+    ok(server != INVALID_HANDLE_VALUE, "CreateNamedPipe failed: %lu\n", GetLastError());
     test_group(server, local_sid, FALSE);
     CloseHandle(server);
 
@@ -2448,7 +2449,7 @@ static void test_empty_name(void)
 
     status = NtCreateFile(&hdirectory, GENERIC_READ | SYNCHRONIZE, &attr, &io, NULL, 0,
             FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0 );
-    ok(!status, "Got unexpected status %#x.\n", status);
+    ok(!status, "Got unexpected status %#lx.\n", status);
 
     name.Buffer = NULL;
     name.Length = 0;
@@ -2459,7 +2460,7 @@ static void test_empty_name(void)
     status = pNtCreateNamedPipeFile(&hpipe, GENERIC_READ | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE, &attr,
             &io, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_CREATE, FILE_SYNCHRONOUS_IO_NONALERT,
             0, 0, 0, 3, 4096, 4096, &timeout);
-    todo_wine ok(status == STATUS_OBJECT_NAME_INVALID, "Got unexpected status %#x.\n", status);
+    todo_wine ok(status == STATUS_OBJECT_NAME_INVALID, "Got unexpected status %#lx.\n", status);
     if (!status)
         CloseHandle(hpipe);
     CloseHandle(hdirectory);
@@ -2469,11 +2470,11 @@ static void test_empty_name(void)
     attr.ObjectName               = &name;
 
     status = pNtCreateDirectoryObject(&hdirectory, GENERIC_READ | SYNCHRONIZE, &attr);
-    todo_wine ok(status == STATUS_OBJECT_TYPE_MISMATCH, "Got unexpected status %#x.\n", status);
+    todo_wine ok(status == STATUS_OBJECT_TYPE_MISMATCH, "Got unexpected status %#lx.\n", status);
 
     status = NtCreateFile(&hdirectory, GENERIC_READ | SYNCHRONIZE, &attr, &io, NULL, 0,
             FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, 0, NULL, 0 );
-    ok(!status, "Got unexpected status %#x.\n", status);
+    ok(!status, "Got unexpected status %#lx.\n", status);
 
     name.Buffer = NULL;
     name.Length = 0;
@@ -2484,30 +2485,30 @@ static void test_empty_name(void)
     status = pNtCreateNamedPipeFile(&hpipe, GENERIC_READ | SYNCHRONIZE, &attr,
             &io, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_CREATE, FILE_SYNCHRONOUS_IO_NONALERT,
             0, 0, 0, 3, 4096, 4096, &timeout);
-    ok(!status, "Got unexpected status %#x.\n", status);
+    ok(!status, "Got unexpected status %#lx.\n", status);
     type_info->TypeName.Buffer = NULL;
     status = pNtQueryObject(hpipe, ObjectTypeInformation, type_info, sizeof(buffer), NULL);
-    ok(!status, "Got unexpected status %#x.\n", status);
+    ok(!status, "Got unexpected status %#lx.\n", status);
     ok(type_info->TypeName.Buffer && !wcscmp(type_info->TypeName.Buffer, L"File"),
             "Got unexpected type %s.\n", debugstr_w(type_info->TypeName.Buffer));
     status = pNtQueryObject(hpipe, ObjectNameInformation, name_info, sizeof(buffer), NULL);
-    ok(status == STATUS_OBJECT_PATH_INVALID, "Got unexpected status %#x.\n", status);
+    ok(status == STATUS_OBJECT_PATH_INVALID, "Got unexpected status %#lx.\n", status);
 
     status = pNtCreateNamedPipeFile(&handle, GENERIC_READ | SYNCHRONIZE, &attr,
             &io, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN, FILE_SYNCHRONOUS_IO_NONALERT,
             0, 0, 0, 1, 4096, 4096, &timeout);
-    todo_wine ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "Got unexpected status %#x.\n", status);
+    todo_wine ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "Got unexpected status %#lx.\n", status);
 
     status = pNtCreateNamedPipeFile(&hpipe2, GENERIC_READ | SYNCHRONIZE, &attr,
             &io, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_CREATE, FILE_SYNCHRONOUS_IO_NONALERT,
             0, 0, 0, 3, 4096, 4096, &timeout);
-    ok(!status, "Got unexpected status %#x.\n", status);
+    ok(!status, "Got unexpected status %#lx.\n", status);
 
     attr.RootDirectory = hpipe;
     pRtlInitUnicodeString(&name, L"a");
     status = NtCreateFile(&hwrite, GENERIC_WRITE | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE, &attr, &io, NULL, 0,
             FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
-    ok(status == STATUS_OBJECT_NAME_INVALID, "Got unexpected status %#x.\n", status);
+    ok(status == STATUS_OBJECT_NAME_INVALID, "Got unexpected status %#lx.\n", status);
 
     name.Buffer = NULL;
     name.Length = 0;
@@ -2515,53 +2516,53 @@ static void test_empty_name(void)
     attr.RootDirectory = hpipe;
     status = NtCreateFile(&hwrite, GENERIC_WRITE | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE, &attr, &io, NULL, 0,
             FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
-    ok(!status, "Got unexpected status %#x.\n", status);
+    ok(!status, "Got unexpected status %#lx.\n", status);
 
     type_info->TypeName.Buffer = NULL;
     status = pNtQueryObject(hwrite, ObjectTypeInformation, type_info, sizeof(buffer), NULL);
-    ok(!status, "Got unexpected status %#x.\n", status);
+    ok(!status, "Got unexpected status %#lx.\n", status);
     ok(type_info->TypeName.Buffer && !wcscmp(type_info->TypeName.Buffer, L"File"),
             "Got unexpected type %s.\n", debugstr_w(type_info->TypeName.Buffer));
     status = pNtQueryObject(hwrite, ObjectNameInformation, name_info, sizeof(buffer), NULL);
-    ok(status == STATUS_OBJECT_PATH_INVALID, "Got unexpected status %#x.\n", status);
+    ok(status == STATUS_OBJECT_PATH_INVALID, "Got unexpected status %#lx.\n", status);
 
     attr.RootDirectory = hpipe;
     status = NtCreateFile(&handle, GENERIC_READ | SYNCHRONIZE, &attr, &io, NULL, 0,
             FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN,
             FILE_NON_DIRECTORY_FILE | FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
-    ok(status == STATUS_PIPE_NOT_AVAILABLE, "Got unexpected status %#x.\n", status);
+    ok(status == STATUS_PIPE_NOT_AVAILABLE, "Got unexpected status %#lx.\n", status);
 
     attr.RootDirectory = hpipe;
     status = NtCreateFile(&handle, GENERIC_WRITE | SYNCHRONIZE, &attr, &io, NULL, 0,
             FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
-    ok(status == STATUS_PIPE_NOT_AVAILABLE, "Got unexpected status %#x.\n", status);
+    ok(status == STATUS_PIPE_NOT_AVAILABLE, "Got unexpected status %#lx.\n", status);
 
     attr.RootDirectory = hpipe2;
     status = NtCreateFile(&hwrite2, GENERIC_WRITE | FILE_WRITE_ATTRIBUTES | SYNCHRONIZE, &attr, &io, NULL, 0,
             FILE_SHARE_READ|FILE_SHARE_WRITE, FILE_OPEN, FILE_SYNCHRONOUS_IO_NONALERT, NULL, 0 );
-    ok(!status, "Got unexpected status %#x.\n", status);
+    ok(!status, "Got unexpected status %#lx.\n", status);
 
     data = 0xdeadbeef;
     ret = WriteFile(hwrite, &data, sizeof(data), &length, NULL);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
-    ok(length == sizeof(data), "Got unexpected length %#x.\n", length);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
+    ok(length == sizeof(data), "Got unexpected length %#lx.\n", length);
 
     data = 0xfeedcafe;
     ret = WriteFile(hwrite2, &data, sizeof(data), &length, NULL);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
-    ok(length == sizeof(data), "Got unexpected length %#x.\n", length);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
+    ok(length == sizeof(data), "Got unexpected length %#lx.\n", length);
 
     data = 0;
     ret = ReadFile(hpipe, &data, sizeof(data), &length, NULL);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
-    ok(length == sizeof(data), "Got unexpected length %#x.\n", length);
-    ok(data == 0xdeadbeef, "Got unexpected data %#x.\n", data);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
+    ok(length == sizeof(data), "Got unexpected length %#lx.\n", length);
+    ok(data == 0xdeadbeef, "Got unexpected data %#lx.\n", data);
 
     data = 0;
     ret = ReadFile(hpipe2, &data, sizeof(data), &length, NULL);
-    ok(ret, "Got unexpected ret %#x, GetLastError() %u.\n", ret, GetLastError());
-    ok(length == sizeof(data), "Got unexpected length %#x.\n", length);
-    ok(data == 0xfeedcafe, "Got unexpected data %#x.\n", data);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
+    ok(length == sizeof(data), "Got unexpected length %#lx.\n", length);
+    ok(data == 0xfeedcafe, "Got unexpected data %#lx.\n", data);
 
     CloseHandle(hwrite);
     CloseHandle(hpipe);
