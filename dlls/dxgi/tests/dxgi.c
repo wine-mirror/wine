@@ -2125,7 +2125,7 @@ static void test_create_swapchain(void)
     /* Fullscreen */
     creation_desc.Windowed = FALSE;
     hr = IDXGIFactory_CreateSwapChain(factory, obj, &creation_desc, &swapchain);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK || hr == DXGI_STATUS_OCCLUDED, "Got unexpected hr %#lx.\n", hr);
     hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
@@ -3573,7 +3573,7 @@ static void test_inexact_modes(void)
     capture_fullscreen_state(&initial_state.fullscreen_state, swapchain_desc.OutputWindow);
 
     hr = IDXGIFactory_CreateSwapChain(factory, (IUnknown *)device, &swapchain_desc, &swapchain);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK || hr == DXGI_STATUS_OCCLUDED, "Got unexpected hr %#lx.\n", hr);
     hr = IDXGISwapChain_GetDesc(swapchain, &result_desc);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDXGISwapChain_SetFullscreenState(swapchain, FALSE, NULL);
