@@ -460,21 +460,6 @@ static DWORD midClose(WORD wDevID)
 }
 
 /**************************************************************************
- * 			midStart				[internal]
- */
-static DWORD midStart(WORD wDevID)
-{
-    TRACE("(%04X);\n", wDevID);
-
-    if (wDevID >= MIDM_NumDevs) return MMSYSERR_BADDEVICEID;
-    if (MidiInDev[wDevID].state == -1) return MIDIERR_NODEVICE;
-
-    MidiInDev[wDevID].state = 1;
-    MidiInDev[wDevID].startTime = GetTickCount();
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
  *			midStop					[internal]
  */
 static DWORD midStop(WORD wDevID)
@@ -533,8 +518,6 @@ DWORD WINAPI ALSA_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 	return midOpen(wDevID, (LPMIDIOPENDESC)dwParam1, dwParam2);
     case MIDM_CLOSE:
 	return midClose(wDevID);
-    case MIDM_START:
-	return midStart(wDevID);
     case MIDM_STOP:
 	return midStop(wDevID);
     }
