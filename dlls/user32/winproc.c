@@ -119,18 +119,12 @@ static WPARAM map_wparam_char_WtoA( WPARAM wParam, DWORD len )
 /* call a 32-bit window procedure */
 static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, LRESULT *result, void *arg )
 {
-    DPI_AWARENESS_CONTEXT context;
     WNDPROC proc = arg;
 
-    USER_CheckNotLock();
-
-    hwnd = WIN_GetFullHandle( hwnd );
     TRACE_(relay)( "\1Call window proc %p (hwnd=%p,msg=%s,wp=%08lx,lp=%08lx)\n",
                    proc, hwnd, SPY_GetMsgName(msg, hwnd), wp, lp );
 
-    context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
     *result = WINPROC_wrapper( proc, hwnd, msg, wp, lp );
-    SetThreadDpiAwarenessContext( context );
 
     TRACE_(relay)( "\1Ret  window proc %p (hwnd=%p,msg=%s,wp=%08lx,lp=%08lx) retval=%08lx\n",
                    proc, hwnd, SPY_GetMsgName(msg, hwnd), wp, lp, *result );
@@ -711,6 +705,10 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
 
 static void dispatch_win_proc_params( struct win_proc_params *params )
 {
+    DPI_AWARENESS_CONTEXT context = SetThreadDpiAwarenessContext( params->dpi_awareness );
+
+    USER_CheckNotLock();
+
     if (!params->ansi)
     {
         if (params->procW == WINPROC_PROC16)
@@ -789,6 +787,8 @@ static void dispatch_win_proc_params( struct win_proc_params *params )
             call_window_proc( params->hwnd, params->msg, params->wparam, params->lparam,
                               params->result, params->func );
     }
+
+    SetThreadDpiAwarenessContext( context );
 }
 
 
@@ -818,13 +818,14 @@ BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
     params.is_dialog = wndPtr->dlgInfo != NULL;
     WIN_ReleasePtr( wndPtr );
 
-    params.hwnd = hwnd;
+    params.hwnd = WIN_GetFullHandle( hwnd );
     params.msg = msg;
     params.wparam = wParam;
     params.lparam = lParam;
     params.result = result;
     params.ansi = !unicode;
     params.mapping = mapping;
+    params.dpi_awareness = GetWindowDpiAwarenessContext( params.hwnd );
 
     if (!proc)
     {
@@ -855,7 +856,9 @@ static void init_win_proc_params( struct win_proc_params *info, WNDPROC func, HW
 {
     WINDOWPROC *proc;
 
-    info->hwnd = hwnd;
+    USER_CheckNotLock();
+
+    info->hwnd = WIN_GetFullHandle( hwnd );
     info->msg = msg;
     info->wparam = wparam;
     info->lparam = lparam;
@@ -863,6 +866,7 @@ static void init_win_proc_params( struct win_proc_params *info, WNDPROC func, HW
     info->ansi = info->ansi_dst = ansi;
     info->is_dialog = FALSE;
     info->mapping = WMCHAR_MAP_CALLWINDOWPROC;
+    info->dpi_awareness = GetWindowDpiAwarenessContext( info->hwnd );
     info->func = func;
 
     if (!(proc = handle_to_proc( func )))
