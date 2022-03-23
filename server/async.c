@@ -370,6 +370,7 @@ obj_handle_t async_handoff( struct async *async, data_size_t *result, int force_
 
     if (!async->pending && NT_ERROR( get_error() ))
     {
+        async->iosb->status = get_error();
         async_call_completion_callback( async );
 
         close_handle( async->thread->process, async->wait_handle );
