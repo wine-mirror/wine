@@ -4204,7 +4204,11 @@ static void parse_url( const WCHAR *url, struct parsed_url *pl )
     work++;
     pl->scheme_number = get_scheme_code(pl->scheme, pl->scheme_len);
     if (!is_slash( work[0] ) || !is_slash( work[1] ))
+    {
+        if (pl->scheme_number != URL_SCHEME_FILE)
+            pl->scheme_number = URL_SCHEME_UNKNOWN;
         return;
+    }
     work += 2;
 
     if (pl->scheme_number != URL_SCHEME_FILE)
