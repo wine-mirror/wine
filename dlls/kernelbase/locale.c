@@ -699,27 +699,6 @@ done:
 }
 
 
-static LCID locale_to_lcid( WCHAR *win_name )
-{
-    WCHAR *p;
-    LCID lcid;
-
-    if (!RtlLocaleNameToLcid( win_name, &lcid, 0 )) return lcid;
-
-    /* try neutral name */
-    if ((p = wcsrchr( win_name, '-' )))
-    {
-        *p = 0;
-        if (!RtlLocaleNameToLcid( win_name, &lcid, 2 ))
-        {
-            if (SUBLANGID(lcid) == SUBLANG_NEUTRAL)
-                lcid = MAKELANGID( PRIMARYLANGID(lcid), SUBLANG_DEFAULT );
-            return lcid;
-        }
-    }
-    return 0;
-}
-
 /***********************************************************************
  *		init_locale
  */
@@ -728,7 +707,7 @@ void init_locale(void)
     UINT ansi_cp = 0, oem_cp = 0;
     USHORT *ansi_ptr, *oem_ptr;
     void *sort_ptr;
-    LCID user_lcid = 0, system_lcid = 0;
+    LCID user_lcid;
     WCHAR bufferW[LOCALE_NAME_MAX_LENGTH];
     DYNAMIC_TIME_ZONE_INFORMATION timezone;
     GEOID geoid = GEOID_NOT_AVAILABLE;
@@ -738,16 +717,6 @@ void init_locale(void)
 
     if (GetEnvironmentVariableW( L"WINEUNIXCP", bufferW, ARRAY_SIZE(bufferW) ))
         unix_cp = wcstoul( bufferW, NULL, 10 );
-    if (GetEnvironmentVariableW( L"WINELOCALE", bufferW, ARRAY_SIZE(bufferW) ))
-        system_lcid = locale_to_lcid( bufferW );
-    if (GetEnvironmentVariableW( L"WINEUSERLOCALE", bufferW, ARRAY_SIZE(bufferW) ))
-        user_lcid = locale_to_lcid( bufferW );
-    if (!system_lcid) system_lcid = MAKELCID( MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT), SORT_DEFAULT );
-    if (!user_lcid) user_lcid = system_lcid;
-
-    NtSetDefaultUILanguage( LANGIDFROMLCID(user_lcid) );
-    NtSetDefaultLocale( TRUE, user_lcid );
-    NtSetDefaultLocale( FALSE, system_lcid );
 
     kernel32_handle = GetModuleHandleW( L"kernel32.dll" );
 
@@ -806,6 +775,7 @@ void init_locale(void)
     /* Update registry contents if the user locale has changed.
      * This simulates the action of the Windows control panel. */
 
+    user_lcid = GetUserDefaultLCID();
     count = sizeof(bufferW);
     if (!RegQueryValueExW( intl_key, L"Locale", NULL, NULL, (BYTE *)bufferW, &count ))
     {

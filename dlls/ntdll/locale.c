@@ -273,8 +273,10 @@ static const NLS_LOCALE_DATA *get_locale_data( UINT idx )
 
 void locale_init(void)
 {
+    WCHAR locale[LOCALE_NAME_MAX_LENGTH];
+    UNICODE_STRING name, value;
     LARGE_INTEGER unused;
-    LCID system_lcid;
+    LCID system_lcid, user_lcid = 0;
     NTSTATUS status;
     struct
     {
@@ -298,6 +300,26 @@ void locale_init(void)
     lcids_index = (const NLS_LOCALE_LCID_INDEX *)((char *)locale_table + locale_table->lcids_offset);
     lcnames_index = (const NLS_LOCALE_LCNAME_INDEX *)((char *)locale_table + locale_table->lcnames_offset);
     locale_strings = (const WCHAR *)((char *)locale_table + locale_table->strings_offset);
+
+    value.Buffer = locale;
+    value.MaximumLength = sizeof(locale);
+    RtlInitUnicodeString( &name, L"WINELOCALE" );
+    if (!RtlQueryEnvironmentVariable_U( NULL, &name, &value ))
+    {
+        const NLS_LOCALE_LCNAME_INDEX *entry = find_lcname_entry( locale );
+        if (entry) system_lcid = get_locale_data( entry->idx )->idefaultlanguage;
+    }
+    RtlInitUnicodeString( &name, L"WINEUSERLOCALE" );
+    if (!RtlQueryEnvironmentVariable_U( NULL, &name, &value ))
+    {
+        const NLS_LOCALE_LCNAME_INDEX *entry = find_lcname_entry( locale );
+        if (entry) user_lcid = get_locale_data( entry->idx )->idefaultlanguage;
+    }
+    if (!system_lcid) system_lcid = MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
+    if (!user_lcid) user_lcid = system_lcid;
+    NtSetDefaultUILanguage( user_lcid );
+    NtSetDefaultLocale( TRUE, user_lcid );
+    NtSetDefaultLocale( FALSE, system_lcid );
 }
 
 
