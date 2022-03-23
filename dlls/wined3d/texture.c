@@ -5163,6 +5163,8 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
 
         VK_CALL(vkCmdPipelineBarrier(vk_command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
                 bo_stage_flags, 0, 0, NULL, 1, &vk_barrier, 0, NULL));
+        /* Start the download so we don't stall waiting for the result. */
+        wined3d_context_vk_submit_command_buffer(context_vk, 0, NULL, NULL, 0, NULL);
     }
 }
 
