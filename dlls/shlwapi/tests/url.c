@@ -748,8 +748,6 @@ static void test_UrlGetPart(void)
         {"telnet://hostname/", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "telnet:hostname"},
     };
 
-    winetest_mute_threshold = 5;
-
     hr = UrlGetPartA(NULL, NULL, NULL, URL_PART_SCHEME, 0);
     ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
 
@@ -837,7 +835,7 @@ static void test_UrlGetPart(void)
         size = 1;
         wcscpy(bufferW, L"x");
         hr = UrlGetPartW(urlW, bufferW, &size, part, flags);
-        todo_wine_if (tests[i].todo_hr || tests[i].hr == S_FALSE)
+        todo_wine_if (tests[i].todo_hr)
         {
             if (tests[i].hr == S_OK)
                 ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
@@ -870,7 +868,7 @@ static void test_UrlGetPart(void)
         size = ARRAY_SIZE(bufferW);
         wcscpy(bufferW, L"x");
         hr = UrlGetPartW(urlW, bufferW, &size, part, flags);
-        todo_wine_if ((tests[i].hr == S_FALSE || tests[i].todo_hr) && strcmp(url, "a:") && strcmp(url, "0:"))
+        todo_wine_if (tests[i].todo_hr && strcmp(url, "a:") && strcmp(url, "0:"))
             ok(hr == (tests[i].hr == S_FALSE ? S_OK : tests[i].hr), "Got hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
         {
@@ -886,8 +884,6 @@ static void test_UrlGetPart(void)
 
         winetest_pop_context();
     }
-
-    winetest_mute_threshold = 42;
 }
 
 /* ########################### */

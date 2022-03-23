@@ -4166,6 +4166,7 @@ HRESULT WINAPI UrlGetPartA(const char *url, char *out, DWORD *out_len, DWORD par
     len2 = WideCharToMultiByte(CP_ACP, 0, outW, len + 1, out, *out_len, NULL, NULL);
     *out_len = len2 - 1;
     heap_free(inW);
+    if (hr == S_OK && !*out_len) hr = S_FALSE;
     return hr;
 }
 
@@ -4382,7 +4383,7 @@ HRESULT WINAPI UrlGetPartW(const WCHAR *url, WCHAR *out, DWORD *out_len, DWORD p
     }
     TRACE("len=%ld %s\n", *out_len, wine_dbgstr_w(out));
 
-    return *out_len ? S_OK : S_FALSE;
+    return S_OK;
 }
 
 BOOL WINAPI UrlIsA(const char *url, URLIS Urlis)
