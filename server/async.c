@@ -322,6 +322,13 @@ void async_wake_obj( struct async *async )
     }
 }
 
+static void async_call_completion_callback( struct async *async )
+{
+    if (async->completion_callback)
+        async->completion_callback( async->completion_callback_private );
+    async->completion_callback = NULL;
+}
+
 /* return async object status and wait handle to client */
 obj_handle_t async_handoff( struct async *async, data_size_t *result, int force_blocking )
 {
@@ -363,6 +370,8 @@ obj_handle_t async_handoff( struct async *async, data_size_t *result, int force_
 
     if (!async->pending && NT_ERROR( get_error() ))
     {
+        async_call_completion_callback( async );
+
         close_handle( async->thread->process, async->wait_handle );
         async->wait_handle = 0;
         return 0;
@@ -528,9 +537,7 @@ void async_set_result( struct object *obj, unsigned int status, apc_param_t tota
             wake_up( &async->obj, 0 );
         }
 
-        if (async->completion_callback)
-            async->completion_callback( async->completion_callback_private );
-        async->completion_callback = NULL;
+        async_call_completion_callback( async );
 
         if (async->queue)
         {
