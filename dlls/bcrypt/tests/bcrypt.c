@@ -1860,6 +1860,16 @@ static void test_ECDSA(void)
     status = BCryptImportKeyPair(alg, NULL, BCRYPT_ECCPUBLIC_BLOB, &key, buffer, size, 0);
     ok(!status, "BCryptImportKeyPair failed: %#lx\n", status);
 
+    memset(buffer, 0xcc, sizeof(buffer));
+    status = BCryptExportKey(key, NULL, BCRYPT_ECCPUBLIC_BLOB, buffer, sizeof(buffer), &size, 0);
+    ok(!status, "Got unexpected status %#lx\n", status);
+    ok(ecckey->dwMagic == BCRYPT_ECDSA_PUBLIC_P256_MAGIC, "Got unexpected magic %#lx.\n", ecckey->dwMagic);
+    ok(ecckey->cbKey == 32, "got %lu\n", ecckey->cbKey);
+    ok(!memcmp(ecckey + 1, eccPubkey, sizeof(eccPubkey)), "Got unexpected key data.\n");
+
+    status = BCryptExportKey(key, NULL, BCRYPT_ECCPRIVATE_BLOB, buffer, sizeof(buffer), &size, 0);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected status %#lx\n", status);
+
     status = BCryptVerifySignature(key, NULL, certHash, sizeof(certHash) - 1, certSignature, sizeof(certSignature), 0);
     ok(status == STATUS_INVALID_SIGNATURE, "Expected STATUS_INVALID_SIGNATURE, got %#lx\n", status);
 
@@ -1885,6 +1895,14 @@ static void test_ECDSA(void)
     status = BCryptImportKeyPair(alg, NULL, BCRYPT_ECCPRIVATE_BLOB, &key, buffer, size, 0);
     ok(!status, "BCryptImportKeyPair failed: %#lx\n", status);
 
+    memset( buffer, 0xcc, sizeof(buffer) );
+    status = BCryptExportKey(key, NULL, BCRYPT_ECCPUBLIC_BLOB, buffer, sizeof(buffer), &size, 0);
+    ok(!status, "Got unexpected status %#lx\n", status);
+    ok(ecckey->dwMagic == BCRYPT_ECDSA_PUBLIC_P256_MAGIC, "got %#lx\n", ecckey->dwMagic);
+    ok(ecckey->cbKey == 32, "got %lu\n", ecckey->cbKey);
+    ok(!memcmp(ecckey + 1, eccPrivkey, sizeof(eccPubkey)), "Got unexpected key data.\n");
+
+    size = sizeof(BCRYPT_ECCKEY_BLOB) + sizeof(eccPrivkey);
     memset( buffer, 0, sizeof(buffer) );
     status = BCryptExportKey(key, NULL, BCRYPT_ECCPRIVATE_BLOB, buffer, size, &size, 0);
     ok(status == STATUS_SUCCESS, "got %#lx\n", status);

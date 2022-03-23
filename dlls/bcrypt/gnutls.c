@@ -91,6 +91,8 @@ static int (*pgnutls_cipher_add_auth)(gnutls_cipher_hd_t, const void *, size_t);
 static gnutls_sign_algorithm_t (*pgnutls_pk_to_sign)(gnutls_pk_algorithm_t, gnutls_digest_algorithm_t);
 static int (*pgnutls_pubkey_import_ecc_raw)(gnutls_pubkey_t, gnutls_ecc_curve_t,
                                             const gnutls_datum_t *, const gnutls_datum_t *);
+static int (*pgnutls_pubkey_export_ecc_raw)(gnutls_pubkey_t key, gnutls_ecc_curve_t *curve,
+                                            gnutls_datum_t *x, gnutls_datum_t *y);
 static int (*pgnutls_privkey_import_ecc_raw)(gnutls_privkey_t, gnutls_ecc_curve_t, const gnutls_datum_t *,
                                              const gnutls_datum_t *, const gnutls_datum_t *);
 static int (*pgnutls_pubkey_verify_hash2)(gnutls_pubkey_t, gnutls_sign_algorithm_t, unsigned int,
@@ -154,6 +156,12 @@ static int compat_gnutls_cipher_add_auth(gnutls_cipher_hd_t handle, const void *
 
 static int compat_gnutls_pubkey_import_ecc_raw(gnutls_pubkey_t key, gnutls_ecc_curve_t curve,
                                                const gnutls_datum_t *x, const gnutls_datum_t *y)
+{
+    return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
+}
+
+static int compat_gnutls_pubkey_export_ecc_raw(gnutls_pubkey_t key, gnutls_ecc_curve_t *curve,
+                                               gnutls_datum_t *x, gnutls_datum_t *y)
 {
     return GNUTLS_E_UNKNOWN_PK_ALGORITHM;
 }
@@ -292,6 +300,7 @@ static NTSTATUS gnutls_process_attach( void *args )
     LOAD_FUNCPTR_OPT(gnutls_cipher_tag)
     LOAD_FUNCPTR_OPT(gnutls_cipher_add_auth)
     LOAD_FUNCPTR_OPT(gnutls_pubkey_import_ecc_raw)
+    LOAD_FUNCPTR_OPT(gnutls_pubkey_export_ecc_raw)
     LOAD_FUNCPTR_OPT(gnutls_privkey_export_rsa_raw)
     LOAD_FUNCPTR_OPT(gnutls_privkey_export_ecc_raw)
     LOAD_FUNCPTR_OPT(gnutls_privkey_import_ecc_raw)
@@ -673,7 +682,14 @@ static NTSTATUS key_export_ecc_public( struct key *key, UCHAR *buf, ULONG len, U
         return STATUS_NOT_IMPLEMENTED;
     }
 
-    if ((ret = pgnutls_privkey_export_ecc_raw( key_data(key)->a.privkey, &curve, &x, &y, NULL )))
+    if (key_data(key)->a.pubkey)
+        ret = pgnutls_pubkey_export_ecc_raw( key_data(key)->a.pubkey, &curve, &x, &y );
+    else if (key_data(key)->a.privkey)
+        ret = pgnutls_privkey_export_ecc_raw( key_data(key)->a.privkey, &curve, &x, &y, NULL );
+    else
+        return STATUS_INVALID_PARAMETER;
+
+    if (ret)
     {
         pgnutls_perror( ret );
         return STATUS_INTERNAL_ERROR;
@@ -909,6 +925,8 @@ static NTSTATUS key_export_ecc( struct key *key, UCHAR *buf, ULONG len, ULONG *r
         FIXME( "algorithm %u does not yet support exporting ecc blob\n", key->alg_id );
         return STATUS_NOT_IMPLEMENTED;
     }
+
+    if (!key_data(key)->a.privkey) return STATUS_INVALID_PARAMETER;
 
     if ((ret = pgnutls_privkey_export_ecc_raw( key_data(key)->a.privkey, &curve, &x, &y, &d )))
     {
