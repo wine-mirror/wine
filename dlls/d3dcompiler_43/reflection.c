@@ -1507,9 +1507,9 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
     TRACE("Target: %#x.\n", r->target);
 
     target_version = r->target & D3DCOMPILER_SHADER_TARGET_VERSION_MASK;
-
 #if D3D_COMPILER_VERSION < 47
-    if (target_version >= 0x501)
+    if (target_version >= 0x501 && (!D3D_COMPILER_VERSION || ((r->target & D3DCOMPILER_SHADER_TARGET_SHADERTYPE_MASK)
+            >> D3DCOMPILER_SHADER_TARGET_SHADERTYPE_SHIFT) != 0x4353 /* CS */))
     {
         WARN("Target version %#x is not supported in d3dcompiler %u.\n", target_version, D3D_COMPILER_VERSION);
         return E_INVALIDARG;

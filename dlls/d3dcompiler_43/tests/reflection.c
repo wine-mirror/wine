@@ -1231,7 +1231,6 @@ static void test_reflection_cs(void)
     HRESULT hr;
 
     hr = call_reflect(test_blob, test_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
-    todo_wine_if(D3D_COMPILER_VERSION < 47)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     if (FAILED(hr))
         return;
