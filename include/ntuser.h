@@ -212,6 +212,7 @@ enum
     NtUserIsChild,
     NtUserKillSystemTimer,
     NtUserMonitorFromWindow,
+    NtUserScreenToClient,
     NtUserSetCaptureWindow,
     NtUserSetForegroundWindow,
     NtUserSetWindowPixelFormat,

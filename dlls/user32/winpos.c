@@ -432,21 +432,9 @@ BOOL WINAPI ClientToScreen( HWND hwnd, LPPOINT lppnt )
 /*******************************************************************
  *		ScreenToClient (USER32.@)
  */
-BOOL WINAPI ScreenToClient( HWND hwnd, LPPOINT lppnt )
+BOOL WINAPI ScreenToClient( HWND hwnd, POINT *pt )
 {
-    POINT offset;
-    BOOL mirrored;
-
-    if (!hwnd)
-    {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return FALSE;
-    }
-    if (!WINPOS_GetWinOffset( 0, hwnd, &mirrored, &offset )) return FALSE;
-    lppnt->x += offset.x;
-    lppnt->y += offset.y;
-    if (mirrored) lppnt->x = -lppnt->x;
-    return TRUE;
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)pt, NtUserScreenToClient );
 }
 
 

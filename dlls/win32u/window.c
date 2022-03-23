@@ -2587,6 +2587,24 @@ other_process:  /* one of the parents may belong to another process, do it the h
     return ret;
 }
 
+/* see ScreenToClient */
+static BOOL screen_to_client( HWND hwnd, POINT *pt )
+{
+    POINT offset;
+    BOOL mirrored;
+
+    if (!hwnd)
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return FALSE;
+    }
+    if (!get_windows_offset( 0, hwnd, get_thread_dpi(), &mirrored, &offset )) return FALSE;
+    pt->x += offset.x;
+    pt->y += offset.y;
+    if (mirrored) pt->x = -pt->x;
+    return TRUE;
+}
+
 /* map coordinates of a window region */
 void map_window_region( HWND from, HWND to, HRGN hrgn )
 {
@@ -5019,6 +5037,8 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
         return kill_system_timer( hwnd, param );
     case NtUserMonitorFromWindow:
         return HandleToUlong( monitor_from_window( hwnd, param, NtUserMonitorFromWindow ));
+    case NtUserScreenToClient:
+        return screen_to_client( hwnd, (POINT *)param );
     case NtUserSetCaptureWindow:
         return set_capture_window( hwnd, param, NULL );
     case NtUserSetForegroundWindow:
