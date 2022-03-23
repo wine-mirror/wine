@@ -850,6 +850,37 @@ BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
 }
 
 
+static void init_win_proc_params( struct win_proc_params *info, WNDPROC func, HWND hwnd, UINT msg,
+                                  WPARAM wparam, LPARAM lparam, LRESULT *result, BOOL ansi )
+{
+    WINDOWPROC *proc;
+
+    info->hwnd = hwnd;
+    info->msg = msg;
+    info->wparam = wparam;
+    info->lparam = lparam;
+    info->result = result;
+    info->ansi = info->ansi_dst = ansi;
+    info->is_dialog = FALSE;
+    info->mapping = WMCHAR_MAP_CALLWINDOWPROC;
+    info->func = func;
+
+    if (!(proc = handle_to_proc( func )))
+    {
+        info->procW = info->procA = NULL;
+    }
+    else if (proc == WINPROC_PROC16)
+    {
+        info->procW = info->procA = WINPROC_PROC16;
+    }
+    else
+    {
+        info->procA = proc->procA;
+        info->procW = proc->procW;
+    }
+}
+
+
 /**********************************************************************
  *		CallWindowProcA (USER32.@)
  *
@@ -874,27 +905,14 @@ BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
  *
  *   ECMA-234, Win32
  */
-LRESULT WINAPI CallWindowProcA(
-    WNDPROC func,  /* [in] window procedure */
-    HWND hwnd,     /* [in] target window */
-    UINT msg,      /* [in] message */
-    WPARAM wParam, /* [in] message dependent parameter */
-    LPARAM lParam  /* [in] message dependent parameter */
-) {
-    WINDOWPROC *proc;
+LRESULT WINAPI CallWindowProcA( WNDPROC func, HWND hwnd, UINT msg, WPARAM wParam,  LPARAM lParam )
+{
+    struct win_proc_params params;
     LRESULT result;
 
     if (!func) return 0;
-
-    if (!(proc = handle_to_proc( func )))
-        call_window_proc( hwnd, msg, wParam, lParam, &result, func );
-    else if (proc == WINPROC_PROC16)
-        wow_handlers.call_window_proc( hwnd, msg, wParam, lParam, &result, func );
-    else if (proc->procA)
-        call_window_proc( hwnd, msg, wParam, lParam, &result, proc->procA );
-    else
-        WINPROC_CallProcAtoW( call_window_proc, hwnd, msg, wParam, lParam, &result,
-                              proc->procW, WMCHAR_MAP_CALLWINDOWPROC );
+    init_win_proc_params( &params, func, hwnd, msg, wParam, lParam, &result, TRUE );
+    dispatch_win_proc_params( &params );
     return result;
 }
 
@@ -904,22 +922,14 @@ LRESULT WINAPI CallWindowProcA(
  *
  * See CallWindowProcA.
  */
-LRESULT WINAPI CallWindowProcW( WNDPROC func, HWND hwnd, UINT msg,
-                                  WPARAM wParam, LPARAM lParam )
+LRESULT WINAPI CallWindowProcW( WNDPROC func, HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam )
 {
-    WINDOWPROC *proc;
+    struct win_proc_params params;
     LRESULT result;
 
     if (!func) return 0;
-
-    if (!(proc = handle_to_proc( func )))
-        call_window_proc( hwnd, msg, wParam, lParam, &result, func );
-    else if (proc == WINPROC_PROC16)
-        WINPROC_CallProcWtoA( wow_handlers.call_window_proc, hwnd, msg, wParam, lParam, &result, func );
-    else if (proc->procW)
-        call_window_proc( hwnd, msg, wParam, lParam, &result, proc->procW );
-    else
-        WINPROC_CallProcWtoA( call_window_proc, hwnd, msg, wParam, lParam, &result, proc->procA );
+    init_win_proc_params( &params, func, hwnd, msg, wParam, lParam, &result, FALSE );
+    dispatch_win_proc_params( &params );
     return result;
 }
 
