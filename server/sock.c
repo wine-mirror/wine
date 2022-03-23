@@ -3526,6 +3526,25 @@ DECL_HANDLER(send_socket)
     if ((status == STATUS_PENDING || status == STATUS_DEVICE_NOT_READY) && sock->wr_shutdown)
         status = STATUS_PIPE_DISCONNECTED;
 
+    if ((status == STATUS_PENDING || status == STATUS_DEVICE_NOT_READY) && !async_queued( &sock->write_q ))
+    {
+        /* If write_q is not empty, we cannot really tell if the already queued
+         * asyncs will not consume all available space; if there's no space
+         * available, the current request won't be immediately satiable.
+         */
+        struct pollfd pollfd;
+        pollfd.fd = get_unix_fd( sock->fd );
+        pollfd.events = POLLOUT;
+        pollfd.revents = 0;
+        if (poll(&pollfd, 1, 0) >= 0 && pollfd.revents)
+        {
+            /* Give the client opportunity to complete synchronously.
+             * If it turns out that the I/O request is not actually immediately satiable,
+             * the client may then choose to re-queue the async (with STATUS_PENDING). */
+            status = STATUS_ALERTED;
+        }
+    }
+
     if ((async = create_request_async( fd, get_fd_comp_flags( fd ), &req->async )))
     {
         struct send_req *send_req;
@@ -3548,7 +3567,7 @@ DECL_HANDLER(send_socket)
         if (timeout)
             async_set_timeout( async, timeout, STATUS_IO_TIMEOUT );
 
-        if (status == STATUS_PENDING)
+        if (status == STATUS_PENDING || status == STATUS_ALERTED)
         {
             queue_async( &sock->write_q, async );
             sock_reselect( sock );
@@ -3556,6 +3575,7 @@ DECL_HANDLER(send_socket)
 
         reply->wait = async_handoff( async, NULL, 0 );
         reply->options = get_fd_options( fd );
+        reply->nonblocking = sock->nonblocking;
         release_object( async );
     }
     release_object( sock );

@@ -1467,6 +1467,7 @@ enum server_fd_type
 @REPLY
     obj_handle_t wait;          /* handle to wait on for blocking send */
     unsigned int options;       /* device open options */
+    int          nonblocking;   /* is socket non-blocking? */
 @END
 
 

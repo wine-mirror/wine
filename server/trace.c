@@ -2053,6 +2053,7 @@ static void dump_send_socket_reply( const struct send_socket_reply *req )
 {
     fprintf( stderr, " wait=%04x", req->wait );
     fprintf( stderr, ", options=%08x", req->options );
+    fprintf( stderr, ", nonblocking=%d", req->nonblocking );
 }
 
 static void dump_get_next_console_request_request( const struct get_next_console_request_request *req )

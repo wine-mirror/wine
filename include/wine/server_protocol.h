@@ -1791,6 +1791,8 @@ struct send_socket_reply
     struct reply_header __header;
     obj_handle_t wait;
     unsigned int options;
+    int          nonblocking;
+    char __pad_20[4];
 };
 
 
@@ -6284,7 +6286,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 747
+#define SERVER_PROTOCOL_VERSION 748
 
 /* ### protocol_version end ### */
 

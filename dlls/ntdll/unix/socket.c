@@ -868,11 +868,13 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
                            const struct WS_sockaddr *addr, unsigned int addr_len, int unix_flags, int force_async )
 {
     struct async_send_ioctl *async;
+    ULONG_PTR information;
     HANDLE wait_handle;
     DWORD async_size;
     NTSTATUS status;
     unsigned int i;
     ULONG options;
+    BOOL nonblocking, alerted;
 
     async_size = offsetof( struct async_send_ioctl, iov[count] );
 
@@ -925,16 +927,38 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
-        if ((!NT_ERROR(status) || wait_handle) && status != STATUS_PENDING)
-        {
-            io->Status = status;
-            io->Information = async->sent_len;
-        }
+        nonblocking = reply->nonblocking;
     }
     SERVER_END_REQ;
 
-    if (status != STATUS_PENDING) release_fileio( &async->io );
+    alerted = status == STATUS_ALERTED;
+    if (alerted)
+    {
+        status = try_send( fd, async );
+        if (status == STATUS_DEVICE_NOT_READY && (force_async || !nonblocking))
+            status = STATUS_PENDING;
 
+        /* If we had a short write and the socket is nonblocking (and we are
+         * not trying to force the operation to be asynchronous), return
+         * success.  Windows actually refuses to send any data in this case,
+         * and returns EWOULDBLOCK, but we have no way of doing that. */
+        if (status == STATUS_DEVICE_NOT_READY && async->sent_len)
+            status = STATUS_SUCCESS;
+    }
+
+    if (status != STATUS_PENDING)
+    {
+        information = async->sent_len;
+        if (!NT_ERROR(status) || (wait_handle && !alerted))
+        {
+            io->Status = status;
+            io->Information = information;
+        }
+        release_fileio( &async->io );
+    }
+    else information = 0;
+
+    if (alerted) set_async_direct_result( &wait_handle, status, information, FALSE );
     if (wait_handle) status = wait_async( wait_handle, options & FILE_SYNCHRONOUS_IO_ALERT );
     return status;
 }
@@ -1055,7 +1079,9 @@ static NTSTATUS sock_transmit( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
     socklen_t addr_len;
     HANDLE wait_handle;
     NTSTATUS status;
+    ULONG_PTR information;
     ULONG options;
+    BOOL alerted;
 
     addr_len = sizeof(addr);
     if (getpeername( fd, &addr.addr, &addr_len ) != 0)
@@ -1105,16 +1131,40 @@ static NTSTATUS sock_transmit( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc,
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );
         options     = reply->options;
-        /* In theory we'd fill the iosb here, as above in sock_send(), but it's
-         * actually currently impossible to get STATUS_SUCCESS. The server will
-         * either return STATUS_PENDING or an error code, and in neither case
-         * should the iosb be filled. */
-        if (!status) FIXME( "Unhandled success status." );
     }
     SERVER_END_REQ;
 
-    if (status != STATUS_PENDING) release_fileio( &async->io );
+    alerted = status == STATUS_ALERTED;
+    if (alerted)
+    {
+        status = try_transmit( fd, file_fd, async );
+        if (status == STATUS_DEVICE_NOT_READY)
+            status = STATUS_PENDING;
+    }
 
+    if (status != STATUS_PENDING)
+    {
+        information = async->head_cursor + async->file_cursor + async->tail_cursor;
+        if (!NT_ERROR(status) || wait_handle)
+        {
+            io->Status = status;
+            io->Information = information;
+        }
+        release_fileio( &async->io );
+    }
+    else information = 0;
+
+    if (alerted)
+    {
+        set_async_direct_result( &wait_handle, status, information, TRUE );
+        if (!(options & (FILE_SYNCHRONOUS_IO_ALERT | FILE_SYNCHRONOUS_IO_NONALERT)))
+        {
+            /* Pretend we always do async I/O.  The client can always retrieve
+             * the actual I/O status via the IO_STATUS_BLOCK.
+             */
+            status = STATUS_PENDING;
+        }
+    }
     if (wait_handle) status = wait_async( wait_handle, options & FILE_SYNCHRONOUS_IO_ALERT );
     return status;
 }
