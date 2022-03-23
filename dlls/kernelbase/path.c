@@ -4198,7 +4198,7 @@ static void parse_url( const WCHAR *url, struct parsed_url *pl )
     memset(pl, 0, sizeof(*pl));
     pl->scheme = url;
     work = parse_scheme( pl->scheme );
-    if (*work != ':') return;
+    if (work < url + 2 || *work != ':') return;
     pl->scheme_len = work - pl->scheme;
     work++;
     if (!is_slash( work[0] ) || !is_slash( work[1] ))

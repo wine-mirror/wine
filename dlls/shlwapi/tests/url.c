@@ -714,8 +714,8 @@ static void test_UrlGetPart(void)
         {"scheme :", URL_PART_SCHEME, 0, S_FALSE, ""},
         {"sch eme:", URL_PART_SCHEME, 0, S_FALSE, ""},
         {":", URL_PART_SCHEME, 0, S_FALSE, ""},
-        {"a:", URL_PART_SCHEME, 0, S_FALSE, "", .todo_hr = TRUE},
-        {"0:", URL_PART_SCHEME, 0, S_FALSE, "", .todo_hr = TRUE},
+        {"a:", URL_PART_SCHEME, 0, S_FALSE, ""},
+        {"0:", URL_PART_SCHEME, 0, S_FALSE, ""},
         {"ab:", URL_PART_SCHEME, 0, S_OK, "ab"},
 
         {"about://hostname/", URL_PART_HOSTNAME, 0, E_FAIL},
@@ -868,7 +868,7 @@ static void test_UrlGetPart(void)
         size = ARRAY_SIZE(bufferW);
         wcscpy(bufferW, L"x");
         hr = UrlGetPartW(urlW, bufferW, &size, part, flags);
-        todo_wine_if (tests[i].todo_hr && strcmp(url, "a:") && strcmp(url, "0:"))
+        todo_wine_if (tests[i].todo_hr)
             ok(hr == (tests[i].hr == S_FALSE ? S_OK : tests[i].hr), "Got hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
         {
