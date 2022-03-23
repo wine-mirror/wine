@@ -2716,38 +2716,27 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
         case MSG_WINEVENT:
             if (size >= sizeof(msg_data->winevent))
             {
-                WINEVENTPROC hook_proc;
-                HMODULE free_module = 0;
+                struct win_event_hook_params params;
 
-                hook_proc = wine_server_get_ptr( msg_data->winevent.hook_proc );
+                params.proc = wine_server_get_ptr( msg_data->winevent.hook_proc );
                 size -= sizeof(msg_data->winevent);
                 if (size)
                 {
-                    WCHAR module[MAX_PATH];
-
-                    size = min( size, (MAX_PATH - 1) * sizeof(WCHAR) );
-                    memcpy( module, &msg_data->winevent + 1, size );
-                    module[size / sizeof(WCHAR)] = 0;
-                    if (!(hook_proc = get_hook_proc( hook_proc, module, &free_module )))
-                    {
-                        ERR( "invalid winevent hook module name %s\n", debugstr_w(module) );
-                        continue;
-                    }
+                    size = min( size, sizeof(params.module) - sizeof(WCHAR) );
+                    memcpy( params.module, &msg_data->winevent + 1, size );
                 }
+                params.module[size / sizeof(WCHAR)] = 0;
+                size = FIELD_OFFSET( struct win_hook_params, module[size / sizeof(WCHAR) + 1] );
 
-                TRACE_(relay)( "\1Call winevent proc %p (hook=%04x,event=%x,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04x,time=%x)\n",
-                               hook_proc, msg_data->winevent.hook, info.msg.message, info.msg.hwnd,
-                               info.msg.wParam, info.msg.lParam, msg_data->winevent.tid, info.msg.time);
+                params.handle    = wine_server_ptr_handle( msg_data->winevent.hook );
+                params.event     = info.msg.message;
+                params.hwnd      = info.msg.hwnd;
+                params.object_id = info.msg.wParam;
+                params.child_id  = info.msg.lParam;
+                params.tid       = msg_data->winevent.tid;
+                params.time      = info.msg.time;
 
-                hook_proc( wine_server_ptr_handle( msg_data->winevent.hook ), info.msg.message,
-                           info.msg.hwnd, info.msg.wParam, info.msg.lParam,
-                           msg_data->winevent.tid, info.msg.time );
-
-                TRACE_(relay)( "\1Ret  winevent proc %p (hook=%04x,event=%x,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04x,time=%x)\n",
-                               hook_proc, msg_data->winevent.hook, info.msg.message, info.msg.hwnd,
-                               info.msg.wParam, info.msg.lParam, msg_data->winevent.tid, info.msg.time);
-
-                if (free_module) FreeLibrary(free_module);
+                User32CallWinEventHook( &params, size );
             }
             continue;
         case MSG_HOOK_LL:

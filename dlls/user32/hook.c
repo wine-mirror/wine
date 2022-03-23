@@ -451,14 +451,14 @@ BOOL WINAPI User32CallWinEventHook( const struct win_event_hook_params *params, 
 
     TRACE_(relay)( "\1Call winevent hook proc %p (hhook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%x,tid=%04x,time=%x)\n",
                    proc, params->handle, params->event, params->hwnd, params->object_id,
-                   params->child_id, GetCurrentThreadId(), GetCurrentTime() );
+                   params->child_id, params->tid, params->time );
 
     proc( params->handle, params->event, params->hwnd, params->object_id, params->child_id,
-          GetCurrentThreadId(), GetCurrentTime() );
+          params->tid, params->time );
 
     TRACE_(relay)( "\1Ret  winevent hook proc %p (hhook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%x,tid=%04x,time=%x)\n",
                    proc, params->handle, params->event, params->hwnd, params->object_id,
-                   params->child_id, GetCurrentThreadId(), GetCurrentTime() );
+                   params->child_id, params->tid, params->time );
 
     if (free_module) FreeLibrary( free_module );
     return TRUE;

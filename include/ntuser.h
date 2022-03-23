@@ -58,6 +58,8 @@ struct win_event_hook_params
     LONG object_id;
     LONG child_id;
     void *handle;
+    DWORD tid;
+    DWORD time;
     WINEVENTPROC proc;
     WCHAR module[MAX_PATH];
 };

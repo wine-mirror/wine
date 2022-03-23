@@ -476,6 +476,7 @@ void WINAPI NtUserNotifyWinEvent( DWORD event, HWND hwnd, LONG object_id, LONG c
     info.hwnd      = hwnd;
     info.object_id = object_id;
     info.child_id  = child_id;
+    info.tid       = GetCurrentThreadId();
 
     SERVER_START_REQ( start_hook_chain )
     {
@@ -502,6 +503,7 @@ void WINAPI NtUserNotifyWinEvent( DWORD event, HWND hwnd, LONG object_id, LONG c
         TRACE( "calling WH_WINEVENT hook %p event %x hwnd %p %x %x module %s\n",
                info.proc, event, hwnd, object_id, child_id, debugstr_w(info.module) );
 
+        info.time = NtGetTickCount();
         KeUserModeCallback( NtUserCallWinEventHook, &info,
                             FIELD_OFFSET( struct win_hook_params, module[lstrlenW(info.module) + 1] ),
                             &ret_ptr, &ret_len );
