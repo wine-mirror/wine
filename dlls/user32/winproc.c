@@ -851,40 +851,6 @@ BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
 }
 
 
-static void init_win_proc_params( struct win_proc_params *info, WNDPROC func, HWND hwnd, UINT msg,
-                                  WPARAM wparam, LPARAM lparam, LRESULT *result, BOOL ansi )
-{
-    WINDOWPROC *proc;
-
-    USER_CheckNotLock();
-
-    info->hwnd = WIN_GetFullHandle( hwnd );
-    info->msg = msg;
-    info->wparam = wparam;
-    info->lparam = lparam;
-    info->result = result;
-    info->ansi = info->ansi_dst = ansi;
-    info->is_dialog = FALSE;
-    info->mapping = WMCHAR_MAP_CALLWINDOWPROC;
-    info->dpi_awareness = GetWindowDpiAwarenessContext( info->hwnd );
-    info->func = func;
-
-    if (!(proc = handle_to_proc( func )))
-    {
-        info->procW = info->procA = NULL;
-    }
-    else if (proc == WINPROC_PROC16)
-    {
-        info->procW = info->procA = WINPROC_PROC16;
-    }
-    else
-    {
-        info->procA = proc->procA;
-        info->procW = proc->procW;
-    }
-}
-
-
 /**********************************************************************
  *		CallWindowProcA (USER32.@)
  *
@@ -914,8 +880,10 @@ LRESULT WINAPI CallWindowProcA( WNDPROC func, HWND hwnd, UINT msg, WPARAM wParam
     struct win_proc_params params;
     LRESULT result;
 
-    if (!func) return 0;
-    init_win_proc_params( &params, func, hwnd, msg, wParam, lParam, &result, TRUE );
+    params.func = func;
+    params.result = &result;
+    if (!NtUserMessageCall( hwnd, msg, wParam, lParam, (ULONG_PTR)&params, FNID_CALLWNDPROC, TRUE ))
+        return 0;
     dispatch_win_proc_params( &params );
     return result;
 }
@@ -931,8 +899,10 @@ LRESULT WINAPI CallWindowProcW( WNDPROC func, HWND hwnd, UINT msg, WPARAM wParam
     struct win_proc_params params;
     LRESULT result;
 
-    if (!func) return 0;
-    init_win_proc_params( &params, func, hwnd, msg, wParam, lParam, &result, FALSE );
+    params.func = func;
+    params.result = &result;
+    if (!NtUserMessageCall( hwnd, msg, wParam, lParam, (ULONG_PTR)&params, FNID_CALLWNDPROC, FALSE ))
+        return 0;
     dispatch_win_proc_params( &params );
     return result;
 }

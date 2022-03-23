@@ -32,6 +32,25 @@
 WINE_DEFAULT_DEBUG_CHANNEL(msg);
 
 
+static BOOL init_win_proc_params( struct win_proc_params *params, HWND hwnd, UINT msg,
+                                  WPARAM wparam, LPARAM lparam, BOOL ansi )
+{
+    if (!params->func) return FALSE;
+
+    user_check_not_lock();
+
+    params->hwnd = get_full_window_handle( hwnd );
+    params->msg = msg;
+    params->wparam = wparam;
+    params->lparam = lparam;
+    params->ansi = params->ansi_dst = ansi;
+    params->is_dialog = FALSE;
+    params->mapping = WMCHAR_MAP_CALLWINDOWPROC;
+    params->dpi_awareness = get_window_dpi_awareness_context( params->hwnd );
+    get_winproc_params( params );
+    return TRUE;
+}
+
 /***********************************************************************
  *           handle_internal_message
  *
@@ -269,6 +288,9 @@ BOOL WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
 {
     switch (type)
     {
+    case FNID_CALLWNDPROC:
+        return init_win_proc_params( (struct win_proc_params *)result_info, hwnd, msg,
+                                     wparam, lparam, ansi );
     case FNID_SENDMESSAGE:
         return send_window_message( hwnd, msg, wparam, lparam, (LRESULT *)result_info, ansi );
     case FNID_SENDNOTIFYMESSAGE:

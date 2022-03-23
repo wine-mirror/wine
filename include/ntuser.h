@@ -220,6 +220,7 @@ enum
 /* NtUserMessageCall codes */
 enum
 {
+    FNID_CALLWNDPROC        = 0x02ab,
     FNID_SENDMESSAGE        = 0x02b1,
     FNID_SENDNOTIFYMESSAGE  = 0x02b7,
     /* Wine-specific exports */

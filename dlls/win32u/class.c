@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(class);
 WINE_DECLARE_DEBUG_CHANNEL(win);
 
 #define MAX_WINPROCS  4096
-#define WINPROC_PROC16  ((WINDOWPROC *)1)  /* placeholder for 16-bit window procs */
+#define WINPROC_PROC16  ((void *)1)  /* placeholder for 16-bit window procs */
 
 typedef struct tagCLASS
 {
@@ -182,6 +182,25 @@ BOOL is_winproc_unicode( WNDPROC proc, BOOL def_val )
     if (ptr == WINPROC_PROC16) return FALSE;  /* 16-bit is always A */
     if (ptr->procA && ptr->procW) return def_val;  /* can be both */
     return ptr->procW != NULL;
+}
+
+void get_winproc_params( struct win_proc_params *params )
+{
+    WINDOWPROC *proc = get_winproc_ptr( params->func );
+
+    if (!proc)
+    {
+        params->procW = params->procA = NULL;
+    }
+    else if (proc == WINPROC_PROC16)
+    {
+        params->procW = params->procA = WINPROC_PROC16;
+    }
+    else
+    {
+        params->procA = proc->procA;
+        params->procW = proc->procW;
+    }
 }
 
 /***********************************************************************
