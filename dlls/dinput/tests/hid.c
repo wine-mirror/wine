@@ -74,7 +74,7 @@ const GUID expect_guid_product = {EXPECT_VIDPID, 0x0000, 0x0000, {0x00, 0x00, 'P
 const WCHAR expect_path[] = L"\\\\?\\hid#vid_1209&pid_0001#2&";
 const WCHAR expect_path_end[] = L"&0000#{4d1e55b2-f16f-11cf-88cb-001111000030}";
 HANDLE device_added, device_removed;
-static BOOL hid_device_created;
+static LONG device_added_count;
 
 static struct winetest_shared_data *test_data;
 static HANDLE monitor_thread, monitor_stop;
@@ -734,7 +734,6 @@ BOOL hid_device_start( struct hid_device_desc *desc )
     CloseHandle( control );
 
     WaitForSingleObject( device_added, INFINITE );
-    hid_device_created = TRUE;
 
     return TRUE;
 }
@@ -2471,6 +2470,11 @@ static void test_hid_device( DWORD report_id, DWORD polled, const HIDP_CAPS *exp
 
     winetest_push_context( "id %ld%s", report_id, polled ? " poll" : "" );
 
+    /* Win7 has a spurious device removal event with polled HID devices */
+    if (!polled || !strcmp(winetest_platform, "wine")) ret = WAIT_TIMEOUT;
+    else ret = WaitForSingleObject( device_removed, 2000 );
+    if (!ret && InterlockedOr( &device_added_count, 0 ) == 1) WaitForSingleObject( device_added, INFINITE );
+
     swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x", vid, pid );
     ret = find_hid_device_path( device_path );
     ok( ret, "Failed to find HID device matching %s\n", debugstr_w( device_path ) );
@@ -3339,7 +3343,10 @@ static LRESULT CALLBACK monitor_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPA
         if (wparam == DBT_DEVICEREMOVECOMPLETE && IsEqualGUID( &iface->dbcc_classguid, &control_class ))
             SetEvent( device_removed );
         if (wparam == DBT_DEVICEARRIVAL && IsEqualGUID( &iface->dbcc_classguid, &GUID_DEVINTERFACE_HID ))
+        {
+            InterlockedIncrement( &device_added_count );
             SetEvent( device_added );
+        }
     }
 
     return DefWindowProcW( hwnd, msg, wparam, lparam );
@@ -3648,7 +3655,6 @@ static void test_bus_driver(void)
     ok( ret, "IOCTL_WINETEST_CREATE_DEVICE failed, last error %lu\n", GetLastError() );
 
     WaitForSingleObject( device_added, INFINITE );
-    hid_device_created = TRUE;
 
     swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x", LOWORD(EXPECT_VIDPID), HIWORD(EXPECT_VIDPID) );
     ret = find_hid_device_path( device_path );
