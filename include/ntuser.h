@@ -61,6 +61,36 @@ struct win_event_hook_params
     WCHAR module[MAX_PATH];
 };
 
+/* type of message-sending functions that need special WM_CHAR handling */
+enum wm_char_mapping
+{
+    WMCHAR_MAP_POSTMESSAGE,
+    WMCHAR_MAP_SENDMESSAGE,
+    WMCHAR_MAP_SENDMESSAGETIMEOUT,
+    WMCHAR_MAP_RECVMESSAGE,
+    WMCHAR_MAP_DISPATCHMESSAGE,
+    WMCHAR_MAP_CALLWINDOWPROC,
+    WMCHAR_MAP_COUNT,
+    WMCHAR_MAP_NOMAPPING = WMCHAR_MAP_COUNT
+};
+
+/* NtUserCallWindowProc params */
+struct win_proc_params
+{
+    WNDPROC func;
+    HWND hwnd;
+    UINT msg;
+    WPARAM wparam;
+    LPARAM lparam;
+    LRESULT *result;
+    BOOL ansi;
+    BOOL ansi_dst;
+    BOOL is_dialog;
+    enum wm_char_mapping mapping;
+    WNDPROC procA;
+    WNDPROC procW;
+};
+
 /* NtUserCallWindowsHook params */
 struct win_hook_params
 {

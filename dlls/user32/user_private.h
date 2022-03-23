@@ -47,19 +47,6 @@ extern void USER_unload_driver(void) DECLSPEC_HIDDEN;
 
 struct received_message_info;
 
-/* type of message-sending functions that need special WM_CHAR handling */
-enum wm_char_mapping
-{
-    WMCHAR_MAP_POSTMESSAGE,
-    WMCHAR_MAP_SENDMESSAGE,
-    WMCHAR_MAP_SENDMESSAGETIMEOUT,
-    WMCHAR_MAP_RECVMESSAGE,
-    WMCHAR_MAP_DISPATCHMESSAGE,
-    WMCHAR_MAP_CALLWINDOWPROC,
-    WMCHAR_MAP_COUNT,
-    WMCHAR_MAP_NOMAPPING = WMCHAR_MAP_COUNT
-};
-
 /* data to store state for A/W mappings of WM_CHAR */
 struct wm_char_mapping_data
 {
