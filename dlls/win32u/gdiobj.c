@@ -1164,6 +1164,7 @@ static struct unix_funcs unix_funcs =
     NtUserDeferWindowPosAndBand,
     NtUserDestroyCursor,
     NtUserDestroyWindow,
+    NtUserDispatchMessage,
     NtUserDrawIconEx,
     NtUserEndDeferWindowPosEx,
     NtUserEndPaint,

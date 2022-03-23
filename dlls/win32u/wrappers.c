@@ -801,6 +801,12 @@ BOOL WINAPI NtUserDestroyWindow( HWND hwnd )
     return unix_funcs->pNtUserDestroyWindow( hwnd );
 }
 
+LRESULT WINAPI NtUserDispatchMessage( const MSG *msg )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserDispatchMessage( msg );
+}
+
 BOOL WINAPI NtUserDrawIconEx( HDC hdc, INT x0, INT y0, HICON icon, INT width,
                               INT height, UINT istep, HBRUSH hbr, UINT flags )
 {

@@ -29,6 +29,7 @@ enum
     /* user32 callbacks */
     NtUserCallEnumDisplayMonitor,
     NtUserCallWinEventHook,
+    NtUserCallWindowProc,
     NtUserCallWindowsHook,
     NtUserLoadDriver,
     /* win16 hooks */
@@ -131,6 +132,7 @@ enum
 {
     NtUserBeginDeferWindowPos,
     NtUserCreateCursorIcon,
+    NtUserDispatchMessageA,
     NtUserEnableDC,
     NtUserGetClipCursor,
     NtUserGetCursorPos,
@@ -343,6 +345,7 @@ BOOL    WINAPI NtUserDestroyAcceleratorTable( HACCEL handle );
 BOOL    WINAPI NtUserDestroyCursor( HCURSOR cursor, ULONG arg );
 BOOL    WINAPI NtUserDestroyMenu( HMENU menu );
 BOOL    WINAPI NtUserDestroyWindow( HWND hwnd );
+LRESULT WINAPI NtUserDispatchMessage( const MSG *msg );
 BOOL    WINAPI NtUserDrawIconEx( HDC hdc, INT x0, INT y0, HICON icon, INT width,
                                  INT height, UINT istep, HBRUSH hbr, UINT flags );
 BOOL    WINAPI NtUserEndDeferWindowPosEx( HDWP hdwp, BOOL async );

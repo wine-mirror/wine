@@ -31,6 +31,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(msg);
 
+#define MAX_WINPROC_RECURSION  64
 
 static BOOL init_win_proc_params( struct win_proc_params *params, HWND hwnd, UINT msg,
                                   WPARAM wparam, LPARAM lparam, BOOL ansi )
@@ -48,6 +49,53 @@ static BOOL init_win_proc_params( struct win_proc_params *params, HWND hwnd, UIN
     params->mapping = WMCHAR_MAP_CALLWINDOWPROC;
     params->dpi_awareness = get_window_dpi_awareness_context( params->hwnd );
     get_winproc_params( params );
+    return TRUE;
+}
+
+static BOOL init_window_call_params( struct win_proc_params *params, HWND hwnd, UINT msg, WPARAM wParam,
+                                     LPARAM lParam, LRESULT *result, BOOL ansi,
+                                     enum wm_char_mapping mapping )
+{
+    WND *win;
+
+    user_check_not_lock();
+
+    if (!(win = get_win_ptr( hwnd ))) return FALSE;
+    if (win == WND_OTHER_PROCESS || win == WND_DESKTOP) return FALSE;
+    if (win->tid != GetCurrentThreadId())
+    {
+        release_win_ptr( win );
+        return FALSE;
+    }
+    params->func = win->winproc;
+    params->ansi_dst = !(win->flags & WIN_ISUNICODE);
+    params->is_dialog = win->dlgInfo != NULL;
+    release_win_ptr( win );
+
+    params->hwnd = get_full_window_handle( hwnd );
+    get_winproc_params( params );
+    params->msg = msg;
+    params->wparam = wParam;
+    params->lparam = lParam;
+    params->result = result;
+    params->ansi = ansi;
+    params->mapping = mapping;
+    params->dpi_awareness = get_window_dpi_awareness_context( params->hwnd );
+    return TRUE;
+}
+
+static BOOL dispatch_win_proc_params( struct win_proc_params *params, size_t size )
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    void *ret_ptr;
+    ULONG ret_len;
+
+    if (thread_info->recursion_count > MAX_WINPROC_RECURSION) return FALSE;
+    thread_info->recursion_count++;
+
+    KeUserModeCallback( NtUserCallWindowProc, params, size, &ret_ptr, &ret_len );
+
+    thread_info->recursion_count--;
     return TRUE;
 }
 
@@ -150,6 +198,63 @@ BOOL WINAPI NtUserGetGUIThreadInfo( DWORD id, GUITHREADINFO *info )
     }
     SERVER_END_REQ;
     return ret;
+}
+
+/**********************************************************************
+ *           dispatch_message
+ */
+LRESULT dispatch_message( const MSG *msg, BOOL ansi )
+{
+    struct win_proc_params params;
+    LRESULT retval = 0;
+
+    /* Process timer messages */
+    if (msg->lParam && (msg->message == WM_TIMER || msg->message == WM_SYSTIMER))
+    {
+        params.func = (WNDPROC)msg->lParam;
+        params.result = &retval; /* FIXME */
+        if (!init_win_proc_params( &params, msg->hwnd, msg->message,
+                                   msg->wParam, NtGetTickCount(), ansi ))
+            return 0;
+        __TRY
+        {
+            dispatch_win_proc_params( &params, sizeof(params) );
+        }
+        __EXCEPT
+        {
+            retval = 0;
+        }
+        __ENDTRY
+        return retval;
+    }
+    if (!msg->hwnd) return 0;
+
+    spy_enter_message( SPY_DISPATCHMESSAGE, msg->hwnd, msg->message, msg->wParam, msg->lParam );
+
+    if (init_window_call_params( &params, msg->hwnd, msg->message, msg->wParam, msg->lParam,
+                                 &retval, ansi, WMCHAR_MAP_DISPATCHMESSAGE ))
+        dispatch_win_proc_params( &params, sizeof(params) );
+    else if (!is_window( msg->hwnd )) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+    else SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+
+    spy_exit_message( SPY_RESULT_OK, msg->hwnd, msg->message, retval, msg->wParam, msg->lParam );
+
+    if (msg->message == WM_PAINT)
+    {
+        /* send a WM_NCPAINT and WM_ERASEBKGND if the non-client area is still invalid */
+        HRGN hrgn = NtGdiCreateRectRgn( 0, 0, 0, 0 );
+        NtUserGetUpdateRgn( msg->hwnd, hrgn, TRUE );
+        NtGdiDeleteObjectApp( hrgn );
+    }
+    return retval;
+}
+
+/**********************************************************************
+ *           NtUserDispatchMessage  (win32u.@)
+ */
+LRESULT WINAPI NtUserDispatchMessage( const MSG *msg )
+{
+    return dispatch_message( msg, FALSE );
 }
 
 /***********************************************************************

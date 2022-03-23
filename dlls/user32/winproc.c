@@ -707,8 +707,6 @@ static void dispatch_win_proc_params( struct win_proc_params *params )
 {
     DPI_AWARENESS_CONTEXT context = SetThreadDpiAwarenessContext( params->dpi_awareness );
 
-    USER_CheckNotLock();
-
     if (!params->ansi)
     {
         if (params->procW == WINPROC_PROC16)
@@ -791,6 +789,11 @@ static void dispatch_win_proc_params( struct win_proc_params *params )
     SetThreadDpiAwarenessContext( context );
 }
 
+BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
+{
+    dispatch_win_proc_params( params );
+    return TRUE;
+}
 
 /**********************************************************************
  *		WINPROC_call_window
@@ -804,6 +807,8 @@ BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
     struct win_proc_params params;
     WINDOWPROC *proc;
     WND *wndPtr;
+
+    USER_CheckNotLock();
 
     if (!(wndPtr = WIN_GetPtr( hwnd ))) return FALSE;
     if (wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return FALSE;

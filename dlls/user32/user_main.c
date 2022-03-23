@@ -195,6 +195,7 @@ static const void *kernel_callback_table[NtUserCallCount] =
 {
     User32CallEnumDisplayMonitor,
     User32CallWinEventHook,
+    User32CallWindowProc,
     User32CallWindowsHook,
     User32LoadDriver,
 };

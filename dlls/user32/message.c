@@ -3901,30 +3901,7 @@ LRESULT WINAPI DECLSPEC_HOTPATCH DispatchMessageA( const MSG* msg )
             return retval;
         }
     }
-    if (!msg->hwnd) return 0;
-
-    SPY_EnterMessage( SPY_DISPATCHMESSAGE, msg->hwnd, msg->message,
-                      msg->wParam, msg->lParam );
-
-    if (!WINPROC_call_window( msg->hwnd, msg->message, msg->wParam, msg->lParam,
-                              &retval, FALSE, WMCHAR_MAP_DISPATCHMESSAGE ))
-    {
-        if (!IsWindow( msg->hwnd )) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        else SetLastError( ERROR_MESSAGE_SYNC_ONLY );
-        retval = 0;
-    }
-
-    SPY_ExitMessage( SPY_RESULT_OK, msg->hwnd, msg->message, retval,
-                     msg->wParam, msg->lParam );
-
-    if (msg->message == WM_PAINT)
-    {
-        /* send a WM_NCPAINT and WM_ERASEBKGND if the non-client area is still invalid */
-        HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
-        NtUserGetUpdateRgn( msg->hwnd, hrgn, TRUE );
-        DeleteObject( hrgn );
-    }
-    return retval;
+    return NtUserCallOneParam( (UINT_PTR)msg, NtUserDispatchMessageA );
 }
 
 
@@ -3972,30 +3949,7 @@ LRESULT WINAPI DECLSPEC_HOTPATCH DispatchMessageW( const MSG* msg )
             return retval;
         }
     }
-    if (!msg->hwnd) return 0;
-
-    SPY_EnterMessage( SPY_DISPATCHMESSAGE, msg->hwnd, msg->message,
-                      msg->wParam, msg->lParam );
-
-    if (!WINPROC_call_window( msg->hwnd, msg->message, msg->wParam, msg->lParam,
-                              &retval, TRUE, WMCHAR_MAP_DISPATCHMESSAGE ))
-    {
-        if (!IsWindow( msg->hwnd )) SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        else SetLastError( ERROR_MESSAGE_SYNC_ONLY );
-        retval = 0;
-    }
-
-    SPY_ExitMessage( SPY_RESULT_OK, msg->hwnd, msg->message, retval,
-                     msg->wParam, msg->lParam );
-
-    if (msg->message == WM_PAINT)
-    {
-        /* send a WM_NCPAINT and WM_ERASEBKGND if the non-client area is still invalid */
-        HRGN hrgn = CreateRectRgn( 0, 0, 0, 0 );
-        NtUserGetUpdateRgn( msg->hwnd, hrgn, TRUE );
-        DeleteObject( hrgn );
-    }
-    return retval;
+    return NtUserDispatchMessage( msg );
 }
 
 
