@@ -39,6 +39,7 @@ namespace Windows {
             interface ISpeechSynthesisStream;
             runtimeclass SpeechSynthesizer;
             runtimeclass VoiceInformation;
+            runtimeclass SpeechSynthesizerOptions;
             runtimeclass SpeechSynthesisStream;
         }
     }
@@ -114,6 +115,16 @@ namespace Windows {
 
             [
                 contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechSynthesis.SpeechSynthesizer),
+                uuid(a7c5ecb2-4339-4d6a-bbf8-c7a4f1544c2e)
+            ]
+            interface ISpeechSynthesizer2 : IInspectable
+            {
+                [propget] HRESULT Options([out, retval] SpeechSynthesizerOptions **value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
                 exclusiveto(Windows.Media.SpeechSynthesis.VoiceInformation),
                 uuid(b127d6a4-1291-4604-aa9c-83134083352c)
             ]
@@ -124,6 +135,19 @@ namespace Windows {
                 [propget] HRESULT Language([out] [retval] HSTRING* value);
                 [propget] HRESULT Description([out] [retval] HSTRING* value);
                 [propget] HRESULT Gender([out] [retval] VoiceGender* value);
+            }
+
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                exclusiveto(Windows.Media.SpeechSynthesis.SpeechSynthesizerOptions),
+                uuid(a0e23871-cc3d-43c9-91b1-ee185324d83d)
+            ]
+            interface ISpeechSynthesizerOptions : IInspectable
+            {
+                [propget] HRESULT IncludeWordBoundaryMetadata([out, retval] boolean *value);
+                [propput] HRESULT IncludeWordBoundaryMetadata([in] boolean value);
+                [propget] HRESULT IncludeSentenceBoundaryMetadata([out, retval] boolean *value);
+                [propput] HRESULT IncludeSentenceBoundaryMetadata([in] boolean value);
             }
 
             [
@@ -146,6 +170,14 @@ namespace Windows {
                 [default] interface Windows.Media.SpeechSynthesis.IVoiceInformation;
             }
 
+            [
+                contract(Windows.Foundation.UniversalApiContract, 1.0),
+                marshaling_behavior(agile)
+            ]
+            runtimeclass SpeechSynthesizerOptions
+            {
+                [default] interface Windows.Media.SpeechSynthesis.ISpeechSynthesizerOptions;
+            }
 
             [contract(Windows.Foundation.UniversalApiContract, 1.0)]
             [marshaling_behavior(agile)]

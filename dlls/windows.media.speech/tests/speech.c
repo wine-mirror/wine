@@ -557,6 +557,7 @@ static void test_SpeechSynthesizer(void)
     IInspectable *inspectable = NULL, *tmp_inspectable = NULL;
     IAgileObject *agile_object = NULL, *tmp_agile_object = NULL;
     ISpeechSynthesizer *synthesizer;
+    ISpeechSynthesizer2 *synthesizer2;
     IClosable *closable;
     HMODULE hdll;
     HSTRING str, str2;
@@ -672,6 +673,17 @@ static void test_SpeechSynthesizer(void)
 
     hr = IInspectable_QueryInterface(inspectable, &IID_IClosable, (void **)&closable);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IInspectable_QueryInterface(inspectable, &IID_ISpeechSynthesizer2, (void **)&synthesizer2);
+    ok(hr == S_OK ||
+            broken(hr == E_NOINTERFACE), /* requires newer Windows */
+            "Got unexpected hr %#lx.\n", hr);
+
+    if (hr == S_OK)
+    {
+        ref = ISpeechSynthesizer2_Release(synthesizer2);
+        ok(ref == 3, "Got unexpected ref %lu.\n", ref);
+    }
 
     ref = IClosable_Release(closable);
     ok(ref == 2, "Got unexpected ref %lu.\n", ref);
