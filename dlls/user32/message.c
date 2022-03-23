@@ -53,6 +53,8 @@ WINE_DECLARE_DEBUG_CHANNEL(key);
 
 #define MAX_PACK_COUNT 4
 
+#define MAX_WINPROC_RECURSION  64
+
 /* the various structures that can be sent in messages, in platform-independent layout */
 struct packed_CREATESTRUCTW
 {
@@ -2162,6 +2164,38 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
     return TRUE;
 }
 
+static BOOL init_window_call_params( struct win_proc_params *params, HWND hwnd, UINT msg, WPARAM wParam,
+                                     LPARAM lParam, LRESULT *result, BOOL ansi,
+                                     enum wm_char_mapping mapping )
+{
+    WND *win;
+
+    USER_CheckNotLock();
+
+    if (!(win = WIN_GetPtr( hwnd ))) return FALSE;
+    if (win == WND_OTHER_PROCESS || win == WND_DESKTOP) return FALSE;
+    if (win->tid != GetCurrentThreadId())
+    {
+        WIN_ReleasePtr( win );
+        return FALSE;
+    }
+    params->func = win->winproc;
+    params->ansi_dst = !(win->flags & WIN_ISUNICODE);
+    params->is_dialog = win->dlgInfo != NULL;
+    WIN_ReleasePtr( win );
+
+    params->hwnd = WIN_GetFullHandle( hwnd );
+    get_winproc_params( params );
+    params->msg = msg;
+    params->wparam = wParam;
+    params->lparam = lParam;
+    params->result = result;
+    params->ansi = ansi;
+    params->mapping = mapping;
+    params->dpi_awareness = GetWindowDpiAwarenessContext( params->hwnd );
+    return TRUE;
+}
+
 /***********************************************************************
  *           call_window_proc
  *
@@ -2170,35 +2204,43 @@ static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM 
 static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                  BOOL unicode, BOOL same_thread, enum wm_char_mapping mapping )
 {
+    struct user_thread_info *thread_info = get_user_thread_info();
+    struct win_proc_params params;
     LRESULT result = 0;
     CWPSTRUCT cwp;
     CWPRETSTRUCT cwpret;
 
     if (msg & 0x80000000)
-    {
-        result = handle_internal_message( hwnd, msg, wparam, lparam );
-        goto done;
-    }
+        return handle_internal_message( hwnd, msg, wparam, lparam );
+
+    if (!WIN_IsCurrentThread( hwnd )) return 0;
+    if (!init_window_call_params( &params, hwnd, msg, wparam, lparam, &result, !unicode, mapping ))
+        return 0;
 
     /* first the WH_CALLWNDPROC hook */
-    hwnd = WIN_GetFullHandle( hwnd );
     cwp.lParam  = lparam;
     cwp.wParam  = wparam;
     cwp.message = msg;
-    cwp.hwnd    = hwnd;
+    cwp.hwnd    = params.hwnd;
     HOOK_CallHooks( WH_CALLWNDPROC, HC_ACTION, same_thread, (LPARAM)&cwp, unicode );
 
-    /* now call the window procedure */
-    if (!WINPROC_call_window( hwnd, msg, wparam, lparam, &result, unicode, mapping )) goto done;
+    if (thread_info->recursion_count <= MAX_WINPROC_RECURSION)
+    {
+        thread_info->recursion_count++;
+
+        /* now call the window procedure */
+        User32CallWindowProc( &params, sizeof(params) );
+
+        thread_info->recursion_count--;
+    }
 
     /* and finally the WH_CALLWNDPROCRET hook */
     cwpret.lResult = result;
     cwpret.lParam  = lparam;
     cwpret.wParam  = wparam;
     cwpret.message = msg;
-    cwpret.hwnd    = hwnd;
+    cwpret.hwnd    = params.hwnd;
     HOOK_CallHooks( WH_CALLWNDPROCRET, HC_ACTION, same_thread, (LPARAM)&cwpret, unicode );
- done:
     return result;
 }
 

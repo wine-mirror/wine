@@ -36,7 +36,6 @@
 WINE_DECLARE_DEBUG_CHANNEL(msg);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
-#define MAX_WINPROC_RECURSION  64
 #define WINPROC_PROC16  ((void *)1)  /* placeholder for 16-bit window procs */
 
 static inline void *get_buffer( void *static_buffer, size_t size, size_t need )
@@ -795,66 +794,24 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
     return TRUE;
 }
 
-/**********************************************************************
- *		WINPROC_call_window
- *
- * Call the window procedure of the specified window.
- */
-BOOL WINPROC_call_window( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam,
-                          LRESULT *result, BOOL unicode, enum wm_char_mapping mapping )
+void get_winproc_params( struct win_proc_params *params )
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
-    struct win_proc_params params;
-    WINDOWPROC *proc;
-    WND *wndPtr;
-
-    USER_CheckNotLock();
-
-    if (!(wndPtr = WIN_GetPtr( hwnd ))) return FALSE;
-    if (wndPtr == WND_OTHER_PROCESS || wndPtr == WND_DESKTOP) return FALSE;
-    if (wndPtr->tid != GetCurrentThreadId())
-    {
-        WIN_ReleasePtr( wndPtr );
-        return FALSE;
-    }
-    params.func = wndPtr->winproc;
-    proc = handle_to_proc( wndPtr->winproc );
-    params.ansi_dst = !(wndPtr->flags & WIN_ISUNICODE);
-    params.is_dialog = wndPtr->dlgInfo != NULL;
-    WIN_ReleasePtr( wndPtr );
-
-    params.hwnd = WIN_GetFullHandle( hwnd );
-    params.msg = msg;
-    params.wparam = wParam;
-    params.lparam = lParam;
-    params.result = result;
-    params.ansi = !unicode;
-    params.mapping = mapping;
-    params.dpi_awareness = GetWindowDpiAwarenessContext( params.hwnd );
+    WINDOWPROC *proc = handle_to_proc( params->func );
 
     if (!proc)
     {
-        params.procW = params.procA = NULL;
+        params->procW = params->procA = NULL;
     }
     else if (proc == WINPROC_PROC16)
     {
-        params.procW = params.procA = WINPROC_PROC16;
+        params->procW = params->procA = WINPROC_PROC16;
     }
     else
     {
-        params.procA = proc->procA;
-        params.procW = proc->procW;
+        params->procA = proc->procA;
+        params->procW = proc->procW;
     }
-
-    if (thread_info->recursion_count > MAX_WINPROC_RECURSION) return FALSE;
-    thread_info->recursion_count++;
-
-    dispatch_win_proc_params( &params );
-
-    thread_info->recursion_count--;
-    return TRUE;
 }
-
 
 /**********************************************************************
  *		CallWindowProcA (USER32.@)
