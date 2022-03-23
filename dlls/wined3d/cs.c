@@ -2872,27 +2872,6 @@ static void (* const wined3d_cs_op_handlers[])(struct wined3d_cs *cs, const void
     /* WINED3D_CS_OP_EXECUTE_COMMAND_LIST        */ wined3d_cs_exec_execute_command_list,
 };
 
-static void wined3d_cs_exec_execute_command_list(struct wined3d_cs *cs, const void *data)
-{
-    const struct wined3d_cs_execute_command_list *op = data;
-    SIZE_T start = 0, end = op->list->data_size;
-    const BYTE *cs_data = op->list->data;
-
-    TRACE("Executing command list %p.\n", op->list);
-
-    while (start < end)
-    {
-        const struct wined3d_cs_packet *packet = wined3d_next_cs_packet(cs_data, &start, WINED3D_CS_QUEUE_MASK);
-        enum wined3d_cs_op opcode = *(const enum wined3d_cs_op *)packet->data;
-
-        if (opcode >= WINED3D_CS_OP_STOP)
-            ERR("Invalid opcode %#x.\n", opcode);
-        else
-            wined3d_cs_op_handlers[opcode](cs, packet->data);
-        TRACE("%s executed.\n", debug_cs_op(opcode));
-    }
-}
-
 void wined3d_device_context_emit_execute_command_list(struct wined3d_device_context *context,
         struct wined3d_command_list *list, bool restore_state)
 {
@@ -3303,16 +3282,74 @@ static void wined3d_cs_command_unlock(const struct wined3d_cs *cs)
         LeaveCriticalSection(&wined3d_command_cs);
 }
 
-static DWORD WINAPI wined3d_cs_run(void *ctx)
+static inline bool wined3d_cs_execute_next(struct wined3d_cs *cs, struct wined3d_cs_queue *queue)
 {
     struct wined3d_cs_packet *packet;
+    enum wined3d_cs_op opcode;
+    SIZE_T tail;
+
+    tail = queue->tail;
+    packet = wined3d_next_cs_packet(queue->data, &tail, WINED3D_CS_QUEUE_MASK);
+
+    if (packet->size)
+    {
+        opcode = *(const enum wined3d_cs_op *)packet->data;
+
+        TRACE("Executing %s at %p.\n", debug_cs_op(opcode), packet);
+        if (opcode >= WINED3D_CS_OP_STOP)
+        {
+            if (opcode > WINED3D_CS_OP_STOP)
+                ERR("Invalid opcode %#x.\n", opcode);
+            return false;
+        }
+
+        wined3d_cs_command_lock(cs);
+        wined3d_cs_op_handlers[opcode](cs, packet->data);
+        wined3d_cs_command_unlock(cs);
+        TRACE("%s at %p executed.\n", debug_cs_op(opcode), packet);
+    }
+
+    InterlockedExchange((LONG *)&queue->tail, tail);
+    return true;
+}
+
+static void wined3d_cs_exec_execute_command_list(struct wined3d_cs *cs, const void *data)
+{
+    const struct wined3d_cs_execute_command_list *op = data;
+    SIZE_T start = 0, end = op->list->data_size;
+    const BYTE *cs_data = op->list->data;
+    struct wined3d_cs_queue *queue;
+
+    TRACE("Executing command list %p.\n", op->list);
+
+    queue = &cs->queue[WINED3D_CS_QUEUE_MAP];
+    while (start < end)
+    {
+        const struct wined3d_cs_packet *packet;
+        enum wined3d_cs_op opcode;
+
+        while (!wined3d_cs_queue_is_empty(cs, queue))
+            wined3d_cs_execute_next(cs, queue);
+
+        packet = wined3d_next_cs_packet(cs_data, &start, WINED3D_CS_QUEUE_MASK);
+        opcode = *(const enum wined3d_cs_op *)packet->data;
+
+        if (opcode >= WINED3D_CS_OP_STOP)
+            ERR("Invalid opcode %#x.\n", opcode);
+        else
+            wined3d_cs_op_handlers[opcode](cs, packet->data);
+        TRACE("%s executed.\n", debug_cs_op(opcode));
+    }
+}
+
+static DWORD WINAPI wined3d_cs_run(void *ctx)
+{
     struct wined3d_cs_queue *queue;
     unsigned int spin_count = 0;
     struct wined3d_cs *cs = ctx;
-    enum wined3d_cs_op opcode;
     HMODULE wined3d_module;
     unsigned int poll = 0;
-    SIZE_T tail;
+    bool run = true;
 
     TRACE("Started.\n");
 
@@ -3322,7 +3359,7 @@ static DWORD WINAPI wined3d_cs_run(void *ctx)
 
     list_init(&cs->query_poll_list);
     cs->thread_id = GetCurrentThreadId();
-    for (;;)
+    while (run)
     {
         if (++poll == WINED3D_CS_QUERY_POLL_INTERVAL)
         {
@@ -3345,27 +3382,7 @@ static DWORD WINAPI wined3d_cs_run(void *ctx)
         }
         spin_count = 0;
 
-        tail = queue->tail;
-        packet = wined3d_next_cs_packet(queue->data, &tail, WINED3D_CS_QUEUE_MASK);
-        if (packet->size)
-        {
-            opcode = *(const enum wined3d_cs_op *)packet->data;
-
-            TRACE("Executing %s at %p.\n", debug_cs_op(opcode), packet);
-            if (opcode >= WINED3D_CS_OP_STOP)
-            {
-                if (opcode > WINED3D_CS_OP_STOP)
-                    ERR("Invalid opcode %#x.\n", opcode);
-                break;
-            }
-
-            wined3d_cs_command_lock(cs);
-            wined3d_cs_op_handlers[opcode](cs, packet->data);
-            wined3d_cs_command_unlock(cs);
-            TRACE("%s at %p executed.\n", debug_cs_op(opcode), packet);
-        }
-
-        InterlockedExchange((LONG *)&queue->tail, tail);
+        run = wined3d_cs_execute_next(cs, queue);
     }
 
     cs->queue[WINED3D_CS_QUEUE_MAP].tail = cs->queue[WINED3D_CS_QUEUE_MAP].head;
