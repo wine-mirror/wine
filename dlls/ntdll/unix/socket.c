@@ -908,21 +908,12 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     async->iov_cursor = 0;
     async->sent_len = 0;
 
-    status = try_send( fd, async );
-
-    if (status != STATUS_SUCCESS && status != STATUS_DEVICE_NOT_READY)
-    {
-        release_fileio( &async->io );
-        return status;
-    }
-
-    if (status == STATUS_DEVICE_NOT_READY && force_async)
-        status = STATUS_PENDING;
+    status = force_async ? STATUS_PENDING : STATUS_DEVICE_NOT_READY;
 
     SERVER_START_REQ( send_socket )
     {
         req->status = status;
-        req->total  = async->sent_len;
+        req->total  = 0;
         req->async  = server_async( handle, &async->io, event, apc, apc_user, iosb_client_ptr(io) );
         status = wine_server_call( req );
         wait_handle = wine_server_ptr_handle( reply->wait );

@@ -8010,7 +8010,7 @@ static void test_shutdown(void)
     WSASetLastError(0xdeadbeef);
     ret = send(client, "test", 5, 0);
     ok(ret == -1, "got %d\n", ret);
-    todo_wine ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
 
     ret = recv(server, buffer, sizeof(buffer), 0);
     ok(!ret, "got %d\n", ret);
@@ -8057,7 +8057,7 @@ static void test_shutdown(void)
     WSASetLastError(0xdeadbeef);
     ret = send(server, "test", 5, 0);
     ok(ret == -1, "got %d\n", ret);
-    todo_wine ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
 
     addrlen = sizeof(addr);
     ret = getpeername(client, (struct sockaddr *)&addr, &addrlen);
@@ -8107,7 +8107,7 @@ static void test_shutdown(void)
     WSASetLastError(0xdeadbeef);
     ret = send(client, "test", 5, 0);
     ok(ret == -1, "got %d\n", ret);
-    todo_wine ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
 
     ret = recv(server, buffer, sizeof(buffer), 0);
     ok(!ret, "got %d\n", ret);
@@ -8125,7 +8125,7 @@ static void test_shutdown(void)
     WSASetLastError(0xdeadbeef);
     ret = send(server, "test", 5, 0);
     ok(ret == -1, "got %d\n", ret);
-    todo_wine ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
 
     addrlen = sizeof(addr);
     ret = getpeername(client, (struct sockaddr *)&addr, &addrlen);
@@ -8256,7 +8256,7 @@ static void test_shutdown(void)
     WSASetLastError(0xdeadbeef);
     ret = sendto(client, "test", 5, 0, (struct sockaddr *)&server_addr, sizeof(server_addr));
     ok(ret == -1, "got %d\n", ret);
-    todo_wine ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
 
     closesocket(client);
     closesocket(server);
@@ -8337,7 +8337,7 @@ static void test_DisconnectEx(void)
     WSASetLastError(0xdeadbeef);
     ret = send(client, "test", 5, 0);
     ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
 
     ret = recv(server, buffer, sizeof(buffer), 0);
     ok(!ret, "got %d\n", ret);
@@ -8391,7 +8391,7 @@ static void test_DisconnectEx(void)
     WSASetLastError(0xdeadbeef);
     ret = send(client, "test", 5, 0);
     ok(ret == -1, "expected failure\n");
-    todo_wine ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
+    ok(WSAGetLastError() == WSAESHUTDOWN, "got error %u\n", WSAGetLastError());
 
     ret = recv(server, buffer, sizeof(buffer), 0);
     ok(!ret, "got %d\n", ret);
