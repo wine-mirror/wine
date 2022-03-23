@@ -460,31 +460,6 @@ static DWORD midClose(WORD wDevID)
 }
 
 /**************************************************************************
- * 			midReset				[internal]
- */
-static DWORD midReset(WORD wDevID)
-{
-    DWORD		dwTime = GetTickCount();
-
-    TRACE("(%04X);\n", wDevID);
-
-    if (wDevID >= MIDM_NumDevs) return MMSYSERR_BADDEVICEID;
-    if (MidiInDev[wDevID].state == -1) return MIDIERR_NODEVICE;
-
-    in_buffer_lock();
-    while (MidiInDev[wDevID].lpQueueHdr) {
-	LPMIDIHDR lpMidiHdr = MidiInDev[wDevID].lpQueueHdr;
-	MidiInDev[wDevID].lpQueueHdr = lpMidiHdr->lpNext;
-	lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
-	lpMidiHdr->dwFlags |= MHDR_DONE;
-	MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD_PTR)lpMidiHdr, dwTime - MidiInDev[wDevID].startTime);
-    }
-    in_buffer_unlock();
-
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
  * 			midStart				[internal]
  */
 static DWORD midStart(WORD wDevID)
@@ -545,6 +520,7 @@ DWORD WINAPI ALSA_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 			    DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
     struct midi_in_message_params params;
+    struct notify_context notify;
     UINT err;
 
     TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
@@ -557,8 +533,6 @@ DWORD WINAPI ALSA_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 	return midOpen(wDevID, (LPMIDIOPENDESC)dwParam1, dwParam2);
     case MIDM_CLOSE:
 	return midClose(wDevID);
-    case MIDM_RESET:
-	return midReset(wDevID);
     case MIDM_START:
 	return midStart(wDevID);
     case MIDM_STOP:
@@ -571,8 +545,13 @@ DWORD WINAPI ALSA_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     params.param_1 = dwParam1;
     params.param_2 = dwParam2;
     params.err = &err;
+    params.notify = &notify;
 
-    ALSA_CALL(midi_in_message, &params);
+    do
+    {
+        ALSA_CALL(midi_in_message, &params);
+        if ((!err || err == ERROR_RETRY) && notify.send_notify) notify_client(&notify);
+    } while (err == ERROR_RETRY);
 
     return err;
 }

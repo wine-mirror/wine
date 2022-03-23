@@ -105,6 +105,20 @@ NTSTATUS midi_in_lock(void *args)
     return STATUS_SUCCESS;
 }
 
+static void set_in_notify(struct notify_context *notify, struct midi_src *src, WORD dev_id, WORD msg,
+                          UINT_PTR param_1, UINT_PTR param_2)
+{
+    notify->send_notify = TRUE;
+    notify->dev_id = dev_id;
+    notify->msg = msg;
+    notify->param_1 = param_1;
+    notify->param_2 = param_2;
+    notify->callback = src->midiDesc.dwCallback;
+    notify->flags = src->wFlags;
+    notify->device = src->midiDesc.hMidi;
+    notify->instance = src->midiDesc.dwInstance;
+}
+
 static snd_seq_t *seq_open(int *port_in_ret)
 {
     static int midi_warn;
@@ -928,6 +942,36 @@ static UINT midi_in_get_devcaps(WORD dev_id, MIDIINCAPSW *caps, UINT size)
     return MMSYSERR_NOERROR;
 }
 
+static DWORD midi_in_reset(WORD dev_id, struct notify_context *notify)
+{
+    UINT cur_time = NtGetTickCount();
+    UINT err = MMSYSERR_NOERROR;
+    struct midi_src *src;
+    MIDIHDR *hdr;
+
+    TRACE("(%04X);\n", dev_id);
+
+    if (dev_id >= num_srcs) return MMSYSERR_BADDEVICEID;
+    src = srcs + dev_id;
+    if (src->state == -1) return MIDIERR_NODEVICE;
+
+    in_buffer_lock();
+
+    if (src->lpQueueHdr)
+    {
+        hdr = src->lpQueueHdr;
+        src->lpQueueHdr = hdr->lpNext;
+        hdr->dwFlags &= ~MHDR_INQUEUE;
+        hdr->dwFlags |= MHDR_DONE;
+        set_in_notify(notify, src, dev_id, MIM_LONGDATA, (DWORD_PTR)hdr, cur_time - src->startTime);
+        if (src->lpQueueHdr) err = ERROR_RETRY; /* ask the client to call again */
+    }
+
+    in_buffer_unlock();
+
+    return err;
+}
+
 NTSTATUS midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
@@ -987,6 +1031,8 @@ NTSTATUS midi_in_message(void *args)
 {
     struct midi_in_message_params *params = args;
 
+    params->notify->send_notify = FALSE;
+
     switch (params->msg)
     {
     case DRVM_EXIT:
@@ -1009,6 +1055,9 @@ NTSTATUS midi_in_message(void *args)
         break;
     case MIDM_GETNUMDEVS:
         *params->err = num_srcs;
+        break;
+    case MIDM_RESET:
+        *params->err = midi_in_reset(params->dev_id, params->notify);
         break;
     default:
         TRACE("Unsupported message\n");
