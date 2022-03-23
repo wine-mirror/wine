@@ -50,6 +50,12 @@ enum D3DCOMPILER_SIGNATURE_ELEMENT_SIZE
 
 #define D3DCOMPILER_SHADER_TARGET_VERSION_MASK 0xffff
 #define D3DCOMPILER_SHADER_TARGET_SHADERTYPE_MASK 0xffff0000
+#define D3DCOMPILER_SHADER_TARGET_SHADERTYPE_SHIFT 16
+
+enum d3dcompiler_shader_type
+{
+    D3DCOMPILER_SHADER_TYPE_CS = 5,
+};
 
 struct d3dcompiler_shader_signature
 {
@@ -158,6 +164,9 @@ struct d3dcompiler_shader_reflection
     D3D_TESSELLATOR_OUTPUT_PRIMITIVE hs_output_primitive;
     D3D_TESSELLATOR_PARTITIONING hs_partitioning;
     D3D_TESSELLATOR_DOMAIN tessellator_domain;
+    UINT thread_group_size_x;
+    UINT thread_group_size_y;
+    UINT thread_group_size_z;
 
     struct d3dcompiler_shader_signature *isgn;
     struct d3dcompiler_shader_signature *osgn;
@@ -707,9 +716,21 @@ static HRESULT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetMinFeatureLeve
 static UINT STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetThreadGroupSize(
         ID3D11ShaderReflection *iface, UINT *sizex, UINT *sizey, UINT *sizez)
 {
-    FIXME("iface %p, sizex %p, sizey %p, sizez %p stub!\n", iface, sizex, sizey, sizez);
+    struct d3dcompiler_shader_reflection *reflection = impl_from_ID3D11ShaderReflection(iface);
 
-    return 0;
+    TRACE("iface %p, sizex %p, sizey %p, sizez %p.\n", iface, sizex, sizey, sizez);
+
+    if (!sizex || !sizey || !sizez)
+    {
+        WARN("Invalid argument specified.\n");
+        return E_INVALIDARG;
+    }
+
+    *sizex = reflection->thread_group_size_x;
+    *sizey = reflection->thread_group_size_y;
+    *sizez = reflection->thread_group_size_z;
+
+    return *sizex * *sizey * *sizez;
 }
 
 static UINT64 STDMETHODCALLTYPE d3dcompiler_shader_reflection_GetRequiresFlags(
@@ -1754,15 +1775,79 @@ static HRESULT d3dcompiler_parse_signature(struct d3dcompiler_shader_signature *
     return S_OK;
 }
 
+#define SM4_OPCODE_MASK                 0xff
+#define SM4_INSTRUCTION_LENGTH_SHIFT    24
+#define SM4_INSTRUCTION_LENGTH_MASK     (0x1fu << SM4_INSTRUCTION_LENGTH_SHIFT)
+
+enum sm4_opcode
+{
+    SM5_OP_DCL_THREAD_GROUP                 = 0x9b,
+};
+
 static HRESULT d3dcompiler_parse_shdr(struct d3dcompiler_shader_reflection *r, const char *data, size_t data_size)
 {
+    uint32_t opcode_token, opcode;
+    uint32_t size, shader_type;
     const char *ptr = data;
+    const uint32_t *u_ptr;
+    unsigned int len;
 
     r->version = read_u32(&ptr);
     TRACE("Shader version: %u\n", r->version);
 
-    /* todo: Check if anything else is needed from the shdr or shex blob. */
+    shader_type = (r->version & D3DCOMPILER_SHADER_TARGET_SHADERTYPE_MASK)
+            >> D3DCOMPILER_SHADER_TARGET_SHADERTYPE_SHIFT;
 
+    if (shader_type != D3DCOMPILER_SHADER_TYPE_CS)
+    {
+        /* TODO: Check if anything else is needed from the SHDR or SHEX blob. */
+        return S_OK;
+    }
+
+    size = read_u32(&ptr);
+    TRACE("size %u.\n", size);
+    if (size * sizeof(uint32_t) != data_size || size < 2)
+    {
+        WARN("Invalid size %u.\n", size);
+        return E_FAIL;
+    }
+    size -= 2;
+    u_ptr = (uint32_t *)ptr;
+    while (size)
+    {
+        opcode_token = *u_ptr;
+        opcode = opcode_token & SM4_OPCODE_MASK;
+        len = (opcode_token & SM4_INSTRUCTION_LENGTH_MASK) >> SM4_INSTRUCTION_LENGTH_SHIFT;
+        if (!len)
+        {
+            if (size < 2)
+            {
+                WARN("End of byte-code, failed to read length token.\n");
+                return E_FAIL;
+            }
+            len = u_ptr[1];
+        }
+        if (!len || size < len)
+        {
+            WARN("Invalid instruction length %u, size %u.\n", len, size);
+            return E_FAIL;
+        }
+        if (opcode == SM5_OP_DCL_THREAD_GROUP)
+        {
+            if (len != 4)
+            {
+                WARN("Invalid dcl_thread_group opcode length %u.\n", len);
+                return E_FAIL;
+            }
+            r->thread_group_size_x = u_ptr[1];
+            r->thread_group_size_y = u_ptr[2];
+            r->thread_group_size_z = u_ptr[3];
+            TRACE("Found dcl_thread_group %u, %u, %u.\n",
+                    r->thread_group_size_x, r->thread_group_size_y, r->thread_group_size_z);
+        }
+        size -= len;
+        u_ptr += len;
+    }
     return S_OK;
 }
 
@@ -1972,7 +2057,6 @@ HRESULT WINAPI D3DReflect(const void *data, SIZE_T data_size, REFIID riid, void 
     }
 
     *reflector = object;
-
     TRACE("Created ID3D11ShaderReflection %p\n", object);
 
     return S_OK;
