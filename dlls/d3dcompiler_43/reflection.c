@@ -52,6 +52,8 @@ enum D3DCOMPILER_SIGNATURE_ELEMENT_SIZE
 #define D3DCOMPILER_SHADER_TARGET_SHADERTYPE_MASK 0xffff0000
 #define D3DCOMPILER_SHADER_TARGET_SHADERTYPE_SHIFT 16
 
+#define D3DCOMPILER_SHDR_SHADER_TYPE_CS 0x4353
+
 enum d3dcompiler_shader_type
 {
     D3DCOMPILER_SHADER_TYPE_CS = 5,
@@ -1487,6 +1489,9 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
     size_t size = data_size >> 2;
     uint32_t target_version;
     const char *ptr = data;
+#if D3D_COMPILER_VERSION < 47
+    uint32_t shader_type;
+#endif
     HRESULT hr;
 
     TRACE("Size %Iu.\n", size);
@@ -1508,8 +1513,10 @@ static HRESULT d3dcompiler_parse_rdef(struct d3dcompiler_shader_reflection *r, c
 
     target_version = r->target & D3DCOMPILER_SHADER_TARGET_VERSION_MASK;
 #if D3D_COMPILER_VERSION < 47
-    if (target_version >= 0x501 && (!D3D_COMPILER_VERSION || ((r->target & D3DCOMPILER_SHADER_TARGET_SHADERTYPE_MASK)
-            >> D3DCOMPILER_SHADER_TARGET_SHADERTYPE_SHIFT) != 0x4353 /* CS */))
+    shader_type = (r->target & D3DCOMPILER_SHADER_TARGET_SHADERTYPE_MASK)
+            >> D3DCOMPILER_SHADER_TARGET_SHADERTYPE_SHIFT;
+    if ((target_version >= 0x501 && shader_type != D3DCOMPILER_SHDR_SHADER_TYPE_CS)
+            || (!D3D_COMPILER_VERSION && shader_type == D3DCOMPILER_SHDR_SHADER_TYPE_CS))
     {
         WARN("Target version %#x is not supported in d3dcompiler %u.\n", target_version, D3D_COMPILER_VERSION);
         return E_INVALIDARG;

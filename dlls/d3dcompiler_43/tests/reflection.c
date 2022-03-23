@@ -1198,9 +1198,32 @@ static const D3D12_SHADER_INPUT_BIND_DESC test_reflection_bound_resources_result
     {"c2", D3D_SIT_CBUFFER, 1, 1, 0, 0, D3D_SRV_DIMENSION_UNKNOWN, 0, 0, 1},
 };
 
-#if D3D_COMPILER_VERSION
 static void test_reflection_cs(void)
 {
+    /*
+     * fxc.exe /T cs_4_0 /Fo
+     */
+#if 0
+    [numthreads(16, 8, 4)]
+    void main( uint3 DTid : SV_DispatchThreadID )
+    {
+    }
+#endif
+    static const DWORD test_blob_cs_4_0[] =
+    {
+        0x43425844, 0x698a31ca, 0x8c6eee35, 0x2377107a, 0xe1e69066, 0x00000001, 0x00000150, 0x00000005,
+        0x00000034, 0x0000008c, 0x0000009c, 0x000000ac, 0x000000d4, 0x46454452, 0x00000050, 0x00000000,
+        0x00000000, 0x00000000, 0x0000001c, 0x43530400, 0x00000100, 0x0000001c, 0x7263694d, 0x666f736f,
+        0x52282074, 0x4c482029, 0x53204c53, 0x65646168, 0x6f432072, 0x6c69706d, 0x39207265, 0x2e39322e,
+        0x2e323539, 0x31313133, 0xababab00, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+        0x00000008, 0x00000000, 0x00000008, 0x58454853, 0x00000020, 0x00050040, 0x00000008, 0x0100086a,
+        0x0400009b, 0x00000010, 0x00000008, 0x00000004, 0x0100003e, 0x54415453, 0x00000074, 0x00000001,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000001, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000, 0x00000000,
+        0x00000000, 0x00000000, 0x00000000, 0x00000000,
+    };
+
     /*
      * fxc.exe /T cs_5_1 /Fo
      */
@@ -1228,10 +1251,17 @@ static void test_reflection_cs(void)
     };
     UINT size_x, size_y, size_z, size_total;
     ID3D11ShaderReflection *ref11;
-    HRESULT hr;
+    HRESULT hr, expected;
+
+    expected = D3D_COMPILER_VERSION ? S_OK : E_INVALIDARG;
+    hr = call_reflect(test_blob_cs_4_0, test_blob_cs_4_0[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
+    ok(hr == expected, "Unexpected hr %#lx.\n", hr);
+
+    if (SUCCEEDED(hr))
+        ref11->lpVtbl->Release(ref11);
 
     hr = call_reflect(test_blob, test_blob[6], &IID_ID3D11ShaderReflection, (void **)&ref11);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == expected, "Unexpected hr %#lx.\n", hr);
     if (FAILED(hr))
         return;
     size_total = ref11->lpVtbl->GetThreadGroupSize(ref11, &size_x, &size_y, &size_z);
@@ -1242,7 +1272,6 @@ static void test_reflection_cs(void)
 
     ref11->lpVtbl->Release(ref11);
 }
-#endif
 
 static void test_reflection_bound_resources(const DWORD *blob, const D3D12_SHADER_INPUT_BIND_DESC *result,
         unsigned int result_count, unsigned int target_version)
@@ -2208,10 +2237,10 @@ START_TEST(reflection)
 #if D3D_COMPILER_VERSION
     test_reflection_references();
     test_reflection_interfaces();
-    test_reflection_cs();
 #else
     test_d3d10_interfaces();
 #endif
+    test_reflection_cs();
     test_reflection_desc_vs();
     test_reflection_desc_ps();
     test_reflection_desc_ps_output();
