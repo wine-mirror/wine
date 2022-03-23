@@ -596,7 +596,7 @@ static void test_UrlGetPart(void)
         DWORD flags;
         HRESULT hr;
         const char *expect;
-        BOOL todo_hr, todo_result;
+        BOOL todo_hr;
     }
     tests[] =
     {
@@ -684,10 +684,10 @@ static void test_UrlGetPart(void)
         {"http:///index.html", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "http:"},
         {"file://h o s t/c:/windows/file", URL_PART_HOSTNAME, 0, S_OK, "h o s t"},
         {"file://h o s t/c:/windows/file", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "h o s t"},
-        {"file://foo:bar@localhost:21/file?query=x", URL_PART_USERNAME, 0, E_FAIL, .todo_hr = TRUE},
-        {"file://foo:bar@localhost:21/file?query=x", URL_PART_PASSWORD, 0, E_FAIL, .todo_hr = TRUE},
-        {"file://foo:bar@localhost:21/file?query=x", URL_PART_HOSTNAME, 0, S_OK, "foo:bar@localhost:21", .todo_result = TRUE},
-        {"file://foo:bar@localhost:21/file?query=x", URL_PART_PORT, 0, E_FAIL, .todo_hr = TRUE},
+        {"file://foo:bar@localhost:21/file?query=x", URL_PART_USERNAME, 0, E_FAIL},
+        {"file://foo:bar@localhost:21/file?query=x", URL_PART_PASSWORD, 0, E_FAIL},
+        {"file://foo:bar@localhost:21/file?query=x", URL_PART_HOSTNAME, 0, S_OK, "foo:bar@localhost:21"},
+        {"file://foo:bar@localhost:21/file?query=x", URL_PART_PORT, 0, E_FAIL},
         {"file://foo:bar@localhost:21/file?query=x", URL_PART_QUERY, 0, S_OK, "query=x"},
         {"http://user:pass 123@www.wine hq.org", URL_PART_HOSTNAME, 0, S_OK, "www.wine hq.org"},
         {"http://user:pass 123@www.wine hq.org", URL_PART_PASSWORD, 0, S_OK, "pass 123"},
@@ -799,7 +799,7 @@ static void test_UrlGetPart(void)
             {
                 if (expect)
                 {
-                    todo_wine_if (tests[i].todo_hr || tests[i].todo_result)
+                    todo_wine_if (tests[i].todo_hr)
                         ok(size == strlen(expect) + 1, "Got size %lu.\n", size);
                 }
             }
@@ -820,7 +820,7 @@ static void test_UrlGetPart(void)
             ok(size == strlen(buffer), "Got size %lu.\n", size);
             if (expect)
             {
-                todo_wine_if (tests[i].todo_hr || tests[i].todo_result)
+                todo_wine_if (tests[i].todo_hr)
                     ok(!strcmp(buffer, expect), "Got result %s.\n", debugstr_a(buffer));
             }
         }
@@ -854,7 +854,7 @@ static void test_UrlGetPart(void)
             {
                 if (expect)
                 {
-                    todo_wine_if (tests[i].todo_hr || tests[i].todo_result)
+                    todo_wine_if (tests[i].todo_hr)
                         ok(size == strlen(expect) + 1, "Got size %lu.\n", size);
                 }
             }
