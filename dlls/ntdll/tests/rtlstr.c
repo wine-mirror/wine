@@ -21,6 +21,7 @@
  * We use function pointers here as there is no import library for NTDLL on
  * windows.
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <stdlib.h>
 
@@ -220,7 +221,7 @@ static void test_RtlInitUnicodeStringEx(void)
     uni.Buffer = (void *) 0xdeadbeef;
     result = pRtlInitUnicodeStringEx(&uni, teststring);
     ok(result == STATUS_SUCCESS,
-       "pRtlInitUnicodeStringEx(&uni, 0) returns %x, expected 0\n",
+       "pRtlInitUnicodeStringEx(&uni, 0) returns %lx, expected 0\n",
        result);
     ok(uni.Length == 32,
        "pRtlInitUnicodeStringEx(&uni, 0) sets Length to %u, expected %u\n",
@@ -251,7 +252,7 @@ static void test_RtlInitUnicodeStringEx(void)
     uni.Buffer = (void *) 0xdeadbeef;
     result = pRtlInitUnicodeStringEx(&uni, teststring2);
     ok(result == STATUS_NAME_TOO_LONG,
-       "pRtlInitUnicodeStringEx(&uni, 0) returns %x, expected %x\n",
+       "pRtlInitUnicodeStringEx(&uni, 0) returns %lx, expected %lx\n",
        result, STATUS_NAME_TOO_LONG);
     ok(uni.Length == 12345 ||
        uni.Length == 0, /* win2k3 */
@@ -287,7 +288,7 @@ static void test_RtlInitUnicodeStringEx(void)
     uni.Buffer = (void *) 0xdeadbeef;
     result = pRtlInitUnicodeStringEx(&uni, 0);
     ok(result == STATUS_SUCCESS,
-       "pRtlInitUnicodeStringEx(&uni, 0) returns %x, expected 0\n",
+       "pRtlInitUnicodeStringEx(&uni, 0) returns %lx, expected 0\n",
        result);
     ok(uni.Length == 0,
        "pRtlInitUnicodeStringEx(&uni, 0) sets Length to %u, expected %u\n",
@@ -470,7 +471,7 @@ static void test_RtlDuplicateUnicodeString(void)
         dest_ansi_buf[dest_ansi_str.Length] = '\0';
         dest_ansi_str.Buffer = dest_ansi_buf;
 	ok(result == dupl_ustr[test_num].result,
-           "(test %d): RtlDuplicateUnicodeString(%d, source, dest) has result %x, expected %x\n",
+           "(test %d): RtlDuplicateUnicodeString(%d, source, dest) has result %lx, expected %lx\n",
 	   test_num, dupl_ustr[test_num].add_nul, result, dupl_ustr[test_num].result);
 	ok(dest_str.Length == dupl_ustr[test_num].res_Length,
 	   "(test %d): RtlDuplicateUnicodeString(%d, source, dest) destination has Length %d, expected %d\n",
@@ -828,7 +829,7 @@ static void test_RtlUnicodeStringToAnsiString(void)
 	}
 	result = pRtlUnicodeStringToAnsiString(&ansi_str, &uni_str, ustr2astr[test_num].doalloc);
 	ok(result == ustr2astr[test_num].result,
-           "(test %d): RtlUnicodeStringToAnsiString(ansi, uni, %d) has result %x, expected %x\n",
+           "(test %d): RtlUnicodeStringToAnsiString(ansi, uni, %d) has result %lx, expected %lx\n",
 	   test_num, ustr2astr[test_num].doalloc, result, ustr2astr[test_num].result);
 	ok(ansi_str.Length == ustr2astr[test_num].res_Length,
 	   "(test %d): RtlUnicodeStringToAnsiString(ansi, uni, %d) ansi has Length %d, expected %d\n",
@@ -890,7 +891,7 @@ static void test_RtlAppendAsciizToString(void)
 	}
 	result = pRtlAppendAsciizToString(&dest_str, app_asc2str[test_num].src);
 	ok(result == app_asc2str[test_num].result,
-           "(test %d): RtlAppendAsciizToString(dest, src) has result %x, expected %x\n",
+           "(test %d): RtlAppendAsciizToString(dest, src) has result %lx, expected %lx\n",
 	   test_num, result, app_asc2str[test_num].result);
 	ok(dest_str.Length == app_asc2str[test_num].res_Length,
 	   "(test %d): RtlAppendAsciizToString(dest, src) dest has Length %d, expected %d\n",
@@ -970,7 +971,7 @@ static void test_RtlAppendStringToString(void)
 	}
 	result = pRtlAppendStringToString(&dest_str, &src_str);
 	ok(result == app_str2str[test_num].result,
-           "(test %d): RtlAppendStringToString(dest, src) has result %x, expected %x\n",
+           "(test %d): RtlAppendStringToString(dest, src) has result %lx, expected %lx\n",
 	   test_num, result, app_str2str[test_num].result);
 	ok(dest_str.Length == app_str2str[test_num].res_Length,
 	   "(test %d): RtlAppendStringToString(dest, src) dest has Length %d, expected %d\n",
@@ -1041,7 +1042,7 @@ static void test_RtlAppendUnicodeToString(void)
 	}
 	result = pRtlAppendUnicodeToString(&dest_str, (LPCWSTR) app_uni2str[test_num].src);
 	ok(result == app_uni2str[test_num].result,
-           "(test %d): RtlAppendUnicodeToString(dest, src) has result %x, expected %x\n",
+           "(test %d): RtlAppendUnicodeToString(dest, src) has result %lx, expected %lx\n",
 	   test_num, result, app_uni2str[test_num].result);
 	ok(dest_str.Length == app_uni2str[test_num].res_Length,
 	   "(test %d): RtlAppendUnicodeToString(dest, src) dest has Length %d, expected %d\n",
@@ -1125,7 +1126,7 @@ static void test_RtlAppendUnicodeStringToString(void)
 	}
 	result = pRtlAppendUnicodeStringToString(&dest_str, &src_str);
 	ok(result == app_ustr2str[test_num].result,
-           "(test %d): RtlAppendStringToString(dest, src) has result %x, expected %x\n",
+           "(test %d): RtlAppendStringToString(dest, src) has result %lx, expected %lx\n",
 	   test_num, result, app_ustr2str[test_num].result);
 	ok(dest_str.Length == app_ustr2str[test_num].res_Length,
 	   "(test %d): RtlAppendStringToString(dest, src) dest has Length %d, expected %d\n",
@@ -1249,7 +1250,7 @@ static void test_RtlFindCharInUnicodeString(void)
 	pos = 12345;
         result = pRtlFindCharInUnicodeString(find_ch_in_ustr[test_num].flags, &main_str, &search_chars, &pos);
         ok(result == find_ch_in_ustr[test_num].result,
-           "(test %d): RtlFindCharInUnicodeString(%d, %s, %s, [out]) has result %x, expected %x\n",
+           "(test %d): RtlFindCharInUnicodeString(%d, %s, %s, [out]) has result %lx, expected %lx\n",
            test_num, find_ch_in_ustr[test_num].flags,
            find_ch_in_ustr[test_num].main_str, find_ch_in_ustr[test_num].search_chars,
            result, find_ch_in_ustr[test_num].result);
@@ -1400,7 +1401,7 @@ static void test_RtlUnicodeStringToInteger(void)
 	result = pRtlUnicodeStringToInteger(&uni, str2int[test_num].base, &value);
 	ok(result == str2int[test_num].result ||
            (str2int[test_num].alternative && result == str2int[test_num].alternative),
-           "(test %d): RtlUnicodeStringToInteger(\"%s\", %d, [out]) has result %x, expected: %x (%x)\n",
+           "(test %d): RtlUnicodeStringToInteger(\"%s\", %d, [out]) has result %lx, expected: %lx (%lx)\n",
 	   test_num, str2int[test_num].str, str2int[test_num].base, result,
            str2int[test_num].result, str2int[test_num].alternative);
         if (result == STATUS_SUCCESS)
@@ -1419,17 +1420,17 @@ static void test_RtlUnicodeStringToInteger(void)
     pRtlInitUnicodeString(&uni, wstr);
     result = pRtlUnicodeStringToInteger(&uni, str2int[1].base, NULL);
     ok(result == STATUS_ACCESS_VIOLATION,
-       "call failed: RtlUnicodeStringToInteger(\"%s\", %d, NULL) has result %x\n",
+       "call failed: RtlUnicodeStringToInteger(\"%s\", %d, NULL) has result %lx\n",
        str2int[1].str, str2int[1].base, result);
     result = pRtlUnicodeStringToInteger(&uni, 20, NULL);
     ok(result == STATUS_INVALID_PARAMETER || result == STATUS_ACCESS_VIOLATION,
-       "call failed: RtlUnicodeStringToInteger(\"%s\", 20, NULL) has result %x\n",
+       "call failed: RtlUnicodeStringToInteger(\"%s\", 20, NULL) has result %lx\n",
        str2int[1].str, result);
 
     uni.Length = 10; /* Make Length shorter (5 WCHARS instead of 7) */
     result = pRtlUnicodeStringToInteger(&uni, str2int[1].base, &value);
     ok(result == STATUS_SUCCESS,
-       "call failed: RtlUnicodeStringToInteger(\"12345\", %d, [out]) has result %x\n",
+       "call failed: RtlUnicodeStringToInteger(\"12345\", %d, [out]) has result %lx\n",
        str2int[1].base, result);
     ok(value == 12345,
        "didn't return expected value (test a): expected: %d, got: %d\n",
@@ -1438,7 +1439,7 @@ static void test_RtlUnicodeStringToInteger(void)
     uni.Length = 5; /* Use odd Length (2.5 WCHARS) */
     result = pRtlUnicodeStringToInteger(&uni, str2int[1].base, &value);
     ok(result == STATUS_SUCCESS || result == STATUS_INVALID_PARAMETER /* vista */,
-       "call failed: RtlUnicodeStringToInteger(\"12\", %d, [out]) has result %x\n",
+       "call failed: RtlUnicodeStringToInteger(\"12\", %d, [out]) has result %lx\n",
        str2int[1].base, result);
     if (result == STATUS_SUCCESS)
         ok(value == 12, "didn't return expected value (test b): expected: %d, got: %d\n", 12, value);
@@ -1446,7 +1447,7 @@ static void test_RtlUnicodeStringToInteger(void)
     uni.Length = 2;
     result = pRtlUnicodeStringToInteger(&uni, str2int[1].base, &value);
     ok(result == STATUS_SUCCESS,
-       "call failed: RtlUnicodeStringToInteger(\"1\", %d, [out]) has result %x\n",
+       "call failed: RtlUnicodeStringToInteger(\"1\", %d, [out]) has result %lx\n",
        str2int[1].base, result);
     ok(value == 1,
        "didn't return expected value (test c): expected: %d, got: %d\n",
@@ -1469,7 +1470,7 @@ static void test_RtlCharToInteger(void)
 	    result = pRtlCharToInteger(str2int[test_num].str, str2int[test_num].base, &value);
 	    ok(result == str2int[test_num].result ||
                (str2int[test_num].alternative && result == str2int[test_num].alternative),
-               "(test %d): call failed: RtlCharToInteger(\"%s\", %d, [out]) has result %x, expected: %x (%x)\n",
+               "(test %d): call failed: RtlCharToInteger(\"%s\", %d, [out]) has result %lx, expected: %lx (%lx)\n",
 	       test_num, str2int[test_num].str, str2int[test_num].base, result,
                str2int[test_num].result, str2int[test_num].alternative);
             if (result == STATUS_SUCCESS)
@@ -1485,12 +1486,12 @@ static void test_RtlCharToInteger(void)
 
     result = pRtlCharToInteger(str2int[1].str, str2int[1].base, NULL);
     ok(result == STATUS_ACCESS_VIOLATION,
-       "call failed: RtlCharToInteger(\"%s\", %d, NULL) has result %x\n",
+       "call failed: RtlCharToInteger(\"%s\", %d, NULL) has result %lx\n",
        str2int[1].str, str2int[1].base, result);
 
     result = pRtlCharToInteger(str2int[1].str, 20, NULL);
     ok(result == STATUS_INVALID_PARAMETER,
-       "call failed: RtlCharToInteger(\"%s\", 20, NULL) has result %x\n",
+       "call failed: RtlCharToInteger(\"%s\", 20, NULL) has result %lx\n",
        str2int[1].str, result);
 }
 
@@ -1657,22 +1658,22 @@ static void one_RtlIntegerToUnicodeString_test(int test_num, const int2str_t *in
 	}
     } else {
 	ok(result == int2str->result,
-           "(test %d): RtlIntegerToUnicodeString(%u, %d, [out]) has result %x, expected: %x\n",
+           "(test %d): RtlIntegerToUnicodeString(%lu, %d, [out]) has result %lx, expected: %lx\n",
 	   test_num, int2str->value, int2str->base, result, int2str->result);
 	if (result == STATUS_SUCCESS) {
 	    ok(unicode_string.Buffer[unicode_string.Length/sizeof(WCHAR)] == '\0',
-               "(test %d): RtlIntegerToUnicodeString(%u, %d, [out]) string \"%s\" is not NULL terminated\n",
+               "(test %d): RtlIntegerToUnicodeString(%lu, %d, [out]) string \"%s\" is not NULL terminated\n",
 	       test_num, int2str->value, int2str->base, ansi_str.Buffer);
 	}
     }
     ok(memcmp(unicode_string.Buffer, expected_unicode_string.Buffer, STRI_BUFFER_LENGTH * sizeof(WCHAR)) == 0,
-       "(test %d): RtlIntegerToUnicodeString(%u, %d, [out]) assigns string \"%s\", expected: \"%s\"\n",
+       "(test %d): RtlIntegerToUnicodeString(%lu, %d, [out]) assigns string \"%s\", expected: \"%s\"\n",
        test_num, int2str->value, int2str->base, ansi_str.Buffer, expected_ansi_str.Buffer);
     ok(unicode_string.Length == expected_unicode_string.Length,
-       "(test %d): RtlIntegerToUnicodeString(%u, %d, [out]) string has Length %d, expected: %d\n",
+       "(test %d): RtlIntegerToUnicodeString(%lu, %d, [out]) string has Length %d, expected: %d\n",
        test_num, int2str->value, int2str->base, unicode_string.Length, expected_unicode_string.Length);
     ok(unicode_string.MaximumLength == expected_unicode_string.MaximumLength,
-       "(test %d): RtlIntegerToUnicodeString(%u, %d, [out]) string has MaximumLength %d, expected: %d\n",
+       "(test %d): RtlIntegerToUnicodeString(%lu, %d, [out]) string has MaximumLength %d, expected: %d\n",
        test_num, int2str->value, int2str->base, unicode_string.MaximumLength, expected_unicode_string.MaximumLength);
     pRtlFreeAnsiString(&expected_ansi_str);
     pRtlFreeAnsiString(&ansi_str);
@@ -1697,10 +1698,10 @@ static void one_RtlIntegerToChar_test(int test_num, const int2str_t *int2str)
     dest_str[STRI_BUFFER_LENGTH] = '\0';
     result = pRtlIntegerToChar(int2str->value, int2str->base, int2str->MaximumLength, dest_str);
     ok(result == int2str->result,
-       "(test %d): RtlIntegerToChar(%u, %d, %d, [out]) has result %x, expected: %x\n",
+       "(test %d): RtlIntegerToChar(%lu, %d, %d, [out]) has result %lx, expected: %lx\n",
        test_num, int2str->value, int2str->base, int2str->MaximumLength, result, int2str->result);
     ok(memcmp(dest_str, int2str->Buffer, STRI_BUFFER_LENGTH) == 0,
-       "(test %d): RtlIntegerToChar(%u, %d, %d, [out]) assigns string \"%s\", expected: \"%s\"\n",
+       "(test %d): RtlIntegerToChar(%lu, %d, %d, [out]) assigns string \"%s\", expected: \"%s\"\n",
        test_num, int2str->value, int2str->base, int2str->MaximumLength, dest_str, int2str->Buffer);
 }
 
@@ -1715,22 +1716,22 @@ static void test_RtlIntegerToChar(void)
 
     result = pRtlIntegerToChar(int2str[0].value, 20, int2str[0].MaximumLength, NULL);
     ok(result == STATUS_INVALID_PARAMETER,
-       "(test a): RtlIntegerToChar(%u, %d, %d, NULL) has result %x, expected: %x\n",
+       "(test a): RtlIntegerToChar(%lu, %d, %d, NULL) has result %lx, expected: %lx\n",
        int2str[0].value, 20, int2str[0].MaximumLength, result, STATUS_INVALID_PARAMETER);
 
     result = pRtlIntegerToChar(int2str[0].value, 20, 0, NULL);
     ok(result == STATUS_INVALID_PARAMETER,
-       "(test b): RtlIntegerToChar(%u, %d, %d, NULL) has result %x, expected: %x\n",
+       "(test b): RtlIntegerToChar(%lu, %d, %d, NULL) has result %lx, expected: %lx\n",
        int2str[0].value, 20, 0, result, STATUS_INVALID_PARAMETER);
 
     result = pRtlIntegerToChar(int2str[0].value, int2str[0].base, 0, NULL);
     ok(result == STATUS_BUFFER_OVERFLOW,
-       "(test c): RtlIntegerToChar(%u, %d, %d, NULL) has result %x, expected: %x\n",
+       "(test c): RtlIntegerToChar(%lu, %d, %d, NULL) has result %lx, expected: %lx\n",
        int2str[0].value, int2str[0].base, 0, result, STATUS_BUFFER_OVERFLOW);
 
     result = pRtlIntegerToChar(int2str[0].value, int2str[0].base, int2str[0].MaximumLength, NULL);
     ok(result == STATUS_ACCESS_VIOLATION,
-       "(test d): RtlIntegerToChar(%u, %d, %d, NULL) has result %x, expected: %x\n",
+       "(test d): RtlIntegerToChar(%lu, %d, %d, NULL) has result %lx, expected: %lx\n",
        int2str[0].value, int2str[0].base, int2str[0].MaximumLength, result, STATUS_ACCESS_VIOLATION);
 }
 
@@ -1883,17 +1884,17 @@ static void test_RtlCompareUnicodeString(void)
         for (ch2 = 0; ch2 < 1024; ch2++)
         {
             LONG res = pRtlCompareUnicodeString( &str1, &str2, FALSE );
-            ok( res == (ch1 - ch2), "wrong result %d %04x %04x\n", res, ch1, ch2 );
+            ok( res == (ch1 - ch2), "wrong result %ld %04x %04x\n", res, ch1, ch2 );
             res = pRtlCompareUnicodeString( &str1, &str2, TRUE );
             ok( res == (pRtlUpcaseUnicodeChar(ch1) - pRtlUpcaseUnicodeChar(ch2)),
-                "wrong result %d %04x %04x\n", res, ch1, ch2 );
+                "wrong result %ld %04x %04x\n", res, ch1, ch2 );
             if (pRtlCompareUnicodeStrings)
             {
                 res = pRtlCompareUnicodeStrings( &ch1, 1, &ch2, 1, FALSE );
-                ok( res == (ch1 - ch2), "wrong result %d %04x %04x\n", res, ch1, ch2 );
+                ok( res == (ch1 - ch2), "wrong result %ld %04x %04x\n", res, ch1, ch2 );
                 res = pRtlCompareUnicodeStrings( &ch1, 1, &ch2, 1, TRUE );
                 ok( res == (pRtlUpcaseUnicodeChar(ch1) - pRtlUpcaseUnicodeChar(ch2)),
-                    "wrong result %d %04x %04x\n", res, ch1, ch2 );
+                    "wrong result %ld %04x %04x\n", res, ch1, ch2 );
             }
         }
     }
@@ -1924,7 +1925,7 @@ static void test_RtlGUIDFromString(void)
   str.Buffer = (LPWSTR)szGuid;
 
   ret = pRtlGUIDFromString(&str, &guid);
-  ok(ret == 0, "expected ret=0, got 0x%0x\n", ret);
+  ok(ret == 0, "expected ret=0, got 0x%0lx\n", ret);
   ok(IsEqualGUID(&guid, &IID_Endianness), "Endianness broken\n");
 
   str.Length = str.MaximumLength = sizeof(szGuid2) - sizeof(WCHAR);
@@ -1949,7 +1950,7 @@ static void test_RtlStringFromGUID(void)
   str.Buffer = NULL;
 
   ret = pRtlStringFromGUID(&IID_Endianness, &str);
-  ok(ret == 0, "expected ret=0, got 0x%0x\n", ret);
+  ok(ret == 0, "expected ret=0, got 0x%0lx\n", ret);
   ok(str.Buffer && !lstrcmpiW(str.Buffer, szGuid), "Endianness broken\n");
   pRtlFreeUnicodeString(&str);
 }
@@ -1991,22 +1992,22 @@ static void test_RtlHashUnicodeString(void)
     }
 
     status = pRtlHashUnicodeString(NULL, FALSE, HASH_STRING_ALGORITHM_X65599, &hash);
-    ok(status == STATUS_INVALID_PARAMETER, "got status 0x%08x\n", status);
+    ok(status == STATUS_INVALID_PARAMETER, "got status 0x%08lx\n", status);
 
     pRtlInitUnicodeString(&str, strW);
     status = pRtlHashUnicodeString(&str, FALSE, HASH_STRING_ALGORITHM_X65599, NULL);
-    ok(status == STATUS_INVALID_PARAMETER, "got status 0x%08x\n", status);
+    ok(status == STATUS_INVALID_PARAMETER, "got status 0x%08lx\n", status);
 
     status = pRtlHashUnicodeString(&str, FALSE, HASH_STRING_ALGORITHM_INVALID, &hash);
-    ok(status == STATUS_INVALID_PARAMETER, "got status 0x%08x\n", status);
+    ok(status == STATUS_INVALID_PARAMETER, "got status 0x%08lx\n", status);
 
     /* embedded null */
     str.Buffer = (PWSTR)strW;
     str.Length = sizeof(strW) - sizeof(WCHAR);
     str.MaximumLength = sizeof(strW);
     status = pRtlHashUnicodeString(&str, FALSE, HASH_STRING_ALGORITHM_X65599, &hash);
-    ok(status == STATUS_SUCCESS, "got status 0x%08x\n", status);
-    ok(hash == 0x32803083, "got 0x%08x\n", hash);
+    ok(status == STATUS_SUCCESS, "got status 0x%08lx\n", status);
+    ok(hash == 0x32803083, "got 0x%08lx\n", hash);
 
     ptr = hash_test;
     while (*ptr->str)
@@ -2014,8 +2015,8 @@ static void test_RtlHashUnicodeString(void)
         pRtlInitUnicodeString(&str, ptr->str);
         hash = 0;
         status = pRtlHashUnicodeString(&str, ptr->case_insensitive, HASH_STRING_ALGORITHM_X65599, &hash);
-        ok(status == STATUS_SUCCESS, "got status 0x%08x for %s\n", status, wine_dbgstr_w(ptr->str));
-        ok(hash == ptr->hash, "got wrong hash 0x%08x, expected 0x%08x, for %s, mode %d\n", hash, ptr->hash,
+        ok(status == STATUS_SUCCESS, "got status 0x%08lx for %s\n", status, wine_dbgstr_w(ptr->str));
+        ok(hash == ptr->hash, "got wrong hash 0x%08lx, expected 0x%08lx, for %s, mode %d\n", hash, ptr->hash,
             wine_dbgstr_w(ptr->str), ptr->case_insensitive);
 
         ptr++;
@@ -2078,8 +2079,8 @@ static void utf8_expect_(const unsigned char *out_string, ULONG buflen, ULONG ou
     status = pRtlUnicodeToUTF8N(
         out_string ? buffer : NULL, buflen, &bytes_out,
         in_string, in_bytes);
-    ok_(__FILE__, line)(status == expect_status, "status 0x%x, expected 0x%x\n", status, expect_status);
-    ok_(__FILE__, line)(bytes_out == out_bytes, "bytes_out = %u, expected %u\n", bytes_out, out_bytes);
+    ok_(__FILE__, line)(status == expect_status, "status 0x%lx, expected 0x%lx\n", status, expect_status);
+    ok_(__FILE__, line)(bytes_out == out_bytes, "bytes_out = %lu, expected %lu\n", bytes_out, out_bytes);
     if (out_string)
     {
         for (i = 0; i < bytes_out; i++)
@@ -2120,51 +2121,51 @@ static void test_RtlUnicodeToUTF8N(void)
     /* show that bytes_out is really ULONG */
     memset(bytes_out_array, 0x55, sizeof(bytes_out_array));
     status = pRtlUnicodeToUTF8N(NULL, 0, bytes_out_array, empty_string, 0);
-    ok(status == STATUS_SUCCESS, "status = 0x%x\n", status);
-    ok(bytes_out_array[0] == 0x00000000, "Got 0x%x\n", bytes_out_array[0]);
-    ok(bytes_out_array[1] == 0x55555555, "Got 0x%x\n", bytes_out_array[1]);
+    ok(status == STATUS_SUCCESS, "status = 0x%lx\n", status);
+    ok(bytes_out_array[0] == 0x00000000, "Got 0x%lx\n", bytes_out_array[0]);
+    ok(bytes_out_array[1] == 0x55555555, "Got 0x%lx\n", bytes_out_array[1]);
 
     /* parameter checks */
     status = pRtlUnicodeToUTF8N(NULL, 0, NULL, NULL, 0);
-    ok(status == STATUS_INVALID_PARAMETER_4, "status = 0x%x\n", status);
+    ok(status == STATUS_INVALID_PARAMETER_4, "status = 0x%lx\n", status);
 
     status = pRtlUnicodeToUTF8N(NULL, 0, NULL, empty_string, 0);
-    ok(status == STATUS_INVALID_PARAMETER, "status = 0x%x\n", status);
+    ok(status == STATUS_INVALID_PARAMETER, "status = 0x%lx\n", status);
 
     bytes_out = 0x55555555;
     status = pRtlUnicodeToUTF8N(NULL, 0, &bytes_out, NULL, 0);
-    ok(status == STATUS_INVALID_PARAMETER_4, "status = 0x%x\n", status);
-    ok(bytes_out == 0x55555555, "bytes_out = 0x%x\n", bytes_out);
+    ok(status == STATUS_INVALID_PARAMETER_4, "status = 0x%lx\n", status);
+    ok(bytes_out == 0x55555555, "bytes_out = 0x%lx\n", bytes_out);
 
     bytes_out = 0x55555555;
     status = pRtlUnicodeToUTF8N(NULL, 0, &bytes_out, invalid_pointer, 0);
-    ok(status == STATUS_SUCCESS, "status = 0x%x\n", status);
-    ok(bytes_out == 0, "bytes_out = 0x%x\n", bytes_out);
+    ok(status == STATUS_SUCCESS, "status = 0x%lx\n", status);
+    ok(bytes_out == 0, "bytes_out = 0x%lx\n", bytes_out);
 
     bytes_out = 0x55555555;
     status = pRtlUnicodeToUTF8N(NULL, 0, &bytes_out, empty_string, 0);
-    ok(status == STATUS_SUCCESS, "status = 0x%x\n", status);
-    ok(bytes_out == 0, "bytes_out = 0x%x\n", bytes_out);
+    ok(status == STATUS_SUCCESS, "status = 0x%lx\n", status);
+    ok(bytes_out == 0, "bytes_out = 0x%lx\n", bytes_out);
 
     bytes_out = 0x55555555;
     status = pRtlUnicodeToUTF8N(NULL, 0, &bytes_out, test_string, 0);
-    ok(status == STATUS_SUCCESS, "status = 0x%x\n", status);
-    ok(bytes_out == 0, "bytes_out = 0x%x\n", bytes_out);
+    ok(status == STATUS_SUCCESS, "status = 0x%lx\n", status);
+    ok(bytes_out == 0, "bytes_out = 0x%lx\n", bytes_out);
 
     bytes_out = 0x55555555;
     status = pRtlUnicodeToUTF8N(NULL, 0, &bytes_out, empty_string, 1);
-    ok(status == STATUS_SUCCESS, "status = 0x%x\n", status);
-    ok(bytes_out == 0, "bytes_out = 0x%x\n", bytes_out);
+    ok(status == STATUS_SUCCESS, "status = 0x%lx\n", status);
+    ok(bytes_out == 0, "bytes_out = 0x%lx\n", bytes_out);
 
     bytes_out = 0x55555555;
     status = pRtlUnicodeToUTF8N(invalid_pointer, 0, &bytes_out, empty_string, 1);
-    ok(status == STATUS_INVALID_PARAMETER_5, "status = 0x%x\n", status);
-    ok(bytes_out == 0x55555555, "bytes_out = 0x%x\n", bytes_out);
+    ok(status == STATUS_INVALID_PARAMETER_5, "status = 0x%lx\n", status);
+    ok(bytes_out == 0x55555555, "bytes_out = 0x%lx\n", bytes_out);
 
     bytes_out = 0x55555555;
     status = pRtlUnicodeToUTF8N(invalid_pointer, 8, &bytes_out, empty_string, 1);
-    ok(status == STATUS_INVALID_PARAMETER_5, "status = 0x%x\n", status);
-    ok(bytes_out == 0x55555555, "bytes_out = 0x%x\n", bytes_out);
+    ok(status == STATUS_INVALID_PARAMETER_5, "status = 0x%lx\n", status);
+    ok(bytes_out == 0x55555555, "bytes_out = 0x%lx\n", bytes_out);
 
     /* length output with special chars */
 #define length_expect(in_chars, out_bytes, expect_status) \
@@ -2184,14 +2185,14 @@ static void test_RtlUnicodeToUTF8N(void)
         memset(buffer, 0x55, sizeof(buffer));
         bytes_out = 0xdeadbeef;
         status = pRtlUnicodeToUTF8N(buffer, i, &bytes_out, special_string, sizeof(special_string));
-        ok(status == STATUS_BUFFER_TOO_SMALL, "%d: status = 0x%x\n", i, status);
-        ok(bytes_out == special_string_len[i], "%d: expected %u, got %u\n", i, special_string_len[i], bytes_out);
+        ok(status == STATUS_BUFFER_TOO_SMALL, "%d: status = 0x%lx\n", i, status);
+        ok(bytes_out == special_string_len[i], "%d: expected %lu, got %lu\n", i, special_string_len[i], bytes_out);
         ok(memcmp(buffer, special_expected, special_string_len[i]) == 0, "%d: bad conversion\n", i);
     }
 
     status = pRtlUnicodeToUTF8N(buffer, 7, &bytes_out, special_string, sizeof(special_string));
-    ok(status == STATUS_SOME_NOT_MAPPED, "status = 0x%x\n", status);
-    ok(bytes_out == special_string_len[7], "expected %u, got %u\n", special_string_len[7], bytes_out);
+    ok(status == STATUS_SOME_NOT_MAPPED, "status = 0x%lx\n", status);
+    ok(bytes_out == special_string_len[7], "expected %lu, got %lu\n", special_string_len[7], bytes_out);
     ok(memcmp(buffer, special_expected, 7) == 0, "bad conversion\n");
 
     /* conversion behavior with varying input length */
@@ -2208,9 +2209,9 @@ static void test_RtlUnicodeToUTF8N(void)
             test_string, input_len);
         if (input_len % sizeof(WCHAR) == 0) {
             ok(status == STATUS_SUCCESS,
-               "(len %u): status = 0x%x\n", input_len, status);
+               "(len %u): status = 0x%lx\n", input_len, status);
             ok(bytes_out == input_len / sizeof(WCHAR),
-               "(len %u): bytes_out = 0x%x\n", input_len, bytes_out);
+               "(len %u): bytes_out = 0x%lx\n", input_len, bytes_out);
             for (i = 0; i < bytes_out; i++) {
                 ok(buffer[i] == test_string[i],
                    "(len %u): buffer[%d] = 0x%x, expected 0x%x\n",
@@ -2222,9 +2223,9 @@ static void test_RtlUnicodeToUTF8N(void)
             }
         } else {
             ok(status == STATUS_INVALID_PARAMETER_5,
-               "(len %u): status = 0x%x\n", input_len, status);
+               "(len %u): status = 0x%lx\n", input_len, status);
             ok(bytes_out == 0x55555555,
-               "(len %u): bytes_out = 0x%x\n", input_len, bytes_out);
+               "(len %u): bytes_out = 0x%lx\n", input_len, bytes_out);
             for (i = 0; i < sizeof(buffer); i++) {
                 ok(buffer[i] == 0x55,
                    "(len %u): buffer[%d] = 0x%x\n", input_len, i, buffer[i]);
@@ -2240,14 +2241,14 @@ static void test_RtlUnicodeToUTF8N(void)
             buffer, sizeof(buffer), &bytes_out,
             unicode_to_utf8[i].unicode, lstrlenW(unicode_to_utf8[i].unicode) * sizeof(WCHAR));
         ok(status == unicode_to_utf8[i].status,
-           "(test %d): status is 0x%x, expected 0x%x\n",
+           "(test %d): status is 0x%lx, expected 0x%lx\n",
            i, status, unicode_to_utf8[i].status);
         ok(bytes_out == strlen(unicode_to_utf8[i].expected),
-           "(test %d): bytes_out is %u, expected %u\n",
+           "(test %d): bytes_out is %lu, expected %u\n",
            i, bytes_out, lstrlenA(unicode_to_utf8[i].expected));
         ok(!memcmp(buffer, unicode_to_utf8[i].expected, bytes_out),
            "(test %d): got \"%.*s\", expected \"%s\"\n",
-           i, bytes_out, buffer, unicode_to_utf8[i].expected);
+           i, (int)bytes_out, buffer, unicode_to_utf8[i].expected);
         ok(buffer[bytes_out] == 0x55,
            "(test %d): behind string: 0x%x\n", i, buffer[bytes_out]);
         memset(buffer, 0x55, sizeof(buffer));
@@ -2266,14 +2267,14 @@ static void test_RtlUnicodeToUTF8N(void)
             buffer, sizeof(buffer), &bytes_out,
             unicode_to_utf8[i].unicode, (lstrlenW(unicode_to_utf8[i].unicode) + 1) * sizeof(WCHAR));
         ok(status == unicode_to_utf8[i].status,
-           "(test %d): status is 0x%x, expected 0x%x\n",
+           "(test %d): status is 0x%lx, expected 0x%lx\n",
            i, status, unicode_to_utf8[i].status);
         ok(bytes_out == strlen(unicode_to_utf8[i].expected) + 1,
-           "(test %d): bytes_out is %u, expected %u\n",
+           "(test %d): bytes_out is %lu, expected %u\n",
            i, bytes_out, lstrlenA(unicode_to_utf8[i].expected) + 1);
         ok(!memcmp(buffer, unicode_to_utf8[i].expected, bytes_out),
            "(test %d): got \"%.*s\", expected \"%s\"\n",
-           i, bytes_out, buffer, unicode_to_utf8[i].expected);
+           i, (int)bytes_out, buffer, unicode_to_utf8[i].expected);
         ok(buffer[bytes_out] == 0x55,
            "(test %d): behind string: 0x%x\n", i, buffer[bytes_out]);
         memset(buffer, 0x55, sizeof(buffer));
@@ -2290,7 +2291,7 @@ static void test_RtlUnicodeToUTF8N(void)
         if (unicode_to_utf8[i].status == STATUS_SOME_NOT_MAPPED)
         {
             ok( ret == 0, "(test %d): wrong len %u\n", i, ret );
-            ok( GetLastError() == ERROR_NO_UNICODE_TRANSLATION, "(test %d): wrong error %u\n", i, GetLastError() );
+            ok( GetLastError() == ERROR_NO_UNICODE_TRANSLATION, "(test %d): wrong error %lu\n", i, GetLastError() );
             ret = strlen(unicode_to_utf8[i].expected) + 1;
         }
         else
@@ -2410,9 +2411,9 @@ static void unicode_expect_(const WCHAR *out_string, ULONG buflen, ULONG out_cha
     status = pRtlUTF8ToUnicodeN(
         out_string ? buffer : NULL, buflen, &bytes_out,
         in_string, in_chars);
-    ok_(__FILE__, line)(status == expect_status, "status = 0x%x\n", status);
+    ok_(__FILE__, line)(status == expect_status, "status = 0x%lx\n", status);
     ok_(__FILE__, line)(bytes_out == out_chars * sizeof(WCHAR),
-                        "bytes_out = %u, expected %u\n", bytes_out, out_chars * (ULONG)sizeof(WCHAR));
+                        "bytes_out = %lu, expected %lu\n", bytes_out, out_chars * (ULONG)sizeof(WCHAR));
     if (out_string)
     {
         for (i = 0; i < bytes_out / sizeof(WCHAR); i++)
@@ -2453,41 +2454,41 @@ static void test_RtlUTF8ToUnicodeN(void)
     /* show that bytes_out is really ULONG */
     memset(bytes_out_array, 0x55, sizeof(bytes_out_array));
     status = pRtlUTF8ToUnicodeN(NULL, 0, bytes_out_array, empty_string, 0);
-    ok(status == STATUS_SUCCESS, "status = 0x%x\n", status);
-    ok(bytes_out_array[0] == 0x00000000, "Got 0x%x\n", bytes_out_array[0]);
-    ok(bytes_out_array[1] == 0x55555555, "Got 0x%x\n", bytes_out_array[1]);
+    ok(status == STATUS_SUCCESS, "status = 0x%lx\n", status);
+    ok(bytes_out_array[0] == 0x00000000, "Got 0x%lx\n", bytes_out_array[0]);
+    ok(bytes_out_array[1] == 0x55555555, "Got 0x%lx\n", bytes_out_array[1]);
 
     /* parameter checks */
     status = pRtlUTF8ToUnicodeN(NULL, 0, NULL, NULL, 0);
-    ok(status == STATUS_INVALID_PARAMETER_4, "status = 0x%x\n", status);
+    ok(status == STATUS_INVALID_PARAMETER_4, "status = 0x%lx\n", status);
 
     status = pRtlUTF8ToUnicodeN(NULL, 0, NULL, empty_string, 0);
-    ok(status == STATUS_INVALID_PARAMETER, "status = 0x%x\n", status);
+    ok(status == STATUS_INVALID_PARAMETER, "status = 0x%lx\n", status);
 
     bytes_out = 0x55555555;
     status = pRtlUTF8ToUnicodeN(NULL, 0, &bytes_out, NULL, 0);
-    ok(status == STATUS_INVALID_PARAMETER_4, "status = 0x%x\n", status);
-    ok(bytes_out == 0x55555555, "bytes_out = 0x%x\n", bytes_out);
+    ok(status == STATUS_INVALID_PARAMETER_4, "status = 0x%lx\n", status);
+    ok(bytes_out == 0x55555555, "bytes_out = 0x%lx\n", bytes_out);
 
     bytes_out = 0x55555555;
     status = pRtlUTF8ToUnicodeN(NULL, 0, &bytes_out, invalid_pointer, 0);
-    ok(status == STATUS_SUCCESS, "status = 0x%x\n", status);
-    ok(bytes_out == 0, "bytes_out = 0x%x\n", bytes_out);
+    ok(status == STATUS_SUCCESS, "status = 0x%lx\n", status);
+    ok(bytes_out == 0, "bytes_out = 0x%lx\n", bytes_out);
 
     bytes_out = 0x55555555;
     status = pRtlUTF8ToUnicodeN(NULL, 0, &bytes_out, empty_string, 0);
-    ok(status == STATUS_SUCCESS, "status = 0x%x\n", status);
-    ok(bytes_out == 0, "bytes_out = 0x%x\n", bytes_out);
+    ok(status == STATUS_SUCCESS, "status = 0x%lx\n", status);
+    ok(bytes_out == 0, "bytes_out = 0x%lx\n", bytes_out);
 
     bytes_out = 0x55555555;
     status = pRtlUTF8ToUnicodeN(NULL, 0, &bytes_out, test_string, 0);
-    ok(status == STATUS_SUCCESS, "status = 0x%x\n", status);
-    ok(bytes_out == 0, "bytes_out = 0x%x\n", bytes_out);
+    ok(status == STATUS_SUCCESS, "status = 0x%lx\n", status);
+    ok(bytes_out == 0, "bytes_out = 0x%lx\n", bytes_out);
 
     bytes_out = 0x55555555;
     status = pRtlUTF8ToUnicodeN(NULL, 0, &bytes_out, empty_string, 1);
-    ok(status == STATUS_SUCCESS, "status = 0x%x\n", status);
-    ok(bytes_out == sizeof(WCHAR), "bytes_out = 0x%x\n", bytes_out);
+    ok(status == STATUS_SUCCESS, "status = 0x%lx\n", status);
+    ok(bytes_out == sizeof(WCHAR), "bytes_out = 0x%lx\n", bytes_out);
 
     /* length output with special chars */
 #define length_expect(in_chars, out_chars, expect_status) \
@@ -2543,10 +2544,10 @@ static void test_RtlUTF8ToUnicodeN(void)
             buffer, sizeof(buffer), &bytes_out,
             utf8_to_unicode[i].utf8, strlen(utf8_to_unicode[i].utf8));
         ok(status == utf8_to_unicode[i].status,
-           "(test %d): status is 0x%x, expected 0x%x\n",
+           "(test %d): status is 0x%lx, expected 0x%lx\n",
            i, status, utf8_to_unicode[i].status);
         ok(bytes_out == lstrlenW(utf8_to_unicode[i].expected) * sizeof(WCHAR),
-           "(test %d): bytes_out is %u, expected %u\n",
+           "(test %d): bytes_out is %lu, expected %lu\n",
            i, bytes_out, lstrlenW(utf8_to_unicode[i].expected) * (ULONG)sizeof(WCHAR));
         ok(!memcmp(buffer, utf8_to_unicode[i].expected, bytes_out),
            "(test %d): got %s, expected %s\n",
@@ -2570,10 +2571,10 @@ static void test_RtlUTF8ToUnicodeN(void)
             buffer, sizeof(buffer), &bytes_out,
             utf8_to_unicode[i].utf8, strlen(utf8_to_unicode[i].utf8) + 1);
         ok(status == utf8_to_unicode[i].status,
-           "(test %d): status is 0x%x, expected 0x%x\n",
+           "(test %d): status is 0x%lx, expected 0x%lx\n",
            i, status, utf8_to_unicode[i].status);
         ok(bytes_out == (lstrlenW(utf8_to_unicode[i].expected) + 1) * sizeof(WCHAR),
-           "(test %d): bytes_out is %u, expected %u\n",
+           "(test %d): bytes_out is %lu, expected %lu\n",
            i, bytes_out, (lstrlenW(utf8_to_unicode[i].expected) + 1) * (ULONG)sizeof(WCHAR));
         ok(!memcmp(buffer, utf8_to_unicode[i].expected, bytes_out),
            "(test %d): got %s, expected %s\n",
@@ -2597,7 +2598,7 @@ static void test_RtlUTF8ToUnicodeN(void)
         if (utf8_to_unicode[i].status == STATUS_SOME_NOT_MAPPED)
         {
             ok( ret == 0, "(test %d): wrong len %u\n", i, ret );
-            ok( GetLastError() == ERROR_NO_UNICODE_TRANSLATION, "(test %d): wrong error %u\n", i, GetLastError() );
+            ok( GetLastError() == ERROR_NO_UNICODE_TRANSLATION, "(test %d): wrong error %lu\n", i, GetLastError() );
             ret = lstrlenW(utf8_to_unicode[i].expected) + 1;
         }
         else
@@ -2635,10 +2636,10 @@ static void WINAPIV testfmt( const WCHAR *src, const WCHAR *expect, ULONG width,
     va_start( args, ansi );
     status = pRtlFormatMessage( src, width, FALSE, ansi, FALSE, &args, buffer, sizeof(buffer), &size );
     va_end( args );
-    ok( !status, "%s: failed %x\n", debugstr_w(src), status );
+    ok( !status, "%s: failed %lx\n", debugstr_w(src), status );
     ok( !lstrcmpW( buffer, expect ), "%s: got %s expected %s\n", debugstr_w(src),
         debugstr_w(buffer), debugstr_w(expect) );
-    ok( size == (lstrlenW(expect) + 1) * sizeof(WCHAR), "%s: wrong size %u\n", debugstr_w(src), size );
+    ok( size == (lstrlenW(expect) + 1) * sizeof(WCHAR), "%s: wrong size %lu\n", debugstr_w(src), size );
 }
 
 static void test_RtlFormatMessage(void)
@@ -2768,7 +2769,7 @@ static void test_RtlFormatMessage(void)
         }
         lstrcpyW( buffer, L"xxxxxxxxxx" );
         fmt( src, 4, FALSE, FALSE, buffer, sizeof(buffer), &size );
-        ok( !lstrcmpW( buffer, expect ), "%04x: got %s\n", i, debugstr_w(buffer) );
+        ok( !lstrcmpW( buffer, expect ), "%04lx: got %s\n", i, debugstr_w(buffer) );
     }
 
     /* args are not counted the same way with an argument array */
@@ -2787,37 +2788,37 @@ static void test_RtlFormatMessage(void)
     /* buffer overflows */
     lstrcpyW( buffer, L"xxxxxxxxxx" );
     status = fmt( L"testing", 0, FALSE, FALSE, buffer, 8, &size );
-    ok( status == STATUS_BUFFER_OVERFLOW, "failed %x\n", status );
+    ok( status == STATUS_BUFFER_OVERFLOW, "failed %lx\n", status );
     ok( !lstrcmpW( buffer, L"testxxxxxx" ) || broken(!lstrcmpW( buffer, L"tesxxxxxxx" )), /* winxp */
         "got %s\n", wine_dbgstr_w(buffer) );
-    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+    ok( size == 0xdeadbeef, "wrong size %lu\n", size );
 
     lstrcpyW( buffer, L"xxxxxxxxxx" );
     status = fmt( L"%1", 0, FALSE, FALSE, buffer, 8, &size, L"test" );
-    ok( status == STATUS_BUFFER_OVERFLOW, "failed %x\n", status );
+    ok( status == STATUS_BUFFER_OVERFLOW, "failed %lx\n", status );
     ok( !memcmp( buffer, L"tes\0xxxxxx", 10 * sizeof(WCHAR) ) || broken(!lstrcmpW( buffer, L"testxxxxxx" )), /* winxp */
         "got %s\n", wine_dbgstr_w(buffer) );
-    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+    ok( size == 0xdeadbeef, "wrong size %lu\n", size );
 
     lstrcpyW( buffer, L"xxxxxxxxxx" );
     status = fmt( L"%1!x!", 0, FALSE, FALSE, buffer, 8, &size, 0x12345678 );
-    ok( status == STATUS_BUFFER_OVERFLOW, "failed %x\n", status );
+    ok( status == STATUS_BUFFER_OVERFLOW, "failed %lx\n", status );
     ok( !memcmp( buffer, L"123\0xxxxxx", 10 * sizeof(WCHAR) ) || broken(!lstrcmpW( buffer, L"1234xxxxxx" )), /* winxp */
         "got %s\n", wine_dbgstr_w(buffer) );
-    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+    ok( size == 0xdeadbeef, "wrong size %lu\n", size );
 
     lstrcpyW( buffer, L"xxxxxxxxxx" );
     status = fmt( L"%1!*s!", 0, FALSE, FALSE, buffer, 10, &size, 5, L"abc" );
-    ok( status == STATUS_BUFFER_OVERFLOW, "failed %x\n", status );
+    ok( status == STATUS_BUFFER_OVERFLOW, "failed %lx\n", status );
     ok( !memcmp( buffer, L"  ab\0xxxxx", 10 * sizeof(WCHAR) ) || broken(!lstrcmpW( buffer, L"  abcxxxxx" )), /* winxp */
         "got %s\n", wine_dbgstr_w(buffer) );
-    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+    ok( size == 0xdeadbeef, "wrong size %lu\n", size );
 
     lstrcpyW( buffer, L"xxxxxxxxxx" );
     status = fmt( L"ab%n", 0, FALSE, FALSE, buffer, 6, &size );
-    ok( status == STATUS_BUFFER_OVERFLOW, "failed %x\n", status );
+    ok( status == STATUS_BUFFER_OVERFLOW, "failed %lx\n", status );
     ok( !memcmp( buffer, L"abxxxxxxxx", 10 * sizeof(WCHAR) ), "got %s\n", wine_dbgstr_w(buffer) );
-    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+    ok( size == 0xdeadbeef, "wrong size %lu\n", size );
 
     /* ignore inserts */
     lstrcpyW( buffer, L"xxxxxxxxxx" );
@@ -2826,67 +2827,67 @@ static void test_RtlFormatMessage(void)
 
     lstrcpyW( buffer, L"xxxxxxxxxx" );
     status = fmt( L"ab%0cd", 0, TRUE, FALSE, buffer, sizeof(buffer), &size );
-    ok( !status, "failed %x\n", status );
+    ok( !status, "failed %lx\n", status );
     ok( !memcmp( buffer, L"ab\0xxxxxxx", 10 * sizeof(WCHAR) ), "got %s\n", wine_dbgstr_wn(buffer, 10) );
 
     /* invalid args */
     lstrcpyW( buffer, L"xxxxxxxxxx" );
     size = 0xdeadbeef;
     status = pRtlFormatMessage( L"abc%1", 0, FALSE, FALSE, FALSE, NULL, buffer, sizeof(buffer), &size );
-    ok( status == STATUS_INVALID_PARAMETER, "failed %x\n", status );
+    ok( status == STATUS_INVALID_PARAMETER, "failed %lx\n", status );
     ok( !lstrcmpW( buffer, L"abcxxxxxxx" ), "got %s\n", wine_dbgstr_w(buffer) );
-    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+    ok( size == 0xdeadbeef, "wrong size %lu\n", size );
 
     lstrcpyW( buffer, L"xxxxxxxxxx" );
     status = pRtlFormatMessage( L"abc%1", 0, FALSE, FALSE, TRUE, NULL, buffer, sizeof(buffer), &size );
-    ok( status == STATUS_INVALID_PARAMETER, "failed %x\n", status );
+    ok( status == STATUS_INVALID_PARAMETER, "failed %lx\n", status );
     ok( !lstrcmpW( buffer, L"abcxxxxxxx" ), "got %s\n", wine_dbgstr_w(buffer) );
-    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+    ok( size == 0xdeadbeef, "wrong size %lu\n", size );
 
     lstrcpyW( buffer, L"xxxxxxxxxx" );
     status = pRtlFormatMessage( L"abc%", 0, FALSE, FALSE, TRUE, NULL, buffer, sizeof(buffer), &size );
-    ok( status == STATUS_INVALID_PARAMETER, "failed %x\n", status );
+    ok( status == STATUS_INVALID_PARAMETER, "failed %lx\n", status );
     ok( !lstrcmpW( buffer, L"abcxxxxxxx" ), "got %s\n", wine_dbgstr_w(buffer) );
-    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+    ok( size == 0xdeadbeef, "wrong size %lu\n", size );
 
     lstrcpyW( buffer, L"xxxxxxxxxx" );
     status = fmt( L"%1!u! %2!u", 0, FALSE, FALSE, buffer, sizeof(buffer), &size, 34 );
-    ok( status == STATUS_INVALID_PARAMETER, "failed %x\n", status );
+    ok( status == STATUS_INVALID_PARAMETER, "failed %lx\n", status );
     ok( !lstrcmpW( buffer, L"34 xxxxxxx" ), "got %s\n", wine_dbgstr_w(buffer) );
-    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+    ok( size == 0xdeadbeef, "wrong size %lu\n", size );
 
     lstrcpyW( buffer, L"xxxxxxxxxx" );
     status = fmt( L"%1!**u!", 0, FALSE, FALSE, buffer, sizeof(buffer), &size, 34 );
-    ok( status == STATUS_SUCCESS, "failed %x\n", status );
+    ok( status == STATUS_SUCCESS, "failed %lx\n", status );
     ok( !lstrcmpW( buffer, L"*u" ), "got %s\n", wine_dbgstr_w(buffer) );
 
     lstrcpyW( buffer, L"xxxxxxxxxx" );
     status = fmt( L"%1!0.3+*u!", 0, FALSE, FALSE, buffer, sizeof(buffer), &size, 34 );
-    ok( status == STATUS_SUCCESS, "failed %x\n", status );
+    ok( status == STATUS_SUCCESS, "failed %lx\n", status );
     ok( !lstrcmpW( buffer, L"+*u" ), "got %s\n", wine_dbgstr_w(buffer) );
 
     lstrcpyW( buffer, L"xxxxxxxxxx" );
     status = fmt( L"aa%1!***u!", 0, FALSE, FALSE, buffer, sizeof(buffer), &size, 34 );
-    ok( status == STATUS_INVALID_PARAMETER, "failed %x\n", status );
+    ok( status == STATUS_INVALID_PARAMETER, "failed %lx\n", status );
     ok( !lstrcmpW( buffer, L"aaxxxxxxxx" ), "got %s\n", wine_dbgstr_w(buffer) );
-    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+    ok( size == 0xdeadbeef, "wrong size %lu\n", size );
 
     lstrcpyW( buffer, L"xxxxxxxxxx" );
     status = fmt( L"abc%1!#.000000000000000000000000000x!", 0, FALSE, FALSE, buffer, sizeof(buffer), &size, 34 );
-    ok( status == STATUS_SUCCESS, "failed %x\n", status );
+    ok( status == STATUS_SUCCESS, "failed %lx\n", status );
     ok( !lstrcmpW( buffer, L"abc0x22" ), "got %s\n", wine_dbgstr_w(buffer) );
 
     lstrcpyW( buffer, L"xxxxxxxxxx" );
     status = fmt( L"abc%1!#.0000000000000000000000000000x!", 0, FALSE, FALSE, buffer, sizeof(buffer), &size, 34 );
-    ok( status == STATUS_INVALID_PARAMETER, "failed %x\n", status );
+    ok( status == STATUS_INVALID_PARAMETER, "failed %lx\n", status );
     ok( !lstrcmpW( buffer, L"abcxxxxxxx" ), "got %s\n", wine_dbgstr_w(buffer) );
-    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+    ok( size == 0xdeadbeef, "wrong size %lu\n", size );
 
     lstrcpyW( buffer, L"xxxxxxxxxx" );
     status = fmt( L"abc%1!hsaaaaaaaaaaaaaaaaaaaaaaaaaaaaa!", 0, FALSE, FALSE, buffer, sizeof(buffer), &size, "hello" );
-    ok( status == STATUS_INVALID_PARAMETER, "failed %x\n", status );
+    ok( status == STATUS_INVALID_PARAMETER, "failed %lx\n", status );
     ok( !lstrcmpW( buffer, L"abcxxxxxxx" ), "got %s\n", wine_dbgstr_w(buffer) );
-    ok( size == 0xdeadbeef, "wrong size %u\n", size );
+    ok( size == 0xdeadbeef, "wrong size %lu\n", size );
 
 }
 
