@@ -1837,7 +1837,7 @@ static void test_toupper(void)
 {
 
     int i, ret, exp_ret;
-    char str[2], *p;
+    char str[3], *p;
     WCHAR wc;
 
     ok(ptoupper != NULL, "toupper is not available\n");
@@ -1846,17 +1846,20 @@ static void test_toupper(void)
     {
         str[0] = i;
         str[1] = i >> 8;
+        str[2] = 0;
         p = str;
         wc = RtlAnsiCharToUnicodeChar( &p );
         wc = RtlUpcaseUnicodeChar( wc );
         ret = WideCharToMultiByte( CP_ACP, 0, &wc, 1, str, 2, NULL, NULL );
-        ok(ret == 1 || ret == 2, "WideCharToMultiByte returned %d\n", ret);
+        ok(!ret || ret == 1 || ret == 2, "WideCharToMultiByte returned %d\n", ret);
         if (ret == 2)
             exp_ret = (unsigned char)str[1] + ((unsigned char)str[0] << 8);
-        else
+        else if (ret == 1)
             exp_ret = (unsigned char)str[0];
+        else
+            exp_ret = (WCHAR)i;
 
-        ret = ptoupper(i);
+        ret = (WCHAR)ptoupper(i);
         ok(ret == exp_ret, "toupper(%x) = %x, expected %x\n", i, ret, exp_ret);
     }
 }
