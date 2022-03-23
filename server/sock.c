@@ -3508,10 +3508,11 @@ static void send_socket_completion_callback( void *private )
 DECL_HANDLER(send_socket)
 {
     struct sock *sock = (struct sock *)get_handle_obj( current->process, req->async.handle, 0, &sock_ops );
-    unsigned int status = req->status;
+    unsigned int status = STATUS_PENDING;
     timeout_t timeout = 0;
     struct async *async;
     struct fd *fd;
+    int bind_errno = 0;
 
     if (!sock) return;
     fd = sock->fd;
@@ -3520,7 +3521,6 @@ DECL_HANDLER(send_socket)
     {
         union unix_sockaddr unix_addr;
         socklen_t unix_len;
-        int bind_errno = 0;
         int unix_fd = get_unix_fd( fd );
 
         unix_len = get_unix_sockaddr_any( &unix_addr, sock->family );
@@ -3532,36 +3532,15 @@ DECL_HANDLER(send_socket)
             sock->addr_len = sockaddr_from_unix( &unix_addr, &sock->addr.addr, sizeof(sock->addr) );
             sock->bound = 1;
         }
-        else if (status == STATUS_PENDING || status == STATUS_DEVICE_NOT_READY)
-            status = sock_get_ntstatus( bind_errno ? bind_errno : errno );
+        else if (!bind_errno) bind_errno = errno;
     }
 
-    /* If we had a short write and the socket is nonblocking (and the client is
-     * not trying to force the operation to be asynchronous), return success.
-     * Windows actually refuses to send any data in this case, and returns
-     * EWOULDBLOCK, but we have no way of doing that. */
-    if (status == STATUS_DEVICE_NOT_READY && req->total && sock->nonblocking)
-        status = STATUS_SUCCESS;
+    if (!req->force_async && !sock->nonblocking && is_fd_overlapped( fd ))
+        timeout = (timeout_t)sock->sndtimeo * -10000;
 
-    /* send() returned EWOULDBLOCK or a short write, i.e. cannot send all data yet */
-    if (status == STATUS_DEVICE_NOT_READY && !sock->nonblocking)
-    {
-        /* Set a timeout on the async if necessary.
-         *
-         * We want to do this *only* if the client gave us STATUS_DEVICE_NOT_READY.
-         * If the client gave us STATUS_PENDING, it expects the async to always
-         * block (it was triggered by WSASend*() with a valid OVERLAPPED
-         * structure) and for the timeout not to be respected. */
-        if (is_fd_overlapped( fd ))
-            timeout = (timeout_t)sock->sndtimeo * -10000;
-
-        status = STATUS_PENDING;
-    }
-
-    if ((status == STATUS_PENDING || status == STATUS_DEVICE_NOT_READY) && sock->wr_shutdown)
-        status = STATUS_PIPE_DISCONNECTED;
-
-    if ((status == STATUS_PENDING || status == STATUS_DEVICE_NOT_READY) && !async_queued( &sock->write_q ))
+    if (bind_errno) status = sock_get_ntstatus( bind_errno );
+    else if (sock->wr_shutdown) status = STATUS_PIPE_DISCONNECTED;
+    else if (!async_queued( &sock->write_q ))
     {
         /* If write_q is not empty, we cannot really tell if the already queued
          * asyncs will not consume all available space; if there's no space
@@ -3580,6 +3559,9 @@ DECL_HANDLER(send_socket)
         }
     }
 
+    if (status == STATUS_PENDING && !req->force_async && sock->nonblocking)
+        status = STATUS_DEVICE_NOT_READY;
+
     if ((async = create_request_async( fd, get_fd_comp_flags( fd ), &req->async )))
     {
         struct send_req *send_req;
@@ -3594,7 +3576,6 @@ DECL_HANDLER(send_socket)
         else if (status == STATUS_PENDING || status == STATUS_DEVICE_NOT_READY)
             status = STATUS_NO_MEMORY;
 
-        if (status == STATUS_SUCCESS) iosb->result = req->total;
         release_object( iosb );
 
         set_error( status );

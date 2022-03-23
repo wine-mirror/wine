@@ -1783,8 +1783,8 @@ struct send_socket_request
     struct request_header __header;
     char __pad_12[4];
     async_data_t async;
-    unsigned int status;
-    unsigned int total;
+    int          force_async;
+    char __pad_60[4];
 };
 struct send_socket_reply
 {
@@ -6286,7 +6286,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 748
+#define SERVER_PROTOCOL_VERSION 749
 
 /* ### protocol_version end ### */
 
