@@ -540,7 +540,7 @@ static NTSTATUS tcp_conns_enumerate_all( DWORD filter, struct nsi_tcp_conn_key *
         memset( &key, 0, sizeof(key) );
         memset( &dyn, 0, sizeof(dyn) );
         memset( &stat, 0, sizeof(stat) );
-        pid_map = get_pid_map( &pid_map_size );
+        if (static_data) pid_map = get_pid_map( &pid_map_size );
 
         /* skip header line */
         ptr = fgets( buf, sizeof(buf), fp );
@@ -558,15 +558,17 @@ static NTSTATUS tcp_conns_enumerate_all( DWORD filter, struct nsi_tcp_conn_key *
             key.local.Ipv4.sin_port = htons( key.local.Ipv4.sin_port );
             key.remote.Ipv4.sin_port = htons( key.remote.Ipv4.sin_port );
 
-            stat.pid = find_owning_pid( pid_map, pid_map_size, inode );
-            stat.create_time = 0; /* FIXME */
-            stat.mod_info = 0; /* FIXME */
-
             if (num < *count)
             {
                 if (key_data) *key_data++ = key;
                 if (dynamic_data) *dynamic_data++ = dyn;
-                if (static_data) *static_data++ = stat;
+                if (static_data)
+                {
+                    stat.pid = find_owning_pid( pid_map, pid_map_size, inode );
+                    stat.create_time = 0; /* FIXME */
+                    stat.mod_info = 0; /* FIXME */
+                    *static_data++ = stat;
+                }
             }
             num++;
         }
@@ -601,16 +603,17 @@ static NTSTATUS tcp_conns_enumerate_all( DWORD filter, struct nsi_tcp_conn_key *
                                                                      addr_scopes_size );
                 key.remote.Ipv6.sin6_scope_id = find_ipv6_addr_scope( &key.remote.Ipv6.sin6_addr, addr_scopes,
                                                                       addr_scopes_size );
-
-                stat.pid = find_owning_pid( pid_map, pid_map_size, inode );
-                stat.create_time = 0; /* FIXME */
-                stat.mod_info = 0; /* FIXME */
-
                 if (num < *count)
                 {
                     if (key_data) *key_data++ = key;
                     if (dynamic_data) *dynamic_data++ = dyn;
-                    if (static_data) *static_data++ = stat;
+                    if (static_data)
+                    {
+                        stat.pid = find_owning_pid( pid_map, pid_map_size, inode );
+                        stat.create_time = 0; /* FIXME */
+                        stat.mod_info = 0; /* FIXME */
+                        *static_data++ = stat;
+                    }
                 }
                 num++;
             }
@@ -649,7 +652,7 @@ static NTSTATUS tcp_conns_enumerate_all( DWORD filter, struct nsi_tcp_conn_key *
         if (len <= sizeof(struct xinpgen)) goto err;
 
         addr_scopes = get_ipv6_addr_scope_table( &addr_scopes_size );
-        pid_map = get_pid_map( &pid_map_size );
+        if (static_data) pid_map = get_pid_map( &pid_map_size );
 
         orig_xig = (struct xinpgen *)buf;
         xig = orig_xig;
@@ -708,15 +711,17 @@ static NTSTATUS tcp_conns_enumerate_all( DWORD filter, struct nsi_tcp_conn_key *
                                                                       addr_scopes_size );
             }
 
-            stat.pid = find_owning_pid( pid_map, pid_map_size, (UINT_PTR)sock->so_pcb );
-            stat.create_time = 0; /* FIXME */
-            stat.mod_info = 0; /* FIXME */
-
             if (num < *count)
             {
                 if (key_data) *key_data++ = key;
                 if (dynamic_data) *dynamic_data++ = dyn;
-                if (static_data) *static_data++ = stat;
+                if (static_data)
+                {
+                    stat.pid = find_owning_pid( pid_map, pid_map_size, (UINT_PTR)sock->so_pcb );
+                    stat.create_time = 0; /* FIXME */
+                    stat.mod_info = 0; /* FIXME */
+                    *static_data++ = stat;
+                }
             }
             num++;
         }
