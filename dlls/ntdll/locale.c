@@ -745,6 +745,13 @@ void WINAPI RtlInitCodePageTable( USHORT *ptr, CPTABLEINFO *info )
 {
     USHORT hdr_size = ptr[0];
 
+    if (ptr[1] == CP_UTF8)
+    {
+        static const CPTABLEINFO utf8_cpinfo = { CP_UTF8, 4, '?', 0xfffd, '?', '?' };
+        *info = utf8_cpinfo;
+        return;
+    }
+
     info->CodePage             = ptr[1];
     info->MaximumCharacterSize = ptr[2];
     info->DefaultChar          = ptr[3];
