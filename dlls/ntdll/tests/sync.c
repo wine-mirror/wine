@@ -17,6 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <stdarg.h>
 
@@ -74,75 +75,75 @@ static void test_event(void)
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
 
     status = pNtCreateEvent(&event, GENERIC_ALL, &attr, 2, 0);
-    ok( status == STATUS_INVALID_PARAMETER, "NtCreateEvent failed %08x\n", status );
+    ok( status == STATUS_INVALID_PARAMETER, "NtCreateEvent failed %08lx\n", status );
 
     status = pNtCreateEvent(&event, GENERIC_ALL, &attr, NotificationEvent, 0);
-    ok( status == STATUS_SUCCESS, "NtCreateEvent failed %08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtCreateEvent failed %08lx\n", status );
     memset(&info, 0xcc, sizeof(info));
     status = pNtQueryEvent(event, EventBasicInformation, &info, sizeof(info), NULL);
-    ok( status == STATUS_SUCCESS, "NtQueryEvent failed %08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtQueryEvent failed %08lx\n", status );
     ok( info.EventType == NotificationEvent && info.EventState == 0,
-        "NtQueryEvent failed, expected 0 0, got %d %d\n", info.EventType, info.EventState );
+        "NtQueryEvent failed, expected 0 0, got %d %ld\n", info.EventType, info.EventState );
     pNtClose(event);
 
     status = pNtCreateEvent(&event, GENERIC_ALL, &attr, SynchronizationEvent, 0);
-    ok( status == STATUS_SUCCESS, "NtCreateEvent failed %08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtCreateEvent failed %08lx\n", status );
 
     status = pNtPulseEvent(event, &prev_state);
-    ok( status == STATUS_SUCCESS, "NtPulseEvent failed %08x\n", status );
-    ok( !prev_state, "prev_state = %x\n", prev_state );
+    ok( status == STATUS_SUCCESS, "NtPulseEvent failed %08lx\n", status );
+    ok( !prev_state, "prev_state = %lx\n", prev_state );
 
     memset(&info, 0xcc, sizeof(info));
     status = pNtQueryEvent(event, EventBasicInformation, &info, sizeof(info), NULL);
-    ok( status == STATUS_SUCCESS, "NtQueryEvent failed %08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtQueryEvent failed %08lx\n", status );
     ok( info.EventType == SynchronizationEvent && info.EventState == 0,
-        "NtQueryEvent failed, expected 1 0, got %d %d\n", info.EventType, info.EventState );
+        "NtQueryEvent failed, expected 1 0, got %d %ld\n", info.EventType, info.EventState );
 
     status = pNtOpenEvent(&event2, GENERIC_ALL, &attr);
-    ok( status == STATUS_SUCCESS, "NtOpenEvent failed %08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtOpenEvent failed %08lx\n", status );
 
     pNtClose(event);
     event = event2;
 
     memset(&info, 0xcc, sizeof(info));
     status = pNtQueryEvent(event, EventBasicInformation, &info, sizeof(info), NULL);
-    ok( status == STATUS_SUCCESS, "NtQueryEvent failed %08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtQueryEvent failed %08lx\n", status );
     ok( info.EventType == SynchronizationEvent && info.EventState == 0,
-        "NtQueryEvent failed, expected 1 0, got %d %d\n", info.EventType, info.EventState );
+        "NtQueryEvent failed, expected 1 0, got %d %ld\n", info.EventType, info.EventState );
 
     status = pNtSetEvent( event, &prev_state );
-    ok( status == STATUS_SUCCESS, "NtSetEvent failed: %08x\n", status );
-    ok( !prev_state, "prev_state = %x\n", prev_state );
+    ok( status == STATUS_SUCCESS, "NtSetEvent failed: %08lx\n", status );
+    ok( !prev_state, "prev_state = %lx\n", prev_state );
 
     memset(&info, 0xcc, sizeof(info));
     status = pNtQueryEvent(event, EventBasicInformation, &info, sizeof(info), NULL);
-    ok( status == STATUS_SUCCESS, "NtQueryEvent failed %08x\n", status );
+    ok( status == STATUS_SUCCESS, "NtQueryEvent failed %08lx\n", status );
     ok( info.EventType == SynchronizationEvent && info.EventState == 1,
-        "NtQueryEvent failed, expected 1 1, got %d %d\n", info.EventType, info.EventState );
+        "NtQueryEvent failed, expected 1 1, got %d %ld\n", info.EventType, info.EventState );
 
     status = pNtSetEvent( event, &prev_state );
-    ok( status == STATUS_SUCCESS, "NtSetEvent failed: %08x\n", status );
-    ok( prev_state == 1, "prev_state = %x\n", prev_state );
+    ok( status == STATUS_SUCCESS, "NtSetEvent failed: %08lx\n", status );
+    ok( prev_state == 1, "prev_state = %lx\n", prev_state );
 
     status = pNtResetEvent( event, &prev_state );
-    ok( status == STATUS_SUCCESS, "NtSetEvent failed: %08x\n", status );
-    ok( prev_state == 1, "prev_state = %x\n", prev_state );
+    ok( status == STATUS_SUCCESS, "NtSetEvent failed: %08lx\n", status );
+    ok( prev_state == 1, "prev_state = %lx\n", prev_state );
 
     status = pNtResetEvent( event, &prev_state );
-    ok( status == STATUS_SUCCESS, "NtSetEvent failed: %08x\n", status );
-    ok( !prev_state, "prev_state = %x\n", prev_state );
+    ok( status == STATUS_SUCCESS, "NtSetEvent failed: %08lx\n", status );
+    ok( !prev_state, "prev_state = %lx\n", prev_state );
 
     status = pNtPulseEvent( event, &prev_state );
-    ok( status == STATUS_SUCCESS, "NtPulseEvent failed %08x\n", status );
-    ok( !prev_state, "prev_state = %x\n", prev_state );
+    ok( status == STATUS_SUCCESS, "NtPulseEvent failed %08lx\n", status );
+    ok( !prev_state, "prev_state = %lx\n", prev_state );
 
     status = pNtSetEvent( event, &prev_state );
-    ok( status == STATUS_SUCCESS, "NtSetEvent failed: %08x\n", status );
-    ok( !prev_state, "prev_state = %x\n", prev_state );
+    ok( status == STATUS_SUCCESS, "NtSetEvent failed: %08lx\n", status );
+    ok( !prev_state, "prev_state = %lx\n", prev_state );
 
     status = pNtPulseEvent( event, &prev_state );
-    ok( status == STATUS_SUCCESS, "NtPulseEvent failed %08x\n", status );
-    ok( prev_state == 1, "prev_state = %x\n", prev_state );
+    ok( status == STATUS_SUCCESS, "NtPulseEvent failed %08lx\n", status );
+    ok( prev_state == 1, "prev_state = %lx\n", prev_state );
 
     pNtClose(event);
 }
@@ -167,7 +168,7 @@ static DWORD WINAPI keyed_event_thread( void *arg )
     RtlInitUnicodeString( &str, keyed_nameW );
 
     status = pNtOpenKeyedEvent( &handle, KEYEDEVENT_ALL_ACCESS, &attr );
-    ok( !status, "NtOpenKeyedEvent failed %x\n", status );
+    ok( !status, "NtOpenKeyedEvent failed %lx\n", status );
 
     for (i = 0; i < 20; i++)
     {
@@ -175,18 +176,18 @@ static DWORD WINAPI keyed_event_thread( void *arg )
             status = pNtWaitForKeyedEvent( handle, (void *)(i * 2), 0, NULL );
         else
             status = pNtReleaseKeyedEvent( handle, (void *)(i * 2), 0, NULL );
-        ok( status == STATUS_SUCCESS, "%li: failed %x\n", i, status );
+        ok( status == STATUS_SUCCESS, "%Ii: failed %lx\n", i, status );
         Sleep( 20 - i );
     }
 
     status = pNtReleaseKeyedEvent( handle, (void *)0x1234, 0, NULL );
-    ok( status == STATUS_SUCCESS, "NtReleaseKeyedEvent %x\n", status );
+    ok( status == STATUS_SUCCESS, "NtReleaseKeyedEvent %lx\n", status );
 
     timeout.QuadPart = -10000;
     status = pNtWaitForKeyedEvent( handle, (void *)0x5678, 0, &timeout );
-    ok( status == STATUS_TIMEOUT, "NtWaitForKeyedEvent %x\n", status );
+    ok( status == STATUS_TIMEOUT, "NtWaitForKeyedEvent %lx\n", status );
     status = pNtReleaseKeyedEvent( handle, (void *)0x9abc, 0, &timeout );
-    ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %x\n", status );
+    ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %lx\n", status );
 
     NtClose( handle );
     return 0;
@@ -216,43 +217,43 @@ static void test_keyed_events(void)
     RtlInitUnicodeString( &str, keyed_nameW );
 
     status = pNtCreateKeyedEvent( &handle, KEYEDEVENT_ALL_ACCESS | SYNCHRONIZE, &attr, 0 );
-    ok( !status, "NtCreateKeyedEvent failed %x\n", status );
+    ok( !status, "NtCreateKeyedEvent failed %lx\n", status );
 
     status = WaitForSingleObject( handle, 1000 );
-    ok( status == 0, "WaitForSingleObject %x\n", status );
+    ok( status == 0, "WaitForSingleObject %lx\n", status );
 
     timeout.QuadPart = -100000;
     status = pNtWaitForKeyedEvent( handle, (void *)255, 0, &timeout );
-    ok( status == STATUS_INVALID_PARAMETER_1, "NtWaitForKeyedEvent %x\n", status );
+    ok( status == STATUS_INVALID_PARAMETER_1, "NtWaitForKeyedEvent %lx\n", status );
     status = pNtReleaseKeyedEvent( handle, (void *)255, 0, &timeout );
-    ok( status == STATUS_INVALID_PARAMETER_1, "NtReleaseKeyedEvent %x\n", status );
+    ok( status == STATUS_INVALID_PARAMETER_1, "NtReleaseKeyedEvent %lx\n", status );
 
     status = pNtWaitForKeyedEvent( handle, (void *)254, 0, &timeout );
-    ok( status == STATUS_TIMEOUT, "NtWaitForKeyedEvent %x\n", status );
+    ok( status == STATUS_TIMEOUT, "NtWaitForKeyedEvent %lx\n", status );
     status = pNtReleaseKeyedEvent( handle, (void *)254, 0, &timeout );
-    ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %x\n", status );
+    ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %lx\n", status );
 
     status = pNtWaitForKeyedEvent( handle, NULL, 0, &timeout );
-    ok( status == STATUS_TIMEOUT, "NtWaitForKeyedEvent %x\n", status );
+    ok( status == STATUS_TIMEOUT, "NtWaitForKeyedEvent %lx\n", status );
     status = pNtReleaseKeyedEvent( handle, NULL, 0, &timeout );
-    ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %x\n", status );
+    ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %lx\n", status );
 
     status = pNtWaitForKeyedEvent( NULL, (void *)8, 0, &timeout );
     ok( status == STATUS_TIMEOUT || broken(status == STATUS_INVALID_HANDLE), /* XP/2003 */
-        "NtWaitForKeyedEvent %x\n", status );
+        "NtWaitForKeyedEvent %lx\n", status );
     status = pNtReleaseKeyedEvent( NULL, (void *)8, 0, &timeout );
     ok( status == STATUS_TIMEOUT || broken(status == STATUS_INVALID_HANDLE), /* XP/2003 */
-        "NtReleaseKeyedEvent %x\n", status );
+        "NtReleaseKeyedEvent %lx\n", status );
 
     status = pNtWaitForKeyedEvent( (HANDLE)0xdeadbeef, (void *)9, 0, &timeout );
-    ok( status == STATUS_INVALID_PARAMETER_1, "NtWaitForKeyedEvent %x\n", status );
+    ok( status == STATUS_INVALID_PARAMETER_1, "NtWaitForKeyedEvent %lx\n", status );
     status = pNtReleaseKeyedEvent( (HANDLE)0xdeadbeef, (void *)9, 0, &timeout );
-    ok( status == STATUS_INVALID_PARAMETER_1, "NtReleaseKeyedEvent %x\n", status );
+    ok( status == STATUS_INVALID_PARAMETER_1, "NtReleaseKeyedEvent %lx\n", status );
 
     status = pNtWaitForKeyedEvent( (HANDLE)0xdeadbeef, (void *)8, 0, &timeout );
-    ok( status == STATUS_INVALID_HANDLE, "NtWaitForKeyedEvent %x\n", status );
+    ok( status == STATUS_INVALID_HANDLE, "NtWaitForKeyedEvent %lx\n", status );
     status = pNtReleaseKeyedEvent( (HANDLE)0xdeadbeef, (void *)8, 0, &timeout );
-    ok( status == STATUS_INVALID_HANDLE, "NtReleaseKeyedEvent %x\n", status );
+    ok( status == STATUS_INVALID_HANDLE, "NtReleaseKeyedEvent %lx\n", status );
 
     thread = CreateThread( NULL, 0, keyed_event_thread, 0, 0, NULL );
     for (i = 0; i < 20; i++)
@@ -261,15 +262,15 @@ static void test_keyed_events(void)
             status = pNtReleaseKeyedEvent( handle, (void *)(i * 2), 0, NULL );
         else
             status = pNtWaitForKeyedEvent( handle, (void *)(i * 2), 0, NULL );
-        ok( status == STATUS_SUCCESS, "%li: failed %x\n", i, status );
+        ok( status == STATUS_SUCCESS, "%Ii: failed %lx\n", i, status );
         Sleep( i );
     }
     status = pNtWaitForKeyedEvent( handle, (void *)0x1234, 0, &timeout );
-    ok( status == STATUS_SUCCESS, "NtWaitForKeyedEvent %x\n", status );
+    ok( status == STATUS_SUCCESS, "NtWaitForKeyedEvent %lx\n", status );
     status = pNtWaitForKeyedEvent( handle, (void *)0x5678, 0, &timeout );
-    ok( status == STATUS_TIMEOUT, "NtWaitForKeyedEvent %x\n", status );
+    ok( status == STATUS_TIMEOUT, "NtWaitForKeyedEvent %lx\n", status );
     status = pNtReleaseKeyedEvent( handle, (void *)0x9abc, 0, &timeout );
-    ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %x\n", status );
+    ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %lx\n", status );
 
     ok( WaitForSingleObject( thread, 30000 ) == 0, "wait failed\n" );
 
@@ -278,65 +279,65 @@ static void test_keyed_events(void)
     /* test access rights */
 
     status = pNtCreateKeyedEvent( &handle, KEYEDEVENT_WAIT, &attr, 0 );
-    ok( !status, "NtCreateKeyedEvent failed %x\n", status );
+    ok( !status, "NtCreateKeyedEvent failed %lx\n", status );
     status = pNtWaitForKeyedEvent( handle, (void *)8, 0, &timeout );
-    ok( status == STATUS_TIMEOUT, "NtWaitForKeyedEvent %x\n", status );
+    ok( status == STATUS_TIMEOUT, "NtWaitForKeyedEvent %lx\n", status );
     status = pNtReleaseKeyedEvent( handle, (void *)8, 0, &timeout );
-    ok( status == STATUS_ACCESS_DENIED, "NtReleaseKeyedEvent %x\n", status );
+    ok( status == STATUS_ACCESS_DENIED, "NtReleaseKeyedEvent %lx\n", status );
     NtClose( handle );
 
     status = pNtCreateKeyedEvent( &handle, KEYEDEVENT_WAKE, &attr, 0 );
-    ok( !status, "NtCreateKeyedEvent failed %x\n", status );
+    ok( !status, "NtCreateKeyedEvent failed %lx\n", status );
     status = pNtWaitForKeyedEvent( handle, (void *)8, 0, &timeout );
-    ok( status == STATUS_ACCESS_DENIED, "NtWaitForKeyedEvent %x\n", status );
+    ok( status == STATUS_ACCESS_DENIED, "NtWaitForKeyedEvent %lx\n", status );
     status = pNtReleaseKeyedEvent( handle, (void *)8, 0, &timeout );
-    ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %x\n", status );
+    ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %lx\n", status );
     NtClose( handle );
 
     status = pNtCreateKeyedEvent( &handle, KEYEDEVENT_ALL_ACCESS, &attr, 0 );
-    ok( !status, "NtCreateKeyedEvent failed %x\n", status );
+    ok( !status, "NtCreateKeyedEvent failed %lx\n", status );
     status = WaitForSingleObject( handle, 1000 );
     ok( status == WAIT_FAILED && GetLastError() == ERROR_ACCESS_DENIED,
-        "WaitForSingleObject %x err %u\n", status, GetLastError() );
+        "WaitForSingleObject %lx err %lu\n", status, GetLastError() );
     status = pNtWaitForKeyedEvent( handle, (void *)8, 0, &timeout );
-    ok( status == STATUS_TIMEOUT, "NtWaitForKeyedEvent %x\n", status );
+    ok( status == STATUS_TIMEOUT, "NtWaitForKeyedEvent %lx\n", status );
     status = pNtReleaseKeyedEvent( handle, (void *)8, 0, &timeout );
-    ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %x\n", status );
+    ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %lx\n", status );
     NtClose( handle );
 
     /* GENERIC_READ gives wait access */
     status = pNtCreateKeyedEvent( &handle, GENERIC_READ, &attr, 0 );
-    ok( !status, "NtCreateKeyedEvent failed %x\n", status );
+    ok( !status, "NtCreateKeyedEvent failed %lx\n", status );
     status = pNtWaitForKeyedEvent( handle, (void *)8, 0, &timeout );
-    ok( status == STATUS_TIMEOUT, "NtWaitForKeyedEvent %x\n", status );
+    ok( status == STATUS_TIMEOUT, "NtWaitForKeyedEvent %lx\n", status );
     status = pNtReleaseKeyedEvent( handle, (void *)8, 0, &timeout );
-    ok( status == STATUS_ACCESS_DENIED, "NtReleaseKeyedEvent %x\n", status );
+    ok( status == STATUS_ACCESS_DENIED, "NtReleaseKeyedEvent %lx\n", status );
     NtClose( handle );
 
     /* GENERIC_WRITE gives wake access */
     status = pNtCreateKeyedEvent( &handle, GENERIC_WRITE, &attr, 0 );
-    ok( !status, "NtCreateKeyedEvent failed %x\n", status );
+    ok( !status, "NtCreateKeyedEvent failed %lx\n", status );
     status = pNtWaitForKeyedEvent( handle, (void *)8, 0, &timeout );
-    ok( status == STATUS_ACCESS_DENIED, "NtWaitForKeyedEvent %x\n", status );
+    ok( status == STATUS_ACCESS_DENIED, "NtWaitForKeyedEvent %lx\n", status );
     status = pNtReleaseKeyedEvent( handle, (void *)8, 0, &timeout );
-    ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %x\n", status );
+    ok( status == STATUS_TIMEOUT, "NtReleaseKeyedEvent %lx\n", status );
 
     /* it's not an event */
     status = pNtPulseEvent( handle, NULL );
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "NtPulseEvent %x\n", status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "NtPulseEvent %lx\n", status );
 
     status = pNtCreateEvent( &event, GENERIC_ALL, &attr, NotificationEvent, FALSE );
     ok( status == STATUS_OBJECT_NAME_COLLISION || status == STATUS_OBJECT_TYPE_MISMATCH /* 7+ */,
-        "CreateEvent %x\n", status );
+        "CreateEvent %lx\n", status );
 
     NtClose( handle );
 
     status = pNtCreateEvent( &event, GENERIC_ALL, &attr, NotificationEvent, FALSE );
-    ok( status == 0, "CreateEvent %x\n", status );
+    ok( status == 0, "CreateEvent %lx\n", status );
     status = pNtWaitForKeyedEvent( event, (void *)8, 0, &timeout );
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "NtWaitForKeyedEvent %x\n", status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "NtWaitForKeyedEvent %lx\n", status );
     status = pNtReleaseKeyedEvent( event, (void *)8, 0, &timeout );
-    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "NtReleaseKeyedEvent %x\n", status );
+    ok( status == STATUS_OBJECT_TYPE_MISMATCH, "NtReleaseKeyedEvent %lx\n", status );
     NtClose( event );
 }
 
@@ -349,12 +350,12 @@ static DWORD WINAPI mutant_thread( void *arg )
 
     mutant = arg;
     ret = WaitForSingleObject( mutant, 1000 );
-    ok( ret == WAIT_OBJECT_0, "WaitForSingleObject failed %08x\n", ret );
+    ok( ret == WAIT_OBJECT_0, "WaitForSingleObject failed %08lx\n", ret );
 
     memset(&info, 0xcc, sizeof(info));
     status = pNtQueryMutant(mutant, MutantBasicInformation, &info, sizeof(info), NULL);
-    ok( status == STATUS_SUCCESS, "NtQueryMutant failed %08x\n", status );
-    ok( info.CurrentCount == 0, "expected 0, got %d\n", info.CurrentCount );
+    ok( status == STATUS_SUCCESS, "NtQueryMutant failed %08lx\n", status );
+    ok( info.CurrentCount == 0, "expected 0, got %ld\n", info.CurrentCount );
     ok( info.OwnedByCaller == TRUE, "expected TRUE, got %d\n", info.OwnedByCaller );
     ok( info.AbandonedState == FALSE, "expected FALSE, got %d\n", info.AbandonedState );
     /* abandon mutant */
@@ -377,76 +378,76 @@ static void test_mutant(void)
     pRtlInitUnicodeString(&str, L"\\BaseNamedObjects\\test_mutant");
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
     status = pNtCreateMutant(&mutant, GENERIC_ALL, &attr, TRUE);
-    ok( status == STATUS_SUCCESS, "Failed to create Mutant(%08x)\n", status );
+    ok( status == STATUS_SUCCESS, "Failed to create Mutant(%08lx)\n", status );
 
     /* bogus */
     status = pNtQueryMutant(mutant, MutantBasicInformation, &info, 0, NULL);
     ok( status == STATUS_INFO_LENGTH_MISMATCH,
-        "Failed to NtQueryMutant, expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status );
+        "Failed to NtQueryMutant, expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status );
     status = pNtQueryMutant(mutant, 0x42, &info, sizeof(info), NULL);
     ok( status == STATUS_INVALID_INFO_CLASS || broken(status == STATUS_NOT_IMPLEMENTED), /* 32-bit on Vista/2k8 */
-        "Failed to NtQueryMutant, expected STATUS_INVALID_INFO_CLASS, got %08x\n", status );
+        "Failed to NtQueryMutant, expected STATUS_INVALID_INFO_CLASS, got %08lx\n", status );
     status = pNtQueryMutant((HANDLE)0xdeadbeef, MutantBasicInformation, &info, sizeof(info), NULL);
     ok( status == STATUS_INVALID_HANDLE,
-        "Failed to NtQueryMutant, expected STATUS_INVALID_HANDLE, got %08x\n", status );
+        "Failed to NtQueryMutant, expected STATUS_INVALID_HANDLE, got %08lx\n", status );
 
     /* new */
     len = -1;
     memset(&info, 0xcc, sizeof(info));
     status = pNtQueryMutant(mutant, MutantBasicInformation, &info, sizeof(info), &len);
-    ok( status == STATUS_SUCCESS, "NtQueryMutant failed %08x\n", status );
-    ok( info.CurrentCount == 0, "expected 0, got %d\n", info.CurrentCount );
+    ok( status == STATUS_SUCCESS, "NtQueryMutant failed %08lx\n", status );
+    ok( info.CurrentCount == 0, "expected 0, got %ld\n", info.CurrentCount );
     ok( info.OwnedByCaller == TRUE, "expected TRUE, got %d\n", info.OwnedByCaller );
     ok( info.AbandonedState == FALSE, "expected FALSE, got %d\n", info.AbandonedState );
-    ok( len == sizeof(info), "got %u\n", len );
+    ok( len == sizeof(info), "got %lu\n", len );
 
     ret = WaitForSingleObject( mutant, 1000 );
-    ok( ret == WAIT_OBJECT_0, "WaitForSingleObject failed %08x\n", ret );
+    ok( ret == WAIT_OBJECT_0, "WaitForSingleObject failed %08lx\n", ret );
 
     memset(&info, 0xcc, sizeof(info));
     status = pNtQueryMutant(mutant, MutantBasicInformation, &info, sizeof(info), NULL);
-    ok( status == STATUS_SUCCESS, "NtQueryMutant failed %08x\n", status );
-    ok( info.CurrentCount == -1, "expected -1, got %d\n", info.CurrentCount );
+    ok( status == STATUS_SUCCESS, "NtQueryMutant failed %08lx\n", status );
+    ok( info.CurrentCount == -1, "expected -1, got %ld\n", info.CurrentCount );
     ok( info.OwnedByCaller == TRUE, "expected TRUE, got %d\n", info.OwnedByCaller );
     ok( info.AbandonedState == FALSE, "expected FALSE, got %d\n", info.AbandonedState );
 
     prev = 0xdeadbeef;
     status = pNtReleaseMutant(mutant, &prev);
-    ok( status == STATUS_SUCCESS, "NtReleaseMutant failed %08x\n", status );
-    ok( prev == -1, "NtReleaseMutant failed, expected -1, got %d\n", prev );
+    ok( status == STATUS_SUCCESS, "NtReleaseMutant failed %08lx\n", status );
+    ok( prev == -1, "NtReleaseMutant failed, expected -1, got %ld\n", prev );
 
     prev = 0xdeadbeef;
     status = pNtReleaseMutant(mutant, &prev);
-    ok( status == STATUS_SUCCESS, "NtReleaseMutant failed %08x\n", status );
-    ok( prev == 0, "NtReleaseMutant failed, expected 0, got %d\n", prev );
+    ok( status == STATUS_SUCCESS, "NtReleaseMutant failed %08lx\n", status );
+    ok( prev == 0, "NtReleaseMutant failed, expected 0, got %ld\n", prev );
 
     memset(&info, 0xcc, sizeof(info));
     status = pNtQueryMutant(mutant, MutantBasicInformation, &info, sizeof(info), NULL);
-    ok( status == STATUS_SUCCESS, "NtQueryMutant failed %08x\n", status );
-    ok( info.CurrentCount == 1, "expected 1, got %d\n", info.CurrentCount );
+    ok( status == STATUS_SUCCESS, "NtQueryMutant failed %08lx\n", status );
+    ok( info.CurrentCount == 1, "expected 1, got %ld\n", info.CurrentCount );
     ok( info.OwnedByCaller == FALSE, "expected FALSE, got %d\n", info.OwnedByCaller );
     ok( info.AbandonedState == FALSE, "expected FALSE, got %d\n", info.AbandonedState );
 
     /* abandoned */
     thread = CreateThread( NULL, 0, mutant_thread, mutant, 0, NULL );
     ret = WaitForSingleObject( thread, 1000 );
-    ok( ret == WAIT_OBJECT_0, "WaitForSingleObject failed %08x\n", ret );
+    ok( ret == WAIT_OBJECT_0, "WaitForSingleObject failed %08lx\n", ret );
     CloseHandle( thread );
 
     memset(&info, 0xcc, sizeof(info));
     status = pNtQueryMutant(mutant, MutantBasicInformation, &info, sizeof(info), NULL);
-    ok( status == STATUS_SUCCESS, "NtQueryMutant failed %08x\n", status );
-    ok( info.CurrentCount == 1, "expected 0, got %d\n", info.CurrentCount );
+    ok( status == STATUS_SUCCESS, "NtQueryMutant failed %08lx\n", status );
+    ok( info.CurrentCount == 1, "expected 0, got %ld\n", info.CurrentCount );
     ok( info.OwnedByCaller == FALSE, "expected FALSE, got %d\n", info.OwnedByCaller );
     ok( info.AbandonedState == TRUE, "expected TRUE, got %d\n", info.AbandonedState );
 
     ret = WaitForSingleObject( mutant, 1000 );
-    ok( ret == WAIT_ABANDONED_0, "WaitForSingleObject failed %08x\n", ret );
+    ok( ret == WAIT_ABANDONED_0, "WaitForSingleObject failed %08lx\n", ret );
 
     memset(&info, 0xcc, sizeof(info));
     status = pNtQueryMutant(mutant, MutantBasicInformation, &info, sizeof(info), NULL);
-    ok( status == STATUS_SUCCESS, "NtQueryMutant failed %08x\n", status );
-    ok( info.CurrentCount == 0, "expected 0, got %d\n", info.CurrentCount );
+    ok( status == STATUS_SUCCESS, "NtQueryMutant failed %08lx\n", status );
+    ok( info.CurrentCount == 0, "expected 0, got %ld\n", info.CurrentCount );
     ok( info.OwnedByCaller == TRUE, "expected TRUE, got %d\n", info.OwnedByCaller );
     ok( info.AbandonedState == FALSE, "expected FALSE, got %d\n", info.AbandonedState );
 
@@ -468,63 +469,63 @@ static void test_semaphore(void)
     InitializeObjectAttributes(&attr, &str, 0, 0, NULL);
 
     status = pNtCreateSemaphore(&semaphore, GENERIC_ALL, &attr, 2, 1);
-    ok( status == STATUS_INVALID_PARAMETER, "Failed to create Semaphore(%08x)\n", status );
+    ok( status == STATUS_INVALID_PARAMETER, "Failed to create Semaphore(%08lx)\n", status );
     status = pNtCreateSemaphore(&semaphore, GENERIC_ALL, &attr, 1, 2);
-    ok( status == STATUS_SUCCESS, "Failed to create Semaphore(%08x)\n", status );
+    ok( status == STATUS_SUCCESS, "Failed to create Semaphore(%08lx)\n", status );
 
     /* bogus */
     status = pNtQuerySemaphore(semaphore, SemaphoreBasicInformation, &info, 0, NULL);
     ok( status == STATUS_INFO_LENGTH_MISMATCH,
-        "Failed to NtQuerySemaphore, expected STATUS_INFO_LENGTH_MISMATCH, got %08x\n", status );
+        "Failed to NtQuerySemaphore, expected STATUS_INFO_LENGTH_MISMATCH, got %08lx\n", status );
     status = pNtQuerySemaphore(semaphore, 0x42, &info, sizeof(info), NULL);
     ok( status == STATUS_INVALID_INFO_CLASS,
-        "Failed to NtQuerySemaphore, expected STATUS_INVALID_INFO_CLASS, got %08x\n", status );
+        "Failed to NtQuerySemaphore, expected STATUS_INVALID_INFO_CLASS, got %08lx\n", status );
     status = pNtQuerySemaphore((HANDLE)0xdeadbeef, SemaphoreBasicInformation, &info, sizeof(info), NULL);
     ok( status == STATUS_INVALID_HANDLE,
-        "Failed to NtQuerySemaphore, expected STATUS_INVALID_HANDLE, got %08x\n", status );
+        "Failed to NtQuerySemaphore, expected STATUS_INVALID_HANDLE, got %08lx\n", status );
 
     len = -1;
     memset(&info, 0xcc, sizeof(info));
     status = pNtQuerySemaphore(semaphore, SemaphoreBasicInformation, &info, sizeof(info), &len);
-    ok( status == STATUS_SUCCESS, "NtQuerySemaphore failed %08x\n", status );
-    ok( info.CurrentCount == 1, "expected 1, got %d\n", info.CurrentCount );
-    ok( info.MaximumCount == 2, "expected 2, got %d\n", info.MaximumCount );
-    ok( len == sizeof(info), "got %u\n", len );
+    ok( status == STATUS_SUCCESS, "NtQuerySemaphore failed %08lx\n", status );
+    ok( info.CurrentCount == 1, "expected 1, got %ld\n", info.CurrentCount );
+    ok( info.MaximumCount == 2, "expected 2, got %ld\n", info.MaximumCount );
+    ok( len == sizeof(info), "got %lu\n", len );
 
     ret = WaitForSingleObject( semaphore, 1000 );
-    ok( ret == WAIT_OBJECT_0, "WaitForSingleObject failed %08x\n", ret );
+    ok( ret == WAIT_OBJECT_0, "WaitForSingleObject failed %08lx\n", ret );
 
     memset(&info, 0xcc, sizeof(info));
     status = pNtQuerySemaphore(semaphore, SemaphoreBasicInformation, &info, sizeof(info), NULL);
-    ok( status == STATUS_SUCCESS, "NtQuerySemaphore failed %08x\n", status );
-    ok( info.CurrentCount == 0, "expected 0, got %d\n", info.CurrentCount );
-    ok( info.MaximumCount == 2, "expected 2, got %d\n", info.MaximumCount );
+    ok( status == STATUS_SUCCESS, "NtQuerySemaphore failed %08lx\n", status );
+    ok( info.CurrentCount == 0, "expected 0, got %ld\n", info.CurrentCount );
+    ok( info.MaximumCount == 2, "expected 2, got %ld\n", info.MaximumCount );
 
     prev = 0xdeadbeef;
     status = pNtReleaseSemaphore(semaphore, 3, &prev);
-    ok( status == STATUS_SEMAPHORE_LIMIT_EXCEEDED, "NtReleaseSemaphore failed %08x\n", status );
-    ok( prev == 0xdeadbeef, "NtReleaseSemaphore failed, expected 0xdeadbeef, got %d\n", prev );
+    ok( status == STATUS_SEMAPHORE_LIMIT_EXCEEDED, "NtReleaseSemaphore failed %08lx\n", status );
+    ok( prev == 0xdeadbeef, "NtReleaseSemaphore failed, expected 0xdeadbeef, got %ld\n", prev );
 
     prev = 0xdeadbeef;
     status = pNtReleaseSemaphore(semaphore, 1, &prev);
-    ok( status == STATUS_SUCCESS, "NtReleaseSemaphore failed %08x\n", status );
-    ok( prev == 0, "NtReleaseSemaphore failed, expected 0, got %d\n", prev );
+    ok( status == STATUS_SUCCESS, "NtReleaseSemaphore failed %08lx\n", status );
+    ok( prev == 0, "NtReleaseSemaphore failed, expected 0, got %ld\n", prev );
 
     prev = 0xdeadbeef;
     status = pNtReleaseSemaphore(semaphore, 1, &prev);
-    ok( status == STATUS_SUCCESS, "NtReleaseSemaphore failed %08x\n", status );
-    ok( prev == 1, "NtReleaseSemaphore failed, expected 1, got %d\n", prev );
+    ok( status == STATUS_SUCCESS, "NtReleaseSemaphore failed %08lx\n", status );
+    ok( prev == 1, "NtReleaseSemaphore failed, expected 1, got %ld\n", prev );
 
     prev = 0xdeadbeef;
     status = pNtReleaseSemaphore(semaphore, 1, &prev);
-    ok( status == STATUS_SEMAPHORE_LIMIT_EXCEEDED, "NtReleaseSemaphore failed %08x\n", status );
-    ok( prev == 0xdeadbeef, "NtReleaseSemaphore failed, expected 0xdeadbeef, got %d\n", prev );
+    ok( status == STATUS_SEMAPHORE_LIMIT_EXCEEDED, "NtReleaseSemaphore failed %08lx\n", status );
+    ok( prev == 0xdeadbeef, "NtReleaseSemaphore failed, expected 0xdeadbeef, got %ld\n", prev );
 
     memset(&info, 0xcc, sizeof(info));
     status = pNtQuerySemaphore(semaphore, SemaphoreBasicInformation, &info, sizeof(info), NULL);
-    ok( status == STATUS_SUCCESS, "NtQuerySemaphore failed %08x\n", status );
-    ok( info.CurrentCount == 2, "expected 2, got %d\n", info.CurrentCount );
-    ok( info.MaximumCount == 2, "expected 2, got %d\n", info.MaximumCount );
+    ok( status == STATUS_SUCCESS, "NtQuerySemaphore failed %08lx\n", status );
+    ok( info.CurrentCount == 2, "expected 2, got %ld\n", info.CurrentCount );
+    ok( info.MaximumCount == 2, "expected 2, got %ld\n", info.MaximumCount );
 
     NtClose( semaphore );
 }
@@ -558,7 +559,7 @@ static void test_wait_on_address(void)
     address = 0;
     compare = 0;
     status = pRtlWaitOnAddress(&address, &compare, 5, NULL);
-    ok(status == STATUS_INVALID_PARAMETER, "got %x\n", status);
+    ok(status == STATUS_INVALID_PARAMETER, "got %lx\n", status);
 
     /* values match */
     address = 0;
@@ -567,9 +568,9 @@ static void test_wait_on_address(void)
     timeout.QuadPart = start.QuadPart + 100 * 10000;
     status = pRtlWaitOnAddress(&address, &compare, 8, &timeout);
     pNtQuerySystemTime(&end);
-    ok(status == STATUS_TIMEOUT, "got 0x%08x\n", status);
+    ok(status == STATUS_TIMEOUT, "got 0x%08lx\n", status);
     elapsed = (end.QuadPart - start.QuadPart) / 10000;
-    ok(90 <= elapsed && elapsed <= 900, "timed out in %u ms\n", elapsed);
+    ok(90 <= elapsed && elapsed <= 900, "timed out in %lu ms\n", elapsed);
     ok(address == 0, "got %s\n", wine_dbgstr_longlong(address));
     ok(compare == 0, "got %s\n", wine_dbgstr_longlong(compare));
 
@@ -583,17 +584,17 @@ static void test_wait_on_address(void)
         timeout.QuadPart = -100 * 10000;
         status = pRtlWaitOnAddress(&address, &compare, size, &timeout);
         pNtQuerySystemTime(&end);
-        ok(status == STATUS_TIMEOUT, "got 0x%08x\n", status);
+        ok(status == STATUS_TIMEOUT, "got 0x%08lx\n", status);
         elapsed = (end.QuadPart - start.QuadPart) / 10000;
-        ok(90 <= elapsed && elapsed <= 900, "timed out in %u ms\n", elapsed);
+        ok(90 <= elapsed && elapsed <= 900, "timed out in %lu ms\n", elapsed);
 
         status = pRtlWaitOnAddress(&address, &compare, size << 1, &timeout);
-        ok(!status, "got 0x%08x\n", status);
+        ok(!status, "got 0x%08lx\n", status);
     }
     address = 0;
     compare = 1;
     status = pRtlWaitOnAddress(&address, &compare, 8, NULL);
-    ok(!status, "got 0x%08x\n", status);
+    ok(!status, "got 0x%08lx\n", status);
 
     /* no waiters */
     address = 0;
@@ -761,10 +762,10 @@ static DWORD WINAPI tid_alert_thread( void *arg )
     NTSTATUS ret;
 
     ret = pNtAlertThreadByThreadId( arg );
-    ok(!ret, "got %#x\n", ret);
+    ok(!ret, "got %#lx\n", ret);
 
     ret = pNtWaitForAlertByThreadId( (void *)0x123, NULL );
-    ok(ret == STATUS_ALERTED, "got %#x\n", ret);
+    ok(ret == STATUS_ALERTED, "got %#lx\n", ret);
 
     return 0;
 }
@@ -786,52 +787,52 @@ static void test_tid_alert( char **argv )
     }
 
     ret = pNtWaitForAlertByThreadId( (void *)0x123, &timeout );
-    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+    ok(ret == STATUS_TIMEOUT, "got %#lx\n", ret);
 
     ret = pNtAlertThreadByThreadId( 0 );
-    ok(ret == STATUS_INVALID_CID, "got %#x\n", ret);
+    ok(ret == STATUS_INVALID_CID, "got %#lx\n", ret);
 
     ret = pNtAlertThreadByThreadId( (HANDLE)0xdeadbeef );
-    ok(ret == STATUS_INVALID_CID, "got %#x\n", ret);
+    ok(ret == STATUS_INVALID_CID, "got %#lx\n", ret);
 
     ret = pNtAlertThreadByThreadId( (HANDLE)(DWORD_PTR)GetCurrentThreadId() );
-    ok(!ret, "got %#x\n", ret);
+    ok(!ret, "got %#lx\n", ret);
 
     ret = pNtAlertThreadByThreadId( (HANDLE)(DWORD_PTR)GetCurrentThreadId() );
-    ok(!ret, "got %#x\n", ret);
+    ok(!ret, "got %#lx\n", ret);
 
     ret = pNtWaitForAlertByThreadId( (void *)0x123, &timeout );
-    ok(ret == STATUS_ALERTED, "got %#x\n", ret);
+    ok(ret == STATUS_ALERTED, "got %#lx\n", ret);
 
     ret = pNtWaitForAlertByThreadId( (void *)0x123, &timeout );
-    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+    ok(ret == STATUS_TIMEOUT, "got %#lx\n", ret);
 
     ret = pNtWaitForAlertByThreadId( (void *)0x321, &timeout );
-    ok(ret == STATUS_TIMEOUT, "got %#x\n", ret);
+    ok(ret == STATUS_TIMEOUT, "got %#lx\n", ret);
 
     thread = CreateThread( NULL, 0, tid_alert_thread, (HANDLE)(DWORD_PTR)GetCurrentThreadId(), 0, &tid );
     timeout.QuadPart = -1000 * 10000;
     ret = pNtWaitForAlertByThreadId( (void *)0x123, &timeout );
-    ok(ret == STATUS_ALERTED, "got %#x\n", ret);
+    ok(ret == STATUS_ALERTED, "got %#lx\n", ret);
 
     ret = WaitForSingleObject( thread, 100 );
-    ok(ret == WAIT_TIMEOUT, "got %d\n", ret);
+    ok(ret == WAIT_TIMEOUT, "got %ld\n", ret);
     ret = pNtAlertThreadByThreadId( (HANDLE)(DWORD_PTR)tid );
-    ok(!ret, "got %#x\n", ret);
+    ok(!ret, "got %#lx\n", ret);
 
     ret = WaitForSingleObject( thread, 1000 );
-    ok(!ret, "got %d\n", ret);
+    ok(!ret, "got %ld\n", ret);
 
     ret = pNtAlertThreadByThreadId( (HANDLE)(DWORD_PTR)tid );
-    ok(!ret, "got %#x\n", ret);
+    ok(!ret, "got %#lx\n", ret);
 
     CloseHandle(thread);
 
     sprintf( cmdline, "%s %s subprocess", argv[0], argv[1] );
     ret = CreateProcessA( NULL, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi );
-    ok(ret, "failed to create process, error %u\n", GetLastError());
+    ok(ret, "failed to create process, error %lu\n", GetLastError());
     ret = pNtAlertThreadByThreadId( (HANDLE)(DWORD_PTR)pi.dwThreadId );
-    todo_wine ok(ret == STATUS_ACCESS_DENIED, "got %#x\n", ret);
+    todo_wine ok(ret == STATUS_ACCESS_DENIED, "got %#lx\n", ret);
     ok(!WaitForSingleObject( pi.hProcess, 1000 ), "wait failed\n");
     CloseHandle( pi.hProcess );
     CloseHandle( pi.hThread );
