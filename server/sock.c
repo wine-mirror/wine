@@ -471,6 +471,32 @@ static socklen_t sockaddr_to_unix( const struct WS_sockaddr *wsaddr, int wsaddrl
     }
 }
 
+static socklen_t get_unix_sockaddr_any( union unix_sockaddr *uaddr, int ws_family )
+{
+    memset( uaddr, 0, sizeof(*uaddr) );
+    switch (ws_family)
+    {
+        case WS_AF_INET:
+            uaddr->in.sin_family = AF_INET;
+            return sizeof(uaddr->in);
+        case WS_AF_INET6:
+            uaddr->in6.sin6_family = AF_INET6;
+            return sizeof(uaddr->in6);
+#ifdef HAS_IPX
+        case WS_AF_IPX:
+            uaddr->ipx.sipx_family = AF_IPX;
+            return sizeof(uaddr->ipx);
+#endif
+#ifdef HAS_IRDA
+        case WS_AF_IRDA:
+            uaddr->irda.sir_family = AF_IRDA;
+            return sizeof(uaddr->irda);
+#endif
+        default:
+            return 0;
+    }
+}
+
 /* some events are generated at the same time but must be sent in a particular
  * order (e.g. CONNECT must be sent before READ) */
 static const enum afd_poll_bit event_bitorder[] =
@@ -3490,15 +3516,24 @@ DECL_HANDLER(send_socket)
     if (!sock) return;
     fd = sock->fd;
 
-    if (sock->type == WS_SOCK_DGRAM)
+    if (sock->type == WS_SOCK_DGRAM && !sock->bound)
     {
-        /* sendto() and sendmsg() implicitly binds a socket */
         union unix_sockaddr unix_addr;
-        socklen_t unix_len = sizeof(unix_addr);
+        socklen_t unix_len;
+        int bind_errno = 0;
+        int unix_fd = get_unix_fd( fd );
 
-        if (!sock->bound && !getsockname( get_unix_fd( fd ), &unix_addr.addr, &unix_len ))
+        unix_len = get_unix_sockaddr_any( &unix_addr, sock->family );
+        if (bind( unix_fd, &unix_addr.addr, unix_len ) < 0)
+            bind_errno = errno;
+
+        if (getsockname( unix_fd, &unix_addr.addr, &unix_len ) >= 0)
+        {
             sock->addr_len = sockaddr_from_unix( &unix_addr, &sock->addr.addr, sizeof(sock->addr) );
-        sock->bound = 1;
+            sock->bound = 1;
+        }
+        else if (status == STATUS_PENDING || status == STATUS_DEVICE_NOT_READY)
+            status = sock_get_ntstatus( bind_errno ? bind_errno : errno );
     }
 
     /* If we had a short write and the socket is nonblocking (and the client is
