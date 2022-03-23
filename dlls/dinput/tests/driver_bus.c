@@ -421,6 +421,7 @@ struct phys_device
 
     WCHAR instance_id[MAX_PATH];
     WCHAR device_id[MAX_PATH];
+    IRP *pending_remove;
 
     BOOL use_report_id;
     DWORD report_descriptor_len;
@@ -677,8 +678,14 @@ static NTSTATUS pdo_pnp( DEVICE_OBJECT *device, IRP *irp )
             {
                 input_queue_cleanup( &impl->input_queue );
                 expect_queue_cleanup( &impl->expect_queue );
+                irp = impl->pending_remove;
                 IoDeleteDevice( device );
                 if (winetest_debug > 1) trace( "Deleted Bus PDO %p\n", device );
+                if (irp)
+                {
+                    irp->IoStatus.Status = STATUS_SUCCESS;
+                    IoCompleteRequest( irp, IO_NO_INCREMENT );
+                }
             }
             return STATUS_SUCCESS;
         }
@@ -1220,7 +1227,9 @@ static NTSTATUS WINAPI pdo_ioctl( DEVICE_OBJECT *device, IRP *irp )
         impl->base.state = PNP_DEVICE_REMOVED;
         irp_queue_clear( &impl->input_queue.pending );
         KeReleaseSpinLock( &impl->base.lock, irql );
-        status = STATUS_SUCCESS;
+        impl->pending_remove = irp;
+        IoMarkIrpPending( irp );
+        status = STATUS_PENDING;
         break;
     case IOCTL_WINETEST_CREATE_DEVICE:
         ok( 0, "unexpected call\n" );
