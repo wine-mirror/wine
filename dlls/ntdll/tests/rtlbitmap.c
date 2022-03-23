@@ -20,6 +20,7 @@
  * We use function pointers here as some of the bitmap functions exist only
  * in later versions of ntdll.
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include "ntdll_test.h"
 
@@ -501,7 +502,7 @@ static void test_RtlFindSetRuns(void)
 
   /* Get first 2 */
   ulCount = pRtlFindSetRuns(&bm, runs, 2, FALSE);
-  ok(ulCount == 2, "RtlFindClearRuns returned %d, expected 2\n", ulCount);
+  ok(ulCount == 2, "RtlFindClearRuns returned %ld, expected 2\n", ulCount);
   ok (runs[0].StartingIndex == 7 || runs[0].StartingIndex == 101,"bad find\n");
   ok (runs[1].StartingIndex == 7 || runs[1].StartingIndex == 101,"bad find\n");
   ok (runs[0].NumberOfBits + runs[1].NumberOfBits == 19 + 3,"bad size\n");
@@ -511,7 +512,7 @@ static void test_RtlFindSetRuns(void)
   /* Get longest 3 */
   memset(runs, 0, sizeof(runs));
   ulCount = pRtlFindSetRuns(&bm, runs, 2, TRUE);
-  ok(ulCount == 2, "RtlFindClearRuns returned %d, expected 2\n", ulCount);
+  ok(ulCount == 2, "RtlFindClearRuns returned %ld, expected 2\n", ulCount);
   ok (runs[0].StartingIndex == 7 || runs[0].StartingIndex == 1877,"bad find\n");
   ok (runs[1].StartingIndex == 7 || runs[1].StartingIndex == 1877,"bad find\n");
   ok (runs[0].NumberOfBits + runs[1].NumberOfBits == 33 + 19,"bad size\n");
@@ -521,7 +522,7 @@ static void test_RtlFindSetRuns(void)
   /* Get all 3 */
   memset(runs, 0, sizeof(runs));
   ulCount = pRtlFindSetRuns(&bm, runs, 3, TRUE);
-  ok(ulCount == 3, "RtlFindClearRuns returned %d, expected 3\n", ulCount);
+  ok(ulCount == 3, "RtlFindClearRuns returned %ld, expected 3\n", ulCount);
   ok (runs[0].StartingIndex == 7 || runs[0].StartingIndex == 101 ||
       runs[0].StartingIndex == 1877,"bad find\n");
   ok (runs[1].StartingIndex == 7 || runs[1].StartingIndex == 101 ||
@@ -539,7 +540,7 @@ static void test_RtlFindSetRuns(void)
     ULONG ulStart = 0;
 
     ulCount = pRtlFindLongestRunSet(&bm, &ulStart);
-    ok(ulCount == 33 && ulStart == 1877,"didn't find longest %d %d\n",ulCount,ulStart);
+    ok(ulCount == 33 && ulStart == 1877,"didn't find longest %ld %ld\n",ulCount,ulStart);
 
     memset(buff, 0, sizeof(buff));
     ulCount = pRtlFindLongestRunSet(&bm, &ulStart);
@@ -578,7 +579,7 @@ static void test_RtlFindClearRuns(void)
 
   /* Get first 2 */
   ulCount = pRtlFindClearRuns(&bm, runs, 2, FALSE);
-  ok(ulCount == 2, "RtlFindClearRuns returned %d, expected 2\n", ulCount);
+  ok(ulCount == 2, "RtlFindClearRuns returned %ld, expected 2\n", ulCount);
   ok (runs[0].StartingIndex == 7 || runs[0].StartingIndex == 101,"bad find\n");
   ok (runs[1].StartingIndex == 7 || runs[1].StartingIndex == 101,"bad find\n");
   ok (runs[0].NumberOfBits + runs[1].NumberOfBits == 19 + 3,"bad size\n");
@@ -588,7 +589,7 @@ static void test_RtlFindClearRuns(void)
   /* Get longest 3 */
   memset(runs, 0, sizeof(runs));
   ulCount = pRtlFindClearRuns(&bm, runs, 2, TRUE);
-  ok(ulCount == 2, "RtlFindClearRuns returned %d, expected 2\n", ulCount);
+  ok(ulCount == 2, "RtlFindClearRuns returned %ld, expected 2\n", ulCount);
   ok (runs[0].StartingIndex == 7 || runs[0].StartingIndex == 1877,"bad find\n");
   ok (runs[1].StartingIndex == 7 || runs[1].StartingIndex == 1877,"bad find\n");
   ok (runs[0].NumberOfBits + runs[1].NumberOfBits == 33 + 19,"bad size\n");
@@ -598,7 +599,7 @@ static void test_RtlFindClearRuns(void)
   /* Get all 3 */
   memset(runs, 0, sizeof(runs));
   ulCount = pRtlFindClearRuns(&bm, runs, 3, TRUE);
-  ok(ulCount == 3, "RtlFindClearRuns returned %d, expected 3\n", ulCount);
+  ok(ulCount == 3, "RtlFindClearRuns returned %ld, expected 3\n", ulCount);
   ok (runs[0].StartingIndex == 7 || runs[0].StartingIndex == 101 ||
       runs[0].StartingIndex == 1877,"bad find\n");
   ok (runs[1].StartingIndex == 7 || runs[1].StartingIndex == 101 ||
@@ -635,8 +636,8 @@ static void test_RtlFindNextForwardRunSet(void)
 
   pRtlInitializeBitMap(&bm, mask, 62);
   ulCount = pRtlFindNextForwardRunSet(&bm, ulStart, &lpPos);
-  ok(ulCount == 6, "Invalid length of found set run: %d, expected 6\n", ulCount);
-  ok(lpPos == 56, "Invalid position of found set run: %d, expected 56\n", lpPos);
+  ok(ulCount == 6, "Invalid length of found set run: %ld, expected 6\n", ulCount);
+  ok(lpPos == 56, "Invalid position of found set run: %ld, expected 56\n", lpPos);
 }
 
 static void test_RtlFindNextForwardRunClear(void)
@@ -649,8 +650,8 @@ static void test_RtlFindNextForwardRunClear(void)
 
   pRtlInitializeBitMap(&bm, mask, 62);
   ulCount = pRtlFindNextForwardRunClear(&bm, ulStart, &lpPos);
-  ok(ulCount == 6, "Invalid length of found clear run: %d, expected 6\n", ulCount);
-  ok(lpPos == 56, "Invalid position of found clear run: %d, expected 56\n", lpPos);
+  ok(ulCount == 6, "Invalid length of found clear run: %ld, expected 6\n", ulCount);
+  ok(lpPos == 56, "Invalid position of found clear run: %ld, expected 56\n", lpPos);
 }
 
 #endif
