@@ -153,6 +153,12 @@ struct connect_req
     unsigned int addr_len, send_len, send_cursor;
 };
 
+struct send_req
+{
+    struct iosb *iosb;
+    struct sock *sock;
+};
+
 enum connection_state
 {
     SOCK_LISTENING,
@@ -3454,6 +3460,25 @@ DECL_HANDLER(recv_socket)
     release_object( sock );
 }
 
+static void send_socket_completion_callback( void *private )
+{
+    struct send_req *send_req = private;
+    struct iosb *iosb = send_req->iosb;
+    struct sock *sock = send_req->sock;
+
+    if (iosb->status != STATUS_SUCCESS)
+    {
+        /* send() calls only clear and reselect events if unsuccessful. */
+        sock->pending_events &= ~AFD_POLL_WRITE;
+        sock->reported_events &= ~AFD_POLL_WRITE;
+        sock_reselect( sock );
+    }
+
+    release_object( iosb );
+    release_object( sock );
+    free( send_req );
+}
+
 DECL_HANDLER(send_socket)
 {
     struct sock *sock = (struct sock *)get_handle_obj( current->process, req->async.handle, 0, &sock_ops );
@@ -3474,13 +3499,6 @@ DECL_HANDLER(send_socket)
         if (!sock->bound && !getsockname( get_unix_fd( fd ), &unix_addr.addr, &unix_len ))
             sock->addr_len = sockaddr_from_unix( &unix_addr, &sock->addr.addr, sizeof(sock->addr) );
         sock->bound = 1;
-    }
-
-    if (status != STATUS_SUCCESS)
-    {
-        /* send() calls only clear and reselect events if unsuccessful. */
-        sock->pending_events &= ~AFD_POLL_WRITE;
-        sock->reported_events &= ~AFD_POLL_WRITE;
     }
 
     /* If we had a short write and the socket is nonblocking (and the client is
@@ -3510,22 +3528,31 @@ DECL_HANDLER(send_socket)
 
     if ((async = create_request_async( fd, get_fd_comp_flags( fd ), &req->async )))
     {
-        if (status == STATUS_SUCCESS)
+        struct send_req *send_req;
+        struct iosb *iosb = async_get_iosb( async );
+
+        if ((send_req = mem_alloc( sizeof(*send_req) )))
         {
-            struct iosb *iosb = async_get_iosb( async );
-            iosb->result = req->total;
-            release_object( iosb );
+            send_req->iosb = (struct iosb *)grab_object( iosb );
+            send_req->sock = (struct sock *)grab_object( sock );
+            async_set_completion_callback( async, send_socket_completion_callback, send_req );
         }
+        else if (status == STATUS_PENDING || status == STATUS_DEVICE_NOT_READY)
+            status = STATUS_NO_MEMORY;
+
+        if (status == STATUS_SUCCESS) iosb->result = req->total;
+        release_object( iosb );
+
         set_error( status );
 
         if (timeout)
             async_set_timeout( async, timeout, STATUS_IO_TIMEOUT );
 
         if (status == STATUS_PENDING)
+        {
             queue_async( &sock->write_q, async );
-
-        /* always reselect; we changed reported_events above */
-        sock_reselect( sock );
+            sock_reselect( sock );
+        }
 
         reply->wait = async_handoff( async, NULL, 0 );
         reply->options = get_fd_options( fd );
