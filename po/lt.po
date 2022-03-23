@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-03-08 09:46+0200\n"
+"PO-Revision-Date: 2022-03-23 08:26+0200\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -3976,13 +3976,11 @@ msgstr ""
 
 #: dlls/jscript/jscript.rc:74
 msgid "Cyclic __proto__ value"
-msgstr ""
+msgstr "Ciklinė __proto__ reikšmė"
 
 #: dlls/jscript/jscript.rc:75
-#, fuzzy
-#| msgid "Cannot define property '|': object is not extensible"
 msgid "Cannot create property for a non-extensible object"
-msgstr "Negalima apibrėžti savybės „|“: objektas nėra išplečiamas"
+msgstr "Negalima sukurti savybės neišplečiamam objektui"
 
 #: dlls/jscript/jscript.rc:76
 msgid "Cannot define property '|': object is not extensible"
