@@ -3082,6 +3082,19 @@ static int tcp6_row_owner_cmp( const void *a, const void *b )
     return RtlUshortByteSwap( rowA->dwRemotePort ) - RtlUshortByteSwap( rowB->dwRemotePort );
 }
 
+static BOOL tcp_table_needs_pids( ULONG table_class )
+{
+    switch (table_class)
+    {
+    case TCP_TABLE_BASIC_LISTENER:
+    case TCP_TABLE_BASIC_CONNECTIONS:
+    case TCP_TABLE_BASIC_ALL:
+        return FALSE;
+
+    }
+    return TRUE;
+}
+
 /*************************************************************************************
  *          get_extended_tcp_table
  *
@@ -3093,13 +3106,19 @@ static DWORD get_extended_tcp_table( void *table, DWORD *size, BOOL sort, ULONG 
     DWORD err, count, needed, i, num = 0, row_size = 0;
     struct nsi_tcp_conn_key *key;
     struct nsi_tcp_conn_dynamic *dyn;
-    struct nsi_tcp_conn_static *stat;
+    struct nsi_tcp_conn_static *stat = NULL;
 
     if (!size) return ERROR_INVALID_PARAMETER;
 
-    err = NsiAllocateAndGetTable( 1, &NPI_MS_TCP_MODULEID, tcp_table_id( table_class ), (void **)&key, sizeof(*key),
-                                  NULL, 0, (void **)&dyn, sizeof(*dyn),
-                                  (void **)&stat, sizeof(*stat), &count, 0 );
+    if (tcp_table_needs_pids( table_class ))
+        err = NsiAllocateAndGetTable( 1, &NPI_MS_TCP_MODULEID, tcp_table_id( table_class ), (void **)&key, sizeof(*key),
+                                      NULL, 0, (void **)&dyn, sizeof(*dyn),
+                                      (void **)&stat, sizeof(*stat), &count, 0 );
+    else /* Don't retrieve the static data if not required as this is expensive to compute */
+        err = NsiAllocateAndGetTable( 1, &NPI_MS_TCP_MODULEID, tcp_table_id( table_class ), (void **)&key, sizeof(*key),
+                                      NULL, 0, (void **)&dyn, sizeof(*dyn),
+                                      NULL, 0, &count, 0 );
+
     if (err) return err;
 
     for (i = 0; i < count; i++)
