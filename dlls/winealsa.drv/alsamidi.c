@@ -69,6 +69,10 @@ static snd_seq_t *midi_seq;
 static unsigned int seq_refs;
 static int port_in = -1;
 
+static pthread_mutex_t notify_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t notify_cond = PTHREAD_COND_INITIALIZER;
+static BOOL notify_quit;
+
 static void seq_lock(void)
 {
     pthread_mutex_lock(&seq_mutex);
@@ -117,6 +121,17 @@ static void set_in_notify(struct notify_context *notify, struct midi_src *src, W
     notify->flags = src->wFlags;
     notify->device = src->midiDesc.hMidi;
     notify->instance = src->midiDesc.dwInstance;
+}
+
+static void notify_post(struct notify_context *notify)
+{
+    pthread_mutex_lock(&notify_mutex);
+
+    if (notify) FIXME("Not yet handled\n");
+    else notify_quit = TRUE;
+    pthread_cond_signal(&notify_cond);
+
+    pthread_mutex_unlock(&notify_mutex);
 }
 
 static snd_seq_t *seq_open(int *port_in_ret)
@@ -401,6 +416,14 @@ NTSTATUS midi_init(void *args)
     params->srcs = srcs;
 
     TRACE("End\n");
+
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS midi_release(void *args)
+{
+    /* stop the notify_wait thread */
+    notify_post(NULL);
 
     return STATUS_SUCCESS;
 }
@@ -1098,6 +1121,22 @@ NTSTATUS midi_in_message(void *args)
         TRACE("Unsupported message\n");
         *params->err = MMSYSERR_NOTSUPPORTED;
     }
+
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS midi_notify_wait(void *args)
+{
+    struct midi_notify_wait_params *params = args;
+
+    pthread_mutex_lock(&notify_mutex);
+
+    while (!notify_quit)
+        pthread_cond_wait(&notify_cond, &notify_mutex);
+
+    *params->quit = notify_quit;
+
+    pthread_mutex_unlock(&notify_mutex);
 
     return STATUS_SUCCESS;
 }

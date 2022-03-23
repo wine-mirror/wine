@@ -557,18 +557,36 @@ DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     return err;
 }
 
+static DWORD WINAPI notify_thread(void *p)
+{
+    struct midi_notify_wait_params params;
+    struct notify_context notify;
+    BOOL quit;
+
+    params.notify = &notify;
+    params.quit = &quit;
+
+    while (1)
+    {
+        ALSA_CALL(midi_notify_wait, &params);
+        if (quit) break;
+    }
+    return 0;
+}
+
 /**************************************************************************
  * 				DriverProc (WINEALSA.@)
  */
 LRESULT CALLBACK ALSA_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
                                  LPARAM dwParam1, LPARAM dwParam2)
 {
-/* EPP     TRACE("(%08lX, %04X, %08lX, %08lX, %08lX)\n",  */
-/* EPP 	  dwDevID, hDriv, wMsg, dwParam1, dwParam2); */
-
     switch(wMsg) {
     case DRV_LOAD:
+        CloseHandle(CreateThread(NULL, 0, notify_thread, NULL, 0, NULL));
+        return 1;
     case DRV_FREE:
+        ALSA_CALL(midi_release, NULL);
+        return 1;
     case DRV_OPEN:
     case DRV_CLOSE:
     case DRV_ENABLE:
