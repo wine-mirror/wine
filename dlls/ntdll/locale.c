@@ -627,7 +627,7 @@ static NTSTATUS get_dummy_preferred_ui_language( DWORD flags, LANGID lang, ULONG
 
     FIXME("(0x%x %p %p %p) returning a dummy value (current locale)\n", flags, count, buffer, size);
 
-    if (flags & MUI_LANGUAGE_ID) swprintf( name, ARRAY_SIZE(name), L"%04lx", lang );
+    if (flags & MUI_LANGUAGE_ID) swprintf( name, ARRAY_SIZE(name), L"%04lX", lang );
     else
     {
         UNICODE_STRING str;
