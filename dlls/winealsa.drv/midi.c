@@ -67,16 +67,6 @@ static void seq_unlock(void)
     ALSA_CALL(midi_seq_lock, (void *)(UINT_PTR)0);
 }
 
-static void in_buffer_lock(void)
-{
-    ALSA_CALL(midi_in_lock, (void *)(UINT_PTR)1);
-}
-
-static void in_buffer_unlock(void)
-{
-    ALSA_CALL(midi_in_lock, (void *)(UINT_PTR)0);
-}
-
 static void notify_client(struct notify_context *notify)
 {
     TRACE("dev_id = %d msg = %d param1 = %04lX param2 = %04lX\n", notify->dev_id, notify->msg, notify->param_1, notify->param_2);
@@ -122,11 +112,6 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg,
     switch (wMsg) {
     case MIM_OPEN:
     case MIM_CLOSE:
-    case MIM_DATA:
-    case MIM_LONGDATA:
-    case MIM_ERROR:
-    case MIM_LONGERROR:
-    case MIM_MOREDATA:
 	if (wDevID > MIDM_NumDevs) return;
 
 	dwCallBack = MidiInDev[wDevID].midiDesc.dwCallback;
@@ -170,117 +155,6 @@ static int midiCloseSeq(void)
     return 0;
 }
 
-static void handle_sysex_event(struct midi_src *src, BYTE *data, UINT len)
-{
-    UINT pos = 0, copy_len, current_time = NtGetTickCount() - src->startTime;
-    MIDIHDR *hdr;
-
-    in_buffer_lock();
-
-    while (len)
-    {
-        hdr = src->lpQueueHdr;
-        if (!hdr) break;
-
-        copy_len = min(len, hdr->dwBufferLength - hdr->dwBytesRecorded);
-        memcpy(hdr->lpData + hdr->dwBytesRecorded, data + pos, copy_len);
-        hdr->dwBytesRecorded += copy_len;
-        len -= copy_len;
-        pos += copy_len;
-
-        if ((hdr->dwBytesRecorded == hdr->dwBufferLength) ||
-            (*(BYTE*)(hdr->lpData + hdr->dwBytesRecorded - 1) == 0xF7))
-        { /* buffer full or end of sysex message */
-            src->lpQueueHdr = hdr->lpNext;
-            hdr->dwFlags &= ~MHDR_INQUEUE;
-            hdr->dwFlags |= MHDR_DONE;
-            MIDI_NotifyClient(src - MidiInDev, MIM_LONGDATA, (DWORD_PTR)hdr, current_time);
-        }
-    }
-
-    in_buffer_unlock();
-}
-
-static void handle_regular_event(struct midi_src *src, snd_seq_event_t *ev)
-{
-    UINT data = 0, value, current_time = NtGetTickCount() - src->startTime;
-
-    switch (ev->type)
-    {
-    case SND_SEQ_EVENT_NOTEOFF:
-        data = (ev->data.note.velocity << 16) | (ev->data.note.note << 8) | MIDI_CMD_NOTE_OFF | ev->data.control.channel;
-        break;
-    case SND_SEQ_EVENT_NOTEON:
-        data = (ev->data.note.velocity << 16) | (ev->data.note.note << 8) | MIDI_CMD_NOTE_ON | ev->data.control.channel;
-        break;
-    case SND_SEQ_EVENT_KEYPRESS:
-        data = (ev->data.note.velocity << 16) | (ev->data.note.note << 8) | MIDI_CMD_NOTE_PRESSURE | ev->data.control.channel;
-        break;
-    case SND_SEQ_EVENT_CONTROLLER:
-        data = (ev->data.control.value << 16) | (ev->data.control.param << 8) | MIDI_CMD_CONTROL | ev->data.control.channel;
-        break;
-    case SND_SEQ_EVENT_PITCHBEND:
-        value = ev->data.control.value + 0x2000;
-        data = (((value >> 7) & 0x7f) << 16) | ((value & 0x7f) << 8) | MIDI_CMD_BENDER | ev->data.control.channel;
-        break;
-    case SND_SEQ_EVENT_PGMCHANGE:
-        data = ((ev->data.control.value & 0x7f) << 8) | MIDI_CMD_PGM_CHANGE | ev->data.control.channel;
-        break;
-    case SND_SEQ_EVENT_CHANPRESS:
-        data = ((ev->data.control.value & 0x7f) << 8) | MIDI_CMD_CHANNEL_PRESSURE | ev->data.control.channel;
-        break;
-    case SND_SEQ_EVENT_CLOCK:
-        data = 0xF8;
-        break;
-    case SND_SEQ_EVENT_START:
-        data = 0xFA;
-        break;
-    case SND_SEQ_EVENT_CONTINUE:
-        data = 0xFB;
-        break;
-    case SND_SEQ_EVENT_STOP:
-        data = 0xFC;
-        break;
-    case SND_SEQ_EVENT_SONGPOS:
-        data = (((ev->data.control.value >> 7) & 0x7f) << 16) | ((ev->data.control.value & 0x7f) << 8) | MIDI_CMD_COMMON_SONG_POS;
-        break;
-    case SND_SEQ_EVENT_SONGSEL:
-        data = ((ev->data.control.value & 0x7f) << 8) | MIDI_CMD_COMMON_SONG_SELECT;
-        break;
-    case SND_SEQ_EVENT_RESET:
-        data = 0xFF;
-        break;
-    case SND_SEQ_EVENT_QFRAME:
-        data = ((ev->data.control.value & 0x7f) << 8) | MIDI_CMD_COMMON_MTC_QUARTER;
-        break;
-    case SND_SEQ_EVENT_SENSING:
-        /* Noting to do */
-        break;
-    }
-
-    if (data != 0)
-    {
-        MIDI_NotifyClient(src - MidiInDev, MIM_DATA, data, current_time);
-    }
-}
-
-static void handle_midi_event(snd_seq_event_t *ev)
-{
-    struct midi_src *src;
-
-    /* Find the target device */
-    for (src = MidiInDev; src < MidiInDev + MIDM_NumDevs; src++)
-        if ((ev->source.client == src->addr.client) && (ev->source.port == src->addr.port))
-            break;
-    if ((src == MidiInDev + MIDM_NumDevs) || (src->state != 1))
-        return;
-
-    if (ev->type == SND_SEQ_EVENT_SYSEX)
-        handle_sysex_event(src, ev->data.ext.ptr, ev->data.ext.len);
-    else
-        handle_regular_event(src, ev);
-}
-
 static DWORD WINAPI midRecThread(void *arg)
 {
     snd_seq_t *midi_seq = arg;
@@ -320,7 +194,7 @@ static DWORD WINAPI midRecThread(void *arg)
             seq_unlock();
 
             if (ev) {
-                handle_midi_event(ev);
+                ALSA_CALL(midi_handle_event, ev);
                 snd_seq_free_event(ev);
             }
 
@@ -571,6 +445,7 @@ static DWORD WINAPI notify_thread(void *p)
     {
         ALSA_CALL(midi_notify_wait, &params);
         if (quit) break;
+        if (notify.send_notify) notify_client(&notify);
     }
     return 0;
 }

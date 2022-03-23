@@ -2451,6 +2451,6 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     midi_notify_wait,
 
     midi_seq_lock, /* temporary */
-    midi_in_lock,
     midi_seq_open,
+    midi_handle_event,
 };
