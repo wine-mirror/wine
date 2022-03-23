@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-12-30 11:19+0900\n"
+"PO-Revision-Date: 2022-03-23 11:25+0900\n"
 "Last-Translator: Byeongsik Jeon <bsjeon@hanmail.net>\n"
 "Language-Team: Korean\n"
 "Language: ko\n"
@@ -240,8 +240,8 @@ msgstr ""
 "다.\n"
 "\n"
 "참고: 배포판이 제공하는 wine-mono 패키지 사용을 추천합니다. 자세한 내용은 <a "
-"href=\"https://wiki.winehq.org/Mono\">https://wiki.winehq.org/Mono</a>를 보십"
-"시오."
+"href=\"https://wiki.winehq.org/Mono\">https://wiki.winehq.org/Mono</a>를 참고"
+"하세요."
 
 #: dlls/appwiz.cpl/appwiz.rc:31
 msgid "Add/Remove Programs"
@@ -3954,13 +3954,11 @@ msgstr ""
 
 #: dlls/jscript/jscript.rc:74
 msgid "Cyclic __proto__ value"
-msgstr ""
+msgstr "순환하는 __proto__ 값"
 
 #: dlls/jscript/jscript.rc:75
-#, fuzzy
-#| msgid "Cannot define property '|': object is not extensible"
 msgid "Cannot create property for a non-extensible object"
-msgstr "확장 가능하지 않은 속성 '|'을(를) 정의할 수 없습니다"
+msgstr "확장 가능하지 않은 개체에 대한 속성을 만들 수 없습니다"
 
 #: dlls/jscript/jscript.rc:76
 msgid "Cannot define property '|': object is not extensible"
@@ -6948,54 +6946,40 @@ msgid "This network connection does not exist.\n"
 msgstr "네트워크 연결이 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3748
-#, fuzzy
-#| msgid "Invalid at interrupt time.\n"
 msgid "Call interrupted.\n"
-msgstr "잘못된 인터럽트 시간.\n"
+msgstr "호출이 중단되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3753
-#, fuzzy
-#| msgid "Invalid handle.\n"
 msgid "Invalid file handle.\n"
-msgstr "잘못된 핸들입니다.\n"
+msgstr "파일 핸들이 잘못되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3763
-#, fuzzy
-#| msgid "Invalid network address.\n"
 msgid "Invalid pointer address.\n"
-msgstr "잘못된 네트워크 주소.\n"
+msgstr "주소가 잘못되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3768
-#, fuzzy
-#| msgid "Invalid name.\n"
 msgid "Invalid argument.\n"
-msgstr "잘못된 이름.\n"
+msgstr "인수가 잘못되었습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3778
 msgid "Connection reset by peer.\n"
-msgstr "피어가 연결을 초기화 했습니다.\n"
+msgstr "피어가 연결을 다시 설정했습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3788
-#, fuzzy
-#| msgid "Point not found.\n"
 msgid "Host not found.\n"
-msgstr "포인트를 찾을 수 없습니다.\n"
+msgstr "호스트를 찾을 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3793
-#, fuzzy
-#| msgid "Attribute is not found.\n"
 msgid "Nonauthoritative host not found.\n"
-msgstr "특성을 찾을 수 없습니다.\n"
+msgstr "일시적으로 호스트를 찾을 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3798
-#, fuzzy
-#| msgid "Unrecoverable error occurred.\n"
 msgid "Nonrecoverable error.\n"
-msgstr "복구할 수 없는 오류가 발생했습니다.\n"
+msgstr "복구할 수 없는 오류입니다.\n"
 
 #: dlls/kernel32/winerror.mc:3803
 msgid "Name valid, no data record.\n"
-msgstr ""
+msgstr "유효한 이름입니다만, 요청한 데이터 레코드가 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3817
 msgid "Not implemented.\n"
@@ -7011,7 +6995,7 @@ msgstr "파일에서 서명을 찾을 수 없습니다.\n"
 
 #: dlls/kernel32/winerror.mc:3824
 msgid "Invalid call.\n"
-msgstr "잘못된 호출.\n"
+msgstr "잘못된 호출입니다.\n"
 
 #: dlls/kernel32/winerror.mc:3831
 msgid "Resource is not currently available.\n"
@@ -9135,8 +9119,8 @@ msgid ""
 "Provider is no longer available. Ensure that the provider is installed "
 "properly."
 msgstr ""
-"공급자를 더 이상 사용할 수 없습니다. 공급자가 올바르게 설치되었는지 확인하십"
-"시오."
+"공급자를 더 이상 사용할 수 없습니다. 공급자가 올바르게 설치되었는지 확인하세"
+"요."
 
 #: dlls/oledb32/version.rc:36
 msgid "Data Link Properties"
@@ -9427,7 +9411,7 @@ msgid ""
 "make sure the correct drive is selected below"
 msgstr ""
 "제조업체 설치 디스크를 삽입하고,\n"
-"아래의 선택된 드라이브가 올바른지 확인하시오"
+"아래의 선택된 드라이브가 올바른지 확인하세요"
 
 #: dlls/setupapi/setupapi.rc:57
 msgid "Copy manufacturer's files from:"
@@ -10193,7 +10177,8 @@ msgstr "'%1' 항목을 휴지통으로 보내시겠습니까?"
 
 #: dlls/shell32/shell32.rc:177
 msgid "The item '%1' can't be sent to Trash. Do you want to delete it instead?"
-msgstr "항목'%1'을(를) 휴지통으로 보낼 수 없습니다. 대신에 지우시겠습니까?"
+msgstr ""
+"항목'%1'을(를) 휴지통으로 보낼 수 없습니다. 대신 완전히 지우시겠습니까?"
 
 #: dlls/shell32/shell32.rc:184
 msgid ""
@@ -15141,7 +15126,7 @@ msgid ""
 msgstr ""
 "파일 '%s'이(가) 변경되었습니다.\n"
 "\n"
-"변결 내용을 저장하시겠습니까?"
+"변경 내용을 저장하시겠습니까?"
 
 #: programs/notepad/notepad.rc:83
 msgid "'%s' could not be found."
@@ -15781,7 +15766,7 @@ msgstr ""
 "지원하는 작업:\n"
 "  ADD | DELETE | IMPORT | EXPORT | QUERY\n"
 "\n"
-"특정 작업에 대한 도움말을 보려면 다음을 입력하십시오.\n"
+"특정 작업에 대한 도움말을 보려면 다음처럼 입력하세요.\n"
 "  REG [작업] /?\n"
 "\n"
 
@@ -16013,7 +15998,7 @@ msgstr ""
 "     레지스트리 값 이름의 데이터를 삭제합니다.\n"
 "\n"
 "  /va\n"
-"     레지스트리 키 아래의 모든 값을 삭제하니다.\n"
+"     레지스트리 키 아래의 모든 값을 삭제합니다.\n"
 "\n"
 "  /f\n"
 "     확인 절차 없이 (모든 하위키 및 값과 함께) 레지스트리 키를\n"
@@ -17442,7 +17427,7 @@ msgstr "열 선택"
 #: programs/taskmgr/taskmgr.rc:519
 msgid ""
 "Select the columns that will appear on the Process page of the Task Manager."
-msgstr "작업 관리자의 프로세스 페이지에 표시될 열을 선택하십시오."
+msgstr "작업 관리자의 프로세스 페이지에 표시될 열을 선택하세요."
 
 #: programs/taskmgr/taskmgr.rc:521
 msgid "&Image Name"
@@ -18426,7 +18411,7 @@ msgstr ""
 #: programs/winecfg/winecfg.rc:76
 msgctxt "Drive letter"
 msgid "Letter"
-msgstr "문자"
+msgstr "드라이브"
 
 #: programs/winecfg/winecfg.rc:77
 msgid "Target folder"
@@ -18831,19 +18816,19 @@ msgstr "새 게임(&N)\tF2"
 
 #: programs/winemine/winemine.rc:42
 msgid "Question &Marks"
-msgstr "물음표(&M)"
+msgstr "물음표 표시(&M)"
 
 #: programs/winemine/winemine.rc:44
 msgid "&Beginner"
-msgstr "초보자(&B)"
+msgstr "초급(&B)"
 
 #: programs/winemine/winemine.rc:45
 msgid "&Intermediate"
-msgstr "중급자(&I)"
+msgstr "중급(&I)"
 
 #: programs/winemine/winemine.rc:46
 msgid "&Expert"
-msgstr "전문가(&E)"
+msgstr "고급(&E)"
 
 #: programs/winemine/winemine.rc:47
 msgid "&Custom..."
@@ -18851,15 +18836,15 @@ msgstr "사용자 정의(&C)..."
 
 #: programs/winemine/winemine.rc:49
 msgid "&Fastest Times"
-msgstr "가장 빠른 시간(&F)"
+msgstr "기록 보기(&F)"
 
 #: programs/winemine/winemine.rc:54
 msgid "&About WineMine"
-msgstr "지뢰찾기 정보(&A)"
+msgstr "지뢰 찾기 정보(&A)"
 
 #: programs/winemine/winemine.rc:61
 msgid "Fastest Times"
-msgstr "최단 시간"
+msgstr "최단 시간 기록"
 
 #: programs/winemine/winemine.rc:63
 msgid "Fastest times"
@@ -18867,19 +18852,19 @@ msgstr "최단 시간"
 
 #: programs/winemine/winemine.rc:64
 msgid "Beginner"
-msgstr "초보자"
+msgstr "초급"
 
 #: programs/winemine/winemine.rc:65
 msgid "Intermediate"
-msgstr "중급자"
+msgstr "중급"
 
 #: programs/winemine/winemine.rc:66
 msgid "Expert"
-msgstr "전문가"
+msgstr "고급"
 
 #: programs/winemine/winemine.rc:74 programs/winemine/winemine.rc:33
 msgid "Reset Results"
-msgstr "초기화 결과"
+msgstr "초기화"
 
 #: programs/winemine/winemine.rc:80
 msgid "Congratulations!"
@@ -18891,31 +18876,31 @@ msgstr "이름을 입력해 주세요"
 
 #: programs/winemine/winemine.rc:90
 msgid "Custom Game"
-msgstr "사용자 지정 게임"
+msgstr "사용자 정의"
 
 #: programs/winemine/winemine.rc:92
 msgid "Rows"
-msgstr "가로줄"
+msgstr "높이"
 
 #: programs/winemine/winemine.rc:93
 msgid "Columns"
-msgstr "세로줄"
+msgstr "너비"
 
 #: programs/winemine/winemine.rc:94
 msgid "Mines"
-msgstr "지뢰"
+msgstr "지뢰 수"
 
 #: programs/winemine/winemine.rc:34
 msgid "All results will be lost. Are you sure?"
-msgstr "모든 결과를 잃습니다. 계속 진행하시겠습니까?"
+msgstr "모든 기록이 초기화됩니다. 계속 진행하시겠습니까?"
 
 #: programs/winemine/winemine.rc:30
 msgid "WineMine"
-msgstr "지뢰찾기"
+msgstr "지뢰 찾기"
 
 #: programs/winemine/winemine.rc:31
 msgid "Nobody"
-msgstr "아무개"
+msgstr "익명"
 
 #: programs/winemine/winemine.rc:32
 msgid "Copyright 2000 Joshua Thielen"
@@ -18983,7 +18968,7 @@ msgstr "Wine 도움말"
 
 #: programs/winhlp32/winhlp32.rc:86
 msgid "Error while reading the help file `%s'"
-msgstr "도움말 파일 `%s'를 읽는 도중 오류 발생"
+msgstr "도움말 파일 '%s'을(를) 읽는 동안 오류 발생"
 
 #: programs/winhlp32/winhlp32.rc:88
 msgid "Summary"
@@ -18999,31 +18984,31 @@ msgstr "도움말 파일 (*.hlp)"
 
 #: programs/winhlp32/winhlp32.rc:92
 msgid "Cannot find '%s'. Do you want to find this file yourself?"
-msgstr "%s을(를) 찾을 수 없습니다'. 이 파일을 직접 찾으시겠습니까?"
+msgstr "'%s'을(를) 찾을 수 없습니다. 파일을 직접 찾으시겠습니까?"
 
 #: programs/winhlp32/winhlp32.rc:93
 msgid "Cannot find a richedit implementation... Aborting"
-msgstr "Richedit 구현을 찾을 수 없습니다... 취소중"
+msgstr "Richedit 구현을 찾을 수 없습니다... 취소 중"
 
 #: programs/winhlp32/winhlp32.rc:94
 msgid "Help topics: "
-msgstr "도움말 목차: "
+msgstr "도움말 항목: "
 
 #: programs/wmic/wmic.rc:28
 msgid "Error: Command line not supported\n"
-msgstr "오류: 명령 라인은 지원되지 않음\n"
+msgstr "오류: 명령 줄은 지원하지 않습니다\n"
 
 #: programs/wmic/wmic.rc:29
 msgid "Error: Alias not found\n"
-msgstr "오류: Alias를 찾을 수 없음\n"
+msgstr "오류: 별칭을 찾을 수 없습니다\n"
 
 #: programs/wmic/wmic.rc:30
 msgid "Error: Invalid query\n"
-msgstr "오류: 잘못된 질의\n"
+msgstr "오류: 잘못된 질의입니다\n"
 
 #: programs/wmic/wmic.rc:31
 msgid "Error: Invalid syntax for PATH\n"
-msgstr "오류: 잘못된 키 이름\n"
+msgstr "오류: 잘못된 구문입니다\n"
 
 #: programs/wordpad/wordpad.rc:31
 msgid "&New...\tCtrl+N"
