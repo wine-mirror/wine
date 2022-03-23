@@ -1152,7 +1152,8 @@ static void test_threadcp(void)
         ret = GetCPInfoExA(CP_THREAD_ACP, 0, &cpi);
         ok(ret, "GetCPInfoExA failed for lcid %04lx, error %ld\n", lcids[i].lcid, GetLastError());
         if (lcids[i].threadcp)
-            ok(cpi.CodePage == lcids[i].threadcp, "wrong codepage %u for lcid %04lx, should be %u\n",
+            ok(cpi.CodePage == lcids[i].threadcp || cpi.CodePage == CP_UTF8 /* Win10 1809+ */,
+               "wrong codepage %u for lcid %04lx, should be %u\n",
                cpi.CodePage, lcids[i].lcid, lcids[i].threadcp);
         else
             ok(cpi.CodePage == acp || cpi.CodePage == CP_UTF8 /* Win10 1809+ */,
@@ -1185,8 +1186,10 @@ static void test_threadcp(void)
     {
         SetThreadLocale(isleads[i].lcid);
 
+        GetCPInfoExA(CP_THREAD_ACP, 0, &cpi);
         islead = IsDBCSLeadByteEx(CP_THREAD_ACP, isleads[i].testchar);
-        ok(islead == isleads[i].islead, "wrong islead %i for test char %x in lcid %04lx.  should be %i\n",
+        ok(islead == isleads[i].islead || (cpi.CodePage == CP_UTF8 && !islead),
+           "wrong islead %i for test char %x in lcid %04lx.  should be %i\n",
             islead, isleads[i].testchar, isleads[i].lcid, isleads[i].islead);
     }
 
