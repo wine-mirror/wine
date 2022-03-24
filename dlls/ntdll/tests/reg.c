@@ -21,7 +21,6 @@
  * helper function RTL_GetKeyHandle().--Brad DeMorrow
  *
  */
-#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include "ntdll_test.h"
 #include "winternl.h"

@@ -17,7 +17,6 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  *
  */
-#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include "ntdll_test.h"
 #include <winnls.h>

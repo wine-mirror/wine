@@ -20,7 +20,6 @@
  * We use function pointers here as some of the bitmap functions exist only
  * in later versions of ntdll.
  */
-#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include "ntdll_test.h"
 

@@ -23,7 +23,6 @@
  * We use function pointers here as there is no import library for NTDLL on
  * windows.
  */
-#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #include <stdio.h>
 #include <stdarg.h>
