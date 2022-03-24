@@ -183,8 +183,7 @@ void jsval_release(jsval_t val)
 {
     switch(jsval_type(val)) {
     case JSV_OBJECT:
-        if(get_object(val))
-            IDispatch_Release(get_object(val));
+        IDispatch_Release(get_object(val));
         break;
     case JSV_STRING:
         jsstr_release(get_string(val));
@@ -229,8 +228,7 @@ HRESULT jsval_copy(jsval_t v, jsval_t *r)
         *r = v;
         return S_OK;
     case JSV_OBJECT:
-        if(get_object(v))
-            IDispatch_AddRef(get_object(v));
+        IDispatch_AddRef(get_object(v));
         *r = v;
         return S_OK;
     case JSV_STRING: {
@@ -282,8 +280,11 @@ HRESULT variant_to_jsval(VARIANT *var, jsval_t *r)
         return S_OK;
     }
     case VT_DISPATCH: {
-        if(V_DISPATCH(var))
-            IDispatch_AddRef(V_DISPATCH(var));
+        if(!V_DISPATCH(var)) {
+            *r = jsval_null_disp();
+            return S_OK;
+        }
+        IDispatch_AddRef(V_DISPATCH(var));
         *r = jsval_disp(V_DISPATCH(var));
         return S_OK;
     }
@@ -332,7 +333,7 @@ HRESULT variant_to_jsval(VARIANT *var, jsval_t *r)
                 return S_OK;
             }
         }else {
-            *r = jsval_disp(NULL);
+            *r = jsval_null_disp();
             return S_OK;
         }
         /* fall through */
@@ -348,13 +349,17 @@ HRESULT jsval_to_variant(jsval_t val, VARIANT *retv)
         V_VT(retv) = VT_EMPTY;
         return S_OK;
     case JSV_NULL:
+        if(get_bool(val)) {
+            V_VT(retv) = VT_DISPATCH;
+            V_DISPATCH(retv) = NULL;
+            return S_OK;
+        }
         V_VT(retv) = VT_NULL;
         return S_OK;
     case JSV_OBJECT:
         V_VT(retv) = VT_DISPATCH;
-        if(get_object(val))
-            IDispatch_AddRef(get_object(val));
         V_DISPATCH(retv) = get_object(val);
+        IDispatch_AddRef(get_object(val));
         return S_OK;
     case JSV_STRING:
         V_VT(retv) = VT_BSTR;
@@ -393,11 +398,6 @@ HRESULT to_primitive(script_ctx_t *ctx, jsval_t val, jsval_t *ret, hint_t hint)
         jsval_t prim;
         DISPID id;
         HRESULT hres;
-
-        if(!get_object(val)) {
-            *ret = jsval_null();
-            return S_OK;
-        }
 
         jsdisp = iface_to_jsdisp(get_object(val));
         if(!jsdisp)
@@ -459,7 +459,7 @@ HRESULT to_boolean(jsval_t val, BOOL *ret)
         *ret = FALSE;
         return S_OK;
     case JSV_OBJECT:
-        *ret = get_object(val) != NULL;
+        *ret = TRUE;
         return S_OK;
     case JSV_STRING:
         *ret = jsstr_length(get_string(val)) != 0;
@@ -839,18 +839,8 @@ HRESULT to_object(script_ctx_t *ctx, jsval_t val, IDispatch **disp)
         *disp = to_disp(dispex);
         break;
     case JSV_OBJECT:
-        if(get_object(val)) {
-            *disp = get_object(val);
-            IDispatch_AddRef(*disp);
-        }else {
-            jsdisp_t *obj;
-
-            hres = create_object(ctx, NULL, &obj);
-            if(FAILED(hres))
-                return hres;
-
-            *disp = to_disp(obj);
-        }
+        *disp = get_object(val);
+        IDispatch_AddRef(*disp);
         break;
     case JSV_BOOL:
         hres = create_bool(ctx, get_bool(val), &dispex);
@@ -859,8 +849,11 @@ HRESULT to_object(script_ctx_t *ctx, jsval_t val, IDispatch **disp)
 
         *disp = to_disp(dispex);
         break;
-    case JSV_UNDEFINED:
     case JSV_NULL:
+        if(is_null_disp(val))
+            return JS_E_OBJECT_REQUIRED;
+        /* fall through */
+    case JSV_UNDEFINED:
         WARN("object expected\n");
         return JS_E_OBJECT_EXPECTED;
     case JSV_VARIANT:

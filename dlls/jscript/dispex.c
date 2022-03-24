@@ -574,7 +574,7 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
         return invoke_prop_func(This->prototype, jsthis ? jsthis : (IDispatch *)&This->IDispatchEx_iface,
                                 This->prototype->props+prop->u.ref, flags, argc, argv, r, caller);
     case PROP_JSVAL: {
-        if(!is_object_instance(prop->u.val) || !get_object(prop->u.val)) {
+        if(!is_object_instance(prop->u.val)) {
             FIXME("invoke %s\n", debugstr_jsval(prop->u.val));
             return E_FAIL;
         }
@@ -593,7 +593,7 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
         if(FAILED(hres))
             return hres;
 
-        if(is_object_instance(val) && get_object(val)) {
+        if(is_object_instance(val)) {
             hres = disp_call_value(This->ctx, get_object(val),
                                    jsthis ? jsthis : (IDispatch*)&This->IDispatchEx_iface,
                                    flags, argc, argv, r);
@@ -1927,7 +1927,7 @@ HRESULT init_dispex_from_constr(jsdisp_t *dispex, script_ctx_t *ctx, const built
             return hres;
         }
 
-        if(is_object_instance(val) && get_object(val))
+        if(is_object_instance(val))
             prot = iface_to_jsdisp(get_object(val));
         else
             prot = jsdisp_addref(ctx->object_prototype);
@@ -1987,7 +1987,7 @@ HRESULT jsdisp_call_value(jsdisp_t *jsfunc, IDispatch *jsthis, WORD flags, unsig
         }
 
         flags &= ~DISPATCH_JSCRIPT_INTERNAL_MASK;
-        hres = jsfunc->builtin_info->call(jsfunc->ctx, jsval_disp(jsthis), flags, argc, argv, r);
+        hres = jsfunc->builtin_info->call(jsfunc->ctx, jsthis ? jsval_disp(jsthis) : jsval_null(), flags, argc, argv, r);
     }
     return hres;
 }

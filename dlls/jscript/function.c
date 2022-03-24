@@ -256,7 +256,7 @@ HRESULT Function_invoke(jsdisp_t *func_this, IDispatch *jsthis, WORD flags, unsi
     assert(is_class(func_this, JSCLASS_FUNCTION));
     function = function_from_jsdisp(func_this);
 
-    return function->vtbl->call(function->dispex.ctx, function, jsval_disp(jsthis), flags, argc, argv, r);
+    return function->vtbl->call(function->dispex.ctx, function, jsthis ? jsval_disp(jsthis) : jsval_null(), flags, argc, argv, r);
 }
 
 static HRESULT Function_get_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
@@ -336,6 +336,8 @@ static HRESULT Function_apply(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsi
 
     TRACE("\n");
 
+    if(is_null_disp(vthis))
+        return JS_E_OBJECT_REQUIRED;
     if(!is_object_instance(vthis) || (!(function = function_this(vthis)) && to_jsdisp(get_object(vthis))))
         return JS_E_FUNCTION_EXPECTED;
 
@@ -407,6 +409,8 @@ static HRESULT Function_call(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsig
 
     TRACE("\n");
 
+    if(is_null_disp(vthis))
+        return JS_E_OBJECT_REQUIRED;
     if(!(function = function_this(vthis)))
         return JS_E_FUNCTION_EXPECTED;
 
@@ -663,7 +667,7 @@ HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, 
         hres = jsdisp_define_data_property(&function->function.dispex, L"length", 0,
                                            jsval_number(function->function.length));
     if(SUCCEEDED(hres))
-        hres = jsdisp_define_data_property(&function->function.dispex, L"prototype", 0, jsval_obj(prototype));
+        hres = jsdisp_define_data_property(&function->function.dispex, L"prototype", 0, prototype ? jsval_obj(prototype) : jsval_null());
     if(FAILED(hres)) {
         jsdisp_release(&function->function.dispex);
         return hres;
@@ -725,8 +729,7 @@ static HRESULT InterpretedFunction_call(script_ctx_t *ctx, FunctionInstance *fun
         this_obj = to_disp(new_obj);
     }else if(is_object_instance(vthis)) {
         this_obj = get_object(vthis);
-        if(this_obj)
-            IDispatch_AddRef(this_obj);
+        IDispatch_AddRef(this_obj);
     }else if(ctx->version >= SCRIPTLANGUAGEVERSION_ES5 && !is_undefined(vthis) && !is_null(vthis)) {
         hres = to_object(ctx, vthis, &this_obj);
         if(FAILED(hres))
@@ -836,7 +839,7 @@ static HRESULT BindFunction_call(script_ctx_t *ctx, FunctionInstance *func, jsva
             memcpy(call_args + function->argc, argv, argc * sizeof(*call_args));
     }
 
-    hres = function->target->vtbl->call(ctx, function->target, jsval_disp(function->this),
+    hres = function->target->vtbl->call(ctx, function->target, function->this ? jsval_disp(function->this) : jsval_null(),
                                         flags, call_argc, call_args, r);
 
     heap_free(call_args);

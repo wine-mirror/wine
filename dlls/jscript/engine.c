@@ -131,8 +131,6 @@ static HRESULT stack_pop_object(script_ctx_t *ctx, IDispatch **r)
 
     v = stack_pop(ctx);
     if(is_object_instance(v)) {
-        if(!get_object(v))
-            return JS_E_OBJECT_REQUIRED;
         *r = get_object(v);
         return S_OK;
     }
@@ -539,10 +537,7 @@ HRESULT jsval_strict_equal(jsval_t lval, jsval_t rval, BOOL *ret)
     TRACE("\n");
 
     if(type != jsval_type(rval)) {
-        if(is_null_instance(lval))
-            *ret = is_null_instance(rval);
-        else
-            *ret = FALSE;
+        *ret = FALSE;
         return S_OK;
     }
 
@@ -1034,7 +1029,7 @@ static void set_error_value(script_ctx_t *ctx, jsval_t value)
     ei->valid_value = TRUE;
     ei->value = value;
 
-    if(is_object_instance(value) && get_object(value) && (obj = to_jsdisp(get_object(value)))) {
+    if(is_object_instance(value) && (obj = to_jsdisp(get_object(value)))) {
         UINT32 number;
         jsstr_t *str;
         jsval_t v;
@@ -1360,11 +1355,9 @@ static HRESULT interp_new(script_ctx_t *ctx)
     /* NOTE: Should use to_object here */
 
     if(is_null(constr))
-        return JS_E_OBJECT_EXPECTED;
-    else if(!is_object_instance(constr))
+        return is_null_disp(constr) ? JS_E_INVALID_PROPERTY : JS_E_OBJECT_EXPECTED;
+    if(!is_object_instance(constr))
         return JS_E_INVALID_ACTION;
-    else if(!get_object(constr))
-        return JS_E_INVALID_PROPERTY;
 
     clear_acc(ctx);
     return disp_call_value(ctx, get_object(constr), NULL, DISPATCH_CONSTRUCT | DISPATCH_JSCRIPT_CALLEREXECSSOURCE,
@@ -1807,7 +1800,7 @@ static HRESULT interp_instanceof(script_ctx_t *ctx)
     HRESULT hres;
 
     v = stack_pop(ctx);
-    if(!is_object_instance(v) || !get_object(v)) {
+    if(!is_object_instance(v)) {
         jsval_release(v);
         return JS_E_FUNCTION_EXPECTED;
     }
@@ -1830,7 +1823,9 @@ static HRESULT interp_instanceof(script_ctx_t *ctx)
 
     v = stack_pop(ctx);
 
-    if(is_object_instance(prot)) {
+    if(is_null_disp(v))
+        hres = JS_E_OBJECT_EXPECTED;
+    else if(is_object_instance(prot)) {
         if(is_object_instance(v))
             tmp = iface_to_jsdisp(get_object(v));
         for(iter = tmp; !ret && iter; iter = iter->prototype) {
@@ -1867,7 +1862,7 @@ static HRESULT interp_in(script_ctx_t *ctx)
     TRACE("\n");
 
     obj = stack_pop(ctx);
-    if(!is_object_instance(obj) || !get_object(obj)) {
+    if(!is_object_instance(obj)) {
         jsval_release(obj);
         return JS_E_OBJECT_EXPECTED;
     }
@@ -2126,7 +2121,7 @@ static HRESULT typeof_string(jsval_t v, const WCHAR **ret)
     case JSV_OBJECT: {
         jsdisp_t *dispex;
 
-        if(get_object(v) && (dispex = iface_to_jsdisp(get_object(v)))) {
+        if((dispex = iface_to_jsdisp(get_object(v)))) {
             *ret = is_class(dispex, JSCLASS_FUNCTION) ? L"function" : L"object";
             jsdisp_release(dispex);
         }else {
@@ -2325,12 +2320,6 @@ static HRESULT equal_values(script_ctx_t *ctx, jsval_t lval, jsval_t rval, BOOL 
 {
     if(jsval_type(lval) == jsval_type(rval) || (is_number(lval) && is_number(rval)))
        return jsval_strict_equal(lval, rval, ret);
-
-    /* FIXME: NULL disps should be handled in more general way */
-    if(is_object_instance(lval) && !get_object(lval))
-        return equal_values(ctx, jsval_null(), rval, ret);
-    if(is_object_instance(rval) && !get_object(rval))
-        return equal_values(ctx, lval, jsval_null(), ret);
 
     if((is_null(lval) && is_undefined(rval)) || (is_undefined(lval) && is_null(rval))) {
         *ret = TRUE;

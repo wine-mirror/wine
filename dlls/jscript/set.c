@@ -274,7 +274,7 @@ static HRESULT Map_forEach(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigne
 
     TRACE("%p (%s)\n", map, debugstr_jsval(argc >= 1 ? argv[0] : jsval_undefined()));
 
-    if(!is_object_instance(callback) || !get_object(callback)) {
+    if(!is_object_instance(callback)) {
         FIXME("invalid callback %s\n", debugstr_jsval(callback));
         return E_FAIL;
     }

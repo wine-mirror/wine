@@ -1926,6 +1926,7 @@ ok(isNaN(tmp), "Math.tan(-Infinity) is not NaN");
         [[true], "true"],
         [[false], "false"],
         [[null], "null"],
+        [[nullDisp], undefined],
         [[1], "1"],
         [["test"], "\"test\""],
         [["test\"\\\b\f\n\r\t\u0002 !"], "\"test\\\"\\\\\\b\\f\\n\\r\\t\\u0002 !\""],
@@ -2367,6 +2368,9 @@ ok(bool.toString() === "true", "bool.toString() = " + bool.toString());
 ok(bool.valueOf() === Boolean(1), "bool.valueOf() = " + bool.valueOf());
 ok(bool.toLocaleString() === bool.toString(), "bool.toLocaleString() = " + bool.toLocaleString());
 
+tmp = Object.prototype.valueOf.call(nullDisp);
+ok(tmp === nullDisp, "nullDisp.valueOf != nullDisp");
+
 ok(ActiveXObject instanceof Function, "ActiveXObject is not instance of Function");
 ok(ActiveXObject.prototype instanceof Object, "ActiveXObject.prototype is not instance of Object");
 
@@ -2574,6 +2578,7 @@ testException(function() {createArray().getItem(3);}, "E_SUBSCRIPT_OUT_OF_RANGE"
 testException(function() {date.setTime();}, "E_ARG_NOT_OPT");
 testException(function() {date.setYear();}, "E_ARG_NOT_OPT");
 testException(function() {arr.test();}, "E_NO_PROPERTY");
+testException(function() {[1,2,3].sort(nullDisp);}, "E_JSCRIPT_EXPECTED");
 testException(function() {Number.prototype.toString.call(arr);}, "E_NOT_NUM");
 testException(function() {Number.prototype.toFixed.call(arr);}, "E_NOT_NUM");
 testException(function() {(new Number(3)).toString(1);}, "E_INVALID_CALL_ARG");
@@ -2587,6 +2592,9 @@ testException(function() {eval("nonexistingfunc()")}, "E_OBJECT_EXPECTED");
 testException(function() {(new Object()) instanceof 3;}, "E_NOT_FUNC");
 testException(function() {(new Object()) instanceof null;}, "E_NOT_FUNC");
 testException(function() {(new Object()) instanceof nullDisp;}, "E_NOT_FUNC");
+testException(function() {nullDisp instanceof Object;}, "E_OBJECT_EXPECTED");
+testException(function() {Function.prototype.apply.call(nullDisp, Object, []);}, "E_OBJECT_REQUIRED");
+testException(function() {Function.prototype.call.call(nullDisp, Object);}, "E_OBJECT_REQUIRED");
 testException(function() {"test" in 3;}, "E_OBJECT_EXPECTED");
 testException(function() {"test" in null;}, "E_OBJECT_EXPECTED");
 testException(function() {"test" in nullDisp;}, "E_OBJECT_EXPECTED");

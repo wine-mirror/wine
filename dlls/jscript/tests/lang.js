@@ -1906,6 +1906,8 @@ ok(getVT(true && nullDisp) === "VT_DISPATCH",
    "getVT(0 && nullDisp) = " + getVT(true && nullDisp));
 ok(!nullDisp === true, "!nullDisp = " + !nullDisp);
 ok(String(nullDisp) === "null", "String(nullDisp) = " + String(nullDisp));
+ok(+nullDisp === 0, "+nullDisp !== 0");
+ok(''+nullDisp === "null", "''+nullDisp !== null");
 ok(nullDisp != new Object(), "nullDisp == new Object()");
 ok(new Object() != nullDisp, "new Object() == nullDisp");
 ok((typeof Object(nullDisp)) === "object", "typeof Object(nullDisp) !== 'object'");

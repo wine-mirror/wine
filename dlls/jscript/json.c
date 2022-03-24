@@ -404,7 +404,7 @@ static HRESULT maybe_to_primitive(script_ctx_t *ctx, jsval_t val, jsval_t *r)
     jsdisp_t *obj;
     HRESULT hres;
 
-    if(!is_object_instance(val) || !get_object(val) || !(obj = iface_to_jsdisp(get_object(val))))
+    if(!is_object_instance(val) || !(obj = iface_to_jsdisp(get_object(val))))
         return jsval_copy(val, r);
 
     if(is_class(obj, JSCLASS_NUMBER)) {
@@ -640,7 +640,7 @@ static HRESULT stringify(stringify_ctx_t *ctx, jsdisp_t *object, const WCHAR *na
     if(FAILED(hres))
         return hres == DISP_E_UNKNOWNNAME ? S_FALSE : hres;
 
-    if(is_object_instance(value) && get_object(value)) {
+    if(is_object_instance(value)) {
         jsdisp_t *obj;
         DISPID id;
 
@@ -681,7 +681,9 @@ static HRESULT stringify(stringify_ctx_t *ctx, jsdisp_t *object, const WCHAR *na
 
     switch(jsval_type(value)) {
     case JSV_NULL:
-        if(!append_string(ctx, L"null"))
+        if(is_null_disp(value))
+            hres = S_FALSE;
+        else if(!append_string(ctx, L"null"))
             hres = E_OUTOFMEMORY;
         break;
     case JSV_BOOL:
@@ -763,8 +765,7 @@ static HRESULT JSON_stringify(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsi
         return S_OK;
     }
 
-    if(argc >= 2 && is_object_instance(argv[1]) && get_object(argv[1]) &&
-       (replacer = to_jsdisp(get_object(argv[1])))) {
+    if(argc >= 2 && is_object_instance(argv[1]) && (replacer = to_jsdisp(get_object(argv[1])))) {
         if(is_callable(replacer)) {
             stringify_ctx.replacer = jsdisp_addref(replacer);
         }else if(is_class(replacer, JSCLASS_ARRAY)) {

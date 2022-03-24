@@ -131,6 +131,15 @@ static inline jsval_t jsval_null(void)
 {
     jsval_t ret;
     __JSVAL_TYPE(ret) = JSV_NULL;
+    __JSVAL_BOOL(ret) = FALSE;
+    return ret;
+}
+
+static inline jsval_t jsval_null_disp(void)
+{
+    jsval_t ret;
+    __JSVAL_TYPE(ret) = JSV_NULL;
+    __JSVAL_BOOL(ret) = TRUE;
     return ret;
 }
 
@@ -178,9 +187,9 @@ static inline BOOL is_null(jsval_t v)
     return __JSVAL_TYPE(v) == JSV_NULL;
 }
 
-static inline BOOL is_null_instance(jsval_t v)
+static inline BOOL is_null_disp(jsval_t v)
 {
-    return is_null(v) || (is_object_instance(v) && !__JSVAL_OBJ(v));
+    return is_null(v) && __JSVAL_BOOL(v);
 }
 
 static inline BOOL is_string(jsval_t v)

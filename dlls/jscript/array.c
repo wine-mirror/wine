@@ -704,7 +704,8 @@ static HRESULT Array_sort(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned
                 hres = JS_E_JSCRIPT_EXPECTED;
                 goto done;
             }
-        }else if(ctx->version >= SCRIPTLANGUAGEVERSION_ES5 ? !is_undefined(argv[0]) : !is_null(argv[0])) {
+        }else if(ctx->version >= SCRIPTLANGUAGEVERSION_ES5 ? !is_undefined(argv[0]) :
+                 (!is_null(argv[0]) || is_null_disp(argv[0]))) {
             WARN("invalid arg %s\n", debugstr_jsval(argv[0]));
             hres = JS_E_JSCRIPT_EXPECTED;
             goto done;
@@ -972,7 +973,7 @@ static HRESULT Array_forEach(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsig
         return hres;
 
     /* Fixme check IsCallable */
-    if(!argc || !is_object_instance(argv[0]) || !get_object(argv[0])) {
+    if(!argc || !is_object_instance(argv[0])) {
         FIXME("Invalid arg %s\n", debugstr_jsval(argc ? argv[0] : jsval_undefined()));
         hres = E_INVALIDARG;
         goto done;
@@ -980,7 +981,7 @@ static HRESULT Array_forEach(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsig
     callback = get_object(argv[0]);
 
     if(argc > 1 && !is_undefined(argv[1])) {
-        if(!is_object_instance(argv[1]) || !get_object(argv[1])) {
+        if(!is_object_instance(argv[1])) {
             FIXME("Unsupported context this %s\n", debugstr_jsval(argv[1]));
             hres = E_NOTIMPL;
             goto done;
@@ -1087,7 +1088,7 @@ static HRESULT Array_map(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned 
     }
 
     /* FIXME: check IsCallable */
-    if(!argc || !is_object_instance(argv[0]) || !get_object(argv[0])) {
+    if(!argc || !is_object_instance(argv[0])) {
         FIXME("Invalid arg %s\n", debugstr_jsval(argc ? argv[0] : jsval_undefined()));
         hres = E_INVALIDARG;
         goto done;
@@ -1095,7 +1096,7 @@ static HRESULT Array_map(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned 
     callback = get_object(argv[0]);
 
     if(argc > 1) {
-        if(is_object_instance(argv[1]) && get_object(argv[1])) {
+        if(is_object_instance(argv[1])) {
             context_this = get_object(argv[1]);
         }else if(!is_undefined(argv[1])) {
             FIXME("Unsupported context this %s\n", debugstr_jsval(argv[1]));
@@ -1154,7 +1155,7 @@ static HRESULT Array_reduce(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsign
     }
 
     /* Fixme check IsCallable */
-    if(!argc || !is_object_instance(argv[0]) || !get_object(argv[0])) {
+    if(!argc || !is_object_instance(argv[0])) {
         FIXME("Invalid arg %s\n", debugstr_jsval(argc ? argv[0] : jsval_undefined()));
         hres = E_INVALIDARG;
         goto done;
