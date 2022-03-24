@@ -129,7 +129,7 @@ LRESULT WINAPI UXTHEME_DefDlgProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, BOO
     case WM_ERASEBKGND:
     {
         dlgproc = (WNDPROC)GetWindowLongPtrW(hwnd, DWLP_DLGPROC);
-        lr = CallWindowProcW(dlgproc, hwnd, msg, wp, lp);
+        lr = LOWORD(CallWindowProcW(dlgproc, hwnd, msg, wp, lp));
         if (lr)
             return lr;
 
