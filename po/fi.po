@@ -3966,13 +3966,11 @@ msgstr ""
 
 #: dlls/jscript/jscript.rc:74
 msgid "Cyclic __proto__ value"
-msgstr ""
+msgstr "Syklinen __proto__"
 
 #: dlls/jscript/jscript.rc:75
-#, fuzzy
-#| msgid "Cannot define property '|': object is not extensible"
 msgid "Cannot create property for a non-extensible object"
-msgstr "Ominaisuutta '|' ei voi määritellä: objekti ei ole laajennettava"
+msgstr "Ominaisuutta ei voi määritellä, koska objekti ei ole laajennettava"
 
 #: dlls/jscript/jscript.rc:76
 msgid "Cannot define property '|': object is not extensible"
