@@ -54,8 +54,10 @@ struct hstring_vector
     LONG ref;
 
     ULONG count;
-    HSTRING values[1];
+    HSTRING values[];
 };
+
+C_ASSERT(sizeof(struct hstring_vector) == offsetof(struct hstring_vector, values[0]));
 
 static inline struct hstring_vector *impl_from_IVectorView_HSTRING(IVectorView_HSTRING *iface)
 {
