@@ -171,7 +171,7 @@ SECURITY_STATUS WINAPI NCryptCreatePersistedKey(NCRYPT_PROV_HANDLE provider, NCR
 
     if (!provider) return NTE_INVALID_HANDLE;
     if (!algid) return HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER);
-    if (name) FIXME("Persistant keys not supported\n");
+    if (name) FIXME("Persistent keys are not supported\n");
 
     if (!lstrcmpiW(algid, BCRYPT_RSA_ALGORITHM))
     {
