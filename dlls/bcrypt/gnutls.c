@@ -1806,11 +1806,13 @@ static NTSTATUS key_asymmetric_duplicate( void *args )
     const struct key_asymmetric_duplicate_params *params = args;
     struct key *key_orig = params->key_orig;
     struct key *key_copy = params->key_copy;
+    gnutls_privkey_t privkey;
+    gnutls_pubkey_t pubkey;
     int ret;
 
     if (!key_data(key_orig)->a.privkey) return STATUS_SUCCESS;
 
-    if ((ret = pgnutls_privkey_init( &key_data(key_copy)->a.privkey )))
+    if ((ret = pgnutls_privkey_init( &privkey )))
     {
         pgnutls_perror( ret );
         return STATUS_INTERNAL_ERROR;
@@ -1827,7 +1829,7 @@ static NTSTATUS key_asymmetric_duplicate( void *args )
             pgnutls_perror( ret );
             return STATUS_INTERNAL_ERROR;
         }
-        ret = pgnutls_privkey_import_rsa_raw( key_data(key_copy)->a.privkey, &m, &e, &d, &p, &q, &u, &e1, &e2 );
+        ret = pgnutls_privkey_import_rsa_raw( privkey, &m, &e, &d, &p, &q, &u, &e1, &e2 );
         free( m.data ); free( e.data ); free( d.data ); free( p.data ); free( q.data ); free( u.data );
         free( e1.data ); free( e2.data );
         if (ret)
@@ -1845,13 +1847,14 @@ static NTSTATUS key_asymmetric_duplicate( void *args )
             pgnutls_perror( ret );
             return STATUS_INTERNAL_ERROR;
         }
-        ret = pgnutls_privkey_import_dsa_raw( key_data(key_copy)->a.privkey, &p, &q, &g, &y, &x );
+        ret = pgnutls_privkey_import_dsa_raw( privkey, &p, &q, &g, &y, &x );
         free( p.data ); free( q.data ); free( g.data ); free( y.data ); free( x.data );
         if (ret)
         {
             pgnutls_perror( ret );
             return STATUS_INTERNAL_ERROR;
         }
+        key_copy->u.a.dss_seed = key_orig->u.a.dss_seed;
         break;
     }
     case ALG_ID_ECDH_P256:
@@ -1865,7 +1868,7 @@ static NTSTATUS key_asymmetric_duplicate( void *args )
             pgnutls_perror( ret );
             return STATUS_INTERNAL_ERROR;
         }
-        ret = pgnutls_privkey_import_ecc_raw( key_data(key_copy)->a.privkey, curve, &x, &y, &k );
+        ret = pgnutls_privkey_import_ecc_raw( privkey, curve, &x, &y, &k );
         free( x.data ); free( y.data ); free( k.data );
         if (ret)
         {
@@ -1879,6 +1882,25 @@ static NTSTATUS key_asymmetric_duplicate( void *args )
         return STATUS_INTERNAL_ERROR;
     }
 
+    if (key_data(key_orig)->a.pubkey)
+    {
+        if ((ret = pgnutls_pubkey_init( &pubkey )))
+        {
+            pgnutls_perror( ret );
+            pgnutls_privkey_deinit( privkey );
+            return STATUS_INTERNAL_ERROR;
+        }
+        if ((ret = pgnutls_pubkey_import_privkey( pubkey, key_data(key_orig)->a.privkey, 0, 0 )))
+        {
+            pgnutls_perror( ret );
+            pgnutls_pubkey_deinit( pubkey );
+            pgnutls_privkey_deinit( privkey );
+            return STATUS_INTERNAL_ERROR;
+        }
+        key_data(key_copy)->a.pubkey = pubkey;
+    }
+
+    key_data(key_copy)->a.privkey = privkey;
     return STATUS_SUCCESS;
 }
 
