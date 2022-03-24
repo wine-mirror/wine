@@ -328,6 +328,12 @@ static void init_tty_output( struct console *console )
     console->tty_cursor_visible = TRUE;
 }
 
+/* no longer use relative cursor positionning (legacy API have been used) */
+static void enter_absolute_mode( struct console *console )
+{
+    console->use_relative_cursor = 0;
+}
+
 static void scroll_to_cursor( struct screen_buffer *screen_buffer )
 {
     unsigned int cursor_x = get_bounded_cursor_x( screen_buffer );
@@ -1920,13 +1926,17 @@ static NTSTATUS set_output_info( struct screen_buffer *screen_buffer,
 
         if (screen_buffer->cursor_x != info->cursor_x || screen_buffer->cursor_y != info->cursor_y)
         {
+            struct console *console = screen_buffer->console;
             screen_buffer->cursor_x = info->cursor_x;
             screen_buffer->cursor_y = info->cursor_y;
+            if (console->use_relative_cursor)
+                set_tty_cursor_relative( console, screen_buffer->cursor_x, screen_buffer->cursor_y );
             scroll_to_cursor( screen_buffer );
         }
     }
     if (params->mask & SET_CONSOLE_OUTPUT_INFO_SIZE)
     {
+        enter_absolute_mode( screen_buffer->console );
         /* new screen-buffer cannot be smaller than actual window */
         if (info->width < screen_buffer->win.right - screen_buffer->win.left + 1 ||
             info->height < screen_buffer->win.bottom - screen_buffer->win.top + 1)
@@ -1962,6 +1972,7 @@ static NTSTATUS set_output_info( struct screen_buffer *screen_buffer,
     }
     if (params->mask & SET_CONSOLE_OUTPUT_INFO_DISPLAY_WINDOW)
     {
+        enter_absolute_mode( screen_buffer->console );
         if (info->win_left < 0 || info->win_left > info->win_right ||
             info->win_right >= screen_buffer->width ||
             info->win_top < 0  || info->win_top > info->win_bottom ||
@@ -1980,6 +1991,7 @@ static NTSTATUS set_output_info( struct screen_buffer *screen_buffer,
     }
     if (params->mask & SET_CONSOLE_OUTPUT_INFO_MAX_SIZE)
     {
+        enter_absolute_mode( screen_buffer->console );
         screen_buffer->max_width  = info->max_width;
         screen_buffer->max_height = info->max_height;
     }
@@ -2085,6 +2097,7 @@ static NTSTATUS write_output( struct screen_buffer *screen_buffer, const struct 
     char_info_t *dest;
     char *src;
 
+    enter_absolute_mode( screen_buffer->console );
     if (*out_size == sizeof(SMALL_RECT) && !params->width) return STATUS_INVALID_PARAMETER;
 
     entry_size = params->mode == CHAR_INFO_MODE_TEXTATTR ? sizeof(char_info_t) : sizeof(WCHAR);
@@ -2187,6 +2200,7 @@ static NTSTATUS read_output( struct screen_buffer *screen_buffer, const struct c
     unsigned int x, y, width;
     unsigned int i, count;
 
+    enter_absolute_mode( screen_buffer->console );
     x = params->x;
     y = params->y;
     mode  = params->mode;
@@ -2265,6 +2279,7 @@ static NTSTATUS fill_output( struct screen_buffer *screen_buffer, const struct c
 
     TRACE( "(%u %u) mode %u\n", params->x, params->y, params->mode );
 
+    enter_absolute_mode( screen_buffer->console );
     if (params->y >= screen_buffer->height) return STATUS_SUCCESS;
     dest = screen_buffer->data + min( params->y * screen_buffer->width + params->x,
                                       screen_buffer->height * screen_buffer->width );
@@ -2318,6 +2333,7 @@ static NTSTATUS scroll_output( struct screen_buffer *screen_buffer, const struct
     RECT update_rect;
     SMALL_RECT clip;
 
+    enter_absolute_mode( screen_buffer->console );
     xsrc = params->scroll.Left;
     ysrc = params->scroll.Top;
     w = params->scroll.Right - params->scroll.Left + 1;
@@ -2736,6 +2752,7 @@ static NTSTATUS process_console_ioctls( struct console *console )
         if (code == IOCTL_CONDRV_INIT_OUTPUT)
         {
             TRACE( "initializing output %x\n", output );
+            enter_absolute_mode( console );
             if (console->active)
                 create_screen_buffer( console, output, console->active->width, console->active->height );
             else
@@ -2862,6 +2879,7 @@ int __cdecl wmain(int argc, WCHAR *argv[])
         if (!wcscmp( argv[i], L"--unix"))
         {
             console.is_unix = 1;
+            console.use_relative_cursor = 1;
             headless = 1;
             continue;
         }
