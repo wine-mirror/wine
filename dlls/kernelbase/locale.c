@@ -3111,38 +3111,58 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumTimeFormats( TIMEFMT_ENUMPROCW proc, 
 BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumUILanguages( UILANGUAGE_ENUMPROCW proc, DWORD flags,
                                                         LONG_PTR param, BOOL unicode )
 {
-    WCHAR name[10];
-    DWORD name_len, type, index = 0;
-    HKEY key;
+    WCHAR nameW[LOCALE_NAME_MAX_LENGTH];
+    char nameA[LOCALE_NAME_MAX_LENGTH];
+    DWORD i;
 
     if (!proc)
     {
 	SetLastError( ERROR_INVALID_PARAMETER );
 	return FALSE;
     }
-    if (flags & ~MUI_LANGUAGE_ID)
+    if (flags & ~(MUI_LANGUAGE_ID | MUI_LANGUAGE_NAME))
     {
 	SetLastError( ERROR_INVALID_FLAGS );
 	return FALSE;
     }
 
-    if (RegOpenKeyExW( nls_key, L"Locale", 0, KEY_READ, &key )) return FALSE;
-
-    for (;;)
+    for (i = 0; i < locale_table->nb_lcnames; i++)
     {
-        name_len = ARRAY_SIZE(name);
-        if (RegEnumValueW( key, index++, name, &name_len, NULL, &type, NULL, NULL )) break;
-        if (type != REG_SZ) continue;
-        if (!wcstoul( name, NULL, 16 )) continue;
-        if (!unicode)
+        if (!lcnames_index[i].name) continue;  /* skip invariant locale */
+        if (lcnames_index[i].id & 0x80000000) continue;  /* skip aliases */
+        if (!get_locale_data( lcnames_index[i].idx )->inotneutral) continue;  /* skip neutral locales */
+        if (!SORTIDFROMLCID( lcnames_index[i].id ) != !(flags & LCID_ALTERNATE_SORTS))
+            continue;  /* skip alternate sorts */
+        if (flags & MUI_LANGUAGE_NAME)
         {
-            char nameA[10];
-            WideCharToMultiByte( CP_ACP, 0, name, -1, nameA, sizeof(nameA), NULL, NULL );
-            if (!((UILANGUAGE_ENUMPROCA)proc)( nameA, param )) break;
+            const WCHAR *str = locale_strings + lcnames_index[i].name;
+
+            if (unicode)
+            {
+                memcpy( nameW, str + 1, (*str + 1) * sizeof(WCHAR) );
+                if (!proc( nameW, param )) break;
+            }
+            else
+            {
+                WideCharToMultiByte( CP_ACP, 0, str + 1, -1, nameA, sizeof(nameA), NULL, NULL );
+                if (!((UILANGUAGE_ENUMPROCA)proc)( nameA, param )) break;
+            }
         }
-        else if (!proc( name, param )) break;
+        else
+        {
+            if (lcnames_index[i].id == LOCALE_CUSTOM_UNSPECIFIED) continue;  /* skip locales with no lcid */
+            if (unicode)
+            {
+                swprintf( nameW, ARRAY_SIZE(nameW), L"%04lx", lcnames_index[i].id );
+                if (!proc( nameW, param )) break;
+            }
+            else
+            {
+                sprintf( nameA, "%04x", lcnames_index[i].id );
+                if (!((UILANGUAGE_ENUMPROCA)proc)( nameA, param )) break;
+            }
+        }
     }
-    RegCloseKey( key );
     return TRUE;
 }
 

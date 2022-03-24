@@ -3849,6 +3849,10 @@ static void test_EnumUILanguageA(void)
   }
   ok(ret, "Expected ret != 0, got %d, error %ld\n", ret, GetLastError());
 
+  SetLastError(0xdeadbeef);
+  ret = pEnumUILanguagesA(luilocale_proc1A, MUI_LANGUAGE_NAME, 0);
+  ok(ret, "Expected ret != 0, got %d, error %ld\n", ret, GetLastError());
+
   enumCount = 0;
   SetLastError(ERROR_SUCCESS);
   ret = pEnumUILanguagesA(luilocale_proc2A, 0, 0);
