@@ -1614,6 +1614,7 @@ static const struct message empty_seq[] =
 
 static HWND dialog_child;
 static DWORD dialog_init_flag;
+static BOOL handle_WM_ERASEBKGND;
 static BOOL handle_WM_CTLCOLORSTATIC;
 
 static INT_PTR CALLBACK test_EnableThemeDialogTexture_proc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
@@ -1638,6 +1639,15 @@ static INT_PTR CALLBACK test_EnableThemeDialogTexture_proc(HWND hwnd, UINT msg, 
         if (dialog_init_flag)
             EnableThemeDialogTexture(hwnd, dialog_init_flag);
         return TRUE;
+
+    case WM_ERASEBKGND:
+    {
+        if (!handle_WM_ERASEBKGND)
+            return FALSE;
+
+        SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, 0);
+        return TRUE;
+    }
 
     case WM_CTLCOLORSTATIC:
         return (INT_PTR)(handle_WM_CTLCOLORSTATIC ? GetSysColorBrush(COLOR_MENU) : 0);
@@ -1875,6 +1885,13 @@ static void test_EnableThemeDialogTexture(void)
     ok(brush == GetSysColorBrush(COLOR_MENU), "Expected brush %p, got %p.\n",
        GetSysColorBrush(COLOR_MENU), brush);
     handle_WM_CTLCOLORSTATIC = FALSE;
+
+    /* Test that the dialog procedure should take precedence over DefDlgProc() for WM_ERASEBKGND */
+    handle_WM_ERASEBKGND = TRUE;
+    lr = SendMessageW(dialog, WM_ERASEBKGND, (WPARAM)child_hdc, 0);
+    todo_wine
+    ok(lr == 0, "Expected 0, got %#lx.\n", lr);
+    handle_WM_ERASEBKGND = FALSE;
 
     /* Test that dialog doesn't have theme handle opened for itself */
     ok(GetWindowTheme(dialog) == NULL, "Expected NULL theme handle.\n");
