@@ -17,6 +17,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+#undef WINE_NO_LONG_TYPES /* temporary for migration */
 
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
@@ -113,18 +114,18 @@ static void test_NtQueryPerformanceCounter(void)
     NTSTATUS status;
 
     status = pNtQueryPerformanceCounter(NULL, NULL);
-    ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %08x\n", status);
+    ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %08lx\n", status);
     status = pNtQueryPerformanceCounter(NULL, &frequency);
-    ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %08x\n", status);
+    ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %08lx\n", status);
     status = pNtQueryPerformanceCounter(&counter, (void *)0xdeadbee0);
-    ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %08x\n", status);
+    ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %08lx\n", status);
     status = pNtQueryPerformanceCounter((void *)0xdeadbee0, &frequency);
-    ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %08x\n", status);
+    ok(status == STATUS_ACCESS_VIOLATION, "expected STATUS_ACCESS_VIOLATION, got %08lx\n", status);
 
     status = pNtQueryPerformanceCounter(&counter, NULL);
-    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
+    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08lx\n", status);
     status = pNtQueryPerformanceCounter(&counter, &frequency);
-    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08x\n", status);
+    ok(status == STATUS_SUCCESS, "expected STATUS_SUCCESS, got %08lx\n", status);
 }
 
 #if defined(__i386__) || defined(__x86_64__)
@@ -175,8 +176,8 @@ static void test_RtlQueryPerformanceCounter(void)
 
         hsd = NULL;
         status = pNtQuerySystemInformation( SystemHypervisorSharedPageInformation, &hsd, sizeof(void *), &len );
-        ok( !status, "NtQuerySystemInformation returned %x\n", status );
-        ok( len == sizeof(void *), "unexpected SystemHypervisorSharedPageInformation length %u\n", len );
+        ok( !status, "NtQuerySystemInformation returned %lx\n", status );
+        ok( len == sizeof(void *), "unexpected SystemHypervisorSharedPageInformation length %lu\n", len );
         ok( !!hsd, "unexpected SystemHypervisorSharedPageInformation address %p\n", hsd );
 
         tsc0 = __rdtsc();
@@ -219,17 +220,17 @@ static void test_RtlQueryPerformanceCounter(void)
 #define TIMER_LEEWAY 10
 #define CHECK_CURRENT_TIMER(expected) \
     do { \
-        ok(status == STATUS_SUCCESS, "NtSetTimerResolution failed %x\n", status); \
-        ok(cur2 == (expected) || broken(abs((int)((expected) - cur2)) <= TIMER_LEEWAY), "expected new timer resolution %u, got %u\n", (expected), cur2); \
+        ok(status == STATUS_SUCCESS, "NtSetTimerResolution failed %lx\n", status); \
+        ok(cur2 == (expected) || broken(abs((int)((expected) - cur2)) <= TIMER_LEEWAY), "expected new timer resolution %lu, got %lu\n", (expected), cur2); \
         set = cur2; \
         min2 = min + 20000; \
         cur2 = min2 + 1; \
         max2 = cur2 + 1; \
         status = NtQueryTimerResolution(&min2, &max2, &cur2); \
-        ok(status == STATUS_SUCCESS, "NtQueryTimerResolution() failed %x\n", status); \
-        ok(min2 == min, "NtQueryTimerResolution() expected min=%u, got %u\n", min, min2); \
-        ok(max2 == max, "NtQueryTimerResolution() expected max=%u, got %u\n", max, max2); \
-        ok(cur2 == set, "NtQueryTimerResolution() expected timer resolution %u, got %u\n", set, cur2); \
+        ok(status == STATUS_SUCCESS, "NtQueryTimerResolution() failed %lx\n", status); \
+        ok(min2 == min, "NtQueryTimerResolution() expected min=%lu, got %lu\n", min, min2); \
+        ok(max2 == max, "NtQueryTimerResolution() expected max=%lu, got %lu\n", max, max2); \
+        ok(cur2 == set, "NtQueryTimerResolution() expected timer resolution %lu, got %lu\n", set, cur2); \
     } while (0)
 
 static void test_TimerResolution(void)
@@ -250,35 +251,35 @@ static void test_TimerResolution(void)
     cur = min + 1;
     max = cur + 1;
     status = NtQueryTimerResolution(&min, &max, &cur);
-    ok(status == STATUS_SUCCESS, "NtQueryTimerResolution() failed (%x)\n", status);
+    ok(status == STATUS_SUCCESS, "NtQueryTimerResolution() failed (%lx)\n", status);
     ok(min == 156250 /* 1/64s HPET */ || min == 156001 /* RTC */,
-       "unexpected minimum timer resolution %u\n", min);
-    ok(0 < max, "invalid maximum timer resolution, should be 0 < %u\n", max);
-    ok(max <= cur || broken(max - TIMER_LEEWAY <= cur), "invalid timer resolutions, should be %u <= %u\n", max, cur);
-    ok(cur <= min || broken(cur <= min + TIMER_LEEWAY), "invalid timer resolutions, should be %u <= %u\n", cur, min);
+       "unexpected minimum timer resolution %lu\n", min);
+    ok(0 < max, "invalid maximum timer resolution, should be 0 < %lu\n", max);
+    ok(max <= cur || broken(max - TIMER_LEEWAY <= cur), "invalid timer resolutions, should be %lu <= %lu\n", max, cur);
+    ok(cur <= min || broken(cur <= min + TIMER_LEEWAY), "invalid timer resolutions, should be %lu <= %lu\n", cur, min);
 
     status = NtSetTimerResolution(0, FALSE, NULL);
     ok(status == STATUS_ACCESS_VIOLATION, "NtSetTimerResolution(,,NULL) success\n");
 
     /* Nothing happens if that pointer is not good */
     status = NtSetTimerResolution(cur - 1, TRUE, NULL);
-    ok(status == STATUS_ACCESS_VIOLATION, "NtSetTimerResolution() failed %x\n", status);
+    ok(status == STATUS_ACCESS_VIOLATION, "NtSetTimerResolution() failed %lx\n", status);
 
     min2 = min + 10000;
     cur2 = min2 + 1;
     max2 = cur2 + 1;
     status = NtQueryTimerResolution(&min2, &max2, &cur2);
-    ok(status == STATUS_SUCCESS, "NtQueryTimerResolution() failed (%x)\n", status);
-    ok(min2 == min, "NtQueryTimerResolution() expected min=%u, got %u\n", min, min2);
-    ok(max2 == max, "NtQueryTimerResolution() expected max=%u, got %u\n", max, max2);
-    ok(cur2 == cur, "NtQueryTimerResolution() expected timer resolution %u, got %u\n", cur, cur2);
+    ok(status == STATUS_SUCCESS, "NtQueryTimerResolution() failed (%lx)\n", status);
+    ok(min2 == min, "NtQueryTimerResolution() expected min=%lu, got %lu\n", min, min2);
+    ok(max2 == max, "NtQueryTimerResolution() expected max=%lu, got %lu\n", max, max2);
+    ok(cur2 == cur, "NtQueryTimerResolution() expected timer resolution %lu, got %lu\n", cur, cur2);
 
     /* 'fails' until the first valid timer resolution request */
     cur2 = 7654321;
     status = NtSetTimerResolution(0, FALSE, &cur2);
-    ok(status == STATUS_TIMER_RESOLUTION_NOT_SET, "NtSetTimerResolution() failed %x\n", status);
+    ok(status == STATUS_TIMER_RESOLUTION_NOT_SET, "NtSetTimerResolution() failed %lx\n", status);
     /* and returns the current timer resolution */
-    ok(cur2 == cur, "expected requested timer resolution %u, got %u\n", cur, cur2);
+    ok(cur2 == cur, "expected requested timer resolution %lu, got %lu\n", cur, cur2);
 
 
     cur2 = 7654321;
@@ -288,18 +289,18 @@ static void test_TimerResolution(void)
     /* Rescinds our timer resolution request */
     cur2 = 7654321;
     status = NtSetTimerResolution(0, FALSE, &cur2);
-    ok(status == STATUS_SUCCESS, "NtSetTimerResolution() failed %x\n", status);
+    ok(status == STATUS_SUCCESS, "NtSetTimerResolution() failed %lx\n", status);
     /* -> the timer resolution was reset to its initial value */
-    ok(cur2 == cur, "expected requested timer resolution %u, got %u\n", min, cur2);
+    ok(cur2 == cur, "expected requested timer resolution %lu, got %lu\n", min, cur2);
 
     cur2 = 7654321;
     status = NtSetTimerResolution(0, FALSE, &cur2);
-    ok(status == STATUS_TIMER_RESOLUTION_NOT_SET, "NtSetTimerResolution() failed %x\n", status);
-    ok(cur2 == cur, "expected requested timer resolution %u, got %u\n", cur, cur2);
+    ok(status == STATUS_TIMER_RESOLUTION_NOT_SET, "NtSetTimerResolution() failed %lx\n", status);
+    ok(cur2 == cur, "expected requested timer resolution %lu, got %lu\n", cur, cur2);
 
     cur2 = 7654321;
     status = NtSetTimerResolution(min + 1, TRUE, &cur2);
-    ok(status == STATUS_SUCCESS, "NtSetTimerResolution() failed %x\n", status);
+    ok(status == STATUS_SUCCESS, "NtSetTimerResolution() failed %lx\n", status);
     /* This works because:
      * - Either cur is the minimum (15.6 ms) resolution already, i.e. the
      *   closest valid value 'set' is rounded to.
@@ -313,9 +314,9 @@ static void test_TimerResolution(void)
     cur2 = 7654321;
     set = max < cur ? cur - 1 : max;
     status = NtSetTimerResolution(set, TRUE, &cur2);
-    ok(status == STATUS_SUCCESS, "NtSetTimerResolution() failed %x\n", status);
-    ok(cur2 <= set || broken(cur2 <= set + TIMER_LEEWAY), "expected new timer resolution %u <= %u\n", cur2, set);
-    trace("timer resolution: %u(max) <= %u(cur) <= %u(prev) <= %u(min)\n", max, cur2, cur, min);
+    ok(status == STATUS_SUCCESS, "NtSetTimerResolution() failed %lx\n", status);
+    ok(cur2 <= set || broken(cur2 <= set + TIMER_LEEWAY), "expected new timer resolution %lu <= %lu\n", cur2, set);
+    trace("timer resolution: %lu(max) <= %lu(cur) <= %lu(prev) <= %lu(min)\n", max, cur2, cur, min);
 
     cur2 = 7654321;
     status = NtSetTimerResolution(cur + 1, TRUE, &cur2);
@@ -324,8 +325,8 @@ static void test_TimerResolution(void)
     /* Cleanup by rescinding the last request */
     cur2 = 7654321;
     status = NtSetTimerResolution(0, FALSE, &cur2);
-    ok(status == STATUS_SUCCESS, "NtSetTimerResolution() failed %x\n", status);
-    ok(cur2 == cur, "expected requested timer resolution %u, got %u\n", set, cur2);
+    ok(status == STATUS_SUCCESS, "NtSetTimerResolution() failed %lx\n", status);
+    ok(cur2 == cur, "expected requested timer resolution %lu, got %lu\n", set, cur2);
 }
 
 static void test_RtlQueryTimeZoneInformation(void)
@@ -345,7 +346,7 @@ static void test_RtlQueryTimeZoneInformation(void)
     memset(&tzinfo, 0xcc, sizeof(tzinfo));
     status = pRtlQueryDynamicTimeZoneInformation(&tzinfo);
     ok(status == STATUS_SUCCESS,
-       "RtlQueryDynamicTimeZoneInformation failed, got %08x\n", status);
+       "RtlQueryDynamicTimeZoneInformation failed, got %08lx\n", status);
     ok(tzinfo.StandardName[0] == '@' ||
        broken(tzinfo.StandardName[0]), /* some win10 2004 */
        "standard time zone name isn't an indirect string, got %s\n",
@@ -357,14 +358,14 @@ static void test_RtlQueryTimeZoneInformation(void)
 
     memset(&tzinfo2, 0xcc, sizeof(tzinfo2));
     status = pNtQuerySystemInformation( SystemDynamicTimeZoneInformation, &tzinfo2, sizeof(tzinfo2), &len );
-    ok( !status, "NtQuerySystemInformation failed %x\n", status );
-    ok( len == sizeof(tzinfo2), "wrong len %u\n", len );
+    ok( !status, "NtQuerySystemInformation failed %lx\n", status );
+    ok( len == sizeof(tzinfo2), "wrong len %lu\n", len );
     ok( !memcmp( &tzinfo, &tzinfo2, sizeof(tzinfo2) ), "tz data is different\n" );
 
     memset(&tzinfo, 0xcc, sizeof(tzinfo));
     status = pRtlQueryTimeZoneInformation((RTL_TIME_ZONE_INFORMATION *)&tzinfo);
     ok(status == STATUS_SUCCESS,
-       "RtlQueryTimeZoneInformation failed, got %08x\n", status);
+       "RtlQueryTimeZoneInformation failed, got %08lx\n", status);
     ok(tzinfo.StandardName[0] == '@' ||
        broken(tzinfo.StandardName[0]), /* some win10 2004 */
        "standard time zone name isn't an indirect string, got %s\n",
@@ -377,7 +378,7 @@ static void test_RtlQueryTimeZoneInformation(void)
     memset(&tzinfo, 0xcc, sizeof(tzinfo));
     status = pRtlQueryTimeZoneInformation((RTL_TIME_ZONE_INFORMATION *)&tzinfo);
     ok(status == STATUS_SUCCESS,
-       "RtlQueryTimeZoneInformation failed, got %08x\n", status);
+       "RtlQueryTimeZoneInformation failed, got %08lx\n", status);
     ok(tzinfo.StandardName[0] == '@' ||
        broken(tzinfo.StandardName[0]), /* some win10 2004 */
        "standard time zone name isn't an indirect string, got %s\n",
@@ -390,8 +391,8 @@ static void test_RtlQueryTimeZoneInformation(void)
     memset(&tzinfo2, 0xcc, sizeof(tzinfo2));
     status = pNtQuerySystemInformation( SystemCurrentTimeZoneInformation, &tzinfo2,
                                         sizeof(RTL_TIME_ZONE_INFORMATION), &len );
-    ok( !status, "NtQuerySystemInformation failed %x\n", status );
-    ok( len == sizeof(RTL_TIME_ZONE_INFORMATION), "wrong len %u\n", len );
+    ok( !status, "NtQuerySystemInformation failed %lx\n", status );
+    ok( len == sizeof(RTL_TIME_ZONE_INFORMATION), "wrong len %lu\n", len );
     ok( !memcmp( &tzinfo, &tzinfo2, sizeof(RTL_TIME_ZONE_INFORMATION) ), "tz data is different\n" );
 }
 
@@ -469,7 +470,7 @@ static void test_user_shared_data_time(void)
 
     t1 = read_ksystem_time(&user_shared_data->TimeZoneBias);
     status = NtQuerySystemInformation(SystemTimeOfDayInformation, &timeofday, sizeof(timeofday), NULL);
-    ok(!status, "failed to query time of day, status %#x\n", status);
+    ok(!status, "failed to query time of day, status %#lx\n", status);
     ok(timeofday.TimeZoneBias.QuadPart == t1, "got USD bias %I64u, ntdll bias %I64u\n",
             t1, timeofday.TimeZoneBias.QuadPart);
 }
