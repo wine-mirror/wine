@@ -129,9 +129,10 @@ LRESULT WINAPI UXTHEME_DefDlgProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, BOO
     case WM_ERASEBKGND:
     {
         dlgproc = (WNDPROC)GetWindowLongPtrW(hwnd, DWLP_DLGPROC);
+        SetWindowLongPtrW(hwnd, DWLP_MSGRESULT, 0);
         lr = LOWORD(CallWindowProcW(dlgproc, hwnd, msg, wp, lp));
         if (lr)
-            return lr;
+            return GetWindowLongPtrW(hwnd, DWLP_MSGRESULT);
 
         brush = get_dialog_background_brush(hwnd, TRUE);
         if (!brush)

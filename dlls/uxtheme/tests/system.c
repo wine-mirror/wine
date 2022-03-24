@@ -1889,8 +1889,7 @@ static void test_EnableThemeDialogTexture(void)
     /* Test that the dialog procedure should take precedence over DefDlgProc() for WM_ERASEBKGND */
     handle_WM_ERASEBKGND = TRUE;
     lr = SendMessageW(dialog, WM_ERASEBKGND, (WPARAM)child_hdc, 0);
-    todo_wine
-    ok(lr == 0, "Expected 0, got %#lx.\n", lr);
+    ok(lr == 0, "Expected 0, got %#Ix.\n", lr);
     handle_WM_ERASEBKGND = FALSE;
 
     /* Test that dialog doesn't have theme handle opened for itself */
