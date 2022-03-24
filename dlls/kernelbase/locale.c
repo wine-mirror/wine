@@ -580,6 +580,8 @@ static const NLS_LOCALE_LCID_INDEX *lcids_index;
 static const NLS_LOCALE_LCNAME_INDEX *lcnames_index;
 static const NLS_LOCALE_HEADER *locale_table;
 static const WCHAR *locale_strings;
+static const NLS_LOCALE_DATA *system_locale;
+static const NLS_LOCALE_DATA *user_locale;
 
 static CPTABLEINFO codepages[128];
 static unsigned int nb_codepages;
@@ -729,6 +731,13 @@ done:
 }
 
 
+static const NLS_LOCALE_DATA *get_locale_data( UINT idx )
+{
+    ULONG offset = locale_table->locales_offset + idx * locale_table->locale_size;
+    return (const NLS_LOCALE_DATA *)((const char *)locale_table + offset);
+}
+
+
 static int compare_locale_names( const WCHAR *n1, const WCHAR *n2 )
 {
     for (;;)
@@ -761,6 +770,61 @@ static const NLS_LOCALE_LCNAME_INDEX *find_lcname_entry( const WCHAR *name )
 }
 
 
+static const NLS_LOCALE_LCID_INDEX *find_lcid_entry( LCID lcid )
+{
+    int min = 0, max = locale_table->nb_lcids - 1;
+
+    while (min <= max)
+    {
+        int pos = (min + max) / 2;
+        if (lcid < lcids_index[pos].id) max = pos - 1;
+        else if (lcid > lcids_index[pos].id) min = pos + 1;
+        else return &lcids_index[pos];
+    }
+    return NULL;
+}
+
+
+static const NLS_LOCALE_DATA *get_locale_by_name( const WCHAR *name, LCID *lcid )
+{
+    const NLS_LOCALE_LCNAME_INDEX *entry;
+
+    if (name == LOCALE_NAME_USER_DEFAULT)
+    {
+        *lcid = user_lcid;
+        return user_locale;
+    }
+    if (!(entry = find_lcname_entry( name ))) return NULL;
+    *lcid = entry->id;
+    return get_locale_data( entry->idx );
+}
+
+
+static const NLS_LOCALE_DATA *get_locale_by_id( LCID *lcid, DWORD flags )
+{
+    const NLS_LOCALE_LCID_INDEX *entry;
+    const NLS_LOCALE_DATA *locale;
+
+    switch (*lcid)
+    {
+    case LOCALE_SYSTEM_DEFAULT:
+        *lcid = system_lcid;
+        return system_locale;
+    case LOCALE_NEUTRAL:
+    case LOCALE_USER_DEFAULT:
+    case LOCALE_CUSTOM_DEFAULT:
+        *lcid = user_lcid;
+        return user_locale;
+    default:
+        if (!(entry = find_lcid_entry( *lcid ))) return NULL;
+        locale = get_locale_data( entry->idx );
+        if (!(flags & LOCALE_ALLOW_NEUTRAL_NAMES) && !locale->inotneutral)
+            locale = get_locale_by_name( locale_strings + locale->ssortlocale + 1, lcid );
+        return locale;
+    }
+}
+
+
 /***********************************************************************
  *		init_locale
  */
@@ -779,6 +843,8 @@ void init_locale(void)
     load_locale_nls();
     NtQueryDefaultLocale( FALSE, &system_lcid );
     NtQueryDefaultLocale( FALSE, &user_lcid );
+    system_locale = get_locale_by_id( &system_lcid, 0 );
+    user_locale = get_locale_by_id( &user_lcid, 0 );
 
     if (GetEnvironmentVariableW( L"WINEUNIXCP", bufferW, ARRAY_SIZE(bufferW) ))
         unix_cp = wcstoul( bufferW, NULL, 10 );
@@ -5211,9 +5277,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsValidLanguageGroup( LGRPID id, DWORD flags )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsValidLocale( LCID lcid, DWORD flags )
 {
-    /* check if language is registered in the kernel32 resources */
-    return FindResourceExW( kernel32_handle, (LPWSTR)RT_STRING,
-                            ULongToPtr( (LOCALE_ILANGUAGE >> 4) + 1 ), LANGIDFROMLCID(lcid)) != 0;
+    return !!get_locale_by_id( &lcid, LOCALE_ALLOW_NEUTRAL_NAMES );
 }
 
 
