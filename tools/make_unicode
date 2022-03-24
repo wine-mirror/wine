@@ -4570,6 +4570,24 @@ sub build_locale_data()
             add_string( "k0-windows-us" ) # FIXME  # keyboard_layout
     }
 
+    # output language groups
+
+    my %groups;
+    add_registry_key( "Locale", "00000409" );
+    foreach my $loc (@locales)
+    {
+        next unless defined $loc->{lcid};
+        next if ($loc->{lcid} & 0x80000000);
+        next if !defined($loc->{alias}) && $loc->{name} !~ /-$loc->{territory}/; # skip neutral locales
+        my $group = locale_entry( $loc, "group", 1 );
+        my $name = sprintf( "%08x", $loc->{lcid} );
+        my $val = sprintf( "%x", $group );
+        add_registry_value( "Locale", $name, $val ) unless ($loc->{lcid} & 0x000f0000);
+        add_registry_value( "Locale\\Alternate Sorts", $name, $val ) if $loc->{name} =~ /_/;
+        $groups{$val} = 1;
+    }
+    foreach my $group (keys %groups) { add_registry_value( "Language Groups", $group, "1" ); }
+
     my $nb_lcids = scalar keys %lcids;
     my $nb_locales = scalar grep { !defined $_->{alias} } @locales;
     my $nb_lcnames = scalar keys %lcnames;
@@ -4656,7 +4674,8 @@ sub dump_registry_script($%)
         my ($def, @vals) = @{$keys{$k}};
         for (my $i = 0; $i < @subkeys; $i++)
         {
-            printf OUTPUT "%*s%s%s\n%*s{\n", 4 * $indent, "", $subkeys[$i],
+            printf OUTPUT "%*s%s%s\n%*s{\n", 4 * $indent, "",
+                $subkeys[$i] =~ /\s/ ? "'$subkeys[$i]'" :  $subkeys[$i],
                 $i == $#subkeys && $def ? " = s '$def'" : "", 4 * $indent, "";
             $indent++;
         }
