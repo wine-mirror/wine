@@ -2902,7 +2902,7 @@ static void test_DSA(void)
     UCHAR sig[40], schemes;
     ULONG len, size;
     NTSTATUS ret;
-    BYTE *buf;
+    BYTE *buf, buf2[sizeof(BCRYPT_DSA_KEY_BLOB) + sizeof(dsaPublicBlob)];
 
     ret = BCryptOpenAlgorithmProvider(&alg, BCRYPT_DSA_ALGORITHM, NULL, 0);
     ok(!ret, "got %#lx\n", ret);
@@ -2916,6 +2916,17 @@ static void test_DSA(void)
 
     ret = BCryptImportKeyPair(alg, NULL, BCRYPT_DSA_PUBLIC_BLOB, &key, dsaPublicBlob, sizeof(dsaPublicBlob), 0);
     ok(!ret, "got %#lx\n", ret);
+
+    memset(buf2, 0xcc, sizeof(buf2));
+    ret = BCryptExportKey(key, NULL, BCRYPT_DSA_PUBLIC_BLOB, buf2, sizeof(buf2), &size, 0);
+    ok(!ret, "got %#lx\n", ret);
+    dsablob = (BCRYPT_DSA_KEY_BLOB *)buf2;
+    ok(dsablob->dwMagic == BCRYPT_DSA_PUBLIC_MAGIC, "got %#lx\n", dsablob->dwMagic);
+    ok(dsablob->cbKey == 64, "got %lu\n", dsablob->cbKey);
+    ok(size == sizeof(*dsablob) + dsablob->cbKey * 3, "got %lu\n", size);
+
+    ret = BCryptExportKey(key, NULL, BCRYPT_DSA_PRIVATE_BLOB, buf2, sizeof(buf2), &size, 0);
+    todo_wine ok(ret == STATUS_INVALID_PARAMETER, "got %#lx\n", ret);
 
     ret = BCryptVerifySignature(key, NULL, dsaHash, sizeof(dsaHash), dsaSignature, sizeof(dsaSignature), 0);
     ok(!ret, "got %#lx\n", ret);
