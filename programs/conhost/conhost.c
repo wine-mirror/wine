@@ -1426,8 +1426,8 @@ static NTSTATUS read_console( struct console *console, unsigned int ioctl, size_
         if (offset > ctx->home_x)
         {
             int deltay;
-            offset -= ctx->home_x;
-            deltay = offset / console->active->width;
+            offset -= ctx->home_x + 1;
+            deltay = offset / console->active->width + 1;
             if (ctx->home_y >= deltay)
                 ctx->home_y -= deltay;
             else
