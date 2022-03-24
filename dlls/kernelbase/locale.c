@@ -3506,20 +3506,19 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumSystemLanguageGroupsW( LANGUAGEGROUP_ENUMPROCW
 BOOL WINAPI DECLSPEC_HOTPATCH EnumSystemLocalesA( LOCALE_ENUMPROCA proc, DWORD flags )
 {
     char name[10];
-    DWORD name_len, type, index = 0;
-    HKEY key;
+    DWORD i;
 
-    if (RegOpenKeyExW( nls_key, L"Locale", 0, KEY_READ, &key )) return FALSE;
-
-    for (;;)
+    for (i = 0; i < locale_table->nb_lcnames; i++)
     {
-        name_len = ARRAY_SIZE(name);
-        if (RegEnumValueA( key, index++, name, &name_len, NULL, &type, NULL, NULL )) break;
-        if (type != REG_SZ) continue;
-        if (!strtoul( name, NULL, 16 )) continue;
+        if (!lcnames_index[i].name) continue;  /* skip invariant locale */
+        if (lcnames_index[i].id == LOCALE_CUSTOM_UNSPECIFIED) continue;  /* skip locales with no lcid */
+        if (lcnames_index[i].id & 0x80000000) continue;  /* skip aliases */
+        if (!get_locale_data( lcnames_index[i].idx )->inotneutral) continue;  /* skip neutral locales */
+        if (!SORTIDFROMLCID( lcnames_index[i].id ) != !(flags & LCID_ALTERNATE_SORTS))
+            continue;  /* skip alternate sorts */
+        sprintf( name, "%08x", lcnames_index[i].id );
         if (!proc( name )) break;
     }
-    RegCloseKey( key );
     return TRUE;
 }
 
@@ -3530,20 +3529,19 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumSystemLocalesA( LOCALE_ENUMPROCA proc, DWORD f
 BOOL WINAPI DECLSPEC_HOTPATCH EnumSystemLocalesW( LOCALE_ENUMPROCW proc, DWORD flags )
 {
     WCHAR name[10];
-    DWORD name_len, type, index = 0;
-    HKEY key;
+    DWORD i;
 
-    if (RegOpenKeyExW( nls_key, L"Locale", 0, KEY_READ, &key )) return FALSE;
-
-    for (;;)
+    for (i = 0; i < locale_table->nb_lcnames; i++)
     {
-        name_len = ARRAY_SIZE(name);
-        if (RegEnumValueW( key, index++, name, &name_len, NULL, &type, NULL, NULL )) break;
-        if (type != REG_SZ) continue;
-        if (!wcstoul( name, NULL, 16 )) continue;
+        if (!lcnames_index[i].name) continue;  /* skip invariant locale */
+        if (lcnames_index[i].id == LOCALE_CUSTOM_UNSPECIFIED) continue;  /* skip locales with no lcid */
+        if (lcnames_index[i].id & 0x80000000) continue;  /* skip aliases */
+        if (!get_locale_data( lcnames_index[i].idx )->inotneutral) continue;  /* skip neutral locales */
+        if (!SORTIDFROMLCID( lcnames_index[i].id ) != !(flags & LCID_ALTERNATE_SORTS))
+            continue;  /* skip alternate sorts */
+        swprintf( name, ARRAY_SIZE(name), L"%08lx", lcnames_index[i].id );
         if (!proc( name )) break;
     }
-    RegCloseKey( key );
     return TRUE;
 }
 
@@ -3554,10 +3552,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumSystemLocalesW( LOCALE_ENUMPROCW proc, DWORD f
 BOOL WINAPI DECLSPEC_HOTPATCH EnumSystemLocalesEx( LOCALE_ENUMPROCEX proc, DWORD wanted_flags,
                                                    LPARAM param, void *reserved )
 {
-    WCHAR buffer[256], name[10];
-    DWORD name_len, type, neutral, flags, index = 0, alt = 0;
-    HKEY key, altkey;
-    LCID lcid;
+    WCHAR buffer[LOCALE_NAME_MAX_LENGTH];
+    DWORD i, flags;
 
     if (reserved)
     {
@@ -3565,36 +3561,20 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumSystemLocalesEx( LOCALE_ENUMPROCEX proc, DWORD
         return FALSE;
     }
 
-    if (RegOpenKeyExW( nls_key, L"Locale", 0, KEY_READ, &key )) return FALSE;
-    if (RegOpenKeyExW( key, L"Alternate Sorts", 0, KEY_READ, &altkey )) altkey = 0;
-
-    for (;;)
+    for (i = 0; i < locale_table->nb_lcnames; i++)
     {
-        name_len = ARRAY_SIZE(name);
-        if (RegEnumValueW( alt ? altkey : key, index++, name, &name_len, NULL, &type, NULL, NULL ))
-        {
-            if (alt++) break;
-            index = 0;
-            continue;
-        }
-        if (type != REG_SZ) continue;
-        if (!(lcid = wcstoul( name, NULL, 16 ))) continue;
+        const NLS_LOCALE_DATA *locale = get_locale_data( lcnames_index[i].idx );
+        const WCHAR *str = locale_strings + lcnames_index[i].name;
 
-        GetLocaleInfoW( lcid, LOCALE_SNAME | LOCALE_NOUSEROVERRIDE, buffer, ARRAY_SIZE( buffer ));
-        if (!GetLocaleInfoW( lcid, LOCALE_INEUTRAL | LOCALE_NOUSEROVERRIDE | LOCALE_RETURN_NUMBER,
-                             (LPWSTR)&neutral, sizeof(neutral) / sizeof(WCHAR) ))
-            neutral = 0;
-
-        if (alt)
+        if (lcnames_index[i].id & 0x80000000) continue;  /* skip aliases */
+        memcpy( buffer, str + 1, (*str + 1) * sizeof(WCHAR) );
+        if (SORTIDFROMLCID( lcnames_index[i].id ) || wcschr( str + 1, '_' ))
             flags = LOCALE_ALTERNATE_SORTS;
         else
-            flags = LOCALE_WINDOWS | (neutral ? LOCALE_NEUTRALDATA : LOCALE_SPECIFICDATA);
-
+            flags = LOCALE_WINDOWS | (locale->inotneutral ? LOCALE_SPECIFICDATA : LOCALE_NEUTRALDATA);
         if (wanted_flags && !(flags & wanted_flags)) continue;
         if (!proc( buffer, flags, param )) break;
     }
-    RegCloseKey( altkey );
-    RegCloseKey( key );
     return TRUE;
 }
 
