@@ -571,9 +571,15 @@ struct norm_table
 static NLSTABLEINFO nls_info;
 static UINT unix_cp = CP_UTF8;
 static UINT mac_cp = 10000;
+static LCID system_lcid;
+static LCID user_lcid;
 static HKEY intl_key;
 static HKEY nls_key;
 static HKEY tz_key;
+static const NLS_LOCALE_LCID_INDEX *lcids_index;
+static const NLS_LOCALE_LCNAME_INDEX *lcnames_index;
+static const NLS_LOCALE_HEADER *locale_table;
+static const WCHAR *locale_strings;
 
 static CPTABLEINFO codepages[128];
 static unsigned int nb_codepages;
@@ -618,6 +624,30 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
       0, 0, { (DWORD_PTR)(__FILE__ ": locale_section") }
 };
 static CRITICAL_SECTION locale_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+
+static void load_locale_nls(void)
+{
+    struct
+    {
+        UINT ctypes;
+        UINT unknown1;
+        UINT unknown2;
+        UINT unknown3;
+        UINT locales;
+        UINT charmaps;
+        UINT geoids;
+        UINT scripts;
+    } *header;
+    LCID lcid;
+    LARGE_INTEGER dummy;
+
+    RtlGetLocaleFileMappingAddress( (void **)&header, &lcid, &dummy );
+    locale_table = (const NLS_LOCALE_HEADER *)((char *)header + header->locales);
+    lcids_index = (const NLS_LOCALE_LCID_INDEX *)((char *)locale_table + locale_table->lcids_offset);
+    lcnames_index = (const NLS_LOCALE_LCNAME_INDEX *)((char *)locale_table + locale_table->lcnames_offset);
+    locale_strings = (const WCHAR *)((char *)locale_table + locale_table->strings_offset);
+}
 
 
 static void init_sortkeys( DWORD *ptr )
@@ -707,13 +737,16 @@ void init_locale(void)
     UINT ansi_cp = 0, oem_cp = 0;
     USHORT *ansi_ptr, *oem_ptr;
     void *sort_ptr;
-    LCID user_lcid;
     WCHAR bufferW[LOCALE_NAME_MAX_LENGTH];
     DYNAMIC_TIME_ZONE_INFORMATION timezone;
     GEOID geoid = GEOID_NOT_AVAILABLE;
     DWORD count, dispos, i;
     SIZE_T size;
     HKEY hkey;
+
+    load_locale_nls();
+    NtQueryDefaultLocale( FALSE, &system_lcid );
+    NtQueryDefaultLocale( FALSE, &user_lcid );
 
     if (GetEnvironmentVariableW( L"WINEUNIXCP", bufferW, ARRAY_SIZE(bufferW) ))
         unix_cp = wcstoul( bufferW, NULL, 10 );
@@ -775,7 +808,6 @@ void init_locale(void)
     /* Update registry contents if the user locale has changed.
      * This simulates the action of the Windows control panel. */
 
-    user_lcid = GetUserDefaultLCID();
     count = sizeof(bufferW);
     if (!RegQueryValueExW( intl_key, L"Locale", NULL, NULL, (BYTE *)bufferW, &count ))
     {
@@ -4671,9 +4703,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetStringTypeExW( LCID locale, DWORD type, const W
  */
 LCID WINAPI DECLSPEC_HOTPATCH GetSystemDefaultLCID(void)
 {
-    LCID lcid;
-    NtQueryDefaultLocale( FALSE, &lcid );
-    return lcid;
+    return system_lcid;
 }
 
 
@@ -4820,9 +4850,7 @@ done:
  */
 LCID WINAPI DECLSPEC_HOTPATCH GetUserDefaultLCID(void)
 {
-    LCID lcid;
-    NtQueryDefaultLocale( TRUE, &lcid );
-    return lcid;
+    return user_lcid;
 }
 
 
