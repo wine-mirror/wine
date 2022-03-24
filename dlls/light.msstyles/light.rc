@@ -398,6 +398,10 @@ BLUE_INI TEXTFILE
 "FillColor = 255 255 255\r\n"
 "BorderColor = 174 174 174\r\n"
 
+"\r\n; Menu\r\n"
+"[Menu]\r\n"
+"BgType = None\r\n"
+
 "\r\n; Progress\r\n"
 "[Progress]\r\n"
 "ProgressChunkSize = 1\r\n"
