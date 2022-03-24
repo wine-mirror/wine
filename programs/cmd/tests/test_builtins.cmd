@@ -380,7 +380,7 @@ rem test  : echo i1|tmp.cmd i2|tmp.cmd i3|tmp.cmd i4
 rem result: i4:[i3:[i2:[i1,i2],i3],i4]@or_broken@i4:[i3:[i2:,i3],i4]@or_broken@i4:[i3:,i4]
 del tmp.cmd
 echo --- chain else
-rem Command arguments are gready and eat up the 'else' unless terminated by
+rem Command arguments are greedy and eat up the 'else' unless terminated by
 rem brackets, which means the 'else' can only be recognized when the
 rem 'if true' command chain ends with brackets.
 if 1==1 if 2==2 if 3==3 (echo a1) else (echo a2) else echo a3
