@@ -63,6 +63,7 @@ file_type get_file_type(const char* filename)
     /* see tools/winebuild/res32.c: check_header for details */
     static const char res_sig[] = { 0,0,0,0, 32,0,0,0, 0xff,0xff, 0,0, 0xff,0xff, 0,0, 0,0,0,0, 0,0, 0,0, 0,0,0,0, 0,0,0,0 };
     static const char elf_sig[4] = "\177ELF";
+    static const char ar_sig[8] = "!<arch>\n";
     char buf[sizeof(res_sig)];
     int fd, cnt;
 
@@ -83,6 +84,7 @@ file_type get_file_type(const char* filename)
     if (strendswith(filename, ".spec")) return file_spec;
     if (strendswith(filename, ".rc")) return file_rc;
     if (cnt >= sizeof(elf_sig) && !memcmp(buf, elf_sig, sizeof(elf_sig))) return file_so;  /* ELF lib */
+    if (cnt >= sizeof(ar_sig) && !memcmp(buf, ar_sig, sizeof(ar_sig))) return file_arh;
     if (cnt >= sizeof(unsigned int) &&
         (*(unsigned int *)buf == 0xfeedface || *(unsigned int *)buf == 0xcefaedfe ||
          *(unsigned int *)buf == 0xfeedfacf || *(unsigned int *)buf == 0xcffaedfe))
