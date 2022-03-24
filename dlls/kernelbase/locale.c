@@ -729,6 +729,38 @@ done:
 }
 
 
+static int compare_locale_names( const WCHAR *n1, const WCHAR *n2 )
+{
+    for (;;)
+    {
+        WCHAR ch1 = *n1++;
+        WCHAR ch2 = *n2++;
+        if (ch1 >= 'a' && ch1 <= 'z') ch1 -= 'a' - 'A';
+        else if (ch1 == '_') ch1 = '-';
+        if (ch2 >= 'a' && ch2 <= 'z') ch2 -= 'a' - 'A';
+        else if (ch2 == '_') ch2 = '-';
+        if (!ch1 || ch1 != ch2) return ch1 - ch2;
+    }
+}
+
+
+static const NLS_LOCALE_LCNAME_INDEX *find_lcname_entry( const WCHAR *name )
+{
+    int min = 0, max = locale_table->nb_lcnames - 1;
+
+    while (min <= max)
+    {
+        int res, pos = (min + max) / 2;
+        const WCHAR *str = locale_strings + lcnames_index[pos].name;
+        res = compare_locale_names( name, str + 1 );
+        if (res < 0) max = pos - 1;
+        else if (res > 0) min = pos + 1;
+        else return &lcnames_index[pos];
+    }
+    return NULL;
+}
+
+
 /***********************************************************************
  *		init_locale
  */
@@ -5190,9 +5222,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsValidLocale( LCID lcid, DWORD flags )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsValidLocaleName( const WCHAR *locale )
 {
-    LCID lcid;
-
-    return !RtlLocaleNameToLcid( locale, &lcid, 2 );
+    if (locale == LOCALE_NAME_USER_DEFAULT) return FALSE;
+    return !!find_lcname_entry( locale );
 }
 
 
