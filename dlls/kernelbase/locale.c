@@ -5596,10 +5596,15 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringW( LCID lcid, DWORD flags, const WCHAR *
 LCID WINAPI DECLSPEC_HOTPATCH LocaleNameToLCID( const WCHAR *name, DWORD flags )
 {
     LCID lcid;
+    const NLS_LOCALE_DATA *locale = get_locale_by_name( name, &lcid );
 
-    if (!name) return GetUserDefaultLCID();
-    if (!set_ntstatus( RtlLocaleNameToLcid( name, &lcid, 2 ))) return 0;
-    if (!(flags & LOCALE_ALLOW_NEUTRAL_NAMES)) lcid = ConvertDefaultLocale( lcid );
+    if (!locale)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (!(flags & LOCALE_ALLOW_NEUTRAL_NAMES) && !locale->inotneutral)
+        lcid = locale->idefaultlanguage;
     return lcid;
 }
 
