@@ -31,6 +31,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <pthread.h>
+#include <time.h>
 #include <alsa/asoundlib.h>
 
 #include "ntstatus.h"
@@ -102,6 +103,18 @@ static void in_buffer_lock(void)
 static void in_buffer_unlock(void)
 {
     pthread_mutex_unlock(&in_buffer_mutex);
+}
+
+static uint64_t get_time_msec(void)
+{
+    struct timespec now = {0, 0};
+
+#ifdef CLOCK_MONOTONIC_RAW
+    if (!clock_gettime(CLOCK_MONOTONIC_RAW, &now))
+        return (uint64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000;
+#endif
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return (uint64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000;
 }
 
 static void set_in_notify(struct notify_context *notify, struct midi_src *src, WORD dev_id, WORD msg,
@@ -924,7 +937,7 @@ static UINT midi_out_reset(WORD dev_id)
 
 static void handle_sysex_event(struct midi_src *src, BYTE *data, UINT len)
 {
-    UINT pos = 0, copy_len, current_time = NtGetTickCount() - src->startTime;
+    UINT pos = 0, copy_len, current_time = get_time_msec() - src->startTime;
     struct notify_context notify;
     MIDIHDR *hdr;
 
@@ -957,7 +970,7 @@ static void handle_sysex_event(struct midi_src *src, BYTE *data, UINT len)
 
 static void handle_regular_event(struct midi_src *src, snd_seq_event_t *ev)
 {
-    UINT data = 0, value, current_time = NtGetTickCount() - src->startTime;
+    UINT data = 0, value, current_time = get_time_msec() - src->startTime;
     struct notify_context notify;
 
     switch (ev->type)
@@ -1127,7 +1140,7 @@ static UINT midi_in_start(WORD dev_id)
     if (src->state == -1) return MIDIERR_NODEVICE;
 
     src->state = 1;
-    src->startTime = NtGetTickCount();
+    src->startTime = get_time_msec();
     return MMSYSERR_NOERROR;
 }
 
@@ -1147,7 +1160,7 @@ static UINT midi_in_stop(WORD dev_id)
 
 static DWORD midi_in_reset(WORD dev_id, struct notify_context *notify)
 {
-    UINT cur_time = NtGetTickCount();
+    UINT cur_time = get_time_msec();
     UINT err = MMSYSERR_NOERROR;
     struct midi_src *src;
     MIDIHDR *hdr;
