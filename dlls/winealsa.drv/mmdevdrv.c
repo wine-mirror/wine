@@ -18,23 +18,15 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#define NONAMELESSUNION
 #define COBJMACROS
-#include "config.h"
 
 #include <stdarg.h>
-#include <stdio.h>
-#include <math.h>
 
 #include "windef.h"
 #include "winbase.h"
 #include "winnls.h"
 #include "winreg.h"
-#include "wine/debug.h"
-#include "wine/unicode.h"
-#include "wine/list.h"
-#include "wine/unixlib.h"
-
+#include "winternl.h"
 #include "propsys.h"
 #include "initguid.h"
 #include "ole2.h"
@@ -44,10 +36,13 @@
 #include "mmsystem.h"
 #include "dsound.h"
 
-#include "initguid.h"
 #include "endpointvolume.h"
 #include "audioclient.h"
 #include "audiopolicy.h"
+
+#include "wine/debug.h"
+#include "wine/list.h"
+#include "wine/unixlib.h"
 
 #include "unixlib.h"
 
@@ -371,7 +366,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **gu
     }
 
     for(i = 0; i < params.num; i++){
-        unsigned int size = (strlenW(params.endpoints[i].name) + 1) * sizeof(WCHAR);
+        unsigned int size = (wcslen(params.endpoints[i].name) + 1) * sizeof(WCHAR);
         ids[i] = HeapAlloc(GetProcessHeap(), 0, size);
         if(!ids[i]){
             params.result = E_OUTOFMEMORY;
