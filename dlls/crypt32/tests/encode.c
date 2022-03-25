@@ -8948,6 +8948,63 @@ static void test_decodeOCSPBasicSignedResponseInfo(DWORD dwEncoding)
     LocalFree(info);
 }
 
+static void test_decodeOCSPBasicResponseInfo(DWORD dwEncoding)
+{
+    static const BYTE resp_id[] = {
+        0xb7, 0x6b, 0xa2, 0xea, 0xa8, 0xaa, 0x84, 0x8c, 0x79, 0xea, 0xb4, 0xda, 0x0f, 0x98, 0xb2, 0xc5,
+        0x95, 0x76, 0xb9, 0xf4};
+    static const BYTE name_hash[] = {
+        0xe4, 0xe3, 0x95, 0xa2, 0x29, 0xd3, 0xd4, 0xc1, 0xc3, 0x1f, 0xf0, 0x98, 0x0c, 0x0b, 0x4e, 0xc0,
+        0x09, 0x8a, 0xab, 0xd8};
+    static const BYTE key_hash[] = {
+        0xb7, 0x6b, 0xa2, 0xea, 0xa8, 0xaa, 0x84, 0x8c, 0x79, 0xea, 0xb4, 0xda, 0x0f, 0x98, 0xb2, 0xc5,
+        0x95, 0x76, 0xb9, 0xf4};
+    static const BYTE serial[] = {
+        0xb1, 0xc1, 0x87, 0x54, 0x54, 0xac, 0x1e, 0x55, 0x40, 0xfb, 0xef, 0xd9, 0x6d, 0x8f, 0x49, 0x08};
+    OCSP_BASIC_RESPONSE_INFO *info;
+    OCSP_BASIC_RESPONSE_ENTRY *entry;
+    DWORD size;
+    BOOL ret;
+
+    size = 0;
+    ret = pCryptDecodeObjectEx(dwEncoding, OCSP_BASIC_RESPONSE, ocsp_to_be_signed,
+                               sizeof(ocsp_to_be_signed), CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size);
+    ok(ret, "got %08lx\n", GetLastError());
+
+    ok(!info->dwVersion, "got %lu\n", info->dwVersion);
+    ok(info->dwResponderIdChoice == 2, "got %lu\n", info->dwResponderIdChoice);
+    ok(info->ByKeyResponderId.cbData == sizeof(resp_id), "got %lu\n", info->ByKeyResponderId.cbData);
+    ok(!memcmp(info->ByKeyResponderId.pbData, resp_id, sizeof(resp_id)), "wrong data\n");
+    ok(info->ProducedAt.dwLowDateTime == 3438583808, "got %lu\n", info->ProducedAt.dwLowDateTime);
+    ok(info->ProducedAt.dwHighDateTime == 30946477, "got %lu\n", info->ProducedAt.dwHighDateTime);
+    ok(info->cResponseEntry == 1, "got %lu\n", info->cResponseEntry);
+    ok(info->rgResponseEntry != NULL, "got %p\n", info->rgResponseEntry);
+
+    entry = info->rgResponseEntry;
+    ok(!strcmp(entry->CertId.HashAlgorithm.pszObjId, szOID_OIWSEC_sha1), "got '%s'\n", entry->CertId.HashAlgorithm.pszObjId);
+    ok(entry->CertId.HashAlgorithm.Parameters.cbData == 2, "got %lu\n", entry->CertId.HashAlgorithm.Parameters.cbData);
+    ok(entry->CertId.HashAlgorithm.Parameters.pbData[0] == 5, "got 0x%02x\n", entry->CertId.HashAlgorithm.Parameters.pbData[0]);
+    ok(!entry->CertId.HashAlgorithm.Parameters.pbData[1], "got 0x%02x\n", entry->CertId.HashAlgorithm.Parameters.pbData[1]);
+    ok(entry->CertId.IssuerNameHash.cbData == 20, "got %lu\n", entry->CertId.IssuerNameHash.cbData);
+    ok(!memcmp(entry->CertId.IssuerNameHash.pbData, name_hash, sizeof(name_hash)), "wrong data\n");
+    ok(entry->CertId.IssuerKeyHash.cbData == 20, "got %lu\n", entry->CertId.IssuerKeyHash.cbData);
+    ok(!memcmp(entry->CertId.IssuerKeyHash.pbData, key_hash, sizeof(key_hash)), "wrong data\n");
+    ok(entry->CertId.SerialNumber.cbData == 16, "got %lu\n", entry->CertId.SerialNumber.cbData);
+    ok(!memcmp(entry->CertId.SerialNumber.pbData, serial, sizeof(serial)), "wrong data\n");
+    ok(entry->dwCertStatus == 0, "got %lu\n", entry->dwCertStatus);
+    ok(entry->pRevokedInfo == NULL, "got %p\n", entry->pRevokedInfo);
+    ok(entry->ThisUpdate.dwLowDateTime == 2558518400, "got %lu\n", entry->ThisUpdate.dwLowDateTime);
+    ok(entry->ThisUpdate.dwHighDateTime == 30946475, "got %lu\n", entry->ThisUpdate.dwHighDateTime);
+    ok(entry->NextUpdate.dwLowDateTime == 2014369408, "got %lu\n", entry->NextUpdate.dwLowDateTime);
+    ok(entry->NextUpdate.dwHighDateTime == 30947877, "got %lu\n", entry->NextUpdate.dwHighDateTime);
+    ok(!entry->cExtension, "got %lu\n", entry->cExtension);
+    ok(entry->rgExtension == NULL, "got %p\n", entry->rgExtension);
+
+    ok(!info->cExtension, "got %lu\n", info->cExtension);
+    ok(info->rgExtension == NULL, "got %p\n", info->rgExtension);
+    LocalFree(info);
+}
+
 START_TEST(encode)
 {
     static const DWORD encodings[] = { X509_ASN_ENCODING, PKCS_7_ASN_ENCODING,
@@ -9044,6 +9101,7 @@ START_TEST(encode)
         test_encodeOCSPRequestInfo(encodings[i]);
         test_decodeOCSPResponseInfo(encodings[i]);
         test_decodeOCSPBasicSignedResponseInfo(encodings[i]);
+        test_decodeOCSPBasicResponseInfo(encodings[i]);
     }
     testPortPublicKeyInfo();
 }
