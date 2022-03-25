@@ -5531,9 +5531,6 @@ static void add_dirty_rect_test(void)
     hr = IDirect3DTexture8_GetSurfaceLevel(tex_dynamic, 0, &surface_dynamic);
     ok(SUCCEEDED(hr), "Failed to get surface level, hr %#x.\n", hr);
 
-    fill_surface(surface_src_red, 0x00ff0000, 0);
-    fill_surface(surface_src_green, 0x0000ff00, 0);
-
     hr = IDirect3DDevice8_SetVertexShader(device, D3DFVF_XYZ | D3DFVF_TEX1);
     ok(SUCCEEDED(hr), "Failed to set fvf, hr %#x.\n", hr);
     hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_SELECTARG1);
@@ -5542,6 +5539,23 @@ static void add_dirty_rect_test(void)
     ok(SUCCEEDED(hr), "Failed to set color arg, hr %#x.\n", hr);
     hr = IDirect3DDevice8_SetTextureStageState(device, 0, D3DTSS_MIPFILTER, D3DTEXF_POINT);
     ok(SUCCEEDED(hr), "Failed to set mip filter, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice8_SetTexture(device, 0, (IDirect3DBaseTexture8 *)tex_dst2);
+    ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+    hr = IDirect3DDevice8_UpdateTexture(device, (IDirect3DBaseTexture8 *)tex_src_red,
+            (IDirect3DBaseTexture8 *)tex_dst2);
+    fill_surface(surface_src_green, 0x00000080, D3DLOCK_NO_DIRTY_UPDATE);
+    hr = IDirect3DDevice8_UpdateTexture(device, (IDirect3DBaseTexture8 *)tex_src_green,
+            (IDirect3DBaseTexture8 *)tex_dst2);
+    ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00000080, 1), "Unexpected colour 0x%08x.\n", color);
+    hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "Unexpected hr %#x.\n", hr);
+
+    fill_surface(surface_src_red, 0x00ff0000, 0);
+    fill_surface(surface_src_green, 0x0000ff00, 0);
 
     hr = IDirect3DDevice8_UpdateTexture(device, (IDirect3DBaseTexture8 *)tex_src_green,
             (IDirect3DBaseTexture8 *)tex_dst1);
