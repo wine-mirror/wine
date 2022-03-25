@@ -1264,6 +1264,67 @@ static void test_GlobalMemoryStatus(void)
             wine_dbgstr_longlong(mem.dwAvailVirtual), wine_dbgstr_longlong(memex.ullAvailVirtual));
 }
 
+static void test_GlobalMemoryStatusEx(void)
+{
+    char buffer[sizeof(SYSTEM_PERFORMANCE_INFORMATION) + 16]; /* some Win 7 versions need a larger info */
+    SYSTEM_PERFORMANCE_INFORMATION *perf_info = (void *)buffer;
+    SYSTEM_BASIC_INFORMATION basic_info;
+    MEMORYSTATUSEX memex = {0}, expect;
+    VM_COUNTERS_EX vmc;
+    NTSTATUS status;
+    BOOL ret;
+
+    SetLastError( 0xdeadbeef );
+    ret = GlobalMemoryStatusEx( &memex );
+    ok( !ret, "GlobalMemoryStatusEx succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
+
+    do
+    {
+        status = NtQuerySystemInformation( SystemBasicInformation, &basic_info, sizeof(basic_info), NULL );
+        ok( !status, "NtQuerySystemInformation returned %#lx\n", status );
+        status = NtQuerySystemInformation( SystemPerformanceInformation, perf_info, sizeof(buffer), NULL );
+        ok( !status, "NtQuerySystemInformation returned %#lx\n", status );
+        status = NtQueryInformationProcess( GetCurrentProcess(), ProcessVmCounters, &vmc, sizeof(vmc), NULL );
+        ok( !status, "NtQueryInformationProcess returned %#lx\n", status );
+        memex.dwLength = sizeof(MEMORYSTATUSEX);
+        ret = GlobalMemoryStatusEx( &memex );
+        ok( ret, "GlobalMemoryStatusEx succeeded\n" );
+    } while (memex.ullAvailPhys != (ULONGLONG)perf_info->AvailablePages * basic_info.PageSize);
+
+    ok( basic_info.PageSize, "got 0 PageSize\n" );
+    ok( basic_info.MmNumberOfPhysicalPages, "got 0 MmNumberOfPhysicalPages\n" );
+    ok( !!basic_info.HighestUserAddress, "got 0 HighestUserAddress\n" );
+    ok( !!basic_info.LowestUserAddress, "got 0 LowestUserAddress\n" );
+    ok( perf_info->TotalCommittedPages, "got 0 TotalCommittedPages\n" );
+    ok( perf_info->TotalCommitLimit, "got 0 TotalCommitLimit\n" );
+    ok( perf_info->AvailablePages, "got 0 AvailablePages\n" );
+
+    expect.dwMemoryLoad = (memex.ullTotalPhys - memex.ullAvailPhys) / (memex.ullTotalPhys / 100);
+    expect.ullTotalPhys = (ULONGLONG)basic_info.MmNumberOfPhysicalPages * basic_info.PageSize;
+    expect.ullAvailPhys = (ULONGLONG)perf_info->AvailablePages * basic_info.PageSize;
+    expect.ullTotalPageFile = (ULONGLONG)perf_info->TotalCommitLimit * basic_info.PageSize;
+    expect.ullAvailPageFile = (ULONGLONG)(perf_info->TotalCommitLimit - perf_info->TotalCommittedPages) * basic_info.PageSize;
+    expect.ullTotalVirtual = (ULONG_PTR)basic_info.HighestUserAddress - (ULONG_PTR)basic_info.LowestUserAddress + 1;
+    expect.ullAvailVirtual = expect.ullTotalVirtual - (ULONGLONG)vmc.WorkingSetSize /* approximate */;
+    expect.ullAvailExtendedVirtual = 0;
+
+    ok( memex.dwMemoryLoad == expect.dwMemoryLoad, "got dwMemoryLoad %lu\n", memex.dwMemoryLoad );
+    todo_wine
+    ok( memex.ullTotalPhys == expect.ullTotalPhys, "got ullTotalPhys %#I64x\n", memex.ullTotalPhys );
+    ok( memex.ullAvailPhys == expect.ullAvailPhys, "got ullAvailPhys %#I64x\n", memex.ullAvailPhys );
+    todo_wine
+    ok( memex.ullTotalPageFile == expect.ullTotalPageFile, "got ullTotalPageFile %#I64x\n", memex.ullTotalPageFile );
+    /* allow some variability, page file is not always in sync on Windows */
+    ok( memex.ullAvailPageFile - expect.ullAvailPageFile + 32 * basic_info.PageSize <= 64 * basic_info.PageSize,
+        "got ullAvailPageFile %#I64x\n", memex.ullAvailPageFile );
+    todo_wine
+    ok( memex.ullTotalVirtual == expect.ullTotalVirtual, "got ullTotalVirtual %#I64x\n", memex.ullTotalVirtual );
+    todo_wine
+    ok( memex.ullAvailVirtual <= expect.ullAvailVirtual, "got ullAvailVirtual %#I64x\n", memex.ullAvailVirtual );
+    ok( memex.ullAvailExtendedVirtual == 0, "got ullAvailExtendedVirtual %#I64x\n", memex.ullAvailExtendedVirtual );
+}
+
 START_TEST(heap)
 {
     int argc;
@@ -1298,6 +1359,7 @@ START_TEST(heap)
     test_HeapQueryInformation();
     test_GetPhysicallyInstalledSystemMemory();
     test_GlobalMemoryStatus();
+    test_GlobalMemoryStatusEx();
 
     if (pRtlGetNtGlobalFlags)
     {
