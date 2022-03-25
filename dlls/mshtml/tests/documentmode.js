@@ -1278,6 +1278,30 @@ sync_test("elem_attr", function() {
     }
 });
 
+sync_test("builtins_diffs", function() {
+    var v = document.documentMode;
+
+    /* despite what spec says for ES6, IE still throws */
+    var props = [
+        "freeze",
+        "getPrototypeOf",
+        "isExtensible",
+        "isFrozen",
+        "isSealed",
+        "keys",
+        "preventExtensions",
+        "seal"
+    ];
+    for(var i = 0; i < props.length; i++) {
+        try {
+            Object[props[i]]("test");
+            ok(false, "Object." + props[i] + " with non-object: expected exception");
+        }catch(e) {
+            ok(e.number === (v < 9 ? 0xa01b6 : 0xa138f) - 0x80000000, "Object." + props[i] + " with non-object: exception = " + e.number);
+        }
+    }
+});
+
 sync_test("__proto__", function() {
     var v = document.documentMode;
     var r, x = 42;
