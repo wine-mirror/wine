@@ -2008,6 +2008,10 @@ static void get_performance_info( SYSTEM_PERFORMANCE_INFORMATION *info )
 #endif
     }
 #endif
+
+    /* Titan Quest refuses to run if TotalPageFile <= TotalPhys */
+    if (!totalswap) totalswap = page_size;
+
     info->AvailablePages      = freeram / page_size;
     info->TotalCommittedPages = (totalram + totalswap - freeram - freeswap) / page_size;
     info->TotalCommitLimit    = (totalram + totalswap) / page_size;

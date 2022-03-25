@@ -1266,17 +1266,13 @@ static void test_GlobalMemoryStatus(void)
     expect.ullAvailExtendedVirtual = 0;
 
     ok( memex.dwMemoryLoad == expect.dwMemoryLoad, "got dwMemoryLoad %lu\n", memex.dwMemoryLoad );
-    todo_wine
     ok( memex.ullTotalPhys == expect.ullTotalPhys, "got ullTotalPhys %#I64x\n", memex.ullTotalPhys );
     ok( memex.ullAvailPhys == expect.ullAvailPhys, "got ullAvailPhys %#I64x\n", memex.ullAvailPhys );
-    todo_wine
     ok( memex.ullTotalPageFile == expect.ullTotalPageFile, "got ullTotalPageFile %#I64x\n", memex.ullTotalPageFile );
     /* allow some variability, page file is not always in sync on Windows */
     ok( memex.ullAvailPageFile - expect.ullAvailPageFile + 32 * basic_info.PageSize <= 64 * basic_info.PageSize,
         "got ullAvailPageFile %#I64x\n", memex.ullAvailPageFile );
-    todo_wine
     ok( memex.ullTotalVirtual == expect.ullTotalVirtual, "got ullTotalVirtual %#I64x\n", memex.ullTotalVirtual );
-    todo_wine
     ok( memex.ullAvailVirtual <= expect.ullAvailVirtual, "got ullAvailVirtual %#I64x\n", memex.ullAvailVirtual );
     ok( memex.ullAvailExtendedVirtual == 0, "got ullAvailExtendedVirtual %#I64x\n", memex.ullAvailExtendedVirtual );
 

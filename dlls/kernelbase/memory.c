@@ -1043,6 +1043,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GlobalMemoryStatusEx( MEMORYSTATUSEX *status )
     static DWORD last_check;
     SYSTEM_BASIC_INFORMATION basic_info;
     SYSTEM_PERFORMANCE_INFORMATION perf_info;
+    VM_COUNTERS_EX vmc;
 
     if (status->dwLength != sizeof(*status))
     {
@@ -1059,16 +1060,18 @@ BOOL WINAPI DECLSPEC_HOTPATCH GlobalMemoryStatusEx( MEMORYSTATUSEX *status )
     if (!set_ntstatus( NtQuerySystemInformation( SystemBasicInformation,
                                                  &basic_info, sizeof(basic_info), NULL )) ||
         !set_ntstatus( NtQuerySystemInformation( SystemPerformanceInformation,
-                                                 &perf_info, sizeof(perf_info), NULL)))
+                                                 &perf_info, sizeof(perf_info), NULL)) ||
+        !set_ntstatus( NtQueryInformationProcess( GetCurrentProcess(), ProcessVmCounters,
+                                                  &vmc, sizeof(vmc), NULL )))
         return FALSE;
 
     status->dwMemoryLoad     = 0;
-    status->ullTotalPhys     = perf_info.TotalCommitLimit;
+    status->ullTotalPhys     = basic_info.MmNumberOfPhysicalPages;
     status->ullAvailPhys     = perf_info.AvailablePages;
-    status->ullTotalPageFile = perf_info.TotalCommitLimit + 1; /* Titan Quest refuses to run if TotalPageFile <= TotalPhys */
+    status->ullTotalPageFile = perf_info.TotalCommitLimit;
     status->ullAvailPageFile = status->ullTotalPageFile - perf_info.TotalCommittedPages;
-    status->ullTotalVirtual  = (ULONG_PTR)basic_info.HighestUserAddress - (ULONG_PTR)basic_info.LowestUserAddress;
-    status->ullAvailVirtual  = status->ullTotalVirtual - 64 * 1024;  /* FIXME */
+    status->ullTotalVirtual  = (ULONG_PTR)basic_info.HighestUserAddress - (ULONG_PTR)basic_info.LowestUserAddress + 1;
+    status->ullAvailVirtual  = status->ullTotalVirtual - (ULONGLONG)vmc.WorkingSetSize /* approximate */;
     status->ullAvailExtendedVirtual = 0;
 
     status->ullTotalPhys     *= basic_info.PageSize;
