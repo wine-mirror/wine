@@ -481,6 +481,8 @@ HRESULT video_renderer_create(IUnknown *outer, IUnknown **out)
         return E_OUTOFMEMORY;
 
     strmbase_renderer_init(&object->renderer, outer, &CLSID_VideoRenderer, L"In", &renderer_ops);
+    wcscpy(object->renderer.sink.pin.name, L"Input");
+
     object->IOverlay_iface.lpVtbl = &overlay_vtbl;
 
     video_window_init(&object->window, &IVideoWindow_VTable,
