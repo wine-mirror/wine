@@ -913,6 +913,23 @@ then
                                   AC_SUBST(DELAYLOADFLAG,["-Wl,-delayload,"])
                                   CFLAGS="$CFLAGS $llvm_cflags"])
         fi
+        AC_MSG_CHECKING([for $CROSSCC option to enable C99 features])
+        AC_CACHE_VAL([wine_cv_crosscc_c99],
+            [wine_cv_crosscc_c99=no
+             for arg in '' '-std=gnu99'
+             do
+                 CC="$CROSSCC $arg"
+                 AC_COMPILE_IFELSE([AC_LANG_SOURCE([$ac_c_conftest_c99_program])],
+                                   [wine_cv_crosscc_c99=$arg],[wine_cv_crosscc_c99=no])
+                 test "x$wine_cv_crosscc_c99" != xno && break
+             done])
+        case "x$wine_cv_crosscc_c99" in
+          x) AC_MSG_RESULT([none needed]) ;;
+          xno) AC_MSG_RESULT([unsupported]) ;;
+          x*) AC_MSG_RESULT([$wine_cv_crosscc_c99])
+              CROSSCC="$CROSSCC $wine_cv_crosscc_c99" ;;
+        esac
+
         WINE_TRY_CROSSCFLAGS([-fno-strict-aliasing])
         dnl clang needs to be told to fail on unknown options
         WINE_TRY_CROSSCFLAGS([-Werror=unknown-warning-option],[CFLAGS="$CFLAGS -Werror=unknown-warning-option"])

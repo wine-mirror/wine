@@ -10707,6 +10707,41 @@ then :
                                   CFLAGS="$CFLAGS $llvm_cflags"
 fi
         fi
+        { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking for $CROSSCC option to enable C99 features" >&5
+printf %s "checking for $CROSSCC option to enable C99 features... " >&6; }
+        if test ${wine_cv_crosscc_c99+y}
+then :
+  printf %s "(cached) " >&6
+else $as_nop
+  wine_cv_crosscc_c99=no
+             for arg in '' '-std=gnu99'
+             do
+                 CC="$CROSSCC $arg"
+                 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$ac_c_conftest_c99_program
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"
+then :
+  wine_cv_crosscc_c99=$arg
+else $as_nop
+  wine_cv_crosscc_c99=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.beam conftest.$ac_ext
+                 test "x$wine_cv_crosscc_c99" != xno && break
+             done
+fi
+
+        case "x$wine_cv_crosscc_c99" in
+          x) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: none needed" >&5
+printf "%s\n" "none needed" >&6; } ;;
+          xno) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: unsupported" >&5
+printf "%s\n" "unsupported" >&6; } ;;
+          x*) { printf "%s\n" "$as_me:${as_lineno-$LINENO}: result: $wine_cv_crosscc_c99" >&5
+printf "%s\n" "$wine_cv_crosscc_c99" >&6; }
+              CROSSCC="$CROSSCC $wine_cv_crosscc_c99" ;;
+        esac
+
         { printf "%s\n" "$as_me:${as_lineno-$LINENO}: checking whether the cross-compiler supports -fno-strict-aliasing" >&5
 printf %s "checking whether the cross-compiler supports -fno-strict-aliasing... " >&6; }
 if test ${ac_cv_crosscflags__fno_strict_aliasing+y}
