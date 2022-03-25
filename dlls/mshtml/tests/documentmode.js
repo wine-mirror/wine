@@ -1415,6 +1415,94 @@ sync_test("__proto__", function() {
     }
 });
 
+sync_test("__defineGetter__", function() {
+    var v = document.documentMode;
+    var r, x = 42;
+
+    if(v < 11) {
+        ok(x.__defineGetter__ === undefined, "x.__defineGetter__ = " + x.__defineGetter__);
+        ok(!("__defineGetter__" in Object), "Object.__defineGetter__ = " + Object.__defineGetter__);
+        return;
+    }
+    ok(Object.prototype.hasOwnProperty("__defineGetter__"), "__defineGetter__ is not a property of Object.prototype");
+    ok(Object.prototype.__defineGetter__.length === 2, "__defineGetter__.length = " + Object.prototype.__defineGetter__.length);
+
+    function getter() { return "wine"; }
+    function setter(val) { }
+
+    r = x.__defineGetter__("foo", getter);
+    ok(r === undefined, "__defineGetter__ on 42 returned " + r);
+    ok(x.foo === undefined, "42.foo = " + x.foo);
+
+    x = {};
+    r = x.__defineGetter__("foo", getter);
+    ok(r === undefined, "__defineGetter__ returned " + r);
+    ok(x.foo === "wine", "x.foo = " + x.foo);
+    r = Object.getOwnPropertyDescriptor(x, "foo");
+    ok(r.value === undefined, "x.foo value = " + r.value);
+    ok(r.get === getter, "x.foo get = " + r.get);
+    ok(r.set === undefined, "x.foo set = " + r.set);
+    ok(r.writable === undefined, "x.foo writable = " + r.writable);
+    ok(r.enumerable === true, "x.foo enumerable = " + r.enumerable);
+    ok(r.configurable === true, "x.foo configurable = " + r.configurable);
+
+    Object.defineProperty(x, "foo", { get: undefined, set: setter, configurable: false });
+    r = Object.getOwnPropertyDescriptor(x, "foo");
+    ok(r.value === undefined, "x.foo setter value = " + r.value);
+    ok(r.get === undefined, "x.foo setter get = " + r.get);
+    ok(r.set === setter, "x.foo setter set = " + r.set);
+    ok(r.writable === undefined, "x.foo setter writable = " + r.writable);
+    ok(r.enumerable === true, "x.foo setter enumerable = " + r.enumerable);
+    ok(r.configurable === false, "x.foo setter configurable = " + r.configurable);
+    try {
+        x.__defineGetter__("foo", getter);
+        ok(false, "expected exception calling __defineGetter__ on non-configurable property");
+    }catch(e) {
+        ok(e.number === 0xa13d6 - 0x80000000, "__defineGetter__ on non-configurable property threw exception " + e.number);
+    }
+
+    r = Object.prototype.__defineGetter__.call(undefined, "bar", getter);
+    ok(r === undefined, "__defineGetter__ on undefined returned " + r);
+    r = Object.prototype.__defineGetter__.call(null, "bar", getter);
+    ok(r === undefined, "__defineGetter__ on null returned " + r);
+    r = x.__defineGetter__(undefined, getter);
+    ok(r === undefined, "__defineGetter__ undefined prop returned " + r);
+    ok(x["undefined"] === "wine", "x.undefined = " + x["undefined"]);
+    r = x.__defineGetter__(false, getter);
+    ok(r === undefined, "__defineGetter__ undefined prop returned " + r);
+    ok(x["false"] === "wine", "x.false = " + x["false"]);
+
+    try {
+        x.__defineGetter__("bar", "string");
+        ok(false, "expected exception calling __defineGetter__ with string");
+    }catch(e) {
+        ok(e.number === 0xa138a - 0x80000000, "__defineGetter__ with string threw exception " + e.number);
+    }
+    try {
+        x.__defineGetter__("bar", undefined);
+        ok(false, "expected exception calling __defineGetter__ with undefined");
+    }catch(e) {
+        ok(e.number === 0xa138a - 0x80000000, "__defineGetter__ with undefined threw exception " + e.number);
+    }
+    try {
+        x.__defineGetter__("bar", null);
+        ok(false, "expected exception calling __defineGetter__ with null");
+    }catch(e) {
+        ok(e.number === 0xa138a - 0x80000000, "__defineGetter__ with null threw exception " + e.number);
+    }
+    try {
+        Object.prototype.__defineGetter__.call(x, "bar");
+        ok(false, "expected exception calling __defineGetter__ with only one arg");
+    }catch(e) {
+        ok(e.number === 0xa138a - 0x80000000, "__defineGetter__ with only one arg threw exception " + e.number);
+    }
+
+    x.bar = "test";
+    ok(x.bar === "test", "x.bar = " + x.bar);
+    x.__defineGetter__("bar", getter);
+    ok(x.bar === "wine", "x.bar with getter = " + x.bar);
+});
+
 async_test("postMessage", function() {
     var v = document.documentMode;
     var onmessage_called = false;
