@@ -520,8 +520,11 @@ HRESULT acm_wrapper_create(IUnknown *outer, IUnknown **out)
     strmbase_filter_init(&object->filter, outer, &CLSID_ACMWrapper, &filter_ops);
 
     strmbase_sink_init(&object->sink, &object->filter, L"In", &sink_ops, NULL);
+    wcscpy(object->sink.pin.name, L"Input");
 
     strmbase_source_init(&object->source, &object->filter, L"Out", &source_ops);
+    wcscpy(object->source.pin.name, L"Output");
+
     object->source_IQualityControl_iface.lpVtbl = &source_qc_vtbl;
     strmbase_passthrough_init(&object->passthrough, (IUnknown *)&object->source.pin.IPin_iface);
     ISeekingPassThru_Init(&object->passthrough.ISeekingPassThru_iface, FALSE,
