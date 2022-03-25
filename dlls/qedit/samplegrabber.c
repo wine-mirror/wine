@@ -652,8 +652,11 @@ HRESULT sample_grabber_create(IUnknown *outer, IUnknown **out)
     object->IMemInputPin_iface.lpVtbl = &IMemInputPin_VTable;
 
     strmbase_sink_init(&object->sink, &object->filter, L"In", &sink_ops, NULL);
+    wcscpy(object->sink.pin.name, L"Input");
 
     strmbase_source_init(&object->source, &object->filter, L"Out", &source_ops);
+    wcscpy(object->source.pin.name, L"Output");
+
     strmbase_passthrough_init(&object->passthrough, (IUnknown *)&object->source.pin.IPin_iface);
     ISeekingPassThru_Init(&object->passthrough.ISeekingPassThru_iface, FALSE,
             &object->sink.pin.IPin_iface);
