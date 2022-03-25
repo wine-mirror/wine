@@ -53,7 +53,7 @@ typedef struct _SEARCH_CONTEXT
 extern const WCHAR inbuilt[][10];
 extern struct env_stack *pushd_directories;
 
-BATCH_CONTEXT *context = NULL;
+struct batch_context *context = NULL;
 int errorlevel;
 WCHAR quals[MAXSTRING], param1[MAXSTRING], param2[MAXSTRING];
 BOOL  interactive;
@@ -3113,7 +3113,7 @@ static WCHAR *fetch_next_line(BOOL feed, BOOL first_line, WCHAR* buffer)
         if (context)
         {
             LARGE_INTEGER zeroli = {.QuadPart = 0};
-            HANDLE h = CreateFileW(context->batchfileW, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
+            HANDLE h = CreateFileW(context->batch_file->path_name, GENERIC_READ, FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
                                    NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
             if (h == INVALID_HANDLE_VALUE)
             {
@@ -4130,7 +4130,7 @@ RETURN_CODE node_execute(CMD_NODE *node)
             WCHAR filename[MAX_PATH];
             CMD_REDIRECTION *output;
             HANDLE saved_output;
-            BATCH_CONTEXT *saved_context = context;
+            struct batch_context *saved_context = context;
 
             /* pipe LHS & RHS are run outside of any batch context */
             context = NULL;

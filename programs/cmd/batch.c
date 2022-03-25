@@ -56,6 +56,53 @@ static RETURN_CODE WCMD_batch_main_loop(void)
     return return_code;
 }
 
+static struct batch_file *find_or_alloc_batch_file(const WCHAR *file)
+{
+    struct batch_file *batchfile;
+    struct batch_context *ctx;
+
+    for (ctx = context; ctx; ctx = ctx->prev_context)
+    {
+        if (ctx->batch_file && !wcscmp(ctx->batch_file->path_name, file))
+            return ctx->batch_file;
+    }
+    batchfile = xalloc(sizeof(*batchfile));
+    batchfile->ref_count = 0;
+    batchfile->path_name = xstrdupW(file);
+
+    return batchfile;
+}
+
+static struct batch_context *push_batch_context(WCHAR *command, struct batch_file *batch_file, ULONGLONG pos)
+{
+    struct batch_context *prev = context;
+
+    context = xalloc(sizeof(struct batch_context));
+    context->file_position.QuadPart = pos;
+    context->command = command;
+    memset(context->shift_count, 0x00, sizeof(context->shift_count));
+    context->prev_context = prev;
+    context->skip_rest = FALSE;
+    context->batch_file = batch_file;
+    batch_file->ref_count++;
+
+    return context;
+}
+
+static struct batch_context *pop_batch_context(struct batch_context *ctx)
+{
+    struct batch_context *prev = ctx->prev_context;
+    struct batch_file *batchfile = ctx->batch_file;
+    if (batchfile && --batchfile->ref_count == 0)
+    {
+        free(batchfile->path_name);
+        free(batchfile);
+        ctx->batch_file = NULL;
+    }
+    free(ctx);
+    return prev;
+}
+
 /****************************************************************************
  * WCMD_batch
  *
@@ -74,24 +121,11 @@ static RETURN_CODE WCMD_batch_main_loop(void)
 
 RETURN_CODE WCMD_call_batch(const WCHAR *file, WCHAR *command)
 {
-    BATCH_CONTEXT *prev_context;
     RETURN_CODE return_code = NO_ERROR;
 
-    /* Create a context structure for this batch file. */
-    prev_context = context;
-    context = malloc(sizeof (BATCH_CONTEXT));
-    context->file_position.QuadPart = 0;
-    context->batchfileW = xstrdupW(file);
-    context->command = command;
-    memset(context->shift_count, 0x00, sizeof(context->shift_count));
-    context->prev_context = prev_context;
-    context->skip_rest = FALSE;
-
+    context = push_batch_context(command, find_or_alloc_batch_file(file), 0);
     return_code = WCMD_batch_main_loop();
-
-    free(context->batchfileW);
-    free(context);
-    context = prev_context;
+    context = pop_batch_context(context);
 
     if (return_code != NO_ERROR && return_code != RETURN_CODE_ABORTED)
         errorlevel = return_code;
@@ -376,7 +410,7 @@ void WCMD_HandleTildeModifiers(WCHAR **start, BOOL atExecute)
      whereas if you start applying other modifiers to it, you get the filename
      the batch label is in                                                     */
   if (*lastModifier == '0' && modifierLen > 1) {
-    lstrcpyW(outputparam, context->batchfileW);
+    lstrcpyW(outputparam, context->batch_file->path_name);
   } else if ((*lastModifier >= '0' && *lastModifier <= '9')) {
     lstrcpyW(outputparam,
             WCMD_parameter (context -> command,
@@ -634,7 +668,6 @@ RETURN_CODE WCMD_call(WCHAR *command)
     else if (context)
     {
         WCHAR gotoLabel[MAX_PATH];
-        BATCH_CONTEXT *prev_context;
 
         lstrcpyW(gotoLabel, param1);
 
@@ -642,14 +675,7 @@ RETURN_CODE WCMD_call(WCHAR *command)
            as for loop variables do not survive a call                    */
         WCMD_save_for_loop_context(TRUE);
 
-        prev_context = context;
-        context = malloc(sizeof (BATCH_CONTEXT));
-        context->file_position = prev_context->file_position; /* will be overwritten by WCMD_GOTO below */
-        context->batchfileW = prev_context->batchfileW;
-        context->command = buffer;
-        memset(context->shift_count, 0x00, sizeof(context->shift_count));
-        context->prev_context = prev_context;
-        context->skip_rest = FALSE;
+        context = push_batch_context(buffer, context->batch_file, context->file_position.QuadPart);
 
         /* FIXME as commands here can temper with param1 global variable (ugly) */
         lstrcpyW(param1, gotoLabel);
@@ -657,8 +683,7 @@ RETURN_CODE WCMD_call(WCHAR *command)
 
         WCMD_batch_main_loop();
 
-        free(context);
-        context = prev_context;
+        context = pop_batch_context(context);
         return_code = errorlevel;
 
         /* Restore the for loop context */

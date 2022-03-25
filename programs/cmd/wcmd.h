@@ -258,23 +258,28 @@ static inline BOOL ends_with_backslash( const WCHAR *path )
 
 int evaluate_if_condition(WCHAR *p, WCHAR **command, int *test, int *negate);
 
-/* Data structure to hold context when executing batch files */
-
-typedef struct _BATCH_CONTEXT
+/* Data structure to store information about a batch file */
+struct batch_file
 {
-    WCHAR *command;	  /* The command which invoked the batch file */
-    LARGE_INTEGER file_position;
-    WCHAR *batchfileW;    /* Name of same */
-    int shift_count[10];  /* Offset in terms of shifts for %0 - %9 */
-    struct _BATCH_CONTEXT *prev_context; /* Pointer to the previous context block */
-    BOOL  skip_rest;      /* Skip the rest of the batch program and exit */
-} BATCH_CONTEXT;
+    unsigned            ref_count;     /* number of BATCH_CONTEXT attached to this */
+    WCHAR              *path_name;     /* Name of self */
+};
+
+struct batch_context
+{
+    WCHAR                *command;	    /* The command which invoked the batch file */
+    LARGE_INTEGER         file_position;
+    int                   shift_count[10];  /* Offset in terms of shifts for %0 - %9 */
+    struct batch_context *prev_context;     /* Pointer to the previous context block */
+    BOOL                  skip_rest;        /* Skip the rest of the batch program and exit */
+    struct batch_file    *batch_file;       /* Reference to the file itself */
+};
 
 /* Data structure to handle building lists during recursive calls */
 
 struct env_stack
 {
-    BATCH_CONTEXT *context;
+    struct batch_context *context;
     struct env_stack *next;
     union
     {
@@ -324,7 +329,7 @@ void WCMD_set_for_loop_variable(unsigned varidx, const WCHAR *value);
  */
 extern WCHAR quals[MAXSTRING], param1[MAXSTRING], param2[MAXSTRING];
 extern int errorlevel;
-extern BATCH_CONTEXT *context;
+extern struct batch_context *context;
 extern BOOL delayedsubst;
 
 static inline BOOL WCMD_is_in_context(const WCHAR *ext)
@@ -332,9 +337,9 @@ static inline BOOL WCMD_is_in_context(const WCHAR *ext)
     size_t c_len, e_len;
     if (!context) return FALSE;
     if (!ext) return TRUE;
-    c_len = wcslen(context->batchfileW);
+    c_len = wcslen(context->batch_file->path_name);
     e_len = wcslen(ext);
-    return (c_len > e_len) && !wcsicmp(&context->batchfileW[c_len - e_len], ext);
+    return (c_len > e_len) && !wcsicmp(&context->batch_file->path_name[c_len - e_len], ext);
 }
 
  #endif /* !RC_INVOKED */
