@@ -803,6 +803,8 @@ sync_test("getPrototypeOf", function() {
     obj = Object.create(null);
     ok(!("toString" in obj), "toString is in obj");
     ok(Object.getPrototypeOf(obj) === null, "Object.getPrototypeOf(obj) = " + Object.getPrototypeOf(obj));
+
+    ok(Object.getPrototypeOf(external) === null, "Object.getPrototypeOf(non-JS obj) = " + Object.getPrototypeOf(external));
 });
 
 sync_test("toString", function() {

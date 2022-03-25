@@ -850,13 +850,8 @@ static HRESULT Object_getPrototypeOf(script_ctx_t *ctx, jsval_t vthis, WORD flag
     TRACE("(%s)\n", debugstr_jsval(argv[0]));
 
     obj = to_jsdisp(get_object(argv[0]));
-    if(!obj) {
-        FIXME("Non-JS object\n");
-        return E_NOTIMPL;
-    }
-
     if(r)
-        *r = obj->prototype
+        *r = obj && obj->prototype
             ? jsval_obj(jsdisp_addref(obj->prototype))
             : jsval_null();
     return S_OK;
