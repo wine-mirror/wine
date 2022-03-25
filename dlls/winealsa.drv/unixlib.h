@@ -207,11 +207,6 @@ struct get_prop_value_params
     unsigned int *buffer_size;
 };
 
-struct midi_init_params
-{
-    UINT *err;
-};
-
 struct notify_context
 {
     BOOL send_notify;
@@ -278,14 +273,12 @@ enum alsa_funcs
     alsa_set_event_handle,
     alsa_is_started,
     alsa_get_prop_value,
-    alsa_midi_init,
     alsa_midi_release,
     alsa_midi_out_message,
     alsa_midi_in_message,
     alsa_midi_notify_wait,
 };
 
-NTSTATUS midi_init(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_release(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_out_message(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_in_message(void *args) DECLSPEC_HIDDEN;

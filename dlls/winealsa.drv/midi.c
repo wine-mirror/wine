@@ -60,22 +60,6 @@ static void notify_client(struct notify_context *notify)
  *======================================================================*/
 
 /**************************************************************************
- * ALSA_MidiInit				[internal]
- *
- * Initializes the MIDI devices information variables
- */
-static BOOL ALSA_MidiInit(void)
-{
-    struct midi_init_params params;
-    UINT err;
-
-    params.err = &err;
-    ALSA_CALL(midi_init, &params);
-
-    return TRUE;
-}
-
-/**************************************************************************
  * 			midMessage (WINEALSA.@)
  */
 DWORD WINAPI ALSA_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
@@ -87,11 +71,6 @@ DWORD WINAPI ALSA_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 
     TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
-    switch (wMsg) {
-    case DRVM_INIT:
-        ALSA_MidiInit();
-        return 0;
-    }
 
     params.dev_id = wDevID;
     params.msg = wMsg;
@@ -122,12 +101,6 @@ DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 
     TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
-
-    switch (wMsg) {
-    case DRVM_INIT:
-        ALSA_MidiInit();
-        return 0;
-    }
 
     params.dev_id = wDevID;
     params.msg = wMsg;

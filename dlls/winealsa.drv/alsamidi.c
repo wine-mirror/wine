@@ -400,27 +400,22 @@ static void port_add(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* pinfo, u
     }
 }
 
-NTSTATUS midi_init(void *args)
+static UINT midi_init(void)
 {
-    struct midi_init_params *params = args;
     static BOOL init_done;
     snd_seq_client_info_t *cinfo;
     snd_seq_port_info_t *pinfo;
     snd_seq_t *seq;
 
-    if (init_done) {
-        *params->err = ERROR_ALREADY_INITIALIZED;
-        return STATUS_SUCCESS;
-    }
+    if (init_done)
+        return ERROR_ALREADY_INITIALIZED;
 
     TRACE("Initializing the MIDI variables.\n");
     init_done = TRUE;
 
     /* try to open device */
-    if (!(seq = seq_open(NULL))) {
-        *params->err = ERROR_OPEN_FAILED;
-        return STATUS_SUCCESS;
-    }
+    if (!(seq = seq_open(NULL)))
+        return ERROR_OPEN_FAILED;
 
     cinfo = calloc( 1, snd_seq_client_info_sizeof() );
     pinfo = calloc( 1, snd_seq_port_info_sizeof() );
@@ -454,11 +449,9 @@ NTSTATUS midi_init(void *args)
     free( cinfo );
     free( pinfo );
 
-    *params->err = NOERROR;
-
     TRACE("End\n");
 
-    return STATUS_SUCCESS;
+    return NOERROR;
 }
 
 NTSTATUS midi_release(void *args)
@@ -1369,6 +1362,9 @@ NTSTATUS midi_out_message(void *args)
 
     switch (params->msg)
     {
+    case DRVM_INIT:
+        *params->err = midi_init();
+        break;
     case DRVM_EXIT:
     case DRVM_ENABLE:
     case DRVM_DISABLE:
@@ -1424,6 +1420,9 @@ NTSTATUS midi_in_message(void *args)
 
     switch (params->msg)
     {
+    case DRVM_INIT:
+        *params->err = midi_init();
+        break;
     case DRVM_EXIT:
     case DRVM_ENABLE:
     case DRVM_DISABLE:
