@@ -898,7 +898,7 @@ static void test_heap_checks( DWORD flags )
     if (flags & HEAP_PAGE_ALLOCS) return;  /* no tests for that case yet */
     trace( "testing heap flags %08lx\n", flags );
 
-    p = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 17 );
+    p = pHeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 17 );
     ok( p != NULL, "HeapAlloc failed\n" );
 
     ret = HeapValidate( GetProcessHeap(), 0, p );
