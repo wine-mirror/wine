@@ -49,12 +49,14 @@ struct wined3d_command_list
     SIZE_T data_size;
     void *data;
 
-    HANDLE upload_heap;
     SIZE_T resource_count;
     struct wined3d_resource **resources;
 
     SIZE_T upload_count;
     struct wined3d_deferred_upload *uploads;
+
+    HANDLE upload_heap;
+    LONG *upload_heap_refcount;
 
     /* List of command lists queued for execution on this command list. We might
      * be the only thing holding a pointer to another command list, so we need
@@ -3960,7 +3962,6 @@ static void wined3d_cs_packet_incref_objects(struct wined3d_cs_packet *packet)
 struct wined3d_deferred_context
 {
     struct wined3d_device_context c;
-    HANDLE upload_heap;
 
     SIZE_T data_size, data_capacity;
     void *data;
@@ -3970,6 +3971,9 @@ struct wined3d_deferred_context
 
     SIZE_T upload_count, uploads_capacity;
     struct wined3d_deferred_upload *uploads;
+
+    HANDLE upload_heap;
+    LONG *upload_heap_refcount;
 
     /* List of command lists queued for execution on this context. A command
      * list can be the only thing holding a pointer to another command list, so
@@ -4091,11 +4095,21 @@ static bool wined3d_deferred_context_map_upload_bo(struct wined3d_device_context
         return false;
 
     if (!deferred->upload_heap)
-        deferred->upload_heap = HeapCreate(HEAP_NO_SERIALIZE, 0, 0);
-    if (!deferred->upload_heap)
     {
-        ERR("Failed to create upload heap.\n");
-        return false;
+        if (!(deferred->upload_heap = HeapCreate(0, 0, 0)))
+        {
+            ERR("Failed to create upload heap.\n");
+            return false;
+        }
+
+        if (!(deferred->upload_heap_refcount = heap_alloc(sizeof(*deferred->upload_heap_refcount))))
+        {
+            HeapDestroy(deferred->upload_heap);
+            deferred->upload_heap = 0;
+            return false;
+        }
+
+        *deferred->upload_heap_refcount = 1;
     }
 
     if (!(sysmem = HeapAlloc(deferred->upload_heap, 0, size + RESOURCE_ALIGNMENT - 1)))
@@ -4243,9 +4257,20 @@ void CDECL wined3d_deferred_context_destroy(struct wined3d_device_context *conte
     heap_free(deferred->resources);
 
     for (i = 0; i < deferred->upload_count; ++i)
+    {
         wined3d_resource_decref(deferred->uploads[i].resource);
+        HeapFree(deferred->upload_heap, 0, deferred->uploads[i].resource);
+    }
+
     if (deferred->upload_heap)
-        HeapDestroy(deferred->upload_heap);
+    {
+        if (!InterlockedDecrement(deferred->upload_heap_refcount))
+        {
+            HeapDestroy(deferred->upload_heap);
+            heap_free(deferred->upload_heap_refcount);
+        }
+    }
+
     heap_free(deferred->uploads);
 
     for (i = 0; i < deferred->command_list_count; ++i)
@@ -4331,7 +4356,8 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
     deferred->query_count = 0;
 
     object->upload_heap = deferred->upload_heap;
-    deferred->upload_heap = 0;
+    if ((object->upload_heap_refcount = deferred->upload_heap_refcount))
+        InterlockedIncrement(object->upload_heap_refcount);
 
     /* This is in fact recorded into a subsequent command list. */
     if (restore)
@@ -4349,11 +4375,22 @@ HRESULT CDECL wined3d_deferred_context_record_command_list(struct wined3d_device
 static void wined3d_command_list_destroy_object(void *object)
 {
     struct wined3d_command_list *list = object;
+    unsigned int i;
 
     TRACE("list %p.\n", list);
 
+    for (i = 0; i < list->upload_count; ++i)
+        HeapFree(list->upload_heap, 0, list->uploads[i].sysmem);
+
     if (list->upload_heap)
-        HeapDestroy(list->upload_heap);
+    {
+        if (!InterlockedDecrement(list->upload_heap_refcount))
+        {
+            HeapDestroy(list->upload_heap);
+            heap_free(list->upload_heap_refcount);
+        }
+    }
+
     heap_free(list);
 }
 
