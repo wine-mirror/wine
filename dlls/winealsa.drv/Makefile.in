@@ -3,7 +3,7 @@ MODULE    = winealsa.drv
 UNIXLIB   = winealsa.so
 IMPORTS   = uuid ole32 advapi32
 DELAYIMPORTS = winmm
-EXTRALIBS = $(ALSA_LIBS)
+EXTRALIBS = $(ALSA_LIBS) $(PTHREAD_LIBS)
 
 EXTRADLLFLAGS = -mcygwin
 
