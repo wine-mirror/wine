@@ -1552,7 +1552,7 @@ static gnutls_digest_algorithm_t get_digest_from_id( const WCHAR *alg_id )
     if (!wcscmp( alg_id, BCRYPT_SHA512_ALGORITHM )) return GNUTLS_DIG_SHA512;
     if (!wcscmp( alg_id, BCRYPT_MD2_ALGORITHM ))    return GNUTLS_DIG_MD2;
     if (!wcscmp( alg_id, BCRYPT_MD5_ALGORITHM ))    return GNUTLS_DIG_MD5;
-    return -1;
+    return GNUTLS_DIG_UNKNOWN;
 }
 
 static NTSTATUS key_asymmetric_verify( void *args )
@@ -1596,7 +1596,7 @@ static NTSTATUS key_asymmetric_verify( void *args )
         if (!(flags & BCRYPT_PAD_PKCS1) || !info) return STATUS_INVALID_PARAMETER;
         if (!info->pszAlgId) return STATUS_INVALID_SIGNATURE;
 
-        if ((hash_alg = get_digest_from_id(info->pszAlgId)) == -1)
+        if ((hash_alg = get_digest_from_id(info->pszAlgId)) == GNUTLS_DIG_UNKNOWN)
         {
             FIXME( "hash algorithm %s not supported\n", debugstr_w(info->pszAlgId) );
             return STATUS_NOT_SUPPORTED;
@@ -1751,7 +1751,7 @@ static NTSTATUS key_asymmetric_sign( void *args )
             return STATUS_INVALID_PARAMETER;
         }
 
-        if ((hash_alg = get_digest_from_id( pad->pszAlgId )) == -1)
+        if ((hash_alg = get_digest_from_id( pad->pszAlgId )) == GNUTLS_DIG_UNKNOWN)
         {
             FIXME( "hash algorithm %s not recognized\n", debugstr_w(pad->pszAlgId) );
             return STATUS_NOT_SUPPORTED;
