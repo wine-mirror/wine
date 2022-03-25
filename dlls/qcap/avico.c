@@ -480,7 +480,10 @@ HRESULT avi_compressor_create(IUnknown *outer, IUnknown **out)
     object->IPersistPropertyBag_iface.lpVtbl = &PersistPropertyBagVtbl;
 
     strmbase_sink_init(&object->sink, &object->filter, L"In", &sink_ops, NULL);
+    wcscpy(object->sink.pin.name, L"Input");
+
     strmbase_source_init(&object->source, &object->filter, L"Out", &source_ops);
+    wcscpy(object->source.pin.name, L"Output");
 
     TRACE("Created AVI compressor %p.\n", object);
     *out = &object->filter.IUnknown_inner;
