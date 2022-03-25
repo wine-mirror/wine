@@ -383,10 +383,10 @@ static HRESULT WINAPI pin_QueryId(IPin *iface, WCHAR **id)
 
     TRACE("pin %p %s:%s, id %p.\n", pin, debugstr_w(pin->filter->name), debugstr_w(pin->name), id);
 
-    if (!(*id = CoTaskMemAlloc((lstrlenW(pin->name) + 1) * sizeof(WCHAR))))
+    if (!(*id = CoTaskMemAlloc((lstrlenW(pin->id) + 1) * sizeof(WCHAR))))
         return E_OUTOFMEMORY;
 
-    lstrcpyW(*id, pin->name);
+    lstrcpyW(*id, pin->id);
 
     return S_OK;
 }
@@ -770,6 +770,7 @@ void strmbase_source_init(struct strmbase_source *pin, struct strmbase_filter *f
     pin->pin.filter = filter;
     pin->pin.dir = PINDIR_OUTPUT;
     lstrcpyW(pin->pin.name, name);
+    lstrcpyW(pin->pin.id, name);
     pin->pin.ops = &func_table->base;
     pin->pFuncsTable = func_table;
 }
@@ -1172,6 +1173,7 @@ void strmbase_sink_init(struct strmbase_sink *pin, struct strmbase_filter *filte
     pin->pin.filter = filter;
     pin->pin.dir = PINDIR_INPUT;
     lstrcpyW(pin->pin.name, name);
+    lstrcpyW(pin->pin.id, name);
     pin->pin.ops = &func_table->base;
     pin->pFuncsTable = func_table;
     pin->pAllocator = pin->preferred_allocator = allocator;

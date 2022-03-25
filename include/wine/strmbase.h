@@ -36,6 +36,7 @@ struct strmbase_pin
     struct strmbase_filter *filter;
     PIN_DIRECTION dir;
     WCHAR name[128];
+    WCHAR id[128];
     IPin *peer;
     AM_MEDIA_TYPE mt;
 

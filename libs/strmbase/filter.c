@@ -436,7 +436,7 @@ static HRESULT WINAPI filter_FindPin(IBaseFilter *iface, const WCHAR *id, IPin *
 
     for (i = 0; (pin = filter->ops->filter_get_pin(filter, i)); ++i)
     {
-        if (!lstrcmpW(id, pin->name))
+        if (!lstrcmpW(id, pin->id))
         {
             IPin_AddRef(*ret = &pin->IPin_iface);
             return S_OK;
