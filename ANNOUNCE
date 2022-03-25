@@ -1,16 +1,17 @@
-The Wine development release 7.4 is now available.
+The Wine development release 7.5 is now available.
 
 What's new in this release:
-  - 'Light' theme enabled by default.
-  - Bundled vkd3d library.
-  - WineD3D, D3D12 and DXGI modules converted to PE.
-  - More large scale cleanups to support 'long' type.
+  - ALSA driver converted to PE.
+  - Locale database generated from Unicode CLDR.
+  - HLSL compiler support with the bundled vkd3d.
+  - Initial support for the OCSP protocol.
+  - More cleanups to support 'long' type.
   - Various bug fixes.
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/7.x/wine-7.4.tar.xz
-  http://mirrors.ibiblio.org/wine/source/7.x/wine-7.4.tar.xz
+  https://dl.winehq.org/wine/source/7.x/wine-7.5.tar.xz
+  http://mirrors.ibiblio.org/wine/source/7.x/wine-7.5.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -26,603 +27,470 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 7.4 (total 14):
+Bugs fixed in 7.5 (total 28):
 
-  20296  Multiple apps crash due missing support for COM dll surrogate, dllhost.exe (League of Legends 08_18_2009_04, 3Dmark03, 3Dmark05, 3Dmark06)
-  41053  RawInput (RegisterRawInputDevices) does not work for gamepads
-  48508  Psi-Ops: The Mindgate Conspiracy freezing in stable Wine 5.0
-  50887  cannot read/run/open some files
-  52204  Vibration on DualSense controller works incorrectly in all Games
-  52476  QuickLOAD: wine 7 causes VB5 application to change input value by factor 10
-  52562  advapi32:registry fails in Wine because some French timezone name translations are too long
-  52581  Internet MIDI crashes with Light Blue theme enabled
-  52596  The Godfather main menu cursor and text not rendered correctly
-  52614  API set DLLs fail to load on Arch Linux with "failed to load apiset: c0000482"
-  52618  32-bit EXEs do not launch from build dir on macOS 10.14 in WOW64
-  52626  MahjongSoul needs unimplemented function combase.dll.RoSetErrorReportingFlags
-  52637  comctl32:listbox test_LBS_NODATA() fails in the Japanese and Chinese locales
-  52639  comctl32:toolbar test_visual() fails in Wine with the Light theme
+  16221  Nota Bene requires AUTOEXEC.NT
+  16222  Nota Bene requires CONFIG.NT
+  33188  wine explorer: wrong behavior when dragging with no items selected
+  34259  cygwin 2.819 installer hangs during postinstall
+  45422  ./tools/sfnt2fon/sfnt2fon.c shows a heap buffer overflow in fill_fontinfo()
+  46648  Core Temp 1.13 fails to start
+  50270  Operation Lovecraft: Fallen Doll crashes
+  50869  Killing Wine process in Wine 6.5 doesn't terminate the application because of the new use of start.exe
+  51017  Multiple programs (Microsoft PowerToys, MS Windows terminal)  crash inside RegOpenKeyExW
+  51923  Minecraft for Windows 10 needs api-ms-win-core-windowserrorreporting-l1-1-1.dll
+  52048  CreateProcess() might not spawn console for new process
+  52294  DYSMANTLE needs d3d11_device_CreateRasterizerState1 implementation
+  52520  Samsung Magician 7.x crashes on unimplemented function setupapi.dll.SetupDiGetClassRegistryPropertyW
+  52574  PlayOnline Viewer crashes after 10-20 seconds
+  52580  Minecraft (Windows 10 edition) needs api-ms-win-core-memory-l1-1-5.dll
+  52613  mIRC: text from clipboard is pasted twice in text boxes
+  52623  Crash of `not_dll` test from `windows-rs` due missing implementation of `winspool.drv.GetSpoolFileHandle`
+  52645  McAfee "FRP" removable media encryption client crashes on unimplemented function shlwapi.dll.PathMatchSpecExW
+  52651  IrfanView 4.59 crashes on startup
+  52654  Multiple programs crash due to window class regression (QuickPar 0.9.1, HeidiSQL, SolSuite, IP super camera, ATPDraw, KakaoTalk)
+  52664  x86_64 bit vkd3d broken in --without-mingw build
+  52667  DTS Master Audio Suite can't select save file location when wine's "Light" theme is used
+  52669  GRID 2 crashes on launch
+  52670  The Evil Within 2 crashes on launch
+  52705  IRichEditOle::GetObject does not set REOBJECT's cp correctly
+  52711  Cakewalk Pro Audio 9.0 no longer works in wine 7.4
+  52717  dxgi:dxgi fails because DXGI_STATUS_OCCLUDED != S_OK
+  52725  Audacity 2.4.2 "Play" keyboard shortcut stopped working
 
 ----------------------------------------------------------------
 
-Changes since 7.3:
+Changes since 7.4:
 
 Alex Henrie (1):
-      tzres: Inform translators of 31-character limit.
+      po: Update Catalan translation.
 
-Alexandre Julliard (18):
-      ntdll/tests: Avoid referencing a global variable from inline asm.
-      configure: Check for working -mabi=ms support on x86_64.
-      winebuild: Align raw data size instead of virtual size in PE sections.
-      configure: Require PE cross-compilation for building on ARM64.
-      include: Add more d3d12 logic ops.
-      include: Change to void the return type for ID3D12GraphicsCommandList::ClearState().
-      libs: Import upstream code from vkd3d release 1.3.
-      wined3d: Use the bundled vkd3d and build with msvcrt.
-      wined3d: Export all the vkd3d functions.
-      d3d12: Build with msvcrt.
-      dxgi: Build with msvcrt.
-      configure: Remove some no longer needed checks.
-      faudio: Revert some calling convention changes.
-      lcms2: Revert some calling convention changes.
-      tiff: Revert some calling convention changes.
-      xml2: Revert some calling convention changes.
-      xslt: Revert some calling convention changes.
-      include: Use the standard va_list in tests.
+Alexandre Julliard (38):
+      dwrite: Only use __builtin_popcount in PE builds.
+      wined3d: Only use __builtin_popcount in PE builds.
+      vkd3d: Only use __builtin_popcount in PE builds.
+      mlang: Use a registry script to register codepages.
+      mlang: Register MIME charsets from the registry script.
+      mlang: Use EnumSystemLocalesEx() to enumerate locales.
+      mlang/tests: Don't test all possible invalid codepages.
+      mlang: Skip Unicode codepages in GetCharCodePages().
+      mlang: Store the codepage data in Unicode.
+      make_unicode: Generate locale.nls using the Unicode CLDR data.
+      ntdll: Add a helper function to map a section.
+      ntdll: Implement NtInitializeNlsFiles().
+      wow64: Add a wrapper for NtInitializeNlsFiles().
+      ntdll: Implement RtlGetLocaleFileMappingAddress().
+      kernel32/tests: Add tests for NtInitializeNlsFiles() and RtlGetLocaleFileMappingAddress().
+      wow64win: Add missing syscall for NtUserGetAtomName().
+      wow64win: Add missing syscall for NtUserGetClassName().
+      mlang: Skip locales that can't be converted to rfc1766 format.
+      po: Regenerate po files.
+      include: Add some structures for the undocumented locale.nls layout.
+      ntdll: Load the locale.nls file at startup.
+      ntdll: Reimplement RtlLocaleNameToLcid() using the locale.nls data.
+      ntdll: Implement RtlIsValidLocaleName().
+      ntdll: Implement RtlLcidToLocaleName().
+      ntdll: Use RtlLcidToLocaleName() in the preferred UI language stub.
+      ntdll: Move user/system locale initialization to ntdll.
+      ntdll: Support UTF-8 codepage in RtlInitCodePageTable().
+      ntdll/tests: Fix string test for UTF-8 default codepage.
+      kernel32/tests: Fix codepage test for UTF-8 default codepage.
+      kernelbase: Load the locale.nls file at startup.
+      kernelbase: Reimplement IsValidLocaleName() using the locale.nls data.
+      kernelbase: Reimplement IsValidLocale() using the locale.nls data.
+      kernelbase: Reimplement ConvertDefaultLocale() using the locale.nls data.
+      kernelbase: Reimplement LocaleNameToLCID() using the locale.nls data.
+      kernelbase: Reimplement EnumUILanguages() using the locale.nls data.
+      kernelbase: Reimplement EnumSystemLocalesA/W/Ex using the locale.nls data.
+      make_unicode: Generate the language groups registry keys.
+      configure: Try to detect a C99 flag for the cross compiler.
 
-Alexandros Frantzis (1):
-      win32u: Fix NtUserCallHooks return value.
+Alistair Leslie-Hughes (1):
+      kernelbase: Trace not supported flags in CopyFileExW.
 
-Alistair Leslie-Hughes (4):
-      windowscodecs: Correctly handle 8bpp custom conversions.
-      include: Correct BYTE typedef.
-      widl: Support basic BYTE type.
-      include: Add IReference<T> interface.
+Andrew Eikum (1):
+      windows.media.speech: Add ISpeechSynthesizer2 stub.
 
 Aurimas Fišeras (1):
       po: Update Lithuanian translation.
 
-Bernhard Kölbl (22):
-      include/windows.media.speechrecognition.idl: Add SpeechRecognitionResult.
-      include/windows.media.speechrecognition.idl: Add SpeechContinuousRecognitionSession.
-      include/windows.media.speechrecognition.idl: Add SpeechRecognitionHypothesis.
-      include/windows.media.speechrecognition.idl: Add SpeechRecognitionHypothesisGeneratedEventArgs.
-      include/windows.media.speechrecognition.idl: Add SpeechRecognizerTimeouts.
-      include/windows.media.speechrecognition.idl: Add SpeechRecognizerUIOptions.
-      include/windows.media.speechrecognition.idl: Add SpeechRecognitionCompilationResult.
-      include/windows.media.speechrecognition.idl: Add SpeechRecognitionQualityDegradingEventArgs.
-      include/windows.media.speechrecognition.idl: Add SpeechRecognizerStateChangedEventArgs.
-      widl: Allow multiple uses of the activatable attribute.
-      include/windows.media.speechrecognition.idl: Add SpeechRecognizer.
-      windows.media.speech: Create private header.
-      windows.media.speech: Explicitly check for available activation factory.
-      windows.media.speech: Move SpeechSynthesizer into separate file.
-      windows.media.speech: Use C object macros to call iface methods.
-      windows.media.speech: Rename activation factory for SpeechSynthesizer.
-      windows.media.speech/tests: Add basic tests for activation factory ifaces.
-      windows.media.speech/tests: Compile with long types.
-      windows.media.speech: Import DEFINE_INSPECTABLE macros.
-      windows.media.speech: Add SpeechRecognizer statics stubs.
-      windows.media.speech: Add SpeechRecognizer stub.
-      windows.media.speech/tests: Add basic tests for the SpeechRecognizer class.
+Austin English (1):
+      winspool: Add GetSpoolFileHandle() stub.
 
-Brendan Shanks (8):
-      winedbg: Sanity check the dwType field of MSVC thread naming exceptions.
-      winedbg: Ensure thread->name is null-terminated.
-      winedbg: Don't set initial thread->name to the tid.
-      winedbg: Print thread names in 'info thread' listing.
-      kernel32/tests: Add additional Get/SetThreadDescription() tests.
-      ntdll: Don't require equal Length and MaximumLength when setting ThreadNameInformation.
-      ntdll: Ensure CONTEXT_EX on exception stack is initialized.
-      makefiles: On macOS, use @rpath instead of @loader_path when building Unix libs.
+Bernhard Kölbl (10):
+      windows.media.speech: Add IAgileObject to SpeechRecognizer.
+      include/windows.media.speechrecognition.idl: Add SpeechRecognitionListConstraint class.
+      windows.media.speech/tests: Add tests for SpeechRecognitionListConstraint.
+      windows.media.speech: Add SpeechRecognitionListConstraint statics stub.
+      windows.media.speech: Add SpeechRecognitionListConstraint stub.
+      windows.media.speech: Implement ISpeechRecognitionConstraint isEnabled.
+      windows.media.speech: Add SpeechContinousRecognitionSession stub.
+      windows.media.speech: Implement ISpeechRecognizer2_get_ContinuousRecognitionSession.
+      windows.media.speech: Implement ResultGenerated event.
+      windows.media.speech: Implement Completed event.
 
-Christopher Egert (1):
-      gsm: Enable WAV49 support.
+Brendan Shanks (1):
+      win32u: Remove workaround for Mac OS X 10.4 and 10.5.
 
-David Kahurani (1):
-      oleaut32: Do not skip the first decimal digit in VarParseNumFromStr().
+Byeong-Sik Jeon (1):
+      po: Update Korean translation.
 
-Dmitry Timoshkov (7):
-      dllhost: Add stub implementation.
-      dllhost: Add ISurrogate stub implementation.
-      dllhost: Implement ISurrogate::LoadDllServer().
-      dllhost: Implement ISurrogate::FreeSurrogate().
-      dllhost: Implement IMarshal::MarshalInterface().
-      dllhost: Periodically call CoFreeUnusedLibraries().
-      combase: Start surrogate local server when required.
+Daniel Lehman (5):
+      server: Always close previous IRP handle.
+      kernel32/tests: Add test for FileTimeToSystemTime.
+      kernelbase: Check for invalid value in FileTimeToSystemTime.
+      propsys: Implement InitVariantFromFileTime.
+      propsys/tests: Add some InitVariantFromFileTime tests.
 
-Eric Pouech (182):
-      gdi32/tests: Enable compilation with long types.
-      hlink/tests: Enable compilation with long types.
-      hnetcfg/tests: Enable compilation with long types.
-      hid/tests: Enable compilation with long types.
-      imagehlp/tests: Enable compilation with long types.
-      imm32/tests: Enable compilation with long types.
-      inetcomm/tests: Enable compilation with long types.
-      inetmib1/tests: Enable compilation with long types.
-      infosoft/tests: Enable compilation with long types.
-      iphlpapi/tests: Enable compilation with long types.
-      itss/tests: Enable compilation with long types.
-      jsproxy/tests: Enable compilation with long types.
-      kernelbase/tests: Enable compilation with long types.
-      localspl/tests: Enable compilation with long types.
-      localui/tests: Enable compilation with long types.
-      lz32/tests: Enable compilation with long types.
-      mapi32/tests: Enable compilation with long types.
-      gameux/tests: Use correct integral type.
-      gameux/tests: Enable compilation with long types.
-      comctl32/tests: Enable compilation with long types.
-      gdiplus/tests: Introduce helper functions (expect*) to handle integral conversions.
-      gdiplus/tests: Enable compilation with long types.
-      conhost: Handle csi escape sequence for shift tab.
-      conhost/tests: Add tests for shift-tab processing.
-      msftedit/tests: Enable compilation with long types.
-      mlang/tests: Enable compilation with long types.
-      mmcndmgr/tests: Enable compilation with long types.
-      mp3dmod/tests: Enable compilation with long types.
-      mpr/tests: Enable compilation with long types.
-      msado15/tests: Use correct integral type.
-      msado15/tests: Enable compilation with long types.
-      msasn1/tests: Enable compilation with long types.
-      msctf/tests: Enable compilation with long types.
-      msdmo/tests: Enable compilation with long types.
-      mspatcha/tests: Enable compilation with long types.
-      msrle32/tests: Enable compilation with long types.
-      msscript.ocx/tests: Enable compilation with long types.
-      mstask/tests: Enable compilation with long types.
-      msvfw32/tests: Enable compilation with long types.
-      ndis.sys/tests: Enable compilation with long types.
-      netapi32/tests: Enable compilation with long types.
-      netcfgx/tests: Enable compilation with long types.
-      netprofm/tests: Enable compilation with long types.
-      ieframe/tests: Enable compilation with long types.
-      jscript/tests: Enable compilation with long types.
-      dsound/tests: Enable compilation with long types.
-      kernelbase: Support CONSOLE_READCONSOLE_CONTROL in ReadConsoleW.
-      kernelbase: Return key state in ReadConsoleW with control.
-      conhost/tests: Add tests for ReadConsoleW with control.
-      kernel32/tests/actctx: Enable compilation with long types.
-      kernel32/tests/codepage: Enable compilation with long types.
-      kernel32/tests/comm: Enable compilation with long types.
-      kernel32/tests/console: Enable compilation with long types.
-      ninput/tests: Enable compilation with long types.
-      ntdsapi/tests: Enable compilation with long types.
-      ntoskrnl.exe/tests: Use correct integral type.
-      ntoskrnl.exe/tests: Enable compilation with long types.
-      ntprint/tests: Use correct integral type.
-      ntprint/tests: Enable compilation with long types.
-      odbccp32/tests: Enable compilation with long types.
-      ole32/tests: Use correct integral type.
-      ole32/tests: Enable compilation with long types.
-      oleacc/tests: Use correct integral type.
-      oleacc/tests: Enable compilation with long types.
-      oledb32/tests: Enable compilation with long types.
-      oledlg/tests: Enable compilation with long types.
-      opengl32/tests: Enable compilation with long types.
-      mscoree/tests: Enable compilation with long types.
-      mshtml/tests: Enable compilation with long types.
-      ntdll/tests: Fix erroneous ok parameters.
-      kernel32/tests/debugger: Enable compilation with long types.
-      kernel32/tests/environ: Enable compilation with long types.
-      kernel32/tests/file: Enable compilation with long types.
-      kernel32/tests/format_msg: Enable compilation with long types.
-      packager/tests: Enable compilation with long types.
-      pdh/tests: Enable compilation with long types.
-      prntvpt/tests: Enable compilation with long types.
-      propsys/tests: Enable compilation with long types.
-      psapi/tests: Enable compilation with long types.
-      pstorec/tests: Enable compilation with long types.
-      qmgr/tests: Enable compilation with long types.
-      qwave/tests: Enable compilation with long types.
-      qasf/tests: Enable compilation with long types.
-      qdvd/tests: Enable compilation with long types.
-      devenum/tests: Build without -DWINE_NO_LONG_TYPES.
-      qcap/tests: Use int instead of LONG for the arguments to IAMStreamConfig::GetNumberOfCapabilities().
-      qedit/tests: Build without -DWINE_NO_LONG_TYPES.
-      qcap/tests: Build without -DWINE_NO_LONG_TYPES.
-      mmdevapi/tests: Enable compilation with long types.
-      msacm32/tests: Enable compilation with long types.
-      mfplat/tests: Use correct integral type.
-      mfplat/tests: Enable compilation with long types.
-      kernel32/tests/heap: Enable compilation with long types.
-      kernel32/tests/loader: Enable compilation with long types.
-      kernel32/tests/locale: Enable compilation with long types.
-      kernel32/tests/module: Enable compilation with long types.
-      rasapi32/tests: Enable compilation with long types.
-      riched32/tests: Enable compilation with long types.
-      rpcrt4/tests: Enable compilation with long types.
-      rsaenh/tests: Enable compilation with long types.
-      sapi/tests: Enable compilation with long types.
-      schannel/tests: Enable compilation with long types.
-      schedsvc/tests: Enable compilation with long types.
-      scrobj/tests: Enable compilation with long types.
-      secur32/tests: Enable compilation with long types.
-      serialui/tests: Enable compilation with long types.
-      setupapi/tests: Use correct integral type.
-      setupapi/tests: Enable compilation with long types.
-      mf/tests: Use correct integral type.
-      mf/tests: Enable compilation with long types.
-      riched20/tests: Use correct integral type.
-      riched20/tests: Enable compilation with long types.
-      kernel32/tests/path: Enable compilation with long types.
-      kernel32/tests/pipe: Enable compilation with long types.
-      kernel32/tests/process: Enable compilation with long types.
-      kernel32/tests/profile: Enable compilation with long types.
-      shell32/tests: Use correct integral type.
-      shell32/tests: Enable compilation with long types.
-      shlwapi/tests: Enable compilation with long types.
-      slc/tests: Enable compilation with long types.
-      sti/tests: Enable compilation with long types.
-      sxs/tests: Enable compilation with long types.
-      tapi32/tests: Enable compilation with long types.
-      taskschd/tests: Enable compilation with long types.
-      twain_32/tests: Enable compilation with long types.
-      uianimation/tests: Enable compilation with long types.
-      uiautomationcore/tests: Enable compilation with long types.
-      quartz/tests: Use the correct integer types.
-      quartz/tests: Build without -DWINE_NO_LONG_TYPES.
-      kernel32/tests/sync: Enable compilation with long types.
-      kernel32/tests/thread: Enable compilation with long types.
-      kernel32/tests/virtual: Enable compilation with long types.
-      kernel32/tests/volume: Enable compilation with long types.
-      userenv/tests: Enable compilation with long types.
-      uxtheme/tests: Enable compilation with long types.
-      user32/tests: Use correct integral type.
-      vcomp110/tests: Enable compilation with long types.
-      vcomp/tests: Enable compilation with long types.
-      version/tests: Enable compilation with long types.
-      virtdisk/tests: Enable compilation with long types.
-      vulkan-1/tests: Enable compilation with long types.
-      wer/tests: Enable compilation with long types.
-      wevtapi/tests: Enable compilation with long types.
-      spoolss/tests: Enable compilation with long types.
-      wiaservc/tests: Enable compilation with long types.
-      windows.globalization/tests: Enable compilation with long types.
-      windows.media.devices/tests: Enable compilation with long types.
-      wininet/tests: Use correct integral type.
-      wininet/tests: Enable compilation with long types.
-      wintab32/tests: Enable compilation with long types.
-      wintrust/tests: Enable compilation with long types.
-      winspool.drv/tests: Enable compilation with long types.
-      kernel32/tests/change: Enable compilation with long types.
-      kernel32/tests/time: Enable compilation with long types.
-      kernel32/tests: Use correct integral type.
-      kernel32/tests: Enable compilation with long types.
-      kernel32/tests: Enable compilation with long types.
-      shdocvw/tests: Enable compilation with long types.
-      urlmon/tests: Enable compilation with long types.
-      vbscript/tests: Enable compilation with long types.
-      windowscodecsext/tests: Enable compilation with long types.
-      windowscodecs/tests: Use correct integral type.
-      windowscodecs/tests: Enable compilation with long types.
-      wlanapi/tests: Enable compilation with long types.
-      wmp/tests: Enable compilation with long types.
-      wmvcore/tests: Enable compilation with long types.
-      wpc/tests: Enable compilation with long types.
-      ws2_32/tests: Use correct integral type.
-      ws2_32/tests: Enable compilation with long types.
-      wsdapi/tests: Enable compilation with long types.
-      wtsapi32/tests: Enable compilation with long types.
-      include: Fix prototype of NtQueryInformationFile.
-      user32/tests: Wrap helper macro inside function.
+Dmitry Timoshkov (5):
+      combase: Always pass explicit access to the registry helpers.
+      combase: Make ProgIDFromCLSID() work in WoW64 setup.
+      combase: Execute dllhost.exe for correct architecture in a WoW64 setup.
+      sc: Fix parsing parameter name in the 'switch=param' constructs.
+      sc: Don't silently fail when something doesn't work as expected.
+
+Eric Pouech (57):
+      oleaut32/tests: Convert UI8 to existing integer test scheme.
+      oleaut32/tests: Convert UI8Copy to existing integer test scheme.
+      oleaut32/tests: Ensure (re)definition of EXPECTRES for all integer types.
+      ntdll/tests: Use correct integral type.
       user32/tests: Enable compilation with long types.
-      kernel32/tests: Remove temporary defines for long types migration.
-      nsiproxy.sys: Explicitly check for recvmsg() failure.
-      oleaut32/tests: Get rid of EXPECTI864 macro.
-      oleaut32/tests: Convert I8 to current integer test scheme.
-      oleau32/tests: Convert I8Copy to existing integer test scheme.
-      winmm/tests: Enable compilation with long types.
-      user32/tests: Enable compilation with long types in listbox.c.
-      user32/tests: Enable compilation with long types in resource.c.
-
-Esme Povirk (1):
-      mscoree: Add an override option for skipping the AppDomain search path.
+      user32/tests: Enable compilation with long types.
+      user32/tests: Enable compilation with long types.
+      user32/tests: Enable compilation with long types.
+      user32/tests: Enable compilation with long types.
+      user32/tests: Enable compilation with long types.
+      user32/tests: Enable compilation with long types.
+      user32/tests: Enable compilation with long types.
+      oleaut32/tests: Use correct integral type.
+      oleaut32/tests: Enable compilation with long types.
+      user32/tests: Enable compilation with long types.
+      user32/tests: Enable compilation with long types.
+      user32/tests: Enable compilation with long types.
+      kernel32/tests: Add some console tests about creating cui vs gui processes.
+      services: Start services detached from console.
+      start: Force no console creation when using start /exec.
+      kernelbase: Handle corner case in CreateProcess.
+      dxgi/tests: Build without -DWINE_NO_LONG_TYPES.
+      dxgi: Build without -DWINE_NO_LONG_TYPES.
+      d3d12/tests: Build without -DWINE_NO_LONG_TYPES.
+      d3d12: Build without -DWINE_NO_LONG_TYPES.
+      user32/tests: Finalize migration to long types.
+      ntdll/tests: Enable compilation with long types in atom.c.
+      ntdll/tests: Enable compilation with long types in directory.c.
+      ntdll/tests: Enable compilation with long types in error.c.
+      ntdll/tests: Enable compilation with long types in change.c.
+      ntdll/tests: Enable compilation with long types in exception.c.
+      ntdll/tests: Enable compilation with long types in env.c.
+      ntdll/tests: Enable compilation with long types in large_int.c
+      ntdll/tests: Enable compilation with long types in om.c.
+      ntdll/tests: Enable compilation with long types in file.c.
+      winedbg: Get rid of dbg_outputW helper.
+      winedbg: Use Unicode APIs for process/thread enumeration.
+      winedbg: Get rid of dbg_W2A helper.
+      ntdll/tests: Enable compilation with long types in pipe.c.
+      ntdll/tests: Enable compilation with long types in port.c.
+      ntdll/tests: Enable compilation with long types in info.c.
+      ntdll/tests: Enable compilation with long types in reg.c.
+      ntdll/tests: Enable compilation with long types in path.c.
+      ntdll/tests: Enable compilation with long types in string.c.
+      ntdll/tests: Enable compilation with long types in rtlbitmap.c.
+      ntdll/tests: Enable compilation with long types in sync.c.
+      ntdll/tests: Enable compilation with long types in rtlstr.c.
+      ntdll/tests: Enable compilation with long types in rtl.c.
+      ntdll/tests: Enable compilation with long types in thread.c.
+      ntdll/tests: Enable compilation with long types in threadpool.c.
+      ntdll/tests: Enable compilation with long types in time.c.
+      ntdll/tests: Enable compilation with long types in virtual.c.
+      ntdll/tests: Enable compilation with long types in wow64.c.
+      ntdll/tests: Finalize migration to long types.
+      windows.globalization: Use a flexible array member for hstring_vector.
+      conhost: Correctly recompute start of edit line on ReadConsole.
+      conhost: Support relative cursor positioning.
 
 Floris Renaud (1):
       po: Update Dutch Translation.
 
-François Gouget (1):
-      windows.gaming.input: Add a linefeed to a TRACE() message.
+François Gouget (12):
+      kernelbase: Add a trailing linefeed to a couple of FIXME() messages.
+      po: Fix the French translation of 'code page'.
+      po: Fix backslash duplication in a French translation.
+      po: Remove a space before a linefeed in the French translation.
+      po: Remove spaces before linefeeds in the Spanish translation.
+      po: Remove a space before a linefeed in the Chinese translation.
+      po: Remove spaces before linefeeds in the Dutch translation.
+      po: Fix an accelerator shortcut in the Norwegian Bokmål translation.
+      ntdll: Return the UI language id in uppercase.
+      ncrypt: Fix the spelling of a FIXME() message.
+      cmd: Fix the spelling of a batch file comment.
+      win32u: Make some functions static.
 
-Georg Lehmann (4):
-      winevulkan: Avoid zero-sized allocations.
-      winevulkan: Manually fixup struct alignment for VkPipelineCreationFeedback.
-      winevulkan: Enable VK_EXT_pipeline_creation_feedback.
-      winevulkan: Update to VK spec version 1.3.207.
+Gabriel Ivăncescu (17):
+      jscript: Pass a jsval "this" to builtin functions.
+      jscript: Pass null jsval to builtin functions instead of the global host.
+      jscript: Return the correct string for Object.toString(null) in ES5+ modes.
+      jscript: Pass jsval "this" to function calls instead of a dispatch.
+      jscript: Return the correct string for Object.toString(undefined) in ES5+ modes.
+      jscript: Return JS_E_INVALID_PROPERTY in jsdisp_call_name if property is not found.
+      jscript: Allow overriding builtin methods by setting the prop.
+      jscript: Make Object.prototype.__proto__ an actual accessor.
+      jscript: Throw error when attempting to set circular __proto__ chains.
+      jscript: Don't allow changing prototype on non-extensible objects.
+      mshtml/tests: Add test for setting a prop with same name as a prototype accessor with no setter.
+      jscript: Store NULL disps as a different type of jsval_null.
+      jscript: Implement Object.prototype.__defineGetter__.
+      jscript: Implement Object.prototype.__defineSetter__.
+      jscript: Throw proper error in Object methods with non-objects args.
+      mshtml/tests: Test for RegExp.prototype.toString with non-regexp.
+      jscript: Handle non-JS objects in Object.getPrototypeOf.
 
-Giovanni Mascellani (1):
-      mfplat: Properly align system memory buffers.
+Georg Lehmann (1):
+      winevulkan: Update to VK spec version 1.3.208.
 
-Hans Leidekker (8):
-      wusa: Use CRT allocation functions.
-      include: Add OCSP definitions.
-      crypt32: Add support for encoding OCSP requests.
-      bcrypt: Return an error when BCryptFinalizeKeyPair() is called twice.
-      ncrypt: Always map bcrypt return values.
-      crypt32: Requestor name is optional in OCSP request.
-      crypt32: Add partial support for encoding signed OCSP requests.
-      crypt32: Add support for decoding OCSP responses.
+Gijs Vermeulen (5):
+      setupapi: Add SetupDiGetClassRegistryPropertyW stub.
+      include: Add more Wait Chain Traversal definitions.
+      advapi32: Add OpenThreadWaitChainSession stub.
+      advapi32: Add GetThreadWaitChain stub.
+      kernelbase: Add PathMatchSpecExA/W.
 
-Hugh McMaster (2):
-      conhost: Don't compare the console config if the user cancels the dialog.
-      conhost: Reimplement font dialog handling.
+Giovanni Mascellani (7):
+      mfplat: Properly align memory allocated by IMF2DBuffer.
+      mfplat/tests: Check that Lock() and Lock2D() see the same content.
+      mfplat: Fix buffer reading with IMF2DBuffer::Lock().
+      mfplat: Do not allocate more memory than required.
+      mfplat: Do not mark the buffer as locked if Lock2D() fails.
+      mfplat: Align buffers at no less than 16 bytes boundaries.
+      mfplat: Do not allocate more memory than requested.
 
-Huw D. M. Davies (19):
-      crypt32: Use an unsigned int to avoid a compiler warning on macOS.
-      win32u: Remove no longer used macro.
-      winealsa: Add a temporary write_best_effort syscall.
-      winealsa: Move timer_loop to the unixlib.
-      winealsa: Move start to the unixlib.
-      winealsa: Move stop to the unixlib.
-      winealsa: Move reset to the unixlib.
-      winealsa: Move set_event_handle to the unixlib.
-      winepulse: Move "last_time" to a local variable.
-      maintainers: Add dllhost.
-      winealsa: Move get_render_buffer to the unixlib.
-      winealsa: Move release_render_buffer to the unixlib.
-      winealsa: Move get_capture_buffer to the unixlib.
-      winealsa: Move release_capture_buffer to the unixlib.
-      winealsa: Move get_next_packet_size to the unixlib.
-      winealsa: Move get_frequency to the unixlib.
-      winealsa: Move get_position to the unixlib.
-      winealsa: Move is_started to the unixlib.
-      winealsa: Move set_volumes to the unixlib.
+Hans Leidekker (11):
+      crypt32: Add support for decoding signed OCSP responses.
+      bcrypt: Pass the algorithm ID to key_asymmetric_create().
+      bcrypt: Call key_destroy() instead of BCryptDestroyKey().
+      bcrypt: Merge the various key export Unix calls into one.
+      bcrypt: Merge the various key import Unix calls into one.
+      bcrypt: Store a public key handle instead of a blob.
+      bcrypt: Stop passing a dummy public key to gnutls_privkey_import_dsa_raw().
+      bcrypt: Fix RSA public key export when we don't have a private key handle.
+      bcrypt: Fix DSA public key export when we don't have a private key handle.
+      bcrypt: Also duplicate the public key handle in key_asymmetric_duplicate().
+      crypt32: Add partial support for decoding OCSP_BASIC_RESPONSE_INFO structures.
 
-Jacek Caban (55):
-      mshtml: Add IDOMMessageEvent stub implementation.
-      mshtml: Implement IDOMMessageEvent::data property.
-      mshtml: Post messages asynchronously in IE9+ modes.
-      user32: Use ACCEL struct in accelerator object.
-      user32: Use CreateAcceleratorTableW in LoadAcceleratorsW.
-      user32: Use CreateAcceleratorTableW in CreateAcceleratorTableA.
-      win32u: Move accelerators object implementation from user32.
-      win32u: Move winproc array from user32.
-      win32u: Implement NtUserGetAtomName.
-      win32u: Move NtUserGetClassName implementation from user32.
-      user32: Factor out find_class.
-      user32: Store class instance as UINT_PTR.
-      user32: Ignore low instance word in find_class.
-      user32: Introduce get_class_info.
-      user32: Use get_class_info for GetClasInfoEx implementation.
-      user32: Move module class registration to get_class_info.
-      user32: Use UNICODE_STRING for passing window classes internally.
-      user32: Store menu name as a struct.
-      win32u: Move class management implementation from user32.
-      win32u: Move NtUserSetClassLong from user32.
-      win32u: Move GetClassLong implementation from user32.
-      win32u: Move NtUserInternalGetWindowText implementation from user32.
-      user32: Use NtUserInternalGetWindowText in GetWindowText.
-      win32u: Move GetWindowTextLength implementation from user32.
-      win32u: Move GetWindowLong implementation from user32.
-      win32u: Move GetWindow implementation from user32.
-      win32u: Move GetParent implementation from user32.
-      win32u: Move NtUserGetAncestor implementation from user32.
-      win32u: Move GWLP_HWNDPARENT implementation from user32.
-      win32u: Move IsChild implementation from user32.
-      win32u: Move IsWindowVisible implementation from user32.
-      win32u: Move is_window_drawable implementation from user32.
-      win32u: Move NtUserFlashWindowEx implementation from user32.
-      win32u: Introduce get_desktop_window.
-      win32u: Move load_driver implementation from user32.
-      win32u: Move GetDesktopWindow implementation from user32.
-      win32u: Move IsWindowUnicode implementation from user32.
-      win32u: Move GetWindowDpiAwarenessContext from user32.
-      win32u: Move GetDpiForWindow from user32.
-      win32u: Move GetWindowRect implementation from user32.
-      win32u: Move GetWindowInfo implementation from user32.
-      win32u: Move GetClientRect implementation from user32.
-      win32u: Move NtUserGetWindowRgnEx implementation from user32.
-      win32u: Move NtUserSetWindowRgn implementation from user32.
-      win32u: Move NtUserMoveWindow implementation from user32.
-      win32u: Move NtUserWindowFromPoint implementation from user32.
-      win32u: Move GetWindowPlacement and MonitorFromWindow implementation from user32.
-      win32u: Move WM_WINE_UPDATEWINDOWSTATE implementation from user32.
-      win32u: Move NtUserSetLayeredWindowAttributes implementation from user32.
-      win32u: Move NtUserUpdateLayeredWindow implementation from user32.
-      win32u: Move NtUserSetActiveWindow implementation from user32.
-      win32u: Move NtUserSetFocus implementation from user32.
-      win32u: Move set_foreground_window implementation from user32.
-      user32: Use NtUserGetGUIThreadInfo for GetCapture implementation.
-      win32u: Move NtUserSetCapture implementation from user32.
+Henri Verbeet (2):
+      wined3d: Store "multisample_quality" as an unsigned int in struct wined3d_swapchain_desc.
+      dxgi/tests: Accept DXGI_STATUS_OCCLUDED as result when creating fullscreen swapchains.
 
-Jactry Zeng (1):
-      d2d1: Add D2D1Shadow effect.
+Huw D. M. Davies (36):
+      winealsa: Move get_prop_value to the unixlib.
+      winealsa: Remove several unused members.
+      winealsa: Remove a workaround for versions of alsa-lib before 1.0.12.
+      winealsa: Move the midi seq lock to the unixlib.
+      winealsa: Move midi_init to unixlib.
+      winealsa: Store the snd_seq handle and the input port in the device data.
+      winealsa: Add a temporary syscall to return the snd_seq handle.
+      winealsa: Move MODM_OPEN to the unixlib.
+      winealsa: Move MODM_CLOSE to the unixlib.
+      winealsa: Move MODM_DATA to the unixlib.
+      winealsa: Move MODM_LONGDATA to the unixlib.
+      winealsa: Move MODM_PREPARE and MODM_UNPREPARE to the unixlib.
+      winealsa: Move MODM_GETDEVAPS to the unixlib.
+      winealsa: Move MODM_GETNUMDEVS to the unixlib.
+      winealsa: Move MODM_GETVOLUME and MODM_SETVOLUME to the unixlib.
+      winealsa: Move MODM_RESET to the unixlib.
+      winealsa: Move MIDM_PREPARE and MIDM_UNPREPARE to the unixlib.
+      winealsa: Move MIDM_GETDEVCAPS to the unixlib.
+      winealsa: Move MIDM_GETNUMDEVS to the unixlib.
+      winealsa: Move the midi in buffer lock to the unixlib.
+      winealsa: Move MIDM_ADDBUFFER to the unixlib.
+      winealsa: Pass the time relative to the start time to the callback.
+      winealsa: Move MIDM_RESET to the unixlib.
+      winealsa: Move MIDM_START to the unixlib.
+      winealsa: Move MIDM_STOP to the unixlib.
+      winealsa: Introduce a notification thread.
+      winealsa: Add helpers to handle regular and sysex events.
+      winealsa: Move the midi event handlers to the unixlib.
+      winealsa: Introduce a helper to retrieve the time.
+      winealsa: Allocate the pollfd array at the start.
+      winealsa: Use a pipe to signal the end of the record thread.
+      winealsa: Move MIDM_OPEN and MIDM_CLOSE to the unixlib.
+      winealsa: Move DRVM_INIT to the unixlib.
+      winealsa: Build with msvcrt.
+      mountmgr: Fix long type warnings on macOS.
+      bcrypt: Use GNUTLS_DIG_UNKNOWN for an unknown digest.
+
+Jacek Caban (47):
+      user32: Fix nameA pointer in alloc_menu_nameW.
+      win32u: Move NtUserWindowFromDC implementation from user32.
+      win32u: Mmove dummy surface implementation from user32.
+      win32u: Move NtUserGetDCEx implementation from user32.
+      win32u: Move NtUserReleaseDC implementation from user32.
+      win32u: Move NtUserBeginPaint implementation from user32.
+      win32u: Move NtUserEndPaint implementation from user32.
+      win32u: Move NtUserRedrawWindow implementation from user32.
+      win32u: Move NtUserGetUpdateRgn implementation from user32.
+      win32u: Fix name comparison in find_class.
+      win32u: Move NtUserSetWindowPos implementation from user32.
+      win32u: Move DWP object implementation from user32.
+      win32u: Move NtUserSetParent implementation from user32.
+      win32u: Move NtUserGetUpdateRect implementation from user32.
+      win32u: Introduce NtUserEnableDC.
+      win32u: Make interface between DC and dce private.
+      win32u: Move set_window_style implementation from user32.
+      win32u: Move NtUsetSetWindowLong implementation from user32.
+      win32u: Move __wine_set_pixel_format implementation from user32.
+      win32u: Move NtUserSetTimer implementation from user32.
+      win32u: Move NtUserSetSystemTimer implementation from user32.
+      win32u: Move NtUserKillTimer implementation from user32.
+      win32u: Move KillSystemTimer implementation from user32.
+      win32u: Move destroy_thread_windows implementation from user32.
+      win32u: Move NtUserDestroyWindow implementation from user32.
+      win32u: Move get_min_max_info implementation from user32.
+      win32u: Move NtUserShowWindow implementation from user32.
+      win32u: Move GetWindowContextHelpId implementation from user32.
+      user32: Move MDI child coordinates fixup out of WIN_FixCoordinates.
+      win32u: Move NtUserCreateWindowEx implementation from user32.
+      win32u: Move apply_window_pos implementation from user32.
+      win32u: Move ArrangeIconicWindows implementation from user32.
+      win32u: Don't use designated initializers for lazy_load_driver.
+      win32u: Move dib.drv implementation from gdi.exe.
+      win32u: Don't use CDECL for window surface functions.
+      user.exe: Use win32u directly for cursor icon handle support.
+      user32: Store current spy indent in user_thread_info struct.
+      win32u: Move message spy implementation from user32.
+      user32: Factor out dispatch_win_proc_params.
+      user32: Use dispatch_win_proc_params in CallWindowProc.
+      user32: Move more code out of call_window_proc.
+      win32u: Move init_win_proc_params implementation from user32.
+      win32u: Implement NtUserDispatchMessage.
+      user32: Use User32CallWinEventHook in peek_message.
+      user32: Merge WINPROC_call_window into call_window_proc.
+      win32u: Move ScreenToClient implementation from user32.
+      win32u: Move menu handle management from user32.
 
 Jan Sikorski (4):
-      wined3d: Add poll_in_cs field to wined3d_query().
-      wined3d: Track pending Vulkan queries separately for each query.
-      wined3d: Poll Vulkan queries directly on the application thread.
-      wined3d: Implement event queries using Vulkan events.
+      wined3d: Pass mask to wined3d_next_cs_packet().
+      wined3d: Flush on texture download to avoid stalling on readout.
+      wined3d: Check map queue when executing command lists.
+      wined3d: Reuse deferred uploads heaps.
 
-Kevin Puetz (1):
-      oleaut32: Fix QueryPathOfRegTypeLib minor version comparison.
+Jinoh Kang (17):
+      user32: Recognise RichEdit50W window class in spy.
+      windowscodecs: Fix rounding in premultiplied alpha conversion.
+      user32: Fix rounding in premultiplied alpha conversion for cursors and icons.
+      comctl32: Pre-multiply static control bitmap image by alpha for GdiAlphaBlend.
+      riched20: Add back-reference to outer ME_Run from struct re_object.
+      riched20: Set REOBJECT's cp correctly in IRichEditOle::GetObject.
+      server: Actually set initial status in set_async_direct_result handler.
+      server: Ensure initial status is set in async_set_result().
+      ws2_32/tests: Continue sending remaining data on short write in test_write_events.
+      server: Add mark_pending field to set_async_direct_result request.
+      server: Generalise async completion callback to be called on synchronous failure.
+      server: Allow async completion callback to retrieve status on synchronous failure.
+      server: Defer clearing events until async is completed in send_socket handler.
+      server: Attempt to complete I/O request immediately in send_socket.
+      server: Ensure datagram sockets are bound in send_socket.
+      ntdll: Don't call try_send before server call in sock_send.
+      server: Replace redundant send_socket status fields with force_async boolean field.
 
-Martin Storsjö (2):
-      ntdll: Zero-initialize the syscall_frame used for starting threads on ARM/ARM64.
-      configure: Tweak PE tools suggestion for ARM64.
+Lauri Kenttä (2):
+      po: Update Finnish translation.
+      po: Update Finnish translation.
 
-Matteo Bruni (7):
-      combase: Add RoSetErrorReportingFlags() stub.
-      d3dx11/tests: Use CRT allocation functions.
-      win32u: Use GDI_ROUND() in a few more places.
-      d3dcompiler/tests: Use hexadecimal constants in a few ok() checks.
-      wined3d: Fix typo in WARN() message.
-      d3d11: Report support for MapNoOverwriteOnDynamicBufferSRV.
-      wined3d: Use list_empty() in shader_glsl_destroy().
+Matteo Bruni (1):
+      d3d10: Do not accept any compute shader in D3D10ReflectShader().
 
-Mohamad Al-Jaf (1):
-      wusa: Support additional expressions.
+Michael Stefaniuc (1):
+      d2d1/tests: Actually test the return of ID2D1TransformedGeometry_GetBounds.
 
-Pat Leamon (1):
-      mshtml: Implement nsIHttpChannel::IsNoCacheReponse.
+Paul Gofman (16):
+      winhttp: Fix filling TIMEVAL in netconn_create().
+      winhttp: Return an winhttp error from netconn_create() on connection failure.
+      winhttp: Also select for error in netconn_create().
+      winhttp: Use a single thread pool wrapper callback for async tasks.
+      winhttp: Manage task cleanup in task_callback() and queue_task().
+      winhttp: Use default thread pool.
+      kernelbase: Query FileStandardInformation instead of FileEndOfFileInformation in SetFilePointerEx().
+      kernelbase: Use FILE_LIST_DIRECTORY instead of GENERIC_READ in FindFirstFileExW().
+      wbemprox: Bump video driver version and date.
+      winhttp: Avoid freeing potentially uninitialized context in netconn_secure_connect().
+      nsiproxy: Avoid redundant pid mapping in tcp_conns_enumerate_all().
+      iphlpapi: Don't request redundant static data in get_extended_tcp_table().
+      d3dcompiler: Implement d3dcompiler_shader_reflection_GetThreadGroupSize().
+      d3dcompiler: Allow cs5.1 shaders on earlier d3dcompiler versions.
+      bcrypt: Fix ECC public key export.
+      wined3d: Add full dirty region at texture creation.
 
-Paul Gofman (41):
-      winhttp: Don't allow websocket send if another non-control send is pending.
-      winhttp: Support sending web socket buffer fragments.
-      winhttp: Support receiving web socket buffer fragments.
-      winhttp: Return default value for WINHTTP_OPTION_WORKER_THREAD_COUNT.
-      win32u: Set BAD_EDID registry value for empty EDID.
-      win32u: Move wine_get_wgl_driver() from DC driver.
-      ws2_32: Base inet_addr() implementation on musl.
-      ws2_32: Pre-validate optlen in getsockopt().
-      ws2_32: Treat optlen as unsigned in setsockopt() for SO_RCVTIMEO.
-      ws2_32: Treat optlen as unsigned in setsockopt() for SO_SNDTIMEO.
-      ws2_32: Return WSAENOBUFS from setsockopt() for IPPROTO_IP with negative optlen.
-      ws2_32/tests: Add tests for setting and getting socket options with shorter length.
-      ws2_32: Validate IP_TOS value.
-      ws2_32/tests: Add tests for bigger option value in test_set_getsockopt().
-      ws2_32: Return WSAEFAULT from setsockopt() for IP_MULTICAST_LOOP with zero optlen.
-      ws2_32: Return WSAEFAULT from setsockopt() for IP_MULTICAST_TTL with zero optlen.
-      ws2_32: Return WSAEFAULT from setsockopt() for IP_TTL with zero optlen.
-      ws2_32/tests: Add tests for zero option length in test_set_getsockopt().
-      ws2_32: Manage shorter length for SO_BROADCAST.
-      ws2_32: Manage shorter length for SO_DONTLINGER.
-      ws2_32: Manage shorter length for SO_DONTROUTE.
-      ws2_32: Manage shorter length for SO_KEEPALIVE.
-      ws2_32: Manage shorter length for SO_LINGER.
-      ws2_32: Manage shorter length for SO_OOBINLINE.
-      ws2_32: Set last error on success for SO_OPENTYPE.
-      ws2_32: Manage shorter length for SO_RCVBUF.
-      ws2_32: Manage shorter length for SO_REUSEADDR.
-      ws2_32: Manage shorter length for SO_SNDBUF.
-      ws2_32: Manage shorter length for TCP_NODELAY.
-      ws2_32: Manage shorter length for IP_PKTINFO.
-      ws2_32: Manage shorter length for IP_RECVTOS.
-      ws2_32: Manage shorter length for IP_RECVTTL.
-      ws2_32: Return WSAENOBUFS from setsockopt() for IPPROTO_IPV6 with negative optlen.
-      ws2_32: Manage shorter length for IPV6_DONTFRAG.
-      ws2_32: Manage shorter length for IPV6_HOPLIMIT.
-      ws2_32: Manage shorter length for IPV6_MULTICAST_HOPS.
-      ws2_32: Manage shorter length for IPV6_MULTICAST_LOOP.
-      ws2_32: Manage shorter length for IPV6_PKTINFO.
-      ws2_32: Manage shorter length for IPV6_RECVTCLASS.
-      ws2_32: Manage shorter length for IPV6_UNICAST_HOPS.
-      ws2_32: Manage shorter length for IPV6_V6ONLY.
+Piotr Caban (7):
+      msvcp110: Introduce wrapper around critical_section functions.
+      msvcp110: Add _Mtx_clear_owner implementation.
+      msvcp110: Add _Mtx_reset_owner implementation.
+      msvcp110: Use _Condition_variable in _Cnd_t implementation.
+      msvcp140: Add SRWLock based _Mtx_t and _Cnd_t implementation.
+      msvcp140: Add condition variable tests.
+      msvcr110: Make sure we don't hang in _Condition_variable::notify* functions.
 
-Piotr Caban (2):
-      oleacc/tests: Fix test windows cleanup.
-      oleacc/tests: Check if test window has focus in test_default_client_accessible_object tests.
+Rémi Bernon (37):
+      winegstreamer: Implement WMA decoder Process(Input|Output) error checks.
+      dinput/tests: Test IIterator_IInspectable_MoveNext returned values.
+      windows.gaming.input: Fix IIterator_IInspectable_MoveNext returne value.
+      windows.gaming.input: Fix IIterator_IInspectable trace messages.
+      winebus.sys: Declare multiple HID simple haptics controller collections.
+      xinput1_3: Support multiple HID simple haptics controller collections.
+      winebus.sys: Remove the now unused HID haptics combined waveform report.
+      winegstreamer: Return S_OK from H264 decoder GetAttributes.
+      winegstreamer: Implement H264 decoder SetInputType.
+      winegstreamer: Implement H264 decoder GetOutputAvailableType.
+      winegstreamer: Implement H264 decoder GetInputAvailableType.
+      winegstreamer: Implement H264 decoder SetOutputType.
+      winebus.sys: Add HID haptics simple controllers for the triggers.
+      winebus.sys: Prefer SDL_JoystickRumble over SDL_HAPTIC_LEFTRIGHT.
+      winebus.sys: Implement trigger rumble using SDL_JoystickRumbleTriggers.
+      windows.gaming.input: Implement HID simple haptics controllers support.
+      winegstreamer: Introduce new wg_transform_(push|read)_data functions.
+      winegstreamer: Return S_OK from WMA decoder ProcessMessage.
+      windows.gaming.input: Fix vector InsertAt / RemoveAt copy sizes.
+      dinput: Allow setting DIPROP_AUTOCENTER when exclusively acquired.
+      winebus.sys: Assume SDL device effects are running by default.
+      dinput/tests: Add more debug traces to the HID driver.
+      dinput/tests: Rename HID driver identifiers and files.
+      dinput/tests: Remove the HID driver IRP_MJ_POWER handler.
+      dinput/tests: Introduce a new find_hid_device_path helper.
+      dinput/tests: Add more HID device and extension pointers tests.
+      dinput/tests: Introduce a new Wine Test Bus driver.
+      dinput/tests: Create a child PDO from the Bus driver.
+      dinput/tests: Create a HID device from the Bus device.
+      dinput/tests: Create all HID devices from the Bus driver.
+      dinput/tests: Remove now unused HID test driver.
+      dinput/tests: Wait for spurious Win7 polled HID device events.
+      dinput/tests: Keep child PDO remove IRP pending until fully removed.
+      kernel32/tests: Use HeapAlloc function pointer to silent a warning.
+      kernel32/tests: Add some GlobalMemoryStatusEx tests.
+      kernel32/tests: Merge GlobalMemoryStatus(Ex) tests together.
+      kernelbase: Fix GlobalMemoryStatusEx counters.
 
-Rémi Bernon (58):
-      windows.gaming.input: Split RawGameController runtimeclass to separate source.
-      windows.gaming.input: Split Gamepad runtimeclass to a separate source.
-      windows.gaming.input: Introduce a generic IVector<IInspectable *> implementation.
-      dinput/tests: Make combase.dll dependency optional.
-      dinput/tests: Simplify windows.gaming.input tests with events.
-      include: Add Windows.Gaming.Input.Custom.IGameControllerProvider declaration.
-      include: Add Windows.Gaming.Input.Custom.ICustomGameControllerFactory declaration.
-      include: Add Windows.Gaming.Input.Custom.GameControllerFactoryManager runtimeclass definition.
-      include: Add Windows.Gaming.Input.IGameControllerInputSink interface definition.
-      include: Add Windows.Gaming.Input.IHidGameControllerInputSink interface definition.
-      include: Add Windows.Gaming.Input.HidGameControllerProvider runtimeclass definition.
-      include: Add Windows.Gaming.Input.IXusbGameControllerInputSink interface definition.
-      include: Add Windows.Gaming.Input.XusbGameControllerProvider runtimeclass definition.
-      windows.gaming.input: Introduce helpers to define IInspectable interface boilerplate.
-      windows.gaming.input: Stub GameControllerFactoryManager runtimeclass.
-      windows.gaming.input: Register Windows.Gaming.Input.Custom classes.
-      dinput/tests: Add tests for IGameControllerFactoryManagerStatics_RegisterCustomFactoryForHardwareId.
-      include: Add Windows.Gaming.Input.IGameControllerBatteryInfo interface definition.
-      include: Add IWeakReference(Source) declaration.
-      dinput/tests: Add tests for ICustomGameControllerFactory_CreateGameController.
-      dinput: Add object names for simulation HID usages.
-      dinput: Refactor HID joystick device type detection logic.
-      winebus.sys: Pass USAGE_AND_PAGE to hid_device_begin_report_descriptor.
-      winebus.sys: Use a physical collection for the HID input report.
-      include: Define some HID simulation device usages.
-      winebus.sys: Use SDL_JoystickGetType to set physical HID usage.
-      dinput: Check collection nodes to find HID simulation device usages.
-      windows.gaming.input: Add an internal WineGameControllerProvider runtimeclass.
-      windows.gaming.input: Start a thread to monitor HID device addition and removal.
-      dinput: Use a custom GUID to open a device from a device path.
-      windows.gaming.input: Instantiate the WineGameControllerProvider runtimeclass.
-      windows.gaming.input: Make QueryInterface implementations consistent.
-      windows.gaming.input: Stub ICustomGameControllerFactory for RawGameController.
-      windows.gaming.input: Stub ICustomGameControllerFactory for Gamepad.
-      windows.gaming.input: Add IGameControllerImpl undocumented interface declaration.
-      include: Add Windows.Devices.Power.IBatteryReport interface definition.
-      winebus.sys: Don't reset report descriptor when starting a collection.
-      windows.gaming.input: Instantiate IGameController(BatteryInfo) stub from providers.
-      windows.gaming.input: Implement IRawGameControllerStatics_FromGameController.
-      windows.gaming.input: Check the controller type and create Gamepad instances.
-      include: Add Windows.Gaming.Input.IGamepadStatics2 interface declaration.
-      windows.gaming.input: Implement IGamepadStatics2_FromGameController.
-      windows.gaming.input: Implement CreateGameController for RawGameController runtimeclass.
-      windows.gaming.input: Implement CreateGameController for Gamepad runtimeclass.
-      include: Fix IIterator<T> declaration and missing IVector(View)<T> requires.
-      windows.gaming.input: Implement IIterable<T> and IIterator<T> interfaces.
-      windows.gaming.input: Implement IRawGameControllerStatics_get_RawGameControllers.
-      windows.gaming.input: Implement IGamepadStatics_get_Gamepads.
-      windows.gaming.input: Implement Controller(Added|Removed) event support.
-      windows.gaming.input: Return object counts and VID/PID for RawGameController.
-      windows.gaming.input: Implement GetCurrentReading for the RawGameController runtimeclass.
-      windows.gaming.input: Implement GetCurrentReading for the Gamepad runtimeclass.
-      mf/tests: Check the number of input samples to get a H264 stream change.
-      mf/tests: Check H264 decoder first NV12 decoded frame.
-      mf/tests: Check H264 decoder stream count and IDs.
-      winegstreamer: Introduce new H264 decoder transform stub.
-      windows.gaming.input: Return correct error from DllGetActivationFactory.
-      windows.gaming.input: Always return S_OK from TryGetFactoryControllerFromGameController.
+Tatsuyuki Ishi (1):
+      winegcc: Identify ar files through signature.
 
-Santino Mazza (8):
-      bcrypt/tests: Test for invalid RSA keyblob.
-      bcrypt: Add support for PUBLICKEY blob types.
-      bcrypt: Validate key size when importing RSA public key.
-      bcrypt: Implement KeyLength property.
-      ncrypt: Make use of bcrypt for low level cryptography.
-      ncrypt/tests: Test for symmetric keys support.
-      ncrypt: Implement NCryptCreatePersistedKey.
-      ncrypt: Implement NCryptFinalizeKey.
+Tim Clem (4):
+      winemac.drv: Simplify control flow in copy_display_modes.
+      winemac.drv: Add a flag to filter unsupported modes in copy_display_modes.
+      winemac.drv: Move synthetic display modes after the real ones.
+      winemac.drv: Sort display modes.
 
-Saulius Krasuckas (1):
-      ntdll: Check __WINE_PE_BUILD instead of compiler macros.
+Zebediah Figura (6):
+      wined3d: Try to load winevulkan.dll instead of vulkan-1.dll.
+      d3dcompiler: Implement D3DCompile2() using vkd3d_shader_compile().
+      kernelbase: Do not return S_FALSE from UrlGetPartW().
+      kernelbase: Do not allow schemes to be less than two characters in UrlGetPart().
+      kernelbase: Do not parse username, password, and port separately for file URLs in UrlGetPart().
+      kernelbase: Do not parse the hostname of internet URLs if they are missing a double slash.
 
-Stefan Dösinger (6):
-      wined3d: Use extra bits in the queue head and tail counters.
-      wined3d: Use the default queue index for resource fencing.
-      wined3d: Remove the no-op wined3d_resource_release.
-      wined3d: Rename resource_acquire to resource_reference.
-      wined3d: Replace the GE_WRAP macro with a function.
-      wined3d: Replace while (1) with for (;;).
+Zhiyi Zhang (2):
+      comctl32/tests: Use correct width and height in create_bitmap() helper.
+      light.msstyles: Add Menu stub class.
 
-Torge Matthies (3):
-      powrprof: Add PowerUnregisterSuspendResumeNotification stub.
-      powrprof: Add PowerSettingRegisterNotification stub.
-      powrprof: Add PowerSettingUnregisterNotification stub.
-
-Zebediah Figura (20):
-      httpapi/tests: Build without -DWINE_NO_LONG_TYPES.
-      d3d10/tests: Add tests for Direct3D 10 shader reflection interfaces.
-      d3d10_1/tests: Add shader reflection tests.
-      d3dcompiler: Use a single definition for both d3d10 and d3d11 reflection interfaces.
-      d3d10: Do not define D3DReflect().
-      devenum/tests: Remove workarounds from test_moniker_isequal().
-      makedep: Do not forbid importing system headers in msvcrt modules.
-      d3d12: Explicitly use Wine d3d12 and Vulkan headers.
-      dxgi: Explicitly use Wine d3d12 and Vulkan headers.
-      configure: Try to detect MinGW libvkd3d using pkg-config if --with-system-dllpath is specified.
-      configure: Fix the check for CAPI support.
-      wined3d: Allow changing settings using a new WINE_D3D_CONFIG environment variable.
-      winegstreamer: Deliver samples in PTS order instead of alternating.
-      wined3d: Do not print a d3d_perf warning in adapter_vk_alloc_bo() for unmapped BOs.
-      d3d11: Do not print a FIXME for dynamic linking in shader retrieval functions.
-      d3d11: Do not print a FIXME for dynamic linking when zero class instances are passed.
-      wined3d: Trace GL buffer object creation more accurately.
-      wined3d: Prevent buildup of retired OpenGL buffer objects' memory.
-      d3d11: Report support for MapNoOverwriteOnDynamicConstantBuffer.
-      d3d11: Report support for ConstantBufferPartialUpdate.
-
-Zhiyi Zhang (11):
-      comctl32/tests: Fix a test failure when theming is active.
-      light.msstyles: Remove Classic Blue variant.
-      uxtheme/tests: Add IsThemePartDefined() tests.
-      uxtheme: Search parts of any state in IsThemePartDefined().
-      wine.inf: Enable Light theme by default.
-      comctl32/tests: Fix a possible test failure.
-      d2d1: Release bitmap on d2d_device_context_SetTarget() error path.
-      d2d1/tests: Test d2d_device_context_SetTarget() with bitmaps of D2D1_ALPHA_MODE_IGNORE.
-      d2d1: Use newer blend options in d2d_device_context_SetTarget() for bitmaps of D2D1_ALPHA_MODE_IGNORE.
-      d2d1/tests: Add d2d_transformed_geometry_StrokeContainsPoint() tests.
-      d2d1: Shrink stroke width for d2d_transformed_geometry_StrokeContainsPoint().
+Ziqing Hui (1):
+      ws2_32/tests: Test getaddrinfo() for IPv6 DNS querying.
 
 --
 Alexandre Julliard
