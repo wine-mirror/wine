@@ -158,33 +158,21 @@ static int midiCloseSeq(void)
 static DWORD WINAPI midRecThread(void *arg)
 {
     snd_seq_t *midi_seq = arg;
-    int npfd;
-    struct pollfd *pfd;
+    int num_fds;
+    struct pollfd *pollfd;
     int ret;
 
-    TRACE("Thread startup\n");
+    num_fds = snd_seq_poll_descriptors_count(midi_seq, POLLIN);
+    pollfd = malloc(num_fds * sizeof(struct pollfd));
 
     while(!end_thread) {
-	TRACE("Thread loop\n");
         seq_lock();
-	npfd = snd_seq_poll_descriptors_count(midi_seq, POLLIN);
-	pfd = HeapAlloc(GetProcessHeap(), 0, npfd * sizeof(struct pollfd));
-	snd_seq_poll_descriptors(midi_seq, pfd, npfd, POLLIN);
+        snd_seq_poll_descriptors(midi_seq, pollfd, num_fds, POLLIN);
         seq_unlock();
 
 	/* Check if an event is present */
-	if (poll(pfd, npfd, 250) <= 0) {
-	    HeapFree(GetProcessHeap(), 0, pfd);
-	    continue;
-	}
-
-	/* Note: This definitely does not work.  
-	 * while(snd_seq_event_input_pending(midi_seq, 0) > 0) {
-	       snd_seq_event_t* ev;
-	       snd_seq_event_input(midi_seq, &ev);
-	       ....................
-	       snd_seq_free_event(ev);
-	   }*/
+        if (poll(pollfd, num_fds, 250) <= 0)
+            continue;
 
 	do {
             snd_seq_event_t *ev;
@@ -202,9 +190,9 @@ static DWORD WINAPI midRecThread(void *arg)
             ret = snd_seq_event_input_pending(midi_seq, 0);
             seq_unlock();
 	} while(ret > 0);
-
-	HeapFree(GetProcessHeap(), 0, pfd);
     }
+
+    free(pollfd);
     return 0;
 }
 
