@@ -27,6 +27,7 @@
 #include "ntuser_private.h"
 #include "wine/debug.h"
 
+WINE_DEFAULT_DEBUG_CHANNEL(menu);
 WINE_DECLARE_DEBUG_CHANNEL(accel);
 
 /* the accelerator user object */
@@ -36,6 +37,9 @@ struct accelerator
     unsigned int       count;
     ACCEL              table[1];
 };
+
+/* (other menu->FocusedItem values give the position of the focused item) */
+#define NO_SELECTED_ITEM  0xffff
 
 /**********************************************************************
  *           NtUserCopyAcceleratorTable   (win32u.@)
@@ -112,12 +116,46 @@ HMENU get_menu( HWND hwnd )
     return UlongToHandle( get_window_long( hwnd, GWLP_ID ));
 }
 
+/* see CreateMenu */
+HMENU create_menu(void)
+{
+    POPUPMENU *menu;
+    HMENU handle;
+
+    if (!(menu = calloc( 1, sizeof(*menu) ))) return 0;
+    menu->FocusedItem = NO_SELECTED_ITEM;
+    menu->refcount = 1;
+
+    if (!(handle = alloc_user_handle( &menu->obj, NTUSER_OBJ_MENU ))) free( menu );
+
+    TRACE( "return %p\n", handle );
+    return handle;
+}
+
 /**********************************************************************
  *         NtUserDestroyMenu   (win32u.@)
  */
-BOOL WINAPI NtUserDestroyMenu( HMENU menu )
+BOOL WINAPI NtUserDestroyMenu( HMENU handle )
 {
-    return user_callbacks && user_callbacks->pDestroyMenu( menu );
+    POPUPMENU *menu;
+
+    TRACE( "(%p)\n", handle );
+
+    if (!(menu = free_user_handle( handle, NTUSER_OBJ_MENU ))) return FALSE;
+    if (menu == OBJ_OTHER_PROCESS) return FALSE;
+
+    /* DestroyMenu should not destroy system menu popup owner */
+    if ((menu->wFlags & (MF_POPUP | MF_SYSMENU)) == MF_POPUP && menu->hWnd)
+    {
+        NtUserDestroyWindow( menu->hWnd );
+        menu->hWnd = 0;
+    }
+
+    if (menu->items && user_callbacks) /* recursively destroy submenus */
+        user_callbacks->free_menu_items( menu );
+
+    free( menu );
+    return TRUE;
 }
 
 /*******************************************************************

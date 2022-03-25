@@ -33,7 +33,6 @@ struct user_callbacks
     BOOL (WINAPI *pAdjustWindowRectEx)( RECT *, DWORD, BOOL, DWORD );
     HANDLE (WINAPI *pCopyImage)( HANDLE, UINT, INT, INT, UINT );
     BOOL (WINAPI *pDestroyCaret)(void);
-    BOOL (WINAPI *pDestroyMenu)( HMENU );
     BOOL (WINAPI *pEndMenu)(void);
     BOOL (WINAPI *pHideCaret)( HWND hwnd );
     BOOL (WINAPI *pPostMessageW)( HWND, UINT, WPARAM, LPARAM );
@@ -45,6 +44,7 @@ struct user_callbacks
     BOOL (WINAPI *pSetSystemMenu)( HWND hwnd, HMENU menu );
     BOOL (WINAPI *pShowCaret)( HWND hwnd );
     DWORD (WINAPI *pWaitForInputIdle)( HANDLE, DWORD );
+    void (CDECL *free_menu_items)( void *ptr );
     void (CDECL *free_win_ptr)( struct tagWND *win );
     HWND (CDECL *is_menu_active)(void);
     void (CDECL *notify_ime)( HWND hwnd, UINT param );
@@ -198,6 +198,35 @@ enum builtin_winprocs
     NB_BUILTIN_WINPROCS,
     NB_BUILTIN_AW_WINPROCS = WINPROC_DESKTOP
 };
+
+struct menu_item;
+
+/* FIXME: make it private to menu.c */
+typedef struct
+{
+    struct user_object obj;
+    WORD        wFlags;       /* Menu flags (MF_POPUP, MF_SYSMENU) */
+    WORD	Width;        /* Width of the whole menu */
+    WORD	Height;       /* Height of the whole menu */
+    UINT        nItems;       /* Number of items in the menu */
+    HWND        hWnd;         /* Window containing the menu */
+    struct menu_item *items;  /* Array of menu items */
+    UINT        FocusedItem;  /* Currently focused item */
+    HWND	hwndOwner;    /* window receiving the messages for ownerdraw */
+    BOOL        bScrolling;   /* Scroll arrows are active */
+    UINT        nScrollPos;   /* Current scroll position */
+    UINT        nTotalHeight; /* Total height of menu items inside menu */
+    RECT        items_rect;   /* Rectangle within which the items lie.  Excludes margins and scroll arrows */
+    LONG        refcount;
+    /* ------------ MENUINFO members ------ */
+    DWORD	dwStyle;	/* Extended menu style */
+    UINT	cyMax;		/* max height of the whole menu, 0 is screen height */
+    HBRUSH	hbrBack;	/* brush for menu background */
+    DWORD	dwContextHelpID;
+    ULONG_PTR	dwMenuData;	/* application defined value */
+    HMENU       hSysMenuOwner;  /* Handle to the dummy sys menu holder */
+    WORD        textOffset;     /* Offset of text when items have both bitmaps and text */
+} POPUPMENU, *LPPOPUPMENU;
 
 /* FIXME: make it private to class.c */
 typedef struct tagWINDOWPROC

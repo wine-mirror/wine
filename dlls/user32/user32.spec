@@ -159,7 +159,7 @@
 @ stdcall DestroyCaret()
 @ stdcall DestroyCursor(long)
 @ stdcall DestroyIcon(long)
-@ stdcall DestroyMenu(long)
+@ stdcall DestroyMenu(long) NtUserDestroyMenu
 # @ stub DestroyReasons
 @ stdcall DestroyWindow(long) NtUserDestroyWindow
 # @ stub DeviceEventWorker

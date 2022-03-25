@@ -204,6 +204,7 @@ struct unix_funcs
                                                      INT x, INT y, INT cx, INT cy,
                                                      UINT flags, UINT unk1, UINT unk2 );
     BOOL     (WINAPI *pNtUserDestroyCursor)( HCURSOR cursor, ULONG arg );
+    BOOL     (WINAPI *pNtUserDestroyMenu)( HMENU handle );
     BOOL     (WINAPI *pNtUserDestroyWindow)( HWND hwnd );
     LRESULT  (WINAPI *pNtUserDispatchMessage)( const MSG *msg );
     BOOL     (WINAPI *pNtUserDrawIconEx)( HDC hdc, INT x0, INT y0, HICON icon, INT width,
@@ -336,6 +337,7 @@ extern BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret ) DECL
 extern BOOL set_foreground_window( HWND hwnd, BOOL mouse ) DECLSPEC_HIDDEN;
 
 /* menu.c */
+extern HMENU create_menu(void) DECLSPEC_HIDDEN;
 extern HMENU get_menu( HWND hwnd ) DECLSPEC_HIDDEN;
 
 /* message.c */

@@ -4623,6 +4623,8 @@ ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
 {
     switch(code)
     {
+    case NtUserCreateMenu:
+        return HandleToUlong( create_menu() );
     case NtUserGetDesktopWindow:
         return HandleToUlong( get_desktop_window() );
     case NtUserGetInputState:
@@ -4739,12 +4741,8 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
     case NtUserUnhookWindowsHook:
         return unhook_windows_hook( arg1, (HOOKPROC)arg2 );
     /* temporary exports */
-    case NtUserAllocHandle:
-        return HandleToUlong( alloc_user_handle( (struct user_object *)arg1, arg2 ));
     case NtUserAllocWinProc:
         return (UINT_PTR)alloc_winproc( (WNDPROC)arg1, arg2 );
-    case NtUserFreeHandle:
-        return (UINT_PTR)free_user_handle( UlongToHandle(arg1), arg2 );
     case NtUserGetHandlePtr:
         return (UINT_PTR)get_user_handle_ptr( UlongToHandle(arg1), arg2 );
     default:

@@ -121,6 +121,7 @@ struct win_hook_params
 /* NtUserCallNoParam codes, not compatible with Windows */
 enum
 {
+    NtUserCreateMenu,
     NtUserGetDesktopWindow,
     NtUserGetInputState,
     NtUserReleaseCapture,
@@ -169,9 +170,7 @@ enum
     NtUserSetIconParam,
     NtUserUnhookWindowsHook,
     /* temporary exports */
-    NtUserAllocHandle,
     NtUserAllocWinProc,
-    NtUserFreeHandle,
     NtUserGetHandlePtr,
 };
 

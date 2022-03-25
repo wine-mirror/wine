@@ -887,7 +887,7 @@ static BOOL MDI_AugmentFrameMenu( HWND frame, HWND hChild )
                      (UINT_PTR)hSysPopup, (LPSTR)hSysMenuBitmap))
     {
         TRACE("not inserted\n");
-	DestroyMenu(hSysPopup);
+        NtUserDestroyMenu( hSysPopup );
         return FALSE;
     }
 

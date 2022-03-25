@@ -832,7 +832,7 @@
 @ stdcall NtUserDestroyCursor(long long)
 @ stub NtUserDestroyDCompositionHwndTarget
 @ stub NtUserDestroyInputContext
-@ stub NtUserDestroyMenu
+@ stdcall NtUserDestroyMenu(long)
 @ stub NtUserDestroyPalmRejectionDelayZone
 @ stdcall NtUserDestroyWindow(long)
 @ stub NtUserDisableImmersiveOwner

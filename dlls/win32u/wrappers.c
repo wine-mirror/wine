@@ -795,6 +795,12 @@ BOOL WINAPI NtUserDestroyCursor( HCURSOR cursor, ULONG arg )
     return unix_funcs->pNtUserDestroyCursor( cursor, arg );
 }
 
+BOOL WINAPI NtUserDestroyMenu( HMENU handle )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserDestroyMenu( handle );
+}
+
 BOOL WINAPI NtUserDestroyWindow( HWND hwnd )
 {
     if (!unix_funcs) return FALSE;

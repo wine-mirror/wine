@@ -3337,7 +3337,7 @@ static void EDIT_WM_ContextMenu(EDITSTATE *es, INT x, INT y)
 	if (cmd)
 	    EDIT_ContextMenuCommand(es, cmd);
 
-	DestroyMenu(menu);
+        NtUserDestroyMenu(menu);
 }
 
 

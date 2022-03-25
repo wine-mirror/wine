@@ -40,15 +40,6 @@ static DWORD process_layout = ~0u;
 
 
 /***********************************************************************
- *           alloc_user_handle
- */
-HANDLE alloc_user_handle( struct user_object *ptr, unsigned int type )
-{
-    return UlongToHandle( NtUserCallTwoParam( (UINT_PTR)ptr, type, NtUserAllocHandle ));
-}
-
-
-/***********************************************************************
  *           get_user_handle_ptr
  */
 void *get_user_handle_ptr( HANDLE handle, unsigned int type )
@@ -64,15 +55,6 @@ void release_user_handle_ptr( void *ptr )
 {
     assert( ptr && ptr != OBJ_OTHER_PROCESS );
     USER_Unlock();
-}
-
-
-/***********************************************************************
- *           free_user_handle
- */
-void *free_user_handle( HANDLE handle, unsigned int type )
-{
-    return UlongToHandle( NtUserCallTwoParam( HandleToUlong(handle), type, NtUserFreeHandle ));
 }
 
 
@@ -672,7 +654,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
     hwnd = NtUserCreateWindowEx( cs->dwExStyle, &class, NULL, NULL, cs->style, cs->x, cs->y,
                                  cs->cx, cs->cy, cs->hwndParent, menu, module,
                                  cs->lpCreateParams, 0, &cbtc, 0, !unicode );
-    if (!hwnd && menu && menu != cs->hMenu) DestroyMenu( menu );
+    if (!hwnd && menu && menu != cs->hMenu) NtUserDestroyMenu( menu );
     return hwnd;
 }
 
