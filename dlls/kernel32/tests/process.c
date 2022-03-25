@@ -4959,6 +4959,40 @@ static void test_job_list_attribute(HANDLE parent_job)
     ok(ret, "SetInformationJobObject error %lu\n", GetLastError());
 }
 
+static void test_services_exe(void)
+{
+    NTSTATUS status;
+    ULONG size, offset;
+    char *buf;
+    SYSTEM_PROCESS_INFORMATION *spi;
+    ULONG services_pid = 0, services_session_id = ~0;
+
+    status = NtQuerySystemInformation(SystemProcessInformation, NULL, 0, &size);
+    ok(status == STATUS_INFO_LENGTH_MISMATCH, "got %#lx\n", status);
+
+    buf = malloc(size);
+    status = NtQuerySystemInformation(SystemProcessInformation, buf, size, &size);
+    ok(status == STATUS_SUCCESS, "got %#lx\n", status);
+
+    spi = (SYSTEM_PROCESS_INFORMATION *)buf;
+    offset = 0;
+
+    do
+    {
+        spi = (SYSTEM_PROCESS_INFORMATION *)(buf + offset);
+        if (!wcsnicmp(spi->ProcessName.Buffer, L"services.exe", spi->ProcessName.Length/sizeof(WCHAR)))
+        {
+            services_pid = HandleToUlong(spi->UniqueProcessId);
+            services_session_id = spi->SessionId;
+        }
+        offset += spi->NextEntryOffset;
+    } while (spi->NextEntryOffset != 0);
+
+    ok(services_pid != 0, "services.exe not found\n");
+    todo_wine
+    ok(services_session_id == 0, "got services.exe SessionId %lu\n", services_session_id);
+}
+
 START_TEST(process)
 {
     HANDLE job, hproc, h, h2;
@@ -5088,6 +5122,7 @@ START_TEST(process)
     test_parent_process_attribute(0, NULL);
     test_handle_list_attribute(FALSE, NULL, NULL);
     test_dead_process();
+    test_services_exe();
 
     /* things that can be tested:
      *  lookup:         check the way program to be executed is searched
