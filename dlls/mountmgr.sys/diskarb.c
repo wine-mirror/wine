@@ -229,7 +229,7 @@ void run_diskarbitration_loop(void)
 
 #if defined(HAVE_SYSTEMCONFIGURATION_SCDYNAMICSTORECOPYDHCPINFO_H) && defined(HAVE_SYSTEMCONFIGURATION_SCNETWORKCONFIGURATION_H)
 
-static UInt8 map_option( ULONG option )
+static UInt8 map_option( unsigned int option )
 {
     switch (option)
     {
@@ -314,7 +314,7 @@ NTSTATUS dhcp_request( void *args )
     case OPTION_ROUTER_ADDRESS:
     case OPTION_BROADCAST_ADDRESS:
     {
-        DWORD *ptr = (DWORD *)(params->buffer + params->offset);
+        unsigned int *ptr = (unsigned int *)(params->buffer + params->offset);
         if (len == sizeof(*ptr) && params->size >= sizeof(*ptr))
         {
             CFDataGetBytes( value, CFRangeMake(0, len), (UInt8 *)ptr );
@@ -341,7 +341,7 @@ NTSTATUS dhcp_request( void *args )
         break;
     }
     default:
-        FIXME( "option %u not supported\n", params->req->id );
+        FIXME( "option %u not supported\n", (unsigned int)params->req->id );
         break;
     }
 
