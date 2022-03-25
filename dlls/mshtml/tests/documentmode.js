@@ -1300,6 +1300,13 @@ sync_test("builtins_diffs", function() {
             ok(e.number === (v < 9 ? 0xa01b6 : 0xa138f) - 0x80000000, "Object." + props[i] + " with non-object: exception = " + e.number);
         }
     }
+
+    try {
+        RegExp.prototype.toString.call({source: "foo", flags: "g"});
+        ok(false, "RegExp.toString with non-regexp: expected exception");
+    }catch(e) {
+        ok(e.number === 0xa1398 - 0x80000000, "RegExp.toString with non-regexp: exception = " + e.number);
+    }
 });
 
 sync_test("__proto__", function() {
