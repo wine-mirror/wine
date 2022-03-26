@@ -30,6 +30,8 @@
 
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdint.h>
+#include <unistd.h>
 #include <pthread.h>
 #include <time.h>
 #include <alsa/asoundlib.h>
