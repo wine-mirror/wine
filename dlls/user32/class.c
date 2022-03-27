@@ -763,6 +763,8 @@ BOOL16 WINAPI ClassNext16( CLASSENTRY *pClassEntry )
 }
 #endif
 
+#ifdef _WIN64
+
 /* 64bit versions */
 
 #undef GetClassLongPtrA
@@ -803,3 +805,5 @@ ULONG_PTR WINAPI SetClassLongPtrA( HWND hwnd, INT offset, LONG_PTR newval )
     if (offset == GCLP_MENUNAME) return set_menu_nameA( hwnd, offset, newval );
     return NtUserSetClassLongPtr( hwnd, offset, newval, TRUE );
 }
+
+#endif /* _WIN64 */

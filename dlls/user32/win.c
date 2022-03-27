@@ -1828,6 +1828,7 @@ BOOL WINAPI SetProcessDefaultLayout( DWORD layout )
     return TRUE;
 }
 
+#ifdef _WIN64
 
 /* 64bit versions */
 
@@ -1867,6 +1868,8 @@ LONG_PTR WINAPI SetWindowLongPtrA( HWND hwnd, INT offset, LONG_PTR newval )
 {
     return NtUserSetWindowLongPtr( hwnd, offset, newval, TRUE );
 }
+
+#endif /* _WIN64 */
 
 /*****************************************************************************
  *              RegisterTouchWindow (USER32.@)
