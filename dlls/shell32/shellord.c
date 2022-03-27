@@ -1674,7 +1674,7 @@ UINT WINAPI SHAddFromPropSheetExtArray(HPSXA hpsxa, LPFNADDPROPSHEETPAGE lpfnAdd
         /* Call the AddPage method of all registered IShellPropSheetExt interfaces */
         for (i = 0; i != psxa->uiCount; i++)
         {
-            psxa->pspsx[i]->lpVtbl->AddPages(psxa->pspsx[i], PsxaCall, (LPARAM)&Call);
+            IShellPropSheetExt_AddPages(psxa->pspsx[i], PsxaCall, (LPARAM)&Call);
         }
 
         return Call.uiCount;
@@ -1764,21 +1764,21 @@ HPSXA WINAPI SHCreatePropSheetExtArrayEx(HKEY hKey, LPCWSTR pszSubKey, UINT max_
                        Then call IShellExtInit's Initialize method. */
                     if (SUCCEEDED(CoCreateInstance(&clsid, NULL, CLSCTX_INPROC_SERVER/* | CLSCTX_NO_CODE_DOWNLOAD */, &IID_IShellPropSheetExt, (LPVOID *)&pspsx)))
                     {
-                        if (SUCCEEDED(pspsx->lpVtbl->QueryInterface(pspsx, &IID_IShellExtInit, (PVOID *)&psxi)))
+                        if (SUCCEEDED(IShellPropSheetExt_QueryInterface(pspsx, &IID_IShellExtInit, (PVOID *)&psxi)))
                         {
-                            if (SUCCEEDED(psxi->lpVtbl->Initialize(psxi, NULL, pDataObj, hKey)))
+                            if (SUCCEEDED(IShellExtInit_Initialize(psxi, NULL, pDataObj, hKey)))
                             {
                                 /* Add the IShellPropSheetExt instance to the array */
                                 psxa->pspsx[psxa->uiCount++] = pspsx;
                             }
                             else
                             {
-                                psxi->lpVtbl->Release(psxi);
-                                pspsx->lpVtbl->Release(pspsx);
+                                IShellExtInit_Release(psxi);
+                                IShellPropSheetExt_Release(pspsx);
                             }
                         }
                         else
-                            pspsx->lpVtbl->Release(pspsx);
+                            IShellPropSheetExt_Release(pspsx);
                     }
                 }
 
@@ -1821,7 +1821,7 @@ UINT WINAPI SHReplaceFromPropSheetExtArray(HPSXA hpsxa, UINT uPageID, LPFNADDPRO
         for (i = 0; i != psxa->uiCount; i++)
         {
             Call.bCalled = FALSE;
-            psxa->pspsx[i]->lpVtbl->ReplacePage(psxa->pspsx[i], uPageID, PsxaCall, (LPARAM)&Call);
+            IShellPropSheetExt_ReplacePage(psxa->pspsx[i], uPageID, PsxaCall, (LPARAM)&Call);
         }
 
         return Call.uiCount;
@@ -1844,7 +1844,7 @@ void WINAPI SHDestroyPropSheetExtArray(HPSXA hpsxa)
     {
         for (i = 0; i != psxa->uiCount; i++)
         {
-            psxa->pspsx[i]->lpVtbl->Release(psxa->pspsx[i]);
+            IShellPropSheetExt_Release(psxa->pspsx[i]);
         }
 
         LocalFree(psxa);
