@@ -1035,7 +1035,13 @@ static void test_default_client_accessible_object(void)
 
     /* Set the focus to the parent window. */
     ShowWindow(hwnd, SW_SHOW);
-    SetFocus(hwnd);
+    if (!SetForegroundWindow(hwnd))
+    {
+        skip("SetForegroundWindow failed\n");
+        IAccessible_Release(acc);
+        DestroyWindow(hwnd);
+        return;
+    }
     hr = IAccessible_get_accFocus(acc, &v);
     ok(GetFocus() == hwnd, "test window has no focus\n");
     ok(hr == S_OK, "hr %#lx\n", hr);
@@ -1763,6 +1769,12 @@ static void test_default_edit_accessible_object(void)
     check_acc_vals(acc, &edit_acc_vals[1]);
     IAccessible_Release(acc);
 
+    if (!SetForegroundWindow(hwnd))
+    {
+        skip("SetForegroundWindow failed\n");
+        DestroyWindow(hwnd);
+        return;
+    }
     SetFocus(edit[2]);
     hr = CreateStdAccessibleObject(edit[2], OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
     str = SysAllocString(L"edit2-test\r\ntest-edit2\n");
