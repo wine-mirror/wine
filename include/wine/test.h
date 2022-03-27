@@ -283,6 +283,7 @@ const char *winetest_elapsed(void)
 static const char color_reset[] = "\e[0m";
 static const char color_dark_red[] = "\e[31m";
 static const char color_yellow[] = "\e[33m";
+static const char color_blue[] = "\e[34m";
 static const char color_bright_red[] = "\e[1;91m";
 
 static void winetest_printf( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
@@ -436,8 +437,10 @@ void winetest_vskip( const char *msg, va_list args )
 {
     if (winetest_add_line() < winetest_mute_threshold)
     {
+        if (winetest_color) printf( color_blue );
         winetest_print_context( "Tests skipped: " );
         vprintf(msg, args);
+        if (winetest_color) printf( color_reset );
         InterlockedIncrement(&skipped);
     }
     else
