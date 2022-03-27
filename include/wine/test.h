@@ -281,6 +281,7 @@ const char *winetest_elapsed(void)
 }
 
 static const char color_reset[] = "\e[0m";
+static const char color_dark_red[] = "\e[31m";
 static const char color_bright_red[] = "\e[1;91m";
 
 static void winetest_printf( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
@@ -354,8 +355,10 @@ int winetest_vok( int condition, const char *msg, va_list args )
     {
         if (condition)
         {
+            if (winetest_color) printf( color_dark_red );
             winetest_print_context( "Test succeeded inside todo block: " );
             vprintf(msg, args);
+            if (winetest_color) printf( color_reset );
             InterlockedIncrement(&todo_failures);
             return 0;
         }
