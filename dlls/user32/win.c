@@ -1831,21 +1831,10 @@ BOOL WINAPI SetProcessDefaultLayout( DWORD layout )
 
 /* 64bit versions */
 
-#ifdef GetWindowLongPtrW
 #undef GetWindowLongPtrW
-#endif
-
-#ifdef GetWindowLongPtrA
 #undef GetWindowLongPtrA
-#endif
-
-#ifdef SetWindowLongPtrW
 #undef SetWindowLongPtrW
-#endif
-
-#ifdef SetWindowLongPtrA
 #undef SetWindowLongPtrA
-#endif
 
 /*****************************************************************************
  *              GetWindowLongPtrW (USER32.@)

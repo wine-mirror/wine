@@ -765,21 +765,10 @@ BOOL16 WINAPI ClassNext16( CLASSENTRY *pClassEntry )
 
 /* 64bit versions */
 
-#ifdef GetClassLongPtrA
 #undef GetClassLongPtrA
-#endif
-
-#ifdef GetClassLongPtrW
 #undef GetClassLongPtrW
-#endif
-
-#ifdef SetClassLongPtrA
 #undef SetClassLongPtrA
-#endif
-
-#ifdef SetClassLongPtrW
 #undef SetClassLongPtrW
-#endif
 
 /***********************************************************************
  *		GetClassLongPtrA (USER32.@)
