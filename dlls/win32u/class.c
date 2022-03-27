@@ -481,6 +481,7 @@ BOOL WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,
     list_remove( &class->entry );
     if (class->hbrBackground > (HBRUSH)(COLOR_GRADIENTINACTIVECAPTION + 1))
         NtGdiDeleteObjectApp( class->hbrBackground );
+    *client_menu_name = class->menu_name;
     NtUserDestroyCursor( class->hIconSmIntern, 0 );
     free( class );
     user_unlock();
