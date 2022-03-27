@@ -282,6 +282,7 @@ const char *winetest_elapsed(void)
 
 static const char color_reset[] = "\e[0m";
 static const char color_dark_red[] = "\e[31m";
+static const char color_green[] = "\e[32m";
 static const char color_yellow[] = "\e[33m";
 static const char color_blue[] = "\e[34m";
 static const char color_bright_red[] = "\e[1;91m";
@@ -399,7 +400,9 @@ int winetest_vok( int condition, const char *msg, va_list args )
             if (winetest_report_success ||
                 (winetest_time && GetTickCount() >= winetest_last_time + 1000))
             {
+                if (winetest_color) printf( color_green );
                 winetest_printf("Test succeeded\n");
+                if (winetest_color) printf( color_reset );
             }
             InterlockedIncrement(&successes);
             return 1;
