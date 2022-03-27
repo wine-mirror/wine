@@ -71,19 +71,16 @@ static ULONG WINAPI IAudioDataImpl_AddRef(IAudioData* iface)
 
 static ULONG WINAPI IAudioDataImpl_Release(IAudioData* iface)
 {
-    AMAudioDataImpl *This = impl_from_IAudioData(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    AMAudioDataImpl *audiodata = impl_from_IAudioData(iface);
+    ULONG ref = InterlockedDecrement(&audiodata->ref);
 
-    TRACE("(%p)->(): new ref = %lu\n", iface, This->ref);
+    TRACE("%p decreasing refcount to %lu.\n", audiodata, ref);
 
     if (!ref)
     {
-        if (This->data_owned)
-        {
-            CoTaskMemFree(This->data);
-        }
-
-        HeapFree(GetProcessHeap(), 0, This);
+        if (audiodata->data_owned)
+            free(audiodata->data);
+        free(audiodata);
     }
 
     return ref;
@@ -103,7 +100,7 @@ static HRESULT WINAPI IAudioDataImpl_SetBuffer(IAudioData* iface, DWORD size, BY
 
     if (This->data_owned)
     {
-        CoTaskMemFree(This->data);
+        free(This->data);
         This->data_owned = FALSE;
     }
 
@@ -112,7 +109,7 @@ static HRESULT WINAPI IAudioDataImpl_SetBuffer(IAudioData* iface, DWORD size, BY
 
     if (!This->data)
     {
-        This->data = CoTaskMemAlloc(This->size);
+        This->data = malloc(This->size);
         This->data_owned = TRUE;
         if (!This->data)
         {
@@ -228,8 +225,7 @@ HRESULT AMAudioData_create(IUnknown *pUnkOuter, LPVOID *ppObj)
     if (pUnkOuter)
         return CLASS_E_NOAGGREGATION;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(AMAudioDataImpl));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IAudioData_iface.lpVtbl = &AudioData_Vtbl;

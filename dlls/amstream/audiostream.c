@@ -202,7 +202,7 @@ static ULONG WINAPI audio_sample_Release(IAudioStreamSample *iface)
         IAMMediaStream_Release(&sample->parent->IAMMediaStream_iface);
         IAudioData_Release(sample->audio_data);
         CloseHandle(sample->update_event);
-        HeapFree(GetProcessHeap(), 0, sample);
+        free(sample);
     }
     return refcount;
 }
@@ -383,8 +383,7 @@ static HRESULT audiostreamsample_create(struct audio_stream *parent, IAudioData 
 
     TRACE("(%p)\n", audio_stream_sample);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IAudioStreamSample_iface.lpVtbl = &AudioStreamSample_Vtbl;
@@ -456,15 +455,15 @@ static ULONG WINAPI audio_IAMMediaStream_AddRef(IAMMediaStream *iface)
 
 static ULONG WINAPI audio_IAMMediaStream_Release(IAMMediaStream *iface)
 {
-    struct audio_stream *This = impl_from_IAMMediaStream(iface);
-    ULONG ref = InterlockedDecrement(&This->ref);
+    struct audio_stream *stream = impl_from_IAMMediaStream(iface);
+    ULONG ref = InterlockedDecrement(&stream->ref);
 
-    TRACE("(%p/%p)->(): new ref = %lu\n", iface, This, ref);
+    TRACE("%p decreasing refcount to %lu.\n", stream, ref);
 
     if (!ref)
     {
-        DeleteCriticalSection(&This->cs);
-        HeapFree(GetProcessHeap(), 0, This);
+        DeleteCriticalSection(&stream->cs);
+        free(stream);
     }
 
     return ref;
@@ -830,7 +829,7 @@ static ULONG WINAPI enum_media_types_Release(IEnumMediaTypes *iface)
     ULONG refcount = InterlockedDecrement(&enum_media_types->refcount);
     TRACE("%p decreasing refcount to %lu.\n", enum_media_types, refcount);
     if (!refcount)
-        heap_free(enum_media_types);
+        free(enum_media_types);
     return refcount;
 }
 
@@ -904,7 +903,7 @@ static HRESULT WINAPI enum_media_types_Clone(IEnumMediaTypes *iface, IEnumMediaT
 
     TRACE("iface %p, out %p.\n", iface, out);
 
-    if (!(object = heap_alloc(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IEnumMediaTypes_iface.lpVtbl = &enum_media_types_vtbl;
@@ -1121,7 +1120,7 @@ static HRESULT WINAPI audio_sink_EnumMediaTypes(IPin *iface, IEnumMediaTypes **e
     if (!enum_media_types)
         return E_POINTER;
 
-    if (!(object = heap_alloc(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IEnumMediaTypes_iface.lpVtbl = &enum_media_types_vtbl;
@@ -1394,8 +1393,7 @@ HRESULT audio_stream_create(IUnknown *outer, void **out)
     if (outer)
         return CLASS_E_NOAGGREGATION;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IAMMediaStream_iface.lpVtbl = &audio_IAMMediaStream_vtbl;

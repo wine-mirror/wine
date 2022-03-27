@@ -229,7 +229,7 @@ static ULONG WINAPI ddraw_IAMMediaStream_Release(IAMMediaStream *iface)
         DeleteCriticalSection(&stream->cs);
         if (stream->ddraw)
             IDirectDraw_Release(stream->ddraw);
-        HeapFree(GetProcessHeap(), 0, stream);
+        free(stream);
     }
 
     return ref;
@@ -815,7 +815,7 @@ static ULONG WINAPI enum_media_types_Release(IEnumMediaTypes *iface)
     ULONG refcount = InterlockedDecrement(&enum_media_types->refcount);
     TRACE("%p decreasing refcount to %lu.\n", enum_media_types, refcount);
     if (!refcount)
-        heap_free(enum_media_types);
+        free(enum_media_types);
     return refcount;
 }
 
@@ -873,7 +873,7 @@ static HRESULT WINAPI enum_media_types_Clone(IEnumMediaTypes *iface, IEnumMediaT
 
     TRACE("iface %p, out %p.\n", iface, out);
 
-    if (!(object = heap_alloc(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IEnumMediaTypes_iface.lpVtbl = &enum_media_types_vtbl;
@@ -1148,7 +1148,7 @@ static HRESULT WINAPI ddraw_sink_EnumMediaTypes(IPin *iface, IEnumMediaTypes **e
     if (!enum_media_types)
         return E_POINTER;
 
-    if (!(object = heap_alloc(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IEnumMediaTypes_iface.lpVtbl = &enum_media_types_vtbl;
@@ -1460,8 +1460,7 @@ HRESULT ddraw_stream_create(IUnknown *outer, void **out)
     if (outer)
         return CLASS_E_NOAGGREGATION;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IAMMediaStream_iface.lpVtbl = &ddraw_IAMMediaStream_vtbl;
@@ -1539,7 +1538,7 @@ static ULONG WINAPI ddraw_sample_Release(IDirectDrawStreamSample *iface)
 
         if (sample->surface)
             IDirectDrawSurface_Release(sample->surface);
-        HeapFree(GetProcessHeap(), 0, sample);
+        free(sample);
     }
 
     return ref;
@@ -1736,8 +1735,7 @@ static HRESULT ddrawstreamsample_create(struct ddraw_stream *parent, IDirectDraw
 
     TRACE("(%p)\n", ddraw_stream_sample);
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
-    if (!object)
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDirectDrawStreamSample_iface.lpVtbl = &DirectDrawStreamSample_Vtbl;

@@ -100,7 +100,7 @@ static ULONG WINAPI multimedia_stream_Release(IAMMultiMediaStream *iface)
             IMediaControl_Release(This->media_control);
         if (This->graph)
             IGraphBuilder_Release(This->graph);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -562,7 +562,7 @@ HRESULT multimedia_stream_create(IUnknown *outer, void **out)
     if (outer)
         return CLASS_E_NOAGGREGATION;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IAMMultiMediaStream_iface.lpVtbl = &multimedia_stream_vtbl;
@@ -572,7 +572,7 @@ HRESULT multimedia_stream_create(IUnknown *outer, void **out)
             CLSCTX_INPROC_SERVER, &IID_IMediaStreamFilter, (void **)&object->filter)))
     {
         ERR("Failed to create stream filter, hr %#lx.\n", hr);
-        heap_free(object);
+        free(object);
         return hr;
     }
 

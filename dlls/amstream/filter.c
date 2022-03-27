@@ -76,8 +76,8 @@ static ULONG WINAPI enum_pins_Release(IEnumPins *iface)
     {
         for (i = 0; i < enum_pins->count; ++i)
             IPin_Release(enum_pins->pins[i]);
-        heap_free(enum_pins->pins);
-        heap_free(enum_pins);
+        free(enum_pins->pins);
+        free(enum_pins);
     }
     return refcount;
 }
@@ -131,16 +131,16 @@ static HRESULT WINAPI enum_pins_Clone(IEnumPins *iface, IEnumPins **out)
 
     TRACE("iface %p, out %p.\n", iface, out);
 
-    if (!(object = heap_alloc(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IEnumPins_iface.lpVtbl = &enum_pins_vtbl;
     object->refcount = 1;
     object->count = enum_pins->count;
     object->index = enum_pins->index;
-    if (!(object->pins = heap_alloc(enum_pins->count * sizeof(*object->pins))))
+    if (!(object->pins = malloc(enum_pins->count * sizeof(*object->pins))))
     {
-        heap_free(object);
+        free(object);
         return E_OUTOFMEMORY;
     }
     for (i = 0; i < enum_pins->count; ++i)
@@ -251,11 +251,11 @@ static ULONG WINAPI filter_Release(IMediaStreamFilter *iface)
             IAMMediaStream_JoinFilter(filter->streams[i], NULL);
             IAMMediaStream_Release(filter->streams[i]);
         }
-        heap_free(filter->streams);
+        free(filter->streams);
         if (filter->clock)
             IReferenceClock_Release(filter->clock);
         DeleteCriticalSection(&filter->cs);
-        heap_free(filter);
+        free(filter);
     }
 
     return refcount;
@@ -424,7 +424,7 @@ static HRESULT WINAPI filter_EnumPins(IMediaStreamFilter *iface, IEnumPins **enu
     if (!enum_pins)
         return E_POINTER;
 
-    if (!(object = heap_alloc(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     EnterCriticalSection(&filter->cs);
@@ -433,9 +433,9 @@ static HRESULT WINAPI filter_EnumPins(IMediaStreamFilter *iface, IEnumPins **enu
     object->refcount = 1;
     object->count = filter->nb_streams;
     object->index = 0;
-    if (!(object->pins = heap_alloc(filter->nb_streams * sizeof(*object->pins))))
+    if (!(object->pins = malloc(filter->nb_streams * sizeof(*object->pins))))
     {
-        heap_free(object);
+        free(object);
         LeaveCriticalSection(&filter->cs);
         return E_OUTOFMEMORY;
     }
@@ -543,7 +543,7 @@ static HRESULT WINAPI filter_AddMediaStream(IMediaStreamFilter *iface, IAMMediaS
 
     TRACE("(%p)->(%p)\n", iface, pAMMediaStream);
 
-    streams = CoTaskMemRealloc(This->streams, (This->nb_streams + 1) * sizeof(IAMMediaStream*));
+    streams = realloc(This->streams, (This->nb_streams + 1) * sizeof(*streams));
     if (!streams)
         return E_OUTOFMEMORY;
     This->streams = streams;
@@ -1092,7 +1092,7 @@ HRESULT filter_create(IUnknown *outer, void **out)
     if (outer)
         return CLASS_E_NOAGGREGATION;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IMediaStreamFilter_iface.lpVtbl = &filter_vtbl;
