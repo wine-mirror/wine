@@ -903,7 +903,8 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_number( val, type, buffer, len );
 
     case LOCALE_SLOCALIZEDDISPLAYNAME:
-        return -1;
+        /* FIXME: localization */
+        return locale_return_string( locale->sengdisplayname, type, buffer, len );
 
     case LOCALE_SABBREVLANGNAME:
         return locale_return_string( locale->sabbrevlangname, type, buffer, len );
@@ -1161,10 +1162,10 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return -1;
 
     case LOCALE_SENGLISHDISPLAYNAME:
-        return -1;
+        return locale_return_string( locale->sengdisplayname, type, buffer, len );
 
     case LOCALE_SNATIVEDISPLAYNAME:
-        return -1;
+        return locale_return_string( locale->snativedisplayname, type, buffer, len );
 
     case LOCALE_INEGATIVEPERCENT:
         return -1;
