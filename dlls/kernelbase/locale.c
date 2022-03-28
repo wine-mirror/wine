@@ -825,6 +825,405 @@ static const NLS_LOCALE_DATA *get_locale_by_id( LCID *lcid, DWORD flags )
 }
 
 
+static int locale_return_data( const WCHAR *data, int datalen, LCTYPE type, WCHAR *buffer, int len )
+{
+    if (type & LOCALE_RETURN_NUMBER)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+
+    if (!len) return datalen;
+    if (datalen > len)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+    memcpy( buffer, data, datalen * sizeof(WCHAR) );
+    return datalen;
+}
+
+
+static int locale_return_string( DWORD pos, LCTYPE type, WCHAR *buffer, int len )
+{
+    return locale_return_data( locale_strings + pos + 1, locale_strings[pos] + 1, type, buffer, len );
+}
+
+
+/* get locale information from the locale.nls file */
+static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE type,
+                            WCHAR *buffer, int len )
+{
+    if (locale != user_locale) type |= LOCALE_NOUSEROVERRIDE;
+
+    switch (LOWORD(type))
+    {
+    case LOCALE_ILANGUAGE:
+        return -1;
+
+    case LOCALE_SLOCALIZEDDISPLAYNAME:
+        return -1;
+
+    case LOCALE_SABBREVLANGNAME:
+        return -1;
+
+    case LOCALE_SNATIVELANGNAME:
+        return -1;
+
+    case LOCALE_ICOUNTRY:
+        return -1;
+
+    case LOCALE_SLOCALIZEDCOUNTRYNAME:
+        return -1;
+
+    case LOCALE_SABBREVCTRYNAME:
+        return -1;
+
+    case LOCALE_SNATIVECTRYNAME:
+        return -1;
+
+    case LOCALE_IDEFAULTLANGUAGE:
+        return -1;
+
+    case LOCALE_IDEFAULTCOUNTRY:
+        return -1;
+
+    case LOCALE_IDEFAULTCODEPAGE:
+        return -1;
+
+    case LOCALE_SLIST:
+        return -1;
+
+    case LOCALE_IMEASURE:
+        return -1;
+
+    case LOCALE_SDECIMAL:
+        return -1;
+
+    case LOCALE_STHOUSAND:
+        return -1;
+
+    case LOCALE_SGROUPING:
+        return -1;
+
+    case LOCALE_IDIGITS:
+        return -1;
+
+    case LOCALE_ILZERO:
+        return -1;
+
+    case LOCALE_SNATIVEDIGITS:
+        return -1;
+
+    case LOCALE_SCURRENCY:
+        return -1;
+
+    case LOCALE_SINTLSYMBOL:
+        return -1;
+
+    case LOCALE_SMONDECIMALSEP:
+        return -1;
+
+    case LOCALE_SMONTHOUSANDSEP:
+        return -1;
+
+    case LOCALE_SMONGROUPING:
+        return -1;
+
+    case LOCALE_ICURRDIGITS:
+    case LOCALE_IINTLCURRDIGITS:
+        return -1;
+
+    case LOCALE_ICURRENCY:
+        return -1;
+
+    case LOCALE_INEGCURR:
+        return -1;
+
+    case LOCALE_SDATE:
+        return -1;
+
+    case LOCALE_STIME:
+        return -1;
+
+    case LOCALE_SSHORTDATE:
+        return -1;
+
+    case LOCALE_SLONGDATE:
+        return -1;
+
+    case LOCALE_IDATE:
+        return -1;
+
+    case LOCALE_ILDATE:
+        return -1;
+
+    case LOCALE_ITIME:
+        return -1;
+
+    case LOCALE_ICENTURY:
+        return -1;
+
+    case LOCALE_ITLZERO:
+        return -1;
+
+    case LOCALE_IDAYLZERO:
+        return -1;
+
+    case LOCALE_IMONLZERO:
+        return -1;
+
+    case LOCALE_S1159:
+        return -1;
+
+    case LOCALE_S2359:
+        return -1;
+
+    case LOCALE_SDAYNAME1:
+    case LOCALE_SDAYNAME2:
+    case LOCALE_SDAYNAME3:
+    case LOCALE_SDAYNAME4:
+    case LOCALE_SDAYNAME5:
+    case LOCALE_SDAYNAME6:
+    case LOCALE_SDAYNAME7:
+        return -1;
+
+    case LOCALE_SABBREVDAYNAME1:
+    case LOCALE_SABBREVDAYNAME2:
+    case LOCALE_SABBREVDAYNAME3:
+    case LOCALE_SABBREVDAYNAME4:
+    case LOCALE_SABBREVDAYNAME5:
+    case LOCALE_SABBREVDAYNAME6:
+    case LOCALE_SABBREVDAYNAME7:
+        return -1;
+
+    case LOCALE_SMONTHNAME1:
+    case LOCALE_SMONTHNAME2:
+    case LOCALE_SMONTHNAME3:
+    case LOCALE_SMONTHNAME4:
+    case LOCALE_SMONTHNAME5:
+    case LOCALE_SMONTHNAME6:
+    case LOCALE_SMONTHNAME7:
+    case LOCALE_SMONTHNAME8:
+    case LOCALE_SMONTHNAME9:
+    case LOCALE_SMONTHNAME10:
+    case LOCALE_SMONTHNAME11:
+    case LOCALE_SMONTHNAME12:
+        return -1;
+
+    case LOCALE_SABBREVMONTHNAME1:
+    case LOCALE_SABBREVMONTHNAME2:
+    case LOCALE_SABBREVMONTHNAME3:
+    case LOCALE_SABBREVMONTHNAME4:
+    case LOCALE_SABBREVMONTHNAME5:
+    case LOCALE_SABBREVMONTHNAME6:
+    case LOCALE_SABBREVMONTHNAME7:
+    case LOCALE_SABBREVMONTHNAME8:
+    case LOCALE_SABBREVMONTHNAME9:
+    case LOCALE_SABBREVMONTHNAME10:
+    case LOCALE_SABBREVMONTHNAME11:
+    case LOCALE_SABBREVMONTHNAME12:
+        return -1;
+
+    case LOCALE_SPOSITIVESIGN:
+        return -1;
+
+    case LOCALE_SNEGATIVESIGN:
+        return -1;
+
+    case LOCALE_IPOSSIGNPOSN:
+        return -1;
+
+    case LOCALE_INEGSIGNPOSN:
+        return -1;
+
+    case LOCALE_IPOSSYMPRECEDES:
+        return -1;
+
+    case LOCALE_IPOSSEPBYSPACE:
+        return -1;
+
+    case LOCALE_INEGSYMPRECEDES:
+        return -1;
+
+    case LOCALE_INEGSEPBYSPACE:
+        return -1;
+
+    case LOCALE_FONTSIGNATURE:
+        return -1;
+
+    case LOCALE_SISO639LANGNAME:
+        return -1;
+
+    case LOCALE_SISO3166CTRYNAME:
+        return -1;
+
+    case LOCALE_IGEOID:
+        return -1;
+
+    case LOCALE_SNAME:
+        if (SORTIDFROMLCID(lcid))  /* custom sort locale */
+        {
+            const NLS_LOCALE_LCID_INDEX *entry = find_lcid_entry( lcid & ~0x80000000 );
+            if (entry) return locale_return_string( entry->name, type, buffer, len );
+        }
+        return locale_return_string( locale->sname, type, buffer, len );
+
+    case LOCALE_SDURATION:
+        return -1;
+
+    case LOCALE_SKEYBOARDSTOINSTALL:
+        return -1;
+
+    case LOCALE_SSHORTESTDAYNAME1:
+    case LOCALE_SSHORTESTDAYNAME2:
+    case LOCALE_SSHORTESTDAYNAME3:
+    case LOCALE_SSHORTESTDAYNAME4:
+    case LOCALE_SSHORTESTDAYNAME5:
+    case LOCALE_SSHORTESTDAYNAME6:
+    case LOCALE_SSHORTESTDAYNAME7:
+        return -1;
+
+    case LOCALE_SISO639LANGNAME2:
+        return -1;
+
+    case LOCALE_SISO3166CTRYNAME2:
+        return -1;
+
+    case LOCALE_SNAN:
+        return -1;
+
+    case LOCALE_SPOSINFINITY:
+        return -1;
+
+    case LOCALE_SNEGINFINITY:
+        return -1;
+
+    case LOCALE_SSCRIPTS:
+        return -1;
+
+    case LOCALE_SPARENT:
+        return -1;
+
+    case LOCALE_SCONSOLEFALLBACKNAME:
+        return -1;
+
+    case LOCALE_SLOCALIZEDLANGUAGENAME:
+        return -1;
+
+    case LOCALE_IREADINGLAYOUT:
+        return -1;
+
+    case LOCALE_INEUTRAL:
+        return -1;
+
+    case LOCALE_SENGLISHDISPLAYNAME:
+        return -1;
+
+    case LOCALE_SNATIVEDISPLAYNAME:
+        return -1;
+
+    case LOCALE_INEGATIVEPERCENT:
+        return -1;
+
+    case LOCALE_IPOSITIVEPERCENT:
+        return -1;
+
+    case LOCALE_SPERCENT:
+        return -1;
+
+    case LOCALE_SPERMILLE:
+        return -1;
+
+    case LOCALE_SMONTHDAY:
+        return -1;
+
+    case LOCALE_SSHORTTIME:
+        return -1;
+
+    case LOCALE_SOPENTYPELANGUAGETAG:
+        return -1;
+
+    case LOCALE_SSORTLOCALE:
+        return -1;
+
+    case LOCALE_SRELATIVELONGDATE:
+        return -1;
+
+    case 0x007d: /* undocumented */
+        return -1;
+
+    case LOCALE_SSHORTESTAM:
+        return -1;
+
+    case LOCALE_SSHORTESTPM:
+        return -1;
+
+    case LOCALE_SENGLANGUAGE:
+        return -1;
+
+    case LOCALE_SENGCOUNTRY:
+        return -1;
+
+    case LOCALE_STIMEFORMAT:
+        return -1;
+
+    case LOCALE_IDEFAULTANSICODEPAGE:
+        return -1;
+
+    case LOCALE_ITIMEMARKPOSN:
+        return -1;
+
+    case LOCALE_SYEARMONTH:
+        return -1;
+
+    case LOCALE_SENGCURRNAME:
+        return -1;
+
+    case LOCALE_SNATIVECURRNAME:
+        return -1;
+
+    case LOCALE_ICALENDARTYPE:
+        return -1;
+
+    case LOCALE_IPAPERSIZE:
+        return -1;
+
+    case LOCALE_IOPTIONALCALENDAR:
+        return -1;
+
+    case LOCALE_IFIRSTDAYOFWEEK:
+        return -1;
+
+    case LOCALE_IFIRSTWEEKOFYEAR:
+        return -1;
+
+    case LOCALE_SMONTHNAME13:
+        return -1;
+
+    case LOCALE_SABBREVMONTHNAME13:
+        return -1;
+
+    case LOCALE_INEGNUMBER:
+        return -1;
+
+    case LOCALE_IDEFAULTMACCODEPAGE:
+        return -1;
+
+    case LOCALE_IDEFAULTEBCDICCODEPAGE:
+        return -1;
+
+    case LOCALE_SSORTNAME:
+        return -1;
+
+    case LOCALE_IDIGITSUBSTITUTION:
+        return -1;
+    }
+    SetLastError( ERROR_INVALID_FLAGS );
+    return 0;
+}
+
+
 /***********************************************************************
  *		init_locale
  */
@@ -4457,6 +4856,7 @@ INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoA( LCID lcid, LCTYPE lctype, char *buf
  */
 INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoW( LCID lcid, LCTYPE lctype, WCHAR *buffer, INT len )
 {
+    const NLS_LOCALE_DATA *locale;
     HRSRC hrsrc;
     HGLOBAL hmem;
     INT ret;
@@ -4469,6 +4869,14 @@ INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoW( LCID lcid, LCTYPE lctype, WCHAR *bu
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
+    if (!(locale = get_locale_by_id( &lcid, 0 )))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    ret = get_locale_info( locale, lcid, lctype, buffer, len );
+    if (ret != -1) return ret;
+
     if (lctype & LOCALE_RETURN_GENITIVE_NAMES && !is_genitive_name_supported( lctype ))
     {
         SetLastError( ERROR_INVALID_FLAGS );
@@ -4591,27 +4999,30 @@ INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoW( LCID lcid, LCTYPE lctype, WCHAR *bu
 /******************************************************************************
  *	GetLocaleInfoEx   (kernelbase.@)
  */
-INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoEx( const WCHAR *locale, LCTYPE info, WCHAR *buffer, INT len )
+INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoEx( const WCHAR *name, LCTYPE info, WCHAR *buffer, INT len )
 {
-    LCID lcid = LocaleNameToLCID( locale, 0 );
+    LCID lcid;
+    int ret;
+    const NLS_LOCALE_DATA *locale = get_locale_by_name( name, &lcid );
 
-    TRACE( "%s lcid=0x%lx 0x%lx\n", debugstr_w(locale), lcid, info );
+    if (!locale)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    ret = get_locale_info( locale, lcid, info, buffer, len );
+    if (ret != -1) return ret;
 
+    TRACE( "%s 0x%lx\n", debugstr_w(name), info );
+
+    lcid = LocaleNameToLCID( name, 0 );
     if (!lcid) return 0;
 
     /* special handling for neutral locale names */
-    if (locale && lstrlenW( locale ) == 2)
+    if (name && lstrlenW( name ) == 2)
     {
         switch (LOWORD( info ))
         {
-        case LOCALE_SNAME:
-            if (len && len < 3)
-            {
-                SetLastError( ERROR_INSUFFICIENT_BUFFER );
-                return 0;
-            }
-            if (len) lstrcpyW( buffer, locale );
-            return 3;
         case LOCALE_SPARENT:
             if (len) buffer[0] = 0;
             return 1;
