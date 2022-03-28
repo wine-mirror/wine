@@ -240,6 +240,17 @@ static void test_HeapCreate(void)
 }
 
 
+struct mem_entry
+{
+    UINT_PTR flags;
+    void *ptr;
+};
+
+static struct mem_entry *mem_entry_from_HANDLE( HLOCAL handle )
+{
+    return CONTAINING_RECORD( handle, struct mem_entry, ptr );
+}
+
 static void test_GlobalAlloc(void)
 {
     static const UINT flags_tests[] =
@@ -257,11 +268,12 @@ static void test_GlobalAlloc(void)
     static const SIZE_T buffer_size = ARRAY_SIZE(zero_buffer);
     const HGLOBAL invalid_mem = LongToHandle( 0xdeadbee0 + sizeof(void *) );
     void *const invalid_ptr = LongToHandle( 0xdeadbee0 );
+    struct mem_entry *entry;
     HGLOBAL globals[0x10000];
+    SIZE_T size, alloc_size;
     HGLOBAL mem, tmp_mem;
     BYTE *ptr, *tmp_ptr;
     UINT i, flags;
-    SIZE_T size;
     BOOL ret;
 
     mem = GlobalFree( 0 );
@@ -318,6 +330,135 @@ static void test_GlobalAlloc(void)
     ok( !tmp_mem, "GlobalFree failed, error %lu\n", GetLastError() );
     size = GlobalSize( mem );
     ok( size == 0, "GlobalSize returned %Iu\n", size );
+
+    mem = GlobalAlloc( GMEM_MOVEABLE | GMEM_DISCARDABLE, 0 );
+    ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+    entry = mem_entry_from_HANDLE( mem );
+    size = GlobalSize( mem );
+    ok( size == 0, "GlobalSize returned %Iu\n", size );
+    ret = HeapValidate( GetProcessHeap(), 0, entry );
+    ok( !ret, "HeapValidate succeeded\n" );
+    todo_wine
+    ok( entry->flags == 0xf, "got unexpected flags %#Ix\n", entry->flags );
+    ok( !entry->ptr, "got unexpected ptr %p\n", entry->ptr );
+    mem = GlobalFree( mem );
+    ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
+
+    mem = GlobalAlloc( GMEM_MOVEABLE, 0 );
+    ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+    entry = mem_entry_from_HANDLE( mem );
+    size = GlobalSize( mem );
+    ok( size == 0, "GlobalSize returned %Iu\n", size );
+    ret = HeapValidate( GetProcessHeap(), 0, entry );
+    ok( !ret, "HeapValidate succeeded\n" );
+    todo_wine
+    ok( entry->flags == 0xb, "got unexpected flags %#Ix\n", entry->flags );
+    ok( !entry->ptr, "got unexpected ptr %p\n", entry->ptr );
+    mem = GlobalFree( mem );
+    ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
+
+    for (alloc_size = 1; alloc_size < 0x10000000; alloc_size <<= 1)
+    {
+        winetest_push_context( "size %#Ix", alloc_size );
+
+        mem = GlobalAlloc( GMEM_FIXED, alloc_size );
+        ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+        ok( !((UINT_PTR)mem & sizeof(void *)), "got unexpected ptr align\n" );
+        ok( !((UINT_PTR)mem & (sizeof(void *) - 1)), "got unexpected ptr align\n" );
+        ret = HeapValidate( GetProcessHeap(), 0, mem );
+        ok( ret, "HeapValidate failed, error %lu\n", GetLastError() );
+        tmp_mem = GlobalFree( mem );
+        ok( !tmp_mem, "GlobalFree failed, error %lu\n", GetLastError() );
+
+        mem = GlobalAlloc( GMEM_MOVEABLE, alloc_size );
+        ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+        todo_wine
+        ok( ((UINT_PTR)mem & sizeof(void *)), "got unexpected entry align\n" );
+        todo_wine
+        ok( !((UINT_PTR)mem & (sizeof(void *) - 1)), "got unexpected entry align\n" );
+
+        entry = mem_entry_from_HANDLE( mem );
+        ret = HeapValidate( GetProcessHeap(), 0, entry );
+        ok( !ret, "HeapValidate succeeded\n" );
+        ret = HeapValidate( GetProcessHeap(), 0, entry->ptr );
+        todo_wine
+        ok( ret, "HeapValidate failed, error %lu\n", GetLastError() );
+        size = HeapSize( GetProcessHeap(), 0, entry->ptr );
+        todo_wine
+        ok( size == alloc_size, "HeapSize returned %Iu\n", size );
+
+        ptr = GlobalLock( mem );
+        ok( !!ptr, "GlobalLock failed, error %lu\n", GetLastError() );
+        ok( ptr != mem, "got unexpected ptr %p\n", ptr );
+        ok( ptr == entry->ptr, "got unexpected ptr %p\n", ptr );
+        ok( !((UINT_PTR)ptr & sizeof(void *)), "got unexpected ptr align\n" );
+        ok( !((UINT_PTR)ptr & (sizeof(void *) - 1)), "got unexpected ptr align\n" );
+        for (i = 1; i < 0xff; ++i)
+        {
+            todo_wine
+            ok( entry->flags == ((i<<16)|3), "got unexpected flags %#Ix\n", entry->flags );
+            ptr = GlobalLock( mem );
+            ok( !!ptr, "GlobalLock failed, error %lu\n", GetLastError() );
+        }
+        ptr = GlobalLock( mem );
+        ok( !!ptr, "GlobalLock failed, error %lu\n", GetLastError() );
+        todo_wine
+        ok( entry->flags == 0xff0003, "got unexpected flags %#Ix\n", entry->flags );
+        for (i = 1; i < 0xff; ++i)
+        {
+            ret = GlobalUnlock( mem );
+            ok( ret, "GlobalUnlock failed, error %lu\n", GetLastError() );
+        }
+        ret = GlobalUnlock( mem );
+        ok( !ret, "GlobalUnlock succeeded, error %lu\n", GetLastError() );
+        todo_wine
+        ok( entry->flags == 0x3, "got unexpected flags %#Ix\n", entry->flags );
+
+        tmp_mem = GlobalFree( mem );
+        ok( !tmp_mem, "GlobalFree failed, error %lu\n", GetLastError() );
+        ok( !!entry->flags, "got unexpected flags %#Ix\n", entry->flags );
+        todo_wine_if(sizeof(void *) == 4)
+        ok( !((UINT_PTR)entry->flags & sizeof(void *)), "got unexpected ptr align\n" );
+        todo_wine_if(sizeof(void *) == 4)
+        ok( !((UINT_PTR)entry->flags & (sizeof(void *) - 1)), "got unexpected ptr align\n" );
+        todo_wine
+        ok( !entry->ptr, "got unexpected ptr %p\n", entry->ptr );
+
+        mem = GlobalAlloc( GMEM_MOVEABLE | GMEM_DISCARDABLE, 0 );
+        ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+        entry = mem_entry_from_HANDLE( mem );
+        todo_wine
+        ok( entry->flags == 0xf, "got unexpected flags %#Ix\n", entry->flags );
+        ok( !entry->ptr, "got unexpected ptr %p\n", entry->ptr );
+        flags = GlobalFlags( mem );
+        ok( flags == (GMEM_DISCARDED | GMEM_DISCARDABLE), "GlobalFlags returned %#x, error %lu\n", flags, GetLastError() );
+        mem = GlobalFree( mem );
+        ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
+
+        mem = GlobalAlloc( GMEM_MOVEABLE | GMEM_DISCARDABLE, 1 );
+        ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+        entry = mem_entry_from_HANDLE( mem );
+        todo_wine
+        ok( entry->flags == 0x7, "got unexpected flags %#Ix\n", entry->flags );
+        ok( !!entry->ptr, "got unexpected ptr %p\n", entry->ptr );
+        flags = GlobalFlags( mem );
+        ok( flags == GMEM_DISCARDABLE, "GlobalFlags returned %#x, error %lu\n", flags, GetLastError() );
+        mem = GlobalFree( mem );
+        ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
+
+        mem = GlobalAlloc( GMEM_MOVEABLE | GMEM_DISCARDABLE | GMEM_DDESHARE, 1 );
+        ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+        entry = mem_entry_from_HANDLE( mem );
+        todo_wine
+        ok( entry->flags == 0x8007, "got unexpected flags %#Ix\n", entry->flags );
+        ok( !!entry->ptr, "got unexpected ptr %p\n", entry->ptr );
+        flags = GlobalFlags( mem );
+        ok( flags == (GMEM_DISCARDABLE | GMEM_DDESHARE), "GlobalFlags returned %#x, error %lu\n", flags, GetLastError() );
+        mem = GlobalFree( mem );
+        ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
+
+        winetest_pop_context();
+    }
 
     mem = GlobalAlloc( GMEM_MOVEABLE, 256 );
     ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
