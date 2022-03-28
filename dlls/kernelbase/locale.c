@@ -932,7 +932,8 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return -1;
 
     case LOCALE_IDEFAULTCODEPAGE:
-        return -1;
+        val = locale->idefaultcodepage == CP_UTF8 ? CP_OEMCP : locale->idefaultcodepage;
+        return locale_return_number( val, type, buffer, len );
 
     case LOCALE_SLIST:
         return -1;
@@ -1213,7 +1214,8 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return -1;
 
     case LOCALE_IDEFAULTANSICODEPAGE:
-        return -1;
+        val = locale->idefaultansicodepage == CP_UTF8 ? CP_ACP : locale->idefaultansicodepage;
+        return locale_return_number( val, type, buffer, len );
 
     case LOCALE_ITIMEMARKPOSN:
         return -1;
@@ -1252,10 +1254,11 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return -1;
 
     case LOCALE_IDEFAULTMACCODEPAGE:
-        return -1;
+        val = locale->idefaultmaccodepage == CP_UTF8 ? CP_MACCP : locale->idefaultmaccodepage;
+        return locale_return_number( val, type, buffer, len );
 
     case LOCALE_IDEFAULTEBCDICCODEPAGE:
-        return -1;
+        return locale_return_number( locale->idefaultebcdiccodepage, type, buffer, len );
 
     case LOCALE_SSORTNAME:
         return -1;
