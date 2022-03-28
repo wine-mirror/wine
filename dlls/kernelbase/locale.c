@@ -915,13 +915,14 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return -1;
 
     case LOCALE_SLOCALIZEDCOUNTRYNAME:
-        return -1;
+        /* FIXME: localization */
+        return locale_return_string( locale->sengcountry, type, buffer, len );
 
     case LOCALE_SABBREVCTRYNAME:
-        return -1;
+        return locale_return_string( locale->sabbrevctryname, type, buffer, len );
 
     case LOCALE_SNATIVECTRYNAME:
-        return -1;
+        return locale_return_string( locale->snativectryname, type, buffer, len );
 
     case LOCALE_IDEFAULTLANGUAGE:
         return locale_return_number( locale->idefaultlanguage, type, buffer, len );
@@ -1097,7 +1098,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_string( locale->siso639langname, type, buffer, len );
 
     case LOCALE_SISO3166CTRYNAME:
-        return -1;
+        return locale_return_string( locale->siso3166ctryname, type, buffer, len );
 
     case LOCALE_IGEOID:
         return -1;
@@ -1129,7 +1130,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_string( locale->siso639langname2, type, buffer, len );
 
     case LOCALE_SISO3166CTRYNAME2:
-        return -1;
+        return locale_return_string( locale->siso3166ctryname2, type, buffer, len );
 
     case LOCALE_SNAN:
         return -1;
@@ -1205,7 +1206,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_string( locale->senglanguage, type, buffer, len );
 
     case LOCALE_SENGCOUNTRY:
-        return -1;
+        return locale_return_string( locale->sengcountry, type, buffer, len );
 
     case LOCALE_STIMEFORMAT:
         return -1;

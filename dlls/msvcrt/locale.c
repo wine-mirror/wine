@@ -363,9 +363,6 @@ LCID locale_to_LCID(const char *locale, unsigned short *codepage, BOOL *sname)
             search.allow_sname = TRUE;
         }
 
-        if(!_stricmp(search.search_country, "China"))
-            strcpy(search.search_country, "People's Republic of China");
-
         EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), (LPSTR)RT_STRING,
                 (LPCSTR)LOCALE_ILANGUAGE,find_best_locale_proc,
                 (LONG_PTR)&search);
