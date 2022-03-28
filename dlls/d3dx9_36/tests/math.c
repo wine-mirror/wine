@@ -1848,7 +1848,7 @@ static void D3DXQuaternionTest(void)
     u.x = 91.0f; u.y = - 82.0f; u.z = 7.3f; u.w = -6.4f;
     D3DXQuaternionSquadSetup(&gotquat, &Nq, &Nq1, &r, &s, &t, &u);
     expectedquat.x = 7.121285f; expectedquat.y = 2.159964f; expectedquat.z = -3.855094f; expectedquat.w = 5.362844f;
-    expect_quaternion(&expectedquat, &gotquat, 2);
+    expect_quaternion(&expectedquat, &gotquat, 16);
     expectedquat.x = -1113.492920f; expectedquat.y = 82.679260f; expectedquat.z = -6.696645f; expectedquat.w = -4.090050f;
     expect_quaternion(&expectedquat, &Nq, 4);
     expectedquat.x = -1111.0f; expectedquat.y = 111.0f; expectedquat.z = -11.0f; expectedquat.w = 1.0f;
