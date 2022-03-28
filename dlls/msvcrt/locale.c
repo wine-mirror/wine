@@ -525,8 +525,13 @@ static BOOL update_threadlocinfo_category(LCID lcid, unsigned short cp,
     if(!locinfo->lc_category[category].locale) {
         int len = 0;
 
-        len += GetLocaleInfoA(lcid, LOCALE_SENGLANGUAGE
-                |LOCALE_NOUSEROVERRIDE, buf, 256);
+        if (lcid == MAKELANGID( LANG_NORWEGIAN, SUBLANG_NORWEGIAN_NYNORSK ))
+        {
+            /* locale.nls contains "Norwegian Nynorsk" instead for LOCALE_SENGLANGUAGE */
+            strcpy( buf, "Norwegian-Nynorsk" );
+            len = strlen( buf ) + 1;
+        }
+        else len += GetLocaleInfoA(lcid, LOCALE_SENGLANGUAGE|LOCALE_NOUSEROVERRIDE, buf, 256);
         buf[len-1] = '_';
         len += GetLocaleInfoA(lcid, LOCALE_SENGCOUNTRY
                 |LOCALE_NOUSEROVERRIDE, &buf[len], 256-len);
