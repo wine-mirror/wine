@@ -1064,7 +1064,9 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
     case LOCALE_SMONTHNAME10:
     case LOCALE_SMONTHNAME11:
     case LOCALE_SMONTHNAME12:
-        return -1;
+        return locale_return_strarray( ((type & LOCALE_RETURN_GENITIVE_NAMES) && locale->sgenitivemonth) ?
+                                       locale->sgenitivemonth : locale->smonthname,
+                                       type - LOCALE_SMONTHNAME1, type, buffer, len );
 
     case LOCALE_SABBREVMONTHNAME1:
     case LOCALE_SABBREVMONTHNAME2:
@@ -1078,7 +1080,9 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
     case LOCALE_SABBREVMONTHNAME10:
     case LOCALE_SABBREVMONTHNAME11:
     case LOCALE_SABBREVMONTHNAME12:
-        return -1;
+        return locale_return_strarray( ((type & LOCALE_RETURN_GENITIVE_NAMES) && locale->sabbrevgenitivemonth) ?
+                                       locale->sabbrevgenitivemonth : locale->sabbrevmonthname,
+                                       type - LOCALE_SABBREVMONTHNAME1, type, buffer, len );
 
     case LOCALE_SPOSITIVESIGN:
         return -1;
@@ -1257,10 +1261,14 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return -1;
 
     case LOCALE_SMONTHNAME13:
-        return -1;
+        return locale_return_strarray( ((type & LOCALE_RETURN_GENITIVE_NAMES) && locale->sgenitivemonth) ?
+                                       locale->sgenitivemonth : locale->smonthname,
+                                       12, type, buffer, len );
 
     case LOCALE_SABBREVMONTHNAME13:
-        return -1;
+        return locale_return_strarray( ((type & LOCALE_RETURN_GENITIVE_NAMES) && locale->sabbrevgenitivemonth) ?
+                                       locale->sabbrevgenitivemonth : locale->sabbrevmonthname,
+                                       12, type, buffer, len );
 
     case LOCALE_INEGNUMBER:
         return -1;
@@ -1514,30 +1522,6 @@ static UINT get_lcid_codepage( LCID lcid, ULONG flags )
         GetLocaleInfoW( lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
                         (WCHAR *)&ret, sizeof(ret)/sizeof(WCHAR) );
     return ret;
-}
-
-
-static BOOL is_genitive_name_supported( LCTYPE lctype )
-{
-    switch (LOWORD(lctype))
-    {
-    case LOCALE_SMONTHNAME1:
-    case LOCALE_SMONTHNAME2:
-    case LOCALE_SMONTHNAME3:
-    case LOCALE_SMONTHNAME4:
-    case LOCALE_SMONTHNAME5:
-    case LOCALE_SMONTHNAME6:
-    case LOCALE_SMONTHNAME7:
-    case LOCALE_SMONTHNAME8:
-    case LOCALE_SMONTHNAME9:
-    case LOCALE_SMONTHNAME10:
-    case LOCALE_SMONTHNAME11:
-    case LOCALE_SMONTHNAME12:
-    case LOCALE_SMONTHNAME13:
-         return TRUE;
-    default:
-         return FALSE;
-    }
 }
 
 
@@ -4936,12 +4920,6 @@ INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoW( LCID lcid, LCTYPE lctype, WCHAR *bu
     ret = get_locale_info( locale, lcid, lctype, buffer, len );
     if (ret != -1) return ret;
 
-    if (lctype & LOCALE_RETURN_GENITIVE_NAMES && !is_genitive_name_supported( lctype ))
-    {
-        SetLastError( ERROR_INVALID_FLAGS );
-        return 0;
-    }
-
     if (!len) buffer = NULL;
 
     lcid = ConvertDefaultLocale( lcid );
@@ -5000,18 +4978,6 @@ INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoW( LCID lcid, LCTYPE lctype, WCHAR *bu
     for (i = 0; i < (lctype & 0x0f); i++) p += *p + 1;
 
     if (lcflags & LOCALE_RETURN_NUMBER) ret = sizeof(UINT) / sizeof(WCHAR);
-    else if (is_genitive_name_supported( lctype ) && *p)
-    {
-        /* genitive form is stored after a null separator from a nominative */
-        for (i = 1; i <= *p; i++) if (!p[i]) break;
-
-        if (i <= *p && (lcflags & LOCALE_RETURN_GENITIVE_NAMES))
-        {
-            ret = *p - i + 1;
-            p += i;
-        }
-        else ret = i;
-    }
     else
         ret = (lctype == LOCALE_FONTSIGNATURE) ? *p : *p + 1;
 
