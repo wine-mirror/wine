@@ -88,7 +88,7 @@ static void test_heap(void)
     UINT    flags;
     HGLOBAL gbl;
     HGLOBAL hsecond;
-    SIZE_T  size, size2;
+    SIZE_T size;
     const SIZE_T max_size = 1024, init_size = 10;
 
     /* Heap*() functions */
@@ -133,205 +133,6 @@ static void test_heap(void)
     ok( (ULONG_PTR)mem % 16 == 0 || broken((ULONG_PTR)mem % 16) /* win9x */,
         "512K block not 16-byte aligned\n" );
     HeapFree(GetProcessHeap(), 0, mem);
-
-    /* Global*() functions */
-    gbl = GlobalAlloc(GMEM_MOVEABLE, 0);
-    ok(gbl != NULL, "global memory not allocated for size 0\n");
-
-    gbl = GlobalReAlloc(gbl, 10, GMEM_MOVEABLE);
-    ok(gbl != NULL, "Can't realloc global memory\n");
-    size = GlobalSize(gbl);
-    ok(size >= 10 && size <= 16, "Memory not resized to size 10, instead size=%Id\n", size);
-
-    gbl = GlobalReAlloc(gbl, 0, GMEM_MOVEABLE);
-    ok(gbl != NULL, "GlobalReAlloc should not fail on size 0\n");
-
-    size = GlobalSize(gbl);
-    ok(size == 0, "Memory not resized to size 0, instead size=%Id\n", size);
-    ok(GlobalFree(gbl) == NULL, "Memory not freed\n");
-    size = GlobalSize(gbl);
-    ok(size == 0, "Memory should have been freed, size=%Id\n", size);
-
-    gbl = GlobalReAlloc(0, 10, GMEM_MOVEABLE);
-    ok(gbl == NULL, "global realloc allocated memory\n");
-
-    /* GlobalLock / GlobalUnlock with a valid handle */
-    gbl = GlobalAlloc(GMEM_MOVEABLE, 256);
-
-    SetLastError( 0xdeadbeef );
-    mem = GlobalLock(gbl);      /* #1 */
-    ok(mem != NULL, "returned %p with %ld (expected '!= NULL')\n", mem, GetLastError());
-    SetLastError( 0xdeadbeef );
-    flags = GlobalFlags(gbl);
-    ok( flags == 1, "returned 0x%04x with %ld (expected '0x0001')\n",
-        flags, GetLastError());
-
-    SetLastError( 0xdeadbeef );
-    msecond = GlobalLock(gbl);   /* #2 */
-    ok( msecond == mem, "returned %p with %ld (expected '%p')\n",
-        msecond, GetLastError(), mem);
-    SetLastError( 0xdeadbeef );
-    flags = GlobalFlags(gbl);
-    ok( flags == 2, "returned 0x%04x with %ld (expected '0x0002')\n",
-        flags, GetLastError());
-    SetLastError( 0xdeadbeef );
-
-    SetLastError( 0xdeadbeef );
-    res = GlobalUnlock(gbl);    /* #1 */
-    ok(res, "returned %ld with %ld (expected '!= 0')\n", res, GetLastError());
-    SetLastError( 0xdeadbeef );
-    flags = GlobalFlags(gbl);
-    ok( flags , "returned 0x%04x with %ld (expected '!= 0')\n",
-        flags, GetLastError());
-
-    SetLastError( 0xdeadbeef );
-    res = GlobalUnlock(gbl);    /* #0 */
-    /* NT: ERROR_SUCCESS (documented on MSDN), 9x: untouched */
-    ok( !res && ((GetLastError() == ERROR_SUCCESS) || (GetLastError() == 0xdeadbeef)),
-        "returned %ld with %ld (expected '0' with: ERROR_SUCCESS or "
-        "0xdeadbeef)\n",
-        res, GetLastError() );
-    SetLastError( 0xdeadbeef );
-    flags = GlobalFlags(gbl);
-    ok( !flags , "returned 0x%04x with %ld (expected '0')\n",
-        flags, GetLastError());
-
-    /* Unlock an already unlocked Handle */
-    SetLastError( 0xdeadbeef );
-    res = GlobalUnlock(gbl);
-    /* NT: ERROR_NOT_LOCKED,  9x: untouched */
-    ok( !res && ((GetLastError() == ERROR_NOT_LOCKED) || (GetLastError() == 0xdeadbeef)),
-        "returned %ld with %ld (expected '0' with: ERROR_NOT_LOCKED or "
-        "0xdeadbeef)\n",
-        res, GetLastError() );
-
-    GlobalFree(gbl);
-    /* invalid handles are caught in windows: */
-    SetLastError( 0xdeadbeef );
-    hsecond = GlobalFree(gbl);      /* invalid handle: free memory twice */
-    ok( (hsecond == gbl) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %p with 0x%08lx (expected %p with ERROR_INVALID_HANDLE)\n",
-        hsecond, GetLastError(), gbl);
-    SetLastError( 0xdeadbeef );
-    hsecond = GlobalFree(LongToHandle(0xdeadbeef)); /* bogus handle */
-    ok( (hsecond == LongToHandle(0xdeadbeef)) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %p with 0x%08lx (expected %p with ERROR_INVALID_HANDLE)\n",
-        hsecond, GetLastError(), LongToHandle(0xdeadbeef));
-    SetLastError( 0xdeadbeef );
-    hsecond = GlobalFree(LongToHandle(0xdeadbee0)); /* bogus pointer */
-    ok( (hsecond == LongToHandle(0xdeadbee0)) &&
-        ((GetLastError() == ERROR_INVALID_HANDLE) || broken(GetLastError() == ERROR_NOACCESS) /* wvista+ */),
-        "returned %p with 0x%08lx (expected %p with ERROR_NOACCESS)\n",
-        hsecond, GetLastError(), LongToHandle(0xdeadbee0));
-
-    SetLastError( 0xdeadbeef );
-    flags = GlobalFlags(gbl);
-    ok( (flags == GMEM_INVALID_HANDLE) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned 0x%04x with 0x%08lx (expected GMEM_INVALID_HANDLE with "
-        "ERROR_INVALID_HANDLE)\n", flags, GetLastError());
-    SetLastError( 0xdeadbeef );
-    size = GlobalSize(gbl);
-    ok( (size == 0) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %Id with 0x%08lx (expected '0' with ERROR_INVALID_HANDLE)\n",
-        size, GetLastError());
-
-    SetLastError( 0xdeadbeef );
-    mem = GlobalLock(gbl);
-    ok( (mem == NULL) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %p with 0x%08lx (expected NULL with ERROR_INVALID_HANDLE)\n",
-        mem, GetLastError());
-
-    /* documented on MSDN: GlobalUnlock() return FALSE on failure.
-       Win9x and wine return FALSE with ERROR_INVALID_HANDLE, but on 
-       NT 3.51 and XPsp2, TRUE with ERROR_INVALID_HANDLE is returned.
-       The similar Test for LocalUnlock() works on all Systems */
-    SetLastError( 0xdeadbeef );
-    res = GlobalUnlock(gbl);
-    ok(GetLastError() == ERROR_INVALID_HANDLE,
-        "returned %ld with %ld (expected ERROR_INVALID_HANDLE)\n",
-        res, GetLastError());
-
-    gbl = GlobalAlloc(GMEM_DDESHARE, 100);
-
-    /* first free */
-    mem = GlobalFree(gbl);
-    ok(mem == NULL, "Expected NULL, got %p\n", mem);
-
-    /* invalid free */
-    if (sizeof(void *) != 8)  /* crashes on 64-bit */
-    {
-        SetLastError( 0xdeadbeef );
-        mem = GlobalFree(gbl);
-        ok(mem == gbl || broken(mem == NULL) /* nt4 */, "Expected gbl, got %p\n", mem);
-        if (mem == gbl)
-            ok(GetLastError() == ERROR_INVALID_HANDLE ||
-               GetLastError() == ERROR_INVALID_PARAMETER, /* win9x */
-               "Expected ERROR_INVALID_HANDLE or ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
-    }
-
-    /* GMEM_FIXED block expands in place only without flags */
-    for (size = 1; size <= max_size; size <<= 1) {
-        gbl = GlobalAlloc(GMEM_FIXED, init_size);
-        SetLastError( 0xdeadbeef );
-        hsecond = GlobalReAlloc(gbl, size + init_size, 0);
-        ok(hsecond == gbl || (hsecond == NULL && GetLastError() == ERROR_NOT_ENOUGH_MEMORY),
-           "got %p with %lx (expected %p or NULL) @%Id\n", hsecond, GetLastError(), gbl, size);
-        GlobalFree(gbl);
-    }
-
-    /* GMEM_FIXED block can be relocated with GMEM_MOVEABLE */
-    for (size = 1; size <= max_size; size <<= 1) {
-        gbl = GlobalAlloc(GMEM_FIXED, init_size);
-        SetLastError( 0xdeadbeef );
-        hsecond = GlobalReAlloc(gbl, size + init_size, GMEM_MOVEABLE);
-        ok(hsecond != NULL,
-           "got %p with %lx (expected non-NULL) @%Id\n", hsecond, GetLastError(), size);
-        mem = GlobalLock(hsecond);
-        ok(mem == hsecond, "got %p (expected %p) @%Id\n", mem, hsecond, size);
-        GlobalFree(hsecond);
-    }
-
-    gbl = GlobalAlloc(GMEM_DDESHARE, 100);
-
-    res = GlobalUnlock(gbl);
-    ok(res == 1 ||
-       broken(res == 0), /* win9x */
-       "Expected 1 or 0, got %ld\n", res);
-
-    res = GlobalUnlock(gbl);
-    ok(res == 1 ||
-       broken(res == 0), /* win9x */
-       "Expected 1 or 0, got %ld\n", res);
-
-    GlobalFree(gbl);
-
-    gbl = GlobalAlloc(GMEM_FIXED, 100);
-
-    SetLastError(0xdeadbeef);
-    res = GlobalUnlock(gbl);
-    ok(res == 1 ||
-       broken(res == 0), /* win9x */
-       "Expected 1 or 0, got %ld\n", res);
-    ok(GetLastError() == 0xdeadbeef, "got %ld\n", GetLastError());
-
-    GlobalFree(gbl);
-
-    /* GlobalSize on an invalid handle */
-    if (sizeof(void *) != 8)  /* crashes on 64-bit Vista */
-    {
-        SetLastError( 0xdeadbeef );
-        size = GlobalSize((HGLOBAL)0xc042);
-        ok(size == 0, "Expected 0, got %Id\n", size);
-        ok(GetLastError() == ERROR_INVALID_HANDLE ||
-           GetLastError() == ERROR_INVALID_PARAMETER, /* win9x */
-           "Expected ERROR_INVALID_HANDLE or ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
-    }
-
-    gbl = GlobalAlloc( GMEM_FIXED, 0 );
-    SetLastError(0xdeadbeef);
-    size = GlobalSize( gbl );
-    ok( size == 1, "wrong size %Iu\n", size );
-    GlobalFree( gbl );
 
     /* ####################################### */
     /* Local*() functions */
@@ -472,49 +273,6 @@ static void test_heap(void)
     ok( !size || broken(size == 1), /* vistau64 */
         "wrong size %Iu\n", size );
     LocalFree( gbl );
-
-    /* trying to lock empty memory should give an error */
-    gbl = GlobalAlloc(GMEM_MOVEABLE|GMEM_ZEROINIT,0);
-    ok(gbl != NULL, "returned NULL\n");
-    SetLastError( 0xdeadbeef );
-    mem = GlobalLock(gbl);
-    /* NT: ERROR_DISCARDED,  9x: untouched */
-    ok( (mem == NULL) && ((GetLastError() == ERROR_DISCARDED) || (GetLastError() == 0xdeadbeef)),
-        "returned %p with 0x%lx/%ld (expected 'NULL' with: ERROR_DISCARDED or "
-        "0xdeadbeef)\n",
-        mem, GetLastError(), GetLastError() );
-
-    GlobalFree(gbl);
-
-    /* trying to get size from data pointer (GMEM_MOVEABLE) */
-    gbl = GlobalAlloc(GMEM_MOVEABLE, 0x123);
-    ok(gbl != NULL, "returned NULL\n");
-    mem = GlobalLock(gbl);
-    ok(mem != NULL, "returned NULL.\n");
-    ok(gbl != mem, "unexpectedly equal.\n");
-
-    size = GlobalSize(gbl);
-    size2 = GlobalSize(mem);
-    ok(size == 0x123, "got %Iu\n", size);
-    ok(size2 == 0x123, "got %Iu\n", size2);
-
-    GlobalFree(gbl);
-
-    /* trying to get size from data pointer (GMEM_FIXED) */
-    gbl = GlobalAlloc(GMEM_FIXED, 0x123);
-    ok(gbl != NULL, "returned NULL\n");
-    mem = GlobalLock(gbl);
-    ok(mem != NULL, "returned NULL.\n");
-    ok(gbl == mem, "got %p, %p.\n", gbl, mem);
-
-    size = GlobalSize(gbl);
-    ok(size == 0x123, "got %Iu\n", size);
-
-    GlobalFree(gbl);
-
-    size = GlobalSize((void *)0xdeadbee0);
-    ok(size == 0, "got %Iu\n", size);
-
 }
 
 
@@ -629,82 +387,339 @@ static void test_HeapCreate(void)
 
 static void test_GlobalAlloc(void)
 {
-    ULONG memchunk;
-    HGLOBAL mem1,mem2,mem2a,mem2b;
-    UCHAR *mem2ptr;
-    UINT i;
-    BOOL error;
-    memchunk=100000;
+    static const UINT flags_tests[] =
+    {
+        GMEM_FIXED | GMEM_NOTIFY,
+        GMEM_FIXED | GMEM_DISCARDABLE,
+        GMEM_MOVEABLE | GMEM_NOTIFY,
+        GMEM_MOVEABLE | GMEM_DDESHARE,
+        GMEM_MOVEABLE | GMEM_NOT_BANKED,
+        GMEM_MOVEABLE | GMEM_NODISCARD,
+        GMEM_MOVEABLE | GMEM_DISCARDABLE,
+        GMEM_MOVEABLE | GMEM_DDESHARE | GMEM_DISCARDABLE | GMEM_LOWER | GMEM_NOCOMPACT | GMEM_NODISCARD | GMEM_NOT_BANKED | GMEM_NOTIFY,
+    };
+    static const char zero_buffer[100000] = {0};
+    static const SIZE_T buffer_size = ARRAY_SIZE(zero_buffer);
+    const HGLOBAL invalid_mem = LongToHandle( 0xdeadbee0 + sizeof(void *) );
+    void *const invalid_ptr = LongToHandle( 0xdeadbee0 );
+    HGLOBAL mem, tmp_mem;
+    BYTE *ptr, *tmp_ptr;
+    UINT i, flags;
+    SIZE_T size;
+    BOOL ret;
 
-    SetLastError(NO_ERROR);
-    /* Check that a normal alloc works */
-    mem1=GlobalAlloc(0,memchunk);
-    ok(mem1!=NULL,"GlobalAlloc failed\n");
-    if(mem1) {
-      ok(GlobalSize(mem1)>=memchunk, "GlobalAlloc should return a big enough memory block\n");
+    mem = GlobalFree( 0 );
+    ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
+    mem = GlobalReAlloc( 0, 10, GMEM_MOVEABLE );
+    ok( !mem, "GlobalReAlloc succeeded\n" );
+
+    mem = GlobalAlloc( GMEM_MOVEABLE, 0 );
+    ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+    mem = GlobalReAlloc( mem, 10, GMEM_MOVEABLE );
+    ok( !!mem, "GlobalReAlloc failed, error %lu\n", GetLastError() );
+    size = GlobalSize( mem );
+    ok( size >= 10 && size <= 16, "GlobalSize returned %Iu\n", size );
+    mem = GlobalReAlloc( mem, 0, GMEM_MOVEABLE );
+    ok( !!mem, "GlobalReAlloc failed, error %lu\n", GetLastError() );
+    size = GlobalSize( mem );
+    ok( size == 0, "GlobalSize returned %Iu\n", size );
+    mem = GlobalReAlloc( mem, 10, GMEM_MOVEABLE );
+    ok( !!mem, "GlobalReAlloc failed, error %lu\n", GetLastError() );
+    size = GlobalSize( mem );
+    ok( size >= 10 && size <= 16, "GlobalSize returned %Iu\n", size );
+    tmp_mem = GlobalFree( mem );
+    ok( !tmp_mem, "GlobalFree failed, error %lu\n", GetLastError() );
+    size = GlobalSize( mem );
+    ok( size == 0, "GlobalSize returned %Iu\n", size );
+
+    mem = GlobalAlloc( GMEM_MOVEABLE, 256 );
+    ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+    ptr = GlobalLock( mem );
+    ok( !!ptr, "GlobalLock failed, error %lu\n", GetLastError() );
+    ok( ptr != mem, "got unexpected ptr %p\n", ptr );
+    flags = GlobalFlags( mem );
+    ok( flags == 1, "GlobalFlags returned %#x, error %lu\n", flags, GetLastError() );
+    tmp_ptr = GlobalLock( mem );
+    ok( !!tmp_ptr, "GlobalLock failed, error %lu\n", GetLastError() );
+    ok( tmp_ptr == ptr, "got ptr %p, expected %p\n", tmp_ptr, ptr );
+    flags = GlobalFlags( mem );
+    ok( flags == 2, "GlobalFlags returned %#x, error %lu\n", flags, GetLastError() );
+    ret = GlobalUnlock( mem );
+    ok( ret, "GlobalUnlock failed, error %lu\n", GetLastError() );
+    flags = GlobalFlags( mem );
+    ok( flags == 1, "GlobalFlags returned %#x, error %lu\n", flags, GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = GlobalUnlock( mem );
+    ok( !ret, "GlobalUnlock succeeded\n" );
+    ok( GetLastError() == ERROR_SUCCESS, "got error %lu\n", GetLastError() );
+    flags = GlobalFlags( mem );
+    ok( !flags, "GlobalFlags returned %#x, error %lu\n", flags, GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = GlobalUnlock( mem );
+    ok( !ret, "GlobalUnlock succeeded\n" );
+    ok( GetLastError() == ERROR_NOT_LOCKED, "got error %lu\n", GetLastError() );
+    tmp_mem = GlobalFree( mem );
+    ok( !tmp_mem, "GlobalFree failed, error %lu\n", GetLastError() );
+
+    mem = GlobalAlloc( GMEM_DDESHARE, 100 );
+    ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+    tmp_mem = GlobalFree( mem );
+    ok( !tmp_mem, "GlobalFree failed, error %lu\n", GetLastError() );
+    if (sizeof(void *) != 8) /* crashes on 64-bit */
+    {
+        SetLastError( 0xdeadbeef );
+        tmp_mem = GlobalFree( mem );
+        ok( tmp_mem == mem, "GlobalFree succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        size = GlobalSize( (HGLOBAL)0xc042 );
+        ok( size == 0, "GlobalSize succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
     }
 
-    /* Check that a 'zeroing' alloc works */
-    mem2=GlobalAlloc(GMEM_ZEROINIT,memchunk);
-    ok(mem2!=NULL,"GlobalAlloc failed: error=%ld\n",GetLastError());
-    if(mem2) {
-      ok(GlobalSize(mem2)>=memchunk,"GlobalAlloc should return a big enough memory block\n");
-      mem2ptr=GlobalLock(mem2);
-      ok(mem2ptr==mem2,"GlobalLock should have returned the same memory as was allocated\n");
-      if(mem2ptr) {
-        error=FALSE;
-        for(i=0;i<memchunk;i++) {
-          if(mem2ptr[i]!=0) {
-            error=TRUE;
-          }
-        }
-        ok(!error,"GlobalAlloc should have zeroed out its allocated memory\n");
-      }
-   }
-    /* Check that GlobalReAlloc works */
+    /* freed handles are caught */
+    mem = GlobalAlloc( GMEM_MOVEABLE, 256 );
+    ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+    tmp_mem = GlobalFree( mem );
+    ok( !tmp_mem, "GlobalFree failed, error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    tmp_mem = GlobalFree( mem );
+    ok( tmp_mem == mem, "GlobalFree succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    flags = GlobalFlags( mem );
+    ok( flags == GMEM_INVALID_HANDLE, "GlobalFlags succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    size = GlobalSize( mem );
+    ok( size == 0, "GlobalSize succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ptr = GlobalLock( mem );
+    ok( !ptr, "GlobalLock succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = GlobalUnlock( mem );
+    todo_wine
+    ok( ret, "GlobalUnlock failed, error %lu\n", GetLastError() );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+#if 0 /* corrupts Wine heap */
+    SetLastError( 0xdeadbeef );
+    tmp_mem = GlobalReAlloc( mem, 0, GMEM_MOVEABLE );
+    todo_wine
+    ok( !tmp_mem, "GlobalReAlloc succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+#endif
+
+    /* invalid handles are caught */
+    SetLastError( 0xdeadbeef );
+    tmp_mem = GlobalFree( invalid_mem );
+    ok( tmp_mem == invalid_mem, "GlobalFree succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    flags = GlobalFlags( invalid_mem );
+    todo_wine
+    ok( flags == GMEM_INVALID_HANDLE, "GlobalFlags succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    size = GlobalSize( invalid_mem );
+    ok( size == 0, "GlobalSize succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ptr = GlobalLock( invalid_mem );
+    ok( !ptr, "GlobalLock succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = GlobalUnlock( invalid_mem );
+    ok( ret, "GlobalUnlock failed, error %lu\n", GetLastError() );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    tmp_mem = GlobalReAlloc( invalid_mem, 0, GMEM_MOVEABLE );
+    ok( !tmp_mem, "GlobalReAlloc succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+
+    /* invalid pointers are caught */
+    SetLastError( 0xdeadbeef );
+    tmp_mem = GlobalFree( invalid_ptr );
+    ok( tmp_mem == invalid_ptr, "GlobalFree succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    flags = GlobalFlags( invalid_ptr );
+    todo_wine
+    ok( flags == GMEM_INVALID_HANDLE, "GlobalFlags succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    size = GlobalSize( invalid_ptr );
+    ok( size == 0, "GlobalSize succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ptr = GlobalLock( invalid_ptr );
+    ok( !ptr, "GlobalLock succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = GlobalUnlock( invalid_ptr );
+    ok( ret, "GlobalUnlock failed, error %lu\n", GetLastError() );
+    ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    tmp_mem = GlobalReAlloc( invalid_ptr, 0, GMEM_MOVEABLE );
+    ok( !tmp_mem, "GlobalReAlloc succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
+
+    /* GMEM_FIXED block doesn't allow resize, though it succeeds with GMEM_MODIFY */
+    mem = GlobalAlloc( GMEM_FIXED, 10 );
+    ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+    tmp_mem = GlobalReAlloc( mem, 9, GMEM_MODIFY );
+    todo_wine
+    ok( !!tmp_mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+    todo_wine
+    ok( tmp_mem == mem, "got ptr %p, expected %p\n", tmp_mem, mem );
+    size = GlobalSize( mem );
+    ok( size == 10, "GlobalSize returned %Iu\n", size );
+    SetLastError( 0xdeadbeef );
+    tmp_mem = GlobalReAlloc( mem, 10, 0 );
+    todo_wine
+    ok( !tmp_mem || broken( tmp_mem == mem ) /* w1064v1507 / w1064v1607 */,
+        "GlobalReAlloc succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_NOT_ENOUGH_MEMORY || broken( GetLastError() == 0xdeadbeef ) /* w1064v1507 / w1064v1607 */,
+        "got error %lu\n", GetLastError() );
+    if (tmp_mem) mem = tmp_mem;
+    tmp_mem = GlobalReAlloc( mem, 1024 * 1024, GMEM_MODIFY );
+    todo_wine
+    ok( !!tmp_mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+    todo_wine
+    ok( tmp_mem == mem, "got ptr %p, expected %p\n", tmp_mem, mem );
+    size = GlobalSize( mem );
+    ok( size == 10, "GlobalSize returned %Iu\n", size );
+    mem = GlobalFree( mem );
+    ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
+
+    /* GMEM_FIXED block can be relocated with GMEM_MOVEABLE */
+    mem = GlobalAlloc( GMEM_FIXED, 10 );
+    ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+    tmp_mem = GlobalReAlloc( mem, 11, GMEM_MOVEABLE );
+    ok( !!tmp_mem, "GlobalReAlloc failed, error %lu\n", GetLastError() );
+    todo_wine
+    ok( tmp_mem != mem || broken( tmp_mem == mem ) /* w1064v1507 / w1064v1607 */,
+        "GlobalReAlloc didn't relocate memory\n" );
+    ptr = GlobalLock( tmp_mem );
+    ok( !!ptr, "GlobalLock failed, error %lu\n", GetLastError() );
+    ok( ptr == tmp_mem, "got ptr %p, expected %p\n", ptr, tmp_mem );
+    GlobalFree( tmp_mem );
+
+    mem = GlobalAlloc( GMEM_DDESHARE, 100 );
+    ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+    ret = GlobalUnlock( mem );
+    ok( ret, "GlobalUnlock failed, error %lu\n", GetLastError() );
+    ret = GlobalUnlock( mem );
+    ok( ret, "GlobalUnlock failed, error %lu\n", GetLastError() );
+    mem = GlobalFree( mem );
+    ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
+
+    mem = GlobalAlloc( GMEM_FIXED, 100 );
+    ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+    ret = GlobalUnlock( mem );
+    ok( ret, "GlobalUnlock failed, error %lu\n", GetLastError() );
+    mem = GlobalFree( mem );
+    ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
+
+    mem = GlobalAlloc( GMEM_FIXED, 0 );
+    ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+    size = GlobalSize( mem );
+    ok( size == 1, "GlobalSize returned %Iu\n", size );
+    mem = GlobalFree( mem );
+    ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
+
+    /* trying to lock empty memory should give an error */
+    mem = GlobalAlloc( GMEM_MOVEABLE | GMEM_ZEROINIT, 0 );
+    ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ptr = GlobalLock( mem );
+    ok( !ptr, "GlobalLock succeeded\n" );
+    ok( GetLastError() == ERROR_DISCARDED, "got error %lu\n", GetLastError() );
+    mem = GlobalFree( mem );
+    ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
+
+    mem = GlobalAlloc( 0, buffer_size );
+    ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+    size = GlobalSize( mem );
+    ok( size >= buffer_size, "GlobalSize returned %Iu, error %lu\n", size, GetLastError() );
+    mem = GlobalFree( mem );
+    ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
+
+    mem = GlobalAlloc( GMEM_ZEROINIT, buffer_size );
+    ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+    size = GlobalSize( mem );
+    ok( size >= buffer_size, "GlobalSize returned %Iu, error %lu\n", size, GetLastError() );
+    ptr = GlobalLock( mem );
+    ok( !!ptr, "GlobalLock failed, error %lu\n", GetLastError() );
+    ok( ptr == mem, "got ptr %p, expected %p\n", ptr, mem );
+    ok( !memcmp( ptr, zero_buffer, buffer_size ), "GlobalAlloc didn't clear memory\n" );
+
     /* Check that we can change GMEM_FIXED to GMEM_MOVEABLE */
-    mem2a=GlobalReAlloc(mem2,0,GMEM_MODIFY | GMEM_MOVEABLE);
-    if(mem2a!=NULL) {
-      mem2=mem2a;
-      mem2ptr=GlobalLock(mem2a);
-      ok(mem2ptr!=NULL && !GlobalUnlock(mem2a)&&GetLastError()==NO_ERROR,
-         "Converting from FIXED to MOVEABLE didn't REALLY work\n");
-    }
+    mem = GlobalReAlloc( mem, 0, GMEM_MODIFY | GMEM_MOVEABLE );
+    ok( !!mem, "GlobalReAlloc failed, error %lu\n", GetLastError() );
+    ok( mem != ptr, "GlobalReAlloc returned unexpected handle\n" );
+    size = GlobalSize( mem );
+    ok( size == buffer_size, "GlobalSize returned %Iu, error %lu\n", size, GetLastError() );
 
-    /* Check that ReAllocing memory works as expected */
-    mem2a=GlobalReAlloc(mem2,2*memchunk,GMEM_MOVEABLE | GMEM_ZEROINIT);
-    ok(mem2a!=NULL,"GlobalReAlloc failed\n");
-    if(mem2a) {
-      ok(GlobalSize(mem2a)>=2*memchunk,"GlobalReAlloc failed\n");
-      mem2ptr=GlobalLock(mem2a);
-      ok(mem2ptr!=NULL,"GlobalLock Failed\n");
-      if(mem2ptr) {
-        error=FALSE;
-        for(i=0;i<memchunk;i++) {
-          if(mem2ptr[memchunk+i]!=0) {
-            error=TRUE;
-          }
-        }
-        ok(!error,"GlobalReAlloc should have zeroed out its allocated memory\n");
+    ptr = GlobalLock( mem );
+    ok( !!ptr, "GlobalLock failed, error %lu\n", GetLastError() );
+    ok( ptr != mem, "got unexpected ptr %p\n", ptr );
+    ret = GlobalUnlock( mem );
+    ok( !ret, "GlobalUnlock succeeded, error %lu\n", GetLastError() );
+    ok( GetLastError() == NO_ERROR, "got error %lu\n", GetLastError() );
 
-        /* Check that GlobalHandle works */
-        mem2b=GlobalHandle(mem2ptr);
-        ok(mem2b==mem2a,"GlobalHandle didn't return the correct memory handle %p/%p for %p\n",
-           mem2a, mem2b, mem2ptr);
-        /* Check that we can't discard locked memory */
-        mem2b=GlobalDiscard(mem2a);
-        if(mem2b==NULL) {
-          ok(!GlobalUnlock(mem2a) && GetLastError()==NO_ERROR,"GlobalUnlock Failed\n");
-        }
-      }
-    }
-    if(mem1) {
-      ok(GlobalFree(mem1)==NULL,"GlobalFree failed\n");
-    }
-    if(mem2a) {
-      ok(GlobalFree(mem2a)==NULL,"GlobalFree failed\n");
-    } else {
-      ok(GlobalFree(mem2)==NULL,"GlobalFree failed\n");
+    tmp_mem = GlobalReAlloc( mem, 2 * buffer_size, GMEM_MOVEABLE | GMEM_ZEROINIT );
+    ok( !!tmp_mem, "GlobalReAlloc failed\n" );
+    ok( tmp_mem == mem || broken( tmp_mem != mem ) /* happens sometimes?? */,
+        "GlobalReAlloc returned unexpected handle\n" );
+    mem = tmp_mem;
+
+    size = GlobalSize( mem );
+    ok( size >= 2 * buffer_size, "GlobalSize returned %Iu, error %lu\n", size, GetLastError() );
+    ptr = GlobalLock( mem );
+    ok( !!ptr, "GlobalLock failed, error %lu\n", GetLastError() );
+    ok( ptr != mem, "got unexpected ptr %p\n", ptr );
+    ok( !memcmp( ptr, zero_buffer, buffer_size ), "GlobalReAlloc didn't clear memory\n" );
+    ok( !memcmp( ptr + buffer_size, zero_buffer, buffer_size ),
+        "GlobalReAlloc didn't clear memory\n" );
+
+    tmp_mem = GlobalHandle( ptr );
+    ok( tmp_mem == mem, "GlobalHandle returned unexpected handle\n" );
+    /* Check that we can't discard locked memory */
+    SetLastError( 0xdeadbeef );
+    tmp_mem = GlobalDiscard( mem );
+    ok( !tmp_mem, "GlobalDiscard succeeded\n" );
+    ret = GlobalUnlock( mem );
+    ok( !ret, "GlobalUnlock succeeded, error %lu\n", GetLastError() );
+    ok( GetLastError() == NO_ERROR, "got error %lu\n", GetLastError() );
+
+    tmp_mem = GlobalDiscard( mem );
+    ok( tmp_mem == mem, "GlobalDiscard failed, error %lu\n", GetLastError() );
+    mem = GlobalFree( mem );
+    ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
+
+    for (i = 0; i < ARRAY_SIZE(flags_tests); i++)
+    {
+        mem = GlobalAlloc( flags_tests[i], 4 );
+        ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+        flags = GlobalFlags( mem );
+        ok( !(flags & ~(GMEM_DDESHARE | GMEM_DISCARDABLE)), "got flags %#x, error %lu\n", flags, GetLastError() );
+        mem = GlobalFree( mem );
+        ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
     }
 }
 
@@ -786,54 +801,6 @@ static void test_LocalAlloc(void)
       ok(LocalFree(mem2a)==NULL,"LocalFree failed\n");
     } else {
       ok(LocalFree(mem2)==NULL,"LocalFree failed\n");
-    }
-}
-
-static void test_obsolete_flags(void)
-{
-    static struct {
-        UINT flags;
-        UINT globalflags;
-    } test_global_flags[] = {
-        {GMEM_FIXED | GMEM_NOTIFY, 0},
-        {GMEM_FIXED | GMEM_DISCARDABLE, 0},
-        {GMEM_MOVEABLE | GMEM_NOTIFY, 0},
-        {GMEM_MOVEABLE | GMEM_DDESHARE, GMEM_DDESHARE},
-        {GMEM_MOVEABLE | GMEM_NOT_BANKED, 0},
-        {GMEM_MOVEABLE | GMEM_NODISCARD, 0},
-        {GMEM_MOVEABLE | GMEM_DISCARDABLE, GMEM_DISCARDABLE},
-        {GMEM_MOVEABLE | GMEM_DDESHARE | GMEM_DISCARDABLE | GMEM_LOWER | GMEM_NOCOMPACT | GMEM_NODISCARD |
-         GMEM_NOT_BANKED | GMEM_NOTIFY, GMEM_DDESHARE | GMEM_DISCARDABLE},
-    };
-
-    unsigned int i;
-    HGLOBAL gbl;
-    UINT resultflags;
-
-    UINT (WINAPI *pGlobalFlags)(HGLOBAL);
-
-    pGlobalFlags = (void *) GetProcAddress(GetModuleHandleA("kernel32"), "GlobalFlags");
-
-    if (!pGlobalFlags)
-    {
-        win_skip("GlobalFlags is not available\n");
-        return;
-    }
-
-    for (i = 0; i < ARRAY_SIZE(test_global_flags); i++)
-    {
-        gbl = GlobalAlloc(test_global_flags[i].flags, 4);
-        ok(gbl != NULL, "GlobalAlloc failed\n");
-
-        SetLastError( 0xdeadbeef );
-        resultflags = pGlobalFlags(gbl);
-
-        ok( resultflags == test_global_flags[i].globalflags ||
-            broken(resultflags == (test_global_flags[i].globalflags & ~GMEM_DDESHARE)), /* win9x */
-            "%u: expected 0x%08x, but returned 0x%08x with %ld\n",
-            i, test_global_flags[i].globalflags, resultflags, GetLastError() );
-
-        GlobalFree(gbl);
     }
 }
 
@@ -1305,7 +1272,6 @@ START_TEST(heap)
     }
 
     test_heap();
-    test_obsolete_flags();
     test_HeapCreate();
     test_GlobalAlloc();
     test_LocalAlloc();
