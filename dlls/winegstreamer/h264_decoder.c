@@ -235,8 +235,27 @@ static HRESULT WINAPI transform_GetInputStreamInfo(IMFTransform *iface, DWORD id
 
 static HRESULT WINAPI transform_GetOutputStreamInfo(IMFTransform *iface, DWORD id, MFT_OUTPUT_STREAM_INFO *info)
 {
-    FIXME("iface %p, id %#lx, info %p stub!\n", iface, id, info);
-    return E_NOTIMPL;
+    struct h264_decoder *decoder = impl_from_IMFTransform(iface);
+    UINT32 sample_size;
+    UINT64 frame_size;
+
+    TRACE("iface %p, id %#lx, info %p.\n", iface, id, info);
+
+    if (!decoder->output_type)
+        sample_size = 1920 * 1088 * 2;
+    else if (FAILED(IMFMediaType_GetUINT32(decoder->output_type, &MF_MT_SAMPLE_SIZE, &sample_size)))
+    {
+        if (FAILED(IMFMediaType_GetUINT64(decoder->output_type, &MF_MT_FRAME_SIZE, &frame_size)))
+            sample_size = 1920 * 1088 * 2;
+        else
+            sample_size = (frame_size >> 32) * (UINT32)frame_size * 2;
+    }
+
+    info->dwFlags = MFT_OUTPUT_STREAM_WHOLE_SAMPLES | MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER | MFT_OUTPUT_STREAM_FIXED_SAMPLE_SIZE;
+    info->cbSize = sample_size;
+    info->cbAlignment = 0;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI transform_GetAttributes(IMFTransform *iface, IMFAttributes **attributes)

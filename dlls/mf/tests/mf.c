@@ -6688,13 +6688,9 @@ static void test_h264_decoder(void)
     flags = MFT_OUTPUT_STREAM_WHOLE_SAMPLES | MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER | MFT_OUTPUT_STREAM_FIXED_SAMPLE_SIZE;
     memset(&output_info, 0xcd, sizeof(output_info));
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
-    todo_wine
     ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
-    todo_wine
     ok(output_info.dwFlags == flags, "got dwFlags %#lx\n", output_info.dwFlags);
-    todo_wine
-    ok(output_info.cbSize == 0x3fc000, "got cbSize %#lx\n", output_info.cbSize);
-    todo_wine
+    ok(output_info.cbSize == 1920 * 1088 * 2, "got cbSize %#lx\n", output_info.cbSize);
     ok(output_info.cbAlignment == 0, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
     i = -1;
@@ -6729,14 +6725,11 @@ static void test_h264_decoder(void)
     flags = MFT_OUTPUT_STREAM_WHOLE_SAMPLES | MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER | MFT_OUTPUT_STREAM_FIXED_SAMPLE_SIZE;
     memset(&output_info, 0xcd, sizeof(output_info));
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
-    todo_wine
     ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
-    todo_wine
     ok(output_info.dwFlags == flags, "got dwFlags %#lx\n", output_info.dwFlags);
     todo_wine
-    ok(output_info.cbSize == 0x3f4800 || broken(output_info.cbSize == 0x3fc000) /* Win7 */,
+    ok(output_info.cbSize == 1920 * 1080 * 2 || broken(output_info.cbSize == 1920 * 1088 * 2) /* Win7 */,
             "got cbSize %#lx\n", output_info.cbSize);
-    todo_wine
     ok(output_info.cbAlignment == 0, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
     /* output types can now be enumerated (though they are actually the same for all input types) */
@@ -6800,14 +6793,10 @@ static void test_h264_decoder(void)
     flags = MFT_OUTPUT_STREAM_WHOLE_SAMPLES | MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER | MFT_OUTPUT_STREAM_FIXED_SAMPLE_SIZE;
     memset(&output_info, 0xcd, sizeof(output_info));
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
-    todo_wine
     ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
-    todo_wine
     ok(output_info.dwFlags == flags, "got dwFlags %#lx\n", output_info.dwFlags);
-    todo_wine
-    ok(output_info.cbSize == 0x3f4800 || broken(output_info.cbSize == 0x3fc000) /* Win7 */,
+    ok(output_info.cbSize == 1920 * 1080 * 2 || broken(output_info.cbSize == 1920 * 1088 * 2) /* Win7 */,
             "got cbSize %#lx\n", output_info.cbSize);
-    todo_wine
     ok(output_info.cbAlignment == 0, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
     input_count = output_count = 0xdeadbeef;
@@ -6846,7 +6835,7 @@ static void test_h264_decoder(void)
     {
         status = 0;
         memset(&output, 0, sizeof(output));
-        output.pSample = create_sample(NULL, 0x3fc000);
+        output.pSample = create_sample(NULL, output_info.cbSize);
         hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
         if (hr != MF_E_TRANSFORM_NEED_MORE_INPUT) break;
         ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
@@ -6900,13 +6889,10 @@ static void test_h264_decoder(void)
     flags = MFT_OUTPUT_STREAM_WHOLE_SAMPLES | MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER | MFT_OUTPUT_STREAM_FIXED_SAMPLE_SIZE;
     memset(&output_info, 0xcd, sizeof(output_info));
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
-    todo_wine
     ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
-    todo_wine
     ok(output_info.dwFlags == flags, "got dwFlags %#lx\n", output_info.dwFlags);
     todo_wine
     ok(output_info.cbSize == 0x3200, "got cbSize %#lx\n", output_info.cbSize);
-    todo_wine
     ok(output_info.cbAlignment == 0, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
     i = -1;
