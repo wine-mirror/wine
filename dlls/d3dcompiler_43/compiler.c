@@ -891,6 +891,7 @@ HRESULT WINAPI D3DCompile2(const void *data, SIZE_T data_size, const char *filen
     preprocess_info.pfn_open_include = open_include;
     preprocess_info.pfn_close_include = close_include;
     preprocess_info.include_context = include;
+    initial_filename = filename ? filename : "";
 
     hlsl_info.type = VKD3D_SHADER_STRUCTURE_TYPE_HLSL_SOURCE_INFO;
     hlsl_info.next = NULL;
