@@ -48,7 +48,8 @@ struct wg_transform
     GstPad *my_src, *my_sink;
     GstPad *their_sink, *their_src;
     GstSegment segment;
-    GstBuffer *input;
+    GstBufferList *input;
+    guint input_max_length;
 
     pthread_mutex_t mutex;
     GstBuffer *output;
@@ -75,7 +76,7 @@ NTSTATUS wg_transform_destroy(void *args)
     struct wg_transform *transform = args;
 
     if (transform->input)
-        gst_buffer_unref(transform->input);
+        gst_buffer_list_unref(transform->input);
     if (transform->output)
         gst_buffer_unref(transform->output);
 
@@ -179,6 +180,9 @@ NTSTATUS wg_transform_create(void *args)
         return STATUS_NO_MEMORY;
     if (!(transform->container = gst_bin_new("wg_transform")))
         goto out;
+    if (!(transform->input = gst_buffer_list_new()))
+        goto out;
+    transform->input_max_length = 1;
 
     if (!(src_caps = wg_format_to_caps(&input_format)))
         goto out;
@@ -212,6 +216,13 @@ NTSTATUS wg_transform_create(void *args)
     switch (input_format.major_type)
     {
         case WG_MAJOR_TYPE_H264:
+            /* Call of Duty: Black Ops 3 doesn't care about the ProcessInput/ProcessOutput
+             * return values, it calls them in a specific order and and expects the decoder
+             * transform to be able to queue its input buffers. We need to use a buffer list
+             * to match its expectations.
+             */
+            transform->input_max_length = 16;
+            /* fallthrough */
         case WG_MAJOR_TYPE_WMA:
             if (!(element = transform_find_element(GST_ELEMENT_FACTORY_TYPE_DECODER, src_caps, raw_caps))
                     || !transform_append_element(transform, element, &first, &last))
@@ -316,6 +327,8 @@ out:
         gst_object_unref(transform->my_src);
     if (src_caps)
         gst_caps_unref(src_caps);
+    if (transform->input)
+        gst_buffer_list_unref(transform->input);
     if (transform->container)
     {
         gst_element_set_state(transform->container, GST_STATE_NULL);
@@ -332,10 +345,12 @@ NTSTATUS wg_transform_push_data(void *args)
     struct wg_transform *transform = params->transform;
     struct wg_sample *sample = params->sample;
     GstBuffer *buffer;
+    guint length;
 
-    if (transform->input)
+    length = gst_buffer_list_length(transform->input);
+    if (length >= transform->input_max_length)
     {
-        GST_INFO("Refusing %u bytes, a buffer is already queued", sample->size);
+        GST_INFO("Refusing %u bytes, %u buffers already queued", sample->size, length);
         params->result = MF_E_NOTACCEPTING;
         return STATUS_SUCCESS;
     }
@@ -346,9 +361,9 @@ NTSTATUS wg_transform_push_data(void *args)
         return STATUS_NO_MEMORY;
     }
     gst_buffer_fill(buffer, 0, sample->data, sample->size);
-    transform->input = buffer;
+    gst_buffer_list_insert(transform->input, -1, buffer);
 
-    GST_INFO("Copied %u bytes from sample %p to input buffer", sample->size, sample);
+    GST_INFO("Copied %u bytes from sample %p to input buffer list", sample->size, sample);
     params->result = S_OK;
     return STATUS_SUCCESS;
 }
@@ -392,17 +407,22 @@ NTSTATUS wg_transform_read_data(void *args)
     struct wg_transform_read_data_params *params = args;
     struct wg_transform *transform = params->transform;
     struct wg_sample *sample = params->sample;
+    GstBufferList *input = transform->input;
     GstFlowReturn ret;
     NTSTATUS status;
 
-    if (!transform->input)
+    if (!gst_buffer_list_length(transform->input))
         GST_DEBUG("Not input buffer queued");
-    else if ((ret = gst_pad_push(transform->my_src, transform->input)))
+    else if (!(transform->input = gst_buffer_list_new()))
+    {
+        GST_ERROR("Failed to allocate new input queue");
+        return STATUS_NO_MEMORY;
+    }
+    else if ((ret = gst_pad_push_list(transform->my_src, input)))
     {
         GST_ERROR("Failed to push transform input, error %d", ret);
         return STATUS_UNSUCCESSFUL;
     }
-    transform->input = NULL;
 
     sample->size = 0;
     pthread_mutex_lock(&transform->mutex);
