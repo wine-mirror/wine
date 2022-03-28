@@ -1232,21 +1232,17 @@ static void test_GlobalMemoryStatus(void)
     GlobalMemoryStatus( &mem );
     ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
 
-    do
-    {
-        status = NtQuerySystemInformation( SystemBasicInformation, &basic_info, sizeof(basic_info), NULL );
-        ok( !status, "NtQuerySystemInformation returned %#lx\n", status );
-        status = NtQuerySystemInformation( SystemPerformanceInformation, perf_info, sizeof(buffer), NULL );
-        ok( !status, "NtQuerySystemInformation returned %#lx\n", status );
-        status = NtQueryInformationProcess( GetCurrentProcess(), ProcessVmCounters, &vmc, sizeof(vmc), NULL );
-        ok( !status, "NtQueryInformationProcess returned %#lx\n", status );
-        mem.dwLength = sizeof(MEMORYSTATUS);
-        GlobalMemoryStatus( &mem );
-        memex.dwLength = sizeof(MEMORYSTATUSEX);
-        ret = GlobalMemoryStatusEx( &memex );
-        ok( ret, "GlobalMemoryStatusEx succeeded\n" );
-    } while (memex.ullAvailPhys != (ULONGLONG)perf_info->AvailablePages * basic_info.PageSize ||
-             mem.dwAvailPhys != min( ~(SIZE_T)0 >> 1, memex.ullAvailPhys ));
+    status = NtQuerySystemInformation( SystemBasicInformation, &basic_info, sizeof(basic_info), NULL );
+    ok( !status, "NtQuerySystemInformation returned %#lx\n", status );
+    status = NtQuerySystemInformation( SystemPerformanceInformation, perf_info, sizeof(buffer), NULL );
+    ok( !status, "NtQuerySystemInformation returned %#lx\n", status );
+    status = NtQueryInformationProcess( GetCurrentProcess(), ProcessVmCounters, &vmc, sizeof(vmc), NULL );
+    ok( !status, "NtQueryInformationProcess returned %#lx\n", status );
+    mem.dwLength = sizeof(MEMORYSTATUS);
+    GlobalMemoryStatus( &mem );
+    memex.dwLength = sizeof(MEMORYSTATUSEX);
+    ret = GlobalMemoryStatusEx( &memex );
+    ok( ret, "GlobalMemoryStatusEx succeeded\n" );
 
     ok( basic_info.PageSize, "got 0 PageSize\n" );
     ok( basic_info.MmNumberOfPhysicalPages, "got 0 MmNumberOfPhysicalPages\n" );
@@ -1265,27 +1261,30 @@ static void test_GlobalMemoryStatus(void)
     expect.ullAvailVirtual = expect.ullTotalVirtual - (ULONGLONG)vmc.WorkingSetSize /* approximate */;
     expect.ullAvailExtendedVirtual = 0;
 
+/* allow some variability, info sources are not always in sync */
+#define IS_WITHIN_RANGE(a, b) (((a) - (b) + (256 * basic_info.PageSize)) <= (512 * basic_info.PageSize))
+
     ok( memex.dwMemoryLoad == expect.dwMemoryLoad, "got dwMemoryLoad %lu\n", memex.dwMemoryLoad );
     ok( memex.ullTotalPhys == expect.ullTotalPhys, "got ullTotalPhys %#I64x\n", memex.ullTotalPhys );
-    ok( memex.ullAvailPhys == expect.ullAvailPhys, "got ullAvailPhys %#I64x\n", memex.ullAvailPhys );
+    ok( IS_WITHIN_RANGE( memex.ullAvailPhys, expect.ullAvailPhys ), "got ullAvailPhys %#I64x\n", memex.ullAvailPhys );
     ok( memex.ullTotalPageFile == expect.ullTotalPageFile, "got ullTotalPageFile %#I64x\n", memex.ullTotalPageFile );
-    /* allow some variability, page file is not always in sync on Windows */
-    ok( memex.ullAvailPageFile - expect.ullAvailPageFile + 32 * basic_info.PageSize <= 64 * basic_info.PageSize,
-        "got ullAvailPageFile %#I64x\n", memex.ullAvailPageFile );
+    ok( IS_WITHIN_RANGE( memex.ullAvailPageFile, expect.ullAvailPageFile ), "got ullAvailPageFile %#I64x\n", memex.ullAvailPageFile );
     ok( memex.ullTotalVirtual == expect.ullTotalVirtual, "got ullTotalVirtual %#I64x\n", memex.ullTotalVirtual );
     ok( memex.ullAvailVirtual <= expect.ullAvailVirtual, "got ullAvailVirtual %#I64x\n", memex.ullAvailVirtual );
     ok( memex.ullAvailExtendedVirtual == 0, "got ullAvailExtendedVirtual %#I64x\n", memex.ullAvailExtendedVirtual );
 
     ok( mem.dwMemoryLoad == memex.dwMemoryLoad, "got dwMemoryLoad %lu\n", mem.dwMemoryLoad );
     ok( mem.dwTotalPhys == min( ~(SIZE_T)0 >> 1, memex.ullTotalPhys ), "got dwTotalPhys %#Ix\n", mem.dwTotalPhys );
-    ok( mem.dwAvailPhys == min( ~(SIZE_T)0 >> 1, memex.ullAvailPhys ), "got dwAvailPhys %#Ix\n", mem.dwAvailPhys );
+    ok( IS_WITHIN_RANGE( mem.dwAvailPhys, min( ~(SIZE_T)0 >> 1, memex.ullAvailPhys ) ), "got dwAvailPhys %#Ix\n", mem.dwAvailPhys );
 #ifndef _WIN64
     todo_wine_if(memex.ullTotalPageFile > 0xfff7ffff)
 #endif
     ok( mem.dwTotalPageFile == min( ~(SIZE_T)0, memex.ullTotalPageFile ), "got dwTotalPageFile %#Ix\n", mem.dwTotalPageFile );
-    ok( mem.dwAvailPageFile == min( ~(SIZE_T)0, memex.ullAvailPageFile ), "got dwAvailPageFile %#Ix\n", mem.dwAvailPageFile );
+    ok( IS_WITHIN_RANGE( mem.dwAvailPageFile, min( ~(SIZE_T)0, memex.ullAvailPageFile ) ), "got dwAvailPageFile %#Ix\n", mem.dwAvailPageFile );
     ok( mem.dwTotalVirtual == memex.ullTotalVirtual, "got dwTotalVirtual %#Ix\n", mem.dwTotalVirtual );
     ok( mem.dwAvailVirtual == memex.ullAvailVirtual, "got dwAvailVirtual %#Ix\n", mem.dwAvailVirtual );
+
+#undef IS_WITHIN_RANGE
 }
 
 START_TEST(heap)
