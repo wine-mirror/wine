@@ -850,16 +850,57 @@ static int locale_return_string( DWORD pos, LCTYPE type, WCHAR *buffer, int len 
 }
 
 
+static int locale_return_number( UINT val, LCTYPE type, WCHAR *buffer, int len )
+{
+    int ret;
+    WCHAR tmp[80];
+
+    if (!(type & LOCALE_RETURN_NUMBER))
+    {
+        switch (LOWORD(type))
+        {
+        case LOCALE_ILANGUAGE:
+        case LOCALE_IDEFAULTLANGUAGE:
+            ret = swprintf( tmp, ARRAY_SIZE(tmp), L"%04x", val ) + 1;
+            break;
+        case LOCALE_IDEFAULTEBCDICCODEPAGE:
+            ret = swprintf( tmp, ARRAY_SIZE(tmp), L"%03u", val ) + 1;
+            break;
+        default:
+            ret = swprintf( tmp, ARRAY_SIZE(tmp), L"%u", val ) + 1;
+            break;
+        }
+    }
+    else ret = sizeof(UINT) / sizeof(WCHAR);
+
+    if (!len) return ret;
+    if (ret > len)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+
+    if (type & LOCALE_RETURN_NUMBER) memcpy( buffer, &val, sizeof(val) );
+    else wcscpy( buffer, tmp );
+
+    return ret;
+}
+
+
 /* get locale information from the locale.nls file */
 static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE type,
                             WCHAR *buffer, int len )
 {
+    UINT val;
+
     if (locale != user_locale) type |= LOCALE_NOUSEROVERRIDE;
 
     switch (LOWORD(type))
     {
     case LOCALE_ILANGUAGE:
-        return -1;
+        /* return default language for neutral locales */
+        val = locale->inotneutral ? locale->ilanguage : locale->idefaultlanguage;
+        return locale_return_number( val, type, buffer, len );
 
     case LOCALE_SLOCALIZEDDISPLAYNAME:
         return -1;
@@ -883,7 +924,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return -1;
 
     case LOCALE_IDEFAULTLANGUAGE:
-        return -1;
+        return locale_return_number( locale->idefaultlanguage, type, buffer, len );
 
     case LOCALE_IDEFAULTCOUNTRY:
         return -1;
