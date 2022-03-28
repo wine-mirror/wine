@@ -887,6 +887,15 @@ static int locale_return_number( UINT val, LCTYPE type, WCHAR *buffer, int len )
 }
 
 
+static int locale_return_strarray( DWORD pos, WORD idx, LCTYPE type, WCHAR *buffer, int len )
+{
+    const DWORD *array = (const DWORD *)(locale_strings + pos + 1);
+    WORD count = locale_strings[pos];
+
+    return locale_return_string( idx < count ? array[idx] : 0, type, buffer, len );
+}
+
+
 /* get locale information from the locale.nls file */
 static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE type,
                             WCHAR *buffer, int len )
@@ -1030,7 +1039,8 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
     case LOCALE_SDAYNAME5:
     case LOCALE_SDAYNAME6:
     case LOCALE_SDAYNAME7:
-        return -1;
+        return locale_return_strarray( locale->sdayname,
+                                       LOWORD(type - LOCALE_SDAYNAME1 + 1) % 7, type, buffer, len );
 
     case LOCALE_SABBREVDAYNAME1:
     case LOCALE_SABBREVDAYNAME2:
@@ -1039,7 +1049,8 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
     case LOCALE_SABBREVDAYNAME5:
     case LOCALE_SABBREVDAYNAME6:
     case LOCALE_SABBREVDAYNAME7:
-        return -1;
+        return locale_return_strarray( locale->sabbrevdayname,
+                                       LOWORD(type - LOCALE_SABBREVDAYNAME1 + 1) % 7, type, buffer, len );
 
     case LOCALE_SMONTHNAME1:
     case LOCALE_SMONTHNAME2:
@@ -1126,7 +1137,8 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
     case LOCALE_SSHORTESTDAYNAME5:
     case LOCALE_SSHORTESTDAYNAME6:
     case LOCALE_SSHORTESTDAYNAME7:
-        return -1;
+        return locale_return_strarray( locale->sshortestdayname,
+                                       LOWORD(type - LOCALE_SSHORTESTDAYNAME1 + 1) % 7, type, buffer, len );
 
     case LOCALE_SISO639LANGNAME2:
         return locale_return_string( locale->siso639langname2, type, buffer, len );
