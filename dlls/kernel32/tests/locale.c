@@ -2790,6 +2790,14 @@ static void test_LocaleNameToLCID(void)
         ok(ret > 0, "%s: got %d\n", wine_dbgstr_w(L"zh-hans"), ret);
         ok(!lstrcmpW(L"zh-CN", buffer), "%s: got wrong locale name %s\n",
            wine_dbgstr_w(L"zh-hans"), wine_dbgstr_w(buffer));
+
+        /* de-DE_phoneb */
+        lcid = pLocaleNameToLCID(L"de-DE_phoneb", 0);
+        ok(lcid == MAKELCID(MAKELANGID(LANG_GERMAN, SUBLANG_DEFAULT), SORT_GERMAN_PHONE_BOOK),
+           "%s: got wrong lcid 0x%04lx\n", wine_dbgstr_w(L"zh-hans"), lcid);
+        ret = pLCIDToLocaleName(lcid, buffer, ARRAY_SIZE(buffer), 0);
+        ok(!lstrcmpW(L"de-DE_phoneb", buffer), "got wrong locale name %s\n",
+           wine_dbgstr_w(buffer));
     }
 
     if (pRtlLocaleNameToLcid)

@@ -5180,9 +5180,9 @@ LANGID WINAPI DECLSPEC_HOTPATCH GetSystemDefaultLangID(void)
 /***********************************************************************
  *	GetSystemDefaultLocaleName   (kernelbase.@)
  */
-INT WINAPI DECLSPEC_HOTPATCH GetSystemDefaultLocaleName( LPWSTR name, INT len )
+INT WINAPI DECLSPEC_HOTPATCH GetSystemDefaultLocaleName( LPWSTR name, INT count )
 {
-    return LCIDToLocaleName( GetSystemDefaultLCID(), name, len, 0 );
+    return get_locale_info( system_locale, system_lcid, LOCALE_SNAME, name, count );
 }
 
 
@@ -5329,7 +5329,7 @@ LANGID WINAPI DECLSPEC_HOTPATCH GetUserDefaultLangID(void)
  */
 INT WINAPI DECLSPEC_HOTPATCH GetUserDefaultLocaleName( LPWSTR name, INT len )
 {
-    return LCIDToLocaleName( GetUserDefaultLCID(), name, len, 0 );
+    return get_locale_info( user_locale, user_lcid, LOCALE_SNAME, name, len );
 }
 
 
@@ -5692,10 +5692,14 @@ DWORD WINAPI DECLSPEC_HOTPATCH IsValidNLSVersion( NLS_FUNCTION func, const WCHAR
  */
 INT WINAPI DECLSPEC_HOTPATCH LCIDToLocaleName( LCID lcid, WCHAR *name, INT count, DWORD flags )
 {
-    static int once;
-    if (flags && !once++) FIXME( "unsupported flags %lx\n", flags );
+    const NLS_LOCALE_DATA *locale = get_locale_by_id( &lcid, flags );
 
-    return GetLocaleInfoW( lcid, LOCALE_SNAME | LOCALE_NOUSEROVERRIDE, name, count );
+    if (!locale)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    return get_locale_info( locale, lcid, LOCALE_SNAME, name, count );
 }
 
 
