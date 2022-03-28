@@ -171,7 +171,7 @@ static const char *config_list_get_value(const char *string, const char *key, si
             if (is_option_separator(prev_char) && *p == '=')
             {
                 if ((end = strpbrk(p + 1, ",;")))
-                    *len = end - p + 1;
+                    *len = end - (p + 1);
                 else
                     *len = strlen(p + 1);
                 return p + 1;
