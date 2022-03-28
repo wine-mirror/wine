@@ -109,8 +109,8 @@ F:	dlls/qcap/
 F:	dlls/qdvd/
 F:	dlls/qedit/
 F:	dlls/quartz/
-F:	dlls/strmbase/
 F:	dlls/winegstreamer/quartz_parser.c
+F:	libs/strmbase/
 
 DirectWrite
 M:	Nikolay Sivov <nsivov@codeweavers.com>
