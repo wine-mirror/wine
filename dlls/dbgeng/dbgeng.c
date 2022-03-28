@@ -31,7 +31,6 @@
 #include "dbgeng.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dbgeng);
@@ -149,12 +148,12 @@ static HRESULT debug_target_init_modules_info(struct target_process *target)
 
     count = needed / sizeof(HMODULE);
 
-    if (!(modules = heap_alloc(count * sizeof(*modules))))
+    if (!(modules = calloc(count, sizeof(*modules))))
         return E_OUTOFMEMORY;
 
-    if (!(target->modules.info = heap_alloc_zero(count * sizeof(*target->modules.info))))
+    if (!(target->modules.info = calloc(count, sizeof(*target->modules.info))))
     {
-        heap_free(modules);
+        free(modules);
         return E_OUTOFMEMORY;
     }
 
@@ -179,7 +178,7 @@ static HRESULT debug_target_init_modules_info(struct target_process *target)
 
     target->cpu_type = debug_target_get_module_machine(target, modules[0]);
 
-    heap_free(modules);
+    free(modules);
 
     target->modules.loaded = count;
     target->modules.unloaded = 0; /* FIXME */
@@ -331,8 +330,8 @@ static ULONG STDMETHODCALLTYPE debugclient_AddRef(IDebugClient7 *iface)
 
 static void debug_target_free(struct target_process *target)
 {
-    heap_free(target->modules.info);
-    heap_free(target);
+    free(target->modules.info);
+    free(target);
 }
 
 static ULONG STDMETHODCALLTYPE debugclient_Release(IDebugClient7 *iface)
@@ -353,7 +352,7 @@ static ULONG STDMETHODCALLTYPE debugclient_Release(IDebugClient7 *iface)
         }
         if (debug_client->event_callbacks)
             debug_client->event_callbacks->lpVtbl->Release(debug_client->event_callbacks);
-        heap_free(debug_client);
+        free(debug_client);
     }
 
     return refcount;
@@ -443,7 +442,7 @@ static HRESULT STDMETHODCALLTYPE debugclient_AttachProcess(IDebugClient7 *iface,
         return E_NOTIMPL;
     }
 
-    if (!(process = heap_alloc_zero(sizeof(*process))))
+    if (!(process = calloc(1, sizeof(*process))))
         return E_OUTOFMEMORY;
 
     process->pid = pid;
@@ -1900,7 +1899,7 @@ static HRESULT STDMETHODCALLTYPE debugsymbols_GetModuleVersionInformation(IDebug
     if (!(size = GetFileVersionInfoSizeA(info->image_name, &handle)))
         return E_FAIL;
 
-    if (!(version_info = heap_alloc(size)))
+    if (!(version_info = malloc(size)))
         return E_OUTOFMEMORY;
 
     if (GetFileVersionInfoA(info->image_name, handle, size, version_info))
@@ -1921,7 +1920,7 @@ static HRESULT STDMETHODCALLTYPE debugsymbols_GetModuleVersionInformation(IDebug
         }
     }
 
-    heap_free(version_info);
+    free(version_info);
 
     return hr;
 }
@@ -4033,8 +4032,7 @@ HRESULT WINAPI DebugCreate(REFIID riid, void **obj)
 
     TRACE("%s, %p.\n", debugstr_guid(riid), obj);
 
-    debug_client = heap_alloc_zero(sizeof(*debug_client));
-    if (!debug_client)
+    if (!(debug_client = calloc(1, sizeof(*debug_client))))
         return E_OUTOFMEMORY;
 
     debug_client->IDebugClient_iface.lpVtbl = &debugclientvtbl;
