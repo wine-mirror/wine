@@ -577,7 +577,12 @@ static void test_D3DX11CompileFromFile(void)
             "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
     todo_wine ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
     todo_wine ok(!!blob, "Got unexpected blob.\n");
-    ok(!errors, "Got unexpected errors.\n");
+    todo_wine ok(!errors, "Got unexpected errors.\n");
+    if (errors)
+    {
+        ID3D10Blob_Release(errors);
+        errors = NULL;
+    }
     if (blob)
     {
         ID3D10Blob_Release(blob);
@@ -590,7 +595,12 @@ static void test_D3DX11CompileFromFile(void)
     hr = D3DX11CompileFromFileW(filename, NULL, NULL, "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
     todo_wine ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
     todo_wine ok(!!blob, "Got unexpected blob.\n");
-    ok(!errors, "Got unexpected errors.\n");
+    todo_wine ok(!errors, "Got unexpected errors.\n");
+    if (errors)
+    {
+        ID3D10Blob_Release(errors);
+        errors = NULL;
+    }
     if (blob)
     {
         ID3D10Blob_Release(blob);
@@ -602,7 +612,12 @@ static void test_D3DX11CompileFromFile(void)
     hr = D3DX11CompileFromFileA(filename_a, NULL, NULL, "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
     todo_wine ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
     todo_wine ok(!!blob, "Got unexpected blob.\n");
-    ok(!errors, "Got unexpected errors.\n");
+    todo_wine ok(!errors, "Got unexpected errors.\n");
+    if (errors)
+    {
+        ID3D10Blob_Release(errors);
+        errors = NULL;
+    }
     if (blob)
     {
         ID3D10Blob_Release(blob);
@@ -615,7 +630,12 @@ static void test_D3DX11CompileFromFile(void)
     hr = D3DX11CompileFromFileW(L"source.ps", NULL, NULL, "main", "ps_2_0", 0, 0, NULL, &blob, &errors, &result);
     todo_wine ok(hr == S_OK && hr == result, "Got unexpected hr %#lx, result %#lx.\n", hr, result);
     todo_wine ok(!!blob, "Got unexpected blob.\n");
-    ok(!errors, "Got unexpected errors.\n");
+    todo_wine ok(!errors, "Got unexpected errors.\n");
+    if (errors)
+    {
+        ID3D10Blob_Release(errors);
+        errors = NULL;
+    }
     if (blob)
     {
         ID3D10Blob_Release(blob);
