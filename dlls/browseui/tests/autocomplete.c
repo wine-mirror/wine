@@ -37,14 +37,6 @@
         ok(FALSE, #exp " failed: %#lx\n", res); \
 }
 
-static LPWSTR strdup_AtoW(LPCSTR str)
-{
-    int size = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    LPWSTR wstr = CoTaskMemAlloc((size + 1)*sizeof(WCHAR));
-    MultiByteToWideChar(CP_ACP, 0, str, -1, wstr, size+1);
-    return wstr;
-}
-
 typedef struct
 {
     IEnumString IEnumString_iface;
@@ -54,7 +46,7 @@ typedef struct
     INT expcount;
     INT pos;
     INT limit;
-    const char **data;
+    const WCHAR **data;
 } TestACL;
 
 extern IEnumStringVtbl TestACLVtbl;
@@ -70,7 +62,7 @@ static TestACL *impl_from_IACList(IACList *iface)
     return CONTAINING_RECORD(iface, TestACL, IACList_iface);
 }
 
-static TestACL *TestACL_Constructor(int limit, const char **strings)
+static TestACL *TestACL_Constructor(int limit, const WCHAR **strings)
 {
     TestACL *This = CoTaskMemAlloc(sizeof(TestACL));
     ZeroMemory(This, sizeof(*This));
@@ -127,6 +119,7 @@ static HRESULT STDMETHODCALLTYPE TestACL_QueryInterface(IEnumString *iface, REFI
 static HRESULT STDMETHODCALLTYPE TestACL_Next(IEnumString *iface, ULONG celt, LPOLESTR *rgelt, ULONG *pceltFetched)
 {
     TestACL *This = impl_from_IEnumString(iface);
+    int size;
     ULONG i;
 
     trace("ACL(%p): read %ld item(s)\n", This, celt);
@@ -134,7 +127,10 @@ static HRESULT STDMETHODCALLTYPE TestACL_Next(IEnumString *iface, ULONG celt, LP
     {
         if (This->pos >= This->limit)
             break;
-        rgelt[i] = strdup_AtoW(This->data[This->pos]);
+
+        size = wcslen(This->data[This->pos]);
+        rgelt[i] = CoTaskMemAlloc((size + 1) * sizeof(WCHAR));
+        wcscpy(rgelt[i], This->data[This->pos]);
         This->pos++;
     }
 
@@ -222,8 +218,8 @@ IACListVtbl TestACL_ACListVtbl =
 
 static void test_ACLMulti(void)
 {
-    const char *strings1[] = {"a", "c", "e"};
-    const char *strings2[] = {"a", "b", "d"};
+    const WCHAR *strings1[] = { L"a", L"c", L"e" };
+    const WCHAR *strings2[] = { L"a", L"b", L"d" };
     const WCHAR exp[] = L"ABC";
     IEnumString *obj;
     IEnumACString *unk;
