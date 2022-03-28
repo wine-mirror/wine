@@ -428,7 +428,6 @@ static void test_verify_signature(void)
                                 sizeof(signature_pkcs1_sha256), NCRYPT_PAD_PKCS1_FLAG);
     ok(ret == ERROR_SUCCESS, "got %#lx\n", ret);
 
-    todo_wine {
     ret = NCryptVerifySignature(key, &padinfo, sha256_hash, sizeof(sha256_hash), invalid_signature,
                                 sizeof(invalid_signature), NCRYPT_PAD_PKCS1_FLAG);
     ok(ret == NTE_BAD_SIGNATURE, "got %#lx\n", ret);
@@ -447,7 +446,7 @@ static void test_verify_signature(void)
 
     ret = NCryptVerifySignature(key, &padinfo, sha256_hash, 4, signature_pkcs1_sha256,
                                 sizeof(signature_pkcs1_sha256), NCRYPT_PAD_PKCS1_FLAG);
-    ok(ret == NTE_INVALID_PARAMETER, "got %#lx\n", ret);
+    todo_wine ok(ret == NTE_INVALID_PARAMETER, "got %#lx\n", ret);
 
     ret = NCryptVerifySignature(key, &padinfo, sha256_hash, sizeof(sha256_hash), NULL,
                                 sizeof(signature_pkcs1_sha256), NCRYPT_PAD_PKCS1_FLAG);
@@ -455,13 +454,12 @@ static void test_verify_signature(void)
 
     ret = NCryptVerifySignature(key, &padinfo, sha256_hash, sizeof(sha256_hash), signature_pkcs1_sha256, 4,
                                 NCRYPT_PAD_PKCS1_FLAG);
-    ok(ret == NTE_INVALID_PARAMETER, "got %#lx\n", ret);
+    todo_wine ok(ret == NTE_INVALID_PARAMETER, "got %#lx\n", ret);
 
     invalid_padinfo.pszAlgId = BCRYPT_MD5_ALGORITHM;
     ret = NCryptVerifySignature(key, &invalid_padinfo, sha256_hash, sizeof(sha256_hash), signature_pkcs1_sha256,
                                 sizeof(signature_pkcs1_sha256), NCRYPT_PAD_PKCS1_FLAG);
-    ok(ret == NTE_INVALID_PARAMETER, "got %#lx\n", ret);
-    }
+    todo_wine ok(ret == NTE_INVALID_PARAMETER, "got %#lx\n", ret);
 
     NCryptFreeObject(key);
     NCryptFreeObject(prov);
