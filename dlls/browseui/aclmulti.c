@@ -34,8 +34,6 @@
 #include "shlguid.h"
 #include "shlobj.h"
 
-#include "wine/heap.h"
-
 #include "browseui.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(browseui);
@@ -80,17 +78,6 @@ static void release_obj(struct ACLMultiSublist *obj)
         IACList_Release(obj->pACL);
 }
 
-static void ACLMulti_Destructor(ACLMulti *This)
-{
-    int i;
-    TRACE("destroying %p\n", This);
-    for (i = 0; i < This->nObjs; i++)
-        release_obj(&This->objs[i]);
-    heap_free(This->objs);
-    heap_free(This);
-    BROWSEUI_refCount--;
-}
-
 static HRESULT WINAPI ACLMulti_QueryInterface(IEnumString *iface, REFIID iid, LPVOID *ppvOut)
 {
     ACLMulti *This = impl_from_IEnumString(iface);
@@ -129,10 +116,18 @@ static ULONG WINAPI ACLMulti_Release(IEnumString *iface)
 {
     ACLMulti *This = impl_from_IEnumString(iface);
     ULONG ret;
+    int i;
 
     ret = InterlockedDecrement(&This->refCount);
     if (ret == 0)
-        ACLMulti_Destructor(This);
+    {
+        for (i = 0; i < This->nObjs; i++)
+            release_obj(&This->objs[i]);
+        free(This->objs);
+        free(This);
+        BROWSEUI_refCount--;
+    }
+
     return ret;
 }
 
@@ -224,7 +219,7 @@ static HRESULT WINAPI ACLMulti_Append(IObjMgr *iface, IUnknown *obj)
     if (obj == NULL)
         return E_FAIL;
 
-    This->objs = heap_realloc(This->objs, sizeof(This->objs[0]) * (This->nObjs+1));
+    This->objs = realloc(This->objs, sizeof(This->objs[0]) * (This->nObjs+1));
     This->objs[This->nObjs].punk = obj;
     IUnknown_AddRef(obj);
     if (FAILED(IUnknown_QueryInterface(obj, &IID_IEnumString, (LPVOID *)&This->objs[This->nObjs].pEnum)))
@@ -247,7 +242,7 @@ static HRESULT WINAPI ACLMulti_Remove(IObjMgr *iface, IUnknown *obj)
             release_obj(&This->objs[i]);
             memmove(&This->objs[i], &This->objs[i+1], (This->nObjs-i-1)*sizeof(struct ACLMultiSublist));
             This->nObjs--;
-            This->objs = heap_realloc(This->objs, sizeof(This->objs[0]) * This->nObjs);
+            This->objs = realloc(This->objs, sizeof(This->objs[0]) * This->nObjs);
             return S_OK;
         }
 
@@ -313,8 +308,7 @@ HRESULT ACLMulti_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     if (pUnkOuter)
         return CLASS_E_NOAGGREGATION;
 
-    This = heap_alloc_zero(sizeof(ACLMulti));
-    if (This == NULL)
+    if (!(This = calloc(1, sizeof(ACLMulti))))
         return E_OUTOFMEMORY;
 
     This->IEnumString_iface.lpVtbl = &ACLMultiVtbl;

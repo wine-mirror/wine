@@ -32,7 +32,6 @@
 #include "shlguid.h"
 #include "rpcproxy.h"
 
-#include "wine/heap.h"
 #include "browseui.h"
 
 #include "initguid.h"
@@ -72,7 +71,7 @@ static inline ClassFactory *impl_from_IClassFactory(IClassFactory *iface)
 static void ClassFactory_Destructor(ClassFactory *This)
 {
     TRACE("Destroying class factory %p\n", This);
-    heap_free(This);
+    free(This);
     InterlockedDecrement(&BROWSEUI_refCount);
 }
 
@@ -147,7 +146,7 @@ static const IClassFactoryVtbl ClassFactoryVtbl = {
 
 static HRESULT ClassFactory_Constructor(LPFNCONSTRUCTOR ctor, LPVOID *ppvOut)
 {
-    ClassFactory *This = heap_alloc(sizeof(ClassFactory));
+    ClassFactory *This = malloc(sizeof(*This));
     This->IClassFactory_iface.lpVtbl = &ClassFactoryVtbl;
     This->ref = 1;
     This->ctor = ctor;

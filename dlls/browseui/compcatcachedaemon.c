@@ -34,8 +34,6 @@
 #include "shlguid.h"
 #include "shlobj.h"
 
-#include "wine/heap.h"
-
 #include "browseui.h"
 #include "resids.h"
 
@@ -57,7 +55,7 @@ static void CompCatCacheDaemon_Destructor(CompCatCacheDaemon *This)
     TRACE("destroying %p\n", This);
     This->cs.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&This->cs);
-    heap_free(This);
+    free(This);
     InterlockedDecrement(&BROWSEUI_refCount);
 }
 
@@ -146,8 +144,7 @@ HRESULT CompCatCacheDaemon_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     if (pUnkOuter)
         return CLASS_E_NOAGGREGATION;
 
-    This = heap_alloc(sizeof(CompCatCacheDaemon));
-    if (This == NULL)
+    if (!(This = calloc(1, sizeof(*This))))
         return E_OUTOFMEMORY;
 
     This->IRunnableTask_iface.lpVtbl = &CompCatCacheDaemonVtbl;

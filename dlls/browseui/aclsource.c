@@ -34,8 +34,6 @@
 #include "shlguid.h"
 #include "shlobj.h"
 
-#include "wine/heap.h"
-
 #include "browseui.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(browseui);
@@ -55,12 +53,6 @@ static inline ACLShellSource *impl_from_IACList2(IACList2 *iface)
 static inline ACLShellSource *impl_from_IEnumString(IEnumString *iface)
 {
     return CONTAINING_RECORD(iface, ACLShellSource, IEnumString_iface);
-}
-
-static void ACLShellSource_Destructor(ACLShellSource *This)
-{
-    TRACE("destroying %p\n", This);
-    heap_free(This);
 }
 
 static HRESULT WINAPI ACLShellSource_QueryInterface(IEnumString *iface, REFIID iid, LPVOID *ppvOut)
@@ -106,7 +98,7 @@ static ULONG WINAPI ACLShellSource_Release(IEnumString *iface)
     TRACE("(%p)->(%lu)\n", This, ref);
 
     if (ref == 0)
-        ACLShellSource_Destructor(This);
+        free(This);
     return ref;
 }
 
@@ -205,8 +197,7 @@ HRESULT ACLShellSource_Constructor(IUnknown *pUnkOuter, IUnknown **ppOut)
     if (pUnkOuter)
         return CLASS_E_NOAGGREGATION;
 
-    This = heap_alloc_zero(sizeof(ACLShellSource));
-    if (This == NULL)
+    if (!(This = calloc(1, sizeof(*This))))
         return E_OUTOFMEMORY;
 
     This->IEnumString_iface.lpVtbl = &ACLShellSourceVtbl;
