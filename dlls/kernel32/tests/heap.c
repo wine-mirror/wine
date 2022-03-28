@@ -84,12 +84,7 @@ static void test_heap(void)
 {
     LPVOID  mem;
     LPVOID  msecond;
-    DWORD   res;
-    UINT    flags;
-    HGLOBAL gbl;
-    HGLOBAL hsecond;
     SIZE_T size;
-    const SIZE_T max_size = 1024, init_size = 10;
 
     /* Heap*() functions */
     mem = HeapAlloc(GetProcessHeap(), 0, 0);
@@ -133,146 +128,6 @@ static void test_heap(void)
     ok( (ULONG_PTR)mem % 16 == 0 || broken((ULONG_PTR)mem % 16) /* win9x */,
         "512K block not 16-byte aligned\n" );
     HeapFree(GetProcessHeap(), 0, mem);
-
-    /* ####################################### */
-    /* Local*() functions */
-    gbl = LocalAlloc(LMEM_MOVEABLE, 0);
-    ok(gbl != NULL, "local memory not allocated for size 0\n");
-
-    gbl = LocalReAlloc(gbl, 10, LMEM_MOVEABLE);
-    ok(gbl != NULL, "Can't realloc local memory\n");
-    size = LocalSize(gbl);
-    ok(size >= 10 && size <= 16, "Memory not resized to size 10, instead size=%Id\n", size);
-
-    gbl = LocalReAlloc(gbl, 0, LMEM_MOVEABLE);
-    ok(gbl != NULL, "LocalReAlloc should not fail on size 0\n");
-
-    size = LocalSize(gbl);
-    ok(size == 0, "Memory not resized to size 0, instead size=%Id\n", size);
-    ok(LocalFree(gbl) == NULL, "Memory not freed\n");
-    size = LocalSize(gbl);
-    ok(size == 0, "Memory should have been freed, size=%Id\n", size);
-
-    gbl = LocalReAlloc(0, 10, LMEM_MOVEABLE);
-    ok(gbl == NULL, "local realloc allocated memory\n");
-
-    /* LocalLock / LocalUnlock with a valid handle */
-    gbl = LocalAlloc(LMEM_MOVEABLE, 256);
-    SetLastError( 0xdeadbeef );
-    mem = LocalLock(gbl);      /* #1 */
-    ok(mem != NULL, "returned %p with %ld (expected '!= NULL')\n", mem, GetLastError());
-    SetLastError( 0xdeadbeef );
-    flags = LocalFlags(gbl);
-    ok( flags == 1, "returned 0x%04x with %ld (expected '0x0001')\n",
-        flags, GetLastError());
-
-    SetLastError( 0xdeadbeef );
-    msecond = LocalLock(gbl);   /* #2 */
-    ok( msecond == mem, "returned %p with %ld (expected '%p')\n",
-        msecond, GetLastError(), mem);
-    SetLastError( 0xdeadbeef );
-    flags = LocalFlags(gbl);
-    ok( flags == 2, "returned 0x%04x with %ld (expected '0x0002')\n",
-        flags, GetLastError());
-    SetLastError( 0xdeadbeef );
-
-    SetLastError( 0xdeadbeef );
-    res = LocalUnlock(gbl);    /* #1 */
-    ok(res, "returned %ld with %ld (expected '!= 0')\n", res, GetLastError());
-    SetLastError( 0xdeadbeef );
-    flags = LocalFlags(gbl);
-    ok( flags , "returned 0x%04x with %ld (expected '!= 0')\n",
-        flags, GetLastError());
-
-    SetLastError( 0xdeadbeef );
-    res = LocalUnlock(gbl);    /* #0 */
-    /* NT: ERROR_SUCCESS (documented on MSDN), 9x: untouched */
-    ok( !res && ((GetLastError() == ERROR_SUCCESS) || (GetLastError() == 0xdeadbeef)),
-        "returned %ld with %ld (expected '0' with: ERROR_SUCCESS or "
-        "0xdeadbeef)\n",
-        res, GetLastError() );
-    SetLastError( 0xdeadbeef );
-    flags = LocalFlags(gbl);
-    ok( !flags , "returned 0x%04x with %ld (expected '0')\n",
-        flags, GetLastError());
-
-    /* Unlock an already unlocked Handle */
-    SetLastError( 0xdeadbeef );
-    res = LocalUnlock(gbl);
-    /* NT: ERROR_NOT_LOCKED,  9x: untouched */
-    ok( !res && ((GetLastError() == ERROR_NOT_LOCKED) || (GetLastError() == 0xdeadbeef)),
-        "returned %ld with %ld (expected '0' with: ERROR_NOT_LOCKED or "
-        "0xdeadbeef)\n",
-        res, GetLastError() );
-
-    LocalFree(gbl);
-    /* invalid handles are caught in windows: */
-    SetLastError( 0xdeadbeef );
-    hsecond = LocalFree(gbl);       /* invalid handle: free memory twice */
-    ok( (hsecond == gbl) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %p with 0x%08lx (expected %p with ERROR_INVALID_HANDLE)\n",
-        hsecond, GetLastError(), gbl);
-    SetLastError( 0xdeadbeef );
-    flags = LocalFlags(gbl);
-    ok( (flags == LMEM_INVALID_HANDLE) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned 0x%04x with 0x%08lx (expected LMEM_INVALID_HANDLE with "
-        "ERROR_INVALID_HANDLE)\n", flags, GetLastError());
-    SetLastError( 0xdeadbeef );
-    size = LocalSize(gbl);
-    ok( (size == 0) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %Id with 0x%08lx (expected '0' with ERROR_INVALID_HANDLE)\n",
-        size, GetLastError());
-
-    SetLastError( 0xdeadbeef );
-    mem = LocalLock(gbl);
-    ok( (mem == NULL) && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %p with 0x%08lx (expected NULL with ERROR_INVALID_HANDLE)\n",
-        mem, GetLastError());
-
-    /* This Test works the same on all Systems (GlobalUnlock() is different) */
-    SetLastError( 0xdeadbeef );
-    res = LocalUnlock(gbl);
-    ok(!res && (GetLastError() == ERROR_INVALID_HANDLE),
-        "returned %ld with %ld (expected '0' with ERROR_INVALID_HANDLE)\n",
-        res, GetLastError());
-
-    /* LMEM_FIXED block expands in place only without flags */
-    for (size = 1; size <= max_size; size <<= 1) {
-        gbl = LocalAlloc(LMEM_FIXED, init_size);
-        SetLastError( 0xdeadbeef );
-        hsecond = LocalReAlloc(gbl, size + init_size, 0);
-        ok(hsecond == gbl || (hsecond == NULL && GetLastError() == ERROR_NOT_ENOUGH_MEMORY),
-           "got %p with %lx (expected %p or NULL) @%Id\n", hsecond, GetLastError(), gbl, size);
-        LocalFree(gbl);
-    }
-
-    /* LMEM_FIXED memory can be relocated with LMEM_MOVEABLE */
-    for (size = 1; size <= max_size; size <<= 1) {
-        gbl = LocalAlloc(LMEM_FIXED, init_size);
-        SetLastError( 0xdeadbeef );
-        hsecond = LocalReAlloc(gbl, size + init_size, LMEM_MOVEABLE);
-        ok(hsecond != NULL,
-           "got %p with %lx (expected non-NULL) @%Id\n", hsecond, GetLastError(), size);
-        mem = LocalLock(hsecond);
-        ok(mem == hsecond, "got %p (expected %p) @%Id\n", mem, hsecond, size);
-        LocalFree(hsecond);
-    }
-
-    /* trying to unlock pointer from LocalAlloc */
-    gbl = LocalAlloc(LMEM_FIXED, 100);
-    SetLastError(0xdeadbeef);
-    res = LocalUnlock(gbl);
-    ok(res == 0, "Expected 0, got %ld\n", res);
-    ok(GetLastError() == ERROR_NOT_LOCKED ||
-       broken(GetLastError() == 0xdeadbeef) /* win9x */, "got %ld\n", GetLastError());
-    LocalFree(gbl);
-
-    gbl = LocalAlloc( LMEM_FIXED, 0 );
-    SetLastError(0xdeadbeef);
-    size = LocalSize( gbl );
-    ok( !size || broken(size == 1), /* vistau64 */
-        "wrong size %Iu\n", size );
-    LocalFree( gbl );
 }
 
 
@@ -723,84 +578,320 @@ static void test_GlobalAlloc(void)
     }
 }
 
-
 static void test_LocalAlloc(void)
 {
-    ULONG memchunk;
-    HLOCAL mem1,mem2,mem2a,mem2b;
-    UCHAR *mem2ptr;
-    UINT i;
-    BOOL error;
-    memchunk=100000;
+    static const UINT flags_tests[] =
+    {
+        LMEM_FIXED,
+        LMEM_FIXED | LMEM_DISCARDABLE,
+        LMEM_MOVEABLE,
+        LMEM_MOVEABLE | LMEM_NODISCARD,
+        LMEM_MOVEABLE | LMEM_DISCARDABLE,
+        LMEM_MOVEABLE | LMEM_DISCARDABLE | LMEM_NOCOMPACT | LMEM_NODISCARD,
+    };
+    static const char zero_buffer[100000] = {0};
+    static const SIZE_T buffer_size = ARRAY_SIZE(zero_buffer);
+    const HLOCAL invalid_mem = LongToHandle( 0xdeadbee0 + sizeof(void *) );
+    void *const invalid_ptr = LongToHandle( 0xdeadbee0 );
+    HLOCAL mem, tmp_mem;
+    BYTE *ptr, *tmp_ptr;
+    UINT i, flags;
+    SIZE_T size;
+    BOOL ret;
 
-    /* Check that a normal alloc works */
-    mem1=LocalAlloc(0,memchunk);
-    ok(mem1!=NULL,"LocalAlloc failed: error=%ld\n",GetLastError());
-    if(mem1) {
-      ok(LocalSize(mem1)>=memchunk, "LocalAlloc should return a big enough memory block\n");
-    }
+    mem = LocalFree( 0 );
+    ok( !mem, "LocalFree failed, error %lu\n", GetLastError() );
+    mem = LocalReAlloc( 0, 10, LMEM_MOVEABLE );
+    ok( !mem, "LocalReAlloc succeeded\n" );
 
-    /* Check that a 'zeroing' and lock alloc works */
-    mem2=LocalAlloc(LMEM_ZEROINIT|LMEM_MOVEABLE,memchunk);
-    ok(mem2!=NULL,"LocalAlloc failed: error=%ld\n",GetLastError());
-    if(mem2) {
-      ok(LocalSize(mem2)>=memchunk,"LocalAlloc should return a big enough memory block\n");
-      mem2ptr=LocalLock(mem2);
-      ok(mem2ptr!=NULL,"LocalLock: error=%ld\n",GetLastError());
-      if(mem2ptr) {
-        error=FALSE;
-        for(i=0;i<memchunk;i++) {
-          if(mem2ptr[i]!=0) {
-            error=TRUE;
-          }
-        }
-        ok(!error,"LocalAlloc should have zeroed out its allocated memory\n");
-        SetLastError(0);
-        error=LocalUnlock(mem2);
-        ok(!error && GetLastError()==NO_ERROR,
-           "LocalUnlock Failed: rc=%d err=%ld\n",error,GetLastError());
-      }
-    }
-   mem2a=LocalFree(mem2);
-   ok(mem2a==NULL, "LocalFree failed: %p\n",mem2a);
+    mem = LocalAlloc( LMEM_MOVEABLE, 0 );
+    ok( !!mem, "LocalAlloc failed, error %lu\n", GetLastError() );
+    mem = LocalReAlloc( mem, 10, LMEM_MOVEABLE );
+    ok( !!mem, "LocalReAlloc failed, error %lu\n", GetLastError() );
+    size = LocalSize( mem );
+    ok( size >= 10 && size <= 16, "LocalSize returned %Iu\n", size );
+    mem = LocalReAlloc( mem, 0, LMEM_MOVEABLE );
+    ok( !!mem, "LocalReAlloc failed, error %lu\n", GetLastError() );
+    size = LocalSize( mem );
+    ok( size == 0, "LocalSize returned %Iu\n", size );
+    mem = LocalReAlloc( mem, 10, LMEM_MOVEABLE );
+    ok( !!mem, "LocalReAlloc failed, error %lu\n", GetLastError() );
+    size = LocalSize( mem );
+    ok( size >= 10 && size <= 16, "LocalSize returned %Iu\n", size );
+    tmp_mem = LocalFree( mem );
+    ok( !tmp_mem, "LocalFree failed, error %lu\n", GetLastError() );
+    size = LocalSize( mem );
+    ok( size == 0, "LocalSize returned %Iu\n", size );
 
-   /* Reallocate mem2 as moveable memory */
-   mem2=LocalAlloc(LMEM_MOVEABLE | LMEM_ZEROINIT,memchunk);
-   ok(mem2!=NULL, "LocalAlloc failed to create moveable memory, error=%ld\n",GetLastError());
+    mem = LocalAlloc( LMEM_MOVEABLE, 256 );
+    ok( !!mem, "LocalAlloc failed, error %lu\n", GetLastError() );
+    ptr = LocalLock( mem );
+    ok( !!ptr, "LocalLock failed, error %lu\n", GetLastError() );
+    ok( ptr != mem, "got unexpected ptr %p\n", ptr );
+    flags = LocalFlags( mem );
+    ok( flags == 1, "LocalFlags returned %#x, error %lu\n", flags, GetLastError() );
+    tmp_ptr = LocalLock( mem );
+    ok( !!tmp_ptr, "LocalLock failed, error %lu\n", GetLastError() );
+    ok( tmp_ptr == ptr, "got ptr %p, expected %p\n", tmp_ptr, ptr );
+    flags = LocalFlags( mem );
+    ok( flags == 2, "LocalFlags returned %#x, error %lu\n", flags, GetLastError() );
+    ret = LocalUnlock( mem );
+    ok( ret, "LocalUnlock failed, error %lu\n", GetLastError() );
+    flags = LocalFlags( mem );
+    ok( flags == 1, "LocalFlags returned %#x, error %lu\n", flags, GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = LocalUnlock( mem );
+    ok( !ret, "LocalUnlock succeeded\n" );
+    ok( GetLastError() == ERROR_SUCCESS, "got error %lu\n", GetLastError() );
+    flags = LocalFlags( mem );
+    ok( !flags, "LocalFlags returned %#x, error %lu\n", flags, GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = LocalUnlock( mem );
+    ok( !ret, "LocalUnlock succeeded\n" );
+    ok( GetLastError() == ERROR_NOT_LOCKED, "got error %lu\n", GetLastError() );
+    tmp_mem = LocalFree( mem );
+    ok( !tmp_mem, "LocalFree failed, error %lu\n", GetLastError() );
 
-   /* Check that ReAllocing memory works as expected */
-    mem2a=LocalReAlloc(mem2,2*memchunk,LMEM_MOVEABLE | LMEM_ZEROINIT);
-    ok(mem2a!=NULL,"LocalReAlloc failed, error=%ld\n",GetLastError());
-    if(mem2a) {
-      ok(LocalSize(mem2a)>=2*memchunk,"LocalReAlloc failed\n");
-      mem2ptr=LocalLock(mem2a);
-      ok(mem2ptr!=NULL,"LocalLock Failed\n");
-      if(mem2ptr) {
-        error=FALSE;
-        for(i=0;i<memchunk;i++) {
-          if(mem2ptr[memchunk+i]!=0) {
-            error=TRUE;
-          }
-        }
-        ok(!error,"LocalReAlloc should have zeroed out its allocated memory\n");
-        /* Check that LocalHandle works */
-        mem2b=LocalHandle(mem2ptr);
-        ok(mem2b==mem2a,"LocalHandle didn't return the correct memory handle %p/%p for %p\n",
-           mem2a, mem2b, mem2ptr);
-        /* Check that we can't discard locked memory */
-        mem2b=LocalDiscard(mem2a);
-        ok(mem2b==NULL,"Discarded memory we shouldn't have\n");
-        SetLastError(NO_ERROR);
-        ok(!LocalUnlock(mem2a) && GetLastError()==NO_ERROR, "LocalUnlock Failed\n");
-      }
-    }
-    if(mem1) {
-      ok(LocalFree(mem1)==NULL,"LocalFree failed\n");
-    }
-    if(mem2a) {
-      ok(LocalFree(mem2a)==NULL,"LocalFree failed\n");
-    } else {
-      ok(LocalFree(mem2)==NULL,"LocalFree failed\n");
+    /* freed handles are caught */
+    mem = LocalAlloc( LMEM_MOVEABLE, 256 );
+    ok( !!mem, "LocalAlloc failed, error %lu\n", GetLastError() );
+    tmp_mem = LocalFree( mem );
+    ok( !tmp_mem, "LocalFree failed, error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    tmp_mem = LocalFree( mem );
+    ok( tmp_mem == mem, "LocalFree succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    flags = LocalFlags( mem );
+    ok( flags == LMEM_INVALID_HANDLE, "LocalFlags succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    size = LocalSize( mem );
+    ok( size == 0, "LocalSize succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ptr = LocalLock( mem );
+    ok( !ptr, "LocalLock succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = LocalUnlock( mem );
+    ok( !ret, "LocalUnlock succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+#if 0 /* corrupts Wine heap */
+    SetLastError( 0xdeadbeef );
+    tmp_mem = LocalReAlloc( mem, 0, LMEM_MOVEABLE );
+    todo_wine
+    ok( !tmp_mem, "LocalReAlloc succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+#endif
+
+    /* invalid handles are caught */
+    SetLastError( 0xdeadbeef );
+    tmp_mem = LocalFree( invalid_mem );
+    ok( tmp_mem == invalid_mem, "LocalFree succeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    flags = LocalFlags( invalid_mem );
+    todo_wine
+    ok( flags == LMEM_INVALID_HANDLE, "LocalFlags succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    size = LocalSize( invalid_mem );
+    ok( size == 0, "LocalSize succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ptr = LocalLock( invalid_mem );
+    ok( !ptr, "LocalLock succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = LocalUnlock( invalid_mem );
+    ok( !ret, "LocalUnlock succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    tmp_mem = LocalReAlloc( invalid_mem, 0, LMEM_MOVEABLE );
+    ok( !tmp_mem, "LocalReAlloc succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+
+    /* invalid pointers are caught */
+    SetLastError( 0xdeadbeef );
+    tmp_mem = LocalFree( invalid_ptr );
+    ok( tmp_mem == invalid_ptr, "LocalFree succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    flags = LocalFlags( invalid_ptr );
+    todo_wine
+    ok( flags == LMEM_INVALID_HANDLE, "LocalFlags succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    size = LocalSize( invalid_ptr );
+    ok( size == 0, "LocalSize succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ptr = LocalLock( invalid_ptr );
+    ok( !ptr, "LocalLock succeeded\n" );
+    ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = LocalUnlock( invalid_ptr );
+    ok( !ret, "LocalUnlock succeeded\n" );
+    ok( GetLastError() == ERROR_NOT_LOCKED, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    tmp_mem = LocalReAlloc( invalid_ptr, 0, LMEM_MOVEABLE );
+    ok( !tmp_mem, "LocalReAlloc succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
+
+    /* LMEM_FIXED block doesn't allow resize, though it succeeds with LMEM_MODIFY */
+    mem = LocalAlloc( LMEM_FIXED, 10 );
+    ok( !!mem, "LocalAlloc failed, error %lu\n", GetLastError() );
+    tmp_mem = LocalReAlloc( mem, 9, LMEM_MODIFY );
+    todo_wine
+    ok( !!tmp_mem, "LocalAlloc failed, error %lu\n", GetLastError() );
+    todo_wine
+    ok( tmp_mem == mem, "got ptr %p, expected %p\n", tmp_mem, mem );
+    size = LocalSize( mem );
+    ok( size == 10, "LocalSize returned %Iu\n", size );
+    SetLastError( 0xdeadbeef );
+    tmp_mem = LocalReAlloc( mem, 10, 0 );
+    todo_wine
+    ok( !tmp_mem || broken( tmp_mem == mem ) /* w1064v1507 / w1064v1607 */,
+        "LocalReAlloc succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_NOT_ENOUGH_MEMORY || broken( GetLastError() == 0xdeadbeef ) /* w1064v1507 / w1064v1607 */,
+        "got error %lu\n", GetLastError() );
+    if (tmp_mem) mem = tmp_mem;
+    tmp_mem = LocalReAlloc( mem, 1024 * 1024, LMEM_MODIFY );
+    todo_wine
+    ok( !!tmp_mem, "LocalAlloc failed, error %lu\n", GetLastError() );
+    todo_wine
+    ok( tmp_mem == mem, "got ptr %p, expected %p\n", tmp_mem, mem );
+    size = LocalSize( mem );
+    ok( size == 10, "LocalSize returned %Iu\n", size );
+    mem = LocalFree( mem );
+    ok( !mem, "LocalFree failed, error %lu\n", GetLastError() );
+
+    /* LMEM_FIXED block can be relocated with LMEM_MOVEABLE */
+    mem = LocalAlloc( LMEM_FIXED, 10 );
+    ok( !!mem, "LocalAlloc failed, error %lu\n", GetLastError() );
+    tmp_mem = LocalReAlloc( mem, 11, LMEM_MOVEABLE );
+    ok( !!tmp_mem, "LocalReAlloc failed, error %lu\n", GetLastError() );
+    todo_wine
+    ok( tmp_mem != mem || broken( tmp_mem == mem ) /* w1064v1507 / w1064v1607 */,
+        "LocalReAlloc didn't relocate memory\n" );
+    ptr = LocalLock( tmp_mem );
+    ok( !!ptr, "LocalLock failed, error %lu\n", GetLastError() );
+    ok( ptr == tmp_mem, "got ptr %p, expected %p\n", ptr, tmp_mem );
+    LocalFree( tmp_mem );
+
+    mem = LocalAlloc( LMEM_FIXED, 100 );
+    ok( !!mem, "LocalAlloc failed, error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = LocalUnlock( mem );
+    ok( !ret, "LocalUnlock succeeded\n" );
+    ok( GetLastError() == ERROR_NOT_LOCKED, "got error %lu\n", GetLastError() );
+    mem = LocalFree( mem );
+    ok( !mem, "LocalFree failed, error %lu\n", GetLastError() );
+
+    mem = LocalAlloc( LMEM_FIXED, 0 );
+    ok( !!mem, "LocalAlloc failed, error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    size = LocalSize( mem );
+    ok( size == 0, "LocalSize returned %Iu\n", size );
+    mem = LocalFree( mem );
+    ok( !mem, "LocalFree failed, error %lu\n", GetLastError() );
+
+    /* trying to lock empty memory should give an error */
+    mem = LocalAlloc( LMEM_MOVEABLE | LMEM_ZEROINIT, 0 );
+    ok( !!mem, "LocalAlloc failed, error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ptr = LocalLock( mem );
+    ok( !ptr, "LocalLock succeeded\n" );
+    ok( GetLastError() == ERROR_DISCARDED, "got error %lu\n", GetLastError() );
+    mem = LocalFree( mem );
+    ok( !mem, "LocalFree failed, error %lu\n", GetLastError() );
+
+    mem = LocalAlloc( 0, buffer_size );
+    ok( !!mem, "LocalAlloc failed, error %lu\n", GetLastError() );
+    size = LocalSize( mem );
+    ok( size >= buffer_size, "LocalSize returned %Iu, error %lu\n", size, GetLastError() );
+    mem = LocalFree( mem );
+    ok( !mem, "LocalFree failed, error %lu\n", GetLastError() );
+
+    mem = LocalAlloc( LMEM_ZEROINIT, buffer_size );
+    ok( !!mem, "LocalAlloc failed, error %lu\n", GetLastError() );
+    size = LocalSize( mem );
+    ok( size >= buffer_size, "LocalSize returned %Iu, error %lu\n", size, GetLastError() );
+    ptr = LocalLock( mem );
+    ok( !!ptr, "LocalLock failed, error %lu\n", GetLastError() );
+    ok( ptr == mem, "got ptr %p, expected %p\n", ptr, mem );
+    ok( !memcmp( ptr, zero_buffer, buffer_size ), "LocalAlloc didn't clear memory\n" );
+
+    /* Check that we cannot change LMEM_FIXED to LMEM_MOVEABLE */
+    mem = LocalReAlloc( mem, 0, LMEM_MODIFY | LMEM_MOVEABLE );
+    ok( !!mem, "LocalReAlloc failed, error %lu\n", GetLastError() );
+    todo_wine
+    ok( mem == ptr, "LocalReAlloc returned unexpected handle\n" );
+    size = LocalSize( mem );
+    ok( size == buffer_size, "LocalSize returned %Iu, error %lu\n", size, GetLastError() );
+
+    ptr = LocalLock( mem );
+    ok( !!ptr, "LocalLock failed, error %lu\n", GetLastError() );
+    todo_wine
+    ok( ptr == mem, "got unexpected ptr %p\n", ptr );
+    ret = LocalUnlock( mem );
+    ok( !ret, "LocalUnlock succeeded, error %lu\n", GetLastError() );
+    todo_wine
+    ok( GetLastError() == ERROR_NOT_LOCKED, "got error %lu\n", GetLastError() );
+
+    tmp_mem = LocalReAlloc( mem, 2 * buffer_size, LMEM_MOVEABLE | LMEM_ZEROINIT );
+    ok( !!tmp_mem, "LocalReAlloc failed\n" );
+    ok( tmp_mem == mem || broken( tmp_mem != mem ) /* happens sometimes?? */,
+        "LocalReAlloc returned unexpected handle\n" );
+    mem = tmp_mem;
+
+    size = LocalSize( mem );
+    ok( size >= 2 * buffer_size, "LocalSize returned %Iu, error %lu\n", size, GetLastError() );
+    ptr = LocalLock( mem );
+    ok( !!ptr, "LocalLock failed, error %lu\n", GetLastError() );
+    todo_wine
+    ok( ptr == mem, "got unexpected ptr %p\n", ptr );
+    ok( !memcmp( ptr, zero_buffer, buffer_size ), "LocalReAlloc didn't clear memory\n" );
+    ok( !memcmp( ptr + buffer_size, zero_buffer, buffer_size ),
+        "LocalReAlloc didn't clear memory\n" );
+
+    tmp_mem = LocalHandle( ptr );
+    ok( tmp_mem == mem, "LocalHandle returned unexpected handle\n" );
+    tmp_mem = LocalDiscard( mem );
+    todo_wine
+    ok( !!tmp_mem, "LocalDiscard failed, error %lu\n", GetLastError() );
+    todo_wine
+    ok( tmp_mem == mem, "LocalDiscard returned unexpected handle\n" );
+    ret = LocalUnlock( mem );
+    ok( !ret, "LocalUnlock succeeded, error %lu\n", GetLastError() );
+    todo_wine
+    ok( GetLastError() == ERROR_NOT_LOCKED, "got error %lu\n", GetLastError() );
+
+    tmp_mem = LocalDiscard( mem );
+    ok( tmp_mem == mem, "LocalDiscard failed, error %lu\n", GetLastError() );
+    mem = LocalFree( mem );
+    ok( !mem, "LocalFree failed, error %lu\n", GetLastError() );
+
+    for (i = 0; i < ARRAY_SIZE(flags_tests); i++)
+    {
+        mem = LocalAlloc( flags_tests[i], 4 );
+        ok( !!mem, "LocalAlloc failed, error %lu\n", GetLastError() );
+        flags = LocalFlags( mem );
+        ok( !(flags & ~LMEM_DISCARDABLE), "got flags %#x, error %lu\n", flags, GetLastError() );
+        mem = LocalFree( mem );
+        ok( !mem, "LocalFree failed, error %lu\n", GetLastError() );
     }
 }
 
