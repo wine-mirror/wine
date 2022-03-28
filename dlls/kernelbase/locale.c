@@ -1103,7 +1103,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return -1;
 
     case LOCALE_SPARENT:
-        return -1;
+        return locale_return_string( locale->sparent, type, buffer, len );
 
     case LOCALE_SCONSOLEFALLBACKNAME:
         return -1;
@@ -5017,17 +5017,6 @@ INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoEx( const WCHAR *name, LCTYPE info, WC
 
     lcid = LocaleNameToLCID( name, 0 );
     if (!lcid) return 0;
-
-    /* special handling for neutral locale names */
-    if (name && lstrlenW( name ) == 2)
-    {
-        switch (LOWORD( info ))
-        {
-        case LOCALE_SPARENT:
-            if (len) buffer[0] = 0;
-            return 1;
-        }
-    }
     return GetLocaleInfoW( lcid, info, buffer, len );
 }
 
