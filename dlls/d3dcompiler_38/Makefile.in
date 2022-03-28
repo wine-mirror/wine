@@ -1,5 +1,5 @@
 MODULE    = d3dcompiler_38.dll
-IMPORTS   = wined3d dxguid uuid
+IMPORTS   = wined3d
 EXTRADEFS = -DD3D_COMPILER_VERSION=38
 PARENTSRC = ../d3dcompiler_43
 EXTRAINCL = $(VKD3D_PE_CFLAGS)
@@ -11,16 +11,13 @@ C_SRCS = \
 	blob.c \
 	bytecodewriter.c \
 	compiler.c \
-	preproc.c \
 	reflection.c \
 	utils.c
 
 LEX_SRCS = \
-	asmshader.l \
-	ppl.l
+	asmshader.l
 
 BISON_SRCS = \
-	asmshader.y \
-	ppy.y
+	asmshader.y
 
 RC_SRCS = version.rc

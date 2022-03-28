@@ -34,6 +34,7 @@ HRESULT WINAPI D3DAssemble(const void *data, SIZE_T datasize, const char *filena
 struct shader_test {
     const char *text;
     const DWORD bytes[128];
+    BOOL todo;
 };
 
 static void dump_shader(DWORD *shader) {
@@ -59,6 +60,7 @@ static void exec_tests(const char *name, struct shader_test tests[], unsigned in
         messages = NULL;
         hr = D3DAssemble(tests[i].text, strlen(tests[i].text), NULL, NULL,
                 NULL, D3DCOMPILE_SKIP_VALIDATION, &shader, &messages);
+        todo_wine_if(tests[i].todo)
         ok(hr == S_OK, "Test %s, shader %u: D3DAssemble failed with error %#lx - %ld.\n", name, i, hr, hr & 0xffff);
         if(messages) {
             trace("D3DAssemble messages:\n%s", (char *)ID3D10Blob_GetBufferPointer(messages));
@@ -211,7 +213,8 @@ static void vs_1_1_test(void) {
             "vs_1_1\n"
             "def c12, 0, -1, -0.5, 1024\n",
             {0xfffe0101, 0x00000051, 0xa00f000c, 0x00000000, 0xbf800000, 0xbf000000,
-             0x44800000, 0x0000ffff}
+             0x44800000, 0x0000ffff},
+            TRUE
         },
         {   /* shader 14: writemasks, swizzles */
             "vs_1_1\n"
@@ -759,7 +762,8 @@ static void vs_2_0_test(void) {
             "defi i1, 0, 40, 30, 10\n",
             {0xfffe0200, 0x05000030, 0xf00f0000, 0xffffffff, 0x00000001, 0x0000000a,
              0x00000000, 0x05000030, 0xf00f0001, 0x00000000, 0x00000028, 0x0000001e,
-             0x0000000a, 0x0000ffff}
+             0x0000000a, 0x0000ffff},
+            TRUE
         },
         {   /* shader 23 */
             "vs_2_0\n"
@@ -971,7 +975,8 @@ static void ps_2_x_test(void) {
             "defi i1, 0, 40, 30, 10\n",
             {0xffff0201, 0x05000030, 0xf00f0000, 0xffffffff, 0x00000001, 0x0000000a,
              0x00000000, 0x05000030, 0xf00f0001, 0x00000000, 0x00000028, 0x0000001e,
-             0x0000000a, 0x0000ffff}
+             0x0000000a, 0x0000ffff},
+            TRUE
         },
         {   /* shader 2 */
             "ps_2_x\n"
@@ -1660,7 +1665,7 @@ static void d3dpreprocess_test(void)
     /* NULL shader test */
     messages = NULL;
     hr = D3DPreprocess(test1, strlen(test1), NULL, defines, NULL, NULL, &messages);
-    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    todo_wine ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     if (messages)
     {
         trace("D3DPreprocess messages:\n%s", (char *)ID3D10Blob_GetBufferPointer(messages));
@@ -1671,7 +1676,7 @@ static void d3dpreprocess_test(void)
     shader = NULL;
     messages = NULL;
     hr = D3DPreprocess(quotation_marks_test, strlen(quotation_marks_test), NULL, NULL, NULL, &shader, &messages);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     if (messages)
     {
         trace("D3DPreprocess messages:\n%s", (char *)ID3D10Blob_GetBufferPointer(messages));

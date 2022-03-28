@@ -1620,7 +1620,8 @@ static void test_include(void)
 
 #if D3D_COMPILER_VERSION >= 46
         hr = tests[i](NULL, D3D_COMPILE_STANDARD_FILE_INCLUDE, &blob, &errors);
-        todo_wine_if (i != 1) ok(hr == (i == 0 ? D3DXERR_INVALIDDATA : E_FAIL), "Got unexpected hr %#lx.\n", hr);
+        todo_wine_if (!i)
+            ok(hr == (i == 0 ? D3DXERR_INVALIDDATA : E_FAIL), "Got unexpected hr %#lx.\n", hr);
         ok(!blob, "Got unexpected blob.\n");
         ok(!!errors, "Got unexpected errors.\n");
         ID3D10Blob_Release(errors);

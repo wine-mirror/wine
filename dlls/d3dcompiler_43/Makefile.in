@@ -11,16 +11,13 @@ C_SRCS = \
 	blob.c \
 	bytecodewriter.c \
 	compiler.c \
-	preproc.c \
 	reflection.c \
 	utils.c
 
 LEX_SRCS = \
-	asmshader.l \
-	ppl.l
+	asmshader.l
 
 BISON_SRCS = \
-	asmshader.y \
-	ppy.y
+	asmshader.y
 
 RC_SRCS = version.rc

@@ -259,7 +259,7 @@ static void assembleshader_test(void)
     messages = NULL;
     hr = D3DXAssembleShader(testshader2, strlen(testshader2), NULL, &include.ID3DXInclude_iface,
                             D3DXSHADER_SKIPVALIDATION, &shader, &messages);
-    ok(hr == D3D_OK, "D3DXAssembleShader test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
+    todo_wine ok(hr == D3D_OK, "D3DXAssembleShader test failed with error 0x%x - %d\n", hr, hr & 0x0000FFFF);
     if(messages) {
         trace("recursive D3DXAssembleShader messages:\n%s", (char *)ID3DXBuffer_GetBufferPointer(messages));
         ID3DXBuffer_Release(messages);

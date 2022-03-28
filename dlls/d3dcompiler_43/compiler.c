@@ -24,7 +24,6 @@
 #include "wine/debug.h"
 
 #include "d3dcompiler_private.h"
-#include "wpp_private.h"
 
 #include <vkd3d_shader.h>
 
@@ -55,49 +54,8 @@ static HRESULT hresult_from_vkd3d_result(int vkd3d_result)
 
 #define D3DXERR_INVALIDDATA                      0x88760b59
 
-#define BUFFER_INITIAL_CAPACITY 256
-
-struct mem_file_desc
-{
-    const char *buffer;
-    unsigned int size;
-    unsigned int pos;
-};
-
-static struct mem_file_desc current_shader;
-static ID3DInclude *current_include;
-static const char *initial_filename;
-
-#define INCLUDES_INITIAL_CAPACITY 4
-
-struct loaded_include
-{
-    const char *name;
-    const char *data;
-};
-
-static struct loaded_include *includes;
-static int includes_capacity, includes_size;
-static const char *parent_include;
-
-static char *wpp_output;
-static int wpp_output_capacity, wpp_output_size;
-
-static char *wpp_messages;
-static int wpp_messages_capacity, wpp_messages_size;
-
-struct define
-{
-    struct define *next;
-    char          *name;
-    char          *value;
-};
-
-static struct define *cmdline_defines;
-
-/* Mutex used to guarantee a single invocation
-   of the D3DXAssembleShader function (or its variants) at a time.
-   This is needed as wpp isn't thread-safe */
+/* Mutex used to guarantee a single invocation of the D3DAssemble function at
+ * a time. This is needed as the assembler isn't thread-safe. */
 static CRITICAL_SECTION wpp_mutex;
 static CRITICAL_SECTION_DEBUG wpp_mutex_debug =
 {
@@ -108,409 +66,21 @@ static CRITICAL_SECTION_DEBUG wpp_mutex_debug =
 };
 static CRITICAL_SECTION wpp_mutex = { &wpp_mutex_debug, -1, 0, 0, 0, 0 };
 
-/* Preprocessor error reporting functions */
-static void wpp_write_message(const char *fmt, va_list args)
+struct d3dcompiler_include_from_file
 {
-    char* newbuffer;
-    int rc, newsize;
+    ID3DInclude ID3DInclude_iface;
+    const char *initial_filename;
+};
 
-    if(wpp_messages_capacity == 0)
-    {
-        wpp_messages = HeapAlloc(GetProcessHeap(), 0, MESSAGEBUFFER_INITIAL_SIZE);
-        if(wpp_messages == NULL)
-            return;
-
-        wpp_messages_capacity = MESSAGEBUFFER_INITIAL_SIZE;
-    }
-
-    while(1)
-    {
-        rc = vsnprintf(wpp_messages + wpp_messages_size,
-                       wpp_messages_capacity - wpp_messages_size, fmt, args);
-
-        if (rc < 0 ||                                           /* C89 */
-            rc >= wpp_messages_capacity - wpp_messages_size) {  /* C99 */
-            /* Resize the buffer */
-            newsize = wpp_messages_capacity * 2;
-            newbuffer = HeapReAlloc(GetProcessHeap(), 0, wpp_messages, newsize);
-            if(newbuffer == NULL)
-            {
-                ERR("Error reallocating memory for parser messages\n");
-                return;
-            }
-            wpp_messages = newbuffer;
-            wpp_messages_capacity = newsize;
-        }
-        else
-        {
-            wpp_messages_size += rc;
-            return;
-        }
-    }
-}
-
-static void WINAPIV PRINTF_ATTR(1,2) wpp_write_message_var(const char *fmt, ...)
+static inline struct d3dcompiler_include_from_file *impl_from_ID3DInclude(ID3DInclude *iface)
 {
-    va_list args;
-
-    va_start(args, fmt);
-    wpp_write_message(fmt, args);
-    va_end(args);
-}
-
-int WINAPIV ppy_error(const char *msg, ...)
-{
-    va_list ap;
-    va_start(ap, msg);
-    wpp_write_message_var("%s:%d:%d: %s: ",
-                          pp_status.input ? pp_status.input : "'main file'",
-                          pp_status.line_number, pp_status.char_number, "Error");
-    wpp_write_message(msg, ap);
-    wpp_write_message_var("\n");
-    va_end(ap);
-    pp_status.state = 1;
-    return 1;
-}
-
-int WINAPIV ppy_warning(const char *msg, ...)
-{
-    va_list ap;
-    va_start(ap, msg);
-    wpp_write_message_var("%s:%d:%d: %s: ",
-                          pp_status.input ? pp_status.input : "'main file'",
-                          pp_status.line_number, pp_status.char_number, "Warning");
-    wpp_write_message(msg, ap);
-    wpp_write_message_var("\n");
-    va_end(ap);
-    return 0;
-}
-
-char *wpp_lookup(const char *filename, int type, const char *parent_name)
-{
-    /* We don't check for file existence here. We will potentially fail on
-     * the following wpp_open_mem(). */
-    char *path;
-    int i;
-
-    TRACE("Looking for include %s, parent %s.\n", debugstr_a(filename), debugstr_a(parent_name));
-
-    parent_include = NULL;
-    if (strcmp(parent_name, initial_filename))
-    {
-        for(i = 0; i < includes_size; i++)
-        {
-            if(!strcmp(parent_name, includes[i].name))
-            {
-                parent_include = includes[i].data;
-                break;
-            }
-        }
-        if(parent_include == NULL)
-        {
-            ERR("Parent include %s missing.\n", debugstr_a(parent_name));
-            return NULL;
-        }
-    }
-
-    path = malloc(strlen(filename) + 1);
-    if(path)
-        memcpy(path, filename, strlen(filename) + 1);
-    return path;
-}
-
-void *wpp_open(const char *filename, int type)
-{
-    struct mem_file_desc *desc;
-    HRESULT hr;
-
-    TRACE("Opening include %s.\n", debugstr_a(filename));
-
-    if(!strcmp(filename, initial_filename))
-    {
-        current_shader.pos = 0;
-        return &current_shader;
-    }
-
-    if(current_include == NULL) return NULL;
-    desc = HeapAlloc(GetProcessHeap(), 0, sizeof(*desc));
-    if(!desc)
-        return NULL;
-
-    if (FAILED(hr = ID3DInclude_Open(current_include, type ? D3D_INCLUDE_LOCAL : D3D_INCLUDE_SYSTEM,
-            filename, parent_include, (const void **)&desc->buffer, &desc->size)))
-    {
-        HeapFree(GetProcessHeap(), 0, desc);
-        return NULL;
-    }
-
-    if(includes_capacity == includes_size)
-    {
-        if(includes_capacity == 0)
-        {
-            includes = HeapAlloc(GetProcessHeap(), 0, INCLUDES_INITIAL_CAPACITY * sizeof(*includes));
-            if(includes == NULL)
-            {
-                ERR("Error allocating memory for the loaded includes structure\n");
-                goto error;
-            }
-            includes_capacity = INCLUDES_INITIAL_CAPACITY * sizeof(*includes);
-        }
-        else
-        {
-            int newcapacity = includes_capacity * 2;
-            struct loaded_include *newincludes =
-                HeapReAlloc(GetProcessHeap(), 0, includes, newcapacity);
-            if(newincludes == NULL)
-            {
-                ERR("Error reallocating memory for the loaded includes structure\n");
-                goto error;
-            }
-            includes = newincludes;
-            includes_capacity = newcapacity;
-        }
-    }
-    includes[includes_size].name = filename;
-    includes[includes_size++].data = desc->buffer;
-
-    desc->pos = 0;
-    return desc;
-
-error:
-    ID3DInclude_Close(current_include, desc->buffer);
-    HeapFree(GetProcessHeap(), 0, desc);
-    return NULL;
-}
-
-void wpp_close(void *file)
-{
-    struct mem_file_desc *desc = file;
-
-    if(desc != &current_shader)
-    {
-        if(current_include)
-            ID3DInclude_Close(current_include, desc->buffer);
-        else
-            ERR("current_include == NULL, desc == %p, buffer = %s\n",
-                desc, desc->buffer);
-
-        HeapFree(GetProcessHeap(), 0, desc);
-    }
-}
-
-int wpp_read(void *file, char *buffer, unsigned int len)
-{
-    struct mem_file_desc *desc = file;
-
-    len = min(len, desc->size - desc->pos);
-    memcpy(buffer, desc->buffer + desc->pos, len);
-    desc->pos += len;
-    return len;
-}
-
-void wpp_write(const char *buffer, unsigned int len)
-{
-    char *new_wpp_output;
-
-    if(wpp_output_capacity == 0)
-    {
-        wpp_output = HeapAlloc(GetProcessHeap(), 0, BUFFER_INITIAL_CAPACITY);
-        if(!wpp_output)
-            return;
-
-        wpp_output_capacity = BUFFER_INITIAL_CAPACITY;
-    }
-    if(len > wpp_output_capacity - wpp_output_size)
-    {
-        while(len > wpp_output_capacity - wpp_output_size)
-        {
-            wpp_output_capacity *= 2;
-        }
-        new_wpp_output = HeapReAlloc(GetProcessHeap(), 0, wpp_output,
-                                     wpp_output_capacity);
-        if(!new_wpp_output)
-        {
-            ERR("Error allocating memory\n");
-            return;
-        }
-        wpp_output = new_wpp_output;
-    }
-    memcpy(wpp_output + wpp_output_size, buffer, len);
-    wpp_output_size += len;
-}
-
-static int wpp_close_output(void)
-{
-    char *new_wpp_output = HeapReAlloc(GetProcessHeap(), 0, wpp_output,
-                                       wpp_output_size + 1);
-    if(!new_wpp_output) return 0;
-    wpp_output = new_wpp_output;
-    wpp_output[wpp_output_size]='\0';
-    wpp_output_size++;
-    return 1;
-}
-
-static void add_cmdline_defines(void)
-{
-    struct define *def;
-
-    for (def = cmdline_defines; def; def = def->next)
-    {
-        if (def->value) pp_add_define( def->name, def->value );
-    }
-}
-
-static void del_cmdline_defines(void)
-{
-    struct define *def;
-
-    for (def = cmdline_defines; def; def = def->next)
-    {
-        if (def->value) pp_del_define( def->name );
-    }
-}
-
-static void add_special_defines(void)
-{
-    time_t now = time(NULL);
-    pp_entry_t *ppp;
-    char buf[32];
-
-    strftime(buf, sizeof(buf), "\"%b %d %Y\"", localtime(&now));
-    pp_add_define( "__DATE__", buf );
-
-    strftime(buf, sizeof(buf), "\"%H:%M:%S\"", localtime(&now));
-    pp_add_define( "__TIME__", buf );
-
-    ppp = pp_add_define( "__FILE__", "" );
-    if(ppp)
-        ppp->type = def_special;
-
-    ppp = pp_add_define( "__LINE__", "" );
-    if(ppp)
-        ppp->type = def_special;
-}
-
-static void del_special_defines(void)
-{
-    pp_del_define( "__DATE__" );
-    pp_del_define( "__TIME__" );
-    pp_del_define( "__FILE__" );
-    pp_del_define( "__LINE__" );
-}
-
-
-/* add a define to the preprocessor list */
-int wpp_add_define( const char *name, const char *value )
-{
-    struct define *def;
-
-    if (!value) value = "";
-
-    for (def = cmdline_defines; def; def = def->next)
-    {
-        if (!strcmp( def->name, name ))
-        {
-            char *new_value = pp_xstrdup(value);
-            if(!new_value)
-                return 1;
-            free( def->value );
-            def->value = new_value;
-
-            return 0;
-        }
-    }
-
-    def = pp_xmalloc( sizeof(*def) );
-    if(!def)
-        return 1;
-    def->next  = cmdline_defines;
-    def->name  = pp_xstrdup(name);
-    if(!def->name)
-    {
-        free(def);
-        return 1;
-    }
-    def->value = pp_xstrdup(value);
-    if(!def->value)
-    {
-        free(def->name);
-        free(def);
-        return 1;
-    }
-    cmdline_defines = def;
-    return 0;
-}
-
-
-/* undefine a previously added definition */
-void wpp_del_define( const char *name )
-{
-    struct define *def;
-
-    for (def = cmdline_defines; def; def = def->next)
-    {
-        if (!strcmp( def->name, name ))
-        {
-            free( def->value );
-            def->value = NULL;
-            return;
-        }
-    }
-}
-
-
-/* the main preprocessor parsing loop */
-int wpp_parse( const char *input, FILE *output )
-{
-    int ret;
-
-    pp_status.input = NULL;
-    pp_status.line_number = 1;
-    pp_status.char_number = 1;
-    pp_status.state = 0;
-
-    ret = pp_push_define_state();
-    if(ret)
-        return ret;
-    add_cmdline_defines();
-    add_special_defines();
-
-    if (!input) pp_status.file = stdin;
-    else if (!(pp_status.file = wpp_open(input, 1)))
-    {
-        ppy_error("Could not open %s\n", input);
-        del_special_defines();
-        del_cmdline_defines();
-        pp_pop_define_state();
-        return 2;
-    }
-
-    pp_status.input = input ? pp_xstrdup(input) : NULL;
-
-    ppy_out = output;
-    pp_writestring("# 1 \"%s\" 1\n", input ? input : "");
-
-    ret = ppy_parse();
-    /* If there were errors during processing, return an error code */
-    if (!ret && pp_status.state) ret = pp_status.state;
-
-    if (input)
-    {
-	wpp_close(pp_status.file);
-	free(pp_status.input);
-    }
-    /* Clean if_stack, it could remain dirty on errors */
-    while (pp_get_if_depth()) pp_pop_if();
-    ppy_lex_destroy();
-    del_special_defines();
-    del_cmdline_defines();
-    pp_pop_define_state();
-    return ret;
+    return CONTAINING_RECORD(iface, struct d3dcompiler_include_from_file, ID3DInclude_iface);
 }
 
 static HRESULT WINAPI d3dcompiler_include_from_file_open(ID3DInclude *iface, D3D_INCLUDE_TYPE include_type,
         const char *filename, const void *parent_data, const void **data, UINT *bytes)
 {
+    struct d3dcompiler_include_from_file *include = impl_from_ID3DInclude(iface);
     char *fullpath, *buffer = NULL, current_dir[MAX_PATH + 1];
     const char *initial_dir;
     SIZE_T size;
@@ -518,10 +88,10 @@ static HRESULT WINAPI d3dcompiler_include_from_file_open(ID3DInclude *iface, D3D
     ULONG read;
     DWORD len;
 
-    if ((initial_dir = strrchr(initial_filename, '\\')))
+    if ((initial_dir = strrchr(include->initial_filename, '\\')))
     {
-        len = initial_dir - initial_filename + 1;
-        initial_dir = initial_filename;
+        len = initial_dir - include->initial_filename + 1;
+        initial_dir = include->initial_filename;
     }
     else
     {
@@ -578,85 +148,106 @@ const struct ID3DIncludeVtbl d3dcompiler_include_from_file_vtbl =
     d3dcompiler_include_from_file_close
 };
 
-struct d3dcompiler_include_from_file
+static int open_include(const char *filename, bool local, const char *parent_data, void *context,
+        struct vkd3d_shader_code *code)
 {
-    ID3DInclude ID3DInclude_iface;
-};
+    ID3DInclude *iface = context;
+    unsigned int size = 0;
+
+    if (!iface)
+        return VKD3D_ERROR;
+
+    memset(code, 0, sizeof(*code));
+    if (FAILED(ID3DInclude_Open(iface, local ? D3D_INCLUDE_LOCAL : D3D_INCLUDE_SYSTEM,
+            filename, parent_data, &code->code, &size)))
+        return VKD3D_ERROR;
+
+    code->size = size;
+    return VKD3D_OK;
+}
+
+static void close_include(const struct vkd3d_shader_code *code, void *context)
+{
+    ID3DInclude *iface = context;
+
+    ID3DInclude_Close(iface, code->code);
+}
 
 static HRESULT preprocess_shader(const void *data, SIZE_T data_size, const char *filename,
-        const D3D_SHADER_MACRO *defines, ID3DInclude *include, ID3DBlob **error_messages)
+        const D3D_SHADER_MACRO *defines, ID3DInclude *include, ID3DBlob **shader_blob,
+        ID3DBlob **messages_blob)
 {
     struct d3dcompiler_include_from_file include_from_file;
-    int ret;
-    HRESULT hr = S_OK;
+    struct vkd3d_shader_preprocess_info preprocess_info;
+    struct vkd3d_shader_compile_info compile_info;
     const D3D_SHADER_MACRO *def = defines;
+    struct vkd3d_shader_code byte_code;
+    char *messages;
+    HRESULT hr;
+    int ret;
 
     if (include == D3D_COMPILE_STANDARD_FILE_INCLUDE)
     {
         include_from_file.ID3DInclude_iface.lpVtbl = &d3dcompiler_include_from_file_vtbl;
+        include_from_file.initial_filename = filename ? filename : "";
         include = &include_from_file.ID3DInclude_iface;
     }
 
-    if (def != NULL)
+    compile_info.type = VKD3D_SHADER_STRUCTURE_TYPE_COMPILE_INFO;
+    compile_info.next = &preprocess_info;
+    compile_info.source.code = data;
+    compile_info.source.size = data_size;
+    compile_info.source_type = VKD3D_SHADER_SOURCE_HLSL;
+    compile_info.target_type = VKD3D_SHADER_TARGET_NONE;
+    compile_info.options = NULL;
+    compile_info.option_count = 0;
+    compile_info.log_level = VKD3D_SHADER_LOG_INFO;
+    compile_info.source_name = filename;
+
+    preprocess_info.type = VKD3D_SHADER_STRUCTURE_TYPE_PREPROCESS_INFO;
+    preprocess_info.next = NULL;
+    preprocess_info.macros = (const struct vkd3d_shader_macro *)defines;
+    preprocess_info.macro_count = 0;
+    if (defines)
     {
-        while (def->Name != NULL)
-        {
-            wpp_add_define(def->Name, def->Definition);
-            def++;
-        }
+        for (def = defines; def->Name; ++def)
+            ++preprocess_info.macro_count;
     }
-    current_include = include;
-    includes_size = 0;
+    preprocess_info.pfn_open_include = open_include;
+    preprocess_info.pfn_close_include = close_include;
+    preprocess_info.include_context = include;
 
-    wpp_output_size = wpp_output_capacity = 0;
-    wpp_output = NULL;
-
-    wpp_messages_size = wpp_messages_capacity = 0;
-    wpp_messages = NULL;
-    current_shader.buffer = data;
-    current_shader.size = data_size;
-    initial_filename = filename ? filename : "";
-
-    ret = wpp_parse(initial_filename, NULL);
-    if (!wpp_close_output())
-        ret = 1;
-    if (ret)
+    ret = vkd3d_shader_preprocess(&compile_info, &byte_code, &messages);
+    if (messages)
     {
-        TRACE("Error during shader preprocessing\n");
-        if (wpp_messages)
+        if (messages_blob)
         {
-            int size;
-            ID3DBlob *buffer;
-
-            TRACE("Preprocessor messages:\n%s\n", debugstr_a(wpp_messages));
-
-            if (error_messages)
+            size_t size = strlen(messages);
+            if (FAILED(hr = D3DCreateBlob(size, messages_blob)))
             {
-                size = strlen(wpp_messages) + 1;
-                hr = D3DCreateBlob(size, &buffer);
-                if (FAILED(hr))
-                    goto cleanup;
-                CopyMemory(ID3D10Blob_GetBufferPointer(buffer), wpp_messages, size);
-                *error_messages = buffer;
+                vkd3d_shader_free_messages(messages);
+                vkd3d_shader_free_shader_code(&byte_code);
+                return hr;
             }
+            memcpy(ID3D10Blob_GetBufferPointer(*messages_blob), messages, size);
         }
-        if (data)
-            TRACE("Shader source:\n%s\n", debugstr_an(data, data_size));
-        hr = E_FAIL;
+        else
+        {
+            vkd3d_shader_free_messages(messages);
+        }
     }
 
-cleanup:
-    /* Remove the previously added defines */
-    if (defines != NULL)
+    if (!ret)
     {
-        while (defines->Name != NULL)
+        if (FAILED(hr = D3DCreateBlob(byte_code.size, shader_blob)))
         {
-            wpp_del_define(defines->Name);
-            defines++;
+            vkd3d_shader_free_shader_code(&byte_code);
+            return hr;
         }
+        memcpy(ID3D10Blob_GetBufferPointer(*shader_blob), byte_code.code, byte_code.size);
     }
-    HeapFree(GetProcessHeap(), 0, wpp_messages);
-    return hr;
+
+    return hresult_from_vkd3d_result(ret);
 }
 
 static HRESULT assemble_shader(const char *preproc_shader, ID3DBlob **shader_blob, ID3DBlob **error_messages)
@@ -739,6 +330,9 @@ HRESULT WINAPI D3DAssemble(const void *data, SIZE_T datasize, const char *filena
         const D3D_SHADER_MACRO *defines, ID3DInclude *include, UINT flags,
         ID3DBlob **shader, ID3DBlob **error_messages)
 {
+    unsigned int preproc_size;
+    ID3DBlob *preproc_shader;
+    char *preproc_terminated;
     HRESULT hr;
 
     TRACE("data %p, datasize %Iu, filename %s, defines %p, include %p, sflags %#x, "
@@ -753,38 +347,22 @@ HRESULT WINAPI D3DAssemble(const void *data, SIZE_T datasize, const char *filena
     if (shader) *shader = NULL;
     if (error_messages) *error_messages = NULL;
 
-    hr = preprocess_shader(data, datasize, filename, defines, include, error_messages);
+    hr = preprocess_shader(data, datasize, filename, defines, include, &preproc_shader, error_messages);
     if (SUCCEEDED(hr))
-        hr = assemble_shader(wpp_output, shader, error_messages);
+    {
+        preproc_size = ID3D10Blob_GetBufferSize(preproc_shader);
+        if ((preproc_terminated = malloc(preproc_size + 1)))
+        {
+            memcpy(preproc_terminated, ID3D10Blob_GetBufferPointer(preproc_shader), preproc_size);
+            ID3D10Blob_Release(preproc_shader);
+            preproc_terminated[preproc_size] = 0;
 
-    HeapFree(GetProcessHeap(), 0, wpp_output);
+            hr = assemble_shader(preproc_terminated, shader, error_messages);
+            free(preproc_terminated);
+        }
+    }
     LeaveCriticalSection(&wpp_mutex);
     return hr;
-}
-
-static int open_include(const char *filename, bool local, const char *parent_data, void *context,
-        struct vkd3d_shader_code *code)
-{
-    ID3DInclude *iface = context;
-    unsigned int size = 0;
-
-    if (!iface)
-        return VKD3D_ERROR;
-
-    memset(code, 0, sizeof(*code));
-    if (FAILED(ID3DInclude_Open(iface, local ? D3D_INCLUDE_LOCAL : D3D_INCLUDE_SYSTEM,
-            filename, parent_data, &code->code, &size)))
-        return VKD3D_ERROR;
-
-    code->size = size;
-    return VKD3D_OK;
-}
-
-static void close_include(const struct vkd3d_shader_code *code, void *context)
-{
-    ID3DInclude *iface = context;
-
-    ID3DInclude_Close(iface, code->code);
 }
 
 HRESULT WINAPI D3DCompile2(const void *data, SIZE_T data_size, const char *filename,
@@ -839,6 +417,7 @@ HRESULT WINAPI D3DCompile2(const void *data, SIZE_T data_size, const char *filen
     if (include == D3D_COMPILE_STANDARD_FILE_INCLUDE)
     {
         include_from_file.ID3DInclude_iface.lpVtbl = &d3dcompiler_include_from_file_vtbl;
+        include_from_file.initial_filename = filename ? filename : "";
         include = &include_from_file.ID3DInclude_iface;
     }
 
@@ -891,7 +470,6 @@ HRESULT WINAPI D3DCompile2(const void *data, SIZE_T data_size, const char *filen
     preprocess_info.pfn_open_include = open_include;
     preprocess_info.pfn_close_include = close_include;
     preprocess_info.include_context = include;
-    initial_filename = filename ? filename : "";
 
     hlsl_info.type = VKD3D_SHADER_STRUCTURE_TYPE_HLSL_SOURCE_INFO;
     hlsl_info.next = NULL;
@@ -955,40 +533,16 @@ HRESULT WINAPI D3DPreprocess(const void *data, SIZE_T size, const char *filename
         const D3D_SHADER_MACRO *defines, ID3DInclude *include,
         ID3DBlob **shader, ID3DBlob **error_messages)
 {
-    HRESULT hr;
-    ID3DBlob *buffer;
-
     TRACE("data %p, size %Iu, filename %s, defines %p, include %p, shader %p, error_messages %p.\n",
           data, size, debugstr_a(filename), defines, include, shader, error_messages);
 
     if (!data)
         return E_INVALIDARG;
 
-    EnterCriticalSection(&wpp_mutex);
-
     if (shader) *shader = NULL;
     if (error_messages) *error_messages = NULL;
 
-    hr = preprocess_shader(data, size, filename, defines, include, error_messages);
-
-    if (SUCCEEDED(hr))
-    {
-        if (shader)
-        {
-            hr = D3DCreateBlob(wpp_output_size, &buffer);
-            if (FAILED(hr))
-                goto cleanup;
-            CopyMemory(ID3D10Blob_GetBufferPointer(buffer), wpp_output, wpp_output_size);
-            *shader = buffer;
-        }
-        else
-            hr = E_INVALIDARG;
-    }
-
-cleanup:
-    HeapFree(GetProcessHeap(), 0, wpp_output);
-    LeaveCriticalSection(&wpp_mutex);
-    return hr;
+    return preprocess_shader(data, size, filename, defines, include, shader, error_messages);
 }
 
 HRESULT WINAPI D3DDisassemble(const void *data, SIZE_T size, UINT flags, const char *comments, ID3DBlob **disassembly)
