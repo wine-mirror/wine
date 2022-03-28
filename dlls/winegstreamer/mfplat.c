@@ -659,11 +659,11 @@ IMFMediaType *mf_media_type_from_wg_format(const struct wg_format *format)
 {
     switch (format->major_type)
     {
-        case WG_MAJOR_TYPE_UNKNOWN:
-            return NULL;
-
+        case WG_MAJOR_TYPE_H264:
         case WG_MAJOR_TYPE_WMA:
-            FIXME("WMA format not implemented!\n");
+            FIXME("Format %u not implemented!\n", format->major_type);
+            /* fallthrough */
+        case WG_MAJOR_TYPE_UNKNOWN:
             return NULL;
 
         case WG_MAJOR_TYPE_AUDIO:
@@ -822,6 +822,38 @@ static void mf_media_type_to_wg_format_wma(IMFMediaType *type, const GUID *subty
     memcpy(format->u.wma.codec_data, codec_data, codec_data_len);
 }
 
+static void mf_media_type_to_wg_format_h264(IMFMediaType *type, struct wg_format *format)
+{
+    UINT64 frame_rate, frame_size;
+    UINT32 profile, level;
+
+    memset(format, 0, sizeof(*format));
+    format->major_type = WG_MAJOR_TYPE_H264;
+
+    if (SUCCEEDED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &frame_size)))
+    {
+        format->u.h264.width = frame_size >> 32;
+        format->u.h264.height = (UINT32)frame_size;
+    }
+
+    if (SUCCEEDED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_RATE, &frame_rate)) && (UINT32)frame_rate)
+    {
+        format->u.h264.fps_n = frame_rate >> 32;
+        format->u.h264.fps_d = (UINT32)frame_rate;
+    }
+    else
+    {
+        format->u.h264.fps_n = 1;
+        format->u.h264.fps_d = 1;
+    }
+
+    if (SUCCEEDED(IMFMediaType_GetUINT32(type, &MF_MT_MPEG2_PROFILE, &profile)))
+        format->u.h264.profile = profile;
+
+    if (SUCCEEDED(IMFMediaType_GetUINT32(type, &MF_MT_MPEG2_LEVEL, &level)))
+        format->u.h264.level = level;
+}
+
 void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format)
 {
     GUID major_type, subtype;
@@ -850,7 +882,12 @@ void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format)
             mf_media_type_to_wg_format_audio(type, &subtype, format);
     }
     else if (IsEqualGUID(&major_type, &MFMediaType_Video))
-        mf_media_type_to_wg_format_video(type, &subtype, format);
+    {
+        if (IsEqualGUID(&subtype, &MFVideoFormat_H264))
+            mf_media_type_to_wg_format_h264(type, format);
+        else
+            mf_media_type_to_wg_format_video(type, &subtype, format);
+    }
     else
         FIXME("Unrecognized major type %s.\n", debugstr_guid(&major_type));
 }

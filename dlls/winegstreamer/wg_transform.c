@@ -211,6 +211,7 @@ NTSTATUS wg_transform_create(void *args)
 
     switch (input_format.major_type)
     {
+        case WG_MAJOR_TYPE_H264:
         case WG_MAJOR_TYPE_WMA:
             if (!(element = transform_find_element(GST_ELEMENT_FACTORY_TYPE_DECODER, src_caps, raw_caps))
                     || !transform_append_element(transform, element, &first, &last))
@@ -251,6 +252,9 @@ NTSTATUS wg_transform_create(void *args)
             break;
 
         case WG_MAJOR_TYPE_VIDEO:
+            break;
+
+        case WG_MAJOR_TYPE_H264:
         case WG_MAJOR_TYPE_WMA:
         case WG_MAJOR_TYPE_UNKNOWN:
             GST_FIXME("Format %u not implemented!", output_format.major_type);

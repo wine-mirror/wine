@@ -35,6 +35,7 @@
 #include <gst/audio/audio.h>
 
 #include "winternl.h"
+#include "codecapi.h"
 #include "dshow.h"
 
 #include "unix_private.h"
@@ -431,6 +432,64 @@ static GstCaps *wg_format_to_caps_wma(const struct wg_format *format)
     return caps;
 }
 
+static GstCaps *wg_format_to_caps_h264(const struct wg_format *format)
+{
+    const char *profile, *level;
+    GstCaps *caps;
+
+    caps = gst_caps_new_empty_simple("video/x-h264");
+    gst_caps_set_simple(caps, "stream-format", G_TYPE_STRING, "byte-stream", NULL);
+    gst_caps_set_simple(caps, "alignment", G_TYPE_STRING, "au", NULL);
+
+    if (format->u.h264.width)
+        gst_caps_set_simple(caps, "width", G_TYPE_INT, format->u.h264.width, NULL);
+    if (format->u.h264.height)
+        gst_caps_set_simple(caps, "height", G_TYPE_INT, format->u.h264.height, NULL);
+    if (format->u.h264.fps_n || format->u.h264.fps_d)
+        gst_caps_set_simple(caps, "framerate", GST_TYPE_FRACTION, format->u.h264.fps_n, format->u.h264.fps_d, NULL);
+
+    switch (format->u.h264.profile)
+    {
+        case eAVEncH264VProfile_Main: profile = "main"; break;
+        case eAVEncH264VProfile_High: profile = "high"; break;
+        case eAVEncH264VProfile_444:  profile = "high-4:4:4"; break;
+        default:
+            GST_FIXME("H264 profile attribute %u not implemented.", format->u.h264.profile);
+            profile = NULL;
+            break;
+    }
+    if (profile)
+        gst_caps_set_simple(caps, "profile", G_TYPE_STRING, profile, NULL);
+
+    switch (format->u.h264.level)
+    {
+        case eAVEncH264VLevel1:   level = "1";   break;
+        case eAVEncH264VLevel1_1: level = "1.1"; break;
+        case eAVEncH264VLevel1_2: level = "1.2"; break;
+        case eAVEncH264VLevel1_3: level = "1.3"; break;
+        case eAVEncH264VLevel2:   level = "2";   break;
+        case eAVEncH264VLevel2_1: level = "2.1"; break;
+        case eAVEncH264VLevel2_2: level = "2.2"; break;
+        case eAVEncH264VLevel3:   level = "3";   break;
+        case eAVEncH264VLevel3_1: level = "3.1"; break;
+        case eAVEncH264VLevel3_2: level = "3.2"; break;
+        case eAVEncH264VLevel4:   level = "4";   break;
+        case eAVEncH264VLevel4_1: level = "4.1"; break;
+        case eAVEncH264VLevel4_2: level = "4.2"; break;
+        case eAVEncH264VLevel5:   level = "5";   break;
+        case eAVEncH264VLevel5_1: level = "5.1"; break;
+        case eAVEncH264VLevel5_2: level = "5.2"; break;
+        default:
+            GST_FIXME("H264 level attribute %u not implemented.", format->u.h264.level);
+            level = NULL;
+            break;
+    }
+    if (level)
+        gst_caps_set_simple(caps, "level", G_TYPE_STRING, level, NULL);
+
+    return caps;
+}
+
 GstCaps *wg_format_to_caps(const struct wg_format *format)
 {
     switch (format->major_type)
@@ -439,6 +498,8 @@ GstCaps *wg_format_to_caps(const struct wg_format *format)
             return NULL;
         case WG_MAJOR_TYPE_WMA:
             return wg_format_to_caps_wma(format);
+        case WG_MAJOR_TYPE_H264:
+            return wg_format_to_caps_h264(format);
         case WG_MAJOR_TYPE_AUDIO:
             return wg_format_to_caps_audio(format);
         case WG_MAJOR_TYPE_VIDEO:
@@ -455,11 +516,11 @@ bool wg_format_compare(const struct wg_format *a, const struct wg_format *b)
 
     switch (a->major_type)
     {
-        case WG_MAJOR_TYPE_UNKNOWN:
-            return false;
-
         case WG_MAJOR_TYPE_WMA:
-            GST_FIXME("WMA format not implemented!\n");
+        case WG_MAJOR_TYPE_H264:
+            GST_FIXME("Format %u not implemented!", a->major_type);
+            /* fallthrough */
+        case WG_MAJOR_TYPE_UNKNOWN:
             return false;
 
         case WG_MAJOR_TYPE_AUDIO:
