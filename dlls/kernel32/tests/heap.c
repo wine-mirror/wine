@@ -257,6 +257,7 @@ static void test_GlobalAlloc(void)
     static const SIZE_T buffer_size = ARRAY_SIZE(zero_buffer);
     const HGLOBAL invalid_mem = LongToHandle( 0xdeadbee0 + sizeof(void *) );
     void *const invalid_ptr = LongToHandle( 0xdeadbee0 );
+    HGLOBAL globals[0x10000];
     HGLOBAL mem, tmp_mem;
     BYTE *ptr, *tmp_ptr;
     UINT i, flags;
@@ -267,6 +268,37 @@ static void test_GlobalAlloc(void)
     ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
     mem = GlobalReAlloc( 0, 10, GMEM_MOVEABLE );
     ok( !mem, "GlobalReAlloc succeeded\n" );
+
+    for (i = 0; i < ARRAY_SIZE(globals); ++i)
+    {
+        mem = GlobalAlloc( GMEM_MOVEABLE | GMEM_DISCARDABLE, 0 );
+        ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+        globals[i] = mem;
+    }
+
+    SetLastError( 0xdeadbeef );
+    mem = GlobalAlloc( GMEM_MOVEABLE | GMEM_DISCARDABLE, 0 );
+    todo_wine
+    ok( !mem, "GlobalAlloc succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    mem = LocalAlloc( LMEM_MOVEABLE | LMEM_DISCARDABLE, 0 );
+    todo_wine
+    ok( !mem, "LocalAlloc succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "got error %lu\n", GetLastError() );
+
+    mem = GlobalAlloc( GMEM_DISCARDABLE, 0 );
+    ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
+    mem = GlobalFree( mem );
+    ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
+
+    for (i = 0; i < ARRAY_SIZE(globals); ++i)
+    {
+        mem = GlobalFree( globals[i] );
+        ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
+    }
 
     mem = GlobalAlloc( GMEM_MOVEABLE, 0 );
     ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
@@ -593,6 +625,7 @@ static void test_LocalAlloc(void)
     static const SIZE_T buffer_size = ARRAY_SIZE(zero_buffer);
     const HLOCAL invalid_mem = LongToHandle( 0xdeadbee0 + sizeof(void *) );
     void *const invalid_ptr = LongToHandle( 0xdeadbee0 );
+    HLOCAL locals[0x10000];
     HLOCAL mem, tmp_mem;
     BYTE *ptr, *tmp_ptr;
     UINT i, flags;
@@ -603,6 +636,37 @@ static void test_LocalAlloc(void)
     ok( !mem, "LocalFree failed, error %lu\n", GetLastError() );
     mem = LocalReAlloc( 0, 10, LMEM_MOVEABLE );
     ok( !mem, "LocalReAlloc succeeded\n" );
+
+    for (i = 0; i < ARRAY_SIZE(locals); ++i)
+    {
+        mem = LocalAlloc( LMEM_MOVEABLE | LMEM_DISCARDABLE, 0 );
+        ok( !!mem, "LocalAlloc failed, error %lu\n", GetLastError() );
+        locals[i] = mem;
+    }
+
+    SetLastError( 0xdeadbeef );
+    mem = LocalAlloc( LMEM_MOVEABLE | LMEM_DISCARDABLE, 0 );
+    todo_wine
+    ok( !mem, "LocalAlloc succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    mem = GlobalAlloc( GMEM_MOVEABLE | GMEM_DISCARDABLE, 0 );
+    todo_wine
+    ok( !mem, "GlobalAlloc succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "got error %lu\n", GetLastError() );
+
+    mem = LocalAlloc( LMEM_DISCARDABLE, 0 );
+    ok( !!mem, "LocalAlloc failed, error %lu\n", GetLastError() );
+    mem = LocalFree( mem );
+    ok( !mem, "LocalFree failed, error %lu\n", GetLastError() );
+
+    for (i = 0; i < ARRAY_SIZE(locals); ++i)
+    {
+        mem = LocalFree( locals[i] );
+        ok( !mem, "LocalFree failed, error %lu\n", GetLastError() );
+    }
 
     mem = LocalAlloc( LMEM_MOVEABLE, 0 );
     ok( !!mem, "LocalAlloc failed, error %lu\n", GetLastError() );
