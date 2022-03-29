@@ -970,10 +970,10 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return -1;
 
     case LOCALE_SCURRENCY:
-        return -1;
+        return locale_return_string( locale->scurrency, type, buffer, len );
 
     case LOCALE_SINTLSYMBOL:
-        return -1;
+        return locale_return_string( locale->sintlsymbol, type, buffer, len );
 
     case LOCALE_SMONDECIMALSEP:
         return -1;
@@ -1241,10 +1241,10 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return -1;
 
     case LOCALE_SENGCURRNAME:
-        return -1;
+        return locale_return_string( locale->sengcurrname, type, buffer, len );
 
     case LOCALE_SNATIVECURRNAME:
-        return -1;
+        return locale_return_string( locale->snativecurrname, type, buffer, len );
 
     case LOCALE_ICALENDARTYPE:
         return -1;
