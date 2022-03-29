@@ -25,6 +25,20 @@ typedef enum D2D1_INK_NIB_SHAPE
     D2D1_INK_NIB_SHAPE_FORCE_DWORD = 0xffffffff
 } D2D1_INK_NIB_SHAPE;
 
+typedef struct D2D1_INK_POINT
+{
+    float x;
+    float y;
+    float radius;
+} D2D1_INK_POINT;
+
+typedef struct D2D1_INK_BEZIER_SEGMENT
+{
+    D2D1_INK_POINT point1;
+    D2D1_INK_POINT point2;
+    D2D1_INK_POINT point3;
+} D2D1_INK_BEZIER_SEGMENT;
+
 [
     object,
     uuid(bae8b344-23fc-4071-8cb5-d05d6f073848),
@@ -42,4 +56,49 @@ interface ID2D1InkStyle : ID2D1Resource
         [in] D2D1_INK_NIB_SHAPE shape
     );
     D2D1_INK_NIB_SHAPE GetNibShape();
+};
+
+[
+    object,
+    uuid(b499923b-7029-478f-a8b3-432c7c5f5312),
+    local,
+]
+interface ID2D1Ink : ID2D1Resource
+{
+    void SetStartPoint(
+        [in] const D2D1_INK_POINT *start_point
+    );
+    D2D1_INK_POINT GetStartPoint();
+    HRESULT AddSegments(
+        [in] const D2D1_INK_BEZIER_SEGMENT *segments,
+        [in] UINT32 segment_count
+    );
+    HRESULT RemoveSegmentsAtEnd(
+        [in] UINT32 segment_count
+    );
+    HRESULT SetSegments(
+        [in] UINT32 start_segment,
+        [in] const D2D1_INK_BEZIER_SEGMENT *segments,
+        [in] UINT32 segment_count
+    );
+    HRESULT SetSegmentAtEnd(
+        [in] const D2D1_INK_BEZIER_SEGMENT *segment
+    );
+    UINT32 GetSegmentCount();
+    HRESULT GetSegments(
+        [in] UINT32 start_segment,
+        [out] D2D1_INK_BEZIER_SEGMENT *segments,
+        [in] UINT32 segment_count
+    );
+    HRESULT StreamAsGeometry(
+        [in, optional] ID2D1InkStyle *ink_style,
+        [in, optional] const D2D1_MATRIX_3X2_F *world_transform,
+        [in] float flattening_tolerance,
+        [in] ID2D1SimplifiedGeometrySink *geometry_sink
+    );
+    HRESULT GetBounds(
+        [in, optional] ID2D1InkStyle *ink_style,
+        [in, optional] const D2D1_MATRIX_3X2_F *world_transform,
+        [out] D2D1_RECT_F *bounds
+    );
 };
