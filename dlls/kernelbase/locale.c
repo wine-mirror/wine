@@ -961,6 +961,27 @@ static int locale_return_strarray_concat( DWORD pos, LCTYPE type, WCHAR *buffer,
 }
 
 
+/* find the first format char in a format string */
+static WCHAR *find_format( WCHAR *str, const WCHAR *accept )
+{
+    for ( ; *str; str++)
+    {
+        if (*str == '\'')
+        {
+            if (!(str = wcschr( str + 1, '\'' ))) return NULL;
+        }
+        else if (wcschr( accept, *str ))
+        {
+            /* ignore "ddd" and "dddd" */
+            if (str[0] != 'd' || str[1] != 'd' || str[2] != 'd') return str;
+            str += 2;
+            while (str[1] == 'd') str++;
+        }
+    }
+    return NULL;
+}
+
+
 /* FIXME: hardcoded, sortname is apparently not available in locale.nls */
 static const WCHAR *get_locale_sortname( LCID lcid )
 {
@@ -1046,6 +1067,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
     static const BYTE inegsignposn[]    = { 0, 3, 4, 2, 0, 1, 3, 4, 1, 3, 4, 2, 4, 3, 0, 0 };
     static const BYTE inegsymprecedes[] = { 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, };
     const WCHAR *sort;
+    WCHAR *str, *end, tmp[80];
     UINT val;
 
     if (locale != user_locale) type |= LOCALE_NOUSEROVERRIDE;
@@ -1140,10 +1162,22 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_number( locale->inegcurr, type, buffer, len );
 
     case LOCALE_SDATE:
-        return -1;
+        if (!get_locale_info( locale, lcid, LOCALE_SSHORTDATE | (type & LOCALE_NOUSEROVERRIDE),
+                              tmp, ARRAY_SIZE( tmp ))) break;
+        if (!(str = find_format( tmp, L"dMy" ))) break;
+        while (str[1] == str[0]) str++;  /* skip repeated chars */
+        if (!(end = find_format( ++str, L"dMy" ))) break;
+        *end++ = 0;
+        return locale_return_data( str, end - str, type, buffer, len );
 
     case LOCALE_STIME:
-        return -1;
+        if (!get_locale_info( locale, lcid, LOCALE_STIMEFORMAT | (type & LOCALE_NOUSEROVERRIDE),
+                              tmp, ARRAY_SIZE( tmp ))) break;
+        if (!(str = find_format( tmp, L"Hhms" ))) break;
+        while (str[1] == str[0]) str++;  /* skip repeated chars */
+        if (!(end = find_format( ++str, L"Hhms" ))) break;
+        *end++ = 0;
+        return locale_return_data( str, end - str, type, buffer, len );
 
     case LOCALE_SSHORTDATE:
         return locale_return_strarray( locale->sshortdate, 0, type, buffer, len );
@@ -1152,25 +1186,56 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_strarray( locale->slongdate, 0, type, buffer, len );
 
     case LOCALE_IDATE:
-        return -1;
+        if (!get_locale_info( locale, lcid, LOCALE_SSHORTDATE | (type & LOCALE_NOUSEROVERRIDE),
+                              tmp, ARRAY_SIZE( tmp ))) break;
+        /* if both year and day are found before month, the last one takes precedence */
+        for (val = 0, str = find_format( tmp, L"dMy" ); str; str = find_format( str + 1, L"dMy" ))
+        {
+            if (*str == 'M') break;
+            val = (*str == 'y' ? 2 : 1);
+        }
+        return locale_return_number( val, type, buffer, len );
 
     case LOCALE_ILDATE:
-        return -1;
+        if (!get_locale_info( locale, lcid, LOCALE_SLONGDATE | (type & LOCALE_NOUSEROVERRIDE),
+                              tmp, ARRAY_SIZE( tmp ))) break;
+        /* if both year and day are found before month, the last one takes precedence */
+        for (val = 0, str = find_format( tmp, L"dMy" ); str; str = find_format( str + 1, L"dMy" ))
+        {
+            if (*str == 'M') break;
+            val = (*str == 'y' ? 2 : 1);
+        }
+        return locale_return_number( val, type, buffer, len );
 
     case LOCALE_ITIME:
-        return -1;
+        if (!get_locale_info( locale, lcid, LOCALE_STIMEFORMAT | (type & LOCALE_NOUSEROVERRIDE),
+                              tmp, ARRAY_SIZE( tmp ))) break;
+        if (!(str = find_format( tmp, L"Hh" ))) break;
+        return locale_return_number( *str == 'H', type, buffer, len );
 
     case LOCALE_ICENTURY:
-        return -1;
+        if (!get_locale_info( locale, lcid, LOCALE_SSHORTDATE | (type & LOCALE_NOUSEROVERRIDE),
+                              tmp, ARRAY_SIZE( tmp ))) break;
+        if (!(str = find_format( tmp, L"y" ))) break;
+        return locale_return_number( !wcsncmp( str, L"yyyy", 4 ), type, buffer, len );
 
     case LOCALE_ITLZERO:
-        return -1;
+        if (!get_locale_info( locale, lcid, LOCALE_STIMEFORMAT | (type & LOCALE_NOUSEROVERRIDE),
+                              tmp, ARRAY_SIZE( tmp ))) break;
+        if (!(str = find_format( tmp, L"Hh" ))) break;
+        return locale_return_number( str[1] == str[0], type, buffer, len );
 
     case LOCALE_IDAYLZERO:
-        return -1;
+        if (!get_locale_info( locale, lcid, LOCALE_SSHORTDATE | (type & LOCALE_NOUSEROVERRIDE),
+                              tmp, ARRAY_SIZE( tmp ))) break;
+        if (!(str = find_format( tmp, L"d" ))) break;
+        return locale_return_number( str[1] == 'd', type, buffer, len );
 
     case LOCALE_IMONLZERO:
-        return -1;
+        if (!get_locale_info( locale, lcid, LOCALE_SSHORTDATE | (type & LOCALE_NOUSEROVERRIDE),
+                              tmp, ARRAY_SIZE( tmp ))) break;
+        if (!(str = find_format( tmp, L"M" ))) break;
+        return locale_return_number( str[1] == 'M', type, buffer, len );
 
     case LOCALE_S1159:
         return locale_return_string( locale->s1159, type, buffer, len );
@@ -1404,7 +1469,10 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_number( val, type, buffer, len );
 
     case LOCALE_ITIMEMARKPOSN:
-        return -1;
+        if (!get_locale_info( locale, lcid, LOCALE_STIMEFORMAT | (type & LOCALE_NOUSEROVERRIDE),
+                              tmp, ARRAY_SIZE( tmp ))) break;
+        if (!(str = find_format( tmp, L"Hhmst" ))) break;
+        return locale_return_number( *str == 't', type, buffer, len );
 
     case LOCALE_SYEARMONTH:
         return locale_return_strarray( locale->syearmonth, 0, type, buffer, len );
