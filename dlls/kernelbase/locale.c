@@ -923,7 +923,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_string( locale->snativelangname, type, buffer, len );
 
     case LOCALE_ICOUNTRY:
-        return -1;
+        return locale_return_number( locale->icountry, type, buffer, len );
 
     case LOCALE_SLOCALIZEDCOUNTRYNAME:
         /* FIXME: localization */
@@ -939,7 +939,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_number( locale->idefaultlanguage, type, buffer, len );
 
     case LOCALE_IDEFAULTCOUNTRY:
-        return -1;
+        return locale_return_number( locale->icountry, type, buffer, len );
 
     case LOCALE_IDEFAULTCODEPAGE:
         val = locale->idefaultcodepage == CP_UTF8 ? CP_OEMCP : locale->idefaultcodepage;
@@ -1119,7 +1119,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_string( locale->siso3166ctryname, type, buffer, len );
 
     case LOCALE_IGEOID:
-        return -1;
+        return locale_return_number( locale->igeoid, type, buffer, len );
 
     case LOCALE_SNAME:
         if (SORTIDFROMLCID(lcid))  /* custom sort locale */
