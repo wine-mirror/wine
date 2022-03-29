@@ -28,7 +28,7 @@
 #include <stdbool.h>
 #include <math.h>
 #define COBJMACROS
-#include "d2d1_2.h"
+#include "d2d1_3.h"
 #include "d3d11_1.h"
 #ifdef D2D1_INIT_GUID
 #include "initguid.h"

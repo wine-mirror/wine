@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Henri Verbeet for CodeWeavers
+ * Copyright 2022 Ziqing Hui for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -16,6 +16,30 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "d3d10_1.h"
-#include "initguid.h"
-#include "d2d1_3.h"
+import "d2d1_2.idl";
+
+typedef enum D2D1_INK_NIB_SHAPE
+{
+    D2D1_INK_NIB_SHAPE_ROUND = 0x0,
+    D2D1_INK_NIB_SHAPE_SQUARE = 0x1,
+    D2D1_INK_NIB_SHAPE_FORCE_DWORD = 0xffffffff
+} D2D1_INK_NIB_SHAPE;
+
+[
+    object,
+    uuid(bae8b344-23fc-4071-8cb5-d05d6f073848),
+    local,
+]
+interface ID2D1InkStyle : ID2D1Resource
+{
+    void SetNibTransform(
+        [in] const D2D1_MATRIX_3X2_F *transform
+    );
+    void GetNibTransform(
+        [out] D2D1_MATRIX_3X2_F *transform
+    );
+    void SetNibShape(
+        [in] D2D1_INK_NIB_SHAPE shape
+    );
+    D2D1_INK_NIB_SHAPE GetNibShape();
+};
