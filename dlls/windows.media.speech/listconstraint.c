@@ -120,8 +120,19 @@ static HRESULT WINAPI list_constraint_GetTrustLevel( ISpeechRecognitionListConst
 
 static HRESULT WINAPI list_constraint_get_Commands(  ISpeechRecognitionListConstraint *iface, IVector_HSTRING **value )
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    struct list_constraint *impl = impl_from_ISpeechRecognitionListConstraint(iface);
+    IIterable_HSTRING *iterable;
+    HRESULT hr;
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    hr = IVector_HSTRING_QueryInterface(impl->commands, &IID_IIterable_HSTRING, (void **)&iterable);
+    if (FAILED(hr)) return hr;
+
+    hr = vector_hstring_create_copy(iterable, value);
+    IIterable_HSTRING_Release(iterable);
+
+    return hr;
 }
 
 static const struct ISpeechRecognitionListConstraintVtbl speech_recognition_list_constraint_vtbl =
@@ -135,7 +146,7 @@ static const struct ISpeechRecognitionListConstraintVtbl speech_recognition_list
     list_constraint_GetRuntimeClassName,
     list_constraint_GetTrustLevel,
     /* ISpeechRecognitionListConstraint methods */
-    list_constraint_get_Commands
+    list_constraint_get_Commands,
 };
 
 /*
@@ -209,7 +220,7 @@ static const struct ISpeechRecognitionConstraintVtbl speech_recognition_constrai
     constraint_put_Tag,
     constraint_get_Type,
     constraint_get_Probability,
-    constraint_put_Probability
+    constraint_put_Probability,
 };
 
 /*
@@ -338,6 +349,7 @@ static HRESULT WINAPI constraint_factory_CreateWithTag( ISpeechRecognitionListCo
                                                         ISpeechRecognitionListConstraint** listconstraint )
 {
     struct list_constraint *impl;
+    HRESULT hr;
 
     TRACE("iface %p, commands %p, tag %p, listconstraint %p.\n", iface, commands, tag, listconstraint);
 
@@ -347,11 +359,7 @@ static HRESULT WINAPI constraint_factory_CreateWithTag( ISpeechRecognitionListCo
         return E_POINTER;
 
     if (!(impl = calloc(1, sizeof(*impl)))) return E_OUTOFMEMORY;
-    if (FAILED(vector_hstring_create(&impl->commands)))
-    {
-        free(impl);
-        return E_OUTOFMEMORY;
-    }
+    if (FAILED(hr = vector_hstring_create_copy(commands, &impl->commands))) goto error;
 
     impl->ISpeechRecognitionListConstraint_iface.lpVtbl = &speech_recognition_list_constraint_vtbl;
     impl->ISpeechRecognitionConstraint_iface.lpVtbl = &speech_recognition_constraint_vtbl;
@@ -361,6 +369,11 @@ static HRESULT WINAPI constraint_factory_CreateWithTag( ISpeechRecognitionListCo
 
     *listconstraint = &impl->ISpeechRecognitionListConstraint_iface;
     return S_OK;
+
+error:
+    if (impl->commands) IVector_HSTRING_Release(impl->commands);
+    if (impl) free(impl);
+    return hr;
 }
 
 static const struct ISpeechRecognitionListConstraintFactoryVtbl speech_recognition_list_constraint_factory_vtbl =

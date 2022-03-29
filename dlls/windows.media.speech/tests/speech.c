@@ -106,6 +106,7 @@ static inline struct completed_event_handler *impl_from_IHandler_RecognitionComp
 HRESULT WINAPI completed_event_handler_QueryInterface( IHandler_RecognitionCompleted *iface, REFIID iid, void **out )
 {
     if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IAgileObject) ||
         IsEqualGUID(iid, &IID_IHandler_RecognitionCompleted))
     {
         IUnknown_AddRef(iface);
@@ -172,6 +173,7 @@ static inline struct recognition_result_handler *impl_from_IHandler_RecognitionR
 HRESULT WINAPI recognition_result_handler_QueryInterface( IHandler_RecognitionResult *iface, REFIID iid, void **out )
 {
     if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IAgileObject) ||
         IsEqualGUID(iid, &IID_IHandler_RecognitionResult))
     {
         IUnknown_AddRef(iface);
@@ -417,9 +419,11 @@ static HRESULT WINAPI iterable_hstring_GetTrustLevel( IIterable_HSTRING *iface, 
 static HRESULT WINAPI iterable_hstring_First( IIterable_HSTRING *iface, IIterator_HSTRING **value )
 {
     struct iterable_hstring *impl = impl_from_Iterable_HSTRING(iface);
+    struct iterator_hstring *impl_iter = impl_from_IIterator_HSTRING(impl->iterator);
 
     trace("iface %p, value %p.\n", iface, value);
 
+    impl_iter->index = 0;
     IIterator_HSTRING_AddRef((*value = impl->iterator));
     return S_OK;
 }
@@ -956,33 +960,34 @@ static void test_SpeechRecognitionListConstraint(void)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ISpeechRecognitionListConstraint_get_Commands(listconstraint, &hstring_vector);
-    todo_wine ok(hr == S_OK, "ISpeechRecognitionListConstraint_Commands failed, hr %#lx.\n", hr);
-
-    if (!SUCCEEDED(hr))
-        goto skip_tests;
+    ok(hr == S_OK, "ISpeechRecognitionListConstraint_Commands failed, hr %#lx.\n", hr);
 
     hr = IVector_HSTRING_get_Size(hstring_vector, &vector_size);
-    todo_wine ok(hr == S_OK, "IVector_HSTRING_get_Size failed, hr %#lx.\n", hr);
-    todo_wine ok(vector_size == ARRAY_SIZE(commands), "Got unexpected vector_size %u.\n", vector_size);
+    ok(hr == S_OK, "IVector_HSTRING_get_Size failed, hr %#lx.\n", hr);
+    ok(vector_size == ARRAY_SIZE(commands), "Got unexpected vector_size %u.\n", vector_size);
 
     for (i = 0; i < vector_size; i++)
     {
         HSTRING str;
 
         hr = IVector_HSTRING_GetAt(hstring_vector, i, &str);
-        todo_wine ok(hr == S_OK, "IVector_HSTRING_GetAt failed, hr %#lx.\n", hr);
+        ok(hr == S_OK, "IVector_HSTRING_GetAt failed, hr %#lx.\n", hr);
         hr = WindowsCompareStringOrdinal(commands[i], str, &str_cmp);
-        todo_wine ok(hr == S_OK, "WindowsCompareStringOrdinal failed, hr %#lx.\n", hr);
-        todo_wine ok(!str_cmp, "Strings not equal.\n");
+        ok(hr == S_OK, "WindowsCompareStringOrdinal failed, hr %#lx.\n", hr);
+        ok(!str_cmp, "Strings not equal.\n");
 
         WindowsDeleteString(str);
     }
 
     ref = IVector_HSTRING_Release(hstring_vector);
-    todo_wine ok(ref == 0, "Got unexpected ref %lu.\n", ref);
+    ok(ref == 0, "Got unexpected ref %lu.\n", ref);
 
     hr = ISpeechRecognitionConstraint_get_Tag(constraint, &tag_out);
     todo_wine ok(hr == S_OK, "ISpeechRecognitionConstraint_get_Tag failed, hr %#lx.\n", hr);
+
+    if (FAILED(hr))
+        goto skip_tests;
+
     hr = WindowsCompareStringOrdinal(tag, tag_out, &str_cmp);
     todo_wine ok(hr == S_OK, "WindowsCompareStringOrdinal failed, hr %#lx.\n", hr);
     todo_wine ok(!str_cmp, "Strings not equal.\n");

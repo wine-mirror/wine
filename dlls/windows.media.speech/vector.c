@@ -727,3 +727,47 @@ HRESULT vector_hstring_create( IVector_HSTRING **out )
     TRACE("created %p\n", *out);
     return S_OK;
 }
+
+HRESULT vector_hstring_create_copy( IIterable_HSTRING *iterable, IVector_HSTRING **out )
+{
+    struct vector_hstring *impl;
+    IIterator_HSTRING *iterator;
+    UINT32 capacity = 0;
+    BOOL available;
+    HRESULT hr;
+
+    TRACE("iterable %p, out %p.\n", iterable, out);
+
+    if (FAILED(hr = vector_hstring_create(out))) return hr;
+    if (FAILED(hr = IIterable_HSTRING_First(iterable, &iterator))) goto error;
+
+    for (IIterator_HSTRING_get_HasCurrent(iterator, &available); available; IIterator_HSTRING_MoveNext(iterator, &available))
+        capacity++;
+
+    IIterator_HSTRING_Release(iterator);
+
+    impl = impl_from_IVector_HSTRING(*out);
+    impl->size = 0;
+    impl->capacity = capacity;
+    if (!(impl->elements = realloc(impl->elements, impl->capacity * sizeof(*impl->elements)))) goto error;
+
+    if (FAILED(hr = IIterable_HSTRING_First(iterable, &iterator))) goto error;
+
+    for (IIterator_HSTRING_get_HasCurrent(iterator, &available); available; IIterator_HSTRING_MoveNext(iterator, &available))
+    {
+        HSTRING str;
+        if (FAILED(hr = IIterator_HSTRING_get_Current(iterator, &str))) goto error;
+        if (FAILED(hr = WindowsDuplicateString(str, &impl->elements[impl->size]))) goto error;
+        WindowsDeleteString(str);
+        impl->size++;
+    }
+
+    IIterator_HSTRING_Release(iterator);
+
+    TRACE("created %p\n", *out);
+    return S_OK;
+
+error:
+    IVector_HSTRING_Release(*out);
+    return hr;
+}
