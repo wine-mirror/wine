@@ -147,7 +147,7 @@ static void check_attributes_(int line, IMFAttributes *attributes, const struct 
         case VT_VECTOR | VT_UI1:
             buf += sprintf(buf, "size %lu, data {", value.caub.cElems);
             for (j = 0; j < 16 && j < value.caub.cElems; ++j)
-                buf += sprintf(buf, "0x%02x,", value.caub.pElems[i + j]);
+                buf += sprintf(buf, "0x%02x,", value.caub.pElems[j]);
             if (value.caub.cElems > 16)
                 buf += sprintf(buf, "...}");
             else
