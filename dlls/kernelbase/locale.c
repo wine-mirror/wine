@@ -1654,6 +1654,68 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
 }
 
 
+/* update a registry value based on the current user locale info */
+static void update_registry_value( UINT type, const WCHAR *value )
+{
+    WCHAR buffer[80];
+    UINT len = get_locale_info( user_locale, user_lcid, type, buffer, ARRAY_SIZE(buffer) );
+    if (len) RegSetValueExW( intl_key, value, 0, REG_SZ, (BYTE *)buffer, len * sizeof(WCHAR) );
+}
+
+
+/* update all registry values upon user locale change */
+static void update_locale_registry(void)
+{
+    WCHAR buffer[80];
+    UINT len;
+
+    len = swprintf( buffer, ARRAY_SIZE(buffer), L"%08x", GetUserDefaultLCID() );
+    RegSetValueExW( intl_key, L"Locale", 0, REG_SZ, (BYTE *)buffer, (len + 1) * sizeof(WCHAR) );
+
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_ICALENDARTYPE, entry_icalendartype.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_ICOUNTRY, entry_icountry.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_ICURRDIGITS, entry_icurrdigits.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_ICURRENCY, entry_icurrency.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_IDIGITS, entry_idigits.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_IDIGITSUBSTITUTION, entry_idigitsubstitution.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_IFIRSTDAYOFWEEK, entry_ifirstdayofweek.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_IFIRSTWEEKOFYEAR, entry_ifirstweekofyear.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_ILZERO, entry_ilzero.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_IMEASURE, entry_imeasure.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_INEGCURR, entry_inegcurr.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_INEGNUMBER, entry_inegnumber.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_IPAPERSIZE, entry_ipapersize.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_S1159, entry_s1159.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_S2359, entry_s2359.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SCURRENCY, entry_scurrency.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SDECIMAL, entry_sdecimal.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SGROUPING, entry_sgrouping.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SLIST, entry_slist.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SLONGDATE, entry_slongdate.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SMONDECIMALSEP, entry_smondecimalsep.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SMONGROUPING, entry_smongrouping.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SMONTHOUSANDSEP, entry_smonthousandsep.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SNATIVEDIGITS, entry_snativedigits.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SNEGATIVESIGN, entry_snegativesign.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SPOSITIVESIGN, entry_spositivesign.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SSHORTDATE, entry_sshortdate.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SSHORTTIME, entry_sshorttime.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_STHOUSAND, entry_sthousand.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_STIMEFORMAT, entry_stimeformat.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SYEARMONTH, entry_syearmonth.value );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_IDATE, L"iDate" );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_ITIME, L"iTime" );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_ITIMEMARKPOSN, L"iTimePrefix" );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_ITLZERO, L"iTLZero" );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SDATE, L"sDate" );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_STIME, L"sTime" );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SABBREVLANGNAME, L"sLanguage" );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SCOUNTRY, L"sCountry" );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SNAME, L"LocaleName" );
+    SetUserGeoID( user_locale->igeoid );
+}
+
+
 /***********************************************************************
  *		init_locale
  */
@@ -1664,8 +1726,7 @@ void init_locale(void)
     void *sort_ptr;
     WCHAR bufferW[LOCALE_NAME_MAX_LENGTH];
     DYNAMIC_TIME_ZONE_INFORMATION timezone;
-    GEOID geoid = GEOID_NOT_AVAILABLE;
-    DWORD count, dispos, i;
+    DWORD count;
     SIZE_T size;
     HKEY hkey;
 
@@ -1721,17 +1782,6 @@ void init_locale(void)
         RegCloseKey( hkey );
     }
 
-    if (!RegCreateKeyExW( intl_key, L"Geo", 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, &dispos ))
-    {
-        if (dispos == REG_CREATED_NEW_KEY)
-        {
-            GetLocaleInfoW( LOCALE_USER_DEFAULT, LOCALE_IGEOID | LOCALE_RETURN_NUMBER,
-                            (WCHAR *)&geoid, sizeof(geoid) / sizeof(WCHAR) );
-            SetUserGeoID( geoid );
-        }
-        RegCloseKey( hkey );
-    }
-
     /* Update registry contents if the user locale has changed.
      * This simulates the action of the Windows control panel. */
 
@@ -1742,24 +1792,8 @@ void init_locale(void)
         TRACE( "updating registry, locale changed %s -> %08lx\n", debugstr_w(bufferW), user_lcid );
     }
     else TRACE( "updating registry, locale changed none -> %08lx\n", user_lcid );
-    swprintf( bufferW, ARRAY_SIZE(bufferW), L"%08x", user_lcid );
-    RegSetValueExW( intl_key, L"Locale", 0, REG_SZ,
-                    (BYTE *)bufferW, (lstrlenW(bufferW) + 1) * sizeof(WCHAR) );
 
-    for (i = 0; i < ARRAY_SIZE(registry_values); i++)
-    {
-        GetLocaleInfoW( LOCALE_USER_DEFAULT, registry_values[i].lctype | LOCALE_NOUSEROVERRIDE,
-                        bufferW, ARRAY_SIZE( bufferW ));
-        RegSetValueExW( intl_key, registry_values[i].name, 0, REG_SZ,
-                        (BYTE *)bufferW, (lstrlenW(bufferW) + 1) * sizeof(WCHAR) );
-    }
-
-    if (geoid == GEOID_NOT_AVAILABLE)
-    {
-        GetLocaleInfoW( LOCALE_USER_DEFAULT, LOCALE_IGEOID | LOCALE_RETURN_NUMBER,
-                        (WCHAR *)&geoid, sizeof(geoid) / sizeof(WCHAR) );
-        SetUserGeoID( geoid );
-    }
+    update_locale_registry();
 
     if (!RegCreateKeyExW( nls_key, L"Codepage",
                           0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
