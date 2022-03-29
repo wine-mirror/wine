@@ -597,7 +597,7 @@ static HRESULT STDMETHODCALLTYPE d2d_factory_GetEffectProperties(ID2D1Factory2 *
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_factory_ID2D1Factory1_CreateDevice(ID2D1Factory2 *iface, IDXGIDevice *dxgi_device,
+static HRESULT STDMETHODCALLTYPE d2d_factory_ID2D1Factory2_CreateDevice(ID2D1Factory2 *iface, IDXGIDevice *dxgi_device,
         ID2D1Device1 **device)
 {
     FIXME("iface %p, dxgi_device %p, device %p stub!\n", iface, dxgi_device, device);
@@ -634,7 +634,7 @@ static const struct ID2D1Factory2Vtbl d2d_factory_vtbl =
     d2d_factory_UnregisterEffect,
     d2d_factory_GetRegisteredEffects,
     d2d_factory_GetEffectProperties,
-    d2d_factory_ID2D1Factory1_CreateDevice,
+    d2d_factory_ID2D1Factory2_CreateDevice,
 };
 
 static HRESULT STDMETHODCALLTYPE d2d_factory_mt_QueryInterface(ID2D1Multithread *iface, REFIID iid, void **out)
