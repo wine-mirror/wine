@@ -3613,7 +3613,6 @@ static BOOL CALLBACK enum_proc(LGRPID group, LCID lcid, LPSTR locale, LONG_PTR l
     SCRIPT_CONTROL sc;
     SCRIPT_STATE ss;
     LCID lcid_old;
-    BOOL todo;
 
     if (!IsValidLocale(lcid, LCID_INSTALLED)) return TRUE;
 
@@ -3624,10 +3623,7 @@ static BOOL CALLBACK enum_proc(LGRPID group, LCID lcid, LPSTR locale, LONG_PTR l
     lcid_old = GetThreadLocale();
     if (!SetThreadLocale(lcid)) return TRUE;
 
-    todo = !GetLocaleInfoW(lcid, LOCALE_IDIGITSUBSTITUTION | LOCALE_RETURN_NUMBER, NULL, 0);
-
     hr = ScriptRecordDigitSubstitution(lcid, &sds);
-    todo_wine_if( todo )
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = ScriptApplyDigitSubstitution(&sds, &sc, &ss);

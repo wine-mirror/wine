@@ -896,6 +896,35 @@ static int locale_return_strarray( DWORD pos, WORD idx, LCTYPE type, WCHAR *buff
 }
 
 
+static int locale_return_strarray_concat( DWORD pos, LCTYPE type, WCHAR *buffer, int len )
+{
+    WORD i, count = locale_strings[pos];
+    const DWORD *array = (const DWORD *)(locale_strings + pos + 1);
+    int ret;
+
+    if (type & LOCALE_RETURN_NUMBER)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+    for (i = 0, ret = 1; i < count; i++) ret += locale_strings[array[i]];
+
+    if (!len) return ret;
+    if (ret > len)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+    for (i = 0; i < count; i++)
+    {
+        memcpy( buffer, locale_strings + array[i] + 1, locale_strings[array[i]] * sizeof(WCHAR) );
+        buffer += locale_strings[array[i]];
+    }
+    *buffer = 0;
+    return ret;
+}
+
+
 /* get locale information from the locale.nls file */
 static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE type,
                             WCHAR *buffer, int len )
@@ -967,7 +996,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return -1;
 
     case LOCALE_SNATIVEDIGITS:
-        return -1;
+        return locale_return_strarray_concat( locale->snativedigits, type, buffer, len );
 
     case LOCALE_SCURRENCY:
         return locale_return_string( locale->scurrency, type, buffer, len );
@@ -1285,7 +1314,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return -1;
 
     case LOCALE_IDIGITSUBSTITUTION:
-        return -1;
+        return locale_return_number( locale->idigitsubstitution, type, buffer, len );
     }
     SetLastError( ERROR_INVALID_FLAGS );
     return 0;
