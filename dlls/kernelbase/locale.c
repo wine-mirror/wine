@@ -978,7 +978,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return -1;
 
     case LOCALE_IMEASURE:
-        return -1;
+        return locale_return_number( locale->imeasure, type, buffer, len );
 
     case LOCALE_SDECIMAL:
         return -1;
@@ -1203,7 +1203,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_string( locale->senglanguage, type, buffer, len );
 
     case LOCALE_IREADINGLAYOUT:
-        return -1;
+        return locale_return_number( locale->ireadinglayout, type, buffer, len );
 
     case LOCALE_INEUTRAL:
         return -1;
@@ -1279,7 +1279,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_number( locale_strings[locale->scalendartype + 1], type, buffer, len );
 
     case LOCALE_IPAPERSIZE:
-        return -1;
+        return locale_return_number( locale->ipapersize, type, buffer, len );
 
     case LOCALE_IOPTIONALCALENDAR:
         return locale_return_number( locale_strings[locale->scalendartype + 2], type, buffer, len );
