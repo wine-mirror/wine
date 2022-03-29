@@ -183,7 +183,7 @@ typedef struct __GLOBAL32_INTERN
  * Lock a global memory object and return a pointer to first byte of the memory
  *
  * PARAMS
- *  hmem [I] Handle of the global memory object
+ *  handle [I] Handle of the global memory object
  *
  * RETURNS
  *  Success: Pointer to first byte of the memory block
@@ -193,9 +193,9 @@ typedef struct __GLOBAL32_INTERN
  *   When the handle is invalid, last error is set to ERROR_INVALID_HANDLE
  *
  */
-LPVOID WINAPI GlobalLock(HGLOBAL hmem)
+void *WINAPI GlobalLock( HGLOBAL handle )
 {
-    return LocalLock( hmem );
+    return LocalLock( handle );
 }
 
 
@@ -205,7 +205,7 @@ LPVOID WINAPI GlobalLock(HGLOBAL hmem)
  * Unlock a global memory object.
  *
  * PARAMS
- *  hmem [I] Handle of the global memory object
+ *  handle [I] Handle of the global memory object
  *
  * RETURNS
  *  Success: Object is still locked
@@ -215,10 +215,10 @@ LPVOID WINAPI GlobalLock(HGLOBAL hmem)
  *   When the handle is invalid, last error is set to ERROR_INVALID_HANDLE
  *
  */
-BOOL WINAPI GlobalUnlock(HGLOBAL hmem)
+BOOL WINAPI GlobalUnlock( HGLOBAL handle )
 {
-    if (ISPOINTER( hmem )) return TRUE;
-    return LocalUnlock( hmem );
+    if (ISPOINTER( handle )) return TRUE;
+    return LocalUnlock( handle );
 }
 
 
@@ -231,13 +231,15 @@ BOOL WINAPI GlobalUnlock(HGLOBAL hmem)
  *      Handle: Success
  *      NULL: Failure
  */
-HGLOBAL WINAPI GlobalHandle( LPCVOID pmem )
+HGLOBAL WINAPI GlobalHandle( const void *ptr )
 {
+    PGLOBAL32_INTERN mem;
     HGLOBAL handle;
-    PGLOBAL32_INTERN maybe_intern;
     LPCVOID test;
 
-    if (!pmem)
+    TRACE_(globalmem)( "ptr %p\n", ptr );
+
+    if (!ptr)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
@@ -248,27 +250,27 @@ HGLOBAL WINAPI GlobalHandle( LPCVOID pmem )
     {
         handle = 0;
 
-        /* note that if pmem is a pointer to a block allocated by        */
+        /* note that if ptr is a pointer to a block allocated by           */
         /* GlobalAlloc with GMEM_MOVEABLE then magic test in HeapValidate  */
         /* will fail.                                                      */
-        if (ISPOINTER( pmem ))
+        if (ISPOINTER( ptr ))
         {
-            if (HeapValidate( GetProcessHeap(), HEAP_NO_SERIALIZE, pmem ))
+            if (HeapValidate( GetProcessHeap(), HEAP_NO_SERIALIZE, ptr ))
             {
-                handle = (HGLOBAL)pmem; /* valid fixed block */
+                handle = (HGLOBAL)ptr; /* valid fixed block */
                 break;
             }
-            handle = POINTER_TO_HANDLE( pmem );
+            handle = POINTER_TO_HANDLE( ptr );
         }
-        else handle = (HGLOBAL)pmem;
+        else handle = (HGLOBAL)ptr;
 
         /* Now test handle either passed in or retrieved from pointer */
-        maybe_intern = HANDLE_TO_INTERN( handle );
-        if (maybe_intern->Magic == MAGIC_GLOBAL_USED)
+        mem = HANDLE_TO_INTERN( handle );
+        if (mem->Magic == MAGIC_GLOBAL_USED)
         {
-            test = maybe_intern->Pointer;
+            test = mem->Pointer;
             if (HeapValidate( GetProcessHeap(), HEAP_NO_SERIALIZE, (const char *)test - HGLOBAL_STORAGE ) && /* obj(-handle) valid arena? */
-                HeapValidate( GetProcessHeap(), HEAP_NO_SERIALIZE, maybe_intern )) /* intern valid arena? */
+                HeapValidate( GetProcessHeap(), HEAP_NO_SERIALIZE, mem )) /* intern valid arena? */
                 break; /* valid moveable block */
         }
         handle = 0;
@@ -294,9 +296,9 @@ HGLOBAL WINAPI GlobalHandle( LPCVOID pmem )
  *      Handle: Success
  *      NULL: Failure
  */
-HGLOBAL WINAPI GlobalReAlloc( HGLOBAL hmem, SIZE_T size, UINT flags )
+HGLOBAL WINAPI GlobalReAlloc( HGLOBAL handle, SIZE_T size, UINT flags )
 {
-    return LocalReAlloc( hmem, size, flags );
+    return LocalReAlloc( handle, size, flags );
 }
 
 
@@ -306,7 +308,7 @@ HGLOBAL WINAPI GlobalReAlloc( HGLOBAL hmem, SIZE_T size, UINT flags )
  * Get the size of a global memory object.
  *
  * PARAMS
- *  hmem [I] Handle of the global memory object
+ *  handle [I] Handle of the global memory object
  *
  * RETURNS
  *  Failure: 0
@@ -316,44 +318,45 @@ HGLOBAL WINAPI GlobalReAlloc( HGLOBAL hmem, SIZE_T size, UINT flags )
  *   When the handle is invalid, last error is set to ERROR_INVALID_HANDLE
  *
  */
-SIZE_T WINAPI GlobalSize(HGLOBAL hmem)
+SIZE_T WINAPI GlobalSize( HGLOBAL handle )
 {
+    PGLOBAL32_INTERN mem;
     SIZE_T retval;
-    PGLOBAL32_INTERN pintern;
 
-    if (!((ULONG_PTR)hmem >> 16))
+    TRACE_(globalmem)( "handle %p\n", handle );
+
+    if (!((ULONG_PTR)handle >> 16))
     {
         SetLastError( ERROR_INVALID_HANDLE );
         return 0;
     }
 
-    if (ISPOINTER( hmem ))
+    if (ISPOINTER( handle ))
     {
-        retval = HeapSize( GetProcessHeap(), 0, hmem );
+        retval = HeapSize( GetProcessHeap(), 0, handle );
         if (retval == ~(SIZE_T)0) /* It might be a GMEM_MOVEABLE data pointer */
         {
-            retval = HeapSize( GetProcessHeap(), 0, (char *)hmem - HGLOBAL_STORAGE );
+            retval = HeapSize( GetProcessHeap(), 0, (char *)handle - HGLOBAL_STORAGE );
             if (retval != ~(SIZE_T)0) retval -= HGLOBAL_STORAGE;
         }
     }
     else
     {
         RtlLockHeap( GetProcessHeap() );
-        pintern = HANDLE_TO_INTERN( hmem );
-
-        if (pintern->Magic == MAGIC_GLOBAL_USED)
+        mem = HANDLE_TO_INTERN( handle );
+        if (mem->Magic == MAGIC_GLOBAL_USED)
         {
-            if (!pintern->Pointer) /* handle case of GlobalAlloc( ??,0) */
+            if (!mem->Pointer) /* handle case of GlobalAlloc( ??,0) */
                 retval = 0;
             else
             {
-                retval = HeapSize( GetProcessHeap(), 0, (char *)pintern->Pointer - HGLOBAL_STORAGE );
+                retval = HeapSize( GetProcessHeap(), 0, (char *)mem->Pointer - HGLOBAL_STORAGE );
                 if (retval != ~(SIZE_T)0) retval -= HGLOBAL_STORAGE;
             }
         }
         else
         {
-            WARN( "invalid handle %p (Magic: 0x%04x)\n", hmem, pintern->Magic );
+            WARN_(globalmem)( "invalid handle %p\n", handle );
             SetLastError( ERROR_INVALID_HANDLE );
             retval = 0;
         }
@@ -367,36 +370,36 @@ SIZE_T WINAPI GlobalSize(HGLOBAL hmem)
 /***********************************************************************
  *           GlobalWire   (KERNEL32.@)
  */
-LPVOID WINAPI GlobalWire(HGLOBAL hmem)
+void *WINAPI GlobalWire( HGLOBAL handle )
 {
-   return GlobalLock( hmem );
+    return GlobalLock( handle );
 }
 
 
 /***********************************************************************
  *           GlobalUnWire   (KERNEL32.@)
  */
-BOOL WINAPI GlobalUnWire(HGLOBAL hmem)
+BOOL WINAPI GlobalUnWire( HGLOBAL handle )
 {
-   return GlobalUnlock( hmem);
+    return GlobalUnlock( handle );
 }
 
 
 /***********************************************************************
  *           GlobalFix   (KERNEL32.@)
  */
-VOID WINAPI GlobalFix(HGLOBAL hmem)
+VOID WINAPI GlobalFix( HGLOBAL handle )
 {
-    GlobalLock( hmem );
+    GlobalLock( handle );
 }
 
 
 /***********************************************************************
  *           GlobalUnfix   (KERNEL32.@)
  */
-VOID WINAPI GlobalUnfix(HGLOBAL hmem)
+VOID WINAPI GlobalUnfix( HGLOBAL handle )
 {
-   GlobalUnlock( hmem);
+    GlobalUnlock( handle );
 }
 
 
@@ -406,34 +409,36 @@ VOID WINAPI GlobalUnfix(HGLOBAL hmem)
  * Get information about a global memory object.
  *
  * PARAMS
- *  hmem [I] Handle of the global memory object 
+ *  handle [I] Handle of the global memory object
  *
  * RETURNS
- *  Failure: GMEM_INVALID_HANDLE, when the provided handle is invalid 
+ *  Failure: GMEM_INVALID_HANDLE, when the provided handle is invalid
  *  Success: Value specifying allocation flags and lock count
  *
  */
-UINT WINAPI GlobalFlags(HGLOBAL hmem)
+UINT WINAPI GlobalFlags( HGLOBAL handle )
 {
+    PGLOBAL32_INTERN mem;
     DWORD retval;
-    PGLOBAL32_INTERN pintern;
 
-    if (ISPOINTER( hmem ))
+    TRACE_(globalmem)( "handle %p\n", handle );
+
+    if (ISPOINTER( handle ))
     {
         retval = 0;
     }
     else
     {
         RtlLockHeap( GetProcessHeap() );
-        pintern = HANDLE_TO_INTERN( hmem );
-        if (pintern->Magic == MAGIC_GLOBAL_USED)
+        mem = HANDLE_TO_INTERN( handle );
+        if (mem->Magic == MAGIC_GLOBAL_USED)
         {
-            retval = pintern->LockCount + (pintern->Flags << 8);
-            if (pintern->Pointer == 0) retval |= GMEM_DISCARDED;
+            retval = mem->LockCount + (mem->Flags << 8);
+            if (mem->Pointer == 0) retval |= GMEM_DISCARDED;
         }
         else
         {
-            WARN( "invalid handle %p (Magic: 0x%04x)\n", hmem, pintern->Magic );
+            WARN_(globalmem)( "invalid handle %p\n", handle );
             SetLastError( ERROR_INVALID_HANDLE );
             retval = GMEM_INVALID_HANDLE;
         }
