@@ -1042,6 +1042,9 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
                             WCHAR *buffer, int len )
 {
     static const WCHAR spermille[] = { 0x2030, 0 };  /* this one seems hardcoded */
+    static const BYTE ipossignposn[]    = { 3, 3, 4, 2, 1, 1, 3, 4, 1, 3, 4, 2, 4, 3, 3, 1 };
+    static const BYTE inegsignposn[]    = { 0, 3, 4, 2, 0, 1, 3, 4, 1, 3, 4, 2, 4, 3, 0, 0 };
+    static const BYTE inegsymprecedes[] = { 1, 1, 1, 1, 0, 0, 0, 0, 0, 1, 0, 1, 1, 0, 1, 0, };
     const WCHAR *sort;
     UINT val;
 
@@ -1234,22 +1237,40 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_string( locale->snegativesign, type, buffer, len );
 
     case LOCALE_IPOSSIGNPOSN:
-        return -1;
+        if (!get_locale_info( locale, lcid,
+                              LOCALE_INEGCURR | LOCALE_RETURN_NUMBER | (type & LOCALE_NOUSEROVERRIDE),
+                              (WCHAR *)&val, sizeof(val)/sizeof(WCHAR) )) break;
+        return locale_return_number( ipossignposn[val], type, buffer, len );
 
     case LOCALE_INEGSIGNPOSN:
-        return -1;
+        if (!get_locale_info( locale, lcid,
+                              LOCALE_INEGCURR | LOCALE_RETURN_NUMBER | (type & LOCALE_NOUSEROVERRIDE),
+                              (WCHAR *)&val, sizeof(val)/sizeof(WCHAR) )) break;
+        return locale_return_number( inegsignposn[val], type, buffer, len );
 
     case LOCALE_IPOSSYMPRECEDES:
-        return -1;
+        if (!get_locale_info( locale, lcid,
+                              LOCALE_ICURRENCY | LOCALE_RETURN_NUMBER | (type & LOCALE_NOUSEROVERRIDE),
+                              (WCHAR *)&val, sizeof(val)/sizeof(WCHAR) )) break;
+        return locale_return_number( !(val & 1), type, buffer, len );
 
     case LOCALE_IPOSSEPBYSPACE:
-        return -1;
+        if (!get_locale_info( locale, lcid,
+                              LOCALE_ICURRENCY | LOCALE_RETURN_NUMBER | (type & LOCALE_NOUSEROVERRIDE),
+                              (WCHAR *)&val, sizeof(val)/sizeof(WCHAR) )) break;
+        return locale_return_number( !!(val & 2), type, buffer, len );
 
     case LOCALE_INEGSYMPRECEDES:
-        return -1;
+        if (!get_locale_info( locale, lcid,
+                              LOCALE_INEGCURR | LOCALE_RETURN_NUMBER | (type & LOCALE_NOUSEROVERRIDE),
+                              (WCHAR *)&val, sizeof(val)/sizeof(WCHAR) )) break;
+        return locale_return_number( inegsymprecedes[val], type, buffer, len );
 
     case LOCALE_INEGSEPBYSPACE:
-        return -1;
+        if (!get_locale_info( locale, lcid,
+                              LOCALE_INEGCURR | LOCALE_RETURN_NUMBER | (type & LOCALE_NOUSEROVERRIDE),
+                              (WCHAR *)&val, sizeof(val)/sizeof(WCHAR) )) break;
+        return locale_return_number( (val >= 8), type, buffer, len );
 
     case LOCALE_FONTSIGNATURE:
         return locale_return_data( locale_strings + locale->fontsignature + 1,
