@@ -6541,17 +6541,18 @@ static void test_h264_decoder(void)
         ATTR_RATIO(MF_MT_FRAME_SIZE, 1920, 1088),
         {0},
     };
-    static const MFVideoArea actual_aperture = {.Area={78, 74}};
-    static const media_type_desc actual_outputs[] =
+    static const MFVideoArea actual_aperture = {.Area={82,84}};
+    static const DWORD actual_width = 96, actual_height = 96;
+    const media_type_desc actual_outputs[] =
     {
         {
             ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
             ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
             ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
             ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
-            ATTR_RATIO(MF_MT_FRAME_SIZE, 80, 80, .todo_value = TRUE),
-            ATTR_UINT32(MF_MT_SAMPLE_SIZE, 9600, .todo_value = TRUE),
-            ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 80, .todo_value = TRUE),
+            ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .todo_value = TRUE),
+            ATTR_UINT32(MF_MT_SAMPLE_SIZE, actual_width * actual_height * 3 / 2, .todo_value = TRUE),
+            ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width, .todo_value = TRUE),
             /* ATTR_UINT32(MF_MT_VIDEO_ROTATION, 0), missing on Win7 */
             ATTR_UINT32(MF_MT_INTERLACE_MODE, 7),
             ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
@@ -6563,9 +6564,9 @@ static void test_h264_decoder(void)
             ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YV12),
             ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
             ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
-            ATTR_RATIO(MF_MT_FRAME_SIZE, 80, 80, .todo_value = TRUE),
-            ATTR_UINT32(MF_MT_SAMPLE_SIZE, 9600, .todo_value = TRUE),
-            ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 80, .todo_value = TRUE),
+            ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .todo_value = TRUE),
+            ATTR_UINT32(MF_MT_SAMPLE_SIZE, actual_width * actual_height * 3 / 2, .todo_value = TRUE),
+            ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width, .todo_value = TRUE),
             /* ATTR_UINT32(MF_MT_VIDEO_ROTATION, 0), missing on Win7 */
             ATTR_UINT32(MF_MT_INTERLACE_MODE, 7),
             ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
@@ -6577,9 +6578,9 @@ static void test_h264_decoder(void)
             ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_IYUV),
             ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
             ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
-            ATTR_RATIO(MF_MT_FRAME_SIZE, 80, 80, .todo_value = TRUE),
-            ATTR_UINT32(MF_MT_SAMPLE_SIZE, 9600, .todo_value = TRUE),
-            ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 80, .todo_value = TRUE),
+            ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .todo_value = TRUE),
+            ATTR_UINT32(MF_MT_SAMPLE_SIZE, actual_width * actual_height * 3 / 2, .todo_value = TRUE),
+            ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width, .todo_value = TRUE),
             /* ATTR_UINT32(MF_MT_VIDEO_ROTATION, 0), missing on Win7 */
             ATTR_UINT32(MF_MT_INTERLACE_MODE, 7),
             ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
@@ -6591,9 +6592,9 @@ static void test_h264_decoder(void)
             ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_I420),
             ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
             ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
-            ATTR_RATIO(MF_MT_FRAME_SIZE, 80, 80, .todo_value = TRUE),
-            ATTR_UINT32(MF_MT_SAMPLE_SIZE, 9600, .todo_value = TRUE),
-            ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 80, .todo_value = TRUE),
+            ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .todo_value = TRUE),
+            ATTR_UINT32(MF_MT_SAMPLE_SIZE, actual_width * actual_height * 3 / 2, .todo_value = TRUE),
+            ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width, .todo_value = TRUE),
             /* ATTR_UINT32(MF_MT_VIDEO_ROTATION, 0), missing on Win7 */
             ATTR_UINT32(MF_MT_INTERLACE_MODE, 7),
             ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
@@ -6605,9 +6606,9 @@ static void test_h264_decoder(void)
             ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2),
             ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
             ATTR_RATIO(MF_MT_FRAME_RATE, 30000, 1001),
-            ATTR_RATIO(MF_MT_FRAME_SIZE, 80, 80, .todo_value = TRUE),
-            ATTR_UINT32(MF_MT_SAMPLE_SIZE, 12800, .todo_value = TRUE),
-            ATTR_UINT32(MF_MT_DEFAULT_STRIDE, 160, .todo_value = TRUE),
+            ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .todo_value = TRUE),
+            ATTR_UINT32(MF_MT_SAMPLE_SIZE, actual_width * actual_height * 2, .todo_value = TRUE),
+            ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width * 2, .todo_value = TRUE),
             /* ATTR_UINT32(MF_MT_VIDEO_ROTATION, 0), missing on Win7 */
             ATTR_UINT32(MF_MT_INTERLACE_MODE, 7),
             ATTR_UINT32(MF_MT_FIXED_SIZE_SAMPLES, 1),
@@ -6870,7 +6871,7 @@ static void test_h264_decoder(void)
     todo_wine
     ok(i == 2, "got %lu iterations\n", i);
     todo_wine
-    ok(h264_encoded_data_len == 44959, "got h264_encoded_data_len %lu\n", h264_encoded_data_len);
+    ok(h264_encoded_data_len == 48194, "got h264_encoded_data_len %lu\n", h264_encoded_data_len);
     todo_wine
     ok(hr == MF_E_TRANSFORM_STREAM_CHANGE, "ProcessOutput returned %#lx\n", hr);
     ok(output.dwStreamID == 0, "got dwStreamID %lu\n", output.dwStreamID);
@@ -6892,7 +6893,7 @@ static void test_h264_decoder(void)
     ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
     ok(output_info.dwFlags == flags, "got dwFlags %#lx\n", output_info.dwFlags);
     todo_wine
-    ok(output_info.cbSize == 0x3200, "got cbSize %#lx\n", output_info.cbSize);
+    ok(output_info.cbSize == actual_width * actual_height * 2, "got cbSize %#lx\n", output_info.cbSize);
     ok(output_info.cbAlignment == 0, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
     i = -1;
@@ -6918,11 +6919,11 @@ static void test_h264_decoder(void)
     ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
     nv12_frame_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
     nv12_frame_len = SizeofResource(GetModuleHandleW(NULL), resource);
-    ok(nv12_frame_len == 9600, "got frame length %lu\n", nv12_frame_len);
+    ok(nv12_frame_len == actual_width * actual_height * 3 / 2, "got frame length %lu\n", nv12_frame_len);
 
     status = 0;
     memset(&output, 0, sizeof(output));
-    output.pSample = create_sample(NULL, 0x3200);
+    output.pSample = create_sample(NULL, actual_width * actual_height * 2);
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
     todo_wine
     ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
@@ -6943,13 +6944,13 @@ static void test_h264_decoder(void)
         ok(length == nv12_frame_len, "got length %lu\n", length);
         if (length == nv12_frame_len)
         {
-            for (i = 0; i < 74; ++i)
+            for (i = 0; i < actual_aperture.Area.cy; ++i)
             {
-                memset(data + 80 * i + 78, 0xcd, 2);
-                memset(data + 80 * (80 + i) + 78, 0xcd, 2);
+                memset(data + actual_width * i + actual_aperture.Area.cx, 0xcd, actual_width - actual_aperture.Area.cx);
+                memset(data + actual_width * (actual_height + i) + actual_aperture.Area.cx, 0xcd, actual_width - actual_aperture.Area.cx);
             }
-            memset(data + 80 * 74, 0xcd, 6 * 80);
-            memset(data + 80 * 117, 0xcd, 3 * 80);
+            memset(data + actual_width * actual_aperture.Area.cy, 0xcd, (actual_height - actual_aperture.Area.cy) * actual_width);
+            memset(data + actual_width * (actual_height + actual_aperture.Area.cy / 2), 0xcd, (actual_height - actual_aperture.Area.cy) / 2 * actual_width);
         }
         hr = IMFMediaBuffer_Unlock(media_buffer);
         ok(hr == S_OK, "Unlock returned %#lx\n", hr);
