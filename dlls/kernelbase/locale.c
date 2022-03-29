@@ -1028,10 +1028,10 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return -1;
 
     case LOCALE_S1159:
-        return -1;
+        return locale_return_string( locale->s1159, type, buffer, len );
 
     case LOCALE_S2359:
-        return -1;
+        return locale_return_string( locale->s2359, type, buffer, len );
 
     case LOCALE_SDAYNAME1:
     case LOCALE_SDAYNAME2:
@@ -1216,10 +1216,10 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return -1;
 
     case LOCALE_SSHORTESTAM:
-        return -1;
+        return locale_return_string( locale->sshortestam, type, buffer, len );
 
     case LOCALE_SSHORTESTPM:
-        return -1;
+        return locale_return_string( locale->sshortestpm, type, buffer, len );
 
     case LOCALE_SENGLANGUAGE:
         return locale_return_string( locale->senglanguage, type, buffer, len );
