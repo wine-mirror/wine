@@ -39,6 +39,42 @@ typedef struct D2D1_INK_BEZIER_SEGMENT
     D2D1_INK_POINT point3;
 } D2D1_INK_BEZIER_SEGMENT;
 
+typedef enum D2D1_PATCH_EDGE_MODE
+{
+    D2D1_PATCH_EDGE_MODE_ALIASED = 0x0,
+    D2D1_PATCH_EDGE_MODE_ANTIALIASED = 0x1,
+    D2D1_PATCH_EDGE_MODE_ALIASED_INFLATED = 0x2,
+    D2D1_PATCH_EDGE_MODE_FORCE_DWORD = 0xffffffff
+} D2D1_PATCH_EDGE_MODE;
+
+typedef struct D2D1_GRADIENT_MESH_PATCH
+{
+    D2D1_POINT_2F point00;
+    D2D1_POINT_2F point01;
+    D2D1_POINT_2F point02;
+    D2D1_POINT_2F point03;
+    D2D1_POINT_2F point10;
+    D2D1_POINT_2F point11;
+    D2D1_POINT_2F point12;
+    D2D1_POINT_2F point13;
+    D2D1_POINT_2F point20;
+    D2D1_POINT_2F point21;
+    D2D1_POINT_2F point22;
+    D2D1_POINT_2F point23;
+    D2D1_POINT_2F point30;
+    D2D1_POINT_2F point31;
+    D2D1_POINT_2F point32;
+    D2D1_POINT_2F point33;
+    D2D1_COLOR_F color00;
+    D2D1_COLOR_F color03;
+    D2D1_COLOR_F color30;
+    D2D1_COLOR_F color33;
+    D2D1_PATCH_EDGE_MODE topEdgeMode;
+    D2D1_PATCH_EDGE_MODE leftEdgeMode;
+    D2D1_PATCH_EDGE_MODE bottomEdgeMode;
+    D2D1_PATCH_EDGE_MODE rightEdgeMode;
+} D2D1_GRADIENT_MESH_PATCH;
+
 [
     object,
     uuid(bae8b344-23fc-4071-8cb5-d05d6f073848),
@@ -100,5 +136,20 @@ interface ID2D1Ink : ID2D1Resource
         [in, optional] ID2D1InkStyle *ink_style,
         [in, optional] const D2D1_MATRIX_3X2_F *world_transform,
         [out] D2D1_RECT_F *bounds
+    );
+};
+
+[
+    object,
+    uuid(f292e401-c050-4cde-83d7-04962d3b23c2),
+    local,
+]
+interface ID2D1GradientMesh : ID2D1Resource
+{
+    UINT32 GetPatchCount();
+    HRESULT GetPatches(
+        [in] UINT32 start_index,
+        [out] D2D1_GRADIENT_MESH_PATCH *patches,
+        [in] UINT32 patch_count
     );
 };
