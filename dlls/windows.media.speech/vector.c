@@ -32,6 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(speech);
 struct vector_view_hstring
 {
     IVectorView_HSTRING IVectorView_HSTRING_iface;
+    IIterable_HSTRING IIterable_HSTRING_iface;
     LONG ref;
 
     UINT32 size;
@@ -55,6 +56,12 @@ static HRESULT WINAPI vector_view_hstring_QueryInterface( IVectorView_HSTRING *i
         IsEqualGUID(iid, &IID_IVectorView_HSTRING))
     {
         IInspectable_AddRef((*out = &impl->IVectorView_HSTRING_iface));
+        return S_OK;
+    }
+
+    if (IsEqualGUID(iid, &IID_IIterable_HSTRING))
+    {
+        IInspectable_AddRef((*out = &impl->IIterable_HSTRING_iface));
         return S_OK;
     }
 
@@ -188,6 +195,35 @@ static const struct IVectorView_HSTRINGVtbl vector_view_hstring_vtbl =
 
 /*
  *
+ * IIterable<HSTRING>
+ *
+ */
+
+DEFINE_IINSPECTABLE_(iterable_view_hstring, IIterable_HSTRING, struct vector_view_hstring, view_impl_from_IIterable_HSTRING,
+                     IIterable_HSTRING_iface, &impl->IVectorView_HSTRING_iface)
+
+static HRESULT WINAPI iterable_view_hstring_First( IIterable_HSTRING *iface, IIterator_HSTRING **value )
+{
+    TRACE("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static const struct IIterable_HSTRINGVtbl iterable_view_hstring_vtbl =
+{
+    /* IUnknown methods */
+    iterable_view_hstring_QueryInterface,
+    iterable_view_hstring_AddRef,
+    iterable_view_hstring_Release,
+    /* IInspectable methods */
+    iterable_view_hstring_GetIids,
+    iterable_view_hstring_GetRuntimeClassName,
+    iterable_view_hstring_GetTrustLevel,
+    /* IIterable<HSTRING> methods */
+    iterable_view_hstring_First,
+};
+
+/*
+ *
  * IVector<HSTRING>
  *
  */
@@ -195,6 +231,7 @@ static const struct IVectorView_HSTRINGVtbl vector_view_hstring_vtbl =
 struct vector_hstring
 {
     IVector_HSTRING IVector_HSTRING_iface;
+    IIterable_HSTRING IIterable_HSTRING_iface;
     LONG ref;
 
     UINT32 size;
@@ -219,6 +256,12 @@ static HRESULT WINAPI vector_hstring_QueryInterface( IVector_HSTRING *iface, REF
         IsEqualGUID(iid, &IID_IVector_HSTRING))
     {
         IInspectable_AddRef((*out = &impl->IVector_HSTRING_iface));
+        return S_OK;
+    }
+
+    if (IsEqualGUID(iid, &IID_IIterable_HSTRING))
+    {
+        IInspectable_AddRef((*out = &impl->IIterable_HSTRING_iface));
         return S_OK;
     }
 
@@ -300,6 +343,7 @@ static HRESULT WINAPI vector_hstring_GetView( IVector_HSTRING *iface, IVectorVie
 
     if (!(view = calloc(1, offsetof(struct vector_view_hstring, elements[impl->size])))) return E_OUTOFMEMORY;
     view->IVectorView_HSTRING_iface.lpVtbl = &vector_view_hstring_vtbl;
+    view->IIterable_HSTRING_iface.lpVtbl = &iterable_view_hstring_vtbl;
     view->ref = 1;
 
     for (i = 0; i < impl->size; ++i)
@@ -479,6 +523,34 @@ static const struct IVector_HSTRINGVtbl vector_hstring_vtbl =
     vector_hstring_ReplaceAll,
 };
 
+/*
+ *
+ * IIterable<HSTRING>
+ *
+ */
+
+DEFINE_IINSPECTABLE(iterable_hstring, IIterable_HSTRING, struct vector_hstring, IVector_HSTRING_iface)
+
+static HRESULT WINAPI iterable_hstring_First( IIterable_HSTRING *iface, IIterator_HSTRING **value )
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static const struct IIterable_HSTRINGVtbl iterable_hstring_vtbl =
+{
+    /* IUnknown methods */
+    iterable_hstring_QueryInterface,
+    iterable_hstring_AddRef,
+    iterable_hstring_Release,
+    /* IInspectable methods */
+    iterable_hstring_GetIids,
+    iterable_hstring_GetRuntimeClassName,
+    iterable_hstring_GetTrustLevel,
+    /* IIterable<HSTRING> methods */
+    iterable_hstring_First,
+};
+
 HRESULT vector_hstring_create( IVector_HSTRING **out )
 {
     struct vector_hstring *impl;
@@ -487,6 +559,7 @@ HRESULT vector_hstring_create( IVector_HSTRING **out )
 
     if (!(impl = calloc(1, sizeof(*impl)))) return E_OUTOFMEMORY;
     impl->IVector_HSTRING_iface.lpVtbl = &vector_hstring_vtbl;
+    impl->IIterable_HSTRING_iface.lpVtbl = &iterable_hstring_vtbl;
     impl->ref = 1;
 
     *out = &impl->IVector_HSTRING_iface;
