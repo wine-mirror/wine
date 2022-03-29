@@ -3632,11 +3632,7 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **obj, IMalloc *imalloc)
 
     TRACE("(%s, %p, %p)\n", wine_dbgstr_guid(riid), obj, imalloc);
 
-    if (imalloc)
-        reader = IMalloc_Alloc(imalloc, sizeof(*reader));
-    else
-        reader = heap_alloc(sizeof(*reader));
-    if (!reader)
+    if (!(reader = m_alloc(imalloc, sizeof(*reader))))
         return E_OUTOFMEMORY;
 
     memset(reader, 0, sizeof(*reader));
@@ -3682,21 +3678,17 @@ HRESULT WINAPI CreateXmlReaderInputWithEncodingName(IUnknown *stream,
 
     if (!stream || !ppInput) return E_INVALIDARG;
 
-    if (imalloc)
-        readerinput = IMalloc_Alloc(imalloc, sizeof(*readerinput));
-    else
-        readerinput = heap_alloc(sizeof(*readerinput));
-    if(!readerinput) return E_OUTOFMEMORY;
+    if (!(readerinput = m_alloc(imalloc, sizeof(*readerinput))))
+        return E_OUTOFMEMORY;
+    memset(readerinput, 0, sizeof(*readerinput));
 
     readerinput->IXmlReaderInput_iface.lpVtbl = &xmlreaderinputvtbl;
     readerinput->ref = 1;
     readerinput->imalloc = imalloc;
-    readerinput->stream = NULL;
     if (imalloc) IMalloc_AddRef(imalloc);
     readerinput->encoding = parse_encoding_name(encoding, -1);
     readerinput->hint = hint;
     readerinput->baseuri = readerinput_strdupW(readerinput, base_uri);
-    readerinput->pending = 0;
 
     hr = alloc_input_buffer(readerinput);
     if (hr != S_OK)
