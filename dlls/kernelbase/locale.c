@@ -1151,13 +1151,13 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_string( locale->siso3166ctryname2, type, buffer, len );
 
     case LOCALE_SNAN:
-        return -1;
+        return locale_return_string( locale->snan, type, buffer, len );
 
     case LOCALE_SPOSINFINITY:
-        return -1;
+        return locale_return_string( locale->sposinfinity, type, buffer, len );
 
     case LOCALE_SNEGINFINITY:
-        return -1;
+        return locale_return_string( locale->sneginfinity, type, buffer, len );
 
     case LOCALE_SSCRIPTS:
         return -1;
