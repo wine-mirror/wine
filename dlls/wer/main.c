@@ -18,12 +18,12 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
 #include "werapi.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 #include "wine/debug.h"
 
@@ -219,7 +219,7 @@ HRESULT WINAPI WerReportCloseHandle(HREPORT hreport)
     if (!found)
         return E_INVALIDARG;
 
-    heap_free(report);
+    free(report);
 
     return S_OK;
 }
@@ -259,7 +259,7 @@ HRESULT WINAPI WerReportCreate(PCWSTR eventtype, WER_REPORT_TYPE reporttype, PWE
         return E_INVALIDARG;
     }
 
-    report = heap_alloc_zero(FIELD_OFFSET(report_t, eventtype[lstrlenW(eventtype) + 1]));
+    report = calloc(1, FIELD_OFFSET(report_t, eventtype[lstrlenW(eventtype) + 1]));
     if (!report)
         return __HRESULT_FROM_WIN32(ERROR_OUTOFMEMORY);
 
