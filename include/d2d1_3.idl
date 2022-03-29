@@ -153,3 +153,16 @@ interface ID2D1GradientMesh : ID2D1Resource
         [in] UINT32 patch_count
     );
 };
+
+[
+    object,
+    uuid(c9b664e5-74a1-4378-9ac2-eefc37a3f4d8),
+    local,
+]
+interface ID2D1ImageSource : ID2D1Image
+{
+    HRESULT OfferResources();
+    HRESULT TryReclaimResources(
+        [out] BOOL *resources_discarded
+    );
+};
