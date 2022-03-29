@@ -46,6 +46,45 @@ extern const unsigned int collation_table[] DECLSPEC_HIDDEN;
 
 static HANDLE kernel32_handle;
 
+struct registry_entry
+{
+    const WCHAR                         *value;
+    enum { NOT_CACHED, CACHED, MISSING } status;
+    WCHAR                                data[80];
+};
+
+static struct registry_entry entry_icalendartype      = { L"iCalendarType" };
+static struct registry_entry entry_icountry           = { L"iCountry" };
+static struct registry_entry entry_icurrdigits        = { L"iCurrDigits" };
+static struct registry_entry entry_icurrency          = { L"iCurrency" };
+static struct registry_entry entry_idigits            = { L"iDigits" };
+static struct registry_entry entry_idigitsubstitution = { L"NumShape" };
+static struct registry_entry entry_ifirstdayofweek    = { L"iFirstDayOfWeek" };
+static struct registry_entry entry_ifirstweekofyear   = { L"iFirstWeekOfYear" };
+static struct registry_entry entry_ilzero             = { L"iLZero" };
+static struct registry_entry entry_imeasure           = { L"iMeasure" };
+static struct registry_entry entry_inegcurr           = { L"iNegCurr" };
+static struct registry_entry entry_inegnumber         = { L"iNegNumber" };
+static struct registry_entry entry_ipapersize         = { L"iPaperSize" };
+static struct registry_entry entry_s1159              = { L"s1159" };
+static struct registry_entry entry_s2359              = { L"s2359" };
+static struct registry_entry entry_scurrency          = { L"sCurrency" };
+static struct registry_entry entry_sdecimal           = { L"sDecimal" };
+static struct registry_entry entry_sgrouping          = { L"sGrouping" };
+static struct registry_entry entry_slist              = { L"sList" };
+static struct registry_entry entry_slongdate          = { L"sLongDate" };
+static struct registry_entry entry_smondecimalsep     = { L"sMonDecimalSep" };
+static struct registry_entry entry_smongrouping       = { L"sMonGrouping" };
+static struct registry_entry entry_smonthousandsep    = { L"sMonThousandSep" };
+static struct registry_entry entry_snativedigits      = { L"sNativeDigits" };
+static struct registry_entry entry_snegativesign      = { L"sNegativeSign" };
+static struct registry_entry entry_spositivesign      = { L"sPositiveSign" };
+static struct registry_entry entry_sshortdate         = { L"sShortDate" };
+static struct registry_entry entry_sshorttime         = { L"sShortTime" };
+static struct registry_entry entry_sthousand          = { L"sThousand" };
+static struct registry_entry entry_stimeformat        = { L"sTimeFormat" };
+static struct registry_entry entry_syearmonth         = { L"sYearMonth" };
+
 static const struct registry_value
 {
     DWORD           lctype;
@@ -844,6 +883,38 @@ static int locale_return_data( const WCHAR *data, int datalen, LCTYPE type, WCHA
 }
 
 
+static int locale_return_reg_string( struct registry_entry *entry, LCTYPE type, WCHAR *buffer, int len )
+{
+    DWORD size;
+    LRESULT res;
+    int ret = -1;
+
+    if (type & LOCALE_NOUSEROVERRIDE) return -1;
+
+    RtlEnterCriticalSection( &locale_section );
+    switch (entry->status)
+    {
+    case NOT_CACHED:
+        size = sizeof(entry->data);
+        res = RegQueryValueExW( intl_key, entry->value, NULL, NULL, (BYTE *)entry->data, &size );
+        if (res)
+        {
+            entry->status = MISSING;
+            break;
+        }
+        entry->status = CACHED;
+        /* fall through */
+    case CACHED:
+        ret = locale_return_data( entry->data, wcslen(entry->data) + 1, type, buffer, len );
+        break;
+    case MISSING:
+        break;
+    }
+    RtlLeaveCriticalSection( &locale_section );
+    return ret;
+}
+
+
 static int locale_return_string( DWORD pos, LCTYPE type, WCHAR *buffer, int len )
 {
     return locale_return_data( locale_strings + pos + 1, locale_strings[pos] + 1, type, buffer, len );
@@ -884,6 +955,27 @@ static int locale_return_number( UINT val, LCTYPE type, WCHAR *buffer, int len )
     else wcscpy( buffer, tmp );
 
     return ret;
+}
+
+
+static int locale_return_reg_number( struct registry_entry *entry, LCTYPE type, WCHAR *buffer, int len )
+{
+    int ret, val;
+    WCHAR *end, tmp[80];
+
+    if (type & LOCALE_RETURN_NUMBER)
+    {
+        ret = locale_return_reg_string( entry, type & ~LOCALE_RETURN_NUMBER, tmp, ARRAY_SIZE( tmp ));
+        if (ret == -1) return ret;
+        val = wcstol( tmp, &end, 10 );
+        if (*end)  /* invalid number */
+        {
+            SetLastError( ERROR_INVALID_FLAGS );
+            return 0;
+        }
+        return locale_return_number( val, type, buffer, len );
+    }
+    return locale_return_reg_string( entry, type, buffer, len );
 }
 
 
@@ -1069,6 +1161,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
     const WCHAR *sort;
     WCHAR *str, *end, tmp[80];
     UINT val;
+    int ret;
 
     if (locale != user_locale) type |= LOCALE_NOUSEROVERRIDE;
 
@@ -1090,6 +1183,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_string( locale->snativelangname, type, buffer, len );
 
     case LOCALE_ICOUNTRY:
+        if ((ret = locale_return_reg_number( &entry_icountry, type, buffer, len )) != -1) return ret;
         return locale_return_number( locale->icountry, type, buffer, len );
 
     case LOCALE_SLOCALIZEDCOUNTRYNAME:
@@ -1113,52 +1207,67 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_number( val, type, buffer, len );
 
     case LOCALE_SLIST:
+        if ((ret = locale_return_reg_string( &entry_slist, type, buffer, len )) != -1) return ret;
         return locale_return_string( locale->slist, type, buffer, len );
 
     case LOCALE_IMEASURE:
+        if ((ret = locale_return_reg_number( &entry_imeasure, type, buffer, len )) != -1) return ret;
         return locale_return_number( locale->imeasure, type, buffer, len );
 
     case LOCALE_SDECIMAL:
+        if ((ret = locale_return_reg_string( &entry_sdecimal, type, buffer, len )) != -1) return ret;
         return locale_return_string( locale->sdecimal, type, buffer, len );
 
     case LOCALE_STHOUSAND:
+        if ((ret = locale_return_reg_string( &entry_sthousand, type, buffer, len )) != -1) return ret;
         return locale_return_string( locale->sthousand, type, buffer, len );
 
     case LOCALE_SGROUPING:
+        if ((ret = locale_return_reg_string( &entry_sgrouping, type, buffer, len )) != -1) return ret;
         return locale_return_grouping( locale->sgrouping, type, buffer, len );
 
     case LOCALE_IDIGITS:
+        if ((ret = locale_return_reg_number( &entry_idigits, type, buffer, len )) != -1) return ret;
         return locale_return_number( locale->idigits, type, buffer, len );
 
     case LOCALE_ILZERO:
+        if ((ret = locale_return_reg_number( &entry_ilzero, type, buffer, len )) != -1) return ret;
         return locale_return_number( locale->ilzero, type, buffer, len );
 
     case LOCALE_SNATIVEDIGITS:
+        if ((ret = locale_return_reg_string( &entry_snativedigits, type, buffer, len )) != -1) return ret;
         return locale_return_strarray_concat( locale->snativedigits, type, buffer, len );
 
     case LOCALE_SCURRENCY:
+        if ((ret = locale_return_reg_string( &entry_scurrency, type, buffer, len )) != -1) return ret;
         return locale_return_string( locale->scurrency, type, buffer, len );
 
     case LOCALE_SINTLSYMBOL:
         return locale_return_string( locale->sintlsymbol, type, buffer, len );
 
     case LOCALE_SMONDECIMALSEP:
+        if ((ret = locale_return_reg_string( &entry_smondecimalsep, type, buffer, len )) != -1) return ret;
         return locale_return_string( locale->smondecimalsep, type, buffer, len );
 
     case LOCALE_SMONTHOUSANDSEP:
+        if ((ret = locale_return_reg_string( &entry_smonthousandsep, type, buffer, len )) != -1) return ret;
         return locale_return_string( locale->smonthousandsep, type, buffer, len );
 
     case LOCALE_SMONGROUPING:
+        if ((ret = locale_return_reg_string( &entry_smongrouping, type, buffer, len )) != -1) return ret;
         return locale_return_grouping( locale->smongrouping, type, buffer, len );
 
     case LOCALE_ICURRDIGITS:
     case LOCALE_IINTLCURRDIGITS:
+        if ((ret = locale_return_reg_number( &entry_icurrdigits, type, buffer, len )) != -1) return ret;
         return locale_return_number( locale->icurrdigits, type, buffer, len );
 
     case LOCALE_ICURRENCY:
+        if ((ret = locale_return_reg_number( &entry_icurrency, type, buffer, len )) != -1) return ret;
         return locale_return_number( locale->icurrency, type, buffer, len );
 
     case LOCALE_INEGCURR:
+        if ((ret = locale_return_reg_number( &entry_inegcurr, type, buffer, len )) != -1) return ret;
         return locale_return_number( locale->inegcurr, type, buffer, len );
 
     case LOCALE_SDATE:
@@ -1180,9 +1289,11 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_data( str, end - str, type, buffer, len );
 
     case LOCALE_SSHORTDATE:
+        if ((ret = locale_return_reg_string( &entry_sshortdate, type, buffer, len )) != -1) return ret;
         return locale_return_strarray( locale->sshortdate, 0, type, buffer, len );
 
     case LOCALE_SLONGDATE:
+        if ((ret = locale_return_reg_string( &entry_slongdate, type, buffer, len )) != -1) return ret;
         return locale_return_strarray( locale->slongdate, 0, type, buffer, len );
 
     case LOCALE_IDATE:
@@ -1238,9 +1349,11 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_number( str[1] == 'M', type, buffer, len );
 
     case LOCALE_S1159:
+        if ((ret = locale_return_reg_string( &entry_s1159, type, buffer, len )) != -1) return ret;
         return locale_return_string( locale->s1159, type, buffer, len );
 
     case LOCALE_S2359:
+        if ((ret = locale_return_reg_string( &entry_s2359, type, buffer, len )) != -1) return ret;
         return locale_return_string( locale->s2359, type, buffer, len );
 
     case LOCALE_SDAYNAME1:
@@ -1296,9 +1409,11 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
                                        type - LOCALE_SABBREVMONTHNAME1, type, buffer, len );
 
     case LOCALE_SPOSITIVESIGN:
+        if ((ret = locale_return_reg_string( &entry_spositivesign, type, buffer, len )) != -1) return ret;
         return locale_return_string( locale->spositivesign, type, buffer, len );
 
     case LOCALE_SNEGATIVESIGN:
+        if ((ret = locale_return_reg_string( &entry_snegativesign, type, buffer, len )) != -1) return ret;
         return locale_return_string( locale->snegativesign, type, buffer, len );
 
     case LOCALE_IPOSSIGNPOSN:
@@ -1430,6 +1545,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_strarray( locale->smonthday, 0, type, buffer, len );
 
     case LOCALE_SSHORTTIME:
+        if ((ret = locale_return_reg_string( &entry_sshorttime, type, buffer, len )) != -1) return ret;
         return locale_return_strarray( locale->sshorttime, 0, type, buffer, len );
 
     case LOCALE_SOPENTYPELANGUAGETAG:
@@ -1462,6 +1578,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_string( locale->sengcountry, type, buffer, len );
 
     case LOCALE_STIMEFORMAT:
+        if ((ret = locale_return_reg_string( &entry_stimeformat, type, buffer, len )) != -1) return ret;
         return locale_return_strarray( locale->stimeformat, 0, type, buffer, len );
 
     case LOCALE_IDEFAULTANSICODEPAGE:
@@ -1475,6 +1592,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_number( *str == 't', type, buffer, len );
 
     case LOCALE_SYEARMONTH:
+        if ((ret = locale_return_reg_string( &entry_syearmonth, type, buffer, len )) != -1) return ret;
         return locale_return_strarray( locale->syearmonth, 0, type, buffer, len );
 
     case LOCALE_SENGCURRNAME:
@@ -1484,18 +1602,22 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_string( locale->snativecurrname, type, buffer, len );
 
     case LOCALE_ICALENDARTYPE:
+        if ((ret = locale_return_reg_number( &entry_icalendartype, type, buffer, len )) != -1) return ret;
         return locale_return_number( locale_strings[locale->scalendartype + 1], type, buffer, len );
 
     case LOCALE_IPAPERSIZE:
+        if ((ret = locale_return_reg_number( &entry_ipapersize, type, buffer, len )) != -1) return ret;
         return locale_return_number( locale->ipapersize, type, buffer, len );
 
     case LOCALE_IOPTIONALCALENDAR:
         return locale_return_number( locale_strings[locale->scalendartype + 2], type, buffer, len );
 
     case LOCALE_IFIRSTDAYOFWEEK:
+        if ((ret = locale_return_reg_number( &entry_ifirstdayofweek, type, buffer, len )) != -1) return ret;
         return locale_return_number( (locale->ifirstdayofweek + 6) % 7, type, buffer, len );
 
     case LOCALE_IFIRSTWEEKOFYEAR:
+        if ((ret = locale_return_reg_number( &entry_ifirstweekofyear, type, buffer, len )) != -1) return ret;
         return locale_return_number( locale->ifirstweekofyear, type, buffer, len );
 
     case LOCALE_SMONTHNAME13:
@@ -1509,6 +1631,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
                                        12, type, buffer, len );
 
     case LOCALE_INEGNUMBER:
+        if ((ret = locale_return_reg_number( &entry_inegnumber, type, buffer, len )) != -1) return ret;
         return locale_return_number( locale->inegnumber, type, buffer, len );
 
     case LOCALE_IDEFAULTMACCODEPAGE:
@@ -1523,6 +1646,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_data( sort, wcslen(sort) + 1, type, buffer, len );
 
     case LOCALE_IDIGITSUBSTITUTION:
+        if ((ret = locale_return_reg_number( &entry_idigitsubstitution, type, buffer, len )) != -1) return ret;
         return locale_return_number( locale->idigitsubstitution, type, buffer, len );
     }
     SetLastError( ERROR_INVALID_FLAGS );
@@ -1777,52 +1901,6 @@ static const struct registry_value *get_locale_registry_value( DWORD lctype )
     for (i = 0; i < ARRAY_SIZE( registry_values ); i++)
         if (registry_values[i].lctype == lctype) return &registry_values[i];
     return NULL;
-}
-
-
-static INT get_registry_locale_info( const struct registry_value *registry_value, LPWSTR buffer, INT len )
-{
-    DWORD size, index = registry_value - registry_values;
-    INT ret;
-
-    RtlEnterCriticalSection( &locale_section );
-
-    if (!registry_cache[index])
-    {
-        size = len * sizeof(WCHAR);
-        ret = RegQueryValueExW( intl_key, registry_value->name, NULL, NULL, (BYTE *)buffer, &size );
-        if (!ret)
-        {
-            if (buffer && (registry_cache[index] = HeapAlloc( GetProcessHeap(), 0, size + sizeof(WCHAR) )))
-            {
-                memcpy( registry_cache[index], buffer, size );
-                registry_cache[index][size / sizeof(WCHAR)] = 0;
-            }
-            RtlLeaveCriticalSection( &locale_section );
-            return size / sizeof(WCHAR);
-        }
-        else
-        {
-            RtlLeaveCriticalSection( &locale_section );
-            if (ret == ERROR_FILE_NOT_FOUND) return -1;
-            if (ret == ERROR_MORE_DATA) SetLastError( ERROR_INSUFFICIENT_BUFFER );
-            else SetLastError( ret );
-            return 0;
-        }
-    }
-
-    ret = lstrlenW( registry_cache[index] ) + 1;
-    if (buffer)
-    {
-        if (ret > len)
-        {
-            SetLastError( ERROR_INSUFFICIENT_BUFFER );
-            ret = 0;
-        }
-        else lstrcpyW( buffer, registry_cache[index] );
-    }
-    RtlLeaveCriticalSection( &locale_section );
-    return ret;
 }
 
 
@@ -5165,45 +5243,6 @@ INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoW( LCID lcid, LCTYPE lctype, WCHAR *bu
     lctype = LOWORD(lctype);
 
     TRACE( "(lcid=0x%lx,lctype=0x%lx,%p,%d)\n", lcid, lctype, buffer, len );
-
-    /* first check for overrides in the registry */
-
-    if (!(lcflags & LOCALE_NOUSEROVERRIDE) && lcid == ConvertDefaultLocale( LOCALE_USER_DEFAULT ))
-    {
-        const struct registry_value *value = get_locale_registry_value( lctype );
-
-        if (value)
-        {
-            if (lcflags & LOCALE_RETURN_NUMBER)
-            {
-                WCHAR tmp[16];
-                ret = get_registry_locale_info( value, tmp, ARRAY_SIZE( tmp ));
-                if (ret > 0)
-                {
-                    WCHAR *end;
-                    UINT number = wcstol( tmp, &end, get_value_base_by_lctype( lctype ) );
-                    if (*end)  /* invalid number */
-                    {
-                        SetLastError( ERROR_INVALID_FLAGS );
-                        return 0;
-                    }
-                    ret = sizeof(UINT) / sizeof(WCHAR);
-                    if (!len) return ret;
-                    if (ret > len)
-                    {
-                        SetLastError( ERROR_INSUFFICIENT_BUFFER );
-                        return 0;
-                    }
-                    memcpy( buffer, &number, sizeof(number) );
-                }
-            }
-            else ret = get_registry_locale_info( value, buffer, len );
-
-            if (ret != -1) return ret;
-        }
-    }
-
-    /* now load it from kernel resources */
 
     if (!(hrsrc = FindResourceExW( kernel32_handle, (LPWSTR)RT_STRING,
                                    ULongToPtr((lctype >> 4) + 1), lcid )))
