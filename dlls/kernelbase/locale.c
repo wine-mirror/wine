@@ -900,6 +900,7 @@ static int locale_return_strarray( DWORD pos, WORD idx, LCTYPE type, WCHAR *buff
 static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE type,
                             WCHAR *buffer, int len )
 {
+    static const WCHAR spermille[] = { 0x2030, 0 };  /* this one seems hardcoded */
     UINT val;
 
     if (locale != user_locale) type |= LOCALE_NOUSEROVERRIDE;
@@ -1185,16 +1186,16 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_string( locale->snativedisplayname, type, buffer, len );
 
     case LOCALE_INEGATIVEPERCENT:
-        return -1;
+        return locale_return_number( locale->inegativepercent, type, buffer, len );
 
     case LOCALE_IPOSITIVEPERCENT:
-        return -1;
+        return locale_return_number( locale->ipositivepercent, type, buffer, len );
 
     case LOCALE_SPERCENT:
-        return -1;
+        return locale_return_string( locale->spercent, type, buffer, len );
 
     case LOCALE_SPERMILLE:
-        return -1;
+        return locale_return_data( spermille, ARRAY_SIZE(spermille), type, buffer, len );
 
     case LOCALE_SMONTHDAY:
         return -1;
