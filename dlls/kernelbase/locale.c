@@ -1276,19 +1276,19 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_string( locale->snativecurrname, type, buffer, len );
 
     case LOCALE_ICALENDARTYPE:
-        return -1;
+        return locale_return_number( locale_strings[locale->scalendartype + 1], type, buffer, len );
 
     case LOCALE_IPAPERSIZE:
         return -1;
 
     case LOCALE_IOPTIONALCALENDAR:
-        return -1;
+        return locale_return_number( locale_strings[locale->scalendartype + 2], type, buffer, len );
 
     case LOCALE_IFIRSTDAYOFWEEK:
-        return -1;
+        return locale_return_number( (locale->ifirstdayofweek + 6) % 7, type, buffer, len );
 
     case LOCALE_IFIRSTWEEKOFYEAR:
-        return -1;
+        return locale_return_number( locale->ifirstweekofyear, type, buffer, len );
 
     case LOCALE_SMONTHNAME13:
         return locale_return_strarray( ((type & LOCALE_RETURN_GENITIVE_NAMES) && locale->sgenitivemonth) ?
