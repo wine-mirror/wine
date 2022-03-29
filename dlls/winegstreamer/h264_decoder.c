@@ -496,15 +496,61 @@ static HRESULT WINAPI transform_ProcessMessage(IMFTransform *iface, MFT_MESSAGE_
 
 static HRESULT WINAPI transform_ProcessInput(IMFTransform *iface, DWORD id, IMFSample *sample, DWORD flags)
 {
-    FIXME("iface %p, id %#lx, sample %p, flags %#lx stub!\n", iface, id, sample, flags);
-    return E_NOTIMPL;
+    struct h264_decoder *decoder = impl_from_IMFTransform(iface);
+    struct wg_sample *wg_sample;
+    MFT_INPUT_STREAM_INFO info;
+    HRESULT hr;
+
+    TRACE("iface %p, id %#lx, sample %p, flags %#lx.\n", iface, id, sample, flags);
+
+    if (FAILED(hr = IMFTransform_GetInputStreamInfo(iface, 0, &info)))
+        return hr;
+
+    if (!decoder->wg_transform)
+        return MF_E_TRANSFORM_TYPE_NOT_SET;
+
+    if (FAILED(hr = mf_create_wg_sample(sample, &wg_sample)))
+        return hr;
+
+    hr = wg_transform_push_data(decoder->wg_transform, wg_sample);
+
+    mf_destroy_wg_sample(wg_sample);
+    return hr;
 }
 
 static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, DWORD count,
         MFT_OUTPUT_DATA_BUFFER *samples, DWORD *status)
 {
-    FIXME("iface %p, flags %#lx, count %lu, samples %p, status %p stub!\n", iface, flags, count, samples, status);
-    return E_NOTIMPL;
+    struct h264_decoder *decoder = impl_from_IMFTransform(iface);
+    MFT_OUTPUT_STREAM_INFO info;
+    struct wg_sample *wg_sample;
+    HRESULT hr;
+
+    TRACE("iface %p, flags %#lx, count %lu, samples %p, status %p.\n", iface, flags, count, samples, status);
+
+    if (count != 1)
+        return E_INVALIDARG;
+
+    if (FAILED(hr = IMFTransform_GetOutputStreamInfo(iface, 0, &info)))
+        return hr;
+
+    if (!decoder->wg_transform)
+        return MF_E_TRANSFORM_TYPE_NOT_SET;
+
+    *status = 0;
+    samples[0].dwStatus = 0;
+    if (!samples[0].pSample) return E_INVALIDARG;
+
+    if (FAILED(hr = mf_create_wg_sample(samples[0].pSample, &wg_sample)))
+        return hr;
+
+    if (wg_sample->max_size < info.cbSize)
+        hr = MF_E_BUFFERTOOSMALL;
+    else
+        hr = wg_transform_read_data(decoder->wg_transform, wg_sample);
+
+    mf_destroy_wg_sample(wg_sample);
+    return hr;
 }
 
 static const IMFTransformVtbl transform_vtbl =

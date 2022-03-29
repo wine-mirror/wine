@@ -6822,7 +6822,6 @@ static void test_h264_decoder(void)
     status = 0;
     memset(&output, 0, sizeof(output));
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
-    todo_wine
     ok(hr == E_INVALIDARG || hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
     ok(output.dwStreamID == 0, "got dwStreamID %lu\n", output.dwStreamID);
     ok(!output.pSample, "got pSample %p\n", output.pSample);
@@ -6850,14 +6849,12 @@ static void test_h264_decoder(void)
         ok(ret == 0, "Release returned %lu\n", ret);
 
         hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
-        todo_wine
         ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
         ret = IMFSample_Release(sample);
         ok(ret <= 1, "Release returned %lu\n", ret);
         sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
 
         hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
-        todo_wine
         ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
         ret = IMFSample_Release(sample);
         ok(ret <= 1, "Release returned %lu\n", ret);
@@ -6883,7 +6880,8 @@ static void test_h264_decoder(void)
     todo_wine
     ok(status == MFT_PROCESS_OUTPUT_STATUS_NEW_STREAMS,
             "got status %#lx\n", status);
-    check_sample(output.pSample, NULL, 0, NULL);
+    if (status == MFT_PROCESS_OUTPUT_STATUS_NEW_STREAMS)
+        check_sample(output.pSample, NULL, 0, NULL);
     ret = IMFSample_Release(output.pSample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
