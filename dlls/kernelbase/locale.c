@@ -887,6 +887,42 @@ static int locale_return_number( UINT val, LCTYPE type, WCHAR *buffer, int len )
 }
 
 
+static int locale_return_grouping( DWORD pos, LCTYPE type, WCHAR *buffer, int len )
+{
+    WORD i, count = locale_strings[pos];
+    const WCHAR *str = locale_strings + pos + 1;
+    int ret;
+
+    if (type & LOCALE_RETURN_NUMBER)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+    ret = 2 * count;
+    if (str[count - 1]) ret += 2;  /* for final zero */
+
+    if (!len) return ret;
+    if (ret > len)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+    for (i = 0; i < count; i++)
+    {
+        if (!str[i])  /* explicit null termination */
+        {
+            buffer[-1] = 0;
+            return ret;
+        }
+        *buffer++ = '0' + str[i];
+        *buffer++ = ';';
+    }
+    *buffer++ = '0';
+    *buffer = 0;
+    return ret;
+}
+
+
 static int locale_return_strarray( DWORD pos, WORD idx, LCTYPE type, WCHAR *buffer, int len )
 {
     const DWORD *array = (const DWORD *)(locale_strings + pos + 1);
@@ -1052,25 +1088,25 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_number( val, type, buffer, len );
 
     case LOCALE_SLIST:
-        return -1;
+        return locale_return_string( locale->slist, type, buffer, len );
 
     case LOCALE_IMEASURE:
         return locale_return_number( locale->imeasure, type, buffer, len );
 
     case LOCALE_SDECIMAL:
-        return -1;
+        return locale_return_string( locale->sdecimal, type, buffer, len );
 
     case LOCALE_STHOUSAND:
-        return -1;
+        return locale_return_string( locale->sthousand, type, buffer, len );
 
     case LOCALE_SGROUPING:
-        return -1;
+        return locale_return_grouping( locale->sgrouping, type, buffer, len );
 
     case LOCALE_IDIGITS:
-        return -1;
+        return locale_return_number( locale->idigits, type, buffer, len );
 
     case LOCALE_ILZERO:
-        return -1;
+        return locale_return_number( locale->ilzero, type, buffer, len );
 
     case LOCALE_SNATIVEDIGITS:
         return locale_return_strarray_concat( locale->snativedigits, type, buffer, len );
@@ -1192,10 +1228,10 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
                                        type - LOCALE_SABBREVMONTHNAME1, type, buffer, len );
 
     case LOCALE_SPOSITIVESIGN:
-        return -1;
+        return locale_return_string( locale->spositivesign, type, buffer, len );
 
     case LOCALE_SNEGATIVESIGN:
-        return -1;
+        return locale_return_string( locale->snegativesign, type, buffer, len );
 
     case LOCALE_IPOSSIGNPOSN:
         return -1;
@@ -1379,7 +1415,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
                                        12, type, buffer, len );
 
     case LOCALE_INEGNUMBER:
-        return -1;
+        return locale_return_number( locale->inegnumber, type, buffer, len );
 
     case LOCALE_IDEFAULTMACCODEPAGE:
         val = locale->idefaultmaccodepage == CP_UTF8 ? CP_MACCP : locale->idefaultmaccodepage;
