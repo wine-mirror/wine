@@ -1030,10 +1030,10 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return -1;
 
     case LOCALE_SSHORTDATE:
-        return -1;
+        return locale_return_strarray( locale->sshortdate, 0, type, buffer, len );
 
     case LOCALE_SLONGDATE:
-        return -1;
+        return locale_return_strarray( locale->slongdate, 0, type, buffer, len );
 
     case LOCALE_IDATE:
         return -1;
@@ -1159,7 +1159,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_string( locale->sname, type, buffer, len );
 
     case LOCALE_SDURATION:
-        return -1;
+        return locale_return_strarray( locale->sduration, 0, type, buffer, len );
 
     case LOCALE_SKEYBOARDSTOINSTALL:
         return -1;
@@ -1227,10 +1227,10 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_data( spermille, ARRAY_SIZE(spermille), type, buffer, len );
 
     case LOCALE_SMONTHDAY:
-        return -1;
+        return locale_return_strarray( locale->smonthday, 0, type, buffer, len );
 
     case LOCALE_SSHORTTIME:
-        return -1;
+        return locale_return_strarray( locale->sshorttime, 0, type, buffer, len );
 
     case LOCALE_SOPENTYPELANGUAGETAG:
         return -1;
@@ -1239,7 +1239,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return -1;
 
     case LOCALE_SRELATIVELONGDATE:
-        return -1;
+        return locale_return_string( locale->srelativelongdate, type, buffer, len );
 
     case 0x007d: /* undocumented */
         return -1;
@@ -1257,7 +1257,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_string( locale->sengcountry, type, buffer, len );
 
     case LOCALE_STIMEFORMAT:
-        return -1;
+        return locale_return_strarray( locale->stimeformat, 0, type, buffer, len );
 
     case LOCALE_IDEFAULTANSICODEPAGE:
         val = locale->idefaultansicodepage == CP_UTF8 ? CP_ACP : locale->idefaultansicodepage;
@@ -1267,7 +1267,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return -1;
 
     case LOCALE_SYEARMONTH:
-        return -1;
+        return locale_return_strarray( locale->syearmonth, 0, type, buffer, len );
 
     case LOCALE_SENGCURRNAME:
         return locale_return_string( locale->sengcurrname, type, buffer, len );
