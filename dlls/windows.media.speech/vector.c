@@ -25,6 +25,169 @@ WINE_DEFAULT_DEBUG_CHANNEL(speech);
 
 /*
  *
+ * IVectorView<HSTRING>
+ *
+ */
+
+struct vector_view_hstring
+{
+    IVectorView_HSTRING IVectorView_HSTRING_iface;
+    LONG ref;
+
+    UINT32 size;
+    HSTRING elements[];
+};
+
+static inline struct vector_view_hstring *impl_from_IVectorView_HSTRING( IVectorView_HSTRING *iface )
+{
+    return CONTAINING_RECORD(iface, struct vector_view_hstring, IVectorView_HSTRING_iface);
+}
+
+static HRESULT WINAPI vector_view_hstring_QueryInterface( IVectorView_HSTRING *iface, REFIID iid, void **out )
+{
+    struct vector_view_hstring *impl = impl_from_IVectorView_HSTRING(iface);
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IInspectable) ||
+        IsEqualGUID(iid, &IID_IAgileObject) ||
+        IsEqualGUID(iid, &IID_IVectorView_HSTRING))
+    {
+        IInspectable_AddRef((*out = &impl->IVectorView_HSTRING_iface));
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI vector_view_hstring_AddRef( IVectorView_HSTRING *iface )
+{
+    struct vector_view_hstring *impl = impl_from_IVectorView_HSTRING(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    TRACE("iface %p increasing refcount to %lu.\n", iface, ref);
+    return ref;
+}
+
+static ULONG WINAPI vector_view_hstring_Release( IVectorView_HSTRING *iface )
+{
+    struct vector_view_hstring *impl = impl_from_IVectorView_HSTRING(iface);
+    ULONG i, ref = InterlockedDecrement(&impl->ref);
+
+    TRACE("iface %p decreasing refcount to %lu.\n", iface, ref);
+
+    if (!ref)
+    {
+        for (i = 0; i < impl->size; ++i) WindowsDeleteString(impl->elements[i]);
+        free(impl);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI vector_view_hstring_GetIids( IVectorView_HSTRING *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI vector_view_hstring_GetRuntimeClassName( IVectorView_HSTRING *iface, HSTRING *class_name )
+{
+    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI vector_view_hstring_GetTrustLevel( IVectorView_HSTRING *iface, TrustLevel *trust_level )
+{
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI vector_view_hstring_GetAt( IVectorView_HSTRING *iface, UINT32 index, HSTRING *value )
+{
+    struct vector_view_hstring *impl = impl_from_IVectorView_HSTRING(iface);
+
+    TRACE("iface %p, index %u, value %p.\n", iface, index, value);
+
+    *value = NULL;
+    if (index >= impl->size) return E_BOUNDS;
+
+    return WindowsDuplicateString(impl->elements[index], value);
+}
+
+static HRESULT WINAPI vector_view_hstring_get_Size( IVectorView_HSTRING *iface, UINT32 *value )
+{
+    struct vector_view_hstring *impl = impl_from_IVectorView_HSTRING(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    *value = impl->size;
+    return S_OK;
+}
+
+static HRESULT WINAPI vector_view_hstring_IndexOf( IVectorView_HSTRING *iface, HSTRING element,
+                                                   UINT32 *index, BOOLEAN *found )
+{
+    struct vector_view_hstring *impl = impl_from_IVectorView_HSTRING(iface);
+    ULONG i;
+
+    TRACE("iface %p, element %p, index %p, found %p.\n", iface, element, index, found);
+
+    for (i = 0; i < impl->size; ++i) if (impl->elements[i] == element) break;
+    if ((*found = (i < impl->size))) *index = i;
+    else *index = 0;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI vector_view_hstring_GetMany( IVectorView_HSTRING *iface, UINT32 start_index,
+                                                   UINT32 items_size, HSTRING *items, UINT *count )
+{
+    struct vector_view_hstring *impl = impl_from_IVectorView_HSTRING(iface);
+    HRESULT hr;
+    UINT32 i;
+
+    TRACE( "iface %p, start_index %u, items_size %u, items %p, count %p.\n",
+           iface, start_index, items_size, items, count );
+
+    if (start_index >= impl->size) return E_BOUNDS;
+
+    for (i = start_index; i < impl->size; ++i)
+    {
+        if (i - start_index >= items_size) break;
+        if (FAILED(hr = WindowsDuplicateString(impl->elements[i], &items[i - start_index]))) goto error;
+    }
+    *count = i - start_index;
+
+    return S_OK;
+
+error:
+    *count = 0;
+    while (i-- > start_index) WindowsDeleteString(items[i-start_index]);
+    return hr;
+}
+
+static const struct IVectorView_HSTRINGVtbl vector_view_hstring_vtbl =
+{
+    /* IUnknown methods */
+    vector_view_hstring_QueryInterface,
+    vector_view_hstring_AddRef,
+    vector_view_hstring_Release,
+    /* IInspectable methods */
+    vector_view_hstring_GetIids,
+    vector_view_hstring_GetRuntimeClassName,
+    vector_view_hstring_GetTrustLevel,
+    /* IVectorView<HSTRING> methods */
+    vector_view_hstring_GetAt,
+    vector_view_hstring_get_Size,
+    vector_view_hstring_IndexOf,
+    vector_view_hstring_GetMany,
+};
+
+/*
+ *
  * IVector<HSTRING>
  *
  */
@@ -128,8 +291,27 @@ static HRESULT WINAPI vector_hstring_get_Size( IVector_HSTRING *iface, UINT32 *v
 
 static HRESULT WINAPI vector_hstring_GetView( IVector_HSTRING *iface, IVectorView_HSTRING **value )
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    struct vector_hstring *impl = impl_from_IVector_HSTRING(iface);
+    struct vector_view_hstring *view;
+    HRESULT hr;
+    ULONG i;
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    if (!(view = calloc(1, offsetof(struct vector_view_hstring, elements[impl->size])))) return E_OUTOFMEMORY;
+    view->IVectorView_HSTRING_iface.lpVtbl = &vector_view_hstring_vtbl;
+    view->ref = 1;
+
+    for (i = 0; i < impl->size; ++i)
+        if (FAILED(hr = WindowsDuplicateString(impl->elements[i], &view->elements[view->size++]))) goto error;
+
+    *value = &view->IVectorView_HSTRING_iface;
+    return S_OK;
+
+error:
+    while (i-- > 0) WindowsDeleteString(view->elements[i]);
+    free(view);
+    return hr;
 }
 
 static HRESULT WINAPI vector_hstring_IndexOf( IVector_HSTRING *iface, HSTRING element, UINT32 *index, BOOLEAN *found )
