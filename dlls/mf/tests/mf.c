@@ -6862,7 +6862,6 @@ static void test_h264_decoder(void)
         i++;
 
         hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
-        todo_wine
         ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
     }
     todo_wine
