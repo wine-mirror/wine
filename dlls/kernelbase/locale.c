@@ -925,11 +925,88 @@ static int locale_return_strarray_concat( DWORD pos, LCTYPE type, WCHAR *buffer,
 }
 
 
+/* FIXME: hardcoded, sortname is apparently not available in locale.nls */
+static const WCHAR *get_locale_sortname( LCID lcid )
+{
+    switch (PRIMARYLANGID( lcid ))
+    {
+    case LANG_CHINESE:
+        switch (SORTIDFROMLCID( lcid ))
+        {
+        case SORT_CHINESE_PRCP:
+            switch (SUBLANGID( lcid ))
+            {
+            case SUBLANG_CHINESE_TRADITIONAL:
+            case SUBLANG_CHINESE_HONGKONG:
+            case 0x1f:
+                return L"Stroke Count";
+            default:
+                return L"Pronunciation";
+            }
+        case SORT_CHINESE_UNICODE: return L"Unicode";
+        case SORT_CHINESE_PRC: return L"Stroke Count";
+        case SORT_CHINESE_BOPOMOFO: return L"Bopomofo";
+        case SORT_CHINESE_RADICALSTROKE: return L"Radical/Stroke";
+        case 5: return L"Surname";
+        }
+        break;
+
+    case LANG_GEORGIAN:
+        if (SORTIDFROMLCID( lcid ) == SORT_GEORGIAN_MODERN) return L"Modern";
+        return L"Traditional";
+
+    case LANG_GERMAN:
+        switch (SUBLANGID( lcid ))
+        {
+        case SUBLANG_NEUTRAL:
+        case SUBLANG_DEFAULT:
+            if (SORTIDFROMLCID( lcid ) == SORT_GERMAN_PHONE_BOOK) return L"Phone Book (DIN)";
+            return L"Dictionary";
+        }
+        break;
+
+    case LANG_HUNGARIAN:
+        if (SORTIDFROMLCID( lcid ) == SORT_HUNGARIAN_TECHNICAL) return L"Technical";
+        break;
+
+    case LANG_INVARIANT:
+        if (SORTIDFROMLCID( lcid ) == SORT_INVARIANT_MATH) return L"Default";
+        return L"Maths Alphanumerics";
+
+    case LANG_JAPANESE:
+        switch (SORTIDFROMLCID( lcid ))
+        {
+        case SORT_JAPANESE_XJIS: return L"XJIS";
+        case SORT_JAPANESE_UNICODE: return L"Unicode";
+        case SORT_JAPANESE_RADICALSTROKE: return L"Radical/Stroke";
+        }
+        break;
+
+    case LANG_KOREAN:
+        if (SORTIDFROMLCID( lcid ) == SORT_KOREAN_UNICODE) return L"Unicode";
+        return L"Dictionary";
+
+    case LANG_SPANISH:
+        switch (SUBLANGID( lcid ))
+        {
+        case SUBLANG_NEUTRAL:
+        case SUBLANG_SPANISH_MODERN:
+            return L"International";
+        case SUBLANG_DEFAULT:
+            return L"Traditional";
+        }
+        break;
+    }
+    return L"Default";
+}
+
+
 /* get locale information from the locale.nls file */
 static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE type,
                             WCHAR *buffer, int len )
 {
     static const WCHAR spermille[] = { 0x2030, 0 };  /* this one seems hardcoded */
+    const WCHAR *sort;
     UINT val;
 
     if (locale != user_locale) type |= LOCALE_NOUSEROVERRIDE;
@@ -1312,7 +1389,8 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_number( locale->idefaultebcdiccodepage, type, buffer, len );
 
     case LOCALE_SSORTNAME:
-        return -1;
+        sort = get_locale_sortname( lcid );
+        return locale_return_data( sort, wcslen(sort) + 1, type, buffer, len );
 
     case LOCALE_IDIGITSUBSTITUTION:
         return locale_return_number( locale->idigitsubstitution, type, buffer, len );
