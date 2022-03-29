@@ -79,7 +79,7 @@ static ULONG WINAPI opc_uri_Release(IOpcPartUri *iface)
         if (uri->source_uri)
             IOpcPartUri_Release(&uri->source_uri->IOpcPartUri_iface);
         IUri_Release(uri->uri);
-        heap_free(uri);
+        free(uri);
     }
 
     return refcount;
@@ -485,7 +485,7 @@ static IUri *opc_part_uri_get_rels_uri(IUri *uri)
         }
     }
 
-    ret = heap_alloc((len + ARRAY_SIZE(relsextW) + ARRAY_SIZE(relsdirW)) * sizeof(WCHAR));
+    ret = malloc((len + ARRAY_SIZE(relsextW) + ARRAY_SIZE(relsdirW)) * sizeof(WCHAR));
     if (!ret)
     {
         SysFreeString(path);
@@ -505,7 +505,7 @@ static IUri *opc_part_uri_get_rels_uri(IUri *uri)
 
     if (FAILED(hr = CreateUri(ret, Uri_CREATE_ALLOW_RELATIVE, 0, &rels_uri)))
         WARN("Failed to create rels uri, hr %#lx.\n", hr);
-    heap_free(ret);
+    free(ret);
     SysFreeString(path);
 
     return rels_uri;
@@ -539,13 +539,13 @@ static HRESULT opc_source_uri_create(struct opc_uri *uri, IOpcUri **out)
     if (!uri->source_uri)
         return OPC_E_RELATIONSHIP_URI_REQUIRED;
 
-    if (!(obj = heap_alloc_zero(sizeof(*obj))))
+    if (!(obj = calloc(1, sizeof(*obj))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = opc_part_uri_init(obj, NULL, uri->source_uri->is_part_uri, uri->source_uri->uri)))
     {
         WARN("Failed to init part uri, hr %#lx.\n", hr);
-        heap_free(obj);
+        free(obj);
         return hr;
     }
 
@@ -561,13 +561,13 @@ HRESULT opc_part_uri_create(IUri *uri, struct opc_uri *source_uri, IOpcPartUri *
     struct opc_uri *obj;
     HRESULT hr;
 
-    if (!(obj = heap_alloc_zero(sizeof(*obj))))
+    if (!(obj = calloc(1, sizeof(*obj))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = opc_part_uri_init(obj, source_uri, TRUE, uri)))
     {
         WARN("Failed to init part uri, hr %#lx.\n", hr);
-        heap_free(obj);
+        free(obj);
         return hr;
     }
 
@@ -584,13 +584,13 @@ HRESULT opc_root_uri_create(IOpcUri **out)
 
     *out = NULL;
 
-    if (!(obj = heap_alloc_zero(sizeof(*obj))))
+    if (!(obj = calloc(1, sizeof(*obj))))
         return E_OUTOFMEMORY;
 
     if (FAILED(hr = CreateUri(L"/", Uri_CREATE_ALLOW_RELATIVE, 0, &uri)))
     {
         WARN("Failed to create rels uri, hr %#lx.\n", hr);
-        heap_free(obj);
+        free(obj);
         return hr;
     }
 
@@ -599,7 +599,7 @@ HRESULT opc_root_uri_create(IOpcUri **out)
     if (FAILED(hr))
     {
         WARN("Failed to init uri, hr %#lx.\n", hr);
-        heap_free(uri);
+        free(uri);
         return hr;
     }
 

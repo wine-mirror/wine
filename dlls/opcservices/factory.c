@@ -85,7 +85,7 @@ static ULONG WINAPI opc_filestream_Release(IStream *iface)
     if (!refcount)
     {
         CloseHandle(stream->hfile);
-        heap_free(stream);
+        free(stream);
     }
 
     return refcount;
@@ -263,14 +263,14 @@ static HRESULT opc_filestream_create(const WCHAR *filename, OPC_STREAM_IO_MODE i
         return E_INVALIDARG;
     }
 
-    if (!(stream = heap_alloc_zero(sizeof(*stream))))
+    if (!(stream = calloc(1, sizeof(*stream))))
         return E_OUTOFMEMORY;
 
     stream->hfile = CreateFileW(filename, access, 0, sa, creation, flags, NULL);
     if (stream->hfile == INVALID_HANDLE_VALUE)
     {
         HRESULT hr = HRESULT_FROM_WIN32(GetLastError());
-        heap_free(stream);
+        free(stream);
         return hr;
     }
 
