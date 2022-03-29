@@ -66,6 +66,8 @@ HRESULT typed_event_handlers_remove( struct list *list, EventRegistrationToken *
 HRESULT typed_event_handlers_notify( struct list *list, IInspectable *sender, IInspectable *args );
 HRESULT typed_event_handlers_clear( struct list* list );
 
+HRESULT vector_hstring_create( IVector_HSTRING **out );
+
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \
     {                                                                                              \

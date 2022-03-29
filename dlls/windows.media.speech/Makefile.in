@@ -6,6 +6,7 @@ C_SRCS = \
 	listconstraint.c \
 	main.c \
 	recognizer.c \
-	synthesizer.c
+	synthesizer.c \
+	vector.c
 
 IDL_SRCS = classes.idl

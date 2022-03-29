@@ -36,6 +36,7 @@ struct list_constraint
     LONG ref;
 
     BOOLEAN enabled;
+    IVector_HSTRING *commands;
 };
 
 /*
@@ -91,7 +92,10 @@ static ULONG WINAPI list_constraint_Release( ISpeechRecognitionListConstraint *i
     TRACE("iface %p, ref %lu.\n", iface, ref);
 
     if (!ref)
+    {
+        IVector_HSTRING_Release(impl->commands);
         free(impl);
+    }
 
     return ref;
 }
@@ -337,12 +341,15 @@ static HRESULT WINAPI constraint_factory_CreateWithTag( ISpeechRecognitionListCo
 
     TRACE("iface %p, commands %p, tag %p, listconstraint %p.\n", iface, commands, tag, listconstraint);
 
+    *listconstraint = NULL;
+
     if (!commands)
         return E_POINTER;
 
-    if (!(impl = calloc(1, sizeof(*impl))))
+    if (!(impl = calloc(1, sizeof(*impl)))) return E_OUTOFMEMORY;
+    if (FAILED(vector_hstring_create(&impl->commands)))
     {
-        *listconstraint = NULL;
+        free(impl);
         return E_OUTOFMEMORY;
     }
 
