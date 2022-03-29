@@ -4594,6 +4594,24 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PRIMITIVES_GENERATED_QUERY_FEATURES_EXT:
+        {
+            const VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT *in = (const VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT *)in_header;
+            VkPhysicalDevicePrimitivesGeneratedQueryFeaturesEXT *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->primitivesGeneratedQuery = in->primitivesGeneratedQuery;
+            out->primitivesGeneratedQueryWithRasterizerDiscard = in->primitivesGeneratedQueryWithRasterizerDiscard;
+            out->primitivesGeneratedQueryWithNonZeroStreams = in->primitivesGeneratedQueryWithNonZeroStreams;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_INHERITED_VIEWPORT_SCISSOR_FEATURES_NV:
         {
             const VkPhysicalDeviceInheritedViewportScissorFeaturesNV *in = (const VkPhysicalDeviceInheritedViewportScissorFeaturesNV *)in_header;
@@ -4752,6 +4770,22 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             out->sType = in->sType;
             out->pNext = NULL;
             out->linearColorAttachment = in->linearColorAttachment;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT *in = (const VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT *)in_header;
+            VkPhysicalDeviceGraphicsPipelineLibraryFeaturesEXT *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->graphicsPipelineLibrary = in->graphicsPipelineLibrary;
 
             out_header->pNext = (VkBaseOutStructure *)out;
             out_header = out_header->pNext;
@@ -9650,6 +9684,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_fragment_shader_interlock",
     "VK_EXT_global_priority",
     "VK_EXT_global_priority_query",
+    "VK_EXT_graphics_pipeline_library",
     "VK_EXT_host_query_reset",
     "VK_EXT_image_robustness",
     "VK_EXT_image_view_min_lod",
@@ -9666,6 +9701,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_pipeline_creation_feedback",
     "VK_EXT_post_depth_coverage",
     "VK_EXT_primitive_topology_list_restart",
+    "VK_EXT_primitives_generated_query",
     "VK_EXT_private_data",
     "VK_EXT_provoking_vertex",
     "VK_EXT_queue_family_foreign",
