@@ -27,7 +27,6 @@
 #include "ole2.h"
 #include "xmllite.h"
 
-#include "wine/heap.h"
 #include "wine/test.h"
 
 #include "initguid.h"
@@ -100,7 +99,7 @@ static WCHAR *strdupAtoW(const char *str)
 
     if (!str) return ret;
     len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-    ret = heap_alloc(len * sizeof(WCHAR));
+    ret = malloc(len * sizeof(WCHAR));
     if (ret)
         MultiByteToWideChar(CP_ACP, 0, str, -1, ret, len);
     return ret;
@@ -843,9 +842,9 @@ static HRESULT write_start_element(IXmlWriter *writer, const char *prefix, const
 
     hr = IXmlWriter_WriteStartElement(writer, prefixW, localW, uriW);
 
-    heap_free(prefixW);
-    heap_free(localW);
-    heap_free(uriW);
+    free(prefixW);
+    free(localW);
+    free(uriW);
 
     return hr;
 }
@@ -863,10 +862,10 @@ static HRESULT write_element_string(IXmlWriter *writer, const char *prefix, cons
 
     hr = IXmlWriter_WriteElementString(writer, prefixW, localW, uriW, valueW);
 
-    heap_free(prefixW);
-    heap_free(localW);
-    heap_free(uriW);
-    heap_free(valueW);
+    free(prefixW);
+    free(localW);
+    free(uriW);
+    free(valueW);
 
     return hr;
 }
@@ -880,7 +879,7 @@ static HRESULT write_string(IXmlWriter *writer, const char *str)
 
     hr = IXmlWriter_WriteString(writer, strW);
 
-    heap_free(strW);
+    free(strW);
 
     return hr;
 }
@@ -1589,10 +1588,10 @@ static HRESULT write_attribute_string(IXmlWriter *writer, const char *prefix, co
 
     hr = IXmlWriter_WriteAttributeString(writer, prefixW, localW, uriW, valueW);
 
-    heap_free(prefixW);
-    heap_free(localW);
-    heap_free(uriW);
-    heap_free(valueW);
+    free(prefixW);
+    free(localW);
+    free(uriW);
+    free(valueW);
 
     return hr;
 }
@@ -2116,10 +2115,10 @@ static HRESULT write_doctype(IXmlWriter *writer, const char *name, const char *p
 
     hr = IXmlWriter_WriteDocType(writer, nameW, pubidW, sysidW, subsetW);
 
-    heap_free(nameW);
-    heap_free(pubidW);
-    heap_free(sysidW);
-    heap_free(subsetW);
+    free(nameW);
+    free(pubidW);
+    free(sysidW);
+    free(subsetW);
 
     return hr;
 }

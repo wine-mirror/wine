@@ -30,7 +30,6 @@
 #include "ole2.h"
 #include "xmllite.h"
 #include "wine/test.h"
-#include "wine/heap.h"
 
 DEFINE_GUID(IID_IXmlReaderInput, 0x0b3ccc9b, 0x9214, 0x428b, 0xa2, 0xae, 0xef, 0x3a, 0xa8, 0x71, 0xaf, 0xda);
 
@@ -383,12 +382,12 @@ static ULONG WINAPI testinput_AddRef(IUnknown *iface)
 
 static ULONG WINAPI testinput_Release(IUnknown *iface)
 {
-    testinput *This = impl_from_IUnknown(iface);
+    testinput *input = impl_from_IUnknown(iface);
     LONG ref;
 
-    ref = InterlockedDecrement(&This->ref);
+    ref = InterlockedDecrement(&input->ref);
     if (ref == 0)
-        heap_free(This);
+        free(input);
 
     return ref;
 }
@@ -404,7 +403,7 @@ static HRESULT testinput_createinstance(void **ppObj)
 {
     testinput *input;
 
-    input = heap_alloc(sizeof(*input));
+    input = malloc(sizeof(*input));
     if(!input) return E_OUTOFMEMORY;
 
     input->IUnknown_iface.lpVtbl = &testinput_vtbl;
