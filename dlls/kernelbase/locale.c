@@ -1139,7 +1139,8 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return -1;
 
     case LOCALE_FONTSIGNATURE:
-        return -1;
+        return locale_return_data( locale_strings + locale->fontsignature + 1,
+                                   locale_strings[locale->fontsignature], type, buffer, len );
 
     case LOCALE_SISO639LANGNAME:
         return locale_return_string( locale->siso639langname, type, buffer, len );
@@ -1233,7 +1234,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_strarray( locale->sshorttime, 0, type, buffer, len );
 
     case LOCALE_SOPENTYPELANGUAGETAG:
-        return -1;
+        return locale_return_string( locale->sopentypelanguagetag, type, buffer, len );
 
     case LOCALE_SSORTLOCALE:
         return -1;
