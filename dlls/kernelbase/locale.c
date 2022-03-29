@@ -1559,7 +1559,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_string( locale->srelativelongdate, type, buffer, len );
 
     case 0x007d: /* undocumented */
-        return -1;
+        return locale_return_number( 0, type, buffer, len );
 
     case LOCALE_SSHORTESTAM:
         return locale_return_string( locale->sshortestam, type, buffer, len );
@@ -1915,12 +1915,6 @@ static UINT get_lcid_codepage( LCID lcid, ULONG flags )
         GetLocaleInfoW( lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
                         (WCHAR *)&ret, sizeof(ret)/sizeof(WCHAR) );
     return ret;
-}
-
-
-static int get_value_base_by_lctype( LCTYPE lctype )
-{
-    return lctype == LOCALE_ILANGUAGE || lctype == LOCALE_IDEFAULTLANGUAGE ? 16 : 10;
 }
 
 
@@ -5237,85 +5231,21 @@ INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoA( LCID lcid, LCTYPE lctype, char *buf
 INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoW( LCID lcid, LCTYPE lctype, WCHAR *buffer, INT len )
 {
     const NLS_LOCALE_DATA *locale;
-    HRSRC hrsrc;
-    HGLOBAL hmem;
-    INT ret;
-    UINT lcflags = lctype;
-    const WCHAR *p;
-    unsigned int i;
 
     if (len < 0 || (len && !buffer))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
+
+    TRACE( "(lcid=0x%lx,lctype=0x%lx,%p,%d)\n", lcid, lctype, buffer, len );
+
     if (!(locale = get_locale_by_id( &lcid, 0 )))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
-    ret = get_locale_info( locale, lcid, lctype, buffer, len );
-    if (ret != -1) return ret;
-
-    if (!len) buffer = NULL;
-
-    lcid = ConvertDefaultLocale( lcid );
-    lctype = LOWORD(lctype);
-
-    TRACE( "(lcid=0x%lx,lctype=0x%lx,%p,%d)\n", lcid, lctype, buffer, len );
-
-    if (!(hrsrc = FindResourceExW( kernel32_handle, (LPWSTR)RT_STRING,
-                                   ULongToPtr((lctype >> 4) + 1), lcid )))
-    {
-        SetLastError( ERROR_INVALID_FLAGS );  /* no such lctype */
-        return 0;
-    }
-    if (!(hmem = LoadResource( kernel32_handle, hrsrc ))) return 0;
-
-    p = LockResource( hmem );
-    for (i = 0; i < (lctype & 0x0f); i++) p += *p + 1;
-
-    if (lcflags & LOCALE_RETURN_NUMBER) ret = sizeof(UINT) / sizeof(WCHAR);
-    else
-        ret = (lctype == LOCALE_FONTSIGNATURE) ? *p : *p + 1;
-
-    if (!len) return ret;
-
-    if (ret > len)
-    {
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
-        return 0;
-    }
-
-    if (lcflags & LOCALE_RETURN_NUMBER)
-    {
-        UINT number;
-        WCHAR *end, *tmp = HeapAlloc( GetProcessHeap(), 0, (*p + 1) * sizeof(WCHAR) );
-        if (!tmp) return 0;
-        memcpy( tmp, p + 1, *p * sizeof(WCHAR) );
-        tmp[*p] = 0;
-        number = wcstol( tmp, &end, get_value_base_by_lctype( lctype ) );
-        if (!*end)
-            memcpy( buffer, &number, sizeof(number) );
-        else  /* invalid number */
-        {
-            SetLastError( ERROR_INVALID_FLAGS );
-            ret = 0;
-        }
-        HeapFree( GetProcessHeap(), 0, tmp );
-
-        TRACE( "(lcid=0x%lx,lctype=0x%lx,%p,%d) returning number %d\n",
-               lcid, lctype, buffer, len, number );
-    }
-    else
-    {
-        memcpy( buffer, p + 1, ret * sizeof(WCHAR) );
-        if (lctype != LOCALE_FONTSIGNATURE) buffer[ret-1] = 0;
-
-        TRACE( "(lcid=0x%lx,lctype=0x%lx,%p,%d) returning %d %s\n",
-               lcid, lctype, buffer, len, ret, debugstr_w(buffer) );
-    }
-    return ret;
+    return get_locale_info( locale, lcid, lctype, buffer, len );
 }
 
 
@@ -5325,22 +5255,16 @@ INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoW( LCID lcid, LCTYPE lctype, WCHAR *bu
 INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoEx( const WCHAR *name, LCTYPE info, WCHAR *buffer, INT len )
 {
     LCID lcid;
-    int ret;
     const NLS_LOCALE_DATA *locale = get_locale_by_name( name, &lcid );
+
+    TRACE( "%s 0x%lx %p %d\n", debugstr_w(name), info, buffer, len );
 
     if (!locale)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
-    ret = get_locale_info( locale, lcid, info, buffer, len );
-    if (ret != -1) return ret;
-
-    TRACE( "%s 0x%lx\n", debugstr_w(name), info );
-
-    lcid = LocaleNameToLCID( name, 0 );
-    if (!lcid) return 0;
-    return GetLocaleInfoW( lcid, info, buffer, len );
+    return get_locale_info( locale, lcid, info, buffer, len );
 }
 
 
