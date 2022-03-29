@@ -1118,23 +1118,23 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_string( locale->sintlsymbol, type, buffer, len );
 
     case LOCALE_SMONDECIMALSEP:
-        return -1;
+        return locale_return_string( locale->smondecimalsep, type, buffer, len );
 
     case LOCALE_SMONTHOUSANDSEP:
-        return -1;
+        return locale_return_string( locale->smonthousandsep, type, buffer, len );
 
     case LOCALE_SMONGROUPING:
-        return -1;
+        return locale_return_grouping( locale->smongrouping, type, buffer, len );
 
     case LOCALE_ICURRDIGITS:
     case LOCALE_IINTLCURRDIGITS:
-        return -1;
+        return locale_return_number( locale->icurrdigits, type, buffer, len );
 
     case LOCALE_ICURRENCY:
-        return -1;
+        return locale_return_number( locale->icurrency, type, buffer, len );
 
     case LOCALE_INEGCURR:
-        return -1;
+        return locale_return_number( locale->inegcurr, type, buffer, len );
 
     case LOCALE_SDATE:
         return -1;
