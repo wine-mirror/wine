@@ -3796,28 +3796,81 @@ static void test_EnumLanguageGroupLocalesA(void)
   pEnumLanguageGroupLocalesA(lgrplocale_procA, LGRPID_WESTERN_EUROPE, 0, 0);
 }
 
-static void test_SetLocaleInfoA(void)
+static void test_SetLocaleInfo(void)
 {
-  BOOL bRet;
-  LCID lcid = GetUserDefaultLCID();
+    BOOL bRet;
+    LCID lcid = GetUserDefaultLCID();
+    UINT i;
 
-  /* Null data */
-  SetLastError(0);
-  bRet = SetLocaleInfoA(lcid, LOCALE_SDATE, 0);
-  ok( !bRet && GetLastError() == ERROR_INVALID_PARAMETER,
-      "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+    /* Null data */
+    SetLastError(0xdeadbeef);
+    bRet = SetLocaleInfoA(lcid, LOCALE_SSHORTDATE, NULL);
+    ok( !bRet && GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
 
-  /* IDATE */
-  SetLastError(0);
-  bRet = SetLocaleInfoA(lcid, LOCALE_IDATE, "test_SetLocaleInfoA");
-  ok(!bRet && GetLastError() == ERROR_INVALID_FLAGS,
-     "Expected ERROR_INVALID_FLAGS, got %ld\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    bRet = SetLocaleInfoW(lcid, LOCALE_SSHORTDATE, NULL);
+    ok( !bRet && GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
 
-  /* ILDATE */
-  SetLastError(0);
-  bRet = SetLocaleInfoA(lcid, LOCALE_ILDATE, "test_SetLocaleInfoA");
-  ok(!bRet && GetLastError() == ERROR_INVALID_FLAGS,
-     "Expected ERROR_INVALID_FLAGS, got %ld\n", GetLastError());
+    SetLastError(0xdeadbeef);
+    bRet = SetLocaleInfoW(lcid, LOCALE_SDAYNAME1, NULL);
+    ok( !bRet && GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INVALID_PARAMETER, got %ld\n", GetLastError());
+
+    for (i = 0; i <= 0x1014; i++)
+    {
+        WCHAR buffer[80];
+        if (!GetLocaleInfoW( LOCALE_USER_DEFAULT, i, buffer, ARRAY_SIZE(buffer) )) continue;
+        SetLastError(0xdeadbeef);
+        bRet = SetLocaleInfoW(lcid, i, buffer);
+        switch (i)
+        {
+        case LOCALE_ICALENDARTYPE:
+        case LOCALE_ICURRDIGITS:
+        case LOCALE_ICURRENCY:
+        case LOCALE_IDIGITS:
+        case LOCALE_IDIGITSUBSTITUTION:
+        case LOCALE_IFIRSTDAYOFWEEK:
+        case LOCALE_IFIRSTWEEKOFYEAR:
+        case LOCALE_ILZERO:
+        case LOCALE_IMEASURE:
+        case LOCALE_INEGCURR:
+        case LOCALE_INEGNUMBER:
+        case LOCALE_IPAPERSIZE:
+        case LOCALE_ITIME:
+        case LOCALE_S1159:
+        case LOCALE_S2359:
+        case LOCALE_SCURRENCY:
+        case LOCALE_SDATE:
+        case LOCALE_SDECIMAL:
+        case LOCALE_SGROUPING:
+        case LOCALE_SLIST:
+        case LOCALE_SLONGDATE:
+        case LOCALE_SMONDECIMALSEP:
+        case LOCALE_SMONGROUPING:
+        case LOCALE_SMONTHOUSANDSEP:
+        case LOCALE_SNATIVEDIGITS:
+        case LOCALE_SNEGATIVESIGN:
+        case LOCALE_SPOSITIVESIGN:
+        case LOCALE_SSHORTDATE:
+        case LOCALE_SSHORTTIME:
+        case LOCALE_STHOUSAND:
+        case LOCALE_STIME:
+        case LOCALE_STIMEFORMAT:
+        case LOCALE_SYEARMONTH:
+            ok( bRet, "%04x: failed err %lu\n", i, GetLastError() );
+            break;
+        case LOCALE_SINTLSYMBOL:
+            ok( bRet || broken(!bRet), /* win10 <= 1507 */
+                "%04x: failed err %lu\n", i, GetLastError() );
+            break;
+        default:
+            ok( !bRet, "%04x: succeeded\n", i );
+            ok( GetLastError() == ERROR_INVALID_FLAGS, "%04x: wrong error %lu\n", i, GetLastError() );
+            break;
+        }
+    }
 }
 
 static BOOL CALLBACK luilocale_proc1A(LPSTR value, LONG_PTR lParam)
@@ -7417,7 +7470,7 @@ START_TEST(locale)
   test_EnumSystemLanguageGroupsA();
   test_EnumSystemLocalesEx();
   test_EnumLanguageGroupLocalesA();
-  test_SetLocaleInfoA();
+  test_SetLocaleInfo();
   test_EnumUILanguageA();
   test_GetCPInfo();
   test_GetStringTypeW();
