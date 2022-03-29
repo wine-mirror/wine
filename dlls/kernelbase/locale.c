@@ -1276,7 +1276,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_strarray( locale->sduration, 0, type, buffer, len );
 
     case LOCALE_SKEYBOARDSTOINSTALL:
-        return -1;
+        return locale_return_string( locale->skeyboardstoinstall, type, buffer, len );
 
     case LOCALE_SSHORTESTDAYNAME1:
     case LOCALE_SSHORTESTDAYNAME2:
@@ -1304,13 +1304,13 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_string( locale->sneginfinity, type, buffer, len );
 
     case LOCALE_SSCRIPTS:
-        return -1;
+        return locale_return_string( locale->sscripts, type, buffer, len );
 
     case LOCALE_SPARENT:
         return locale_return_string( locale->sparent, type, buffer, len );
 
     case LOCALE_SCONSOLEFALLBACKNAME:
-        return -1;
+        return locale_return_string( locale->sconsolefallbackname, type, buffer, len );
 
     case LOCALE_SLOCALIZEDLANGUAGENAME:
         /* FIXME: localization */
@@ -1320,7 +1320,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_number( locale->ireadinglayout, type, buffer, len );
 
     case LOCALE_INEUTRAL:
-        return -1;
+        return locale_return_number( !locale->inotneutral, type, buffer, len );
 
     case LOCALE_SENGLISHDISPLAYNAME:
         return locale_return_string( locale->sengdisplayname, type, buffer, len );
@@ -1350,7 +1350,12 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_string( locale->sopentypelanguagetag, type, buffer, len );
 
     case LOCALE_SSORTLOCALE:
-        return -1;
+        if (SORTIDFROMLCID(lcid))  /* custom sort locale */
+        {
+            const NLS_LOCALE_LCID_INDEX *entry = find_lcid_entry( lcid & ~0x80000000 );
+            if (entry) return locale_return_string( entry->name, type, buffer, len );
+        }
+        return locale_return_string( locale->ssortlocale, type, buffer, len );
 
     case LOCALE_SRELATIVELONGDATE:
         return locale_return_string( locale->srelativelongdate, type, buffer, len );
