@@ -1319,7 +1319,7 @@ static void *shader_sm4_init(const DWORD *byte_code, size_t byte_code_size,
         struct wined3d_shader_signature_element *e = &output_signature->elements[i];
 
         if (priv->shader_version.type == WINED3D_SHADER_TYPE_PIXEL
-                && _strnicmp(e->semantic_name, "SV_TARGET", -1))
+                && stricmp(e->semantic_name, "SV_TARGET"))
             continue;
         if (e->register_idx >= ARRAY_SIZE(priv->output_map))
         {
