@@ -166,3 +166,21 @@ interface ID2D1ImageSource : ID2D1Image
         [out] BOOL *resources_discarded
     );
 };
+
+[
+    object,
+    uuid(77395441-1c8f-4555-8683-f50dab0fe792),
+    local,
+]
+interface ID2D1ImageSourceFromWic : ID2D1ImageSource
+{
+    HRESULT EnsureCached(
+        [in, optional] const D2D1_RECT_U *rect_to_fill
+    );
+    HRESULT TrimCache(
+        [in, optional] const D2D1_RECT_U *rect_to_preserve
+    );
+    void GetSource(
+        [out] IWICBitmapSource **source
+    );
+};
