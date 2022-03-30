@@ -729,6 +729,7 @@ static void test_VoiceInformation(void)
 static void test_SpeechRecognizer(void)
 {
     static const WCHAR *speech_recognition_name = L"Windows.Media.SpeechRecognition.SpeechRecognizer";
+    IVector_ISpeechRecognitionConstraint *constraints = NULL;
     ISpeechContinuousRecognitionSession *session = NULL;
     ISpeechRecognizerFactory *sr_factory = NULL;
     ISpeechRecognizerStatics *sr_statics = NULL;
@@ -840,6 +841,12 @@ static void test_SpeechRecognizer(void)
 
         hr = ISpeechContinuousRecognitionSession_remove_ResultGenerated(session, token);
         ok(hr == S_OK, "ISpeechContinuousRecognitionSession_remove_ResultGenerated failed, hr %#lx.\n", hr);
+
+        hr = ISpeechRecognizer_get_Constraints(recognizer, &constraints);
+        ok(hr == S_OK, "ISpeechContinuousRecognitionSession_get_Constraints failed, hr %#lx.\n", hr);
+
+        ref = IVector_ISpeechRecognitionConstraint_Release(constraints);
+        ok(ref == 1, "Got unexpected ref %lu.\n", ref);
 
         ref = ISpeechContinuousRecognitionSession_Release(session);
         ok(ref == 1, "Got unexpected ref %lu.\n", ref);

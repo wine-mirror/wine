@@ -324,8 +324,10 @@ static HRESULT WINAPI recognizer_GetTrustLevel( ISpeechRecognizer *iface, TrustL
 
 static HRESULT WINAPI recognizer_get_Constraints( ISpeechRecognizer *iface, IVector_ISpeechRecognitionConstraint **vector )
 {
-    FIXME("iface %p, operation %p stub!\n", iface, vector);
-    return E_NOTIMPL;
+    struct recognizer *impl = impl_from_ISpeechRecognizer(iface);
+    TRACE("iface %p, operation %p.\n", iface, vector);
+    IVector_ISpeechRecognitionConstraint_AddRef((*vector = impl->constraints));
+    return S_OK;
 }
 
 static HRESULT WINAPI recognizer_get_CurrentLanguage( ISpeechRecognizer *iface, ILanguage **language )
