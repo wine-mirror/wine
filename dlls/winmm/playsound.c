@@ -262,6 +262,7 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
     INT			count, bufsize, left, index;
     struct playsound_data	s;
     void*               data;
+    LONG                r;
 
     s.hEvent = 0;
 
@@ -361,7 +362,8 @@ static DWORD WINAPI proc_PlaySound(LPVOID arg)
     lpWaveFormat = HeapAlloc(GetProcessHeap(), 0, mmckInfo.cksize);
     if (!lpWaveFormat)
 	goto errCleanUp;
-    if (mmioRead(hmmio, (HPSTR)lpWaveFormat, mmckInfo.cksize) < sizeof(PCMWAVEFORMAT))
+    r = mmioRead(hmmio, (HPSTR)lpWaveFormat, mmckInfo.cksize);
+    if (r < 0 || r < sizeof(PCMWAVEFORMAT))
 	goto errCleanUp;
 
     TRACE("wFormatTag=%04X !\n", 	lpWaveFormat->wFormatTag);
