@@ -34,7 +34,6 @@
 #include "xmllite.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(scrobj);
@@ -243,15 +242,6 @@ static void release_typelib(void)
     ITypeLib_Release(typelib);
 }
 
-static WCHAR *heap_strdupW(const WCHAR *str)
-{
-    WCHAR *ret;
-    size_t size = (wcslen(str) + 1) * sizeof(WCHAR);
-    if (!(ret = heap_alloc(size))) return NULL;
-    memcpy(ret, str, size);
-    return ret;
-}
-
 static inline struct scriptlet_global *global_from_IDispatchEx(IDispatchEx *iface)
 {
     return CONTAINING_RECORD(iface, struct scriptlet_global, IDispatchEx_iface);
@@ -304,7 +294,8 @@ static ULONG WINAPI global_Release(IDispatchEx *iface)
 
     TRACE("(%p) ref=%ld\n", This, ref);
 
-    if (!ref) heap_free(This);
+    if (!ref) free(This);
+
     return ref;
 }
 
@@ -495,8 +486,8 @@ static ULONG WINAPI ActiveScriptSite_Release(IActiveScriptSite *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
-        heap_free(This->language);
-        heap_free(This);
+        free(This->language);
+        free(This);
     }
 
     return ref;
@@ -758,7 +749,8 @@ static HRESULT lookup_object_properties(struct scriptlet_instance *object, struc
 
     if (!member_cnt) return S_OK;
 
-    if (!(object->members = heap_alloc_zero(member_cnt * sizeof(*object->members)))) return E_OUTOFMEMORY;
+    if (!(object->members = calloc(member_cnt, sizeof(*object->members))))
+        return E_OUTOFMEMORY;
     object->member_cnt = member_cnt;
 
     LIST_FOR_EACH_ENTRY(member, &factory->members, struct scriptlet_member, entry)
@@ -858,7 +850,8 @@ static HRESULT create_script_host(const WCHAR *language, IActiveScript *origin_s
     struct script_host *host;
     HRESULT hres;
 
-    if (!(host = heap_alloc_zero(sizeof(*host)))) return E_OUTOFMEMORY;
+    if (!(host = calloc(1, sizeof(*host))))
+        return E_OUTOFMEMORY;
 
     host->IActiveScriptSite_iface.lpVtbl = &ActiveScriptSiteVtbl;
     host->IActiveScriptSiteWindow_iface.lpVtbl = &ActiveScriptSiteWindowVtbl;
@@ -866,7 +859,7 @@ static HRESULT create_script_host(const WCHAR *language, IActiveScript *origin_s
     host->ref = 1;
     host->state = SCRIPTSTATE_CLOSED;
 
-    if (!(host->language = heap_strdupW(language)))
+    if (!(host->language = wcsdup(language)))
     {
         IActiveScriptSite_Release(&host->IActiveScriptSite_iface);
         return E_OUTOFMEMORY;
@@ -990,10 +983,10 @@ static ULONG WINAPI scriptlet_Release(IDispatchEx *iface)
         unsigned i;
         for (i = 0; i < This->member_cnt; i++)
             SysFreeString(This->members[i].name);
-        heap_free(This->members);
+        free(This->members);
         detach_script_hosts(&This->hosts);
         if (This->global) IDispatchEx_Release(&This->global->IDispatchEx_iface);
-        heap_free(This);
+        free(This);
     }
     return ref;
 }
@@ -1197,13 +1190,14 @@ static HRESULT create_scriptlet_instance(struct scriptlet_factory *factory, IDis
     IDispatch *script_dispatch;
     HRESULT hres;
 
-    if (!(obj = heap_alloc_zero(sizeof(*obj)))) return E_OUTOFMEMORY;
+    if (!(obj = calloc(1, sizeof(*obj))))
+        return E_OUTOFMEMORY;
 
     obj->IDispatchEx_iface.lpVtbl = &DispatchExVtbl;
     obj->ref = 1;
     list_init(&obj->hosts);
 
-    if (!(obj->global = heap_alloc(sizeof(*obj->global))))
+    if (!(obj->global = malloc(sizeof(*obj->global))))
     {
         IDispatchEx_Release(&obj->IDispatchEx_iface);
         return E_OUTOFMEMORY;
@@ -1325,7 +1319,7 @@ static HRESULT read_xml_value(struct scriptlet_factory *factory, WCHAR **ret)
     HRESULT hres;
     hres = IXmlReader_GetValue(factory->xml_reader, &str, &len);
     if (FAILED(hres)) return hres;
-    if (!(*ret = heap_alloc((len + 1) * sizeof(WCHAR)))) return E_OUTOFMEMORY;
+    if (!(*ret = malloc((len + 1) * sizeof(WCHAR)))) return E_OUTOFMEMORY;
     memcpy(*ret, str, len * sizeof(WCHAR));
     (*ret)[len] = 0;
     return S_OK;
@@ -1414,7 +1408,7 @@ static HRESULT parse_scriptlet_registration(struct scriptlet_factory *factory)
         size_t progid_len = wcslen(factory->progid);
         size_t version_len = wcslen(factory->version);
 
-        if (!(factory->versioned_progid = heap_alloc((progid_len + version_len + 2) * sizeof(WCHAR))))
+        if (!(factory->versioned_progid = malloc((progid_len + version_len + 2) * sizeof(WCHAR))))
             return E_OUTOFMEMORY;
 
         memcpy(factory->versioned_progid, factory->progid, (progid_len + 1) * sizeof(WCHAR));
@@ -1476,13 +1470,13 @@ static HRESULT parse_scriptlet_public(struct scriptlet_factory *factory)
             return E_FAIL;
         }
 
-        if (!(member = heap_alloc(sizeof(*member)))) return E_OUTOFMEMORY;
+        if (!(member = malloc(sizeof(*member)))) return E_OUTOFMEMORY;
         member->type = member_type;
 
         hres = read_xml_value(factory, &member->name);
         if (FAILED(hres))
         {
-            heap_free(member);
+            free(member);
             return hres;
         }
 
@@ -1491,7 +1485,7 @@ static HRESULT parse_scriptlet_public(struct scriptlet_factory *factory)
             if (!wcsicmp(member_iter->name, member->name))
             {
                 FIXME("Duplicated member %s\n", debugstr_w(member->name));
-                heap_free(member);
+                free(member);
                 return E_FAIL;
             }
         }
@@ -1530,7 +1524,7 @@ static HRESULT parse_scriptlet_public(struct scriptlet_factory *factory)
                     return E_FAIL;
                 }
 
-                if (!(parameter = heap_alloc_zero(sizeof(*parameter)))) return E_OUTOFMEMORY;
+                if (!(parameter = calloc(1, sizeof(*parameter)))) return E_OUTOFMEMORY;
                 list_add_tail(&member->u.parameters, &parameter->entry);
 
                 hres = read_xml_value(factory, &parameter->name);
@@ -1639,7 +1633,7 @@ static HRESULT parse_scriptlet_script(struct scriptlet_factory *factory, struct 
         return E_FAIL;
     }
 
-    if (!(script->body = heap_alloc((buf_size = 1024) * sizeof(WCHAR)))) return E_OUTOFMEMORY;
+    if (!(script->body = malloc((buf_size = 1024) * sizeof(WCHAR)))) return E_OUTOFMEMORY;
     size = 0;
 
     for (;;)
@@ -1651,12 +1645,12 @@ static HRESULT parse_scriptlet_script(struct scriptlet_factory *factory, struct 
         if (hres == S_FALSE) break;
         if (size + 1 == buf_size)
         {
-            if (!(new_body = heap_realloc(script->body, (buf_size *= 2) * sizeof(WCHAR)))) return E_OUTOFMEMORY;
+            if (!(new_body = realloc(script->body, (buf_size *= 2) * sizeof(WCHAR)))) return E_OUTOFMEMORY;
             script->body = new_body;
         }
     }
     script->body[size++] = 0;
-    if (size != buf_size) script->body = heap_realloc(script->body, size * sizeof(WCHAR));
+    if (size != buf_size) script->body = realloc(script->body, size * sizeof(WCHAR));
 
     TRACE("body %s\n", debugstr_w(script->body));
     return expect_end_element(factory);
@@ -1725,7 +1719,7 @@ static HRESULT parse_scriptlet_file(struct scriptlet_factory *factory, const WCH
         else if (is_xml_name(factory, L"script"))
         {
             struct scriptlet_script *script;
-            if (!(script = heap_alloc_zero(sizeof(*script)))) return E_OUTOFMEMORY;
+            if (!(script = calloc(1, sizeof(*script)))) return E_OUTOFMEMORY;
             list_add_tail(&factory->scripts, &script->entry);
             hres = parse_scriptlet_script(factory, script);
             if (FAILED(hres)) return hres;
@@ -1803,33 +1797,33 @@ static ULONG WINAPI scriptlet_factory_Release(IClassFactory *iface)
         {
             struct scriptlet_member *member = LIST_ENTRY(list_head(&This->members), struct scriptlet_member, entry);
             list_remove(&member->entry);
-            heap_free(member->name);
+            free(member->name);
             if (member->type == MEMBER_METHOD)
             {
                 while (!list_empty(&member->u.parameters))
                 {
                     struct method_parameter *parameter = LIST_ENTRY(list_head(&member->u.parameters), struct method_parameter, entry);
                     list_remove(&parameter->entry);
-                    heap_free(parameter->name);
-                    heap_free(parameter);
+                    free(parameter->name);
+                    free(parameter);
                 }
             }
-            heap_free(member);
+            free(member);
         }
         while (!list_empty(&This->scripts))
         {
             struct scriptlet_script *script = LIST_ENTRY(list_head(&This->scripts), struct scriptlet_script, entry);
             list_remove(&script->entry);
-            heap_free(script->language);
-            heap_free(script->body);
-            heap_free(script);
+            free(script->language);
+            free(script->body);
+            free(script);
         }
-        heap_free(This->classid_str);
-        heap_free(This->description);
-        heap_free(This->versioned_progid);
-        heap_free(This->progid);
-        heap_free(This->version);
-        heap_free(This);
+        free(This->classid_str);
+        free(This->description);
+        free(This->versioned_progid);
+        free(This->progid);
+        free(This->version);
+        free(This);
     }
     return ref;
 }
@@ -1888,7 +1882,7 @@ static HRESULT create_scriptlet_factory(const WCHAR *url, struct scriptlet_facto
 
     TRACE("%s\n", debugstr_w(url));
 
-    if (!(factory = heap_alloc_zero(sizeof(*factory))))
+    if (!(factory = calloc(1, sizeof(*factory))))
     {
         IClassFactory_Release(&factory->IClassFactory_iface);
         return E_OUTOFMEMORY;
@@ -2106,7 +2100,7 @@ static ULONG WINAPI scriptlet_typelib_Release(IGenScriptletTLib *iface)
     if (!ref)
     {
         SysFreeString(This->guid);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return ref;
@@ -2424,13 +2418,11 @@ static HRESULT WINAPI scriptlet_typelib_CreateInstance(IClassFactory *factory, I
 
     *obj = NULL;
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
-    if (!This)
+    if (!(This = calloc(1, sizeof(*This))))
         return E_OUTOFMEMORY;
 
     This->IGenScriptletTLib_iface.lpVtbl = &scriptlet_typelib_vtbl;
     This->ref = 1;
-    This->guid = NULL;
 
     hr = IGenScriptletTLib_QueryInterface(&This->IGenScriptletTLib_iface, riid, obj);
     IGenScriptletTLib_Release(&This->IGenScriptletTLib_iface);
@@ -2517,11 +2509,11 @@ HRESULT WINAPI DllGetClassObject(REFCLSID rclsid, REFIID riid, void **ppv)
         WCHAR *url;
         HRESULT hres;
 
-        if (!(url = heap_alloc(size * sizeof(WCHAR)))) return E_OUTOFMEMORY;
+        if (!(url = malloc(size * sizeof(WCHAR)))) return E_OUTOFMEMORY;
         status = RegQueryValueW(HKEY_CLASSES_ROOT, key_name, url, &size);
 
         hres = create_scriptlet_factory(url, &factory);
-        heap_free(url);
+        free(url);
         if (FAILED(hres)) return hres;
 
         hres = IClassFactory_QueryInterface(&factory->IClassFactory_iface, riid, ppv);
