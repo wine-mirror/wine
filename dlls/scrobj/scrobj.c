@@ -1883,10 +1883,7 @@ static HRESULT create_scriptlet_factory(const WCHAR *url, struct scriptlet_facto
     TRACE("%s\n", debugstr_w(url));
 
     if (!(factory = calloc(1, sizeof(*factory))))
-    {
-        IClassFactory_Release(&factory->IClassFactory_iface);
         return E_OUTOFMEMORY;
-    }
 
     factory->IClassFactory_iface.lpVtbl = &scriptlet_factory_vtbl;
     factory->ref = 1;
