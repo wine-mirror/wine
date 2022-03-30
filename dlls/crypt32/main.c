@@ -18,6 +18,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "windef.h"
@@ -136,17 +137,17 @@ HLRUCACHE WINAPI I_CryptFreeLruCache(HLRUCACHE h, DWORD unk0, DWORD unk1)
 
 LPVOID WINAPI CryptMemAlloc(ULONG cbSize)
 {
-    return HeapAlloc(GetProcessHeap(), 0, cbSize);
+    return malloc(cbSize);
 }
 
 LPVOID WINAPI CryptMemRealloc(LPVOID pv, ULONG cbSize)
 {
-    return HeapReAlloc(GetProcessHeap(), 0, pv, cbSize);
+    return realloc(pv, cbSize);
 }
 
 VOID WINAPI CryptMemFree(LPVOID pv)
 {
-    HeapFree(GetProcessHeap(), 0, pv);
+    free(pv);
 }
 
 DWORD WINAPI I_CryptAllocTls(void)
