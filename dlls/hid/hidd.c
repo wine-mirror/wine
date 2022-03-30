@@ -120,6 +120,12 @@ BOOLEAN WINAPI HidD_SetNumInputBuffers(HANDLE HidDeviceObject, ULONG NumberBuffe
     return sync_ioctl(HidDeviceObject, IOCTL_SET_NUM_DEVICE_INPUT_BUFFERS, &NumberBuffers, sizeof(NumberBuffers), NULL, 0);
 }
 
+BOOLEAN WINAPI HidD_GetPhysicalDescriptor( HANDLE file, void *buffer, ULONG buffer_len )
+{
+    TRACE( "file %p, buffer %p, buffer_len %u.\n", file, buffer, buffer_len );
+    return sync_ioctl( file, IOCTL_GET_PHYSICAL_DESCRIPTOR, NULL, 0, buffer, buffer_len );
+}
+
 BOOLEAN WINAPI HidD_GetProductString(HANDLE HidDeviceObject, PVOID Buffer, ULONG BufferLength)
 {
     TRACE("(%p %p %u)\n", HidDeviceObject, Buffer, BufferLength);

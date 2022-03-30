@@ -9,7 +9,7 @@
 @ stdcall HidD_GetManufacturerString(long ptr long)
 @ stub HidD_GetMsGenreDescriptor
 @ stdcall HidD_GetNumInputBuffers(long ptr)
-@ stub HidD_GetPhysicalDescriptor
+@ stdcall HidD_GetPhysicalDescriptor(long ptr long)
 @ stdcall HidD_GetPreparsedData(ptr ptr)
 @ stdcall HidD_GetProductString(long ptr long)
 @ stdcall HidD_GetSerialNumberString(long ptr long)
