@@ -26,13 +26,3 @@ enum name_attr_id
 };
 
 const WCHAR *get_name_attribute( IAssemblyName *, enum name_attr_id ) DECLSPEC_HIDDEN;
-
-static inline WCHAR *strdupW( const WCHAR *src )
-{
-    WCHAR *dst;
-
-    if (!src) return NULL;
-    dst = HeapAlloc( GetProcessHeap(), 0, (lstrlenW( src ) + 1) * sizeof(WCHAR) );
-    if (dst) lstrcpyW( dst, src );
-    return dst;
-}
