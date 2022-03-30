@@ -174,6 +174,8 @@ struct vector_view_hstring
     HSTRING elements[];
 };
 
+C_ASSERT(sizeof(struct vector_view_hstring) == offsetof(struct vector_view_hstring, elements[0]));
+
 static inline struct vector_view_hstring *impl_from_IVectorView_HSTRING( IVectorView_HSTRING *iface )
 {
     return CONTAINING_RECORD(iface, struct vector_view_hstring, IVectorView_HSTRING_iface);
@@ -774,6 +776,167 @@ error:
 
 /*
  *
+ * IVectorView<Inspectable*>
+ *
+ */
+
+struct vector_view_inspectable
+{
+    IVectorView_IInspectable IVectorView_IInspectable_iface;
+    struct vector_iids iids;
+    LONG ref;
+
+    UINT32 size;
+    IInspectable *elements[];
+};
+
+C_ASSERT(sizeof(struct vector_view_inspectable) == offsetof(struct vector_view_inspectable, elements[0]));
+
+static inline struct vector_view_inspectable *impl_from_IVectorView_IInspectable( IVectorView_IInspectable *iface )
+{
+    return CONTAINING_RECORD(iface, struct vector_view_inspectable, IVectorView_IInspectable_iface);
+}
+
+static HRESULT WINAPI vector_view_inspectable_QueryInterface( IVectorView_IInspectable *iface, REFIID iid, void **out )
+{
+    struct vector_view_inspectable *impl = impl_from_IVectorView_IInspectable(iface);
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IInspectable) ||
+        IsEqualGUID(iid, &IID_IAgileObject) ||
+        IsEqualGUID(iid, impl->iids.view))
+    {
+        IInspectable_AddRef((*out = &impl->IVectorView_IInspectable_iface));
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI vector_view_inspectable_AddRef( IVectorView_IInspectable *iface )
+{
+    struct vector_view_inspectable *impl = impl_from_IVectorView_IInspectable(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    TRACE("iface %p increasing refcount to %lu.\n", iface, ref);
+    return ref;
+}
+
+static ULONG WINAPI vector_view_inspectable_Release( IVectorView_IInspectable *iface )
+{
+    struct vector_view_inspectable *impl = impl_from_IVectorView_IInspectable(iface);
+    ULONG i, ref = InterlockedDecrement(&impl->ref);
+
+    TRACE("iface %p decreasing refcount to %lu.\n", iface, ref);
+
+    if (!ref)
+    {
+        for (i = 0; i < impl->size; ++i) IInspectable_Release(impl->elements[i]);
+        free(impl);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI vector_view_inspectable_GetIids( IVectorView_IInspectable *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI vector_view_inspectable_GetRuntimeClassName( IVectorView_IInspectable *iface, HSTRING *class_name )
+{
+    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI vector_view_inspectable_GetTrustLevel( IVectorView_IInspectable *iface, TrustLevel *trust_level )
+{
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI vector_view_inspectable_GetAt( IVectorView_IInspectable *iface, UINT32 index, IInspectable **value )
+{
+    struct vector_view_inspectable *impl = impl_from_IVectorView_IInspectable(iface);
+
+    TRACE("iface %p, index %u, value %p.\n", iface, index, value);
+
+    *value = NULL;
+    if (index >= impl->size) return E_BOUNDS;
+
+    IInspectable_AddRef((*value = impl->elements[index]));
+    return S_OK;
+}
+
+static HRESULT WINAPI vector_view_inspectable_get_Size( IVectorView_IInspectable *iface, UINT32 *value )
+{
+    struct vector_view_inspectable *impl = impl_from_IVectorView_IInspectable(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    *value = impl->size;
+    return S_OK;
+}
+
+static HRESULT WINAPI vector_view_inspectable_IndexOf( IVectorView_IInspectable *iface, IInspectable *element,
+                                                       UINT32 *index, BOOLEAN *found )
+{
+    struct vector_view_inspectable *impl = impl_from_IVectorView_IInspectable(iface);
+    ULONG i;
+
+    TRACE("iface %p, element %p, index %p, found %p.\n", iface, element, index, found);
+
+    for (i = 0; i < impl->size; ++i) if (impl->elements[i] == element) break;
+    if ((*found = (i < impl->size))) *index = i;
+    else *index = 0;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI vector_view_inspectable_GetMany( IVectorView_IInspectable *iface, UINT32 start_index,
+                                                       UINT32 items_size, IInspectable **items, UINT *count )
+{
+    struct vector_view_inspectable *impl = impl_from_IVectorView_IInspectable(iface);
+    UINT32 i;
+
+    TRACE("iface %p, start_index %u, items_size %u, items %p, count %p.\n",
+           iface, start_index, items_size, items, count);
+
+    if (start_index >= impl->size) return E_BOUNDS;
+
+    for (i = start_index; i < impl->size; ++i)
+    {
+        if (i - start_index >= items_size) break;
+        IInspectable_AddRef((items[i - start_index] = impl->elements[i]));
+    }
+    *count = i - start_index;
+
+    return S_OK;
+}
+
+static const struct IVectorView_IInspectableVtbl vector_view_inspectable_vtbl =
+{
+    /* IUnknown methods */
+    vector_view_inspectable_QueryInterface,
+    vector_view_inspectable_AddRef,
+    vector_view_inspectable_Release,
+    /* IInspectable methods */
+    vector_view_inspectable_GetIids,
+    vector_view_inspectable_GetRuntimeClassName,
+    vector_view_inspectable_GetTrustLevel,
+    /* IVectorView<IInspectable*> methods */
+    vector_view_inspectable_GetAt,
+    vector_view_inspectable_get_Size,
+    vector_view_inspectable_IndexOf,
+    vector_view_inspectable_GetMany
+};
+
+/*
+ *
  * IVector<Inspectable*>
  *
  */
@@ -879,8 +1042,21 @@ static HRESULT WINAPI vector_inspectable_get_Size( IVector_IInspectable *iface, 
 
 static HRESULT WINAPI vector_inspectable_GetView( IVector_IInspectable *iface, IVectorView_IInspectable **value )
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    struct vector_inspectable *impl = impl_from_IVector_IInspectable(iface);
+    struct vector_view_inspectable *view;
+    ULONG i;
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    if (!(view = calloc(1, offsetof(struct vector_view_inspectable, elements[impl->size])))) return E_OUTOFMEMORY;
+    view->IVectorView_IInspectable_iface.lpVtbl = &vector_view_inspectable_vtbl;
+    view->iids = impl->iids;
+    view->ref = 1;
+
+    for (i = 0; i < impl->size; ++i) IInspectable_AddRef((view->elements[view->size++] = impl->elements[i]));
+
+    *value = &view->IVectorView_IInspectable_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI vector_inspectable_IndexOf( IVector_IInspectable *iface,

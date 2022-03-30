@@ -64,6 +64,7 @@ extern IActivationFactory *synthesizer_factory;
 struct vector_iids
 {
     const GUID *vector;
+    const GUID *view;
 };
 
 HRESULT typed_event_handlers_append( struct list *list, ITypedEventHandler_IInspectable_IInspectable *handler, EventRegistrationToken *token );
