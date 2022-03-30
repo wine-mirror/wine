@@ -4180,6 +4180,117 @@ start /wait cmd /cutf8.cmd
 if errorlevel 1 (echo Failure) else echo Success
 del utf8.cmd
 
+echo ------------ Testing alteration while executing ------
+rem In all the tests, the offsets (esp. for labels) must remain the same
+rem Calling a non existing label will generate a message on stderr but nothing on stdout
+
+rem overwrite label before current position
+echo @echo off > run.cmd
+echo goto doit >> run.cmd
+echo :labelAA >> run.cmd
+echo echo AA >> run.cmd
+echo goto :eof >> run.cmd
+echo :doit >> run.cmd
+echo copy /Y ovr.cmd run.cmd ^> NUL >> run.cmd
+echo call :labelAA >> run.cmd
+echo call :labelBB >> run.cmd
+
+echo @echo off > ovr.cmd
+echo goto doit >> ovr.cmd
+echo :labelBB >> ovr.cmd
+echo echo BB >> ovr.cmd
+echo goto :eof >> ovr.cmd
+echo :doit >> ovr.cmd
+echo copy /Y ovr.cmd run.cmd ^> NUL >> ovr.cmd
+echo call :labelAA >> ovr.cmd
+echo call :labelBB >> ovr.cmd
+
+call run.cmd
+
+rem overwrite label after current position
+echo ---
+echo @echo off > run.cmd
+echo copy /Y ovr.cmd run.cmd ^> NUL >> run.cmd
+echo call :labelAA >> run.cmd
+echo call :labelBB >> run.cmd
+echo goto :eof >> run.cmd
+echo :labelAA >> run.cmd
+echo echo AA >> run.cmd
+echo goto :eof >> run.cmd
+
+echo @echo off > ovr.cmd
+echo copy /Y ovr.cmd run.cmd ^> NUL >> ovr.cmd
+echo call :labelAA >> ovr.cmd
+echo call :labelBB >> ovr.cmd
+echo goto :eof >> ovr.cmd
+echo :labelBB >> ovr.cmd
+echo echo BB >> ovr.cmd
+echo goto :eof >> ovr.cmd
+
+call run.cmd
+
+rem overwrite label before current position with another label with same name
+echo ---
+echo @echo off > run.cmd
+echo goto doit >> run.cmd
+echo :labelAA >> run.cmd
+echo echo A1 >> run.cmd
+echo goto :eof >> run.cmd
+echo :labelAA >> run.cmd
+echo echo A2 >> run.cmd
+echo goto :eof >> run.cmd
+echo :doit >> run.cmd
+echo copy /Y ovr.cmd run.cmd ^> NUL >> run.cmd
+echo call :labelAA >> run.cmd
+echo call :labelBB >> run.cmd
+
+echo @echo off > ovr.cmd
+echo goto doit >> ovr.cmd
+echo :labelBB >> ovr.cmd
+echo echo BB >> ovr.cmd
+echo goto :eof >> ovr.cmd
+echo :labelAA >> ovr.cmd
+echo echo A2 >> ovr.cmd
+echo goto :eof >> ovr.cmd
+echo :doit >> ovr.cmd
+echo copy /Y ovr.cmd run.cmd ^> NUL >> ovr.cmd
+echo call :labelAA >> ovr.cmd
+echo call :labelBB >> ovr.cmd
+
+call run.cmd
+
+rem overwrite label after current position with another label with same name
+echo ---
+echo @echo off > run.cmd
+echo copy /Y ovr.cmd run.cmd ^> NUL >> run.cmd
+echo call :labelAA >> run.cmd
+echo call :labelBB >> run.cmd
+echo goto :eof >> run.cmd
+echo :labelAA >> run.cmd
+echo echo A1 >> run.cmd
+echo goto :eof >> run.cmd
+echo :labelAA >> run.cmd
+echo echo A2 >> run.cmd
+echo goto :eof >> run.cmd
+
+echo @echo off > ovr.cmd
+echo copy /Y ovr.cmd ovr.cmd ^> NUL >> ovr.cmd
+echo call :labelAA >> ovr.cmd
+echo call :labelBB >> ovr.cmd
+echo goto :eof >> ovr.cmd
+echo :labelBB >> ovr.cmd
+echo echo BB >> ovr.cmd
+echo goto :eof >> ovr.cmd
+echo :labelAA >> ovr.cmd
+echo echo A2 >> ovr.cmd
+echo goto :eof >> ovr.cmd
+
+call run.cmd
+
+rem cleanup
+echo ---
+delete run.cmd
+delete ovr.cmd
 echo ------------ Testing combined CALLs/GOTOs ------------
 echo @echo off>foo.cmd
 echo goto :eof>>foot.cmd

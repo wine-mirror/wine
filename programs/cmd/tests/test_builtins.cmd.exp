@@ -2166,6 +2166,17 @@ Success
 ---- Testing nasty bits ----
 ------------ Testing updated code page execution ------------
 Success
+------------ Testing alteration while executing ------
+BB@space@
+---
+BB@space@
+---
+A2@space@
+BB@space@
+---
+A2@space@
+BB@space@
+---
 ------------ Testing combined CALLs/GOTOs ------------
 world
 cheball
