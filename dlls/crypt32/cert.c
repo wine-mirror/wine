@@ -2720,7 +2720,7 @@ static BOOL CNG_ImportRSAPubKey(CERT_PUBLIC_KEY_INFO *info, BCRYPT_KEY_HANDLE *k
     else
     {
         FIXME("Unsupported RSA algorithm: %#x\n", hdr->aiKeyAlg);
-        CryptMemFree(hdr);
+        LocalFree(hdr);
         SetLastError(NTE_BAD_ALGID);
         return FALSE;
     }
@@ -2762,7 +2762,7 @@ static BOOL CNG_ImportRSAPubKey(CERT_PUBLIC_KEY_INFO *info, BCRYPT_KEY_HANDLE *k
     CryptMemFree(rsakey);
 
 done:
-    CryptMemFree(hdr);
+    LocalFree(hdr);
     if (alg) BCryptCloseAlgorithmProvider(alg, 0);
     if (status) SetLastError(RtlNtStatusToDosError(status));
     return !status;
@@ -2772,7 +2772,6 @@ BOOL CNG_ImportPubKey(CERT_PUBLIC_KEY_INFO *pubKeyInfo, BCRYPT_KEY_HANDLE *key)
 {
     if (!strcmp(pubKeyInfo->Algorithm.pszObjId, szOID_ECC_PUBLIC_KEY))
         return CNG_ImportECCPubKey(pubKeyInfo, key);
-
 
     if (!strcmp(pubKeyInfo->Algorithm.pszObjId, szOID_RSA_RSA))
         return CNG_ImportRSAPubKey(pubKeyInfo, key);
