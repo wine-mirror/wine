@@ -1156,6 +1156,11 @@ static NTSTATUS WINAPI pdo_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
         status = STATUS_SUCCESS;
         break;
 
+    case IOCTL_GET_PHYSICAL_DESCRIPTOR:
+        irp->IoStatus.Information = 0;
+        status = STATUS_NOT_SUPPORTED;
+        break;
+
     default:
         ok( 0, "unexpected call\n" );
         status = irp->IoStatus.Status;

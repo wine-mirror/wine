@@ -1545,6 +1545,11 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
     USHORT count;
     BOOL ret;
 
+    SetLastError( 0xdeadbeef );
+    ret = HidD_GetPhysicalDescriptor( file, buffer, sizeof(buffer) );
+    ok( !ret, "HidD_GetPhysicalDescriptor succeeded\n" );
+    ok( GetLastError() == ERROR_NOT_SUPPORTED, "got error %lu\n", GetLastError() );
+
     ret = HidD_GetPreparsedData( file, &preparsed_data );
     ok( ret, "HidD_GetPreparsedData failed with error %lu\n", GetLastError() );
 
