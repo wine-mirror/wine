@@ -27,7 +27,6 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "winver.h"
-#include "wine/heap.h"
 
 #include <pshpack1.h>
 
@@ -441,19 +440,6 @@ HRESULT assembly_get_external_files(ASSEMBLY *assembly, LPWSTR **files, DWORD *c
 
 extern HRESULT IAssemblyName_SetPath(IAssemblyName *iface, LPCWSTR path) DECLSPEC_HIDDEN;
 extern HRESULT IAssemblyName_GetPath(IAssemblyName *iface, LPWSTR buf, ULONG *len) DECLSPEC_HIDDEN;
-
-static inline LPWSTR strdupW(LPCWSTR src)
-{
-    LPWSTR dest;
-
-    if (!src)
-        return NULL;
-
-    if ((dest = heap_alloc((lstrlenW(src) + 1) * sizeof(WCHAR))))
-        lstrcpyW(dest, src);
-
-    return dest;
-}
 
 #define BYTES_PER_TOKEN 8
 #define CHARS_PER_BYTE  2

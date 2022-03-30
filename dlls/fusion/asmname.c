@@ -114,12 +114,12 @@ static ULONG WINAPI IAssemblyNameImpl_Release(IAssemblyName *iface)
 
     if (!refCount)
     {
-        heap_free(This->path);
-        heap_free(This->displayname);
-        heap_free(This->name);
-        heap_free(This->culture);
-        heap_free(This->procarch);
-        heap_free(This);
+        free(This->path);
+        free(This->displayname);
+        free(This->name);
+        free(This->culture);
+        free(This->procarch);
+        free(This);
     }
 
     return refCount;
@@ -521,7 +521,7 @@ HRESULT IAssemblyName_SetPath(IAssemblyName *iface, LPCWSTR path)
 {
     IAssemblyNameImpl *name = unsafe_impl_from_IAssemblyName(iface);
 
-    name->path = strdupW(path);
+    name->path = wcsdup(path);
     if (!name->path)
         return E_OUTOFMEMORY;
 
@@ -576,12 +576,10 @@ static HRESULT parse_version(IAssemblyNameImpl *name, LPWSTR version)
 
 static HRESULT parse_culture(IAssemblyNameImpl *name, LPCWSTR culture)
 {
-    static const WCHAR empty[] = {0};
-
     if (lstrlenW(culture) == 2)
-        name->culture = strdupW(culture);
+        name->culture = wcsdup(culture);
     else
-        name->culture = strdupW(empty);
+        name->culture = wcsdup(L"");
 
     return S_OK;
 }
@@ -662,7 +660,7 @@ static WCHAR *parse_value( const WCHAR *str, unsigned int len )
     BOOL quoted = FALSE;
     unsigned int i = 0;
 
-    if (!(ret = heap_alloc( (len + 1) * sizeof(WCHAR) ))) return NULL;
+    if (!(ret = malloc( (len + 1) * sizeof(WCHAR) ))) return NULL;
     if (*p == '\"')
     {
         quoted = TRUE;
@@ -671,7 +669,7 @@ static WCHAR *parse_value( const WCHAR *str, unsigned int len )
     while (*p && *p != '\"') ret[i++] = *p++;
     if ((quoted && *p != '\"') || (!quoted && *p == '\"'))
     {
-        heap_free( ret );
+        free( ret );
         return NULL;
     }
     ret[i] = 0;
@@ -687,11 +685,11 @@ static HRESULT parse_display_name(IAssemblyNameImpl *name, LPCWSTR szAssemblyNam
     if (!szAssemblyName)
         return S_OK;
 
-    name->displayname = strdupW(szAssemblyName);
+    name->displayname = wcsdup(szAssemblyName);
     if (!name->displayname)
         return E_OUTOFMEMORY;
 
-    str = strdupW(szAssemblyName);
+    str = wcsdup(szAssemblyName);
     save = str;
     if (!str)
     {
@@ -709,7 +707,7 @@ static HRESULT parse_display_name(IAssemblyNameImpl *name, LPCWSTR szAssemblyNam
         goto done;
     }
 
-    name->name = strdupW(str);
+    name->name = wcsdup(str);
     if (!name->name)
     {
         hr = E_OUTOFMEMORY;
@@ -768,7 +766,7 @@ static HRESULT parse_display_name(IAssemblyNameImpl *name, LPCWSTR szAssemblyNam
 
             hr = parse_procarch( name, name->procarch );
         }
-        heap_free( value );
+        free( value );
 
         if (FAILED(hr))
             goto done;
@@ -777,13 +775,13 @@ static HRESULT parse_display_name(IAssemblyNameImpl *name, LPCWSTR szAssemblyNam
     }
 
 done:
-    heap_free(save);
+    free(save);
     if (FAILED(hr))
     {
-        heap_free(name->displayname);
-        heap_free(name->name);
-        heap_free(name->culture);
-        heap_free(name->procarch);
+        free(name->displayname);
+        free(name->name);
+        free(name->culture);
+        free(name->procarch);
     }
     return hr;
 }
@@ -808,7 +806,7 @@ HRESULT WINAPI CreateAssemblyNameObject(IAssemblyName **ppAssemblyNameObj,
         (!szAssemblyName || !*szAssemblyName))
         return E_INVALIDARG;
 
-    if (!(name = heap_alloc_zero(sizeof(*name)))) return E_OUTOFMEMORY;
+    if (!(name = calloc(1, sizeof(*name)))) return E_OUTOFMEMORY;
 
     name->IAssemblyName_iface.lpVtbl = &AssemblyNameVtbl;
     name->ref = 1;
@@ -816,7 +814,7 @@ HRESULT WINAPI CreateAssemblyNameObject(IAssemblyName **ppAssemblyNameObj,
     hr = parse_display_name(name, szAssemblyName);
     if (FAILED(hr))
     {
-        heap_free(name);
+        free(name);
         return hr;
     }
 

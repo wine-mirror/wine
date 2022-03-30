@@ -105,10 +105,10 @@ static ULONG WINAPI IAssemblyEnumImpl_Release(IAssemblyEnum *iface)
 
             list_remove(&asmname->entry);
             IAssemblyName_Release(asmname->name);
-            heap_free(asmname);
+            free(asmname);
         }
 
-        heap_free(This);
+        free(This);
     }
 
     return refCount;
@@ -354,7 +354,7 @@ static HRESULT enum_gac_assemblies(struct list *assemblies, IAssemblyName *name,
             }
             swprintf(disp, ARRAY_SIZE(disp), name_fmt, parent, version, token);
 
-            if (!(asmname = heap_alloc(sizeof(*asmname))))
+            if (!(asmname = malloc(sizeof(*asmname))))
             {
                 hr = E_OUTOFMEMORY;
                 break;
@@ -364,7 +364,7 @@ static HRESULT enum_gac_assemblies(struct list *assemblies, IAssemblyName *name,
                                           CANOF_PARSE_DISPLAY_NAME, NULL);
             if (FAILED(hr))
             {
-                heap_free(asmname);
+                free(asmname);
                 break;
             }
 
@@ -372,7 +372,7 @@ static HRESULT enum_gac_assemblies(struct list *assemblies, IAssemblyName *name,
             if (FAILED(hr))
             {
                 IAssemblyName_Release(asmname->name);
-                heap_free(asmname);
+                free(asmname);
                 break;
             }
 
@@ -475,7 +475,7 @@ HRESULT WINAPI CreateAssemblyEnum(IAssemblyEnum **pEnum, IUnknown *pUnkReserved,
     if (dwFlags == 0 || dwFlags == ASM_CACHE_ROOT)
         return E_INVALIDARG;
 
-    if (!(asmenum = heap_alloc(sizeof(*asmenum)))) return E_OUTOFMEMORY;
+    if (!(asmenum = malloc(sizeof(*asmenum)))) return E_OUTOFMEMORY;
 
     asmenum->IAssemblyEnum_iface.lpVtbl = &AssemblyEnumVtbl;
     asmenum->ref = 1;
@@ -486,7 +486,7 @@ HRESULT WINAPI CreateAssemblyEnum(IAssemblyEnum **pEnum, IUnknown *pUnkReserved,
         hr = enumerate_gac(asmenum, pName);
         if (FAILED(hr))
         {
-            heap_free(asmenum);
+            free(asmenum);
             return hr;
         }
     }
