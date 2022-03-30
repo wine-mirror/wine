@@ -61,6 +61,11 @@ extern IActivationFactory *synthesizer_factory;
 
 
 
+struct vector_iids
+{
+    const GUID *vector;
+};
+
 HRESULT typed_event_handlers_append( struct list *list, ITypedEventHandler_IInspectable_IInspectable *handler, EventRegistrationToken *token );
 HRESULT typed_event_handlers_remove( struct list *list, EventRegistrationToken *token );
 HRESULT typed_event_handlers_notify( struct list *list, IInspectable *sender, IInspectable *args );
@@ -68,6 +73,7 @@ HRESULT typed_event_handlers_clear( struct list* list );
 
 HRESULT vector_hstring_create( IVector_HSTRING **out );
 HRESULT vector_hstring_create_copy( IIterable_HSTRING *iterable, IVector_HSTRING **out );
+HRESULT vector_inspectable_create( const struct vector_iids *iids, IVector_IInspectable **out );
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \
     static inline impl_type *impl_from( iface_type *iface )                                        \

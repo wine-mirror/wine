@@ -233,6 +233,7 @@ struct recognizer
     LONG ref;
 
     ISpeechContinuousRecognitionSession *session;
+    IVector_ISpeechRecognitionConstraint *constraints;
 };
 
 /*
@@ -296,6 +297,7 @@ static ULONG WINAPI recognizer_Release( ISpeechRecognizer *iface )
     if (!ref)
     {
         ISpeechContinuousRecognitionSession_Release(impl->session);
+        IVector_ISpeechRecognitionConstraint_Release(impl->constraints);
         free(impl);
     }
 
@@ -637,13 +639,22 @@ static HRESULT WINAPI recognizer_factory_Create( ISpeechRecognizerFactory *iface
 {
     struct recognizer *impl;
     struct session *session;
+    struct vector_iids constraints_iids =
+    {
+        .vector = &IID_IVector_ISpeechRecognitionConstraint,
+    };
+    HRESULT hr;
 
     TRACE("iface %p, language %p, speechrecognizer %p.\n", iface, language, speechrecognizer);
 
     *speechrecognizer = NULL;
 
     if (!(impl = calloc(1, sizeof(*impl)))) return E_OUTOFMEMORY;
-    if (!(session = calloc(1, sizeof(*session)))) return E_OUTOFMEMORY;
+    if (!(session = calloc(1, sizeof(*session))))
+    {
+        hr = E_OUTOFMEMORY;
+        goto error;
+    }
 
     if (language)
         FIXME("language parameter unused. Stub!\n");
@@ -658,11 +669,19 @@ static HRESULT WINAPI recognizer_factory_Create( ISpeechRecognizerFactory *iface
     impl->ISpeechRecognizer2_iface.lpVtbl = &speech_recognizer2_vtbl;
     impl->session = &session->ISpeechContinuousRecognitionSession_iface;
     impl->ref = 1;
+    if (FAILED(hr = vector_inspectable_create(&constraints_iids, (IVector_IInspectable**)&impl->constraints)))
+        goto error;
 
     TRACE("created SpeechRecognizer %p.\n", impl);
 
     *speechrecognizer = &impl->ISpeechRecognizer_iface;
     return S_OK;
+
+error:
+    free(session);
+    free(impl);
+
+    return hr;
 }
 
 static const struct ISpeechRecognizerFactoryVtbl speech_recognizer_factory_vtbl =
