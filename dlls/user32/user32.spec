@@ -608,6 +608,7 @@
 @ stdcall RegisterRawInputDevices(ptr long long)
 @ stdcall RegisterServicesProcess(long)
 @ stdcall RegisterShellHookWindow (long)
+@ stdcall RegisterSuspendResumeNotification(long long)
 @ stdcall RegisterSystemThread(long long)
 @ stdcall RegisterTasklist (long)
 @ stdcall RegisterTouchHitTestingWindow(long long)
@@ -783,6 +784,7 @@
 @ stdcall UnregisterHotKey(long long) NtUserUnregisterHotKey
 # @ stub UnregisterMessagePumpHook
 @ stdcall UnregisterPowerSettingNotification(ptr)
+@ stdcall UnregisterSuspendResumeNotification(ptr)
 @ stdcall UnregisterTouchWindow(long)
 @ stdcall UnregisterUserApiHook()
 @ stdcall UpdateLayeredWindow(long long ptr ptr long ptr long ptr long)
