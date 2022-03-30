@@ -641,6 +641,7 @@ static HRESULT WINAPI recognizer_factory_Create( ISpeechRecognizerFactory *iface
     struct session *session;
     struct vector_iids constraints_iids =
     {
+        .iterable = &IID_IIterable_ISpeechRecognitionConstraint,
         .vector = &IID_IVector_ISpeechRecognitionConstraint,
         .view = &IID_IVectorView_ISpeechRecognitionConstraint,
     };

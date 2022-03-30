@@ -783,6 +783,7 @@ error:
 struct vector_view_inspectable
 {
     IVectorView_IInspectable IVectorView_IInspectable_iface;
+    IIterable_IInspectable IIterable_IInspectable_iface;
     struct vector_iids iids;
     LONG ref;
 
@@ -809,6 +810,12 @@ static HRESULT WINAPI vector_view_inspectable_QueryInterface( IVectorView_IInspe
         IsEqualGUID(iid, impl->iids.view))
     {
         IInspectable_AddRef((*out = &impl->IVectorView_IInspectable_iface));
+        return S_OK;
+    }
+
+    if (IsEqualGUID(iid, impl->iids.iterable))
+    {
+        IInspectable_AddRef((*out = &impl->IIterable_IInspectable_iface));
         return S_OK;
     }
 
@@ -937,6 +944,35 @@ static const struct IVectorView_IInspectableVtbl vector_view_inspectable_vtbl =
 
 /*
  *
+ * IIterable<Inspectable*>
+ *
+ */
+
+DEFINE_IINSPECTABLE_(iterable_view_inspectable, IIterable_IInspectable, struct vector_view_inspectable,
+                     view_impl_from_IIterable_IInspectable, IIterable_IInspectable_iface, &impl->IVectorView_IInspectable_iface)
+
+static HRESULT WINAPI iterable_view_inspectable_First( IIterable_IInspectable *iface, IIterator_IInspectable **value )
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static const struct IIterable_IInspectableVtbl iterable_view_inspectable_vtbl =
+{
+    /* IUnknown methods */
+    iterable_view_inspectable_QueryInterface,
+    iterable_view_inspectable_AddRef,
+    iterable_view_inspectable_Release,
+    /* IInspectable methods */
+    iterable_view_inspectable_GetIids,
+    iterable_view_inspectable_GetRuntimeClassName,
+    iterable_view_inspectable_GetTrustLevel,
+    /* IIterable<IInspectable*> methods */
+    iterable_view_inspectable_First
+};
+
+/*
+ *
  * IVector<Inspectable*>
  *
  */
@@ -944,6 +980,7 @@ static const struct IVectorView_IInspectableVtbl vector_view_inspectable_vtbl =
 struct vector_inspectable
 {
     IVector_IInspectable IVector_IInspectable_iface;
+    IIterable_IInspectable IIterable_IInspectable_iface;
     struct vector_iids iids;
     LONG ref;
 
@@ -969,6 +1006,12 @@ static HRESULT WINAPI vector_inspectable_QueryInterface( IVector_IInspectable *i
         IsEqualGUID(iid, impl->iids.vector))
     {
         IInspectable_AddRef((*out = &impl->IVector_IInspectable_iface));
+        return S_OK;
+    }
+
+    if (IsEqualGUID(iid, impl->iids.iterable))
+    {
+        IInspectable_AddRef((*out = &impl->IIterable_IInspectable_iface));
         return S_OK;
     }
 
@@ -1050,6 +1093,7 @@ static HRESULT WINAPI vector_inspectable_GetView( IVector_IInspectable *iface, I
 
     if (!(view = calloc(1, offsetof(struct vector_view_inspectable, elements[impl->size])))) return E_OUTOFMEMORY;
     view->IVectorView_IInspectable_iface.lpVtbl = &vector_view_inspectable_vtbl;
+    view->IIterable_IInspectable_iface.lpVtbl = &iterable_view_inspectable_vtbl;
     view->iids = impl->iids;
     view->ref = 1;
 
@@ -1211,6 +1255,34 @@ static const struct IVector_IInspectableVtbl vector_inspectable_vtbl =
     vector_inspectable_ReplaceAll
 };
 
+/*
+ *
+ * IIterable<Inspectable*>
+ *
+ */
+
+DEFINE_IINSPECTABLE(iterable_inspectable, IIterable_IInspectable, struct vector_inspectable, IVector_IInspectable_iface)
+
+static HRESULT WINAPI iterable_inspectable_First( IIterable_IInspectable *iface, IIterator_IInspectable **value )
+{
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return E_NOTIMPL;
+}
+
+static const struct IIterable_IInspectableVtbl iterable_inspectable_vtbl =
+{
+    /* IUnknown methods */
+    iterable_inspectable_QueryInterface,
+    iterable_inspectable_AddRef,
+    iterable_inspectable_Release,
+    /* IInspectable methods */
+    iterable_inspectable_GetIids,
+    iterable_inspectable_GetRuntimeClassName,
+    iterable_inspectable_GetTrustLevel,
+    /* IIterable<IInspectable*> methods */
+    iterable_inspectable_First
+};
+
 HRESULT vector_inspectable_create( const struct vector_iids *iids, IVector_IInspectable **out )
 {
     struct vector_inspectable *impl;
@@ -1219,6 +1291,7 @@ HRESULT vector_inspectable_create( const struct vector_iids *iids, IVector_IInsp
 
     if (!(impl = calloc(1, sizeof(*impl)))) return E_OUTOFMEMORY;
     impl->IVector_IInspectable_iface.lpVtbl = &vector_inspectable_vtbl;
+    impl->IIterable_IInspectable_iface.lpVtbl = &iterable_inspectable_vtbl;
     impl->iids = *iids;
     impl->ref = 1;
 
