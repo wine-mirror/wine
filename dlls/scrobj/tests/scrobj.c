@@ -27,7 +27,6 @@
 #include <mshtmhst.h>
 
 #include "wine/test.h"
-#include "wine/heap.h"
 
 static HRESULT (WINAPI *pDllInstall)(BOOL, const WCHAR *);
 
@@ -715,7 +714,7 @@ static WCHAR *get_test_file(const char *res_name)
     ok(res, "CloseHandle failed: %lu\n", GetLastError());
 
     size = (wcslen(buffer) + 1) * sizeof(WCHAR);
-    ret = heap_alloc(size);
+    ret = malloc(size);
     memcpy(ret, buffer, size);
     return ret;
 }
@@ -1078,7 +1077,7 @@ START_TEST(scrobj)
         register_script_object(FALSE, test_file);
 
         register_script_engine(FALSE);
-        heap_free(test_file);
+        free(test_file);
     }
     else
         skip("Could not register script engine\n");
