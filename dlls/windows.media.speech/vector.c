@@ -776,6 +776,142 @@ error:
 
 /*
  *
+ * IIterator<Inspectable*>
+ *
+ */
+
+struct iterator_inspectable
+{
+    IIterator_IInspectable IIterator_IInspectable_iface;
+    const GUID *iid;
+    LONG ref;
+
+    IVectorView_IInspectable *view;
+    UINT32 index;
+    UINT32 size;
+};
+
+static inline struct iterator_inspectable *impl_from_IIterator_IInspectable( IIterator_IInspectable *iface )
+{
+    return CONTAINING_RECORD(iface, struct iterator_inspectable, IIterator_IInspectable_iface);
+}
+
+static HRESULT WINAPI iterator_inspectable_QueryInterface( IIterator_IInspectable *iface, REFIID iid, void **out )
+{
+    struct iterator_inspectable *impl = impl_from_IIterator_IInspectable(iface);
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IInspectable) ||
+        IsEqualGUID(iid, &IID_IAgileObject) ||
+        IsEqualGUID(iid, impl->iid))
+    {
+        IInspectable_AddRef((*out = &impl->IIterator_IInspectable_iface));
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI iterator_inspectable_AddRef( IIterator_IInspectable *iface )
+{
+    struct iterator_inspectable *impl = impl_from_IIterator_IInspectable(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    TRACE("iface %p increasing refcount to %lu.\n", iface, ref);
+    return ref;
+}
+
+static ULONG WINAPI iterator_inspectable_Release( IIterator_IInspectable *iface )
+{
+    struct iterator_inspectable *impl = impl_from_IIterator_IInspectable(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+
+    TRACE("iface %p decreasing refcount to %lu.\n", iface, ref);
+
+    if (!ref)
+    {
+        IVectorView_IInspectable_Release(impl->view);
+        free(impl);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI iterator_inspectable_GetIids( IIterator_IInspectable *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI iterator_inspectable_GetRuntimeClassName( IIterator_IInspectable *iface, HSTRING *class_name )
+{
+    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI iterator_inspectable_GetTrustLevel( IIterator_IInspectable *iface, TrustLevel *trust_level )
+{
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI iterator_inspectable_get_Current( IIterator_IInspectable *iface, IInspectable **value )
+{
+    struct iterator_inspectable *impl = impl_from_IIterator_IInspectable(iface);
+    TRACE("iface %p, value %p.\n", iface, value);
+    return IVectorView_IInspectable_GetAt(impl->view, impl->index, value);
+}
+
+static HRESULT WINAPI iterator_inspectable_get_HasCurrent( IIterator_IInspectable *iface, BOOL *value )
+{
+    struct iterator_inspectable *impl = impl_from_IIterator_IInspectable(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    *value = impl->index < impl->size;
+    return S_OK;
+}
+
+static HRESULT WINAPI iterator_inspectable_MoveNext( IIterator_IInspectable *iface, BOOL *value )
+{
+    struct iterator_inspectable *impl = impl_from_IIterator_IInspectable(iface);
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    if (impl->index < impl->size) impl->index++;
+    return IIterator_IInspectable_get_HasCurrent(iface, value);
+}
+
+static HRESULT WINAPI iterator_inspectable_GetMany( IIterator_IInspectable *iface, UINT32 items_size,
+                                                    IInspectable **items, UINT *count )
+{
+    struct iterator_inspectable *impl = impl_from_IIterator_IInspectable(iface);
+    TRACE("iface %p, items_size %u, items %p, count %p.\n", iface, items_size, items, count);
+    return IVectorView_IInspectable_GetMany(impl->view, impl->index, items_size, items, count);
+}
+
+static const IIterator_IInspectableVtbl iterator_inspectable_vtbl =
+{
+    /* IUnknown methods */
+    iterator_inspectable_QueryInterface,
+    iterator_inspectable_AddRef,
+    iterator_inspectable_Release,
+    /* IInspectable methods */
+    iterator_inspectable_GetIids,
+    iterator_inspectable_GetRuntimeClassName,
+    iterator_inspectable_GetTrustLevel,
+    /* IIterator<IInspectable*> methods */
+    iterator_inspectable_get_Current,
+    iterator_inspectable_get_HasCurrent,
+    iterator_inspectable_MoveNext,
+    iterator_inspectable_GetMany
+};
+
+/*
+ *
  * IVectorView<Inspectable*>
  *
  */
@@ -953,8 +1089,21 @@ DEFINE_IINSPECTABLE_(iterable_view_inspectable, IIterable_IInspectable, struct v
 
 static HRESULT WINAPI iterable_view_inspectable_First( IIterable_IInspectable *iface, IIterator_IInspectable **value )
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    struct vector_view_inspectable *impl = view_impl_from_IIterable_IInspectable(iface);
+    struct iterator_inspectable *iter;
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    if (!(iter = calloc(1, sizeof(struct iterator_inspectable)))) return E_OUTOFMEMORY;
+    iter->IIterator_IInspectable_iface.lpVtbl = &iterator_inspectable_vtbl;
+    iter->iid = impl->iids.iterator;
+    iter->ref = 1;
+
+    IVectorView_IInspectable_AddRef((iter->view = &impl->IVectorView_IInspectable_iface));
+    iter->size = impl->size;
+
+    *value = &iter->IIterator_IInspectable_iface;
+    return S_OK;
 }
 
 static const struct IIterable_IInspectableVtbl iterable_view_inspectable_vtbl =
@@ -1265,8 +1414,22 @@ DEFINE_IINSPECTABLE(iterable_inspectable, IIterable_IInspectable, struct vector_
 
 static HRESULT WINAPI iterable_inspectable_First( IIterable_IInspectable *iface, IIterator_IInspectable **value )
 {
-    FIXME("iface %p, value %p stub!\n", iface, value);
-    return E_NOTIMPL;
+    struct vector_inspectable *impl = impl_from_IIterable_IInspectable(iface);
+    IIterable_IInspectable *iterable;
+    IVectorView_IInspectable *view;
+    HRESULT hr;
+
+    TRACE("iface %p, value %p.\n", iface, value);
+
+    if (FAILED(hr = IVector_IInspectable_GetView(&impl->IVector_IInspectable_iface, &view))) return hr;
+
+    hr = IVectorView_IInspectable_QueryInterface(view, impl->iids.iterable, (void **)&iterable);
+    IVectorView_IInspectable_Release(view);
+    if (FAILED(hr)) return hr;
+
+    hr = IIterable_IInspectable_First(iterable, value);
+    IIterable_IInspectable_Release(iterable);
+    return hr;
 }
 
 static const struct IIterable_IInspectableVtbl iterable_inspectable_vtbl =

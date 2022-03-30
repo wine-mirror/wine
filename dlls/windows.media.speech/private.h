@@ -64,6 +64,7 @@ extern IActivationFactory *synthesizer_factory;
 struct vector_iids
 {
     const GUID *iterable;
+    const GUID *iterator;
     const GUID *vector;
     const GUID *view;
 };
