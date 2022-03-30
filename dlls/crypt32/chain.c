@@ -2007,7 +2007,7 @@ static PCCERT_CONTEXT CRYPT_FindIssuer(const CertificateChainEngine *engine, con
     if(!res)
         return NULL;
 
-    urls = HeapAlloc(GetProcessHeap(), 0, size);
+    urls = CryptMemAlloc(size);
     if(!urls)
         return NULL;
 
@@ -2045,7 +2045,7 @@ static PCCERT_CONTEXT CRYPT_FindIssuer(const CertificateChainEngine *engine, con
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, urls);
+    CryptMemFree(urls);
     return issuer;
 }
 

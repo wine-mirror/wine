@@ -72,7 +72,7 @@ static DWORD serialize_KeyProvInfoProperty(const CRYPT_KEY_PROV_INFO *info, stru
 
     if (!ret) return size;
 
-    store = HeapAlloc(GetProcessHeap(), 0, size);
+    store = CryptMemAlloc(size);
     if (!store) return 0;
 
     param = (struct store_CRYPT_KEY_PROV_PARAM *)(store + 1);
@@ -331,7 +331,7 @@ static DWORD read_serialized_KeyProvInfoProperty(const struct store_CRYPT_KEY_PR
     for (i = 0; i < store->cProvParam; i++)
         size += sizeof(CRYPT_KEY_PROV_PARAM) + param[i].cbData;
 
-    info = HeapAlloc(GetProcessHeap(), 0, size);
+    info = CryptMemAlloc(size);
     if (!info)
     {
         SetLastError(ERROR_OUTOFMEMORY);

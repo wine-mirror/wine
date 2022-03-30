@@ -18,7 +18,6 @@
 
 #include <stdarg.h>
 #include <stdio.h>
-#include <stdlib.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -622,19 +621,19 @@ static void read_trusted_roots_from_known_locations(HCERTSTORE store)
 
     if (from)
     {
-        params.buffer = malloc( params.size );
+        params.buffer = CryptMemAlloc( params.size );
         while (!CRYPT32_CALL( enum_root_certs, &params ))
         {
             if (needed > params.size)
             {
-                free( params.buffer );
-                params.buffer = malloc( needed );
+                CryptMemFree( params.buffer );
+                params.buffer = CryptMemAlloc( needed );
                 params.size = needed;
             }
             else CertAddEncodedCertificateToStore( from, X509_ASN_ENCODING, params.buffer, needed,
                                                    CERT_STORE_ADD_NEW, NULL );
         }
-        free( params.buffer );
+        CryptMemFree( params.buffer );
         check_and_store_certs(from, store);
     }
     CertCloseStore(from, 0);

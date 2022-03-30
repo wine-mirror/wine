@@ -17,7 +17,6 @@
  */
 
 #include <stdarg.h>
-#include <stdlib.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -28,7 +27,6 @@
 #include "crypt32_private.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
@@ -55,17 +53,17 @@ static HCRYPTPROV import_key( cert_store_data_t data, DWORD flags )
         }
     }
 
-    params.buf = key = malloc( size );
+    params.buf = key = CryptMemAlloc( size );
     if (CRYPT32_CALL( import_store_key, &params ) ||
         !CryptImportKey( prov, key, size, 0, flags & CRYPT_EXPORTABLE, &cryptkey ))
     {
         WARN( "CryptImportKey failed %08lx\n", GetLastError() );
         CryptReleaseContext( prov, 0 );
-        free( key );
+        CryptMemFree( key );
         return 0;
     }
     CryptDestroyKey( cryptkey );
-    free( key );
+    CryptMemFree( key );
     return prov;
 }
 
@@ -177,10 +175,10 @@ HCERTSTORE WINAPI PFXImportCertStore( CRYPT_DATA_BLOB *pfx, const WCHAR *passwor
         struct import_store_cert_params import_params = { data, i, NULL, &size };
 
         if (CRYPT32_CALL( import_store_cert, &import_params ) != STATUS_BUFFER_TOO_SMALL) break;
-        import_params.buf = cert = malloc( size );
+        import_params.buf = cert = CryptMemAlloc( size );
         if (!CRYPT32_CALL( import_store_cert, &import_params ))
             ctx = CertCreateContext( CERT_STORE_CERTIFICATE_CONTEXT, X509_ASN_ENCODING, cert, size, 0, NULL );
-        free( cert );
+        CryptMemFree( cert );
         if (!ctx)
         {
             WARN( "CertCreateContext failed %08lx\n", GetLastError() );

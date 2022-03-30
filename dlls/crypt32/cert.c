@@ -677,7 +677,7 @@ static BOOL CertContext_SetKeyProvInfoProperty(CONTEXT_PROPERTY_LIST *properties
     for (i = 0; i < info->cProvParam; i++)
         size += sizeof(CRYPT_KEY_PROV_PARAM) + info->rgProvParam[i].cbData;
 
-    prop = HeapAlloc(GetProcessHeap(), 0, size);
+    prop = CryptMemAlloc(size);
     if (!prop)
     {
         SetLastError(ERROR_OUTOFMEMORY);
@@ -687,7 +687,7 @@ static BOOL CertContext_SetKeyProvInfoProperty(CONTEXT_PROPERTY_LIST *properties
     copy_KeyProvInfoProperty(info, prop);
 
     ret = ContextPropertyList_SetProperty(properties, CERT_KEY_PROV_INFO_PROP_ID, (const BYTE *)prop, size);
-    HeapFree(GetProcessHeap(), 0, prop);
+    CryptMemFree(prop);
 
     return ret;
 }
@@ -865,7 +865,7 @@ static BOOL CRYPT_AcquirePrivateKeyFromProvInfo(PCCERT_CONTEXT pCert, DWORD dwFl
          CERT_KEY_PROV_INFO_PROP_ID, 0, &size);
         if (ret)
         {
-            info = HeapAlloc(GetProcessHeap(), 0, size);
+            info = CryptMemAlloc(size);
             if (info)
             {
                 ret = CertGetCertificateContextProperty(pCert,
@@ -901,7 +901,7 @@ static BOOL CRYPT_AcquirePrivateKeyFromProvInfo(PCCERT_CONTEXT pCert, DWORD dwFl
             SetLastError(CRYPT_E_NO_KEY_PROPERTY);
     }
     if (allocated)
-        HeapFree(GetProcessHeap(), 0, info);
+        CryptMemFree(info);
     return ret;
 }
 
@@ -953,7 +953,7 @@ BOOL WINAPI CryptAcquireCertificatePrivateKey(PCCERT_CONTEXT pCert,
 
         if (ret)
         {
-            info = HeapAlloc(GetProcessHeap(), 0, size);
+            info = CryptMemAlloc(size);
             ret = CertGetCertificateContextProperty(pCert,
              CERT_KEY_PROV_INFO_PROP_ID, info, &size);
             if (ret)
@@ -1003,7 +1003,7 @@ BOOL WINAPI CryptAcquireCertificatePrivateKey(PCCERT_CONTEXT pCert,
             }
         }
     }
-    HeapFree(GetProcessHeap(), 0, info);
+    CryptMemFree(info);
     if (cert_in_store)
         CertFreeCertificateContext(cert_in_store);
     return ret;
