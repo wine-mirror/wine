@@ -291,7 +291,7 @@ static	DWORD WAVE_mciReadFmt(WINE_MCIWAVE* wmw, const MMCKINFO* pckMainRIFF)
     if (!pwfx) return MCIERR_OUT_OF_MEMORY;
 
     r = mmioRead(wmw->hFile, (HPSTR)pwfx, mmckInfo.cksize);
-    if (r < sizeof(PCMWAVEFORMAT)) {
+    if (r < 0 || r < sizeof(PCMWAVEFORMAT)) {
 	HeapFree(GetProcessHeap(), 0, pwfx);
 	return MCIERR_INVALID_FILE;
     }
