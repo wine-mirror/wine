@@ -71,6 +71,7 @@ struct vector_iids
 
 typedef HRESULT (WINAPI *async_operation_inspectable_callback)( IInspectable *invoker, IInspectable **result );
 
+HRESULT async_action_create( IAsyncAction **out );
 HRESULT async_operation_inspectable_create( const GUID *iid, IInspectable *invoker, async_operation_inspectable_callback callback,
                                             IAsyncOperation_IInspectable **out );
 

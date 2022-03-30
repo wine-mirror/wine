@@ -1577,20 +1577,20 @@ static void test_Recognition(void)
     IAsyncOperation_IInspectable_Release((IAsyncOperation_IInspectable *)operation);
 
     hr = ISpeechContinuousRecognitionSession_StartAsync(session, &action);
-    todo_wine ok(hr == S_OK, "ISpeechContinuousRecognitionSession_StartAsync failed, hr %#lx.\n", hr);
-
-    if (FAILED(hr)) goto skip_action;
-
-    await_async_void(action, &action_handler);
-    check_async_info((IInspectable *)action, 1, Completed, S_OK);
+    ok(hr == S_OK, "ISpeechContinuousRecognitionSession_StartAsync failed, hr %#lx.\n", hr);
 
     handler = (void *)0xdeadbeef;
     hr = IAsyncAction_get_Completed(action, &handler);
     todo_wine ok(hr == S_OK, "IAsyncAction_put_Completed failed, hr %#lx.\n", hr);
     todo_wine ok(handler == NULL, "Handler was %p.\n", handler);
 
+    if (FAILED(hr)) goto skip_action;
+
+    await_async_void(action, &action_handler);
+
     hr = IAsyncAction_QueryInterface(action, &IID_IAsyncInfo, (void **)&info);
     todo_wine ok(hr == S_OK, "IAsyncAction_QueryInterface failed, hr %#lx.\n", hr);
+    check_async_info((IInspectable *)action, 1, Completed, S_OK);
 
     hr = IAsyncInfo_Cancel(info);
     todo_wine ok(hr == S_OK, "IAsyncInfo_Cancel failed, hr %#lx.\n", hr);
@@ -1660,9 +1660,9 @@ static void test_Recognition(void)
     todo_wine ok(action != action2, "actions were the same!\n");
 
     IAsyncAction_Release(action2);
+skip_action:
     IAsyncAction_Release(action);
 
-skip_action:
     hr = ISpeechContinuousRecognitionSession_remove_ResultGenerated(session, token);
     ok(hr == S_OK, "ISpeechContinuousRecognitionSession_remove_ResultGenerated failed, hr %#lx.\n", hr);
 

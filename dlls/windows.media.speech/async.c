@@ -28,6 +28,132 @@ WINE_DEFAULT_DEBUG_CHANNEL(speech);
 
 /*
  *
+ * IAsyncAction
+ *
+ */
+
+struct async_void
+{
+    IAsyncAction IAsyncAction_iface;
+    LONG ref;
+};
+
+static inline struct async_void *impl_from_IAsyncAction( IAsyncAction *iface )
+{
+    return CONTAINING_RECORD(iface, struct async_void, IAsyncAction_iface);
+}
+
+HRESULT WINAPI async_void_QueryInterface( IAsyncAction *iface, REFIID iid, void **out )
+{
+    struct async_void *impl = impl_from_IAsyncAction(iface);
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IInspectable) ||
+        IsEqualGUID(iid, &IID_IAgileObject) ||
+        IsEqualGUID(iid, &IID_IAsyncAction))
+    {
+        IInspectable_AddRef((*out = &impl->IAsyncAction_iface));
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+ULONG WINAPI async_void_AddRef( IAsyncAction *iface )
+{
+    struct async_void *impl = impl_from_IAsyncAction(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+    return ref;
+}
+
+ULONG WINAPI async_void_Release( IAsyncAction *iface )
+{
+    struct async_void *impl = impl_from_IAsyncAction(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+    return ref;
+}
+
+HRESULT WINAPI async_void_GetIids( IAsyncAction *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI async_void_GetRuntimeClassName( IAsyncAction *iface, HSTRING *class_name )
+{
+    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI async_void_GetTrustLevel( IAsyncAction *iface, TrustLevel *trust_level )
+{
+    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI async_void_put_Completed( IAsyncAction *iface, IAsyncActionCompletedHandler *handler )
+{
+    FIXME("iface %p, handler %p stub!\n", iface, handler);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI async_void_get_Completed( IAsyncAction *iface, IAsyncActionCompletedHandler **handler )
+{
+    FIXME("iface %p, handler %p stub!\n", iface, handler);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI async_void_GetResults( IAsyncAction *iface )
+{
+    FIXME("iface %p stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static const struct IAsyncActionVtbl async_void_vtbl =
+{
+    /* IUnknown methods */
+    async_void_QueryInterface,
+    async_void_AddRef,
+    async_void_Release,
+    /* IInspectable methods */
+    async_void_GetIids,
+    async_void_GetRuntimeClassName,
+    async_void_GetTrustLevel,
+    /* IAsyncAction methods */
+    async_void_put_Completed,
+    async_void_get_Completed,
+    async_void_GetResults
+};
+
+
+HRESULT async_action_create( IAsyncAction **out )
+{
+    struct async_void *impl;
+
+    TRACE("out %p.\n", out);
+
+    if (!(impl = calloc(1, sizeof(*impl))))
+    {
+        *out = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    impl->IAsyncAction_iface.lpVtbl = &async_void_vtbl;
+    impl->ref = 1;
+
+    *out = &impl->IAsyncAction_iface;
+    TRACE("created %p\n", *out);
+    return S_OK;
+}
+
+/*
+ *
  * IAsyncOperation<IInspectable*>
  *
  */
