@@ -55,158 +55,6 @@ WINE_DECLARE_DEBUG_CHANNEL(key);
 
 #define MAX_WINPROC_RECURSION  64
 
-/* the various structures that can be sent in messages, in platform-independent layout */
-struct packed_CREATESTRUCTW
-{
-    ULONGLONG     lpCreateParams;
-    ULONGLONG     hInstance;
-    user_handle_t hMenu;
-    DWORD         __pad1;
-    user_handle_t hwndParent;
-    DWORD         __pad2;
-    INT           cy;
-    INT           cx;
-    INT           y;
-    INT           x;
-    LONG          style;
-    ULONGLONG     lpszName;
-    ULONGLONG     lpszClass;
-    DWORD         dwExStyle;
-    DWORD         __pad3;
-};
-
-struct packed_DRAWITEMSTRUCT
-{
-    UINT          CtlType;
-    UINT          CtlID;
-    UINT          itemID;
-    UINT          itemAction;
-    UINT          itemState;
-    user_handle_t hwndItem;
-    DWORD         __pad1;
-    user_handle_t hDC;
-    DWORD         __pad2;
-    RECT          rcItem;
-    ULONGLONG     itemData;
-};
-
-struct packed_MEASUREITEMSTRUCT
-{
-    UINT          CtlType;
-    UINT          CtlID;
-    UINT          itemID;
-    UINT          itemWidth;
-    UINT          itemHeight;
-    ULONGLONG     itemData;
-};
-
-struct packed_DELETEITEMSTRUCT
-{
-    UINT          CtlType;
-    UINT          CtlID;
-    UINT          itemID;
-    user_handle_t hwndItem;
-    DWORD         __pad;
-    ULONGLONG     itemData;
-};
-
-struct packed_COMPAREITEMSTRUCT
-{
-    UINT          CtlType;
-    UINT          CtlID;
-    user_handle_t hwndItem;
-    DWORD         __pad1;
-    UINT          itemID1;
-    ULONGLONG     itemData1;
-    UINT          itemID2;
-    ULONGLONG     itemData2;
-    DWORD         dwLocaleId;
-    DWORD         __pad2;
-};
-
-struct packed_WINDOWPOS
-{
-    user_handle_t hwnd;
-    DWORD         __pad1;
-    user_handle_t hwndInsertAfter;
-    DWORD         __pad2;
-    INT           x;
-    INT           y;
-    INT           cx;
-    INT           cy;
-    UINT          flags;
-    DWORD         __pad3;
-};
-
-struct packed_COPYDATASTRUCT
-{
-    ULONGLONG dwData;
-    DWORD     cbData;
-    ULONGLONG lpData;
-};
-
-struct packed_HELPINFO
-{
-    UINT          cbSize;
-    INT           iContextType;
-    INT           iCtrlId;
-    user_handle_t hItemHandle;
-    DWORD         __pad;
-    ULONGLONG     dwContextId;
-    POINT         MousePos;
-};
-
-struct packed_NCCALCSIZE_PARAMS
-{
-    RECT          rgrc[3];
-    ULONGLONG     __pad1;
-    user_handle_t hwnd;
-    DWORD         __pad2;
-    user_handle_t hwndInsertAfter;
-    DWORD         __pad3;
-    INT           x;
-    INT           y;
-    INT           cx;
-    INT           cy;
-    UINT          flags;
-    DWORD         __pad4;
-};
-
-struct packed_MSG
-{
-    user_handle_t hwnd;
-    DWORD         __pad1;
-    UINT          message;
-    ULONGLONG     wParam;
-    ULONGLONG     lParam;
-    DWORD         time;
-    POINT         pt;
-    DWORD         __pad2;
-};
-
-struct packed_MDINEXTMENU
-{
-    user_handle_t hmenuIn;
-    DWORD         __pad1;
-    user_handle_t hmenuNext;
-    DWORD         __pad2;
-    user_handle_t hwndNext;
-    DWORD         __pad3;
-};
-
-struct packed_MDICREATESTRUCTW
-{
-    ULONGLONG szClass;
-    ULONGLONG szTitle;
-    ULONGLONG hOwner;
-    INT       x;
-    INT       y;
-    INT       cx;
-    INT       cy;
-    DWORD     style;
-    ULONGLONG lParam;
-};
-
 struct packed_hook_extra_info
 {
     user_handle_t handle;
@@ -253,15 +101,6 @@ struct packed_message
     int                  count;
     const void          *data[MAX_PACK_COUNT];
     size_t               size[MAX_PACK_COUNT];
-};
-
-/* info about the message currently being received by the current thread */
-struct received_message_info
-{
-    enum message_type type;
-    MSG               msg;
-    UINT              flags;  /* InSendMessageEx return flags */
-    struct received_message_info *prev;
 };
 
 /* structure to group all parameters for sent messages of the various kinds */
@@ -1855,22 +1694,6 @@ static void reply_message( struct received_message_info *info, LRESULT result, M
 
 
 /***********************************************************************
- *           reply_message_result
- *
- * Send a reply to a sent message and update thread receive info.
- */
-static BOOL reply_message_result( LRESULT result, MSG *msg )
-{
-    struct received_message_info *info = get_user_thread_info()->receive_info;
-
-    if (!info) return FALSE;
-    reply_message( info, result, msg );
-    if (msg) get_user_thread_info()->receive_info = info->prev;
-    return TRUE;
-}
-
-
-/***********************************************************************
  *           handle_internal_message
  *
  * Handle an internal Wine message instead of calling the window proc.
@@ -2903,7 +2726,7 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
                                    info.msg.lParam, (info.type != MSG_ASCII), FALSE,
                                    WMCHAR_MAP_RECVMESSAGE );
         if (thread_info->receive_info == &info )
-            reply_message_result( result, &info.msg );
+            NtUserCallTwoParam( result, (UINT_PTR)&info.msg, NtUserReplyMessage );
 
         /* if some PM_QS* flags were specified, only handle sent messages from now on */
         if (HIWORD(flags) && !changed_mask) flags = PM_QS_SENDMESSAGE | LOWORD(flags);
@@ -3591,7 +3414,7 @@ BOOL WINAPI SendMessageCallbackW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
  */
 BOOL WINAPI ReplyMessage( LRESULT result )
 {
-    return reply_message_result( result, NULL );
+    return NtUserCallTwoParam( result, 0, NtUserReplyMessage );
 }
 
 

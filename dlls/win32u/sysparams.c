@@ -4736,6 +4736,8 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
         return mirror_window_region( UlongToHandle(arg1), UlongToHandle(arg2) );
     case NtUserMonitorFromRect:
         return HandleToUlong( monitor_from_rect( (const RECT *)arg1, arg2, get_thread_dpi() ));
+    case NtUserReplyMessage:
+        return reply_message_result( arg1, (MSG *)arg2 );
     case NtUserSetIconParam:
         return set_icon_param( UlongToHandle(arg1), arg2 );
     case NtUserUnhookWindowsHook:

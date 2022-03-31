@@ -33,6 +33,56 @@ WINE_DEFAULT_DEBUG_CHANNEL(msg);
 
 #define MAX_WINPROC_RECURSION  64
 
+#define MAX_PACK_COUNT 4
+
+struct packed_hook_extra_info
+{
+    user_handle_t handle;
+    DWORD         __pad;
+    ULONGLONG     lparam;
+};
+
+/* the structures are unpacked on top of the packed ones, so make sure they fit */
+C_ASSERT( sizeof(struct packed_CREATESTRUCTW) >= sizeof(CREATESTRUCTW) );
+C_ASSERT( sizeof(struct packed_DRAWITEMSTRUCT) >= sizeof(DRAWITEMSTRUCT) );
+C_ASSERT( sizeof(struct packed_MEASUREITEMSTRUCT) >= sizeof(MEASUREITEMSTRUCT) );
+C_ASSERT( sizeof(struct packed_DELETEITEMSTRUCT) >= sizeof(DELETEITEMSTRUCT) );
+C_ASSERT( sizeof(struct packed_COMPAREITEMSTRUCT) >= sizeof(COMPAREITEMSTRUCT) );
+C_ASSERT( sizeof(struct packed_WINDOWPOS) >= sizeof(WINDOWPOS) );
+C_ASSERT( sizeof(struct packed_COPYDATASTRUCT) >= sizeof(COPYDATASTRUCT) );
+C_ASSERT( sizeof(struct packed_HELPINFO) >= sizeof(HELPINFO) );
+C_ASSERT( sizeof(struct packed_NCCALCSIZE_PARAMS) >= sizeof(NCCALCSIZE_PARAMS) + sizeof(WINDOWPOS) );
+C_ASSERT( sizeof(struct packed_MSG) >= sizeof(MSG) );
+C_ASSERT( sizeof(struct packed_MDINEXTMENU) >= sizeof(MDINEXTMENU) );
+C_ASSERT( sizeof(struct packed_MDICREATESTRUCTW) >= sizeof(MDICREATESTRUCTW) );
+C_ASSERT( sizeof(struct packed_hook_extra_info) >= sizeof(struct hook_extra_info) );
+
+union packed_structs
+{
+    struct packed_CREATESTRUCTW cs;
+    struct packed_DRAWITEMSTRUCT dis;
+    struct packed_MEASUREITEMSTRUCT mis;
+    struct packed_DELETEITEMSTRUCT dls;
+    struct packed_COMPAREITEMSTRUCT cis;
+    struct packed_WINDOWPOS wp;
+    struct packed_COPYDATASTRUCT cds;
+    struct packed_HELPINFO hi;
+    struct packed_NCCALCSIZE_PARAMS ncp;
+    struct packed_MSG msg;
+    struct packed_MDINEXTMENU mnm;
+    struct packed_MDICREATESTRUCTW mcs;
+    struct packed_hook_extra_info hook;
+};
+
+/* description of the data fields that need to be packed along with a sent message */
+struct packed_message
+{
+    union packed_structs ps;
+    int                  count;
+    const void          *data[MAX_PACK_COUNT];
+    size_t               size[MAX_PACK_COUNT];
+};
+
 static BOOL init_win_proc_params( struct win_proc_params *params, HWND hwnd, UINT msg,
                                   WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
@@ -96,6 +146,220 @@ static BOOL dispatch_win_proc_params( struct win_proc_params *params, size_t siz
     KeUserModeCallback( NtUserCallWindowProc, params, size, &ret_ptr, &ret_len );
 
     thread_info->recursion_count--;
+    return TRUE;
+}
+
+/* add a data field to a packed message */
+static inline void push_data( struct packed_message *data, const void *ptr, size_t size )
+{
+    data->data[data->count] = ptr;
+    data->size[data->count] = size;
+    data->count++;
+}
+
+/* pack a pointer into a 32/64 portable format */
+static inline ULONGLONG pack_ptr( const void *ptr )
+{
+    return (ULONG_PTR)ptr;
+}
+
+/***********************************************************************
+ *           pack_reply
+ *
+ * Pack a reply to a message for sending to another process.
+ */
+static void pack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
+                        LRESULT res, struct packed_message *data )
+{
+    data->count = 0;
+    switch(message)
+    {
+    case WM_NCCREATE:
+    case WM_CREATE:
+    {
+        CREATESTRUCTW *cs = (CREATESTRUCTW *)lparam;
+        data->ps.cs.lpCreateParams = (ULONG_PTR)cs->lpCreateParams;
+        data->ps.cs.hInstance      = (ULONG_PTR)cs->hInstance;
+        data->ps.cs.hMenu          = wine_server_user_handle( cs->hMenu );
+        data->ps.cs.hwndParent     = wine_server_user_handle( cs->hwndParent );
+        data->ps.cs.cy             = cs->cy;
+        data->ps.cs.cx             = cs->cx;
+        data->ps.cs.y              = cs->y;
+        data->ps.cs.x              = cs->x;
+        data->ps.cs.style          = cs->style;
+        data->ps.cs.dwExStyle      = cs->dwExStyle;
+        data->ps.cs.lpszName       = (ULONG_PTR)cs->lpszName;
+        data->ps.cs.lpszClass      = (ULONG_PTR)cs->lpszClass;
+        push_data( data, &data->ps.cs, sizeof(data->ps.cs) );
+        break;
+    }
+    case WM_GETTEXT:
+    case CB_GETLBTEXT:
+    case LB_GETTEXT:
+        push_data( data, (WCHAR *)lparam, (res + 1) * sizeof(WCHAR) );
+        break;
+    case WM_GETMINMAXINFO:
+        push_data( data, (MINMAXINFO *)lparam, sizeof(MINMAXINFO) );
+        break;
+    case WM_MEASUREITEM:
+    {
+        MEASUREITEMSTRUCT *mis = (MEASUREITEMSTRUCT *)lparam;
+        data->ps.mis.CtlType    = mis->CtlType;
+        data->ps.mis.CtlID      = mis->CtlID;
+        data->ps.mis.itemID     = mis->itemID;
+        data->ps.mis.itemWidth  = mis->itemWidth;
+        data->ps.mis.itemHeight = mis->itemHeight;
+        data->ps.mis.itemData   = mis->itemData;
+        push_data( data, &data->ps.mis, sizeof(data->ps.mis) );
+        break;
+    }
+    case WM_WINDOWPOSCHANGING:
+    case WM_WINDOWPOSCHANGED:
+    {
+        WINDOWPOS *wp = (WINDOWPOS *)lparam;
+        data->ps.wp.hwnd            = wine_server_user_handle( wp->hwnd );
+        data->ps.wp.hwndInsertAfter = wine_server_user_handle( wp->hwndInsertAfter );
+        data->ps.wp.x               = wp->x;
+        data->ps.wp.y               = wp->y;
+        data->ps.wp.cx              = wp->cx;
+        data->ps.wp.cy              = wp->cy;
+        data->ps.wp.flags           = wp->flags;
+        push_data( data, &data->ps.wp, sizeof(data->ps.wp) );
+        break;
+    }
+    case WM_GETDLGCODE:
+        if (lparam)
+        {
+            MSG *msg = (MSG *)lparam;
+            data->ps.msg.hwnd    = wine_server_user_handle( msg->hwnd );
+            data->ps.msg.message = msg->message;
+            data->ps.msg.wParam  = msg->wParam;
+            data->ps.msg.lParam  = msg->lParam;
+            data->ps.msg.time    = msg->time;
+            data->ps.msg.pt      = msg->pt;
+            push_data( data, &data->ps.msg, sizeof(data->ps.msg) );
+        }
+        break;
+    case SBM_GETSCROLLINFO:
+        push_data( data, (SCROLLINFO *)lparam, sizeof(SCROLLINFO) );
+        break;
+    case EM_GETRECT:
+    case LB_GETITEMRECT:
+    case CB_GETDROPPEDCONTROLRECT:
+    case WM_SIZING:
+    case WM_MOVING:
+        push_data( data, (RECT *)lparam, sizeof(RECT) );
+        break;
+    case EM_GETLINE:
+    {
+        WORD *ptr = (WORD *)lparam;
+        push_data( data, ptr, ptr[-1] * sizeof(WCHAR) );
+        break;
+    }
+    case LB_GETSELITEMS:
+        push_data( data, (UINT *)lparam, wparam * sizeof(UINT) );
+        break;
+    case WM_MDIGETACTIVE:
+        if (lparam) push_data( data, (BOOL *)lparam, sizeof(BOOL) );
+        break;
+    case WM_NCCALCSIZE:
+        if (!wparam)
+            push_data( data, (RECT *)lparam, sizeof(RECT) );
+        else
+        {
+            NCCALCSIZE_PARAMS *ncp = (NCCALCSIZE_PARAMS *)lparam;
+            data->ps.ncp.rgrc[0]         = ncp->rgrc[0];
+            data->ps.ncp.rgrc[1]         = ncp->rgrc[1];
+            data->ps.ncp.rgrc[2]         = ncp->rgrc[2];
+            data->ps.ncp.hwnd            = wine_server_user_handle( ncp->lppos->hwnd );
+            data->ps.ncp.hwndInsertAfter = wine_server_user_handle( ncp->lppos->hwndInsertAfter );
+            data->ps.ncp.x               = ncp->lppos->x;
+            data->ps.ncp.y               = ncp->lppos->y;
+            data->ps.ncp.cx              = ncp->lppos->cx;
+            data->ps.ncp.cy              = ncp->lppos->cy;
+            data->ps.ncp.flags           = ncp->lppos->flags;
+            push_data( data, &data->ps.ncp, sizeof(data->ps.ncp) );
+        }
+        break;
+    case EM_GETSEL:
+    case SBM_GETRANGE:
+    case CB_GETEDITSEL:
+        if (wparam) push_data( data, (DWORD *)wparam, sizeof(DWORD) );
+        if (lparam) push_data( data, (DWORD *)lparam, sizeof(DWORD) );
+        break;
+    case WM_NEXTMENU:
+    {
+        MDINEXTMENU *mnm = (MDINEXTMENU *)lparam;
+        data->ps.mnm.hmenuIn   = wine_server_user_handle( mnm->hmenuIn );
+        data->ps.mnm.hmenuNext = wine_server_user_handle( mnm->hmenuNext );
+        data->ps.mnm.hwndNext  = wine_server_user_handle( mnm->hwndNext );
+        push_data( data, &data->ps.mnm, sizeof(data->ps.mnm) );
+        break;
+    }
+    case WM_MDICREATE:
+    {
+        MDICREATESTRUCTW *mcs = (MDICREATESTRUCTW *)lparam;
+        data->ps.mcs.szClass = pack_ptr( mcs->szClass );
+        data->ps.mcs.szTitle = pack_ptr( mcs->szTitle );
+        data->ps.mcs.hOwner  = pack_ptr( mcs->hOwner );
+        data->ps.mcs.x       = mcs->x;
+        data->ps.mcs.y       = mcs->y;
+        data->ps.mcs.cx      = mcs->cx;
+        data->ps.mcs.cy      = mcs->cy;
+        data->ps.mcs.style   = mcs->style;
+        data->ps.mcs.lParam  = mcs->lParam;
+        push_data( data, &data->ps.mcs, sizeof(data->ps.mcs) );
+        break;
+    }
+    case WM_ASKCBFORMATNAME:
+        push_data( data, (WCHAR *)lparam, (lstrlenW((WCHAR *)lparam) + 1) * sizeof(WCHAR) );
+        break;
+    }
+}
+
+/***********************************************************************
+ *           reply_message
+ *
+ * Send a reply to a sent message.
+ */
+static void reply_message( struct received_message_info *info, LRESULT result, MSG *msg )
+{
+    struct packed_message data;
+    int i, replied = info->flags & ISMEX_REPLIED;
+
+    if (info->flags & ISMEX_NOTIFY) return;  /* notify messages don't get replies */
+    if (!msg && replied) return;  /* replied already */
+
+    memset( &data, 0, sizeof(data) );
+    info->flags |= ISMEX_REPLIED;
+
+    if (info->type == MSG_OTHER_PROCESS && !replied)
+    {
+        pack_reply( msg->hwnd, msg->message, msg->wParam, msg->lParam, result, &data );
+    }
+
+    SERVER_START_REQ( reply_message )
+    {
+        req->result = result;
+        req->remove = msg != NULL;
+        for (i = 0; i < data.count; i++) wine_server_add_data( req, data.data[i], data.size[i] );
+        wine_server_call( req );
+    }
+    SERVER_END_REQ;
+}
+
+/***********************************************************************
+ *           reply_message_result
+ *
+ * Send a reply to a sent message and update thread receive info.
+ */
+BOOL reply_message_result( LRESULT result, MSG *msg )
+{
+    struct received_message_info *info = get_user_thread_info()->receive_info;
+
+    if (!info) return FALSE;
+    reply_message( info, result, msg );
+    if (msg) get_user_thread_info()->receive_info = info->prev;
     return TRUE;
 }
 

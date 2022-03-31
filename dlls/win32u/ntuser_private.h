@@ -256,6 +256,15 @@ typedef struct tagWINDOWPROC
 #define SPY_RESULT_OK             0x0001
 #define SPY_RESULT_DEFWND         0x0002
 
+/* info about the message currently being received by the current thread */
+struct received_message_info
+{
+    UINT  type;
+    MSG   msg;
+    UINT  flags;  /* InSendMessageEx return flags */
+    struct received_message_info *prev;
+};
+
 extern const char *debugstr_msg_name( UINT msg, HWND hwnd ) DECLSPEC_HIDDEN;
 extern const char *debugstr_vkey_name( WPARAM wParam ) DECLSPEC_HIDDEN;
 extern void spy_enter_message( INT flag, HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;

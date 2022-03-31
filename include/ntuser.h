@@ -167,6 +167,7 @@ enum
     NtUserGetSystemMetricsForDpi,
     NtUserMirrorRgn,
     NtUserMonitorFromRect,
+    NtUserReplyMessage,
     NtUserSetIconParam,
     NtUserUnhookWindowsHook,
     /* temporary exports */
@@ -308,6 +309,158 @@ enum wine_internal_message
     WM_WINE_UPDATEWINDOWSTATE,
     WM_WINE_FIRST_DRIVER_MSG = 0x80001000,  /* range of messages reserved for the USER driver */
     WM_WINE_LAST_DRIVER_MSG = 0x80001fff
+};
+
+/* the various structures that can be sent in messages, in platform-independent layout */
+struct packed_CREATESTRUCTW
+{
+    ULONGLONG lpCreateParams;
+    ULONGLONG hInstance;
+    UINT      hMenu;
+    DWORD     __pad1;
+    UINT      hwndParent;
+    DWORD     __pad2;
+    INT       cy;
+    INT       cx;
+    INT       y;
+    INT       x;
+    LONG      style;
+    ULONGLONG lpszName;
+    ULONGLONG lpszClass;
+    DWORD     dwExStyle;
+    DWORD     __pad3;
+};
+
+struct packed_DRAWITEMSTRUCT
+{
+    UINT      CtlType;
+    UINT      CtlID;
+    UINT      itemID;
+    UINT      itemAction;
+    UINT      itemState;
+    UINT      hwndItem;
+    DWORD     __pad1;
+    UINT      hDC;
+    DWORD     __pad2;
+    RECT      rcItem;
+    ULONGLONG itemData;
+};
+
+struct packed_MEASUREITEMSTRUCT
+{
+    UINT      CtlType;
+    UINT      CtlID;
+    UINT      itemID;
+    UINT      itemWidth;
+    UINT      itemHeight;
+    ULONGLONG itemData;
+};
+
+struct packed_DELETEITEMSTRUCT
+{
+    UINT      CtlType;
+    UINT      CtlID;
+    UINT      itemID;
+    UINT      hwndItem;
+    DWORD     __pad;
+    ULONGLONG itemData;
+};
+
+struct packed_COMPAREITEMSTRUCT
+{
+    UINT      CtlType;
+    UINT      CtlID;
+    UINT      hwndItem;
+    DWORD     __pad1;
+    UINT      itemID1;
+    ULONGLONG itemData1;
+    UINT      itemID2;
+    ULONGLONG itemData2;
+    DWORD     dwLocaleId;
+    DWORD     __pad2;
+};
+
+struct packed_WINDOWPOS
+{
+    UINT      hwnd;
+    DWORD     __pad1;
+    UINT      hwndInsertAfter;
+    DWORD     __pad2;
+    INT       x;
+    INT       y;
+    INT       cx;
+    INT       cy;
+    UINT      flags;
+    DWORD     __pad3;
+};
+
+struct packed_COPYDATASTRUCT
+{
+    ULONGLONG dwData;
+    DWORD     cbData;
+    ULONGLONG lpData;
+};
+
+struct packed_HELPINFO
+{
+    UINT      cbSize;
+    INT       iContextType;
+    INT       iCtrlId;
+    UINT      hItemHandle;
+    DWORD     __pad;
+    ULONGLONG dwContextId;
+    POINT     MousePos;
+};
+
+struct packed_NCCALCSIZE_PARAMS
+{
+    RECT      rgrc[3];
+    ULONGLONG __pad1;
+    UINT      hwnd;
+    DWORD     __pad2;
+    UINT      hwndInsertAfter;
+    DWORD     __pad3;
+    INT       x;
+    INT       y;
+    INT       cx;
+    INT       cy;
+    UINT      flags;
+    DWORD     __pad4;
+};
+
+struct packed_MSG
+{
+    UINT      hwnd;
+    DWORD     __pad1;
+    UINT      message;
+    ULONGLONG wParam;
+    ULONGLONG lParam;
+    DWORD     time;
+    POINT     pt;
+    DWORD     __pad2;
+};
+
+struct packed_MDINEXTMENU
+{
+    UINT      hmenuIn;
+    DWORD     __pad1;
+    UINT      hmenuNext;
+    DWORD     __pad2;
+    UINT      hwndNext;
+    DWORD     __pad3;
+};
+
+struct packed_MDICREATESTRUCTW
+{
+    ULONGLONG szClass;
+    ULONGLONG szTitle;
+    ULONGLONG hOwner;
+    INT       x;
+    INT       y;
+    INT       cx;
+    INT       cy;
+    DWORD     style;
+    ULONGLONG lParam;
 };
 
 
