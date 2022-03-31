@@ -365,6 +365,13 @@ static void oss_clean_devnode(char *dest, const char *devnode)
     dest[len] = '\0';
 }
 
+static int open_device(const char *device, EDataFlow flow)
+{
+    int flags = ((flow == eRender) ? O_WRONLY : O_RDONLY) | O_NONBLOCK;
+
+    return open(device, flags, 0);
+}
+
 static UINT get_default_index(EDataFlow flow)
 {
     int fd = -1, err;
@@ -373,11 +380,7 @@ static UINT get_default_index(EDataFlow flow)
     char devnode[OSS_DEVNODE_SIZE];
     OSSDevice *dev_item;
 
-    if(flow == eRender)
-        fd = open("/dev/dsp", O_WRONLY | O_NONBLOCK);
-    else
-        fd = open("/dev/dsp", O_RDONLY | O_NONBLOCK);
-
+    fd = open_device("/dev/dsp", flow);
     if(fd < 0){
         WARN("Couldn't open default device!\n");
         return 0;
@@ -482,10 +485,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID **guids,
         if(&dev_item->entry != &g_devices)
             continue;
 
-        if(flow == eRender)
-            fd = open(devnode, O_WRONLY | O_NONBLOCK, 0);
-        else
-            fd = open(devnode, O_RDONLY | O_NONBLOCK, 0);
+        fd = open_device(devnode, flow);
         if(fd < 0){
             WARN("Opening device \"%s\" failed, pretending it doesn't exist: %d (%s)\n",
                     devnode, errno, strerror(errno));
@@ -578,14 +578,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev,
          return hr;
     }
 
-    if(oss_dev->flow == eRender)
-        This->fd = open(oss_dev->devnode, O_WRONLY | O_NONBLOCK, 0);
-    else if(oss_dev->flow == eCapture)
-        This->fd = open(oss_dev->devnode, O_RDONLY | O_NONBLOCK, 0);
-    else{
-        HeapFree(GetProcessHeap(), 0, This);
-        return E_INVALIDARG;
-    }
+    This->fd = open_device(oss_dev->devnode, oss_dev->flow);
     if(This->fd < 0){
         WARN("Unable to open device %s: %d (%s)\n", oss_dev->devnode, errno,
                 strerror(errno));
@@ -1236,11 +1229,7 @@ static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient3 *iface,
             outpwfx = NULL;
     }
 
-    if(This->dataflow == eRender)
-        fd = open(This->devnode, O_WRONLY | O_NONBLOCK, 0);
-    else if(This->dataflow == eCapture)
-        fd = open(This->devnode, O_RDONLY | O_NONBLOCK, 0);
-
+    fd = open_device(This->devnode, This->dataflow);
     if(fd < 0){
         WARN("Unable to open device %s: %d (%s)\n", This->devnode, errno,
                 strerror(errno));
