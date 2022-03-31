@@ -903,6 +903,12 @@ INT WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size )
     return unix_funcs->pNtUserGetKeyNameText( lparam, buffer, size );
 }
 
+BOOL WINAPI NtUserGetMessage( MSG *msg, HWND hwnd, UINT first, UINT last )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserGetMessage( msg, hwnd, first, last );
+}
+
 BOOL WINAPI NtUserGetUpdateRect( HWND hwnd, RECT *rect, BOOL erase )
 {
     if (!unix_funcs) return FALSE;

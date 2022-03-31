@@ -24,6 +24,7 @@
 #pragma makedep unix
 #endif
 
+#include <assert.h>
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "win32u_private.h"
@@ -36,6 +37,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(msg);
 WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 #define MAX_WINPROC_RECURSION  64
+
+#define WM_NCMOUSEFIRST WM_NCMOUSEMOVE
+#define WM_NCMOUSELAST  (WM_NCMOUSEFIRST+(WM_MOUSELAST-WM_MOUSEFIRST))
 
 #define MAX_PACK_COUNT 4
 
@@ -384,22 +388,24 @@ static void reply_message( struct received_message_info *info, LRESULT result, M
 {
     struct packed_message data;
     int i, replied = info->flags & ISMEX_REPLIED;
+    BOOL remove = msg != NULL;
 
     if (info->flags & ISMEX_NOTIFY) return;  /* notify messages don't get replies */
-    if (!msg && replied) return;  /* replied already */
+    if (!remove && replied) return;  /* replied already */
 
     memset( &data, 0, sizeof(data) );
     info->flags |= ISMEX_REPLIED;
 
     if (info->type == MSG_OTHER_PROCESS && !replied)
     {
+        if (!msg) msg = &info->msg;
         pack_reply( msg->hwnd, msg->message, msg->wParam, msg->lParam, result, &data );
     }
 
     SERVER_START_REQ( reply_message )
     {
         req->result = result;
-        req->remove = msg != NULL;
+        req->remove = remove;
         for (i = 0; i < data.count; i++) wine_server_add_data( req, data.data[i], data.size[i] );
         wine_server_call( req );
     }
@@ -856,6 +862,30 @@ void process_sent_messages(void)
     peek_message( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE, 0 );
 }
 
+/***********************************************************************
+ *           get_server_queue_handle
+ *
+ * Get a handle to the server message queue for the current thread.
+ */
+static HANDLE get_server_queue_handle(void)
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    HANDLE ret;
+
+    if (!(ret = thread_info->server_queue))
+    {
+        SERVER_START_REQ( get_msg_queue )
+        {
+            wine_server_call( req );
+            ret = wine_server_ptr_handle( reply->handle );
+        }
+        SERVER_END_REQ;
+        thread_info->server_queue = ret;
+        if (!ret) ERR( "Cannot get server thread queue\n" );
+    }
+    return ret;
+}
+
 /* check for driver events if we detect that the app is not properly consuming messages */
 static inline void check_for_driver_events( UINT msg )
 {
@@ -889,6 +919,41 @@ static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DW
     if (enable_thunk_lock)
         KeUserModeCallback( NtUserThunkLock, &lock, sizeof(lock), &ret_ptr, &ret_len );
 
+    return ret;
+}
+
+/***********************************************************************
+ *           wait_objects
+ *
+ * Wait for multiple objects including the server queue, with specific queue masks.
+ */
+static DWORD wait_objects( DWORD count, const HANDLE *handles, DWORD timeout,
+                           DWORD wake_mask, DWORD changed_mask, DWORD flags )
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    DWORD ret;
+
+    assert( count );  /* we must have at least the server queue */
+
+    flush_window_surfaces( TRUE );
+
+    if (thread_info->wake_mask != wake_mask || thread_info->changed_mask != changed_mask)
+    {
+        SERVER_START_REQ( set_queue_mask )
+        {
+            req->wake_mask    = wake_mask;
+            req->changed_mask = changed_mask;
+            req->skip_wait    = 0;
+            wine_server_call( req );
+        }
+        SERVER_END_REQ;
+        thread_info->wake_mask = wake_mask;
+        thread_info->changed_mask = changed_mask;
+    }
+
+    ret = wait_message( count, handles, timeout, changed_mask, flags );
+
+    if (ret != WAIT_TIMEOUT) thread_info->wake_mask = thread_info->changed_mask = 0;
     return ret;
 }
 
@@ -927,6 +992,40 @@ BOOL WINAPI NtUserPeekMessage( MSG *msg_out, HWND hwnd, UINT first, UINT last, U
     }
     *msg_out = msg;
     return TRUE;
+}
+
+/***********************************************************************
+ *           NtUserGetMessage  (win32u.@)
+ */
+BOOL WINAPI NtUserGetMessage( MSG *msg, HWND hwnd, UINT first, UINT last )
+{
+    HANDLE server_queue = get_server_queue_handle();
+    unsigned int mask = QS_POSTMESSAGE | QS_SENDMESSAGE;  /* Always selected */
+    int ret;
+
+    user_check_not_lock();
+    check_for_driver_events( 0 );
+
+    if (first || last)
+    {
+        if ((first <= WM_KEYLAST) && (last >= WM_KEYFIRST)) mask |= QS_KEY;
+        if ( ((first <= WM_MOUSELAST) && (last >= WM_MOUSEFIRST)) ||
+             ((first <= WM_NCMOUSELAST) && (last >= WM_NCMOUSEFIRST)) ) mask |= QS_MOUSE;
+        if ((first <= WM_TIMER) && (last >= WM_TIMER)) mask |= QS_TIMER;
+        if ((first <= WM_SYSTIMER) && (last >= WM_SYSTIMER)) mask |= QS_TIMER;
+        if ((first <= WM_PAINT) && (last >= WM_PAINT)) mask |= QS_PAINT;
+    }
+    else mask = QS_ALLINPUT;
+
+    while (!(ret = peek_message( msg, hwnd, first, last, PM_REMOVE | (mask << 16), mask )))
+    {
+        wait_objects( 1, &server_queue, INFINITE, mask & (QS_SENDMESSAGE | QS_SMRESULT), mask, 0 );
+    }
+    if (ret < 0) return -1;
+
+    check_for_driver_events( msg->message );
+
+    return msg->message != WM_QUIT;
 }
 
 /**********************************************************************
