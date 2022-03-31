@@ -4193,7 +4193,6 @@ static void subtest_InsertObject(struct reolecb_obj *callback)
   UpdateWindow(hwnd);
   testobj->line = __LINE__;
   flush_dispatch_messages();
-  todo_wine
   ok(testobj->draw_count != 0, "expected draw_count to be nonzero, got %d\n", testobj->draw_count);
 
   SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"");
@@ -4225,7 +4224,6 @@ static void subtest_InsertObject(struct reolecb_obj *callback)
   UpdateWindow(hwnd);
   testobj->line = __LINE__;
   flush_dispatch_messages();
-  todo_wine
   ok(testobj->draw_count != 0, "expected draw_count to be nonzero, got %d\n", testobj->draw_count);
 
   SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"");
