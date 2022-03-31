@@ -410,6 +410,15 @@ static UINT get_default_index(EDataFlow flow)
     return 0;
 }
 
+static const OSSDevice *get_ossdevice_from_guid(const GUID *guid)
+{
+    OSSDevice *dev_item;
+    LIST_FOR_EACH_ENTRY(dev_item, &g_devices, OSSDevice, entry)
+        if(IsEqualGUID(guid, &dev_item->guid))
+            return dev_item;
+    return NULL;
+}
+
 HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID **guids,
         UINT *num, UINT *def_index)
 {
@@ -542,15 +551,6 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID **guids,
     *def_index = get_default_index(flow);
 
     return S_OK;
-}
-
-static const OSSDevice *get_ossdevice_from_guid(const GUID *guid)
-{
-    OSSDevice *dev_item;
-    LIST_FOR_EACH_ENTRY(dev_item, &g_devices, OSSDevice, entry)
-        if(IsEqualGUID(guid, &dev_item->guid))
-            return dev_item;
-    return NULL;
 }
 
 HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev,
