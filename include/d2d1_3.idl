@@ -323,3 +323,22 @@ interface ID2D1DeviceContext2 : ID2D1DeviceContext1
         [out] ID2D1TransformedImageSource **transformed
     );
 }
+
+[
+    object,
+    uuid(a44472e1-8dfb-4e60-8492-6e2861c9ca8b),
+    local,
+]
+interface ID2D1Device2 : ID2D1Device1
+{
+    HRESULT CreateDeviceContext(
+        [in] D2D1_DEVICE_CONTEXT_OPTIONS options,
+        [out] ID2D1DeviceContext2 **context
+    );
+    void FlushDeviceContexts(
+        [in] ID2D1Bitmap *bitmap
+    );
+    HRESULT GetDxgiDevice(
+        [out] IDXGIDevice **dxgi_device
+    );
+}
