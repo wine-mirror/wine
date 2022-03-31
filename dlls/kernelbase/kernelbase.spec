@@ -943,7 +943,7 @@
 @ stdcall K32InitializeProcessForWsWatch(long) InitializeProcessForWsWatch
 @ stdcall K32QueryWorkingSet(long ptr long) QueryWorkingSet
 @ stdcall K32QueryWorkingSetEx(long ptr long) QueryWorkingSetEx
-@ stub KernelBaseGetGlobalData
+@ stdcall KernelBaseGetGlobalData()
 @ stdcall LCIDToLocaleName(long ptr long long)
 @ stdcall LCMapStringA(long long str long ptr long)
 @ stdcall LCMapStringEx(wstr long wstr long ptr long ptr ptr long)

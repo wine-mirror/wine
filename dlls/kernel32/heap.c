@@ -33,6 +33,9 @@
 #include "winerror.h"
 #include "winnt.h"
 #include "winternl.h"
+
+#include "kernel_private.h"
+
 #include "wine/exception.h"
 #include "wine/debug.h"
 
@@ -155,6 +158,8 @@ struct mem_entry
 };
 
 #include "poppack.h"
+
+struct kernelbase_global_data *kernelbase_global_data;
 
 #define MAGIC_LOCAL_USED    0x5342
 #define POINTER_TO_HANDLE( p ) (*(((const HGLOBAL *)( p )) - 2))

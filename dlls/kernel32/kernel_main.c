@@ -123,6 +123,7 @@ static BOOL process_attach( HMODULE module )
     RtlSetUnhandledExceptionFilter( UnhandledExceptionFilter );
 
     NtQuerySystemInformation( SystemBasicInformation, &system_info, sizeof(system_info), NULL );
+    kernelbase_global_data = KernelBaseGetGlobalData();
 
     copy_startup_info();
 

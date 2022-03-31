@@ -21,6 +21,17 @@
 #ifndef __WINE_KERNEL_PRIVATE_H
 #define __WINE_KERNEL_PRIVATE_H
 
+/* not compatible with windows */
+struct kernelbase_global_data
+{
+    struct mem_entry *mem_entries;
+    struct mem_entry *mem_entries_end;
+};
+
+void *WINAPI KernelBaseGetGlobalData(void);
+
+extern struct kernelbase_global_data *kernelbase_global_data;
+
 NTSTATUS WINAPI BaseGetNamedObjectDirectory( HANDLE *dir );
 
 static inline BOOL set_ntstatus( NTSTATUS status )

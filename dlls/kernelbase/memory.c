@@ -578,6 +578,13 @@ BOOL WINAPI DECLSPEC_HOTPATCH HeapWalk( HANDLE heap, PROCESS_HEAP_ENTRY *entry )
  * Global/local heap functions
  ***********************************************************************/
 
+/* not compatible with windows */
+struct kernelbase_global_data
+{
+    struct mem_entry *mem_entries;
+    struct mem_entry *mem_entries_end;
+};
+
 #include "pshpack1.h"
 
 struct mem_entry
@@ -589,6 +596,8 @@ struct mem_entry
 };
 
 #include "poppack.h"
+
+static struct kernelbase_global_data kernelbase_global_data = {0};
 
 #define MAGIC_LOCAL_USED    0x5342
 /* align the storage needed for the HLOCAL on an 8-byte boundary thus
@@ -616,6 +625,17 @@ static inline void *unsafe_ptr_from_HLOCAL( HLOCAL handle )
     if ((ULONG_PTR)handle & 2) return NULL;
     return handle;
 }
+
+
+/***********************************************************************
+ *           KernelBaseGetGlobalData   (kernelbase.@)
+ */
+void *WINAPI KernelBaseGetGlobalData(void)
+{
+    WARN_(globalmem)( "semi-stub!\n" );
+    return &kernelbase_global_data;
+}
+
 
 /***********************************************************************
  *           GlobalAlloc   (kernelbase.@)
