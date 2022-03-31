@@ -611,9 +611,10 @@ static inline HLOCAL HLOCAL_from_mem( struct mem_entry *mem )
     return &mem->ptr;
 }
 
-static inline BOOL is_pointer( HLOCAL handle )
+static inline void *unsafe_ptr_from_HLOCAL( HLOCAL handle )
 {
-    return !((ULONG_PTR)handle & 2);
+    if ((ULONG_PTR)handle & 2) return NULL;
+    return handle;
 }
 
 /***********************************************************************
@@ -695,6 +696,7 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalFree( HLOCAL handle )
 {
     struct mem_entry *mem;
     HLOCAL ret;
+    void *ptr;
 
     TRACE_(globalmem)( "handle %p\n", handle );
 
@@ -702,9 +704,9 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalFree( HLOCAL handle )
     __TRY
     {
         ret = 0;
-        if (is_pointer( handle )) /* POINTER */
+        if ((ptr = unsafe_ptr_from_HLOCAL( handle )))
         {
-            if (!HeapFree( GetProcessHeap(), HEAP_NO_SERIALIZE, handle ))
+            if (!HeapFree( GetProcessHeap(), HEAP_NO_SERIALIZE, ptr ))
             {
                 SetLastError( ERROR_INVALID_HANDLE );
                 ret = handle;
@@ -752,11 +754,11 @@ LPVOID WINAPI DECLSPEC_HOTPATCH LocalLock( HLOCAL handle )
 
     TRACE_(globalmem)( "handle %p\n", handle );
 
-    if (is_pointer( handle ))
+    if ((ret = unsafe_ptr_from_HLOCAL( handle )))
     {
         __TRY
         {
-            volatile char *p = handle;
+            volatile char *p = ret;
             *p |= 0;
         }
         __EXCEPT_PAGE_FAULT
@@ -764,7 +766,7 @@ LPVOID WINAPI DECLSPEC_HOTPATCH LocalLock( HLOCAL handle )
             return NULL;
         }
         __ENDTRY
-        return handle;
+        return ret;
     }
 
     RtlLockHeap( GetProcessHeap() );
@@ -799,16 +801,16 @@ LPVOID WINAPI DECLSPEC_HOTPATCH LocalLock( HLOCAL handle )
 HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT flags )
 {
     struct mem_entry *mem;
-    void *ptr;
     HLOCAL ret = 0;
     DWORD heap_flags = (flags & LMEM_ZEROINIT) ? HEAP_ZERO_MEMORY : 0;
+    void *ptr;
 
     TRACE_(globalmem)( "handle %p, size %#Ix, flags %#x\n", handle, size, flags );
 
     RtlLockHeap( GetProcessHeap() );
     if (flags & LMEM_MODIFY) /* modify flags */
     {
-        if (is_pointer( handle ) && (flags & LMEM_MOVEABLE))
+        if (unsafe_ptr_from_HLOCAL( handle ) && (flags & LMEM_MOVEABLE))
         {
             /* make a fixed block moveable
              * actually only NT is able to do this. But it's soo simple
@@ -838,11 +840,11 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT f
     }
     else
     {
-        if (is_pointer( handle ))
+        if ((ptr = unsafe_ptr_from_HLOCAL( handle )))
         {
             /* reallocate fixed memory */
             if (!(flags & LMEM_MOVEABLE)) heap_flags |= HEAP_REALLOC_IN_PLACE_ONLY;
-            ret = HeapReAlloc( GetProcessHeap(), heap_flags, handle, size );
+            ret = HeapReAlloc( GetProcessHeap(), heap_flags, ptr, size );
         }
         else if ((mem = unsafe_mem_from_HLOCAL( handle )))
         {
@@ -903,7 +905,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH LocalUnlock( HLOCAL handle )
 
     TRACE_(globalmem)( "handle %p\n", handle );
 
-    if (is_pointer( handle ))
+    if (unsafe_ptr_from_HLOCAL( handle ))
     {
         SetLastError( ERROR_NOT_LOCKED );
         return FALSE;
