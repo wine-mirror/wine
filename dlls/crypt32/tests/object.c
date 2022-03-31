@@ -45,18 +45,10 @@ static char bigCertBase64[] =
 "MHoCAQEwAgYAMBUxEzARBgNVBAMTCkp1YW4gTGFuZwAwIhgPMTYwMTAxMDEwMDAw\n"
 "MDBaGA8xNjAxMDEwMTAwMDAwMFowFTETMBEGA1UEAxMKSnVhbiBMYW5nADAHMAIG\n"
 "AAMBAKMWMBQwEgYDVR0TAQH/BAgwBgEB/wIBAQ==\n";
-static WCHAR bigCertBase64W[] = {
-'M','H','o','C','A','Q','E','w','A','g','Y','A','M','B','U','x','E','z','A',
-'R','B','g','N','V','B','A','M','T','C','k','p','1','Y','W','4','g','T','G',
-'F','u','Z','w','A','w','I','h','g','P','M','T','Y','w','M','T','A','x','M',
-'D','E','w',',','D','A','w','\n',
-'M','D','B','a','G','A','8','x','N','j','A','x','M','D','E','w','M','T','A',
-'w','M','D','A','w','M','F','o','w','F','T','E','T','M','B','E','G','A','1',
-'U','E','A','x','M','K','S','n','V','h','b','i','B','M','Y','W','5','n','A',
-'D','A','H','M','A','I','G','\n',
-'A','A','M','B','A','K','M','W','M','B','Q','w','E','g','Y','D','V','R','0',
-'T','A','Q','H','/','B','A','g','w','B','g','E','B','/','w','I','B','A','Q',
-'=','=','\n',0 };
+static WCHAR bigCertBase64W[] =
+L"MHoCAQEwAgYAMBUxEzARBgNVBAMTCkp1YW4gTGFuZwAwIhgPMTYwMTAxMDEw,DAw\n"
+"MDBaGA8xNjAxMDEwMTAwMDAwMFowFTETMBEGA1UEAxMKSnVhbiBMYW5nADAHMAIG\n"
+"AAMBAKMWMBQwEgYDVR0TAQH/BAgwBgEB/wIBAQ==\n";
 static BYTE signedWithCertWithValidPubKeyContent[] = {
 0x30,0x82,0x01,0x89,0x06,0x09,0x2a,0x86,0x48,0x86,0xf7,0x0d,0x01,0x07,0x02,
 0xa0,0x82,0x01,0x7a,0x30,0x82,0x01,0x76,0x02,0x01,0x01,0x31,0x0e,0x30,0x0c,
@@ -95,34 +87,16 @@ static char signedWithCertWithValidPubKeyContentBase64[] =
 "EzARBgNVBAMTCkp1YW4gTGFuZwACAQEwDAYIKoZIhvcNAgUFADAEBgAFAARAgaZw"
 "s+9Z0WbRm8CatppebW9tDVmpqm7pLKAe7sJgvFm+P2MGjckRHSNkku8u/FcppK/g"
 "7pMZOVHkRLgLKPSoDQ==";
-static WCHAR signedWithCertWithValidPubKeyContentBase64W[] = {
-'M','I','I','B','i','Q','Y','J','K','o','Z','I','h','v','c','N','A','Q','c','C',
-'o','I','I','B','e','j','C','C','A','X','Y','C','A','Q','E','x','D','j','A','M',
-'B','g','g','q','h','k','i','G','9','w','0','C','B','Q','U','A','M','B','M','G',
-'C','S','q','G','S','I','b','3','D','Q','E','H','A','a','A','G','B','A','Q','B',
-'A','g','M','E','o','I','H','S','M','I','H','P','A','g','E','B','M','A','I','G',
-'A','D','A','V','M','R','M','w','E','Q','Y','D','V','Q','Q','D','E','w','p','K',
-'d','W','F','u','I','E','x','h','b','m','c','A','M','C','I','Y','D','z','E','2',
-'M','D','E','w','M','T','A','x','M','D','A','w','M','D','A','w','W','h','g','P',
-'M','T','Y','w','M','T','A','x','M','D','E','w','M','D','A','w','M','D','B','a',
-'M','B','U','x','E','z','A','R','B','g','N','V','B','A','M','T','C','k','p','1',
-'Y','W','4','g','T','G','F','u','Z','w','A','w','X','D','A','N','B','g','k','q',
-'h','k','i','G','9','w','0','B','A','Q','E','F','A','A','N','L','A','D','B','I',
-'A','k','E','A','4','l','Q','6','p','4','O','x','J','x','Q','+','W','b','u','0',
-'U','+','Y','f','5','1','3','x','I','W','i','t','h','V','P','b','a','x','7','r',
-'Z','Z','c','D','h','m','D','e','8','2','w','4','d','e','B','M','Y','b','u','8',
-'Y','h','e','p','z','X','k','/','I','U','6','W','y','w','7','c','Y','Z','Q','w',
-'G','B','B','r','0','B','w','Q','e','Q','I','D','A','Q','A','B','o','x','Y','w',
-'F','D','A','S','B','g','N','V','H','R','M','B','A','f','8','E','C','D','A','G',
-'A','Q','H','/','A','g','E','B','M','X','c','w','d','Q','I','B','A','T','A','a',
-'M','B','U','x','E','z','A','R','B','g','N','V','B','A','M','T','C','k','p','1',
-'Y','W','4','g','T','G','F','u','Z','w','A','C','A','Q','E','w','D','A','Y','I',
-'K','o','Z','I','h','v','c','N','A','g','U','F','A','D','A','E','B','g','A','F',
-'A','A','R','A','g','a','Z','w','s','+','9','Z','0','W','b','R','m','8','C','a',
-'t','p','p','e','b','W','9','t','D','V','m','p','q','m','7','p','L','K','A','e',
-'7','s','J','g','v','F','m','+','P','2','M','G','j','c','k','R','H','S','N','k',
-'k','u','8','u','/','F','c','p','p','K','/','g','7','p','M','Z','O','V','H','k',
-'R','L','g','L','K','P','S','o','D','Q','=','=',0 };
+static WCHAR signedWithCertWithValidPubKeyContentBase64W[] =
+L"MIIBiQYJKoZIhvcNAQcCoIIBejCCAXYCAQExDjAMBggqhkiG9w0CBQUAMBMGCSqG"
+"SIb3DQEHAaAGBAQBAgMEoIHSMIHPAgEBMAIGADAVMRMwEQYDVQQDEwpKdWFuIExh"
+"bmcAMCIYDzE2MDEwMTAxMDAwMDAwWhgPMTYwMTAxMDEwMDAwMDBaMBUxEzARBgNV"
+"BAMTCkp1YW4gTGFuZwAwXDANBgkqhkiG9w0BAQEFAANLADBIAkEA4lQ6p4OxJxQ+"
+"Wbu0U+Yf513xIWithVPbax7rZZcDhmDe82w4deBMYbu8YhepzXk/IU6Wyw7cYZQw"
+"GBBr0BwQeQIDAQABoxYwFDASBgNVHRMBAf8ECDAGAQH/AgEBMXcwdQIBATAaMBUx"
+"EzARBgNVBAMTCkp1YW4gTGFuZwACAQEwDAYIKoZIhvcNAgUFADAEBgAFAARAgaZw"
+"s+9Z0WbRm8CatppebW9tDVmpqm7pLKAe7sJgvFm+P2MGjckRHSNkku8u/FcppK/g"
+"7pMZOVHkRLgLKPSoDQ==";
 
 static void test_query_object(void)
 {

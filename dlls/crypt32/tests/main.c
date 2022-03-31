@@ -272,31 +272,23 @@ static void test_readTrustedPublisherDWORD(void)
     pReadDWORD = (void *)GetProcAddress(hCrypt, "I_CryptReadTrustedPublisherDWORDValueFromRegistry");
     if (pReadDWORD)
     {
-        static const WCHAR safer[] = { 
-         'S','o','f','t','w','a','r','e','\\',
-         'P','o','l','i','c','i','e','s','\\',
-         'M','i','c','r','o','s','o','f','t','\\','S','y','s','t','e','m',
-         'C','e','r','t','i','f','i','c','a','t','e','s','\\',
-         'T','r','u','s','t','e','d','P','u','b','l','i','s','h','e','r',
-         '\\','S','a','f','e','r',0 };
-        static const WCHAR authenticodeFlags[] = { 'A','u','t','h','e','n',
-         't','i','c','o','d','e','F','l','a','g','s',0 };
         BOOL ret, exists = FALSE;
         DWORD size, readFlags = 0, returnedFlags;
         HKEY key;
         LONG rc;
 
-        rc = RegOpenKeyW(HKEY_LOCAL_MACHINE, safer, &key);
+        rc = RegOpenKeyW(HKEY_LOCAL_MACHINE,
+                         L"Software\\Policies\\Microsoft\\SystemCertificates\\TrustedPublisher\\Safer", &key);
         if (rc == ERROR_SUCCESS)
         {
             size = sizeof(readFlags);
-            rc = RegQueryValueExW(key, authenticodeFlags, NULL, NULL,
+            rc = RegQueryValueExW(key, L"AuthenticodeFlags", NULL, NULL,
              (LPBYTE)&readFlags, &size);
             if (rc == ERROR_SUCCESS)
                 exists = TRUE;
         }
         returnedFlags = 0xdeadbeef;
-        ret = pReadDWORD(authenticodeFlags, &returnedFlags);
+        ret = pReadDWORD(L"AuthenticodeFlags", &returnedFlags);
         ok(ret == exists, "Unexpected return value\n");
         ok(readFlags == returnedFlags,
          "Expected flags %08lx, got %08lx\n", readFlags, returnedFlags);

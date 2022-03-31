@@ -41,8 +41,6 @@ static void test_AddRemoveProvider(void)
     BOOL ret;
     SIP_ADD_NEWPROVIDER newprov;
     GUID actionid = { 0xdeadbe, 0xefde, 0xadbe, { 0xef,0xde,0xad,0xbe,0xef,0xde,0xad,0xbe }};
-    static WCHAR dummydll[]      = {'d','e','a','d','b','e','e','f','.','d','l','l',0 };
-    static WCHAR dummyfunction[] = {'d','u','m','m','y','f','u','n','c','t','i','o','n',0 };
 
     /* NULL check */
     SetLastError(0xdeadbeef);
@@ -77,12 +75,12 @@ static void test_AddRemoveProvider(void)
     memset(&newprov, 0, sizeof(SIP_ADD_NEWPROVIDER));
     newprov.cbStruct = sizeof(SIP_ADD_NEWPROVIDER);
     newprov.pgSubject = &actionid;
-    newprov.pwszDLLFileName = dummydll;
-    newprov.pwszGetFuncName = dummyfunction;
-    newprov.pwszPutFuncName = dummyfunction;
-    newprov.pwszCreateFuncName = dummyfunction;
-    newprov.pwszVerifyFuncName = dummyfunction;
-    newprov.pwszRemoveFuncName = dummyfunction;
+    newprov.pwszDLLFileName = (WCHAR *)L"deadbeef.dll";
+    newprov.pwszGetFuncName = (WCHAR *)L"dummyfunction";
+    newprov.pwszPutFuncName = (WCHAR *)L"dummyfunction";
+    newprov.pwszCreateFuncName = (WCHAR *)L"dummyfunction";
+    newprov.pwszVerifyFuncName = (WCHAR *)L"dummyfunction";
+    newprov.pwszRemoveFuncName = (WCHAR *)L"dummyfunction";
     SetLastError(0xdeadbeef);
     ret = CryptSIPAddProvider(&newprov);
     if (!ret && GetLastError() == ERROR_ACCESS_DENIED)
@@ -111,16 +109,16 @@ static void test_AddRemoveProvider(void)
     memset(&newprov, 0, sizeof(SIP_ADD_NEWPROVIDER));
     newprov.cbStruct = sizeof(SIP_ADD_NEWPROVIDER);
     newprov.pgSubject = &actionid;
-    newprov.pwszDLLFileName = dummydll;
-    newprov.pwszGetFuncName = dummyfunction;
-    newprov.pwszPutFuncName = dummyfunction;
-    newprov.pwszCreateFuncName = dummyfunction;
-    newprov.pwszVerifyFuncName = dummyfunction;
-    newprov.pwszRemoveFuncName = dummyfunction;
-    newprov.pwszIsFunctionNameFmt2 = dummyfunction;
-    newprov.pwszIsFunctionName = dummyfunction;
+    newprov.pwszDLLFileName = (WCHAR *)L"deadbeef.dll";
+    newprov.pwszGetFuncName = (WCHAR *)L"dummyfunction";
+    newprov.pwszPutFuncName = (WCHAR *)L"dummyfunction";
+    newprov.pwszCreateFuncName = (WCHAR *)L"dummyfunction";
+    newprov.pwszVerifyFuncName = (WCHAR *)L"dummyfunction";
+    newprov.pwszRemoveFuncName = (WCHAR *)L"dummyfunction";
+    newprov.pwszIsFunctionNameFmt2 = (WCHAR *)L"dummyfunction";
+    newprov.pwszIsFunctionName = (WCHAR *)L"dummyfunction";
     /* If GetCapFuncName set to NULL, then CryptSIPRemoveProvider fails on win 8 */
-    newprov.pwszGetCapFuncName = dummyfunction;
+    newprov.pwszGetCapFuncName = (WCHAR *)L"dummyfunction";
 
     SetLastError(0xdeadbeef);
     ret = CryptSIPAddProvider(&newprov);
@@ -148,7 +146,6 @@ static void test_SIPRetrieveSubjectGUID(void)
     static const CHAR windir[] = "windir";
     static const CHAR regeditExe[] = "regedit.exe";
     static const GUID nullSubject  = { 0x0, 0x0, 0x0, { 0x0,0x0,0x0,0x0,0x0,0x0,0x0,0x0 }};
-    static const WCHAR deadbeef[]  = { 'c',':','\\','d','e','a','d','b','e','e','f','.','d','b','f',0 };
     /* Couldn't find a name for this GUID, it's the one used for 95% of the files */
     static const GUID unknownGUID = { 0xC689AAB8, 0x8E78, 0x11D0, { 0x8C,0x47,0x00,0xC0,0x4F,0xC2,0x95,0xEE }};
     static const GUID cabGUID = { 0xc689aaba, 0x8e78, 0x11d0, {0x8c,0x47,0x00,0xc0,0x4f,0xc2,0x95,0xee }};
@@ -170,7 +167,7 @@ static void test_SIPRetrieveSubjectGUID(void)
     SetLastError(0xdeadbeef);
     /* Set subject to something other than zeros */
     memset(&subject, 1, sizeof(GUID));
-    ret = CryptSIPRetrieveSubjectGuid(deadbeef, NULL, &subject);
+    ret = CryptSIPRetrieveSubjectGuid(L"c:\\deadbeef.dbf", NULL, &subject);
     ok ( !ret, "Expected CryptSIPRetrieveSubjectGuid to fail\n");
     ok (GetLastError() == ERROR_FILE_NOT_FOUND ||
         GetLastError() == ERROR_PATH_NOT_FOUND,

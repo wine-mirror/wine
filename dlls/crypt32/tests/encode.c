@@ -886,9 +886,6 @@ static void test_encodeName(DWORD dwEncoding)
     }
 }
 
-static WCHAR commonNameW[] = { 'J','u','a','n',' ','L','a','n','g',0 };
-static WCHAR surNameW[] = { 'L','a','n','g',0 };
-
 static const BYTE twoRDNsNoNull[] = {
  0x30,0x21,0x31,0x1f,0x30,0x0b,0x06,0x03,0x55,0x04,0x04,0x13,0x04,0x4c,0x61,
  0x6e,0x67,0x30,0x10,0x06,0x03,0x55,0x04,0x03,0x13,0x09,0x4a,0x75,0x61,0x6e,
@@ -935,8 +932,8 @@ static void test_encodeUnicodeName(DWORD dwEncoding)
      */
     attrs[0].pszObjId = oid_common_name;
     attrs[0].dwValueType = CERT_RDN_PRINTABLE_STRING;
-    attrs[0].Value.cbData = sizeof(commonNameW);
-    attrs[0].Value.pbData = (BYTE *)commonNameW;
+    attrs[0].Value.cbData = sizeof(L"Juan Lang");
+    attrs[0].Value.pbData = (BYTE *)L"Juan Lang";
     rdn.cRDNAttr = 1;
     rdn.rgRDNAttr = attrs;
     info.cRDN = 1;
@@ -952,11 +949,11 @@ static void test_encodeUnicodeName(DWORD dwEncoding)
     attrs[0].pszObjId = oid_common_name;
     attrs[0].dwValueType = CERT_RDN_PRINTABLE_STRING;
     attrs[0].Value.cbData = 0;
-    attrs[0].Value.pbData = (BYTE *)commonNameW;
+    attrs[0].Value.pbData = (BYTE *)L"Juan Lang";
     attrs[1].pszObjId = oid_sur_name;
     attrs[1].dwValueType = CERT_RDN_PRINTABLE_STRING;
     attrs[1].Value.cbData = 0;
-    attrs[1].Value.pbData = (BYTE *)surNameW;
+    attrs[1].Value.pbData = (BYTE *)L"Lang";
     rdn.cRDNAttr = 2;
     rdn.rgRDNAttr = attrs;
     info.cRDN = 1;
@@ -1226,9 +1223,9 @@ static void test_decodeUnicodeName(DWORD dwEncoding)
 
         CERT_RDN_ATTR attrs[] = {
          { oid_sur_name, CERT_RDN_PRINTABLE_STRING,
-         { lstrlenW(surNameW) * sizeof(WCHAR), (BYTE *)surNameW } },
+         { lstrlenW(L"Lang") * sizeof(WCHAR), (BYTE *)L"Lang" } },
          { oid_common_name, CERT_RDN_PRINTABLE_STRING,
-         { lstrlenW(commonNameW) * sizeof(WCHAR), (BYTE *)commonNameW } },
+         { lstrlenW(L"Juan Lang") * sizeof(WCHAR), (BYTE *)L"Juan Lang" } },
         };
 
         rdn.cRDNAttr = ARRAY_SIZE(attrs);
@@ -1297,9 +1294,9 @@ static struct EncodedNameValue nameValues[] = {
      visibleCommonNameValue, sizeof(visibleCommonNameValue) },
  { { CERT_RDN_GENERAL_STRING, { sizeof(commonName), (BYTE *)commonName } },
      generalCommonNameValue, sizeof(generalCommonNameValue) },
- { { CERT_RDN_BMP_STRING, { sizeof(commonNameW), (BYTE *)commonNameW } },
+ { { CERT_RDN_BMP_STRING, { sizeof(L"Juan Lang"), (BYTE *)L"Juan Lang" } },
      bmpCommonNameValue, sizeof(bmpCommonNameValue) },
- { { CERT_RDN_UTF8_STRING, { sizeof(commonNameW), (BYTE *)commonNameW } },
+ { { CERT_RDN_UTF8_STRING, { sizeof(L"Juan Lang"), (BYTE *)L"Juan Lang" } },
      utf8CommonNameValue, sizeof(utf8CommonNameValue) },
  /* The following tests succeed under Windows, but really should fail,
   * they contain characters that are illegal for the encoding.  I'm
@@ -1437,14 +1434,11 @@ static void test_decodeNameValue(DWORD dwEncoding)
 
 static const BYTE emptyURL[] = { 0x30, 0x02, 0x86, 0x00 };
 static const BYTE emptyURLExtraBytes[] = { 0x30, 0x02, 0x86, 0x00, 0, 0, 0 };
-static const WCHAR url[] = { 'h','t','t','p',':','/','/','w','i','n','e',
- 'h','q','.','o','r','g',0 };
+static const WCHAR url[] = L"http://winehq.org";
 static const BYTE encodedURL[] = { 0x30, 0x13, 0x86, 0x11, 0x68, 0x74,
  0x74, 0x70, 0x3a, 0x2f, 0x2f, 0x77, 0x69, 0x6e, 0x65, 0x68, 0x71, 0x2e,
  0x6f, 0x72, 0x67 };
-static const WCHAR nihongoURL[] = { 'h','t','t','p',':','/','/',0x226f,
- 0x575b, 0 };
-static const WCHAR dnsName[] = { 'w','i','n','e','h','q','.','o','r','g',0 };
+static const WCHAR dnsName[] = L"winehq.org";
 static const BYTE encodedDnsName[] = { 0x30, 0x0c, 0x82, 0x0a, 0x77, 0x69,
  0x6e, 0x65, 0x68, 0x71, 0x2e, 0x6f, 0x72, 0x67 };
 static const BYTE localhost[] = { 127, 0, 0, 1 };
@@ -1503,7 +1497,7 @@ static void test_encodeAltName(DWORD dwEncoding)
         LocalFree(buf);
     }
     /* Now with the URL containing an invalid IA5 char */
-    U(entry).pwszURL = (LPWSTR)nihongoURL;
+    U(entry).pwszURL = (WCHAR *)L"http://\x226f\x575b";
     ret = pCryptEncodeObjectEx(dwEncoding, X509_ALTERNATE_NAME, &info,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(!ret && GetLastError() == CRYPT_E_INVALID_IA5_STRING,
@@ -1764,17 +1758,13 @@ struct UnicodeExpectedError
     DWORD   error;
 };
 
-static const WCHAR oneW[] = { '1',0 };
-static const WCHAR aW[] = { 'a',0 };
-static const WCHAR quoteW[] = { '"', 0 };
-
 static struct UnicodeExpectedError unicodeErrors[] = {
- { CERT_RDN_ANY_TYPE,         oneW,       0, CRYPT_E_NOT_CHAR_STRING },
- { CERT_RDN_ENCODED_BLOB,     oneW,       0, CRYPT_E_NOT_CHAR_STRING },
- { CERT_RDN_OCTET_STRING,     oneW,       0, CRYPT_E_NOT_CHAR_STRING },
- { CERT_RDN_NUMERIC_STRING,   aW,         0, CRYPT_E_INVALID_NUMERIC_STRING },
- { CERT_RDN_PRINTABLE_STRING, quoteW,     0, CRYPT_E_INVALID_PRINTABLE_STRING },
- { CERT_RDN_IA5_STRING,       nihongoURL, 7, CRYPT_E_INVALID_IA5_STRING },
+ { CERT_RDN_ANY_TYPE,         L"1",       0, CRYPT_E_NOT_CHAR_STRING },
+ { CERT_RDN_ENCODED_BLOB,     L"1",       0, CRYPT_E_NOT_CHAR_STRING },
+ { CERT_RDN_OCTET_STRING,     L"1",       0, CRYPT_E_NOT_CHAR_STRING },
+ { CERT_RDN_NUMERIC_STRING,   L"a",       0, CRYPT_E_INVALID_NUMERIC_STRING },
+ { CERT_RDN_PRINTABLE_STRING, L"\"",      0, CRYPT_E_INVALID_PRINTABLE_STRING },
+ { CERT_RDN_IA5_STRING,       L"http://\x226f\x575b", 7, CRYPT_E_INVALID_IA5_STRING },
 };
 
 struct UnicodeExpectedResult
@@ -1805,24 +1795,24 @@ static BYTE nihongoUTF8[] = { 0x0c,0x0d,0x68,0x74,0x74,0x70,0x3a,0x2f,0x2f,
  0xe2,0x89,0xaf,0xe5,0x9d,0x9b };
 
 static struct UnicodeExpectedResult unicodeResults[] = {
- { CERT_RDN_NUMERIC_STRING,   oneW, { sizeof(oneNumeric), oneNumeric } },
- { CERT_RDN_PRINTABLE_STRING, oneW, { sizeof(onePrintable), onePrintable } },
- { CERT_RDN_TELETEX_STRING,   oneW, { sizeof(oneTeletex), oneTeletex } },
- { CERT_RDN_VIDEOTEX_STRING,  oneW, { sizeof(oneVideotex), oneVideotex } },
- { CERT_RDN_IA5_STRING,       oneW, { sizeof(oneIA5), oneIA5 } },
- { CERT_RDN_GRAPHIC_STRING,   oneW, { sizeof(oneGraphic), oneGraphic } },
- { CERT_RDN_VISIBLE_STRING,   oneW, { sizeof(oneVisible), oneVisible } },
- { CERT_RDN_UNIVERSAL_STRING, oneW, { sizeof(oneUniversal), oneUniversal } },
- { CERT_RDN_GENERAL_STRING,   oneW, { sizeof(oneGeneral), oneGeneral } },
- { CERT_RDN_BMP_STRING,       oneW, { sizeof(oneBMP), oneBMP } },
- { CERT_RDN_UTF8_STRING,      oneW, { sizeof(oneUTF8), oneUTF8 } },
- { CERT_RDN_BMP_STRING,     nihongoURL, { sizeof(nihongoBMP), nihongoBMP } },
- { CERT_RDN_UTF8_STRING,    nihongoURL, { sizeof(nihongoUTF8), nihongoUTF8 } },
+ { CERT_RDN_NUMERIC_STRING,   L"1", { sizeof(oneNumeric), oneNumeric } },
+ { CERT_RDN_PRINTABLE_STRING, L"1", { sizeof(onePrintable), onePrintable } },
+ { CERT_RDN_TELETEX_STRING,   L"1", { sizeof(oneTeletex), oneTeletex } },
+ { CERT_RDN_VIDEOTEX_STRING,  L"1", { sizeof(oneVideotex), oneVideotex } },
+ { CERT_RDN_IA5_STRING,       L"1", { sizeof(oneIA5), oneIA5 } },
+ { CERT_RDN_GRAPHIC_STRING,   L"1", { sizeof(oneGraphic), oneGraphic } },
+ { CERT_RDN_VISIBLE_STRING,   L"1", { sizeof(oneVisible), oneVisible } },
+ { CERT_RDN_UNIVERSAL_STRING, L"1", { sizeof(oneUniversal), oneUniversal } },
+ { CERT_RDN_GENERAL_STRING,   L"1", { sizeof(oneGeneral), oneGeneral } },
+ { CERT_RDN_BMP_STRING,       L"1", { sizeof(oneBMP), oneBMP } },
+ { CERT_RDN_UTF8_STRING,      L"1", { sizeof(oneUTF8), oneUTF8 } },
+ { CERT_RDN_BMP_STRING,       L"http://\x226f\x575b", { sizeof(nihongoBMP), nihongoBMP } },
+ { CERT_RDN_UTF8_STRING,      L"http://\x226f\x575b", { sizeof(nihongoUTF8), nihongoUTF8 } },
 };
 
 static struct UnicodeExpectedResult unicodeWeirdness[] = {
- { CERT_RDN_TELETEX_STRING, nihongoURL, { sizeof(nihongoT61), nihongoT61 } },
- { CERT_RDN_GENERAL_STRING, nihongoURL, { sizeof(nihongoGeneral), nihongoGeneral } },
+ { CERT_RDN_TELETEX_STRING, L"http://\x226f\x575b", { sizeof(nihongoT61), nihongoT61 } },
+ { CERT_RDN_GENERAL_STRING, L"http://\x226f\x575b", { sizeof(nihongoGeneral), nihongoGeneral } },
 };
 
 static void test_encodeUnicodeNameValue(DWORD dwEncoding)
@@ -1854,12 +1844,12 @@ static void test_encodeUnicodeNameValue(DWORD dwEncoding)
     ok(!ret && GetLastError() == CRYPT_E_NOT_CHAR_STRING,
      "Expected CRYPT_E_NOT_CHAR_STRING, got %08lx\n", GetLastError());
     value.dwValueType = CERT_RDN_ANY_TYPE;
-    value.Value.pbData = (LPBYTE)oneW;
+    value.Value.pbData = (LPBYTE)L"1";
     ret = pCryptEncodeObjectEx(dwEncoding, X509_UNICODE_NAME_VALUE, &value,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(!ret && GetLastError() == CRYPT_E_NOT_CHAR_STRING,
      "Expected CRYPT_E_NOT_CHAR_STRING, got %08lx\n", GetLastError());
-    value.Value.cbData = sizeof(oneW);
+    value.Value.cbData = sizeof(L"1");
     ret = pCryptEncodeObjectEx(dwEncoding, X509_UNICODE_NAME_VALUE, &value,
      CRYPT_ENCODE_ALLOC_FLAG, NULL, &buf, &size);
     ok(!ret && GetLastError() == CRYPT_E_NOT_CHAR_STRING,
@@ -3699,7 +3689,7 @@ static void test_encodeCRLDistPoints(DWORD dwEncoding)
     /* A dist point with an invalid name */
     point.DistPointName.dwDistPointNameChoice = CRL_DIST_POINT_FULL_NAME;
     entry.dwAltNameChoice = CERT_ALT_NAME_URL;
-    U(entry).pwszURL = (LPWSTR)nihongoURL;
+    U(entry).pwszURL = (WCHAR *)L"http://\x226f\x575b";
     U(point.DistPointName).FullName.cAltEntry = 1;
     U(point.DistPointName).FullName.rgAltEntry = &entry;
     ret = pCryptEncodeObjectEx(dwEncoding, X509_CRL_DIST_POINTS, &info,
@@ -7567,8 +7557,6 @@ static void test_decodeNameConstraints(DWORD dwEncoding)
     }
 }
 
-static WCHAR noticeText[] = { 'T','h','i','s',' ','i','s',' ','a',' ',
- 'n','o','t','i','c','e',0 };
 static const BYTE noticeWithDisplayText[] = {
  0x30,0x22,0x1e,0x20,0x00,0x54,0x00,0x68,0x00,0x69,0x00,0x73,0x00,0x20,0x00,
  0x69,0x00,0x73,0x00,0x20,0x00,0x61,0x00,0x20,0x00,0x6e,0x00,0x6f,0x00,0x74,
@@ -7607,7 +7595,7 @@ static void test_encodePolicyQualifierUserNotice(DWORD dwEncoding)
         ok(!memcmp(buf, emptySequence, size), "unexpected value\n");
         LocalFree(buf);
     }
-    notice.pszDisplayText = noticeText;
+    notice.pszDisplayText = (WCHAR *)L"This is a notice";
     ret = pCryptEncodeObjectEx(dwEncoding,
      X509_PKIX_POLICY_QUALIFIER_USERNOTICE, &notice, CRYPT_ENCODE_ALLOC_FLAG,
      NULL, &buf, &size);
@@ -7663,7 +7651,7 @@ static void test_decodePolicyQualifierUserNotice(DWORD dwEncoding)
     ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
     if (ret)
     {
-        ok(!lstrcmpW(notice->pszDisplayText, noticeText),
+        ok(!lstrcmpW(notice->pszDisplayText, L"This is a notice"),
          "unexpected display text\n");
         ok(notice->pNoticeReference == NULL, "unexpected notice reference\n");
         LocalFree(notice);
@@ -7675,7 +7663,7 @@ static void test_decodePolicyQualifierUserNotice(DWORD dwEncoding)
     ok(ret, "CryptDecodeObjectEx failed: %08lx\n", GetLastError());
     if (ret)
     {
-        ok(!lstrcmpW(notice->pszDisplayText, noticeText),
+        ok(!lstrcmpW(notice->pszDisplayText, L"This is a notice"),
          "unexpected display text\n");
         ok(notice->pNoticeReference != NULL, "expected a notice reference\n");
         if (notice->pNoticeReference)

@@ -5140,31 +5140,6 @@ static void check_ssl_policy(void)
 {
     CERT_CHAIN_POLICY_PARA policyPara = { 0 };
     SSL_EXTRA_CERT_CHAIN_POLICY_PARA sslPolicyPara = { { 0 } };
-    WCHAR winehq[] = { 'w','i','n','e','h','q','.','o','r','g',0 };
-    WCHAR google_dot_com[] = { 'w','w','w','.','g','o','o','g','l','e','.',
-     'c','o','m',0 };
-    WCHAR battle_dot_net[] = { 'w','w','w','.','b','a','t','t','l','e','.',
-     'n','e','t',0 };
-    WCHAR a_dot_openssl_dot_org[] = { 'a','.','o','p','e','n','s','s','l','.',
-     'o','r','g',0 };
-    WCHAR openssl_dot_org[] = { 'o','p','e','n','s','s','l','.','o','r','g',0 };
-    WCHAR fopenssl_dot_org[] = { 'f','o','p','e','n','s','s','l','.',
-     'o','r','g',0 };
-    WCHAR a_dot_b_dot_openssl_dot_org[] = { 'a','.','b','.',
-     'o','p','e','n','s','s','l','.','o','r','g',0 };
-    WCHAR cs_dot_stanford_dot_edu[] = { 'c','s','.',
-     's','t','a','n','f','o','r','d','.','e','d','u',0 };
-    WCHAR www_dot_cs_dot_stanford_dot_edu[] = { 'w','w','w','.','c','s','.',
-     's','t','a','n','f','o','r','d','.','e','d','u',0 };
-    WCHAR a_dot_cs_dot_stanford_dot_edu[] = { 'a','.','c','s','.',
-     's','t','a','n','f','o','r','d','.','e','d','u',0 };
-    WCHAR test_dot_winehq_dot_org[] = { 't','e','s','t','.',
-     'w','i','n','e','h','q','.','o','r','g',0 };
-    WCHAR a_dot_b_dot_winehq_dot_org[] = { 'a','.','b','.',
-     'w','i','n','e','h','q','.','o','r','g',0 };
-    WCHAR foo_dot_com[] = { 'f','o','o','.','c','o','m',0 };
-    WCHAR afoo_dot_com[] = { 'a','f','o','o','.','c','o','m',0 };
-    WCHAR a_dot_foo_dot_com[] = { 'a','.','f','o','o','.','c','o','m',0 };
     HCERTSTORE testRoot;
     CERT_CHAIN_ENGINE_CONFIG engineConfig = { sizeof(engineConfig), 0 };
     HCERTCHAINENGINE engine;
@@ -5199,7 +5174,7 @@ static void check_ssl_policy(void)
     /* One more time authenticating a client, but specify winehq.org as the
      * server name.
      */
-    sslPolicyPara.pwszServerName = winehq;
+    sslPolicyPara.pwszServerName = (WCHAR *)L"winehq.org";
     CHECK_CHAIN_POLICY_STATUS_ARRAY(CERT_CHAIN_POLICY_SSL, NULL, sslPolicyCheck,
      &oct2007, &policyPara);
     /* And again authenticating a server, still specifying winehq.org as the
@@ -5226,7 +5201,7 @@ static void check_ssl_policy(void)
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, NULL,
      ignoredUnknownCAPolicyCheck, &oct2007, &policyPara);
     /* And again, but checking the Google chain at a bad date */
-    sslPolicyPara.pwszServerName = google_dot_com;
+    sslPolicyPara.pwszServerName = (WCHAR *)L"www.google.com";
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, NULL,
      googlePolicyCheckWithMatchingNameExpired, &oct2007, &policyPara);
     policyPara.dwFlags = 0;
@@ -5239,7 +5214,7 @@ static void check_ssl_policy(void)
      googlePolicyCheckWithMatchingName, &oct2007, &policyPara);
     /* And again, but checking the Google chain at a good date */
     sslPolicyPara.fdwChecks = SECURITY_FLAG_IGNORE_UNKNOWN_CA;
-    sslPolicyPara.pwszServerName = google_dot_com;
+    sslPolicyPara.pwszServerName = (WCHAR *)L"www.google.com";
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, NULL,
      googlePolicyCheckWithMatchingName, &nov2016, &policyPara);
     sslPolicyPara.fdwChecks = 0;
@@ -5248,34 +5223,34 @@ static void check_ssl_policy(void)
      * with various combinations of matching and non-matching names.
      * With "a.openssl.org": match
      */
-    sslPolicyPara.pwszServerName = a_dot_openssl_dot_org;
+    sslPolicyPara.pwszServerName = (WCHAR *)L"a.openssl.org";
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, NULL,
      opensslPolicyCheckWithMatchingName, &oct2009, &policyPara);
     /* With "openssl.org": no match */
-    sslPolicyPara.pwszServerName = openssl_dot_org;
+    sslPolicyPara.pwszServerName = (WCHAR *)L"openssl.org";
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, NULL,
      opensslPolicyCheckWithoutMatchingName, &oct2009, &policyPara);
     /* With "fopenssl.org": no match */
-    sslPolicyPara.pwszServerName = fopenssl_dot_org;
+    sslPolicyPara.pwszServerName = (WCHAR *)L"fopenssl.org";
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, NULL,
      opensslPolicyCheckWithoutMatchingName, &oct2009, &policyPara);
     /* with "a.b.openssl.org": no match */
-    sslPolicyPara.pwszServerName = a_dot_b_dot_openssl_dot_org;
+    sslPolicyPara.pwszServerName = (WCHAR *)L"a.b.openssl.org";
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, NULL,
      opensslPolicyCheckWithoutMatchingName, &oct2009, &policyPara);
     /* Check again with the cs.stanford.edu, which has both cs.stanford.edu
      * and www.cs.stanford.edu in its subject alternative name.
      * With "cs.stanford.edu": match
      */
-    sslPolicyPara.pwszServerName = cs_dot_stanford_dot_edu;
+    sslPolicyPara.pwszServerName = (WCHAR *)L"cs.stanford.edu";
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, NULL,
      stanfordPolicyCheckWithMatchingName, &nov2016, &policyPara);
     /* With "www.cs.stanford.edu": match */
-    sslPolicyPara.pwszServerName = www_dot_cs_dot_stanford_dot_edu;
+    sslPolicyPara.pwszServerName = (WCHAR *)L"www.cs.stanford.edu";
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, NULL,
      stanfordPolicyCheckWithMatchingName, &nov2016, &policyPara);
     /* With "a.cs.stanford.edu": no match */
-    sslPolicyPara.pwszServerName = a_dot_cs_dot_stanford_dot_edu;
+    sslPolicyPara.pwszServerName = (WCHAR *)L"a.cs.stanford.edu";
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, NULL,
      stanfordPolicyCheckWithoutMatchingName, &nov2016, &policyPara);
     /* Check chain29, which has a wildcard in its subject alternative name,
@@ -5293,15 +5268,15 @@ static void check_ssl_policy(void)
         return;
     }
     /* With "winehq.org": no match */
-    sslPolicyPara.pwszServerName = winehq;
+    sslPolicyPara.pwszServerName = (WCHAR *)L"winehq.org";
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, engine,
      winehqPolicyCheckWithoutMatchingName, &oct2007, &policyPara);
     /* With "test.winehq.org": match */
-    sslPolicyPara.pwszServerName = test_dot_winehq_dot_org;
+    sslPolicyPara.pwszServerName = (WCHAR *)L"test.winehq.org";
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, engine,
      winehqPolicyCheckWithMatchingName, &oct2007, &policyPara);
     /* With "a.b.winehq.org": no match */
-    sslPolicyPara.pwszServerName = a_dot_b_dot_winehq_dot_org;
+    sslPolicyPara.pwszServerName = (WCHAR *)L"a.b.winehq.org";
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, engine,
      winehqPolicyCheckWithoutMatchingName, &oct2007, &policyPara);
     /* When specifying to ignore name mismatch: match */
@@ -5320,20 +5295,20 @@ static void check_ssl_policy(void)
     /* Test chain31, which has two CNs, "*.foo.com" and "foo.com", against
      * some names that match one of the CNs:
      */
-    sslPolicyPara.pwszServerName = foo_dot_com;
+    sslPolicyPara.pwszServerName = (WCHAR *)L"foo.com";
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, NULL,
      fooPolicyCheckWithMatchingName, &oct2007, &policyPara);
-    sslPolicyPara.pwszServerName = a_dot_foo_dot_com;
+    sslPolicyPara.pwszServerName = (WCHAR *)L"a.foo.com";
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, NULL,
      fooPolicyCheckWithMatchingName, &oct2007, &policyPara);
     /* and against a name that doesn't match either CN: */
-    sslPolicyPara.pwszServerName = afoo_dot_com;
+    sslPolicyPara.pwszServerName = (WCHAR *)L"afoo.com";
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, NULL,
      fooPolicyCheckWithoutMatchingName, &oct2007, &policyPara);
     /* The Battle.Net chain checks a certificate with a domain component
      * containing a terminating NULL.
      */
-    sslPolicyPara.pwszServerName = battle_dot_net;
+    sslPolicyPara.pwszServerName = (WCHAR *)L"www.battle.net";
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, NULL,
      nullTerminatedDomainComponentPolicyCheck, &oct2010, &policyPara);
 }

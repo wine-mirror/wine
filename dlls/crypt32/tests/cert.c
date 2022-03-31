@@ -348,7 +348,6 @@ static void checkHash(const BYTE *data, DWORD dataLen, ALG_ID algID,
 }
 
 static const CHAR cspNameA[] = "WineCryptTemp";
-static WCHAR cspNameW[] = { 'W','i','n','e','C','r','y','p','t','T','e','m','p',0 };
 static const BYTE v1CertWithPubKey[] = {
 0x30,0x81,0x95,0x02,0x01,0x01,0x30,0x02,0x06,0x00,0x30,0x15,0x31,0x13,0x30,
 0x11,0x06,0x03,0x55,0x04,0x03,0x13,0x0a,0x4a,0x75,0x61,0x6e,0x20,0x4c,0x61,
@@ -1135,9 +1134,6 @@ static void testFindCert(void)
     CRYPT_HASH_BLOB blob;
     BYTE otherSerialNumber[] = { 2 };
     DWORD count;
-    static const WCHAR juan[] = { 'j','u','a','n',0 };
-    static const WCHAR lang[] = { 'L','A','N','G',0 };
-    static const WCHAR malcolm[] = { 'm','a','l','c','o','l','m',0 };
 
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
@@ -1272,7 +1268,7 @@ static void testFindCert(void)
     context = NULL;
     do {
         context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
-         CERT_FIND_ISSUER_STR, juan, context);
+         CERT_FIND_ISSUER_STR, L"juan", context);
         if (context)
             count++;
     } while (context);
@@ -1281,14 +1277,14 @@ static void testFindCert(void)
     context = NULL;
     do {
         context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
-         CERT_FIND_ISSUER_STR, lang, context);
+         CERT_FIND_ISSUER_STR, L"LANG", context);
         if (context)
             count++;
     } while (context);
     ok(count == 3, "expected 3 contexts\n");
     SetLastError(0xdeadbeef);
     context = CertFindCertificateInStore(store, X509_ASN_ENCODING, 0,
-     CERT_FIND_ISSUER_STR, malcolm, NULL);
+     CERT_FIND_ISSUER_STR, L"malcolm", NULL);
     ok(!context, "expected no certs\n");
     ok(GetLastError() == CRYPT_E_NOT_FOUND,
      "expected CRYPT_E_NOT_FOUND, got %08lx\n", GetLastError());
@@ -1564,8 +1560,6 @@ static void testGetIssuerCert(void)
     DWORD flags = 0xffffffff, size;
     CERT_NAME_BLOB certsubject;
     BYTE *certencoded;
-    WCHAR rootW[] = {'R', 'O', 'O', 'T', '\0'},
-          certname[] = {'C', 'N', '=', 'd', 'u', 'm', 'm', 'y', ',', ' ', 'T', '=', 'T', 'e', 's', 't', '\0'};
     HCERTSTORE store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
 
@@ -1707,10 +1701,10 @@ static void testGetIssuerCert(void)
 
     /* Self-sign a certificate, add to the store and test getting the issuer */
     size = 0;
-    ok(CertStrToNameW(X509_ASN_ENCODING, certname, CERT_X500_NAME_STR, NULL, NULL, &size, NULL),
+    ok(CertStrToNameW(X509_ASN_ENCODING, L"CN=dummy, T=Test", CERT_X500_NAME_STR, NULL, NULL, &size, NULL),
        "CertStrToName should have worked\n");
     certencoded = HeapAlloc(GetProcessHeap(), 0, size);
-    ok(CertStrToNameW(X509_ASN_ENCODING, certname, CERT_X500_NAME_STR, NULL, certencoded, &size, NULL),
+    ok(CertStrToNameW(X509_ASN_ENCODING, L"CN=dummy, T=Test", CERT_X500_NAME_STR, NULL, certencoded, &size, NULL),
        "CertStrToName should have worked\n");
     certsubject.pbData = certencoded;
     certsubject.cbData = size;
@@ -1735,7 +1729,7 @@ static void testGetIssuerCert(void)
     HeapFree(GetProcessHeap(), 0, certencoded);
 
     /* Test root storage self-signed certificate */
-    store = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0, CERT_SYSTEM_STORE_CURRENT_USER, rootW);
+    store = CertOpenStore(CERT_STORE_PROV_SYSTEM, 0, 0, CERT_SYSTEM_STORE_CURRENT_USER, L"ROOT");
     ok(store != NULL, "CertOpenStore failed: %08lx\n", GetLastError());
     flags = 0;
     cert1 = CertEnumCertificatesInStore(store, NULL);
@@ -1796,10 +1790,6 @@ static void testCryptHashCert2(void)
     BOOL ret;
     BYTE hash[20];
     DWORD hashLen;
-    const WCHAR SHA1[] = { 'S', 'H', 'A', '1', '\0' };
-    const WCHAR invalidAlgorithm[] = { '_', 'S', 'H', 'O', 'U', 'L', 'D',
-                                       'N', 'O', 'T',
-                                       'E', 'X', 'I', 'S', 'T', '_', '\0' };
 
     if (!pCryptHashCertificate2)
     {
@@ -1809,21 +1799,21 @@ static void testCryptHashCert2(void)
 
     /* Test empty hash */
     hashLen = sizeof(hash);
-    ret = pCryptHashCertificate2(SHA1, 0, NULL, NULL, 0, hash, &hashLen);
+    ret = pCryptHashCertificate2(L"SHA1", 0, NULL, NULL, 0, hash, &hashLen);
     ok(ret, "CryptHashCertificate2 failed: %08lx\n", GetLastError());
     ok(hashLen == sizeof(hash), "Got unexpected size of hash %ld\n", hashLen);
     ok(!memcmp(hash, emptyHash, sizeof(emptyHash)), "Unexpected hash of nothing\n");
 
     /* Test known hash */
     hashLen = sizeof(hash);
-    ret = pCryptHashCertificate2(SHA1, 0, NULL, toHash, sizeof(toHash), hash, &hashLen);
+    ret = pCryptHashCertificate2(L"SHA1", 0, NULL, toHash, sizeof(toHash), hash, &hashLen);
     ok(ret, "CryptHashCertificate2 failed: %08lx\n", GetLastError());
     ok(hashLen == sizeof(hash), "Got unexpected size of hash %ld\n", hashLen);
     ok(!memcmp(hash, knownHash, sizeof(knownHash)), "Unexpected hash\n");
 
     /* Test null hash size pointer just sets hash size */
     hashLen = 0;
-    ret = pCryptHashCertificate2(SHA1, 0, NULL, toHash, sizeof(toHash), NULL, &hashLen);
+    ret = pCryptHashCertificate2(L"SHA1", 0, NULL, toHash, sizeof(toHash), NULL, &hashLen);
     ok(ret, "CryptHashCertificate2 failed: %08lx\n", GetLastError());
     ok(hashLen == sizeof(hash), "Hash size not set correctly (%ld)\n", hashLen);
 
@@ -1837,24 +1827,24 @@ static void testCryptHashCert2(void)
     /* Test invalid algorithm */
     hashLen = sizeof(hash);
     SetLastError(0xdeadbeef);
-    ret = pCryptHashCertificate2(invalidAlgorithm, 0, NULL, toHash, sizeof(toHash), hash, &hashLen);
+    ret = pCryptHashCertificate2(L"_SHOULDNOTEXIST_", 0, NULL, toHash, sizeof(toHash), hash, &hashLen);
     ok(!ret && GetLastError() == STATUS_NOT_FOUND,
      "Expected STATUS_NOT_FOUND (0x%08lx), got 0x%08lx\n", STATUS_NOT_FOUND, GetLastError());
 
     /* Test hash buffer too small */
     hashLen = sizeof(hash) / 2;
     SetLastError(0xdeadbeef);
-    ret = pCryptHashCertificate2(SHA1, 0, NULL, toHash, sizeof(toHash), hash, &hashLen);
+    ret = pCryptHashCertificate2(L"SHA1", 0, NULL, toHash, sizeof(toHash), hash, &hashLen);
     ok(!ret && GetLastError() == ERROR_MORE_DATA,
      "Expected ERROR_MORE_DATA (%d), got %ld\n", ERROR_MORE_DATA, GetLastError());
 
     /* Null hash length crashes Windows implementations */
     if (0) {
         /* Test hashLen null with hash */
-        ret = pCryptHashCertificate2(SHA1, 0, NULL, toHash, sizeof(toHash), hash, NULL);
+        ret = pCryptHashCertificate2(L"SHA1", 0, NULL, toHash, sizeof(toHash), hash, NULL);
 
         /* Test hashLen null with no hash */
-        ret = pCryptHashCertificate2(SHA1, 0, NULL, toHash, sizeof(toHash), NULL, NULL);
+        ret = pCryptHashCertificate2(L"SHA1", 0, NULL, toHash, sizeof(toHash), NULL, NULL);
     }
 }
 
@@ -2311,7 +2301,7 @@ static void testCreateSelfSignCert(void)
                     if (ret)
                     {
                         /* Sanity-check the key provider */
-                        ok(!lstrcmpW(pInfo->pwszContainerName, cspNameW),
+                        ok(!lstrcmpW(pInfo->pwszContainerName, L"WineCryptTemp"),
                          "Unexpected key container\n");
                         ok(!lstrcmpW(pInfo->pwszProvName, MS_DEF_PROV_W),
                          "Unexpected provider\n");
@@ -2346,7 +2336,7 @@ static void testCreateSelfSignCert(void)
     info.dwProvType = PROV_RSA_FULL;
     info.dwKeySpec = AT_KEYEXCHANGE;
     info.pwszProvName = (LPWSTR) MS_DEF_PROV_W;
-    info.pwszContainerName = cspNameW;
+    info.pwszContainerName = (WCHAR *)L"WineCryptTemp";
     /* This should fail because the CSP doesn't have the specified key. */
     SetLastError(0xdeadbeef);
     context = pCertCreateSelfSignCertificate(csp, &name, 0, &info, NULL, NULL,
@@ -2385,7 +2375,7 @@ static void testCreateSelfSignCert(void)
                 if (ret)
                 {
                     /* Sanity-check the key provider */
-                    ok(!lstrcmpW(pInfo->pwszContainerName, cspNameW),
+                    ok(!lstrcmpW(pInfo->pwszContainerName, L"WineCryptTemp"),
                         "Unexpected key container\n");
                     ok(!lstrcmpW(pInfo->pwszProvName, MS_DEF_PROV_W),
                         "Unexpected provider\n");
@@ -2432,7 +2422,7 @@ static void testCreateSelfSignCert(void)
                 if (ret)
                 {
                     /* Sanity-check the key provider */
-                    ok(!lstrcmpW(pInfo->pwszContainerName, cspNameW),
+                    ok(!lstrcmpW(pInfo->pwszContainerName, L"WineCryptTemp"),
                         "Unexpected key container\n");
                     ok(!lstrcmpW(pInfo->pwszProvName, MS_DEF_PROV_W),
                         "Unexpected provider\n");
@@ -2468,7 +2458,7 @@ static void testCreateSelfSignCert(void)
     info.dwProvType = PROV_RSA_FULL;
     info.dwKeySpec = AT_SIGNATURE;
     info.pwszProvName = (LPWSTR) MS_DEF_PROV_W;
-    info.pwszContainerName = cspNameW;
+    info.pwszContainerName = (WCHAR *)L"WineCryptTemp";
     /* This should fail because the CSP doesn't have the specified key. */
     SetLastError(0xdeadbeef);
     context = pCertCreateSelfSignCertificate(csp, &name, 0, &info, NULL, NULL,
@@ -2509,7 +2499,7 @@ static void testCreateSelfSignCert(void)
                 if (ret)
                 {
                     /* Sanity-check the key provider */
-                    ok(!lstrcmpW(pInfo->pwszContainerName, cspNameW),
+                    ok(!lstrcmpW(pInfo->pwszContainerName, L"WineCryptTemp"),
                         "Unexpected key container\n");
                     ok(!lstrcmpW(pInfo->pwszProvName, MS_DEF_PROV_W),
                         "Unexpected provider\n");
@@ -3112,7 +3102,7 @@ static void testIsRDNAttrsInCertificateName(void)
     static char juan_with_intermediate_space[] = "Juan  Lang";
     static char juan_with_trailing_space[] = "Juan Lang ";
     static char juan_lower_case[] = "juan lang";
-    static WCHAR juanW[] = { 'J','u','a','n',' ','L','a','n','g',0 };
+    static WCHAR juanW[] = L"Juan Lang";
     static char the_wine_project[] = "The Wine Project";
     BOOL ret;
     CERT_NAME_BLOB name;
@@ -3852,7 +3842,7 @@ static void testAcquireCertPrivateKey(void)
 
     lstrcpyW(ms_def_prov_w, MS_DEF_PROV_W);
 
-    keyProvInfo.pwszContainerName = cspNameW;
+    keyProvInfo.pwszContainerName = (WCHAR *)L"WineCryptTemp";
     keyProvInfo.pwszProvName = ms_def_prov_w;
     keyProvInfo.dwProvType = PROV_RSA_FULL;
     keyProvInfo.dwFlags = 0;
