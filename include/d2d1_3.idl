@@ -53,6 +53,21 @@ typedef enum D2D1_TRANSFORMED_IMAGE_SOURCE_OPTIONS
     D2D1_TRANSFORMED_IMAGE_SOURCE_OPTIONS_FORCE_DWORD = 0xffffffff
 } D2D1_TRANSFORMED_IMAGE_SOURCE_OPTIONS;
 
+typedef enum D2D1_IMAGE_SOURCE_LOADING_OPTIONS
+{
+    D2D1_IMAGE_SOURCE_LOADING_OPTIONS_NONE = 0x0,
+    D2D1_IMAGE_SOURCE_LOADING_OPTIONS_RELEASE_SOURCE = 0x1,
+    D2D1_IMAGE_SOURCE_LOADING_OPTIONS_CACHE_ON_DEMAND = 0x2,
+    D2D1_IMAGE_SOURCE_LOADING_OPTIONS_FORCE_DWORD = 0xffffffff
+} D2D1_IMAGE_SOURCE_LOADING_OPTIONS;
+
+typedef enum D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS
+{
+    D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS_NONE = 0x0,
+    D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS_LOW_QUALITY_PRIMARY_CONVERSION = 0x1,
+    D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS_FORCE_DWORD = 0xffffffff
+} D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS;
+
 typedef struct D2D1_INK_POINT
 {
     float x;
@@ -66,6 +81,12 @@ typedef struct D2D1_INK_BEZIER_SEGMENT
     D2D1_INK_POINT point2;
     D2D1_INK_POINT point3;
 } D2D1_INK_BEZIER_SEGMENT;
+
+typedef struct D2D1_INK_STYLE_PROPERTIES
+{
+    D2D1_INK_NIB_SHAPE nibShape;
+    D2D1_MATRIX_3X2_F nibTransform;
+} D2D1_INK_STYLE_PROPERTIES;
 
 typedef struct D2D1_GRADIENT_MESH_PATCH
 {
@@ -228,3 +249,77 @@ interface ID2D1TransformedImageSource : ID2D1Image
         [out] D2D1_TRANSFORMED_IMAGE_SOURCE_PROPERTIES *out
     );
 };
+
+[
+    object,
+    uuid(53dd9855-a3b0-4d5b-82e1-26e25c5e5797),
+    local,
+]
+interface ID2D1LookupTable3D : ID2D1Resource
+{
+}
+
+[
+    object,
+    uuid(394ea6a3-0c34-4321-950b-6ca20f0be6c7),
+    local,
+]
+interface ID2D1DeviceContext2 : ID2D1DeviceContext1
+{
+    HRESULT CreateInk(
+        [in] const D2D1_INK_POINT *start_point,
+        [out] ID2D1Ink **ink
+    );
+    HRESULT CreateInkStyle(
+        [in, optional] const D2D1_INK_STYLE_PROPERTIES *ink_style_properties,
+        [out] ID2D1InkStyle **ink_style
+    );
+    HRESULT CreateGradientMesh(
+        [in] const D2D1_GRADIENT_MESH_PATCH *patches,
+        [in] UINT32 patches_count,
+        [out] ID2D1GradientMesh **gradient_mesh
+    );
+    HRESULT CreateImageSourceFromWic(
+        [in] IWICBitmapSource *wic_bitmap_source,
+        [in] D2D1_IMAGE_SOURCE_LOADING_OPTIONS loading_options,
+        [in] D2D1_ALPHA_MODE alpha_mode,
+        [out] ID2D1ImageSourceFromWic **image_source
+    );
+    HRESULT CreateLookupTable3D(
+        [in] D2D1_BUFFER_PRECISION precision,
+        [in] const UINT32 *extents,
+        [in] const BYTE *data,
+        [in] UINT32 data_count,
+        [in] const UINT32 *strides,
+        [out] ID2D1LookupTable3D **lookup_table
+    );
+    HRESULT CreateImageSourceFromDxgi(
+        [in] IDXGISurface **surfaces,
+        [in] UINT32 surface_count,
+        [in] DXGI_COLOR_SPACE_TYPE color_space,
+        [in] D2D1_IMAGE_SOURCE_FROM_DXGI_OPTIONS options,
+        [out] ID2D1ImageSource **image_source
+    );
+    HRESULT GetGradientMeshWorldBounds(
+        [in] ID2D1GradientMesh *gradient_mesh,
+        [out] D2D1_RECT_F *bounds
+    );
+    void DrawInk(
+        [in] ID2D1Ink *ink,
+        [in] ID2D1Brush *brush,
+        [in, optional] ID2D1InkStyle *ink_style
+    );
+    void DrawGradientMesh(
+        [in] ID2D1GradientMesh *gradient_mesh
+    );
+    void DrawGdiMetafile(
+        [in] ID2D1GdiMetafile *gdi_metafile,
+        [in, optional] const D2D1_RECT_F *dst_rect,
+        [in, optional] const D2D1_RECT_F *src_rect
+    );
+    HRESULT CreateTransformedImageSource(
+        [in] ID2D1ImageSource *source,
+        [in] const D2D1_TRANSFORMED_IMAGE_SOURCE_PROPERTIES *props,
+        [out] ID2D1TransformedImageSource **transformed
+    );
+}
