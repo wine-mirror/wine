@@ -2600,7 +2600,10 @@ struct wined3d_context_vk
 
     VkFramebuffer vk_framebuffer;
     VkRenderPass vk_render_pass;
-    VkDescriptorPool vk_descriptor_pool;
+
+    SIZE_T vk_descriptor_pools_size;
+    SIZE_T vk_descriptor_pool_count;
+    VkDescriptorPool *vk_descriptor_pools;
 
     VkSampleCountFlagBits sample_count;
     unsigned int rt_count;
@@ -2682,8 +2685,8 @@ void wined3d_context_vk_submit_command_buffer(struct wined3d_context_vk *context
         unsigned int wait_semaphore_count, const VkSemaphore *wait_semaphores, const VkPipelineStageFlags *wait_stages,
         unsigned int signal_semaphore_count, const VkSemaphore *signal_semaphores) DECLSPEC_HIDDEN;
 void wined3d_context_vk_wait_command_buffer(struct wined3d_context_vk *context_vk, uint64_t id) DECLSPEC_HIDDEN;
-VkResult wined3d_context_vk_create_vk_descriptor_set(struct wined3d_context_vk *context_vk,
-        VkDescriptorSetLayout vk_set_layout, VkDescriptorSet *vk_descriptor_set) DECLSPEC_HIDDEN;
+VkDescriptorSet wined3d_context_vk_create_vk_descriptor_set(struct wined3d_context_vk *context_vk,
+        VkDescriptorSetLayout vk_set_layout) DECLSPEC_HIDDEN;
 
 typedef void (*APPLYSTATEFUNC)(struct wined3d_context *ctx, const struct wined3d_state *state, DWORD state_id);
 

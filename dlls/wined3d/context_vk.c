@@ -685,17 +685,33 @@ void wined3d_context_vk_destroy_vk_framebuffer(struct wined3d_context_vk *contex
     o->command_buffer_id = command_buffer_id;
 }
 
-static void wined3d_context_vk_destroy_vk_descriptor_pool(struct wined3d_context_vk *context_vk,
-        VkDescriptorPool vk_descriptor_pool, uint64_t command_buffer_id)
+static void wined3d_context_vk_return_vk_descriptor_pool(struct wined3d_context_vk *context_vk,
+        VkDescriptorPool vk_descriptor_pool)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+
+    if (!wined3d_array_reserve((void **)&context_vk->vk_descriptor_pools, &context_vk->vk_descriptor_pools_size,
+            context_vk->vk_descriptor_pool_count + 1, sizeof(*context_vk->vk_descriptor_pools)))
+    {
+        VK_CALL(vkDestroyDescriptorPool(device_vk->vk_device, vk_descriptor_pool, NULL));
+        TRACE("Destroying descriptor pool 0x%s.\n", wine_dbgstr_longlong(vk_descriptor_pool));
+        return;
+    }
+
+    VK_CALL(vkResetDescriptorPool(device_vk->vk_device, vk_descriptor_pool, 0));
+    context_vk->vk_descriptor_pools[context_vk->vk_descriptor_pool_count++] = vk_descriptor_pool;
+}
+
+static void wined3d_context_vk_reset_vk_descriptor_pool(struct wined3d_context_vk *context_vk,
+        VkDescriptorPool vk_descriptor_pool, uint64_t command_buffer_id)
+{
     struct wined3d_retired_object_vk *o;
 
     if (context_vk->completed_command_buffer_id > command_buffer_id)
     {
-        VK_CALL(vkDestroyDescriptorPool(device_vk->vk_device, vk_descriptor_pool, NULL));
-        TRACE("Destroyed descriptor pool 0x%s.\n", wine_dbgstr_longlong(vk_descriptor_pool));
+        wined3d_context_vk_return_vk_descriptor_pool(context_vk, vk_descriptor_pool);
+        TRACE("Reset descriptor pool 0x%s.\n", wine_dbgstr_longlong(vk_descriptor_pool));
         return;
     }
 
@@ -1111,8 +1127,8 @@ static void wined3d_context_vk_cleanup_resources(struct wined3d_context_vk *cont
                 break;
 
             case WINED3D_RETIRED_DESCRIPTOR_POOL_VK:
-                VK_CALL(vkDestroyDescriptorPool(device_vk->vk_device, o->u.vk_descriptor_pool, NULL));
-                TRACE("Destroyed descriptor pool 0x%s.\n", wine_dbgstr_longlong(o->u.vk_descriptor_pool));
+                wined3d_context_vk_return_vk_descriptor_pool(context_vk, o->u.vk_descriptor_pool);
+                TRACE("Reset descriptor pool 0x%s.\n", wine_dbgstr_longlong(o->u.vk_descriptor_pool));
                 break;
 
             case WINED3D_RETIRED_MEMORY_VK:
@@ -1581,6 +1597,7 @@ void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk)
     struct wined3d_command_buffer_vk *buffer = &context_vk->current_command_buffer;
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    unsigned int i;
 
     if (buffer->vk_command_buffer)
     {
@@ -1594,8 +1611,9 @@ void wined3d_context_vk_cleanup(struct wined3d_context_vk *context_vk)
 
     heap_free(context_vk->compute.bindings.bindings);
     heap_free(context_vk->graphics.bindings.bindings);
-    if (context_vk->vk_descriptor_pool)
-        VK_CALL(vkDestroyDescriptorPool(device_vk->vk_device, context_vk->vk_descriptor_pool, NULL));
+    for (i = 0; i < context_vk->vk_descriptor_pool_count; ++i)
+        VK_CALL(vkDestroyDescriptorPool(device_vk->vk_device, context_vk->vk_descriptor_pools[i], NULL));
+    heap_free(context_vk->vk_descriptor_pools);
     if (context_vk->vk_framebuffer)
         VK_CALL(vkDestroyFramebuffer(device_vk->vk_device, context_vk->vk_framebuffer, NULL));
     VK_CALL(vkDestroyCommandPool(device_vk->vk_device, context_vk->vk_command_pool, NULL));
@@ -2655,48 +2673,71 @@ static VkResult wined3d_context_vk_create_vk_descriptor_pool(struct wined3d_devi
     return vr;
 }
 
-VkResult wined3d_context_vk_create_vk_descriptor_set(struct wined3d_context_vk *context_vk,
-        VkDescriptorSetLayout vk_set_layout, VkDescriptorSet *vk_descriptor_set)
+VkDescriptorPool wined3d_context_vk_get_vk_descriptor_pool(struct wined3d_context_vk *context_vk)
+{
+    VkResult vr;
+
+    if (context_vk->vk_descriptor_pool_count)
+        return context_vk->vk_descriptor_pools[0];
+
+    if (!wined3d_array_reserve((void **)&context_vk->vk_descriptor_pools, &context_vk->vk_descriptor_pools_size,
+            1, sizeof(*context_vk->vk_descriptor_pools)))
+    {
+        ERR("Failed to allocate array.\n");
+        return VK_NULL_HANDLE;
+    }
+
+    if ((vr = wined3d_context_vk_create_vk_descriptor_pool(wined3d_device_vk(context_vk->c.device),
+            context_vk->vk_info, context_vk->vk_descriptor_pools)))
+    {
+        WARN("Failed to create descriptor pool, vr %s.\n", wined3d_debug_vkresult(vr));
+        return VK_NULL_HANDLE;
+    }
+
+    context_vk->vk_descriptor_pool_count = 1;
+    return context_vk->vk_descriptor_pools[0];
+}
+
+VkDescriptorSet wined3d_context_vk_create_vk_descriptor_set(struct wined3d_context_vk *context_vk,
+        VkDescriptorSetLayout vk_set_layout)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     struct VkDescriptorSetAllocateInfo set_desc;
+    VkDescriptorPool vk_descriptor_pool;
+    VkDescriptorSet vk_descriptor_set;
     VkResult vr;
 
-    if (!context_vk->vk_descriptor_pool && (vr = wined3d_context_vk_create_vk_descriptor_pool(device_vk,
-            vk_info, &context_vk->vk_descriptor_pool)))
-    {
-        WARN("Failed to create descriptor pool, vr %s.\n", wined3d_debug_vkresult(vr));
-        return vr;
-    }
+    if (!(vk_descriptor_pool = wined3d_context_vk_get_vk_descriptor_pool(context_vk)))
+        return VK_NULL_HANDLE;
 
     set_desc.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     set_desc.pNext = NULL;
-    set_desc.descriptorPool = context_vk->vk_descriptor_pool;
+    set_desc.descriptorPool = vk_descriptor_pool;
     set_desc.descriptorSetCount = 1;
     set_desc.pSetLayouts = &vk_set_layout;
-    if ((vr = VK_CALL(vkAllocateDescriptorSets(device_vk->vk_device, &set_desc, vk_descriptor_set))) >= 0)
-        return vr;
+    if ((vr = VK_CALL(vkAllocateDescriptorSets(device_vk->vk_device, &set_desc, &vk_descriptor_set))) >= 0)
+        return vk_descriptor_set;
 
     if (vr == VK_ERROR_FRAGMENTED_POOL || vr == VK_ERROR_OUT_OF_POOL_MEMORY)
     {
-        wined3d_context_vk_destroy_vk_descriptor_pool(context_vk,
-                context_vk->vk_descriptor_pool, context_vk->current_command_buffer.id);
-        context_vk->vk_descriptor_pool = VK_NULL_HANDLE;
-        if ((vr = wined3d_context_vk_create_vk_descriptor_pool(device_vk, vk_info, &context_vk->vk_descriptor_pool)))
+        wined3d_context_vk_reset_vk_descriptor_pool(context_vk,
+                vk_descriptor_pool, context_vk->current_command_buffer.id);
+        context_vk->vk_descriptor_pools[0] = context_vk->vk_descriptor_pools[--context_vk->vk_descriptor_pool_count];
+        if (!(vk_descriptor_pool = wined3d_context_vk_get_vk_descriptor_pool(context_vk)))
         {
-            WARN("Failed to create descriptor pool, vr %s.\n", wined3d_debug_vkresult(vr));
-            return vr;
+            WARN("Failed to create descriptor pool.\n");
+            return VK_NULL_HANDLE;
         }
 
-        set_desc.descriptorPool = context_vk->vk_descriptor_pool;
-        if ((vr = VK_CALL(vkAllocateDescriptorSets(device_vk->vk_device, &set_desc, vk_descriptor_set))) >= 0)
-            return vr;
+        set_desc.descriptorPool = vk_descriptor_pool;
+        if ((vr = VK_CALL(vkAllocateDescriptorSets(device_vk->vk_device, &set_desc, &vk_descriptor_set))) >= 0)
+            return vk_descriptor_set;
     }
 
     WARN("Failed to allocate descriptor set, vr %s.\n", wined3d_debug_vkresult(vr));
 
-    return vr;
+    return VK_NULL_HANDLE;
 }
 
 static bool wined3d_shader_descriptor_writes_vk_add_write(struct wined3d_shader_descriptor_writes_vk *writes,
@@ -2949,7 +2990,6 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
     VkPipelineLayout vk_pipeline_layout;
     VkPipelineBindPoint vk_bind_point;
     VkDescriptorSet vk_descriptor_set;
-    VkResult vr;
     size_t i;
 
     switch (pipeline)
@@ -2973,9 +3013,9 @@ static bool wined3d_context_vk_update_descriptors(struct wined3d_context_vk *con
             return false;
     }
 
-    if ((vr = wined3d_context_vk_create_vk_descriptor_set(context_vk, vk_set_layout, &vk_descriptor_set)))
+    if (!(vk_descriptor_set = wined3d_context_vk_create_vk_descriptor_set(context_vk, vk_set_layout)))
     {
-        WARN("Failed to create descriptor set, vr %s.\n", wined3d_debug_vkresult(vr));
+        WARN("Failed to create descriptor set.\n");
         return false;
     }
 

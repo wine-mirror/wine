@@ -1922,7 +1922,6 @@ void wined3d_unordered_access_view_vk_clear(struct wined3d_unordered_access_view
     DWORD uav_location;
     unsigned int level;
     bool is_array;
-    VkResult vr;
 
     device_vk = wined3d_device_vk(device);
     state = &device_vk->uav_clear_state;
@@ -2124,8 +2123,7 @@ void wined3d_unordered_access_view_vk_clear(struct wined3d_unordered_access_view
 
     vk_info = context_vk->vk_info;
 
-    vr = wined3d_context_vk_create_vk_descriptor_set(context_vk, layout->vk_set_layout, &vk_writes[0].dstSet);
-    if (vr != VK_SUCCESS)
+    if (!(vk_writes[0].dstSet = wined3d_context_vk_create_vk_descriptor_set(context_vk, layout->vk_set_layout)))
     {
         ERR("Failed to create descriptor set.\n");
         wined3d_context_vk_destroy_bo(context_vk, &constants_bo);
