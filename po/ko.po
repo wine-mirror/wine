@@ -3989,3018 +3989,6 @@ msgstr "Wine 커널 DLL"
 msgid "Wine"
 msgstr "Wine"
 
-#: dlls/kernel32/winerror.mc:28
-msgid "Success.\n"
-msgstr "성공.\n"
-
-#: dlls/kernel32/winerror.mc:33
-msgid "Invalid function.\n"
-msgstr "잘못된 함수입니다.\n"
-
-#: dlls/kernel32/winerror.mc:38
-msgid "File not found.\n"
-msgstr "파일을 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:43
-msgid "Path not found.\n"
-msgstr "경로를 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:48 dlls/kernel32/winerror.mc:3773
-msgid "Too many open files.\n"
-msgstr "열린 파일이 너무 많습니다.\n"
-
-#: dlls/kernel32/winerror.mc:53 dlls/kernel32/winerror.mc:3758
-msgid "Access denied.\n"
-msgstr "접근이 거부되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:58
-msgid "Invalid handle.\n"
-msgstr "잘못된 핸들입니다.\n"
-
-#: dlls/kernel32/winerror.mc:63
-msgid "Memory trashed.\n"
-msgstr "메모리 손상되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:68
-msgid "Not enough memory.\n"
-msgstr "메모리가 부족합니다.\n"
-
-#: dlls/kernel32/winerror.mc:73
-msgid "Invalid block.\n"
-msgstr "잘못된 블록입니다.\n"
-
-#: dlls/kernel32/winerror.mc:78
-msgid "Bad environment.\n"
-msgstr "잘못된 환경입니다.\n"
-
-#: dlls/kernel32/winerror.mc:83
-msgid "Bad format.\n"
-msgstr "잘못된 형식입니다.\n"
-
-#: dlls/kernel32/winerror.mc:88
-msgid "Invalid access.\n"
-msgstr "잘못된 접근입니다.\n"
-
-#: dlls/kernel32/winerror.mc:93
-msgid "Invalid data.\n"
-msgstr "잘못된 데이터입니다.\n"
-
-#: dlls/kernel32/winerror.mc:98
-msgid "Out of memory.\n"
-msgstr "메모리 부족.\n"
-
-#: dlls/kernel32/winerror.mc:103
-msgid "Invalid drive.\n"
-msgstr "잘못된 드라이브.\n"
-
-#: dlls/kernel32/winerror.mc:108
-msgid "Can't delete current directory.\n"
-msgstr "현재 디렉터리 제거 실패.\n"
-
-#: dlls/kernel32/winerror.mc:113
-msgid "Not same device.\n"
-msgstr "다른 장치.\n"
-
-#: dlls/kernel32/winerror.mc:118
-msgid "No more files.\n"
-msgstr "더 이상 파일이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:123
-msgid "Write protected.\n"
-msgstr "쓰기 금지.\n"
-
-#: dlls/kernel32/winerror.mc:128
-msgid "Bad unit.\n"
-msgstr "잘못된 유닛.\n"
-
-#: dlls/kernel32/winerror.mc:133
-msgid "Not ready.\n"
-msgstr "준비되지 않았습니다.\n"
-
-#: dlls/kernel32/winerror.mc:138
-msgid "Bad command.\n"
-msgstr "잘못된 명령.\n"
-
-#: dlls/kernel32/winerror.mc:143
-msgid "CRC error.\n"
-msgstr "CRC 오류.\n"
-
-#: dlls/kernel32/winerror.mc:148
-msgid "Bad length.\n"
-msgstr "잘못된 길이.\n"
-
-#: dlls/kernel32/winerror.mc:153 dlls/kernel32/winerror.mc:528
-msgid "Seek error.\n"
-msgstr "이동 오류.\n"
-
-#: dlls/kernel32/winerror.mc:158
-msgid "Not DOS disk.\n"
-msgstr "DOS 디스크가 아닙니다.\n"
-
-#: dlls/kernel32/winerror.mc:163
-msgid "Sector not found.\n"
-msgstr "섹터를 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:168
-msgid "Out of paper.\n"
-msgstr "프린터 용지가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:173
-msgid "Write fault.\n"
-msgstr "쓰기 사고.\n"
-
-#: dlls/kernel32/winerror.mc:178
-msgid "Read fault.\n"
-msgstr "읽기 사고.\n"
-
-#: dlls/kernel32/winerror.mc:183
-msgid "General failure.\n"
-msgstr "일반 실패.\n"
-
-#: dlls/kernel32/winerror.mc:188
-msgid "Sharing violation.\n"
-msgstr "공유 위반.\n"
-
-#: dlls/kernel32/winerror.mc:193
-msgid "Lock violation.\n"
-msgstr "잠금 위반.\n"
-
-#: dlls/kernel32/winerror.mc:198
-msgid "Wrong disk.\n"
-msgstr "잘못된 디스크.\n"
-
-#: dlls/kernel32/winerror.mc:203
-msgid "Sharing buffer exceeded.\n"
-msgstr "공유 버퍼 초과.\n"
-
-#: dlls/kernel32/winerror.mc:208
-msgid "End of file.\n"
-msgstr "파일 끝.\n"
-
-#: dlls/kernel32/winerror.mc:213 dlls/kernel32/winerror.mc:438
-msgid "Disk full.\n"
-msgstr "디스크가 차 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:218
-msgid "Request not supported.\n"
-msgstr "지원되지 않는 요청.\n"
-
-#: dlls/kernel32/winerror.mc:223
-msgid "Remote machine not listening.\n"
-msgstr "원격 머신 접속 실패.\n"
-
-#: dlls/kernel32/winerror.mc:228
-msgid "Duplicate network name.\n"
-msgstr "중복된 네트워크 이름.\n"
-
-#: dlls/kernel32/winerror.mc:233
-msgid "Bad network path.\n"
-msgstr "잘못된 네트워크 경로.\n"
-
-#: dlls/kernel32/winerror.mc:238
-msgid "Network busy.\n"
-msgstr "네트워크 사용 중.\n"
-
-#: dlls/kernel32/winerror.mc:243
-msgid "Device does not exist.\n"
-msgstr "장치가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:248
-msgid "Too many commands.\n"
-msgstr "너무 많은 명령.\n"
-
-#: dlls/kernel32/winerror.mc:253
-msgid "Adapter hardware error.\n"
-msgstr "어댑터 하드웨어 오류.\n"
-
-#: dlls/kernel32/winerror.mc:258
-msgid "Bad network response.\n"
-msgstr "잘못된 네트워크 응답.\n"
-
-#: dlls/kernel32/winerror.mc:263
-msgid "Unexpected network error.\n"
-msgstr "예기치 않은 네트워크 오류.\n"
-
-#: dlls/kernel32/winerror.mc:268
-msgid "Bad remote adapter.\n"
-msgstr "잘못된 원격 어댑터.\n"
-
-#: dlls/kernel32/winerror.mc:273
-msgid "Print queue full.\n"
-msgstr "프린터 대기열이 가득 찼습니다.\n"
-
-#: dlls/kernel32/winerror.mc:278
-msgid "No spool space.\n"
-msgstr "스풀 공간 부족.\n"
-
-#: dlls/kernel32/winerror.mc:283
-msgid "Print canceled.\n"
-msgstr "인쇄가 취소되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:288
-msgid "Network name deleted.\n"
-msgstr "네트워크 이름을 제거했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:293
-msgid "Network access denied.\n"
-msgstr "네트워크 접근 거부.\n"
-
-#: dlls/kernel32/winerror.mc:298
-msgid "Bad device type.\n"
-msgstr "잘못된 장치 유형.\n"
-
-#: dlls/kernel32/winerror.mc:303
-msgid "Bad network name.\n"
-msgstr "잘못된 네트워크 이름.\n"
-
-#: dlls/kernel32/winerror.mc:308
-msgid "Too many network names.\n"
-msgstr "네트워크 이름 한계 초과.\n"
-
-#: dlls/kernel32/winerror.mc:313
-msgid "Too many network sessions.\n"
-msgstr "네트워크 세션 한계 초과.\n"
-
-#: dlls/kernel32/winerror.mc:318
-msgid "Sharing paused.\n"
-msgstr "공유 중지.\n"
-
-#: dlls/kernel32/winerror.mc:323
-msgid "Request not accepted.\n"
-msgstr "수용되지 않는 요청.\n"
-
-#: dlls/kernel32/winerror.mc:328
-msgid "Redirector paused.\n"
-msgstr "리디렉터 중지.\n"
-
-#: dlls/kernel32/winerror.mc:333
-msgid "File exists.\n"
-msgstr "파일이 존재합니다.\n"
-
-#: dlls/kernel32/winerror.mc:338
-msgid "Cannot create.\n"
-msgstr "만들 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:343
-msgid "Int24 failure.\n"
-msgstr "INT24 오류.\n"
-
-#: dlls/kernel32/winerror.mc:348
-msgid "Out of structures.\n"
-msgstr "구성에 필요한 공간 부족.\n"
-
-#: dlls/kernel32/winerror.mc:353
-msgid "Already assigned.\n"
-msgstr "이미 할당되어 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:358 dlls/kernel32/winerror.mc:1713
-msgid "Invalid password.\n"
-msgstr "잘못된 암호.\n"
-
-#: dlls/kernel32/winerror.mc:363
-msgid "Invalid parameter.\n"
-msgstr "잘못된 매개변수.\n"
-
-#: dlls/kernel32/winerror.mc:368
-msgid "Net write fault.\n"
-msgstr "네트워크 쓰기 오류.\n"
-
-#: dlls/kernel32/winerror.mc:373
-msgid "No process slots.\n"
-msgstr "프로세스 슬롯이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:378
-msgid "Too many semaphores.\n"
-msgstr "세마포어 한계 초과.\n"
-
-#: dlls/kernel32/winerror.mc:383
-msgid "Exclusive semaphore already owned.\n"
-msgstr "이미 소유된 배타적 세마포어.\n"
-
-#: dlls/kernel32/winerror.mc:388
-msgid "Semaphore is set.\n"
-msgstr "세마포어가 설정되어 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:393
-msgid "Too many semaphore requests.\n"
-msgstr "너무 많은 세마포어 요청.\n"
-
-#: dlls/kernel32/winerror.mc:398
-msgid "Invalid at interrupt time.\n"
-msgstr "잘못된 인터럽트 시간.\n"
-
-#: dlls/kernel32/winerror.mc:403
-msgid "Semaphore owner died.\n"
-msgstr "세마포어 소유권 해제.\n"
-
-#: dlls/kernel32/winerror.mc:408
-msgid "Semaphore user limit.\n"
-msgstr "세마포어 사용자 제한.\n"
-
-#: dlls/kernel32/winerror.mc:413
-msgid "Insert disk for drive %1.\n"
-msgstr "드라이브 %1에 디스크를 넣으세요.\n"
-
-#: dlls/kernel32/winerror.mc:418
-msgid "Drive locked.\n"
-msgstr "드라이브가 잠겨 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:423
-msgid "Broken pipe.\n"
-msgstr "파이프가 종료되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:428
-msgid "Open failed.\n"
-msgstr "열기 실패.\n"
-
-#: dlls/kernel32/winerror.mc:433
-msgid "Buffer overflow.\n"
-msgstr "버퍼 오버플로우.\n"
-
-#: dlls/kernel32/winerror.mc:443
-msgid "No more search handles.\n"
-msgstr "핸들을 더이상 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:448
-msgid "Invalid target handle.\n"
-msgstr "잘못된 목표 핸들.\n"
-
-#: dlls/kernel32/winerror.mc:453
-msgid "Invalid IOCTL.\n"
-msgstr "잘못된 IOCTL.\n"
-
-#: dlls/kernel32/winerror.mc:458
-msgid "Invalid verify switch.\n"
-msgstr "잘못된 검증 스위치.\n"
-
-#: dlls/kernel32/winerror.mc:463
-msgid "Bad driver level.\n"
-msgstr "잘못된 드라이버 레벨.\n"
-
-#: dlls/kernel32/winerror.mc:468
-msgid "Call not implemented.\n"
-msgstr "호출이 구현되지 않았습니다.\n"
-
-#: dlls/kernel32/winerror.mc:473
-msgid "Semaphore timeout.\n"
-msgstr "세마포어 시간 만료.\n"
-
-#: dlls/kernel32/winerror.mc:478
-msgid "Insufficient buffer.\n"
-msgstr "충분하지 않은 버퍼.\n"
-
-#: dlls/kernel32/winerror.mc:483 dlls/mferror/mferror.mc:109
-msgid "Invalid name.\n"
-msgstr "잘못된 이름.\n"
-
-#: dlls/kernel32/winerror.mc:488
-msgid "Invalid level.\n"
-msgstr "잘못된 레벨.\n"
-
-#: dlls/kernel32/winerror.mc:493
-msgid "No volume label.\n"
-msgstr "볼륨 레이블이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:498
-msgid "Module not found.\n"
-msgstr "모듈을 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:503
-msgid "Procedure not found.\n"
-msgstr "프로시져를 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:508
-msgid "No children to wait for.\n"
-msgstr "대기중인 자식 프로세스가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:513
-msgid "Child process has not completed.\n"
-msgstr "자식 프로세스가 완료되지 않았습니다.\n"
-
-#: dlls/kernel32/winerror.mc:518
-msgid "Invalid use of direct access handle.\n"
-msgstr "직접 접근할 수 없는 핸들입니다.\n"
-
-#: dlls/kernel32/winerror.mc:523
-msgid "Negative seek.\n"
-msgstr "반대로 이동.\n"
-
-#: dlls/kernel32/winerror.mc:533
-msgid "Drive is a JOIN target.\n"
-msgstr "드라이브가 JOIN 타겟입니다.\n"
-
-#: dlls/kernel32/winerror.mc:538
-msgid "Drive is already JOINed.\n"
-msgstr "드라이브가 이미 JOIN 되어 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:543
-msgid "Drive is already SUBSTed.\n"
-msgstr "드라이브가 이미 SUBST 되어 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:548
-msgid "Drive is not JOINed.\n"
-msgstr "드라이브가 JOIN 되지 않습니다.\n"
-
-#: dlls/kernel32/winerror.mc:553
-msgid "Drive is not SUBSTed.\n"
-msgstr "드라이브가 SUBST 되지 않습니다.\n"
-
-#: dlls/kernel32/winerror.mc:558
-msgid "Attempt to JOIN onto a JOINed drive.\n"
-msgstr "JOIN 된 드라이브에 JOIN 시도했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:563
-msgid "Attempt to SUBST onto a SUBSTed drive.\n"
-msgstr "SUBST 된 드라이브에 SUBST 시도했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:568
-msgid "Attempt to JOIN to a SUBSTed drive.\n"
-msgstr "SUBST 된 드라이브에 JOIN 시도했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:573
-msgid "Attempt to SUBST to a JOINed drive.\n"
-msgstr "JOIN 된 드라이브에 SUBST 시도했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:578
-msgid "Drive is busy.\n"
-msgstr "드라이브 사용 중.\n"
-
-#: dlls/kernel32/winerror.mc:583
-msgid "Same drive.\n"
-msgstr "같은 드라이브.\n"
-
-#: dlls/kernel32/winerror.mc:588
-msgid "Not top-level directory.\n"
-msgstr "루트 디렉터리의 하위 디렉터리가 아닙니다.\n"
-
-#: dlls/kernel32/winerror.mc:593
-msgid "Directory is not empty.\n"
-msgstr "디렉터리가 비어 있지 않습니다.\n"
-
-#: dlls/kernel32/winerror.mc:598
-msgid "Path is in use as a SUBST.\n"
-msgstr "경로가 SUBST 용으로 사용 중입니다.\n"
-
-#: dlls/kernel32/winerror.mc:603
-msgid "Path is in use as a JOIN.\n"
-msgstr "지정한 경로가 JOIN 용으로 사용 중입니다.\n"
-
-#: dlls/kernel32/winerror.mc:608
-msgid "Path is busy.\n"
-msgstr "경로 사용 중.\n"
-
-#: dlls/kernel32/winerror.mc:613
-msgid "Already a SUBST target.\n"
-msgstr "이미 SUBST 타겟입니다.\n"
-
-#: dlls/kernel32/winerror.mc:618
-msgid "System trace not specified or disallowed.\n"
-msgstr "시스템 추적이 지정하지 않았거나 허용되지 않습니다.\n"
-
-#: dlls/kernel32/winerror.mc:623
-msgid "Event count for DosMuxSemWait incorrect.\n"
-msgstr "DosMuxSemWait 용 이벤트 개수가 잘못되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:628
-msgid "Too many waiters for DosMuxSemWait.\n"
-msgstr "DosMuxSemWait 용 대기자가 너무 많습니다.\n"
-
-#: dlls/kernel32/winerror.mc:633
-msgid "DosSemMuxWait list invalid.\n"
-msgstr "DosSemMuxWait 목록이 잘못되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:638
-msgid "Volume label too long.\n"
-msgstr "볼륨 레이블이 너무 깁니다.\n"
-
-#: dlls/kernel32/winerror.mc:643
-msgid "Too many TCBs.\n"
-msgstr "TCB 한계를 초과했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:648
-msgid "Signal refused.\n"
-msgstr "시그널이 거부되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:653
-msgid "Segment discarded.\n"
-msgstr "세그맨트가 폐기되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:658
-msgid "Segment not locked.\n"
-msgstr "세그멘트를 잠글 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:663
-msgid "Bad thread ID address.\n"
-msgstr "잘못된 스레드 ID 주소.\n"
-
-#: dlls/kernel32/winerror.mc:668
-msgid "Bad arguments to DosExecPgm.\n"
-msgstr "잘못된 DosExecPgm 인수.\n"
-
-#: dlls/kernel32/winerror.mc:673
-msgid "Path is invalid.\n"
-msgstr "잘못된 경로.\n"
-
-#: dlls/kernel32/winerror.mc:678
-msgid "Signal pending.\n"
-msgstr "시그널 대기 중.\n"
-
-#: dlls/kernel32/winerror.mc:683
-msgid "Max system-wide thread count reached.\n"
-msgstr "시스템 스레드 작성 한계에 도달했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:688
-msgid "Lock failed.\n"
-msgstr "잠금 실패.\n"
-
-#: dlls/kernel32/winerror.mc:693
-msgid "Resource in use.\n"
-msgstr "리소스 사용 중.\n"
-
-#: dlls/kernel32/winerror.mc:698
-msgid "Cancel violation.\n"
-msgstr "취소 위반.\n"
-
-#: dlls/kernel32/winerror.mc:703
-msgid "Atomic locks not supported.\n"
-msgstr "원자적 잠금 미지원.\n"
-
-#: dlls/kernel32/winerror.mc:708
-msgid "Invalid segment number.\n"
-msgstr "잘못된 세그멘트 번호.\n"
-
-#: dlls/kernel32/winerror.mc:713
-msgid "Invalid ordinal for %1.\n"
-msgstr "잘못된 %1 번호.\n"
-
-#: dlls/kernel32/winerror.mc:718
-msgid "File already exists.\n"
-msgstr "파일이 이미 존재합니다.\n"
-
-#: dlls/kernel32/winerror.mc:723
-msgid "Invalid flag number.\n"
-msgstr "잘못된 플래그.\n"
-
-#: dlls/kernel32/winerror.mc:728
-msgid "Semaphore name not found.\n"
-msgstr "세마포어 이름을 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:733
-msgid "Invalid starting code segment for %1.\n"
-msgstr "잘못된 %1 시작 코드 세그멘트.\n"
-
-#: dlls/kernel32/winerror.mc:738
-msgid "Invalid starting stack segment for %1.\n"
-msgstr "잘못된 %1 시작 스택 세그먼트.\n"
-
-#: dlls/kernel32/winerror.mc:743
-msgid "Invalid module type for %1.\n"
-msgstr "잘못된 %1 모듈 유형.\n"
-
-#: dlls/kernel32/winerror.mc:748
-msgid "Invalid EXE signature in %1.\n"
-msgstr "잘못된 %1 EXE 서명.\n"
-
-#: dlls/kernel32/winerror.mc:753
-msgid "EXE %1 is marked invalid.\n"
-msgstr "EXE %1이(가) 잘못된 것으로 표시되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:758
-msgid "Bad EXE format for %1.\n"
-msgstr "잘못된 %1 EXE 형식.\n"
-
-#: dlls/kernel32/winerror.mc:763
-msgid "Iterated data exceeds 64k in %1.\n"
-msgstr "%1에 통합된 데이터가 64k를 초과했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:768
-msgid "Invalid MinAllocSize in %1.\n"
-msgstr "%1 최소 할당 크기가 잘못되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:773
-msgid "Dynlink from invalid ring.\n"
-msgstr "잘못된 링에서의 동적 링크.\n"
-
-#: dlls/kernel32/winerror.mc:778
-msgid "IOPL not enabled.\n"
-msgstr "불가능한 IOPL.\n"
-
-#: dlls/kernel32/winerror.mc:783
-msgid "Invalid SEGDPL in %1.\n"
-msgstr "잘못된 %1 SEGDPL.\n"
-
-#: dlls/kernel32/winerror.mc:788
-msgid "Auto data segment exceeds 64k.\n"
-msgstr "자동 데이터 세그멘트가 64k를 초과했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:793
-msgid "Ring 2 segment must be movable.\n"
-msgstr "링 2 세그멘트는 이동 가능해야 합니다.\n"
-
-#: dlls/kernel32/winerror.mc:798
-msgid "Relocation chain exceeds segment limit in %1.\n"
-msgstr "재배치 체인이 %1 세그먼트 제한을 초과했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:803
-msgid "Infinite loop in relocation chain in %1.\n"
-msgstr "%1 안 재배치 체인에 무한 루프가 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:808
-msgid "Environment variable not found.\n"
-msgstr "환경변수를 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:813
-msgid "No signal sent.\n"
-msgstr "시그널 전송 실패.\n"
-
-#: dlls/kernel32/winerror.mc:818 programs/cmd/cmd.rc:410
-msgid "File name is too long.\n"
-msgstr "너무 긴 파일 이름.\n"
-
-#: dlls/kernel32/winerror.mc:823
-msgid "Ring 2 stack in use.\n"
-msgstr "Ring 2 스택 사용 중.\n"
-
-#: dlls/kernel32/winerror.mc:828
-msgid "Error in use of filename wildcards.\n"
-msgstr "파일 이름 와일드카드 사용 오류.\n"
-
-#: dlls/kernel32/winerror.mc:833
-msgid "Invalid signal number.\n"
-msgstr "잘못된 시그널 번호.\n"
-
-#: dlls/kernel32/winerror.mc:838
-msgid "Error setting signal handler.\n"
-msgstr "시그널 핸들러 설정 오류.\n"
-
-#: dlls/kernel32/winerror.mc:843
-msgid "Segment locked.\n"
-msgstr "세그멘트 잠김.\n"
-
-#: dlls/kernel32/winerror.mc:848
-msgid "Too many modules.\n"
-msgstr "너무 많은 모듈.\n"
-
-#: dlls/kernel32/winerror.mc:853
-msgid "Nesting LoadModule calls not allowed.\n"
-msgstr "허락된지 않는 LoadModule 호출 중첩.\n"
-
-#: dlls/kernel32/winerror.mc:858
-msgid "Machine type mismatch.\n"
-msgstr "머신 형식 불일치.\n"
-
-#: dlls/kernel32/winerror.mc:863
-msgid "Bad pipe.\n"
-msgstr "잘못된 파이프.\n"
-
-#: dlls/kernel32/winerror.mc:868
-msgid "Pipe busy.\n"
-msgstr "파이프 사용 중.\n"
-
-#: dlls/kernel32/winerror.mc:873
-msgid "Pipe closed.\n"
-msgstr "파이프가 닫혔습니다.\n"
-
-#: dlls/kernel32/winerror.mc:878
-msgid "Pipe not connected.\n"
-msgstr "파이프가 연결되지 않습니다.\n"
-
-#: dlls/kernel32/winerror.mc:883
-msgid "More data available.\n"
-msgstr "사용 가능한 데이터가 더 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:888
-msgid "Session canceled.\n"
-msgstr "세션 취소.\n"
-
-#: dlls/kernel32/winerror.mc:893
-msgid "Invalid extended attribute name.\n"
-msgstr "잘못된 확장 속성 이름.\n"
-
-#: dlls/kernel32/winerror.mc:898
-msgid "Extended attribute list inconsistent.\n"
-msgstr "일관성 없는 확장 속성 목록.\n"
-
-#: dlls/kernel32/winerror.mc:903
-msgid "No more data available.\n"
-msgstr "사용 가능한 데이터가 더 이상 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:908
-msgid "Cannot use Copy API.\n"
-msgstr "복사 API를 사용할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:913
-msgid "Directory name invalid.\n"
-msgstr "잘못된 디렉터리 이름.\n"
-
-#: dlls/kernel32/winerror.mc:918
-msgid "Extended attributes didn't fit.\n"
-msgstr "확장 속성이 버퍼에 맞지 않습니다.\n"
-
-#: dlls/kernel32/winerror.mc:923
-msgid "Extended attribute file corrupt.\n"
-msgstr "확장 속성 파일 손상.\n"
-
-#: dlls/kernel32/winerror.mc:928
-msgid "Extended attribute table full.\n"
-msgstr "확장 속성 테이블이 가득 찾습니다.\n"
-
-#: dlls/kernel32/winerror.mc:933
-msgid "Invalid extended attribute handle.\n"
-msgstr "잘못된 확장 속성 핸들.\n"
-
-#: dlls/kernel32/winerror.mc:938
-msgid "Extended attributes not supported.\n"
-msgstr "지원되지 않는 확장 속성.\n"
-
-#: dlls/kernel32/winerror.mc:943
-msgid "Mutex not owned by caller.\n"
-msgstr "호출자가 소유하지 않은 mutex.\n"
-
-#: dlls/kernel32/winerror.mc:948
-msgid "Too many posts to semaphore.\n"
-msgstr "너무 많은 세마포어 통지.\n"
-
-#: dlls/kernel32/winerror.mc:953
-msgid "Read/WriteProcessMemory partially completed.\n"
-msgstr "일부 Read/WriteProcessMemory 요청 완료.\n"
-
-#: dlls/kernel32/winerror.mc:958
-msgid "The oplock wasn't granted.\n"
-msgstr "승인되지 않은 oplock.\n"
-
-#: dlls/kernel32/winerror.mc:963
-msgid "Invalid oplock message received.\n"
-msgstr "잘못된 oplock 메시지 수신.\n"
-
-#: dlls/kernel32/winerror.mc:968
-msgid "Message 0x%1 not found in file %2.\n"
-msgstr "파일 %2에 메시지 0x%1이(가) 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:973
-msgid "Invalid address.\n"
-msgstr "잘못된 주소.\n"
-
-#: dlls/kernel32/winerror.mc:978
-msgid "Arithmetic overflow.\n"
-msgstr "수치 연산 오버플로우.\n"
-
-#: dlls/kernel32/winerror.mc:983
-msgid "Pipe connected.\n"
-msgstr "파이프가 연결되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:988
-msgid "Pipe listening.\n"
-msgstr "파이프가 연결을 기다리고 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:993
-msgid "Extended attribute access denied.\n"
-msgstr "확장 속성의 접근이 거부되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:998
-msgid "I/O operation aborted.\n"
-msgstr "I/O 연산이 취소되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1003
-msgid "Overlapped I/O incomplete.\n"
-msgstr "중첩된 I/O 연산이 완료되지 않았습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1008
-msgid "Overlapped I/O pending.\n"
-msgstr "중첩된 I/O 연산이 진행 중입니다.\n"
-
-#: dlls/kernel32/winerror.mc:1013
-msgid "No access to memory location.\n"
-msgstr "메모리 위치 접근이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1018
-msgid "Swap error.\n"
-msgstr "스왑 오류.\n"
-
-#: dlls/kernel32/winerror.mc:1023
-msgid "Stack overflow.\n"
-msgstr "스택 오버플로우.\n"
-
-#: dlls/kernel32/winerror.mc:1028
-msgid "Invalid message.\n"
-msgstr "잘못된 메시지입니다.\n"
-
-#: dlls/kernel32/winerror.mc:1033
-msgid "Cannot complete.\n"
-msgstr "완료할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1038
-msgid "Invalid flags.\n"
-msgstr "잘못된 플래그입니다.\n"
-
-#: dlls/kernel32/winerror.mc:1043
-msgid "Unrecognized volume.\n"
-msgstr "인식되지 않는 볼륨.\n"
-
-#: dlls/kernel32/winerror.mc:1048
-msgid "File invalid.\n"
-msgstr "잘못된 파일입니다.\n"
-
-#: dlls/kernel32/winerror.mc:1053
-msgid "Cannot run full-screen.\n"
-msgstr "전체화면에서 실행할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1058
-msgid "Nonexistent token.\n"
-msgstr "토큰이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1063
-msgid "Registry corrupt.\n"
-msgstr "레지스트리 손상.\n"
-
-#: dlls/kernel32/winerror.mc:1068
-msgid "Invalid key.\n"
-msgstr "잘못된 키.\n"
-
-#: dlls/kernel32/winerror.mc:1073
-msgid "Can't open registry key.\n"
-msgstr "레지스트리 키를 열 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1078
-msgid "Can't read registry key.\n"
-msgstr "레지스트리 키를 읽을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1083
-msgid "Can't write registry key.\n"
-msgstr "레지스트리 키를 쓸 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1088
-msgid "Registry has been recovered.\n"
-msgstr "레지스트리는 복구되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1093
-msgid "Registry is corrupt.\n"
-msgstr "레지스트리 손상.\n"
-
-#: dlls/kernel32/winerror.mc:1098
-msgid "I/O to registry failed.\n"
-msgstr "레지스트리 I/O 실패.\n"
-
-#: dlls/kernel32/winerror.mc:1103
-msgid "Not registry file.\n"
-msgstr "레지스트리 파일이 아닙니다.\n"
-
-#: dlls/kernel32/winerror.mc:1108
-msgid "Key deleted.\n"
-msgstr "키가 제거되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1113
-msgid "No registry log space.\n"
-msgstr "레지스트리 기록 공간 부족.\n"
-
-#: dlls/kernel32/winerror.mc:1118
-msgid "Registry key has subkeys.\n"
-msgstr "레지스트리 키가 서브키를 가지고 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1123
-msgid "Subkey must be volatile.\n"
-msgstr "하위키는 휘발성이어야 합니다.\n"
-
-#: dlls/kernel32/winerror.mc:1128
-msgid "Notify change request in progress.\n"
-msgstr "진행 중인 요청 변화를 알립니다.\n"
-
-#: dlls/kernel32/winerror.mc:1133
-msgid "Dependent services are running.\n"
-msgstr "의존 서비스 실행 중.\n"
-
-#: dlls/kernel32/winerror.mc:1138
-msgid "Invalid service control.\n"
-msgstr "잘못된 서비스 컨트롤.\n"
-
-#: dlls/kernel32/winerror.mc:1143
-msgid "Service request timeout.\n"
-msgstr "서비스 요청 시간 초과.\n"
-
-#: dlls/kernel32/winerror.mc:1148
-msgid "Cannot create service thread.\n"
-msgstr "서비스 스레드 만들기 실패.\n"
-
-#: dlls/kernel32/winerror.mc:1153
-msgid "Service database locked.\n"
-msgstr "서비스 데이터베이스 잠.\n"
-
-#: dlls/kernel32/winerror.mc:1158
-msgid "Service already running.\n"
-msgstr "서비스 실행 증.\n"
-
-#: dlls/kernel32/winerror.mc:1163
-msgid "Invalid service account.\n"
-msgstr "잘못된 서비스 계정.\n"
-
-#: dlls/kernel32/winerror.mc:1168
-msgid "Service is disabled.\n"
-msgstr "서비스 실행 불능.\n"
-
-#: dlls/kernel32/winerror.mc:1173
-msgid "Circular dependency.\n"
-msgstr "원형 서비스 종속성.\n"
-
-#: dlls/kernel32/winerror.mc:1178
-msgid "Service does not exist.\n"
-msgstr "서비스가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1183
-msgid "Service cannot accept control message.\n"
-msgstr "받아들일 수 없는 서비스 컨트롤 메시지.\n"
-
-#: dlls/kernel32/winerror.mc:1188
-msgid "Service not active.\n"
-msgstr "활성화도지 않은 서비스.\n"
-
-#: dlls/kernel32/winerror.mc:1193
-msgid "Service controller connect failed.\n"
-msgstr "서비스 컨트롤러 연결 실패.\n"
-
-#: dlls/kernel32/winerror.mc:1198
-msgid "Exception in service.\n"
-msgstr "서비스에 예외 발생.\n"
-
-#: dlls/kernel32/winerror.mc:1203
-msgid "Database does not exist.\n"
-msgstr "데이터베이스가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1208
-msgid "Service-specific error.\n"
-msgstr "서비스 고유 오류.\n"
-
-#: dlls/kernel32/winerror.mc:1213
-msgid "Process aborted.\n"
-msgstr "예기치 않은 프로세스 종료.\n"
-
-#: dlls/kernel32/winerror.mc:1218
-msgid "Service dependency failed.\n"
-msgstr "서비스 종속성 실패.\n"
-
-#: dlls/kernel32/winerror.mc:1223
-msgid "Service login failed.\n"
-msgstr "서비스 로그인 실패.\n"
-
-#: dlls/kernel32/winerror.mc:1228
-msgid "Service start-hang.\n"
-msgstr "서비스 start-hang.\n"
-
-#: dlls/kernel32/winerror.mc:1233
-msgid "Invalid service lock.\n"
-msgstr "잘못된 서비스 잠금.\n"
-
-#: dlls/kernel32/winerror.mc:1238
-msgid "Service marked for delete.\n"
-msgstr "서비스가 제거로 표시.\n"
-
-#: dlls/kernel32/winerror.mc:1243
-msgid "Service exists.\n"
-msgstr "서비스가 존재합니다.\n"
-
-#: dlls/kernel32/winerror.mc:1248
-msgid "System running last-known-good config.\n"
-msgstr "시스템이 마지막으로 알려진 좋은 구성으로 실행중입니다.\n"
-
-#: dlls/kernel32/winerror.mc:1253
-msgid "Service dependency deleted.\n"
-msgstr "서비스 종속성이 제거되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1258
-msgid "Boot already accepted as last-good config.\n"
-msgstr "시동이 이미 최종 양호 설정으로 받아들여졌습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1263
-msgid "Service not started since last boot.\n"
-msgstr "서비스가 마지막 시동 이후로 시작되지 않았습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1268
-msgid "Duplicate service name.\n"
-msgstr "중복된 서비스 이름.\n"
-
-#: dlls/kernel32/winerror.mc:1273
-msgid "Different service account.\n"
-msgstr "다른 서비스 계정.\n"
-
-#: dlls/kernel32/winerror.mc:1278
-msgid "Driver failure cannot be detected.\n"
-msgstr "드라이버 오류를 발견할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1283
-msgid "Process abort cannot be detected.\n"
-msgstr "프로세스 중단을 발견할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1288
-msgid "No recovery program for service.\n"
-msgstr "서비스를 복구 프로그램이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1293
-msgid "Service not implemented by exe.\n"
-msgstr "서비스가 EXE로 구현되지 않았습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1298
-msgid "End of media.\n"
-msgstr "미디어 끝.\n"
-
-#: dlls/kernel32/winerror.mc:1303
-msgid "Filemark detected.\n"
-msgstr "파일 표시를 발견했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1308
-msgid "Beginning of media.\n"
-msgstr "미디어 시작.\n"
-
-#: dlls/kernel32/winerror.mc:1313
-msgid "Setmark detected.\n"
-msgstr "세트 표시를 발견했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1318
-msgid "No data detected.\n"
-msgstr "감지된 데이터가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1323
-msgid "Partition failure.\n"
-msgstr "파티션 실패.\n"
-
-#: dlls/kernel32/winerror.mc:1328
-msgid "Invalid block length.\n"
-msgstr "잘못된 블럭 길이.\n"
-
-#: dlls/kernel32/winerror.mc:1333
-msgid "Device not partitioned.\n"
-msgstr "장치에 파티션이 업습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1338
-msgid "Unable to lock media.\n"
-msgstr "미디어 잠금 불가능.\n"
-
-#: dlls/kernel32/winerror.mc:1343
-msgid "Unable to unload media.\n"
-msgstr "미디어를 적재 해제 불가능.\n"
-
-#: dlls/kernel32/winerror.mc:1348
-msgid "Media changed.\n"
-msgstr "미디어가 변경되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1353
-msgid "I/O bus reset.\n"
-msgstr "I/O 버스 재설정.\n"
-
-#: dlls/kernel32/winerror.mc:1358
-msgid "No media in drive.\n"
-msgstr "드라이브에 미디어가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1363
-msgid "No Unicode translation.\n"
-msgstr "유니코드 매핑이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1368
-msgid "DLL initialization failed.\n"
-msgstr "DLL 초기화 실패.\n"
-
-#: dlls/kernel32/winerror.mc:1373
-msgid "Shutdown in progress.\n"
-msgstr "시스템 종료 중.\n"
-
-#: dlls/kernel32/winerror.mc:1378
-msgid "No shutdown in progress.\n"
-msgstr "시스템 종료 중이 아닙니다.\n"
-
-#: dlls/kernel32/winerror.mc:1383
-msgid "I/O device error.\n"
-msgstr "I/O 장치 오류.\n"
-
-#: dlls/kernel32/winerror.mc:1388
-msgid "No serial devices found.\n"
-msgstr "시리얼 장치 발견 실패.\n"
-
-#: dlls/kernel32/winerror.mc:1393
-msgid "Shared IRQ busy.\n"
-msgstr "공유된 IRQ 사용 중.\n"
-
-#: dlls/kernel32/winerror.mc:1398
-msgid "Serial I/O completed.\n"
-msgstr "시리얼 I/O 완료.\n"
-
-#: dlls/kernel32/winerror.mc:1403
-msgid "Serial I/O counter timeout.\n"
-msgstr "시리얼 I/O 카운터 시간 초과.\n"
-
-#: dlls/kernel32/winerror.mc:1408
-msgid "Floppy ID address mark not found.\n"
-msgstr "플로피 ID 주소 표시 찾기 실패.\n"
-
-#: dlls/kernel32/winerror.mc:1413
-msgid "Floppy reports wrong cylinder.\n"
-msgstr "잘못된 플로피 실린더 값 보고.\n"
-
-#: dlls/kernel32/winerror.mc:1418
-msgid "Unknown floppy error.\n"
-msgstr "알 수 없는 플로피 오류.\n"
-
-#: dlls/kernel32/winerror.mc:1423
-msgid "Floppy registers inconsistent.\n"
-msgstr "일관성 없는 플로피 등록값.\n"
-
-#: dlls/kernel32/winerror.mc:1428
-msgid "Hard disk recalibrate failed.\n"
-msgstr "하드디스크 재조정 실패.\n"
-
-#: dlls/kernel32/winerror.mc:1433
-msgid "Hard disk operation failed.\n"
-msgstr "하드디스크 작업 실패.\n"
-
-#: dlls/kernel32/winerror.mc:1438
-msgid "Hard disk reset failed.\n"
-msgstr "하드디스크 재설정 실패.\n"
-
-#: dlls/kernel32/winerror.mc:1443
-msgid "End of tape media.\n"
-msgstr "테이프 미디어 끝.\n"
-
-#: dlls/kernel32/winerror.mc:1448
-msgid "Not enough server memory.\n"
-msgstr "서버 메모리 부족.\n"
-
-#: dlls/kernel32/winerror.mc:1453
-msgid "Possible deadlock.\n"
-msgstr "데드락 가능성.\n"
-
-#: dlls/kernel32/winerror.mc:1458
-msgid "Incorrect alignment.\n"
-msgstr "잘못된 정렬.\n"
-
-#: dlls/kernel32/winerror.mc:1463
-msgid "Set-power-state vetoed.\n"
-msgstr "파워 상태 설정 거부.\n"
-
-#: dlls/kernel32/winerror.mc:1468
-msgid "Set-power-state failed.\n"
-msgstr "파워 상태 설정 실패.\n"
-
-#: dlls/kernel32/winerror.mc:1473
-msgid "Too many links.\n"
-msgstr "너무 많은 링크.\n"
-
-#: dlls/kernel32/winerror.mc:1478
-msgid "Newer Windows version needed.\n"
-msgstr "더 최신의 Windows 버전이 필요합니다.\n"
-
-#: dlls/kernel32/winerror.mc:1483
-msgid "Wrong operating system.\n"
-msgstr "잘못된 운영체제.\n"
-
-#: dlls/kernel32/winerror.mc:1488
-msgid "Single-instance application.\n"
-msgstr "단일 인스턴트 프로그램.\n"
-
-#: dlls/kernel32/winerror.mc:1493
-msgid "Real-mode application.\n"
-msgstr "리얼 모드 프로그램.\n"
-
-#: dlls/kernel32/winerror.mc:1498
-msgid "Invalid DLL.\n"
-msgstr "잘못된 DLL.\n"
-
-#: dlls/kernel32/winerror.mc:1503
-msgid "No associated application.\n"
-msgstr "연결된 프로그램이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1508
-msgid "DDE failure.\n"
-msgstr "DDE 실패.\n"
-
-#: dlls/kernel32/winerror.mc:1513
-msgid "DLL not found.\n"
-msgstr "DLL을 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1518
-msgid "Out of user handles.\n"
-msgstr "사용자 핸들 부족.\n"
-
-#: dlls/kernel32/winerror.mc:1523
-msgid "Message can only be used in synchronous calls.\n"
-msgstr "메시지는 오직 동기 호출에만 사용할 수 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1528
-msgid "The source element is empty.\n"
-msgstr "원본 요소가 비어 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1533
-msgid "The destination element is full.\n"
-msgstr "대상 요소가 가능 차 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1538
-msgid "The element address is invalid.\n"
-msgstr "잘못된 요소 주소.\n"
-
-#: dlls/kernel32/winerror.mc:1543
-msgid "The magazine is not present.\n"
-msgstr "Magazine이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1548
-msgid "The device needs reinitialization.\n"
-msgstr "이 장치는 재초기화가 필요합니다.\n"
-
-#: dlls/kernel32/winerror.mc:1553
-msgid "The device requires cleaning.\n"
-msgstr "이 장치는 정리가 필요합니다.\n"
-
-#: dlls/kernel32/winerror.mc:1558
-msgid "The device door is open.\n"
-msgstr "장치 문이 열려 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1563
-msgid "The device is not connected.\n"
-msgstr "장치가 연결되지 않았습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1568
-msgid "Element not found.\n"
-msgstr "요소를 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1573
-msgid "No match found.\n"
-msgstr "일치하는 것이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1578
-msgid "Property set not found.\n"
-msgstr "속성 집합을 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1583
-msgid "Point not found.\n"
-msgstr "포인트를 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1588
-msgid "No running tracking service.\n"
-msgstr "실행 중인 추적 서비스가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1593
-msgid "No such volume ID.\n"
-msgstr "그런 볼륨 ID가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1598
-msgid "Unable to remove the file to be replaced.\n"
-msgstr "바꿀 파일을 제거할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1603
-msgid "Unable to move the replacement file into place.\n"
-msgstr "교체 파일을 제자리로 이동할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1608
-msgid "Moving the replacement file failed.\n"
-msgstr "교체 파일을 이동하지 못했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1613
-msgid "The journal is being deleted.\n"
-msgstr "저널이 삭제되고 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1618
-msgid "The journal is not active.\n"
-msgstr "저널이 활성화되지 않았습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1623
-msgid "Potential matching file found.\n"
-msgstr "일치할 가능성이 있는 파일이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1628
-msgid "The journal entry was deleted.\n"
-msgstr "저널 엔트리가 지워짐.\n"
-
-#: dlls/kernel32/winerror.mc:1633
-msgid "Invalid device name.\n"
-msgstr "잘못된 장치 이름.\n"
-
-#: dlls/kernel32/winerror.mc:1638
-msgid "Connection unavailable.\n"
-msgstr "불가능한 연결.\n"
-
-#: dlls/kernel32/winerror.mc:1643
-msgid "Device already remembered.\n"
-msgstr "장치는 이미 기억됨.\n"
-
-#: dlls/kernel32/winerror.mc:1648
-msgid "No network or bad path.\n"
-msgstr "네트워크가 없거나 잘못된 경로.\n"
-
-#: dlls/kernel32/winerror.mc:1653
-msgid "Invalid network provider name.\n"
-msgstr "잘못된 네트워크 제공자 이름.\n"
-
-#: dlls/kernel32/winerror.mc:1658
-msgid "Cannot open network connection profile.\n"
-msgstr "네트워크 연결 프로필을 열 수 없음.\n"
-
-#: dlls/kernel32/winerror.mc:1663
-msgid "Corrupt network connection profile.\n"
-msgstr "망가진 네트워크 연결 프로필.\n"
-
-#: dlls/kernel32/winerror.mc:1668
-msgid "Not a container.\n"
-msgstr "컨테이너가 아닙니다.\n"
-
-#: dlls/kernel32/winerror.mc:1673
-msgid "Extended error.\n"
-msgstr "확장된 오류.\n"
-
-#: dlls/kernel32/winerror.mc:1678
-msgid "Invalid group name.\n"
-msgstr "잘못된 그룹 이름.\n"
-
-#: dlls/kernel32/winerror.mc:1683
-msgid "Invalid computer name.\n"
-msgstr "잘못된 컴퓨터 이름.\n"
-
-#: dlls/kernel32/winerror.mc:1688
-msgid "Invalid event name.\n"
-msgstr "잘못된 이벤트 이름.\n"
-
-#: dlls/kernel32/winerror.mc:1693
-msgid "Invalid domain name.\n"
-msgstr "잘못된 도메인 이름.\n"
-
-#: dlls/kernel32/winerror.mc:1698
-msgid "Invalid service name.\n"
-msgstr "잘못된 서비스 이름.\n"
-
-#: dlls/kernel32/winerror.mc:1703
-msgid "Invalid network name.\n"
-msgstr "잘못된 네트워크 이름.\n"
-
-#: dlls/kernel32/winerror.mc:1708
-msgid "Invalid share name.\n"
-msgstr "잘못된 공유 이름.\n"
-
-#: dlls/kernel32/winerror.mc:1718
-msgid "Invalid message name.\n"
-msgstr "잘못된 메시지 이름.\n"
-
-#: dlls/kernel32/winerror.mc:1723
-msgid "Invalid message destination.\n"
-msgstr "잘못된 메시지 대상.\n"
-
-#: dlls/kernel32/winerror.mc:1728
-msgid "Session credential conflict.\n"
-msgstr "세션 자격 증명 충돌.\n"
-
-#: dlls/kernel32/winerror.mc:1733
-msgid "Remote session limit exceeded.\n"
-msgstr "원격 세션 제한 초과.\n"
-
-#: dlls/kernel32/winerror.mc:1738
-msgid "Duplicate domain or workgroup name.\n"
-msgstr "도메인 또는 작업그룹 이름 중복.\n"
-
-#: dlls/kernel32/winerror.mc:1743
-msgid "No network.\n"
-msgstr "네트워크 없음.\n"
-
-#: dlls/kernel32/winerror.mc:1748
-msgid "Operation canceled by user.\n"
-msgstr "작업이 사용자에 위해 취소됨.\n"
-
-#: dlls/kernel32/winerror.mc:1753
-msgid "File has a user-mapped section.\n"
-msgstr "파일에 사용자 매핑 섹션이 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1758 dlls/kernel32/winerror.mc:3783
-msgid "Connection refused.\n"
-msgstr "연결 거부.\n"
-
-#: dlls/kernel32/winerror.mc:1763
-msgid "Connection gracefully closed.\n"
-msgstr "정상적으로 연결 종료.\n"
-
-#: dlls/kernel32/winerror.mc:1768
-msgid "Address already associated with transport endpoint.\n"
-msgstr "이미 전송 엔드포인트와 연결된 주소입니다.\n"
-
-#: dlls/kernel32/winerror.mc:1773
-msgid "Address not associated with transport endpoint.\n"
-msgstr "주소가 전송 엔드포인트와 연결되지 않았습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1778
-msgid "Connection invalid.\n"
-msgstr "연결이 잘못되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1783
-msgid "Connection is active.\n"
-msgstr "연결이 활성화되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1788
-msgid "Network unreachable.\n"
-msgstr "네트워크에 연결할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1793
-msgid "Host unreachable.\n"
-msgstr "호스트에 연결할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1798
-msgid "Protocol unreachable.\n"
-msgstr "접근할 수 없는 프르토콜.\n"
-
-#: dlls/kernel32/winerror.mc:1803
-msgid "Port unreachable.\n"
-msgstr "접근할 수 없는 포트.\n"
-
-#: dlls/kernel32/winerror.mc:1808
-msgid "Request aborted.\n"
-msgstr "요청 중단.\n"
-
-#: dlls/kernel32/winerror.mc:1813
-msgid "Connection aborted.\n"
-msgstr "연결 중단.\n"
-
-#: dlls/kernel32/winerror.mc:1818
-msgid "Please retry operation.\n"
-msgstr "작업을 다시 시도하세요.\n"
-
-#: dlls/kernel32/winerror.mc:1823
-msgid "Connection count limit reached.\n"
-msgstr "연결 개수 제한에 도달했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1828
-msgid "Login time restriction.\n"
-msgstr "로그인 시간 제한.\n"
-
-#: dlls/kernel32/winerror.mc:1833
-msgid "Login workstation restriction.\n"
-msgstr "로그인 워크스테이션 제한.\n"
-
-#: dlls/kernel32/winerror.mc:1838
-msgid "Incorrect network address.\n"
-msgstr "잘못된 네트워크 주소.\n"
-
-#: dlls/kernel32/winerror.mc:1843
-msgid "Service already registered.\n"
-msgstr "서비스가 이미 등록되어 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1848
-msgid "Service not found.\n"
-msgstr "서비스를 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1853
-msgid "User not authenticated.\n"
-msgstr "인증되지 않은 사용자.\n"
-
-#: dlls/kernel32/winerror.mc:1858
-msgid "User not logged on.\n"
-msgstr "로그온되지 않은 사용자.\n"
-
-#: dlls/kernel32/winerror.mc:1863
-msgid "Continue work in progress.\n"
-msgstr "진행중인 작업을 계속합니다.\n"
-
-#: dlls/kernel32/winerror.mc:1868
-msgid "Already initialized.\n"
-msgstr "이미 초기화되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1873
-msgid "No more local devices.\n"
-msgstr "지역 장치가 더 이상 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1878
-msgid "The site does not exist.\n"
-msgstr "사이트가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1883
-msgid "The domain controller already exists.\n"
-msgstr "도메인 제어기가 이미 존재합니다.\n"
-
-#: dlls/kernel32/winerror.mc:1888
-msgid "Supported only when connected.\n"
-msgstr "연결되었을 때만 지원됩니다.\n"
-
-#: dlls/kernel32/winerror.mc:1893
-msgid "Perform operation even when nothing changed.\n"
-msgstr "바뀐 것이 없는 경우에도 작업을 수행합니다.\n"
-
-#: dlls/kernel32/winerror.mc:1898
-msgid "The user profile is invalid.\n"
-msgstr "사용자 프로파일이 잘못되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1903
-msgid "Not supported on Small Business Server.\n"
-msgstr "Small Business Server는 지원되지 않습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1908
-msgid "Not all privileges assigned.\n"
-msgstr "모든 권한을 할당되지는 않습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1913
-msgid "Some security IDs not mapped.\n"
-msgstr "일부 보안 ID가 매핑되지 않았습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1918
-msgid "No quotas for account.\n"
-msgstr "계정에 할당량이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1923
-msgid "Local user session key.\n"
-msgstr "지역 사용자 세션 키.\n"
-
-#: dlls/kernel32/winerror.mc:1928
-msgid "Password too complex for LM.\n"
-msgstr "LM 용으로는 너무 복잡한 암호.\n"
-
-#: dlls/kernel32/winerror.mc:1933
-msgid "Unknown revision.\n"
-msgstr "알 수 없는 리비전.\n"
-
-#: dlls/kernel32/winerror.mc:1938
-msgid "Incompatible revision levels.\n"
-msgstr "호환되지 않는 리비전 레벨.\n"
-
-#: dlls/kernel32/winerror.mc:1943
-msgid "Invalid owner.\n"
-msgstr "잘못된 소유자.\n"
-
-#: dlls/kernel32/winerror.mc:1948
-msgid "Invalid primary group.\n"
-msgstr "잘못된 기본 그룹.\n"
-
-#: dlls/kernel32/winerror.mc:1953
-msgid "No impersonation token.\n"
-msgstr "가장(위장) 토큰이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1958
-msgid "Can't disable mandatory group.\n"
-msgstr "필수 그룹을 비활성화할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1963
-msgid "No logon servers available.\n"
-msgstr "로그온 서버를 이용할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1968
-msgid "No such logon session.\n"
-msgstr "로그온 세션이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1973
-msgid "No such privilege.\n"
-msgstr "어떤 권한도 없음.\n"
-
-#: dlls/kernel32/winerror.mc:1978
-msgid "Privilege not held.\n"
-msgstr "권한이 유지 되지 않음.\n"
-
-#: dlls/kernel32/winerror.mc:1983
-msgid "Invalid account name.\n"
-msgstr "잘못된 계정 이름.\n"
-
-#: dlls/kernel32/winerror.mc:1988
-msgid "User already exists.\n"
-msgstr "사용자는 이미 존재합니다.\n"
-
-#: dlls/kernel32/winerror.mc:1993
-msgid "No such user.\n"
-msgstr "어떤 사용자도 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:1998
-msgid "Group already exists.\n"
-msgstr "그룹은 이미 존재합니다.\n"
-
-#: dlls/kernel32/winerror.mc:2003
-msgid "No such group.\n"
-msgstr "어떤 그룹도 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2008
-msgid "User already in group.\n"
-msgstr "사용자는 이미 그룹에 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2013
-msgid "User not in group.\n"
-msgstr "사용자가 그룹에 없음.\n"
-
-#: dlls/kernel32/winerror.mc:2018
-msgid "Can't delete last admin user.\n"
-msgstr "마지막  관리 사용자를 지울 수 없음.\n"
-
-#: dlls/kernel32/winerror.mc:2023
-msgid "Wrong password.\n"
-msgstr "잘못된 암호.\n"
-
-#: dlls/kernel32/winerror.mc:2028
-msgid "Ill-formed password.\n"
-msgstr "나쁜 형태의 암호.\n"
-
-#: dlls/kernel32/winerror.mc:2033
-msgid "Password restriction.\n"
-msgstr "암호 제한.\n"
-
-#: dlls/kernel32/winerror.mc:2038
-msgid "Logon failure.\n"
-msgstr "로그인 실패.\n"
-
-#: dlls/kernel32/winerror.mc:2043
-msgid "Account restriction.\n"
-msgstr "계정 제한.\n"
-
-#: dlls/kernel32/winerror.mc:2048
-msgid "Invalid logon hours.\n"
-msgstr "잘못된 로그온 시간.\n"
-
-#: dlls/kernel32/winerror.mc:2053
-msgid "Invalid workstation.\n"
-msgstr "잘못된 워크스테이션.\n"
-
-#: dlls/kernel32/winerror.mc:2058
-msgid "Password expired.\n"
-msgstr "암호 유효 기간 만료.\n"
-
-#: dlls/kernel32/winerror.mc:2063
-msgid "Account disabled.\n"
-msgstr "계정을 사용할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2068
-msgid "No security ID mapped.\n"
-msgstr "매핑된 보안 아이디가 없음.\n"
-
-#: dlls/kernel32/winerror.mc:2073
-msgid "Too many LUIDs requested.\n"
-msgstr "너무 많은  LUI가 요구됨.\n"
-
-#: dlls/kernel32/winerror.mc:2078
-msgid "LUIDs exhausted.\n"
-msgstr "LUID가 고갈됨.\n"
-
-#: dlls/kernel32/winerror.mc:2083
-msgid "Invalid sub authority.\n"
-msgstr "잘못된 하위 기관.\n"
-
-#: dlls/kernel32/winerror.mc:2088
-msgid "Invalid ACL.\n"
-msgstr "잘못된 ACL.\n"
-
-#: dlls/kernel32/winerror.mc:2093
-msgid "Invalid SID.\n"
-msgstr "잘못된 SID.\n"
-
-#: dlls/kernel32/winerror.mc:2098
-msgid "Invalid security descriptor.\n"
-msgstr "잘못된 보안 설명자.\n"
-
-#: dlls/kernel32/winerror.mc:2103
-msgid "Bad inherited ACL.\n"
-msgstr "나쁜 ACL을 상속.\n"
-
-#: dlls/kernel32/winerror.mc:2108
-msgid "Server disabled.\n"
-msgstr "서버가 가능하지 않음.\n"
-
-#: dlls/kernel32/winerror.mc:2113
-msgid "Server not disabled.\n"
-msgstr "서버가 가능하지 않지가 않음.\n"
-
-#: dlls/kernel32/winerror.mc:2118
-msgid "Invalid ID authority.\n"
-msgstr "잘못된 아이디 권한.\n"
-
-#: dlls/kernel32/winerror.mc:2123
-msgid "Allotted space exceeded.\n"
-msgstr "할당된 공간을 초과했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2128
-msgid "Invalid group attributes.\n"
-msgstr "잘못된 그룹 속성.\n"
-
-#: dlls/kernel32/winerror.mc:2133
-msgid "Bad impersonation level.\n"
-msgstr "나쁜 가장 수준.\n"
-
-#: dlls/kernel32/winerror.mc:2138
-msgid "Can't open anonymous security token.\n"
-msgstr "익명 보안 토큰을 열 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2143
-msgid "Bad validation class.\n"
-msgstr "나쁜 검증 클래스.\n"
-
-#: dlls/kernel32/winerror.mc:2148
-msgid "Bad token type.\n"
-msgstr "나쁜 토큰 형식.\n"
-
-#: dlls/kernel32/winerror.mc:2153
-msgid "No security on object.\n"
-msgstr "개체에 보안 없음.\n"
-
-#: dlls/kernel32/winerror.mc:2158
-msgid "Can't access domain information.\n"
-msgstr "도메인 정보에 접근할 수 없음.\n"
-
-#: dlls/kernel32/winerror.mc:2163
-msgid "Invalid server state.\n"
-msgstr "잘못된 서버 상태.\n"
-
-#: dlls/kernel32/winerror.mc:2168
-msgid "Invalid domain state.\n"
-msgstr "잘못된 도메인 상태.\n"
-
-#: dlls/kernel32/winerror.mc:2173
-msgid "Invalid domain role.\n"
-msgstr "잘못된 도메인 법칙.\n"
-
-#: dlls/kernel32/winerror.mc:2178
-msgid "No such domain.\n"
-msgstr "어떤 도메인도 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2183
-msgid "Domain already exists.\n"
-msgstr "도메인은 이미 존재합니다.\n"
-
-#: dlls/kernel32/winerror.mc:2188
-msgid "Domain limit exceeded.\n"
-msgstr "도메인 제한 도달.\n"
-
-#: dlls/kernel32/winerror.mc:2193
-msgid "Internal database corruption.\n"
-msgstr "내부 데이터베이스 손상.\n"
-
-#: dlls/kernel32/winerror.mc:2198
-msgid "Internal error.\n"
-msgstr "내부 오류.\n"
-
-#: dlls/kernel32/winerror.mc:2203
-msgid "Generic access types not mapped.\n"
-msgstr "매핑되지 않은 일반 액세스 유형.\n"
-
-#: dlls/kernel32/winerror.mc:2208
-msgid "Bad descriptor format.\n"
-msgstr "나쁜 설명자 형식.\n"
-
-#: dlls/kernel32/winerror.mc:2213
-msgid "Not a logon process.\n"
-msgstr "로그온 프로세스가 아님.\n"
-
-#: dlls/kernel32/winerror.mc:2218
-msgid "Logon session ID exists.\n"
-msgstr "로그온 세션 아이디가 존재함.\n"
-
-#: dlls/kernel32/winerror.mc:2223
-msgid "Unknown authentication package.\n"
-msgstr "알 수 없는 인증 패키지.\n"
-
-#: dlls/kernel32/winerror.mc:2228
-msgid "Bad logon session state.\n"
-msgstr "나쁜 로그온 세션 상태.\n"
-
-#: dlls/kernel32/winerror.mc:2233
-msgid "Logon session ID collision.\n"
-msgstr "로그온 세션 아이디 충돌.\n"
-
-#: dlls/kernel32/winerror.mc:2238
-msgid "Invalid logon type.\n"
-msgstr "잘못된 로그온 타입.\n"
-
-#: dlls/kernel32/winerror.mc:2243
-msgid "Cannot impersonate.\n"
-msgstr "사칭할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2248
-msgid "Invalid transaction state.\n"
-msgstr "트랜잭션 상태가 잘못되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2253
-msgid "Security DB commit failure.\n"
-msgstr "보안 DB 약속 실패.\n"
-
-#: dlls/kernel32/winerror.mc:2258
-msgid "Account is built-in.\n"
-msgstr "이 계정은 내부용입니다.\n"
-
-#: dlls/kernel32/winerror.mc:2263
-msgid "Group is built-in.\n"
-msgstr "이 그룹은 내부용입니다.\n"
-
-#: dlls/kernel32/winerror.mc:2268
-msgid "User is built-in.\n"
-msgstr "이 사용자는 내부용입니다.\n"
-
-#: dlls/kernel32/winerror.mc:2273
-msgid "Group is primary for user.\n"
-msgstr "그룹은 사용자에 대한 기본입니다.\n"
-
-#: dlls/kernel32/winerror.mc:2278
-msgid "Token already in use.\n"
-msgstr "토큰은 이미 사용중입니다.\n"
-
-#: dlls/kernel32/winerror.mc:2283
-msgid "No such local group.\n"
-msgstr "어떤 지역 그룹도 없음.\n"
-
-#: dlls/kernel32/winerror.mc:2288
-msgid "User not in local group.\n"
-msgstr "지역 그룹에 사용자가 없음.\n"
-
-#: dlls/kernel32/winerror.mc:2293
-msgid "User already in local group.\n"
-msgstr "사용자는 이미 지역 그룹에 존재함.\n"
-
-#: dlls/kernel32/winerror.mc:2298
-msgid "Local group already exists.\n"
-msgstr "지역 그룹이 이미 존재함.\n"
-
-#: dlls/kernel32/winerror.mc:2303 dlls/kernel32/winerror.mc:2328
-msgid "Logon type not granted.\n"
-msgstr "부여하지 않은 로그온 유형.\n"
-
-#: dlls/kernel32/winerror.mc:2308
-msgid "Too many secrets.\n"
-msgstr "너무 많은 비밀.\n"
-
-#: dlls/kernel32/winerror.mc:2313
-msgid "Secret too long.\n"
-msgstr "비밀이 너무 김.\n"
-
-#: dlls/kernel32/winerror.mc:2318
-msgid "Internal security DB error.\n"
-msgstr "내부 보안 ID 오류.\n"
-
-#: dlls/kernel32/winerror.mc:2323
-msgid "Too many context IDs.\n"
-msgstr "컨텍스트 아이디가 너무 많음.\n"
-
-#: dlls/kernel32/winerror.mc:2333
-msgid "Cross-encrypted NT password required.\n"
-msgstr "교차-암호화된 NT 암호가 요구됨.\n"
-
-#: dlls/kernel32/winerror.mc:2338
-msgid "No such member.\n"
-msgstr "어떤 회원도 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2343
-msgid "Invalid member.\n"
-msgstr "잘못된 회원.\n"
-
-#: dlls/kernel32/winerror.mc:2348
-msgid "Too many SIDs.\n"
-msgstr "너무 많은 SID이 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2353
-msgid "Cross-encrypted LM password required.\n"
-msgstr "교차-암호화된  LM 암호가 요구됨.\n"
-
-#: dlls/kernel32/winerror.mc:2358
-msgid "No inheritable components.\n"
-msgstr "상속가능한 구성요소가 없음.\n"
-
-#: dlls/kernel32/winerror.mc:2363
-msgid "File or directory corrupt.\n"
-msgstr "파일이나 디렉터리가 망가졌습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2368
-msgid "Disk is corrupt.\n"
-msgstr "디스크가 망가졌습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2373
-msgid "No user session key.\n"
-msgstr "사용자 세션 키가 없음.\n"
-
-#: dlls/kernel32/winerror.mc:2378
-msgid "License quota exceeded.\n"
-msgstr "라이선스의 할당량을 초과했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2383
-msgid "Wrong target name.\n"
-msgstr "잘못된 목표의 이름.\n"
-
-#: dlls/kernel32/winerror.mc:2388
-msgid "Mutual authentication failed.\n"
-msgstr "상호 인증 실패.\n"
-
-#: dlls/kernel32/winerror.mc:2393
-msgid "Time skew between client and server.\n"
-msgstr "클라이언트와 서버 사이의 시간 왜곡.\n"
-
-#: dlls/kernel32/winerror.mc:2398
-msgid "Invalid window handle.\n"
-msgstr "잘못된 원도우 핸들.\n"
-
-#: dlls/kernel32/winerror.mc:2403
-msgid "Invalid menu handle.\n"
-msgstr "잘못된 메뉴 핸들.\n"
-
-#: dlls/kernel32/winerror.mc:2408
-msgid "Invalid cursor handle.\n"
-msgstr "잘못된 커서 핸들.\n"
-
-#: dlls/kernel32/winerror.mc:2413
-msgid "Invalid accelerator table handle.\n"
-msgstr "잘못된 엑셀레이터 테이블 핸들.\n"
-
-#: dlls/kernel32/winerror.mc:2418
-msgid "Invalid hook handle.\n"
-msgstr "잘못된 hook 핸들.\n"
-
-#: dlls/kernel32/winerror.mc:2423
-msgid "Invalid DWP handle.\n"
-msgstr "잘못된 DWP 핸들.\n"
-
-#: dlls/kernel32/winerror.mc:2428
-msgid "Can't create top-level child window.\n"
-msgstr "최고 수준의 하위 창을 만들 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2433
-msgid "Can't find window class.\n"
-msgstr "창 클래스를 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2438
-msgid "Window owned by another thread.\n"
-msgstr "창은 다른 스레드가 가지고 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2443
-msgid "Hotkey already registered.\n"
-msgstr "바로 가기는 이미 등록되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2448
-msgid "Class already exists.\n"
-msgstr "클래스는 이미 존재합니다.\n"
-
-#: dlls/kernel32/winerror.mc:2453
-msgid "Class does not exist.\n"
-msgstr "클래스가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2458
-msgid "Class has open windows.\n"
-msgstr "클래스는 연 상태의 창을 가지고 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2463 dlls/mferror/mferror.mc:130
-msgid "Invalid index.\n"
-msgstr "잘못된 인덱스.\n"
-
-#: dlls/kernel32/winerror.mc:2468
-msgid "Invalid icon handle.\n"
-msgstr "잘못된 아이콘 핸들.\n"
-
-#: dlls/kernel32/winerror.mc:2473
-msgid "Private dialog index.\n"
-msgstr "비공개 다이얼로그 색인.\n"
-
-#: dlls/kernel32/winerror.mc:2478
-msgid "List box ID not found.\n"
-msgstr "목록상자 ID를 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2483
-msgid "No wildcard characters.\n"
-msgstr "와일드카드 문자가 없음.\n"
-
-#: dlls/kernel32/winerror.mc:2488
-msgid "Clipboard not open.\n"
-msgstr "클립보드를 열 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2493
-msgid "Hotkey not registered.\n"
-msgstr "바로 가기가 등록되지 않았습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2498
-msgid "Not a dialog window.\n"
-msgstr "대화창이 아닙니다.\n"
-
-#: dlls/kernel32/winerror.mc:2503
-msgid "Control ID not found.\n"
-msgstr "컨트롤 아이디를 찾을 수 없음.\n"
-
-#: dlls/kernel32/winerror.mc:2508
-msgid "Invalid combo box message.\n"
-msgstr "잘못된  콤보 박스 메시지입니다.\n"
-
-#: dlls/kernel32/winerror.mc:2513
-msgid "Not a combo box window.\n"
-msgstr "콤보 박스 창이 아닙니다.\n"
-
-#: dlls/kernel32/winerror.mc:2518
-msgid "Invalid edit height.\n"
-msgstr "잘못된 편집 높이.\n"
-
-#: dlls/kernel32/winerror.mc:2523
-msgid "DC not found.\n"
-msgstr "DC를 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2528
-msgid "Invalid hook filter.\n"
-msgstr "잘못된 훅 필터.\n"
-
-#: dlls/kernel32/winerror.mc:2533
-msgid "Invalid filter procedure.\n"
-msgstr "잘못된 필터 프로시져.\n"
-
-#: dlls/kernel32/winerror.mc:2538
-msgid "Hook procedure needs module handle.\n"
-msgstr "훅 프로시저가 모듈 핸들을 필요로 합니다.\n"
-
-#: dlls/kernel32/winerror.mc:2543
-msgid "Global-only hook procedure.\n"
-msgstr "글로벌 전용 훅 프로시저.\n"
-
-#: dlls/kernel32/winerror.mc:2548
-msgid "Journal hook already set.\n"
-msgstr "저널 훅이 이미 설정되어 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2553
-msgid "Hook procedure not installed.\n"
-msgstr "훅 프로시저가 설치되어 있지 않습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2558
-msgid "Invalid list box message.\n"
-msgstr "잘못된 목록상자 메시지.\n"
-
-#: dlls/kernel32/winerror.mc:2563
-msgid "Invalid LB_SETCOUNT sent.\n"
-msgstr "잘못된 LB_SETCOUNT 보내기.\n"
-
-#: dlls/kernel32/winerror.mc:2568
-msgid "No tab stops on this list box.\n"
-msgstr "이 목록상자는 탭정지가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2573
-msgid "Can't destroy object owned by another thread.\n"
-msgstr "다른 스레드가 소유한 개체를 파괴할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2578
-msgid "Child window menus not allowed.\n"
-msgstr "자식 창 메뉴는 허용되지 않습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2583
-msgid "Window has no system menu.\n"
-msgstr "창이 시스템 메뉴를 가지고 있지 않습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2588
-msgid "Invalid message box style.\n"
-msgstr "잘못된 메시지 박스 스타일.\n"
-
-#: dlls/kernel32/winerror.mc:2593
-msgid "Invalid SPI parameter.\n"
-msgstr "잘못된 SPI 매개변수.\n"
-
-#: dlls/kernel32/winerror.mc:2598
-msgid "Screen already locked.\n"
-msgstr "화면은 이미 잠겼습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2603
-msgid "Window handles have different parents.\n"
-msgstr "창 핸들이 각각 다른 부모를 가지고 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2608
-msgid "Not a child window.\n"
-msgstr "자식 창이 아닙니다.\n"
-
-#: dlls/kernel32/winerror.mc:2613
-msgid "Invalid GW command.\n"
-msgstr "잘못된 GW 명령.\n"
-
-#: dlls/kernel32/winerror.mc:2618
-msgid "Invalid thread ID.\n"
-msgstr "잘못된 스레드 ID.\n"
-
-#: dlls/kernel32/winerror.mc:2623
-msgid "Not an MDI child window.\n"
-msgstr "MDI 자식 창이 아님.\n"
-
-#: dlls/kernel32/winerror.mc:2628
-msgid "Popup menu already active.\n"
-msgstr "팝업 메뉴는 이미 활성화되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2633
-msgid "No scrollbars.\n"
-msgstr "스크롤바가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2638
-msgid "Invalid scrollbar range.\n"
-msgstr "잘못된 스코롤바 범위.\n"
-
-#: dlls/kernel32/winerror.mc:2643
-msgid "Invalid ShowWin command.\n"
-msgstr "잘못된 ShowWin 명령.\n"
-
-#: dlls/kernel32/winerror.mc:2648
-msgid "No system resources.\n"
-msgstr "시스템 리소스가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2653
-msgid "No non-paged system resources.\n"
-msgstr "페이지되지 않은 시스템 자원이 없음.\n"
-
-#: dlls/kernel32/winerror.mc:2658
-msgid "No paged system resources.\n"
-msgstr "페이지된 시스템 자원이 없음.\n"
-
-#: dlls/kernel32/winerror.mc:2663
-msgid "No working set quota.\n"
-msgstr "작동하는 할당령 설정이 없음.\n"
-
-#: dlls/kernel32/winerror.mc:2668
-msgid "No page file quota.\n"
-msgstr "페이지파일 할당량이 없음.\n"
-
-#: dlls/kernel32/winerror.mc:2673
-msgid "Exceeded commitment limit.\n"
-msgstr "약정 한도 초과.\n"
-
-#: dlls/kernel32/winerror.mc:2678
-msgid "Menu item not found.\n"
-msgstr "메뉴 항목을 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2683
-msgid "Invalid keyboard handle.\n"
-msgstr "잘못된 키보드 핸들.\n"
-
-#: dlls/kernel32/winerror.mc:2688
-msgid "Hook type not allowed.\n"
-msgstr "허용되지 않은 훅 형식.\n"
-
-#: dlls/kernel32/winerror.mc:2693
-msgid "Interactive window station required.\n"
-msgstr "대화형 Windows 스테이션이 요구됨.\n"
-
-#: dlls/kernel32/winerror.mc:2698
-msgid "Timeout.\n"
-msgstr "시간 초과.\n"
-
-#: dlls/kernel32/winerror.mc:2703
-msgid "Invalid monitor handle.\n"
-msgstr "잘못된 모니터 핸들.\n"
-
-#: dlls/kernel32/winerror.mc:2708
-msgid "Event log file corrupt.\n"
-msgstr "이벤트 로그 파일이 망가졌습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2713
-msgid "Event log can't start.\n"
-msgstr "이벤트 로그를 시작할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2718
-msgid "Event log file full.\n"
-msgstr "이벤트 로그 파일이 가득 참.\n"
-
-#: dlls/kernel32/winerror.mc:2723
-msgid "Event log file changed.\n"
-msgstr "이벤트 로그 파일이 변경되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2728
-msgid "Installer service failed.\n"
-msgstr "설치 서비스가 실패함.\n"
-
-#: dlls/kernel32/winerror.mc:2733
-msgid "Installation aborted by user.\n"
-msgstr "설치가 사용자에 위해 취소됨.\n"
-
-#: dlls/kernel32/winerror.mc:2738
-msgid "Installation failure.\n"
-msgstr "설치 실패.\n"
-
-#: dlls/kernel32/winerror.mc:2743
-msgid "Installation suspended.\n"
-msgstr "설치가 일시 중지됨.\n"
-
-#: dlls/kernel32/winerror.mc:2748
-msgid "Unknown product.\n"
-msgstr "알 수 없는 제품.\n"
-
-#: dlls/kernel32/winerror.mc:2753
-msgid "Unknown feature.\n"
-msgstr "알 수 없는 특징.\n"
-
-#: dlls/kernel32/winerror.mc:2758
-msgid "Unknown component.\n"
-msgstr "알 수 없는 구성 요소.\n"
-
-#: dlls/kernel32/winerror.mc:2763
-msgid "Unknown property.\n"
-msgstr "알 수 없는 속성.\n"
-
-#: dlls/kernel32/winerror.mc:2768
-msgid "Invalid handle state.\n"
-msgstr "잘못된 핸들 상태.\n"
-
-#: dlls/kernel32/winerror.mc:2773
-msgid "Bad configuration.\n"
-msgstr "잘못된 구성.\n"
-
-#: dlls/kernel32/winerror.mc:2778
-msgid "Index is missing.\n"
-msgstr "인덱스가 빠짐.\n"
-
-#: dlls/kernel32/winerror.mc:2783
-msgid "Installation source is missing.\n"
-msgstr "설치 원본이 없음.\n"
-
-#: dlls/kernel32/winerror.mc:2788
-msgid "Wrong installation package version.\n"
-msgstr "잘못된 설치 패키지 버전.\n"
-
-#: dlls/kernel32/winerror.mc:2793
-msgid "Product uninstalled.\n"
-msgstr "제품이 제거되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2798
-msgid "Invalid query syntax.\n"
-msgstr "잘못된 쿼리 구문입니다.\n"
-
-#: dlls/kernel32/winerror.mc:2803
-msgid "Invalid field.\n"
-msgstr "잘못된 필드입니다.\n"
-
-#: dlls/kernel32/winerror.mc:2808
-msgid "Device removed.\n"
-msgstr "장치가 제거되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2813
-msgid "Installation already running.\n"
-msgstr "설치 작업이 이미 실행중입니다.\n"
-
-#: dlls/kernel32/winerror.mc:2818
-msgid "Installation package failed to open.\n"
-msgstr "설치 패키지를 열지 못했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2823
-msgid "Installation package is invalid.\n"
-msgstr "설치 패키지가 잘못되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2828
-msgid "Installer user interface failed.\n"
-msgstr "설치 프로그램 사용자 인터페이스 실패.\n"
-
-#: dlls/kernel32/winerror.mc:2833
-msgid "Failed to open installation log file.\n"
-msgstr "설치 로그 파일 열기 실패.\n"
-
-#: dlls/kernel32/winerror.mc:2838
-msgid "Installation language not supported.\n"
-msgstr "설치하려는 언어가 지원되지 않습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2843
-msgid "Installation transform failed to apply.\n"
-msgstr "설치 변환 실패가 추가됨.\n"
-
-#: dlls/kernel32/winerror.mc:2848
-msgid "Installation package rejected.\n"
-msgstr "설치 패키지기 거부됨.\n"
-
-#: dlls/kernel32/winerror.mc:2853
-msgid "Function could not be called.\n"
-msgstr "함수를 호출할 수 없음.\n"
-
-#: dlls/kernel32/winerror.mc:2858
-msgid "Function failed.\n"
-msgstr "함수 실패.\n"
-
-#: dlls/kernel32/winerror.mc:2863
-msgid "Invalid table.\n"
-msgstr "잘못된 테이블.\n"
-
-#: dlls/kernel32/winerror.mc:2868
-msgid "Data type mismatch.\n"
-msgstr "데이터 형식이 맞지 않습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2873 dlls/kernel32/winerror.mc:3083
-msgid "Unsupported type.\n"
-msgstr "지원되지 않는 형식.\n"
-
-#: dlls/kernel32/winerror.mc:2878
-msgid "Creation failed.\n"
-msgstr "만들기 실패함.\n"
-
-#: dlls/kernel32/winerror.mc:2883
-msgid "Temporary directory not writable.\n"
-msgstr "임시 디렉터리에 기록할 수 없음.\n"
-
-#: dlls/kernel32/winerror.mc:2888
-msgid "Installation platform not supported.\n"
-msgstr "설치하려는 플랫폼이 지원되지 않스니다.\n"
-
-#: dlls/kernel32/winerror.mc:2893
-msgid "Installer not used.\n"
-msgstr "설치 프로그램이 사용되지 않음.\n"
-
-#: dlls/kernel32/winerror.mc:2898
-msgid "Failed to open the patch package.\n"
-msgstr "패치 패키지 열기 실패.\n"
-
-#: dlls/kernel32/winerror.mc:2903
-msgid "Invalid patch package.\n"
-msgstr "잘못된 패치 패키지.\n"
-
-#: dlls/kernel32/winerror.mc:2908
-msgid "Unsupported patch package.\n"
-msgstr "지원되지 않는 패치 패키지입니다.\n"
-
-#: dlls/kernel32/winerror.mc:2913
-msgid "Another version is installed.\n"
-msgstr "다른 버전이 설치되어 있음.\n"
-
-#: dlls/kernel32/winerror.mc:2918
-msgid "Invalid command line.\n"
-msgstr "잘못된 명령 라인.\n"
-
-#: dlls/kernel32/winerror.mc:2923
-msgid "Remote installation not allowed.\n"
-msgstr "원격 설치는 허용되지 않음.\n"
-
-#: dlls/kernel32/winerror.mc:2928
-msgid "Reboot initiated after successful install.\n"
-msgstr "설치가 성공한 후에 스스로 재부팅될 것임.\n"
-
-#: dlls/kernel32/winerror.mc:2933
-msgid "Invalid string binding.\n"
-msgstr "잘못된 문자열 바인딩.\n"
-
-#: dlls/kernel32/winerror.mc:2938
-msgid "Wrong kind of binding.\n"
-msgstr "잘못된 종류의 바인딩.\n"
-
-#: dlls/kernel32/winerror.mc:2943
-msgid "Invalid binding.\n"
-msgstr "잘못된 바인딩.\n"
-
-#: dlls/kernel32/winerror.mc:2948
-msgid "RPC protocol sequence not supported.\n"
-msgstr "RPC 프로토콜 시퀀스가 지원되지 않음.\n"
-
-#: dlls/kernel32/winerror.mc:2953
-msgid "Invalid RPC protocol sequence.\n"
-msgstr "잘못된 RPC 프로토콜 순서.\n"
-
-#: dlls/kernel32/winerror.mc:2958
-msgid "Invalid string UUID.\n"
-msgstr "잘못된 문자열 UUID.\n"
-
-#: dlls/kernel32/winerror.mc:2963
-msgid "Invalid endpoint format.\n"
-msgstr "잘못된 엔드포인트 포맷.\n"
-
-#: dlls/kernel32/winerror.mc:2968
-msgid "Invalid network address.\n"
-msgstr "잘못된 네트워크 주소.\n"
-
-#: dlls/kernel32/winerror.mc:2973
-msgid "No endpoint found.\n"
-msgstr "엔드포인트를 찾을 수 없음.\n"
-
-#: dlls/kernel32/winerror.mc:2978
-msgid "Invalid timeout value.\n"
-msgstr "잘못된 시간 초과 값.\n"
-
-#: dlls/kernel32/winerror.mc:2983
-msgid "Object UUID not found.\n"
-msgstr "UUID 개체를 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2988
-msgid "UUID already registered.\n"
-msgstr "UUID는 이미 등록되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2993
-msgid "UUID type already registered.\n"
-msgstr "UUID 형식은 이미 등록되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:2998
-msgid "Server already listening.\n"
-msgstr "서버는 이미 응답중입니다.\n"
-
-#: dlls/kernel32/winerror.mc:3003
-msgid "No protocol sequences registered.\n"
-msgstr "어떤 프로토콜 순서도 등록되어있지 않습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3008
-msgid "RPC server not listening.\n"
-msgstr "RPC 서버는 응답이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3013
-msgid "Unknown manager type.\n"
-msgstr "알 수 없는 관리자 유형.\n"
-
-#: dlls/kernel32/winerror.mc:3018
-msgid "Unknown interface.\n"
-msgstr "알 수 없는 인터페이스.\n"
-
-#: dlls/kernel32/winerror.mc:3023
-msgid "No bindings.\n"
-msgstr "바인딩이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3028
-msgid "No protocol sequences.\n"
-msgstr "어떤 프로토콜 순서도 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3033
-msgid "Can't create endpoint.\n"
-msgstr "엔드포인트를 만들 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3038
-msgid "Out of resources.\n"
-msgstr "리소스 부족.\n"
-
-#: dlls/kernel32/winerror.mc:3043
-msgid "RPC server unavailable.\n"
-msgstr "RPC 서버를 사용할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3048
-msgid "RPC server too busy.\n"
-msgstr "RPC 서버가 지나치게 사용 중입니다.\n"
-
-#: dlls/kernel32/winerror.mc:3053
-msgid "Invalid network options.\n"
-msgstr "잘못된 네트워크 옵션.\n"
-
-#: dlls/kernel32/winerror.mc:3058
-msgid "No RPC call active.\n"
-msgstr "RPC 호출이 활성화되지 않았습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3063
-msgid "RPC call failed.\n"
-msgstr "RPC 호출이 실패했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3068
-msgid "RPC call failed and didn't execute.\n"
-msgstr "RPC 호출이 실패하여 실행하지 않았습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3073
-msgid "RPC protocol error.\n"
-msgstr "RPC 프로토콜 오류.\n"
-
-#: dlls/kernel32/winerror.mc:3078
-msgid "Unsupported transfer syntax.\n"
-msgstr "지원되지 않는 전송 구문.\n"
-
-#: dlls/kernel32/winerror.mc:3088
-msgid "Invalid tag.\n"
-msgstr "잘못된 태그.\n"
-
-#: dlls/kernel32/winerror.mc:3093
-msgid "Invalid array bounds.\n"
-msgstr "배열 경계가 잘못되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3098
-msgid "No entry name.\n"
-msgstr "항목 이름이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3103
-msgid "Invalid name syntax.\n"
-msgstr "잘못된 이름 구문.\n"
-
-#: dlls/kernel32/winerror.mc:3108
-msgid "Unsupported name syntax.\n"
-msgstr "지원되지 않는 이름 구문.\n"
-
-#: dlls/kernel32/winerror.mc:3113
-msgid "No network address.\n"
-msgstr "네트워크 주소가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3118
-msgid "Duplicate endpoint.\n"
-msgstr "중복된 엔드포인트.\n"
-
-#: dlls/kernel32/winerror.mc:3123
-msgid "Unknown authentication type.\n"
-msgstr "알 수 없는 인증 형식.\n"
-
-#: dlls/kernel32/winerror.mc:3128
-msgid "Maximum calls too low.\n"
-msgstr "최대 호출이 너무 낮습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3133
-msgid "String too long.\n"
-msgstr "문자열이 너무 깁니다.\n"
-
-#: dlls/kernel32/winerror.mc:3138
-msgid "Protocol sequence not found.\n"
-msgstr "프로토콜 시퀀스를 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3143
-msgid "Procedure number out of range.\n"
-msgstr "절차 번호가 범위를 벗어났습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3148
-msgid "Binding has no authentication data.\n"
-msgstr "바인딩에 인증 데이터가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3153
-msgid "Unknown authentication service.\n"
-msgstr "알 수 없는 인증 서비스.\n"
-
-#: dlls/kernel32/winerror.mc:3158
-msgid "Unknown authentication level.\n"
-msgstr "알 수 없는 인증 수준.\n"
-
-#: dlls/kernel32/winerror.mc:3163
-msgid "Invalid authentication identity.\n"
-msgstr "잘못된 인증 ID.\n"
-
-#: dlls/kernel32/winerror.mc:3168
-msgid "Unknown authorization service.\n"
-msgstr "알 수 없는 인증 서비스.\n"
-
-#: dlls/kernel32/winerror.mc:3173
-msgid "Invalid entry.\n"
-msgstr "잘못된 항목.\n"
-
-#: dlls/kernel32/winerror.mc:3178
-msgid "Can't perform operation.\n"
-msgstr "작업을 수행할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3183
-msgid "Endpoints not registered.\n"
-msgstr "엔드포인트가 등록되지 않았습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3188
-msgid "Nothing to export.\n"
-msgstr "내보낼 것이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3193
-msgid "Incomplete name.\n"
-msgstr "불완전한 이름.\n"
-
-#: dlls/kernel32/winerror.mc:3198
-msgid "Invalid version option.\n"
-msgstr "잘못된 버전 옵션.\n"
-
-#: dlls/kernel32/winerror.mc:3203
-msgid "No more members.\n"
-msgstr "구성원이 더 이상 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3208
-msgid "Not all objects unexported.\n"
-msgstr "내보내기 취소된 개체가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3213
-msgid "Interface not found.\n"
-msgstr "인터페이스를 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3218
-msgid "Entry already exists.\n"
-msgstr "항목이 이미 존재합니다.\n"
-
-#: dlls/kernel32/winerror.mc:3223
-msgid "Entry not found.\n"
-msgstr "항목을 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3228
-msgid "Name service unavailable.\n"
-msgstr "이름 서비스를 사용할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3233
-msgid "Invalid network address family.\n"
-msgstr "네트워크 주소 패밀리가 잘못되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3238
-msgid "Operation not supported.\n"
-msgstr "작업이 지원되지 않습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3243
-msgid "No security context available.\n"
-msgstr "사용할 수 있는 보안 컨텍스트가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3248
-msgid "RPCInternal error.\n"
-msgstr "RPC 내부 오류.\n"
-
-#: dlls/kernel32/winerror.mc:3253
-msgid "RPC divide-by-zero.\n"
-msgstr "RPC 0으로 나눔.\n"
-
-#: dlls/kernel32/winerror.mc:3258
-msgid "Address error.\n"
-msgstr "주소 오류.\n"
-
-#: dlls/kernel32/winerror.mc:3263
-msgid "Floating-point divide-by-zero.\n"
-msgstr "0으로 나뉜 부동 소수점.\n"
-
-#: dlls/kernel32/winerror.mc:3268
-msgid "Floating-point underflow.\n"
-msgstr "부동 소수점 언더플로우.\n"
-
-#: dlls/kernel32/winerror.mc:3273
-msgid "Floating-point overflow.\n"
-msgstr "부동 소수점 오버플로.\n"
-
-#: dlls/kernel32/winerror.mc:3278
-msgid "No more entries.\n"
-msgstr "추가 항목이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3283
-msgid "Character translation table open failed.\n"
-msgstr "문자 변환 테이블을 열지 못했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3288
-msgid "Character translation table file too small.\n"
-msgstr "문자 변환 테이블 파일이 너무 작습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3293
-msgid "Null context handle.\n"
-msgstr "널 컨택스트 핸들.\n"
-
-#: dlls/kernel32/winerror.mc:3298
-msgid "Context handle damaged.\n"
-msgstr "컨텍스트 핸들이 손상되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3303
-msgid "Binding handle mismatch.\n"
-msgstr "바인딩 핸들이 일치하지 않습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3308
-msgid "Cannot get call handle.\n"
-msgstr "호출 핸들을 가져올 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3313
-msgid "Null reference pointer.\n"
-msgstr "널 참조 포인터.\n"
-
-#: dlls/kernel32/winerror.mc:3318
-msgid "Enumeration value out of range.\n"
-msgstr "열거 값이 범위를 벗어났습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3323
-msgid "Byte count too small.\n"
-msgstr "바이트 수가 너무 적습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3328
-msgid "Bad stub data.\n"
-msgstr "잘못된 스텁 데이터.\n"
-
-#: dlls/kernel32/winerror.mc:3333
-msgid "Invalid user buffer.\n"
-msgstr "잘못된 사용자 버퍼.\n"
-
-#: dlls/kernel32/winerror.mc:3338
-msgid "Unrecognized media.\n"
-msgstr "알 수 없는 미디어입니다.\n"
-
-#: dlls/kernel32/winerror.mc:3343
-msgid "No trust secret.\n"
-msgstr "트러스트 암호가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3348
-msgid "No trust SAM account.\n"
-msgstr "트러스트 SAM 계정이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3353
-msgid "Trusted domain failure.\n"
-msgstr "신뢰할 수 있는 도메인 실패.\n"
-
-#: dlls/kernel32/winerror.mc:3358
-msgid "Trusted relationship failure.\n"
-msgstr "신뢰할 수 있는 관계 실패.\n"
-
-#: dlls/kernel32/winerror.mc:3363
-msgid "Trust logon failure.\n"
-msgstr "트러스트 로그온 실패.\n"
-
-#: dlls/kernel32/winerror.mc:3368
-msgid "RPC call already in progress.\n"
-msgstr "RPC 호출이 이미 진행 중입니다.\n"
-
-#: dlls/kernel32/winerror.mc:3373
-msgid "NETLOGON is not started.\n"
-msgstr "NETLOGON이 시작되지 않았습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3378
-msgid "Account expired.\n"
-msgstr "계좌가 만료되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3383
-msgid "Redirector has open handles.\n"
-msgstr "리디렉터 핸들이 열려 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3388
-msgid "Printer driver already installed.\n"
-msgstr "프린터 드라이버가 이미 설치되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3393
-msgid "Unknown port.\n"
-msgstr "알 수 없는 포트.\n"
-
-#: dlls/kernel32/winerror.mc:3398
-msgid "Unknown printer driver.\n"
-msgstr "알 수 없는 프린터 드라이버.\n"
-
-#: dlls/kernel32/winerror.mc:3403
-msgid "Unknown print processor.\n"
-msgstr "알 수 없는 인쇄 프로세서.\n"
-
-#: dlls/kernel32/winerror.mc:3408
-msgid "Invalid separator file.\n"
-msgstr "잘못된 구분 파일.\n"
-
-#: dlls/kernel32/winerror.mc:3413
-msgid "Invalid priority.\n"
-msgstr "잘못된 우선순위.\n"
-
-#: dlls/kernel32/winerror.mc:3418
-msgid "Invalid printer name.\n"
-msgstr "잘못된 프린터 이름.\n"
-
-#: dlls/kernel32/winerror.mc:3423
-msgid "Printer already exists.\n"
-msgstr "프린터가 이미 존재합니다.\n"
-
-#: dlls/kernel32/winerror.mc:3428
-msgid "Invalid printer command.\n"
-msgstr "잘못된 프린터 명령.\n"
-
-#: dlls/kernel32/winerror.mc:3433
-msgid "Invalid data type.\n"
-msgstr "잘못된 데이터 형식.\n"
-
-#: dlls/kernel32/winerror.mc:3438
-msgid "Invalid environment.\n"
-msgstr "잘못된 환경변수.\n"
-
-#: dlls/kernel32/winerror.mc:3443
-msgid "No more bindings.\n"
-msgstr "이제 바인딩이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3448
-msgid "Can't log on with inter-domain trust account.\n"
-msgstr "도메인 간 트러스트 계정으로 로그온할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3453
-msgid "Can't log on with workstation trust account.\n"
-msgstr "워크스테이션 트러스트 계정으로 로그온할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3458
-msgid "Can't log on with server trust account.\n"
-msgstr "서버 트러스트 계정으로 로그온할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3463
-msgid "Domain trust information inconsistent.\n"
-msgstr "도메인 신뢰 정보가 일치하지 않습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3468
-msgid "Server has open handles.\n"
-msgstr "서버에 열린 핸들이 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3473
-msgid "Resource data not found.\n"
-msgstr "리소스 데이터를 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3478
-msgid "Resource type not found.\n"
-msgstr "리소스 형식을 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3483
-msgid "Resource name not found.\n"
-msgstr "리소스 이름을 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3488
-msgid "Resource language not found.\n"
-msgstr "리소스 언어를 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3493
-msgid "Not enough quota.\n"
-msgstr "할당량이 충분하지 않습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3498
-msgid "No interfaces.\n"
-msgstr "인터페이스가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3503
-msgid "RPC call canceled.\n"
-msgstr "RPC 호출이 취소되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3508
-msgid "Binding incomplete.\n"
-msgstr "바인딩이 완료되지 않았습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3513
-msgid "RPC comm failure.\n"
-msgstr "RPC 통신 오류.\n"
-
-#: dlls/kernel32/winerror.mc:3518
-msgid "Unsupported authorization level.\n"
-msgstr "지원되지 않는 권한 수준.\n"
-
-#: dlls/kernel32/winerror.mc:3523
-msgid "No principal name registered.\n"
-msgstr "등록된 기본 이름이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3528
-msgid "Not an RPC error.\n"
-msgstr "RPC 오류가 아닙니다.\n"
-
-#: dlls/kernel32/winerror.mc:3533
-msgid "UUID is local only.\n"
-msgstr "UUID는 로컬 전용입니다.\n"
-
-#: dlls/kernel32/winerror.mc:3538
-msgid "Security package error.\n"
-msgstr "보안 패키지 오류.\n"
-
-#: dlls/kernel32/winerror.mc:3543
-msgid "Thread not canceled.\n"
-msgstr "스레드가 취소되지 않았습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3548
-msgid "Invalid handle operation.\n"
-msgstr "잘못된 핸들 작업.\n"
-
-#: dlls/kernel32/winerror.mc:3553
-msgid "Wrong serializing package version.\n"
-msgstr "잘못된 일련의 순차적인 패키지 버전.\n"
-
-#: dlls/kernel32/winerror.mc:3558
-msgid "Wrong stub version.\n"
-msgstr "잘못된 스텁 버전.\n"
-
-#: dlls/kernel32/winerror.mc:3563
-msgid "Invalid pipe object.\n"
-msgstr "잘못된 파이프 개체.\n"
-
-#: dlls/kernel32/winerror.mc:3568
-msgid "Wrong pipe order.\n"
-msgstr "잘못된 파이프 순서.\n"
-
-#: dlls/kernel32/winerror.mc:3573
-msgid "Wrong pipe version.\n"
-msgstr "잘못된 파이프 버전.\n"
-
-#: dlls/kernel32/winerror.mc:3578
-msgid "Group member not found.\n"
-msgstr "그룹 멤버를 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3583
-msgid "Can't create endpoint mapper DB.\n"
-msgstr "엔드포인트 매핑기 DB를 만들 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3588
-msgid "Invalid object.\n"
-msgstr "잘못된 개체.\n"
-
-#: dlls/kernel32/winerror.mc:3593
-msgid "Invalid time.\n"
-msgstr "잘못된 시간.\n"
-
-#: dlls/kernel32/winerror.mc:3598
-msgid "Invalid form name.\n"
-msgstr "잘못된 폼 이름.\n"
-
-#: dlls/kernel32/winerror.mc:3603
-msgid "Invalid form size.\n"
-msgstr "잘못된 폼 크기.\n"
-
-#: dlls/kernel32/winerror.mc:3608
-msgid "Already awaiting printer handle.\n"
-msgstr "이미 프린터 핸들을 기다리고 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3613
-msgid "Printer deleted.\n"
-msgstr "프린터가 삭제되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3618
-msgid "Invalid printer state.\n"
-msgstr "프린터 상태가 잘못되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3623
-msgid "User must change password.\n"
-msgstr "사용자는 암호를 변경해야 합니다.\n"
-
-#: dlls/kernel32/winerror.mc:3628
-msgid "Domain controller not found.\n"
-msgstr "도메인 컨트롤러를 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3633
-msgid "Account locked out.\n"
-msgstr "계정이 잠겨 있습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3638
-msgid "Invalid pixel format.\n"
-msgstr "잘못된 픽셀 형식.\n"
-
-#: dlls/kernel32/winerror.mc:3643
-msgid "Invalid driver.\n"
-msgstr "잘못된 드라이버.\n"
-
-#: dlls/kernel32/winerror.mc:3648
-msgid "Invalid object resolver set.\n"
-msgstr "잘못된 개체 해결기 집합.\n"
-
-#: dlls/kernel32/winerror.mc:3653
-msgid "Incomplete RPC send.\n"
-msgstr "불완전한 RPC 전송.\n"
-
-#: dlls/kernel32/winerror.mc:3658
-msgid "Invalid asynchronous RPC handle.\n"
-msgstr "잘못된 비동기 RPC 핸들.\n"
-
-#: dlls/kernel32/winerror.mc:3663
-msgid "Invalid asynchronous RPC call.\n"
-msgstr "잘못된 비동기 RPC 호출.\n"
-
-#: dlls/kernel32/winerror.mc:3668
-msgid "RPC pipe closed.\n"
-msgstr "RPC 파이프가 닫혔습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3673
-msgid "Discipline error on RPC pipe.\n"
-msgstr "RPC 파이프의 징계 오류입니다.\n"
-
-#: dlls/kernel32/winerror.mc:3678
-msgid "No data on RPC pipe.\n"
-msgstr "RPC 파이프에 데이터가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3683
-msgid "No site name available.\n"
-msgstr "사용할 수 있는 사이트 이름이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3688
-msgid "The file cannot be accessed.\n"
-msgstr "파일에 액세스할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3693
-msgid "The filename cannot be resolved.\n"
-msgstr "파일 이름을 확인할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3698
-msgid "RPC entry type mismatch.\n"
-msgstr "RPC 입력 유형이 일치하지 않습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3703
-msgid "Not all objects could be exported.\n"
-msgstr "모든 개체를 내보낼 수는 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3708
-msgid "The interface could not be exported.\n"
-msgstr "인터페이스를 내보낼 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3713
-msgid "The profile could not be added.\n"
-msgstr "프로필을 추가할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3718
-msgid "The profile element could not be added.\n"
-msgstr "프로필 요소를 추가할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3723
-msgid "The profile element could not be removed.\n"
-msgstr "프로필 요소를 제거하지 못했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3728
-msgid "The group element could not be added.\n"
-msgstr "그룹 요소를 추가할 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3733
-msgid "The group element could not be removed.\n"
-msgstr "그룹 요소가 제거되지 않았습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3738
-msgid "The username could not be found.\n"
-msgstr "사용자 이름을 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3743
-msgid "This network connection does not exist.\n"
-msgstr "네트워크 연결이 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3748
-msgid "Call interrupted.\n"
-msgstr "호출이 중단되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3753
-msgid "Invalid file handle.\n"
-msgstr "파일 핸들이 잘못되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3763
-msgid "Invalid pointer address.\n"
-msgstr "주소가 잘못되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3768
-msgid "Invalid argument.\n"
-msgstr "인수가 잘못되었습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3778
-msgid "Connection reset by peer.\n"
-msgstr "피어가 연결을 다시 설정했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3788
-msgid "Host not found.\n"
-msgstr "호스트를 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3793
-msgid "Nonauthoritative host not found.\n"
-msgstr "일시적으로 호스트를 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3798
-msgid "Nonrecoverable error.\n"
-msgstr "복구할 수 없는 오류입니다.\n"
-
-#: dlls/kernel32/winerror.mc:3803
-msgid "Name valid, no data record.\n"
-msgstr "유효한 이름입니다만, 요청한 데이터 레코드가 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3817
-msgid "Not implemented.\n"
-msgstr "구현되지 않았습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3838
-msgid "Call failed.\n"
-msgstr "호출이 실패했습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3810
-msgid "No Signature found in file.\n"
-msgstr "파일에서 서명을 찾을 수 없습니다.\n"
-
-#: dlls/kernel32/winerror.mc:3824
-msgid "Invalid call.\n"
-msgstr "잘못된 호출입니다.\n"
-
-#: dlls/kernel32/winerror.mc:3831
-msgid "Resource is not currently available.\n"
-msgstr "현재 리소스를 사용할 수 없습니다.\n"
-
 #: dlls/kernelbase/kernelbase.rc:29
 msgid "Western Europe and United States"
 msgstr ""
@@ -7042,6 +4030,3018 @@ msgstr ""
 #: dlls/kernelbase/kernelbase.rc:45
 msgid "Armenian"
 msgstr ""
+
+#: dlls/kernelbase/winerror.mc:28
+msgid "Success.\n"
+msgstr "성공.\n"
+
+#: dlls/kernelbase/winerror.mc:33
+msgid "Invalid function.\n"
+msgstr "잘못된 함수입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:38
+msgid "File not found.\n"
+msgstr "파일을 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:43
+msgid "Path not found.\n"
+msgstr "경로를 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:48 dlls/kernelbase/winerror.mc:3773
+msgid "Too many open files.\n"
+msgstr "열린 파일이 너무 많습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:53 dlls/kernelbase/winerror.mc:3758
+msgid "Access denied.\n"
+msgstr "접근이 거부되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:58
+msgid "Invalid handle.\n"
+msgstr "잘못된 핸들입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:63
+msgid "Memory trashed.\n"
+msgstr "메모리 손상되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:68
+msgid "Not enough memory.\n"
+msgstr "메모리가 부족합니다.\n"
+
+#: dlls/kernelbase/winerror.mc:73
+msgid "Invalid block.\n"
+msgstr "잘못된 블록입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:78
+msgid "Bad environment.\n"
+msgstr "잘못된 환경입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:83
+msgid "Bad format.\n"
+msgstr "잘못된 형식입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:88
+msgid "Invalid access.\n"
+msgstr "잘못된 접근입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:93
+msgid "Invalid data.\n"
+msgstr "잘못된 데이터입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:98
+msgid "Out of memory.\n"
+msgstr "메모리 부족.\n"
+
+#: dlls/kernelbase/winerror.mc:103
+msgid "Invalid drive.\n"
+msgstr "잘못된 드라이브.\n"
+
+#: dlls/kernelbase/winerror.mc:108
+msgid "Can't delete current directory.\n"
+msgstr "현재 디렉터리 제거 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:113
+msgid "Not same device.\n"
+msgstr "다른 장치.\n"
+
+#: dlls/kernelbase/winerror.mc:118
+msgid "No more files.\n"
+msgstr "더 이상 파일이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:123
+msgid "Write protected.\n"
+msgstr "쓰기 금지.\n"
+
+#: dlls/kernelbase/winerror.mc:128
+msgid "Bad unit.\n"
+msgstr "잘못된 유닛.\n"
+
+#: dlls/kernelbase/winerror.mc:133
+msgid "Not ready.\n"
+msgstr "준비되지 않았습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:138
+msgid "Bad command.\n"
+msgstr "잘못된 명령.\n"
+
+#: dlls/kernelbase/winerror.mc:143
+msgid "CRC error.\n"
+msgstr "CRC 오류.\n"
+
+#: dlls/kernelbase/winerror.mc:148
+msgid "Bad length.\n"
+msgstr "잘못된 길이.\n"
+
+#: dlls/kernelbase/winerror.mc:153 dlls/kernelbase/winerror.mc:528
+msgid "Seek error.\n"
+msgstr "이동 오류.\n"
+
+#: dlls/kernelbase/winerror.mc:158
+msgid "Not DOS disk.\n"
+msgstr "DOS 디스크가 아닙니다.\n"
+
+#: dlls/kernelbase/winerror.mc:163
+msgid "Sector not found.\n"
+msgstr "섹터를 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:168
+msgid "Out of paper.\n"
+msgstr "프린터 용지가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:173
+msgid "Write fault.\n"
+msgstr "쓰기 사고.\n"
+
+#: dlls/kernelbase/winerror.mc:178
+msgid "Read fault.\n"
+msgstr "읽기 사고.\n"
+
+#: dlls/kernelbase/winerror.mc:183
+msgid "General failure.\n"
+msgstr "일반 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:188
+msgid "Sharing violation.\n"
+msgstr "공유 위반.\n"
+
+#: dlls/kernelbase/winerror.mc:193
+msgid "Lock violation.\n"
+msgstr "잠금 위반.\n"
+
+#: dlls/kernelbase/winerror.mc:198
+msgid "Wrong disk.\n"
+msgstr "잘못된 디스크.\n"
+
+#: dlls/kernelbase/winerror.mc:203
+msgid "Sharing buffer exceeded.\n"
+msgstr "공유 버퍼 초과.\n"
+
+#: dlls/kernelbase/winerror.mc:208
+msgid "End of file.\n"
+msgstr "파일 끝.\n"
+
+#: dlls/kernelbase/winerror.mc:213 dlls/kernelbase/winerror.mc:438
+msgid "Disk full.\n"
+msgstr "디스크가 차 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:218
+msgid "Request not supported.\n"
+msgstr "지원되지 않는 요청.\n"
+
+#: dlls/kernelbase/winerror.mc:223
+msgid "Remote machine not listening.\n"
+msgstr "원격 머신 접속 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:228
+msgid "Duplicate network name.\n"
+msgstr "중복된 네트워크 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:233
+msgid "Bad network path.\n"
+msgstr "잘못된 네트워크 경로.\n"
+
+#: dlls/kernelbase/winerror.mc:238
+msgid "Network busy.\n"
+msgstr "네트워크 사용 중.\n"
+
+#: dlls/kernelbase/winerror.mc:243
+msgid "Device does not exist.\n"
+msgstr "장치가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:248
+msgid "Too many commands.\n"
+msgstr "너무 많은 명령.\n"
+
+#: dlls/kernelbase/winerror.mc:253
+msgid "Adapter hardware error.\n"
+msgstr "어댑터 하드웨어 오류.\n"
+
+#: dlls/kernelbase/winerror.mc:258
+msgid "Bad network response.\n"
+msgstr "잘못된 네트워크 응답.\n"
+
+#: dlls/kernelbase/winerror.mc:263
+msgid "Unexpected network error.\n"
+msgstr "예기치 않은 네트워크 오류.\n"
+
+#: dlls/kernelbase/winerror.mc:268
+msgid "Bad remote adapter.\n"
+msgstr "잘못된 원격 어댑터.\n"
+
+#: dlls/kernelbase/winerror.mc:273
+msgid "Print queue full.\n"
+msgstr "프린터 대기열이 가득 찼습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:278
+msgid "No spool space.\n"
+msgstr "스풀 공간 부족.\n"
+
+#: dlls/kernelbase/winerror.mc:283
+msgid "Print canceled.\n"
+msgstr "인쇄가 취소되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:288
+msgid "Network name deleted.\n"
+msgstr "네트워크 이름을 제거했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:293
+msgid "Network access denied.\n"
+msgstr "네트워크 접근 거부.\n"
+
+#: dlls/kernelbase/winerror.mc:298
+msgid "Bad device type.\n"
+msgstr "잘못된 장치 유형.\n"
+
+#: dlls/kernelbase/winerror.mc:303
+msgid "Bad network name.\n"
+msgstr "잘못된 네트워크 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:308
+msgid "Too many network names.\n"
+msgstr "네트워크 이름 한계 초과.\n"
+
+#: dlls/kernelbase/winerror.mc:313
+msgid "Too many network sessions.\n"
+msgstr "네트워크 세션 한계 초과.\n"
+
+#: dlls/kernelbase/winerror.mc:318
+msgid "Sharing paused.\n"
+msgstr "공유 중지.\n"
+
+#: dlls/kernelbase/winerror.mc:323
+msgid "Request not accepted.\n"
+msgstr "수용되지 않는 요청.\n"
+
+#: dlls/kernelbase/winerror.mc:328
+msgid "Redirector paused.\n"
+msgstr "리디렉터 중지.\n"
+
+#: dlls/kernelbase/winerror.mc:333
+msgid "File exists.\n"
+msgstr "파일이 존재합니다.\n"
+
+#: dlls/kernelbase/winerror.mc:338
+msgid "Cannot create.\n"
+msgstr "만들 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:343
+msgid "Int24 failure.\n"
+msgstr "INT24 오류.\n"
+
+#: dlls/kernelbase/winerror.mc:348
+msgid "Out of structures.\n"
+msgstr "구성에 필요한 공간 부족.\n"
+
+#: dlls/kernelbase/winerror.mc:353
+msgid "Already assigned.\n"
+msgstr "이미 할당되어 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:358 dlls/kernelbase/winerror.mc:1713
+msgid "Invalid password.\n"
+msgstr "잘못된 암호.\n"
+
+#: dlls/kernelbase/winerror.mc:363
+msgid "Invalid parameter.\n"
+msgstr "잘못된 매개변수.\n"
+
+#: dlls/kernelbase/winerror.mc:368
+msgid "Net write fault.\n"
+msgstr "네트워크 쓰기 오류.\n"
+
+#: dlls/kernelbase/winerror.mc:373
+msgid "No process slots.\n"
+msgstr "프로세스 슬롯이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:378
+msgid "Too many semaphores.\n"
+msgstr "세마포어 한계 초과.\n"
+
+#: dlls/kernelbase/winerror.mc:383
+msgid "Exclusive semaphore already owned.\n"
+msgstr "이미 소유된 배타적 세마포어.\n"
+
+#: dlls/kernelbase/winerror.mc:388
+msgid "Semaphore is set.\n"
+msgstr "세마포어가 설정되어 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:393
+msgid "Too many semaphore requests.\n"
+msgstr "너무 많은 세마포어 요청.\n"
+
+#: dlls/kernelbase/winerror.mc:398
+msgid "Invalid at interrupt time.\n"
+msgstr "잘못된 인터럽트 시간.\n"
+
+#: dlls/kernelbase/winerror.mc:403
+msgid "Semaphore owner died.\n"
+msgstr "세마포어 소유권 해제.\n"
+
+#: dlls/kernelbase/winerror.mc:408
+msgid "Semaphore user limit.\n"
+msgstr "세마포어 사용자 제한.\n"
+
+#: dlls/kernelbase/winerror.mc:413
+msgid "Insert disk for drive %1.\n"
+msgstr "드라이브 %1에 디스크를 넣으세요.\n"
+
+#: dlls/kernelbase/winerror.mc:418
+msgid "Drive locked.\n"
+msgstr "드라이브가 잠겨 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:423
+msgid "Broken pipe.\n"
+msgstr "파이프가 종료되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:428
+msgid "Open failed.\n"
+msgstr "열기 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:433
+msgid "Buffer overflow.\n"
+msgstr "버퍼 오버플로우.\n"
+
+#: dlls/kernelbase/winerror.mc:443
+msgid "No more search handles.\n"
+msgstr "핸들을 더이상 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:448
+msgid "Invalid target handle.\n"
+msgstr "잘못된 목표 핸들.\n"
+
+#: dlls/kernelbase/winerror.mc:453
+msgid "Invalid IOCTL.\n"
+msgstr "잘못된 IOCTL.\n"
+
+#: dlls/kernelbase/winerror.mc:458
+msgid "Invalid verify switch.\n"
+msgstr "잘못된 검증 스위치.\n"
+
+#: dlls/kernelbase/winerror.mc:463
+msgid "Bad driver level.\n"
+msgstr "잘못된 드라이버 레벨.\n"
+
+#: dlls/kernelbase/winerror.mc:468
+msgid "Call not implemented.\n"
+msgstr "호출이 구현되지 않았습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:473
+msgid "Semaphore timeout.\n"
+msgstr "세마포어 시간 만료.\n"
+
+#: dlls/kernelbase/winerror.mc:478
+msgid "Insufficient buffer.\n"
+msgstr "충분하지 않은 버퍼.\n"
+
+#: dlls/kernelbase/winerror.mc:483 dlls/mferror/mferror.mc:109
+msgid "Invalid name.\n"
+msgstr "잘못된 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:488
+msgid "Invalid level.\n"
+msgstr "잘못된 레벨.\n"
+
+#: dlls/kernelbase/winerror.mc:493
+msgid "No volume label.\n"
+msgstr "볼륨 레이블이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:498
+msgid "Module not found.\n"
+msgstr "모듈을 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:503
+msgid "Procedure not found.\n"
+msgstr "프로시져를 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:508
+msgid "No children to wait for.\n"
+msgstr "대기중인 자식 프로세스가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:513
+msgid "Child process has not completed.\n"
+msgstr "자식 프로세스가 완료되지 않았습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:518
+msgid "Invalid use of direct access handle.\n"
+msgstr "직접 접근할 수 없는 핸들입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:523
+msgid "Negative seek.\n"
+msgstr "반대로 이동.\n"
+
+#: dlls/kernelbase/winerror.mc:533
+msgid "Drive is a JOIN target.\n"
+msgstr "드라이브가 JOIN 타겟입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:538
+msgid "Drive is already JOINed.\n"
+msgstr "드라이브가 이미 JOIN 되어 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:543
+msgid "Drive is already SUBSTed.\n"
+msgstr "드라이브가 이미 SUBST 되어 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:548
+msgid "Drive is not JOINed.\n"
+msgstr "드라이브가 JOIN 되지 않습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:553
+msgid "Drive is not SUBSTed.\n"
+msgstr "드라이브가 SUBST 되지 않습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:558
+msgid "Attempt to JOIN onto a JOINed drive.\n"
+msgstr "JOIN 된 드라이브에 JOIN 시도했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:563
+msgid "Attempt to SUBST onto a SUBSTed drive.\n"
+msgstr "SUBST 된 드라이브에 SUBST 시도했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:568
+msgid "Attempt to JOIN to a SUBSTed drive.\n"
+msgstr "SUBST 된 드라이브에 JOIN 시도했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:573
+msgid "Attempt to SUBST to a JOINed drive.\n"
+msgstr "JOIN 된 드라이브에 SUBST 시도했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:578
+msgid "Drive is busy.\n"
+msgstr "드라이브 사용 중.\n"
+
+#: dlls/kernelbase/winerror.mc:583
+msgid "Same drive.\n"
+msgstr "같은 드라이브.\n"
+
+#: dlls/kernelbase/winerror.mc:588
+msgid "Not top-level directory.\n"
+msgstr "루트 디렉터리의 하위 디렉터리가 아닙니다.\n"
+
+#: dlls/kernelbase/winerror.mc:593
+msgid "Directory is not empty.\n"
+msgstr "디렉터리가 비어 있지 않습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:598
+msgid "Path is in use as a SUBST.\n"
+msgstr "경로가 SUBST 용으로 사용 중입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:603
+msgid "Path is in use as a JOIN.\n"
+msgstr "지정한 경로가 JOIN 용으로 사용 중입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:608
+msgid "Path is busy.\n"
+msgstr "경로 사용 중.\n"
+
+#: dlls/kernelbase/winerror.mc:613
+msgid "Already a SUBST target.\n"
+msgstr "이미 SUBST 타겟입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:618
+msgid "System trace not specified or disallowed.\n"
+msgstr "시스템 추적이 지정하지 않았거나 허용되지 않습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:623
+msgid "Event count for DosMuxSemWait incorrect.\n"
+msgstr "DosMuxSemWait 용 이벤트 개수가 잘못되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:628
+msgid "Too many waiters for DosMuxSemWait.\n"
+msgstr "DosMuxSemWait 용 대기자가 너무 많습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:633
+msgid "DosSemMuxWait list invalid.\n"
+msgstr "DosSemMuxWait 목록이 잘못되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:638
+msgid "Volume label too long.\n"
+msgstr "볼륨 레이블이 너무 깁니다.\n"
+
+#: dlls/kernelbase/winerror.mc:643
+msgid "Too many TCBs.\n"
+msgstr "TCB 한계를 초과했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:648
+msgid "Signal refused.\n"
+msgstr "시그널이 거부되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:653
+msgid "Segment discarded.\n"
+msgstr "세그맨트가 폐기되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:658
+msgid "Segment not locked.\n"
+msgstr "세그멘트를 잠글 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:663
+msgid "Bad thread ID address.\n"
+msgstr "잘못된 스레드 ID 주소.\n"
+
+#: dlls/kernelbase/winerror.mc:668
+msgid "Bad arguments to DosExecPgm.\n"
+msgstr "잘못된 DosExecPgm 인수.\n"
+
+#: dlls/kernelbase/winerror.mc:673
+msgid "Path is invalid.\n"
+msgstr "잘못된 경로.\n"
+
+#: dlls/kernelbase/winerror.mc:678
+msgid "Signal pending.\n"
+msgstr "시그널 대기 중.\n"
+
+#: dlls/kernelbase/winerror.mc:683
+msgid "Max system-wide thread count reached.\n"
+msgstr "시스템 스레드 작성 한계에 도달했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:688
+msgid "Lock failed.\n"
+msgstr "잠금 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:693
+msgid "Resource in use.\n"
+msgstr "리소스 사용 중.\n"
+
+#: dlls/kernelbase/winerror.mc:698
+msgid "Cancel violation.\n"
+msgstr "취소 위반.\n"
+
+#: dlls/kernelbase/winerror.mc:703
+msgid "Atomic locks not supported.\n"
+msgstr "원자적 잠금 미지원.\n"
+
+#: dlls/kernelbase/winerror.mc:708
+msgid "Invalid segment number.\n"
+msgstr "잘못된 세그멘트 번호.\n"
+
+#: dlls/kernelbase/winerror.mc:713
+msgid "Invalid ordinal for %1.\n"
+msgstr "잘못된 %1 번호.\n"
+
+#: dlls/kernelbase/winerror.mc:718
+msgid "File already exists.\n"
+msgstr "파일이 이미 존재합니다.\n"
+
+#: dlls/kernelbase/winerror.mc:723
+msgid "Invalid flag number.\n"
+msgstr "잘못된 플래그.\n"
+
+#: dlls/kernelbase/winerror.mc:728
+msgid "Semaphore name not found.\n"
+msgstr "세마포어 이름을 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:733
+msgid "Invalid starting code segment for %1.\n"
+msgstr "잘못된 %1 시작 코드 세그멘트.\n"
+
+#: dlls/kernelbase/winerror.mc:738
+msgid "Invalid starting stack segment for %1.\n"
+msgstr "잘못된 %1 시작 스택 세그먼트.\n"
+
+#: dlls/kernelbase/winerror.mc:743
+msgid "Invalid module type for %1.\n"
+msgstr "잘못된 %1 모듈 유형.\n"
+
+#: dlls/kernelbase/winerror.mc:748
+msgid "Invalid EXE signature in %1.\n"
+msgstr "잘못된 %1 EXE 서명.\n"
+
+#: dlls/kernelbase/winerror.mc:753
+msgid "EXE %1 is marked invalid.\n"
+msgstr "EXE %1이(가) 잘못된 것으로 표시되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:758
+msgid "Bad EXE format for %1.\n"
+msgstr "잘못된 %1 EXE 형식.\n"
+
+#: dlls/kernelbase/winerror.mc:763
+msgid "Iterated data exceeds 64k in %1.\n"
+msgstr "%1에 통합된 데이터가 64k를 초과했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:768
+msgid "Invalid MinAllocSize in %1.\n"
+msgstr "%1 최소 할당 크기가 잘못되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:773
+msgid "Dynlink from invalid ring.\n"
+msgstr "잘못된 링에서의 동적 링크.\n"
+
+#: dlls/kernelbase/winerror.mc:778
+msgid "IOPL not enabled.\n"
+msgstr "불가능한 IOPL.\n"
+
+#: dlls/kernelbase/winerror.mc:783
+msgid "Invalid SEGDPL in %1.\n"
+msgstr "잘못된 %1 SEGDPL.\n"
+
+#: dlls/kernelbase/winerror.mc:788
+msgid "Auto data segment exceeds 64k.\n"
+msgstr "자동 데이터 세그멘트가 64k를 초과했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:793
+msgid "Ring 2 segment must be movable.\n"
+msgstr "링 2 세그멘트는 이동 가능해야 합니다.\n"
+
+#: dlls/kernelbase/winerror.mc:798
+msgid "Relocation chain exceeds segment limit in %1.\n"
+msgstr "재배치 체인이 %1 세그먼트 제한을 초과했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:803
+msgid "Infinite loop in relocation chain in %1.\n"
+msgstr "%1 안 재배치 체인에 무한 루프가 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:808
+msgid "Environment variable not found.\n"
+msgstr "환경변수를 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:813
+msgid "No signal sent.\n"
+msgstr "시그널 전송 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:818 programs/cmd/cmd.rc:410
+msgid "File name is too long.\n"
+msgstr "너무 긴 파일 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:823
+msgid "Ring 2 stack in use.\n"
+msgstr "Ring 2 스택 사용 중.\n"
+
+#: dlls/kernelbase/winerror.mc:828
+msgid "Error in use of filename wildcards.\n"
+msgstr "파일 이름 와일드카드 사용 오류.\n"
+
+#: dlls/kernelbase/winerror.mc:833
+msgid "Invalid signal number.\n"
+msgstr "잘못된 시그널 번호.\n"
+
+#: dlls/kernelbase/winerror.mc:838
+msgid "Error setting signal handler.\n"
+msgstr "시그널 핸들러 설정 오류.\n"
+
+#: dlls/kernelbase/winerror.mc:843
+msgid "Segment locked.\n"
+msgstr "세그멘트 잠김.\n"
+
+#: dlls/kernelbase/winerror.mc:848
+msgid "Too many modules.\n"
+msgstr "너무 많은 모듈.\n"
+
+#: dlls/kernelbase/winerror.mc:853
+msgid "Nesting LoadModule calls not allowed.\n"
+msgstr "허락된지 않는 LoadModule 호출 중첩.\n"
+
+#: dlls/kernelbase/winerror.mc:858
+msgid "Machine type mismatch.\n"
+msgstr "머신 형식 불일치.\n"
+
+#: dlls/kernelbase/winerror.mc:863
+msgid "Bad pipe.\n"
+msgstr "잘못된 파이프.\n"
+
+#: dlls/kernelbase/winerror.mc:868
+msgid "Pipe busy.\n"
+msgstr "파이프 사용 중.\n"
+
+#: dlls/kernelbase/winerror.mc:873
+msgid "Pipe closed.\n"
+msgstr "파이프가 닫혔습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:878
+msgid "Pipe not connected.\n"
+msgstr "파이프가 연결되지 않습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:883
+msgid "More data available.\n"
+msgstr "사용 가능한 데이터가 더 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:888
+msgid "Session canceled.\n"
+msgstr "세션 취소.\n"
+
+#: dlls/kernelbase/winerror.mc:893
+msgid "Invalid extended attribute name.\n"
+msgstr "잘못된 확장 속성 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:898
+msgid "Extended attribute list inconsistent.\n"
+msgstr "일관성 없는 확장 속성 목록.\n"
+
+#: dlls/kernelbase/winerror.mc:903
+msgid "No more data available.\n"
+msgstr "사용 가능한 데이터가 더 이상 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:908
+msgid "Cannot use Copy API.\n"
+msgstr "복사 API를 사용할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:913
+msgid "Directory name invalid.\n"
+msgstr "잘못된 디렉터리 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:918
+msgid "Extended attributes didn't fit.\n"
+msgstr "확장 속성이 버퍼에 맞지 않습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:923
+msgid "Extended attribute file corrupt.\n"
+msgstr "확장 속성 파일 손상.\n"
+
+#: dlls/kernelbase/winerror.mc:928
+msgid "Extended attribute table full.\n"
+msgstr "확장 속성 테이블이 가득 찾습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:933
+msgid "Invalid extended attribute handle.\n"
+msgstr "잘못된 확장 속성 핸들.\n"
+
+#: dlls/kernelbase/winerror.mc:938
+msgid "Extended attributes not supported.\n"
+msgstr "지원되지 않는 확장 속성.\n"
+
+#: dlls/kernelbase/winerror.mc:943
+msgid "Mutex not owned by caller.\n"
+msgstr "호출자가 소유하지 않은 mutex.\n"
+
+#: dlls/kernelbase/winerror.mc:948
+msgid "Too many posts to semaphore.\n"
+msgstr "너무 많은 세마포어 통지.\n"
+
+#: dlls/kernelbase/winerror.mc:953
+msgid "Read/WriteProcessMemory partially completed.\n"
+msgstr "일부 Read/WriteProcessMemory 요청 완료.\n"
+
+#: dlls/kernelbase/winerror.mc:958
+msgid "The oplock wasn't granted.\n"
+msgstr "승인되지 않은 oplock.\n"
+
+#: dlls/kernelbase/winerror.mc:963
+msgid "Invalid oplock message received.\n"
+msgstr "잘못된 oplock 메시지 수신.\n"
+
+#: dlls/kernelbase/winerror.mc:968
+msgid "Message 0x%1 not found in file %2.\n"
+msgstr "파일 %2에 메시지 0x%1이(가) 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:973
+msgid "Invalid address.\n"
+msgstr "잘못된 주소.\n"
+
+#: dlls/kernelbase/winerror.mc:978
+msgid "Arithmetic overflow.\n"
+msgstr "수치 연산 오버플로우.\n"
+
+#: dlls/kernelbase/winerror.mc:983
+msgid "Pipe connected.\n"
+msgstr "파이프가 연결되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:988
+msgid "Pipe listening.\n"
+msgstr "파이프가 연결을 기다리고 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:993
+msgid "Extended attribute access denied.\n"
+msgstr "확장 속성의 접근이 거부되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:998
+msgid "I/O operation aborted.\n"
+msgstr "I/O 연산이 취소되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1003
+msgid "Overlapped I/O incomplete.\n"
+msgstr "중첩된 I/O 연산이 완료되지 않았습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1008
+msgid "Overlapped I/O pending.\n"
+msgstr "중첩된 I/O 연산이 진행 중입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1013
+msgid "No access to memory location.\n"
+msgstr "메모리 위치 접근이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1018
+msgid "Swap error.\n"
+msgstr "스왑 오류.\n"
+
+#: dlls/kernelbase/winerror.mc:1023
+msgid "Stack overflow.\n"
+msgstr "스택 오버플로우.\n"
+
+#: dlls/kernelbase/winerror.mc:1028
+msgid "Invalid message.\n"
+msgstr "잘못된 메시지입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1033
+msgid "Cannot complete.\n"
+msgstr "완료할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1038
+msgid "Invalid flags.\n"
+msgstr "잘못된 플래그입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1043
+msgid "Unrecognized volume.\n"
+msgstr "인식되지 않는 볼륨.\n"
+
+#: dlls/kernelbase/winerror.mc:1048
+msgid "File invalid.\n"
+msgstr "잘못된 파일입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1053
+msgid "Cannot run full-screen.\n"
+msgstr "전체화면에서 실행할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1058
+msgid "Nonexistent token.\n"
+msgstr "토큰이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1063
+msgid "Registry corrupt.\n"
+msgstr "레지스트리 손상.\n"
+
+#: dlls/kernelbase/winerror.mc:1068
+msgid "Invalid key.\n"
+msgstr "잘못된 키.\n"
+
+#: dlls/kernelbase/winerror.mc:1073
+msgid "Can't open registry key.\n"
+msgstr "레지스트리 키를 열 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1078
+msgid "Can't read registry key.\n"
+msgstr "레지스트리 키를 읽을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1083
+msgid "Can't write registry key.\n"
+msgstr "레지스트리 키를 쓸 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1088
+msgid "Registry has been recovered.\n"
+msgstr "레지스트리는 복구되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1093
+msgid "Registry is corrupt.\n"
+msgstr "레지스트리 손상.\n"
+
+#: dlls/kernelbase/winerror.mc:1098
+msgid "I/O to registry failed.\n"
+msgstr "레지스트리 I/O 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:1103
+msgid "Not registry file.\n"
+msgstr "레지스트리 파일이 아닙니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1108
+msgid "Key deleted.\n"
+msgstr "키가 제거되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1113
+msgid "No registry log space.\n"
+msgstr "레지스트리 기록 공간 부족.\n"
+
+#: dlls/kernelbase/winerror.mc:1118
+msgid "Registry key has subkeys.\n"
+msgstr "레지스트리 키가 서브키를 가지고 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1123
+msgid "Subkey must be volatile.\n"
+msgstr "하위키는 휘발성이어야 합니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1128
+msgid "Notify change request in progress.\n"
+msgstr "진행 중인 요청 변화를 알립니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1133
+msgid "Dependent services are running.\n"
+msgstr "의존 서비스 실행 중.\n"
+
+#: dlls/kernelbase/winerror.mc:1138
+msgid "Invalid service control.\n"
+msgstr "잘못된 서비스 컨트롤.\n"
+
+#: dlls/kernelbase/winerror.mc:1143
+msgid "Service request timeout.\n"
+msgstr "서비스 요청 시간 초과.\n"
+
+#: dlls/kernelbase/winerror.mc:1148
+msgid "Cannot create service thread.\n"
+msgstr "서비스 스레드 만들기 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:1153
+msgid "Service database locked.\n"
+msgstr "서비스 데이터베이스 잠.\n"
+
+#: dlls/kernelbase/winerror.mc:1158
+msgid "Service already running.\n"
+msgstr "서비스 실행 증.\n"
+
+#: dlls/kernelbase/winerror.mc:1163
+msgid "Invalid service account.\n"
+msgstr "잘못된 서비스 계정.\n"
+
+#: dlls/kernelbase/winerror.mc:1168
+msgid "Service is disabled.\n"
+msgstr "서비스 실행 불능.\n"
+
+#: dlls/kernelbase/winerror.mc:1173
+msgid "Circular dependency.\n"
+msgstr "원형 서비스 종속성.\n"
+
+#: dlls/kernelbase/winerror.mc:1178
+msgid "Service does not exist.\n"
+msgstr "서비스가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1183
+msgid "Service cannot accept control message.\n"
+msgstr "받아들일 수 없는 서비스 컨트롤 메시지.\n"
+
+#: dlls/kernelbase/winerror.mc:1188
+msgid "Service not active.\n"
+msgstr "활성화도지 않은 서비스.\n"
+
+#: dlls/kernelbase/winerror.mc:1193
+msgid "Service controller connect failed.\n"
+msgstr "서비스 컨트롤러 연결 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:1198
+msgid "Exception in service.\n"
+msgstr "서비스에 예외 발생.\n"
+
+#: dlls/kernelbase/winerror.mc:1203
+msgid "Database does not exist.\n"
+msgstr "데이터베이스가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1208
+msgid "Service-specific error.\n"
+msgstr "서비스 고유 오류.\n"
+
+#: dlls/kernelbase/winerror.mc:1213
+msgid "Process aborted.\n"
+msgstr "예기치 않은 프로세스 종료.\n"
+
+#: dlls/kernelbase/winerror.mc:1218
+msgid "Service dependency failed.\n"
+msgstr "서비스 종속성 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:1223
+msgid "Service login failed.\n"
+msgstr "서비스 로그인 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:1228
+msgid "Service start-hang.\n"
+msgstr "서비스 start-hang.\n"
+
+#: dlls/kernelbase/winerror.mc:1233
+msgid "Invalid service lock.\n"
+msgstr "잘못된 서비스 잠금.\n"
+
+#: dlls/kernelbase/winerror.mc:1238
+msgid "Service marked for delete.\n"
+msgstr "서비스가 제거로 표시.\n"
+
+#: dlls/kernelbase/winerror.mc:1243
+msgid "Service exists.\n"
+msgstr "서비스가 존재합니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1248
+msgid "System running last-known-good config.\n"
+msgstr "시스템이 마지막으로 알려진 좋은 구성으로 실행중입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1253
+msgid "Service dependency deleted.\n"
+msgstr "서비스 종속성이 제거되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1258
+msgid "Boot already accepted as last-good config.\n"
+msgstr "시동이 이미 최종 양호 설정으로 받아들여졌습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1263
+msgid "Service not started since last boot.\n"
+msgstr "서비스가 마지막 시동 이후로 시작되지 않았습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1268
+msgid "Duplicate service name.\n"
+msgstr "중복된 서비스 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:1273
+msgid "Different service account.\n"
+msgstr "다른 서비스 계정.\n"
+
+#: dlls/kernelbase/winerror.mc:1278
+msgid "Driver failure cannot be detected.\n"
+msgstr "드라이버 오류를 발견할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1283
+msgid "Process abort cannot be detected.\n"
+msgstr "프로세스 중단을 발견할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1288
+msgid "No recovery program for service.\n"
+msgstr "서비스를 복구 프로그램이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1293
+msgid "Service not implemented by exe.\n"
+msgstr "서비스가 EXE로 구현되지 않았습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1298
+msgid "End of media.\n"
+msgstr "미디어 끝.\n"
+
+#: dlls/kernelbase/winerror.mc:1303
+msgid "Filemark detected.\n"
+msgstr "파일 표시를 발견했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1308
+msgid "Beginning of media.\n"
+msgstr "미디어 시작.\n"
+
+#: dlls/kernelbase/winerror.mc:1313
+msgid "Setmark detected.\n"
+msgstr "세트 표시를 발견했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1318
+msgid "No data detected.\n"
+msgstr "감지된 데이터가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1323
+msgid "Partition failure.\n"
+msgstr "파티션 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:1328
+msgid "Invalid block length.\n"
+msgstr "잘못된 블럭 길이.\n"
+
+#: dlls/kernelbase/winerror.mc:1333
+msgid "Device not partitioned.\n"
+msgstr "장치에 파티션이 업습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1338
+msgid "Unable to lock media.\n"
+msgstr "미디어 잠금 불가능.\n"
+
+#: dlls/kernelbase/winerror.mc:1343
+msgid "Unable to unload media.\n"
+msgstr "미디어를 적재 해제 불가능.\n"
+
+#: dlls/kernelbase/winerror.mc:1348
+msgid "Media changed.\n"
+msgstr "미디어가 변경되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1353
+msgid "I/O bus reset.\n"
+msgstr "I/O 버스 재설정.\n"
+
+#: dlls/kernelbase/winerror.mc:1358
+msgid "No media in drive.\n"
+msgstr "드라이브에 미디어가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1363
+msgid "No Unicode translation.\n"
+msgstr "유니코드 매핑이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1368
+msgid "DLL initialization failed.\n"
+msgstr "DLL 초기화 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:1373
+msgid "Shutdown in progress.\n"
+msgstr "시스템 종료 중.\n"
+
+#: dlls/kernelbase/winerror.mc:1378
+msgid "No shutdown in progress.\n"
+msgstr "시스템 종료 중이 아닙니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1383
+msgid "I/O device error.\n"
+msgstr "I/O 장치 오류.\n"
+
+#: dlls/kernelbase/winerror.mc:1388
+msgid "No serial devices found.\n"
+msgstr "시리얼 장치 발견 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:1393
+msgid "Shared IRQ busy.\n"
+msgstr "공유된 IRQ 사용 중.\n"
+
+#: dlls/kernelbase/winerror.mc:1398
+msgid "Serial I/O completed.\n"
+msgstr "시리얼 I/O 완료.\n"
+
+#: dlls/kernelbase/winerror.mc:1403
+msgid "Serial I/O counter timeout.\n"
+msgstr "시리얼 I/O 카운터 시간 초과.\n"
+
+#: dlls/kernelbase/winerror.mc:1408
+msgid "Floppy ID address mark not found.\n"
+msgstr "플로피 ID 주소 표시 찾기 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:1413
+msgid "Floppy reports wrong cylinder.\n"
+msgstr "잘못된 플로피 실린더 값 보고.\n"
+
+#: dlls/kernelbase/winerror.mc:1418
+msgid "Unknown floppy error.\n"
+msgstr "알 수 없는 플로피 오류.\n"
+
+#: dlls/kernelbase/winerror.mc:1423
+msgid "Floppy registers inconsistent.\n"
+msgstr "일관성 없는 플로피 등록값.\n"
+
+#: dlls/kernelbase/winerror.mc:1428
+msgid "Hard disk recalibrate failed.\n"
+msgstr "하드디스크 재조정 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:1433
+msgid "Hard disk operation failed.\n"
+msgstr "하드디스크 작업 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:1438
+msgid "Hard disk reset failed.\n"
+msgstr "하드디스크 재설정 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:1443
+msgid "End of tape media.\n"
+msgstr "테이프 미디어 끝.\n"
+
+#: dlls/kernelbase/winerror.mc:1448
+msgid "Not enough server memory.\n"
+msgstr "서버 메모리 부족.\n"
+
+#: dlls/kernelbase/winerror.mc:1453
+msgid "Possible deadlock.\n"
+msgstr "데드락 가능성.\n"
+
+#: dlls/kernelbase/winerror.mc:1458
+msgid "Incorrect alignment.\n"
+msgstr "잘못된 정렬.\n"
+
+#: dlls/kernelbase/winerror.mc:1463
+msgid "Set-power-state vetoed.\n"
+msgstr "파워 상태 설정 거부.\n"
+
+#: dlls/kernelbase/winerror.mc:1468
+msgid "Set-power-state failed.\n"
+msgstr "파워 상태 설정 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:1473
+msgid "Too many links.\n"
+msgstr "너무 많은 링크.\n"
+
+#: dlls/kernelbase/winerror.mc:1478
+msgid "Newer Windows version needed.\n"
+msgstr "더 최신의 Windows 버전이 필요합니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1483
+msgid "Wrong operating system.\n"
+msgstr "잘못된 운영체제.\n"
+
+#: dlls/kernelbase/winerror.mc:1488
+msgid "Single-instance application.\n"
+msgstr "단일 인스턴트 프로그램.\n"
+
+#: dlls/kernelbase/winerror.mc:1493
+msgid "Real-mode application.\n"
+msgstr "리얼 모드 프로그램.\n"
+
+#: dlls/kernelbase/winerror.mc:1498
+msgid "Invalid DLL.\n"
+msgstr "잘못된 DLL.\n"
+
+#: dlls/kernelbase/winerror.mc:1503
+msgid "No associated application.\n"
+msgstr "연결된 프로그램이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1508
+msgid "DDE failure.\n"
+msgstr "DDE 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:1513
+msgid "DLL not found.\n"
+msgstr "DLL을 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1518
+msgid "Out of user handles.\n"
+msgstr "사용자 핸들 부족.\n"
+
+#: dlls/kernelbase/winerror.mc:1523
+msgid "Message can only be used in synchronous calls.\n"
+msgstr "메시지는 오직 동기 호출에만 사용할 수 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1528
+msgid "The source element is empty.\n"
+msgstr "원본 요소가 비어 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1533
+msgid "The destination element is full.\n"
+msgstr "대상 요소가 가능 차 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1538
+msgid "The element address is invalid.\n"
+msgstr "잘못된 요소 주소.\n"
+
+#: dlls/kernelbase/winerror.mc:1543
+msgid "The magazine is not present.\n"
+msgstr "Magazine이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1548
+msgid "The device needs reinitialization.\n"
+msgstr "이 장치는 재초기화가 필요합니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1553
+msgid "The device requires cleaning.\n"
+msgstr "이 장치는 정리가 필요합니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1558
+msgid "The device door is open.\n"
+msgstr "장치 문이 열려 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1563
+msgid "The device is not connected.\n"
+msgstr "장치가 연결되지 않았습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1568
+msgid "Element not found.\n"
+msgstr "요소를 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1573
+msgid "No match found.\n"
+msgstr "일치하는 것이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1578
+msgid "Property set not found.\n"
+msgstr "속성 집합을 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1583
+msgid "Point not found.\n"
+msgstr "포인트를 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1588
+msgid "No running tracking service.\n"
+msgstr "실행 중인 추적 서비스가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1593
+msgid "No such volume ID.\n"
+msgstr "그런 볼륨 ID가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1598
+msgid "Unable to remove the file to be replaced.\n"
+msgstr "바꿀 파일을 제거할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1603
+msgid "Unable to move the replacement file into place.\n"
+msgstr "교체 파일을 제자리로 이동할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1608
+msgid "Moving the replacement file failed.\n"
+msgstr "교체 파일을 이동하지 못했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1613
+msgid "The journal is being deleted.\n"
+msgstr "저널이 삭제되고 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1618
+msgid "The journal is not active.\n"
+msgstr "저널이 활성화되지 않았습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1623
+msgid "Potential matching file found.\n"
+msgstr "일치할 가능성이 있는 파일이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1628
+msgid "The journal entry was deleted.\n"
+msgstr "저널 엔트리가 지워짐.\n"
+
+#: dlls/kernelbase/winerror.mc:1633
+msgid "Invalid device name.\n"
+msgstr "잘못된 장치 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:1638
+msgid "Connection unavailable.\n"
+msgstr "불가능한 연결.\n"
+
+#: dlls/kernelbase/winerror.mc:1643
+msgid "Device already remembered.\n"
+msgstr "장치는 이미 기억됨.\n"
+
+#: dlls/kernelbase/winerror.mc:1648
+msgid "No network or bad path.\n"
+msgstr "네트워크가 없거나 잘못된 경로.\n"
+
+#: dlls/kernelbase/winerror.mc:1653
+msgid "Invalid network provider name.\n"
+msgstr "잘못된 네트워크 제공자 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:1658
+msgid "Cannot open network connection profile.\n"
+msgstr "네트워크 연결 프로필을 열 수 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:1663
+msgid "Corrupt network connection profile.\n"
+msgstr "망가진 네트워크 연결 프로필.\n"
+
+#: dlls/kernelbase/winerror.mc:1668
+msgid "Not a container.\n"
+msgstr "컨테이너가 아닙니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1673
+msgid "Extended error.\n"
+msgstr "확장된 오류.\n"
+
+#: dlls/kernelbase/winerror.mc:1678
+msgid "Invalid group name.\n"
+msgstr "잘못된 그룹 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:1683
+msgid "Invalid computer name.\n"
+msgstr "잘못된 컴퓨터 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:1688
+msgid "Invalid event name.\n"
+msgstr "잘못된 이벤트 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:1693
+msgid "Invalid domain name.\n"
+msgstr "잘못된 도메인 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:1698
+msgid "Invalid service name.\n"
+msgstr "잘못된 서비스 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:1703
+msgid "Invalid network name.\n"
+msgstr "잘못된 네트워크 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:1708
+msgid "Invalid share name.\n"
+msgstr "잘못된 공유 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:1718
+msgid "Invalid message name.\n"
+msgstr "잘못된 메시지 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:1723
+msgid "Invalid message destination.\n"
+msgstr "잘못된 메시지 대상.\n"
+
+#: dlls/kernelbase/winerror.mc:1728
+msgid "Session credential conflict.\n"
+msgstr "세션 자격 증명 충돌.\n"
+
+#: dlls/kernelbase/winerror.mc:1733
+msgid "Remote session limit exceeded.\n"
+msgstr "원격 세션 제한 초과.\n"
+
+#: dlls/kernelbase/winerror.mc:1738
+msgid "Duplicate domain or workgroup name.\n"
+msgstr "도메인 또는 작업그룹 이름 중복.\n"
+
+#: dlls/kernelbase/winerror.mc:1743
+msgid "No network.\n"
+msgstr "네트워크 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:1748
+msgid "Operation canceled by user.\n"
+msgstr "작업이 사용자에 위해 취소됨.\n"
+
+#: dlls/kernelbase/winerror.mc:1753
+msgid "File has a user-mapped section.\n"
+msgstr "파일에 사용자 매핑 섹션이 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1758 dlls/kernelbase/winerror.mc:3783
+msgid "Connection refused.\n"
+msgstr "연결 거부.\n"
+
+#: dlls/kernelbase/winerror.mc:1763
+msgid "Connection gracefully closed.\n"
+msgstr "정상적으로 연결 종료.\n"
+
+#: dlls/kernelbase/winerror.mc:1768
+msgid "Address already associated with transport endpoint.\n"
+msgstr "이미 전송 엔드포인트와 연결된 주소입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1773
+msgid "Address not associated with transport endpoint.\n"
+msgstr "주소가 전송 엔드포인트와 연결되지 않았습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1778
+msgid "Connection invalid.\n"
+msgstr "연결이 잘못되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1783
+msgid "Connection is active.\n"
+msgstr "연결이 활성화되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1788
+msgid "Network unreachable.\n"
+msgstr "네트워크에 연결할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1793
+msgid "Host unreachable.\n"
+msgstr "호스트에 연결할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1798
+msgid "Protocol unreachable.\n"
+msgstr "접근할 수 없는 프르토콜.\n"
+
+#: dlls/kernelbase/winerror.mc:1803
+msgid "Port unreachable.\n"
+msgstr "접근할 수 없는 포트.\n"
+
+#: dlls/kernelbase/winerror.mc:1808
+msgid "Request aborted.\n"
+msgstr "요청 중단.\n"
+
+#: dlls/kernelbase/winerror.mc:1813
+msgid "Connection aborted.\n"
+msgstr "연결 중단.\n"
+
+#: dlls/kernelbase/winerror.mc:1818
+msgid "Please retry operation.\n"
+msgstr "작업을 다시 시도하세요.\n"
+
+#: dlls/kernelbase/winerror.mc:1823
+msgid "Connection count limit reached.\n"
+msgstr "연결 개수 제한에 도달했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1828
+msgid "Login time restriction.\n"
+msgstr "로그인 시간 제한.\n"
+
+#: dlls/kernelbase/winerror.mc:1833
+msgid "Login workstation restriction.\n"
+msgstr "로그인 워크스테이션 제한.\n"
+
+#: dlls/kernelbase/winerror.mc:1838
+msgid "Incorrect network address.\n"
+msgstr "잘못된 네트워크 주소.\n"
+
+#: dlls/kernelbase/winerror.mc:1843
+msgid "Service already registered.\n"
+msgstr "서비스가 이미 등록되어 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1848
+msgid "Service not found.\n"
+msgstr "서비스를 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1853
+msgid "User not authenticated.\n"
+msgstr "인증되지 않은 사용자.\n"
+
+#: dlls/kernelbase/winerror.mc:1858
+msgid "User not logged on.\n"
+msgstr "로그온되지 않은 사용자.\n"
+
+#: dlls/kernelbase/winerror.mc:1863
+msgid "Continue work in progress.\n"
+msgstr "진행중인 작업을 계속합니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1868
+msgid "Already initialized.\n"
+msgstr "이미 초기화되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1873
+msgid "No more local devices.\n"
+msgstr "지역 장치가 더 이상 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1878
+msgid "The site does not exist.\n"
+msgstr "사이트가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1883
+msgid "The domain controller already exists.\n"
+msgstr "도메인 제어기가 이미 존재합니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1888
+msgid "Supported only when connected.\n"
+msgstr "연결되었을 때만 지원됩니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1893
+msgid "Perform operation even when nothing changed.\n"
+msgstr "바뀐 것이 없는 경우에도 작업을 수행합니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1898
+msgid "The user profile is invalid.\n"
+msgstr "사용자 프로파일이 잘못되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1903
+msgid "Not supported on Small Business Server.\n"
+msgstr "Small Business Server는 지원되지 않습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1908
+msgid "Not all privileges assigned.\n"
+msgstr "모든 권한을 할당되지는 않습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1913
+msgid "Some security IDs not mapped.\n"
+msgstr "일부 보안 ID가 매핑되지 않았습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1918
+msgid "No quotas for account.\n"
+msgstr "계정에 할당량이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1923
+msgid "Local user session key.\n"
+msgstr "지역 사용자 세션 키.\n"
+
+#: dlls/kernelbase/winerror.mc:1928
+msgid "Password too complex for LM.\n"
+msgstr "LM 용으로는 너무 복잡한 암호.\n"
+
+#: dlls/kernelbase/winerror.mc:1933
+msgid "Unknown revision.\n"
+msgstr "알 수 없는 리비전.\n"
+
+#: dlls/kernelbase/winerror.mc:1938
+msgid "Incompatible revision levels.\n"
+msgstr "호환되지 않는 리비전 레벨.\n"
+
+#: dlls/kernelbase/winerror.mc:1943
+msgid "Invalid owner.\n"
+msgstr "잘못된 소유자.\n"
+
+#: dlls/kernelbase/winerror.mc:1948
+msgid "Invalid primary group.\n"
+msgstr "잘못된 기본 그룹.\n"
+
+#: dlls/kernelbase/winerror.mc:1953
+msgid "No impersonation token.\n"
+msgstr "가장(위장) 토큰이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1958
+msgid "Can't disable mandatory group.\n"
+msgstr "필수 그룹을 비활성화할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1963
+msgid "No logon servers available.\n"
+msgstr "로그온 서버를 이용할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1968
+msgid "No such logon session.\n"
+msgstr "로그온 세션이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1973
+msgid "No such privilege.\n"
+msgstr "어떤 권한도 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:1978
+msgid "Privilege not held.\n"
+msgstr "권한이 유지 되지 않음.\n"
+
+#: dlls/kernelbase/winerror.mc:1983
+msgid "Invalid account name.\n"
+msgstr "잘못된 계정 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:1988
+msgid "User already exists.\n"
+msgstr "사용자는 이미 존재합니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1993
+msgid "No such user.\n"
+msgstr "어떤 사용자도 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:1998
+msgid "Group already exists.\n"
+msgstr "그룹은 이미 존재합니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2003
+msgid "No such group.\n"
+msgstr "어떤 그룹도 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2008
+msgid "User already in group.\n"
+msgstr "사용자는 이미 그룹에 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2013
+msgid "User not in group.\n"
+msgstr "사용자가 그룹에 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:2018
+msgid "Can't delete last admin user.\n"
+msgstr "마지막  관리 사용자를 지울 수 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:2023
+msgid "Wrong password.\n"
+msgstr "잘못된 암호.\n"
+
+#: dlls/kernelbase/winerror.mc:2028
+msgid "Ill-formed password.\n"
+msgstr "나쁜 형태의 암호.\n"
+
+#: dlls/kernelbase/winerror.mc:2033
+msgid "Password restriction.\n"
+msgstr "암호 제한.\n"
+
+#: dlls/kernelbase/winerror.mc:2038
+msgid "Logon failure.\n"
+msgstr "로그인 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:2043
+msgid "Account restriction.\n"
+msgstr "계정 제한.\n"
+
+#: dlls/kernelbase/winerror.mc:2048
+msgid "Invalid logon hours.\n"
+msgstr "잘못된 로그온 시간.\n"
+
+#: dlls/kernelbase/winerror.mc:2053
+msgid "Invalid workstation.\n"
+msgstr "잘못된 워크스테이션.\n"
+
+#: dlls/kernelbase/winerror.mc:2058
+msgid "Password expired.\n"
+msgstr "암호 유효 기간 만료.\n"
+
+#: dlls/kernelbase/winerror.mc:2063
+msgid "Account disabled.\n"
+msgstr "계정을 사용할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2068
+msgid "No security ID mapped.\n"
+msgstr "매핑된 보안 아이디가 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:2073
+msgid "Too many LUIDs requested.\n"
+msgstr "너무 많은  LUI가 요구됨.\n"
+
+#: dlls/kernelbase/winerror.mc:2078
+msgid "LUIDs exhausted.\n"
+msgstr "LUID가 고갈됨.\n"
+
+#: dlls/kernelbase/winerror.mc:2083
+msgid "Invalid sub authority.\n"
+msgstr "잘못된 하위 기관.\n"
+
+#: dlls/kernelbase/winerror.mc:2088
+msgid "Invalid ACL.\n"
+msgstr "잘못된 ACL.\n"
+
+#: dlls/kernelbase/winerror.mc:2093
+msgid "Invalid SID.\n"
+msgstr "잘못된 SID.\n"
+
+#: dlls/kernelbase/winerror.mc:2098
+msgid "Invalid security descriptor.\n"
+msgstr "잘못된 보안 설명자.\n"
+
+#: dlls/kernelbase/winerror.mc:2103
+msgid "Bad inherited ACL.\n"
+msgstr "나쁜 ACL을 상속.\n"
+
+#: dlls/kernelbase/winerror.mc:2108
+msgid "Server disabled.\n"
+msgstr "서버가 가능하지 않음.\n"
+
+#: dlls/kernelbase/winerror.mc:2113
+msgid "Server not disabled.\n"
+msgstr "서버가 가능하지 않지가 않음.\n"
+
+#: dlls/kernelbase/winerror.mc:2118
+msgid "Invalid ID authority.\n"
+msgstr "잘못된 아이디 권한.\n"
+
+#: dlls/kernelbase/winerror.mc:2123
+msgid "Allotted space exceeded.\n"
+msgstr "할당된 공간을 초과했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2128
+msgid "Invalid group attributes.\n"
+msgstr "잘못된 그룹 속성.\n"
+
+#: dlls/kernelbase/winerror.mc:2133
+msgid "Bad impersonation level.\n"
+msgstr "나쁜 가장 수준.\n"
+
+#: dlls/kernelbase/winerror.mc:2138
+msgid "Can't open anonymous security token.\n"
+msgstr "익명 보안 토큰을 열 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2143
+msgid "Bad validation class.\n"
+msgstr "나쁜 검증 클래스.\n"
+
+#: dlls/kernelbase/winerror.mc:2148
+msgid "Bad token type.\n"
+msgstr "나쁜 토큰 형식.\n"
+
+#: dlls/kernelbase/winerror.mc:2153
+msgid "No security on object.\n"
+msgstr "개체에 보안 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:2158
+msgid "Can't access domain information.\n"
+msgstr "도메인 정보에 접근할 수 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:2163
+msgid "Invalid server state.\n"
+msgstr "잘못된 서버 상태.\n"
+
+#: dlls/kernelbase/winerror.mc:2168
+msgid "Invalid domain state.\n"
+msgstr "잘못된 도메인 상태.\n"
+
+#: dlls/kernelbase/winerror.mc:2173
+msgid "Invalid domain role.\n"
+msgstr "잘못된 도메인 법칙.\n"
+
+#: dlls/kernelbase/winerror.mc:2178
+msgid "No such domain.\n"
+msgstr "어떤 도메인도 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2183
+msgid "Domain already exists.\n"
+msgstr "도메인은 이미 존재합니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2188
+msgid "Domain limit exceeded.\n"
+msgstr "도메인 제한 도달.\n"
+
+#: dlls/kernelbase/winerror.mc:2193
+msgid "Internal database corruption.\n"
+msgstr "내부 데이터베이스 손상.\n"
+
+#: dlls/kernelbase/winerror.mc:2198
+msgid "Internal error.\n"
+msgstr "내부 오류.\n"
+
+#: dlls/kernelbase/winerror.mc:2203
+msgid "Generic access types not mapped.\n"
+msgstr "매핑되지 않은 일반 액세스 유형.\n"
+
+#: dlls/kernelbase/winerror.mc:2208
+msgid "Bad descriptor format.\n"
+msgstr "나쁜 설명자 형식.\n"
+
+#: dlls/kernelbase/winerror.mc:2213
+msgid "Not a logon process.\n"
+msgstr "로그온 프로세스가 아님.\n"
+
+#: dlls/kernelbase/winerror.mc:2218
+msgid "Logon session ID exists.\n"
+msgstr "로그온 세션 아이디가 존재함.\n"
+
+#: dlls/kernelbase/winerror.mc:2223
+msgid "Unknown authentication package.\n"
+msgstr "알 수 없는 인증 패키지.\n"
+
+#: dlls/kernelbase/winerror.mc:2228
+msgid "Bad logon session state.\n"
+msgstr "나쁜 로그온 세션 상태.\n"
+
+#: dlls/kernelbase/winerror.mc:2233
+msgid "Logon session ID collision.\n"
+msgstr "로그온 세션 아이디 충돌.\n"
+
+#: dlls/kernelbase/winerror.mc:2238
+msgid "Invalid logon type.\n"
+msgstr "잘못된 로그온 타입.\n"
+
+#: dlls/kernelbase/winerror.mc:2243
+msgid "Cannot impersonate.\n"
+msgstr "사칭할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2248
+msgid "Invalid transaction state.\n"
+msgstr "트랜잭션 상태가 잘못되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2253
+msgid "Security DB commit failure.\n"
+msgstr "보안 DB 약속 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:2258
+msgid "Account is built-in.\n"
+msgstr "이 계정은 내부용입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2263
+msgid "Group is built-in.\n"
+msgstr "이 그룹은 내부용입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2268
+msgid "User is built-in.\n"
+msgstr "이 사용자는 내부용입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2273
+msgid "Group is primary for user.\n"
+msgstr "그룹은 사용자에 대한 기본입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2278
+msgid "Token already in use.\n"
+msgstr "토큰은 이미 사용중입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2283
+msgid "No such local group.\n"
+msgstr "어떤 지역 그룹도 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:2288
+msgid "User not in local group.\n"
+msgstr "지역 그룹에 사용자가 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:2293
+msgid "User already in local group.\n"
+msgstr "사용자는 이미 지역 그룹에 존재함.\n"
+
+#: dlls/kernelbase/winerror.mc:2298
+msgid "Local group already exists.\n"
+msgstr "지역 그룹이 이미 존재함.\n"
+
+#: dlls/kernelbase/winerror.mc:2303 dlls/kernelbase/winerror.mc:2328
+msgid "Logon type not granted.\n"
+msgstr "부여하지 않은 로그온 유형.\n"
+
+#: dlls/kernelbase/winerror.mc:2308
+msgid "Too many secrets.\n"
+msgstr "너무 많은 비밀.\n"
+
+#: dlls/kernelbase/winerror.mc:2313
+msgid "Secret too long.\n"
+msgstr "비밀이 너무 김.\n"
+
+#: dlls/kernelbase/winerror.mc:2318
+msgid "Internal security DB error.\n"
+msgstr "내부 보안 ID 오류.\n"
+
+#: dlls/kernelbase/winerror.mc:2323
+msgid "Too many context IDs.\n"
+msgstr "컨텍스트 아이디가 너무 많음.\n"
+
+#: dlls/kernelbase/winerror.mc:2333
+msgid "Cross-encrypted NT password required.\n"
+msgstr "교차-암호화된 NT 암호가 요구됨.\n"
+
+#: dlls/kernelbase/winerror.mc:2338
+msgid "No such member.\n"
+msgstr "어떤 회원도 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2343
+msgid "Invalid member.\n"
+msgstr "잘못된 회원.\n"
+
+#: dlls/kernelbase/winerror.mc:2348
+msgid "Too many SIDs.\n"
+msgstr "너무 많은 SID이 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2353
+msgid "Cross-encrypted LM password required.\n"
+msgstr "교차-암호화된  LM 암호가 요구됨.\n"
+
+#: dlls/kernelbase/winerror.mc:2358
+msgid "No inheritable components.\n"
+msgstr "상속가능한 구성요소가 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:2363
+msgid "File or directory corrupt.\n"
+msgstr "파일이나 디렉터리가 망가졌습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2368
+msgid "Disk is corrupt.\n"
+msgstr "디스크가 망가졌습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2373
+msgid "No user session key.\n"
+msgstr "사용자 세션 키가 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:2378
+msgid "License quota exceeded.\n"
+msgstr "라이선스의 할당량을 초과했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2383
+msgid "Wrong target name.\n"
+msgstr "잘못된 목표의 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:2388
+msgid "Mutual authentication failed.\n"
+msgstr "상호 인증 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:2393
+msgid "Time skew between client and server.\n"
+msgstr "클라이언트와 서버 사이의 시간 왜곡.\n"
+
+#: dlls/kernelbase/winerror.mc:2398
+msgid "Invalid window handle.\n"
+msgstr "잘못된 원도우 핸들.\n"
+
+#: dlls/kernelbase/winerror.mc:2403
+msgid "Invalid menu handle.\n"
+msgstr "잘못된 메뉴 핸들.\n"
+
+#: dlls/kernelbase/winerror.mc:2408
+msgid "Invalid cursor handle.\n"
+msgstr "잘못된 커서 핸들.\n"
+
+#: dlls/kernelbase/winerror.mc:2413
+msgid "Invalid accelerator table handle.\n"
+msgstr "잘못된 엑셀레이터 테이블 핸들.\n"
+
+#: dlls/kernelbase/winerror.mc:2418
+msgid "Invalid hook handle.\n"
+msgstr "잘못된 hook 핸들.\n"
+
+#: dlls/kernelbase/winerror.mc:2423
+msgid "Invalid DWP handle.\n"
+msgstr "잘못된 DWP 핸들.\n"
+
+#: dlls/kernelbase/winerror.mc:2428
+msgid "Can't create top-level child window.\n"
+msgstr "최고 수준의 하위 창을 만들 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2433
+msgid "Can't find window class.\n"
+msgstr "창 클래스를 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2438
+msgid "Window owned by another thread.\n"
+msgstr "창은 다른 스레드가 가지고 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2443
+msgid "Hotkey already registered.\n"
+msgstr "바로 가기는 이미 등록되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2448
+msgid "Class already exists.\n"
+msgstr "클래스는 이미 존재합니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2453
+msgid "Class does not exist.\n"
+msgstr "클래스가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2458
+msgid "Class has open windows.\n"
+msgstr "클래스는 연 상태의 창을 가지고 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2463 dlls/mferror/mferror.mc:130
+msgid "Invalid index.\n"
+msgstr "잘못된 인덱스.\n"
+
+#: dlls/kernelbase/winerror.mc:2468
+msgid "Invalid icon handle.\n"
+msgstr "잘못된 아이콘 핸들.\n"
+
+#: dlls/kernelbase/winerror.mc:2473
+msgid "Private dialog index.\n"
+msgstr "비공개 다이얼로그 색인.\n"
+
+#: dlls/kernelbase/winerror.mc:2478
+msgid "List box ID not found.\n"
+msgstr "목록상자 ID를 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2483
+msgid "No wildcard characters.\n"
+msgstr "와일드카드 문자가 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:2488
+msgid "Clipboard not open.\n"
+msgstr "클립보드를 열 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2493
+msgid "Hotkey not registered.\n"
+msgstr "바로 가기가 등록되지 않았습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2498
+msgid "Not a dialog window.\n"
+msgstr "대화창이 아닙니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2503
+msgid "Control ID not found.\n"
+msgstr "컨트롤 아이디를 찾을 수 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:2508
+msgid "Invalid combo box message.\n"
+msgstr "잘못된  콤보 박스 메시지입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2513
+msgid "Not a combo box window.\n"
+msgstr "콤보 박스 창이 아닙니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2518
+msgid "Invalid edit height.\n"
+msgstr "잘못된 편집 높이.\n"
+
+#: dlls/kernelbase/winerror.mc:2523
+msgid "DC not found.\n"
+msgstr "DC를 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2528
+msgid "Invalid hook filter.\n"
+msgstr "잘못된 훅 필터.\n"
+
+#: dlls/kernelbase/winerror.mc:2533
+msgid "Invalid filter procedure.\n"
+msgstr "잘못된 필터 프로시져.\n"
+
+#: dlls/kernelbase/winerror.mc:2538
+msgid "Hook procedure needs module handle.\n"
+msgstr "훅 프로시저가 모듈 핸들을 필요로 합니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2543
+msgid "Global-only hook procedure.\n"
+msgstr "글로벌 전용 훅 프로시저.\n"
+
+#: dlls/kernelbase/winerror.mc:2548
+msgid "Journal hook already set.\n"
+msgstr "저널 훅이 이미 설정되어 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2553
+msgid "Hook procedure not installed.\n"
+msgstr "훅 프로시저가 설치되어 있지 않습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2558
+msgid "Invalid list box message.\n"
+msgstr "잘못된 목록상자 메시지.\n"
+
+#: dlls/kernelbase/winerror.mc:2563
+msgid "Invalid LB_SETCOUNT sent.\n"
+msgstr "잘못된 LB_SETCOUNT 보내기.\n"
+
+#: dlls/kernelbase/winerror.mc:2568
+msgid "No tab stops on this list box.\n"
+msgstr "이 목록상자는 탭정지가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2573
+msgid "Can't destroy object owned by another thread.\n"
+msgstr "다른 스레드가 소유한 개체를 파괴할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2578
+msgid "Child window menus not allowed.\n"
+msgstr "자식 창 메뉴는 허용되지 않습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2583
+msgid "Window has no system menu.\n"
+msgstr "창이 시스템 메뉴를 가지고 있지 않습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2588
+msgid "Invalid message box style.\n"
+msgstr "잘못된 메시지 박스 스타일.\n"
+
+#: dlls/kernelbase/winerror.mc:2593
+msgid "Invalid SPI parameter.\n"
+msgstr "잘못된 SPI 매개변수.\n"
+
+#: dlls/kernelbase/winerror.mc:2598
+msgid "Screen already locked.\n"
+msgstr "화면은 이미 잠겼습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2603
+msgid "Window handles have different parents.\n"
+msgstr "창 핸들이 각각 다른 부모를 가지고 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2608
+msgid "Not a child window.\n"
+msgstr "자식 창이 아닙니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2613
+msgid "Invalid GW command.\n"
+msgstr "잘못된 GW 명령.\n"
+
+#: dlls/kernelbase/winerror.mc:2618
+msgid "Invalid thread ID.\n"
+msgstr "잘못된 스레드 ID.\n"
+
+#: dlls/kernelbase/winerror.mc:2623
+msgid "Not an MDI child window.\n"
+msgstr "MDI 자식 창이 아님.\n"
+
+#: dlls/kernelbase/winerror.mc:2628
+msgid "Popup menu already active.\n"
+msgstr "팝업 메뉴는 이미 활성화되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2633
+msgid "No scrollbars.\n"
+msgstr "스크롤바가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2638
+msgid "Invalid scrollbar range.\n"
+msgstr "잘못된 스코롤바 범위.\n"
+
+#: dlls/kernelbase/winerror.mc:2643
+msgid "Invalid ShowWin command.\n"
+msgstr "잘못된 ShowWin 명령.\n"
+
+#: dlls/kernelbase/winerror.mc:2648
+msgid "No system resources.\n"
+msgstr "시스템 리소스가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2653
+msgid "No non-paged system resources.\n"
+msgstr "페이지되지 않은 시스템 자원이 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:2658
+msgid "No paged system resources.\n"
+msgstr "페이지된 시스템 자원이 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:2663
+msgid "No working set quota.\n"
+msgstr "작동하는 할당령 설정이 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:2668
+msgid "No page file quota.\n"
+msgstr "페이지파일 할당량이 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:2673
+msgid "Exceeded commitment limit.\n"
+msgstr "약정 한도 초과.\n"
+
+#: dlls/kernelbase/winerror.mc:2678
+msgid "Menu item not found.\n"
+msgstr "메뉴 항목을 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2683
+msgid "Invalid keyboard handle.\n"
+msgstr "잘못된 키보드 핸들.\n"
+
+#: dlls/kernelbase/winerror.mc:2688
+msgid "Hook type not allowed.\n"
+msgstr "허용되지 않은 훅 형식.\n"
+
+#: dlls/kernelbase/winerror.mc:2693
+msgid "Interactive window station required.\n"
+msgstr "대화형 Windows 스테이션이 요구됨.\n"
+
+#: dlls/kernelbase/winerror.mc:2698
+msgid "Timeout.\n"
+msgstr "시간 초과.\n"
+
+#: dlls/kernelbase/winerror.mc:2703
+msgid "Invalid monitor handle.\n"
+msgstr "잘못된 모니터 핸들.\n"
+
+#: dlls/kernelbase/winerror.mc:2708
+msgid "Event log file corrupt.\n"
+msgstr "이벤트 로그 파일이 망가졌습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2713
+msgid "Event log can't start.\n"
+msgstr "이벤트 로그를 시작할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2718
+msgid "Event log file full.\n"
+msgstr "이벤트 로그 파일이 가득 참.\n"
+
+#: dlls/kernelbase/winerror.mc:2723
+msgid "Event log file changed.\n"
+msgstr "이벤트 로그 파일이 변경되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2728
+msgid "Installer service failed.\n"
+msgstr "설치 서비스가 실패함.\n"
+
+#: dlls/kernelbase/winerror.mc:2733
+msgid "Installation aborted by user.\n"
+msgstr "설치가 사용자에 위해 취소됨.\n"
+
+#: dlls/kernelbase/winerror.mc:2738
+msgid "Installation failure.\n"
+msgstr "설치 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:2743
+msgid "Installation suspended.\n"
+msgstr "설치가 일시 중지됨.\n"
+
+#: dlls/kernelbase/winerror.mc:2748
+msgid "Unknown product.\n"
+msgstr "알 수 없는 제품.\n"
+
+#: dlls/kernelbase/winerror.mc:2753
+msgid "Unknown feature.\n"
+msgstr "알 수 없는 특징.\n"
+
+#: dlls/kernelbase/winerror.mc:2758
+msgid "Unknown component.\n"
+msgstr "알 수 없는 구성 요소.\n"
+
+#: dlls/kernelbase/winerror.mc:2763
+msgid "Unknown property.\n"
+msgstr "알 수 없는 속성.\n"
+
+#: dlls/kernelbase/winerror.mc:2768
+msgid "Invalid handle state.\n"
+msgstr "잘못된 핸들 상태.\n"
+
+#: dlls/kernelbase/winerror.mc:2773
+msgid "Bad configuration.\n"
+msgstr "잘못된 구성.\n"
+
+#: dlls/kernelbase/winerror.mc:2778
+msgid "Index is missing.\n"
+msgstr "인덱스가 빠짐.\n"
+
+#: dlls/kernelbase/winerror.mc:2783
+msgid "Installation source is missing.\n"
+msgstr "설치 원본이 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:2788
+msgid "Wrong installation package version.\n"
+msgstr "잘못된 설치 패키지 버전.\n"
+
+#: dlls/kernelbase/winerror.mc:2793
+msgid "Product uninstalled.\n"
+msgstr "제품이 제거되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2798
+msgid "Invalid query syntax.\n"
+msgstr "잘못된 쿼리 구문입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2803
+msgid "Invalid field.\n"
+msgstr "잘못된 필드입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2808
+msgid "Device removed.\n"
+msgstr "장치가 제거되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2813
+msgid "Installation already running.\n"
+msgstr "설치 작업이 이미 실행중입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2818
+msgid "Installation package failed to open.\n"
+msgstr "설치 패키지를 열지 못했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2823
+msgid "Installation package is invalid.\n"
+msgstr "설치 패키지가 잘못되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2828
+msgid "Installer user interface failed.\n"
+msgstr "설치 프로그램 사용자 인터페이스 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:2833
+msgid "Failed to open installation log file.\n"
+msgstr "설치 로그 파일 열기 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:2838
+msgid "Installation language not supported.\n"
+msgstr "설치하려는 언어가 지원되지 않습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2843
+msgid "Installation transform failed to apply.\n"
+msgstr "설치 변환 실패가 추가됨.\n"
+
+#: dlls/kernelbase/winerror.mc:2848
+msgid "Installation package rejected.\n"
+msgstr "설치 패키지기 거부됨.\n"
+
+#: dlls/kernelbase/winerror.mc:2853
+msgid "Function could not be called.\n"
+msgstr "함수를 호출할 수 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:2858
+msgid "Function failed.\n"
+msgstr "함수 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:2863
+msgid "Invalid table.\n"
+msgstr "잘못된 테이블.\n"
+
+#: dlls/kernelbase/winerror.mc:2868
+msgid "Data type mismatch.\n"
+msgstr "데이터 형식이 맞지 않습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2873 dlls/kernelbase/winerror.mc:3083
+msgid "Unsupported type.\n"
+msgstr "지원되지 않는 형식.\n"
+
+#: dlls/kernelbase/winerror.mc:2878
+msgid "Creation failed.\n"
+msgstr "만들기 실패함.\n"
+
+#: dlls/kernelbase/winerror.mc:2883
+msgid "Temporary directory not writable.\n"
+msgstr "임시 디렉터리에 기록할 수 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:2888
+msgid "Installation platform not supported.\n"
+msgstr "설치하려는 플랫폼이 지원되지 않스니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2893
+msgid "Installer not used.\n"
+msgstr "설치 프로그램이 사용되지 않음.\n"
+
+#: dlls/kernelbase/winerror.mc:2898
+msgid "Failed to open the patch package.\n"
+msgstr "패치 패키지 열기 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:2903
+msgid "Invalid patch package.\n"
+msgstr "잘못된 패치 패키지.\n"
+
+#: dlls/kernelbase/winerror.mc:2908
+msgid "Unsupported patch package.\n"
+msgstr "지원되지 않는 패치 패키지입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2913
+msgid "Another version is installed.\n"
+msgstr "다른 버전이 설치되어 있음.\n"
+
+#: dlls/kernelbase/winerror.mc:2918
+msgid "Invalid command line.\n"
+msgstr "잘못된 명령 라인.\n"
+
+#: dlls/kernelbase/winerror.mc:2923
+msgid "Remote installation not allowed.\n"
+msgstr "원격 설치는 허용되지 않음.\n"
+
+#: dlls/kernelbase/winerror.mc:2928
+msgid "Reboot initiated after successful install.\n"
+msgstr "설치가 성공한 후에 스스로 재부팅될 것임.\n"
+
+#: dlls/kernelbase/winerror.mc:2933
+msgid "Invalid string binding.\n"
+msgstr "잘못된 문자열 바인딩.\n"
+
+#: dlls/kernelbase/winerror.mc:2938
+msgid "Wrong kind of binding.\n"
+msgstr "잘못된 종류의 바인딩.\n"
+
+#: dlls/kernelbase/winerror.mc:2943
+msgid "Invalid binding.\n"
+msgstr "잘못된 바인딩.\n"
+
+#: dlls/kernelbase/winerror.mc:2948
+msgid "RPC protocol sequence not supported.\n"
+msgstr "RPC 프로토콜 시퀀스가 지원되지 않음.\n"
+
+#: dlls/kernelbase/winerror.mc:2953
+msgid "Invalid RPC protocol sequence.\n"
+msgstr "잘못된 RPC 프로토콜 순서.\n"
+
+#: dlls/kernelbase/winerror.mc:2958
+msgid "Invalid string UUID.\n"
+msgstr "잘못된 문자열 UUID.\n"
+
+#: dlls/kernelbase/winerror.mc:2963
+msgid "Invalid endpoint format.\n"
+msgstr "잘못된 엔드포인트 포맷.\n"
+
+#: dlls/kernelbase/winerror.mc:2968
+msgid "Invalid network address.\n"
+msgstr "잘못된 네트워크 주소.\n"
+
+#: dlls/kernelbase/winerror.mc:2973
+msgid "No endpoint found.\n"
+msgstr "엔드포인트를 찾을 수 없음.\n"
+
+#: dlls/kernelbase/winerror.mc:2978
+msgid "Invalid timeout value.\n"
+msgstr "잘못된 시간 초과 값.\n"
+
+#: dlls/kernelbase/winerror.mc:2983
+msgid "Object UUID not found.\n"
+msgstr "UUID 개체를 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2988
+msgid "UUID already registered.\n"
+msgstr "UUID는 이미 등록되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2993
+msgid "UUID type already registered.\n"
+msgstr "UUID 형식은 이미 등록되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:2998
+msgid "Server already listening.\n"
+msgstr "서버는 이미 응답중입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3003
+msgid "No protocol sequences registered.\n"
+msgstr "어떤 프로토콜 순서도 등록되어있지 않습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3008
+msgid "RPC server not listening.\n"
+msgstr "RPC 서버는 응답이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3013
+msgid "Unknown manager type.\n"
+msgstr "알 수 없는 관리자 유형.\n"
+
+#: dlls/kernelbase/winerror.mc:3018
+msgid "Unknown interface.\n"
+msgstr "알 수 없는 인터페이스.\n"
+
+#: dlls/kernelbase/winerror.mc:3023
+msgid "No bindings.\n"
+msgstr "바인딩이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3028
+msgid "No protocol sequences.\n"
+msgstr "어떤 프로토콜 순서도 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3033
+msgid "Can't create endpoint.\n"
+msgstr "엔드포인트를 만들 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3038
+msgid "Out of resources.\n"
+msgstr "리소스 부족.\n"
+
+#: dlls/kernelbase/winerror.mc:3043
+msgid "RPC server unavailable.\n"
+msgstr "RPC 서버를 사용할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3048
+msgid "RPC server too busy.\n"
+msgstr "RPC 서버가 지나치게 사용 중입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3053
+msgid "Invalid network options.\n"
+msgstr "잘못된 네트워크 옵션.\n"
+
+#: dlls/kernelbase/winerror.mc:3058
+msgid "No RPC call active.\n"
+msgstr "RPC 호출이 활성화되지 않았습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3063
+msgid "RPC call failed.\n"
+msgstr "RPC 호출이 실패했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3068
+msgid "RPC call failed and didn't execute.\n"
+msgstr "RPC 호출이 실패하여 실행하지 않았습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3073
+msgid "RPC protocol error.\n"
+msgstr "RPC 프로토콜 오류.\n"
+
+#: dlls/kernelbase/winerror.mc:3078
+msgid "Unsupported transfer syntax.\n"
+msgstr "지원되지 않는 전송 구문.\n"
+
+#: dlls/kernelbase/winerror.mc:3088
+msgid "Invalid tag.\n"
+msgstr "잘못된 태그.\n"
+
+#: dlls/kernelbase/winerror.mc:3093
+msgid "Invalid array bounds.\n"
+msgstr "배열 경계가 잘못되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3098
+msgid "No entry name.\n"
+msgstr "항목 이름이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3103
+msgid "Invalid name syntax.\n"
+msgstr "잘못된 이름 구문.\n"
+
+#: dlls/kernelbase/winerror.mc:3108
+msgid "Unsupported name syntax.\n"
+msgstr "지원되지 않는 이름 구문.\n"
+
+#: dlls/kernelbase/winerror.mc:3113
+msgid "No network address.\n"
+msgstr "네트워크 주소가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3118
+msgid "Duplicate endpoint.\n"
+msgstr "중복된 엔드포인트.\n"
+
+#: dlls/kernelbase/winerror.mc:3123
+msgid "Unknown authentication type.\n"
+msgstr "알 수 없는 인증 형식.\n"
+
+#: dlls/kernelbase/winerror.mc:3128
+msgid "Maximum calls too low.\n"
+msgstr "최대 호출이 너무 낮습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3133
+msgid "String too long.\n"
+msgstr "문자열이 너무 깁니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3138
+msgid "Protocol sequence not found.\n"
+msgstr "프로토콜 시퀀스를 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3143
+msgid "Procedure number out of range.\n"
+msgstr "절차 번호가 범위를 벗어났습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3148
+msgid "Binding has no authentication data.\n"
+msgstr "바인딩에 인증 데이터가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3153
+msgid "Unknown authentication service.\n"
+msgstr "알 수 없는 인증 서비스.\n"
+
+#: dlls/kernelbase/winerror.mc:3158
+msgid "Unknown authentication level.\n"
+msgstr "알 수 없는 인증 수준.\n"
+
+#: dlls/kernelbase/winerror.mc:3163
+msgid "Invalid authentication identity.\n"
+msgstr "잘못된 인증 ID.\n"
+
+#: dlls/kernelbase/winerror.mc:3168
+msgid "Unknown authorization service.\n"
+msgstr "알 수 없는 인증 서비스.\n"
+
+#: dlls/kernelbase/winerror.mc:3173
+msgid "Invalid entry.\n"
+msgstr "잘못된 항목.\n"
+
+#: dlls/kernelbase/winerror.mc:3178
+msgid "Can't perform operation.\n"
+msgstr "작업을 수행할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3183
+msgid "Endpoints not registered.\n"
+msgstr "엔드포인트가 등록되지 않았습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3188
+msgid "Nothing to export.\n"
+msgstr "내보낼 것이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3193
+msgid "Incomplete name.\n"
+msgstr "불완전한 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:3198
+msgid "Invalid version option.\n"
+msgstr "잘못된 버전 옵션.\n"
+
+#: dlls/kernelbase/winerror.mc:3203
+msgid "No more members.\n"
+msgstr "구성원이 더 이상 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3208
+msgid "Not all objects unexported.\n"
+msgstr "내보내기 취소된 개체가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3213
+msgid "Interface not found.\n"
+msgstr "인터페이스를 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3218
+msgid "Entry already exists.\n"
+msgstr "항목이 이미 존재합니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3223
+msgid "Entry not found.\n"
+msgstr "항목을 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3228
+msgid "Name service unavailable.\n"
+msgstr "이름 서비스를 사용할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3233
+msgid "Invalid network address family.\n"
+msgstr "네트워크 주소 패밀리가 잘못되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3238
+msgid "Operation not supported.\n"
+msgstr "작업이 지원되지 않습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3243
+msgid "No security context available.\n"
+msgstr "사용할 수 있는 보안 컨텍스트가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3248
+msgid "RPCInternal error.\n"
+msgstr "RPC 내부 오류.\n"
+
+#: dlls/kernelbase/winerror.mc:3253
+msgid "RPC divide-by-zero.\n"
+msgstr "RPC 0으로 나눔.\n"
+
+#: dlls/kernelbase/winerror.mc:3258
+msgid "Address error.\n"
+msgstr "주소 오류.\n"
+
+#: dlls/kernelbase/winerror.mc:3263
+msgid "Floating-point divide-by-zero.\n"
+msgstr "0으로 나뉜 부동 소수점.\n"
+
+#: dlls/kernelbase/winerror.mc:3268
+msgid "Floating-point underflow.\n"
+msgstr "부동 소수점 언더플로우.\n"
+
+#: dlls/kernelbase/winerror.mc:3273
+msgid "Floating-point overflow.\n"
+msgstr "부동 소수점 오버플로.\n"
+
+#: dlls/kernelbase/winerror.mc:3278
+msgid "No more entries.\n"
+msgstr "추가 항목이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3283
+msgid "Character translation table open failed.\n"
+msgstr "문자 변환 테이블을 열지 못했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3288
+msgid "Character translation table file too small.\n"
+msgstr "문자 변환 테이블 파일이 너무 작습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3293
+msgid "Null context handle.\n"
+msgstr "널 컨택스트 핸들.\n"
+
+#: dlls/kernelbase/winerror.mc:3298
+msgid "Context handle damaged.\n"
+msgstr "컨텍스트 핸들이 손상되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3303
+msgid "Binding handle mismatch.\n"
+msgstr "바인딩 핸들이 일치하지 않습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3308
+msgid "Cannot get call handle.\n"
+msgstr "호출 핸들을 가져올 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3313
+msgid "Null reference pointer.\n"
+msgstr "널 참조 포인터.\n"
+
+#: dlls/kernelbase/winerror.mc:3318
+msgid "Enumeration value out of range.\n"
+msgstr "열거 값이 범위를 벗어났습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3323
+msgid "Byte count too small.\n"
+msgstr "바이트 수가 너무 적습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3328
+msgid "Bad stub data.\n"
+msgstr "잘못된 스텁 데이터.\n"
+
+#: dlls/kernelbase/winerror.mc:3333
+msgid "Invalid user buffer.\n"
+msgstr "잘못된 사용자 버퍼.\n"
+
+#: dlls/kernelbase/winerror.mc:3338
+msgid "Unrecognized media.\n"
+msgstr "알 수 없는 미디어입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3343
+msgid "No trust secret.\n"
+msgstr "트러스트 암호가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3348
+msgid "No trust SAM account.\n"
+msgstr "트러스트 SAM 계정이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3353
+msgid "Trusted domain failure.\n"
+msgstr "신뢰할 수 있는 도메인 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:3358
+msgid "Trusted relationship failure.\n"
+msgstr "신뢰할 수 있는 관계 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:3363
+msgid "Trust logon failure.\n"
+msgstr "트러스트 로그온 실패.\n"
+
+#: dlls/kernelbase/winerror.mc:3368
+msgid "RPC call already in progress.\n"
+msgstr "RPC 호출이 이미 진행 중입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3373
+msgid "NETLOGON is not started.\n"
+msgstr "NETLOGON이 시작되지 않았습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3378
+msgid "Account expired.\n"
+msgstr "계좌가 만료되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3383
+msgid "Redirector has open handles.\n"
+msgstr "리디렉터 핸들이 열려 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3388
+msgid "Printer driver already installed.\n"
+msgstr "프린터 드라이버가 이미 설치되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3393
+msgid "Unknown port.\n"
+msgstr "알 수 없는 포트.\n"
+
+#: dlls/kernelbase/winerror.mc:3398
+msgid "Unknown printer driver.\n"
+msgstr "알 수 없는 프린터 드라이버.\n"
+
+#: dlls/kernelbase/winerror.mc:3403
+msgid "Unknown print processor.\n"
+msgstr "알 수 없는 인쇄 프로세서.\n"
+
+#: dlls/kernelbase/winerror.mc:3408
+msgid "Invalid separator file.\n"
+msgstr "잘못된 구분 파일.\n"
+
+#: dlls/kernelbase/winerror.mc:3413
+msgid "Invalid priority.\n"
+msgstr "잘못된 우선순위.\n"
+
+#: dlls/kernelbase/winerror.mc:3418
+msgid "Invalid printer name.\n"
+msgstr "잘못된 프린터 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:3423
+msgid "Printer already exists.\n"
+msgstr "프린터가 이미 존재합니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3428
+msgid "Invalid printer command.\n"
+msgstr "잘못된 프린터 명령.\n"
+
+#: dlls/kernelbase/winerror.mc:3433
+msgid "Invalid data type.\n"
+msgstr "잘못된 데이터 형식.\n"
+
+#: dlls/kernelbase/winerror.mc:3438
+msgid "Invalid environment.\n"
+msgstr "잘못된 환경변수.\n"
+
+#: dlls/kernelbase/winerror.mc:3443
+msgid "No more bindings.\n"
+msgstr "이제 바인딩이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3448
+msgid "Can't log on with inter-domain trust account.\n"
+msgstr "도메인 간 트러스트 계정으로 로그온할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3453
+msgid "Can't log on with workstation trust account.\n"
+msgstr "워크스테이션 트러스트 계정으로 로그온할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3458
+msgid "Can't log on with server trust account.\n"
+msgstr "서버 트러스트 계정으로 로그온할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3463
+msgid "Domain trust information inconsistent.\n"
+msgstr "도메인 신뢰 정보가 일치하지 않습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3468
+msgid "Server has open handles.\n"
+msgstr "서버에 열린 핸들이 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3473
+msgid "Resource data not found.\n"
+msgstr "리소스 데이터를 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3478
+msgid "Resource type not found.\n"
+msgstr "리소스 형식을 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3483
+msgid "Resource name not found.\n"
+msgstr "리소스 이름을 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3488
+msgid "Resource language not found.\n"
+msgstr "리소스 언어를 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3493
+msgid "Not enough quota.\n"
+msgstr "할당량이 충분하지 않습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3498
+msgid "No interfaces.\n"
+msgstr "인터페이스가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3503
+msgid "RPC call canceled.\n"
+msgstr "RPC 호출이 취소되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3508
+msgid "Binding incomplete.\n"
+msgstr "바인딩이 완료되지 않았습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3513
+msgid "RPC comm failure.\n"
+msgstr "RPC 통신 오류.\n"
+
+#: dlls/kernelbase/winerror.mc:3518
+msgid "Unsupported authorization level.\n"
+msgstr "지원되지 않는 권한 수준.\n"
+
+#: dlls/kernelbase/winerror.mc:3523
+msgid "No principal name registered.\n"
+msgstr "등록된 기본 이름이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3528
+msgid "Not an RPC error.\n"
+msgstr "RPC 오류가 아닙니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3533
+msgid "UUID is local only.\n"
+msgstr "UUID는 로컬 전용입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3538
+msgid "Security package error.\n"
+msgstr "보안 패키지 오류.\n"
+
+#: dlls/kernelbase/winerror.mc:3543
+msgid "Thread not canceled.\n"
+msgstr "스레드가 취소되지 않았습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3548
+msgid "Invalid handle operation.\n"
+msgstr "잘못된 핸들 작업.\n"
+
+#: dlls/kernelbase/winerror.mc:3553
+msgid "Wrong serializing package version.\n"
+msgstr "잘못된 일련의 순차적인 패키지 버전.\n"
+
+#: dlls/kernelbase/winerror.mc:3558
+msgid "Wrong stub version.\n"
+msgstr "잘못된 스텁 버전.\n"
+
+#: dlls/kernelbase/winerror.mc:3563
+msgid "Invalid pipe object.\n"
+msgstr "잘못된 파이프 개체.\n"
+
+#: dlls/kernelbase/winerror.mc:3568
+msgid "Wrong pipe order.\n"
+msgstr "잘못된 파이프 순서.\n"
+
+#: dlls/kernelbase/winerror.mc:3573
+msgid "Wrong pipe version.\n"
+msgstr "잘못된 파이프 버전.\n"
+
+#: dlls/kernelbase/winerror.mc:3578
+msgid "Group member not found.\n"
+msgstr "그룹 멤버를 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3583
+msgid "Can't create endpoint mapper DB.\n"
+msgstr "엔드포인트 매핑기 DB를 만들 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3588
+msgid "Invalid object.\n"
+msgstr "잘못된 개체.\n"
+
+#: dlls/kernelbase/winerror.mc:3593
+msgid "Invalid time.\n"
+msgstr "잘못된 시간.\n"
+
+#: dlls/kernelbase/winerror.mc:3598
+msgid "Invalid form name.\n"
+msgstr "잘못된 폼 이름.\n"
+
+#: dlls/kernelbase/winerror.mc:3603
+msgid "Invalid form size.\n"
+msgstr "잘못된 폼 크기.\n"
+
+#: dlls/kernelbase/winerror.mc:3608
+msgid "Already awaiting printer handle.\n"
+msgstr "이미 프린터 핸들을 기다리고 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3613
+msgid "Printer deleted.\n"
+msgstr "프린터가 삭제되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3618
+msgid "Invalid printer state.\n"
+msgstr "프린터 상태가 잘못되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3623
+msgid "User must change password.\n"
+msgstr "사용자는 암호를 변경해야 합니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3628
+msgid "Domain controller not found.\n"
+msgstr "도메인 컨트롤러를 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3633
+msgid "Account locked out.\n"
+msgstr "계정이 잠겨 있습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3638
+msgid "Invalid pixel format.\n"
+msgstr "잘못된 픽셀 형식.\n"
+
+#: dlls/kernelbase/winerror.mc:3643
+msgid "Invalid driver.\n"
+msgstr "잘못된 드라이버.\n"
+
+#: dlls/kernelbase/winerror.mc:3648
+msgid "Invalid object resolver set.\n"
+msgstr "잘못된 개체 해결기 집합.\n"
+
+#: dlls/kernelbase/winerror.mc:3653
+msgid "Incomplete RPC send.\n"
+msgstr "불완전한 RPC 전송.\n"
+
+#: dlls/kernelbase/winerror.mc:3658
+msgid "Invalid asynchronous RPC handle.\n"
+msgstr "잘못된 비동기 RPC 핸들.\n"
+
+#: dlls/kernelbase/winerror.mc:3663
+msgid "Invalid asynchronous RPC call.\n"
+msgstr "잘못된 비동기 RPC 호출.\n"
+
+#: dlls/kernelbase/winerror.mc:3668
+msgid "RPC pipe closed.\n"
+msgstr "RPC 파이프가 닫혔습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3673
+msgid "Discipline error on RPC pipe.\n"
+msgstr "RPC 파이프의 징계 오류입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3678
+msgid "No data on RPC pipe.\n"
+msgstr "RPC 파이프에 데이터가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3683
+msgid "No site name available.\n"
+msgstr "사용할 수 있는 사이트 이름이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3688
+msgid "The file cannot be accessed.\n"
+msgstr "파일에 액세스할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3693
+msgid "The filename cannot be resolved.\n"
+msgstr "파일 이름을 확인할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3698
+msgid "RPC entry type mismatch.\n"
+msgstr "RPC 입력 유형이 일치하지 않습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3703
+msgid "Not all objects could be exported.\n"
+msgstr "모든 개체를 내보낼 수는 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3708
+msgid "The interface could not be exported.\n"
+msgstr "인터페이스를 내보낼 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3713
+msgid "The profile could not be added.\n"
+msgstr "프로필을 추가할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3718
+msgid "The profile element could not be added.\n"
+msgstr "프로필 요소를 추가할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3723
+msgid "The profile element could not be removed.\n"
+msgstr "프로필 요소를 제거하지 못했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3728
+msgid "The group element could not be added.\n"
+msgstr "그룹 요소를 추가할 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3733
+msgid "The group element could not be removed.\n"
+msgstr "그룹 요소가 제거되지 않았습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3738
+msgid "The username could not be found.\n"
+msgstr "사용자 이름을 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3743
+msgid "This network connection does not exist.\n"
+msgstr "네트워크 연결이 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3748
+msgid "Call interrupted.\n"
+msgstr "호출이 중단되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3753
+msgid "Invalid file handle.\n"
+msgstr "파일 핸들이 잘못되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3763
+msgid "Invalid pointer address.\n"
+msgstr "주소가 잘못되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3768
+msgid "Invalid argument.\n"
+msgstr "인수가 잘못되었습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3778
+msgid "Connection reset by peer.\n"
+msgstr "피어가 연결을 다시 설정했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3788
+msgid "Host not found.\n"
+msgstr "호스트를 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3793
+msgid "Nonauthoritative host not found.\n"
+msgstr "일시적으로 호스트를 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3798
+msgid "Nonrecoverable error.\n"
+msgstr "복구할 수 없는 오류입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3803
+msgid "Name valid, no data record.\n"
+msgstr "유효한 이름입니다만, 요청한 데이터 레코드가 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3817
+msgid "Not implemented.\n"
+msgstr "구현되지 않았습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3838
+msgid "Call failed.\n"
+msgstr "호출이 실패했습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3810
+msgid "No Signature found in file.\n"
+msgstr "파일에서 서명을 찾을 수 없습니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3824
+msgid "Invalid call.\n"
+msgstr "잘못된 호출입니다.\n"
+
+#: dlls/kernelbase/winerror.mc:3831
+msgid "Resource is not currently available.\n"
+msgstr "현재 리소스를 사용할 수 없습니다.\n"
 
 #: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73

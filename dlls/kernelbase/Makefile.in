@@ -26,3 +26,4 @@ C_SRCS = \
 	volume.c
 
 RC_SRCS = kernelbase.rc
+MC_SRCS = winerror.mc

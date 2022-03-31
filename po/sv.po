@@ -4055,3042 +4055,6 @@ msgstr "Wine-kärn-DLL"
 msgid "Wine"
 msgstr "Wine"
 
-#: dlls/kernel32/winerror.mc:28
-msgid "Success.\n"
-msgstr "Lyckades.\n"
-
-#: dlls/kernel32/winerror.mc:33
-msgid "Invalid function.\n"
-msgstr "Ogiltig funktion.\n"
-
-#: dlls/kernel32/winerror.mc:38
-msgid "File not found.\n"
-msgstr "Filen hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:43
-msgid "Path not found.\n"
-msgstr "Sökvägen hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:48 dlls/kernel32/winerror.mc:3773
-msgid "Too many open files.\n"
-msgstr "För många öppna filer.\n"
-
-#: dlls/kernel32/winerror.mc:53 dlls/kernel32/winerror.mc:3758
-msgid "Access denied.\n"
-msgstr "Åtkomst nekad.\n"
-
-#: dlls/kernel32/winerror.mc:58
-msgid "Invalid handle.\n"
-msgstr "Ogiltig referens.\n"
-
-#: dlls/kernel32/winerror.mc:63
-msgid "Memory trashed.\n"
-msgstr "Minne förstört.\n"
-
-#: dlls/kernel32/winerror.mc:68
-msgid "Not enough memory.\n"
-msgstr "Ej tillräckligt minne.\n"
-
-#: dlls/kernel32/winerror.mc:73
-msgid "Invalid block.\n"
-msgstr "Ogiltigt block.\n"
-
-#: dlls/kernel32/winerror.mc:78
-msgid "Bad environment.\n"
-msgstr "Felaktig miljö.\n"
-
-#: dlls/kernel32/winerror.mc:83
-msgid "Bad format.\n"
-msgstr "Felaktigt format.\n"
-
-#: dlls/kernel32/winerror.mc:88
-msgid "Invalid access.\n"
-msgstr "Ogiltig åtkomst.\n"
-
-#: dlls/kernel32/winerror.mc:93
-msgid "Invalid data.\n"
-msgstr "Ogiltigt data.\n"
-
-#: dlls/kernel32/winerror.mc:98
-msgid "Out of memory.\n"
-msgstr "Otillräckligt minne.\n"
-
-#: dlls/kernel32/winerror.mc:103
-msgid "Invalid drive.\n"
-msgstr "Ogiltig disk.\n"
-
-#: dlls/kernel32/winerror.mc:108
-msgid "Can't delete current directory.\n"
-msgstr "Kan inte ta bort aktuell katalog.\n"
-
-#: dlls/kernel32/winerror.mc:113
-msgid "Not same device.\n"
-msgstr "Inte samma enhet.\n"
-
-#: dlls/kernel32/winerror.mc:118
-msgid "No more files.\n"
-msgstr "Inga fler filer.\n"
-
-#: dlls/kernel32/winerror.mc:123
-msgid "Write protected.\n"
-msgstr "Skrivskyddad.\n"
-
-#: dlls/kernel32/winerror.mc:128
-msgid "Bad unit.\n"
-msgstr "Felaktig enhet.\n"
-
-#: dlls/kernel32/winerror.mc:133
-msgid "Not ready.\n"
-msgstr "Ej redo.\n"
-
-#: dlls/kernel32/winerror.mc:138
-msgid "Bad command.\n"
-msgstr "Felaktigt kommando.\n"
-
-#: dlls/kernel32/winerror.mc:143
-msgid "CRC error.\n"
-msgstr "CRC-fel.\n"
-
-#: dlls/kernel32/winerror.mc:148
-msgid "Bad length.\n"
-msgstr "Felaktig längd.\n"
-
-#: dlls/kernel32/winerror.mc:153 dlls/kernel32/winerror.mc:528
-msgid "Seek error.\n"
-msgstr "Sökfel.\n"
-
-#: dlls/kernel32/winerror.mc:158
-msgid "Not DOS disk.\n"
-msgstr "Inte DOS-disk.\n"
-
-#: dlls/kernel32/winerror.mc:163
-msgid "Sector not found.\n"
-msgstr "Sektor hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:168
-msgid "Out of paper.\n"
-msgstr "Slut på papper.\n"
-
-#: dlls/kernel32/winerror.mc:173
-msgid "Write fault.\n"
-msgstr "Skrivfel.\n"
-
-#: dlls/kernel32/winerror.mc:178
-msgid "Read fault.\n"
-msgstr "Läsfel.\n"
-
-#: dlls/kernel32/winerror.mc:183
-msgid "General failure.\n"
-msgstr "Allmänt fel.\n"
-
-#: dlls/kernel32/winerror.mc:188
-msgid "Sharing violation.\n"
-msgstr "Delningsfel.\n"
-
-#: dlls/kernel32/winerror.mc:193
-msgid "Lock violation.\n"
-msgstr "Låsningsfel.\n"
-
-#: dlls/kernel32/winerror.mc:198
-msgid "Wrong disk.\n"
-msgstr "Fel disk.\n"
-
-#: dlls/kernel32/winerror.mc:203
-msgid "Sharing buffer exceeded.\n"
-msgstr "Delningsbufferten överskreds.\n"
-
-#: dlls/kernel32/winerror.mc:208
-msgid "End of file.\n"
-msgstr "Filslut.\n"
-
-#: dlls/kernel32/winerror.mc:213 dlls/kernel32/winerror.mc:438
-msgid "Disk full.\n"
-msgstr "Disken är full.\n"
-
-#: dlls/kernel32/winerror.mc:218
-msgid "Request not supported.\n"
-msgstr "Förfrågan ej stödd.\n"
-
-#: dlls/kernel32/winerror.mc:223
-msgid "Remote machine not listening.\n"
-msgstr "Fjärrmaskinen lyssnar inte.\n"
-
-#: dlls/kernel32/winerror.mc:228
-msgid "Duplicate network name.\n"
-msgstr "Upprepat nätverksnamn.\n"
-
-#: dlls/kernel32/winerror.mc:233
-msgid "Bad network path.\n"
-msgstr "Felaktig nätverkssökväg.\n"
-
-#: dlls/kernel32/winerror.mc:238
-msgid "Network busy.\n"
-msgstr "Nätverket upptaget.\n"
-
-#: dlls/kernel32/winerror.mc:243
-msgid "Device does not exist.\n"
-msgstr "Enheten existerar inte.\n"
-
-#: dlls/kernel32/winerror.mc:248
-msgid "Too many commands.\n"
-msgstr "För många kommandon.\n"
-
-#: dlls/kernel32/winerror.mc:253
-msgid "Adapter hardware error.\n"
-msgstr "Adapter-hårdvarufel.\n"
-
-#: dlls/kernel32/winerror.mc:258
-msgid "Bad network response.\n"
-msgstr "Felaktig nätverksrespons.\n"
-
-#: dlls/kernel32/winerror.mc:263
-msgid "Unexpected network error.\n"
-msgstr "Oväntat nätverksfel.\n"
-
-#: dlls/kernel32/winerror.mc:268
-msgid "Bad remote adapter.\n"
-msgstr "Felaktig fjärradapter.\n"
-
-#: dlls/kernel32/winerror.mc:273
-msgid "Print queue full.\n"
-msgstr "Skrivarkön full.\n"
-
-#: dlls/kernel32/winerror.mc:278
-msgid "No spool space.\n"
-msgstr "Inget spool-utrymme.\n"
-
-#: dlls/kernel32/winerror.mc:283
-msgid "Print canceled.\n"
-msgstr "Utskrift avbruten.\n"
-
-#: dlls/kernel32/winerror.mc:288
-msgid "Network name deleted.\n"
-msgstr "Nätverksnamn borttaget.\n"
-
-#: dlls/kernel32/winerror.mc:293
-msgid "Network access denied.\n"
-msgstr "Nätverksåtkomst nekad.\n"
-
-#: dlls/kernel32/winerror.mc:298
-msgid "Bad device type.\n"
-msgstr "Felaktig enhetstyp.\n"
-
-#: dlls/kernel32/winerror.mc:303
-msgid "Bad network name.\n"
-msgstr "Felaktigt nätverksnamn.\n"
-
-#: dlls/kernel32/winerror.mc:308
-msgid "Too many network names.\n"
-msgstr "För många nätverksnamn.\n"
-
-#: dlls/kernel32/winerror.mc:313
-msgid "Too many network sessions.\n"
-msgstr "För många nätverkssessioner.\n"
-
-#: dlls/kernel32/winerror.mc:318
-msgid "Sharing paused.\n"
-msgstr "Delning pausad.\n"
-
-#: dlls/kernel32/winerror.mc:323
-msgid "Request not accepted.\n"
-msgstr "Förfrågan ej accepterad.\n"
-
-#: dlls/kernel32/winerror.mc:328
-msgid "Redirector paused.\n"
-msgstr "Omdirigerare pausad.\n"
-
-#: dlls/kernel32/winerror.mc:333
-msgid "File exists.\n"
-msgstr "Filen existerar.\n"
-
-#: dlls/kernel32/winerror.mc:338
-msgid "Cannot create.\n"
-msgstr "Kan ej skapa.\n"
-
-#: dlls/kernel32/winerror.mc:343
-msgid "Int24 failure.\n"
-msgstr "Int24-fel.\n"
-
-#: dlls/kernel32/winerror.mc:348
-msgid "Out of structures.\n"
-msgstr "Slut på strukturer.\n"
-
-#: dlls/kernel32/winerror.mc:353
-msgid "Already assigned.\n"
-msgstr "Redan tilldelad.\n"
-
-#: dlls/kernel32/winerror.mc:358 dlls/kernel32/winerror.mc:1713
-msgid "Invalid password.\n"
-msgstr "Ogiltigt lösenord.\n"
-
-#: dlls/kernel32/winerror.mc:363
-msgid "Invalid parameter.\n"
-msgstr "Ogiltig parameter.\n"
-
-#: dlls/kernel32/winerror.mc:368
-msgid "Net write fault.\n"
-msgstr "Nätverksskrivfel.\n"
-
-#: dlls/kernel32/winerror.mc:373
-msgid "No process slots.\n"
-msgstr "Inga lediga processutrymmen.\n"
-
-#: dlls/kernel32/winerror.mc:378
-msgid "Too many semaphores.\n"
-msgstr "För många semaforer.\n"
-
-#: dlls/kernel32/winerror.mc:383
-msgid "Exclusive semaphore already owned.\n"
-msgstr "Exklusiv semafor ägs redan.\n"
-
-#: dlls/kernel32/winerror.mc:388
-msgid "Semaphore is set.\n"
-msgstr "Semaforen är riggad.\n"
-
-#: dlls/kernel32/winerror.mc:393
-msgid "Too many semaphore requests.\n"
-msgstr "För många semaforförfrågningar.\n"
-
-#: dlls/kernel32/winerror.mc:398
-msgid "Invalid at interrupt time.\n"
-msgstr "Ogiltig operation vid avbrott.\n"
-
-#: dlls/kernel32/winerror.mc:403
-msgid "Semaphore owner died.\n"
-msgstr "Semaforägaren dog.\n"
-
-#: dlls/kernel32/winerror.mc:408
-msgid "Semaphore user limit.\n"
-msgstr "Användargräns för semafor.\n"
-
-#: dlls/kernel32/winerror.mc:413
-msgid "Insert disk for drive %1.\n"
-msgstr "Sätt i disk i enhet %1.\n"
-
-#: dlls/kernel32/winerror.mc:418
-msgid "Drive locked.\n"
-msgstr "Disken låst.\n"
-
-#: dlls/kernel32/winerror.mc:423
-msgid "Broken pipe.\n"
-msgstr "Trasigt rör.\n"
-
-#: dlls/kernel32/winerror.mc:428
-msgid "Open failed.\n"
-msgstr "Kunde inte öppna.\n"
-
-#: dlls/kernel32/winerror.mc:433
-msgid "Buffer overflow.\n"
-msgstr "Buffertöverspill.\n"
-
-#: dlls/kernel32/winerror.mc:443
-msgid "No more search handles.\n"
-msgstr "Inga fler sökreferenser.\n"
-
-#: dlls/kernel32/winerror.mc:448
-msgid "Invalid target handle.\n"
-msgstr "Ogiltig målreferens.\n"
-
-#: dlls/kernel32/winerror.mc:453
-msgid "Invalid IOCTL.\n"
-msgstr "Ogiltig IOCTL.\n"
-
-#: dlls/kernel32/winerror.mc:458
-msgid "Invalid verify switch.\n"
-msgstr "Ogiltigt verify-val.\n"
-
-#: dlls/kernel32/winerror.mc:463
-msgid "Bad driver level.\n"
-msgstr "Felaktig drivrutinsnivå.\n"
-
-#: dlls/kernel32/winerror.mc:468
-msgid "Call not implemented.\n"
-msgstr "Anrop ej implementerat.\n"
-
-#: dlls/kernel32/winerror.mc:473
-msgid "Semaphore timeout.\n"
-msgstr "Tiden gick ut för semaforen.\n"
-
-#: dlls/kernel32/winerror.mc:478
-msgid "Insufficient buffer.\n"
-msgstr "Otillräcklig buffert.\n"
-
-#: dlls/kernel32/winerror.mc:483 dlls/mferror/mferror.mc:109
-msgid "Invalid name.\n"
-msgstr "Ogiltigt namn.\n"
-
-#: dlls/kernel32/winerror.mc:488
-msgid "Invalid level.\n"
-msgstr "Ogiltig nivå.\n"
-
-#: dlls/kernel32/winerror.mc:493
-msgid "No volume label.\n"
-msgstr "Ingen volymetikett.\n"
-
-#: dlls/kernel32/winerror.mc:498
-msgid "Module not found.\n"
-msgstr "Modulen hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:503
-msgid "Procedure not found.\n"
-msgstr "Proceduren hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:508
-msgid "No children to wait for.\n"
-msgstr "Inga barn att vänta på.\n"
-
-#: dlls/kernel32/winerror.mc:513
-msgid "Child process has not completed.\n"
-msgstr "Barnprocessen är ej klar.\n"
-
-#: dlls/kernel32/winerror.mc:518
-msgid "Invalid use of direct access handle.\n"
-msgstr "Ogiltig användning av direktåtkomstreferens.\n"
-
-#: dlls/kernel32/winerror.mc:523
-msgid "Negative seek.\n"
-msgstr "Sökning till innan filens början.\n"
-
-#: dlls/kernel32/winerror.mc:533
-msgid "Drive is a JOIN target.\n"
-msgstr "Disken är ett mål för JOIN.\n"
-
-#: dlls/kernel32/winerror.mc:538
-msgid "Drive is already JOINed.\n"
-msgstr "Disken är redan JOINad.\n"
-
-#: dlls/kernel32/winerror.mc:543
-msgid "Drive is already SUBSTed.\n"
-msgstr "Disken är redan SUBSTad.\n"
-
-#: dlls/kernel32/winerror.mc:548
-msgid "Drive is not JOINed.\n"
-msgstr "Disken är inte JOINad.\n"
-
-#: dlls/kernel32/winerror.mc:553
-msgid "Drive is not SUBSTed.\n"
-msgstr "Disken är inte SUBSTad.\n"
-
-#: dlls/kernel32/winerror.mc:558
-msgid "Attempt to JOIN onto a JOINed drive.\n"
-msgstr "Försökte JOINa till en JOINad disk.\n"
-
-#: dlls/kernel32/winerror.mc:563
-msgid "Attempt to SUBST onto a SUBSTed drive.\n"
-msgstr "Försökte SUBSTa till en SUBSTad disk.\n"
-
-#: dlls/kernel32/winerror.mc:568
-msgid "Attempt to JOIN to a SUBSTed drive.\n"
-msgstr "Försökte JOINa till en SUBSTad disk.\n"
-
-#: dlls/kernel32/winerror.mc:573
-msgid "Attempt to SUBST to a JOINed drive.\n"
-msgstr "Försökte SUBSTa till en JOINad disk.\n"
-
-#: dlls/kernel32/winerror.mc:578
-msgid "Drive is busy.\n"
-msgstr "Enheten är upptagen.\n"
-
-#: dlls/kernel32/winerror.mc:583
-msgid "Same drive.\n"
-msgstr "Samma enhet.\n"
-
-#: dlls/kernel32/winerror.mc:588
-msgid "Not top-level directory.\n"
-msgstr "Inte toppnivåkatalog.\n"
-
-#: dlls/kernel32/winerror.mc:593
-msgid "Directory is not empty.\n"
-msgstr "Katalogen är ej tom.\n"
-
-#: dlls/kernel32/winerror.mc:598
-msgid "Path is in use as a SUBST.\n"
-msgstr "Sökvägen används som en SUBST.\n"
-
-#: dlls/kernel32/winerror.mc:603
-msgid "Path is in use as a JOIN.\n"
-msgstr "Sökvägen används som ett JOIN.\n"
-
-#: dlls/kernel32/winerror.mc:608
-msgid "Path is busy.\n"
-msgstr "Sökvägen är upptagen.\n"
-
-#: dlls/kernel32/winerror.mc:613
-msgid "Already a SUBST target.\n"
-msgstr "Redan ett mål för SUBST.\n"
-
-#: dlls/kernel32/winerror.mc:618
-msgid "System trace not specified or disallowed.\n"
-msgstr "System-trace ospecificerat eller ej tillåtet.\n"
-
-#: dlls/kernel32/winerror.mc:623
-msgid "Event count for DosMuxSemWait incorrect.\n"
-msgstr "Inkorrekt antal händelser för DosMuxSemWait.\n"
-
-#: dlls/kernel32/winerror.mc:628
-msgid "Too many waiters for DosMuxSemWait.\n"
-msgstr "För många väntande för DosMuxSemWait.\n"
-
-#: dlls/kernel32/winerror.mc:633
-msgid "DosSemMuxWait list invalid.\n"
-msgstr "DosSemMuxWait-lista ogiltig.\n"
-
-#: dlls/kernel32/winerror.mc:638
-msgid "Volume label too long.\n"
-msgstr "Volymetiketten är för lång.\n"
-
-#: dlls/kernel32/winerror.mc:643
-msgid "Too many TCBs.\n"
-msgstr "För många TCB:er.\n"
-
-#: dlls/kernel32/winerror.mc:648
-msgid "Signal refused.\n"
-msgstr "Signal vägrad.\n"
-
-#: dlls/kernel32/winerror.mc:653
-msgid "Segment discarded.\n"
-msgstr "Segment kasserat.\n"
-
-#: dlls/kernel32/winerror.mc:658
-msgid "Segment not locked.\n"
-msgstr "Segment inte låst.\n"
-
-#: dlls/kernel32/winerror.mc:663
-msgid "Bad thread ID address.\n"
-msgstr "Felaktig tråd-ID-adress.\n"
-
-#: dlls/kernel32/winerror.mc:668
-msgid "Bad arguments to DosExecPgm.\n"
-msgstr "Felaktiga argument till DosExecPgm.\n"
-
-#: dlls/kernel32/winerror.mc:673
-msgid "Path is invalid.\n"
-msgstr "Ogiltig sökväg.\n"
-
-#: dlls/kernel32/winerror.mc:678
-msgid "Signal pending.\n"
-msgstr "En signal väntar.\n"
-
-#: dlls/kernel32/winerror.mc:683
-msgid "Max system-wide thread count reached.\n"
-msgstr "Max antal trådar i systemet uppnått.\n"
-
-#: dlls/kernel32/winerror.mc:688
-msgid "Lock failed.\n"
-msgstr "Låsning misslyckades.\n"
-
-#: dlls/kernel32/winerror.mc:693
-msgid "Resource in use.\n"
-msgstr "Resursen används.\n"
-
-#: dlls/kernel32/winerror.mc:698
-msgid "Cancel violation.\n"
-msgstr "Avbrytningsfel.\n"
-
-#: dlls/kernel32/winerror.mc:703
-msgid "Atomic locks not supported.\n"
-msgstr "Atomiska lås stöds inte.\n"
-
-#: dlls/kernel32/winerror.mc:708
-msgid "Invalid segment number.\n"
-msgstr "Ogiltigt segmentnummer.\n"
-
-#: dlls/kernel32/winerror.mc:713
-msgid "Invalid ordinal for %1.\n"
-msgstr "Ogiltigt ordningstal för %1.\n"
-
-#: dlls/kernel32/winerror.mc:718
-msgid "File already exists.\n"
-msgstr "Filen existerar redan.\n"
-
-#: dlls/kernel32/winerror.mc:723
-msgid "Invalid flag number.\n"
-msgstr "Ogiltigt flaggnummer.\n"
-
-#: dlls/kernel32/winerror.mc:728
-msgid "Semaphore name not found.\n"
-msgstr "Semafornamnet hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:733
-msgid "Invalid starting code segment for %1.\n"
-msgstr "Ogiltigt startkodsegment för %1.\n"
-
-#: dlls/kernel32/winerror.mc:738
-msgid "Invalid starting stack segment for %1.\n"
-msgstr "Ogiltigt startstacksegment för %1.\n"
-
-#: dlls/kernel32/winerror.mc:743
-msgid "Invalid module type for %1.\n"
-msgstr "Ogiltig modultyp för %1.\n"
-
-#: dlls/kernel32/winerror.mc:748
-msgid "Invalid EXE signature in %1.\n"
-msgstr "Ogiltig EXE-signatur i %1.\n"
-
-#: dlls/kernel32/winerror.mc:753
-msgid "EXE %1 is marked invalid.\n"
-msgstr "EXE:n %1 är märkt ogiltig.\n"
-
-#: dlls/kernel32/winerror.mc:758
-msgid "Bad EXE format for %1.\n"
-msgstr "Felaktigt EXE-format för %1.\n"
-
-#: dlls/kernel32/winerror.mc:763
-msgid "Iterated data exceeds 64k in %1.\n"
-msgstr "Itererat data överskrider 64k i %1.\n"
-
-#: dlls/kernel32/winerror.mc:768
-msgid "Invalid MinAllocSize in %1.\n"
-msgstr "Ogiltig MinAllocSize i %1.\n"
-
-#: dlls/kernel32/winerror.mc:773
-msgid "Dynlink from invalid ring.\n"
-msgstr "Dynlink från ogiltig ring.\n"
-
-#: dlls/kernel32/winerror.mc:778
-msgid "IOPL not enabled.\n"
-msgstr "IOPL ej aktiverat.\n"
-
-#: dlls/kernel32/winerror.mc:783
-msgid "Invalid SEGDPL in %1.\n"
-msgstr "Ogiltig SEGDPL i %1.\n"
-
-#: dlls/kernel32/winerror.mc:788
-msgid "Auto data segment exceeds 64k.\n"
-msgstr "Autodatasegment överskrider 64k.\n"
-
-#: dlls/kernel32/winerror.mc:793
-msgid "Ring 2 segment must be movable.\n"
-msgstr "Ring 2-segment måste vara flyttbart.\n"
-
-#: dlls/kernel32/winerror.mc:798
-msgid "Relocation chain exceeds segment limit in %1.\n"
-msgstr "Omflyttningskedjan överskrider segmentgränsen i %1.\n"
-
-#: dlls/kernel32/winerror.mc:803
-msgid "Infinite loop in relocation chain in %1.\n"
-msgstr "Oändlig loop i omflyttningskedja i %1.\n"
-
-#: dlls/kernel32/winerror.mc:808
-msgid "Environment variable not found.\n"
-msgstr "Miljövariabeln hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:813
-msgid "No signal sent.\n"
-msgstr "Ingen signal skickades.\n"
-
-#: dlls/kernel32/winerror.mc:818 programs/cmd/cmd.rc:410
-msgid "File name is too long.\n"
-msgstr "Filnamnet för långt.\n"
-
-#: dlls/kernel32/winerror.mc:823
-msgid "Ring 2 stack in use.\n"
-msgstr "Ring 2-stack används.\n"
-
-#: dlls/kernel32/winerror.mc:828
-msgid "Error in use of filename wildcards.\n"
-msgstr "Felaktig användning av jokertecken för filnamn.\n"
-
-#: dlls/kernel32/winerror.mc:833
-msgid "Invalid signal number.\n"
-msgstr "Ogiltigt signalnummer.\n"
-
-#: dlls/kernel32/winerror.mc:838
-msgid "Error setting signal handler.\n"
-msgstr "Fel vid inställning av signalhanterare.\n"
-
-#: dlls/kernel32/winerror.mc:843
-msgid "Segment locked.\n"
-msgstr "Segment låst.\n"
-
-#: dlls/kernel32/winerror.mc:848
-msgid "Too many modules.\n"
-msgstr "För många moduler.\n"
-
-#: dlls/kernel32/winerror.mc:853
-msgid "Nesting LoadModule calls not allowed.\n"
-msgstr "Ej tillåtet att nästa LoadModule-anrop.\n"
-
-#: dlls/kernel32/winerror.mc:858
-msgid "Machine type mismatch.\n"
-msgstr "Arkitekturerna överensstämmer inte.\n"
-
-#: dlls/kernel32/winerror.mc:863
-msgid "Bad pipe.\n"
-msgstr "Felaktigt rör.\n"
-
-#: dlls/kernel32/winerror.mc:868
-msgid "Pipe busy.\n"
-msgstr "Rör upptaget.\n"
-
-#: dlls/kernel32/winerror.mc:873
-msgid "Pipe closed.\n"
-msgstr "Rör stängt.\n"
-
-#: dlls/kernel32/winerror.mc:878
-msgid "Pipe not connected.\n"
-msgstr "Rör ej anslutet.\n"
-
-#: dlls/kernel32/winerror.mc:883
-msgid "More data available.\n"
-msgstr "Mer data tillgängligt.\n"
-
-#: dlls/kernel32/winerror.mc:888
-msgid "Session canceled.\n"
-msgstr "Sessionen avbröts.\n"
-
-#: dlls/kernel32/winerror.mc:893
-msgid "Invalid extended attribute name.\n"
-msgstr "Ogiltigt namn på utökat attribut.\n"
-
-#: dlls/kernel32/winerror.mc:898
-msgid "Extended attribute list inconsistent.\n"
-msgstr "Utökade attributslistan inkonsekvent.\n"
-
-#: dlls/kernel32/winerror.mc:903
-msgid "No more data available.\n"
-msgstr "Inget mer data tillgängligt.\n"
-
-#: dlls/kernel32/winerror.mc:908
-msgid "Cannot use Copy API.\n"
-msgstr "Kan inte använda Copy-API:t.\n"
-
-#: dlls/kernel32/winerror.mc:913
-msgid "Directory name invalid.\n"
-msgstr "Ogiltigt katalognamn.\n"
-
-#: dlls/kernel32/winerror.mc:918
-msgid "Extended attributes didn't fit.\n"
-msgstr "Utökat attribut passade inte.\n"
-
-#: dlls/kernel32/winerror.mc:923
-msgid "Extended attribute file corrupt.\n"
-msgstr "Utökade attributsfilen korrupt.\n"
-
-#: dlls/kernel32/winerror.mc:928
-msgid "Extended attribute table full.\n"
-msgstr "Utökade attributstabellen är full.\n"
-
-#: dlls/kernel32/winerror.mc:933
-msgid "Invalid extended attribute handle.\n"
-msgstr "Ogiltig referens till utökade attribut.\n"
-
-#: dlls/kernel32/winerror.mc:938
-msgid "Extended attributes not supported.\n"
-msgstr "Utökade attribut stöds ej.\n"
-
-#: dlls/kernel32/winerror.mc:943
-msgid "Mutex not owned by caller.\n"
-msgstr "Mutex ägdes inte av anroparen.\n"
-
-#: dlls/kernel32/winerror.mc:948
-msgid "Too many posts to semaphore.\n"
-msgstr "För många poster till semafor.\n"
-
-#: dlls/kernel32/winerror.mc:953
-msgid "Read/WriteProcessMemory partially completed.\n"
-msgstr "Read/WriteProcessMemory delvis fullbordat.\n"
-
-#: dlls/kernel32/winerror.mc:958
-msgid "The oplock wasn't granted.\n"
-msgstr "Oplock-begäran nekades.\n"
-
-#: dlls/kernel32/winerror.mc:963
-msgid "Invalid oplock message received.\n"
-msgstr "Ogiltigt oplock-meddelande mottaget.\n"
-
-#: dlls/kernel32/winerror.mc:968
-msgid "Message 0x%1 not found in file %2.\n"
-msgstr "Meddelande 0x%1 ej funnet i fil %2.\n"
-
-#: dlls/kernel32/winerror.mc:973
-msgid "Invalid address.\n"
-msgstr "Ogiltig adress.\n"
-
-#: dlls/kernel32/winerror.mc:978
-msgid "Arithmetic overflow.\n"
-msgstr "Aritmetiskt överspill.\n"
-
-#: dlls/kernel32/winerror.mc:983
-msgid "Pipe connected.\n"
-msgstr "Rör anslutet.\n"
-
-#: dlls/kernel32/winerror.mc:988
-msgid "Pipe listening.\n"
-msgstr "Rör lyssnar.\n"
-
-#: dlls/kernel32/winerror.mc:993
-msgid "Extended attribute access denied.\n"
-msgstr "Åtkomst till utökade attribut nekad.\n"
-
-#: dlls/kernel32/winerror.mc:998
-msgid "I/O operation aborted.\n"
-msgstr "I/O-operation avbruten.\n"
-
-#: dlls/kernel32/winerror.mc:1003
-msgid "Overlapped I/O incomplete.\n"
-msgstr "Överlappande I/O oavslutad.\n"
-
-#: dlls/kernel32/winerror.mc:1008
-msgid "Overlapped I/O pending.\n"
-msgstr "Överlappande I/O pågår.\n"
-
-#: dlls/kernel32/winerror.mc:1013
-msgid "No access to memory location.\n"
-msgstr "Ingen åtkomst till minnesplats.\n"
-
-#: dlls/kernel32/winerror.mc:1018
-msgid "Swap error.\n"
-msgstr "Swap-fel.\n"
-
-#: dlls/kernel32/winerror.mc:1023
-msgid "Stack overflow.\n"
-msgstr "Stack-överspill.\n"
-
-#: dlls/kernel32/winerror.mc:1028
-msgid "Invalid message.\n"
-msgstr "Ogiltigt meddelande.\n"
-
-#: dlls/kernel32/winerror.mc:1033
-msgid "Cannot complete.\n"
-msgstr "Kan inte slutföra.\n"
-
-#: dlls/kernel32/winerror.mc:1038
-msgid "Invalid flags.\n"
-msgstr "Ogiltiga flaggor.\n"
-
-#: dlls/kernel32/winerror.mc:1043
-msgid "Unrecognized volume.\n"
-msgstr "Volymen ej igenkänd.\n"
-
-#: dlls/kernel32/winerror.mc:1048
-msgid "File invalid.\n"
-msgstr "Ogiltig fil.\n"
-
-#: dlls/kernel32/winerror.mc:1053
-msgid "Cannot run full-screen.\n"
-msgstr "Kan inte köra helskärm.\n"
-
-#: dlls/kernel32/winerror.mc:1058
-msgid "Nonexistent token.\n"
-msgstr "Ej existerande symbol.\n"
-
-#: dlls/kernel32/winerror.mc:1063
-msgid "Registry corrupt.\n"
-msgstr "Registret korrupt.\n"
-
-#: dlls/kernel32/winerror.mc:1068
-msgid "Invalid key.\n"
-msgstr "Ogiltig nyckel.\n"
-
-#: dlls/kernel32/winerror.mc:1073
-msgid "Can't open registry key.\n"
-msgstr "Kan inte öppna registernyckel.\n"
-
-#: dlls/kernel32/winerror.mc:1078
-msgid "Can't read registry key.\n"
-msgstr "Kan inte läsa registernyckel.\n"
-
-#: dlls/kernel32/winerror.mc:1083
-msgid "Can't write registry key.\n"
-msgstr "Kan inte skriva registernyckel.\n"
-
-#: dlls/kernel32/winerror.mc:1088
-msgid "Registry has been recovered.\n"
-msgstr "Registret har återskapats.\n"
-
-#: dlls/kernel32/winerror.mc:1093
-msgid "Registry is corrupt.\n"
-msgstr "Registret är korrupt.\n"
-
-#: dlls/kernel32/winerror.mc:1098
-msgid "I/O to registry failed.\n"
-msgstr "I/O till registret misslyckades.\n"
-
-#: dlls/kernel32/winerror.mc:1103
-msgid "Not registry file.\n"
-msgstr "Ej registerfil.\n"
-
-#: dlls/kernel32/winerror.mc:1108
-msgid "Key deleted.\n"
-msgstr "Nyckel togs bort.\n"
-
-#: dlls/kernel32/winerror.mc:1113
-msgid "No registry log space.\n"
-msgstr "Inget utrymme för registerlogg.\n"
-
-#: dlls/kernel32/winerror.mc:1118
-msgid "Registry key has subkeys.\n"
-msgstr "Registernyckeln har undernycklar.\n"
-
-#: dlls/kernel32/winerror.mc:1123
-msgid "Subkey must be volatile.\n"
-msgstr "Undernyckel måste vara volatile.\n"
-
-#: dlls/kernel32/winerror.mc:1128
-msgid "Notify change request in progress.\n"
-msgstr "Förfrågan om ändring av notifiering pågår.\n"
-
-#: dlls/kernel32/winerror.mc:1133
-msgid "Dependent services are running.\n"
-msgstr "Beroende tjänster körs.\n"
-
-#: dlls/kernel32/winerror.mc:1138
-msgid "Invalid service control.\n"
-msgstr "Ogiltig tjänstkontroll.\n"
-
-#: dlls/kernel32/winerror.mc:1143
-msgid "Service request timeout.\n"
-msgstr "Tiden gick ut för förfrågan till tjänst.\n"
-
-#: dlls/kernel32/winerror.mc:1148
-msgid "Cannot create service thread.\n"
-msgstr "Kan inte skapa tjänst-tråd.\n"
-
-#: dlls/kernel32/winerror.mc:1153
-msgid "Service database locked.\n"
-msgstr "Tjänstdatabas låst.\n"
-
-#: dlls/kernel32/winerror.mc:1158
-msgid "Service already running.\n"
-msgstr "Tjänsten körs redan.\n"
-
-#: dlls/kernel32/winerror.mc:1163
-msgid "Invalid service account.\n"
-msgstr "Ogiltigt tjänstkonto.\n"
-
-#: dlls/kernel32/winerror.mc:1168
-msgid "Service is disabled.\n"
-msgstr "Tjänsten inaktiverad.\n"
-
-#: dlls/kernel32/winerror.mc:1173
-msgid "Circular dependency.\n"
-msgstr "Cirkulärt beroende.\n"
-
-#: dlls/kernel32/winerror.mc:1178
-msgid "Service does not exist.\n"
-msgstr "Tjänsten existerar inte.\n"
-
-#: dlls/kernel32/winerror.mc:1183
-msgid "Service cannot accept control message.\n"
-msgstr "Tjänsten kan inte acceptera kontrollmeddelande.\n"
-
-#: dlls/kernel32/winerror.mc:1188
-msgid "Service not active.\n"
-msgstr "Tjänst ej aktiv.\n"
-
-#: dlls/kernel32/winerror.mc:1193
-msgid "Service controller connect failed.\n"
-msgstr "Anslutning till tjänstens kontrollant misslyckades.\n"
-
-#: dlls/kernel32/winerror.mc:1198
-msgid "Exception in service.\n"
-msgstr "Undantag i tjänst.\n"
-
-#: dlls/kernel32/winerror.mc:1203
-msgid "Database does not exist.\n"
-msgstr "Databasen existerar inte.\n"
-
-#: dlls/kernel32/winerror.mc:1208
-msgid "Service-specific error.\n"
-msgstr "Tjänst-specifikt fel.\n"
-
-#: dlls/kernel32/winerror.mc:1213
-msgid "Process aborted.\n"
-msgstr "Processen avbröts.\n"
-
-#: dlls/kernel32/winerror.mc:1218
-msgid "Service dependency failed.\n"
-msgstr "Beroendetjänsten misslyckades.\n"
-
-#: dlls/kernel32/winerror.mc:1223
-msgid "Service login failed.\n"
-msgstr "Tjänstinloggning misslyckades.\n"
-
-#: dlls/kernel32/winerror.mc:1228
-msgid "Service start-hang.\n"
-msgstr "Tjänsten hängdes vid start.\n"
-
-#: dlls/kernel32/winerror.mc:1233
-msgid "Invalid service lock.\n"
-msgstr "Ogiltigt lås för tjänsten.\n"
-
-#: dlls/kernel32/winerror.mc:1238
-msgid "Service marked for delete.\n"
-msgstr "Tjänst markerad för borttagning.\n"
-
-#: dlls/kernel32/winerror.mc:1243
-msgid "Service exists.\n"
-msgstr "Tjänsten existerar.\n"
-
-#: dlls/kernel32/winerror.mc:1248
-msgid "System running last-known-good config.\n"
-msgstr "Systemet kör senaste kända bra inställning.\n"
-
-#: dlls/kernel32/winerror.mc:1253
-msgid "Service dependency deleted.\n"
-msgstr "Beroendetjänsten borttagen.\n"
-
-#: dlls/kernel32/winerror.mc:1258
-msgid "Boot already accepted as last-good config.\n"
-msgstr "Boot redan accepterad som senaste bra inställning.\n"
-
-#: dlls/kernel32/winerror.mc:1263
-msgid "Service not started since last boot.\n"
-msgstr "Tjänst ej startad sedan senaste systemstart.\n"
-
-#: dlls/kernel32/winerror.mc:1268
-msgid "Duplicate service name.\n"
-msgstr "Upprepat tjänstnamn.\n"
-
-#: dlls/kernel32/winerror.mc:1273
-msgid "Different service account.\n"
-msgstr "Annat tjänstkonto.\n"
-
-#: dlls/kernel32/winerror.mc:1278
-msgid "Driver failure cannot be detected.\n"
-msgstr "Drivrutinsfel kan ej upptäckas.\n"
-
-#: dlls/kernel32/winerror.mc:1283
-msgid "Process abort cannot be detected.\n"
-msgstr "Processavbrott kan ej upptäckas.\n"
-
-#: dlls/kernel32/winerror.mc:1288
-msgid "No recovery program for service.\n"
-msgstr "Inget återställningsprogram för tjänsten.\n"
-
-#: dlls/kernel32/winerror.mc:1293
-msgid "Service not implemented by exe.\n"
-msgstr "Tjänsten ej implementerad av exe.\n"
-
-#: dlls/kernel32/winerror.mc:1298
-msgid "End of media.\n"
-msgstr "Slut på media.\n"
-
-#: dlls/kernel32/winerror.mc:1303
-msgid "Filemark detected.\n"
-msgstr "Filmarkör upptäckt.\n"
-
-#: dlls/kernel32/winerror.mc:1308
-msgid "Beginning of media.\n"
-msgstr "Början på media.\n"
-
-#: dlls/kernel32/winerror.mc:1313
-msgid "Setmark detected.\n"
-msgstr "Setmarkör upptäckt.\n"
-
-#: dlls/kernel32/winerror.mc:1318
-msgid "No data detected.\n"
-msgstr "Ingen data upptäckt.\n"
-
-#: dlls/kernel32/winerror.mc:1323
-msgid "Partition failure.\n"
-msgstr "Partitionsfel.\n"
-
-#: dlls/kernel32/winerror.mc:1328
-msgid "Invalid block length.\n"
-msgstr "Ogiltig blocklängd.\n"
-
-#: dlls/kernel32/winerror.mc:1333
-msgid "Device not partitioned.\n"
-msgstr "Enheten är ej partitionerad.\n"
-
-#: dlls/kernel32/winerror.mc:1338
-msgid "Unable to lock media.\n"
-msgstr "Kunde inte låsa media.\n"
-
-#: dlls/kernel32/winerror.mc:1343
-msgid "Unable to unload media.\n"
-msgstr "Kunde inte mata ut media.\n"
-
-#: dlls/kernel32/winerror.mc:1348
-msgid "Media changed.\n"
-msgstr "Media ändrades.\n"
-
-#: dlls/kernel32/winerror.mc:1353
-msgid "I/O bus reset.\n"
-msgstr "I/O-bussen återställdes.\n"
-
-#: dlls/kernel32/winerror.mc:1358
-msgid "No media in drive.\n"
-msgstr "Inget media i enhet.\n"
-
-#: dlls/kernel32/winerror.mc:1363
-msgid "No Unicode translation.\n"
-msgstr "Ingen Unicode-översättning.\n"
-
-#: dlls/kernel32/winerror.mc:1368
-msgid "DLL initialization failed.\n"
-msgstr "DLL-initiering misslyckades.\n"
-
-#: dlls/kernel32/winerror.mc:1373
-msgid "Shutdown in progress.\n"
-msgstr "Nedstängning pågår.\n"
-
-#: dlls/kernel32/winerror.mc:1378
-msgid "No shutdown in progress.\n"
-msgstr "Ingen nedstängning pågår.\n"
-
-#: dlls/kernel32/winerror.mc:1383
-msgid "I/O device error.\n"
-msgstr "I/O-enhetsfel.\n"
-
-#: dlls/kernel32/winerror.mc:1388
-msgid "No serial devices found.\n"
-msgstr "Inga seriella enheter hittades.\n"
-
-#: dlls/kernel32/winerror.mc:1393
-msgid "Shared IRQ busy.\n"
-msgstr "Delad IRQ upptagen.\n"
-
-#: dlls/kernel32/winerror.mc:1398
-msgid "Serial I/O completed.\n"
-msgstr "Seriell I/O slutförd.\n"
-
-#: dlls/kernel32/winerror.mc:1403
-msgid "Serial I/O counter timeout.\n"
-msgstr "Tiden gick ut för seriella I/O-räknaren.\n"
-
-#: dlls/kernel32/winerror.mc:1408
-msgid "Floppy ID address mark not found.\n"
-msgstr "ID-adressmärke hittades inte på floppyn.\n"
-
-#: dlls/kernel32/winerror.mc:1413
-msgid "Floppy reports wrong cylinder.\n"
-msgstr "Floppy uppger fel cylinder.\n"
-
-#: dlls/kernel32/winerror.mc:1418
-msgid "Unknown floppy error.\n"
-msgstr "Okänt floppyfel.\n"
-
-#: dlls/kernel32/winerror.mc:1423
-msgid "Floppy registers inconsistent.\n"
-msgstr "Floppyregister inkonsekventa.\n"
-
-#: dlls/kernel32/winerror.mc:1428
-msgid "Hard disk recalibrate failed.\n"
-msgstr "Omkalibrering av hårddisk misslyckades.\n"
-
-#: dlls/kernel32/winerror.mc:1433
-msgid "Hard disk operation failed.\n"
-msgstr "Hårddisksoperation misslyckades.\n"
-
-#: dlls/kernel32/winerror.mc:1438
-msgid "Hard disk reset failed.\n"
-msgstr "Återställning av hårddisk misslyckades.\n"
-
-#: dlls/kernel32/winerror.mc:1443
-msgid "End of tape media.\n"
-msgstr "Slut på bandet.\n"
-
-#: dlls/kernel32/winerror.mc:1448
-msgid "Not enough server memory.\n"
-msgstr "Otillräckligt serverminne.\n"
-
-#: dlls/kernel32/winerror.mc:1453
-msgid "Possible deadlock.\n"
-msgstr "Möjlig deadlock.\n"
-
-#: dlls/kernel32/winerror.mc:1458
-msgid "Incorrect alignment.\n"
-msgstr "Felaktig justering.\n"
-
-#: dlls/kernel32/winerror.mc:1463
-msgid "Set-power-state vetoed.\n"
-msgstr "Set-power-state hejdades.\n"
-
-#: dlls/kernel32/winerror.mc:1468
-msgid "Set-power-state failed.\n"
-msgstr "Set-power-state misslyckades.\n"
-
-#: dlls/kernel32/winerror.mc:1473
-msgid "Too many links.\n"
-msgstr "För många länkar.\n"
-
-#: dlls/kernel32/winerror.mc:1478
-msgid "Newer Windows version needed.\n"
-msgstr "Nyare windowsversion krävs.\n"
-
-#: dlls/kernel32/winerror.mc:1483
-msgid "Wrong operating system.\n"
-msgstr "Fel operativsystem.\n"
-
-#: dlls/kernel32/winerror.mc:1488
-msgid "Single-instance application.\n"
-msgstr "Endast en instans kan köras av detta program.\n"
-
-#: dlls/kernel32/winerror.mc:1493
-msgid "Real-mode application.\n"
-msgstr "Real mode-program.\n"
-
-#: dlls/kernel32/winerror.mc:1498
-msgid "Invalid DLL.\n"
-msgstr "Ogiltig DLL.\n"
-
-#: dlls/kernel32/winerror.mc:1503
-msgid "No associated application.\n"
-msgstr "Inget associerat program.\n"
-
-#: dlls/kernel32/winerror.mc:1508
-msgid "DDE failure.\n"
-msgstr "DDE-fel.\n"
-
-#: dlls/kernel32/winerror.mc:1513
-msgid "DLL not found.\n"
-msgstr "DLL hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:1518
-msgid "Out of user handles.\n"
-msgstr "Inga fler användarreferenser.\n"
-
-#: dlls/kernel32/winerror.mc:1523
-msgid "Message can only be used in synchronous calls.\n"
-msgstr "Meddelande kan endast användas i synkrona anrop.\n"
-
-#: dlls/kernel32/winerror.mc:1528
-msgid "The source element is empty.\n"
-msgstr "Källelementet är tomt.\n"
-
-#: dlls/kernel32/winerror.mc:1533
-msgid "The destination element is full.\n"
-msgstr "Destinationselementet är fullt.\n"
-
-#: dlls/kernel32/winerror.mc:1538
-msgid "The element address is invalid.\n"
-msgstr "Elementets adress är ogiltig.\n"
-
-#: dlls/kernel32/winerror.mc:1543
-msgid "The magazine is not present.\n"
-msgstr "Magasinet är inte tillgängligt.\n"
-
-#: dlls/kernel32/winerror.mc:1548
-msgid "The device needs reinitialization.\n"
-msgstr "Enheten behöver återinitieras.\n"
-
-#: dlls/kernel32/winerror.mc:1553
-msgid "The device requires cleaning.\n"
-msgstr "Enheten behöver rengöras.\n"
-
-#: dlls/kernel32/winerror.mc:1558
-msgid "The device door is open.\n"
-msgstr "Enhetsdörren är öppen.\n"
-
-#: dlls/kernel32/winerror.mc:1563
-msgid "The device is not connected.\n"
-msgstr "Enheten är ej ansluten.\n"
-
-#: dlls/kernel32/winerror.mc:1568
-msgid "Element not found.\n"
-msgstr "Elementet hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:1573
-msgid "No match found.\n"
-msgstr "Ingen matchning hittades.\n"
-
-#: dlls/kernel32/winerror.mc:1578
-msgid "Property set not found.\n"
-msgstr "Egenskapsmängden hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:1583
-msgid "Point not found.\n"
-msgstr "Punkten hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:1588
-msgid "No running tracking service.\n"
-msgstr "Ingen spårningstjänst körs.\n"
-
-#: dlls/kernel32/winerror.mc:1593
-msgid "No such volume ID.\n"
-msgstr "Inget sådant volym-ID.\n"
-
-#: dlls/kernel32/winerror.mc:1598
-msgid "Unable to remove the file to be replaced.\n"
-msgstr "Kan inte ta bort filen som ska ersättas.\n"
-
-#: dlls/kernel32/winerror.mc:1603
-msgid "Unable to move the replacement file into place.\n"
-msgstr "Kan inte flytta ersättningsfilen.\n"
-
-#: dlls/kernel32/winerror.mc:1608
-msgid "Moving the replacement file failed.\n"
-msgstr "Kunde inte flytta ersättningsfilen.\n"
-
-#: dlls/kernel32/winerror.mc:1613
-msgid "The journal is being deleted.\n"
-msgstr "Journalen tas bort.\n"
-
-#: dlls/kernel32/winerror.mc:1618
-msgid "The journal is not active.\n"
-msgstr "Jornalen är ej aktiv.\n"
-
-#: dlls/kernel32/winerror.mc:1623
-msgid "Potential matching file found.\n"
-msgstr "Potentiellt matchande fil funnen.\n"
-
-#: dlls/kernel32/winerror.mc:1628
-msgid "The journal entry was deleted.\n"
-msgstr "Journalinlägget togs bort.\n"
-
-#: dlls/kernel32/winerror.mc:1633
-msgid "Invalid device name.\n"
-msgstr "Ogiltigt enhetsnamn.\n"
-
-#: dlls/kernel32/winerror.mc:1638
-msgid "Connection unavailable.\n"
-msgstr "Anslutning ej tillgänglig.\n"
-
-#: dlls/kernel32/winerror.mc:1643
-msgid "Device already remembered.\n"
-msgstr "Enhet redan ihågkommen.\n"
-
-#: dlls/kernel32/winerror.mc:1648
-msgid "No network or bad path.\n"
-msgstr "Inget nätverk eller felaktig sökväg.\n"
-
-#: dlls/kernel32/winerror.mc:1653
-msgid "Invalid network provider name.\n"
-msgstr "Ogiltigt namn på nätverksleverantör.\n"
-
-#: dlls/kernel32/winerror.mc:1658
-msgid "Cannot open network connection profile.\n"
-msgstr "Kan inte öppna nätverksanslutningsprofil.\n"
-
-#: dlls/kernel32/winerror.mc:1663
-msgid "Corrupt network connection profile.\n"
-msgstr "Korrupt nätverksanslutningsprofil.\n"
-
-#: dlls/kernel32/winerror.mc:1668
-msgid "Not a container.\n"
-msgstr "Inte en container.\n"
-
-#: dlls/kernel32/winerror.mc:1673
-msgid "Extended error.\n"
-msgstr "Utökat fel.\n"
-
-#: dlls/kernel32/winerror.mc:1678
-msgid "Invalid group name.\n"
-msgstr "Ogiltigt gruppnamn.\n"
-
-#: dlls/kernel32/winerror.mc:1683
-msgid "Invalid computer name.\n"
-msgstr "Ogiltigt datornamn.\n"
-
-#: dlls/kernel32/winerror.mc:1688
-msgid "Invalid event name.\n"
-msgstr "Ogiltigt händelsenamn.\n"
-
-#: dlls/kernel32/winerror.mc:1693
-msgid "Invalid domain name.\n"
-msgstr "Ogiltigt domännamn.\n"
-
-#: dlls/kernel32/winerror.mc:1698
-msgid "Invalid service name.\n"
-msgstr "Ogiltigt tjänstnamn.\n"
-
-#: dlls/kernel32/winerror.mc:1703
-msgid "Invalid network name.\n"
-msgstr "Ogiltigt nätverksnamn.\n"
-
-#: dlls/kernel32/winerror.mc:1708
-msgid "Invalid share name.\n"
-msgstr "Ogiltigt namn på share.\n"
-
-#: dlls/kernel32/winerror.mc:1718
-msgid "Invalid message name.\n"
-msgstr "Ogiltigt meddelandenamn.\n"
-
-#: dlls/kernel32/winerror.mc:1723
-msgid "Invalid message destination.\n"
-msgstr "Ogiltig meddelandedestination.\n"
-
-#: dlls/kernel32/winerror.mc:1728
-msgid "Session credential conflict.\n"
-msgstr "Inloggningskonflikt mellan sessionerna.\n"
-
-#: dlls/kernel32/winerror.mc:1733
-msgid "Remote session limit exceeded.\n"
-msgstr "Antalet tillåtna fjärrsessioner överskridet.\n"
-
-#: dlls/kernel32/winerror.mc:1738
-msgid "Duplicate domain or workgroup name.\n"
-msgstr "Upprepat domän- eller arbetsgruppsnamn.\n"
-
-#: dlls/kernel32/winerror.mc:1743
-msgid "No network.\n"
-msgstr "Inget nätverk.\n"
-
-#: dlls/kernel32/winerror.mc:1748
-msgid "Operation canceled by user.\n"
-msgstr "Operationen avbröts av en användare.\n"
-
-#: dlls/kernel32/winerror.mc:1753
-msgid "File has a user-mapped section.\n"
-msgstr "Filen har en användarmappad sektion.\n"
-
-#: dlls/kernel32/winerror.mc:1758 dlls/kernel32/winerror.mc:3783
-msgid "Connection refused.\n"
-msgstr "Anslutning nekades.\n"
-
-#: dlls/kernel32/winerror.mc:1763
-msgid "Connection gracefully closed.\n"
-msgstr "Anslutningen stängdes graciöst.\n"
-
-#: dlls/kernel32/winerror.mc:1768
-msgid "Address already associated with transport endpoint.\n"
-msgstr "Adressen redan associerad med transportslutpunkt.\n"
-
-#: dlls/kernel32/winerror.mc:1773
-msgid "Address not associated with transport endpoint.\n"
-msgstr "Adress ej associerad med transportslutpunkt.\n"
-
-#: dlls/kernel32/winerror.mc:1778
-msgid "Connection invalid.\n"
-msgstr "Anslutningen ogiltig.\n"
-
-#: dlls/kernel32/winerror.mc:1783
-msgid "Connection is active.\n"
-msgstr "Anslutningen är aktiv.\n"
-
-#: dlls/kernel32/winerror.mc:1788
-msgid "Network unreachable.\n"
-msgstr "Nätverket oåtkomligt.\n"
-
-#: dlls/kernel32/winerror.mc:1793
-msgid "Host unreachable.\n"
-msgstr "Värden oåtkomlig.\n"
-
-#: dlls/kernel32/winerror.mc:1798
-msgid "Protocol unreachable.\n"
-msgstr "Protokoll oåtkomligt.\n"
-
-#: dlls/kernel32/winerror.mc:1803
-msgid "Port unreachable.\n"
-msgstr "Port oåtkomlig.\n"
-
-#: dlls/kernel32/winerror.mc:1808
-msgid "Request aborted.\n"
-msgstr "Förfrågningen avbröts.\n"
-
-#: dlls/kernel32/winerror.mc:1813
-msgid "Connection aborted.\n"
-msgstr "Anslutningen avbröts.\n"
-
-#: dlls/kernel32/winerror.mc:1818
-msgid "Please retry operation.\n"
-msgstr "Var god försök operationen igen.\n"
-
-#: dlls/kernel32/winerror.mc:1823
-msgid "Connection count limit reached.\n"
-msgstr "Gränsen för högsta antal anslutningar har nåtts.\n"
-
-#: dlls/kernel32/winerror.mc:1828
-msgid "Login time restriction.\n"
-msgstr "Inloggningstidsbegränsning.\n"
-
-#: dlls/kernel32/winerror.mc:1833
-msgid "Login workstation restriction.\n"
-msgstr "Inloggningsbegränsning för datorn.\n"
-
-#: dlls/kernel32/winerror.mc:1838
-msgid "Incorrect network address.\n"
-msgstr "Ogiltig nätverksadress.\n"
-
-#: dlls/kernel32/winerror.mc:1843
-msgid "Service already registered.\n"
-msgstr "Tjänsten redan registrerad.\n"
-
-#: dlls/kernel32/winerror.mc:1848
-msgid "Service not found.\n"
-msgstr "Tjänsten hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:1853
-msgid "User not authenticated.\n"
-msgstr "Användaren är ej autentiserad.\n"
-
-#: dlls/kernel32/winerror.mc:1858
-msgid "User not logged on.\n"
-msgstr "Användaren är ej inloggad.\n"
-
-#: dlls/kernel32/winerror.mc:1863
-msgid "Continue work in progress.\n"
-msgstr "Fortsätt pågående arbete.\n"
-
-#: dlls/kernel32/winerror.mc:1868
-msgid "Already initialized.\n"
-msgstr "Redan initierad.\n"
-
-#: dlls/kernel32/winerror.mc:1873
-msgid "No more local devices.\n"
-msgstr "Inga fler lokala enheter.\n"
-
-#: dlls/kernel32/winerror.mc:1878
-msgid "The site does not exist.\n"
-msgstr "Sidan existerar inte.\n"
-
-#: dlls/kernel32/winerror.mc:1883
-msgid "The domain controller already exists.\n"
-msgstr "Domänkontrollanten existerar redan.\n"
-
-#: dlls/kernel32/winerror.mc:1888
-msgid "Supported only when connected.\n"
-msgstr "Stöds endast medan ansluten.\n"
-
-#: dlls/kernel32/winerror.mc:1893
-msgid "Perform operation even when nothing changed.\n"
-msgstr "Utför operation även då inget ändrats.\n"
-
-#: dlls/kernel32/winerror.mc:1898
-msgid "The user profile is invalid.\n"
-msgstr "Användarprofilen är ogiltig.\n"
-
-#: dlls/kernel32/winerror.mc:1903
-msgid "Not supported on Small Business Server.\n"
-msgstr "Stöds ej på Small Business Server.\n"
-
-#: dlls/kernel32/winerror.mc:1908
-msgid "Not all privileges assigned.\n"
-msgstr "Alla privilegier ej tilldelade.\n"
-
-#: dlls/kernel32/winerror.mc:1913
-msgid "Some security IDs not mapped.\n"
-msgstr "Vissa säkerhets-ID ej mappade.\n"
-
-#: dlls/kernel32/winerror.mc:1918
-msgid "No quotas for account.\n"
-msgstr "Inga kvoter för konto.\n"
-
-#: dlls/kernel32/winerror.mc:1923
-msgid "Local user session key.\n"
-msgstr "Sessionsnyckel för lokal användare.\n"
-
-#: dlls/kernel32/winerror.mc:1928
-msgid "Password too complex for LM.\n"
-msgstr "Lösenord för komplext för LM.\n"
-
-#: dlls/kernel32/winerror.mc:1933
-msgid "Unknown revision.\n"
-msgstr "Okänd revision.\n"
-
-#: dlls/kernel32/winerror.mc:1938
-msgid "Incompatible revision levels.\n"
-msgstr "Inkompatibla revisionsnivåer.\n"
-
-#: dlls/kernel32/winerror.mc:1943
-msgid "Invalid owner.\n"
-msgstr "Ogiltig ägare.\n"
-
-#: dlls/kernel32/winerror.mc:1948
-msgid "Invalid primary group.\n"
-msgstr "Ogiltig primär grupp.\n"
-
-#: dlls/kernel32/winerror.mc:1953
-msgid "No impersonation token.\n"
-msgstr "Ingen symbol för personifiering.\n"
-
-#: dlls/kernel32/winerror.mc:1958
-msgid "Can't disable mandatory group.\n"
-msgstr "Kan inte inaktivera obligatorisk grupp.\n"
-
-#: dlls/kernel32/winerror.mc:1963
-msgid "No logon servers available.\n"
-msgstr "Inga inloggningsservrar tillgängliga.\n"
-
-#: dlls/kernel32/winerror.mc:1968
-msgid "No such logon session.\n"
-msgstr "Ingen sådan inloggningssession.\n"
-
-#: dlls/kernel32/winerror.mc:1973
-msgid "No such privilege.\n"
-msgstr "Inget sådant privilegium.\n"
-
-#: dlls/kernel32/winerror.mc:1978
-msgid "Privilege not held.\n"
-msgstr "Har inte nödvändigt privilegium.\n"
-
-#: dlls/kernel32/winerror.mc:1983
-msgid "Invalid account name.\n"
-msgstr "Ogiltigt kontonamn.\n"
-
-#: dlls/kernel32/winerror.mc:1988
-msgid "User already exists.\n"
-msgstr "Användaren existerar redan.\n"
-
-#: dlls/kernel32/winerror.mc:1993
-msgid "No such user.\n"
-msgstr "Ingen sådan användare.\n"
-
-#: dlls/kernel32/winerror.mc:1998
-msgid "Group already exists.\n"
-msgstr "Gruppen existerar redan.\n"
-
-#: dlls/kernel32/winerror.mc:2003
-msgid "No such group.\n"
-msgstr "Ingen sådan grupp.\n"
-
-#: dlls/kernel32/winerror.mc:2008
-msgid "User already in group.\n"
-msgstr "Användare redan i gruppen.\n"
-
-#: dlls/kernel32/winerror.mc:2013
-msgid "User not in group.\n"
-msgstr "Användare ej i gruppen.\n"
-
-#: dlls/kernel32/winerror.mc:2018
-msgid "Can't delete last admin user.\n"
-msgstr "Kan inte ta bort sista administratörsanvändaren.\n"
-
-#: dlls/kernel32/winerror.mc:2023
-msgid "Wrong password.\n"
-msgstr "Fel lösenord.\n"
-
-#: dlls/kernel32/winerror.mc:2028
-msgid "Ill-formed password.\n"
-msgstr "Ogiltigt lösenord.\n"
-
-#: dlls/kernel32/winerror.mc:2033
-msgid "Password restriction.\n"
-msgstr "Lösenordsbegränsning.\n"
-
-#: dlls/kernel32/winerror.mc:2038
-msgid "Logon failure.\n"
-msgstr "Inloggningsfel.\n"
-
-#: dlls/kernel32/winerror.mc:2043
-msgid "Account restriction.\n"
-msgstr "Kontobegränsning.\n"
-
-#: dlls/kernel32/winerror.mc:2048
-msgid "Invalid logon hours.\n"
-msgstr "Ogiltiga inloggningstider.\n"
-
-#: dlls/kernel32/winerror.mc:2053
-msgid "Invalid workstation.\n"
-msgstr "Ej tillåten dator.\n"
-
-#: dlls/kernel32/winerror.mc:2058
-msgid "Password expired.\n"
-msgstr "Lösenord utgånget.\n"
-
-#: dlls/kernel32/winerror.mc:2063
-msgid "Account disabled.\n"
-msgstr "Kontot inaktiverat.\n"
-
-#: dlls/kernel32/winerror.mc:2068
-msgid "No security ID mapped.\n"
-msgstr "Inget säkerhets-ID mappat.\n"
-
-#: dlls/kernel32/winerror.mc:2073
-msgid "Too many LUIDs requested.\n"
-msgstr "För många LUID efterfrågade.\n"
-
-#: dlls/kernel32/winerror.mc:2078
-msgid "LUIDs exhausted.\n"
-msgstr "Slut på LUID:er.\n"
-
-#: dlls/kernel32/winerror.mc:2083
-msgid "Invalid sub authority.\n"
-msgstr "Ogiltig underauktoritet.\n"
-
-#: dlls/kernel32/winerror.mc:2088
-msgid "Invalid ACL.\n"
-msgstr "Ogiltigt ACL.\n"
-
-#: dlls/kernel32/winerror.mc:2093
-msgid "Invalid SID.\n"
-msgstr "Ogiltigt SID.\n"
-
-#: dlls/kernel32/winerror.mc:2098
-msgid "Invalid security descriptor.\n"
-msgstr "Ogiltig säkerhetsdeskriptor.\n"
-
-#: dlls/kernel32/winerror.mc:2103
-msgid "Bad inherited ACL.\n"
-msgstr "Felaktig ärvd ACL.\n"
-
-#: dlls/kernel32/winerror.mc:2108
-msgid "Server disabled.\n"
-msgstr "Servern inaktiverad.\n"
-
-#: dlls/kernel32/winerror.mc:2113
-msgid "Server not disabled.\n"
-msgstr "Servern ej inaktiverad.\n"
-
-#: dlls/kernel32/winerror.mc:2118
-msgid "Invalid ID authority.\n"
-msgstr "Ogiltig ID-auktoritet.\n"
-
-#: dlls/kernel32/winerror.mc:2123
-msgid "Allotted space exceeded.\n"
-msgstr "Tilldelat utrymme överskridet.\n"
-
-#: dlls/kernel32/winerror.mc:2128
-msgid "Invalid group attributes.\n"
-msgstr "Ogiltiga gruppattribut.\n"
-
-#: dlls/kernel32/winerror.mc:2133
-msgid "Bad impersonation level.\n"
-msgstr "Ogiltig personifieringsnivå.\n"
-
-#: dlls/kernel32/winerror.mc:2138
-msgid "Can't open anonymous security token.\n"
-msgstr "Kan inte öppna anonym säkerhetssymbol.\n"
-
-#: dlls/kernel32/winerror.mc:2143
-msgid "Bad validation class.\n"
-msgstr "Felaktig valideringsklass.\n"
-
-#: dlls/kernel32/winerror.mc:2148
-msgid "Bad token type.\n"
-msgstr "Felaktig symboltyp.\n"
-
-#: dlls/kernel32/winerror.mc:2153
-msgid "No security on object.\n"
-msgstr "Ingen säkerhet på objekt.\n"
-
-#: dlls/kernel32/winerror.mc:2158
-msgid "Can't access domain information.\n"
-msgstr "Kan inte komma åt domäninformation.\n"
-
-#: dlls/kernel32/winerror.mc:2163
-msgid "Invalid server state.\n"
-msgstr "Ogiltigt servertillstånd.\n"
-
-#: dlls/kernel32/winerror.mc:2168
-msgid "Invalid domain state.\n"
-msgstr "Ogiltigt domäntillstånd.\n"
-
-#: dlls/kernel32/winerror.mc:2173
-msgid "Invalid domain role.\n"
-msgstr "Ogiltig domänroll.\n"
-
-#: dlls/kernel32/winerror.mc:2178
-msgid "No such domain.\n"
-msgstr "Ingen sådan domän.\n"
-
-#: dlls/kernel32/winerror.mc:2183
-msgid "Domain already exists.\n"
-msgstr "Domänen existerar redan.\n"
-
-#: dlls/kernel32/winerror.mc:2188
-msgid "Domain limit exceeded.\n"
-msgstr "Domängräns överskriden.\n"
-
-#: dlls/kernel32/winerror.mc:2193
-msgid "Internal database corruption.\n"
-msgstr "Intern databaskorruption.\n"
-
-#: dlls/kernel32/winerror.mc:2198
-msgid "Internal error.\n"
-msgstr "Internt fel.\n"
-
-#: dlls/kernel32/winerror.mc:2203
-msgid "Generic access types not mapped.\n"
-msgstr "Generiska åtkomsttyper ej mappade.\n"
-
-#: dlls/kernel32/winerror.mc:2208
-msgid "Bad descriptor format.\n"
-msgstr "Felaktigt deskriptorformat.\n"
-
-#: dlls/kernel32/winerror.mc:2213
-msgid "Not a logon process.\n"
-msgstr "Inte en inloggningsprocess.\n"
-
-#: dlls/kernel32/winerror.mc:2218
-msgid "Logon session ID exists.\n"
-msgstr "Inloggningssessions-ID existerar.\n"
-
-#: dlls/kernel32/winerror.mc:2223
-msgid "Unknown authentication package.\n"
-msgstr "Okänt autentiseringspaket.\n"
-
-#: dlls/kernel32/winerror.mc:2228
-msgid "Bad logon session state.\n"
-msgstr "Felaktigt inloggningssessionstillstånd.\n"
-
-#: dlls/kernel32/winerror.mc:2233
-msgid "Logon session ID collision.\n"
-msgstr "ID-kollision för inloggningssession.\n"
-
-#: dlls/kernel32/winerror.mc:2238
-msgid "Invalid logon type.\n"
-msgstr "Ogiltig inloggningstyp.\n"
-
-#: dlls/kernel32/winerror.mc:2243
-msgid "Cannot impersonate.\n"
-msgstr "Kan inte personifiera.\n"
-
-#: dlls/kernel32/winerror.mc:2248
-msgid "Invalid transaction state.\n"
-msgstr "Ogiltigt överföringstillstånd.\n"
-
-#: dlls/kernel32/winerror.mc:2253
-msgid "Security DB commit failure.\n"
-msgstr "Skrivfel till säkerhetsdatabasen.\n"
-
-#: dlls/kernel32/winerror.mc:2258
-msgid "Account is built-in.\n"
-msgstr "Kontot är inbyggt.\n"
-
-#: dlls/kernel32/winerror.mc:2263
-msgid "Group is built-in.\n"
-msgstr "Gruppen är inbyggd.\n"
-
-#: dlls/kernel32/winerror.mc:2268
-msgid "User is built-in.\n"
-msgstr "Användaren är inbyggd.\n"
-
-#: dlls/kernel32/winerror.mc:2273
-msgid "Group is primary for user.\n"
-msgstr "Gruppen är primär för användaren.\n"
-
-#: dlls/kernel32/winerror.mc:2278
-msgid "Token already in use.\n"
-msgstr "Symbolen används redan.\n"
-
-#: dlls/kernel32/winerror.mc:2283
-msgid "No such local group.\n"
-msgstr "Ingen sådan lokal grupp.\n"
-
-#: dlls/kernel32/winerror.mc:2288
-msgid "User not in local group.\n"
-msgstr "Användare ej i lokal grupp.\n"
-
-#: dlls/kernel32/winerror.mc:2293
-msgid "User already in local group.\n"
-msgstr "Användare redan i lokal grupp.\n"
-
-#: dlls/kernel32/winerror.mc:2298
-msgid "Local group already exists.\n"
-msgstr "Lokal grupp existerar redan.\n"
-
-#: dlls/kernel32/winerror.mc:2303 dlls/kernel32/winerror.mc:2328
-msgid "Logon type not granted.\n"
-msgstr "Inloggningstypen beviljades inte.\n"
-
-#: dlls/kernel32/winerror.mc:2308
-msgid "Too many secrets.\n"
-msgstr "För många hemligheter.\n"
-
-#: dlls/kernel32/winerror.mc:2313
-msgid "Secret too long.\n"
-msgstr "Hemligheten för lång.\n"
-
-#: dlls/kernel32/winerror.mc:2318
-msgid "Internal security DB error.\n"
-msgstr "Fel i intern säkerhetsdatabas.\n"
-
-#: dlls/kernel32/winerror.mc:2323
-msgid "Too many context IDs.\n"
-msgstr "För många kontext-ID:n.\n"
-
-#: dlls/kernel32/winerror.mc:2333
-msgid "Cross-encrypted NT password required.\n"
-msgstr "Korskrypterat NT-lösenord krävs.\n"
-
-#: dlls/kernel32/winerror.mc:2338
-msgid "No such member.\n"
-msgstr "Ingen sådan medlem.\n"
-
-#: dlls/kernel32/winerror.mc:2343
-msgid "Invalid member.\n"
-msgstr "Ogiltig medlem.\n"
-
-#: dlls/kernel32/winerror.mc:2348
-msgid "Too many SIDs.\n"
-msgstr "För många SID.\n"
-
-#: dlls/kernel32/winerror.mc:2353
-msgid "Cross-encrypted LM password required.\n"
-msgstr "Korskrypterat LM-lösenord krävs.\n"
-
-#: dlls/kernel32/winerror.mc:2358
-msgid "No inheritable components.\n"
-msgstr "Inga ärvbara komponenter.\n"
-
-#: dlls/kernel32/winerror.mc:2363
-msgid "File or directory corrupt.\n"
-msgstr "Fil eller katalog korrupt.\n"
-
-#: dlls/kernel32/winerror.mc:2368
-msgid "Disk is corrupt.\n"
-msgstr "Disken är korrupt.\n"
-
-#: dlls/kernel32/winerror.mc:2373
-msgid "No user session key.\n"
-msgstr "Ingen användarsessionsnyckel.\n"
-
-#: dlls/kernel32/winerror.mc:2378
-msgid "License quota exceeded.\n"
-msgstr "Licenskvot överskriden.\n"
-
-#: dlls/kernel32/winerror.mc:2383
-msgid "Wrong target name.\n"
-msgstr "Felaktigt namn på mål.\n"
-
-#: dlls/kernel32/winerror.mc:2388
-msgid "Mutual authentication failed.\n"
-msgstr "Ömsesidig autentisering misslyckades.\n"
-
-#: dlls/kernel32/winerror.mc:2393
-msgid "Time skew between client and server.\n"
-msgstr "Det finns en tidsskillnad mellan klienten och servern.\n"
-
-#: dlls/kernel32/winerror.mc:2398
-msgid "Invalid window handle.\n"
-msgstr "Ogiltig fönsterreferens.\n"
-
-#: dlls/kernel32/winerror.mc:2403
-msgid "Invalid menu handle.\n"
-msgstr "Ogiltig menyreferens.\n"
-
-#: dlls/kernel32/winerror.mc:2408
-msgid "Invalid cursor handle.\n"
-msgstr "Ogiltig markörreferens.\n"
-
-#: dlls/kernel32/winerror.mc:2413
-msgid "Invalid accelerator table handle.\n"
-msgstr "Ogiltig snabbtangentstabellreferens.\n"
-
-#: dlls/kernel32/winerror.mc:2418
-msgid "Invalid hook handle.\n"
-msgstr "Ogiltig hookreferens.\n"
-
-#: dlls/kernel32/winerror.mc:2423
-msgid "Invalid DWP handle.\n"
-msgstr "Ogiltig DWP-referens.\n"
-
-#: dlls/kernel32/winerror.mc:2428
-msgid "Can't create top-level child window.\n"
-msgstr "Kan inte skapa barnfönster på toppnivå.\n"
-
-#: dlls/kernel32/winerror.mc:2433
-msgid "Can't find window class.\n"
-msgstr "Kan inte hitta fönsterklass.\n"
-
-#: dlls/kernel32/winerror.mc:2438
-msgid "Window owned by another thread.\n"
-msgstr "Fönster ägt av annan tråd.\n"
-
-#: dlls/kernel32/winerror.mc:2443
-msgid "Hotkey already registered.\n"
-msgstr "Snabbknapp redan registrerad.\n"
-
-#: dlls/kernel32/winerror.mc:2448
-msgid "Class already exists.\n"
-msgstr "Klassen existerar redan.\n"
-
-#: dlls/kernel32/winerror.mc:2453
-msgid "Class does not exist.\n"
-msgstr "Klass existerar inte.\n"
-
-#: dlls/kernel32/winerror.mc:2458
-msgid "Class has open windows.\n"
-msgstr "Klassen har öppna fönster.\n"
-
-#: dlls/kernel32/winerror.mc:2463 dlls/mferror/mferror.mc:130
-msgid "Invalid index.\n"
-msgstr "Ogiltigt index.\n"
-
-#: dlls/kernel32/winerror.mc:2468
-msgid "Invalid icon handle.\n"
-msgstr "Ogiltig ikonreferens.\n"
-
-#: dlls/kernel32/winerror.mc:2473
-msgid "Private dialog index.\n"
-msgstr "Privat dialogindex.\n"
-
-#: dlls/kernel32/winerror.mc:2478
-msgid "List box ID not found.\n"
-msgstr "Listrute-ID ej funnet.\n"
-
-#: dlls/kernel32/winerror.mc:2483
-msgid "No wildcard characters.\n"
-msgstr "Inga jokertecken.\n"
-
-#: dlls/kernel32/winerror.mc:2488
-msgid "Clipboard not open.\n"
-msgstr "Urklippshanterare ej öppen.\n"
-
-#: dlls/kernel32/winerror.mc:2493
-msgid "Hotkey not registered.\n"
-msgstr "Snabbknapp ej registrerad.\n"
-
-#: dlls/kernel32/winerror.mc:2498
-msgid "Not a dialog window.\n"
-msgstr "Inte ett dialogfönster.\n"
-
-#: dlls/kernel32/winerror.mc:2503
-msgid "Control ID not found.\n"
-msgstr "Kontroll-ID hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:2508
-msgid "Invalid combo box message.\n"
-msgstr "Invalid kombinationsrutemeddelande.\n"
-
-#: dlls/kernel32/winerror.mc:2513
-msgid "Not a combo box window.\n"
-msgstr "Inte ett kombinationsrutefönster.\n"
-
-#: dlls/kernel32/winerror.mc:2518
-msgid "Invalid edit height.\n"
-msgstr "Ogiltig höjdändring.\n"
-
-#: dlls/kernel32/winerror.mc:2523
-msgid "DC not found.\n"
-msgstr "DC ej funnen.\n"
-
-#: dlls/kernel32/winerror.mc:2528
-msgid "Invalid hook filter.\n"
-msgstr "Ogiltigt hook-filter.\n"
-
-#: dlls/kernel32/winerror.mc:2533
-msgid "Invalid filter procedure.\n"
-msgstr "Ogiltig filterprocedur.\n"
-
-#: dlls/kernel32/winerror.mc:2538
-msgid "Hook procedure needs module handle.\n"
-msgstr "Hook-procedur kräver modulreferens.\n"
-
-#: dlls/kernel32/winerror.mc:2543
-msgid "Global-only hook procedure.\n"
-msgstr "Hook-proceduren enbart global.\n"
-
-#: dlls/kernel32/winerror.mc:2548
-msgid "Journal hook already set.\n"
-msgstr "Journal-hook redan riggad.\n"
-
-#: dlls/kernel32/winerror.mc:2553
-msgid "Hook procedure not installed.\n"
-msgstr "Hook-procedur inte installerad.\n"
-
-#: dlls/kernel32/winerror.mc:2558
-msgid "Invalid list box message.\n"
-msgstr "Ogiltigt listrutemeddelande.\n"
-
-#: dlls/kernel32/winerror.mc:2563
-msgid "Invalid LB_SETCOUNT sent.\n"
-msgstr "Ogiltig LB_SETCOUNT skickad.\n"
-
-#: dlls/kernel32/winerror.mc:2568
-msgid "No tab stops on this list box.\n"
-msgstr "Inga tabbstop på denna listruta.\n"
-
-#: dlls/kernel32/winerror.mc:2573
-msgid "Can't destroy object owned by another thread.\n"
-msgstr "Kan inte förstöra objekt ägt av annan tråd.\n"
-
-#: dlls/kernel32/winerror.mc:2578
-msgid "Child window menus not allowed.\n"
-msgstr "Barnfönstermenyer ej tillåtna.\n"
-
-#: dlls/kernel32/winerror.mc:2583
-msgid "Window has no system menu.\n"
-msgstr "Fönstret har ingen systemmeny.\n"
-
-#: dlls/kernel32/winerror.mc:2588
-msgid "Invalid message box style.\n"
-msgstr "Ogiltig stil på meddelanderuta.\n"
-
-#: dlls/kernel32/winerror.mc:2593
-msgid "Invalid SPI parameter.\n"
-msgstr "Ogiltig SPI-parameter.\n"
-
-#: dlls/kernel32/winerror.mc:2598
-msgid "Screen already locked.\n"
-msgstr "Skärm redan låst.\n"
-
-#: dlls/kernel32/winerror.mc:2603
-msgid "Window handles have different parents.\n"
-msgstr "Fönsterreferenserna har olika föräldrar.\n"
-
-#: dlls/kernel32/winerror.mc:2608
-msgid "Not a child window.\n"
-msgstr "Inte ett barnfönster.\n"
-
-#: dlls/kernel32/winerror.mc:2613
-msgid "Invalid GW command.\n"
-msgstr "Ogiltigt GW-kommando.\n"
-
-#: dlls/kernel32/winerror.mc:2618
-msgid "Invalid thread ID.\n"
-msgstr "Ogiltigt tråd-ID.\n"
-
-#: dlls/kernel32/winerror.mc:2623
-msgid "Not an MDI child window.\n"
-msgstr "Inte ett MDI-barnfönster.\n"
-
-#: dlls/kernel32/winerror.mc:2628
-msgid "Popup menu already active.\n"
-msgstr "Popupmeny redan aktiv.\n"
-
-#: dlls/kernel32/winerror.mc:2633
-msgid "No scrollbars.\n"
-msgstr "Inga rullningslister.\n"
-
-#: dlls/kernel32/winerror.mc:2638
-msgid "Invalid scrollbar range.\n"
-msgstr "Ogiltigt rullningslistintervall.\n"
-
-#: dlls/kernel32/winerror.mc:2643
-msgid "Invalid ShowWin command.\n"
-msgstr "Ogiltigt ShowWin-kommando.\n"
-
-#: dlls/kernel32/winerror.mc:2648
-msgid "No system resources.\n"
-msgstr "Inga systemresurser.\n"
-
-#: dlls/kernel32/winerror.mc:2653
-msgid "No non-paged system resources.\n"
-msgstr "Inga oväxlade systemresurser.\n"
-
-#: dlls/kernel32/winerror.mc:2658
-msgid "No paged system resources.\n"
-msgstr "Inga växlade systemresurser.\n"
-
-#: dlls/kernel32/winerror.mc:2663
-msgid "No working set quota.\n"
-msgstr "Ingen fungerande kvot satt.\n"
-
-#: dlls/kernel32/winerror.mc:2668
-msgid "No page file quota.\n"
-msgstr "Ingen växlingsfilkvot.\n"
-
-#: dlls/kernel32/winerror.mc:2673
-msgid "Exceeded commitment limit.\n"
-msgstr "Överskred commitment-gräns.\n"
-
-#: dlls/kernel32/winerror.mc:2678
-msgid "Menu item not found.\n"
-msgstr "Menypost ej funnen.\n"
-
-#: dlls/kernel32/winerror.mc:2683
-msgid "Invalid keyboard handle.\n"
-msgstr "Ogiltig tangentbordsreferens.\n"
-
-#: dlls/kernel32/winerror.mc:2688
-msgid "Hook type not allowed.\n"
-msgstr "Hook-typen ej tillåten.\n"
-
-#: dlls/kernel32/winerror.mc:2693
-msgid "Interactive window station required.\n"
-msgstr "En interaktiv fönsterstation krävs.\n"
-
-#: dlls/kernel32/winerror.mc:2698
-msgid "Timeout.\n"
-msgstr "Tidsgräns överstigen.\n"
-
-#: dlls/kernel32/winerror.mc:2703
-msgid "Invalid monitor handle.\n"
-msgstr "Ogiltig skärmreferens.\n"
-
-#: dlls/kernel32/winerror.mc:2708
-msgid "Event log file corrupt.\n"
-msgstr "Händelseloggfil korrupt.\n"
-
-#: dlls/kernel32/winerror.mc:2713
-msgid "Event log can't start.\n"
-msgstr "Händelselogg kan inte starta.\n"
-
-#: dlls/kernel32/winerror.mc:2718
-msgid "Event log file full.\n"
-msgstr "Händelseloggfil full.\n"
-
-#: dlls/kernel32/winerror.mc:2723
-msgid "Event log file changed.\n"
-msgstr "Händelseloggfil ändrad.\n"
-
-#: dlls/kernel32/winerror.mc:2728
-msgid "Installer service failed.\n"
-msgstr "Installationstjänsten misslyckades.\n"
-
-#: dlls/kernel32/winerror.mc:2733
-msgid "Installation aborted by user.\n"
-msgstr "Installation avbruten av användare.\n"
-
-#: dlls/kernel32/winerror.mc:2738
-msgid "Installation failure.\n"
-msgstr "Installationsfel.\n"
-
-#: dlls/kernel32/winerror.mc:2743
-msgid "Installation suspended.\n"
-msgstr "Installationen avbruten.\n"
-
-#: dlls/kernel32/winerror.mc:2748
-msgid "Unknown product.\n"
-msgstr "Okänd produkt.\n"
-
-#: dlls/kernel32/winerror.mc:2753
-msgid "Unknown feature.\n"
-msgstr "Okänd egenskap.\n"
-
-#: dlls/kernel32/winerror.mc:2758
-msgid "Unknown component.\n"
-msgstr "Okänd komponent.\n"
-
-#: dlls/kernel32/winerror.mc:2763
-msgid "Unknown property.\n"
-msgstr "Okänd egenskap.\n"
-
-#: dlls/kernel32/winerror.mc:2768
-msgid "Invalid handle state.\n"
-msgstr "Ogiltigt referenstillstånd.\n"
-
-#: dlls/kernel32/winerror.mc:2773
-msgid "Bad configuration.\n"
-msgstr "Ogiltig konfiguration.\n"
-
-#: dlls/kernel32/winerror.mc:2778
-msgid "Index is missing.\n"
-msgstr "Index saknas.\n"
-
-#: dlls/kernel32/winerror.mc:2783
-msgid "Installation source is missing.\n"
-msgstr "Installationskälla saknas.\n"
-
-#: dlls/kernel32/winerror.mc:2788
-msgid "Wrong installation package version.\n"
-msgstr "Fel version av installationspaket.\n"
-
-#: dlls/kernel32/winerror.mc:2793
-msgid "Product uninstalled.\n"
-msgstr "Produkten avinstallerad.\n"
-
-#: dlls/kernel32/winerror.mc:2798
-msgid "Invalid query syntax.\n"
-msgstr "Ogiltig frågesyntax.\n"
-
-#: dlls/kernel32/winerror.mc:2803
-msgid "Invalid field.\n"
-msgstr "Ogiltigt fält.\n"
-
-#: dlls/kernel32/winerror.mc:2808
-msgid "Device removed.\n"
-msgstr "Enhet borttagen.\n"
-
-#: dlls/kernel32/winerror.mc:2813
-msgid "Installation already running.\n"
-msgstr "Installationen körs redan.\n"
-
-#: dlls/kernel32/winerror.mc:2818
-msgid "Installation package failed to open.\n"
-msgstr "Installationspaketet öppnades inte.\n"
-
-#: dlls/kernel32/winerror.mc:2823
-msgid "Installation package is invalid.\n"
-msgstr "Installationspaketet är ogiltigt.\n"
-
-#: dlls/kernel32/winerror.mc:2828
-msgid "Installer user interface failed.\n"
-msgstr "Användargränssnittet för installationsprogrammet misslyckades.\n"
-
-#: dlls/kernel32/winerror.mc:2833
-msgid "Failed to open installation log file.\n"
-msgstr "Kunde inte öppna installationslogg.\n"
-
-#: dlls/kernel32/winerror.mc:2838
-msgid "Installation language not supported.\n"
-msgstr "Installationsspråket stöds inte.\n"
-
-#: dlls/kernel32/winerror.mc:2843
-msgid "Installation transform failed to apply.\n"
-msgstr ""
-
-#: dlls/kernel32/winerror.mc:2848
-msgid "Installation package rejected.\n"
-msgstr "Installationspaketet avslogs.\n"
-
-#: dlls/kernel32/winerror.mc:2853
-msgid "Function could not be called.\n"
-msgstr "Funktionen kunde inte anropas.\n"
-
-#: dlls/kernel32/winerror.mc:2858
-msgid "Function failed.\n"
-msgstr "Funktionen misslyckades.\n"
-
-#: dlls/kernel32/winerror.mc:2863
-msgid "Invalid table.\n"
-msgstr "Ogiltig tabell.\n"
-
-#: dlls/kernel32/winerror.mc:2868
-msgid "Data type mismatch.\n"
-msgstr "Datatyperna överensstämmer inte.\n"
-
-#: dlls/kernel32/winerror.mc:2873 dlls/kernel32/winerror.mc:3083
-msgid "Unsupported type.\n"
-msgstr "Ej stödd typ.\n"
-
-#: dlls/kernel32/winerror.mc:2878
-msgid "Creation failed.\n"
-msgstr "Kunde inte skapa.\n"
-
-#: dlls/kernel32/winerror.mc:2883
-msgid "Temporary directory not writable.\n"
-msgstr "Tillfällig katalog ej skrivbar.\n"
-
-#: dlls/kernel32/winerror.mc:2888
-msgid "Installation platform not supported.\n"
-msgstr "Installationsplattformen stöds inte.\n"
-
-#: dlls/kernel32/winerror.mc:2893
-msgid "Installer not used.\n"
-msgstr "Installationsprogrammet ej använt.\n"
-
-#: dlls/kernel32/winerror.mc:2898
-msgid "Failed to open the patch package.\n"
-msgstr "Kunde inte öppna korrigeringspaketet.\n"
-
-#: dlls/kernel32/winerror.mc:2903
-msgid "Invalid patch package.\n"
-msgstr "Ogiltigt korrigeringspaket.\n"
-
-#: dlls/kernel32/winerror.mc:2908
-msgid "Unsupported patch package.\n"
-msgstr "Ej stött korrigeringspaket.\n"
-
-#: dlls/kernel32/winerror.mc:2913
-msgid "Another version is installed.\n"
-msgstr "En annan version är installerad.\n"
-
-#: dlls/kernel32/winerror.mc:2918
-msgid "Invalid command line.\n"
-msgstr "Ogiltig kommandorad.\n"
-
-#: dlls/kernel32/winerror.mc:2923
-msgid "Remote installation not allowed.\n"
-msgstr "Fjärrinstallation ej tillåten.\n"
-
-#: dlls/kernel32/winerror.mc:2928
-msgid "Reboot initiated after successful install.\n"
-msgstr "Omstart påbörjad efter lyckad installation.\n"
-
-#: dlls/kernel32/winerror.mc:2933
-msgid "Invalid string binding.\n"
-msgstr "Ogiltig strängbindning.\n"
-
-#: dlls/kernel32/winerror.mc:2938
-msgid "Wrong kind of binding.\n"
-msgstr "Fel sorts bindning.\n"
-
-#: dlls/kernel32/winerror.mc:2943
-msgid "Invalid binding.\n"
-msgstr "Ogiltig bindning.\n"
-
-#: dlls/kernel32/winerror.mc:2948
-msgid "RPC protocol sequence not supported.\n"
-msgstr "RPC-protokollsekvens stöds ej.\n"
-
-#: dlls/kernel32/winerror.mc:2953
-msgid "Invalid RPC protocol sequence.\n"
-msgstr "Ogiltig RPC-protokollsekvens.\n"
-
-#: dlls/kernel32/winerror.mc:2958
-msgid "Invalid string UUID.\n"
-msgstr "Ogiltigt sträng-UUID.\n"
-
-#: dlls/kernel32/winerror.mc:2963
-msgid "Invalid endpoint format.\n"
-msgstr "Ogiltigt slutpunktsformat.\n"
-
-#: dlls/kernel32/winerror.mc:2968
-msgid "Invalid network address.\n"
-msgstr "Ogiltig nätverksadress.\n"
-
-#: dlls/kernel32/winerror.mc:2973
-msgid "No endpoint found.\n"
-msgstr "Ingen slutpunkt funnen.\n"
-
-#: dlls/kernel32/winerror.mc:2978
-msgid "Invalid timeout value.\n"
-msgstr "Ogiltigt timeoutvärde.\n"
-
-#: dlls/kernel32/winerror.mc:2983
-msgid "Object UUID not found.\n"
-msgstr "Objekt-UUID ej funnet.\n"
-
-#: dlls/kernel32/winerror.mc:2988
-msgid "UUID already registered.\n"
-msgstr "UUID redan registrerat.\n"
-
-#: dlls/kernel32/winerror.mc:2993
-msgid "UUID type already registered.\n"
-msgstr "UUID-typ redan registrerad.\n"
-
-#: dlls/kernel32/winerror.mc:2998
-msgid "Server already listening.\n"
-msgstr "Servern lyssnar redan.\n"
-
-#: dlls/kernel32/winerror.mc:3003
-msgid "No protocol sequences registered.\n"
-msgstr "Inga protokollsekvenser registrerade.\n"
-
-#: dlls/kernel32/winerror.mc:3008
-msgid "RPC server not listening.\n"
-msgstr "RPC-servern lyssnar inte.\n"
-
-#: dlls/kernel32/winerror.mc:3013
-msgid "Unknown manager type.\n"
-msgstr "Okänd hanterartyp.\n"
-
-#: dlls/kernel32/winerror.mc:3018
-msgid "Unknown interface.\n"
-msgstr "Okänt gränssnitt.\n"
-
-#: dlls/kernel32/winerror.mc:3023
-msgid "No bindings.\n"
-msgstr "Inga bindningar.\n"
-
-#: dlls/kernel32/winerror.mc:3028
-msgid "No protocol sequences.\n"
-msgstr "Inga protokollsekvenser.\n"
-
-#: dlls/kernel32/winerror.mc:3033
-msgid "Can't create endpoint.\n"
-msgstr "Kan inte skapa slutpunkt.\n"
-
-#: dlls/kernel32/winerror.mc:3038
-msgid "Out of resources.\n"
-msgstr "Slut på resurser.\n"
-
-#: dlls/kernel32/winerror.mc:3043
-msgid "RPC server unavailable.\n"
-msgstr "RPC-servern otillgänglig.\n"
-
-#: dlls/kernel32/winerror.mc:3048
-msgid "RPC server too busy.\n"
-msgstr "RPC-servern är för upptagen.\n"
-
-#: dlls/kernel32/winerror.mc:3053
-msgid "Invalid network options.\n"
-msgstr "Ogiltiga nätverksval.\n"
-
-#: dlls/kernel32/winerror.mc:3058
-msgid "No RPC call active.\n"
-msgstr "Inget RPC-anrop aktivt.\n"
-
-#: dlls/kernel32/winerror.mc:3063
-msgid "RPC call failed.\n"
-msgstr "RPC-anrop misslyckades.\n"
-
-#: dlls/kernel32/winerror.mc:3068
-msgid "RPC call failed and didn't execute.\n"
-msgstr "RPC-anrop misslyckades och exekverades inte.\n"
-
-#: dlls/kernel32/winerror.mc:3073
-msgid "RPC protocol error.\n"
-msgstr "RPC-protokollfel.\n"
-
-#: dlls/kernel32/winerror.mc:3078
-msgid "Unsupported transfer syntax.\n"
-msgstr "Ej stött överföringssyntax.\n"
-
-#: dlls/kernel32/winerror.mc:3088
-msgid "Invalid tag.\n"
-msgstr "Ogiltig tagg.\n"
-
-#: dlls/kernel32/winerror.mc:3093
-msgid "Invalid array bounds.\n"
-msgstr "Ogiltiga arraygränser.\n"
-
-#: dlls/kernel32/winerror.mc:3098
-msgid "No entry name.\n"
-msgstr "Inget postnamn.\n"
-
-#: dlls/kernel32/winerror.mc:3103
-msgid "Invalid name syntax.\n"
-msgstr "Ogiltig namnsyntax.\n"
-
-#: dlls/kernel32/winerror.mc:3108
-msgid "Unsupported name syntax.\n"
-msgstr "Ej stött namnsyntax.\n"
-
-#: dlls/kernel32/winerror.mc:3113
-msgid "No network address.\n"
-msgstr "Ingen nätverksadress.\n"
-
-#: dlls/kernel32/winerror.mc:3118
-msgid "Duplicate endpoint.\n"
-msgstr "Upprepad slutpunkt.\n"
-
-#: dlls/kernel32/winerror.mc:3123
-msgid "Unknown authentication type.\n"
-msgstr "Okänd autentiseringstyp.\n"
-
-#: dlls/kernel32/winerror.mc:3128
-msgid "Maximum calls too low.\n"
-msgstr "Maximalt antal anrop för lågt.\n"
-
-#: dlls/kernel32/winerror.mc:3133
-msgid "String too long.\n"
-msgstr "Strängen för lång.\n"
-
-#: dlls/kernel32/winerror.mc:3138
-msgid "Protocol sequence not found.\n"
-msgstr "Protokollsekvens ej funnen.\n"
-
-#: dlls/kernel32/winerror.mc:3143
-msgid "Procedure number out of range.\n"
-msgstr "Procedurnummer utanför giltigt intervall.\n"
-
-#: dlls/kernel32/winerror.mc:3148
-msgid "Binding has no authentication data.\n"
-msgstr "Bindningen har inget autentiseringsdata.\n"
-
-#: dlls/kernel32/winerror.mc:3153
-msgid "Unknown authentication service.\n"
-msgstr "Okänd autentiseringstjänst.\n"
-
-#: dlls/kernel32/winerror.mc:3158
-msgid "Unknown authentication level.\n"
-msgstr "Okänd autentiseringsnivå.\n"
-
-#: dlls/kernel32/winerror.mc:3163
-msgid "Invalid authentication identity.\n"
-msgstr "Okänd autentiseringsidentitet.\n"
-
-#: dlls/kernel32/winerror.mc:3168
-msgid "Unknown authorization service.\n"
-msgstr "Okänd auktoriseringstjänst.\n"
-
-#: dlls/kernel32/winerror.mc:3173
-msgid "Invalid entry.\n"
-msgstr "Ogiltig post.\n"
-
-#: dlls/kernel32/winerror.mc:3178
-msgid "Can't perform operation.\n"
-msgstr "Kan inte utföra operationen.\n"
-
-#: dlls/kernel32/winerror.mc:3183
-msgid "Endpoints not registered.\n"
-msgstr "Slutpunkter ej registrerade.\n"
-
-#: dlls/kernel32/winerror.mc:3188
-msgid "Nothing to export.\n"
-msgstr "Inget att exportera.\n"
-
-#: dlls/kernel32/winerror.mc:3193
-msgid "Incomplete name.\n"
-msgstr "Inkomplett namn.\n"
-
-#: dlls/kernel32/winerror.mc:3198
-msgid "Invalid version option.\n"
-msgstr "Ogiltigt versionsval.\n"
-
-#: dlls/kernel32/winerror.mc:3203
-msgid "No more members.\n"
-msgstr "Inga fler medlemmar.\n"
-
-#: dlls/kernel32/winerror.mc:3208
-msgid "Not all objects unexported.\n"
-msgstr "Alla objekt avexporterades inte.\n"
-
-#: dlls/kernel32/winerror.mc:3213
-msgid "Interface not found.\n"
-msgstr "Gränssnitt hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:3218
-msgid "Entry already exists.\n"
-msgstr "Posten existerar redan.\n"
-
-#: dlls/kernel32/winerror.mc:3223
-msgid "Entry not found.\n"
-msgstr "Posten hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:3228
-msgid "Name service unavailable.\n"
-msgstr "Namntjänst otillgänglig.\n"
-
-#: dlls/kernel32/winerror.mc:3233
-msgid "Invalid network address family.\n"
-msgstr "Ogiltig nätverksadressfamilj.\n"
-
-#: dlls/kernel32/winerror.mc:3238
-msgid "Operation not supported.\n"
-msgstr "Operationen stöds inte.\n"
-
-#: dlls/kernel32/winerror.mc:3243
-msgid "No security context available.\n"
-msgstr "Ingen säkerhetskontext tillgänglig.\n"
-
-#: dlls/kernel32/winerror.mc:3248
-msgid "RPCInternal error.\n"
-msgstr "RPCInternal-fel.\n"
-
-#: dlls/kernel32/winerror.mc:3253
-msgid "RPC divide-by-zero.\n"
-msgstr "Division med noll för RPC.\n"
-
-#: dlls/kernel32/winerror.mc:3258
-msgid "Address error.\n"
-msgstr "Adressfel.\n"
-
-#: dlls/kernel32/winerror.mc:3263
-msgid "Floating-point divide-by-zero.\n"
-msgstr "Division med noll för flyttal.\n"
-
-#: dlls/kernel32/winerror.mc:3268
-msgid "Floating-point underflow.\n"
-msgstr "Flyttalsunderspill.\n"
-
-#: dlls/kernel32/winerror.mc:3273
-msgid "Floating-point overflow.\n"
-msgstr "Flyttalsöverspill.\n"
-
-#: dlls/kernel32/winerror.mc:3278
-msgid "No more entries.\n"
-msgstr "Inga fler poster.\n"
-
-#: dlls/kernel32/winerror.mc:3283
-msgid "Character translation table open failed.\n"
-msgstr "Kunde inte öppna teckenomvandlingstabellen.\n"
-
-#: dlls/kernel32/winerror.mc:3288
-msgid "Character translation table file too small.\n"
-msgstr "Teckenomvandlingstabellens fil är för liten.\n"
-
-#: dlls/kernel32/winerror.mc:3293
-msgid "Null context handle.\n"
-msgstr "Nullkontext-referens.\n"
-
-#: dlls/kernel32/winerror.mc:3298
-msgid "Context handle damaged.\n"
-msgstr "Kontextreferens skadad.\n"
-
-#: dlls/kernel32/winerror.mc:3303
-msgid "Binding handle mismatch.\n"
-msgstr "Bindningsreferensen överensstämmer inte.\n"
-
-#: dlls/kernel32/winerror.mc:3308
-msgid "Cannot get call handle.\n"
-msgstr "Kan inte erhålla anropsreferens.\n"
-
-#: dlls/kernel32/winerror.mc:3313
-msgid "Null reference pointer.\n"
-msgstr "Nullreferens-pekare.\n"
-
-#: dlls/kernel32/winerror.mc:3318
-msgid "Enumeration value out of range.\n"
-msgstr "Uppräkningsvärde utanför giltigt intervall.\n"
-
-#: dlls/kernel32/winerror.mc:3323
-msgid "Byte count too small.\n"
-msgstr "Byteantalet för litet.\n"
-
-#: dlls/kernel32/winerror.mc:3328
-msgid "Bad stub data.\n"
-msgstr "Felaktigt stub-data.\n"
-
-#: dlls/kernel32/winerror.mc:3333
-msgid "Invalid user buffer.\n"
-msgstr "Ogiltig användarbuffert.\n"
-
-#: dlls/kernel32/winerror.mc:3338
-msgid "Unrecognized media.\n"
-msgstr "Ej igenkänt media.\n"
-
-#: dlls/kernel32/winerror.mc:3343
-msgid "No trust secret.\n"
-msgstr ""
-
-#: dlls/kernel32/winerror.mc:3348
-msgid "No trust SAM account.\n"
-msgstr ""
-
-#: dlls/kernel32/winerror.mc:3353
-msgid "Trusted domain failure.\n"
-msgstr ""
-
-#: dlls/kernel32/winerror.mc:3358
-msgid "Trusted relationship failure.\n"
-msgstr ""
-
-#: dlls/kernel32/winerror.mc:3363
-msgid "Trust logon failure.\n"
-msgstr ""
-
-#: dlls/kernel32/winerror.mc:3368
-msgid "RPC call already in progress.\n"
-msgstr "RPC-anrop pågår redan.\n"
-
-#: dlls/kernel32/winerror.mc:3373
-msgid "NETLOGON is not started.\n"
-msgstr "NETLOGON ej startat.\n"
-
-#: dlls/kernel32/winerror.mc:3378
-msgid "Account expired.\n"
-msgstr "Kontot utgånget.\n"
-
-#: dlls/kernel32/winerror.mc:3383
-msgid "Redirector has open handles.\n"
-msgstr "Omdirigeraren har öppna referenser.\n"
-
-#: dlls/kernel32/winerror.mc:3388
-msgid "Printer driver already installed.\n"
-msgstr "Skrivardrivrutin redan installerad.\n"
-
-#: dlls/kernel32/winerror.mc:3393
-msgid "Unknown port.\n"
-msgstr "Okänd port.\n"
-
-#: dlls/kernel32/winerror.mc:3398
-msgid "Unknown printer driver.\n"
-msgstr "Okänd skrivardrivrutin.\n"
-
-#: dlls/kernel32/winerror.mc:3403
-msgid "Unknown print processor.\n"
-msgstr "Okänd utskriftsprocessor.\n"
-
-#: dlls/kernel32/winerror.mc:3408
-msgid "Invalid separator file.\n"
-msgstr "Ogiltig separatorfil.\n"
-
-#: dlls/kernel32/winerror.mc:3413
-msgid "Invalid priority.\n"
-msgstr "Ogiltig prioritet.\n"
-
-#: dlls/kernel32/winerror.mc:3418
-msgid "Invalid printer name.\n"
-msgstr "Ogiltigt skrivarnamn.\n"
-
-#: dlls/kernel32/winerror.mc:3423
-msgid "Printer already exists.\n"
-msgstr "Skrivaren existerar redan.\n"
-
-#: dlls/kernel32/winerror.mc:3428
-msgid "Invalid printer command.\n"
-msgstr "Ogiltigt skrivarkommando.\n"
-
-#: dlls/kernel32/winerror.mc:3433
-msgid "Invalid data type.\n"
-msgstr "Ogiltig datatyp.\n"
-
-#: dlls/kernel32/winerror.mc:3438
-msgid "Invalid environment.\n"
-msgstr "Ogiltig miljö.\n"
-
-#: dlls/kernel32/winerror.mc:3443
-msgid "No more bindings.\n"
-msgstr "Inga fler bindningar.\n"
-
-#: dlls/kernel32/winerror.mc:3448
-msgid "Can't log on with inter-domain trust account.\n"
-msgstr ""
-
-#: dlls/kernel32/winerror.mc:3453
-msgid "Can't log on with workstation trust account.\n"
-msgstr ""
-
-#: dlls/kernel32/winerror.mc:3458
-msgid "Can't log on with server trust account.\n"
-msgstr ""
-
-#: dlls/kernel32/winerror.mc:3463
-msgid "Domain trust information inconsistent.\n"
-msgstr ""
-
-#: dlls/kernel32/winerror.mc:3468
-msgid "Server has open handles.\n"
-msgstr "Server har öppna referenser.\n"
-
-#: dlls/kernel32/winerror.mc:3473
-msgid "Resource data not found.\n"
-msgstr "Resursdata hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:3478
-msgid "Resource type not found.\n"
-msgstr "Resurstyp hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:3483
-msgid "Resource name not found.\n"
-msgstr "Resursnamn hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:3488
-msgid "Resource language not found.\n"
-msgstr "Resursspråk hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:3493
-msgid "Not enough quota.\n"
-msgstr "Otillräcklig kvot.\n"
-
-#: dlls/kernel32/winerror.mc:3498
-msgid "No interfaces.\n"
-msgstr "Inga gränssnitt.\n"
-
-#: dlls/kernel32/winerror.mc:3503
-msgid "RPC call canceled.\n"
-msgstr "RPC-anrop avbröts.\n"
-
-#: dlls/kernel32/winerror.mc:3508
-msgid "Binding incomplete.\n"
-msgstr "Bindning ej komplett.\n"
-
-#: dlls/kernel32/winerror.mc:3513
-msgid "RPC comm failure.\n"
-msgstr "RPC-kommunikationsfel.\n"
-
-#: dlls/kernel32/winerror.mc:3518
-msgid "Unsupported authorization level.\n"
-msgstr "Ostödd auktoriseringsnivå.\n"
-
-#: dlls/kernel32/winerror.mc:3523
-msgid "No principal name registered.\n"
-msgstr "Inget principalnamn registrerat.\n"
-
-#: dlls/kernel32/winerror.mc:3528
-msgid "Not an RPC error.\n"
-msgstr "Inte ett RPC-fel.\n"
-
-#: dlls/kernel32/winerror.mc:3533
-msgid "UUID is local only.\n"
-msgstr "UUID är endast lokalt.\n"
-
-#: dlls/kernel32/winerror.mc:3538
-msgid "Security package error.\n"
-msgstr "Säkerhetspaket-fel.\n"
-
-#: dlls/kernel32/winerror.mc:3543
-msgid "Thread not canceled.\n"
-msgstr "Tråd ej avbruten.\n"
-
-#: dlls/kernel32/winerror.mc:3548
-msgid "Invalid handle operation.\n"
-msgstr "Ogiltig referensoperation.\n"
-
-#: dlls/kernel32/winerror.mc:3553
-msgid "Wrong serializing package version.\n"
-msgstr "Fel serialiserande paketversion.\n"
-
-#: dlls/kernel32/winerror.mc:3558
-msgid "Wrong stub version.\n"
-msgstr "Fel stub-version.\n"
-
-#: dlls/kernel32/winerror.mc:3563
-msgid "Invalid pipe object.\n"
-msgstr "Ogiltigt rör.\n"
-
-#: dlls/kernel32/winerror.mc:3568
-msgid "Wrong pipe order.\n"
-msgstr "Fel ordning på röret.\n"
-
-#: dlls/kernel32/winerror.mc:3573
-msgid "Wrong pipe version.\n"
-msgstr "Fel version på röret.\n"
-
-#: dlls/kernel32/winerror.mc:3578
-msgid "Group member not found.\n"
-msgstr "Gruppmedlem ej funnen.\n"
-
-#: dlls/kernel32/winerror.mc:3583
-msgid "Can't create endpoint mapper DB.\n"
-msgstr "Kan inte skapa Endpoint mapper-databas.\n"
-
-#: dlls/kernel32/winerror.mc:3588
-msgid "Invalid object.\n"
-msgstr "Ogiltigt objekt.\n"
-
-#: dlls/kernel32/winerror.mc:3593
-msgid "Invalid time.\n"
-msgstr "Ogiltig tid.\n"
-
-#: dlls/kernel32/winerror.mc:3598
-msgid "Invalid form name.\n"
-msgstr "Ogiltigt formulärnamn.\n"
-
-#: dlls/kernel32/winerror.mc:3603
-msgid "Invalid form size.\n"
-msgstr "Ogiltig formulärstorlek.\n"
-
-#: dlls/kernel32/winerror.mc:3608
-msgid "Already awaiting printer handle.\n"
-msgstr "Väntar redan på skrivarreferens.\n"
-
-#: dlls/kernel32/winerror.mc:3613
-msgid "Printer deleted.\n"
-msgstr "Skrivare borttagen.\n"
-
-#: dlls/kernel32/winerror.mc:3618
-msgid "Invalid printer state.\n"
-msgstr "Ogiltigt skrivartillstånd.\n"
-
-#: dlls/kernel32/winerror.mc:3623
-msgid "User must change password.\n"
-msgstr "Användaren måste byta lösenord.\n"
-
-#: dlls/kernel32/winerror.mc:3628
-msgid "Domain controller not found.\n"
-msgstr "Domänkontrollanten hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:3633
-msgid "Account locked out.\n"
-msgstr "Konto utlåst.\n"
-
-#: dlls/kernel32/winerror.mc:3638
-msgid "Invalid pixel format.\n"
-msgstr "Ogiltigt pixelformat.\n"
-
-#: dlls/kernel32/winerror.mc:3643
-msgid "Invalid driver.\n"
-msgstr "Ogiltig drivrutin.\n"
-
-#: dlls/kernel32/winerror.mc:3648
-msgid "Invalid object resolver set.\n"
-msgstr "Ogiltig objekt-resolver vald.\n"
-
-#: dlls/kernel32/winerror.mc:3653
-msgid "Incomplete RPC send.\n"
-msgstr "Inkomplett RPC send.\n"
-
-#: dlls/kernel32/winerror.mc:3658
-msgid "Invalid asynchronous RPC handle.\n"
-msgstr "Ogiltig asynkron RPC-referens.\n"
-
-#: dlls/kernel32/winerror.mc:3663
-msgid "Invalid asynchronous RPC call.\n"
-msgstr "Ogiltigt asynkront RPC-anrop.\n"
-
-#: dlls/kernel32/winerror.mc:3668
-msgid "RPC pipe closed.\n"
-msgstr "RPC-rör stängt.\n"
-
-#: dlls/kernel32/winerror.mc:3673
-msgid "Discipline error on RPC pipe.\n"
-msgstr "Disciplinfel på RPC-rör.\n"
-
-#: dlls/kernel32/winerror.mc:3678
-msgid "No data on RPC pipe.\n"
-msgstr "Ingen data på RPC-rör.\n"
-
-#: dlls/kernel32/winerror.mc:3683
-msgid "No site name available.\n"
-msgstr "Inget sidnamn tillgängligt.\n"
-
-#: dlls/kernel32/winerror.mc:3688
-msgid "The file cannot be accessed.\n"
-msgstr "Kommer inte åt filen.\n"
-
-#: dlls/kernel32/winerror.mc:3693
-msgid "The filename cannot be resolved.\n"
-msgstr "Filnamnet kan inte hittas.\n"
-
-#: dlls/kernel32/winerror.mc:3698
-msgid "RPC entry type mismatch.\n"
-msgstr "Posttyper för RPC överensstämmer inte.\n"
-
-#: dlls/kernel32/winerror.mc:3703
-msgid "Not all objects could be exported.\n"
-msgstr "Alla objekt kunde inte exporteras.\n"
-
-#: dlls/kernel32/winerror.mc:3708
-msgid "The interface could not be exported.\n"
-msgstr "Gränssnittet kunde inte exporteras.\n"
-
-#: dlls/kernel32/winerror.mc:3713
-msgid "The profile could not be added.\n"
-msgstr "Profilen kunde inte läggas till.\n"
-
-#: dlls/kernel32/winerror.mc:3718
-msgid "The profile element could not be added.\n"
-msgstr "Profilelementet kunde inte läggas till.\n"
-
-#: dlls/kernel32/winerror.mc:3723
-msgid "The profile element could not be removed.\n"
-msgstr "Profilelementet kunde inte tas bort.\n"
-
-#: dlls/kernel32/winerror.mc:3728
-msgid "The group element could not be added.\n"
-msgstr "Gruppelementet kunde inte hittas.\n"
-
-#: dlls/kernel32/winerror.mc:3733
-msgid "The group element could not be removed.\n"
-msgstr "Gruppelementet kunde inte tas bort.\n"
-
-#: dlls/kernel32/winerror.mc:3738
-msgid "The username could not be found.\n"
-msgstr "Användarnamnet kunde inte hittas.\n"
-
-#: dlls/kernel32/winerror.mc:3743
-msgid "This network connection does not exist.\n"
-msgstr "Nätverksanslutningen existerar inte.\n"
-
-#: dlls/kernel32/winerror.mc:3748
-#, fuzzy
-#| msgid "Invalid at interrupt time.\n"
-msgid "Call interrupted.\n"
-msgstr "Ogiltig operation vid avbrott.\n"
-
-#: dlls/kernel32/winerror.mc:3753
-#, fuzzy
-#| msgid "Invalid handle.\n"
-msgid "Invalid file handle.\n"
-msgstr "Ogiltig referens.\n"
-
-#: dlls/kernel32/winerror.mc:3763
-#, fuzzy
-#| msgid "Invalid network address.\n"
-msgid "Invalid pointer address.\n"
-msgstr "Ogiltig nätverksadress.\n"
-
-#: dlls/kernel32/winerror.mc:3768
-#, fuzzy
-#| msgid "Invalid name.\n"
-msgid "Invalid argument.\n"
-msgstr "Ogiltigt namn.\n"
-
-#: dlls/kernel32/winerror.mc:3778
-msgid "Connection reset by peer.\n"
-msgstr "Anslutningen återställdes.\n"
-
-#: dlls/kernel32/winerror.mc:3788
-#, fuzzy
-#| msgid "Point not found.\n"
-msgid "Host not found.\n"
-msgstr "Punkten hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:3793
-#, fuzzy
-#| msgid "File not found.\n"
-msgid "Nonauthoritative host not found.\n"
-msgstr "Filen hittades inte.\n"
-
-#: dlls/kernel32/winerror.mc:3798
-#, fuzzy
-#| msgid "A printer error occurred."
-msgid "Nonrecoverable error.\n"
-msgstr "Ett skrivarfel inträffade."
-
-#: dlls/kernel32/winerror.mc:3803
-msgid "Name valid, no data record.\n"
-msgstr ""
-
-#: dlls/kernel32/winerror.mc:3817
-#, fuzzy
-#| msgid "Not implemented"
-msgid "Not implemented.\n"
-msgstr "Ej implementerat"
-
-#: dlls/kernel32/winerror.mc:3838
-#, fuzzy
-#| msgid "RPC call failed.\n"
-msgid "Call failed.\n"
-msgstr "RPC-anrop misslyckades.\n"
-
-#: dlls/kernel32/winerror.mc:3810
-#, fuzzy
-#| msgid "Message 0x%1 not found in file %2.\n"
-msgid "No Signature found in file.\n"
-msgstr "Meddelande 0x%1 ej funnet i fil %2.\n"
-
-#: dlls/kernel32/winerror.mc:3824
-#, fuzzy
-#| msgid "Invalid level.\n"
-msgid "Invalid call.\n"
-msgstr "Ogiltig nivå.\n"
-
-#: dlls/kernel32/winerror.mc:3831
-#, fuzzy
-#| msgid "Help not available."
-msgid "Resource is not currently available.\n"
-msgstr "Ingen hjälp finns tillgänglig."
-
 #: dlls/kernelbase/kernelbase.rc:29
 msgid "Western Europe and United States"
 msgstr ""
@@ -7132,6 +4096,3042 @@ msgstr ""
 #: dlls/kernelbase/kernelbase.rc:45
 msgid "Armenian"
 msgstr ""
+
+#: dlls/kernelbase/winerror.mc:28
+msgid "Success.\n"
+msgstr "Lyckades.\n"
+
+#: dlls/kernelbase/winerror.mc:33
+msgid "Invalid function.\n"
+msgstr "Ogiltig funktion.\n"
+
+#: dlls/kernelbase/winerror.mc:38
+msgid "File not found.\n"
+msgstr "Filen hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:43
+msgid "Path not found.\n"
+msgstr "Sökvägen hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:48 dlls/kernelbase/winerror.mc:3773
+msgid "Too many open files.\n"
+msgstr "För många öppna filer.\n"
+
+#: dlls/kernelbase/winerror.mc:53 dlls/kernelbase/winerror.mc:3758
+msgid "Access denied.\n"
+msgstr "Åtkomst nekad.\n"
+
+#: dlls/kernelbase/winerror.mc:58
+msgid "Invalid handle.\n"
+msgstr "Ogiltig referens.\n"
+
+#: dlls/kernelbase/winerror.mc:63
+msgid "Memory trashed.\n"
+msgstr "Minne förstört.\n"
+
+#: dlls/kernelbase/winerror.mc:68
+msgid "Not enough memory.\n"
+msgstr "Ej tillräckligt minne.\n"
+
+#: dlls/kernelbase/winerror.mc:73
+msgid "Invalid block.\n"
+msgstr "Ogiltigt block.\n"
+
+#: dlls/kernelbase/winerror.mc:78
+msgid "Bad environment.\n"
+msgstr "Felaktig miljö.\n"
+
+#: dlls/kernelbase/winerror.mc:83
+msgid "Bad format.\n"
+msgstr "Felaktigt format.\n"
+
+#: dlls/kernelbase/winerror.mc:88
+msgid "Invalid access.\n"
+msgstr "Ogiltig åtkomst.\n"
+
+#: dlls/kernelbase/winerror.mc:93
+msgid "Invalid data.\n"
+msgstr "Ogiltigt data.\n"
+
+#: dlls/kernelbase/winerror.mc:98
+msgid "Out of memory.\n"
+msgstr "Otillräckligt minne.\n"
+
+#: dlls/kernelbase/winerror.mc:103
+msgid "Invalid drive.\n"
+msgstr "Ogiltig disk.\n"
+
+#: dlls/kernelbase/winerror.mc:108
+msgid "Can't delete current directory.\n"
+msgstr "Kan inte ta bort aktuell katalog.\n"
+
+#: dlls/kernelbase/winerror.mc:113
+msgid "Not same device.\n"
+msgstr "Inte samma enhet.\n"
+
+#: dlls/kernelbase/winerror.mc:118
+msgid "No more files.\n"
+msgstr "Inga fler filer.\n"
+
+#: dlls/kernelbase/winerror.mc:123
+msgid "Write protected.\n"
+msgstr "Skrivskyddad.\n"
+
+#: dlls/kernelbase/winerror.mc:128
+msgid "Bad unit.\n"
+msgstr "Felaktig enhet.\n"
+
+#: dlls/kernelbase/winerror.mc:133
+msgid "Not ready.\n"
+msgstr "Ej redo.\n"
+
+#: dlls/kernelbase/winerror.mc:138
+msgid "Bad command.\n"
+msgstr "Felaktigt kommando.\n"
+
+#: dlls/kernelbase/winerror.mc:143
+msgid "CRC error.\n"
+msgstr "CRC-fel.\n"
+
+#: dlls/kernelbase/winerror.mc:148
+msgid "Bad length.\n"
+msgstr "Felaktig längd.\n"
+
+#: dlls/kernelbase/winerror.mc:153 dlls/kernelbase/winerror.mc:528
+msgid "Seek error.\n"
+msgstr "Sökfel.\n"
+
+#: dlls/kernelbase/winerror.mc:158
+msgid "Not DOS disk.\n"
+msgstr "Inte DOS-disk.\n"
+
+#: dlls/kernelbase/winerror.mc:163
+msgid "Sector not found.\n"
+msgstr "Sektor hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:168
+msgid "Out of paper.\n"
+msgstr "Slut på papper.\n"
+
+#: dlls/kernelbase/winerror.mc:173
+msgid "Write fault.\n"
+msgstr "Skrivfel.\n"
+
+#: dlls/kernelbase/winerror.mc:178
+msgid "Read fault.\n"
+msgstr "Läsfel.\n"
+
+#: dlls/kernelbase/winerror.mc:183
+msgid "General failure.\n"
+msgstr "Allmänt fel.\n"
+
+#: dlls/kernelbase/winerror.mc:188
+msgid "Sharing violation.\n"
+msgstr "Delningsfel.\n"
+
+#: dlls/kernelbase/winerror.mc:193
+msgid "Lock violation.\n"
+msgstr "Låsningsfel.\n"
+
+#: dlls/kernelbase/winerror.mc:198
+msgid "Wrong disk.\n"
+msgstr "Fel disk.\n"
+
+#: dlls/kernelbase/winerror.mc:203
+msgid "Sharing buffer exceeded.\n"
+msgstr "Delningsbufferten överskreds.\n"
+
+#: dlls/kernelbase/winerror.mc:208
+msgid "End of file.\n"
+msgstr "Filslut.\n"
+
+#: dlls/kernelbase/winerror.mc:213 dlls/kernelbase/winerror.mc:438
+msgid "Disk full.\n"
+msgstr "Disken är full.\n"
+
+#: dlls/kernelbase/winerror.mc:218
+msgid "Request not supported.\n"
+msgstr "Förfrågan ej stödd.\n"
+
+#: dlls/kernelbase/winerror.mc:223
+msgid "Remote machine not listening.\n"
+msgstr "Fjärrmaskinen lyssnar inte.\n"
+
+#: dlls/kernelbase/winerror.mc:228
+msgid "Duplicate network name.\n"
+msgstr "Upprepat nätverksnamn.\n"
+
+#: dlls/kernelbase/winerror.mc:233
+msgid "Bad network path.\n"
+msgstr "Felaktig nätverkssökväg.\n"
+
+#: dlls/kernelbase/winerror.mc:238
+msgid "Network busy.\n"
+msgstr "Nätverket upptaget.\n"
+
+#: dlls/kernelbase/winerror.mc:243
+msgid "Device does not exist.\n"
+msgstr "Enheten existerar inte.\n"
+
+#: dlls/kernelbase/winerror.mc:248
+msgid "Too many commands.\n"
+msgstr "För många kommandon.\n"
+
+#: dlls/kernelbase/winerror.mc:253
+msgid "Adapter hardware error.\n"
+msgstr "Adapter-hårdvarufel.\n"
+
+#: dlls/kernelbase/winerror.mc:258
+msgid "Bad network response.\n"
+msgstr "Felaktig nätverksrespons.\n"
+
+#: dlls/kernelbase/winerror.mc:263
+msgid "Unexpected network error.\n"
+msgstr "Oväntat nätverksfel.\n"
+
+#: dlls/kernelbase/winerror.mc:268
+msgid "Bad remote adapter.\n"
+msgstr "Felaktig fjärradapter.\n"
+
+#: dlls/kernelbase/winerror.mc:273
+msgid "Print queue full.\n"
+msgstr "Skrivarkön full.\n"
+
+#: dlls/kernelbase/winerror.mc:278
+msgid "No spool space.\n"
+msgstr "Inget spool-utrymme.\n"
+
+#: dlls/kernelbase/winerror.mc:283
+msgid "Print canceled.\n"
+msgstr "Utskrift avbruten.\n"
+
+#: dlls/kernelbase/winerror.mc:288
+msgid "Network name deleted.\n"
+msgstr "Nätverksnamn borttaget.\n"
+
+#: dlls/kernelbase/winerror.mc:293
+msgid "Network access denied.\n"
+msgstr "Nätverksåtkomst nekad.\n"
+
+#: dlls/kernelbase/winerror.mc:298
+msgid "Bad device type.\n"
+msgstr "Felaktig enhetstyp.\n"
+
+#: dlls/kernelbase/winerror.mc:303
+msgid "Bad network name.\n"
+msgstr "Felaktigt nätverksnamn.\n"
+
+#: dlls/kernelbase/winerror.mc:308
+msgid "Too many network names.\n"
+msgstr "För många nätverksnamn.\n"
+
+#: dlls/kernelbase/winerror.mc:313
+msgid "Too many network sessions.\n"
+msgstr "För många nätverkssessioner.\n"
+
+#: dlls/kernelbase/winerror.mc:318
+msgid "Sharing paused.\n"
+msgstr "Delning pausad.\n"
+
+#: dlls/kernelbase/winerror.mc:323
+msgid "Request not accepted.\n"
+msgstr "Förfrågan ej accepterad.\n"
+
+#: dlls/kernelbase/winerror.mc:328
+msgid "Redirector paused.\n"
+msgstr "Omdirigerare pausad.\n"
+
+#: dlls/kernelbase/winerror.mc:333
+msgid "File exists.\n"
+msgstr "Filen existerar.\n"
+
+#: dlls/kernelbase/winerror.mc:338
+msgid "Cannot create.\n"
+msgstr "Kan ej skapa.\n"
+
+#: dlls/kernelbase/winerror.mc:343
+msgid "Int24 failure.\n"
+msgstr "Int24-fel.\n"
+
+#: dlls/kernelbase/winerror.mc:348
+msgid "Out of structures.\n"
+msgstr "Slut på strukturer.\n"
+
+#: dlls/kernelbase/winerror.mc:353
+msgid "Already assigned.\n"
+msgstr "Redan tilldelad.\n"
+
+#: dlls/kernelbase/winerror.mc:358 dlls/kernelbase/winerror.mc:1713
+msgid "Invalid password.\n"
+msgstr "Ogiltigt lösenord.\n"
+
+#: dlls/kernelbase/winerror.mc:363
+msgid "Invalid parameter.\n"
+msgstr "Ogiltig parameter.\n"
+
+#: dlls/kernelbase/winerror.mc:368
+msgid "Net write fault.\n"
+msgstr "Nätverksskrivfel.\n"
+
+#: dlls/kernelbase/winerror.mc:373
+msgid "No process slots.\n"
+msgstr "Inga lediga processutrymmen.\n"
+
+#: dlls/kernelbase/winerror.mc:378
+msgid "Too many semaphores.\n"
+msgstr "För många semaforer.\n"
+
+#: dlls/kernelbase/winerror.mc:383
+msgid "Exclusive semaphore already owned.\n"
+msgstr "Exklusiv semafor ägs redan.\n"
+
+#: dlls/kernelbase/winerror.mc:388
+msgid "Semaphore is set.\n"
+msgstr "Semaforen är riggad.\n"
+
+#: dlls/kernelbase/winerror.mc:393
+msgid "Too many semaphore requests.\n"
+msgstr "För många semaforförfrågningar.\n"
+
+#: dlls/kernelbase/winerror.mc:398
+msgid "Invalid at interrupt time.\n"
+msgstr "Ogiltig operation vid avbrott.\n"
+
+#: dlls/kernelbase/winerror.mc:403
+msgid "Semaphore owner died.\n"
+msgstr "Semaforägaren dog.\n"
+
+#: dlls/kernelbase/winerror.mc:408
+msgid "Semaphore user limit.\n"
+msgstr "Användargräns för semafor.\n"
+
+#: dlls/kernelbase/winerror.mc:413
+msgid "Insert disk for drive %1.\n"
+msgstr "Sätt i disk i enhet %1.\n"
+
+#: dlls/kernelbase/winerror.mc:418
+msgid "Drive locked.\n"
+msgstr "Disken låst.\n"
+
+#: dlls/kernelbase/winerror.mc:423
+msgid "Broken pipe.\n"
+msgstr "Trasigt rör.\n"
+
+#: dlls/kernelbase/winerror.mc:428
+msgid "Open failed.\n"
+msgstr "Kunde inte öppna.\n"
+
+#: dlls/kernelbase/winerror.mc:433
+msgid "Buffer overflow.\n"
+msgstr "Buffertöverspill.\n"
+
+#: dlls/kernelbase/winerror.mc:443
+msgid "No more search handles.\n"
+msgstr "Inga fler sökreferenser.\n"
+
+#: dlls/kernelbase/winerror.mc:448
+msgid "Invalid target handle.\n"
+msgstr "Ogiltig målreferens.\n"
+
+#: dlls/kernelbase/winerror.mc:453
+msgid "Invalid IOCTL.\n"
+msgstr "Ogiltig IOCTL.\n"
+
+#: dlls/kernelbase/winerror.mc:458
+msgid "Invalid verify switch.\n"
+msgstr "Ogiltigt verify-val.\n"
+
+#: dlls/kernelbase/winerror.mc:463
+msgid "Bad driver level.\n"
+msgstr "Felaktig drivrutinsnivå.\n"
+
+#: dlls/kernelbase/winerror.mc:468
+msgid "Call not implemented.\n"
+msgstr "Anrop ej implementerat.\n"
+
+#: dlls/kernelbase/winerror.mc:473
+msgid "Semaphore timeout.\n"
+msgstr "Tiden gick ut för semaforen.\n"
+
+#: dlls/kernelbase/winerror.mc:478
+msgid "Insufficient buffer.\n"
+msgstr "Otillräcklig buffert.\n"
+
+#: dlls/kernelbase/winerror.mc:483 dlls/mferror/mferror.mc:109
+msgid "Invalid name.\n"
+msgstr "Ogiltigt namn.\n"
+
+#: dlls/kernelbase/winerror.mc:488
+msgid "Invalid level.\n"
+msgstr "Ogiltig nivå.\n"
+
+#: dlls/kernelbase/winerror.mc:493
+msgid "No volume label.\n"
+msgstr "Ingen volymetikett.\n"
+
+#: dlls/kernelbase/winerror.mc:498
+msgid "Module not found.\n"
+msgstr "Modulen hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:503
+msgid "Procedure not found.\n"
+msgstr "Proceduren hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:508
+msgid "No children to wait for.\n"
+msgstr "Inga barn att vänta på.\n"
+
+#: dlls/kernelbase/winerror.mc:513
+msgid "Child process has not completed.\n"
+msgstr "Barnprocessen är ej klar.\n"
+
+#: dlls/kernelbase/winerror.mc:518
+msgid "Invalid use of direct access handle.\n"
+msgstr "Ogiltig användning av direktåtkomstreferens.\n"
+
+#: dlls/kernelbase/winerror.mc:523
+msgid "Negative seek.\n"
+msgstr "Sökning till innan filens början.\n"
+
+#: dlls/kernelbase/winerror.mc:533
+msgid "Drive is a JOIN target.\n"
+msgstr "Disken är ett mål för JOIN.\n"
+
+#: dlls/kernelbase/winerror.mc:538
+msgid "Drive is already JOINed.\n"
+msgstr "Disken är redan JOINad.\n"
+
+#: dlls/kernelbase/winerror.mc:543
+msgid "Drive is already SUBSTed.\n"
+msgstr "Disken är redan SUBSTad.\n"
+
+#: dlls/kernelbase/winerror.mc:548
+msgid "Drive is not JOINed.\n"
+msgstr "Disken är inte JOINad.\n"
+
+#: dlls/kernelbase/winerror.mc:553
+msgid "Drive is not SUBSTed.\n"
+msgstr "Disken är inte SUBSTad.\n"
+
+#: dlls/kernelbase/winerror.mc:558
+msgid "Attempt to JOIN onto a JOINed drive.\n"
+msgstr "Försökte JOINa till en JOINad disk.\n"
+
+#: dlls/kernelbase/winerror.mc:563
+msgid "Attempt to SUBST onto a SUBSTed drive.\n"
+msgstr "Försökte SUBSTa till en SUBSTad disk.\n"
+
+#: dlls/kernelbase/winerror.mc:568
+msgid "Attempt to JOIN to a SUBSTed drive.\n"
+msgstr "Försökte JOINa till en SUBSTad disk.\n"
+
+#: dlls/kernelbase/winerror.mc:573
+msgid "Attempt to SUBST to a JOINed drive.\n"
+msgstr "Försökte SUBSTa till en JOINad disk.\n"
+
+#: dlls/kernelbase/winerror.mc:578
+msgid "Drive is busy.\n"
+msgstr "Enheten är upptagen.\n"
+
+#: dlls/kernelbase/winerror.mc:583
+msgid "Same drive.\n"
+msgstr "Samma enhet.\n"
+
+#: dlls/kernelbase/winerror.mc:588
+msgid "Not top-level directory.\n"
+msgstr "Inte toppnivåkatalog.\n"
+
+#: dlls/kernelbase/winerror.mc:593
+msgid "Directory is not empty.\n"
+msgstr "Katalogen är ej tom.\n"
+
+#: dlls/kernelbase/winerror.mc:598
+msgid "Path is in use as a SUBST.\n"
+msgstr "Sökvägen används som en SUBST.\n"
+
+#: dlls/kernelbase/winerror.mc:603
+msgid "Path is in use as a JOIN.\n"
+msgstr "Sökvägen används som ett JOIN.\n"
+
+#: dlls/kernelbase/winerror.mc:608
+msgid "Path is busy.\n"
+msgstr "Sökvägen är upptagen.\n"
+
+#: dlls/kernelbase/winerror.mc:613
+msgid "Already a SUBST target.\n"
+msgstr "Redan ett mål för SUBST.\n"
+
+#: dlls/kernelbase/winerror.mc:618
+msgid "System trace not specified or disallowed.\n"
+msgstr "System-trace ospecificerat eller ej tillåtet.\n"
+
+#: dlls/kernelbase/winerror.mc:623
+msgid "Event count for DosMuxSemWait incorrect.\n"
+msgstr "Inkorrekt antal händelser för DosMuxSemWait.\n"
+
+#: dlls/kernelbase/winerror.mc:628
+msgid "Too many waiters for DosMuxSemWait.\n"
+msgstr "För många väntande för DosMuxSemWait.\n"
+
+#: dlls/kernelbase/winerror.mc:633
+msgid "DosSemMuxWait list invalid.\n"
+msgstr "DosSemMuxWait-lista ogiltig.\n"
+
+#: dlls/kernelbase/winerror.mc:638
+msgid "Volume label too long.\n"
+msgstr "Volymetiketten är för lång.\n"
+
+#: dlls/kernelbase/winerror.mc:643
+msgid "Too many TCBs.\n"
+msgstr "För många TCB:er.\n"
+
+#: dlls/kernelbase/winerror.mc:648
+msgid "Signal refused.\n"
+msgstr "Signal vägrad.\n"
+
+#: dlls/kernelbase/winerror.mc:653
+msgid "Segment discarded.\n"
+msgstr "Segment kasserat.\n"
+
+#: dlls/kernelbase/winerror.mc:658
+msgid "Segment not locked.\n"
+msgstr "Segment inte låst.\n"
+
+#: dlls/kernelbase/winerror.mc:663
+msgid "Bad thread ID address.\n"
+msgstr "Felaktig tråd-ID-adress.\n"
+
+#: dlls/kernelbase/winerror.mc:668
+msgid "Bad arguments to DosExecPgm.\n"
+msgstr "Felaktiga argument till DosExecPgm.\n"
+
+#: dlls/kernelbase/winerror.mc:673
+msgid "Path is invalid.\n"
+msgstr "Ogiltig sökväg.\n"
+
+#: dlls/kernelbase/winerror.mc:678
+msgid "Signal pending.\n"
+msgstr "En signal väntar.\n"
+
+#: dlls/kernelbase/winerror.mc:683
+msgid "Max system-wide thread count reached.\n"
+msgstr "Max antal trådar i systemet uppnått.\n"
+
+#: dlls/kernelbase/winerror.mc:688
+msgid "Lock failed.\n"
+msgstr "Låsning misslyckades.\n"
+
+#: dlls/kernelbase/winerror.mc:693
+msgid "Resource in use.\n"
+msgstr "Resursen används.\n"
+
+#: dlls/kernelbase/winerror.mc:698
+msgid "Cancel violation.\n"
+msgstr "Avbrytningsfel.\n"
+
+#: dlls/kernelbase/winerror.mc:703
+msgid "Atomic locks not supported.\n"
+msgstr "Atomiska lås stöds inte.\n"
+
+#: dlls/kernelbase/winerror.mc:708
+msgid "Invalid segment number.\n"
+msgstr "Ogiltigt segmentnummer.\n"
+
+#: dlls/kernelbase/winerror.mc:713
+msgid "Invalid ordinal for %1.\n"
+msgstr "Ogiltigt ordningstal för %1.\n"
+
+#: dlls/kernelbase/winerror.mc:718
+msgid "File already exists.\n"
+msgstr "Filen existerar redan.\n"
+
+#: dlls/kernelbase/winerror.mc:723
+msgid "Invalid flag number.\n"
+msgstr "Ogiltigt flaggnummer.\n"
+
+#: dlls/kernelbase/winerror.mc:728
+msgid "Semaphore name not found.\n"
+msgstr "Semafornamnet hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:733
+msgid "Invalid starting code segment for %1.\n"
+msgstr "Ogiltigt startkodsegment för %1.\n"
+
+#: dlls/kernelbase/winerror.mc:738
+msgid "Invalid starting stack segment for %1.\n"
+msgstr "Ogiltigt startstacksegment för %1.\n"
+
+#: dlls/kernelbase/winerror.mc:743
+msgid "Invalid module type for %1.\n"
+msgstr "Ogiltig modultyp för %1.\n"
+
+#: dlls/kernelbase/winerror.mc:748
+msgid "Invalid EXE signature in %1.\n"
+msgstr "Ogiltig EXE-signatur i %1.\n"
+
+#: dlls/kernelbase/winerror.mc:753
+msgid "EXE %1 is marked invalid.\n"
+msgstr "EXE:n %1 är märkt ogiltig.\n"
+
+#: dlls/kernelbase/winerror.mc:758
+msgid "Bad EXE format for %1.\n"
+msgstr "Felaktigt EXE-format för %1.\n"
+
+#: dlls/kernelbase/winerror.mc:763
+msgid "Iterated data exceeds 64k in %1.\n"
+msgstr "Itererat data överskrider 64k i %1.\n"
+
+#: dlls/kernelbase/winerror.mc:768
+msgid "Invalid MinAllocSize in %1.\n"
+msgstr "Ogiltig MinAllocSize i %1.\n"
+
+#: dlls/kernelbase/winerror.mc:773
+msgid "Dynlink from invalid ring.\n"
+msgstr "Dynlink från ogiltig ring.\n"
+
+#: dlls/kernelbase/winerror.mc:778
+msgid "IOPL not enabled.\n"
+msgstr "IOPL ej aktiverat.\n"
+
+#: dlls/kernelbase/winerror.mc:783
+msgid "Invalid SEGDPL in %1.\n"
+msgstr "Ogiltig SEGDPL i %1.\n"
+
+#: dlls/kernelbase/winerror.mc:788
+msgid "Auto data segment exceeds 64k.\n"
+msgstr "Autodatasegment överskrider 64k.\n"
+
+#: dlls/kernelbase/winerror.mc:793
+msgid "Ring 2 segment must be movable.\n"
+msgstr "Ring 2-segment måste vara flyttbart.\n"
+
+#: dlls/kernelbase/winerror.mc:798
+msgid "Relocation chain exceeds segment limit in %1.\n"
+msgstr "Omflyttningskedjan överskrider segmentgränsen i %1.\n"
+
+#: dlls/kernelbase/winerror.mc:803
+msgid "Infinite loop in relocation chain in %1.\n"
+msgstr "Oändlig loop i omflyttningskedja i %1.\n"
+
+#: dlls/kernelbase/winerror.mc:808
+msgid "Environment variable not found.\n"
+msgstr "Miljövariabeln hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:813
+msgid "No signal sent.\n"
+msgstr "Ingen signal skickades.\n"
+
+#: dlls/kernelbase/winerror.mc:818 programs/cmd/cmd.rc:410
+msgid "File name is too long.\n"
+msgstr "Filnamnet för långt.\n"
+
+#: dlls/kernelbase/winerror.mc:823
+msgid "Ring 2 stack in use.\n"
+msgstr "Ring 2-stack används.\n"
+
+#: dlls/kernelbase/winerror.mc:828
+msgid "Error in use of filename wildcards.\n"
+msgstr "Felaktig användning av jokertecken för filnamn.\n"
+
+#: dlls/kernelbase/winerror.mc:833
+msgid "Invalid signal number.\n"
+msgstr "Ogiltigt signalnummer.\n"
+
+#: dlls/kernelbase/winerror.mc:838
+msgid "Error setting signal handler.\n"
+msgstr "Fel vid inställning av signalhanterare.\n"
+
+#: dlls/kernelbase/winerror.mc:843
+msgid "Segment locked.\n"
+msgstr "Segment låst.\n"
+
+#: dlls/kernelbase/winerror.mc:848
+msgid "Too many modules.\n"
+msgstr "För många moduler.\n"
+
+#: dlls/kernelbase/winerror.mc:853
+msgid "Nesting LoadModule calls not allowed.\n"
+msgstr "Ej tillåtet att nästa LoadModule-anrop.\n"
+
+#: dlls/kernelbase/winerror.mc:858
+msgid "Machine type mismatch.\n"
+msgstr "Arkitekturerna överensstämmer inte.\n"
+
+#: dlls/kernelbase/winerror.mc:863
+msgid "Bad pipe.\n"
+msgstr "Felaktigt rör.\n"
+
+#: dlls/kernelbase/winerror.mc:868
+msgid "Pipe busy.\n"
+msgstr "Rör upptaget.\n"
+
+#: dlls/kernelbase/winerror.mc:873
+msgid "Pipe closed.\n"
+msgstr "Rör stängt.\n"
+
+#: dlls/kernelbase/winerror.mc:878
+msgid "Pipe not connected.\n"
+msgstr "Rör ej anslutet.\n"
+
+#: dlls/kernelbase/winerror.mc:883
+msgid "More data available.\n"
+msgstr "Mer data tillgängligt.\n"
+
+#: dlls/kernelbase/winerror.mc:888
+msgid "Session canceled.\n"
+msgstr "Sessionen avbröts.\n"
+
+#: dlls/kernelbase/winerror.mc:893
+msgid "Invalid extended attribute name.\n"
+msgstr "Ogiltigt namn på utökat attribut.\n"
+
+#: dlls/kernelbase/winerror.mc:898
+msgid "Extended attribute list inconsistent.\n"
+msgstr "Utökade attributslistan inkonsekvent.\n"
+
+#: dlls/kernelbase/winerror.mc:903
+msgid "No more data available.\n"
+msgstr "Inget mer data tillgängligt.\n"
+
+#: dlls/kernelbase/winerror.mc:908
+msgid "Cannot use Copy API.\n"
+msgstr "Kan inte använda Copy-API:t.\n"
+
+#: dlls/kernelbase/winerror.mc:913
+msgid "Directory name invalid.\n"
+msgstr "Ogiltigt katalognamn.\n"
+
+#: dlls/kernelbase/winerror.mc:918
+msgid "Extended attributes didn't fit.\n"
+msgstr "Utökat attribut passade inte.\n"
+
+#: dlls/kernelbase/winerror.mc:923
+msgid "Extended attribute file corrupt.\n"
+msgstr "Utökade attributsfilen korrupt.\n"
+
+#: dlls/kernelbase/winerror.mc:928
+msgid "Extended attribute table full.\n"
+msgstr "Utökade attributstabellen är full.\n"
+
+#: dlls/kernelbase/winerror.mc:933
+msgid "Invalid extended attribute handle.\n"
+msgstr "Ogiltig referens till utökade attribut.\n"
+
+#: dlls/kernelbase/winerror.mc:938
+msgid "Extended attributes not supported.\n"
+msgstr "Utökade attribut stöds ej.\n"
+
+#: dlls/kernelbase/winerror.mc:943
+msgid "Mutex not owned by caller.\n"
+msgstr "Mutex ägdes inte av anroparen.\n"
+
+#: dlls/kernelbase/winerror.mc:948
+msgid "Too many posts to semaphore.\n"
+msgstr "För många poster till semafor.\n"
+
+#: dlls/kernelbase/winerror.mc:953
+msgid "Read/WriteProcessMemory partially completed.\n"
+msgstr "Read/WriteProcessMemory delvis fullbordat.\n"
+
+#: dlls/kernelbase/winerror.mc:958
+msgid "The oplock wasn't granted.\n"
+msgstr "Oplock-begäran nekades.\n"
+
+#: dlls/kernelbase/winerror.mc:963
+msgid "Invalid oplock message received.\n"
+msgstr "Ogiltigt oplock-meddelande mottaget.\n"
+
+#: dlls/kernelbase/winerror.mc:968
+msgid "Message 0x%1 not found in file %2.\n"
+msgstr "Meddelande 0x%1 ej funnet i fil %2.\n"
+
+#: dlls/kernelbase/winerror.mc:973
+msgid "Invalid address.\n"
+msgstr "Ogiltig adress.\n"
+
+#: dlls/kernelbase/winerror.mc:978
+msgid "Arithmetic overflow.\n"
+msgstr "Aritmetiskt överspill.\n"
+
+#: dlls/kernelbase/winerror.mc:983
+msgid "Pipe connected.\n"
+msgstr "Rör anslutet.\n"
+
+#: dlls/kernelbase/winerror.mc:988
+msgid "Pipe listening.\n"
+msgstr "Rör lyssnar.\n"
+
+#: dlls/kernelbase/winerror.mc:993
+msgid "Extended attribute access denied.\n"
+msgstr "Åtkomst till utökade attribut nekad.\n"
+
+#: dlls/kernelbase/winerror.mc:998
+msgid "I/O operation aborted.\n"
+msgstr "I/O-operation avbruten.\n"
+
+#: dlls/kernelbase/winerror.mc:1003
+msgid "Overlapped I/O incomplete.\n"
+msgstr "Överlappande I/O oavslutad.\n"
+
+#: dlls/kernelbase/winerror.mc:1008
+msgid "Overlapped I/O pending.\n"
+msgstr "Överlappande I/O pågår.\n"
+
+#: dlls/kernelbase/winerror.mc:1013
+msgid "No access to memory location.\n"
+msgstr "Ingen åtkomst till minnesplats.\n"
+
+#: dlls/kernelbase/winerror.mc:1018
+msgid "Swap error.\n"
+msgstr "Swap-fel.\n"
+
+#: dlls/kernelbase/winerror.mc:1023
+msgid "Stack overflow.\n"
+msgstr "Stack-överspill.\n"
+
+#: dlls/kernelbase/winerror.mc:1028
+msgid "Invalid message.\n"
+msgstr "Ogiltigt meddelande.\n"
+
+#: dlls/kernelbase/winerror.mc:1033
+msgid "Cannot complete.\n"
+msgstr "Kan inte slutföra.\n"
+
+#: dlls/kernelbase/winerror.mc:1038
+msgid "Invalid flags.\n"
+msgstr "Ogiltiga flaggor.\n"
+
+#: dlls/kernelbase/winerror.mc:1043
+msgid "Unrecognized volume.\n"
+msgstr "Volymen ej igenkänd.\n"
+
+#: dlls/kernelbase/winerror.mc:1048
+msgid "File invalid.\n"
+msgstr "Ogiltig fil.\n"
+
+#: dlls/kernelbase/winerror.mc:1053
+msgid "Cannot run full-screen.\n"
+msgstr "Kan inte köra helskärm.\n"
+
+#: dlls/kernelbase/winerror.mc:1058
+msgid "Nonexistent token.\n"
+msgstr "Ej existerande symbol.\n"
+
+#: dlls/kernelbase/winerror.mc:1063
+msgid "Registry corrupt.\n"
+msgstr "Registret korrupt.\n"
+
+#: dlls/kernelbase/winerror.mc:1068
+msgid "Invalid key.\n"
+msgstr "Ogiltig nyckel.\n"
+
+#: dlls/kernelbase/winerror.mc:1073
+msgid "Can't open registry key.\n"
+msgstr "Kan inte öppna registernyckel.\n"
+
+#: dlls/kernelbase/winerror.mc:1078
+msgid "Can't read registry key.\n"
+msgstr "Kan inte läsa registernyckel.\n"
+
+#: dlls/kernelbase/winerror.mc:1083
+msgid "Can't write registry key.\n"
+msgstr "Kan inte skriva registernyckel.\n"
+
+#: dlls/kernelbase/winerror.mc:1088
+msgid "Registry has been recovered.\n"
+msgstr "Registret har återskapats.\n"
+
+#: dlls/kernelbase/winerror.mc:1093
+msgid "Registry is corrupt.\n"
+msgstr "Registret är korrupt.\n"
+
+#: dlls/kernelbase/winerror.mc:1098
+msgid "I/O to registry failed.\n"
+msgstr "I/O till registret misslyckades.\n"
+
+#: dlls/kernelbase/winerror.mc:1103
+msgid "Not registry file.\n"
+msgstr "Ej registerfil.\n"
+
+#: dlls/kernelbase/winerror.mc:1108
+msgid "Key deleted.\n"
+msgstr "Nyckel togs bort.\n"
+
+#: dlls/kernelbase/winerror.mc:1113
+msgid "No registry log space.\n"
+msgstr "Inget utrymme för registerlogg.\n"
+
+#: dlls/kernelbase/winerror.mc:1118
+msgid "Registry key has subkeys.\n"
+msgstr "Registernyckeln har undernycklar.\n"
+
+#: dlls/kernelbase/winerror.mc:1123
+msgid "Subkey must be volatile.\n"
+msgstr "Undernyckel måste vara volatile.\n"
+
+#: dlls/kernelbase/winerror.mc:1128
+msgid "Notify change request in progress.\n"
+msgstr "Förfrågan om ändring av notifiering pågår.\n"
+
+#: dlls/kernelbase/winerror.mc:1133
+msgid "Dependent services are running.\n"
+msgstr "Beroende tjänster körs.\n"
+
+#: dlls/kernelbase/winerror.mc:1138
+msgid "Invalid service control.\n"
+msgstr "Ogiltig tjänstkontroll.\n"
+
+#: dlls/kernelbase/winerror.mc:1143
+msgid "Service request timeout.\n"
+msgstr "Tiden gick ut för förfrågan till tjänst.\n"
+
+#: dlls/kernelbase/winerror.mc:1148
+msgid "Cannot create service thread.\n"
+msgstr "Kan inte skapa tjänst-tråd.\n"
+
+#: dlls/kernelbase/winerror.mc:1153
+msgid "Service database locked.\n"
+msgstr "Tjänstdatabas låst.\n"
+
+#: dlls/kernelbase/winerror.mc:1158
+msgid "Service already running.\n"
+msgstr "Tjänsten körs redan.\n"
+
+#: dlls/kernelbase/winerror.mc:1163
+msgid "Invalid service account.\n"
+msgstr "Ogiltigt tjänstkonto.\n"
+
+#: dlls/kernelbase/winerror.mc:1168
+msgid "Service is disabled.\n"
+msgstr "Tjänsten inaktiverad.\n"
+
+#: dlls/kernelbase/winerror.mc:1173
+msgid "Circular dependency.\n"
+msgstr "Cirkulärt beroende.\n"
+
+#: dlls/kernelbase/winerror.mc:1178
+msgid "Service does not exist.\n"
+msgstr "Tjänsten existerar inte.\n"
+
+#: dlls/kernelbase/winerror.mc:1183
+msgid "Service cannot accept control message.\n"
+msgstr "Tjänsten kan inte acceptera kontrollmeddelande.\n"
+
+#: dlls/kernelbase/winerror.mc:1188
+msgid "Service not active.\n"
+msgstr "Tjänst ej aktiv.\n"
+
+#: dlls/kernelbase/winerror.mc:1193
+msgid "Service controller connect failed.\n"
+msgstr "Anslutning till tjänstens kontrollant misslyckades.\n"
+
+#: dlls/kernelbase/winerror.mc:1198
+msgid "Exception in service.\n"
+msgstr "Undantag i tjänst.\n"
+
+#: dlls/kernelbase/winerror.mc:1203
+msgid "Database does not exist.\n"
+msgstr "Databasen existerar inte.\n"
+
+#: dlls/kernelbase/winerror.mc:1208
+msgid "Service-specific error.\n"
+msgstr "Tjänst-specifikt fel.\n"
+
+#: dlls/kernelbase/winerror.mc:1213
+msgid "Process aborted.\n"
+msgstr "Processen avbröts.\n"
+
+#: dlls/kernelbase/winerror.mc:1218
+msgid "Service dependency failed.\n"
+msgstr "Beroendetjänsten misslyckades.\n"
+
+#: dlls/kernelbase/winerror.mc:1223
+msgid "Service login failed.\n"
+msgstr "Tjänstinloggning misslyckades.\n"
+
+#: dlls/kernelbase/winerror.mc:1228
+msgid "Service start-hang.\n"
+msgstr "Tjänsten hängdes vid start.\n"
+
+#: dlls/kernelbase/winerror.mc:1233
+msgid "Invalid service lock.\n"
+msgstr "Ogiltigt lås för tjänsten.\n"
+
+#: dlls/kernelbase/winerror.mc:1238
+msgid "Service marked for delete.\n"
+msgstr "Tjänst markerad för borttagning.\n"
+
+#: dlls/kernelbase/winerror.mc:1243
+msgid "Service exists.\n"
+msgstr "Tjänsten existerar.\n"
+
+#: dlls/kernelbase/winerror.mc:1248
+msgid "System running last-known-good config.\n"
+msgstr "Systemet kör senaste kända bra inställning.\n"
+
+#: dlls/kernelbase/winerror.mc:1253
+msgid "Service dependency deleted.\n"
+msgstr "Beroendetjänsten borttagen.\n"
+
+#: dlls/kernelbase/winerror.mc:1258
+msgid "Boot already accepted as last-good config.\n"
+msgstr "Boot redan accepterad som senaste bra inställning.\n"
+
+#: dlls/kernelbase/winerror.mc:1263
+msgid "Service not started since last boot.\n"
+msgstr "Tjänst ej startad sedan senaste systemstart.\n"
+
+#: dlls/kernelbase/winerror.mc:1268
+msgid "Duplicate service name.\n"
+msgstr "Upprepat tjänstnamn.\n"
+
+#: dlls/kernelbase/winerror.mc:1273
+msgid "Different service account.\n"
+msgstr "Annat tjänstkonto.\n"
+
+#: dlls/kernelbase/winerror.mc:1278
+msgid "Driver failure cannot be detected.\n"
+msgstr "Drivrutinsfel kan ej upptäckas.\n"
+
+#: dlls/kernelbase/winerror.mc:1283
+msgid "Process abort cannot be detected.\n"
+msgstr "Processavbrott kan ej upptäckas.\n"
+
+#: dlls/kernelbase/winerror.mc:1288
+msgid "No recovery program for service.\n"
+msgstr "Inget återställningsprogram för tjänsten.\n"
+
+#: dlls/kernelbase/winerror.mc:1293
+msgid "Service not implemented by exe.\n"
+msgstr "Tjänsten ej implementerad av exe.\n"
+
+#: dlls/kernelbase/winerror.mc:1298
+msgid "End of media.\n"
+msgstr "Slut på media.\n"
+
+#: dlls/kernelbase/winerror.mc:1303
+msgid "Filemark detected.\n"
+msgstr "Filmarkör upptäckt.\n"
+
+#: dlls/kernelbase/winerror.mc:1308
+msgid "Beginning of media.\n"
+msgstr "Början på media.\n"
+
+#: dlls/kernelbase/winerror.mc:1313
+msgid "Setmark detected.\n"
+msgstr "Setmarkör upptäckt.\n"
+
+#: dlls/kernelbase/winerror.mc:1318
+msgid "No data detected.\n"
+msgstr "Ingen data upptäckt.\n"
+
+#: dlls/kernelbase/winerror.mc:1323
+msgid "Partition failure.\n"
+msgstr "Partitionsfel.\n"
+
+#: dlls/kernelbase/winerror.mc:1328
+msgid "Invalid block length.\n"
+msgstr "Ogiltig blocklängd.\n"
+
+#: dlls/kernelbase/winerror.mc:1333
+msgid "Device not partitioned.\n"
+msgstr "Enheten är ej partitionerad.\n"
+
+#: dlls/kernelbase/winerror.mc:1338
+msgid "Unable to lock media.\n"
+msgstr "Kunde inte låsa media.\n"
+
+#: dlls/kernelbase/winerror.mc:1343
+msgid "Unable to unload media.\n"
+msgstr "Kunde inte mata ut media.\n"
+
+#: dlls/kernelbase/winerror.mc:1348
+msgid "Media changed.\n"
+msgstr "Media ändrades.\n"
+
+#: dlls/kernelbase/winerror.mc:1353
+msgid "I/O bus reset.\n"
+msgstr "I/O-bussen återställdes.\n"
+
+#: dlls/kernelbase/winerror.mc:1358
+msgid "No media in drive.\n"
+msgstr "Inget media i enhet.\n"
+
+#: dlls/kernelbase/winerror.mc:1363
+msgid "No Unicode translation.\n"
+msgstr "Ingen Unicode-översättning.\n"
+
+#: dlls/kernelbase/winerror.mc:1368
+msgid "DLL initialization failed.\n"
+msgstr "DLL-initiering misslyckades.\n"
+
+#: dlls/kernelbase/winerror.mc:1373
+msgid "Shutdown in progress.\n"
+msgstr "Nedstängning pågår.\n"
+
+#: dlls/kernelbase/winerror.mc:1378
+msgid "No shutdown in progress.\n"
+msgstr "Ingen nedstängning pågår.\n"
+
+#: dlls/kernelbase/winerror.mc:1383
+msgid "I/O device error.\n"
+msgstr "I/O-enhetsfel.\n"
+
+#: dlls/kernelbase/winerror.mc:1388
+msgid "No serial devices found.\n"
+msgstr "Inga seriella enheter hittades.\n"
+
+#: dlls/kernelbase/winerror.mc:1393
+msgid "Shared IRQ busy.\n"
+msgstr "Delad IRQ upptagen.\n"
+
+#: dlls/kernelbase/winerror.mc:1398
+msgid "Serial I/O completed.\n"
+msgstr "Seriell I/O slutförd.\n"
+
+#: dlls/kernelbase/winerror.mc:1403
+msgid "Serial I/O counter timeout.\n"
+msgstr "Tiden gick ut för seriella I/O-räknaren.\n"
+
+#: dlls/kernelbase/winerror.mc:1408
+msgid "Floppy ID address mark not found.\n"
+msgstr "ID-adressmärke hittades inte på floppyn.\n"
+
+#: dlls/kernelbase/winerror.mc:1413
+msgid "Floppy reports wrong cylinder.\n"
+msgstr "Floppy uppger fel cylinder.\n"
+
+#: dlls/kernelbase/winerror.mc:1418
+msgid "Unknown floppy error.\n"
+msgstr "Okänt floppyfel.\n"
+
+#: dlls/kernelbase/winerror.mc:1423
+msgid "Floppy registers inconsistent.\n"
+msgstr "Floppyregister inkonsekventa.\n"
+
+#: dlls/kernelbase/winerror.mc:1428
+msgid "Hard disk recalibrate failed.\n"
+msgstr "Omkalibrering av hårddisk misslyckades.\n"
+
+#: dlls/kernelbase/winerror.mc:1433
+msgid "Hard disk operation failed.\n"
+msgstr "Hårddisksoperation misslyckades.\n"
+
+#: dlls/kernelbase/winerror.mc:1438
+msgid "Hard disk reset failed.\n"
+msgstr "Återställning av hårddisk misslyckades.\n"
+
+#: dlls/kernelbase/winerror.mc:1443
+msgid "End of tape media.\n"
+msgstr "Slut på bandet.\n"
+
+#: dlls/kernelbase/winerror.mc:1448
+msgid "Not enough server memory.\n"
+msgstr "Otillräckligt serverminne.\n"
+
+#: dlls/kernelbase/winerror.mc:1453
+msgid "Possible deadlock.\n"
+msgstr "Möjlig deadlock.\n"
+
+#: dlls/kernelbase/winerror.mc:1458
+msgid "Incorrect alignment.\n"
+msgstr "Felaktig justering.\n"
+
+#: dlls/kernelbase/winerror.mc:1463
+msgid "Set-power-state vetoed.\n"
+msgstr "Set-power-state hejdades.\n"
+
+#: dlls/kernelbase/winerror.mc:1468
+msgid "Set-power-state failed.\n"
+msgstr "Set-power-state misslyckades.\n"
+
+#: dlls/kernelbase/winerror.mc:1473
+msgid "Too many links.\n"
+msgstr "För många länkar.\n"
+
+#: dlls/kernelbase/winerror.mc:1478
+msgid "Newer Windows version needed.\n"
+msgstr "Nyare windowsversion krävs.\n"
+
+#: dlls/kernelbase/winerror.mc:1483
+msgid "Wrong operating system.\n"
+msgstr "Fel operativsystem.\n"
+
+#: dlls/kernelbase/winerror.mc:1488
+msgid "Single-instance application.\n"
+msgstr "Endast en instans kan köras av detta program.\n"
+
+#: dlls/kernelbase/winerror.mc:1493
+msgid "Real-mode application.\n"
+msgstr "Real mode-program.\n"
+
+#: dlls/kernelbase/winerror.mc:1498
+msgid "Invalid DLL.\n"
+msgstr "Ogiltig DLL.\n"
+
+#: dlls/kernelbase/winerror.mc:1503
+msgid "No associated application.\n"
+msgstr "Inget associerat program.\n"
+
+#: dlls/kernelbase/winerror.mc:1508
+msgid "DDE failure.\n"
+msgstr "DDE-fel.\n"
+
+#: dlls/kernelbase/winerror.mc:1513
+msgid "DLL not found.\n"
+msgstr "DLL hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:1518
+msgid "Out of user handles.\n"
+msgstr "Inga fler användarreferenser.\n"
+
+#: dlls/kernelbase/winerror.mc:1523
+msgid "Message can only be used in synchronous calls.\n"
+msgstr "Meddelande kan endast användas i synkrona anrop.\n"
+
+#: dlls/kernelbase/winerror.mc:1528
+msgid "The source element is empty.\n"
+msgstr "Källelementet är tomt.\n"
+
+#: dlls/kernelbase/winerror.mc:1533
+msgid "The destination element is full.\n"
+msgstr "Destinationselementet är fullt.\n"
+
+#: dlls/kernelbase/winerror.mc:1538
+msgid "The element address is invalid.\n"
+msgstr "Elementets adress är ogiltig.\n"
+
+#: dlls/kernelbase/winerror.mc:1543
+msgid "The magazine is not present.\n"
+msgstr "Magasinet är inte tillgängligt.\n"
+
+#: dlls/kernelbase/winerror.mc:1548
+msgid "The device needs reinitialization.\n"
+msgstr "Enheten behöver återinitieras.\n"
+
+#: dlls/kernelbase/winerror.mc:1553
+msgid "The device requires cleaning.\n"
+msgstr "Enheten behöver rengöras.\n"
+
+#: dlls/kernelbase/winerror.mc:1558
+msgid "The device door is open.\n"
+msgstr "Enhetsdörren är öppen.\n"
+
+#: dlls/kernelbase/winerror.mc:1563
+msgid "The device is not connected.\n"
+msgstr "Enheten är ej ansluten.\n"
+
+#: dlls/kernelbase/winerror.mc:1568
+msgid "Element not found.\n"
+msgstr "Elementet hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:1573
+msgid "No match found.\n"
+msgstr "Ingen matchning hittades.\n"
+
+#: dlls/kernelbase/winerror.mc:1578
+msgid "Property set not found.\n"
+msgstr "Egenskapsmängden hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:1583
+msgid "Point not found.\n"
+msgstr "Punkten hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:1588
+msgid "No running tracking service.\n"
+msgstr "Ingen spårningstjänst körs.\n"
+
+#: dlls/kernelbase/winerror.mc:1593
+msgid "No such volume ID.\n"
+msgstr "Inget sådant volym-ID.\n"
+
+#: dlls/kernelbase/winerror.mc:1598
+msgid "Unable to remove the file to be replaced.\n"
+msgstr "Kan inte ta bort filen som ska ersättas.\n"
+
+#: dlls/kernelbase/winerror.mc:1603
+msgid "Unable to move the replacement file into place.\n"
+msgstr "Kan inte flytta ersättningsfilen.\n"
+
+#: dlls/kernelbase/winerror.mc:1608
+msgid "Moving the replacement file failed.\n"
+msgstr "Kunde inte flytta ersättningsfilen.\n"
+
+#: dlls/kernelbase/winerror.mc:1613
+msgid "The journal is being deleted.\n"
+msgstr "Journalen tas bort.\n"
+
+#: dlls/kernelbase/winerror.mc:1618
+msgid "The journal is not active.\n"
+msgstr "Jornalen är ej aktiv.\n"
+
+#: dlls/kernelbase/winerror.mc:1623
+msgid "Potential matching file found.\n"
+msgstr "Potentiellt matchande fil funnen.\n"
+
+#: dlls/kernelbase/winerror.mc:1628
+msgid "The journal entry was deleted.\n"
+msgstr "Journalinlägget togs bort.\n"
+
+#: dlls/kernelbase/winerror.mc:1633
+msgid "Invalid device name.\n"
+msgstr "Ogiltigt enhetsnamn.\n"
+
+#: dlls/kernelbase/winerror.mc:1638
+msgid "Connection unavailable.\n"
+msgstr "Anslutning ej tillgänglig.\n"
+
+#: dlls/kernelbase/winerror.mc:1643
+msgid "Device already remembered.\n"
+msgstr "Enhet redan ihågkommen.\n"
+
+#: dlls/kernelbase/winerror.mc:1648
+msgid "No network or bad path.\n"
+msgstr "Inget nätverk eller felaktig sökväg.\n"
+
+#: dlls/kernelbase/winerror.mc:1653
+msgid "Invalid network provider name.\n"
+msgstr "Ogiltigt namn på nätverksleverantör.\n"
+
+#: dlls/kernelbase/winerror.mc:1658
+msgid "Cannot open network connection profile.\n"
+msgstr "Kan inte öppna nätverksanslutningsprofil.\n"
+
+#: dlls/kernelbase/winerror.mc:1663
+msgid "Corrupt network connection profile.\n"
+msgstr "Korrupt nätverksanslutningsprofil.\n"
+
+#: dlls/kernelbase/winerror.mc:1668
+msgid "Not a container.\n"
+msgstr "Inte en container.\n"
+
+#: dlls/kernelbase/winerror.mc:1673
+msgid "Extended error.\n"
+msgstr "Utökat fel.\n"
+
+#: dlls/kernelbase/winerror.mc:1678
+msgid "Invalid group name.\n"
+msgstr "Ogiltigt gruppnamn.\n"
+
+#: dlls/kernelbase/winerror.mc:1683
+msgid "Invalid computer name.\n"
+msgstr "Ogiltigt datornamn.\n"
+
+#: dlls/kernelbase/winerror.mc:1688
+msgid "Invalid event name.\n"
+msgstr "Ogiltigt händelsenamn.\n"
+
+#: dlls/kernelbase/winerror.mc:1693
+msgid "Invalid domain name.\n"
+msgstr "Ogiltigt domännamn.\n"
+
+#: dlls/kernelbase/winerror.mc:1698
+msgid "Invalid service name.\n"
+msgstr "Ogiltigt tjänstnamn.\n"
+
+#: dlls/kernelbase/winerror.mc:1703
+msgid "Invalid network name.\n"
+msgstr "Ogiltigt nätverksnamn.\n"
+
+#: dlls/kernelbase/winerror.mc:1708
+msgid "Invalid share name.\n"
+msgstr "Ogiltigt namn på share.\n"
+
+#: dlls/kernelbase/winerror.mc:1718
+msgid "Invalid message name.\n"
+msgstr "Ogiltigt meddelandenamn.\n"
+
+#: dlls/kernelbase/winerror.mc:1723
+msgid "Invalid message destination.\n"
+msgstr "Ogiltig meddelandedestination.\n"
+
+#: dlls/kernelbase/winerror.mc:1728
+msgid "Session credential conflict.\n"
+msgstr "Inloggningskonflikt mellan sessionerna.\n"
+
+#: dlls/kernelbase/winerror.mc:1733
+msgid "Remote session limit exceeded.\n"
+msgstr "Antalet tillåtna fjärrsessioner överskridet.\n"
+
+#: dlls/kernelbase/winerror.mc:1738
+msgid "Duplicate domain or workgroup name.\n"
+msgstr "Upprepat domän- eller arbetsgruppsnamn.\n"
+
+#: dlls/kernelbase/winerror.mc:1743
+msgid "No network.\n"
+msgstr "Inget nätverk.\n"
+
+#: dlls/kernelbase/winerror.mc:1748
+msgid "Operation canceled by user.\n"
+msgstr "Operationen avbröts av en användare.\n"
+
+#: dlls/kernelbase/winerror.mc:1753
+msgid "File has a user-mapped section.\n"
+msgstr "Filen har en användarmappad sektion.\n"
+
+#: dlls/kernelbase/winerror.mc:1758 dlls/kernelbase/winerror.mc:3783
+msgid "Connection refused.\n"
+msgstr "Anslutning nekades.\n"
+
+#: dlls/kernelbase/winerror.mc:1763
+msgid "Connection gracefully closed.\n"
+msgstr "Anslutningen stängdes graciöst.\n"
+
+#: dlls/kernelbase/winerror.mc:1768
+msgid "Address already associated with transport endpoint.\n"
+msgstr "Adressen redan associerad med transportslutpunkt.\n"
+
+#: dlls/kernelbase/winerror.mc:1773
+msgid "Address not associated with transport endpoint.\n"
+msgstr "Adress ej associerad med transportslutpunkt.\n"
+
+#: dlls/kernelbase/winerror.mc:1778
+msgid "Connection invalid.\n"
+msgstr "Anslutningen ogiltig.\n"
+
+#: dlls/kernelbase/winerror.mc:1783
+msgid "Connection is active.\n"
+msgstr "Anslutningen är aktiv.\n"
+
+#: dlls/kernelbase/winerror.mc:1788
+msgid "Network unreachable.\n"
+msgstr "Nätverket oåtkomligt.\n"
+
+#: dlls/kernelbase/winerror.mc:1793
+msgid "Host unreachable.\n"
+msgstr "Värden oåtkomlig.\n"
+
+#: dlls/kernelbase/winerror.mc:1798
+msgid "Protocol unreachable.\n"
+msgstr "Protokoll oåtkomligt.\n"
+
+#: dlls/kernelbase/winerror.mc:1803
+msgid "Port unreachable.\n"
+msgstr "Port oåtkomlig.\n"
+
+#: dlls/kernelbase/winerror.mc:1808
+msgid "Request aborted.\n"
+msgstr "Förfrågningen avbröts.\n"
+
+#: dlls/kernelbase/winerror.mc:1813
+msgid "Connection aborted.\n"
+msgstr "Anslutningen avbröts.\n"
+
+#: dlls/kernelbase/winerror.mc:1818
+msgid "Please retry operation.\n"
+msgstr "Var god försök operationen igen.\n"
+
+#: dlls/kernelbase/winerror.mc:1823
+msgid "Connection count limit reached.\n"
+msgstr "Gränsen för högsta antal anslutningar har nåtts.\n"
+
+#: dlls/kernelbase/winerror.mc:1828
+msgid "Login time restriction.\n"
+msgstr "Inloggningstidsbegränsning.\n"
+
+#: dlls/kernelbase/winerror.mc:1833
+msgid "Login workstation restriction.\n"
+msgstr "Inloggningsbegränsning för datorn.\n"
+
+#: dlls/kernelbase/winerror.mc:1838
+msgid "Incorrect network address.\n"
+msgstr "Ogiltig nätverksadress.\n"
+
+#: dlls/kernelbase/winerror.mc:1843
+msgid "Service already registered.\n"
+msgstr "Tjänsten redan registrerad.\n"
+
+#: dlls/kernelbase/winerror.mc:1848
+msgid "Service not found.\n"
+msgstr "Tjänsten hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:1853
+msgid "User not authenticated.\n"
+msgstr "Användaren är ej autentiserad.\n"
+
+#: dlls/kernelbase/winerror.mc:1858
+msgid "User not logged on.\n"
+msgstr "Användaren är ej inloggad.\n"
+
+#: dlls/kernelbase/winerror.mc:1863
+msgid "Continue work in progress.\n"
+msgstr "Fortsätt pågående arbete.\n"
+
+#: dlls/kernelbase/winerror.mc:1868
+msgid "Already initialized.\n"
+msgstr "Redan initierad.\n"
+
+#: dlls/kernelbase/winerror.mc:1873
+msgid "No more local devices.\n"
+msgstr "Inga fler lokala enheter.\n"
+
+#: dlls/kernelbase/winerror.mc:1878
+msgid "The site does not exist.\n"
+msgstr "Sidan existerar inte.\n"
+
+#: dlls/kernelbase/winerror.mc:1883
+msgid "The domain controller already exists.\n"
+msgstr "Domänkontrollanten existerar redan.\n"
+
+#: dlls/kernelbase/winerror.mc:1888
+msgid "Supported only when connected.\n"
+msgstr "Stöds endast medan ansluten.\n"
+
+#: dlls/kernelbase/winerror.mc:1893
+msgid "Perform operation even when nothing changed.\n"
+msgstr "Utför operation även då inget ändrats.\n"
+
+#: dlls/kernelbase/winerror.mc:1898
+msgid "The user profile is invalid.\n"
+msgstr "Användarprofilen är ogiltig.\n"
+
+#: dlls/kernelbase/winerror.mc:1903
+msgid "Not supported on Small Business Server.\n"
+msgstr "Stöds ej på Small Business Server.\n"
+
+#: dlls/kernelbase/winerror.mc:1908
+msgid "Not all privileges assigned.\n"
+msgstr "Alla privilegier ej tilldelade.\n"
+
+#: dlls/kernelbase/winerror.mc:1913
+msgid "Some security IDs not mapped.\n"
+msgstr "Vissa säkerhets-ID ej mappade.\n"
+
+#: dlls/kernelbase/winerror.mc:1918
+msgid "No quotas for account.\n"
+msgstr "Inga kvoter för konto.\n"
+
+#: dlls/kernelbase/winerror.mc:1923
+msgid "Local user session key.\n"
+msgstr "Sessionsnyckel för lokal användare.\n"
+
+#: dlls/kernelbase/winerror.mc:1928
+msgid "Password too complex for LM.\n"
+msgstr "Lösenord för komplext för LM.\n"
+
+#: dlls/kernelbase/winerror.mc:1933
+msgid "Unknown revision.\n"
+msgstr "Okänd revision.\n"
+
+#: dlls/kernelbase/winerror.mc:1938
+msgid "Incompatible revision levels.\n"
+msgstr "Inkompatibla revisionsnivåer.\n"
+
+#: dlls/kernelbase/winerror.mc:1943
+msgid "Invalid owner.\n"
+msgstr "Ogiltig ägare.\n"
+
+#: dlls/kernelbase/winerror.mc:1948
+msgid "Invalid primary group.\n"
+msgstr "Ogiltig primär grupp.\n"
+
+#: dlls/kernelbase/winerror.mc:1953
+msgid "No impersonation token.\n"
+msgstr "Ingen symbol för personifiering.\n"
+
+#: dlls/kernelbase/winerror.mc:1958
+msgid "Can't disable mandatory group.\n"
+msgstr "Kan inte inaktivera obligatorisk grupp.\n"
+
+#: dlls/kernelbase/winerror.mc:1963
+msgid "No logon servers available.\n"
+msgstr "Inga inloggningsservrar tillgängliga.\n"
+
+#: dlls/kernelbase/winerror.mc:1968
+msgid "No such logon session.\n"
+msgstr "Ingen sådan inloggningssession.\n"
+
+#: dlls/kernelbase/winerror.mc:1973
+msgid "No such privilege.\n"
+msgstr "Inget sådant privilegium.\n"
+
+#: dlls/kernelbase/winerror.mc:1978
+msgid "Privilege not held.\n"
+msgstr "Har inte nödvändigt privilegium.\n"
+
+#: dlls/kernelbase/winerror.mc:1983
+msgid "Invalid account name.\n"
+msgstr "Ogiltigt kontonamn.\n"
+
+#: dlls/kernelbase/winerror.mc:1988
+msgid "User already exists.\n"
+msgstr "Användaren existerar redan.\n"
+
+#: dlls/kernelbase/winerror.mc:1993
+msgid "No such user.\n"
+msgstr "Ingen sådan användare.\n"
+
+#: dlls/kernelbase/winerror.mc:1998
+msgid "Group already exists.\n"
+msgstr "Gruppen existerar redan.\n"
+
+#: dlls/kernelbase/winerror.mc:2003
+msgid "No such group.\n"
+msgstr "Ingen sådan grupp.\n"
+
+#: dlls/kernelbase/winerror.mc:2008
+msgid "User already in group.\n"
+msgstr "Användare redan i gruppen.\n"
+
+#: dlls/kernelbase/winerror.mc:2013
+msgid "User not in group.\n"
+msgstr "Användare ej i gruppen.\n"
+
+#: dlls/kernelbase/winerror.mc:2018
+msgid "Can't delete last admin user.\n"
+msgstr "Kan inte ta bort sista administratörsanvändaren.\n"
+
+#: dlls/kernelbase/winerror.mc:2023
+msgid "Wrong password.\n"
+msgstr "Fel lösenord.\n"
+
+#: dlls/kernelbase/winerror.mc:2028
+msgid "Ill-formed password.\n"
+msgstr "Ogiltigt lösenord.\n"
+
+#: dlls/kernelbase/winerror.mc:2033
+msgid "Password restriction.\n"
+msgstr "Lösenordsbegränsning.\n"
+
+#: dlls/kernelbase/winerror.mc:2038
+msgid "Logon failure.\n"
+msgstr "Inloggningsfel.\n"
+
+#: dlls/kernelbase/winerror.mc:2043
+msgid "Account restriction.\n"
+msgstr "Kontobegränsning.\n"
+
+#: dlls/kernelbase/winerror.mc:2048
+msgid "Invalid logon hours.\n"
+msgstr "Ogiltiga inloggningstider.\n"
+
+#: dlls/kernelbase/winerror.mc:2053
+msgid "Invalid workstation.\n"
+msgstr "Ej tillåten dator.\n"
+
+#: dlls/kernelbase/winerror.mc:2058
+msgid "Password expired.\n"
+msgstr "Lösenord utgånget.\n"
+
+#: dlls/kernelbase/winerror.mc:2063
+msgid "Account disabled.\n"
+msgstr "Kontot inaktiverat.\n"
+
+#: dlls/kernelbase/winerror.mc:2068
+msgid "No security ID mapped.\n"
+msgstr "Inget säkerhets-ID mappat.\n"
+
+#: dlls/kernelbase/winerror.mc:2073
+msgid "Too many LUIDs requested.\n"
+msgstr "För många LUID efterfrågade.\n"
+
+#: dlls/kernelbase/winerror.mc:2078
+msgid "LUIDs exhausted.\n"
+msgstr "Slut på LUID:er.\n"
+
+#: dlls/kernelbase/winerror.mc:2083
+msgid "Invalid sub authority.\n"
+msgstr "Ogiltig underauktoritet.\n"
+
+#: dlls/kernelbase/winerror.mc:2088
+msgid "Invalid ACL.\n"
+msgstr "Ogiltigt ACL.\n"
+
+#: dlls/kernelbase/winerror.mc:2093
+msgid "Invalid SID.\n"
+msgstr "Ogiltigt SID.\n"
+
+#: dlls/kernelbase/winerror.mc:2098
+msgid "Invalid security descriptor.\n"
+msgstr "Ogiltig säkerhetsdeskriptor.\n"
+
+#: dlls/kernelbase/winerror.mc:2103
+msgid "Bad inherited ACL.\n"
+msgstr "Felaktig ärvd ACL.\n"
+
+#: dlls/kernelbase/winerror.mc:2108
+msgid "Server disabled.\n"
+msgstr "Servern inaktiverad.\n"
+
+#: dlls/kernelbase/winerror.mc:2113
+msgid "Server not disabled.\n"
+msgstr "Servern ej inaktiverad.\n"
+
+#: dlls/kernelbase/winerror.mc:2118
+msgid "Invalid ID authority.\n"
+msgstr "Ogiltig ID-auktoritet.\n"
+
+#: dlls/kernelbase/winerror.mc:2123
+msgid "Allotted space exceeded.\n"
+msgstr "Tilldelat utrymme överskridet.\n"
+
+#: dlls/kernelbase/winerror.mc:2128
+msgid "Invalid group attributes.\n"
+msgstr "Ogiltiga gruppattribut.\n"
+
+#: dlls/kernelbase/winerror.mc:2133
+msgid "Bad impersonation level.\n"
+msgstr "Ogiltig personifieringsnivå.\n"
+
+#: dlls/kernelbase/winerror.mc:2138
+msgid "Can't open anonymous security token.\n"
+msgstr "Kan inte öppna anonym säkerhetssymbol.\n"
+
+#: dlls/kernelbase/winerror.mc:2143
+msgid "Bad validation class.\n"
+msgstr "Felaktig valideringsklass.\n"
+
+#: dlls/kernelbase/winerror.mc:2148
+msgid "Bad token type.\n"
+msgstr "Felaktig symboltyp.\n"
+
+#: dlls/kernelbase/winerror.mc:2153
+msgid "No security on object.\n"
+msgstr "Ingen säkerhet på objekt.\n"
+
+#: dlls/kernelbase/winerror.mc:2158
+msgid "Can't access domain information.\n"
+msgstr "Kan inte komma åt domäninformation.\n"
+
+#: dlls/kernelbase/winerror.mc:2163
+msgid "Invalid server state.\n"
+msgstr "Ogiltigt servertillstånd.\n"
+
+#: dlls/kernelbase/winerror.mc:2168
+msgid "Invalid domain state.\n"
+msgstr "Ogiltigt domäntillstånd.\n"
+
+#: dlls/kernelbase/winerror.mc:2173
+msgid "Invalid domain role.\n"
+msgstr "Ogiltig domänroll.\n"
+
+#: dlls/kernelbase/winerror.mc:2178
+msgid "No such domain.\n"
+msgstr "Ingen sådan domän.\n"
+
+#: dlls/kernelbase/winerror.mc:2183
+msgid "Domain already exists.\n"
+msgstr "Domänen existerar redan.\n"
+
+#: dlls/kernelbase/winerror.mc:2188
+msgid "Domain limit exceeded.\n"
+msgstr "Domängräns överskriden.\n"
+
+#: dlls/kernelbase/winerror.mc:2193
+msgid "Internal database corruption.\n"
+msgstr "Intern databaskorruption.\n"
+
+#: dlls/kernelbase/winerror.mc:2198
+msgid "Internal error.\n"
+msgstr "Internt fel.\n"
+
+#: dlls/kernelbase/winerror.mc:2203
+msgid "Generic access types not mapped.\n"
+msgstr "Generiska åtkomsttyper ej mappade.\n"
+
+#: dlls/kernelbase/winerror.mc:2208
+msgid "Bad descriptor format.\n"
+msgstr "Felaktigt deskriptorformat.\n"
+
+#: dlls/kernelbase/winerror.mc:2213
+msgid "Not a logon process.\n"
+msgstr "Inte en inloggningsprocess.\n"
+
+#: dlls/kernelbase/winerror.mc:2218
+msgid "Logon session ID exists.\n"
+msgstr "Inloggningssessions-ID existerar.\n"
+
+#: dlls/kernelbase/winerror.mc:2223
+msgid "Unknown authentication package.\n"
+msgstr "Okänt autentiseringspaket.\n"
+
+#: dlls/kernelbase/winerror.mc:2228
+msgid "Bad logon session state.\n"
+msgstr "Felaktigt inloggningssessionstillstånd.\n"
+
+#: dlls/kernelbase/winerror.mc:2233
+msgid "Logon session ID collision.\n"
+msgstr "ID-kollision för inloggningssession.\n"
+
+#: dlls/kernelbase/winerror.mc:2238
+msgid "Invalid logon type.\n"
+msgstr "Ogiltig inloggningstyp.\n"
+
+#: dlls/kernelbase/winerror.mc:2243
+msgid "Cannot impersonate.\n"
+msgstr "Kan inte personifiera.\n"
+
+#: dlls/kernelbase/winerror.mc:2248
+msgid "Invalid transaction state.\n"
+msgstr "Ogiltigt överföringstillstånd.\n"
+
+#: dlls/kernelbase/winerror.mc:2253
+msgid "Security DB commit failure.\n"
+msgstr "Skrivfel till säkerhetsdatabasen.\n"
+
+#: dlls/kernelbase/winerror.mc:2258
+msgid "Account is built-in.\n"
+msgstr "Kontot är inbyggt.\n"
+
+#: dlls/kernelbase/winerror.mc:2263
+msgid "Group is built-in.\n"
+msgstr "Gruppen är inbyggd.\n"
+
+#: dlls/kernelbase/winerror.mc:2268
+msgid "User is built-in.\n"
+msgstr "Användaren är inbyggd.\n"
+
+#: dlls/kernelbase/winerror.mc:2273
+msgid "Group is primary for user.\n"
+msgstr "Gruppen är primär för användaren.\n"
+
+#: dlls/kernelbase/winerror.mc:2278
+msgid "Token already in use.\n"
+msgstr "Symbolen används redan.\n"
+
+#: dlls/kernelbase/winerror.mc:2283
+msgid "No such local group.\n"
+msgstr "Ingen sådan lokal grupp.\n"
+
+#: dlls/kernelbase/winerror.mc:2288
+msgid "User not in local group.\n"
+msgstr "Användare ej i lokal grupp.\n"
+
+#: dlls/kernelbase/winerror.mc:2293
+msgid "User already in local group.\n"
+msgstr "Användare redan i lokal grupp.\n"
+
+#: dlls/kernelbase/winerror.mc:2298
+msgid "Local group already exists.\n"
+msgstr "Lokal grupp existerar redan.\n"
+
+#: dlls/kernelbase/winerror.mc:2303 dlls/kernelbase/winerror.mc:2328
+msgid "Logon type not granted.\n"
+msgstr "Inloggningstypen beviljades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:2308
+msgid "Too many secrets.\n"
+msgstr "För många hemligheter.\n"
+
+#: dlls/kernelbase/winerror.mc:2313
+msgid "Secret too long.\n"
+msgstr "Hemligheten för lång.\n"
+
+#: dlls/kernelbase/winerror.mc:2318
+msgid "Internal security DB error.\n"
+msgstr "Fel i intern säkerhetsdatabas.\n"
+
+#: dlls/kernelbase/winerror.mc:2323
+msgid "Too many context IDs.\n"
+msgstr "För många kontext-ID:n.\n"
+
+#: dlls/kernelbase/winerror.mc:2333
+msgid "Cross-encrypted NT password required.\n"
+msgstr "Korskrypterat NT-lösenord krävs.\n"
+
+#: dlls/kernelbase/winerror.mc:2338
+msgid "No such member.\n"
+msgstr "Ingen sådan medlem.\n"
+
+#: dlls/kernelbase/winerror.mc:2343
+msgid "Invalid member.\n"
+msgstr "Ogiltig medlem.\n"
+
+#: dlls/kernelbase/winerror.mc:2348
+msgid "Too many SIDs.\n"
+msgstr "För många SID.\n"
+
+#: dlls/kernelbase/winerror.mc:2353
+msgid "Cross-encrypted LM password required.\n"
+msgstr "Korskrypterat LM-lösenord krävs.\n"
+
+#: dlls/kernelbase/winerror.mc:2358
+msgid "No inheritable components.\n"
+msgstr "Inga ärvbara komponenter.\n"
+
+#: dlls/kernelbase/winerror.mc:2363
+msgid "File or directory corrupt.\n"
+msgstr "Fil eller katalog korrupt.\n"
+
+#: dlls/kernelbase/winerror.mc:2368
+msgid "Disk is corrupt.\n"
+msgstr "Disken är korrupt.\n"
+
+#: dlls/kernelbase/winerror.mc:2373
+msgid "No user session key.\n"
+msgstr "Ingen användarsessionsnyckel.\n"
+
+#: dlls/kernelbase/winerror.mc:2378
+msgid "License quota exceeded.\n"
+msgstr "Licenskvot överskriden.\n"
+
+#: dlls/kernelbase/winerror.mc:2383
+msgid "Wrong target name.\n"
+msgstr "Felaktigt namn på mål.\n"
+
+#: dlls/kernelbase/winerror.mc:2388
+msgid "Mutual authentication failed.\n"
+msgstr "Ömsesidig autentisering misslyckades.\n"
+
+#: dlls/kernelbase/winerror.mc:2393
+msgid "Time skew between client and server.\n"
+msgstr "Det finns en tidsskillnad mellan klienten och servern.\n"
+
+#: dlls/kernelbase/winerror.mc:2398
+msgid "Invalid window handle.\n"
+msgstr "Ogiltig fönsterreferens.\n"
+
+#: dlls/kernelbase/winerror.mc:2403
+msgid "Invalid menu handle.\n"
+msgstr "Ogiltig menyreferens.\n"
+
+#: dlls/kernelbase/winerror.mc:2408
+msgid "Invalid cursor handle.\n"
+msgstr "Ogiltig markörreferens.\n"
+
+#: dlls/kernelbase/winerror.mc:2413
+msgid "Invalid accelerator table handle.\n"
+msgstr "Ogiltig snabbtangentstabellreferens.\n"
+
+#: dlls/kernelbase/winerror.mc:2418
+msgid "Invalid hook handle.\n"
+msgstr "Ogiltig hookreferens.\n"
+
+#: dlls/kernelbase/winerror.mc:2423
+msgid "Invalid DWP handle.\n"
+msgstr "Ogiltig DWP-referens.\n"
+
+#: dlls/kernelbase/winerror.mc:2428
+msgid "Can't create top-level child window.\n"
+msgstr "Kan inte skapa barnfönster på toppnivå.\n"
+
+#: dlls/kernelbase/winerror.mc:2433
+msgid "Can't find window class.\n"
+msgstr "Kan inte hitta fönsterklass.\n"
+
+#: dlls/kernelbase/winerror.mc:2438
+msgid "Window owned by another thread.\n"
+msgstr "Fönster ägt av annan tråd.\n"
+
+#: dlls/kernelbase/winerror.mc:2443
+msgid "Hotkey already registered.\n"
+msgstr "Snabbknapp redan registrerad.\n"
+
+#: dlls/kernelbase/winerror.mc:2448
+msgid "Class already exists.\n"
+msgstr "Klassen existerar redan.\n"
+
+#: dlls/kernelbase/winerror.mc:2453
+msgid "Class does not exist.\n"
+msgstr "Klass existerar inte.\n"
+
+#: dlls/kernelbase/winerror.mc:2458
+msgid "Class has open windows.\n"
+msgstr "Klassen har öppna fönster.\n"
+
+#: dlls/kernelbase/winerror.mc:2463 dlls/mferror/mferror.mc:130
+msgid "Invalid index.\n"
+msgstr "Ogiltigt index.\n"
+
+#: dlls/kernelbase/winerror.mc:2468
+msgid "Invalid icon handle.\n"
+msgstr "Ogiltig ikonreferens.\n"
+
+#: dlls/kernelbase/winerror.mc:2473
+msgid "Private dialog index.\n"
+msgstr "Privat dialogindex.\n"
+
+#: dlls/kernelbase/winerror.mc:2478
+msgid "List box ID not found.\n"
+msgstr "Listrute-ID ej funnet.\n"
+
+#: dlls/kernelbase/winerror.mc:2483
+msgid "No wildcard characters.\n"
+msgstr "Inga jokertecken.\n"
+
+#: dlls/kernelbase/winerror.mc:2488
+msgid "Clipboard not open.\n"
+msgstr "Urklippshanterare ej öppen.\n"
+
+#: dlls/kernelbase/winerror.mc:2493
+msgid "Hotkey not registered.\n"
+msgstr "Snabbknapp ej registrerad.\n"
+
+#: dlls/kernelbase/winerror.mc:2498
+msgid "Not a dialog window.\n"
+msgstr "Inte ett dialogfönster.\n"
+
+#: dlls/kernelbase/winerror.mc:2503
+msgid "Control ID not found.\n"
+msgstr "Kontroll-ID hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:2508
+msgid "Invalid combo box message.\n"
+msgstr "Invalid kombinationsrutemeddelande.\n"
+
+#: dlls/kernelbase/winerror.mc:2513
+msgid "Not a combo box window.\n"
+msgstr "Inte ett kombinationsrutefönster.\n"
+
+#: dlls/kernelbase/winerror.mc:2518
+msgid "Invalid edit height.\n"
+msgstr "Ogiltig höjdändring.\n"
+
+#: dlls/kernelbase/winerror.mc:2523
+msgid "DC not found.\n"
+msgstr "DC ej funnen.\n"
+
+#: dlls/kernelbase/winerror.mc:2528
+msgid "Invalid hook filter.\n"
+msgstr "Ogiltigt hook-filter.\n"
+
+#: dlls/kernelbase/winerror.mc:2533
+msgid "Invalid filter procedure.\n"
+msgstr "Ogiltig filterprocedur.\n"
+
+#: dlls/kernelbase/winerror.mc:2538
+msgid "Hook procedure needs module handle.\n"
+msgstr "Hook-procedur kräver modulreferens.\n"
+
+#: dlls/kernelbase/winerror.mc:2543
+msgid "Global-only hook procedure.\n"
+msgstr "Hook-proceduren enbart global.\n"
+
+#: dlls/kernelbase/winerror.mc:2548
+msgid "Journal hook already set.\n"
+msgstr "Journal-hook redan riggad.\n"
+
+#: dlls/kernelbase/winerror.mc:2553
+msgid "Hook procedure not installed.\n"
+msgstr "Hook-procedur inte installerad.\n"
+
+#: dlls/kernelbase/winerror.mc:2558
+msgid "Invalid list box message.\n"
+msgstr "Ogiltigt listrutemeddelande.\n"
+
+#: dlls/kernelbase/winerror.mc:2563
+msgid "Invalid LB_SETCOUNT sent.\n"
+msgstr "Ogiltig LB_SETCOUNT skickad.\n"
+
+#: dlls/kernelbase/winerror.mc:2568
+msgid "No tab stops on this list box.\n"
+msgstr "Inga tabbstop på denna listruta.\n"
+
+#: dlls/kernelbase/winerror.mc:2573
+msgid "Can't destroy object owned by another thread.\n"
+msgstr "Kan inte förstöra objekt ägt av annan tråd.\n"
+
+#: dlls/kernelbase/winerror.mc:2578
+msgid "Child window menus not allowed.\n"
+msgstr "Barnfönstermenyer ej tillåtna.\n"
+
+#: dlls/kernelbase/winerror.mc:2583
+msgid "Window has no system menu.\n"
+msgstr "Fönstret har ingen systemmeny.\n"
+
+#: dlls/kernelbase/winerror.mc:2588
+msgid "Invalid message box style.\n"
+msgstr "Ogiltig stil på meddelanderuta.\n"
+
+#: dlls/kernelbase/winerror.mc:2593
+msgid "Invalid SPI parameter.\n"
+msgstr "Ogiltig SPI-parameter.\n"
+
+#: dlls/kernelbase/winerror.mc:2598
+msgid "Screen already locked.\n"
+msgstr "Skärm redan låst.\n"
+
+#: dlls/kernelbase/winerror.mc:2603
+msgid "Window handles have different parents.\n"
+msgstr "Fönsterreferenserna har olika föräldrar.\n"
+
+#: dlls/kernelbase/winerror.mc:2608
+msgid "Not a child window.\n"
+msgstr "Inte ett barnfönster.\n"
+
+#: dlls/kernelbase/winerror.mc:2613
+msgid "Invalid GW command.\n"
+msgstr "Ogiltigt GW-kommando.\n"
+
+#: dlls/kernelbase/winerror.mc:2618
+msgid "Invalid thread ID.\n"
+msgstr "Ogiltigt tråd-ID.\n"
+
+#: dlls/kernelbase/winerror.mc:2623
+msgid "Not an MDI child window.\n"
+msgstr "Inte ett MDI-barnfönster.\n"
+
+#: dlls/kernelbase/winerror.mc:2628
+msgid "Popup menu already active.\n"
+msgstr "Popupmeny redan aktiv.\n"
+
+#: dlls/kernelbase/winerror.mc:2633
+msgid "No scrollbars.\n"
+msgstr "Inga rullningslister.\n"
+
+#: dlls/kernelbase/winerror.mc:2638
+msgid "Invalid scrollbar range.\n"
+msgstr "Ogiltigt rullningslistintervall.\n"
+
+#: dlls/kernelbase/winerror.mc:2643
+msgid "Invalid ShowWin command.\n"
+msgstr "Ogiltigt ShowWin-kommando.\n"
+
+#: dlls/kernelbase/winerror.mc:2648
+msgid "No system resources.\n"
+msgstr "Inga systemresurser.\n"
+
+#: dlls/kernelbase/winerror.mc:2653
+msgid "No non-paged system resources.\n"
+msgstr "Inga oväxlade systemresurser.\n"
+
+#: dlls/kernelbase/winerror.mc:2658
+msgid "No paged system resources.\n"
+msgstr "Inga växlade systemresurser.\n"
+
+#: dlls/kernelbase/winerror.mc:2663
+msgid "No working set quota.\n"
+msgstr "Ingen fungerande kvot satt.\n"
+
+#: dlls/kernelbase/winerror.mc:2668
+msgid "No page file quota.\n"
+msgstr "Ingen växlingsfilkvot.\n"
+
+#: dlls/kernelbase/winerror.mc:2673
+msgid "Exceeded commitment limit.\n"
+msgstr "Överskred commitment-gräns.\n"
+
+#: dlls/kernelbase/winerror.mc:2678
+msgid "Menu item not found.\n"
+msgstr "Menypost ej funnen.\n"
+
+#: dlls/kernelbase/winerror.mc:2683
+msgid "Invalid keyboard handle.\n"
+msgstr "Ogiltig tangentbordsreferens.\n"
+
+#: dlls/kernelbase/winerror.mc:2688
+msgid "Hook type not allowed.\n"
+msgstr "Hook-typen ej tillåten.\n"
+
+#: dlls/kernelbase/winerror.mc:2693
+msgid "Interactive window station required.\n"
+msgstr "En interaktiv fönsterstation krävs.\n"
+
+#: dlls/kernelbase/winerror.mc:2698
+msgid "Timeout.\n"
+msgstr "Tidsgräns överstigen.\n"
+
+#: dlls/kernelbase/winerror.mc:2703
+msgid "Invalid monitor handle.\n"
+msgstr "Ogiltig skärmreferens.\n"
+
+#: dlls/kernelbase/winerror.mc:2708
+msgid "Event log file corrupt.\n"
+msgstr "Händelseloggfil korrupt.\n"
+
+#: dlls/kernelbase/winerror.mc:2713
+msgid "Event log can't start.\n"
+msgstr "Händelselogg kan inte starta.\n"
+
+#: dlls/kernelbase/winerror.mc:2718
+msgid "Event log file full.\n"
+msgstr "Händelseloggfil full.\n"
+
+#: dlls/kernelbase/winerror.mc:2723
+msgid "Event log file changed.\n"
+msgstr "Händelseloggfil ändrad.\n"
+
+#: dlls/kernelbase/winerror.mc:2728
+msgid "Installer service failed.\n"
+msgstr "Installationstjänsten misslyckades.\n"
+
+#: dlls/kernelbase/winerror.mc:2733
+msgid "Installation aborted by user.\n"
+msgstr "Installation avbruten av användare.\n"
+
+#: dlls/kernelbase/winerror.mc:2738
+msgid "Installation failure.\n"
+msgstr "Installationsfel.\n"
+
+#: dlls/kernelbase/winerror.mc:2743
+msgid "Installation suspended.\n"
+msgstr "Installationen avbruten.\n"
+
+#: dlls/kernelbase/winerror.mc:2748
+msgid "Unknown product.\n"
+msgstr "Okänd produkt.\n"
+
+#: dlls/kernelbase/winerror.mc:2753
+msgid "Unknown feature.\n"
+msgstr "Okänd egenskap.\n"
+
+#: dlls/kernelbase/winerror.mc:2758
+msgid "Unknown component.\n"
+msgstr "Okänd komponent.\n"
+
+#: dlls/kernelbase/winerror.mc:2763
+msgid "Unknown property.\n"
+msgstr "Okänd egenskap.\n"
+
+#: dlls/kernelbase/winerror.mc:2768
+msgid "Invalid handle state.\n"
+msgstr "Ogiltigt referenstillstånd.\n"
+
+#: dlls/kernelbase/winerror.mc:2773
+msgid "Bad configuration.\n"
+msgstr "Ogiltig konfiguration.\n"
+
+#: dlls/kernelbase/winerror.mc:2778
+msgid "Index is missing.\n"
+msgstr "Index saknas.\n"
+
+#: dlls/kernelbase/winerror.mc:2783
+msgid "Installation source is missing.\n"
+msgstr "Installationskälla saknas.\n"
+
+#: dlls/kernelbase/winerror.mc:2788
+msgid "Wrong installation package version.\n"
+msgstr "Fel version av installationspaket.\n"
+
+#: dlls/kernelbase/winerror.mc:2793
+msgid "Product uninstalled.\n"
+msgstr "Produkten avinstallerad.\n"
+
+#: dlls/kernelbase/winerror.mc:2798
+msgid "Invalid query syntax.\n"
+msgstr "Ogiltig frågesyntax.\n"
+
+#: dlls/kernelbase/winerror.mc:2803
+msgid "Invalid field.\n"
+msgstr "Ogiltigt fält.\n"
+
+#: dlls/kernelbase/winerror.mc:2808
+msgid "Device removed.\n"
+msgstr "Enhet borttagen.\n"
+
+#: dlls/kernelbase/winerror.mc:2813
+msgid "Installation already running.\n"
+msgstr "Installationen körs redan.\n"
+
+#: dlls/kernelbase/winerror.mc:2818
+msgid "Installation package failed to open.\n"
+msgstr "Installationspaketet öppnades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:2823
+msgid "Installation package is invalid.\n"
+msgstr "Installationspaketet är ogiltigt.\n"
+
+#: dlls/kernelbase/winerror.mc:2828
+msgid "Installer user interface failed.\n"
+msgstr "Användargränssnittet för installationsprogrammet misslyckades.\n"
+
+#: dlls/kernelbase/winerror.mc:2833
+msgid "Failed to open installation log file.\n"
+msgstr "Kunde inte öppna installationslogg.\n"
+
+#: dlls/kernelbase/winerror.mc:2838
+msgid "Installation language not supported.\n"
+msgstr "Installationsspråket stöds inte.\n"
+
+#: dlls/kernelbase/winerror.mc:2843
+msgid "Installation transform failed to apply.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:2848
+msgid "Installation package rejected.\n"
+msgstr "Installationspaketet avslogs.\n"
+
+#: dlls/kernelbase/winerror.mc:2853
+msgid "Function could not be called.\n"
+msgstr "Funktionen kunde inte anropas.\n"
+
+#: dlls/kernelbase/winerror.mc:2858
+msgid "Function failed.\n"
+msgstr "Funktionen misslyckades.\n"
+
+#: dlls/kernelbase/winerror.mc:2863
+msgid "Invalid table.\n"
+msgstr "Ogiltig tabell.\n"
+
+#: dlls/kernelbase/winerror.mc:2868
+msgid "Data type mismatch.\n"
+msgstr "Datatyperna överensstämmer inte.\n"
+
+#: dlls/kernelbase/winerror.mc:2873 dlls/kernelbase/winerror.mc:3083
+msgid "Unsupported type.\n"
+msgstr "Ej stödd typ.\n"
+
+#: dlls/kernelbase/winerror.mc:2878
+msgid "Creation failed.\n"
+msgstr "Kunde inte skapa.\n"
+
+#: dlls/kernelbase/winerror.mc:2883
+msgid "Temporary directory not writable.\n"
+msgstr "Tillfällig katalog ej skrivbar.\n"
+
+#: dlls/kernelbase/winerror.mc:2888
+msgid "Installation platform not supported.\n"
+msgstr "Installationsplattformen stöds inte.\n"
+
+#: dlls/kernelbase/winerror.mc:2893
+msgid "Installer not used.\n"
+msgstr "Installationsprogrammet ej använt.\n"
+
+#: dlls/kernelbase/winerror.mc:2898
+msgid "Failed to open the patch package.\n"
+msgstr "Kunde inte öppna korrigeringspaketet.\n"
+
+#: dlls/kernelbase/winerror.mc:2903
+msgid "Invalid patch package.\n"
+msgstr "Ogiltigt korrigeringspaket.\n"
+
+#: dlls/kernelbase/winerror.mc:2908
+msgid "Unsupported patch package.\n"
+msgstr "Ej stött korrigeringspaket.\n"
+
+#: dlls/kernelbase/winerror.mc:2913
+msgid "Another version is installed.\n"
+msgstr "En annan version är installerad.\n"
+
+#: dlls/kernelbase/winerror.mc:2918
+msgid "Invalid command line.\n"
+msgstr "Ogiltig kommandorad.\n"
+
+#: dlls/kernelbase/winerror.mc:2923
+msgid "Remote installation not allowed.\n"
+msgstr "Fjärrinstallation ej tillåten.\n"
+
+#: dlls/kernelbase/winerror.mc:2928
+msgid "Reboot initiated after successful install.\n"
+msgstr "Omstart påbörjad efter lyckad installation.\n"
+
+#: dlls/kernelbase/winerror.mc:2933
+msgid "Invalid string binding.\n"
+msgstr "Ogiltig strängbindning.\n"
+
+#: dlls/kernelbase/winerror.mc:2938
+msgid "Wrong kind of binding.\n"
+msgstr "Fel sorts bindning.\n"
+
+#: dlls/kernelbase/winerror.mc:2943
+msgid "Invalid binding.\n"
+msgstr "Ogiltig bindning.\n"
+
+#: dlls/kernelbase/winerror.mc:2948
+msgid "RPC protocol sequence not supported.\n"
+msgstr "RPC-protokollsekvens stöds ej.\n"
+
+#: dlls/kernelbase/winerror.mc:2953
+msgid "Invalid RPC protocol sequence.\n"
+msgstr "Ogiltig RPC-protokollsekvens.\n"
+
+#: dlls/kernelbase/winerror.mc:2958
+msgid "Invalid string UUID.\n"
+msgstr "Ogiltigt sträng-UUID.\n"
+
+#: dlls/kernelbase/winerror.mc:2963
+msgid "Invalid endpoint format.\n"
+msgstr "Ogiltigt slutpunktsformat.\n"
+
+#: dlls/kernelbase/winerror.mc:2968
+msgid "Invalid network address.\n"
+msgstr "Ogiltig nätverksadress.\n"
+
+#: dlls/kernelbase/winerror.mc:2973
+msgid "No endpoint found.\n"
+msgstr "Ingen slutpunkt funnen.\n"
+
+#: dlls/kernelbase/winerror.mc:2978
+msgid "Invalid timeout value.\n"
+msgstr "Ogiltigt timeoutvärde.\n"
+
+#: dlls/kernelbase/winerror.mc:2983
+msgid "Object UUID not found.\n"
+msgstr "Objekt-UUID ej funnet.\n"
+
+#: dlls/kernelbase/winerror.mc:2988
+msgid "UUID already registered.\n"
+msgstr "UUID redan registrerat.\n"
+
+#: dlls/kernelbase/winerror.mc:2993
+msgid "UUID type already registered.\n"
+msgstr "UUID-typ redan registrerad.\n"
+
+#: dlls/kernelbase/winerror.mc:2998
+msgid "Server already listening.\n"
+msgstr "Servern lyssnar redan.\n"
+
+#: dlls/kernelbase/winerror.mc:3003
+msgid "No protocol sequences registered.\n"
+msgstr "Inga protokollsekvenser registrerade.\n"
+
+#: dlls/kernelbase/winerror.mc:3008
+msgid "RPC server not listening.\n"
+msgstr "RPC-servern lyssnar inte.\n"
+
+#: dlls/kernelbase/winerror.mc:3013
+msgid "Unknown manager type.\n"
+msgstr "Okänd hanterartyp.\n"
+
+#: dlls/kernelbase/winerror.mc:3018
+msgid "Unknown interface.\n"
+msgstr "Okänt gränssnitt.\n"
+
+#: dlls/kernelbase/winerror.mc:3023
+msgid "No bindings.\n"
+msgstr "Inga bindningar.\n"
+
+#: dlls/kernelbase/winerror.mc:3028
+msgid "No protocol sequences.\n"
+msgstr "Inga protokollsekvenser.\n"
+
+#: dlls/kernelbase/winerror.mc:3033
+msgid "Can't create endpoint.\n"
+msgstr "Kan inte skapa slutpunkt.\n"
+
+#: dlls/kernelbase/winerror.mc:3038
+msgid "Out of resources.\n"
+msgstr "Slut på resurser.\n"
+
+#: dlls/kernelbase/winerror.mc:3043
+msgid "RPC server unavailable.\n"
+msgstr "RPC-servern otillgänglig.\n"
+
+#: dlls/kernelbase/winerror.mc:3048
+msgid "RPC server too busy.\n"
+msgstr "RPC-servern är för upptagen.\n"
+
+#: dlls/kernelbase/winerror.mc:3053
+msgid "Invalid network options.\n"
+msgstr "Ogiltiga nätverksval.\n"
+
+#: dlls/kernelbase/winerror.mc:3058
+msgid "No RPC call active.\n"
+msgstr "Inget RPC-anrop aktivt.\n"
+
+#: dlls/kernelbase/winerror.mc:3063
+msgid "RPC call failed.\n"
+msgstr "RPC-anrop misslyckades.\n"
+
+#: dlls/kernelbase/winerror.mc:3068
+msgid "RPC call failed and didn't execute.\n"
+msgstr "RPC-anrop misslyckades och exekverades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:3073
+msgid "RPC protocol error.\n"
+msgstr "RPC-protokollfel.\n"
+
+#: dlls/kernelbase/winerror.mc:3078
+msgid "Unsupported transfer syntax.\n"
+msgstr "Ej stött överföringssyntax.\n"
+
+#: dlls/kernelbase/winerror.mc:3088
+msgid "Invalid tag.\n"
+msgstr "Ogiltig tagg.\n"
+
+#: dlls/kernelbase/winerror.mc:3093
+msgid "Invalid array bounds.\n"
+msgstr "Ogiltiga arraygränser.\n"
+
+#: dlls/kernelbase/winerror.mc:3098
+msgid "No entry name.\n"
+msgstr "Inget postnamn.\n"
+
+#: dlls/kernelbase/winerror.mc:3103
+msgid "Invalid name syntax.\n"
+msgstr "Ogiltig namnsyntax.\n"
+
+#: dlls/kernelbase/winerror.mc:3108
+msgid "Unsupported name syntax.\n"
+msgstr "Ej stött namnsyntax.\n"
+
+#: dlls/kernelbase/winerror.mc:3113
+msgid "No network address.\n"
+msgstr "Ingen nätverksadress.\n"
+
+#: dlls/kernelbase/winerror.mc:3118
+msgid "Duplicate endpoint.\n"
+msgstr "Upprepad slutpunkt.\n"
+
+#: dlls/kernelbase/winerror.mc:3123
+msgid "Unknown authentication type.\n"
+msgstr "Okänd autentiseringstyp.\n"
+
+#: dlls/kernelbase/winerror.mc:3128
+msgid "Maximum calls too low.\n"
+msgstr "Maximalt antal anrop för lågt.\n"
+
+#: dlls/kernelbase/winerror.mc:3133
+msgid "String too long.\n"
+msgstr "Strängen för lång.\n"
+
+#: dlls/kernelbase/winerror.mc:3138
+msgid "Protocol sequence not found.\n"
+msgstr "Protokollsekvens ej funnen.\n"
+
+#: dlls/kernelbase/winerror.mc:3143
+msgid "Procedure number out of range.\n"
+msgstr "Procedurnummer utanför giltigt intervall.\n"
+
+#: dlls/kernelbase/winerror.mc:3148
+msgid "Binding has no authentication data.\n"
+msgstr "Bindningen har inget autentiseringsdata.\n"
+
+#: dlls/kernelbase/winerror.mc:3153
+msgid "Unknown authentication service.\n"
+msgstr "Okänd autentiseringstjänst.\n"
+
+#: dlls/kernelbase/winerror.mc:3158
+msgid "Unknown authentication level.\n"
+msgstr "Okänd autentiseringsnivå.\n"
+
+#: dlls/kernelbase/winerror.mc:3163
+msgid "Invalid authentication identity.\n"
+msgstr "Okänd autentiseringsidentitet.\n"
+
+#: dlls/kernelbase/winerror.mc:3168
+msgid "Unknown authorization service.\n"
+msgstr "Okänd auktoriseringstjänst.\n"
+
+#: dlls/kernelbase/winerror.mc:3173
+msgid "Invalid entry.\n"
+msgstr "Ogiltig post.\n"
+
+#: dlls/kernelbase/winerror.mc:3178
+msgid "Can't perform operation.\n"
+msgstr "Kan inte utföra operationen.\n"
+
+#: dlls/kernelbase/winerror.mc:3183
+msgid "Endpoints not registered.\n"
+msgstr "Slutpunkter ej registrerade.\n"
+
+#: dlls/kernelbase/winerror.mc:3188
+msgid "Nothing to export.\n"
+msgstr "Inget att exportera.\n"
+
+#: dlls/kernelbase/winerror.mc:3193
+msgid "Incomplete name.\n"
+msgstr "Inkomplett namn.\n"
+
+#: dlls/kernelbase/winerror.mc:3198
+msgid "Invalid version option.\n"
+msgstr "Ogiltigt versionsval.\n"
+
+#: dlls/kernelbase/winerror.mc:3203
+msgid "No more members.\n"
+msgstr "Inga fler medlemmar.\n"
+
+#: dlls/kernelbase/winerror.mc:3208
+msgid "Not all objects unexported.\n"
+msgstr "Alla objekt avexporterades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:3213
+msgid "Interface not found.\n"
+msgstr "Gränssnitt hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:3218
+msgid "Entry already exists.\n"
+msgstr "Posten existerar redan.\n"
+
+#: dlls/kernelbase/winerror.mc:3223
+msgid "Entry not found.\n"
+msgstr "Posten hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:3228
+msgid "Name service unavailable.\n"
+msgstr "Namntjänst otillgänglig.\n"
+
+#: dlls/kernelbase/winerror.mc:3233
+msgid "Invalid network address family.\n"
+msgstr "Ogiltig nätverksadressfamilj.\n"
+
+#: dlls/kernelbase/winerror.mc:3238
+msgid "Operation not supported.\n"
+msgstr "Operationen stöds inte.\n"
+
+#: dlls/kernelbase/winerror.mc:3243
+msgid "No security context available.\n"
+msgstr "Ingen säkerhetskontext tillgänglig.\n"
+
+#: dlls/kernelbase/winerror.mc:3248
+msgid "RPCInternal error.\n"
+msgstr "RPCInternal-fel.\n"
+
+#: dlls/kernelbase/winerror.mc:3253
+msgid "RPC divide-by-zero.\n"
+msgstr "Division med noll för RPC.\n"
+
+#: dlls/kernelbase/winerror.mc:3258
+msgid "Address error.\n"
+msgstr "Adressfel.\n"
+
+#: dlls/kernelbase/winerror.mc:3263
+msgid "Floating-point divide-by-zero.\n"
+msgstr "Division med noll för flyttal.\n"
+
+#: dlls/kernelbase/winerror.mc:3268
+msgid "Floating-point underflow.\n"
+msgstr "Flyttalsunderspill.\n"
+
+#: dlls/kernelbase/winerror.mc:3273
+msgid "Floating-point overflow.\n"
+msgstr "Flyttalsöverspill.\n"
+
+#: dlls/kernelbase/winerror.mc:3278
+msgid "No more entries.\n"
+msgstr "Inga fler poster.\n"
+
+#: dlls/kernelbase/winerror.mc:3283
+msgid "Character translation table open failed.\n"
+msgstr "Kunde inte öppna teckenomvandlingstabellen.\n"
+
+#: dlls/kernelbase/winerror.mc:3288
+msgid "Character translation table file too small.\n"
+msgstr "Teckenomvandlingstabellens fil är för liten.\n"
+
+#: dlls/kernelbase/winerror.mc:3293
+msgid "Null context handle.\n"
+msgstr "Nullkontext-referens.\n"
+
+#: dlls/kernelbase/winerror.mc:3298
+msgid "Context handle damaged.\n"
+msgstr "Kontextreferens skadad.\n"
+
+#: dlls/kernelbase/winerror.mc:3303
+msgid "Binding handle mismatch.\n"
+msgstr "Bindningsreferensen överensstämmer inte.\n"
+
+#: dlls/kernelbase/winerror.mc:3308
+msgid "Cannot get call handle.\n"
+msgstr "Kan inte erhålla anropsreferens.\n"
+
+#: dlls/kernelbase/winerror.mc:3313
+msgid "Null reference pointer.\n"
+msgstr "Nullreferens-pekare.\n"
+
+#: dlls/kernelbase/winerror.mc:3318
+msgid "Enumeration value out of range.\n"
+msgstr "Uppräkningsvärde utanför giltigt intervall.\n"
+
+#: dlls/kernelbase/winerror.mc:3323
+msgid "Byte count too small.\n"
+msgstr "Byteantalet för litet.\n"
+
+#: dlls/kernelbase/winerror.mc:3328
+msgid "Bad stub data.\n"
+msgstr "Felaktigt stub-data.\n"
+
+#: dlls/kernelbase/winerror.mc:3333
+msgid "Invalid user buffer.\n"
+msgstr "Ogiltig användarbuffert.\n"
+
+#: dlls/kernelbase/winerror.mc:3338
+msgid "Unrecognized media.\n"
+msgstr "Ej igenkänt media.\n"
+
+#: dlls/kernelbase/winerror.mc:3343
+msgid "No trust secret.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:3348
+msgid "No trust SAM account.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:3353
+msgid "Trusted domain failure.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:3358
+msgid "Trusted relationship failure.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:3363
+msgid "Trust logon failure.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:3368
+msgid "RPC call already in progress.\n"
+msgstr "RPC-anrop pågår redan.\n"
+
+#: dlls/kernelbase/winerror.mc:3373
+msgid "NETLOGON is not started.\n"
+msgstr "NETLOGON ej startat.\n"
+
+#: dlls/kernelbase/winerror.mc:3378
+msgid "Account expired.\n"
+msgstr "Kontot utgånget.\n"
+
+#: dlls/kernelbase/winerror.mc:3383
+msgid "Redirector has open handles.\n"
+msgstr "Omdirigeraren har öppna referenser.\n"
+
+#: dlls/kernelbase/winerror.mc:3388
+msgid "Printer driver already installed.\n"
+msgstr "Skrivardrivrutin redan installerad.\n"
+
+#: dlls/kernelbase/winerror.mc:3393
+msgid "Unknown port.\n"
+msgstr "Okänd port.\n"
+
+#: dlls/kernelbase/winerror.mc:3398
+msgid "Unknown printer driver.\n"
+msgstr "Okänd skrivardrivrutin.\n"
+
+#: dlls/kernelbase/winerror.mc:3403
+msgid "Unknown print processor.\n"
+msgstr "Okänd utskriftsprocessor.\n"
+
+#: dlls/kernelbase/winerror.mc:3408
+msgid "Invalid separator file.\n"
+msgstr "Ogiltig separatorfil.\n"
+
+#: dlls/kernelbase/winerror.mc:3413
+msgid "Invalid priority.\n"
+msgstr "Ogiltig prioritet.\n"
+
+#: dlls/kernelbase/winerror.mc:3418
+msgid "Invalid printer name.\n"
+msgstr "Ogiltigt skrivarnamn.\n"
+
+#: dlls/kernelbase/winerror.mc:3423
+msgid "Printer already exists.\n"
+msgstr "Skrivaren existerar redan.\n"
+
+#: dlls/kernelbase/winerror.mc:3428
+msgid "Invalid printer command.\n"
+msgstr "Ogiltigt skrivarkommando.\n"
+
+#: dlls/kernelbase/winerror.mc:3433
+msgid "Invalid data type.\n"
+msgstr "Ogiltig datatyp.\n"
+
+#: dlls/kernelbase/winerror.mc:3438
+msgid "Invalid environment.\n"
+msgstr "Ogiltig miljö.\n"
+
+#: dlls/kernelbase/winerror.mc:3443
+msgid "No more bindings.\n"
+msgstr "Inga fler bindningar.\n"
+
+#: dlls/kernelbase/winerror.mc:3448
+msgid "Can't log on with inter-domain trust account.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:3453
+msgid "Can't log on with workstation trust account.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:3458
+msgid "Can't log on with server trust account.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:3463
+msgid "Domain trust information inconsistent.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:3468
+msgid "Server has open handles.\n"
+msgstr "Server har öppna referenser.\n"
+
+#: dlls/kernelbase/winerror.mc:3473
+msgid "Resource data not found.\n"
+msgstr "Resursdata hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:3478
+msgid "Resource type not found.\n"
+msgstr "Resurstyp hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:3483
+msgid "Resource name not found.\n"
+msgstr "Resursnamn hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:3488
+msgid "Resource language not found.\n"
+msgstr "Resursspråk hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:3493
+msgid "Not enough quota.\n"
+msgstr "Otillräcklig kvot.\n"
+
+#: dlls/kernelbase/winerror.mc:3498
+msgid "No interfaces.\n"
+msgstr "Inga gränssnitt.\n"
+
+#: dlls/kernelbase/winerror.mc:3503
+msgid "RPC call canceled.\n"
+msgstr "RPC-anrop avbröts.\n"
+
+#: dlls/kernelbase/winerror.mc:3508
+msgid "Binding incomplete.\n"
+msgstr "Bindning ej komplett.\n"
+
+#: dlls/kernelbase/winerror.mc:3513
+msgid "RPC comm failure.\n"
+msgstr "RPC-kommunikationsfel.\n"
+
+#: dlls/kernelbase/winerror.mc:3518
+msgid "Unsupported authorization level.\n"
+msgstr "Ostödd auktoriseringsnivå.\n"
+
+#: dlls/kernelbase/winerror.mc:3523
+msgid "No principal name registered.\n"
+msgstr "Inget principalnamn registrerat.\n"
+
+#: dlls/kernelbase/winerror.mc:3528
+msgid "Not an RPC error.\n"
+msgstr "Inte ett RPC-fel.\n"
+
+#: dlls/kernelbase/winerror.mc:3533
+msgid "UUID is local only.\n"
+msgstr "UUID är endast lokalt.\n"
+
+#: dlls/kernelbase/winerror.mc:3538
+msgid "Security package error.\n"
+msgstr "Säkerhetspaket-fel.\n"
+
+#: dlls/kernelbase/winerror.mc:3543
+msgid "Thread not canceled.\n"
+msgstr "Tråd ej avbruten.\n"
+
+#: dlls/kernelbase/winerror.mc:3548
+msgid "Invalid handle operation.\n"
+msgstr "Ogiltig referensoperation.\n"
+
+#: dlls/kernelbase/winerror.mc:3553
+msgid "Wrong serializing package version.\n"
+msgstr "Fel serialiserande paketversion.\n"
+
+#: dlls/kernelbase/winerror.mc:3558
+msgid "Wrong stub version.\n"
+msgstr "Fel stub-version.\n"
+
+#: dlls/kernelbase/winerror.mc:3563
+msgid "Invalid pipe object.\n"
+msgstr "Ogiltigt rör.\n"
+
+#: dlls/kernelbase/winerror.mc:3568
+msgid "Wrong pipe order.\n"
+msgstr "Fel ordning på röret.\n"
+
+#: dlls/kernelbase/winerror.mc:3573
+msgid "Wrong pipe version.\n"
+msgstr "Fel version på röret.\n"
+
+#: dlls/kernelbase/winerror.mc:3578
+msgid "Group member not found.\n"
+msgstr "Gruppmedlem ej funnen.\n"
+
+#: dlls/kernelbase/winerror.mc:3583
+msgid "Can't create endpoint mapper DB.\n"
+msgstr "Kan inte skapa Endpoint mapper-databas.\n"
+
+#: dlls/kernelbase/winerror.mc:3588
+msgid "Invalid object.\n"
+msgstr "Ogiltigt objekt.\n"
+
+#: dlls/kernelbase/winerror.mc:3593
+msgid "Invalid time.\n"
+msgstr "Ogiltig tid.\n"
+
+#: dlls/kernelbase/winerror.mc:3598
+msgid "Invalid form name.\n"
+msgstr "Ogiltigt formulärnamn.\n"
+
+#: dlls/kernelbase/winerror.mc:3603
+msgid "Invalid form size.\n"
+msgstr "Ogiltig formulärstorlek.\n"
+
+#: dlls/kernelbase/winerror.mc:3608
+msgid "Already awaiting printer handle.\n"
+msgstr "Väntar redan på skrivarreferens.\n"
+
+#: dlls/kernelbase/winerror.mc:3613
+msgid "Printer deleted.\n"
+msgstr "Skrivare borttagen.\n"
+
+#: dlls/kernelbase/winerror.mc:3618
+msgid "Invalid printer state.\n"
+msgstr "Ogiltigt skrivartillstånd.\n"
+
+#: dlls/kernelbase/winerror.mc:3623
+msgid "User must change password.\n"
+msgstr "Användaren måste byta lösenord.\n"
+
+#: dlls/kernelbase/winerror.mc:3628
+msgid "Domain controller not found.\n"
+msgstr "Domänkontrollanten hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:3633
+msgid "Account locked out.\n"
+msgstr "Konto utlåst.\n"
+
+#: dlls/kernelbase/winerror.mc:3638
+msgid "Invalid pixel format.\n"
+msgstr "Ogiltigt pixelformat.\n"
+
+#: dlls/kernelbase/winerror.mc:3643
+msgid "Invalid driver.\n"
+msgstr "Ogiltig drivrutin.\n"
+
+#: dlls/kernelbase/winerror.mc:3648
+msgid "Invalid object resolver set.\n"
+msgstr "Ogiltig objekt-resolver vald.\n"
+
+#: dlls/kernelbase/winerror.mc:3653
+msgid "Incomplete RPC send.\n"
+msgstr "Inkomplett RPC send.\n"
+
+#: dlls/kernelbase/winerror.mc:3658
+msgid "Invalid asynchronous RPC handle.\n"
+msgstr "Ogiltig asynkron RPC-referens.\n"
+
+#: dlls/kernelbase/winerror.mc:3663
+msgid "Invalid asynchronous RPC call.\n"
+msgstr "Ogiltigt asynkront RPC-anrop.\n"
+
+#: dlls/kernelbase/winerror.mc:3668
+msgid "RPC pipe closed.\n"
+msgstr "RPC-rör stängt.\n"
+
+#: dlls/kernelbase/winerror.mc:3673
+msgid "Discipline error on RPC pipe.\n"
+msgstr "Disciplinfel på RPC-rör.\n"
+
+#: dlls/kernelbase/winerror.mc:3678
+msgid "No data on RPC pipe.\n"
+msgstr "Ingen data på RPC-rör.\n"
+
+#: dlls/kernelbase/winerror.mc:3683
+msgid "No site name available.\n"
+msgstr "Inget sidnamn tillgängligt.\n"
+
+#: dlls/kernelbase/winerror.mc:3688
+msgid "The file cannot be accessed.\n"
+msgstr "Kommer inte åt filen.\n"
+
+#: dlls/kernelbase/winerror.mc:3693
+msgid "The filename cannot be resolved.\n"
+msgstr "Filnamnet kan inte hittas.\n"
+
+#: dlls/kernelbase/winerror.mc:3698
+msgid "RPC entry type mismatch.\n"
+msgstr "Posttyper för RPC överensstämmer inte.\n"
+
+#: dlls/kernelbase/winerror.mc:3703
+msgid "Not all objects could be exported.\n"
+msgstr "Alla objekt kunde inte exporteras.\n"
+
+#: dlls/kernelbase/winerror.mc:3708
+msgid "The interface could not be exported.\n"
+msgstr "Gränssnittet kunde inte exporteras.\n"
+
+#: dlls/kernelbase/winerror.mc:3713
+msgid "The profile could not be added.\n"
+msgstr "Profilen kunde inte läggas till.\n"
+
+#: dlls/kernelbase/winerror.mc:3718
+msgid "The profile element could not be added.\n"
+msgstr "Profilelementet kunde inte läggas till.\n"
+
+#: dlls/kernelbase/winerror.mc:3723
+msgid "The profile element could not be removed.\n"
+msgstr "Profilelementet kunde inte tas bort.\n"
+
+#: dlls/kernelbase/winerror.mc:3728
+msgid "The group element could not be added.\n"
+msgstr "Gruppelementet kunde inte hittas.\n"
+
+#: dlls/kernelbase/winerror.mc:3733
+msgid "The group element could not be removed.\n"
+msgstr "Gruppelementet kunde inte tas bort.\n"
+
+#: dlls/kernelbase/winerror.mc:3738
+msgid "The username could not be found.\n"
+msgstr "Användarnamnet kunde inte hittas.\n"
+
+#: dlls/kernelbase/winerror.mc:3743
+msgid "This network connection does not exist.\n"
+msgstr "Nätverksanslutningen existerar inte.\n"
+
+#: dlls/kernelbase/winerror.mc:3748
+#, fuzzy
+#| msgid "Invalid at interrupt time.\n"
+msgid "Call interrupted.\n"
+msgstr "Ogiltig operation vid avbrott.\n"
+
+#: dlls/kernelbase/winerror.mc:3753
+#, fuzzy
+#| msgid "Invalid handle.\n"
+msgid "Invalid file handle.\n"
+msgstr "Ogiltig referens.\n"
+
+#: dlls/kernelbase/winerror.mc:3763
+#, fuzzy
+#| msgid "Invalid network address.\n"
+msgid "Invalid pointer address.\n"
+msgstr "Ogiltig nätverksadress.\n"
+
+#: dlls/kernelbase/winerror.mc:3768
+#, fuzzy
+#| msgid "Invalid name.\n"
+msgid "Invalid argument.\n"
+msgstr "Ogiltigt namn.\n"
+
+#: dlls/kernelbase/winerror.mc:3778
+msgid "Connection reset by peer.\n"
+msgstr "Anslutningen återställdes.\n"
+
+#: dlls/kernelbase/winerror.mc:3788
+#, fuzzy
+#| msgid "Point not found.\n"
+msgid "Host not found.\n"
+msgstr "Punkten hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:3793
+#, fuzzy
+#| msgid "File not found.\n"
+msgid "Nonauthoritative host not found.\n"
+msgstr "Filen hittades inte.\n"
+
+#: dlls/kernelbase/winerror.mc:3798
+#, fuzzy
+#| msgid "A printer error occurred."
+msgid "Nonrecoverable error.\n"
+msgstr "Ett skrivarfel inträffade."
+
+#: dlls/kernelbase/winerror.mc:3803
+msgid "Name valid, no data record.\n"
+msgstr ""
+
+#: dlls/kernelbase/winerror.mc:3817
+#, fuzzy
+#| msgid "Not implemented"
+msgid "Not implemented.\n"
+msgstr "Ej implementerat"
+
+#: dlls/kernelbase/winerror.mc:3838
+#, fuzzy
+#| msgid "RPC call failed.\n"
+msgid "Call failed.\n"
+msgstr "RPC-anrop misslyckades.\n"
+
+#: dlls/kernelbase/winerror.mc:3810
+#, fuzzy
+#| msgid "Message 0x%1 not found in file %2.\n"
+msgid "No Signature found in file.\n"
+msgstr "Meddelande 0x%1 ej funnet i fil %2.\n"
+
+#: dlls/kernelbase/winerror.mc:3824
+#, fuzzy
+#| msgid "Invalid level.\n"
+msgid "Invalid call.\n"
+msgstr "Ogiltig nivå.\n"
+
+#: dlls/kernelbase/winerror.mc:3831
+#, fuzzy
+#| msgid "Help not available."
+msgid "Resource is not currently available.\n"
+msgstr "Ingen hjälp finns tillgänglig."
 
 #: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73

@@ -34,6 +34,3 @@ C_SRCS = \
 RC_SRCS = \
 	locale_rc.rc \
 	version.rc
-
-MC_SRCS = \
-	winerror.mc

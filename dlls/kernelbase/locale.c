@@ -45,7 +45,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(nls);
 extern const unsigned int collation_table[] DECLSPEC_HIDDEN;
 
 static HMODULE kernelbase_handle;
-static HANDLE kernel32_handle;
 
 struct registry_entry
 {
@@ -1557,8 +1556,6 @@ void init_locale( HMODULE module )
 
     if (GetEnvironmentVariableW( L"WINEUNIXCP", bufferW, ARRAY_SIZE(bufferW) ))
         unix_cp = wcstoul( bufferW, NULL, 10 );
-
-    kernel32_handle = GetModuleHandleW( L"kernel32.dll" );
 
     GetLocaleInfoW( LOCALE_SYSTEM_DEFAULT, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
                     (WCHAR *)&ansi_cp, sizeof(ansi_cp)/sizeof(WCHAR) );
@@ -4345,7 +4342,7 @@ static const WCHAR *get_message( DWORD flags, const void *src, UINT id, UINT lan
             /* Fold win32 hresult to its embedded error code. */
             if (HRESULT_SEVERITY(id) == SEVERITY_ERROR && HRESULT_FACILITY(id) == FACILITY_WIN32)
                 id = HRESULT_CODE( id );
-            status = RtlFindMessage( kernel32_handle, RT_MESSAGETABLE, lang, id, &entry );
+            status = RtlFindMessage( kernelbase_handle, RT_MESSAGETABLE, lang, id, &entry );
         }
         if (!set_ntstatus( status )) return NULL;
 
