@@ -96,6 +96,7 @@ static BOOL init_win_proc_params( struct win_proc_params *params, HWND hwnd, UIN
     params->lparam = lparam;
     params->ansi = params->ansi_dst = ansi;
     params->is_dialog = FALSE;
+    params->needs_unpack = FALSE;
     params->mapping = WMCHAR_MAP_CALLWINDOWPROC;
     params->dpi_awareness = get_window_dpi_awareness_context( params->hwnd );
     get_winproc_params( params );
@@ -129,6 +130,7 @@ static BOOL init_window_call_params( struct win_proc_params *params, HWND hwnd, 
     params->lparam = lParam;
     params->result = result;
     params->ansi = ansi;
+    params->needs_unpack = FALSE;
     params->mapping = mapping;
     params->dpi_awareness = get_window_dpi_awareness_context( params->hwnd );
     return TRUE;

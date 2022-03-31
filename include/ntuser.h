@@ -89,6 +89,7 @@ struct win_proc_params
     BOOL ansi;
     BOOL ansi_dst;
     BOOL is_dialog;
+    BOOL needs_unpack;
     enum wm_char_mapping mapping;
     DPI_AWARENESS_CONTEXT dpi_awareness;
     WNDPROC procA;
