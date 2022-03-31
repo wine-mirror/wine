@@ -16,6 +16,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#include "mmdeviceapi.h"
+
 /* From <dlls/mmdevapi/mmdevapi.h> */
 enum DriverPriority
 {
@@ -30,9 +32,26 @@ struct test_connect_params
     enum DriverPriority priority;
 };
 
+struct endpoint
+{
+    WCHAR *name;
+    char *device;
+};
+
+struct get_endpoint_ids_params
+{
+    EDataFlow flow;
+    struct endpoint *endpoints;
+    unsigned int size;
+    HRESULT result;
+    unsigned int num;
+    unsigned int default_idx;
+};
+
 enum oss_funcs
 {
     oss_test_connect,
+    oss_get_endpoint_ids,
 };
 
 extern unixlib_handle_t oss_handle;

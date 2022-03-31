@@ -53,6 +53,7 @@
 
 #include "wine/debug.h"
 #include "wine/list.h"
+#include "wine/unicode.h"
 #include "wine/unixlib.h"
 
 #include "unixlib.h"
@@ -147,11 +148,10 @@ typedef struct _SessionMgr {
 } SessionMgr;
 
 typedef struct _OSSDevice {
-    EDataFlow flow;
-    char devnode[OSS_DEVNODE_SIZE];
-    GUID guid;
-
     struct list entry;
+    EDataFlow flow;
+    GUID guid;
+    char devnode[0];
 } OSSDevice;
 
 static struct list g_devices = LIST_INIT(g_devices);
@@ -346,68 +346,11 @@ static void get_device_guid(EDataFlow flow, const char *device, GUID *guid)
         RegCloseKey(key);
 }
 
-/* dst must be large enough to hold devnode */
-static void oss_clean_devnode(char *dest, const char *devnode)
-{
-    const char *dot, *slash;
-    size_t len;
-
-    strcpy(dest, devnode);
-    dot = strrchr(dest, '.');
-    if(!dot)
-        return;
-
-    slash = strrchr(dest, '/');
-    if(slash && dot < slash)
-        return;
-
-    len = dot - dest;
-    dest[len] = '\0';
-}
-
 static int open_device(const char *device, EDataFlow flow)
 {
     int flags = ((flow == eRender) ? O_WRONLY : O_RDONLY) | O_NONBLOCK;
 
     return open(device, flags, 0);
-}
-
-static UINT get_default_index(EDataFlow flow)
-{
-    int fd = -1, err;
-    UINT i;
-    oss_audioinfo ai;
-    char devnode[OSS_DEVNODE_SIZE];
-    OSSDevice *dev_item;
-
-    fd = open_device("/dev/dsp", flow);
-    if(fd < 0){
-        WARN("Couldn't open default device!\n");
-        return 0;
-    }
-
-    ai.dev = -1;
-    if((err = ioctl(fd, SNDCTL_ENGINEINFO, &ai)) < 0){
-        WARN("SNDCTL_ENGINEINFO failed: %d (%s)\n", err, strerror(errno));
-        close(fd);
-        return 0;
-    }
-
-    close(fd);
-
-    TRACE("Default devnode: %s\n", ai.devnode);
-    oss_clean_devnode(devnode, ai.devnode);
-    i = 0;
-    LIST_FOR_EACH_ENTRY(dev_item, &g_devices, OSSDevice, entry){
-        if(dev_item->flow == flow){
-            if(!strcmp(devnode, dev_item->devnode))
-                return i;
-            ++i;
-        }
-    }
-
-    WARN("Couldn't find default device! Choosing first.\n");
-    return 0;
 }
 
 static const OSSDevice *get_ossdevice_from_guid(const GUID *guid)
@@ -419,138 +362,80 @@ static const OSSDevice *get_ossdevice_from_guid(const GUID *guid)
     return NULL;
 }
 
-HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID **guids,
+static void device_add(OSSDevice *oss_dev)
+{
+    if(get_ossdevice_from_guid(&oss_dev->guid)) /* already in list */
+        HeapFree(GetProcessHeap(), 0, oss_dev);
+    else
+        list_add_tail(&g_devices, &oss_dev->entry);
+}
+
+HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **guids_out,
         UINT *num, UINT *def_index)
 {
-    int i, mixer_fd;
-    oss_sysinfo sysinfo;
-    static int print_once = 0;
-
-    static const WCHAR outW[] = {'O','u','t',':',' ',0};
-    static const WCHAR inW[] = {'I','n',':',' ',0};
+    struct get_endpoint_ids_params params;
+    GUID *guids = NULL;
+    WCHAR **ids = NULL;
+    unsigned int i;
 
     TRACE("%d %p %p %p %p\n", flow, ids, guids, num, def_index);
 
-    mixer_fd = open("/dev/mixer", O_RDONLY, 0);
-    if(mixer_fd < 0){
-        ERR("OSS /dev/mixer doesn't seem to exist\n");
-        return AUDCLNT_E_SERVICE_NOT_RUNNING;
+    params.flow = flow;
+    params.size = 1000;
+    params.endpoints = NULL;
+    do{
+        HeapFree(GetProcessHeap(), 0, params.endpoints);
+        params.endpoints = HeapAlloc(GetProcessHeap(), 0, params.size);
+        OSS_CALL(get_endpoint_ids, &params);
+    }while(params.result == HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER));
+
+    if(FAILED(params.result)) goto end;
+
+    ids = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, params.num * sizeof(*ids));
+    guids = HeapAlloc(GetProcessHeap(), 0, params.num * sizeof(*guids));
+    if(!ids || !guids){
+        params.result = E_OUTOFMEMORY;
+        goto end;
     }
 
-    if(ioctl(mixer_fd, SNDCTL_SYSINFO, &sysinfo) < 0){
-        close(mixer_fd);
+    for(i = 0; i < params.num; i++){
+        unsigned int name_size = (strlenW(params.endpoints[i].name) + 1) * sizeof(WCHAR);
+        unsigned int dev_size = strlen(params.endpoints[i].device) + 1;
+        OSSDevice *oss_dev;
 
-        if(errno == EINVAL){
-            ERR("OSS version too old, need at least OSSv4\n");
-            return AUDCLNT_E_SERVICE_NOT_RUNNING;
+        ids[i] = HeapAlloc(GetProcessHeap(), 0, name_size);
+        oss_dev = HeapAlloc(GetProcessHeap(), 0, offsetof(OSSDevice, devnode[dev_size]));
+        if(!ids[i] || !oss_dev){
+            HeapFree(GetProcessHeap, 0, oss_dev);
+            params.result = E_OUTOFMEMORY;
+            goto end;
         }
+        memcpy(ids[i], params.endpoints[i].name, name_size);
+        get_device_guid(flow, params.endpoints[i].device, guids + i);
 
-        ERR("Error getting SNDCTL_SYSINFO: %d (%s)\n", errno, strerror(errno));
-        return E_FAIL;
+        oss_dev->flow = flow;
+        oss_dev->guid = guids[i];
+        memcpy(oss_dev->devnode, params.endpoints[i].device, dev_size);
+        device_add(oss_dev);
+    }
+    *def_index = params.default_idx;
+
+end:
+    HeapFree(GetProcessHeap(), 0, params.endpoints);
+    if(FAILED(params.result)){
+        HeapFree(GetProcessHeap(), 0, guids);
+        if(ids){
+            for(i = 0; i < params.num; i++)
+                HeapFree(GetProcessHeap(), 0, ids[i]);
+            HeapFree(GetProcessHeap(), 0, ids);
+        }
+    }else{
+        *ids_out = ids;
+        *guids_out = guids;
+        *num = params.num;
     }
 
-    if(!print_once){
-        TRACE("OSS sysinfo:\n");
-        TRACE("product: %s\n", sysinfo.product);
-        TRACE("version: %s\n", sysinfo.version);
-        TRACE("versionnum: %x\n", sysinfo.versionnum);
-        TRACE("numaudios: %d\n", sysinfo.numaudios);
-        TRACE("nummixers: %d\n", sysinfo.nummixers);
-        TRACE("numcards: %d\n", sysinfo.numcards);
-        TRACE("numaudioengines: %d\n", sysinfo.numaudioengines);
-        print_once = 1;
-    }
-
-    if(sysinfo.numaudios <= 0){
-        WARN("No audio devices!\n");
-        close(mixer_fd);
-        return AUDCLNT_E_SERVICE_NOT_RUNNING;
-    }
-
-    *ids = HeapAlloc(GetProcessHeap(), 0, sysinfo.numaudios * sizeof(WCHAR *));
-    *guids = HeapAlloc(GetProcessHeap(), 0, sysinfo.numaudios * sizeof(GUID));
-
-    *num = 0;
-    for(i = 0; i < sysinfo.numaudios; ++i){
-        oss_audioinfo ai = {0};
-        char devnode[OSS_DEVNODE_SIZE];
-        OSSDevice *dev_item;
-        int fd;
-
-        ai.dev = i;
-        if(ioctl(mixer_fd, SNDCTL_AUDIOINFO, &ai) < 0){
-            WARN("Error getting AUDIOINFO for dev %d: %d (%s)\n", i, errno,
-                    strerror(errno));
-            continue;
-        }
-
-        oss_clean_devnode(devnode, ai.devnode);
-
-        /* check for duplicates */
-        LIST_FOR_EACH_ENTRY(dev_item, &g_devices, OSSDevice, entry){
-            if(dev_item->flow == flow && !strcmp(devnode, dev_item->devnode))
-                break;
-        }
-        if(&dev_item->entry != &g_devices)
-            continue;
-
-        fd = open_device(devnode, flow);
-        if(fd < 0){
-            WARN("Opening device \"%s\" failed, pretending it doesn't exist: %d (%s)\n",
-                    devnode, errno, strerror(errno));
-            continue;
-        }
-        close(fd);
-
-        if((flow == eCapture && (ai.caps & PCM_CAP_INPUT)) ||
-                (flow == eRender && (ai.caps & PCM_CAP_OUTPUT))){
-            size_t len, prefix_len;
-            const WCHAR *prefix;
-
-            dev_item = HeapAlloc(GetProcessHeap(), 0, sizeof(*dev_item));
-
-            dev_item->flow = flow;
-            get_device_guid(flow, devnode, &dev_item->guid);
-            strcpy(dev_item->devnode, devnode);
-
-            (*guids)[*num] = dev_item->guid;
-
-            len = MultiByteToWideChar(CP_UNIXCP, 0, ai.name, -1, NULL, 0);
-            if(flow == eRender){
-                prefix = outW;
-                prefix_len = ARRAY_SIZE(outW) - 1;
-                len += prefix_len;
-            }else{
-                prefix = inW;
-                prefix_len = ARRAY_SIZE(inW) - 1;
-                len += prefix_len;
-            }
-            (*ids)[*num] = HeapAlloc(GetProcessHeap(), 0,
-                    len * sizeof(WCHAR));
-            if(!(*ids)[*num]){
-                for(i = 0; i < *num; ++i)
-                    HeapFree(GetProcessHeap(), 0, (*ids)[i]);
-                HeapFree(GetProcessHeap(), 0, *ids);
-                HeapFree(GetProcessHeap(), 0, *guids);
-                HeapFree(GetProcessHeap(), 0, dev_item);
-                close(mixer_fd);
-                return E_OUTOFMEMORY;
-            }
-            memcpy((*ids)[*num], prefix, prefix_len * sizeof(WCHAR));
-            MultiByteToWideChar(CP_UNIXCP, 0, ai.name, -1,
-                    (*ids)[*num] + prefix_len, len - prefix_len);
-
-            list_add_tail(&g_devices, &dev_item->entry);
-
-            (*num)++;
-        }
-    }
-
-    close(mixer_fd);
-
-    *def_index = get_default_index(flow);
-
-    return S_OK;
+    return params.result;
 }
 
 HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev,
