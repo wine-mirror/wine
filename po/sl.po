@@ -3240,11 +3240,11 @@ msgstr "zahodnoevropsko"
 msgid "Central European"
 msgstr "srednjeevropsko"
 
-#: dlls/gdi32/gdi32.rc:30
+#: dlls/gdi32/gdi32.rc:30 dlls/kernelbase/kernelbase.rc:33
 msgid "Cyrillic"
 msgstr "cirilica"
 
-#: dlls/gdi32/gdi32.rc:31
+#: dlls/gdi32/gdi32.rc:31 dlls/kernelbase/kernelbase.rc:32
 msgid "Greek"
 msgstr "grško"
 
@@ -3252,27 +3252,27 @@ msgstr "grško"
 msgid "Turkish"
 msgstr "turško"
 
-#: dlls/gdi32/gdi32.rc:33
+#: dlls/gdi32/gdi32.rc:33 dlls/kernelbase/kernelbase.rc:40
 msgid "Hebrew"
 msgstr "hebrejsko"
 
-#: dlls/gdi32/gdi32.rc:34
+#: dlls/gdi32/gdi32.rc:34 dlls/kernelbase/kernelbase.rc:41
 msgid "Arabic"
 msgstr "arabsko"
 
-#: dlls/gdi32/gdi32.rc:35
+#: dlls/gdi32/gdi32.rc:35 dlls/kernelbase/kernelbase.rc:31
 msgid "Baltic"
 msgstr "baltsko"
 
-#: dlls/gdi32/gdi32.rc:36
+#: dlls/gdi32/gdi32.rc:36 dlls/kernelbase/kernelbase.rc:42
 msgid "Vietnamese"
 msgstr "vietnamsko"
 
-#: dlls/gdi32/gdi32.rc:37
+#: dlls/gdi32/gdi32.rc:37 dlls/kernelbase/kernelbase.rc:39
 msgid "Thai"
 msgstr "tajsko"
 
-#: dlls/gdi32/gdi32.rc:38
+#: dlls/gdi32/gdi32.rc:38 dlls/kernelbase/kernelbase.rc:35
 msgid "Japanese"
 msgstr "japonsko"
 
@@ -7155,6 +7155,48 @@ msgstr "Neveljavna raven.\n"
 #| msgid "Help not available."
 msgid "Resource is not currently available.\n"
 msgstr "Pomoč ni na voljo."
+
+#: dlls/kernelbase/kernelbase.rc:29
+msgid "Western Europe and United States"
+msgstr ""
+
+#: dlls/kernelbase/kernelbase.rc:30
+#, fuzzy
+#| msgid "Central European"
+msgid "Central Europe"
+msgstr "srednjeevropsko"
+
+#: dlls/kernelbase/kernelbase.rc:34
+#, fuzzy
+#| msgid "Turkish"
+msgid "Turkic"
+msgstr "turško"
+
+#: dlls/kernelbase/kernelbase.rc:36
+msgid "Korean"
+msgstr ""
+
+#: dlls/kernelbase/kernelbase.rc:37
+#, fuzzy
+#| msgid "Operation Ceased"
+msgid "Traditional Chinese"
+msgstr "Opravilo je bilo zaustavljeno"
+
+#: dlls/kernelbase/kernelbase.rc:38
+msgid "Simplified Chinese"
+msgstr ""
+
+#: dlls/kernelbase/kernelbase.rc:43
+msgid "Indic"
+msgstr ""
+
+#: dlls/kernelbase/kernelbase.rc:44
+msgid "Georgian"
+msgstr ""
+
+#: dlls/kernelbase/kernelbase.rc:45
+msgid "Armenian"
+msgstr ""
 
 #: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73

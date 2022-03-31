@@ -3193,11 +3193,11 @@ msgstr "Westers"
 msgid "Central European"
 msgstr "Centraal europees"
 
-#: dlls/gdi32/gdi32.rc:30
+#: dlls/gdi32/gdi32.rc:30 dlls/kernelbase/kernelbase.rc:33
 msgid "Cyrillic"
 msgstr "Cyrillisch"
 
-#: dlls/gdi32/gdi32.rc:31
+#: dlls/gdi32/gdi32.rc:31 dlls/kernelbase/kernelbase.rc:32
 msgid "Greek"
 msgstr "Grieks"
 
@@ -3205,27 +3205,27 @@ msgstr "Grieks"
 msgid "Turkish"
 msgstr "Turks"
 
-#: dlls/gdi32/gdi32.rc:33
+#: dlls/gdi32/gdi32.rc:33 dlls/kernelbase/kernelbase.rc:40
 msgid "Hebrew"
 msgstr "Hebreeuws"
 
-#: dlls/gdi32/gdi32.rc:34
+#: dlls/gdi32/gdi32.rc:34 dlls/kernelbase/kernelbase.rc:41
 msgid "Arabic"
 msgstr "Arabisch"
 
-#: dlls/gdi32/gdi32.rc:35
+#: dlls/gdi32/gdi32.rc:35 dlls/kernelbase/kernelbase.rc:31
 msgid "Baltic"
 msgstr "Baltisch"
 
-#: dlls/gdi32/gdi32.rc:36
+#: dlls/gdi32/gdi32.rc:36 dlls/kernelbase/kernelbase.rc:42
 msgid "Vietnamese"
 msgstr "Vietnamees"
 
-#: dlls/gdi32/gdi32.rc:37
+#: dlls/gdi32/gdi32.rc:37 dlls/kernelbase/kernelbase.rc:39
 msgid "Thai"
 msgstr "Thais"
 
-#: dlls/gdi32/gdi32.rc:38
+#: dlls/gdi32/gdi32.rc:38 dlls/kernelbase/kernelbase.rc:35
 msgid "Japanese"
 msgstr "Japans"
 
@@ -7034,6 +7034,42 @@ msgstr "Ongeldige oproep.\n"
 #: dlls/kernel32/winerror.mc:3831
 msgid "Resource is not currently available.\n"
 msgstr "Bron is tijdelijk niet beschikbaar.\n"
+
+#: dlls/kernelbase/kernelbase.rc:29
+msgid "Western Europe and United States"
+msgstr "West Europa en Verenigde Staten"
+
+#: dlls/kernelbase/kernelbase.rc:30
+msgid "Central Europe"
+msgstr "Centraal Europa"
+
+#: dlls/kernelbase/kernelbase.rc:34
+msgid "Turkic"
+msgstr "Turks"
+
+#: dlls/kernelbase/kernelbase.rc:36
+msgid "Korean"
+msgstr "Koreaans"
+
+#: dlls/kernelbase/kernelbase.rc:37
+msgid "Traditional Chinese"
+msgstr "Traditioneel Chinees"
+
+#: dlls/kernelbase/kernelbase.rc:38
+msgid "Simplified Chinese"
+msgstr "Vereenvoudigd Chinees"
+
+#: dlls/kernelbase/kernelbase.rc:43
+msgid "Indic"
+msgstr "Indisch"
+
+#: dlls/kernelbase/kernelbase.rc:44
+msgid "Georgian"
+msgstr "Georgisch"
+
+#: dlls/kernelbase/kernelbase.rc:45
+msgid "Armenian"
+msgstr "Armeens"
 
 #: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73

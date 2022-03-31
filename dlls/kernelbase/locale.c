@@ -44,6 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(nls);
 
 extern const unsigned int collation_table[] DECLSPEC_HIDDEN;
 
+static HMODULE kernelbase_handle;
 static HANDLE kernel32_handle;
 
 struct registry_entry
@@ -1536,7 +1537,7 @@ static void update_locale_registry(void)
 /***********************************************************************
  *		init_locale
  */
-void init_locale(void)
+void init_locale( HMODULE module )
 {
     UINT ansi_cp = 0, oem_cp = 0;
     USHORT *ansi_ptr, *oem_ptr;
@@ -1552,6 +1553,7 @@ void init_locale(void)
     NtQueryDefaultLocale( FALSE, &user_lcid );
     system_locale = get_locale_by_id( &system_lcid, 0 );
     user_locale = get_locale_by_id( &user_lcid, 0 );
+    kernelbase_handle = module;
 
     if (GetEnvironmentVariableW( L"WINEUNIXCP", bufferW, ARRAY_SIZE(bufferW) ))
         unix_cp = wcstoul( bufferW, NULL, 10 );
@@ -3622,7 +3624,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumSystemLanguageGroups( LANGUAGEGROUP_E
         id = wcstoul( name, NULL, 16 );
 
         if (!(flags & LGRPID_SUPPORTED) && !wcstoul( value, NULL, 10 )) continue;
-        if (!LoadStringW( kernel32_handle, 0x2000 + id, descr, ARRAY_SIZE(descr) )) descr[0] = 0;
+        if (!LoadStringW( kernelbase_handle, id, descr, ARRAY_SIZE(descr) )) descr[0] = 0;
         TRACE( "%p: %lu %s %s %lx %Ix\n", proc, id, debugstr_w(name), debugstr_w(descr), flags, param );
         if (!unicode)
         {

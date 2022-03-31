@@ -3148,11 +3148,11 @@ msgstr ""
 msgid "Central European"
 msgstr ""
 
-#: dlls/gdi32/gdi32.rc:30
+#: dlls/gdi32/gdi32.rc:30 dlls/kernelbase/kernelbase.rc:33
 msgid "Cyrillic"
 msgstr ""
 
-#: dlls/gdi32/gdi32.rc:31
+#: dlls/gdi32/gdi32.rc:31 dlls/kernelbase/kernelbase.rc:32
 msgid "Greek"
 msgstr ""
 
@@ -3160,27 +3160,27 @@ msgstr ""
 msgid "Turkish"
 msgstr ""
 
-#: dlls/gdi32/gdi32.rc:33
+#: dlls/gdi32/gdi32.rc:33 dlls/kernelbase/kernelbase.rc:40
 msgid "Hebrew"
 msgstr ""
 
-#: dlls/gdi32/gdi32.rc:34
+#: dlls/gdi32/gdi32.rc:34 dlls/kernelbase/kernelbase.rc:41
 msgid "Arabic"
 msgstr ""
 
-#: dlls/gdi32/gdi32.rc:35
+#: dlls/gdi32/gdi32.rc:35 dlls/kernelbase/kernelbase.rc:31
 msgid "Baltic"
 msgstr ""
 
-#: dlls/gdi32/gdi32.rc:36
+#: dlls/gdi32/gdi32.rc:36 dlls/kernelbase/kernelbase.rc:42
 msgid "Vietnamese"
 msgstr ""
 
-#: dlls/gdi32/gdi32.rc:37
+#: dlls/gdi32/gdi32.rc:37 dlls/kernelbase/kernelbase.rc:39
 msgid "Thai"
 msgstr ""
 
-#: dlls/gdi32/gdi32.rc:38
+#: dlls/gdi32/gdi32.rc:38 dlls/kernelbase/kernelbase.rc:35
 msgid "Japanese"
 msgstr ""
 
@@ -7026,6 +7026,43 @@ msgstr ""
 
 #: dlls/kernel32/winerror.mc:3831
 msgid "Resource is not currently available.\n"
+msgstr ""
+
+#: dlls/kernelbase/kernelbase.rc:29
+msgid "Western Europe and United States"
+msgstr ""
+
+#: dlls/kernelbase/kernelbase.rc:30
+#, fuzzy
+msgid "Central Europe"
+msgstr "&Rafacer\tDel"
+
+#: dlls/kernelbase/kernelbase.rc:34
+msgid "Turkic"
+msgstr ""
+
+#: dlls/kernelbase/kernelbase.rc:36
+msgid "Korean"
+msgstr ""
+
+#: dlls/kernelbase/kernelbase.rc:37
+msgid "Traditional Chinese"
+msgstr ""
+
+#: dlls/kernelbase/kernelbase.rc:38
+msgid "Simplified Chinese"
+msgstr ""
+
+#: dlls/kernelbase/kernelbase.rc:43
+msgid "Indic"
+msgstr ""
+
+#: dlls/kernelbase/kernelbase.rc:44
+msgid "Georgian"
+msgstr ""
+
+#: dlls/kernelbase/kernelbase.rc:45
+msgid "Armenian"
 msgstr ""
 
 #: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47

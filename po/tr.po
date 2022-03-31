@@ -3187,11 +3187,11 @@ msgstr "Batı"
 msgid "Central European"
 msgstr "Orta Avrupa"
 
-#: dlls/gdi32/gdi32.rc:30
+#: dlls/gdi32/gdi32.rc:30 dlls/kernelbase/kernelbase.rc:33
 msgid "Cyrillic"
 msgstr "Kiril"
 
-#: dlls/gdi32/gdi32.rc:31
+#: dlls/gdi32/gdi32.rc:31 dlls/kernelbase/kernelbase.rc:32
 msgid "Greek"
 msgstr "Yunanca"
 
@@ -3199,27 +3199,27 @@ msgstr "Yunanca"
 msgid "Turkish"
 msgstr "Türkçe"
 
-#: dlls/gdi32/gdi32.rc:33
+#: dlls/gdi32/gdi32.rc:33 dlls/kernelbase/kernelbase.rc:40
 msgid "Hebrew"
 msgstr "İbranice"
 
-#: dlls/gdi32/gdi32.rc:34
+#: dlls/gdi32/gdi32.rc:34 dlls/kernelbase/kernelbase.rc:41
 msgid "Arabic"
 msgstr "Arapça"
 
-#: dlls/gdi32/gdi32.rc:35
+#: dlls/gdi32/gdi32.rc:35 dlls/kernelbase/kernelbase.rc:31
 msgid "Baltic"
 msgstr "Baltık"
 
-#: dlls/gdi32/gdi32.rc:36
+#: dlls/gdi32/gdi32.rc:36 dlls/kernelbase/kernelbase.rc:42
 msgid "Vietnamese"
 msgstr "Vietnamca"
 
-#: dlls/gdi32/gdi32.rc:37
+#: dlls/gdi32/gdi32.rc:37 dlls/kernelbase/kernelbase.rc:39
 msgid "Thai"
 msgstr "Tayca"
 
-#: dlls/gdi32/gdi32.rc:38
+#: dlls/gdi32/gdi32.rc:38 dlls/kernelbase/kernelbase.rc:35
 msgid "Japanese"
 msgstr "Japonca"
 
@@ -7048,6 +7048,48 @@ msgstr "Geçersiz çağrı.\n"
 #: dlls/kernel32/winerror.mc:3831
 msgid "Resource is not currently available.\n"
 msgstr "Kaynak şu an kullanılamıyor.\n"
+
+#: dlls/kernelbase/kernelbase.rc:29
+msgid "Western Europe and United States"
+msgstr ""
+
+#: dlls/kernelbase/kernelbase.rc:30
+#, fuzzy
+#| msgid "Central European"
+msgid "Central Europe"
+msgstr "Orta Avrupa"
+
+#: dlls/kernelbase/kernelbase.rc:34
+#, fuzzy
+#| msgid "Turkish"
+msgid "Turkic"
+msgstr "Türkçe"
+
+#: dlls/kernelbase/kernelbase.rc:36
+msgid "Korean"
+msgstr ""
+
+#: dlls/kernelbase/kernelbase.rc:37
+#, fuzzy
+#| msgid "Operation Ceased"
+msgid "Traditional Chinese"
+msgstr "İşlem Durduruldu"
+
+#: dlls/kernelbase/kernelbase.rc:38
+msgid "Simplified Chinese"
+msgstr ""
+
+#: dlls/kernelbase/kernelbase.rc:43
+msgid "Indic"
+msgstr ""
+
+#: dlls/kernelbase/kernelbase.rc:44
+msgid "Georgian"
+msgstr ""
+
+#: dlls/kernelbase/kernelbase.rc:45
+msgid "Armenian"
+msgstr ""
 
 #: dlls/light.msstyles/light.rc:41 dlls/light.msstyles/light.rc:47
 #: programs/winhlp32/winhlp32.rc:53 programs/winhlp32/winhlp32.rc:73

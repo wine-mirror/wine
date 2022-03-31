@@ -34,7 +34,7 @@ struct pseudo_console
 extern WCHAR *file_name_AtoW( LPCSTR name, BOOL alloc ) DECLSPEC_HIDDEN;
 extern DWORD file_name_WtoA( LPCWSTR src, INT srclen, LPSTR dest, INT destlen ) DECLSPEC_HIDDEN;
 extern void init_startup_info( RTL_USER_PROCESS_PARAMETERS *params ) DECLSPEC_HIDDEN;
-extern void init_locale(void) DECLSPEC_HIDDEN;
+extern void init_locale( HMODULE module ) DECLSPEC_HIDDEN;
 extern void init_console(void) DECLSPEC_HIDDEN;
 
 extern const WCHAR windows_dir[] DECLSPEC_HIDDEN;
