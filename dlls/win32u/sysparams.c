@@ -1506,6 +1506,14 @@ POINT map_dpi_point( POINT pt, UINT dpi_from, UINT dpi_to )
     return pt;
 }
 
+/**********************************************************************
+ *              point_phys_to_win_dpi
+ */
+POINT point_phys_to_win_dpi( HWND hwnd, POINT pt )
+{
+    return map_dpi_point( pt, get_win_monitor_dpi( hwnd ), get_dpi_for_window( hwnd ));
+}
+
 /* map value from system dpi to standard 96 dpi for storing in the registry */
 static int map_from_system_dpi( int val )
 {
@@ -4634,6 +4642,8 @@ ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
     /* temporary exports */
     case NtUserExitingThread:
         exiting_thread_id = GetCurrentThreadId();
+    case NtUserProcessSentMessages:
+        process_sent_messages();
         return 0;
     case NtUserThreadDetach:
         thread_detach();

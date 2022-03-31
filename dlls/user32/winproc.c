@@ -1295,6 +1295,12 @@ void get_winproc_params( struct win_proc_params *params )
     }
 }
 
+BOOL WINAPI User32CallSendAsyncCallback( const struct send_async_params *params, ULONG size )
+{
+    params->callback( params->hwnd, params->msg, params->data, params->result );
+    return TRUE;
+}
+
 /**********************************************************************
  *		CallWindowProcA (USER32.@)
  *

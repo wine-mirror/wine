@@ -177,11 +177,13 @@ static const struct user_callbacks user_funcs =
     free_win_ptr,
     MENU_IsMenuActive,
     notify_ime,
+    process_hardware_message,
     register_builtin_classes,
     MSG_SendInternalMessageTimeout,
     MENU_SetMenu,
     SCROLL_SetStandardScrollPainted,
     (void *)__wine_set_user_driver,
+    unpack_dde_message,
     register_imm,
     unregister_imm,
 };
@@ -194,6 +196,7 @@ static BOOL WINAPI User32LoadDriver( const WCHAR *path, ULONG size )
 static const void *kernel_callback_table[NtUserCallCount] =
 {
     User32CallEnumDisplayMonitor,
+    User32CallSendAsyncCallback,
     User32CallWinEventHook,
     User32CallWindowProc,
     User32CallWindowsHook,

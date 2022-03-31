@@ -1545,8 +1545,8 @@ static BOOL post_dde_message( struct packed_message *data, const struct send_mes
  *
  * Unpack a posted DDE message received from another process.
  */
-static BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
-                                void **buffer, size_t size )
+BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
+                         void **buffer, size_t size )
 {
     UINT_PTR	uiLo, uiHi;
     HGLOBAL	hMem = 0;
@@ -2084,8 +2084,8 @@ static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, H
  *
  * Process a hardware message; return TRUE if message should be passed on to the app
  */
-static BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data,
-                                      HWND hwnd_filter, UINT first, UINT last, BOOL remove )
+BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data,
+                               HWND hwnd_filter, UINT first, UINT last, BOOL remove )
 {
     DPI_AWARENESS_CONTEXT context;
     BOOL ret = FALSE;
@@ -2377,8 +2377,7 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
  */
 static inline void process_sent_messages(void)
 {
-    MSG msg;
-    peek_message( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE, 0 );
+    NtUserCallNoParam( NtUserProcessSentMessages );
 }
 
 

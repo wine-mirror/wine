@@ -28,6 +28,8 @@
 struct dce;
 struct tagWND;
 
+struct hardware_msg_data;
+
 struct user_callbacks
 {
     BOOL (WINAPI *pAdjustWindowRectEx)( RECT *, DWORD, BOOL, DWORD );
@@ -48,11 +50,15 @@ struct user_callbacks
     void (CDECL *free_win_ptr)( struct tagWND *win );
     HWND (CDECL *is_menu_active)(void);
     void (CDECL *notify_ime)( HWND hwnd, UINT param );
+    BOOL (CDECL *process_hardware_message)( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data,
+                                            HWND hwnd_filter, UINT first, UINT last, BOOL remove );
     void (CDECL *register_builtin_classes)(void);
     LRESULT (WINAPI *send_ll_message)( DWORD, DWORD, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
     BOOL (CDECL *set_menu)( HWND hwnd, HMENU menu );
     void (WINAPI *set_standard_scroll_painted)( HWND hwnd, INT bar, BOOL visible );
     void (CDECL *set_user_driver)( void *, UINT );
+    BOOL (CDECL *unpack_dde_message)( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
+                                      void **buffer, size_t size );
     BOOL (WINAPI *register_imm)( HWND hwnd );
     void (WINAPI *unregister_imm)( HWND hwnd );
 };

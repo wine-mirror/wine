@@ -83,7 +83,10 @@ extern BOOL rawinput_device_get_usages(HANDLE handle, USAGE *usage_page, USAGE *
 extern struct rawinput_thread_data *rawinput_thread_data(void);
 extern void rawinput_update_device_list(void);
 
-extern void create_offscreen_window_surface( const RECT *visible_rect, struct window_surface **surface ) DECLSPEC_HIDDEN;
+extern BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data,
+                                      HWND hwnd_filter, UINT first, UINT last, BOOL remove ) DECLSPEC_HIDDEN;
+extern BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
+                                void **buffer, size_t size ) DECLSPEC_HIDDEN;
 
 extern void CLIPBOARD_ReleaseOwner( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL FOCUS_MouseActivate( HWND hwnd ) DECLSPEC_HIDDEN;
@@ -124,6 +127,7 @@ extern ATOM get_class_info( HINSTANCE instance, const WCHAR *name, WNDCLASSEXW *
 /* kernel callbacks */
 
 BOOL WINAPI User32CallEnumDisplayMonitor( struct enum_display_monitor_params *params, ULONG size );
+BOOL WINAPI User32CallSendAsyncCallback( const struct send_async_params *params, ULONG size );
 BOOL WINAPI User32CallWinEventHook( const struct win_event_hook_params *params, ULONG size );
 BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size );
 BOOL WINAPI User32CallWindowsHook( const struct win_hook_params *params, ULONG size );

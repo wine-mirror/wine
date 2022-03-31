@@ -28,6 +28,7 @@ enum
 {
     /* user32 callbacks */
     NtUserCallEnumDisplayMonitor,
+    NtUserCallSendAsyncCallback,
     NtUserCallWinEventHook,
     NtUserCallWindowProc,
     NtUserCallWindowsHook,
@@ -48,6 +49,16 @@ struct enum_display_monitor_params
     HDC hdc;
     RECT rect;
     LPARAM lparam;
+};
+
+/* NtUserCallSendAsyncCallback params */
+struct send_async_params
+{
+    SENDASYNCPROC callback;
+    HWND hwnd;
+    UINT msg;
+    ULONG_PTR data;
+    LRESULT result;
 };
 
 /* NtUserCallWinEventHook params */
@@ -128,6 +139,7 @@ enum
     NtUserReleaseCapture,
     /* temporary exports */
     NtUserExitingThread,
+    NtUserProcessSentMessages,
     NtUserThreadDetach,
 };
 

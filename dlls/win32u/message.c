@@ -24,12 +24,16 @@
 #pragma makedep unix
 #endif
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "win32u_private.h"
 #include "ntuser_private.h"
+#include "dde.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msg);
+WINE_DECLARE_DEBUG_CHANNEL(relay);
 
 #define MAX_WINPROC_RECURSION  64
 
@@ -82,6 +86,8 @@ struct packed_message
     const void          *data[MAX_PACK_COUNT];
     size_t               size[MAX_PACK_COUNT];
 };
+
+static const INPUT_MESSAGE_SOURCE msg_source_unavailable = { IMDT_UNAVAILABLE, IMO_UNAVAILABLE };
 
 static BOOL init_win_proc_params( struct win_proc_params *params, HWND hwnd, UINT msg,
                                   WPARAM wparam, LPARAM lparam, BOOL ansi )
@@ -163,6 +169,56 @@ static inline void push_data( struct packed_message *data, const void *ptr, size
 static inline ULONGLONG pack_ptr( const void *ptr )
 {
     return (ULONG_PTR)ptr;
+}
+
+/***********************************************************************
+ *           unpack_message
+ *
+ * Unpack a message received from another process.
+ */
+static BOOL unpack_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
+                            void **buffer, size_t size )
+{
+    size_t minsize = 0;
+    union packed_structs *ps = *buffer;
+
+    switch(message)
+    {
+    case WM_WINE_SETWINDOWPOS:
+    {
+        WINDOWPOS wp;
+        if (size < sizeof(ps->wp)) return FALSE;
+        wp.hwnd            = wine_server_ptr_handle( ps->wp.hwnd );
+        wp.hwndInsertAfter = wine_server_ptr_handle( ps->wp.hwndInsertAfter );
+        wp.x               = ps->wp.x;
+        wp.y               = ps->wp.y;
+        wp.cx              = ps->wp.cx;
+        wp.cy              = ps->wp.cy;
+        wp.flags           = ps->wp.flags;
+        memcpy( &ps->wp, &wp, sizeof(wp) );
+        break;
+    }
+    case WM_WINE_KEYBOARD_LL_HOOK:
+    case WM_WINE_MOUSE_LL_HOOK:
+    {
+        struct hook_extra_info h_extra;
+        minsize = sizeof(ps->hook) +
+                  (message == WM_WINE_KEYBOARD_LL_HOOK ? sizeof(KBDLLHOOKSTRUCT)
+                                                       : sizeof(MSLLHOOKSTRUCT));
+        if (size < minsize) return FALSE;
+        h_extra.handle = wine_server_ptr_handle( ps->hook.handle );
+        h_extra.lparam = (LPARAM)(&ps->hook + 1);
+        memcpy( &ps->hook, &h_extra, sizeof(h_extra) );
+        break;
+    }
+    default:
+        return TRUE;  /* message doesn't need any unpacking */
+    }
+
+    /* default exit for most messages: check minsize and store buffer in lparam */
+    if (size < minsize) return FALSE;
+    *lparam = (LPARAM)*buffer;
+    return TRUE;
 }
 
 /***********************************************************************
@@ -429,7 +485,7 @@ DWORD WINAPI NtUserWaitForInputIdle( HANDLE process, DWORD timeout, BOOL wow )
 }
 
 /**********************************************************************
- *	     NtUserGetGUIThreadInfo  (win32u.@)
+ *           NtUserGetGUIThreadInfo  (win32u.@)
  */
 BOOL WINAPI NtUserGetGUIThreadInfo( DWORD id, GUITHREADINFO *info )
 {
@@ -464,6 +520,340 @@ BOOL WINAPI NtUserGetGUIThreadInfo( DWORD id, GUITHREADINFO *info )
     }
     SERVER_END_REQ;
     return ret;
+}
+
+/***********************************************************************
+ *           call_window_proc
+ *
+ * Call a window procedure and the corresponding hooks.
+ */
+static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
+                                 BOOL unicode, BOOL same_thread, enum wm_char_mapping mapping,
+                                 BOOL needs_unpack, void *buffer, size_t size )
+{
+    struct win_proc_params p, *params = &p;
+    LRESULT result = 0;
+    CWPSTRUCT cwp;
+    CWPRETSTRUCT cwpret;
+
+    if (msg & 0x80000000)
+        return handle_internal_message( hwnd, msg, wparam, lparam );
+
+    if (!needs_unpack) size = 0;
+    if (!is_current_thread_window( hwnd )) return 0;
+    if (size && !(params = malloc( sizeof(*params) + size ))) return 0;
+    if (!init_window_call_params( params, hwnd, msg, wparam, lparam, &result, !unicode, mapping ))
+    {
+        if (params != &p) free( params );
+        return 0;
+    }
+
+    params->needs_unpack = needs_unpack;
+    if (size) memcpy( params + 1, buffer, size );
+
+    /* first the WH_CALLWNDPROC hook */
+    cwp.lParam  = lparam;
+    cwp.wParam  = wparam;
+    cwp.message = msg;
+    cwp.hwnd    = params->hwnd;
+    call_hooks( WH_CALLWNDPROC, HC_ACTION, same_thread, (LPARAM)&cwp, unicode );
+
+    dispatch_win_proc_params( params, sizeof(*params) + size );
+    if (params != &p) free( params );
+
+    /* and finally the WH_CALLWNDPROCRET hook */
+    cwpret.lResult = result;
+    cwpret.lParam  = lparam;
+    cwpret.wParam  = wparam;
+    cwpret.message = msg;
+    cwpret.hwnd    = params->hwnd;
+    call_hooks( WH_CALLWNDPROCRET, HC_ACTION, same_thread, (LPARAM)&cwpret, unicode );
+    return result;
+}
+
+/***********************************************************************
+ *           call_sendmsg_callback
+ *
+ * Call the callback function of SendMessageCallback.
+ */
+static inline void call_sendmsg_callback( SENDASYNCPROC callback, HWND hwnd, UINT msg,
+                                          ULONG_PTR data, LRESULT result )
+{
+    struct send_async_params params;
+    void *ret_ptr;
+    ULONG ret_len;
+
+    if (!callback) return;
+
+    params.callback = callback;
+    params.hwnd     = hwnd;
+    params.msg      = msg;
+    params.data     = data;
+    params.result   = result;
+
+    TRACE_(relay)( "\1Call message callback %p (hwnd=%p,msg=%s,data=%08lx,result=%08lx)\n",
+                   callback, hwnd, debugstr_msg_name( msg, hwnd ), data, result );
+
+    KeUserModeCallback( NtUserCallSendAsyncCallback, &params, sizeof(params), &ret_ptr, &ret_len );
+
+    TRACE_(relay)( "\1Ret  message callback %p (hwnd=%p,msg=%s,data=%08lx,result=%08lx)\n",
+                   callback, hwnd, debugstr_msg_name( msg, hwnd ), data, result );
+}
+
+/***********************************************************************
+ *           peek_message
+ *
+ * Peek for a message matching the given parameters. Return 0 if none are
+ * available; -1 on error.
+ * All pending sent messages are processed before returning.
+ */
+static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags, UINT changed_mask )
+{
+    LRESULT result;
+    struct user_thread_info *thread_info = get_user_thread_info();
+    INPUT_MESSAGE_SOURCE prev_source = thread_info->msg_source;
+    struct received_message_info info;
+    unsigned int hw_id = 0;  /* id of previous hardware message */
+    void *buffer;
+    size_t buffer_size = 1024;
+
+    if (!(buffer = malloc( buffer_size ))) return -1;
+
+    if (!first && !last) last = ~0;
+    if (hwnd == HWND_BROADCAST) hwnd = HWND_TOPMOST;
+
+    for (;;)
+    {
+        NTSTATUS res;
+        size_t size = 0;
+        const message_data_t *msg_data = buffer;
+        BOOL needs_unpack = FALSE;
+
+        thread_info->msg_source = prev_source;
+
+        SERVER_START_REQ( get_message )
+        {
+            req->flags     = flags;
+            req->get_win   = wine_server_user_handle( hwnd );
+            req->get_first = first;
+            req->get_last  = last;
+            req->hw_id     = hw_id;
+            req->wake_mask = changed_mask & (QS_SENDMESSAGE | QS_SMRESULT);
+            req->changed_mask = changed_mask;
+            wine_server_set_reply( req, buffer, buffer_size );
+            if (!(res = wine_server_call( req )))
+            {
+                size = wine_server_reply_size( reply );
+                info.type        = reply->type;
+                info.msg.hwnd    = wine_server_ptr_handle( reply->win );
+                info.msg.message = reply->msg;
+                info.msg.wParam  = reply->wparam;
+                info.msg.lParam  = reply->lparam;
+                info.msg.time    = reply->time;
+                info.msg.pt.x    = reply->x;
+                info.msg.pt.y    = reply->y;
+                hw_id            = 0;
+                thread_info->active_hooks = reply->active_hooks;
+            }
+            else buffer_size = reply->total;
+        }
+        SERVER_END_REQ;
+
+        if (res)
+        {
+            free( buffer );
+            if (res == STATUS_PENDING)
+            {
+                thread_info->wake_mask = changed_mask & (QS_SENDMESSAGE | QS_SMRESULT);
+                thread_info->changed_mask = changed_mask;
+                return 0;
+            }
+            if (res != STATUS_BUFFER_OVERFLOW)
+            {
+                SetLastError( RtlNtStatusToDosError(res) );
+                return -1;
+            }
+            if (!(buffer = malloc( buffer_size ))) return -1;
+            continue;
+        }
+
+        TRACE( "got type %d msg %x (%s) hwnd %p wp %lx lp %lx\n",
+               info.type, info.msg.message,
+               (info.type == MSG_WINEVENT) ? "MSG_WINEVENT" : debugstr_msg_name(info.msg.message, info.msg.hwnd),
+               info.msg.hwnd, info.msg.wParam, info.msg.lParam );
+
+        switch(info.type)
+        {
+        case MSG_ASCII:
+        case MSG_UNICODE:
+            info.flags = ISMEX_SEND;
+            break;
+        case MSG_NOTIFY:
+            info.flags = ISMEX_NOTIFY;
+            if (!unpack_message( info.msg.hwnd, info.msg.message, &info.msg.wParam,
+                                 &info.msg.lParam, &buffer, size ))
+                continue;
+            needs_unpack = TRUE;
+            break;
+        case MSG_CALLBACK:
+            info.flags = ISMEX_CALLBACK;
+            break;
+        case MSG_CALLBACK_RESULT:
+            if (size >= sizeof(msg_data->callback))
+                call_sendmsg_callback( wine_server_get_ptr(msg_data->callback.callback),
+                                       info.msg.hwnd, info.msg.message,
+                                       msg_data->callback.data, msg_data->callback.result );
+            continue;
+        case MSG_WINEVENT:
+            if (size >= sizeof(msg_data->winevent))
+            {
+                struct win_event_hook_params params;
+                void *ret_ptr;
+                ULONG ret_len;
+
+                params.proc = wine_server_get_ptr( msg_data->winevent.hook_proc );
+                size -= sizeof(msg_data->winevent);
+                if (size)
+                {
+                    size = min( size, sizeof(params.module) - sizeof(WCHAR) );
+                    memcpy( params.module, &msg_data->winevent + 1, size );
+                }
+                params.module[size / sizeof(WCHAR)] = 0;
+                size = FIELD_OFFSET( struct win_hook_params, module[size / sizeof(WCHAR) + 1] );
+
+                params.handle    = wine_server_ptr_handle( msg_data->winevent.hook );
+                params.event     = info.msg.message;
+                params.hwnd      = info.msg.hwnd;
+                params.object_id = info.msg.wParam;
+                params.child_id  = info.msg.lParam;
+                params.tid       = msg_data->winevent.tid;
+                params.time      = info.msg.time;
+
+                KeUserModeCallback( NtUserCallWinEventHook, &params, size, &ret_ptr, &ret_len );
+            }
+            continue;
+        case MSG_HOOK_LL:
+            info.flags = ISMEX_SEND;
+            result = 0;
+            if (info.msg.message == WH_KEYBOARD_LL && size >= sizeof(msg_data->hardware))
+            {
+                KBDLLHOOKSTRUCT hook;
+
+                hook.vkCode      = LOWORD( info.msg.lParam );
+                hook.scanCode    = HIWORD( info.msg.lParam );
+                hook.flags       = msg_data->hardware.flags;
+                hook.time        = info.msg.time;
+                hook.dwExtraInfo = msg_data->hardware.info;
+                TRACE( "calling keyboard LL hook vk %x scan %x flags %x time %u info %lx\n",
+                       hook.vkCode, hook.scanCode, hook.flags, hook.time, hook.dwExtraInfo );
+                result = call_hooks( WH_KEYBOARD_LL, HC_ACTION, info.msg.wParam, (LPARAM)&hook, TRUE );
+            }
+            else if (info.msg.message == WH_MOUSE_LL && size >= sizeof(msg_data->hardware))
+            {
+                MSLLHOOKSTRUCT hook;
+
+                hook.pt          = info.msg.pt;
+                hook.mouseData   = info.msg.lParam;
+                hook.flags       = msg_data->hardware.flags;
+                hook.time        = info.msg.time;
+                hook.dwExtraInfo = msg_data->hardware.info;
+                TRACE( "calling mouse LL hook pos %d,%d data %x flags %x time %u info %lx\n",
+                       hook.pt.x, hook.pt.y, hook.mouseData, hook.flags, hook.time, hook.dwExtraInfo );
+                result = call_hooks( WH_MOUSE_LL, HC_ACTION, info.msg.wParam, (LPARAM)&hook, TRUE );
+            }
+            reply_message( &info, result, &info.msg );
+            continue;
+        case MSG_OTHER_PROCESS:
+            info.flags = ISMEX_SEND;
+            if (!unpack_message( info.msg.hwnd, info.msg.message, &info.msg.wParam,
+                                 &info.msg.lParam, &buffer, size ))
+            {
+                /* ignore it */
+                reply_message( &info, 0, &info.msg );
+                continue;
+            }
+            needs_unpack = TRUE;
+            break;
+        case MSG_HARDWARE:
+            if (size >= sizeof(msg_data->hardware))
+            {
+                hw_id = msg_data->hardware.hw_id;
+                if (!user_callbacks) continue;
+                if (!user_callbacks->process_hardware_message( &info.msg, hw_id, &msg_data->hardware,
+                                                               hwnd, first, last, flags & PM_REMOVE ))
+                {
+                    TRACE("dropping msg %x\n", info.msg.message );
+                    continue;  /* ignore it */
+                }
+                *msg = info.msg;
+                thread_info->GetMessagePosVal = MAKELONG( info.msg.pt.x, info.msg.pt.y );
+                thread_info->GetMessageTimeVal = info.msg.time;
+                thread_info->GetMessageExtraInfoVal = msg_data->hardware.info;
+                free( buffer );
+                call_hooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)msg, TRUE );
+                return 1;
+            }
+            continue;
+        case MSG_POSTED:
+            if (info.msg.message & 0x80000000)  /* internal message */
+            {
+                if (flags & PM_REMOVE)
+                {
+                    handle_internal_message( info.msg.hwnd, info.msg.message,
+                                             info.msg.wParam, info.msg.lParam );
+                    /* if this is a nested call return right away */
+                    if (first == info.msg.message && last == info.msg.message)
+                    {
+                        free( buffer );
+                        return 0;
+                    }
+                }
+                else
+                    peek_message( msg, info.msg.hwnd, info.msg.message,
+                                  info.msg.message, flags | PM_REMOVE, changed_mask );
+                continue;
+            }
+            if (info.msg.message >= WM_DDE_FIRST && info.msg.message <= WM_DDE_LAST)
+            {
+                if (!user_callbacks->unpack_dde_message( info.msg.hwnd, info.msg.message, &info.msg.wParam,
+                                                         &info.msg.lParam, &buffer, size ))
+                    continue;  /* ignore it */
+            }
+            *msg = info.msg;
+            msg->pt = point_phys_to_win_dpi( info.msg.hwnd, info.msg.pt );
+            thread_info->GetMessagePosVal = MAKELONG( msg->pt.x, msg->pt.y );
+            thread_info->GetMessageTimeVal = info.msg.time;
+            thread_info->GetMessageExtraInfoVal = 0;
+            thread_info->msg_source = msg_source_unavailable;
+            free( buffer );
+            call_hooks( WH_GETMESSAGE, HC_ACTION, flags & PM_REMOVE, (LPARAM)msg, TRUE );
+            return 1;
+        }
+
+        /* if we get here, we have a sent message; call the window procedure */
+        info.prev = thread_info->receive_info;
+        thread_info->receive_info = &info;
+        thread_info->msg_source = msg_source_unavailable;
+        result = call_window_proc( info.msg.hwnd, info.msg.message, info.msg.wParam,
+                                   info.msg.lParam, (info.type != MSG_ASCII), FALSE,
+                                   WMCHAR_MAP_RECVMESSAGE, needs_unpack, buffer, size );
+        if (thread_info->receive_info == &info)
+            reply_message_result( result, &info.msg );
+
+        /* if some PM_QS* flags were specified, only handle sent messages from now on */
+        if (HIWORD(flags) && !changed_mask) flags = PM_QS_SENDMESSAGE | LOWORD(flags);
+    }
+}
+
+/***********************************************************************
+ *           process_sent_messages
+ *
+ * Process all pending sent messages.
+ */
+void process_sent_messages(void)
+{
+    MSG msg;
+    peek_message( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE, 0 );
 }
 
 /**********************************************************************
