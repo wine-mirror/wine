@@ -1146,16 +1146,25 @@ static WCHAR *extract_icon(LPCWSTR icoPathW, int index, const WCHAR *destFilenam
     int numEntries;
     HRESULT hr;
     WCHAR *nativeIdentifier = NULL;
+    WCHAR fullPathW[MAX_PATH];
+    DWORD len;
 
     WINE_TRACE("path=[%s] index=%d destFilename=[%s]\n", wine_dbgstr_w(icoPathW), index, wine_dbgstr_w(destFilename));
 
-    hr = open_icon(icoPathW, index, bWait, &stream, &pIconDirEntries, &numEntries);
+    len = GetFullPathNameW(icoPathW, MAX_PATH, fullPathW, NULL);
+    if (len == 0 || len > MAX_PATH)
+    {
+        WINE_WARN("GetFullPathName failed\n");
+        return NULL;
+    }
+
+    hr = open_icon(fullPathW, index, bWait, &stream, &pIconDirEntries, &numEntries);
     if (FAILED(hr))
     {
-        WINE_WARN("opening icon %s index %d failed, hr=0x%08lX\n", wine_dbgstr_w(icoPathW), index, hr);
+        WINE_WARN("opening icon %s index %d failed, hr=0x%08lX\n", wine_dbgstr_w(fullPathW), index, hr);
         goto end;
     }
-    hr = platform_write_icon(stream, pIconDirEntries, numEntries, index, icoPathW, destFilename, &nativeIdentifier);
+    hr = platform_write_icon(stream, pIconDirEntries, numEntries, index, fullPathW, destFilename, &nativeIdentifier);
     if (FAILED(hr))
         WINE_WARN("writing icon failed, error 0x%08lX\n", hr);
 
