@@ -255,22 +255,19 @@ static int compare_info(LCID lcid, DWORD flags, char* buff, const char* cmp, BOO
 }
 
 static BOOL CALLBACK
-find_best_locale_proc(HMODULE hModule, LPCSTR type, LPCSTR name, WORD LangID, LONG_PTR lParam)
+find_best_locale_proc( WCHAR *name, DWORD locale_flags, LPARAM lParam )
 {
   locale_search_t *res = (locale_search_t *)lParam;
-  const LCID lcid = MAKELCID(LangID, SORT_DEFAULT);
+  const LCID lcid = LocaleNameToLCID( name, 0 );
   char buff[MAX_ELEM_LEN];
   unsigned int flags = 0;
-
-  if(PRIMARYLANGID(LangID) == LANG_NEUTRAL)
-    return CONTINUE_LOOKING;
 
 #if _MSVCR_VER >= 110
   if (res->allow_sname && compare_info(lcid,LOCALE_SNAME,buff,res->search_language, TRUE))
   {
     TRACE(":Found locale: %s->%s\n", res->search_language, buff);
     res->match_flags = FOUND_SNAME;
-    res->found_lang_id = LangID;
+    res->found_lang_id = LANGIDFROMLCID(lcid);
     return STOP_LOOKING;
   }
 #endif
@@ -305,7 +302,7 @@ find_best_locale_proc(HMODULE hModule, LPCSTR type, LPCSTR name, WORD LangID, LO
   {
     /* Found a better match than previously */
     res->match_flags = flags;
-    res->found_lang_id = LangID;
+    res->found_lang_id = LANGIDFROMLCID(lcid);
   }
   if ((flags & (FOUND_LANGUAGE | FOUND_COUNTRY)) ==
         (FOUND_LANGUAGE | FOUND_COUNTRY))
@@ -363,9 +360,7 @@ LCID locale_to_LCID(const char *locale, unsigned short *codepage, BOOL *sname)
             search.allow_sname = TRUE;
         }
 
-        EnumResourceLanguagesA(GetModuleHandleA("KERNEL32"), (LPSTR)RT_STRING,
-                (LPCSTR)LOCALE_ILANGUAGE,find_best_locale_proc,
-                (LONG_PTR)&search);
+        EnumSystemLocalesEx( find_best_locale_proc, 0, (LPARAM)&search, NULL);
 
         if (!search.match_flags)
             return -1;
