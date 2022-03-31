@@ -802,16 +802,25 @@ static HRESULT open_module_icon(LPCWSTR szFileName, int nIndex, IStream **ppStre
     GRPICONDIR *pIconDir;
     ENUMRESSTRUCT sEnumRes;
     HRESULT hr = E_FAIL;
+    WCHAR fullPathW[MAX_PATH];
+    DWORD len;
 
-    hModule = LoadLibraryExW(szFileName, 0, LOAD_LIBRARY_AS_DATAFILE);
+    len = SearchPathW(NULL, szFileName, L".exe", MAX_PATH, fullPathW, NULL);
+    if (len == 0 || len > MAX_PATH)
+    {
+        WINE_WARN("SearchPath failed\n");
+        return HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+    }
+
+    hModule = LoadLibraryExW(fullPathW, 0, LOAD_LIBRARY_AS_DATAFILE);
     if (!hModule)
     {
         if (GetLastError() == ERROR_BAD_EXE_FORMAT)
-            return open_module16_icon(szFileName, nIndex, ppStream);
+            return open_module16_icon(fullPathW, nIndex, ppStream);
         else
         {
             WINE_WARN("LoadLibraryExW (%s) failed, error %ld\n",
-                     wine_dbgstr_w(szFileName), GetLastError());
+                     wine_dbgstr_w(fullPathW), GetLastError());
             return HRESULT_FROM_WIN32(GetLastError());
         }
     }
@@ -820,7 +829,7 @@ static HRESULT open_module_icon(LPCWSTR szFileName, int nIndex, IStream **ppStre
     {
         hResInfo = FindResourceW(hModule, MAKEINTRESOURCEW(-nIndex), (LPCWSTR)RT_GROUP_ICON);
         WINE_TRACE("FindResourceW (%s) called, return %p, error %ld\n",
-                   wine_dbgstr_w(szFileName), hResInfo, GetLastError());
+                   wine_dbgstr_w(fullPathW), hResInfo, GetLastError());
     }
     else
     {
