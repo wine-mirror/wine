@@ -617,7 +617,7 @@ my @locales =
  { name => "el-GR", lcid => 0x00000408 },
  { name => "en", lcid => 0x00000009, oemcp => 437, slist => ",", sabbrevlangname => "ENU" },
  { name => "en-001", oemcp => 850 },
- { name => "en-029", lcid => 0x00002409, file => "en", oemcp => 850, sintlsymbol => "XCD", sabbrevlangname => "ENB" },
+ { name => "en-029", lcid => 0x00002409, file => "en", oemcp => 850, sabbrevlangname => "ENB" },
  { name => "en-150", oemcp => 65001 },
  { name => "en-AE", lcid => 0x00004c09, oemcp => 65001, sabbrevlangname => "ZZZ" },
  { name => "en-AG", oemcp => 850 },
@@ -807,7 +807,7 @@ my @locales =
  { name => "fo-DK", oemcp => 65001, maccp => 65001 },
  { name => "fo-FO", lcid => 0x00000438 },
  { name => "fr", lcid => 0x0000000c, oemcp => 850, ebcdiccp => 20297 },
- { name => "fr-029", lcid => 0x00001c0c, file => "fr", sintlsymbol => "XCD", sabbrevlangname => "ZZZ" },
+ { name => "fr-029", lcid => 0x00001c0c, file => "fr", sabbrevlangname => "ZZZ" },
  { name => "fr-BE", lcid => 0x0000080c, sabbrevlangname => "FRB" },
  { name => "fr-BF" },
  { name => "fr-BI" },
@@ -1485,6 +1485,311 @@ my @locales =
  { name => "zh-TW_radstr", lcid => 0x00040404, alias => "zh-TW" },
  { name => "zu", lcid => 0x00000035, oemcp => 850 },
  { name => "zu-ZA", lcid => 0x00000435 },
+);
+
+my @geoids =
+(
+ { id => 2,   name => "AG" },     # Antigua and Barbuda
+ { id => 3,   name => "AF" },     # Afghanistan
+ { id => 4,   name => "DZ" },     # Algeria
+ { id => 5,   name => "AZ" },     # Azerbaijan
+ { id => 6,   name => "AL" },     # Albania
+ { id => 7,   name => "AM" },     # Armenia
+ { id => 8,   name => "AD" },     # Andorra
+ { id => 9,   name => "AO" },     # Angola
+ { id => 10,  name => "AS" },     # American Samoa
+ { id => 11,  name => "AR" },     # Argentina
+ { id => 12,  name => "AU" },     # Australia
+ { id => 14,  name => "AT" },     # Austria
+ { id => 17,  name => "BH" },     # Bahrain
+ { id => 18,  name => "BB" },     # Barbados
+ { id => 19,  name => "BW" },     # Botswana
+ { id => 20,  name => "BM" },     # Bermuda
+ { id => 21,  name => "BE" },     # Belgium
+ { id => 22,  name => "BS" },     # Bahamas, The
+ { id => 23,  name => "BD" },     # Bangladesh
+ { id => 24,  name => "BZ" },     # Belize
+ { id => 25,  name => "BA" },     # Bosnia and Herzegovina
+ { id => 26,  name => "BO" },     # Bolivia
+ { id => 27,  name => "MM" },     # Myanmar
+ { id => 28,  name => "BJ" },     # Benin
+ { id => 29,  name => "BY" },     # Belarus
+ { id => 30,  name => "SB" },     # Solomon Islands
+ { id => 32,  name => "BR" },     # Brazil
+ { id => 34,  name => "BT" },     # Bhutan
+ { id => 35,  name => "BG" },     # Bulgaria
+ { id => 37,  name => "BN" },     # Brunei
+ { id => 38,  name => "BI" },     # Burundi
+ { id => 39,  name => "CA" },     # Canada
+ { id => 40,  name => "KH" },     # Cambodia
+ { id => 41,  name => "TD" },     # Chad
+ { id => 42,  name => "LK" },     # Sri Lanka
+ { id => 43,  name => "CG" },     # Congo
+ { id => 44,  name => "CD" },     # Congo (DRC)
+ { id => 45,  name => "CN" },     # China
+ { id => 46,  name => "CL" },     # Chile
+ { id => 49,  name => "CM" },     # Cameroon
+ { id => 50,  name => "KM" },     # Comoros
+ { id => 51,  name => "CO" },     # Colombia
+ { id => 54,  name => "CR" },     # Costa Rica
+ { id => 55,  name => "CF" },     # Central African Republic
+ { id => 56,  name => "CU" },     # Cuba
+ { id => 57,  name => "CV" },     # Cape Verde
+ { id => 59,  name => "CY" },     # Cyprus
+ { id => 61,  name => "DK" },     # Denmark
+ { id => 62,  name => "DJ" },     # Djibouti
+ { id => 63,  name => "DM" },     # Dominica
+ { id => 65,  name => "DO" },     # Dominican Republic
+ { id => 66,  name => "EC" },     # Ecuador
+ { id => 67,  name => "EG" },     # Egypt
+ { id => 68,  name => "IE" },     # Ireland
+ { id => 69,  name => "GQ" },     # Equatorial Guinea
+ { id => 70,  name => "EE" },     # Estonia
+ { id => 71,  name => "ER" },     # Eritrea
+ { id => 72,  name => "SV" },     # El Salvador
+ { id => 73,  name => "ET" },     # Ethiopia
+ { id => 75,  name => "CZ" },     # Czech Republic
+ { id => 77,  name => "FI" },     # Finland
+ { id => 78,  name => "FJ" },     # Fiji Islands
+ { id => 80,  name => "FM" },     # Micronesia
+ { id => 81,  name => "FO" },     # Faroe Islands
+ { id => 84,  name => "FR" },     # France
+ { id => 86,  name => "GM" },     # Gambia, The
+ { id => 87,  name => "GA" },     # Gabon
+ { id => 88,  name => "GE" },     # Georgia
+ { id => 89,  name => "GH" },     # Ghana
+ { id => 90,  name => "GI" },     # Gibraltar
+ { id => 91,  name => "GD" },     # Grenada
+ { id => 93,  name => "GL" },     # Greenland
+ { id => 94,  name => "DE" },     # Germany
+ { id => 98,  name => "GR" },     # Greece
+ { id => 99,  name => "GT" },     # Guatemala
+ { id => 100, name => "GN" },     # Guinea
+ { id => 101, name => "GY" },     # Guyana
+ { id => 103, name => "HT" },     # Haiti
+ { id => 104, name => "HK" },     # Hong Kong S.A.R.
+ { id => 106, name => "HN" },     # Honduras
+ { id => 108, name => "HR" },     # Croatia
+ { id => 109, name => "HU" },     # Hungary
+ { id => 110, name => "IS" },     # Iceland
+ { id => 111, name => "ID" },     # Indonesia
+ { id => 113, name => "IN" },     # India
+ { id => 114, name => "IO" },     # British Indian Ocean Territory
+ { id => 116, name => "IR" },     # Iran
+ { id => 117, name => "IL" },     # Israel
+ { id => 118, name => "IT" },     # Italy
+ { id => 119, name => "CI" },     # Côte d'Ivoire
+ { id => 121, name => "IQ" },     # Iraq
+ { id => 122, name => "JP" },     # Japan
+ { id => 124, name => "JM" },     # Jamaica
+ { id => 125, name => "SJ" },     # Jan Mayen
+ { id => 126, name => "JO" },     # Jordan
+ { id => 127, parent => "UM" },   # Johnston Atoll
+ { id => 129, name => "KE" },     # Kenya
+ { id => 130, name => "KG" },     # Kyrgyzstan
+ { id => 131, name => "KP" },     # North Korea
+ { id => 133, name => "KI" },     # Kiribati
+ { id => 134, name => "KR" },     # Korea
+ { id => 136, name => "KW" },     # Kuwait
+ { id => 137, name => "KZ" },     # Kazakhstan
+ { id => 138, name => "LA" },     # Laos
+ { id => 139, name => "LB" },     # Lebanon
+ { id => 140, name => "LV" },     # Latvia
+ { id => 141, name => "LT" },     # Lithuania
+ { id => 142, name => "LR" },     # Liberia
+ { id => 143, name => "SK" },     # Slovakia
+ { id => 145, name => "LI" },     # Liechtenstein
+ { id => 146, name => "LS" },     # Lesotho
+ { id => 147, name => "LU" },     # Luxembourg
+ { id => 148, name => "LY" },     # Libya
+ { id => 149, name => "MG" },     # Madagascar
+ { id => 151, name => "MO" },     # Macao S.A.R.
+ { id => 152, name => "MD" },     # Moldova
+ { id => 154, name => "MN" },     # Mongolia
+ { id => 156, name => "MW" },     # Malawi
+ { id => 157, name => "ML" },     # Mali
+ { id => 158, name => "MC" },     # Monaco
+ { id => 159, name => "MA" },     # Morocco
+ { id => 160, name => "MU" },     # Mauritius
+ { id => 162, name => "MR" },     # Mauritania
+ { id => 163, name => "MT" },     # Malta
+ { id => 164, name => "OM" },     # Oman
+ { id => 165, name => "MV" },     # Maldives
+ { id => 166, name => "MX" },     # Mexico
+ { id => 167, name => "MY" },     # Malaysia
+ { id => 168, name => "MZ" },     # Mozambique
+ { id => 173, name => "NE" },     # Niger
+ { id => 174, name => "VU" },     # Vanuatu
+ { id => 175, name => "NG" },     # Nigeria
+ { id => 176, name => "NL" },     # Netherlands
+ { id => 177, name => "NO" },     # Norway
+ { id => 178, name => "NP" },     # Nepal
+ { id => 180, name => "NR" },     # Nauru
+ { id => 181, name => "SR" },     # Suriname
+ { id => 182, name => "NI" },     # Nicaragua
+ { id => 183, name => "NZ" },     # New Zealand
+ { id => 184, name => "PS" },     # Palestinian Authority
+ { id => 185, name => "PY" },     # Paraguay
+ { id => 187, name => "PE" },     # Peru
+ { id => 190, name => "PK" },     # Pakistan
+ { id => 191, name => "PL" },     # Poland
+ { id => 192, name => "PA" },     # Panama
+ { id => 193, name => "PT" },     # Portugal
+ { id => 194, name => "PG" },     # Papua New Guinea
+ { id => 195, name => "PW" },     # Palau
+ { id => 196, name => "GW" },     # Guinea-Bissau
+ { id => 197, name => "QA" },     # Qatar
+ { id => 198, name => "RE" },     # Reunion
+ { id => 199, name => "MH" },     # Marshall Islands
+ { id => 200, name => "RO" },     # Romania
+ { id => 201, name => "PH" },     # Philippines
+ { id => 202, name => "PR" },     # Puerto Rico
+ { id => 203, name => "RU" },     # Russia
+ { id => 204, name => "RW" },     # Rwanda
+ { id => 205, name => "SA" },     # Saudi Arabia
+ { id => 206, name => "PM" },     # St. Pierre and Miquelon
+ { id => 207, name => "KN" },     # St. Kitts and Nevis
+ { id => 208, name => "SC" },     # Seychelles
+ { id => 209, name => "ZA" },     # South Africa
+ { id => 210, name => "SN" },     # Senegal
+ { id => 212, name => "SI" },     # Slovenia
+ { id => 213, name => "SL" },     # Sierra Leone
+ { id => 214, name => "SM" },     # San Marino
+ { id => 215, name => "SG" },     # Singapore
+ { id => 216, name => "SO" },     # Somalia
+ { id => 217, name => "ES" },     # Spain
+ { id => 218, name => "LC" },     # St. Lucia
+ { id => 219, name => "SD" },     # Sudan
+ { id => 220, name => "SJ" },     # Svalbard
+ { id => 221, name => "SE" },     # Sweden
+ { id => 222, name => "SY" },     # Syria
+ { id => 223, name => "CH" },     # Switzerland
+ { id => 224, name => "AE" },     # United Arab Emirates
+ { id => 225, name => "TT" },     # Trinidad and Tobago
+ { id => 227, name => "TH" },     # Thailand
+ { id => 228, name => "TJ" },     # Tajikistan
+ { id => 231, name => "TO" },     # Tonga
+ { id => 232, name => "TG" },     # Togo
+ { id => 233, name => "ST" },     # São Tomé and Príncipe
+ { id => 234, name => "TN" },     # Tunisia
+ { id => 235, name => "TR" },     # Turkey
+ { id => 236, name => "TV" },     # Tuvalu
+ { id => 237, name => "TW" },     # Taiwan
+ { id => 238, name => "TM" },     # Turkmenistan
+ { id => 239, name => "TZ" },     # Tanzania
+ { id => 240, name => "UG" },     # Uganda
+ { id => 241, name => "UA" },     # Ukraine
+ { id => 242, name => "GB" },     # United Kingdom
+ { id => 244, name => "US" },     # United States
+ { id => 245, name => "BF" },     # Burkina Faso
+ { id => 246, name => "UY" },     # Uruguay
+ { id => 247, name => "UZ" },     # Uzbekistan
+ { id => 248, name => "VC" },     # St. Vincent and the Grenadines
+ { id => 249, name => "VE" },     # Bolivarian Republic of Venezuela
+ { id => 251, name => "VN" },     # Vietnam
+ { id => 252, name => "VI" },     # Virgin Islands
+ { id => 253, name => "VA" },     # Vatican City
+ { id => 254, name => "NA" },     # Namibia
+ { id => 257, name => "EH" },     # Western Sahara (disputed)
+ { id => 258, parent => "UM" },   # Wake Island
+ { id => 259, name => "WS" },     # Samoa
+ { id => 260, name => "SZ" },     # Swaziland
+ { id => 261, name => "YE" },     # Yemen
+ { id => 263, name => "ZM" },     # Zambia
+ { id => 264, name => "ZW" },     # Zimbabwe
+ { id => 269, name => "CS" },     # Serbia and Montenegro (Former)
+ { id => 270, name => "ME" },     # Montenegro
+ { id => 271, name => "RS" },     # Serbia
+ { id => 273, name => "CW" },     # Curaçao
+ { id => 276, name => "SS" },     # South Sudan
+ { id => 300, name => "AI" },     # Anguilla
+ { id => 301, name => "AQ" },     # Antarctica
+ { id => 302, name => "AW" },     # Aruba
+ { id => 303, parent => "SH" },   # Ascension Island
+ { id => 304, parent => "053" },  # Ashmore and Cartier Islands
+ { id => 305, parent => "UM" },   # Baker Island
+ { id => 306, name => "BV" },     # Bouvet Island
+ { id => 307, name => "KY" },     # Cayman Islands
+ { id => 308, name => "830", parent => "155" }, # Channel Islands
+ { id => 309, name => "CX" },     # Christmas Island
+ { id => 310, parent => "009" },  # Clipperton Island
+ { id => 311, name => "CC" },     # Cocos (Keeling) Islands
+ { id => 312, name => "CK" },     # Cook Islands
+ { id => 313, parent => "053" },  # Coral Sea Islands
+ { id => 314, parent => "IO" },   # Diego Garcia
+ { id => 315, name => "FK" },     # Falkland Islands (Islas Malvinas)
+ { id => 317, name => "GF" },     # French Guiana
+ { id => 318, name => "PF" },     # French Polynesia
+ { id => 319, name => "TF" },     # French Southern and Antarctic Lands
+ { id => 321, name => "GP" },     # Guadeloupe
+ { id => 322, name => "GU" },     # Guam
+ { id => 323 },                   # Guantanamo Bay
+ { id => 324, name => "GG" },     # Guernsey
+ { id => 325, name => "HM" },     # Heard Island and McDonald Islands
+ { id => 326, parent => "UM" },   # Howland Island
+ { id => 327, parent => "UM" },   # Jarvis Island
+ { id => 328, name => "JE" },     # Jersey
+ { id => 329, parent => "UM" },   # Kingman Reef
+ { id => 330, name => "MQ" },     # Martinique
+ { id => 331, name => "YT" },     # Mayotte
+ { id => 332, name => "MS" },     # Montserrat
+ { id => 333, name => "AN", region => 1 }, # Netherlands Antilles (Former)
+ { id => 334, name => "NC" },     # New Caledonia
+ { id => 335, name => "NU" },     # Niue
+ { id => 336, name => "NF" },     # Norfolk Island
+ { id => 337, name => "MP" },     # Northern Mariana Islands
+ { id => 338, parent => "UM" },   # Palmyra Atoll
+ { id => 339, name => "PN" },     # Pitcairn Islands
+ { id => 340, parent => "MP" },   # Rota Island
+ { id => 341, parent => "MP" },   # Saipan
+ { id => 342, name => "GS" },     # South Georgia and the South Sandwich Islands
+ { id => 343, name => "SH" },     # St. Helena
+ { id => 346, parent => "MP" },   # Tinian Island
+ { id => 347, name => "TK" },     # Tokelau
+ { id => 348, parent => "SH" },   # Tristan da Cunha
+ { id => 349, name => "TC" },     # Turks and Caicos Islands
+ { id => 351, name => "VG" },     # Virgin Islands, British
+ { id => 352, name => "WF" },     # Wallis and Futuna
+ { id => 742, name => "002" },    # Africa
+ { id => 2129, name => "142" },   # Asia
+ { id => 10541, name => "150" },  # Europe
+ { id => 15126, name => "IM" },   # Man, Isle of
+ { id => 19618, name => "MK" },   # Macedonia, Former Yugoslav Republic of
+ { id => 20900, name => "054" },  # Melanesia
+ { id => 21206, name => "057" },  # Micronesia
+ { id => 21242, parent => "UM" }, # Midway Islands
+ { id => 23581, name => "021" },  # Northern America
+ { id => 26286, name => "061" },  # Polynesia
+ { id => 27082, name => "013" },  # Central America
+ { id => 27114, name => "009" },  # Oceania
+ { id => 30967, name => "SX" },   # Sint Maarten (Dutch part)
+ { id => 31396, name => "005" },  # South America
+ { id => 31706, name => "MF" },   # Saint Martin (French part)
+ { id => 39070, name => "001" },  # World
+ { id => 42483, name => "011" },  # Western Africa
+ { id => 42484, name => "017" },  # Middle Africa
+ { id => 42487, name => "015" },  # Northern Africa
+ { id => 47590, name => "143" },  # Central Asia
+ { id => 47599, name => "035" },  # South-Eastern Asia
+ { id => 47600, name => "030" },  # Eastern Asia
+ { id => 47603, name => "014" },  # Eastern Africa
+ { id => 47609, name => "151" },  # Eastern Europe
+ { id => 47610, name => "039" },  # Southern Europe
+ { id => 47611, name => "145" },  # Middle East
+ { id => 47614, name => "034" },  # Southern Asia
+ { id => 7299303, name => "TL" }, # Democratic Republic of Timor-Leste
+ { id => 9914689, name => "XK" }, # Kosovo
+ { id => 10026358, name => "019" }, # Americas
+ { id => 10028789, name => "AX" },  # Åland Islands
+ { id => 10039880, name => "029", sintlsymbol => "XCD" }, # Caribbean
+ { id => 10039882, name => "154" }, # Northern Europe
+ { id => 10039883, name => "018" }, # Southern Africa
+ { id => 10210824, name => "155" }, # Western Europe
+ { id => 10210825, name => "053" }, # Australia and New Zealand
+ { id => 161832015, name => "BL" }, # Saint Barthélemy
+ { id => 161832256, name => "UM" }, # U.S. Minor Outlying Islands
+ { id => 161832257, name => "419", parent => "019" }, # Latin America and the Caribbean
+ { id => 161832258, name => "BQ" },   # Bonaire, Sint Eustatius and Saba
 );
 
 my @cp2uni = ();
@@ -3453,6 +3758,15 @@ sub align_string($$)
 }
 
 ################################################################
+# pad a string with zeros
+sub pad_string($$)
+{
+    my ($pad, $str) = @_;
+    $str .= pack "C*", (0) x ($pad - length($str)) if length($str) < $pad;
+    return $str;
+}
+
+################################################################
 # pack a GUID string
 sub pack_guid($)
 {
@@ -4154,6 +4468,64 @@ sub build_locale_data()
         print STDERR "no territory found for $loc->{name}\n";
     }
 
+    # fill geoid table
+
+    my %geotable;
+    foreach my $geo (@geoids)
+    {
+        my $name = $geo->{name};
+        next unless defined $name;
+        $geo->{alias} = $geotable{$name} if defined $geotable{$name};
+        $geotable{$name} ||= $geo;
+    }
+    foreach my $loc (@locales)
+    {
+        next if defined $loc->{alias};
+        my $territory = $loc->{territory};
+        $geotable{$territory} ||= { name => $territory };
+    }
+    foreach my $name (keys %geotable)
+    {
+        my $geo = $geotable{$name};
+        $geo->{dialcode} = xml_query( $phone, "(/supplementalData/telephoneCodeData/codesByTerritory[\@territory='$name']/telephoneCountryCode)[1]/\@code" );
+        if ($name =~ /\d+/)
+        {
+            $geo->{uncode} = $name;
+            next;
+        }
+        $geo->{iso2} = $name;
+        $geo->{iso3} = xml_query( $suppl, "/supplementalData/codeMappings/territoryCodes[\@type='$name']/\@alpha3");
+        $geo->{uncode} = xml_query( $suppl, "/supplementalData/codeMappings/territoryCodes[\@type='$name']/\@numeric");
+        $geo->{sintlsymbol} ||= xml_query( $suppl, "(/supplementalData/currencyData/region[\@iso3166='$name']/currency[not(\@to)])[1]/\@iso4217") || "XXX";
+        $geo->{sintlsymbol} =~ s/XXX/XDR/;
+    }
+    foreach my $geo (@geoids)
+    {
+        $geo->{parentid} = $geotable{$geo->{parent}}->{id} if defined $geo->{parent};
+        next if defined $geo->{iso2};
+        next if defined $geo->{alias};
+        next unless defined $geo->{uncode};
+        my @contains;
+        my $list = xml_query( $suppl, "/supplementalData/territoryContainment/group[\@type='$geo->{uncode}' and not(\@status)]/\@contains");
+        push @contains, split /\s+/, $list if defined $list;
+        $list = xml_query( $suppl, "/supplementalData/territoryContainment/group[\@type='$geo->{uncode}' and \@status='deprecated']/\@contains");
+        push @contains, split /\s+/, $list if defined $list;
+        while (@contains)
+        {
+            my $territory = pop @contains;
+            if (defined $geotable{$territory})
+            {
+                $geotable{$territory}->{parentid} ||= $geo->{id};
+            }
+            elsif ($territory =~ /\d+/)
+            {
+                # expand region recursively
+                $list = xml_query( $suppl, "/supplementalData/territoryContainment/group[\@type='$territory' and not(\@status)]/\@contains" );
+                push @contains, split /\s+/, $list if defined $list;
+            }
+        }
+    }
+
     # assign default lcid to aliases
 
     foreach my $loc (@locales)
@@ -4234,6 +4606,7 @@ sub build_locale_data()
         my $sparent = $loc->{sparent} || (($sname =~ /(.*)-[0-9A-Za-z]+/) ? $1 : $loc->{parent});
         my $unique_lcid = $loc->{lcid};
         unless (defined $unique_lcid) { $unique_lcid = $default_lcid++; }
+        my $geo = $geotable{$territory};
         my $territory_match = "contains(concat(' ',normalize-space(\@territories),' '),' $territory ')";
 
         # languages and scripts
@@ -4245,7 +4618,7 @@ sub build_locale_data()
         my $siso639langname2 = $iso639{$siso639langname} || $siso639langname;
         my $sopentypelang = sprintf "%-4s", locale_entry( $loc, "sopentypelang", uc $siso639langname2 );
         my $sabbrevlangname = defined $loc->{lcid} ? locale_entry( $loc, "sabbrevlangname", uc $siso639langname2 ) : "ZZZ";
-        my $siso3166ctryname2 = $territory =~ /^\d+$/ ? $territory : xml_query( $suppl, "/supplementalData/codeMappings/territoryCodes[\@type='$territory']/\@alpha3");
+        my $siso3166ctryname2 = $geo->{iso3} || $geo->{uncode};
         my $senglanguage = loc_query( $lcnames{en}, "/ldml/localeDisplayNames/languages/language[\@type='$language' and not(\@alt)]" ) || "";
         my $sengcountry = loc_query( $lcnames{en}, "/ldml/localeDisplayNames/territories/territory[\@type='$territory' and not(\@alt)]" ) || "";
         my $snativelangname = loc_query( $loc, "/ldml/localeDisplayNames/languages/language[\@type='$language' and not(\@alt)]" );
@@ -4277,7 +4650,7 @@ sub build_locale_data()
             my $linelayout = loc_query( $loc, "/ldml/layout/orientation/lineOrder" );
             $ireadinglayout = $linelayout eq "right-to-left" ? 2 : 3;
         }
-        my $icountry = xml_query( $phone, "(/supplementalData/telephoneCodeData/codesByTerritory[\@territory='$territory']/telephoneCountryCode)[1]/\@code" ) || 1;
+        my $igeoid = $geo->{id} || 0;
 
         # numbers
 
@@ -4308,9 +4681,10 @@ sub build_locale_data()
 
         # currencies
 
-        my $sintlsymbol = $loc->{sintlsymbol} || xml_query( $suppl, "(/supplementalData/currencyData/region[\@iso3166='$territory']/currency[not(\@to)])[1]/\@iso4217") || "XDR";
-        my $scurrency = $loc->{scurrency} || loc_query( $loc, "/ldml/numbers/currencies/currency[\@type='$sintlsymbol']/symbol[\@alt='narrow']" );
+        my $sintlsymbol = $geo->{sintlsymbol} || "XDR";
+        my $scurrency = $geo->{scurrency} || loc_query( $loc, "/ldml/numbers/currencies/currency[\@type='$sintlsymbol']/symbol[\@alt='narrow']" );
         $scurrency ||= loc_query( $loc, "/ldml/numbers/currencies/currency[\@type='$sintlsymbol']/symbol[not(\@alt)]" );
+        $geo->{scurrency} = $scurrency if $scurrency;
         $scurrency ||= $sintlsymbol;
         my $sengcurrname = $loc->{sengcurrname} || loc_query( $lcnames{en}, "/ldml/numbers/currencies/currency[\@type='$sintlsymbol']/displayName[not(\@count)]" );
         my $snativecurrname = $loc->{sengcurrname} || loc_query( $loc, "/ldml/numbers/currencies/currency[\@type='$sintlsymbol']/displayName[not(\@count)]" ) || $sengcurrname;
@@ -4444,6 +4818,7 @@ sub build_locale_data()
             $sengcurrname = $snativecurrname = "International Monetary Fund";
             $scurrency = "\x{00a4}";
             $ifirstdayofweek = 0;
+            $igeoid = $geotable{"US"}->{id};
             @stimeformat = ("HH:mm:ss");
             @sshortdate = ("MM/dd/yyyy", "yyyy-MM-dd");
             @slongdate = ("dddd, dd MMMM yyyy");
@@ -4475,7 +4850,7 @@ sub build_locale_data()
             !$neutral,                             # LOCALE_INEUTRAL
             $ifirstdayofweek,                      # LOCALE_IFIRSTDAYOFWEEK
             $firstweekofyear,                      # LOCALE_IFIRSTWEEKOFYEAR
-            $icountry,                             # LOCALE_ICOUNTRY,
+            $geo->{dialcode} || 1 ,                # LOCALE_ICOUNTRY,
             $measure,                              # LOCALE_IMEASURE
             $digitsubstitution;                    # LOCALE_IDIGITSUBSTITUTION
 
@@ -4505,7 +4880,7 @@ sub build_locale_data()
             $oemcp,                                # LOCALE_IDEFAULTCODEPAGE
             $maccp,                                # LOCALE_IDEFAULTMACCODEPAGE
             $ebcdiccp,                             # LOCALE_IDEFAULTEBCDICCODEPAGE
-            0,  # FIXME                            # LOCALE_IGEOID
+            $igeoid < 65536 ? $igeoid : 39070,     # old_geoid
             $papersize ? 1 : 9,                    # LOCALE_IPAPERSIZE
             0;  # FIXME                            # islamic_cal
 
@@ -4563,7 +4938,7 @@ sub build_locale_data()
             add_string( "0409:00000409" ), # FIXME # LOCALE_SKEYBOARDSTOINSTALL
             add_string( $sscripts ),               # LOCALE_SSCRIPTS
             add_string( $srelativelongdate ),      # LOCALE_SRELATIVELONGDATE
-            0,  # FIXME                            # LOCALE_IGEOID2
+            $igeoid,                               # LOCALE_IGEOID
             add_string( $sshortestam || "a" ),     # LOCALE_SSHORTESTAM
             add_string( $sshortestpm || "p" ),     # LOCALE_SSHORTESTPM
             add_strarray( @smonthday ),            # LOCALE_SMONTHDAY
@@ -4626,6 +5001,55 @@ sub build_locale_data()
 
 
 ################################################################
+# build the geoids table for locale.nls
+sub build_geoids_data()
+{
+    my $data = "";
+    my %index;
+    my $idx = 0;
+    my @geo_header = (0x00650067, 0x0000006f, 0, 4 * 7, scalar @geoids, 0, 0);
+
+    foreach my $geo (@geoids)
+    {
+        my $id = $geo->{id};
+        $geo = $geo->{alias} if defined $geo->{alias};
+        my $lat = "0.000";
+        my $long = "0.000";
+        my $iso2 = $geo->{iso2} || "XX";
+        my $iso3 = $geo->{iso3} || "XX";
+        my $isregion = $geo->{region} || (defined $geo->{uncode} && !defined $geo->{iso2});
+        my $sintlsymbol = $geo->{sintlsymbol} || "XDR";
+        my $scurrency = $geo->{scurrency} || "\x{00a4}";
+
+        $data .= pack( "L<", $id );
+        $data .= pad_string( 24, encode( "UTF16LE", $lat ));
+        $data .= pad_string( 24, encode( "UTF16LE", $long ));
+        $data .= pack( "L<2", $isregion ? 14 : 16, $geo->{parentid} || 39070 );
+        $data .= pad_string( 8, encode( "UTF16LE", $iso2 ));
+        $data .= pad_string( 8, encode( "UTF16LE", $iso3 ));
+        $data .= pack( "S<2", $geo->{uncode} || 0, $geo->{dialcode} || 0 );
+        $data .= pad_string( 8, encode( "UTF16LE", $sintlsymbol ));
+        $data .= pad_string( 16, encode( "UTF16LE", $scurrency ));
+        $index{$geo->{name}} = $idx if $geo->{name};
+        $idx++;
+    }
+    $index{"XX"} = $index{"001"};
+
+    $geo_header[5] = $geo_header[3] + length $data;
+    $geo_header[6] = scalar keys %index;
+
+    foreach my $name (sort keys %index)
+    {
+        $data .= pad_string( 8, encode( "UTF16LE", $name ));
+        $data .= pack "L<", $index{$name};
+    }
+
+    $geo_header[2] = $geo_header[3] + length $data;
+    return pack( "L<7", @geo_header ) . $data;
+}
+
+
+################################################################
 # build a binary locale table
 sub dump_locales($$)
 {
@@ -4635,7 +5059,7 @@ sub dump_locales($$)
 
     my $locale_data = build_locale_data();
     my $charmaps_data = "";  # FIXME
-    my $geoids_data = "";  # FIXME
+    my $geoids_data = build_geoids_data();
     my $scripts_data = "";  # FIXME
 
     my @header = ( 0 ) x 8;
