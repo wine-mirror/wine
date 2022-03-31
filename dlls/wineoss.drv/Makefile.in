@@ -1,5 +1,6 @@
 EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wineoss.drv
+UNIXLIB   = wineoss.so
 IMPORTS   = uuid ole32 user32 advapi32
 DELAYIMPORTS = winmm
 EXTRALIBS = $(OSS4_LIBS)
@@ -11,4 +12,5 @@ C_SRCS = \
 	midi.c \
 	midipatch.c \
 	mmaux.c \
-	mmdevdrv.c
+	mmdevdrv.c \
+	oss.c
