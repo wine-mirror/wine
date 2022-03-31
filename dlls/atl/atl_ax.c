@@ -63,12 +63,12 @@ static LRESULT CALLBACK AtlAxWin_wndproc( HWND hWnd, UINT wMsg, WPARAM wParam, L
     if ( wMsg == WM_CREATE )
     {
             DWORD len = GetWindowTextLengthW( hWnd ) + 1;
-            WCHAR *ptr = HeapAlloc( GetProcessHeap(), 0, len*sizeof(WCHAR) );
+            WCHAR *ptr = malloc( len*sizeof(WCHAR) );
             if (!ptr)
                 return 1;
             GetWindowTextW( hWnd, ptr, len );
             AtlAxCreateControlEx( ptr, hWnd, NULL, NULL, NULL, NULL, NULL );
-            HeapFree( GetProcessHeap(), 0, ptr );
+            free( ptr );
             return 0;
     }
     return DefWindowProcW( hWnd, wMsg, wParam, lParam );
@@ -225,7 +225,7 @@ static ULONG WINAPI OleClientSite_Release(IOleClientSite *iface)
     if (!ref)
     {
         IOCS_Detach( This );
-        HeapFree( GetProcessHeap(), 0, This );
+        free( This );
     }
 
     return ref;
@@ -945,7 +945,7 @@ static HRESULT IOCS_Create( HWND hWnd, IUnknown *pUnkControl, IUnknown **contain
         return S_OK;
 
     *container = NULL;
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof(IOCS));
+    This = malloc(sizeof(*This));
 
     if (!This)
         return E_OUTOFMEMORY;
@@ -969,7 +969,7 @@ static HRESULT IOCS_Create( HWND hWnd, IUnknown *pUnkControl, IUnknown **contain
     else
     {
         IOCS_Detach( This );
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
 
     return hr;
@@ -1160,7 +1160,7 @@ static inline BOOL advance_array(WORD **pptr, DWORD *palloc, DWORD *pfilled, con
     if ( (*pfilled + size) > *palloc )
     {
         *palloc = ((*pfilled+size) + 0xFF) & ~0xFF;
-        *pptr = HeapReAlloc( GetProcessHeap(), 0, *pptr, *palloc * sizeof(WORD) );
+        *pptr = realloc( *pptr, *palloc * sizeof(WORD) );
         if (!*pptr)
             return FALSE;
     }
@@ -1186,7 +1186,7 @@ static LPDLGTEMPLATEW AX_ConvertDialogTemplate(LPCDLGTEMPLATEW src_tmpl)
     DWORD style;
 
     filled = 0; allocated = 256;
-    output = HeapAlloc( GetProcessHeap(), 0, allocated * sizeof(WORD) );
+    output = malloc( allocated * sizeof(WORD) );
     if (!output)
         return NULL;
 
@@ -1307,12 +1307,12 @@ HWND WINAPI AtlAxCreateDialogA(HINSTANCE hInst, LPCSTR name, HWND owner, DLGPROC
         return AtlAxCreateDialogW( hInst, (LPCWSTR) name, owner, dlgProc, param );
 
     length = MultiByteToWideChar( CP_ACP, 0, name, -1, NULL, 0 );
-    nameW = HeapAlloc( GetProcessHeap(), 0, length * sizeof(WCHAR) );
+    nameW = malloc( length * sizeof(WCHAR) );
     if (nameW)
     {
         MultiByteToWideChar( CP_ACP, 0, name, -1, nameW, length );
         res = AtlAxCreateDialogW( hInst, nameW, owner, dlgProc, param );
-        HeapFree( GetProcessHeap(), 0, nameW );
+        free( nameW );
     }
     return res;
 }
@@ -1348,8 +1348,8 @@ HWND WINAPI AtlAxCreateDialogW(HINSTANCE hInst, LPCWSTR name, HWND owner, DLGPRO
     newptr = AX_ConvertDialogTemplate( ptr );
     if ( newptr )
     {
-            res = CreateDialogIndirectParamW( hInst, newptr, owner, dlgProc, param );
-            HeapFree( GetProcessHeap(), 0, newptr );
+        res = CreateDialogIndirectParamW( hInst, newptr, owner, dlgProc, param );
+        free( newptr );
     } else
         res = NULL;
     FreeResource ( hrsrc );
@@ -1425,7 +1425,7 @@ INT_PTR WINAPI AtlAxDialogBoxW(HINSTANCE instance, const WCHAR *name,
         return 0;
 
     ret = DialogBoxIndirectParamW(instance, template, owner, proc, param);
-    HeapFree(GetProcessHeap(), 0, template);
+    free(template);
     return ret;
 }
 

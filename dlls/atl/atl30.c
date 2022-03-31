@@ -121,7 +121,7 @@ HRESULT WINAPI AtlModuleTerm(_ATL_MODULE *pM)
             iter->pFunc(iter->dw);
             tmp = iter;
             iter = iter->pNext;
-            HeapFree(GetProcessHeap(), 0, tmp);
+            free(tmp);
         }
     }
 

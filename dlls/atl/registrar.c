@@ -74,7 +74,7 @@ static inline Registrar *impl_from_IRegistrar(IRegistrar *iface)
 
 static void strbuf_init(strbuf *buf)
 {
-    buf->str = HeapAlloc(GetProcessHeap(), 0, 128*sizeof(WCHAR));
+    buf->str = malloc(128*sizeof(WCHAR));
     buf->alloc = 128;
     buf->len = 0;
 }
@@ -85,7 +85,7 @@ static void strbuf_write(LPCOLESTR str, strbuf *buf, int len)
         len = lstrlenW(str);
     if(buf->len+len+1 >= buf->alloc) {
         buf->alloc = (buf->len+len)<<1;
-        buf->str = HeapReAlloc(GetProcessHeap(), 0, buf->str, buf->alloc*sizeof(WCHAR));
+        buf->str = realloc(buf->str, buf->alloc*sizeof(WCHAR));
     }
     memcpy(buf->str+buf->len, str, len*sizeof(OLECHAR));
     buf->len += len;
@@ -292,7 +292,7 @@ static HRESULT do_process_key(LPCOLESTR *pstr, HKEY parent_key, strbuf *buf, BOO
                     if(FAILED(hres))
                         break;
                     count = (lstrlenW(buf->str) + 1) / 2;
-                    bytes = HeapAlloc(GetProcessHeap(), 0, count);
+                    bytes = malloc(count);
                     if(bytes == NULL) {
                         hres = E_OUTOFMEMORY;
                         break;
@@ -313,7 +313,7 @@ static HRESULT do_process_key(LPCOLESTR *pstr, HKEY parent_key, strbuf *buf, BOO
                             hres = HRESULT_FROM_WIN32(lres);
                         }
                     }
-                    HeapFree(GetProcessHeap(), 0, bytes);
+                    free(bytes);
                     break;
                 }
                 default:
@@ -360,7 +360,7 @@ static HRESULT do_process_key(LPCOLESTR *pstr, HKEY parent_key, strbuf *buf, BOO
             break;
     }
 
-    HeapFree(GetProcessHeap(), 0, name.str);
+    free(name.str);
     if(hkey && key_type != IS_VAL)
         RegCloseKey(hkey);
     *pstr = iter;
@@ -411,7 +411,7 @@ static HRESULT do_process_root_key(LPCOLESTR data, BOOL do_register)
         if(FAILED(hres))
             break;
     }
-    HeapFree(GetProcessHeap(), 0, buf.str);
+    free(buf.str);
     return hres;
 }
 
@@ -426,7 +426,7 @@ static HRESULT string_register(Registrar *This, LPCOLESTR data, BOOL do_register
     hres = do_preprocess(This, data, &buf);
     if(FAILED(hres)) {
         WARN("preprocessing failed!\n");
-        HeapFree(GetProcessHeap(), 0, buf.str);
+        free(buf.str);
         return hres;
     }
 
@@ -434,7 +434,7 @@ static HRESULT string_register(Registrar *This, LPCOLESTR data, BOOL do_register
     if(FAILED(hres) && do_register)
         do_process_root_key(buf.str, FALSE);
 
-    HeapFree(GetProcessHeap(), 0, buf.str);
+    free(buf.str);
     return hres;
 }
 
@@ -456,13 +456,13 @@ static HRESULT resource_register(Registrar *This, LPCOLESTR resFileName,
             reslen = SizeofResource(hins, src);
             if(regstra) {
                 len = MultiByteToWideChar(CP_ACP, 0, regstra, reslen, NULL, 0)+1;
-                regstrw = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len*sizeof(WCHAR));
+                regstrw = calloc(len, sizeof(WCHAR));
                 MultiByteToWideChar(CP_ACP, 0, regstra, reslen, regstrw, len);
                 regstrw[len-1] = '\0';
 
                 hres = string_register(This, regstrw, do_register);
 
-                HeapFree(GetProcessHeap(), 0, regstrw);
+                free(regstrw);
             }else {
                 WARN("could not load resource\n");
                 hres = HRESULT_FROM_WIN32(GetLastError());
@@ -491,21 +491,21 @@ static HRESULT file_register(Registrar *This, LPCOLESTR fileName, BOOL do_regist
     file = CreateFileW(fileName, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, 0, NULL);
     if(file != INVALID_HANDLE_VALUE) {
         filelen = GetFileSize(file, NULL);
-        regstra = HeapAlloc(GetProcessHeap(), 0, filelen);
+        regstra = malloc(filelen);
         if(ReadFile(file, regstra, filelen, NULL, NULL)) {
             len = MultiByteToWideChar(CP_ACP, 0, regstra, filelen, NULL, 0)+1;
-            regstrw = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, len*sizeof(WCHAR));
+            regstrw = calloc(len, sizeof(WCHAR));
             MultiByteToWideChar(CP_ACP, 0, regstra, filelen, regstrw, len);
             regstrw[len-1] = '\0';
 
             hres = string_register(This, regstrw, do_register);
 
-            HeapFree(GetProcessHeap(), 0, regstrw);
+            free(regstrw);
         }else {
             WARN("Failed to read file %s\n", debugstr_w(fileName));
             hres = HRESULT_FROM_WIN32(GetLastError());
         }
-        HeapFree(GetProcessHeap(), 0, regstra);
+        free(regstra);
         CloseHandle(file);
     }else {
         WARN("Could not open file %s\n", debugstr_w(fileName));
@@ -545,7 +545,7 @@ static ULONG WINAPI Registrar_Release(IRegistrar *iface)
     TRACE("(%p) ->%ld\n", This, ref);
     if(!ref) {
         IRegistrar_ClearReplacements(iface);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
     }
     return ref;
 }
@@ -558,14 +558,14 @@ static HRESULT WINAPI Registrar_AddReplacement(IRegistrar *iface, LPCOLESTR Key,
 
     TRACE("(%p)->(%s %s)\n", This, debugstr_w(Key), debugstr_w(item));
 
-    new_rep = HeapAlloc(GetProcessHeap(), 0, sizeof(rep_list));
+    new_rep = malloc(sizeof(*new_rep));
 
     new_rep->key_len  = lstrlenW(Key);
-    new_rep->key = HeapAlloc(GetProcessHeap(), 0, (new_rep->key_len + 1) * sizeof(OLECHAR));
+    new_rep->key = malloc((new_rep->key_len + 1) * sizeof(OLECHAR));
     memcpy(new_rep->key, Key, (new_rep->key_len+1)*sizeof(OLECHAR));
 
     len = lstrlenW(item)+1;
-    new_rep->item = HeapAlloc(GetProcessHeap(), 0, len*sizeof(OLECHAR));
+    new_rep->item = malloc(len*sizeof(OLECHAR));
     memcpy(new_rep->item, item, len*sizeof(OLECHAR));
 
     new_rep->next = This->rep;
@@ -587,9 +587,9 @@ static HRESULT WINAPI Registrar_ClearReplacements(IRegistrar *iface)
     iter = This->rep;
     while(iter) {
         iter2 = iter->next;
-        HeapFree(GetProcessHeap(), 0, iter->key);
-        HeapFree(GetProcessHeap(), 0, iter->item);
-        HeapFree(GetProcessHeap(), 0, iter);
+        free(iter->key);
+        free(iter->item);
+        free(iter);
         iter = iter2;
     }
 
@@ -680,13 +680,12 @@ HRESULT WINAPI AtlCreateRegistrar(IRegistrar **ret)
 {
     Registrar *registrar;
 
-    registrar = HeapAlloc(GetProcessHeap(), 0, sizeof(*registrar));
+    registrar = calloc(1, sizeof(*registrar));
     if(!registrar)
         return E_OUTOFMEMORY;
 
     registrar->IRegistrar_iface.lpVtbl = &RegistrarVtbl;
     registrar->ref = 1;
-    registrar->rep = NULL;
 
     *ret = &registrar->IRegistrar_iface;
     return S_OK;
