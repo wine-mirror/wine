@@ -958,6 +958,12 @@ BOOL WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
     return unix_funcs->pNtUserMessageCall( hwnd, msg, wparam, lparam, result_info, type, ansi );
 }
 
+BOOL WINAPI NtUserPeekMessage( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT flags )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserPeekMessage( msg_out, hwnd, first, last, flags );
+}
+
 BOOL WINAPI NtUserRedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags )
 {
     if (!unix_funcs) return FALSE;

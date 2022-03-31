@@ -856,6 +856,79 @@ void process_sent_messages(void)
     peek_message( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE, 0 );
 }
 
+/* check for driver events if we detect that the app is not properly consuming messages */
+static inline void check_for_driver_events( UINT msg )
+{
+    if (get_user_thread_info()->message_count > 200)
+    {
+        flush_window_surfaces( FALSE );
+        user_driver->pMsgWaitForMultipleObjectsEx( 0, NULL, 0, QS_ALLINPUT, 0 );
+    }
+    else if (msg == WM_TIMER || msg == WM_SYSTIMER)
+    {
+        /* driver events should have priority over timers, so make sure we'll check for them soon */
+        get_user_thread_info()->message_count += 100;
+    }
+    else get_user_thread_info()->message_count++;
+}
+
+/* wait for message or signaled handle */
+static DWORD wait_message( DWORD count, const HANDLE *handles, DWORD timeout, DWORD mask, DWORD flags )
+{
+    DWORD ret, lock;
+    void *ret_ptr;
+    ULONG ret_len;
+
+    if (enable_thunk_lock)
+        lock = KeUserModeCallback( NtUserThunkLock, NULL, 0, &ret_ptr, &ret_len );
+
+    ret = user_driver->pMsgWaitForMultipleObjectsEx( count, handles, timeout, mask, flags );
+    if (ret == WAIT_TIMEOUT && !count && !timeout) NtYieldExecution();
+    if ((mask & QS_INPUT) == QS_INPUT) get_user_thread_info()->message_count = 0;
+
+    if (enable_thunk_lock)
+        KeUserModeCallback( NtUserThunkLock, &lock, sizeof(lock), &ret_ptr, &ret_len );
+
+    return ret;
+}
+
+/***********************************************************************
+ *           NtUserPeekMessage  (win32u.@)
+ */
+BOOL WINAPI NtUserPeekMessage( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT flags )
+{
+    MSG msg;
+    int ret;
+
+    user_check_not_lock();
+    check_for_driver_events( 0 );
+
+    ret = peek_message( &msg, hwnd, first, last, flags, 0 );
+    if (ret < 0) return FALSE;
+
+    if (!ret)
+    {
+        flush_window_surfaces( TRUE );
+        ret = wait_message( 0, NULL, 0, QS_ALLINPUT, 0 );
+        /* if we received driver events, check again for a pending message */
+        if (ret == WAIT_TIMEOUT || peek_message( &msg, hwnd, first, last, flags, 0 ) <= 0) return FALSE;
+    }
+
+    check_for_driver_events( msg.message );
+
+    /* copy back our internal safe copy of message data to msg_out.
+     * msg_out is a variable from the *program*, so it can't be used
+     * internally as it can get "corrupted" by our use of SendMessage()
+     * (back to the program) inside the message handling itself. */
+    if (!msg_out)
+    {
+        SetLastError( ERROR_NOACCESS );
+        return FALSE;
+    }
+    *msg_out = msg;
+    return TRUE;
+}
+
 /**********************************************************************
  *           dispatch_message
  */

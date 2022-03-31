@@ -2596,6 +2596,19 @@ static void WINAPI User16CallFreeIcon( ULONG *param, ULONG size )
 }
 
 
+static DWORD WINAPI User16ThunkLock( DWORD *param, ULONG size )
+{
+    if (size != sizeof(DWORD))
+    {
+        DWORD lock;
+        ReleaseThunkLock( &lock );
+        return lock;
+    }
+    RestoreThunkLock( *param );
+    return 0;
+}
+
+
 void register_wow_handlers(void)
 {
     void **callback_table = NtCurrentTeb()->Peb->KernelCallbackTable;
@@ -2615,6 +2628,9 @@ void register_wow_handlers(void)
     };
 
     callback_table[NtUserCallFreeIcon] = User16CallFreeIcon;
+    callback_table[NtUserThunkLock]    = User16ThunkLock;
+
+    NtUserCallOneParam( TRUE, NtUserEnableThunkLock );
 
     UserRegisterWowHandlers( &handlers16, &wow_handlers32 );
 }

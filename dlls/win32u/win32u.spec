@@ -1098,7 +1098,7 @@
 @ stub NtUserPaintDesktop
 @ stub NtUserPaintMenuBar
 @ stub NtUserPaintMonitor
-@ stub NtUserPeekMessage
+@ stdcall NtUserPeekMessage(ptr long long long long)
 @ stub NtUserPerMonitorDPIPhysicalToLogicalPoint
 @ stub NtUserPhysicalToLogicalDpiPointForWindow
 @ stub NtUserPhysicalToLogicalPoint

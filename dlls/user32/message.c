@@ -3208,36 +3208,7 @@ static inline void check_for_driver_events( UINT msg )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH PeekMessageW( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT flags )
 {
-    MSG msg;
-    int ret;
-
-    USER_CheckNotLock();
-    check_for_driver_events( 0 );
-
-    ret = peek_message( &msg, hwnd, first, last, flags, 0 );
-    if (ret < 0) return FALSE;
-
-    if (!ret)
-    {
-        flush_window_surfaces( TRUE );
-        ret = wow_handlers.wait_message( 0, NULL, 0, QS_ALLINPUT, 0 );
-        /* if we received driver events, check again for a pending message */
-        if (ret == WAIT_TIMEOUT || peek_message( &msg, hwnd, first, last, flags, 0 ) <= 0) return FALSE;
-    }
-
-    check_for_driver_events( msg.message );
-
-    /* copy back our internal safe copy of message data to msg_out.
-     * msg_out is a variable from the *program*, so it can't be used
-     * internally as it can get "corrupted" by our use of SendMessage()
-     * (back to the program) inside the message handling itself. */
-    if (!msg_out)
-    {
-        SetLastError( ERROR_NOACCESS );
-        return FALSE;
-    }
-    *msg_out = msg;
-    return TRUE;
+    return NtUserPeekMessage( msg_out, hwnd, first, last, flags );
 }
 
 

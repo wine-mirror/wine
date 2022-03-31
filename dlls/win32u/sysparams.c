@@ -230,6 +230,8 @@ static struct list monitors = LIST_INIT(monitors);
 static INT64 last_query_display_time;
 static pthread_mutex_t display_lock = PTHREAD_MUTEX_INITIALIZER;
 
+BOOL enable_thunk_lock = FALSE;
+
 static struct monitor virtual_monitor =
 {
     .handle = NULLDRV_DEFAULT_HMONITOR,
@@ -4669,6 +4671,9 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         return dispatch_message( (const MSG *)arg, TRUE );
     case NtUserEnableDC:
         return set_dce_flags( UlongToHandle(arg), DCHF_ENABLEDC );
+    case NtUserEnableThunkLock:
+        enable_thunk_lock = arg;
+        return 0;
     case NtUserGetClipCursor:
         return get_clip_cursor( (RECT *)arg );
     case NtUserGetCursorPos:
