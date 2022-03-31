@@ -346,27 +346,23 @@ static void get_device_guid(EDataFlow flow, const char *device, GUID *guid)
         RegCloseKey(key);
 }
 
-static const char *oss_clean_devnode(const char *devnode)
+/* dst must be large enough to hold devnode */
+static void oss_clean_devnode(char *dest, const char *devnode)
 {
-    static char ret[OSS_DEVNODE_SIZE];
-
     const char *dot, *slash;
     size_t len;
 
-    dot = strrchr(devnode, '.');
+    strcpy(dest, devnode);
+    dot = strrchr(dest, '.');
     if(!dot)
-        return devnode;
+        return;
 
-    slash = strrchr(devnode, '/');
+    slash = strrchr(dest, '/');
     if(slash && dot < slash)
-        return devnode;
+        return;
 
-    len = dot - devnode;
-
-    memcpy(ret, devnode, len);
-    ret[len] = '\0';
-
-    return ret;
+    len = dot - dest;
+    dest[len] = '\0';
 }
 
 static UINT get_default_index(EDataFlow flow)
@@ -374,7 +370,7 @@ static UINT get_default_index(EDataFlow flow)
     int fd = -1, err;
     UINT i;
     oss_audioinfo ai;
-    const char *devnode;
+    char devnode[OSS_DEVNODE_SIZE];
     OSSDevice *dev_item;
 
     if(flow == eRender)
@@ -397,7 +393,7 @@ static UINT get_default_index(EDataFlow flow)
     close(fd);
 
     TRACE("Default devnode: %s\n", ai.devnode);
-    devnode = oss_clean_devnode(ai.devnode);
+    oss_clean_devnode(devnode, ai.devnode);
     i = 0;
     LIST_FOR_EACH_ENTRY(dev_item, &g_devices, OSSDevice, entry){
         if(dev_item->flow == flow){
@@ -465,7 +461,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID **guids,
     *num = 0;
     for(i = 0; i < sysinfo.numaudios; ++i){
         oss_audioinfo ai = {0};
-        const char *devnode;
+        char devnode[OSS_DEVNODE_SIZE];
         OSSDevice *dev_item;
         int fd;
 
@@ -476,7 +472,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids, GUID **guids,
             continue;
         }
 
-        devnode = oss_clean_devnode(ai.devnode);
+        oss_clean_devnode(devnode, ai.devnode);
 
         /* check for duplicates */
         LIST_FOR_EACH_ENTRY(dev_item, &g_devices, OSSDevice, entry){
