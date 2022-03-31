@@ -290,15 +290,11 @@ static void test_GlobalAlloc(void)
 
     SetLastError( 0xdeadbeef );
     mem = GlobalAlloc( GMEM_MOVEABLE | GMEM_DISCARDABLE, 0 );
-    todo_wine
     ok( !mem, "GlobalAlloc succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "got error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     mem = LocalAlloc( LMEM_MOVEABLE | LMEM_DISCARDABLE, 0 );
-    todo_wine
     ok( !mem, "LocalAlloc succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "got error %lu\n", GetLastError() );
 
     mem = GlobalAlloc( GMEM_DISCARDABLE, 0 );
@@ -417,7 +413,6 @@ static void test_GlobalAlloc(void)
         tmp_mem = GlobalFree( mem );
         ok( !tmp_mem, "GlobalFree failed, error %lu\n", GetLastError() );
         ok( !!entry->flags, "got unexpected flags %#Ix\n", entry->flags );
-        todo_wine_if(sizeof(void *) == 4)
         ok( !((UINT_PTR)entry->flags & sizeof(void *)), "got unexpected ptr align\n" );
         todo_wine_if(sizeof(void *) == 4)
         ok( !((UINT_PTR)entry->flags & (sizeof(void *) - 1)), "got unexpected ptr align\n" );
@@ -787,15 +782,11 @@ static void test_LocalAlloc(void)
 
     SetLastError( 0xdeadbeef );
     mem = LocalAlloc( LMEM_MOVEABLE | LMEM_DISCARDABLE, 0 );
-    todo_wine
     ok( !mem, "LocalAlloc succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "got error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     mem = GlobalAlloc( GMEM_MOVEABLE | GMEM_DISCARDABLE, 0 );
-    todo_wine
     ok( !mem, "GlobalAlloc succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "got error %lu\n", GetLastError() );
 
     mem = LocalAlloc( LMEM_DISCARDABLE, 0 );

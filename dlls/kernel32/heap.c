@@ -151,10 +151,17 @@ BOOL WINAPI HeapDestroy( HANDLE heap /* [in] Handle of heap */ )
 
 struct mem_entry
 {
-    WORD magic;
-    void *ptr;
-    BYTE flags;
-    BYTE lock;
+    union
+    {
+        struct
+        {
+            WORD magic;
+            void *ptr;
+            BYTE flags;
+            BYTE lock;
+        };
+        void *next_free;
+    };
 };
 
 #include "poppack.h"
@@ -173,7 +180,9 @@ struct kernelbase_global_data *kernelbase_global_data;
 static inline struct mem_entry *unsafe_mem_from_HLOCAL( HLOCAL handle )
 {
     struct mem_entry *mem = CONTAINING_RECORD( handle, struct mem_entry, ptr );
+    struct kernelbase_global_data *data = kernelbase_global_data;
     if (!((ULONG_PTR)handle & 2)) return NULL;
+    if (mem < data->mem_entries || mem >= data->mem_entries_end) return NULL;
     if (mem->magic != MAGIC_LOCAL_USED) return NULL;
     return mem;
 }
@@ -276,8 +285,7 @@ HGLOBAL WINAPI GlobalHandle( const void *ptr )
         if ((mem = unsafe_mem_from_HLOCAL( handle )))
         {
             test = mem->ptr;
-            if (HeapValidate( GetProcessHeap(), HEAP_NO_SERIALIZE, (const char *)test - HLOCAL_STORAGE ) && /* obj(-handle) valid arena? */
-                HeapValidate( GetProcessHeap(), HEAP_NO_SERIALIZE, mem )) /* intern valid arena? */
+            if (HeapValidate( GetProcessHeap(), HEAP_NO_SERIALIZE, (const char *)test - HLOCAL_STORAGE )) /* obj(-handle) valid arena? */
                 break; /* valid moveable block */
         }
         handle = 0;

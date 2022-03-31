@@ -589,15 +589,30 @@ struct kernelbase_global_data
 
 struct mem_entry
 {
-   WORD  magic;
-   void *ptr;
-   BYTE flags;
-   BYTE lock;
+    union
+    {
+        struct
+        {
+            WORD magic;
+            void *ptr;
+            BYTE flags;
+            BYTE lock;
+        };
+        void *next_free;
+    };
 };
 
 #include "poppack.h"
 
-static struct kernelbase_global_data kernelbase_global_data = {0};
+#define MAX_MEM_HANDLES  0x10000
+static struct mem_entry mem_entries[MAX_MEM_HANDLES];
+static struct mem_entry *next_free_mem = mem_entries;
+
+static struct kernelbase_global_data kernelbase_global_data =
+{
+    .mem_entries = mem_entries,
+    .mem_entries_end = mem_entries + MAX_MEM_HANDLES,
+};
 
 #define MAGIC_LOCAL_USED    0x5342
 /* align the storage needed for the HLOCAL on an 8-byte boundary thus
@@ -610,7 +625,9 @@ static struct kernelbase_global_data kernelbase_global_data = {0};
 static inline struct mem_entry *unsafe_mem_from_HLOCAL( HLOCAL handle )
 {
     struct mem_entry *mem = CONTAINING_RECORD( handle, struct mem_entry, ptr );
+    struct kernelbase_global_data *data = &kernelbase_global_data;
     if (!((ULONG_PTR)handle & 2)) return NULL;
+    if (mem < data->mem_entries || mem >= data->mem_entries_end) return NULL;
     if (mem->magic != MAGIC_LOCAL_USED) return NULL;
     return mem;
 }
@@ -666,8 +683,10 @@ HGLOBAL WINAPI DECLSPEC_HOTPATCH GlobalFree( HLOCAL handle )
  */
 HLOCAL WINAPI DECLSPEC_HOTPATCH LocalAlloc( UINT flags, SIZE_T size )
 {
+    HANDLE heap = GetProcessHeap();
     struct mem_entry *mem;
     DWORD heap_flags = 0;
+    HLOCAL handle;
     void *ptr;
 
     TRACE_(globalmem)( "flags %#x, size %#Ix\n", flags, size );
@@ -676,36 +695,44 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalAlloc( UINT flags, SIZE_T size )
 
     if (!(flags & LMEM_MOVEABLE)) /* pointer */
     {
-        ptr = HeapAlloc( GetProcessHeap(), heap_flags, size );
+        ptr = HeapAlloc( heap, heap_flags, size );
         TRACE_(globalmem)( "return %p\n", ptr );
         return ptr;
     }
 
-    if (size > INT_MAX - HLOCAL_STORAGE)
+    RtlLockHeap( heap );
+    if ((mem = next_free_mem) < mem_entries || mem >= mem_entries + MAX_MEM_HANDLES)
+        mem = NULL;
+    else
     {
-        SetLastError( ERROR_OUTOFMEMORY );
-        return 0;
+        if (!mem->next_free) next_free_mem++;
+        else next_free_mem = mem->next_free;
+        mem->next_free = NULL;
     }
-    if (!(mem = HeapAlloc( GetProcessHeap(), 0, sizeof(*mem) ))) return 0;
+    RtlUnlockHeap( heap );
+
+    if (!mem) goto failed;
+    handle = HLOCAL_from_mem( mem );
 
     mem->magic = MAGIC_LOCAL_USED;
     mem->flags = flags >> 8;
     mem->lock  = 0;
+    mem->ptr   = NULL;
 
     if (size)
     {
-        if (!(ptr = HeapAlloc(GetProcessHeap(), heap_flags, size + HLOCAL_STORAGE )))
-        {
-            HeapFree( GetProcessHeap(), 0, mem );
-            return 0;
-        }
-        *(HLOCAL *)ptr = HLOCAL_from_mem( mem );
+        if (!(ptr = HeapAlloc( heap, heap_flags, size + HLOCAL_STORAGE ))) goto failed;
+        *(HLOCAL *)ptr = handle;
         mem->ptr = (char *)ptr + HLOCAL_STORAGE;
     }
-    else mem->ptr = NULL;
 
-    TRACE_(globalmem)( "return handle %p, ptr %p\n", HLOCAL_from_mem( mem ), mem->ptr );
-    return HLOCAL_from_mem( mem );
+    TRACE_(globalmem)( "return handle %p, ptr %p\n", handle, mem->ptr );
+    return handle;
+
+failed:
+    if (mem) LocalFree( handle );
+    SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+    return 0;
 }
 
 
@@ -714,52 +741,32 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalAlloc( UINT flags, SIZE_T size )
  */
 HLOCAL WINAPI DECLSPEC_HOTPATCH LocalFree( HLOCAL handle )
 {
+    HANDLE heap = GetProcessHeap();
     struct mem_entry *mem;
-    HLOCAL ret;
+    HLOCAL ret = handle;
     void *ptr;
 
     TRACE_(globalmem)( "handle %p\n", handle );
 
-    RtlLockHeap( GetProcessHeap() );
-    __TRY
+    RtlLockHeap( heap );
+    if ((ptr = unsafe_ptr_from_HLOCAL( handle )))
     {
-        ret = 0;
-        if ((ptr = unsafe_ptr_from_HLOCAL( handle )))
-        {
-            if (!HeapFree( GetProcessHeap(), HEAP_NO_SERIALIZE, ptr ))
-            {
-                SetLastError( ERROR_INVALID_HANDLE );
-                ret = handle;
-            }
-        }
-        else  /* HANDLE */
-        {
-            if ((mem = unsafe_mem_from_HLOCAL( handle )))
-            {
-                mem->magic = 0xdead;
-                if (mem->ptr)
-                {
-                    if (!HeapFree( GetProcessHeap(), HEAP_NO_SERIALIZE, (char *)mem->ptr - HLOCAL_STORAGE ))
-                        ret = handle;
-                }
-                if (!HeapFree( GetProcessHeap(), HEAP_NO_SERIALIZE, mem )) ret = handle;
-            }
-            else
-            {
-                WARN_(globalmem)( "invalid handle %p\n", handle );
-                SetLastError( ERROR_INVALID_HANDLE );
-                ret = handle;
-            }
-        }
+        if (HeapFree( heap, HEAP_NO_SERIALIZE, ptr )) ret = 0;
     }
-    __EXCEPT_PAGE_FAULT
+    else if ((mem = unsafe_mem_from_HLOCAL( handle )))
+    {
+        if (!mem->ptr || HeapFree( heap, HEAP_NO_SERIALIZE, (char *)mem->ptr - HLOCAL_STORAGE )) ret = 0;
+        mem->ptr = NULL;
+        mem->next_free = next_free_mem;
+        next_free_mem = mem;
+    }
+    RtlUnlockHeap( heap );
+
+    if (ret)
     {
         WARN_(globalmem)( "invalid handle %p\n", handle );
         SetLastError( ERROR_INVALID_HANDLE );
-        ret = handle;
     }
-    __ENDTRY
-    RtlUnlockHeap( GetProcessHeap() );
     return ret;
 }
 
