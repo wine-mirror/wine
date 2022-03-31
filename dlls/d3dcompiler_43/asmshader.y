@@ -304,6 +304,8 @@ int asmshader_lex(void);
 %type <rel_reg> rel_reg
 %type <reg> predicate
 %type <immval> immsum
+%type <immval> signed_integer
+%type <immval> signed_float
 %type <sregs> sregs
 
 %%
@@ -713,11 +715,11 @@ instruction:          INSTR_ADD omods dreg ',' sregs
                                                   asm_ctx.line_no);
                                 set_parse_status(&asm_ctx.status,  PARSE_WARN);
                             }
-                    | INSTR_DEF REG_CONSTFLOAT ',' IMMVAL ',' IMMVAL ',' IMMVAL ',' IMMVAL
+                    | INSTR_DEF REG_CONSTFLOAT ',' signed_float ',' signed_float ',' signed_float ',' signed_float
                             {
                                 asm_ctx.funcs->constF(&asm_ctx, $2, $4.val, $6.val, $8.val, $10.val);
                             }
-                    | INSTR_DEFI REG_CONSTINT ',' IMMVAL ',' IMMVAL ',' IMMVAL ',' IMMVAL
+                    | INSTR_DEFI REG_CONSTINT ',' signed_integer ',' signed_integer ',' signed_integer ',' signed_integer
                             {
                                 asm_ctx.funcs->constI(&asm_ctx, $2, $4.val, $6.val, $8.val, $10.val);
                             }
@@ -1387,23 +1389,46 @@ rel_reg:               /* empty */
                             $$.swizzle = $5;
                         }
 
-immsum:               IMMVAL
+immsum:               signed_integer
+                    | immsum '+' signed_integer
                         {
-                            if(!$1.integer) {
+                            $$.val = $1.val + $3.val;
+                        }
+                    | immsum '-' signed_integer
+                        {
+                            $$.val = $1.val - $3.val;
+                        }
+
+signed_integer:
+                      IMMVAL
+                        {
+                            if (!$1.integer)
+                            {
                                 asmparser_message(&asm_ctx, "Line %u: Unexpected float %f\n",
-                                                  asm_ctx.line_no, $1.val);
+                                        asm_ctx.line_no, $1.val);
                                 set_parse_status(&asm_ctx.status,  PARSE_ERR);
                             }
                             $$.val = $1.val;
                         }
-                    | immsum '+' IMMVAL
+                    | '-' IMMVAL
                         {
-                            if(!$3.integer) {
+                            if (!$2.integer)
+                            {
                                 asmparser_message(&asm_ctx, "Line %u: Unexpected float %f\n",
-                                                  asm_ctx.line_no, $3.val);
+                                        asm_ctx.line_no, $2.val);
                                 set_parse_status(&asm_ctx.status,  PARSE_ERR);
                             }
-                            $$.val = $1.val + $3.val;
+                            $$.val = -$2.val;
+                        }
+
+signed_float:
+                      IMMVAL
+                        {
+                            $$.val = $1.val;
+                        }
+                    | '-' IMMVAL
+                        {
+                            $$.val = -$2.val;
                         }
 
 smod:                 SMOD_BIAS
