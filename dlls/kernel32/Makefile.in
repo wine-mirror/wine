@@ -32,5 +32,4 @@ C_SRCS = \
 	volume.c
 
 RC_SRCS = \
-	locale_rc.rc \
 	version.rc
