@@ -21,7 +21,6 @@
 #include "explorerframe_main.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(explorerframe);
 
@@ -81,7 +80,7 @@ static ULONG STDMETHODCALLTYPE taskbar_list_Release(ITaskbarList4 *iface)
 
     if (!refcount)
     {
-        heap_free(This);
+        free(This);
         EFRAME_UnlockModule();
     }
 
@@ -309,7 +308,7 @@ HRESULT TaskbarList_Constructor(IUnknown *outer, REFIID riid, void **taskbar_lis
         return CLASS_E_NOAGGREGATION;
     }
 
-    object = heap_alloc(sizeof(*object));
+    object = malloc(sizeof(*object));
     if (!object)
     {
         ERR("Failed to allocate taskbar list object memory\n");

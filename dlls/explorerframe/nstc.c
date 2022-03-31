@@ -33,7 +33,6 @@
 
 #include "wine/list.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 #include "explorerframe_main.h"
 
@@ -852,7 +851,7 @@ static ULONG WINAPI NSTC2_fnRelease(INameSpaceTreeControl2* iface)
     if(!ref)
     {
         TRACE("Freeing.\n");
-        heap_free(This);
+        free(This);
         EFRAME_UnlockModule();
     }
 
@@ -989,7 +988,7 @@ static HRESULT WINAPI NSTC2_fnInsertRoot(INameSpaceTreeControl2* iface,
 
     TRACE("%p, %d, %p, %lx, %lx, %p\n", This, iIndex, psiRoot, grfEnumFlags, grfRootStyle, pif);
 
-    new_root = heap_alloc(sizeof(*new_root));
+    new_root = malloc(sizeof(*new_root));
     if(!new_root)
         return E_OUTOFMEMORY;
 
@@ -1013,7 +1012,7 @@ static HRESULT WINAPI NSTC2_fnInsertRoot(INameSpaceTreeControl2* iface,
     if(!new_root->htreeitem)
     {
         WARN("Failed to add the root.\n");
-        heap_free(new_root);
+        free(new_root);
         return E_FAIL;
     }
 
@@ -1081,7 +1080,7 @@ static HRESULT WINAPI NSTC2_fnRemoveRoot(INameSpaceTreeControl2* iface,
         events_OnItemDeleted(This, root->psi, TRUE);
         SendMessageW(This->hwnd_tv, TVM_DELETEITEM, 0, (LPARAM)root->htreeitem);
         list_remove(&root->entry);
-        heap_free(root);
+        free(root);
         return S_OK;
     }
     else
@@ -1123,7 +1122,7 @@ static HRESULT WINAPI NSTC2_fnGetRootItems(INameSpaceTreeControl2* iface,
     if(!count)
         return E_INVALIDARG;
 
-    array = heap_alloc(sizeof(LPITEMIDLIST)*count);
+    array = malloc(sizeof(LPITEMIDLIST)*count);
 
     i = 0;
     LIST_FOR_EACH_ENTRY(root, &This->roots, nstc_root, entry)
@@ -1137,7 +1136,7 @@ static HRESULT WINAPI NSTC2_fnGetRootItems(INameSpaceTreeControl2* iface,
     for(i = 0; i < count; i++)
         ILFree(array[i]);
 
-    heap_free(array);
+    free(array);
 
     return hr;
 }
@@ -1598,7 +1597,7 @@ HRESULT NamespaceTreeControl_Constructor(IUnknown *pUnkOuter, REFIID riid, void 
 
     EFRAME_LockModule();
 
-    nstc = heap_alloc_zero(sizeof(*nstc));
+    nstc = calloc(1, sizeof(*nstc));
     if (!nstc)
         return E_OUTOFMEMORY;
 
