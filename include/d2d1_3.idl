@@ -342,3 +342,16 @@ interface ID2D1Device2 : ID2D1Device1
         [out] IDXGIDevice **dxgi_device
     );
 }
+
+[
+    object,
+    uuid(0869759f-4f00-413f-b03e-2bda45404d0f),
+    local,
+]
+interface ID2D1Factory3 : ID2D1Factory2
+{
+    HRESULT CreateDevice(
+        [in] IDXGIDevice *dxgi_device,
+        [out] ID2D1Device2 **d2d_device
+    );
+}
