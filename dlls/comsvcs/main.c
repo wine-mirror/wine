@@ -19,7 +19,6 @@
  */
 
 #include "comsvcs_private.h"
-#include "wine/heap.h"
 #include "wine/debug.h"
 #include "initguid.h"
 #include "comsvcs_classes.h"
@@ -109,7 +108,7 @@ static ULONG WINAPI holder_Release(IHolder *iface)
 
     if (!ref)
     {
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -221,7 +220,7 @@ static HRESULT create_holder(IDispenserDriver *driver, IHolder **object)
 
     TRACE("(%p)\n", object);
 
-    hold = heap_alloc(sizeof(*hold));
+    hold = malloc(sizeof(*hold));
     if (!hold)
     {
         *object = NULL;
@@ -277,7 +276,7 @@ static ULONG WINAPI dismanager_Release(IDispenserManager *iface)
     {
         if (This->mta_cookie)
             CoDecrementMTAUsage(This->mta_cookie);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -330,7 +329,7 @@ static HRESULT WINAPI dispenser_manager_cf_CreateInstance(IClassFactory *iface, 
 
     TRACE("(%p %s %p)\n", outer, debugstr_guid(riid), object);
 
-    dismanager = heap_alloc_zero(sizeof(*dismanager));
+    dismanager = calloc(1, sizeof(*dismanager));
     if (!dismanager)
     {
         *object = NULL;
@@ -443,8 +442,8 @@ static ULONG WINAPI new_moniker_Release(IMoniker* iface)
 
     if (!refcount)
     {
-        heap_free(moniker->progid);
-        heap_free(moniker);
+        free(moniker->progid);
+        free(moniker);
     }
 
     return refcount;
@@ -488,7 +487,7 @@ static HRESULT WINAPI new_moniker_Load(IMoniker *iface, IStream *stream)
 
     if (SUCCEEDED(hr) && progid_len)
     {
-        if (!(progid = heap_alloc(progid_len)))
+        if (!(progid = malloc(progid_len)))
            return E_OUTOFMEMORY;
         hr = IStream_Read(stream, progid, progid_len, &len);
     }
@@ -500,12 +499,12 @@ static HRESULT WINAPI new_moniker_Load(IMoniker *iface, IStream *stream)
     if (SUCCEEDED(hr) && pad == 0)
     {
         moniker->clsid = clsid;
-        heap_free(moniker->progid);
+        free(moniker->progid);
         moniker->progid = progid;
         progid = NULL;
     }
 
-    heap_free(progid);
+    free(progid);
 
     return hr;
 }
@@ -871,7 +870,7 @@ static HRESULT new_moniker_parse_displayname(IBindCtx *pbc, LPOLESTR name, ULONG
         progid = str;
     }
 
-    moniker = heap_alloc_zero(sizeof(*moniker));
+    moniker = calloc(1, sizeof(*moniker));
     if (!moniker)
         return E_OUTOFMEMORY;
 
@@ -881,12 +880,11 @@ static HRESULT new_moniker_parse_displayname(IBindCtx *pbc, LPOLESTR name, ULONG
     moniker->clsid = guid;
     if (progid)
     {
-        if (!(moniker->progid = heap_alloc((lstrlenW(progid) + 1) * sizeof(WCHAR))))
+        if (!(moniker->progid = wcsdup(progid)))
         {
             IMoniker_Release(&moniker->IMoniker_iface);
             return E_OUTOFMEMORY;
         }
-        lstrcpyW(moniker->progid, progid);
     }
 
     *ret = &moniker->IMoniker_iface;
