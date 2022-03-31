@@ -261,6 +261,7 @@ struct received_message_info
     enum message_type type;
     MSG               msg;
     UINT              flags;  /* InSendMessageEx return flags */
+    struct received_message_info *prev;
 };
 
 /* structure to group all parameters for sent messages of the various kinds */
@@ -1824,10 +1825,11 @@ static void unpack_reply( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
  *
  * Send a reply to a sent message.
  */
-static void reply_message( struct received_message_info *info, LRESULT result, BOOL remove )
+static void reply_message( struct received_message_info *info, LRESULT result, MSG *msg )
 {
     struct packed_message data;
     int i, replied = info->flags & ISMEX_REPLIED;
+    BOOL remove = msg != NULL;
 
     if (info->flags & ISMEX_NOTIFY) return;  /* notify messages don't get replies */
     if (!remove && replied) return;  /* replied already */
@@ -1837,8 +1839,8 @@ static void reply_message( struct received_message_info *info, LRESULT result, B
 
     if (info->type == MSG_OTHER_PROCESS && !replied)
     {
-        pack_reply( info->msg.hwnd, info->msg.message, info->msg.wParam,
-                    info->msg.lParam, result, &data );
+        if (!msg) msg = &info->msg;
+        pack_reply( msg->hwnd, msg->message, msg->wParam, msg->lParam, result, &data );
     }
 
     SERVER_START_REQ( reply_message )
@@ -1849,6 +1851,22 @@ static void reply_message( struct received_message_info *info, LRESULT result, B
         wine_server_call( req );
     }
     SERVER_END_REQ;
+}
+
+
+/***********************************************************************
+ *           reply_message_result
+ *
+ * Send a reply to a sent message and update thread receive info.
+ */
+static BOOL reply_message_result( LRESULT result, MSG *msg )
+{
+    struct received_message_info *info = get_user_thread_info()->receive_info;
+
+    if (!info) return FALSE;
+    reply_message( info, result, msg );
+    if (msg) get_user_thread_info()->receive_info = info->prev;
+    return TRUE;
 }
 
 
@@ -2665,7 +2683,7 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
     LRESULT result;
     struct user_thread_info *thread_info = get_user_thread_info();
     INPUT_MESSAGE_SOURCE prev_source = thread_info->msg_source;
-    struct received_message_info info, *old_info;
+    struct received_message_info info;
     unsigned int hw_id = 0;  /* id of previous hardware message */
     void *buffer;
     size_t buffer_size = 1024;
@@ -2810,7 +2828,7 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
                        hook.pt.x, hook.pt.y, hook.mouseData, hook.flags, hook.time, hook.dwExtraInfo );
                 result = HOOK_CallHooks( WH_MOUSE_LL, HC_ACTION, info.msg.wParam, (LPARAM)&hook, TRUE );
             }
-            reply_message( &info, result, TRUE );
+            reply_message( &info, result, &info.msg );
             continue;
         case MSG_OTHER_PROCESS:
             info.flags = ISMEX_SEND;
@@ -2818,7 +2836,7 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
                                  &info.msg.lParam, &buffer, size ))
             {
                 /* ignore it */
-                reply_message( &info, 0, TRUE );
+                reply_message( &info, 0, &info.msg );
                 continue;
             }
             break;
@@ -2878,14 +2896,14 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
         }
 
         /* if we get here, we have a sent message; call the window procedure */
-        old_info = thread_info->receive_info;
+        info.prev = thread_info->receive_info;
         thread_info->receive_info = &info;
         thread_info->msg_source = msg_source_unavailable;
         result = call_window_proc( info.msg.hwnd, info.msg.message, info.msg.wParam,
                                    info.msg.lParam, (info.type != MSG_ASCII), FALSE,
                                    WMCHAR_MAP_RECVMESSAGE );
-        reply_message( &info, result, TRUE );
-        thread_info->receive_info = old_info;
+        if (thread_info->receive_info == &info )
+            reply_message_result( result, &info.msg );
 
         /* if some PM_QS* flags were specified, only handle sent messages from now on */
         if (HIWORD(flags) && !changed_mask) flags = PM_QS_SENDMESSAGE | LOWORD(flags);
@@ -3573,11 +3591,7 @@ BOOL WINAPI SendMessageCallbackW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
  */
 BOOL WINAPI ReplyMessage( LRESULT result )
 {
-    struct received_message_info *info = get_user_thread_info()->receive_info;
-
-    if (!info) return FALSE;
-    reply_message( info, result, FALSE );
-    return TRUE;
+    return reply_message_result( result, NULL );
 }
 
 
