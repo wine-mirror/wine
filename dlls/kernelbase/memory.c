@@ -598,9 +598,12 @@ struct mem_entry
  * the output jpeg's > 1 MB if not */
 #define HLOCAL_STORAGE      (sizeof(HLOCAL) * 2)
 
-static inline struct mem_entry *mem_from_HLOCAL( HLOCAL handle )
+static inline struct mem_entry *unsafe_mem_from_HLOCAL( HLOCAL handle )
 {
-    return (struct mem_entry *)((char *)handle - 2);
+    struct mem_entry *mem = CONTAINING_RECORD( handle, struct mem_entry, ptr );
+    if (!((ULONG_PTR)handle & 2)) return NULL;
+    if (mem->magic != MAGIC_LOCAL_USED) return NULL;
+    return mem;
 }
 
 static inline HLOCAL HLOCAL_from_mem( struct mem_entry *mem )
@@ -709,8 +712,7 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalFree( HLOCAL handle )
         }
         else  /* HANDLE */
         {
-            mem = mem_from_HLOCAL( handle );
-            if (mem->magic == MAGIC_LOCAL_USED)
+            if ((mem = unsafe_mem_from_HLOCAL( handle )))
             {
                 mem->magic = 0xdead;
                 if (mem->ptr)
@@ -745,6 +747,7 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalFree( HLOCAL handle )
  */
 LPVOID WINAPI DECLSPEC_HOTPATCH LocalLock( HLOCAL handle )
 {
+    struct mem_entry *mem;
     void *ret = NULL;
 
     TRACE_(globalmem)( "handle %p\n", handle );
@@ -767,8 +770,7 @@ LPVOID WINAPI DECLSPEC_HOTPATCH LocalLock( HLOCAL handle )
     RtlLockHeap( GetProcessHeap() );
     __TRY
     {
-        struct mem_entry *mem = mem_from_HLOCAL( handle );
-        if (mem->magic == MAGIC_LOCAL_USED)
+        if ((mem = unsafe_mem_from_HLOCAL( handle )))
         {
             ret = mem->ptr;
             if (!mem->ptr) SetLastError( ERROR_DISCARDED );
@@ -826,10 +828,9 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT f
                 LocalFree( handle );
             }
         }
-        else if (!is_pointer( handle ) && (flags & LMEM_DISCARDABLE))
+        else if ((mem = unsafe_mem_from_HLOCAL( handle )) && (flags & LMEM_DISCARDABLE))
         {
             /* change the flags to make our block "discardable" */
-            mem = mem_from_HLOCAL( handle );
             mem->flags |= LMEM_DISCARDABLE >> 8;
             ret = handle;
         }
@@ -843,10 +844,9 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT f
             if (!(flags & LMEM_MOVEABLE)) heap_flags |= HEAP_REALLOC_IN_PLACE_ONLY;
             ret = HeapReAlloc( GetProcessHeap(), heap_flags, handle, size );
         }
-        else
+        else if ((mem = unsafe_mem_from_HLOCAL( handle )))
         {
             /* reallocate a moveable block */
-            mem = mem_from_HLOCAL( handle );
             if (size != 0)
             {
                 if (size <= INT_MAX - HLOCAL_STORAGE)
@@ -886,6 +886,7 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT f
                 else WARN_(globalmem)( "not freeing memory associated with locked handle\n" );
             }
         }
+        else SetLastError( ERROR_INVALID_HANDLE );
     }
     RtlUnlockHeap( GetProcessHeap() );
     return ret;
@@ -897,6 +898,7 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT f
  */
 BOOL WINAPI DECLSPEC_HOTPATCH LocalUnlock( HLOCAL handle )
 {
+    struct mem_entry *mem;
     BOOL ret = FALSE;
 
     TRACE_(globalmem)( "handle %p\n", handle );
@@ -910,8 +912,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH LocalUnlock( HLOCAL handle )
     RtlLockHeap( GetProcessHeap() );
     __TRY
     {
-        struct mem_entry *mem = mem_from_HLOCAL( handle );
-        if (mem->magic == MAGIC_LOCAL_USED)
+        if ((mem = unsafe_mem_from_HLOCAL( handle )))
         {
             if (mem->lock)
             {
