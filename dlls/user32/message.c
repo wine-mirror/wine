@@ -1184,22 +1184,21 @@ static HGLOBAL dde_get_pair(HGLOBAL shm)
  *
  * Post a DDE message
  */
-static BOOL post_dde_message( struct packed_message *data, const struct send_message_info *info )
+static BOOL post_dde_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DWORD dest_tid, DWORD type )
 {
     void*       ptr = NULL;
     int         size = 0;
     UINT_PTR    uiLo, uiHi;
     LPARAM      lp;
     HGLOBAL     hunlock = 0;
-    int         i;
     DWORD       res;
     ULONGLONG   hpack;
 
-    if (!UnpackDDElParam( info->msg, info->lparam, &uiLo, &uiHi ))
+    if (!UnpackDDElParam( msg, lparam, &uiLo, &uiHi ))
         return FALSE;
 
-    lp = info->lparam;
-    switch (info->msg)
+    lp = lparam;
+    switch (msg)
     {
         /* DDE messages which don't require packing are:
          * WM_DDE_INITIATE
@@ -1216,7 +1215,8 @@ static BOOL post_dde_message( struct packed_message *data, const struct send_mes
             {
                 hpack = pack_ptr( h );
                 /* send back the value of h on the other side */
-                push_data( data, &hpack, sizeof(hpack) );
+                ptr = &hpack;
+                size = sizeof(hpack);
                 lp = uiLo;
                 TRACE( "send dde-ack %lx %08lx => %p\n", uiLo, uiHi, h );
             }
@@ -1231,17 +1231,15 @@ static BOOL post_dde_message( struct packed_message *data, const struct send_mes
     case WM_DDE_ADVISE:
     case WM_DDE_DATA:
     case WM_DDE_POKE:
-        size = 0;
         if (uiLo)
         {
             size = GlobalSize( (HGLOBAL)uiLo ) ;
-            if ((info->msg == WM_DDE_ADVISE && size < sizeof(DDEADVISE)) ||
-                (info->msg == WM_DDE_DATA   && size < FIELD_OFFSET(DDEDATA, Value)) ||
-                (info->msg == WM_DDE_POKE   && size < FIELD_OFFSET(DDEPOKE, Value))
-                )
-            return FALSE;
+            if ((msg == WM_DDE_ADVISE && size < sizeof(DDEADVISE)) ||
+                (msg == WM_DDE_DATA   && size < FIELD_OFFSET(DDEDATA, Value)) ||
+                (msg == WM_DDE_POKE   && size < FIELD_OFFSET(DDEPOKE, Value)))
+                return FALSE;
         }
-        else if (info->msg != WM_DDE_DATA) return FALSE;
+        else if (msg != WM_DDE_DATA) return FALSE;
 
         lp = uiHi;
         if (uiLo)
@@ -1252,37 +1250,35 @@ static BOOL post_dde_message( struct packed_message *data, const struct send_mes
                 TRACE("unused %d, fResponse %d, fRelease %d, fDeferUpd %d, fAckReq %d, cfFormat %d\n",
                        dde_data->unused, dde_data->fResponse, dde_data->fRelease,
                        dde_data->reserved, dde_data->fAckReq, dde_data->cfFormat);
-                push_data( data, ptr, size );
                 hunlock = (HGLOBAL)uiLo;
             }
         }
         TRACE( "send ddepack %u %lx\n", size, uiHi );
         break;
     case WM_DDE_EXECUTE:
-        if (info->lparam)
+        if (lparam)
         {
-            if ((ptr = GlobalLock( (HGLOBAL)info->lparam) ))
+            if ((ptr = GlobalLock( (HGLOBAL)lparam) ))
             {
-                push_data(data, ptr, GlobalSize( (HGLOBAL)info->lparam ));
+                size = GlobalSize( (HGLOBAL)lparam );
                 /* so that the other side can send it back on ACK */
-                lp = info->lparam;
-                hunlock = (HGLOBAL)info->lparam;
+                lp = lparam;
+                hunlock = (HGLOBAL)lparam;
             }
         }
         break;
     }
     SERVER_START_REQ( send_message )
     {
-        req->id      = info->dest_tid;
-        req->type    = info->type;
+        req->id      = dest_tid;
+        req->type    = type;
         req->flags   = 0;
-        req->win     = wine_server_user_handle( info->hwnd );
-        req->msg     = info->msg;
-        req->wparam  = info->wparam;
+        req->win     = wine_server_user_handle( hwnd );
+        req->msg     = msg;
+        req->wparam  = wparam;
         req->lparam  = lp;
         req->timeout = TIMEOUT_INFINITE;
-        for (i = 0; i < data->count; i++)
-            wine_server_add_data( req, data->data[i], data->size[i] );
+        if (size) wine_server_add_data( req, ptr, size );
         if ((res = wine_server_call( req )))
         {
             if (res == STATUS_INVALID_PARAMETER)
@@ -1292,7 +1288,7 @@ static BOOL post_dde_message( struct packed_message *data, const struct send_mes
                 SetLastError( RtlNtStatusToDosError(res) );
         }
         else
-            FreeDDElParam(info->msg, info->lparam);
+            FreeDDElParam( msg, lparam );
     }
     SERVER_END_REQ;
     if (hunlock) GlobalUnlock(hunlock);
@@ -2010,7 +2006,8 @@ static BOOL put_message_in_queue( const struct send_message_info *info, size_t *
     }
     else if (info->type == MSG_POSTED && info->msg >= WM_DDE_FIRST && info->msg <= WM_DDE_LAST)
     {
-        return post_dde_message( &data, info );
+        return post_dde_message( info->hwnd, info->msg, info->wparam, info->lparam,
+                                 info->dest_tid, info->type );
     }
 
     SERVER_START_REQ( send_message )
