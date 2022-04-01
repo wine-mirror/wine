@@ -43,7 +43,6 @@
 #include "asptlb.h"
 #include "shlwapi.h"
 
-#include "wine/heap.h"
 #include "wine/test.h"
 
 #define XML_E_UNEXPECTED_ATTRIBUTE 0xC00CE56C
@@ -193,7 +192,7 @@ static ULONG WINAPI dispevent_Release(IDispatch *iface)
     ULONG ref = InterlockedDecrement( &This->ref );
 
     if (ref == 0)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -253,7 +252,7 @@ static const IDispatchVtbl dispeventVtbl =
 
 static IDispatch* create_dispevent(void)
 {
-    dispevent *event = heap_alloc(sizeof(*event));
+    dispevent *event = malloc(sizeof(*event));
 
     event->IDispatch_iface.lpVtbl = &dispeventVtbl;
     event->ref = 1;
