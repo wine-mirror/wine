@@ -194,7 +194,7 @@
 @ stub VariantToStringAlloc
 @ stub VariantToStringArray
 @ stub VariantToStringArrayAlloc
-@ stub VariantToStringWithDefault
+@ stdcall VariantToStringWithDefault(ptr wstr)
 @ stub VariantToUInt16
 @ stub VariantToUInt16Array
 @ stub VariantToUInt16ArrayAlloc

@@ -416,6 +416,22 @@ PCWSTR WINAPI PropVariantToStringWithDefault(REFPROPVARIANT propvarIn, LPCWSTR p
     return pszDefault;
 }
 
+/******************************************************************
+ *  VariantToStringWithDefault   (PROPSYS.@)
+ */
+PCWSTR WINAPI VariantToStringWithDefault(const VARIANT *pvar, const WCHAR *default_value)
+{
+    TRACE("%s, %s.\n", debugstr_variant(pvar), debugstr_w(default_value));
+
+    if (V_VT(pvar) == (VT_BYREF | VT_VARIANT)) pvar = V_VARIANTREF(pvar);
+    if (V_VT(pvar) == (VT_BYREF | VT_BSTR) || V_VT(pvar) == VT_BSTR)
+    {
+        BSTR ret = V_ISBYREF(pvar) ? *V_BSTRREF(pvar) : V_BSTR(pvar);
+        return ret ? ret : L"";
+    }
+
+    return default_value;
+}
 
 /******************************************************************
  *  PropVariantChangeType   (PROPSYS.@)
