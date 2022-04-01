@@ -26,7 +26,6 @@
 #include "shlwapi.h"
 
 #include "wine/test.h"
-#include "wine/heap.h"
 
 #include "initguid.h"
 #include "interfaces.h"
@@ -108,7 +107,7 @@ static void run_test(void)
     ok(ret == FALSE, "Got %d\n", ret);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got %ld\n", GetLastError());
 
-    info = heap_alloc(buffer_size);
+    info = malloc(buffer_size);
     SetLastError(0xdeadbeef);
     ret = SxsLookupClrGuid(SXS_LOOKUP_CLR_GUID_FIND_CLR_CLASS, (GUID*)&CLSID_Test, NULL, info, buffer_size, &buffer_size);
     ok(ret == TRUE, "Got %d\n", ret);
@@ -121,14 +120,14 @@ static void run_test(void)
     ok(!lstrcmpW(info->pcwszRuntimeVersion, L"v4.0.0.0"), "Unexpected runtime version %s.\n",
            wine_dbgstr_w(info->pcwszRuntimeVersion));
 
-    heap_free(info);
+    free(info);
 
     SetLastError(0xdeadbeef);
     ret = SxsLookupClrGuid(SXS_LOOKUP_CLR_GUID_FIND_SURROGATE, (GUID *)&CLSID_SurrogateTest, NULL, NULL, 0, &buffer_size);
     ok(!ret, "Unexpected return value %d.\n", ret);
     ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER, "Got %ld\n", GetLastError());
 
-    info = heap_alloc(buffer_size);
+    info = malloc(buffer_size);
     SetLastError(0xdeadbeef);
     ret = SxsLookupClrGuid(SXS_LOOKUP_CLR_GUID_FIND_SURROGATE, (GUID *)&CLSID_SurrogateTest, NULL, info,
             buffer_size, &buffer_size);
@@ -142,7 +141,7 @@ static void run_test(void)
     ok(!lstrcmpW(info->pcwszRuntimeVersion, L"v4.0.0.1"), "Unexpected runtime version %s.\n",
            wine_dbgstr_w(info->pcwszRuntimeVersion));
 
-    heap_free(info);
+    free(info);
 
     SetLastError(0xdeadbeef);
     ret = SxsLookupClrGuid(SXS_LOOKUP_CLR_GUID_FIND_ANY, (GUID *)&CLSID_SurrogateTest, NULL, NULL, 0, &buffer_size);
