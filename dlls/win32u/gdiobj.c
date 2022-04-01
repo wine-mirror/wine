@@ -1226,6 +1226,7 @@ static struct unix_funcs unix_funcs =
     NtUserUnregisterHotKey,
     NtUserUpdateLayeredWindow,
     NtUserVkKeyScanEx,
+    NtUserWaitForInputIdle,
     NtUserWindowFromPoint,
 
     SetDIBits,

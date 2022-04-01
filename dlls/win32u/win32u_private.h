@@ -286,6 +286,7 @@ struct unix_funcs
                                                    COLORREF key, const BLENDFUNCTION *blend,
                                                    DWORD flags, const RECT *dirty );
     WORD     (WINAPI *pNtUserVkKeyScanEx)( WCHAR chr, HKL layout );
+    DWORD    (WINAPI *pNtUserWaitForInputIdle)( HANDLE process, DWORD timeout, BOOL wow );
     HWND     (WINAPI *pNtUserWindowFromPoint)( LONG x, LONG y );
 
     /* Wine-specific functions */

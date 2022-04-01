@@ -172,7 +172,6 @@ static const struct user_callbacks user_funcs =
     SendNotifyMessageW,
     SetSystemMenu,
     ShowCaret,
-    WaitForInputIdle,
     free_menu_items,
     free_win_ptr,
     MENU_IsMenuActive,

@@ -1184,6 +1184,12 @@ WORD WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout )
     return unix_funcs->pNtUserVkKeyScanEx( chr, layout );
 }
 
+DWORD WINAPI NtUserWaitForInputIdle( HANDLE process, DWORD timeout, BOOL wow )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserWaitForInputIdle( process, timeout, wow );
+}
+
 HWND WINAPI NtUserWindowFromPoint( LONG x, LONG y )
 {
     if (!unix_funcs) return 0;

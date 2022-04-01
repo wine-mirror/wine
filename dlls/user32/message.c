@@ -2974,53 +2974,9 @@ DWORD WINAPI MsgWaitForMultipleObjects( DWORD count, const HANDLE *handles,
 /***********************************************************************
  *		WaitForInputIdle (USER32.@)
  */
-DWORD WINAPI WaitForInputIdle( HANDLE hProcess, DWORD dwTimeOut )
+DWORD WINAPI WaitForInputIdle( HANDLE process, DWORD timeout )
 {
-    DWORD start_time, elapsed, ret;
-    HANDLE handles[2];
-
-    handles[0] = hProcess;
-    SERVER_START_REQ( get_process_idle_event )
-    {
-        req->handle = wine_server_obj_handle( hProcess );
-        wine_server_call_err( req );
-        handles[1] = wine_server_ptr_handle( reply->event );
-    }
-    SERVER_END_REQ;
-    if (!handles[1]) return WAIT_FAILED;  /* no event to wait on */
-
-    start_time = GetTickCount();
-    elapsed = 0;
-
-    TRACE("waiting for %p\n", handles[1] );
-    do
-    {
-        ret = MsgWaitForMultipleObjects ( 2, handles, FALSE, dwTimeOut - elapsed, QS_SENDMESSAGE );
-        switch (ret)
-        {
-        case WAIT_OBJECT_0:
-            return 0;
-        case WAIT_OBJECT_0+2:
-            process_sent_messages();
-            break;
-        case WAIT_TIMEOUT:
-        case WAIT_FAILED:
-            TRACE("timeout or error\n");
-            return ret;
-        default:
-            TRACE("finished\n");
-            return 0;
-        }
-        if (dwTimeOut != INFINITE)
-        {
-            elapsed = GetTickCount() - start_time;
-            if (elapsed > dwTimeOut)
-                break;
-        }
-    }
-    while (1);
-
-    return WAIT_TIMEOUT;
+    return NtUserWaitForInputIdle( process, timeout, FALSE );
 }
 
 

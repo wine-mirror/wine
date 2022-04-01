@@ -45,7 +45,6 @@ struct user_callbacks
     BOOL (WINAPI *pSendNotifyMessageW)( HWND, UINT, WPARAM, LPARAM );
     BOOL (WINAPI *pSetSystemMenu)( HWND hwnd, HMENU menu );
     BOOL (WINAPI *pShowCaret)( HWND hwnd );
-    DWORD (WINAPI *pWaitForInputIdle)( HANDLE, DWORD );
     void (CDECL *free_menu_items)( void *ptr );
     void (CDECL *free_win_ptr)( struct tagWND *win );
     HWND (CDECL *is_menu_active)(void);

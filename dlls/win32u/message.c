@@ -481,15 +481,6 @@ LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     }
 }
 
-/***********************************************************************
- *           NtUserWaitForInputIdle (win32u.@)
- */
-DWORD WINAPI NtUserWaitForInputIdle( HANDLE process, DWORD timeout, BOOL wow )
-{
-    if (!user_callbacks) return 0;
-    return user_callbacks->pWaitForInputIdle( process, timeout );
-}
-
 /**********************************************************************
  *           NtUserGetGUIThreadInfo  (win32u.@)
  */
@@ -978,6 +969,58 @@ DWORD WINAPI NtUserMsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handl
 
     return wait_objects( count+1, wait_handles, timeout,
                          (flags & MWMO_INPUTAVAILABLE) ? mask : 0, mask, flags );
+}
+
+/***********************************************************************
+ *           NtUserWaitForInputIdle (win32u.@)
+ */
+DWORD WINAPI NtUserWaitForInputIdle( HANDLE process, DWORD timeout, BOOL wow )
+{
+    DWORD start_time, elapsed, ret;
+    HANDLE handles[2];
+
+    handles[0] = process;
+    SERVER_START_REQ( get_process_idle_event )
+    {
+        req->handle = wine_server_obj_handle( process );
+        wine_server_call_err( req );
+        handles[1] = wine_server_ptr_handle( reply->event );
+    }
+    SERVER_END_REQ;
+    if (!handles[1]) return WAIT_FAILED;  /* no event to wait on */
+
+    start_time = NtGetTickCount();
+    elapsed = 0;
+
+    TRACE("waiting for %p\n", handles[1] );
+
+    for (;;)
+    {
+        ret = NtUserMsgWaitForMultipleObjectsEx( 2, handles, timeout - elapsed, QS_SENDMESSAGE, 0 );
+        switch (ret)
+        {
+        case WAIT_OBJECT_0:
+            return 0;
+        case WAIT_OBJECT_0+2:
+            process_sent_messages();
+            break;
+        case WAIT_TIMEOUT:
+        case WAIT_FAILED:
+            TRACE("timeout or error\n");
+            return ret;
+        default:
+            TRACE("finished\n");
+            return 0;
+        }
+        if (timeout != INFINITE)
+        {
+            elapsed = NtGetTickCount() - start_time;
+            if (elapsed > timeout)
+                break;
+        }
+    }
+
+    return WAIT_TIMEOUT;
 }
 
 /***********************************************************************
