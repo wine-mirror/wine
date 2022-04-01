@@ -351,6 +351,9 @@ extern BOOL kill_system_timer( HWND hwnd, UINT_PTR id ) DECLSPEC_HIDDEN;
 extern LRESULT post_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;
 extern void process_sent_messages(void) DECLSPEC_HIDDEN;
 extern BOOL reply_message_result( LRESULT result, MSG *msg ) DECLSPEC_HIDDEN;
+extern LRESULT send_internal_message_timeout( DWORD dest_pid, DWORD dest_tid, UINT msg, WPARAM wparam,
+                                              LPARAM lparam, UINT flags, UINT timeout,
+                                              PDWORD_PTR res_ptr ) DECLSPEC_HIDDEN;
 extern LRESULT send_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;
 
 /* sysparams.c */

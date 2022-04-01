@@ -1184,7 +1184,7 @@ static HGLOBAL dde_get_pair(HGLOBAL shm)
  *
  * Post a DDE message
  */
-static BOOL post_dde_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DWORD dest_tid, DWORD type )
+BOOL post_dde_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DWORD dest_tid, DWORD type )
 {
     void*       ptr = NULL;
     int         size = 0;
@@ -2290,47 +2290,6 @@ NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, const RAWINPUT *r
         wait_message_reply( 0 );
         retrieve_reply( &info, 0, &ignored );
     }
-    return ret;
-}
-
-
-/***********************************************************************
- *		MSG_SendInternalMessageTimeout
- *
- * Same as SendMessageTimeoutW but sends the message to a specific thread
- * without requiring a window handle. Only works for internal Wine messages.
- */
-LRESULT WINAPI MSG_SendInternalMessageTimeout( DWORD dest_pid, DWORD dest_tid,
-                                               UINT msg, WPARAM wparam, LPARAM lparam,
-                                               UINT flags, UINT timeout, PDWORD_PTR res_ptr )
-{
-    struct send_message_info info;
-    LRESULT ret, result;
-
-    assert( msg & 0x80000000 );  /* must be an internal Wine message */
-
-    info.type     = MSG_UNICODE;
-    info.dest_tid = dest_tid;
-    info.hwnd     = 0;
-    info.msg      = msg;
-    info.wparam   = wparam;
-    info.lparam   = lparam;
-    info.flags    = flags;
-    info.timeout  = timeout;
-
-    if (USER_IsExitingThread( dest_tid )) return 0;
-
-    if (dest_tid == GetCurrentThreadId())
-    {
-        result = handle_internal_message( 0, msg, wparam, lparam );
-        ret = 1;
-    }
-    else
-    {
-        if (dest_pid != GetCurrentProcessId()) info.type = MSG_OTHER_PROCESS;
-        ret = send_inter_thread_message( &info, &result );
-    }
-    if (ret && res_ptr) *res_ptr = result;
     return ret;
 }
 

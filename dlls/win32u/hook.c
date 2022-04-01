@@ -200,16 +200,14 @@ static LRESULT call_hook( struct win_hook_params *info )
         switch(info->id)
         {
         case WH_KEYBOARD_LL:
-            if (!user_callbacks) break;
-            user_callbacks->send_ll_message( info->pid, info->tid, WM_WINE_KEYBOARD_LL_HOOK,
-                                             info->wparam, (LPARAM)&h_extra, SMTO_ABORTIFHUNG,
-                                             get_ll_hook_timeout(), &ret );
+            send_internal_message_timeout( info->pid, info->tid, WM_WINE_KEYBOARD_LL_HOOK,
+                                           info->wparam, (LPARAM)&h_extra, SMTO_ABORTIFHUNG,
+                                           get_ll_hook_timeout(), &ret );
             break;
         case WH_MOUSE_LL:
-            if (!user_callbacks) break;
-            user_callbacks->send_ll_message( info->pid, info->tid, WM_WINE_MOUSE_LL_HOOK,
-                                             info->wparam, (LPARAM)&h_extra, SMTO_ABORTIFHUNG,
-                                             get_ll_hook_timeout(), &ret );
+            send_internal_message_timeout( info->pid, info->tid, WM_WINE_MOUSE_LL_HOOK,
+                                           info->wparam, (LPARAM)&h_extra, SMTO_ABORTIFHUNG,
+                                           get_ll_hook_timeout(), &ret );
             break;
         default:
             ERR("Unknown hook id %d\n", info->id);

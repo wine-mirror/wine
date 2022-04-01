@@ -83,6 +83,8 @@ extern BOOL rawinput_device_get_usages(HANDLE handle, USAGE *usage_page, USAGE *
 extern struct rawinput_thread_data *rawinput_thread_data(void);
 extern void rawinput_update_device_list(void);
 
+extern BOOL post_dde_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DWORD dest_tid,
+                              DWORD type ) DECLSPEC_HIDDEN;
 extern BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data,
                                       HWND hwnd_filter, UINT first, UINT last, BOOL remove ) DECLSPEC_HIDDEN;
 extern BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
@@ -100,9 +102,6 @@ extern RECT get_primary_monitor_rect(void) DECLSPEC_HIDDEN;
 extern DWORD get_input_codepage( void ) DECLSPEC_HIDDEN;
 extern BOOL map_wparam_AtoW( UINT message, WPARAM *wparam, enum wm_char_mapping mapping ) DECLSPEC_HIDDEN;
 extern NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput, UINT flags ) DECLSPEC_HIDDEN;
-extern LRESULT WINAPI MSG_SendInternalMessageTimeout( DWORD dest_pid, DWORD dest_tid,
-                                                      UINT msg, WPARAM wparam, LPARAM lparam,
-                                                      UINT flags, UINT timeout, PDWORD_PTR res_ptr ) DECLSPEC_HIDDEN;
 extern HPEN SYSCOLOR_GetPen( INT index ) DECLSPEC_HIDDEN;
 extern HBRUSH SYSCOLOR_Get55AABrush(void) DECLSPEC_HIDDEN;
 extern void SYSPARAMS_Init(void) DECLSPEC_HIDDEN;
