@@ -1191,6 +1191,7 @@ static struct unix_funcs unix_funcs =
     NtUserMapVirtualKeyEx,
     NtUserMessageCall,
     NtUserMoveWindow,
+    NtUserMsgWaitForMultipleObjectsEx,
     NtUserPeekMessage,
     NtUserRedrawWindow,
     NtUserRegisterClassExWOW,

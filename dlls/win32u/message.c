@@ -958,6 +958,29 @@ static DWORD wait_objects( DWORD count, const HANDLE *handles, DWORD timeout,
 }
 
 /***********************************************************************
+ *           NtUserMsgWaitForMultipleObjectsEx   (win32u.@)
+ */
+DWORD WINAPI NtUserMsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
+                                                DWORD timeout, DWORD mask, DWORD flags )
+{
+    HANDLE wait_handles[MAXIMUM_WAIT_OBJECTS];
+    DWORD i;
+
+    if (count > MAXIMUM_WAIT_OBJECTS-1)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return WAIT_FAILED;
+    }
+
+    /* add the queue to the handle list */
+    for (i = 0; i < count; i++) wait_handles[i] = handles[i];
+    wait_handles[count] = get_server_queue_handle();
+
+    return wait_objects( count+1, wait_handles, timeout,
+                         (flags & MWMO_INPUTAVAILABLE) ? mask : 0, mask, flags );
+}
+
+/***********************************************************************
  *           NtUserPeekMessage  (win32u.@)
  */
 BOOL WINAPI NtUserPeekMessage( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT flags )

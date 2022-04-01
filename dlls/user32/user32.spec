@@ -544,7 +544,7 @@
 @ stdcall MonitorFromWindow(long long)
 @ stdcall MoveWindow(long long long long long long) NtUserMoveWindow
 @ stdcall MsgWaitForMultipleObjects(long ptr long long long)
-@ stdcall MsgWaitForMultipleObjectsEx(long ptr long long long)
+@ stdcall MsgWaitForMultipleObjectsEx(long ptr long long long) NtUserMsgWaitForMultipleObjectsEx
 @ stdcall NotifyWinEvent(long long long long) NtUserNotifyWinEvent
 @ stdcall OemKeyScan(long)
 @ stdcall OemToCharA(str ptr)

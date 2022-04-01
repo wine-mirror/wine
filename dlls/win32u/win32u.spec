@@ -1085,7 +1085,7 @@
 @ stub NtUserModifyUserStartupInfoFlags
 @ stub NtUserModifyWindowTouchCapability
 @ stdcall NtUserMoveWindow(long long long long long long)
-@ stub NtUserMsgWaitForMultipleObjectsEx
+@ stdcall NtUserMsgWaitForMultipleObjectsEx(long ptr long long long)
 @ stub NtUserNavigateFocus
 @ stub NtUserNotifyIMEStatus
 @ stub NtUserNotifyProcessCreate

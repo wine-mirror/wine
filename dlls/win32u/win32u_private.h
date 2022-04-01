@@ -239,6 +239,8 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserMessageCall)( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                            ULONG_PTR result_info, DWORD type, BOOL ansi );
     BOOL     (WINAPI *pNtUserMoveWindow)( HWND hwnd, INT x, INT y, INT cx, INT cy, BOOL repaint );
+    DWORD    (WINAPI *pNtUserMsgWaitForMultipleObjectsEx)( DWORD count, const HANDLE *handles,
+                                                           DWORD timeout, DWORD mask, DWORD flags );
     BOOL     (WINAPI *pNtUserPeekMessage)( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT flags );
     BOOL     (WINAPI *pNtUserRedrawWindow)( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags );
     ATOM     (WINAPI *pNtUserRegisterClassExWOW)( const WNDCLASSEXW *wc, UNICODE_STRING *name,

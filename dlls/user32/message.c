@@ -1963,42 +1963,6 @@ static void wait_message_reply( UINT flags )
 
 
 /***********************************************************************
- *           wait_objects
- *
- * Wait for multiple objects including the server queue, with specific queue masks.
- */
-static DWORD wait_objects( DWORD count, const HANDLE *handles, DWORD timeout,
-                           DWORD wake_mask, DWORD changed_mask, DWORD flags )
-{
-    struct user_thread_info *thread_info = get_user_thread_info();
-    DWORD ret;
-
-    assert( count );  /* we must have at least the server queue */
-
-    flush_window_surfaces( TRUE );
-
-    if (thread_info->wake_mask != wake_mask || thread_info->changed_mask != changed_mask)
-    {
-        SERVER_START_REQ( set_queue_mask )
-        {
-            req->wake_mask    = wake_mask;
-            req->changed_mask = changed_mask;
-            req->skip_wait    = 0;
-            wine_server_call( req );
-        }
-        SERVER_END_REQ;
-        thread_info->wake_mask = wake_mask;
-        thread_info->changed_mask = changed_mask;
-    }
-
-    ret = wow_handlers.wait_message( count, handles, timeout, changed_mask, flags );
-
-    if (ret != WAIT_TIMEOUT) thread_info->wake_mask = thread_info->changed_mask = 0;
-    return ret;
-}
-
-
-/***********************************************************************
  *		put_message_in_queue
  *
  * Put a sent message into the destination queue.
@@ -2992,31 +2956,7 @@ BOOL WINAPI GetCurrentInputMessageSource( INPUT_MESSAGE_SOURCE *source )
  */
 BOOL WINAPI WaitMessage(void)
 {
-    return (MsgWaitForMultipleObjectsEx( 0, NULL, INFINITE, QS_ALLINPUT, 0 ) != WAIT_FAILED);
-}
-
-
-/***********************************************************************
- *		MsgWaitForMultipleObjectsEx   (USER32.@)
- */
-DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *pHandles,
-                                          DWORD timeout, DWORD mask, DWORD flags )
-{
-    HANDLE handles[MAXIMUM_WAIT_OBJECTS];
-    DWORD i;
-
-    if (count > MAXIMUM_WAIT_OBJECTS-1)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return WAIT_FAILED;
-    }
-
-    /* add the queue to the handle list */
-    for (i = 0; i < count; i++) handles[i] = pHandles[i];
-    handles[count] = get_server_queue_handle();
-
-    return wait_objects( count+1, handles, timeout,
-                         (flags & MWMO_INPUTAVAILABLE) ? mask : 0, mask, flags );
+    return NtUserMsgWaitForMultipleObjectsEx( 0, NULL, INFINITE, QS_ALLINPUT, 0 ) != WAIT_FAILED;
 }
 
 
@@ -3026,8 +2966,8 @@ DWORD WINAPI MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *pHandles,
 DWORD WINAPI MsgWaitForMultipleObjects( DWORD count, const HANDLE *handles,
                                         BOOL wait_all, DWORD timeout, DWORD mask )
 {
-    return MsgWaitForMultipleObjectsEx( count, handles, timeout, mask,
-                                        wait_all ? MWMO_WAITALL : 0 );
+    return NtUserMsgWaitForMultipleObjectsEx( count, handles, timeout, mask,
+                                              wait_all ? MWMO_WAITALL : 0 );
 }
 
 
