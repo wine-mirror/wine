@@ -32,7 +32,6 @@
 #include "mmdeviceapi.h"
 #include "audiosessiontypes.h"
 
-#include "wine/heap.h"
 #include "wine/test.h"
 
 static HRESULT (WINAPI *pMFCreateDXGIDeviceManager)(UINT *token, IMFDXGIDeviceManager **manager);
