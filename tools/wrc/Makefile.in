@@ -6,7 +6,6 @@ C_SRCS = \
 	genres.c \
 	newstruc.c \
 	po.c \
-	translation.c \
 	utils.c \
 	wpp.c \
 	wrc.c

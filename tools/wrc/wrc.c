@@ -132,8 +132,6 @@ int utf8_input = 0;
 
 int check_utf8 = 1;  /* whether to check for valid utf8 */
 
-static int verify_translations_mode;
-
 static char *output_name;	/* The name given by the -o option */
 const char *input_name = NULL;	/* The name given on the command-line */
 static char *temp_name = NULL;	/* Temporary file for preprocess pipe */
@@ -167,7 +165,6 @@ enum long_options_values
     LONG_OPT_VERSION,
     LONG_OPT_DEBUG,
     LONG_OPT_PEDANTIC,
-    LONG_OPT_VERIFY_TRANSL
 };
 
 static const char short_options[] =
@@ -194,7 +191,6 @@ static const struct long_option long_options[] = {
 	{ "undefine", 1, 'U' },
 	{ "use-temp-file", 0, LONG_OPT_TMPFILE },
 	{ "verbose", 0, 'v' },
-	{ "verify-translations", 0, LONG_OPT_VERIFY_TRANSL },
 	{ "version", 0, LONG_OPT_VERSION },
 	{ NULL }
 };
@@ -358,9 +354,6 @@ static void option_callback( int optc, char *optarg )
     case LONG_OPT_PEDANTIC:
         pedantic = 1;
         break;
-    case LONG_OPT_VERIFY_TRANSL:
-        verify_translations_mode = 1;
-        break;
     case 'D':
         wpp_add_cmdline_define(optarg);
         break;
@@ -499,11 +492,6 @@ int main(int argc,char *argv[])
 	if(debuglevel & DEBUGLEVEL_DUMP)
 		dump_resources(resource_top);
 
-	if(verify_translations_mode)
-	{
-		verify_translations(resource_top);
-		exit(0);
-	}
         if (!po_mode && output_name)
         {
             if (strendswith( output_name, ".po" )) po_mode = 1;
