@@ -4717,8 +4717,6 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
             MSG *msg = (MSG *)arg;
             return handle_internal_message( msg->hwnd, msg->message, msg->wParam, msg->lParam );
         }
-    case NtUserIncrementKeyStateCounter:
-        return InterlockedAdd( &global_key_state_counter, arg );
     case NtUserLock:
         switch( arg )
         {

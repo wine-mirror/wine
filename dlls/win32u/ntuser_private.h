@@ -38,7 +38,6 @@ struct user_callbacks
     BOOL (WINAPI *pEndMenu)(void);
     BOOL (WINAPI *pHideCaret)( HWND hwnd );
     BOOL (WINAPI *pPostMessageW)( HWND, UINT, WPARAM, LPARAM );
-    UINT (WINAPI *pSendInput)( UINT count, INPUT *inputs, int size );
     LRESULT (WINAPI *pSendMessageTimeoutW)( HWND, UINT, WPARAM, LPARAM, UINT, UINT, PDWORD_PTR );
     LRESULT (WINAPI *pSendMessageA)( HWND, UINT, WPARAM, LPARAM );
     LRESULT (WINAPI *pSendMessageW)( HWND, UINT, WPARAM, LPARAM );

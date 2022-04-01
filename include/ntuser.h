@@ -169,7 +169,6 @@ enum
     NtUserGetDeskPattern,
     NtUserGetWinProcPtr,
     NtUserHandleInternalMessage,
-    NtUserIncrementKeyStateCounter,
     NtUserLock,
     NtUserSetCallbacks,
     NtUserSpyGetVKeyName,
@@ -605,6 +604,7 @@ HANDLE  WINAPI NtUserRemoveProp( HWND hwnd, const WCHAR *str );
 BOOL    WINAPI NtUserScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
                                HRGN ret_update_rgn, RECT *update_rect );
 HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE palette, WORD force_background );
+UINT     WINAPI NtUserSendInput( UINT count, INPUT *inputs, int size );
 HWND     WINAPI NtUserSetActiveWindow( HWND hwnd );
 HWND     WINAPI NtUserSetCapture( HWND hwnd );
 DWORD    WINAPI NtUserSetClassLong( HWND hwnd, INT offset, LONG newval, BOOL ansi );

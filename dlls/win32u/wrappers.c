@@ -1016,6 +1016,12 @@ HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE hpal, WORD bkg )
     return unix_funcs->pNtUserSelectPalette( hdc, hpal, bkg );
 }
 
+UINT WINAPI NtUserSendInput( UINT count, INPUT *inputs, int size )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserSendInput( count, inputs, size );
+}
+
 HWND WINAPI NtUserSetActiveWindow( HWND hwnd )
 {
     if (!unix_funcs) return 0;

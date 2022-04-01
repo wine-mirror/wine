@@ -65,11 +65,6 @@ void USER_unload_driver(void)
  * These are fallbacks for entry points that are not implemented in the real driver.
  */
 
-static BOOL CDECL nulldrv_SetCursorPos( INT x, INT y )
-{
-    return TRUE;
-}
-
 static void CDECL nulldrv_UpdateClipboard(void)
 {
 }
@@ -103,11 +98,6 @@ static LRESULT CDECL nulldrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam
  * Each entry point simply loads the real driver and chains to it.
  */
 
-static BOOL CDECL loaderdrv_SetCursorPos( INT x, INT y )
-{
-    return load_driver()->pSetCursorPos( x, y );
-}
-
 static void CDECL loaderdrv_UpdateClipboard(void)
 {
     load_driver()->pUpdateClipboard();
@@ -130,7 +120,7 @@ static struct user_driver_funcs lazy_load_driver =
     NULL,
     NULL,
     NULL,
-    loaderdrv_SetCursorPos,
+    NULL,
     NULL,
     /* clipboard functions */
     loaderdrv_UpdateClipboard,
@@ -187,7 +177,6 @@ void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT v
 #define SET_USER_FUNC(name) \
     do { if (!driver->p##name) driver->p##name = nulldrv_##name; } while(0)
 
-    SET_USER_FUNC(SetCursorPos);
     SET_USER_FUNC(UpdateClipboard);
     SET_USER_FUNC(MsgWaitForMultipleObjectsEx);
     SET_USER_FUNC(SetWindowIcon);

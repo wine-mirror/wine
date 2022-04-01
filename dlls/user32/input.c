@@ -123,105 +123,6 @@ BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret )
 
 
 /***********************************************************************
- *		update_mouse_coords
- *
- * Helper for SendInput.
- */
-static void update_mouse_coords( INPUT *input )
-{
-    if (!(input->u.mi.dwFlags & MOUSEEVENTF_MOVE)) return;
-
-    if (input->u.mi.dwFlags & MOUSEEVENTF_ABSOLUTE)
-    {
-        DPI_AWARENESS_CONTEXT context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
-        RECT rc;
-
-        if (input->u.mi.dwFlags & MOUSEEVENTF_VIRTUALDESK)
-            rc = get_virtual_screen_rect();
-        else
-            rc = get_primary_monitor_rect();
-
-        input->u.mi.dx = rc.left + ((input->u.mi.dx * (rc.right - rc.left)) >> 16);
-        input->u.mi.dy = rc.top  + ((input->u.mi.dy * (rc.bottom - rc.top)) >> 16);
-        SetThreadDpiAwarenessContext( context );
-    }
-    else
-    {
-        int accel[3];
-
-        /* dx and dy can be negative numbers for relative movements */
-        SystemParametersInfoW(SPI_GETMOUSE, 0, accel, 0);
-
-        if (!accel[2]) return;
-
-        if (abs(input->u.mi.dx) > accel[0])
-        {
-            input->u.mi.dx *= 2;
-            if ((abs(input->u.mi.dx) > accel[1]) && (accel[2] == 2)) input->u.mi.dx *= 2;
-        }
-        if (abs(input->u.mi.dy) > accel[0])
-        {
-            input->u.mi.dy *= 2;
-            if ((abs(input->u.mi.dy) > accel[1]) && (accel[2] == 2)) input->u.mi.dy *= 2;
-        }
-    }
-}
-
-/***********************************************************************
- *		SendInput  (USER32.@)
- */
-UINT WINAPI SendInput( UINT count, LPINPUT inputs, int size )
-{
-    UINT i;
-    NTSTATUS status = STATUS_SUCCESS;
-
-    if (size != sizeof(INPUT))
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-
-    if (!count)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-
-    if (!inputs)
-    {
-        SetLastError( ERROR_NOACCESS );
-        return 0;
-    }
-
-    for (i = 0; i < count; i++)
-    {
-        INPUT input = inputs[i];
-        switch (input.type)
-        {
-        case INPUT_MOUSE:
-            /* we need to update the coordinates to what the server expects */
-            update_mouse_coords( &input );
-            /* fallthrough */
-        case INPUT_KEYBOARD:
-            status = send_hardware_message( 0, &input, NULL, SEND_HWMSG_INJECTED );
-            break;
-        case INPUT_HARDWARE:
-            SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-            return 0;
-        }
-
-        if (status)
-        {
-            SetLastError( RtlNtStatusToDosError(status) );
-            break;
-        }
-    }
-
-    return i;
-}
-
-
-/***********************************************************************
  *		keybd_event (USER32.@)
  */
 void WINAPI keybd_event( BYTE bVk, BYTE bScan,
@@ -235,7 +136,7 @@ void WINAPI keybd_event( BYTE bVk, BYTE bScan,
     input.u.ki.dwFlags = dwFlags;
     input.u.ki.time = 0;
     input.u.ki.dwExtraInfo = dwExtraInfo;
-    SendInput( 1, &input, sizeof(input) );
+    NtUserSendInput( 1, &input, sizeof(input) );
 }
 
 
@@ -254,7 +155,7 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
     input.u.mi.dwFlags = dwFlags;
     input.u.mi.time = 0;
     input.u.mi.dwExtraInfo = dwExtraInfo;
-    SendInput( 1, &input, sizeof(input) );
+    NtUserSendInput( 1, &input, sizeof(input) );
 }
 
 

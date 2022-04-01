@@ -1159,7 +1159,7 @@
 @ stub NtUserScrollWindowEx
 @ stdcall NtUserSelectPalette(long long long)
 @ stub NtUserSendEventMessage
-@ stub NtUserSendInput
+@ stdcall NtUserSendInput(long ptr long)
 @ stub NtUserSendInteractiveControlHapticsReport
 @ stub NtUserSetActivationFilter
 @ stub NtUserSetActiveProcessForMonitor

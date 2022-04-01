@@ -1199,6 +1199,7 @@ static struct unix_funcs unix_funcs =
     NtUserReleaseDC,
     NtUserScrollDC,
     NtUserSelectPalette,
+    NtUserSendInput,
     NtUserSetActiveWindow,
     NtUserSetCapture,
     NtUserSetClassLong,

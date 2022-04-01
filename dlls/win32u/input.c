@@ -26,6 +26,8 @@
 #pragma makedep unix
 #endif
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "win32u_private.h"
 #include "ntuser_private.h"
 #include "wine/server.h"
@@ -76,12 +78,99 @@ BOOL CDECL __wine_send_input( HWND hwnd, const INPUT *input, const RAWINPUT *raw
 }
 
 /***********************************************************************
+ *		update_mouse_coords
+ *
+ * Helper for NtUserSendInput.
+ */
+static void update_mouse_coords( INPUT *input )
+{
+    if (!(input->mi.dwFlags & MOUSEEVENTF_MOVE)) return;
+
+    if (input->mi.dwFlags & MOUSEEVENTF_ABSOLUTE)
+    {
+        RECT rc;
+
+        if (input->mi.dwFlags & MOUSEEVENTF_VIRTUALDESK)
+            rc = get_virtual_screen_rect( 0 );
+        else
+            rc = get_primary_monitor_rect( 0 );
+
+        input->mi.dx = rc.left + ((input->mi.dx * (rc.right - rc.left)) >> 16);
+        input->mi.dy = rc.top  + ((input->mi.dy * (rc.bottom - rc.top)) >> 16);
+    }
+    else
+    {
+        int accel[3];
+
+        /* dx and dy can be negative numbers for relative movements */
+        NtUserSystemParametersInfo( SPI_GETMOUSE, 0, accel, 0 );
+
+        if (!accel[2]) return;
+
+        if (abs( input->mi.dx ) > accel[0])
+        {
+            input->mi.dx *= 2;
+            if (abs( input->mi.dx ) > accel[1] && accel[2] == 2) input->mi.dx *= 2;
+        }
+        if (abs(input->mi.dy) > accel[0])
+        {
+            input->mi.dy *= 2;
+            if (abs( input->mi.dy ) > accel[1] && accel[2] == 2) input->mi.dy *= 2;
+        }
+    }
+}
+
+/***********************************************************************
  *           NtUserSendInput  (win32u.@)
  */
 UINT WINAPI NtUserSendInput( UINT count, INPUT *inputs, int size )
 {
-    if (!user_callbacks) return 0;
-    return user_callbacks->pSendInput( count, inputs, size );
+    UINT i;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    if (size != sizeof(INPUT))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    if (!count)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    if (!inputs)
+    {
+        SetLastError( ERROR_NOACCESS );
+        return 0;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        INPUT input = inputs[i];
+        switch (input.type)
+        {
+        case INPUT_MOUSE:
+            /* we need to update the coordinates to what the server expects */
+            update_mouse_coords( &input );
+            /* fallthrough */
+        case INPUT_KEYBOARD:
+            status = send_hardware_message( 0, &input, NULL, SEND_HWMSG_INJECTED );
+            break;
+        case INPUT_HARDWARE:
+            SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
+            return 0;
+        }
+
+        if (status)
+        {
+            SetLastError( RtlNtStatusToDosError(status) );
+            break;
+        }
+    }
+
+    return i;
 }
 
 /***********************************************************************

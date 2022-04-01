@@ -635,7 +635,7 @@
 @ stdcall SendDlgItemMessageW(long long long long long)
 @ stdcall SendIMEMessageExA(long long)
 @ stdcall SendIMEMessageExW(long long)
-@ stdcall SendInput(long ptr long)
+@ stdcall SendInput(long ptr long) NtUserSendInput
 @ stdcall SendMessageA(long long long long)
 @ stdcall SendMessageCallbackA(long long long long ptr long)
 @ stdcall SendMessageCallbackW(long long long long ptr long)
