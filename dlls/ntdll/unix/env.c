@@ -1019,6 +1019,7 @@ static WCHAR **build_wargv( const WCHAR *image )
 static BOOL unix_to_win_locale( const char *unix_name, char *win_name )
 {
     static const char sep[] = "_.@";
+    const char *extra = NULL;
     char buffer[LOCALE_NAME_MAX_LENGTH];
     char *p, *country = NULL, *modifier = NULL;
 
@@ -1062,9 +1063,23 @@ static BOOL unix_to_win_locale( const char *unix_name, char *win_name )
     strcpy( win_name, buffer );
     if (modifier)
     {
-        if (!strcmp( modifier, "latin" )) strcat( win_name, "-Latn" );
-        else if (!strcmp( modifier, "euro" )) {} /* ignore */
-        else return FALSE;
+        if (!strcmp( modifier, "arabic" )) strcat( win_name, "-Arab" );
+        else if (!strcmp( modifier, "chakma" )) strcat( win_name, "-Cakm" );
+        else if (!strcmp( modifier, "cherokee" )) strcat( win_name, "-Cher" );
+        else if (!strcmp( modifier, "cyrillic" )) strcat( win_name, "-Cyrl" );
+        else if (!strcmp( modifier, "devanagari" )) strcat( win_name, "-Deva" );
+        else if (!strcmp( modifier, "gurmukhi" )) strcat( win_name, "-Guru" );
+        else if (!strcmp( modifier, "javanese" )) strcat( win_name, "-Java" );
+        else if (!strcmp( modifier, "latin" )) strcat( win_name, "-Latn" );
+        else if (!strcmp( modifier, "mongolian" )) strcat( win_name, "-Mong" );
+        else if (!strcmp( modifier, "syriac" )) strcat( win_name, "-Syrc" );
+        else if (!strcmp( modifier, "tifinagh" )) strcat( win_name, "-Tfng" );
+        else if (!strcmp( modifier, "tibetan" )) strcat( win_name, "-Tibt" );
+        else if (!strcmp( modifier, "vai" )) strcat( win_name, "-Vaii" );
+        else if (!strcmp( modifier, "yi" )) strcat( win_name, "-Yiii" );
+        else if (!strcmp( modifier, "saaho" )) strcpy( win_name, "ssy" );
+        else if (!strcmp( modifier, "valencia" )) extra = "-valencia";
+        /* ignore unknown modifiers */
     }
     if (country)
     {
@@ -1072,6 +1087,7 @@ static BOOL unix_to_win_locale( const char *unix_name, char *win_name )
         *p++ = '-';
         strcpy( p, country );
     }
+    if (extra) strcat( win_name, extra );
     return TRUE;
 }
 
