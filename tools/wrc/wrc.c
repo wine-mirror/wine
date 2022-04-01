@@ -36,7 +36,6 @@
 #include "../tools.h"
 #include "wrc.h"
 #include "utils.h"
-#include "dumpres.h"
 #include "newstruc.h"
 #include "parser.h"
 #include "wpp_private.h"
@@ -488,9 +487,6 @@ int main(int argc,char *argv[])
         }
 	/* stdin special case. NULL means "stdin" for wpp. */
         if (input_files.count == 0 && load_file( NULL, output_name )) exit(1);
-
-	if(debuglevel & DEBUGLEVEL_DUMP)
-		dump_resources(resource_top);
 
         if (!po_mode && output_name)
         {

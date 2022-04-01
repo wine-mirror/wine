@@ -508,6 +508,16 @@ done:
     return 0;
 }
 
+const char *get_nameid_str(const name_id_t *n)
+{
+    int len;
+
+    if (!n) return "<none>";
+    if (n->type == name_ord) return strmake( "%u", n->name.i_name );
+    if (n->name.s_name->type == str_char) return n->name.s_name->str.cstr;
+    return unicode_to_utf8( n->name.s_name->str.wstr, n->name.s_name->size, &len );
+}
+
 
 struct lang2cp
 {

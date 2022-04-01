@@ -134,7 +134,6 @@
 #include "wrc.h"
 #include "utils.h"
 #include "newstruc.h"
-#include "dumpres.h"
 #include "wpp_private.h"
 #include "parser.h"
 #include "windef.h"
@@ -455,7 +454,6 @@ resource
 			$$->name = new_name_id();
 			$$->name->type = name_ord;
 			$$->name->name.i_name = $1;
-			chat("Got %s (%d)\n", get_typename($3), $$->name->name.i_name);
 			}
 			}
 	| tIDENT usrcvt resource_definition {
@@ -465,7 +463,6 @@ resource
 			$$->name = new_name_id();
 			$$->name->type = name_str;
 			$$->name->name.s_name = $1;
-			chat("Got %s (%s)\n", get_typename($3), $$->name->name.s_name->str.cstr);
 		}
 		}
 	| stringtable {

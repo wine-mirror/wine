@@ -2,7 +2,6 @@ PROGRAMS = wrc
 EXTRALIBS = $(GETTEXTPO_LIBS)
 
 C_SRCS = \
-	dumpres.c \
 	genres.c \
 	newstruc.c \
 	po.c \
