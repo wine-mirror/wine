@@ -44,6 +44,7 @@
 #include "mtdll.h"
 #include "wine/asm.h"
 #include "wine/debug.h"
+#include "wine/asm.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 
@@ -855,12 +856,25 @@ static int msvcrt_flush_buffer(FILE* file)
 /*********************************************************************
  *		_isatty (MSVCRT.@)
  */
-int CDECL _isatty(int fd)
+int CDECL MSVCRT__isatty(int fd)
 {
     TRACE(":fd (%d)\n",fd);
 
     return get_ioinfo_nolock(fd)->wxflag & WX_TTY;
 }
+#if defined(__x86_64__) && !defined(__arm64ec__)
+__ASM_GLOBAL_FUNC( _isatty,
+        "jmp " __ASM_NAME("MSVCRT__isatty") "\n\t"
+        /* These instructions are needed for Ruby runtime to find internal pioinfo address. */
+        "lea MSVCRT___pioinfo(%rip),%rdx\n\t"
+        "addq $0,%rsp\n\t"
+        "ret" )
+#else
+int CDECL _isatty(int fd)
+{
+    return MSVCRT__isatty(fd);
+}
+#endif
 
 /* INTERNAL: Allocate stdio file buffer */
 static BOOL msvcrt_alloc_buffer(FILE* file)
