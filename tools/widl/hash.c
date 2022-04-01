@@ -515,59 +515,6 @@ unsigned int lhash_val_of_name_sys( syskind_t skind, int lcid, const char *lpStr
   switch (PRIMARYLANGID(LANGIDFROMLCID(lcid)))
   {
   default:
-    fprintf(stderr, "Unknown lcid %x, treating as latin-based, please report\n", lcid);
-    /* .. Fall Through .. */
-  case LANG_AFRIKAANS:  case LANG_ALBANIAN:   case LANG_ARMENIAN:
-  case LANG_ASSAMESE:   case LANG_AZERI:      case LANG_BASQUE:
-  case LANG_BELARUSIAN: case LANG_BENGALI:    case LANG_BULGARIAN:
-  case LANG_CATALAN:    case LANG_DANISH:     case LANG_DIVEHI:
-  case LANG_DUTCH:      case LANG_ENGLISH:    case LANG_ESTONIAN:
-  case LANG_FAEROESE:   case LANG_FINNISH:    case LANG_FRENCH:
-  case LANG_GALICIAN:   case LANG_GEORGIAN:   case LANG_GERMAN:
-  case LANG_GUJARATI:   case LANG_HINDI:      case LANG_INDONESIAN:
-  case LANG_ITALIAN:    case LANG_KANNADA:    case LANG_KASHMIRI:
-  case LANG_KAZAK:      case LANG_KONKANI:    case LANG_KYRGYZ:
-  case LANG_LATVIAN:    case LANG_LITHUANIAN: case LANG_MACEDONIAN:
-  case LANG_MALAY:      case LANG_MALAYALAM:  case LANG_MANIPURI:
-  case LANG_MARATHI:    case LANG_MONGOLIAN:  case LANG_NEPALI:
-  case LANG_ORIYA:      case LANG_PORTUGUESE: case LANG_PUNJABI:
-  case LANG_ROMANIAN:   case LANG_SANSKRIT:   case LANG_SERBIAN:
-  case LANG_SINDHI:     case LANG_SLOVENIAN:  case LANG_SWAHILI:
-  case LANG_SWEDISH:    case LANG_SYRIAC:     case LANG_TAMIL:
-  case LANG_TATAR:      case LANG_TELUGU:     case LANG_THAI:
-  case LANG_UKRAINIAN:  case LANG_URDU:       case LANG_UZBEK:
-  case LANG_VIETNAMESE: case LANG_MALTESE:    case LANG_IRISH:
-  case LANG_SAMI:       case LANG_UPPER_SORBIAN: case LANG_TSWANA:
-  case LANG_XHOSA:      case LANG_ZULU:       case LANG_WELSH:
-  case LANG_BRETON:     case LANG_SCOTTISH_GAELIC: case LANG_NEUTRAL:
-/* some languages not in all windows versions or ReactOS */
-#ifdef LANG_MANX_GAELIC
-  case LANG_MANX_GAELIC:
-#endif
-#ifdef LANG_TAJIK
-  case LANG_TAJIK:
-#endif
-#ifdef LANG_ROMANSH
-  case LANG_ROMANSH:
-#endif
-#ifdef LANG_SUTU
-  case LANG_SUTU:
-#endif
-#ifdef LANG_TSONGA
-  case LANG_TSONGA:
-#endif
-#ifdef LANG_VENDA
-  case LANG_VENDA:
-#endif
-#ifdef LANG_ESPERANTO
-  case LANG_ESPERANTO:
-#endif
-#ifdef LANG_WALON
-  case LANG_WALON:
-#endif
-#ifdef LANG_CORNISH
-  case LANG_CORNISH:
-#endif
     nOffset = 16;
     pnLookup = Lookup_16;
     break;
