@@ -30,7 +30,6 @@
 #include "dxva2api.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxva2);
 
@@ -98,7 +97,7 @@ static BOOL dxva_array_reserve(void **elements, size_t *capacity, size_t count, 
     if (new_capacity < count)
         new_capacity = max_capacity;
 
-    if (!(new_elements = heap_realloc(*elements, new_capacity * size)))
+    if (!(new_elements = realloc(*elements, new_capacity * size)))
         return FALSE;
 
     *elements = new_elements;
@@ -178,7 +177,7 @@ static ULONG WINAPI video_processor_Release(IDirectXVideoProcessor *iface)
     if (!refcount)
     {
         IDirectXVideoProcessorService_Release(processor->service);
-        heap_free(processor);
+        free(processor);
     }
 
     return refcount;
@@ -613,7 +612,7 @@ static HRESULT WINAPI device_manager_processor_service_CreateVideoProcessor(IDir
         return E_INVALIDARG;
     }
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDirectXVideoProcessor_iface.lpVtbl = &video_processor_vtbl;
@@ -776,8 +775,8 @@ static ULONG WINAPI device_manager_Release(IDirect3DDeviceManager9 *iface)
             if (manager->handles[i].state_block)
                 IDirect3DStateBlock9_Release(manager->handles[i].state_block);
         }
-        heap_free(manager->handles);
-        heap_free(manager);
+        free(manager->handles);
+        free(manager);
     }
 
     return refcount;
@@ -1051,7 +1050,7 @@ HRESULT WINAPI DXVA2CreateDirect3DDeviceManager9(UINT *token, IDirect3DDeviceMan
 
     *manager = NULL;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->IDirect3DDeviceManager9_iface.lpVtbl = &device_manager_vtbl;
