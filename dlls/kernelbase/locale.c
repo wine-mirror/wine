@@ -1543,6 +1543,7 @@ void init_locale( HMODULE module )
     void *sort_ptr;
     WCHAR bufferW[LOCALE_NAME_MAX_LENGTH];
     DYNAMIC_TIME_ZONE_INFORMATION timezone;
+    const WCHAR *user_locale_name;
     DWORD count;
     SIZE_T size;
     HKEY hkey;
@@ -1621,13 +1622,15 @@ void init_locale( HMODULE module )
     /* Update registry contents if the user locale has changed.
      * This simulates the action of the Windows control panel. */
 
+    user_locale_name = locale_strings + user_locale->sname + 1;
     count = sizeof(bufferW);
-    if (!RegQueryValueExW( intl_key, L"Locale", NULL, NULL, (BYTE *)bufferW, &count ))
+    if (!RegQueryValueExW( intl_key, L"LocaleName", NULL, NULL, (BYTE *)bufferW, &count ))
     {
-        if (wcstoul( bufferW, NULL, 16 ) == user_lcid) return;  /* already set correctly */
-        TRACE( "updating registry, locale changed %s -> %08lx\n", debugstr_w(bufferW), user_lcid );
+        if (!wcscmp( bufferW, user_locale_name )) return; /* unchanged */
+        TRACE( "updating registry, locale changed %s -> %s\n",
+               debugstr_w(bufferW), debugstr_w(user_locale_name) );
     }
-    else TRACE( "updating registry, locale changed none -> %08lx\n", user_lcid );
+    else TRACE( "updating registry, locale changed none -> %s\n", debugstr_w(user_locale_name) );
 
     update_locale_registry();
 
