@@ -8860,7 +8860,7 @@ static const BYTE ocsp_basic_signed_response[] = {
   0x05, 0x51, 0x49, 0xac, 0x2f, 0xe8, 0x67, 0xcf, 0xa7
 };
 
-static const BYTE ocsp_to_be_signed[] = {
+static const BYTE ocsp_basic_response[] = {
   0x30, 0x81, 0x9e, 0xa2, 0x16, 0x04, 0x14, 0xb7, 0x6b, 0xa2, 0xea, 0xa8,
   0xaa, 0x84, 0x8c, 0x79, 0xea, 0xb4, 0xda, 0x0f, 0x98, 0xb2, 0xc5, 0x95,
   0x76, 0xb9, 0xf4, 0x18, 0x0f, 0x32, 0x30, 0x32, 0x32, 0x30, 0x33, 0x31,
@@ -8875,6 +8875,24 @@ static const BYTE ocsp_to_be_signed[] = {
   0x33, 0x31, 0x30, 0x31, 0x38, 0x32, 0x31, 0x30, 0x31, 0x5a, 0xa0, 0x11,
   0x18, 0x0f, 0x32, 0x30, 0x32, 0x32, 0x30, 0x33, 0x31, 0x37, 0x31, 0x37,
   0x33, 0x36, 0x30, 0x31, 0x5a
+};
+
+static const BYTE ocsp_basic_response_revoked[] = {
+  0x30, 0x81, 0xb1, 0xa2, 0x16, 0x04, 0x14, 0xa4, 0x8d, 0xe5, 0xbe, 0x7c,
+  0x79, 0xe4, 0x70, 0x23, 0x6d, 0x2e, 0x29, 0x34, 0xad, 0x23, 0x58, 0xdc,
+  0xf5, 0x31, 0x7f, 0x18, 0x0f, 0x32, 0x30, 0x32, 0x32, 0x30, 0x33, 0x33,
+  0x31, 0x30, 0x31, 0x32, 0x35, 0x30, 0x35, 0x5a, 0x30, 0x81, 0x85, 0x30,
+  0x81, 0x82, 0x30, 0x49, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e, 0x03, 0x02,
+  0x1a, 0x05, 0x00, 0x04, 0x14, 0x74, 0xb4, 0xe7, 0x23, 0x19, 0xc7, 0x65,
+  0x92, 0x15, 0x40, 0x44, 0x7b, 0xc7, 0xce, 0x3e, 0x90, 0xc2, 0x18, 0x76,
+  0xeb, 0x04, 0x14, 0xa4, 0x8d, 0xe5, 0xbe, 0x7c, 0x79, 0xe4, 0x70, 0x23,
+  0x6d, 0x2e, 0x29, 0x34, 0xad, 0x23, 0x58, 0xdc, 0xf5, 0x31, 0x7f, 0x02,
+  0x10, 0x0d, 0x2e, 0x67, 0xa2, 0x98, 0x85, 0x3b, 0x9a, 0x54, 0x52, 0xe3,
+  0xa2, 0x85, 0xa4, 0x57, 0x2f, 0xa1, 0x11, 0x18, 0x0f, 0x32, 0x30, 0x32,
+  0x31, 0x31, 0x30, 0x32, 0x37, 0x32, 0x31, 0x33, 0x38, 0x34, 0x38, 0x5a,
+  0x18, 0x0f, 0x32, 0x30, 0x32, 0x32, 0x30, 0x33, 0x33, 0x31, 0x30, 0x31,
+  0x30, 0x39, 0x30, 0x31, 0x5a, 0xa0, 0x11, 0x18, 0x0f, 0x32, 0x30, 0x32,
+  0x32, 0x30, 0x34, 0x30, 0x37, 0x30, 0x30, 0x32, 0x34, 0x30, 0x31, 0x5a
 };
 
 static const BYTE ocsp_signature[] = {
@@ -8914,8 +8932,8 @@ static void test_decodeOCSPBasicSignedResponseInfo(DWORD dwEncoding)
     ok(ret, "got %08lx\n", GetLastError());
     if (sizeof(void *) == 4) todo_wine ok(size == 496, "got %lu\n", size);
     else ok(size == 536, "got %lu\n", size);
-    ok(info->ToBeSigned.cbData == sizeof(ocsp_to_be_signed), "got %lu\n", info->ToBeSigned.cbData);
-    ok(!memcmp(info->ToBeSigned.pbData, ocsp_to_be_signed, sizeof(ocsp_to_be_signed)), "wrong data\n");
+    ok(info->ToBeSigned.cbData == sizeof(ocsp_basic_response), "got %lu\n", info->ToBeSigned.cbData);
+    ok(!memcmp(info->ToBeSigned.pbData, ocsp_basic_response, sizeof(ocsp_basic_response)), "wrong data\n");
 
     ok(!strcmp(info->SignatureInfo.SignatureAlgorithm.pszObjId, szOID_RSA_SHA256RSA),
        "got %s\n", info->SignatureInfo.SignatureAlgorithm.pszObjId);
@@ -8941,22 +8959,35 @@ static void test_decodeOCSPBasicResponseInfo(DWORD dwEncoding)
     static const BYTE resp_id[] = {
         0xb7, 0x6b, 0xa2, 0xea, 0xa8, 0xaa, 0x84, 0x8c, 0x79, 0xea, 0xb4, 0xda, 0x0f, 0x98, 0xb2, 0xc5,
         0x95, 0x76, 0xb9, 0xf4};
+    static const BYTE resp_id2[] = {
+        0xa4, 0x8d, 0xe5, 0xbe, 0x7c, 0x79, 0xe4, 0x70, 0x23, 0x6d, 0x2e, 0x29, 0x34, 0xad, 0x23, 0x58,
+        0xdc, 0xf5, 0x31, 0x7f};
     static const BYTE name_hash[] = {
         0xe4, 0xe3, 0x95, 0xa2, 0x29, 0xd3, 0xd4, 0xc1, 0xc3, 0x1f, 0xf0, 0x98, 0x0c, 0x0b, 0x4e, 0xc0,
         0x09, 0x8a, 0xab, 0xd8};
+    static const BYTE name_hash2[] = {
+        0x74, 0xb4, 0xe7, 0x23, 0x19, 0xc7, 0x65, 0x92, 0x15, 0x40, 0x44, 0x7b, 0xc7, 0xce, 0x3e, 0x90,
+        0xc2, 0x18, 0x76, 0xeb};
     static const BYTE key_hash[] = {
         0xb7, 0x6b, 0xa2, 0xea, 0xa8, 0xaa, 0x84, 0x8c, 0x79, 0xea, 0xb4, 0xda, 0x0f, 0x98, 0xb2, 0xc5,
         0x95, 0x76, 0xb9, 0xf4};
+    static const BYTE key_hash2[] = {
+        0xa4, 0x8d, 0xe5, 0xbe, 0x7c, 0x79, 0xe4, 0x70, 0x23, 0x6d, 0x2e, 0x29, 0x34, 0xad, 0x23, 0x58,
+        0xdc, 0xf5, 0x31, 0x7f};
     static const BYTE serial[] = {
         0xb1, 0xc1, 0x87, 0x54, 0x54, 0xac, 0x1e, 0x55, 0x40, 0xfb, 0xef, 0xd9, 0x6d, 0x8f, 0x49, 0x08};
+    static const BYTE serial2[] = {
+        0x2f, 0x57, 0xa4, 0x85, 0xa2, 0xe3, 0x52, 0x54, 0x9a, 0x3b, 0x85, 0x98, 0xa2, 0x67, 0x2e, 0x0d};
     OCSP_BASIC_RESPONSE_INFO *info;
     OCSP_BASIC_RESPONSE_ENTRY *entry;
+    OCSP_BASIC_REVOKED_INFO *revoked;
     DWORD size;
     BOOL ret;
 
+    /* good cert */
     size = 0;
-    ret = pCryptDecodeObjectEx(dwEncoding, OCSP_BASIC_RESPONSE, ocsp_to_be_signed,
-                               sizeof(ocsp_to_be_signed), CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size);
+    ret = pCryptDecodeObjectEx(dwEncoding, OCSP_BASIC_RESPONSE, ocsp_basic_response,
+                               sizeof(ocsp_basic_response), CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size);
     ok(ret, "got %08lx\n", GetLastError());
 
     ok(!info->dwVersion, "got %lu\n", info->dwVersion);
@@ -8990,6 +9021,53 @@ static void test_decodeOCSPBasicResponseInfo(DWORD dwEncoding)
 
     ok(!info->cExtension, "got %lu\n", info->cExtension);
     ok(info->rgExtension == NULL, "got %p\n", info->rgExtension);
+    LocalFree(info);
+
+    /* revoked cert */
+    size = 0;
+    ret = pCryptDecodeObjectEx(dwEncoding, OCSP_BASIC_RESPONSE, ocsp_basic_response_revoked,
+                               sizeof(ocsp_basic_response_revoked), CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size);
+    todo_wine ok(ret, "got %08lx\n", GetLastError());
+
+    if (ret) {
+    ok(!info->dwVersion, "got %lu\n", info->dwVersion);
+    ok(info->dwResponderIdChoice == 2, "got %lu\n", info->dwResponderIdChoice);
+    ok(info->ByKeyResponderId.cbData == sizeof(resp_id), "got %lu\n", info->ByKeyResponderId.cbData);
+    ok(!memcmp(info->ByKeyResponderId.pbData, resp_id2, sizeof(resp_id2)), "wrong data\n");
+    ok(info->ProducedAt.dwLowDateTime == 647048832, "got %lu\n", info->ProducedAt.dwLowDateTime);
+    ok(info->ProducedAt.dwHighDateTime == 30950558, "got %lu\n", info->ProducedAt.dwHighDateTime);
+    ok(info->cResponseEntry == 1, "got %lu\n", info->cResponseEntry);
+    ok(info->rgResponseEntry != NULL, "got %p\n", info->rgResponseEntry);
+
+    entry = info->rgResponseEntry;
+    ok(!strcmp(entry->CertId.HashAlgorithm.pszObjId, szOID_OIWSEC_sha1), "got '%s'\n", entry->CertId.HashAlgorithm.pszObjId);
+    ok(entry->CertId.HashAlgorithm.Parameters.cbData == 2, "got %lu\n", entry->CertId.HashAlgorithm.Parameters.cbData);
+    ok(entry->CertId.HashAlgorithm.Parameters.pbData[0] == 5, "got 0x%02x\n", entry->CertId.HashAlgorithm.Parameters.pbData[0]);
+    ok(!entry->CertId.HashAlgorithm.Parameters.pbData[1], "got 0x%02x\n", entry->CertId.HashAlgorithm.Parameters.pbData[1]);
+    ok(entry->CertId.IssuerNameHash.cbData == 20, "got %lu\n", entry->CertId.IssuerNameHash.cbData);
+    ok(!memcmp(entry->CertId.IssuerNameHash.pbData, name_hash2, sizeof(name_hash2)), "wrong data\n");
+    ok(entry->CertId.IssuerKeyHash.cbData == 20, "got %lu\n", entry->CertId.IssuerKeyHash.cbData);
+    ok(!memcmp(entry->CertId.IssuerKeyHash.pbData, key_hash2, sizeof(key_hash2)), "wrong data\n");
+    ok(entry->CertId.SerialNumber.cbData == 16, "got %lu\n", entry->CertId.SerialNumber.cbData);
+    ok(!memcmp(entry->CertId.SerialNumber.pbData, serial2, sizeof(serial2)), "wrong data\n");
+    ok(entry->dwCertStatus == 1, "got %lu\n", entry->dwCertStatus);
+    ok(entry->pRevokedInfo != NULL, "got NULL\n");
+
+    revoked = entry->pRevokedInfo;
+    ok(revoked->RevocationDate.dwLowDateTime == 107865088, "got %lu\n", revoked->RevocationDate.dwLowDateTime);
+    ok(revoked->RevocationDate.dwHighDateTime == 30919547, "got %lu\n", revoked->RevocationDate.dwHighDateTime);
+    ok(!revoked->dwCrlReasonCode, "got %lu\n", revoked->dwCrlReasonCode);
+
+    ok(entry->ThisUpdate.dwLowDateTime == 3891950720, "got %lu\n", entry->ThisUpdate.dwLowDateTime);
+    ok(entry->ThisUpdate.dwHighDateTime == 30950555, "got %lu\n", entry->ThisUpdate.dwHighDateTime);
+    ok(entry->NextUpdate.dwLowDateTime == 3347801728, "got %lu\n", entry->NextUpdate.dwLowDateTime);
+    ok(entry->NextUpdate.dwHighDateTime == 30951957, "got %lu\n", entry->NextUpdate.dwHighDateTime);
+    ok(!entry->cExtension, "got %lu\n", entry->cExtension);
+    ok(entry->rgExtension == NULL, "got %p\n", entry->rgExtension);
+
+    ok(!info->cExtension, "got %lu\n", info->cExtension);
+    ok(info->rgExtension == NULL, "got %p\n", info->rgExtension);
+    }
     LocalFree(info);
 }
 
