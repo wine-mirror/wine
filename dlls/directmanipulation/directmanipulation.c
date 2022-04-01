@@ -23,7 +23,6 @@
 #include "winbase.h"
 #include "oleidl.h"
 #include "rpcproxy.h"
-#include "wine/heap.h"
 #include "wine/debug.h"
 
 #include "directmanipulation.h"
@@ -89,7 +88,7 @@ ULONG WINAPI update_manager_Release(IDirectManipulationUpdateManager *iface)
 
     if (!ref)
     {
-        heap_free(This);
+        free(This);
     }
     return ref;
 }
@@ -130,7 +129,7 @@ static HRESULT create_update_manager(IDirectManipulationUpdateManager **obj)
 {
     struct directupdatemanager *object;
 
-    object = heap_alloc(sizeof(*object));
+    object = malloc(sizeof(*object));
     if(!object)
         return E_OUTOFMEMORY;
 
@@ -201,7 +200,7 @@ static ULONG WINAPI primary_Release(IDirectManipulationPrimaryContent *iface)
 
     if (!ref)
     {
-        heap_free(This);
+        free(This);
     }
     return ref;
 }
@@ -433,7 +432,7 @@ static ULONG WINAPI viewport_Release(IDirectManipulationViewport2 *iface)
 
     if (!ref)
     {
-        heap_free(This);
+        free(This);
     }
     return ref;
 }
@@ -540,7 +539,7 @@ static HRESULT WINAPI viewport_GetPrimaryContent(IDirectManipulationViewport2 *i
     {
         struct primarycontext *primary;
         TRACE("IDirectManipulationPrimaryContent\n");
-        primary = heap_alloc( sizeof(*primary));
+        primary = malloc( sizeof(*primary));
         if(!primary)
             return E_OUTOFMEMORY;
 
@@ -719,7 +718,7 @@ static HRESULT create_viewport(IDirectManipulationViewport2 **obj)
 {
     struct directviewport *object;
 
-    object = heap_alloc(sizeof(*object));
+    object = malloc(sizeof(*object));
     if(!object)
         return E_OUTOFMEMORY;
 
@@ -766,7 +765,7 @@ static ULONG WINAPI direct_manip_Release(IDirectManipulationManager2 *iface)
     {
         if(This->updatemanager)
             IDirectManipulationUpdateManager_Release(This->updatemanager);
-        heap_free(This);
+        free(This);
     }
     return ref;
 }
@@ -887,7 +886,7 @@ static HRESULT WINAPI DirectManipulation_CreateInstance(IClassFactory *iface, IU
 
     *ppv = NULL;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    object = calloc(1, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
@@ -962,7 +961,7 @@ static ULONG WINAPI compositor_Release(IDirectManipulationCompositor2 *iface)
     {
         if(This->manager)
             IDirectManipulationUpdateManager_Release(This->manager);
-        heap_free(This);
+        free(This);
     }
     return ref;
 }
@@ -1065,7 +1064,7 @@ static HRESULT WINAPI DirectCompositor_CreateInstance(IClassFactory *iface, IUnk
 
     *ppv = NULL;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    object = calloc(1, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
