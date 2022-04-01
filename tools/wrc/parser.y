@@ -174,7 +174,7 @@ static raw_data_t *merge_raw_data(raw_data_t *r1, raw_data_t *r2);
 static raw_data_t *str2raw_data(string_t *str);
 static raw_data_t *int2raw_data(int i);
 static raw_data_t *long2raw_data(int i);
-static raw_data_t *load_file(string_t *name, language_t *lang);
+static raw_data_t *load_file(string_t *name, language_t lang);
 static itemex_opt_t *new_itemex_opt(int id, int type, int state, int helpid);
 static event_t *add_string_event(string_t *key, int id, int flags, event_t *prev);
 static event_t *add_event(int key, int id, int flags, event_t *prev);
@@ -182,7 +182,7 @@ static name_id_t *convert_ctlclass(name_id_t *cls);
 static control_t *ins_ctrl(int type, int special_style, control_t *ctrl, control_t *prev);
 static dialog_t *dialog_version(version_t *v, dialog_t *dlg);
 static dialog_t *dialog_characteristics(characts_t *c, dialog_t *dlg);
-static dialog_t *dialog_language(language_t *l, dialog_t *dlg);
+static dialog_t *dialog_language(language_t l, dialog_t *dlg);
 static dialog_t *dialog_menu(name_id_t *m, dialog_t *dlg);
 static dialog_t *dialog_class(name_id_t *n, dialog_t *dlg);
 static dialog_t *dialog_font(font_id_t *f, dialog_t *dlg);
@@ -227,7 +227,7 @@ static int rsrcid_to_token(int lookahead);
 	control_t	*ctl;
 	name_id_t	*nid;
 	font_id_t	*fntid;
-	language_t	*lan;
+	language_t	lan;
 	version_t	*ver;
 	characts_t	*chars;
 	event_t		*event;
@@ -388,8 +388,7 @@ resources
 				while(rsc)
 				{
 					if(rsc->type == head->type
-					&& rsc->lan->id == head->lan->id
-					&& rsc->lan->sub == head->lan->sub
+					&& rsc->lan == head->lan
 					&& !compare_name_id(rsc->name, head->name)
 					&& (rsc->type != res_usr || !compare_name_id(rsc->res.usr->type,head->res.usr->type)))
 					{
@@ -503,12 +502,11 @@ resource
 
 		if(!win32)
 			parser_warning("LANGUAGE not supported in 16-bit mode\n");
-		free(currentlanguage);
-		if (get_language_codepage($3, $5) == -1)
-			yyerror( "Language %04x is not supported", ($5<<10) + $3);
-		currentlanguage = new_language($3, $5);
+		currentlanguage = MAKELANGID($3, $5);
+		if (get_language_codepage(currentlanguage) == -1)
+			yyerror( "Language %04x is not supported", currentlanguage);
 		$$ = NULL;
-		chat("Got LANGUAGE %d,%d (0x%04x)\n", $3, $5, ($5<<10) + $3);
+		chat("Got LANGUAGE %d,%d (0x%04x)\n", $3, $5, currentlanguage);
 		}
 	;
 
@@ -744,8 +742,7 @@ accelerators
 			$$->lvc = *($3);
 			free($3);
 		}
-		if(!$$->lvc.language)
-			$$->lvc.language = dup_language(currentlanguage);
+		if(!$$->lvc.language) $$->lvc.language = currentlanguage;
 		}
 	;
 
@@ -807,8 +804,7 @@ dialog	: tDIALOG loadmemopts expr ',' expr ',' expr ',' expr dlg_attributes
 		$$->style->or_mask &= ~($$->style->and_mask);
 		$$->style->and_mask = 0;
 
-		if(!$$->lvc.language)
-			$$->lvc.language = dup_language(currentlanguage);
+		if(!$$->lvc.language) $$->lvc.language = currentlanguage;
 		}
 	;
 
@@ -1023,8 +1019,7 @@ dialogex: tDIALOGEX loadmemopts expr ',' expr ',' expr ',' expr helpid dlgex_att
 		$$->style->or_mask &= ~($$->style->and_mask);
 		$$->style->and_mask = 0;
 
-		if(!$$->lvc.language)
-			$$->lvc.language = dup_language(currentlanguage);
+		if(!$$->lvc.language) $$->lvc.language = currentlanguage;
 		}
 	;
 
@@ -1200,8 +1195,7 @@ menu	: tMENU loadmemopts opt_lvc menu_body {
 			$$->lvc = *($3);
 			free($3);
 		}
-		if(!$$->lvc.language)
-			$$->lvc.language = dup_language(currentlanguage);
+		if(!$$->lvc.language) $$->lvc.language = currentlanguage;
 		}
 	;
 
@@ -1276,8 +1270,7 @@ menuex	: tMENUEX loadmemopts opt_lvc menuex_body	{
 			$$->lvc = *($3);
 			free($3);
 		}
-		if(!$$->lvc.language)
-			$$->lvc.language = dup_language(currentlanguage);
+		if(!$$->lvc.language) $$->lvc.language = currentlanguage;
 		}
 	;
 
@@ -1492,7 +1485,7 @@ versioninfo
 			$$->memopt = WRC_MO_MOVEABLE | (win32 ? WRC_MO_PURE : 0);
 		$$->blocks = get_ver_block_head($5);
 		/* Set language; there is no version or characteristics */
-		$$->lvc.language = dup_language(currentlanguage);
+		$$->lvc.language = currentlanguage;
 		}
 	;
 
@@ -1627,10 +1620,7 @@ toolbar: tTOOLBAR loadmemopts expr ',' expr opt_lvc tBEGIN toolbar_items tEND {
 			$$->lvc = *($6);
 			free($6);
 		}
-		if(!$$->lvc.language)
-		{
-			$$->lvc.language = dup_language(currentlanguage);
-		}
+		if(!$$->lvc.language) $$->lvc.language = currentlanguage;
 		}
 	;
 
@@ -1730,9 +1720,9 @@ opt_lvc	: /* Empty */		{ $$ = new_lvc(); }
 	 * The conflict is now moved to the expression handling below.
 	 */
 opt_language
-	: tLANGUAGE expr ',' expr	{ $$ = new_language($2, $4);
-					  if (get_language_codepage($2, $4) == -1)
-						yyerror( "Language %04x is not supported", ($4<<10) + $2);
+	: tLANGUAGE expr ',' expr	{ $$ = MAKELANGID($2, $4);
+					  if (get_language_codepage($$) == -1)
+						yyerror( "Language %04x is not supported", $$);
 					}
 	;
 
@@ -1753,7 +1743,7 @@ raw_data: opt_lvc tBEGIN raw_elements tEND {
 		}
 
 		if(!$3->lvc.language)
-			$3->lvc.language = dup_language(currentlanguage);
+			$3->lvc.language = currentlanguage;
 
 		$$ = $3;
 		}
@@ -1775,7 +1765,7 @@ raw_elements
 	;
 
 /* File data or raw data */
-file_raw: filename	{ $$ = load_file($1,dup_language(currentlanguage)); }
+file_raw: filename	{ $$ = load_file($1,currentlanguage); }
 	| raw_data	{ $$ = $1; }
 	;
 
@@ -1896,7 +1886,7 @@ static dialog_t *dialog_menu(name_id_t *m, dialog_t *dlg)
 	return dlg;
 }
 
-static dialog_t *dialog_language(language_t *l, dialog_t *dlg)
+static dialog_t *dialog_language(language_t l, dialog_t *dlg)
 {
 	assert(dlg != NULL);
 	if(dlg->lvc.language)
@@ -2152,7 +2142,7 @@ static itemex_opt_t *new_itemex_opt(int id, int type, int state, int helpid)
 }
 
 /* Raw data functions */
-static raw_data_t *load_file(string_t *filename, language_t *lang)
+static raw_data_t *load_file(string_t *filename, language_t lang)
 {
 	FILE *fp = NULL;
 	char *path, *name;
@@ -2334,12 +2324,11 @@ static stringtable_t *find_stringtable(lvc_t *lvc)
 	assert(lvc != NULL);
 
 	if(!lvc->language)
-		lvc->language = dup_language(currentlanguage);
+		lvc->language = currentlanguage;
 
 	for(stt = sttres; stt; stt = stt->next)
 	{
-		if(stt->lvc.language->id == lvc->language->id
-		&& stt->lvc.language->sub == lvc->language->sub)
+		if(stt->lvc.language == lvc->language)
 		{
 			/* Found a table with the same language */
 			/* The version and characteristics are now handled
@@ -2640,7 +2629,7 @@ static resource_t *build_fontdirs(resource_t *tail)
 		{
 			if(!fnt[j])
 				continue;
-			if(fnt[j]->lan->id == fnd[i]->lan->id && fnt[j]->lan->sub == fnd[i]->lan->sub)
+			if(fnt[j]->lan == fnd[i]->lan)
 			{
 				lanfnt[nlanfnt] = fnt[j];
 				nlanfnt++;
@@ -2670,7 +2659,7 @@ static resource_t *build_fontdirs(resource_t *tail)
 					fnt[i] = NULL;
 					fntleft--;
 				}
-				else if(fnt[i]->lan->id == lanfnt[0]->lan->id && fnt[i]->lan->sub == lanfnt[0]->lan->sub)
+				else if(fnt[i]->lan == lanfnt[0]->lan)
 					goto addlanfnt;
 			}
 		}

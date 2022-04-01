@@ -48,7 +48,7 @@ extern int line_number;
 extern int char_number;
 
 extern resource_t *resource_top;
-extern language_t *currentlanguage;
+extern language_t currentlanguage;
 
 void write_pot_file( const char *outname );
 void write_po_files( const char *outname );

@@ -673,15 +673,15 @@ static const struct lang2cp lang2cps[] =
     { LANG_ZULU,           SUBLANG_NEUTRAL,              1252 }
 };
 
-int get_language_codepage( unsigned short lang, unsigned short sublang )
+int get_language_codepage( language_t lang )
 {
     unsigned int i;
     int cp = -1, defcp = -1;
 
     for (i = 0; i < ARRAY_SIZE(lang2cps); i++)
     {
-        if (lang2cps[i].lang != lang) continue;
-        if (lang2cps[i].sublang == sublang)
+        if (lang2cps[i].lang != PRIMARYLANGID(lang)) continue;
+        if (lang2cps[i].sublang == SUBLANGID(lang))
         {
             cp = lang2cps[i].cp;
             break;

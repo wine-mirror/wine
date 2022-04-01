@@ -185,7 +185,7 @@ ani_any_t *new_ani_any(void)
     return ret;
 }
 
-resource_t *new_resource(enum res_e t, void *res, int memopt, language_t *lan)
+resource_t *new_resource(enum res_e t, void *res, int memopt, language_t lan)
 {
 	resource_t *r = xmalloc(sizeof(resource_t));
 	memset( r, 0, sizeof(*r) );
@@ -208,20 +208,6 @@ characts_t *new_characts(unsigned int c)
 	characts_t *cp = xmalloc(sizeof(characts_t));
 	*cp = c;
 	return cp;
-}
-
-language_t *new_language(int id, int sub)
-{
-	language_t *lan = xmalloc(sizeof(language_t));
-	lan->id = id;
-	lan->sub = sub;
-	return lan;
-}
-
-language_t *dup_language(language_t *l)
-{
-	if(!l) return NULL;
-	return new_language(l->id, l->sub);
 }
 
 version_t *dup_version(version_t *v)
@@ -337,10 +323,9 @@ typedef struct {
 	int		id;
 } id_alloc_t;
 
-static int get_new_id(id_alloc_t **list, int *n, language_t *lan)
+static int get_new_id(id_alloc_t **list, int *n, language_t lan)
 {
 	int i;
-	assert(lan != NULL);
 	assert(list != NULL);
 	assert(n != NULL);
 
@@ -348,25 +333,25 @@ static int get_new_id(id_alloc_t **list, int *n, language_t *lan)
 	{
 		*list = xmalloc(sizeof(id_alloc_t));
 		*n = 1;
-		(*list)[0].lan = *lan;
+		(*list)[0].lan = lan;
 		(*list)[0].id = 1;
 		return 1;
 	}
 
 	for(i = 0; i < *n; i++)
 	{
-		if((*list)[i].lan.id == lan->id && (*list)[i].lan.sub == lan->sub)
+		if((*list)[i].lan == lan)
 			return ++((*list)[i].id);
 	}
 
 	*list = xrealloc(*list, sizeof(id_alloc_t) * (*n+1));
-	(*list)[*n].lan = *lan;
+	(*list)[*n].lan = lan;
 	(*list)[*n].id = 1;
 	*n += 1;
 	return 1;
 }
 
-static int alloc_icon_id(language_t *lan)
+static int alloc_icon_id(language_t lan)
 {
 	static id_alloc_t *idlist = NULL;
 	static int nid = 0;
@@ -374,7 +359,7 @@ static int alloc_icon_id(language_t *lan)
 	return get_new_id(&idlist, &nid, lan);
 }
 
-static int alloc_cursor_id(language_t *lan)
+static int alloc_cursor_id(language_t lan)
 {
 	static id_alloc_t *idlist = NULL;
 	static int nid = 0;

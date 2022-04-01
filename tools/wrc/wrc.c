@@ -109,8 +109,8 @@ int extensions = 1;
 /*
  * Language setting for resources (-l option)
  */
-static language_t *defaultlanguage;
-language_t *currentlanguage = NULL;
+static language_t defaultlanguage;
+language_t currentlanguage = 0;
 
 /*
  * Set when extra warnings should be generated (-W option)
@@ -271,7 +271,7 @@ static int load_file( const char *input_name, const char *output_name )
     }
 
     /* Reset the language */
-    currentlanguage = dup_language( defaultlanguage );
+    currentlanguage = defaultlanguage;
     check_utf8 = 1;
 
     /* Go from .rc to .res */
@@ -288,7 +288,6 @@ static int load_file( const char *input_name, const char *output_name )
         unlink( temp_name );
         temp_name = NULL;
     }
-    free( currentlanguage );
     return ret;
 }
 
@@ -376,14 +375,10 @@ static void option_callback( int optc, char *optarg )
         else if (strcmp(optarg, "rc")) error("Output format %s not supported.\n", optarg);
         break;
     case 'l':
-    {
-        int lan;
-        lan = strtol(optarg, NULL, 0);
-        if (get_language_codepage(PRIMARYLANGID(lan), SUBLANGID(lan)) == -1)
-            error("Language %04x is not supported\n", lan);
-        defaultlanguage = new_language(PRIMARYLANGID(lan), SUBLANGID(lan));
-    }
-    break;
+        defaultlanguage = strtol(optarg, NULL, 0);
+        if (get_language_codepage( defaultlanguage ) == -1)
+            error("Language %04x is not supported\n", defaultlanguage);
+        break;
     case 'm':
         if (!strcmp( optarg, "16" )) win32 = 0;
         else win32 = 1;
@@ -473,10 +468,6 @@ int main(int argc,char *argv[])
         wpp_set_debug( (debuglevel & DEBUGLEVEL_PPLEX) != 0,
                        (debuglevel & DEBUGLEVEL_PPTRACE) != 0,
                        (debuglevel & DEBUGLEVEL_PPMSG) != 0 );
-
-	/* Check if the user set a language, else set default */
-	if(!defaultlanguage)
-		defaultlanguage = new_language(0, 0);
 
 	atexit(cleanup_files);
 
