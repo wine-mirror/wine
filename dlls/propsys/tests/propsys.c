@@ -2064,6 +2064,192 @@ static void test_InitVariantFromFileTime(void)
     ok(V_DATE(&var) == d, "got wrong value: %f, expected %f\n", V_DATE(&var), d);
 }
 
+static void test_VariantToStringWithDefault(void)
+{
+    static WCHAR default_value[] = L"test";
+    VARIANT var, var2;
+    PCWSTR result;
+    BSTR b;
+
+    V_VT(&var) = VT_EMPTY;
+    result = VariantToStringWithDefault(&var, NULL);
+    ok(result == NULL, "Unexpected value %s\n", wine_dbgstr_w(result));
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result == default_value, "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    V_VT(&var) = VT_NULL;
+    result = VariantToStringWithDefault(&var, NULL);
+    ok(result == NULL, "Unexpected value %s\n", wine_dbgstr_w(result));
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result == default_value, "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    V_VT(&var) = VT_BOOL;
+    result = VariantToStringWithDefault(&var, NULL);
+    ok(result == NULL, "Unexpected value %s\n", wine_dbgstr_w(result));
+    V_BOOL(&var) = VARIANT_TRUE;
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result == default_value, "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    V_VT(&var) = VT_CY;
+    V_CY(&var).int64 = 100000;
+    result = VariantToStringWithDefault(&var, NULL);
+    ok(result == NULL, "Unexpected value %s\n", wine_dbgstr_w(result));
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result == default_value, "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    V_VT(&var) = VT_DATE;
+    V_DATE(&var) = 42.0;
+    result = VariantToStringWithDefault(&var, NULL);
+    ok(result == NULL, "Unexpected value %s\n", wine_dbgstr_w(result));
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result == default_value, "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    V_VT(&var) = VT_ERROR;
+    V_ERROR(&var) = DISP_E_PARAMNOTFOUND;
+    result = VariantToStringWithDefault(&var, NULL);
+    ok(result == NULL, "Unexpected value %s\n", wine_dbgstr_w(result));
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result == default_value, "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    V_VT(&var) = VT_I4;
+    V_I4(&var) = 15;
+    result = VariantToStringWithDefault(&var, NULL);
+    ok(result == NULL, "Unexpected value %s\n", wine_dbgstr_w(result));
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result == default_value, "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    V_VT(&var) = VT_I1;
+    V_I1(&var) = 1;
+    result = VariantToStringWithDefault(&var, NULL);
+    ok(result == NULL, "Unexpected value %s\n", wine_dbgstr_w(result));
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result == default_value, "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    /* V_BSTR */
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = NULL;
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result[0] == '\0', "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(L"");
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result == V_BSTR(&var), "Unexpected value %s\n", wine_dbgstr_w(result));
+    VariantClear(&var);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(L" ");
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result == V_BSTR(&var), "Unexpected value %s\n", wine_dbgstr_w(result));
+    VariantClear(&var);
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(L"test1");
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result == V_BSTR(&var), "Unexpected value %s\n", wine_dbgstr_w(result));
+    VariantClear(&var);
+
+    /* V_BSTRREF */
+
+    V_VT(&var) = VT_BYREF | VT_BSTR;
+    b = NULL;
+    V_BSTRREF(&var) = &b;
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result[0] == '\0', "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    V_VT(&var) = VT_BYREF | VT_BSTR;
+    b = SysAllocString(L"");
+    V_BSTRREF(&var) = &b;
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result == b, "Unexpected value %s\n", wine_dbgstr_w(result));
+    SysFreeString(b);
+
+    V_VT(&var) = VT_BYREF | VT_BSTR;
+    b = SysAllocString(L" ");
+    V_BSTRREF(&var) = &b;
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result == b, "Unexpected value %s\n", wine_dbgstr_w(result));
+    SysFreeString(b);
+
+    V_VT(&var) = VT_BYREF | VT_BSTR;
+    b = SysAllocString(L"test1");
+    V_BSTRREF(&var) = &b;
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result == b, "Unexpected value %s\n", wine_dbgstr_w(result));
+    SysFreeString(b);
+
+    /* Nested V_BSTR */
+
+    V_VT(&var) = VT_BYREF | VT_VARIANT;
+    V_VT(&var2) = VT_BSTR;
+    V_BSTR(&var2) = NULL;
+    V_VARIANTREF(&var) = &var2;
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result[0] == '\0', "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    V_VT(&var) = VT_BYREF | VT_VARIANT;
+    V_VT(&var2) = VT_BSTR;
+    V_BSTR(&var2) = SysAllocString(L"");
+    V_VARIANTREF(&var) = &var2;
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result == V_BSTR(&var2), "Unexpected value %s\n", wine_dbgstr_w(result));
+    VariantClear(&var2);
+
+    V_VT(&var) = VT_BYREF | VT_VARIANT;
+    V_VT(&var2) = VT_BSTR;
+    V_BSTR(&var2) = SysAllocString(L" ");
+    V_VARIANTREF(&var) = &var2;
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result == V_BSTR(&var2), "Unexpected value %s\n", wine_dbgstr_w(result));
+    VariantClear(&var2);
+
+    V_VT(&var) = VT_BYREF | VT_VARIANT;
+    V_VT(&var2) = VT_BSTR;
+    V_BSTR(&var2) = SysAllocString(L"test1");
+    V_VARIANTREF(&var) = &var2;
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result == V_BSTR(&var2), "Unexpected value %s\n", wine_dbgstr_w(result));
+    VariantClear(&var2);
+
+    /* Nested V_BSTRREF */
+
+    V_VT(&var) = VT_BYREF | VT_VARIANT;
+    V_VT(&var2) = VT_BYREF | VT_BSTR;
+    b = NULL;
+    V_BSTRREF(&var2) = &b;
+    V_VARIANTREF(&var) = &var2;
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result[0] == '\0', "Unexpected value %s\n", wine_dbgstr_w(result));
+
+    V_VT(&var) = VT_BYREF | VT_VARIANT;
+    V_VT(&var2) = VT_BYREF | VT_BSTR;
+    b = SysAllocString(L"");
+    V_BSTRREF(&var2) = &b;
+    V_VARIANTREF(&var) = &var2;
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result == b, "Unexpected value %s\n", wine_dbgstr_w(result));
+    SysFreeString(b);
+
+    V_VT(&var) = VT_BYREF | VT_VARIANT;
+    V_VT(&var2) = VT_BYREF | VT_BSTR;
+    b = SysAllocString(L" ");
+    V_BSTRREF(&var2) = &b;
+    V_VARIANTREF(&var) = &var2;
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result == b, "Unexpected value %s\n", wine_dbgstr_w(result));
+    SysFreeString(b);
+
+    V_VT(&var) = VT_BYREF | VT_VARIANT;
+    V_VT(&var2) = VT_BYREF | VT_BSTR;
+    b = SysAllocString(L"test1");
+    V_BSTRREF(&var2) = &b;
+    V_VARIANTREF(&var) = &var2;
+    result = VariantToStringWithDefault(&var, default_value);
+    ok(result == b, "Unexpected value %s\n", wine_dbgstr_w(result));
+    SysFreeString(b);
+}
+
 START_TEST(propsys)
 {
     test_PSStringFromPropertyKey();
@@ -2088,4 +2274,5 @@ START_TEST(propsys)
     test_propertystore();
     test_PSCreatePropertyStoreFromObject();
     test_InitVariantFromFileTime();
+    test_VariantToStringWithDefault();
 }
