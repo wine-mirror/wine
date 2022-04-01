@@ -1547,12 +1547,32 @@ void init_locale( HMODULE module )
     SIZE_T size;
     HKEY hkey;
 
+    kernelbase_handle = module;
     load_locale_nls();
+
     NtQueryDefaultLocale( FALSE, &system_lcid );
     NtQueryDefaultLocale( FALSE, &user_lcid );
-    system_locale = get_locale_by_id( &system_lcid, 0 );
-    user_locale = get_locale_by_id( &user_lcid, 0 );
-    kernelbase_handle = module;
+    if (!(system_locale = get_locale_by_id( &system_lcid, 0 )))
+    {
+        if (GetEnvironmentVariableW( L"WINELOCALE", bufferW, ARRAY_SIZE(bufferW) ))
+        {
+            system_locale = get_locale_by_name( bufferW, &system_lcid );
+            if (system_lcid == LOCALE_CUSTOM_UNSPECIFIED) system_lcid = LOCALE_CUSTOM_DEFAULT;
+        }
+    }
+    if (!(user_locale = get_locale_by_id( &user_lcid, 0 )))
+    {
+        if (GetEnvironmentVariableW( L"WINEUSERLOCALE", bufferW, ARRAY_SIZE(bufferW) ))
+        {
+            user_locale = get_locale_by_name( bufferW, &user_lcid );
+            if (user_lcid == LOCALE_CUSTOM_UNSPECIFIED) user_lcid = LOCALE_CUSTOM_DEFAULT;
+        }
+        else
+        {
+            user_locale = system_locale;
+            user_lcid = system_lcid;
+        }
+    }
 
     if (GetEnvironmentVariableW( L"WINEUNIXCP", bufferW, ARRAY_SIZE(bufferW) ))
         unix_cp = wcstoul( bufferW, NULL, 10 );
