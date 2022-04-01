@@ -247,17 +247,17 @@ static void put_name_id(name_id_t *nid, int upcase, language_t lang)
 static void put_lvc(lvc_t *lvc)
 {
 	if(lvc)
+	{
 		put_word(lvc->language);
+		put_dword(lvc->version);
+		put_dword(lvc->characts);
+	}
 	else
+	{
 		put_word(0);	/* Neutral */
-	if(lvc && lvc->version)
-		put_dword(*lvc->version);
-	else
 		put_dword(0);
-	if(lvc && lvc->characts)
-		put_dword(*lvc->characts);
-	else
 		put_dword(0);
+	}
 }
 
 /*

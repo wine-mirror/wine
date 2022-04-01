@@ -155,8 +155,8 @@ static int dont_want_id = 0;	/* See language parsing for details */
 
 /* Set to the current options of the currently scanning stringtable */
 static int *tagstt_memopt;
-static characts_t *tagstt_characts;
-static version_t *tagstt_version;
+static characts_t tagstt_characts;
+static version_t tagstt_version;
 
 static const char riff[4] = "RIFF";	/* RIFF file magic for animated cursor/icon */
 
@@ -180,8 +180,8 @@ static event_t *add_string_event(string_t *key, int id, int flags, event_t *prev
 static event_t *add_event(int key, int id, int flags, event_t *prev);
 static name_id_t *convert_ctlclass(name_id_t *cls);
 static control_t *ins_ctrl(int type, int special_style, control_t *ctrl, control_t *prev);
-static dialog_t *dialog_version(version_t *v, dialog_t *dlg);
-static dialog_t *dialog_characteristics(characts_t *c, dialog_t *dlg);
+static dialog_t *dialog_version(version_t v, dialog_t *dlg);
+static dialog_t *dialog_characteristics(characts_t c, dialog_t *dlg);
 static dialog_t *dialog_language(language_t l, dialog_t *dlg);
 static dialog_t *dialog_menu(name_id_t *m, dialog_t *dlg);
 static dialog_t *dialog_class(name_id_t *n, dialog_t *dlg);
@@ -228,8 +228,8 @@ static int rsrcid_to_token(int lookahead);
 	name_id_t	*nid;
 	font_id_t	*fntid;
 	language_t	lan;
-	version_t	*ver;
-	characts_t	*chars;
+	version_t	ver;
+	characts_t	chars;
 	event_t		*event;
 	menu_item_t	*menitm;
 	itemex_opt_t	*exopt;
@@ -1727,11 +1727,11 @@ opt_language
 	;
 
 opt_characts
-	: tCHARACTERISTICS expr		{ $$ = new_characts($2); }
+	: tCHARACTERISTICS expr		{ $$ = $2; }
 	;
 
 opt_version
-	: tVERSION expr			{ $$ = new_version($2); }
+	: tVERSION expr			{ $$ = $2; }
 	;
 
 /* ------------------------------ Raw data handling ------------------------------ */
@@ -1895,7 +1895,7 @@ static dialog_t *dialog_language(language_t l, dialog_t *dlg)
 	return dlg;
 }
 
-static dialog_t *dialog_characteristics(characts_t *c, dialog_t *dlg)
+static dialog_t *dialog_characteristics(characts_t c, dialog_t *dlg)
 {
 	assert(dlg != NULL);
 	if(dlg->lvc.characts)
@@ -1904,7 +1904,7 @@ static dialog_t *dialog_characteristics(characts_t *c, dialog_t *dlg)
 	return dlg;
 }
 
-static dialog_t *dialog_version(version_t *v, dialog_t *dlg)
+static dialog_t *dialog_version(version_t v, dialog_t *dlg)
 {
 	assert(dlg != NULL);
 	if(dlg->lvc.version)
@@ -2369,8 +2369,8 @@ static resource_t *build_stt_resources(stringtable_t *stthead)
 	int j;
 	unsigned int andsum;
 	unsigned int orsum;
-	characts_t *characts;
-	version_t *version;
+	characts_t characts;
+	version_t version;
 
 	if(!stthead)
 		return NULL;
@@ -2401,8 +2401,8 @@ static resource_t *build_stt_resources(stringtable_t *stthead)
 			}
 			andsum = ~0;
 			orsum = 0;
-			characts = NULL;
-			version = NULL;
+			characts = 0;
+			version = 0;
 			/* Check individual memory options and get
 			 * the first characteristics/version
 			 */
@@ -2426,11 +2426,11 @@ static resource_t *build_stt_resources(stringtable_t *stthead)
 			{
 				if(characts
 				&& newstt->entries[j].characts
-				&& *newstt->entries[j].characts != *characts)
+				&& newstt->entries[j].characts != characts)
 					warning("Stringtable's characteristics are not the same (idbase: %d)\n", newstt->idbase);
 				if(version
 				&& newstt->entries[j].version
-				&& *newstt->entries[j].version != *version)
+				&& newstt->entries[j].version != version)
 					warning("Stringtable's versions are not the same (idbase: %d)\n", newstt->idbase);
 			}
 			rsc = new_resource(res_stt, newstt, newstt->memopt, newstt->lvc.language);

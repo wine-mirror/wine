@@ -196,32 +196,6 @@ resource_t *new_resource(enum res_e t, void *res, int memopt, language_t lan)
 	return r;
 }
 
-version_t *new_version(unsigned int v)
-{
-	version_t *vp = xmalloc(sizeof(version_t));
-	*vp = v;
-	return vp;
-}
-
-characts_t *new_characts(unsigned int c)
-{
-	characts_t *cp = xmalloc(sizeof(characts_t));
-	*cp = c;
-	return cp;
-}
-
-version_t *dup_version(version_t *v)
-{
-	if(!v) return NULL;
-	return new_version(*v);
-}
-
-characts_t *dup_characts(characts_t *c)
-{
-	if(!c) return NULL;
-	return new_characts(*c);
-}
-
 html_t *new_html(raw_data_t *rd, int *memopt)
 {
 	html_t *html = xmalloc(sizeof(html_t));

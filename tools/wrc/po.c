@@ -86,10 +86,10 @@ static language_t get_default_sublang( language_t lan )
     }
 }
 
-static version_t *get_dup_version( language_t lang )
+static version_t get_dup_version( language_t lang )
 {
     /* English "translations" take precedence over the original rc contents */
-    return new_version( is_english( lang ) ? 1 : -1 );
+    return is_english( lang ) ? 1 : -1;
 }
 
 static name_id_t *dup_name_id( name_id_t *id )

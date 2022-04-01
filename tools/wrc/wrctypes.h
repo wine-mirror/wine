@@ -108,8 +108,8 @@ typedef unsigned int version_t;
 
 typedef struct lvc {
 	language_t	language;
-	version_t	*version;
-	characts_t	*characts;
+	version_t	version;
+	characts_t	characts;
 } lvc_t;
 
 typedef struct font_id {
@@ -428,8 +428,8 @@ typedef struct stt_entry {
 	string_t		*str;
 	int			id;
 	unsigned int		memopt;
-	characts_t		*characts;
-	version_t		*version;
+	characts_t		characts;
+	version_t		version;
 } stt_entry_t;
 
 typedef struct stringtable {
