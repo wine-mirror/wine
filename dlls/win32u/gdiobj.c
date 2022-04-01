@@ -1235,6 +1235,7 @@ static struct unix_funcs unix_funcs =
     __wine_get_icm_profile,
     __wine_get_vulkan_driver,
     __wine_get_wgl_driver,
+    __wine_send_input,
     __wine_set_display_driver,
 };
 

@@ -53,6 +53,7 @@ struct user_callbacks
                                     DWORD type );
     BOOL (CDECL *process_hardware_message)( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data,
                                             HWND hwnd_filter, UINT first, UINT last, BOOL remove );
+    BOOL (CDECL *rawinput_device_get_usages)(HANDLE handle, USHORT *usage_page, USHORT *usage);
     void (CDECL *register_builtin_classes)(void);
     BOOL (CDECL *set_menu)( HWND hwnd, HMENU menu );
     void (WINAPI *set_standard_scroll_painted)( HWND hwnd, INT bar, BOOL visible );

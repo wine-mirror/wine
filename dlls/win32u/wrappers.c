@@ -1234,6 +1234,12 @@ struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version )
     return unix_funcs->get_wgl_driver( hdc, version );
 }
 
+BOOL CDECL __wine_send_input( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->wine_send_input( hwnd, input, rawinput );
+}
+
 /***********************************************************************
  *           __wine_set_display_driver    (win32u.@)
  */

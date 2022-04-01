@@ -1321,6 +1321,7 @@
 # Wine internal extensions
 
 # Graphics drivers
+@ cdecl __wine_send_input(long ptr ptr)
 @ cdecl __wine_set_display_driver(ptr long)
 
 # OpenGL

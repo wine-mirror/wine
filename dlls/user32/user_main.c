@@ -178,6 +178,7 @@ static const struct user_callbacks user_funcs =
     notify_ime,
     post_dde_message,
     process_hardware_message,
+    rawinput_device_get_usages,
     register_builtin_classes,
     MENU_SetMenu,
     SCROLL_SetStandardScrollPainted,

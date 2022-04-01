@@ -29,6 +29,7 @@
 #define WIN32_NO_STATUS
 #include "win32u_private.h"
 #include "ntuser_private.h"
+#include "hidusage.h"
 #include "dbt.h"
 #include "dde.h"
 #include "wine/server.h"
@@ -1859,6 +1860,121 @@ LRESULT send_internal_message_timeout( DWORD dest_pid, DWORD dest_tid,
         ret = send_inter_thread_message( &info, &result );
     }
     if (ret && res_ptr) *res_ptr = result;
+    return ret;
+}
+
+/***********************************************************************
+ *		send_hardware_message
+ */
+NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput, UINT flags )
+{
+    struct user_key_state_info *key_state_info = get_user_thread_info()->key_state;
+    struct send_message_info info;
+    int prev_x, prev_y, new_x, new_y;
+    INT counter = global_key_state_counter;
+    USAGE hid_usage_page, hid_usage;
+    NTSTATUS ret;
+    BOOL wait;
+
+    info.type     = MSG_HARDWARE;
+    info.dest_tid = 0;
+    info.hwnd     = hwnd;
+    info.flags    = 0;
+    info.timeout  = 0;
+
+    if (input->type == INPUT_HARDWARE && rawinput->header.dwType == RIM_TYPEHID)
+    {
+        if (input->hi.uMsg == WM_INPUT_DEVICE_CHANGE)
+        {
+            hid_usage_page = ((USAGE *)rawinput->data.hid.bRawData)[0];
+            hid_usage = ((USAGE *)rawinput->data.hid.bRawData)[1];
+        }
+        if (input->hi.uMsg == WM_INPUT && user_callbacks &&
+            !user_callbacks->rawinput_device_get_usages( rawinput->header.hDevice,
+                                                         &hid_usage_page, &hid_usage ))
+        {
+            WARN( "unable to get HID usages for device %p\n", rawinput->header.hDevice );
+            return STATUS_INVALID_HANDLE;
+        }
+    }
+
+    SERVER_START_REQ( send_hardware_message )
+    {
+        req->win        = wine_server_user_handle( hwnd );
+        req->flags      = flags;
+        req->input.type = input->type;
+        switch (input->type)
+        {
+        case INPUT_MOUSE:
+            req->input.mouse.x     = input->mi.dx;
+            req->input.mouse.y     = input->mi.dy;
+            req->input.mouse.data  = input->mi.mouseData;
+            req->input.mouse.flags = input->mi.dwFlags;
+            req->input.mouse.time  = input->mi.time;
+            req->input.mouse.info  = input->mi.dwExtraInfo;
+            break;
+        case INPUT_KEYBOARD:
+            req->input.kbd.vkey  = input->ki.wVk;
+            req->input.kbd.scan  = input->ki.wScan;
+            req->input.kbd.flags = input->ki.dwFlags;
+            req->input.kbd.time  = input->ki.time;
+            req->input.kbd.info  = input->ki.dwExtraInfo;
+            break;
+        case INPUT_HARDWARE:
+            req->input.hw.msg    = input->hi.uMsg;
+            req->input.hw.lparam = MAKELONG( input->hi.wParamL, input->hi.wParamH );
+            switch (input->hi.uMsg)
+            {
+            case WM_INPUT:
+            case WM_INPUT_DEVICE_CHANGE:
+                req->input.hw.rawinput.type = rawinput->header.dwType;
+                switch (rawinput->header.dwType)
+                {
+                case RIM_TYPEHID:
+                    req->input.hw.rawinput.hid.device = HandleToUlong( rawinput->header.hDevice );
+                    req->input.hw.rawinput.hid.param = rawinput->header.wParam;
+                    req->input.hw.rawinput.hid.usage_page = hid_usage_page;
+                    req->input.hw.rawinput.hid.usage = hid_usage;
+                    req->input.hw.rawinput.hid.count = rawinput->data.hid.dwCount;
+                    req->input.hw.rawinput.hid.length = rawinput->data.hid.dwSizeHid;
+                    wine_server_add_data( req, rawinput->data.hid.bRawData,
+                                          rawinput->data.hid.dwCount * rawinput->data.hid.dwSizeHid );
+                    break;
+                default:
+                    assert( 0 );
+                    break;
+                }
+            }
+            break;
+        }
+        if (key_state_info) wine_server_set_reply( req, key_state_info->state,
+                                                   sizeof(key_state_info->state) );
+        ret = wine_server_call( req );
+        wait = reply->wait;
+        prev_x = reply->prev_x;
+        prev_y = reply->prev_y;
+        new_x  = reply->new_x;
+        new_y  = reply->new_y;
+    }
+    SERVER_END_REQ;
+
+    if (!ret)
+    {
+        if (key_state_info)
+        {
+            key_state_info->time    = NtGetTickCount();
+            key_state_info->counter = counter;
+        }
+        if ((flags & SEND_HWMSG_INJECTED) && (prev_x != new_x || prev_y != new_y))
+            user_driver->pSetCursorPos( new_x, new_y );
+    }
+
+    if (wait)
+    {
+        LRESULT ignored;
+        wait_message_reply( 0 );
+        retrieve_reply( &info, 0, &ignored );
+    }
     return ret;
 }
 

@@ -123,19 +123,6 @@ BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret )
 
 
 /***********************************************************************
- *		__wine_send_input  (USER32.@)
- *
- * Internal SendInput function to allow the graphics driver to inject real events.
- */
-BOOL CDECL __wine_send_input( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput )
-{
-    NTSTATUS status = send_hardware_message( hwnd, input, rawinput, 0 );
-    if (status) SetLastError( RtlNtStatusToDosError(status) );
-    return !status;
-}
-
-
-/***********************************************************************
  *		update_mouse_coords
  *
  * Helper for SendInput.
