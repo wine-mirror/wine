@@ -84,8 +84,8 @@ static const pfPaint staticPaintFunc[SS_TYPEMASK+1] =
     STATIC_PaintOwnerDrawfn, /* SS_OWNERDRAW */
     STATIC_PaintBitmapfn,    /* SS_BITMAP */
     STATIC_PaintEnhMetafn,   /* SS_ENHMETAFILE */
-    STATIC_PaintEtchedfn,    /* SS_ETCHEDHORZ */
-    STATIC_PaintEtchedfn,    /* SS_ETCHEDVERT */
+    NULL,                    /* SS_ETCHEDHORZ */
+    NULL,                    /* SS_ETCHEDVERT */
     STATIC_PaintEtchedfn,    /* SS_ETCHEDFRAME */
 };
 
@@ -530,9 +530,20 @@ static LRESULT CALLBACK STATIC_WindowProc( HWND hwnd, UINT uMsg, WPARAM wParam, 
         {
             CREATESTRUCTW *cs = (CREATESTRUCTW *)lParam;
 
-            if (full_style & SS_SUNKEN)
+            if (full_style & SS_SUNKEN || style == SS_ETCHEDHORZ || style == SS_ETCHEDVERT)
                 SetWindowLongW( hwnd, GWL_EXSTYLE,
                                 GetWindowLongW( hwnd, GWL_EXSTYLE ) | WS_EX_STATICEDGE );
+
+            if (style == SS_ETCHEDHORZ || style == SS_ETCHEDVERT) {
+                RECT rc;
+                GetClientRect(hwnd, &rc);
+                if (style == SS_ETCHEDHORZ)
+                    rc.bottom = rc.top;
+                else
+                    rc.right = rc.left;
+                AdjustWindowRectEx(&rc, full_style, FALSE, GetWindowLongW(hwnd, GWL_EXSTYLE));
+                SetWindowPos(hwnd, NULL, 0, 0, rc.right - rc.left, rc.bottom - rc.top, SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER);
+            }
 
             switch (style)
             {
@@ -915,18 +926,7 @@ static void STATIC_PaintEtchedfn( HWND hwnd, HDC hdc, DWORD style )
 
     /* FIXME: sometimes (not always) sends WM_CTLCOLORSTATIC */
     GetClientRect( hwnd, &rc );
-    switch (style & SS_TYPEMASK)
-    {
-    case SS_ETCHEDHORZ:
-        DrawEdge(hdc, &rc, EDGE_ETCHED, BF_TOP | BF_BOTTOM);
-        break;
-    case SS_ETCHEDVERT:
-        DrawEdge(hdc, &rc, EDGE_ETCHED, BF_LEFT | BF_RIGHT);
-        break;
-    case SS_ETCHEDFRAME:
-        DrawEdge(hdc, &rc, EDGE_ETCHED, BF_RECT);
-        break;
-    }
+    DrawEdge(hdc, &rc, EDGE_ETCHED, BF_RECT);
 }
 
 void STATIC_Register(void)
