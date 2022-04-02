@@ -424,18 +424,18 @@ START_TEST(static)
 
     test_updates(0, 0);
     test_updates(SS_ICON, 0);
-    test_updates(SS_BLACKRECT, TODO_COUNT);
-    test_updates(SS_WHITERECT, TODO_COUNT);
-    test_updates(SS_BLACKFRAME, TODO_COUNT);
-    test_updates(SS_WHITEFRAME, TODO_COUNT);
-    test_updates(SS_USERITEM, TODO_COUNT);
+    test_updates(SS_BLACKRECT, 0);
+    test_updates(SS_WHITERECT, 0);
+    test_updates(SS_BLACKFRAME, 0);
+    test_updates(SS_WHITEFRAME, 0);
+    test_updates(SS_USERITEM, 0);
     test_updates(SS_SIMPLE, 0);
     test_updates(SS_OWNERDRAW, 0);
     test_updates(SS_BITMAP, 0);
     test_updates(SS_BITMAP | SS_CENTERIMAGE, 0);
-    test_updates(SS_ETCHEDHORZ, TODO_COUNT);
-    test_updates(SS_ETCHEDVERT, TODO_COUNT);
-    test_updates(SS_ETCHEDFRAME, TODO_COUNT);
+    test_updates(SS_ETCHEDHORZ, 0);
+    test_updates(SS_ETCHEDVERT, 0);
+    test_updates(SS_ETCHEDFRAME, 0);
     test_updates(SS_SUNKEN, 0);
     test_set_text();
     test_set_image();
