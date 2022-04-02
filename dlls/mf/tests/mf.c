@@ -5623,7 +5623,7 @@ static void test_MFRequireProtectedEnvironment(void)
 static BOOL create_transform(GUID category, MFT_REGISTER_TYPE_INFO *input_type,
         MFT_REGISTER_TYPE_INFO *output_type, const WCHAR *expect_name, const GUID *expect_major_type,
         const GUID *expect_input, ULONG expect_input_count, const GUID *expect_output, ULONG expect_output_count,
-        IMFTransform **transform, GUID *class_id)
+        IMFTransform **transform, const GUID *expect_class_id, GUID *class_id)
 {
     MFT_REGISTER_TYPE_INFO *input_types = NULL, *output_types = NULL;
     UINT32 input_count = 0, output_count = 0, count = 0, i;
@@ -5643,6 +5643,7 @@ static BOOL create_transform(GUID category, MFT_REGISTER_TYPE_INFO *input_type,
     ok(count == 1, "got %u\n", count);
     *class_id = class_ids[0];
     CoTaskMemFree(class_ids);
+    ok(IsEqualGUID(class_id, expect_class_id), "got class id %s\n", debugstr_guid(class_id));
 
     hr = MFTGetInfo(*class_id, &name, &input_types, &input_count, &output_types, &output_count, NULL);
     if (FAILED(hr))
@@ -5834,7 +5835,7 @@ static void test_wma_encoder(void)
 
     if (!create_transform(MFT_CATEGORY_AUDIO_ENCODER, &input_type, &output_type, L"WMAudio Encoder MFT", &MFMediaType_Audio,
             transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
-            &transform, &class_id))
+            &transform, &CLSID_CWMAEncMediaObject, &class_id))
         goto failed;
 
     check_interface(transform, &IID_IMediaObject, TRUE);
@@ -6064,7 +6065,7 @@ static void test_wma_decoder(void)
 
     if (!create_transform(MFT_CATEGORY_AUDIO_DECODER, &input_type, &output_type, L"WMAudio Decoder MFT", &MFMediaType_Audio,
             transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
-            &transform, &class_id))
+            &transform, &CLSID_CWMADecMediaObject, &class_id))
         goto failed;
 
     check_interface(transform, &IID_IMediaObject, TRUE);
@@ -6718,7 +6719,7 @@ static void test_h264_decoder(void)
 
     if (!create_transform(MFT_CATEGORY_VIDEO_DECODER, &input_type, &output_type, L"Microsoft H264 Video Decoder MFT", &MFMediaType_Video,
             transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
-            &transform, &class_id))
+            &transform, &CLSID_MSH264DecoderMFT, &class_id))
         goto failed;
 
     hr = IMFTransform_GetAttributes(transform, &attributes);
