@@ -6488,9 +6488,7 @@ static void test_wma_decoder(void)
         ok(status == 0, "got status %#lx\n", status);
         value = 0xdeadbeef;
         hr = IMFSample_GetUINT32(sample, &MFSampleExtension_CleanPoint, &value);
-        todo_wine
         ok(hr == S_OK, "GetUINT32 MFSampleExtension_CleanPoint returned %#lx\n", hr);
-        todo_wine
         ok(value == 1, "got MFSampleExtension_CleanPoint %u\n", value);
         hr = IMFSample_GetTotalLength(sample, &length);
         ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);

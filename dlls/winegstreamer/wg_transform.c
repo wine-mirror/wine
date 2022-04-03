@@ -369,6 +369,8 @@ NTSTATUS wg_transform_push_data(void *args)
         GST_BUFFER_PTS(buffer) = sample->pts * 100;
     if (sample->flags & WG_SAMPLE_FLAG_HAS_DURATION)
         GST_BUFFER_DURATION(buffer) = sample->duration * 100;
+    if (!(sample->flags & WG_SAMPLE_FLAG_SYNC_POINT))
+        GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT);
     gst_buffer_list_insert(transform->input, -1, buffer);
 
     GST_INFO("Copied %u bytes from sample %p to input buffer list", sample->size, sample);
@@ -415,6 +417,8 @@ static NTSTATUS read_transform_output_data(GstBuffer *buffer, struct wg_sample *
         sample->flags |= WG_SAMPLE_FLAG_HAS_DURATION;
         sample->duration = duration;
     }
+    if (!GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT))
+        sample->flags |= WG_SAMPLE_FLAG_SYNC_POINT;
 
     GST_INFO("Copied %u bytes, sample %p, flags %#x", sample->size, sample, sample->flags);
     return STATUS_SUCCESS;
