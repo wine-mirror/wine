@@ -17,6 +17,7 @@
  */
 
 import "d2d1_1.idl";
+import "d2d1effects_1.idl";
 
 typedef enum D2D1_RENDERING_PRIORITY
 {
