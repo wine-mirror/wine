@@ -1306,7 +1306,8 @@ void wined3d_shader_resource_view_gl_generate_mipmap(struct wined3d_shader_resou
     if (gl_info->supported[ARB_SAMPLER_OBJECTS])
         GL_EXTCALL(glBindSampler(context_gl->active_texture, 0));
     gl_tex = wined3d_texture_gl_get_gl_texture(texture_gl, srgb);
-    if (context_gl->c.d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
+    if (context_gl->c.d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL
+            && gl_info->supported[EXT_TEXTURE_SRGB_DECODE])
     {
         gl_info->gl_ops.gl.p_glTexParameteri(texture_gl->target,
                 GL_TEXTURE_SRGB_DECODE_EXT, GL_SKIP_DECODE_EXT);
