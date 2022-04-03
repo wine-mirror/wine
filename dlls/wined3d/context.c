@@ -78,6 +78,9 @@ void context_invalidate_state(struct wined3d_context *context, unsigned int stat
     unsigned int representative = context->state_table[state_id].representative;
     unsigned int index, shift;
 
+    if (!representative)
+        ERR("Invalidating representative 0, state_id %u.\n", state_id);
+
     index = representative / (sizeof(*context->dirty_graphics_states) * CHAR_BIT);
     shift = representative & ((sizeof(*context->dirty_graphics_states) * CHAR_BIT) - 1);
     context->dirty_graphics_states[index] |= (1u << shift);
