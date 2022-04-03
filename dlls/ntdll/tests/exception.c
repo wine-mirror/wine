@@ -1223,7 +1223,6 @@ static void test_debugger(DWORD cont_status)
                 }
                 else if (stage == 13)
                 {
-                    todo_wine
                     ok(FALSE || broken(TRUE) /* < Win10 */, "should not throw exception\n");
                     continuestatus = DBG_EXCEPTION_NOT_HANDLED;
                 }
@@ -3923,7 +3922,6 @@ static void test_debugger(DWORD cont_status)
                 }
                 else if (stage == 13)
                 {
-                    todo_wine
                     ok(FALSE || broken(TRUE) /* < Win10 */, "should not throw exception\n");
                     continuestatus = DBG_EXCEPTION_NOT_HANDLED;
                 }
@@ -6627,7 +6625,6 @@ static void test_debugger(DWORD cont_status)
                 }
                 else if (stage == 13)
                 {
-                    todo_wine
                     ok(FALSE || broken(TRUE) /* < Win10 */, "should not throw exception\n");
                     continuestatus = DBG_EXCEPTION_NOT_HANDLED;
                 }
@@ -7881,7 +7878,6 @@ static void test_debugger(DWORD cont_status)
                 }
                 else if (stage == 13)
                 {
-                    todo_wine
                     ok(FALSE || broken(TRUE) /* < Win10 */, "should not throw exception\n");
                     continuestatus = DBG_EXCEPTION_NOT_HANDLED;
                 }
@@ -8624,24 +8620,20 @@ static void test_closehandle(DWORD numexc, HANDLE handle)
     ret = CloseHandle(handle);
     ok(expectret || (GetLastError() == ERROR_INVALID_HANDLE),
         "CloseHandle had wrong GetLastError(), got %lu for %p\n", GetLastError(), handle);
-    todo_wine_if(is_magic_handle(handle)) {
     ok(ret == expectret || broken(HandleToLong(handle) < 0) /* < Win10 */,
         "CloseHandle expected %d, got %d for %p\n", expectret, ret, handle);
     ok(invalid_handle_exceptions == numexc || broken(!numexc && is_magic_handle(handle)), /* < Win10 */
         "CloseHandle generated %ld exceptions, expected %ld for %p\n",
        invalid_handle_exceptions, numexc, handle);
-    }
 
     invalid_handle_exceptions = 0;
     expect = expectret ? STATUS_SUCCESS : STATUS_INVALID_HANDLE;
     status = pNtClose(handle);
-    todo_wine_if(is_magic_handle(handle)) {
     ok(status == expect || broken(HandleToLong(handle) < 0), /* < Win10 */
         "NtClose returned unexpected status %#lx, expected %#lx for %p\n", status, expect, handle);
     ok(invalid_handle_exceptions == numexc || broken(!numexc && is_magic_handle(handle)), /* < Win10 */
         "CloseHandle generated %ld exceptions, expected %ld for %p\n",
        invalid_handle_exceptions, numexc, handle);
-    }
 
     pRtlRemoveVectoredExceptionHandler(vectored_handler);
 }
