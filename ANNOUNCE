@@ -1,12 +1,12 @@
-The Wine maintenance release 6.0.3 is now available.
+The Wine maintenance release 6.0.4 is now available.
 
-What's new in this release (see below for details):
+What's new in this release:
   - Various bug fixes
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/6.0/wine-6.0.3.tar.xz
-  http://mirrors.ibiblio.org/wine/source/6.0/wine-6.0.3.tar.xz
+  https://dl.winehq.org/wine/source/6.0/wine-6.0.4.tar.xz
+  http://mirrors.ibiblio.org/wine/source/6.0/wine-6.0.4.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -22,230 +22,160 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 6.0.3 (total 46):
+Bugs fixed in 6.0.4 (total 42):
 
-  30244  Might & Magic Clash of Heroes: fails to start
-  36887  Trusteer Rapport setup crashes on unimplemented function ntoskrnl.exe.PsGetCurrentProcessSessionId
-  37592  Filenames in themed file dialog change size
-  39142  Roblox Client/Server connection is dropped with error "This server has shut down."
-  41292  Nexton LC-ScriptEngine freezes, possibly bad dsound notifications
-  47047  Multiple kernel drivers crash due to missing 'ntoskrnl.exe.MmGetPhysicalAddress' semi-stub (64-bit MRAC Anti-Cheat (My.Com Warface) kernel service, DELL BIOS flash utility, BattlEye Anti-Cheat)
-  47505  Levelhead: Fatal error when attempting to access the game's servers when logged in
-  47791  Inconsistent %ERRORLEVEL% after setting env var value in cmd.exe
-  48891  Bash from Cygwin/msys2 terminates after first command
-  49625  winedbg --command 'info wnd' fails with Exception c0000005
-  49726  ChrisPC Free VPN Connection 2.x crashes on unimplemented function rasapi32.dll.RasSetCredentialsA when clicking 'Connect to VPN'
-  50041  Amnesia: Rebirth crashes with builtin vcomp140
-  50113  Total Commander 9.51: when using a third-party theme with Windows XP, the drive buttons and function buttons at the bottom of the window (F5 Copy) are not displayed
-  50244  Melodyne 5: activation via internet fails with 12152 error
-  50272  Melodyne 5: activation via internet produces "Unknown Error"
-  50404  Sims 4 crashes on startup with builtin msvcrt
-  50412  Wrong check for needed access rights in QueryServiceConfig2
-  50603  WiX Toolset v3.11 installer crashes when loading update feed XML
-  50615  Excel 2007 needs ICreateTypeInfo2::DeleteFuncDesc()
-  50735  MSBuild fails to launch FileTracker
-  51221  Dangerous Water crash when starting a Multiplayer game (requires IDirectPlay8Server_EnumServiceProviders implementation)
-  51244  Frostpunk doesn't launch with builtin msvcr120
-  51264  GUI exe receives invalid StdOutput HANDLE if launched via ShellExecuteEx
-  51267  Rise of Legends Demo crashes with null pointer exception inside SAXReader::parseURL
-  51291  Youkoso! Sukebe Elf no Mori e (demo) doesn't show thumbnail image in monitor settings.
-  51302  NASCAR '15 Victory Edition gets in infinite loop on launch
-  51303  Metal Gear Solid V: Ground Zeroes needs d3d11_swapchain_GetLastPresentCount implementation
-  51348  uxtheme.SetWindowTheme should use SendMessage to send WM_THEMECHANGED
-  51358  Civilization 4: XML load error when trying to start
-  51382  NetEase Cloud Music crashes on zh_CN.UTF-8 locale.
-  51435  iostream float formatting broken since Wine 5.12-170-g1bc6f0c8617
-  51452  oleaut32:varformat fails in Wine when the currency sign has two characters or more
-  51465  EVE Online launcher crashes
-  51503  vbscript parser error in expression with # char
-  51505  MIDISelector's MIDI mapper configuration doesn't take effect
-  51506  Disabled controls are not greyed out when theming is active
-  51535  Native Access 1.13.3 crashes on unimplemented function virtdisk.dll.DetachVirtualDisk
-  51553  Purple bitmap should be transparent in scrollbar theming
-  51574  swscanf_s with %zu fails for valid value
-  51576  Click-N-Type 3.03 virtual keyboard installer sometimes has two task panes
-  51590  services:service fails when the KDE taskbar is at the top
-  51591  AFxW: file list panes aren't updated at start-up
-  51635  wine fails to build with glibc 2.34
-  51728  copypasta in pwcache.c:ctox()
-  51894  ucrtbase:misc fails on some Windows 10 1607 and 1709
-  51932  wine-stable 6.0.2 build fails in Ubuntu 21.10
+  12732  Nota Bene crashes on install
+  26350  Dungeons demo (OGRE) fails to load its plugins (LoadLibraryEx with LOAD_WITH_ALTERED_SEARCH_PATH and relative path)
+  32183  Cannot open console device read only, then read from it to get input
+  39699  EDT for Windows installer crashes inside wine`s hhctrl.ocx
+  41098  Descent 3 (GOG version) has problem when running with OpenGL renderer (Nvidia proprietary drivers)
+  42030  winedbg: Internal crash at 0x9f58fd40
+  44202  undname.c fails to parse symbols with rvalue-reference semantics '&&'
+  47287  Accessible Event Watcher Tool 'accevent.exe' from Windows 10 SDK (10.0.17763.x) crashes on unimplemented function oleacc.dll.AccessibleObjectFromEvent
+  48631  Multiple games display text as squares (Death to Spies: Moment of Truth, Shadow Warrior, Resident Evil 4 HD)
+  48950  NVDA needs oleacc.AccessibleObjectFromPoint implementation for mouse tracking
+  50370  Gothic 1 doesn't start correctly when screen resolution of the game matches display resolution
+  50526  ConEmu wineconsole Ctrl+m has different behavior
+  50714  YooSee CMS client 10.0.0.53 crashes after login since Wine 5.12 (ntdll built as PE)
+  51163  WinOffice Pro 5.3 stops after splashscreen, needs WMI class SoftwareLicensingProduct
+  51195  Lara Croft and the Temple of Osiris doesn't launch
+  51220  version:info - In Wine the GetFileVersionInfoEx() checks fail in non-English locales
+  51396  cl.exe 64bit fails with internal compiler error, needs support for separated code segments in vcruntime140_1
+  51598  cmd.exe crashes on "if exist" without arguments
+  51821  EVE Online Client Crashes Due to differences in how Wine and Windows handle LdrGetDllPath with dwFlags 0x8 and relative path
+  51860  Missing include for uid_t on musl-based systems
+  51864  VeraCrypt Installer for 1.24-Update7 (Win8+) fails with HRESULT 0x800288BD
+  51911  vbscript does not handle strings in if clauses
+  51938  Safe Exam Browser needs "DNSDomain" from Win32_NetworkAdapterConfiguration
+  51959  Missing procedure GetDayLightFlag
+  51968  Winaero WEI Tool: Crash due to C:\windows\performance\winsat\datastore missing
+  51978  Autodesk Fusion 360 crashes on unimplemented function msvcp140.dll.?table@?$ctype@D@std@@QEBAPEBFXZ
+  51983  foobar2000 v1.5.1+ crashes on startup with Wine v6.6+ with Windows version set to "Windows 10"
+  52076  Wrong icons placement when using a theme
+  52082  Ace Ventura (CD-ROM) crashes on start
+  52102  outSPOKEN 3.0 demo crashes on unimplemented function krnl386.exe16.GetLPErrMode
+  52141  NetAPI detection in configure is broken
+  52173  Kodi crashes on unimplemented function wsdapi.dll.WSDCreateDiscoveryProvider
+  52200  Yamizome Liberator (demo): In-game video isn't played.
+  52220  TMIDI Player, Cherry: Playback with multiple MIDI ports is broken
+  52224  inetmib1:main test times out in linux
+  52298  Opening PPT with Freeoffice Presentations crashes on unimplemented function ole32.dll.OleConvertIStorageToOLESTREAMEx
+  52327  Wrong WM_CONTEXTMENU message default  processing
+  52349  Vortex Mod Manager Starts but Infinitely Loads
+  52378  Python WMI module: AttributeError: wbemErrInvalidQuery
+  52494  shell32 progman_dde tests crash if run immediately after prefix creation
+  52583  ApiSetView does not display export ordinals correctly
+  52626  MahjongSoul needs unimplemented function combase.dll.RoSetErrorReportingFlags
 
 ----------------------------------------------------------------
 
-Changes since 6.0.2:
+Changes since 6.0.3:
 
-Akihiro Sagawa (6):
-      ntdll/tests: Expand path name tests with path + device name.
-      ntdll: Validate directory path when the path name ends with a dos device name.
-      ntdll: Fix null pointer dereference in RtlDosPathNameToNtPathName_U_WithStatus.
-      midimap: Introduce XP form and prefer it.
-      user32/tests: Test pending redraw state with owner-drawn list box.
-      user32/listbox: Fix redraw after LB_SETCOUNT message.
+Akihiro Sagawa (1):
+      quartz: Fix a race in IMediaFilter::Pause().
 
 Alex Henrie (2):
-      ntoskrnl: Add MmGetPhysicalAddress semi-stub.
-      rasapi32: Add RasSetCredentialsA/W stubs.
+      krnl386: Add GetLPErrMode stub.
+      explorer: Only try to destroy the IShellWindows object if it exists.
 
-Alexandre Julliard (2):
-      ntdll: Avoid crash on shutting down partially initialized thread.
-      wininet/tests: Mark a failing test as todo.
+Alexandre Julliard (3):
+      configure: Fix the netapi check.
+      krnl386.exe: Page-align the GlobalAlloc() size when the selector limit is in pages.
+      user.exe: Make sure that the thunk selector doesn't get freed.
 
-Alistair Leslie-Hughes (5):
-      services: Check correct permission for QueryServiceConfig2W.
-      dpnet: Implement IDirectPlay8Server EnumServiceProviders.
-      ntoskrnl.exe: Implement PsGetCurrentProcessSessionId.
-      wininet: Reset context length for http status 304.
-      wininet: Allow up to 4K for response headers.
+Bernhard Kölbl (1):
+      oleaut32: Allow the registration of 64bit typelibs from a 32bit context.
 
-Andrew Boyarshin (1):
-      include: Fix IRequestDictionary IID.
+Bernhard Übelacker (2):
+      hhctrl.ocx: Handle only the number of bytes given in html_fragment_len.
+      inetmib1: Fix endianess issue with dwLocalAddr and dwLocalPort.
 
-Andrew Eikum (1):
-      comctl32: Avoid gcc 11 maybe-uninitialized warning.
+Christian Costa (1):
+      d3dx9: Also check for a valid alpha channel for TGA images.
 
-Andrey Gusev (1):
-      msvcr120: Add version.rc file.
+Connor McAdams (2):
+      oleacc: Implement AccessibleObjectFromEvent.
+      winex11.drv: Add mutable pixel format awareness.
 
-Austin English (1):
-      virtdisk: Add DetachVirtualDisk stub.
+Derek Lesho (1):
+      kernelbase: Fix parameter order of FindResourceExW call for non-localized path.
 
-Bernhard Übelacker (1):
-      attrib: Avoid crash when called without parameter.
+Doug Lyons (1):
+      msvcrt: Do not acquire fd lock in msvcrt_create_io_inherit_block.
 
-Brendan McGrath (1):
-      kernelbase: Don't pass StdHandles with CREATE_NEW_CONSOLE.
+Eric Pouech (2):
+      winedbg: Fix command line arguments parsing.
+      cmd: Don't crash on 'if exist' without parameter.
 
-Damjan Jovanovic (4):
-      server: The owner of a securable object should have all the standard access rights.
-      msxml3: Return S_FALSE from IXMLDOMNamedNodeMap::nextNode() when there are no attributes.
-      msxml3/tests: Add some regex tests.
-      msxml3: Use XSD regex quantifier format S{0, m} instead of S{, m}.
-
-Dmitry Timoshkov (1):
-      vcruntime140_1: Fix compilation with clang.
-
-Eric Pouech (1):
-      winedbg: Fix crash when no process attached in 'info wnd' command.
-
-Fabian Maurer (3):
-      configure: Improve resolv lib test for glibc 2.34.
-      mpr: Fix copy paste error when converting hex char to int.
-      msi: Set dialog as parent in subsequent dialog.
-
-Florian Eder (1):
-      cmd: Do not change errorlevel when setting environment variables.
-
-François Gouget (16):
-      ntdll: Fix the spelling of a comment.
-      oleaut32/tests: Allow testing VarParseNumFromStr() using Unicode strings.
-      oleaut32/tests: Add more VarParseNumFromStr() tests.
-      oleaut32: Fix VarParseNumFromStr()'s support for two-character currencies.
-      oleaut32: VarParseNumFromStr() accepts trailing currency symbols.
-      oleaut32: Setting sThousand to a non-breaking space also matches regular spaces.
-      oleaut32: Fix a trace containing a null character.
-      oleaut32/tests: Fix the Swiss franc and Moroccan dirham tests.
-      oleaut32: VarParseNumFromStr() does not allow leading thousands separators.
-      oleaut32: Fix VarParseNumFromStr()'s support for trailing thousands separator spaces.
-      oleaut32/tests: Test VarParseNumFromStr()'s handling of LOCALE_SMON*.
-      oleaut32/tests: Add more VarParseNumFromStr() hexadecimal/octal tests.
-      oleaut32: Remove caching from VARIANT_GetLocalisedNumberChars().
-      oleaut32: Fix VarParseNumFromStr()'s handling of currency thousands separators.
-      oleaut32: Add support for longer currency symbols.
-      gdiplus: GdipGetFamilyName() should not crash when given a NULL name.
+Gabriel Ivăncescu (3):
+      comctl32: Redraw children when the combo box is dropped down.
+      user32: Redraw children when the combo box is dropped down.
+      ddraw: Use WINED3D_SWAPCHAIN_NO_WINDOW_CHANGES only if window is not in foreground.
 
 Gerald Pfeifer (1):
-      ntdll: Only use sysinfo function when present.
+      configure: Diagnose if NetAPI is not present.
 
-Gijs Vermeulen (2):
-      vcomp: Implement omp_get_num_procs().
-      ntdll: Avoid declaration-after-statement warning.
+Hugh McMaster (1):
+      conhost: Process Ctrl-M key input.
 
-Giovanni Mascellani (1):
-      kernelbase: Fix an incorrect allocation size.
+Huw D. M. Davies (1):
+      user32: Set WM_CONTEXTMENU's wparam to the child window's handle.
 
-Hans Leidekker (10):
-      wldap32: Rename ldap_connect() to avoid a name conflict.
-      winhttp: Pass a socket pointer to send_bytes() and receive_bytes().
-      winhttp: Read any data left in the request buffer for websocket connections.
-      winhttp: Call read_data() at least once in drain_content().
-      winhttp: Call drain_content() before clear_response_headers().
-      winhttp: Fix return value for relative redirects.
-      winhttp: Don't remove content-type/length headers in handle_redirect().
-      winhttp/tests: Add redirect tests.
-      wbemprox: Return an empty array for __DERIVATION.
-      wbemprox: Add __DERIVATION to the list of system properties.
+Ismael Luceno (1):
+      server: Fix missing include for uid_t.
 
-Henri Verbeet (2):
-      dxgi/tests: Add a test for swapchain present counts.
-      dxgi: Implement d3d11_swapchain_GetLastPresentCount().
+Jacek Caban (1):
+      ntdll: Fix handling \\.\CON path in RtlDosPathNameToNtPathName.
 
-Hiroki Awata (1):
-      dsound: Notify DSBPN_OFFSETSTOP earlier.
+Jacek Konieczny (1):
+      winealsa.drv: Use separate port for each output device.
 
-Jacek Caban (2):
-      advapi32: Link to msvcrt.dll.
-      include: Use __builtin_offsetof on Clang.
+Louis Lenders (5):
+      wbemprox: Add empty DNSDomain to Win32_NetworkAdapterConfiguration.
+      combase: Add stub for RoOriginateError.
+      wsdapi: Add stub for WSDCreateDiscoveryProvider.
+      wbemprox: Add some properties of SoftwareLicensingProduct class.
+      ole32: Add stub for OleConvertIStorageToOLESTREAMEx.
 
-Jactry Zeng (1):
-      gdi32: Fix a typo in unix_face_create().
+Loïc Rebmeister (1):
+      loader: Create performance\winsat\datastore on prefix creation.
 
-Jan Sikorski (1):
-      winemac.drv: Omit WM_ENTER/EXITSIZEMOVE on non-interactive window changes.
+Matteo Bruni (1):
+      combase: Add RoSetErrorReportingFlags() stub.
 
-Jefferson Carpenter (1):
-      msxml3/saxreader: Handle null url in parseURL().
+Nick Fox (2):
+      kernel32: Add tests for LdrGetDllPath with LOAD_WITH_ALTERED_SEARCH_PATH.
+      ntdll: Fix LdrGetDllPath with LOAD_WITH_ALTERED_SEARCH_PATH without a path.
 
-Kalen Alwardt (1):
-      ntdll: Export ZwFilterToken().
+Nikolay Sivov (3):
+      d3d11: Always initialize out view pointer in CreateRenderTargetView().
+      include: Add WbemErrorEnum error codes.
+      comctl32/listview: Initialize subitem text buffer before drawing each subitem.
 
-Nikolay Sivov (2):
-      oleaut32: Added ICreateTypeInfo2::DeleteFuncDesc().
-      d3dx9/effect: Reset output handle for next after last technique in FindNextValidTechnique().
+Olivier F. R. Dierick (1):
+      taskschd: Set count to zero in regtasks_get_Count stub.
 
-Oleg Dubinskiy (1):
-      include: Add RASCREDENTIALSA/W structures.
-
-Paul Gofman (2):
-      wined3d: Add GPU information for AMD VANGOGH.
-      kernelbase: Fix copy size for delete_privs in CreateRestrictedToken().
-
-Piotr Caban (3):
-      msvcrt: Update round_limb on first limb length change in printf.
-      msvcrt: Support z length modifier in scanf.
-      ucrtbase: Fix fopen x mode test failures.
+Piotr Caban (5):
+      msvcp100: Export ctype<char>::table function.
+      oleacc: Add AccessibleObjectFromPoint implementation.
+      msvcrt: Don't use GetDaylightFlag function in _ftime64.
+      vcruntime140_1: Add support for exception separated code segments.
+      ucrtbase: Add support for r-value demangling in unDName.
 
 Robert Wilhelm (1):
-      vbscript: Support date and time literals.
+      vbscript: Support VT_BSTR in stack_pop_bool.
 
-Roman Pišl (1):
-      ntdll: Don't pretend that the whole address space is reserved on non-i386.
+Rémi Bernon (1):
+      ntdll: Use the unrolled memset from msvcrt.
 
-Rémi Bernon (4):
-      msvcrt: Set next_token when str is empty in wcstok_s.
-      dssenh/tests: Add CryptAcquireContextA last error check.
-      dssenh: Return NTE_BAD_KEYSET when key cannot be opened.
-      dssenh: Only fill hash buffer when it's provided.
+Thomas Faber (1):
+      msvcrt/tests: Show that spawn does not require locking of fds.
 
-Ted Lyngmo (1):
-      ucrtbase: Add support for x mode in fopen.
+Zebediah Figura (1):
+      ntdll/tests: Add more tests for RtlDosPathNameToNtPathName_U().
 
-Vijay Kiran Kamuju (1):
-      msdrm: Add stub DRMRegisterContent function.
-
-Zebediah Figura (2):
-      quartz: Do not print an incorrect state warning in MediaFilter_GetState() if a filter has been run asynchronously.
-      server: Return STATUS_KEY_DELETED when trying to retrieve the full name of a deleted key.
-
-Zhiyi Zhang (8):
-      uxtheme/tests: Test SetWindowTheme() with a non-existent subclass.
-      uxtheme: Fall back to default class if the specified subclass is not found.
-      uxtheme/tests: Test that SetWindowTheme() should send WM_THEMECHANGED instead of posting it.
-      uxtheme: Send WM_THEMECHANGED instead of posting it in SetWindowTheme().
-      uxtheme: Fix incorrect part IDs in button class map.
-      uxtheme: Use TransparentBlt() for bitmaps with all alpha values being 0xff.
-      user32: Report a fake monitor when running on an invisible window station.
-      uxtheme: Get and set system metrics in 96 DPI.
+Zhiyi Zhang (1):
+      comctl32/button: Support image list margin for buttons with BS_CENTER or BS_VCENTER.
 
 --
 Michael Stefaniuc
