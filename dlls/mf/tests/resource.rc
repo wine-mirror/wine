@@ -40,3 +40,6 @@ nv12frame.bin RCDATA nv12frame.bin
 
 /* @makedep: i420frame.bin */
 i420frame.bin RCDATA i420frame.bin
+
+/* @makedep: rgb32frame.bin */
+rgb32frame.bin RCDATA rgb32frame.bin
