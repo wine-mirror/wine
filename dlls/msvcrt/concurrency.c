@@ -1220,11 +1220,45 @@ DEFINE_THISCALL_WRAPPER(ThreadScheduler_CreateScheduleGroup, 4)
     return NULL;
 }
 
+typedef struct
+{
+    void (__cdecl *proc)(void*);
+    void *data;
+} schedule_task_arg;
+
+static void WINAPI schedule_task_proc(PTP_CALLBACK_INSTANCE instance, void *context, PTP_WORK work)
+{
+    schedule_task_arg arg;
+
+    arg = *(schedule_task_arg*)context;
+    operator_delete(context);
+    arg.proc(arg.data);
+}
+
 DEFINE_THISCALL_WRAPPER(ThreadScheduler_ScheduleTask_loc, 16)
 void __thiscall ThreadScheduler_ScheduleTask_loc(ThreadScheduler *this,
         void (__cdecl *proc)(void*), void* data, /*location*/void *placement)
 {
+    schedule_task_arg *arg;
+    TP_WORK *work;
+
     FIXME("(%p %p %p %p) stub\n", this, proc, data, placement);
+
+    arg = operator_new(sizeof(*arg));
+    arg->proc = proc;
+    arg->data = data;
+
+    work = CreateThreadpoolWork(schedule_task_proc, arg, NULL);
+    if(!work) {
+        scheduler_resource_allocation_error e;
+
+        operator_delete(arg);
+        scheduler_resource_allocation_error_ctor_name(&e, NULL,
+                HRESULT_FROM_WIN32(GetLastError()));
+        _CxxThrowException(&e, &scheduler_resource_allocation_error_exception_type);
+    }
+    SubmitThreadpoolWork(work);
+    CloseThreadpoolWork(work);
 }
 
 DEFINE_THISCALL_WRAPPER(ThreadScheduler_ScheduleTask, 12)
@@ -1232,6 +1266,7 @@ void __thiscall ThreadScheduler_ScheduleTask(ThreadScheduler *this,
         void (__cdecl *proc)(void*), void* data)
 {
     FIXME("(%p %p %p) stub\n", this, proc, data);
+    ThreadScheduler_ScheduleTask_loc(this, proc, data, NULL);
 }
 
 DEFINE_THISCALL_WRAPPER(ThreadScheduler_IsAvailableLocation, 8)
