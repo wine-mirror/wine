@@ -125,7 +125,6 @@ static void check_dmo(const GUID *class_id, const WCHAR *expect_name, const GUID
 
     hr = DMOGetName(class_id, name);
     ok(hr == S_OK, "DMOGetName returned %#lx\n", hr);
-    todo_wine_if(!wcscmp(expect_name, L"WMAudio Decoder DMO"))
     ok(!wcscmp(name, expect_name), "got name %s\n", debugstr_w(name));
 
     hr = DMOGetTypes(class_id, ARRAY_SIZE(input), &input_count, input,
