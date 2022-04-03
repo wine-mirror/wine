@@ -17,6 +17,7 @@
  */
 
 import "d2d1_2.idl";
+import "d2d1effects_2.idl";
 
 typedef enum D2D1_INK_NIB_SHAPE
 {
