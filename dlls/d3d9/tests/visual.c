@@ -1193,7 +1193,7 @@ static void clear_test(void)
     ok(color == 0x0000ff00, "(322,242) has color %08x\n", color);
 
     color = getPixelColor(device, 478, 358);
-    ok(color == 0x0000ff00, "(478,358 has color %08x\n", color);
+    ok(color == 0x0000ff00, "(478,358) has color %08x\n", color);
     color = getPixelColor(device, 482, 358);
     ok(color == 0x00ffffff, "(482,358) has color %08x\n", color);
     color = getPixelColor(device, 478, 362);
