@@ -2271,22 +2271,7 @@ BOOL WINAPI SendNotifyMessageA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
  */
 BOOL WINAPI SendNotifyMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    struct send_message_info info;
-
-    if (is_pointer_message( msg, wparam ))
-    {
-        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
-        return FALSE;
-    }
-
-    info.type    = MSG_NOTIFY;
-    info.hwnd    = hwnd;
-    info.msg     = msg;
-    info.wparam  = wparam;
-    info.lparam  = lparam;
-    info.flags   = 0;
-
-    return send_message( &info, NULL, TRUE );
+    return NtUserMessageCall( hwnd, msg, wparam, lparam, 0, FNID_SENDNOTIFYMESSAGE, FALSE );
 }
 
 
