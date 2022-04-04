@@ -2217,19 +2217,7 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
  */
 LRESULT WINAPI SendMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    DWORD_PTR res = 0;
-    struct send_message_info info;
-
-    info.type    = MSG_UNICODE;
-    info.hwnd    = hwnd;
-    info.msg     = msg;
-    info.wparam  = wparam;
-    info.lparam  = lparam;
-    info.flags   = SMTO_NORMAL;
-    info.timeout = 0;
-
-    send_message( &info, &res, TRUE );
-    return res;
+    return NtUserMessageCall( hwnd, msg, wparam, lparam, NULL, FNID_SENDMESSAGE, FALSE );
 }
 
 

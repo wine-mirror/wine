@@ -2234,11 +2234,20 @@ BOOL kill_system_timer( HWND hwnd, UINT_PTR id )
 
 static LRESULT send_window_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
-    /* FIXME: move implementation from user32 */
-    if (!user_callbacks) return FALSE;
-    return ansi
-        ? user_callbacks->pSendMessageA( hwnd, msg, wparam, lparam )
-        : user_callbacks->pSendMessageW( hwnd, msg, wparam, lparam );
+    struct send_message_info info;
+    DWORD_PTR res = 0;
+
+    info.type    = ansi ? MSG_ASCII : MSG_UNICODE;
+    info.hwnd    = hwnd;
+    info.msg     = msg;
+    info.wparam  = wparam;
+    info.lparam  = lparam;
+    info.flags   = SMTO_NORMAL;
+    info.timeout = 0;
+    info.wm_char = WMCHAR_MAP_SENDMESSAGETIMEOUT;
+
+    process_message( &info, &res, ansi );
+    return res;
 }
 
 /* see SendMessageTimeoutW */

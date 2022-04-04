@@ -165,8 +165,6 @@ static const struct user_callbacks user_funcs =
     EndMenu,
     HideCaret,
     PostMessageW,
-    SendMessageA,
-    SendMessageW,
     SendNotifyMessageW,
     SetSystemMenu,
     ShowCaret,
