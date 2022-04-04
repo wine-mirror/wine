@@ -177,29 +177,32 @@ static int parse_accel_string( const string_t *key, int flags )
 */
 static void put_string(const string_t *str, int isterm, language_t lang)
 {
-    int cnt, codepage;
+    int cnt;
 
     if (win32)
     {
-        string_t *newstr;
 
-        codepage = get_language_codepage( lang );
-        newstr = convert_string_unicode( str, codepage );
-        if (str->type == str_char && check_valid_utf8( str, codepage ))
+        if (str->type == str_char)
         {
-            print_location( &str->loc );
-            warning( "string \"%s\" seems to be UTF-8 but codepage %u is in use, maybe use --utf8?\n",
-                     str->str.cstr, codepage );
+            int codepage = get_language_codepage( lang );
+            string_t *newstr = convert_string_unicode( str, codepage );
+
+            if (check_valid_utf8( str, codepage ))
+            {
+                print_location( &str->loc );
+                warning( "string \"%s\" seems to be UTF-8 but codepage %u is in use, maybe use --utf8?\n",
+                         str->str.cstr, codepage );
+            }
+            str = newstr;
         }
-        if (!isterm) put_word(newstr->size);
-        for(cnt = 0; cnt < newstr->size; cnt++)
+        if (!isterm) put_word(str->size);
+        for(cnt = 0; cnt < str->size; cnt++)
         {
-            WCHAR c = newstr->str.wstr[cnt];
+            WCHAR c = str->str.wstr[cnt];
             if (isterm && !c) break;
             put_word(c);
         }
         if (isterm) put_word(0);
-        free_string(newstr);
     }
     else
     {

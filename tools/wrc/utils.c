@@ -385,6 +385,7 @@ int get_language_codepage( language_t lang )
     const NLS_LOCALE_LCID_INDEX *entry;
 
     if (!lang) return 1252;
+    if (lang == MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT )) return 1252;
     if (!locale_table) load_locale_nls();
     if (!(entry = find_lcid_entry( lang ))) return -1;
     return get_locale_data( entry->idx )->idefaultansicodepage;
