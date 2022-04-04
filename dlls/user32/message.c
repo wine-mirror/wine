@@ -2197,18 +2197,22 @@ LRESULT WINAPI SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
 LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                     UINT flags, UINT timeout, PDWORD_PTR res_ptr )
 {
-    struct send_message_info info;
+    struct send_message_timeout_params params = { .flags = flags, .timeout = timeout };
+    LRESULT res = 0;
 
-    info.type    = MSG_ASCII;
-    info.hwnd    = hwnd;
-    info.msg     = msg;
-    info.wparam  = wparam;
-    info.lparam  = lparam;
-    info.flags   = flags;
-    info.timeout = timeout;
-    info.wm_char  = WMCHAR_MAP_SENDMESSAGETIMEOUT;
+    if (msg != WM_CHAR || WIN_IsCurrentThread( hwnd ))
+    {
+        res = NtUserMessageCall( hwnd, msg, wparam, lparam, &params,
+                                 FNID_SENDMESSAGEWTOOPTION, TRUE );
+    }
+    else if (map_wparam_AtoW( msg, &wparam, WMCHAR_MAP_SENDMESSAGE ))
+    {
+        res = NtUserMessageCall( hwnd, msg, wparam, lparam, &params,
+                                 FNID_SENDMESSAGEWTOOPTION, FALSE );
+    }
 
-    return send_message( &info, res_ptr, FALSE );
+    if (res_ptr) *res_ptr = res;
+    return params.result;
 }
 
 
