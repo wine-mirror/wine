@@ -957,8 +957,8 @@ UINT WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout )
     return unix_funcs->pNtUserMapVirtualKeyEx( code, type, layout );
 }
 
-BOOL WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
-                               ULONG_PTR result_info, DWORD type, BOOL ansi )
+LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
+                                  void *result_info, DWORD type, BOOL ansi )
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserMessageCall( hwnd, msg, wparam, lparam, result_info, type, ansi );

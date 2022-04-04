@@ -377,5 +377,6 @@ void SPY_EnterMessage( INT flag, HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
 
 void SPY_ExitMessage( INT flag, HWND hwnd, UINT msg, LRESULT lreturn, WPARAM wparam, LPARAM lparam )
 {
-    if (TRACE_ON(message)) NtUserMessageCall( hwnd, msg, wparam, lparam, lreturn, FNID_SPYEXIT, flag );
+    if (TRACE_ON(message)) NtUserMessageCall( hwnd, msg, wparam, lparam, (void *)lreturn,
+                                              FNID_SPYEXIT, flag );
 }

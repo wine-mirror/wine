@@ -4667,7 +4667,6 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     DPI_AWARENESS_CONTEXT context;
     HWND hwnd, owner = 0;
     INT sw = SW_SHOW;
-    LRESULT result;
     RECT rect;
     WND *win;
 
@@ -4846,8 +4845,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
 
     TRACE( "hwnd %p cs %d,%d %dx%d %s\n", hwnd, cs.x, cs.y, cs.cx, cs.cy, wine_dbgstr_rect(&rect) );
     *client_cs = cs;
-    if (!NtUserMessageCall( hwnd, WM_NCCREATE, 0, (LPARAM)client_cs, (ULONG_PTR)&result,
-                            FNID_SENDMESSAGE, ansi ) || !result)
+    if (!NtUserMessageCall( hwnd, WM_NCCREATE, 0, (LPARAM)client_cs, NULL, FNID_SENDMESSAGE, ansi ))
     {
         WARN( "%p: aborted by WM_NCCREATE\n", hwnd );
         goto failed;
@@ -4879,8 +4877,8 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     else goto failed;
 
     /* send WM_CREATE */
-    if (!NtUserMessageCall( hwnd, WM_CREATE, 0, (LPARAM)client_cs, (ULONG_PTR)&result,
-                            FNID_SENDMESSAGE, ansi ) || result == -1) goto failed;
+    if (NtUserMessageCall( hwnd, WM_CREATE, 0, (LPARAM)client_cs, 0, FNID_SENDMESSAGE, ansi ) == -1)
+        goto failed;
     cs = *client_cs;
 
     /* call the driver */

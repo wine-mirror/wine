@@ -2133,23 +2133,19 @@ BOOL kill_system_timer( HWND hwnd, UINT_PTR id )
     return ret;
 }
 
-static BOOL send_window_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
-                                 LRESULT *result, BOOL ansi )
+static LRESULT send_window_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
     /* FIXME: move implementation from user32 */
     if (!user_callbacks) return FALSE;
-    *result = ansi
+    return ansi
         ? user_callbacks->pSendMessageA( hwnd, msg, wparam, lparam )
         : user_callbacks->pSendMessageW( hwnd, msg, wparam, lparam );
-    return TRUE;
 }
 
 /* see SendMessageW */
 LRESULT send_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    LRESULT result = 0;
-    send_window_message( hwnd, msg, wparam, lparam, &result, FALSE );
-    return result;
+    return send_window_message( hwnd, msg, wparam, lparam, FALSE );
 }
 
 /* see SendNotifyMessageW */
@@ -2166,8 +2162,8 @@ LRESULT post_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
     return user_callbacks->pPostMessageW( hwnd, msg, wparam, lparam );
 }
 
-BOOL WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
-                               ULONG_PTR result_info, DWORD type, BOOL ansi )
+LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
+                                  void *result_info, DWORD type, BOOL ansi )
 {
     switch (type)
     {
@@ -2175,17 +2171,17 @@ BOOL WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
         return init_win_proc_params( (struct win_proc_params *)result_info, hwnd, msg,
                                      wparam, lparam, ansi );
     case FNID_SENDMESSAGE:
-        return send_window_message( hwnd, msg, wparam, lparam, (LRESULT *)result_info, ansi );
+        return send_window_message( hwnd, msg, wparam, lparam, ansi );
     case FNID_SENDNOTIFYMESSAGE:
         return send_notify_message( hwnd, msg, wparam, lparam, ansi );
     case FNID_SPYENTER:
         spy_enter_message( ansi, hwnd, msg, wparam, lparam );
         return 0;
     case FNID_SPYEXIT:
-        spy_exit_message( ansi, hwnd, msg, result_info, wparam, lparam );
+        spy_exit_message( ansi, hwnd, msg, (LPARAM)result_info, wparam, lparam );
         return 0;
     default:
-        FIXME( "%p %x %lx %lx %lx %x %x\n", hwnd, msg, wparam, lparam, result_info, type, ansi );
+        FIXME( "%p %x %lx %lx %p %x %x\n", hwnd, msg, wparam, lparam, result_info, type, ansi );
     }
     return 0;
 }

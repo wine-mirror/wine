@@ -381,6 +381,102 @@ static void test_cursoricon(void)
     ok(ret, "Destroy icon failed, error %lu.\n", GetLastError());
 }
 
+static LRESULT WINAPI test_message_call_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    switch (msg)
+    {
+    case WM_SETTEXT:
+        ok( !wcscmp( (const WCHAR *)lparam, L"test" ),
+            "lparam = %s\n", wine_dbgstr_w( (const WCHAR *)lparam ));
+        return 6;
+    case WM_USER:
+        ok( wparam == 1, "wparam = %Iu\n", wparam );
+        ok( lparam == 2, "lparam = %Iu\n", lparam );
+        return 3;
+    case WM_USER + 1:
+        return lparam;
+    }
+
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
+}
+
+static void WINAPI test_message_callback( HWND hwnd, UINT msg, ULONG_PTR data, LRESULT result )
+{
+    ok( msg == WM_USER, "msg = %u\n", msg );
+    ok( data == 10, "data = %Iu\n", data );
+    ok( result == 3, "result = %Iu\n", result );
+}
+
+static void test_message_call(void)
+{
+    const LPARAM large_lparam = (LPARAM)(3 + ((ULONGLONG)1 << 60));
+    struct send_message_callback_params callback_params = {
+        .callback = test_message_callback,
+        .data = 10,
+    };
+    struct send_message_timeout_params smp;
+    WNDCLASSW cls = { 0 };
+    LRESULT res;
+    HWND hwnd;
+
+    cls.lpfnWndProc = test_message_call_proc;
+    cls.lpszClassName = L"TestClass";
+    RegisterClassW( &cls );
+
+    hwnd = CreateWindowExW( 0, L"TestClass", NULL, WS_POPUP, 0,0,0,0,0,0,0, NULL );
+
+    res = NtUserMessageCall( hwnd, WM_USER, 1, 2, (void *)0xdeadbeef, FNID_SENDMESSAGE, FALSE );
+    ok( res == 3, "res = %Iu\n", res );
+
+    res = NtUserMessageCall( hwnd, WM_USER, 1, 2, (void *)0xdeadbeef, FNID_SENDMESSAGE, TRUE );
+    ok( res == 3, "res = %Iu\n", res );
+
+    res = NtUserMessageCall( hwnd, WM_SETTEXT, 0, (LPARAM)L"test", NULL, FNID_SENDMESSAGE, FALSE );
+    ok( res == 6, "res = %Iu\n", res );
+
+    res = NtUserMessageCall( hwnd, WM_SETTEXT, 0, (LPARAM)"test", NULL, FNID_SENDMESSAGE, TRUE );
+    ok( res == 6, "res = %Iu\n", res );
+
+    SetLastError( 0xdeadbeef );
+    res = NtUserMessageCall( UlongToHandle(0xdeadbeef), WM_USER, 1, 2, 0, FNID_SENDMESSAGE, TRUE );
+    ok( !res, "res = %Iu\n", res );
+    ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "GetLastError() = %lu\n", GetLastError());
+
+    res = NtUserMessageCall( hwnd, WM_USER + 1, 0, large_lparam, 0, FNID_SENDMESSAGE, FALSE );
+    ok( res == large_lparam, "res = %Iu\n", res );
+
+    smp.flags = 0;
+    smp.timeout = 10;
+    smp.result = 0xdeadbeef;
+    res = NtUserMessageCall( hwnd, WM_USER, 1, 2, &smp, FNID_SENDMESSAGEWTOOPTION, FALSE );
+    todo_wine
+    ok( res == 3, "res = %Iu\n", res );
+    todo_wine
+    ok( smp.result == 1, "smp.result = %Iu\n", smp.result );
+
+    smp.flags = 0;
+    smp.timeout = 10;
+    smp.result = 0xdeadbeef;
+    res = NtUserMessageCall( hwnd, WM_USER + 1, 0, large_lparam,
+                             &smp, FNID_SENDMESSAGEWTOOPTION, FALSE );
+    todo_wine
+    ok( res == large_lparam, "res = %Iu\n", res );
+    todo_wine
+    ok( smp.result == 1, "smp.result = %Iu\n", smp.result );
+
+    res = NtUserMessageCall( hwnd, WM_USER, 1, 2, (void *)0xdeadbeef,
+                             FNID_SENDNOTIFYMESSAGE, FALSE );
+    ok( res == 1, "res = %Iu\n", res );
+
+    res = NtUserMessageCall( hwnd, WM_USER, 1, 2, &callback_params,
+                             FNID_SENDMESSAGECALLBACK, FALSE );
+    todo_wine
+    ok( res == 1, "res = %Iu\n", res );
+
+    DestroyWindow( hwnd );
+    UnregisterClassW( L"TestClass", NULL );
+}
+
 START_TEST(win32u)
 {
     /* native win32u.dll fails if user32 is not loaded, so make sure it's fully initialized */
@@ -391,6 +487,7 @@ START_TEST(win32u)
     test_class();
     test_NtUserBuildHwndList();
     test_cursoricon();
+    test_message_call();
 
     test_NtUserCloseWindowStation();
 }
