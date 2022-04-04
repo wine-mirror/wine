@@ -147,8 +147,6 @@ BOOL WINAPI HeapDestroy( HANDLE heap /* [in] Handle of heap */ )
  * Global/local heap functions, keep in sync with kernelbase/memory.c
  ***********************************************************************/
 
-#include "pshpack1.h"
-
 struct mem_entry
 {
     union
@@ -156,15 +154,15 @@ struct mem_entry
         struct
         {
             WORD magic;
-            void *ptr;
             BYTE flags;
             BYTE lock;
         };
         void *next_free;
     };
+    void *ptr;
 };
 
-#include "poppack.h"
+C_ASSERT(sizeof(struct mem_entry) == 2 * sizeof(void *));
 
 struct kernelbase_global_data *kernelbase_global_data;
 
@@ -181,7 +179,7 @@ static inline struct mem_entry *unsafe_mem_from_HLOCAL( HLOCAL handle )
 {
     struct mem_entry *mem = CONTAINING_RECORD( handle, struct mem_entry, ptr );
     struct kernelbase_global_data *data = kernelbase_global_data;
-    if (!((ULONG_PTR)handle & 2)) return NULL;
+    if (((UINT_PTR)handle & ((sizeof(void *) << 1) - 1)) != sizeof(void *)) return NULL;
     if (mem < data->mem_entries || mem >= data->mem_entries_end) return NULL;
     if (mem->magic != MAGIC_LOCAL_USED) return NULL;
     return mem;
@@ -189,7 +187,7 @@ static inline struct mem_entry *unsafe_mem_from_HLOCAL( HLOCAL handle )
 
 static inline void *unsafe_ptr_from_HLOCAL( HLOCAL handle )
 {
-    if ((ULONG_PTR)handle & 2) return NULL;
+    if (((UINT_PTR)handle & ((sizeof(void *) << 1) - 1))) return NULL;
     return handle;
 }
 

@@ -368,9 +368,7 @@ static void test_GlobalAlloc(void)
 
         mem = GlobalAlloc( GMEM_MOVEABLE, alloc_size );
         ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
-        todo_wine
         ok( ((UINT_PTR)mem & sizeof(void *)), "got unexpected entry align\n" );
-        todo_wine
         ok( !((UINT_PTR)mem & (sizeof(void *) - 1)), "got unexpected entry align\n" );
 
         entry = mem_entry_from_HANDLE( mem );
@@ -414,9 +412,7 @@ static void test_GlobalAlloc(void)
         ok( !tmp_mem, "GlobalFree failed, error %lu\n", GetLastError() );
         ok( !!entry->flags, "got unexpected flags %#Ix\n", entry->flags );
         ok( !((UINT_PTR)entry->flags & sizeof(void *)), "got unexpected ptr align\n" );
-        todo_wine_if(sizeof(void *) == 4)
         ok( !((UINT_PTR)entry->flags & (sizeof(void *) - 1)), "got unexpected ptr align\n" );
-        todo_wine
         ok( !entry->ptr, "got unexpected ptr %p\n", entry->ptr );
 
         mem = GlobalAlloc( GMEM_MOVEABLE | GMEM_DISCARDABLE, 0 );
@@ -543,29 +539,24 @@ static void test_GlobalAlloc(void)
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     flags = GlobalFlags( invalid_mem );
-    todo_wine
     ok( flags == GMEM_INVALID_HANDLE, "GlobalFlags succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     size = GlobalSize( invalid_mem );
     ok( size == 0, "GlobalSize succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     ptr = GlobalLock( invalid_mem );
     ok( !ptr, "GlobalLock succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     ret = GlobalUnlock( invalid_mem );
-    ok( ret, "GlobalUnlock failed, error %lu\n", GetLastError() );
     todo_wine
+    ok( ret, "GlobalUnlock failed, error %lu\n", GetLastError() );
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     tmp_mem = GlobalReAlloc( invalid_mem, 0, GMEM_MOVEABLE );
     ok( !tmp_mem, "GlobalReAlloc succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
 
     /* invalid pointers are caught */
@@ -889,29 +880,23 @@ static void test_LocalAlloc(void)
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     flags = LocalFlags( invalid_mem );
-    todo_wine
     ok( flags == LMEM_INVALID_HANDLE, "LocalFlags succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     size = LocalSize( invalid_mem );
     ok( size == 0, "LocalSize succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     ptr = LocalLock( invalid_mem );
     ok( !ptr, "LocalLock succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     ret = LocalUnlock( invalid_mem );
     ok( !ret, "LocalUnlock succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     tmp_mem = LocalReAlloc( invalid_mem, 0, LMEM_MOVEABLE );
     ok( !tmp_mem, "LocalReAlloc succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
 
     /* invalid pointers are caught */
