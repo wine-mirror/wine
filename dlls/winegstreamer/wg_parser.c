@@ -205,9 +205,14 @@ static NTSTATUS wg_parser_stream_enable(void *args)
     const struct wg_parser_stream_enable_params *params = args;
     struct wg_parser_stream *stream = params->stream;
     const struct wg_format *format = params->format;
+    struct wg_parser *parser = stream->parser;
+
+    pthread_mutex_lock(&parser->mutex);
 
     stream->current_format = *format;
     stream->enabled = true;
+
+    pthread_mutex_unlock(&parser->mutex);
 
     if (format->major_type == WG_MAJOR_TYPE_VIDEO)
     {
@@ -245,8 +250,11 @@ static NTSTATUS wg_parser_stream_enable(void *args)
 static NTSTATUS wg_parser_stream_disable(void *args)
 {
     struct wg_parser_stream *stream = args;
+    struct wg_parser *parser = stream->parser;
 
+    pthread_mutex_lock(&parser->mutex);
     stream->enabled = false;
+    pthread_mutex_unlock(&parser->mutex);
     return S_OK;
 }
 
@@ -437,6 +445,7 @@ static gboolean sink_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
     switch (event->type)
     {
         case GST_EVENT_SEGMENT:
+            pthread_mutex_lock(&parser->mutex);
             if (stream->enabled)
             {
                 const GstSegment *segment;
@@ -445,29 +454,31 @@ static gboolean sink_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
 
                 if (segment->format != GST_FORMAT_TIME)
                 {
+                    pthread_mutex_unlock(&parser->mutex);
                     GST_FIXME("Unhandled format \"%s\".", gst_format_get_name(segment->format));
                     break;
                 }
 
                 gst_segment_copy_into(segment, &stream->segment);
             }
+            pthread_mutex_unlock(&parser->mutex);
             break;
 
         case GST_EVENT_EOS:
             pthread_mutex_lock(&parser->mutex);
             stream->eos = true;
-            pthread_mutex_unlock(&parser->mutex);
             if (stream->enabled)
                 pthread_cond_signal(&stream->event_cond);
             else
                 pthread_cond_signal(&parser->init_cond);
+            pthread_mutex_unlock(&parser->mutex);
             break;
 
         case GST_EVENT_FLUSH_START:
+            pthread_mutex_lock(&parser->mutex);
+
             if (stream->enabled)
             {
-                pthread_mutex_lock(&parser->mutex);
-
                 stream->flushing = true;
                 pthread_cond_signal(&stream->event_empty_cond);
 
@@ -477,9 +488,9 @@ static gboolean sink_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
                     gst_buffer_unref(stream->buffer);
                     stream->buffer = NULL;
                 }
-
-                pthread_mutex_unlock(&parser->mutex);
             }
+
+            pthread_mutex_unlock(&parser->mutex);
             break;
 
         case GST_EVENT_FLUSH_STOP:
@@ -528,16 +539,17 @@ static GstFlowReturn sink_chain_cb(GstPad *pad, GstObject *parent, GstBuffer *bu
 
     GST_LOG("stream %p, buffer %p.", stream, buffer);
 
+    pthread_mutex_lock(&parser->mutex);
+
     if (!stream->enabled)
     {
+        pthread_mutex_unlock(&parser->mutex);
         gst_buffer_unref(buffer);
         return GST_FLOW_OK;
     }
 
     /* Allow this buffer to be flushed by GStreamer. We are effectively
      * implementing a queue object here. */
-
-    pthread_mutex_lock(&parser->mutex);
 
     while (!stream->flushing && stream->buffer)
         pthread_cond_wait(&stream->event_empty_cond, &parser->mutex);
@@ -573,6 +585,7 @@ static GstFlowReturn sink_chain_cb(GstPad *pad, GstObject *parent, GstBuffer *bu
 static gboolean sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
 {
     struct wg_parser_stream *stream = gst_pad_get_element_private(pad);
+    struct wg_parser *parser = stream->parser;
 
     GST_LOG("stream %p, type \"%s\".", stream, gst_query_type_get_name(query->type));
 
@@ -585,10 +598,15 @@ static gboolean sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
 
             gst_query_parse_caps(query, &filter);
 
+            pthread_mutex_lock(&parser->mutex);
+
             if (stream->enabled)
                 caps = wg_format_to_caps(&stream->current_format);
             else
                 caps = gst_caps_new_any();
+
+            pthread_mutex_unlock(&parser->mutex);
+
             if (!caps)
                 return FALSE;
 
@@ -614,8 +632,11 @@ static gboolean sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
             gboolean ret = TRUE;
             GstCaps *caps;
 
+            pthread_mutex_lock(&parser->mutex);
+
             if (!stream->enabled)
             {
+                pthread_mutex_unlock(&parser->mutex);
                 gst_query_set_accept_caps_result(query, TRUE);
                 return TRUE;
             }
@@ -623,6 +644,9 @@ static gboolean sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
             gst_query_parse_accept_caps(query, &caps);
             wg_format_from_caps(&format, caps);
             ret = wg_format_compare(&format, &stream->current_format);
+
+            pthread_mutex_unlock(&parser->mutex);
+
             if (!ret && gst_debug_category_get_threshold(GST_CAT_DEFAULT) >= GST_LEVEL_WARNING)
             {
                 gchar *str = gst_caps_to_string(caps);
