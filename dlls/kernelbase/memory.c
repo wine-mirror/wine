@@ -774,6 +774,7 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalFree( HLOCAL handle )
  */
 LPVOID WINAPI DECLSPEC_HOTPATCH LocalLock( HLOCAL handle )
 {
+    HANDLE heap = GetProcessHeap();
     struct mem_entry *mem;
     void *ret = NULL;
 
@@ -794,28 +795,20 @@ LPVOID WINAPI DECLSPEC_HOTPATCH LocalLock( HLOCAL handle )
         return ret;
     }
 
-    RtlLockHeap( GetProcessHeap() );
-    __TRY
+    RtlLockHeap( heap );
+    if ((mem = unsafe_mem_from_HLOCAL( handle )))
     {
-        if ((mem = unsafe_mem_from_HLOCAL( handle )))
-        {
-            ret = mem->ptr;
-            if (!mem->ptr) SetLastError( ERROR_DISCARDED );
-            else if (mem->lock < LMEM_LOCKCOUNT) mem->lock++;
-        }
-        else
-        {
-            WARN_(globalmem)( "invalid handle %p\n", handle );
-            SetLastError( ERROR_INVALID_HANDLE );
-        }
+        ret = mem->ptr;
+        if (!mem->ptr) SetLastError( ERROR_DISCARDED );
+        else if (mem->lock < LMEM_LOCKCOUNT) mem->lock++;
     }
-    __EXCEPT_PAGE_FAULT
+    else
     {
-        WARN_(globalmem)( "(%p): Page fault occurred ! Caused by bug ?\n", handle );
+        WARN_(globalmem)( "invalid handle %p\n", handle );
         SetLastError( ERROR_INVALID_HANDLE );
     }
-    __ENDTRY
-    RtlUnlockHeap( GetProcessHeap() );
+    RtlUnlockHeap( heap );
+
     return ret;
 }
 
