@@ -918,6 +918,7 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT f
  */
 BOOL WINAPI DECLSPEC_HOTPATCH LocalUnlock( HLOCAL handle )
 {
+    HANDLE heap = GetProcessHeap();
     struct mem_entry *mem;
     BOOL ret = FALSE;
 
@@ -929,36 +930,28 @@ BOOL WINAPI DECLSPEC_HOTPATCH LocalUnlock( HLOCAL handle )
         return FALSE;
     }
 
-    RtlLockHeap( GetProcessHeap() );
-    __TRY
+    RtlLockHeap( heap );
+    if ((mem = unsafe_mem_from_HLOCAL( handle )))
     {
-        if ((mem = unsafe_mem_from_HLOCAL( handle )))
+        if (mem->lock)
         {
-            if (mem->lock)
-            {
-                mem->lock--;
-                ret = (mem->lock != 0);
-                if (!ret) SetLastError( NO_ERROR );
-            }
-            else
-            {
-                WARN_(globalmem)( "%p not locked\n", handle );
-                SetLastError( ERROR_NOT_LOCKED );
-            }
+            mem->lock--;
+            ret = (mem->lock != 0);
+            if (!ret) SetLastError( NO_ERROR );
         }
         else
         {
-            WARN_(globalmem)( "invalid handle %p\n", handle );
-            SetLastError( ERROR_INVALID_HANDLE );
+            WARN_(globalmem)( "%p not locked\n", handle );
+            SetLastError( ERROR_NOT_LOCKED );
         }
     }
-    __EXCEPT_PAGE_FAULT
+    else
     {
-        WARN_(globalmem)( "(%p): Page fault occurred ! Caused by bug ?\n", handle );
-        SetLastError( ERROR_INVALID_PARAMETER );
+        WARN_(globalmem)( "invalid handle %p\n", handle );
+        SetLastError( ERROR_INVALID_HANDLE );
     }
-    __ENDTRY
-    RtlUnlockHeap( GetProcessHeap() );
+    RtlUnlockHeap( heap );
+
     return ret;
 }
 
