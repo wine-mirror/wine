@@ -2246,23 +2246,10 @@ LRESULT WINAPI SendMessageA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
  */
 BOOL WINAPI SendNotifyMessageA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    struct send_message_info info;
-
-    if (is_pointer_message( msg, wparam ))
-    {
-        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+    if (!WIN_IsCurrentThread( hwnd ) && !map_wparam_AtoW( msg, &wparam, WMCHAR_MAP_SENDMESSAGE ))
         return FALSE;
-    }
 
-    info.type    = MSG_NOTIFY;
-    info.hwnd    = hwnd;
-    info.msg     = msg;
-    info.wparam  = wparam;
-    info.lparam  = lparam;
-    info.flags   = 0;
-    info.wm_char = WMCHAR_MAP_SENDMESSAGETIMEOUT;
-
-    return send_message( &info, NULL, FALSE );
+    return NtUserMessageCall( hwnd, msg, wparam, lparam, 0, FNID_SENDNOTIFYMESSAGE, TRUE );
 }
 
 
