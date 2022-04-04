@@ -2296,24 +2296,8 @@ BOOL WINAPI SendMessageCallbackA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
 BOOL WINAPI SendMessageCallbackW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                   SENDASYNCPROC callback, ULONG_PTR data )
 {
-    struct send_message_info info;
-
-    if (is_pointer_message( msg, wparam ))
-    {
-        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
-        return FALSE;
-    }
-
-    info.type     = MSG_CALLBACK;
-    info.hwnd     = hwnd;
-    info.msg      = msg;
-    info.wparam   = wparam;
-    info.lparam   = lparam;
-    info.callback = callback;
-    info.data     = data;
-    info.flags    = 0;
-
-    return send_message( &info, NULL, TRUE );
+    struct send_message_callback_params params = { .callback = callback, .data = data };
+    return NtUserMessageCall( hwnd, msg, wparam, lparam, &params, FNID_SENDMESSAGECALLBACK, FALSE );
 }
 
 

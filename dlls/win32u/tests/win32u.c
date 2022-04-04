@@ -466,7 +466,6 @@ static void test_message_call(void)
 
     res = NtUserMessageCall( hwnd, WM_USER, 1, 2, &callback_params,
                              FNID_SENDMESSAGECALLBACK, FALSE );
-    todo_wine
     ok( res == 1, "res = %Iu\n", res );
 
     DestroyWindow( hwnd );

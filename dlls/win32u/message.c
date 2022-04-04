@@ -2372,6 +2372,31 @@ static BOOL send_notify_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     return process_message( &info, NULL, ansi );
 }
 
+/* see SendMessageCallbackW */
+static BOOL send_message_callback( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
+                                   const struct send_message_callback_params *params, BOOL ansi )
+{
+    struct send_message_info info;
+
+    if (is_pointer_message( msg, wparam ))
+    {
+        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        return FALSE;
+    }
+
+    info.type     = MSG_CALLBACK;
+    info.hwnd     = hwnd;
+    info.msg      = msg;
+    info.wparam   = wparam;
+    info.lparam   = lparam;
+    info.callback = params->callback;
+    info.data     = params->data;
+    info.flags    = 0;
+    info.wm_char  = WMCHAR_MAP_SENDMESSAGETIMEOUT;
+
+    return process_message( &info, NULL, ansi );
+}
+
 /***********************************************************************
  *           NtUserPostMessage  (win32u.@)
  */
@@ -2402,6 +2427,8 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
         }
     case FNID_SENDNOTIFYMESSAGE:
         return send_notify_message( hwnd, msg, wparam, lparam, ansi );
+    case FNID_SENDMESSAGECALLBACK:
+        return send_message_callback( hwnd, msg, wparam, lparam, (void *)result_info, ansi );
     case FNID_SPYENTER:
         spy_enter_message( ansi, hwnd, msg, wparam, lparam );
         return 0;
