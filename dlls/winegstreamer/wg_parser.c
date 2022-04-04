@@ -255,6 +255,7 @@ static NTSTATUS wg_parser_stream_disable(void *args)
     pthread_mutex_lock(&parser->mutex);
     stream->enabled = false;
     pthread_mutex_unlock(&parser->mutex);
+    pthread_cond_signal(&stream->event_empty_cond);
     return S_OK;
 }
 
@@ -541,6 +542,12 @@ static GstFlowReturn sink_chain_cb(GstPad *pad, GstObject *parent, GstBuffer *bu
 
     pthread_mutex_lock(&parser->mutex);
 
+    /* Allow this buffer to be flushed by GStreamer. We are effectively
+     * implementing a queue object here. */
+
+    while (stream->enabled && !stream->flushing && stream->buffer)
+        pthread_cond_wait(&stream->event_empty_cond, &parser->mutex);
+
     if (!stream->enabled)
     {
         pthread_mutex_unlock(&parser->mutex);
@@ -548,11 +555,6 @@ static GstFlowReturn sink_chain_cb(GstPad *pad, GstObject *parent, GstBuffer *bu
         return GST_FLOW_OK;
     }
 
-    /* Allow this buffer to be flushed by GStreamer. We are effectively
-     * implementing a queue object here. */
-
-    while (!stream->flushing && stream->buffer)
-        pthread_cond_wait(&stream->event_empty_cond, &parser->mutex);
     if (stream->flushing)
     {
         pthread_mutex_unlock(&parser->mutex);
