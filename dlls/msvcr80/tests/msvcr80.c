@@ -97,17 +97,17 @@ static void test_ioinfo_flags(void)
     info = &__pioinfo[tempfd / MSVCRT_FD_BLOCK_SIZE][tempfd % MSVCRT_FD_BLOCK_SIZE];
     ok(!!info, "NULL info.\n");
     ok(info->handle == handle, "Unexpected handle %p, expected %p.\n", info->handle, handle);
-    todo_wine ok(info->exflag == 1, "Unexpected exflag %#x.\n", info->exflag);
+    ok(info->exflag == 1, "Unexpected exflag %#x.\n", info->exflag);
     ok(info->wxflag == (WX_TEXT | WX_OPEN), "Unexpected wxflag %#x.\n", info->wxflag);
-    todo_wine ok(info->unicode, "Unicode is not set.\n");
-    todo_wine ok(info->textmode == 2, "Unexpected textmode %d.\n", info->textmode);
+    ok(info->unicode, "Unicode is not set.\n");
+    ok(info->textmode == 2, "Unexpected textmode %d.\n", info->textmode);
     p__close(tempfd);
 
     ok(info->handle == INVALID_HANDLE_VALUE, "Unexpected handle %p.\n", info->handle);
-    todo_wine ok(info->exflag == 1, "Unexpected exflag %#x.\n", info->exflag);
-    todo_wine ok(info->unicode, "Unicode is not set.\n");
+    ok(info->exflag == 1, "Unexpected exflag %#x.\n", info->exflag);
+    ok(info->unicode, "Unicode is not set.\n");
     ok(!info->wxflag, "Unexpected wxflag %#x.\n", info->wxflag);
-    todo_wine ok(info->textmode == 2, "Unexpected textmode %d.\n", info->textmode);
+    ok(info->textmode == 2, "Unexpected textmode %d.\n", info->textmode);
 
     info = &__pioinfo[(tempfd + 4) / MSVCRT_FD_BLOCK_SIZE][(tempfd + 4) % MSVCRT_FD_BLOCK_SIZE];
     ok(!!info, "NULL info.\n");
@@ -119,7 +119,7 @@ static void test_ioinfo_flags(void)
     ok(tempfd != -1, "_open failed with error: %d\n", errno);
     info = &__pioinfo[tempfd / MSVCRT_FD_BLOCK_SIZE][tempfd % MSVCRT_FD_BLOCK_SIZE];
     ok(!!info, "NULL info.\n");
-    todo_wine ok(info->exflag == 1, "Unexpected exflag %#x.\n", info->exflag);
+    ok(info->exflag == 1, "Unexpected exflag %#x.\n", info->exflag);
     ok(info->wxflag == (WX_TEXT | WX_OPEN), "Unexpected wxflag %#x.\n", info->wxflag);
     ok(!info->unicode, "Unicode is not set.\n");
     ok(!info->textmode, "Unexpected textmode %d.\n", info->textmode);
@@ -129,10 +129,10 @@ static void test_ioinfo_flags(void)
     ok(tempfd != -1, "_open failed with error: %d\n", errno);
     info = &__pioinfo[tempfd / MSVCRT_FD_BLOCK_SIZE][tempfd % MSVCRT_FD_BLOCK_SIZE];
     ok(!!info, "NULL info.\n");
-    todo_wine ok(info->exflag == 1, "Unexpected exflag %#x.\n", info->exflag);
+    ok(info->exflag == 1, "Unexpected exflag %#x.\n", info->exflag);
     ok(info->wxflag == (WX_TEXT | WX_OPEN), "Unexpected wxflag %#x.\n", info->wxflag);
     ok(!info->unicode, "Unicode is not set.\n");
-    todo_wine ok(info->textmode == 1, "Unexpected textmode %d.\n", info->textmode);
+    ok(info->textmode == 1, "Unexpected textmode %d.\n", info->textmode);
     p__close(tempfd);
 
     unlink(tempf);
