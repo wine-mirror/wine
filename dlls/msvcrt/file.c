@@ -113,8 +113,6 @@ typedef struct {
     char pipech2[2];
     __int64 startpos;
     BOOL utf8translations;
-#endif
-#if _MSVCR_VER >= 90
     char dbcsBuffer;
     BOOL dbcsBufferUsed;
 #endif
@@ -3476,7 +3474,7 @@ int CDECL _write(int fd, const void* buf, unsigned int count)
             char conv[sizeof(lfbuf)];
             size_t len = 0;
 
-#if _MSVCR_VER >= 90
+#if _MSVCR_VER >= 80
             if (info->dbcsBufferUsed)
             {
                 conv[j++] = info->dbcsBuffer;
@@ -3495,7 +3493,7 @@ int CDECL _write(int fd, const void* buf, unsigned int count)
 
                     if (i == count)
                     {
-#if _MSVCR_VER >= 90
+#if _MSVCR_VER >= 80
                         info->dbcsBuffer = conv[j-1];
                         info->dbcsBufferUsed = TRUE;
                         break;

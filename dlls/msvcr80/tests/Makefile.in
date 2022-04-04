@@ -1,0 +1,7 @@
+TESTDLL   = msvcr80.dll
+
+C_SRCS = \
+	msvcr80.c
+
+RC_SRCS = \
+	msvcr80.rc
