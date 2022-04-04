@@ -2230,20 +2230,14 @@ LRESULT WINAPI SendMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
  */
 LRESULT WINAPI SendMessageA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    DWORD_PTR res = 0;
-    struct send_message_info info;
+    if (msg == WM_CHAR && !WIN_IsCurrentThread( hwnd ))
+    {
+        if (!map_wparam_AtoW( msg, &wparam, WMCHAR_MAP_SENDMESSAGE ))
+            return 0;
+        return NtUserMessageCall( hwnd, msg, wparam, lparam, NULL, FNID_SENDMESSAGE, FALSE );
+    }
 
-    info.type    = MSG_ASCII;
-    info.hwnd    = hwnd;
-    info.msg     = msg;
-    info.wparam  = wparam;
-    info.lparam  = lparam;
-    info.flags   = SMTO_NORMAL;
-    info.timeout = 0;
-    info.wm_char  = WMCHAR_MAP_SENDMESSAGE;
-
-    send_message( &info, &res, FALSE );
-    return res;
+    return NtUserMessageCall( hwnd, msg, wparam, lparam, NULL, FNID_SENDMESSAGE, TRUE );
 }
 
 
