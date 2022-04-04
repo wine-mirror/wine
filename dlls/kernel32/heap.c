@@ -147,14 +147,19 @@ BOOL WINAPI HeapDestroy( HANDLE heap /* [in] Handle of heap */ )
  * Global/local heap functions, keep in sync with kernelbase/memory.c
  ***********************************************************************/
 
+#define MEM_FLAG_USED        1
+#define MEM_FLAG_MOVEABLE    2
+#define MEM_FLAG_DISCARDABLE 4
+#define MEM_FLAG_DISCARDED   8
+#define MEM_FLAG_DDESHARE    0x8000
+
 struct mem_entry
 {
     union
     {
         struct
         {
-            WORD magic;
-            BYTE flags;
+            WORD flags;
             BYTE lock;
         };
         void *next_free;
@@ -166,7 +171,6 @@ C_ASSERT(sizeof(struct mem_entry) == 2 * sizeof(void *));
 
 struct kernelbase_global_data *kernelbase_global_data;
 
-#define MAGIC_LOCAL_USED    0x5342
 #define POINTER_TO_HANDLE( p ) (*(((const HGLOBAL *)( p )) - 2))
 /* align the storage needed for the HLOCAL on an 8-byte boundary thus
  * LocalAlloc/LocalReAlloc'ing with LMEM_MOVEABLE of memory with
@@ -181,7 +185,7 @@ static inline struct mem_entry *unsafe_mem_from_HLOCAL( HLOCAL handle )
     struct kernelbase_global_data *data = kernelbase_global_data;
     if (((UINT_PTR)handle & ((sizeof(void *) << 1) - 1)) != sizeof(void *)) return NULL;
     if (mem < data->mem_entries || mem >= data->mem_entries_end) return NULL;
-    if (mem->magic != MAGIC_LOCAL_USED) return NULL;
+    if (!(mem->flags & MEM_FLAG_USED)) return NULL;
     return mem;
 }
 
@@ -431,32 +435,29 @@ VOID WINAPI GlobalUnfix( HGLOBAL handle )
  */
 UINT WINAPI GlobalFlags( HGLOBAL handle )
 {
+    HANDLE heap = GetProcessHeap();
     struct mem_entry *mem;
-    DWORD retval;
+    UINT flags;
 
-    TRACE_(globalmem)( "handle %p\n", handle );
+    if (unsafe_ptr_from_HLOCAL( handle )) return 0;
 
-    if (unsafe_ptr_from_HLOCAL( handle ))
+    RtlLockHeap( heap );
+    if ((mem = unsafe_mem_from_HLOCAL( handle )))
     {
-        retval = 0;
+        flags = mem->lock;
+        if (mem->flags & MEM_FLAG_DISCARDABLE) flags |= GMEM_DISCARDABLE;
+        if (mem->flags & MEM_FLAG_DISCARDED) flags |= GMEM_DISCARDED;
+        if (mem->flags & MEM_FLAG_DDESHARE) flags |= GMEM_DDESHARE;
     }
     else
     {
-        RtlLockHeap( GetProcessHeap() );
-        if ((mem = unsafe_mem_from_HLOCAL( handle )))
-        {
-            retval = mem->lock + (mem->flags << 8);
-            if (mem->ptr == 0) retval |= GMEM_DISCARDED;
-        }
-        else
-        {
-            WARN_(globalmem)( "invalid handle %p\n", handle );
-            SetLastError( ERROR_INVALID_HANDLE );
-            retval = GMEM_INVALID_HANDLE;
-        }
-        RtlUnlockHeap( GetProcessHeap() );
+        WARN_(globalmem)( "invalid handle %p\n", handle );
+        SetLastError( ERROR_INVALID_HANDLE );
+        flags = GMEM_INVALID_HANDLE;
     }
-    return retval;
+    RtlUnlockHeap( heap );
+
+    return flags;
 }
 
 
@@ -491,10 +492,11 @@ SIZE_T WINAPI LocalCompact( UINT minfree )
  *  Windows memory management does not provide a separate local heap
  *  and global heap.
  */
-UINT WINAPI LocalFlags(
-              HLOCAL handle /* [in] Handle of memory object */
-) {
-    return GlobalFlags( handle );
+UINT WINAPI LocalFlags( HLOCAL handle )
+{
+    UINT flags = GlobalFlags( handle );
+    if (flags & GMEM_DISCARDABLE) flags |= LMEM_DISCARDABLE;
+    return flags;
 }
 
 
