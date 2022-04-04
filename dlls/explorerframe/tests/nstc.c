@@ -364,7 +364,7 @@ static INameSpaceTreeControlEventsImpl *create_nstc_events(void)
 {
     INameSpaceTreeControlEventsImpl *This;
 
-    This = heap_alloc(sizeof(*This));
+    This = malloc(sizeof(*This));
     This->INameSpaceTreeControlEvents_iface.lpVtbl = &vt_NSTCEvents;
     This->ref = 1;
 
@@ -2351,8 +2351,8 @@ static void test_events(void)
     if(!res)
     {
         /* Freeing these prematurely causes a crash. */
-        heap_free(pnstceimpl);
-        heap_free(pnstceimpl2);
+        free(pnstceimpl);
+        free(pnstceimpl2);
     }
 
     IShellItem_Release(psi);
