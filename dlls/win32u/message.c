@@ -1474,7 +1474,7 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
  *
  * Process all pending sent messages.
  */
-void process_sent_messages(void)
+static void process_sent_messages(void)
 {
     MSG msg;
     peek_message( &msg, 0, 0, 0, PM_REMOVE | PM_QS_SENDMESSAGE, 0 );

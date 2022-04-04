@@ -140,7 +140,6 @@ enum
     NtUserReleaseCapture,
     /* temporary exports */
     NtUserExitingThread,
-    NtUserProcessSentMessages,
     NtUserThreadDetach,
 };
 

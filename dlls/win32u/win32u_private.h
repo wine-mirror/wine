@@ -350,7 +350,6 @@ extern HMENU get_menu( HWND hwnd ) DECLSPEC_HIDDEN;
 /* message.c */
 extern LRESULT dispatch_message( const MSG *msg, BOOL ansi ) DECLSPEC_HIDDEN;
 extern BOOL kill_system_timer( HWND hwnd, UINT_PTR id ) DECLSPEC_HIDDEN;
-extern void process_sent_messages(void) DECLSPEC_HIDDEN;
 extern BOOL reply_message_result( LRESULT result, MSG *msg ) DECLSPEC_HIDDEN;
 extern NTSTATUS send_hardware_message( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput,
                                        UINT flags ) DECLSPEC_HIDDEN;

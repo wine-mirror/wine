@@ -4643,9 +4643,6 @@ ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
     /* temporary exports */
     case NtUserExitingThread:
         exiting_thread_id = GetCurrentThreadId();
-    case NtUserProcessSentMessages:
-        process_sent_messages();
-        return 0;
     case NtUserThreadDetach:
         thread_detach();
         return 0;
