@@ -3902,7 +3902,7 @@ void update_window_state( HWND hwnd )
 
     if (!is_current_thread_window( hwnd ))
     {
-        post_message( hwnd, WM_WINE_UPDATEWINDOWSTATE, 0, 0 );
+        NtUserPostMessage( hwnd, WM_WINE_UPDATEWINDOWSTATE, 0, 0 );
         return;
     }
 
@@ -4923,7 +4923,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     }
 
     if (parent == get_desktop_window())
-        post_message( parent, WM_PARENTNOTIFY, WM_CREATE, (LPARAM)hwnd );
+        NtUserPostMessage( parent, WM_PARENTNOTIFY, WM_CREATE, (LPARAM)hwnd );
 
     if (cs.style & WS_VISIBLE)
     {

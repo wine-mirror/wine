@@ -2154,8 +2154,10 @@ static BOOL send_notify_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpar
     return user_callbacks && user_callbacks->pSendNotifyMessageW( hwnd, msg, wparam, lparam );
 }
 
-/* see PostMessageW */
-LRESULT post_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+/***********************************************************************
+ *           NtUserPostMessage  (win32u.@)
+ */
+BOOL WINAPI NtUserPostMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     /* FIXME: move implementation from user32 */
     if (!user_callbacks) return 0;
