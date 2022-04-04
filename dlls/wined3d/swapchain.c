@@ -2178,12 +2178,43 @@ static LONG fullscreen_exstyle(LONG exstyle)
     return exstyle;
 }
 
+struct wined3d_window_state
+{
+    HWND window;
+    HWND window_pos_after;
+    LONG style, exstyle;
+    int x, y, width, height;
+    uint32_t flags;
+    bool set_style;
+};
+
+static DWORD WINAPI wined3d_set_window_state(void *ctx)
+{
+    struct wined3d_window_state *s = ctx;
+    bool filter;
+
+    filter = wined3d_filter_messages(s->window, TRUE);
+
+    if (s->set_style)
+    {
+        SetWindowLongW(s->window, GWL_STYLE, s->style);
+        SetWindowLongW(s->window, GWL_EXSTYLE, s->exstyle);
+    }
+    SetWindowPos(s->window, s->window_pos_after, s->x, s->y, s->width, s->height, s->flags);
+
+    wined3d_filter_messages(s->window, filter);
+
+    heap_free(s);
+
+    return 0;
+}
+
 HRESULT wined3d_swapchain_state_setup_fullscreen(struct wined3d_swapchain_state *state,
         HWND window, int x, int y, int width, int height)
 {
-    unsigned int window_pos_flags = SWP_FRAMECHANGED | SWP_NOACTIVATE;
-    LONG style, exstyle;
-    BOOL filter;
+    struct wined3d_window_state *s;
+    DWORD window_tid, tid;
+    HANDLE thread;
 
     TRACE("Setting up window %p for fullscreen mode.\n", window);
 
@@ -2193,33 +2224,50 @@ HRESULT wined3d_swapchain_state_setup_fullscreen(struct wined3d_swapchain_state 
         return WINED3DERR_NOTAVAILABLE;
     }
 
+    if (!(s = heap_alloc(sizeof(*s))))
+        return E_OUTOFMEMORY;
+    s->window = window;
+    s->window_pos_after = HWND_TOPMOST;
+    s->x = x;
+    s->y = y;
+    s->width = width;
+    s->height = height;
+
     if (state->style || state->exstyle)
     {
         ERR("Changing the window style for window %p, but another style (%08x, %08x) is already stored.\n",
                 window, state->style, state->exstyle);
     }
 
+    s->flags = SWP_FRAMECHANGED | SWP_NOACTIVATE;
     if (state->desc.flags & WINED3D_SWAPCHAIN_NO_WINDOW_CHANGES)
-        window_pos_flags |= SWP_NOZORDER;
+        s->flags |= SWP_NOZORDER;
     else
-        window_pos_flags |= SWP_SHOWWINDOW;
+        s->flags |= SWP_SHOWWINDOW;
 
     state->style = GetWindowLongW(window, GWL_STYLE);
     state->exstyle = GetWindowLongW(window, GWL_EXSTYLE);
 
-    style = fullscreen_style(state->style);
-    exstyle = fullscreen_exstyle(state->exstyle);
+    s->style = fullscreen_style(state->style);
+    s->exstyle = fullscreen_exstyle(state->exstyle);
+    s->set_style = true;
 
     TRACE("Old style was %08x, %08x, setting to %08x, %08x.\n",
-            state->style, state->exstyle, style, exstyle);
+            state->style, state->exstyle, s->style, s->exstyle);
 
-    filter = wined3d_filter_messages(window, TRUE);
+    window_tid = GetWindowThreadProcessId(window, NULL);
+    tid = GetCurrentThreadId();
 
-    SetWindowLongW(window, GWL_STYLE, style);
-    SetWindowLongW(window, GWL_EXSTYLE, exstyle);
-    SetWindowPos(window, HWND_TOPMOST, x, y, width, height, window_pos_flags);
-
-    wined3d_filter_messages(window, filter);
+    TRACE("Window %p belongs to thread %#x.\n", window, window_tid);
+    /* If the window belongs to a different thread, modifying the style and/or
+     * position can potentially deadlock if that thread isn't processing
+     * messages. */
+    if (window_tid == tid)
+        wined3d_set_window_state(s);
+    else if (!(thread = CreateThread(NULL, 0, wined3d_set_window_state, s, 0, NULL)))
+        ERR("Failed to create thread.\n");
+    else
+        CloseHandle(thread);
 
     return WINED3D_OK;
 }
@@ -2227,21 +2275,27 @@ HRESULT wined3d_swapchain_state_setup_fullscreen(struct wined3d_swapchain_state 
 void wined3d_swapchain_state_restore_from_fullscreen(struct wined3d_swapchain_state *state,
         HWND window, const RECT *window_rect)
 {
-    unsigned int window_pos_flags = SWP_FRAMECHANGED | SWP_NOZORDER | SWP_NOACTIVATE;
-    HWND window_pos_after = NULL;
+    struct wined3d_window_state *s;
+    DWORD window_tid, tid;
     LONG style, exstyle;
-    RECT rect = {0};
-    BOOL filter;
+    HANDLE thread;
 
     if (!state->style && !state->exstyle)
         return;
 
+    if (!(s = heap_alloc(sizeof(*s))))
+        return;
+
+    s->window = window;
+    s->window_pos_after = NULL;
+    s->flags = SWP_FRAMECHANGED | SWP_NOZORDER | SWP_NOACTIVATE;
+
     if ((state->desc.flags & WINED3D_SWAPCHAIN_RESTORE_WINDOW_STATE)
             && !(state->desc.flags & WINED3D_SWAPCHAIN_NO_WINDOW_CHANGES))
     {
-        window_pos_after = (state->exstyle & WS_EX_TOPMOST) ? HWND_TOPMOST : HWND_NOTOPMOST;
-        window_pos_flags |= (state->style & WS_VISIBLE) ? SWP_SHOWWINDOW : SWP_HIDEWINDOW;
-        window_pos_flags &= ~SWP_NOZORDER;
+        s->window_pos_after = (state->exstyle & WS_EX_TOPMOST) ? HWND_TOPMOST : HWND_NOTOPMOST;
+        s->flags |= (state->style & WS_VISIBLE) ? SWP_SHOWWINDOW : SWP_HIDEWINDOW;
+        s->flags &= ~SWP_NOZORDER;
     }
 
     style = GetWindowLongW(window, GWL_STYLE);
@@ -2259,26 +2313,40 @@ void wined3d_swapchain_state_restore_from_fullscreen(struct wined3d_swapchain_st
     TRACE("Restoring window style of window %p to %08x, %08x.\n",
             window, state->style, state->exstyle);
 
-    filter = wined3d_filter_messages(window, TRUE);
-
+    s->style = state->style;
+    s->exstyle = state->exstyle;
     /* Only restore the style if the application didn't modify it during the
      * fullscreen phase. Some applications change it before calling Reset()
      * when switching between windowed and fullscreen modes (HL2), some
      * depend on the original style (Eve Online). */
-    if (style == fullscreen_style(state->style) && exstyle == fullscreen_exstyle(state->exstyle))
-    {
-        SetWindowLongW(window, GWL_STYLE, state->style);
-        SetWindowLongW(window, GWL_EXSTYLE, state->exstyle);
-    }
+    s->set_style = style == fullscreen_style(state->style) && exstyle == fullscreen_exstyle(state->exstyle);
 
     if (window_rect)
-        rect = *window_rect;
+    {
+        s->x = window_rect->left;
+        s->y = window_rect->top;
+        s->width = window_rect->right - window_rect->left;
+        s->height = window_rect->bottom - window_rect->top;
+    }
     else
-        window_pos_flags |= (SWP_NOMOVE | SWP_NOSIZE);
-    SetWindowPos(window, window_pos_after, rect.left, rect.top,
-            rect.right - rect.left, rect.bottom - rect.top, window_pos_flags);
+    {
+        s->x = s->y = s->width = s->height = 0;
+        s->flags |= (SWP_NOMOVE | SWP_NOSIZE);
+    }
 
-    wined3d_filter_messages(window, filter);
+    window_tid = GetWindowThreadProcessId(window, NULL);
+    tid = GetCurrentThreadId();
+
+    TRACE("Window %p belongs to thread %#x.\n", window, window_tid);
+    /* If the window belongs to a different thread, modifying the style and/or
+     * position can potentially deadlock if that thread isn't processing
+     * messages. */
+    if (window_tid == tid)
+        wined3d_set_window_state(s);
+    else if (!(thread = CreateThread(NULL, 0, wined3d_set_window_state, s, 0, NULL)))
+        ERR("Failed to create thread.\n");
+    else
+        CloseHandle(thread);
 
     /* Delete the old values. */
     state->style = 0;
