@@ -31,7 +31,6 @@
 #include "initguid.h"
 #include "uianimation.h"
 
-#include "wine/heap.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(uianimation);
@@ -151,7 +150,7 @@ static ULONG WINAPI animation_storyboard_Release( IUIAnimationStoryboard *iface 
     TRACE( "(%p) ref = %lu\n", This, ref );
 
     if (!ref)
-        heap_free( This );
+        free( This );
 
     return ref;
 }
@@ -308,7 +307,7 @@ const struct IUIAnimationStoryboardVtbl animation_storyboard_vtbl =
 
 static HRESULT animation_storyboard_create( IUIAnimationStoryboard **obj )
 {
-    struct animation_storyboard *This = heap_alloc( sizeof(*This) );
+    struct animation_storyboard *This = malloc( sizeof(*This) );
 
     if (!This) return E_OUTOFMEMORY;
     This->IUIAnimationStoryboard_iface.lpVtbl = &animation_storyboard_vtbl;
@@ -371,7 +370,7 @@ static ULONG WINAPI animation_var_Release( IUIAnimationVariable *iface )
     TRACE( "(%p) ref = %lu\n", This, ref );
 
     if (!ref)
-        heap_free( This );
+        free( This );
 
     return ref;
 }
@@ -498,7 +497,7 @@ const struct IUIAnimationVariableVtbl animation_var_vtbl =
 
 static HRESULT animation_var_create(DOUBLE initial, IUIAnimationVariable **obj )
 {
-    struct animation_var *This = heap_alloc( sizeof(*This) );
+    struct animation_var *This = malloc( sizeof(*This) );
 
     if (!This) return E_OUTOFMEMORY;
     This->IUIAnimationVariable_iface.lpVtbl = &animation_var_vtbl;
@@ -561,7 +560,7 @@ static ULONG WINAPI manager_Release( IUIAnimationManager *iface )
 
     if (!ref)
     {
-        heap_free( This );
+        free( This );
     }
 
     return ref;
@@ -730,7 +729,7 @@ const struct IUIAnimationManagerVtbl manager_vtbl =
 
 static HRESULT manager_create( IUnknown *outer, REFIID iid, void **obj )
 {
-    struct manager *This = heap_alloc( sizeof(*This) );
+    struct manager *This = malloc( sizeof(*This) );
     HRESULT hr;
 
     if (!This) return E_OUTOFMEMORY;
@@ -793,7 +792,7 @@ static ULONG WINAPI timer_Release( IUIAnimationTimer *iface )
     TRACE( "(%p) ref = %lu\n", This, ref );
 
     if (!ref)
-        heap_free( This );
+        free( This );
 
     return ref;
 }
@@ -866,7 +865,7 @@ const struct IUIAnimationTimerVtbl timer_vtbl =
 
 static HRESULT timer_create( IUnknown *outer, REFIID iid, void **obj )
 {
-    struct timer *This = heap_alloc( sizeof(*This) );
+    struct timer *This = malloc( sizeof(*This) );
     HRESULT hr;
 
     if (!This)
@@ -930,7 +929,7 @@ static ULONG WINAPI tr_factory_Release( IUIAnimationTransitionFactory *iface )
     TRACE( "(%p) ref = %lu\n", This, ref );
 
     if (!ref)
-        heap_free( This );
+        free( This );
 
     return ref;
 }
@@ -953,7 +952,7 @@ const struct IUIAnimationTransitionFactoryVtbl tr_factory_vtbl =
 
 static HRESULT transition_create( IUnknown *outer, REFIID iid, void **obj )
 {
-    struct tr_factory *This = heap_alloc( sizeof(*This) );
+    struct tr_factory *This = malloc( sizeof(*This) );
     HRESULT hr;
 
     if (!This) return E_OUTOFMEMORY;
@@ -1017,7 +1016,7 @@ static ULONG WINAPI tr_library_Release( IUIAnimationTransitionLibrary *iface )
     TRACE( "(%p) ref = %lu\n", This, ref );
 
     if (!ref)
-        heap_free( This );
+        free( This );
 
     return ref;
 }
@@ -1141,7 +1140,7 @@ const struct IUIAnimationTransitionLibraryVtbl tr_library_vtbl =
 
 static HRESULT library_create( IUnknown *outer, REFIID iid, void **obj )
 {
-    struct tr_library *This = heap_alloc( sizeof(*This) );
+    struct tr_library *This = malloc( sizeof(*This) );
     HRESULT hr;
 
     if (!This) return E_OUTOFMEMORY;
