@@ -1218,7 +1218,7 @@ static HRESULT DoPaste(ContextMenu *This)
 
 	      TRACE("CF_HDROP=%p\n", medium.u.hGlobal);
 	      count = DragQueryFileW(medium.u.hGlobal, -1, NULL, 0);
-	      pidls = SHAlloc(count*sizeof(ITEMIDLIST**));
+	      pidls = SHAlloc(count*sizeof(ITEMIDLIST*));
 	      if (pidls)
 	      {
 	        for (i = 0; i < count; i++)
