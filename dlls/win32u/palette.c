@@ -583,9 +583,8 @@ UINT realize_palette( HDC hdc )
     {
         /* send palette change notification */
         HWND hwnd = NtUserWindowFromDC( hdc );
-        if (hwnd) user_callbacks->pSendMessageTimeoutW( HWND_BROADCAST, WM_PALETTECHANGED,
-                                                        HandleToUlong(hwnd), 0, SMTO_ABORTIFHUNG,
-                                                        2000, NULL );
+        if (hwnd) send_message_timeout( HWND_BROADCAST, WM_PALETTECHANGED, HandleToUlong(hwnd), 0,
+                                        SMTO_ABORTIFHUNG, 2000, NULL, FALSE );
     }
     return realized;
 }

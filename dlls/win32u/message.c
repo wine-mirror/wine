@@ -2035,6 +2035,105 @@ LRESULT WINAPI NtUserDispatchMessage( const MSG *msg )
     return dispatch_message( msg, FALSE );
 }
 
+static BOOL is_message_broadcastable( UINT msg )
+{
+    return msg < WM_USER || msg >= 0xc000;
+}
+
+/***********************************************************************
+ *           broadcast_message
+ */
+static BOOL broadcast_message( struct send_message_info *info, DWORD_PTR *res_ptr )
+{
+    if (is_message_broadcastable( info->msg ))
+    {
+        HWND *list = list_window_children( 0, get_desktop_window(), NULL, 0 );
+        int i;
+
+        for (i = 0; list[i]; i++)
+        {
+            if (!is_window(list[i])) continue;
+            if ((get_window_long( list[i], GWL_STYLE ) & (WS_POPUP|WS_CHILD)) == WS_CHILD)
+                continue;
+
+            switch(info->type)
+            {
+            case MSG_UNICODE:
+                send_message_timeout( list[i], info->msg, info->wparam, info->lparam,
+                                      info->flags, info->timeout, NULL, FALSE );
+                break;
+            case MSG_ASCII:
+                send_message_timeout( list[i], info->msg, info->wparam, info->lparam,
+                                      info->flags, info->timeout, NULL, TRUE );
+                break;
+            case MSG_NOTIFY:
+                NtUserMessageCall( list[i], info->msg, info->wparam, info->lparam,
+                                   0, FNID_SENDNOTIFYMESSAGE, FALSE );
+                break;
+            case MSG_CALLBACK:
+                {
+                    struct send_message_callback_params params =
+                        { .callback = info->callback, .data = info->data };
+                    NtUserMessageCall( list[i], info->msg, info->wparam, info->lparam,
+                                       &params, FNID_SENDMESSAGECALLBACK, FALSE );
+                    break;
+                }
+            case MSG_POSTED:
+                NtUserPostMessage( list[i], info->msg, info->wparam, info->lparam );
+                break;
+            default:
+                ERR( "bad type %d\n", info->type );
+                break;
+            }
+        }
+    }
+
+    if (res_ptr) *res_ptr = 1;
+    return TRUE;
+}
+
+/***********************************************************************
+ *           process_message
+ *
+ * Backend implementation of the various SendMessage functions.
+ */
+static BOOL process_message( struct send_message_info *info, DWORD_PTR *res_ptr, BOOL ansi )
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    INPUT_MESSAGE_SOURCE prev_source = thread_info->msg_source;
+    DWORD dest_pid;
+    BOOL ret;
+    LRESULT result;
+
+    if (is_broadcast( info->hwnd )) return broadcast_message( info, res_ptr );
+
+    if (!(info->dest_tid = get_window_thread( info->hwnd, &dest_pid ))) return FALSE;
+    if (is_exiting_thread( info->dest_tid )) return FALSE;
+
+    thread_info->msg_source = msg_source_unavailable;
+    spy_enter_message( SPY_SENDMESSAGE, info->hwnd, info->msg, info->wparam, info->lparam );
+
+    if (info->dest_tid == GetCurrentThreadId())
+    {
+        result = call_window_proc( info->hwnd, info->msg, info->wparam, info->lparam,
+                                   !ansi, TRUE, info->wm_char, FALSE, NULL, 0 );
+        if (info->type == MSG_CALLBACK)
+            call_sendmsg_callback( info->callback, info->hwnd, info->msg, info->data, result );
+        ret = TRUE;
+    }
+    else
+    {
+        if (dest_pid != GetCurrentProcessId() && (info->type == MSG_ASCII || info->type == MSG_UNICODE))
+            info->type = MSG_OTHER_PROCESS;
+        ret = send_inter_thread_message( info, &result );
+    }
+
+    spy_exit_message( SPY_RESULT_OK, info->hwnd, info->msg, result, info->wparam, info->lparam );
+    thread_info->msg_source = prev_source;
+    if (ret && res_ptr) *res_ptr = result;
+    return ret;
+}
+
 /***********************************************************************
  *           NtUserSetTimer (win32u.@)
  */
@@ -2142,6 +2241,24 @@ static LRESULT send_window_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
         : user_callbacks->pSendMessageW( hwnd, msg, wparam, lparam );
 }
 
+/* see SendMessageTimeoutW */
+LRESULT send_message_timeout( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
+                              UINT flags, UINT timeout, DWORD_PTR *res_ptr, BOOL ansi )
+{
+    struct send_message_info info;
+
+    info.type    = ansi ? MSG_ASCII : MSG_UNICODE;
+    info.hwnd    = hwnd;
+    info.msg     = msg;
+    info.wparam  = wparam;
+    info.lparam  = lparam;
+    info.flags   = flags;
+    info.timeout = timeout;
+    info.wm_char = WMCHAR_MAP_SENDMESSAGETIMEOUT;
+
+    return process_message( &info, res_ptr, ansi );
+}
+
 /* see SendMessageW */
 LRESULT send_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
@@ -2174,6 +2291,14 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
                                      wparam, lparam, ansi );
     case FNID_SENDMESSAGE:
         return send_window_message( hwnd, msg, wparam, lparam, ansi );
+    case FNID_SENDMESSAGEWTOOPTION:
+        {
+            struct send_message_timeout_params *params = (void *)result_info;
+            DWORD_PTR res = 0;
+            params->result = send_message_timeout( hwnd, msg, wparam, lparam, params->flags,
+                                                   params->timeout, &res, ansi );
+            return res;
+        }
     case FNID_SENDNOTIFYMESSAGE:
         return send_notify_message( hwnd, msg, wparam, lparam, ansi );
     case FNID_SPYENTER:

@@ -4103,9 +4103,8 @@ BOOL WINAPI NtUserSystemParametersInfo( UINT action, UINT val, void *ptr, UINT w
     {
         static const WCHAR emptyW[1];
         if (winini & (SPIF_SENDWININICHANGE | SPIF_SENDCHANGE))
-            user_callbacks->pSendMessageTimeoutW( HWND_BROADCAST, WM_SETTINGCHANGE,
-                                                  action, (LPARAM) emptyW,
-                                                  SMTO_ABORTIFHUNG, 2000, NULL );
+            send_message_timeout( HWND_BROADCAST, WM_SETTINGCHANGE, action, (LPARAM) emptyW,
+                                  SMTO_ABORTIFHUNG, 2000, NULL, FALSE );
     }
     TRACE( "(%u, %u, %p, %u) ret %d\n", action, val, ptr, winini, ret );
     return ret;
@@ -4547,8 +4546,8 @@ BOOL WINAPI NtUserSetSysColors( INT count, const INT *colors, const COLORREF *va
             set_entry( &system_colors[colors[i]], values[i], 0, 0 );
 
     /* Send WM_SYSCOLORCHANGE message to all windows */
-    user_callbacks->pSendMessageTimeoutW( HWND_BROADCAST, WM_SYSCOLORCHANGE, 0, 0,
-                                          SMTO_ABORTIFHUNG, 2000, NULL );
+    send_message_timeout( HWND_BROADCAST, WM_SYSCOLORCHANGE, 0, 0,
+                          SMTO_ABORTIFHUNG, 2000, NULL, FALSE );
     /* Repaint affected portions of all visible windows */
     NtUserRedrawWindow( 0, NULL, 0, RDW_INVALIDATE | RDW_ERASE | RDW_UPDATENOW | RDW_ALLCHILDREN );
     return TRUE;

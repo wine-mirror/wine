@@ -449,9 +449,7 @@ static void test_message_call(void)
     smp.timeout = 10;
     smp.result = 0xdeadbeef;
     res = NtUserMessageCall( hwnd, WM_USER, 1, 2, &smp, FNID_SENDMESSAGEWTOOPTION, FALSE );
-    todo_wine
     ok( res == 3, "res = %Iu\n", res );
-    todo_wine
     ok( smp.result == 1, "smp.result = %Iu\n", smp.result );
 
     smp.flags = 0;
@@ -459,9 +457,7 @@ static void test_message_call(void)
     smp.result = 0xdeadbeef;
     res = NtUserMessageCall( hwnd, WM_USER + 1, 0, large_lparam,
                              &smp, FNID_SENDMESSAGEWTOOPTION, FALSE );
-    todo_wine
     ok( res == large_lparam, "res = %Iu\n", res );
-    todo_wine
     ok( smp.result == 1, "smp.result = %Iu\n", smp.result );
 
     res = NtUserMessageCall( hwnd, WM_USER, 1, 2, (void *)0xdeadbeef,

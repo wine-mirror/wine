@@ -2183,17 +2183,12 @@ static BOOL send_message( struct send_message_info *info, DWORD_PTR *res_ptr, BO
 LRESULT WINAPI SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                     UINT flags, UINT timeout, PDWORD_PTR res_ptr )
 {
-    struct send_message_info info;
+    struct send_message_timeout_params params = { .flags = flags, .timeout = timeout };
+    LRESULT res;
 
-    info.type    = MSG_UNICODE;
-    info.hwnd    = hwnd;
-    info.msg     = msg;
-    info.wparam  = wparam;
-    info.lparam  = lparam;
-    info.flags   = flags;
-    info.timeout = timeout;
-
-    return send_message( &info, res_ptr, TRUE );
+    res = NtUserMessageCall( hwnd, msg, wparam, lparam, &params, FNID_SENDMESSAGEWTOOPTION, FALSE );
+    if (res_ptr) *res_ptr = res;
+    return params.result;
 }
 
 /***********************************************************************
