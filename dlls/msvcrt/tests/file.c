@@ -37,6 +37,20 @@
 #include <locale.h>
 #include <winternl.h>
 
+#define WX_OPEN           0x01
+#define WX_ATEOF          0x02
+#define WX_READNL         0x04
+#define WX_PIPE           0x08
+#define WX_DONTINHERIT    0x10
+#define WX_APPEND         0x20
+#define WX_TTY            0x40
+#define WX_TEXT           0x80
+
+#define EF_UTF8           0x01
+#define EF_UTF16          0x02
+#define EF_CRIT_INIT      0x04
+#define EF_UNK_UNICODE    0x08
+
 #define MSVCRT_FD_BLOCK_SIZE 32
 typedef struct {
     HANDLE              handle;
@@ -2851,6 +2865,40 @@ static void test_open_hints(void)
     unlink(tempfile);
 }
 
+static void test_ioinfo_flags(void)
+{
+    HANDLE handle;
+    ioinfo *info;
+    char *tempf;
+    int tempfd;
+
+    tempf = _tempnam(".","wne");
+
+    tempfd = _open(tempf, _O_CREAT|_O_TRUNC|_O_WRONLY|_O_WTEXT, _S_IWRITE);
+    ok(tempfd != -1, "_open failed with error: %d\n", errno);
+
+    handle = (HANDLE)_get_osfhandle(tempfd);
+    info = &__pioinfo[tempfd / MSVCRT_FD_BLOCK_SIZE][tempfd % MSVCRT_FD_BLOCK_SIZE];
+    ok(!!info, "NULL info.\n");
+    ok(info->handle == handle, "Unexpected handle %p, expected %p.\n", info->handle, handle);
+    ok(info->exflag == (EF_UTF16 | EF_CRIT_INIT | EF_UNK_UNICODE), "Unexpected exflag %#x.\n", info->exflag);
+    ok(info->wxflag == (WX_TEXT | WX_OPEN), "Unexpected wxflag %#x.\n", info->wxflag);
+
+    close(tempfd);
+
+    ok(info->handle == INVALID_HANDLE_VALUE, "Unexpected handle %p.\n", info->handle);
+    ok(info->exflag == (EF_UTF16 | EF_CRIT_INIT | EF_UNK_UNICODE), "Unexpected exflag %#x.\n", info->exflag);
+    ok(!info->wxflag, "Unexpected wxflag %#x.\n", info->wxflag);
+
+    info = &__pioinfo[(tempfd + 4) / MSVCRT_FD_BLOCK_SIZE][(tempfd + 4) % MSVCRT_FD_BLOCK_SIZE];
+    ok(!!info, "NULL info.\n");
+    ok(info->handle == INVALID_HANDLE_VALUE, "Unexpected handle %p.\n", info->handle);
+    ok(!info->exflag, "Unexpected exflag %#x.\n", info->exflag);
+
+    unlink(tempf);
+    free(tempf);
+}
+
 START_TEST(file)
 {
     int arg_c;
@@ -2925,6 +2973,7 @@ START_TEST(file)
     test_lseek();
     test_fopen_hints();
     test_open_hints();
+    test_ioinfo_flags();
 
     /* Wait for the (_P_NOWAIT) spawned processes to finish to make sure the report
      * file contains lines in the correct order
