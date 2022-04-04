@@ -1629,6 +1629,15 @@ static HRESULT GST_RemoveOutputPins(struct parser *This)
     if (!This->sink_connected)
         return S_OK;
 
+    /* Disconnecting source pins triggers a call to wg_parser_stream_disable().
+     * The stream pointers are no longer valid after wg_parser_disconnect(), so
+     * make sure we disable the streams first. */
+    for (i = 0; i < This->source_count; ++i)
+    {
+        if (This->sources[i])
+            free_source_pin(This->sources[i]);
+    }
+
     wg_parser_disconnect(This->wg_parser);
 
     /* read_thread() needs to stay alive to service any read requests GStreamer
@@ -1636,12 +1645,6 @@ static HRESULT GST_RemoveOutputPins(struct parser *This)
     This->sink_connected = false;
     WaitForSingleObject(This->read_thread, INFINITE);
     CloseHandle(This->read_thread);
-
-    for (i = 0; i < This->source_count; ++i)
-    {
-        if (This->sources[i])
-            free_source_pin(This->sources[i]);
-    }
 
     This->source_count = 0;
     free(This->sources);
