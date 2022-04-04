@@ -63,7 +63,7 @@ struct debug_client
     IDebugDataSpaces IDebugDataSpaces_iface;
     IDebugSymbols3 IDebugSymbols3_iface;
     IDebugControl4 IDebugControl4_iface;
-    IDebugAdvanced IDebugAdvanced_iface;
+    IDebugAdvanced3 IDebugAdvanced3_iface;
     IDebugSystemObjects IDebugSystemObjects_iface;
     LONG refcount;
     ULONG engine_options;
@@ -257,9 +257,9 @@ static struct debug_client *impl_from_IDebugControl4(IDebugControl4 *iface)
     return CONTAINING_RECORD(iface, struct debug_client, IDebugControl4_iface);
 }
 
-static struct debug_client *impl_from_IDebugAdvanced(IDebugAdvanced *iface)
+static struct debug_client *impl_from_IDebugAdvanced3(IDebugAdvanced3 *iface)
 {
-    return CONTAINING_RECORD(iface, struct debug_client, IDebugAdvanced_iface);
+    return CONTAINING_RECORD(iface, struct debug_client, IDebugAdvanced3_iface);
 }
 
 static struct debug_client *impl_from_IDebugSystemObjects(IDebugSystemObjects *iface)
@@ -301,9 +301,11 @@ static HRESULT STDMETHODCALLTYPE debugclient_QueryInterface(IDebugClient7 *iface
     {
         *obj = &debug_client->IDebugControl4_iface;
     }
-    else if (IsEqualIID(riid, &IID_IDebugAdvanced))
+    else if (IsEqualIID(riid, &IID_IDebugAdvanced3)
+            || IsEqualIID(riid, &IID_IDebugAdvanced2)
+            || IsEqualIID(riid, &IID_IDebugAdvanced))
     {
-        *obj = &debug_client->IDebugAdvanced_iface;
+        *obj = &debug_client->IDebugAdvanced3_iface;
     }
     else if (IsEqualIID(riid, &IID_IDebugSystemObjects))
     {
@@ -4266,28 +4268,25 @@ static const IDebugControl4Vtbl debugcontrolvtbl =
     debugcontrol_ResetManagedStatus,
 };
 
-static HRESULT STDMETHODCALLTYPE debugadvanced_QueryInterface(IDebugAdvanced *iface, REFIID riid, void **obj)
+static HRESULT STDMETHODCALLTYPE debugadvanced_QueryInterface(IDebugAdvanced3 *iface, REFIID riid, void **obj)
 {
-    struct debug_client *debug_client = impl_from_IDebugAdvanced(iface);
-    IUnknown *unk = (IUnknown *)&debug_client->IDebugClient_iface;
-    return IUnknown_QueryInterface(unk, riid, obj);
+    struct debug_client *debug_client = impl_from_IDebugAdvanced3(iface);
+    return IUnknown_QueryInterface((IUnknown *)&debug_client->IDebugClient_iface, riid, obj);
 }
 
-static ULONG STDMETHODCALLTYPE debugadvanced_AddRef(IDebugAdvanced *iface)
+static ULONG STDMETHODCALLTYPE debugadvanced_AddRef(IDebugAdvanced3 *iface)
 {
-    struct debug_client *debug_client = impl_from_IDebugAdvanced(iface);
-    IUnknown *unk = (IUnknown *)&debug_client->IDebugClient_iface;
-    return IUnknown_AddRef(unk);
+    struct debug_client *debug_client = impl_from_IDebugAdvanced3(iface);
+    return IUnknown_AddRef((IUnknown *)&debug_client->IDebugClient_iface);
 }
 
-static ULONG STDMETHODCALLTYPE debugadvanced_Release(IDebugAdvanced *iface)
+static ULONG STDMETHODCALLTYPE debugadvanced_Release(IDebugAdvanced3 *iface)
 {
-    struct debug_client *debug_client = impl_from_IDebugAdvanced(iface);
-    IUnknown *unk = (IUnknown *)&debug_client->IDebugClient_iface;
-    return IUnknown_Release(unk);
+    struct debug_client *debug_client = impl_from_IDebugAdvanced3(iface);
+    return IUnknown_Release((IUnknown *)&debug_client->IDebugClient_iface);
 }
 
-static HRESULT STDMETHODCALLTYPE debugadvanced_GetThreadContext(IDebugAdvanced *iface, void *context,
+static HRESULT STDMETHODCALLTYPE debugadvanced_GetThreadContext(IDebugAdvanced3 *iface, void *context,
         ULONG context_size)
 {
     FIXME("%p, %p, %lu stub.\n", iface, context, context_size);
@@ -4295,7 +4294,7 @@ static HRESULT STDMETHODCALLTYPE debugadvanced_GetThreadContext(IDebugAdvanced *
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE debugadvanced_SetThreadContext(IDebugAdvanced *iface, void *context,
+static HRESULT STDMETHODCALLTYPE debugadvanced_SetThreadContext(IDebugAdvanced3 *iface, void *context,
         ULONG context_size)
 {
     FIXME("%p, %p, %lu stub.\n", iface, context, context_size);
@@ -4303,16 +4302,97 @@ static HRESULT STDMETHODCALLTYPE debugadvanced_SetThreadContext(IDebugAdvanced *
     return E_NOTIMPL;
 }
 
-static const IDebugAdvancedVtbl debugadvancedvtbl =
+static HRESULT STDMETHODCALLTYPE debugadvanced_Request(IDebugAdvanced3 *iface, ULONG request, void *inbuffer,
+        ULONG inbuffer_size, void *outbuffer, ULONG outbuffer_size, ULONG *outsize)
+{
+    FIXME("%p, %lu, %p, %lu, %p, %lu, %p stub.\n", iface, request, inbuffer, inbuffer_size, outbuffer, outbuffer_size, outsize);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugadvanced_GetSourceFileInformation(IDebugAdvanced3 *iface, ULONG which, char *sourcefile,
+        ULONG64 arg64, ULONG arg32, void *buffer, ULONG buffer_size, ULONG *info_size)
+{
+    FIXME("%p, %lu, %p, %s, %#lx, %p, %lu, %p stub.\n", iface, which, sourcefile, wine_dbgstr_longlong(arg64),
+            arg32, buffer, buffer_size, info_size);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugadvanced_FindSourceFileAndToken(IDebugAdvanced3 *iface, ULONG start_element,
+        ULONG64 modaddr, const char *filename, ULONG flags, void *filetoken, ULONG filetokensize, ULONG *found_element,
+        char *buffer, ULONG buffer_size, ULONG *found_size)
+{
+    FIXME("%p, %lu, %s, %s, %#lx, %p, %lu, %p, %p, %lu, %p stub.\n", iface, start_element, wine_dbgstr_longlong(modaddr),
+            debugstr_a(filename), flags, filetoken, filetokensize, found_element, buffer, buffer_size, found_size);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugadvanced_GetSymbolInformation(IDebugAdvanced3 *iface, ULONG which, ULONG64 arg64,
+        ULONG arg32, void *buffer, ULONG buffer_size, ULONG *info_size, char *string_buffer, ULONG string_buffer_size,
+        ULONG *string_size)
+{
+    FIXME("%p, %lu, %s, %#lx, %p, %lu, %p, %p, %lu, %p stub.\n", iface, which, wine_dbgstr_longlong(arg64),
+            arg32, buffer, buffer_size, info_size, string_buffer, string_buffer_size, string_size);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugadvanced_GetSystemObjectInformation(IDebugAdvanced3 *iface, ULONG which, ULONG64 arg64,
+        ULONG arg32, void *buffer, ULONG buffer_size, ULONG *info_size)
+{
+    FIXME("%p, %lu, %s, %#lx, %p, %lu, %p stub.\n", iface, which, wine_dbgstr_longlong(arg64), arg32, buffer,
+            buffer_size, info_size);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugadvanced_GetSourceFileInformationWide(IDebugAdvanced3 *iface, ULONG which,
+        WCHAR *source_file, ULONG64 arg64, ULONG arg32, void *buffer, ULONG buffer_size, ULONG *info_size)
+{
+    FIXME("%p, %lu, %p, %s, %#lx, %p, %lu, %p stub.\n", iface, which, source_file, wine_dbgstr_longlong(arg64),
+            arg32, buffer, buffer_size, info_size);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugadvanced_FindSourceFileAndTokenWide(IDebugAdvanced3 *iface, ULONG start_element,
+        ULONG64 modaddr, const WCHAR *filename, ULONG flags, void *filetoken, ULONG filetokensize, ULONG *found_element,
+        WCHAR *buffer, ULONG buffer_size, ULONG *found_size)
+{
+    FIXME("%p, %lu, %s, %s, %#lx, %p, %lu, %p, %p, %lu, %p stub.\n", iface, start_element, wine_dbgstr_longlong(modaddr),
+            debugstr_w(filename), flags, filetoken, filetokensize, found_element, buffer, buffer_size, found_size);
+
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE debugadvanced_GetSymbolInformationWide(IDebugAdvanced3 *iface, ULONG which, ULONG64 arg64,
+        ULONG arg32, void *buffer, ULONG buffer_size, ULONG *info_size, WCHAR *string_buffer, ULONG string_buffer_size,
+        ULONG *string_size)
+{
+    FIXME("%p, %lu, %s, %#lx, %p, %lu, %p, %p, %lu, %p stub.\n", iface, which, wine_dbgstr_longlong(arg64),
+            arg32, buffer, buffer_size, info_size, string_buffer, string_buffer_size, string_size);
+
+    return E_NOTIMPL;
+}
+
+static const IDebugAdvanced3Vtbl debugadvancedvtbl =
 {
     debugadvanced_QueryInterface,
     debugadvanced_AddRef,
     debugadvanced_Release,
-    /* IDebugAdvanced */
     debugadvanced_GetThreadContext,
     debugadvanced_SetThreadContext,
+    debugadvanced_Request,
+    debugadvanced_GetSourceFileInformation,
+    debugadvanced_FindSourceFileAndToken,
+    debugadvanced_GetSymbolInformation,
+    debugadvanced_GetSystemObjectInformation,
+    debugadvanced_GetSourceFileInformationWide,
+    debugadvanced_FindSourceFileAndTokenWide,
+    debugadvanced_GetSymbolInformationWide,
 };
-
 
 static HRESULT STDMETHODCALLTYPE debugsystemobjects_QueryInterface(IDebugSystemObjects *iface, REFIID riid, void **obj)
 {
@@ -4625,7 +4705,7 @@ HRESULT WINAPI DebugCreate(REFIID riid, void **obj)
     debug_client->IDebugDataSpaces_iface.lpVtbl = &debugdataspacesvtbl;
     debug_client->IDebugSymbols3_iface.lpVtbl = &debugsymbolsvtbl;
     debug_client->IDebugControl4_iface.lpVtbl = &debugcontrolvtbl;
-    debug_client->IDebugAdvanced_iface.lpVtbl = &debugadvancedvtbl;
+    debug_client->IDebugAdvanced3_iface.lpVtbl = &debugadvancedvtbl;
     debug_client->IDebugSystemObjects_iface.lpVtbl = &debugsystemobjectsvtbl;
     debug_client->refcount = 1;
     list_init(&debug_client->targets);
