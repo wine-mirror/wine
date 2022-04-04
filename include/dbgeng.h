@@ -47,6 +47,8 @@ DEFINE_GUID(IID_IDebugControl2,           0xd4366723, 0x44df, 0x4bed, 0x8c, 0x7e
 DEFINE_GUID(IID_IDebugControl3,           0x7df74a86, 0xb03f, 0x407f, 0x90, 0xab, 0xa2, 0x0d, 0xad, 0xce, 0xad, 0x08);
 DEFINE_GUID(IID_IDebugControl4,           0x94e60ce9, 0x9b41, 0x4b19, 0x9f, 0xc0, 0x6d, 0x9e, 0xb3, 0x52, 0x72, 0xb3);
 DEFINE_GUID(IID_IDebugAdvanced,           0xf2df5f53, 0x071f, 0x47bd, 0x9d, 0xe6, 0x57, 0x34, 0xc3, 0xfe, 0xd6, 0x89);
+DEFINE_GUID(IID_IDebugAdvanced2,          0x716d14c9, 0x119b, 0x4ba5, 0xaf, 0x1f, 0x08, 0x90, 0xe6, 0x72, 0x41, 0x6a);
+DEFINE_GUID(IID_IDebugAdvanced3,          0xcba4abb4, 0x84c4, 0x444d, 0x87, 0xca, 0xa0, 0x4e, 0x13, 0x28, 0x67, 0x39);
 DEFINE_GUID(IID_IDebugSystemObjects,      0x6b86fe2c, 0x2c4f, 0x4f0c, 0x9d, 0xa2, 0x17, 0x43, 0x11, 0xac, 0xc3, 0x27);
 DEFINE_GUID(IID_IDebugSystemObjects2,     0x0ae9f5ff, 0x1852, 0x4679, 0xb0, 0x55, 0x49, 0x4b, 0xee, 0x64, 0x07, 0xee);
 DEFINE_GUID(IID_IDebugSystemObjects3,     0xe9676e2f, 0xe286, 0x4ea3, 0xb0, 0xf9, 0xdf, 0xe5, 0xd9, 0xfc, 0x33, 0x0e);
@@ -2344,6 +2346,67 @@ DECLARE_INTERFACE_(IDebugAdvanced, IUnknown)
     /* IDebugAdvanced */
     STDMETHOD(GetThreadContext)(THIS_ void *context, ULONG context_size) PURE;
     STDMETHOD(SetThreadContext)(THIS_ void *context, ULONG context_size) PURE;
+};
+#undef INTERFACE
+
+#define INTERFACE IDebugAdvanced2
+DECLARE_INTERFACE_(IDebugAdvanced2, IUnknown)
+{
+    /* IUnknown */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* IDebugAdvanced */
+    STDMETHOD(GetThreadContext)(THIS_ void *context, ULONG context_size) PURE;
+    STDMETHOD(SetThreadContext)(THIS_ void *context, ULONG context_size) PURE;
+    /* IDebugAdvanced2 */
+    STDMETHOD(Request)(THIS_ ULONG request, void *inbuffer, ULONG inbuffer_size,
+            void *outbuffer, ULONG outbuffer_size, ULONG *outsize) PURE;
+    STDMETHOD(GetSourceFileInformation)(THIS_ ULONG which, char *sourcefile,
+            ULONG64 arg64, ULONG arg32, void *buffer, ULONG buffer_size, ULONG *info_size) PURE;
+    STDMETHOD(FindSourceFileAndToken)(THIS_ ULONG start_element, ULONG64 modaddr, const char *filename,
+            ULONG flags, void *filetoken, ULONG filetokensize, ULONG *found_element, char *buffer,
+            ULONG buffer_size, ULONG *found_size) PURE;
+    STDMETHOD(GetSymbolInformation)(THIS_ ULONG which, ULONG64 arg64, ULONG arg32, void *buffer,
+            ULONG buffer_size, ULONG *info_size, char *string_buffer, ULONG string_buffer_size,
+            ULONG *string_size) PURE;
+    STDMETHOD(GetSystemObjectInformation)(THIS_ ULONG which, ULONG64 arg64, ULONG arg32,
+            void *buffer, ULONG buffer_size, ULONG *info_size) PURE;
+};
+#undef INTERFACE
+
+#define INTERFACE IDebugAdvanced3
+DECLARE_INTERFACE_(IDebugAdvanced3, IUnknown)
+{
+    /* IUnknown */
+    STDMETHOD(QueryInterface)(THIS_ REFIID riid, void **out) PURE;
+    STDMETHOD_(ULONG, AddRef)(THIS) PURE;
+    STDMETHOD_(ULONG, Release)(THIS) PURE;
+    /* IDebugAdvanced */
+    STDMETHOD(GetThreadContext)(THIS_ void *context, ULONG context_size) PURE;
+    STDMETHOD(SetThreadContext)(THIS_ void *context, ULONG context_size) PURE;
+    /* IDebugAdvanced2 */
+    STDMETHOD(Request)(THIS_ ULONG request, void *inbuffer, ULONG inbuffer_size,
+            void *outbuffer, ULONG outbuffer_size, ULONG *outsize) PURE;
+    STDMETHOD(GetSourceFileInformation)(THIS_ ULONG which, char *sourcefile,
+            ULONG64 arg64, ULONG arg32, void *buffer, ULONG buffer_size, ULONG *info_size) PURE;
+    STDMETHOD(FindSourceFileAndToken)(THIS_ ULONG start_element, ULONG64 modaddr, const char *filename,
+            ULONG flags, void *filetoken, ULONG filetokensize, ULONG *found_element, char *buffer,
+            ULONG buffer_size, ULONG *found_size) PURE;
+    STDMETHOD(GetSymbolInformation)(THIS_ ULONG which, ULONG64 arg64, ULONG arg32, void *buffer,
+            ULONG buffer_size, ULONG *info_size, char *string_buffer, ULONG string_buffer_size,
+            ULONG *string_size) PURE;
+    STDMETHOD(GetSystemObjectInformation)(THIS_ ULONG which, ULONG64 arg64, ULONG arg32,
+            void *buffer, ULONG buffer_size, ULONG *info_size) PURE;
+    /* IDebugAdvanced3 */
+    STDMETHOD(GetSourceFileInformationWide)(THIS_ ULONG which, WCHAR *source_file, ULONG64 arg64,
+            ULONG arg32, void *buffer, ULONG buffer_size, ULONG *info_size) PURE;
+    STDMETHOD(FindSourceFileAndTokenWide)(THIS_ ULONG start_element, ULONG64 modaddr, const WCHAR *filename,
+            ULONG flags, void *filetoken, ULONG filetokensize, ULONG *found_element, WCHAR *buffer,
+            ULONG buffer_size, ULONG *found_size) PURE;
+    STDMETHOD(GetSymbolInformationWide)(THIS_ ULONG which, ULONG64 arg64, ULONG arg32, void *buffer,
+            ULONG buffer_size, ULONG *info_size, WCHAR *string_buffer, ULONG string_buffer_size,
+            ULONG *string_size) PURE;
 };
 #undef INTERFACE
 
