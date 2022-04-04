@@ -2650,6 +2650,7 @@ static void output_source_rc( struct makefile *make, struct incl_file *source, c
     }
     output( "%s.res: %s", obj_dir_path( make, obj ), source->filename );
     output_filename( tools_path( make, "wrc" ));
+    if (make->src_dir) output_filename( "nls/locale.nls" );
     output_filenames( source->dependencies );
     output( "\n" );
     output( "\t%s%s -u -o $@", cmd_prefix( "WRC" ), tools_path( make, "wrc" ) );
