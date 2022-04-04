@@ -88,6 +88,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(msvcrt);
 static char utf8_bom[3] = { 0xef, 0xbb, 0xbf };
 static char utf16_bom[2] = { 0xff, 0xfe };
 
+#define MSVCRT_INTERNAL_BUFSIZ 4096
+
 enum textmode
 {
     TEXTMODE_ANSI,
@@ -95,11 +97,32 @@ enum textmode
     TEXTMODE_UTF16LE,
 };
 
-/* FIXME: this should be allocated dynamically */
+#if _MSVCR_VER >= 140
+
+#define MSVCRT_MAX_FILES 8192
+#define MSVCRT_FD_BLOCK_SIZE 64
+
+typedef struct {
+    CRITICAL_SECTION    crit;
+    HANDLE              handle;
+    __int64             startpos;
+    unsigned char       wxflag;
+    char                textmode;
+    char                lookahead[3];
+    char unicode          : 1;
+    char utf8translations : 1;
+    char dbcsBufferUsed   : 1;
+    char dbcsBuffer[MB_LEN_MAX];
+} ioinfo;
+
+/*********************************************************************
+ *		__badioinfo (MSVCRT.@)
+ */
+ioinfo MSVCRT___badioinfo = { {0}, INVALID_HANDLE_VALUE, 0, WX_TEXT };
+#else
+
 #define MSVCRT_MAX_FILES 2048
 #define MSVCRT_FD_BLOCK_SIZE 32
-
-#define MSVCRT_INTERNAL_BUFSIZ 4096
 
 typedef struct {
     HANDLE              handle;
@@ -113,10 +136,16 @@ typedef struct {
     char pipech2[2];
     __int64 startpos;
     BOOL utf8translations;
-    char dbcsBuffer;
+    char dbcsBuffer[1];
     BOOL dbcsBufferUsed;
 #endif
 } ioinfo;
+
+/*********************************************************************
+ *		__badioinfo (MSVCRT.@)
+ */
+ioinfo MSVCRT___badioinfo = { INVALID_HANDLE_VALUE, WX_TEXT };
+#endif
 
 /*********************************************************************
  *		__pioinfo (MSVCRT.@)
@@ -124,12 +153,18 @@ typedef struct {
  */
 ioinfo * MSVCRT___pioinfo[MSVCRT_MAX_FILES/MSVCRT_FD_BLOCK_SIZE] = { 0 };
 
-/*********************************************************************
- *		__badioinfo (MSVCRT.@)
- */
-ioinfo MSVCRT___badioinfo = { INVALID_HANDLE_VALUE, WX_TEXT };
-
 #if _MSVCR_VER >= 80
+
+#if _MSVCR_VER >= 140
+static inline BOOL ioinfo_is_crit_init(ioinfo *info)
+{
+    return TRUE;
+}
+
+static inline void ioinfo_set_crit_init(ioinfo *info)
+{
+}
+#else
 static inline BOOL ioinfo_is_crit_init(ioinfo *info)
 {
     return info->exflag & 1;
@@ -139,6 +174,7 @@ static inline void ioinfo_set_crit_init(ioinfo *info)
 {
     info->exflag |= 1;
 }
+#endif
 
 static inline enum textmode ioinfo_get_textmode(ioinfo *info)
 {
@@ -384,9 +420,24 @@ static inline BOOL alloc_pioinfo_block(int fd)
         return FALSE;
     }
     for(i=0; i<MSVCRT_FD_BLOCK_SIZE; i++)
+    {
         block[i].handle = INVALID_HANDLE_VALUE;
+        if (ioinfo_is_crit_init(&block[i]))
+        {
+            /* Initialize crit section on block allocation for _MSVC_VER >= 140,
+             * ioinfo_is_crit_init() is always TRUE. */
+            InitializeCriticalSection(&block[i].crit);
+        }
+    }
     if(InterlockedCompareExchangePointer((void**)&MSVCRT___pioinfo[fd/MSVCRT_FD_BLOCK_SIZE], block, NULL))
+    {
+        if (ioinfo_is_crit_init(&block[0]))
+        {
+            for(i = 0; i < MSVCRT_FD_BLOCK_SIZE; ++i)
+                DeleteCriticalSection(&block[i].crit);
+        }
         free(block);
+    }
     return TRUE;
 }
 
@@ -3555,7 +3606,7 @@ int CDECL _write(int fd, const void* buf, unsigned int count)
 #if _MSVCR_VER >= 80
             if (info->dbcsBufferUsed)
             {
-                conv[j++] = info->dbcsBuffer;
+                conv[j++] = info->dbcsBuffer[0];
                 info->dbcsBufferUsed = FALSE;
                 conv[j++] = s[i++];
                 len++;
@@ -3572,7 +3623,7 @@ int CDECL _write(int fd, const void* buf, unsigned int count)
                     if (i == count)
                     {
 #if _MSVCR_VER >= 80
-                        info->dbcsBuffer = conv[j-1];
+                        info->dbcsBuffer[0] = conv[j-1];
                         info->dbcsBufferUsed = TRUE;
                         break;
 #else
