@@ -580,7 +580,7 @@ static BOOL compile_cs(const WCHAR *source, const WCHAR *target, const WCHAR *ty
     swprintf(cmdline, ARRAY_SIZE(cmdline), L"%s /t:%s %s /out:\"%s\" \"%s\"", csc, type, args, target, source);
 
     si.cb = sizeof(si);
-    ret = CreateProcessW(csc, cmdline, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi);
+    ret = CreateProcessW(csc, cmdline, NULL, NULL, FALSE, DETACHED_PROCESS, NULL, NULL, &si, &pi);
     ok(ret, "Could not create process: %lu\n", GetLastError());
 
     wait_child_process(pi.hProcess);
