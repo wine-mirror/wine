@@ -46,6 +46,11 @@ coclass CMSH264DecoderMFT {}
 coclass CWMADecMediaObject {};
 
 [
+    uuid(70f598e9-f4ab-495a-99e2-a7c4d3d89abf)
+]
+coclass CWMAEncMediaObject {};
+
+[
     uuid(93af0c51-2275-45d2-a35b-f2ba21caed00)
 ]
 coclass AACMFTEncoder {};
