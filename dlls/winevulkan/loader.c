@@ -215,24 +215,11 @@ VkResult WINAPI vk_icdNegotiateLoaderICDInterfaceVersion(uint32_t *supported_ver
 
 static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
 {
-    const void *driver;
-
-    driver = __wine_get_vulkan_driver(WINE_VULKAN_DRIVER_VERSION);
-    if (!driver)
-    {
-        ERR("Failed to load Wine graphics driver supporting Vulkan.\n");
-        return FALSE;
-    }
-
     if (NtQueryVirtualMemory(GetCurrentProcess(), hinstance, MemoryWineUnixFuncs,
                              &unix_handle, sizeof(unix_handle), NULL))
         return FALSE;
 
-    if (vk_unix_call(unix_init, &driver) || !driver)
-        return FALSE;
-
-    unix_funcs = driver;
-    return TRUE;
+    return !vk_unix_call(unix_init, &unix_funcs);
 }
 
 static BOOL  wine_vk_init_once(void)

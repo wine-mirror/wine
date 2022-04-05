@@ -436,7 +436,14 @@ static void wine_vk_device_free(struct VkDevice_T *device)
 
 NTSTATUS init_vulkan(void *args)
 {
-    vk_funcs = *(const struct vulkan_funcs **)args;
+    vk_funcs = __wine_get_vulkan_driver(WINE_VULKAN_DRIVER_VERSION);
+    if (!vk_funcs)
+    {
+        ERR("Failed to load Wine graphics driver supporting Vulkan.\n");
+        return STATUS_UNSUCCESSFUL;
+    }
+
+
     *(const struct unix_funcs **)args = &loader_funcs;
     return STATUS_SUCCESS;
 }
