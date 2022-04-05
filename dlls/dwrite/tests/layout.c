@@ -4747,6 +4747,86 @@ if (font) {
     IDWriteFactory2_Release(factory2);
 }
 
+static void get_font_name(IDWriteFont *font, WCHAR *name, UINT32 size)
+{
+    IDWriteLocalizedStrings *names;
+    IDWriteFontFamily *family;
+    UINT32 index;
+    BOOL exists;
+    HRESULT hr;
+
+    hr = IDWriteFont_GetFontFamily(font, &family);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IDWriteFontFamily_GetFamilyNames(family, &names);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IDWriteLocalizedStrings_FindLocaleName(names, L"en-us", &index, &exists);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(index != UINT_MAX && exists, "Name was not found.\n");
+    hr = IDWriteLocalizedStrings_GetString(names, index, name, size);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    IDWriteLocalizedStrings_Release(names);
+    IDWriteFontFamily_Release(family);
+}
+
+static void test_system_fallback(void)
+{
+    static const struct fallback_test
+    {
+        const WCHAR text[2];
+        const WCHAR *name;
+    }
+    tests[] =
+    {
+        { { 0x25d4, 0}, L"Segoe UI Symbol" },
+    };
+    IDWriteFontFallback *fallback;
+    IDWriteFactory2 *factory;
+    IDWriteFont *font;
+    UINT32 i, length;
+    WCHAR name[256];
+    BOOL exists;
+    float scale;
+    HRESULT hr;
+
+    if (!(factory = create_factory_iid(&IID_IDWriteFactory2)))
+    {
+        win_skip("System font fallback API is not supported.\n");
+        return;
+    }
+
+    hr = IDWriteFactory2_GetSystemFontFallback(factory, &fallback);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        g_source = tests[i].text;
+        hr = IDWriteFontFallback_MapCharacters(fallback, &analysissource, 0, 1, NULL, NULL, DWRITE_FONT_WEIGHT_NORMAL,
+                DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, &length, &font, &scale);
+    todo_wine
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        if (hr != S_OK) continue;
+        ok(length == 1, "Unexpected length %u\n", length);
+        ok(scale == 1.0f, "got %f\n", scale);
+
+        get_font_name(font, name, ARRAY_SIZE(name));
+    todo_wine
+        ok(!wcscmp(name, tests[i].name), "%u: unexpected name %s.\n", i, wine_dbgstr_w(name));
+
+        hr = IDWriteFont_HasCharacter(font, g_source[0], &exists);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine
+        ok(exists, "%s missing character %#x\n", wine_dbgstr_w(name), g_source[0]);
+
+        IDWriteFont_Release(font);
+    }
+
+    IDWriteFontFallback_Release(fallback);
+    IDWriteFactory2_Release(factory);
+}
+
 static void test_FontFallbackBuilder(void)
 {
     IDWriteFontFallback *fallback, *fallback2;
@@ -6529,6 +6609,7 @@ START_TEST(layout)
     test_pixelsnapping();
     test_SetWordWrapping();
     test_MapCharacters();
+    test_system_fallback();
     test_FontFallbackBuilder();
     test_SetTypography();
     test_SetLastLineWrapping();
