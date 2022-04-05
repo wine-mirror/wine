@@ -54,3 +54,8 @@ coclass CWMAEncMediaObject {};
     uuid(93af0c51-2275-45d2-a35b-f2ba21caed00)
 ]
 coclass AACMFTEncoder {};
+
+[
+    uuid(98230571-0087-4204-b020-3282538e57d3)
+]
+coclass CColorConvertDMO {};
