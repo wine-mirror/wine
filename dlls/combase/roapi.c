@@ -37,14 +37,35 @@ static const char *debugstr_hstring(HSTRING hstr)
     return wine_dbgstr_wn(str, len);
 }
 
+struct activatable_class_data
+{
+    ULONG size;
+    DWORD unk;
+    DWORD module_len;
+    DWORD module_offset;
+    DWORD threading_model;
+};
+
 static HRESULT get_library_for_classid(const WCHAR *classid, WCHAR **out)
 {
+    ACTCTX_SECTION_KEYED_DATA data;
     HKEY hkey_root, hkey_class;
     DWORD type, size;
     HRESULT hr;
     WCHAR *buf = NULL;
 
     *out = NULL;
+
+    /* search activation context first */
+    data.cbSize = sizeof(data);
+    if (FindActCtxSectionStringW(FIND_ACTCTX_SECTION_KEY_RETURN_HACTCTX, NULL,
+            ACTIVATION_CONTEXT_SECTION_WINRT_ACTIVATABLE_CLASSES, classid, &data))
+    {
+        struct activatable_class_data *activatable_class = (struct activatable_class_data *)data.lpData;
+        void *ptr = (BYTE *)data.lpSectionBase + activatable_class->module_offset;
+        *out = wcsdup(ptr);
+        return S_OK;
+    }
 
     /* load class registry key */
     if (RegOpenKeyExW(HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\WindowsRuntime\\ActivatableClassId",

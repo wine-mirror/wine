@@ -95,21 +95,19 @@ static void test_ActivationFactories(void)
     todo_wine
     ok(hr == E_NOTIMPL || broken(hr == REGDB_E_CLASSNOTREG) /* <= w1064v1809 */,
             "RoGetActivationFactory returned %#lx.\n", hr);
+    todo_wine
     ok(factory == NULL, "got factory %p.\n", factory);
+    if (factory) IActivationFactory_Release(factory);
     WindowsDeleteString(str);
     hr = WindowsCreateString(L"Wine.Test.Trusted", ARRAY_SIZE(L"Wine.Test.Trusted") - 1, &str);
     ok(hr == S_OK, "WindowsCreateString returned %#lx.\n", hr);
     hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
-    todo_wine
     ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG) /* <= w1064v1809 */,
             "RoGetActivationFactory returned %#lx.\n", hr);
     if (hr == REGDB_E_CLASSNOTREG)
         ok(!factory, "got factory %p.\n", factory);
     else
-    {
-        todo_wine
         ok(!!factory, "got factory %p.\n", factory);
-    }
     if (!factory) ref = 0;
     else ref = IActivationFactory_Release(factory);
     ok(ref == 0, "Release returned %lu\n", ref);
@@ -126,6 +124,8 @@ START_TEST(roapi)
 
     test_ActivationFactories();
 
+    SetLastError(0xdeadbeef);
     ret = DeleteFileW(L"wine.combase.test.dll");
+    todo_wine_if(!ret && GetLastError() == ERROR_ACCESS_DENIED)
     ok(ret, "Failed to delete file, error %lu\n", GetLastError());
 }
