@@ -1487,6 +1487,33 @@ my @locales =
  { name => "zu-ZA", lcid => 0x00000435 },
 );
 
+my @calendars =
+(
+ { id => 1, name => "Gregorian", itwodigityearmax => 2049 },
+ { id => 2, type => "gregorian", locale => "en-US", itwodigityearmax => 2049 },
+ { id => 3, type => "japanese", locale => "ja-JP", eras => [ 232..236 ] },
+ { id => 4, type => "roc", locale => "zh-TW", eras => [ 1 ] },
+ { id => 5, type => "dangi", locale => "ko-KR", eras => [ 0 ] },
+ { id => 6, type => "islamic", locale => "ar-SA", itwodigityearmax => 1451 },
+ { id => 7, type => "buddhist", locale => "th-TH", eras => [ 0 ] },
+ { id => 8, type => "hebrew", locale => "he-IL", itwodigityearmax => 5810 },
+ { id => 9, type => "gregorian", locale => "fr-FR", itwodigityearmax => 2049 },
+ { id => 10, type => "gregorian", locale => "ar-SA", itwodigityearmax => 2049 },
+ { id => 11, type => "gregorian", locale => "ar-SA", itwodigityearmax => 2049 },
+ { id => 12, type => "gregorian", locale => "ar-SA", itwodigityearmax => 2049 },
+ { id => 13, name => "Julian", locale => "en-US", itwodigityearmax => 2049 },
+ { id => 14, name => "Japanese Lunisolar" },
+ { id => 15, name => "Chinese Lunisolar" },
+ { id => 16, name => "Saka" },
+ { id => 17, name => "Lunar ETO Chinese" },
+ { id => 18, name => "Lunar ETO Korean" },
+ { id => 19, name => "Lunar ETO Rokuyou" },
+ { id => 20, name => "Korean Lunisolar" },
+ { id => 21, name => "Taiwan Lunisolar" },
+ { id => 22, type => "persian", locale => "prs-AF", itwodigityearmax => 1429 },
+ { id => 23, type => "islamic-umalqura", locale => "ar-SA", itwodigityearmax => 1451 },
+);
+
 my @geoids =
 (
  { id => 2,   name => "AG" },     # Antigua and Barbuda
@@ -4346,14 +4373,14 @@ sub parse_percent_format($)
 sub convert_date_format($)
 {
     my $fmt = shift;
-    $fmt =~ s/G/g/;
+    $fmt =~ s/G+/gg/;
     $fmt =~ s/LLLL/MMMM/;
     $fmt =~ s/LLL/MMM/;
     $fmt =~ s/E+/dddd/;
     $fmt =~ s/ccc+/dddd/;
-    $fmt =~ s/([^y])y([^y])/$1yyyy$2/;
+    $fmt =~ s/([^gy])y([^y])/$1yyyy$2/;
     $fmt =~ s/^y([^y])/yyyy$1/;
-    $fmt =~ s/([^y])y$/$1yyyy/;
+    $fmt =~ s/([^gy])y$/$1yyyy/;
     return $fmt;
 }
 
@@ -4524,6 +4551,16 @@ sub build_locale_data()
                 push @contains, split /\s+/, $list if defined $list;
             }
         }
+    }
+
+    # assign calendars to their locale
+
+    foreach my $cal (@calendars)
+    {
+        next unless defined $cal->{locale};
+        my $loc = $lcnames{$cal->{locale}};
+        $loc->{calendar} = [ ] unless defined $loc->{calendar};
+        push @{$loc->{calendar}}, $cal;
     }
 
     # assign default lcid to aliases
@@ -4766,6 +4803,27 @@ sub build_locale_data()
                                 loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='gregorian']/dateTimeFormats/availableFormats/dateFormatItem[\@id='MMMEd' and not(\@alt)]" );
         $srelativelongdate = convert_date_format( $srelativelongdate );
 
+        if (defined $loc->{calendar})
+        {
+            foreach my $cal (@{$loc->{calendar}})
+            {
+                $cal->{sshortdate} = \@sshortdate;
+                $cal->{syearmonth} = \@syearmonth;
+                $cal->{slongdate} = \@slongdate;
+                $cal->{serastring} = [ $serastring ];
+                $cal->{sdayname} = \@sdayname;
+                $cal->{sabbrevdayname} = \@sabbrevdayname;
+                $cal->{smonthname} = \@smonthname;
+                $cal->{sabbrevmonthname} = \@sabbrevmonthname;
+                $cal->{scalname} = $scalnames[$cal->{id}];
+                $cal->{smonthday} = \@smonthday;
+                $cal->{sshortestdayname} = \@sshortestdayname;
+                $cal->{sabbreverastring} = [ $serastring ];
+                $cal->{sshortestdayname} = \@sshortestdayname;
+                $cal->{srelativelongdate} = $srelativelongdate;
+            }
+        }
+
         # codepages
 
         my %ansicpmap = ( 437 => 1252, 720 => 1256, 737 => 1253, 775 => 1257, 850 => 1252,
@@ -4963,16 +5021,138 @@ sub build_locale_data()
     }
     foreach my $group (keys %groups) { add_registry_value( "Language Groups", $group, "1" ); }
 
+    # output calendar data
+
+    my $calendar_data = "";
+    foreach my $cal (@calendars)
+    {
+        my $scalname = $cal->{name};
+        my $iyearoffsetrange = 0;
+        my $itwodigityearmax = $cal->{itwodigityearmax};
+        my @sshortdate;
+        my @syearmonth;
+        my @slongdate;
+        my @serastring;
+        my @sdayname;
+        my @sabbrevdayname;
+        my @smonthname;
+        my @sabbrevmonthname;
+        my @smonthday;
+        my @sabbreverastring;
+        my @sshortestdayname;
+
+        my $type = $cal->{type};
+        if (defined $cal->{locale} && defined $type)
+        {
+            my $loc = $lcnames{$cal->{locale}};
+            my $fmt = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='$type']/dateTimeFormats/availableFormats/dateFormatItem[\@id='yMd' and not(\@alt)]" );
+            push @sshortdate, $fmt if $fmt;
+            $fmt = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='$type']/dateTimeFormats/availableFormats/dateFormatItem[\@id='yyyyMd' and not(\@alt)]" );
+            push @sshortdate, $fmt if $fmt;
+            $fmt = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='$type']/dateTimeFormats/availableFormats/dateFormatItem[\@id='yMMMd' and not(\@alt)]" );
+            push @sshortdate, $fmt if $fmt;
+            $fmt = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='$type']/dateTimeFormats/availableFormats/dateFormatItem[\@id='yyyyMMMd' and not(\@alt)]" );
+            push @sshortdate, $fmt if $fmt;
+            @sshortdate = map convert_date_format($_), @sshortdate;
+            $fmt = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='$type']/dateFormats/dateFormatLength[\@type='full']/dateFormat/pattern[not(\@alt)]" );
+            push @slongdate, $fmt if $fmt;
+            $fmt = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='$type']/dateFormats/dateFormatLength[\@type='long']/dateFormat/pattern[not(\@alt)]" );
+            push @slongdate, $fmt if $fmt;
+            @slongdate = map convert_date_format($_), @slongdate;
+
+            foreach my $n (1..13)
+            {
+                my $name = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='$type']/months/monthContext[\@type='format']/monthWidth[\@type='wide']/month[\@type='$n' and not(\@yeartype)]" );
+                my $abbrev = loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='$type']/months/monthContext[\@type='format']/monthWidth[\@type='abbreviated']/month[\@type='$n' and not(\@yeartype)]" );
+                push @smonthname, $name || "";
+                push @sabbrevmonthname, $abbrev || $name || "";
+            }
+
+            $scalname ||= loc_query( $loc, "/ldml/localeDisplayNames/types/type[\@key='calendar' and \@type='$type']" );
+            if (defined $cal->{eras})
+            {
+                my @eras;
+                my $idx = 1;
+                foreach my $era (@{$cal->{eras}})
+                {
+                    my $start = xml_query( $suppl, "/supplementalData/calendarData/calendar[\@type='$type']/eras/era[\@type='$era']/\@start" );
+                    next unless $start =~ /^(-?\d+)-(\d+)-(\d+)/;
+                    my ($year, $mon, $day, $zero, $first) = ($1, $2, $3, $1 - 1, 1);
+                    if ($zero < 0)
+                    {
+                        $first -= $zero;
+                        $year = 1;
+                        $itwodigityearmax = 2049 - $zero;
+                    }
+                    unshift @eras, pack( "S<8", 6, $idx++, $year, $mon, $day, $zero, $first, 0 );
+                    push @serastring, loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='$type']/eras/eraAbbr/era[\@type='$era']" );
+                    push @sabbreverastring, loc_query( $loc, "/ldml/dates/calendars/calendar[\@type='$type']/eras/eraNarrow/era[\@type='$era']" );
+                }
+                $iyearoffsetrange = add_str_data( pack "S<L<*", scalar @eras, map { add_str_data($_); } @eras );
+            }
+        }
+
+        @sshortdate = @{$cal->{sshortdate}} if defined $cal->{sshortdate} && !@sshortdate;
+        @syearmonth = @{$cal->{syearmonth}} if defined $cal->{syearmonth};
+        @slongdate = @{$cal->{slongdate}} if defined $cal->{slongdate} && !@slongdate;
+        @serastring = @{$cal->{serastring}} if defined $cal->{serastring} && !@serastring;
+        @sdayname = @{$cal->{sdayname}} if defined $cal->{sdayname};
+        @sabbrevdayname = @{$cal->{sabbrevdayname}} if defined $cal->{sabbrevdayname};
+        @smonthname = @{$cal->{smonthname}} if defined $cal->{smonthname} && !join("",@smonthname);
+        @sabbrevmonthname = @{$cal->{sabbrevmonthname}} if defined $cal->{sabbrevmonthname} && !join("",@sabbrevmonthname);
+        @smonthday = @{$cal->{smonthday}} if defined $cal->{smonthday};
+        @sabbreverastring = @{$cal->{sabbreverastring}} if defined $cal->{sabbreverastring} && !@sabbreverastring;
+        @sshortestdayname = @{$cal->{sshortestdayname}} if defined $cal->{sshortestdayname};
+        my $srelativelongdate = $cal->{srelativelongdate};
+
+        @serastring = ("A.D.") unless @serastring;
+        @sabbreverastring = ("AD") unless @sabbreverastring;
+
+        if ($cal->{id} != 1)  # calendar 1 is a placeholder, information is fetched from locale instead
+        {
+            @sshortdate = ("") unless @sshortdate;
+            @syearmonth = ("") unless @syearmonth;
+            @slongdate = ("") unless @slongdate;
+            @sdayname = ("") x 7 unless @sdayname;
+            @sabbrevdayname = ("") x 7 unless @sabbrevdayname;
+            @sshortestdayname = ("") x 7 unless @sshortestdayname;
+            @smonthname = ("") x 13 unless @smonthname;
+            @sabbrevmonthname = ("") x 13 unless @sabbrevmonthname;
+            @smonthday = ("") unless @smonthday;
+        }
+
+        $calendar_data .= pack "S<2L<17",
+            $cal->{id},                        # CAL_ICALINTVALUE
+            $itwodigityearmax || 99,           # CAL_ITWODIGITYEARMAX
+            add_strarray( @sshortdate ),       # CAL_SSHORTDATE
+            add_strarray( @syearmonth ),       # CAL_SYEARMONTH
+            add_strarray( @slongdate ),        # CAL_SLONGDATE
+            add_strarray( @serastring ),       # CAL_SERASTRING
+            $iyearoffsetrange,                 # CAL_IYEAROFFSETRANGE
+            add_strarray( @sdayname ),         # CAL_SDAYNAME
+            add_strarray( @sabbrevdayname ),   # CAL_SABBREVDAYNAME
+            add_strarray( @smonthname ),       # CAL_SMONTHNAME
+            add_strarray( @sabbrevmonthname ), # CAL_SABBREVMONTHNAME
+            add_string( $scalname ),           # CAL_SCALNAME
+            add_strarray( @smonthday ),        # CAL_SMONTHDAY
+            add_strarray( @sabbreverastring ), # CAL_SABBREVERASTRING
+            add_strarray( @sshortestdayname ), # CAL_SSHORTESTDAYNAME
+            add_string( $srelativelongdate );  # CAL_SRELATIVELONGDATE
+    }
+
+    # output locale header
+
     my $nb_lcids = scalar keys %lcids;
     my $nb_locales = scalar grep { !defined $_->{alias} } @locales;
     my $nb_lcnames = scalar keys %lcnames;
     my $locale_size = length($locale_data) / $nb_locales;
-    my $nb_calendars = 0;
+    my $nb_calendars = scalar @calendars;
+    my $calendar_size = length($calendar_data) / $nb_calendars;
     my $lcids_offset = 19 * 4;  # size of header
     my $lcnames_offset = $lcids_offset + length $lcid_data;
     my $locales_offset = $lcnames_offset + length $lcname_data;
     my $calendar_offset = $locales_offset + length $locale_data;
-    my $strings_offset = $calendar_offset;
+    my $strings_offset = $calendar_offset + length $calendar_data;
 
     my $locale_header = pack "L<7S<4L<S<2L<3S<2L<4",
         8,  # offset
@@ -4991,12 +5171,12 @@ sub build_locale_data()
         $lcnames_offset,
         0,
         $nb_calendars,
-        0,
+        $calendar_size,
         $calendar_offset,
         $strings_offset,
         0, 0;
 
-    return align_string( 4, $locale_header . $lcid_data . $lcname_data . $locale_data . $string_data );
+    return align_string( 4, $locale_header . $lcid_data . $lcname_data . $locale_data . $calendar_data . $string_data );
 }
 
 
