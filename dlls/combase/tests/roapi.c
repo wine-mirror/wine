@@ -28,12 +28,31 @@
 
 #include "wine/test.h"
 
+static void load_resource(const WCHAR *filename)
+{
+    DWORD written;
+    HANDLE file;
+    HRSRC res;
+    void *ptr;
+
+    file = CreateFileW(filename, GENERIC_READ | GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(file != INVALID_HANDLE_VALUE, "failed to create %s, error %lu\n", debugstr_w(filename), GetLastError());
+
+    res = FindResourceW(NULL, filename, L"TESTDLL");
+    ok(res != 0, "couldn't find resource\n");
+    ptr = LockResource(LoadResource(GetModuleHandleW(NULL), res));
+    WriteFile(file, ptr, SizeofResource(GetModuleHandleW(NULL), res), &written, NULL);
+    ok(written == SizeofResource(GetModuleHandleW(NULL), res), "couldn't write resource\n");
+    CloseHandle(file);
+}
+
 static void test_ActivationFactories(void)
 {
     HRESULT hr;
     HSTRING str, str2;
     IActivationFactory *factory = NULL;
     IInspectable *inspect = NULL;
+    ULONG ref;
 
     hr = WindowsCreateString(L"Windows.Data.Xml.Dom.XmlDocument",
                               ARRAY_SIZE(L"Windows.Data.Xml.Dom.XmlDocument") - 1, &str);
@@ -63,10 +82,50 @@ static void test_ActivationFactories(void)
 
     WindowsDeleteString(str2);
     WindowsDeleteString(str);
+
+    hr = WindowsCreateString(L"Wine.Test.Missing", ARRAY_SIZE(L"Wine.Test.Missing") - 1, &str);
+    ok(hr == S_OK, "WindowsCreateString returned %#lx.\n", hr);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    ok(hr == REGDB_E_CLASSNOTREG, "RoGetActivationFactory returned %#lx.\n", hr);
+    ok(factory == NULL, "got factory %p.\n", factory);
+    WindowsDeleteString(str);
+    hr = WindowsCreateString(L"Wine.Test.Class", ARRAY_SIZE(L"Wine.Test.Class") - 1, &str);
+    ok(hr == S_OK, "WindowsCreateString returned %#lx.\n", hr);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    todo_wine
+    ok(hr == E_NOTIMPL || broken(hr == REGDB_E_CLASSNOTREG) /* <= w1064v1809 */,
+            "RoGetActivationFactory returned %#lx.\n", hr);
+    ok(factory == NULL, "got factory %p.\n", factory);
+    WindowsDeleteString(str);
+    hr = WindowsCreateString(L"Wine.Test.Trusted", ARRAY_SIZE(L"Wine.Test.Trusted") - 1, &str);
+    ok(hr == S_OK, "WindowsCreateString returned %#lx.\n", hr);
+    hr = RoGetActivationFactory(str, &IID_IActivationFactory, (void **)&factory);
+    todo_wine
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG) /* <= w1064v1809 */,
+            "RoGetActivationFactory returned %#lx.\n", hr);
+    if (hr == REGDB_E_CLASSNOTREG)
+        ok(!factory, "got factory %p.\n", factory);
+    else
+    {
+        todo_wine
+        ok(!!factory, "got factory %p.\n", factory);
+    }
+    if (!factory) ref = 0;
+    else ref = IActivationFactory_Release(factory);
+    ok(ref == 0, "Release returned %lu\n", ref);
+    WindowsDeleteString(str);
+
     RoUninitialize();
 }
 
 START_TEST(roapi)
 {
+    BOOL ret;
+
+    load_resource(L"wine.combase.test.dll");
+
     test_ActivationFactories();
+
+    ret = DeleteFileW(L"wine.combase.test.dll");
+    ok(ret, "Failed to delete file, error %lu\n", GetLastError());
 }
