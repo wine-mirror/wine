@@ -1505,8 +1505,12 @@ static void test_GlobalMemoryStatus(void)
     ok( memex.ullAvailExtendedVirtual == 0, "got ullAvailExtendedVirtual %#I64x\n", memex.ullAvailExtendedVirtual );
 
     ok( mem.dwMemoryLoad == memex.dwMemoryLoad, "got dwMemoryLoad %lu\n", mem.dwMemoryLoad );
-    ok( mem.dwTotalPhys == min( ~(SIZE_T)0 >> 1, memex.ullTotalPhys ), "got dwTotalPhys %#Ix\n", mem.dwTotalPhys );
-    ok( IS_WITHIN_RANGE( mem.dwAvailPhys, min( ~(SIZE_T)0 >> 1, memex.ullAvailPhys ) ), "got dwAvailPhys %#Ix\n", mem.dwAvailPhys );
+    ok( mem.dwTotalPhys == min( ~(SIZE_T)0 >> 1, memex.ullTotalPhys ) ||
+        broken( mem.dwTotalPhys == ~(SIZE_T)0 ) /* Win <= 8.1 with RAM size > 4GB */,
+        "got dwTotalPhys %#Ix\n", mem.dwTotalPhys );
+    ok( IS_WITHIN_RANGE( mem.dwAvailPhys, min( ~(SIZE_T)0 >> 1, memex.ullAvailPhys ) ) ||
+        broken( mem.dwAvailPhys == ~(SIZE_T)0 ) /* Win <= 8.1 with RAM size > 4GB */,
+        "got dwAvailPhys %#Ix\n", mem.dwAvailPhys );
 #ifndef _WIN64
     todo_wine_if(memex.ullTotalPageFile > 0xfff7ffff)
 #endif
