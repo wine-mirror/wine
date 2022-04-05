@@ -37,7 +37,6 @@
 #include "ocidl.h"
 #include "oleauto.h"
 
-#include "wine/heap.h"
 #include "wine/test.h"
 
 #include <initguid.h>
@@ -75,7 +74,7 @@ static WCHAR *make_wstr(const char *str)
     if(!len || len < 0)
         return NULL;
 
-    ret = heap_alloc(len * sizeof(WCHAR));
+    ret = malloc(len * sizeof(WCHAR));
     if(!ret)
         return NULL;
 
@@ -3032,7 +3031,7 @@ static void test_SHGetIDListFromObject(void)
     hres = pSHGetIDListFromObject(NULL, &pidl);
     ok(hres == E_NOINTERFACE, "Got %lx\n", hres);
 
-    punkimpl = heap_alloc(sizeof(*punkimpl));
+    punkimpl = malloc(sizeof(*punkimpl));
     punkimpl->IUnknown_iface.lpVtbl = &vt_IUnknown;
     punkimpl->ifaces = ifaces;
     punkimpl->unknown = 0;
@@ -3049,7 +3048,7 @@ static void test_SHGetIDListFromObject(void)
        "interface not requested.\n");
 
     ok(!punkimpl->unknown, "Got %ld unknown.\n", punkimpl->unknown);
-    heap_free(punkimpl);
+    free(punkimpl);
 
     pidl_desktop = NULL;
     SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, &pidl_desktop);
@@ -3203,7 +3202,7 @@ static void test_SHGetItemFromObject(void)
     hres = pSHGetItemFromObject(NULL, &IID_IUnknown, (void**)&punk);
     ok(hres == E_NOINTERFACE, "Got 0x%08lx\n", hres);
 
-    punkimpl = heap_alloc(sizeof(*punkimpl));
+    punkimpl = malloc(sizeof(*punkimpl));
     punkimpl->IUnknown_iface.lpVtbl = &vt_IUnknown;
     punkimpl->ifaces = ifaces;
     punkimpl->unknown = 0;
@@ -3221,7 +3220,7 @@ static void test_SHGetItemFromObject(void)
        "interface not requested.\n");
 
     ok(!punkimpl->unknown, "Got %ld unknown.\n", punkimpl->unknown);
-    heap_free(punkimpl);
+    free(punkimpl);
 
     /* Test IShellItem */
     hres = pSHGetItemFromObject((IUnknown*)psfdesktop, &IID_IShellItem, (void**)&psi);
@@ -4584,7 +4583,7 @@ static void r_verify_pidl(unsigned l, LPCITEMIDLIST pidl, const WCHAR *path)
             WCHAR *strW = make_wstr(U(filename).cStr);
             ok_(__FILE__,l)(!lstrcmpW(path, strW), "didn't get expected path (%s), instead: %s\n",
                      wine_dbgstr_w(path), U(filename).cStr);
-            heap_free(strW);
+            free(strW);
         }
 
         IShellFolder_Release(parent);
@@ -4918,8 +4917,8 @@ static LRESULT CALLBACK testwindow_wndproc(HWND hwnd, UINT msg, WPARAM wparam, L
             path2 = make_wstr(exp_data->path_2);
             verify_pidl(pidls[0], path1);
             verify_pidl(pidls[1], path2);
-            heap_free(path1);
-            heap_free(path2);
+            free(path1);
+            free(path2);
 
             exp_data->missing_events--;
 
@@ -5027,8 +5026,8 @@ static void test_SHChangeNotify(BOOL test_new_delivery)
             do_events();
             ok(exp_data->missing_events == 0, "%s: Expected wndproc to be called\n", exp_data->id);
 
-            heap_free(path1);
-            heap_free(path2);
+            free(path1);
+            free(path2);
         }
     }
 

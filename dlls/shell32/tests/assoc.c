@@ -25,7 +25,6 @@
 #include "shlguid.h"
 #include "shobjidl.h"
 
-#include "wine/heap.h"
 #include "wine/test.h"
 
 
@@ -104,8 +103,8 @@ static struct assoc_getstring_test getstring_tests[] =
 static void getstring_test(LPCWSTR assocName, HKEY progIdKey, ASSOCSTR str, LPCWSTR expected_string, int line)
 {
     IQueryAssociations *assoc;
+    WCHAR *buffer;
     HRESULT hr;
-    WCHAR *buffer = NULL;
     DWORD len;
 
     hr = CoCreateInstance(&CLSID_QueryAssociations, NULL, CLSCTX_INPROC_SERVER, &IID_IQueryAssociations, (void*)&assoc);
@@ -122,19 +121,19 @@ static void getstring_test(LPCWSTR assocName, HKEY progIdKey, ASSOCSTR str, LPCW
             return;
         }
 
-        buffer = heap_alloc(len * sizeof(WCHAR));
+        buffer = malloc(len * sizeof(WCHAR));
         ok_(__FILE__, line)(buffer != NULL, "out of memory\n");
         hr = IQueryAssociations_GetString(assoc, 0, str, NULL, buffer, &len);
         ok_(__FILE__, line)(hr == S_OK, "GetString returned 0x%lx, expected S_OK\n", hr);
 
         ok_(__FILE__, line)(lstrcmpW(buffer, expected_string) == 0, "GetString returned %s, expected %s\n",
                 wine_dbgstr_w(buffer), wine_dbgstr_w(expected_string));
+        free(buffer);
     } else {
         ok_(__FILE__, line)(FAILED(hr), "GetString returned 0x%lx, expected failure\n", hr);
     }
 
     IQueryAssociations_Release(assoc);
-    heap_free(buffer);
 }
 
 static void test_IQueryAssociations_GetString(void)

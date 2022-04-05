@@ -28,7 +28,6 @@
 #include "shldisp.h"
 #include "shlobj.h"
 
-#include "wine/heap.h"
 #include "wine/test.h"
 
 static HWND hMainWnd, hEdit;
@@ -317,7 +316,7 @@ static ULONG WINAPI string_enumerator_Release(IEnumString *iface)
     ULONG ref = InterlockedDecrement(&this->ref);
 
     if (!ref)
-        heap_free(this);
+        free(this);
 
     return ref;
 }
@@ -426,7 +425,7 @@ static HRESULT string_enumerator_create(void **ppv, WCHAR **suggestions, int cou
 {
     struct string_enumerator *object;
 
-    object = heap_alloc_zero(sizeof(*object));
+    object = calloc(1, sizeof(*object));
     object->IEnumString_iface.lpVtbl = &string_enumerator_vtbl;
     object->IACList_iface.lpVtbl = &aclist_vtbl;
     object->ref = 1;

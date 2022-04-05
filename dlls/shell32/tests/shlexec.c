@@ -40,7 +40,6 @@
 #include "shlwapi.h"
 #include "ddeml.h"
 
-#include "wine/heap.h"
 #include "wine/test.h"
 
 #include "shell32_test.h"
@@ -756,7 +755,7 @@ static LSTATUS myRegDeleteTreeA(HKEY hKey, LPCSTR lpszSubKey)
     if (dwMaxLen > ARRAY_SIZE(szNameBuf))
     {
         /* Name too big: alloc a buffer for it */
-        if (!(lpszName = heap_alloc(dwMaxLen*sizeof(CHAR))))
+        if (!(lpszName = malloc(dwMaxLen*sizeof(CHAR))))
         {
             ret = ERROR_NOT_ENOUGH_MEMORY;
             goto cleanup;
@@ -791,7 +790,7 @@ static LSTATUS myRegDeleteTreeA(HKEY hKey, LPCSTR lpszSubKey)
 cleanup:
     /* Free buffer if allocated */
     if (lpszName != szNameBuf)
-        heap_free(lpszName);
+        free(lpszName);
     if(lpszSubKey)
         RegCloseKey(hSubKey);
     return ret;
@@ -851,11 +850,11 @@ static void create_test_verb_dde(const char* classname, const char* verb,
     }
     else
     {
-        cmd = heap_alloc(strlen(argv0) + 10 + strlen(child_file) + 2 + strlen(cmdtail) + 1);
+        cmd = malloc(strlen(argv0) + 10 + strlen(child_file) + 2 + strlen(cmdtail) + 1);
         sprintf(cmd,"%s shlexec \"%s\" %s", argv0, child_file, cmdtail);
         rc=RegSetValueExA(hkey_cmd, NULL, 0, REG_SZ, (LPBYTE)cmd, strlen(cmd)+1);
         ok(rc == ERROR_SUCCESS, "setting command failed with %ld\n", rc);
-        heap_free(cmd);
+        free(cmd);
     }
 
     if (ddeexec)

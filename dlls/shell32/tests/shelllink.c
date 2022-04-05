@@ -29,7 +29,6 @@
 #include "shellapi.h"
 #include "commoncontrols.h"
 
-#include "wine/heap.h"
 #include "wine/test.h"
 
 #include "shell32_test.h"
@@ -70,12 +69,12 @@ static LPITEMIDLIST path_to_pidl(const char* path)
         int len;
 
         len=MultiByteToWideChar(CP_ACP, 0, path, -1, NULL, 0);
-        pathW = heap_alloc(len * sizeof(WCHAR));
+        pathW = malloc(len * sizeof(WCHAR));
         MultiByteToWideChar(CP_ACP, 0, path, -1, pathW, len);
 
         r=pSHILCreateFromPath(pathW, &pidl, NULL);
         ok(r == S_OK, "SHILCreateFromPath failed (0x%08lx)\n", r);
-        heap_free(pathW);
+        free(pathW);
     }
     return pidl;
 }

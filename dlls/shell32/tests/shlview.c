@@ -38,7 +38,6 @@
 
 #include "initguid.h"
 
-#include "wine/heap.h"
 #include "wine/test.h"
 
 #include "msg.h"
@@ -150,7 +149,7 @@ static IDataObject* IDataObjectImpl_Construct(void)
 {
     IDataObjectImpl *obj;
 
-    obj = heap_alloc(sizeof(*obj));
+    obj = malloc(sizeof(*obj));
     obj->IDataObject_iface.lpVtbl = &IDataObjectImpl_Vtbl;
     obj->ref = 1;
 
@@ -188,7 +187,7 @@ static ULONG WINAPI IDataObjectImpl_Release(IDataObject * iface)
     ULONG ref = InterlockedDecrement(&This->ref);
 
     if (!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
@@ -275,7 +274,7 @@ static IShellBrowser* IShellBrowserImpl_Construct(void)
 {
     IShellBrowserImpl *browser;
 
-    browser = heap_alloc(sizeof(*browser));
+    browser = malloc(sizeof(*browser));
     browser->IShellBrowser_iface.lpVtbl = &IShellBrowserImpl_Vtbl;
     browser->ref = 1;
 
@@ -318,7 +317,7 @@ static ULONG WINAPI IShellBrowserImpl_Release(IShellBrowser * iface)
     ULONG ref = InterlockedDecrement(&This->ref);
 
     if (!ref)
-        heap_free(This);
+        free(This);
 
     return ref;
 }
