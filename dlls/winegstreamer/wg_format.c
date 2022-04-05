@@ -394,11 +394,14 @@ static GstCaps *wg_format_to_caps_video(const struct wg_format *format)
     gst_video_info_set_format(&info, video_format, format->u.video.width, abs(format->u.video.height));
     if ((caps = gst_video_info_to_caps(&info)))
     {
-        /* Clear some fields that shouldn't prevent us from connecting. */
         for (i = 0; i < gst_caps_get_size(caps); ++i)
         {
-            gst_structure_remove_fields(gst_caps_get_structure(caps, i),
-                    "framerate", "pixel-aspect-ratio", "colorimetry", "chroma-site", NULL);
+            if (!format->u.video.width)
+                gst_structure_remove_fields(gst_caps_get_structure(caps, i), "width", NULL);
+            if (!format->u.video.height)
+                gst_structure_remove_fields(gst_caps_get_structure(caps, i), "height", NULL);
+            if (!format->u.video.fps_d && !format->u.video.fps_n)
+                gst_structure_remove_fields(gst_caps_get_structure(caps, i), "framerate", NULL);
         }
     }
     return caps;

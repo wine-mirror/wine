@@ -7200,7 +7200,7 @@ static void test_h264_decoder(void)
             "got status %#lx\n", status);
     hr = IMFSample_GetTotalLength(output.pSample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
-    todo_wine_if(length == 1920 * 1080 * 3 / 2)
+    todo_wine
     ok(length == 0, "got length %lu\n", length);
     ret = IMFSample_Release(output.pSample);
     ok(ret == 0, "Release returned %lu\n", ret);

@@ -75,6 +75,14 @@ static HRESULT try_create_wg_transform(struct h264_decoder *decoder)
     if (output_format.major_type == WG_MAJOR_TYPE_UNKNOWN)
         return MF_E_INVALIDMEDIATYPE;
 
+    /* Don't force any specific size, H264 streams already have the metadata for it
+     * and will generate a MF_E_TRANSFORM_STREAM_CHANGE result later.
+     */
+    output_format.u.video.width = 0;
+    output_format.u.video.height = 0;
+    output_format.u.video.fps_d = 0;
+    output_format.u.video.fps_n = 0;
+
     if (!(decoder->wg_transform = wg_transform_create(&input_format, &output_format)))
         return E_FAIL;
 
