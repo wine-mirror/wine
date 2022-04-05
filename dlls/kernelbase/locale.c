@@ -208,6 +208,26 @@ static const WCHAR ligatures[][5] =
     { 0xfb06,  's','t',0 },
 };
 
+struct calendar
+{
+    USHORT icalintvalue;        /* 00 */
+    USHORT itwodigityearmax;    /* 02 */
+    UINT   sshortdate;          /* 04 */
+    UINT   syearmonth;          /* 08 */
+    UINT   slongdate;           /* 0c */
+    UINT   serastring;          /* 10 */
+    UINT   iyearoffsetrange;    /* 14 */
+    UINT   sdayname;            /* 18 */
+    UINT   sabbrevdayname;      /* 1c */
+    UINT   smonthname;          /* 20 */
+    UINT   sabbrevmonthname;    /* 24 */
+    UINT   scalname;            /* 28 */
+    UINT   smonthday;           /* 2c */
+    UINT   sabbreverastring;    /* 30 */
+    UINT   sshortestdayname;    /* 34 */
+    UINT   srelativelongdate;   /* 38 */
+    UINT   unused[3];           /* 3c */
+};
 
 static const struct geo_id
 {
@@ -776,6 +796,21 @@ static int locale_return_strarray_concat( DWORD pos, LCTYPE type, WCHAR *buffer,
     }
     *buffer = 0;
     return ret;
+}
+
+
+static int cal_return_number( UINT val, CALTYPE type, WCHAR *buffer, int len, DWORD *value )
+{
+    WCHAR tmp[12];
+    int ret;
+
+    if (type & CAL_RETURN_NUMBER)
+    {
+        *value = val;
+        return sizeof(UINT) / sizeof(WCHAR);
+    }
+    ret = swprintf( tmp, ARRAY_SIZE(tmp), L"%u", val );
+    return locale_return_data( tmp, ret + 1, 0, buffer, len );
 }
 
 
@@ -1400,6 +1435,172 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_number( locale->idigitsubstitution, type, buffer, len );
     }
     SetLastError( ERROR_INVALID_FLAGS );
+    return 0;
+}
+
+
+/* get calendar information from the locale.nls file */
+static int get_calendar_info( const NLS_LOCALE_DATA *locale, CALID id, CALTYPE type,
+                              WCHAR *buffer, int len, DWORD *value )
+{
+    unsigned int i, idx = id, val = 0;
+    const struct calendar *cal;
+
+    if (type & CAL_RETURN_NUMBER)
+    {
+        if (buffer || len || !value) goto invalid;
+    }
+    else if (len < 0 || value) goto invalid;
+
+    if (id != CAL_GREGORIAN)
+    {
+        const USHORT *ids = locale_strings + locale->scalendartype;
+        for (i = 0; i < ids[0]; i++) if (ids[1 + i] == id) break;
+        if (i == ids[0]) goto invalid;
+        if (id == CAL_HIJRI) idx = locale->islamic_cal[0];
+        else if (id == CAL_PERSIAN) idx = locale->islamic_cal[1];
+    }
+
+    if (!idx || idx > locale_table->nb_calendars) goto invalid;
+
+    cal = (const struct calendar *)((const char *)locale_table + locale_table->calendars_offset +
+                                    (idx - 1) * locale_table->calendar_size);
+
+    switch (LOWORD(type))
+    {
+    case CAL_ICALINTVALUE:
+        return cal_return_number( cal->icalintvalue, type, buffer, len, value );
+
+    case CAL_SCALNAME:
+        return locale_return_strarray( locale->calnames, id - 1, type, buffer, len );
+
+    case CAL_IYEAROFFSETRANGE:
+        if (cal->iyearoffsetrange)
+        {
+            const DWORD *array = (const DWORD *)(locale_strings + cal->iyearoffsetrange + 1);
+            const short *info = (const short *)locale_strings + array[0];
+            val = (info[5] < 0) ? -info[5] : info[5] + 1;  /* year zero */
+        }
+        return cal_return_number( val, type, buffer, len, value );
+
+    case CAL_SERASTRING:
+        if (id == CAL_GREGORIAN) return locale_return_string( locale->serastring, type, buffer, len );
+        if (cal->iyearoffsetrange)
+        {
+            const DWORD *array = (const DWORD *)(locale_strings + cal->iyearoffsetrange + 1);
+            const short *info = (const short *)locale_strings + array[0];
+            val = info[1] - 1;
+        }
+        return locale_return_strarray( cal->serastring, val, type, buffer, len );
+
+    case CAL_SSHORTDATE:
+        val = (id == CAL_GREGORIAN) ? locale->sshortdate : cal->sshortdate;
+        return locale_return_strarray( val, 0, type, buffer, len );
+
+    case CAL_SLONGDATE:
+        val = (id == CAL_GREGORIAN) ? locale->slongdate : cal->slongdate;
+        return locale_return_strarray( val, 0, type, buffer, len );
+
+    case CAL_SDAYNAME1:
+    case CAL_SDAYNAME2:
+    case CAL_SDAYNAME3:
+    case CAL_SDAYNAME4:
+    case CAL_SDAYNAME5:
+    case CAL_SDAYNAME6:
+    case CAL_SDAYNAME7:
+        val = (id == CAL_GREGORIAN) ? locale->sdayname : cal->sdayname;
+        return locale_return_strarray( val, (LOWORD(type) - CAL_SDAYNAME1 + 1) % 7, type, buffer, len );
+
+    case CAL_SABBREVDAYNAME1:
+    case CAL_SABBREVDAYNAME2:
+    case CAL_SABBREVDAYNAME3:
+    case CAL_SABBREVDAYNAME4:
+    case CAL_SABBREVDAYNAME5:
+    case CAL_SABBREVDAYNAME6:
+    case CAL_SABBREVDAYNAME7:
+        val = (id == CAL_GREGORIAN) ? locale->sabbrevdayname : cal->sabbrevdayname;
+        return locale_return_strarray( val, (LOWORD(type) - CAL_SABBREVDAYNAME1 + 1) % 7, type, buffer, len );
+    case CAL_SMONTHNAME1:
+    case CAL_SMONTHNAME2:
+    case CAL_SMONTHNAME3:
+    case CAL_SMONTHNAME4:
+    case CAL_SMONTHNAME5:
+    case CAL_SMONTHNAME6:
+    case CAL_SMONTHNAME7:
+    case CAL_SMONTHNAME8:
+    case CAL_SMONTHNAME9:
+    case CAL_SMONTHNAME10:
+    case CAL_SMONTHNAME11:
+    case CAL_SMONTHNAME12:
+    case CAL_SMONTHNAME13:
+        if (id != CAL_GREGORIAN) val = cal->smonthname;
+        else if ((type & CAL_RETURN_GENITIVE_NAMES) && locale->sgenitivemonth) val = locale->sgenitivemonth;
+        else val = locale->smonthname;
+        return locale_return_strarray( val, LOWORD(type) - CAL_SMONTHNAME1, type, buffer, len );
+
+    case CAL_SABBREVMONTHNAME1:
+    case CAL_SABBREVMONTHNAME2:
+    case CAL_SABBREVMONTHNAME3:
+    case CAL_SABBREVMONTHNAME4:
+    case CAL_SABBREVMONTHNAME5:
+    case CAL_SABBREVMONTHNAME6:
+    case CAL_SABBREVMONTHNAME7:
+    case CAL_SABBREVMONTHNAME8:
+    case CAL_SABBREVMONTHNAME9:
+    case CAL_SABBREVMONTHNAME10:
+    case CAL_SABBREVMONTHNAME11:
+    case CAL_SABBREVMONTHNAME12:
+    case CAL_SABBREVMONTHNAME13:
+        if (id != CAL_GREGORIAN) val = cal->sabbrevmonthname;
+        else if ((type & CAL_RETURN_GENITIVE_NAMES) && locale->sabbrevgenitivemonth) val = locale->sabbrevgenitivemonth;
+        else val = locale->sabbrevmonthname;
+        return locale_return_strarray( val, LOWORD(type) - CAL_SABBREVMONTHNAME1, type, buffer, len );
+
+    case CAL_SYEARMONTH:
+        val = (id == CAL_GREGORIAN) ? locale->syearmonth : cal->syearmonth;
+        return locale_return_strarray( val, 0, type, buffer, len );
+
+    case CAL_ITWODIGITYEARMAX:
+        return cal_return_number( cal->itwodigityearmax, type, buffer, len, value );
+
+    case CAL_SSHORTESTDAYNAME1:
+    case CAL_SSHORTESTDAYNAME2:
+    case CAL_SSHORTESTDAYNAME3:
+    case CAL_SSHORTESTDAYNAME4:
+    case CAL_SSHORTESTDAYNAME5:
+    case CAL_SSHORTESTDAYNAME6:
+    case CAL_SSHORTESTDAYNAME7:
+        val = (id == CAL_GREGORIAN) ? locale->sshortestdayname : cal->sshortestdayname;
+        return locale_return_strarray( val, (LOWORD(type) - CAL_SSHORTESTDAYNAME1 + 1) % 7, type, buffer, len );
+
+    case CAL_SMONTHDAY:
+        val = (id == CAL_GREGORIAN) ? locale->smonthday : cal->smonthday;
+        return locale_return_strarray( val, 0, type, buffer, len );
+
+    case CAL_SABBREVERASTRING:
+        if (id == CAL_GREGORIAN) return locale_return_string( locale->sabbreverastring, type, buffer, len );
+        if (cal->iyearoffsetrange)
+        {
+            const DWORD *array = (const DWORD *)(locale_strings + cal->iyearoffsetrange + 1);
+            const short *info = (const short *)locale_strings + array[0];
+            val = info[1] - 1;
+        }
+        return locale_return_strarray( cal->sabbreverastring, val, type, buffer, len );
+
+    case CAL_SRELATIVELONGDATE:
+        val = (id == CAL_GREGORIAN) ? locale->srelativelongdate : cal->srelativelongdate;
+        return locale_return_string( val, type, buffer, len );
+
+    case CAL_SENGLISHERANAME:
+    case CAL_SENGLISHABBREVERANAME:
+        /* not supported on Windows */
+        break;
+    }
+    SetLastError( ERROR_INVALID_FLAGS );
+    return 0;
+
+invalid:
+    SetLastError( ERROR_INVALID_PARAMETER );
     return 0;
 }
 
@@ -4639,193 +4840,40 @@ BOOL WINAPI GetCPInfoExW( UINT codepage, DWORD flags, CPINFOEXW *cpinfo )
  *	GetCalendarInfoW   (kernelbase.@)
  */
 INT WINAPI DECLSPEC_HOTPATCH GetCalendarInfoW( LCID lcid, CALID calendar, CALTYPE type,
-                                               WCHAR *data, INT count, DWORD *value )
+                                               WCHAR *buffer, INT len, DWORD *value )
 {
-    static const LCTYPE lctype_map[] =
-    {
-        0, /* not used */
-        0, /* CAL_ICALINTVALUE */
-        0, /* CAL_SCALNAME */
-        0, /* CAL_IYEAROFFSETRANGE */
-        0, /* CAL_SERASTRING */
-        LOCALE_SSHORTDATE,
-        LOCALE_SLONGDATE,
-        LOCALE_SDAYNAME1,
-        LOCALE_SDAYNAME2,
-        LOCALE_SDAYNAME3,
-        LOCALE_SDAYNAME4,
-        LOCALE_SDAYNAME5,
-        LOCALE_SDAYNAME6,
-        LOCALE_SDAYNAME7,
-        LOCALE_SABBREVDAYNAME1,
-        LOCALE_SABBREVDAYNAME2,
-        LOCALE_SABBREVDAYNAME3,
-        LOCALE_SABBREVDAYNAME4,
-        LOCALE_SABBREVDAYNAME5,
-        LOCALE_SABBREVDAYNAME6,
-        LOCALE_SABBREVDAYNAME7,
-        LOCALE_SMONTHNAME1,
-        LOCALE_SMONTHNAME2,
-        LOCALE_SMONTHNAME3,
-        LOCALE_SMONTHNAME4,
-        LOCALE_SMONTHNAME5,
-        LOCALE_SMONTHNAME6,
-        LOCALE_SMONTHNAME7,
-        LOCALE_SMONTHNAME8,
-        LOCALE_SMONTHNAME9,
-        LOCALE_SMONTHNAME10,
-        LOCALE_SMONTHNAME11,
-        LOCALE_SMONTHNAME12,
-        LOCALE_SMONTHNAME13,
-        LOCALE_SABBREVMONTHNAME1,
-        LOCALE_SABBREVMONTHNAME2,
-        LOCALE_SABBREVMONTHNAME3,
-        LOCALE_SABBREVMONTHNAME4,
-        LOCALE_SABBREVMONTHNAME5,
-        LOCALE_SABBREVMONTHNAME6,
-        LOCALE_SABBREVMONTHNAME7,
-        LOCALE_SABBREVMONTHNAME8,
-        LOCALE_SABBREVMONTHNAME9,
-        LOCALE_SABBREVMONTHNAME10,
-        LOCALE_SABBREVMONTHNAME11,
-        LOCALE_SABBREVMONTHNAME12,
-        LOCALE_SABBREVMONTHNAME13,
-        LOCALE_SYEARMONTH,
-        0, /* CAL_ITWODIGITYEARMAX */
-        LOCALE_SSHORTESTDAYNAME1,
-        LOCALE_SSHORTESTDAYNAME2,
-        LOCALE_SSHORTESTDAYNAME3,
-        LOCALE_SSHORTESTDAYNAME4,
-        LOCALE_SSHORTESTDAYNAME5,
-        LOCALE_SSHORTESTDAYNAME6,
-        LOCALE_SSHORTESTDAYNAME7,
-        LOCALE_SMONTHDAY,
-        0, /* CAL_SABBREVERASTRING */
-    };
-    DWORD flags = 0;
-    CALTYPE calinfo = type & 0xffff;
+    const NLS_LOCALE_DATA *locale;
 
-    if (type & CAL_NOUSEROVERRIDE) FIXME("flag CAL_NOUSEROVERRIDE used, not fully implemented\n");
-    if (type & CAL_USE_CP_ACP) FIXME("flag CAL_USE_CP_ACP used, not fully implemented\n");
+    TRACE( "%04lx %lu 0x%lx %p %d %p\n", lcid, calendar, type, buffer, len, value );
 
-    if ((type & CAL_RETURN_NUMBER) && !value)
+    if (!(locale = get_locale_by_id( &lcid, 0 )))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
     }
-
-    if (type & CAL_RETURN_GENITIVE_NAMES) flags |= LOCALE_RETURN_GENITIVE_NAMES;
-
-    switch (calinfo)
-    {
-    case CAL_ICALINTVALUE:
-        if (type & CAL_RETURN_NUMBER)
-            return GetLocaleInfoW( lcid, LOCALE_RETURN_NUMBER | LOCALE_ICALENDARTYPE,
-                                   (WCHAR *)value, sizeof(*value) / sizeof(WCHAR) );
-        return GetLocaleInfoW( lcid, LOCALE_ICALENDARTYPE, data, count );
-
-    case CAL_SCALNAME:
-        FIXME( "Unimplemented caltype %ld\n", calinfo );
-        if (data) *data = 0;
-        return 1;
-
-    case CAL_IYEAROFFSETRANGE:
-    case CAL_SERASTRING:
-    case CAL_SABBREVERASTRING:
-        FIXME( "Unimplemented caltype %ld\n", calinfo );
-        return 0;
-
-    case CAL_SSHORTDATE:
-    case CAL_SLONGDATE:
-    case CAL_SDAYNAME1:
-    case CAL_SDAYNAME2:
-    case CAL_SDAYNAME3:
-    case CAL_SDAYNAME4:
-    case CAL_SDAYNAME5:
-    case CAL_SDAYNAME6:
-    case CAL_SDAYNAME7:
-    case CAL_SABBREVDAYNAME1:
-    case CAL_SABBREVDAYNAME2:
-    case CAL_SABBREVDAYNAME3:
-    case CAL_SABBREVDAYNAME4:
-    case CAL_SABBREVDAYNAME5:
-    case CAL_SABBREVDAYNAME6:
-    case CAL_SABBREVDAYNAME7:
-    case CAL_SMONTHNAME1:
-    case CAL_SMONTHNAME2:
-    case CAL_SMONTHNAME3:
-    case CAL_SMONTHNAME4:
-    case CAL_SMONTHNAME5:
-    case CAL_SMONTHNAME6:
-    case CAL_SMONTHNAME7:
-    case CAL_SMONTHNAME8:
-    case CAL_SMONTHNAME9:
-    case CAL_SMONTHNAME10:
-    case CAL_SMONTHNAME11:
-    case CAL_SMONTHNAME12:
-    case CAL_SMONTHNAME13:
-    case CAL_SABBREVMONTHNAME1:
-    case CAL_SABBREVMONTHNAME2:
-    case CAL_SABBREVMONTHNAME3:
-    case CAL_SABBREVMONTHNAME4:
-    case CAL_SABBREVMONTHNAME5:
-    case CAL_SABBREVMONTHNAME6:
-    case CAL_SABBREVMONTHNAME7:
-    case CAL_SABBREVMONTHNAME8:
-    case CAL_SABBREVMONTHNAME9:
-    case CAL_SABBREVMONTHNAME10:
-    case CAL_SABBREVMONTHNAME11:
-    case CAL_SABBREVMONTHNAME12:
-    case CAL_SABBREVMONTHNAME13:
-    case CAL_SMONTHDAY:
-    case CAL_SYEARMONTH:
-    case CAL_SSHORTESTDAYNAME1:
-    case CAL_SSHORTESTDAYNAME2:
-    case CAL_SSHORTESTDAYNAME3:
-    case CAL_SSHORTESTDAYNAME4:
-    case CAL_SSHORTESTDAYNAME5:
-    case CAL_SSHORTESTDAYNAME6:
-    case CAL_SSHORTESTDAYNAME7:
-        return GetLocaleInfoW( lcid, lctype_map[calinfo] | flags, data, count );
-
-    case CAL_ITWODIGITYEARMAX:
-        if (type & CAL_RETURN_NUMBER)
-        {
-            *value = CALINFO_MAX_YEAR;
-            return sizeof(DWORD) / sizeof(WCHAR);
-        }
-        else
-        {
-            WCHAR buffer[10];
-            int ret = swprintf( buffer, ARRAY_SIZE(buffer), L"%u", CALINFO_MAX_YEAR ) + 1;
-            if (!data) return ret;
-            if (ret <= count)
-            {
-                lstrcpyW( data, buffer );
-                return ret;
-            }
-            SetLastError( ERROR_INSUFFICIENT_BUFFER );
-            return 0;
-        }
-        break;
-    default:
-        FIXME( "Unknown caltype %ld\n", calinfo );
-        SetLastError( ERROR_INVALID_FLAGS );
-        return 0;
-    }
-    return 0;
+    return get_calendar_info( locale, calendar, type, buffer, len, value );
 }
 
 
 /***********************************************************************
  *	GetCalendarInfoEx   (kernelbase.@)
  */
-INT WINAPI DECLSPEC_HOTPATCH GetCalendarInfoEx( const WCHAR *locale, CALID calendar, const WCHAR *reserved,
-                                                CALTYPE type, WCHAR *data, INT count, DWORD *value )
+INT WINAPI DECLSPEC_HOTPATCH GetCalendarInfoEx( const WCHAR *name, CALID calendar, const WCHAR *reserved,
+                                                CALTYPE type, WCHAR *buffer, INT len, DWORD *value )
 {
-    LCID lcid = LocaleNameToLCID( locale, 0 );
-    return GetCalendarInfoW( lcid, calendar, type, data, count, value );
+    LCID lcid;
+    const NLS_LOCALE_DATA *locale = get_locale_by_name( name, &lcid );
+
+    TRACE( "%s %lu 0x%lx %p %d %p\n", debugstr_w(name), calendar, type, buffer, len, value );
+
+    if (!locale)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    return get_calendar_info( locale, calendar, type, buffer, len, value );
 }
+
 
 static CRITICAL_SECTION tzname_section;
 static CRITICAL_SECTION_DEBUG tzname_section_debug =

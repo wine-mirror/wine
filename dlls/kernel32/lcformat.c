@@ -1763,12 +1763,10 @@ int WINAPI GetCalendarInfoA( LCID lcid, CALID id, CALTYPE type, LPSTR data, int 
     int ret, sizeW = size;
     LPWSTR dataW = NULL;
 
-    if (NLS_IsUnicodeOnlyLcid(lcid))
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return 0;
-    }
-    if (!size && !(type & CAL_RETURN_NUMBER)) sizeW = GetCalendarInfoW( lcid, id, type, NULL, 0, NULL );
+    if (type & CAL_RETURN_NUMBER)
+        return GetCalendarInfoW( lcid, id, type, (WCHAR *)data, size, val ) * sizeof(WCHAR);
+
+    if (!size) sizeW = GetCalendarInfoW( lcid, id, type, NULL, 0, NULL );
     if (!(dataW = HeapAlloc(GetProcessHeap(), 0, sizeW * sizeof(WCHAR)))) return 0;
 
     ret = GetCalendarInfoW( lcid, id, type, dataW, sizeW, val );
