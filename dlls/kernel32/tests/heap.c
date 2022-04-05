@@ -31,6 +31,7 @@
 #include "wine/test.h"
 
 /* some undocumented flags (names are made up) */
+#define HEAP_PRIVATE          0x00001000
 #define HEAP_PAGE_ALLOCS      0x01000000
 #define HEAP_VALIDATE         0x10000000
 #define HEAP_VALIDATE_ALL     0x20000000
@@ -43,12 +44,16 @@ static BOOL (WINAPI *pHeapQueryInformation)(HANDLE, HEAP_INFORMATION_CLASS, PVOI
 static BOOL (WINAPI *pGetPhysicallyInstalledSystemMemory)(ULONGLONG *);
 static ULONG (WINAPI *pRtlGetNtGlobalFlags)(void);
 
-struct heap_layout
+struct heap
 {
-    DWORD_PTR unknown[2];
-    DWORD pattern;
-    DWORD flags;
-    DWORD force_flags;
+    UINT_PTR unknown1[2];
+    UINT     ffeeffee;
+    UINT     auto_flags;
+    UINT_PTR unknown2[7];
+    UINT     unknown3[2];
+    UINT_PTR unknown4[3];
+    UINT     flags;
+    UINT     force_flags;
 };
 
 static SIZE_T resize_9x(SIZE_T size)
@@ -1127,7 +1132,6 @@ static void test_heap_checks( DWORD flags )
     SIZE_T i, size, large_size = 3000 * 1024 + 37;
 
     if (flags & HEAP_PAGE_ALLOCS) return;  /* no tests for that case yet */
-    trace( "testing heap flags %08lx\n", flags );
 
     p = pHeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, 17 );
     ok( p != NULL, "HeapAlloc failed\n" );
@@ -1348,68 +1352,112 @@ static DWORD heap_flags_from_global_flag( DWORD flag )
     if (flag & FLG_HEAP_ENABLE_FREE_CHECK)
         ret |= HEAP_FREE_CHECKING_ENABLED;
     if (flag & FLG_HEAP_VALIDATE_PARAMETERS)
-        ret |= HEAP_VALIDATE_PARAMS | HEAP_VALIDATE | HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED;
+        ret |= HEAP_VALIDATE_PARAMS | HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED;
     if (flag & FLG_HEAP_VALIDATE_ALL)
-        ret |= HEAP_VALIDATE_ALL | HEAP_VALIDATE | HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED;
+        ret |= HEAP_VALIDATE_ALL | HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED;
     if (flag & FLG_HEAP_DISABLE_COALESCING)
         ret |= HEAP_DISABLE_COALESCE_ON_FREE;
     if (flag & FLG_HEAP_PAGE_ALLOCS)
-        ret |= HEAP_PAGE_ALLOCS | HEAP_GROWABLE;
+        ret |= HEAP_PAGE_ALLOCS;
     return ret;
+}
+
+static void test_heap_layout( HANDLE handle, DWORD global_flag, DWORD heap_flags )
+{
+    DWORD force_flags = heap_flags & ~(HEAP_SHARED|HEAP_DISABLE_COALESCE_ON_FREE);
+    struct heap *heap = handle;
+
+    if (global_flag & FLG_HEAP_ENABLE_TAGGING) heap_flags |= HEAP_SHARED;
+    if (!(global_flag & FLG_HEAP_PAGE_ALLOCS)) force_flags &= ~(HEAP_GROWABLE|HEAP_PRIVATE);
+
+    todo_wine_if( force_flags & (HEAP_PRIVATE|HEAP_NO_SERIALIZE) )
+    ok( heap->force_flags == force_flags, "got force_flags %#x\n", heap->force_flags );
+    todo_wine_if( heap_flags & (HEAP_VALIDATE_ALL|HEAP_VALIDATE_PARAMS|HEAP_SHARED|HEAP_PRIVATE) )
+    ok( heap->flags == heap_flags, "got flags %#x\n", heap->flags );
+
+    if (heap->flags & HEAP_PAGE_ALLOCS)
+    {
+        struct heap expect_heap;
+        memset( &expect_heap, 0xee, sizeof(expect_heap) );
+        expect_heap.force_flags = heap->force_flags;
+        expect_heap.flags = heap->flags;
+        todo_wine
+        ok( !memcmp( heap, &expect_heap, sizeof(expect_heap) ), "got unexpected data\n" );
+    }
+    else
+    {
+        todo_wine
+        ok( heap->ffeeffee == 0xffeeffee, "got ffeeffee %#x\n", heap->ffeeffee );
+        ok( heap->auto_flags == (heap_flags & HEAP_GROWABLE) || !heap->auto_flags,
+            "got auto_flags %#x\n", heap->auto_flags );
+    }
 }
 
 static void test_child_heap( const char *arg )
 {
-    struct heap_layout *heap = GetProcessHeap();
-    DWORD expected = strtoul( arg, 0, 16 );
-    DWORD expect_heap;
+    char buffer[32];
+    DWORD global_flags = strtoul( arg, 0, 16 ), type, size = sizeof(buffer);
+    DWORD heap_flags;
+    HANDLE heap;
+    HKEY hkey;
+    BOOL ret;
 
-    if (expected == 0xdeadbeef)  /* expected value comes from Session Manager global flags */
+    if (global_flags == 0xdeadbeef)  /* global_flags value comes from Session Manager global flags */
     {
-        HKEY hkey;
-        expected = 0;
-        if (!RegOpenKeyA( HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Control\\Session Manager", &hkey ))
+        ret = RegOpenKeyA( HKEY_LOCAL_MACHINE, "SYSTEM\\CurrentControlSet\\Control\\Session Manager", &hkey );
+        if (!ret)
         {
-            char buffer[32];
-            DWORD type, size = sizeof(buffer);
-
-            if (!RegQueryValueExA( hkey, "GlobalFlag", 0, &type, (BYTE *)buffer, &size ))
-            {
-                if (type == REG_DWORD) expected = *(DWORD *)buffer;
-                else if (type == REG_SZ) expected = strtoul( buffer, 0, 16 );
-            }
-            RegCloseKey( hkey );
+            skip( "Session Manager flags not set\n" );
+            return;
         }
+
+        ret = RegQueryValueExA( hkey, "GlobalFlag", 0, &type, (BYTE *)buffer, &size );
+        ok( ret, "RegQueryValueExA failed, error %lu\n", GetLastError() );
+
+        if (type == REG_DWORD) global_flags = *(DWORD *)buffer;
+        else if (type == REG_SZ) global_flags = strtoul( buffer, 0, 16 );
+
+        ret = RegCloseKey( hkey );
+        ok( ret, "RegCloseKey failed, error %lu\n", GetLastError() );
     }
-    if (expected && !pRtlGetNtGlobalFlags())  /* not working on NT4 */
+    if (global_flags && !pRtlGetNtGlobalFlags())  /* not working on NT4 */
     {
         win_skip( "global flags not set\n" );
         return;
     }
 
-    ok( pRtlGetNtGlobalFlags() == expected,
-        "%s: got global flags %08lx expected %08lx\n", arg, pRtlGetNtGlobalFlags(), expected );
+    heap_flags = heap_flags_from_global_flag( global_flags );
+    trace( "testing global flags %#lx, heap flags %08lx\n", global_flags, heap_flags );
 
-    expect_heap = heap_flags_from_global_flag( expected );
+    ok( pRtlGetNtGlobalFlags() == global_flags, "got global flags %#lx\n", pRtlGetNtGlobalFlags() );
 
-    if (!(heap->flags & HEAP_GROWABLE) || heap->pattern == 0xffeeffee)  /* vista layout */
-    {
-        ok( (heap->flags & ~HEAP_GROWABLE) == 0, "%s: got heap flags %08lx\n", arg, heap->flags );
-    }
-    else if (heap->pattern == 0xeeeeeeee && heap->flags == 0xeeeeeeee)
-    {
-        ok( expected & FLG_HEAP_PAGE_ALLOCS, "%s: got heap flags 0xeeeeeeee without page alloc\n", arg );
-    }
-    else
-    {
-        ok( heap->flags == (expect_heap | HEAP_GROWABLE),
-            "%s: got heap flags %08lx expected %08lx\n", arg, heap->flags, expect_heap );
-        ok( heap->force_flags == (expect_heap & ~0x18000080),
-            "%s: got heap force flags %08lx expected %08lx\n", arg, heap->force_flags, expect_heap );
-        expect_heap = heap->flags;
-    }
+    test_heap_layout( GetProcessHeap(), global_flags, heap_flags|HEAP_GROWABLE );
 
-    test_heap_checks( expect_heap );
+    heap = HeapCreate( 0, 0, 0 );
+    ok( heap != GetProcessHeap(), "got unexpected heap\n" );
+    test_heap_layout( heap, global_flags, heap_flags|HEAP_GROWABLE|HEAP_PRIVATE );
+    ret = HeapDestroy( heap );
+    ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
+
+    heap = HeapCreate( HEAP_NO_SERIALIZE, 0, 0 );
+    ok( heap != GetProcessHeap(), "got unexpected heap\n" );
+    test_heap_layout( heap, global_flags, heap_flags|HEAP_NO_SERIALIZE|HEAP_GROWABLE|HEAP_PRIVATE );
+    ret = HeapDestroy( heap );
+    ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
+
+    heap = HeapCreate( 0, 0x1000, 0x10000 );
+    ok( heap != GetProcessHeap(), "got unexpected heap\n" );
+    test_heap_layout( heap, global_flags, heap_flags|HEAP_PRIVATE );
+    ret = HeapDestroy( heap );
+    ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
+
+    heap = HeapCreate( HEAP_SHARED, 0, 0 );
+    ok( heap != GetProcessHeap(), "got unexpected heap\n" );
+    test_heap_layout( heap, global_flags, heap_flags|HEAP_GROWABLE|HEAP_PRIVATE );
+    ret = HeapDestroy( heap );
+    ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
+
+    test_heap_checks( heap_flags );
 }
 
 static void test_GetPhysicallyInstalledSystemMemory(void)
