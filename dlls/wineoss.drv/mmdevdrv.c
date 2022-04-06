@@ -121,7 +121,6 @@ struct ACImpl {
 
     int fd;
     oss_audioinfo ai;
-    char devnode[OSS_DEVNODE_SIZE];
 
     BOOL initted, playing;
     UINT64 written_frames, last_pos_frames;
@@ -138,6 +137,9 @@ struct ACImpl {
     AudioSessionWrapper *session_wrapper;
 
     struct list entry;
+
+    /* Keep at end */
+    char devnode[0];
 };
 
 typedef struct _SessionMgr {
@@ -445,6 +447,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev,
     ACImpl *This;
     const OSSDevice *oss_dev;
     HRESULT hr;
+    int len;
 
     TRACE("%s %p %p\n", debugstr_guid(guid), dev, out);
 
@@ -453,8 +456,8 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev,
         WARN("Unknown GUID: %s\n", debugstr_guid(guid));
         return AUDCLNT_E_DEVICE_INVALIDATED;
     }
-
-    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(ACImpl));
+    len = strlen(oss_dev->devnode);
+    This = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, offsetof(ACImpl, devnode[len + 1]));
     if(!This)
         return E_OUTOFMEMORY;
 
