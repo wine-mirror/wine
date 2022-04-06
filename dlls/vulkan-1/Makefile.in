@@ -1,7 +1,10 @@
 MODULE    = vulkan-1.dll
-IMPORTS   = winevulkan
+IMPORTS   = user32
 IMPORTLIB = vulkan-1
 
 EXTRADLLFLAGS = -Wb,--prefer-native
 
 RC_SRCS = version.rc
+
+C_SRCS = \
+	vulkan.c
