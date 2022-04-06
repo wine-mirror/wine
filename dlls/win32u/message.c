@@ -296,6 +296,26 @@ static inline BOOL listbox_has_strings( HWND hwnd )
     return (!(style & (LBS_OWNERDRAWFIXED | LBS_OWNERDRAWVARIABLE)) || (style & LBS_HASSTRINGS));
 }
 
+/* check whether message is in the range of keyboard messages */
+static inline BOOL is_keyboard_message( UINT message )
+{
+    return (message >= WM_KEYFIRST && message <= WM_KEYLAST);
+}
+
+/* check whether message is in the range of mouse messages */
+static inline BOOL is_mouse_message( UINT message )
+{
+    return ((message >= WM_NCMOUSEFIRST && message <= WM_NCMOUSELAST) ||
+            (message >= WM_MOUSEFIRST && message <= WM_MOUSELAST));
+}
+
+/* check whether message matches the specified hwnd filter */
+static inline BOOL check_hwnd_filter( const MSG *msg, HWND hwnd_filter )
+{
+    if (!hwnd_filter || hwnd_filter == get_desktop_window()) return TRUE;
+    return (msg->hwnd == hwnd_filter || is_child( hwnd_filter, msg->hwnd ));
+}
+
 /***********************************************************************
  *           unpack_message
  *
@@ -1225,6 +1245,374 @@ static inline void call_sendmsg_callback( SENDASYNCPROC callback, HWND hwnd, UIN
 }
 
 /***********************************************************************
+ *          accept_hardware_message
+ *
+ * Tell the server we have passed the message to the app
+ * (even though we may end up dropping it later on)
+ */
+static void accept_hardware_message( UINT hw_id )
+{
+    SERVER_START_REQ( accept_hardware_message )
+    {
+        req->hw_id = hw_id;
+        if (wine_server_call( req ))
+            FIXME("Failed to reply to MSG_HARDWARE message. Message may not be removed from queue.\n");
+    }
+    SERVER_END_REQ;
+}
+
+/***********************************************************************
+ *           send_parent_notify
+ *
+ * Send a WM_PARENTNOTIFY to all ancestors of the given window, unless
+ * the window has the WS_EX_NOPARENTNOTIFY style.
+ */
+static void send_parent_notify( HWND hwnd, WORD event, WORD idChild, POINT pt )
+{
+    /* pt has to be in the client coordinates of the parent window */
+    map_window_points( 0, hwnd, &pt, 1, get_thread_dpi() );
+    for (;;)
+    {
+        HWND parent;
+
+        if (!(get_window_long( hwnd, GWL_STYLE ) & WS_CHILD)) break;
+        if (get_window_long( hwnd, GWL_EXSTYLE ) & WS_EX_NOPARENTNOTIFY) break;
+        if (!(parent = get_parent( hwnd ))) break;
+        if (parent == get_desktop_window()) break;
+        map_window_points( hwnd, parent, &pt, 1, get_thread_dpi() );
+        hwnd = parent;
+        send_message( hwnd, WM_PARENTNOTIFY,
+                      MAKEWPARAM( event, idChild ), MAKELPARAM( pt.x, pt.y ) );
+    }
+}
+
+/***********************************************************************
+ *          process_keyboard_message
+ *
+ * returns TRUE if the contents of 'msg' should be passed to the application
+ */
+static BOOL process_keyboard_message( MSG *msg, UINT hw_id, HWND hwnd_filter,
+                                      UINT first, UINT last, BOOL remove )
+{
+    EVENTMSG event;
+
+    if (msg->message == WM_KEYDOWN || msg->message == WM_SYSKEYDOWN ||
+        msg->message == WM_KEYUP || msg->message == WM_SYSKEYUP)
+        switch (msg->wParam)
+        {
+            case VK_LSHIFT: case VK_RSHIFT:
+                msg->wParam = VK_SHIFT;
+                break;
+            case VK_LCONTROL: case VK_RCONTROL:
+                msg->wParam = VK_CONTROL;
+                break;
+            case VK_LMENU: case VK_RMENU:
+                msg->wParam = VK_MENU;
+                break;
+        }
+
+    /* FIXME: is this really the right place for this hook? */
+    event.message = msg->message;
+    event.hwnd    = msg->hwnd;
+    event.time    = msg->time;
+    event.paramL  = (msg->wParam & 0xFF) | (HIWORD(msg->lParam) << 8);
+    event.paramH  = msg->lParam & 0x7FFF;
+    if (HIWORD(msg->lParam) & 0x0100) event.paramH |= 0x8000; /* special_key - bit */
+    call_hooks( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)&event, TRUE );
+
+    /* check message filters */
+    if (msg->message < first || msg->message > last) return FALSE;
+    if (!check_hwnd_filter( msg, hwnd_filter )) return FALSE;
+
+    if (remove)
+    {
+        if((msg->message == WM_KEYDOWN) &&
+           (msg->hwnd != get_desktop_window()))
+        {
+            /* Handle F1 key by sending out WM_HELP message */
+            if (msg->wParam == VK_F1)
+            {
+                NtUserPostMessage( msg->hwnd, WM_KEYF1, 0, 0 );
+            }
+            else if(msg->wParam >= VK_BROWSER_BACK &&
+                    msg->wParam <= VK_LAUNCH_APP2)
+            {
+                /* FIXME: Process keystate */
+                send_message( msg->hwnd, WM_APPCOMMAND, (WPARAM)msg->hwnd,
+                              MAKELPARAM(0, (FAPPCOMMAND_KEY | (msg->wParam - VK_BROWSER_BACK + 1))) );
+            }
+        }
+        else if (msg->message == WM_KEYUP)
+        {
+            /* Handle VK_APPS key by posting a WM_CONTEXTMENU message */
+            if (msg->wParam == VK_APPS && user_callbacks && !user_callbacks->is_menu_active())
+                NtUserPostMessage( msg->hwnd, WM_CONTEXTMENU, (WPARAM)msg->hwnd, -1 );
+        }
+    }
+
+    if (call_hooks( WH_KEYBOARD, remove ? HC_ACTION : HC_NOREMOVE,
+                    LOWORD(msg->wParam), msg->lParam, TRUE ))
+    {
+        /* skip this message */
+        call_hooks( WH_CBT, HCBT_KEYSKIPPED, LOWORD(msg->wParam), msg->lParam, TRUE );
+        accept_hardware_message( hw_id );
+        return FALSE;
+    }
+    if (remove) accept_hardware_message( hw_id );
+    msg->pt = point_phys_to_win_dpi( msg->hwnd, msg->pt );
+
+    if (remove && msg->message == WM_KEYDOWN && user_callbacks)
+        if (user_callbacks->pImmProcessKey( msg->hwnd, NtUserGetKeyboardLayout(0),
+                                            msg->wParam, msg->lParam, 0 ))
+            msg->wParam = VK_PROCESSKEY;
+
+    return TRUE;
+}
+
+/***********************************************************************
+ *          process_mouse_message
+ *
+ * returns TRUE if the contents of 'msg' should be passed to the application
+ */
+static BOOL process_mouse_message( MSG *msg, UINT hw_id, ULONG_PTR extra_info, HWND hwnd_filter,
+                                   UINT first, UINT last, BOOL remove )
+{
+    static MSG clk_msg;
+
+    POINT pt;
+    UINT message;
+    INT hittest;
+    EVENTMSG event;
+    GUITHREADINFO info;
+    MOUSEHOOKSTRUCTEX hook;
+    BOOL eat_msg;
+    WPARAM wparam;
+
+    /* find the window to dispatch this mouse message to */
+
+    info.cbSize = sizeof(info);
+    NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info );
+    if (info.hwndCapture)
+    {
+        hittest = HTCLIENT;
+        msg->hwnd = info.hwndCapture;
+    }
+    else
+    {
+        HWND orig = msg->hwnd;
+
+        msg->hwnd = window_from_point( msg->hwnd, msg->pt, &hittest );
+        if (!msg->hwnd) /* As a heuristic, try the next window if it's the owner of orig */
+        {
+            HWND next = get_window_relative( orig, GW_HWNDNEXT );
+
+            if (next && get_window_relative( orig, GW_OWNER ) == next &&
+                is_current_thread_window( next ))
+                msg->hwnd = window_from_point( next, msg->pt, &hittest );
+        }
+    }
+
+    if (!msg->hwnd || !is_current_thread_window( msg->hwnd ))
+    {
+        accept_hardware_message( hw_id );
+        return FALSE;
+    }
+
+    msg->pt = point_phys_to_win_dpi( msg->hwnd, msg->pt );
+    set_thread_dpi_awareness_context( get_window_dpi_awareness_context( msg->hwnd ));
+
+    /* FIXME: is this really the right place for this hook? */
+    event.message = msg->message;
+    event.time    = msg->time;
+    event.hwnd    = msg->hwnd;
+    event.paramL  = msg->pt.x;
+    event.paramH  = msg->pt.y;
+    call_hooks( WH_JOURNALRECORD, HC_ACTION, 0, (LPARAM)&event, TRUE );
+
+    if (!check_hwnd_filter( msg, hwnd_filter )) return FALSE;
+
+    pt = msg->pt;
+    message = msg->message;
+    wparam = msg->wParam;
+    /* Note: windows has no concept of a non-client wheel message */
+    if (message != WM_MOUSEWHEEL)
+    {
+        if (hittest != HTCLIENT)
+        {
+            message += WM_NCMOUSEMOVE - WM_MOUSEMOVE;
+            wparam = hittest;
+        }
+        else
+        {
+            /* coordinates don't get translated while tracking a menu */
+            /* FIXME: should differentiate popups and top-level menus */
+            if (!(info.flags & GUI_INMENUMODE))
+                screen_to_client( msg->hwnd, &pt );
+        }
+    }
+    msg->lParam = MAKELONG( pt.x, pt.y );
+
+    /* translate double clicks */
+
+    if (msg->message == WM_LBUTTONDOWN ||
+        msg->message == WM_RBUTTONDOWN ||
+        msg->message == WM_MBUTTONDOWN ||
+        msg->message == WM_XBUTTONDOWN)
+    {
+        BOOL update = remove;
+
+        /* translate double clicks -
+	 * note that ...MOUSEMOVEs can slip in between
+	 * ...BUTTONDOWN and ...BUTTONDBLCLK messages */
+
+        if ((info.flags & (GUI_INMENUMODE|GUI_INMOVESIZE)) ||
+            hittest != HTCLIENT ||
+            (get_class_long( msg->hwnd, GCL_STYLE, FALSE ) & CS_DBLCLKS))
+        {
+           if ((msg->message == clk_msg.message) &&
+               (msg->hwnd == clk_msg.hwnd) &&
+               (msg->wParam == clk_msg.wParam) &&
+               (msg->time - clk_msg.time < NtUserGetDoubleClickTime()) &&
+               (abs(msg->pt.x - clk_msg.pt.x) < get_system_metrics( SM_CXDOUBLECLK ) / 2) &&
+               (abs(msg->pt.y - clk_msg.pt.y) < get_system_metrics( SM_CYDOUBLECLK ) / 2))
+           {
+               message += (WM_LBUTTONDBLCLK - WM_LBUTTONDOWN);
+               if (update)
+               {
+                   clk_msg.message = 0;  /* clear the double click conditions */
+                   update = FALSE;
+               }
+           }
+        }
+        if (message < first || message > last) return FALSE;
+        /* update static double click conditions */
+        if (update) clk_msg = *msg;
+    }
+    else
+    {
+        if (message < first || message > last) return FALSE;
+    }
+    msg->wParam = wparam;
+
+    /* message is accepted now (but may still get dropped) */
+
+    hook.pt           = msg->pt;
+    hook.hwnd         = msg->hwnd;
+    hook.wHitTestCode = hittest;
+    hook.dwExtraInfo  = extra_info;
+    hook.mouseData    = msg->wParam;
+    if (call_hooks( WH_MOUSE, remove ? HC_ACTION : HC_NOREMOVE, message, (LPARAM)&hook, TRUE ))
+    {
+        hook.pt           = msg->pt;
+        hook.hwnd         = msg->hwnd;
+        hook.wHitTestCode = hittest;
+        hook.dwExtraInfo  = extra_info;
+        hook.mouseData    = msg->wParam;
+        call_hooks( WH_CBT, HCBT_CLICKSKIPPED, message, (LPARAM)&hook, TRUE );
+        accept_hardware_message( hw_id );
+        return FALSE;
+    }
+
+    if ((hittest == HTERROR) || (hittest == HTNOWHERE))
+    {
+        send_message( msg->hwnd, WM_SETCURSOR, (WPARAM)msg->hwnd, MAKELONG( hittest, msg->message ));
+        accept_hardware_message( hw_id );
+        return FALSE;
+    }
+
+    if (remove) accept_hardware_message( hw_id );
+
+    if (!remove || info.hwndCapture)
+    {
+        msg->message = message;
+        return TRUE;
+    }
+
+    eat_msg = FALSE;
+
+    if (msg->message == WM_LBUTTONDOWN ||
+        msg->message == WM_RBUTTONDOWN ||
+        msg->message == WM_MBUTTONDOWN ||
+        msg->message == WM_XBUTTONDOWN)
+    {
+        /* Send the WM_PARENTNOTIFY,
+         * note that even for double/nonclient clicks
+         * notification message is still WM_L/M/RBUTTONDOWN.
+         */
+        send_parent_notify( msg->hwnd, msg->message, 0, msg->pt );
+
+        /* Activate the window if needed */
+
+        if (msg->hwnd != info.hwndActive)
+        {
+            HWND hwndTop = NtUserGetAncestor( msg->hwnd, GA_ROOT );
+
+            if ((get_window_long( hwndTop, GWL_STYLE ) & (WS_POPUP|WS_CHILD)) != WS_CHILD)
+            {
+                LONG ret = send_message( msg->hwnd, WM_MOUSEACTIVATE, (WPARAM)hwndTop,
+                                         MAKELONG( hittest, msg->message ) );
+                switch(ret)
+                {
+                case MA_NOACTIVATEANDEAT:
+                    eat_msg = TRUE;
+                    /* fall through */
+                case MA_NOACTIVATE:
+                    break;
+                case MA_ACTIVATEANDEAT:
+                    eat_msg = TRUE;
+                    /* fall through */
+                case MA_ACTIVATE:
+                case 0:
+                    if (!set_foreground_window( hwndTop, TRUE )) eat_msg = TRUE;
+                    break;
+                default:
+                    WARN( "unknown WM_MOUSEACTIVATE code %d\n", ret );
+                    break;
+                }
+            }
+        }
+    }
+
+    /* send the WM_SETCURSOR message */
+
+    /* Windows sends the normal mouse message as the message parameter
+       in the WM_SETCURSOR message even if it's non-client mouse message */
+    send_message( msg->hwnd, WM_SETCURSOR, (WPARAM)msg->hwnd, MAKELONG( hittest, msg->message ));
+
+    msg->message = message;
+    return !eat_msg;
+}
+
+/***********************************************************************
+ *           process_hardware_message
+ *
+ * Process a hardware message; return TRUE if message should be passed on to the app
+ */
+static BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data,
+                                      HWND hwnd_filter, UINT first, UINT last, BOOL remove )
+{
+    DPI_AWARENESS_CONTEXT context;
+    BOOL ret = FALSE;
+
+    get_user_thread_info()->msg_source.deviceType = msg_data->source.device;
+    get_user_thread_info()->msg_source.originId   = msg_data->source.origin;
+
+    /* hardware messages are always in physical coords */
+    context = set_thread_dpi_awareness_context( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
+
+    if (msg->message == WM_INPUT || msg->message == WM_INPUT_DEVICE_CHANGE)
+        ret = user_callbacks && user_callbacks->process_rawinput_message( msg, hw_id, msg_data );
+    else if (is_keyboard_message( msg->message ))
+        ret = process_keyboard_message( msg, hw_id, hwnd_filter, first, last, remove );
+    else if (is_mouse_message( msg->message ))
+        ret = process_mouse_message( msg, hw_id, msg_data->info, hwnd_filter, first, last, remove );
+    else
+        ERR( "unknown message type %x\n", msg->message );
+    set_thread_dpi_awareness_context( context );
+    return ret;
+}
+
+/***********************************************************************
  *           peek_message
  *
  * Peek for a message matching the given parameters. Return 0 if none are
@@ -1402,9 +1790,8 @@ static int peek_message( MSG *msg, HWND hwnd, UINT first, UINT last, UINT flags,
             if (size >= sizeof(msg_data->hardware))
             {
                 hw_id = msg_data->hardware.hw_id;
-                if (!user_callbacks) continue;
-                if (!user_callbacks->process_hardware_message( &info.msg, hw_id, &msg_data->hardware,
-                                                               hwnd, first, last, flags & PM_REMOVE ))
+                if (!process_hardware_message( &info.msg, hw_id, &msg_data->hardware,
+                                               hwnd, first, last, flags & PM_REMOVE ))
                 {
                     TRACE("dropping msg %x\n", info.msg.message );
                     continue;  /* ignore it */

@@ -344,7 +344,7 @@ DWORD get_window_thread( HWND hwnd, DWORD *process )
 }
 
 /* see GetParent */
-static HWND get_parent( HWND hwnd )
+HWND get_parent( HWND hwnd )
 {
     HWND retval = 0;
     WND *win;
@@ -479,7 +479,7 @@ HWND WINAPI NtUserSetParent( HWND hwnd, HWND parent )
 }
 
 /* see GetWindow */
-static HWND get_window_relative( HWND hwnd, UINT rel )
+HWND get_window_relative( HWND hwnd, UINT rel )
 {
     HWND retval = 0;
 
@@ -2189,7 +2189,7 @@ static HWND *list_children_from_point( HWND hwnd, POINT pt )
  *
  * Find the window and hittest for a given point.
  */
-static HWND window_from_point( HWND hwnd, POINT pt, INT *hittest )
+HWND window_from_point( HWND hwnd, POINT pt, INT *hittest )
 {
     int i, res;
     HWND ret, *list;
@@ -2588,7 +2588,7 @@ other_process:  /* one of the parents may belong to another process, do it the h
 }
 
 /* see ScreenToClient */
-static BOOL screen_to_client( HWND hwnd, POINT *pt )
+BOOL screen_to_client( HWND hwnd, POINT *pt )
 {
     POINT offset;
     BOOL mirrored;

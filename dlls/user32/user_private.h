@@ -85,8 +85,8 @@ extern void rawinput_update_device_list(void);
 
 extern BOOL post_dde_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DWORD dest_tid,
                               DWORD type ) DECLSPEC_HIDDEN;
-extern BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data,
-                                      HWND hwnd_filter, UINT first, UINT last, BOOL remove ) DECLSPEC_HIDDEN;
+extern BOOL process_rawinput_message( MSG *msg, UINT hw_id,
+                                      const struct hardware_msg_data *msg_data ) DECLSPEC_HIDDEN;
 extern BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
                                 void **buffer, size_t size ) DECLSPEC_HIDDEN;
 
