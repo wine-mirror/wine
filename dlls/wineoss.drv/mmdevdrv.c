@@ -430,8 +430,6 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev,
         IAudioClient **out)
 {
     ACImpl *This;
-    struct oss_stream *stream;
-    oss_audioinfo ai;
     const OSSDevice *oss_dev;
     HRESULT hr;
     int len;
@@ -448,56 +446,14 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev,
     if(!This)
         return E_OUTOFMEMORY;
 
-    stream = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This->stream));
-    if(!stream){
-        HeapFree(GetProcessHeap(), 0, This);
-        return E_OUTOFMEMORY;
-    }
-    stream->flow = oss_dev->flow;
-    This->stream = stream;
-
     hr = CoCreateFreeThreadedMarshaler((IUnknown *)&This->IAudioClient3_iface, &This->pUnkFTMarshal);
     if (FAILED(hr)) {
-         HeapFree(GetProcessHeap(), 0, stream);
          HeapFree(GetProcessHeap(), 0, This);
          return hr;
     }
 
-    stream->fd = open_device(oss_dev->devnode, oss_dev->flow);
-    if(stream->fd < 0){
-        WARN("Unable to open device %s: %d (%s)\n", oss_dev->devnode, errno,
-                strerror(errno));
-        HeapFree(GetProcessHeap(), 0, stream);
-        HeapFree(GetProcessHeap(), 0, This);
-        return AUDCLNT_E_DEVICE_INVALIDATED;
-    }
-
     This->dataflow = oss_dev->flow;
-
-    ai.dev = -1;
-    if(ioctl(stream->fd, SNDCTL_ENGINEINFO, &ai) < 0){
-        WARN("Unable to get audio info for device %s: %d (%s)\n", oss_dev->devnode,
-                errno, strerror(errno));
-        close(stream->fd);
-        HeapFree(GetProcessHeap(), 0, stream);
-        HeapFree(GetProcessHeap(), 0, This);
-        return E_FAIL;
-    }
-
     strcpy(This->devnode, oss_dev->devnode);
-
-    TRACE("OSS audioinfo:\n");
-    TRACE("devnode: %s\n", ai.devnode);
-    TRACE("name: %s\n", ai.name);
-    TRACE("busy: %x\n", ai.busy);
-    TRACE("caps: %x\n", ai.caps);
-    TRACE("iformats: %x\n", ai.iformats);
-    TRACE("oformats: %x\n", ai.oformats);
-    TRACE("enabled: %d\n", ai.enabled);
-    TRACE("min_rate: %d\n", ai.min_rate);
-    TRACE("max_rate: %d\n", ai.max_rate);
-    TRACE("min_channels: %d\n", ai.min_channels);
-    TRACE("max_channels: %d\n", ai.max_channels);
 
     This->IAudioClient3_iface.lpVtbl = &AudioClient3_Vtbl;
     This->IAudioRenderClient_iface.lpVtbl = &AudioRenderClient_Vtbl;
@@ -576,17 +532,19 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
         IUnknown_Release(This->pUnkFTMarshal);
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
-        close(stream->fd);
         if(This->initted){
             EnterCriticalSection(&g_sessions_lock);
             list_remove(&This->entry);
             LeaveCriticalSection(&g_sessions_lock);
         }
         HeapFree(GetProcessHeap(), 0, This->vols);
-        HeapFree(GetProcessHeap(), 0, stream->local_buffer);
-        HeapFree(GetProcessHeap(), 0, stream->tmp_buffer);
-        CoTaskMemFree(stream->fmt);
-        HeapFree(GetProcessHeap(), 0, stream);
+        if(stream){
+            close(stream->fd);
+            HeapFree(GetProcessHeap(), 0, stream->local_buffer);
+            HeapFree(GetProcessHeap(), 0, stream->tmp_buffer);
+            CoTaskMemFree(stream->fmt);
+            HeapFree(GetProcessHeap(), 0, stream);
+        }
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -882,7 +840,8 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         const GUID *sessionguid)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    struct oss_stream *stream = This->stream;
+    struct oss_stream *stream;
+    oss_audioinfo ai;
     int i;
     HRESULT hr;
 
@@ -942,18 +901,49 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         return AUDCLNT_E_ALREADY_INITIALIZED;
     }
 
-    hr = setup_oss_device(mode, stream->fd, fmt, NULL);
-    if(FAILED(hr)){
-        LeaveCriticalSection(&This->lock);
-        LeaveCriticalSection(&g_sessions_lock);
-        return hr;
-    }
-
-    stream->fmt = clone_format(fmt);
-    if(!stream->fmt){
+    stream = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This->stream));
+    if(!stream){
         LeaveCriticalSection(&This->lock);
         LeaveCriticalSection(&g_sessions_lock);
         return E_OUTOFMEMORY;
+    }
+    stream->flow = This->dataflow;
+
+    stream->fd = open_device(This->devnode, This->dataflow);
+    if(stream->fd < 0){
+        WARN("Unable to open device %s: %d (%s)\n", This->devnode, errno, strerror(errno));
+        hr = AUDCLNT_E_DEVICE_INVALIDATED;
+        goto exit;
+    }
+
+    ai.dev = -1;
+    if(ioctl(stream->fd, SNDCTL_ENGINEINFO, &ai) < 0){
+        WARN("Unable to get audio info for device %s: %d (%s)\n", This->devnode, errno, strerror(errno));
+        hr = E_FAIL;
+        goto exit;
+    }
+
+    TRACE("OSS audioinfo:\n");
+    TRACE("devnode: %s\n", ai.devnode);
+    TRACE("name: %s\n", ai.name);
+    TRACE("busy: %x\n", ai.busy);
+    TRACE("caps: %x\n", ai.caps);
+    TRACE("iformats: %x\n", ai.iformats);
+    TRACE("oformats: %x\n", ai.oformats);
+    TRACE("enabled: %d\n", ai.enabled);
+    TRACE("min_rate: %d\n", ai.min_rate);
+    TRACE("max_rate: %d\n", ai.max_rate);
+    TRACE("min_channels: %d\n", ai.min_channels);
+    TRACE("max_channels: %d\n", ai.max_channels);
+
+    hr = setup_oss_device(mode, stream->fd, fmt, NULL);
+    if(FAILED(hr))
+        goto exit;
+
+    stream->fmt = clone_format(fmt);
+    if(!stream->fmt){
+        hr = E_OUTOFMEMORY;
+        goto exit;
     }
 
     stream->period_us = period / 10;
@@ -965,23 +955,16 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     stream->local_buffer = HeapAlloc(GetProcessHeap(), 0,
             stream->bufsize_frames * fmt->nBlockAlign);
     if(!stream->local_buffer){
-        CoTaskMemFree(stream->fmt);
-        stream->fmt = NULL;
-        LeaveCriticalSection(&This->lock);
-        LeaveCriticalSection(&g_sessions_lock);
-        return E_OUTOFMEMORY;
+        hr = E_OUTOFMEMORY;
+        goto exit;
     }
 
     This->channel_count = fmt->nChannels;
     This->vols = HeapAlloc(GetProcessHeap(), 0, This->channel_count * sizeof(float));
     if(!This->vols){
-        CoTaskMemFree(stream->fmt);
-        stream->fmt = NULL;
-        LeaveCriticalSection(&This->lock);
-        LeaveCriticalSection(&g_sessions_lock);
-        return E_OUTOFMEMORY;
+        hr = E_OUTOFMEMORY;
+        goto exit;
     }
-
     for(i = 0; i < This->channel_count; ++i)
         This->vols[i] = 1.f;
 
@@ -991,24 +974,25 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 
     hr = get_audio_session(sessionguid, This->parent, This->channel_count,
             &This->session);
+
+exit:
     if(FAILED(hr)){
         HeapFree(GetProcessHeap(), 0, This->vols);
         This->vols = NULL;
         CoTaskMemFree(stream->fmt);
-        stream->fmt = NULL;
-        LeaveCriticalSection(&This->lock);
-        LeaveCriticalSection(&g_sessions_lock);
-        return hr;
+        if(stream->fd >= 0) close(stream->fd);
+        HeapFree(GetProcessHeap(), 0, stream->local_buffer);
+        HeapFree(GetProcessHeap(), 0, stream);
+    } else {
+        list_add_tail(&This->session->clients, &This->entry);
+        This->stream = stream;
+        This->initted = TRUE;
     }
-
-    list_add_tail(&This->session->clients, &This->entry);
-
-    This->initted = TRUE;
 
     LeaveCriticalSection(&This->lock);
     LeaveCriticalSection(&g_sessions_lock);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI AudioClient_GetBufferSize(IAudioClient3 *iface,
@@ -1129,7 +1113,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
     ACImpl *This = impl_from_IAudioClient3(iface);
     WAVEFORMATEXTENSIBLE *fmt;
     oss_audioinfo ai;
-    int formats;
+    int formats, fd;
 
     TRACE("(%p)->(%p)\n", This, pwfx);
 
@@ -1137,12 +1121,20 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
         return E_POINTER;
     *pwfx = NULL;
 
+    fd = open_device(This->devnode, This->dataflow);
+    if(fd < 0){
+        WARN("Unable to open device %s: %d (%s)\n", This->devnode, errno, strerror(errno));
+        return AUDCLNT_E_DEVICE_INVALIDATED;
+    }
+
     ai.dev = -1;
-    if(ioctl(This->stream->fd, SNDCTL_ENGINEINFO, &ai) < 0){
+    if(ioctl(fd, SNDCTL_ENGINEINFO, &ai) < 0){
         WARN("Unable to get audio info for device %s: %d (%s)\n", This->devnode,
                 errno, strerror(errno));
+        close(fd);
         return E_FAIL;
     }
+    close(fd);
 
     if(This->dataflow == eRender)
         formats = ai.oformats;
