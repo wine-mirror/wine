@@ -64,7 +64,7 @@ cpp_quote("#endif")
         {
             [propput] HRESULT Completed([in] Windows.Foundation.AsyncOperationCompletedHandler<TResult> *handler);
             [propget] HRESULT Completed([out, retval] Windows.Foundation.AsyncOperationCompletedHandler<TResult> **handler);
-            HRESULT GetResults([out, retval] TResult **results);
+            HRESULT GetResults([out, retval] TResult *results);
         }
 
         [
