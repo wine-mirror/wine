@@ -32,6 +32,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(speech);
 struct async_operation
 {
     IAsyncOperation_IInspectable IAsyncOperation_IInspectable_iface;
+    IAsyncInfo IAsyncInfo_iface;
     const GUID *iid;
     LONG ref;
 };
@@ -53,6 +54,12 @@ static HRESULT WINAPI async_operation_QueryInterface( IAsyncOperation_IInspectab
         IsEqualGUID(iid, impl->iid))
     {
         IInspectable_AddRef((*out = &impl->IAsyncOperation_IInspectable_iface));
+        return S_OK;
+    }
+
+    if (IsEqualGUID(iid, &IID_IAsyncInfo))
+    {
+        IInspectable_AddRef((*out = &impl->IAsyncInfo_iface));
         return S_OK;
     }
 
@@ -136,6 +143,62 @@ static const struct IAsyncOperation_IInspectableVtbl async_operation_vtbl =
     async_operation_GetResults
 };
 
+/*
+ *
+ * IAsyncInfo
+ *
+ */
+
+DEFINE_IINSPECTABLE(async_operation_info, IAsyncInfo, struct async_operation, IAsyncOperation_IInspectable_iface)
+
+static HRESULT WINAPI async_operation_info_get_Id( IAsyncInfo *iface, UINT32 *id )
+{
+    FIXME("iface %p, id %p stub!\n", iface, id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI async_operation_info_get_Status( IAsyncInfo *iface, AsyncStatus *status )
+{
+    FIXME("iface %p, status %p stub!\n", iface, status);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI async_operation_info_get_ErrorCode( IAsyncInfo *iface, HRESULT *error_code )
+{
+    FIXME("iface %p, error_code %p stub!\n", iface, error_code);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI async_operation_info_Cancel( IAsyncInfo *iface )
+{
+    FIXME("iface %p stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI async_operation_info_Close( IAsyncInfo *iface )
+{
+    FIXME("iface %p stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static const struct IAsyncInfoVtbl async_operation_info_vtbl =
+{
+    /* IUnknown methods */
+    async_operation_info_QueryInterface,
+    async_operation_info_AddRef,
+    async_operation_info_Release,
+    /* IInspectable methods */
+    async_operation_info_GetIids,
+    async_operation_info_GetRuntimeClassName,
+    async_operation_info_GetTrustLevel,
+    /* IAsyncInfo */
+    async_operation_info_get_Id,
+    async_operation_info_get_Status,
+    async_operation_info_get_ErrorCode,
+    async_operation_info_Cancel,
+    async_operation_info_Close
+};
+
 HRESULT async_operation_create( const GUID *iid, IAsyncOperation_IInspectable **out )
 {
     struct async_operation *impl;
@@ -147,6 +210,7 @@ HRESULT async_operation_create( const GUID *iid, IAsyncOperation_IInspectable **
     }
 
     impl->IAsyncOperation_IInspectable_iface.lpVtbl = &async_operation_vtbl;
+    impl->IAsyncInfo_iface.lpVtbl = &async_operation_info_vtbl;
     impl->iid = iid;
     impl->ref = 1;
 
