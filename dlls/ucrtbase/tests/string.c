@@ -491,6 +491,20 @@ static void test__strnicmp(void)
     ok(!ret, "got %d.\n", ret);
 }
 
+static void test_wcsnicmp(void)
+{
+    static const wchar_t str1[] = L"TEST";
+    static const wchar_t str2[] = L"test";
+    int ret;
+
+    errno = 0xdeadbeef;
+    ret = wcsnicmp(str1, str2, -1);
+    ok(!ret, "got %d.\n", ret);
+
+    ret = wcsnicmp(str1, str2, 0x7fffffff);
+    ok(!ret, "got %d.\n", ret);
+}
+
 static void test_SpecialCasing(void)
 {
     int i;
@@ -602,6 +616,7 @@ START_TEST(string)
     test_mbsspn();
     test_wcstok();
     test__strnicmp();
+    test_wcsnicmp();
     test_SpecialCasing();
     test__mbbtype_l();
 }
