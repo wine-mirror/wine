@@ -3107,7 +3107,7 @@ static void EDIT_WM_Paste(EDITSTATE *es)
             /* clear selected text in password edit box even with empty clipboard */
             EDIT_EM_ReplaceSel(es, TRUE, NULL, 0, TRUE, TRUE);
         }
-	CloseClipboard();
+	NtUserCloseClipboard();
 }
 
 
@@ -3136,7 +3136,7 @@ static void EDIT_WM_Copy(EDITSTATE *es)
 	OpenClipboard(es->hwndSelf);
 	EmptyClipboard();
 	SetClipboardData(CF_UNICODETEXT, hdst);
-	CloseClipboard();
+	NtUserCloseClipboard();
 }
 
 

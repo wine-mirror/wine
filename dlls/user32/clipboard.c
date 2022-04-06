@@ -675,31 +675,6 @@ BOOL WINAPI OpenClipboard( HWND hwnd )
 
 
 /**************************************************************************
- *		CloseClipboard (USER32.@)
- */
-BOOL WINAPI CloseClipboard(void)
-{
-    HWND viewer = 0, owner = 0;
-    BOOL ret;
-
-    TRACE( "\n" );
-
-    SERVER_START_REQ( close_clipboard )
-    {
-        if ((ret = !wine_server_call_err( req )))
-        {
-            viewer = wine_server_ptr_handle( reply->viewer );
-            owner = wine_server_ptr_handle( reply->owner );
-        }
-    }
-    SERVER_END_REQ;
-
-    if (viewer) SendNotifyMessageW( viewer, WM_DRAWCLIPBOARD, (WPARAM)owner, 0 );
-    return ret;
-}
-
-
-/**************************************************************************
  *		EmptyClipboard (USER32.@)
  * Empties and acquires ownership of the clipboard
  */

@@ -77,6 +77,31 @@ static const char *debugstr_format( UINT id )
 }
 
 /**************************************************************************
+ *           NtUserCloseClipboard    (win32u.@)
+ */
+BOOL WINAPI NtUserCloseClipboard(void)
+{
+    HWND viewer = 0, owner = 0;
+    BOOL ret;
+
+    TRACE( "\n" );
+
+    SERVER_START_REQ( close_clipboard )
+    {
+        if ((ret = !wine_server_call_err( req )))
+        {
+            viewer = wine_server_ptr_handle( reply->viewer );
+            owner = wine_server_ptr_handle( reply->owner );
+        }
+    }
+    SERVER_END_REQ;
+
+    if (viewer) NtUserMessageCall( viewer, WM_DRAWCLIPBOARD, (WPARAM)owner, 0,
+                                   0, FNID_SENDNOTIFYMESSAGE, FALSE );
+    return ret;
+}
+
+/**************************************************************************
  *           NtUserCountClipboardFormats    (win32u.@)
  */
 INT WINAPI NtUserCountClipboardFormats(void)

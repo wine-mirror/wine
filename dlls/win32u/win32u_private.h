@@ -194,6 +194,7 @@ struct unix_funcs
     LONG     (WINAPI *pNtUserChangeDisplaySettings)( UNICODE_STRING *devname, DEVMODEW *devmode, HWND hwnd,
                                                      DWORD flags, void *lparam );
     BOOL     (WINAPI *pNtUserClipCursor)( const RECT *rect );
+    BOOL     (WINAPI *pNtUserCloseClipboard)(void);
     INT      (WINAPI *pNtUserCountClipboardFormats)(void);
     HWND     (WINAPI *pNtUserCreateWindowEx)( DWORD ex_style, UNICODE_STRING *class_name,
                                               UNICODE_STRING *version, UNICODE_STRING *window_name,

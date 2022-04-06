@@ -793,7 +793,7 @@
 @ stub NtUserChildWindowFromPointEx
 @ stub NtUserClearForeground
 @ stdcall NtUserClipCursor(ptr)
-@ stub NtUserCloseClipboard
+@ stdcall NtUserCloseClipboard()
 @ stdcall -syscall NtUserCloseDesktop(long)
 @ stdcall -syscall NtUserCloseWindowStation(long)
 @ stub NtUserCompositionInputSinkLuidFromPoint

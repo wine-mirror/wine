@@ -749,6 +749,12 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
     return unix_funcs->pNtUserCallHwndParam( hwnd, param, code );
 }
 
+BOOL WINAPI NtUserCloseClipboard(void)
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserCloseClipboard();
+}
+
 LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devmode, HWND hwnd,
                                          DWORD flags, void *lparam )
 {
