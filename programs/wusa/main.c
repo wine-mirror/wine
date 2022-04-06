@@ -477,6 +477,14 @@ static BOOL strbuf_append(struct strbuf *buf, const WCHAR *str, DWORD len)
     return TRUE;
 }
 
+static BOOL assembly_is_wow64(const struct assembly_entry *assembly)
+{
+#ifdef __x86_64__
+    return !wcsicmp(assembly->identity.architecture, L"x86") || !wcsicmp(assembly->identity.architecture, L"wow64");
+#endif
+    return FALSE;
+}
+
 static WCHAR *lookup_expression(struct assembly_entry *assembly, const WCHAR *key)
 {
     WCHAR path[MAX_PATH];
@@ -484,25 +492,19 @@ static WCHAR *lookup_expression(struct assembly_entry *assembly, const WCHAR *ke
 
     if (!wcsicmp(key, L"runtime.system32") || !wcsicmp(key, L"runtime.drivers") || !wcsicmp(key, L"runtime.wbem"))
     {
-#ifdef __x86_64__
-        if (!wcsicmp(assembly->identity.architecture, L"x86")) csidl = CSIDL_SYSTEMX86;
-#endif
-        if (!csidl) csidl = CSIDL_SYSTEM;
+        if (assembly_is_wow64(assembly)) csidl = CSIDL_SYSTEMX86;
+        else csidl = CSIDL_SYSTEM;
     }
     else if (!wcsicmp(key, L"runtime.windows") || !wcsicmp(key, L"runtime.inf")) csidl = CSIDL_WINDOWS;
     else if (!wcsicmp(key, L"runtime.programfiles"))
     {
-#ifdef __x86_64__
-        if (!wcsicmp(assembly->identity.architecture, L"x86")) csidl = CSIDL_PROGRAM_FILESX86;
-#endif
-        if (!csidl) csidl = CSIDL_PROGRAM_FILES;
+        if (assembly_is_wow64(assembly)) csidl = CSIDL_PROGRAM_FILESX86;
+        else csidl = CSIDL_PROGRAM_FILES;
     }
     else if (!wcsicmp(key, L"runtime.commonfiles"))
     {
-#ifdef __x86_64__
-        if (!wcsicmp(assembly->identity.architecture, L"x86")) csidl = CSIDL_PROGRAM_FILES_COMMONX86;
-#endif
-        if (!csidl) csidl = CSIDL_PROGRAM_FILES_COMMON;
+        if (assembly_is_wow64(assembly)) csidl = CSIDL_PROGRAM_FILES_COMMONX86;
+        else csidl = CSIDL_PROGRAM_FILES_COMMON;
     }
 #ifdef __x86_64__
     else if (!wcsicmp(key, L"runtime.programfilesx86")) csidl = CSIDL_PROGRAM_FILESX86;
