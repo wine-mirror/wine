@@ -67,10 +67,21 @@ struct get_endpoint_ids_params
     unsigned int default_idx;
 };
 
+struct is_format_supported_params
+{
+    const char *device;
+    EDataFlow flow;
+    AUDCLNT_SHAREMODE share;
+    const WAVEFORMATEX *fmt_in;
+    WAVEFORMATEXTENSIBLE *fmt_out;
+    HRESULT result;
+};
+
 enum oss_funcs
 {
     oss_test_connect,
     oss_get_endpoint_ids,
+    oss_is_format_supported,
 };
 
 extern unixlib_handle_t oss_handle;

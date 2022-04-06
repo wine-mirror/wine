@@ -1094,45 +1094,34 @@ static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient3 *iface,
 }
 
 static HRESULT WINAPI AudioClient_IsFormatSupported(IAudioClient3 *iface,
-        AUDCLNT_SHAREMODE mode, const WAVEFORMATEX *pwfx,
-        WAVEFORMATEX **outpwfx)
+        AUDCLNT_SHAREMODE mode, const WAVEFORMATEX *fmt,
+        WAVEFORMATEX **out)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    int fd = -1;
-    HRESULT ret;
+    struct is_format_supported_params params;
 
-    TRACE("(%p)->(%x, %p, %p)\n", This, mode, pwfx, outpwfx);
+    TRACE("(%p)->(%x, %p, %p)\n", This, mode, fmt, out);
+    if(fmt) dump_fmt(fmt);
 
-    if(!pwfx || (mode == AUDCLNT_SHAREMODE_SHARED && !outpwfx))
-        return E_POINTER;
+    params.device = This->devnode;
+    params.flow = This->dataflow;
+    params.share = mode;
+    params.fmt_in = fmt;
+    params.fmt_out = NULL;
 
-    if(mode != AUDCLNT_SHAREMODE_SHARED && mode != AUDCLNT_SHAREMODE_EXCLUSIVE)
-        return E_INVALIDARG;
-
-    if(pwfx->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-            pwfx->cbSize < sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX))
-        return E_INVALIDARG;
-
-    dump_fmt(pwfx);
-
-    if(outpwfx){
-        *outpwfx = NULL;
-        if(mode != AUDCLNT_SHAREMODE_SHARED)
-            outpwfx = NULL;
+    if(out){
+        *out = NULL;
+        if(mode == AUDCLNT_SHAREMODE_SHARED)
+            params.fmt_out = CoTaskMemAlloc(sizeof(*params.fmt_out));
     }
+    OSS_CALL(is_format_supported, &params);
 
-    fd = open_device(This->devnode, This->dataflow);
-    if(fd < 0){
-        WARN("Unable to open device %s: %d (%s)\n", This->devnode, errno,
-                strerror(errno));
-        return AUDCLNT_E_DEVICE_INVALIDATED;
-    }
+    if(params.result == S_FALSE)
+        *out = &params.fmt_out->Format;
+    else
+        CoTaskMemFree(params.fmt_out);
 
-    ret = setup_oss_device(mode, fd, pwfx, outpwfx);
-
-    close(fd);
-
-    return ret;
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,

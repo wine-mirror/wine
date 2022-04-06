@@ -35,6 +35,7 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "winternl.h"
+#include "initguid.h"
 #include "audioclient.h"
 
 #include "wine/debug.h"
@@ -294,8 +295,209 @@ static NTSTATUS get_endpoint_ids(void *args)
     return STATUS_SUCCESS;
 }
 
+static UINT get_channel_mask(unsigned int channels)
+{
+    switch(channels){
+    case 0:
+        return 0;
+    case 1:
+        return KSAUDIO_SPEAKER_MONO;
+    case 2:
+        return KSAUDIO_SPEAKER_STEREO;
+    case 3:
+        return KSAUDIO_SPEAKER_STEREO | SPEAKER_LOW_FREQUENCY;
+    case 4:
+        return KSAUDIO_SPEAKER_QUAD;    /* not _SURROUND */
+    case 5:
+        return KSAUDIO_SPEAKER_QUAD | SPEAKER_LOW_FREQUENCY;
+    case 6:
+        return KSAUDIO_SPEAKER_5POINT1; /* not 5POINT1_SURROUND */
+    case 7:
+        return KSAUDIO_SPEAKER_5POINT1 | SPEAKER_BACK_CENTER;
+    case 8:
+        return KSAUDIO_SPEAKER_7POINT1_SURROUND; /* Vista deprecates 7POINT1 */
+    }
+    FIXME("Unknown speaker configuration: %u\n", channels);
+    return 0;
+}
+
+static int get_oss_format(const WAVEFORMATEX *fmt)
+{
+    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)fmt;
+
+    if(fmt->wFormatTag == WAVE_FORMAT_PCM ||
+            (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))){
+        switch(fmt->wBitsPerSample){
+        case 8:
+            return AFMT_U8;
+        case 16:
+            return AFMT_S16_LE;
+        case 24:
+            return AFMT_S24_LE;
+        case 32:
+            return AFMT_S32_LE;
+        }
+        return -1;
+    }
+
+#ifdef AFMT_FLOAT
+    if(fmt->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
+            (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))){
+        if(fmt->wBitsPerSample != 32)
+            return -1;
+
+        return AFMT_FLOAT;
+    }
+#endif
+
+    return -1;
+}
+
+static WAVEFORMATEXTENSIBLE *clone_format(const WAVEFORMATEX *fmt)
+{
+    WAVEFORMATEXTENSIBLE *ret;
+    size_t size;
+
+    if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+        size = sizeof(WAVEFORMATEXTENSIBLE);
+    else
+        size = sizeof(WAVEFORMATEX);
+
+    ret = malloc(size);
+    if(!ret)
+        return NULL;
+
+    memcpy(ret, fmt, size);
+
+    ret->Format.cbSize = size - sizeof(WAVEFORMATEX);
+
+    return ret;
+}
+
+static HRESULT setup_oss_device(AUDCLNT_SHAREMODE share, int fd,
+                                const WAVEFORMATEX *fmt, WAVEFORMATEXTENSIBLE *out)
+{
+    const WAVEFORMATEXTENSIBLE *fmtex = (const WAVEFORMATEXTENSIBLE *)fmt;
+    int tmp, oss_format;
+    double tenth;
+    HRESULT ret = S_OK;
+    WAVEFORMATEXTENSIBLE *closest;
+
+    tmp = oss_format = get_oss_format(fmt);
+    if(oss_format < 0)
+        return AUDCLNT_E_UNSUPPORTED_FORMAT;
+    if(ioctl(fd, SNDCTL_DSP_SETFMT, &tmp) < 0){
+        WARN("SETFMT failed: %d (%s)\n", errno, strerror(errno));
+        return E_FAIL;
+    }
+    if(tmp != oss_format){
+        TRACE("Format unsupported by this OSS version: %x\n", oss_format);
+        return AUDCLNT_E_UNSUPPORTED_FORMAT;
+    }
+
+    if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+            (fmtex->Format.nAvgBytesPerSec == 0 ||
+             fmtex->Format.nBlockAlign == 0 ||
+             fmtex->Samples.wValidBitsPerSample > fmtex->Format.wBitsPerSample))
+        return E_INVALIDARG;
+
+    if(fmt->nChannels == 0)
+        return AUDCLNT_E_UNSUPPORTED_FORMAT;
+
+    closest = clone_format(fmt);
+    if(!closest)
+        return E_OUTOFMEMORY;
+
+    tmp = fmt->nSamplesPerSec;
+    if(ioctl(fd, SNDCTL_DSP_SPEED, &tmp) < 0){
+        WARN("SPEED failed: %d (%s)\n", errno, strerror(errno));
+        free(closest);
+        return E_FAIL;
+    }
+    tenth = fmt->nSamplesPerSec * 0.1;
+    if(tmp > fmt->nSamplesPerSec + tenth || tmp < fmt->nSamplesPerSec - tenth){
+        ret = S_FALSE;
+        closest->Format.nSamplesPerSec = tmp;
+    }
+
+    tmp = fmt->nChannels;
+    if(ioctl(fd, SNDCTL_DSP_CHANNELS, &tmp) < 0){
+        WARN("CHANNELS failed: %d (%s)\n", errno, strerror(errno));
+        free(closest);
+        return E_FAIL;
+    }
+    if(tmp != fmt->nChannels){
+        ret = S_FALSE;
+        closest->Format.nChannels = tmp;
+    }
+
+    if(closest->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+        closest->dwChannelMask = get_channel_mask(closest->Format.nChannels);
+
+    if(fmt->nBlockAlign != fmt->nChannels * fmt->wBitsPerSample / 8 ||
+            fmt->nAvgBytesPerSec != fmt->nBlockAlign * fmt->nSamplesPerSec ||
+            (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+             fmtex->Samples.wValidBitsPerSample < fmtex->Format.wBitsPerSample))
+        ret = S_FALSE;
+
+    if(share == AUDCLNT_SHAREMODE_EXCLUSIVE &&
+            fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
+        if(fmtex->dwChannelMask == 0 || fmtex->dwChannelMask & SPEAKER_RESERVED)
+            ret = S_FALSE;
+    }
+
+    if(ret == S_FALSE && !out)
+        ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
+
+    if(ret == S_FALSE && out){
+        closest->Format.nBlockAlign =
+            closest->Format.nChannels * closest->Format.wBitsPerSample / 8;
+        closest->Format.nAvgBytesPerSec =
+            closest->Format.nBlockAlign * closest->Format.nSamplesPerSec;
+        if(closest->Format.wFormatTag == WAVE_FORMAT_EXTENSIBLE)
+            closest->Samples.wValidBitsPerSample = closest->Format.wBitsPerSample;
+        memcpy(out, closest, closest->Format.cbSize + sizeof(WAVEFORMATEX));
+    }
+    free(closest);
+
+    TRACE("returning: %08x\n", ret);
+    return ret;
+}
+
+static NTSTATUS is_format_supported(void *args)
+{
+    struct is_format_supported_params *params = args;
+    int fd;
+
+    params->result = S_OK;
+
+    if(!params->fmt_in || (params->share == AUDCLNT_SHAREMODE_SHARED && !params->fmt_out))
+        params->result = E_POINTER;
+    else if(params->share != AUDCLNT_SHAREMODE_SHARED && params->share != AUDCLNT_SHAREMODE_EXCLUSIVE)
+        params->result = E_INVALIDARG;
+    else if(params->fmt_in->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+            params->fmt_in->cbSize < sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX))
+        params->result = E_INVALIDARG;
+    if(FAILED(params->result))
+        return STATUS_SUCCESS;
+
+    fd = open_device(params->device, params->flow);
+    if(fd < 0){
+        WARN("Unable to open device %s: %d (%s)\n", params->device, errno, strerror(errno));
+        params->result = AUDCLNT_E_DEVICE_INVALIDATED;
+        return STATUS_SUCCESS;
+    }
+    params->result = setup_oss_device(params->share, fd, params->fmt_in, params->fmt_out);
+    close(fd);
+
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     test_connect,
     get_endpoint_ids,
+    is_format_supported,
 };
