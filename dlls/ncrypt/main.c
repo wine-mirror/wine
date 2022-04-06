@@ -374,7 +374,7 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
     }
     else if (flags)
     {
-        ERR("Invalid flags %#lx\n", flags);
+        WARN("Invalid flags %#lx\n", flags);
         return NTE_BAD_FLAGS;
     }
 
