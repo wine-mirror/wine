@@ -120,6 +120,12 @@ static const char manifest3[] =
 "        numMethods=\"10\""
 "        baseInterface=\"{66666666-8888-7777-6666-555555555557}\""
 "    />"
+"    <activatableClass name=\"Wine.Test.Class1\" threadingModel=\"mta\" xmlns=\"urn:schemas-microsoft-com:winrt.v1\"/>"
+"    <activatableClass name=\"Wine.Test.Class2\" threadingModel=\"both\" xmlns=\"urn:schemas-microsoft-com:winrt.v1\"/>"
+"    <activatableClass name=\"Wine.Test.Class3\" threadingModel=\"sta\" xmlns=\"urn:schemas-microsoft-com:winrt.v1\"/>"
+"</file>"
+"<file name=\"Wine.Test.dll\">"
+"    <activatableClass name=\"Wine.Test.Class4\" threadingModel=\"sta\" xmlns=\"urn:schemas-microsoft-com:winrt.v1\"/>"
 "</file>"
 "    <comInterfaceExternalProxyStub "
 "        name=\"Iifaceps2\""
@@ -393,6 +399,15 @@ static const char wrong_manifest10[] =
 "        </requestedPrivileges>"
 "    </security>"
 "</trustInfo>"
+"</assembly>";
+
+/* activatableClass with the wrong xmlns is invalid */
+static const char wrong_manifest11[] =
+"<assembly xmlns=\"urn:schemas-microsoft-com:asm.v1\" manifestVersion=\"1.0\">"
+"<assemblyIdentity version=\"1.0.0.0\" name=\"Wine.Test\" type=\"win32\" />"
+"<file name=\"testlib.dll\">"
+"    <activatableClass name=\"Wine.Test.Class1\" threadingModel=\"both\" />"
+"</file>"
 "</assembly>";
 
 static const char wrong_depmanifest1[] =
@@ -1092,6 +1107,8 @@ static void test_create_fail(void)
     test_create_and_fail(wrong_manifest9, NULL, 0, TRUE /* WinXP */);
     trace("wrong_manifest10\n");
     test_create_and_fail(wrong_manifest10, NULL, 0, TRUE /* WinXP */);
+    trace("wrong_manifest11\n");
+    test_create_and_fail(wrong_manifest11, NULL, 1, FALSE);
     trace("UTF-16 manifest1 without BOM\n");
     test_create_wide_and_fail(manifest1, FALSE );
     trace("manifest2\n");
@@ -1350,6 +1367,70 @@ static void test_find_window_class(HANDLE handle, LPCWSTR clsname, ULONG exid, i
        data.ulAssemblyRosterIndex, exid);
 
     ReleaseActCtx(handle);
+}
+
+enum winrt_threading_model
+{
+    WINRT_THREADING_MODEL_BOTH = 0,
+    WINRT_THREADING_MODEL_STA = 1,
+    WINRT_THREADING_MODEL_MTA = 2,
+};
+
+struct activatable_class_data
+{
+    ULONG size;
+    DWORD unk;
+    DWORD module_len;
+    DWORD module_offset;
+    DWORD threading_model;
+};
+
+static void test_find_activatable_class(HANDLE handle, const WCHAR *classid, enum winrt_threading_model threading_model,
+                                        const WCHAR *file, ULONG exid, int line)
+{
+    struct activatable_class_data *activatable_class;
+    struct strsection_header *header;
+    ACTCTX_SECTION_KEYED_DATA data;
+    void *ptr;
+    BOOL ret;
+
+    memset(&data, 0xfe, sizeof(data));
+    data.cbSize = sizeof(data);
+
+    ret = FindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_WINRT_ACTIVATABLE_CLASSES, classid, &data);
+    todo_wine
+    ok_(__FILE__, line)(ret || broken(!ret) /* <= Win10 v1809 */, "FindActCtxSectionStringW failed, error %lu\n", GetLastError());
+    if (!ret)
+    {
+        ok_(__FILE__, line)(GetLastError() == ERROR_SXS_SECTION_NOT_FOUND, "got error %lu\n", GetLastError());
+        return;
+    }
+
+    ok_(__FILE__, line)(data.cbSize == sizeof(data), "got cbSize %lu\n", data.cbSize);
+    ok_(__FILE__, line)(data.ulDataFormatVersion == 1, "got ulDataFormatVersion %lu\n", data.ulDataFormatVersion);
+    ok_(__FILE__, line)(data.lpData != NULL, "got lpData %p\n", data.lpData);
+
+    header = (struct strsection_header *)data.lpSectionBase;
+    ok_(__FILE__, line)(header->magic == 0x64487353, "got wrong magic 0x%08lx\n", header->magic);
+    ok_(__FILE__, line)(data.lpSectionBase != NULL, "got lpSectionBase %p\n", data.lpSectionBase);
+    ok_(__FILE__, line)(data.ulSectionTotalLength > 0, "got ulSectionTotalLength %lu\n", data.ulSectionTotalLength);
+    ok_(__FILE__, line)(data.lpSectionGlobalData == (BYTE *)header + header->global_offset,
+                        "got lpSectionGlobalData %p\n", data.lpSectionGlobalData);
+    ok_(__FILE__, line)(data.ulSectionGlobalDataLength == header->global_len,
+                        "got ulSectionGlobalDataLength %lu\n", data.ulSectionGlobalDataLength);
+    ok_(__FILE__, line)(data.hActCtx == NULL, "got hActCtx %p\n", data.hActCtx);
+    ok_(__FILE__, line)(data.ulAssemblyRosterIndex == exid, "got ulAssemblyRosterIndex %lu\n", data.ulAssemblyRosterIndex);
+
+    activatable_class = (struct activatable_class_data *)data.lpData;
+    ok_(__FILE__, line)(activatable_class->size == sizeof(*activatable_class), "got size %lu\n",
+                        activatable_class->size);
+    ok_(__FILE__, line)(activatable_class->threading_model == threading_model, "got threading_model %lu\n",
+                        activatable_class->threading_model);
+
+    ptr = (BYTE *)header + activatable_class->module_offset;
+    ok_(__FILE__, line)(wcslen(ptr) * sizeof(WCHAR) == activatable_class->module_len,
+                        "got module_len %lu\n", activatable_class->module_len);
+    ok_(__FILE__, line)(!wcscmp(ptr, file), "got data.lpSectionGlobalData %s\n", debugstr_w(ptr));
 }
 
 static void test_find_string_fail(void)
@@ -2180,6 +2261,10 @@ static void test_actctx(void)
         test_find_ifaceps_redirection(handle, &IID_Iifaceps2, &IID_TlibTest4, &IID_Ibifaceps, &IID_PS32, 1, __LINE__);
         test_find_ifaceps_redirection(handle, &IID_Iifaceps3, &IID_TlibTest4, &IID_Ibifaceps, NULL, 1, __LINE__);
         test_find_string_fail();
+        test_find_activatable_class(handle, L"Wine.Test.Class1", WINRT_THREADING_MODEL_MTA, L"testlib.dll", 1, __LINE__);
+        test_find_activatable_class(handle, L"Wine.Test.Class2", WINRT_THREADING_MODEL_BOTH, L"testlib.dll", 1, __LINE__);
+        test_find_activatable_class(handle, L"Wine.Test.Class3", WINRT_THREADING_MODEL_STA, L"testlib.dll", 1, __LINE__);
+        test_find_activatable_class(handle, L"Wine.Test.Class4", WINRT_THREADING_MODEL_STA, L"Wine.Test.dll", 1, __LINE__);
 
         b = DeactivateActCtx(0, cookie);
         ok(b, "DeactivateActCtx failed: %lu\n", GetLastError());
