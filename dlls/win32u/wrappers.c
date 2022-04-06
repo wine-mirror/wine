@@ -977,6 +977,12 @@ BOOL WINAPI NtUserPeekMessage( MSG *msg_out, HWND hwnd, UINT first, UINT last, U
     return unix_funcs->pNtUserPeekMessage( msg_out, hwnd, first, last, flags );
 }
 
+BOOL WINAPI NtUserPostMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserPostMessage( hwnd, msg, wparam, lparam );
+}
+
 BOOL WINAPI NtUserPostThreadMessage( DWORD thread, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     if (!unix_funcs) return FALSE;

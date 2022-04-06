@@ -1103,7 +1103,7 @@
 @ stub NtUserPhysicalToLogicalDpiPointForWindow
 @ stub NtUserPhysicalToLogicalPoint
 @ stub NtUserPostKeyboardInputMessage
-@ stub NtUserPostMessage
+@ stdcall NtUserPostMessage(long long long long)
 @ stdcall NtUserPostThreadMessage(long long long long)
 @ stub NtUserPrintWindow
 @ stub NtUserProcessConnect

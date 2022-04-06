@@ -2402,9 +2402,33 @@ static BOOL send_message_callback( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lp
  */
 BOOL WINAPI NtUserPostMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    /* FIXME: move implementation from user32 */
-    if (!user_callbacks) return 0;
-    return user_callbacks->pPostMessageW( hwnd, msg, wparam, lparam );
+    struct send_message_info info;
+
+    if (is_pointer_message( msg, wparam ))
+    {
+        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        return FALSE;
+    }
+
+    TRACE( "hwnd %p msg %x (%s) wp %lx lp %lx\n",
+           hwnd, msg, debugstr_msg_name(msg, hwnd), wparam, lparam );
+
+    info.type   = MSG_POSTED;
+    info.hwnd   = hwnd;
+    info.msg    = msg;
+    info.wparam = wparam;
+    info.lparam = lparam;
+    info.flags  = 0;
+
+    if (is_broadcast(hwnd)) return broadcast_message( &info, NULL );
+
+    if (!hwnd) return NtUserPostThreadMessage( GetCurrentThreadId(), msg, wparam, lparam );
+
+    if (!(info.dest_tid = get_window_thread( hwnd, NULL ))) return FALSE;
+
+    if (is_exiting_thread( info.dest_tid )) return TRUE;
+
+    return put_message_in_queue( &info, NULL );
 }
 
 /**********************************************************************
