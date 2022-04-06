@@ -1398,7 +1398,6 @@ static void test_find_activatable_class(HANDLE handle, const WCHAR *classid, enu
     data.cbSize = sizeof(data);
 
     ret = FindActCtxSectionStringW(0, NULL, ACTIVATION_CONTEXT_SECTION_WINRT_ACTIVATABLE_CLASSES, classid, &data);
-    todo_wine
     ok_(__FILE__, line)(ret || broken(!ret) /* <= Win10 v1809 */, "FindActCtxSectionStringW failed, error %lu\n", GetLastError());
     if (!ret)
     {
