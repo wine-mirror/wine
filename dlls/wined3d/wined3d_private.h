@@ -4976,6 +4976,8 @@ enum wined3d_push_constants
 #define WINED3D_CS_SPIN_COUNT           10000000u
 #define WINED3D_CS_QUEUE_MASK           (WINED3D_CS_QUEUE_SIZE - 1)
 
+C_ASSERT(!(WINED3D_CS_QUEUE_SIZE & (WINED3D_CS_QUEUE_SIZE - 1)));
+
 struct wined3d_cs_queue
 {
     ULONG head, tail;
