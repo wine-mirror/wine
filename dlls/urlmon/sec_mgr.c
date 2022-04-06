@@ -1153,8 +1153,8 @@ static HRESULT WINAPI SecManagerImpl_ProcessUrlActionEx2(IInternetSecurityManage
         DWORD dwFlags, DWORD_PTR dwReserved, DWORD *pdwOutFlags)
 {
     SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
-    FIXME("(%p)->(%p %08lx %p %ld %p %ld %08lx %08lx %p) stub\n", This, pUri, dwAction, pPolicy,
-          cbPolicy, pContext, cbContext, dwFlags, (DWORD)dwReserved, pdwOutFlags);
+    FIXME("(%p)->(%p %08lx %p %ld %p %ld %08lx %08Ix %p) stub\n", This, pUri, dwAction, pPolicy,
+          cbPolicy, pContext, cbContext, dwFlags, dwReserved, pdwOutFlags);
     return E_NOTIMPL;
 }
 
@@ -1162,7 +1162,7 @@ static HRESULT WINAPI SecManagerImpl_GetSecurityIdEx2(IInternetSecurityManagerEx
         IUri *pUri, BYTE *pbSecurityId, DWORD *pcbSecurityId, DWORD_PTR dwReserved)
 {
     SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
-    TRACE("(%p)->(%p %p %p %08lx) stub\n", This, pUri, pbSecurityId, pcbSecurityId, (DWORD)dwReserved);
+    TRACE("(%p)->(%p %p %p %08Ix) stub\n", This, pUri, pbSecurityId, pcbSecurityId, dwReserved);
 
     if(dwReserved)
         FIXME("dwReserved is not supported yet\n");
@@ -1178,8 +1178,8 @@ static HRESULT WINAPI SecManagerImpl_QueryCustomPolicyEx2(IInternetSecurityManag
         DWORD cbContext, DWORD_PTR dwReserved)
 {
     SecManagerImpl *This = impl_from_IInternetSecurityManagerEx2(iface);
-    FIXME("(%p)->(%p %s %p %p %p %ld %08lx) stub\n", This, pUri, debugstr_guid(guidKey), ppPolicy, pcbPolicy,
-          pContext, cbContext, (DWORD)dwReserved);
+    FIXME("(%p)->(%p %s %p %p %p %ld %08Ix) stub\n", This, pUri, debugstr_guid(guidKey), ppPolicy, pcbPolicy,
+          pContext, cbContext, dwReserved);
     return E_NOTIMPL;
 }
 
@@ -1993,7 +1993,7 @@ HRESULT WINAPI CoInternetGetSecurityUrlEx(IUri *pUri, IUri **ppSecUri, PSUACTION
     WCHAR *ret_url;
     HRESULT hres;
 
-    TRACE("(%p,%p,%u,%lu)\n", pUri, ppSecUri, psuAction, (DWORD)dwReserved);
+    TRACE("(%p,%p,%u,%Iu)\n", pUri, ppSecUri, psuAction, dwReserved);
 
     if(!pUri || !ppSecUri)
         return E_INVALIDARG;

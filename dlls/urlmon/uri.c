@@ -4662,7 +4662,7 @@ static HRESULT WINAPI UriBuilderFactory_CreateIUriBuilder(IUriBuilderFactory *if
                                                           IUriBuilder **ppIUriBuilder)
 {
     Uri *This = impl_from_IUriBuilderFactory(iface);
-    TRACE("(%p)->(%08lx %08lx %p)\n", This, dwFlags, (DWORD)dwReserved, ppIUriBuilder);
+    TRACE("(%p)->(%08lx %08Ix %p)\n", This, dwFlags, dwReserved, ppIUriBuilder);
 
     if(!ppIUriBuilder)
         return E_POINTER;
@@ -4681,7 +4681,7 @@ static HRESULT WINAPI UriBuilderFactory_CreateInitializedIUriBuilder(IUriBuilder
                                                                      IUriBuilder **ppIUriBuilder)
 {
     Uri *This = impl_from_IUriBuilderFactory(iface);
-    TRACE("(%p)->(%08lx %08lx %p)\n", This, dwFlags, (DWORD)dwReserved, ppIUriBuilder);
+    TRACE("(%p)->(%08lx %08Ix %p)\n", This, dwFlags, dwReserved, ppIUriBuilder);
 
     if(!ppIUriBuilder)
         return E_POINTER;
@@ -5286,7 +5286,7 @@ HRESULT WINAPI CreateUri(LPCWSTR pwzURI, DWORD dwFlags, DWORD_PTR dwReserved, IU
     HRESULT hr;
     parse_data data;
 
-    TRACE("(%s %lx %lx %p)\n", debugstr_w(pwzURI), dwFlags, (DWORD)dwReserved, ppURI);
+    TRACE("(%s %lx %Ix %p)\n", debugstr_w(pwzURI), dwFlags, dwReserved, ppURI);
 
     if(!ppURI)
         return E_INVALIDARG;
@@ -5374,7 +5374,7 @@ HRESULT WINAPI CreateUriWithFragment(LPCWSTR pwzURI, LPCWSTR pwzFragment, DWORD 
                                      DWORD_PTR dwReserved, IUri **ppURI)
 {
     HRESULT hres;
-    TRACE("(%s %s %lx %lx %p)\n", debugstr_w(pwzURI), debugstr_w(pwzFragment), dwFlags, (DWORD)dwReserved, ppURI);
+    TRACE("(%s %s %lx %Ix %p)\n", debugstr_w(pwzURI), debugstr_w(pwzFragment), dwFlags, dwReserved, ppURI);
 
     if(!ppURI)
         return E_INVALIDARG;
@@ -5547,11 +5547,11 @@ static HRESULT WINAPI UriBuilder_CreateUriSimple(IUriBuilder *iface,
 {
     UriBuilder *This = impl_from_IUriBuilder(iface);
     HRESULT hr;
-    TRACE("(%p)->(%ld %ld %p)\n", This, dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
+    TRACE("(%p)->(%ld %Id %p)\n", This, dwAllowEncodingPropertyMask, dwReserved, ppIUri);
 
     hr = build_uri(This, ppIUri, 0, UriBuilder_USE_ORIGINAL_FLAGS, dwAllowEncodingPropertyMask);
     if(hr == E_NOTIMPL)
-        FIXME("(%p)->(%ld %ld %p)\n", This, dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
+        FIXME("(%p)->(%ld %Id %p)\n", This, dwAllowEncodingPropertyMask, dwReserved, ppIUri);
     return hr;
 }
 
@@ -5563,7 +5563,7 @@ static HRESULT WINAPI UriBuilder_CreateUri(IUriBuilder *iface,
 {
     UriBuilder *This = impl_from_IUriBuilder(iface);
     HRESULT hr;
-    TRACE("(%p)->(0x%08lx %ld %ld %p)\n", This, dwCreateFlags, dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
+    TRACE("(%p)->(0x%08lx %ld %Id %p)\n", This, dwCreateFlags, dwAllowEncodingPropertyMask, dwReserved, ppIUri);
 
     if(dwCreateFlags == -1)
         hr = build_uri(This, ppIUri, 0, UriBuilder_USE_ORIGINAL_FLAGS, dwAllowEncodingPropertyMask);
@@ -5571,7 +5571,7 @@ static HRESULT WINAPI UriBuilder_CreateUri(IUriBuilder *iface,
         hr = build_uri(This, ppIUri, dwCreateFlags, 0, dwAllowEncodingPropertyMask);
 
     if(hr == E_NOTIMPL)
-        FIXME("(%p)->(0x%08lx %ld %ld %p)\n", This, dwCreateFlags, dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
+        FIXME("(%p)->(0x%08lx %ld %Id %p)\n", This, dwCreateFlags, dwAllowEncodingPropertyMask, dwReserved, ppIUri);
     return hr;
 }
 
@@ -5584,13 +5584,13 @@ static HRESULT WINAPI UriBuilder_CreateUriWithFlags(IUriBuilder *iface,
 {
     UriBuilder *This = impl_from_IUriBuilder(iface);
     HRESULT hr;
-    TRACE("(%p)->(0x%08lx 0x%08lx %ld %ld %p)\n", This, dwCreateFlags, dwUriBuilderFlags,
-        dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
+    TRACE("(%p)->(0x%08lx 0x%08lx %ld %Id %p)\n", This, dwCreateFlags, dwUriBuilderFlags,
+        dwAllowEncodingPropertyMask, dwReserved, ppIUri);
 
     hr = build_uri(This, ppIUri, dwCreateFlags, dwUriBuilderFlags, dwAllowEncodingPropertyMask);
     if(hr == E_NOTIMPL)
-        FIXME("(%p)->(0x%08lx 0x%08lx %ld %ld %p)\n", This, dwCreateFlags, dwUriBuilderFlags,
-            dwAllowEncodingPropertyMask, (DWORD)dwReserved, ppIUri);
+        FIXME("(%p)->(0x%08lx 0x%08lx %ld %Id %p)\n", This, dwCreateFlags, dwUriBuilderFlags,
+            dwAllowEncodingPropertyMask, dwReserved, ppIUri);
     return hr;
 }
 
@@ -5932,7 +5932,7 @@ HRESULT WINAPI CreateIUriBuilder(IUri *pIUri, DWORD dwFlags, DWORD_PTR dwReserve
 {
     UriBuilder *ret;
 
-    TRACE("(%p %lx %lx %p)\n", pIUri, dwFlags, (DWORD)dwReserved, ppIUriBuilder);
+    TRACE("(%p %lx %Ix %p)\n", pIUri, dwFlags, dwReserved, ppIUriBuilder);
 
     if(!ppIUriBuilder)
         return E_POINTER;
@@ -5962,8 +5962,8 @@ HRESULT WINAPI CreateIUriBuilder(IUri *pIUri, DWORD dwFlags, DWORD_PTR dwReserve
         } else {
             heap_free(ret);
             *ppIUriBuilder = NULL;
-            FIXME("(%p %lx %lx %p): Unknown IUri types not supported yet.\n", pIUri, dwFlags,
-                (DWORD)dwReserved, ppIUriBuilder);
+            FIXME("(%p %lx %Ix %p): Unknown IUri types not supported yet.\n", pIUri, dwFlags,
+                  dwReserved, ppIUriBuilder);
             return E_NOTIMPL;
         }
     }
@@ -6295,7 +6295,7 @@ HRESULT WINAPI CoInternetCombineIUri(IUri *pBaseUri, IUri *pRelativeUri, DWORD d
     HRESULT hr;
     IInternetProtocolInfo *info;
     Uri *relative, *base;
-    TRACE("(%p %p %lx %p %lx)\n", pBaseUri, pRelativeUri, dwCombineFlags, ppCombinedUri, (DWORD)dwReserved);
+    TRACE("(%p %p %lx %p %Ix)\n", pBaseUri, pRelativeUri, dwCombineFlags, ppCombinedUri, dwReserved);
 
     if(!ppCombinedUri)
         return E_INVALIDARG;
@@ -6309,8 +6309,8 @@ HRESULT WINAPI CoInternetCombineIUri(IUri *pBaseUri, IUri *pRelativeUri, DWORD d
     base = get_uri_obj(pBaseUri);
     if(!relative || !base) {
         *ppCombinedUri = NULL;
-        FIXME("(%p %p %lx %p %lx) Unknown IUri types not supported yet.\n",
-            pBaseUri, pRelativeUri, dwCombineFlags, ppCombinedUri, (DWORD)dwReserved);
+        FIXME("(%p %p %lx %p %Ix) Unknown IUri types not supported yet.\n",
+            pBaseUri, pRelativeUri, dwCombineFlags, ppCombinedUri, dwReserved);
         return E_NOTIMPL;
     }
 
@@ -6343,8 +6343,8 @@ HRESULT WINAPI CoInternetCombineUrlEx(IUri *pBaseUri, LPCWSTR pwzRelativeUrl, DW
     HRESULT hr;
     IInternetProtocolInfo *info;
 
-    TRACE("(%p %s %lx %p %lx)\n", pBaseUri, debugstr_w(pwzRelativeUrl), dwCombineFlags,
-        ppCombinedUri, (DWORD)dwReserved);
+    TRACE("(%p %s %lx %p %Ix)\n", pBaseUri, debugstr_w(pwzRelativeUrl), dwCombineFlags,
+        ppCombinedUri, dwReserved);
 
     if(!ppCombinedUri)
         return E_POINTER;
@@ -6362,8 +6362,8 @@ HRESULT WINAPI CoInternetCombineUrlEx(IUri *pBaseUri, LPCWSTR pwzRelativeUrl, DW
     base = get_uri_obj(pBaseUri);
     if(!base) {
         *ppCombinedUri = NULL;
-        FIXME("(%p %s %lx %p %lx) Unknown IUri's not supported yet.\n", pBaseUri, debugstr_w(pwzRelativeUrl),
-            dwCombineFlags, ppCombinedUri, (DWORD)dwReserved);
+        FIXME("(%p %s %lx %p %Ix) Unknown IUri's not supported yet.\n", pBaseUri, debugstr_w(pwzRelativeUrl),
+            dwCombineFlags, ppCombinedUri, dwReserved);
         return E_NOTIMPL;
     }
 
@@ -6828,8 +6828,8 @@ HRESULT WINAPI CoInternetParseIUri(IUri *pIUri, PARSEACTION ParseAction, DWORD d
     Uri *uri;
     IInternetProtocolInfo *info;
 
-    TRACE("(%p %d %lx %p %ld %p %lx)\n", pIUri, ParseAction, dwFlags, pwzResult,
-        cchResult, pcchResult, (DWORD)dwReserved);
+    TRACE("(%p %d %lx %p %ld %p %Ix)\n", pIUri, ParseAction, dwFlags, pwzResult,
+        cchResult, pcchResult, dwReserved);
 
     if(!pcchResult)
         return E_POINTER;
@@ -6841,8 +6841,8 @@ HRESULT WINAPI CoInternetParseIUri(IUri *pIUri, PARSEACTION ParseAction, DWORD d
 
     if(!(uri = get_uri_obj(pIUri))) {
         *pcchResult = 0;
-        FIXME("(%p %d %lx %p %ld %p %lx) Unknown IUri's not supported for this action.\n",
-            pIUri, ParseAction, dwFlags, pwzResult, cchResult, pcchResult, (DWORD)dwReserved);
+        FIXME("(%p %d %lx %p %ld %p %Ix) Unknown IUri's not supported for this action.\n",
+            pIUri, ParseAction, dwFlags, pwzResult, cchResult, pcchResult, dwReserved);
         return E_NOTIMPL;
     }
 
@@ -6896,8 +6896,8 @@ HRESULT WINAPI CoInternetParseIUri(IUri *pIUri, PARSEACTION ParseAction, DWORD d
     default:
         *pcchResult = 0;
         hr = E_NOTIMPL;
-        FIXME("(%p %d %lx %p %ld %p %lx) Partial stub.\n", pIUri, ParseAction, dwFlags,
-            pwzResult, cchResult, pcchResult, (DWORD)dwReserved);
+        FIXME("(%p %d %lx %p %ld %p %Ix) Partial stub.\n", pIUri, ParseAction, dwFlags,
+            pwzResult, cchResult, pcchResult, dwReserved);
     }
 
     return hr;
