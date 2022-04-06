@@ -147,7 +147,7 @@ NTSTATUS WINAPI BCryptEnumAlgorithms( ULONG type, ULONG *ret_count, BCRYPT_ALGOR
                                    BCRYPT_SIGNATURE_OPERATION |\
                                    BCRYPT_RNG_OPERATION;
     BCRYPT_ALGORITHM_IDENTIFIER *list;
-    ULONG i, count = 0;
+    ULONG i, j, count = 0;
 
     TRACE( "%#lx, %p, %p, %#lx\n", type, ret_count, ret_list, flags );
 
@@ -160,12 +160,13 @@ NTSTATUS WINAPI BCryptEnumAlgorithms( ULONG type, ULONG *ret_count, BCRYPT_ALGOR
 
     if (!(list = malloc( count * sizeof(*list) ))) return STATUS_NO_MEMORY;
 
-    for (i = 0; i < ARRAY_SIZE( builtin_algorithms ); i++)
+    for (i = 0, j = 0; i < ARRAY_SIZE( builtin_algorithms ); i++)
     {
         if (!match_operation_type( type, builtin_algorithms[i].class )) continue;
-        list[i].pszName = (WCHAR *)builtin_algorithms[i].name;
-        list[i].dwClass = builtin_algorithms[i].class;
-        list[i].dwFlags = 0;
+        list[j].pszName = (WCHAR *)builtin_algorithms[i].name;
+        list[j].dwClass = builtin_algorithms[i].class;
+        list[j].dwFlags = 0;
+        j++;
     }
 
     *ret_count = count;

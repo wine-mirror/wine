@@ -2668,7 +2668,7 @@ static void test_BCryptEnumAlgorithms(void)
 {
     BCRYPT_ALGORITHM_IDENTIFIER *list;
     NTSTATUS ret;
-    ULONG count;
+    ULONG count, op;
 
     ret = BCryptEnumAlgorithms(0, NULL, NULL, 0);
     ok(ret == STATUS_INVALID_PARAMETER, "got %#lx\n", ret);
@@ -2685,6 +2685,16 @@ static void test_BCryptEnumAlgorithms(void)
     count = 0;
     list = NULL;
     ret = BCryptEnumAlgorithms(0, &count, &list, 0);
+    ok(!ret, "got %#lx\n", ret);
+    ok(list != NULL, "NULL list\n");
+    ok(count, "got %lu\n", count);
+    BCryptFreeBuffer( list );
+
+    op = BCRYPT_CIPHER_OPERATION | BCRYPT_ASYMMETRIC_ENCRYPTION_OPERATION | BCRYPT_SIGNATURE_OPERATION |
+         BCRYPT_SECRET_AGREEMENT_OPERATION;
+    count = 0;
+    list = NULL;
+    ret = BCryptEnumAlgorithms(op, &count, &list, 0);
     ok(!ret, "got %#lx\n", ret);
     ok(list != NULL, "NULL list\n");
     ok(count, "got %lu\n", count);
