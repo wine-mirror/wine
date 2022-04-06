@@ -75,7 +75,7 @@ NTSTATUS WINAPI BCryptEnumContextFunctions( ULONG table, const WCHAR *ctx, ULONG
 
 void WINAPI BCryptFreeBuffer( void *buffer )
 {
-    FIXME( "%p\n", buffer );
+    free( buffer );
 }
 
 NTSTATUS WINAPI BCryptRegisterProvider( const WCHAR *provider, ULONG flags, CRYPT_PROVIDER_REG *reg )
