@@ -242,6 +242,7 @@ struct unix_funcs
     DWORD    (WINAPI *pNtUserMsgWaitForMultipleObjectsEx)( DWORD count, const HANDLE *handles,
                                                            DWORD timeout, DWORD mask, DWORD flags );
     BOOL     (WINAPI *pNtUserPeekMessage)( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT flags );
+    BOOL     (WINAPI *pNtUserPostThreadMessage)( DWORD thread, UINT msg, WPARAM wparam, LPARAM lparam );
     BOOL     (WINAPI *pNtUserRedrawWindow)( HWND hwnd, const RECT *rect, HRGN hrgn, UINT flags );
     ATOM     (WINAPI *pNtUserRegisterClassExWOW)( const WNDCLASSEXW *wc, UNICODE_STRING *name,
                                                   UNICODE_STRING *version,

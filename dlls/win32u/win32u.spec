@@ -1104,7 +1104,7 @@
 @ stub NtUserPhysicalToLogicalPoint
 @ stub NtUserPostKeyboardInputMessage
 @ stub NtUserPostMessage
-@ stub NtUserPostThreadMessage
+@ stdcall NtUserPostThreadMessage(long long long long)
 @ stub NtUserPrintWindow
 @ stub NtUserProcessConnect
 @ stub NtUserProcessInkFeedbackCommand

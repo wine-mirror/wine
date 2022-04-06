@@ -1807,7 +1807,7 @@ BOOL WINAPI PostMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
         return TRUE;
     }
 
-    if (!hwnd) return PostThreadMessageW( GetCurrentThreadId(), msg, wparam, lparam );
+    if (!hwnd) return NtUserPostThreadMessage( GetCurrentThreadId(), msg, wparam, lparam );
 
     if (!(info.dest_tid = GetWindowThreadProcessId( hwnd, NULL ))) return FALSE;
 
@@ -1823,32 +1823,7 @@ BOOL WINAPI PostMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 BOOL WINAPI PostThreadMessageA( DWORD thread, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     if (!map_wparam_AtoW( msg, &wparam, WMCHAR_MAP_POSTMESSAGE )) return TRUE;
-    return PostThreadMessageW( thread, msg, wparam, lparam );
-}
-
-
-/**********************************************************************
- *		PostThreadMessageW  (USER32.@)
- */
-BOOL WINAPI PostThreadMessageW( DWORD thread, UINT msg, WPARAM wparam, LPARAM lparam )
-{
-    struct send_message_info info;
-
-    if (is_pointer_message( msg, wparam ))
-    {
-        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
-        return FALSE;
-    }
-    if (USER_IsExitingThread( thread )) return TRUE;
-
-    info.type     = MSG_POSTED;
-    info.dest_tid = thread;
-    info.hwnd     = 0;
-    info.msg      = msg;
-    info.wparam   = wparam;
-    info.lparam   = lparam;
-    info.flags    = 0;
-    return put_message_in_queue( &info, NULL );
+    return NtUserPostThreadMessage( thread, msg, wparam, lparam );
 }
 
 

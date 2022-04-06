@@ -2407,6 +2407,30 @@ BOOL WINAPI NtUserPostMessage( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam
     return user_callbacks->pPostMessageW( hwnd, msg, wparam, lparam );
 }
 
+/**********************************************************************
+ *           NtUserPostThreadMessage  (win32u.@)
+ */
+BOOL WINAPI NtUserPostThreadMessage( DWORD thread, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    struct send_message_info info;
+
+    if (is_pointer_message( msg, wparam ))
+    {
+        SetLastError( ERROR_MESSAGE_SYNC_ONLY );
+        return FALSE;
+    }
+    if (is_exiting_thread( thread )) return TRUE;
+
+    info.type     = MSG_POSTED;
+    info.dest_tid = thread;
+    info.hwnd     = 0;
+    info.msg      = msg;
+    info.wparam   = wparam;
+    info.lparam   = lparam;
+    info.flags    = 0;
+    return put_message_in_queue( &info, NULL );
+}
+
 LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                   void *result_info, DWORD type, BOOL ansi )
 {
