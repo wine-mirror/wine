@@ -69,14 +69,6 @@ static void CDECL nulldrv_UpdateClipboard(void)
 {
 }
 
-static DWORD CDECL nulldrv_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
-                                                        DWORD mask, DWORD flags )
-{
-    if (!count && !timeout) return WAIT_TIMEOUT;
-    return WaitForMultipleObjectsEx( count, handles, flags & MWMO_WAITALL,
-                                     timeout, flags & MWMO_ALERTABLE );
-}
-
 static void CDECL nulldrv_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
 {
 }
@@ -134,7 +126,7 @@ static struct user_driver_funcs lazy_load_driver =
     NULL,
     NULL,
     NULL,
-    nulldrv_MsgWaitForMultipleObjectsEx,
+    NULL,
     NULL,
     NULL,
     NULL,
@@ -178,7 +170,6 @@ void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT v
     do { if (!driver->p##name) driver->p##name = nulldrv_##name; } while(0)
 
     SET_USER_FUNC(UpdateClipboard);
-    SET_USER_FUNC(MsgWaitForMultipleObjectsEx);
     SET_USER_FUNC(SetWindowIcon);
     SET_USER_FUNC(SetWindowText);
     SET_USER_FUNC(SysCommand);
