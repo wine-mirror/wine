@@ -381,30 +381,10 @@ BOOL WINAPI EnumUILanguagesA( UILANGUAGE_ENUMPROCA proc, DWORD flags, LONG_PTR p
  */
 INT WINAPI GetGeoInfoA(GEOID geoid, GEOTYPE geotype, LPSTR data, int data_len, LANGID lang)
 {
-    WCHAR *buffW;
-    INT len;
+    WCHAR buffer[256];
 
     TRACE("%ld %ld %p %d %d\n", geoid, geotype, data, data_len, lang);
 
-    len = GetGeoInfoW(geoid, geotype, NULL, 0, lang);
-    if (!len)
-        return 0;
-
-    buffW = HeapAlloc(GetProcessHeap(), 0, len*sizeof(WCHAR));
-    if (!buffW)
-        return 0;
-
-    GetGeoInfoW(geoid, geotype, buffW, len, lang);
-    len = WideCharToMultiByte(CP_ACP, 0, buffW, -1, NULL, 0, NULL, NULL);
-    if (!data || !data_len) {
-        HeapFree(GetProcessHeap(), 0, buffW);
-        return len;
-    }
-
-    len = WideCharToMultiByte(CP_ACP, 0, buffW, -1, data, data_len, NULL, NULL);
-    HeapFree(GetProcessHeap(), 0, buffW);
-
-    if (data_len < len)
-        SetLastError(ERROR_INSUFFICIENT_BUFFER);
-    return data_len < len ? 0 : len;
+    if (!GetGeoInfoW( geoid, geotype, buffer, ARRAY_SIZE(buffer), lang )) return 0;
+    return WideCharToMultiByte( CP_ACP, 0, buffer, -1, data, data_len, NULL, NULL );
 }
