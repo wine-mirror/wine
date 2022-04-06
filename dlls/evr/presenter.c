@@ -429,15 +429,20 @@ static HRESULT video_presenter_sample_queue_init(struct video_presenter *present
     return S_OK;
 }
 
-static void video_presenter_sample_queue_push(struct video_presenter *presenter, IMFSample *sample)
+static void video_presenter_sample_queue_push(struct video_presenter *presenter, IMFSample *sample,
+        BOOL at_front)
 {
     struct sample_queue *queue = &presenter->thread.queue;
+    unsigned int idx;
 
     EnterCriticalSection(&presenter->cs);
     if (queue->used != queue->size)
     {
-        queue->back = (queue->back + 1) % queue->size;
-        queue->samples[queue->back] = sample;
+        if (at_front)
+            idx = queue->front = (queue->size + queue->front - 1) % queue->size;
+        else
+            idx = queue->back = (queue->back + 1) % queue->size;
+        queue->samples[idx] = sample;
         queue->used++;
         IMFSample_AddRef(sample);
     }
@@ -556,7 +561,7 @@ static void video_presenter_check_queue(struct video_presenter *presenter,
         if (present)
             video_presenter_sample_present(presenter, sample);
         else
-            video_presenter_sample_queue_push(presenter, sample);
+            video_presenter_sample_queue_push(presenter, sample, TRUE);
 
         IMFSample_Release(sample);
 
@@ -580,7 +585,7 @@ static void video_presenter_schedule_sample(struct video_presenter *presenter, I
 
     if (presenter->clock)
     {
-        video_presenter_sample_queue_push(presenter, sample);
+        video_presenter_sample_queue_push(presenter, sample, FALSE);
         PostThreadMessageW(presenter->thread.tid, EVRM_PRESENT, 0, 0);
     }
     else
