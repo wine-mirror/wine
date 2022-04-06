@@ -1063,11 +1063,11 @@ LRESULT CALLBACK MCIAVI_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
     case MCI_SAVE:
     case MCI_UNDO:
     case MCI_UNFREEZE:
-	TRACE("Unsupported function [0x%x] flags=%08lx\n", wMsg, (DWORD)dwParam1);
+	TRACE("Unsupported function [0x%x] flags=%08Ix\n", wMsg, dwParam1);
 	return MCIERR_UNSUPPORTED_FUNCTION;
     case MCI_SPIN:
     case MCI_ESCAPE:
-	WARN("Unsupported command [0x%x] %08lx\n", wMsg, (DWORD)dwParam1);
+	WARN("Unsupported command [0x%x] %08Ix\n", wMsg, dwParam1);
 	break;
     case MCI_OPEN:
     case MCI_CLOSE:
