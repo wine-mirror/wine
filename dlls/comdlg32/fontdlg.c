@@ -937,7 +937,7 @@ static LRESULT CFn_WMCommand(HWND hDlg, WPARAM wParam, LPARAM lParam, LPCHOOSEFO
         }
     }
 
-    TRACE("WM_COMMAND wParam=%08lX lParam=%08IX\n", (LONG)wParam, lParam);
+    TRACE("WM_COMMAND wParam=%08IX lParam=%08IX\n", wParam, lParam);
     switch (LOWORD(wParam))
     {
     case cmb1:
