@@ -28,9 +28,11 @@
 #include "winbase.h"
 
 #include "initguid.h"
+#include "dmo.h"
 #include "mediaobj.h"
 #include "ole2.h"
 #include "wmcodecdsp.h"
+#include "propsys.h"
 #include "propvarutil.h"
 
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
@@ -98,6 +100,51 @@ static void check_service_interface_(unsigned int line, void *iface_ptr, REFGUID
     ok_(__FILE__, line)(hr == expected_hr, "Got hr %#lx, expected %#lx.\n", hr, expected_hr);
     if (SUCCEEDED(hr))
         IUnknown_Release(unk);
+}
+
+static void check_dmo(const GUID *class_id, const WCHAR *expect_name, const GUID *expect_major_type,
+        const GUID *expect_input, ULONG expect_input_count, const GUID *expect_output, ULONG expect_output_count)
+{
+    ULONG i, input_count = 0, output_count = 0;
+    DMO_PARTIAL_MEDIATYPE output[32] = {{{0}}};
+    DMO_PARTIAL_MEDIATYPE input[32] = {{{0}}};
+    WCHAR name[80];
+    HRESULT hr;
+
+    winetest_push_context("%s", debugstr_w(expect_name));
+
+    hr = DMOGetName(class_id, name);
+    ok(hr == S_OK, "DMOGetName returned %#lx\n", hr);
+    todo_wine_if(!wcscmp(expect_name, L"WMAudio Decoder DMO"))
+    ok(!wcscmp(name, expect_name), "got name %s\n", debugstr_w(name));
+
+    hr = DMOGetTypes(class_id, ARRAY_SIZE(input), &input_count, input,
+            ARRAY_SIZE(output), &output_count, output);
+    ok(hr == S_OK, "DMOGetTypes returned %#lx\n", hr);
+    ok(input_count == expect_input_count, "got input_count %lu\n", input_count);
+    ok(output_count == expect_output_count, "got output_count %lu\n", output_count);
+
+    for (i = 0; i < input_count; ++i)
+    {
+        winetest_push_context("in %lu", i);
+        ok(IsEqualGUID(&input[i].type, expect_major_type),
+            "got type %s\n", debugstr_guid(&input[i].type));
+        ok(IsEqualGUID(&input[i].subtype, expect_input + i),
+            "got subtype %s\n", debugstr_guid(&input[i].subtype));
+        winetest_pop_context();
+    }
+
+    for (i = 0; i < output_count; ++i)
+    {
+        winetest_push_context("out %lu", i);
+        ok(IsEqualGUID(&output[i].type, expect_major_type),
+            "got type %s\n", debugstr_guid(&output[i].type));
+        ok(IsEqualGUID(&output[i].subtype, expect_output + i),
+            "got subtype %s\n", debugstr_guid( &output[i].subtype));
+        winetest_pop_context();
+    }
+
+    winetest_pop_context();
 }
 
 struct attribute_desc
@@ -5788,6 +5835,16 @@ static void test_wma_encoder(void)
         MFAudioFormat_WMAudioV9,
         MFAudioFormat_WMAudio_Lossless,
     };
+    const GUID dmo_inputs[] =
+    {
+        MEDIASUBTYPE_PCM,
+    };
+    const GUID dmo_outputs[] =
+    {
+        MEDIASUBTYPE_WMAUDIO2,
+        MEDIASUBTYPE_WMAUDIO3,
+        MEDIASUBTYPE_WMAUDIO_LOSSLESS,
+    };
 
     static const struct attribute_desc input_type_desc[] =
     {
@@ -5838,7 +5895,13 @@ static void test_wma_encoder(void)
             &transform, &CLSID_CWMAEncMediaObject, &class_id))
         goto failed;
 
+    check_dmo(&class_id, L"WMAudio Encoder DMO", &MEDIATYPE_Audio, dmo_inputs, ARRAY_SIZE(dmo_inputs),
+            dmo_outputs, ARRAY_SIZE(dmo_outputs));
+
+    check_interface(transform, &IID_IMFTransform, TRUE);
     check_interface(transform, &IID_IMediaObject, TRUE);
+    check_interface(transform, &IID_IPropertyStore, TRUE);
+    check_interface(transform, &IID_IPropertyBag, TRUE);
 
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
@@ -5965,6 +6028,18 @@ static void test_wma_decoder(void)
         MFAudioFormat_PCM,
         MFAudioFormat_Float,
     };
+    const GUID dmo_inputs[] =
+    {
+        MEDIASUBTYPE_MSAUDIO1,
+        MEDIASUBTYPE_WMAUDIO2,
+        MEDIASUBTYPE_WMAUDIO3,
+        MEDIASUBTYPE_WMAUDIO_LOSSLESS,
+    };
+    const GUID dmo_outputs[] =
+    {
+        MEDIASUBTYPE_PCM,
+        MEDIASUBTYPE_IEEE_FLOAT,
+    };
 
     static const media_type_desc expect_available_inputs[] =
     {
@@ -6068,7 +6143,14 @@ static void test_wma_decoder(void)
             &transform, &CLSID_CWMADecMediaObject, &class_id))
         goto failed;
 
+    check_dmo(&class_id, L"WMAudio Decoder DMO", &MEDIATYPE_Audio, dmo_inputs, ARRAY_SIZE(dmo_inputs),
+            dmo_outputs, ARRAY_SIZE(dmo_outputs));
+
+    check_interface(transform, &IID_IMFTransform, TRUE);
     check_interface(transform, &IID_IMediaObject, TRUE);
+    todo_wine
+    check_interface(transform, &IID_IPropertyStore, TRUE);
+    check_interface(transform, &IID_IPropertyBag, TRUE);
 
     /* check default media types */
 
