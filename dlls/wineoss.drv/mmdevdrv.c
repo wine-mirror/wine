@@ -117,6 +117,7 @@ struct ACImpl {
     AUDCLNT_SHAREMODE share;
     HANDLE event;
     float *vols;
+    UINT32 channel_count;
 
     int fd;
     oss_audioinfo ai;
@@ -970,7 +971,8 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         return E_OUTOFMEMORY;
     }
 
-    This->vols = HeapAlloc(GetProcessHeap(), 0, fmt->nChannels * sizeof(float));
+    This->channel_count = fmt->nChannels;
+    This->vols = HeapAlloc(GetProcessHeap(), 0, This->channel_count * sizeof(float));
     if(!This->vols){
         CoTaskMemFree(This->fmt);
         This->fmt = NULL;
@@ -979,14 +981,14 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         return E_OUTOFMEMORY;
     }
 
-    for(i = 0; i < fmt->nChannels; ++i)
+    for(i = 0; i < This->channel_count; ++i)
         This->vols[i] = 1.f;
 
     This->share = mode;
     This->flags = flags;
     This->oss_bufsize_bytes = 0;
 
-    hr = get_audio_session(sessionguid, This->parent, fmt->nChannels,
+    hr = get_audio_session(sessionguid, This->parent, This->channel_count,
             &This->session);
     if(FAILED(hr)){
         HeapFree(GetProcessHeap(), 0, This->vols);
@@ -2674,7 +2676,7 @@ static HRESULT WINAPI AudioStreamVolume_GetChannelCount(
     if(!out)
         return E_POINTER;
 
-    *out = This->fmt->nChannels;
+    *out = This->channel_count;
 
     return S_OK;
 }
@@ -2689,7 +2691,7 @@ static HRESULT WINAPI AudioStreamVolume_SetChannelVolume(
     if(level < 0.f || level > 1.f)
         return E_INVALIDARG;
 
-    if(index >= This->fmt->nChannels)
+    if(index >= This->channel_count)
         return E_INVALIDARG;
 
     EnterCriticalSection(&This->lock);
@@ -2713,7 +2715,7 @@ static HRESULT WINAPI AudioStreamVolume_GetChannelVolume(
     if(!level)
         return E_POINTER;
 
-    if(index >= This->fmt->nChannels)
+    if(index >= This->channel_count)
         return E_INVALIDARG;
 
     *level = This->vols[index];
@@ -2732,7 +2734,7 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
     if(!levels)
         return E_POINTER;
 
-    if(count != This->fmt->nChannels)
+    if(count != This->channel_count)
         return E_INVALIDARG;
 
     EnterCriticalSection(&This->lock);
@@ -2758,7 +2760,7 @@ static HRESULT WINAPI AudioStreamVolume_GetAllVolumes(
     if(!levels)
         return E_POINTER;
 
-    if(count != This->fmt->nChannels)
+    if(count != This->channel_count)
         return E_INVALIDARG;
 
     EnterCriticalSection(&This->lock);
