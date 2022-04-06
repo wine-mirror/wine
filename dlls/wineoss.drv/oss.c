@@ -495,9 +495,110 @@ static NTSTATUS is_format_supported(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS get_mix_format(void *args)
+{
+    struct get_mix_format_params *params = args;
+    WAVEFORMATEXTENSIBLE *fmt = params->fmt;
+    oss_audioinfo ai;
+    int formats, fd;
+
+    if(params->flow != eRender && params->flow != eCapture){
+        params->result = E_UNEXPECTED;
+        return STATUS_SUCCESS;
+    }
+
+    fd = open_device(params->device, params->flow);
+    if(fd < 0){
+        WARN("Unable to open device %s: %d (%s)\n", params->device, errno, strerror(errno));
+        params->result = AUDCLNT_E_DEVICE_INVALIDATED;
+        return STATUS_SUCCESS;
+    }
+
+    ai.dev = -1;
+    if(ioctl(fd, SNDCTL_ENGINEINFO, &ai) < 0){
+        WARN("Unable to get audio info for device %s: %d (%s)\n", params->device, errno, strerror(errno));
+        close(fd);
+        params->result = E_FAIL;
+        return STATUS_SUCCESS;
+    }
+    close(fd);
+
+    if(params->flow == eRender)
+        formats = ai.oformats;
+    else
+        formats = ai.iformats;
+
+    fmt->Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
+    if(formats & AFMT_S16_LE){
+        fmt->Format.wBitsPerSample = 16;
+        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+#ifdef AFMT_FLOAT
+    }else if(formats & AFMT_FLOAT){
+        fmt->Format.wBitsPerSample = 32;
+        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
+#endif
+    }else if(formats & AFMT_U8){
+        fmt->Format.wBitsPerSample = 8;
+        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+    }else if(formats & AFMT_S32_LE){
+        fmt->Format.wBitsPerSample = 32;
+        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+    }else if(formats & AFMT_S24_LE){
+        fmt->Format.wBitsPerSample = 24;
+        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
+    }else{
+        WARN("Didn't recognize any available OSS formats: %x\n", formats);
+        params->result = E_FAIL;
+        return STATUS_SUCCESS;
+    }
+
+    /* some OSS drivers are buggy, so set reasonable defaults if
+     * the reported values seem wacky */
+    fmt->Format.nChannels = max(ai.max_channels, ai.min_channels);
+    if(fmt->Format.nChannels == 0 || fmt->Format.nChannels > 8)
+        fmt->Format.nChannels = 2;
+
+    /* For most hardware on Windows, users must choose a configuration with an even
+     * number of channels (stereo, quad, 5.1, 7.1). Users can then disable
+     * channels, but those channels are still reported to applications from
+     * GetMixFormat! Some applications behave badly if given an odd number of
+     * channels (e.g. 2.1). */
+    if(fmt->Format.nChannels > 1 && (fmt->Format.nChannels & 0x1))
+    {
+        if(fmt->Format.nChannels < ai.max_channels)
+            fmt->Format.nChannels += 1;
+        else
+            /* We could "fake" more channels and downmix the emulated channels,
+             * but at that point you really ought to tweak your OSS setup or
+             * just use PulseAudio. */
+            WARN("Some Windows applications behave badly with an odd number of channels (%u)!\n", fmt->Format.nChannels);
+    }
+
+    if(ai.max_rate == 0)
+        fmt->Format.nSamplesPerSec = 44100;
+    else
+        fmt->Format.nSamplesPerSec = min(ai.max_rate, 44100);
+    if(fmt->Format.nSamplesPerSec < ai.min_rate)
+        fmt->Format.nSamplesPerSec = ai.min_rate;
+
+    fmt->dwChannelMask = get_channel_mask(fmt->Format.nChannels);
+
+    fmt->Format.nBlockAlign = (fmt->Format.wBitsPerSample *
+            fmt->Format.nChannels) / 8;
+    fmt->Format.nAvgBytesPerSec = fmt->Format.nSamplesPerSec *
+        fmt->Format.nBlockAlign;
+
+    fmt->Samples.wValidBitsPerSample = fmt->Format.wBitsPerSample;
+    fmt->Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
+
+    params->result = S_OK;
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     test_connect,
     get_endpoint_ids,
     is_format_supported,
+    get_mix_format,
 };

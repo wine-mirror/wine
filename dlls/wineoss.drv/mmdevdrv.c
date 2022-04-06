@@ -1111,9 +1111,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
         WAVEFORMATEX **pwfx)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    WAVEFORMATEXTENSIBLE *fmt;
-    oss_audioinfo ai;
-    int formats, fd;
+    struct get_mix_format_params params;
 
     TRACE("(%p)->(%p)\n", This, pwfx);
 
@@ -1121,99 +1119,21 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
         return E_POINTER;
     *pwfx = NULL;
 
-    fd = open_device(This->devnode, This->dataflow);
-    if(fd < 0){
-        WARN("Unable to open device %s: %d (%s)\n", This->devnode, errno, strerror(errno));
-        return AUDCLNT_E_DEVICE_INVALIDATED;
-    }
-
-    ai.dev = -1;
-    if(ioctl(fd, SNDCTL_ENGINEINFO, &ai) < 0){
-        WARN("Unable to get audio info for device %s: %d (%s)\n", This->devnode,
-                errno, strerror(errno));
-        close(fd);
-        return E_FAIL;
-    }
-    close(fd);
-
-    if(This->dataflow == eRender)
-        formats = ai.oformats;
-    else if(This->dataflow == eCapture)
-        formats = ai.iformats;
-    else
-        return E_UNEXPECTED;
-
-    fmt = CoTaskMemAlloc(sizeof(WAVEFORMATEXTENSIBLE));
-    if(!fmt)
+    params.device = This->devnode;
+    params.flow = This->dataflow;
+    params.fmt = CoTaskMemAlloc(sizeof(WAVEFORMATEXTENSIBLE));
+    if(!params.fmt)
         return E_OUTOFMEMORY;
 
-    fmt->Format.wFormatTag = WAVE_FORMAT_EXTENSIBLE;
-    if(formats & AFMT_S16_LE){
-        fmt->Format.wBitsPerSample = 16;
-        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
-#ifdef AFMT_FLOAT
-    }else if(formats & AFMT_FLOAT){
-        fmt->Format.wBitsPerSample = 32;
-        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_IEEE_FLOAT;
-#endif
-    }else if(formats & AFMT_U8){
-        fmt->Format.wBitsPerSample = 8;
-        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
-    }else if(formats & AFMT_S32_LE){
-        fmt->Format.wBitsPerSample = 32;
-        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
-    }else if(formats & AFMT_S24_LE){
-        fmt->Format.wBitsPerSample = 24;
-        fmt->SubFormat = KSDATAFORMAT_SUBTYPE_PCM;
-    }else{
-        WARN("Didn't recognize any available OSS formats: %x\n", formats);
-        CoTaskMemFree(fmt);
-        return E_FAIL;
-    }
+    OSS_CALL(get_mix_format, &params);
 
-    /* some OSS drivers are buggy, so set reasonable defaults if
-     * the reported values seem wacky */
-    fmt->Format.nChannels = max(ai.max_channels, ai.min_channels);
-    if(fmt->Format.nChannels == 0 || fmt->Format.nChannels > 8)
-        fmt->Format.nChannels = 2;
+    if(SUCCEEDED(params.result)){
+        *pwfx = &params.fmt->Format;
+        dump_fmt(*pwfx);
+    } else
+        CoTaskMemFree(params.fmt);
 
-    /* For most hardware on Windows, users must choose a configuration with an even
-     * number of channels (stereo, quad, 5.1, 7.1). Users can then disable
-     * channels, but those channels are still reported to applications from
-     * GetMixFormat! Some applications behave badly if given an odd number of
-     * channels (e.g. 2.1). */
-    if(fmt->Format.nChannels > 1 && (fmt->Format.nChannels & 0x1))
-    {
-        if(fmt->Format.nChannels < ai.max_channels)
-            fmt->Format.nChannels += 1;
-        else
-            /* We could "fake" more channels and downmix the emulated channels,
-             * but at that point you really ought to tweak your OSS setup or
-             * just use PulseAudio. */
-            WARN("Some Windows applications behave badly with an odd number of channels (%u)!\n", fmt->Format.nChannels);
-    }
-
-    if(ai.max_rate == 0)
-        fmt->Format.nSamplesPerSec = 44100;
-    else
-        fmt->Format.nSamplesPerSec = min(ai.max_rate, 44100);
-    if(fmt->Format.nSamplesPerSec < ai.min_rate)
-        fmt->Format.nSamplesPerSec = ai.min_rate;
-
-    fmt->dwChannelMask = get_channel_mask(fmt->Format.nChannels);
-
-    fmt->Format.nBlockAlign = (fmt->Format.wBitsPerSample *
-            fmt->Format.nChannels) / 8;
-    fmt->Format.nAvgBytesPerSec = fmt->Format.nSamplesPerSec *
-        fmt->Format.nBlockAlign;
-
-    fmt->Samples.wValidBitsPerSample = fmt->Format.wBitsPerSample;
-    fmt->Format.cbSize = sizeof(WAVEFORMATEXTENSIBLE) - sizeof(WAVEFORMATEX);
-
-    *pwfx = (WAVEFORMATEX*)fmt;
-    dump_fmt(*pwfx);
-
-    return S_OK;
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_GetDevicePeriod(IAudioClient3 *iface,

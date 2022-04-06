@@ -77,11 +77,20 @@ struct is_format_supported_params
     HRESULT result;
 };
 
+struct get_mix_format_params
+{
+    const char *device;
+    EDataFlow flow;
+    WAVEFORMATEXTENSIBLE *fmt;
+    HRESULT result;
+};
+
 enum oss_funcs
 {
     oss_test_connect,
     oss_get_endpoint_ids,
     oss_is_format_supported,
+    oss_get_mix_format,
 };
 
 extern unixlib_handle_t oss_handle;
