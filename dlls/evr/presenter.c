@@ -548,7 +548,7 @@ static void video_presenter_check_queue(struct video_presenter *presenter,
             if (delta > 3 * presenter->frame_time_threshold)
             {
                 /* Convert 100ns -> msec */
-                wait = (delta - 3 * presenter->frame_time_threshold) / 100000;
+                wait = (delta - 3 * presenter->frame_time_threshold) / 10000;
                 present = FALSE;
             }
         }
