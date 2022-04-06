@@ -949,14 +949,14 @@ static void test_SpeechRecognizer(void)
         compilation_handler.thread_id = GetCurrentThreadId();
 
         hr = ISpeechRecognizer_CompileConstraintsAsync(recognizer, &operation);
-        todo_wine ok(hr == S_OK, "ISpeechRecognizer_CompileConstraintsAsync failed, hr %#lx.\n", hr);
-
-        if (FAILED(hr)) goto skip_operation;
+        ok(hr == S_OK, "ISpeechRecognizer_CompileConstraintsAsync failed, hr %#lx.\n", hr);
 
         handler = (void*)0xdeadbeef;
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_get_Completed(operation, &handler);
         todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         todo_wine ok(handler == NULL, "Handler had value %p.\n", handler);
+
+        if (FAILED(hr)) goto skip_operation;
 
         compilation_result = (void*)0xdeadbeef;
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_GetResults(operation, &compilation_result);
@@ -1081,10 +1081,10 @@ static void test_SpeechRecognizer(void)
         todo_wine ok(hr == S_OK, "IAsyncInfo_get_Status failed, hr %#lx.\n", hr);
         todo_wine ok(async_status == Completed, "Status was %#x.\n", async_status);
 
+skip_operation:
         ref = IAsyncOperation_SpeechRecognitionCompilationResult_Release(operation);
         ok(!ref, "Got unexpected ref %lu.\n", ref);
 
-skip_operation:
         ref = ISpeechContinuousRecognitionSession_Release(session);
         ok(ref == 1, "Got unexpected ref %lu.\n", ref);
 

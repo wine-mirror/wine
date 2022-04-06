@@ -69,6 +69,8 @@ struct vector_iids
     const GUID *view;
 };
 
+HRESULT async_operation_create( const GUID *iid, IAsyncOperation_IInspectable **out );
+
 HRESULT typed_event_handlers_append( struct list *list, ITypedEventHandler_IInspectable_IInspectable *handler, EventRegistrationToken *token );
 HRESULT typed_event_handlers_remove( struct list *list, EventRegistrationToken *token );
 HRESULT typed_event_handlers_notify( struct list *list, IInspectable *sender, IInspectable *args );

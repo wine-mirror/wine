@@ -124,7 +124,7 @@ static HRESULT WINAPI session_set_AutoStopSilenceTimeout( ISpeechContinuousRecog
 
 static HRESULT WINAPI session_StartAsync( ISpeechContinuousRecognitionSession *iface, IAsyncAction **action )
 {
-    FIXME("iface %p, action %p semi stub!\n", iface, action);
+    FIXME("iface %p, action %p stub!\n", iface, action);
     return E_NOTIMPL;
 }
 
@@ -351,8 +351,9 @@ static HRESULT WINAPI recognizer_get_UIOptions( ISpeechRecognizer *iface, ISpeec
 static HRESULT WINAPI recognizer_CompileConstraintsAsync( ISpeechRecognizer *iface,
                                                           IAsyncOperation_SpeechRecognitionCompilationResult **operation )
 {
-    FIXME("iface %p, operation %p stub!\n", iface, operation);
-    return E_NOTIMPL;
+    IAsyncOperation_IInspectable **value = (IAsyncOperation_IInspectable **)operation;
+    FIXME("iface %p, operation %p semi-stub!\n", iface, operation);
+    return async_operation_create(&IID_IAsyncOperation_SpeechRecognitionCompilationResult, value);
 }
 
 static HRESULT WINAPI recognizer_RecognizeAsync( ISpeechRecognizer *iface,
