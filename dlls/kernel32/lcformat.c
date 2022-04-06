@@ -1754,35 +1754,3 @@ int WINAPI GetCurrencyFormatEx(LPCWSTR localename, DWORD flags, LPCWSTR value,
 
     return GetCurrencyFormatW( LocaleNameToLCID(localename, 0), flags, value, format, str, len);
 }
-
-/*********************************************************************
- *            GetCalendarInfoA (KERNEL32.@)
- */
-int WINAPI GetCalendarInfoA( LCID lcid, CALID id, CALTYPE type, LPSTR data, int size, DWORD *val )
-{
-    int ret, sizeW = size;
-    LPWSTR dataW = NULL;
-
-    if (type & CAL_RETURN_NUMBER)
-        return GetCalendarInfoW( lcid, id, type, (WCHAR *)data, size, val ) * sizeof(WCHAR);
-
-    if (!size) sizeW = GetCalendarInfoW( lcid, id, type, NULL, 0, NULL );
-    if (!(dataW = HeapAlloc(GetProcessHeap(), 0, sizeW * sizeof(WCHAR)))) return 0;
-
-    ret = GetCalendarInfoW( lcid, id, type, dataW, sizeW, val );
-    if(ret && dataW && data)
-        ret = WideCharToMultiByte( CP_ACP, 0, dataW, -1, data, size, NULL, NULL );
-    else if (type & CAL_RETURN_NUMBER)
-        ret *= sizeof(WCHAR);
-    HeapFree( GetProcessHeap(), 0, dataW );
-    return ret;
-}
-
-/*********************************************************************
- *            SetCalendarInfoA (KERNEL32.@)
- */
-int WINAPI SetCalendarInfoA( LCID lcid, CALID id, CALTYPE type, LPCSTR data)
-{
-    FIXME("(%08lx,%08lx,%08lx,%s): stub\n", lcid, id, type, debugstr_a(data));
-    return 0;
-}

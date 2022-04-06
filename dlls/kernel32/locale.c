@@ -63,11 +63,13 @@ extern BOOL WINAPI Internal_EnumUILanguages( UILANGUAGE_ENUMPROCW proc, DWORD fl
  *
  * Retrieve the ANSI codepage for a given locale.
  */
-static inline UINT get_lcid_codepage( LCID lcid )
+static UINT get_lcid_codepage( LCID lcid, UINT flags )
 {
-    UINT ret;
-    if (!GetLocaleInfoW( lcid, LOCALE_IDEFAULTANSICODEPAGE|LOCALE_RETURN_NUMBER, (WCHAR *)&ret,
-                         sizeof(ret)/sizeof(WCHAR) )) ret = 0;
+    UINT ret = 0;
+
+    if (flags & LOCALE_USE_CP_ACP) return CP_ACP;
+    GetLocaleInfoW( lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
+                    (WCHAR *)&ret, sizeof(ret)/sizeof(WCHAR) );
     return ret;
 }
 
@@ -98,12 +100,10 @@ static inline UINT get_lcid_codepage( LCID lcid )
  */
 BOOL WINAPI SetLocaleInfoA(LCID lcid, LCTYPE lctype, LPCSTR data)
 {
-    UINT codepage = CP_ACP;
+    UINT codepage = get_lcid_codepage( lcid, lctype );
     WCHAR *strW;
     DWORD len;
     BOOL ret;
-
-    if (!(lctype & LOCALE_USE_CP_ACP)) codepage = get_lcid_codepage( lcid );
 
     if (!data)
     {
@@ -373,6 +373,34 @@ BOOL WINAPI InvalidateNLSCache(void)
 BOOL WINAPI EnumUILanguagesA( UILANGUAGE_ENUMPROCA proc, DWORD flags, LONG_PTR param )
 {
     return Internal_EnumUILanguages( (UILANGUAGE_ENUMPROCW)proc, flags, param, FALSE );
+}
+
+
+/*********************************************************************
+ *            GetCalendarInfoA (KERNEL32.@)
+ */
+int WINAPI GetCalendarInfoA( LCID lcid, CALID id, CALTYPE type, LPSTR data, int data_len, DWORD *val )
+{
+    WCHAR buffer[256];
+
+    if (type & CAL_RETURN_NUMBER)
+        return GetCalendarInfoW( lcid, id, type, (WCHAR *)data, data_len, val ) * sizeof(WCHAR);
+
+    if (!GetCalendarInfoW( lcid, id, type, buffer, ARRAY_SIZE(buffer), val )) return 0;
+    return WideCharToMultiByte( get_lcid_codepage(lcid, type), 0, buffer, -1, data, data_len, NULL, NULL );
+}
+
+
+/*********************************************************************
+ *            SetCalendarInfoA (KERNEL32.@)
+ */
+int WINAPI SetCalendarInfoA( LCID lcid, CALID id, CALTYPE type, LPCSTR data )
+{
+    WCHAR buffer[256];
+
+    if (!MultiByteToWideChar( get_lcid_codepage(lcid, type), 0, data, -1, buffer, ARRAY_SIZE(buffer) ))
+        return 0;
+    return SetCalendarInfoW( lcid, id, type, buffer );
 }
 
 
