@@ -81,8 +81,6 @@ typedef struct _AudioSession {
     float *channel_vols;
     BOOL mute;
 
-    CRITICAL_SECTION lock;
-
     struct list entry;
 } AudioSession;
 
@@ -834,9 +832,6 @@ static AudioSession *create_session(const GUID *guid, IMMDevice *device,
     list_init(&ret->clients);
 
     list_add_head(&g_sessions, &ret->entry);
-
-    InitializeCriticalSection(&ret->lock);
-    ret->lock.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": AudioSession.lock");
 
     session_init_vols(ret, num_channels);
 
@@ -2565,13 +2560,13 @@ static HRESULT WINAPI SimpleAudioVolume_SetMasterVolume(
     if(context)
         FIXME("Notifications not supported yet\n");
 
-    EnterCriticalSection(&session->lock);
+    EnterCriticalSection(&g_sessions_lock);
 
     session->master_vol = level;
 
     TRACE("OSS doesn't support setting volume\n");
 
-    LeaveCriticalSection(&session->lock);
+    LeaveCriticalSection(&g_sessions_lock);
 
     return S_OK;
 }
@@ -2600,11 +2595,11 @@ static HRESULT WINAPI SimpleAudioVolume_SetMute(ISimpleAudioVolume *iface,
 
     TRACE("(%p)->(%u, %s)\n", session, mute, debugstr_guid(context));
 
-    EnterCriticalSection(&session->lock);
+    EnterCriticalSection(&g_sessions_lock);
 
     session->mute = mute;
 
-    LeaveCriticalSection(&session->lock);
+    LeaveCriticalSection(&g_sessions_lock);
 
     return S_OK;
 }
@@ -2856,13 +2851,13 @@ static HRESULT WINAPI ChannelAudioVolume_SetChannelVolume(
     if(context)
         FIXME("Notifications not supported yet\n");
 
-    EnterCriticalSection(&session->lock);
+    EnterCriticalSection(&g_sessions_lock);
 
     session->channel_vols[index] = level;
 
     TRACE("OSS doesn't support setting volume\n");
 
-    LeaveCriticalSection(&session->lock);
+    LeaveCriticalSection(&g_sessions_lock);
 
     return S_OK;
 }
@@ -2906,14 +2901,14 @@ static HRESULT WINAPI ChannelAudioVolume_SetAllVolumes(
     if(context)
         FIXME("Notifications not supported yet\n");
 
-    EnterCriticalSection(&session->lock);
+    EnterCriticalSection(&g_sessions_lock);
 
     for(i = 0; i < count; ++i)
         session->channel_vols[i] = levels[i];
 
     TRACE("OSS doesn't support setting volume\n");
 
-    LeaveCriticalSection(&session->lock);
+    LeaveCriticalSection(&g_sessions_lock);
 
     return S_OK;
 }
