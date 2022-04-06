@@ -113,8 +113,6 @@ struct ACImpl {
     UINT32 channel_count;
     struct oss_stream *stream;
 
-    oss_audioinfo ai;
-
     BOOL initted;
     HANDLE timer;
 
@@ -433,6 +431,7 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev,
 {
     ACImpl *This;
     struct oss_stream *stream;
+    oss_audioinfo ai;
     const OSSDevice *oss_dev;
     HRESULT hr;
     int len;
@@ -475,8 +474,8 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev,
 
     This->dataflow = oss_dev->flow;
 
-    This->ai.dev = -1;
-    if(ioctl(stream->fd, SNDCTL_ENGINEINFO, &This->ai) < 0){
+    ai.dev = -1;
+    if(ioctl(stream->fd, SNDCTL_ENGINEINFO, &ai) < 0){
         WARN("Unable to get audio info for device %s: %d (%s)\n", oss_dev->devnode,
                 errno, strerror(errno));
         close(stream->fd);
@@ -488,17 +487,17 @@ HRESULT WINAPI AUDDRV_GetAudioEndpoint(GUID *guid, IMMDevice *dev,
     strcpy(This->devnode, oss_dev->devnode);
 
     TRACE("OSS audioinfo:\n");
-    TRACE("devnode: %s\n", This->ai.devnode);
-    TRACE("name: %s\n", This->ai.name);
-    TRACE("busy: %x\n", This->ai.busy);
-    TRACE("caps: %x\n", This->ai.caps);
-    TRACE("iformats: %x\n", This->ai.iformats);
-    TRACE("oformats: %x\n", This->ai.oformats);
-    TRACE("enabled: %d\n", This->ai.enabled);
-    TRACE("min_rate: %d\n", This->ai.min_rate);
-    TRACE("max_rate: %d\n", This->ai.max_rate);
-    TRACE("min_channels: %d\n", This->ai.min_channels);
-    TRACE("max_channels: %d\n", This->ai.max_channels);
+    TRACE("devnode: %s\n", ai.devnode);
+    TRACE("name: %s\n", ai.name);
+    TRACE("busy: %x\n", ai.busy);
+    TRACE("caps: %x\n", ai.caps);
+    TRACE("iformats: %x\n", ai.iformats);
+    TRACE("oformats: %x\n", ai.oformats);
+    TRACE("enabled: %d\n", ai.enabled);
+    TRACE("min_rate: %d\n", ai.min_rate);
+    TRACE("max_rate: %d\n", ai.max_rate);
+    TRACE("min_channels: %d\n", ai.min_channels);
+    TRACE("max_channels: %d\n", ai.max_channels);
 
     This->IAudioClient3_iface.lpVtbl = &AudioClient3_Vtbl;
     This->IAudioRenderClient_iface.lpVtbl = &AudioRenderClient_Vtbl;
@@ -1129,6 +1128,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
     WAVEFORMATEXTENSIBLE *fmt;
+    oss_audioinfo ai;
     int formats;
 
     TRACE("(%p)->(%p)\n", This, pwfx);
@@ -1137,10 +1137,17 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
         return E_POINTER;
     *pwfx = NULL;
 
+    ai.dev = -1;
+    if(ioctl(This->stream->fd, SNDCTL_ENGINEINFO, &ai) < 0){
+        WARN("Unable to get audio info for device %s: %d (%s)\n", This->devnode,
+                errno, strerror(errno));
+        return E_FAIL;
+    }
+
     if(This->dataflow == eRender)
-        formats = This->ai.oformats;
+        formats = ai.oformats;
     else if(This->dataflow == eCapture)
-        formats = This->ai.iformats;
+        formats = ai.iformats;
     else
         return E_UNEXPECTED;
 
@@ -1174,7 +1181,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
 
     /* some OSS drivers are buggy, so set reasonable defaults if
      * the reported values seem wacky */
-    fmt->Format.nChannels = max(This->ai.max_channels, This->ai.min_channels);
+    fmt->Format.nChannels = max(ai.max_channels, ai.min_channels);
     if(fmt->Format.nChannels == 0 || fmt->Format.nChannels > 8)
         fmt->Format.nChannels = 2;
 
@@ -1185,7 +1192,7 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
      * channels (e.g. 2.1). */
     if(fmt->Format.nChannels > 1 && (fmt->Format.nChannels & 0x1))
     {
-        if(fmt->Format.nChannels < This->ai.max_channels)
+        if(fmt->Format.nChannels < ai.max_channels)
             fmt->Format.nChannels += 1;
         else
             /* We could "fake" more channels and downmix the emulated channels,
@@ -1194,12 +1201,12 @@ static HRESULT WINAPI AudioClient_GetMixFormat(IAudioClient3 *iface,
             WARN("Some Windows applications behave badly with an odd number of channels (%u)!\n", fmt->Format.nChannels);
     }
 
-    if(This->ai.max_rate == 0)
+    if(ai.max_rate == 0)
         fmt->Format.nSamplesPerSec = 44100;
     else
-        fmt->Format.nSamplesPerSec = min(This->ai.max_rate, 44100);
-    if(fmt->Format.nSamplesPerSec < This->ai.min_rate)
-        fmt->Format.nSamplesPerSec = This->ai.min_rate;
+        fmt->Format.nSamplesPerSec = min(ai.max_rate, 44100);
+    if(fmt->Format.nSamplesPerSec < ai.min_rate)
+        fmt->Format.nSamplesPerSec = ai.min_rate;
 
     fmt->dwChannelMask = get_channel_mask(fmt->Format.nChannels);
 
