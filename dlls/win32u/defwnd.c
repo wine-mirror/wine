@@ -74,6 +74,54 @@ static BOOL set_window_text( HWND hwnd, const void *text, BOOL ansi )
     return TRUE;
 }
 
+static HICON set_window_icon( HWND hwnd, WPARAM type, HICON icon )
+{
+    HICON ret = 0;
+    WND *win;
+
+    if (!(win = get_win_ptr( hwnd ))) return 0;
+
+    switch (type)
+    {
+    case ICON_SMALL:
+        ret = win->hIconSmall;
+        if (ret && !icon && win->hIcon && user_callbacks)
+        {
+            win->hIconSmall2 = user_callbacks->pCopyImage( win->hIcon, IMAGE_ICON,
+                                                           get_system_metrics( SM_CXSMICON ),
+                                                           get_system_metrics( SM_CYSMICON ), 0 );
+        }
+        else if (icon && win->hIconSmall2)
+        {
+            NtUserDestroyCursor( win->hIconSmall2, 0 );
+            win->hIconSmall2 = NULL;
+        }
+        win->hIconSmall = icon;
+        break;
+
+    case ICON_BIG:
+        ret = win->hIcon;
+        if (win->hIconSmall2)
+        {
+            NtUserDestroyCursor( win->hIconSmall2, 0 );
+            win->hIconSmall2 = NULL;
+        }
+        if (icon && !win->hIconSmall && user_callbacks)
+        {
+            win->hIconSmall2 = user_callbacks->pCopyImage( icon, IMAGE_ICON,
+                                                           get_system_metrics( SM_CXSMICON ),
+                                                           get_system_metrics( SM_CYSMICON ), 0 );
+        }
+        win->hIcon = icon;
+        break;
+    }
+    release_win_ptr( win );
+
+    user_driver->pSetWindowIcon( hwnd, type, icon );
+    return ret;
+}
+
+
 LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
     LRESULT result = 0;
@@ -103,6 +151,10 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
 
     case WM_SETTEXT:
         result = set_window_text( hwnd, (void *)lparam, ansi );
+        break;
+
+    case WM_SETICON:
+        result = (LRESULT)set_window_icon( hwnd, wparam, (HICON)lparam );
         break;
     }
 

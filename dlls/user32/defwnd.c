@@ -517,53 +517,11 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
     case WM_SETICON:
         {
-            HICON ret;
-            WND *wndPtr = WIN_GetPtr( hwnd );
-
-            switch(wParam)
-            {
-            case ICON_SMALL:
-                ret = wndPtr->hIconSmall;
-                if (ret && !lParam && wndPtr->hIcon)
-                {
-                    wndPtr->hIconSmall2 = CopyImage( wndPtr->hIcon, IMAGE_ICON,
-                                                     GetSystemMetrics( SM_CXSMICON ),
-                                                     GetSystemMetrics( SM_CYSMICON ), 0 );
-                }
-                else if (lParam && wndPtr->hIconSmall2)
-                {
-                    DestroyIcon( wndPtr->hIconSmall2 );
-                    wndPtr->hIconSmall2 = NULL;
-                }
-                wndPtr->hIconSmall = (HICON)lParam;
-                break;
-            case ICON_BIG:
-                ret = wndPtr->hIcon;
-                if (wndPtr->hIconSmall2)
-                {
-                    DestroyIcon( wndPtr->hIconSmall2 );
-                    wndPtr->hIconSmall2 = NULL;
-                }
-                if (lParam && !wndPtr->hIconSmall)
-                {
-                    wndPtr->hIconSmall2 = CopyImage( (HICON)lParam, IMAGE_ICON,
-                                                     GetSystemMetrics( SM_CXSMICON ),
-                                                     GetSystemMetrics( SM_CYSMICON ), 0 );
-                }
-                wndPtr->hIcon = (HICON)lParam;
-                break;
-            default:
-                ret = 0;
-                break;
-            }
-            WIN_ReleasePtr( wndPtr );
-
-            USER_Driver->pSetWindowIcon( hwnd, wParam, (HICON)lParam );
-
+            LRESULT res =  NtUserMessageCall( hwnd, msg, wParam, lParam,
+                                              0, FNID_DEFWINDOWPROC, FALSE );
             if( (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CAPTION) == WS_CAPTION )
                 NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
-
-            return (LRESULT)ret;
+            return res;
         }
 
     case WM_GETICON:
