@@ -1396,8 +1396,8 @@ static HRESULT load_job_data(TaskImpl *This, BYTE *data, DWORD size)
     data += sizeof(USHORT) + data_size;
 
     /* Trigger Data */
-    TRACE("trigger_offset %04x, triggers end at %04lx\n", fixed->trigger_offset,
-          (DWORD)(fixed->trigger_offset + sizeof(USHORT) + trigger_count * sizeof(TASK_TRIGGER)));
+    TRACE("trigger_offset %04x, triggers end at %04Ix\n", fixed->trigger_offset,
+          fixed->trigger_offset + sizeof(USHORT) + trigger_count * sizeof(TASK_TRIGGER));
 
     task_trigger = (TASK_TRIGGER *)(data + sizeof(USHORT));
 
