@@ -4183,7 +4183,7 @@ DWORD WINAPI ConvertInterfaceLuidToAlias( const NET_LUID *luid, WCHAR *alias, SI
     DWORD err;
     IF_COUNTED_STRING name;
 
-    TRACE( "(%p %p %lu)\n", luid, alias, (DWORD)len );
+    TRACE( "(%p %p %Iu)\n", luid, alias, len );
 
     if (!luid || !alias) return ERROR_INVALID_PARAMETER;
 
@@ -4243,7 +4243,7 @@ DWORD WINAPI ConvertInterfaceLuidToNameA(const NET_LUID *luid, char *name, SIZE_
     DWORD err;
     WCHAR nameW[IF_MAX_STRING_SIZE + 1];
 
-    TRACE( "(%p %p %lu)\n", luid, name, (DWORD)len );
+    TRACE( "(%p %p %Iu)\n", luid, name, len );
 
     if (!luid) return ERROR_INVALID_PARAMETER;
     if (!name || !len) return ERROR_NOT_ENOUGH_MEMORY;
@@ -4283,7 +4283,7 @@ DWORD WINAPI ConvertInterfaceLuidToNameW(const NET_LUID *luid, WCHAR *name, SIZE
     const WCHAR *prefix = NULL;
     WCHAR buf[IF_MAX_STRING_SIZE + 1];
 
-    TRACE( "(%p %p %lu)\n", luid, name, (DWORD)len );
+    TRACE( "(%p %p %Iu)\n", luid, name, len );
 
     if (!luid || !name) return ERROR_INVALID_PARAMETER;
 
