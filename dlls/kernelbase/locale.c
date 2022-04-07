@@ -1956,6 +1956,14 @@ static WCHAR compose_chars( WCHAR ch1, WCHAR ch2 )
 }
 
 
+static UINT get_locale_codepage( const NLS_LOCALE_DATA *locale, ULONG flags )
+{
+    UINT ret = locale->idefaultansicodepage;
+    if ((flags & LOCALE_USE_CP_ACP) || ret == CP_UTF8) ret = system_locale->idefaultansicodepage;
+    return ret;
+}
+
+
 static UINT get_lcid_codepage( LCID lcid, ULONG flags )
 {
     UINT ret = GetACP();
@@ -3627,15 +3635,17 @@ static DWORD get_timezone_id( const TIME_ZONE_INFORMATION *info, LARGE_INTEGER t
 /******************************************************************************
  *	Internal_EnumCalendarInfo   (kernelbase.@)
  */
-BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumCalendarInfo( CALINFO_ENUMPROCW proc, LCID lcid, CALID id,
+BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumCalendarInfo( CALINFO_ENUMPROCW proc,
+                                                         const NLS_LOCALE_DATA *locale, CALID id,
                                                          CALTYPE type, BOOL unicode, BOOL ex,
                                                          BOOL exex, LPARAM lparam )
 {
+    const USHORT *calendars;
+    USHORT cal = id;
     WCHAR buffer[256];
-    CALID calendars[2] = { id };
-    INT ret, i;
+    INT ret, i, count = 1;
 
-    if (!proc)
+    if (!proc || !locale)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
@@ -3643,24 +3653,33 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumCalendarInfo( CALINFO_ENUMPROCW proc,
 
     if (id == ENUM_ALL_CALENDARS)
     {
-        if (!GetLocaleInfoW( lcid, LOCALE_ICALENDARTYPE | LOCALE_RETURN_NUMBER,
-                             (WCHAR *)&calendars[0], sizeof(calendars[0]) / sizeof(WCHAR) )) return FALSE;
-        if (!GetLocaleInfoW( lcid, LOCALE_IOPTIONALCALENDAR | LOCALE_RETURN_NUMBER,
-                             (WCHAR *)&calendars[1], sizeof(calendars[1]) / sizeof(WCHAR) )) calendars[1] = 0;
+        count = locale_strings[locale->scalendartype];
+        calendars = locale_strings + locale->scalendartype + 1;
+    }
+    else if (id <= CAL_UMALQURA)
+    {
+        calendars = &cal;
+        count = 1;
+    }
+    else
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
     }
 
-    for (i = 0; i < ARRAY_SIZE(calendars) && calendars[i]; i++)
+    for (i = 0; i < count; i++)
     {
         id = calendars[i];
         if (type & CAL_RETURN_NUMBER)
-            ret = GetCalendarInfoW( lcid, id, type, NULL, 0, (LPDWORD)buffer );
+            ret = get_calendar_info( locale, id, type, NULL, 0, (LPDWORD)buffer );
         else if (unicode)
-            ret = GetCalendarInfoW( lcid, id, type, buffer, ARRAY_SIZE(buffer), NULL );
+            ret = get_calendar_info( locale, id, type, buffer, ARRAY_SIZE(buffer), NULL );
         else
         {
             WCHAR bufW[256];
-            ret = GetCalendarInfoW( lcid, id, type, bufW, ARRAY_SIZE(bufW), NULL );
-            if (ret) WideCharToMultiByte( CP_ACP, 0, bufW, -1, (char *)buffer, sizeof(buffer), NULL, NULL );
+            ret = get_calendar_info( locale, id, type, bufW, ARRAY_SIZE(bufW), NULL );
+            if (ret) WideCharToMultiByte( get_locale_codepage( locale, type ), 0,
+                                          bufW, -1, (char *)buffer, sizeof(buffer), NULL, NULL );
         }
 
         if (ret)
@@ -4155,7 +4174,8 @@ LCID WINAPI DECLSPEC_HOTPATCH ConvertDefaultLocale( LCID lcid )
 BOOL WINAPI DECLSPEC_HOTPATCH EnumCalendarInfoW( CALINFO_ENUMPROCW proc, LCID lcid,
                                                  CALID id, CALTYPE type )
 {
-    return Internal_EnumCalendarInfo( proc, lcid, id, type, TRUE, FALSE, FALSE, 0 );
+    return Internal_EnumCalendarInfo( proc, NlsValidateLocale( &lcid, 0 ),
+                                      id, type, TRUE, FALSE, FALSE, 0 );
 }
 
 
@@ -4165,7 +4185,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumCalendarInfoW( CALINFO_ENUMPROCW proc, LCID lc
 BOOL WINAPI DECLSPEC_HOTPATCH EnumCalendarInfoExW( CALINFO_ENUMPROCEXW proc, LCID lcid,
                                                    CALID id, CALTYPE type )
 {
-    return Internal_EnumCalendarInfo( (CALINFO_ENUMPROCW)proc, lcid, id, type, TRUE, TRUE, FALSE, 0 );
+    return Internal_EnumCalendarInfo( (CALINFO_ENUMPROCW)proc, NlsValidateLocale( &lcid, 0 ),
+                                      id, type, TRUE, TRUE, FALSE, 0 );
 }
 
 /******************************************************************************
@@ -4174,8 +4195,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumCalendarInfoExW( CALINFO_ENUMPROCEXW proc, LCI
 BOOL WINAPI DECLSPEC_HOTPATCH EnumCalendarInfoExEx( CALINFO_ENUMPROCEXEX proc, LPCWSTR locale, CALID id,
                                                     LPCWSTR reserved, CALTYPE type, LPARAM lparam )
 {
-    LCID lcid = LocaleNameToLCID( locale, 0 );
-    return Internal_EnumCalendarInfo( (CALINFO_ENUMPROCW)proc, lcid, id, type, TRUE, TRUE, TRUE, lparam );
+    LCID lcid;
+    return Internal_EnumCalendarInfo( (CALINFO_ENUMPROCW)proc, get_locale_by_name( locale, &lcid ),
+                                      id, type, TRUE, TRUE, TRUE, lparam );
 }
 
 

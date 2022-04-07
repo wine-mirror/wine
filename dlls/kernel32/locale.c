@@ -38,12 +38,14 @@
 #include "winerror.h"
 #include "winver.h"
 #include "kernel_private.h"
-#include "wine/heap.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(nls);
 
-extern BOOL WINAPI Internal_EnumCalendarInfo( CALINFO_ENUMPROCW proc, LCID lcid, CALID id,
+extern const NLS_LOCALE_DATA * WINAPI NlsValidateLocale( LCID *lcid, ULONG flags );
+
+extern BOOL WINAPI Internal_EnumCalendarInfo( CALINFO_ENUMPROCW proc,
+                                              const NLS_LOCALE_DATA *locale, CALID id,
                                               CALTYPE type, BOOL unicode, BOOL ex,
                                               BOOL exex, LPARAM lparam );
 extern BOOL WINAPI Internal_EnumDateFormats( DATEFMT_ENUMPROCW proc, LCID lcid, DWORD flags, BOOL unicode,
@@ -299,7 +301,8 @@ BOOL WINAPI EnumLanguageGroupLocalesA( LANGGROUPLOCALE_ENUMPROCA proc, LGRPID id
  */
 BOOL WINAPI EnumCalendarInfoA( CALINFO_ENUMPROCA proc, LCID lcid, CALID id, CALTYPE type )
 {
-    return Internal_EnumCalendarInfo( (CALINFO_ENUMPROCW)proc, lcid, id, type, FALSE, FALSE, FALSE, 0 );
+    return Internal_EnumCalendarInfo( (CALINFO_ENUMPROCW)proc, NlsValidateLocale( &lcid, 0 ),
+                                      id, type, FALSE, FALSE, FALSE, 0 );
 }
 
 /******************************************************************************
@@ -307,7 +310,8 @@ BOOL WINAPI EnumCalendarInfoA( CALINFO_ENUMPROCA proc, LCID lcid, CALID id, CALT
  */
 BOOL WINAPI EnumCalendarInfoExA( CALINFO_ENUMPROCEXA proc, LCID lcid, CALID id, CALTYPE type )
 {
-    return Internal_EnumCalendarInfo( (CALINFO_ENUMPROCW)proc, lcid, id, type, FALSE, TRUE, FALSE, 0 );
+    return Internal_EnumCalendarInfo( (CALINFO_ENUMPROCW)proc, NlsValidateLocale( &lcid, 0 ),
+                                      id, type, FALSE, TRUE, FALSE, 0 );
 }
 
 /**************************************************************************
