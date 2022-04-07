@@ -416,8 +416,48 @@ SECURITY_STATUS WINAPI NCryptImportKey(NCRYPT_PROV_HANDLE provider, NCRYPT_KEY_H
 
 SECURITY_STATUS WINAPI NCryptIsAlgSupported(NCRYPT_PROV_HANDLE provider, const WCHAR *algid, DWORD flags)
 {
-    FIXME("(%#Ix, %s, %#lx): stub\n", provider, wine_dbgstr_w(algid), flags);
-    return NTE_NOT_SUPPORTED;
+    static const ULONG supported = BCRYPT_CIPHER_OPERATION |\
+                                   BCRYPT_ASYMMETRIC_ENCRYPTION_OPERATION |\
+                                   BCRYPT_SIGNATURE_OPERATION |\
+                                   BCRYPT_SECRET_AGREEMENT_OPERATION;
+    BCRYPT_ALGORITHM_IDENTIFIER *list;
+    ULONG i, count;
+    NTSTATUS status;
+
+    TRACE("(%#Ix, %s, %#lx)\n", provider, wine_dbgstr_w(algid), flags);
+
+    if (!provider) return NTE_INVALID_HANDLE;
+    if (!algid) return HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER);
+    if (flags == NCRYPT_SILENT_FLAG)
+    {
+        FIXME("Silent flag not implemented\n");
+    }
+    else if (flags)
+    {
+        WARN("Invalid flags %#lx\n", flags);
+        return NTE_BAD_FLAGS;
+    }
+    if (!lstrcmpiW(BCRYPT_RSA_SIGN_ALGORITHM, algid)) return NTE_NOT_SUPPORTED;
+
+    status = BCryptEnumAlgorithms(supported, &count, &list, 0);
+    if (status != STATUS_SUCCESS)
+    {
+        ERR("Error retrieving algorithm list %#lx\n", status);
+        return map_ntstatus(status);
+    }
+
+    status = STATUS_NOT_SUPPORTED;
+    for (i = 0; i < count; i++)
+    {
+        if (!lstrcmpiW(list[i].pszName, algid))
+        {
+            status = STATUS_SUCCESS;
+            break;
+        }
+    }
+
+    BCryptFreeBuffer(list);
+    return map_ntstatus(status);
 }
 
 BOOL WINAPI NCryptIsKeyHandle(NCRYPT_KEY_HANDLE hKey)
