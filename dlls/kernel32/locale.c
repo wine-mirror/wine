@@ -55,8 +55,8 @@ extern BOOL WINAPI Internal_EnumLanguageGroupLocales( LANGGROUPLOCALE_ENUMPROCW 
 extern BOOL WINAPI Internal_EnumSystemCodePages( CODEPAGE_ENUMPROCW proc, DWORD flags, BOOL unicode );
 extern BOOL WINAPI Internal_EnumSystemLanguageGroups( LANGUAGEGROUP_ENUMPROCW proc, DWORD flags,
                                                       LONG_PTR param, BOOL unicode );
-extern BOOL WINAPI Internal_EnumTimeFormats( TIMEFMT_ENUMPROCW proc, LCID lcid, DWORD flags,
-                                             BOOL unicode, BOOL ex, LPARAM lparam );
+extern BOOL WINAPI Internal_EnumTimeFormats( TIMEFMT_ENUMPROCW proc, const NLS_LOCALE_DATA *locale,
+                                             DWORD flags, BOOL unicode, BOOL ex, LPARAM lparam );
 extern BOOL WINAPI Internal_EnumUILanguages( UILANGUAGE_ENUMPROCW proc, DWORD flags,
                                              LONG_PTR param, BOOL unicode );
 
@@ -350,7 +350,8 @@ BOOL WINAPI EnumTimeFormatsA( TIMEFMT_ENUMPROCA proc, LCID lcid, DWORD flags )
         SetLastError(ERROR_INVALID_FLAGS);
         return FALSE;
     }
-    return Internal_EnumTimeFormats( (TIMEFMT_ENUMPROCW)proc, lcid, flags, FALSE, FALSE, 0 );
+    return Internal_EnumTimeFormats( (TIMEFMT_ENUMPROCW)proc, NlsValidateLocale( &lcid, 0 ),
+                                     flags, FALSE, FALSE, 0 );
 }
 
 /******************************************************************************

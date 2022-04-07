@@ -3888,14 +3888,16 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumSystemLanguageGroups( LANGUAGEGROUP_E
 /**************************************************************************
  *	Internal_EnumTimeFormats   (kernelbase.@)
  */
-BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumTimeFormats( TIMEFMT_ENUMPROCW proc, LCID lcid, DWORD flags,
+BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumTimeFormats( TIMEFMT_ENUMPROCW proc,
+                                                        const NLS_LOCALE_DATA *locale, DWORD flags,
                                                         BOOL unicode, BOOL ex, LPARAM lparam )
 {
     WCHAR buffer[256];
-    LCTYPE lctype;
-    INT ret;
+    INT ret = TRUE;
+    const DWORD *array;
+    DWORD pos, i;
 
-    if (!proc)
+    if (!proc || !locale)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
@@ -3903,10 +3905,12 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumTimeFormats( TIMEFMT_ENUMPROCW proc, 
     switch (flags & ~LOCALE_USE_CP_ACP)
     {
     case 0:
-        lctype = LOCALE_STIMEFORMAT;
+        if (!get_locale_info( locale, 0, LOCALE_STIMEFORMAT, buffer, ARRAY_SIZE(buffer) )) return FALSE;
+        pos = locale->stimeformat;
         break;
     case TIME_NOSECONDS:
-        lctype = LOCALE_SSHORTTIME;
+        if (!get_locale_info( locale, 0, LOCALE_SSHORTTIME, buffer, ARRAY_SIZE(buffer) )) return FALSE;
+        pos = locale->sshorttime;
         break;
     default:
         FIXME( "Unknown time format %lx\n", flags );
@@ -3914,16 +3918,21 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumTimeFormats( TIMEFMT_ENUMPROCW proc, 
         return FALSE;
     }
 
-    lctype |= flags & LOCALE_USE_CP_ACP;
-    if (unicode)
-        ret = GetLocaleInfoW( lcid, lctype, buffer, ARRAY_SIZE(buffer) );
-    else
-        ret = GetLocaleInfoA( lcid, lctype, (char *)buffer, sizeof(buffer) );
-
-    if (ret)
+    array = (const DWORD *)(locale_strings + pos + 1);
+    for (i = 0; ret && i < locale_strings[pos]; i++)
     {
-        if (ex) ((TIMEFMT_ENUMPROCEX)proc)( buffer, lparam );
-        else proc( buffer );
+        if (i) memcpy( buffer, locale_strings + array[i] + 1,
+                       (locale_strings[array[i]] + 1) * sizeof(WCHAR) );
+
+        if (ex) ret = ((TIMEFMT_ENUMPROCEX)proc)( buffer, lparam );
+        else if (unicode) ret = proc( buffer );
+        else
+        {
+            char buffA[256];
+            WideCharToMultiByte( get_locale_codepage( locale, flags ), 0, buffer, -1,
+                                 buffA, ARRAY_SIZE(buffA), NULL, NULL );
+            ret = proc( (WCHAR *)buffA );
+        }
     }
     return TRUE;
 }
@@ -4408,7 +4417,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumSystemLocalesEx( LOCALE_ENUMPROCEX proc, DWORD
  */
 BOOL WINAPI DECLSPEC_HOTPATCH EnumTimeFormatsW( TIMEFMT_ENUMPROCW proc, LCID lcid, DWORD flags )
 {
-    return Internal_EnumTimeFormats( proc, lcid, flags, TRUE, FALSE, 0 );
+    return Internal_EnumTimeFormats( proc, NlsValidateLocale( &lcid, 0 ), flags, TRUE, FALSE, 0 );
 }
 
 
@@ -4418,8 +4427,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumTimeFormatsW( TIMEFMT_ENUMPROCW proc, LCID lci
 BOOL WINAPI DECLSPEC_HOTPATCH EnumTimeFormatsEx( TIMEFMT_ENUMPROCEX proc, const WCHAR *locale,
                                                  DWORD flags, LPARAM lparam )
 {
-    LCID lcid = LocaleNameToLCID( locale, 0 );
-    return Internal_EnumTimeFormats( (TIMEFMT_ENUMPROCW)proc, lcid, flags, TRUE, TRUE, lparam );
+    LCID lcid;
+    return Internal_EnumTimeFormats( (TIMEFMT_ENUMPROCW)proc, get_locale_by_name( locale, &lcid ),
+                                     flags, TRUE, TRUE, lparam );
 }
 
 
