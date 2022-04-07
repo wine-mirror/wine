@@ -574,6 +574,8 @@ static const NLS_LOCALE_DATA *get_locale_by_id( LCID *lcid, DWORD flags )
     case LOCALE_NEUTRAL:
     case LOCALE_USER_DEFAULT:
     case LOCALE_CUSTOM_DEFAULT:
+    case LOCALE_CUSTOM_UNSPECIFIED:
+    case LOCALE_CUSTOM_UI_DEFAULT:
         *lcid = user_lcid;
         return user_locale;
     default:
@@ -5406,9 +5408,7 @@ INT WINAPI DECLSPEC_HOTPATCH GetUserDefaultLocaleName( LPWSTR name, INT len )
  */
 LANGID WINAPI DECLSPEC_HOTPATCH GetUserDefaultUILanguage(void)
 {
-    LANGID lang;
-    NtQueryDefaultUILanguage( &lang );
-    return lang;
+    return LANGIDFROMLCID( GetUserDefaultLCID() );
 }
 
 
@@ -5708,7 +5708,15 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsValidLanguageGroup( LGRPID id, DWORD flags )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsValidLocale( LCID lcid, DWORD flags )
 {
-    return !!get_locale_by_id( &lcid, LOCALE_ALLOW_NEUTRAL_NAMES );
+    switch (lcid)
+    {
+    case LOCALE_NEUTRAL:
+    case LOCALE_USER_DEFAULT:
+    case LOCALE_SYSTEM_DEFAULT:
+        return FALSE;
+    default:
+        return !!get_locale_by_id( &lcid, LOCALE_ALLOW_NEUTRAL_NAMES );
+    }
 }
 
 

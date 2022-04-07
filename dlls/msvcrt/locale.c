@@ -262,6 +262,8 @@ find_best_locale_proc( WCHAR *name, DWORD locale_flags, LPARAM lParam )
   char buff[MAX_ELEM_LEN];
   unsigned int flags = 0;
 
+  if (lcid == LOCALE_CUSTOM_UNSPECIFIED) return CONTINUE_LOOKING;
+
 #if _MSVCR_VER >= 110
   if (res->allow_sname && compare_info(lcid,LOCALE_SNAME,buff,res->search_language, TRUE))
   {
