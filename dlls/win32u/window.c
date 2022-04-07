@@ -807,6 +807,17 @@ BOOL is_window_unicode( HWND hwnd )
     return ret;
 }
 
+/* see IsWindowEnabled */
+static BOOL is_window_enabled( HWND hwnd )
+{
+    LONG ret;
+
+    SetLastError( NO_ERROR );
+    ret = get_window_long( hwnd, GWL_STYLE );
+    if (!ret && GetLastError() != NO_ERROR) return FALSE;
+    return !(ret & WS_DISABLED);
+}
+
 /* see GetWindowDpiAwarenessContext */
 DPI_AWARENESS_CONTEXT get_window_dpi_awareness_context( HWND hwnd )
 {
@@ -4979,6 +4990,8 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
         return get_server_window_text( hwnd, NULL, 0 );
     case NtUserIsWindow:
         return is_window( hwnd );
+    case NtUserIsWindowEnabled:
+        return is_window_enabled( hwnd );
     case NtUserIsWindowUnicode:
         return is_window_unicode( hwnd );
     case NtUserIsWindowVisible:

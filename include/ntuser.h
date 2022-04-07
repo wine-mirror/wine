@@ -198,6 +198,7 @@ enum
     NtUserGetWindowDpiAwarenessContext,
     NtUserGetWindowTextLength,
     NtUserIsWindow,
+    NtUserIsWindowEnabled,
     NtUserIsWindowUnicode,
     NtUserIsWindowVisible,
 };

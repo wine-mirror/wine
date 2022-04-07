@@ -915,14 +915,9 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
 /***********************************************************************
  *		IsWindowEnabled (USER32.@)
  */
-BOOL WINAPI IsWindowEnabled(HWND hWnd)
+BOOL WINAPI IsWindowEnabled( HWND hwnd )
 {
-    LONG ret;
-
-    SetLastError(NO_ERROR);
-    ret = GetWindowLongW( hWnd, GWL_STYLE );
-    if (!ret && GetLastError() != NO_ERROR) return FALSE;
-    return !(ret & WS_DISABLED);
+    return NtUserCallHwnd( hwnd, NtUserIsWindowEnabled );
 }
 
 /***********************************************************************
