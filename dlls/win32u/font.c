@@ -277,15 +277,6 @@ static inline INT INTERNAL_YWSTODS(DC *dc, INT height)
     return pt[1].y - pt[0].y;
 }
 
-static inline WCHAR *strdupW( const WCHAR *p )
-{
-    WCHAR *ret;
-    DWORD len = (lstrlenW(p) + 1) * sizeof(WCHAR);
-    ret = malloc( len );
-    memcpy(ret, p, len);
-    return ret;
-}
-
 static INT FONT_GetObjectW( HGDIOBJ handle, INT count, LPVOID buffer );
 static BOOL FONT_DeleteObject( HGDIOBJ handle );
 
@@ -1201,8 +1192,8 @@ static struct gdi_font_face *create_face( struct gdi_font_family *family, const 
     struct gdi_font_face *face = calloc( 1, sizeof(*face) );
 
     face->refcount   = 1;
-    face->style_name = strdupW( style );
-    face->full_name  = strdupW( fullname );
+    face->style_name = wcsdup( style );
+    face->full_name  = wcsdup( fullname );
     face->face_index = index;
     face->fs         = fs;
     face->ntmFlags   = ntmflags;
@@ -1210,7 +1201,7 @@ static struct gdi_font_face *create_face( struct gdi_font_family *family, const 
     face->flags      = flags;
     face->data_ptr   = data_ptr;
     face->data_size  = data_size;
-    if (file) face->file = strdupW( file );
+    if (file) face->file = wcsdup( file );
     if (size) face->size = *size;
     else face->scalable = TRUE;
     if (insert_face_in_family_list( face, family )) return face;
@@ -2075,9 +2066,9 @@ static struct gdi_font *create_gdi_font( const struct gdi_font_face *face, const
     font->ntmFlags = face->ntmFlags;
     font->aa_flags = HIWORD( face->flags );
     if (!family_name) family_name = face->family->family_name;
-    font->otm.otmpFamilyName = (char *)strdupW( family_name );
-    font->otm.otmpStyleName = (char *)strdupW( face->style_name );
-    font->otm.otmpFaceName = (char *)strdupW( face->full_name );
+    font->otm.otmpFamilyName = (char *)wcsdup( family_name );
+    font->otm.otmpStyleName = (char *)wcsdup( face->style_name );
+    font->otm.otmpFaceName = (char *)wcsdup( face->full_name );
     return font;
 }
 
@@ -3310,6 +3301,22 @@ DWORD win32u_mbtowc( CPTABLEINFO *info, WCHAR *dst, DWORD dstlen, const char *sr
     DWORD i, ret;
 
     if (!info && !(info = get_cptable( get_acp() ))) return 0;
+
+    if (!dst)
+    {
+        /* only compute length */
+        if (info->DBCSOffsets)
+        {
+            for (ret = 0; srclen--; src++, ret++)
+            {
+                if (!info->DBCSOffsets[(unsigned char)*src]) continue;
+                if (!srclen--) break;
+                src++;
+            }
+        }
+        else ret = srclen;
+        return ret * sizeof(WCHAR);
+    }
 
     dstlen /= sizeof(WCHAR);
     if (info->DBCSOffsets)

@@ -584,24 +584,6 @@ static BOOL is_subpixel_rendering_enabled( void )
 }
 
 
-static LPWSTR strdupW(LPCWSTR p)
-{
-    LPWSTR ret;
-    DWORD len = (lstrlenW(p) + 1) * sizeof(WCHAR);
-    ret = malloc( len );
-    memcpy(ret, p, len);
-    return ret;
-}
-
-static WCHAR *towstr(const char *str)
-{
-    DWORD len = strlen(str) + 1;
-    WCHAR *wstr = malloc( len * sizeof(WCHAR) );
-    win32u_mbtowc( NULL, wstr, len * sizeof(WCHAR), str, len );
-    return wstr;
-}
-
-
 static const LANGID mac_langid_table[] =
 {
     MAKELANGID(LANG_ENGLISH,SUBLANG_DEFAULT),                /* TT_MAC_LANGID_ENGLISH */
@@ -1168,7 +1150,7 @@ static WCHAR *decode_opentype_name( struct opentype_name *name )
     if (len == ARRAY_SIZE(buffer)) WARN("Truncated font name %s -> %s\n", debugstr_an(name->bytes, name->length), debugstr_w(buffer));
     else buffer[len] = 0;
 
-    return strdupW( buffer );
+    return wcsdup( buffer );
 }
 
 struct unix_face
@@ -3687,7 +3669,7 @@ static BOOL freetype_set_outline_text_metrics( struct gdi_font *font )
     {
         static const WCHAR fake_nameW[] = {'f','a','k','e',' ','n','a','m','e', 0};
         FIXME("failed to read full_nameW for font %s!\n", wine_dbgstr_w((WCHAR *)font->otm.otmpFamilyName));
-        font->otm.otmpFullName = (char *)strdupW(fake_nameW);
+        font->otm.otmpFullName = (char *)wcsdup( fake_nameW );
     }
     needed = sizeof(font->otm) + (lstrlenW( (WCHAR *)font->otm.otmpFamilyName ) + 1 +
                                   lstrlenW( (WCHAR *)font->otm.otmpStyleName ) + 1 +

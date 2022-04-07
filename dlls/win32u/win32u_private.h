@@ -571,7 +571,30 @@ static inline ULONG win32u_wcstoul( const WCHAR *s, WCHAR **end, int base )
     return negative ? -ret : ret;
 }
 
+DWORD win32u_mbtowc( CPTABLEINFO *info, WCHAR *dst, DWORD dstlen, const char *src,
+                     DWORD srclen ) DECLSPEC_HIDDEN;
+DWORD win32u_wctomb( CPTABLEINFO *info, char *dst, DWORD dstlen, const WCHAR *src,
+                     DWORD srclen ) DECLSPEC_HIDDEN;
+
+static inline WCHAR *win32u_wcsdup( const WCHAR *str )
+{
+    DWORD size = (lstrlenW( str ) + 1) * sizeof(WCHAR);
+    WCHAR *ret = malloc( size );
+    if (ret) memcpy( ret, str, size );
+    return ret;
+}
+
+static inline WCHAR *towstr( const char *str )
+{
+    DWORD len = strlen( str ) + 1;
+    DWORD size = win32u_mbtowc( NULL, NULL, 0, str, len );
+    WCHAR *ret = malloc( size );
+    if (ret) win32u_mbtowc( NULL, ret, size, str, len );
+    return ret;
+}
+
 #define towupper(c)     win32u_towupper(c)
+#define wcsdup(s)       win32u_wcsdup(s)
 #define wcstol(s,e,b)   win32u_wcstol(s,e,b)
 #define wcstoul(s,e,b)  win32u_wcstoul(s,e,b)
 
@@ -586,11 +609,6 @@ static inline UINT asciiz_to_unicode( WCHAR *dst, const char *src )
     while ((*p++ = *src++));
     return (p - dst) * sizeof(WCHAR);
 }
-
-DWORD win32u_mbtowc( CPTABLEINFO *info, WCHAR *dst, DWORD dstlen, const char *src,
-                     DWORD srclen ) DECLSPEC_HIDDEN;
-DWORD win32u_wctomb( CPTABLEINFO *info, char *dst, DWORD dstlen, const WCHAR *src,
-                     DWORD srclen ) DECLSPEC_HIDDEN;
 
 static inline BOOL is_win9x(void)
 {
