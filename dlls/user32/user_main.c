@@ -153,7 +153,6 @@ static void WINAPI unregister_imm( HWND hwnd )
 
 static void CDECL free_win_ptr( WND *win )
 {
-    HeapFree( GetProcessHeap(), 0, win->text );
     HeapFree( GetProcessHeap(), 0, win->pScroll );
 }
 

@@ -73,10 +73,6 @@ static void CDECL nulldrv_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
 {
 }
 
-static void CDECL nulldrv_SetWindowText( HWND hwnd, LPCWSTR text )
-{
-}
-
 static LRESULT CDECL nulldrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
     return -1;
@@ -136,7 +132,7 @@ static struct user_driver_funcs lazy_load_driver =
     NULL,
     nulldrv_SetWindowIcon,
     NULL,
-    nulldrv_SetWindowText,
+    NULL,
     NULL,
     nulldrv_SysCommand,
     NULL,
@@ -171,7 +167,6 @@ void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT v
 
     SET_USER_FUNC(UpdateClipboard);
     SET_USER_FUNC(SetWindowIcon);
-    SET_USER_FUNC(SetWindowText);
     SET_USER_FUNC(SysCommand);
 #undef SET_USER_FUNC
 

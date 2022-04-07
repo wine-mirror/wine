@@ -472,6 +472,39 @@ static void test_message_call(void)
     UnregisterClassW( L"TestClass", NULL );
 }
 
+static void test_window_text(void)
+{
+    WCHAR buf[512];
+    LRESULT res;
+    int len;
+    HWND hwnd;
+
+    hwnd = CreateWindowExW( 0, L"static", NULL, WS_POPUP, 0,0,0,0,0,0,0, NULL );
+
+    memset( buf, 0xcc, sizeof(buf) );
+    len = NtUserInternalGetWindowText( hwnd, buf, ARRAYSIZE(buf) );
+    ok( len == 0, "len = %d\n", len );
+    ok( !buf[0], "buf = %s\n", wine_dbgstr_w(buf) );
+
+    res = NtUserMessageCall( hwnd, WM_SETTEXT, 0, (LPARAM)L"test", 0, FNID_DEFWINDOWPROC, FALSE );
+    ok( res == 1, "res = %Id\n", res );
+
+    memset( buf, 0xcc, sizeof(buf) );
+    len = NtUserInternalGetWindowText( hwnd, buf, ARRAYSIZE(buf) );
+    ok( len == 4, "len = %d\n", len );
+    ok( !lstrcmpW( buf, L"test" ), "buf = %s\n", wine_dbgstr_w(buf) );
+
+    res = NtUserMessageCall( hwnd, WM_SETTEXT, 0, (LPARAM)"TestA", 0, FNID_DEFWINDOWPROC, TRUE );
+    ok( res == 1, "res = %Id\n", res );
+
+    memset( buf, 0xcc, sizeof(buf) );
+    len = NtUserInternalGetWindowText( hwnd, buf, ARRAYSIZE(buf) );
+    ok( len == 5, "len = %d\n", len );
+    ok( !lstrcmpW( buf, L"TestA" ), "buf = %s\n", wine_dbgstr_w(buf) );
+
+    DestroyWindow( hwnd );
+}
+
 START_TEST(win32u)
 {
     /* native win32u.dll fails if user32 is not loaded, so make sure it's fully initialized */
@@ -483,6 +516,7 @@ START_TEST(win32u)
     test_NtUserBuildHwndList();
     test_cursoricon();
     test_message_call();
+    test_window_text();
 
     test_NtUserCloseWindowStation();
 }

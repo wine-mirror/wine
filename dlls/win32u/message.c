@@ -2847,6 +2847,8 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
 {
     switch (type)
     {
+    case FNID_DEFWINDOWPROC:
+        return default_window_proc( hwnd, msg, wparam, lparam, ansi );
     case FNID_CALLWNDPROC:
         return init_win_proc_params( (struct win_proc_params *)result_info, hwnd, msg,
                                      wparam, lparam, ansi );

@@ -238,6 +238,7 @@ enum
 /* NtUserMessageCall codes */
 enum
 {
+    FNID_DEFWINDOWPROC        = 0x029e,
     FNID_CALLWNDPROC          = 0x02ab,
     FNID_SENDMESSAGE          = 0x02b1,
     FNID_SENDMESSAGEWTOOPTION = 0x02b3,
