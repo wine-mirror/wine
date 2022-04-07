@@ -51,7 +51,7 @@ static ULONG WINAPI d3drm_light_AddRef(IDirect3DRMLight *iface)
     struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
     ULONG refcount = InterlockedIncrement(&light->ref);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -61,7 +61,7 @@ static ULONG WINAPI d3drm_light_Release(IDirect3DRMLight *iface)
     struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
     ULONG refcount = InterlockedDecrement(&light->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -105,7 +105,7 @@ static HRESULT WINAPI d3drm_light_SetAppData(IDirect3DRMLight *iface, DWORD data
 {
     struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
 
-    TRACE("iface %p, data %#x.\n", iface, data);
+    TRACE("iface %p, data %#lx.\n", iface, data);
 
     light->obj.appdata = data;
 
@@ -163,7 +163,7 @@ static HRESULT WINAPI d3drm_light_SetColor(IDirect3DRMLight *iface, D3DCOLOR col
 {
     struct d3drm_light *light = impl_from_IDirect3DRMLight(iface);
 
-    TRACE("iface %p, color 0x%08x.\n", iface, color);
+    TRACE("iface %p, color 0x%08lx.\n", iface, color);
 
     light->color = 0xff000000 | color;
 

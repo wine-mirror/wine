@@ -117,7 +117,7 @@ static ULONG WINAPI d3drm_viewport2_AddRef(IDirect3DRMViewport2 *iface)
     struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport2(iface);
     ULONG refcount = InterlockedIncrement(&viewport->obj.ref);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -136,7 +136,7 @@ static ULONG WINAPI d3drm_viewport2_Release(IDirect3DRMViewport2 *iface)
     struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport2(iface);
     ULONG refcount = InterlockedDecrement(&viewport->obj.ref);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
         d3drm_viewport_destroy(viewport);
@@ -213,7 +213,7 @@ static HRESULT WINAPI d3drm_viewport2_SetAppData(IDirect3DRMViewport2 *iface, DW
 {
     struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport2(iface);
 
-    TRACE("iface %p, data %#x\n", iface, data);
+    TRACE("iface %p, data %#lx\n", iface, data);
 
     viewport->obj.appdata = data;
     return S_OK;
@@ -223,7 +223,7 @@ static HRESULT WINAPI d3drm_viewport1_SetAppData(IDirect3DRMViewport *iface, DWO
 {
     struct d3drm_viewport *viewport = impl_from_IDirect3DRMViewport(iface);
 
-    TRACE("iface %p, data %#x\n", iface, data);
+    TRACE("iface %p, data %#lx\n", iface, data);
 
     return d3drm_viewport2_SetAppData(&viewport->IDirect3DRMViewport2_iface, data);
 }
@@ -313,7 +313,7 @@ static HRESULT WINAPI d3drm_viewport2_Init(IDirect3DRMViewport2 *iface, IDirect3
     D3DMATERIALHANDLE hmat;
     HRESULT hr = D3DRM_OK;
 
-    TRACE("iface %p, device %p, camera %p, x %u, y %u, width %u, height %u.\n",
+    TRACE("iface %p, device %p, camera %p, x %lu, y %lu, width %lu, height %lu.\n",
             iface, device, camera, x, y, width, height);
 
     if (!device_obj || !camera
@@ -407,7 +407,7 @@ static HRESULT WINAPI d3drm_viewport1_Init(IDirect3DRMViewport *iface, IDirect3D
     IDirect3DRMDevice3 *device3;
     HRESULT hr;
 
-    TRACE("iface %p, device %p, camera %p, x %u, y %u, width %u, height %u.\n",
+    TRACE("iface %p, device %p, camera %p, x %lu, y %lu, width %lu, height %lu.\n",
           iface, device, camera, x, y, width, height);
 
     if (!device || !frame)
@@ -432,7 +432,7 @@ static HRESULT WINAPI d3drm_viewport2_Clear(IDirect3DRMViewport2 *iface, DWORD f
     IDirectDrawSurface *ds;
     DWORD clear_flags = 0;
 
-    TRACE("iface %p, flags %#x.\n", iface, flags);
+    TRACE("iface %p, flags %#lx.\n", iface, flags);
 
     clear_rect.u1.x1 = clear_rect.u2.y1 = 0;
     clear_rect.u3.x2 = viewport->device->width;
@@ -661,7 +661,7 @@ static HRESULT WINAPI d3drm_viewport1_InverseTransform(IDirect3DRMViewport *ifac
 static HRESULT WINAPI d3drm_viewport2_Configure(IDirect3DRMViewport2 *iface,
         LONG x, LONG y, DWORD width, DWORD height)
 {
-    FIXME("iface %p, x %d, y %d, width %u, height %u stub!\n", iface, x, y, width, height);
+    FIXME("iface %p, x %ld, y %ld, width %lu, height %lu stub!\n", iface, x, y, width, height);
 
     return E_NOTIMPL;
 }
@@ -669,7 +669,7 @@ static HRESULT WINAPI d3drm_viewport2_Configure(IDirect3DRMViewport2 *iface,
 static HRESULT WINAPI d3drm_viewport1_Configure(IDirect3DRMViewport *iface,
         LONG x, LONG y, DWORD width, DWORD height)
 {
-    FIXME("iface %p, x %d, y %d, width %u, height %u stub!\n", iface, x, y, width, height);
+    FIXME("iface %p, x %ld, y %ld, width %lu, height %lu stub!\n", iface, x, y, width, height);
 
     return E_NOTIMPL;
 }
@@ -677,7 +677,7 @@ static HRESULT WINAPI d3drm_viewport1_Configure(IDirect3DRMViewport *iface,
 static HRESULT WINAPI d3drm_viewport2_ForceUpdate(IDirect3DRMViewport2* iface,
         DWORD x1, DWORD y1, DWORD x2, DWORD y2)
 {
-    FIXME("iface %p, x1 %u, y1 %u, x2 %u, y2 %u stub!\n", iface, x1, y1, x2, y2);
+    FIXME("iface %p, x1 %lu, y1 %lu, x2 %lu, y2 %lu stub!\n", iface, x1, y1, x2, y2);
 
     return E_NOTIMPL;
 }
@@ -685,7 +685,7 @@ static HRESULT WINAPI d3drm_viewport2_ForceUpdate(IDirect3DRMViewport2* iface,
 static HRESULT WINAPI d3drm_viewport1_ForceUpdate(IDirect3DRMViewport *iface,
         DWORD x1, DWORD y1, DWORD x2, DWORD y2)
 {
-    FIXME("iface %p, x1 %u, y1 %u, x2 %u, y2 %u stub!\n", iface, x1, y1, x2, y2);
+    FIXME("iface %p, x1 %lu, y1 %lu, x2 %lu, y2 %lu stub!\n", iface, x1, y1, x2, y2);
 
     return E_NOTIMPL;
 }
@@ -825,7 +825,7 @@ static HRESULT WINAPI d3drm_viewport1_GetPlane(IDirect3DRMViewport *iface,
 static HRESULT WINAPI d3drm_viewport2_Pick(IDirect3DRMViewport2 *iface,
         LONG x, LONG y, IDirect3DRMPickedArray **visuals)
 {
-    FIXME("iface %p, x %d, y %d, visuals %p stub!\n", iface, x, y, visuals);
+    FIXME("iface %p, x %ld, y %ld, visuals %p stub!\n", iface, x, y, visuals);
 
     return E_NOTIMPL;
 }
@@ -833,7 +833,7 @@ static HRESULT WINAPI d3drm_viewport2_Pick(IDirect3DRMViewport2 *iface,
 static HRESULT WINAPI d3drm_viewport1_Pick(IDirect3DRMViewport *iface,
         LONG x, LONG y, IDirect3DRMPickedArray **visuals)
 {
-    FIXME("iface %p, x %d, y %d, visuals %p stub!\n", iface, x, y, visuals);
+    FIXME("iface %p, x %ld, y %ld, visuals %p stub!\n", iface, x, y, visuals);
 
     return E_NOTIMPL;
 }
@@ -1025,7 +1025,7 @@ static HRESULT WINAPI d3drm_viewport1_GetDirect3DViewport(IDirect3DRMViewport *i
 static HRESULT WINAPI d3drm_viewport2_TransformVectors(IDirect3DRMViewport2 *iface,
         DWORD vector_count, D3DRMVECTOR4D *dst, D3DVECTOR *src)
 {
-    FIXME("iface %p, vector_count %u, dst %p, src %p stub!\n", iface, vector_count, dst, src);
+    FIXME("iface %p, vector_count %lu, dst %p, src %p stub!\n", iface, vector_count, dst, src);
 
     return E_NOTIMPL;
 }
@@ -1033,7 +1033,7 @@ static HRESULT WINAPI d3drm_viewport2_TransformVectors(IDirect3DRMViewport2 *ifa
 static HRESULT WINAPI d3drm_viewport2_InverseTransformVectors(IDirect3DRMViewport2 *iface,
         DWORD vector_count, D3DVECTOR *dst, D3DRMVECTOR4D *src)
 {
-    FIXME("iface %p, vector_count %u, dst %p, src %p stub!\n", iface, vector_count, dst, src);
+    FIXME("iface %p, vector_count %lu, dst %p, src %p stub!\n", iface, vector_count, dst, src);
 
     return E_NOTIMPL;
 }

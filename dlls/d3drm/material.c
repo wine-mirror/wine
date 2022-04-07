@@ -52,7 +52,7 @@ static ULONG WINAPI d3drm_material_AddRef(IDirect3DRMMaterial2 *iface)
     struct d3drm_material *material = impl_from_IDirect3DRMMaterial2(iface);
     ULONG refcount = InterlockedIncrement(&material->ref);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -62,7 +62,7 @@ static ULONG WINAPI d3drm_material_Release(IDirect3DRMMaterial2 *iface)
     struct d3drm_material *material = impl_from_IDirect3DRMMaterial2(iface);
     ULONG refcount = InterlockedDecrement(&material->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -106,7 +106,7 @@ static HRESULT WINAPI d3drm_material_SetAppData(IDirect3DRMMaterial2 *iface, DWO
 {
     struct d3drm_material *material = impl_from_IDirect3DRMMaterial2(iface);
 
-    TRACE("iface %p, data %#x.\n", iface, data);
+    TRACE("iface %p, data %#lx.\n", iface, data);
 
     material->obj.appdata = data;
 

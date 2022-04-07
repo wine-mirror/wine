@@ -409,7 +409,7 @@ static HRESULT WINAPI d3drm_texture1_SetAppData(IDirect3DRMTexture *iface, DWORD
 {
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture(iface);
 
-    TRACE("iface %p, data %#x.\n", iface, data);
+    TRACE("iface %p, data %#lx.\n", iface, data);
 
     return IDirect3DRMTexture3_SetAppData(&texture->IDirect3DRMTexture3_iface, data);
 }
@@ -492,7 +492,7 @@ static HRESULT WINAPI d3drm_texture1_SetColors(IDirect3DRMTexture *iface, DWORD 
 {
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture(iface);
 
-    TRACE("iface %p, max_colors %u.\n", iface, max_colors);
+    TRACE("iface %p, max_colors %lu.\n", iface, max_colors);
 
     return IDirect3DRMTexture3_SetColors(&texture->IDirect3DRMTexture3_iface, max_colors);
 }
@@ -501,7 +501,7 @@ static HRESULT WINAPI d3drm_texture1_SetShades(IDirect3DRMTexture *iface, DWORD 
 {
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture(iface);
 
-    TRACE("iface %p, max_shades %u.\n", iface, max_shades);
+    TRACE("iface %p, max_shades %lu.\n", iface, max_shades);
 
     return IDirect3DRMTexture3_SetShades(&texture->IDirect3DRMTexture3_iface, max_shades);
 }
@@ -519,7 +519,7 @@ static HRESULT WINAPI d3drm_texture1_SetDecalOrigin(IDirect3DRMTexture *iface, L
 {
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture(iface);
 
-    TRACE("iface %p, x %d, y %d.\n", iface, x, y);
+    TRACE("iface %p, x %ld, y %ld.\n", iface, x, y);
 
     return IDirect3DRMTexture3_SetDecalOrigin(&texture->IDirect3DRMTexture3_iface, x, y);
 }
@@ -528,7 +528,7 @@ static HRESULT WINAPI d3drm_texture1_SetDecalScale(IDirect3DRMTexture *iface, DW
 {
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture(iface);
 
-    TRACE("iface %p, scale %u.\n", iface, scale);
+    TRACE("iface %p, scale %lu.\n", iface, scale);
 
     return IDirect3DRMTexture3_SetDecalScale(&texture->IDirect3DRMTexture3_iface, scale);
 }
@@ -546,7 +546,7 @@ static HRESULT WINAPI d3drm_texture1_SetDecalTransparentColor(IDirect3DRMTexture
 {
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture(iface);
 
-    TRACE("iface %p, color 0x%08x.\n", iface, color);
+    TRACE("iface %p, color 0x%08lx.\n", iface, color);
 
     return IDirect3DRMTexture3_SetDecalTransparentColor(&texture->IDirect3DRMTexture3_iface, color);
 }
@@ -718,7 +718,7 @@ static HRESULT WINAPI d3drm_texture2_SetAppData(IDirect3DRMTexture2 *iface, DWOR
 {
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture2(iface);
 
-    TRACE("iface %p, data %#x.\n", iface, data);
+    TRACE("iface %p, data %#lx.\n", iface, data);
 
     return IDirect3DRMTexture3_SetAppData(&texture->IDirect3DRMTexture3_iface, data);
 }
@@ -796,7 +796,7 @@ static HRESULT WINAPI d3drm_texture2_SetColors(IDirect3DRMTexture2 *iface, DWORD
 {
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture2(iface);
 
-    TRACE("iface %p, max_colors %u.\n", iface, max_colors);
+    TRACE("iface %p, max_colors %lu.\n", iface, max_colors);
 
     return IDirect3DRMTexture3_SetColors(&texture->IDirect3DRMTexture3_iface, max_colors);
 }
@@ -805,7 +805,7 @@ static HRESULT WINAPI d3drm_texture2_SetShades(IDirect3DRMTexture2 *iface, DWORD
 {
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture2(iface);
 
-    TRACE("iface %p, max_shades %u.\n", iface, max_shades);
+    TRACE("iface %p, max_shades %lu.\n", iface, max_shades);
 
     return IDirect3DRMTexture3_SetShades(&texture->IDirect3DRMTexture3_iface, max_shades);
 }
@@ -823,7 +823,7 @@ static HRESULT WINAPI d3drm_texture2_SetDecalOrigin(IDirect3DRMTexture2 *iface, 
 {
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture2(iface);
 
-    TRACE("iface %p, x %d, y %d.\n", iface, x, y);
+    TRACE("iface %p, x %ld, y %ld.\n", iface, x, y);
 
     return IDirect3DRMTexture3_SetDecalOrigin(&texture->IDirect3DRMTexture3_iface, x, y);
 }
@@ -832,7 +832,7 @@ static HRESULT WINAPI d3drm_texture2_SetDecalScale(IDirect3DRMTexture2 *iface, D
 {
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture2(iface);
 
-    TRACE("iface %p, scale %u.\n", iface, scale);
+    TRACE("iface %p, scale %lu.\n", iface, scale);
 
     return IDirect3DRMTexture3_SetDecalScale(&texture->IDirect3DRMTexture3_iface, scale);
 }
@@ -850,7 +850,7 @@ static HRESULT WINAPI d3drm_texture2_SetDecalTransparentColor(IDirect3DRMTexture
 {
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture2(iface);
 
-    TRACE("iface %p, color 0x%08x.\n", iface, color);
+    TRACE("iface %p, color 0x%08lx.\n", iface, color);
 
     return IDirect3DRMTexture3_SetDecalTransparentColor(&texture->IDirect3DRMTexture3_iface, color);
 }
@@ -949,7 +949,7 @@ static HRESULT WINAPI d3drm_texture2_GenerateMIPMap(IDirect3DRMTexture2 *iface, 
 {
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture2(iface);
 
-    TRACE("iface %p, flags %#x.\n", iface, flags);
+    TRACE("iface %p, flags %#lx.\n", iface, flags);
 
     return IDirect3DRMTexture3_GenerateMIPMap(&texture->IDirect3DRMTexture3_iface, flags);
 }
@@ -1028,7 +1028,7 @@ static ULONG WINAPI d3drm_texture3_AddRef(IDirect3DRMTexture3 *iface)
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture3(iface);
     ULONG refcount = InterlockedIncrement(&texture->obj.ref);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -1038,7 +1038,7 @@ static ULONG WINAPI d3drm_texture3_Release(IDirect3DRMTexture3 *iface)
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture3(iface);
     ULONG refcount = InterlockedDecrement(&texture->obj.ref);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
         d3drm_texture_destroy(texture);
@@ -1078,7 +1078,7 @@ static HRESULT WINAPI d3drm_texture3_SetAppData(IDirect3DRMTexture3 *iface, DWOR
 {
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture3(iface);
 
-    TRACE("iface %p, data %#x.\n", iface, data);
+    TRACE("iface %p, data %#lx.\n", iface, data);
 
     texture->obj.appdata = data;
 
@@ -1166,21 +1166,21 @@ static HRESULT WINAPI d3drm_texture3_InitFromResource(IDirect3DRMTexture3 *iface
 static HRESULT WINAPI d3drm_texture3_Changed(IDirect3DRMTexture3 *iface,
         DWORD flags, DWORD rect_count, RECT *rects)
 {
-    FIXME("iface %p, flags %#x, rect_count %u, rects %p stub!\n", iface, flags, rect_count, rects);
+    FIXME("iface %p, flags %#lx, rect_count %lu, rects %p stub!\n", iface, flags, rect_count, rects);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI d3drm_texture3_SetColors(IDirect3DRMTexture3 *iface, DWORD max_colors)
 {
-    FIXME("iface %p, max_colors %u stub!\n", iface, max_colors);
+    FIXME("iface %p, max_colors %lu stub!\n", iface, max_colors);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI d3drm_texture3_SetShades(IDirect3DRMTexture3 *iface, DWORD max_shades)
 {
-    FIXME("iface %p, max_shades %u stub!\n", iface, max_shades);
+    FIXME("iface %p, max_shades %lu stub!\n", iface, max_shades);
 
     return E_NOTIMPL;
 }
@@ -1194,14 +1194,14 @@ static HRESULT WINAPI d3drm_texture3_SetDecalSize(IDirect3DRMTexture3 *iface, D3
 
 static HRESULT WINAPI d3drm_texture3_SetDecalOrigin(IDirect3DRMTexture3 *iface, LONG x, LONG y)
 {
-    FIXME("iface %p, x %d, y %d stub!\n", iface, x, y);
+    FIXME("iface %p, x %ld, y %ld stub!\n", iface, x, y);
 
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI d3drm_texture3_SetDecalScale(IDirect3DRMTexture3 *iface, DWORD scale)
 {
-    FIXME("iface %p, scale %u stub!\n", iface, scale);
+    FIXME("iface %p, scale %lu stub!\n", iface, scale);
 
     return E_NOTIMPL;
 }
@@ -1215,7 +1215,7 @@ static HRESULT WINAPI d3drm_texture3_SetDecalTransparency(IDirect3DRMTexture3 *i
 
 static HRESULT WINAPI d3drm_texture3_SetDecalTransparentColor(IDirect3DRMTexture3 *iface, D3DCOLOR color)
 {
-    FIXME("iface %p, color 0x%08x stub!\n", iface, color);
+    FIXME("iface %p, color 0x%08lx stub!\n", iface, color);
 
     return E_NOTIMPL;
 }
@@ -1309,7 +1309,7 @@ static HRESULT WINAPI d3drm_texture3_InitFromResource2(IDirect3DRMTexture3 *ifac
 
 static HRESULT WINAPI d3drm_texture3_GenerateMIPMap(IDirect3DRMTexture3 *iface, DWORD flags)
 {
-    FIXME("iface %p, flags %#x stub!\n", iface, flags);
+    FIXME("iface %p, flags %#lx stub!\n", iface, flags);
 
     return E_NOTIMPL;
 }
@@ -1319,10 +1319,10 @@ static HRESULT WINAPI d3drm_texture3_GetSurface(IDirect3DRMTexture3 *iface,
 {
     struct d3drm_texture *texture = impl_from_IDirect3DRMTexture3(iface);
 
-    TRACE("iface %p, flags %#x, surface %p.\n", iface, flags, surface);
+    TRACE("iface %p, flags %#lx, surface %p.\n", iface, flags, surface);
 
     if (flags)
-        FIXME("unexpected flags %#x.\n", flags);
+        FIXME("unexpected flags %#lx.\n", flags);
 
     if (!surface)
         return D3DRMERR_BADVALUE;
@@ -1338,7 +1338,7 @@ static HRESULT WINAPI d3drm_texture3_GetSurface(IDirect3DRMTexture3 *iface,
 
 static HRESULT WINAPI d3drm_texture3_SetCacheOptions(IDirect3DRMTexture3 *iface, LONG importance, DWORD flags)
 {
-    FIXME("iface %p, importance %d, flags %#x stub!\n", iface, importance, flags);
+    FIXME("iface %p, importance %ld, flags %#lx stub!\n", iface, importance, flags);
 
     return E_NOTIMPL;
 }
