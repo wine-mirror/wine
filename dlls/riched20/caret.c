@@ -456,13 +456,21 @@ static struct re_object* create_re_object(const REOBJECT *reo, ME_Run *run)
   return reobj;
 }
 
-void editor_insert_oleobj(ME_TextEditor *editor, const REOBJECT *reo)
+HRESULT editor_insert_oleobj(ME_TextEditor *editor, const REOBJECT *reo)
 {
   ME_Run *run, *prev;
   const WCHAR space = ' ';
   struct re_object *reobj_prev = NULL;
   ME_Cursor *cursor, cursor_from_ofs;
   ME_Style *style;
+  HRESULT hr;
+
+  if (editor->lpOleCallback)
+  {
+    hr = IRichEditOleCallback_QueryInsertObject(editor->lpOleCallback, (LPCLSID)&reo->clsid, reo->pstg, REO_CP_SELECTION);
+    if (hr != S_OK)
+      return hr;
+  }
 
   if (reo->cp == REO_CP_SELECTION)
     cursor = editor->pCursors;
@@ -495,6 +503,7 @@ void editor_insert_oleobj(ME_TextEditor *editor, const REOBJECT *reo)
     list_add_head(&editor->reobj_list, &run->reobj->entry);
 
   ME_ReleaseStyle( style );
+  return S_OK;
 }
 
 

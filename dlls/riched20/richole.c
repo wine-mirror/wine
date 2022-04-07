@@ -1361,6 +1361,7 @@ static HRESULT WINAPI
 IRichEditOle_fnInsertObject(IRichEditOle *iface, REOBJECT *reo)
 {
     struct text_services *services = impl_from_IRichEditOle( iface );
+    HRESULT hr;
 
     TRACE("(%p,%p)\n", services, reo);
 
@@ -1369,7 +1370,10 @@ IRichEditOle_fnInsertObject(IRichEditOle *iface, REOBJECT *reo)
 
     if (reo->cbStruct < sizeof(*reo)) return STG_E_INVALIDPARAMETER;
 
-    editor_insert_oleobj(services->editor, reo);
+    hr = editor_insert_oleobj(services->editor, reo);
+    if (hr != S_OK)
+        return hr;
+
     ME_CommitUndo(services->editor);
     ME_UpdateRepaint(services->editor, FALSE);
     return S_OK;

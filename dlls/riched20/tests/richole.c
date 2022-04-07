@@ -3420,7 +3420,7 @@ static void _insert_reobject(struct reolecb_obj *callback, IRichEditOle *reole,
   IOleClientSite *clientsite;
   HRESULT hr;
 
-  olecb_expect_QueryInsertObject(callback, line, EXPECT_TODO_WINE | 1,
+  olecb_expect_QueryInsertObject(callback, line, 1,
                                  &CLSID_NULL, NULL, REO_CP_SELECTION /* cp overriden */, S_OK);
   hr = IRichEditOle_GetClientSite(reole, &clientsite);
   ok_(__FILE__,line)(hr == S_OK, "IRichEditOle_GetClientSite got hr %#lx.\n", hr);
@@ -3495,18 +3495,16 @@ static void subtest_InsertObject(struct reolecb_obj *callback)
     hr = IRichEditOle_GetClientSite(reole, &clientsite);
     ok(hr == S_OK, "IRichEditOle_GetClientSite got hr %#lx.\n", hr);
 
-    olecb_expect_QueryInsertObject(callback, __LINE__, EXPECT_TODO_WINE | 1,
+    olecb_expect_QueryInsertObject(callback, __LINE__, 1,
                                    &CLSID_NULL, NULL, REO_CP_SELECTION, S_FALSE);
     fill_reobject_struct(&reobj, REO_CP_SELECTION, NULL, NULL, clientsite, 10, 10, DVASPECT_CONTENT, 0, 0);
     hr = IRichEditOle_InsertObject(reole, &reobj);
-    todo_wine
     ok(hr == S_FALSE, "IRichEditOle_InsertObject got hr %#lx.\n", hr);
     olecb_check_QueryInsertObject(callback, __LINE__);
 
     IOleClientSite_Release(clientsite);
 
     count = IRichEditOle_GetObjectCount(reole);
-    todo_wine
     ok(count == 3, "got wrong object count: %ld\n", count);
   }
 
