@@ -465,6 +465,80 @@ static void test_verify_signature(void)
     NCryptFreeObject(prov);
 }
 
+static void test_NCryptIsAlgSupported(void)
+{
+    NCRYPT_PROV_HANDLE prov;
+    SECURITY_STATUS ret;
+
+    NCryptOpenStorageProvider(&prov, NULL, 0);
+    ret = NCryptIsAlgSupported(0, BCRYPT_RSA_ALGORITHM, 0);
+    ok(ret == NTE_INVALID_HANDLE, "expected NTE_INVALID_HANDLE, got %#lx\n", ret);
+
+    ret = NCryptIsAlgSupported(prov, NULL, 0);
+    ok(ret == HRESULT_FROM_WIN32(RPC_X_NULL_REF_POINTER) || broken(ret == NTE_FAIL) /* win7 */, "got %#lx\n", ret);
+
+    ret = NCryptIsAlgSupported(prov, BCRYPT_RSA_ALGORITHM, 20);
+    ok(ret == NTE_BAD_FLAGS, "expected NTE_BAD_FLAGS, got %#lx\n", ret);
+
+    ret = NCryptIsAlgSupported(prov, BCRYPT_RSA_ALGORITHM, 0);
+    ok(ret == ERROR_SUCCESS, "expected BCRYPT_RSA_ALGORITHM to be supported, got %#lx\n", ret);
+
+    ret = NCryptIsAlgSupported(prov, BCRYPT_RSA_ALGORITHM, NCRYPT_SILENT_FLAG);
+    ok(ret == ERROR_SUCCESS, "expected BCRYPT_RSA_ALGORITHM to be supported, got %#lx\n", ret);
+
+    ret = NCryptIsAlgSupported(prov, BCRYPT_3DES_ALGORITHM, 0);
+    ok(ret == ERROR_SUCCESS || broken(ret == NTE_NOT_SUPPORTED) /* win7 */,
+       "expected BCRYPT_3DES_ALGORITHM to be supported, got %#lx\n", ret);
+
+    ret = NCryptIsAlgSupported(prov, BCRYPT_AES_ALGORITHM, 0);
+    ok(ret == ERROR_SUCCESS || broken(ret == NTE_NOT_SUPPORTED) /* win7 */,
+       "expected BCRYPT_AES_ALGORITHM to be supported, got %#lx\n", ret);
+
+    ret = NCryptIsAlgSupported(prov, BCRYPT_ECDH_P256_ALGORITHM, 0);
+    ok(ret == ERROR_SUCCESS, "expected BCRYPT_ECDH_P256_ALGORITHM to be supported, got %#lx\n", ret);
+
+    ret = NCryptIsAlgSupported(prov, BCRYPT_ECDSA_P256_ALGORITHM, 0);
+    ok(ret == ERROR_SUCCESS, "expected BCRYPT_ECDSA_P256_ALGORITHM to be supported, got %#lx\n", ret);
+
+    ret = NCryptIsAlgSupported(prov, BCRYPT_ECDSA_P384_ALGORITHM, 0);
+    ok(ret == ERROR_SUCCESS, "expected BCRYPT_ECDSA_P384_ALGORITHM to be supported, got %#lx\n", ret);
+
+    ret = NCryptIsAlgSupported(prov, BCRYPT_DSA_ALGORITHM, 0);
+    ok(ret == ERROR_SUCCESS, "expected BCRYPT_DSA_ALGORITHM to be supported, got %#lx\n", ret);
+
+    /* Not supported */
+    ret = NCryptIsAlgSupported(prov, BCRYPT_SHA256_ALGORITHM, 0);
+    ok(ret == NTE_NOT_SUPPORTED, "expected BCRYPT_SHA256_ALGORITHM to not be supported, got %#lx\n", ret);
+
+    ret = NCryptIsAlgSupported(prov, BCRYPT_SHA384_ALGORITHM, 0);
+    ok(ret == NTE_NOT_SUPPORTED, "expected BCRYPT_SHA384_ALGORITHM to not be supported, got %#lx\n", ret);
+
+    ret = NCryptIsAlgSupported(prov, BCRYPT_SHA512_ALGORITHM, 0);
+    ok(ret == NTE_NOT_SUPPORTED, "expected BCRYPT_SHA512_ALGORITHM to not be supported, got %#lx\n", ret);
+
+    ret = NCryptIsAlgSupported(prov, BCRYPT_SHA1_ALGORITHM, 0);
+    ok(ret == NTE_NOT_SUPPORTED, "expected BCRYPT_SHA1_ALGORITHM to not be supported, got %#lx\n", ret);
+
+    ret = NCryptIsAlgSupported(prov, BCRYPT_MD5_ALGORITHM, 0);
+    ok(ret == NTE_NOT_SUPPORTED, "expected BCRYPT_MD5_ALGORITHM to not be supported, got %#lx\n", ret);
+
+    ret = NCryptIsAlgSupported(prov, BCRYPT_MD4_ALGORITHM, 0);
+    ok(ret == NTE_NOT_SUPPORTED, "expected BCRYPT_MD4_ALGORITHM to not be supported, got %#lx\n", ret);
+
+    ret = NCryptIsAlgSupported(prov, BCRYPT_MD2_ALGORITHM, 0);
+    ok(ret == NTE_NOT_SUPPORTED, "expected BCRYPT_MD2_ALGORITHM to not be supported, got %#lx\n", ret);
+
+    ret = NCryptIsAlgSupported(prov, BCRYPT_RSA_SIGN_ALGORITHM, 0);
+    ok(ret == NTE_NOT_SUPPORTED, "expected BCRYPT_RSA_SIGN_ALGORITHM to not be supported, got %#lx\n", ret);
+
+    ret = NCryptIsAlgSupported(prov, BCRYPT_RSA_SIGN_ALGORITHM, 20);
+    ok(ret == NTE_BAD_FLAGS, "expected NTE_BAD_FLAGS, got %#lx\n", ret);
+
+    ret = NCryptIsAlgSupported(prov, BCRYPT_RNG_ALGORITHM, 0);
+    ok(ret == NTE_NOT_SUPPORTED, "expected BCRYPT_RNG_ALGORITHM to not be supported, got %#lx\n", ret);
+    NCryptFreeObject(prov);
+}
+
 START_TEST(ncrypt)
 {
     test_key_import_rsa();
@@ -474,4 +548,5 @@ START_TEST(ncrypt)
     test_create_persisted_key();
     test_finalize_key();
     test_verify_signature();
+    test_NCryptIsAlgSupported();
 }
