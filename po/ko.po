@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-03-23 11:25+0900\n"
+"PO-Revision-Date: 2022-04-02 01:13+0900\n"
 "Last-Translator: Byeongsik Jeon <bsjeon@hanmail.net>\n"
 "Language-Team: Korean\n"
 "Language: ko\n"
@@ -3991,45 +3991,39 @@ msgstr "Wine"
 
 #: dlls/kernelbase/kernelbase.rc:29
 msgid "Western Europe and United States"
-msgstr ""
+msgstr "서유럽 및 미국"
 
 #: dlls/kernelbase/kernelbase.rc:30
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe"
 msgstr "중앙 유럽어"
 
 #: dlls/kernelbase/kernelbase.rc:34
-#, fuzzy
-#| msgid "Turkish"
 msgid "Turkic"
 msgstr "터키어"
 
 #: dlls/kernelbase/kernelbase.rc:36
 msgid "Korean"
-msgstr ""
+msgstr "한국어"
 
 #: dlls/kernelbase/kernelbase.rc:37
-#, fuzzy
-#| msgid "Operation Ceased"
 msgid "Traditional Chinese"
-msgstr "작업 중지됨"
+msgstr "중국어 번체"
 
 #: dlls/kernelbase/kernelbase.rc:38
 msgid "Simplified Chinese"
-msgstr ""
+msgstr "중국어 간체"
 
 #: dlls/kernelbase/kernelbase.rc:43
 msgid "Indic"
-msgstr ""
+msgstr "인도어"
 
 #: dlls/kernelbase/kernelbase.rc:44
 msgid "Georgian"
-msgstr ""
+msgstr "그루지아어"
 
 #: dlls/kernelbase/kernelbase.rc:45
 msgid "Armenian"
-msgstr ""
+msgstr "아르메니아어"
 
 #: dlls/kernelbase/winerror.mc:28
 msgid "Success.\n"
@@ -4189,7 +4183,7 @@ msgstr "지원되지 않는 요청.\n"
 
 #: dlls/kernelbase/winerror.mc:223
 msgid "Remote machine not listening.\n"
-msgstr "원격 머신 접속 실패.\n"
+msgstr "원격 시스템 접속 실패.\n"
 
 #: dlls/kernelbase/winerror.mc:228
 msgid "Duplicate network name.\n"
@@ -6329,7 +6323,7 @@ msgstr "다른 버전이 설치되어 있음.\n"
 
 #: dlls/kernelbase/winerror.mc:2918
 msgid "Invalid command line.\n"
-msgstr "잘못된 명령 라인.\n"
+msgstr "잘못된 명령줄.\n"
 
 #: dlls/kernelbase/winerror.mc:2923
 msgid "Remote installation not allowed.\n"
@@ -13838,12 +13832,12 @@ msgid ""
 "The prompt can also be changed by altering the PROMPT environment variable,\n"
 "so the command 'SET PROMPT=text' has the same effect as 'PROMPT text'.\n"
 msgstr ""
-"PROMPT은 명령 라인 프로프트를 설정합니다.\n"
+"PROMPT는 명령줄 프롬프트를 설정합니다.\n"
 "\n"
-"PROMPT 명령어 이후의 문자열(과 바로 이후의 공백)은 cmd가 입력을 기다리고\n"
-"있을 때 명령 라인의 시작에 나타납니다.\n"
+"PROMPT 명령어 이후의 문자열( 및 이후의 공백)은 CMD가 입력을 기다리고\n"
+"있을 때 명령줄의 시작에 나타납니다.\n"
 "\n"
-"아래 소개하는 문자열은 특별한 의미를 가집니다:\n"
+"아래 나열된 문자열은 특별한 의미를 가집니다.\n"
 "\n"
 "$$    달러 기호        $_    라인피드            $b    파이프 기호 (|)\n"
 "$d    현재 날짜        $e    이스케이프          $g    > 기호\n"
@@ -13862,8 +13856,7 @@ msgid ""
 "A command line beginning with REM (followed by a space) performs no action,\n"
 "and can therefore be used as a comment in a batch file.\n"
 msgstr ""
-"REM으로 시작하(고 뒤에 공백이 뒤따르)는 명령 라인은 어떤 동작도 하지 않습니"
-"다.\n"
+"REM( 및 공백)으로 시작하는 명령줄은 어떤 동작도 하지 않습니다.\n"
 "그러므로 배치 파일에서 주석으로 사용할 수 있습니다.\n"
 
 #: programs/cmd/cmd.rc:176
@@ -13923,7 +13916,7 @@ msgid ""
 "called from the command line.\n"
 msgstr ""
 "SHIFT는 배치 파일 안에서 매개변수 리스트의 처음 하나를 제거 위해서\n"
-"사용합니다. 매개변수 2가 매개변수 1이 되는 식입니다. 이것은 명령 라인에서\n"
+"사용합니다. 매개변수 2가 매개변수 1이 되는 식입니다. 이것은 명령줄에서\n"
 "사용했을 경우에는 아무 영향이 없습니다.\n"
 
 #: programs/cmd/cmd.rc:212
@@ -14652,7 +14645,7 @@ msgstr "사용법: ipconfig [ /? | /all ]\n"
 
 #: programs/ipconfig/ipconfig.rc:31
 msgid "Error: Unknown or invalid command line parameters specified\n"
-msgstr "오류:  없거나 잘못된 명령어 라인 매개변수가 지정됨\n"
+msgstr "오류: 잘못된 명령줄 매개변수가 지정되었습니다\n"
 
 #: programs/ipconfig/ipconfig.rc:32
 msgid "%1 adapter %2\n"
@@ -15297,15 +15290,15 @@ msgstr "다른 이름으로 저장(&S)..."
 
 #: programs/oleview/oleview.rc:87
 msgid "&Group by type kind"
-msgstr "타입 종류에 따라 구분(&G)"
+msgstr "유형별 구분(&G)"
 
 #: programs/oleview/oleview.rc:156
 msgid "Connect to another machine"
-msgstr "다른 머신에 접속"
+msgstr "다른 시스템에 접속"
 
 #: programs/oleview/oleview.rc:159
 msgid "&Machine name:"
-msgstr "머신 이름(&M):"
+msgstr "시스템 이름(&M):"
 
 #: programs/oleview/oleview.rc:167
 msgid "System Configuration"
@@ -15329,7 +15322,7 @@ msgid ""
 "They have no effect on Wine performance."
 msgstr ""
 "이 셋팅은 레지스트리 값만 바꿉니다.\n"
-"Wine의 성능에는 영향을 미치지 않습니다."
+"Wine 성능에는 영향이 없습니다."
 
 #: programs/oleview/oleview.rc:180
 msgid "Default Interface Viewer"
@@ -15381,7 +15374,7 @@ msgstr "TypeLib 파일 (*.tlb;*.olb;*.dll;*.ocx;*.exe)"
 
 #: programs/oleview/oleview.rc:105
 msgid "Bind to file via a File Moniker"
-msgstr "파일 별명으로 파일 연결"
+msgstr "파일 모니커를 통해서 파일 연결"
 
 #: programs/oleview/oleview.rc:106
 msgid "Open a TypeLib file and view the contents"
@@ -15389,7 +15382,7 @@ msgstr "TypeLib  파일 열고 내용 보기"
 
 #: programs/oleview/oleview.rc:107
 msgid "Change machine wide Distributed COM settings"
-msgstr "머신 전체의 DCOM 설정 바꾸기"
+msgstr "시스템 전체의 DCOM 설정 바꾸기"
 
 #: programs/oleview/oleview.rc:108
 msgid "Run the Wine registry editor"
@@ -15397,7 +15390,7 @@ msgstr "Wine 레지스트리 편집기 실행"
 
 #: programs/oleview/oleview.rc:109
 msgid "Quit the application. Prompts to save changes"
-msgstr "바뀐 것을 저장할지 물어보고 프로그램 끝내기"
+msgstr "변경 사항을 저장할 지 물어본 후 프로그램 끝내기"
 
 #: programs/oleview/oleview.rc:110
 msgid "Create an instance of the selected object"
@@ -15405,7 +15398,7 @@ msgstr "선택된 개체의 인스턴트 만들기"
 
 #: programs/oleview/oleview.rc:111
 msgid "Create an instance of the selected object on a specific machine"
-msgstr "지정한 머신의 선택된 개체의 인스턴트 만들기"
+msgstr "지정한 시스템에서 선택한 개체의 인스턴트 만들기"
 
 #: programs/oleview/oleview.rc:112
 msgid "Release the currently selected object instance"
@@ -15413,28 +15406,28 @@ msgstr "현재 선택된 개체 인스턴트 해제하기"
 
 #: programs/oleview/oleview.rc:113
 msgid "Copy the GUID of the currently selected item to the clipboard"
-msgstr "현재 선택된 항목의 GUID를 클립보드로 복사"
+msgstr "클립보드로 현재 선택된 항목의 GUID 복사하기"
 
 #: programs/oleview/oleview.rc:114
 msgid "Display the viewer for the selected item"
-msgstr "선택된 항목의 뷰어 보기"
+msgstr "선택된 항목에 대한 뷰어 보기"
 
 #: programs/oleview/oleview.rc:119
 msgid "Toggle between expert and novice display mode"
-msgstr "전문가와 초보자 모드 전환e"
+msgstr "일반 및 고급 보기 모드 사이 전환"
 
 #: programs/oleview/oleview.rc:120
 msgid ""
 "Toggle the display of component categories that are not meant to be visible"
-msgstr "구성 요소 목록 보기(보이지 않더라도)"
+msgstr "(표시 가능하지 않더라도 )컴포넌트 범주 보기 여부 전환"
 
 #: programs/oleview/oleview.rc:121
 msgid "Show or hide the toolbar"
-msgstr "도구 모음 보기/숨기기"
+msgstr "도구 모음 보이기/숨기기"
 
 #: programs/oleview/oleview.rc:122
 msgid "Show or hide the status bar"
-msgstr "상태 표시줄 보기/숨기기"
+msgstr "상태 표시줄 보이기/숨기기"
 
 #: programs/oleview/oleview.rc:123
 msgid "Refresh all lists"
@@ -15446,27 +15439,27 @@ msgstr "프로그램 정보, 버전, 저작권 보기"
 
 #: programs/oleview/oleview.rc:115
 msgid "Ask for an in-process server when calling CoGetClassObject"
-msgstr "CoGetClassObject을 호출할 때 인-프로세스 서버에 묻기"
+msgstr "CoGetClassObject를 호출할 때 인-프로세스 서버에 묻기"
 
 #: programs/oleview/oleview.rc:116
 msgid "Ask for an in-process handler when calling CoGetClassObject"
-msgstr "CoGetClassObject을 호출할 때 인-프로세스 핸들러에 묻기"
+msgstr "CoGetClassObject를 호출할 때 인-프로세스 핸들러에 묻기"
 
 #: programs/oleview/oleview.rc:117
 msgid "Ask for a local server when calling CoGetClassObject"
-msgstr "CoGetClassObject을 호출할 때 지역 서버에 묻기"
+msgstr "CoGetClassObject를 호출할 때 로컬 서버에 묻기"
 
 #: programs/oleview/oleview.rc:118
 msgid "Ask for a remote server when calling CoGetClassObject"
-msgstr "CoGetClassObject을 호출할 때 원격 서버에 묻기"
+msgstr "CoGetClassObject를 호출할 때 원격 서버에 묻기"
 
 #: programs/oleview/oleview.rc:130
 msgid "ObjectClasses"
-msgstr "ObjectClasses"
+msgstr "개체 클래스"
 
 #: programs/oleview/oleview.rc:131
 msgid "Grouped by Component Category"
-msgstr "컴포턴트 분류"
+msgstr "컴포넌트 범주별 그룹화"
 
 #: programs/oleview/oleview.rc:132
 msgid "OLE 1.0 Objects"
@@ -15482,11 +15475,11 @@ msgstr "모든 개체"
 
 #: programs/oleview/oleview.rc:135
 msgid "Application IDs"
-msgstr "프로그램 IDs"
+msgstr "프로그램 ID"
 
 #: programs/oleview/oleview.rc:136
 msgid "Type Libraries"
-msgstr "라이브러리 형식"
+msgstr "라이브러리 유형"
 
 #: programs/oleview/oleview.rc:137
 msgid "ver."
@@ -15498,7 +15491,7 @@ msgstr "인터페이스"
 
 #: programs/oleview/oleview.rc:140
 msgid "Registry"
-msgstr "레지스트리"
+msgstr "등록"
 
 #: programs/oleview/oleview.rc:141
 msgid "Implementation"
@@ -15526,11 +15519,11 @@ msgstr "LoadTypeLib( %1 ) 실패 ($%2!x!)"
 
 #: programs/oleview/oleview.rc:151
 msgid "Inherited Interfaces"
-msgstr "상속 인터페이스"
+msgstr "상속된 인터페이스"
 
 #: programs/oleview/oleview.rc:126
 msgid "Save as an .IDL or .H file"
-msgstr ".IDL 이나 .H file로 저장"
+msgstr ".IDL 또는 .H 파일로 저장"
 
 #: programs/oleview/oleview.rc:127
 msgid "Close window"
@@ -15538,7 +15531,7 @@ msgstr "창 닫기"
 
 #: programs/oleview/oleview.rc:128
 msgid "Group typeinfos by kind"
-msgstr "타입정보를 타입에 따라 분류"
+msgstr "종류별 타입정보 그룹화"
 
 #: programs/progman/progman.rc:33
 msgid "&New..."
@@ -15652,7 +15645,7 @@ msgstr "프로그램 속성"
 
 #: programs/progman/progman.rc:172 programs/progman/progman.rc:212
 msgid "&Command line:"
-msgstr "명령 라인(&C):"
+msgstr "명령줄(&C):"
 
 #: programs/progman/progman.rc:174
 msgid "&Working directory:"
@@ -15664,7 +15657,7 @@ msgstr "키 조합(&K):"
 
 #: programs/progman/progman.rc:179 programs/progman/progman.rc:215
 msgid "&Minimize at launch"
-msgstr "실행시 최소화(&M)"
+msgstr "실행할 때 최소화(&M)"
 
 #: programs/progman/progman.rc:183
 msgid "Change &icon..."
@@ -17036,7 +17029,7 @@ msgstr ""
 
 #: programs/start/start.rc:61
 msgid "Could not translate the specified Unix filename to a DOS filename."
-msgstr "지정한 Unix 파일 이름을 DOS 파일 이름으로 바꿀 수 없습니다."
+msgstr "지정한 UNIX 파일 이름을 DOS 파일 이름으로 바꿀 수 없습니다."
 
 #: programs/taskkill/taskkill.rc:30
 msgid "Usage: taskkill [/?] [/f] [/im ProcessName | /pid ProcessID]\n"
@@ -17044,42 +17037,40 @@ msgstr "사용법: taskkill [/?] [/f] [/im 프로세스이름 | /pid 프로세�
 
 #: programs/taskkill/taskkill.rc:31
 msgid "Error: Unknown or invalid command line option specified.\n"
-msgstr "오류:  없거나 잘못된 명령라인 옵션이 지정되었습니다.\n"
+msgstr "오류: 잘못된 명령줄 옵션이 지정되었습니다.\n"
 
 #: programs/taskkill/taskkill.rc:32
 msgid "Error: Invalid command line parameter specified.\n"
-msgstr "오류: 잘못된 명령어 라인 옵션이 지정되었습니다.\n"
+msgstr "오류: 잘못된 명령줄 매개변수가 지정되었습니다.\n"
 
 #: programs/taskkill/taskkill.rc:33
 msgid "Error: One of options /im or /pid must be specified.\n"
-msgstr "오류: /im 니 /pid  옵션중의 하나는 반드시 지정되어야합니다.\n"
+msgstr "오류: /im 또는 /pid 옵션 중 하나는 반드시 지정되어야합니다.\n"
 
 #: programs/taskkill/taskkill.rc:34
 msgid "Error: Option %1 expects a command line parameter.\n"
-msgstr ""
-"오류: 옵션 %1은(는) 하나의 명령어라인 매개변수가 올것으로 예상합니다.\n"
+msgstr "오류: %1 옵션은 명령줄 매개변수가 있어야 합니다.\n"
 
 #: programs/taskkill/taskkill.rc:35
 msgid "Error: Options /im and /pid are mutually exclusive.\n"
-msgstr "오류: 옵션 /im과 /pid는 함께 사용할 수 없습니다.\n"
+msgstr "오류: /im 및 /pid 옵션은 함께 사용할 수 없습니다.\n"
 
 #: programs/taskkill/taskkill.rc:36
 msgid "Close message sent to top-level windows of process with PID %1!u!.\n"
-msgstr "PID %1!u! 의 프로세스의 최상위 창에 닫는 메시지 보냈습니다.\n"
+msgstr "PID %1!u! 프로세스의 최상위 창에 닫기 메시지를 보냈습니다.\n"
 
 #: programs/taskkill/taskkill.rc:37
 msgid ""
 "Close message sent to top-level windows of process \"%1\" with PID %2!u!.\n"
-msgstr ""
-"PID %2!u! 의 프로세스 \"%1\"의 최상위 창에 닫으라는 메시지를 보냈습니다.\n"
+msgstr "PID %2!u! 프로세스 \"%1\"의 최상위 창에 닫기 메시지를 보냈습니다.\n"
 
 #: programs/taskkill/taskkill.rc:38
 msgid "Process with PID %1!u! was forcibly terminated.\n"
-msgstr "PID %1!u! 의 프로세스는 강제로 종료되었습니다.\n"
+msgstr "PID %1!u! 프로세스를 강제로 종료하였습니다.\n"
 
 #: programs/taskkill/taskkill.rc:39
 msgid "Process \"%1\" with PID %2!u! was forcibly terminated.\n"
-msgstr "PID %2!u!인 프로세스 \"%1\"은(는) 강제로 종료되엇습니다.\n"
+msgstr "PID %2!u! 프로세스 \"%1\"을(를) 강제로 종료하였습니다.\n"
 
 #: programs/taskkill/taskkill.rc:40
 msgid "Error: Could not find process \"%1\".\n"
@@ -17091,7 +17082,7 @@ msgstr "오류: 프로세스 목록을 열거할 수 없습니다.\n"
 
 #: programs/taskkill/taskkill.rc:42
 msgid "Error: Unable to terminate process \"%1\".\n"
-msgstr "오류: \"%1\" 프로세스를 중단시킬 수 없습니다.\n"
+msgstr "오류: \"%1\" 프로세스를 중단할 수 없습니다.\n"
 
 #: programs/taskkill/taskkill.rc:43
 msgid "Error: Process self-termination is not permitted.\n"
@@ -18705,7 +18696,7 @@ msgstr "이름 정렬(&S)"
 
 #: programs/winefile/winefile.rc:55
 msgid "Sort &by Type"
-msgstr "종류별 정렬(&B)"
+msgstr "유형별 정렬(&B)"
 
 #: programs/winefile/winefile.rc:56
 msgid "Sort by Si&ze"
