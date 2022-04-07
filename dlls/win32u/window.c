@@ -808,7 +808,7 @@ BOOL is_window_unicode( HWND hwnd )
 }
 
 /* see IsWindowEnabled */
-static BOOL is_window_enabled( HWND hwnd )
+BOOL is_window_enabled( HWND hwnd )
 {
     LONG ret;
 

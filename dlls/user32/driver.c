@@ -69,11 +69,6 @@ static void CDECL nulldrv_UpdateClipboard(void)
 {
 }
 
-static LRESULT CDECL nulldrv_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
-{
-    return -1;
-}
-
 
 /**********************************************************************
  * Lazy loading user driver
@@ -130,7 +125,7 @@ static struct user_driver_funcs lazy_load_driver =
     NULL,
     NULL,
     NULL,
-    nulldrv_SysCommand,
+    NULL,
     NULL,
     NULL,
     NULL,
@@ -162,7 +157,6 @@ void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT v
     do { if (!driver->p##name) driver->p##name = nulldrv_##name; } while(0)
 
     SET_USER_FUNC(UpdateClipboard);
-    SET_USER_FUNC(SysCommand);
 #undef SET_USER_FUNC
 
     prev = InterlockedCompareExchangePointer( (void **)&USER_Driver, driver, &lazy_load_driver );

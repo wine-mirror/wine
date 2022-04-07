@@ -1540,12 +1540,7 @@ LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
     TRACE("hwnd %p WM_SYSCOMMAND %lx %lx\n", hwnd, wParam, lParam );
 
-    if (!IsWindowEnabled( hwnd )) return 0;
-
-    if (HOOK_CallHooks( WH_CBT, HCBT_SYSCOMMAND, wParam, lParam, TRUE ))
-        return 0;
-
-    if (!USER_Driver->pSysCommand( hwnd, wParam, lParam ))
+    if (!NtUserMessageCall( hwnd, WM_SYSCOMMAND, wParam, lParam, 0, FNID_DEFWINDOWPROC, FALSE ))
         return 0;
 
     switch (wParam & 0xfff0)

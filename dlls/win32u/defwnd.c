@@ -121,6 +121,18 @@ static HICON set_window_icon( HWND hwnd, WPARAM type, HICON icon )
     return ret;
 }
 
+static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
+{
+    if (!is_window_enabled( hwnd )) return 0;
+
+    if (call_hooks( WH_CBT, HCBT_SYSCOMMAND, wparam, lparam, TRUE ))
+        return 0;
+
+    if (!user_driver->pSysCommand( hwnd, wparam, lparam ))
+        return 0;
+
+    return 1;
+}
 
 LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
@@ -155,6 +167,10 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
 
     case WM_SETICON:
         result = (LRESULT)set_window_icon( hwnd, wparam, (HICON)lparam );
+        break;
+
+    case WM_SYSCOMMAND:
+        result = handle_sys_command( hwnd, wparam, lparam );
         break;
     }
 
