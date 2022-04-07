@@ -561,8 +561,14 @@ static const NLS_LOCALE_DATA *get_locale_by_name( const WCHAR *name, LCID *lcid 
 }
 
 
-static const NLS_LOCALE_DATA *get_locale_by_id( LCID *lcid, DWORD flags )
+/******************************************************************************
+ *	NlsValidateLocale   (kernelbase.@)
+ *
+ * Note: it seems to return some internal data on Windows, we simply return the locale.nls data pointer.
+ */
+const NLS_LOCALE_DATA * WINAPI NlsValidateLocale( LCID *lcid, ULONG flags )
 {
+    const NLS_LOCALE_LCNAME_INDEX *name_entry;
     const NLS_LOCALE_LCID_INDEX *entry;
     const NLS_LOCALE_DATA *locale;
 
@@ -581,8 +587,9 @@ static const NLS_LOCALE_DATA *get_locale_by_id( LCID *lcid, DWORD flags )
     default:
         if (!(entry = find_lcid_entry( *lcid ))) return NULL;
         locale = get_locale_data( entry->idx );
-        if (!(flags & LOCALE_ALLOW_NEUTRAL_NAMES) && !locale->inotneutral)
-            locale = get_locale_by_name( locale_strings + locale->ssortlocale + 1, lcid );
+        if ((flags & LOCALE_ALLOW_NEUTRAL_NAMES) || locale->inotneutral) return locale;
+        if ((name_entry = find_lcname_entry( locale_strings + locale->ssortlocale + 1 )))
+            locale = get_locale_data( name_entry->idx );
         return locale;
     }
 }
@@ -1756,27 +1763,23 @@ void init_locale( HMODULE module )
 
     NtQueryDefaultLocale( FALSE, &system_lcid );
     NtQueryDefaultLocale( FALSE, &user_lcid );
-    if (!(system_locale = get_locale_by_id( &system_lcid, 0 )))
+    if (!(system_locale = NlsValidateLocale( &system_lcid, 0 )))
     {
         if (GetEnvironmentVariableW( L"WINELOCALE", bufferW, ARRAY_SIZE(bufferW) ))
-        {
             system_locale = get_locale_by_name( bufferW, &system_lcid );
-            if (system_lcid == LOCALE_CUSTOM_UNSPECIFIED) system_lcid = LOCALE_CUSTOM_DEFAULT;
-        }
+        if (!system_locale) system_locale = get_locale_by_name( L"en-US", &system_lcid );
     }
-    if (!(user_locale = get_locale_by_id( &user_lcid, 0 )))
+    system_lcid = system_locale->ilanguage;
+    if (system_lcid == LOCALE_CUSTOM_UNSPECIFIED) system_lcid = LOCALE_CUSTOM_DEFAULT;
+
+    if (!(user_locale = NlsValidateLocale( &user_lcid, 0 )))
     {
         if (GetEnvironmentVariableW( L"WINEUSERLOCALE", bufferW, ARRAY_SIZE(bufferW) ))
-        {
             user_locale = get_locale_by_name( bufferW, &user_lcid );
-            if (user_lcid == LOCALE_CUSTOM_UNSPECIFIED) user_lcid = LOCALE_CUSTOM_DEFAULT;
-        }
-        else
-        {
-            user_locale = system_locale;
-            user_lcid = system_lcid;
-        }
+        if (!user_locale) user_locale = system_locale;
     }
+    user_lcid = user_locale->ilanguage;
+    if (user_lcid == LOCALE_CUSTOM_UNSPECIFIED) user_lcid = LOCALE_CUSTOM_DEFAULT;
 
     if (GetEnvironmentVariableW( L"WINEUNIXCP", bufferW, ARRAY_SIZE(bufferW) ))
         unix_cp = wcstoul( bufferW, NULL, 10 );
@@ -4140,7 +4143,8 @@ INT WINAPI DECLSPEC_HOTPATCH CompareStringOrdinal( const WCHAR *str1, INT len1,
  */
 LCID WINAPI DECLSPEC_HOTPATCH ConvertDefaultLocale( LCID lcid )
 {
-    get_locale_by_id( &lcid, 0 );
+    const NLS_LOCALE_DATA *locale = NlsValidateLocale( &lcid, 0 );
+    if (locale) lcid = locale->ilanguage;
     return lcid;
 }
 
@@ -4848,7 +4852,7 @@ INT WINAPI DECLSPEC_HOTPATCH GetCalendarInfoW( LCID lcid, CALID calendar, CALTYP
 
     TRACE( "%04lx %lu 0x%lx %p %d %p\n", lcid, calendar, type, buffer, len, value );
 
-    if (!(locale = get_locale_by_id( &lcid, 0 )))
+    if (!(locale = NlsValidateLocale( &lcid, 0 )))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
@@ -5063,7 +5067,7 @@ INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoW( LCID lcid, LCTYPE lctype, WCHAR *bu
 
     TRACE( "(lcid=0x%lx,lctype=0x%lx,%p,%d)\n", lcid, lctype, buffer, len );
 
-    if (!(locale = get_locale_by_id( &lcid, 0 )))
+    if (!(locale = NlsValidateLocale( &lcid, 0 )))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return 0;
@@ -5715,7 +5719,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsValidLocale( LCID lcid, DWORD flags )
     case LOCALE_SYSTEM_DEFAULT:
         return FALSE;
     default:
-        return !!get_locale_by_id( &lcid, LOCALE_ALLOW_NEUTRAL_NAMES );
+        return !!NlsValidateLocale( &lcid, LOCALE_ALLOW_NEUTRAL_NAMES );
     }
 }
 
@@ -5768,7 +5772,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH IsValidNLSVersion( NLS_FUNCTION func, const WCHAR
  */
 INT WINAPI DECLSPEC_HOTPATCH LCIDToLocaleName( LCID lcid, WCHAR *name, INT count, DWORD flags )
 {
-    const NLS_LOCALE_DATA *locale = get_locale_by_id( &lcid, flags );
+    const NLS_LOCALE_DATA *locale = NlsValidateLocale( &lcid, flags );
 
     if (!locale)
     {

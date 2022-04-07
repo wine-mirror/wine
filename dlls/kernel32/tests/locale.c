@@ -86,6 +86,7 @@ static BOOL (WINAPI *pGetUserPreferredUILanguages)(DWORD, ULONG*, WCHAR*, ULONG*
 static WCHAR (WINAPI *pRtlUpcaseUnicodeChar)(WCHAR);
 static INT (WINAPI *pGetNumberFormatEx)(LPCWSTR, DWORD, LPCWSTR, const NUMBERFMTW *, LPWSTR, int);
 static INT (WINAPI *pFindNLSStringEx)(LPCWSTR, DWORD, LPCWSTR, INT, LPCWSTR, INT, LPINT, LPNLSVERSIONINFO, LPVOID, LPARAM);
+static void * (WINAPI *pNlsValidateLocale)(LCID*,ULONG);
 static LANGID (WINAPI *pSetThreadUILanguage)(LANGID);
 static LANGID (WINAPI *pGetThreadUILanguage)(VOID);
 static INT (WINAPI *pNormalizeString)(NORM_FORM, LPCWSTR, INT, LPWSTR, INT);
@@ -143,6 +144,9 @@ static void InitFunctionPointers(void)
   X(GetNLSVersion);
   X(GetNLSVersionEx);
   X(IsValidNLSVersion);
+
+  mod = GetModuleHandleA("kernelbase");
+  X(NlsValidateLocale);
 
   mod = GetModuleHandleA("ntdll");
   X(RtlUpcaseUnicodeChar);
@@ -3005,6 +3009,84 @@ static void test_LocaleNameToLCID(void)
         RtlFreeUnicodeString( &str );
     }
     else win_skip( "RtlLcidToLocaleName not available\n" );
+
+    if (pNlsValidateLocale)
+    {
+        void *ret, *ret2;
+        LCID lcid;
+
+        lcid = LOCALE_NEUTRAL;
+        ret = pNlsValidateLocale( &lcid, 0 );
+        ok( !!ret, "failed for %04lx\n", lcid );
+        ok( lcid == GetUserDefaultLCID(), "wrong lcid %04lx\n", lcid );
+
+        lcid = MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT);
+        ret = pNlsValidateLocale( &lcid, 0 );
+        ok( !!ret, "failed for %04lx\n", lcid );
+        ok( lcid == MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT), "wrong lcid %04lx\n", lcid );
+
+        lcid = MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL);
+        ret2 = pNlsValidateLocale( &lcid, 0 );
+        ok( !!ret2, "failed for %04lx\n", lcid );
+        ok( ret == ret2, "got different pointer for neutral\n" );
+        ok( lcid == MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL), "wrong lcid %04lx\n", lcid );
+
+        lcid = MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL);
+        ret2 = pNlsValidateLocale( &lcid, LOCALE_ALLOW_NEUTRAL_NAMES );
+        ok( !!ret2, "failed for %04lx\n", lcid );
+        ok( ret != ret2, "got same pointer for neutral\n" );
+        ok( lcid == MAKELANGID(LANG_ENGLISH, SUBLANG_NEUTRAL), "wrong lcid %04lx\n", lcid );
+
+        lcid = 0x00010407;
+        ret = pNlsValidateLocale( &lcid, 0 );
+        ok( !!ret, "failed for %04lx\n", lcid );
+        ok( lcid == 0x00010407, "wrong lcid %04lx\n", lcid );
+
+        lcid = LOCALE_SYSTEM_DEFAULT;
+        ret = pNlsValidateLocale( &lcid, 0 );
+        ok( !!ret, "failed for %04lx\n", lcid );
+        ok( lcid == GetSystemDefaultLCID(), "wrong lcid %04lx\n", lcid );
+        ret2 = pNlsValidateLocale( &lcid, 0 );
+        ok( ret == ret2, "got different pointer for system\n" );
+
+        lcid = LOCALE_USER_DEFAULT;
+        ret = pNlsValidateLocale( &lcid, 0 );
+        ok( !!ret, "failed for %04lx\n", lcid );
+        ok( lcid == GetUserDefaultLCID(), "wrong lcid %04lx\n", lcid );
+        ret2 = pNlsValidateLocale( &lcid, 0 );
+        ok( ret == ret2, "got different pointer for user\n" );
+
+        lcid = LOCALE_INVARIANT;
+        ret = pNlsValidateLocale( &lcid, 0 );
+        ok( !!ret, "failed for %04lx\n", lcid );
+        ok( lcid == LOCALE_INVARIANT, "wrong lcid %04lx\n", lcid );
+        ret2 = pNlsValidateLocale( &lcid, 0 );
+        ok( ret == ret2, "got different pointer for invariant\n" );
+
+        lcid = LOCALE_CUSTOM_DEFAULT;
+        ret = pNlsValidateLocale( &lcid, 0 );
+        ok( !!ret, "failed for %04lx\n", lcid );
+        ok( lcid == GetUserDefaultLCID(), "wrong lcid %04lx\n", lcid );
+        ret2 = pNlsValidateLocale( &lcid, 0 );
+        ok( ret == ret2, "got different pointer for custom default\n" );
+
+        lcid = LOCALE_CUSTOM_UNSPECIFIED;
+        ret = pNlsValidateLocale( &lcid, 0 );
+        ok( ret || broken(!ret), /* <= win8 */ "failed for %04lx\n", lcid );
+        if (ret) ok( lcid == GetUserDefaultLCID(), "wrong lcid %04lx\n", lcid );
+
+        SetLastError( 0xdeadbeef );
+        lcid = LOCALE_CUSTOM_UI_DEFAULT;
+        ret = pNlsValidateLocale( &lcid, 0 );
+        if (!ret) ok( GetLastError() == 0xdeadbeef, "error %lu\n", GetLastError());
+
+        lcid = 0xbeef;
+        ret = pNlsValidateLocale( &lcid, 0 );
+        ok( !ret, "succeeded\n" );
+        ok( lcid == 0xbeef, "wrong lcid %04lx\n", lcid );
+        ok( GetLastError() == 0xdeadbeef, "error %lu\n", GetLastError());
+    }
+    else win_skip( "NlsValidateLocale not available\n" );
 }
 
 /* this requires collation table patch to make it MS compatible */

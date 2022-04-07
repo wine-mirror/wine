@@ -1001,7 +1001,7 @@
 @ stub NlsIsUserDefaultLocale
 @ stub NlsUpdateLocale
 @ stub NlsUpdateSystemLocale
-@ stub NlsValidateLocale
+@ stdcall NlsValidateLocale(ptr long)
 @ stub NlsWriteEtwEvent
 @ stdcall NormalizeString(long wstr long ptr long)
 @ stub NotifyMountMgr
