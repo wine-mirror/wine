@@ -27,7 +27,6 @@
 #include <olectl.h>
 
 #include "wine/test.h"
-#include "wine/heap.h"
 
 #define DEFINE_EXPECT(func) \
     static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
