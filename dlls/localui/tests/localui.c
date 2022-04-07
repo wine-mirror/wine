@@ -69,7 +69,7 @@ static PORT_INFO_2W * find_portinfo2(LPCWSTR pPort)
             return NULL;
         }
         ok(!res, "EnumPorts succeeded: got %ld\n", res);
-        pi_buffer = HeapAlloc(GetProcessHeap(), 0, pi_needed);
+        pi_buffer = malloc(pi_needed);
         res = EnumPortsW(NULL, 2, pi_buffer, pi_needed, &pi_needed, &pi_numports);
         ok(res == 1, "EnumPorts failed: got %ld\n", res);
     }
@@ -103,21 +103,6 @@ static LPCSTR load_functions(void)
     if (!pInitializePrintMonitorUI) return ptr;
 
     return NULL;
-}
-
-/* ###########################
- *   strdupW [internal]
- */
-
-static LPWSTR strdupW(LPCWSTR strW)
-{
-    LPWSTR  ptr;
-
-    ptr = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(strW) + 1) * sizeof(WCHAR));
-    if (ptr) {
-        lstrcpyW(ptr, strW);
-    }
-    return ptr;
 }
 
 /* ########################### */
@@ -267,7 +252,6 @@ START_TEST(localui)
     DWORD   numentries;
     PORT_INFO_2W * pi2;
     WCHAR   bufferW[16];
-    CHAR    bufferA[16];
     DWORD   id;
 
     /* localui.dll does not exist before w2k */
@@ -302,29 +286,26 @@ START_TEST(localui)
     /* "LPT1:" - "LPT9:" */
     while (((lpt_present == NULL) || (lpt_absent == NULL)) && id < 9) {
         id++;
-        sprintf(bufferA, "LPT%lu:", id);
-        MultiByteToWideChar( CP_ACP, 0, bufferA, -1, bufferW, ARRAY_SIZE(bufferW));
+        swprintf(bufferW, ARRAY_SIZE(bufferW), L"LPT%lu:", id);
         pi2 = find_portinfo2(bufferW);
         if (pi2 && (lpt_present == NULL)) lpt_present = pi2;
-        if (!pi2 && (lpt_absent == NULL)) lpt_absent = strdupW(bufferW);
+        if (!pi2 && (lpt_absent == NULL)) lpt_absent = wcsdup(bufferW);
     }
 
     id = 0;
     /* "COM1:" - "COM9:" */
     while (((com_present == NULL) || (com_absent == NULL)) && id < 9) {
         id++;
-        sprintf(bufferA, "COM%lu:", id);
-        MultiByteToWideChar( CP_ACP, 0, bufferA, -1, bufferW, ARRAY_SIZE(bufferW));
+        swprintf(bufferW, ARRAY_SIZE(bufferW), L"COM%lu:", id);
         pi2 = find_portinfo2(bufferW);
         if (pi2 && (com_present == NULL)) com_present = pi2;
-        if (!pi2 && (com_absent == NULL)) com_absent = strdupW(bufferW);
+        if (!pi2 && (com_absent == NULL)) com_absent = wcsdup(bufferW);
     }
 
     test_AddPortUI();
     test_ConfigurePortUI();
 
-    /* cleanup */
-    HeapFree(GetProcessHeap(), 0, lpt_absent);
-    HeapFree(GetProcessHeap(), 0, com_absent);
-    HeapFree(GetProcessHeap(), 0, pi_buffer);
+    free(lpt_absent);
+    free(com_absent);
+    free(pi_buffer);
 }
