@@ -81,42 +81,15 @@ static SIZE_T resize_9x(SIZE_T size)
     return max(dwSizeAligned, 12); /* at least 12 bytes */
 }
 
-static void test_sized_HeapAlloc(int nbytes)
-{
-    BOOL success;
-    char *buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nbytes);
-    ok(buf != NULL, "allocate failed\n");
-    ok(buf[0] == 0, "buffer not zeroed\n");
-    success = HeapFree(GetProcessHeap(), 0, buf);
-    ok(success, "free failed\n");
-}
-
-static void test_sized_HeapReAlloc(int nbytes1, int nbytes2)
-{
-    BOOL success;
-    char *buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, nbytes1);
-    ok(buf != NULL, "allocate failed\n");
-    ok(buf[0] == 0, "buffer not zeroed\n");
-    buf = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buf, nbytes2);
-    ok(buf != NULL, "reallocate failed\n");
-    ok(buf[nbytes2-1] == 0, "buffer not zeroed\n");
-    success = HeapFree(GetProcessHeap(), 0, buf);
-    ok(success, "free failed\n");
-}
-
 static void test_heap(void)
 {
     LPVOID  mem;
-    LPVOID  msecond;
     SIZE_T size;
 
     /* Heap*() functions */
     mem = HeapAlloc(GetProcessHeap(), 0, 0);
     ok(mem != NULL, "memory not allocated for size 0\n");
     HeapFree(GetProcessHeap(), 0, mem);
-
-    mem = HeapReAlloc(GetProcessHeap(), 0, NULL, 10);
-    ok(mem == NULL, "memory allocated by HeapReAlloc\n");
 
     for (size = 0; size <= 256; size++)
     {
@@ -127,24 +100,6 @@ static void test_heap(void)
             "HeapSize returned %Iu instead of %Iu or %Iu\n", heap_size, size, resize_9x(size));
         HeapFree(GetProcessHeap(), 0, mem);
     }
-
-    /* test some border cases of HeapAlloc and HeapReAlloc */
-    mem = HeapAlloc(GetProcessHeap(), 0, 0);
-    ok(mem != NULL, "memory not allocated for size 0\n");
-    msecond = pHeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mem, ~(SIZE_T)0 - 7);
-    ok(msecond == NULL, "HeapReAlloc(~0 - 7) should have failed\n");
-    msecond = pHeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, mem, ~(SIZE_T)0);
-    ok(msecond == NULL, "HeapReAlloc(~0) should have failed\n");
-    HeapFree(GetProcessHeap(), 0, mem);
-    mem = pHeapAlloc(GetProcessHeap(), 0, ~(SIZE_T)0);
-    ok(mem == NULL, "memory allocated for size ~0\n");
-    mem = HeapAlloc(GetProcessHeap(), 0, 17);
-    msecond = HeapReAlloc(GetProcessHeap(), 0, mem, 0);
-    ok(msecond != NULL, "HeapReAlloc(0) should have succeeded\n");
-    size = HeapSize(GetProcessHeap(), 0, msecond);
-    ok(size == 0 || broken(size == 1) /* some vista and win7 */,
-       "HeapSize should have returned 0 instead of %Iu\n", size);
-    HeapFree(GetProcessHeap(), 0, msecond);
 
     /* large blocks must be 16-byte aligned */
     mem = HeapAlloc(GetProcessHeap(), 0, 512 * 1024);
@@ -157,110 +112,235 @@ static void test_heap(void)
 
 static void test_HeapCreate(void)
 {
-    SYSTEM_INFO sysInfo;
-    ULONG memchunk;
-    HANDLE heap;
-    LPVOID mem1,mem1a,mem3;
-    UCHAR *mem2,*mem2a;
-    UINT i;
-    BOOL error;
-    DWORD dwSize;
+    SIZE_T alloc_size = 0x8000 * sizeof(void *), size;
+    HANDLE heap, heap1;
+    BYTE *ptr, *ptr1;
+    BOOL ret;
 
-    /* Retrieve the page size for this system */
-    GetSystemInfo(&sysInfo);
-    ok(sysInfo.dwPageSize>0,"GetSystemInfo should return a valid page size\n");
+    /* check heap alignment */
 
-    /* Create a Heap with a minimum and maximum size */
-    /* Note that Windows and Wine seem to behave a bit differently with respect
-       to memory allocation.  In Windows, you can't access all the memory
-       specified in the heap (due to overhead), so choosing a reasonable maximum
-       size for the heap was done mostly by trial-and-error on Win2k.  It may need
-       more tweaking for otherWindows variants.
-    */
-    memchunk=10*sysInfo.dwPageSize;
-    heap=HeapCreate(0,2*memchunk,5*memchunk);
-    ok( !((ULONG_PTR)heap & 0xffff), "heap %p not 64K aligned\n", heap );
+    heap = HeapCreate( 0, 0, 0 );
+    ok( !!heap, "HeapCreate failed, error %lu\n", GetLastError() );
+    ok( !((ULONG_PTR)heap & 0xffff), "wrong heap alignment\n" );
+    heap1 = HeapCreate( 0, 0, 0 );
+    ok( !!heap, "HeapCreate failed, error %lu\n", GetLastError() );
+    ok( !((ULONG_PTR)heap1 & 0xffff), "wrong heap alignment\n" );
+    ret = HeapDestroy( heap1 );
+    ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
+    ret = HeapDestroy( heap );
+    ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
 
-    /* Check that HeapCreate allocated the right amount of ram */
-    mem1=HeapAlloc(heap,0,5*memchunk+1);
-    ok(mem1==NULL,"HeapCreate allocated more Ram than it should have\n");
-    HeapFree(heap,0,mem1);
+    /* growable heap */
 
-    /* Check that a normal alloc works */
-    mem1=HeapAlloc(heap,0,memchunk);
-    ok(mem1!=NULL,"HeapAlloc failed\n");
-    if(mem1) {
-      ok(HeapSize(heap,0,mem1)>=memchunk, "HeapAlloc should return a big enough memory block\n");
-    }
+    heap = HeapCreate( 0, 0, 0 );
+    ok( !!heap, "HeapCreate failed, error %lu\n", GetLastError() );
+    ok( !((ULONG_PTR)heap & 0xffff), "wrong heap alignment\n" );
 
-    /* Check that a 'zeroing' alloc works */
-    mem2=HeapAlloc(heap,HEAP_ZERO_MEMORY,memchunk);
-    ok(mem2!=NULL,"HeapAlloc failed\n");
-    if(mem2) {
-      ok(HeapSize(heap,0,mem2)>=memchunk,"HeapAlloc should return a big enough memory block\n");
-      error=FALSE;
-      for(i=0;i<memchunk;i++) {
-        if(mem2[i]!=0) {
-          error=TRUE;
-        }
-      }
-      ok(!error,"HeapAlloc should have zeroed out its allocated memory\n");
-    }
+    /* test some border cases */
 
-    /* Check that HeapAlloc returns NULL when requested way too much memory */
-    mem3=HeapAlloc(heap,0,5*memchunk);
-    ok(mem3==NULL,"HeapAlloc should return NULL\n");
-    if(mem3) {
-      ok(HeapFree(heap,0,mem3),"HeapFree didn't pass successfully\n");
-    }
+    ret = HeapFree( heap, 0, NULL );
+    ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
 
-    /* Check that HeapReAlloc works */
-    mem2a=HeapReAlloc(heap,HEAP_ZERO_MEMORY,mem2,memchunk+5*sysInfo.dwPageSize);
-    ok(mem2a!=NULL,"HeapReAlloc failed\n");
-    if(mem2a) {
-      ok(HeapSize(heap,0,mem2a)>=memchunk+5*sysInfo.dwPageSize,"HeapReAlloc failed\n");
-      error=FALSE;
-      for(i=0;i<5*sysInfo.dwPageSize;i++) {
-        if(mem2a[memchunk+i]!=0) {
-          error=TRUE;
-        }
-      }
-      ok(!error,"HeapReAlloc should have zeroed out its allocated memory\n");
-    }
+    SetLastError( 0xdeadbeef );
+    ptr = HeapReAlloc( heap, 0, NULL, 1 );
+    ok( !ptr, "HeapReAlloc succeeded\n" );
+    todo_wine
+    ok( GetLastError() == NO_ERROR, "got error %lu\n", GetLastError() );
 
-    /* Check that HeapReAlloc honours HEAP_REALLOC_IN_PLACE_ONLY */
-    error=FALSE;
-    mem1a=HeapReAlloc(heap,HEAP_REALLOC_IN_PLACE_ONLY,mem1,memchunk+sysInfo.dwPageSize);
-    if(mem1a!=NULL) {
-      if(mem1a!=mem1) {
-        error=TRUE;
-      }
-    }
-    ok(mem1a==NULL || !error,"HeapReAlloc didn't honour HEAP_REALLOC_IN_PLACE_ONLY\n");
+    ptr = HeapAlloc( heap, 0, 0 );
+    ok( !!ptr, "HeapAlloc failed, error %lu\n", GetLastError() );
+    size = HeapSize( heap, 0, ptr );
+    ok( size == 0, "HeapSize returned %#Ix, error %lu\n", size, GetLastError() );
+    ptr1 = pHeapReAlloc( heap, 0, ptr, ~(SIZE_T)0 - 7 );
+    ok( !ptr1, "HeapReAlloc succeeded\n" );
+    ptr1 = pHeapReAlloc( heap, 0, ptr, ~(SIZE_T)0 );
+    ok( !ptr1, "HeapReAlloc succeeded\n" );
+    ret = HeapFree( heap, 0, ptr );
+    ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
 
-    /* Check that HeapFree works correctly */
-   if(mem1a) {
-     ok(HeapFree(heap,0,mem1a),"HeapFree failed\n");
-   } else {
-     ok(HeapFree(heap,0,mem1),"HeapFree failed\n");
-   }
-   if(mem2a) {
-     ok(HeapFree(heap,0,mem2a),"HeapFree failed\n");
-   } else {
-     ok(HeapFree(heap,0,mem2),"HeapFree failed\n");
-   }
+    ptr = pHeapAlloc( heap, 0, ~(SIZE_T)0 );
+    ok( !ptr, "HeapAlloc succeeded\n" );
 
-   /* 0-length buffer */
-   mem1 = HeapAlloc(heap, 0, 0);
-   ok(mem1 != NULL, "Reserved memory\n");
+    ptr = HeapAlloc( heap, 0, 1 );
+    ok( !!ptr, "HeapAlloc failed, error %lu\n", GetLastError() );
+    ptr1 = HeapReAlloc( heap, 0, ptr, 0 );
+    ok( !!ptr1, "HeapReAlloc failed, error %lu\n", GetLastError() );
+    size = HeapSize( heap, 0, ptr1 );
+    ok( size == 0, "HeapSize returned %#Ix, error %lu\n", size, GetLastError() );
+    ret = HeapFree( heap, 0, ptr );
+    ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
 
-   dwSize = HeapSize(heap, 0, mem1);
-   /* should work with 0-length buffer */
-   ok(dwSize < 0xFFFFFFFF, "The size of the 0-length buffer\n");
-   ok(HeapFree(heap, 0, mem1), "Freed the 0-length buffer\n");
+    ptr = HeapAlloc( heap, 0, 5 * alloc_size + 1 );
+    ok( !!ptr, "HeapAlloc failed, error %lu\n", GetLastError() );
+    ret = HeapFree( heap, 0, ptr );
+    ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
 
-   /* Check that HeapDestroy works */
-   ok(HeapDestroy(heap),"HeapDestroy failed\n");
+    ptr = HeapAlloc( heap, 0, alloc_size );
+    ok( !!ptr, "HeapAlloc failed, error %lu\n", GetLastError() );
+    size = HeapSize( heap, 0, ptr );
+    ok( size == alloc_size, "HeapSize returned %#Ix, error %lu\n", size, GetLastError() );
+    ptr1 = HeapAlloc( heap, 0, 4 * alloc_size );
+    ok( !!ptr1, "HeapAlloc failed, error %lu\n", GetLastError() );
+    ret = HeapFree( heap, 0, ptr1 );
+    ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+    ret = HeapFree( heap, 0, ptr );
+    ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+
+    /* test HEAP_ZERO_MEMORY */
+
+    ptr = HeapAlloc( heap, HEAP_ZERO_MEMORY, 1 );
+    ok( !!ptr, "HeapAlloc failed, error %lu\n", GetLastError() );
+    size = HeapSize( heap, 0, ptr );
+    ok( size == 1, "HeapSize returned %#Ix, error %lu\n", size, GetLastError() );
+    while (size) if (ptr[--size]) break;
+    ok( !size && !ptr[0], "memory wasn't zeroed\n" );
+    ret = HeapFree( heap, 0, ptr );
+    ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+
+    ptr = HeapAlloc( heap, HEAP_ZERO_MEMORY, (1 << 20) );
+    ok( !!ptr, "HeapAlloc failed, error %lu\n", GetLastError() );
+    size = HeapSize( heap, 0, ptr );
+    ok( size == (1 << 20), "HeapSize returned %#Ix, error %lu\n", size, GetLastError() );
+    while (size) if (ptr[--size]) break;
+    ok( !size && !ptr[0], "memory wasn't zeroed\n" );
+    ret = HeapFree( heap, 0, ptr );
+    ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+
+    ptr = HeapAlloc( heap, HEAP_ZERO_MEMORY, alloc_size );
+    ok( !!ptr, "HeapAlloc failed, error %lu\n", GetLastError() );
+    size = HeapSize( heap, 0, ptr );
+    ok( size == alloc_size, "HeapSize returned %#Ix, error %lu\n", size, GetLastError() );
+    while (size) if (ptr[--size]) break;
+    ok( !size && !ptr[0], "memory wasn't zeroed\n" );
+
+    ptr = HeapReAlloc( heap, HEAP_ZERO_MEMORY, ptr, 3 * alloc_size );
+    ok( !!ptr, "HeapReAlloc failed, error %lu\n", GetLastError() );
+    size = HeapSize( heap, 0, ptr );
+    ok( size == 3 * alloc_size, "HeapSize returned %#Ix, error %lu\n", size, GetLastError() );
+    while (size) if (ptr[--size]) break;
+    ok( !size && !ptr[0], "memory wasn't zeroed\n" );
+
+    /* shrinking a small-ish block in place and growing back is okay */
+    ptr1 = HeapReAlloc( heap, HEAP_REALLOC_IN_PLACE_ONLY, ptr, alloc_size * 3 / 2 );
+    ok( ptr1 == ptr, "HeapReAlloc HEAP_REALLOC_IN_PLACE_ONLY failed, error %lu\n", GetLastError() );
+    ptr1 = HeapReAlloc( heap, HEAP_REALLOC_IN_PLACE_ONLY, ptr, 2 * alloc_size );
+    ok( ptr1 == ptr, "HeapReAlloc HEAP_REALLOC_IN_PLACE_ONLY failed, error %lu\n", GetLastError() );
+
+    ptr = HeapReAlloc( heap, HEAP_ZERO_MEMORY, ptr, 1 );
+    ok( !!ptr, "HeapReAlloc failed, error %lu\n", GetLastError() );
+    size = HeapSize( heap, 0, ptr );
+    ok( size == 1, "HeapSize returned %#Ix, error %lu\n", size, GetLastError() );
+    while (size) if (ptr[--size]) break;
+    ok( !size && !ptr[0], "memory wasn't zeroed\n" );
+
+    ptr = HeapReAlloc( heap, HEAP_ZERO_MEMORY, ptr, (1 << 20) );
+    ok( !!ptr, "HeapReAlloc failed, error %lu\n", GetLastError() );
+    size = HeapSize( heap, 0, ptr );
+    ok( size == (1 << 20), "HeapSize returned %#Ix, error %lu\n", size, GetLastError() );
+    while (size) if (ptr[--size]) break;
+    ok( !size && !ptr[0], "memory wasn't zeroed\n" );
+
+    /* shrinking a very large block decommits pages and fail to grow in place */
+    ptr1 = HeapReAlloc( heap, HEAP_REALLOC_IN_PLACE_ONLY, ptr, alloc_size * 3 / 2 );
+    ok( ptr1 == ptr, "HeapReAlloc HEAP_REALLOC_IN_PLACE_ONLY failed, error %lu\n", GetLastError() );
+    ptr1 = HeapReAlloc( heap, HEAP_REALLOC_IN_PLACE_ONLY, ptr, 2 * alloc_size );
+    todo_wine
+    ok( ptr1 != ptr, "HeapReAlloc HEAP_REALLOC_IN_PLACE_ONLY succeeded\n" );
+    ok( GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "got error %lu\n", GetLastError() );
+
+    ret = HeapFree( heap, 0, ptr1 );
+    ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+
+    ret = HeapDestroy( heap );
+    ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
+
+
+    /* fixed size heaps */
+
+    heap = HeapCreate( 0, alloc_size, alloc_size );
+    ok( !!heap, "HeapCreate failed, error %lu\n", GetLastError() );
+    ok( !((ULONG_PTR)heap & 0xffff), "wrong heap alignment\n" );
+
+    ptr = HeapAlloc( heap, 0, alloc_size - (0x400 + 0x80 * sizeof(void *)) );
+    ok( !!ptr, "HeapAlloc failed, error %lu\n", GetLastError() );
+    size = HeapSize( heap, 0, ptr );
+    ok( size == alloc_size - (0x400 + 0x80 * sizeof(void *)),
+        "HeapSize returned %#Ix, error %lu\n", size, GetLastError() );
+    ret = HeapFree( heap, 0, ptr );
+    ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    ptr1 = HeapAlloc( heap, 0, alloc_size - (0x200 + 0x80 * sizeof(void *)) );
+    todo_wine
+    ok( !ptr1, "HeapAlloc succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "got error %lu\n", GetLastError() );
+    ret = HeapFree( heap, 0, ptr1 );
+    ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+
+    ret = HeapDestroy( heap );
+    ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
+
+
+    heap = HeapCreate( 0, 2 * alloc_size, 5 * alloc_size );
+    ok( !!heap, "HeapCreate failed, error %lu\n", GetLastError() );
+    ok( !((ULONG_PTR)heap & 0xffff), "wrong heap alignment\n" );
+
+    ptr = HeapAlloc( heap, 0, 0 );
+    ok( !!ptr, "HeapAlloc failed, error %lu\n", GetLastError() );
+    size = HeapSize( heap, 0, ptr );
+    ok( size == 0, "HeapSize returned %#Ix, error %lu\n", size, GetLastError() );
+    ret = HeapFree( heap, 0, ptr );
+    ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+
+    /* cannot allocate large blocks from fixed size heap */
+
+    SetLastError( 0xdeadbeef );
+    ptr1 = HeapAlloc( heap, 0, 3 * alloc_size );
+    todo_wine
+    ok( !ptr1, "HeapAlloc succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "got error %lu\n", GetLastError() );
+    ret = HeapFree( heap, 0, ptr1 );
+    ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+
+    ptr = HeapAlloc( heap, 0, alloc_size );
+    ok( !!ptr, "HeapAlloc failed, error %lu\n", GetLastError() );
+    size = HeapSize( heap, 0, ptr );
+    ok( size == alloc_size, "HeapSize returned %#Ix, error %lu\n", size, GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ptr1 = HeapAlloc( heap, 0, 4 * alloc_size );
+    ok( !ptr1, "HeapAlloc succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "got error %lu\n", GetLastError() );
+    ret = HeapFree( heap, 0, ptr1 );
+    ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+    ret = HeapFree( heap, 0, ptr );
+    ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+
+    ptr = HeapAlloc( heap, HEAP_ZERO_MEMORY, alloc_size );
+    ok( !!ptr, "HeapAlloc failed, error %lu\n", GetLastError() );
+    size = HeapSize( heap, 0, ptr );
+    ok( size == alloc_size, "HeapSize returned %#Ix, error %lu\n", size, GetLastError() );
+    while (size) if (ptr[--size]) break;
+    ok( !size && !ptr[0], "memory wasn't zeroed\n" );
+
+    ptr = HeapReAlloc( heap, HEAP_ZERO_MEMORY, ptr, 2 * alloc_size );
+    ok( !!ptr, "HeapReAlloc failed, error %lu\n", GetLastError() );
+    size = HeapSize( heap, 0, ptr );
+    ok( size == 2 * alloc_size, "HeapSize returned %#Ix, error %lu\n", size, GetLastError() );
+    while (size) if (ptr[--size]) break;
+    ok( !size && !ptr[0], "memory wasn't zeroed\n" );
+
+    ptr1 = HeapReAlloc( heap, HEAP_REALLOC_IN_PLACE_ONLY, ptr, alloc_size * 3 / 2 );
+    ok( ptr1 == ptr, "HeapReAlloc HEAP_REALLOC_IN_PLACE_ONLY failed, error %lu\n", GetLastError() );
+    ptr1 = HeapReAlloc( heap, HEAP_REALLOC_IN_PLACE_ONLY, ptr, 2 * alloc_size );
+    ok( ptr1 == ptr, "HeapReAlloc HEAP_REALLOC_IN_PLACE_ONLY failed, error %lu\n", GetLastError() );
+    ret = HeapFree( heap, 0, ptr1 );
+    ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+
+    ret = HeapDestroy( heap );
+    ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
 }
 
 
@@ -1604,14 +1684,6 @@ START_TEST(heap)
     test_HeapCreate();
     test_GlobalAlloc();
     test_LocalAlloc();
-
-    /* Test both short and very long blocks */
-    test_sized_HeapAlloc(1);
-    test_sized_HeapAlloc(1 << 20);
-    test_sized_HeapReAlloc(1, 100);
-    test_sized_HeapReAlloc(1, (1 << 20));
-    test_sized_HeapReAlloc((1 << 20), (2 << 20));
-    test_sized_HeapReAlloc((1 << 20), 1);
 
     test_HeapQueryInformation();
     test_GetPhysicallyInstalledSystemMemory();
