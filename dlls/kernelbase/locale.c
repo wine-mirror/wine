@@ -468,6 +468,17 @@ static const NLS_LOCALE_DATA *get_locale_data( UINT idx )
 }
 
 
+static const struct calendar *get_calendar_data( const NLS_LOCALE_DATA *locale, UINT id )
+{
+    if (id == CAL_HIJRI) id = locale->islamic_cal[0];
+    else if (id == CAL_PERSIAN) id = locale->islamic_cal[1];
+
+    if (!id || id > locale_table->nb_calendars) return NULL;
+    return (const struct calendar *)((const char *)locale_table + locale_table->calendars_offset +
+                                     (id - 1) * locale_table->calendar_size);
+}
+
+
 static int compare_locale_names( const WCHAR *n1, const WCHAR *n2 )
 {
     for (;;)
@@ -1452,7 +1463,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
 static int get_calendar_info( const NLS_LOCALE_DATA *locale, CALID id, CALTYPE type,
                               WCHAR *buffer, int len, DWORD *value )
 {
-    unsigned int i, idx = id, val = 0;
+    unsigned int i, val = 0;
     const struct calendar *cal;
 
     if (type & CAL_RETURN_NUMBER)
@@ -1466,14 +1477,8 @@ static int get_calendar_info( const NLS_LOCALE_DATA *locale, CALID id, CALTYPE t
         const USHORT *ids = locale_strings + locale->scalendartype;
         for (i = 0; i < ids[0]; i++) if (ids[1 + i] == id) break;
         if (i == ids[0]) goto invalid;
-        if (id == CAL_HIJRI) idx = locale->islamic_cal[0];
-        else if (id == CAL_PERSIAN) idx = locale->islamic_cal[1];
     }
-
-    if (!idx || idx > locale_table->nb_calendars) goto invalid;
-
-    cal = (const struct calendar *)((const char *)locale_table + locale_table->calendars_offset +
-                                    (idx - 1) * locale_table->calendar_size);
+    if (!(cal = get_calendar_data( locale, id ))) goto invalid;
 
     switch (LOWORD(type))
     {
@@ -3694,55 +3699,95 @@ BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumCalendarInfo( CALINFO_ENUMPROCW proc,
 }
 
 
+static BOOL call_enum_date_func( DATEFMT_ENUMPROCW proc, const NLS_LOCALE_DATA *locale, DWORD flags,
+                                 DWORD str, WCHAR *buffer, CALID id, BOOL unicode,
+                                 BOOL ex, BOOL exex, LPARAM lparam )
+{
+    char buffA[256];
+
+    if (str) memcpy( buffer, locale_strings + str + 1, (locale_strings[str] + 1) * sizeof(WCHAR) );
+    if (exex) return ((DATEFMT_ENUMPROCEXEX)proc)( buffer, id, lparam );
+    if (ex) return ((DATEFMT_ENUMPROCEXW)proc)( buffer, id );
+    if (unicode) return proc( buffer );
+    WideCharToMultiByte( get_locale_codepage( locale, flags ), 0, buffer, -1,
+                         buffA, ARRAY_SIZE(buffA), NULL, NULL );
+    return proc( (WCHAR *)buffA );
+}
+
+
 /**************************************************************************
  *	Internal_EnumDateFormats   (kernelbase.@)
  */
-BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumDateFormats( DATEFMT_ENUMPROCW proc, LCID lcid, DWORD flags,
+BOOL WINAPI DECLSPEC_HOTPATCH Internal_EnumDateFormats( DATEFMT_ENUMPROCW proc,
+                                                        const NLS_LOCALE_DATA *locale, DWORD flags,
                                                         BOOL unicode, BOOL ex, BOOL exex, LPARAM lparam )
 {
     WCHAR buffer[256];
-    LCTYPE lctype;
-    CALID cal_id;
-    INT ret;
+    INT i, j, ret;
+    DWORD pos;
+    const struct calendar *cal;
+    const USHORT *calendars = locale_strings + locale->scalendartype;
+    const DWORD *array;
 
-    if (!proc)
+    if (!proc || !locale)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-    if (!GetLocaleInfoW( lcid, LOCALE_ICALENDARTYPE|LOCALE_RETURN_NUMBER,
-                         (LPWSTR)&cal_id, sizeof(cal_id)/sizeof(WCHAR) ))
-        return FALSE;
 
     switch (flags & ~LOCALE_USE_CP_ACP)
     {
     case 0:
     case DATE_SHORTDATE:
-        lctype = LOCALE_SSHORTDATE;
+        if (!get_locale_info( locale, 0, LOCALE_SSHORTDATE, buffer, ARRAY_SIZE(buffer) )) return FALSE;
+        pos = locale->sshortdate;
         break;
     case DATE_LONGDATE:
-        lctype = LOCALE_SLONGDATE;
+        if (!get_locale_info( locale, 0, LOCALE_SLONGDATE, buffer, ARRAY_SIZE(buffer) )) return FALSE;
+        pos = locale->slongdate;
         break;
     case DATE_YEARMONTH:
-        lctype = LOCALE_SYEARMONTH;
+        if (!get_locale_info( locale, 0, LOCALE_SYEARMONTH, buffer, ARRAY_SIZE(buffer) )) return FALSE;
+        pos = locale->syearmonth;
         break;
     default:
-        FIXME( "unknown date format 0x%08lx\n", flags );
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
 
-    lctype |= flags & LOCALE_USE_CP_ACP;
-    if (unicode)
-        ret = GetLocaleInfoW( lcid, lctype, buffer, ARRAY_SIZE(buffer) );
-    else
-        ret = GetLocaleInfoA( lcid, lctype, (char *)buffer, sizeof(buffer) );
+    /* first the user override data */
 
-    if (ret)
+    ret = call_enum_date_func( proc, locale, flags, 0, buffer, 1, unicode, ex, exex, lparam );
+
+    /* then the remaining locale data */
+
+    array = (const DWORD *)(locale_strings + pos + 1);
+    for (i = 1; ret && i < locale_strings[pos]; i++)
+        ret = call_enum_date_func( proc, locale, flags, array[i], buffer, 1, unicode, ex, exex, lparam );
+
+    /* then the extra calendars */
+
+    for (i = 0; ret && i < calendars[0]; i++)
     {
-        if (exex) ((DATEFMT_ENUMPROCEXEX)proc)( buffer, cal_id, lparam );
-        else if (ex) ((DATEFMT_ENUMPROCEXW)proc)( buffer, cal_id );
-        else proc( buffer );
+        if (calendars[i + 1] == 1) continue;
+        if (!(cal = get_calendar_data( locale, calendars[i + 1] ))) continue;
+        switch (flags & ~LOCALE_USE_CP_ACP)
+        {
+        case 0:
+        case DATE_SHORTDATE:
+            pos = cal->sshortdate;
+            break;
+        case DATE_LONGDATE:
+            pos = cal->slongdate;
+            break;
+        case DATE_YEARMONTH:
+            pos = cal->syearmonth;
+            break;
+        }
+        array = (const DWORD *)(locale_strings + pos + 1);
+        for (j = 0; ret && j < locale_strings[pos]; j++)
+            ret = call_enum_date_func( proc, locale, flags, array[j], buffer,
+                                       calendars[i + 1], unicode, ex, exex, lparam );
     }
     return TRUE;
 }
@@ -4215,7 +4260,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumCalendarInfoExEx( CALINFO_ENUMPROCEXEX proc, L
  */
 BOOL WINAPI DECLSPEC_HOTPATCH EnumDateFormatsW( DATEFMT_ENUMPROCW proc, LCID lcid, DWORD flags )
 {
-    return Internal_EnumDateFormats( proc, lcid, flags, TRUE, FALSE, FALSE, 0 );
+    return Internal_EnumDateFormats( proc, NlsValidateLocale( &lcid, 0 ),
+                                     flags, TRUE, FALSE, FALSE, 0 );
 }
 
 
@@ -4224,7 +4270,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumDateFormatsW( DATEFMT_ENUMPROCW proc, LCID lci
  */
 BOOL WINAPI DECLSPEC_HOTPATCH EnumDateFormatsExW( DATEFMT_ENUMPROCEXW proc, LCID lcid, DWORD flags )
 {
-    return Internal_EnumDateFormats( (DATEFMT_ENUMPROCW)proc, lcid, flags, TRUE, TRUE, FALSE, 0 );
+    return Internal_EnumDateFormats( (DATEFMT_ENUMPROCW)proc, NlsValidateLocale( &lcid, 0 ),
+                                     flags, TRUE, TRUE, FALSE, 0 );
 }
 
 
@@ -4234,8 +4281,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumDateFormatsExW( DATEFMT_ENUMPROCEXW proc, LCID
 BOOL WINAPI DECLSPEC_HOTPATCH EnumDateFormatsExEx( DATEFMT_ENUMPROCEXEX proc, const WCHAR *locale,
                                                    DWORD flags, LPARAM lparam )
 {
-    LCID lcid = LocaleNameToLCID( locale, 0 );
-    return Internal_EnumDateFormats( (DATEFMT_ENUMPROCW)proc, lcid, flags, TRUE, TRUE, TRUE, lparam );
+    LCID lcid;
+    return Internal_EnumDateFormats( (DATEFMT_ENUMPROCW)proc, get_locale_by_name( locale, &lcid ),
+                                     flags, TRUE, TRUE, TRUE, lparam );
 }
 
 

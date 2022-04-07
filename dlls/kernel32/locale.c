@@ -48,8 +48,8 @@ extern BOOL WINAPI Internal_EnumCalendarInfo( CALINFO_ENUMPROCW proc,
                                               const NLS_LOCALE_DATA *locale, CALID id,
                                               CALTYPE type, BOOL unicode, BOOL ex,
                                               BOOL exex, LPARAM lparam );
-extern BOOL WINAPI Internal_EnumDateFormats( DATEFMT_ENUMPROCW proc, LCID lcid, DWORD flags, BOOL unicode,
-                                             BOOL ex, BOOL exex, LPARAM lparam );
+extern BOOL WINAPI Internal_EnumDateFormats( DATEFMT_ENUMPROCW proc, const NLS_LOCALE_DATA *locale,
+                                             DWORD flags, BOOL unicode, BOOL ex, BOOL exex, LPARAM lparam );
 extern BOOL WINAPI Internal_EnumLanguageGroupLocales( LANGGROUPLOCALE_ENUMPROCW proc, LGRPID id,
                                                       DWORD flags, LONG_PTR param, BOOL unicode );
 extern BOOL WINAPI Internal_EnumSystemCodePages( CODEPAGE_ENUMPROCW proc, DWORD flags, BOOL unicode );
@@ -322,7 +322,8 @@ BOOL WINAPI EnumCalendarInfoExA( CALINFO_ENUMPROCEXA proc, LCID lcid, CALID id, 
  */
 BOOL WINAPI EnumDateFormatsExA(DATEFMT_ENUMPROCEXA proc, LCID lcid, DWORD flags)
 {
-    return Internal_EnumDateFormats( (DATEFMT_ENUMPROCW)proc, lcid, flags, FALSE, TRUE, FALSE, 0 );
+    return Internal_EnumDateFormats( (DATEFMT_ENUMPROCW)proc, NlsValidateLocale( &lcid, 0 ),
+                                     flags, FALSE, TRUE, FALSE, 0 );
 }
 
 /**************************************************************************
@@ -333,7 +334,8 @@ BOOL WINAPI EnumDateFormatsExA(DATEFMT_ENUMPROCEXA proc, LCID lcid, DWORD flags)
  */
 BOOL WINAPI EnumDateFormatsA(DATEFMT_ENUMPROCA proc, LCID lcid, DWORD flags)
 {
-    return Internal_EnumDateFormats( (DATEFMT_ENUMPROCW)proc, lcid, flags, FALSE, FALSE, FALSE, 0 );
+    return Internal_EnumDateFormats( (DATEFMT_ENUMPROCW)proc, NlsValidateLocale( &lcid, 0 ),
+                                     flags, FALSE, FALSE, FALSE, 0 );
 }
 
 /**************************************************************************
