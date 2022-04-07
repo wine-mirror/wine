@@ -4514,6 +4514,23 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_2D_VIEW_OF_3D_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceImage2DViewOf3DFeaturesEXT *in = (const VkPhysicalDeviceImage2DViewOf3DFeaturesEXT *)in_header;
+            VkPhysicalDeviceImage2DViewOf3DFeaturesEXT *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->image2DViewOf3D = in->image2DViewOf3D;
+            out->sampler2DViewOf3D = in->sampler2DViewOf3D;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MUTABLE_DESCRIPTOR_TYPE_FEATURES_VALVE:
         {
             const VkPhysicalDeviceMutableDescriptorTypeFeaturesVALVE *in = (const VkPhysicalDeviceMutableDescriptorTypeFeaturesVALVE *)in_header;
@@ -9686,6 +9703,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_global_priority_query",
     "VK_EXT_graphics_pipeline_library",
     "VK_EXT_host_query_reset",
+    "VK_EXT_image_2d_view_of_3d",
     "VK_EXT_image_robustness",
     "VK_EXT_image_view_min_lod",
     "VK_EXT_index_type_uint8",
