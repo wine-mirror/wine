@@ -99,7 +99,7 @@ static ULONG WINAPI copy_error_Release(
     if (!refs)
     {
         if (error->file) IBackgroundCopyFile2_Release(error->file);
-        HeapFree(GetProcessHeap(), 0, error);
+        free(error);
     }
     return refs;
 }
@@ -189,7 +189,7 @@ static HRESULT create_copy_error(
 
     TRACE("context %u code %08lx file %p\n", context, code, file);
 
-    if (!(error = HeapAlloc(GetProcessHeap(), 0, sizeof(*error) ))) return E_OUTOFMEMORY;
+    if (!(error = malloc(sizeof(*error) ))) return E_OUTOFMEMORY;
     error->IBackgroundCopyError_iface.lpVtbl = &copy_error_vtbl;
     error->refs    = 1;
     error->context = context;
@@ -262,22 +262,22 @@ static ULONG WINAPI BackgroundCopyJob_Release(IBackgroundCopyJob4 *iface)
         DeleteCriticalSection(&job->cs);
         if (job->callback)
             IBackgroundCopyCallback2_Release(job->callback);
-        HeapFree(GetProcessHeap(), 0, job->displayName);
-        HeapFree(GetProcessHeap(), 0, job->description);
-        HeapFree(GetProcessHeap(), 0, job->http_options.headers);
+        free(job->displayName);
+        free(job->description);
+        free(job->http_options.headers);
         for (i = 0; i < BG_AUTH_TARGET_PROXY; i++)
         {
             for (j = 0; j < BG_AUTH_SCHEME_PASSPORT; j++)
             {
                 BG_AUTH_CREDENTIALS *cred = &job->http_options.creds[i][j];
-                HeapFree(GetProcessHeap(), 0, cred->Credentials.Basic.UserName);
-                HeapFree(GetProcessHeap(), 0, cred->Credentials.Basic.Password);
+                free(cred->Credentials.Basic.UserName);
+                free(cred->Credentials.Basic.Password);
             }
         }
         CloseHandle(job->wait);
         CloseHandle(job->cancel);
         CloseHandle(job->done);
-        HeapFree(GetProcessHeap(), 0, job);
+        free(job);
     }
 
     return ref;
@@ -578,10 +578,8 @@ static HRESULT WINAPI BackgroundCopyJob_SetDescription(IBackgroundCopyJob4 *ifac
     }
     else
     {
-        HeapFree(GetProcessHeap(), 0, job->description);
-        if ((job->description = HeapAlloc(GetProcessHeap(), 0, (len+1)*sizeof(WCHAR))))
-            lstrcpyW(job->description, desc);
-        else
+        free(job->description);
+        if (!(job->description = wcsdup(desc)))
             hr = E_OUTOFMEMORY;
     }
 
@@ -803,13 +801,13 @@ static HRESULT WINAPI BackgroundCopyJob_SetCredentials(IBackgroundCopyJob4 *ifac
 
     if (cred->Credentials.Basic.UserName)
     {
-        HeapFree(GetProcessHeap(), 0, new_cred->Credentials.Basic.UserName);
-        new_cred->Credentials.Basic.UserName = strdupW(cred->Credentials.Basic.UserName);
+        free(new_cred->Credentials.Basic.UserName);
+        new_cred->Credentials.Basic.UserName = wcsdup(cred->Credentials.Basic.UserName);
     }
     if (cred->Credentials.Basic.Password)
     {
-        HeapFree(GetProcessHeap(), 0, new_cred->Credentials.Basic.Password);
-        new_cred->Credentials.Basic.Password = strdupW(cred->Credentials.Basic.Password);
+        free(new_cred->Credentials.Basic.Password);
+        new_cred->Credentials.Basic.Password = wcsdup(cred->Credentials.Basic.Password);
     }
 
     LeaveCriticalSection(&job->cs);
@@ -834,9 +832,9 @@ static HRESULT WINAPI BackgroundCopyJob_RemoveCredentials(
     EnterCriticalSection(&job->cs);
 
     new_cred->Target = new_cred->Scheme = 0;
-    HeapFree(GetProcessHeap(), 0, new_cred->Credentials.Basic.UserName);
+    free(new_cred->Credentials.Basic.UserName);
     new_cred->Credentials.Basic.UserName = NULL;
-    HeapFree(GetProcessHeap(), 0, new_cred->Credentials.Basic.Password);
+    free(new_cred->Credentials.Basic.Password);
     new_cred->Credentials.Basic.Password = NULL;
 
     LeaveCriticalSection(&job->cs);
@@ -1047,18 +1045,18 @@ static HRESULT WINAPI http_options_SetCustomHeaders(
 
     if (RequestHeaders)
     {
-        WCHAR *headers = strdupW(RequestHeaders);
+        WCHAR *headers = wcsdup(RequestHeaders);
         if (!headers)
         {
             LeaveCriticalSection(&job->cs);
             return E_OUTOFMEMORY;
         }
-        HeapFree(GetProcessHeap(), 0, job->http_options.headers);
+        free(job->http_options.headers);
         job->http_options.headers = headers;
     }
     else
     {
-        HeapFree(GetProcessHeap(), 0, job->http_options.headers);
+        free(job->http_options.headers);
         job->http_options.headers = NULL;
     }
 
@@ -1140,7 +1138,7 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type, GUID
 
     TRACE("(%s,%d,%p)\n", debugstr_w(displayName), type, job);
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof *This);
+    This = malloc(sizeof(*This));
     if (!This)
         return E_OUTOFMEMORY;
 
@@ -1152,12 +1150,12 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type, GUID
     This->ref = 1;
     This->type = type;
 
-    This->displayName = strdupW(displayName);
+    This->displayName = wcsdup(displayName);
     if (!This->displayName)
     {
         This->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->cs);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
         return E_OUTOFMEMORY;
     }
 
@@ -1166,8 +1164,8 @@ HRESULT BackgroundCopyJobConstructor(LPCWSTR displayName, BG_JOB_TYPE type, GUID
     {
         This->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->cs);
-        HeapFree(GetProcessHeap(), 0, This->displayName);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This->displayName);
+        free(This);
         return hr;
     }
     *job_id = This->jobId;

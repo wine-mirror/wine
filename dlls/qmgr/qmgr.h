@@ -115,13 +115,6 @@ BOOL processFile(BackgroundCopyFileImpl *file, BackgroundCopyJobImpl *job) DECLS
 BOOL transitionJobState(BackgroundCopyJobImpl *job, BG_JOB_STATE from, BG_JOB_STATE to) DECLSPEC_HIDDEN;
 
 /* Little helper functions */
-static inline WCHAR *strdupW(const WCHAR *src)
-{
-    WCHAR *dst = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(src) + 1) * sizeof(WCHAR));
-    if (dst) lstrcpyW(dst, src);
-    return dst;
-}
-
 static inline WCHAR *co_strdupW(const WCHAR *src)
 {
     WCHAR *dst = CoTaskMemAlloc((lstrlenW(src) + 1) * sizeof(WCHAR));

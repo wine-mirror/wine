@@ -82,9 +82,9 @@ static ULONG WINAPI BackgroundCopyFile_Release(
     if (ref == 0)
     {
         IBackgroundCopyJob4_Release(&file->owner->IBackgroundCopyJob4_iface);
-        HeapFree(GetProcessHeap(), 0, file->info.LocalName);
-        HeapFree(GetProcessHeap(), 0, file->info.RemoteName);
-        HeapFree(GetProcessHeap(), 0, file);
+        free(file->info.LocalName);
+        free(file->info.RemoteName);
+        free(file);
     }
 
     return ref;
@@ -167,34 +167,29 @@ HRESULT BackgroundCopyFileConstructor(BackgroundCopyJobImpl *owner,
 
     TRACE("(%s, %s, %p)\n", debugstr_w(remoteName), debugstr_w(localName), file);
 
-    This = HeapAlloc(GetProcessHeap(), 0, sizeof *This);
+    This = calloc(1, sizeof(*This));
     if (!This)
         return E_OUTOFMEMORY;
 
-    This->info.RemoteName = strdupW(remoteName);
+    This->info.RemoteName = wcsdup(remoteName);
     if (!This->info.RemoteName)
     {
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
         return E_OUTOFMEMORY;
     }
 
-    This->info.LocalName = strdupW(localName);
+    This->info.LocalName = wcsdup(localName);
     if (!This->info.LocalName)
     {
-        HeapFree(GetProcessHeap(), 0, This->info.RemoteName);
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This->info.RemoteName);
+        free(This);
         return E_OUTOFMEMORY;
     }
 
     This->IBackgroundCopyFile2_iface.lpVtbl = &BackgroundCopyFile2Vtbl;
     This->ref = 1;
-
     This->fileProgress.BytesTotal = BG_SIZE_UNKNOWN;
-    This->fileProgress.BytesTransferred = 0;
-    This->fileProgress.Completed = FALSE;
     This->owner = owner;
-    This->read_size = 0;
-    This->tempFileName[0] = 0;
     IBackgroundCopyJob4_AddRef(&owner->IBackgroundCopyJob4_iface);
 
     *file = This;
