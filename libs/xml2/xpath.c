@@ -10981,7 +10981,7 @@ xmlXPathCompileExpr(xmlXPathParserContextPtr ctxt, int sort) {
     }
 
     if (xpctxt != NULL)
-        xpctxt->depth -= 1;
+        xpctxt->depth -= 10;
 }
 
 /**
@@ -11118,7 +11118,9 @@ xmlXPathCompNodeTest(xmlXPathParserContextPtr ctxt, xmlXPathTestVal *test,
 	    name = NULL;
 	    if (CUR != ')') {
 		name = xmlXPathParseLiteral(ctxt);
-		CHECK_ERROR NULL;
+                if (name == NULL) {
+	            XP_ERRORNULL(XPATH_EXPR_ERROR);
+                }
 		*test = NODE_TEST_PI;
 		SKIP_BLANKS;
 	    }
