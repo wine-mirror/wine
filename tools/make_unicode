@@ -33,8 +33,7 @@ my $REPORTS = "http://www.unicode.org/reports";
 my $MSDATA = "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498";
 my $MSCODEPAGES = "$MSDATA/Windows Supported Code Page Data Files.zip";
 
-#my $CLDRDATA = "https://www.unicode.org/Public/cldr/40/cldr-common-40.0.zip";
-my $CLDRVERSION = "40";
+my $CLDRVERSION = "41";
 my $CLDRDATA = "https://github.com/unicode-org/cldr/archive/refs/tags/release-$CLDRVERSION.zip";
 my $CLDR33DATA = "https://www.unicode.org/Public/cldr/33/cldr-common-33.0.zip";
 
@@ -987,8 +986,8 @@ my @locales =
  { name => "ks", lcid => 0x00000060, group => 15, sabbrevlangname => "ZZZ", sopentypelang => "KSH" },
  { name => "ks-Arab", lcid => 0x00000460 },
  { name => "ks-Arab-IN" },
- { name => "ks-Deva", slist => ",", dir => "seed" },
- { name => "ks-Deva-IN", lcid => 0x00000860, dir => "seed" },
+ { name => "ks-Deva", slist => "," },
+ { name => "ks-Deva-IN", lcid => 0x00000860 },
  { name => "ks-IN", alias => "ks-Arab-IN" },
  { name => "ksb" },
  { name => "ksb-TZ" },
