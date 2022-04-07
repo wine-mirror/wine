@@ -19,7 +19,6 @@
 #define COBJMACROS
 
 #include "windows.h"
-#include "wine/heap.h"
 #include "ole2.h"
 #include "dshow.h"
 #include "wmp.h"
@@ -128,22 +127,6 @@ void unregister_wmp_class(void) DECLSPEC_HIDDEN;
 void unregister_player_msg_class(void) DECLSPEC_HIDDEN;
 
 extern HINSTANCE wmp_instance DECLSPEC_HIDDEN;
-
-static inline WCHAR *heap_strdupW(const WCHAR *str)
-{
-    WCHAR *ret;
-
-    if(str) {
-        size_t size = lstrlenW(str)+1;
-        ret = heap_alloc(size*sizeof(WCHAR));
-        if(ret)
-            memcpy(ret, str, size*sizeof(WCHAR));
-    }else {
-        ret = NULL;
-    }
-
-    return ret;
-}
 
 static inline HRESULT return_bstr(const WCHAR *value, BSTR *p)
 {

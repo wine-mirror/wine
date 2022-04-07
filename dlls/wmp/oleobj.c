@@ -20,7 +20,6 @@
 #include "olectl.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmp);
 
@@ -307,7 +306,7 @@ static ULONG WINAPI OleObject_Release(IOleObject *iface)
         release_client_site(This);
         destroy_player(This);
         ConnectionPointContainer_Destroy(This);
-        heap_free(This);
+        free(This);
     }
 
     return ref;
@@ -890,7 +889,7 @@ HRESULT WINAPI WMPFactory_CreateInstance(IClassFactory *iface, IUnknown *outer,
 
     TRACE("(%p %s %p)\n", outer, debugstr_guid(riid), ppv);
 
-    wmp = heap_alloc_zero(sizeof(*wmp));
+    wmp = calloc(1, sizeof(*wmp));
     if(!wmp)
         return E_OUTOFMEMORY;
 

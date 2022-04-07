@@ -1741,9 +1741,9 @@ static ULONG WINAPI WMPMedia_Release(IWMPMedia *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
-        heap_free(This->url);
-        heap_free(This->name);
-        heap_free(This);
+        free(This->url);
+        free(This->name);
+        free(This);
     }
 
     return ref;
@@ -1815,8 +1815,8 @@ static HRESULT WINAPI WMPMedia_put_name(IWMPMedia *iface, BSTR name)
 
     if (!name) return E_POINTER;
 
-    heap_free(This->name);
-    This->name = heap_strdupW(name);
+    free(This->name);
+    This->name = wcsdup(name);
     return S_OK;
 }
 
@@ -1990,9 +1990,9 @@ static ULONG WINAPI WMPPlaylist_Release(IWMPPlaylist *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
-        heap_free(This->url);
-        heap_free(This->name);
-        heap_free(This);
+        free(This->url);
+        free(This->name);
+        free(This);
     }
 
     return ref;
@@ -2060,8 +2060,8 @@ static HRESULT WINAPI WMPPlaylist_put_name(IWMPPlaylist *iface, BSTR name)
 
     if (!name) return E_POINTER;
 
-    heap_free(This->name);
-    This->name = heap_strdupW(name);
+    free(This->name);
+    This->name = wcsdup(name);
     return S_OK;
 }
 
@@ -2282,7 +2282,7 @@ HRESULT create_media_from_url(BSTR url, double duration, IWMPMedia **ppMedia)
     HRESULT hr;
     WCHAR *name_dup;
 
-    media = heap_alloc_zero(sizeof(*media));
+    media = calloc(1, sizeof(*media));
     if (!media)
         return E_OUTOFMEMORY;
 
@@ -2290,20 +2290,20 @@ HRESULT create_media_from_url(BSTR url, double duration, IWMPMedia **ppMedia)
 
     if (url)
     {
-        media->url = heap_strdupW(url);
-        name_dup = heap_strdupW(url);
+        media->url = wcsdup(url);
+        name_dup = wcsdup(url);
 
         hr = CreateUri(name_dup, Uri_CREATE_ALLOW_RELATIVE | Uri_CREATE_ALLOW_IMPLICIT_FILE_SCHEME, 0, &uri);
         if (FAILED(hr))
         {
-            heap_free(name_dup);
+            free(name_dup);
             IWMPMedia_Release(&media->IWMPMedia_iface);
             return hr;
         }
         hr = IUri_GetPath(uri, &path);
         if (hr != S_OK)
         {
-            heap_free(name_dup);
+            free(name_dup);
             IUri_Release(uri);
             IWMPMedia_Release(&media->IWMPMedia_iface);
             return hr;
@@ -2323,8 +2323,8 @@ HRESULT create_media_from_url(BSTR url, double duration, IWMPMedia **ppMedia)
     }
     else
     {
-        media->url = heap_strdupW(L"");
-        media->name = heap_strdupW(L"");
+        media->url = wcsdup(L"");
+        media->name = wcsdup(L"");
     }
 
     media->duration = duration;
@@ -2343,13 +2343,13 @@ HRESULT create_playlist(BSTR name, BSTR url, LONG count, IWMPPlaylist **ppPlayli
 {
     WMPPlaylist *playlist;
 
-    playlist = heap_alloc_zero(sizeof(*playlist));
+    playlist = calloc(1, sizeof(*playlist));
     if (!playlist)
         return E_OUTOFMEMORY;
 
     playlist->IWMPPlaylist_iface.lpVtbl = &WMPPlaylistVtbl;
-    playlist->url = heap_strdupW(url ? url : L"");
-    playlist->name = heap_strdupW(name ? name : L"");
+    playlist->url = wcsdup(url ? url : L"");
+    playlist->name = wcsdup(name ? name : L"");
     playlist->ref = 1;
     playlist->count = count;
 
