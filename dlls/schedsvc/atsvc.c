@@ -491,8 +491,8 @@ static BOOL load_job_data(const char *data, DWORD size, struct job_t *info)
     data += sizeof(USHORT) + data_size;
 
     /* Trigger Data */
-    TRACE("trigger_offset %04x, triggers end at %04lx\n", fixed->trigger_offset,
-          (DWORD)(fixed->trigger_offset + sizeof(USHORT) + info->trigger_count * sizeof(TASK_TRIGGER)));
+    TRACE("trigger_offset %04x, triggers end at %04Ix\n", fixed->trigger_offset,
+          fixed->trigger_offset + sizeof(USHORT) + info->trigger_count * sizeof(TASK_TRIGGER));
 
     info->trigger_count = *(const USHORT *)data;
     TRACE("trigger_count %u\n", info->trigger_count);
