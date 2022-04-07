@@ -33,6 +33,185 @@
 #include <tom.h>
 #include <wine/test.h>
 
+#define EXPECT_TODO_WINE 0x80000000UL
+
+struct reolecb_obj
+{
+    IRichEditOleCallback IRichEditOleCallback_iface;
+    LONG ref;
+    int line;
+
+    ULONG expect_queryinsertobject;
+
+    const CLSID *clsid;
+    IStorage *stg;
+    LONG cp;
+    HRESULT queryinsertobject_result;
+};
+
+static inline struct reolecb_obj *impl_from_IRichEditOleCallback(IRichEditOleCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct reolecb_obj, IRichEditOleCallback_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE reolecb_obj_QueryInterface(IRichEditOleCallback *iface, REFIID riid, void **obj)
+{
+    if (IsEqualGUID(riid, &IID_IUnknown) || IsEqualGUID(riid, &IID_IRichEditOleCallback)) {
+        IRichEditOleCallback_AddRef(iface);
+        *obj = iface;
+        return S_OK;
+    }
+    *obj = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE reolecb_obj_AddRef(IRichEditOleCallback *iface)
+{
+    struct reolecb_obj *This = impl_from_IRichEditOleCallback(iface);
+    ULONG ref = InterlockedIncrement(&This->ref);
+    return ref;
+}
+
+static ULONG STDMETHODCALLTYPE reolecb_obj_Release(IRichEditOleCallback *iface)
+{
+    struct reolecb_obj *This = impl_from_IRichEditOleCallback(iface);
+    ULONG ref = InterlockedDecrement(&This->ref);
+    if (!ref) free(This);
+    return ref;
+}
+
+static HRESULT STDMETHODCALLTYPE reolecb_obj_GetNewStorage(IRichEditOleCallback *iface, IStorage **stg)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE reolecb_obj_GetInPlaceContext(IRichEditOleCallback *iface,
+                                                               IOleInPlaceFrame **frame,
+                                                               IOleInPlaceUIWindow **doc,
+                                                               OLEINPLACEFRAMEINFO *frame_info)
+{
+    return E_INVALIDARG;
+}
+
+static HRESULT STDMETHODCALLTYPE reolecb_obj_ShowContainerUI(IRichEditOleCallback *iface, BOOL show)
+{
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE reolecb_obj_QueryInsertObject(IRichEditOleCallback *iface, CLSID *clsid,
+                                                               IStorage *stg, LONG cp)
+{
+    struct reolecb_obj *This = impl_from_IRichEditOleCallback(iface);
+    ULONG expect = This->expect_queryinsertobject;
+
+    todo_wine_if(expect & EXPECT_TODO_WINE)
+    ok_(__FILE__,This->line)( expect & ~EXPECT_TODO_WINE,
+                              "unexpected call to IRichEditOleCallback_QueryInsertObject\n");
+    if (!(expect & ~EXPECT_TODO_WINE)) return S_OK;
+    This->expect_queryinsertobject--;
+
+    if (This->clsid && clsid)
+        ok_(__FILE__,This->line)( IsEqualGUID(This->clsid, clsid),
+                                  "QueryInsertObject clsid expected %s, got %s\n",
+                                  wine_dbgstr_guid( This->clsid ), wine_dbgstr_guid( clsid ));
+    else
+        ok_(__FILE__,This->line)( This->clsid == clsid,
+                                  "QueryInsertObject clsid expected %p, got %p\n", This->clsid, clsid );
+    ok_(__FILE__,This->line)( This->stg == stg, "QueryInsertObject stg expected %p, got %p\n", This->stg, stg );
+    ok_(__FILE__,This->line)( This->cp == cp, "QueryInsertObject cp expected %ld, got %ld\n", This->cp, cp );
+    return This->queryinsertobject_result;
+}
+
+static HRESULT STDMETHODCALLTYPE reolecb_obj_DeleteObject(IRichEditOleCallback *iface, IOleObject *oleobj)
+{
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE reolecb_obj_QueryAcceptData(IRichEditOleCallback *iface, IDataObject *dataobj,
+                                                             CLIPFORMAT *cf_format, DWORD reco, BOOL really,
+                                                             HGLOBAL metapict)
+{
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE reolecb_obj_ContextSensitiveHelp(IRichEditOleCallback *iface, BOOL enter_mode)
+{
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE reolecb_obj_GetClipboardData(IRichEditOleCallback *iface, CHARRANGE *chrg,
+                                                              DWORD reco, IDataObject **dataobj)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE reolecb_obj_GetDragDropEffect(IRichEditOleCallback *iface, BOOL drag,
+                                                               DWORD key_state, DWORD *effect)
+{
+    if (effect) *effect = DROPEFFECT_COPY;
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE reolecb_obj_GetContextMenu(IRichEditOleCallback *iface, WORD seltype,
+                                                            IOleObject *oleobj, CHARRANGE *chrg, HMENU *hmenu)
+{
+    return E_NOTIMPL;
+}
+
+static const struct IRichEditOleCallbackVtbl reolecb_obj_Vtbl = {
+    reolecb_obj_QueryInterface,
+    reolecb_obj_AddRef,
+    reolecb_obj_Release,
+    reolecb_obj_GetNewStorage,
+    reolecb_obj_GetInPlaceContext,
+    reolecb_obj_ShowContainerUI,
+    reolecb_obj_QueryInsertObject,
+    reolecb_obj_DeleteObject,
+    reolecb_obj_QueryAcceptData,
+    reolecb_obj_ContextSensitiveHelp,
+    reolecb_obj_GetClipboardData,
+    reolecb_obj_GetDragDropEffect,
+    reolecb_obj_GetContextMenu,
+};
+
+static HRESULT reolecb_obj_Create(struct reolecb_obj **objptr)
+{
+    struct reolecb_obj *obj;
+
+    obj = calloc(sizeof(struct reolecb_obj), 1);
+    if (!obj) return E_OUTOFMEMORY;
+
+    obj->IRichEditOleCallback_iface.lpVtbl = &reolecb_obj_Vtbl;
+    obj->ref = 1;
+
+    *objptr = obj;
+    return S_OK;
+}
+
+static void olecb_expect_QueryInsertObject(struct reolecb_obj *This, int line, ULONG expect,
+                                           const CLSID *clsid, IStorage *stg, LONG cp, HRESULT result)
+{
+    if (!This) return;
+
+    This->line = line;
+    This->expect_queryinsertobject = expect;
+    This->clsid = clsid;
+    This->stg = stg;
+    This->cp = cp;
+    This->queryinsertobject_result = result;
+}
+
+static void olecb_check_QueryInsertObject(struct reolecb_obj *This, int line)
+{
+    if (!This) return;
+
+    todo_wine_if(This->expect_queryinsertobject & EXPECT_TODO_WINE)
+    ok( !(This->expect_queryinsertobject & ~EXPECT_TODO_WINE),
+        "expected IRichEditOleCallback_QueryInsertObject to be called\n" );
+
+    olecb_expect_QueryInsertObject(This, 0, 0, NULL, NULL, 0, S_OK);
+}
+
 static HMODULE hmoduleRichEdit;
 
 DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -3233,21 +3412,26 @@ static void _check_reobject_struct(IRichEditOle *reole, LONG index, DWORD flags,
   ok_(__FILE__,line)(reobj.dwUser == user, "got wrong user-defined value.\n");
 }
 
-#define INSERT_REOBJECT(reole,reobj,cp,user) \
-  _insert_reobject(reole, reobj, cp, user, __LINE__)
-static void _insert_reobject(IRichEditOle *reole, REOBJECT *reobj, LONG cp, DWORD user, int line)
+#define INSERT_REOBJECT(callback,reole,reobj,cp,user) \
+  _insert_reobject(callback, reole, reobj, cp, user, __LINE__)
+static void _insert_reobject(struct reolecb_obj *callback, IRichEditOle *reole,
+                             REOBJECT *reobj, LONG cp, DWORD user, int line)
 {
   IOleClientSite *clientsite;
   HRESULT hr;
+
+  olecb_expect_QueryInsertObject(callback, line, EXPECT_TODO_WINE | 1,
+                                 &CLSID_NULL, NULL, REO_CP_SELECTION /* cp overriden */, S_OK);
   hr = IRichEditOle_GetClientSite(reole, &clientsite);
   ok_(__FILE__,line)(hr == S_OK, "IRichEditOle_GetClientSite got hr %#lx.\n", hr);
   fill_reobject_struct(reobj, cp, NULL, NULL, clientsite, 10, 10, DVASPECT_CONTENT, 0, user);
   hr = IRichEditOle_InsertObject(reole, reobj);
   ok_(__FILE__,line)(hr == S_OK, "IRichEditOle_InsertObject got hr %#lx.\n", hr);
   IOleClientSite_Release(clientsite);
+  olecb_check_QueryInsertObject(callback, line);
 }
 
-static void test_InsertObject(void)
+static void subtest_InsertObject(struct reolecb_obj *callback)
 {
   static CHAR test_text1[] = "abcdefg";
   IRichEditOle *reole = NULL;
@@ -3271,6 +3455,12 @@ static void test_InsertObject(void)
   BSTR bstr;
 
   create_interfaces(&hwnd, &reole, &doc, &selection);
+  if (callback)
+  {
+    LRESULT sendres = SendMessageA(hwnd, EM_SETOLECALLBACK, 0, (LPARAM)&callback->IRichEditOleCallback_iface);
+    ok( !!sendres, "EM_SETOLECALLBACK should succeed\n" );
+  }
+
   SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)test_text1);
 
   hr = IRichEditOle_InsertObject(reole, NULL);
@@ -3278,21 +3468,47 @@ static void test_InsertObject(void)
 
   /* insert object1 in (0, 1)*/
   SendMessageA(hwnd, EM_SETSEL, 0, 1);
-  INSERT_REOBJECT(reole, &reo1, REO_CP_SELECTION, 1);
+  INSERT_REOBJECT(callback, reole, &reo1, REO_CP_SELECTION, 1);
   count = IRichEditOle_GetObjectCount(reole);
   ok(count == 1, "got wrong object count: %ld\n", count);
 
   /* insert object2 in (2, 3)*/
   SendMessageA(hwnd, EM_SETSEL, 2, 3);
-  INSERT_REOBJECT(reole, &reo2, REO_CP_SELECTION, 2);
+  INSERT_REOBJECT(callback, reole, &reo2, REO_CP_SELECTION, 2);
   count = IRichEditOle_GetObjectCount(reole);
   ok(count == 2, "got wrong object count: %ld\n", count);
 
   /* insert object3 in (1, 2)*/
   SendMessageA(hwnd, EM_SETSEL, 1, 2);
-  INSERT_REOBJECT(reole, &reo3, REO_CP_SELECTION, 3);
+  INSERT_REOBJECT(callback, reole, &reo3, REO_CP_SELECTION, 3);
   count = IRichEditOle_GetObjectCount(reole);
   ok(count == 3, "got wrong object count: %ld\n", count);
+
+  if (callback)
+  {
+    IOleClientSite *clientsite;
+    REOBJECT reobj;
+
+    /* (fail to) insert object1 in (3, 4)*/
+    SendMessageA(hwnd, EM_SETSEL, 3, 4);
+
+    hr = IRichEditOle_GetClientSite(reole, &clientsite);
+    ok(hr == S_OK, "IRichEditOle_GetClientSite got hr %#lx.\n", hr);
+
+    olecb_expect_QueryInsertObject(callback, __LINE__, EXPECT_TODO_WINE | 1,
+                                   &CLSID_NULL, NULL, REO_CP_SELECTION, S_FALSE);
+    fill_reobject_struct(&reobj, REO_CP_SELECTION, NULL, NULL, clientsite, 10, 10, DVASPECT_CONTENT, 0, 0);
+    hr = IRichEditOle_InsertObject(reole, &reobj);
+    todo_wine
+    ok(hr == S_FALSE, "IRichEditOle_InsertObject got hr %#lx.\n", hr);
+    olecb_check_QueryInsertObject(callback, __LINE__);
+
+    IOleClientSite_Release(clientsite);
+
+    count = IRichEditOle_GetObjectCount(reole);
+    todo_wine
+    ok(count == 3, "got wrong object count: %ld\n", count);
+  }
 
   /* tests below show that order of rebject (from 0 to 2) is: reo1,reo3,reo2 */
   CHECK_REOBJECT_STRUCT(reole, 0, REO_GETOBJ_ALL_INTERFACES, 0, 0, NULL, NULL, reo1.polesite, 1);
@@ -3371,8 +3587,8 @@ static void test_InsertObject(void)
   SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)test_text1);
 
   /* "abc|d|efg" */
-  INSERT_REOBJECT(reole, &reo1, 3, 1);
-  INSERT_REOBJECT(reole, &reo2, 5, 2);
+  INSERT_REOBJECT(callback, reole, &reo1, 3, 1);
+  INSERT_REOBJECT(callback, reole, &reo2, 5, 2);
 
   SendMessageW(hwnd, EM_SETSEL, 2, 3);
   result = SendMessageW(hwnd, EM_SELECTIONTYPE, 0, 0);
@@ -3473,8 +3689,8 @@ static void test_InsertObject(void)
   ok(!result, "Got result %lx.\n", result);
   /* "abc|d|efg" */
   SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)test_text1);
-  INSERT_REOBJECT(reole, &reo1, 3, 1);
-  INSERT_REOBJECT(reole, &reo2, 5, 2);
+  INSERT_REOBJECT(callback, reole, &reo1, 3, 1);
+  INSERT_REOBJECT(callback, reole, &reo2, 5, 2);
 
   expected_string = L"abc d efg";
   charrange.cpMin = 0;
@@ -3551,7 +3767,35 @@ static void test_InsertObject(void)
   ok(hr == S_OK, "Got hr %#lx.\n", hr);
   todo_wine ok(result == 0xfffc, "Got char: %lc\n", (WCHAR)result);
 
+  if (callback)
+  {
+    LRESULT sendres = SendMessageA(hwnd, EM_SETOLECALLBACK, 0, 0);
+    ok( !!sendres, "EM_SETOLECALLBACK should succeed\n" );
+  }
+
   release_interfaces(&hwnd, &reole, &doc, &selection);
+}
+
+static void test_InsertObject(void)
+{
+  struct reolecb_obj *callback;
+  HRESULT hr;
+  ULONG ref;
+
+  subtest_InsertObject(NULL);
+
+  hr = reolecb_obj_Create(&callback);
+  ok(SUCCEEDED(hr), "reolecb_obj_Create returned %#lx\n", hr);
+  if (SUCCEEDED(hr))
+  {
+    subtest_InsertObject(callback);
+    ref = IRichEditOleCallback_Release(&callback->IRichEditOleCallback_iface);
+    ok(ref == 0, "expected IRichEditOleCallback recount to be 0, got %lu\n", ref);
+  }
+  else
+  {
+    skip("cannot test InsertObject with callback\n");
+  }
 }
 
 static void test_GetStoryLength(void)
