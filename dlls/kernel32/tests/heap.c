@@ -40,9 +40,28 @@
 /* use function pointers to avoid warnings for invalid parameter tests */
 static LPVOID (WINAPI *pHeapAlloc)(HANDLE,DWORD,SIZE_T);
 static LPVOID (WINAPI *pHeapReAlloc)(HANDLE,DWORD,LPVOID,SIZE_T);
-static BOOL (WINAPI *pHeapQueryInformation)(HANDLE, HEAP_INFORMATION_CLASS, PVOID, SIZE_T, PSIZE_T);
-static BOOL (WINAPI *pGetPhysicallyInstalledSystemMemory)(ULONGLONG *);
-static ULONG (WINAPI *pRtlGetNtGlobalFlags)(void);
+static BOOL (WINAPI *pGetPhysicallyInstalledSystemMemory)( ULONGLONG * );
+
+#define MAKE_FUNC(f) static typeof(f) *p ## f
+MAKE_FUNC( HeapQueryInformation );
+MAKE_FUNC( GlobalFlags );
+MAKE_FUNC( RtlGetNtGlobalFlags );
+#undef MAKE_FUNC
+
+static void load_functions(void)
+{
+    HMODULE kernel32 = GetModuleHandleW( L"kernel32.dll" );
+    HMODULE ntdll = GetModuleHandleW( L"ntdll.dll" );
+
+#define LOAD_FUNC(m, f) p ## f = (void *)GetProcAddress( m, #f );
+    LOAD_FUNC( kernel32, HeapAlloc );
+    LOAD_FUNC( kernel32, HeapReAlloc );
+    LOAD_FUNC( kernel32, HeapQueryInformation );
+    LOAD_FUNC( kernel32, GetPhysicallyInstalledSystemMemory );
+    LOAD_FUNC( kernel32, GlobalFlags );
+    LOAD_FUNC( ntdll, RtlGetNtGlobalFlags );
+#undef LOAD_FUNC
+}
 
 struct heap
 {
@@ -1079,7 +1098,6 @@ static void test_HeapQueryInformation(void)
     SIZE_T size;
     BOOL ret;
 
-    pHeapQueryInformation = (void *)GetProcAddress(GetModuleHandleA("kernel32.dll"), "HeapQueryInformation");
     if (!pHeapQueryInformation)
     {
         win_skip("HeapQueryInformation is not available\n");
@@ -1462,12 +1480,10 @@ static void test_child_heap( const char *arg )
 
 static void test_GetPhysicallyInstalledSystemMemory(void)
 {
-    HMODULE kernel32 = GetModuleHandleA("kernel32.dll");
     MEMORYSTATUSEX memstatus;
     ULONGLONG total_memory;
     BOOL ret;
 
-    pGetPhysicallyInstalledSystemMemory = (void *)GetProcAddress(kernel32, "GetPhysicallyInstalledSystemMemory");
     if (!pGetPhysicallyInstalledSystemMemory)
     {
         win_skip("GetPhysicallyInstalledSystemMemory is not available\n");
@@ -1575,10 +1591,7 @@ START_TEST(heap)
     int argc;
     char **argv;
 
-    pHeapAlloc = (void *)GetProcAddress( GetModuleHandleA("kernel32"), "HeapAlloc" );
-    pHeapReAlloc = (void *)GetProcAddress( GetModuleHandleA("kernel32"), "HeapReAlloc" );
-
-    pRtlGetNtGlobalFlags = (void *)GetProcAddress( GetModuleHandleA("ntdll.dll"), "RtlGetNtGlobalFlags" );
+    load_functions();
 
     argc = winetest_get_mainargs( &argv );
     if (argc >= 3)
