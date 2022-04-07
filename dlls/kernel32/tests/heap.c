@@ -75,46 +75,13 @@ struct heap
     UINT     force_flags;
 };
 
-static SIZE_T resize_9x(SIZE_T size)
-{
-    DWORD dwSizeAligned = (size + 3) & ~3;
-    return max(dwSizeAligned, 12); /* at least 12 bytes */
-}
-
-static void test_heap(void)
-{
-    LPVOID  mem;
-    SIZE_T size;
-
-    /* Heap*() functions */
-    mem = HeapAlloc(GetProcessHeap(), 0, 0);
-    ok(mem != NULL, "memory not allocated for size 0\n");
-    HeapFree(GetProcessHeap(), 0, mem);
-
-    for (size = 0; size <= 256; size++)
-    {
-        SIZE_T heap_size;
-        mem = HeapAlloc(GetProcessHeap(), 0, size);
-        heap_size = HeapSize(GetProcessHeap(), 0, mem);
-        ok(heap_size == size || heap_size == resize_9x(size), 
-            "HeapSize returned %Iu instead of %Iu or %Iu\n", heap_size, size, resize_9x(size));
-        HeapFree(GetProcessHeap(), 0, mem);
-    }
-
-    /* large blocks must be 16-byte aligned */
-    mem = HeapAlloc(GetProcessHeap(), 0, 512 * 1024);
-    ok( mem != NULL, "failed for size 512K\n" );
-    ok( (ULONG_PTR)mem % 16 == 0 || broken((ULONG_PTR)mem % 16) /* win9x */,
-        "512K block not 16-byte aligned\n" );
-    HeapFree(GetProcessHeap(), 0, mem);
-}
-
 
 static void test_HeapCreate(void)
 {
-    SIZE_T alloc_size = 0x8000 * sizeof(void *), size;
+    SIZE_T alloc_size = 0x8000 * sizeof(void *), size, i;
+    BYTE *ptr, *ptr1, *ptrs[128];
     HANDLE heap, heap1;
-    BYTE *ptr, *ptr1;
+    UINT_PTR align;
     BOOL ret;
 
     /* check heap alignment */
@@ -185,6 +152,40 @@ static void test_HeapCreate(void)
     ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
     ret = HeapFree( heap, 0, ptr );
     ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+
+    /* test pointer alignment */
+
+    align = 0;
+    for (i = 0; i < ARRAY_SIZE(ptrs); ++i)
+    {
+        ptrs[i] = HeapAlloc( heap, 0, alloc_size );
+        ok( !!ptrs[i], "HeapAlloc failed, error %lu\n", GetLastError() );
+        align |= (UINT_PTR)ptrs[i];
+    }
+    ok( !(align & (2 * sizeof(void *) - 1)), "got wrong alignment\n" );
+    ok( align & (2 * sizeof(void *)), "got wrong alignment\n" );
+    for (i = 0; i < ARRAY_SIZE(ptrs); ++i)
+    {
+        ret = HeapFree( heap, 0, ptrs[i] );
+        ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+    }
+
+    align = 0;
+    for (i = 0; i < ARRAY_SIZE(ptrs); ++i)
+    {
+        ptrs[i] = HeapAlloc( heap, 0, 4 * alloc_size );
+        ok( !!ptrs[i], "HeapAlloc failed, error %lu\n", GetLastError() );
+        align |= (UINT_PTR)ptrs[i];
+    }
+    todo_wine_if( sizeof(void *) == 8 )
+    ok( !(align & (8 * sizeof(void *) - 1)), "got wrong alignment\n" );
+    todo_wine_if( sizeof(void *) == 8 )
+    ok( align & (8 * sizeof(void *)), "got wrong alignment\n" );
+    for (i = 0; i < ARRAY_SIZE(ptrs); ++i)
+    {
+        ret = HeapFree( heap, 0, ptrs[i] );
+        ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+    }
 
     /* test HEAP_ZERO_MEMORY */
 
@@ -1680,7 +1681,6 @@ START_TEST(heap)
         return;
     }
 
-    test_heap();
     test_HeapCreate();
     test_GlobalAlloc();
     test_LocalAlloc();
