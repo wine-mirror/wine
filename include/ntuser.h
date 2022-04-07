@@ -141,6 +141,7 @@ enum
     /* temporary exports */
     NtUserExitingThread,
     NtUserThreadDetach,
+    NtUserUpdateClipboard,
 };
 
 /* NtUserCallOneParam codes, not compatible with Windows */

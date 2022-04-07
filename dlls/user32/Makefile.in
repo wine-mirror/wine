@@ -19,7 +19,6 @@ C_SRCS = \
 	defwnd.c \
 	desktop.c \
 	dialog.c \
-	driver.c \
 	edit.c \
 	exticon.c \
 	focus.c \

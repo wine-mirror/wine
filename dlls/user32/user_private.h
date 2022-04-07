@@ -29,7 +29,6 @@
 #include "winreg.h"
 #include "winternl.h"
 #include "hidusage.h"
-#include "wine/gdi_driver.h"
 #include "wine/heap.h"
 
 #define GET_WORD(ptr)  (*(const WORD *)(ptr))
@@ -38,12 +37,6 @@
 
 #define WINE_MOUSE_HANDLE       ((HANDLE)1)
 #define WINE_KEYBOARD_HANDLE    ((HANDLE)2)
-
-struct window_surface;
-
-extern const struct user_driver_funcs *USER_Driver DECLSPEC_HIDDEN;
-
-extern void USER_unload_driver(void) DECLSPEC_HIDDEN;
 
 struct received_message_info;
 

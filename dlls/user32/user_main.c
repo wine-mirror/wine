@@ -176,7 +176,6 @@ static const struct user_callbacks user_funcs =
     register_builtin_classes,
     MENU_SetMenu,
     SCROLL_SetStandardScrollPainted,
-    (void *)__wine_set_user_driver,
     unpack_dde_message,
     register_imm,
     unregister_imm,
@@ -270,7 +269,6 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
         thread_detach();
         break;
     case DLL_PROCESS_DETACH:
-        USER_unload_driver();
         FreeLibrary(imm32_module);
         break;
     }

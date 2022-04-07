@@ -655,7 +655,7 @@ BOOL WINAPI OpenClipboard( HWND hwnd )
 
     TRACE( "%p\n", hwnd );
 
-    USER_Driver->pUpdateClipboard();
+    NtUserCallNoParam( NtUserUpdateClipboard );
 
     EnterCriticalSection( &clipboard_cs );
 

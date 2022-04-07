@@ -839,4 +839,3 @@
 # or 'wine_' (for user-visible functions) to avoid namespace conflicts.
 #
 @ cdecl __wine_set_pixel_format(long long)
-@ cdecl __wine_set_user_driver(ptr long)

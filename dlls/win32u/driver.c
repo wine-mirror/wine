@@ -928,15 +928,6 @@ static void CDECL nulldrv_ThreadDetach( void )
 {
 }
 
-static BOOL setup_null_driver(void)
-{
-    if (user_callbacks)
-        user_callbacks->set_user_driver( &null_user_driver, WINE_GDI_DRIVER_VERSION );
-    else
-        __wine_set_display_driver( &null_user_driver, WINE_GDI_DRIVER_VERSION );
-    return TRUE;
-}
-
 static const WCHAR guid_key_prefixW[] =
 {
     '\\','R','e','g','i','s','t','r','y',
@@ -993,7 +984,11 @@ static BOOL load_desktop_driver( HWND hwnd )
             ret = KeUserModeCallback( NtUserLoadDriver, info->Data, info->DataLength,
                                       &ret_ptr, &ret_len );
         }
-        else ret = setup_null_driver();
+        else
+        {
+            __wine_set_user_driver( &null_user_driver, WINE_GDI_DRIVER_VERSION );
+            ret = TRUE;
+        }
     }
     else if ((size = query_reg_ascii_value( hkey, "DriverError", info, sizeof(buf) )))
     {
@@ -1024,7 +1019,7 @@ static const struct user_driver_funcs *load_driver(void)
             || (flags.dwFlags & WSF_VISIBLE))
             null_user_driver.pCreateWindow = nodrv_CreateWindow;
 
-        setup_null_driver();
+        __wine_set_user_driver( &null_user_driver, WINE_GDI_DRIVER_VERSION );
     }
 
     return user_driver;
@@ -1230,16 +1225,21 @@ static const struct user_driver_funcs lazy_load_driver =
 const struct user_driver_funcs *user_driver = &lazy_load_driver;
 
 /******************************************************************************
- *	     __wine_set_display_driver   (win32u.@)
+ *	     __wine_set_user_driver   (win32u.@)
  */
-void CDECL __wine_set_display_driver( struct user_driver_funcs *driver, UINT version )
+void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version )
 {
+    struct user_driver_funcs *driver, *prev;
+
     if (version != WINE_GDI_DRIVER_VERSION)
     {
         ERR( "version mismatch, driver wants %u but win32u has %u\n",
              version, WINE_GDI_DRIVER_VERSION );
         return;
     }
+
+    driver = malloc( sizeof(*driver) );
+    *driver = *funcs;
 
 #define SET_USER_FUNC(name) \
     do { if (!driver->p##name) driver->p##name = nulldrv_##name; } while(0)
@@ -1290,7 +1290,13 @@ void CDECL __wine_set_display_driver( struct user_driver_funcs *driver, UINT ver
     SET_USER_FUNC(ThreadDetach);
 #undef SET_USER_FUNC
 
-    InterlockedExchangePointer( (void **)&user_driver, driver );
+    prev = InterlockedCompareExchangePointer( (void **)&user_driver, driver, (void *)&lazy_load_driver );
+    if (prev != &lazy_load_driver)
+    {
+        /* another thread beat us to it */
+        free( driver );
+        driver = prev;
+    }
 }
 
 /******************************************************************************

@@ -1265,12 +1265,12 @@ BOOL CDECL __wine_send_input( HWND hwnd, const INPUT *input, const RAWINPUT *raw
 }
 
 /***********************************************************************
- *           __wine_set_display_driver    (win32u.@)
+ *           __wine_set_user_driver    (win32u.@)
  */
-void CDECL __wine_set_display_driver( struct user_driver_funcs *funcs, UINT version )
+void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version )
 {
     if (!unix_funcs) return;
-    return unix_funcs->set_display_driver( funcs, version );
+    return unix_funcs->set_user_driver( funcs, version );
 }
 
 extern void wrappers_init( unixlib_handle_t handle )

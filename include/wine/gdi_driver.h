@@ -331,7 +331,6 @@ struct user_driver_funcs
 };
 
 extern void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version );
-extern void CDECL __wine_set_display_driver( struct user_driver_funcs *funcs, UINT version );
 extern struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version );
 extern const struct vulkan_funcs * CDECL __wine_get_vulkan_driver( UINT version );
 

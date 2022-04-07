@@ -1322,7 +1322,7 @@
 
 # Graphics drivers
 @ cdecl __wine_send_input(long ptr ptr)
-@ cdecl __wine_set_display_driver(ptr long)
+@ cdecl __wine_set_user_driver(ptr long)
 
 # OpenGL
 @ cdecl __wine_get_wgl_driver(long long)

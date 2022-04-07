@@ -4647,6 +4647,9 @@ ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
     case NtUserThreadDetach:
         thread_detach();
         return 0;
+    case NtUserUpdateClipboard:
+        user_driver->pUpdateClipboard();
+        return 0;
     default:
         FIXME( "invalid code %u\n", code );
         return 0;

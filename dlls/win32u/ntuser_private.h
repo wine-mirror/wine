@@ -51,7 +51,6 @@ struct user_callbacks
     void (CDECL *register_builtin_classes)(void);
     BOOL (CDECL *set_menu)( HWND hwnd, HMENU menu );
     void (WINAPI *set_standard_scroll_painted)( HWND hwnd, INT bar, BOOL visible );
-    void (CDECL *set_user_driver)( void *, UINT );
     BOOL (CDECL *unpack_dde_message)( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
                                       void **buffer, size_t size );
     BOOL (WINAPI *register_imm)( HWND hwnd );
