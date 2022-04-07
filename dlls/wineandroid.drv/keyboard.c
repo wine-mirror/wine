@@ -753,7 +753,7 @@ jboolean keyboard_event( JNIEnv *env, jobject obj, jint win, jint action, jint k
 /***********************************************************************
  *           ANDROID_GetKeyNameText
  */
-INT CDECL ANDROID_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
+INT ANDROID_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
 {
     int scancode, vkey, len;
     const char *name;
@@ -813,7 +813,7 @@ INT CDECL ANDROID_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
 /***********************************************************************
  *           ANDROID_MapVirtualKeyEx
  */
-UINT CDECL ANDROID_MapVirtualKeyEx( UINT code, UINT maptype, HKL hkl )
+UINT ANDROID_MapVirtualKeyEx( UINT code, UINT maptype, HKL hkl )
 {
     UINT ret = 0;
     const char *s;
@@ -881,7 +881,7 @@ UINT CDECL ANDROID_MapVirtualKeyEx( UINT code, UINT maptype, HKL hkl )
 /***********************************************************************
  *           ANDROID_VkKeyScanEx
  */
-SHORT CDECL ANDROID_VkKeyScanEx( WCHAR ch, HKL hkl )
+SHORT ANDROID_VkKeyScanEx( WCHAR ch, HKL hkl )
 {
     SHORT ret = -1;
     if (ch < ARRAY_SIZE( char_vkey_map )) ret = char_vkey_map[ch];

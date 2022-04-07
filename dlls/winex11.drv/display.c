@@ -241,8 +241,8 @@ void X11DRV_DisplayDevices_Update(BOOL send_display_change)
 
 static BOOL force_display_devices_refresh;
 
-void CDECL X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manager,
-                                        BOOL force, void *param )
+void X11DRV_UpdateDisplayDevices( const struct gdi_device_manager *device_manager,
+                                  BOOL force, void *param )
 {
     struct x11drv_display_device_handler *handler;
     struct gdi_adapter *adapters;

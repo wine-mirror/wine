@@ -1709,7 +1709,7 @@ void set_window_visual( struct x11drv_win_data *data, const XVisualInfo *vis, BO
 /*****************************************************************
  *		SetWindowText   (X11DRV.@)
  */
-void CDECL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
+void X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
 {
     Window win;
 
@@ -1726,7 +1726,7 @@ void CDECL X11DRV_SetWindowText( HWND hwnd, LPCWSTR text )
  *
  * Update the X state of a window to reflect a style change
  */
-void CDECL X11DRV_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
+void X11DRV_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
 {
     struct x11drv_win_data *data;
     DWORD changed = style->styleNew ^ style->styleOld;
@@ -1752,7 +1752,7 @@ done:
 /***********************************************************************
  *		DestroyWindow   (X11DRV.@)
  */
-void CDECL X11DRV_DestroyWindow( HWND hwnd )
+void X11DRV_DestroyWindow( HWND hwnd )
 {
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
     struct x11drv_win_data *data;
@@ -1813,7 +1813,7 @@ BOOL create_desktop_win_data( Window win )
 /**********************************************************************
  *		CreateDesktopWindow   (X11DRV.@)
  */
-BOOL CDECL X11DRV_CreateDesktopWindow( HWND hwnd )
+BOOL X11DRV_CreateDesktopWindow( HWND hwnd )
 {
     unsigned int width, height;
 
@@ -1892,7 +1892,7 @@ static LRESULT CALLBACK desktop_wndproc_wrapper( HWND hwnd, UINT msg, WPARAM wp,
 /**********************************************************************
  *		CreateWindow   (X11DRV.@)
  */
-BOOL CDECL X11DRV_CreateWindow( HWND hwnd )
+BOOL X11DRV_CreateWindow( HWND hwnd )
 {
     if (hwnd == GetDesktopWindow())
     {
@@ -2144,8 +2144,8 @@ XIC X11DRV_get_ic( HWND hwnd )
 /***********************************************************************
  *		X11DRV_GetDC   (X11DRV.@)
  */
-void CDECL X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
-                         const RECT *top_rect, DWORD flags )
+void X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
+                   const RECT *top_rect, DWORD flags )
 {
     struct x11drv_escape_set_drawable escape;
     HWND parent;
@@ -2192,7 +2192,7 @@ void CDECL X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
 /***********************************************************************
  *		X11DRV_ReleaseDC  (X11DRV.@)
  */
-void CDECL X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
+void X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
 {
     struct x11drv_escape_set_drawable escape;
 
@@ -2208,7 +2208,7 @@ void CDECL X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
 /*************************************************************************
  *		ScrollDC   (X11DRV.@)
  */
-BOOL CDECL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, HRGN update )
+BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, HRGN update )
 {
     RECT rect;
     BOOL ret;
@@ -2243,7 +2243,7 @@ BOOL CDECL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, HRGN update )
 /***********************************************************************
  *		SetCapture  (X11DRV.@)
  */
-void CDECL X11DRV_SetCapture( HWND hwnd, UINT flags )
+void X11DRV_SetCapture( HWND hwnd, UINT flags )
 {
     struct x11drv_thread_data *thread_data = x11drv_thread_data();
     struct x11drv_win_data *data;
@@ -2278,7 +2278,7 @@ void CDECL X11DRV_SetCapture( HWND hwnd, UINT flags )
 /*****************************************************************
  *		SetParent   (X11DRV.@)
  */
-void CDECL X11DRV_SetParent( HWND hwnd, HWND parent, HWND old_parent )
+void X11DRV_SetParent( HWND hwnd, HWND parent, HWND old_parent )
 {
     struct x11drv_win_data *data;
 
@@ -2329,9 +2329,9 @@ static inline BOOL get_surface_rect( const RECT *visible_rect, RECT *surface_rec
 /***********************************************************************
  *		WindowPosChanging   (X11DRV.@)
  */
-BOOL CDECL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
-                                     const RECT *window_rect, const RECT *client_rect, RECT *visible_rect,
-                                     struct window_surface **surface )
+BOOL X11DRV_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
+                               const RECT *window_rect, const RECT *client_rect, RECT *visible_rect,
+                               struct window_surface **surface )
 {
     struct x11drv_win_data *data = get_win_data( hwnd );
     RECT surface_rect;
@@ -2395,10 +2395,10 @@ done:
 /***********************************************************************
  *		WindowPosChanged   (X11DRV.@)
  */
-void CDECL X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
-                                    const RECT *rectWindow, const RECT *rectClient,
-                                    const RECT *visible_rect, const RECT *valid_rects,
-                                    struct window_surface *surface )
+void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
+                              const RECT *rectWindow, const RECT *rectClient,
+                              const RECT *visible_rect, const RECT *valid_rects,
+                              struct window_surface *surface )
 {
     struct x11drv_thread_data *thread_data;
     struct x11drv_win_data *data;
@@ -2561,7 +2561,7 @@ static BOOL hide_icon( struct x11drv_win_data *data )
 /***********************************************************************
  *           ShowWindow   (X11DRV.@)
  */
-UINT CDECL X11DRV_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
+UINT X11DRV_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
 {
     int x, y;
     unsigned int width, height, border, depth;
@@ -2615,7 +2615,7 @@ done:
  * first time). Complete the X11 driver-specific initialisation
  * and set the window hints.
  */
-void CDECL X11DRV_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
+void X11DRV_SetWindowIcon( HWND hwnd, UINT type, HICON icon )
 {
     struct x11drv_win_data *data;
 
@@ -2638,7 +2638,7 @@ done:
  *
  * Assign specified region to window (for non-rectangular windows)
  */
-void CDECL X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
+void X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
 {
     struct x11drv_win_data *data;
 
@@ -2659,7 +2659,7 @@ void CDECL X11DRV_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw )
  *
  * Set transparency attributes for a layered window.
  */
-void CDECL X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
+void X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
 {
     struct x11drv_win_data *data = get_win_data( hwnd );
 
@@ -2703,8 +2703,8 @@ void CDECL X11DRV_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alph
 /*****************************************************************************
  *              UpdateLayeredWindow  (X11DRV.@)
  */
-BOOL CDECL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
-                                       const RECT *window_rect )
+BOOL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
+                                 const RECT *window_rect )
 {
     struct window_surface *surface;
     struct x11drv_win_data *data;
@@ -2832,7 +2832,7 @@ static void taskbar_delete_tab( HWND hwnd )
 /**********************************************************************
  *           X11DRV_WindowMessage   (X11DRV.@)
  */
-LRESULT CDECL X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
+LRESULT X11DRV_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 {
     struct x11drv_win_data *data;
 
@@ -2930,7 +2930,7 @@ static LRESULT start_screensaver(void)
  *
  * Perform WM_SYSCOMMAND handling.
  */
-LRESULT CDECL X11DRV_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
+LRESULT X11DRV_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
     WPARAM hittest = wparam & 0x0f;
     int dir;
@@ -2999,7 +2999,7 @@ failed:
     return -1;
 }
 
-void CDECL X11DRV_FlashWindowEx( PFLASHWINFO pfinfo )
+void X11DRV_FlashWindowEx( FLASHWINFO *pfinfo )
 {
     struct x11drv_win_data *data = get_win_data( pfinfo->hwnd );
     XEvent xev;

@@ -467,7 +467,7 @@ static DWORD get_display_depth(ULONG_PTR display_id)
  *		EnumDisplaySettingsEx  (X11DRV.@)
  *
  */
-BOOL CDECL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DWORD flags)
+BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DWORD flags)
 {
     static const WCHAR dev_name[CCHDEVICENAME] =
         { 'W','i','n','e',' ','X','1','1',' ','d','r','i','v','e','r',0 };
@@ -931,8 +931,8 @@ static BOOL all_detached_settings(const struct x11drv_display_setting *displays,
  *		ChangeDisplaySettingsEx  (X11DRV.@)
  *
  */
-LONG CDECL X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
-                                           HWND hwnd, DWORD flags, LPVOID lpvoid )
+LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
+                                     HWND hwnd, DWORD flags, LPVOID lpvoid )
 {
     struct x11drv_display_setting *displays;
     INT display_idx, display_count;

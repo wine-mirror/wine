@@ -312,7 +312,7 @@ static INT CDECL X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOI
 /**********************************************************************
  *           X11DRV_wine_get_wgl_driver
  */
-static struct opengl_funcs * CDECL X11DRV_wine_get_wgl_driver( UINT version )
+static struct opengl_funcs *X11DRV_wine_get_wgl_driver( UINT version )
 {
     return get_glx_driver( version );
 }
@@ -320,7 +320,7 @@ static struct opengl_funcs * CDECL X11DRV_wine_get_wgl_driver( UINT version )
 /**********************************************************************
  *           X11DRV_wine_get_vulkan_driver
  */
-static const struct vulkan_funcs * CDECL X11DRV_wine_get_vulkan_driver( UINT version )
+static const struct vulkan_funcs *X11DRV_wine_get_vulkan_driver( UINT version )
 {
     return get_vulkan_driver( version );
 }

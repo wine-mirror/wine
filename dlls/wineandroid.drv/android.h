@@ -80,32 +80,32 @@ extern int ioctl_set_cursor( int id, int width, int height,
  * USER driver
  */
 
-extern INT CDECL ANDROID_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size ) DECLSPEC_HIDDEN;
-extern UINT CDECL ANDROID_MapVirtualKeyEx( UINT code, UINT maptype, HKL hkl ) DECLSPEC_HIDDEN;
-extern SHORT CDECL ANDROID_VkKeyScanEx( WCHAR ch, HKL hkl ) DECLSPEC_HIDDEN;
-extern void CDECL ANDROID_SetCursor( HCURSOR handle ) DECLSPEC_HIDDEN;
-extern BOOL CDECL ANDROID_CreateWindow( HWND hwnd ) DECLSPEC_HIDDEN;
-extern void CDECL ANDROID_DestroyWindow( HWND hwnd ) DECLSPEC_HIDDEN;
-extern DWORD CDECL ANDROID_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
-                                                        DWORD mask, DWORD flags ) DECLSPEC_HIDDEN;
-extern void CDECL ANDROID_SetCursor( HCURSOR handle ) DECLSPEC_HIDDEN;
-extern void CDECL ANDROID_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha,
-                                                      DWORD flags ) DECLSPEC_HIDDEN;
-extern void CDECL ANDROID_SetParent( HWND hwnd, HWND parent, HWND old_parent ) DECLSPEC_HIDDEN;
-extern void CDECL ANDROID_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw ) DECLSPEC_HIDDEN;
-extern void CDECL ANDROID_SetCapture( HWND hwnd, UINT flags ) DECLSPEC_HIDDEN;
-extern void CDECL ANDROID_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style ) DECLSPEC_HIDDEN;
-extern UINT CDECL ANDROID_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp ) DECLSPEC_HIDDEN;
-extern BOOL CDECL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
-                                               const RECT *window_rect ) DECLSPEC_HIDDEN;
-extern LRESULT CDECL ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ) DECLSPEC_HIDDEN;
-extern BOOL CDECL ANDROID_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
-                                             const RECT *window_rect, const RECT *client_rect,
-                                             RECT *visible_rect, struct window_surface **surface ) DECLSPEC_HIDDEN;
-extern void CDECL ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
-                                            const RECT *window_rect, const RECT *client_rect,
-                                            const RECT *visible_rect, const RECT *valid_rects,
-                                            struct window_surface *surface ) DECLSPEC_HIDDEN;
+extern INT ANDROID_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size ) DECLSPEC_HIDDEN;
+extern UINT ANDROID_MapVirtualKeyEx( UINT code, UINT maptype, HKL hkl ) DECLSPEC_HIDDEN;
+extern SHORT ANDROID_VkKeyScanEx( WCHAR ch, HKL hkl ) DECLSPEC_HIDDEN;
+extern void ANDROID_SetCursor( HCURSOR handle ) DECLSPEC_HIDDEN;
+extern BOOL ANDROID_CreateWindow( HWND hwnd ) DECLSPEC_HIDDEN;
+extern void ANDROID_DestroyWindow( HWND hwnd ) DECLSPEC_HIDDEN;
+extern DWORD ANDROID_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
+                                                  DWORD mask, DWORD flags ) DECLSPEC_HIDDEN;
+extern void ANDROID_SetCursor( HCURSOR handle ) DECLSPEC_HIDDEN;
+extern void ANDROID_SetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha,
+                                                DWORD flags ) DECLSPEC_HIDDEN;
+extern void ANDROID_SetParent( HWND hwnd, HWND parent, HWND old_parent ) DECLSPEC_HIDDEN;
+extern void ANDROID_SetWindowRgn( HWND hwnd, HRGN hrgn, BOOL redraw ) DECLSPEC_HIDDEN;
+extern void ANDROID_SetCapture( HWND hwnd, UINT flags ) DECLSPEC_HIDDEN;
+extern void ANDROID_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style ) DECLSPEC_HIDDEN;
+extern UINT ANDROID_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp ) DECLSPEC_HIDDEN;
+extern BOOL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
+                                         const RECT *window_rect ) DECLSPEC_HIDDEN;
+extern LRESULT ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ) DECLSPEC_HIDDEN;
+extern BOOL ANDROID_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
+                                       const RECT *window_rect, const RECT *client_rect,
+                                       RECT *visible_rect, struct window_surface **surface ) DECLSPEC_HIDDEN;
+extern void ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
+                                      const RECT *window_rect, const RECT *client_rect,
+                                      const RECT *visible_rect, const RECT *valid_rects,
+                                      struct window_surface *surface ) DECLSPEC_HIDDEN;
 
 extern unsigned int screen_width DECLSPEC_HIDDEN;
 extern unsigned int screen_height DECLSPEC_HIDDEN;

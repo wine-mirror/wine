@@ -191,8 +191,8 @@ static BOOL CDECL ANDROID_DeleteDC( PHYSDEV dev )
 /***********************************************************************
  *           ANDROID_ChangeDisplaySettingsEx
  */
-LONG CDECL ANDROID_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
-                                            HWND hwnd, DWORD flags, LPVOID lpvoid )
+LONG ANDROID_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
+                                      HWND hwnd, DWORD flags, LPVOID lpvoid )
 {
     FIXME( "(%s,%p,%p,0x%08x,%p)\n", debugstr_w( devname ), devmode, hwnd, flags, lpvoid );
     return DISP_CHANGE_SUCCESSFUL;
@@ -202,8 +202,8 @@ LONG CDECL ANDROID_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
 /***********************************************************************
  *           ANDROID_UpdateDisplayDevices
  */
-void CDECL ANDROID_UpdateDisplayDevices( const struct gdi_device_manager *device_manager,
-                                         BOOL force, void *param )
+void ANDROID_UpdateDisplayDevices( const struct gdi_device_manager *device_manager,
+                                   BOOL force, void *param )
 {
     if (force || force_display_devices_refresh)
     {
@@ -222,7 +222,7 @@ void CDECL ANDROID_UpdateDisplayDevices( const struct gdi_device_manager *device
 /***********************************************************************
  *           ANDROID_EnumDisplaySettingsEx
  */
-BOOL CDECL ANDROID_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DWORD flags)
+BOOL ANDROID_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DWORD flags )
 {
     static const WCHAR dev_name[CCHDEVICENAME] =
         { 'W','i','n','e',' ','A','n','d','r','o','i','d',' ','d','r','i','v','e','r',0 };
@@ -261,7 +261,7 @@ BOOL CDECL ANDROID_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devm
 /**********************************************************************
  *           ANDROID_wine_get_wgl_driver
  */
-static struct opengl_funcs * CDECL ANDROID_wine_get_wgl_driver( UINT version )
+static struct opengl_funcs *ANDROID_wine_get_wgl_driver( UINT version )
 {
     return get_wgl_driver( version );
 }

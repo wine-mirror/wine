@@ -1451,7 +1451,7 @@ static Cursor create_cursor( HANDLE handle )
 /***********************************************************************
  *		DestroyCursorIcon (X11DRV.@)
  */
-void CDECL X11DRV_DestroyCursorIcon( HCURSOR handle )
+void X11DRV_DestroyCursorIcon( HCURSOR handle )
 {
     Cursor cursor;
 
@@ -1466,7 +1466,7 @@ void CDECL X11DRV_DestroyCursorIcon( HCURSOR handle )
 /***********************************************************************
  *		SetCursor (X11DRV.@)
  */
-void CDECL X11DRV_SetCursor( HCURSOR handle )
+void X11DRV_SetCursor( HCURSOR handle )
 {
     if (InterlockedExchangePointer( (void **)&last_cursor, handle ) != handle ||
         GetTickCount() - last_cursor_change > 100)
@@ -1479,7 +1479,7 @@ void CDECL X11DRV_SetCursor( HCURSOR handle )
 /***********************************************************************
  *		SetCursorPos (X11DRV.@)
  */
-BOOL CDECL X11DRV_SetCursorPos( INT x, INT y )
+BOOL X11DRV_SetCursorPos( INT x, INT y )
 {
     struct x11drv_thread_data *data = x11drv_init_thread_data();
     POINT pos = virtual_screen_to_root( x, y );
@@ -1514,7 +1514,7 @@ BOOL CDECL X11DRV_SetCursorPos( INT x, INT y )
 /***********************************************************************
  *		GetCursorPos (X11DRV.@)
  */
-BOOL CDECL X11DRV_GetCursorPos(LPPOINT pos)
+BOOL X11DRV_GetCursorPos(LPPOINT pos)
 {
     Display *display = thread_init_display();
     Window root, child;
@@ -1535,7 +1535,7 @@ BOOL CDECL X11DRV_GetCursorPos(LPPOINT pos)
 /***********************************************************************
  *		ClipCursor (X11DRV.@)
  */
-BOOL CDECL X11DRV_ClipCursor( LPCRECT clip )
+BOOL X11DRV_ClipCursor( LPCRECT clip )
 {
     RECT virtual_rect = get_virtual_screen_rect();
 

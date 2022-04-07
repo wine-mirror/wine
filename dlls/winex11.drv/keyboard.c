@@ -1853,7 +1853,7 @@ static BOOL match_x11_keyboard_layout(HKL hkl)
 /***********************************************************************
  *		ActivateKeyboardLayout (X11DRV.@)
  */
-BOOL CDECL X11DRV_ActivateKeyboardLayout(HKL hkl, UINT flags)
+BOOL X11DRV_ActivateKeyboardLayout(HKL hkl, UINT flags)
 {
     FIXME("%p, %04x: semi-stub!\n", hkl, flags);
 
@@ -1898,7 +1898,7 @@ BOOL X11DRV_MappingNotify( HWND dummy, XEvent *event )
  *
  * Note: Windows ignores HKL parameter and uses current active layout instead
  */
-SHORT CDECL X11DRV_VkKeyScanEx(WCHAR wChar, HKL hkl)
+SHORT X11DRV_VkKeyScanEx( WCHAR wChar, HKL hkl )
 {
     Display *display = thread_init_display();
     KeyCode keycode;
@@ -1980,7 +1980,7 @@ SHORT CDECL X11DRV_VkKeyScanEx(WCHAR wChar, HKL hkl)
 /***********************************************************************
  *		MapVirtualKeyEx (X11DRV.@)
  */
-UINT CDECL X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
+UINT X11DRV_MapVirtualKeyEx( UINT wCode, UINT wMapType, HKL hkl )
 {
     UINT ret = 0;
     int keyc;
@@ -2124,7 +2124,7 @@ UINT CDECL X11DRV_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 /***********************************************************************
  *		GetKeyNameText (X11DRV.@)
  */
-INT CDECL X11DRV_GetKeyNameText(LONG lParam, LPWSTR lpBuffer, INT nSize)
+INT X11DRV_GetKeyNameText( LONG lParam, LPWSTR lpBuffer, INT nSize )
 {
   Display *display = thread_init_display();
   int vkey, ansi, scanCode;
@@ -2337,8 +2337,8 @@ static char KEYBOARD_MapDeadKeysym(KeySym keysym)
  * FIXME : should do the above (return 2 for non matching deadchar+char combinations)
  *
  */
-INT CDECL X11DRV_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
-                             LPWSTR bufW, int bufW_size, UINT flags, HKL hkl)
+INT X11DRV_ToUnicodeEx( UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
+                        LPWSTR bufW, int bufW_size, UINT flags, HKL hkl )
 {
     Display *display = thread_init_display();
     XKeyEvent e;
@@ -2639,7 +2639,7 @@ found:
 /***********************************************************************
  *		Beep (X11DRV.@)
  */
-void CDECL X11DRV_Beep(void)
+void X11DRV_Beep(void)
 {
     XBell(gdi_display, 0);
 }

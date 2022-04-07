@@ -636,7 +636,7 @@ static BOOL process_attach(void)
 /***********************************************************************
  *           ThreadDetach (X11DRV.@)
  */
-void CDECL X11DRV_ThreadDetach(void)
+void X11DRV_ThreadDetach(void)
 {
     struct x11drv_thread_data *data = TlsGetValue( thread_data_tls_index );
 
@@ -739,7 +739,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
 /***********************************************************************
  *              SystemParametersInfo (X11DRV.@)
  */
-BOOL CDECL X11DRV_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, UINT flags )
+BOOL X11DRV_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, UINT flags )
 {
     switch (action)
     {

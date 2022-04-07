@@ -44,7 +44,7 @@ struct display_mode_descriptor
 };
 
 
-BOOL CDECL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, LPDEVMODEW devmode, DWORD flags);
+BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, LPDEVMODEW devmode, DWORD flags);
 
 static const char initial_mode_key[] = "Initial Display Mode";
 static const WCHAR pixelencodingW[] = {'P','i','x','e','l','E','n','c','o','d','i','n','g',0};
@@ -827,8 +827,8 @@ static BOOL is_detached_mode(const DEVMODEW *mode)
  *              ChangeDisplaySettingsEx  (MACDRV.@)
  *
  */
-LONG CDECL macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
-                                          HWND hwnd, DWORD flags, LPVOID lpvoid)
+LONG macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
+                                    HWND hwnd, DWORD flags, LPVOID lpvoid)
 {
     WCHAR primary_adapter[CCHDEVICENAME];
     LONG ret = DISP_CHANGE_BADMODE;
@@ -1031,8 +1031,7 @@ better:
  *              EnumDisplaySettingsEx  (MACDRV.@)
  *
  */
-BOOL CDECL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode,
-                                        LPDEVMODEW devmode, DWORD flags)
+BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, DEVMODEW *devmode, DWORD flags)
 {
     static const WCHAR dev_name[CCHDEVICENAME] =
         { 'W','i','n','e',' ','M','a','c',' ','d','r','i','v','e','r',0 };
@@ -1233,7 +1232,7 @@ failed:
 /***********************************************************************
  *              GetDeviceGammaRamp (MACDRV.@)
  */
-BOOL CDECL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
+BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
 {
     BOOL ret = FALSE;
     DDGAMMARAMP *r = ramp;
@@ -1317,7 +1316,7 @@ done:
 /***********************************************************************
  *              SetDeviceGammaRamp (MACDRV.@)
  */
-BOOL CDECL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
+BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp)
 {
     DDGAMMARAMP *r = ramp;
     struct macdrv_display *displays;
@@ -1444,8 +1443,8 @@ void macdrv_displays_changed(const macdrv_event *event)
 
 static BOOL force_display_devices_refresh;
 
-void CDECL macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manager,
-                                        BOOL force, void *param )
+void macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manager,
+                                  BOOL force, void *param )
 {
     struct macdrv_adapter *adapters, *adapter;
     struct macdrv_monitor *monitors, *monitor;

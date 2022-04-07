@@ -1161,7 +1161,7 @@ void macdrv_process_text_input(UINT vkey, UINT scan, UINT repeat, const BYTE *ke
 /***********************************************************************
  *              ActivateKeyboardLayout (MACDRV.@)
  */
-BOOL CDECL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
+BOOL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
 {
     BOOL ret = FALSE;
     struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
@@ -1204,7 +1204,7 @@ BOOL CDECL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
 /***********************************************************************
  *              Beep (MACDRV.@)
  */
-void CDECL macdrv_Beep(void)
+void macdrv_Beep(void)
 {
     macdrv_beep();
 }
@@ -1213,7 +1213,7 @@ void CDECL macdrv_Beep(void)
 /***********************************************************************
  *              GetKeyNameText (MACDRV.@)
  */
-INT CDECL macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
+INT macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
 {
     struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
     int scan, keyc;
@@ -1299,7 +1299,7 @@ INT CDECL macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
 /***********************************************************************
  *     GetKeyboardLayoutList (MACDRV.@)
  */
-UINT CDECL macdrv_GetKeyboardLayoutList(INT size, HKL *list)
+UINT macdrv_GetKeyboardLayoutList(INT size, HKL *list)
 {
     int count = 0;
     struct layout *layout;
@@ -1331,7 +1331,7 @@ UINT CDECL macdrv_GetKeyboardLayoutList(INT size, HKL *list)
 /***********************************************************************
  *              MapVirtualKeyEx (MACDRV.@)
  */
-UINT CDECL macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
+UINT macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 {
     struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
     UINT ret = 0;
@@ -1460,7 +1460,7 @@ UINT CDECL macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
 /***********************************************************************
  *              RegisterHotKey (MACDRV.@)
  */
-BOOL CDECL macdrv_RegisterHotKey(HWND hwnd, UINT mod_flags, UINT vkey)
+BOOL macdrv_RegisterHotKey(HWND hwnd, UINT mod_flags, UINT vkey)
 {
     struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
     unsigned int keyc, modifiers = 0;
@@ -1519,8 +1519,8 @@ BOOL CDECL macdrv_RegisterHotKey(HWND hwnd, UINT mod_flags, UINT vkey)
  *              virtual key to form a single character.
  *
  */
-INT CDECL macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
-                             LPWSTR bufW, int bufW_size, UINT flags, HKL hkl)
+INT macdrv_ToUnicodeEx(UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
+                       LPWSTR bufW, int bufW_size, UINT flags, HKL hkl)
 {
     struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
     INT ret = 0;
@@ -1704,7 +1704,7 @@ done:
 /***********************************************************************
  *              UnregisterHotKey (MACDRV.@)
  */
-void CDECL macdrv_UnregisterHotKey(HWND hwnd, UINT modifiers, UINT vkey)
+void macdrv_UnregisterHotKey(HWND hwnd, UINT modifiers, UINT vkey)
 {
     struct macdrv_thread_data *thread_data = macdrv_thread_data();
 
@@ -1720,7 +1720,7 @@ void CDECL macdrv_UnregisterHotKey(HWND hwnd, UINT modifiers, UINT vkey)
  *
  * Note: Windows ignores HKL parameter and uses current active layout instead
  */
-SHORT CDECL macdrv_VkKeyScanEx(WCHAR wChar, HKL hkl)
+SHORT macdrv_VkKeyScanEx(WCHAR wChar, HKL hkl)
 {
     struct macdrv_thread_data *thread_data = macdrv_init_thread_data();
     SHORT ret = -1;

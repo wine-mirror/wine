@@ -2053,7 +2053,7 @@ done:
 /**************************************************************************
  *              macdrv_UpdateClipboard
  */
-void CDECL macdrv_UpdateClipboard(void)
+void macdrv_UpdateClipboard(void)
 {
     static ULONG last_update;
     ULONG now, end;

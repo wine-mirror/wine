@@ -475,8 +475,8 @@ static BOOL process_events( Display *display, Bool (*filter)(Display*, XEvent*,X
 /***********************************************************************
  *           MsgWaitForMultipleObjectsEx   (X11DRV.@)
  */
-DWORD CDECL X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
-                                                DWORD timeout, DWORD mask, DWORD flags )
+DWORD X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
+                                          DWORD timeout, DWORD mask, DWORD flags )
 {
     DWORD ret;
     struct x11drv_thread_data *data = TlsGetValue( thread_data_tls_index );
@@ -1420,7 +1420,7 @@ void wait_for_withdrawn_state( HWND hwnd, BOOL set )
  *
  * Set the X focus.
  */
-void CDECL X11DRV_SetFocus( HWND hwnd )
+void X11DRV_SetFocus( HWND hwnd )
 {
     struct x11drv_win_data *data;
 
