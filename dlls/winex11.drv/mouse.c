@@ -1060,9 +1060,8 @@ static Cursor create_xcursor_system_cursor( const ICONINFOEXW *info )
     HMODULE module;
     HKEY key;
     const char * const *names = NULL;
-    WCHAR *p, name[MAX_PATH * 2], valueW[64];
+    WCHAR *p, name[MAX_PATH * 2];
     char valueA[64];
-    DWORD ret;
 
     if (!info->szModName[0]) return 0;
 
@@ -1075,13 +1074,15 @@ static Cursor create_xcursor_system_cursor( const ICONINFOEXW *info )
     valueA[0] = 0;
 
     /* @@ Wine registry key: HKCU\Software\Wine\X11 Driver\Cursors */
-    if (!RegOpenKeyA( HKEY_CURRENT_USER, "Software\\Wine\\X11 Driver\\Cursors", &key ))
+    if ((key = open_hkcu_key( "Software\\Wine\\X11 Driver\\Cursors" )))
     {
-        DWORD size = sizeof(valueW);
-        ret = RegQueryValueExW( key, name, NULL, NULL, (BYTE *)valueW, &size );
-        RegCloseKey( key );
-        if (!ret)
+        char buffer[4096];
+        KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
+        DWORD size = query_reg_value( key, NULL, value, sizeof(buffer) );
+        NtClose( key );
+        if (size && value->Type == REG_SZ)
         {
+            const WCHAR *valueW = (const WCHAR *)value->Data;
             if (!valueW[0]) return 0; /* force standard cursor */
             if (!WideCharToMultiByte( CP_UNIXCP, 0, valueW, -1, valueA, sizeof(valueA), NULL, NULL ))
                 valueA[0] = 0;

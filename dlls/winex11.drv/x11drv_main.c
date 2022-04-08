@@ -353,7 +353,7 @@ static HKEY reg_open_key( HKEY root, const WCHAR *name, ULONG name_len )
 }
 
 
-static HKEY open_hkcu_key( const char *name )
+HKEY open_hkcu_key( const char *name )
 {
     WCHAR bufferW[256];
     static HKEY hkcu;
@@ -385,8 +385,7 @@ static HKEY open_hkcu_key( const char *name )
 }
 
 
-static ULONG query_reg_value( HKEY hkey, const WCHAR *name,
-                              KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size )
+ULONG query_reg_value( HKEY hkey, const WCHAR *name, KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size )
 {
     unsigned int name_size = name ? lstrlenW( name ) * sizeof(WCHAR) : 0;
     UNICODE_STRING nameW = { name_size, name_size, (WCHAR *)name };

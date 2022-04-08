@@ -841,6 +841,12 @@ static inline BOOL is_window_rect_mapped( const RECT *rect )
             max( rect->bottom, rect->top + 1 ) > virtual_rect.top);
 }
 
+/* registry helpers */
+
+extern HKEY open_hkcu_key( const char *name ) DECLSPEC_HIDDEN;
+extern ULONG query_reg_value( HKEY hkey, const WCHAR *name,
+                              KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size ) DECLSPEC_HIDDEN;
+
 /* string helpers */
 
 static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
