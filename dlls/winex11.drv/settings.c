@@ -319,6 +319,13 @@ static BOOL read_registry_settings(const WCHAR *device_name, DEVMODEW *dm)
     return ret;
 }
 
+static BOOL set_setting_value( HKEY hkey, const char *name, DWORD val )
+{
+    WCHAR nameW[128];
+    UNICODE_STRING str = { asciiz_to_unicode( nameW, name ) - sizeof(WCHAR), sizeof(nameW), nameW };
+    return !NtSetValueKey( hkey, &str, 0, REG_DWORD, &val, sizeof(val) );
+}
+
 static BOOL write_registry_settings(const WCHAR *device_name, const DEVMODEW *dm)
 {
     HANDLE mutex;
@@ -332,23 +339,17 @@ static BOOL write_registry_settings(const WCHAR *device_name, const DEVMODEW *dm
         return FALSE;
     }
 
-#define set_value(name, data) \
-    if (RegSetValueExA(hkey, name, 0, REG_DWORD, (const BYTE*)(data), sizeof(DWORD))) \
-        ret = FALSE
+    ret &= set_setting_value( hkey, "DefaultSettings.BitsPerPel", dm->dmBitsPerPel );
+    ret &= set_setting_value( hkey, "DefaultSettings.XResolution", dm->dmPelsWidth );
+    ret &= set_setting_value( hkey, "DefaultSettings.YResolution", dm->dmPelsHeight );
+    ret &= set_setting_value( hkey, "DefaultSettings.VRefresh", dm->dmDisplayFrequency );
+    ret &= set_setting_value( hkey, "DefaultSettings.Flags", dm->u2.dmDisplayFlags );
+    ret &= set_setting_value( hkey, "DefaultSettings.XPanning", dm->u1.s2.dmPosition.x );
+    ret &= set_setting_value( hkey, "DefaultSettings.YPanning", dm->u1.s2.dmPosition.y );
+    ret &= set_setting_value( hkey, "DefaultSettings.Orientation", dm->u1.s2.dmDisplayOrientation );
+    ret &= set_setting_value( hkey, "DefaultSettings.FixedOutput", dm->u1.s2.dmDisplayFixedOutput );
 
-    set_value("DefaultSettings.BitsPerPel", &dm->dmBitsPerPel);
-    set_value("DefaultSettings.XResolution", &dm->dmPelsWidth);
-    set_value("DefaultSettings.YResolution", &dm->dmPelsHeight);
-    set_value("DefaultSettings.VRefresh", &dm->dmDisplayFrequency);
-    set_value("DefaultSettings.Flags", &dm->u2.dmDisplayFlags);
-    set_value("DefaultSettings.XPanning", &dm->u1.s2.dmPosition.x);
-    set_value("DefaultSettings.YPanning", &dm->u1.s2.dmPosition.y);
-    set_value("DefaultSettings.Orientation", &dm->u1.s2.dmDisplayOrientation);
-    set_value("DefaultSettings.FixedOutput", &dm->u1.s2.dmDisplayFixedOutput);
-
-#undef set_value
-
-    RegCloseKey(hkey);
+    NtClose( hkey );
     release_display_device_init_mutex(mutex);
     return ret;
 }
