@@ -114,8 +114,8 @@ BOOL memory_write_value(const struct dbg_lvalue* lvalue, DWORD size, void* value
     if (!types_get_info(&lvalue->type, TI_GET_LENGTH, &os)) return FALSE;
     if (size != os)
     {
-        dbg_printf("Size mismatch in memory_write_value, got %lu from type while expecting %lu\n",
-                   (DWORD)os, size);
+        dbg_printf("Size mismatch in memory_write_value, got %I64u from type while expecting %lu\n",
+                   os, size);
         return FALSE;
     }
 
