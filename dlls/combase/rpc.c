@@ -77,7 +77,7 @@ struct registered_if
 static inline void get_rpc_endpoint(LPWSTR endpoint, const OXID *oxid)
 {
     /* FIXME: should get endpoint from rpcss */
-    wsprintfW(endpoint, L"\\pipe\\OLE_%08lx%08lx", (DWORD)(*oxid >> 32), (DWORD)*oxid);
+    wsprintfW(endpoint, L"\\pipe\\OLE_%016I64x", *oxid);
 }
 
 typedef struct
