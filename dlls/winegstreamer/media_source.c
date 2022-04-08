@@ -363,6 +363,10 @@ static void start_pipeline(struct media_source *source, struct source_async_comm
             IMFMediaType_Release(current_mt);
             IMFMediaTypeHandler_Release(mth);
         }
+        else
+        {
+            wg_parser_stream_disable(stream->wg_stream);
+        }
 
         if (position->vt != VT_EMPTY)
             stream->eos = FALSE;
@@ -419,10 +423,7 @@ static void stop_pipeline(struct media_source *source)
     {
         struct media_stream *stream = source->streams[i];
         if (stream->state != STREAM_INACTIVE)
-        {
             IMFMediaEventQueue_QueueEventParamVar(stream->event_queue, MEStreamStopped, &GUID_NULL, S_OK, NULL);
-            wg_parser_stream_disable(stream->wg_stream);
-        }
     }
 
     IMFMediaEventQueue_QueueEventParamVar(source->event_queue, MESourceStopped, &GUID_NULL, S_OK, NULL);
