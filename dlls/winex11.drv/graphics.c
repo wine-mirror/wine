@@ -1629,12 +1629,14 @@ extern void WINAPI A_SHAUpdate( sha_ctx *, const unsigned char *, unsigned int )
 extern void WINAPI A_SHAFinal( sha_ctx *, unsigned char * );
 
 static const WCHAR mntr_key[] =
-    {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
+    {'\\','R','e','g','i','s','t','r','y','\\','M','a','c','h','i','n','e','\\',
+     'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\',
      'W','i','n','d','o','w','s',' ','N','T','\\','C','u','r','r','e','n','t',
-     'V','e','r','s','i','o','n','\\','I','C','M','\\','m','n','t','r',0};
+     'V','e','r','s','i','o','n','\\','I','C','M','\\','m','n','t','r'};
 
 static const WCHAR color_path[] =
-    {'\\','s','p','o','o','l','\\','d','r','i','v','e','r','s','\\','c','o','l','o','r','\\',0};
+    {'c',':','\\','w','i','n','d','o','w','s','\\','s','y','s','t','e','m','3','2',
+     '\\','s','p','o','o','l','\\','d','r','i','v','e','r','s','\\','c','o','l','o','r','\\'};
 
 /***********************************************************************
  *              GetICMProfile (X11DRV.@)
@@ -1645,22 +1647,27 @@ BOOL CDECL X11DRV_GetICMProfile( PHYSDEV dev, BOOL allow_default, LPDWORD size, 
         {'s','R','G','B',' ','C','o','l','o','r',' ','S','p','a','c','e',' ',
          'P','r','o','f','i','l','e','.','i','c','m',0};
     HKEY hkey;
-    DWORD required, len;
-    WCHAR profile[MAX_PATH], fullname[2*MAX_PATH + ARRAY_SIZE( color_path )];
+    DWORD required;
+    char buf[4096];
+    KEY_VALUE_FULL_INFORMATION *info = (void *)buf;
     unsigned char *buffer;
     unsigned long buflen;
+    ULONG full_size;
+    WCHAR profile[MAX_PATH], fullname[MAX_PATH + ARRAY_SIZE( color_path )];
 
     if (!size) return FALSE;
 
-    GetSystemDirectoryW( fullname, MAX_PATH );
-    strcatW( fullname, color_path );
+    memcpy( fullname, color_path, sizeof(color_path) );
+    fullname[ARRAYSIZE(color_path)] = 0;
 
-    len = ARRAY_SIZE( profile );
-    if (!RegCreateKeyExW( HKEY_LOCAL_MACHINE, mntr_key, 0, NULL, 0, KEY_ALL_ACCESS, NULL, &hkey, NULL ) &&
-        !RegEnumValueW( hkey, 0, profile, &len, NULL, NULL, NULL, NULL )) /* FIXME handle multiple values */
+    hkey = reg_open_key( NULL, mntr_key, sizeof(mntr_key) );
+
+    if (hkey && !NtEnumerateValueKey( hkey, 0, KeyValueFullInformation,
+                                      info, sizeof(buf), &full_size ))
     {
-        strcatW( fullname, profile );
-        RegCloseKey( hkey );
+        /* FIXME handle multiple values */
+        memcpy( fullname + ARRAYSIZE(color_path), info->Name, info->NameLength );
+        fullname[ARRAYSIZE(color_path) + info->NameLength / sizeof(WCHAR)] = 0;
     }
     else if ((buffer = get_icm_profile( &buflen )))
     {
@@ -1694,6 +1701,7 @@ BOOL CDECL X11DRV_GetICMProfile( PHYSDEV dev, BOOL allow_default, LPDWORD size, 
     else if (!allow_default) return FALSE;
     else strcatW( fullname, srgb );
 
+    NtClose( hkey );
     required = strlenW( fullname ) + 1;
     if (*size < required)
     {

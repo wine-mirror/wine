@@ -846,6 +846,7 @@ static inline BOOL is_window_rect_mapped( const RECT *rect )
 extern HKEY open_hkcu_key( const char *name ) DECLSPEC_HIDDEN;
 extern ULONG query_reg_value( HKEY hkey, const WCHAR *name,
                               KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size ) DECLSPEC_HIDDEN;
+extern HKEY reg_open_key( HKEY root, const WCHAR *name, ULONG name_len ) DECLSPEC_HIDDEN;
 
 /* string helpers */
 
