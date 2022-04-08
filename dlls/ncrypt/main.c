@@ -40,6 +40,7 @@ static SECURITY_STATUS map_ntstatus(NTSTATUS status)
     case STATUS_INVALID_SIGNATURE: return NTE_BAD_SIGNATURE;
     case STATUS_SUCCESS:           return ERROR_SUCCESS;
     case STATUS_INVALID_PARAMETER: return NTE_INVALID_PARAMETER;
+    case STATUS_NO_MEMORY:         return NTE_NO_MEMORY;
     case STATUS_NOT_SUPPORTED:     return NTE_NOT_SUPPORTED;
     case NTE_BAD_DATA:             return NTE_BAD_DATA;
     default:
