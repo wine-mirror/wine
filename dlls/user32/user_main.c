@@ -365,11 +365,11 @@ const char *SPY_GetVKeyName( WPARAM wparam )
 
 void SPY_EnterMessage( INT flag, HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    if (TRACE_ON(message)) NtUserMessageCall( hwnd, msg, wparam, lparam, 0, FNID_SPYENTER, flag );
+    if (TRACE_ON(message)) NtUserMessageCall( hwnd, msg, wparam, lparam, 0, NtUserSpyEnter, flag );
 }
 
 void SPY_ExitMessage( INT flag, HWND hwnd, UINT msg, LRESULT lreturn, WPARAM wparam, LPARAM lparam )
 {
     if (TRACE_ON(message)) NtUserMessageCall( hwnd, msg, wparam, lparam, (void *)lreturn,
-                                              FNID_SPYEXIT, flag );
+                                              NtUserSpyExit, flag );
 }

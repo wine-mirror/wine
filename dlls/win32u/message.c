@@ -249,7 +249,7 @@ static BOOL dispatch_win_proc_params( struct win_proc_params *params, size_t siz
     if (thread_info->recursion_count > MAX_WINPROC_RECURSION) return FALSE;
     thread_info->recursion_count++;
 
-    KeUserModeCallback( NtUserCallWindowProc, params, size, &ret_ptr, &ret_len );
+    KeUserModeCallback( NtUserCallWinProc, params, size, &ret_ptr, &ret_len );
 
     thread_info->recursion_count--;
     return TRUE;
@@ -2531,14 +2531,14 @@ static BOOL broadcast_message( struct send_message_info *info, DWORD_PTR *res_pt
                 break;
             case MSG_NOTIFY:
                 NtUserMessageCall( list[i], info->msg, info->wparam, info->lparam,
-                                   0, FNID_SENDNOTIFYMESSAGE, FALSE );
+                                   0, NtUserSendNotifyMessage, FALSE );
                 break;
             case MSG_CALLBACK:
                 {
                     struct send_message_callback_params params =
                         { .callback = info->callback, .data = info->data };
                     NtUserMessageCall( list[i], info->msg, info->wparam, info->lparam,
-                                       &params, FNID_SENDMESSAGECALLBACK, FALSE );
+                                       &params, NtUserSendMessageCallback, FALSE );
                     break;
                 }
             case MSG_POSTED:
@@ -2847,14 +2847,14 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
 {
     switch (type)
     {
-    case FNID_DEFWINDOWPROC:
+    case NtUserDefWindowProc:
         return default_window_proc( hwnd, msg, wparam, lparam, ansi );
-    case FNID_CALLWNDPROC:
+    case NtUserCallWindowProc:
         return init_win_proc_params( (struct win_proc_params *)result_info, hwnd, msg,
                                      wparam, lparam, ansi );
-    case FNID_SENDMESSAGE:
+    case NtUserSendMessage:
         return send_window_message( hwnd, msg, wparam, lparam, ansi );
-    case FNID_SENDMESSAGEWTOOPTION:
+    case NtUserSendMessageTimeout:
         {
             struct send_message_timeout_params *params = (void *)result_info;
             DWORD_PTR res = 0;
@@ -2862,14 +2862,14 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
                                                    params->timeout, &res, ansi );
             return res;
         }
-    case FNID_SENDNOTIFYMESSAGE:
+    case NtUserSendNotifyMessage:
         return send_notify_message( hwnd, msg, wparam, lparam, ansi );
-    case FNID_SENDMESSAGECALLBACK:
+    case NtUserSendMessageCallback:
         return send_message_callback( hwnd, msg, wparam, lparam, (void *)result_info, ansi );
-    case FNID_SPYENTER:
+    case NtUserSpyEnter:
         spy_enter_message( ansi, hwnd, msg, wparam, lparam );
         return 0;
-    case FNID_SPYEXIT:
+    case NtUserSpyExit:
         spy_exit_message( ansi, hwnd, msg, (LPARAM)result_info, wparam, lparam );
         return 0;
     default:

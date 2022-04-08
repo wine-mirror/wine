@@ -602,7 +602,7 @@ LRESULT WINAPI SendMessageTimeoutW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     struct send_message_timeout_params params = { .flags = flags, .timeout = timeout };
     LRESULT res;
 
-    res = NtUserMessageCall( hwnd, msg, wparam, lparam, &params, FNID_SENDMESSAGEWTOOPTION, FALSE );
+    res = NtUserMessageCall( hwnd, msg, wparam, lparam, &params, NtUserSendMessageTimeout, FALSE );
     if (res_ptr) *res_ptr = res;
     return params.result;
 }
@@ -619,12 +619,12 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
     if (msg != WM_CHAR || WIN_IsCurrentThread( hwnd ))
     {
         res = NtUserMessageCall( hwnd, msg, wparam, lparam, &params,
-                                 FNID_SENDMESSAGEWTOOPTION, TRUE );
+                                 NtUserSendMessageTimeout, TRUE );
     }
     else if (map_wparam_AtoW( msg, &wparam, WMCHAR_MAP_SENDMESSAGE ))
     {
         res = NtUserMessageCall( hwnd, msg, wparam, lparam, &params,
-                                 FNID_SENDMESSAGEWTOOPTION, FALSE );
+                                 NtUserSendMessageTimeout, FALSE );
     }
 
     if (res_ptr) *res_ptr = res;
@@ -637,7 +637,7 @@ LRESULT WINAPI SendMessageTimeoutA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM l
  */
 LRESULT WINAPI SendMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    return NtUserMessageCall( hwnd, msg, wparam, lparam, NULL, FNID_SENDMESSAGE, FALSE );
+    return NtUserMessageCall( hwnd, msg, wparam, lparam, NULL, NtUserSendMessage, FALSE );
 }
 
 
@@ -650,10 +650,10 @@ LRESULT WINAPI SendMessageA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
     {
         if (!map_wparam_AtoW( msg, &wparam, WMCHAR_MAP_SENDMESSAGE ))
             return 0;
-        return NtUserMessageCall( hwnd, msg, wparam, lparam, NULL, FNID_SENDMESSAGE, FALSE );
+        return NtUserMessageCall( hwnd, msg, wparam, lparam, NULL, NtUserSendMessage, FALSE );
     }
 
-    return NtUserMessageCall( hwnd, msg, wparam, lparam, NULL, FNID_SENDMESSAGE, TRUE );
+    return NtUserMessageCall( hwnd, msg, wparam, lparam, NULL, NtUserSendMessage, TRUE );
 }
 
 
@@ -665,7 +665,7 @@ BOOL WINAPI SendNotifyMessageA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
     if (!WIN_IsCurrentThread( hwnd ) && !map_wparam_AtoW( msg, &wparam, WMCHAR_MAP_SENDMESSAGE ))
         return FALSE;
 
-    return NtUserMessageCall( hwnd, msg, wparam, lparam, 0, FNID_SENDNOTIFYMESSAGE, TRUE );
+    return NtUserMessageCall( hwnd, msg, wparam, lparam, 0, NtUserSendNotifyMessage, TRUE );
 }
 
 
@@ -674,7 +674,7 @@ BOOL WINAPI SendNotifyMessageA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpara
  */
 BOOL WINAPI SendNotifyMessageW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
-    return NtUserMessageCall( hwnd, msg, wparam, lparam, 0, FNID_SENDNOTIFYMESSAGE, FALSE );
+    return NtUserMessageCall( hwnd, msg, wparam, lparam, 0, NtUserSendNotifyMessage, FALSE );
 }
 
 
@@ -689,7 +689,7 @@ BOOL WINAPI SendMessageCallbackA( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
     if (!WIN_IsCurrentThread( hwnd ) && !map_wparam_AtoW( msg, &wparam, WMCHAR_MAP_SENDMESSAGE ))
         return FALSE;
 
-    return NtUserMessageCall( hwnd, msg, wparam, lparam, &params, FNID_SENDMESSAGECALLBACK, TRUE );
+    return NtUserMessageCall( hwnd, msg, wparam, lparam, &params, NtUserSendMessageCallback, TRUE );
 }
 
 
@@ -700,7 +700,7 @@ BOOL WINAPI SendMessageCallbackW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
                                   SENDASYNCPROC callback, ULONG_PTR data )
 {
     struct send_message_callback_params params = { .callback = callback, .data = data };
-    return NtUserMessageCall( hwnd, msg, wparam, lparam, &params, FNID_SENDMESSAGECALLBACK, FALSE );
+    return NtUserMessageCall( hwnd, msg, wparam, lparam, &params, NtUserSendMessageCallback, FALSE );
 }
 
 

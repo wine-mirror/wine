@@ -1332,7 +1332,7 @@ LRESULT WINAPI CallWindowProcA( WNDPROC func, HWND hwnd, UINT msg, WPARAM wParam
 
     params.func = func;
     params.result = &result;
-    if (!NtUserMessageCall( hwnd, msg, wParam, lParam, &params, FNID_CALLWNDPROC, TRUE ))
+    if (!NtUserMessageCall( hwnd, msg, wParam, lParam, &params, NtUserCallWindowProc, TRUE ))
         return 0;
     dispatch_win_proc_params( &params );
     return result;
@@ -1351,7 +1351,7 @@ LRESULT WINAPI CallWindowProcW( WNDPROC func, HWND hwnd, UINT msg, WPARAM wParam
 
     params.func = func;
     params.result = &result;
-    if (!NtUserMessageCall( hwnd, msg, wParam, lParam, &params, FNID_CALLWNDPROC, FALSE ))
+    if (!NtUserMessageCall( hwnd, msg, wParam, lParam, &params, NtUserCallWindowProc, FALSE ))
         return 0;
     dispatch_win_proc_params( &params );
     return result;

@@ -3258,7 +3258,7 @@ BOOL WINAPI NtUserSetWindowPos( HWND hwnd, HWND after, INT x, INT y, INT cx, INT
 
     if (flags & SWP_ASYNCWINDOWPOS)
         return NtUserMessageCall( winpos.hwnd, WM_WINE_SETWINDOWPOS, 0, (LPARAM)&winpos,
-                                  0, FNID_SENDNOTIFYMESSAGE, FALSE );
+                                  0, NtUserSendNotifyMessage, FALSE );
     else
         return send_message( winpos.hwnd, WM_WINE_SETWINDOWPOS, 0, (LPARAM)&winpos );
 }
@@ -4120,7 +4120,7 @@ BOOL WINAPI NtUserShowWindowAsync( HWND hwnd, INT cmd )
         return show_window( full_handle, cmd );
 
     return NtUserMessageCall( hwnd, WM_WINE_SHOWWINDOW, cmd, 0, 0,
-                              FNID_SENDNOTIFYMESSAGE, FALSE );
+                              NtUserSendNotifyMessage, FALSE );
 }
 
 /***********************************************************************
@@ -4317,7 +4317,7 @@ LRESULT destroy_window( HWND hwnd )
                 destroy_window( children[i] );
             else
                 NtUserMessageCall( children[i], WM_WINE_DESTROYWINDOW, 0, 0,
-                                   0, FNID_SENDNOTIFYMESSAGE, FALSE );
+                                   0, NtUserSendNotifyMessage, FALSE );
         }
         free( children );
     }
@@ -4858,7 +4858,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
 
     TRACE( "hwnd %p cs %d,%d %dx%d %s\n", hwnd, cs.x, cs.y, cs.cx, cs.cy, wine_dbgstr_rect(&rect) );
     *client_cs = cs;
-    if (!NtUserMessageCall( hwnd, WM_NCCREATE, 0, (LPARAM)client_cs, NULL, FNID_SENDMESSAGE, ansi ))
+    if (!NtUserMessageCall( hwnd, WM_NCCREATE, 0, (LPARAM)client_cs, NULL, NtUserSendMessage, ansi ))
     {
         WARN( "%p: aborted by WM_NCCREATE\n", hwnd );
         goto failed;
@@ -4890,7 +4890,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     else goto failed;
 
     /* send WM_CREATE */
-    if (NtUserMessageCall( hwnd, WM_CREATE, 0, (LPARAM)client_cs, 0, FNID_SENDMESSAGE, ansi ) == -1)
+    if (NtUserMessageCall( hwnd, WM_CREATE, 0, (LPARAM)client_cs, 0, NtUserSendMessage, ansi ) == -1)
         goto failed;
     cs = *client_cs;
 

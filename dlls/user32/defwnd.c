@@ -263,7 +263,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         return NC_HandleNCActivate( hwnd, wParam, lParam );
 
     case WM_NCDESTROY:
-        return NtUserMessageCall( hwnd, msg, wParam, lParam, 0, FNID_DEFWINDOWPROC, FALSE );
+        return NtUserMessageCall( hwnd, msg, wParam, lParam, 0, NtUserDefWindowProc, FALSE );
 
     case WM_PRINT:
         DEFWND_Print(hwnd, (HDC)wParam, lParam);
@@ -518,7 +518,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     case WM_SETICON:
         {
             LRESULT res =  NtUserMessageCall( hwnd, msg, wParam, lParam,
-                                              0, FNID_DEFWINDOWPROC, FALSE );
+                                              0, NtUserDefWindowProc, FALSE );
             if( (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CAPTION) == WS_CAPTION )
                 NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
             return res;
@@ -668,7 +668,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         {
             CREATESTRUCTA *cs = (CREATESTRUCTA *)lParam;
 
-            result = NtUserMessageCall( hwnd, msg, wParam, lParam, 0, FNID_DEFWINDOWPROC, TRUE );
+            result = NtUserMessageCall( hwnd, msg, wParam, lParam, 0, NtUserDefWindowProc, TRUE );
 
             if(cs->style & (WS_HSCROLL | WS_VSCROLL))
             {
@@ -703,7 +703,7 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
         break;
 
     case WM_SETTEXT:
-        result = NtUserMessageCall( hwnd, msg, wParam, lParam, 0, FNID_DEFWINDOWPROC, TRUE );
+        result = NtUserMessageCall( hwnd, msg, wParam, lParam, 0, NtUserDefWindowProc, TRUE );
         if (result && (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CAPTION) == WS_CAPTION)
             NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
         break;
@@ -850,7 +850,7 @@ LRESULT WINAPI DefWindowProcW(
         {
             CREATESTRUCTW *cs = (CREATESTRUCTW *)lParam;
 
-            result = NtUserMessageCall( hwnd, msg, wParam, lParam, 0, FNID_DEFWINDOWPROC, FALSE );
+            result = NtUserMessageCall( hwnd, msg, wParam, lParam, 0, NtUserDefWindowProc, FALSE );
 
             if(cs->style & (WS_HSCROLL | WS_VSCROLL))
             {
@@ -882,7 +882,7 @@ LRESULT WINAPI DefWindowProcW(
         break;
 
     case WM_SETTEXT:
-        result = NtUserMessageCall( hwnd, msg, wParam, lParam, 0, FNID_DEFWINDOWPROC, FALSE );
+        result = NtUserMessageCall( hwnd, msg, wParam, lParam, 0, NtUserDefWindowProc, FALSE );
         if (result && (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CAPTION) == WS_CAPTION)
             NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
         break;

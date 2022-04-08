@@ -425,30 +425,30 @@ static void test_message_call(void)
 
     hwnd = CreateWindowExW( 0, L"TestClass", NULL, WS_POPUP, 0,0,0,0,0,0,0, NULL );
 
-    res = NtUserMessageCall( hwnd, WM_USER, 1, 2, (void *)0xdeadbeef, FNID_SENDMESSAGE, FALSE );
+    res = NtUserMessageCall( hwnd, WM_USER, 1, 2, (void *)0xdeadbeef, NtUserSendMessage, FALSE );
     ok( res == 3, "res = %Iu\n", res );
 
-    res = NtUserMessageCall( hwnd, WM_USER, 1, 2, (void *)0xdeadbeef, FNID_SENDMESSAGE, TRUE );
+    res = NtUserMessageCall( hwnd, WM_USER, 1, 2, (void *)0xdeadbeef, NtUserSendMessage, TRUE );
     ok( res == 3, "res = %Iu\n", res );
 
-    res = NtUserMessageCall( hwnd, WM_SETTEXT, 0, (LPARAM)L"test", NULL, FNID_SENDMESSAGE, FALSE );
+    res = NtUserMessageCall( hwnd, WM_SETTEXT, 0, (LPARAM)L"test", NULL, NtUserSendMessage, FALSE );
     ok( res == 6, "res = %Iu\n", res );
 
-    res = NtUserMessageCall( hwnd, WM_SETTEXT, 0, (LPARAM)"test", NULL, FNID_SENDMESSAGE, TRUE );
+    res = NtUserMessageCall( hwnd, WM_SETTEXT, 0, (LPARAM)"test", NULL, NtUserSendMessage, TRUE );
     ok( res == 6, "res = %Iu\n", res );
 
     SetLastError( 0xdeadbeef );
-    res = NtUserMessageCall( UlongToHandle(0xdeadbeef), WM_USER, 1, 2, 0, FNID_SENDMESSAGE, TRUE );
+    res = NtUserMessageCall( UlongToHandle(0xdeadbeef), WM_USER, 1, 2, 0, NtUserSendMessage, TRUE );
     ok( !res, "res = %Iu\n", res );
     ok( GetLastError() == ERROR_INVALID_WINDOW_HANDLE, "GetLastError() = %lu\n", GetLastError());
 
-    res = NtUserMessageCall( hwnd, WM_USER + 1, 0, large_lparam, 0, FNID_SENDMESSAGE, FALSE );
+    res = NtUserMessageCall( hwnd, WM_USER + 1, 0, large_lparam, 0, NtUserSendMessage, FALSE );
     ok( res == large_lparam, "res = %Iu\n", res );
 
     smp.flags = 0;
     smp.timeout = 10;
     smp.result = 0xdeadbeef;
-    res = NtUserMessageCall( hwnd, WM_USER, 1, 2, &smp, FNID_SENDMESSAGEWTOOPTION, FALSE );
+    res = NtUserMessageCall( hwnd, WM_USER, 1, 2, &smp, NtUserSendMessageTimeout, FALSE );
     ok( res == 3, "res = %Iu\n", res );
     ok( smp.result == 1, "smp.result = %Iu\n", smp.result );
 
@@ -456,16 +456,16 @@ static void test_message_call(void)
     smp.timeout = 10;
     smp.result = 0xdeadbeef;
     res = NtUserMessageCall( hwnd, WM_USER + 1, 0, large_lparam,
-                             &smp, FNID_SENDMESSAGEWTOOPTION, FALSE );
+                             &smp, NtUserSendMessageTimeout, FALSE );
     ok( res == large_lparam, "res = %Iu\n", res );
     ok( smp.result == 1, "smp.result = %Iu\n", smp.result );
 
     res = NtUserMessageCall( hwnd, WM_USER, 1, 2, (void *)0xdeadbeef,
-                             FNID_SENDNOTIFYMESSAGE, FALSE );
+                             NtUserSendNotifyMessage, FALSE );
     ok( res == 1, "res = %Iu\n", res );
 
     res = NtUserMessageCall( hwnd, WM_USER, 1, 2, &callback_params,
-                             FNID_SENDMESSAGECALLBACK, FALSE );
+                             NtUserSendMessageCallback, FALSE );
     ok( res == 1, "res = %Iu\n", res );
 
     DestroyWindow( hwnd );
@@ -486,7 +486,7 @@ static void test_window_text(void)
     ok( len == 0, "len = %d\n", len );
     ok( !buf[0], "buf = %s\n", wine_dbgstr_w(buf) );
 
-    res = NtUserMessageCall( hwnd, WM_SETTEXT, 0, (LPARAM)L"test", 0, FNID_DEFWINDOWPROC, FALSE );
+    res = NtUserMessageCall( hwnd, WM_SETTEXT, 0, (LPARAM)L"test", 0, NtUserDefWindowProc, FALSE );
     ok( res == 1, "res = %Id\n", res );
 
     memset( buf, 0xcc, sizeof(buf) );
@@ -494,7 +494,7 @@ static void test_window_text(void)
     ok( len == 4, "len = %d\n", len );
     ok( !lstrcmpW( buf, L"test" ), "buf = %s\n", wine_dbgstr_w(buf) );
 
-    res = NtUserMessageCall( hwnd, WM_SETTEXT, 0, (LPARAM)"TestA", 0, FNID_DEFWINDOWPROC, TRUE );
+    res = NtUserMessageCall( hwnd, WM_SETTEXT, 0, (LPARAM)"TestA", 0, NtUserDefWindowProc, TRUE );
     ok( res == 1, "res = %Id\n", res );
 
     memset( buf, 0xcc, sizeof(buf) );

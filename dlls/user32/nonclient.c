@@ -1540,7 +1540,7 @@ LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
     TRACE("hwnd %p WM_SYSCOMMAND %lx %lx\n", hwnd, wParam, lParam );
 
-    if (!NtUserMessageCall( hwnd, WM_SYSCOMMAND, wParam, lParam, 0, FNID_DEFWINDOWPROC, FALSE ))
+    if (!NtUserMessageCall( hwnd, WM_SYSCOMMAND, wParam, lParam, 0, NtUserDefWindowProc, FALSE ))
         return 0;
 
     switch (wParam & 0xfff0)

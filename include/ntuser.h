@@ -30,7 +30,7 @@ enum
     NtUserCallEnumDisplayMonitor,
     NtUserCallSendAsyncCallback,
     NtUserCallWinEventHook,
-    NtUserCallWindowProc,
+    NtUserCallWinProc,
     NtUserCallWindowsHook,
     NtUserLoadDriver,
     /* win16 hooks */
@@ -240,15 +240,15 @@ enum
 /* NtUserMessageCall codes */
 enum
 {
-    FNID_DEFWINDOWPROC        = 0x029e,
-    FNID_CALLWNDPROC          = 0x02ab,
-    FNID_SENDMESSAGE          = 0x02b1,
-    FNID_SENDMESSAGEWTOOPTION = 0x02b3,
-    FNID_SENDNOTIFYMESSAGE    = 0x02b7,
-    FNID_SENDMESSAGECALLBACK  = 0x02b8,
+    NtUserDefWindowProc       = 0x029e,
+    NtUserCallWindowProc      = 0x02ab,
+    NtUserSendMessage         = 0x02b1,
+    NtUserSendMessageTimeout  = 0x02b3,
+    NtUserSendNotifyMessage   = 0x02b7,
+    NtUserSendMessageCallback = 0x02b8,
     /* Wine-specific exports */
-    FNID_SPYENTER             = 0x0300,
-    FNID_SPYEXIT              = 0x0301,
+    NtUserSpyEnter            = 0x0300,
+    NtUserSpyExit             = 0x0301,
 };
 
 struct send_message_timeout_params

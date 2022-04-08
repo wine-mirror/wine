@@ -97,7 +97,7 @@ BOOL WINAPI NtUserCloseClipboard(void)
     SERVER_END_REQ;
 
     if (viewer) NtUserMessageCall( viewer, WM_DRAWCLIPBOARD, (WPARAM)owner, 0,
-                                   0, FNID_SENDNOTIFYMESSAGE, FALSE );
+                                   0, NtUserSendNotifyMessage, FALSE );
     return ret;
 }
 
@@ -336,5 +336,5 @@ void release_clipboard_owner( HWND hwnd )
 
     if (viewer)
         NtUserMessageCall( viewer, WM_DRAWCLIPBOARD, (WPARAM)owner, 0,
-                           0, FNID_SENDNOTIFYMESSAGE, FALSE );
+                           0, NtUserSendNotifyMessage, FALSE );
 }
