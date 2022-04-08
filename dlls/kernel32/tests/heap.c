@@ -78,6 +78,7 @@ struct heap
 
 static void test_HeapCreate(void)
 {
+    static const BYTE buffer[512] = {0};
     SIZE_T alloc_size = 0x8000 * sizeof(void *), size, i;
     BYTE *ptr, *ptr1, *ptrs[128];
     HANDLE heap, heap1;
@@ -107,12 +108,49 @@ static void test_HeapCreate(void)
 
     ret = HeapFree( heap, 0, NULL );
     ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+#if 0 /* crashes */
+    SetLastError( 0xdeadbeef );
+    ret = HeapFree( heap, 0, (void *)0xdeadbe00 );
+    ok( !ret, "HeapFree succeeded\n" );
+    ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ptr = (BYTE *)((UINT_PTR)buffer & ~63) + 64;
+    ret = HeapFree( heap, 0, ptr );
+    ok( !ret, "HeapFree succeeded\n" );
+    ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
+#endif
 
     SetLastError( 0xdeadbeef );
     ptr = HeapReAlloc( heap, 0, NULL, 1 );
     ok( !ptr, "HeapReAlloc succeeded\n" );
     todo_wine
     ok( GetLastError() == NO_ERROR, "got error %lu\n", GetLastError() );
+#if 0 /* crashes */
+    SetLastError( 0xdeadbeef );
+    ptr1 = HeapReAlloc( heap, 0, (void *)0xdeadbe00, 1 );
+    ok( !ptr1, "HeapReAlloc succeeded\n" );
+    ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ptr = (BYTE *)((UINT_PTR)buffer & ~63) + 64;
+    ptr1 = HeapReAlloc( heap, 0, ptr, 1 );
+    ok( !ptr1, "HeapReAlloc succeeded\n" );
+    ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
+#endif
+
+    SetLastError( 0xdeadbeef );
+    ret = HeapValidate( heap, 0, NULL );
+    ok( ret, "HeapValidate failed, error %lu\n", GetLastError() );
+    ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = HeapValidate( heap, 0, (void *)0xdeadbe00 );
+    ok( !ret, "HeapValidate succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ptr = (BYTE *)((UINT_PTR)buffer & ~63) + 64;
+    ret = HeapValidate( heap, 0, ptr );
+    ok( !ret, "HeapValidate succeeded\n" );
+    ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
 
     ptr = HeapAlloc( heap, 0, 0 );
     ok( !!ptr, "HeapAlloc failed, error %lu\n", GetLastError() );
@@ -122,8 +160,14 @@ static void test_HeapCreate(void)
     ok( !ptr1, "HeapReAlloc succeeded\n" );
     ptr1 = pHeapReAlloc( heap, 0, ptr, ~(SIZE_T)0 );
     ok( !ptr1, "HeapReAlloc succeeded\n" );
+    ret = HeapValidate( heap, 0, ptr );
+    ok( ret, "HeapValidate failed, error %lu\n", GetLastError() );
     ret = HeapFree( heap, 0, ptr );
     ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
+    ret = HeapValidate( heap, 0, ptr );
+    ok( !ret, "HeapValidate succeeded\n" );
+    ok( GetLastError() == 0xdeadbeef, "got error %lu\n", GetLastError() );
 
     ptr = pHeapAlloc( heap, 0, ~(SIZE_T)0 );
     ok( !ptr, "HeapAlloc succeeded\n" );
@@ -247,6 +291,7 @@ static void test_HeapCreate(void)
     ptr1 = HeapReAlloc( heap, HEAP_REALLOC_IN_PLACE_ONLY, ptr, 2 * alloc_size );
     todo_wine
     ok( ptr1 != ptr, "HeapReAlloc HEAP_REALLOC_IN_PLACE_ONLY succeeded\n" );
+    todo_wine
     ok( GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "got error %lu\n", GetLastError() );
 
     ret = HeapFree( heap, 0, ptr1 );
