@@ -1794,8 +1794,12 @@ static HRESULT WINAPI recordset_CompareBookmarks( _Recordset *iface, VARIANT boo
 
 static HRESULT WINAPI recordset_Clone( _Recordset *iface, LockTypeEnum lock_type, _Recordset **obj )
 {
-    FIXME( "%p, %d, %p\n", iface, lock_type, obj );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+    FIXME( "%p, %d, %p\n", recordset, lock_type, obj );
+
+    *obj = iface;
+    recordset_AddRef( iface );
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_Resync( _Recordset *iface, AffectEnum affect_records, ResyncEnum resync_values )
