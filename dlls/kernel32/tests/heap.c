@@ -44,6 +44,7 @@ static BOOL (WINAPI *pGetPhysicallyInstalledSystemMemory)( ULONGLONG * );
 
 #define MAKE_FUNC(f) static typeof(f) *p ## f
 MAKE_FUNC( HeapQueryInformation );
+MAKE_FUNC( HeapSetInformation );
 MAKE_FUNC( GlobalFlags );
 MAKE_FUNC( RtlGetNtGlobalFlags );
 #undef MAKE_FUNC
@@ -57,6 +58,7 @@ static void load_functions(void)
     LOAD_FUNC( kernel32, HeapAlloc );
     LOAD_FUNC( kernel32, HeapReAlloc );
     LOAD_FUNC( kernel32, HeapQueryInformation );
+    LOAD_FUNC( kernel32, HeapSetInformation );
     LOAD_FUNC( kernel32, GetPhysicallyInstalledSystemMemory );
     LOAD_FUNC( kernel32, GlobalFlags );
     LOAD_FUNC( ntdll, RtlGetNtGlobalFlags );
@@ -84,6 +86,7 @@ static void test_HeapCreate(void)
     HANDLE heap, heap1, heaps[8];
     BYTE *ptr, *ptr1, *ptrs[128];
     DWORD heap_count, count;
+    ULONG compat_info;
     UINT_PTR align;
     BOOL ret;
 
@@ -642,6 +645,98 @@ static void test_HeapCreate(void)
     ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
     ret = HeapFree( heap, 0, ptr );
     ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+
+    size = 0;
+    SetLastError( 0xdeadbeef );
+    ret = pHeapQueryInformation( 0, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
+    todo_wine
+    ok( !ret, "HeapQueryInformation succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
+    todo_wine
+    ok( size == 0, "got size %Iu\n", size );
+
+    size = 0;
+    SetLastError( 0xdeadbeef );
+    ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, NULL, 0, &size );
+    ok( !ret, "HeapQueryInformation succeeded\n" );
+    ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %lu\n", GetLastError() );
+    ok( size == sizeof(ULONG), "got size %Iu\n", size );
+
+    SetLastError( 0xdeadbeef );
+    ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, NULL, 0, NULL );
+    ok( !ret, "HeapQueryInformation succeeded\n" );
+    ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got error %lu\n", GetLastError() );
+
+    SetLastError( 0xdeadbeef );
+    compat_info = 0xdeadbeef;
+    ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info) + 1, NULL );
+    ok( ret, "HeapQueryInformation failed, error %lu\n", GetLastError() );
+    ok( compat_info == 0, "got compat_info %lu\n", compat_info );
+
+    ret = HeapDestroy( heap );
+    ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
+
+
+    /* check setting LFH compat info */
+
+    heap = HeapCreate( 0, 0, 0 );
+    ok( !!heap, "HeapCreate failed, error %lu\n", GetLastError() );
+    ok( !((ULONG_PTR)heap & 0xffff), "wrong heap alignment\n" );
+
+    ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
+    ok( ret, "HeapQueryInformation failed, error %lu\n", GetLastError() );
+    ok( compat_info == 0, "got HeapCompatibilityInformation %lu\n", compat_info );
+
+    compat_info = 2;
+    ret = pHeapSetInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info) );
+    ok( ret, "HeapSetInformation failed, error %lu\n", GetLastError() );
+    ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
+    ok( ret, "HeapQueryInformation failed, error %lu\n", GetLastError() );
+    todo_wine
+    ok( compat_info == 2, "got HeapCompatibilityInformation %lu\n", compat_info );
+
+    /* cannot be undone */
+
+    compat_info = 0;
+    SetLastError( 0xdeadbeef );
+    ret = pHeapSetInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info) );
+    todo_wine
+    ok( !ret, "HeapSetInformation succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_GEN_FAILURE, "got error %lu\n", GetLastError() );
+    compat_info = 1;
+    SetLastError( 0xdeadbeef );
+    ret = pHeapSetInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info) );
+    todo_wine
+    ok( !ret, "HeapSetInformation succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_GEN_FAILURE, "got error %lu\n", GetLastError() );
+    ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
+    ok( ret, "HeapQueryInformation failed, error %lu\n", GetLastError() );
+    todo_wine
+    ok( compat_info == 2, "got HeapCompatibilityInformation %lu\n", compat_info );
+
+    ret = HeapDestroy( heap );
+    ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
+
+    /* some allocation pattern automatically enables LFH */
+
+    heap = HeapCreate( 0, 0, 0 );
+    ok( !!heap, "HeapCreate failed, error %lu\n", GetLastError() );
+    ok( !((ULONG_PTR)heap & 0xffff), "wrong heap alignment\n" );
+
+    ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
+    ok( ret, "HeapQueryInformation failed, error %lu\n", GetLastError() );
+    ok( compat_info == 0, "got HeapCompatibilityInformation %lu\n", compat_info );
+
+    for (i = 0; i < 0x12; i++) ptrs[i] = pHeapAlloc( heap, 0, 0 );
+    for (i = 0; i < 0x12; i++) HeapFree( heap, 0, ptrs[i] );
+
+    ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
+    ok( ret, "HeapQueryInformation failed, error %lu\n", GetLastError() );
+    todo_wine
+    ok( compat_info == 2, "got HeapCompatibilityInformation %lu\n", compat_info );
 
     ret = HeapDestroy( heap );
     ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
@@ -1505,57 +1600,6 @@ static void test_LocalAlloc(void)
     }
 }
 
-static void test_HeapQueryInformation(void)
-{
-    ULONG info;
-    SIZE_T size;
-    BOOL ret;
-
-    if (!pHeapQueryInformation)
-    {
-        win_skip("HeapQueryInformation is not available\n");
-        return;
-    }
-
-    if (0) /* crashes under XP */
-    {
-        size = 0;
-        pHeapQueryInformation(0,
-                                HeapCompatibilityInformation,
-                                &info, sizeof(info), &size);
-        size = 0;
-        pHeapQueryInformation(GetProcessHeap(),
-                                HeapCompatibilityInformation,
-                                NULL, sizeof(info), &size);
-    }
-
-    size = 0;
-    SetLastError(0xdeadbeef);
-    ret = pHeapQueryInformation(GetProcessHeap(),
-                                HeapCompatibilityInformation,
-                                NULL, 0, &size);
-    ok(!ret, "HeapQueryInformation should fail\n");
-    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-       "expected ERROR_INSUFFICIENT_BUFFER got %lu\n", GetLastError());
-    ok(size == sizeof(ULONG), "expected 4, got %Iu\n", size);
-
-    SetLastError(0xdeadbeef);
-    ret = pHeapQueryInformation(GetProcessHeap(),
-                                HeapCompatibilityInformation,
-                                NULL, 0, NULL);
-    ok(!ret, "HeapQueryInformation should fail\n");
-    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
-       "expected ERROR_INSUFFICIENT_BUFFER got %lu\n", GetLastError());
-
-    info = 0xdeadbeaf;
-    SetLastError(0xdeadbeef);
-    ret = pHeapQueryInformation(GetProcessHeap(),
-                                HeapCompatibilityInformation,
-                                &info, sizeof(info) + 1, NULL);
-    ok(ret, "HeapQueryInformation error %lu\n", GetLastError());
-    ok(info == 0 || info == 1 || info == 2, "expected 0, 1 or 2, got %lu\n", info);
-}
-
 static void test_heap_checks( DWORD flags )
 {
     BYTE old, *p, *p2;
@@ -2017,7 +2061,6 @@ START_TEST(heap)
     test_GlobalAlloc();
     test_LocalAlloc();
 
-    test_HeapQueryInformation();
     test_GetPhysicallyInstalledSystemMemory();
     test_GlobalMemoryStatus();
 
