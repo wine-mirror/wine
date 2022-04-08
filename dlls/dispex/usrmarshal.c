@@ -134,7 +134,7 @@ HRESULT __RPC_STUB IDispatchEx_InvokeEx_Stub(IDispatchEx* This, DISPID id, LCID 
        any on return. */
     if(byref_args)
     {
-        vt_list = HeapAlloc(GetProcessHeap(), 0, pdp->cArgs * sizeof(vt_list[0]));
+        vt_list = malloc(pdp->cArgs * sizeof(vt_list[0]));
         if(!vt_list) return E_OUTOFMEMORY;
         for(arg = 0; arg < pdp->cArgs; arg++)
             vt_list[arg] = V_VT(pdp->rgvarg + arg);
@@ -166,6 +166,6 @@ HRESULT __RPC_STUB IDispatchEx_InvokeEx_Stub(IDispatchEx* This, DISPID id, LCID 
     for(arg = 0; arg < byref_args; arg++)
         VariantInit(pdp->rgvarg + ref_idx[arg]);
 
-    HeapFree(GetProcessHeap(), 0, vt_list);
+    free(vt_list);
     return hr;
 }
