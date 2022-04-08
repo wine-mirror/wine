@@ -80,23 +80,40 @@ static void test_HeapCreate(void)
 {
     static const BYTE buffer[512] = {0};
     SIZE_T alloc_size = 0x8000 * sizeof(void *), size, i;
+    HANDLE heap, heap1, heaps[8];
     BYTE *ptr, *ptr1, *ptrs[128];
-    HANDLE heap, heap1;
+    DWORD heap_count, count;
     UINT_PTR align;
     BOOL ret;
+
+    heap_count = GetProcessHeaps( 0, NULL );
+    ok( heap_count <= 6, "GetProcessHeaps returned %lu\n", heap_count );
 
     /* check heap alignment */
 
     heap = HeapCreate( 0, 0, 0 );
     ok( !!heap, "HeapCreate failed, error %lu\n", GetLastError() );
     ok( !((ULONG_PTR)heap & 0xffff), "wrong heap alignment\n" );
+    count = GetProcessHeaps( 0, NULL );
+    ok( count == heap_count + 1, "GetProcessHeaps returned %lu\n", count );
     heap1 = HeapCreate( 0, 0, 0 );
     ok( !!heap, "HeapCreate failed, error %lu\n", GetLastError() );
     ok( !((ULONG_PTR)heap1 & 0xffff), "wrong heap alignment\n" );
+    count = GetProcessHeaps( 0, NULL );
+    ok( count == heap_count + 2, "GetProcessHeaps returned %lu\n", count );
+    count = GetProcessHeaps( ARRAY_SIZE(heaps), heaps );
+    ok( count == heap_count + 2, "GetProcessHeaps returned %lu\n", count );
+    ok( heaps[0] == GetProcessHeap(), "got wrong heap\n" );
+    todo_wine
+    ok( heaps[heap_count + 0] == heap, "got wrong heap\n" );
+    todo_wine
+    ok( heaps[heap_count + 1] == heap1, "got wrong heap\n" );
     ret = HeapDestroy( heap1 );
     ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
     ret = HeapDestroy( heap );
     ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
+    count = GetProcessHeaps( 0, NULL );
+    ok( count == heap_count, "GetProcessHeaps returned %lu\n", count );
 
     /* growable heap */
 
