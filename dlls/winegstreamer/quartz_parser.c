@@ -961,6 +961,24 @@ static HRESULT parser_init_stream(struct strmbase_filter *iface)
 
     filter->streaming = true;
 
+    for (i = 0; i < filter->source_count; ++i)
+    {
+        struct parser_source *source = filter->sources[i];
+        struct wg_format format;
+        bool ret;
+
+        if (source->pin.pin.peer)
+        {
+            ret = amt_to_wg_format(&source->pin.pin.mt, &format);
+            assert(ret);
+            wg_parser_stream_enable(source->wg_stream, &format);
+        }
+        else
+        {
+            wg_parser_stream_disable(source->wg_stream);
+        }
+    }
+
     /* DirectShow retains the old seek positions, but resets to them every time
      * it transitions from stopped -> paused. */
 
@@ -1529,8 +1547,6 @@ static HRESULT WINAPI GSTOutPin_DecideBufferSize(struct strmbase_source *iface,
     struct parser_source *pin = impl_source_from_IPin(&iface->pin.IPin_iface);
     unsigned int buffer_size = 16384;
     ALLOCATOR_PROPERTIES ret_props;
-    struct wg_format format;
-    bool ret;
 
     if (IsEqualGUID(&pin->pin.pin.mt.formattype, &FORMAT_VideoInfo))
     {
@@ -1545,10 +1561,6 @@ static HRESULT WINAPI GSTOutPin_DecideBufferSize(struct strmbase_source *iface,
         buffer_size = format->nAvgBytesPerSec;
     }
 
-    ret = amt_to_wg_format(&pin->pin.pin.mt, &format);
-    assert(ret);
-    wg_parser_stream_enable(pin->wg_stream, &format);
-
     /* We do need to drop any buffers that might have been sent with the old
      * caps, but this will be handled in parser_init_stream(). */
 
@@ -1556,13 +1568,6 @@ static HRESULT WINAPI GSTOutPin_DecideBufferSize(struct strmbase_source *iface,
     props->cbBuffer = max(props->cbBuffer, buffer_size);
     props->cbAlign = max(props->cbAlign, 1);
     return IMemAllocator_SetProperties(allocator, props, &ret_props);
-}
-
-static void source_disconnect(struct strmbase_source *iface)
-{
-    struct parser_source *pin = impl_source_from_IPin(&iface->pin.IPin_iface);
-
-    wg_parser_stream_disable(pin->wg_stream);
 }
 
 static void free_source_pin(struct parser_source *pin)
@@ -1590,7 +1595,6 @@ static const struct strmbase_source_ops source_ops =
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
     .pfnDecideBufferSize = GSTOutPin_DecideBufferSize,
-    .source_disconnect = source_disconnect,
 };
 
 static struct parser_source *create_pin(struct parser *filter,
@@ -1629,9 +1633,6 @@ static HRESULT GST_RemoveOutputPins(struct parser *This)
     if (!This->sink_connected)
         return S_OK;
 
-    /* Disconnecting source pins triggers a call to wg_parser_stream_disable().
-     * The stream pointers are no longer valid after wg_parser_disconnect(), so
-     * make sure we disable the streams first. */
     for (i = 0; i < This->source_count; ++i)
     {
         if (This->sources[i])
