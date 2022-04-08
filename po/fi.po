@@ -4003,45 +4003,39 @@ msgstr "Wine"
 
 #: dlls/kernelbase/kernelbase.rc:29
 msgid "Western Europe and United States"
-msgstr ""
+msgstr "Länsi-Eurooppa ja Yhdysvallat"
 
 #: dlls/kernelbase/kernelbase.rc:30
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe"
-msgstr "Keskieurooppalainen"
+msgstr "Keskieurooppa"
 
 #: dlls/kernelbase/kernelbase.rc:34
-#, fuzzy
-#| msgid "Turkish"
 msgid "Turkic"
-msgstr "Turkkilainen"
+msgstr "Turkki"
 
 #: dlls/kernelbase/kernelbase.rc:36
 msgid "Korean"
-msgstr ""
+msgstr "Korea"
 
 #: dlls/kernelbase/kernelbase.rc:37
-#, fuzzy
-#| msgid "Operation Ceased"
 msgid "Traditional Chinese"
-msgstr "Toiminta lakannut"
+msgstr "Kiina (perinteinen)"
 
 #: dlls/kernelbase/kernelbase.rc:38
 msgid "Simplified Chinese"
-msgstr ""
+msgstr "Kiina (yksinkertaistettu)"
 
 #: dlls/kernelbase/kernelbase.rc:43
 msgid "Indic"
-msgstr ""
+msgstr "Intia"
 
 #: dlls/kernelbase/kernelbase.rc:44
 msgid "Georgian"
-msgstr ""
+msgstr "Georgia"
 
 #: dlls/kernelbase/kernelbase.rc:45
 msgid "Armenian"
-msgstr ""
+msgstr "Armenia"
 
 #: dlls/kernelbase/winerror.mc:28
 msgid "Success.\n"
