@@ -68,26 +68,27 @@ static HRESULT WINAPI file_writer_sink_receive(struct strmbase_sink *iface, IMed
     struct file_writer *filter = impl_from_strmbase_pin(&iface->pin);
     REFERENCE_TIME start, stop;
     LARGE_INTEGER offset;
+    DWORD size, ret_size;
     HRESULT hr;
-    DWORD size;
     BYTE *data;
 
     if ((hr = IMediaSample_GetTime(sample, &start, &stop)) != S_OK)
         ERR("Failed to get sample time, hr %#lx.\n", hr);
+    size = stop - start;
 
     if ((hr = IMediaSample_GetPointer(sample, &data)) != S_OK)
         ERR("Failed to get sample pointer, hr %#lx.\n", hr);
 
     offset.QuadPart = start;
     if (!SetFilePointerEx(filter->file, offset, NULL, FILE_BEGIN)
-            || !WriteFile(filter->file, data, stop - start, &size, NULL))
+            || !WriteFile(filter->file, data, size, &ret_size, NULL))
     {
         ERR("Failed to write file, error %lu.\n", GetLastError());
         return HRESULT_FROM_WIN32(hr);
     }
 
-    if (size != stop - start)
-        ERR("Short write, %lu/%lu.\n", size, (DWORD)(stop - start));
+    if (ret_size != size)
+        ERR("Short write, %lu/%lu.\n", ret_size, size);
 
     return S_OK;
 }
