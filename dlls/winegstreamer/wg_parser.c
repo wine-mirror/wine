@@ -1293,6 +1293,13 @@ static NTSTATUS wg_parser_connect(void *args)
                 pthread_cond_wait(&parser->init_cond, &parser->mutex);
             }
         }
+
+        /* Now that we're fully initialized, enable the stream so that further
+         * samples get queued instead of being discarded. We don't actually need
+         * the samples (in particular, the frontend should seek before
+         * attempting to read anything), but we don't want to waste CPU time
+         * trying to decode them. */
+        stream->enabled = true;
     }
 
     pthread_mutex_unlock(&parser->mutex);
