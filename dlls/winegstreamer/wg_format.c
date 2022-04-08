@@ -495,7 +495,7 @@ GstCaps *wg_format_to_caps(const struct wg_format *format)
     switch (format->major_type)
     {
         case WG_MAJOR_TYPE_UNKNOWN:
-            return NULL;
+            return gst_caps_new_any();
         case WG_MAJOR_TYPE_WMA:
             return wg_format_to_caps_wma(format);
         case WG_MAJOR_TYPE_H264:

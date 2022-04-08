@@ -254,6 +254,7 @@ static NTSTATUS wg_parser_stream_disable(void *args)
 
     pthread_mutex_lock(&parser->mutex);
     stream->enabled = false;
+    stream->current_format.major_type = WG_MAJOR_TYPE_UNKNOWN;
     pthread_mutex_unlock(&parser->mutex);
     pthread_cond_signal(&stream->event_empty_cond);
     return S_OK;
@@ -601,12 +602,7 @@ static gboolean sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
             gst_query_parse_caps(query, &filter);
 
             pthread_mutex_lock(&parser->mutex);
-
-            if (stream->enabled)
-                caps = wg_format_to_caps(&stream->current_format);
-            else
-                caps = gst_caps_new_any();
-
+            caps = wg_format_to_caps(&stream->current_format);
             pthread_mutex_unlock(&parser->mutex);
 
             if (!caps)
@@ -636,7 +632,7 @@ static gboolean sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
 
             pthread_mutex_lock(&parser->mutex);
 
-            if (!stream->enabled)
+            if (stream->current_format.major_type == WG_MAJOR_TYPE_UNKNOWN)
             {
                 pthread_mutex_unlock(&parser->mutex);
                 gst_query_set_accept_caps_result(query, TRUE);
@@ -689,6 +685,7 @@ static struct wg_parser_stream *create_stream(struct wg_parser *parser)
     gst_segment_init(&stream->segment, GST_FORMAT_UNDEFINED);
 
     stream->parser = parser;
+    stream->current_format.major_type = WG_MAJOR_TYPE_UNKNOWN;
     pthread_cond_init(&stream->event_cond, NULL);
     pthread_cond_init(&stream->event_empty_cond, NULL);
 
