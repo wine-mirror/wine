@@ -685,7 +685,7 @@ static HRESULT build_systeminfo_tree(IDxDiagContainerImpl_Container *node)
         return hr;
 
     /* FIXME: Roundoff should not be done with truncated division. */
-    swprintf(print_buf, ARRAY_SIZE(print_buf), L"%uMB RAM", (DWORD)(msex.ullTotalPhys / (1024 * 1024)));
+    swprintf(print_buf, ARRAY_SIZE(print_buf), L"%I64uMB RAM", msex.ullTotalPhys / (1024 * 1024));
     hr = add_bstr_property(node, L"szPhysicalMemoryEnglish", print_buf);
     if (FAILED(hr))
         return hr;
