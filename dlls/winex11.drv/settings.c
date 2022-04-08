@@ -219,16 +219,28 @@ void init_registry_display_settings(void)
     }
 }
 
-static BOOL get_display_device_reg_key(const WCHAR *device_name, WCHAR *key, unsigned len)
+static HKEY get_display_device_reg_key( const WCHAR *device_name )
 {
     static const WCHAR display[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y'};
     static const WCHAR video_value_fmt[] = {'\\','D','e','v','i','c','e','\\',
                                             'V','i','d','e','o','%','d',0};
-    static const WCHAR video_key[] = {'H','A','R','D','W','A','R','E','\\',
-                                      'D','E','V','I','C','E','M','A','P','\\',
-                                      'V','I','D','E','O','\\',0};
-    WCHAR value_name[MAX_PATH], buffer[MAX_PATH], *end_ptr;
+    static const WCHAR video_key[] = {
+        '\\','R','e','g','i','s','t','r','y',
+        '\\','M','a','c','h','i','n','e',
+        '\\','H','A','R','D','W','A','R','E',
+        '\\','D','E','V','I','C','E','M','A','P',
+        '\\','V','I','D','E','O'};
+    static const WCHAR current_config_key[] = {
+        '\\','R','e','g','i','s','t','r','y',
+        '\\','M','a','c','h','i','n','e',
+        '\\','S','y','s','t','e','m',
+        '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
+        '\\','H','a','r','d','w','a','r','e',' ','P','r','o','f','i','l','e','s',
+        '\\','C','u','r','r','e','n','t'};
+    WCHAR value_name[MAX_PATH], buffer[4096], *end_ptr;
+    KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
     DWORD adapter_index, size;
+    HKEY hkey;
 
     /* Device name has to be \\.\DISPLAY%d */
     if (strncmpiW(device_name, display, ARRAY_SIZE(display)))
@@ -240,23 +252,23 @@ static BOOL get_display_device_reg_key(const WCHAR *device_name, WCHAR *key, uns
         return FALSE;
 
     /* Open \Device\Video* in HKLM\HARDWARE\DEVICEMAP\VIDEO\ */
+    if (!(hkey = reg_open_key( NULL, video_key, sizeof(video_key) ))) return FALSE;
     sprintfW(value_name, video_value_fmt, adapter_index);
-    size = sizeof(buffer);
-    if (RegGetValueW(HKEY_LOCAL_MACHINE, video_key, value_name, RRF_RT_REG_SZ, NULL, buffer, &size))
-        return FALSE;
+    size = query_reg_value( hkey, value_name, value, sizeof(buffer) );
+    NtClose( hkey );
+    if (!size || value->Type != REG_SZ) return FALSE;
 
-    if (len < lstrlenW(buffer + 18) + 1)
-        return FALSE;
-
-    /* Skip \Registry\Machine\ prefix */
-    lstrcpyW(key, buffer + 18);
-    TRACE("display device %s registry settings key %s.\n", wine_dbgstr_w(device_name), wine_dbgstr_w(key));
-    return TRUE;
+    /* Replace \Registry\Machine\ prefix with HKEY_CURRENT_CONFIG */
+    memmove( buffer + ARRAYSIZE(current_config_key), (const WCHAR *)value->Data + 17,
+             size - 17 * sizeof(WCHAR) );
+    memcpy( buffer, current_config_key, sizeof(current_config_key) );
+    TRACE( "display device %s registry settings key %s.\n", wine_dbgstr_w(device_name),
+           wine_dbgstr_w(buffer) );
+    return reg_open_key( NULL, buffer, lstrlenW(buffer) * sizeof(WCHAR) );
 }
 
 static BOOL read_registry_settings(const WCHAR *device_name, DEVMODEW *dm)
 {
-    WCHAR wine_x11_reg_key[MAX_PATH];
     HANDLE mutex;
     HKEY hkey;
     DWORD type, size;
@@ -265,13 +277,7 @@ static BOOL read_registry_settings(const WCHAR *device_name, DEVMODEW *dm)
     dm->dmFields = 0;
 
     mutex = get_display_device_init_mutex();
-    if (!get_display_device_reg_key(device_name, wine_x11_reg_key, ARRAY_SIZE(wine_x11_reg_key)))
-    {
-        release_display_device_init_mutex(mutex);
-        return FALSE;
-    }
-
-    if (RegOpenKeyExW(HKEY_CURRENT_CONFIG, wine_x11_reg_key, 0, KEY_READ, &hkey))
+    if (!(hkey = get_display_device_reg_key( device_name )))
     {
         release_display_device_init_mutex(mutex);
         return FALSE;
@@ -309,20 +315,12 @@ static BOOL read_registry_settings(const WCHAR *device_name, DEVMODEW *dm)
 
 static BOOL write_registry_settings(const WCHAR *device_name, const DEVMODEW *dm)
 {
-    WCHAR wine_x11_reg_key[MAX_PATH];
     HANDLE mutex;
     HKEY hkey;
     BOOL ret = TRUE;
 
     mutex = get_display_device_init_mutex();
-    if (!get_display_device_reg_key(device_name, wine_x11_reg_key, ARRAY_SIZE(wine_x11_reg_key)))
-    {
-        release_display_device_init_mutex(mutex);
-        return FALSE;
-    }
-
-    if (RegCreateKeyExW(HKEY_CURRENT_CONFIG, wine_x11_reg_key, 0, NULL,
-                        REG_OPTION_VOLATILE, KEY_WRITE, NULL, &hkey, NULL))
+    if (!(hkey = get_display_device_reg_key( device_name )))
     {
         release_display_device_init_mutex(mutex);
         return FALSE;
