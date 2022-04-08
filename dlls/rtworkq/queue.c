@@ -875,7 +875,7 @@ static HRESULT queue_cancel_item(struct queue *queue, RTWQWORKITEM_KEY key)
             else if ((key & SCHEDULED_ITEM_KEY_MASK) == SCHEDULED_ITEM_KEY_MASK)
                 CloseThreadpoolTimer(item->u.timer_object);
             else
-                WARN("Unknown item key mask %#lx.\n", (DWORD)key);
+                WARN("Unknown item key mask %#I64x.\n", key);
             queue_release_pending_item(item);
             hr = S_OK;
             break;
