@@ -579,7 +579,7 @@ VOID WINAPI SnmpUtilPrintAsnAny(AsnAny *any)
     case ASN_TIMETICKS:  TRACE("Timeticks %lu\n", any->asnValue.ticks); return;
     case ASN_COUNTER64:
     {
-        TRACE("Counter64 %lx%08lx\n", (DWORD)(any->asnValue.counter64.QuadPart>>32),(DWORD)any->asnValue.counter64.QuadPart);
+        TRACE("Counter64 %I64x\n", any->asnValue.counter64.QuadPart);
         return;
     }
     case ASN_OCTETSTRING:
