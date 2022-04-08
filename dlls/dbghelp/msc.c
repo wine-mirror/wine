@@ -693,7 +693,7 @@ static struct symt* codeview_add_type_array(struct codeview_type_parse* ctp,
     if (symt_get_info(ctp->module, elem, TI_GET_LENGTH, &elem_size) && elem_size)
     {
         if (arr_len % (DWORD)elem_size)
-            FIXME("array size should be a multiple of element size %u %lu\n", arr_len, (DWORD)elem_size);
+            FIXME("array size should be a multiple of element size %u %I64u\n", arr_len, elem_size);
         count = arr_len / (unsigned)elem_size;
     }
     return &symt_new_array(ctp->module, 0, count, elem, index)->symt;
