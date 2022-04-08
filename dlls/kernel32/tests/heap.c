@@ -740,6 +740,133 @@ static void test_HeapCreate(void)
 
     ret = HeapDestroy( heap );
     ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
+
+
+    /* LFH actually doesn't enable immediately, the pattern is required */
+
+    heap = HeapCreate( 0, 0, 0 );
+    ok( !!heap, "HeapCreate failed, error %lu\n", GetLastError() );
+    ok( !((ULONG_PTR)heap & 0xffff), "wrong heap alignment\n" );
+
+    compat_info = 2;
+    ret = pHeapSetInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info) );
+    ok( ret, "HeapSetInformation failed, error %lu\n", GetLastError() );
+    ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
+    ok( ret, "HeapQueryInformation failed, error %lu\n", GetLastError() );
+    todo_wine
+    ok( compat_info == 2, "got HeapCompatibilityInformation %lu\n", compat_info );
+
+    for (i = 0; i < 0x11; i++) ptrs[i] = pHeapAlloc( heap, 0, 24 + 2 * sizeof(void *) );
+    for (i = 0; i < 0x11; i++) HeapFree( heap, 0, ptrs[i] );
+
+    count = 0;
+    memset( &entries, 0xcd, sizeof(entries) );
+    memset( &entry, 0xcd, sizeof(entry) );
+    entry.lpData = NULL;
+    SetLastError( 0xdeadbeef );
+    while ((ret = HeapWalk( heap, &entry ))) entries[count++] = entry;
+    ok( GetLastError() == ERROR_NO_MORE_ITEMS, "got error %lu\n", GetLastError() );
+    todo_wine
+    ok( count == 3, "got count %lu\n", count );
+
+    todo_wine
+    ok( entries[0].wFlags == PROCESS_HEAP_REGION, "got wFlags %#x\n", entries[0].wFlags );
+    todo_wine
+    ok( entries[0].lpData == heap, "got lpData %p\n", entries[0].lpData );
+    todo_wine
+    ok( entries[0].cbData <= 0x1000 /* sizeof(*heap) */, "got cbData %#lx\n", entries[0].cbData );
+    todo_wine
+    ok( entries[0].cbOverhead == 0, "got cbOverhead %#x\n", entries[0].cbOverhead );
+    ok( entries[0].iRegionIndex == 0, "got iRegionIndex %d\n", entries[0].iRegionIndex );
+    todo_wine
+    ok( entries[1].wFlags == 0, "got wFlags %#x\n", entries[1].wFlags );
+    todo_wine
+    ok( entries[2].wFlags == PROCESS_HEAP_UNCOMMITTED_RANGE, "got wFlags %#x\n", entries[2].wFlags );
+
+    for (i = 0; i < 0x12; i++) ptrs[i] = pHeapAlloc( heap, 0, 24 + 2 * sizeof(void *) );
+    for (i = 0; i < 0x12; i++) HeapFree( heap, 0, ptrs[i] );
+
+    count = 0;
+    memset( &entries, 0xcd, sizeof(entries) );
+    memset( &entry, 0xcd, sizeof(entry) );
+    entry.lpData = NULL;
+    SetLastError( 0xdeadbeef );
+    while ((ret = HeapWalk( heap, &entry ))) entries[count++] = entry;
+    ok( GetLastError() == ERROR_NO_MORE_ITEMS, "got error %lu\n", GetLastError() );
+    todo_wine
+    ok( count > 24, "got count %lu\n", count );
+    if (count < 2) count = 2;
+
+    todo_wine
+    ok( entries[0].wFlags == PROCESS_HEAP_REGION, "got wFlags %#x\n", entries[0].wFlags );
+    todo_wine
+    ok( entries[0].lpData == heap, "got lpData %p\n", entries[0].lpData );
+    todo_wine
+    ok( entries[0].cbData <= 0x1000 /* sizeof(*heap) */, "got cbData %#lx\n", entries[0].cbData );
+    todo_wine
+    ok( entries[0].cbOverhead == 0, "got cbOverhead %#x\n", entries[0].cbOverhead );
+    ok( entries[0].iRegionIndex == 0, "got iRegionIndex %d\n", entries[0].iRegionIndex );
+    todo_wine
+    ok( entries[1].wFlags == 0, "got wFlags %#x\n", entries[1].wFlags );
+
+    for (i = 0; i < 0x12; i++)
+    {
+        todo_wine
+        ok( entries[4 + i].wFlags == 0, "got wFlags %#x\n", entries[4 + i].wFlags );
+        todo_wine
+        ok( entries[4 + i].cbData == 0x20, "got cbData %#lx\n", entries[4 + i].cbData );
+        todo_wine
+        ok( entries[4 + i].cbOverhead == 2 * sizeof(void *), "got cbOverhead %#x\n", entries[4 + i].cbOverhead );
+    }
+
+    if (entries[count - 1].wFlags == PROCESS_HEAP_REGION) /* > win7 */
+        ok( entries[count - 2].wFlags == PROCESS_HEAP_UNCOMMITTED_RANGE, "got wFlags %#x\n", entries[count - 2].wFlags );
+    else
+    {
+        todo_wine
+        ok( entries[count - 1].wFlags == PROCESS_HEAP_UNCOMMITTED_RANGE, "got wFlags %#x\n", entries[count - 2].wFlags );
+    }
+
+    for (i = 0; i < 0x12; i++) ptrs[i] = pHeapAlloc( heap, 0, 24 + 2 * sizeof(void *) );
+
+    count = 0;
+    memset( &entries, 0xcd, sizeof(entries) );
+    memset( &entry, 0xcd, sizeof(entry) );
+    entry.lpData = NULL;
+    SetLastError( 0xdeadbeef );
+    while ((ret = HeapWalk( heap, &entry ))) entries[count++] = entry;
+    ok( GetLastError() == ERROR_NO_MORE_ITEMS, "got error %lu\n", GetLastError() );
+    todo_wine
+    ok( count > 24, "got count %lu\n", count );
+    if (count < 2) count = 2;
+
+    todo_wine
+    ok( entries[0].wFlags == PROCESS_HEAP_REGION, "got wFlags %#x\n", entries[0].wFlags );
+    todo_wine
+    ok( entries[0].lpData == heap, "got lpData %p\n", entries[0].lpData );
+    ok( entries[0].cbData <= 0x1000 /* sizeof(*heap) */, "got cbData %#lx\n", entries[0].cbData );
+    todo_wine
+    ok( entries[0].cbOverhead == 0, "got cbOverhead %#x\n", entries[0].cbOverhead );
+    ok( entries[0].iRegionIndex == 0, "got iRegionIndex %d\n", entries[0].iRegionIndex );
+    ok( entries[1].wFlags == 0 || entries[1].wFlags == PROCESS_HEAP_ENTRY_BUSY /* win7 */, "got wFlags %#x\n", entries[1].wFlags );
+
+    for (i = 1; i < count - 2; i++)
+    {
+        if (entries[i].wFlags != PROCESS_HEAP_ENTRY_BUSY) continue;
+        todo_wine_if( sizeof(void *) == 8 )
+        ok( entries[i].cbData == 0x18 + 2 * sizeof(void *), "got cbData %#lx\n", entries[i].cbData );
+        ok( entries[i].cbOverhead == 0x8, "got cbOverhead %#x\n", entries[i].cbOverhead );
+    }
+
+    if (entries[count - 1].wFlags == PROCESS_HEAP_REGION) /* > win7 */
+        ok( entries[count - 2].wFlags == PROCESS_HEAP_UNCOMMITTED_RANGE, "got wFlags %#x\n", entries[count - 2].wFlags );
+    else
+        ok( entries[count - 1].wFlags == PROCESS_HEAP_UNCOMMITTED_RANGE, "got wFlags %#x\n", entries[count - 2].wFlags );
+
+    for (i = 0; i < 0x12; i++) HeapFree( heap, 0, ptrs[i] );
+
+    ret = HeapDestroy( heap );
+    ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
 }
 
 
