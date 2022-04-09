@@ -2282,12 +2282,14 @@ static HRESULT WINAPI stream_sample_allocator_cb_QueryInterface(IMFVideoSampleAl
 
 static ULONG WINAPI stream_sample_allocator_cb_AddRef(IMFVideoSampleAllocatorNotify *iface)
 {
-    return 2;
+    struct media_stream *stream = impl_stream_from_IMFVideoSampleAllocatorNotify(iface);
+    return source_reader_addref(stream->reader);
 }
 
 static ULONG WINAPI stream_sample_allocator_cb_Release(IMFVideoSampleAllocatorNotify *iface)
 {
-    return 1;
+    struct media_stream *stream = impl_stream_from_IMFVideoSampleAllocatorNotify(iface);
+    return source_reader_release(stream->reader);
 }
 
 static HRESULT WINAPI stream_sample_allocator_cb_NotifyRelease(IMFVideoSampleAllocatorNotify *iface)
