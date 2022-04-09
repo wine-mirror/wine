@@ -491,8 +491,12 @@ static HRESULT WINAPI MetadataHandlerEnum_Next(IWICEnumMetadataItem *iface,
     ULONG new_index;
     HRESULT hr=S_FALSE;
     ULONG i;
+    ULONG fetched;
 
     TRACE("(%p,%li)\n", iface, celt);
+
+    if (!pceltFetched)
+        pceltFetched = &fetched;
 
     EnterCriticalSection(&This->parent->lock);
 

@@ -303,6 +303,21 @@ static void test_metadata_unknown(void)
         ok(hr == S_FALSE, "Next failed, hr=%lx\n", hr);
         ok(items_returned == 0, "unexpected item count %li\n", items_returned);
 
+        hr = IWICEnumMetadataItem_Reset(enumerator);
+        ok(hr == S_OK, "Reset failed, hr=%lx\n", hr);
+
+        hr = IWICEnumMetadataItem_Next(enumerator, 1, &schema, &id, NULL, NULL);
+        ok(hr == S_OK, "Next failed, hr=%lx\n", hr);
+
+        if (hr == S_OK)
+        {
+            ok(schema.vt == VT_EMPTY, "unexpected vt: %i\n", schema.vt);
+            ok(id.vt == VT_EMPTY, "unexpected vt: %i\n", id.vt);
+
+            PropVariantClear(&schema);
+            PropVariantClear(&id);
+        }
+
         IWICEnumMetadataItem_Release(enumerator);
     }
 
