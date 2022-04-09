@@ -971,16 +971,16 @@ BOOL WINAPI IsWinEventHookInstalled(DWORD dwEvent)
 }
 
 /* Undocumented RegisterUserApiHook() */
-BOOL WINAPI RegisterUserApiHook(const struct user_api_hook *new, struct user_api_hook *old)
+BOOL WINAPI RegisterUserApiHook(const struct user_api_hook *new_hook, struct user_api_hook *old_hook)
 {
-    if (!new)
+    if (!new_hook)
         return FALSE;
 
     USER_Lock();
-    hooked_user_api = *new;
+    hooked_user_api = *new_hook;
     user_api = &hooked_user_api;
-    if (old)
-        *old = original_user_api;
+    if (old_hook)
+        *old_hook = original_user_api;
     USER_Unlock();
     return TRUE;
 }
