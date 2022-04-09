@@ -344,8 +344,6 @@ START_TEST(static)
     test_updates(SS_OWNERDRAW);
     test_updates(SS_BITMAP);
     test_updates(SS_BITMAP | SS_CENTERIMAGE);
-    test_updates(SS_BLACKRECT);
-    test_updates(SS_WHITERECT);
     test_updates(SS_ETCHEDHORZ);
     test_updates(SS_ETCHEDVERT);
     test_updates(SS_ETCHEDFRAME);
