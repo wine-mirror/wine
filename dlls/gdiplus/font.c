@@ -106,7 +106,7 @@ typedef struct
 #define GET_BE_DWORD(x) (x)
 #else
 #define GET_BE_WORD(x) MAKEWORD(HIBYTE(x), LOBYTE(x))
-#define GET_BE_DWORD(x) MAKELONG(GET_BE_WORD(HIWORD(x)), GET_BE_WORD(LOWORD(x)));
+#define GET_BE_DWORD(x) MAKELONG(GET_BE_WORD(HIWORD(x)), GET_BE_WORD(LOWORD(x)))
 #endif
 
 #define MS_MAKE_TAG(ch0, ch1, ch2, ch3) \
@@ -1150,13 +1150,15 @@ GpStatus WINGDIPAPI GdipPrivateAddFontFile(GpFontCollection *collection, GDIPCON
 #define NAME_ID_FULL_FONT_NAME  4
 
 typedef struct {
-    USHORT major_version;
-    USHORT minor_version;
+    ULONG version;
     USHORT tables_no;
     USHORT search_range;
     USHORT entry_selector;
     USHORT range_shift;
 } tt_header;
+
+#define TT_HEADER_VERSION_1 0x00010000
+#define TT_HEADER_VERSION_CFF 0x4f54544f
 
 typedef struct {
     char tag[4];        /* table name */
@@ -1402,7 +1404,8 @@ static WCHAR *load_ttf_name_id( const BYTE *mem, DWORD_PTR size, DWORD id )
     header = (const tt_header*)mem;
     count = GET_BE_WORD(header->tables_no);
 
-    if (GET_BE_WORD(header->major_version) != 1 || GET_BE_WORD(header->minor_version) != 0)
+    if (GET_BE_DWORD(header->version) != TT_HEADER_VERSION_1 &&
+        GET_BE_DWORD(header->version) != TT_HEADER_VERSION_CFF)
         return NULL;
 
     pos = sizeof(*header);
