@@ -426,7 +426,7 @@ LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
                     rc.right = rc.left;
                 AdjustWindowRectEx(&rc, full_style, FALSE, GetWindowLongW(hwnd, GWL_EXSTYLE));
                 NtUserSetWindowPos( hwnd, NULL, 0, 0, rc.right - rc.left, rc.bottom - rc.top,
-                                    SWP_NOMOVE | SWP_NOZORDER );
+                                    SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOZORDER );
             }
 
             switch (style) {
