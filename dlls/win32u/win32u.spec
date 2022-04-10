@@ -1281,7 +1281,7 @@
 @ stub NtUserTrackPopupMenuEx
 @ stub NtUserTransformPoint
 @ stub NtUserTransformRect
-@ stub NtUserTranslateAccelerator
+@ stdcall NtUserTranslateAccelerator(long long ptr)
 @ stdcall NtUserTranslateMessage(ptr long)
 @ stub NtUserUndelegateInput
 @ stdcall -syscall NtUserUnhookWinEvent(long)

@@ -1258,6 +1258,12 @@ BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
     return unix_funcs->pNtUserTrackMouseEvent( info );
 }
 
+INT WINAPI NtUserTranslateAccelerator( HWND hwnd, HACCEL accel, MSG *msg )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserTranslateAccelerator( hwnd, accel, msg );
+}
+
 BOOL WINAPI NtUserTranslateMessage( const MSG *msg, UINT flags )
 {
     if (!unix_funcs) return 0;

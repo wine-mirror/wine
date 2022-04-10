@@ -235,6 +235,23 @@ static BOOL is_menu( HMENU handle )
     return is_menu;
 }
 
+/***********************************************************************
+ *           get_win_sys_menu
+ *
+ * Get the system menu of a window
+ */
+static HMENU get_win_sys_menu( HWND hwnd )
+{
+    HMENU ret = 0;
+    WND *win = get_win_ptr( hwnd );
+    if (win && win != WND_OTHER_PROCESS && win != WND_DESKTOP)
+    {
+        ret = win->hSysMenu;
+        release_win_ptr( win );
+    }
+    return ret;
+}
+
 static POPUPMENU *find_menu_item( HMENU handle, UINT id, UINT flags, UINT *pos )
 {
     UINT fallback_pos = ~0u, i;
@@ -344,6 +361,48 @@ static POPUPMENU *insert_menu_item( HMENU handle, UINT id, UINT flags, UINT *ret
 static BOOL is_win_menu_disallowed( HWND hwnd )
 {
     return (get_window_long(hwnd, GWL_STYLE) & (WS_CHILD | WS_POPUP)) == WS_CHILD;
+}
+
+/***********************************************************************
+ *           find_submenu
+ *
+ * Find a Sub menu. Return the position of the submenu, and modifies
+ * *hmenu in case it is found in another sub-menu.
+ * If the submenu cannot be found, NO_SELECTED_ITEM is returned.
+ */
+static UINT find_submenu( HMENU *handle_ptr, HMENU target )
+{
+    POPUPMENU *menu;
+    MENUITEM *item;
+    UINT i;
+
+    if (*handle_ptr == (HMENU)0xffff || !(menu = grab_menu_ptr( *handle_ptr )))
+        return NO_SELECTED_ITEM;
+
+    item = menu->items;
+    for (i = 0; i < menu->nItems; i++, item++)
+    {
+        if(!(item->fType & MF_POPUP)) continue;
+        if (item->hSubMenu == target)
+        {
+            release_menu_ptr( menu );
+            return i;
+        }
+        else
+        {
+            HMENU hsubmenu = item->hSubMenu;
+            UINT pos = find_submenu( &hsubmenu, target );
+            if (pos != NO_SELECTED_ITEM)
+            {
+                *handle_ptr = hsubmenu;
+                release_menu_ptr( menu );
+                return pos;
+            }
+        }
+    }
+
+    release_menu_ptr( menu );
+    return NO_SELECTED_ITEM;
 }
 
 /* see GetMenu */
@@ -932,6 +991,25 @@ BOOL WINAPI NtUserSetMenuContextHelpId( HMENU handle, DWORD id )
     return TRUE;
 }
 
+/* see GetSubMenu */
+static HMENU get_sub_menu( HMENU handle, INT pos )
+{
+    POPUPMENU *menu;
+    HMENU submenu;
+    UINT i;
+
+    if (!(menu = find_menu_item( handle, pos, MF_BYPOSITION, &i )))
+        return 0;
+
+    if (menu->items[i].fType & MF_POPUP)
+        submenu = menu->items[i].hSubMenu;
+    else
+        submenu = 0;
+
+    release_menu_ptr(menu);
+    return submenu;
+}
+
 /**********************************************************************
  *           NtUserSetMenuDefaultItem    (win32u.@)
  */
@@ -978,4 +1056,205 @@ BOOL WINAPI NtUserSetMenuDefaultItem( HMENU handle, UINT item, UINT bypos )
 
     release_menu_ptr( menu );
     return ret;
+}
+
+/**********************************************************************
+ *           translate_accelerator
+ */
+static BOOL translate_accelerator( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam,
+                                   BYTE virt, WORD key, WORD cmd )
+{
+    INT mask = 0;
+    UINT msg = 0;
+
+    if (wparam != key) return FALSE;
+
+    if (NtUserGetKeyState( VK_CONTROL ) & 0x8000) mask |= FCONTROL;
+    if (NtUserGetKeyState( VK_MENU ) & 0x8000)    mask |= FALT;
+    if (NtUserGetKeyState( VK_SHIFT ) & 0x8000)   mask |= FSHIFT;
+
+    if (message == WM_CHAR || message == WM_SYSCHAR)
+    {
+        if (!(virt & FVIRTKEY) && (mask & FALT) == (virt & FALT))
+        {
+            TRACE_(accel)( "found accel for WM_CHAR: ('%c')\n", LOWORD(wparam) & 0xff );
+            goto found;
+        }
+    }
+    else
+    {
+        if (virt & FVIRTKEY)
+        {
+            TRACE_(accel)( "found accel for virt_key %04lx (scan %04x)\n",
+                           wparam, 0xff & HIWORD(lparam) );
+
+            if (mask == (virt & (FSHIFT | FCONTROL | FALT))) goto found;
+            TRACE_(accel)( ", but incorrect SHIFT/CTRL/ALT-state\n" );
+        }
+        else
+        {
+            if (!(lparam & 0x01000000))  /* no special_key */
+            {
+                if ((virt & FALT) && (lparam & 0x20000000)) /* ALT pressed */
+                {
+                    TRACE_(accel)( "found accel for Alt-%c\n", LOWORD(wparam) & 0xff );
+                    goto found;
+                }
+            }
+        }
+    }
+    return FALSE;
+
+found:
+    if (message == WM_KEYUP || message == WM_SYSKEYUP)
+        msg = 1;
+    else
+    {
+        HMENU menu_handle, submenu, sys_menu;
+        UINT sys_stat = ~0u, stat = ~0u, pos;
+        POPUPMENU *menu;
+
+        menu_handle = (get_window_long( hwnd, GWL_STYLE ) & WS_CHILD) ? 0 : get_menu(hwnd);
+        sys_menu = get_win_sys_menu( hwnd );
+
+        /* find menu item and ask application to initialize it */
+        /* 1. in the system menu */
+        if ((menu = find_menu_item( sys_menu, cmd, MF_BYCOMMAND, NULL )))
+        {
+            submenu = menu->obj.handle;
+            release_menu_ptr( menu );
+
+            if (get_capture())
+                msg = 2;
+            if (!is_window_enabled( hwnd ))
+                msg = 3;
+            else
+            {
+                send_message( hwnd, WM_INITMENU, (WPARAM)sys_menu, 0 );
+                if (submenu != sys_menu)
+                {
+                    pos = find_submenu( &sys_menu, submenu );
+                    TRACE_(accel)( "sys_menu = %p, submenu = %p, pos = %d\n",
+                                   sys_menu, submenu, pos );
+                    send_message( hwnd, WM_INITMENUPOPUP, (WPARAM)submenu, MAKELPARAM(pos, TRUE) );
+                }
+                sys_stat = get_menu_state( get_sub_menu( sys_menu, 0 ), cmd, MF_BYCOMMAND );
+            }
+        }
+        else /* 2. in the window's menu */
+        {
+            if ((menu = find_menu_item( menu_handle, cmd, MF_BYCOMMAND, NULL )))
+            {
+                submenu = menu->obj.handle;
+                release_menu_ptr( menu );
+
+                if (get_capture())
+                    msg = 2;
+                if (!is_window_enabled( hwnd ))
+                    msg = 3;
+                else
+                {
+                    send_message( hwnd, WM_INITMENU, (WPARAM)menu_handle, 0 );
+                    if(submenu != menu_handle)
+                    {
+                        pos = find_submenu( &menu_handle, submenu );
+                        TRACE_(accel)( "menu_handle = %p, submenu = %p, pos = %d\n",
+                                       menu_handle, submenu, pos );
+                        send_message( hwnd, WM_INITMENUPOPUP, (WPARAM)submenu,
+                                      MAKELPARAM(pos, FALSE) );
+                    }
+                    stat = get_menu_state( menu_handle, cmd, MF_BYCOMMAND );
+                }
+            }
+        }
+
+        if (msg == 0)
+        {
+            if (sys_stat != ~0u)
+            {
+                if (sys_stat & (MF_DISABLED|MF_GRAYED))
+                    msg = 4;
+                else
+                    msg = WM_SYSCOMMAND;
+            }
+            else
+            {
+                if (stat != ~0u)
+                {
+                    if (is_iconic( hwnd ))
+                        msg = 5;
+                    else
+                    {
+                        if (stat & (MF_DISABLED|MF_GRAYED))
+                            msg = 6;
+                        else
+                            msg = WM_COMMAND;
+                    }
+                }
+                else
+                    msg = WM_COMMAND;
+            }
+        }
+    }
+
+    if (msg == WM_COMMAND)
+    {
+        TRACE_(accel)( ", sending WM_COMMAND, wparam=%0x\n", 0x10000 | cmd );
+        send_message( hwnd, msg, 0x10000 | cmd, 0 );
+    }
+    else if (msg == WM_SYSCOMMAND)
+    {
+        TRACE_(accel)( ", sending WM_SYSCOMMAND, wparam=%0x\n", cmd );
+        send_message( hwnd, msg, cmd, 0x00010000 );
+    }
+    else
+    {
+        /*  some reasons for NOT sending the WM_{SYS}COMMAND message:
+         *   #0: unknown (please report!)
+         *   #1: for WM_KEYUP,WM_SYSKEYUP
+         *   #2: mouse is captured
+         *   #3: window is disabled
+         *   #4: it's a disabled system menu option
+         *   #5: it's a menu option, but window is iconic
+         *   #6: it's a menu option, but disabled
+         */
+        TRACE_(accel)( ", but won't send WM_{SYS}COMMAND, reason is #%d\n", msg );
+        if (!msg) ERR_(accel)( " unknown reason\n" );
+    }
+    return TRUE;
+}
+
+/**********************************************************************
+ *           NtUserTranslateAccelerator     (win32u.@)
+ */
+INT WINAPI NtUserTranslateAccelerator( HWND hwnd, HACCEL accel, MSG *msg )
+{
+    ACCEL data[32], *ptr = data;
+    int i, count;
+
+    if (!hwnd) return 0;
+
+    if (msg->message != WM_KEYDOWN &&
+        msg->message != WM_SYSKEYDOWN &&
+        msg->message != WM_CHAR &&
+        msg->message != WM_SYSCHAR)
+        return 0;
+
+    TRACE_(accel)("accel %p, hwnd %p, msg->hwnd %p, msg->message %04x, wParam %08lx, lParam %08lx\n",
+                  accel,hwnd,msg->hwnd,msg->message,msg->wParam,msg->lParam);
+
+    if (!(count = NtUserCopyAcceleratorTable( accel, NULL, 0 ))) return 0;
+    if (count > ARRAY_SIZE( data ))
+    {
+        if (!(ptr = malloc( count * sizeof(*ptr) ))) return 0;
+    }
+    count = NtUserCopyAcceleratorTable( accel, ptr, count );
+    for (i = 0; i < count; i++)
+    {
+        if (translate_accelerator( hwnd, msg->message, msg->wParam, msg->lParam,
+                                   ptr[i].fVirt, ptr[i].key, ptr[i].cmd))
+            break;
+    }
+    if (ptr != data) free( ptr );
+    return (i < count);
 }

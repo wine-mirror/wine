@@ -56,7 +56,6 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(menu);
-WINE_DECLARE_DEBUG_CHANNEL(accel);
 
 /* internal flags for menu tracking */
 
@@ -4769,170 +4768,6 @@ DWORD WINAPI CalcMenuBar(HWND hwnd, DWORD left, DWORD right, DWORD top, RECT *re
 
 
 /**********************************************************************
- *           translate_accelerator
- */
-static BOOL translate_accelerator( HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam,
-                                   BYTE fVirt, WORD key, WORD cmd )
-{
-    INT mask = 0;
-    UINT mesg = 0;
-
-    if (wParam != key) return FALSE;
-
-    if (NtUserGetKeyState(VK_CONTROL) & 0x8000) mask |= FCONTROL;
-    if (NtUserGetKeyState(VK_MENU) & 0x8000) mask |= FALT;
-    if (NtUserGetKeyState(VK_SHIFT) & 0x8000) mask |= FSHIFT;
-
-    if (message == WM_CHAR || message == WM_SYSCHAR)
-    {
-        if ( !(fVirt & FVIRTKEY) && (mask & FALT) == (fVirt & FALT) )
-        {
-            TRACE_(accel)("found accel for WM_CHAR: ('%c')\n", LOWORD(wParam) & 0xff);
-            goto found;
-        }
-    }
-    else
-    {
-        if(fVirt & FVIRTKEY)
-        {
-            TRACE_(accel)("found accel for virt_key %04lx (scan %04x)\n",
-                          wParam, 0xff & HIWORD(lParam));
-
-            if(mask == (fVirt & (FSHIFT | FCONTROL | FALT))) goto found;
-            TRACE_(accel)(", but incorrect SHIFT/CTRL/ALT-state\n");
-        }
-        else
-        {
-            if (!(lParam & 0x01000000))  /* no special_key */
-            {
-                if ((fVirt & FALT) && (lParam & 0x20000000))
-                {                              /* ^^ ALT pressed */
-                    TRACE_(accel)("found accel for Alt-%c\n", LOWORD(wParam) & 0xff);
-                    goto found;
-                }
-            }
-        }
-    }
-    return FALSE;
-
- found:
-    if (message == WM_KEYUP || message == WM_SYSKEYUP)
-        mesg = 1;
-    else
-    {
-        HMENU hMenu, hSubMenu, hSysMenu;
-        UINT uSysStat = (UINT)-1, uStat = (UINT)-1, nPos;
-        POPUPMENU *menu;
-
-        hMenu = (GetWindowLongW( hWnd, GWL_STYLE ) & WS_CHILD) ? 0 : GetMenu(hWnd);
-        hSysMenu = get_win_sys_menu( hWnd );
-
-        /* find menu item and ask application to initialize it */
-        /* 1. in the system menu */
-        if ((menu = find_menu_item(hSysMenu, cmd, MF_BYCOMMAND, NULL)))
-        {
-            hSubMenu = menu->obj.handle;
-            release_menu_ptr(menu);
-
-            if (GetCapture())
-                mesg = 2;
-            if (!IsWindowEnabled(hWnd))
-                mesg = 3;
-            else
-            {
-                SendMessageW(hWnd, WM_INITMENU, (WPARAM)hSysMenu, 0L);
-                if(hSubMenu != hSysMenu)
-                {
-                    nPos = MENU_FindSubMenu(&hSysMenu, hSubMenu);
-                    TRACE_(accel)("hSysMenu = %p, hSubMenu = %p, nPos = %d\n", hSysMenu, hSubMenu, nPos);
-                    SendMessageW(hWnd, WM_INITMENUPOPUP, (WPARAM)hSubMenu, MAKELPARAM(nPos, TRUE));
-                }
-                uSysStat = GetMenuState(GetSubMenu(hSysMenu, 0), cmd, MF_BYCOMMAND);
-            }
-        }
-        else /* 2. in the window's menu */
-        {
-            if ((menu = find_menu_item(hMenu, cmd, MF_BYCOMMAND, NULL)))
-            {
-                hSubMenu = menu->obj.handle;
-                release_menu_ptr(menu);
-
-                if (GetCapture())
-                    mesg = 2;
-                if (!IsWindowEnabled(hWnd))
-                    mesg = 3;
-                else
-                {
-                    SendMessageW(hWnd, WM_INITMENU, (WPARAM)hMenu, 0L);
-                    if(hSubMenu != hMenu)
-                    {
-                        nPos = MENU_FindSubMenu(&hMenu, hSubMenu);
-                        TRACE_(accel)("hMenu = %p, hSubMenu = %p, nPos = %d\n", hMenu, hSubMenu, nPos);
-                        SendMessageW(hWnd, WM_INITMENUPOPUP, (WPARAM)hSubMenu, MAKELPARAM(nPos, FALSE));
-                    }
-                    uStat = GetMenuState(hMenu, cmd, MF_BYCOMMAND);
-                }
-            }
-        }
-
-        if (mesg == 0)
-        {
-            if (uSysStat != (UINT)-1)
-            {
-                if (uSysStat & (MF_DISABLED|MF_GRAYED))
-                    mesg=4;
-                else
-                    mesg=WM_SYSCOMMAND;
-            }
-            else
-            {
-                if (uStat != (UINT)-1)
-                {
-                    if (IsIconic(hWnd))
-                        mesg=5;
-                    else
-                    {
-                        if (uStat & (MF_DISABLED|MF_GRAYED))
-                            mesg=6;
-                        else
-                            mesg=WM_COMMAND;
-                    }
-                }
-                else
-                    mesg=WM_COMMAND;
-            }
-        }
-    }
-
-    if( mesg==WM_COMMAND )
-    {
-        TRACE_(accel)(", sending WM_COMMAND, wParam=%0x\n", 0x10000 | cmd);
-        SendMessageW(hWnd, mesg, 0x10000 | cmd, 0L);
-    }
-    else if( mesg==WM_SYSCOMMAND )
-    {
-        TRACE_(accel)(", sending WM_SYSCOMMAND, wParam=%0x\n", cmd);
-        SendMessageW(hWnd, mesg, cmd, 0x00010000L);
-    }
-    else
-    {
-        /*  some reasons for NOT sending the WM_{SYS}COMMAND message:
-         *   #0: unknown (please report!)
-         *   #1: for WM_KEYUP,WM_SYSKEYUP
-         *   #2: mouse is captured
-         *   #3: window is disabled
-         *   #4: it's a disabled system menu option
-         *   #5: it's a menu option, but window is iconic
-         *   #6: it's a menu option, but disabled
-         */
-        TRACE_(accel)(", but won't send WM_{SYS}COMMAND, reason is #%d\n",mesg);
-        if(mesg==0)
-            ERR_(accel)(" unknown reason - please report!\n");
-    }
-    return TRUE;
-}
-
-/**********************************************************************
  *      TranslateAcceleratorA     (USER32.@)
  *      TranslateAccelerator      (USER32.@)
  */
@@ -4942,7 +4777,7 @@ INT WINAPI TranslateAcceleratorA( HWND hWnd, HACCEL hAccel, LPMSG msg )
     {
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
-        return TranslateAcceleratorW( hWnd, hAccel, msg );
+        return NtUserTranslateAccelerator( hWnd, hAccel, msg );
 
     case WM_CHAR:
     case WM_SYSCHAR:
@@ -4952,45 +4787,10 @@ INT WINAPI TranslateAcceleratorA( HWND hWnd, HACCEL hAccel, LPMSG msg )
             WCHAR wch;
             MultiByteToWideChar(CP_ACP, 0, &ch, 1, &wch, 1);
             msgW.wParam = MAKEWPARAM(wch, HIWORD(msg->wParam));
-            return TranslateAcceleratorW( hWnd, hAccel, &msgW );
+            return NtUserTranslateAccelerator( hWnd, hAccel, &msgW );
         }
 
     default:
         return 0;
     }
-}
-
-/**********************************************************************
- *      TranslateAcceleratorW     (USER32.@)
- */
-INT WINAPI TranslateAcceleratorW( HWND hWnd, HACCEL hAccel, LPMSG msg )
-{
-    ACCEL data[32], *ptr = data;
-    int i, count;
-
-    if (!hWnd) return 0;
-
-    if (msg->message != WM_KEYDOWN &&
-        msg->message != WM_SYSKEYDOWN &&
-        msg->message != WM_CHAR &&
-        msg->message != WM_SYSCHAR)
-        return 0;
-
-    TRACE_(accel)("hAccel %p, hWnd %p, msg->hwnd %p, msg->message %04x, wParam %08lx, lParam %08lx\n",
-                  hAccel,hWnd,msg->hwnd,msg->message,msg->wParam,msg->lParam);
-
-    if (!(count = NtUserCopyAcceleratorTable( hAccel, NULL, 0 ))) return 0;
-    if (count > ARRAY_SIZE( data ))
-    {
-        if (!(ptr = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*ptr) ))) return 0;
-    }
-    count = NtUserCopyAcceleratorTable( hAccel, ptr, count );
-    for (i = 0; i < count; i++)
-    {
-        if (translate_accelerator( hWnd, msg->message, msg->wParam, msg->lParam,
-                                   ptr[i].fVirt, ptr[i].key, ptr[i].cmd))
-            break;
-    }
-    if (ptr != data) HeapFree( GetProcessHeap(), 0, ptr );
-    return (i < count);
 }

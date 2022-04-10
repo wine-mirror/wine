@@ -767,7 +767,7 @@
 @ stdcall TrackPopupMenuEx(long long long long long ptr)
 @ stdcall TranslateAccelerator(long long ptr) TranslateAcceleratorA
 @ stdcall TranslateAcceleratorA(long long ptr)
-@ stdcall TranslateAcceleratorW(long long ptr)
+@ stdcall TranslateAcceleratorW(long long ptr) NtUserTranslateAccelerator
 @ stdcall TranslateMDISysAccel(long ptr)
 @ stdcall TranslateMessage(ptr)
 # @ stub TranslateMessageEx
