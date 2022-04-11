@@ -2283,11 +2283,6 @@ static int mbstowcs_utf8( DWORD flags, const char *src, int srclen, WCHAR *dst, 
     DWORD reslen;
     NTSTATUS status;
 
-    if (flags & ~(MB_PRECOMPOSED | MB_COMPOSITE | MB_USEGLYPHCHARS | MB_ERR_INVALID_CHARS))
-    {
-        SetLastError( ERROR_INVALID_FLAGS );
-        return 0;
-    }
     if (!dstlen) dst = NULL;
     status = RtlUTF8ToUnicodeN( dst, dstlen * sizeof(WCHAR), &reslen, src, srclen );
     if (status == STATUS_SOME_NOT_MAPPED)
@@ -2528,23 +2523,11 @@ static int mbstowcs_dbcs( const CPTABLEINFO *info, const unsigned char *src, int
 }
 
 
-static int mbstowcs_codepage( UINT codepage, DWORD flags, const char *src, int srclen,
+static int mbstowcs_codepage( const CPTABLEINFO *info, DWORD flags, const char *src, int srclen,
                               WCHAR *dst, int dstlen )
 {
     CPTABLEINFO local_info;
-    const CPTABLEINFO *info = get_codepage_table( codepage );
     const unsigned char *str = (const unsigned char *)src;
-
-    if (!info)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-    if (flags & ~(MB_PRECOMPOSED | MB_COMPOSITE | MB_USEGLYPHCHARS | MB_ERR_INVALID_CHARS))
-    {
-        SetLastError( ERROR_INVALID_FLAGS );
-        return 0;
-    }
 
     if ((flags & MB_USEGLYPHCHARS) && info->MultiByteTable[256] == 256)
     {
@@ -6161,6 +6144,7 @@ LCID WINAPI DECLSPEC_HOTPATCH LocaleNameToLCID( const WCHAR *name, DWORD flags )
 INT WINAPI DECLSPEC_HOTPATCH MultiByteToWideChar( UINT codepage, DWORD flags, const char *src, INT srclen,
                                                   WCHAR *dst, INT dstlen )
 {
+    const CPTABLEINFO *info;
     int ret;
 
     if (!src || !srclen || (!dst && dstlen) || dstlen < 0)
@@ -6178,19 +6162,24 @@ INT WINAPI DECLSPEC_HOTPATCH MultiByteToWideChar( UINT codepage, DWORD flags, co
     case CP_UTF7:
         ret = mbstowcs_utf7( flags, src, srclen, dst, dstlen );
         break;
-    case CP_UTF8:
-        ret = mbstowcs_utf8( flags, src, srclen, dst, dstlen );
-        break;
     case CP_UNIXCP:
-        if (unix_cp == CP_UTF8)
-        {
-            ret = mbstowcs_utf8( flags, src, srclen, dst, dstlen );
-            break;
-        }
         codepage = unix_cp;
         /* fall through */
     default:
-        ret = mbstowcs_codepage( codepage, flags, src, srclen, dst, dstlen );
+        if (!(info = get_codepage_table( codepage )))
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+        if (flags & ~(MB_PRECOMPOSED | MB_COMPOSITE | MB_USEGLYPHCHARS | MB_ERR_INVALID_CHARS))
+        {
+            SetLastError( ERROR_INVALID_FLAGS );
+            return 0;
+        }
+        if (info->CodePage == CP_UTF8)
+            ret = mbstowcs_utf8( flags, src, srclen, dst, dstlen );
+        else
+            ret = mbstowcs_codepage( info, flags, src, srclen, dst, dstlen );
         break;
     }
     TRACE( "cp %d %s -> %s, ret = %d\n", codepage, debugstr_an(src, srclen), debugstr_wn(dst, ret), ret );
