@@ -6173,7 +6173,7 @@ static void test_large_content(int port)
     ok(GetLastError() == ERROR_HTTP_INVALID_HEADER,
         "expected ERROR_HTTP_INVALID_HEADER, got %lx\n", GetLastError());
     ok(sizelen == sizeof(DWORD64), "sizelen %lu\n", sizelen);
-    ok(len64 == ~0, "len64 %lx%08lx\n", (DWORD)(len64 >> 32), (DWORD)len64);
+    ok(len64 == ~0, "len64 %I64x\n", len64);
 
     close_request(&req);
 
