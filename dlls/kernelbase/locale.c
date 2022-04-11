@@ -5098,6 +5098,7 @@ INT WINAPI DECLSPEC_HOTPATCH GetGeoInfoW( GEOID id, GEOTYPE type, WCHAR *data, i
  */
 INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoA( LCID lcid, LCTYPE lctype, char *buffer, INT len )
 {
+    const NLS_LOCALE_DATA *locale;
     WCHAR *bufferW;
     INT lenW, ret;
 
@@ -5113,19 +5114,26 @@ INT WINAPI DECLSPEC_HOTPATCH GetLocaleInfoA( LCID lcid, LCTYPE lctype, char *buf
         SetLastError( ERROR_INVALID_FLAGS );
         return 0;
     }
-
+    if (!(locale = NlsValidateLocale( &lcid, 0 )))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
     if (LOWORD(lctype) == LOCALE_FONTSIGNATURE || (lctype & LOCALE_RETURN_NUMBER))
-        return GetLocaleInfoW( lcid, lctype, (WCHAR *)buffer, len / sizeof(WCHAR) ) * sizeof(WCHAR);
+    {
+        ret = get_locale_info( locale, lcid, lctype, (WCHAR *)buffer, len / sizeof(WCHAR) );
+        return ret * sizeof(WCHAR);
+    }
 
-    if (!(lenW = GetLocaleInfoW( lcid, lctype, NULL, 0 ))) return 0;
+    if (!(lenW = get_locale_info( locale, lcid, lctype, NULL, 0 ))) return 0;
 
     if (!(bufferW = RtlAllocateHeap( GetProcessHeap(), 0, lenW * sizeof(WCHAR) )))
     {
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         return 0;
     }
-    ret = GetLocaleInfoW( lcid, lctype, bufferW, lenW );
-    if (ret) ret = WideCharToMultiByte( get_lcid_codepage( lcid, lctype ), 0,
+    ret = get_locale_info( locale, lcid, lctype, bufferW, lenW );
+    if (ret) ret = WideCharToMultiByte( get_locale_codepage( locale, lctype ), 0,
                                         bufferW, ret, buffer, len, NULL, NULL );
     RtlFreeHeap( GetProcessHeap(), 0, bufferW );
     return ret;
