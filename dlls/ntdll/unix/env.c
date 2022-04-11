@@ -1354,6 +1354,8 @@ static void get_initial_console( RTL_USER_PROCESS_PARAMETERS *params )
         params->hStdOutput = (HANDLE)((UINT_PTR)params->hStdOutput | 1);
         output_fd = 1;
     }
+    if (!params->ConsoleHandle && main_image_info.SubSystemType == IMAGE_SUBSYSTEM_WINDOWS_CUI)
+        params->ConsoleHandle = CONSOLE_HANDLE_SHELL_NO_WINDOW;
 
     if (output_fd != -1)
     {

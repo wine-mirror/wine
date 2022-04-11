@@ -86,6 +86,12 @@ static BOOL console_ioctl( HANDLE handle, DWORD code, void *in_buff, DWORD in_co
     IO_STATUS_BLOCK io;
     NTSTATUS status;
 
+    if (handle == CONSOLE_HANDLE_SHELL_NO_WINDOW)
+    {
+        WARN("Incorrect access to Shell-no-window console (ioctl=%lx)\n", code);
+        SetLastError( ERROR_INVALID_ACCESS );
+        return FALSE;
+    }
     status = NtDeviceIoControlFile( handle, NULL, NULL, NULL, &io, code, in_buff, in_count,
                                     out_buff, out_count );
     switch( status )
@@ -621,10 +627,13 @@ BOOL WINAPI DECLSPEC_HOTPATCH FreeConsole(void)
 {
     RtlEnterCriticalSection( &console_section );
 
-    NtClose( console_connection );
-    console_connection = NULL;
+    if (RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle != CONSOLE_HANDLE_SHELL_NO_WINDOW)
+    {
+        NtClose( console_connection );
+        console_connection = NULL;
 
-    NtClose( RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle );
+        NtClose( RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle );
+    }
     RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle = NULL;
 
     if (console_flags & CONSOLE_INPUT_HANDLE)  NtClose( GetStdHandle( STD_INPUT_HANDLE ));
@@ -2303,5 +2312,6 @@ void init_console( void )
         if (RtlImageNtHeader( mod )->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
             alloc_console( no_window );
     }
-    else if (params->ConsoleHandle) create_console_connection( params->ConsoleHandle );
+    else if (params->ConsoleHandle && params->ConsoleHandle != CONSOLE_HANDLE_SHELL_NO_WINDOW)
+        create_console_connection( params->ConsoleHandle );
 }

@@ -191,5 +191,6 @@ struct condrv_ctrl_event
 #define CONSOLE_HANDLE_ALLOC            LongToHandle(-1)
 #define CONSOLE_HANDLE_ALLOC_NO_WINDOW  LongToHandle(-2)
 #define CONSOLE_HANDLE_SHELL            LongToHandle(-3)
+#define CONSOLE_HANDLE_SHELL_NO_WINDOW  LongToHandle(-4)
 
 #endif /* _INC_CONDRV */
