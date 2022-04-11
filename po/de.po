@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-01-10 13:49+0200\n"
+"PO-Revision-Date: 2022-04-11 16:51+0200\n"
 "Last-Translator: Julian Rüger <jr98@gmx.net>\n"
 "Language-Team: German\n"
 "Language: de\n"
@@ -3981,13 +3981,11 @@ msgstr ""
 
 #: dlls/jscript/jscript.rc:74
 msgid "Cyclic __proto__ value"
-msgstr ""
+msgstr "Zyklischer __proto__-Wert"
 
 #: dlls/jscript/jscript.rc:75
-#, fuzzy
-#| msgid "Cannot define property '|': object is not extensible"
 msgid "Cannot create property for a non-extensible object"
-msgstr "Eigenschaft '|' kann nicht definiert werden: Objekt nicht erweiterbar"
+msgstr "Eigenschaft für nicht-erweiterbares Objekt kann nicht angelegt werden"
 
 #: dlls/jscript/jscript.rc:76
 msgid "Cannot define property '|': object is not extensible"
@@ -7014,54 +7012,40 @@ msgid "This network connection does not exist.\n"
 msgstr "Diese Netzwerkverbindung existiert nicht.\n"
 
 #: dlls/kernelbase/winerror.mc:3748
-#, fuzzy
-#| msgid "Invalid at interrupt time.\n"
 msgid "Call interrupted.\n"
-msgstr "Ungültig während eines Interrupts.\n"
+msgstr "Aufruf unterbrochen.\n"
 
 #: dlls/kernelbase/winerror.mc:3753
-#, fuzzy
-#| msgid "Invalid handle.\n"
 msgid "Invalid file handle.\n"
-msgstr "Ungültiges Handle.\n"
+msgstr "Ungültiges Dateihandle.\n"
 
 #: dlls/kernelbase/winerror.mc:3763
-#, fuzzy
-#| msgid "Invalid network address.\n"
 msgid "Invalid pointer address.\n"
-msgstr "Ungültige Netzwerkadresse.\n"
+msgstr "Ungültige Zeigeradresse.\n"
 
 #: dlls/kernelbase/winerror.mc:3768
-#, fuzzy
-#| msgid "Invalid name.\n"
 msgid "Invalid argument.\n"
-msgstr "Ungültiger Name.\n"
+msgstr "Ungültiges Argument.\n"
 
 #: dlls/kernelbase/winerror.mc:3778
 msgid "Connection reset by peer.\n"
 msgstr "Verbindung von Gegenstelle zurückgesetzt.\n"
 
 #: dlls/kernelbase/winerror.mc:3788
-#, fuzzy
-#| msgid "Point not found.\n"
 msgid "Host not found.\n"
-msgstr "Punkt nicht gefunden.\n"
+msgstr "Host nicht gefunden.\n"
 
 #: dlls/kernelbase/winerror.mc:3793
-#, fuzzy
-#| msgid "Attribute is not found.\n"
 msgid "Nonauthoritative host not found.\n"
-msgstr "Attribut nicht gefunden.\n"
+msgstr "Nicht-authoritativer Host nicht gefunden.\n"
 
 #: dlls/kernelbase/winerror.mc:3798
-#, fuzzy
-#| msgid "Unrecoverable error occurred.\n"
 msgid "Nonrecoverable error.\n"
-msgstr "Nicht ausgleichbarer Fehler aufgetreten.\n"
+msgstr "Unausgleichbarer Fehler.\n"
 
 #: dlls/kernelbase/winerror.mc:3803
 msgid "Name valid, no data record.\n"
-msgstr ""
+msgstr "Name gültig, kein Datensatz.\n"
 
 #: dlls/kernelbase/winerror.mc:3817
 msgid "Not implemented.\n"
@@ -11042,18 +11026,14 @@ msgid "(UTC-03:00) City of Buenos Aires"
 msgstr "(UTC-03:00) Stadt Buenos Aires"
 
 #: dlls/tzres/tzres.rc:378
-#, fuzzy
-#| msgid "Turks And Caicos Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Turks And Caicos Standard Time"
-msgstr "Turks- und Caicosinseln Normalzeit"
+msgstr "Turks-, Caicosinseln Normalzeit"
 
 #: dlls/tzres/tzres.rc:379
-#, fuzzy
-#| msgid "Turks And Caicos Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Turks And Caicos Daylight Time"
-msgstr "Turks- und Caicosinseln Sommerzeit"
+msgstr "Turks-, Caicosinseln Sommerzeit"
 
 #: dlls/tzres/tzres.rc:380
 msgid "(UTC-05:00) Turks and Caicos"
@@ -11647,18 +11627,14 @@ msgid "(UTC+03:00) Moscow, St. Petersburg"
 msgstr "(UTC+03:00) Moskau, St. Petersburg"
 
 #: dlls/tzres/tzres.rc:63
-#, fuzzy
-#| msgid "Aus Central W. Standard Time"
 msgctxt "maximum 31 characters"
 msgid "Aus Central W. Standard Time"
-msgstr "West-Zentralaustralische Normalzeit"
+msgstr "West-Zentralaustr. Normalzeit"
 
 #: dlls/tzres/tzres.rc:64
-#, fuzzy
-#| msgid "Aus Central W. Daylight Time"
 msgctxt "maximum 31 characters"
 msgid "Aus Central W. Daylight Time"
-msgstr "West-Zentralaustralische Sommerzeit"
+msgstr "West-Zentralaustr. Sommerzeit"
 
 #: dlls/tzres/tzres.rc:65
 msgid "(UTC+08:45) Eucla"
