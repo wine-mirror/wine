@@ -361,10 +361,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH AttachConsole( DWORD pid )
 }
 
 
-/******************************************************************
- *      AllocConsole   (kernelbase.@)
- */
-BOOL WINAPI AllocConsole(void)
+static BOOL alloc_console( BOOL headless )
 {
     SECURITY_ATTRIBUTES inheritable_attr = { sizeof(inheritable_attr), NULL, TRUE };
     STARTUPINFOW app_si, console_si;
@@ -419,6 +416,7 @@ BOOL WINAPI AllocConsole(void)
 
     swprintf( conhost_path, ARRAY_SIZE(conhost_path), L"%s\\conhost.exe", system_dir );
     swprintf( cmd, ARRAY_SIZE(cmd),  L"\"%s\" --server 0x%x", conhost_path, condrv_handle( server ));
+    if (headless) wcscat( cmd, L" --headless" );
     Wow64DisableWow64FsRedirection( &redir );
     ret = CreateProcessW( conhost_path, cmd, NULL, NULL, TRUE, DETACHED_PROCESS, NULL, NULL, &console_si, &pi );
     Wow64RevertWow64FsRedirection( redir );
@@ -441,6 +439,15 @@ error:
     FreeConsole();
     RtlLeaveCriticalSection( &console_section );
     return FALSE;
+}
+
+
+/******************************************************************
+ *      AllocConsole   (kernelbase.@)
+ */
+BOOL WINAPI AllocConsole(void)
+{
+    return alloc_console( FALSE );
 }
 
 
@@ -2287,12 +2294,14 @@ void init_console( void )
             init_console_std_handles( FALSE );
         }
     }
-    else if (params->ConsoleHandle == CONSOLE_HANDLE_ALLOC)
+    else if (params->ConsoleHandle == CONSOLE_HANDLE_ALLOC ||
+             params->ConsoleHandle == CONSOLE_HANDLE_ALLOC_NO_WINDOW)
     {
+        BOOL no_window = params->ConsoleHandle == CONSOLE_HANDLE_ALLOC_NO_WINDOW;
         HMODULE mod = GetModuleHandleW( NULL );
         params->ConsoleHandle = NULL;
         if (RtlImageNtHeader( mod )->OptionalHeader.Subsystem == IMAGE_SUBSYSTEM_WINDOWS_CUI)
-            AllocConsole();
+            alloc_console( no_window );
     }
     else if (params->ConsoleHandle) create_console_connection( params->ConsoleHandle );
 }

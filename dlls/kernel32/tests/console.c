@@ -4754,7 +4754,6 @@ static void test_CreateProcessCUI(void)
     res = check_child_console_bits(cuiexec, CREATE_NEW_CONSOLE);
     ok(res == (CP_WITH_CONSOLE | CP_WITH_HANDLE | CP_WITH_WINDOW | CP_ALONE), "Unexpected result %x\n", res);
     res = check_child_console_bits(cuiexec, CREATE_NO_WINDOW);
-    todo_wine
     ok(res == (CP_WITH_CONSOLE | CP_WITH_HANDLE | CP_ALONE), "Unexpected result %x\n", res);
     res = check_child_console_bits(cuiexec, DETACHED_PROCESS | CREATE_NO_WINDOW);
     ok(res == 0, "Unexpected result %x\n", res);
@@ -4771,7 +4770,6 @@ static void test_CreateProcessCUI(void)
     res = check_child_console_bits(guiexec, CREATE_NEW_CONSOLE);
     ok(res == 0, "Unexpected result %x\n", res);
     res = check_child_console_bits(guiexec, CREATE_NO_WINDOW);
-    todo_wine
     ok(res == 0, "Unexpected result %x\n", res);
     res = check_child_console_bits(guiexec, DETACHED_PROCESS | CREATE_NO_WINDOW);
     ok(res == 0, "Unexpected result %x\n", res);
@@ -4785,7 +4783,6 @@ static void test_CreateProcessCUI(void)
     res = check_child_console_bits(cuiexec, CREATE_NEW_CONSOLE);
     ok(res == (CP_WITH_CONSOLE | CP_WITH_HANDLE | CP_WITH_WINDOW | CP_ALONE), "Unexpected result %x\n", res);
     res = check_child_console_bits(cuiexec, CREATE_NO_WINDOW);
-    todo_wine
     ok(res == (CP_WITH_CONSOLE | CP_WITH_HANDLE | CP_ALONE), "Unexpected result %x\n", res);
     res = check_child_console_bits(cuiexec, DETACHED_PROCESS | CREATE_NO_WINDOW);
     ok(res == 0, "Unexpected result %x\n", res);

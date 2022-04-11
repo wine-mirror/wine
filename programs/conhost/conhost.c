@@ -2650,7 +2650,7 @@ static NTSTATUS console_input_ioctl( struct console *console, unsigned int code,
             TRACE( "get window\n" );
             if (in_size || *out_size != sizeof(*result)) return STATUS_INVALID_PARAMETER;
             if (!(result = alloc_ioctl_buffer( sizeof(*result )))) return STATUS_NO_MEMORY;
-            if (!console->win) init_message_window( console );
+            if (!console->win && !console->no_window) init_message_window( console );
             *result = condrv_handle( console->win );
             return STATUS_SUCCESS;
         }
@@ -2929,8 +2929,13 @@ int __cdecl wmain(int argc, WCHAR *argv[])
     {
         console.tty_input  = GetStdHandle( STD_INPUT_HANDLE );
         console.tty_output = GetStdHandle( STD_OUTPUT_HANDLE );
-        init_tty_output( &console );
-        if (!console.is_unix && !ensure_tty_input_thread( &console )) return 1;
+
+        if (console.tty_input || console.tty_output)
+        {
+            init_tty_output( &console );
+            if (!console.is_unix && !ensure_tty_input_thread( &console )) return 1;
+        }
+        else console.no_window = TRUE;
     }
     else
     {

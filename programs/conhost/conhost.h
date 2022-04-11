@@ -79,6 +79,7 @@ struct console
     struct screen_buffer  *active;              /* active screen buffer */
     int                    is_unix;             /* UNIX terminal mode */
     int                    use_relative_cursor; /* use relative cursor positionning */
+    int                    no_window;           /* don't create console window */
     INPUT_RECORD          *records;             /* input records */
     unsigned int           record_count;        /* number of input records */
     unsigned int           record_size;         /* size of input records buffer */

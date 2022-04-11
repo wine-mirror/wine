@@ -188,7 +188,8 @@ struct condrv_ctrl_event
 };
 
 /* Wine specific values for console inheritance (params->ConsoleHandle) */
-#define CONSOLE_HANDLE_ALLOC  ((HANDLE)1)
-#define CONSOLE_HANDLE_SHELL  ((HANDLE)2)
+#define CONSOLE_HANDLE_ALLOC            UlongToHandle(1)
+#define CONSOLE_HANDLE_ALLOC_NO_WINDOW  UlongToHandle(2)
+#define CONSOLE_HANDLE_SHELL            UlongToHandle(3)
 
 #endif /* _INC_CONDRV */
