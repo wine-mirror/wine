@@ -2574,7 +2574,7 @@ static void test_query_directory(void)
     status = NtQueryDirectoryObject( NULL, info, sizeof(buffer), TRUE, TRUE, &context, &size );
     ok( status == STATUS_INVALID_HANDLE, "got %#lx\n", status );
     ok( context == 0xdeadbeef, "got context %#lx\n", context );
-    todo_wine ok( size == 0xdeadbeef || broken(!size) /* WoW64 */, "got size %lu\n", size);
+    ok( size == 0xdeadbeef || broken(!size) /* WoW64 */, "got size %lu\n", size);
 
     size = 0xdeadbeef;
     status = NtQueryDirectoryObject( dir, info, sizeof(buffer), TRUE, TRUE, NULL, &size );
