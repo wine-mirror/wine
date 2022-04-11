@@ -654,12 +654,38 @@ sync_test("property_definitions", function() {
 });
 
 sync_test("string_idx", function() {
-    var s = "foobar";
+    var i, s = "foobar";
     ok(s[0] === "f", "s[0] = " + s[0]);
     ok(s[5] === "r", "s[5] = " + s[5]);
     ok(s[6] === undefined, "s[6] = " + s[6]);
     ok((delete s[0]) === false, "delete s[0] returned true");
     ok((delete s[6]) === true, "delete s[6] returned false");
+    s[6] = "X";
+    ok(s[6] === undefined, "s[6] = " + s[6]);
+
+    s = new String(s);
+    test_own_data_prop_desc(s, "0", false, true, false);
+    test_own_data_prop_desc(s, "1", false, true, false);
+    ok(!s.hasOwnProperty("6"), "'6' is a property");
+
+    s[7] = "X";
+    ok(s[7] === "X", "s[7] = " + s[7]);
+    // s.hasOwnProperty("7") returns false on Win8 likely due to a bug in its js engine
+
+    Object.defineProperty(s, "8", {writable: false, enumerable: true, configurable: true, value: "Y"});
+    ok(s[8] === "Y", "s[8] = " + s[8]);
+    ok(s.hasOwnProperty("8"), "'8' not a property");
+
+    String.prototype[9] = "Z";
+    ok(s[9] === "Z", "s[9] = " + s[9]);
+    delete String.prototype[9];
+
+    i = 0;
+    for(var idx in s) {
+        ok(s[idx] === "foobar XY"[idx], "enum s[" + idx + "] = " + s[idx]);
+        i++;
+    }
+    ok(i === 8, "enum did " + i + " iterations");
 });
 
 sync_test("string_trim", function() {

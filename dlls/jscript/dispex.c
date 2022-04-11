@@ -285,7 +285,10 @@ static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, 
         for(ptr = name; is_digit(*ptr) && idx < 0x10000; ptr++)
             idx = idx*10 + (*ptr-'0');
         if(!*ptr && idx < This->builtin_info->idx_length(This)) {
-            prop = alloc_prop(This, name, PROP_IDX, This->builtin_info->idx_put ? PROPF_WRITABLE : 0);
+            unsigned flags = PROPF_ENUMERABLE;
+            if(This->builtin_info->idx_put)
+                flags |= PROPF_WRITABLE;
+            prop = alloc_prop(This, name, PROP_IDX, flags);
             if(!prop)
                 return E_OUTOFMEMORY;
 
@@ -2444,6 +2447,18 @@ HRESULT jsdisp_next_prop(jsdisp_t *obj, DISPID id, enum jsdisp_enum_type enum_ty
     HRESULT hres;
 
     if(id == DISPID_STARTENUM) {
+        if(obj->builtin_info->idx_length) {
+            unsigned i = 0, len = obj->builtin_info->idx_length(obj);
+            WCHAR name[12];
+
+            for(i = 0; i < len; i++) {
+                swprintf(name, ARRAY_SIZE(name), L"%d", i);
+                hres = find_prop_name(obj, string_hash(name), name, &iter);
+                if(FAILED(hres))
+                    return hres;
+            }
+        }
+
         if (enum_type == JSDISP_ENUM_ALL) {
             hres = fill_protrefs(obj);
             if(FAILED(hres))
