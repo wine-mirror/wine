@@ -1956,9 +1956,30 @@ static HRESULT WINAPI video_mixer_processor_GetAvailableVideoProcessorModes(IMFV
 static HRESULT WINAPI video_mixer_processor_GetVideoProcessorCaps(IMFVideoProcessor *iface, GUID *mode,
         DXVA2_VideoProcessorCaps *caps)
 {
-    FIXME("%p, %s, %p.\n", iface, debugstr_guid(mode), caps);
+    struct video_mixer *mixer = impl_from_IMFVideoProcessor(iface);
+    IDirectXVideoProcessorService *service;
+    DXVA2_VideoDesc video_desc;
+    GUID subtype = { 0 };
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %p.\n", iface, debugstr_guid(mode), caps);
+
+    EnterCriticalSection(&mixer->cs);
+
+    if (!mixer->inputs[0].media_type || !mixer->output.media_type)
+        hr = MF_E_TRANSFORM_TYPE_NOT_SET;
+    else if (SUCCEEDED(hr = video_mixer_get_processor_service(mixer, &service)))
+    {
+        video_mixer_init_dxva_videodesc(mixer->inputs[0].media_type, &video_desc);
+        IMFMediaType_GetGUID(mixer->output.media_type, &MF_MT_SUBTYPE, &subtype);
+
+        hr = IDirectXVideoProcessorService_GetVideoProcessorCaps(service, mode, &video_desc, subtype.Data1, caps);
+        IDirectXVideoProcessorService_Release(service);
+    }
+
+    LeaveCriticalSection(&mixer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_mixer_processor_GetVideoProcessorMode(IMFVideoProcessor *iface, GUID *mode)
