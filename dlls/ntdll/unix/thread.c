@@ -71,10 +71,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(thread);
 WINE_DECLARE_DEBUG_CHANNEL(seh);
 
-#ifndef PTHREAD_STACK_MIN
-#define PTHREAD_STACK_MIN 16384
-#endif
-
 static int nb_threads = 1;
 
 static inline int get_unix_exit_code( NTSTATUS status )
