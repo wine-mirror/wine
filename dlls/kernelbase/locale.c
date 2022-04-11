@@ -5580,8 +5580,10 @@ INT WINAPI DECLSPEC_HOTPATCH IdnToUnicode( DWORD flags, const WCHAR *src, INT sr
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsCharAlphaA( CHAR c )
 {
-    WCHAR wc = nls_info.AnsiTableInfo.MultiByteTable[(unsigned char)c];
-    return !!(get_char_type( CT_CTYPE1, wc ) & C1_ALPHA);
+    WCHAR wc;
+    DWORD reslen;
+    RtlMultiByteToUnicodeN( &wc, sizeof(WCHAR), &reslen, &c, 1 );
+    return reslen && (get_char_type( CT_CTYPE1, wc ) & C1_ALPHA);
 }
 
 
@@ -5599,8 +5601,10 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsCharAlphaW( WCHAR wc )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsCharAlphaNumericA( CHAR c )
 {
-    WCHAR wc = nls_info.AnsiTableInfo.MultiByteTable[(unsigned char)c];
-    return !!(get_char_type( CT_CTYPE1, wc ) & (C1_ALPHA | C1_DIGIT));
+    WCHAR wc;
+    DWORD reslen;
+    RtlMultiByteToUnicodeN( &wc, sizeof(WCHAR), &reslen, &c, 1 );
+    return reslen && (get_char_type( CT_CTYPE1, wc ) & (C1_ALPHA | C1_DIGIT));
 }
 
 
@@ -5645,8 +5649,10 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsCharDigitW( WCHAR wc )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsCharLowerA( CHAR c )
 {
-    WCHAR wc = nls_info.AnsiTableInfo.MultiByteTable[(unsigned char)c];
-    return !!(get_char_type( CT_CTYPE1, wc ) & C1_LOWER);
+    WCHAR wc;
+    DWORD reslen;
+    RtlMultiByteToUnicodeN( &wc, sizeof(WCHAR), &reslen, &c, 1 );
+    return reslen && (get_char_type( CT_CTYPE1, wc ) & C1_LOWER);
 }
 
 
@@ -5673,8 +5679,10 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsCharPunctW( WCHAR wc )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsCharSpaceA( CHAR c )
 {
-    WCHAR wc = nls_info.AnsiTableInfo.MultiByteTable[(unsigned char)c];
-    return !!(get_char_type( CT_CTYPE1, wc ) & C1_SPACE);
+    WCHAR wc;
+    DWORD reslen;
+    RtlMultiByteToUnicodeN( &wc, sizeof(WCHAR), &reslen, &c, 1 );
+    return reslen && (get_char_type( CT_CTYPE1, wc ) & C1_SPACE);
 }
 
 
@@ -5692,8 +5700,10 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsCharSpaceW( WCHAR wc )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsCharUpperA( CHAR c )
 {
-    WCHAR wc = nls_info.AnsiTableInfo.MultiByteTable[(unsigned char)c];
-    return !!(get_char_type( CT_CTYPE1, wc ) & C1_UPPER);
+    WCHAR wc;
+    DWORD reslen;
+    RtlMultiByteToUnicodeN( &wc, sizeof(WCHAR), &reslen, &c, 1 );
+    return reslen && (get_char_type( CT_CTYPE1, wc ) & C1_UPPER);
 }
 
 
