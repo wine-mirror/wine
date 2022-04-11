@@ -83,13 +83,7 @@ static char user_locale[LOCALE_NAME_MAX_LENGTH];
 const WCHAR system_dir[] = {'\\','?','?','\\','C',':','\\','w','i','n','d','o','w','s','\\',
                             's','y','s','t','e','m','3','2','\\',0};
 
-static struct
-{
-    USHORT *data;
-    USHORT *dbcs;
-    USHORT *mbtable;
-    void   *wctable;
-} unix_cp;
+static CPTABLEINFO unix_cp = { CP_UTF8, 4, '?', 0xfffd, '?', '?' };
 
 static char *get_nls_file_path( ULONG type, ULONG id )
 {
@@ -276,17 +270,6 @@ static const struct { const char *name; UINT cp; } charset_names[] =
     { "UTF8", CP_UTF8 }
 };
 
-static void init_unix_cptable( USHORT *ptr )
-{
-    unix_cp.data = ptr;
-    ptr += ptr[0];
-    unix_cp.wctable = ptr + ptr[0] + 1;
-    unix_cp.mbtable = ++ptr;
-    ptr += 256;
-    if (*ptr++) ptr += 256;  /* glyph table */
-    if (*ptr) unix_cp.dbcs = ptr + 1; /* dbcs ranges */
-}
-
 static void init_unix_codepage(void)
 {
     char charset_name[16];
@@ -315,7 +298,7 @@ static void init_unix_codepage(void)
             if (charset_names[pos].cp != CP_UTF8)
             {
                 void *data = read_nls_file( NLS_SECTION_CODEPAGE, charset_names[pos].cp );
-                if (data) init_unix_cptable( data );
+                if (data) init_codepage_table( data, &unix_cp );
             }
             return;
         }
@@ -378,42 +361,14 @@ static BOOL is_dynamic_env_var( const char *var )
  */
 DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen )
 {
-    DWORD reslen;
+    unsigned int reslen;
 
-    if (unix_cp.data)
-    {
-        DWORD i;
+    if (unix_cp.CodePage != CP_UTF8) return cp_mbstowcs( &unix_cp, dst, dstlen, src, srclen );
 
-        if (unix_cp.dbcs)
-        {
-            for (i = dstlen; srclen && i; i--, srclen--, src++, dst++)
-            {
-                USHORT off = unix_cp.dbcs[(unsigned char)*src];
-                if (off && srclen > 1)
-                {
-                    src++;
-                    srclen--;
-                    *dst = unix_cp.dbcs[off + (unsigned char)*src];
-                }
-                else *dst = unix_cp.mbtable[(unsigned char)*src];
-            }
-            reslen = dstlen - i;
-        }
-        else
-        {
-            reslen = min( srclen, dstlen );
-            for (i = 0; i < reslen; i++) dst[i] = unix_cp.mbtable[(unsigned char)src[i]];
-        }
-    }
-    else  /* utf-8 */
-    {
-        reslen = 0;
-        RtlUTF8ToUnicodeN( dst, dstlen * sizeof(WCHAR), &reslen, src, srclen );
-        reslen /= sizeof(WCHAR);
+    utf8_mbstowcs( dst, dstlen, &reslen, src, srclen );
 #ifdef __APPLE__  /* work around broken Mac OS X filesystem that enforces NFD */
-        if (reslen && nfc_table) reslen = compose_string( nfc_table, dst, reslen );
+    if (reslen && nfc_table) reslen = compose_string( nfc_table, dst, reslen );
 #endif
-    }
     return reslen;
 }
 
@@ -423,98 +378,40 @@ DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen )
  */
 int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict )
 {
-    DWORD i, reslen;
+    unsigned int i, reslen;
 
-    if (unix_cp.data)
+    if (unix_cp.CodePage != CP_UTF8)
     {
-        if (unix_cp.dbcs)
+        if (strict)
         {
-            const unsigned short *uni2cp = unix_cp.wctable;
-            for (i = dstlen; srclen && i; i--, srclen--, src++)
+            if (unix_cp.DBCSCodePage)
             {
-                unsigned short ch = uni2cp[*src];
-                if (ch >> 8)
+                const WCHAR *uni2cp = unix_cp.WideCharTable;
+                for (i = 0; i < srclen; i++)
                 {
-                    if (strict && unix_cp.dbcs[unix_cp.dbcs[ch >> 8] + (ch & 0xff)] != *src) return -1;
-                    if (i == 1) break;  /* do not output a partial char */
-                    i--;
-                    *dst++ = ch >> 8;
-                }
-                else
-                {
-                    if (unix_cp.mbtable[ch] != *src) return -1;
-                    *dst++ = (char)ch;
+                    WCHAR ch = uni2cp[src[i]];
+                    if (ch >> 8)
+                    {
+                        if (unix_cp.DBCSOffsets[unix_cp.DBCSOffsets[ch >> 8] + (ch & 0xff)] != src[i])
+                            return -1;
+                    }
+                    else if (unix_cp.MultiByteTable[(unsigned char)ch] != src[i]) return -1;
                 }
             }
-            reslen = dstlen - i;
-        }
-        else
-        {
-            const unsigned char *uni2cp = unix_cp.wctable;
-            reslen = min( srclen, dstlen );
-            for (i = 0; i < reslen; i++)
+            else
             {
-                unsigned char ch = uni2cp[src[i]];
-                if (strict && unix_cp.mbtable[ch] != src[i]) return -1;
-                dst[i] = ch;
+                const char *uni2cp = unix_cp.WideCharTable;
+                for (i = 0; i < srclen; i++)
+                    if (unix_cp.MultiByteTable[(unsigned char)uni2cp[src[i]]] != src[i])
+                        return -1;
             }
         }
+        reslen = cp_wcstombs( &unix_cp, dst, dstlen, src, srclen );
     }
-    else  /* utf-8 */
+    else
     {
-        char *end;
-        unsigned int val;
-
-        for (end = dst + dstlen; srclen; srclen--, src++)
-        {
-            WCHAR ch = *src;
-
-            if (ch < 0x80)  /* 0x00-0x7f: 1 byte */
-            {
-                if (dst > end - 1) break;
-                *dst++ = ch;
-                continue;
-            }
-            if (ch < 0x800)  /* 0x80-0x7ff: 2 bytes */
-            {
-                if (dst > end - 2) break;
-                dst[1] = 0x80 | (ch & 0x3f);
-                ch >>= 6;
-                dst[0] = 0xc0 | ch;
-                dst += 2;
-                continue;
-            }
-            if (!get_utf16( src, srclen, &val ))
-            {
-                if (strict) return -1;
-                val = 0xfffd;
-            }
-            if (val < 0x10000)  /* 0x800-0xffff: 3 bytes */
-            {
-                if (dst > end - 3) break;
-                dst[2] = 0x80 | (val & 0x3f);
-                val >>= 6;
-                dst[1] = 0x80 | (val & 0x3f);
-                val >>= 6;
-                dst[0] = 0xe0 | val;
-                dst += 3;
-            }
-            else   /* 0x10000-0x10ffff: 4 bytes */
-            {
-                if (dst > end - 4) break;
-                dst[3] = 0x80 | (val & 0x3f);
-                val >>= 6;
-                dst[2] = 0x80 | (val & 0x3f);
-                val >>= 6;
-                dst[1] = 0x80 | (val & 0x3f);
-                val >>= 6;
-                dst[0] = 0xf0 | val;
-                dst += 4;
-                src++;
-                srclen--;
-            }
-        }
-        reslen = dstlen - (end - dst);
+        NTSTATUS status = utf8_wcstombs( dst, dstlen, &reslen, src, srclen );
+        if (strict && status == STATUS_SOME_NOT_MAPPED) return -1;
     }
     return reslen;
 }
@@ -1140,9 +1037,9 @@ static void add_dynamic_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
     add_system_dll_path_var( env, pos, size );
     append_envA( env, pos, size, "WINEUSERNAME", user_name );
     append_envA( env, pos, size, "WINEDLLOVERRIDES", overrides );
-    if (unix_cp.data)
+    if (unix_cp.CodePage != CP_UTF8)
     {
-        sprintf( str, "%u", unix_cp.data[1] );
+        sprintf( str, "%u", unix_cp.CodePage );
         append_envA( env, pos, size, "WINEUNIXCP", str );
     }
     else append_envW( env, pos, size, "WINEUNIXCP", NULL );
