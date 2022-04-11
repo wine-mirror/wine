@@ -49,15 +49,15 @@ HRESULT WINAPI HlinkCreateFromMoniker( IMoniker *pimkTrgt, LPCWSTR pwzLocation,
         IUnknown* piunkOuter, REFIID riid, void** ppvObj)
 {
     IHlink *hl = NULL;
-    HRESULT r;
+    HRESULT hr;
 
     TRACE("%p %s %s %p %li %p %s %p\n", pimkTrgt, debugstr_w(pwzLocation),
             debugstr_w(pwzFriendlyName), pihlsite, dwSiteData, piunkOuter,
             debugstr_guid(riid), ppvObj);
 
-    r = CoCreateInstance(&CLSID_StdHlink, piunkOuter, CLSCTX_INPROC_SERVER, riid, (LPVOID*)&hl);
-    if (FAILED(r))
-        return r;
+    hr = CoCreateInstance(&CLSID_StdHlink, piunkOuter, CLSCTX_INPROC_SERVER, &IID_IHlink, (LPVOID*)&hl);
+    if (FAILED(hr))
+        return hr;
 
     IHlink_SetMonikerReference(hl, HLINKSETF_LOCATION | HLINKSETF_TARGET, pimkTrgt, pwzLocation);
 
@@ -66,11 +66,10 @@ HRESULT WINAPI HlinkCreateFromMoniker( IMoniker *pimkTrgt, LPCWSTR pwzLocation,
     if (pihlsite)
         IHlink_SetHlinkSite(hl, pihlsite, dwSiteData);
 
-    *ppvObj = hl;
+    hr = IHlink_QueryInterface(hl, riid, ppvObj);
+    IHlink_Release(hl);
 
-    TRACE("Returning %lx\n",r);
-
-    return r;
+    return hr;
 }
 
 /***********************************************************************

@@ -2607,6 +2607,22 @@ static void test_HlinkUpdateStackItem(void)
     CHECK_CALLED(HLF_UpdateHlink);
 }
 
+static void test_HlinkCreateFromMoniker(void)
+{
+    IPersistStream *stream;
+    IMoniker *moniker;
+    HRESULT hr;
+
+    hr = CreateItemMoniker(L"1", L"1", &moniker);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = HlinkCreateFromMoniker(moniker, L"1", L"a", NULL, 0, NULL, &IID_IPersistStream, (void **)&stream);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    IPersistStream_Release(stream);
+
+    IMoniker_Release(moniker);
+}
+
 START_TEST(hlink)
 {
     CoInitialize(NULL);
@@ -2627,6 +2643,7 @@ START_TEST(hlink)
     test_StdHlink();
     test_Hlink_Navigate();
     test_HlinkUpdateStackItem();
+    test_HlinkCreateFromMoniker();
 
     CoUninitialize();
 }
