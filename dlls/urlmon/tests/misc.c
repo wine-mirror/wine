@@ -1635,6 +1635,26 @@ static void test_user_agent(void)
     ok(hres == E_OUTOFMEMORY, "UrlMkGetSessionOption failed: %08lx\n", hres);
     ok(size == sizeof(test_str) && !memcmp(str2, test_str, sizeof(test_str)), "wrong user agent\n");
 
+    for(i = 0; i < 12; i++) {
+        size = sizeof(ua);
+        hres = pObtainUserAgentString(i, ua, &size);
+        ok(hres == S_OK, "[%u] ObtainUserAgentString failed: %08lx\n", i, hres);
+        ok(size == strlen(ua) + 1, "[%u] unexpected size %lu, expected %Iu\n", i, size, strlen(ua) + 1);
+        if(i >= 7)
+            ok(strcmp(ua, test_str), "[%u] unexpected UA, did not expect \"test\"\n", i);
+        else
+            ok(!strcmp(ua, test_str), "[%u] unexpected UA %s, expected \"test\"\n", i, wine_dbgstr_a(ua));
+
+        size = sizeof(ua);
+        hres = pObtainUserAgentString(i | UAS_EXACTLEGACY, ua, &size);
+        ok(hres == S_OK, "[%u] ObtainUserAgentString failed: %08lx\n", i, hres);
+        ok(size == strlen(ua) + 1, "[%u] unexpected size %lu, expected %Iu\n", i, size, strlen(ua) + 1);
+        if(i == 7)
+            ok(strcmp(ua, test_str), "[%u] unexpected UA, did not expect \"test\"\n", i);
+        else
+            ok(!strcmp(ua, test_str), "[%u] unexpected UA %s, expected \"test\"\n", i, wine_dbgstr_a(ua));
+    }
+
     hres = UrlMkSetSessionOption(URLMON_OPTION_USERAGENT, test2_str, sizeof(test2_str), 0);
     ok(hres == S_OK, "UrlMkSetSessionOption failed: %08lx\n", hres);
 

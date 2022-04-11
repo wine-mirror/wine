@@ -508,9 +508,9 @@ static BOOL user_agent_set;
 
 static size_t obtain_user_agent(unsigned int version, WCHAR *ret, size_t size)
 {
+    BOOL is_wow, quirks = FALSE, use_current = FALSE;
     OSVERSIONINFOW info = {sizeof(info)};
     const WCHAR *os_type, *is_nt;
-    BOOL is_wow, quirks = FALSE;
     DWORD res;
     size_t len = 0;
     HKEY key;
@@ -519,17 +519,18 @@ static size_t obtain_user_agent(unsigned int version, WCHAR *ret, size_t size)
         version &= ~UAS_EXACTLEGACY;
         if(version == 7)
             quirks = TRUE;
-        else
+        else {
+            use_current = TRUE;
             version = 7;
-    }else if(version < 7) {
-        version = 7;
+        }
     }
+
     if(version > 11) {
         FIXME("Unsupported version %u\n", version);
         version = 11;
     }
 
-    if(version < 7 || (version == 7 && !quirks)) {
+    if(version < 7 || use_current) {
         EnterCriticalSection(&session_cs);
         if(user_agent) {
             len = wcslen(user_agent) + 1;
@@ -538,6 +539,9 @@ static size_t obtain_user_agent(unsigned int version, WCHAR *ret, size_t size)
         LeaveCriticalSection(&session_cs);
         if(len) return len;
     }
+
+    if(version < 7)
+        version = 7;
 
     swprintf(ret, size, L"Mozilla/%s (", version < 9 ? L"4.0" : L"5.0");
     len = lstrlenW(ret);
