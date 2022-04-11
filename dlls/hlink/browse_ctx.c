@@ -53,14 +53,17 @@ static HRESULT WINAPI IHlinkBC_fnQueryInterface( IHlinkBrowseContext *iface,
 
     if (IsEqualIID(riid, &IID_IUnknown) ||
         IsEqualIID(riid, &IID_IHlinkBrowseContext))
-        *ppvObj = This;
-
-    if (*ppvObj)
     {
-        IUnknown_AddRef((IUnknown*)(*ppvObj));
-        return S_OK;
+        *ppvObj = &This->IHlinkBrowseContext_iface;
     }
-    return E_NOINTERFACE;
+    else
+    {
+        *ppvObj = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*ppvObj);
+    return S_OK;
 }
 
 static ULONG WINAPI IHlinkBC_fnAddRef (IHlinkBrowseContext* iface)
@@ -368,6 +371,7 @@ static const IHlinkBrowseContextVtbl hlvt =
 HRESULT HLinkBrowseContext_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv)
 {
     HlinkBCImpl * hl;
+    HRESULT hr;
 
     TRACE("unkOut=%p riid=%s\n", pUnkOuter, debugstr_guid(riid));
     *ppv = NULL;
@@ -383,6 +387,8 @@ HRESULT HLinkBrowseContext_Constructor(IUnknown *pUnkOuter, REFIID riid, void **
     hl->IHlinkBrowseContext_iface.lpVtbl = &hlvt;
     list_init(&hl->links);
 
-    *ppv = hl;
-    return S_OK;
+    hr = IHlinkBrowseContext_QueryInterface(&hl->IHlinkBrowseContext_iface, riid, ppv);
+    IHlinkBrowseContext_Release(&hl->IHlinkBrowseContext_iface);
+
+    return hr;
 }

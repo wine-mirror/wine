@@ -197,10 +197,20 @@ static void test_GetObject(void)
     IMoniker_Release(dummy);
 }
 
+static void test_interfaces(void)
+{
+    IHlinkBrowseContext *bc;
+    HRESULT hr;
+
+    hr = HlinkCreateBrowseContext(NULL, &IID_IMoniker, (void **)&bc);
+    ok(hr == E_NOINTERFACE, "Unexpected hr %#lx.\n", hr);
+}
+
 START_TEST(browse_ctx)
 {
     CoInitialize(NULL);
 
+    test_interfaces();
     test_SetInitialHlink();
     test_BrowseWindowInfo();
     test_GetObject();
