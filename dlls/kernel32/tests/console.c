@@ -4689,7 +4689,7 @@ static void copy_change_subsystem(const char* in, const char* out, DWORD subsyst
     CloseHandle(hFile);
 }
 
-static BOOL check_whether_child_attached(const char* exec, DWORD flags)
+static DWORD check_child_console_bits(const char* exec, DWORD flags)
 {
     STARTUPINFOA si = { sizeof(si) };
     PROCESS_INFORMATION info;
@@ -4705,11 +4705,17 @@ static BOOL check_whether_child_attached(const char* exec, DWORD flags)
     ret = WaitForSingleObject(info.hProcess, 30000);
     ok(ret == WAIT_OBJECT_0, "Could not wait for the child process: %ld le=%lu\n",
         ret, GetLastError());
-    ret = GetExitCodeProcess(info.hProcess, &exit_code);
-    ok(ret && exit_code <= 255, "Couldn't get exit_code\n");
+    res = GetExitCodeProcess(info.hProcess, &exit_code);
+    ok(res && exit_code <= 255, "Couldn't get exit_code\n");
     CloseHandle(info.hProcess);
-    return exit_code != 0;
+    return exit_code;
 }
+
+#define CP_WITH_CONSOLE  0x01   /* attached to a console */
+#define CP_WITH_HANDLE   0x02   /* child has a console handle */
+#define CP_WITH_WINDOW   0x04   /* child has a console window */
+#define CP_ALONE         0x08   /* whether child is the single process attached to console */
+#define CP_GROUP_LEADER  0x10   /* whether the child is the process group leader */
 
 static void test_CreateProcessCUI(void)
 {
@@ -4728,14 +4734,63 @@ static void test_CreateProcessCUI(void)
 
     FreeConsole();
 
-    res = check_whether_child_attached(guiexec, DETACHED_PROCESS);
-    ok(!res, "Don't expecting child to be attached to a console\n");
-    res = check_whether_child_attached(guiexec, 0);
-    ok(!res, "Don't expecting child to be attached to a console\n");
-    res = check_whether_child_attached(cuiexec, DETACHED_PROCESS);
-    ok(!res, "Don't expecting child to be attached to a console\n");
-    res = check_whether_child_attached(cuiexec, 0);
-    ok(res, "Expecting child to be attached to a console\n");
+    res = check_child_console_bits(guiexec, 0);
+    ok(res == 0, "Unexpected result %x\n", res);
+    res = check_child_console_bits(guiexec, DETACHED_PROCESS);
+    ok(res == 0, "Unexpected result %x\n", res);
+    res = check_child_console_bits(guiexec, CREATE_NEW_CONSOLE);
+    ok(res == 0, "Unexpected result %x\n", res);
+    res = check_child_console_bits(guiexec, CREATE_NO_WINDOW);
+    ok(res == 0, "Unexpected result %x\n", res);
+    res = check_child_console_bits(guiexec, DETACHED_PROCESS | CREATE_NO_WINDOW);
+    ok(res == 0, "Unexpected result %x\n", res);
+    res = check_child_console_bits(guiexec, CREATE_NEW_CONSOLE | CREATE_NO_WINDOW);
+    ok(res == 0, "Unexpected result %x\n", res);
+
+    res = check_child_console_bits(cuiexec, 0);
+    ok(res == (CP_WITH_CONSOLE | CP_WITH_HANDLE | CP_WITH_WINDOW | CP_ALONE), "Unexpected result %x\n", res);
+    res = check_child_console_bits(cuiexec, DETACHED_PROCESS);
+    ok(res == 0, "Unexpected result %x\n", res);
+    res = check_child_console_bits(cuiexec, CREATE_NEW_CONSOLE);
+    ok(res == (CP_WITH_CONSOLE | CP_WITH_HANDLE | CP_WITH_WINDOW | CP_ALONE), "Unexpected result %x\n", res);
+    res = check_child_console_bits(cuiexec, CREATE_NO_WINDOW);
+    todo_wine
+    ok(res == (CP_WITH_CONSOLE | CP_WITH_HANDLE | CP_ALONE), "Unexpected result %x\n", res);
+    res = check_child_console_bits(cuiexec, DETACHED_PROCESS | CREATE_NO_WINDOW);
+    ok(res == 0, "Unexpected result %x\n", res);
+    res = check_child_console_bits(cuiexec, CREATE_NEW_CONSOLE | CREATE_NO_WINDOW);
+    ok(res == (CP_WITH_CONSOLE | CP_WITH_HANDLE | CP_WITH_WINDOW | CP_ALONE), "Unexpected result %x\n", res);
+
+    AllocConsole();
+
+    res = check_child_console_bits(guiexec, 0);
+    todo_wine
+    ok(res == 0, "Unexpected result %x\n", res);
+    res = check_child_console_bits(guiexec, DETACHED_PROCESS);
+    ok(res == 0, "Unexpected result %x\n", res);
+    res = check_child_console_bits(guiexec, CREATE_NEW_CONSOLE);
+    ok(res == 0, "Unexpected result %x\n", res);
+    res = check_child_console_bits(guiexec, CREATE_NO_WINDOW);
+    todo_wine
+    ok(res == 0, "Unexpected result %x\n", res);
+    res = check_child_console_bits(guiexec, DETACHED_PROCESS | CREATE_NO_WINDOW);
+    ok(res == 0, "Unexpected result %x\n", res);
+    res = check_child_console_bits(guiexec, CREATE_NEW_CONSOLE | CREATE_NO_WINDOW);
+    ok(res == 0, "Unexpected result %x\n", res);
+
+    res = check_child_console_bits(cuiexec, 0);
+    ok(res == (CP_WITH_CONSOLE | CP_WITH_HANDLE | CP_WITH_WINDOW), "Unexpected result %x\n", res);
+    res = check_child_console_bits(cuiexec, DETACHED_PROCESS);
+    ok(res == 0, "Unexpected result %x\n", res);
+    res = check_child_console_bits(cuiexec, CREATE_NEW_CONSOLE);
+    ok(res == (CP_WITH_CONSOLE | CP_WITH_HANDLE | CP_WITH_WINDOW | CP_ALONE), "Unexpected result %x\n", res);
+    res = check_child_console_bits(cuiexec, CREATE_NO_WINDOW);
+    todo_wine
+    ok(res == (CP_WITH_CONSOLE | CP_WITH_HANDLE | CP_ALONE), "Unexpected result %x\n", res);
+    res = check_child_console_bits(cuiexec, DETACHED_PROCESS | CREATE_NO_WINDOW);
+    ok(res == 0, "Unexpected result %x\n", res);
+    res = check_child_console_bits(cuiexec, CREATE_NEW_CONSOLE | CREATE_NO_WINDOW);
+    ok(res == (CP_WITH_CONSOLE | CP_WITH_HANDLE | CP_WITH_WINDOW | CP_ALONE), "Unexpected result %x\n", res);
 
     DeleteFileA(guiexec);
     DeleteFileA(cuiexec);
@@ -4771,7 +4826,15 @@ START_TEST(console)
 
     if (argc == 3 && !strcmp(argv[2], "check_console"))
     {
-        ExitProcess(GetConsoleCP() != 0);
+        DWORD exit_code = 0, pcslist;
+        if (GetConsoleCP() != 0) exit_code |= CP_WITH_CONSOLE;
+        if (RtlGetCurrentPeb()->ProcessParameters->ConsoleHandle) exit_code |= CP_WITH_HANDLE;
+        if (IsWindow(GetConsoleWindow())) exit_code |= CP_WITH_WINDOW;
+        if (pGetConsoleProcessList && GetConsoleProcessList(&pcslist, 1) == 1)
+            exit_code |= CP_ALONE;
+        if (RtlGetCurrentPeb()->ProcessParameters->ProcessGroupId == GetCurrentProcessId())
+            exit_code |= CP_GROUP_LEADER;
+        ExitProcess(exit_code);
     }
 
     test_current = argc >= 3 && !strcmp(argv[2], "--current");
