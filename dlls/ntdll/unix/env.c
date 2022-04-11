@@ -55,6 +55,7 @@
 #include "wine/condrv.h"
 #include "wine/debug.h"
 #include "unix_private.h"
+#include "locale_private.h"
 #include "error.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(environ);
@@ -89,14 +90,6 @@ static struct
     USHORT *mbtable;
     void   *wctable;
 } unix_cp;
-
-enum nls_section_type
-{
-    NLS_SECTION_SORTKEYS = 9,
-    NLS_SECTION_CASEMAP = 10,
-    NLS_SECTION_CODEPAGE = 11,
-    NLS_SECTION_NORMALIZE = 12
-};
 
 static char *get_nls_file_path( ULONG type, ULONG id )
 {
@@ -206,183 +199,15 @@ static NTSTATUS get_nls_section_name( ULONG type, ULONG id, WCHAR name[32] )
 }
 
 
-static int get_utf16( const WCHAR *src, unsigned int srclen, unsigned int *ch )
-{
-    if (IS_HIGH_SURROGATE( src[0] ))
-    {
-        if (srclen <= 1) return 0;
-        if (!IS_LOW_SURROGATE( src[1] )) return 0;
-        *ch = 0x10000 + ((src[0] & 0x3ff) << 10) + (src[1] & 0x3ff);
-        return 2;
-    }
-    if (IS_LOW_SURROGATE( src[0] )) return 0;
-    *ch = src[0];
-    return 1;
-}
-
-
 #ifdef __APPLE__
 
 /* The Apple filesystem enforces NFD so we need the compose tables to put it back into NFC */
-
-struct norm_table
-{
-    WCHAR   name[13];      /* 00 file name */
-    USHORT  checksum[3];   /* 1a checksum? */
-    USHORT  version[4];    /* 20 Unicode version */
-    USHORT  form;          /* 28 normalization form */
-    USHORT  len_factor;    /* 2a factor for length estimates */
-    USHORT  unknown1;      /* 2c */
-    USHORT  decomp_size;   /* 2e decomposition hash size */
-    USHORT  comp_size;     /* 30 composition hash size */
-    USHORT  unknown2;      /* 32 */
-    USHORT  classes;       /* 34 combining classes table offset */
-    USHORT  props_level1;  /* 36 char properties table level 1 offset */
-    USHORT  props_level2;  /* 38 char properties table level 2 offset */
-    USHORT  decomp_hash;   /* 3a decomposition hash table offset */
-    USHORT  decomp_map;    /* 3c decomposition character map table offset */
-    USHORT  decomp_seq;    /* 3e decomposition character sequences offset */
-    USHORT  comp_hash;     /* 40 composition hash table offset */
-    USHORT  comp_seq;      /* 42 composition character sequences offset */
-    /* BYTE[]       combining class values */
-    /* BYTE[0x2200] char properties index level 1 */
-    /* BYTE[]       char properties index level 2 */
-    /* WORD[]       decomposition hash table */
-    /* WORD[]       decomposition character map */
-    /* WORD[]       decomposition character sequences */
-    /* WORD[]       composition hash table */
-    /* WORD[]       composition character sequences */
-};
 
 static struct norm_table *nfc_table;
 
 static void init_unix_codepage(void)
 {
     nfc_table = read_nls_file( NLS_SECTION_NORMALIZE, NormalizationC );
-}
-
-static void put_utf16( WCHAR *dst, unsigned int ch )
-{
-    if (ch >= 0x10000)
-    {
-        ch -= 0x10000;
-        dst[0] = 0xd800 | (ch >> 10);
-        dst[1] = 0xdc00 | (ch & 0x3ff);
-    }
-    else dst[0] = ch;
-}
-
-static BYTE rol( BYTE val, BYTE count )
-{
-    return (val << count) | (val >> (8 - count));
-}
-
-
-static BYTE get_char_props( const struct norm_table *info, unsigned int ch )
-{
-    const BYTE *level1 = (const BYTE *)((const USHORT *)info + info->props_level1);
-    const BYTE *level2 = (const BYTE *)((const USHORT *)info + info->props_level2);
-    BYTE off = level1[ch / 128];
-
-    if (!off || off >= 0xfb) return rol( off, 5 );
-    return level2[(off - 1) * 128 + ch % 128];
-}
-
-static BYTE get_combining_class( const struct norm_table *info, unsigned int c )
-{
-    const BYTE *classes = (const BYTE *)((const USHORT *)info + info->classes);
-    BYTE class = get_char_props( info, c ) & 0x3f;
-
-    if (class == 0x3f) return 0;
-    return classes[class];
-}
-
-#define HANGUL_SBASE  0xac00
-#define HANGUL_LBASE  0x1100
-#define HANGUL_VBASE  0x1161
-#define HANGUL_TBASE  0x11a7
-#define HANGUL_LCOUNT 19
-#define HANGUL_VCOUNT 21
-#define HANGUL_TCOUNT 28
-#define HANGUL_NCOUNT (HANGUL_VCOUNT * HANGUL_TCOUNT)
-#define HANGUL_SCOUNT (HANGUL_LCOUNT * HANGUL_NCOUNT)
-
-static unsigned int compose_hangul( unsigned int ch1, unsigned int ch2 )
-{
-    if (ch1 >= HANGUL_LBASE && ch1 < HANGUL_LBASE + HANGUL_LCOUNT)
-    {
-        int lindex = ch1 - HANGUL_LBASE;
-        int vindex = ch2 - HANGUL_VBASE;
-        if (vindex >= 0 && vindex < HANGUL_VCOUNT)
-            return HANGUL_SBASE + (lindex * HANGUL_VCOUNT + vindex) * HANGUL_TCOUNT;
-    }
-    if (ch1 >= HANGUL_SBASE && ch1 < HANGUL_SBASE + HANGUL_SCOUNT)
-    {
-        int sindex = ch1 - HANGUL_SBASE;
-        if (!(sindex % HANGUL_TCOUNT))
-        {
-            int tindex = ch2 - HANGUL_TBASE;
-            if (tindex > 0 && tindex < HANGUL_TCOUNT) return ch1 + tindex;
-        }
-    }
-    return 0;
-}
-
-static unsigned int compose_chars( const struct norm_table *info, unsigned int ch1, unsigned int ch2 )
-{
-    const USHORT *table = (const USHORT *)info + info->comp_hash;
-    const WCHAR *chars = (const USHORT *)info + info->comp_seq;
-    unsigned int hash, start, end, i, len, ch[3];
-
-    hash = (ch1 + 95 * ch2) % info->comp_size;
-    start = table[hash];
-    end = table[hash + 1];
-    while (start < end)
-    {
-        for (i = 0; i < 3; i++, start += len) len = get_utf16( chars + start, end - start, ch + i );
-        if (ch[0] == ch1 && ch[1] == ch2) return ch[2];
-    }
-    return 0;
-}
-
-static unsigned int compose_string( const struct norm_table *info, WCHAR *str, unsigned int srclen )
-{
-    unsigned int i, ch, comp, len, start_ch = 0, last_starter = srclen;
-    BYTE class, prev_class = 0;
-
-    for (i = 0; i < srclen; i += len)
-    {
-        if (!(len = get_utf16( str + i, srclen - i, &ch ))) return 0;
-        class = get_combining_class( info, ch );
-        if (last_starter == srclen || (prev_class && prev_class >= class) ||
-            (!(comp = compose_hangul( start_ch, ch )) &&
-             !(comp = compose_chars( info, start_ch, ch ))))
-        {
-            if (!class)
-            {
-                last_starter = i;
-                start_ch = ch;
-            }
-            prev_class = class;
-        }
-        else
-        {
-            int comp_len = 1 + (comp >= 0x10000);
-            int start_len = 1 + (start_ch >= 0x10000);
-
-            if (comp_len != start_len)
-                memmove( str + last_starter + comp_len, str + last_starter + start_len,
-                         (i - (last_starter + start_len)) * sizeof(WCHAR) );
-            memmove( str + i + comp_len - start_len, str + i + len, (srclen - i - len) * sizeof(WCHAR) );
-            srclen += comp_len - start_len - len;
-            start_ch = comp;
-            i = last_starter;
-            len = comp_len;
-            prev_class = 0;
-            put_utf16( str + i, comp );
-        }
-    }
-    return srclen;
 }
 
 #elif defined(__ANDROID__)  /* Android always uses UTF-8 */
@@ -547,58 +372,6 @@ static BOOL is_dynamic_env_var( const char *var )
             STARTS_WITH( var, "WINELOADERNOEXEC=" ) ||
             STARTS_WITH( var, "WINESERVERSOCKET=" ));
 }
-
-static unsigned int decode_utf8_char( unsigned char ch, const char **str, const char *strend )
-{
-    /* number of following bytes in sequence based on first byte value (for bytes above 0x7f) */
-    static const char utf8_length[128] =
-    {
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x80-0x8f */
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0x90-0x9f */
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0xa0-0xaf */
-        0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0, /* 0xb0-0xbf */
-        0,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 0xc0-0xcf */
-        1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1, /* 0xd0-0xdf */
-        2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2, /* 0xe0-0xef */
-        3,3,3,3,3,0,0,0,0,0,0,0,0,0,0,0  /* 0xf0-0xff */
-    };
-
-    /* first byte mask depending on UTF-8 sequence length */
-    static const unsigned char utf8_mask[4] = { 0x7f, 0x1f, 0x0f, 0x07 };
-
-    unsigned int len = utf8_length[ch - 0x80];
-    unsigned int res = ch & utf8_mask[len];
-    const char *end = *str + len;
-
-    if (end > strend)
-    {
-        *str = end;
-        return ~0;
-    }
-    switch (len)
-    {
-    case 3:
-        if ((ch = end[-3] ^ 0x80) >= 0x40) break;
-        res = (res << 6) | ch;
-        (*str)++;
-        if (res < 0x10) break;
-    case 2:
-        if ((ch = end[-2] ^ 0x80) >= 0x40) break;
-        res = (res << 6) | ch;
-        if (res >= 0x110000 >> 6) break;
-        (*str)++;
-        if (res < 0x20) break;
-        if (res >= 0xd800 >> 6 && res <= 0xdfff >> 6) break;
-    case 1:
-        if ((ch = end[-1] ^ 0x80) >= 0x40) break;
-        res = (res << 6) | ch;
-        (*str)++;
-        if (res < 0x80) break;
-        return res;
-    }
-    return ~0;
-}
-
 
 /******************************************************************
  *      ntdll_umbstowcs  (ntdll.so)
