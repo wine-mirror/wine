@@ -2508,9 +2508,11 @@ static BOOL is_message_broadcastable( UINT msg )
  */
 static BOOL broadcast_message( struct send_message_info *info, DWORD_PTR *res_ptr )
 {
-    if (is_message_broadcastable( info->msg ))
+    HWND *list;
+
+    if (is_message_broadcastable( info->msg ) &&
+        (list = list_window_children( 0, get_desktop_window(), NULL, 0 )))
     {
-        HWND *list = list_window_children( 0, get_desktop_window(), NULL, 0 );
         int i;
 
         for (i = 0; list[i]; i++)
