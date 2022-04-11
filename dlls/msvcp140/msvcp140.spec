@@ -3632,7 +3632,7 @@
 @ cdecl _Cnd_timedwait(ptr ptr ptr)
 @ cdecl _Cnd_unregister_at_thread_exit(ptr)
 @ cdecl _Cnd_wait(ptr ptr)
-@ stub _Copy_file
+@ cdecl _Copy_file(wstr wstr)
 @ stub _Cosh
 @ cdecl _Current_get(ptr)
 @ cdecl _Current_set(wstr) tr2_sys__Current_set_wchar

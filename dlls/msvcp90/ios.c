@@ -15776,6 +15776,17 @@ enum file_type __cdecl _Stat(WCHAR const* path, int* permissions)
     return (attr & FILE_ATTRIBUTE_DIRECTORY) ? directory_file : regular_file;
 }
 
+/* _Copy_file, msvcp140 version */
+DWORD __cdecl _Copy_file(WCHAR const* src, WCHAR const* dst)
+{
+    TRACE("src %s, dst %s.\n", debugstr_w(src), debugstr_w(dst));
+
+    if (CopyFileW(src, dst, FALSE))
+        return ERROR_SUCCESS;
+
+    return GetLastError();
+}
+
 /* ?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PB_WAAH@Z */
 /* ?_Lstat@sys@tr2@std@@YA?AW4file_type@123@PEB_WAEAH@Z */
 enum file_type __cdecl tr2_sys__Lstat_wchar(WCHAR const* path, int* err_code)

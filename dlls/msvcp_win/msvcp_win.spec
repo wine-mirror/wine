@@ -3632,7 +3632,7 @@
 @ cdecl _Cnd_timedwait(ptr ptr ptr) msvcp140._Cnd_timedwait
 @ cdecl _Cnd_unregister_at_thread_exit(ptr) msvcp140._Cnd_unregister_at_thread_exit
 @ cdecl _Cnd_wait(ptr ptr) msvcp140._Cnd_wait
-@ stub _Copy_file
+@ cdecl _Copy_file(wstr wstr) msvcp140._Copy_file
 @ stub _Cosh
 @ cdecl _Current_get(ptr) msvcp140._Current_get
 @ cdecl _Current_set(wstr) msvcp140._Current_set
