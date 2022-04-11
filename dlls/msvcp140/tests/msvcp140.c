@@ -1619,7 +1619,7 @@ static void test_Copy_file(void)
     SetLastError(0xdeadbeef);
     ret = p_Copy_file(L"wine_test_dir/f1", L"wine_test_dir/f3");
     ok(ret == ERROR_SUCCESS, "Got unexpected ret %lu.\n", ret);
-    todo_wine ok(GetLastError() == ret, "Got unexpected err %lu.\n", GetLastError());
+    ok(GetLastError() == ret, "Got unexpected err %lu.\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = p_Copy_file(L"wine_test_dir/missing", L"wine_test_dir/f3");
