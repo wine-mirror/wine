@@ -167,6 +167,281 @@ static inline unsigned int decode_utf8_char( unsigned char ch, const char **str,
 }
 
 
+static inline void init_codepage_table( USHORT *ptr, CPTABLEINFO *info )
+{
+    USHORT hdr_size = ptr[0];
+
+    info->CodePage             = ptr[1];
+    info->MaximumCharacterSize = ptr[2];
+    info->DefaultChar          = ptr[3];
+    info->UniDefaultChar       = ptr[4];
+    info->TransDefaultChar     = ptr[5];
+    info->TransUniDefaultChar  = ptr[6];
+    memcpy( info->LeadByte, ptr + 7, sizeof(info->LeadByte) );
+    ptr += hdr_size;
+
+    info->WideCharTable = ptr + ptr[0] + 1;
+    info->MultiByteTable = ++ptr;
+    ptr += 256;
+    if (*ptr++) ptr += 256;  /* glyph table */
+    info->DBCSRanges = ptr;
+    if (*ptr)  /* dbcs ranges */
+    {
+        info->DBCSCodePage = 1;
+        info->DBCSOffsets  = ptr + 1;
+    }
+    else
+    {
+        info->DBCSCodePage = 0;
+        info->DBCSOffsets  = NULL;
+    }
+}
+
+
+static inline unsigned int cp_mbstowcs_size( const CPTABLEINFO *info, const char *str, unsigned int len )
+{
+    unsigned int res;
+
+    if (!info->DBCSCodePage) return len;
+
+    for (res = 0; len; len--, str++, res++)
+    {
+        if (info->DBCSOffsets[(unsigned char)*str] && len > 1)
+        {
+            str++;
+            len--;
+        }
+    }
+    return res;
+}
+
+
+static inline unsigned int cp_wcstombs_size( const CPTABLEINFO *info, const WCHAR *str, unsigned int len )
+{
+    if (info->DBCSCodePage)
+    {
+        WCHAR *uni2cp = info->WideCharTable;
+        unsigned int res;
+
+        for (res = 0; len; len--, str++, res++)
+            if (uni2cp[*str] & 0xff00) res++;
+        return res;
+    }
+    else return len;
+}
+
+
+static inline NTSTATUS utf8_wcstombs_size( const WCHAR *src, unsigned int srclen, unsigned int *reslen )
+{
+    unsigned int val, len;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    for (len = 0; srclen; srclen--, src++)
+    {
+        if (*src < 0x80) len++;  /* 0x00-0x7f: 1 byte */
+        else if (*src < 0x800) len += 2;  /* 0x80-0x7ff: 2 bytes */
+        else
+        {
+            if (!get_utf16( src, srclen, &val ))
+            {
+                val = 0xfffd;
+                status = STATUS_SOME_NOT_MAPPED;
+            }
+            if (val < 0x10000) len += 3; /* 0x800-0xffff: 3 bytes */
+            else   /* 0x10000-0x10ffff: 4 bytes */
+            {
+                len += 4;
+                src++;
+                srclen--;
+            }
+        }
+    }
+    *reslen = len;
+    return status;
+}
+
+
+static inline NTSTATUS utf8_mbstowcs_size( const char *src, unsigned int srclen, unsigned int *reslen )
+{
+    unsigned int res, len;
+    NTSTATUS status = STATUS_SUCCESS;
+    const char *srcend = src + srclen;
+
+    for (len = 0; src < srcend; len++)
+    {
+        unsigned char ch = *src++;
+        if (ch < 0x80) continue;
+        if ((res = decode_utf8_char( ch, &src, srcend )) > 0x10ffff)
+            status = STATUS_SOME_NOT_MAPPED;
+        else
+            if (res > 0xffff) len++;
+    }
+    *reslen = len;
+    return status;
+}
+
+
+static inline unsigned int cp_mbstowcs( const CPTABLEINFO *info, WCHAR *dst, unsigned int dstlen,
+                                        const char *src, unsigned int srclen )
+{
+    unsigned int i, ret;
+
+    if (info->DBCSOffsets)
+    {
+        for (i = dstlen; srclen && i; i--, srclen--, src++, dst++)
+        {
+            USHORT off = info->DBCSOffsets[(unsigned char)*src];
+            if (off && srclen > 1)
+            {
+                src++;
+                srclen--;
+                *dst = info->DBCSOffsets[off + (unsigned char)*src];
+            }
+            else *dst = info->MultiByteTable[(unsigned char)*src];
+        }
+        ret = dstlen - i;
+    }
+    else
+    {
+        ret = min( srclen, dstlen );
+        for (i = 0; i < ret; i++) dst[i] = info->MultiByteTable[(unsigned char)src[i]];
+    }
+    return ret;
+}
+
+
+static inline unsigned int cp_wcstombs( const CPTABLEINFO *info, char *dst, unsigned int dstlen,
+                                        const WCHAR *src, unsigned int srclen )
+{
+    unsigned int i, ret;
+
+    if (info->DBCSCodePage)
+    {
+        const WCHAR *uni2cp = info->WideCharTable;
+
+        for (i = dstlen; srclen && i; i--, srclen--, src++)
+        {
+            if (uni2cp[*src] & 0xff00)
+            {
+                if (i == 1) break;  /* do not output a partial char */
+                i--;
+                *dst++ = uni2cp[*src] >> 8;
+            }
+            *dst++ = (char)uni2cp[*src];
+        }
+        ret = dstlen - i;
+    }
+    else
+    {
+        const char *uni2cp = info->WideCharTable;
+        ret = min( srclen, dstlen );
+        for (i = 0; i < ret; i++) dst[i] = uni2cp[src[i]];
+    }
+    return ret;
+}
+
+
+static inline NTSTATUS utf8_mbstowcs( WCHAR *dst, unsigned int dstlen, unsigned int *reslen,
+                                      const char *src, unsigned int srclen )
+{
+    unsigned int res;
+    NTSTATUS status = STATUS_SUCCESS;
+    const char *srcend = src + srclen;
+    WCHAR *dstend = dst + dstlen;
+
+    while ((dst < dstend) && (src < srcend))
+    {
+        unsigned char ch = *src++;
+        if (ch < 0x80)  /* special fast case for 7-bit ASCII */
+        {
+            *dst++ = ch;
+            continue;
+        }
+        if ((res = decode_utf8_char( ch, &src, srcend )) <= 0xffff)
+        {
+            *dst++ = res;
+        }
+        else if (res <= 0x10ffff)  /* we need surrogates */
+        {
+            res -= 0x10000;
+            *dst++ = 0xd800 | (res >> 10);
+            if (dst == dstend) break;
+            *dst++ = 0xdc00 | (res & 0x3ff);
+        }
+        else
+        {
+            *dst++ = 0xfffd;
+            status = STATUS_SOME_NOT_MAPPED;
+        }
+    }
+    if (src < srcend) status = STATUS_BUFFER_TOO_SMALL;  /* overflow */
+    *reslen = dstlen - (dstend - dst);
+    return status;
+}
+
+
+static inline NTSTATUS utf8_wcstombs( char *dst, unsigned int dstlen, unsigned int *reslen,
+                                      const WCHAR *src, unsigned int srclen )
+{
+    char *end;
+    unsigned int val;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    for (end = dst + dstlen; srclen; srclen--, src++)
+    {
+        WCHAR ch = *src;
+
+        if (ch < 0x80)  /* 0x00-0x7f: 1 byte */
+        {
+            if (dst > end - 1) break;
+            *dst++ = ch;
+            continue;
+        }
+        if (ch < 0x800)  /* 0x80-0x7ff: 2 bytes */
+        {
+            if (dst > end - 2) break;
+            dst[1] = 0x80 | (ch & 0x3f);
+            ch >>= 6;
+            dst[0] = 0xc0 | ch;
+            dst += 2;
+            continue;
+        }
+        if (!get_utf16( src, srclen, &val ))
+        {
+            val = 0xfffd;
+            status = STATUS_SOME_NOT_MAPPED;
+        }
+        if (val < 0x10000)  /* 0x800-0xffff: 3 bytes */
+        {
+            if (dst > end - 3) break;
+            dst[2] = 0x80 | (val & 0x3f);
+            val >>= 6;
+            dst[1] = 0x80 | (val & 0x3f);
+            val >>= 6;
+            dst[0] = 0xe0 | val;
+            dst += 3;
+        }
+        else   /* 0x10000-0x10ffff: 4 bytes */
+        {
+            if (dst > end - 4) break;
+            dst[3] = 0x80 | (val & 0x3f);
+            val >>= 6;
+            dst[2] = 0x80 | (val & 0x3f);
+            val >>= 6;
+            dst[1] = 0x80 | (val & 0x3f);
+            val >>= 6;
+            dst[0] = 0xf0 | val;
+            dst += 4;
+            src++;
+            srclen--;
+        }
+    }
+    if (srclen) status = STATUS_BUFFER_TOO_SMALL;
+    *reslen = dstlen - (end - dst);
+    return status;
+}
+
+
 #define HANGUL_SBASE  0xac00
 #define HANGUL_LBASE  0x1100
 #define HANGUL_VBASE  0x1161
