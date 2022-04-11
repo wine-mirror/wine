@@ -1130,6 +1130,7 @@ static const IBindStatusCallbackVtbl bind_callback_vtbl =
 HRESULT HLink_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv)
 {
     HlinkImpl * hl;
+    HRESULT hr;
 
     TRACE("unkOut=%p riid=%s\n", pUnkOuter, debugstr_guid(riid));
     *ppv = NULL;
@@ -1146,6 +1147,8 @@ HRESULT HLink_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv)
     hl->IDataObject_iface.lpVtbl = &dovt;
     hl->IBindStatusCallback_iface.lpVtbl = &bind_callback_vtbl;
 
-    *ppv = hl;
-    return S_OK;
+    hr = IHlink_QueryInterface(&hl->IHlink_iface, riid, ppv);
+    IHlink_Release(&hl->IHlink_iface);
+
+    return hr;
 }
