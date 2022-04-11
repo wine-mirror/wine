@@ -83,6 +83,7 @@ static HRESULT (WINAPI *pCompareSecurityIds)(BYTE*,DWORD,BYTE*,DWORD,DWORD);
 static HRESULT (WINAPI *pCoInternetIsFeatureEnabled)(INTERNETFEATURELIST,DWORD);
 static HRESULT (WINAPI *pCoInternetSetFeatureEnabled)(INTERNETFEATURELIST,DWORD,BOOL);
 static HRESULT (WINAPI *pIEInstallScope)(DWORD*);
+static HRESULT (WINAPI *pMapBrowserEmulationModeToUserAgent)(const void*,WCHAR**);
 
 static WCHAR *a2co(const char *str)
 {
@@ -2721,6 +2722,59 @@ static void test_bsc_marshaling(void)
     TerminateThread(thread, 0);
 }
 
+static void test_MapBrowserEmulationModeToUserAgent(BOOL custom_ua)
+{
+    /* Undocumented structure of unknown size, crashes if it's too small (with arbitrary values from stack) */
+    struct
+    {
+        DWORD version;
+        char unknown[252];
+    } arg;
+    static char test_str[] = "test";
+    const char *custom_ua_msg = "";
+    HRESULT hres;
+    unsigned i;
+    WCHAR *ua;
+
+    if(!pMapBrowserEmulationModeToUserAgent) {
+        win_skip("MapBrowserEmulationModeToUserAgent not available\n");
+        return;
+    }
+    memset(&arg, 0, sizeof(arg));
+
+    if(custom_ua) {
+        hres = UrlMkSetSessionOption(URLMON_OPTION_USERAGENT, test_str, sizeof(test_str), 0);
+        ok(hres == S_OK, "UrlMkSetSessionOption failed: %08lx\n", hres);
+        custom_ua_msg = " (with custom ua)";
+    }
+
+    for(i = 0; i < 12; i++) {
+        arg.version = i;
+        ua = (WCHAR*)0xdeadbeef;
+        hres = pMapBrowserEmulationModeToUserAgent(&arg, &ua);
+        ok(hres == (i == 5 || i >= 7 || custom_ua ? S_OK : E_FAIL),
+           "[%u] MapBrowserEmulationModeToUserAgent%s returned %08lx\n", i, custom_ua_msg, hres);
+        if(hres != S_OK)
+            ok(ua == NULL, "[%u] ua%s = %p\n", i, custom_ua_msg, ua);
+        else {
+            char buf[1024];
+            DWORD size = sizeof(buf);
+            WCHAR *ua2;
+
+            if(custom_ua)
+                ua2 = a2co(test_str);
+            else {
+                hres = pObtainUserAgentString(i, buf, &size);
+                ok(hres == S_OK, "[%u] ObtainUserAgentString%s failed: %08lx\n", i, custom_ua_msg, hres);
+                ua2 = a2co(buf);
+            }
+            ok(!lstrcmpW(ua, ua2), "[%u] ua%s = %s, expected %s\n", i, custom_ua_msg, wine_dbgstr_w(ua), wine_dbgstr_w(ua2));
+            CoTaskMemFree(ua2);
+            CoTaskMemFree(ua);
+        }
+    }
+}
+
 START_TEST(misc)
 {
     HMODULE hurlmon;
@@ -2745,6 +2799,7 @@ START_TEST(misc)
     pCoInternetIsFeatureEnabled = (void*) GetProcAddress(hurlmon, "CoInternetIsFeatureEnabled");
     pCoInternetSetFeatureEnabled = (void*) GetProcAddress(hurlmon, "CoInternetSetFeatureEnabled");
     pIEInstallScope = (void*) GetProcAddress(hurlmon, "IEInstallScope");
+    pMapBrowserEmulationModeToUserAgent = (void*) GetProcAddress(hurlmon, (const char*)445);
 
     if (!pCoInternetCompareUrl || !pCoInternetGetSecurityUrl ||
         !pCoInternetGetSession || !pCoInternetParseUrl || !pCompareSecurityIds) {
@@ -2757,6 +2812,7 @@ START_TEST(misc)
     if(argc <= 2 || strcmp(argv[2], "internet_features")) {
         register_protocols();
 
+        test_MapBrowserEmulationModeToUserAgent(FALSE);
         test_CreateFormatEnum();
         test_RegisterFormatEnumerator();
         test_CoInternetParseUrl();
@@ -2773,6 +2829,7 @@ START_TEST(misc)
         test_MkParseDisplayNameEx();
         test_IsValidURL();
         test_bsc_marshaling();
+        test_MapBrowserEmulationModeToUserAgent(TRUE);
     }
 
     test_internet_features();

@@ -792,16 +792,6 @@ int WINAPI MapUriToBrowserEmulationState(DWORD unk1, DWORD unk2, DWORD unk3)
 }
 
 /***********************************************************************
- *           MapBrowserEmulationModeToUserAgent (URLMON.445)
- *    Undocumented, added in IE8
- */
-int WINAPI MapBrowserEmulationModeToUserAgent(DWORD unk1, DWORD unk2)
-{
-    FIXME("stub: %ld %ld\n", unk1, unk2);
-    return 0;
-}
-
-/***********************************************************************
  *           CoInternetGetBrowserProfile (URLMON.446)
  *    Undocumented, added in IE8
  */
