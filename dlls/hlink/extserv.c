@@ -89,10 +89,10 @@ static ULONG WINAPI ExtServUnk_Release(IUnknown *iface)
     TRACE("(%p) ref=%ld\n", This, ref);
 
     if(!ref) {
-        heap_free(This->username);
-        heap_free(This->password);
-        heap_free(This->headers);
-        heap_free(This);
+        free(This->username);
+        free(This->password);
+        free(This->headers);
+        free(This);
     }
 
     return ref;
@@ -236,7 +236,7 @@ static HRESULT ExtServ_ImplSetAdditionalHeaders(ExtensionService* This, LPCWSTR 
 {
     int len;
 
-    heap_free(This->headers);
+    free(This->headers);
     This->headers = NULL;
 
     if (!pwzAdditionalHeaders)
@@ -245,11 +245,11 @@ static HRESULT ExtServ_ImplSetAdditionalHeaders(ExtensionService* This, LPCWSTR 
     len = lstrlenW(pwzAdditionalHeaders);
 
     if(len && pwzAdditionalHeaders[len-1] != '\n' && pwzAdditionalHeaders[len-1] != '\r') {
-        This->headers = heap_alloc(len*sizeof(WCHAR) + sizeof(L"\r\n"));
+        This->headers = malloc(len*sizeof(WCHAR) + sizeof(L"\r\n"));
         memcpy(This->headers, pwzAdditionalHeaders, len*sizeof(WCHAR));
         memcpy(This->headers+len, L"\r\n", sizeof(L"\r\n"));
     }else {
-        This->headers = hlink_strdupW(pwzAdditionalHeaders);
+        This->headers = wcsdup(pwzAdditionalHeaders);
     }
 
     return S_OK;
@@ -266,12 +266,12 @@ static HRESULT WINAPI ExtServ_SetAdditionalHeaders(IExtensionServices* iface, LP
 
 static HRESULT ExtServ_ImplSetAuthenticateData(ExtensionService* This, HWND phwnd, LPCWSTR pwzUsername, LPCWSTR pwzPassword)
 {
-    heap_free(This->username);
-    heap_free(This->password);
+    free(This->username);
+    free(This->password);
 
     This->hwnd = phwnd;
-    This->username = hlink_strdupW(pwzUsername);
-    This->password = hlink_strdupW(pwzPassword);
+    This->username = wcsdup(pwzUsername);
+    This->password = wcsdup(pwzPassword);
 
     return S_OK;
 }
@@ -307,17 +307,14 @@ HRESULT WINAPI HlinkCreateExtensionServices(LPCWSTR pwzAdditionalHeaders,
             phwnd, debugstr_w(pszUsername), debugstr_w(pszPassword),
             punkOuter, debugstr_guid(riid), ppv);
 
-    ret = heap_alloc(sizeof(*ret));
+    if (!(ret = calloc(1, sizeof(*ret))))
+        return E_OUTOFMEMORY;
 
     ret->IUnknown_inner.lpVtbl = &ExtServUnkVtbl;
     ret->IAuthenticate_iface.lpVtbl = &AuthenticateVtbl;
     ret->IHttpNegotiate_iface.lpVtbl = &HttpNegotiateVtbl;
     ret->IExtensionServices_iface.lpVtbl = &ExtServVtbl;
     ret->ref = 1;
-    ret->headers = NULL;
-    ret->hwnd = NULL;
-    ret->username = NULL;
-    ret->password = NULL;
 
     ExtServ_ImplSetAuthenticateData(ret, phwnd, pszUsername, pszPassword);
     ExtServ_ImplSetAdditionalHeaders(ret, pwzAdditionalHeaders);

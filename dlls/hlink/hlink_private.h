@@ -27,25 +27,8 @@
 #include "ole2.h"
 #include "hlink.h"
 
-#include "wine/heap.h"
-
 extern HRESULT HLink_Constructor(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
 extern HRESULT HLinkBrowseContext_Constructor(IUnknown*,REFIID,void**) DECLSPEC_HIDDEN;
-
-static inline LPWSTR hlink_strdupW(LPCWSTR str)
-{
-    LPWSTR ret = NULL;
-
-    if(str) {
-        DWORD size;
-
-        size = (lstrlenW(str)+1)*sizeof(WCHAR);
-        ret = heap_alloc(size);
-        memcpy(ret, str, size);
-    }
-
-    return ret;
-}
 
 static inline LPWSTR hlink_co_strdupW(LPCWSTR str)
 {
