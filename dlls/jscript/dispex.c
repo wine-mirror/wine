@@ -2546,6 +2546,7 @@ HRESULT jsdisp_get_own_property(jsdisp_t *obj, const WCHAR *name, BOOL flags_onl
     switch(prop->type) {
     case PROP_BUILTIN:
     case PROP_JSVAL:
+    case PROP_IDX:
         desc->mask |= PROPF_WRITABLE;
         desc->explicit_value = TRUE;
         if(!flags_only) {
