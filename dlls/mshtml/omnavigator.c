@@ -1162,77 +1162,80 @@ static HRESULT WINAPI OmNavigator_get_appName(IOmNavigator *iface, BSTR *p)
     return S_OK;
 }
 
-static unsigned int get_ua_version(OmNavigator *navigator)
+/* undocumented, added in IE8 */
+extern HRESULT WINAPI MapBrowserEmulationModeToUserAgent(const void*,WCHAR**);
+
+/* Retrieves allocated user agent via CoTaskMemAlloc */
+static HRESULT get_user_agent(OmNavigator *navigator, WCHAR **user_agent)
 {
+    DWORD version;
+
     switch(dispex_compat_mode(&navigator->dispex)) {
     case COMPAT_MODE_QUIRKS:
     case COMPAT_MODE_IE5:
     case COMPAT_MODE_IE7:
-        return 7;
+        version = 7;
+        break;
     case COMPAT_MODE_IE8:
-        return 8;
+        version = 8;
+        break;
     case COMPAT_MODE_IE9:
-        return 9;
+        version = 9;
+        break;
     case COMPAT_MODE_IE10:
-        return 10;
+        version = 10;
+        break;
     case COMPAT_MODE_IE11:
-        return 11;
+        version = 11;
+        break;
+    default:
+        assert(0);
+        return E_FAIL;
     }
-    assert(0);
-    return 0;
+    return MapBrowserEmulationModeToUserAgent(&version, user_agent);
 }
 
 static HRESULT WINAPI OmNavigator_get_appVersion(IOmNavigator *iface, BSTR *p)
 {
     OmNavigator *This = impl_from_IOmNavigator(iface);
-
-    char user_agent[512];
-    DWORD size;
+    WCHAR *user_agent;
+    unsigned len;
     HRESULT hres;
     const unsigned skip_prefix = 8; /* strlen("Mozilla/") */
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    size = sizeof(user_agent);
-    hres = ObtainUserAgentString(get_ua_version(This), user_agent, &size);
+    hres = get_user_agent(This, &user_agent);
     if(FAILED(hres))
         return hres;
+    len = wcslen(user_agent);
 
-    if(size <= skip_prefix) {
+    if(len < skip_prefix) {
+        CoTaskMemFree(user_agent);
         *p = NULL;
         return S_OK;
     }
 
-    size = MultiByteToWideChar(CP_ACP, 0, user_agent + skip_prefix, -1, NULL, 0);
-    *p = SysAllocStringLen(NULL, size-1);
-    if(!*p)
-        return E_OUTOFMEMORY;
-
-    MultiByteToWideChar(CP_ACP, 0, user_agent + skip_prefix, -1, *p, size);
-    return S_OK;
+    *p = SysAllocStringLen(user_agent + skip_prefix, len - skip_prefix);
+    CoTaskMemFree(user_agent);
+    return *p ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI OmNavigator_get_userAgent(IOmNavigator *iface, BSTR *p)
 {
     OmNavigator *This = impl_from_IOmNavigator(iface);
-    char user_agent[512];
-    DWORD size;
+    WCHAR *user_agent;
     HRESULT hres;
 
     TRACE("(%p)->(%p)\n", This, p);
 
-    size = sizeof(user_agent);
-    hres = ObtainUserAgentString(get_ua_version(This), user_agent, &size);
+    hres = get_user_agent(This, &user_agent);
     if(FAILED(hres))
         return hres;
 
-    size = MultiByteToWideChar(CP_ACP, 0, user_agent, -1, NULL, 0);
-    *p = SysAllocStringLen(NULL, size-1);
-    if(!*p)
-        return E_OUTOFMEMORY;
-
-    MultiByteToWideChar(CP_ACP, 0, user_agent, -1, *p, size);
-    return S_OK;
+    *p = SysAllocString(user_agent);
+    CoTaskMemFree(user_agent);
+    return *p ? S_OK : E_OUTOFMEMORY;
 }
 
 static HRESULT WINAPI OmNavigator_javaEnabled(IOmNavigator *iface, VARIANT_BOOL *enabled)

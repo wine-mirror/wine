@@ -6479,6 +6479,11 @@ static void test_navigator(IHTMLDocument2 *doc)
     ok(!lstrcmpW(bstr, buf+8), "appVersion returned %s, expected \"%s\"\n", wine_dbgstr_w(bstr), wine_dbgstr_w(buf+8));
     SysFreeString(bstr);
 
+    hres = IOmNavigator_get_userAgent(navigator, &bstr);
+    ok(hres == S_OK, "get_userAgent failed: %08lx\n", hres);
+    ok(!lstrcmpW(bstr, buf), "userAgent returned %s, expected %s\n", wine_dbgstr_w(bstr), wine_dbgstr_w(buf));
+    SysFreeString(bstr);
+
     hres = UrlMkSetSessionOption(URLMON_OPTION_USERAGENT, buf, lstrlenW(buf), 0);
     ok(hres == S_OK, "UrlMkSetSessionOption failed: %08lx\n", hres);
 
@@ -11294,6 +11299,42 @@ static void test_quirks_mode(void)
                 "</html>", test_document_mode);
 }
 
+static void test_custom_user_agent(IHTMLDocument2 *doc)
+{
+    static const WCHAR ua[] = L"1234567890xxxABC";
+    static char ua_ascii[] = "1234567890xxxABC";
+    IOmNavigator *navigator;
+    IHTMLWindow2 *window;
+    HRESULT hres;
+    BSTR bstr;
+
+    /* Set it only first time, to test it doesn't get reset on compat mode change */
+    if(compat_mode == COMPAT_NONE) {
+        hres = UrlMkSetSessionOption(URLMON_OPTION_USERAGENT, ua_ascii, sizeof(ua_ascii), 0);
+        ok(hres == S_OK, "UrlMkSetSessionOption failed: %08lx\n", hres);
+    }
+
+    hres = IHTMLDocument2_get_parentWindow(doc, &window);
+    ok(hres == S_OK, "parentWidnow failed: %08lx\n", hres);
+
+    hres = IHTMLWindow2_get_navigator(window, &navigator);
+    ok(hres == S_OK, "get_navigator failed: %08lx\n", hres);
+    ok(navigator != NULL, "navigator == NULL\n");
+    IHTMLWindow2_Release(window);
+
+    hres = IOmNavigator_get_appVersion(navigator, &bstr);
+    ok(hres == S_OK, "get_appVersion failed: %08lx\n", hres);
+    ok(!lstrcmpW(bstr, ua+8), "appVersion returned %s, expected %s\n", wine_dbgstr_w(bstr), wine_dbgstr_w(ua+8));
+    SysFreeString(bstr);
+
+    hres = IOmNavigator_get_userAgent(navigator, &bstr);
+    ok(hres == S_OK, "get_userAgent failed: %08lx\n", hres);
+    ok(!lstrcmpW(bstr, ua), "userAgent returned %s, expected %s\n", wine_dbgstr_w(bstr), wine_dbgstr_w(ua));
+    SysFreeString(bstr);
+
+    IOmNavigator_Release(navigator);
+}
+
 static void check_ie(void)
 {
     IHTMLDocument2 *doc;
@@ -11355,6 +11396,16 @@ START_TEST(dom)
     run_domtest(doctype_str, test_doctype);
 
     test_quirks_mode();
+
+    /* Run this last since it messes with the process-wide user agent */
+    if (winetest_interactive || ! is_ie_hardened()) {
+        run_domtest(doc_blank, test_custom_user_agent);
+        if(is_ie9plus) {
+            compat_mode = COMPAT_IE9;
+            run_domtest(doc_blank_ie9, test_custom_user_agent);
+            compat_mode = COMPAT_NONE;
+        }
+    }
 
     DestroyWindow(container_hwnd);
     CoUninitialize();

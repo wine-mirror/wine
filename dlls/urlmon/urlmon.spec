@@ -110,6 +110,6 @@
 410 stdcall @(long long) LogSqmBits
 423 stdcall @(long long long long) LogSqmUXCommandOffsetInternal
 444 stdcall @(long long long) MapUriToBrowserEmulationState
-445 stdcall @(ptr ptr) MapBrowserEmulationModeToUserAgent
+445 stdcall -noname MapBrowserEmulationModeToUserAgent(ptr ptr)
 446 stdcall @(long) CoInternetGetBrowserProfile
 455 stdcall @() FlushUrlmonZonesCache
