@@ -263,32 +263,32 @@ static void test_other_invalid_parameters(void)
     ok(len == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "len=%d error=%lx\n", len, GetLastError());
 
 
-    /* CP_UTF7, CP_UTF8, or CP_SYMBOL and defchar not NULL => ERROR_INVALID_PARAMETER */
-    /* CP_SYMBOL's behavior here is undocumented */
+    /* CP_UTF7 or CP_SYMBOL and defchar not NULL => ERROR_INVALID_PARAMETER */
+    /* CP_UTF8 allows it since win10 1709 */
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_UTF7, 0, w_string, w_string_len, c_string, c_string_len, c_string, NULL);
     ok(len == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "len=%d error=%lx\n", len, GetLastError());
 
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_UTF8, 0, w_string, w_string_len, c_string, c_string_len, c_string, NULL);
-    ok((len == 0 && GetLastError() == ERROR_INVALID_PARAMETER)
-            || broken(len == 12) /* Win10 1709+ */, "len=%d error=%lx\n", len, GetLastError());
+    ok(len == 12 || broken(len == 0 && GetLastError() == ERROR_INVALID_PARAMETER),
+       "len=%d error=%lx\n", len, GetLastError());
 
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_SYMBOL, 0, w_string, w_string_len, c_string, c_string_len, c_string, NULL);
     ok(len == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "len=%d error=%lx\n", len, GetLastError());
 
 
-    /* CP_UTF7, CP_UTF8, or CP_SYMBOL and used not NULL => ERROR_INVALID_PARAMETER */
-    /* CP_SYMBOL's behavior here is undocumented */
+    /* CP_UTF7 or CP_SYMBOL and used not NULL => ERROR_INVALID_PARAMETER */
+    /* CP_UTF8 allows it since win10 1709 */
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_UTF7, 0, w_string, w_string_len, c_string, c_string_len, NULL, &used);
     ok(len == 0 && GetLastError() == ERROR_INVALID_PARAMETER, "len=%d error=%lx\n", len, GetLastError());
 
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_UTF8, 0, w_string, w_string_len, c_string, c_string_len, NULL, &used);
-    ok((len == 0 && GetLastError() == ERROR_INVALID_PARAMETER)
-            || broken(len == 12) /* Win10 1709+ */, "len=%d error=%lx\n", len, GetLastError());
+    ok(len == 12 || broken(len == 0 && GetLastError() == ERROR_INVALID_PARAMETER),
+       "len=%d error=%lx\n", len, GetLastError());
 
     SetLastError(0xdeadbeef);
     len = WideCharToMultiByte(CP_SYMBOL, 0, w_string, w_string_len, c_string, c_string_len, NULL, &used);

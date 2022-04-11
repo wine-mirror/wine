@@ -2687,17 +2687,7 @@ static int wcstombs_utf8( DWORD flags, const WCHAR *src, int srclen, char *dst, 
     DWORD reslen;
     NTSTATUS status;
 
-    if (defchar || used)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-    if (flags & ~(WC_DISCARDNS | WC_SEPCHARS | WC_DEFAULTCHAR | WC_ERR_INVALID_CHARS |
-                  WC_COMPOSITECHECK | WC_NO_BEST_FIT_CHARS))
-    {
-        SetLastError( ERROR_INVALID_FLAGS );
-        return 0;
-    }
+    if (used) *used = FALSE;
     if (!dstlen) dst = NULL;
     status = RtlUnicodeToUTF8N( dst, dstlen, &reslen, src, srclen * sizeof(WCHAR) );
     if (status == STATUS_SOME_NOT_MAPPED)
@@ -2707,6 +2697,7 @@ static int wcstombs_utf8( DWORD flags, const WCHAR *src, int srclen, char *dst, 
             SetLastError( ERROR_NO_UNICODE_TRANSLATION );
             return 0;
         }
+        if (used) *used = TRUE;
     }
     else if (!set_ntstatus( status )) reslen = 0;
     return reslen;
@@ -3054,22 +3045,9 @@ static int wcstombs_dbcs_slow( const CPTABLEINFO *info, DWORD flags, const WCHAR
 }
 
 
-static int wcstombs_codepage( UINT codepage, DWORD flags, const WCHAR *src, int srclen,
+static int wcstombs_codepage( const CPTABLEINFO *info, DWORD flags, const WCHAR *src, int srclen,
                               char *dst, int dstlen, const char *defchar, BOOL *used )
 {
-    const CPTABLEINFO *info = get_codepage_table( codepage );
-
-    if (!info)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-    if (flags & ~(WC_DISCARDNS | WC_SEPCHARS | WC_DEFAULTCHAR | WC_ERR_INVALID_CHARS |
-                  WC_COMPOSITECHECK | WC_NO_BEST_FIT_CHARS))
-    {
-        SetLastError( ERROR_INVALID_FLAGS );
-        return 0;
-    }
     if (flags || defchar || used)
     {
         if (!defchar) defchar = (const char *)&info->DefaultChar;
@@ -6468,6 +6446,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH VerLanguageNameW( DWORD lang, LPWSTR buffer, DWOR
 INT WINAPI DECLSPEC_HOTPATCH WideCharToMultiByte( UINT codepage, DWORD flags, LPCWSTR src, INT srclen,
                                                   LPSTR dst, INT dstlen, LPCSTR defchar, BOOL *used )
 {
+    const CPTABLEINFO *info;
     int ret;
 
     if (!src || !srclen || (!dst && dstlen) || dstlen < 0)
@@ -6486,20 +6465,25 @@ INT WINAPI DECLSPEC_HOTPATCH WideCharToMultiByte( UINT codepage, DWORD flags, LP
     case CP_UTF7:
         ret = wcstombs_utf7( flags, src, srclen, dst, dstlen, defchar, used );
         break;
-    case CP_UTF8:
-        ret = wcstombs_utf8( flags, src, srclen, dst, dstlen, defchar, used );
-        break;
     case CP_UNIXCP:
-        if (unix_cp == CP_UTF8)
-        {
-            if (used) *used = FALSE;
-            ret = wcstombs_utf8( flags, src, srclen, dst, dstlen, NULL, NULL );
-            break;
-        }
         codepage = unix_cp;
         /* fall through */
     default:
-        ret = wcstombs_codepage( codepage, flags, src, srclen, dst, dstlen, defchar, used );
+        if (!(info = get_codepage_table( codepage )))
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+        if (flags & ~(WC_DISCARDNS | WC_SEPCHARS | WC_DEFAULTCHAR | WC_ERR_INVALID_CHARS |
+                      WC_COMPOSITECHECK | WC_NO_BEST_FIT_CHARS))
+        {
+            SetLastError( ERROR_INVALID_FLAGS );
+            return 0;
+        }
+        if (info->CodePage == CP_UTF8)
+            ret = wcstombs_utf8( flags, src, srclen, dst, dstlen, defchar, used );
+        else
+            ret = wcstombs_codepage( info, flags, src, srclen, dst, dstlen, defchar, used );
         break;
     }
     TRACE( "cp %d %s -> %s, ret = %d\n", codepage, debugstr_wn(src, srclen), debugstr_an(dst, ret), ret );
