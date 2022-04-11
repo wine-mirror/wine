@@ -506,15 +506,13 @@ LPSTR __cdecl _strlwr( LPSTR str )
  */
 int __cdecl toupper( int c )
 {
-    char str[2], *p = str;
+    char str[4], *p = str;
     WCHAR wc;
     DWORD len;
 
-    str[0] = c;
-    str[1] = c >> 8;
+    memcpy( str, &c, sizeof(c) );
     wc = RtlAnsiCharToUnicodeChar( &p );
-    wc = RtlUpcaseUnicodeChar( wc );
-    RtlUnicodeToMultiByteN( str, sizeof(str), &len, &wc, sizeof(wc) );
+    if (RtlUpcaseUnicodeToMultiByteN( str, 2, &len, &wc, sizeof(wc) )) return c;
     if (len == 2) return ((unsigned char)str[0] << 8) + (unsigned char)str[1];
     return (unsigned char)str[0];
 }

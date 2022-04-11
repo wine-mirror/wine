@@ -387,16 +387,22 @@ NTSTATUS WINAPI RtlGetLocaleFileMappingAddress( void **ptr, LCID *lcid, LARGE_IN
  */
 WCHAR WINAPI RtlAnsiCharToUnicodeChar( char **ansi )
 {
+    unsigned char ch = *(*ansi)++;
+
+    if (nls_info.AnsiTableInfo.CodePage == CP_UTF8)
+    {
+        unsigned int res;
+
+        if (ch < 0x80) return ch;
+        if ((res = decode_utf8_char( ch, (const char **)ansi, *ansi + 3 )) > 0x10ffff) res = 0xfffd;
+        return res;
+    }
     if (nls_info.AnsiTableInfo.DBCSOffsets)
     {
-        USHORT off = nls_info.AnsiTableInfo.DBCSOffsets[(unsigned char)**ansi];
-        if (off)
-        {
-            (*ansi)++;
-            return nls_info.AnsiTableInfo.DBCSOffsets[off + (unsigned char)*(*ansi)++];
-        }
+        USHORT off = nls_info.AnsiTableInfo.DBCSOffsets[ch];
+        if (off) return nls_info.AnsiTableInfo.DBCSOffsets[off + (unsigned char)*(*ansi)++];
     }
-    return nls_info.AnsiTableInfo.MultiByteTable[(unsigned char)*(*ansi)++];
+    return nls_info.AnsiTableInfo.MultiByteTable[ch];
 }
 
 
@@ -518,13 +524,14 @@ NTSTATUS WINAPI RtlUnicodeToCustomCPN( CPTABLEINFO *info, char *dst, DWORD dstle
 NTSTATUS WINAPI RtlMultiByteToUnicodeN( WCHAR *dst, DWORD dstlen, DWORD *reslen,
                                         const char *src, DWORD srclen )
 {
-    if (nls_info.AnsiTableInfo.WideCharTable)
-        return RtlCustomCPToUnicodeN( &nls_info.AnsiTableInfo, dst, dstlen, reslen, src, srclen );
+    unsigned int ret;
 
-    /* locale not setup yet */
-    dstlen = min( srclen, dstlen / sizeof(WCHAR) );
-    if (reslen) *reslen = dstlen * sizeof(WCHAR);
-    while (dstlen--) *dst++ = *src++ & 0x7f;
+    if (nls_info.AnsiTableInfo.CodePage != CP_UTF8)
+        ret = cp_mbstowcs( &nls_info.AnsiTableInfo, dst, dstlen / sizeof(WCHAR), src, srclen );
+    else
+        utf8_mbstowcs( dst, dstlen / sizeof(WCHAR), &ret, src, srclen );
+
+    if (reslen) *reslen = ret * sizeof(WCHAR);
     return STATUS_SUCCESS;
 }
 
@@ -534,7 +541,14 @@ NTSTATUS WINAPI RtlMultiByteToUnicodeN( WCHAR *dst, DWORD dstlen, DWORD *reslen,
  */
 NTSTATUS WINAPI RtlMultiByteToUnicodeSize( DWORD *size, const char *str, DWORD len )
 {
-    *size = cp_mbstowcs_size( &nls_info.AnsiTableInfo, str, len ) * sizeof(WCHAR);
+    unsigned int ret;
+
+    if (nls_info.AnsiTableInfo.CodePage != CP_UTF8)
+        ret = cp_mbstowcs_size( &nls_info.AnsiTableInfo, str, len );
+    else
+        utf8_mbstowcs_size( str, len, &ret );
+
+    *size = ret * sizeof(WCHAR);
     return STATUS_SUCCESS;
 }
 
@@ -545,7 +559,15 @@ NTSTATUS WINAPI RtlMultiByteToUnicodeSize( DWORD *size, const char *str, DWORD l
 NTSTATUS WINAPI RtlOemToUnicodeN( WCHAR *dst, DWORD dstlen, DWORD *reslen,
                                   const char *src, DWORD srclen )
 {
-    return RtlCustomCPToUnicodeN( &nls_info.OemTableInfo, dst, dstlen, reslen, src, srclen );
+    unsigned int ret;
+
+    if (nls_info.OemTableInfo.CodePage != CP_UTF8)
+        ret = cp_mbstowcs( &nls_info.OemTableInfo, dst, dstlen / sizeof(WCHAR), src, srclen );
+    else
+        utf8_mbstowcs( dst, dstlen / sizeof(WCHAR), &ret, src, srclen );
+
+    if (reslen) *reslen = ret * sizeof(WCHAR);
+    return STATUS_SUCCESS;
 }
 
 
@@ -555,7 +577,14 @@ NTSTATUS WINAPI RtlOemToUnicodeN( WCHAR *dst, DWORD dstlen, DWORD *reslen,
  */
 DWORD WINAPI RtlOemStringToUnicodeSize( const STRING *str )
 {
-    return (cp_mbstowcs_size( &nls_info.OemTableInfo, str->Buffer, str->Length ) + 1) * sizeof(WCHAR);
+    unsigned int ret;
+
+    if (nls_info.OemTableInfo.CodePage != CP_UTF8)
+        ret = cp_mbstowcs_size( &nls_info.OemTableInfo, str->Buffer, str->Length );
+    else
+        utf8_mbstowcs_size( str->Buffer, str->Length, &ret );
+
+    return (ret + 1) * sizeof(WCHAR);
 }
 
 
@@ -565,7 +594,14 @@ DWORD WINAPI RtlOemStringToUnicodeSize( const STRING *str )
  */
 DWORD WINAPI RtlUnicodeStringToOemSize( const UNICODE_STRING *str )
 {
-    return cp_wcstombs_size( &nls_info.OemTableInfo, str->Buffer, str->Length / sizeof(WCHAR) ) + 1;
+    unsigned int ret;
+
+    if (nls_info.OemTableInfo.CodePage != CP_UTF8)
+        ret = cp_wcstombs_size( &nls_info.OemTableInfo, str->Buffer, str->Length / sizeof(WCHAR) );
+    else
+        utf8_wcstombs_size( str->Buffer, str->Length / sizeof(WCHAR), &ret );
+
+    return ret + 1;
 }
 
 
@@ -575,18 +611,14 @@ DWORD WINAPI RtlUnicodeStringToOemSize( const UNICODE_STRING *str )
 NTSTATUS WINAPI RtlUnicodeToMultiByteN( char *dst, DWORD dstlen, DWORD *reslen,
                                         const WCHAR *src, DWORD srclen )
 {
-    if (nls_info.AnsiTableInfo.WideCharTable)
-        return RtlUnicodeToCustomCPN( &nls_info.AnsiTableInfo, dst, dstlen, reslen, src, srclen );
+    unsigned int ret;
 
-    /* locale not setup yet */
-    dstlen = min( srclen / sizeof(WCHAR), dstlen );
-    if (reslen) *reslen = dstlen;
-    while (dstlen--)
-    {
-        WCHAR ch = *src++;
-        if (ch > 0x7f) ch = '?';
-        *dst++ = ch;
-    }
+    if (nls_info.AnsiTableInfo.CodePage != CP_UTF8)
+        ret = cp_wcstombs( &nls_info.AnsiTableInfo, dst, dstlen, src, srclen / sizeof(WCHAR) );
+    else
+        utf8_wcstombs( dst, dstlen, &ret, src, srclen / sizeof(WCHAR) );
+
+    if (reslen) *reslen = ret;
     return STATUS_SUCCESS;
 }
 
@@ -596,7 +628,14 @@ NTSTATUS WINAPI RtlUnicodeToMultiByteN( char *dst, DWORD dstlen, DWORD *reslen,
  */
 NTSTATUS WINAPI RtlUnicodeToMultiByteSize( DWORD *size, const WCHAR *str, DWORD len )
 {
-    *size = cp_wcstombs_size( &nls_info.AnsiTableInfo, str, len / sizeof(WCHAR) );
+    unsigned int ret;
+
+    if (nls_info.AnsiTableInfo.CodePage != CP_UTF8)
+        ret = cp_wcstombs_size( &nls_info.AnsiTableInfo, str, len / sizeof(WCHAR) );
+    else
+        utf8_wcstombs_size( str, len / sizeof(WCHAR), &ret );
+
+    *size = ret;
     return STATUS_SUCCESS;
 }
 
@@ -607,7 +646,15 @@ NTSTATUS WINAPI RtlUnicodeToMultiByteSize( DWORD *size, const WCHAR *str, DWORD 
 NTSTATUS WINAPI RtlUnicodeToOemN( char *dst, DWORD dstlen, DWORD *reslen,
                                   const WCHAR *src, DWORD srclen )
 {
-    return RtlUnicodeToCustomCPN( &nls_info.OemTableInfo, dst, dstlen, reslen, src, srclen );
+    unsigned int ret;
+
+    if (nls_info.OemTableInfo.CodePage != CP_UTF8)
+        ret = cp_wcstombs( &nls_info.OemTableInfo, dst, dstlen, src, srclen / sizeof(WCHAR) );
+    else
+        utf8_wcstombs( dst, dstlen, &ret, src, srclen / sizeof(WCHAR) );
+
+    if (reslen) *reslen = ret;
+    return STATUS_SUCCESS;
 }
 
 
@@ -712,12 +759,77 @@ NTSTATUS WINAPI RtlUpcaseUnicodeToCustomCPN( CPTABLEINFO *info, char *dst, DWORD
 }
 
 
+static NTSTATUS upcase_unicode_to_utf8( char *dst, DWORD dstlen, DWORD *reslen,
+                                        const WCHAR *src, DWORD srclen )
+{
+    char *end;
+    unsigned int val;
+    NTSTATUS status = STATUS_SUCCESS;
+
+    srclen /= sizeof(WCHAR);
+
+    for (end = dst + dstlen; srclen; srclen--, src++)
+    {
+        WCHAR ch = casemap( nls_info.UpperCaseTable, *src );
+
+        if (ch < 0x80)  /* 0x00-0x7f: 1 byte */
+        {
+            if (dst > end - 1) break;
+            *dst++ = ch;
+            continue;
+        }
+        if (ch < 0x800)  /* 0x80-0x7ff: 2 bytes */
+        {
+            if (dst > end - 2) break;
+            dst[1] = 0x80 | (ch & 0x3f);
+            ch >>= 6;
+            dst[0] = 0xc0 | ch;
+            dst += 2;
+            continue;
+        }
+        if (!get_utf16( src, srclen, &val ))
+        {
+            val = 0xfffd;
+            status = STATUS_SOME_NOT_MAPPED;
+        }
+        if (val < 0x10000)  /* 0x800-0xffff: 3 bytes */
+        {
+            if (dst > end - 3) break;
+            dst[2] = 0x80 | (val & 0x3f);
+            val >>= 6;
+            dst[1] = 0x80 | (val & 0x3f);
+            val >>= 6;
+            dst[0] = 0xe0 | val;
+            dst += 3;
+        }
+        else   /* 0x10000-0x10ffff: 4 bytes */
+        {
+            if (dst > end - 4) break;
+            dst[3] = 0x80 | (val & 0x3f);
+            val >>= 6;
+            dst[2] = 0x80 | (val & 0x3f);
+            val >>= 6;
+            dst[1] = 0x80 | (val & 0x3f);
+            val >>= 6;
+            dst[0] = 0xf0 | val;
+            dst += 4;
+            src++;
+            srclen--;
+        }
+    }
+    if (srclen) status = STATUS_BUFFER_TOO_SMALL;
+    if (reslen) *reslen = dstlen - (end - dst);
+    return status;
+}
+
 /**************************************************************************
  *	RtlUpcaseUnicodeToMultiByteN   (NTDLL.@)
  */
 NTSTATUS WINAPI RtlUpcaseUnicodeToMultiByteN( char *dst, DWORD dstlen, DWORD *reslen,
                                               const WCHAR *src, DWORD srclen )
 {
+    if (nls_info.AnsiTableInfo.CodePage == CP_UTF8)
+        return upcase_unicode_to_utf8( dst, dstlen, reslen, src, srclen );
     return RtlUpcaseUnicodeToCustomCPN( &nls_info.AnsiTableInfo, dst, dstlen, reslen, src, srclen );
 }
 
@@ -728,20 +840,9 @@ NTSTATUS WINAPI RtlUpcaseUnicodeToMultiByteN( char *dst, DWORD dstlen, DWORD *re
 NTSTATUS WINAPI RtlUpcaseUnicodeToOemN( char *dst, DWORD dstlen, DWORD *reslen,
                                         const WCHAR *src, DWORD srclen )
 {
-    if (nls_info.OemTableInfo.WideCharTable)
-        return RtlUpcaseUnicodeToCustomCPN( &nls_info.OemTableInfo, dst, dstlen, reslen, src, srclen );
-
-    /* locale not setup yet */
-    dstlen = min( srclen / sizeof(WCHAR), dstlen );
-    if (reslen) *reslen = dstlen;
-    while (dstlen--)
-    {
-        WCHAR ch = *src++;
-        if (ch > 0x7f) ch = '?';
-        else ch = casemap_ascii( ch );
-        *dst++ = ch;
-    }
-    return STATUS_SUCCESS;
+    if (nls_info.OemTableInfo.CodePage == CP_UTF8)
+        return upcase_unicode_to_utf8( dst, dstlen, reslen, src, srclen );
+    return RtlUpcaseUnicodeToCustomCPN( &nls_info.OemTableInfo, dst, dstlen, reslen, src, srclen );
 }
 
 
