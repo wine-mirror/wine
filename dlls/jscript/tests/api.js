@@ -2611,6 +2611,8 @@ testException(function() {delete false;}, "E_INVALID_DELETE");
 testException(function() {undefined.toString();}, "E_OBJECT_EXPECTED");
 testException(function() {null.toString();}, "E_OBJECT_EXPECTED");
 testException(function() {RegExp.prototype.toString.call(new Object());}, "E_REGEXP_EXPECTED");
+testException(function() {/a/.lastIndex();}, "E_NOT_FUNC");
+testException(function() {"a".length();}, "E_NOT_FUNC");
 
 testException(function() { return arguments.callee(); }, "E_STACK_OVERFLOW");
 

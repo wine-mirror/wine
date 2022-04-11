@@ -560,6 +560,9 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
     case PROP_BUILTIN: {
         jsval_t vthis;
 
+        if(!prop->u.p->invoke)
+            return JS_E_FUNCTION_EXPECTED;
+
         if(flags == DISPATCH_CONSTRUCT && (prop->flags & PROPF_METHOD)) {
             WARN("%s is not a constructor\n", debugstr_w(prop->name));
             return E_INVALIDARG;

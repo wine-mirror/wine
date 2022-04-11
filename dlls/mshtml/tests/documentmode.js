@@ -1307,6 +1307,19 @@ sync_test("builtins_diffs", function() {
     }catch(e) {
         ok(e.number === 0xa1398 - 0x80000000, "RegExp.toString with non-regexp: exception = " + e.number);
     }
+
+    try {
+        /a/.lastIndex();
+        ok(false, "/a/.lastIndex(): expected exception");
+    }catch(e) {
+        ok(e.number === 0xa138a - 0x80000000, "/a/.lastIndex(): exception = " + e.number);
+    }
+    try {
+        "a".length();
+        ok(false, "\"a\".length(): expected exception");
+    }catch(e) {
+        ok(e.number === 0xa138a - 0x80000000, "\"a\".length(): exception = " + e.number);
+    }
 });
 
 sync_test("__proto__", function() {
