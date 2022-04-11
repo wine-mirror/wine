@@ -556,7 +556,7 @@ DECL_HANDLER(get_directory_entry)
                     memcpy( (char *)ptr + name_len, type_name->str, type_name->len );
                 }
             }
-            else set_error( STATUS_BUFFER_OVERFLOW );
+            else set_error( STATUS_BUFFER_TOO_SMALL );
 
             release_object( obj );
         }
