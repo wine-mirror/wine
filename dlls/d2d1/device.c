@@ -1978,7 +1978,41 @@ static BOOL STDMETHODCALLTYPE d2d_device_context_IsBufferPrecisionSupported(ID2D
 static void STDMETHODCALLTYPE d2d_device_context_GetImageLocalBounds(ID2D1DeviceContext *iface,
         ID2D1Image *image, D2D1_RECT_F *local_bounds)
 {
-    FIXME("iface %p, image %p, local_bounds %p stub!\n", iface, image, local_bounds);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    D2D_SIZE_U pixel_size;
+    ID2D1Bitmap *bitmap;
+    D2D_SIZE_F size;
+
+    TRACE("iface %p, image %p, local_bounds %p.\n", iface, image, local_bounds);
+
+    if (SUCCEEDED(ID2D1Image_QueryInterface(image, &IID_ID2D1Bitmap, (void **)&bitmap)))
+    {
+        local_bounds->left = 0.0f;
+        local_bounds->top  = 0.0f;
+        switch (context->drawing_state.unitMode)
+        {
+            case D2D1_UNIT_MODE_DIPS:
+                size = ID2D1Bitmap_GetSize(bitmap);
+                local_bounds->right  = size.width;
+                local_bounds->bottom = size.height;
+                break;
+
+            case D2D1_UNIT_MODE_PIXELS:
+                pixel_size = ID2D1Bitmap_GetPixelSize(bitmap);
+                local_bounds->right  = pixel_size.width;
+                local_bounds->bottom = pixel_size.height;
+                break;
+
+            default:
+                WARN("Unknown unit mode %#x.\n", context->drawing_state.unitMode);
+                break;
+        }
+        ID2D1Bitmap_Release(bitmap);
+    }
+    else
+    {
+        FIXME("Unable to get local bounds of image %p.\n", image);
+    }
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_device_context_GetImageWorldBounds(ID2D1DeviceContext *iface,

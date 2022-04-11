@@ -10824,7 +10824,7 @@ static void test_image_bounds(BOOL d3d11)
         set_rect(&bounds, 0.0f, 0.0f, 0.0f, 0.0f);
         size = ID2D1Bitmap_GetSize(bitmap);
         ID2D1DeviceContext_GetImageLocalBounds(context, (ID2D1Image *)bitmap, &bounds);
-        todo_wine ok(compare_rect(&bounds, 0.0f, 0.0f, size.width, size.height, 0),
+        ok(compare_rect(&bounds, 0.0f, 0.0f, size.width, size.height, 0),
                 "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
                 bounds.left, bounds.top, bounds.right, bounds.bottom, 0.0f, 0.0f, size.width, size.height);
 
@@ -10832,7 +10832,7 @@ static void test_image_bounds(BOOL d3d11)
         ID2D1DeviceContext_GetDpi(context, &dpi_x, &dpi_y);
         ID2D1DeviceContext_SetDpi(context, dpi_x * 2.0f, dpi_y * 2.0f);
         ID2D1DeviceContext_GetImageLocalBounds(context, (ID2D1Image *)bitmap, &bounds);
-        todo_wine ok(compare_rect(&bounds, 0.0f, 0.0f, size.width, size.height, 0),
+        ok(compare_rect(&bounds, 0.0f, 0.0f, size.width, size.height, 0),
                 "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
                 bounds.left, bounds.top, bounds.right, bounds.bottom, 0.0f, 0.0f, size.width, size.height);
         ID2D1DeviceContext_SetDpi(context, dpi_x, dpi_y);
@@ -10842,7 +10842,8 @@ static void test_image_bounds(BOOL d3d11)
         ok(unit_mode == D2D1_UNIT_MODE_DIPS, "Got unexpected unit mode %#x.\n", unit_mode);
         ID2D1DeviceContext_SetUnitMode(context, D2D1_UNIT_MODE_PIXELS);
         ID2D1DeviceContext_GetImageLocalBounds(context, (ID2D1Image *)bitmap, &bounds);
-        todo_wine ok(compare_rect(&bounds, 0.0f, 0.0f, test->pixel_size.width, test->pixel_size.height, 0),
+        todo_wine_if(!compare_float(test->dpi_x, 96.0f, 0) || !compare_float(test->dpi_y, 96.0f, 0))
+        ok(compare_rect(&bounds, 0.0f, 0.0f, test->pixel_size.width, test->pixel_size.height, 0),
                 "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
                 bounds.left, bounds.top, bounds.right, bounds.bottom, 0.0f, 0.0f,
                 (float)test->pixel_size.width, (float)test->pixel_size.height);
