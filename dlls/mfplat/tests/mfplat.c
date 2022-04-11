@@ -6057,18 +6057,21 @@ static void test_MFCreateMediaBufferFromMediaType(void)
         unsigned int buffer_length;
     } audio_tests[] =
     {
-        { 0,  0,  0,  4,  0, 20 },
-        { 0, 16,  0,  4,  0, 20 },
-        { 0,  0, 32,  4,  0, 36 },
-        { 0, 64, 32,  4,  0, 64 },
-        { 1,  0,  0,  4, 16, 36 },
-        { 2,  0,  0,  4, 16, 52 },
+        { 0,  0,   0,  4,  0, 20 },
+        { 0, 16,   0,  4,  0, 20 },
+        { 0,  0,  32,  4,  0, 36 },
+        { 0, 64,  32,  4,  0, 64 },
+        { 1,  0,   0,  4, 16, 36 },
+        { 2,  0,   0,  4, 16, 52 },
+        { 2,  0,  64,  4, 16, 68 },
+        { 2,  0, 128,  4, 16,132 },
     };
+    IMFMediaType *media_type, *media_type2;
+    unsigned int i, alignment;
     IMFMediaBuffer *buffer;
-    DWORD length;
+    DWORD length, max;
+    BYTE *data;
     HRESULT hr;
-    IMFMediaType *media_type;
-    unsigned int i;
 
     if (!pMFCreateMediaBufferFromMediaType)
     {
@@ -6082,8 +6085,14 @@ static void test_MFCreateMediaBufferFromMediaType(void)
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "Failed to create media type, hr %#lx.\n", hr);
 
+    hr = MFCreateMediaType(&media_type2);
+    ok(hr == S_OK, "Failed to create media type, hr %#lx.\n", hr);
+
     hr = IMFMediaType_SetGUID(media_type, &MF_MT_MAJOR_TYPE, &MFMediaType_Audio);
     ok(hr == S_OK, "Failed to set attribute, hr %#lx.\n", hr);
+
+    hr = IMFMediaType_CopyAllItems(media_type, (IMFAttributes *)media_type2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     for (i = 0; i < ARRAY_SIZE(audio_tests); ++i)
     {
@@ -6107,10 +6116,37 @@ static void test_MFCreateMediaBufferFromMediaType(void)
         ok(hr == S_OK, "Failed to get length, hr %#lx.\n", hr);
         ok(ptr->buffer_length == length, "%d: unexpected buffer length %lu, expected %u.\n", i, length, ptr->buffer_length);
 
+        alignment = ptr->min_alignment ? ptr->min_alignment - 1 : MF_16_BYTE_ALIGNMENT;
+        hr = IMFMediaBuffer_Lock(buffer, &data, &max, &length);
+        ok(hr == S_OK, "Failed to lock, hr %#lx.\n", hr);
+        ok(ptr->buffer_length == max && !length, "Unexpected length.\n");
+        ok(!((uintptr_t)data & alignment), "%u: data at %p is misaligned.\n", i, data);
+        hr = IMFMediaBuffer_Unlock(buffer);
+        ok(hr == S_OK, "Failed to unlock, hr %#lx.\n", hr);
+
+        IMFMediaBuffer_Release(buffer);
+
+        /* Only major type is set. */
+        hr = pMFCreateMediaBufferFromMediaType(media_type2, ptr->duration * 10000000, ptr->min_length,
+                ptr->min_alignment, &buffer);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IMFMediaBuffer_GetMaxLength(buffer, &length);
+        ok(hr == S_OK, "Failed to get length, hr %#lx.\n", hr);
+        ok(ptr->min_length == length, "%u: unexpected buffer length %lu, expected %u.\n", i, length, ptr->min_length);
+
+        hr = IMFMediaBuffer_Lock(buffer, &data, &max, &length);
+        ok(hr == S_OK, "Failed to lock, hr %#lx.\n", hr);
+        ok(ptr->min_length == max && !length, "Unexpected length.\n");
+        ok(!((uintptr_t)data & alignment), "%u: data at %p is misaligned.\n", i, data);
+        hr = IMFMediaBuffer_Unlock(buffer);
+        ok(hr == S_OK, "Failed to unlock, hr %#lx.\n", hr);
+
         IMFMediaBuffer_Release(buffer);
     }
 
     IMFMediaType_Release(media_type);
+    IMFMediaType_Release(media_type2);
 }
 
 static void validate_media_type(IMFMediaType *mediatype, const WAVEFORMATEX *format)

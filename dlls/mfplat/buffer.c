@@ -1596,6 +1596,8 @@ HRESULT WINAPI MFCreateMediaBufferFromMediaType(IMFMediaType *media_type, LONGLO
         if (FAILED(IMFMediaType_GetUINT32(media_type, &MF_MT_AUDIO_BLOCK_ALIGNMENT, &block_alignment)))
             WARN("Block alignment was not specified.\n");
 
+        alignment = max(16, alignment);
+
         if (block_alignment)
         {
             avg_length = 0;
@@ -1610,8 +1612,6 @@ HRESULT WINAPI MFCreateMediaBufferFromMediaType(IMFMediaType *media_type, LONGLO
                 }
             }
 
-            alignment = max(16, alignment);
-
             length = buffer_get_aligned_length(avg_length + 1, alignment);
             length = buffer_get_aligned_length(length, block_alignment);
         }
@@ -1620,7 +1620,7 @@ HRESULT WINAPI MFCreateMediaBufferFromMediaType(IMFMediaType *media_type, LONGLO
 
         length = max(length, min_length);
 
-        return create_1d_buffer(length, MF_1_BYTE_ALIGNMENT, buffer);
+        return create_1d_buffer(length, alignment - 1, buffer);
     }
     else
         FIXME("Major type %s is not supported.\n", debugstr_guid(&major));
