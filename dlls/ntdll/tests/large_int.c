@@ -349,9 +349,8 @@ static void one_RtlInt64ToUnicodeString_test(int test_num, const largeint2str_t 
 	} /* if */
     } /* if */
     ok(memcmp(unicode_string.Buffer, expected_unicode_string.Buffer, LARGE_STRI_BUFFER_LENGTH * sizeof(WCHAR)) == 0,
-       "(test %d): RtlInt64ToUnicodeString(0x%lx%08lx, %d, [out]) assigns string \"%s\", expected: \"%s\"\n",
-       test_num, (DWORD)(largeint2str->value >>32), (DWORD)largeint2str->value, largeint2str->base, 
-       ansi_str.Buffer, expected_ansi_str.Buffer);
+       "(test %d): RtlInt64ToUnicodeString(0x%I64x, %d, [out]) assigns string \"%s\", expected: \"%s\"\n",
+       test_num, largeint2str->value, largeint2str->base, ansi_str.Buffer, expected_ansi_str.Buffer);
     ok(unicode_string.Length == expected_unicode_string.Length,
        "(test %d): RtlInt64ToUnicodeString(0x%s, %d, [out]) string has Length %d, expected: %d\n",
        test_num, wine_dbgstr_longlong(largeint2str->value), largeint2str->base,
