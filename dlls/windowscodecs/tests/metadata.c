@@ -713,27 +713,27 @@ static void compare_metadata(IWICMetadataReader *reader, const struct test_data 
             case VT_UI1:
                 ok(td[i].count == U(value).caub.cElems, "%lu: expected cElems %d, got %ld\n", i, td[i].count, U(value).caub.cElems);
                 for (j = 0; j < U(value).caub.cElems; j++)
-                    ok(td[i].value[j] == U(value).caub.pElems[j], "%lu: expected value[%ld] %#lx/%#lx, got %#x\n", i, j, (ULONG)td[i].value[j], (ULONG)(td[i].value[j] >> 32), U(value).caub.pElems[j]);
+                    ok(td[i].value[j] == U(value).caub.pElems[j], "%lu: expected value[%ld] %#I64x, got %#x\n", i, j, td[i].value[j], U(value).caub.pElems[j]);
                 break;
             case VT_I2:
             case VT_UI2:
                 ok(td[i].count == U(value).caui.cElems, "%lu: expected cElems %d, got %ld\n", i, td[i].count, U(value).caui.cElems);
                 for (j = 0; j < U(value).caui.cElems; j++)
-                    ok(td[i].value[j] == U(value).caui.pElems[j], "%lu: expected value[%ld] %#lx/%#lx, got %#x\n", i, j, (ULONG)td[i].value[j], (ULONG)(td[i].value[j] >> 32), U(value).caui.pElems[j]);
+                    ok(td[i].value[j] == U(value).caui.pElems[j], "%lu: expected value[%ld] %#I64x, got %#x\n", i, j, td[i].value[j], U(value).caui.pElems[j]);
                 break;
             case VT_I4:
             case VT_UI4:
             case VT_R4:
                 ok(td[i].count == U(value).caul.cElems, "%lu: expected cElems %d, got %ld\n", i, td[i].count, U(value).caul.cElems);
                 for (j = 0; j < U(value).caul.cElems; j++)
-                    ok(td[i].value[j] == U(value).caul.pElems[j], "%lu: expected value[%ld] %#lx/%#lx, got %#lx\n", i, j, (ULONG)td[i].value[j], (ULONG)(td[i].value[j] >> 32), U(value).caul.pElems[j]);
+                    ok(td[i].value[j] == U(value).caul.pElems[j], "%lu: expected value[%ld] %#I64x, got %#lx\n", i, j, td[i].value[j], U(value).caul.pElems[j]);
                 break;
             case VT_I8:
             case VT_UI8:
             case VT_R8:
                 ok(td[i].count == U(value).cauh.cElems, "%lu: expected cElems %d, got %ld\n", i, td[i].count, U(value).cauh.cElems);
                 for (j = 0; j < U(value).cauh.cElems; j++)
-                    ok(td[i].value[j] == U(value).cauh.pElems[j].QuadPart, "%lu: expected value[%ld] %08lx/%08lx, got %08lx/%08lx\n", i, j, (ULONG)td[i].value[j], (ULONG)(td[i].value[j] >> 32), U(value).cauh.pElems[j].u.LowPart, U(value).cauh.pElems[j].u.HighPart);
+                    ok(td[i].value[j] == U(value).cauh.pElems[j].QuadPart, "%lu: expected value[%ld] %I64x, got %08lx/%08lx\n", i, j, td[i].value[j], U(value).cauh.pElems[j].u.LowPart, U(value).cauh.pElems[j].u.HighPart);
                 break;
             case VT_LPSTR:
                 ok(td[i].count == U(value).calpstr.cElems, "%lu: expected cElems %d, got %ld\n", i, td[i].count, U(value).caub.cElems);
@@ -760,8 +760,8 @@ static void compare_metadata(IWICMetadataReader *reader, const struct test_data 
             ok(!memcmp(td[i].string, U(value).blob.pBlobData, td[i].count), "%lu: expected %s, got %s\n", i, td[i].string, U(value).blob.pBlobData);
         }
         else
-            ok(U(value).uhVal.QuadPart == td[i].value[0], "%lu: expected value %#x/%#x got %#lx/%#lx\n",
-               i, (UINT)td[i].value[0], (UINT)(td[i].value[0] >> 32), U(value).uhVal.u.LowPart, U(value).uhVal.u.HighPart);
+            ok(U(value).uhVal.QuadPart == td[i].value[0], "%lu: expected value %#I64x got %#lx/%#lx\n",
+               i, td[i].value[0], U(value).uhVal.u.LowPart, U(value).uhVal.u.HighPart);
 
         PropVariantClear(&schema);
         PropVariantClear(&id);
@@ -2082,7 +2082,7 @@ static void test_metadata_APE(void)
         ok(value.vt == (VT_UI1|VT_VECTOR), "unexpected vt: %i\n", id.vt);
         ok(td[1].count == U(value).caub.cElems, "expected cElems %d, got %ld\n", td[1].count, U(value).caub.cElems);
         for (i = 0; i < U(value).caub.cElems; i++)
-            ok(td[1].value[i] == U(value).caub.pElems[i], "%u: expected value %#lx/%#lx, got %#x\n", i, (ULONG)td[1].value[i], (ULONG)(td[1].value[i] >> 32), U(value).caub.pElems[i]);
+            ok(td[1].value[i] == U(value).caub.pElems[i], "%u: expected value %#I64x, got %#x\n", i, td[1].value[i], U(value).caub.pElems[i]);
         PropVariantClear(&value);
 
         hr = IWICMetadataReader_GetMetadataHandlerInfo(reader, &info);
