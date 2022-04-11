@@ -1099,9 +1099,8 @@ NTSTATUS WINAPI NtQueryDirectoryObject( HANDLE handle, DIRECTORY_BASIC_INFORMATI
                                         ULONG size, BOOLEAN single_entry, BOOLEAN restart,
                                         ULONG *context, ULONG *ret_size )
 {
+    ULONG index = restart ? 0 : *context;
     NTSTATUS ret;
-
-    if (restart) *context = 0;
 
     if (single_entry)
     {
@@ -1110,7 +1109,7 @@ NTSTATUS WINAPI NtQueryDirectoryObject( HANDLE handle, DIRECTORY_BASIC_INFORMATI
         SERVER_START_REQ( get_directory_entry )
         {
             req->handle = wine_server_obj_handle( handle );
-            req->index = *context;
+            req->index = index;
             wine_server_set_reply( req, buffer + 1, size - sizeof(*buffer) - 2*sizeof(WCHAR) );
             if (!(ret = wine_server_call( req )))
             {
@@ -1125,7 +1124,7 @@ NTSTATUS WINAPI NtQueryDirectoryObject( HANDLE handle, DIRECTORY_BASIC_INFORMATI
                          buffer->ObjectTypeName.Length );
                 buffer->ObjectName.Buffer[buffer->ObjectName.Length/sizeof(WCHAR)] = 0;
                 buffer->ObjectTypeName.Buffer[buffer->ObjectTypeName.Length/sizeof(WCHAR)] = 0;
-                (*context)++;
+                *context = index + 1;
             }
         }
         SERVER_END_REQ;
