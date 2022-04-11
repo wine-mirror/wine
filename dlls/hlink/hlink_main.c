@@ -80,7 +80,7 @@ HRESULT WINAPI HlinkCreateFromString( LPCWSTR pwzTarget, LPCWSTR pwzLocation,
         IUnknown* piunkOuter, REFIID riid, void** ppvObj)
 {
     IHlink *hl = NULL;
-    HRESULT r;
+    HRESULT hr;
     WCHAR *hash, *tgt;
     const WCHAR *loc;
 
@@ -88,9 +88,9 @@ HRESULT WINAPI HlinkCreateFromString( LPCWSTR pwzTarget, LPCWSTR pwzLocation,
             debugstr_w(pwzLocation), debugstr_w(pwzFriendlyName), pihlsite,
             dwSiteData, piunkOuter, debugstr_guid(riid), ppvObj);
 
-    r = CoCreateInstance(&CLSID_StdHlink, piunkOuter, CLSCTX_INPROC_SERVER, riid, (LPVOID*)&hl);
-    if (FAILED(r))
-        return r;
+    hr = CoCreateInstance(&CLSID_StdHlink, piunkOuter, CLSCTX_INPROC_SERVER, &IID_IHlink, (void **)&hl);
+    if (FAILED(hr))
+        return hr;
 
     if (pwzTarget)
     {
@@ -137,10 +137,10 @@ HRESULT WINAPI HlinkCreateFromString( LPCWSTR pwzTarget, LPCWSTR pwzLocation,
     if (pihlsite)
         IHlink_SetHlinkSite(hl, pihlsite, dwSiteData);
 
-    TRACE("Returning %lx\n",r);
-    *ppvObj = hl;
+    hr = IHlink_QueryInterface(hl, riid, ppvObj);
+    IHlink_Release(hl);
 
-    return r;
+    return hr;
 }
 
 
