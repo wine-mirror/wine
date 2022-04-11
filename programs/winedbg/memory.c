@@ -452,8 +452,7 @@ char* memory_offset_to_string(char *str, DWORD64 offset, unsigned mode)
     if (mode == 32)
         sprintf(str, "0x%08x", (unsigned int) offset);
     else
-        sprintf(str, "0x%08x%08x", (unsigned int)(offset >> 32),
-                (unsigned int)offset);
+        sprintf(str, "%#016I64x", offset);
 
     return str;
 }
