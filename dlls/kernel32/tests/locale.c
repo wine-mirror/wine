@@ -4251,6 +4251,7 @@ static void test_GetCPInfo(void)
 {
     BOOL ret;
     CPINFO cpinfo;
+    CPINFOEXW cpiw;
 
     SetLastError(0xdeadbeef);
     ret = GetCPInfo(CP_SYMBOL, &cpinfo);
@@ -4275,6 +4276,18 @@ static void test_GetCPInfo(void)
         for (i = 0; i < sizeof(cpinfo.LeadByte); i++)
             ok(!cpinfo.LeadByte[i], "expected NUL byte in index %u\n", i);
         ok(cpinfo.MaxCharSize == 5, "expected 5, got 0x%x\n", cpinfo.MaxCharSize);
+
+        memset( &cpiw, 0xcc, sizeof(cpiw) );
+        ret = GetCPInfoExW( CP_UTF7, 0, &cpiw );
+        ok( ret, "GetCPInfoExW failed err %lu\n", GetLastError() );
+        ok( cpiw.DefaultChar[0] == 0x3f, "wrong DefaultChar[0] %02x\n", cpiw.DefaultChar[0] );
+        ok( cpiw.DefaultChar[1] == 0, "wrong DefaultChar[1] %02x\n", cpiw.DefaultChar[1] );
+        for (i = 0; i < 12; i++) ok( cpiw.LeadByte[i] == 0, "wrong LeadByte[%u] %02x\n", i, cpiw.LeadByte[i] );
+        ok( cpiw.MaxCharSize == 5, "wrong MaxCharSize %02x\n", cpiw.MaxCharSize );
+        ok( cpiw.CodePage == CP_UTF7, "wrong CodePage %02x\n", cpiw.CodePage );
+        ok( cpiw.UnicodeDefaultChar == 0xfffd, "wrong UnicodeDefaultChar %02x\n", cpiw.UnicodeDefaultChar );
+        ok( !wcscmp( cpiw.CodePageName, L"65000 (UTF-7)" ),
+            "wrong CodePageName %s\n", debugstr_w(cpiw.CodePageName) );
     }
 
     memset(cpinfo.LeadByte, '-', ARRAY_SIZE(cpinfo.LeadByte));
@@ -4293,9 +4306,26 @@ static void test_GetCPInfo(void)
         ok(cpinfo.DefaultChar[1] == 0, "expected 0, got 0x%x\n", cpinfo.DefaultChar[1]);
         for (i = 0; i < sizeof(cpinfo.LeadByte); i++)
             ok(!cpinfo.LeadByte[i], "expected NUL byte in index %u\n", i);
-        ok(cpinfo.MaxCharSize == 4 || broken(cpinfo.MaxCharSize == 3) /* win9x */,
-           "expected 4, got %u\n", cpinfo.MaxCharSize);
+        ok(cpinfo.MaxCharSize == 4, "expected 4, got %u\n", cpinfo.MaxCharSize);
+
+        memset( &cpiw, 0xcc, sizeof(cpiw) );
+        ret = GetCPInfoExW( CP_UTF8, 0, &cpiw );
+        ok( ret, "GetCPInfoExW failed err %lu\n", GetLastError() );
+        ok( cpiw.DefaultChar[0] == 0x3f, "wrong DefaultChar[0] %02x\n", cpiw.DefaultChar[0] );
+        ok( cpiw.DefaultChar[1] == 0, "wrong DefaultChar[1] %02x\n", cpiw.DefaultChar[1] );
+        for (i = 0; i < 12; i++) ok( cpiw.LeadByte[i] == 0, "wrong LeadByte[%u] %02x\n", i, cpiw.LeadByte[i] );
+        ok( cpiw.MaxCharSize == 4, "wrong MaxCharSize %02x\n", cpiw.MaxCharSize );
+        ok( cpiw.CodePage == CP_UTF8, "wrong CodePage %02x\n", cpiw.CodePage );
+        ok( cpiw.UnicodeDefaultChar == 0xfffd, "wrong UnicodeDefaultChar %02x\n", cpiw.UnicodeDefaultChar );
+        ok( !wcscmp( cpiw.CodePageName, L"65001 (UTF-8)" ),
+            "wrong CodePageName %s\n", debugstr_w(cpiw.CodePageName) );
     }
+
+
+    SetLastError( 0xdeadbeef );
+    ret = GetCPInfoExW( 0xbeef, 0, &cpiw );
+    ok( !ret, "GetCPInfoExW succeeeded\n" );
+    ok( GetLastError() == ERROR_INVALID_PARAMETER, "wrong error %lu\n", GetLastError() );
 
     if (pNtGetNlsSectionPtr)
     {

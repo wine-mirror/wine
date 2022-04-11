@@ -164,8 +164,8 @@ static const struct { UINT cp; const WCHAR *name; } codepage_names[] =
     { 28604, L"ISO 8859-14 Latin 8 (Celtic)" },
     { 28605, L"ISO 8859-15 Latin 9 (Euro)" },
     { 28606, L"ISO 8859-16 Latin 10 (Balkan)" },
-    { 65000, L"Unicode (UTF-7)" },
-    { 65001, L"Unicode (UTF-8)" }
+    { 65000, L"65000 (UTF-7)" },
+    { 65001, L"65001 (UTF-8)" }
 };
 
 /* Unicode expanded ligatures */
@@ -1964,24 +1964,28 @@ static WCHAR compose_chars( WCHAR ch1, WCHAR ch2 )
 static UINT get_locale_codepage( const NLS_LOCALE_DATA *locale, ULONG flags )
 {
     UINT ret = locale->idefaultansicodepage;
-    if ((flags & LOCALE_USE_CP_ACP) || ret == CP_UTF8) ret = system_locale->idefaultansicodepage;
+    if ((flags & LOCALE_USE_CP_ACP) || ret == CP_UTF8) ret = nls_info.AnsiTableInfo.CodePage;
     return ret;
 }
 
 
 static UINT get_lcid_codepage( LCID lcid, ULONG flags )
 {
-    UINT ret = GetACP();
+    UINT ret = nls_info.AnsiTableInfo.CodePage;
 
-    if (!(flags & LOCALE_USE_CP_ACP) && lcid != GetSystemDefaultLCID())
-        GetLocaleInfoW( lcid, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
-                        (WCHAR *)&ret, sizeof(ret)/sizeof(WCHAR) );
+    if (!(flags & LOCALE_USE_CP_ACP) && lcid != system_lcid)
+    {
+        const NLS_LOCALE_DATA *locale = NlsValidateLocale( &lcid, 0 );
+        if (locale) ret = locale->idefaultansicodepage;
+    }
     return ret;
 }
 
 
 static const CPTABLEINFO *get_codepage_table( UINT codepage )
 {
+    static const CPTABLEINFO utf7_cpinfo = { CP_UTF7, 5, '?', 0xfffd, '?', '?' };
+    static const CPTABLEINFO utf8_cpinfo = { CP_UTF8, 4, '?', 0xfffd, '?', '?' };
     unsigned int i;
     USHORT *ptr;
     SIZE_T size;
@@ -1996,15 +2000,13 @@ static const CPTABLEINFO *get_codepage_table( UINT codepage )
         codepage = mac_cp;
         break;
     case CP_THREAD_ACP:
-        if (NtCurrentTeb()->CurrentLocale == GetUserDefaultLCID()) return &nls_info.AnsiTableInfo;
         codepage = get_lcid_codepage( NtCurrentTeb()->CurrentLocale, 0 );
-        if (!codepage) return &nls_info.AnsiTableInfo;
-        break;
-    default:
-        if (codepage == nls_info.AnsiTableInfo.CodePage) return &nls_info.AnsiTableInfo;
-        if (codepage == nls_info.OemTableInfo.CodePage) return &nls_info.OemTableInfo;
         break;
     }
+    if (codepage == nls_info.AnsiTableInfo.CodePage) return &nls_info.AnsiTableInfo;
+    if (codepage == nls_info.OemTableInfo.CodePage) return &nls_info.OemTableInfo;
+    if (codepage == CP_UTF8) return &utf8_cpinfo;
+    if (codepage == CP_UTF7) return &utf7_cpinfo;
 
     RtlEnterCriticalSection( &locale_section );
 
@@ -4838,27 +4840,14 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetCPInfo( UINT codepage, CPINFO *cpinfo )
 {
     const CPTABLEINFO *table;
 
-    if (!cpinfo)
+    if (!cpinfo || !(table = get_codepage_table( codepage )))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-    switch (codepage)
-    {
-    case CP_UTF7:
-    case CP_UTF8:
-        cpinfo->DefaultChar[0] = 0x3f;
-        cpinfo->DefaultChar[1] = 0;
-        memset( cpinfo->LeadByte, 0, sizeof(cpinfo->LeadByte) );
-        cpinfo->MaxCharSize = (codepage == CP_UTF7) ? 5 : 4;
-        break;
-    default:
-        if (!(table = get_codepage_table( codepage ))) return FALSE;
-        cpinfo->MaxCharSize = table->MaximumCharacterSize;
-        memcpy( cpinfo->DefaultChar, &table->DefaultChar, sizeof(cpinfo->DefaultChar) );
-        memcpy( cpinfo->LeadByte, table->LeadByte, sizeof(cpinfo->LeadByte) );
-        break;
-    }
+    cpinfo->MaxCharSize = table->MaximumCharacterSize;
+    memcpy( cpinfo->DefaultChar, &table->DefaultChar, sizeof(cpinfo->DefaultChar) );
+    memcpy( cpinfo->LeadByte, table->LeadByte, sizeof(cpinfo->LeadByte) );
     return TRUE;
 }
 
@@ -4871,38 +4860,16 @@ BOOL WINAPI GetCPInfoExW( UINT codepage, DWORD flags, CPINFOEXW *cpinfo )
     const CPTABLEINFO *table;
     int min, max, pos;
 
-    if (!cpinfo)
+    if (!cpinfo || !(table = get_codepage_table( codepage )))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return FALSE;
     }
-    switch (codepage)
-    {
-    case CP_UTF7:
-        cpinfo->DefaultChar[0] = 0x3f;
-        cpinfo->DefaultChar[1] = 0;
-        cpinfo->LeadByte[0] = cpinfo->LeadByte[1] = 0;
-        cpinfo->MaxCharSize = 5;
-        cpinfo->CodePage = CP_UTF7;
-        cpinfo->UnicodeDefaultChar = 0x3f;
-        break;
-    case CP_UTF8:
-        cpinfo->DefaultChar[0] = 0x3f;
-        cpinfo->DefaultChar[1] = 0;
-        cpinfo->LeadByte[0] = cpinfo->LeadByte[1] = 0;
-        cpinfo->MaxCharSize = 4;
-        cpinfo->CodePage = CP_UTF8;
-        cpinfo->UnicodeDefaultChar = 0x3f;
-        break;
-    default:
-        if (!(table = get_codepage_table( codepage ))) return FALSE;
-        cpinfo->MaxCharSize = table->MaximumCharacterSize;
-        memcpy( cpinfo->DefaultChar, &table->DefaultChar, sizeof(cpinfo->DefaultChar) );
-        memcpy( cpinfo->LeadByte, table->LeadByte, sizeof(cpinfo->LeadByte) );
-        cpinfo->CodePage = table->CodePage;
-        cpinfo->UnicodeDefaultChar = table->UniDefaultChar;
-        break;
-    }
+    cpinfo->MaxCharSize = table->MaximumCharacterSize;
+    memcpy( cpinfo->DefaultChar, &table->DefaultChar, sizeof(cpinfo->DefaultChar) );
+    memcpy( cpinfo->LeadByte, table->LeadByte, sizeof(cpinfo->LeadByte) );
+    cpinfo->CodePage = table->CodePage;
+    cpinfo->UnicodeDefaultChar = table->UniDefaultChar;
 
     min = 0;
     max = ARRAY_SIZE(codepage_names) - 1;
@@ -5775,9 +5742,6 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsValidCodePage( UINT codepage )
     case CP_MACCP:
     case CP_THREAD_ACP:
         return FALSE;
-    case CP_UTF7:
-    case CP_UTF8:
-        return TRUE;
     default:
         return get_codepage_table( codepage ) != NULL;
     }
