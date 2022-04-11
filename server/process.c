@@ -1333,8 +1333,8 @@ DECL_HANDLER(new_process)
     /* connect to the window station */
     connect_process_winstation( process, parent_thread, parent );
 
-    /* set the process console */
-    if (info->data->console > 3)
+    /* inherit the process console, but keep pseudo handles (< 0), and 0 (= not attached to a console) as is */
+    if ((int)info->data->console > 0)
         info->data->console = duplicate_handle( parent, info->data->console, process,
                                                 0, 0, DUPLICATE_SAME_ACCESS );
 
