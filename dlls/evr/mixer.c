@@ -1930,9 +1930,27 @@ static ULONG WINAPI video_mixer_processor_Release(IMFVideoProcessor *iface)
 static HRESULT WINAPI video_mixer_processor_GetAvailableVideoProcessorModes(IMFVideoProcessor *iface, UINT *count,
         GUID **modes)
 {
-    FIXME("%p, %p, %p.\n", iface, count, modes);
+    struct video_mixer *mixer = impl_from_IMFVideoProcessor(iface);
+    IDirectXVideoProcessorService *service;
+    DXVA2_VideoDesc video_desc;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %p.\n", iface, count, modes);
+
+    EnterCriticalSection(&mixer->cs);
+
+    if (!mixer->inputs[0].media_type || !mixer->output.media_type)
+        hr = MF_E_TRANSFORM_TYPE_NOT_SET;
+    else if (SUCCEEDED(hr = video_mixer_get_processor_service(mixer, &service)))
+    {
+        video_mixer_init_dxva_videodesc(mixer->inputs[0].media_type, &video_desc);
+        hr = IDirectXVideoProcessorService_GetVideoProcessorDeviceGuids(service, &video_desc, count, modes);
+        IDirectXVideoProcessorService_Release(service);
+    }
+
+    LeaveCriticalSection(&mixer->cs);
+
+    return hr;
 }
 
 static HRESULT WINAPI video_mixer_processor_GetVideoProcessorCaps(IMFVideoProcessor *iface, GUID *mode,
