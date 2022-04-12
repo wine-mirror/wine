@@ -462,7 +462,7 @@
 @ stub NtGdiGetColorSpaceforBitmap
 @ stub NtGdiGetCurrentDpiInfo
 @ stub NtGdiGetDCDpiScaleValue
-@ stub NtGdiGetDCDword
+@ stdcall -syscall NtGdiGetDCDword(long long ptr)
 @ stdcall -syscall NtGdiGetDCObject(long long)
 @ stub NtGdiGetDCPoint
 @ stub NtGdiGetDCforBitmap

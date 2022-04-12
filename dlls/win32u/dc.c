@@ -961,6 +961,73 @@ BOOL WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *pre
 
 
 /***********************************************************************
+ *           NtGdiGetDCDword    (win32u.@)
+ */
+BOOL WINAPI NtGdiGetDCDword( HDC hdc, UINT method, DWORD *result )
+{
+    BOOL ret = TRUE;
+    DC *dc;
+
+    if (!(dc = get_dc_ptr( hdc ))) return 0;
+
+    switch (method)
+    {
+    case NtGdiGetArcDirection:
+        *result = dc->attr->arc_direction;
+        break;
+
+    case NtGdiGetBkColor:
+        *result = dc->attr->background_color;
+        break;
+
+    case NtGdiGetBkMode:
+        *result = dc->attr->background_mode;
+        break;
+
+    case NtGdiGetDCBrushColor:
+        *result = dc->attr->brush_color;
+        break;
+
+    case NtGdiGetDCPenColor:
+        *result = dc->attr->pen_color;
+        break;
+
+    case NtGdiGetGraphicsMode:
+        *result = dc->attr->graphics_mode;
+        break;
+
+    case NtGdiGetLayout:
+        *result = dc->attr->layout;
+        break;
+
+    case NtGdiGetPolyFillMode:
+        *result = dc->attr->poly_fill_mode;
+        break;
+
+    case NtGdiGetROP2:
+        *result = dc->attr->rop_mode;
+        break;
+
+    case NtGdiGetTextColor:
+        *result = dc->attr->text_color;
+        break;
+
+    case NtGdiIsMemDC:
+        *result = get_gdi_object_type( hdc ) == NTGDI_OBJ_MEMDC;
+        break;
+
+    default:
+        WARN( "unknown method %u\n", method );
+        ret = FALSE;
+        break;
+    }
+
+    release_dc_ptr( dc );
+    return ret;
+}
+
+
+/***********************************************************************
  *           NtGdiSetBrushOrg    (win32u.@)
  */
 BOOL WINAPI NtGdiSetBrushOrg( HDC hdc, INT x, INT y, POINT *oldorg )

@@ -57,6 +57,7 @@
     SYSCALL_ENTRY( NtGdiGetBitmapBits ) \
     SYSCALL_ENTRY( NtGdiGetBitmapDimension ) \
     SYSCALL_ENTRY( NtGdiGetColorAdjustment ) \
+    SYSCALL_ENTRY( NtGdiGetDCDword ) \
     SYSCALL_ENTRY( NtGdiGetDCObject ) \
     SYSCALL_ENTRY( NtGdiGetFontFileData ) \
     SYSCALL_ENTRY( NtGdiGetFontFileInfo ) \

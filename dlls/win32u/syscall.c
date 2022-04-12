@@ -70,6 +70,7 @@ static void * const syscalls[] =
     NtGdiGetBitmapBits,
     NtGdiGetBitmapDimension,
     NtGdiGetColorAdjustment,
+    NtGdiGetDCDword,
     NtGdiGetDCObject,
     NtGdiGetFontFileData,
     NtGdiGetFontFileInfo,

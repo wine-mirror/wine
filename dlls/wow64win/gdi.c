@@ -50,6 +50,15 @@ NTSTATUS WINAPI wow64_NtGdiExtGetObjectW( UINT *args )
     return NtGdiExtGetObjectW( handle, count, buffer );
 }
 
+NTSTATUS WINAPI wow64_NtGdiGetDCDword( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    UINT method = get_ulong( &args );
+    DWORD *result = get_ptr( &args );
+
+    return NtGdiGetDCDword( hdc, method, result );
+}
+
 NTSTATUS WINAPI wow64_NtGdiGetDCObject( UINT *args )
 {
     HDC hdc = get_handle( &args );
