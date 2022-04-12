@@ -113,7 +113,7 @@ static HRESULT get_sd( SECURITY_DESCRIPTOR **sd, DWORD *size )
 
     *size = GetSecurityDescriptorLength( &absolute_sd );
 
-    *sd = HeapAlloc( GetProcessHeap(), 0, *size );
+    *sd = malloc( *size );
     if (!*sd)
         hr = E_OUTOFMEMORY;
 
@@ -121,7 +121,7 @@ static HRESULT get_sd( SECURITY_DESCRIPTOR **sd, DWORD *size )
     {
         if (!MakeSelfRelativeSD(&absolute_sd, *sd, size))
         {
-            HeapFree( GetProcessHeap(), 0, *sd );
+            free( *sd );
             *sd = NULL;
             hr = E_FAIL;
         }
@@ -162,7 +162,7 @@ HRESULT security_get_sd( IWbemClassObject *obj, IWbemContext *context, IWbemClas
             if (SUCCEEDED(hr))
                 hr = IWbemClassObject_Put( out_params, L"SD", 0, &var_sd, CIM_UINT8|CIM_FLAG_ARRAY );
 
-            HeapFree( GetProcessHeap(), 0, sd );
+            free( sd );
             VariantClear( &var_sd );
         }
 
