@@ -340,6 +340,15 @@ static int open_device(const char *device, EDataFlow flow)
     return open(device, flags, 0);
 }
 
+static void set_stream_volumes(ACImpl *This)
+{
+    struct oss_stream *stream = This->stream;
+
+    EnterCriticalSection(&This->lock);
+    stream->mute = This->session->mute;
+    LeaveCriticalSection(&This->lock);
+}
+
 static const OSSDevice *get_ossdevice_from_guid(const GUID *guid)
 {
     OSSDevice *dev_item;
@@ -982,12 +991,14 @@ exit:
         if(stream->fd >= 0) close(stream->fd);
         HeapFree(GetProcessHeap(), 0, stream->local_buffer);
         HeapFree(GetProcessHeap(), 0, stream);
+        LeaveCriticalSection(&This->lock);
     } else {
         list_add_tail(&This->session->clients, &This->entry);
         This->stream = stream;
+        LeaveCriticalSection(&This->lock);
+        set_stream_volumes(This);
     }
 
-    LeaveCriticalSection(&This->lock);
     LeaveCriticalSection(&g_sessions_lock);
 
     return hr;
@@ -1164,7 +1175,7 @@ static void silence_buffer(struct oss_stream *stream, BYTE *buffer, UINT32 frame
         memset(buffer, 0, frames * stream->fmt->nBlockAlign);
 }
 
-static void oss_write_data(struct oss_stream *stream, BOOL mute)
+static void oss_write_data(struct oss_stream *stream)
 {
     ssize_t written_bytes;
     UINT32 written_frames, in_oss_frames, write_limit, max_period, write_offs_frames, new_frames;
@@ -1235,7 +1246,7 @@ static void oss_write_data(struct oss_stream *stream, BOOL mute)
 
     buf = stream->local_buffer + write_offs_frames * stream->fmt->nBlockAlign;
 
-    if(mute)
+    if(stream->mute)
         silence_buffer(stream, buf, to_write_frames);
 
     written_bytes = write(stream->fd, buf, to_write_bytes);
@@ -1259,7 +1270,7 @@ static void oss_write_data(struct oss_stream *stream, BOOL mute)
         to_write_frames = min(write_limit - written_frames, new_frames - written_frames);
         to_write_bytes = to_write_frames * stream->fmt->nBlockAlign;
 
-        if(mute)
+        if(stream->mute)
             silence_buffer(stream, stream->local_buffer, to_write_frames);
 
         TRACE("wrapping to write %lu frames from beginning\n", to_write_frames);
@@ -1308,7 +1319,7 @@ static void CALLBACK oss_period_callback(void *user, BOOLEAN timer)
 
     if(stream->playing){
         if(stream->flow == eRender && stream->held_frames)
-            oss_write_data(stream, This->session->mute);
+            oss_write_data(stream);
         else if(stream->flow == eCapture)
             oss_read_data(stream);
     }
@@ -2476,6 +2487,7 @@ static HRESULT WINAPI SimpleAudioVolume_SetMasterVolume(
 {
     AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
     AudioSession *session = This->session;
+    ACImpl *client;
 
     TRACE("(%p)->(%f, %s)\n", session, level, wine_dbgstr_guid(context));
 
@@ -2490,6 +2502,8 @@ static HRESULT WINAPI SimpleAudioVolume_SetMasterVolume(
     session->master_vol = level;
 
     TRACE("OSS doesn't support setting volume\n");
+    LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry)
+        set_stream_volumes(client);
 
     LeaveCriticalSection(&g_sessions_lock);
 
@@ -2517,12 +2531,16 @@ static HRESULT WINAPI SimpleAudioVolume_SetMute(ISimpleAudioVolume *iface,
 {
     AudioSessionWrapper *This = impl_from_ISimpleAudioVolume(iface);
     AudioSession *session = This->session;
+    ACImpl *client;
 
     TRACE("(%p)->(%u, %s)\n", session, mute, debugstr_guid(context));
 
     EnterCriticalSection(&g_sessions_lock);
 
     session->mute = mute;
+
+    LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry)
+        set_stream_volumes(client);
 
     LeaveCriticalSection(&g_sessions_lock);
 
@@ -2622,6 +2640,7 @@ static HRESULT WINAPI AudioStreamVolume_SetChannelVolume(
     This->vols[index] = level;
 
     TRACE("OSS doesn't support setting volume\n");
+    set_stream_volumes(This);
 
     LeaveCriticalSection(&This->lock);
 
@@ -2666,6 +2685,7 @@ static HRESULT WINAPI AudioStreamVolume_SetAllVolumes(
         This->vols[i] = levels[i];
 
     TRACE("OSS doesn't support setting volume\n");
+    set_stream_volumes(This);
 
     LeaveCriticalSection(&This->lock);
 
@@ -2763,6 +2783,7 @@ static HRESULT WINAPI ChannelAudioVolume_SetChannelVolume(
 {
     AudioSessionWrapper *This = impl_from_IChannelAudioVolume(iface);
     AudioSession *session = This->session;
+    ACImpl *client;
 
     TRACE("(%p)->(%d, %f, %s)\n", session, index, level,
             wine_dbgstr_guid(context));
@@ -2781,6 +2802,8 @@ static HRESULT WINAPI ChannelAudioVolume_SetChannelVolume(
     session->channel_vols[index] = level;
 
     TRACE("OSS doesn't support setting volume\n");
+    LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry)
+        set_stream_volumes(client);
 
     LeaveCriticalSection(&g_sessions_lock);
 
@@ -2812,6 +2835,7 @@ static HRESULT WINAPI ChannelAudioVolume_SetAllVolumes(
 {
     AudioSessionWrapper *This = impl_from_IChannelAudioVolume(iface);
     AudioSession *session = This->session;
+    ACImpl *client;
     int i;
 
     TRACE("(%p)->(%d, %p, %s)\n", session, count, levels,
@@ -2832,6 +2856,8 @@ static HRESULT WINAPI ChannelAudioVolume_SetAllVolumes(
         session->channel_vols[i] = levels[i];
 
     TRACE("OSS doesn't support setting volume\n");
+    LIST_FOR_EACH_ENTRY(client, &session->clients, ACImpl, entry)
+        set_stream_volumes(client);
 
     LeaveCriticalSection(&g_sessions_lock);
 
