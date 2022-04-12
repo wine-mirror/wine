@@ -3221,7 +3221,6 @@ static UINT get_glyph_index_symbol( struct gdi_font *font, UINT glyph )
 CPTABLEINFO *get_cptable( WORD cp )
 {
     static CPTABLEINFO tables[100];
-    CPTABLEINFO *info;
     unsigned int i;
     USHORT *ptr;
     SIZE_T size;
@@ -3234,112 +3233,28 @@ CPTABLEINFO *get_cptable( WORD cp )
         ERR( "too many code pages\n" );
         return NULL;
     }
-
-    info = &tables[i];
-    info->CodePage             = ptr[1];
-    info->MaximumCharacterSize = ptr[2];
-    info->DefaultChar          = ptr[3];
-    info->UniDefaultChar       = ptr[4];
-    info->TransDefaultChar     = ptr[5];
-    info->TransUniDefaultChar  = ptr[6];
-    memcpy( info->LeadByte, ptr + 7, sizeof(info->LeadByte) );
-    ptr += ptr[0];
-
-    info->WideCharTable = ptr + ptr[0] + 1;
-    info->MultiByteTable = ++ptr;
-    ptr += 256;
-    if (*ptr++) ptr += 256;  /* glyph table */
-    info->DBCSRanges = ptr;
-    if (*ptr)  /* dbcs ranges */
-    {
-        info->DBCSCodePage = 1;
-        info->DBCSOffsets  = ptr + 1;
-    }
-    else
-    {
-        info->DBCSCodePage = 0;
-        info->DBCSOffsets  = NULL;
-    }
-
-    return info;
+    RtlInitCodePageTable( ptr, &tables[i] );
+    return &tables[i];
 }
 
 DWORD win32u_wctomb( CPTABLEINFO *info, char *dst, DWORD dstlen, const WCHAR *src, DWORD srclen )
 {
-    DWORD i, ret;
+    DWORD ret;
 
     if (!info && !(info = get_cptable( get_acp() ))) return 0;
 
-    srclen /= sizeof(WCHAR);
-    if (info->DBCSCodePage)
-    {
-        WCHAR *uni2cp = info->WideCharTable;
-
-        for (i = dstlen; srclen && i; i--, srclen--, src++)
-        {
-            if (uni2cp[*src] & 0xff00)
-            {
-                if (i == 1) break;  /* do not output a partial char */
-                i--;
-                *dst++ = uni2cp[*src] >> 8;
-            }
-            *dst++ = (char)uni2cp[*src];
-        }
-        ret = dstlen - i;
-    }
-    else
-    {
-        char *uni2cp = info->WideCharTable;
-        ret = min( srclen, dstlen );
-        for (i = 0; i < ret; i++) dst[i] = uni2cp[src[i]];
-    }
+    RtlUnicodeToCustomCPN( info, dst, dstlen, &ret, src, srclen );
     return ret;
 }
 
 DWORD win32u_mbtowc( CPTABLEINFO *info, WCHAR *dst, DWORD dstlen, const char *src, DWORD srclen )
 {
-    DWORD i, ret;
+    DWORD ret;
 
     if (!info && !(info = get_cptable( get_acp() ))) return 0;
 
-    if (!dst)
-    {
-        /* only compute length */
-        if (info->DBCSOffsets)
-        {
-            for (ret = 0; srclen--; src++, ret++)
-            {
-                if (!info->DBCSOffsets[(unsigned char)*src]) continue;
-                if (!srclen--) break;
-                src++;
-            }
-        }
-        else ret = srclen;
-        return ret * sizeof(WCHAR);
-    }
-
-    dstlen /= sizeof(WCHAR);
-    if (info->DBCSOffsets)
-    {
-        for (i = dstlen; srclen && i; i--, srclen--, src++, dst++)
-        {
-            USHORT off = info->DBCSOffsets[(unsigned char)*src];
-            if (off && srclen > 1)
-            {
-                src++;
-                srclen--;
-                *dst = info->DBCSOffsets[off + (unsigned char)*src];
-            }
-            else *dst = info->MultiByteTable[(unsigned char)*src];
-        }
-        ret = dstlen - i;
-    }
-    else
-    {
-        ret = min( srclen, dstlen );
-        for (i = 0; i < ret; i++) dst[i] = info->MultiByteTable[(unsigned char)src[i]];
-    }
-    return ret * sizeof(WCHAR);
+    RtlCustomCPToUnicodeN( info, dst, dstlen, &ret, src, srclen );
+    return ret;
 }
 
 static BOOL wc_to_index( UINT cp, WCHAR wc, unsigned char *dst, BOOL allow_default )

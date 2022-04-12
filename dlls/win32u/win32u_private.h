@@ -592,9 +592,8 @@ static inline WCHAR *win32u_wcsdup( const WCHAR *str )
 static inline WCHAR *towstr( const char *str )
 {
     DWORD len = strlen( str ) + 1;
-    DWORD size = win32u_mbtowc( NULL, NULL, 0, str, len );
-    WCHAR *ret = malloc( size );
-    if (ret) win32u_mbtowc( NULL, ret, size, str, len );
+    WCHAR *ret = malloc( len * sizeof(WCHAR) );
+    if (ret) win32u_mbtowc( NULL, ret, len * sizeof(WCHAR), str, len );
     return ret;
 }
 
