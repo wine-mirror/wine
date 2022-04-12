@@ -3892,12 +3892,11 @@ BOOL WINAPI InsertMenuW( HMENU hMenu, UINT pos, UINT flags,
         return FALSE;
 
     MENU_mnu2mnuii( flags, id, str, &mii);
+    mii.fMask |= MIIM_CHECKMARKS;
 
     item = &menu->items[newpos];
     ret = SetMenuItemInfo_common( item, &mii, TRUE);
-    if (ret)
-        item->hCheckBit = item->hUnCheckBit = 0;
-    else
+    if (!ret)
         RemoveMenu( hMenu, pos, flags );
     release_menu_ptr(menu);
 
