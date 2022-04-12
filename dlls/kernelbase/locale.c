@@ -1767,7 +1767,7 @@ void init_locale( HMODULE module )
     load_locale_nls();
 
     NtQueryDefaultLocale( FALSE, &system_lcid );
-    NtQueryDefaultLocale( FALSE, &user_lcid );
+    NtQueryDefaultLocale( TRUE, &user_lcid );
     if (!(system_locale = NlsValidateLocale( &system_lcid, 0 )))
     {
         if (GetEnvironmentVariableW( L"WINELOCALE", bufferW, ARRAY_SIZE(bufferW) ))
