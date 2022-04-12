@@ -4824,6 +4824,7 @@ static BOOL MENU_NormalizeMenuItemInfoStruct( const MENUITEMINFOW *pmii_in,
 BOOL WINAPI SetMenuItemInfoA(HMENU hmenu, UINT item, BOOL bypos,
                                  const MENUITEMINFOA *lpmii)
 {
+    WCHAR *strW = NULL;
     MENUITEMINFOW mii;
     POPUPMENU *menu;
     UINT pos;
@@ -4833,14 +4834,25 @@ BOOL WINAPI SetMenuItemInfoA(HMENU hmenu, UINT item, BOOL bypos,
 
     if (!MENU_NormalizeMenuItemInfoStruct( (const MENUITEMINFOW *)lpmii, &mii )) return FALSE;
 
+    if ((mii.fMask & MIIM_STRING) && mii.dwTypeData)
+    {
+        const char *str = (const char *)mii.dwTypeData;
+        UINT len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+        if (!(strW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return FALSE;
+        MultiByteToWideChar( CP_ACP, 0, str, -1, strW, len );
+        mii.dwTypeData = strW;
+    }
+
     if (!(menu = find_menu_item(hmenu, item, bypos ? MF_BYPOSITION : 0, &pos)))
     {
         /* workaround for Word 95: pretend that SC_TASKLIST item exists */
+        HeapFree( GetProcessHeap(), 0, strW );
         if (item == SC_TASKLIST && !bypos) return TRUE;
         return FALSE;
     }
-    ret = SetMenuItemInfo_common(&menu->items[pos], &mii, FALSE);
+    ret = SetMenuItemInfo_common(&menu->items[pos], &mii, TRUE);
     release_menu_ptr(menu);
+    HeapFree( GetProcessHeap(), 0, strW );
     return ret;
 }
 
