@@ -281,6 +281,8 @@ static HRESULT WINAPI transform_sink_receive(struct strmbase_sink *pin, IMediaSa
 {
     struct transform *filter = impl_from_strmbase_filter(pin->pin.filter);
     struct wg_sample input_wg_sample = {0};
+    REFERENCE_TIME start_time;
+    REFERENCE_TIME end_time;
     HRESULT hr;
 
     /* We do not expect pin connection state to change while the filter is
@@ -305,6 +307,18 @@ static HRESULT WINAPI transform_sink_receive(struct strmbase_sink *pin, IMediaSa
     hr = IMediaSample_GetPointer(sample, &input_wg_sample.data);
     if (FAILED(hr))
         return hr;
+
+    hr = IMediaSample_GetTime(sample, &start_time, &end_time);
+    if (SUCCEEDED(hr))
+    {
+        input_wg_sample.pts = start_time;
+        input_wg_sample.flags |= WG_SAMPLE_FLAG_HAS_PTS;
+    }
+    if (hr == S_OK)
+    {
+        input_wg_sample.duration = end_time - start_time;
+        input_wg_sample.flags |= WG_SAMPLE_FLAG_HAS_DURATION;
+    }
 
     hr = wg_transform_push_data(filter->transform, &input_wg_sample);
     if (FAILED(hr))
@@ -345,6 +359,20 @@ static HRESULT WINAPI transform_sink_receive(struct strmbase_sink *pin, IMediaSa
         {
             IMediaSample_Release(output_sample);
             return hr;
+        }
+
+        if (output_wg_sample.flags & WG_SAMPLE_FLAG_HAS_PTS)
+        {
+            start_time = output_wg_sample.pts;
+            if (output_wg_sample.flags & WG_SAMPLE_FLAG_HAS_DURATION)
+            {
+                end_time = start_time + output_wg_sample.duration;
+                IMediaSample_SetTime(output_sample, &start_time, &end_time);
+            }
+            else
+            {
+                IMediaSample_SetTime(output_sample, &start_time, NULL);
+            }
         }
 
         hr = IMemInputPin_Receive(filter->source.pMemInputPin, output_sample);

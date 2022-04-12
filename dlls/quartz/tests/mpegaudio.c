@@ -888,11 +888,11 @@ static HRESULT WINAPI testsink_Receive(struct strmbase_sink *iface, IMediaSample
     start = 0xdeadbeef;
     stop = 0xdeadbeef;
     hr = IMediaSample_GetTime(sample, &start, &stop);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (filter->got_sample == 1)
     {
-        todo_wine ok(start == filter->expected_start_time, "Got start time %s.\n", wine_dbgstr_longlong(start));
-        todo_wine ok(stop == filter->expected_stop_time, "Got stop time %s.\n", wine_dbgstr_longlong(stop));
+        ok(start == filter->expected_start_time, "Got start time %s.\n", wine_dbgstr_longlong(start));
+        ok(stop == filter->expected_stop_time, "Got stop time %s.\n", wine_dbgstr_longlong(stop));
     }
 
     return S_OK;
