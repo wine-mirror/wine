@@ -576,6 +576,8 @@ static inline ULONG win32u_wcstoul( const WCHAR *s, WCHAR **end, int base )
     return negative ? -ret : ret;
 }
 
+extern CPTABLEINFO ansi_cp DECLSPEC_HIDDEN;
+
 DWORD win32u_mbtowc( CPTABLEINFO *info, WCHAR *dst, DWORD dstlen, const char *src,
                      DWORD srclen ) DECLSPEC_HIDDEN;
 DWORD win32u_wctomb( CPTABLEINFO *info, char *dst, DWORD dstlen, const WCHAR *src,
@@ -593,7 +595,7 @@ static inline WCHAR *towstr( const char *str )
 {
     DWORD len = strlen( str ) + 1;
     WCHAR *ret = malloc( len * sizeof(WCHAR) );
-    if (ret) win32u_mbtowc( NULL, ret, len, str, len );
+    if (ret) win32u_mbtowc( &ansi_cp, ret, len, str, len );
     return ret;
 }
 

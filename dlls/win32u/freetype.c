@@ -2524,7 +2524,7 @@ static BOOL freetype_get_glyph_index( struct gdi_font *font, UINT *glyph, BOOL u
             DWORD len;
             char ch;
 
-            len = win32u_wctomb( NULL, &ch, 1, &wc, 1 );
+            len = win32u_wctomb( &ansi_cp, &ch, 1, &wc, 1 );
             if (len) *glyph = get_glyph_index_symbol( font, (unsigned char)ch );
         }
         return TRUE;

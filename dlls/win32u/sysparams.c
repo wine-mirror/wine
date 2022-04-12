@@ -2659,7 +2659,7 @@ static void logfont16to32( const LOGFONT16 *font16, LPLOGFONTW font32 )
     font32->lfClipPrecision = font16->lfClipPrecision;
     font32->lfQuality = font16->lfQuality;
     font32->lfPitchAndFamily = font16->lfPitchAndFamily;
-    win32u_mbtowc( NULL, font32->lfFaceName, LF_FACESIZE, font16->lfFaceName,
+    win32u_mbtowc( &ansi_cp, font32->lfFaceName, LF_FACESIZE, font16->lfFaceName,
                    strlen( font16->lfFaceName ));
     font32->lfFaceName[LF_FACESIZE-1] = 0;
 }
@@ -4229,7 +4229,7 @@ int get_system_metrics( int index )
     case SM_PENWINDOWS:
         return 0;
     case SM_DBCSENABLED:
-        return get_cptable(get_acp())->MaximumCharacterSize > 1;
+        return ansi_cp.MaximumCharacterSize > 1;
     case SM_CMOUSEBUTTONS:
         return 3;
     case SM_SECURE:

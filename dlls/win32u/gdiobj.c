@@ -487,13 +487,11 @@ static const struct DefaultFontInfo* get_default_fonts(UINT charset)
 static UINT get_default_charset( void )
 {
     CHARSETINFO     csi;
-    UINT    uACP;
 
-    uACP = get_acp();
     csi.ciCharset = ANSI_CHARSET;
-    if ( !translate_charset_info( ULongToPtr(uACP), &csi, TCI_SRCCODEPAGE ) )
+    if ( !translate_charset_info( ULongToPtr(ansi_cp.CodePage), &csi, TCI_SRCCODEPAGE ) )
     {
-        FIXME( "unhandled codepage %u - use ANSI_CHARSET for default stock objects\n", uACP );
+        FIXME( "unhandled codepage %u - use ANSI_CHARSET for default stock objects\n", ansi_cp.CodePage );
         return ANSI_CHARSET;
     }
 
