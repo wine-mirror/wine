@@ -67,6 +67,15 @@ NTSTATUS WINAPI wow64_NtGdiGetDCObject( UINT *args )
     return HandleToUlong( NtGdiGetDCObject( hdc, type ));
 }
 
+NTSTATUS WINAPI wow64_NtGdiGetDCPoint( UINT *args )
+{
+    HDC hdc = get_handle( &args );
+    UINT method = get_ulong( &args );
+    POINT *result = get_ptr( &args );
+
+    return NtGdiGetDCPoint( hdc, method, result );
+}
+
 NTSTATUS WINAPI wow64_NtGdiCreateBitmap( UINT *args )
 {
     INT width = get_ulong( &args );

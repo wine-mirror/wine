@@ -131,6 +131,14 @@ enum
     NtGdiIsMemDC,
 };
 
+/* NtGdiGetDCPoint parameter, not compatible with Windows */
+enum
+{
+    NtGdiGetBrushOrgEx,
+    NtGdiGetCurrentPosition,
+    NtGdiGetDCOrg,
+};
+
 enum
 {
     NtGdiAnimatePalette,

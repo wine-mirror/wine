@@ -1028,6 +1028,42 @@ BOOL WINAPI NtGdiGetDCDword( HDC hdc, UINT method, DWORD *result )
 
 
 /***********************************************************************
+ *           NtGdiGetDCPoint    (win32u.@)
+ */
+BOOL WINAPI NtGdiGetDCPoint( HDC hdc, UINT method, POINT *result )
+{
+    BOOL ret = TRUE;
+    DC *dc;
+
+    if (!(dc = get_dc_ptr( hdc ))) return 0;
+
+    switch (method)
+    {
+    case NtGdiGetBrushOrgEx:
+        *result = dc->attr->brush_org;
+        break;
+
+    case NtGdiGetCurrentPosition:
+        *result = dc->attr->cur_pos;
+        break;
+
+    case NtGdiGetDCOrg:
+        result->x = dc->attr->vis_rect.left;
+        result->y = dc->attr->vis_rect.top;
+        break;
+
+    default:
+        WARN( "unknown method %u\n", method );
+        ret = FALSE;
+        break;
+    }
+
+    release_dc_ptr( dc );
+    return ret;
+}
+
+
+/***********************************************************************
  *           NtGdiSetBrushOrg    (win32u.@)
  */
 BOOL WINAPI NtGdiSetBrushOrg( HDC hdc, INT x, INT y, POINT *oldorg )

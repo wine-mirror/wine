@@ -72,6 +72,7 @@ static void * const syscalls[] =
     NtGdiGetColorAdjustment,
     NtGdiGetDCDword,
     NtGdiGetDCObject,
+    NtGdiGetDCPoint,
     NtGdiGetFontFileData,
     NtGdiGetFontFileInfo,
     NtGdiGetNearestPaletteIndex,

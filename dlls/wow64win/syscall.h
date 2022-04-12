@@ -59,6 +59,7 @@
     SYSCALL_ENTRY( NtGdiGetColorAdjustment ) \
     SYSCALL_ENTRY( NtGdiGetDCDword ) \
     SYSCALL_ENTRY( NtGdiGetDCObject ) \
+    SYSCALL_ENTRY( NtGdiGetDCPoint ) \
     SYSCALL_ENTRY( NtGdiGetFontFileData ) \
     SYSCALL_ENTRY( NtGdiGetFontFileInfo ) \
     SYSCALL_ENTRY( NtGdiGetNearestPaletteIndex ) \
