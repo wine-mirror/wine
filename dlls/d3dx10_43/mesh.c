@@ -59,7 +59,7 @@ static ULONG STDMETHODCALLTYPE d3dx10_mesh_AddRef(ID3DX10Mesh *iface)
     struct d3dx10_mesh *mesh = impl_from_ID3DX10Mesh(iface);
     ULONG refcount = InterlockedIncrement(&mesh->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -69,7 +69,7 @@ static ULONG STDMETHODCALLTYPE d3dx10_mesh_Release(ID3DX10Mesh *iface)
     struct d3dx10_mesh *mesh = impl_from_ID3DX10Mesh(iface);
     ULONG refcount = InterlockedDecrement(&mesh->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
         heap_free(mesh);

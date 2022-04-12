@@ -442,10 +442,10 @@ HRESULT WINAPI D3DX10GetImageInfoFromResourceA(HMODULE module, const char *resou
 HRESULT WINAPI D3DX10GetImageInfoFromResourceW(HMODULE module, const WCHAR *resource, ID3DX10ThreadPump *pump,
         D3DX10_IMAGE_INFO *info, HRESULT *result)
 {
-    unsigned int size;
     HRSRC res_info;
     void *buffer;
     HRESULT hr;
+    DWORD size;
 
     TRACE("module %p, resource %s, pump %p, info %p, result %p.\n",
             module, debugstr_w(resource), pump, info, result);
@@ -482,7 +482,7 @@ HRESULT WINAPI D3DX10GetImageInfoFromMemory(const void *src_data, SIZE_T src_dat
     GUID container_format;
     HRESULT hr;
 
-    TRACE("src_data %p, src_data_size %lu, pump %p, img_info %p, hresult %p.\n",
+    TRACE("src_data %p, src_data_size %Iu, pump %p, img_info %p, hresult %p.\n",
             src_data, src_data_size, pump, img_info, hresult);
 
     if (!src_data || !src_data_size || !img_info)
@@ -697,7 +697,7 @@ HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *s
     GUID src_format;
     HRESULT hr;
 
-    TRACE("device %p, src_data %p, src_data_size %lu, load_info %p, pump %p, texture %p, hresult %p.\n",
+    TRACE("device %p, src_data %p, src_data_size %Iu, load_info %p, pump %p, texture %p, hresult %p.\n",
             device, src_data, src_data_size, load_info, pump, texture, hresult);
 
     if (!src_data || !src_data_size || !texture)

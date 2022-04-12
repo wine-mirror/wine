@@ -66,7 +66,7 @@ static ULONG WINAPI d3dx_font_AddRef(ID3DX10Font *iface)
     struct d3dx_font *font = impl_from_ID3DX10Font(iface);
     ULONG refcount = InterlockedIncrement(&font->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
     return refcount;
 }
 
@@ -75,7 +75,7 @@ static ULONG WINAPI d3dx_font_Release(ID3DX10Font *iface)
     struct d3dx_font *font = impl_from_ID3DX10Font(iface);
     ULONG refcount = InterlockedDecrement(&font->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {

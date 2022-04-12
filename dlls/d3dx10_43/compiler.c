@@ -37,7 +37,7 @@ HRESULT WINAPI D3DX10CreateEffectFromMemory(const void *data, SIZE_T datasize, c
     ID3D10Blob *code;
     HRESULT hr;
 
-    TRACE("data %p, datasize %lu, filename %s, defines %p, include %p, profile %s, shader_flags %#x,"
+    TRACE("data %p, datasize %Iu, filename %s, defines %p, include %p, profile %s, shader_flags %#x,"
             "effect_flags %#x, device %p, effect_pool %p, pump %p, effect %p, errors %p, hresult %p.\n",
             data, datasize, debugstr_a(filename), defines, include, debugstr_a(profile),
             shader_flags, effect_flags, device, effect_pool, pump, effect, errors, hresult);
@@ -51,7 +51,7 @@ HRESULT WINAPI D3DX10CreateEffectFromMemory(const void *data, SIZE_T datasize, c
     if (FAILED(hr = D3DCompile(data, datasize, filename, defines, include, "main", profile,
             shader_flags, effect_flags, &code, errors)))
     {
-        WARN("Effect compilation failed, hr %#x.\n", hr);
+        WARN("Effect compilation failed, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -84,7 +84,7 @@ HRESULT WINAPI D3DX10CreateEffectFromFileW(const WCHAR *filename, const D3D10_SH
     if (FAILED(hr = D3DCompileFromFile(filename, defines, include, "main", profile, shader_flags,
             effect_flags, &code, errors)))
     {
-        WARN("Effect compilation failed, hr %#x.\n", hr);
+        WARN("Effect compilation failed, hr %#lx.\n", hr);
         return hr;
     }
 
