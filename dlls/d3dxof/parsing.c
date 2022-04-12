@@ -274,8 +274,8 @@ HRESULT parse_header(parse_buffer * buf, BYTE ** decomp_buffer_ptr)
     }
 
     if ((decomp_buffer - *decomp_buffer_ptr) != decomp_file_size)
-        ERR("Size of all decompressed chunks (%lu) does not match decompressed file size (%lu).\n",
-                (DWORD)(decomp_buffer - *decomp_buffer_ptr), decomp_file_size);
+        ERR("Size of all decompressed chunks (%Iu) does not match decompressed file size (%lu).\n",
+                decomp_buffer - *decomp_buffer_ptr, decomp_file_size);
 
     /* Use decompressed data */
     buf->buffer = *decomp_buffer_ptr;
