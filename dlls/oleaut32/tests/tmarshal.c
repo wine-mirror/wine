@@ -39,21 +39,18 @@ static inline void release_iface_(unsigned int line, void *iface)
 }
 #define release_iface(a) release_iface_(__LINE__, a)
 
-/* ULL suffix is not portable */
-#define ULL_CONST(dw1, dw2) ((((ULONGLONG)dw1) << 32) | (ULONGLONG)dw2)
-
 static const WCHAR test_bstr1[] = {'f','o','o',0,'b','a','r'};
 static const WCHAR test_bstr2[] = {'t','e','s','t',0};
 static const WCHAR test_bstr3[] = {'q','u','x',0};
 static const WCHAR test_bstr4[] = {'a','b','c',0};
 
-static const MYSTRUCT test_mystruct1 = {0x12345678, ULL_CONST(0xdeadbeef, 0x98765432), {0,1,2,3,4,5,6,7}};
-static const MYSTRUCT test_mystruct2 = {0x91827364, ULL_CONST(0x88776655, 0x44332211), {3,6,1,4,0,1,3,0}};
-static const MYSTRUCT test_mystruct3 = {0x1a1b1c1d, ULL_CONST(0x1e1f1011, 0x12131415), {9,2,4,5,6,5,1,3}};
-static const MYSTRUCT test_mystruct4 = {0x2a2b2c2d, ULL_CONST(0x2e2f2021, 0x22232425), {0,4,6,7,3,6,7,4}};
-static const MYSTRUCT test_mystruct5 = {0x3a3b3c3d, ULL_CONST(0x3e3f3031, 0x32333435), {1,6,7,3,8,4,6,5}};
-static const MYSTRUCT test_mystruct6 = {0x4a4b4c4d, ULL_CONST(0x4e4f4041, 0x42434445), {3,6,5,3,4,8,0,9}};
-static const MYSTRUCT test_mystruct7 = {0x5a5b5c5d, ULL_CONST(0x5e5f5051, 0x52535455), {1,8,4,4,4,2,3,1}};
+static const MYSTRUCT test_mystruct1 = {0x12345678, 0xdeadbeef98765432ull, {0,1,2,3,4,5,6,7}};
+static const MYSTRUCT test_mystruct2 = {0x91827364, 0x8877665544332211ull, {3,6,1,4,0,1,3,0}};
+static const MYSTRUCT test_mystruct3 = {0x1a1b1c1d, 0x1e1f101112131415ull, {9,2,4,5,6,5,1,3}};
+static const MYSTRUCT test_mystruct4 = {0x2a2b2c2d, 0x2e2f202122232425ull, {0,4,6,7,3,6,7,4}};
+static const MYSTRUCT test_mystruct5 = {0x3a3b3c3d, 0x3e3f303132333435ull, {1,6,7,3,8,4,6,5}};
+static const MYSTRUCT test_mystruct6 = {0x4a4b4c4d, 0x4e4f404142434445ull, {3,6,5,3,4,8,0,9}};
+static const MYSTRUCT test_mystruct7 = {0x5a5b5c5d, 0x5e5f505152535455ull, {1,8,4,4,4,2,3,1}};
 
 static const struct thin test_thin_struct = {-456, 78};
 
@@ -1134,7 +1131,7 @@ static HRESULT WINAPI Widget_basetypes_out(IWidget *iface, signed char *c, short
     *uc = 254;
     *us = 256;
     *ul = 0xf00dfade;
-    *uh = (((ULONGLONG)0xabcdef01) << 32) | (ULONGLONG)0x23456789;
+    *uh = 0xabcdef0123456789ull;
     *f = M_LN2;
     *d = M_LN10;
     *st = STATE_UNWIDGETIFIED;
@@ -2033,8 +2030,7 @@ static void test_marshal_basetypes(IWidget *widget, IDispatch *disp)
     ok(uc == 254, "Got unsigned char %u.\n", uc);
     ok(us == 256, "Got unsigned short %u.\n", us);
     ok(ul == 0xf00dfade, "Got unsigned int %li.\n", ul);
-    ok(uh == ((((ULONGLONG)0xabcdef01) << 32) | (ULONGLONG)0x23456789),
-            "Got unsigned hyper %s.\n", wine_dbgstr_longlong(uh));
+    ok(uh == 0xabcdef0123456789ull, "Got unsigned hyper %s.\n", wine_dbgstr_longlong(uh));
     ok(f == (float)M_LN2, "Got float %f.\n", f);
     ok(d == M_LN10, "Got double %f.\n", d);
     ok(st == STATE_UNWIDGETIFIED, "Got state %u.\n", st);
@@ -2050,8 +2046,7 @@ static void test_marshal_basetypes(IWidget *widget, IDispatch *disp)
     ok(uc == 254, "Got unsigned char %u.\n", uc);
     ok(us == 256, "Got unsigned short %u.\n", us);
     ok(ul == 0xf00dfade, "Got unsigned int %li.\n", ul);
-    ok(uh == ((((ULONGLONG)0xabcdef01) << 32) | (ULONGLONG)0x23456789),
-            "Got unsigned hyper %s.\n", wine_dbgstr_longlong(uh));
+    ok(uh == 0xabcdef0123456789ull, "Got unsigned hyper %s.\n", wine_dbgstr_longlong(uh));
     ok(f == (float)M_LN2, "Got float %f.\n", f);
     ok(d == M_LN10, "Got double %f.\n", d);
     ok(st == STATE_UNWIDGETIFIED, "Got state %u.\n", st);

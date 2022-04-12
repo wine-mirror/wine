@@ -2514,9 +2514,9 @@ static const char *szFailOk = "Call failed, hres = %08x\n";
   ok(V_I4(&vOut) == val, "Expected i4 = %ld, got %ld\n", (LONG)val, V_I4(&vOut)); }
 #define EXPECT_UI4(val) EXPECT_OK { EXPECT_TYPE(VT_UI4); \
   ok(V_UI4(&vOut) == val, "Expected ui4 = %d, got %d\n", (ULONG)val, V_UI4(&vOut)); }
-#define EXPECT_I8(high,low) EXPECT_OK { EXPECT_TYPE(VT_I8); \
-  ok(V_I8(&vOut) == ((((ULONG64)(high))<<32)|(low)), "Expected i8 = %lx%08lx, got %lx%08lx\n", \
-     (LONG)(high), (LONG)(low), (LONG)(V_I8(&vOut)>>32), (LONG)V_I8(&vOut) ); }
+#define EXPECT_I8(val) EXPECT_OK { EXPECT_TYPE(VT_I8); \
+  ok(V_I8(&vOut) == val, "Expected i8 = %lx%08lx, got %lx%08lx\n", \
+     (LONG)(val >> 32), (LONG)(val), (LONG)(V_I8(&vOut)>>32), (LONG)V_I8(&vOut) ); }
 #define EXPECT_UI8(val) EXPECT_OK { EXPECT_TYPE(VT_UI8); \
   ok(V_UI8(&vOut) == val, "Expected ui8 = 0x%x%08x, got 0x%x%08x\n", \
       (DWORD)((ULONG64)val >> 32), (DWORD)(ULONG64)val, (DWORD)(V_UI8(&vOut) >> 32), (DWORD)V_UI8(&vOut)); }
@@ -2615,7 +2615,7 @@ static void test_VarNumFromParseNum(void)
     /* We cannot use INTEGER_VTBITS as WinXP and Win2003 are broken(?). They
        truncate the number to the smallest integer size requested:
        CONVERT(16,0,0,16,4,0, INTEGER_VTBITS); EXPECT_I1((signed char)0xff); */
-    CONVERT(16,0,0,16,4,0, VTBIT_I8); EXPECT_I8(0x7fffffff,0xffffffff);
+    CONVERT(16,0,0,16,4,0, VTBIT_I8); EXPECT_I8(0x7fffffffffffffffull);
   }
 
   /* Assume the above pattern holds for numbers without hi-bit set, test (preservation of) hi-bit */
@@ -2642,7 +2642,7 @@ static void test_VarNumFromParseNum(void)
        truncate the number to the smallest integer size requested:
        CONVERT(16,0,0,16,4,0, INTEGER_VTBITS & ~VTBIT_I1);
        EXPECT_I2((signed short)0x0002); */
-    CONVERT(16,0,0,16,4,0, VTBIT_I8); EXPECT_I8(0x80000000,0x00000002);
+    CONVERT(16,0,0,16,4,0, VTBIT_I8); EXPECT_I8(0x8000000000000002ull);
   }
 
   /* Test (preservation of) hi-bit with STRICT type requesting */
@@ -2665,7 +2665,7 @@ static void test_VarNumFromParseNum(void)
   SETRGB(12, 0); SETRGB(13, 0); SETRGB(14, 0); SETRGB(15, 2);
   if (has_i8)
   {
-    CONVERT(16,0,0,16,4,0, VTBIT_I8); EXPECT_I8(0x80000000,0x00000002);
+    CONVERT(16,0,0,16,4,0, VTBIT_I8); EXPECT_I8(0x8000000000000002ull);
   }
   /* Assume the above pattern holds for numbers with hi-bit set */
 

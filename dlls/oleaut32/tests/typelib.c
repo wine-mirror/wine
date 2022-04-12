@@ -1194,7 +1194,7 @@ static double WINAPI double_func( double a0, float a1, double a2, int a3 )
 
 static LONGLONG WINAPI longlong_func( LONGLONG a0, CY a1 )
 {
-    ok( a0 == (((ULONGLONG)0xdead << 32) | 0xbeef), "wrong arg0 %08lx%08lx\n", (DWORD)(a0 >> 32), (DWORD)a0);
+    ok( a0 == 0xdead00000000beefll, "wrong arg0 %08lx%08lx\n", (DWORD)(a0 >> 32), (DWORD)a0);
     ok( a1.int64 == ((ULONGLONG)10000 * 12345678), "wrong arg1 %08lx%08lx\n",
         (DWORD)(a1.int64 >> 32), (DWORD)a1.int64 );
     return ((ULONGLONG)4321 << 32) | 8765;
@@ -1379,7 +1379,7 @@ static void test_DispCallFunc(void)
 
     memset( args, 0x55, sizeof(args) );
     types[0] = VT_I8;
-    V_I8(&args[0]) = ((ULONGLONG)0xdead << 32) | 0xbeef;
+    V_I8(&args[0]) = 0xdead00000000beefll;
     types[1] = VT_CY;
     V_CY(&args[1]).int64 = (ULONGLONG)10000 * 12345678;
     memset( &result, 0xcc, sizeof(result) );
