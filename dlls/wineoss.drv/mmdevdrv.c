@@ -113,7 +113,6 @@ struct ACImpl {
     UINT32 channel_count;
     struct oss_stream *stream;
 
-    BOOL initted;
     HANDLE timer;
 
     CRITICAL_SECTION lock;
@@ -532,7 +531,7 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
         IUnknown_Release(This->pUnkFTMarshal);
         This->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&This->lock);
-        if(This->initted){
+        if(This->session){
             EnterCriticalSection(&g_sessions_lock);
             list_remove(&This->entry);
             LeaveCriticalSection(&g_sessions_lock);
@@ -895,7 +894,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     EnterCriticalSection(&g_sessions_lock);
     EnterCriticalSection(&This->lock);
 
-    if(This->initted){
+    if(This->stream){
         LeaveCriticalSection(&This->lock);
         LeaveCriticalSection(&g_sessions_lock);
         return AUDCLNT_E_ALREADY_INITIALIZED;
@@ -986,7 +985,6 @@ exit:
     } else {
         list_add_tail(&This->session->clients, &This->entry);
         This->stream = stream;
-        This->initted = TRUE;
     }
 
     LeaveCriticalSection(&This->lock);
@@ -1008,7 +1006,7 @@ static HRESULT WINAPI AudioClient_GetBufferSize(IAudioClient3 *iface,
 
     EnterCriticalSection(&This->lock);
 
-    if(!This->initted){
+    if(!This->stream){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_NOT_INITIALIZED;
     }
@@ -1035,7 +1033,7 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
 
     EnterCriticalSection(&This->lock);
 
-    if(!This->initted){
+    if(!This->stream){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_NOT_INITIALIZED;
     }
@@ -1062,7 +1060,7 @@ static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient3 *iface,
 
     EnterCriticalSection(&This->lock);
 
-    if(!This->initted){
+    if(!This->stream){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_NOT_INITIALIZED;
     }
@@ -1330,7 +1328,7 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
 
     EnterCriticalSection(&This->lock);
 
-    if(!This->initted){
+    if(!This->stream){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_NOT_INITIALIZED;
     }
@@ -1368,7 +1366,7 @@ static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)
 
     EnterCriticalSection(&This->lock);
 
-    if(!This->initted){
+    if(!This->stream){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_NOT_INITIALIZED;
     }
@@ -1395,7 +1393,7 @@ static HRESULT WINAPI AudioClient_Reset(IAudioClient3 *iface)
 
     EnterCriticalSection(&This->lock);
 
-    if(!This->initted){
+    if(!This->stream){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_NOT_INITIALIZED;
     }
@@ -1438,7 +1436,7 @@ static HRESULT WINAPI AudioClient_SetEventHandle(IAudioClient3 *iface,
 
     EnterCriticalSection(&This->lock);
 
-    if(!This->initted){
+    if(!This->stream){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_NOT_INITIALIZED;
     }
@@ -1474,7 +1472,7 @@ static HRESULT WINAPI AudioClient_GetService(IAudioClient3 *iface, REFIID riid,
 
     EnterCriticalSection(&This->lock);
 
-    if(!This->initted){
+    if(!This->stream){
         LeaveCriticalSection(&This->lock);
         return AUDCLNT_E_NOT_INITIALIZED;
     }
