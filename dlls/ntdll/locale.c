@@ -40,7 +40,7 @@ BYTE NlsMbCodePageTag = 0;
 BYTE NlsMbOemCodePageTag = 0;
 
 static const WCHAR *locale_strings;
-static NLSTABLEINFO nls_info;
+static NLSTABLEINFO nls_info = { { CP_UTF8 }, { CP_UTF8 } };
 static struct norm_table *norm_tables[16];
 static const NLS_LOCALE_LCID_INDEX *lcids_index;
 static const NLS_LOCALE_LCNAME_INDEX *lcnames_index;
