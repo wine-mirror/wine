@@ -282,13 +282,13 @@ HRESULT WbemQualifierSet_create( enum wbm_namespace ns, const WCHAR *class, cons
     if (!(set = malloc( sizeof(*set) ))) return E_OUTOFMEMORY;
 
     set->IWbemQualifierSet_iface.lpVtbl = &qualifier_set_vtbl;
-    if (!(set->class = heap_strdupW( class )))
+    if (!(set->class = wcsdup( class )))
     {
         free( set );
         return E_OUTOFMEMORY;
     }
     if (!member) set->member = NULL;
-    else if (!(set->member = heap_strdupW( member )))
+    else if (!(set->member = wcsdup( member )))
     {
         free( set->class );
         free( set );

@@ -783,7 +783,7 @@ static HRESULT create_signature_columns_and_data( IEnumWbemClassObject *iter, UI
 
         hr = IWbemClassObject_Get( param, L"Parameter", 0, &val, NULL, NULL );
         if (hr != S_OK) goto error;
-        columns[i].name = heap_strdupW( V_BSTR( &val ) );
+        columns[i].name = wcsdup( V_BSTR( &val ) );
         VariantClear( &val );
 
         hr = IWbemClassObject_Get( param, L"Type", 0, &val, NULL, NULL );
@@ -1068,7 +1068,7 @@ HRESULT create_class_object( enum wbm_namespace ns, const WCHAR *name, IEnumWbem
     co->IWbemClassObject_iface.lpVtbl = &class_object_vtbl;
     co->refs  = 1;
     if (!name) co->name = NULL;
-    else if (!(co->name = heap_strdupW( name )))
+    else if (!(co->name = wcsdup( name )))
     {
         free( co );
         return E_OUTOFMEMORY;

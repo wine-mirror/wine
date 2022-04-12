@@ -376,7 +376,7 @@ struct table *create_table( const WCHAR *name, UINT num_cols, const struct colum
     struct table *table;
 
     if (!(table = malloc( sizeof(*table) ))) return NULL;
-    table->name               = heap_strdupW( name );
+    table->name               = wcsdup( name );
     table->num_cols           = num_cols;
     table->columns            = columns;
     table->num_rows           = num_rows;

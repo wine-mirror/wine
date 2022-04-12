@@ -749,7 +749,7 @@ static HRESULT WINAPI wbem_services_ExecQueryAsync(
         free_async( async );
         goto done;
     }
-    if (!(query->str = heap_strdupW( strQuery )))
+    if (!(query->str = wcsdup( strQuery )))
     {
         free_async( async );
         goto done;
@@ -818,7 +818,7 @@ static HRESULT WINAPI wbem_services_ExecNotificationQueryAsync(
         free_async( async );
         goto done;
     }
-    if (!(query->str = heap_strdupW( strQuery )))
+    if (!(query->str = wcsdup( strQuery )))
     {
         free_async( async );
         goto done;
@@ -1152,7 +1152,7 @@ static HRESULT WINAPI wbem_context_SetValue(
     else
     {
         if (!(value = calloc( 1, sizeof(*value) ))) return E_OUTOFMEMORY;
-        if (!(value->name = heap_strdupW( name )))
+        if (!(value->name = wcsdup( name )))
         {
             free( value );
             return E_OUTOFMEMORY;

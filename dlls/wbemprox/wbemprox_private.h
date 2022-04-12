@@ -275,14 +275,6 @@ HRESULT sysrestore_enable(IWbemClassObject *obj, IWbemContext *context, IWbemCla
 HRESULT sysrestore_get_last_status(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
 HRESULT sysrestore_restore(IWbemClassObject *obj, IWbemContext *context, IWbemClassObject *in, IWbemClassObject **out) DECLSPEC_HIDDEN;
 
-static inline WCHAR *heap_strdupW( const WCHAR *src )
-{
-    WCHAR *dst;
-    if (!src) return NULL;
-    if ((dst = malloc( (lstrlenW( src ) + 1) * sizeof(WCHAR) ))) lstrcpyW( dst, src );
-    return dst;
-}
-
 static inline WCHAR *heap_strdupAW( const char *src )
 {
     int len;
