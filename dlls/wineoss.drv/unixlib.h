@@ -35,6 +35,8 @@ struct oss_stream
 
     BYTE *local_buffer, *tmp_buffer;
     INT32 getbuf_last; /* <0 when using tmp_buffer */
+
+    pthread_mutex_t lock;
 };
 
 /* From <dlls/mmdevapi/mmdevapi.h> */
