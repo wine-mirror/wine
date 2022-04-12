@@ -44,8 +44,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
 #include "x11drv.h"
 #include "winternl.h"
 #include "wine/debug.h"
@@ -849,8 +847,14 @@ BOOL CDECL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
         }
         if (physDevSrc->depth == 1)
         {
-            int text_pixel = X11DRV_PALETTE_ToPhysical( physDevDst, GetTextColor(physDevDst->dev.hdc) );
-            int bkgnd_pixel = X11DRV_PALETTE_ToPhysical( physDevDst, GetBkColor(physDevDst->dev.hdc) );
+            DWORD text_color, bk_color;
+            int text_pixel, bkgnd_pixel;
+
+            NtGdiGetDCDword( physDevDst->dev.hdc, NtGdiGetTextColor, &text_color );
+            text_pixel = X11DRV_PALETTE_ToPhysical( physDevDst, text_color );
+
+            NtGdiGetDCDword( physDevDst->dev.hdc, NtGdiGetBkColor, &bk_color );
+            bkgnd_pixel = X11DRV_PALETTE_ToPhysical( physDevDst, bk_color );
 
             XSetBackground( gdi_display, physDevDst->gc, text_pixel );
             XSetForeground( gdi_display, physDevDst->gc, bkgnd_pixel );
@@ -880,8 +884,14 @@ BOOL CDECL X11DRV_StretchBlt( PHYSDEV dst_dev, struct bitblt_coords *dst,
            to color or vice versa, the foreground and background color of
            the device context are used.  In fact, it also applies to the
            case when it is converted from mono to mono. */
-        int text_pixel = X11DRV_PALETTE_ToPhysical( physDevDst, GetTextColor(physDevDst->dev.hdc) );
-        int bkgnd_pixel = X11DRV_PALETTE_ToPhysical( physDevDst, GetBkColor(physDevDst->dev.hdc) );
+        DWORD text_color, bk_color;
+        int text_pixel, bkgnd_pixel;
+
+        NtGdiGetDCDword( physDevDst->dev.hdc, NtGdiGetTextColor, &text_color );
+        text_pixel = X11DRV_PALETTE_ToPhysical( physDevDst, text_color );
+
+        NtGdiGetDCDword( physDevDst->dev.hdc, NtGdiGetBkColor, &bk_color );
+        bkgnd_pixel = X11DRV_PALETTE_ToPhysical( physDevDst, bk_color );
 
         if (X11DRV_PALETTE_XPixelToPalette && physDevDst->depth != 1)
         {
@@ -1480,7 +1490,7 @@ Pixmap create_pixmap_from_image( HDC hdc, const XVisualInfo *vis, const BITMAPIN
     {
         if (dst_info->bmiHeader.biBitCount == 1)  /* set a default color table for 1-bpp */
             memcpy( dst_info->bmiColors, default_colortable, sizeof(default_colortable) );
-        dib = CreateDIBSection( hdc, dst_info, coloruse, &dst_bits.ptr, 0, 0 );
+        dib = NtGdiCreateDIBSection( hdc, 0, 0, dst_info, coloruse, 0, 0, 0, &dst_bits.ptr );
         if (dib)
         {
             if (src_info->bmiHeader.biBitCount == 1 && !src_info->bmiHeader.biClrUsed)
@@ -1489,7 +1499,7 @@ Pixmap create_pixmap_from_image( HDC hdc, const XVisualInfo *vis, const BITMAPIN
             dst_bits.free = NULL;
             dst_bits.is_copy = TRUE;
             err = put_pixmap_image( pixmap, vis, dst_info, &dst_bits );
-            DeleteObject( dib );
+            NtGdiDeleteObjectApp( dib );
         }
         else err = ERROR_OUTOFMEMORY;
     }
@@ -1592,9 +1602,9 @@ static inline UINT get_color_component( UINT color, UINT mask )
 #ifdef HAVE_LIBXSHAPE
 static inline void flush_rgn_data( HRGN rgn, RGNDATA *data )
 {
-    HRGN tmp = ExtCreateRegion( NULL, data->rdh.dwSize + data->rdh.nRgnSize, data );
-    CombineRgn( rgn, rgn, tmp, RGN_OR );
-    DeleteObject( tmp );
+    HRGN tmp = NtGdiExtCreateRegion( NULL, data->rdh.dwSize + data->rdh.nRgnSize, data );
+    NtGdiCombineRgn( rgn, rgn, tmp, RGN_OR );
+    NtGdiDeleteObjectApp( tmp );
     data->rdh.nCount = 0;
 }
 
@@ -1639,7 +1649,7 @@ static void update_surface_region( struct x11drv_window_surface *surface )
     data->rdh.nCount = 0;
     data->rdh.nRgnSize = sizeof(buffer) - sizeof(data->rdh);
 
-    rgn = CreateRectRgn( 0, 0, 0, 0 );
+    rgn = NtGdiCreateRectRgn( 0, 0, 0, 0 );
     width = surface->header.rect.right - surface->header.rect.left;
 
     switch (info->bmiHeader.biBitCount)
@@ -1741,7 +1751,7 @@ static void update_surface_region( struct x11drv_window_surface *surface )
         HeapFree( GetProcessHeap(), 0, data );
     }
 
-    DeleteObject( rgn );
+    NtGdiDeleteObjectApp( rgn );
 #endif
 }
 
@@ -1868,14 +1878,14 @@ static void x11drv_surface_set_region( struct window_surface *window_surface, HR
     window_surface->funcs->lock( window_surface );
     if (!region)
     {
-        if (surface->region) DeleteObject( surface->region );
+        if (surface->region) NtGdiDeleteObjectApp( surface->region );
         surface->region = 0;
         XSetClipMask( gdi_display, surface->gc, None );
     }
     else
     {
-        if (!surface->region) surface->region = CreateRectRgn( 0, 0, 0, 0 );
-        CombineRgn( surface->region, region, 0, RGN_COPY );
+        if (!surface->region) surface->region = NtGdiCreateRectRgn( 0, 0, 0, 0 );
+        NtGdiCombineRgn( surface->region, region, 0, RGN_COPY );
         if ((data = X11DRV_GetRegionData( surface->region, 0 )))
         {
             XSetClipRectangles( gdi_display, surface->gc, 0, 0,
@@ -1979,7 +1989,7 @@ static void x11drv_surface_destroy( struct window_surface *window_surface )
     }
     surface->crit.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &surface->crit );
-    if (surface->region) DeleteObject( surface->region );
+    if (surface->region) NtGdiDeleteObjectApp( surface->region );
     HeapFree( GetProcessHeap(), 0, surface );
 }
 
@@ -2099,10 +2109,10 @@ HRGN expose_surface( struct window_surface *window_surface, const RECT *rect )
     add_bounds_rect( &surface->bounds, &rc );
     if (surface->region)
     {
-        region = CreateRectRgnIndirect( rect );
-        if (CombineRgn( region, region, surface->region, RGN_DIFF ) <= NULLREGION)
+        region = NtGdiCreateRectRgn( rect->left, rect->top, rect->right, rect->bottom );
+        if (NtGdiCombineRgn( region, region, surface->region, RGN_DIFF ) <= NULLREGION)
         {
-            DeleteObject( region );
+            NtGdiDeleteObjectApp( region );
             region = 0;
         }
     }

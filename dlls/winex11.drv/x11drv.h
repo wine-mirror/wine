@@ -57,8 +57,7 @@ typedef int Status;
 
 #include "windef.h"
 #include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
+#include "ntgdi.h"
 #include "wine/gdi_driver.h"
 #include "wine/list.h"
 
