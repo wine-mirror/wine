@@ -840,6 +840,13 @@ static inline BOOL is_window_rect_mapped( const RECT *rect )
             max( rect->bottom, rect->top + 1 ) > virtual_rect.top);
 }
 
+/* GDI helpers */
+
+static inline BOOL lp_to_dp( HDC hdc, POINT *points, INT count )
+{
+    return NtGdiTransformPoints( hdc, points, points, count, NtGdiLPtoDP );
+}
+
 /* registry helpers */
 
 extern HKEY open_hkcu_key( const char *name ) DECLSPEC_HIDDEN;
