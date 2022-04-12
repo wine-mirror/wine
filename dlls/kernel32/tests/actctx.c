@@ -3650,7 +3650,7 @@ static void test_manifest_in_module(void)
     ctx.lpResourceName = (LPWSTR)124;
     ctx.hModule = GetModuleHandleW(NULL);
     handle = CreateActCtxW(&ctx);
-    ok(handle != 0, "CreateActCtx error %lu\n", GetLastError());
+    ok(handle != INVALID_HANDLE_VALUE, "CreateActCtx error %lu\n", GetLastError());
 
     test_basic_info(handle, __LINE__);
     test_detailed_info(handle, &detailed_info3, __LINE__);
