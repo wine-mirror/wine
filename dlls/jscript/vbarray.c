@@ -93,7 +93,7 @@ static HRESULT VBArray_getItem(script_ctx_t *ctx, jsval_t vthis, WORD flags, uns
         return hres;
 
     if(r) {
-        hres = variant_to_jsval(&out, r);
+        hres = variant_to_jsval(ctx, &out, r);
         VariantClear(&out);
     }
     return hres;
@@ -163,7 +163,7 @@ static HRESULT VBArray_toArray(script_ctx_t *ctx, jsval_t vthis, WORD flags, uns
     }
 
     for(i=0; i<size; i++) {
-        hres = variant_to_jsval(v, &val);
+        hres = variant_to_jsval(ctx, v, &val);
         if(SUCCEEDED(hres)) {
             hres = jsdisp_propput_idx(array, i, val);
             jsval_release(val);

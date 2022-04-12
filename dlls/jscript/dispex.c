@@ -386,7 +386,7 @@ static IDispatch *get_this(DISPPARAMS *dp)
     return NULL;
 }
 
-static HRESULT convert_params(const DISPPARAMS *dp, jsval_t *buf, unsigned *argc, jsval_t **ret)
+static HRESULT convert_params(script_ctx_t *ctx, const DISPPARAMS *dp, jsval_t *buf, unsigned *argc, jsval_t **ret)
 {
     jsval_t *argv;
     unsigned cnt;
@@ -404,7 +404,7 @@ static HRESULT convert_params(const DISPPARAMS *dp, jsval_t *buf, unsigned *argc
     }
 
     for(i = 0; i < cnt; i++) {
-        hres = variant_to_jsval(dp->rgvarg+dp->cArgs-i-1, argv+i);
+        hres = variant_to_jsval(ctx, dp->rgvarg+dp->cArgs-i-1, argv+i);
         if(FAILED(hres)) {
             while(i--)
                 jsval_release(argv[i]);
@@ -1593,7 +1593,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         jsval_t *argv, buf[6], r;
         unsigned argc;
 
-        hres = convert_params(pdp, buf, &argc, &argv);
+        hres = convert_params(This->ctx, pdp, buf, &argc, &argv);
         if(FAILED(hres))
             break;
 
@@ -1649,7 +1649,7 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
             break;
         }
 
-        hres = variant_to_jsval(pdp->rgvarg+i, &val);
+        hres = variant_to_jsval(This->ctx, pdp->rgvarg+i, &val);
         if(FAILED(hres))
             break;
 
@@ -2141,7 +2141,7 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, uns
         heap_free(dp.rgvarg);
 
     if(SUCCEEDED(hres) && ret)
-        hres = variant_to_jsval(&retv, ret);
+        hres = variant_to_jsval(ctx, &retv, ret);
     VariantClear(&retv);
     return hres;
 }
@@ -2209,7 +2209,7 @@ HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, W
     if(!r)
         return S_OK;
 
-    hres = variant_to_jsval(&retv, r);
+    hres = variant_to_jsval(ctx, &retv, r);
     VariantClear(&retv);
     return hres;
 }
@@ -2385,7 +2385,7 @@ HRESULT disp_propget(script_ctx_t *ctx, IDispatch *disp, DISPID id, jsval_t *val
     V_VT(&var) = VT_EMPTY;
     hres = disp_invoke(ctx, disp, id, INVOKE_PROPERTYGET, &dp, &var);
     if(SUCCEEDED(hres)) {
-        hres = variant_to_jsval(&var, val);
+        hres = variant_to_jsval(ctx, &var, val);
         VariantClear(&var);
     }
     return hres;

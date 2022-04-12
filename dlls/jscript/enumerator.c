@@ -44,7 +44,7 @@ static inline EnumeratorInstance *enumerator_this(jsval_t vthis)
     return (jsdisp && is_class(jsdisp, JSCLASS_ENUMERATOR)) ? enumerator_from_jsdisp(jsdisp) : NULL;
 }
 
-static inline HRESULT enumvar_get_next_item(EnumeratorInstance *This)
+static inline HRESULT enumvar_get_next_item(EnumeratorInstance *This, script_ctx_t *ctx)
 {
     HRESULT hres;
     VARIANT nextitem;
@@ -60,7 +60,7 @@ static inline HRESULT enumvar_get_next_item(EnumeratorInstance *This)
     hres = IEnumVARIANT_Next(This->enumvar, 1, &nextitem, NULL);
     if (hres == S_OK)
     {
-        hres = variant_to_jsval(&nextitem, &This->item);
+        hres = variant_to_jsval(ctx, &nextitem, &This->item);
         VariantClear(&nextitem);
         if (FAILED(hres))
         {
@@ -134,7 +134,7 @@ static HRESULT Enumerator_moveFirst(script_ctx_t *ctx, jsval_t vthis, WORD flags
             return hres;
 
         This->atend = FALSE;
-        hres = enumvar_get_next_item(This);
+        hres = enumvar_get_next_item(This, ctx);
         if(FAILED(hres))
             return hres;
     }
@@ -157,7 +157,7 @@ static HRESULT Enumerator_moveNext(script_ctx_t *ctx, jsval_t vthis, WORD flags,
 
     if (This->enumvar)
     {
-        hres = enumvar_get_next_item(This);
+        hres = enumvar_get_next_item(This, ctx);
         if (FAILED(hres))
             return hres;
     }
@@ -272,7 +272,7 @@ static HRESULT create_enumerator(script_ctx_t *ctx, jsval_t *argv, jsdisp_t **re
 
     enumerator->enumvar = enumvar;
     enumerator->atend = !enumvar;
-    hres = enumvar_get_next_item(enumerator);
+    hres = enumvar_get_next_item(enumerator, ctx);
     if (FAILED(hres))
     {
         jsdisp_release(&enumerator->dispex);

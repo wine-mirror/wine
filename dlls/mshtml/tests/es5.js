@@ -1362,6 +1362,7 @@ sync_test("isFrozen", function() {
 });
 
 sync_test("builtin_context", function() {
+    var nullDisp = external.nullDisp;
     var tests = [
         [ "Array.map",              JS_E_OBJECT_EXPECTED,       function(ctx) { Array.prototype.map.call(ctx, function(a, b) {}); } ],
         [ "Array.sort",             JS_E_OBJECT_EXPECTED,       function(ctx) { Array.prototype.sort.call(ctx); } ],
@@ -1399,6 +1400,13 @@ sync_test("builtin_context", function() {
         }catch(ex) {
             var n = ex.number >>> 0;
             ok(n === tests[i][1], tests[i][0] + " with undefined context exception code = " + n);
+        }
+        try {
+            tests[i][2](nullDisp);
+            ok(false, "expected exception calling " + tests[i][0] + " with nullDisp context");
+        }catch(ex) {
+            var n = ex.number >>> 0;
+            ok(n === tests[i][1], tests[i][0] + " with nullDisp context exception code = " + n);
         }
     }
 
