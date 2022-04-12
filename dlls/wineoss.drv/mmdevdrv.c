@@ -260,6 +260,16 @@ int WINAPI AUDDRV_GetPriority(void)
     return params.priority;
 }
 
+static HRESULT stream_release(struct oss_stream *stream)
+{
+    struct release_stream_params params;
+
+    params.stream = stream;
+    OSS_CALL(release_stream, &params);
+
+    return params.result;
+}
+
 static void oss_lock(struct oss_stream *stream)
 {
     pthread_mutex_lock(&stream->lock);
@@ -340,13 +350,6 @@ static void get_device_guid(EDataFlow flow, const char *device, GUID *guid)
 
     if(key)
         RegCloseKey(key);
-}
-
-static int open_device(const char *device, EDataFlow flow)
-{
-    int flags = ((flow == eRender) ? O_WRONLY : O_RDONLY) | O_NONBLOCK;
-
-    return open(device, flags, 0);
 }
 
 static void set_stream_volumes(ACImpl *This)
@@ -524,7 +527,6 @@ static ULONG WINAPI AudioClient_AddRef(IAudioClient3 *iface)
 static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    struct oss_stream *stream = This->stream;
     ULONG ref;
 
     ref = InterlockedDecrement(&This->ref);
@@ -550,21 +552,8 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
             LeaveCriticalSection(&g_sessions_lock);
         }
         HeapFree(GetProcessHeap(), 0, This->vols);
-        if(stream){
-            SIZE_T size;
-            close(stream->fd);
-            if(stream->local_buffer){
-                size = 0;
-                NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer, &size, MEM_RELEASE);
-            }
-            if(stream->tmp_buffer){
-                size = 0;
-                NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, &size, MEM_RELEASE);
-            }
-            CoTaskMemFree(stream->fmt);
-            pthread_mutex_destroy(&stream->lock);
-            HeapFree(GetProcessHeap(), 0, stream);
-        }
+        if(This->stream)
+            stream_release(This->stream);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -602,177 +591,6 @@ static void dump_fmt(const WAVEFORMATEX *fmt)
         TRACE("Samples: %04x\n", fmtex->Samples.wReserved);
         TRACE("SubFormat: %s\n", wine_dbgstr_guid(&fmtex->SubFormat));
     }
-}
-
-static DWORD get_channel_mask(unsigned int channels)
-{
-    switch(channels){
-    case 0:
-        return 0;
-    case 1:
-        return KSAUDIO_SPEAKER_MONO;
-    case 2:
-        return KSAUDIO_SPEAKER_STEREO;
-    case 3:
-        return KSAUDIO_SPEAKER_STEREO | SPEAKER_LOW_FREQUENCY;
-    case 4:
-        return KSAUDIO_SPEAKER_QUAD;    /* not _SURROUND */
-    case 5:
-        return KSAUDIO_SPEAKER_QUAD | SPEAKER_LOW_FREQUENCY;
-    case 6:
-        return KSAUDIO_SPEAKER_5POINT1; /* not 5POINT1_SURROUND */
-    case 7:
-        return KSAUDIO_SPEAKER_5POINT1 | SPEAKER_BACK_CENTER;
-    case 8:
-        return KSAUDIO_SPEAKER_7POINT1_SURROUND; /* Vista deprecates 7POINT1 */
-    }
-    FIXME("Unknown speaker configuration: %u\n", channels);
-    return 0;
-}
-
-static int get_oss_format(const WAVEFORMATEX *fmt)
-{
-    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)fmt;
-
-    if(fmt->wFormatTag == WAVE_FORMAT_PCM ||
-            (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))){
-        switch(fmt->wBitsPerSample){
-        case 8:
-            return AFMT_U8;
-        case 16:
-            return AFMT_S16_LE;
-        case 24:
-            return AFMT_S24_LE;
-        case 32:
-            return AFMT_S32_LE;
-        }
-        return -1;
-    }
-
-#ifdef AFMT_FLOAT
-    if(fmt->wFormatTag == WAVE_FORMAT_IEEE_FLOAT ||
-            (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT))){
-        if(fmt->wBitsPerSample != 32)
-            return -1;
-
-        return AFMT_FLOAT;
-    }
-#endif
-
-    return -1;
-}
-
-static WAVEFORMATEX *clone_format(const WAVEFORMATEX *fmt)
-{
-    WAVEFORMATEX *ret;
-    size_t size;
-
-    if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
-        size = sizeof(WAVEFORMATEXTENSIBLE);
-    else
-        size = sizeof(WAVEFORMATEX);
-
-    ret = CoTaskMemAlloc(size);
-    if(!ret)
-        return NULL;
-
-    memcpy(ret, fmt, size);
-
-    ret->cbSize = size - sizeof(WAVEFORMATEX);
-
-    return ret;
-}
-
-static HRESULT setup_oss_device(AUDCLNT_SHAREMODE mode, int fd,
-        const WAVEFORMATEX *fmt, WAVEFORMATEX **out)
-{
-    int tmp, oss_format;
-    double tenth;
-    HRESULT ret = S_OK;
-    WAVEFORMATEX *closest = NULL;
-
-    tmp = oss_format = get_oss_format(fmt);
-    if(oss_format < 0)
-        return AUDCLNT_E_UNSUPPORTED_FORMAT;
-    if(ioctl(fd, SNDCTL_DSP_SETFMT, &tmp) < 0){
-        WARN("SETFMT failed: %d (%s)\n", errno, strerror(errno));
-        return E_FAIL;
-    }
-    if(tmp != oss_format){
-        TRACE("Format unsupported by this OSS version: %x\n", oss_format);
-        return AUDCLNT_E_UNSUPPORTED_FORMAT;
-    }
-
-    if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-            (fmt->nAvgBytesPerSec == 0 ||
-             fmt->nBlockAlign == 0 ||
-             ((WAVEFORMATEXTENSIBLE*)fmt)->Samples.wValidBitsPerSample > fmt->wBitsPerSample))
-        return E_INVALIDARG;
-
-    if(fmt->nChannels == 0)
-        return AUDCLNT_E_UNSUPPORTED_FORMAT;
-
-    closest = clone_format(fmt);
-    if(!closest)
-        return E_OUTOFMEMORY;
-
-    tmp = fmt->nSamplesPerSec;
-    if(ioctl(fd, SNDCTL_DSP_SPEED, &tmp) < 0){
-        WARN("SPEED failed: %d (%s)\n", errno, strerror(errno));
-        CoTaskMemFree(closest);
-        return E_FAIL;
-    }
-    tenth = fmt->nSamplesPerSec * 0.1;
-    if(tmp > fmt->nSamplesPerSec + tenth || tmp < fmt->nSamplesPerSec - tenth){
-        ret = S_FALSE;
-        closest->nSamplesPerSec = tmp;
-    }
-
-    tmp = fmt->nChannels;
-    if(ioctl(fd, SNDCTL_DSP_CHANNELS, &tmp) < 0){
-        WARN("CHANNELS failed: %d (%s)\n", errno, strerror(errno));
-        CoTaskMemFree(closest);
-        return E_FAIL;
-    }
-    if(tmp != fmt->nChannels){
-        ret = S_FALSE;
-        closest->nChannels = tmp;
-    }
-
-    if(closest->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
-        ((WAVEFORMATEXTENSIBLE*)closest)->dwChannelMask = get_channel_mask(closest->nChannels);
-
-    if(fmt->nBlockAlign != fmt->nChannels * fmt->wBitsPerSample / 8 ||
-            fmt->nAvgBytesPerSec != fmt->nBlockAlign * fmt->nSamplesPerSec ||
-            (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
-             ((WAVEFORMATEXTENSIBLE*)fmt)->Samples.wValidBitsPerSample < fmt->wBitsPerSample))
-        ret = S_FALSE;
-
-    if(mode == AUDCLNT_SHAREMODE_EXCLUSIVE &&
-            fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE){
-        if(((WAVEFORMATEXTENSIBLE*)fmt)->dwChannelMask == 0 ||
-                ((WAVEFORMATEXTENSIBLE*)fmt)->dwChannelMask & SPEAKER_RESERVED)
-            ret = S_FALSE;
-    }
-
-    if(ret == S_FALSE && !out)
-        ret = AUDCLNT_E_UNSUPPORTED_FORMAT;
-
-    if(ret == S_FALSE && out){
-        closest->nBlockAlign =
-            closest->nChannels * closest->wBitsPerSample / 8;
-        closest->nAvgBytesPerSec =
-            closest->nBlockAlign * closest->nSamplesPerSec;
-        if(closest->wFormatTag == WAVE_FORMAT_EXTENSIBLE)
-            ((WAVEFORMATEXTENSIBLE*)closest)->Samples.wValidBitsPerSample = closest->wBitsPerSample;
-        *out = closest;
-    } else
-        CoTaskMemFree(closest);
-
-    TRACE("returning: %08x\n", ret);
-    return ret;
 }
 
 static void session_init_vols(AudioSession *session, UINT channels)
@@ -860,11 +678,9 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         const GUID *sessionguid)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
+    struct create_stream_params params;
     struct oss_stream *stream;
-    oss_audioinfo ai;
-    SIZE_T size;
-    int i;
-    HRESULT hr;
+    unsigned int i;
 
     TRACE("(%p)->(%x, %x, %s, %s, %p, %s)\n", This, mode, flags,
           wine_dbgstr_longlong(duration), wine_dbgstr_longlong(period), fmt, debugstr_guid(sessionguid));
@@ -920,92 +736,38 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
         return AUDCLNT_E_ALREADY_INITIALIZED;
     }
 
-    stream = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*This->stream));
-    if(!stream){
+    params.device = This->devnode;
+    params.flow = This->dataflow;
+    params.share = mode;
+    params.flags = flags;
+    params.duration = duration;
+    params.period = period;
+    params.fmt = fmt;
+    params.stream = &stream;
+
+    OSS_CALL(create_stream, &params);
+    if(FAILED(params.result)){
         LeaveCriticalSection(&g_sessions_lock);
-        return E_OUTOFMEMORY;
-    }
-    stream->flow = This->dataflow;
-    pthread_mutex_init(&stream->lock, NULL);
-
-    stream->fd = open_device(This->devnode, This->dataflow);
-    if(stream->fd < 0){
-        WARN("Unable to open device %s: %d (%s)\n", This->devnode, errno, strerror(errno));
-        hr = AUDCLNT_E_DEVICE_INVALIDATED;
-        goto exit;
-    }
-
-    ai.dev = -1;
-    if(ioctl(stream->fd, SNDCTL_ENGINEINFO, &ai) < 0){
-        WARN("Unable to get audio info for device %s: %d (%s)\n", This->devnode, errno, strerror(errno));
-        hr = E_FAIL;
-        goto exit;
-    }
-
-    TRACE("OSS audioinfo:\n");
-    TRACE("devnode: %s\n", ai.devnode);
-    TRACE("name: %s\n", ai.name);
-    TRACE("busy: %x\n", ai.busy);
-    TRACE("caps: %x\n", ai.caps);
-    TRACE("iformats: %x\n", ai.iformats);
-    TRACE("oformats: %x\n", ai.oformats);
-    TRACE("enabled: %d\n", ai.enabled);
-    TRACE("min_rate: %d\n", ai.min_rate);
-    TRACE("max_rate: %d\n", ai.max_rate);
-    TRACE("min_channels: %d\n", ai.min_channels);
-    TRACE("max_channels: %d\n", ai.max_channels);
-
-    hr = setup_oss_device(mode, stream->fd, fmt, NULL);
-    if(FAILED(hr))
-        goto exit;
-
-    stream->fmt = clone_format(fmt);
-    if(!stream->fmt){
-        hr = E_OUTOFMEMORY;
-        goto exit;
-    }
-
-    stream->period_us = period / 10;
-    stream->period_frames = MulDiv(fmt->nSamplesPerSec, period, 10000000);
-
-    stream->bufsize_frames = MulDiv(duration, fmt->nSamplesPerSec, 10000000);
-    if(mode == AUDCLNT_SHAREMODE_EXCLUSIVE)
-        stream->bufsize_frames -= stream->bufsize_frames % stream->period_frames;
-    size = stream->bufsize_frames * fmt->nBlockAlign;
-    if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer, 0, &size,
-                               MEM_COMMIT, PAGE_READWRITE)){
-        hr = E_OUTOFMEMORY;
-        goto exit;
+        return params.result;
     }
 
     This->channel_count = fmt->nChannels;
     This->vols = HeapAlloc(GetProcessHeap(), 0, This->channel_count * sizeof(float));
     if(!This->vols){
-        hr = E_OUTOFMEMORY;
+        params.result = E_OUTOFMEMORY;
         goto exit;
     }
     for(i = 0; i < This->channel_count; ++i)
         This->vols[i] = 1.f;
 
-    stream->share = mode;
-    stream->flags = flags;
-    stream->oss_bufsize_bytes = 0;
-
-    hr = get_audio_session(sessionguid, This->parent, This->channel_count,
+    params.result = get_audio_session(sessionguid, This->parent, This->channel_count,
             &This->session);
 
 exit:
-    if(FAILED(hr)){
+    if(FAILED(params.result)){
+        stream_release(stream);
         HeapFree(GetProcessHeap(), 0, This->vols);
         This->vols = NULL;
-        CoTaskMemFree(stream->fmt);
-        if(stream->fd >= 0) close(stream->fd);
-        if(stream->local_buffer){
-            size = 0;
-            NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer, &size, MEM_RELEASE);
-        }
-        pthread_mutex_destroy(&stream->lock);
-        HeapFree(GetProcessHeap(), 0, stream);
     } else {
         list_add_tail(&This->session->clients, &This->entry);
         This->stream = stream;
@@ -1014,7 +776,7 @@ exit:
 
     LeaveCriticalSection(&g_sessions_lock);
 
-    return hr;
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_GetBufferSize(IAudioClient3 *iface,

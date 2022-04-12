@@ -69,6 +69,25 @@ struct get_endpoint_ids_params
     unsigned int default_idx;
 };
 
+struct create_stream_params
+{
+    const char *device;
+    EDataFlow flow;
+    AUDCLNT_SHAREMODE share;
+    UINT flags;
+    REFERENCE_TIME duration;
+    REFERENCE_TIME period;
+    const WAVEFORMATEX *fmt;
+    HRESULT result;
+    struct oss_stream **stream;
+};
+
+struct release_stream_params
+{
+    struct oss_stream *stream;
+    HRESULT result;
+};
+
 struct is_format_supported_params
 {
     const char *device;
@@ -91,6 +110,8 @@ enum oss_funcs
 {
     oss_test_connect,
     oss_get_endpoint_ids,
+    oss_create_stream,
+    oss_release_stream,
     oss_is_format_supported,
     oss_get_mix_format,
 };

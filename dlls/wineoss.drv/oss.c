@@ -31,6 +31,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/soundcard.h>
+#include <pthread.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -44,6 +45,30 @@
 #include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(oss);
+
+/* copied from kernelbase */
+static int muldiv( int a, int b, int c )
+{
+    LONGLONG ret;
+
+    if (!c) return -1;
+
+    /* We want to deal with a positive divisor to simplify the logic. */
+    if (c < 0)
+    {
+        a = -a;
+        c = -c;
+    }
+
+    /* If the result is positive, we "add" to round. else, we subtract to round. */
+    if ((a < 0 && b < 0) || (a >= 0 && b >= 0))
+        ret = (((LONGLONG)a * b) + (c / 2)) / c;
+    else
+        ret = (((LONGLONG)a * b) - (c / 2)) / c;
+
+    if (ret > 2147483647 || ret < -2147483647) return -1;
+    return ret;
+}
 
 static NTSTATUS test_connect(void *args)
 {
@@ -466,6 +491,118 @@ static HRESULT setup_oss_device(AUDCLNT_SHAREMODE share, int fd,
     return ret;
 }
 
+static NTSTATUS create_stream(void *args)
+{
+    struct create_stream_params *params = args;
+    WAVEFORMATEXTENSIBLE *fmtex;
+    struct oss_stream *stream;
+    oss_audioinfo ai;
+    SIZE_T size;
+
+    stream = calloc(1, sizeof(*stream));
+    if(!stream){
+        params->result = E_OUTOFMEMORY;
+        return STATUS_SUCCESS;
+    }
+
+    stream->flow = params->flow;
+    pthread_mutex_init(&stream->lock, NULL);
+
+    stream->fd = open_device(params->device, params->flow);
+    if(stream->fd < 0){
+        WARN("Unable to open device %s: %d (%s)\n", params->device, errno, strerror(errno));
+        params->result = AUDCLNT_E_DEVICE_INVALIDATED;
+        goto exit;
+    }
+
+    ai.dev = -1;
+    if(ioctl(stream->fd, SNDCTL_ENGINEINFO, &ai) < 0){
+        WARN("Unable to get audio info for device %s: %d (%s)\n", params->device, errno, strerror(errno));
+        params->result = E_FAIL;
+        goto exit;
+    }
+
+    TRACE("OSS audioinfo:\n");
+    TRACE("devnode: %s\n", ai.devnode);
+    TRACE("name: %s\n", ai.name);
+    TRACE("busy: %x\n", ai.busy);
+    TRACE("caps: %x\n", ai.caps);
+    TRACE("iformats: %x\n", ai.iformats);
+    TRACE("oformats: %x\n", ai.oformats);
+    TRACE("enabled: %d\n", ai.enabled);
+    TRACE("min_rate: %d\n", ai.min_rate);
+    TRACE("max_rate: %d\n", ai.max_rate);
+    TRACE("min_channels: %d\n", ai.min_channels);
+    TRACE("max_channels: %d\n", ai.max_channels);
+
+    params->result = setup_oss_device(params->share, stream->fd, params->fmt, NULL);
+    if(FAILED(params->result))
+        goto exit;
+
+    fmtex = clone_format(params->fmt);
+    if(!fmtex){
+        params->result = E_OUTOFMEMORY;
+        goto exit;
+    }
+    stream->fmt = &fmtex->Format;
+
+    stream->period_us = params->period / 10;
+    stream->period_frames = muldiv(params->fmt->nSamplesPerSec, params->period, 10000000);
+
+    stream->bufsize_frames = muldiv(params->duration, params->fmt->nSamplesPerSec, 10000000);
+    if(params->share == AUDCLNT_SHAREMODE_EXCLUSIVE)
+        stream->bufsize_frames -= stream->bufsize_frames % stream->period_frames;
+    size = stream->bufsize_frames * params->fmt->nBlockAlign;
+    if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer, 0, &size,
+                               MEM_COMMIT, PAGE_READWRITE)){
+        params->result = E_OUTOFMEMORY;
+        goto exit;
+    }
+
+    stream->share = params->share;
+    stream->flags = params->flags;
+    stream->oss_bufsize_bytes = 0;
+
+exit:
+    if(FAILED(params->result)){
+        if(stream->fd >= 0) close(stream->fd);
+        if(stream->local_buffer){
+            size = 0;
+            NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer, &size, MEM_RELEASE);
+        }
+        pthread_mutex_destroy(&stream->lock);
+        free(stream->fmt);
+        free(stream);
+    }else{
+        *params->stream = stream;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS release_stream(void *args)
+{
+    struct release_stream_params *params = args;
+    struct oss_stream *stream = params->stream;
+    SIZE_T size;
+
+    close(stream->fd);
+    if(stream->local_buffer){
+        size = 0;
+        NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer, &size, MEM_RELEASE);
+    }
+    if(stream->tmp_buffer){
+        size = 0;
+        NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, &size, MEM_RELEASE);
+    }
+    free(stream->fmt);
+    pthread_mutex_destroy(&stream->lock);
+    free(stream);
+
+    params->result = S_OK;
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS is_format_supported(void *args)
 {
     struct is_format_supported_params *params = args;
@@ -599,6 +736,8 @@ unixlib_entry_t __wine_unix_call_funcs[] =
 {
     test_connect,
     get_endpoint_ids,
+    create_stream,
+    release_stream,
     is_format_supported,
     get_mix_format,
 };
