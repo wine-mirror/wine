@@ -337,7 +337,7 @@ int X11DRV_PALETTE_Init(void)
     }
     else
     {
-        GetPaletteEntries( GetStockObject(DEFAULT_PALETTE), 0, NB_RESERVED_COLORS, sys_pal_template );
+        get_palette_entries( GetStockObject(DEFAULT_PALETTE), 0, NB_RESERVED_COLORS, sys_pal_template );
 
         if ((mapping = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(int) * NB_RESERVED_COLORS )))
             palette_set_mapping( GetStockObject(DEFAULT_PALETTE), mapping );
@@ -881,20 +881,20 @@ static int X11DRV_SysPaletteLookupPixel( COLORREF col, BOOL skipReserved )
  */
 COLORREF X11DRV_PALETTE_GetColor( X11DRV_PDEVICE *physDev, COLORREF color )
 {
-    HPALETTE             hPal = GetCurrentObject(physDev->dev.hdc, OBJ_PAL );
-    PALETTEENTRY         entry;
+    HPALETTE hPal = NtGdiGetDCObject( physDev->dev.hdc, NTGDI_OBJ_PAL );
+    PALETTEENTRY entry;
 
     if (color & (1 << 24))  /* PALETTEINDEX */
     {
         unsigned int idx = LOWORD(color);
-        if (!GetPaletteEntries( hPal, idx, 1, &entry )) return 0;
+        if (!get_palette_entries( hPal, idx, 1, &entry )) return 0;
         return RGB( entry.peRed, entry.peGreen, entry.peBlue );
     }
 
     if (color >> 24 == 2)  /* PALETTERGB */
     {
-        unsigned int idx = GetNearestPaletteIndex( hPal, color & 0xffffff );
-        if (!GetPaletteEntries( hPal, idx, 1, &entry )) return 0;
+        unsigned int idx = NtGdiGetNearestPaletteIndex( hPal, color & 0xffffff );
+        if (!get_palette_entries( hPal, idx, 1, &entry )) return 0;
         return RGB( entry.peRed, entry.peGreen, entry.peBlue );
     }
 
@@ -911,8 +911,8 @@ COLORREF X11DRV_PALETTE_GetColor( X11DRV_PDEVICE *physDev, COLORREF color )
  */
 int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
 {
-    WORD 		 index = 0;
-    HPALETTE 		 hPal = GetCurrentObject(physDev->dev.hdc, OBJ_PAL );
+    WORD index = 0;
+    HPALETTE hPal = NtGdiGetDCObject( physDev->dev.hdc, NTGDI_OBJ_PAL );
     int *mapping = palette_get_mapping( hPal );
     PALETTEENTRY entry;
     ColorShifts *shifts = &X11DRV_PALETTE_default_shifts;
@@ -931,7 +931,7 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
         {
             unsigned int idx = LOWORD( color );
 
-            if (!GetPaletteEntries( hPal, idx, 1, &entry ))
+            if (!get_palette_entries( hPal, idx, 1, &entry ))
             {
                 WARN("PALETTEINDEX(%x) : idx %d is out of bounds, assuming black\n", color, idx);
                 return 0;
@@ -990,13 +990,13 @@ int X11DRV_PALETTE_ToPhysical( X11DRV_PDEVICE *physDev, COLORREF color )
         if (color & (1 << 24))  /* PALETTEINDEX */
         {
             index = LOWORD( color );
-            if (!GetPaletteEntries( hPal, index, 1, &entry ))
+            if (!get_palette_entries( hPal, index, 1, &entry ))
                 WARN("PALETTEINDEX(%x) : index %i is out of bounds\n", color, index);
             else if (mapping) index = mapping[index];
         }
         else if (color >> 24 == 2)  /* PALETTERGB */
         {
-            index = GetNearestPaletteIndex( hPal, color );
+            index = NtGdiGetNearestPaletteIndex( hPal, color );
             if (mapping) index = mapping[index];
         }
         else if (color >> 16 == 0x10ff)  /* DIBINDEX */
@@ -1197,7 +1197,7 @@ UINT CDECL X11DRV_RealizePalette( PHYSDEV dev, HPALETTE hpal, BOOL primary )
 
     if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL) return 0;
 
-    if (!GetObjectW( hpal, sizeof(num_entries), &num_entries )) return 0;
+    if (!NtGdiExtGetObjectW( hpal, sizeof(num_entries), &num_entries )) return 0;
 
     /* initialize palette mapping table */
     prev_mapping = palette_get_mapping( hpal );
@@ -1217,7 +1217,7 @@ UINT CDECL X11DRV_RealizePalette( PHYSDEV dev, HPALETTE hpal, BOOL primary )
         FIXME( "more than 256 entries not supported\n" );
         num_entries = 256;
     }
-    if (!(num_entries = GetPaletteEntries( hpal, 0, num_entries, entries ))) return 0;
+    if (!(num_entries = get_palette_entries( hpal, 0, num_entries, entries ))) return 0;
 
     /* reset dynamic system palette entries */
 
@@ -1361,19 +1361,19 @@ COLORREF CDECL X11DRV_GetNearestColor( PHYSDEV dev, COLORREF color )
 
         UINT index;
         PALETTEENTRY entry;
-        HPALETTE hpal = GetCurrentObject( dev->hdc, OBJ_PAL );
+        HPALETTE hpal = NtGdiGetDCObject( dev->hdc, NTGDI_OBJ_PAL );
 
         if (!hpal) hpal = GetStockObject( DEFAULT_PALETTE );
 
         if (spec_type == 2) /* PALETTERGB */
-            index = GetNearestPaletteIndex( hpal, color );
+            index = NtGdiGetNearestPaletteIndex( hpal, color );
         else  /* PALETTEINDEX */
             index = LOWORD(color);
 
-        if (!GetPaletteEntries( hpal, index, 1, &entry ))
+        if (!get_palette_entries( hpal, index, 1, &entry ))
         {
             WARN("RGB(%x) : idx %d is out of bounds, assuming NULL\n", color, index );
-            if (!GetPaletteEntries( hpal, 0, 1, &entry )) return CLR_INVALID;
+            if (!get_palette_entries( hpal, 0, 1, &entry )) return CLR_INVALID;
         }
         color = RGB( entry.peRed,  entry.peGreen, entry.peBlue );
     }
@@ -1392,15 +1392,16 @@ COLORREF CDECL X11DRV_GetNearestColor( PHYSDEV dev, COLORREF color )
  */
 UINT CDECL X11DRV_RealizeDefaultPalette( PHYSDEV dev )
 {
+    DWORD is_memdc;
     UINT ret = 0;
 
-    if (palette_size && GetObjectType(dev->hdc) != OBJ_MEMDC)
+    if (palette_size && NtGdiGetDCDword( dev->hdc, NtGdiIsMemDC, &is_memdc ) && is_memdc)
     {
         /* lookup is needed to account for SetSystemPaletteUse() stuff */
         int i, index, *mapping = palette_get_mapping( GetStockObject(DEFAULT_PALETTE) );
         PALETTEENTRY entries[NB_RESERVED_COLORS];
 
-        GetPaletteEntries( GetStockObject(DEFAULT_PALETTE), 0, NB_RESERVED_COLORS, entries );
+        get_palette_entries( GetStockObject(DEFAULT_PALETTE), 0, NB_RESERVED_COLORS, entries );
         EnterCriticalSection( &palette_cs );
         for( i = 0; i < NB_RESERVED_COLORS; i++ )
         {

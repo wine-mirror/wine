@@ -847,6 +847,11 @@ static inline BOOL lp_to_dp( HDC hdc, POINT *points, INT count )
     return NtGdiTransformPoints( hdc, points, points, count, NtGdiLPtoDP );
 }
 
+static inline UINT get_palette_entries( HPALETTE palette, UINT start, UINT count, PALETTEENTRY *entries )
+{
+    return NtGdiDoPalette( palette, start, count, entries, NtGdiGetPaletteEntries, TRUE );
+}
+
 /* registry helpers */
 
 extern HKEY open_hkcu_key( const char *name ) DECLSPEC_HIDDEN;
