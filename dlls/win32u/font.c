@@ -199,6 +199,7 @@ static struct font_gamma_ramp font_gamma_ramp;
 static void add_face_to_cache( struct gdi_font_face *face );
 static void remove_face_from_cache( struct gdi_font_face *face );
 
+static CPTABLEINFO utf8_cp;
 static CPTABLEINFO oem_cp;
 CPTABLEINFO ansi_cp = { 0 };
 
@@ -369,6 +370,11 @@ static const struct nls_update_font_list
     { 1252, 850, "vga850.fon", "vgafix.fon", "vgasys.fon",
       "coure.fon", "serife.fon", "smalle.fon", "sserife.fon", "sseriff.fon",
       "Tahoma","Times New Roman"  /* FIXME unverified */
+    },
+    /* UTF-8 */
+    { CP_UTF8, CP_UTF8, "vga850.fon", "vgafix.fon", "vgasys.fon",
+      "coure.fon", "serife.fon", "smalle.fon", "sserife.fon", "sseriff.fon",
+      "Tahoma", "Times New Roman"  /* FIXME unverified */
     },
     /* Eastern Europe */
     { 1250, 852, "vga852.fon", "vgafixe.fon", "vgasyse.fon",
@@ -2717,6 +2723,7 @@ static void update_font_system_link_info(void)
 
 static void update_codepage( UINT screen_dpi )
 {
+    USHORT utf8_hdr[2] = { 0, CP_UTF8 };
     char value_buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[40 * sizeof(WCHAR)])];
     KEY_VALUE_PARTIAL_INFORMATION *info = (void *)value_buffer;
     char cpbuf[40];
@@ -2733,8 +2740,15 @@ static void update_codepage( UINT screen_dpi )
     if (size == sizeof(DWORD) && info->Type == REG_DWORD)
         font_dpi = *(DWORD *)info->Data;
 
-    RtlInitCodePageTable( NtCurrentTeb()->Peb->AnsiCodePageData, &ansi_cp );
-    RtlInitCodePageTable( NtCurrentTeb()->Peb->OemCodePageData, &oem_cp );
+    RtlInitCodePageTable( utf8_hdr, &utf8_cp );
+    if (NtCurrentTeb()->Peb->AnsiCodePageData)
+        RtlInitCodePageTable( NtCurrentTeb()->Peb->AnsiCodePageData, &ansi_cp );
+    else
+        ansi_cp = utf8_cp;
+    if (NtCurrentTeb()->Peb->OemCodePageData)
+        RtlInitCodePageTable( NtCurrentTeb()->Peb->OemCodePageData, &oem_cp );
+    else
+        oem_cp = utf8_cp;
     sprintf( cpbuf, "%u,%u", ansi_cp.CodePage, oem_cp.CodePage );
     asciiz_to_unicode( cpbufW, cpbuf );
 
@@ -3210,6 +3224,7 @@ CPTABLEINFO *get_cptable( WORD cp )
     SIZE_T size;
 
     if (cp == CP_ACP) return &ansi_cp;
+    if (cp == CP_UTF8) return &utf8_cp;
 
     for (i = 0; i < ARRAY_SIZE(tables) && tables[i].CodePage; i++)
         if (tables[i].CodePage == cp) return &tables[i];
@@ -3227,7 +3242,11 @@ DWORD win32u_wctomb( CPTABLEINFO *info, char *dst, DWORD dstlen, const WCHAR *sr
 {
     DWORD ret;
 
-    RtlUnicodeToCustomCPN( info, dst, dstlen, &ret, src, srclen * sizeof(WCHAR) );
+    if (info->CodePage == CP_UTF8)
+        RtlUnicodeToUTF8N( dst, dstlen, &ret, src, srclen * sizeof(WCHAR) );
+    else
+        RtlUnicodeToCustomCPN( info, dst, dstlen, &ret, src, srclen * sizeof(WCHAR) );
+
     return ret;
 }
 
@@ -3235,7 +3254,11 @@ DWORD win32u_mbtowc( CPTABLEINFO *info, WCHAR *dst, DWORD dstlen, const char *sr
 {
     DWORD ret;
 
-    RtlCustomCPToUnicodeN( info, dst, dstlen * sizeof(WCHAR), &ret, src, srclen );
+    if (info->CodePage == CP_UTF8)
+        RtlUTF8ToUnicodeN( dst, dstlen * sizeof(WCHAR), &ret, src, srclen );
+    else
+        RtlCustomCPToUnicodeN( info, dst, dstlen * sizeof(WCHAR), &ret, src, srclen );
+
     return ret / sizeof(WCHAR);
 }
 
@@ -3245,7 +3268,18 @@ static BOOL wc_to_index( UINT cp, WCHAR wc, unsigned char *dst, BOOL allow_defau
 
     if (!(info = get_cptable( cp ))) return FALSE;
 
-    if (info->DBCSCodePage)
+    if (info->CodePage == CP_UTF8)
+    {
+        if (wc < 0x80)
+        {
+            *dst = wc;
+            return TRUE;
+        }
+        if (!allow_default) return FALSE;
+        *dst = info->DefaultChar;
+        return TRUE;
+    }
+    else if (info->DBCSCodePage)
     {
         WCHAR *uni2cp = info->WideCharTable;
         if (uni2cp[wc] & 0xff00) return FALSE;

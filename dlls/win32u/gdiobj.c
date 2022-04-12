@@ -464,38 +464,22 @@ void make_gdi_object_system( HGDIOBJ handle, BOOL set)
 /******************************************************************************
  *      get_default_fonts
  */
-static const struct DefaultFontInfo* get_default_fonts(UINT charset)
+static const struct DefaultFontInfo* get_default_fonts(void)
 {
-        unsigned int n;
+    unsigned int n;
+    CHARSETINFO csi;
 
-        for(n = 0; n < ARRAY_SIZE( default_fonts ); n++)
-        {
-                if ( default_fonts[n].charset == charset )
-                        return &default_fonts[n];
-        }
-
-        FIXME( "unhandled charset 0x%08x - use ANSI_CHARSET for default stock objects\n", charset );
-        return &default_fonts[0];
-}
-
-
-/******************************************************************************
- *      get_default_charset    (internal)
- *
- * get the language-dependent charset that can handle CP_ACP correctly.
- */
-static UINT get_default_charset( void )
-{
-    CHARSETINFO     csi;
+    if (ansi_cp.CodePage == CP_UTF8) return &default_fonts[0];
 
     csi.ciCharset = ANSI_CHARSET;
-    if ( !translate_charset_info( ULongToPtr(ansi_cp.CodePage), &csi, TCI_SRCCODEPAGE ) )
-    {
-        FIXME( "unhandled codepage %u - use ANSI_CHARSET for default stock objects\n", ansi_cp.CodePage );
-        return ANSI_CHARSET;
-    }
+    translate_charset_info( ULongToPtr(ansi_cp.CodePage), &csi, TCI_SRCCODEPAGE );
 
-    return csi.ciCharset;
+    for(n = 0; n < ARRAY_SIZE( default_fonts ); n++)
+        if ( default_fonts[n].charset == csi.ciCharset )
+            return &default_fonts[n];
+
+    FIXME( "unhandled charset 0x%08x - use ANSI_CHARSET for default stock objects\n", csi.ciCharset );
+    return &default_fonts[0];
 }
 
 
@@ -654,7 +638,7 @@ static void init_stock_objects( unsigned int dpi )
     create_font( &AnsiVarFont );
 
     /* language-dependent stock fonts */
-    deffonts = get_default_fonts(get_default_charset());
+    deffonts = get_default_fonts();
     create_font( &deffonts->SystemFont );
     create_font( &deffonts->DeviceDefaultFont );
 
