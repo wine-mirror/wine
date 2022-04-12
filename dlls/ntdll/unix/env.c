@@ -2252,6 +2252,39 @@ WCHAR WINAPI RtlDowncaseUnicodeChar( WCHAR wch )
     return ntdll_towlower( wch );
 }
 
+/******************************************************************
+ *      RtlInitCodePageTable   (ntdll.so)
+ */
+void WINAPI RtlInitCodePageTable( USHORT *ptr, CPTABLEINFO *info )
+{
+    static const CPTABLEINFO utf8_cpinfo = { CP_UTF8, 4, '?', 0xfffd, '?', '?' };
+
+    if (ptr[1] == CP_UTF8) *info = utf8_cpinfo;
+    else init_codepage_table( ptr, info );
+}
+
+/**************************************************************************
+ *	RtlCustomCPToUnicodeN   (ntdll.so)
+ */
+NTSTATUS WINAPI RtlCustomCPToUnicodeN( CPTABLEINFO *info, WCHAR *dst, DWORD dstlen, DWORD *reslen,
+                                       const char *src, DWORD srclen )
+{
+    unsigned int ret = cp_mbstowcs( info, dst, dstlen / sizeof(WCHAR), src, srclen );
+    if (reslen) *reslen = ret * sizeof(WCHAR);
+    return STATUS_SUCCESS;
+}
+
+/**************************************************************************
+ *	RtlUnicodeToCustomCPN   (ntdll.so)
+ */
+NTSTATUS WINAPI RtlUnicodeToCustomCPN( CPTABLEINFO *info, char *dst, DWORD dstlen, DWORD *reslen,
+                                       const WCHAR *src, DWORD srclen )
+{
+    unsigned int ret = cp_wcstombs( info, dst, dstlen, src, srclen / sizeof(WCHAR) );
+    if (reslen) *reslen = ret;
+    return STATUS_SUCCESS;
+}
+
 /**********************************************************************
  *      RtlUTF8ToUnicodeN  (ntdll.so)
  */
@@ -2266,6 +2299,23 @@ NTSTATUS WINAPI RtlUTF8ToUnicodeN( WCHAR *dst, DWORD dstlen, DWORD *reslen, cons
         status = utf8_mbstowcs( dst, dstlen / sizeof(WCHAR), &ret, src, srclen );
 
     *reslen = ret * sizeof(WCHAR);
+    return status;
+}
+
+/**************************************************************************
+ *	RtlUnicodeToUTF8N   (ntdll.so)
+ */
+NTSTATUS WINAPI RtlUnicodeToUTF8N( char *dst, DWORD dstlen, DWORD *reslen, const WCHAR *src, DWORD srclen )
+{
+    unsigned int ret;
+    NTSTATUS status;
+
+    if (!dst)
+        status = utf8_wcstombs_size( src, srclen / sizeof(WCHAR), &ret );
+    else
+        status = utf8_wcstombs( dst, dstlen, &ret, src, srclen / sizeof(WCHAR) );
+
+    *reslen = ret;
     return status;
 }
 
