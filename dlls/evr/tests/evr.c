@@ -276,7 +276,7 @@ static void test_interfaces(void)
     IBaseFilter *filter = create_evr();
     ULONG ref;
 
-    todo_wine check_interface(filter, &IID_IAMFilterMiscFlags, TRUE);
+    check_interface(filter, &IID_IAMFilterMiscFlags, TRUE);
     check_interface(filter, &IID_IBaseFilter, TRUE);
     check_interface(filter, &IID_IEVRFilterConfig, TRUE);
     check_interface(filter, &IID_IMediaFilter, TRUE);
@@ -547,6 +547,24 @@ static void test_unconnected_eos(void)
     IMediaEvent_Release(eventsrc);
     ref = IFilterGraph2_Release(graph);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+}
+
+static void test_misc_flags(void)
+{
+    IBaseFilter *filter = create_evr();
+    IAMFilterMiscFlags *misc_flags;
+    ULONG ref, flags;
+    HRESULT hr;
+
+    hr = IBaseFilter_QueryInterface(filter, &IID_IAMFilterMiscFlags, (void **)&misc_flags);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    flags = IAMFilterMiscFlags_GetMiscFlags(misc_flags);
+    ok(flags == AM_FILTER_MISC_FLAGS_IS_RENDERER, "Unexpected flags %#lx.\n", flags);
+    IAMFilterMiscFlags_Release(misc_flags);
+
     ref = IBaseFilter_Release(filter);
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
@@ -3207,6 +3225,7 @@ START_TEST(evr)
     test_find_pin();
     test_pin_info();
     test_unconnected_eos();
+    test_misc_flags();
 
     test_default_mixer();
     test_default_mixer_type_negotiation();

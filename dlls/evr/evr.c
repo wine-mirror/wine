@@ -34,6 +34,7 @@ struct evr
 {
     struct strmbase_renderer renderer;
     IEVRFilterConfig IEVRFilterConfig_iface;
+    IAMFilterMiscFlags IAMFilterMiscFlags_iface;
 };
 
 static struct evr *impl_from_strmbase_renderer(struct strmbase_renderer *iface)
@@ -47,6 +48,8 @@ static HRESULT evr_query_interface(struct strmbase_renderer *iface, REFIID iid, 
 
     if (IsEqualGUID(iid, &IID_IEVRFilterConfig))
         *out = &filter->IEVRFilterConfig_iface;
+    else if (IsEqualGUID(iid, &IID_IAMFilterMiscFlags))
+        *out = &filter->IAMFilterMiscFlags_iface;
     else
         return E_NOINTERFACE;
 
@@ -132,6 +135,44 @@ static const IEVRFilterConfigVtbl filter_config_vtbl =
     filter_config_GetNumberOfStreams,
 };
 
+static struct evr *impl_from_IAMFilterMiscFlags(IAMFilterMiscFlags *iface)
+{
+    return CONTAINING_RECORD(iface, struct evr, IAMFilterMiscFlags_iface);
+}
+
+static HRESULT WINAPI filter_misc_flags_QueryInterface(IAMFilterMiscFlags *iface, REFIID iid, void **out)
+{
+    struct evr *filter = impl_from_IAMFilterMiscFlags(iface);
+    return IUnknown_QueryInterface(filter->renderer.filter.outer_unk, iid, out);
+}
+
+static ULONG WINAPI filter_misc_flags_AddRef(IAMFilterMiscFlags *iface)
+{
+    struct evr *filter = impl_from_IAMFilterMiscFlags(iface);
+    return IUnknown_AddRef(filter->renderer.filter.outer_unk);
+}
+
+static ULONG WINAPI filter_misc_flags_Release(IAMFilterMiscFlags *iface)
+{
+    struct evr *filter = impl_from_IAMFilterMiscFlags(iface);
+    return IUnknown_Release(filter->renderer.filter.outer_unk);
+}
+
+static ULONG WINAPI filter_misc_flags_GetMiscFlags(IAMFilterMiscFlags *iface)
+{
+    TRACE("%p.\n", iface);
+
+    return AM_FILTER_MISC_FLAGS_IS_RENDERER;
+}
+
+static const IAMFilterMiscFlagsVtbl filter_misc_flags_vtbl =
+{
+    filter_misc_flags_QueryInterface,
+    filter_misc_flags_AddRef,
+    filter_misc_flags_Release,
+    filter_misc_flags_GetMiscFlags,
+};
+
 HRESULT evr_filter_create(IUnknown *outer, void **out)
 {
     struct evr *object;
@@ -142,6 +183,7 @@ HRESULT evr_filter_create(IUnknown *outer, void **out)
     strmbase_renderer_init(&object->renderer, outer,
             &CLSID_EnhancedVideoRenderer, L"EVR Input0", &renderer_ops);
     object->IEVRFilterConfig_iface.lpVtbl = &filter_config_vtbl;
+    object->IAMFilterMiscFlags_iface.lpVtbl = &filter_misc_flags_vtbl;
 
     TRACE("Created EVR %p.\n", object);
     *out = &object->renderer.filter.IUnknown_inner;
