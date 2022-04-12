@@ -3243,7 +3243,7 @@ DWORD win32u_wctomb( CPTABLEINFO *info, char *dst, DWORD dstlen, const WCHAR *sr
 
     if (!info && !(info = get_cptable( get_acp() ))) return 0;
 
-    RtlUnicodeToCustomCPN( info, dst, dstlen, &ret, src, srclen );
+    RtlUnicodeToCustomCPN( info, dst, dstlen, &ret, src, srclen * sizeof(WCHAR) );
     return ret;
 }
 
@@ -3253,8 +3253,8 @@ DWORD win32u_mbtowc( CPTABLEINFO *info, WCHAR *dst, DWORD dstlen, const char *sr
 
     if (!info && !(info = get_cptable( get_acp() ))) return 0;
 
-    RtlCustomCPToUnicodeN( info, dst, dstlen, &ret, src, srclen );
-    return ret;
+    RtlCustomCPToUnicodeN( info, dst, dstlen * sizeof(WCHAR), &ret, src, srclen );
+    return ret / sizeof(WCHAR);
 }
 
 static BOOL wc_to_index( UINT cp, WCHAR wc, unsigned char *dst, BOOL allow_default )

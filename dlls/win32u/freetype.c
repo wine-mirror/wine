@@ -782,9 +782,8 @@ static WCHAR *copy_name_table_string( const FT_SfntName *name )
     case TT_PLATFORM_MACINTOSH:
         if (!(cp = get_mac_code_page( name ))) return NULL;
         ret = malloc( (name->string_len + 1) * sizeof(WCHAR) );
-        i = win32u_mbtowc( cp, ret, name->string_len * sizeof(WCHAR),
-                           (char *)name->string, name->string_len );
-        ret[i / sizeof(WCHAR)] = 0;
+        i = win32u_mbtowc( cp, ret, name->string_len, (char *)name->string, name->string_len );
+        ret[i] = 0;
         return ret;
     }
     return NULL;
@@ -1142,8 +1141,7 @@ static WCHAR *decode_opentype_name( struct opentype_name *name )
     {
         CPTABLEINFO *cptable = get_cptable( name->codepage );
         if (!cptable) return NULL;
-        len = win32u_mbtowc( cptable, buffer, sizeof(buffer), name->bytes, name->length );
-        len /= sizeof(WCHAR);
+        len = win32u_mbtowc( cptable, buffer, ARRAY_SIZE(buffer), name->bytes, name->length );
     }
 
     buffer[ARRAY_SIZE(buffer) - 1] = 0;
@@ -2526,7 +2524,7 @@ static BOOL freetype_get_glyph_index( struct gdi_font *font, UINT *glyph, BOOL u
             DWORD len;
             char ch;
 
-            len = win32u_wctomb( NULL, &ch, 1, &wc, sizeof(wc) );
+            len = win32u_wctomb( NULL, &ch, 1, &wc, 1 );
             if (len) *glyph = get_glyph_index_symbol( font, (unsigned char)ch );
         }
         return TRUE;

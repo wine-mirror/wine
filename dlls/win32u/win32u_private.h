@@ -593,7 +593,7 @@ static inline WCHAR *towstr( const char *str )
 {
     DWORD len = strlen( str ) + 1;
     WCHAR *ret = malloc( len * sizeof(WCHAR) );
-    if (ret) win32u_mbtowc( NULL, ret, len * sizeof(WCHAR), str, len );
+    if (ret) win32u_mbtowc( NULL, ret, len, str, len );
     return ret;
 }
 
