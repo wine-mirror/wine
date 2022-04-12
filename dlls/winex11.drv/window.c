@@ -402,10 +402,10 @@ static void sync_window_region( struct x11drv_win_data *data, HRGN win_region )
 
     if (hrgn == (HRGN)1)  /* hack: win_region == 1 means retrieve region from server */
     {
-        if (!(hrgn = CreateRectRgn( 0, 0, 0, 0 ))) return;
+        if (!(hrgn = NtGdiCreateRectRgn( 0, 0, 0, 0 ))) return;
         if (GetWindowRgn( data->hwnd, hrgn ) == ERROR)
         {
-            DeleteObject( hrgn );
+            NtGdiDeleteObjectApp( hrgn );
             hrgn = 0;
         }
     }
@@ -430,7 +430,7 @@ static void sync_window_region( struct x11drv_win_data *data, HRGN win_region )
             data->shaped = TRUE;
         }
     }
-    if (hrgn && hrgn != win_region) DeleteObject( hrgn );
+    if (hrgn && hrgn != win_region) NtGdiDeleteObjectApp( hrgn );
 #endif  /* HAVE_LIBXSHAPE */
 }
 
@@ -509,7 +509,7 @@ static unsigned long *get_bitmap_argb( HDC hdc, HBITMAP color, HBITMAP mask, uns
     int i, j;
     BOOL has_alpha = FALSE;
 
-    if (!GetObjectW( color, sizeof(bm), &bm )) return NULL;
+    if (!NtGdiExtGetObjectW( color, sizeof(bm), &bm )) return NULL;
     info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     info->bmiHeader.biWidth = bm.bmWidth;
     info->bmiHeader.biHeight = -bm.bmHeight;
@@ -523,7 +523,8 @@ static unsigned long *get_bitmap_argb( HDC hdc, HBITMAP color, HBITMAP mask, uns
     info->bmiHeader.biClrImportant = 0;
     *size = bm.bmWidth * bm.bmHeight + 2;
     if (!(bits = HeapAlloc( GetProcessHeap(), 0, *size * sizeof(long) ))) goto failed;
-    if (!GetDIBits( hdc, color, 0, bm.bmHeight, bits + 2, info, DIB_RGB_COLORS )) goto failed;
+    if (!NtGdiGetDIBitsInternal( hdc, color, 0, bm.bmHeight, bits + 2, info, DIB_RGB_COLORS, 0, 0 ))
+        goto failed;
 
     bits[0] = bm.bmWidth;
     bits[1] = bm.bmHeight;
@@ -538,7 +539,8 @@ static unsigned long *get_bitmap_argb( HDC hdc, HBITMAP color, HBITMAP mask, uns
         info->bmiHeader.biBitCount = 1;
         info->bmiHeader.biSizeImage = width_bytes * bm.bmHeight;
         if (!(mask_bits = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage ))) goto failed;
-        if (!GetDIBits( hdc, mask, 0, bm.bmHeight, mask_bits, info, DIB_RGB_COLORS )) goto failed;
+        if (!NtGdiGetDIBitsInternal( hdc, mask, 0, bm.bmHeight, mask_bits, info, DIB_RGB_COLORS, 0, 0 ))
+            goto failed;
         ptr = bits + 2;
         for (i = 0; i < bm.bmHeight; i++)
             for (j = 0; j < bm.bmWidth; j++, ptr++)
@@ -578,9 +580,11 @@ static BOOL create_icon_pixmaps( HDC hdc, const ICONINFO *icon, Pixmap *icon_ret
 
     info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     info->bmiHeader.biBitCount = 0;
-    if (!(lines = GetDIBits( hdc, icon->hbmColor, 0, 0, NULL, info, DIB_RGB_COLORS ))) goto failed;
+    if (!(lines = NtGdiGetDIBitsInternal( hdc, icon->hbmColor, 0, 0, NULL, info, DIB_RGB_COLORS, 0, 0 )))
+        goto failed;
     if (!(bits.ptr = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage ))) goto failed;
-    if (!GetDIBits( hdc, icon->hbmColor, 0, lines, bits.ptr, info, DIB_RGB_COLORS )) goto failed;
+    if (!NtGdiGetDIBitsInternal( hdc, icon->hbmColor, 0, lines, bits.ptr, info, DIB_RGB_COLORS, 0, 0 ))
+        goto failed;
 
     color_pixmap = create_pixmap_from_image( hdc, &vis, info, &bits, DIB_RGB_COLORS );
     HeapFree( GetProcessHeap(), 0, bits.ptr );
@@ -589,9 +593,11 @@ static BOOL create_icon_pixmaps( HDC hdc, const ICONINFO *icon, Pixmap *icon_ret
 
     info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     info->bmiHeader.biBitCount = 0;
-    if (!(lines = GetDIBits( hdc, icon->hbmMask, 0, 0, NULL, info, DIB_RGB_COLORS ))) goto failed;
+    if (!(lines = NtGdiGetDIBitsInternal( hdc, icon->hbmMask, 0, 0, NULL, info, DIB_RGB_COLORS, 0, 0 )))
+        goto failed;
     if (!(bits.ptr = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage ))) goto failed;
-    if (!GetDIBits( hdc, icon->hbmMask, 0, lines, bits.ptr, info, DIB_RGB_COLORS )) goto failed;
+    if (!NtGdiGetDIBitsInternal( hdc, icon->hbmMask, 0, lines, bits.ptr, info, DIB_RGB_COLORS, 0, 0 ))
+        goto failed;
 
     /* invert the mask */
     for (i = 0; i < info->bmiHeader.biSizeImage / sizeof(DWORD); i++) ((DWORD *)bits.ptr)[i] ^= ~0u;
@@ -639,7 +645,7 @@ static void fetch_icon_data( HWND hwnd, HICON icon_big, HICON icon_small )
 
     if (!GetIconInfo(icon_big, &ii)) return;
 
-    hDC = CreateCompatibleDC(0);
+    hDC = NtGdiCreateCompatibleDC(0);
     bits = get_bitmap_argb( hDC, ii.hbmColor, ii.hbmMask, &size );
     if (bits && GetIconInfo( icon_small, &ii_small ))
     {
@@ -658,15 +664,15 @@ static void fetch_icon_data( HWND hwnd, HICON icon_big, HICON icon_small )
             }
         }
         HeapFree( GetProcessHeap(), 0, bits_small );
-        DeleteObject( ii_small.hbmColor );
-        DeleteObject( ii_small.hbmMask );
+        NtGdiDeleteObjectApp( ii_small.hbmColor );
+        NtGdiDeleteObjectApp( ii_small.hbmMask );
     }
 
     if (!create_icon_pixmaps( hDC, &ii, &icon_pixmap, &mask_pixmap )) icon_pixmap = mask_pixmap = 0;
 
-    DeleteObject( ii.hbmColor );
-    DeleteObject( ii.hbmMask );
-    DeleteDC(hDC);
+    NtGdiDeleteObjectApp( ii.hbmColor );
+    NtGdiDeleteObjectApp( ii.hbmMask );
+    NtGdiDeleteObjectApp( hDC );
 
     if ((data = get_win_data( hwnd )))
     {
@@ -1401,9 +1407,9 @@ static void move_window_bits( HWND hwnd, Window window, const RECT *old_rect, co
         hdc_src = hdc_dst = GetDCEx( hwnd, 0, DCX_CACHE );
     }
 
-    rgn = CreateRectRgnIndirect( &dst_rect );
-    SelectClipRgn( hdc_dst, rgn );
-    DeleteObject( rgn );
+    rgn = NtGdiCreateRectRgn( dst_rect.left, dst_rect.top, dst_rect.right, dst_rect.bottom );
+    NtGdiExtSelectClipRgn( hdc_dst, rgn, RGN_COPY );
+    NtGdiDeleteObjectApp( rgn );
     /* WS_CLIPCHILDREN doesn't exclude children from the window update
      * region, and ExcludeUpdateRgn call may inappropriately clip valid
      * child window contents from the copied parent window bits, but we
@@ -1413,17 +1419,17 @@ static void move_window_bits( HWND hwnd, Window window, const RECT *old_rect, co
         ExcludeUpdateRgn( hdc_dst, hwnd );
 
     code = X11DRV_START_EXPOSURES;
-    ExtEscape( hdc_dst, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
+    NtGdiExtEscape( hdc_dst, NULL, 0, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
 
     TRACE( "copying bits for win %p/%lx %s -> %s\n",
            hwnd, window, wine_dbgstr_rect(&src_rect), wine_dbgstr_rect(&dst_rect) );
-    BitBlt( hdc_dst, dst_rect.left, dst_rect.top,
-            dst_rect.right - dst_rect.left, dst_rect.bottom - dst_rect.top,
-            hdc_src, src_rect.left, src_rect.top, SRCCOPY );
+    NtGdiBitBlt( hdc_dst, dst_rect.left, dst_rect.top,
+                 dst_rect.right - dst_rect.left, dst_rect.bottom - dst_rect.top,
+                 hdc_src, src_rect.left, src_rect.top, SRCCOPY, 0, 0 );
 
     rgn = 0;
     code = X11DRV_END_EXPOSURES;
-    ExtEscape( hdc_dst, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, sizeof(rgn), (LPSTR)&rgn );
+    NtGdiExtEscape( hdc_dst, NULL, 0, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, sizeof(rgn), (LPSTR)&rgn );
 
     ReleaseDC( hwnd, hdc_dst );
     if (hdc_src != hdc_dst) ReleaseDC( parent, hdc_src );
@@ -1433,13 +1439,13 @@ static void move_window_bits( HWND hwnd, Window window, const RECT *old_rect, co
         if (!window)
         {
             /* map region to client rect since we are using DCX_WINDOW */
-            OffsetRgn( rgn, new_window_rect->left - new_client_rect->left,
+            NtGdiOffsetRgn( rgn, new_window_rect->left - new_client_rect->left,
                        new_window_rect->top - new_client_rect->top );
             RedrawWindow( hwnd, NULL, rgn,
                           RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ALLCHILDREN );
         }
         else RedrawWindow( hwnd, NULL, rgn, RDW_INVALIDATE | RDW_ERASE | RDW_ALLCHILDREN );
-        DeleteObject( rgn );
+        NtGdiDeleteObjectApp( rgn );
     }
 }
 
@@ -1571,9 +1577,9 @@ static void create_whole_window( struct x11drv_win_data *data )
         data->managed = TRUE;
     }
 
-    if ((win_rgn = CreateRectRgn( 0, 0, 0, 0 )) && GetWindowRgn( data->hwnd, win_rgn ) == ERROR)
+    if ((win_rgn = NtGdiCreateRectRgn( 0, 0, 0, 0 )) && GetWindowRgn( data->hwnd, win_rgn ) == ERROR)
     {
-        DeleteObject( win_rgn );
+        NtGdiDeleteObjectApp( win_rgn );
         win_rgn = 0;
     }
     data->shaped = (win_rgn != 0);
@@ -1616,7 +1622,7 @@ static void create_whole_window( struct x11drv_win_data *data )
     sync_window_cursor( data->whole_window );
 
 done:
-    if (win_rgn) DeleteObject( win_rgn );
+    if (win_rgn) NtGdiDeleteObjectApp( win_rgn );
 }
 
 
@@ -2185,7 +2191,7 @@ void X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
         else escape.drawable = X11DRV_get_whole_window( top );
     }
 
-    ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
+    NtGdiExtEscape( hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 }
 
 
@@ -2201,7 +2207,7 @@ void X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
     escape.mode = IncludeInferiors;
     escape.dc_rect = get_virtual_screen_rect();
     OffsetRect( &escape.dc_rect, -2 * escape.dc_rect.left, -2 * escape.dc_rect.top );
-    ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
+    NtGdiExtEscape( hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 }
 
 
@@ -2214,27 +2220,27 @@ BOOL X11DRV_ScrollDC( HDC hdc, INT dx, INT dy, HRGN update )
     BOOL ret;
     HRGN expose_rgn = 0;
 
-    GetClipBox( hdc, &rect );
+    NtGdiGetAppClipBox( hdc, &rect );
 
     if (update)
     {
         INT code = X11DRV_START_EXPOSURES;
-        ExtEscape( hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
+        NtGdiExtEscape( hdc, NULL, 0, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
 
-        ret = BitBlt( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
-                      hdc, rect.left - dx, rect.top - dy, SRCCOPY );
+        ret = NtGdiBitBlt( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
+                           hdc, rect.left - dx, rect.top - dy, SRCCOPY, 0, 0 );
 
         code = X11DRV_END_EXPOSURES;
-        ExtEscape( hdc, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code,
-                   sizeof(expose_rgn), (LPSTR)&expose_rgn );
+        NtGdiExtEscape( hdc, NULL, 0, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code,
+                        sizeof(expose_rgn), (LPSTR)&expose_rgn );
         if (expose_rgn)
         {
-            CombineRgn( update, update, expose_rgn, RGN_OR );
-            DeleteObject( expose_rgn );
+            NtGdiCombineRgn( update, update, expose_rgn, RGN_OR );
+            NtGdiDeleteObjectApp( expose_rgn );
         }
     }
-    else ret = BitBlt( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
-                       hdc, rect.left - dx, rect.top - dy, SRCCOPY );
+    else ret = NtGdiBitBlt( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
+                            hdc, rect.left - dx, rect.top - dy, SRCCOPY, 0, 0 );
 
     return ret;
 }
@@ -2758,10 +2764,11 @@ BOOL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
 
     dst_bits = surface->funcs->get_info( surface, bmi );
 
-    if (!(dib = CreateDIBSection( info->hdcDst, bmi, DIB_RGB_COLORS, &src_bits, NULL, 0 ))) goto done;
-    if (!(hdc = CreateCompatibleDC( 0 ))) goto done;
+    if (!(dib = NtGdiCreateDIBSection( info->hdcDst, NULL, 0, bmi, DIB_RGB_COLORS, 0, 0, 0, &src_bits )))
+        goto done;
+    if (!(hdc = NtGdiCreateCompatibleDC( 0 ))) goto done;
 
-    SelectObject( hdc, dib );
+    NtGdiSelectBitmap( hdc, dib );
 
     surface->funcs->lock( surface );
 
@@ -2769,16 +2776,16 @@ BOOL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
     {
         IntersectRect( &rect, &rect, info->prcDirty );
         memcpy( src_bits, dst_bits, bmi->bmiHeader.biSizeImage );
-        PatBlt( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, BLACKNESS );
+        NtGdiPatBlt( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, BLACKNESS );
     }
     src_rect = rect;
     if (info->pptSrc) OffsetRect( &src_rect, info->pptSrc->x, info->pptSrc->y );
-    DPtoLP( info->hdcSrc, (POINT *)&src_rect, 2 );
+    NtGdiTransformPoints( info->hdcSrc, (POINT *)&src_rect, (POINT *)&src_rect, 2, NtGdiDPtoLP );
 
-    ret = GdiAlphaBlend( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
-                         info->hdcSrc, src_rect.left, src_rect.top,
-                         src_rect.right - src_rect.left, src_rect.bottom - src_rect.top,
-                         (info->dwFlags & ULW_ALPHA) ? *info->pblend : blend );
+    ret = NtGdiAlphaBlend( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
+                           info->hdcSrc, src_rect.left, src_rect.top,
+                           src_rect.right - src_rect.left, src_rect.bottom - src_rect.top,
+                           (info->dwFlags & ULW_ALPHA) ? *info->pblend : blend, 0 );
     if (ret)
     {
         memcpy( dst_bits, src_bits, bmi->bmiHeader.biSizeImage );
@@ -2790,8 +2797,8 @@ BOOL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
 
 done:
     window_surface_release( surface );
-    if (hdc) DeleteDC( hdc );
-    if (dib) DeleteObject( dib );
+    if (hdc) NtGdiDeleteObjectApp( hdc );
+    if (dib) NtGdiDeleteObjectApp( dib );
     return ret;
 }
 
