@@ -157,14 +157,13 @@ static void testMemStore(void)
     context = NULL;
     ret = CertAddEncodedCertificateToStore(store1, X509_ASN_ENCODING, emptyCert,
      sizeof(emptyCert), CERT_STORE_ADD_ALWAYS, &context);
-    /* Windows returns CRYPT_E_ASN1_EOD or OSS_DATA_ERROR, but accept
+    /* Windows returns CRYPT_E_ASN1_EOD, but accept
      * CRYPT_E_ASN1_CORRUPT as well (because matching errors is tough in this
      * case)
      */
     GLE = GetLastError();
-    ok(!ret && (GLE == CRYPT_E_ASN1_EOD || GLE == CRYPT_E_ASN1_CORRUPT ||
-     GLE == OSS_DATA_ERROR),
-     "Expected CRYPT_E_ASN1_EOD or CRYPT_E_ASN1_CORRUPT or OSS_DATA_ERROR, got %08lx\n",
+    ok(!ret && (GLE == CRYPT_E_ASN1_EOD || GLE == CRYPT_E_ASN1_CORRUPT),
+     "Expected CRYPT_E_ASN1_EOD or CRYPT_E_ASN1_CORRUPT, got %08lx\n",
      GLE);
     /* add a "signed" cert--the signature isn't a real signature, so this adds
      * without any check of the signature's validity
@@ -188,9 +187,8 @@ static void testMemStore(void)
     ret = CertAddEncodedCertificateToStore(store1, X509_ASN_ENCODING,
      signedCRL, sizeof(signedCRL), CERT_STORE_ADD_ALWAYS, &context);
     GLE = GetLastError();
-    ok(!ret && (GLE == CRYPT_E_ASN1_BADTAG || GLE == CRYPT_E_ASN1_CORRUPT ||
-     GLE == OSS_DATA_ERROR),
-     "Expected CRYPT_E_ASN1_BADTAG or CRYPT_E_ASN1_CORRUPT or OSS_DATA_ERROR, got %08lx\n",
+    ok(!ret && (GLE == CRYPT_E_ASN1_BADTAG || GLE == CRYPT_E_ASN1_CORRUPT),
+     "Expected CRYPT_E_ASN1_BADTAG or CRYPT_E_ASN1_CORRUPT, got %08lx\n",
      GLE);
     /* add a cert to store1 */
     ret = CertAddEncodedCertificateToStore(store1, X509_ASN_ENCODING, bigCert,
@@ -3232,8 +3230,7 @@ static void test_PFXImportCertStore(void)
     pfx.pbData = (BYTE *)pfxdata;
     pfx.cbData = sizeof(pfxdata);
     store = PFXImportCertStore( &pfx, NULL, CRYPT_EXPORTABLE|CRYPT_USER_KEYSET|PKCS12_NO_PERSIST_KEY );
-    ok( store != NULL || broken(store == NULL) /* winxp */, "got %lu\n", GetLastError() );
-    if (!store) return;
+    ok( store != NULL, "got %lu\n", GetLastError() );
     count = countCertsInStore( store );
     ok( count == 1, "got %lu\n", count );
 

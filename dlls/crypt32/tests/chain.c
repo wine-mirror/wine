@@ -54,12 +54,6 @@ static const BYTE selfSignedCert[] = {
  0x0a, 0x8c, 0xb4, 0x5c, 0x34, 0x78, 0xe0, 0x3c, 0x9c, 0xe9, 0xf3, 0x30, 0x9f,
  0xa8, 0x76, 0x57, 0x92, 0x36 };
 
-static BOOL (WINAPI *pCertCreateCertificateChainEngine)(PCERT_CHAIN_ENGINE_CONFIG,HCERTCHAINENGINE*);
-static BOOL (WINAPI *pCertGetCertificateChain)(HCERTCHAINENGINE,PCCERT_CONTEXT,LPFILETIME,HCERTSTORE,PCERT_CHAIN_PARA,DWORD,LPVOID,PCCERT_CHAIN_CONTEXT*);
-static VOID (WINAPI *pCertFreeCertificateChain)(PCCERT_CHAIN_CONTEXT);
-static VOID (WINAPI *pCertFreeCertificateChainEngine)(HCERTCHAINENGINE);
-static BOOL (WINAPI *pCertVerifyCertificateChainPolicy)(LPCSTR,PCCERT_CHAIN_CONTEXT,PCERT_CHAIN_POLICY_PARA,PCERT_CHAIN_POLICY_STATUS);
-
 #define IS_INTOID(x)    (((ULONG_PTR)(x) >> 16) == 0)
 
 typedef struct _CERT_CHAIN_ENGINE_CONFIG_NO_EXCLUSIVE_ROOT
@@ -84,47 +78,41 @@ static void testCreateCertChainEngine(void)
     HCERTCHAINENGINE engine;
     HCERTSTORE store;
 
-    if (!pCertCreateCertificateChainEngine || !pCertFreeCertificateChainEngine)
-    {
-        win_skip("Cert*CertificateChainEngine() functions are not available\n");
-        return;
-    }
-
     /* Crash
-    ret = pCertCreateCertificateChainEngine(NULL, NULL);
-    ret = pCertCreateCertificateChainEngine(NULL, &engine);
-    ret = pCertCreateCertificateChainEngine(pConfig, NULL);
+    ret = CertCreateCertificateChainEngine(NULL, NULL);
+    ret = CertCreateCertificateChainEngine(NULL, &engine);
+    ret = CertCreateCertificateChainEngine(pConfig, NULL);
      */
-    ret = pCertCreateCertificateChainEngine(pConfig, &engine);
+    ret = CertCreateCertificateChainEngine(pConfig, &engine);
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     /* Crashes
     config.cbSize = sizeof(config);
-    ret = pCertCreateCertificateChainEngine(pConfig, NULL);
+    ret = CertCreateCertificateChainEngine(pConfig, NULL);
      */
     config.cbSize = sizeof(config);
-    ret = pCertCreateCertificateChainEngine(pConfig, &engine);
+    ret = CertCreateCertificateChainEngine(pConfig, &engine);
     ok(ret, "CertCreateCertificateChainEngine failed: %08lx\n", GetLastError());
-    pCertFreeCertificateChainEngine(engine);
+    CertFreeCertificateChainEngine(engine);
     config.dwFlags = 0xff000000;
-    ret = pCertCreateCertificateChainEngine(pConfig, &engine);
+    ret = CertCreateCertificateChainEngine(pConfig, &engine);
     ok(ret, "CertCreateCertificateChainEngine failed: %08lx\n", GetLastError());
-    pCertFreeCertificateChainEngine(engine);
+    CertFreeCertificateChainEngine(engine);
 
     /* Creating a cert with no root certs at all is allowed.. */
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0,
      CERT_STORE_CREATE_NEW_FLAG, NULL);
     config.hRestrictedRoot = store;
-    ret = pCertCreateCertificateChainEngine(pConfig, &engine);
+    ret = CertCreateCertificateChainEngine(pConfig, &engine);
     ok(ret, "CertCreateCertificateChainEngine failed: %08lx\n", GetLastError());
-    pCertFreeCertificateChainEngine(engine);
+    CertFreeCertificateChainEngine(engine);
 
     /* but creating one with a restricted root with a cert that isn't a member
      * of the Root store isn't allowed.
      */
     CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING, selfSignedCert,
      sizeof(selfSignedCert), CERT_STORE_ADD_ALWAYS, NULL);
-    ret = pCertCreateCertificateChainEngine(pConfig, &engine);
+    ret = CertCreateCertificateChainEngine(pConfig, &engine);
     /* ERROR_FILE_NOT_FOUND used in Windows 10 */
     ok(!ret && ((GetLastError() == CRYPT_E_NOT_FOUND) ||
                 (GetLastError() == ERROR_FILE_NOT_FOUND)),
@@ -3399,7 +3387,7 @@ static PCCERT_CHAIN_CONTEXT getChain(HCERTCHAINENGINE engine,
             ok(SystemTimeToFileTime(checkTime, &fileTime),
              "SystemTimeToFileTime failed for day %d, month %d, year %d\n",
              checkTime->wDay, checkTime->wMonth, checkTime->wYear);
-            ret = pCertGetCertificateChain(engine, endCert, &fileTime,
+            ret = CertGetCertificateChain(engine, endCert, &fileTime,
              includeStore ? store : NULL, &chainPara, flags, NULL, &chain);
             todo_wine_if (todo & TODO_CHAIN)
                 ok(ret, "Chain %ld: CertGetCertificateChain failed: %08lx\n",
@@ -4356,17 +4344,17 @@ static void testGetCertChain(void)
     if (0)
     {
         /* Crash on Vista */
-        ret = pCertGetCertificateChain(NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL);
+        ret = CertGetCertificateChain(NULL, NULL, NULL, NULL, NULL, 0, NULL, NULL);
         ok(!ret && GetLastError() == E_INVALIDARG,
          "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     }
-    ret = pCertGetCertificateChain(NULL, NULL, NULL, NULL, NULL, 0, NULL,
+    ret = CertGetCertificateChain(NULL, NULL, NULL, NULL, NULL, 0, NULL,
      &chain);
     ok(!ret && GetLastError() == E_INVALIDARG,
      "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     /* Crash
-    ret = pCertGetCertificateChain(NULL, NULL, NULL, NULL, &para, 0, NULL, NULL);
-    ret = pCertGetCertificateChain(NULL, NULL, NULL, NULL, &para, 0, NULL,
+    ret = CertGetCertificateChain(NULL, NULL, NULL, NULL, &para, 0, NULL, NULL);
+    ret = CertGetCertificateChain(NULL, NULL, NULL, NULL, &para, 0, NULL,
      &chain);
      */
     cert = CertCreateCertificateContext(X509_ASN_ENCODING, bigCert,
@@ -4374,17 +4362,17 @@ static void testGetCertChain(void)
     if (0)
     {
         /* Crash on Vista */
-        ret = pCertGetCertificateChain(NULL, cert, NULL, NULL, NULL, 0, NULL, NULL);
+        ret = CertGetCertificateChain(NULL, cert, NULL, NULL, NULL, 0, NULL, NULL);
         ok(!ret && GetLastError() == E_INVALIDARG,
          "Expected E_INVALIDARG, got %08lx\n", GetLastError());
     }
     /* Crash
-    ret = pCertGetCertificateChain(NULL, cert, NULL, NULL, &para, 0, NULL, NULL);
+    ret = CertGetCertificateChain(NULL, cert, NULL, NULL, &para, 0, NULL, NULL);
      */
 
     /* Tests with an invalid cert (one whose signature is bad) */
     SetLastError(0xdeadbeef);
-    ret = pCertGetCertificateChain(NULL, cert, NULL, NULL, &para, 0, NULL,
+    ret = CertGetCertificateChain(NULL, cert, NULL, NULL, &para, 0, NULL,
      &chain);
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_DATA ||
@@ -4392,7 +4380,7 @@ static void testGetCertChain(void)
      "Expected ERROR_INVALID_DATA or CRYPT_E_ASN1_BADTAG, got %ld\n", GetLastError());
     para.cbSize = sizeof(para);
     SetLastError(0xdeadbeef);
-    ret = pCertGetCertificateChain(NULL, cert, NULL, NULL, &para, 0, NULL,
+    ret = CertGetCertificateChain(NULL, cert, NULL, NULL, &para, 0, NULL,
      &chain);
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_DATA ||
@@ -4401,7 +4389,7 @@ static void testGetCertChain(void)
 
     para.cbSize = 0;
     SetLastError(0xdeadbeef);
-    ret = pCertGetCertificateChain(NULL, cert, NULL, NULL, &para, 0, NULL,
+    ret = CertGetCertificateChain(NULL, cert, NULL, NULL, &para, 0, NULL,
      &chain);
     ok(!ret, "Expected failure\n");
     ok(GetLastError() == ERROR_INVALID_DATA ||
@@ -4426,39 +4414,39 @@ static void testGetCertChain(void)
     para.RequestedUsage.dwType = USAGE_MATCH_TYPE_AND;
     para.RequestedUsage.Usage.rgpszUsageIdentifier = oids;
     para.RequestedUsage.Usage.cUsageIdentifier = 1;
-    ret = pCertGetCertificateChain(NULL, cert, &fileTime, store, &para,
+    ret = CertGetCertificateChain(NULL, cert, &fileTime, store, &para,
      0, NULL, &chain);
     ok(ret, "CertGetCertificateChain failed: %08lx\n", GetLastError());
     if (ret)
     {
         ok(chain->TrustStatus.dwErrorStatus & CERT_TRUST_IS_NOT_VALID_FOR_USAGE,
          "expected CERT_TRUST_IS_NOT_VALID_FOR_USAGE\n");
-        pCertFreeCertificateChain(chain);
+        CertFreeCertificateChain(chain);
     }
     oids[0] = oid_server_auth;
-    ret = pCertGetCertificateChain(NULL, cert, &fileTime, store, &para,
+    ret = CertGetCertificateChain(NULL, cert, &fileTime, store, &para,
      0, NULL, &chain);
     ok(ret, "CertGetCertificateChain failed: %08lx\n", GetLastError());
     if (ret)
     {
         ok(!(chain->TrustStatus.dwErrorStatus & CERT_TRUST_IS_NOT_VALID_FOR_USAGE),
            "didn't expect CERT_TRUST_IS_NOT_VALID_FOR_USAGE, got %lx\n", chain->TrustStatus.dwErrorStatus);
-        pCertFreeCertificateChain(chain);
+        CertFreeCertificateChain(chain);
     }
     oids[1] = one_two_three;
     para.RequestedUsage.Usage.cUsageIdentifier = 2;
     para.RequestedUsage.dwType = USAGE_MATCH_TYPE_AND;
-    ret = pCertGetCertificateChain(NULL, cert, &fileTime, store, &para,
+    ret = CertGetCertificateChain(NULL, cert, &fileTime, store, &para,
      0, NULL, &chain);
     ok(ret, "CertGetCertificateChain failed: %08lx\n", GetLastError());
     if (ret)
     {
         ok(chain->TrustStatus.dwErrorStatus & CERT_TRUST_IS_NOT_VALID_FOR_USAGE,
          "expected CERT_TRUST_IS_NOT_VALID_FOR_USAGE\n");
-        pCertFreeCertificateChain(chain);
+        CertFreeCertificateChain(chain);
     }
     para.RequestedUsage.dwType = USAGE_MATCH_TYPE_OR;
-    ret = pCertGetCertificateChain(NULL, cert, &fileTime, store, &para,
+    ret = CertGetCertificateChain(NULL, cert, &fileTime, store, &para,
      0, NULL, &chain);
     ok(ret, "CertGetCertificateChain failed: %08lx\n", GetLastError());
     if (ret)
@@ -4466,7 +4454,7 @@ static void testGetCertChain(void)
         ok(!(chain->TrustStatus.dwErrorStatus &
          CERT_TRUST_IS_NOT_VALID_FOR_USAGE),
          "didn't expect CERT_TRUST_IS_NOT_VALID_FOR_USAGE\n");
-        pCertFreeCertificateChain(chain);
+        CertFreeCertificateChain(chain);
     }
     CertCloseStore(store, 0);
     CertFreeCertificateContext(cert);
@@ -4479,7 +4467,7 @@ static void testGetCertChain(void)
         {
             checkChainStatus(chain, &chainCheck[i].status, chainCheck[i].todo,
              "chainCheck", i);
-            pCertFreeCertificateChain(chain);
+            CertFreeCertificateChain(chain);
         }
     }
     chain = getChain(NULL, &opensslChainCheck.certs, 0, TRUE, &oct2007,
@@ -4502,7 +4490,7 @@ static void testGetCertChain(void)
             checkChainStatus(chain, &incompleteOpensslChainCheck.status,
              incompleteOpensslChainCheck.todo, "incompleteOpensslChainCheck",
              0);
-        pCertFreeCertificateChain(chain);
+        CertFreeCertificateChain(chain);
     }
     for (i = 0; i < ARRAY_SIZE(chainCheckNoStore); i++)
     {
@@ -4512,7 +4500,7 @@ static void testGetCertChain(void)
         {
             checkChainStatus(chain, &chainCheckNoStore[i].status,
              chainCheckNoStore[i].todo, "chainCheckNoStore", i);
-            pCertFreeCertificateChain(chain);
+            CertFreeCertificateChain(chain);
         }
     }
     chain = getChain(NULL, &chainCheckEmbeddedNull.certs, 0, TRUE, &oct2007,
@@ -4535,7 +4523,7 @@ static void testGetCertChain(void)
             checkChainStatus(chain, &chainCheckEmbeddedNullBroken.status,
              chainCheckEmbeddedNullBroken.todo, "chainCheckEmbeddedNullBroken",
              0);
-        pCertFreeCertificateChain(chain);
+        CertFreeCertificateChain(chain);
     }
 
     store = CertOpenStore(CERT_STORE_PROV_MEMORY, 0, 0, CERT_STORE_CREATE_NEW_FLAG, NULL);
@@ -4555,13 +4543,6 @@ static void testGetCertChain(void)
     /* Pass store that does not contain all certs in chain. */
     ret = CertGetCertificateChain(NULL, cert, &fileTime, store, &para, 0, NULL, &chain);
     ok(ret, "CertGetCertificateChain failed: %lu\n", GetLastError());
-
-    if(chain->TrustStatus.dwErrorStatus == CERT_TRUST_IS_PARTIAL_CHAIN) { /* win2k */
-        win_skip("winehq cert reported as partial chain, skipping its tests\n");
-        pCertFreeCertificateChain(chain);
-        CertCloseStore(store, 0);
-        return;
-    }
 
     ok(chain->TrustStatus.dwErrorStatus == CERT_TRUST_HAS_EXACT_MATCH_ISSUER, "chain->TrustStatus.dwErrorStatus = %lx\n",
        chain->TrustStatus.dwErrorStatus);
@@ -4610,7 +4591,7 @@ static void testGetCertChain(void)
     test_name_blob(&simple_chain->rgpElement[2]->pCertContext->pCertInfo->Subject,
                    "US, New Jersey, Jersey City, The USERTRUST Network, USERTrust RSA Certification Authority");
 
-    pCertFreeCertificateChain(chain);
+    CertFreeCertificateChain(chain);
 
     /* Test revocation flags */
     ret = CertGetCertificateChain(NULL, cert, &fileTime, store, &para, CERT_CHAIN_REVOCATION_CHECK_END_CERT, NULL,
@@ -4618,26 +4599,25 @@ static void testGetCertChain(void)
     ok(ret, "CertGetCertificateChain failed: %lu\n", GetLastError());
     ok(chain->TrustStatus.dwErrorStatus == CERT_TRUST_HAS_EXACT_MATCH_ISSUER, "chain->TrustStatus.dwErrorStatus = %lx\n",
        chain->TrustStatus.dwErrorStatus);
-    pCertFreeCertificateChain(chain);
+    CertFreeCertificateChain(chain);
 
     ret = CertGetCertificateChain(NULL, cert, &fileTime, store, &para, CERT_CHAIN_REVOCATION_CHECK_CHAIN, NULL, &chain);
     ok(ret, "CertGetCertificateChain failed: %lu\n", GetLastError());
-    ok(chain->TrustStatus.dwErrorStatus == CERT_TRUST_HAS_EXACT_MATCH_ISSUER ||
-       broken(chain->TrustStatus.dwErrorStatus == (CERT_TRUST_IS_NOT_TIME_VALID|CERT_TRUST_REVOCATION_STATUS_UNKNOWN)), /* XP */
+    ok(chain->TrustStatus.dwErrorStatus == CERT_TRUST_HAS_EXACT_MATCH_ISSUER,
        "chain->TrustStatus.dwErrorStatus = %lx\n", chain->TrustStatus.dwErrorStatus);
-    pCertFreeCertificateChain(chain);
+    CertFreeCertificateChain(chain);
 
     ret = CertGetCertificateChain(NULL, cert, &fileTime, store, &para, CERT_CHAIN_REVOCATION_CHECK_CHAIN_EXCLUDE_ROOT,
                                   NULL, &chain);
     ok(ret, "CertGetCertificateChain failed: %lu\n", GetLastError());
     ok(chain->TrustStatus.dwErrorStatus == CERT_TRUST_HAS_EXACT_MATCH_ISSUER, "chain->TrustStatus.dwErrorStatus = %lx\n",
        chain->TrustStatus.dwErrorStatus);
-    pCertFreeCertificateChain(chain);
+    CertFreeCertificateChain(chain);
 
     /* Test HCCE_LOCAL_MACHINE */
     ret = CertGetCertificateChain(HCCE_LOCAL_MACHINE, cert, &fileTime, store, &para, 0, NULL, &chain);
     ok(ret, "CertGetCertificateChain failed: %lu\n", GetLastError());
-    pCertFreeCertificateChain(chain);
+    CertFreeCertificateChain(chain);
 
     CertFreeCertificateContext(cert);
     CertCloseStore(store, 0);
@@ -4671,10 +4651,10 @@ static void test_CERT_CHAIN_PARA_cbSize(void)
         SystemTimeToFileTime(&oct2007, &fileTime);
 
         para.cbSize = i;
-        ret = pCertGetCertificateChain(NULL, cert, &fileTime,
+        ret = CertGetCertificateChain(NULL, cert, &fileTime,
          NULL, &para, 0, NULL, &chain);
         ok(ret, "CertGetCertificateChain failed %lu\n", GetLastError());
-        pCertFreeCertificateChain(chain);
+        CertFreeCertificateChain(chain);
     }
 
     CertFreeCertificateContext(cert);
@@ -4996,7 +4976,7 @@ static void checkChainPolicyStatus(LPCSTR policy, HCERTCHAINENGINE engine,
     if (chain)
     {
         CERT_CHAIN_POLICY_STATUS policyStatus = { 0 };
-        BOOL ret = pCertVerifyCertificateChainPolicy(policy, chain, para,
+        BOOL ret = CertVerifyCertificateChainPolicy(policy, chain, para,
          &policyStatus);
 
         if (check->todo & TODO_POLICY)
@@ -5012,7 +4992,7 @@ static void checkChainPolicyStatus(LPCSTR policy, HCERTCHAINENGINE engine,
                 skip("%s[%ld]: missing policy %s, skipping test\n",
                  testName, testIndex,
                  IS_INTOID(policy) ? num_to_str(LOWORD(policy)) : policy);
-                pCertFreeCertificateChain(chain);
+                CertFreeCertificateChain(chain);
                 return;
             }
             ok(ret, "%s[%ld](%s): CertVerifyCertificateChainPolicy failed: %08lx\n",
@@ -5037,7 +5017,7 @@ static void checkChainPolicyStatus(LPCSTR policy, HCERTCHAINENGINE engine,
                  testName, testIndex,
                  IS_INTOID(policy) ? num_to_str(LOWORD(policy)) : policy,
                  policyStatus.dwError, check->status.dwError);
-                pCertFreeCertificateChain(chain);
+                CertFreeCertificateChain(chain);
                 return;
             }
             todo_wine_if (check->todo & TODO_CHAINS)
@@ -5057,7 +5037,7 @@ static void checkChainPolicyStatus(LPCSTR policy, HCERTCHAINENGINE engine,
                  IS_INTOID(policy) ? num_to_str(LOWORD(policy)) : policy,
                  check->status.lElementIndex, policyStatus.lElementIndex);
         }
-        pCertFreeCertificateChain(chain);
+        CertFreeCertificateChain(chain);
     }
 }
 
@@ -5262,7 +5242,7 @@ static void check_ssl_policy(void)
     CertAddEncodedCertificateToStore(testRoot, X509_ASN_ENCODING, chain0_0,
      sizeof(chain0_0), CERT_STORE_ADD_ALWAYS, NULL);
     engineConfig.hExclusiveRoot = testRoot;
-    if (!pCertCreateCertificateChainEngine(&engineConfig, &engine))
+    if (!CertCreateCertificateChainEngine(&engineConfig, &engine))
     {
         skip("Couldn't create chain engine\n");
         return;
@@ -5283,7 +5263,7 @@ static void check_ssl_policy(void)
     sslPolicyPara.fdwChecks |= SECURITY_FLAG_IGNORE_CERT_CN_INVALID;
     CHECK_CHAIN_POLICY_STATUS(CERT_CHAIN_POLICY_SSL, engine,
      winehqPolicyCheckWithMatchingName, &oct2007, &policyPara);
-    pCertFreeCertificateChainEngine(engine);
+    CertFreeCertificateChainEngine(engine);
     CertCloseStore(testRoot, 0);
     /* Test chain30, which has an invalid critical extension in an intermediate
      * cert, against the SSL policy.
@@ -5328,40 +5308,34 @@ static void testVerifyCertChainPolicy(void)
     CERT_CHAIN_POLICY_STATUS policyStatus = { 0 };
     CERT_CHAIN_POLICY_PARA policyPara = { 0 };
 
-    if (!pCertVerifyCertificateChainPolicy)
-    {
-        win_skip("CertVerifyCertificateChainPolicy() is not available\n");
-        return;
-    }
-
     /* Crash
-    ret = pCertVerifyCertificateChainPolicy(NULL, NULL, NULL, NULL);
-    ret = pCertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, NULL, NULL,
+    ret = CertVerifyCertificateChainPolicy(NULL, NULL, NULL, NULL);
+    ret = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, NULL, NULL,
      NULL);
-    ret = pCertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, NULL,
+    ret = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, NULL,
      &chainPara, NULL);
      */
     SetLastError(0xdeadbeef);
-    ret = pCertVerifyCertificateChainPolicy(NULL, NULL, NULL, &policyStatus);
+    ret = CertVerifyCertificateChainPolicy(NULL, NULL, NULL, &policyStatus);
     ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
      "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
     /* Crashes
-    ret = pCertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, NULL, NULL,
+    ret = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, NULL, NULL,
      &policyStatus);
      */
     cert = CertCreateCertificateContext(X509_ASN_ENCODING, selfSignedCert,
      sizeof(selfSignedCert));
-    pCertGetCertificateChain(NULL, cert, NULL, NULL, &chainPara, 0, NULL,
+    CertGetCertificateChain(NULL, cert, NULL, NULL, &chainPara, 0, NULL,
      &chain);
     /* Crash
-    ret = pCertVerifyCertificateChainPolicy(NULL, chain, NULL, NULL);
-    ret = pCertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, chain, NULL,
+    ret = CertVerifyCertificateChainPolicy(NULL, chain, NULL, NULL);
+    ret = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, chain, NULL,
      NULL);
-    ret = pCertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, chain,
+    ret = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, chain,
      &chainPara, NULL);
      */
     /* Size of policy status is apparently ignored, as is pChainPolicyPara */
-    ret = pCertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, chain, NULL,
+    ret = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, chain, NULL,
      &policyStatus);
     ok(ret, "CertVerifyCertificateChainPolicy failed: %08lx\n", GetLastError());
     ok(policyStatus.dwError == CERT_E_UNTRUSTEDROOT ||
@@ -5370,7 +5344,7 @@ static void testVerifyCertChainPolicy(void)
     ok(policyStatus.lChainIndex == 0 && policyStatus.lElementIndex == 0,
      "Expected both indexes 0, got %ld, %ld\n", policyStatus.lChainIndex,
      policyStatus.lElementIndex);
-    ret = pCertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, chain,
+    ret = CertVerifyCertificateChainPolicy(CERT_CHAIN_POLICY_BASE, chain,
      &policyPara, &policyStatus);
     ok(ret, "CertVerifyCertificateChainPolicy failed: %08lx\n", GetLastError());
     ok(policyStatus.dwError == CERT_E_UNTRUSTEDROOT ||
@@ -5379,7 +5353,7 @@ static void testVerifyCertChainPolicy(void)
     ok(policyStatus.lChainIndex == 0 && policyStatus.lElementIndex == 0,
      "Expected both indexes 0, got %ld, %ld\n", policyStatus.lChainIndex,
      policyStatus.lElementIndex);
-    pCertFreeCertificateChain(chain);
+    CertFreeCertificateChain(chain);
     CertFreeCertificateContext(cert);
 
     check_base_policy();
@@ -5392,22 +5366,8 @@ static void testVerifyCertChainPolicy(void)
 
 START_TEST(chain)
 {
-    HMODULE hCrypt32 = GetModuleHandleA("crypt32.dll");
-    pCertCreateCertificateChainEngine = (void*)GetProcAddress(hCrypt32, "CertCreateCertificateChainEngine");
-    pCertGetCertificateChain = (void*)GetProcAddress(hCrypt32, "CertGetCertificateChain");
-    pCertFreeCertificateChain = (void*)GetProcAddress(hCrypt32, "CertFreeCertificateChain");
-    pCertFreeCertificateChainEngine = (void*)GetProcAddress(hCrypt32, "CertFreeCertificateChainEngine");
-    pCertVerifyCertificateChainPolicy = (void*)GetProcAddress(hCrypt32, "CertVerifyCertificateChainPolicy");
-
     testCreateCertChainEngine();
-    if (!pCertGetCertificateChain || !pCertFreeCertificateChain)
-    {
-        win_skip("Cert*CertificateChain functions not available\n");
-    }
-    else
-    {
-        testVerifyCertChainPolicy();
-        testGetCertChain();
-        test_CERT_CHAIN_PARA_cbSize();
-    }
+    testVerifyCertChainPolicy();
+    testGetCertChain();
+    test_CERT_CHAIN_PARA_cbSize();
 }

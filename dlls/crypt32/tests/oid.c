@@ -29,73 +29,68 @@
 
 #include "wine/test.h"
 
-
-static BOOL (WINAPI *pCryptEnumOIDInfo)(DWORD,DWORD,void*,PFN_CRYPT_ENUM_OID_INFO);
-
-
 struct OIDToAlgID
 {
     LPCSTR oid;
-    LPCSTR altOid;
     DWORD algID;
     DWORD altAlgID;
 };
 
 static const struct OIDToAlgID oidToAlgID[] = {
- { szOID_RSA_RSA, NULL, CALG_RSA_KEYX },
- { szOID_RSA_MD2RSA, NULL, CALG_MD2 },
- { szOID_RSA_MD4RSA, NULL, CALG_MD4 },
- { szOID_RSA_MD5RSA, NULL, CALG_MD5 },
- { szOID_RSA_SHA1RSA, NULL, CALG_SHA },
- { szOID_RSA_DH, NULL, CALG_DH_SF },
- { szOID_RSA_SMIMEalgESDH, NULL, CALG_DH_EPHEM },
- { szOID_RSA_SMIMEalgCMS3DESwrap, NULL, CALG_3DES },
- { szOID_RSA_SMIMEalgCMSRC2wrap, NULL, CALG_RC2 },
- { szOID_RSA_MD2, NULL, CALG_MD2 },
- { szOID_RSA_MD4, NULL, CALG_MD4 },
- { szOID_RSA_MD5, NULL, CALG_MD5 },
- { szOID_RSA_RC2CBC, NULL, CALG_RC2 },
- { szOID_RSA_RC4, NULL, CALG_RC4 },
- { szOID_RSA_DES_EDE3_CBC, NULL, CALG_3DES },
- { szOID_ANSI_X942_DH, NULL, CALG_DH_SF },
- { szOID_X957_DSA, NULL, CALG_DSS_SIGN },
- { szOID_X957_SHA1DSA, NULL, CALG_SHA },
- { szOID_OIWSEC_md4RSA, NULL, CALG_MD4 },
- { szOID_OIWSEC_md5RSA, NULL, CALG_MD5 },
- { szOID_OIWSEC_md4RSA2, NULL, CALG_MD4 },
- { szOID_OIWSEC_desCBC, NULL, CALG_DES },
- { szOID_OIWSEC_dsa, NULL, CALG_DSS_SIGN },
- { szOID_OIWSEC_shaDSA, NULL, CALG_SHA },
- { szOID_OIWSEC_shaRSA, NULL, CALG_SHA },
- { szOID_OIWSEC_sha, NULL, CALG_SHA },
- { szOID_OIWSEC_rsaXchg, NULL, CALG_RSA_KEYX },
- { szOID_OIWSEC_sha1, NULL, CALG_SHA },
- { szOID_OIWSEC_dsaSHA1, NULL, CALG_SHA },
- { szOID_OIWSEC_sha1RSASign, NULL, CALG_SHA },
- { szOID_OIWDIR_md2RSA, NULL, CALG_MD2 },
- { szOID_INFOSEC_mosaicUpdatedSig, NULL, CALG_SHA },
- { szOID_INFOSEC_mosaicKMandUpdSig, NULL, CALG_DSS_SIGN },
- { szOID_NIST_sha256, NULL, CALG_SHA_256, -1 },
- { szOID_NIST_sha384, NULL, CALG_SHA_384, -1 },
- { szOID_NIST_sha512, NULL, CALG_SHA_512, -1 }
+ { szOID_RSA_RSA, CALG_RSA_KEYX },
+ { szOID_RSA_MD2RSA, CALG_MD2 },
+ { szOID_RSA_MD4RSA, CALG_MD4 },
+ { szOID_RSA_MD5RSA, CALG_MD5 },
+ { szOID_RSA_SHA1RSA, CALG_SHA },
+ { szOID_RSA_DH, CALG_DH_SF },
+ { szOID_RSA_SMIMEalgESDH, CALG_DH_EPHEM },
+ { szOID_RSA_SMIMEalgCMS3DESwrap, CALG_3DES },
+ { szOID_RSA_SMIMEalgCMSRC2wrap, CALG_RC2 },
+ { szOID_RSA_MD2, CALG_MD2 },
+ { szOID_RSA_MD4, CALG_MD4 },
+ { szOID_RSA_MD5, CALG_MD5 },
+ { szOID_RSA_RC2CBC, CALG_RC2 },
+ { szOID_RSA_RC4, CALG_RC4 },
+ { szOID_RSA_DES_EDE3_CBC, CALG_3DES },
+ { szOID_ANSI_X942_DH, CALG_DH_SF },
+ { szOID_X957_DSA, CALG_DSS_SIGN },
+ { szOID_X957_SHA1DSA, CALG_SHA },
+ { szOID_OIWSEC_md4RSA, CALG_MD4 },
+ { szOID_OIWSEC_md5RSA, CALG_MD5 },
+ { szOID_OIWSEC_md4RSA2, CALG_MD4 },
+ { szOID_OIWSEC_desCBC, CALG_DES },
+ { szOID_OIWSEC_dsa, CALG_DSS_SIGN },
+ { szOID_OIWSEC_shaDSA, CALG_SHA },
+ { szOID_OIWSEC_shaRSA, CALG_SHA },
+ { szOID_OIWSEC_sha, CALG_SHA },
+ { szOID_OIWSEC_rsaXchg, CALG_RSA_KEYX },
+ { szOID_OIWSEC_sha1, CALG_SHA },
+ { szOID_OIWSEC_dsaSHA1, CALG_SHA },
+ { szOID_OIWSEC_sha1RSASign, CALG_SHA },
+ { szOID_OIWDIR_md2RSA, CALG_MD2 },
+ { szOID_INFOSEC_mosaicUpdatedSig, CALG_SHA },
+ { szOID_INFOSEC_mosaicKMandUpdSig, CALG_DSS_SIGN },
+ { szOID_NIST_sha256, CALG_SHA_256, -1 },
+ { szOID_NIST_sha384, CALG_SHA_384, -1 },
+ { szOID_NIST_sha512, CALG_SHA_512, -1 }
 };
 
 static const struct OIDToAlgID algIDToOID[] = {
- { szOID_RSA_RSA, NULL, CALG_RSA_KEYX },
- { szOID_RSA_SMIMEalgESDH, NULL, CALG_DH_EPHEM },
- { szOID_RSA_MD2, NULL, CALG_MD2 },
- { szOID_RSA_MD4, NULL, CALG_MD4 },
- { szOID_RSA_MD5, NULL, CALG_MD5 },
- { szOID_RSA_RC2CBC, NULL, CALG_RC2 },
- { szOID_RSA_RC4, NULL, CALG_RC4 },
- { szOID_RSA_DES_EDE3_CBC, NULL, CALG_3DES },
- { szOID_ANSI_X942_DH, NULL, CALG_DH_SF },
- { szOID_X957_DSA, szOID_OIWSEC_dsa /* some Win98 */, CALG_DSS_SIGN },
- { szOID_OIWSEC_desCBC, NULL, CALG_DES },
- { szOID_OIWSEC_sha1, NULL, CALG_SHA },
+ { szOID_RSA_RSA, CALG_RSA_KEYX },
+ { szOID_RSA_SMIMEalgESDH, CALG_DH_EPHEM },
+ { szOID_RSA_MD2, CALG_MD2 },
+ { szOID_RSA_MD4, CALG_MD4 },
+ { szOID_RSA_MD5, CALG_MD5 },
+ { szOID_RSA_RC2CBC, CALG_RC2 },
+ { szOID_RSA_RC4, CALG_RC4 },
+ { szOID_RSA_DES_EDE3_CBC, CALG_3DES },
+ { szOID_ANSI_X942_DH, CALG_DH_SF },
+ { szOID_X957_DSA, CALG_DSS_SIGN },
+ { szOID_OIWSEC_desCBC, CALG_DES },
+ { szOID_OIWSEC_sha1, CALG_SHA },
 };
 
-static void testOIDToAlgID(void)
+static void test_OIDToAlgID(void)
 {
     int i;
     DWORD alg;
@@ -112,7 +107,7 @@ static void testOIDToAlgID(void)
     }
 }
 
-static void testAlgIDToOID(void)
+static void test_AlgIDToOID(void)
 {
     int i;
     LPCSTR oid;
@@ -126,27 +121,9 @@ static void testAlgIDToOID(void)
     {
         oid = CertAlgIdToOID(algIDToOID[i].algID);
         /* Allow failure, not every version of Windows supports every algo */
-        ok(oid != NULL || broken(!oid), "CertAlgIdToOID failed, expected %s\n", algIDToOID[i].oid);
+        ok(oid != NULL, "CertAlgIdToOID failed, expected %s\n", algIDToOID[i].oid);
         if (oid)
-        {
-            if (strcmp(oid, algIDToOID[i].oid))
-            {
-                if (algIDToOID[i].altOid)
-                    ok(!strcmp(oid, algIDToOID[i].altOid),
-                     "Expected %s or %s, got %s\n", algIDToOID[i].oid,
-                     algIDToOID[i].altOid, oid);
-                else
-                {
-                    /* No need to rerun the test, we already know it failed. */
-                    ok(0, "Expected %s, got %s\n", algIDToOID[i].oid, oid);
-                }
-            }
-            else
-            {
-                /* No need to rerun the test, we already know it succeeded. */
-                ok(1, "Expected %s, got %s\n", algIDToOID[i].oid, oid);
-            }
-        }
+            ok(!strcmp(oid, algIDToOID[i].oid), "Expected %s, got %s\n", algIDToOID[i].oid, oid);
     }
 }
 
@@ -213,8 +190,7 @@ static void test_oidFunctionSet(void)
 
         ret = CryptGetOIDFunctionAddress(set1, X509_ASN_ENCODING, X509_CERT, 0,
          &funcAddr, &hFuncAddr);
-        ok((!ret && GetLastError() == ERROR_FILE_NOT_FOUND) ||
-         broken(ret) /* some Win98 */,
+        ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
          "Expected ERROR_FILE_NOT_FOUND, got %08lx\n", GetLastError());
     }
 }
@@ -266,10 +242,8 @@ static void test_installOIDFunctionAddress(void)
          */
         ret = CryptGetOIDFunctionAddress(set, X509_ASN_ENCODING, 0, 0,
          (void **)&funcAddr, &hFuncAddr);
-        ok(!ret && (GetLastError() == ERROR_FILE_NOT_FOUND ||
-         GetLastError() == E_INVALIDARG /* some Win98 */),
-         "Expected ERROR_FILE_NOT_FOUND or E_INVALIDARG, got %ld\n",
-         GetLastError());
+        ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+         "Expected ERROR_FILE_NOT_FOUND, got %ld\n", GetLastError());
         ret = CryptGetOIDFunctionAddress(set, X509_ASN_ENCODING, X509_CERT, 0,
          (void **)&funcAddr, &hFuncAddr);
         ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
@@ -520,20 +494,14 @@ static void test_enumOIDInfo(void)
     BOOL ret;
     DWORD count = 0;
 
-    if (!pCryptEnumOIDInfo)
-    {
-        win_skip("CryptEnumOIDInfo() is not available\n");
-        return;
-    }
-
     /* This crashes
-    ret = pCryptEnumOIDInfo(7, 0, NULL, NULL);
+    ret = CryptEnumOIDInfo(7, 0, NULL, NULL);
      */
 
     /* Silly tests, check that more than one thing is enumerated */
-    ret = pCryptEnumOIDInfo(0, 0, &count, countOidInfo);
+    ret = CryptEnumOIDInfo(0, 0, &count, countOidInfo);
     ok(ret && count > 0, "Expected more than item enumerated\n");
-    ret = pCryptEnumOIDInfo(0, 0, NULL, noOidInfo);
+    ret = CryptEnumOIDInfo(0, 0, NULL, noOidInfo);
     ok(!ret, "Expected FALSE\n");
 }
 
@@ -700,11 +668,8 @@ static void test_registerOIDInfo(void)
 
 START_TEST(oid)
 {
-    HMODULE hCrypt32 = GetModuleHandleA("crypt32.dll");
-    pCryptEnumOIDInfo = (void*)GetProcAddress(hCrypt32, "CryptEnumOIDInfo");
-
-    testOIDToAlgID();
-    testAlgIDToOID();
+    test_OIDToAlgID();
+    test_AlgIDToOID();
     test_enumOIDInfo();
     test_findOIDInfo();
     test_registerOIDInfo();

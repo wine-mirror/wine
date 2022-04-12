@@ -57,17 +57,6 @@ static void test_AddRemoveProvider(void)
         /* Apparently the needed rights are checked before the existence of the provider */
         skip("Need admin rights\n");
     }
-    else
-    {
-        /* On some Win98 systems, CryptSIPRemoveProvider always succeeds if
-         * the arguments are correct, whether or not the registry key is
-         * present, so don't test ret, just check the last error if it does
-         * return FALSE.
-         */
-        if (!ret)
-            ok (GetLastError() == ERROR_FILE_NOT_FOUND,
-                "Expected ERROR_FILE_NOT_FOUND, got %ld.\n", GetLastError());
-    }
 
     /* Everything OK, pwszIsFunctionName and pwszIsFunctionNameFmt2 are left NULL
      * as allowed */
@@ -96,14 +85,8 @@ static void test_AddRemoveProvider(void)
      */
     SetLastError(0xdeadbeef);
     ret = CryptSIPRemoveProvider(&actionid);
-    /* On some Win98 systems, CryptSIPRemoveProvider always succeeds if
-     * the arguments are correct, whether or not the registry key is
-     * present, so don't test ret, just check the last error if it does
-     * return FALSE.
-     */
-    if (!ret)
-        ok (GetLastError() == ERROR_FILE_NOT_FOUND,
-            "Expected ERROR_FILE_NOT_FOUND, got %ld.\n", GetLastError());
+    ok(!ret && GetLastError() == ERROR_FILE_NOT_FOUND,
+       "Expected ERROR_FILE_NOT_FOUND, got %ld.\n", GetLastError());
 
     /* Everything OK */
     memset(&newprov, 0, sizeof(SIP_ADD_NEWPROVIDER));
@@ -223,11 +206,8 @@ static void test_SIPRetrieveSubjectGUID(void)
     memset(&subject, 1, sizeof(GUID));
     ret = CryptSIPRetrieveSubjectGuid(tempfileW, NULL, &subject);
     ok ( !ret, "Expected CryptSIPRetrieveSubjectGuid to fail\n");
-    ok ( GetLastError() == ERROR_FILE_INVALID ||
-         GetLastError() == ERROR_INVALID_PARAMETER /* Vista */ ||
-         GetLastError() == ERROR_SUCCESS /* most Win98 */ ||
-         GetLastError() == TRUST_E_SUBJECT_FORM_UNKNOWN /* some Win98 */,
-        "Expected ERROR_FILE_INVALID, ERROR_INVALID_PARAMETER, ERROR_SUCCESS or TRUST_E_SUBJECT_FORM_UNKNOWN, got 0x%08lx\n", GetLastError());
+    ok ( GetLastError() == ERROR_FILE_INVALID || GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_FILE_INVALID, ERROR_INVALID_PARAMETER, got 0x%08lx\n", GetLastError());
     ok(IsEqualGUID(&subject, &nullSubject),
        "Expected a NULL GUID for empty file %s, not %s\n", tempfile, wine_dbgstr_guid(&subject));
 
@@ -240,10 +220,8 @@ static void test_SIPRetrieveSubjectGUID(void)
     memset(&subject, 1, sizeof(GUID));
     ret = CryptSIPRetrieveSubjectGuid(tempfileW, NULL, &subject);
     ok ( !ret, "Expected CryptSIPRetrieveSubjectGuid to fail\n");
-    ok ( GetLastError() == ERROR_INVALID_PARAMETER ||
-         GetLastError() == ERROR_SUCCESS /* most Win98 */ ||
-         GetLastError() == TRUST_E_SUBJECT_FORM_UNKNOWN /* some Win98 */,
-        "Expected ERROR_INVALID_PARAMETER, ERROR_SUCCESS or TRUST_E_SUBJECT_FORM_UNKNOWN, got 0x%08lx\n", GetLastError());
+    ok ( GetLastError() == ERROR_INVALID_PARAMETER,
+        "Expected ERROR_INVALID_PARAMETER, got 0x%08lx\n", GetLastError());
     ok(IsEqualGUID(&subject, &nullSubject),
        "Expected a NULL GUID for empty file %s, not %s\n", tempfile, wine_dbgstr_guid(&subject));
 
@@ -256,8 +234,7 @@ static void test_SIPRetrieveSubjectGUID(void)
     memset(&subject, 1, sizeof(GUID));
     ret = CryptSIPRetrieveSubjectGuid(tempfileW, NULL, &subject);
     ok ( !ret, "Expected CryptSIPRetrieveSubjectGuid to fail\n");
-    ok ( GetLastError() == TRUST_E_SUBJECT_FORM_UNKNOWN ||
-         GetLastError() == ERROR_SUCCESS /* Win98 */,
+    ok ( GetLastError() == TRUST_E_SUBJECT_FORM_UNKNOWN,
         "Expected TRUST_E_SUBJECT_FORM_UNKNOWN or ERROR_SUCCESS, got 0x%08lx\n", GetLastError());
     ok(IsEqualGUID(&subject, &nullSubject),
        "Expected a NULL GUID for empty file %s, not %s\n", tempfile, wine_dbgstr_guid(&subject));
