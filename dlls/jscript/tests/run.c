@@ -2787,6 +2787,91 @@ static void test_retval(void)
     close_script(engine);
 }
 
+static void test_propputref(void)
+{
+    static DISPID propput_dispid = DISPID_PROPERTYPUT;
+    DISPPARAMS dp = {0}, dp_get = {0};
+    IActiveScript *script, *script2;
+    IDispatch *disp, *obj;
+    HRESULT hres;
+    VARIANT v;
+    DISPID id;
+    BSTR str;
+
+    hres = parse_script_expr(L"new Object()", &v, &script2);
+    ok(hres == S_OK, "parse_script_expr failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    obj = V_DISPATCH(&v);
+
+    hres = parse_script_expr(L"var disp = new Object(); disp.a = disp; disp", &v, &script);
+    ok(hres == S_OK, "parse_script_expr failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    disp = V_DISPATCH(&v);
+
+    str = SysAllocString(L"a");
+    hres = IDispatch_GetIDsOfNames(disp, &IID_NULL, &str, 1, 0, &id);
+    ok(hres == S_OK, "GetIDsOfNames failed: %08lx\n", hres);
+    SysFreeString(str);
+
+    dp.cArgs = dp.cNamedArgs = 1;
+    dp.rgdispidNamedArgs = &propput_dispid;
+    dp.rgvarg = &v;
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = obj;
+    hres = IDispatch_Invoke(disp, id, &IID_NULL, 0, DISPATCH_PROPERTYPUTREF, &dp, NULL, NULL, NULL);
+    ok(hres == S_OK, "Invoke failed: %08lx\n", hres);
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatch_Invoke(disp, id, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp_get, &v, NULL, NULL);
+    ok(hres == S_OK, "Invoke failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) == obj, "V_DISPATCH(v) = %p\n", V_DISPATCH(&v));
+    VariantClear(&v);
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = obj;
+    hres = IDispatch_Invoke(disp, id, &IID_NULL, 0, DISPATCH_PROPERTYPUTREF | DISPATCH_PROPERTYPUT, &dp, NULL, NULL, NULL);
+    ok(hres == S_OK, "Invoke failed: %08lx\n", hres);
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatch_Invoke(disp, id, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp_get, &v, NULL, NULL);
+    ok(hres == S_OK, "Invoke failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) == obj, "V_DISPATCH(v) = %p\n", V_DISPATCH(&v));
+    IDispatch_Release(obj);
+    close_script(script2);
+    VariantClear(&v);
+
+    V_VT(&v) = VT_DISPATCH;
+    V_DISPATCH(&v) = NULL;
+    hres = IDispatch_Invoke(disp, id, &IID_NULL, 0, DISPATCH_PROPERTYPUTREF, &dp, NULL, NULL, NULL);
+    ok(hres == S_OK, "Invoke failed: %08lx\n", hres);
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatch_Invoke(disp, id, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp_get, &v, NULL, NULL);
+    ok(hres == S_OK, "Invoke failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    ok(!V_DISPATCH(&v), "V_DISPATCH(v) = %p\n", V_DISPATCH(&v));
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatch_Invoke(disp, id, &IID_NULL, 0, DISPATCH_PROPERTYPUTREF, &dp, NULL, NULL, NULL);
+    ok(hres == S_OK, "Invoke failed: %08lx\n", hres);
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatch_Invoke(disp, id, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp_get, &v, NULL, NULL);
+    ok(hres == S_OK, "Invoke failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_EMPTY, "V_VT(v) = %d\n", V_VT(&v));
+
+    V_VT(&v) = VT_I4;
+    V_I4(&v) = 42;
+    hres = IDispatch_Invoke(disp, id, &IID_NULL, 0, DISPATCH_PROPERTYPUTREF, &dp, NULL, NULL, NULL);
+    ok(hres == S_OK, "Invoke failed: %08lx\n", hres);
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatch_Invoke(disp, id, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp_get, &v, NULL, NULL);
+    ok(hres == S_OK, "Invoke failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == 42, "V_I4(v) = %ld\n", V_I4(&v));
+
+    IDispatch_Release(disp);
+    close_script(script);
+}
+
 static void test_default_value(void)
 {
     static DISPID propput_dispid = DISPID_PROPERTYPUT;
@@ -2888,6 +2973,10 @@ static void test_default_value(void)
     V_VT(&v) = VT_EMPTY;
     hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_PROPERTYPUT, &dp, NULL, NULL, NULL);
     ok(hres == DISP_E_MEMBERNOTFOUND, "Invoke failed: %08lx\n", hres);
+    hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_PROPERTYPUTREF, &dp, NULL, NULL, NULL);
+    ok(hres == DISP_E_MEMBERNOTFOUND, "Invoke failed: %08lx\n", hres);
+    hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_PROPERTYPUTREF | DISPATCH_PROPERTYPUT, &dp, NULL, NULL, NULL);
+    ok(hres == DISP_E_MEMBERNOTFOUND, "Invoke failed: %08lx\n", hres);
     IDispatch_Release(disp);
     close_script(script);
 
@@ -2898,6 +2987,10 @@ static void test_default_value(void)
 
     V_VT(&v) = VT_EMPTY;
     hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_PROPERTYPUT, &dp, NULL, NULL, NULL);
+    ok(hres == DISP_E_MEMBERNOTFOUND, "Invoke failed: %08lx\n", hres);
+    hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_PROPERTYPUTREF, &dp, NULL, NULL, NULL);
+    ok(hres == DISP_E_MEMBERNOTFOUND, "Invoke failed: %08lx\n", hres);
+    hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_PROPERTYPUTREF | DISPATCH_PROPERTYPUT, &dp, NULL, NULL, NULL);
     ok(hres == DISP_E_MEMBERNOTFOUND, "Invoke failed: %08lx\n", hres);
     IDispatch_Release(disp);
     close_script(script);
@@ -2968,6 +3061,7 @@ static void test_script_exprs(void)
     VariantClear(&v);
 
     test_default_value();
+    test_propputref();
     test_retval();
 
     testing_expr = FALSE;

@@ -1627,6 +1627,8 @@ static HRESULT WINAPI DispatchEx_InvokeEx(IDispatchEx *iface, DISPID id, LCID lc
         }
         break;
     }
+    case DISPATCH_PROPERTYPUTREF | DISPATCH_PROPERTYPUT:
+    case DISPATCH_PROPERTYPUTREF:
     case DISPATCH_PROPERTYPUT: {
         jsval_t val;
         DWORD i;
