@@ -3618,8 +3618,8 @@ static void test_VarCyInt(void)
 #define EXPECTDEC(scl, sgn, hi, lo) ok(hres == S_OK && \
   S(U(out)).scale == (BYTE)(scl) && S(U(out)).sign == (BYTE)(sgn) && \
   out.Hi32 == (ULONG)(hi) && U1(out).Lo64 == (ULONG64)(lo), \
-  "expected (%d,%d,%d,(%lx %lx)), got (%d,%d,%ld,(%lx %lx)) hres 0x%08lx\n", \
-  scl, sgn, hi, (LONG)((LONG64)(lo) >> 32), (LONG)((lo) & 0xffffffff), S(U(out)).scale, \
+  "expected (%d,%d,%d,%I64x), got (%d,%d,%ld,(%lx %lx)) hres 0x%08lx\n", \
+  scl, sgn, hi, (LONG64)(lo), S(U(out)).scale, \
   S(U(out)).sign, out.Hi32, S1(U1(out)).Mid32, S1(U1(out)).Lo32, hres)
 
 #define EXPECTDEC64(scl, sgn, hi, mid, lo) ok(hres == S_OK && \

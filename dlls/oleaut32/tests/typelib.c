@@ -1194,9 +1194,8 @@ static double WINAPI double_func( double a0, float a1, double a2, int a3 )
 
 static LONGLONG WINAPI longlong_func( LONGLONG a0, CY a1 )
 {
-    ok( a0 == 0xdead00000000beefll, "wrong arg0 %08lx%08lx\n", (DWORD)(a0 >> 32), (DWORD)a0);
-    ok( a1.int64 == ((ULONGLONG)10000 * 12345678), "wrong arg1 %08lx%08lx\n",
-        (DWORD)(a1.int64 >> 32), (DWORD)a1.int64 );
+    ok( a0 == 0xdead00000000beefll, "wrong arg0 %#I64x\n", a0);
+    ok( a1.int64 == ((ULONGLONG)10000 * 12345678), "wrong arg1 %#I64x\n", a1.int64 );
     return ((ULONGLONG)4321 << 32) | 8765;
 }
 
@@ -1208,7 +1207,7 @@ static VARIANT WINAPI variant_func( int a0, BOOL a1, DECIMAL a2, VARIANT a3 )
     V_VT(&var) = VT_LPWSTR;
     V_UI4(&var) = 0xbabe;
     ok( a2.Hi32 == 1122, "wrong arg2.Hi32 %lx\n", a2.Hi32 );
-    ok( U1(a2).Lo64 == 3344, "wrong arg2.Lo64 %08lx%08lx\n", (DWORD)(U1(a2).Lo64 >> 32), (DWORD)U1(a2).Lo64 );
+    ok( U1(a2).Lo64 == 3344, "wrong arg2.Lo64 %#I64x\n", U1(a2).Lo64 );
     ok( V_VT(&a3) == VT_EMPTY, "wrong arg3 type %x\n", V_VT(&a3) );
     ok( V_UI4(&a3) == 0xdeadbeef, "wrong arg3 value %lx\n", V_UI4(&a3) );
     return var;
@@ -1389,8 +1388,8 @@ static void test_DispCallFunc(void)
     if (res == S_OK)
     {
         ok( V_VT(&result) == VT_I8, "wrong result type %d\n", V_VT(&result) );
-        ok( V_I8(&result) == (((ULONGLONG)4321 << 32) | 8765), "wrong result %08lx%08lx\n",
-            (DWORD)(V_I8(&result) >> 32), (DWORD)V_I8(&result) );
+        ok( V_I8(&result) == (((ULONGLONG)4321 << 32) | 8765), "wrong result %#I64x\n",
+            V_I8(&result) );
     }
 
     memset( args, 0x55, sizeof(args) );
