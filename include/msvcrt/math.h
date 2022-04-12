@@ -69,12 +69,16 @@ _ACRTIMP double __cdecl fabs(double);
 _ACRTIMP double __cdecl ldexp(double, int);
 _ACRTIMP double __cdecl frexp(double, int*);
 _ACRTIMP double __cdecl modf(double, double*);
+_ACRTIMP double __cdecl fdim(double, double);
 _ACRTIMP double __cdecl fmod(double, double);
 _ACRTIMP double __cdecl fmin(double, double);
 _ACRTIMP double __cdecl fmax(double, double);
 _ACRTIMP double __cdecl erf(double);
+_ACRTIMP double __cdecl remainder(double, double);
 _ACRTIMP double __cdecl remquo(double, double, int*);
 _ACRTIMP float __cdecl remquof(float, float, int*);
+_ACRTIMP double __cdecl lgamma(double);
+_ACRTIMP double __cdecl tgamma(double);
 
 _ACRTIMP double __cdecl _hypot(double, double);
 _ACRTIMP double __cdecl _j0(double);
@@ -86,18 +90,31 @@ _ACRTIMP double __cdecl _yn(int, double);
 
 _ACRTIMP double __cdecl cbrt(double);
 _ACRTIMP double __cdecl exp2(double);
+_ACRTIMP double __cdecl expm1(double);
+_ACRTIMP double __cdecl log1p(double);
 _ACRTIMP double __cdecl log2(double);
+_ACRTIMP double __cdecl logb(double);
 _ACRTIMP double __cdecl rint(double);
 _ACRTIMP double __cdecl round(double);
 _ACRTIMP double __cdecl trunc(double);
 
 _ACRTIMP float __cdecl cbrtf(float);
 _ACRTIMP float __cdecl exp2f(float);
+_ACRTIMP float __cdecl expm1f(float);
+_ACRTIMP float __cdecl log1pf(float);
 _ACRTIMP float __cdecl log2f(float);
+_ACRTIMP float __cdecl logbf(float);
 _ACRTIMP float __cdecl rintf(float);
 _ACRTIMP float __cdecl roundf(float);
 _ACRTIMP float __cdecl truncf(float);
 
+_ACRTIMP int __cdecl ilogb(double);
+_ACRTIMP int __cdecl ilogbf(float);
+
+_ACRTIMP __int64 __cdecl llrint(double);
+_ACRTIMP __int64 __cdecl llrintf(float);
+_ACRTIMP __int64 __cdecl llround(double);
+_ACRTIMP __int64 __cdecl llroundf(float);
 _ACRTIMP __msvcrt_long __cdecl lrint(double);
 _ACRTIMP __msvcrt_long __cdecl lrintf(float);
 _ACRTIMP __msvcrt_long __cdecl lround(double);
@@ -105,6 +122,8 @@ _ACRTIMP __msvcrt_long __cdecl lroundf(float);
 
 _ACRTIMP double __cdecl scalbn(double,int);
 _ACRTIMP float  __cdecl scalbnf(float,int);
+_ACRTIMP double __cdecl scalbln(double,__msvcrt_long);
+_ACRTIMP float  __cdecl scalblnf(float,__msvcrt_long);
 
 _ACRTIMP double __cdecl _copysign (double, double);
 _ACRTIMP double __cdecl _chgsign (double);
@@ -114,6 +133,8 @@ _ACRTIMP double __cdecl _nextafter(double, double);
 _ACRTIMP int    __cdecl _finite(double);
 _ACRTIMP int    __cdecl _isnan(double);
 _ACRTIMP int    __cdecl _fpclass(double);
+
+_ACRTIMP double __cdecl nextafter(double, double);
 
 #ifndef __i386__
 
@@ -199,15 +220,20 @@ _ACRTIMP float __cdecl _logbf(float);
 _ACRTIMP float __cdecl acoshf(float);
 _ACRTIMP float __cdecl asinhf(float);
 _ACRTIMP float __cdecl atanhf(float);
+_ACRTIMP float __cdecl erff(float);
+_ACRTIMP float __cdecl fdimf(float, float);
+_ACRTIMP float __cdecl fmaxf(float, float);
+_ACRTIMP float __cdecl fminf(float, float);
+_ACRTIMP float __cdecl lgammaf(float);
+_ACRTIMP float __cdecl nextafterf(float, float);
+_ACRTIMP float __cdecl remainderf(float, float);
+_ACRTIMP float __cdecl tgammaf(float);
 
 #else
 
 static inline float _chgsignf(float x) { return _chgsign(x); }
 static inline float _copysignf(float x, float y) { return _copysign(x, y); }
 static inline float _logbf(float x) { return _logb(x); }
-static inline float acoshf(float x) { return acosh(x); }
-static inline float asinhf(float x) { return asinh(x); }
-static inline float atanhf(float x) { return atanh(x); }
 
 #endif
 
