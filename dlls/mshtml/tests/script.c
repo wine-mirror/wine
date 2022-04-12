@@ -151,6 +151,8 @@ DEFINE_EXPECT(GetTypeInfo);
 #define DISPID_EXTERNAL_BROKEN         0x300004
 #define DISPID_EXTERNAL_WIN_SKIP       0x300005
 #define DISPID_EXTERNAL_WRITESTREAM    0x300006
+#define DISPID_EXTERNAL_GETVT          0x300007
+#define DISPID_EXTERNAL_NULL_DISP      0x300008
 
 static const GUID CLSID_TestScript =
     {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x07,0x46}};
@@ -589,6 +591,14 @@ static HRESULT WINAPI externalDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, 
         *pid = DISPID_EXTERNAL_WRITESTREAM;
         return S_OK;
     }
+    if(!lstrcmpW(bstrName, L"getVT")) {
+        *pid = DISPID_EXTERNAL_GETVT;
+        return S_OK;
+    }
+    if(!lstrcmpW(bstrName, L"nullDisp")) {
+        *pid = DISPID_EXTERNAL_NULL_DISP;
+        return S_OK;
+    }
 
     ok(0, "unexpected name %s\n", wine_dbgstr_w(bstrName));
     return DISP_E_UNKNOWNNAME;
@@ -714,6 +724,64 @@ static HRESULT WINAPI externalDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID 
         ok(V_VT(pdp->rgvarg+1) == VT_BSTR, "V_VT(psp->rgvargs) = %d\n", V_VT(pdp->rgvarg));
 
         stream_write(V_BSTR(pdp->rgvarg+1), V_BSTR(pdp->rgvarg));
+        return S_OK;
+
+    case DISPID_EXTERNAL_GETVT:
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(pdp->rgvarg != NULL, "rgvarg == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(pdp->cArgs == 1, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) == VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+
+        V_VT(pvarRes) = VT_BSTR;
+        switch(V_VT(pdp->rgvarg)) {
+        case VT_EMPTY:
+            V_BSTR(pvarRes) = SysAllocString(L"VT_EMPTY");
+            break;
+        case VT_NULL:
+            V_BSTR(pvarRes) = SysAllocString(L"VT_NULL");
+            break;
+        case VT_I4:
+            V_BSTR(pvarRes) = SysAllocString(L"VT_I4");
+            break;
+        case VT_R8:
+            V_BSTR(pvarRes) = SysAllocString(L"VT_R8");
+            break;
+        case VT_BSTR:
+            V_BSTR(pvarRes) = SysAllocString(L"VT_BSTR");
+            break;
+        case VT_DISPATCH:
+            V_BSTR(pvarRes) = SysAllocString(L"VT_DISPATCH");
+            break;
+        case VT_BOOL:
+            V_BSTR(pvarRes) = SysAllocString(L"VT_BOOL");
+            break;
+        case VT_DATE:
+            V_BSTR(pvarRes) = SysAllocString(L"VT_DATE");
+            break;
+        default:
+            ok(0, "unknown vt %d\n", V_VT(pdp->rgvarg));
+            return E_FAIL;
+        }
+
+        return S_OK;
+
+    case DISPID_EXTERNAL_NULL_DISP:
+        ok(wFlags == INVOKE_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgvarg, "rgvarg != NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) == VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+
+        V_VT(pvarRes) = VT_DISPATCH;
+        V_DISPATCH(pvarRes) = NULL;
         return S_OK;
 
     default:

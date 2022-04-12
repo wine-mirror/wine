@@ -298,9 +298,25 @@ sync_test("getOwnPropertyDescriptor", function() {
     test_own_data_prop_desc(function(){}, "prototype", true, false, false);
     test_own_data_prop_desc(Function, "prototype", false, false, false);
     test_own_data_prop_desc(String.prototype, "constructor", true, false, true);
+
+    try {
+        Object.getOwnPropertyDescriptor(null, "prototype");
+        ok(false, "expected exception with null");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_OBJECT_EXPECTED, "with null context threw " + n);
+    }
+    try {
+        Object.getOwnPropertyDescriptor(external.nullDisp, "prototype");
+        ok(false, "expected exception calling getOwnPropertyDescriptor(nullDisp)");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_OBJECT_EXPECTED, "getOwnPropertyDescriptor(nullDisp) threw " + n);
+    }
 });
 
 sync_test("defineProperty", function() {
+    var nullDisp = external.nullDisp;
     function test_accessor_prop_desc(obj, prop, orig_desc) {
         var expected_enumerable = "enumerable" in orig_desc && !!orig_desc.enumerable;
         var expected_configurable = "configurable" in orig_desc && !!orig_desc.configurable;
@@ -548,6 +564,16 @@ sync_test("defineProperty", function() {
     Object.defineProperty(obj, "funcprop", desc);
     test_accessor_prop_desc(obj, "funcprop", desc);
     ok(obj.funcprop(100) === 10, "obj.funcprop() = " + obj.funcprop(100));
+
+    expect_exception(function() {
+        Object.defineProperty(null, "funcprop", desc);
+    }, JS_E_OBJECT_EXPECTED);
+    expect_exception(function() {
+        Object.defineProperty(nullDisp, "funcprop", desc);
+    }, JS_E_OBJECT_EXPECTED);
+    expect_exception(function() {
+        Object.defineProperty(obj, "funcprop", nullDisp);
+    }, JS_E_OBJECT_EXPECTED);
 });
 
 sync_test("defineProperties", function() {
@@ -831,6 +857,13 @@ sync_test("getPrototypeOf", function() {
     ok(Object.getPrototypeOf(obj) === null, "Object.getPrototypeOf(obj) = " + Object.getPrototypeOf(obj));
 
     ok(Object.getPrototypeOf(external) === null, "Object.getPrototypeOf(non-JS obj) = " + Object.getPrototypeOf(external));
+    try {
+        Object.getOwnPropertyDescriptor(external.nullDisp);
+        ok(false, "expected exception calling getOwnPropertyDescriptor(nullDisp)");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_OBJECT_EXPECTED, "getOwnPropertyDescriptor(nullDisp) threw " + n);
+    }
 });
 
 sync_test("toString", function() {
@@ -956,6 +989,14 @@ sync_test("keys", function() {
     ok(keys === "", "keys([]) = " + keys);
 
     ok(Object.keys.length === 1, "Object.keys.length = " + Object.keys.length);
+
+    try {
+        Object.keys(external.nullDisp);
+        ok(false, "expected exception calling keys(nullDisp)");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_OBJECT_EXPECTED, "keys(nullDisp) threw " + n);
+    }
 });
 
 sync_test("getOwnPropertyNames", function() {
@@ -980,6 +1021,14 @@ sync_test("getOwnPropertyNames", function() {
     ok(names === "length", "names = " + names);
 
     ok(Object.getOwnPropertyNames.length === 1, "Object.getOwnPropertyNames.length = " + Object.getOwnPropertyNames.length);
+
+    try {
+        Object.getOwnPropertyNames(external.nullDisp);
+        ok(false, "expected exception calling getOwnPropertyNames(nullDisp)");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_OBJECT_EXPECTED, "getOwnPropertyNames(nullDisp) threw " + n);
+    }
 });
 
 sync_test("reduce", function() {
@@ -1091,6 +1140,14 @@ sync_test("preventExtensions", function() {
 
     ok(Object.preventExtensions.length === 1, "Object.preventExtensions.length = " + Object.preventExtensions.length);
     ok(Object.isExtensible.length === 1, "Object.isExtensible.length = " + Object.isExtensible.length);
+
+    try {
+        Object.preventExtensions(external.nullDisp);
+        ok(false, "expected exception calling preventExtensions(nullDisp)");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_OBJECT_EXPECTED, "preventExtensions(nullDisp) threw " + n);
+    }
 });
 
 sync_test("freeze", function() {
@@ -1143,6 +1200,14 @@ sync_test("freeze", function() {
     }
     ok(o[0] === 1, "o[0] = " + o[0]);
     ok(o.length === 1, "o.length = " + o.length);
+
+    try {
+        Object.freeze(external.nullDisp);
+        ok(false, "expected exception freeze(nullDisp)");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_OBJECT_EXPECTED, "freeze(nullDisp) threw " + n);
+    }
 });
 
 sync_test("seal", function() {
@@ -1195,9 +1260,18 @@ sync_test("seal", function() {
     }
     ok(o[0] === 1, "o[0] = " + o[0]);
     ok(o.length === 1, "o.length = " + o.length);
+
+    try {
+        Object.seal(external.nullDisp);
+        ok(false, "expected exception calling seal(nullDisp)");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_OBJECT_EXPECTED, "seal(nullDisp) threw " + n);
+    }
 });
 
 sync_test("isFrozen", function() {
+    var nullDisp = external.nullDisp;
     ok(Object.isFrozen.length === 1, "Object.isFrozen.length = " + Object.isFrozen.length);
     ok(Object.isSealed.length === 1, "Object.isSealed.length = " + Object.isSealed.length);
 
@@ -1263,6 +1337,28 @@ sync_test("isFrozen", function() {
     ok(Object.isFrozen(o) === true, "o is not frozen");
     ok(Object.isSealed(o) === true, "o is not sealed");
     ok(Object.isExtensible(o) === false, "o is extensible");
+
+    try {
+        Object.isFrozen(nullDisp);
+        ok(false, "expected exception calling isFrozen(nullDisp)");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_OBJECT_EXPECTED, "isFrozen(nullDisp) threw " + n);
+    }
+    try {
+        Object.isSealed(nullDisp);
+        ok(false, "expected exception calling isSealed(nullDisp)");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_OBJECT_EXPECTED, "isSealed(nullDisp) threw " + n);
+    }
+    try {
+        Object.isExtensible(nullDisp);
+        ok(false, "expected exception calling isExtensible(nullDisp)");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_OBJECT_EXPECTED, "isExtensible(nullDisp) threw " + n);
+    }
 });
 
 sync_test("builtin_context", function() {

@@ -1322,6 +1322,64 @@ sync_test("builtins_diffs", function() {
     }
 });
 
+sync_test("nullDisp", function() {
+    var v = document.documentMode, nullDisp = external.nullDisp, r;
+
+    todo_wine.
+    ok(external.getVT(nullDisp) === "VT_NULL", "getVT(nullDisp) is not VT_NULL");
+    ok(typeof(nullDisp) === "object", "typeof(nullDisp) = " + typeof(nullDisp));
+    ok(nullDisp === nullDisp, "nullDisp !== nullDisp");
+    ok(nullDisp === null, "nullDisp === null");
+    ok(nullDisp == null, "nullDisp == null");
+    ok(!nullDisp === true, "!nullDisp = " + !nullDisp);
+    ok(String(nullDisp) === "null", "String(nullDisp) = " + String(nullDisp));
+    ok(+nullDisp === 0, "+nullDisp !== 0");
+    ok(''+nullDisp === "null", "''+nullDisp !== null");
+    ok(nullDisp != new Object(), "nullDisp == new Object()");
+    ok(new Object() != nullDisp, "new Object() == nullDisp");
+    ok((typeof Object(nullDisp)) === "object", "typeof Object(nullDisp) !== 'object'");
+    r = Object(nullDisp).toString();
+    ok(r === "[object Object]", "Object(nullDisp).toString() = " + r);
+    ok(Object(nullDisp) != nullDisp, "Object(nullDisp) == nullDisp");
+    ok(new Object(nullDisp) != nullDisp, "new Object(nullDisp) == nullDisp");
+
+    if(v >= 8) {
+        r = JSON.stringify.call(null, nullDisp);
+        todo_wine.
+        ok(r === "null", "JSON.stringify(nullDisp) returned " + r);
+    }
+
+    try {
+        (new Object()) instanceof nullDisp;
+        ok(false, "expected exception on (new Object()) instanceof nullDisp");
+    }catch(e) {
+        ok(e.number === 0xa138a - 0x80000000, "(new Object()) instanceof nullDisp threw " + e.number);
+    }
+
+    try {
+        Function.prototype.apply.call(nullDisp, Object, []);
+        ok(false, "expected exception calling Function.apply on nullDisp");
+    }catch(e) {
+        todo_wine.
+        ok(e.number === 0xa138a - 0x80000000, "Function.apply on nullDisp threw " + e.number);
+    }
+    try {
+        Function.prototype.call.call(nullDisp, Object);
+        ok(false, "expected exception calling Function.call on nullDisp");
+    }catch(e) {
+        todo_wine.
+        ok(e.number === 0xa138a - 0x80000000, "Function.call on nullDisp threw " + e.number);
+    }
+
+    try {
+        new nullDisp;
+        ok(false, "expected exception for new nullDisp");
+    }catch(e) {
+        todo_wine.
+        ok(e.number === 0xa138f - 0x80000000, "new nullDisp threw " + e.number);
+    }
+});
+
 sync_test("__proto__", function() {
     var v = document.documentMode;
     var r, x = 42;
