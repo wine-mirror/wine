@@ -1963,7 +1963,8 @@ static void wglFinish(void)
     }
 
     pglFinish();
-    if (escape.gl_drawable) ExtEscape( ctx->hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
+    if (escape.gl_drawable)
+        NtGdiExtEscape( ctx->hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 }
 
 static void wglFlush(void)
@@ -1989,7 +1990,8 @@ static void wglFlush(void)
     }
 
     pglFlush();
-    if (escape.gl_drawable) ExtEscape( ctx->hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
+    if (escape.gl_drawable)
+        NtGdiExtEscape( ctx->hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 }
 
 static const GLubyte *wglGetString(GLenum name)
@@ -2325,12 +2327,12 @@ static HDC X11DRV_wglGetPbufferDCARB( struct wgl_pbuffer *object )
     struct gl_drawable *gl, *prev;
     HDC hdc;
 
-    hdc = CreateDCA( "DISPLAY", NULL, NULL, NULL );
+    hdc = NtGdiOpenDCW( NULL, NULL, NULL, 0, TRUE, NULL, NULL, NULL );
     if (!hdc) return 0;
 
     if (!(gl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*gl) )))
     {
-        DeleteDC( hdc );
+        NtGdiDeleteObjectApp( hdc );
         return 0;
     }
     gl->type = DC_GL_PBUFFER;
@@ -2348,7 +2350,7 @@ static HDC X11DRV_wglGetPbufferDCARB( struct wgl_pbuffer *object )
     escape.drawable = object->drawable;
     escape.mode = IncludeInferiors;
     SetRect( &escape.dc_rect, 0, 0, object->width, object->height );
-    ExtEscape( hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
+    NtGdiExtEscape( hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 
     TRACE( "(%p)->(%p)\n", object, hdc );
     return hdc;
@@ -2465,7 +2467,7 @@ static int X11DRV_wglReleasePbufferDCARB( struct wgl_pbuffer *object, HDC hdc )
 
     LeaveCriticalSection( &context_section );
 
-    return hdc && DeleteDC(hdc);
+    return hdc && NtGdiDeleteObjectApp(hdc);
 }
 
 /**
@@ -3372,7 +3374,8 @@ static BOOL WINAPI glxdrv_wglSwapBuffers( HDC hdc )
 
     release_gl_drawable( gl );
 
-    if (escape.gl_drawable) ExtEscape( ctx->hdc, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
+    if (escape.gl_drawable)
+        NtGdiExtEscape( ctx->hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
     return TRUE;
 }
 

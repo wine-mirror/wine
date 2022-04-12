@@ -135,7 +135,7 @@ void add_device_bounds( X11DRV_PDEVICE *dev, const RECT *rect )
     RECT rc;
 
     if (!dev->bounds) return;
-    if (dev->region && GetRgnBox( dev->region, &rc ))
+    if (dev->region && NtGdiGetRgnBox( dev->region, &rc ))
     {
         if (IntersectRect( &rc, &rc, rect )) add_bounds_rect( dev->bounds, &rc );
     }
@@ -266,21 +266,24 @@ static INT CDECL X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOI
                             if (event.type == NoExpose) break;
                             if (event.type == GraphicsExpose)
                             {
+                                DWORD layout;
                                 RECT rect;
 
                                 rect.left   = event.xgraphicsexpose.x - physDev->dc_rect.left;
                                 rect.top    = event.xgraphicsexpose.y - physDev->dc_rect.top;
                                 rect.right  = rect.left + event.xgraphicsexpose.width;
                                 rect.bottom = rect.top + event.xgraphicsexpose.height;
-                                if (GetLayout( dev->hdc ) & LAYOUT_RTL)
+                                if (NtGdiGetDCDword( dev->hdc, NtGdiGetLayout, &layout ) &&
+                                    (layout & LAYOUT_RTL))
                                     mirror_rect( &physDev->dc_rect, &rect );
 
                                 TRACE( "got %s count %d\n", wine_dbgstr_rect(&rect),
                                        event.xgraphicsexpose.count );
 
-                                if (!tmp) tmp = CreateRectRgnIndirect( &rect );
-                                else SetRectRgn( tmp, rect.left, rect.top, rect.right, rect.bottom );
-                                if (hrgn) CombineRgn( hrgn, hrgn, tmp, RGN_OR );
+                                if (!tmp) tmp = NtGdiCreateRectRgn( rect.left, rect.top,
+                                                                    rect.right, rect.bottom );
+                                else NtGdiSetRectRgn( tmp, rect.left, rect.top, rect.right, rect.bottom );
+                                if (hrgn) NtGdiCombineRgn( hrgn, hrgn, tmp, RGN_OR );
                                 else
                                 {
                                     hrgn = tmp;
@@ -294,7 +297,7 @@ static INT CDECL X11DRV_ExtEscape( PHYSDEV dev, INT escape, INT in_count, LPCVOI
                                 break;
                             }
                         }
-                        if (tmp) DeleteObject( tmp );
+                        if (tmp) NtGdiDeleteObjectApp( tmp );
                     }
                     *(HRGN *)out_data = hrgn;
                     return TRUE;

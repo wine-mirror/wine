@@ -246,7 +246,7 @@ HBRUSH CDECL X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_
         return hbrush;
     }
 
-    if (!GetObjectA( hbrush, sizeof(logbrush), &logbrush )) return 0;
+    if (!NtGdiExtGetObjectW( hbrush, sizeof(logbrush), &logbrush )) return 0;
 
     TRACE("hdc=%p hbrush=%p\n", dev->hdc, hbrush);
 
@@ -257,7 +257,7 @@ HBRUSH CDECL X11DRV_SelectBrush( PHYSDEV dev, HBRUSH hbrush, const struct brush_
     }
     physDev->brush.style = logbrush.lbStyle;
     if (hbrush == GetStockObject( DC_BRUSH ))
-        logbrush.lbColor = GetDCBrushColor( dev->hdc );
+        NtGdiGetDCDword( dev->hdc, NtGdiGetDCBrushColor, &logbrush.lbColor );
 
     switch(logbrush.lbStyle)
     {
@@ -289,7 +289,7 @@ COLORREF CDECL X11DRV_SetDCBrushColor( PHYSDEV dev, COLORREF crColor )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
 
-    if (GetCurrentObject(dev->hdc, OBJ_BRUSH) == GetStockObject( DC_BRUSH ))
+    if (NtGdiGetDCObject( dev->hdc, NTGDI_OBJ_BRUSH ) == GetStockObject( DC_BRUSH ))
         BRUSH_SelectSolidBrush( physDev, crColor );
 
     return crColor;

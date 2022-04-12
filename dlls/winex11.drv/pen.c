@@ -70,17 +70,17 @@ HPEN CDECL X11DRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern 
     int i;
     EXTLOGPEN *elp = NULL;
 
-    if (!GetObjectW( hpen, sizeof(logpen), &logpen ))
+    if (!NtGdiExtGetObjectW( hpen, sizeof(logpen), &logpen ))
     {
         /* must be an extended pen */
-        INT size = GetObjectW( hpen, 0, NULL );
+        INT size = NtGdiExtGetObjectW( hpen, 0, NULL );
 
         if (!size) return 0;
 
         physDev->pen.ext = 1;
         elp = HeapAlloc( GetProcessHeap(), 0, size );
 
-        GetObjectW( hpen, size, elp );
+        NtGdiExtGetObjectW( hpen, size, elp );
         logpen.lopnStyle = elp->elpPenStyle;
         logpen.lopnWidth.x = elp->elpWidth;
         logpen.lopnWidth.y = 0;
@@ -103,7 +103,7 @@ HPEN CDECL X11DRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern 
 
     if (physDev->pen.width == 1) physDev->pen.width = 0;  /* Faster */
     if (hpen == GetStockObject( DC_PEN ))
-        logpen.lopnColor = GetDCPenColor( dev->hdc );
+        NtGdiGetDCDword( dev->hdc, NtGdiGetDCPenColor, &logpen.lopnColor );
     physDev->pen.pixel = X11DRV_PALETTE_ToPhysical( physDev, logpen.lopnColor );
     switch(logpen.lopnStyle & PS_STYLE_MASK)
     {
@@ -158,7 +158,7 @@ COLORREF CDECL X11DRV_SetDCPenColor( PHYSDEV dev, COLORREF crColor )
 {
     X11DRV_PDEVICE *physDev = get_x11drv_dev( dev );
 
-    if (GetCurrentObject(dev->hdc, OBJ_PEN) == GetStockObject( DC_PEN ))
+    if (NtGdiGetDCObject( dev->hdc, NTGDI_OBJ_PEN ) == GetStockObject( DC_PEN ))
         physDev->pen.pixel = X11DRV_PALETTE_ToPhysical( physDev, crColor );
 
     return crColor;

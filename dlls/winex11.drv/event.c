@@ -937,8 +937,8 @@ static BOOL X11DRV_Expose( HWND hwnd, XEvent *xev )
         {
             surface_region = expose_surface( data->surface, &rect );
             if (!surface_region) flags = 0;
-            else OffsetRgn( surface_region, data->whole_rect.left - data->client_rect.left,
-                            data->whole_rect.top - data->client_rect.top );
+            else NtGdiOffsetRgn( surface_region, data->whole_rect.left - data->client_rect.left,
+                                 data->whole_rect.top - data->client_rect.top );
 
             if (data->vis.visualid != default_visual.visualid)
                 data->surface->funcs->flush( data->surface );
