@@ -166,7 +166,6 @@ enum
 {
     NtUserGetMonitorInfo,
     NtUserGetSystemMetricsForDpi,
-    NtUserMirrorRgn,
     NtUserMonitorFromRect,
     NtUserReplyMessage,
     NtUserSetIconParam,
@@ -213,6 +212,7 @@ enum
     NtUserGetWindowWord,
     NtUserIsChild,
     NtUserKillSystemTimer,
+    NtUserMirrorRgn,
     NtUserMonitorFromWindow,
     NtUserScreenToClient,
     NtUserSetCaptureWindow,
