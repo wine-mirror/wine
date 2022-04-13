@@ -220,7 +220,7 @@ HRESULT WINAPI D3DX10CompileFromMemory(const char *data, SIZE_T data_size, const
         const char *target, UINT sflags, UINT eflags, ID3DX10ThreadPump *pump, ID3D10Blob **shader,
         ID3D10Blob **error_messages, HRESULT *hresult)
 {
-    TRACE("data %s, data_size %lu, filename %s, defines %p, include %p, entry_point %s, target %s, "
+    TRACE("data %s, data_size %Iu, filename %s, defines %p, include %p, entry_point %s, target %s, "
             "sflags %#x, eflags %#x, pump %p, shader %p, error_messages %p, hresult %p.\n",
             debugstr_an(data, data_size), data_size, debugstr_a(filename), defines, include,
             debugstr_a(entry_point), debugstr_a(target), sflags, eflags, pump, shader,
@@ -261,7 +261,7 @@ HRESULT WINAPI D3DX10CreateAsyncMemoryLoader(const void *data, SIZE_T data_size,
 {
     struct asyncdataloader *object;
 
-    TRACE("data %p, data_size %lu, loader %p.\n", data, data_size, loader);
+    TRACE("data %p, data_size %Iu, loader %p.\n", data, data_size, loader);
 
     if (!data || !loader)
         return E_FAIL;
@@ -398,7 +398,7 @@ HRESULT WINAPI D3DX10PreprocessShaderFromMemory(const char *data, SIZE_T data_si
         const D3D10_SHADER_MACRO *defines, ID3DInclude *include, ID3DX10ThreadPump *pump, ID3D10Blob **shader_text,
         ID3D10Blob **errors, HRESULT *hresult)
 {
-    FIXME("data %s, data_size %lu, filename %s, defines %p, include %p, pump %p, shader_text %p, "
+    FIXME("data %s, data_size %Iu, filename %s, defines %p, include %p, pump %p, shader_text %p, "
             "errors %p, hresult %p stub!\n",
             debugstr_an(data, data_size), data_size, debugstr_a(filename), defines, include, pump,
             shader_text, errors, hresult);

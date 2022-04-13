@@ -53,7 +53,7 @@ HRESULT WINAPI D3DX10CreateEffectPoolFromMemory(const void *data, SIZE_T datasiz
         UINT fxflags, ID3D10Device *device, ID3DX10ThreadPump *pump, ID3D10EffectPool **effectpool,
         ID3D10Blob **errors, HRESULT *hresult)
 {
-    FIXME("data %p, datasize %lu, filename %s, defines %p, include %p, profile %s, hlslflags %#x, fxflags %#x, "
+    FIXME("data %p, datasize %Iu, filename %s, defines %p, include %p, profile %s, hlslflags %#x, fxflags %#x, "
             "device %p, pump %p, effectpool %p, errors %p, hresult %p.\n",
             data, datasize, debugstr_a(filename), defines, include, debugstr_a(profile), hlslflags, fxflags, device,
             pump, effectpool, errors, hresult);
