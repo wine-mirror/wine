@@ -587,7 +587,8 @@ static HRESULT detach_scope(script_ctx_t *ctx, call_frame_t *frame, scope_chain_
         scope->obj = to_disp(scope->jsobj);
     }
 
-    if (scope == frame->base_scope && func->name && ctx->version >= SCRIPTLANGUAGEVERSION_ES5)
+    if (scope == frame->base_scope && func->name && func->local_ref == INVALID_LOCAL_REF &&
+        ctx->version >= SCRIPTLANGUAGEVERSION_ES5)
         jsdisp_propput_name(scope->jsobj, func->name, jsval_obj(jsdisp_addref(frame->function_instance)));
 
     index = scope->scope_index;
@@ -716,7 +717,8 @@ static HRESULT identifier_eval(script_ctx_t *ctx, BSTR identifier, exprval_t *re
                 }
 
                 /* ECMA-262 5.1 Edition    13 */
-                if(func->name && ctx->version >= SCRIPTLANGUAGEVERSION_ES5 && !wcscmp(identifier, func->name)) {
+                if(func->name && ctx->version >= SCRIPTLANGUAGEVERSION_ES5 &&
+                   func->local_ref == INVALID_LOCAL_REF && !wcscmp(identifier, func->name)) {
                     TRACE("returning a function from scope chain\n");
                     ret->type = EXPRVAL_JSVAL;
                     ret->u.val = jsval_obj(jsdisp_addref(scope->frame->function_instance));

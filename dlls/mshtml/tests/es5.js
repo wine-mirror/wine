@@ -1691,6 +1691,34 @@ sync_test("functions scope", function() {
     func_outer(o);
     func();
     ok(ret === o, "ret != o");
+
+    func_outer = function g() {
+        var g2 = g;
+        g = 10;
+        ok(g !== 10, "g was redefined to 10");
+        g = function() {};
+        ok(g === g2, "g !== g2: " + g);
+    }
+    func_outer();
+
+    function h() {
+        h = 1;
+        ok(h === 1, "h was not redefined: " + h);
+    }
+    h();
+    ok(h === 1, "h = " + h);
+
+    function h2() { return function() { h2 = 2; }; }
+    h2()();
+    ok(h2 === 2, "h2 = " + h2);
+
+    (function e() {
+        var f = e;
+        ok(typeof(f) === "function", "f = " + f);
+        (function () { e = 1; })();
+        e = 2;
+        ok(f === e, "f != e");
+    })();
 });
 
 sync_test("console", function() {
