@@ -776,6 +776,18 @@ static NTSTATUS get_latency(void *args)
     return oss_unlock_result(stream, &params->result, S_OK);
 }
 
+static NTSTATUS get_current_padding(void *args)
+{
+    struct get_current_padding_params *params = args;
+    struct oss_stream *stream = params->stream;
+
+    oss_lock(stream);
+
+    *params->padding = stream->held_frames;
+
+    return oss_unlock_result(stream, &params->result, S_OK);
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     test_connect,
@@ -786,4 +798,5 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_mix_format,
     get_buffer_size,
     get_latency,
+    get_current_padding,
 };

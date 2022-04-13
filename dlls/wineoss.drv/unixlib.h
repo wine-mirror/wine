@@ -120,6 +120,13 @@ struct get_latency_params
     REFERENCE_TIME *latency;
 };
 
+struct get_current_padding_params
+{
+    struct oss_stream *stream;
+    HRESULT result;
+    UINT32 *padding;
+};
+
 enum oss_funcs
 {
     oss_test_connect,
@@ -130,6 +137,7 @@ enum oss_funcs
     oss_get_mix_format,
     oss_get_buffer_size,
     oss_get_latency,
+    oss_get_current_padding,
 };
 
 extern unixlib_handle_t oss_handle;
