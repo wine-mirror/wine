@@ -21,6 +21,7 @@
 #include "gst_private.h"
 
 #include "mferror.h"
+#include "mpegtype.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
@@ -28,6 +29,7 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 struct transform
 {
     struct strmbase_filter filter;
+    IMpegAudioDecoder IMpegAudioDecoder_iface;
 
     struct strmbase_sink sink;
     struct strmbase_source source;
@@ -69,6 +71,19 @@ static void transform_destroy(struct strmbase_filter *iface)
     strmbase_filter_cleanup(&filter->filter);
 
     free(filter);
+}
+
+static HRESULT transform_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)
+{
+    struct transform *filter = impl_from_strmbase_filter(iface);
+
+    if (IsEqualGUID(iid, &IID_IMpegAudioDecoder) && filter->IMpegAudioDecoder_iface.lpVtbl)
+        *out = &filter->IMpegAudioDecoder_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
 }
 
 static HRESULT transform_init_stream(struct strmbase_filter *iface)
@@ -115,8 +130,131 @@ static const struct strmbase_filter_ops filter_ops =
 {
     .filter_get_pin = transform_get_pin,
     .filter_destroy = transform_destroy,
+    .filter_query_interface = transform_query_interface,
     .filter_init_stream = transform_init_stream,
     .filter_cleanup_stream = transform_cleanup_stream,
+};
+
+static struct transform *impl_from_IMpegAudioDecoder(IMpegAudioDecoder *iface)
+{
+    return CONTAINING_RECORD(iface, struct transform, IMpegAudioDecoder_iface);
+}
+
+static HRESULT WINAPI mpeg_audio_decoder_QueryInterface(IMpegAudioDecoder *iface,
+        REFIID iid, void **out)
+{
+    struct transform *filter = impl_from_IMpegAudioDecoder(iface);
+    return IUnknown_QueryInterface(filter->filter.outer_unk, iid, out);
+}
+
+static ULONG WINAPI mpeg_audio_decoder_AddRef(IMpegAudioDecoder *iface)
+{
+    struct transform *filter = impl_from_IMpegAudioDecoder(iface);
+    return IUnknown_AddRef(filter->filter.outer_unk);
+}
+
+static ULONG WINAPI mpeg_audio_decoder_Release(IMpegAudioDecoder *iface)
+{
+    struct transform *filter = impl_from_IMpegAudioDecoder(iface);
+    return IUnknown_Release(filter->filter.outer_unk);
+}
+
+static HRESULT WINAPI mpeg_audio_decoder_get_FrequencyDivider(IMpegAudioDecoder *iface, ULONG *divider)
+{
+    FIXME("iface %p, divider %p, stub!\n", iface, divider);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mpeg_audio_decoder_put_FrequencyDivider(IMpegAudioDecoder *iface, ULONG divider)
+{
+    FIXME("iface %p, divider %lu, stub!\n", iface, divider);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mpeg_audio_decoder_get_DecoderAccuracy(IMpegAudioDecoder *iface, ULONG *accuracy)
+{
+    FIXME("iface %p, accuracy %p, stub!\n", iface, accuracy);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mpeg_audio_decoder_put_DecoderAccuracy(IMpegAudioDecoder *iface, ULONG accuracy)
+{
+    FIXME("iface %p, accuracy %lu, stub!\n", iface, accuracy);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mpeg_audio_decoder_get_Stereo(IMpegAudioDecoder *iface, ULONG *stereo)
+{
+    FIXME("iface %p, stereo %p, stub!\n", iface, stereo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mpeg_audio_decoder_put_Stereo(IMpegAudioDecoder *iface, ULONG stereo)
+{
+    FIXME("iface %p, stereo %lu, stub!\n", iface, stereo);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mpeg_audio_decoder_get_DecoderWordSize(IMpegAudioDecoder *iface, ULONG *word_size)
+{
+    FIXME("iface %p, word_size %p, stub!\n", iface, word_size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mpeg_audio_decoder_put_DecoderWordSize(IMpegAudioDecoder *iface, ULONG word_size)
+{
+    FIXME("iface %p, word_size %lu, stub!\n", iface, word_size);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mpeg_audio_decoder_get_IntegerDecode(IMpegAudioDecoder *iface, ULONG *integer_decode)
+{
+    FIXME("iface %p, integer_decode %p, stub!\n", iface, integer_decode);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mpeg_audio_decoder_put_IntegerDecode(IMpegAudioDecoder *iface, ULONG integer_decode)
+{
+    FIXME("iface %p, integer_decode %lu, stub!\n", iface, integer_decode);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mpeg_audio_decoder_get_DualMode(IMpegAudioDecoder *iface, ULONG *dual_mode)
+{
+    FIXME("iface %p, dual_mode %p, stub!\n", iface, dual_mode);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mpeg_audio_decoder_put_DualMode(IMpegAudioDecoder *iface, ULONG dual_mode)
+{
+    FIXME("iface %p, dual_mode %lu, stub!\n", iface, dual_mode);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI mpeg_audio_decoder_get_AudioFormat(IMpegAudioDecoder *iface, MPEG1WAVEFORMAT *format)
+{
+    FIXME("iface %p, format %p, stub!\n", iface, format);
+    return E_NOTIMPL;
+}
+
+static const IMpegAudioDecoderVtbl mpeg_audio_decoder_vtbl =
+{
+    mpeg_audio_decoder_QueryInterface,
+    mpeg_audio_decoder_AddRef,
+    mpeg_audio_decoder_Release,
+    mpeg_audio_decoder_get_FrequencyDivider,
+    mpeg_audio_decoder_put_FrequencyDivider,
+    mpeg_audio_decoder_get_DecoderAccuracy,
+    mpeg_audio_decoder_put_DecoderAccuracy,
+    mpeg_audio_decoder_get_Stereo,
+    mpeg_audio_decoder_put_Stereo,
+    mpeg_audio_decoder_get_DecoderWordSize,
+    mpeg_audio_decoder_put_DecoderWordSize,
+    mpeg_audio_decoder_get_IntegerDecode,
+    mpeg_audio_decoder_put_IntegerDecode,
+    mpeg_audio_decoder_get_DualMode,
+    mpeg_audio_decoder_put_DualMode,
+    mpeg_audio_decoder_get_AudioFormat,
 };
 
 static HRESULT transform_sink_query_accept(struct strmbase_pin *pin, const AM_MEDIA_TYPE *mt)
@@ -439,6 +577,8 @@ HRESULT mpeg_audio_codec_create(IUnknown *outer, IUnknown **out)
 
     wcscpy(object->sink.pin.name, L"XForm In");
     wcscpy(object->source.pin.name, L"XForm Out");
+
+    object->IMpegAudioDecoder_iface.lpVtbl = &mpeg_audio_decoder_vtbl;
 
     TRACE("Created MPEG audio decoder %p.\n", object);
     *out = &object->filter.IUnknown_inner;
