@@ -209,6 +209,27 @@ void locale_init(void)
         oem_cp = get_locale_data( entry->idx )->idefaultcodepage;
     }
 
+    if (!RtlQueryActivationContextApplicationSettings( 0, NULL, L"http://schemas.microsoft.com/SMI/2019/WindowsSettings",
+                                                       L"activeCodePage", locale, ARRAY_SIZE(locale), NULL ))
+    {
+        const NLS_LOCALE_LCNAME_INDEX *entry = find_lcname_entry( locale );
+
+        if (!wcsicmp( locale, L"utf-8" ))
+        {
+            ansi_cp = oem_cp = CP_UTF8;
+        }
+        else if (!wcsicmp( locale, L"legacy" ))
+        {
+            if (ansi_cp == CP_UTF8) ansi_cp = 1252;
+            if (oem_cp == CP_UTF8) oem_cp = 437;
+        }
+        else if ((entry = find_lcname_entry( locale )))
+        {
+            ansi_cp = get_locale_data( entry->idx )->idefaultansicodepage;
+            oem_cp = get_locale_data( entry->idx )->idefaultcodepage;
+        }
+    }
+
     NtGetNlsSectionPtr( 10, 0, NULL, &case_ptr, &size );
     NtCurrentTeb()->Peb->UnicodeCaseTableData = case_ptr;
     if (ansi_cp != CP_UTF8)
