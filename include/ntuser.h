@@ -131,21 +131,6 @@ struct win_hook_params
 #define NTUSER_DPI_PER_MONITOR_AWARE_V2   0x00000022
 #define NTUSER_DPI_PER_UNAWARE_GDISCALED  0x40006010
 
-/* NtUserCallHwnd codes, not compatible with Windows */
-enum
-{
-    NtUserArrangeIconicWindows,
-    NtUserGetDpiForWindow,
-    NtUserGetParent,
-    NtUserGetWindowContextHelpId,
-    NtUserGetWindowDpiAwarenessContext,
-    NtUserGetWindowTextLength,
-    NtUserIsWindow,
-    NtUserIsWindowEnabled,
-    NtUserIsWindowUnicode,
-    NtUserIsWindowVisible,
-};
-
 /* NtUserCallHwndParam codes, not compatible with Windows */
 enum
 {
@@ -808,6 +793,72 @@ static inline UINT_PTR NtUserSetIconParam( HICON icon, ULONG_PTR param )
 static inline BOOL NtUserUnhookWindowsHook( INT id, HOOKPROC proc )
 {
     return NtUserCallTwoParam( id, (UINT_PTR)proc, NtUserCallTwoParam_UnhookWindowsHook );
+}
+
+/* NtUserCallHwnd codes, not compatible with Windows */
+enum
+{
+    NtUserCallHwnd_ArrangeIconicWindows,
+    NtUserCallHwnd_GetDpiForWindow,
+    NtUserCallHwnd_GetParent,
+    NtUserCallHwnd_GetWindowContextHelpId,
+    NtUserCallHwnd_GetWindowDpiAwarenessContext,
+    NtUserCallHwnd_GetWindowTextLength,
+    NtUserCallHwnd_IsWindow,
+    NtUserCallHwnd_IsWindowEnabled,
+    NtUserCallHwnd_IsWindowUnicode,
+    NtUserCallHwnd_IsWindowVisible,
+};
+
+static inline UINT NtUserArrangeIconicWindows( HWND parent )
+{
+    return NtUserCallHwnd( parent, NtUserCallHwnd_ArrangeIconicWindows );
+}
+
+static inline DWORD NtUserGetWindowContextHelpId( HWND hwnd )
+{
+    return NtUserCallHwnd( hwnd, NtUserCallHwnd_GetWindowContextHelpId );
+}
+
+static inline UINT NtUserGetDpiForWindow( HWND hwnd )
+{
+    return NtUserCallHwnd( hwnd, NtUserCallHwnd_GetDpiForWindow );
+}
+
+static inline HWND NtUserGetParent( HWND hwnd )
+{
+    return UlongToHandle( NtUserCallHwnd( hwnd, NtUserCallHwnd_GetParent ));
+}
+
+static inline DPI_AWARENESS_CONTEXT NtUserGetWindowDpiAwarenessContext( HWND hwnd )
+{
+    return (DPI_AWARENESS_CONTEXT)NtUserCallHwnd( hwnd,
+                                                  NtUserCallHwnd_GetWindowDpiAwarenessContext );
+}
+
+static inline INT NtUserGetWindowTextLength( HWND hwnd )
+{
+    return NtUserCallHwnd( hwnd, NtUserCallHwnd_GetWindowTextLength );
+}
+
+static inline BOOL NtUserIsWindow( HWND hwnd )
+{
+    return NtUserCallHwnd( hwnd, NtUserCallHwnd_IsWindow );
+}
+
+static inline BOOL NtUserIsWindowEnabled( HWND hwnd )
+{
+    return NtUserCallHwnd( hwnd, NtUserCallHwnd_IsWindowEnabled );
+}
+
+static inline BOOL NtUserIsWindowUnicode( HWND hwnd )
+{
+    return NtUserCallHwnd( hwnd, NtUserCallHwnd_IsWindowUnicode );
+}
+
+static inline BOOL NtUserIsWindowVisible( HWND hwnd )
+{
+    return NtUserCallHwnd( hwnd, NtUserCallHwnd_IsWindowVisible );
 }
 
 #endif /* _NTUSER_ */

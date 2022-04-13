@@ -4976,26 +4976,36 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
 {
     switch (code)
     {
-    case NtUserArrangeIconicWindows:
+    case NtUserCallHwnd_ArrangeIconicWindows:
         return arrange_iconic_windows( hwnd );
-    case NtUserGetDpiForWindow:
+
+    case NtUserCallHwnd_GetDpiForWindow:
         return get_dpi_for_window( hwnd );
-    case NtUserGetParent:
+
+    case NtUserCallHwnd_GetParent:
         return HandleToUlong( get_parent( hwnd ));
-    case NtUserGetWindowContextHelpId:
+
+    case NtUserCallHwnd_GetWindowContextHelpId:
         return get_window_context_help_id( hwnd );
-    case NtUserGetWindowDpiAwarenessContext:
+
+    case NtUserCallHwnd_GetWindowDpiAwarenessContext:
         return (ULONG_PTR)get_window_dpi_awareness_context( hwnd );
-    case NtUserGetWindowTextLength:
+
+    case NtUserCallHwnd_GetWindowTextLength:
         return get_server_window_text( hwnd, NULL, 0 );
-    case NtUserIsWindow:
+
+    case NtUserCallHwnd_IsWindow:
         return is_window( hwnd );
-    case NtUserIsWindowEnabled:
+
+    case NtUserCallHwnd_IsWindowEnabled:
         return is_window_enabled( hwnd );
-    case NtUserIsWindowUnicode:
+
+    case NtUserCallHwnd_IsWindowUnicode:
         return is_window_unicode( hwnd );
-    case NtUserIsWindowVisible:
+
+    case NtUserCallHwnd_IsWindowVisible:
         return is_window_visible( hwnd );
+
     default:
         FIXME( "invalid code %u\n", code );
         return 0;

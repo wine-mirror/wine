@@ -906,7 +906,7 @@ BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
  */
 BOOL WINAPI IsWindowEnabled( HWND hwnd )
 {
-    return NtUserCallHwnd( hwnd, NtUserIsWindowEnabled );
+    return NtUserIsWindowEnabled( hwnd );
 }
 
 /***********************************************************************
@@ -914,7 +914,7 @@ BOOL WINAPI IsWindowEnabled( HWND hwnd )
  */
 BOOL WINAPI IsWindowUnicode( HWND hwnd )
 {
-    return NtUserCallHwnd( hwnd, NtUserIsWindowUnicode );
+    return NtUserIsWindowUnicode( hwnd );
 }
 
 
@@ -923,7 +923,7 @@ BOOL WINAPI IsWindowUnicode( HWND hwnd )
  */
 DPI_AWARENESS_CONTEXT WINAPI GetWindowDpiAwarenessContext( HWND hwnd )
 {
-    return (DPI_AWARENESS_CONTEXT)NtUserCallHwnd( hwnd, NtUserGetWindowDpiAwarenessContext );
+    return NtUserGetWindowDpiAwarenessContext( hwnd );
 }
 
 
@@ -932,7 +932,7 @@ DPI_AWARENESS_CONTEXT WINAPI GetWindowDpiAwarenessContext( HWND hwnd )
  */
 UINT WINAPI GetDpiForWindow( HWND hwnd )
 {
-    return NtUserCallHwnd( hwnd, NtUserGetDpiForWindow );
+    return NtUserGetDpiForWindow( hwnd );
 }
 
 
@@ -1215,7 +1215,7 @@ INT WINAPI GetWindowTextLengthA( HWND hwnd )
 
     /* when window belongs to other process, don't send a message */
     GetCPInfo( CP_ACP, &info );
-    return NtUserCallHwnd( hwnd, NtUserGetWindowTextLength ) * info.MaxCharSize;
+    return NtUserGetWindowTextLength( hwnd ) * info.MaxCharSize;
 }
 
 /*******************************************************************
@@ -1226,7 +1226,7 @@ INT WINAPI GetWindowTextLengthW( HWND hwnd )
     if (WIN_IsCurrentProcess( hwnd )) return SendMessageW( hwnd, WM_GETTEXTLENGTH, 0, 0 );
 
     /* when window belongs to other process, don't send a message */
-    return NtUserCallHwnd( hwnd, NtUserGetWindowTextLength );
+    return NtUserGetWindowTextLength( hwnd );
 }
 
 
@@ -1235,7 +1235,7 @@ INT WINAPI GetWindowTextLengthW( HWND hwnd )
  */
 BOOL WINAPI IsWindow( HWND hwnd )
 {
-    return NtUserCallHwnd( hwnd, NtUserIsWindow );
+    return NtUserIsWindow( hwnd );
 }
 
 
@@ -1253,7 +1253,7 @@ DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
  */
 HWND WINAPI GetParent( HWND hwnd )
 {
-    return UlongToHandle( NtUserCallHwnd( hwnd, NtUserGetParent ));
+    return NtUserGetParent( hwnd );
 }
 
 
@@ -1271,7 +1271,7 @@ BOOL WINAPI IsChild( HWND parent, HWND child )
  */
 BOOL WINAPI IsWindowVisible( HWND hwnd )
 {
-    return NtUserCallHwnd( hwnd, NtUserIsWindowVisible );
+    return NtUserIsWindowVisible( hwnd );
 }
 
 
@@ -1564,7 +1564,7 @@ BOOL WINAPI FlashWindow( HWND hWnd, BOOL bInvert )
  */
 DWORD WINAPI GetWindowContextHelpId( HWND hwnd )
 {
-    return NtUserCallHwnd( hwnd, NtUserGetWindowContextHelpId );
+    return NtUserGetWindowContextHelpId( hwnd );
 }
 
 

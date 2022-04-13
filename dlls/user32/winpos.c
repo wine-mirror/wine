@@ -895,7 +895,7 @@ BOOL WINAPI EndDeferWindowPos( HDWP hdwp )
  */
 UINT WINAPI ArrangeIconicWindows( HWND parent )
 {
-    return NtUserCallHwnd( parent, NtUserArrangeIconicWindows );
+    return NtUserArrangeIconicWindows( parent );
 }
 
 
