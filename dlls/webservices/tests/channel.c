@@ -19,6 +19,7 @@
 #include <stdio.h>
 #define COBJMACROS
 #include "windows.h"
+#include "winsock2.h"
 #include "webservices.h"
 #include "initguid.h"
 #include "netfw.h"
@@ -110,6 +111,12 @@ static void test_WsCreateChannel(void)
                                NULL );
     ok( hr == S_OK, "got %#lx\n", hr );
     ok( addr_version == WS_ADDRESSING_VERSION_1_0, "got %u\n", addr_version );
+
+    size = 0xdeadbeef;
+    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_MAX_SESSION_DICTIONARY_SIZE, &size, sizeof(size), NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    todo_wine ok( size == 2048, "got %lu\n", size );
+
     WsFreeChannel( channel );
 }
 
@@ -441,6 +448,8 @@ struct listener_info
     WS_CHANNEL_BINDING  binding;
     WS_CHANNEL_TYPE     type;
     void                (*server_func)( WS_CHANNEL * );
+    LPTHREAD_START_ROUTINE listener_proc;
+    ULONG                  dict_size;
 };
 
 static void server_message_read_write( WS_CHANNEL *channel )
@@ -779,6 +788,104 @@ static void client_duplex_session_async( const struct listener_info *info )
     WsFreeChannel( channel );
 }
 
+static const char *dict_str = "teststrteststrteteststrteststrteteststrteststrteteststrteststrteteststrteststrteteststrteststrteteststrteststrteststrteststr_";
+static const char *short_dict_str = "final_str";
+static void client_duplex_session_dict( const struct listener_info *info )
+{
+    WS_XML_STRING action = {6, (BYTE *)"action"}, ns = {2, (BYTE *)"ns"}, local_name;
+    const WS_MESSAGE_DESCRIPTION *descs[1];
+    WS_ELEMENT_DESCRIPTION desc_body;
+    ULONG size, cur_dict_bytes = 0;
+    WS_MESSAGE_DESCRIPTION desc;
+    WS_ENDPOINT_ADDRESS addr;
+    WS_CHANNEL_PROPERTY prop;
+    int dict_str_cnt = 0;
+    char elem_name[128];
+    WS_CHANNEL *channel;
+    WS_MESSAGE *msg;
+    INT32 val = -1;
+    WCHAR buf[64];
+    HRESULT hr;
+    DWORD err;
+
+    err = WaitForSingleObject( info->ready, 3000 );
+    ok( err == WAIT_OBJECT_0, "wait failed %lu\n", err );
+
+    size = info->dict_size;
+    prop.id = WS_CHANNEL_PROPERTY_MAX_SESSION_DICTIONARY_SIZE;
+    prop.value = &size;
+    prop.valueSize = sizeof(size);
+    hr = WsCreateChannel( info->type, info->binding, &prop, 1, NULL, &channel, NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    size = 0xdeadbeef;
+    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_MAX_SESSION_DICTIONARY_SIZE, &size, sizeof(size), NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( size == info->dict_size, "got %lu\n", size );
+
+    hr = WsShutdownSessionChannel( channel, NULL, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
+
+    memset( &addr, 0, sizeof(addr) );
+    addr.url.length = wsprintfW( buf, L"net.tcp://localhost:%u", info->port );
+    addr.url.chars  = buf;
+    hr = WsOpenChannel( channel, &addr, NULL, NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    memset(&local_name, 0, sizeof(local_name));
+    desc_body.elementLocalName = &local_name;
+    desc_body.elementNs        = &ns;
+    desc_body.type             = WS_INT32_TYPE;
+    desc_body.typeDescription  = NULL;
+
+    desc.action                 = &action;
+    desc.bodyElementDescription = &desc_body;
+    descs[0] = &desc;
+
+    while (1)
+    {
+        hr = WsCreateMessageForChannel( channel, NULL, 0, &msg, NULL );
+        ok( hr == S_OK, "got %#lx\n", hr );
+
+        sprintf(elem_name, "%s%02x", dict_str, dict_str_cnt);
+        local_name.length = strlen(elem_name);
+        local_name.bytes = (BYTE *)elem_name;
+
+        hr = WsReceiveMessage( channel, msg, descs, 1, WS_RECEIVE_REQUIRED_MESSAGE, WS_READ_REQUIRED_VALUE,
+                               NULL, &val, sizeof(val), NULL, NULL, NULL );
+        ok( hr == S_OK, "got %#lx\n", hr );
+
+        WsFreeMessage( msg );
+
+        dict_str_cnt++;
+        cur_dict_bytes += strlen(elem_name) + 1;
+
+        if ((cur_dict_bytes + strlen(elem_name) + 1) > info->dict_size) break;
+    }
+
+    hr = WsCreateMessageForChannel( channel, NULL, 0, &msg, NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    local_name.length = strlen(short_dict_str);
+    local_name.bytes = (BYTE *)short_dict_str;
+    hr = WsReceiveMessage( channel, msg, descs, 1, WS_RECEIVE_REQUIRED_MESSAGE, WS_READ_REQUIRED_VALUE,
+                           NULL, &val, sizeof(val), NULL, NULL, NULL );
+    todo_wine ok( hr == WS_E_QUOTA_EXCEEDED, "got %#lx\n", hr);
+
+    WsFreeMessage( msg );
+
+    hr = WsShutdownSessionChannel( channel, NULL, NULL );
+    todo_wine ok( hr == WS_E_OBJECT_FAULTED, "got %#lx\n", hr );
+
+    hr = WsCloseChannel( channel, NULL, NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    err = WaitForSingleObject( info->done, 3000 );
+    ok( err == WAIT_OBJECT_0, "wait failed %lu\n", err );
+
+    WsFreeChannel( channel );
+}
+
 static void server_accept_channel( WS_CHANNEL *channel )
 {
     WS_XML_STRING localname = {9, (BYTE *)"localname"}, ns = {2, (BYTE *)"ns"}, action = {6, (BYTE *)"action"};
@@ -1024,9 +1131,245 @@ static DWORD CALLBACK listener_proc( void *arg )
     return 0;
 }
 
+static int write_size( char *buf, int size )
+{
+    if (size < 0x80)
+    {
+        buf[0] = size;
+        return 1;
+    }
+
+    buf[0] = (size & 0x7f) | 0x80;
+    if ((size >>= 7) < 0x80)
+    {
+        buf[1] = size;
+        return 2;
+    }
+    buf[1] = (size & 0x7f) | 0x80;
+    if ((size >>= 7) < 0x80)
+    {
+        buf[2] = size;
+        return 3;
+    }
+    buf[2] = (size & 0x7f) | 0x80;
+    if ((size >>= 7) < 0x80)
+    {
+        buf[3] = size;
+        return 4;
+    }
+    buf[3] = (size & 0x7f) | 0x80;
+
+    if ((size >>= 7) < 0x08)
+    {
+        buf[4] = size;
+        return 5;
+    }
+
+    return 0;
+}
+
+static const char send_record_begin[] = {
+    0x56, 0x02, 0x0b, 0x01, 0x61, 0x06, 0x0b, 0x01,
+    0x73, 0x04, 0x56, 0x08, 0x44, 0x0a, 0x1e, 0x00,
+    0x82, 0x99, 0x06, 0x61, 0x63, 0x74, 0x69, 0x6f,
+    0x6e, 0x44, 0x0c, 0x1e, 0x00, 0x82, 0x99
+};
+
+static const char send_record_middle[] = { 0x01, 0x56, 0x0e, 0x42 };
+static const char send_record_end[] = { 0x08, 0x02, 0x6e, 0x73, 0x89, 0xff, 0x01, 0x01 };
+
+static BOOL send_dict_str( int sock, char *addr, const char *str, int dict_str_count )
+{
+    char buf[512], dict_buf[256], body_buf[128], dict_size_buf[5];
+    int offset, dict_buf_size, body_buf_size, dict_size;
+
+    /* Session dictionary strings. */
+    offset = write_size( dict_buf, strlen(str) );
+    memcpy( dict_buf + offset, str, strlen(str) );
+    dict_buf_size = strlen(str) + offset;
+
+    dict_size = write_size( dict_size_buf, dict_buf_size );
+
+    /* Message body. */
+    memcpy( body_buf, send_record_begin, ARRAY_SIZE(send_record_begin) );
+    offset = ARRAY_SIZE(send_record_begin);
+
+    offset += write_size( body_buf + offset, strlen(addr) );
+    memcpy( body_buf + offset, addr, strlen(addr) );
+    offset += strlen(addr);
+
+    memcpy( body_buf + offset, send_record_middle, ARRAY_SIZE(send_record_middle) );
+    offset += ARRAY_SIZE(send_record_middle);
+
+    /* All session dictionary values are odd, i.e 0 == 1, 1 == 3, 2 == 5 */
+    offset += write_size( body_buf + offset, (dict_str_count << 1) + 1 );
+
+    memcpy( body_buf + offset, send_record_end, ARRAY_SIZE(send_record_end) );
+    body_buf_size = offset + ARRAY_SIZE(send_record_end);
+
+    /* Sized envelope record type */
+    buf[0] = 0x06;
+    offset = 1;
+    offset += write_size( buf + 1, body_buf_size + dict_buf_size + dict_size );
+    memcpy( buf + offset, dict_size_buf, dict_size );
+    offset += dict_size;
+    memcpy( buf + offset, dict_buf, dict_buf_size );
+    offset += dict_buf_size;
+    memcpy( buf + offset, body_buf, body_buf_size );
+    offset += body_buf_size;
+
+    if (send( sock, buf, offset, 0 ) != offset)
+    {
+        ok(0, "Failed to send message\n");
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static const char preamble_begin[] = { 0x00, 0x01, 0x00, 0x01, 0x02, 0x02 };
+static const char preamble_end[] = { 0x03, 0x08, 0x0c };
+
+static BOOL send_preamble( int sock, char *host )
+{
+    char buf[256];
+    int offset;
+
+    memcpy(buf, preamble_begin, ARRAY_SIZE(preamble_begin));
+    offset = ARRAY_SIZE(preamble_begin);
+
+    offset += write_size( buf + offset, strlen(host) );
+    memcpy(buf + offset, host, strlen(host));
+    offset += strlen(host);
+
+    memcpy(buf + offset, preamble_end, ARRAY_SIZE(preamble_end));
+    offset += ARRAY_SIZE(preamble_end);
+    if (send( sock, buf, offset, 0 ) != offset)
+    {
+        ok(0, "Failed to send preamble\n");
+        return FALSE;
+    }
+
+    /* Receive ACK record. */
+    if ((recv( sock, buf, 1, 0 ) != 1) || buf[0] != 0x0b)
+    {
+        ok(0, "Failed to receive ACK record\n");
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
+static BOOL recv_preamble( int sock, char *host )
+{
+    BOOL success = TRUE;
+    char buf[256], tmp_buf[5];
+    int tmp_size;
+
+    recv( sock, buf, ARRAY_SIZE(preamble_begin), 0 );
+    if (memcmp( buf, preamble_begin, ARRAY_SIZE(preamble_begin) ))
+    {
+        success = FALSE;
+        goto exit;
+    }
+
+    tmp_size = write_size( tmp_buf, strlen(host) );
+    recv( sock, buf, tmp_size, 0 );
+    if (memcmp( buf, tmp_buf, tmp_size ))
+    {
+        success = FALSE;
+        goto exit;
+    }
+
+    recv( sock, buf, strlen(host), 0 );
+    if (memcmp( buf, host, strlen(host) ))
+    {
+        success = FALSE;
+        goto exit;
+    }
+
+    recv( sock, buf, ARRAY_SIZE(preamble_end), 0 );
+    if (memcmp( buf, preamble_end, ARRAY_SIZE(preamble_end) ))
+    {
+        success = FALSE;
+        goto exit;
+    }
+
+    /* Send ACK record. */
+    buf[0] = 0x0b;
+    send( sock, buf, 1, 0 );
+
+exit:
+    ok( success, "Failed to receive proper preamble\n" );
+    return success;
+}
+
+static DWORD CALLBACK listener_socket_proc( void *arg )
+{
+    int res, c = -1, on = 1, dict_str_cnt = 0;
+    struct listener_info *info = arg;
+    char dict_str_buf[256], addr[64];
+    TIMEVAL timeval = { 0, 10000 };
+    ULONG cur_dict_bytes = 0;
+    struct sockaddr_in sa;
+    WSADATA wsa;
+    FD_SET set;
+    SOCKET s;
+
+    WSAStartup( MAKEWORD(1,1), &wsa );
+    if ((s = socket( AF_INET, SOCK_STREAM, 0 )) == INVALID_SOCKET) return 1;
+    setsockopt( s, SOL_SOCKET, SO_REUSEADDR, (char *)&on, sizeof(on) );
+
+    memset( &sa, 0, sizeof(sa) );
+    sa.sin_family           = AF_INET;
+    sa.sin_port             = htons( info->port );
+    sa.sin_addr.S_un.S_addr = inet_addr( "127.0.0.1" );
+    if (bind( s, (struct sockaddr *)&sa, sizeof(sa) ) < 0) return 1;
+
+    listen( s, 0 );
+    SetEvent( info->ready );
+    c = accept( s, NULL, NULL );
+
+    memset( addr, 0, ARRAY_SIZE(addr) );
+    sprintf( addr, "net.tcp://localhost:%u", info->port );
+
+    FD_ZERO( &set );
+    FD_SET( c, &set );
+    /* Windows tends to send a preamble immediately, Wine does not. */
+    if ((res = select( c + 1, &set, NULL, NULL, &timeval )) > 0)
+    {
+        if (!recv_preamble( c, addr )) goto exit;
+    }
+    else
+    {
+        if (!send_preamble( c, addr )) goto exit;
+    }
+
+    /* Now we begin sending out dictionary strings. */
+    while (1)
+    {
+        sprintf(dict_str_buf, "%s%02x", dict_str, dict_str_cnt);
+        send_dict_str( c, addr, dict_str_buf, dict_str_cnt );
+        dict_str_cnt++;
+        cur_dict_bytes += strlen(dict_str_buf) + 1;
+
+        if ((cur_dict_bytes + strlen(dict_str_buf) + 1) > info->dict_size) break;
+    }
+
+    send_dict_str( c, addr, short_dict_str, dict_str_cnt );
+
+exit:
+    shutdown( c, 2 );
+    closesocket( c );
+    closesocket( s );
+
+    SetEvent( info->done );
+    return 0;
+}
+
 static HANDLE start_listener( struct listener_info *info )
 {
-    HANDLE thread = CreateThread( NULL, 0, listener_proc, info, 0, NULL );
+    HANDLE thread = CreateThread( NULL, 0, info->listener_proc, info, 0, NULL );
     ok( thread != NULL, "failed to create listener thread %lu\n", GetLastError() );
     return thread;
 }
@@ -1164,15 +1507,19 @@ START_TEST(channel)
         WS_CHANNEL_TYPE    type;
         void               (*server_func)( WS_CHANNEL * );
         void               (*client_func)( const struct listener_info * );
+        LPTHREAD_START_ROUTINE listener_proc;
+        ULONG                  dict_size;
     }
     tests[] =
     {
-        { WS_UDP_CHANNEL_BINDING, WS_CHANNEL_TYPE_DUPLEX, server_message_read_write, client_message_read_write },
-        { WS_TCP_CHANNEL_BINDING, WS_CHANNEL_TYPE_DUPLEX_SESSION, server_duplex_session, client_duplex_session },
-        { WS_UDP_CHANNEL_BINDING, WS_CHANNEL_TYPE_DUPLEX, server_accept_channel, client_accept_channel },
-        { WS_TCP_CHANNEL_BINDING, WS_CHANNEL_TYPE_DUPLEX_SESSION, server_accept_channel, client_accept_channel },
-        { WS_TCP_CHANNEL_BINDING, WS_CHANNEL_TYPE_DUPLEX_SESSION, server_request_reply, client_request_reply },
-        { WS_TCP_CHANNEL_BINDING, WS_CHANNEL_TYPE_DUPLEX_SESSION, server_duplex_session, client_duplex_session_async },
+        { WS_UDP_CHANNEL_BINDING, WS_CHANNEL_TYPE_DUPLEX, server_message_read_write, client_message_read_write, listener_proc },
+        { WS_TCP_CHANNEL_BINDING, WS_CHANNEL_TYPE_DUPLEX_SESSION, server_duplex_session, client_duplex_session, listener_proc },
+        { WS_UDP_CHANNEL_BINDING, WS_CHANNEL_TYPE_DUPLEX, server_accept_channel, client_accept_channel, listener_proc },
+        { WS_TCP_CHANNEL_BINDING, WS_CHANNEL_TYPE_DUPLEX_SESSION, server_accept_channel, client_accept_channel, listener_proc },
+        { WS_TCP_CHANNEL_BINDING, WS_CHANNEL_TYPE_DUPLEX_SESSION, server_request_reply, client_request_reply, listener_proc },
+        { WS_TCP_CHANNEL_BINDING, WS_CHANNEL_TYPE_DUPLEX_SESSION, server_duplex_session, client_duplex_session_async, listener_proc },
+        { WS_TCP_CHANNEL_BINDING, WS_CHANNEL_TYPE_DUPLEX_SESSION, NULL, client_duplex_session_dict, listener_socket_proc, 2048 },
+        { WS_TCP_CHANNEL_BINDING, WS_CHANNEL_TYPE_DUPLEX_SESSION, NULL, client_duplex_session_dict, listener_socket_proc, 4096 },
     };
 
     if (firewall_enabled)
@@ -1206,6 +1553,8 @@ START_TEST(channel)
         info.binding     = tests[i].binding;
         info.type        = tests[i].type;
         info.server_func = tests[i].server_func;
+        info.listener_proc = tests[i].listener_proc;
+        info.dict_size     = tests[i].dict_size;
 
         thread = start_listener( &info );
         tests[i].client_func( &info );
