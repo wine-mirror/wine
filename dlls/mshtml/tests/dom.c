@@ -5425,7 +5425,10 @@ static IHTMLElement *get_doc_elem_by_id(IHTMLDocument2 *doc, const WCHAR *id)
 static void test_select_elem(IHTMLSelectElement *select)
 {
     IDispatch *disp, *disp2;
-    VARIANT name, index;
+    VARIANT name, index, v;
+    IEnumVARIANT *enum_var;
+    IUnknown *enum_unk;
+    ULONG fetched;
     HRESULT hres;
 
     test_select_type(select, L"select-one");
@@ -5494,6 +5497,40 @@ static void test_select_elem(IHTMLSelectElement *select)
     ok(iface_cmp((IUnknown*)disp, (IUnknown*)disp2), "disp != disp2\n");
     IDispatch_Release(disp2);
     IDispatch_Release(disp);
+
+    hres = IHTMLSelectElement_get__newEnum(select, &enum_unk);
+    ok(hres == S_OK, "_newEnum failed: %08lx\n", hres);
+
+    hres = IUnknown_QueryInterface(enum_unk, &IID_IEnumVARIANT, (void**)&enum_var);
+    IUnknown_Release(enum_unk);
+    ok(hres == S_OK, "Could not get IEnumVARIANT iface: %08lx\n", hres);
+
+    fetched = 0;
+    V_VT(&v) = VT_ERROR;
+    hres = IEnumVARIANT_Next(enum_var, 1, &v, &fetched);
+    ok(hres == S_OK, "Next failed: %08lx\n", hres);
+    ok(fetched == 1, "fetched = %lu\n", fetched);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(&v) == NULL\n");
+    test_disp((IUnknown*)V_DISPATCH(&v), &DIID_DispHTMLOptionElement, &CLSID_HTMLOptionElement, NULL);
+    VariantClear(&v);
+
+    fetched = 0;
+    V_VT(&v) = VT_ERROR;
+    hres = IEnumVARIANT_Next(enum_var, 1, &v, &fetched);
+    ok(hres == S_OK, "Next failed: %08lx\n", hres);
+    ok(fetched == 1, "fetched = %lu\n", fetched);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(&v) == NULL\n");
+    test_disp((IUnknown*)V_DISPATCH(&v), &DIID_DispHTMLOptionElement, &CLSID_HTMLOptionElement, NULL);
+    VariantClear(&v);
+
+    fetched = 0;
+    V_VT(&v) = VT_ERROR;
+    hres = IEnumVARIANT_Next(enum_var, 1, &v, &fetched);
+    ok(hres == S_FALSE, "Next failed: %08lx\n", hres);
+    ok(fetched == 0, "fetched = %lu\n", fetched);
+    IEnumVARIANT_Release(enum_var);
 
     test_select_multiple(select, VARIANT_FALSE);
     test_select_set_multiple(select, VARIANT_TRUE);

@@ -674,6 +674,15 @@ struct HTMLSelectElement {
     nsIDOMHTMLSelectElement *nsselect;
 };
 
+typedef struct {
+    IEnumVARIANT IEnumVARIANT_iface;
+
+    LONG ref;
+
+    ULONG iter;
+    HTMLSelectElement *elem;
+} HTMLSelectElementEnum;
+
 static inline HTMLSelectElement *impl_from_IHTMLSelectElement(IHTMLSelectElement *iface)
 {
     return CONTAINING_RECORD(iface, HTMLSelectElement, IHTMLSelectElement_iface);
@@ -713,6 +722,135 @@ static HRESULT htmlselect_item(HTMLSelectElement *This, int i, IDispatch **ret)
     }
     return S_OK;
 }
+
+static inline HTMLSelectElementEnum *impl_from_IEnumVARIANT(IEnumVARIANT *iface)
+{
+    return CONTAINING_RECORD(iface, HTMLSelectElementEnum, IEnumVARIANT_iface);
+}
+
+static HRESULT WINAPI HTMLSelectElementEnum_QueryInterface(IEnumVARIANT *iface, REFIID riid, void **ppv)
+{
+    HTMLSelectElementEnum *This = impl_from_IEnumVARIANT(iface);
+
+    TRACE("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+
+    if(IsEqualGUID(riid, &IID_IUnknown)) {
+        *ppv = &This->IEnumVARIANT_iface;
+    }else if(IsEqualGUID(riid, &IID_IEnumVARIANT)) {
+        *ppv = &This->IEnumVARIANT_iface;
+    }else {
+        FIXME("(%p)->(%s %p)\n", This, debugstr_mshtml_guid(riid), ppv);
+        *ppv = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown*)*ppv);
+    return S_OK;
+}
+
+static ULONG WINAPI HTMLSelectElementEnum_AddRef(IEnumVARIANT *iface)
+{
+    HTMLSelectElementEnum *This = impl_from_IEnumVARIANT(iface);
+    LONG ref = InterlockedIncrement(&This->ref);
+
+    TRACE("(%p) ref=%ld\n", This, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI HTMLSelectElementEnum_Release(IEnumVARIANT *iface)
+{
+    HTMLSelectElementEnum *This = impl_from_IEnumVARIANT(iface);
+    LONG ref = InterlockedDecrement(&This->ref);
+
+    TRACE("(%p) ref=%ld\n", This, ref);
+
+    if(!ref) {
+        IHTMLSelectElement_Release(&This->elem->IHTMLSelectElement_iface);
+        heap_free(This);
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI HTMLSelectElementEnum_Next(IEnumVARIANT *iface, ULONG celt, VARIANT *rgVar, ULONG *pCeltFetched)
+{
+    HTMLSelectElementEnum *This = impl_from_IEnumVARIANT(iface);
+    nsresult nsres;
+    HRESULT hres;
+    ULONG num, i;
+    UINT32 len;
+
+    TRACE("(%p)->(%lu %p %p)\n", This, celt, rgVar, pCeltFetched);
+
+    nsres = nsIDOMHTMLSelectElement_GetLength(This->elem->nsselect, &len);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+    num = min(len - This->iter, celt);
+
+    for(i = 0; i < num; i++) {
+        hres = htmlselect_item(This->elem, This->iter + i, &V_DISPATCH(&rgVar[i]));
+        if(FAILED(hres)) {
+            while(i--)
+                VariantClear(&rgVar[i]);
+            return hres;
+        }
+        V_VT(&rgVar[i]) = VT_DISPATCH;
+    }
+
+    This->iter += num;
+    if(pCeltFetched)
+        *pCeltFetched = num;
+    return num == celt ? S_OK : S_FALSE;
+}
+
+static HRESULT WINAPI HTMLSelectElementEnum_Skip(IEnumVARIANT *iface, ULONG celt)
+{
+    HTMLSelectElementEnum *This = impl_from_IEnumVARIANT(iface);
+    nsresult nsres;
+    UINT32 len;
+
+    TRACE("(%p)->(%lu)\n", This, celt);
+
+    nsres = nsIDOMHTMLSelectElement_GetLength(This->elem->nsselect, &len);
+    if(NS_FAILED(nsres))
+        return E_FAIL;
+
+    if(This->iter + celt > len) {
+        This->iter = len;
+        return S_FALSE;
+    }
+
+    This->iter += celt;
+    return S_OK;
+}
+
+static HRESULT WINAPI HTMLSelectElementEnum_Reset(IEnumVARIANT *iface)
+{
+    HTMLSelectElementEnum *This = impl_from_IEnumVARIANT(iface);
+
+    TRACE("(%p)->()\n", This);
+
+    This->iter = 0;
+    return S_OK;
+}
+
+static HRESULT WINAPI HTMLSelectElementEnum_Clone(IEnumVARIANT *iface, IEnumVARIANT **ppEnum)
+{
+    HTMLSelectElementEnum *This = impl_from_IEnumVARIANT(iface);
+    FIXME("(%p)->(%p)\n", This, ppEnum);
+    return E_NOTIMPL;
+}
+
+static const IEnumVARIANTVtbl HTMLSelectElementEnumVtbl = {
+    HTMLSelectElementEnum_QueryInterface,
+    HTMLSelectElementEnum_AddRef,
+    HTMLSelectElementEnum_Release,
+    HTMLSelectElementEnum_Next,
+    HTMLSelectElementEnum_Skip,
+    HTMLSelectElementEnum_Reset,
+    HTMLSelectElementEnum_Clone
+};
 
 static HRESULT WINAPI HTMLSelectElement_QueryInterface(IHTMLSelectElement *iface,
                                                          REFIID riid, void **ppv)
@@ -1117,8 +1255,23 @@ static HRESULT WINAPI HTMLSelectElement_get_length(IHTMLSelectElement *iface, LO
 static HRESULT WINAPI HTMLSelectElement_get__newEnum(IHTMLSelectElement *iface, IUnknown **p)
 {
     HTMLSelectElement *This = impl_from_IHTMLSelectElement(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    HTMLSelectElementEnum *ret;
+
+    TRACE("(%p)->(%p)\n", This, p);
+
+    ret = heap_alloc(sizeof(*ret));
+    if(!ret)
+        return E_OUTOFMEMORY;
+
+    ret->IEnumVARIANT_iface.lpVtbl = &HTMLSelectElementEnumVtbl;
+    ret->ref = 1;
+    ret->iter = 0;
+
+    HTMLSelectElement_AddRef(&This->IHTMLSelectElement_iface);
+    ret->elem = This;
+
+    *p = (IUnknown*)&ret->IEnumVARIANT_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLSelectElement_item(IHTMLSelectElement *iface, VARIANT name,
