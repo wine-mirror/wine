@@ -1,0 +1,126 @@
+/*
+ * Copyright (C) 2022 Zebediah Figura for CodeWeavers
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public
+ * License as published by the Free Software Foundation; either
+ * version 2.1 of the License, or (at your option) any later version.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this library; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
+ */
+
+import "unknwn.idl";
+
+interface IMediaSample;
+
+cpp_quote("#if 0")
+
+typedef struct _DDSCAPS2
+{
+    DWORD dwCaps;
+    DWORD dwCaps2;
+    DWORD dwCaps3;
+    union
+    {
+        DWORD dwCaps4;
+        DWORD dwVolumeDepth;
+    } DUMMYUNIONNAME1;
+} DDSCAPS2;
+
+typedef struct _DDPIXELFORMAT
+{
+    DWORD dwSize;
+    DWORD dwFlags;
+    DWORD dwFourCC;
+    union
+    {
+        DWORD dwRGBBitCount;
+        DWORD dwYUVBitCount;
+        DWORD dwZBufferBitDepth;
+        DWORD dwAlphaBitDepth;
+        DWORD dwLuminanceBitCount;
+        DWORD dwBumpBitCount;
+        DWORD dwPrivateFormatBitCount;
+    } DUMMYUNIONNAME1;
+    union
+    {
+        DWORD dwRBitMask;
+        DWORD dwYBitMask;
+        DWORD dwStencilBitDepth;
+        DWORD dwLuminanceBitMask;
+        DWORD dwBumpDuBitMask;
+        DWORD dwOperations;
+    } DUMMYUNIONNAME2;
+    union
+    {
+        DWORD dwGBitMask;
+        DWORD dwUBitMask;
+        DWORD dwZBitMask;
+        DWORD dwBumpDvBitMask;
+        struct
+        {
+            WORD wFlipMSTypes;
+            WORD wBltMSTypes;
+        } MultiSampleCaps;
+    } DUMMYUNIONNAME3;
+    union
+    {
+        DWORD dwBBitMask;
+        DWORD dwVBitMask;
+        DWORD dwStencilBitMask;
+        DWORD dwBumpLuminanceBitMask;
+    } DUMMYUNIONNAME4;
+    union
+    {
+        DWORD dwRGBAlphaBitMask;
+        DWORD dwYUVAlphaBitMask;
+        DWORD dwLuminanceAlphaBitMask;
+        DWORD dwRGBZBitMask;
+        DWORD dwYUVZBitMask;
+    } DUMMYUNIONNAME5;
+} DDPIXELFORMAT;
+
+import "amva.h";
+
+cpp_quote("#endif")
+
+[
+    local,
+    uuid(256a6a22-fbad-11d1-82bf-00a0c9696c8f),
+]
+interface IAMVideoAccelerator : IUnknown
+{
+    HRESULT GetVideoAcceleratorGUIDs(DWORD *count, GUID *accelerators);
+    HRESULT GetUncompFormatsSupported(const GUID *accelerator, DWORD *count, DDPIXELFORMAT *formats);
+    HRESULT GetInternalMemInfo(const GUID *accelerator,
+            const AMVAUncompDataInfo *format_info, AMVAInternalMemInfo *mem_info);
+    HRESULT GetCompBufferInfo(const GUID *accelerator, const AMVAUncompDataInfo *uncompressed_info,
+            DWORD *compressed_info_count, AMVACompBufferInfo *compressed_infos);
+    HRESULT GetInternalCompBufferInfo(DWORD *count, AMVACompBufferInfo *infos);
+    HRESULT BeginFrame(const AMVABeginFrameInfo *info);
+    HRESULT EndFrame(const AMVAEndFrameInfo *info);
+    HRESULT GetBuffer(DWORD type_index, DWORD buffer_index, BOOL read_only, void **buffer, LONG *stride);
+    HRESULT ReleaseBuffer(DWORD type_index, DWORD buffer_index);
+    HRESULT Execute(DWORD function, void *in_data, DWORD in_size, void *out_data,
+            DWORD out_size, DWORD buffer_count, const AMVABUFFERINFO *buffers);
+    HRESULT QueryRenderStatus(DWORD type_index, DWORD buffer_index, DWORD flags);
+    HRESULT DisplayFrame(DWORD index, IMediaSample *sample);
+}
+
+[
+    local,
+    uuid(256a6a21-fbad-11d1-82bf-00a0c9696c8f),
+]
+interface IAMVideoAcceleratorNotify : IUnknown
+{
+    HRESULT GetUncompSurfacesInfo(const GUID *accelerator, AMVAUncompBufferInfo *info);
+    HRESULT SetUncompSurfacesInfo(DWORD allocated_count);
+    HRESULT GetCreateVideoAcceleratorData(const GUID *accelerator, DWORD *size, void **data);
+}

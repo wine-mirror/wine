@@ -39,3 +39,4 @@
 #include "amstream.h"
 #include "qedit.h"
 #include "vmr9.h"
+#include "videoacc.h"
