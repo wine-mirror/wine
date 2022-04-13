@@ -147,7 +147,10 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 #define WINE_PRODUCTVERSION_STR "8.00.6001.18939"
 
 #include "wine/wine_common_ver.rc"
- 
+
+/* @makedep: inetcpl.manifest */
+123 RT_MANIFEST inetcpl.manifest
+
 /* @makedep: inetcpl.ico */
 ICO_MAIN ICON "inetcpl.ico"
 ICO_INTERNET ICON "inetcpl.ico"
