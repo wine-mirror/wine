@@ -23,6 +23,7 @@
 #include "dshow.h"
 #include "d3d9.h"
 #include "vmr9.h"
+#include "videoacc.h"
 #include "wine/strmbase.h"
 #include "wine/test.h"
 
@@ -239,6 +240,7 @@ static void test_common_interfaces(IBaseFilter *filter)
     check_interface(filter, &IID_IVMRFilterConfig, TRUE);
     todo_wine check_interface(filter, &IID_IVMRMixerBitmap, TRUE);
 
+    check_interface(filter, &IID_IAMVideoAccelerator, FALSE);
     check_interface(filter, &IID_IBasicAudio, FALSE);
     check_interface(filter, &IID_IDirectDrawVideo, FALSE);
     check_interface(filter, &IID_IPersistPropertyBag, FALSE);
@@ -255,6 +257,7 @@ static void test_common_interfaces(IBaseFilter *filter)
 
     IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
 
+    todo_wine check_interface(pin, &IID_IAMVideoAccelerator, TRUE);
     check_interface(pin, &IID_IMemInputPin, TRUE);
     check_interface(pin, &IID_IOverlay, TRUE);
     check_interface(pin, &IID_IPin, TRUE);

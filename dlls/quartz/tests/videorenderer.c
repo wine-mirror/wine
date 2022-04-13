@@ -20,6 +20,7 @@
 
 #define COBJMACROS
 #include "dshow.h"
+#include "videoacc.h"
 #include "wine/strmbase.h"
 #include "wine/test.h"
 
@@ -89,6 +90,7 @@ static void test_interfaces(void)
     check_interface(filter, &IID_IVideoWindow, TRUE);
 
     check_interface(filter, &IID_IAMFilterMiscFlags, FALSE);
+    check_interface(filter, &IID_IAMVideoAccelerator, FALSE);
     check_interface(filter, &IID_IBasicAudio, FALSE);
     check_interface(filter, &IID_IDispatch, FALSE);
     check_interface(filter, &IID_IOverlay, FALSE);
@@ -105,6 +107,7 @@ static void test_interfaces(void)
     todo_wine check_interface(pin, &IID_IQualityControl, TRUE);
     check_interface(pin, &IID_IUnknown, TRUE);
 
+    check_interface(pin, &IID_IAMVideoAccelerator, FALSE);
     check_interface(pin, &IID_IAsyncReader, FALSE);
     check_interface(pin, &IID_IMediaPosition, FALSE);
     check_interface(pin, &IID_IMediaSeeking, FALSE);
