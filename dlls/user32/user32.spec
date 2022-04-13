@@ -831,11 +831,3 @@
 @ varargs wsprintfW(wstr wstr)
 @ stdcall wvsprintfA(ptr str ptr)
 @ stdcall wvsprintfW(ptr wstr ptr)
-
-################################################################
-# Wine internal extensions
-#
-# All functions must be prefixed with '__wine_' (for internal functions)
-# or 'wine_' (for user-visible functions) to avoid namespace conflicts.
-#
-@ cdecl __wine_set_pixel_format(long long)

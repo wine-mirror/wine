@@ -1698,15 +1698,6 @@ BOOL WINAPI SwitchDesktop( HDESK hDesktop)
 }
 
 
-/***********************************************************************
- *           __wine_set_pixel_format
- */
-BOOL CDECL __wine_set_pixel_format( HWND hwnd, int format )
-{
-    return NtUserSetWindowPixelFormat( hwnd, format );
-}
-
-
 /*****************************************************************************
  *              UpdateLayeredWindowIndirect  (USER32.@)
  */

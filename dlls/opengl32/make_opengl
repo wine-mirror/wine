@@ -645,8 +645,7 @@ foreach (sort keys %norm_functions)
 }
 print HEADER "\n\n";
 
-print HEADER "extern struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version );\n";
-print HEADER "extern BOOL CDECL __wine_set_pixel_format( HWND hwnd, int format );\n\n";
+print HEADER "extern struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version );\n\n";
 print HEADER "#endif /* __WINE_WGL_DRIVER_H */\n";
 close HEADER;
 

@@ -3406,6 +3406,5 @@ struct opengl_funcs
     USE_GL_FUNC(glViewport)
 
 extern struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version );
-extern BOOL CDECL __wine_set_pixel_format( HWND hwnd, int format );
 
 #endif /* __WINE_WGL_DRIVER_H */

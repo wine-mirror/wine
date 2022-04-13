@@ -245,7 +245,7 @@ static BOOL set_pixel_format( HDC hdc, int format, BOOL allow_change )
     release_gl_drawable( gl );
 
     if (prev && prev != format && !allow_change) return FALSE;
-    if (__wine_set_pixel_format( hwnd, format )) return TRUE;
+    if (NtUserSetWindowPixelFormat( hwnd, format )) return TRUE;
     destroy_gl_drawable( hwnd );
     return FALSE;
 }
