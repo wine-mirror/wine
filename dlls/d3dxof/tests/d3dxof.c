@@ -394,10 +394,11 @@ static void init_function_pointers(void)
     pDirectXFileCreate = (void *)GetProcAddress(hd3dxof, "DirectXFileCreate");
 }
 
-static ULONG getRefcount(IUnknown *iface)
+static ULONG get_refcount(void *iface)
 {
-    IUnknown_AddRef(iface);
-    return IUnknown_Release(iface);
+    IUnknown *unknown = iface;
+    IUnknown_AddRef(unknown);
+    return IUnknown_Release(unknown);
 }
 
 static void test_refcount(void)
@@ -423,7 +424,7 @@ static void test_refcount(void)
         return;
     }
 
-    ref = getRefcount( (IUnknown *) lpDirectXFile);
+    ref = get_refcount(lpDirectXFile);
     ok(ref == 1, "Unexpected refcount %ld.\n", ref);
     ref = IDirectXFile_AddRef(lpDirectXFile);
     ok(ref == 2, "Unexpected refcount %ld.\n", ref);
@@ -437,33 +438,33 @@ static void test_refcount(void)
     dxflm.dSize = sizeof(object) - 1;
     hr = IDirectXFile_CreateEnumObject(lpDirectXFile, &dxflm, DXFILELOAD_FROMMEMORY, &lpdxfeo);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
-    ref = getRefcount( (IUnknown *) lpDirectXFile);
+    ref = get_refcount(lpDirectXFile);
     ok(ref == 1, "Unexpected refcount %ld.\n", ref);
-    ref = getRefcount( (IUnknown *) lpdxfeo);
+    ref = get_refcount(lpdxfeo);
     ok(ref == 1, "Unexpected refcount %ld.\n", ref);
 
     hr = IDirectXFileEnumObject_GetNextDataObject(lpdxfeo, &lpdxfd);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
-    ref = getRefcount( (IUnknown *) lpDirectXFile);
+    ref = get_refcount(lpDirectXFile);
     ok(ref == 1, "Unexpected refcount %ld.\n", ref);
-    ref = getRefcount( (IUnknown *) lpdxfeo);
+    ref = get_refcount(lpdxfeo);
     ok(ref == 1, "Unexpected refcount %ld.\n", ref);
     /* Enum object gets references to all top level objects */
-    ref = getRefcount( (IUnknown *) lpdxfd);
+    ref = get_refcount(lpdxfd);
     ok(ref == 2, "Unexpected refcount %ld.\n", ref);
 
     ref = IDirectXFile_Release(lpDirectXFile);
     ok(!ref, "Unexpected refcount %ld.\n", ref);
     /* Nothing changes for all other objects */
-    ref = getRefcount( (IUnknown *) lpdxfeo);
+    ref = get_refcount(lpdxfeo);
     ok(ref == 1, "Unexpected refcount %ld.\n", ref);
-    ref = getRefcount( (IUnknown *) lpdxfd);
+    ref = get_refcount(lpdxfd);
     ok(ref == 2, "Unexpected refcount %ld.\n", ref);
 
     ref = IDirectXFileEnumObject_Release(lpdxfeo);
     ok(!ref, "Unexpected refcount %ld.\n", ref);
     /* Enum object releases references to all top level objects */
-    ref = getRefcount( (IUnknown *) lpdxfd);
+    ref = get_refcount(lpdxfd);
     ok(ref == 1, "Unexpected refcount %ld.\n", ref);
 
     ref = IDirectXFileData_Release(lpdxfd);
