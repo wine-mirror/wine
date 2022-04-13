@@ -70,6 +70,24 @@ static int muldiv( int a, int b, int c )
     return ret;
 }
 
+static void oss_lock(struct oss_stream *stream)
+{
+    pthread_mutex_lock(&stream->lock);
+}
+
+static void oss_unlock(struct oss_stream *stream)
+{
+    pthread_mutex_unlock(&stream->lock);
+}
+
+static NTSTATUS oss_unlock_result(struct oss_stream *stream,
+                                  HRESULT *result, HRESULT value)
+{
+    *result = value;
+    oss_unlock(stream);
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS test_connect(void *args)
 {
     struct test_connect_params *params = args;
@@ -732,6 +750,18 @@ static NTSTATUS get_mix_format(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS get_buffer_size(void *args)
+{
+    struct get_buffer_size_params *params = args;
+    struct oss_stream *stream = params->stream;
+
+    oss_lock(stream);
+
+    *params->size = stream->bufsize_frames;
+
+    return oss_unlock_result(stream, &params->result, S_OK);
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     test_connect,
@@ -740,4 +770,5 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     release_stream,
     is_format_supported,
     get_mix_format,
+    get_buffer_size,
 };

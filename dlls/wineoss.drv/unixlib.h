@@ -106,6 +106,13 @@ struct get_mix_format_params
     HRESULT result;
 };
 
+struct get_buffer_size_params
+{
+    struct oss_stream *stream;
+    HRESULT result;
+    UINT32 *size;
+};
+
 enum oss_funcs
 {
     oss_test_connect,
@@ -114,6 +121,7 @@ enum oss_funcs
     oss_release_stream,
     oss_is_format_supported,
     oss_get_mix_format,
+    oss_get_buffer_size,
 };
 
 extern unixlib_handle_t oss_handle;
