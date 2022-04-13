@@ -102,6 +102,12 @@ struct stop_params
     HRESULT result;
 };
 
+struct reset_params
+{
+    struct oss_stream *stream;
+    HRESULT result;
+};
+
 struct timer_loop_params
 {
     struct oss_stream *stream;
@@ -154,6 +160,7 @@ enum oss_funcs
     oss_release_stream,
     oss_start,
     oss_stop,
+    oss_reset,
     oss_timer_loop,
     oss_is_format_supported,
     oss_get_mix_format,

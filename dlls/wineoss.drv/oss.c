@@ -661,6 +661,32 @@ static NTSTATUS stop(void *args)
     return oss_unlock_result(stream, &params->result, S_OK);
 }
 
+static NTSTATUS reset(void *args)
+{
+    struct reset_params *params = args;
+    struct oss_stream *stream = params->stream;
+
+    oss_lock(stream);
+
+    if(stream->playing)
+        return oss_unlock_result(stream, &params->result, AUDCLNT_E_NOT_STOPPED);
+
+    if(stream->getbuf_last)
+        return oss_unlock_result(stream, &params->result, AUDCLNT_E_BUFFER_OPERATION_PENDING);
+
+    if(stream->flow == eRender){
+        stream->written_frames = 0;
+        stream->last_pos_frames = 0;
+    }else{
+        stream->written_frames += stream->held_frames;
+    }
+    stream->held_frames = 0;
+    stream->lcl_offs_frames = 0;
+    stream->in_oss_frames = 0;
+
+    return oss_unlock_result(stream, &params->result, S_OK);
+}
+
 static void silence_buffer(struct oss_stream *stream, BYTE *buffer, UINT32 frames)
 {
     WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)stream->fmt;
@@ -1025,6 +1051,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     release_stream,
     start,
     stop,
+    reset,
     timer_loop,
     is_format_supported,
     get_mix_format,
