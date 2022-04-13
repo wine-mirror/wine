@@ -604,6 +604,12 @@ static NTSTATUS release_stream(void *args)
     struct oss_stream *stream = params->stream;
     SIZE_T size;
 
+    if(params->timer_thread){
+        stream->please_quit = TRUE;
+        NtWaitForSingleObject(params->timer_thread, FALSE, NULL);
+        NtClose(params->timer_thread);
+    }
+
     close(stream->fd);
     if(stream->local_buffer){
         size = 0;
@@ -618,6 +624,195 @@ static NTSTATUS release_stream(void *args)
     free(stream);
 
     params->result = S_OK;
+    return STATUS_SUCCESS;
+}
+
+static void silence_buffer(struct oss_stream *stream, BYTE *buffer, UINT32 frames)
+{
+    WAVEFORMATEXTENSIBLE *fmtex = (WAVEFORMATEXTENSIBLE*)stream->fmt;
+    if((stream->fmt->wFormatTag == WAVE_FORMAT_PCM ||
+            (stream->fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
+             IsEqualGUID(&fmtex->SubFormat, &KSDATAFORMAT_SUBTYPE_PCM))) &&
+            stream->fmt->wBitsPerSample == 8)
+        memset(buffer, 128, frames * stream->fmt->nBlockAlign);
+    else
+        memset(buffer, 0, frames * stream->fmt->nBlockAlign);
+}
+
+static void oss_write_data(struct oss_stream *stream)
+{
+    ssize_t written_bytes;
+    UINT32 written_frames, in_oss_frames, write_limit, max_period, write_offs_frames, new_frames;
+    SIZE_T to_write_frames, to_write_bytes, advanced;
+    audio_buf_info bi;
+    BYTE *buf;
+
+    if(ioctl(stream->fd, SNDCTL_DSP_GETOSPACE, &bi) < 0){
+        WARN("GETOSPACE failed: %d (%s)\n", errno, strerror(errno));
+        return;
+    }
+
+    max_period = max(bi.fragsize / stream->fmt->nBlockAlign, stream->period_frames);
+
+    if(bi.bytes > stream->oss_bufsize_bytes){
+        TRACE("New buffer size (%u) is larger than old buffer size (%u)\n",
+                bi.bytes, stream->oss_bufsize_bytes);
+        stream->oss_bufsize_bytes = bi.bytes;
+        in_oss_frames = 0;
+    }else
+        in_oss_frames = (stream->oss_bufsize_bytes - bi.bytes) / stream->fmt->nBlockAlign;
+
+    if(in_oss_frames > stream->in_oss_frames){
+        TRACE("Capping reported frames from %u to %u\n",
+                in_oss_frames, stream->in_oss_frames);
+        in_oss_frames = stream->in_oss_frames;
+    }
+
+    write_limit = 0;
+    while(write_limit + in_oss_frames < max_period * 3)
+        write_limit += max_period;
+    if(write_limit == 0)
+        return;
+
+    /*        vvvvvv - in_oss_frames
+     * [--xxxxxxxxxx]
+     *       [xxxxxxxxxx--]
+     *        ^^^^^^^^^^ - held_frames
+     *        ^ - lcl_offs_frames
+     */
+    advanced = stream->in_oss_frames - in_oss_frames;
+    if(advanced > stream->held_frames)
+        advanced = stream->held_frames;
+    stream->lcl_offs_frames += advanced;
+    stream->lcl_offs_frames %= stream->bufsize_frames;
+    stream->held_frames -= advanced;
+    stream->in_oss_frames = in_oss_frames;
+    TRACE("advanced by %lu, lcl_offs: %u, held: %u, in_oss: %u\n",
+            advanced, stream->lcl_offs_frames, stream->held_frames, stream->in_oss_frames);
+
+
+    if(stream->held_frames == stream->in_oss_frames)
+        return;
+
+    write_offs_frames = (stream->lcl_offs_frames + stream->in_oss_frames) % stream->bufsize_frames;
+    new_frames = stream->held_frames - stream->in_oss_frames;
+
+    if(write_offs_frames + new_frames > stream->bufsize_frames)
+        to_write_frames = stream->bufsize_frames - write_offs_frames;
+    else
+        to_write_frames = new_frames;
+
+    to_write_frames = min(to_write_frames, write_limit);
+    to_write_bytes = to_write_frames * stream->fmt->nBlockAlign;
+    TRACE("going to write %lu frames from %u (%lu of %u)\n", to_write_frames,
+            write_offs_frames, to_write_frames + write_offs_frames,
+            stream->bufsize_frames);
+
+    buf = stream->local_buffer + write_offs_frames * stream->fmt->nBlockAlign;
+
+    if(stream->mute)
+        silence_buffer(stream, buf, to_write_frames);
+
+    written_bytes = write(stream->fd, buf, to_write_bytes);
+    if(written_bytes < 0){
+        /* EAGAIN is OSS buffer full, log that too */
+        WARN("write failed: %d (%s)\n", errno, strerror(errno));
+        return;
+    }
+    written_frames = written_bytes / stream->fmt->nBlockAlign;
+
+    stream->in_oss_frames += written_frames;
+
+    if(written_frames < to_write_frames){
+        /* OSS buffer probably full */
+        return;
+    }
+
+    if(new_frames > written_frames && written_frames < write_limit){
+        /* wrapped and have some data back at the start to write */
+
+        to_write_frames = min(write_limit - written_frames, new_frames - written_frames);
+        to_write_bytes = to_write_frames * stream->fmt->nBlockAlign;
+
+        if(stream->mute)
+            silence_buffer(stream, stream->local_buffer, to_write_frames);
+
+        TRACE("wrapping to write %lu frames from beginning\n", to_write_frames);
+
+        written_bytes = write(stream->fd, stream->local_buffer, to_write_bytes);
+        if(written_bytes < 0){
+            WARN("write failed: %d (%s)\n", errno, strerror(errno));
+            return;
+        }
+        written_frames = written_bytes / stream->fmt->nBlockAlign;
+        stream->in_oss_frames += written_frames;
+    }
+}
+
+static void oss_read_data(struct oss_stream *stream)
+{
+    UINT64 pos, readable;
+    ssize_t nread;
+
+    pos = (stream->held_frames + stream->lcl_offs_frames) % stream->bufsize_frames;
+    readable = (stream->bufsize_frames - pos) * stream->fmt->nBlockAlign;
+
+    nread = read(stream->fd, stream->local_buffer + pos * stream->fmt->nBlockAlign,
+            readable);
+    if(nread < 0){
+        WARN("read failed: %d (%s)\n", errno, strerror(errno));
+        return;
+    }
+
+    stream->held_frames += nread / stream->fmt->nBlockAlign;
+
+    if(stream->held_frames > stream->bufsize_frames){
+        WARN("Overflow of unread data\n");
+        stream->lcl_offs_frames += stream->held_frames;
+        stream->lcl_offs_frames %= stream->bufsize_frames;
+        stream->held_frames = stream->bufsize_frames;
+    }
+}
+
+static NTSTATUS timer_loop(void *args)
+{
+    struct timer_loop_params *params = args;
+    struct oss_stream *stream = params->stream;
+    LARGE_INTEGER delay, now, next;
+    int adjust;
+
+    oss_lock(stream);
+
+    delay.QuadPart = -stream->period;
+    NtQueryPerformanceCounter(&now, NULL);
+    next.QuadPart = now.QuadPart + stream->period;
+
+    while(!stream->please_quit){
+        if(stream->playing){
+            if(stream->flow == eRender && stream->held_frames)
+                oss_write_data(stream);
+            else if(stream->flow == eCapture)
+                oss_read_data(stream);
+        }
+        if(stream->event)
+            NtSetEvent(stream->event, NULL);
+        oss_unlock(stream);
+
+        NtDelayExecution(FALSE, &delay);
+
+        oss_lock(stream);
+        NtQueryPerformanceCounter(&now, NULL);
+        adjust = next.QuadPart - now.QuadPart;
+        if(adjust > stream->period / 2)
+            adjust = stream->period / 2;
+        else if(adjust < -stream->period / 2)
+            adjust = -stream->period / 2;
+        delay.QuadPart = -(stream->period + adjust);
+        next.QuadPart += stream->period;
+    }
+
+    oss_unlock(stream);
+
     return STATUS_SUCCESS;
 }
 
@@ -794,6 +989,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_endpoint_ids,
     create_stream,
     release_stream,
+    timer_loop,
     is_format_supported,
     get_mix_format,
     get_buffer_size,

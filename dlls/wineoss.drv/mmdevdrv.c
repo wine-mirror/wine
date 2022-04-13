@@ -114,7 +114,7 @@ struct ACImpl {
     UINT32 channel_count;
     struct oss_stream *stream;
 
-    HANDLE timer;
+    HANDLE timer_thread;
 
     AudioSession *session;
     AudioSessionWrapper *session_wrapper;
@@ -146,8 +146,6 @@ static const WCHAR drv_key_devicesW[] = {'S','o','f','t','w','a','r','e','\\',
     'W','i','n','e','\\','D','r','i','v','e','r','s','\\',
     'w','i','n','e','o','s','s','.','d','r','v','\\','d','e','v','i','c','e','s',0};
 static const WCHAR guidW[] = {'g','u','i','d',0};
-
-static HANDLE g_timer_q;
 
 static CRITICAL_SECTION g_sessions_lock;
 static CRITICAL_SECTION_DEBUG g_sessions_lock_debug =
@@ -230,9 +228,6 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, void *reserved)
         if(NtQueryVirtualMemory(GetCurrentProcess(), dll, MemoryWineUnixFuncs,
                                 &oss_handle, sizeof(oss_handle), NULL))
             return FALSE;
-        g_timer_q = CreateTimerQueue();
-        if(!g_timer_q)
-            return FALSE;
         break;
 
     case DLL_PROCESS_DETACH:
@@ -260,14 +255,26 @@ int WINAPI AUDDRV_GetPriority(void)
     return params.priority;
 }
 
-static HRESULT stream_release(struct oss_stream *stream)
+static HRESULT stream_release(struct oss_stream *stream, HANDLE timer_thread)
 {
     struct release_stream_params params;
 
     params.stream = stream;
+    params.timer_thread = timer_thread;
     OSS_CALL(release_stream, &params);
 
     return params.result;
+}
+
+static DWORD WINAPI timer_thread(void *user)
+{
+    struct oss_stream *stream = user;
+    struct timer_loop_params params;
+
+    params.stream = stream;
+    OSS_CALL(timer_loop, &params);
+
+    return 0;
 }
 
 static void oss_lock(struct oss_stream *stream)
@@ -532,17 +539,6 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
     ref = InterlockedDecrement(&This->ref);
     TRACE("(%p) Refcount now %u\n", This, ref);
     if(!ref){
-        if(This->timer){
-            HANDLE event;
-            DWORD wait;
-            event = CreateEventW(NULL, TRUE, FALSE, NULL);
-            wait = !DeleteTimerQueueTimer(g_timer_q, This->timer, event);
-            wait = wait && GetLastError() == ERROR_IO_PENDING;
-            if(event && wait)
-                WaitForSingleObject(event, INFINITE);
-            CloseHandle(event);
-        }
-
         IAudioClient3_Stop(iface);
         IMMDevice_Release(This->parent);
         IUnknown_Release(This->pUnkFTMarshal);
@@ -553,7 +549,7 @@ static ULONG WINAPI AudioClient_Release(IAudioClient3 *iface)
         }
         HeapFree(GetProcessHeap(), 0, This->vols);
         if(This->stream)
-            stream_release(This->stream);
+            stream_release(This->stream, This->timer_thread);
         HeapFree(GetProcessHeap(), 0, This);
     }
     return ref;
@@ -765,7 +761,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 
 exit:
     if(FAILED(params.result)){
-        stream_release(stream);
+        stream_release(stream, NULL);
         HeapFree(GetProcessHeap(), 0, This->vols);
         This->vols = NULL;
     } else {
@@ -935,161 +931,6 @@ static void silence_buffer(struct oss_stream *stream, BYTE *buffer, UINT32 frame
         memset(buffer, 0, frames * stream->fmt->nBlockAlign);
 }
 
-static void oss_write_data(struct oss_stream *stream)
-{
-    ssize_t written_bytes;
-    UINT32 written_frames, in_oss_frames, write_limit, max_period, write_offs_frames, new_frames;
-    SIZE_T to_write_frames, to_write_bytes, advanced;
-    audio_buf_info bi;
-    BYTE *buf;
-
-    if(ioctl(stream->fd, SNDCTL_DSP_GETOSPACE, &bi) < 0){
-        WARN("GETOSPACE failed: %d (%s)\n", errno, strerror(errno));
-        return;
-    }
-
-    max_period = max(bi.fragsize / stream->fmt->nBlockAlign, stream->period_frames);
-
-    if(bi.bytes > stream->oss_bufsize_bytes){
-        TRACE("New buffer size (%u) is larger than old buffer size (%u)\n",
-                bi.bytes, stream->oss_bufsize_bytes);
-        stream->oss_bufsize_bytes = bi.bytes;
-        in_oss_frames = 0;
-    }else
-        in_oss_frames = (stream->oss_bufsize_bytes - bi.bytes) / stream->fmt->nBlockAlign;
-
-    if(in_oss_frames > stream->in_oss_frames){
-        TRACE("Capping reported frames from %u to %u\n",
-                in_oss_frames, stream->in_oss_frames);
-        in_oss_frames = stream->in_oss_frames;
-    }
-
-    write_limit = 0;
-    while(write_limit + in_oss_frames < max_period * 3)
-        write_limit += max_period;
-    if(write_limit == 0)
-        return;
-
-    /*        vvvvvv - in_oss_frames
-     * [--xxxxxxxxxx]
-     *       [xxxxxxxxxx--]
-     *        ^^^^^^^^^^ - held_frames
-     *        ^ - lcl_offs_frames
-     */
-    advanced = stream->in_oss_frames - in_oss_frames;
-    if(advanced > stream->held_frames)
-        advanced = stream->held_frames;
-    stream->lcl_offs_frames += advanced;
-    stream->lcl_offs_frames %= stream->bufsize_frames;
-    stream->held_frames -= advanced;
-    stream->in_oss_frames = in_oss_frames;
-    TRACE("advanced by %lu, lcl_offs: %u, held: %u, in_oss: %u\n",
-            advanced, stream->lcl_offs_frames, stream->held_frames, stream->in_oss_frames);
-
-
-    if(stream->held_frames == stream->in_oss_frames)
-        return;
-
-    write_offs_frames = (stream->lcl_offs_frames + stream->in_oss_frames) % stream->bufsize_frames;
-    new_frames = stream->held_frames - stream->in_oss_frames;
-
-    if(write_offs_frames + new_frames > stream->bufsize_frames)
-        to_write_frames = stream->bufsize_frames - write_offs_frames;
-    else
-        to_write_frames = new_frames;
-
-    to_write_frames = min(to_write_frames, write_limit);
-    to_write_bytes = to_write_frames * stream->fmt->nBlockAlign;
-    TRACE("going to write %lu frames from %u (%lu of %u)\n", to_write_frames,
-            write_offs_frames, to_write_frames + write_offs_frames,
-            stream->bufsize_frames);
-
-    buf = stream->local_buffer + write_offs_frames * stream->fmt->nBlockAlign;
-
-    if(stream->mute)
-        silence_buffer(stream, buf, to_write_frames);
-
-    written_bytes = write(stream->fd, buf, to_write_bytes);
-    if(written_bytes < 0){
-        /* EAGAIN is OSS buffer full, log that too */
-        WARN("write failed: %d (%s)\n", errno, strerror(errno));
-        return;
-    }
-    written_frames = written_bytes / stream->fmt->nBlockAlign;
-
-    stream->in_oss_frames += written_frames;
-
-    if(written_frames < to_write_frames){
-        /* OSS buffer probably full */
-        return;
-    }
-
-    if(new_frames > written_frames && written_frames < write_limit){
-        /* wrapped and have some data back at the start to write */
-
-        to_write_frames = min(write_limit - written_frames, new_frames - written_frames);
-        to_write_bytes = to_write_frames * stream->fmt->nBlockAlign;
-
-        if(stream->mute)
-            silence_buffer(stream, stream->local_buffer, to_write_frames);
-
-        TRACE("wrapping to write %lu frames from beginning\n", to_write_frames);
-
-        written_bytes = write(stream->fd, stream->local_buffer, to_write_bytes);
-        if(written_bytes < 0){
-            WARN("write failed: %d (%s)\n", errno, strerror(errno));
-            return;
-        }
-        written_frames = written_bytes / stream->fmt->nBlockAlign;
-        stream->in_oss_frames += written_frames;
-    }
-}
-
-static void oss_read_data(struct oss_stream *stream)
-{
-    UINT64 pos, readable;
-    ssize_t nread;
-
-    pos = (stream->held_frames + stream->lcl_offs_frames) % stream->bufsize_frames;
-    readable = (stream->bufsize_frames - pos) * stream->fmt->nBlockAlign;
-
-    nread = read(stream->fd, stream->local_buffer + pos * stream->fmt->nBlockAlign,
-            readable);
-    if(nread < 0){
-        WARN("read failed: %d (%s)\n", errno, strerror(errno));
-        return;
-    }
-
-    stream->held_frames += nread / stream->fmt->nBlockAlign;
-
-    if(stream->held_frames > stream->bufsize_frames){
-        WARN("Overflow of unread data\n");
-        stream->lcl_offs_frames += stream->held_frames;
-        stream->lcl_offs_frames %= stream->bufsize_frames;
-        stream->held_frames = stream->bufsize_frames;
-    }
-}
-
-static void CALLBACK oss_period_callback(void *user, BOOLEAN timer)
-{
-    ACImpl *This = user;
-    struct oss_stream *stream = This->stream;
-
-    oss_lock(stream);
-
-    if(stream->playing){
-        if(stream->flow == eRender && stream->held_frames)
-            oss_write_data(stream);
-        else if(stream->flow == eCapture)
-            oss_read_data(stream);
-    }
-
-    if(stream->event)
-        SetEvent(stream->event);
-
-    oss_unlock(stream);
-}
-
 static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
@@ -1118,11 +959,9 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
         return AUDCLNT_E_NOT_STOPPED;
     }
 
-    if(!This->timer){
-        if(!CreateTimerQueueTimer(&This->timer, g_timer_q,
-                    oss_period_callback, This, 0, stream->period / 10000,
-                    WT_EXECUTEINTIMERTHREAD))
-            ERR("Unable to create period timer: %u\n", GetLastError());
+    if(!This->timer_thread){
+        This->timer_thread = CreateThread(NULL, 0, timer_thread, This->stream, 0, NULL);
+        SetThreadPriority(This->timer_thread, THREAD_PRIORITY_TIME_CRITICAL);
     }
 
     stream->playing = TRUE;

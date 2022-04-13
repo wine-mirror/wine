@@ -28,7 +28,7 @@ struct oss_stream
 
     int fd;
 
-    BOOL playing, mute;
+    BOOL playing, mute, please_quit;
     UINT64 written_frames, last_pos_frames;
     UINT32 period_frames, bufsize_frames, held_frames, tmp_buffer_frames, in_oss_frames;
     UINT32 oss_bufsize_bytes, lcl_offs_frames; /* offs into local_buffer where valid data starts */
@@ -86,7 +86,13 @@ struct create_stream_params
 struct release_stream_params
 {
     struct oss_stream *stream;
+    HANDLE timer_thread;
     HRESULT result;
+};
+
+struct timer_loop_params
+{
+    struct oss_stream *stream;
 };
 
 struct is_format_supported_params
@@ -134,6 +140,7 @@ enum oss_funcs
     oss_get_endpoint_ids,
     oss_create_stream,
     oss_release_stream,
+    oss_timer_loop,
     oss_is_format_supported,
     oss_get_mix_format,
     oss_get_buffer_size,
