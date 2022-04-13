@@ -33,6 +33,7 @@
 #include "ddraw.h"
 #include "dvdmedia.h"
 #include "d3d9.h"
+#include "videoacc.h"
 #include "vmr9.h"
 
 #include "wine/debug.h"
@@ -78,6 +79,7 @@ struct quartz_vmr
      * Native uses a separate reference count for IVMRSurfaceAllocatorNotify9. */
     LONG IVMRSurfaceAllocatorNotify9_refcount;
 
+    IAMVideoAccelerator IAMVideoAccelerator_iface;
     IOverlay IOverlay_iface;
 
     IVMRSurfaceAllocator9 *allocator;
@@ -610,7 +612,9 @@ static HRESULT vmr_pin_query_interface(struct strmbase_renderer *iface, REFIID i
 {
     struct quartz_vmr *filter = impl_from_IBaseFilter(&iface->filter.IBaseFilter_iface);
 
-    if (IsEqualGUID(iid, &IID_IOverlay))
+    if (IsEqualGUID(iid, &IID_IAMVideoAccelerator))
+        *out = &filter->IAMVideoAccelerator_iface;
+    else if (IsEqualGUID(iid, &IID_IOverlay))
         *out = &filter->IOverlay_iface;
     else
         return E_NOINTERFACE;
@@ -2430,6 +2434,139 @@ static const IVMRAspectRatioControl9Vtbl aspect_ratio_control9_vtbl =
     aspect_ratio_control9_SetAspectRatioMode,
 };
 
+static struct quartz_vmr *impl_from_IAMVideoAccelerator(IAMVideoAccelerator *iface)
+{
+    return CONTAINING_RECORD(iface, struct quartz_vmr, IAMVideoAccelerator_iface);
+}
+
+static HRESULT WINAPI video_accelerator_QueryInterface(IAMVideoAccelerator *iface, REFIID iid, void **out)
+{
+    struct quartz_vmr *filter = impl_from_IAMVideoAccelerator(iface);
+    return IPin_QueryInterface(&filter->renderer.sink.pin.IPin_iface, iid, out);
+}
+
+static ULONG WINAPI video_accelerator_AddRef(IAMVideoAccelerator *iface)
+{
+    struct quartz_vmr *filter = impl_from_IAMVideoAccelerator(iface);
+    return IPin_AddRef(&filter->renderer.sink.pin.IPin_iface);
+}
+
+static ULONG WINAPI video_accelerator_Release(IAMVideoAccelerator *iface)
+{
+    struct quartz_vmr *filter = impl_from_IAMVideoAccelerator(iface);
+    return IPin_Release(&filter->renderer.sink.pin.IPin_iface);
+}
+
+static HRESULT WINAPI video_accelerator_GetVideoAcceleratorGUIDs(
+        IAMVideoAccelerator *iface, DWORD *count, GUID *accelerators)
+{
+    FIXME("iface %p, count %p, accelerators %p, stub!\n", iface, count, accelerators);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_accelerator_GetUncompFormatsSupported(IAMVideoAccelerator *iface,
+        const GUID *accelerator, DWORD *count, DDPIXELFORMAT *formats)
+{
+    FIXME("iface %p, accelerator %s, count %p, formats %p, stub!\n",
+            iface, debugstr_guid(accelerator), count, formats);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_accelerator_GetInternalMemInfo(IAMVideoAccelerator *iface,
+        const GUID *accelerator, const AMVAUncompDataInfo *format_info, AMVAInternalMemInfo *mem_info)
+{
+    FIXME("iface %p, accelerator %s, format_info %p, mem_info %p, stub!\n",
+            iface, debugstr_guid(accelerator), format_info, mem_info);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_accelerator_GetCompBufferInfo(IAMVideoAccelerator *iface,
+        const GUID *accelerator, const AMVAUncompDataInfo *uncompressed_info,
+        DWORD *compressed_info_count, AMVACompBufferInfo *compressed_infos)
+{
+    FIXME("iface %p, accelerator %s, uncompressed_info %p, compressed_info_count %p, compressed_infos %p, stub!\n",
+            iface, debugstr_guid(accelerator), uncompressed_info, compressed_info_count, compressed_infos);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_accelerator_GetInternalCompBufferInfo(
+        IAMVideoAccelerator *iface, DWORD *count, AMVACompBufferInfo *infos)
+{
+    FIXME("iface %p, count %p, infos %p, stub!\n", iface, count, infos);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_accelerator_BeginFrame(IAMVideoAccelerator *iface, const AMVABeginFrameInfo *info)
+{
+    FIXME("iface %p, info %p, stub!\n", iface, info);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_accelerator_EndFrame(IAMVideoAccelerator *iface, const AMVAEndFrameInfo *info)
+{
+    FIXME("iface %p, info %p, stub!\n", iface, info);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_accelerator_GetBuffer(IAMVideoAccelerator *iface,
+        DWORD type_index, DWORD buffer_index, BOOL read_only, void **buffer, LONG *stride)
+{
+    FIXME("iface %p, type_index %lu, buffer_index %lu, read_only %d, buffer %p, stride %p, stub!\n",
+            iface, type_index, buffer_index, read_only, buffer, stride);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_accelerator_ReleaseBuffer(
+        IAMVideoAccelerator *iface, DWORD type_index, DWORD buffer_index)
+{
+    FIXME("iface %p, type_index %lu, buffer_index %lu, stub!\n", iface, type_index, buffer_index);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_accelerator_Execute(IAMVideoAccelerator *iface,
+        DWORD function, void *in_data, DWORD in_size, void *out_data,
+        DWORD out_size, DWORD buffer_count, const AMVABUFFERINFO *buffers)
+{
+    FIXME("iface %p, function %#lx, in_data %p, in_size %lu,"
+            " out_data %p, out_size %lu, buffer_count %lu, buffers %p, stub!\n",
+            iface, function, in_data, in_size, out_data, out_size, buffer_count, buffers);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_accelerator_QueryRenderStatus(IAMVideoAccelerator *iface,
+        DWORD type_index, DWORD buffer_index, DWORD flags)
+{
+    FIXME("iface %p, type_index %lu, buffer_index %lu, flags %#lx, stub!\n",
+            iface, type_index, buffer_index, flags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI video_accelerator_DisplayFrame(
+        IAMVideoAccelerator *iface, DWORD index, IMediaSample *sample)
+{
+    FIXME("iface %p, index %lu, sample %p, stub!\n", iface, index, sample);
+    return E_NOTIMPL;
+}
+
+static const IAMVideoAcceleratorVtbl video_accelerator_vtbl =
+{
+    video_accelerator_QueryInterface,
+    video_accelerator_AddRef,
+    video_accelerator_Release,
+    video_accelerator_GetVideoAcceleratorGUIDs,
+    video_accelerator_GetUncompFormatsSupported,
+    video_accelerator_GetInternalMemInfo,
+    video_accelerator_GetCompBufferInfo,
+    video_accelerator_GetInternalCompBufferInfo,
+    video_accelerator_BeginFrame,
+    video_accelerator_EndFrame,
+    video_accelerator_GetBuffer,
+    video_accelerator_ReleaseBuffer,
+    video_accelerator_Execute,
+    video_accelerator_QueryRenderStatus,
+    video_accelerator_DisplayFrame,
+};
+
 static inline struct quartz_vmr *impl_from_IOverlay(IOverlay *iface)
 {
     return CONTAINING_RECORD(iface, struct quartz_vmr, IOverlay_iface);
@@ -2567,6 +2704,8 @@ static HRESULT vmr_create(IUnknown *outer, IUnknown **out, const CLSID *clsid)
     object->IVMRSurfaceAllocatorNotify9_iface.lpVtbl = &VMR9_SurfaceAllocatorNotify_Vtbl;
     object->IVMRWindowlessControl_iface.lpVtbl = &VMR7_WindowlessControl_Vtbl;
     object->IVMRWindowlessControl9_iface.lpVtbl = &VMR9_WindowlessControl_Vtbl;
+
+    object->IAMVideoAccelerator_iface.lpVtbl = &video_accelerator_vtbl;
     object->IOverlay_iface.lpVtbl = &overlay_vtbl;
 
     video_window_init(&object->window, &IVideoWindow_VTable,

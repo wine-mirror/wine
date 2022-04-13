@@ -257,7 +257,7 @@ static void test_common_interfaces(IBaseFilter *filter)
 
     IBaseFilter_FindPin(filter, L"VMR Input0", &pin);
 
-    todo_wine check_interface(pin, &IID_IAMVideoAccelerator, TRUE);
+    check_interface(pin, &IID_IAMVideoAccelerator, TRUE);
     check_interface(pin, &IID_IMemInputPin, TRUE);
     check_interface(pin, &IID_IOverlay, TRUE);
     check_interface(pin, &IID_IPin, TRUE);
