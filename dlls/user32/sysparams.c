@@ -453,7 +453,7 @@ INT WINAPI GetSystemMetrics( INT index )
  */
 INT WINAPI GetSystemMetricsForDpi( INT index, UINT dpi )
 {
-    return NtUserCallTwoParam( index, dpi, NtUserGetSystemMetricsForDpi );
+    return NtUserGetSystemMetricsForDpi( index, dpi );
 }
 
 
@@ -994,7 +994,7 @@ BOOL WINAPI PhysicalToLogicalPointForPerMonitorDPI( HWND hwnd, POINT *pt )
  */
 HMONITOR WINAPI MonitorFromRect( const RECT *rect, DWORD flags )
 {
-    return UlongToHandle( NtUserCallTwoParam( (LONG_PTR)rect, flags, NtUserMonitorFromRect ));
+    return NtUserMonitorFromRect( rect, flags );
 }
 
 /***********************************************************************
@@ -1045,7 +1045,7 @@ BOOL WINAPI GetMonitorInfoA( HMONITOR monitor, LPMONITORINFO info )
  */
 BOOL WINAPI GetMonitorInfoW( HMONITOR monitor, LPMONITORINFO info )
 {
-    return NtUserCallTwoParam( HandleToUlong(monitor), (ULONG_PTR)info, NtUserGetMonitorInfo );
+    return NtUserGetMonitorInfo( monitor, info );
 }
 
 #ifdef __i386__

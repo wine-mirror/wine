@@ -4762,23 +4762,31 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
 {
     switch(code)
     {
-    case NtUserGetMonitorInfo:
+    case NtUserCallTwoParam_GetMonitorInfo:
         return get_monitor_info( UlongToHandle(arg1), (MONITORINFO *)arg2 );
-    case NtUserGetSystemMetricsForDpi:
+
+    case NtUserCallTwoParam_GetSystemMetricsForDpi:
         return get_system_metrics_for_dpi( arg1, arg2 );
-    case NtUserMonitorFromRect:
+
+    case NtUserCallTwoParam_MonitorFromRect:
         return HandleToUlong( monitor_from_rect( (const RECT *)arg1, arg2, get_thread_dpi() ));
-    case NtUserReplyMessage:
+
+    case NtUserCallTwoParam_ReplyMessage:
         return reply_message_result( arg1, (MSG *)arg2 );
-    case NtUserSetIconParam:
+
+    case NtUserCallTwoParam_SetIconParam:
         return set_icon_param( UlongToHandle(arg1), arg2 );
-    case NtUserUnhookWindowsHook:
+
+    case NtUserCallTwoParam_UnhookWindowsHook:
         return unhook_windows_hook( arg1, (HOOKPROC)arg2 );
+
     /* temporary exports */
     case NtUserAllocWinProc:
         return (UINT_PTR)alloc_winproc( (WNDPROC)arg1, arg2 );
+
     case NtUserGetHandlePtr:
         return (UINT_PTR)get_user_handle_ptr( UlongToHandle(arg1), arg2 );
+
     default:
         FIXME( "invalid code %u\n", code );
         return 0;

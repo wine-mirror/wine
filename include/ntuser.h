@@ -131,20 +131,6 @@ struct win_hook_params
 #define NTUSER_DPI_PER_MONITOR_AWARE_V2   0x00000022
 #define NTUSER_DPI_PER_UNAWARE_GDISCALED  0x40006010
 
-/* NtUserCallTwoParam codes, not compatible with Windows */
-enum
-{
-    NtUserGetMonitorInfo,
-    NtUserGetSystemMetricsForDpi,
-    NtUserMonitorFromRect,
-    NtUserReplyMessage,
-    NtUserSetIconParam,
-    NtUserUnhookWindowsHook,
-    /* temporary exports */
-    NtUserAllocWinProc,
-    NtUserGetHandlePtr,
-};
-
 /* NtUserCallHwnd codes, not compatible with Windows */
 enum
 {
@@ -776,6 +762,52 @@ static inline BOOL NtUserMessageBeep( UINT i )
 static inline UINT NtUserRealizePalette( HDC hdc )
 {
     return NtUserCallOneParam( HandleToUlong(hdc), NtUserCallOneParam_RealizePalette );
+}
+
+/* NtUserCallTwoParam codes, not compatible with Windows */
+enum
+{
+    NtUserCallTwoParam_GetMonitorInfo,
+    NtUserCallTwoParam_GetSystemMetricsForDpi,
+    NtUserCallTwoParam_MonitorFromRect,
+    NtUserCallTwoParam_ReplyMessage,
+    NtUserCallTwoParam_SetIconParam,
+    NtUserCallTwoParam_UnhookWindowsHook,
+    /* temporary exports */
+    NtUserAllocWinProc,
+    NtUserGetHandlePtr,
+};
+
+static inline BOOL NtUserGetMonitorInfo( HMONITOR monitor, MONITORINFO *info )
+{
+    return NtUserCallTwoParam( HandleToUlong(monitor), (ULONG_PTR)info,
+                               NtUserCallTwoParam_GetMonitorInfo );
+}
+
+static inline INT NtUserGetSystemMetricsForDpi( INT index, UINT dpi )
+{
+    return NtUserCallTwoParam( index, dpi, NtUserCallTwoParam_GetSystemMetricsForDpi );
+}
+
+static inline HMONITOR NtUserMonitorFromRect( const RECT *rect, DWORD flags )
+{
+    ULONG ret = NtUserCallTwoParam( (LONG_PTR)rect, flags, NtUserCallTwoParam_MonitorFromRect );
+    return UlongToHandle( ret );
+}
+
+static inline BOOL NtUserReplyMessage( LRESULT result, MSG *msg )
+{
+    return NtUserCallTwoParam( result, (UINT_PTR)msg, NtUserCallTwoParam_ReplyMessage );
+}
+
+static inline UINT_PTR NtUserSetIconParam( HICON icon, ULONG_PTR param )
+{
+    return NtUserCallTwoParam( HandleToUlong(icon), param, NtUserCallTwoParam_SetIconParam );
+}
+
+static inline BOOL NtUserUnhookWindowsHook( INT id, HOOKPROC proc )
+{
+    return NtUserCallTwoParam( id, (UINT_PTR)proc, NtUserCallTwoParam_UnhookWindowsHook );
 }
 
 #endif /* _NTUSER_ */

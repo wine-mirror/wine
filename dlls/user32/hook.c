@@ -379,7 +379,7 @@ HHOOK WINAPI SetWindowsHookExW( INT id, HOOKPROC proc, HINSTANCE inst, DWORD tid
  */
 BOOL WINAPI UnhookWindowsHook( INT id, HOOKPROC proc )
 {
-    return NtUserCallTwoParam( id, (UINT_PTR)proc, NtUserUnhookWindowsHook );
+    return NtUserUnhookWindowsHook( id, proc );
 }
 
 

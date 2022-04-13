@@ -1268,7 +1268,7 @@ BOOL WINAPI User32CallWindowProc( struct win_proc_params *params, ULONG size )
         msg.lParam  = params->lparam;
         dispatch_win_proc_params( params );
 
-        NtUserCallTwoParam( result, (UINT_PTR)&msg, NtUserReplyMessage );
+        NtUserReplyMessage( result, &msg );
         if (buffer != stack_buffer && buffer != params + 1)
             HeapFree( GetProcessHeap(), 0, buffer );
     }

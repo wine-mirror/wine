@@ -694,7 +694,7 @@ BOOL WINAPI SendMessageCallbackW( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
  */
 BOOL WINAPI ReplyMessage( LRESULT result )
 {
-    return NtUserCallTwoParam( result, 0, NtUserReplyMessage );
+    return NtUserReplyMessage( result, NULL );
 }
 
 
