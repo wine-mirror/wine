@@ -564,7 +564,7 @@ static NTSTATUS create_stream(void *args)
     }
     stream->fmt = &fmtex->Format;
 
-    stream->period_us = params->period / 10;
+    stream->period = params->period;
     stream->period_frames = muldiv(params->fmt->nSamplesPerSec, params->period, 10000000);
 
     stream->bufsize_frames = muldiv(params->duration, params->fmt->nSamplesPerSec, 10000000);
@@ -771,7 +771,7 @@ static NTSTATUS get_latency(void *args)
 
     /* pretend we process audio in Period chunks, so max latency includes
      * the period time.  Some native machines add .6666ms in shared mode. */
-    *params->latency = (REFERENCE_TIME)stream->period_us * 10 + 6666;
+    *params->latency = stream->period + 6666;
 
     return oss_unlock_result(stream, &params->result, S_OK);
 }

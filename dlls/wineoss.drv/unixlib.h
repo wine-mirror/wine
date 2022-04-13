@@ -30,8 +30,9 @@ struct oss_stream
 
     BOOL playing, mute;
     UINT64 written_frames, last_pos_frames;
-    UINT32 period_us, period_frames, bufsize_frames, held_frames, tmp_buffer_frames, in_oss_frames;
+    UINT32 period_frames, bufsize_frames, held_frames, tmp_buffer_frames, in_oss_frames;
     UINT32 oss_bufsize_bytes, lcl_offs_frames; /* offs into local_buffer where valid data starts */
+    REFERENCE_TIME period;
 
     BYTE *local_buffer, *tmp_buffer;
     INT32 getbuf_last; /* <0 when using tmp_buffer */

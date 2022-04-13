@@ -1120,7 +1120,7 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
 
     if(!This->timer){
         if(!CreateTimerQueueTimer(&This->timer, g_timer_q,
-                    oss_period_callback, This, 0, stream->period_us / 1000,
+                    oss_period_callback, This, 0, stream->period / 10000,
                     WT_EXECUTEINTIMERTHREAD))
             ERR("Unable to create period timer: %u\n", GetLastError());
     }
