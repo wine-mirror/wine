@@ -40,6 +40,9 @@ typedef struct CPlApplet {
     unsigned		count;		/* number of subprograms */
     HMODULE     	hModule;	/* module of loaded applet */
     APPLET_PROC		proc;		/* entry point address */
+    BOOL                context_activated; /* whether context is activated */
+    HANDLE              context;        /* activation context handle */
+    ULONG_PTR           cookie;         /* activation context cookie */
     struct applet_info  info[1];	/* array of count information */
 } CPlApplet;
 

@@ -53,6 +53,9 @@ void Control_UnloadApplet(CPlApplet* applet)
 
     if (applet->proc) applet->proc(applet->hWnd, CPL_EXIT, 0L, 0L);
     FreeLibrary(applet->hModule);
+    if (applet->context_activated)
+        DeactivateActCtx(0, applet->cookie);
+    ReleaseActCtx(applet->context);
     list_remove( &applet->entry );
     heap_free(applet->cmd);
     heap_free(applet);
@@ -60,14 +63,18 @@ void Control_UnloadApplet(CPlApplet* applet)
 
 CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
 {
+    WCHAR path[MAX_PATH];
     CPlApplet*	applet;
     DWORD len;
     unsigned 	i;
     CPLINFO	info;
     NEWCPLINFOW newinfo;
+    ACTCTXW ctx;
 
     if (!(applet = heap_alloc_zero(sizeof(*applet))))
        return applet;
+
+    applet->context = INVALID_HANDLE_VALUE;
 
     len = ExpandEnvironmentStringsW(cmd, NULL, 0);
     if (len > 0)
@@ -86,6 +93,21 @@ CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
     }
 
     applet->hWnd = hWnd;
+
+    /* Activate context before DllMain() is called */
+    if (SearchPathW(NULL, applet->cmd, NULL, ARRAY_SIZE(path), path, NULL))
+    {
+        memset(&ctx, 0, sizeof(ctx));
+        ctx.cbSize = sizeof(ctx);
+        ctx.lpSource = path;
+        ctx.lpResourceName = MAKEINTRESOURCEW(123);
+        ctx.dwFlags = ACTCTX_FLAG_RESOURCE_NAME_VALID;
+        applet->context = CreateActCtxW(&ctx);
+        if (applet->context != INVALID_HANDLE_VALUE)
+            applet->context_activated = ActivateActCtx(applet->context, &applet->cookie);
+        else
+            TRACE("No manifest at ID 123 in %s\n", wine_dbgstr_w(path));
+    }
 
     if (!(applet->hModule = LoadLibraryW(applet->cmd))) {
         WARN("Cannot load control panel applet %s\n", debugstr_w(applet->cmd));
@@ -177,6 +199,9 @@ CPlApplet*	Control_LoadApplet(HWND hWnd, LPCWSTR cmd, CPanel* panel)
 
  theError:
     FreeLibrary(applet->hModule);
+    if (applet->context_activated)
+        DeactivateActCtx(0, applet->cookie);
+    ReleaseActCtx(applet->context);
     heap_free(applet->cmd);
     heap_free(applet);
     return NULL;
