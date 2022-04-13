@@ -9584,6 +9584,38 @@ static void test_dpi(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_unit_mode(BOOL d3d11)
+{
+    struct d2d1_test_context ctx;
+    ID2D1DeviceContext *context;
+    D2D1_UNIT_MODE unit_mode;
+    HRESULT hr;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    hr = ID2D1RenderTarget_QueryInterface(ctx.rt, &IID_ID2D1DeviceContext, (void **)&context);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    unit_mode = ID2D1DeviceContext_GetUnitMode(context);
+    ok(unit_mode == D2D1_UNIT_MODE_DIPS, "Got unexpected unit mode %#x.\n", unit_mode);
+
+    ID2D1DeviceContext_SetUnitMode(context, 0xdeadbeef);
+    unit_mode = ID2D1DeviceContext_GetUnitMode(context);
+    ok(unit_mode == D2D1_UNIT_MODE_DIPS, "Got unexpected unit mode %#x.\n", unit_mode);
+
+    ID2D1DeviceContext_SetUnitMode(context, D2D1_UNIT_MODE_PIXELS);
+    unit_mode = ID2D1DeviceContext_GetUnitMode(context);
+    todo_wine ok(unit_mode == D2D1_UNIT_MODE_PIXELS, "Got unexpected unit mode %#x.\n", unit_mode);
+
+    ID2D1DeviceContext_SetUnitMode(context, 0xdeadbeef);
+    unit_mode = ID2D1DeviceContext_GetUnitMode(context);
+    todo_wine ok(unit_mode == D2D1_UNIT_MODE_PIXELS, "Got unexpected unit mode %#x.\n", unit_mode);
+
+    ID2D1DeviceContext_Release(context);
+    release_test_context(&ctx);
+}
+
 static void test_wic_bitmap_format(BOOL d3d11)
 {
     IWICImagingFactory *wic_factory;
@@ -10919,6 +10951,7 @@ START_TEST(d2d1)
     queue_test(test_command_list);
     queue_d3d10_test(test_max_bitmap_size);
     queue_test(test_dpi);
+    queue_test(test_unit_mode);
     queue_test(test_wic_bitmap_format);
     queue_d3d10_test(test_math);
     queue_d3d10_test(test_colour_space);
