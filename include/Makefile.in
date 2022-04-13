@@ -435,6 +435,7 @@ SOURCES = \
 	mmreg.h \
 	mmstream.idl \
 	mmsystem.h \
+	mpegtype.idl \
 	mprapi.h \
 	mprerror.h \
 	msacm.h \

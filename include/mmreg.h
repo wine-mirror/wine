@@ -836,6 +836,18 @@ typedef struct {
     GUID SubFormat;
 } WAVEFORMATEXTENSIBLE, *PWAVEFORMATEXTENSIBLE;
 
+typedef struct {
+	WAVEFORMATEX wfx;
+	WORD fwHeadLayer;
+	DWORD dwHeadBitrate;
+	WORD fwHeadMode;
+	WORD fwHeadModeExt;
+	WORD wHeadEmphasis;
+	WORD fwHeadFlags;
+	DWORD dwPTSLow;
+	DWORD dwPTSHigh;
+} MPEG1WAVEFORMAT;
+
 #pragma pack(pop)
 cpp_quote("#endif")
 
