@@ -1318,7 +1318,7 @@ UINT_PTR WINAPI SetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc )
  */
 BOOL WINAPI KillSystemTimer( HWND hwnd, UINT_PTR id )
 {
-    return NtUserCallHwndParam( hwnd, id, NtUserKillSystemTimer );
+    return NtUserKillSystemTimer( hwnd, id );
 }
 
 

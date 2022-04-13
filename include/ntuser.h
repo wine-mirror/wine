@@ -131,40 +131,6 @@ struct win_hook_params
 #define NTUSER_DPI_PER_MONITOR_AWARE_V2   0x00000022
 #define NTUSER_DPI_PER_UNAWARE_GDISCALED  0x40006010
 
-/* NtUserCallHwndParam codes, not compatible with Windows */
-enum
-{
-    NtUserGetClassLongA,
-    NtUserGetClassLongW,
-    NtUserGetClassLongPtrA,
-    NtUserGetClassLongPtrW,
-    NtUserGetClassWord,
-    NtUserGetClientRect,
-    NtUserGetMinMaxInfo,
-    NtUserGetWindowInfo,
-    NtUserGetWindowLongA,
-    NtUserGetWindowLongW,
-    NtUserGetWindowLongPtrA,
-    NtUserGetWindowLongPtrW,
-    NtUserGetWindowPlacement,
-    NtUserGetWindowRect,
-    NtUserGetWindowRelative,
-    NtUserGetWindowThread,
-    NtUserGetWindowWord,
-    NtUserIsChild,
-    NtUserKillSystemTimer,
-    NtUserMirrorRgn,
-    NtUserMonitorFromWindow,
-    NtUserScreenToClient,
-    NtUserSetCaptureWindow,
-    NtUserSetForegroundWindow,
-    NtUserSetWindowPixelFormat,
-    /* temporary exports */
-    NtUserIsWindowDrawable,
-    NtUserSetWindowStyle,
-    NtUserSpyGetMsgName,
-};
-
 /* NtUserMessageCall codes */
 enum
 {
@@ -859,6 +825,165 @@ static inline BOOL NtUserIsWindowUnicode( HWND hwnd )
 static inline BOOL NtUserIsWindowVisible( HWND hwnd )
 {
     return NtUserCallHwnd( hwnd, NtUserCallHwnd_IsWindowVisible );
+}
+
+/* NtUserCallHwndParam codes, not compatible with Windows */
+enum
+{
+    NtUserCallHwndParam_GetClassLongA,
+    NtUserCallHwndParam_GetClassLongW,
+    NtUserCallHwndParam_GetClassLongPtrA,
+    NtUserCallHwndParam_GetClassLongPtrW,
+    NtUserCallHwndParam_GetClassWord,
+    NtUserCallHwndParam_GetClientRect,
+    NtUserCallHwndParam_GetMinMaxInfo,
+    NtUserCallHwndParam_GetWindowInfo,
+    NtUserCallHwndParam_GetWindowLongA,
+    NtUserCallHwndParam_GetWindowLongW,
+    NtUserCallHwndParam_GetWindowLongPtrA,
+    NtUserCallHwndParam_GetWindowLongPtrW,
+    NtUserCallHwndParam_GetWindowPlacement,
+    NtUserCallHwndParam_GetWindowRect,
+    NtUserCallHwndParam_GetWindowRelative,
+    NtUserCallHwndParam_GetWindowThread,
+    NtUserCallHwndParam_GetWindowWord,
+    NtUserCallHwndParam_IsChild,
+    NtUserCallHwndParam_KillSystemTimer,
+    NtUserCallHwndParam_MirrorRgn,
+    NtUserCallHwndParam_MonitorFromWindow,
+    NtUserCallHwndParam_ScreenToClient,
+    NtUserCallHwndParam_SetForegroundWindow,
+    NtUserCallHwndParam_SetWindowPixelFormat,
+    /* temporary exports */
+    NtUserIsWindowDrawable,
+    NtUserSetCaptureWindow,
+    NtUserSetWindowStyle,
+    NtUserSpyGetMsgName,
+};
+
+static inline DWORD NtUserGetClassLongA( HWND hwnd, INT offset )
+{
+    return NtUserCallHwndParam( hwnd, offset, NtUserCallHwndParam_GetClassLongA );
+}
+
+static inline ULONG_PTR NtUserGetClassLongPtrA( HWND hwnd, INT offset )
+{
+    return NtUserCallHwndParam( hwnd, offset, NtUserCallHwndParam_GetClassLongPtrA );
+}
+
+static inline ULONG_PTR NtUserGetClassLongPtrW( HWND hwnd, INT offset )
+{
+    return NtUserCallHwndParam( hwnd, offset, NtUserCallHwndParam_GetClassLongPtrW );
+}
+
+static inline DWORD NtUserGetClassLongW( HWND hwnd, INT offset )
+{
+    return NtUserCallHwndParam( hwnd, offset, NtUserCallHwndParam_GetClassLongW );
+}
+
+static inline WORD NtUserGetClassWord( HWND hwnd, INT offset )
+{
+    return NtUserCallHwndParam( hwnd, offset, NtUserCallHwndParam_GetClassWord );
+}
+
+static inline BOOL NtUserGetClientRect( HWND hwnd, RECT *rect )
+{
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)rect, NtUserCallHwndParam_GetClientRect );
+}
+
+static inline MINMAXINFO NtUserGetMinMaxInfo( HWND hwnd )
+{
+    MINMAXINFO info;
+    NtUserCallHwndParam( hwnd, (UINT_PTR)&info, NtUserCallHwndParam_GetMinMaxInfo );
+    return info;
+}
+
+static inline BOOL NtUserGetWindowInfo( HWND hwnd, WINDOWINFO *info )
+{
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)info, NtUserCallHwndParam_GetWindowInfo );
+}
+
+static inline LONG NtUserGetWindowLongA( HWND hwnd, INT offset )
+{
+    return NtUserCallHwndParam( hwnd, offset, NtUserCallHwndParam_GetWindowLongA );
+}
+
+static inline LONG_PTR NtUserGetWindowLongPtrA( HWND hwnd, INT offset )
+{
+    return NtUserCallHwndParam( hwnd, offset, NtUserCallHwndParam_GetWindowLongPtrA );
+}
+
+static inline LONG_PTR NtUserGetWindowLongPtrW( HWND hwnd, INT offset )
+{
+    return NtUserCallHwndParam( hwnd, offset, NtUserCallHwndParam_GetWindowLongPtrW );
+}
+
+static inline LONG NtUserGetWindowLongW( HWND hwnd, INT offset )
+{
+    return NtUserCallHwndParam( hwnd, offset, NtUserCallHwndParam_GetWindowLongW );
+}
+
+static inline BOOL NtUserGetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
+{
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)wndpl,
+                                NtUserCallHwndParam_GetWindowPlacement );
+}
+
+static inline BOOL NtUserGetWindowRect( HWND hwnd, RECT *rect )
+{
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)rect, NtUserCallHwndParam_GetWindowRect );
+}
+
+static inline HWND NtUserGetWindowRelative( HWND hwnd, UINT rel )
+{
+    return UlongToHandle( NtUserCallHwndParam( hwnd, rel,
+                                               NtUserCallHwndParam_GetWindowRelative ));
+}
+
+static inline DWORD NtUserGetWindowThread( HWND hwnd, DWORD *process )
+{
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)process, NtUserCallHwndParam_GetWindowThread );
+}
+
+static inline WORD NtUserGetWindowWord( HWND hwnd, INT offset )
+{
+    return NtUserCallHwndParam( hwnd, offset, NtUserCallHwndParam_GetWindowWord );
+}
+
+static inline BOOL NtUserIsChild( HWND parent, HWND child )
+{
+    return NtUserCallHwndParam( parent, HandleToUlong(child), NtUserCallHwndParam_IsChild );
+}
+
+static inline BOOL NtUserKillSystemTimer( HWND hwnd, UINT_PTR id )
+{
+    return NtUserCallHwndParam( hwnd, id, NtUserCallHwndParam_KillSystemTimer );
+}
+
+static inline BOOL NtUserMirrorRgn( HWND hwnd, HRGN hrgn )
+{
+    return NtUserCallHwndParam( hwnd, HandleToUlong(hrgn), NtUserCallHwndParam_MirrorRgn );
+}
+
+static inline HMONITOR NtUserMonitorFromWindow( HWND hwnd, DWORD flags )
+{
+    ULONG ret = NtUserCallHwndParam(  hwnd, flags, NtUserCallHwndParam_MonitorFromWindow );
+    return UlongToHandle( ret );
+}
+
+static inline BOOL NtUserScreenToClient( HWND hwnd, POINT *pt )
+{
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)pt, NtUserCallHwndParam_ScreenToClient );
+}
+
+static inline BOOL NtUserSetForegroundWindow( HWND hwnd, BOOL mouse )
+{
+    return NtUserCallHwndParam( hwnd, mouse, NtUserCallHwndParam_SetForegroundWindow );
+}
+
+static inline BOOL NtUserSetWindowPixelFormat( HWND hwnd, int format )
+{
+    return NtUserCallHwndParam( hwnd, format, NtUserCallHwndParam_SetWindowPixelFormat );
 }
 
 #endif /* _NTUSER_ */

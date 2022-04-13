@@ -493,7 +493,7 @@ BOOL WINAPI UnregisterClassW( LPCWSTR className, HINSTANCE hInstance )
  */
 WORD WINAPI GetClassWord( HWND hwnd, INT offset )
 {
-    return NtUserCallHwndParam( hwnd, offset, NtUserGetClassWord );
+    return NtUserGetClassWord( hwnd, offset );
 }
 
 
@@ -502,7 +502,7 @@ WORD WINAPI GetClassWord( HWND hwnd, INT offset )
  */
 DWORD WINAPI GetClassLongW( HWND hwnd, INT offset )
 {
-    return NtUserCallHwndParam( hwnd, offset, NtUserGetClassLongW );
+    return NtUserGetClassLongW( hwnd, offset );
 }
 
 
@@ -512,7 +512,7 @@ DWORD WINAPI GetClassLongW( HWND hwnd, INT offset )
  */
 DWORD WINAPI GetClassLongA( HWND hwnd, INT offset )
 {
-    return NtUserCallHwndParam( hwnd, offset, NtUserGetClassLongA );
+    return NtUserGetClassLongA( hwnd, offset );
 }
 
 
@@ -777,7 +777,7 @@ BOOL16 WINAPI ClassNext16( CLASSENTRY *pClassEntry )
  */
 ULONG_PTR WINAPI GetClassLongPtrA( HWND hwnd, INT offset )
 {
-    return NtUserCallHwndParam( hwnd, offset, NtUserGetClassLongPtrA );
+    return NtUserGetClassLongPtrA( hwnd, offset );
 }
 
 /***********************************************************************
@@ -785,7 +785,7 @@ ULONG_PTR WINAPI GetClassLongPtrA( HWND hwnd, INT offset )
  */
 ULONG_PTR WINAPI GetClassLongPtrW( HWND hwnd, INT offset )
 {
-    return NtUserCallHwndParam( hwnd, offset, NtUserGetClassLongPtrW );
+    return NtUserGetClassLongPtrW( hwnd, offset );
 }
 
 /***********************************************************************

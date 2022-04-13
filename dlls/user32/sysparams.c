@@ -1013,7 +1013,7 @@ HMONITOR WINAPI MonitorFromPoint( POINT pt, DWORD flags )
  */
 HMONITOR WINAPI MonitorFromWindow( HWND hwnd, DWORD flags )
 {
-    return UlongToHandle( NtUserCallHwndParam(  hwnd, flags, NtUserMonitorFromWindow ));
+    return NtUserMonitorFromWindow( hwnd, flags );
 }
 
 /***********************************************************************

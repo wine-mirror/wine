@@ -941,7 +941,7 @@ UINT WINAPI GetDpiForWindow( HWND hwnd )
  */
 WORD WINAPI GetWindowWord( HWND hwnd, INT offset )
 {
-    return NtUserCallHwndParam( hwnd, offset, NtUserGetWindowWord );
+    return NtUserGetWindowWord( hwnd, offset );
 }
 
 
@@ -961,7 +961,7 @@ LONG WINAPI GetWindowLongA( HWND hwnd, INT offset )
         return 0;
 #endif
     default:
-        return NtUserCallHwndParam( hwnd, offset, NtUserGetWindowLongA );
+        return NtUserGetWindowLongA( hwnd, offset );
     }
 }
 
@@ -982,7 +982,7 @@ LONG WINAPI GetWindowLongW( HWND hwnd, INT offset )
         return 0;
 #endif
     default:
-        return NtUserCallHwndParam( hwnd, offset, NtUserGetWindowLongW );
+        return NtUserGetWindowLongW( hwnd, offset );
     }
 }
 
@@ -1244,7 +1244,7 @@ BOOL WINAPI IsWindow( HWND hwnd )
  */
 DWORD WINAPI GetWindowThreadProcessId( HWND hwnd, LPDWORD process )
 {
-    return NtUserCallHwndParam( hwnd, (UINT_PTR)process, NtUserGetWindowThread );
+    return NtUserGetWindowThread( hwnd, process );
 }
 
 
@@ -1262,7 +1262,7 @@ HWND WINAPI GetParent( HWND hwnd )
  */
 BOOL WINAPI IsChild( HWND parent, HWND child )
 {
-    return NtUserCallHwndParam( parent, HandleToUlong(child), NtUserIsChild );
+    return NtUserIsChild( parent, child );
 }
 
 
@@ -1304,7 +1304,7 @@ HWND WINAPI GetTopWindow( HWND hwnd )
  */
 HWND WINAPI GetWindow( HWND hwnd, UINT rel )
 {
-    return UlongToHandle( NtUserCallHwndParam( hwnd, rel, NtUserGetWindowRelative ));
+    return NtUserGetWindowRelative( hwnd, rel );
 }
 
 
@@ -1683,7 +1683,7 @@ UINT WINAPI GetWindowModuleFileNameW( HWND hwnd, LPWSTR module, UINT size )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetWindowInfo( HWND hwnd, WINDOWINFO *info )
 {
-    return NtUserCallHwndParam( hwnd, (UINT_PTR)info, NtUserGetWindowInfo );
+    return NtUserGetWindowInfo( hwnd, info );
 }
 
 /******************************************************************************
@@ -1703,7 +1703,7 @@ BOOL WINAPI SwitchDesktop( HDESK hDesktop)
  */
 BOOL CDECL __wine_set_pixel_format( HWND hwnd, int format )
 {
-    return NtUserCallHwndParam( hwnd, format, NtUserSetWindowPixelFormat );
+    return NtUserSetWindowPixelFormat( hwnd, format );
 }
 
 
@@ -1826,7 +1826,7 @@ BOOL WINAPI SetProcessDefaultLayout( DWORD layout )
  */
 LONG_PTR WINAPI GetWindowLongPtrW( HWND hwnd, INT offset )
 {
-    return NtUserCallHwndParam( hwnd, offset, NtUserGetWindowLongPtrW );
+    return NtUserGetWindowLongPtrW( hwnd, offset );
 }
 
 /*****************************************************************************
@@ -1834,7 +1834,7 @@ LONG_PTR WINAPI GetWindowLongPtrW( HWND hwnd, INT offset )
  */
 LONG_PTR WINAPI GetWindowLongPtrA( HWND hwnd, INT offset )
 {
-    return NtUserCallHwndParam( hwnd, offset, NtUserGetWindowLongPtrA );
+    return NtUserGetWindowLongPtrA( hwnd, offset );
 }
 
 /*****************************************************************************

@@ -64,7 +64,7 @@ void WINAPI SwitchToThisWindow( HWND hwnd, BOOL alt_tab )
  */
 BOOL WINAPI GetWindowRect( HWND hwnd, LPRECT rect )
 {
-    BOOL ret = NtUserCallHwndParam( hwnd, (UINT_PTR)rect, NtUserGetWindowRect );
+    BOOL ret = NtUserGetWindowRect( hwnd, rect );
     if (ret) TRACE( "hwnd %p %s\n", hwnd, wine_dbgstr_rect(rect) );
     return ret;
 }
@@ -105,7 +105,7 @@ int WINAPI GetWindowRgnBox( HWND hwnd, LPRECT prect )
  */
 BOOL WINAPI GetClientRect( HWND hwnd, LPRECT rect )
 {
-    return NtUserCallHwndParam( hwnd, (UINT_PTR)rect, NtUserGetClientRect );
+    return NtUserGetClientRect( hwnd, rect );
 }
 
 
@@ -434,7 +434,7 @@ BOOL WINAPI ClientToScreen( HWND hwnd, LPPOINT lppnt )
  */
 BOOL WINAPI ScreenToClient( HWND hwnd, POINT *pt )
 {
-    return NtUserCallHwndParam( hwnd, (UINT_PTR)pt, NtUserScreenToClient );
+    return NtUserScreenToClient( hwnd, pt );
 }
 
 
@@ -514,18 +514,6 @@ static BOOL get_work_rect( HWND hwnd, RECT *rect )
 }
 
 
-/*******************************************************************
- *           WINPOS_GetMinMaxInfo
- *
- * Get the minimized and maximized information for a window.
- */
-MINMAXINFO WINPOS_GetMinMaxInfo( HWND hwnd )
-{
-    MINMAXINFO info;
-    NtUserCallHwndParam( hwnd, (UINT_PTR)&info, NtUserGetMinMaxInfo );
-    return info;
-}
-
 /***********************************************************************
  *		GetInternalWindowPos (USER32.@)
  */
@@ -594,7 +582,7 @@ static void update_maximized_pos( WND *wnd, RECT *work_rect )
  */
 BOOL WINAPI GetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
 {
-    return NtUserCallHwndParam( hwnd, (UINT_PTR)wndpl, NtUserGetWindowPlacement );
+    return NtUserGetWindowPlacement( hwnd, wndpl );
 }
 
 /* make sure the specified rect is visible on screen */
@@ -849,7 +837,7 @@ LONG WINPOS_HandleWindowPosChanging( HWND hwnd, WINDOWPOS *winpos )
     if (winpos->flags & SWP_NOSIZE) return 0;
     if ((style & WS_THICKFRAME) || ((style & (WS_POPUP | WS_CHILD)) == 0))
     {
-	MINMAXINFO info = WINPOS_GetMinMaxInfo( hwnd );
+	MINMAXINFO info = NtUserGetMinMaxInfo( hwnd );
         winpos->cx = min( winpos->cx, info.ptMaxTrackSize.x );
         winpos->cy = min( winpos->cy, info.ptMaxTrackSize.y );
 	if (!(style & WS_MINIMIZE))
@@ -1081,7 +1069,7 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
 
       /* Get min/max info */
 
-    minmax = WINPOS_GetMinMaxInfo( hwnd );
+    minmax = NtUserGetMinMaxInfo( hwnd );
     WIN_GetRectangles( hwnd, COORDS_PARENT, &sizingRect, NULL );
     origRect = sizingRect;
     if (style & WS_CHILD)

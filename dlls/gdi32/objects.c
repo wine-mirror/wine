@@ -695,7 +695,7 @@ HRGN WINAPI CreatePolygonRgn( const POINT *points, INT count, INT mode )
  */
 BOOL WINAPI MirrorRgn( HWND hwnd, HRGN hrgn )
 {
-    return NtUserCallHwndParam( hwnd, HandleToUlong(hrgn), NtUserMirrorRgn );
+    return NtUserMirrorRgn( hwnd, hrgn );
 }
 
 /***********************************************************************
