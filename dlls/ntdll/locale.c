@@ -153,10 +153,14 @@ static const NLS_LOCALE_DATA *get_locale_data( UINT idx )
 
 void locale_init(void)
 {
+    USHORT utf8[2] = { 0, CP_UTF8 };
     WCHAR locale[LOCALE_NAME_MAX_LENGTH];
     UNICODE_STRING name, value;
     LARGE_INTEGER unused;
+    SIZE_T size;
     LCID system_lcid, user_lcid = 0;
+    UINT ansi_cp = 1252, oem_cp = 437;
+    void *ansi_ptr = utf8, *oem_ptr = utf8, *case_ptr;
     NTSTATUS status;
     struct
     {
@@ -189,10 +193,38 @@ void locale_init(void)
         const NLS_LOCALE_LCNAME_INDEX *entry = find_lcname_entry( locale );
         if (entry) user_lcid = get_locale_data( entry->idx )->idefaultlanguage;
     }
-    if (system_lcid == LOCALE_CUSTOM_UNSPECIFIED) system_lcid = MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
     if (!user_lcid) user_lcid = system_lcid;
     NtSetDefaultUILanguage( user_lcid );
     NtSetDefaultLocale( TRUE, user_lcid );
+
+    if (system_lcid == LOCALE_CUSTOM_UNSPECIFIED)
+    {
+        system_lcid = MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
+        ansi_cp = oem_cp = CP_UTF8;
+    }
+    else
+    {
+        const NLS_LOCALE_LCID_INDEX *entry = find_lcid_entry( system_lcid );
+        ansi_cp = get_locale_data( entry->idx )->idefaultansicodepage;
+        oem_cp = get_locale_data( entry->idx )->idefaultcodepage;
+    }
+
+    NtGetNlsSectionPtr( 10, 0, NULL, &case_ptr, &size );
+    NtCurrentTeb()->Peb->UnicodeCaseTableData = case_ptr;
+    if (ansi_cp != CP_UTF8)
+    {
+        NtGetNlsSectionPtr( 11, ansi_cp, NULL, &ansi_ptr, &size );
+        NtCurrentTeb()->Peb->AnsiCodePageData = ansi_ptr;
+    }
+    if (oem_cp != CP_UTF8)
+    {
+        NtGetNlsSectionPtr( 11, oem_cp, NULL, &oem_ptr, &size );
+        NtCurrentTeb()->Peb->OemCodePageData = oem_ptr;
+    }
+    RtlInitNlsTables( ansi_ptr, oem_ptr, case_ptr, &nls_info );
+    NlsAnsiCodePage     = nls_info.AnsiTableInfo.CodePage;
+    NlsMbCodePageTag    = nls_info.AnsiTableInfo.DBCSCodePage;
+    NlsMbOemCodePageTag = nls_info.OemTableInfo.DBCSCodePage;
 }
 
 

@@ -285,7 +285,6 @@ struct norm_table
 
 static NLSTABLEINFO nls_info;
 static UINT unix_cp = CP_UTF8;
-static UINT mac_cp = 10000;
 static LCID system_lcid;
 static LCID user_lcid;
 static HKEY intl_key;
@@ -1752,7 +1751,7 @@ static void update_locale_registry(void)
  */
 void init_locale( HMODULE module )
 {
-    UINT ansi_cp = 0, oem_cp = 0;
+    USHORT utf8[2] = { 0, CP_UTF8 };
     USHORT *ansi_ptr, *oem_ptr;
     void *sort_ptr;
     WCHAR bufferW[LOCALE_NAME_MAX_LENGTH];
@@ -1781,26 +1780,13 @@ void init_locale( HMODULE module )
     if (GetEnvironmentVariableW( L"WINEUNIXCP", bufferW, ARRAY_SIZE(bufferW) ))
         unix_cp = wcstoul( bufferW, NULL, 10 );
 
-    GetLocaleInfoW( LOCALE_SYSTEM_DEFAULT, LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
-                    (WCHAR *)&ansi_cp, sizeof(ansi_cp)/sizeof(WCHAR) );
-    GetLocaleInfoW( LOCALE_SYSTEM_DEFAULT, LOCALE_IDEFAULTMACCODEPAGE | LOCALE_RETURN_NUMBER,
-                    (WCHAR *)&mac_cp, sizeof(mac_cp)/sizeof(WCHAR) );
-    GetLocaleInfoW( LOCALE_SYSTEM_DEFAULT, LOCALE_IDEFAULTCODEPAGE | LOCALE_RETURN_NUMBER,
-                    (WCHAR *)&oem_cp, sizeof(oem_cp)/sizeof(WCHAR) );
-
     NtGetNlsSectionPtr( 9, 0, NULL, &sort_ptr, &size );
     NtGetNlsSectionPtr( 12, NormalizationC, NULL, (void **)&norm_info, &size );
     init_sortkeys( sort_ptr );
 
-    if (!ansi_cp || NtGetNlsSectionPtr( 11, ansi_cp, NULL, (void **)&ansi_ptr, &size ))
-        NtGetNlsSectionPtr( 11, 1252, NULL, (void **)&ansi_ptr, &size );
-    if (!oem_cp || NtGetNlsSectionPtr( 11, oem_cp, 0, (void **)&oem_ptr, &size ))
-        NtGetNlsSectionPtr( 11, 437, NULL, (void **)&oem_ptr, &size );
-    NtCurrentTeb()->Peb->AnsiCodePageData = ansi_ptr;
-    NtCurrentTeb()->Peb->OemCodePageData = oem_ptr;
-    NtCurrentTeb()->Peb->UnicodeCaseTableData = sort.casemap;
+    ansi_ptr = NtCurrentTeb()->Peb->AnsiCodePageData ? NtCurrentTeb()->Peb->AnsiCodePageData : utf8;
+    oem_ptr = NtCurrentTeb()->Peb->OemCodePageData ? NtCurrentTeb()->Peb->OemCodePageData : utf8;
     RtlInitNlsTables( ansi_ptr, oem_ptr, sort.casemap, &nls_info );
-    RtlResetRtlTranslations( &nls_info );
 
     RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Nls",
                      0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &nls_key, NULL );
@@ -1840,11 +1826,11 @@ void init_locale( HMODULE module )
     if (!RegCreateKeyExW( nls_key, L"Codepage",
                           0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &hkey, NULL ))
     {
-        count = swprintf( bufferW, ARRAY_SIZE(bufferW), L"%03d", ansi_cp );
+        count = swprintf( bufferW, ARRAY_SIZE(bufferW), L"%03d", GetACP() );
         RegSetValueExW( hkey, L"ACP", 0, REG_SZ, (BYTE *)bufferW, (count + 1) * sizeof(WCHAR) );
-        count = swprintf( bufferW, ARRAY_SIZE(bufferW), L"%03d", oem_cp );
+        count = swprintf( bufferW, ARRAY_SIZE(bufferW), L"%03d", GetOEMCP() );
         RegSetValueExW( hkey, L"OEMCP", 0, REG_SZ, (BYTE *)bufferW, (count + 1) * sizeof(WCHAR) );
-        count = swprintf( bufferW, ARRAY_SIZE(bufferW), L"%03d", mac_cp );
+        count = swprintf( bufferW, ARRAY_SIZE(bufferW), L"%03d", system_locale->idefaultmaccodepage );
         RegSetValueExW( hkey, L"MACCP", 0, REG_SZ, (BYTE *)bufferW, (count + 1) * sizeof(WCHAR) );
         RegCloseKey( hkey );
     }
@@ -1989,7 +1975,7 @@ static const CPTABLEINFO *get_codepage_table( UINT codepage )
     case CP_OEMCP:
         return &nls_info.OemTableInfo;
     case CP_MACCP:
-        codepage = mac_cp;
+        codepage = system_locale->idefaultmaccodepage;
         break;
     case CP_THREAD_ACP:
         codepage = get_lcid_codepage( NtCurrentTeb()->CurrentLocale, 0 );
