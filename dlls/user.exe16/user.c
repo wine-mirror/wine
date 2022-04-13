@@ -353,7 +353,7 @@ HICON get_icon_32( HICON16 icon16 )
 /* retrieve the 16-bit counterpart of a 32-bit icon, creating it if needed */
 HICON16 get_icon_16( HICON icon )
 {
-    HICON16 ret = NtUserCallOneParam( HandleToUlong(icon), NtUserGetIconParam );
+    HICON16 ret = NtUserGetIconParam( icon );
 
     if (!ret)
     {

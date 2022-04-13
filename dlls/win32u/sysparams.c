@@ -4670,41 +4670,57 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
 {
     switch(code)
     {
-    case NtUserBeginDeferWindowPos:
+    case NtUserCallOneParam_BeginDeferWindowPos:
         return HandleToUlong( begin_defer_window_pos( arg ));
-    case NtUserCreateCursorIcon:
+
+    case NtUserCallOneParam_CreateCursorIcon:
         return HandleToUlong( alloc_cursoricon_handle( arg ));
-    case NtUserDispatchMessageA:
+
+    case NtUserCallOneParam_DispatchMessageA:
         return dispatch_message( (const MSG *)arg, TRUE );
-    case NtUserEnableDC:
+
+    case NtUserCallOneParam_EnableDC:
         return set_dce_flags( UlongToHandle(arg), DCHF_ENABLEDC );
-    case NtUserEnableThunkLock:
+
+    case NtUserCallOneParam_EnableThunkLock:
         enable_thunk_lock = arg;
         return 0;
-    case NtUserGetClipCursor:
+
+    case NtUserCallOneParam_GetClipCursor:
         return get_clip_cursor( (RECT *)arg );
-    case NtUserGetCursorPos:
+
+    case NtUserCallOneParam_GetCursorPos:
         return get_cursor_pos( (POINT *)arg );
-    case NtUserGetIconParam:
+
+    case NtUserCallOneParam_GetIconParam:
         return get_icon_param( UlongToHandle(arg) );
-    case NtUserGetSysColor:
+
+    case NtUserCallOneParam_GetSysColor:
         return get_sys_color( arg );
-    case NtUserRealizePalette:
+
+    case NtUserCallOneParam_RealizePalette:
         return realize_palette( UlongToHandle(arg) );
-    case NtUserGetPrimaryMonitorRect:
+
+    case NtUserCallOneParam_GetPrimaryMonitorRect:
         *(RECT *)arg = get_primary_monitor_rect( 0 );
         return 1;
-    case NtUserGetSysColorBrush:
+
+    case NtUserCallOneParam_GetSysColorBrush:
         return HandleToUlong( get_sys_color_brush(arg) );
-    case NtUserGetSysColorPen:
+
+    case NtUserCallOneParam_GetSysColorPen:
         return HandleToUlong( get_sys_color_pen(arg) );
-    case NtUserGetSystemMetrics:
+
+    case NtUserCallOneParam_GetSystemMetrics:
         return get_system_metrics( arg );
-    case NtUserGetVirtualScreenRect:
+
+    case NtUserCallOneParam_GetVirtualScreenRect:
         *(RECT *)arg = get_virtual_screen_rect( 0 );
         return 1;
-    case NtUserMessageBeep:
+
+    case NtUserCallOneParam_MessageBeep:
         return message_beep( arg );
+
     /* temporary exports */
     case NtUserCallHooks:
         {
@@ -4712,18 +4728,23 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
             return call_hooks( params->id, params->code, params->wparam, params->lparam,
                                params->next_unicode );
         }
+
     case NtUserFlushWindowSurfaces:
         flush_window_surfaces( arg );
         return 0;
+
     case NtUserGetDeskPattern:
         return get_entry( &entry_DESKPATTERN, 256, (WCHAR *)arg );
+
     case NtUserGetWinProcPtr:
         return (UINT_PTR)get_winproc_ptr( UlongToHandle(arg) );
+
     case NtUserHandleInternalMessage:
         {
             MSG *msg = (MSG *)arg;
             return handle_internal_message( msg->hwnd, msg->message, msg->wParam, msg->lParam );
         }
+
     case NtUserLock:
         switch( arg )
         {
@@ -4731,10 +4752,13 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         case 1: user_unlock(); return 0;
         default: user_check_not_lock(); return 0;
         }
+
     case NtUserSetCallbacks:
         return (UINT_PTR)InterlockedExchangePointer( (void **)&user_callbacks, (void *)arg );
+
     case NtUserSpyGetVKeyName:
         return (UINT_PTR)debugstr_vkey_name( arg );
+
     default:
         FIXME( "invalid code %u\n", code );
         return 0;

@@ -64,16 +64,12 @@ POINT root_to_virtual_screen(INT x, INT y)
 
 RECT get_virtual_screen_rect(void)
 {
-    RECT virtual;
-    NtUserCallOneParam( (UINT_PTR)&virtual, NtUserGetVirtualScreenRect );
-    return virtual;
+    return NtUserGetVirtualScreenRect();
 }
 
 RECT get_primary_monitor_rect(void)
 {
-    RECT primary;
-    NtUserCallOneParam( (UINT_PTR)&primary, NtUserGetPrimaryMonitorRect );
-    return primary;
+    return NtUserGetPrimaryMonitorRect();
 }
 
 /* Get the primary monitor rect from the host system */

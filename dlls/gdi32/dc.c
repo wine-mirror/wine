@@ -2092,7 +2092,7 @@ BOOL WINAPI ScaleWindowExtEx( HDC hdc, INT x_num, INT x_denom,
 
 static UINT WINAPI realize_palette( HDC hdc )
 {
-    return NtUserCallOneParam( HandleToUlong(hdc), NtUserRealizePalette );
+    return NtUserRealizePalette( hdc );
 }
 
 /* Pointers to USER implementation of SelectPalette/RealizePalette */

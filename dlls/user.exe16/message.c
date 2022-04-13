@@ -2615,7 +2615,7 @@ void register_wow_handlers(void)
     callback_table[NtUserCallFreeIcon] = User16CallFreeIcon;
     callback_table[NtUserThunkLock]    = User16ThunkLock;
 
-    NtUserCallOneParam( TRUE, NtUserEnableThunkLock );
+    NtUserEnableThunkLock( TRUE );
 
     UserRegisterWowHandlers( &handlers16, &wow_handlers32 );
 }

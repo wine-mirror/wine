@@ -131,36 +131,6 @@ struct win_hook_params
 #define NTUSER_DPI_PER_MONITOR_AWARE_V2   0x00000022
 #define NTUSER_DPI_PER_UNAWARE_GDISCALED  0x40006010
 
-/* NtUserCallOneParam codes, not compatible with Windows */
-enum
-{
-    NtUserBeginDeferWindowPos,
-    NtUserCreateCursorIcon,
-    NtUserDispatchMessageA,
-    NtUserEnableDC,
-    NtUserEnableThunkLock,
-    NtUserGetClipCursor,
-    NtUserGetCursorPos,
-    NtUserGetIconParam,
-    NtUserGetPrimaryMonitorRect,
-    NtUserGetSysColor,
-    NtUserGetSysColorBrush,
-    NtUserGetSysColorPen,
-    NtUserGetSystemMetrics,
-    NtUserGetVirtualScreenRect,
-    NtUserMessageBeep,
-    NtUserRealizePalette,
-    /* temporary exports */
-    NtUserCallHooks,
-    NtUserFlushWindowSurfaces,
-    NtUserGetDeskPattern,
-    NtUserGetWinProcPtr,
-    NtUserHandleInternalMessage,
-    NtUserLock,
-    NtUserSetCallbacks,
-    NtUserSpyGetVKeyName,
-};
-
 /* NtUserCallTwoParam codes, not compatible with Windows */
 enum
 {
@@ -694,6 +664,120 @@ static inline BOOL NtUserGetInputState(void)
 static inline BOOL NtUserReleaseCapture(void)
 {
     return NtUserCallNoParam( NtUserCallNoParam_ReleaseCapture );
+}
+
+/* NtUserCallOneParam codes, not compatible with Windows */
+enum
+{
+    NtUserCallOneParam_BeginDeferWindowPos,
+    NtUserCallOneParam_CreateCursorIcon,
+    NtUserCallOneParam_DispatchMessageA,
+    NtUserCallOneParam_EnableDC,
+    NtUserCallOneParam_EnableThunkLock,
+    NtUserCallOneParam_GetClipCursor,
+    NtUserCallOneParam_GetCursorPos,
+    NtUserCallOneParam_GetIconParam,
+    NtUserCallOneParam_GetPrimaryMonitorRect,
+    NtUserCallOneParam_GetSysColor,
+    NtUserCallOneParam_GetSysColorBrush,
+    NtUserCallOneParam_GetSysColorPen,
+    NtUserCallOneParam_GetSystemMetrics,
+    NtUserCallOneParam_GetVirtualScreenRect,
+    NtUserCallOneParam_MessageBeep,
+    NtUserCallOneParam_RealizePalette,
+    /* temporary exports */
+    NtUserCallHooks,
+    NtUserFlushWindowSurfaces,
+    NtUserGetDeskPattern,
+    NtUserGetWinProcPtr,
+    NtUserHandleInternalMessage,
+    NtUserLock,
+    NtUserSetCallbacks,
+    NtUserSpyGetVKeyName,
+};
+
+static inline HDWP NtUserBeginDeferWindowPos( INT count )
+{
+    return UlongToHandle( NtUserCallOneParam( count, NtUserCallOneParam_BeginDeferWindowPos ));
+}
+
+static inline HICON NtUserCreateCursorIcon( BOOL is_icon )
+{
+    return UlongToHandle( NtUserCallOneParam( is_icon, NtUserCallOneParam_CreateCursorIcon ));
+}
+
+static inline LRESULT NtUserDispatchMessageA( const MSG *msg )
+{
+    return NtUserCallOneParam( (UINT_PTR)msg, NtUserCallOneParam_DispatchMessageA );
+}
+
+static inline WORD NtUserEnableDC( HDC hdc )
+{
+    return NtUserCallOneParam( HandleToUlong(hdc), NtUserCallOneParam_EnableDC );
+}
+
+static inline void NtUserEnableThunkLock( BOOL enable )
+{
+    NtUserCallOneParam( enable, NtUserCallOneParam_EnableThunkLock );
+}
+
+static inline BOOL NtUserGetClipCursor( RECT *rect )
+{
+    return NtUserCallOneParam( (UINT_PTR)rect, NtUserCallOneParam_GetClipCursor );
+}
+
+static inline BOOL NtUserGetCursorPos( POINT *pt )
+{
+    return NtUserCallOneParam( (UINT_PTR)pt, NtUserCallOneParam_GetCursorPos );
+}
+
+static inline UINT_PTR NtUserGetIconParam( HICON icon )
+{
+    return NtUserCallOneParam( HandleToUlong(icon), NtUserCallOneParam_GetIconParam );
+}
+
+static inline RECT NtUserGetPrimaryMonitorRect(void)
+{
+    RECT primary;
+    NtUserCallOneParam( (UINT_PTR)&primary, NtUserCallOneParam_GetPrimaryMonitorRect );
+    return primary;
+}
+
+static inline COLORREF NtUserGetSysColor( INT index )
+{
+    return NtUserCallOneParam( index, NtUserCallOneParam_GetSysColor );
+}
+
+static inline HBRUSH NtUserGetSysColorBrush( INT index )
+{
+    return UlongToHandle( NtUserCallOneParam( index, NtUserCallOneParam_GetSysColorBrush ));
+}
+
+static inline HPEN NtUserGetSysColorPen( INT index )
+{
+    return UlongToHandle( NtUserCallOneParam( index, NtUserCallOneParam_GetSysColorPen ));
+}
+
+static inline INT NtUserGetSystemMetrics( INT index )
+{
+    return NtUserCallOneParam( index, NtUserCallOneParam_GetSystemMetrics );
+}
+
+static inline RECT NtUserGetVirtualScreenRect(void)
+{
+    RECT virtual;
+    NtUserCallOneParam( (UINT_PTR)&virtual, NtUserCallOneParam_GetVirtualScreenRect );
+    return virtual;
+}
+
+static inline BOOL NtUserMessageBeep( UINT i )
+{
+    return NtUserCallOneParam( i, NtUserCallOneParam_MessageBeep );
+}
+
+static inline UINT NtUserRealizePalette( HDC hdc )
+{
+    return NtUserCallOneParam( HandleToUlong(hdc), NtUserCallOneParam_RealizePalette );
 }
 
 #endif /* _NTUSER_ */

@@ -444,7 +444,7 @@ BOOL WINAPI SystemParametersInfoA( UINT uiAction, UINT uiParam,
  */
 INT WINAPI GetSystemMetrics( INT index )
 {
-    return NtUserCallOneParam( index, NtUserGetSystemMetrics );
+    return NtUserGetSystemMetrics( index );
 }
 
 
@@ -486,7 +486,7 @@ BOOL WINAPI SetDoubleClickTime( UINT interval )
  */
 COLORREF WINAPI DECLSPEC_HOTPATCH GetSysColor( INT index )
 {
-    return NtUserCallOneParam( index, NtUserGetSysColor );
+    return NtUserGetSysColor( index );
 }
 
 
@@ -505,7 +505,7 @@ DWORD_PTR WINAPI SetSysColorsTemp( const COLORREF *pPens, const HBRUSH *pBrushes
  */
 HBRUSH WINAPI DECLSPEC_HOTPATCH GetSysColorBrush( INT index )
 {
-    return UlongToHandle( NtUserCallOneParam( index, NtUserGetSysColorBrush ));
+    return NtUserGetSysColorBrush( index );
 }
 
 
@@ -514,7 +514,7 @@ HBRUSH WINAPI DECLSPEC_HOTPATCH GetSysColorBrush( INT index )
  */
 HPEN SYSCOLOR_GetPen( INT index )
 {
-    return UlongToHandle( NtUserCallOneParam( index, NtUserGetSysColorPen ));
+    return NtUserGetSysColorPen( index );
 }
 
 
@@ -523,7 +523,7 @@ HPEN SYSCOLOR_GetPen( INT index )
  */
 HBRUSH SYSCOLOR_Get55AABrush(void)
 {
-    return UlongToHandle( NtUserCallOneParam( COLOR_55AA_BRUSH, NtUserGetSysColorBrush ));
+    return NtUserGetSysColorBrush( COLOR_55AA_BRUSH );
 }
 
 /***********************************************************************

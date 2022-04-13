@@ -937,7 +937,7 @@ LRESULT WINAPI DECLSPEC_HOTPATCH DispatchMessageA( const MSG* msg )
             return retval;
         }
     }
-    return NtUserCallOneParam( (UINT_PTR)msg, NtUserDispatchMessageA );
+    return NtUserDispatchMessageA( msg );
 }
 
 
@@ -1315,7 +1315,7 @@ BOOL WINAPI SetMessageQueue( INT size )
  */
 BOOL WINAPI MessageBeep( UINT i )
 {
-    return NtUserCallOneParam( i, NtUserMessageBeep );
+    return NtUserMessageBeep( i );
 }
 
 

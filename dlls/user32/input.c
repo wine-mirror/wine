@@ -164,7 +164,7 @@ void WINAPI mouse_event( DWORD dwFlags, DWORD dx, DWORD dy,
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetCursorPos( POINT *pt )
 {
-    return NtUserCallOneParam( (UINT_PTR)pt, NtUserGetCursorPos );
+    return NtUserGetCursorPos( pt );
 }
 
 

@@ -75,7 +75,7 @@ void USER_CheckNotLock(void)
  */
 UINT WINAPI UserRealizePalette( HDC hdc )
 {
-    return NtUserCallOneParam( HandleToUlong(hdc), NtUserRealizePalette );
+    return NtUserRealizePalette( hdc );
 }
 
 

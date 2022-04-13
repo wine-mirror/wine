@@ -964,7 +964,7 @@ static HICON create_cursoricon_object( struct cursoricon_desc *desc, BOOL is_ico
     UNICODE_STRING res_str = { 0 };
     HICON handle;
 
-    if (!(handle = UlongToHandle( NtUserCallOneParam( is_icon, NtUserCreateCursorIcon )))) return 0;
+    if (!(handle = NtUserCreateCursorIcon( is_icon ))) return 0;
 
     if (module) LdrGetDllFullName( module, &module_name );
 
@@ -1610,7 +1610,7 @@ BOOL WINAPI DrawIcon( HDC hdc, INT x, INT y, HICON hIcon )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH GetClipCursor( RECT *rect )
 {
-    return NtUserCallOneParam( (UINT_PTR)rect, NtUserGetClipCursor );
+    return NtUserGetClipCursor( rect );
 }
 
 

@@ -867,7 +867,7 @@ LONG WINPOS_HandleWindowPosChanging( HWND hwnd, WINDOWPOS *winpos )
  */
 HDWP WINAPI BeginDeferWindowPos( INT count )
 {
-    return UlongToHandle( NtUserCallOneParam( count, NtUserBeginDeferWindowPos ));
+    return NtUserBeginDeferWindowPos( count );
 }
 
 
