@@ -5504,7 +5504,10 @@ static void test_form_item(IHTMLElement *elem)
 {
     IHTMLFormElement *form = get_form_iface((IUnknown*)elem);
     IDispatch *disp, *disp2;
-    VARIANT name, index;
+    IEnumVARIANT *enum_var;
+    VARIANT name, index, v;
+    IUnknown *enum_unk;
+    ULONG fetched;
     HRESULT hres;
 
     V_VT(&index) = VT_EMPTY;
@@ -5543,6 +5546,40 @@ static void test_form_item(IHTMLElement *elem)
     ok(iface_cmp((IUnknown*)disp, (IUnknown*)disp2), "disp != disp2\n");
     IDispatch_Release(disp2);
     IDispatch_Release(disp);
+
+    hres = IHTMLFormElement_get__newEnum(form, &enum_unk);
+    ok(hres == S_OK, "_newEnum failed: %08lx\n", hres);
+
+    hres = IUnknown_QueryInterface(enum_unk, &IID_IEnumVARIANT, (void**)&enum_var);
+    IUnknown_Release(enum_unk);
+    ok(hres == S_OK, "Could not get IEnumVARIANT iface: %08lx\n", hres);
+
+    fetched = 0;
+    V_VT(&v) = VT_ERROR;
+    hres = IEnumVARIANT_Next(enum_var, 1, &v, &fetched);
+    ok(hres == S_OK, "Next failed: %08lx\n", hres);
+    ok(fetched == 1, "fetched = %lu\n", fetched);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(&v) == NULL\n");
+    test_disp((IUnknown*)V_DISPATCH(&v), &DIID_DispHTMLTextAreaElement, &CLSID_HTMLTextAreaElement, NULL);
+    VariantClear(&v);
+
+    fetched = 0;
+    V_VT(&v) = VT_ERROR;
+    hres = IEnumVARIANT_Next(enum_var, 1, &v, &fetched);
+    ok(hres == S_OK, "Next failed: %08lx\n", hres);
+    ok(fetched == 1, "fetched = %lu\n", fetched);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(&v) == NULL\n");
+    test_disp((IUnknown*)V_DISPATCH(&v), &DIID_DispHTMLInputElement, &CLSID_HTMLInputElement, NULL);
+    VariantClear(&v);
+
+    fetched = 0;
+    V_VT(&v) = VT_ERROR;
+    hres = IEnumVARIANT_Next(enum_var, 1, &v, &fetched);
+    ok(hres == S_FALSE, "Next failed: %08lx\n", hres);
+    ok(fetched == 0, "fetched = %lu\n", fetched);
+    IEnumVARIANT_Release(enum_var);
 }
 
 static void test_create_option_elem(IHTMLDocument2 *doc)
