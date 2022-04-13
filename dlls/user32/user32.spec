@@ -619,7 +619,7 @@
 @ stdcall ReleaseCapture()
 @ stdcall ReleaseDC(long long) NtUserReleaseDC
 @ stdcall RemoveClipboardFormatListener(long) NtUserRemoveClipboardFormatListener
-@ stdcall RemoveMenu(long long long)
+@ stdcall RemoveMenu(long long long) NtUserRemoveMenu
 @ stdcall RemovePropA(long str)
 @ stdcall RemovePropW(long wstr)
 @ stdcall ReplyMessage(long)

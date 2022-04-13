@@ -30,6 +30,22 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(wow);
 
+typedef struct
+{
+    UINT    cbSize;
+    UINT    fMask;
+    UINT    fType;
+    UINT    fState;
+    UINT    wID;
+    UINT32  hSubMenu;
+    UINT32  hbmpChecked;
+    UINT32  hbmpUnchecked;
+    UINT32  dwItemData;
+    UINT32  dwTypeData;
+    UINT    cch;
+    UINT32  hbmpItem;
+} MENUITEMINFOW32;
+
 NTSTATUS WINAPI wow64_NtUserInitializeClientPfnArrays( UINT *args )
 {
     FIXME( "\n" );
@@ -707,4 +723,51 @@ NTSTATUS WINAPI wow64_NtUserThunkedMenuInfo( UINT *args )
     }
 
     return NtUserThunkedMenuInfo( menu, info32 ? &info : NULL );
+}
+
+NTSTATUS WINAPI wow64_NtUserThunkedMenuItemInfo( UINT *args )
+{
+    HMENU handle = get_handle( &args );
+    UINT pos = get_ulong( &args );
+    UINT flags = get_ulong( &args );
+    UINT method = get_ulong( &args );
+    MENUITEMINFOW32 *info32 = get_ptr( &args );
+    UNICODE_STRING32 *str32 = get_ptr( &args );
+    MENUITEMINFOW info = { sizeof(info) }, *info_ptr;
+    UNICODE_STRING str;
+
+    if (info32)
+    {
+        info.cbSize = sizeof(info);
+        info.fMask = info32->fMask;
+        switch (method)
+        {
+        case NtUserSetMenuItemInfo:
+        case NtUserInsertMenuItem:
+            info.fType = info32->fType;
+            info.fState = info32->fState;
+            info.wID = info32->wID;
+            info.hSubMenu = UlongToHandle( info32->hSubMenu );
+            info.hbmpChecked = UlongToHandle( info32->hbmpUnchecked );
+            info.dwItemData = info32->dwItemData;
+            info.dwTypeData = UlongToPtr( info32->dwTypeData );
+            info.cch = info32->cch;
+            info.hbmpItem = UlongToHandle( info32->hbmpItem );
+            break;
+        }
+        info_ptr = &info;
+    }
+    else info_ptr = NULL;
+
+    return NtUserThunkedMenuItemInfo( handle, pos, flags, method, info_ptr,
+                                      unicode_str_32to64( &str, str32 ));
+}
+
+NTSTATUS WINAPI wow64_NtUserRemoveMenu( UINT *args )
+{
+    HMENU handle = get_handle( &args );
+    UINT id = get_ulong( &args );
+    UINT flags = get_ulong( &args );
+
+    return NtUserRemoveMenu( handle, id, flags );
 }

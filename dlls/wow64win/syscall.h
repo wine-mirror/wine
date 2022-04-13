@@ -143,6 +143,7 @@
     SYSCALL_ENTRY( NtUserOpenInputDesktop ) \
     SYSCALL_ENTRY( NtUserOpenWindowStation ) \
     SYSCALL_ENTRY( NtUserRemoveClipboardFormatListener ) \
+    SYSCALL_ENTRY( NtUserRemoveMenu ) \
     SYSCALL_ENTRY( NtUserRemoveProp ) \
     SYSCALL_ENTRY( NtUserSetKeyboardState ) \
     SYSCALL_ENTRY( NtUserSetMenuContextHelpId ) \
@@ -157,6 +158,7 @@
     SYSCALL_ENTRY( NtUserSetWinEventHook ) \
     SYSCALL_ENTRY( NtUserSetWindowsHookEx ) \
     SYSCALL_ENTRY( NtUserThunkedMenuInfo ) \
+    SYSCALL_ENTRY( NtUserThunkedMenuItemInfo ) \
     SYSCALL_ENTRY( NtUserUnhookWinEvent ) \
     SYSCALL_ENTRY( NtUserUnhookWindowsHookEx ) \
     SYSCALL_ENTRY( NtUserWindowFromDC )

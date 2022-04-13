@@ -1147,7 +1147,7 @@
 @ stub NtUserRemoteStopScreenUpdates
 @ stdcall -syscall NtUserRemoveClipboardFormatListener(long)
 @ stub NtUserRemoveInjectionDevice
-@ stub NtUserRemoveMenu
+@ stdcall -syscall NtUserRemoveMenu(long long long)
 @ stdcall -syscall NtUserRemoveProp(long wstr)
 @ stub NtUserRemoveVisualIdentifier
 @ stub NtUserReportInertia
@@ -1275,7 +1275,7 @@
 @ stdcall NtUserSystemParametersInfoForDpi(long long ptr long long)
 @ stub NtUserTestForInteractiveUser
 @ stdcall -syscall NtUserThunkedMenuInfo(long ptr)
-@ stub NtUserThunkedMenuItemInfo
+@ stdcall -syscall NtUserThunkedMenuItemInfo(long long long long ptr ptr)
 @ stdcall NtUserToUnicodeEx(long long ptr ptr long long long)
 @ stdcall NtUserTrackMouseEvent(ptr)
 @ stub NtUserTrackPopupMenuEx

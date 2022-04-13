@@ -417,7 +417,7 @@ static LRESULT MDI_RefreshMenu(MDICLIENTINFO *ci)
                     if (mii.wID == ci->idFirstChild)
                     {
                         TRACE("removing %u items including separator\n", count - i);
-                        while (RemoveMenu(ci->hWindowMenu, i, MF_BYPOSITION))
+                        while (NtUserRemoveMenu( ci->hWindowMenu, i, MF_BYPOSITION ))
                             /* nothing */;
 
                         break;
@@ -935,7 +935,7 @@ static BOOL MDI_RestoreFrameMenu( HWND frame, HWND hChild )
 		     TRUE,
 		     &menuInfo);
 
-    RemoveMenu(menu,0,MF_BYPOSITION);
+    NtUserRemoveMenu( menu, 0, MF_BYPOSITION );
 
     if ( (menuInfo.fType & MFT_BITMAP)           &&
 	 (LOWORD(menuInfo.dwTypeData)!=0)        &&

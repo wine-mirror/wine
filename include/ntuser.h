@@ -178,6 +178,13 @@ enum
     NtUserSpyExit             = 0x0301,
 };
 
+/* NtUserThunkedMenuItemInfo codes */
+enum
+{
+    NtUserSetMenuItemInfo,
+    NtUserInsertMenuItem,
+};
+
 struct send_message_timeout_params
 {
     UINT flags;
@@ -581,6 +588,7 @@ ATOM    WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *
 BOOL    WINAPI NtUserRegisterHotKey( HWND hwnd, INT id, UINT modifiers, UINT vk );
 INT     WINAPI NtUserReleaseDC( HWND hwnd, HDC hdc );
 BOOL    WINAPI NtUserRemoveClipboardFormatListener( HWND hwnd );
+BOOL    WINAPI NtUserRemoveMenu( HMENU menu, UINT id, UINT flags );
 HANDLE  WINAPI NtUserRemoveProp( HWND hwnd, const WCHAR *str );
 BOOL    WINAPI NtUserScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
                                HRGN ret_update_rgn, RECT *update_rect );
@@ -629,6 +637,8 @@ BOOL    WINAPI NtUserShowWindowAsync( HWND hwnd, INT cmd );
 BOOL    WINAPI NtUserSystemParametersInfo( UINT action, UINT val, void *ptr, UINT winini );
 BOOL    WINAPI NtUserSystemParametersInfoForDpi( UINT action, UINT val, PVOID ptr, UINT winini, UINT dpi );
 BOOL    WINAPI NtUserThunkedMenuInfo( HMENU menu, const MENUINFO *info );
+UINT    WINAPI NtUserThunkedMenuItemInfo( HMENU menu, UINT pos, UINT flags, UINT method,
+                                          MENUITEMINFOW *info, UNICODE_STRING *str );
 INT     WINAPI NtUserToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
                                   WCHAR *str, int size, UINT flags, HKL layout );
 BOOL    WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info );
