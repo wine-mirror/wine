@@ -418,11 +418,6 @@ static void test_refcount(void)
 
     hr = pDirectXFileCreate(&lpDirectXFile);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
-    if (!lpDirectXFile)
-    {
-        skip("Couldn't create DirectXFile interface\n");
-        return;
-    }
 
     ref = get_refcount(lpDirectXFile);
     ok(ref == 1, "Unexpected refcount %ld.\n", ref);
@@ -490,11 +485,6 @@ static void test_CreateEnumObject(void)
 
     hr = pDirectXFileCreate(&lpDirectXFile);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
-    if (!lpDirectXFile)
-    {
-        skip("Couldn't create DirectXFile interface\n");
-        return;
-    }
 
     hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template, sizeof(template) - 1);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
@@ -565,11 +555,6 @@ static void test_file_types(void)
 
     hr = pDirectXFileCreate(&dxfile);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
-    if (!dxfile)
-    {
-        skip("Couldn't create DirectXFile interface\n");
-        return;
-    }
 
     hr = IDirectXFile_RegisterTemplates(dxfile, empty_txt_file, sizeof(empty_txt_file) - 1);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
@@ -639,11 +624,6 @@ static void test_templates(void)
 
     hr = pDirectXFileCreate(&dxfile);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
-    if (!dxfile)
-    {
-        skip("Couldn't create DirectXFile interface\n");
-        return;
-    }
 
     hr = IDirectXFile_RegisterTemplates(dxfile, templates_bad_file_type1, sizeof(templates_bad_file_type1) - 1);
     ok(hr == DXFILEERR_BADFILETYPE, "Unexpected hr %#lx.\n", hr);
@@ -681,11 +661,6 @@ static void test_compressed_files(void)
 
     hr = pDirectXFileCreate(&dxfile);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
-    if (!dxfile)
-    {
-        skip("Couldn't create DirectXFile interface\n");
-        return;
-    }
 
     hr = IDirectXFile_RegisterTemplates(dxfile, compressed_template, sizeof(compressed_template) - 1);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
@@ -728,11 +703,6 @@ static void test_getname(void)
 
     hr = pDirectXFileCreate(&lpDirectXFile);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
-    if (!lpDirectXFile)
-    {
-        skip("Couldn't create DirectXFile interface\n");
-        return;
-    }
 
     hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template, sizeof(template) - 1);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
@@ -816,11 +786,6 @@ static void test_syntax(void)
 
     hr = pDirectXFileCreate(&lpDirectXFile);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
-    if (!lpDirectXFile)
-    {
-        skip("Couldn't create DirectXFile interface\n");
-        return;
-    }
 
     hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template_syntax_array_mixed, sizeof(template_syntax_array_mixed) - 1);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
@@ -929,11 +894,6 @@ static void test_syntax_semicolon_comma(void)
 
     hr = pDirectXFileCreate(&dxfile);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
-    if (!dxfile)
-    {
-        skip("Couldn't create DirectXFile interface\n");
-        return;
-    }
 
     hr = IDirectXFile_RegisterTemplates(dxfile, template_syntax_array_mixed, sizeof(template_syntax_array_mixed) - 1);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
@@ -1029,11 +989,6 @@ static void test_complex_object(void)
 
     hr = pDirectXFileCreate(&dxfile);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
-    if (!dxfile)
-    {
-        skip("Couldn't create DirectXFile interface\n");
-        return;
-    }
 
     hr = IDirectXFile_RegisterTemplates(dxfile, templates_complex_object, sizeof(templates_complex_object) - 1);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
@@ -1063,11 +1018,6 @@ static void test_standard_templates(void)
 
     hr = pDirectXFileCreate(&dxfile);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
-    if (!dxfile)
-    {
-        skip("Couldn't create DirectXFile interface\n");
-        return;
-    }
 
     hr = IDirectXFile_RegisterTemplates(dxfile, D3DRM_XTEMPLATES, D3DRM_XTEMPLATE_BYTES);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
@@ -1088,11 +1038,6 @@ static void test_type_index_color(void)
 
     hr = pDirectXFileCreate(&dxfile);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
-    if (!dxfile)
-    {
-        skip("Couldn't create DirectXFile interface\n");
-        return;
-    }
 
     /* Test that 'indexColor' can be used (same as IndexedColor in standard templates) and is case sensitive */
     hr = IDirectXFile_RegisterTemplates(dxfile, template_using_index_color_lower, sizeof(template_using_index_color_lower) - 1);
@@ -1241,11 +1186,6 @@ static void test_dump(void)
 
     hr = pDirectXFileCreate(&lpDirectXFile);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
-    if(!lpDirectXFile)
-    {
-        skip("Couldn't create DirectXFile interface\n");
-        goto exit;
-    }
 
     hr = IDirectXFile_RegisterTemplates(lpDirectXFile, pvData, cbSize);
     ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
