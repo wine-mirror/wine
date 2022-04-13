@@ -124,7 +124,7 @@ static ULONG WINAPI ddrawex4_AddRef(IDirectDraw4 *iface)
     struct ddrawex *ddrawex = impl_from_IDirectDraw4(iface);
     ULONG refcount = InterlockedIncrement(&ddrawex->ref);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -161,7 +161,7 @@ static ULONG WINAPI ddrawex4_Release(IDirectDraw4 *iface)
     struct ddrawex *ddrawex = impl_from_IDirectDraw4(iface);
     ULONG refcount = InterlockedDecrement(&ddrawex->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -240,7 +240,7 @@ static HRESULT WINAPI ddrawex4_CreateClipper(IDirectDraw4 *iface, DWORD flags,
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw4(iface);
 
-    TRACE("iface %p, flags %#x, clipper %p, outer_unknown %p.\n",
+    TRACE("iface %p, flags %#lx, clipper %p, outer_unknown %p.\n",
             iface, flags, clipper, outer_unknown);
 
     /* This may require a wrapper interface for clippers too which handles this. */
@@ -255,7 +255,7 @@ static HRESULT WINAPI ddrawex3_CreateClipper(IDirectDraw3 *iface, DWORD flags,
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw3(iface);
 
-    TRACE("iface %p, flags %#x, clipper %p, outer_unknown %p.\n",
+    TRACE("iface %p, flags %#lx, clipper %p, outer_unknown %p.\n",
             iface, flags, clipper, outer_unknown);
 
     return ddrawex4_CreateClipper(&ddrawex->IDirectDraw4_iface, flags, clipper, outer_unknown);
@@ -266,7 +266,7 @@ static HRESULT WINAPI ddrawex2_CreateClipper(IDirectDraw2 *iface, DWORD flags,
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw2(iface);
 
-    TRACE("iface %p, flags %#x, clipper %p, outer_unknown %p.\n",
+    TRACE("iface %p, flags %#lx, clipper %p, outer_unknown %p.\n",
             iface, flags, clipper, outer_unknown);
 
     return ddrawex4_CreateClipper(&ddrawex->IDirectDraw4_iface, flags, clipper, outer_unknown);
@@ -277,7 +277,7 @@ static HRESULT WINAPI ddrawex1_CreateClipper(IDirectDraw *iface, DWORD flags,
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw(iface);
 
-    TRACE("iface %p, flags %#x, clipper %p, outer_unknown %p.\n",
+    TRACE("iface %p, flags %#lx, clipper %p, outer_unknown %p.\n",
             iface, flags, clipper, outer_unknown);
 
     return ddrawex4_CreateClipper(&ddrawex->IDirectDraw4_iface, flags, clipper, outer_unknown);
@@ -288,7 +288,7 @@ static HRESULT WINAPI ddrawex4_CreatePalette(IDirectDraw4 *iface, DWORD flags,
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw4(iface);
 
-    TRACE("iface %p, flags %#x. entries %p, palette %p, outer_unknown %p.\n",
+    TRACE("iface %p, flags %#lx, entries %p, palette %p, outer_unknown %p.\n",
             iface, flags, entries, palette, outer_unknown);
 
     /* This may require a wrapper interface for palettes too which handles this. */
@@ -303,7 +303,7 @@ static HRESULT WINAPI ddrawex3_CreatePalette(IDirectDraw3 *iface, DWORD flags,
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw3(iface);
 
-    TRACE("iface %p, flags %#x. entries %p, palette %p, outer_unknown %p.\n",
+    TRACE("iface %p, flags %#lx, entries %p, palette %p, outer_unknown %p.\n",
             iface, flags, entries, palette, outer_unknown);
 
     return ddrawex4_CreatePalette(&ddrawex->IDirectDraw4_iface, flags, entries, palette, outer_unknown);
@@ -314,7 +314,7 @@ static HRESULT WINAPI ddrawex2_CreatePalette(IDirectDraw2 *iface, DWORD flags,
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw2(iface);
 
-    TRACE("iface %p, flags %#x. entries %p, palette %p, outer_unknown %p.\n",
+    TRACE("iface %p, flags %#lx, entries %p, palette %p, outer_unknown %p.\n",
             iface, flags, entries, palette, outer_unknown);
 
     return ddrawex4_CreatePalette(&ddrawex->IDirectDraw4_iface, flags, entries, palette, outer_unknown);
@@ -325,7 +325,7 @@ static HRESULT WINAPI ddrawex1_CreatePalette(IDirectDraw *iface, DWORD flags,
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw(iface);
 
-    TRACE("iface %p, flags %#x. entries %p, palette %p, outer_unknown %p.\n",
+    TRACE("iface %p, flags %#lx, entries %p, palette %p, outer_unknown %p.\n",
             iface, flags, entries, palette, outer_unknown);
 
     return ddrawex4_CreatePalette(&ddrawex->IDirectDraw4_iface, flags, entries, palette, outer_unknown);
@@ -546,7 +546,7 @@ static HRESULT WINAPI ddrawex4_EnumDisplayModes(IDirectDraw4 *iface, DWORD flags
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw4(iface);
 
-    TRACE("iface %p, flags %#x, desc %p, ctx %p, cb %p.\n", iface, flags, desc, ctx, cb);
+    TRACE("iface %p, flags %#lx, desc %p, ctx %p, cb %p.\n", iface, flags, desc, ctx, cb);
 
     return IDirectDraw4_EnumDisplayModes(ddrawex->parent, flags, desc, ctx, cb);
 }
@@ -574,7 +574,7 @@ static HRESULT WINAPI ddrawex3_EnumDisplayModes(IDirectDraw3 *iface, DWORD flags
     struct enummodes_ctx cb_ctx;
     DDSURFACEDESC2 ddsd2;
 
-    TRACE("iface %p, flags %#x, desc %p, ctx %p, cb %p.\n", iface, flags, desc, ctx, cb);
+    TRACE("iface %p, flags %#lx, desc %p, ctx %p, cb %p.\n", iface, flags, desc, ctx, cb);
 
     DDSD_to_DDSD2(desc, &ddsd2);
     cb_ctx.orig_cb = cb;
@@ -587,7 +587,7 @@ static HRESULT WINAPI ddrawex2_EnumDisplayModes(IDirectDraw2 *iface, DWORD flags
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw2(iface);
 
-    TRACE("iface %p, flags %#x, desc %p, ctx %p, cb %p.\n", iface, flags, desc, ctx, cb);
+    TRACE("iface %p, flags %#lx, desc %p, ctx %p, cb %p.\n", iface, flags, desc, ctx, cb);
 
     return ddrawex3_EnumDisplayModes(&ddrawex->IDirectDraw3_iface, flags, desc, ctx, cb);
 }
@@ -597,7 +597,7 @@ static HRESULT WINAPI ddrawex1_EnumDisplayModes(IDirectDraw *iface, DWORD flags,
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw(iface);
 
-    TRACE("iface %p, flags %#x, desc %p, ctx %p, cb %p.\n", iface, flags, desc, ctx, cb);
+    TRACE("iface %p, flags %#lx, desc %p, ctx %p, cb %p.\n", iface, flags, desc, ctx, cb);
 
     return ddrawex3_EnumDisplayModes(&ddrawex->IDirectDraw3_iface, flags, desc, ctx, cb);
 }
@@ -625,7 +625,7 @@ static HRESULT WINAPI ddrawex4_EnumSurfaces(IDirectDraw4 *iface, DWORD flags,
     struct ddrawex *ddrawex = impl_from_IDirectDraw4(iface);
     struct enumsurfaces4_ctx cb_ctx;
 
-    TRACE("iface %p, flags %#x, desc %p, ctx %p, cb %p.\n", iface, flags, desc, ctx, cb);
+    TRACE("iface %p, flags %#lx, desc %p, ctx %p, cb %p.\n", iface, flags, desc, ctx, cb);
 
     cb_ctx.orig_cb = cb;
     cb_ctx.orig_ctx = ctx;
@@ -661,7 +661,7 @@ static HRESULT WINAPI ddrawex3_EnumSurfaces(IDirectDraw3 *iface, DWORD flags,
     DDSURFACEDESC2 ddsd2;
     struct enumsurfaces_ctx cb_ctx;
 
-    TRACE("iface %p, flags %#x, desc %p, ctx %p, cb %p.\n", iface, flags, desc, ctx, cb);
+    TRACE("iface %p, flags %#lx, desc %p, ctx %p, cb %p.\n", iface, flags, desc, ctx, cb);
 
     DDSD_to_DDSD2(desc, &ddsd2);
     cb_ctx.orig_cb = cb;
@@ -674,7 +674,7 @@ static HRESULT WINAPI ddrawex2_EnumSurfaces(IDirectDraw2 *iface, DWORD flags,
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw2(iface);
 
-    TRACE("iface %p, flags %#x, desc %p, ctx %p, cb %p.\n", iface, flags, desc, ctx, cb);
+    TRACE("iface %p, flags %#lx, desc %p, ctx %p, cb %p.\n", iface, flags, desc, ctx, cb);
 
     return ddrawex3_EnumSurfaces(&ddrawex->IDirectDraw3_iface, flags, desc, ctx, cb);
 }
@@ -684,7 +684,7 @@ static HRESULT WINAPI ddrawex1_EnumSurfaces(IDirectDraw *iface, DWORD flags,
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw(iface);
 
-    TRACE("iface %p, flags %#x, desc %p, ctx %p, cb %p.\n", iface, flags, desc, ctx, cb);
+    TRACE("iface %p, flags %#lx, desc %p, ctx %p, cb %p.\n", iface, flags, desc, ctx, cb);
 
     return ddrawex3_EnumSurfaces(&ddrawex->IDirectDraw3_iface, flags, desc, ctx, cb);
 }
@@ -1079,7 +1079,7 @@ static HRESULT WINAPI ddrawex4_SetCooperativeLevel(IDirectDraw4 *iface, HWND win
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw4(iface);
 
-    TRACE("iface %p, window %p, flags %#x.\n", iface, window, flags);
+    TRACE("iface %p, window %p, flags %#lx.\n", iface, window, flags);
 
     return IDirectDraw4_SetCooperativeLevel(ddrawex->parent, window, flags);
 }
@@ -1088,7 +1088,7 @@ static HRESULT WINAPI ddrawex3_SetCooperativeLevel(IDirectDraw3 *iface, HWND win
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw3(iface);
 
-    TRACE("iface %p, window %p, flags %#x.\n", iface, window, flags);
+    TRACE("iface %p, window %p, flags %#lx.\n", iface, window, flags);
 
     return ddrawex4_SetCooperativeLevel(&ddrawex->IDirectDraw4_iface, window, flags);
 }
@@ -1097,7 +1097,7 @@ static HRESULT WINAPI ddrawex2_SetCooperativeLevel(IDirectDraw2 *iface, HWND win
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw2(iface);
 
-    TRACE("iface %p, window %p, flags %#x.\n", iface, window, flags);
+    TRACE("iface %p, window %p, flags %#lx.\n", iface, window, flags);
 
     return ddrawex4_SetCooperativeLevel(&ddrawex->IDirectDraw4_iface, window, flags);
 }
@@ -1106,7 +1106,7 @@ static HRESULT WINAPI ddrawex1_SetCooperativeLevel(IDirectDraw *iface, HWND wind
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw(iface);
 
-    TRACE("iface %p, window %p, flags %#x.\n", iface, window, flags);
+    TRACE("iface %p, window %p, flags %#lx.\n", iface, window, flags);
 
     return ddrawex4_SetCooperativeLevel(&ddrawex->IDirectDraw4_iface, window, flags);
 }
@@ -1116,7 +1116,7 @@ static HRESULT WINAPI ddrawex4_SetDisplayMode(IDirectDraw4 *iface, DWORD width,
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw4(iface);
 
-    TRACE("iface %p, width %u, height %u, bpp %u, refresh_rate %u, flags %#x.\n",
+    TRACE("iface %p, width %lu, height %lu, bpp %lu, refresh_rate %lu, flags %#lx.\n",
             iface, width, height, bpp, refresh_rate, flags);
 
     return IDirectDraw4_SetDisplayMode(ddrawex->parent, width, height, bpp, refresh_rate, flags);
@@ -1127,7 +1127,7 @@ static HRESULT WINAPI ddrawex3_SetDisplayMode(IDirectDraw3 *iface, DWORD width,
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw3(iface);
 
-    TRACE("iface %p, width %u, height %u, bpp %u, refresh_rate %u, flags %#x.\n",
+    TRACE("iface %p, width %lu, height %lu, bpp %lu, refresh_rate %lu, flags %#lx.\n",
             iface, width, height, bpp, refresh_rate, flags);
 
     return ddrawex4_SetDisplayMode(&ddrawex->IDirectDraw4_iface, width, height, bpp, refresh_rate, flags);
@@ -1138,7 +1138,7 @@ static HRESULT WINAPI ddrawex2_SetDisplayMode(IDirectDraw2 *iface, DWORD width,
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw2(iface);
 
-    TRACE("iface %p, width %u, height %u, bpp %u, refresh_rate %u, flags %#x.\n",
+    TRACE("iface %p, width %lu, height %lu, bpp %lu, refresh_rate %lu, flags %#lx.\n",
             iface, width, height, bpp, refresh_rate, flags);
 
     return ddrawex4_SetDisplayMode(&ddrawex->IDirectDraw4_iface, width, height, bpp, refresh_rate, flags);
@@ -1149,7 +1149,7 @@ static HRESULT WINAPI ddrawex1_SetDisplayMode(IDirectDraw *iface, DWORD width,
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw(iface);
 
-    TRACE("iface %p, width %u, height %u, bpp %u.\n", iface, width, height, bpp);
+    TRACE("iface %p, width %lu, height %lu, bpp %lu.\n", iface, width, height, bpp);
 
     return ddrawex4_SetDisplayMode(&ddrawex->IDirectDraw4_iface, width, height, bpp, 0, 0);
 }
@@ -1158,7 +1158,7 @@ static HRESULT WINAPI ddrawex4_WaitForVerticalBlank(IDirectDraw4 *iface, DWORD f
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw4(iface);
 
-    TRACE("iface %p, flags %#x, event %p.\n", iface, flags, event);
+    TRACE("iface %p, flags %#lx, event %p.\n", iface, flags, event);
 
     return IDirectDraw4_WaitForVerticalBlank(ddrawex->parent, flags, event);
 }
@@ -1167,7 +1167,7 @@ static HRESULT WINAPI ddrawex3_WaitForVerticalBlank(IDirectDraw3 *iface, DWORD f
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw3(iface);
 
-    TRACE("iface %p, flags %#x, event %p.\n", iface, flags, event);
+    TRACE("iface %p, flags %#lx, event %p.\n", iface, flags, event);
 
     return ddrawex4_WaitForVerticalBlank(&ddrawex->IDirectDraw4_iface, flags, event);
 }
@@ -1176,7 +1176,7 @@ static HRESULT WINAPI ddrawex2_WaitForVerticalBlank(IDirectDraw2 *iface, DWORD f
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw2(iface);
 
-    TRACE("iface %p, flags %#x, event %p.\n", iface, flags, event);
+    TRACE("iface %p, flags %#lx, event %p.\n", iface, flags, event);
 
     return ddrawex4_WaitForVerticalBlank(&ddrawex->IDirectDraw4_iface, flags, event);
 }
@@ -1185,7 +1185,7 @@ static HRESULT WINAPI ddrawex1_WaitForVerticalBlank(IDirectDraw *iface, DWORD fl
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw(iface);
 
-    TRACE("iface %p, flags %#x, event %p.\n", iface, flags, event);
+    TRACE("iface %p, flags %#lx, event %p.\n", iface, flags, event);
 
     return ddrawex4_WaitForVerticalBlank(&ddrawex->IDirectDraw4_iface, flags, event);
 }
@@ -1292,7 +1292,7 @@ static HRESULT WINAPI ddrawex4_GetDeviceIdentifier(IDirectDraw4 *iface,
 {
     struct ddrawex *ddrawex = impl_from_IDirectDraw4(iface);
 
-    TRACE("iface %p, identifier %p, flags %#x.\n", iface, identifier, flags);
+    TRACE("iface %p, identifier %p, flags %#lx.\n", iface, identifier, flags);
 
     return IDirectDraw4_GetDeviceIdentifier(ddrawex->parent, identifier, flags);
 }
@@ -1420,7 +1420,7 @@ HRESULT WINAPI ddrawex_factory_CreateDirectDraw(IDirectDrawFactory *iface, GUID 
     struct ddrawex *object;
     HRESULT hr;
 
-    TRACE("iface %p, guid %s, window %p, coop_level %#x, reserved %#x, outer_unknown %p, ddraw %p.\n",
+    TRACE("iface %p, guid %s, window %p, coop_level %#lx, reserved %#lx, outer_unknown %p, ddraw %p.\n",
             iface, debugstr_guid(guid), window, coop_level, reserved, outer_unknown, ddraw);
 
     if (outer_unknown)

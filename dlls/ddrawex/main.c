@@ -69,7 +69,7 @@ static ULONG WINAPI ddrawex_class_factory_AddRef(IClassFactory *iface)
     struct ddrawex_class_factory *factory = impl_from_IClassFactory(iface);
     ULONG refcount = InterlockedIncrement(&factory->ref);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -79,7 +79,7 @@ static ULONG WINAPI ddrawex_class_factory_Release(IClassFactory *iface)
     struct ddrawex_class_factory *factory = impl_from_IClassFactory(iface);
     ULONG refcount = InterlockedDecrement(&factory->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
         heap_free(factory);
@@ -148,7 +148,7 @@ static ULONG WINAPI ddrawex_factory_AddRef(IDirectDrawFactory *iface)
     struct ddrawex_factory *factory = impl_from_IDirectDrawFactory(iface);
     ULONG refcount = InterlockedIncrement(&factory->ref);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -158,7 +158,7 @@ static ULONG WINAPI ddrawex_factory_Release(IDirectDrawFactory *iface)
     struct ddrawex_factory *factory = impl_from_IDirectDrawFactory(iface);
     ULONG refcount = InterlockedDecrement(&factory->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
         heap_free(factory);
