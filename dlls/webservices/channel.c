@@ -1415,7 +1415,7 @@ static enum known_encoding map_channel_encoding( struct channel *channel )
 }
 
 #define FRAME_VERSION_MAJOR 1
-#define FRAME_VERSION_MINOR 1
+#define FRAME_VERSION_MINOR 0
 
 static HRESULT write_preamble( struct channel *channel )
 {
