@@ -7578,6 +7578,94 @@ static HRESULT create_filters_collection(compat_mode_t compat_mode, IHTMLFilters
     return S_OK;
 }
 
+static HRESULT get_attr_dispid_by_idx(HTMLAttributeCollection *This, LONG *idx, DISPID *dispid)
+{
+    IDispatchEx *dispex = &This->elem->node.event_target.dispex.IDispatchEx_iface;
+    DISPID id = DISPID_STARTENUM;
+    LONG len = -1;
+    HRESULT hres;
+
+    FIXME("filter non-enumerable attributes out\n");
+
+    while(1) {
+        hres = IDispatchEx_GetNextDispID(dispex, fdexEnumAll, id, &id);
+        if(FAILED(hres))
+            return hres;
+        else if(hres == S_FALSE)
+            break;
+
+        len++;
+        if(len == *idx)
+            break;
+    }
+
+    if(dispid) {
+        *dispid = id;
+        return *idx==len ? S_OK : DISP_E_UNKNOWNNAME;
+    }
+
+    *idx = len+1;
+    return S_OK;
+}
+
+static inline HRESULT get_attr_dispid_by_name(HTMLAttributeCollection *This, BSTR name, DISPID *id)
+{
+    HRESULT hres;
+
+    if(name[0]>='0' && name[0]<='9') {
+        WCHAR *end_ptr;
+        LONG idx;
+
+        idx = wcstoul(name, &end_ptr, 10);
+        if(!*end_ptr) {
+            hres = get_attr_dispid_by_idx(This, &idx, id);
+            if(SUCCEEDED(hres))
+                return hres;
+        }
+    }
+
+    if(!This->elem) {
+        WARN("NULL elem\n");
+        return E_UNEXPECTED;
+    }
+
+    hres = IDispatchEx_GetDispID(&This->elem->node.event_target.dispex.IDispatchEx_iface,
+            name, fdexNameCaseInsensitive, id);
+    return hres;
+}
+
+static inline HRESULT get_domattr(HTMLAttributeCollection *This, DISPID id, LONG *list_pos, HTMLDOMAttribute **attr)
+{
+    HTMLDOMAttribute *iter;
+    LONG pos = 0;
+    HRESULT hres;
+
+    *attr = NULL;
+    LIST_FOR_EACH_ENTRY(iter, &This->attrs, HTMLDOMAttribute, entry) {
+        if(iter->dispid == id) {
+            *attr = iter;
+            break;
+        }
+        pos++;
+    }
+
+    if(!*attr) {
+        if(!This->elem) {
+            WARN("NULL elem\n");
+            return E_UNEXPECTED;
+        }
+
+        hres = HTMLDOMAttribute_Create(NULL, This->elem, id, dispex_compat_mode(&This->elem->node.event_target.dispex), attr);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    IHTMLDOMAttribute_AddRef(&(*attr)->IHTMLDOMAttribute_iface);
+    if(list_pos)
+        *list_pos = pos;
+    return S_OK;
+}
+
 /* interface IHTMLAttributeCollection */
 static inline HTMLAttributeCollection *impl_from_IHTMLAttributeCollection(IHTMLAttributeCollection *iface)
 {
@@ -7670,94 +7758,6 @@ static HRESULT WINAPI HTMLAttributeCollection_Invoke(IHTMLAttributeCollection *i
     HTMLAttributeCollection *This = impl_from_IHTMLAttributeCollection(iface);
     return IDispatchEx_Invoke(&This->dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
             wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
-}
-
-static HRESULT get_attr_dispid_by_idx(HTMLAttributeCollection *This, LONG *idx, DISPID *dispid)
-{
-    IDispatchEx *dispex = &This->elem->node.event_target.dispex.IDispatchEx_iface;
-    DISPID id = DISPID_STARTENUM;
-    LONG len = -1;
-    HRESULT hres;
-
-    FIXME("filter non-enumerable attributes out\n");
-
-    while(1) {
-        hres = IDispatchEx_GetNextDispID(dispex, fdexEnumAll, id, &id);
-        if(FAILED(hres))
-            return hres;
-        else if(hres == S_FALSE)
-            break;
-
-        len++;
-        if(len == *idx)
-            break;
-    }
-
-    if(dispid) {
-        *dispid = id;
-        return *idx==len ? S_OK : DISP_E_UNKNOWNNAME;
-    }
-
-    *idx = len+1;
-    return S_OK;
-}
-
-static inline HRESULT get_attr_dispid_by_name(HTMLAttributeCollection *This, BSTR name, DISPID *id)
-{
-    HRESULT hres;
-
-    if(name[0]>='0' && name[0]<='9') {
-        WCHAR *end_ptr;
-        LONG idx;
-
-        idx = wcstoul(name, &end_ptr, 10);
-        if(!*end_ptr) {
-            hres = get_attr_dispid_by_idx(This, &idx, id);
-            if(SUCCEEDED(hres))
-                return hres;
-        }
-    }
-
-    if(!This->elem) {
-        WARN("NULL elem\n");
-        return E_UNEXPECTED;
-    }
-
-    hres = IDispatchEx_GetDispID(&This->elem->node.event_target.dispex.IDispatchEx_iface,
-            name, fdexNameCaseInsensitive, id);
-    return hres;
-}
-
-static inline HRESULT get_domattr(HTMLAttributeCollection *This, DISPID id, LONG *list_pos, HTMLDOMAttribute **attr)
-{
-    HTMLDOMAttribute *iter;
-    LONG pos = 0;
-    HRESULT hres;
-
-    *attr = NULL;
-    LIST_FOR_EACH_ENTRY(iter, &This->attrs, HTMLDOMAttribute, entry) {
-        if(iter->dispid == id) {
-            *attr = iter;
-            break;
-        }
-        pos++;
-    }
-
-    if(!*attr) {
-        if(!This->elem) {
-            WARN("NULL elem\n");
-            return E_UNEXPECTED;
-        }
-
-        hres = HTMLDOMAttribute_Create(NULL, This->elem, id, dispex_compat_mode(&This->elem->node.event_target.dispex), attr);
-        if(FAILED(hres))
-            return hres;
-    }
-
-    IHTMLDOMAttribute_AddRef(&(*attr)->IHTMLDOMAttribute_iface);
-    if(list_pos)
-        *list_pos = pos;
-    return S_OK;
 }
 
 static HRESULT WINAPI HTMLAttributeCollection_get_length(IHTMLAttributeCollection *iface, LONG *p)
