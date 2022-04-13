@@ -806,7 +806,7 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
         REFERENCE_TIME *latency)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    struct oss_stream *stream = This->stream;
+    struct get_latency_params params;
 
     TRACE("(%p)->(%p)\n", This, latency);
 
@@ -816,15 +816,11 @@ static HRESULT WINAPI AudioClient_GetStreamLatency(IAudioClient3 *iface,
     if(!This->stream)
         return AUDCLNT_E_NOT_INITIALIZED;
 
-    oss_lock(stream);
+    params.stream = This->stream;
+    params.latency = latency;
+    OSS_CALL(get_latency, &params);
 
-    /* pretend we process audio in Period chunks, so max latency includes
-     * the period time.  Some native machines add .6666ms in shared mode. */
-    *latency = (REFERENCE_TIME)stream->period_us * 10 + 6666;
-
-    oss_unlock(stream);
-
-    return S_OK;
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_GetCurrentPadding(IAudioClient3 *iface,

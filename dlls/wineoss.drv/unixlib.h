@@ -113,6 +113,13 @@ struct get_buffer_size_params
     UINT32 *size;
 };
 
+struct get_latency_params
+{
+    struct oss_stream *stream;
+    HRESULT result;
+    REFERENCE_TIME *latency;
+};
+
 enum oss_funcs
 {
     oss_test_connect,
@@ -122,6 +129,7 @@ enum oss_funcs
     oss_is_format_supported,
     oss_get_mix_format,
     oss_get_buffer_size,
+    oss_get_latency,
 };
 
 extern unixlib_handle_t oss_handle;

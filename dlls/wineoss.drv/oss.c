@@ -762,6 +762,20 @@ static NTSTATUS get_buffer_size(void *args)
     return oss_unlock_result(stream, &params->result, S_OK);
 }
 
+static NTSTATUS get_latency(void *args)
+{
+    struct get_latency_params *params = args;
+    struct oss_stream *stream = params->stream;
+
+    oss_lock(stream);
+
+    /* pretend we process audio in Period chunks, so max latency includes
+     * the period time.  Some native machines add .6666ms in shared mode. */
+    *params->latency = (REFERENCE_TIME)stream->period_us * 10 + 6666;
+
+    return oss_unlock_result(stream, &params->result, S_OK);
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     test_connect,
@@ -771,4 +785,5 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     is_format_supported,
     get_mix_format,
     get_buffer_size,
+    get_latency,
 };
