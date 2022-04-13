@@ -5229,8 +5229,11 @@ static void test_elem_bounding_client_rect(IUnknown *unk)
 {
     IHTMLRectCollection *rects;
     IHTMLRect *rect, *rect2;
+    IEnumVARIANT *enum_var;
     IHTMLElement2 *elem2;
+    IUnknown *enum_unk;
     VARIANT v, index;
+    ULONG fetched;
     LONG l;
     HRESULT hres;
 
@@ -5284,6 +5287,30 @@ static void test_elem_bounding_client_rect(IUnknown *unk)
     ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
     test_disp((IUnknown*)V_DISPATCH(&v), &IID_IHTMLRect, NULL, L"[object]");
     VariantClear(&v);
+
+    hres = IHTMLRectCollection_get__newEnum(rects, &enum_unk);
+    ok(hres == S_OK, "_newEnum failed: %08lx\n", hres);
+
+    hres = IUnknown_QueryInterface(enum_unk, &IID_IEnumVARIANT, (void**)&enum_var);
+    IUnknown_Release(enum_unk);
+    ok(hres == S_OK, "Could not get IEnumVARIANT iface: %08lx\n", hres);
+
+    fetched = 0;
+    V_VT(&v) = VT_ERROR;
+    hres = IEnumVARIANT_Next(enum_var, 1, &v, &fetched);
+    ok(hres == S_OK, "Next failed: %08lx\n", hres);
+    ok(fetched == 1, "fetched = %lu\n", fetched);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_DISPATCH(&v) != NULL, "V_DISPATCH(&v) == NULL\n");
+    test_disp((IUnknown*)V_DISPATCH(&v), &IID_IHTMLRect, NULL, L"[object]");
+    VariantClear(&v);
+
+    fetched = 0;
+    V_VT(&v) = VT_ERROR;
+    hres = IEnumVARIANT_Next(enum_var, 1, &v, &fetched);
+    ok(hres == S_FALSE, "Next failed: %08lx\n", hres);
+    ok(fetched == 0, "fetched = %lu\n", fetched);
+    IEnumVARIANT_Release(enum_var);
 
     IHTMLRectCollection_Release(rects);
     IHTMLElement2_Release(elem2);
