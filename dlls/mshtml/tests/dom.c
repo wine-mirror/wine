@@ -8577,7 +8577,10 @@ static void test_stylesheet(IDispatch *disp)
 static void test_stylesheets(IHTMLDocument2 *doc)
 {
     IHTMLStyleSheetsCollection *col = NULL;
+    IEnumVARIANT *enum_var;
+    IUnknown *enum_unk;
     VARIANT idx, res;
+    ULONG fetched;
     LONG len = 0;
     HRESULT hres;
 
@@ -8610,6 +8613,30 @@ static void test_stylesheets(IHTMLDocument2 *doc)
     ok(hres == E_INVALIDARG, "item failed: %08lx, expected E_INVALIDARG\n", hres);
     ok(V_VT(&res) == VT_EMPTY, "V_VT(res) = %d\n", V_VT(&res));
     VariantClear(&res);
+
+    hres = IHTMLStyleSheetsCollection_get__newEnum(col, &enum_unk);
+    ok(hres == S_OK, "_newEnum failed: %08lx\n", hres);
+
+    hres = IUnknown_QueryInterface(enum_unk, &IID_IEnumVARIANT, (void**)&enum_var);
+    IUnknown_Release(enum_unk);
+    ok(hres == S_OK, "Could not get IEnumVARIANT iface: %08lx\n", hres);
+
+    fetched = 0;
+    V_VT(&res) = VT_ERROR;
+    hres = IEnumVARIANT_Next(enum_var, 1, &res, &fetched);
+    ok(hres == S_OK, "Next failed: %08lx\n", hres);
+    ok(fetched == 1, "fetched = %lu\n", fetched);
+    ok(V_VT(&res) == VT_DISPATCH, "V_VT(res) = %d\n", V_VT(&res));
+    ok(V_DISPATCH(&res) != NULL, "V_DISPATCH(&res) == NULL\n");
+    test_disp2((IUnknown*)V_DISPATCH(&res), &DIID_DispHTMLStyleSheet, &IID_IHTMLStyleSheet, NULL, L"[object]");
+    VariantClear(&res);
+
+    fetched = 0;
+    V_VT(&res) = VT_ERROR;
+    hres = IEnumVARIANT_Next(enum_var, 1, &res, &fetched);
+    ok(hres == S_FALSE, "Next failed: %08lx\n", hres);
+    ok(fetched == 0, "fetched = %lu\n", fetched);
+    IEnumVARIANT_Release(enum_var);
 
     IHTMLStyleSheetsCollection_Release(col);
 }
