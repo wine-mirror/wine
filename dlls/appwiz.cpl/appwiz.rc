@@ -126,5 +126,8 @@ FONT 8, "MS Shell Dlg"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
+/* @makedep: appwiz.manifest */
+123 RT_MANIFEST appwiz.manifest
+
 /* @makedep: appwiz.ico */
 ICO_MAIN ICON "appwiz.ico"
