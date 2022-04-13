@@ -416,7 +416,7 @@ static void test_refcount(void)
     }
 
     hr = pDirectXFileCreate(&lpDirectXFile);
-    ok(hr == DXFILE_OK, "DirectXFileCreate: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     if (!lpDirectXFile)
     {
         skip("Couldn't create DirectXFile interface\n");
@@ -424,50 +424,50 @@ static void test_refcount(void)
     }
 
     ref = getRefcount( (IUnknown *) lpDirectXFile);
-    ok(ref == 1, "Got refcount %d, expected 1\n", ref);
+    ok(ref == 1, "Unexpected refcount %ld.\n", ref);
     ref = IDirectXFile_AddRef(lpDirectXFile);
-    ok(ref == 2, "Got refcount %d, expected 2\n", ref);
+    ok(ref == 2, "Unexpected refcount %ld.\n", ref);
     ref = IDirectXFile_Release(lpDirectXFile);
-    ok(ref == 1, "Got refcount %d, expected 1\n", ref);
+    ok(ref == 1, "Unexpected refcount %ld.\n", ref);
 
     hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template, sizeof(template) - 1);
-    ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     dxflm.lpMemory = &object;
     dxflm.dSize = sizeof(object) - 1;
     hr = IDirectXFile_CreateEnumObject(lpDirectXFile, &dxflm, DXFILELOAD_FROMMEMORY, &lpdxfeo);
-    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     ref = getRefcount( (IUnknown *) lpDirectXFile);
-    ok(ref == 1, "Got refcount %d, expected 1\n", ref);
+    ok(ref == 1, "Unexpected refcount %ld.\n", ref);
     ref = getRefcount( (IUnknown *) lpdxfeo);
-    ok(ref == 1, "Got refcount %d, expected 1\n", ref);
+    ok(ref == 1, "Unexpected refcount %ld.\n", ref);
 
     hr = IDirectXFileEnumObject_GetNextDataObject(lpdxfeo, &lpdxfd);
-    ok(hr == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     ref = getRefcount( (IUnknown *) lpDirectXFile);
-    ok(ref == 1, "Got refcount %d, expected 1\n", ref);
+    ok(ref == 1, "Unexpected refcount %ld.\n", ref);
     ref = getRefcount( (IUnknown *) lpdxfeo);
-    ok(ref == 1, "Got refcount %d, expected 1\n", ref);
+    ok(ref == 1, "Unexpected refcount %ld.\n", ref);
     /* Enum object gets references to all top level objects */
     ref = getRefcount( (IUnknown *) lpdxfd);
-    ok(ref == 2, "Got refcount %d, expected 2\n", ref);
+    ok(ref == 2, "Unexpected refcount %ld.\n", ref);
 
     ref = IDirectXFile_Release(lpDirectXFile);
-    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+    ok(!ref, "Unexpected refcount %ld.\n", ref);
     /* Nothing changes for all other objects */
     ref = getRefcount( (IUnknown *) lpdxfeo);
-    ok(ref == 1, "Got refcount %d, expected 1\n", ref);
+    ok(ref == 1, "Unexpected refcount %ld.\n", ref);
     ref = getRefcount( (IUnknown *) lpdxfd);
-    ok(ref == 2, "Got refcount %d, expected 2\n", ref);
+    ok(ref == 2, "Unexpected refcount %ld.\n", ref);
 
     ref = IDirectXFileEnumObject_Release(lpdxfeo);
-    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+    ok(!ref, "Unexpected refcount %ld.\n", ref);
     /* Enum object releases references to all top level objects */
     ref = getRefcount( (IUnknown *) lpdxfd);
-    ok(ref == 1, "Got refcount %d, expected 1\n", ref);
+    ok(ref == 1, "Unexpected refcount %ld.\n", ref);
 
     ref = IDirectXFileData_Release(lpdxfd);
-    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+    ok(!ref, "Unexpected refcount %ld.\n", ref);
 }
 
 static void test_CreateEnumObject(void)
@@ -488,7 +488,7 @@ static void test_CreateEnumObject(void)
     }
 
     hr = pDirectXFileCreate(&lpDirectXFile);
-    ok(hr == DXFILE_OK, "DirectXFileCreate: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     if (!lpDirectXFile)
     {
         skip("Couldn't create DirectXFile interface\n");
@@ -496,57 +496,57 @@ static void test_CreateEnumObject(void)
     }
 
     hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template, sizeof(template) - 1);
-    ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     dxflm.lpMemory = &object;
     dxflm.dSize = sizeof(object) - 1;
     /* Check that only lowest 4 bits are relevant in DXFILELOADOPTIONS */
     hr = IDirectXFile_CreateEnumObject(lpDirectXFile, &dxflm, 0xFFFFFFF0 + DXFILELOAD_FROMMEMORY, &lpdxfeo);
-    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirectXFileEnumObject_GetNextDataObject(lpdxfeo, &lpdxfd);
-    ok(hr == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     /* Get all data (szMember == NULL) */
     hr = IDirectXFileData_GetData(lpdxfd, NULL, &size, (void**)&pdata);
-    ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
-    ok(size == 8, "Retrieved data size is wrong (%u instead of 8)\n", size);
+    ok(size == 8, "Unexpected data size %lu.\n", size);
     ok((*((WORD*)pdata) == 1) && (*((WORD*)(pdata+2)) == 2) && (*((DWORD*)(pdata+4)) == 3), "Retrieved data is wrong\n");
 
     /* Get only "major" member (szMember == "major") */
     hr = IDirectXFileData_GetData(lpdxfd, "major", &size, (void**)&pdata);
-    ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
-    ok(size == 2, "Retrieved data size is wrong (%u instead of 2)\n", size);
+    ok(size == 2, "Unexpected data size %lu.\n", size);
     ok(*((WORD*)pdata) == 1, "Retrieved data is wrong (%u instead of 1)\n", *((WORD*)pdata));
 
     /* Get only "minor" member (szMember == "minor") */
     hr = IDirectXFileData_GetData(lpdxfd, "minor", &size, (void**)&pdata);
-    ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
-    ok(size == 2, "Retrieved data size is wrong (%u instead of 2)\n", size);
+    ok(size == 2, "Unexpected data size %lu.\n", size);
     ok(*((WORD*)pdata) == 2, "Retrieved data is wrong (%u instead of 2)\n", *((WORD*)pdata));
 
     /* Get only "flags" member (szMember == "flags") */
     hr = IDirectXFileData_GetData(lpdxfd, "flags", &size, (void**)&pdata);
-    ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
-    ok(size == 4, "Retrieved data size is wrong (%u instead of 4)\n", size);
+    ok(size == 4, "Unexpected data size %lu.\n", size);
     ok(*((WORD*)pdata) == 3, "Retrieved data is wrong (%u instead of 3)\n", *((WORD*)pdata));
 
     /* Try to get not existing member (szMember == "unknown") */
     hr = IDirectXFileData_GetData(lpdxfd, "unknown", &size, (void**)&pdata);
-    ok(hr == DXFILEERR_BADDATAREFERENCE, "IDirectXFileData_GetData: %x\n", hr);
+    ok(hr == DXFILEERR_BADDATAREFERENCE, "Unexpected hr %#lx.\n", hr);
 
     ref = IDirectXFileEnumObject_Release(lpdxfeo);
-    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+    ok(!ref, "Unexpected refcount %ld.\n", ref);
 
     ref = IDirectXFile_Release(lpDirectXFile);
-    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+    ok(!ref, "Unexpected refcount %ld.\n", ref);
 
     ref = IDirectXFileData_Release(lpdxfd);
-    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+    ok(!ref, "Unexpected refcount %ld.\n", ref);
 }
 
 static void test_file_types(void)
@@ -563,7 +563,7 @@ static void test_file_types(void)
     }
 
     hr = pDirectXFileCreate(&dxfile);
-    ok(hr == DXFILE_OK, "DirectXFileCreate: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     if (!dxfile)
     {
         skip("Couldn't create DirectXFile interface\n");
@@ -571,64 +571,64 @@ static void test_file_types(void)
     }
 
     hr = IDirectXFile_RegisterTemplates(dxfile, empty_txt_file, sizeof(empty_txt_file) - 1);
-    ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirectXFile_RegisterTemplates(dxfile, empty_bin_file, sizeof(empty_bin_file) - 1);
-    ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirectXFile_RegisterTemplates(dxfile, empty_tzip_file, sizeof(empty_tzip_file) - 1);
-    ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirectXFile_RegisterTemplates(dxfile, empty_bzip_file, sizeof(empty_bzip_file) - 1);
-    ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirectXFile_RegisterTemplates(dxfile, empty_cmp_file, sizeof(empty_cmp_file) - 1);
-    ok(hr == DXFILEERR_BADFILETYPE, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+    ok(hr == DXFILEERR_BADFILETYPE, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirectXFile_RegisterTemplates(dxfile, empty_xxxx_file, sizeof(empty_xxxx_file) - 1);
-    ok(hr == DXFILEERR_BADFILETYPE, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+    ok(hr == DXFILEERR_BADFILETYPE, "Unexpected hr %#lx.\n", hr);
 
     lminfo.lpMemory = empty_txt_file;
     lminfo.dSize = sizeof(empty_txt_file) - 1;
     hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
-    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == DXFILE_OK) IDirectXFileEnumObject_Release(enum_object);
 
     lminfo.lpMemory = empty_bin_file;
     lminfo.dSize = sizeof(empty_bin_file) - 1;
     hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
-    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == DXFILE_OK) IDirectXFileEnumObject_Release(enum_object);
 
     lminfo.lpMemory = empty_tzip_file;
     lminfo.dSize = sizeof(empty_tzip_file) - 1;
     hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
-    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == DXFILE_OK) IDirectXFileEnumObject_Release(enum_object);
 
     lminfo.lpMemory = empty_bzip_file;
     lminfo.dSize = sizeof(empty_bzip_file) - 1;
     hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
-    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == DXFILE_OK) IDirectXFileEnumObject_Release(enum_object);
 
     lminfo.lpMemory = empty_cmp_file;
     lminfo.dSize = sizeof(empty_cmp_file) - 1;
     hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
-    ok(hr == DXFILEERR_BADFILETYPE, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    ok(hr == DXFILEERR_BADFILETYPE, "Unexpected hr %#lx.\n", hr);
 
     lminfo.lpMemory = empty_xxxx_file;
     lminfo.dSize = sizeof(empty_xxxx_file) - 1;
     hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
-    ok(hr == DXFILEERR_BADFILETYPE, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    ok(hr == DXFILEERR_BADFILETYPE, "Unexpected hr %#lx.\n", hr);
 
     IDirectXFile_Release(dxfile);
 }
 
 static void test_templates(void)
 {
-    HRESULT ret;
     IDirectXFile *dxfile = NULL;
+    HRESULT hr;
 
     if (!pDirectXFileCreate)
     {
@@ -636,28 +636,28 @@ static void test_templates(void)
         return;
     }
 
-    ret = pDirectXFileCreate(&dxfile);
-    ok(ret == DXFILE_OK, "DirectXFileCreate: %x\n", ret);
+    hr = pDirectXFileCreate(&dxfile);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     if (!dxfile)
     {
         skip("Couldn't create DirectXFile interface\n");
         return;
     }
 
-    ret = IDirectXFile_RegisterTemplates(dxfile, templates_bad_file_type1, sizeof(templates_bad_file_type1) - 1);
-    ok(ret == DXFILEERR_BADFILETYPE, "RegisterTemplates returned %#x, expected %#x\n", ret, DXFILEERR_BADFILETYPE);
+    hr = IDirectXFile_RegisterTemplates(dxfile, templates_bad_file_type1, sizeof(templates_bad_file_type1) - 1);
+    ok(hr == DXFILEERR_BADFILETYPE, "Unexpected hr %#lx.\n", hr);
 
-    ret = IDirectXFile_RegisterTemplates(dxfile, templates_bad_file_version, sizeof(templates_bad_file_version) - 1);
-    ok(ret == DXFILEERR_BADFILEVERSION, "RegisterTemplates returned %#x, expected %#x\n", ret, DXFILEERR_BADFILEVERSION);
+    hr = IDirectXFile_RegisterTemplates(dxfile, templates_bad_file_version, sizeof(templates_bad_file_version) - 1);
+    ok(hr == DXFILEERR_BADFILEVERSION, "Unexpected hr %#lx.\n", hr);
 
-    ret = IDirectXFile_RegisterTemplates(dxfile, templates_bad_file_type2, sizeof(templates_bad_file_type2) - 1);
-    ok(ret == DXFILEERR_BADFILETYPE, "RegisterTemplates returned %#x, expected %#x\n", ret, DXFILEERR_BADFILETYPE);
+    hr = IDirectXFile_RegisterTemplates(dxfile, templates_bad_file_type2, sizeof(templates_bad_file_type2) - 1);
+    ok(hr == DXFILEERR_BADFILETYPE, "Unexpected hr %#lx.\n", hr);
 
-    ret = IDirectXFile_RegisterTemplates(dxfile, templates_bad_file_float_size, sizeof(templates_bad_file_float_size) - 1);
-    ok(ret == DXFILEERR_BADFILEFLOATSIZE, "RegisterTemplates returned %#x, expected %#x\n", ret, DXFILEERR_BADFILEFLOATSIZE);
+    hr = IDirectXFile_RegisterTemplates(dxfile, templates_bad_file_float_size, sizeof(templates_bad_file_float_size) - 1);
+    ok(hr == DXFILEERR_BADFILEFLOATSIZE, "Unexpected hr %#lx.\n", hr);
 
-    ret = IDirectXFile_RegisterTemplates(dxfile, templates_parse_error, sizeof(templates_parse_error) - 1);
-    ok(ret == DXFILEERR_PARSEERROR, "RegisterTemplates returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
+    hr = IDirectXFile_RegisterTemplates(dxfile, templates_parse_error, sizeof(templates_parse_error) - 1);
+    ok(hr == DXFILEERR_PARSEERROR, "Unexpected hr %#lx.\n", hr);
 
     IDirectXFile_Release(dxfile);
 }
@@ -679,7 +679,7 @@ static void test_compressed_files(void)
     }
 
     hr = pDirectXFileCreate(&dxfile);
-    ok(hr == DXFILE_OK, "DirectXFileCreate: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     if (!dxfile)
     {
         skip("Couldn't create DirectXFile interface\n");
@@ -687,18 +687,18 @@ static void test_compressed_files(void)
     }
 
     hr = IDirectXFile_RegisterTemplates(dxfile, compressed_template, sizeof(compressed_template) - 1);
-    ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     lminfo.lpMemory = compressed_object;
     lminfo.dSize = sizeof(compressed_object) - 1;
     hr = IDirectXFile_CreateEnumObject(dxfile, &lminfo, DXFILELOAD_FROMMEMORY, &enum_object);
-    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirectXFileEnumObject_GetNextDataObject(enum_object, &file_data);
-    ok(hr == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirectXFileData_GetData(file_data, NULL, &size, (void**)&data);
-    ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     ok(size == 8, "Retrieved data size is wrong\n");
     ok((*((WORD*)data) == 1) && (*((WORD*)(data+2)) == 2) && (*((DWORD*)(data+4)) == 3), "Retrieved data is wrong\n");
@@ -726,7 +726,7 @@ static void test_getname(void)
     }
 
     hr = pDirectXFileCreate(&lpDirectXFile);
-    ok(hr == DXFILE_OK, "DirectXFileCreate: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     if (!lpDirectXFile)
     {
         skip("Couldn't create DirectXFile interface\n");
@@ -734,67 +734,67 @@ static void test_getname(void)
     }
 
     hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template, sizeof(template) - 1);
-    ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     /* Check object with name */
     dxflm.lpMemory = &object;
     dxflm.dSize = sizeof(object) - 1;
     hr = IDirectXFile_CreateEnumObject(lpDirectXFile, &dxflm, DXFILELOAD_FROMMEMORY, &lpdxfeo);
-    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     hr = IDirectXFileEnumObject_GetNextDataObject(lpdxfeo, &lpdxfd);
-    ok(hr == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirectXFileData_GetName(lpdxfd, NULL, NULL);
-    ok(hr == DXFILEERR_BADVALUE, "IDirectXFileData_GetName: %x\n", hr);
+    ok(hr == DXFILEERR_BADVALUE, "Unexpected hr %#lx.\n", hr);
     hr = IDirectXFileData_GetName(lpdxfd, name, NULL);
-    ok(hr == DXFILEERR_BADVALUE, "IDirectXFileData_GetName: %x\n", hr);
+    ok(hr == DXFILEERR_BADVALUE, "Unexpected hr %#lx.\n", hr);
     hr = IDirectXFileData_GetName(lpdxfd, NULL, &length);
-    ok(hr == DXFILE_OK, "IDirectXFileData_GetName: %x\n", hr);
-    ok(length == 7, "Returned length should be 7 instead of %u\n", length);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+    ok(length == 7, "Unexpected length %lu.\n", length);
     length = sizeof(name);
     hr = IDirectXFileData_GetName(lpdxfd, name, &length);
-    ok(hr == DXFILE_OK, "IDirectXFileData_GetName: %x\n", hr);
-    ok(length == 7, "Returned length should be 7 instead of %u\n", length);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+    ok(length == 7, "Unexpected length %lu.\n", length);
     ok(!strcmp(name, "Object"), "Returned string should be 'Object' instead of '%s'\n", name);
     length = 3;
     hr = IDirectXFileData_GetName(lpdxfd, name, &length);
-    ok(hr == DXFILEERR_BADVALUE, "IDirectXFileData_GetName: %x\n", hr);
+    ok(hr == DXFILEERR_BADVALUE, "Unexpected hr %#lx.\n", hr);
 
     ref = IDirectXFileEnumObject_Release(lpdxfeo);
-    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+    ok(!ref, "Unexpected refcount %ld.\n", ref);
     ref = IDirectXFileData_Release(lpdxfd);
-    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+    ok(!ref, "Unexpected refcount %ld.\n", ref);
 
     /* Check object without name */
     dxflm.lpMemory = &object_noname;
     dxflm.dSize = sizeof(object_noname) - 1;
     hr = IDirectXFile_CreateEnumObject(lpDirectXFile, &dxflm, DXFILELOAD_FROMMEMORY, &lpdxfeo);
-    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     hr = IDirectXFileEnumObject_GetNextDataObject(lpdxfeo, &lpdxfd);
-    ok(hr == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirectXFileData_GetName(lpdxfd, NULL, &length);
-    ok(hr == DXFILE_OK, "IDirectXFileData_GetName: %x\n", hr);
-    ok(length == 0, "Returned length should be 0 instead of %u\n", length);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!length, "Unexpected length %lu.\n", length);
     length = 0;
     name[0] = 0x7f;
     hr = IDirectXFileData_GetName(lpdxfd, name, &length);
-    ok(hr == DXFILE_OK, "IDirectXFileData_GetName: %x\n", hr);
-    ok(length == 0, "Returned length should be 0 instead of %u\n", length);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!length, "Unexpected length %lu.\n", length);
     ok(name[0] == 0x7f, "First character is %#x instead of 0x7f\n", name[0]);
     length = sizeof(name);
     name[0] = 0x7f;
     hr = IDirectXFileData_GetName(lpdxfd, name, &length);
-    ok(hr == DXFILE_OK, "IDirectXFileData_GetName: %x\n", hr);
-    ok(length == 0, "Returned length should be 0 instead of %u\n", length);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!length, "Unexpected length %lu.\n", length);
     ok(name[0] == 0, "First character is %#x instead of 0x00\n", name[0]);
 
     ref = IDirectXFileEnumObject_Release(lpdxfeo);
-    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+    ok(!ref, "Unexpected refcount %ld.\n", ref);
     ref = IDirectXFileData_Release(lpdxfd);
-    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+    ok(!ref, "Unexpected refcount %ld.\n", ref);
     ref = IDirectXFile_Release(lpDirectXFile);
-    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+    ok(!ref, "Unexpected refcount %ld.\n", ref);
 }
 
 static void test_syntax(void)
@@ -814,7 +814,7 @@ static void test_syntax(void)
     }
 
     hr = pDirectXFileCreate(&lpDirectXFile);
-    ok(hr == DXFILE_OK, "DirectXFileCreate: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     if (!lpDirectXFile)
     {
         skip("Couldn't create DirectXFile interface\n");
@@ -822,32 +822,32 @@ static void test_syntax(void)
     }
 
     hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template_syntax_array_mixed, sizeof(template_syntax_array_mixed) - 1);
-    ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     /* Test empty array */
     dxflm.lpMemory = &object_syntax_empty_array;
     dxflm.dSize = sizeof(object_syntax_empty_array) - 1;
     hr = IDirectXFile_CreateEnumObject(lpDirectXFile, &dxflm, DXFILELOAD_FROMMEMORY, &lpdxfeo);
-    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     hr = IDirectXFileEnumObject_GetNextDataObject(lpdxfeo, &lpdxfd);
-    ok(hr == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     if (hr == DXFILE_OK)
         IDirectXFileData_Release(lpdxfd);
     IDirectXFileEnumObject_Release(lpdxfeo);
 
     hr = IDirectXFile_RegisterTemplates(lpDirectXFile, template_syntax_string, sizeof(template_syntax_string) - 1);
-    ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     /* Test normal string */
     dxflm.lpMemory = &object_syntax_string_normal;
     dxflm.dSize = sizeof(object_syntax_string_normal) - 1;
     hr = IDirectXFile_CreateEnumObject(lpDirectXFile, &dxflm, DXFILELOAD_FROMMEMORY, &lpdxfeo);
-    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     hr = IDirectXFileEnumObject_GetNextDataObject(lpdxfeo, &lpdxfd);
-    ok(hr == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     hr = IDirectXFileData_GetData(lpdxfd, NULL, &size, (void**)&string);
-    ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
-    ok(size == sizeof(char*), "Got wrong data size %d\n", size);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+    ok(size == sizeof(char*), "Got wrong data size %ld.\n", size);
     ok(!strcmp(*string, "foobar"), "Got string %s, expected foobar\n", *string);
     if (hr == DXFILE_OK)
         IDirectXFileData_Release(lpdxfd);
@@ -857,12 +857,12 @@ static void test_syntax(void)
     dxflm.lpMemory = &object_syntax_string_with_separator;
     dxflm.dSize = sizeof(object_syntax_string_with_separator) - 1;
     hr = IDirectXFile_CreateEnumObject(lpDirectXFile, &dxflm, DXFILELOAD_FROMMEMORY, &lpdxfeo);
-    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     hr = IDirectXFileEnumObject_GetNextDataObject(lpdxfeo, &lpdxfd);
-    ok(hr == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     hr = IDirectXFileData_GetData(lpdxfd, NULL, &size, (void**)&string);
-    ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
-    ok(size == sizeof(char*), "Got wrong data size %d\n", size);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+    ok(size == sizeof(char*), "Got wrong data size %ld.\n", size);
     ok(!strcmp(*string, "foo;bar"), "Got string %s, expected foo;bar\n", *string);
     if (hr == DXFILE_OK)
         IDirectXFileData_Release(lpdxfd);
@@ -872,12 +872,12 @@ static void test_syntax(void)
     dxflm.lpMemory = &object_syntax_string_bin;
     dxflm.dSize = sizeof(object_syntax_string_bin);
     hr = IDirectXFile_CreateEnumObject(lpDirectXFile, &dxflm, DXFILELOAD_FROMMEMORY, &lpdxfeo);
-    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     hr = IDirectXFileEnumObject_GetNextDataObject(lpdxfeo, &lpdxfd);
-    ok(hr == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     hr = IDirectXFileData_GetData(lpdxfd, NULL, &size, (void**)&string);
-    ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
-    ok(size == sizeof(char*), "Got wrong data size %d\n", size);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+    ok(size == sizeof(char*), "Got wrong data size %ld.\n", size);
     ok(!strcmp(*string, "foobar"), "Got string %s, expected foobar\n", *string);
     if (hr == DXFILE_OK)
         IDirectXFileData_Release(lpdxfd);
@@ -899,14 +899,14 @@ static HRESULT test_buffer_object(IDirectXFile *dxfile, char* object_data, DWORD
     load_info.lpMemory = object_data;
     load_info.dSize = object_size;
     hr = IDirectXFile_CreateEnumObject(dxfile, &load_info, DXFILELOAD_FROMMEMORY, &enum_object);
-    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     ret = IDirectXFileEnumObject_GetNextDataObject(enum_object, &file_data);
     if (ret == DXFILE_OK)
     {
         hr = IDirectXFileData_GetData(file_data, NULL, &size, (void**)&array);
-        ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
-        ok(size == sizeof(values), "Got wrong data size %d\n", size);
-        ok(!memcmp(array, values, sizeof(values)), "Got values [%u, %u, %u, %u, %u], expected [%u, %u, %u, %u, %u]\n",
+        ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+        ok(size == sizeof(values), "Got wrong data size %ld.\n", size);
+        ok(!memcmp(array, values, sizeof(values)), "Got values [%lu, %lu, %lu, %lu, %lu], expected [%lu, %lu, %lu, %lu, %lu]\n",
            array[0], array[1], array[2], array[3], array[4], values[0], values[1], values[2], values[3], values[4]);
         IDirectXFileData_Release(file_data);
     }
@@ -917,8 +917,8 @@ static HRESULT test_buffer_object(IDirectXFile *dxfile, char* object_data, DWORD
 
 static void test_syntax_semicolon_comma(void)
 {
-    HRESULT ret;
     IDirectXFile *dxfile = NULL;
+    HRESULT hr;
 
     if (!pDirectXFileCreate)
     {
@@ -926,99 +926,99 @@ static void test_syntax_semicolon_comma(void)
         return;
     }
 
-    ret = pDirectXFileCreate(&dxfile);
-    ok(ret == DXFILE_OK, "DirectXFileCreate failed with %#x\n", ret);
+    hr = pDirectXFileCreate(&dxfile);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     if (!dxfile)
     {
         skip("Couldn't create DirectXFile interface\n");
         return;
     }
 
-    ret = IDirectXFile_RegisterTemplates(dxfile, template_syntax_array_mixed, sizeof(template_syntax_array_mixed) - 1);
-    ok(ret == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates failed with %#x\n", ret);
+    hr = IDirectXFile_RegisterTemplates(dxfile, template_syntax_array_mixed, sizeof(template_syntax_array_mixed) - 1);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     /* Test semicolon separators in text mode */
-    ret = test_buffer_object(dxfile, object_syntax_semicolon_txt, sizeof(object_syntax_semicolon_txt) - 1);
-    ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
+    hr = test_buffer_object(dxfile, object_syntax_semicolon_txt, sizeof(object_syntax_semicolon_txt) - 1);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     /* Test semicolon separators in binary mode */
-    ret = test_buffer_object(dxfile, object_syntax_semicolon_bin, sizeof(object_syntax_semicolon_bin));
-    ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
+    hr = test_buffer_object(dxfile, object_syntax_semicolon_bin, sizeof(object_syntax_semicolon_bin));
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     /* Test comma separators in text mode */
-    ret = test_buffer_object(dxfile, object_syntax_comma_txt, sizeof(object_syntax_comma_txt) - 1);
-    ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
+    hr = test_buffer_object(dxfile, object_syntax_comma_txt, sizeof(object_syntax_comma_txt) - 1);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     /* Test comma separators in binary mode */
-    ret = test_buffer_object(dxfile, object_syntax_comma_bin, sizeof(object_syntax_comma_bin));
-    ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
+    hr = test_buffer_object(dxfile, object_syntax_comma_bin, sizeof(object_syntax_comma_bin));
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     /* Test multi-semicolons separators in text mode */
-    ret = test_buffer_object(dxfile, object_syntax_multi_semicolons_txt, sizeof(object_syntax_multi_semicolons_txt) - 1);
-    ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
+    hr = test_buffer_object(dxfile, object_syntax_multi_semicolons_txt, sizeof(object_syntax_multi_semicolons_txt) - 1);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     /* Test multi-semicolons separators in binary mode */
-    ret = test_buffer_object(dxfile, object_syntax_multi_semicolons_bin, sizeof(object_syntax_multi_semicolons_bin));
-    ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
+    hr = test_buffer_object(dxfile, object_syntax_multi_semicolons_bin, sizeof(object_syntax_multi_semicolons_bin));
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     /* Test multi-commas separators in text mode */
-    ret = test_buffer_object(dxfile, object_syntax_multi_commas_txt, sizeof(object_syntax_multi_semicolons_txt) - 1);
-    ok(ret == DXFILEERR_PARSEERROR, "test_buffer_object returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
+    hr = test_buffer_object(dxfile, object_syntax_multi_commas_txt, sizeof(object_syntax_multi_semicolons_txt) - 1);
+    ok(hr == DXFILEERR_PARSEERROR, "Unexpected hr %#lx.\n", hr);
     /* Test multi-commas separators in binary mode */
-    ret = test_buffer_object(dxfile, object_syntax_multi_commas_bin, sizeof(object_syntax_multi_semicolons_bin));
-    ok(ret == DXFILEERR_PARSEERROR, "test_buffer_object returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
+    hr = test_buffer_object(dxfile, object_syntax_multi_commas_bin, sizeof(object_syntax_multi_semicolons_bin));
+    ok(hr == DXFILEERR_PARSEERROR, "Unexpected hr %#lx.\n", hr);
 
     /* Test multi-semicolons + single comma separators in text mode */
-    ret = test_buffer_object(dxfile, object_syntax_multi_semicolons_and_comma_txt, sizeof(object_syntax_multi_semicolons_and_comma_txt) - 1);
-    ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
+    hr = test_buffer_object(dxfile, object_syntax_multi_semicolons_and_comma_txt, sizeof(object_syntax_multi_semicolons_and_comma_txt) - 1);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     /* Test multi-semicolons + single comma separators in binary mode */
-    ret = test_buffer_object(dxfile, object_syntax_multi_semicolons_and_comma_bin, sizeof(object_syntax_multi_semicolons_and_comma_bin));
-    ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
+    hr = test_buffer_object(dxfile, object_syntax_multi_semicolons_and_comma_bin, sizeof(object_syntax_multi_semicolons_and_comma_bin));
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     /* Test comma + semicolon separators in text mode */
-    ret = test_buffer_object(dxfile, object_syntax_comma_and_semicolon_txt, sizeof(object_syntax_comma_and_semicolon_txt) - 1);
-    ok(ret == DXFILEERR_PARSEERROR, "test_buffer_object returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
+    hr = test_buffer_object(dxfile, object_syntax_comma_and_semicolon_txt, sizeof(object_syntax_comma_and_semicolon_txt) - 1);
+    ok(hr == DXFILEERR_PARSEERROR, "Unexpected hr %#lx.\n", hr);
     /* Test comma + semicolon separators in binary mode */
-    ret = test_buffer_object(dxfile, object_syntax_comma_and_semicolon_bin, sizeof(object_syntax_comma_and_semicolon_bin));
-    ok(ret == DXFILEERR_PARSEERROR, "test_buffer_object returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
+    hr = test_buffer_object(dxfile, object_syntax_comma_and_semicolon_bin, sizeof(object_syntax_comma_and_semicolon_bin));
+    ok(hr == DXFILEERR_PARSEERROR, "Unexpected hr %#lx.\n", hr);
 
     /* Test no ending separator in text mode */
-    ret = test_buffer_object(dxfile, object_syntax_no_ending_separator_txt, sizeof(object_syntax_no_ending_separator_txt) - 1);
-    ok(ret == DXFILEERR_PARSEERROR, "test_buffer_object returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
+    hr = test_buffer_object(dxfile, object_syntax_no_ending_separator_txt, sizeof(object_syntax_no_ending_separator_txt) - 1);
+    ok(hr == DXFILEERR_PARSEERROR, "Unexpected hr %#lx.\n", hr);
     /* Test no ending separator in binary mode */
-    ret = test_buffer_object(dxfile, object_syntax_no_ending_separator_bin, sizeof(object_syntax_no_ending_separator_bin));
-    ok(ret == DXFILEERR_PARSEERROR, "test_buffer_object returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
+    hr = test_buffer_object(dxfile, object_syntax_no_ending_separator_bin, sizeof(object_syntax_no_ending_separator_bin));
+    ok(hr == DXFILEERR_PARSEERROR, "Unexpected hr %#lx.\n", hr);
 
     /* Test no array separator in text mode */
-    ret = test_buffer_object(dxfile, object_syntax_array_no_separator_txt, sizeof(object_syntax_array_no_separator_txt) - 1);
-    ok(ret == DXFILEERR_PARSEERROR, "test_buffer_object returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
+    hr = test_buffer_object(dxfile, object_syntax_array_no_separator_txt, sizeof(object_syntax_array_no_separator_txt) - 1);
+    ok(hr == DXFILEERR_PARSEERROR, "Unexpected hr %#lx.\n", hr);
     /* Test no array separator in binary mode */
-    ret = test_buffer_object(dxfile, object_syntax_array_no_separator_bin, sizeof(object_syntax_array_no_separator_bin));
-    ok(ret == DXFILEERR_PARSEERROR, "test_buffer_object returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
+    hr = test_buffer_object(dxfile, object_syntax_array_no_separator_bin, sizeof(object_syntax_array_no_separator_bin));
+    ok(hr == DXFILEERR_PARSEERROR, "Unexpected hr %#lx.\n", hr);
 
     /* Test object with a single integer list in binary mode */
-    ret = test_buffer_object(dxfile, object_syntax_full_integer_list_bin, sizeof(object_syntax_full_integer_list_bin));
-    ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
+    hr = test_buffer_object(dxfile, object_syntax_full_integer_list_bin, sizeof(object_syntax_full_integer_list_bin));
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     /* Test object with mixed integer list and integers + single comma separators in binary mode */
-    ret = test_buffer_object(dxfile, object_syntax_mixed_integer_list_bin, sizeof(object_syntax_mixed_integer_list_bin));
-    ok(ret == DXFILE_OK, "test_buffer_object failed with %#x\n", ret);
+    hr = test_buffer_object(dxfile, object_syntax_mixed_integer_list_bin, sizeof(object_syntax_mixed_integer_list_bin));
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     /* Test integer list followed by a semicolon in binary mode */
-    ret = test_buffer_object(dxfile, object_syntax_integer_list_semicolon_bin, sizeof(object_syntax_integer_list_semicolon_bin));
-    ok(ret == DXFILEERR_PARSEERROR, "test_buffer_object returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
+    hr = test_buffer_object(dxfile, object_syntax_integer_list_semicolon_bin, sizeof(object_syntax_integer_list_semicolon_bin));
+    ok(hr == DXFILEERR_PARSEERROR, "Unexpected hr %#lx.\n", hr);
 
     /* Test integer list followed by a comma in binary mode */
-    ret = test_buffer_object(dxfile, object_syntax_integer_list_comma_bin, sizeof(object_syntax_integer_list_comma_bin));
-    ok(ret == DXFILEERR_PARSEERROR, "test_buffer_object returned %#x, expected %#x\n", ret, DXFILEERR_PARSEERROR);
+    hr = test_buffer_object(dxfile, object_syntax_integer_list_comma_bin, sizeof(object_syntax_integer_list_comma_bin));
+    ok(hr == DXFILEERR_PARSEERROR, "Unexpected hr %#lx.\n", hr);
 
     IDirectXFile_Release(dxfile);
 }
 
 static void test_complex_object(void)
 {
-    HRESULT ret;
     IDirectXFile *dxfile = NULL;
     IDirectXFileEnumObject *enum_object;
     IDirectXFileData *file_data;
     DXFILELOADMEMORY load_info;
+    HRESULT hr;
 
     if (!pDirectXFileCreate)
     {
@@ -1026,23 +1026,23 @@ static void test_complex_object(void)
         return;
     }
 
-    ret = pDirectXFileCreate(&dxfile);
-    ok(ret == DXFILE_OK, "DirectXFileCreate failed with %#x\n", ret);
+    hr = pDirectXFileCreate(&dxfile);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     if (!dxfile)
     {
         skip("Couldn't create DirectXFile interface\n");
         return;
     }
 
-    ret = IDirectXFile_RegisterTemplates(dxfile, templates_complex_object, sizeof(templates_complex_object) - 1);
-    ok(ret == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates failed with %#x\n", ret);
+    hr = IDirectXFile_RegisterTemplates(dxfile, templates_complex_object, sizeof(templates_complex_object) - 1);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     load_info.lpMemory = object_complex;
     load_info.dSize = sizeof(object_complex) - 1;
-    ret = IDirectXFile_CreateEnumObject(dxfile, &load_info, DXFILELOAD_FROMMEMORY, &enum_object);
-    ok(ret == DXFILE_OK, "IDirectXFile_CreateEnumObject failed with %#x\n", ret);
-    ret = IDirectXFileEnumObject_GetNextDataObject(enum_object, &file_data);
-    ok(ret == DXFILE_OK, "IDirectXFileEnumObject_GetNextDataObject failed with %#x\n", ret);
+    hr = IDirectXFile_CreateEnumObject(dxfile, &load_info, DXFILELOAD_FROMMEMORY, &enum_object);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDirectXFileEnumObject_GetNextDataObject(enum_object, &file_data);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     IDirectXFileData_Release(file_data);
     IDirectXFileEnumObject_Release(enum_object);
@@ -1051,8 +1051,8 @@ static void test_complex_object(void)
 
 static void test_standard_templates(void)
 {
-    HRESULT ret;
     IDirectXFile *dxfile = NULL;
+    HRESULT hr;
 
     if (!pDirectXFileCreate)
     {
@@ -1060,24 +1060,24 @@ static void test_standard_templates(void)
         return;
     }
 
-    ret = pDirectXFileCreate(&dxfile);
-    ok(ret == DXFILE_OK, "DirectXFileCreate failed with %#x\n", ret);
+    hr = pDirectXFileCreate(&dxfile);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     if (!dxfile)
     {
         skip("Couldn't create DirectXFile interface\n");
         return;
     }
 
-    ret = IDirectXFile_RegisterTemplates(dxfile, D3DRM_XTEMPLATES, D3DRM_XTEMPLATE_BYTES);
-    ok(ret == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates failed with %#x\n", ret);
+    hr = IDirectXFile_RegisterTemplates(dxfile, D3DRM_XTEMPLATES, D3DRM_XTEMPLATE_BYTES);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     IDirectXFile_Release(dxfile);
 }
 
 static void test_type_index_color(void)
 {
-    HRESULT ret;
     IDirectXFile *dxfile = NULL;
+    HRESULT hr;
 
     if (!pDirectXFileCreate)
     {
@@ -1085,8 +1085,8 @@ static void test_type_index_color(void)
         return;
     }
 
-    ret = pDirectXFileCreate(&dxfile);
-    ok(ret == DXFILE_OK, "DirectXFileCreate failed with %#x\n", ret);
+    hr = pDirectXFileCreate(&dxfile);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     if (!dxfile)
     {
         skip("Couldn't create DirectXFile interface\n");
@@ -1094,10 +1094,10 @@ static void test_type_index_color(void)
     }
 
     /* Test that 'indexColor' can be used (same as IndexedColor in standard templates) and is case sensitive */
-    ret = IDirectXFile_RegisterTemplates(dxfile, template_using_index_color_lower, sizeof(template_using_index_color_lower) - 1);
-    ok(ret == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates failed with %#x\n", ret);
-    ret = IDirectXFile_RegisterTemplates(dxfile, template_using_index_color_upper, sizeof(template_using_index_color_upper) - 1);
-    ok(ret == DXFILEERR_PARSEERROR, "IDirectXFileImpl_RegisterTemplates returned %#x instead of %#x\n", ret, DXFILEERR_PARSEERROR);
+    hr = IDirectXFile_RegisterTemplates(dxfile, template_using_index_color_lower, sizeof(template_using_index_color_lower) - 1);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
+    hr = IDirectXFile_RegisterTemplates(dxfile, template_using_index_color_upper, sizeof(template_using_index_color_upper) - 1);
+    ok(hr == DXFILEERR_PARSEERROR, "Unexpected hr %#lx.\n", hr);
 
     IDirectXFile_Release(dxfile);
 }
@@ -1120,16 +1120,16 @@ static void process_data(LPDIRECTXFILEDATA lpDirectXFileData, int level)
     DWORD k, size;
 
     hr = IDirectXFileData_GetId(lpDirectXFileData, &clsid);
-    ok(hr == DXFILE_OK, "IDirectXFileData_GetId: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     hr = IDirectXFileData_GetName(lpDirectXFileData, name, &len);
-    ok(hr == DXFILE_OK, "IDirectXFileData_GetName: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     hr = IDirectXFileData_GetType(lpDirectXFileData, &clsid_type);
-    ok(hr == DXFILE_OK, "IDirectXFileData_GetType: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     hr = IDirectXFileData_GetData(lpDirectXFileData, NULL, &size, (void**)&pData);
-    ok(hr == DXFILE_OK, "IDirectXFileData_GetData: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     for (i = 0; i < level; i++)
         printf("  ");
-    printf("Found object '%s' - %s - %s - %d\n",
+    printf("Found object '%s' - %s - %s - %ld\n",
            len ? name : "", wine_dbgstr_guid(&clsid), wine_dbgstr_guid(clsid_type), size);
 
     if (EXPAND_STRING && size == 4)
@@ -1176,9 +1176,9 @@ static void process_data(LPDIRECTXFILEDATA lpDirectXFileData, int level)
 if (0)
 {
             hr = IDirectXFileDataReference_GetId(lpDirectXFileData, &clsid);
-            ok(hr == DXFILE_OK, "IDirectXFileData_GetId: %x\n", hr);
+            ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
             hr = IDirectXFileDataReference_GetName(lpDirectXFileData, name, &len);
-            ok(hr == DXFILE_OK, "IDirectXFileData_GetName: %x\n", hr);
+            ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 }
             IDirectXFileDataReference_Resolve(p2, &pfdo);
             process_data(pfdo, level);
@@ -1196,7 +1196,7 @@ if (0)
         IDirectXFileObject_Release(pChildObj);
     }
 
-    ok(hr == DXFILE_OK || hr == DXFILEERR_NOMOREOBJECTS, "IDirectXFileData_GetNextObject: %x\n", hr);
+    ok(hr == DXFILE_OK || hr == DXFILEERR_NOMOREOBJECTS, "Unexpected hr %#lx.\n", hr);
 }
 
 /* Dump an X file 'objects.x' and its related templates file 'templates.x' if they are both presents
@@ -1236,10 +1236,10 @@ static void test_dump(void)
       goto exit;
     }
 
-    printf("Load templates file (%d bytes)\n", cbSize);
+    printf("Load templates file (%ld bytes)\n", cbSize);
 
     hr = pDirectXFileCreate(&lpDirectXFile);
-    ok(hr == DXFILE_OK, "DirectXFileCreate: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
     if(!lpDirectXFile)
     {
         skip("Couldn't create DirectXFile interface\n");
@@ -1247,10 +1247,10 @@ static void test_dump(void)
     }
 
     hr = IDirectXFile_RegisterTemplates(lpDirectXFile, pvData, cbSize);
-    ok(hr == DXFILE_OK, "IDirectXFileImpl_RegisterTemplates: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     hr = IDirectXFile_CreateEnumObject(lpDirectXFile, (LPVOID)"objects.x", DXFILELOAD_FROMFILE, &lpDirectXFileEnumObject);
-    ok(hr == DXFILE_OK, "IDirectXFile_CreateEnumObject: %x\n", hr);
+    ok(hr == DXFILE_OK, "Unexpected hr %#lx.\n", hr);
 
     while (SUCCEEDED(hr = IDirectXFileEnumObject_GetNextDataObject(lpDirectXFileEnumObject, &lpDirectXFileData)))
     {
@@ -1258,13 +1258,13 @@ static void test_dump(void)
         process_data(lpDirectXFileData, 0);
         IDirectXFileData_Release(lpDirectXFileData);
     }
-    ok(hr == DXFILE_OK || hr == DXFILEERR_NOMOREOBJECTS, "IDirectXFileEnumObject_GetNextDataObject: %x\n", hr);
+    ok(hr == DXFILE_OK || hr == DXFILEERR_NOMOREOBJECTS, "Unexpected hr %#lx.\n", hr);
 
     ref = IDirectXFile_Release(lpDirectXFileEnumObject);
-    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+    ok(!ref, "Unexpected refcount %lu.\n", ref);
 
     ref = IDirectXFile_Release(lpDirectXFile);
-    ok(ref == 0, "Got refcount %d, expected 0\n", ref);
+    ok(!ref, "Unexpected refcount %lu.\n", ref);
 
     CloseHandle(hFile);
 
