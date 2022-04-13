@@ -33,6 +33,7 @@ struct transform
 
     struct strmbase_sink sink;
     struct strmbase_source source;
+    struct strmbase_passthrough passthrough;
 
     struct wg_transform *transform;
 
@@ -66,6 +67,7 @@ static void transform_destroy(struct strmbase_filter *iface)
 {
     struct transform *filter = impl_from_strmbase_filter(iface);
 
+    strmbase_passthrough_cleanup(&filter->passthrough);
     strmbase_source_cleanup(&filter->source);
     strmbase_sink_cleanup(&filter->sink);
     strmbase_filter_cleanup(&filter->filter);
@@ -409,6 +411,21 @@ static HRESULT transform_source_get_media_type(struct strmbase_pin *pin, unsigne
     return filter->ops->source_get_media_type(filter, index, mt);
 }
 
+static HRESULT transform_source_query_interface(struct strmbase_pin *pin, REFIID iid, void **out)
+{
+    struct transform *filter = impl_from_strmbase_filter(pin->filter);
+
+    if (IsEqualGUID(iid, &IID_IMediaPosition))
+        *out = &filter->passthrough.IMediaPosition_iface;
+    else if (IsEqualGUID(iid, &IID_IMediaSeeking))
+        *out = &filter->passthrough.IMediaSeeking_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
 static HRESULT WINAPI transform_source_DecideBufferSize(struct strmbase_source *pin, IMemAllocator *allocator, ALLOCATOR_PROPERTIES *props)
 {
     struct transform *filter = impl_from_strmbase_filter(pin->pin.filter);
@@ -420,6 +437,7 @@ static const struct strmbase_source_ops source_ops =
 {
     .base.pin_query_accept = transform_source_query_accept,
     .base.pin_get_media_type = transform_source_get_media_type,
+    .base.pin_query_interface = transform_source_query_interface,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
     .pfnDecideBufferSize = transform_source_DecideBufferSize,
@@ -436,6 +454,10 @@ static HRESULT transform_create(IUnknown *outer, const CLSID *clsid, const struc
     strmbase_filter_init(&object->filter, outer, clsid, &filter_ops);
     strmbase_sink_init(&object->sink, &object->filter, L"In", &sink_ops, NULL);
     strmbase_source_init(&object->source, &object->filter, L"Out", &source_ops);
+
+    strmbase_passthrough_init(&object->passthrough, (IUnknown *)&object->source.pin.IPin_iface);
+    ISeekingPassThru_Init(&object->passthrough.ISeekingPassThru_iface, FALSE,
+            &object->sink.pin.IPin_iface);
 
     object->ops = ops;
 
