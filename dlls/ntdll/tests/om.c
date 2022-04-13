@@ -2638,7 +2638,7 @@ static void test_query_directory(void)
     memset( buffer, 0xcc, sizeof(buffer) );
     status = NtQueryDirectoryObject( dir, info, needed_size - 1, TRUE, TRUE, &context, &size );
     ok( status == STATUS_BUFFER_TOO_SMALL, "got %#lx\n", status );
-    todo_wine ok( size == needed_size, "expected size %lu, got %lu\n", needed_size, size );
+    ok( size == needed_size, "expected size %lu, got %lu\n", needed_size, size );
 
     status = NtQueryDirectoryObject( dir, info, sizeof(buffer), TRUE, TRUE, &context, NULL );
     ok( !status, "got %#lx\n", status );

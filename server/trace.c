@@ -3978,7 +3978,8 @@ static void dump_get_directory_entry_request( const struct get_directory_entry_r
 
 static void dump_get_directory_entry_reply( const struct get_directory_entry_reply *req )
 {
-    fprintf( stderr, " name_len=%u", req->name_len );
+    fprintf( stderr, " total_len=%u", req->total_len );
+    fprintf( stderr, ", name_len=%u", req->name_len );
     dump_varargs_unicode_str( ", name=", min(cur_size,req->name_len) );
     dump_varargs_unicode_str( ", type=", cur_size );
 }

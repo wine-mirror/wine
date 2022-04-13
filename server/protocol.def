@@ -3275,6 +3275,7 @@ struct handle_info
     obj_handle_t   handle;             /* handle to the directory */
     unsigned int   index;              /* entry index */
 @REPLY
+    data_size_t    total_len;          /* total length needed for strings */
     data_size_t    name_len;           /* length of the entry name in bytes */
     VARARG(name,unicode_str,name_len); /* entry name */
     VARARG(type,unicode_str);          /* entry type */

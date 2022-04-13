@@ -1125,10 +1125,10 @@ NTSTATUS WINAPI NtQueryDirectoryObject( HANDLE handle, DIRECTORY_BASIC_INFORMATI
                 buffer->ObjectName.Buffer[buffer->ObjectName.Length/sizeof(WCHAR)] = 0;
                 buffer->ObjectTypeName.Buffer[buffer->ObjectTypeName.Length/sizeof(WCHAR)] = 0;
                 *context = index + 1;
-
-                if (ret_size)
-                    *ret_size = buffer->ObjectName.MaximumLength + buffer->ObjectTypeName.MaximumLength + sizeof(*buffer);
             }
+
+            if (ret_size && (!ret || ret == STATUS_BUFFER_TOO_SMALL))
+                *ret_size = sizeof(*buffer) + reply->total_len + 2 * sizeof(WCHAR);
         }
         SERVER_END_REQ;
     }
