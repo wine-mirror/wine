@@ -934,7 +934,7 @@ static void silence_buffer(struct oss_stream *stream, BYTE *buffer, UINT32 frame
 static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
-    struct oss_stream *stream = This->stream;
+    struct start_params params;
 
     TRACE("(%p)\n", This);
 
@@ -945,31 +945,17 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
         return AUDCLNT_E_NOT_INITIALIZED;
     }
 
-    oss_lock(stream);
+    params.stream = This->stream;
+    OSS_CALL(start, &params);
 
-    if((stream->flags & AUDCLNT_STREAMFLAGS_EVENTCALLBACK) && !stream->event){
-        oss_unlock(stream);
-        LeaveCriticalSection(&g_sessions_lock);
-        return AUDCLNT_E_EVENTHANDLE_NOT_SET;
-    }
-
-    if(stream->playing){
-        oss_unlock(stream);
-        LeaveCriticalSection(&g_sessions_lock);
-        return AUDCLNT_E_NOT_STOPPED;
-    }
-
-    if(!This->timer_thread){
+    if(SUCCEEDED(params.result) && !This->timer_thread){
         This->timer_thread = CreateThread(NULL, 0, timer_thread, This->stream, 0, NULL);
         SetThreadPriority(This->timer_thread, THREAD_PRIORITY_TIME_CRITICAL);
     }
 
-    stream->playing = TRUE;
-
-    oss_unlock(stream);
     LeaveCriticalSection(&g_sessions_lock);
 
-    return S_OK;
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClient_Stop(IAudioClient3 *iface)

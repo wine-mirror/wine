@@ -90,6 +90,12 @@ struct release_stream_params
     HRESULT result;
 };
 
+struct start_params
+{
+    struct oss_stream *stream;
+    HRESULT result;
+};
+
 struct timer_loop_params
 {
     struct oss_stream *stream;
@@ -140,6 +146,7 @@ enum oss_funcs
     oss_get_endpoint_ids,
     oss_create_stream,
     oss_release_stream,
+    oss_start,
     oss_timer_loop,
     oss_is_format_supported,
     oss_get_mix_format,
