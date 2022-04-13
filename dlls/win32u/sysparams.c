@@ -4729,21 +4729,11 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
                                params->next_unicode );
         }
 
-    case NtUserFlushWindowSurfaces:
-        flush_window_surfaces( arg );
-        return 0;
-
     case NtUserGetDeskPattern:
         return get_entry( &entry_DESKPATTERN, 256, (WCHAR *)arg );
 
     case NtUserGetWinProcPtr:
         return (UINT_PTR)get_winproc_ptr( UlongToHandle(arg) );
-
-    case NtUserHandleInternalMessage:
-        {
-            MSG *msg = (MSG *)arg;
-            return handle_internal_message( msg->hwnd, msg->message, msg->wParam, msg->lParam );
-        }
 
     case NtUserLock:
         switch( arg )

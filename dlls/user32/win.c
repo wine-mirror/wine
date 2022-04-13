@@ -142,17 +142,6 @@ BOOL is_desktop_window( HWND hwnd )
 }
 
 
-/*******************************************************************
- *           flush_window_surfaces
- *
- * Flush pending output from all window surfaces.
- */
-void flush_window_surfaces( BOOL idle )
-{
-    NtUserCallOneParam( idle, NtUserFlushWindowSurfaces );
-}
-
-
 /***********************************************************************
  *           WIN_GetPtr
  *

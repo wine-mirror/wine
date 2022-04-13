@@ -687,10 +687,8 @@ enum
     NtUserCallOneParam_RealizePalette,
     /* temporary exports */
     NtUserCallHooks,
-    NtUserFlushWindowSurfaces,
     NtUserGetDeskPattern,
     NtUserGetWinProcPtr,
-    NtUserHandleInternalMessage,
     NtUserLock,
     NtUserSetCallbacks,
     NtUserSpyGetVKeyName,

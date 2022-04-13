@@ -266,21 +266,6 @@ static void map_wparam_WtoA( MSG *msg, BOOL remove )
 }
 
 
-/***********************************************************************
- *           handle_internal_message
- *
- * Handle an internal Wine message instead of calling the window proc.
- */
-LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
-{
-    MSG m;
-    m.hwnd    = hwnd;
-    m.message = msg;
-    m.wParam  = wparam;
-    m.lParam  = lparam;
-    return NtUserCallOneParam( (UINT_PTR)&m, NtUserHandleInternalMessage );
-}
-
 /* since the WM_DDE_ACK response to a WM_DDE_EXECUTE message should contain the handle
  * to the memory handle, we keep track (in the server side) of all pairs of handle
  * used (the client passes its value and the content of the memory handle), and

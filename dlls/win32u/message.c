@@ -1079,7 +1079,7 @@ BOOL reply_message_result( LRESULT result, MSG *msg )
  *
  * Handle an internal Wine message instead of calling the window proc.
  */
-LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+static LRESULT handle_internal_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
 {
     switch(msg)
     {
