@@ -1248,7 +1248,7 @@ static BOOL dwarf2_read_range(dwarf2_parse_context_t* ctx, const dwarf2_debug_in
             if (low  < *plow)  *plow = low;
             if (high > *phigh) *phigh = high;
         }
-        if (*plow == UMAX || *phigh == 0) {FIXME("no entry found\n"); return FALSE;}
+        if (*plow == UMAX || *phigh == 0) {WARN("no entry found\n"); return FALSE;}
         if (*plow == *phigh) {WARN("entry found, but low=high %Ix %Ix\n", low, high); return FALSE;}
 
         return TRUE;
