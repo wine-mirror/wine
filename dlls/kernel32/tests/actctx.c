@@ -2688,9 +2688,12 @@ static void extract_resource(const char *name, const char *type, const char *pat
 
 static void test_CreateActCtx(void)
 {
+    static const DWORD flags[] = {LOAD_LIBRARY_AS_DATAFILE, LOAD_LIBRARY_AS_IMAGE_RESOURCE,
+                                  LOAD_LIBRARY_AS_IMAGE_RESOURCE | LOAD_LIBRARY_AS_DATAFILE};
     CHAR path[MAX_PATH], dir[MAX_PATH], dll[MAX_PATH];
     ACTCTXA actctx;
     HANDLE handle;
+    int i;
 
     GetTempPathA(ARRAY_SIZE(path), path);
     strcat(path, "main_wndcls.manifest");
@@ -2827,6 +2830,34 @@ todo_wine {
     delete_manifest_file("testdir.manifest");
     delete_manifest_file("assembly_dir\\testdir.manifest");
     RemoveDirectoryA(dir);
+
+    /* create using lpSource with a DLL relative name */
+    memset(&actctx, 0, sizeof(actctx));
+    actctx.cbSize = sizeof(actctx);
+    actctx.lpSource = "shell32.dll";
+    actctx.lpResourceName = MAKEINTRESOURCEA(124);
+    actctx.dwFlags = ACTCTX_FLAG_RESOURCE_NAME_VALID;
+    handle = CreateActCtxA(&actctx);
+    ok(handle == INVALID_HANDLE_VALUE, "CreateActCtxA succeeded\n");
+
+    /* create from module loaded as data file */
+    memset(&actctx, 0, sizeof(actctx));
+    actctx.cbSize = sizeof(actctx);
+    actctx.lpResourceName = MAKEINTRESOURCEA(1);
+    actctx.dwFlags = ACTCTX_FLAG_HMODULE_VALID | ACTCTX_FLAG_RESOURCE_NAME_VALID;
+    for (i = 0; i < ARRAY_SIZE(flags); ++i)
+    {
+        winetest_push_context("%lu", flags[i]);
+
+        /* use explorer.exe because using modules already loaded has a different behavior */
+        actctx.hModule = LoadLibraryExA("C:\\windows\\explorer.exe", NULL, flags[i]);
+        ok(actctx.hModule != NULL, "LoadLibraryExA failed, error %lu\n", GetLastError());
+        handle = CreateActCtxA(&actctx);
+        ok(handle == INVALID_HANDLE_VALUE, "CreateActCtxA succeeded\n");
+        FreeLibrary(actctx.hModule);
+
+        winetest_pop_context();
+    }
 }
 
 static BOOL init_funcs(void)
