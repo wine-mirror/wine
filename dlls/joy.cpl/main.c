@@ -992,10 +992,24 @@ static void display_cpl_sheets(HWND parent, struct JoystickData *data)
 {
     INITCOMMONCONTROLSEX icex;
     PROPSHEETPAGEW psp[NUM_PROPERTY_PAGES];
+    BOOL activated = FALSE;
     PROPSHEETHEADERW psh;
+    ULONG_PTR cookie;
+    ACTCTXW actctx;
+    HANDLE context;
     DWORD id = 0;
 
     OleInitialize(NULL);
+    /* Activate context */
+    memset(&actctx, 0, sizeof(actctx));
+    actctx.cbSize = sizeof(actctx);
+    actctx.hModule = hcpl;
+    actctx.lpResourceName = MAKEINTRESOURCEW(124);
+    actctx.dwFlags = ACTCTX_FLAG_HMODULE_VALID | ACTCTX_FLAG_RESOURCE_NAME_VALID;
+    context = CreateActCtxW(&actctx);
+    if (context != INVALID_HANDLE_VALUE)
+        activated = ActivateActCtx(context, &cookie);
+
     /* Initialize common controls */
     icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
     icex.dwICC = ICC_LISTVIEW_CLASSES | ICC_BAR_CLASSES;
@@ -1039,6 +1053,9 @@ static void display_cpl_sheets(HWND parent, struct JoystickData *data)
     /* display the dialog */
     PropertySheetW(&psh);
 
+    if (activated)
+        DeactivateActCtx(0, cookie);
+    ReleaseActCtx(context);
     OleUninitialize();
 }
 

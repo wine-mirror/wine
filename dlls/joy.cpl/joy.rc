@@ -77,6 +77,9 @@ FONT 8, "Ms Shell Dlg"
 
 LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
+/* @makedep: joy.manifest */
+124 RT_MANIFEST joy.manifest
+
 /* @makedep: joy.ico */
 ICO_MAIN ICON "joy.ico"
 
