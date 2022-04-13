@@ -118,7 +118,7 @@ static BOOL X11DRV_desktop_get_modes( ULONG_PTR id, DWORD flags, DEVMODEW **new_
     RECT primary_rect;
     DEVMODEW *modes;
 
-    primary_rect = get_primary_monitor_rect();
+    primary_rect = NtUserGetPrimaryMonitorRect();
     screen_width = primary_rect.right - primary_rect.left;
     screen_height = primary_rect.bottom - primary_rect.top;
 
@@ -166,7 +166,7 @@ static void X11DRV_desktop_free_modes( DEVMODEW *modes )
 
 static BOOL X11DRV_desktop_get_current_mode( ULONG_PTR id, DEVMODEW *mode )
 {
-    RECT primary_rect = get_primary_monitor_rect();
+    RECT primary_rect = NtUserGetPrimaryMonitorRect();
 
     mode->dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT |
                      DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY | DM_POSITION;
@@ -374,7 +374,7 @@ BOOL CDECL X11DRV_create_desktop( UINT width, UINT height )
 
 BOOL is_desktop_fullscreen(void)
 {
-    RECT primary_rect = get_primary_monitor_rect();
+    RECT primary_rect = NtUserGetPrimaryMonitorRect();
     return (primary_rect.right - primary_rect.left == max_width &&
             primary_rect.bottom - primary_rect.top == max_height);
 }
@@ -421,8 +421,8 @@ void X11DRV_resize_desktop( BOOL send_display_change )
     HWND hwnd = GetDesktopWindow();
     INT width, height;
 
-    virtual_rect = get_virtual_screen_rect();
-    primary_rect = get_primary_monitor_rect();
+    virtual_rect = NtUserGetVirtualScreenRect();
+    primary_rect = NtUserGetPrimaryMonitorRect();
     width = primary_rect.right;
     height = primary_rect.bottom;
 

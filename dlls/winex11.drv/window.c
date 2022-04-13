@@ -1836,7 +1836,7 @@ BOOL X11DRV_CreateDesktopWindow( HWND hwnd )
 
     if (!width && !height)  /* not initialized yet */
     {
-        RECT rect = get_virtual_screen_rect();
+        RECT rect = NtUserGetVirtualScreenRect();
 
         SERVER_START_REQ( set_window_pos )
         {
@@ -2205,7 +2205,7 @@ void X11DRV_ReleaseDC( HWND hwnd, HDC hdc )
     escape.code = X11DRV_SET_DRAWABLE;
     escape.drawable = root_window;
     escape.mode = IncludeInferiors;
-    escape.dc_rect = get_virtual_screen_rect();
+    escape.dc_rect = NtUserGetVirtualScreenRect();
     OffsetRect( &escape.dc_rect, -2 * escape.dc_rect.left, -2 * escape.dc_rect.top );
     NtGdiExtEscape( hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
 }
@@ -2320,7 +2320,7 @@ done:
 
 static inline BOOL get_surface_rect( const RECT *visible_rect, RECT *surface_rect )
 {
-    *surface_rect = get_virtual_screen_rect();
+    *surface_rect = NtUserGetVirtualScreenRect();
 
     if (!IntersectRect( surface_rect, surface_rect, visible_rect )) return FALSE;
     OffsetRect( surface_rect, -visible_rect->left, -visible_rect->top );

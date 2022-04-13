@@ -562,7 +562,7 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     if (!GetMonitorInfoW( monitor, &monitor_info )) return FALSE;
     if (!grab_fullscreen)
     {
-        RECT virtual_rect = get_virtual_screen_rect();
+        RECT virtual_rect = NtUserGetVirtualScreenRect();
         if (!EqualRect( &monitor_info.rcMonitor, &virtual_rect )) return FALSE;
         if (is_virtual_desktop()) return FALSE;
     }
@@ -1540,7 +1540,7 @@ BOOL X11DRV_GetCursorPos(LPPOINT pos)
  */
 BOOL X11DRV_ClipCursor( LPCRECT clip )
 {
-    RECT virtual_rect = get_virtual_screen_rect();
+    RECT virtual_rect = NtUserGetVirtualScreenRect();
 
     if (!clip) clip = &virtual_rect;
 
@@ -1853,7 +1853,7 @@ static BOOL map_raw_event_coords( XIRawEvent *event, INPUT *input )
     }
     if (event->deviceid != thread_data->xi2_current_slave) return FALSE;
 
-    virtual_rect = get_virtual_screen_rect();
+    virtual_rect = NtUserGetVirtualScreenRect();
 
     if (x->max <= x->min) x_scale = 1;
     else x_scale = (virtual_rect.right - virtual_rect.left) / (x->max - x->min);

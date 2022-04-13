@@ -44,7 +44,7 @@ void release_display_device_init_mutex(HANDLE mutex)
 
 POINT virtual_screen_to_root(INT x, INT y)
 {
-    RECT virtual = get_virtual_screen_rect();
+    RECT virtual = NtUserGetVirtualScreenRect();
     POINT pt;
 
     pt.x = x - virtual.left;
@@ -54,22 +54,12 @@ POINT virtual_screen_to_root(INT x, INT y)
 
 POINT root_to_virtual_screen(INT x, INT y)
 {
-    RECT virtual = get_virtual_screen_rect();
+    RECT virtual = NtUserGetVirtualScreenRect();
     POINT pt;
 
     pt.x = x + virtual.left;
     pt.y = y + virtual.top;
     return pt;
-}
-
-RECT get_virtual_screen_rect(void)
-{
-    return NtUserGetVirtualScreenRect();
-}
-
-RECT get_primary_monitor_rect(void)
-{
-    return NtUserGetPrimaryMonitorRect();
 }
 
 /* Get the primary monitor rect from the host system */
@@ -214,9 +204,9 @@ void X11DRV_DisplayDevices_Update(BOOL send_display_change)
     HWND foreground;
     UINT mask = 0;
 
-    old_virtual_rect = get_virtual_screen_rect();
+    old_virtual_rect = NtUserGetVirtualScreenRect();
     X11DRV_DisplayDevices_Init(TRUE);
-    new_virtual_rect = get_virtual_screen_rect();
+    new_virtual_rect = NtUserGetVirtualScreenRect();
 
     /* Calculate XReconfigureWMWindow() mask */
     if (old_virtual_rect.left != new_virtual_rect.left)
