@@ -1579,7 +1579,8 @@ void X11DRV_InitKeyboard( Display *display )
         WORD first, last;
     } vkey_ranges[] = {
         { VK_OEM_1, VK_OEM_3 },
-        { VK_OEM_4, VK_ICO_00 },
+        { VK_OEM_4, VK_OEM_8 },
+        { VK_OEM_AX, VK_ICO_00 },
         { 0xe6, 0xe6 },
         { 0xe9, 0xf5 },
         { VK_OEM_NEC_EQUAL, VK_OEM_NEC_EQUAL },
