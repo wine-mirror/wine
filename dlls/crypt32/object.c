@@ -629,15 +629,45 @@ static BOOL CRYPT_QueryEmbeddedMessageObject(DWORD dwObjectType,
 
     TRACE("%s\n", debugstr_w(pvObject));
 
-    if (dwObjectType != CERT_QUERY_OBJECT_FILE)
+    if (dwObjectType == CERT_QUERY_OBJECT_BLOB)
     {
-        WARN("don't know what to do for type %ld embedded signed messages\n",
-         dwObjectType);
+        WCHAR temp_path[MAX_PATH], temp_name[MAX_PATH];
+        const CERT_BLOB *b = pvObject;
+
+        TRACE("cbData %lu, pbData %p.\n", b->cbData, b->pbData);
+
+        if (!GetTempPathW(MAX_PATH, temp_path) || !GetTempFileNameW(temp_path, L"blb", 0, temp_name))
+        {
+            ERR("Failed getting temp file name.\n");
+            return FALSE;
+        }
+        file = CreateFileW(temp_name, GENERIC_READ | GENERIC_WRITE, 0,
+                NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL | FILE_FLAG_DELETE_ON_CLOSE, NULL);
+        if (file == INVALID_HANDLE_VALUE)
+        {
+            ERR("Could not create temp file.\n");
+            SetLastError(ERROR_OUTOFMEMORY);
+            return FALSE;
+        }
+        if (!WriteFile(file, b->pbData, b->cbData, NULL, NULL))
+        {
+            CloseHandle(file);
+            ERR("Could not write temp file.\n");
+            SetLastError(ERROR_OUTOFMEMORY);
+            return FALSE;
+        }
+    }
+    else if (dwObjectType == CERT_QUERY_OBJECT_FILE)
+    {
+        file = CreateFileW(pvObject, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+    }
+    else
+    {
+        WARN("Unknown dwObjectType %lu.\n", dwObjectType);
         SetLastError(E_INVALIDARG);
         return FALSE;
     }
-    file = CreateFileW(pvObject, GENERIC_READ, FILE_SHARE_READ,
-     NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+
     if (file != INVALID_HANDLE_VALUE)
     {
         ret = CryptSIPRetrieveSubjectGuid(pvObject, file, &subject);
