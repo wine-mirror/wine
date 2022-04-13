@@ -4213,7 +4213,7 @@ BOOL WINAPI SetMenuItemBitmaps( HMENU hMenu, UINT nPos, UINT wFlags,
  */
 HMENU WINAPI CreateMenu(void)
 {
-    return UlongToHandle( NtUserCallNoParam( NtUserCreateMenu ));
+    return NtUserCreateMenu();
 }
 
 

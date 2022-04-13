@@ -4632,24 +4632,31 @@ ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
 {
     switch(code)
     {
-    case NtUserCreateMenu:
+    case NtUserCallNoParam_CreateMenu:
         return HandleToUlong( create_menu() );
-    case NtUserGetDesktopWindow:
+
+    case NtUserCallNoParam_GetDesktopWindow:
         return HandleToUlong( get_desktop_window() );
-    case NtUserGetInputState:
+
+    case NtUserCallNoParam_GetInputState:
         return get_input_state();
-    case NtUserReleaseCapture:
+
+    case NtUserCallNoParam_ReleaseCapture:
         return release_capture();
+
     /* temporary exports */
     case NtUserExitingThread:
         exiting_thread_id = GetCurrentThreadId();
         return 0;
+
     case NtUserThreadDetach:
         thread_detach();
         return 0;
+
     case NtUserUpdateClipboard:
         user_driver->pUpdateClipboard();
         return 0;
+
     default:
         FIXME( "invalid code %u\n", code );
         return 0;

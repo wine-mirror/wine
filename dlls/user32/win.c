@@ -871,7 +871,7 @@ HWND WINAPI GetDesktopWindow(void)
     struct user_thread_info *thread_info = get_user_thread_info();
 
     if (thread_info->top_window) return thread_info->top_window;
-    return UlongToHandle( NtUserCallNoParam( NtUserGetDesktopWindow ));
+    return NtUserGetDesktopWindow();
 }
 
 

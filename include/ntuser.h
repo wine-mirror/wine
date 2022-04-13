@@ -131,19 +131,6 @@ struct win_hook_params
 #define NTUSER_DPI_PER_MONITOR_AWARE_V2   0x00000022
 #define NTUSER_DPI_PER_UNAWARE_GDISCALED  0x40006010
 
-/* NtUserCallNoParam codes, not compatible with Windows */
-enum
-{
-    NtUserCreateMenu,
-    NtUserGetDesktopWindow,
-    NtUserGetInputState,
-    NtUserReleaseCapture,
-    /* temporary exports */
-    NtUserExitingThread,
-    NtUserThreadDetach,
-    NtUserUpdateClipboard,
-};
-
 /* NtUserCallOneParam codes, not compatible with Windows */
 enum
 {
@@ -675,5 +662,38 @@ WORD    WINAPI NtUserVkKeyScanEx( WCHAR chr, HKL layout );
 DWORD   WINAPI NtUserWaitForInputIdle( HANDLE process, DWORD timeout, BOOL wow );
 HWND    WINAPI NtUserWindowFromDC( HDC hdc );
 HWND    WINAPI NtUserWindowFromPoint( LONG x, LONG y );
+
+/* NtUserCallNoParam codes, not compatible with Windows */
+enum
+{
+    NtUserCallNoParam_CreateMenu,
+    NtUserCallNoParam_GetDesktopWindow,
+    NtUserCallNoParam_GetInputState,
+    NtUserCallNoParam_ReleaseCapture,
+    /* temporary exports */
+    NtUserExitingThread,
+    NtUserThreadDetach,
+    NtUserUpdateClipboard,
+};
+
+static inline HMENU NtUserCreateMenu(void)
+{
+    return UlongToHandle( NtUserCallNoParam( NtUserCallNoParam_CreateMenu ));
+}
+
+static inline HWND NtUserGetDesktopWindow(void)
+{
+    return UlongToHandle( NtUserCallNoParam( NtUserCallNoParam_GetDesktopWindow ));
+}
+
+static inline BOOL NtUserGetInputState(void)
+{
+    return NtUserCallNoParam( NtUserCallNoParam_GetInputState );
+}
+
+static inline BOOL NtUserReleaseCapture(void)
+{
+    return NtUserCallNoParam( NtUserCallNoParam_ReleaseCapture );
+}
 
 #endif /* _NTUSER_ */
