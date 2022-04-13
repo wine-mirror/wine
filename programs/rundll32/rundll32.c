@@ -276,9 +276,12 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPWSTR szCmdLine
     HWND hWnd;
     LPWSTR szDllName,szEntryPoint;
     void *entry_point = NULL;
-    BOOL unicode = FALSE, win16 = FALSE;
+    BOOL unicode = FALSE, win16 = FALSE, activated = FALSE;
+    HMODULE hDll, hCtx = INVALID_HANDLE_VALUE;
+    WCHAR path[MAX_PATH];
     STARTUPINFOW info;
-    HMODULE hDll;
+    ULONG_PTR cookie;
+    ACTCTXW ctx;
 
     hWnd=NULL;
     hDll=NULL;
@@ -300,6 +303,21 @@ int WINAPI wWinMain(HINSTANCE instance, HINSTANCE hOldInstance, LPWSTR szCmdLine
     else
         szEntryPoint = get_next_arg(&szCmdLine);
     WINE_TRACE("EntryPoint=%s\n",wine_dbgstr_w(szEntryPoint));
+
+    /* Activate context before DllMain() is called */
+    if (SearchPathW(NULL, szDllName, NULL, ARRAY_SIZE(path), path, NULL))
+    {
+        memset(&ctx, 0, sizeof(ctx));
+        ctx.cbSize = sizeof(ctx);
+        ctx.lpSource = path;
+        ctx.lpResourceName = MAKEINTRESOURCEW(123);
+        ctx.dwFlags = ACTCTX_FLAG_RESOURCE_NAME_VALID;
+        hCtx = CreateActCtxW(&ctx);
+        if (hCtx != INVALID_HANDLE_VALUE)
+            activated = ActivateActCtx(hCtx, &cookie);
+        else
+            WINE_TRACE("No manifest at ID 123 in %s\n", wine_dbgstr_w(path));
+    }
 
     /* Load the library */
     hDll=LoadLibraryW(szDllName);
@@ -367,6 +385,9 @@ CLEANUP:
         DestroyWindow(hWnd);
     if (hDll)
         FreeLibrary(hDll);
+    if (activated)
+        DeactivateActCtx(0, cookie);
+    ReleaseActCtx(hCtx);
     HeapFree(GetProcessHeap(),0,szDllName);
     return 0; /* rundll32 always returns 0! */
 }
