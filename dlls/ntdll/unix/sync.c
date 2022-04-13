@@ -1104,13 +1104,12 @@ NTSTATUS WINAPI NtQueryDirectoryObject( HANDLE handle, DIRECTORY_BASIC_INFORMATI
 
     if (single_entry)
     {
-        if (size <= sizeof(*buffer) + 2 * sizeof(WCHAR)) return STATUS_BUFFER_OVERFLOW;
-
         SERVER_START_REQ( get_directory_entry )
         {
             req->handle = wine_server_obj_handle( handle );
             req->index = index;
-            wine_server_set_reply( req, buffer + 1, size - sizeof(*buffer) - 2*sizeof(WCHAR) );
+            if (size >= sizeof(*buffer) + 2 * sizeof(WCHAR))
+                wine_server_set_reply( req, buffer + 1, size - sizeof(*buffer) - 2 * sizeof(WCHAR) );
             if (!(ret = wine_server_call( req )))
             {
                 buffer->ObjectName.Buffer = (WCHAR *)(buffer + 1);

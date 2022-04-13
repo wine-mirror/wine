@@ -2530,7 +2530,7 @@ static void test_query_directory(void)
     context = 0xdeadbeef;
     size = 0xdeadbeef;
     status = NtQueryDirectoryObject( dir, info, 0, TRUE, TRUE, &context, &size );
-    todo_wine ok( status == STATUS_NO_MORE_ENTRIES, "got %#lx\n", status );
+    ok( status == STATUS_NO_MORE_ENTRIES, "got %#lx\n", status );
     ok( context == 0xdeadbeef, "got context %#lx\n", context );
     todo_wine ok( size == sizeof(*info) || broken(!size) /* WoW64 */, "got size %lu\n", size );
 
@@ -2630,9 +2630,9 @@ static void test_query_directory(void)
     size = 0xdeadbeef;
     context = 0xdeadbeef;
     status = NtQueryDirectoryObject( dir, info, 0, TRUE, TRUE, &context, &size );
-    todo_wine ok( status == STATUS_BUFFER_TOO_SMALL, "got %#lx\n", status );
+    ok( status == STATUS_BUFFER_TOO_SMALL, "got %#lx\n", status );
     ok( context == 0xdeadbeef, "got context %#lx\n", context );
-    todo_wine ok( size == needed_size, "expected size %lu, got %lu\n", needed_size, size );
+    ok( size == needed_size, "expected size %lu, got %lu\n", needed_size, size );
 
     size = 0xdeadbeef;
     memset( buffer, 0xcc, sizeof(buffer) );
