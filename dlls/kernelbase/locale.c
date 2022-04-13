@@ -366,10 +366,9 @@ static void load_locale_nls(void)
         UINT  index_count;
     } *geo_header;
 
-    LCID lcid;
     LARGE_INTEGER dummy;
 
-    RtlGetLocaleFileMappingAddress( (void **)&header, &lcid, &dummy );
+    RtlGetLocaleFileMappingAddress( (void **)&header, &system_lcid, &dummy );
     locale_table = (const NLS_LOCALE_HEADER *)((char *)header + header->locales);
     lcids_index = (const NLS_LOCALE_LCID_INDEX *)((char *)locale_table + locale_table->lcids_offset);
     lcnames_index = (const NLS_LOCALE_LCNAME_INDEX *)((char *)locale_table + locale_table->lcnames_offset);
@@ -1766,17 +1765,10 @@ void init_locale( HMODULE module )
     kernelbase_handle = module;
     load_locale_nls();
 
-    NtQueryDefaultLocale( FALSE, &system_lcid );
-    NtQueryDefaultLocale( TRUE, &user_lcid );
-    if (!(system_locale = NlsValidateLocale( &system_lcid, 0 )))
-    {
-        if (GetEnvironmentVariableW( L"WINELOCALE", bufferW, ARRAY_SIZE(bufferW) ))
-            system_locale = get_locale_by_name( bufferW, &system_lcid );
-        if (!system_locale) system_locale = get_locale_by_name( L"en-US", &system_lcid );
-    }
-    system_lcid = system_locale->ilanguage;
-    if (system_lcid == LOCALE_CUSTOM_UNSPECIFIED) system_lcid = LOCALE_CUSTOM_DEFAULT;
+    if (system_lcid == LOCALE_CUSTOM_UNSPECIFIED) system_lcid = MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
+    system_locale = NlsValidateLocale( &system_lcid, 0 );
 
+    NtQueryDefaultLocale( TRUE, &user_lcid );
     if (!(user_locale = NlsValidateLocale( &user_lcid, 0 )))
     {
         if (GetEnvironmentVariableW( L"WINEUSERLOCALE", bufferW, ARRAY_SIZE(bufferW) ))

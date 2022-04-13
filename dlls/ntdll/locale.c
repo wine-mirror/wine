@@ -183,23 +183,16 @@ void locale_init(void)
 
     value.Buffer = locale;
     value.MaximumLength = sizeof(locale);
-    RtlInitUnicodeString( &name, L"WINELOCALE" );
-    if (!RtlQueryEnvironmentVariable_U( NULL, &name, &value ))
-    {
-        const NLS_LOCALE_LCNAME_INDEX *entry = find_lcname_entry( locale );
-        if (entry) system_lcid = get_locale_data( entry->idx )->idefaultlanguage;
-    }
     RtlInitUnicodeString( &name, L"WINEUSERLOCALE" );
     if (!RtlQueryEnvironmentVariable_U( NULL, &name, &value ))
     {
         const NLS_LOCALE_LCNAME_INDEX *entry = find_lcname_entry( locale );
         if (entry) user_lcid = get_locale_data( entry->idx )->idefaultlanguage;
     }
-    if (!system_lcid) system_lcid = MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
+    if (system_lcid == LOCALE_CUSTOM_UNSPECIFIED) system_lcid = MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
     if (!user_lcid) user_lcid = system_lcid;
     NtSetDefaultUILanguage( user_lcid );
     NtSetDefaultLocale( TRUE, user_lcid );
-    NtSetDefaultLocale( FALSE, system_lcid );
 }
 
 

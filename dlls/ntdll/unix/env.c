@@ -74,7 +74,7 @@ char **main_envp = NULL;
 WCHAR **main_wargv = NULL;
 
 static LCID user_lcid, system_lcid;
-static LANGID user_ui_language, system_ui_language;
+static LANGID user_ui_language;
 
 static char system_locale[LOCALE_NAME_MAX_LENGTH];
 static char user_locale[LOCALE_NAME_MAX_LENGTH];
@@ -348,7 +348,6 @@ static BOOL is_dynamic_env_var( const char *var )
             STARTS_WITH( var, "WINECONFIGDIR=" ) ||
             STARTS_WITH( var, "WINEDLLDIR" ) ||
             STARTS_WITH( var, "WINEUNIXCP=" ) ||
-            STARTS_WITH( var, "WINELOCALE=" ) ||
             STARTS_WITH( var, "WINEUSERLOCALE=" ) ||
             STARTS_WITH( var, "WINEUSERNAME=" ) ||
             STARTS_WITH( var, "WINEPRELOADRESERVE=" ) ||
@@ -762,6 +761,47 @@ static BOOL unix_to_win_locale( const char *unix_name, char *win_name )
 }
 
 
+static LCID init_system_lcid( void *locale_ptr )
+{
+    struct
+    {
+        UINT ctypes;
+        UINT unknown1;
+        UINT unknown2;
+        UINT unknown3;
+        UINT locales;
+        UINT charmaps;
+        UINT geoids;
+        UINT scripts;
+    } *header = locale_ptr;
+    WCHAR name[LOCALE_NAME_MAX_LENGTH];
+    const NLS_LOCALE_LCNAME_INDEX *lcnames;
+    const NLS_LOCALE_HEADER *locale_table;
+    const WCHAR *locale_strings;
+    int min, max;
+
+    ascii_to_unicode( name, system_locale, strlen(system_locale) + 1 );
+    locale_table = (const NLS_LOCALE_HEADER *)((char *)header + header->locales);
+    locale_strings = (const WCHAR *)((char *)locale_table + locale_table->strings_offset);
+    lcnames = (const NLS_LOCALE_LCNAME_INDEX *)((char *)locale_table + locale_table->lcnames_offset);
+    min = 0;
+    max = locale_table->nb_lcnames - 1;
+    while (min <= max)
+    {
+        int pos = (min + max) / 2;
+        int res = wcsicmp( name, locale_strings + lcnames[pos].name + 1 );
+        if (res < 0) max = pos - 1;
+        else if (res > 0) min = pos + 1;
+        else
+        {
+            ULONG offset = locale_table->locales_offset + lcnames[pos].idx * locale_table->locale_size;
+            return ((const NLS_LOCALE_DATA *)((const char *)locale_table + offset))->idefaultlanguage;
+        }
+    }
+    return MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
+}
+
+
 /******************************************************************
  *		init_locale
  */
@@ -1043,9 +1083,7 @@ static void add_dynamic_environment( WCHAR **env, SIZE_T *pos, SIZE_T *size )
         append_envA( env, pos, size, "WINEUNIXCP", str );
     }
     else append_envW( env, pos, size, "WINEUNIXCP", NULL );
-    append_envA( env, pos, size, "WINELOCALE", system_locale );
-    append_envA( env, pos, size, "WINEUSERLOCALE",
-                 strcmp( user_locale, system_locale ) ? user_locale : NULL );
+    append_envA( env, pos, size, "WINEUSERLOCALE", user_locale );
     append_envA( env, pos, size, "SystemDrive", "C:" );
     append_envA( env, pos, size, "SystemRoot", "C:\\windows" );
 }
@@ -2179,6 +2217,7 @@ NTSTATUS WINAPI NtInitializeNlsFiles( void **ptr, LCID *lcid, LARGE_INTEGER *siz
         status = map_section( handle, ptr, &mapsize, PAGE_READONLY );
         NtClose( handle );
     }
+    if (!status && !system_lcid) system_lcid = init_system_lcid( *ptr );
     *lcid = system_lcid;
     return status;
 }
@@ -2200,11 +2239,7 @@ NTSTATUS WINAPI NtQueryDefaultLocale( BOOLEAN user, LCID *lcid )
 NTSTATUS WINAPI NtSetDefaultLocale( BOOLEAN user, LCID lcid )
 {
     if (user) user_lcid = lcid;
-    else
-    {
-        system_lcid = lcid;
-        system_ui_language = LANGIDFROMLCID(lcid); /* there is no separate call to set it */
-    }
+    else system_lcid = lcid;
     return STATUS_SUCCESS;
 }
 
@@ -2234,7 +2269,7 @@ NTSTATUS WINAPI NtSetDefaultUILanguage( LANGID lang )
  */
 NTSTATUS WINAPI NtQueryInstallUILanguage( LANGID *lang )
 {
-    *lang = system_ui_language;
+    *lang = LANGIDFROMLCID(system_lcid); /* there is no separate call to set it */
     return STATUS_SUCCESS;
 }
 
