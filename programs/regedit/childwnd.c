@@ -32,12 +32,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(regedit);
 ChildWnd* g_pChildWnd;
 static int last_split;
 
-static const WCHAR wszLastKey[] = {'L','a','s','t','K','e','y',0};
-static const WCHAR wszKeyName[] = {'S','o','f','t','w','a','r','e','\\',
-                                   'M','i','c','r','o','s','o','f','t','\\',
-                                   'W','i','n','d','o','w','s','\\',
-                                   'C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\',
-                                   'A','p','p','l','e','t','s','\\','R','e','g','e','d','i','t',0};
+static const WCHAR wszLastKey[] = L"LastKey";
+static const WCHAR wszKeyName[] = L"Software\\Microsoft\\Windows\\CurrentVersion\\Applets\\Regedit";
 
 /*******************************************************************************
  * Local module support methods
@@ -58,11 +54,7 @@ static LPCWSTR GetRootKeyName(HKEY hRootKey)
     if(hRootKey == HKEY_DYN_DATA)
         return reg_class_namesW[INDEX_HKEY_DYN_DATA];
     else
-    {
-        static const WCHAR unknown_key[] = {'U','N','K','N','O','W','N',' ','H','K','E','Y',',',' ',
-                                            'P','L','E','A','S','E',' ','R','E','P','O','R','T',0};
-        return unknown_key;
-    }
+        return L"Unknown HKEY. Please report.";
 }
 
 static void draw_splitbar(HWND hWnd, int x)
