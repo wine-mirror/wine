@@ -852,6 +852,12 @@ BOOL WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD mode,
     return unix_funcs->pNtUserEnumDisplaySettings( device, mode, dev_mode, flags );
 }
 
+INT WINAPI NtUserExcludeUpdateRgn( HDC hdc, HWND hwnd )
+{
+    if (!unix_funcs) return ERROR;
+    return unix_funcs->pNtUserExcludeUpdateRgn( hdc, hwnd );
+}
+
 BOOL WINAPI NtUserFlashWindowEx( FLASHWINFO *info )
 {
     if (!unix_funcs) return FALSE;

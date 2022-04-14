@@ -240,31 +240,6 @@ BOOL WINAPI ValidateRect( HWND hwnd, const RECT *rect )
 }
 
 
-/***********************************************************************
- *		ExcludeUpdateRgn (USER32.@)
- */
-INT WINAPI ExcludeUpdateRgn( HDC hdc, HWND hwnd )
-{
-    HRGN update_rgn = CreateRectRgn( 0, 0, 0, 0 );
-    INT ret = NtUserGetUpdateRgn( hwnd, update_rgn, FALSE );
-
-    if (ret != ERROR)
-    {
-        DPI_AWARENESS_CONTEXT context;
-        POINT pt;
-
-        context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
-        GetDCOrgEx( hdc, &pt );
-        MapWindowPoints( 0, hwnd, &pt, 1 );
-        OffsetRgn( update_rgn, -pt.x, -pt.y );
-        ret = ExtSelectClipRgn( hdc, update_rgn, RGN_DIFF );
-        SetThreadDpiAwarenessContext( context );
-    }
-    DeleteObject( update_rgn );
-    return ret;
-}
-
-
 static INT scroll_window( HWND hwnd, INT dx, INT dy, const RECT *rect, const RECT *clipRect,
                           HRGN hrgnUpdate, LPRECT rcUpdate, UINT flags, BOOL is_ex )
 {

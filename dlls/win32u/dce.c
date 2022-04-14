@@ -1546,3 +1546,27 @@ BOOL WINAPI NtUserGetUpdateRect( HWND hwnd, RECT *rect, BOOL erase )
     if (need_erase) flags |= UPDATE_DELAYED_ERASE;
     return get_update_flags( hwnd, NULL, &flags ) && (flags & UPDATE_PAINT);
 }
+
+/***********************************************************************
+ *           NtUserExcludeUpdateRgn (win32u.@)
+ */
+INT WINAPI NtUserExcludeUpdateRgn( HDC hdc, HWND hwnd )
+{
+    HRGN update_rgn = NtGdiCreateRectRgn( 0, 0, 0, 0 );
+    INT ret = NtUserGetUpdateRgn( hwnd, update_rgn, FALSE );
+
+    if (ret != ERROR)
+    {
+        DPI_AWARENESS_CONTEXT context;
+        POINT pt;
+
+        context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( hwnd ));
+        NtGdiGetDCPoint( hdc, NtGdiGetDCOrg, &pt );
+        map_window_points( 0, hwnd, &pt, 1, get_thread_dpi() );
+        NtGdiOffsetRgn( update_rgn, -pt.x, -pt.y );
+        ret = NtGdiExtSelectClipRgn( hdc, update_rgn, RGN_DIFF );
+        set_thread_dpi_awareness_context( context );
+    }
+    NtGdiDeleteObjectApp( update_rgn );
+    return ret;
+}

@@ -217,6 +217,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserEnumDisplayMonitors)( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp );
     BOOL     (WINAPI *pNtUserEnumDisplaySettings)( UNICODE_STRING *device, DWORD mode,
                                                    DEVMODEW *dev_mode, DWORD flags );
+    INT      (WINAPI *pNtUserExcludeUpdateRgn)( HDC hdc, HWND hwnd );
     BOOL     (WINAPI *pNtUserFlashWindowEx)( FLASHWINFO *info );
     SHORT    (WINAPI *pNtUserGetAsyncKeyState)( INT key );
     ATOM     (WINAPI *pNtUserGetClassInfoEx)( HINSTANCE instance, UNICODE_STRING *name, WNDCLASSEXW *wc,

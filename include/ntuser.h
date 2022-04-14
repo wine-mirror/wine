@@ -436,6 +436,7 @@ NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
 BOOL    WINAPI NtUserEnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc, LPARAM lp );
 BOOL    WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD mode,
                                           DEVMODEW *dev_mode, DWORD flags );
+INT     WINAPI NtUserExcludeUpdateRgn( HDC hdc, HWND hwnd );
 HICON   WINAPI NtUserFindExistingCursorIcon( UNICODE_STRING *module, UNICODE_STRING *res_name,
                                              void *desc );
 BOOL    WINAPI NtUserFlashWindowEx( FLASHWINFO *info );

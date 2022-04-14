@@ -237,7 +237,7 @@
 @ stdcall EnumWindowStationsW(ptr long)
 @ stdcall EnumWindows(ptr long)
 @ stdcall EqualRect(ptr ptr)
-@ stdcall ExcludeUpdateRgn(long long)
+@ stdcall ExcludeUpdateRgn(long long) NtUserExcludeUpdateRgn
 @ stdcall ExitWindowsEx(long long)
 @ stdcall FillRect(long ptr long)
 @ stdcall FindWindowA(str str)

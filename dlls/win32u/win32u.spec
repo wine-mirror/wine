@@ -879,7 +879,7 @@
 @ stdcall NtUserEnumDisplayMonitors(long ptr ptr long)
 @ stdcall NtUserEnumDisplaySettings(ptr long ptr long)
 @ stub NtUserEvent
-@ stub NtUserExcludeUpdateRgn
+@ stdcall NtUserExcludeUpdateRgn(long long)
 @ stub NtUserFillWindow
 @ stdcall -syscall NtUserFindExistingCursorIcon(ptr ptr ptr)
 @ stub NtUserFindWindowEx
