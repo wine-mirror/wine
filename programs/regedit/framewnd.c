@@ -37,7 +37,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(regedit);
  * Global and Local Variables:
  */
 
-static const WCHAR favoritesKey[] =  {'S','o','f','t','w','a','r','e','\\','M','i','c','r','o','s','o','f','t','\\','W','i','n','d','o','w','s','\\','C','u','r','r','e','n','t','V','e','r','s','i','o','n','\\','A','p','p','l','e','t','s','\\','R','e','g','E','d','i','t','\\','F','a','v','o','r','i','t','e','s',0};
+static const WCHAR favoritesKey[] =  L"Software\\Microsoft\\Windows\\CurrentVersion\\Applets\\Regedit\\Favorites";
 static BOOL bInMenuLoop = FALSE;        /* Tells us if we are in the menu loop */
 static WCHAR favoriteName[128];
 static WCHAR searchString[128];
@@ -420,13 +420,12 @@ static BOOL InitOpenFileName(HWND hWnd, OPENFILENAMEW *pofn)
 
     if (FilterBuffer[0] == 0)
     {
-        static const WCHAR filterW[] = {'%','s','%','c','*','.','r','e','g','%','c','%','s','%','c','*','.','r','e','g','%','c','%','s','%','c','*','.','*','%','c',0};
         WCHAR filter_reg[MAX_PATH], filter_reg4[MAX_PATH], filter_all[MAX_PATH];
 
         LoadStringW(hInst, IDS_FILEDIALOG_FILTER_REG, filter_reg, MAX_PATH);
         LoadStringW(hInst, IDS_FILEDIALOG_FILTER_REG4, filter_reg4, MAX_PATH);
         LoadStringW(hInst, IDS_FILEDIALOG_FILTER_ALL, filter_all, MAX_PATH);
-        swprintf( FilterBuffer, ARRAY_SIZE(FilterBuffer), filterW,
+        swprintf( FilterBuffer, ARRAY_SIZE(FilterBuffer), L"%s%c*.reg%c%s%c*.reg%c%s%c*.*%c",
                   filter_reg, 0, 0, filter_reg4, 0, 0, filter_all, 0, 0 );
     }
     pofn->lpstrFilter = FilterBuffer;
@@ -442,10 +441,8 @@ static BOOL InitOpenFileName(HWND hWnd, OPENFILENAMEW *pofn)
 
 static BOOL import_registry_filename(LPWSTR filename)
 {
-    static const WCHAR rb_mode[] = {'r','b',0};
-
     BOOL Success;
-    FILE* reg_file = _wfopen(filename, rb_mode);
+    FILE* reg_file = _wfopen(filename, L"rb");
 
     if(!reg_file)
         return FALSE;
@@ -1018,8 +1015,7 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
     case ID_HELP_HELPTOPICS:
     {
-        const WCHAR help_regedit[] = {'r','e','g','e','d','i','t',0};
-        WinHelpW(hWnd, help_regedit, HELP_FINDER, 0);
+        WinHelpW(hWnd, L"regedit", HELP_FINDER, 0);
         break;
     }
     case ID_HELP_ABOUT:
@@ -1059,11 +1055,9 @@ static BOOL _CmdWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 LRESULT CALLBACK FrameWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-    static const WCHAR captionW[] = {'r','e','g','e','d','i','t',' ','c','h','i','l','d',' ','w','i','n','d','o','w',0};
-
     switch (message) {
     case WM_CREATE:
-        CreateWindowExW(0, szChildClass, captionW, WS_CHILD | WS_VISIBLE,
+        CreateWindowExW(0, szChildClass, L"regedit child window", WS_CHILD | WS_VISIBLE,
                         CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT,
                         hWnd, NULL, hInst, 0);
         LoadStringW(hInst, IDS_EXPAND, expandW, ARRAY_SIZE(expandW));
@@ -1099,8 +1093,7 @@ LRESULT CALLBACK FrameWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         break;
     case WM_DESTROY:
     {
-        const WCHAR help_regedit[] = {'r','e','g','e','d','i','t',0};
-        WinHelpW(hWnd, help_regedit, HELP_QUIT, 0);
+        WinHelpW(hWnd, L"regedit", HELP_QUIT, 0);
         PostQuitMessage(0);
     }
     default:
