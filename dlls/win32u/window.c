@@ -2669,6 +2669,25 @@ other_process:  /* one of the parents may belong to another process, do it the h
     return ret;
 }
 
+/* see ClientToScreen */
+static BOOL client_to_screen( HWND hwnd, POINT *pt )
+{
+    POINT offset;
+    BOOL mirrored;
+
+    if (!hwnd)
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return FALSE;
+    }
+
+    if (!get_windows_offset( hwnd, 0, get_thread_dpi(), &mirrored, &offset )) return FALSE;
+    pt->x += offset.x;
+    pt->y += offset.y;
+    if (mirrored) pt->x = -pt->x;
+    return TRUE;
+}
+
 /* see ScreenToClient */
 BOOL screen_to_client( HWND hwnd, POINT *pt )
 {
@@ -5090,6 +5109,9 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
 {
     switch (code)
     {
+    case NtUserCallHwndParam_ClientToScreen:
+        return client_to_screen( hwnd, (POINT *)param );
+
     case NtUserCallHwndParam_EnableWindow:
         return enable_window( hwnd, param );
 

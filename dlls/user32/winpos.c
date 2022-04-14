@@ -240,120 +240,6 @@ HWND WINAPI ChildWindowFromPointEx( HWND parent, POINT pt, UINT flags )
 
 
 /*******************************************************************
- *         WINPOS_GetWinOffset
- *
- * Calculate the offset between the origin of the two windows. Used
- * to implement MapWindowPoints.
- */
-static BOOL WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored, POINT *ret_offset )
-{
-    WND * wndPtr;
-    POINT offset;
-    BOOL mirror_from, mirror_to, ret;
-    HWND hwnd;
-
-    offset.x = offset.y = 0;
-    *mirrored = mirror_from = mirror_to = FALSE;
-
-    /* Translate source window origin to screen coords */
-    if (hwndFrom)
-    {
-        if (!(wndPtr = WIN_GetPtr( hwndFrom )))
-        {
-            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-            return FALSE;
-        }
-        if (wndPtr == WND_OTHER_PROCESS) goto other_process;
-        if (wndPtr != WND_DESKTOP)
-        {
-            if (wndPtr->dwExStyle & WS_EX_LAYOUTRTL)
-            {
-                mirror_from = TRUE;
-                offset.x += wndPtr->client_rect.right - wndPtr->client_rect.left;
-            }
-            while (wndPtr->parent)
-            {
-                offset.x += wndPtr->client_rect.left;
-                offset.y += wndPtr->client_rect.top;
-                hwnd = wndPtr->parent;
-                WIN_ReleasePtr( wndPtr );
-                if (!(wndPtr = WIN_GetPtr( hwnd ))) break;
-                if (wndPtr == WND_OTHER_PROCESS) goto other_process;
-                if (wndPtr == WND_DESKTOP) break;
-                if (wndPtr->flags & WIN_CHILDREN_MOVED)
-                {
-                    WIN_ReleasePtr( wndPtr );
-                    goto other_process;
-                }
-            }
-            if (wndPtr && wndPtr != WND_DESKTOP) WIN_ReleasePtr( wndPtr );
-            offset = point_win_to_thread_dpi( hwndFrom, offset );
-        }
-    }
-
-    /* Translate origin to destination window coords */
-    if (hwndTo)
-    {
-        if (!(wndPtr = WIN_GetPtr( hwndTo )))
-        {
-            SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-            return FALSE;
-        }
-        if (wndPtr == WND_OTHER_PROCESS) goto other_process;
-        if (wndPtr != WND_DESKTOP)
-        {
-            POINT pt = { 0, 0 };
-            if (wndPtr->dwExStyle & WS_EX_LAYOUTRTL)
-            {
-                mirror_to = TRUE;
-                pt.x += wndPtr->client_rect.right - wndPtr->client_rect.left;
-            }
-            while (wndPtr->parent)
-            {
-                pt.x += wndPtr->client_rect.left;
-                pt.y += wndPtr->client_rect.top;
-                hwnd = wndPtr->parent;
-                WIN_ReleasePtr( wndPtr );
-                if (!(wndPtr = WIN_GetPtr( hwnd ))) break;
-                if (wndPtr == WND_OTHER_PROCESS) goto other_process;
-                if (wndPtr == WND_DESKTOP) break;
-                if (wndPtr->flags & WIN_CHILDREN_MOVED)
-                {
-                    WIN_ReleasePtr( wndPtr );
-                    goto other_process;
-                }
-            }
-            if (wndPtr && wndPtr != WND_DESKTOP) WIN_ReleasePtr( wndPtr );
-            pt = point_win_to_thread_dpi( hwndTo, pt );
-            offset.x -= pt.x;
-            offset.y -= pt.y;
-        }
-    }
-
-    *mirrored = mirror_from ^ mirror_to;
-    if (mirror_from) offset.x = -offset.x;
-    *ret_offset = offset;
-    return TRUE;
-
- other_process:  /* one of the parents may belong to another process, do it the hard way */
-    SERVER_START_REQ( get_windows_offset )
-    {
-        req->from = wine_server_user_handle( hwndFrom );
-        req->to   = wine_server_user_handle( hwndTo );
-        req->dpi  = get_thread_dpi();
-        if ((ret = !wine_server_call_err( req )))
-        {
-            ret_offset->x = reply->x;
-            ret_offset->y = reply->y;
-            *mirrored = reply->mirror;
-        }
-    }
-    SERVER_END_REQ;
-    return ret;
-}
-
-
-/*******************************************************************
  *		MapWindowPoints (USER32.@)
  */
 INT WINAPI MapWindowPoints( HWND hwnd_from, HWND hwnd_to, POINT *points, UINT count )
@@ -365,21 +251,9 @@ INT WINAPI MapWindowPoints( HWND hwnd_from, HWND hwnd_to, POINT *points, UINT co
 /*******************************************************************
  *		ClientToScreen (USER32.@)
  */
-BOOL WINAPI ClientToScreen( HWND hwnd, LPPOINT lppnt )
+BOOL WINAPI ClientToScreen( HWND hwnd, POINT *pt )
 {
-    POINT offset;
-    BOOL mirrored;
-
-    if (!hwnd)
-    {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return FALSE;
-    }
-    if (!WINPOS_GetWinOffset( hwnd, 0, &mirrored, &offset )) return FALSE;
-    lppnt->x += offset.x;
-    lppnt->y += offset.y;
-    if (mirrored) lppnt->x = -lppnt->x;
-    return TRUE;
+    return NtUserClientToScreen( hwnd, pt );
 }
 
 

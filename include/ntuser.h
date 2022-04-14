@@ -832,6 +832,7 @@ static inline BOOL NtUserIsWindowVisible( HWND hwnd )
 /* NtUserCallHwndParam codes, not compatible with Windows */
 enum
 {
+    NtUserCallHwndParam_ClientToScreen,
     NtUserCallHwndParam_EnableWindow,
     NtUserCallHwndParam_GetClassLongA,
     NtUserCallHwndParam_GetClassLongW,
@@ -864,6 +865,11 @@ enum
     NtUserSetWindowStyle,
     NtUserSpyGetMsgName,
 };
+
+static inline BOOL NtUserClientToScreen( HWND hwnd, POINT *pt )
+{
+    return NtUserCallHwndParam( hwnd, (UINT_PTR)pt, NtUserCallHwndParam_ClientToScreen );
+}
 
 static inline BOOL NtUserEnableWindow( HWND hwnd, BOOL enable )
 {
