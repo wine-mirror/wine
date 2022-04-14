@@ -790,7 +790,7 @@
 @ stub NtUserCheckProcessForClipboardAccess
 @ stub NtUserCheckProcessSession
 @ stub NtUserCheckWindowThreadDesktop
-@ stub NtUserChildWindowFromPointEx
+@ stdcall -syscall NtUserChildWindowFromPointEx(long long long long)
 @ stub NtUserClearForeground
 @ stdcall NtUserClipCursor(ptr)
 @ stdcall NtUserCloseClipboard()

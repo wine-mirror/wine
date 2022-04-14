@@ -2256,6 +2256,43 @@ HWND WINAPI NtUserWindowFromPoint( LONG x, LONG y )
 }
 
 /*******************************************************************
+ *           NtUserChildWindowFromPointEx (win32u.@)
+ */
+HWND WINAPI NtUserChildWindowFromPointEx( HWND parent, LONG x, LONG y, UINT flags )
+{
+    POINT pt = { .x = x, .y = y }; /* in the client coordinates */
+    HWND *list;
+    int i;
+    RECT rect;
+    HWND ret;
+
+    get_client_rect( parent, &rect );
+    if (!PtInRect( &rect, pt )) return 0;
+    if (!(list = list_window_children( 0, parent, NULL, 0 ))) return parent;
+
+    for (i = 0; list[i]; i++)
+    {
+        if (!get_window_rects( list[i], COORDS_PARENT, &rect, NULL, get_thread_dpi() )) continue;
+        if (!PtInRect( &rect, pt )) continue;
+        if (flags & (CWP_SKIPINVISIBLE|CWP_SKIPDISABLED))
+        {
+            LONG style = get_window_long( list[i], GWL_STYLE );
+            if ((flags & CWP_SKIPINVISIBLE) && !(style & WS_VISIBLE)) continue;
+            if ((flags & CWP_SKIPDISABLED) && (style & WS_DISABLED)) continue;
+        }
+        if (flags & CWP_SKIPTRANSPARENT)
+        {
+            if (get_window_long( list[i], GWL_EXSTYLE ) & WS_EX_TRANSPARENT) continue;
+        }
+        break;
+    }
+    ret = list[i];
+    free( list );
+    if (!ret) ret = parent;
+    return ret;
+}
+
+/*******************************************************************
  *           get_work_rect
  *
  * Get the work area that a maximized window can cover, depending on style.

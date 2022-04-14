@@ -216,54 +216,26 @@ HWND WINAPI WindowFromPoint( POINT pt )
 /*******************************************************************
  *		ChildWindowFromPoint (USER32.@)
  */
-HWND WINAPI ChildWindowFromPoint( HWND hwndParent, POINT pt )
+HWND WINAPI ChildWindowFromPoint( HWND parent, POINT pt )
 {
-    return ChildWindowFromPointEx( hwndParent, pt, CWP_ALL );
+    return NtUserChildWindowFromPointEx( parent, pt.x, pt.y, CWP_ALL );
 }
 
 /*******************************************************************
  *		RealChildWindowFromPoint (USER32.@)
  */
-HWND WINAPI RealChildWindowFromPoint( HWND hwndParent, POINT pt )
+HWND WINAPI RealChildWindowFromPoint( HWND parent, POINT pt )
 {
-    return ChildWindowFromPointEx( hwndParent, pt, CWP_SKIPTRANSPARENT | CWP_SKIPINVISIBLE );
+    return NtUserChildWindowFromPointEx( parent, pt.x, pt.y,
+                                         CWP_SKIPTRANSPARENT | CWP_SKIPINVISIBLE );
 }
 
 /*******************************************************************
  *		ChildWindowFromPointEx (USER32.@)
  */
-HWND WINAPI ChildWindowFromPointEx( HWND hwndParent, POINT pt, UINT uFlags)
+HWND WINAPI ChildWindowFromPointEx( HWND parent, POINT pt, UINT flags )
 {
-    /* pt is in the client coordinates */
-    HWND *list;
-    int i;
-    RECT rect;
-    HWND retvalue;
-
-    GetClientRect( hwndParent, &rect );
-    if (!PtInRect( &rect, pt )) return 0;
-    if (!(list = WIN_ListChildren( hwndParent ))) return hwndParent;
-
-    for (i = 0; list[i]; i++)
-    {
-        if (!WIN_GetRectangles( list[i], COORDS_PARENT, &rect, NULL )) continue;
-        if (!PtInRect( &rect, pt )) continue;
-        if (uFlags & (CWP_SKIPINVISIBLE|CWP_SKIPDISABLED))
-        {
-            LONG style = GetWindowLongW( list[i], GWL_STYLE );
-            if ((uFlags & CWP_SKIPINVISIBLE) && !(style & WS_VISIBLE)) continue;
-            if ((uFlags & CWP_SKIPDISABLED) && (style & WS_DISABLED)) continue;
-        }
-        if (uFlags & CWP_SKIPTRANSPARENT)
-        {
-            if (GetWindowLongW( list[i], GWL_EXSTYLE ) & WS_EX_TRANSPARENT) continue;
-        }
-        break;
-    }
-    retvalue = list[i];
-    HeapFree( GetProcessHeap(), 0, list );
-    if (!retvalue) retvalue = hwndParent;
-    return retvalue;
+    return NtUserChildWindowFromPointEx( parent, pt.x, pt.y, flags );
 }
 
 

@@ -416,6 +416,16 @@ NTSTATUS WINAPI wow64_NtUserGetMouseMovePointsEx( UINT *args )
     return NtUserGetMouseMovePointsEx( size, ptin, ptout, count, resolution );
 }
 
+NTSTATUS WINAPI wow64_NtUserChildWindowFromPointEx( UINT *args )
+{
+    HWND parent = get_handle( &args );
+    LONG x = get_ulong( &args );
+    LONG y = get_ulong( &args );
+    UINT flags = get_ulong( &args );
+
+    return HandleToUlong( NtUserChildWindowFromPointEx( parent, x, y, flags ));
+}
+
 NTSTATUS WINAPI wow64_NtUserSetProcessDpiAwarenessContext( UINT *args )
 {
     ULONG awareness = get_ulong( &args );
