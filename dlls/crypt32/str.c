@@ -914,31 +914,32 @@ DWORD WINAPI CertGetNameStringA(PCCERT_CONTEXT cert, DWORD type,
  * The return value is a pointer within *info, so don't free *info before
  * you're done with the return value.
  */
-static PCERT_ALT_NAME_ENTRY cert_find_alt_name_entry(PCCERT_CONTEXT cert,
- LPCSTR altNameOID, DWORD entryType, PCERT_ALT_NAME_INFO *info)
+static PCERT_ALT_NAME_ENTRY cert_find_alt_name_entry(PCCERT_CONTEXT cert, BOOL alt_name_issuer,
+                                                     DWORD entryType, PCERT_ALT_NAME_INFO *info)
 {
-    PCERT_ALT_NAME_ENTRY entry = NULL;
-    PCERT_EXTENSION ext = CertFindExtension(altNameOID,
-     cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension);
-
-    if (ext)
+    static const char *oids[][2] =
     {
-        DWORD bytes = 0;
+        { szOID_SUBJECT_ALT_NAME2, szOID_SUBJECT_ALT_NAME },
+        { szOID_ISSUER_ALT_NAME2, szOID_ISSUER_ALT_NAME },
+    };
+    PCERT_EXTENSION ext;
+    DWORD bytes = 0;
+    unsigned int i;
 
-        if (CryptDecodeObjectEx(cert->dwCertEncodingType, X509_ALTERNATE_NAME,
-         ext->Value.pbData, ext->Value.cbData, CRYPT_DECODE_ALLOC_FLAG, NULL,
-         info, &bytes))
-        {
-            DWORD i;
+    ext = CertFindExtension(oids[!!alt_name_issuer][0], cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension);
+    if (!ext)
+        ext = CertFindExtension(oids[!!alt_name_issuer][1], cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension);
+    if (!ext) return NULL;
 
-            for (i = 0; !entry && i < (*info)->cAltEntry; i++)
-                if ((*info)->rgAltEntry[i].dwAltNameChoice == entryType)
-                    entry = &(*info)->rgAltEntry[i];
-        }
-    }
-    else
-        *info = NULL;
-    return entry;
+    if (!CryptDecodeObjectEx(cert->dwCertEncodingType, X509_ALTERNATE_NAME, ext->Value.pbData, ext->Value.cbData,
+                             CRYPT_DECODE_ALLOC_FLAG, NULL, info, &bytes))
+        return NULL;
+
+    for (i = 0; i < (*info)->cAltEntry; ++i)
+        if ((*info)->rgAltEntry[i].dwAltNameChoice == entryType)
+            return &(*info)->rgAltEntry[i];
+
+    return NULL;
 }
 
 static DWORD cert_get_name_from_rdn_attr(DWORD encodingType,
@@ -974,172 +975,138 @@ static DWORD copy_output_str(WCHAR *dst, const WCHAR *src, DWORD dst_size)
     return len + 1;
 }
 
-DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
- DWORD dwFlags, void *pvTypePara, LPWSTR pszNameString, DWORD cchNameString)
+DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT cert, DWORD type, DWORD flags, void *type_para,
+                                LPWSTR name_string, DWORD name_len)
 {
-    DWORD ret = 0;
+    CERT_ALT_NAME_INFO *info = NULL;
+    PCERT_ALT_NAME_ENTRY entry;
+    BOOL alt_name_issuer;
     PCERT_NAME_BLOB name;
-    LPCSTR altNameOID;
+    DWORD ret = 0;
 
-    TRACE("(%p, %ld, %08lx, %p, %p, %ld)\n", pCertContext, dwType,
-     dwFlags, pvTypePara, pszNameString, cchNameString);
+    TRACE("(%p, %ld, %08lx, %p, %p, %ld)\n", cert, type, flags, type_para, name_string, name_len);
 
-    if (!pCertContext)
+    if (!cert)
         goto done;
 
-    if (dwFlags & CERT_NAME_ISSUER_FLAG)
-    {
-        name = &pCertContext->pCertInfo->Issuer;
-        altNameOID = szOID_ISSUER_ALT_NAME;
-    }
-    else
-    {
-        name = &pCertContext->pCertInfo->Subject;
-        altNameOID = szOID_SUBJECT_ALT_NAME;
-    }
+    alt_name_issuer = flags & CERT_NAME_ISSUER_FLAG;
+    name = alt_name_issuer ? &cert->pCertInfo->Issuer : &cert->pCertInfo->Subject;
 
-    switch (dwType)
+    switch (type)
     {
     case CERT_NAME_EMAIL_TYPE:
     {
-        CERT_ALT_NAME_INFO *info;
-        PCERT_ALT_NAME_ENTRY entry = cert_find_alt_name_entry(pCertContext,
-         altNameOID, CERT_ALT_NAME_RFC822_NAME, &info);
+        entry = cert_find_alt_name_entry(cert, alt_name_issuer, CERT_ALT_NAME_RFC822_NAME, &info);
 
-        if (entry) ret = copy_output_str(pszNameString, entry->u.pwszRfc822Name, cchNameString);
-        if (info)
-            LocalFree(info);
-        if (!ret)
+        if (entry)
         {
-            ret = cert_get_name_from_rdn_attr(pCertContext->dwCertEncodingType,
-             name, szOID_RSA_emailAddr, pszNameString, cchNameString);
-         }
+            ret = copy_output_str(name_string, entry->u.pwszRfc822Name, name_len);
+            break;
+        }
+        ret = cert_get_name_from_rdn_attr(cert->dwCertEncodingType, name, szOID_RSA_emailAddr,
+                                          name_string, name_len);
         break;
     }
     case CERT_NAME_RDN_TYPE:
     {
-        DWORD type = pvTypePara ? *(DWORD *)pvTypePara : 0;
+        DWORD param = type_para ? *(DWORD *)type_para : 0;
 
         if (name->cbData)
-            ret = CertNameToStrW(pCertContext->dwCertEncodingType, name,
-             type, pszNameString, cchNameString);
+        {
+            ret = CertNameToStrW(cert->dwCertEncodingType, name, param, name_string, name_len);
+        }
         else
         {
-            CERT_ALT_NAME_INFO *info;
-            PCERT_ALT_NAME_ENTRY entry = cert_find_alt_name_entry(pCertContext,
-             altNameOID, CERT_ALT_NAME_DIRECTORY_NAME, &info);
+            entry = cert_find_alt_name_entry(cert, alt_name_issuer, CERT_ALT_NAME_DIRECTORY_NAME, &info);
 
             if (entry)
-                ret = CertNameToStrW(pCertContext->dwCertEncodingType,
-                 &entry->u.DirectoryName, type, pszNameString, cchNameString);
-            if (info)
-                LocalFree(info);
+                ret = CertNameToStrW(cert->dwCertEncodingType, &entry->u.DirectoryName,
+                                     param, name_string, name_len);
         }
         break;
     }
     case CERT_NAME_ATTR_TYPE:
-        ret = cert_get_name_from_rdn_attr(pCertContext->dwCertEncodingType,
-         name, pvTypePara, pszNameString, cchNameString);
-        if (!ret)
-        {
-            CERT_ALT_NAME_INFO *altInfo;
-            PCERT_ALT_NAME_ENTRY entry = cert_find_alt_name_entry(pCertContext,
-             altNameOID, CERT_ALT_NAME_DIRECTORY_NAME, &altInfo);
+        ret = cert_get_name_from_rdn_attr(cert->dwCertEncodingType, name, type_para,
+                                          name_string, name_len);
+        if (ret) break;
 
-            if (entry)
-                ret = cert_name_to_str_with_indent(X509_ASN_ENCODING, 0,
-                 &entry->u.DirectoryName, 0, pszNameString, cchNameString);
-            if (altInfo)
-                LocalFree(altInfo);
-        }
+        entry = cert_find_alt_name_entry(cert, alt_name_issuer, CERT_ALT_NAME_DIRECTORY_NAME, &info);
+
+        if (entry)
+            ret = cert_name_to_str_with_indent(X509_ASN_ENCODING, 0, &entry->u.DirectoryName,
+                                               0, name_string, name_len);
         break;
     case CERT_NAME_SIMPLE_DISPLAY_TYPE:
     {
-        static const LPCSTR simpleAttributeOIDs[] = { szOID_COMMON_NAME,
-         szOID_ORGANIZATIONAL_UNIT_NAME, szOID_ORGANIZATION_NAME,
-         szOID_RSA_emailAddr };
+        static const LPCSTR simpleAttributeOIDs[] =
+        {
+            szOID_COMMON_NAME, szOID_ORGANIZATIONAL_UNIT_NAME, szOID_ORGANIZATION_NAME, szOID_RSA_emailAddr
+        };
         CERT_NAME_INFO *nameInfo = NULL;
         DWORD bytes = 0, i;
 
-        if (CryptDecodeObjectEx(pCertContext->dwCertEncodingType, X509_NAME,
-         name->pbData, name->cbData, CRYPT_DECODE_ALLOC_FLAG, NULL, &nameInfo,
-         &bytes))
+        if (CryptDecodeObjectEx(cert->dwCertEncodingType, X509_NAME, name->pbData, name->cbData,
+                                CRYPT_DECODE_ALLOC_FLAG, NULL, &nameInfo, &bytes))
         {
             PCERT_RDN_ATTR nameAttr = NULL;
 
             for (i = 0; !nameAttr && i < ARRAY_SIZE(simpleAttributeOIDs); i++)
                 nameAttr = CertFindRDNAttr(simpleAttributeOIDs[i], nameInfo);
             if (nameAttr)
-                ret = rdn_value_to_strW(nameAttr->dwValueType,
-                 &nameAttr->Value, pszNameString, cchNameString, TRUE);
+                ret = rdn_value_to_strW(nameAttr->dwValueType, &nameAttr->Value, name_string, name_len, TRUE);
             LocalFree(nameInfo);
         }
-        if (!ret)
-        {
-            CERT_ALT_NAME_INFO *altInfo;
-            PCERT_ALT_NAME_ENTRY entry = cert_find_alt_name_entry(pCertContext,
-             altNameOID, CERT_ALT_NAME_RFC822_NAME, &altInfo);
-
-            if (altInfo)
-            {
-                if (!entry && altInfo->cAltEntry)
-                    entry = &altInfo->rgAltEntry[0];
-                if (entry) ret = copy_output_str(pszNameString, entry->u.pwszRfc822Name, cchNameString);
-                LocalFree(altInfo);
-            }
-        }
+        if (ret) break;
+        entry = cert_find_alt_name_entry(cert, alt_name_issuer, CERT_ALT_NAME_RFC822_NAME, &info);
+        if (!info) break;
+        if (!entry && info->cAltEntry)
+            entry = &info->rgAltEntry[0];
+        if (entry) ret = copy_output_str(name_string, entry->u.pwszRfc822Name, name_len);
         break;
     }
     case CERT_NAME_FRIENDLY_DISPLAY_TYPE:
     {
-        DWORD cch = cchNameString;
+        DWORD len = name_len;
 
-        if (CertGetCertificateContextProperty(pCertContext,
-         CERT_FRIENDLY_NAME_PROP_ID, pszNameString, &cch))
-            ret = cch;
+        if (CertGetCertificateContextProperty(cert, CERT_FRIENDLY_NAME_PROP_ID, name_string, &len))
+            ret = len;
         else
-            ret = CertGetNameStringW(pCertContext,
-             CERT_NAME_SIMPLE_DISPLAY_TYPE, dwFlags, pvTypePara, pszNameString,
-             cchNameString);
+            ret = CertGetNameStringW(cert, CERT_NAME_SIMPLE_DISPLAY_TYPE, flags,
+                                     type_para, name_string, name_len);
         break;
     }
     case CERT_NAME_DNS_TYPE:
     {
-        CERT_ALT_NAME_INFO *info;
-        PCERT_ALT_NAME_ENTRY entry = cert_find_alt_name_entry(pCertContext,
-         altNameOID, CERT_ALT_NAME_DNS_NAME, &info);
+        entry = cert_find_alt_name_entry(cert, alt_name_issuer, CERT_ALT_NAME_DNS_NAME, &info);
 
-        if (entry) ret = copy_output_str(pszNameString, entry->u.pwszDNSName, cchNameString);
-
-        if (info)
-            LocalFree(info);
-        if (!ret)
-            ret = cert_get_name_from_rdn_attr(pCertContext->dwCertEncodingType,
-             name, szOID_COMMON_NAME, pszNameString, cchNameString);
+        if (entry)
+        {
+            ret = copy_output_str(name_string, entry->u.pwszDNSName, name_len);
+            break;
+        }
+        ret = cert_get_name_from_rdn_attr(cert->dwCertEncodingType, name, szOID_COMMON_NAME,
+                                          name_string, name_len);
         break;
     }
     case CERT_NAME_URL_TYPE:
     {
-        CERT_ALT_NAME_INFO *info;
-        PCERT_ALT_NAME_ENTRY entry = cert_find_alt_name_entry(pCertContext,
-         altNameOID, CERT_ALT_NAME_URL, &info);
-
-        if (entry) ret = copy_output_str(pszNameString, entry->u.pwszURL, cchNameString);
-
-        if (info)
-            LocalFree(info);
+        if ((entry = cert_find_alt_name_entry(cert, alt_name_issuer, CERT_ALT_NAME_URL, &info)))
+            ret = copy_output_str(name_string, entry->u.pwszURL, name_len);
         break;
     }
     default:
-        FIXME("unimplemented for type %ld\n", dwType);
+        FIXME("unimplemented for type %lu.\n", type);
         ret = 0;
         break;
     }
 done:
+    if (info)
+        LocalFree(info);
+
     if (!ret)
     {
         ret = 1;
-        if (pszNameString && cchNameString) pszNameString[0] = 0;
+        if (name_string && name_len) name_string[0] = 0;
     }
     return ret;
 }
