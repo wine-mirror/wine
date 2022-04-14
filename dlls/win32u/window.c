@@ -5151,6 +5151,13 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
     case NtUserCallHwndParam_KillSystemTimer:
         return kill_system_timer( hwnd, param );
 
+    case NtUserCallHwndParam_MapWindowPoints:
+        {
+            struct map_window_points_params *params = (void *)param;
+            return map_window_points( hwnd, params->hwnd_to, params->points, params->count,
+                                      get_thread_dpi() );
+        }
+
     case NtUserCallHwndParam_MirrorRgn:
         return mirror_window_region( hwnd, UlongToHandle(param) );
 

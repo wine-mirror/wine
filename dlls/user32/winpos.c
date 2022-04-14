@@ -356,27 +356,9 @@ static BOOL WINPOS_GetWinOffset( HWND hwndFrom, HWND hwndTo, BOOL *mirrored, POI
 /*******************************************************************
  *		MapWindowPoints (USER32.@)
  */
-INT WINAPI MapWindowPoints( HWND hwndFrom, HWND hwndTo, LPPOINT lppt, UINT count )
+INT WINAPI MapWindowPoints( HWND hwnd_from, HWND hwnd_to, POINT *points, UINT count )
 {
-    BOOL mirrored;
-    POINT offset;
-    UINT i;
-
-    if (!WINPOS_GetWinOffset( hwndFrom, hwndTo, &mirrored, &offset )) return 0;
-
-    for (i = 0; i < count; i++)
-    {
-        lppt[i].x += offset.x;
-        lppt[i].y += offset.y;
-        if (mirrored) lppt[i].x = -lppt[i].x;
-    }
-    if (mirrored && count == 2)  /* special case for rectangle */
-    {
-        int tmp = lppt[0].x;
-        lppt[0].x = lppt[1].x;
-        lppt[1].x = tmp;
-    }
-    return MAKELONG( LOWORD(offset.x), LOWORD(offset.y) );
+    return NtUserMapWindowPoints( hwnd_from, hwnd_to, points, count );
 }
 
 

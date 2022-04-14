@@ -852,6 +852,7 @@ enum
     NtUserCallHwndParam_GetWindowWord,
     NtUserCallHwndParam_IsChild,
     NtUserCallHwndParam_KillSystemTimer,
+    NtUserCallHwndParam_MapWindowPoints,
     NtUserCallHwndParam_MirrorRgn,
     NtUserCallHwndParam_MonitorFromWindow,
     NtUserCallHwndParam_ScreenToClient,
@@ -966,6 +967,23 @@ static inline BOOL NtUserIsChild( HWND parent, HWND child )
 static inline BOOL NtUserKillSystemTimer( HWND hwnd, UINT_PTR id )
 {
     return NtUserCallHwndParam( hwnd, id, NtUserCallHwndParam_KillSystemTimer );
+}
+
+struct map_window_points_params
+{
+    HWND hwnd_to;
+    POINT *points;
+    UINT count;
+};
+
+static inline int NtUserMapWindowPoints( HWND hwnd_from, HWND hwnd_to, POINT *points, UINT count )
+{
+    struct map_window_points_params params;
+    params.hwnd_to = hwnd_to;
+    params.points = points;
+    params.count = count;
+    return NtUserCallHwndParam( hwnd_from, (UINT_PTR)&params,
+                                NtUserCallHwndParam_MapWindowPoints );
 }
 
 static inline BOOL NtUserMirrorRgn( HWND hwnd, HRGN hrgn )
