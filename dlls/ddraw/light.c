@@ -123,7 +123,7 @@ static ULONG WINAPI d3d_light_AddRef(IDirect3DLight *iface)
     struct d3d_light *light = impl_from_IDirect3DLight(iface);
     ULONG ref = InterlockedIncrement(&light->ref);
 
-    TRACE("%p increasing refcount to %u.\n", light, ref);
+    TRACE("%p increasing refcount to %lu.\n", light, ref);
 
     return ref;
 }
@@ -133,7 +133,7 @@ static ULONG WINAPI d3d_light_Release(IDirect3DLight *iface)
     struct d3d_light *light = impl_from_IDirect3DLight(iface);
     ULONG ref = InterlockedDecrement(&light->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", light, ref);
+    TRACE("%p decreasing refcount to %lu.\n", light, ref);
 
     if (!ref)
     {

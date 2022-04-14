@@ -23,7 +23,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 static void dump_material(const D3DMATERIAL *mat)
 {
-    TRACE("  dwSize : %d\n", mat->dwSize);
+    TRACE("  dwSize : %ld\n", mat->dwSize);
 }
 
 static inline struct d3d_material *impl_from_IDirect3DMaterial(IDirect3DMaterial *iface)
@@ -116,7 +116,7 @@ static ULONG WINAPI d3d_material3_AddRef(IDirect3DMaterial3 *iface)
     struct d3d_material *material = impl_from_IDirect3DMaterial3(iface);
     ULONG ref = InterlockedIncrement(&material->ref);
 
-    TRACE("%p increasing refcount to %u.\n", material, ref);
+    TRACE("%p increasing refcount to %lu.\n", material, ref);
 
     return ref;
 }
@@ -136,7 +136,7 @@ static ULONG WINAPI d3d_material3_Release(IDirect3DMaterial3 *iface)
     struct d3d_material *material = impl_from_IDirect3DMaterial3(iface);
     ULONG ref = InterlockedDecrement(&material->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", material, ref);
+    TRACE("%p decreasing refcount to %lu.\n", material, ref);
 
     if (!ref)
     {
@@ -311,7 +311,7 @@ static HRESULT WINAPI d3d_material3_GetHandle(IDirect3DMaterial3 *iface,
         material->Handle = h + 1;
     }
     *handle = material->Handle;
-    TRACE(" returning handle %08x.\n", *handle);
+    TRACE(" returning handle %#lx.\n", *handle);
     wined3d_mutex_unlock();
 
     return D3D_OK;

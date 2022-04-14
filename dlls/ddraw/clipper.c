@@ -86,7 +86,7 @@ static ULONG WINAPI ddraw_clipper_AddRef(IDirectDrawClipper *iface)
     }
 
     refcount = InterlockedIncrement(&clipper->ref);
-    TRACE("%p increasing refcount to %u.\n", clipper, refcount);
+    TRACE("%p increasing refcount to %lu.\n", clipper, refcount);
     return refcount;
 }
 
@@ -103,7 +103,7 @@ static ULONG WINAPI ddraw_clipper_Release(IDirectDrawClipper *iface)
 
     refcount = InterlockedDecrement(&clipper->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", clipper, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", clipper, refcount);
 
     if (!refcount)
     {
@@ -120,14 +120,14 @@ static HRESULT WINAPI ddraw_clipper_SetHWnd(IDirectDrawClipper *iface, DWORD fla
 {
     struct ddraw_clipper *clipper = impl_from_IDirectDrawClipper(iface);
 
-    TRACE("iface %p, flags %#x, window %p.\n", iface, flags, window);
+    TRACE("iface %p, flags %#lx, window %p.\n", iface, flags, window);
 
     if (!ddraw_clipper_is_valid(clipper))
         return DDERR_INVALIDPARAMS;
 
     if (flags)
     {
-        FIXME("flags %#x, not supported.\n", flags);
+        FIXME("flags %#lx, not supported.\n", flags);
         return DDERR_INVALIDPARAMS;
     }
 
@@ -280,7 +280,7 @@ static HRESULT WINAPI ddraw_clipper_SetClipList(IDirectDrawClipper *iface, RGNDA
 {
     struct ddraw_clipper *clipper = impl_from_IDirectDrawClipper(iface);
 
-    TRACE("iface %p, region %p, flags %#x.\n", iface, region, flags);
+    TRACE("iface %p, region %p, flags %#lx.\n", iface, region, flags);
 
     if (!ddraw_clipper_is_valid(clipper))
         return DDERR_INVALIDPARAMS;
@@ -330,7 +330,7 @@ static HRESULT WINAPI ddraw_clipper_Initialize(IDirectDrawClipper *iface,
 {
     struct ddraw_clipper *clipper = impl_from_IDirectDrawClipper(iface);
 
-    TRACE("iface %p, ddraw %p, flags %#x.\n", iface, ddraw, flags);
+    TRACE("iface %p, ddraw %p, flags %#lx.\n", iface, ddraw, flags);
 
     if (!ddraw_clipper_is_valid(clipper))
         return DDERR_INVALIDPARAMS;

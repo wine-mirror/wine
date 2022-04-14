@@ -66,7 +66,7 @@ static ULONG WINAPI ddraw_palette_AddRef(IDirectDrawPalette *iface)
     struct ddraw_palette *This = impl_from_IDirectDrawPalette(iface);
     ULONG ref = InterlockedIncrement(&This->ref);
 
-    TRACE("%p increasing refcount to %u.\n", This, ref);
+    TRACE("%p increasing refcount to %lu.\n", This, ref);
 
     return ref;
 }
@@ -85,7 +85,7 @@ static ULONG WINAPI ddraw_palette_Release(IDirectDrawPalette *iface)
     struct ddraw_palette *palette = impl_from_IDirectDrawPalette(iface);
     ULONG ref = InterlockedDecrement(&palette->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", palette, ref);
+    TRACE("%p decreasing refcount to %lu.\n", palette, ref);
 
     if (ref == 0)
     {
@@ -121,7 +121,7 @@ static ULONG WINAPI ddraw_palette_Release(IDirectDrawPalette *iface)
 static HRESULT WINAPI ddraw_palette_Initialize(IDirectDrawPalette *iface,
         IDirectDraw *ddraw, DWORD flags, PALETTEENTRY *entries)
 {
-    TRACE("iface %p, ddraw %p, flags %#x, entries %p.\n",
+    TRACE("iface %p, ddraw %p, flags %#lx, entries %p.\n",
             iface, ddraw, flags, entries);
 
     return DDERR_ALREADYINITIALIZED;
@@ -163,7 +163,7 @@ static HRESULT WINAPI ddraw_palette_SetEntries(IDirectDrawPalette *iface,
     struct ddraw_palette *palette = impl_from_IDirectDrawPalette(iface);
     HRESULT hr;
 
-    TRACE("iface %p, flags %#x, start %u, count %u, entries %p.\n",
+    TRACE("iface %p, flags %#lx, start %lu, count %lu, entries %p.\n",
             iface, flags, start, count, entries);
 
     if (!entries)
@@ -202,7 +202,7 @@ static HRESULT WINAPI ddraw_palette_GetEntries(IDirectDrawPalette *iface,
     struct ddraw_palette *palette = impl_from_IDirectDrawPalette(iface);
     HRESULT hr;
 
-    TRACE("iface %p, flags %#x, start %u, count %u, entries %p.\n",
+    TRACE("iface %p, flags %#lx, start %lu, count %lu, entries %p.\n",
             iface, flags, start, count, entries);
 
     if (!entries)
@@ -262,7 +262,7 @@ HRESULT ddraw_palette_init(struct ddraw_palette *palette,
 
     if ((entry_count = palette_size(flags)) == ~0u)
     {
-        WARN("Invalid flags %#x.\n", flags);
+        WARN("Invalid flags %#lx.\n", flags);
         return DDERR_INVALIDPARAMS;
     }
 
@@ -280,7 +280,7 @@ HRESULT ddraw_palette_init(struct ddraw_palette *palette,
     if (FAILED(hr = wined3d_palette_create(ddraw->wined3d_device,
             wined3d_flags, entry_count, entries, &palette->wined3d_palette)))
     {
-        WARN("Failed to create wined3d palette, hr %#x.\n", hr);
+        WARN("Failed to create wined3d palette, hr %#lx.\n", hr);
         return hr;
     }
 
