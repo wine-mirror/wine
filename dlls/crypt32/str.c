@@ -141,115 +141,6 @@ static inline BOOL is_quotable_char(WCHAR c)
     }
 }
 
-static DWORD quote_rdn_value_to_str_a(DWORD dwValueType,
- PCERT_RDN_VALUE_BLOB pValue, LPSTR psz, DWORD csz)
-{
-    DWORD ret = 0, len, i;
-    BOOL needsQuotes = FALSE;
-
-    TRACE("(%ld, %p, %p, %ld)\n", dwValueType, pValue, psz, csz);
-
-    switch (dwValueType)
-    {
-    case CERT_RDN_ANY_TYPE:
-        break;
-    case CERT_RDN_NUMERIC_STRING:
-    case CERT_RDN_PRINTABLE_STRING:
-    case CERT_RDN_TELETEX_STRING:
-    case CERT_RDN_VIDEOTEX_STRING:
-    case CERT_RDN_IA5_STRING:
-    case CERT_RDN_GRAPHIC_STRING:
-    case CERT_RDN_VISIBLE_STRING:
-    case CERT_RDN_GENERAL_STRING:
-        len = pValue->cbData;
-        if (pValue->cbData && isspace(pValue->pbData[0]))
-            needsQuotes = TRUE;
-        if (pValue->cbData && isspace(pValue->pbData[pValue->cbData - 1]))
-            needsQuotes = TRUE;
-        for (i = 0; i < pValue->cbData; i++)
-        {
-            if (is_quotable_char(pValue->pbData[i]))
-                needsQuotes = TRUE;
-            if (pValue->pbData[i] == '"')
-                len += 1;
-        }
-        if (needsQuotes)
-            len += 2;
-        if (!psz || !csz)
-            ret = len;
-        else
-        {
-            char *ptr = psz;
-
-            if (needsQuotes)
-                *ptr++ = '"';
-            for (i = 0; i < pValue->cbData && ptr - psz < csz; ptr++, i++)
-            {
-                *ptr = pValue->pbData[i];
-                if (pValue->pbData[i] == '"' && ptr - psz < csz - 1)
-                    *(++ptr) = '"';
-            }
-            if (needsQuotes && ptr - psz < csz)
-                *ptr++ = '"';
-            ret = ptr - psz;
-        }
-        break;
-    case CERT_RDN_BMP_STRING:
-    case CERT_RDN_UTF8_STRING:
-        len = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)pValue->pbData,
-         pValue->cbData / sizeof(WCHAR), NULL, 0, NULL, NULL);
-        if (pValue->cbData && iswspace(((LPCWSTR)pValue->pbData)[0]))
-            needsQuotes = TRUE;
-        if (pValue->cbData &&
-         iswspace(((LPCWSTR)pValue->pbData)[pValue->cbData / sizeof(WCHAR)-1]))
-            needsQuotes = TRUE;
-        for (i = 0; i < pValue->cbData / sizeof(WCHAR); i++)
-        {
-            if (is_quotable_char(((LPCWSTR)pValue->pbData)[i]))
-                needsQuotes = TRUE;
-            if (((LPCWSTR)pValue->pbData)[i] == '"')
-                len += 1;
-        }
-        if (needsQuotes)
-            len += 2;
-        if (!psz || !csz)
-            ret = len;
-        else
-        {
-            char *dst = psz;
-
-            if (needsQuotes)
-                *dst++ = '"';
-            for (i = 0; i < pValue->cbData / sizeof(WCHAR) &&
-             dst - psz < csz; dst++, i++)
-            {
-                LPCWSTR src = (LPCWSTR)pValue->pbData + i;
-
-                WideCharToMultiByte(CP_ACP, 0, src, 1, dst,
-                 csz - (dst - psz) - 1, NULL, NULL);
-                if (*src == '"' && dst - psz < csz - 1)
-                    *(++dst) = '"';
-            }
-            if (needsQuotes && dst - psz < csz)
-                *dst++ = '"';
-            ret = dst - psz;
-        }
-        break;
-    default:
-        FIXME("string type %ld unimplemented\n", dwValueType);
-    }
-    if (psz && csz)
-    {
-        *(psz + ret) = '\0';
-        csz--;
-        ret++;
-    }
-    else
-        ret++;
-    TRACE("returning %ld (%s)\n", ret, debugstr_a(psz));
-    return ret;
-}
-
 static DWORD quote_rdn_value_to_str_w(DWORD dwValueType,
  PCERT_RDN_VALUE_BLOB pValue, LPWSTR psz, DWORD csz)
 {
@@ -345,136 +236,37 @@ static DWORD quote_rdn_value_to_str_w(DWORD dwValueType,
     return ret;
 }
 
-/* Adds the prefix prefix to the string pointed to by psz, followed by the
- * character '='.  Copies no more than csz characters.  Returns the number of
- * characters copied.  If psz is NULL, returns the number of characters that
- * would be copied.
- */
-static DWORD CRYPT_AddPrefixA(LPCSTR prefix, LPSTR psz, DWORD csz)
+DWORD WINAPI CertNameToStrA(DWORD encoding_type, PCERT_NAME_BLOB name_blob, DWORD str_type, LPSTR str, DWORD str_len)
 {
-    DWORD chars;
+    DWORD len, len_mb, ret;
+    LPWSTR strW;
 
-    TRACE("(%s, %p, %ld)\n", debugstr_a(prefix), psz, csz);
+    TRACE("(%ld, %p, %08lx, %p, %ld)\n", encoding_type, name_blob, str_type, str, str_len);
 
-    if (psz)
+    len = CertNameToStrW(encoding_type, name_blob, str_type, NULL, 0);
+
+    if (!(strW = CryptMemAlloc(len * sizeof(*strW))))
     {
-        chars = min(strlen(prefix), csz);
-        memcpy(psz, prefix, chars);
-        *(psz + chars) = '=';
-        chars++;
+        ERR("No memory.\n");
+        if (str && str_len) *str = 0;
+        return 1;
     }
-    else
-        chars = lstrlenA(prefix) + 1;
-    return chars;
-}
 
-DWORD WINAPI CertNameToStrA(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
- DWORD dwStrType, LPSTR psz, DWORD csz)
-{
-    static const DWORD unsupportedFlags = CERT_NAME_STR_NO_QUOTING_FLAG |
-     CERT_NAME_STR_ENABLE_T61_UNICODE_FLAG;
-    static const char commaSep[] = ", ";
-    static const char semiSep[] = "; ";
-    static const char crlfSep[] = "\r\n";
-    static const char plusSep[] = " + ";
-    static const char spaceSep[] = " ";
-    DWORD ret = 0, bytes = 0;
-    BOOL bRet;
-    CERT_NAME_INFO *info;
-
-    TRACE("(%ld, %p, %08lx, %p, %ld)\n", dwCertEncodingType, pName, dwStrType,
-     psz, csz);
-    if (dwStrType & unsupportedFlags)
-        FIXME("unsupported flags: %08lx\n", dwStrType & unsupportedFlags);
-
-    bRet = CryptDecodeObjectEx(dwCertEncodingType, X509_NAME, pName->pbData,
-     pName->cbData, CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &bytes);
-    if (bRet)
+    len = CertNameToStrW(encoding_type, name_blob, str_type, strW, len);
+    len_mb = WideCharToMultiByte(CP_ACP, 0, strW, len, NULL, 0, NULL, NULL);
+    if (!str || !str_len)
     {
-        DWORD i, j, sepLen, rdnSepLen;
-        LPCSTR sep, rdnSep;
-        BOOL reverse = dwStrType & CERT_NAME_STR_REVERSE_FLAG;
-        const CERT_RDN *rdn = info->rgRDN;
-
-        if(reverse && info->cRDN > 1) rdn += (info->cRDN - 1);
-
-        if (dwStrType & CERT_NAME_STR_SEMICOLON_FLAG)
-            sep = semiSep;
-        else if (dwStrType & CERT_NAME_STR_CRLF_FLAG)
-            sep = crlfSep;
-        else
-            sep = commaSep;
-        sepLen = strlen(sep);
-        if (dwStrType & CERT_NAME_STR_NO_PLUS_FLAG)
-            rdnSep = spaceSep;
-        else
-            rdnSep = plusSep;
-        rdnSepLen = strlen(rdnSep);
-        for (i = 0; (!psz || ret < csz) && i < info->cRDN; i++)
-        {
-            for (j = 0; (!psz || ret < csz) && j < rdn->cRDNAttr; j++)
-            {
-                DWORD chars;
-                char prefixBuf[13]; /* big enough for SERIALNUMBER */
-                LPCSTR prefix = NULL;
-
-                if ((dwStrType & 0x000000ff) == CERT_OID_NAME_STR)
-                    prefix = rdn->rgRDNAttr[j].pszObjId;
-                else if ((dwStrType & 0x000000ff) == CERT_X500_NAME_STR)
-                {
-                    PCCRYPT_OID_INFO oidInfo = CryptFindOIDInfo(
-                     CRYPT_OID_INFO_OID_KEY,
-                     rdn->rgRDNAttr[j].pszObjId,
-                     CRYPT_RDN_ATTR_OID_GROUP_ID);
-
-                    if (oidInfo)
-                    {
-                        WideCharToMultiByte(CP_ACP, 0, oidInfo->pwszName, -1,
-                         prefixBuf, sizeof(prefixBuf), NULL, NULL);
-                        prefix = prefixBuf;
-                    }
-                    else
-                        prefix = rdn->rgRDNAttr[j].pszObjId;
-                }
-                if (prefix)
-                {
-                    /* - 1 is needed to account for the NULL terminator. */
-                    chars = CRYPT_AddPrefixA(prefix,
-                     psz ? psz + ret : NULL, psz ? csz - ret - 1 : 0);
-                    ret += chars;
-                }
-                chars = quote_rdn_value_to_str_a(
-                 rdn->rgRDNAttr[j].dwValueType,
-                 &rdn->rgRDNAttr[j].Value, psz ? psz + ret : NULL,
-                 psz ? csz - ret : 0);
-                if (chars)
-                    ret += chars - 1;
-                if (j < rdn->cRDNAttr - 1)
-                {
-                    if (psz && ret < csz - rdnSepLen - 1)
-                        memcpy(psz + ret, rdnSep, rdnSepLen);
-                    ret += rdnSepLen;
-                }
-            }
-            if (i < info->cRDN - 1)
-            {
-                if (psz && ret < csz - sepLen - 1)
-                    memcpy(psz + ret, sep, sepLen);
-                ret += sepLen;
-            }
-            if(reverse) rdn--;
-            else rdn++;
-        }
-        LocalFree(info);
+        CryptMemFree(strW);
+        return len_mb;
     }
-    if (psz && csz)
+
+    ret = WideCharToMultiByte(CP_ACP, 0, strW, len, str, str_len, NULL, NULL);
+    if (ret < len_mb)
     {
-        *(psz + ret) = '\0';
-        ret++;
+        str[0] = 0;
+        ret = 1;
     }
-    else
-        ret++;
-    TRACE("Returning %s\n", debugstr_a(psz));
+    CryptMemFree(strW);
     return ret;
 }
 

@@ -276,24 +276,27 @@ static void test_CertRDNValueToStrW(void)
          wine_dbgstr_w(ePKIW), wine_dbgstr_w(buffer));
 }
 
-static void test_NameToStrConversionA(PCERT_NAME_BLOB pName, DWORD dwStrType,
- LPCSTR expected, BOOL todo)
+#define test_NameToStrConversionA(a, b, c) test_NameToStrConversionA_(__LINE__, a, b, c)
+static void test_NameToStrConversionA_(unsigned int line, PCERT_NAME_BLOB pName, DWORD dwStrType, LPCSTR expected)
 {
-    char buffer[2000] = { 0 };
-    DWORD i;
+    char buffer[2000];
+    DWORD len, retlen;
 
-    i = CertNameToStrA(X509_ASN_ENCODING, pName, dwStrType, NULL, 0);
-    todo_wine_if (todo)
-        ok(i == strlen(expected) + 1, "Expected %d chars, got %ld\n",
-         lstrlenA(expected) + 1, i);
-    i = CertNameToStrA(X509_ASN_ENCODING,pName, dwStrType, buffer,
-     sizeof(buffer));
-    todo_wine_if (todo)
-        ok(i == strlen(expected) + 1, "Expected %d chars, got %ld\n",
-         lstrlenA(expected) + 1, i);
-    todo_wine_if (todo)
-        ok(!strcmp(buffer, expected), "Expected %s, got %s\n", expected,
-         buffer);
+    len = CertNameToStrA(X509_ASN_ENCODING, pName, dwStrType, NULL, 0);
+    ok(len == strlen(expected) + 1, "line %u: Expected %d chars, got %ld.\n", line, lstrlenA(expected) + 1, len);
+    len = CertNameToStrA(X509_ASN_ENCODING,pName, dwStrType, buffer, sizeof(buffer));
+    ok(len == strlen(expected) + 1, "line %u: Expected %d chars, got %ld.\n",  line, lstrlenA(expected) + 1, len);
+    ok(!strcmp(buffer, expected), "line %u: Expected %s, got %s.\n", line, expected, buffer);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    retlen = CertNameToStrA(X509_ASN_ENCODING, pName, dwStrType, buffer, len - 1);
+    ok(retlen == 1, "line %u: expected 1, got %lu\n", line, retlen);
+    ok(!buffer[0], "line %u: string is not zero terminated.\n", line);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    retlen = CertNameToStrA(X509_ASN_ENCODING, pName, dwStrType, buffer, 0);
+    ok(retlen == len, "line %u: expected %lu chars, got %lu\n", line, len - 1, retlen);
+    ok((unsigned char)buffer[0] == 0xcc, "line %u: got %s\n", line, wine_dbgstr_a(buffer));
 }
 
 static BYTE encodedSimpleCN[] = {
@@ -366,79 +369,71 @@ static void test_CertNameToStrA(void)
          "Expected positive return and ERROR_SUCCESS, got %ld - %08lx\n",
          ret, GetLastError());
 
+        test_NameToStrConversionA(&context->pCertInfo->Issuer, CERT_SIMPLE_NAME_STR, issuerStr);
         test_NameToStrConversionA(&context->pCertInfo->Issuer,
-         CERT_SIMPLE_NAME_STR, issuerStr, FALSE);
+         CERT_SIMPLE_NAME_STR | CERT_NAME_STR_SEMICOLON_FLAG, issuerStrSemicolon);
         test_NameToStrConversionA(&context->pCertInfo->Issuer,
-         CERT_SIMPLE_NAME_STR | CERT_NAME_STR_SEMICOLON_FLAG,
-         issuerStrSemicolon, FALSE);
-        test_NameToStrConversionA(&context->pCertInfo->Issuer,
-         CERT_SIMPLE_NAME_STR | CERT_NAME_STR_CRLF_FLAG,
-         issuerStrCRLF, FALSE);
+         CERT_SIMPLE_NAME_STR | CERT_NAME_STR_CRLF_FLAG, issuerStrCRLF);
+        test_NameToStrConversionA(&context->pCertInfo->Subject, CERT_OID_NAME_STR, subjectStr);
         test_NameToStrConversionA(&context->pCertInfo->Subject,
-         CERT_OID_NAME_STR, subjectStr, FALSE);
+         CERT_OID_NAME_STR | CERT_NAME_STR_SEMICOLON_FLAG, subjectStrSemicolon);
         test_NameToStrConversionA(&context->pCertInfo->Subject,
-         CERT_OID_NAME_STR | CERT_NAME_STR_SEMICOLON_FLAG,
-         subjectStrSemicolon, FALSE);
+         CERT_OID_NAME_STR | CERT_NAME_STR_CRLF_FLAG, subjectStrCRLF);
         test_NameToStrConversionA(&context->pCertInfo->Subject,
-         CERT_OID_NAME_STR | CERT_NAME_STR_CRLF_FLAG,
-         subjectStrCRLF, FALSE);
-        test_NameToStrConversionA(&context->pCertInfo->Subject,
-         CERT_X500_NAME_STR, x500SubjectStr, FALSE);
+         CERT_X500_NAME_STR, x500SubjectStr);
         test_NameToStrConversionA(&context->pCertInfo->Subject,
          CERT_X500_NAME_STR | CERT_NAME_STR_SEMICOLON_FLAG | CERT_NAME_STR_REVERSE_FLAG,
-         x500SubjectStrSemicolonReverse, FALSE);
+         x500SubjectStrSemicolonReverse);
 
         CertFreeCertificateContext(context);
     }
     blob.pbData = encodedSimpleCN;
     blob.cbData = sizeof(encodedSimpleCN);
-    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=1", FALSE);
+    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=1");
     blob.pbData = encodedSingleQuotedCN;
     blob.cbData = sizeof(encodedSingleQuotedCN);
-    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN='1'", FALSE);
-    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "'1'", FALSE);
+    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN='1'");
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "'1'");
     blob.pbData = encodedSpacedCN;
     blob.cbData = sizeof(encodedSpacedCN);
-    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\" 1 \"", FALSE);
-    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\" 1 \"", FALSE);
+    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\" 1 \"");
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\" 1 \"");
     blob.pbData = encodedQuotedCN;
     blob.cbData = sizeof(encodedQuotedCN);
-    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"\"\"1\"\"\"",
-     FALSE);
-    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"\"\"1\"\"\"",
-     FALSE);
+    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"\"\"1\"\"\"");
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"\"\"1\"\"\"");
     blob.pbData = encodedMultipleAttrCN;
     blob.cbData = sizeof(encodedMultipleAttrCN);
-    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"1+2\"", FALSE);
-    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"1+2\"", FALSE);
+    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"1+2\"");
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"1+2\"");
     blob.pbData = encodedCommaCN;
     blob.cbData = sizeof(encodedCommaCN);
-    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"a,b\"", FALSE);
-    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"a,b\"", FALSE);
+    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"a,b\"");
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"a,b\"");
     blob.pbData = encodedEqualCN;
     blob.cbData = sizeof(encodedEqualCN);
-    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"a=b\"", FALSE);
-    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"a=b\"", FALSE);
+    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"a=b\"");
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"a=b\"");
     blob.pbData = encodedLessThanCN;
     blob.cbData = sizeof(encodedLessThanCN);
-    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"<\"", FALSE);
-    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"<\"", FALSE);
+    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"<\"");
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"<\"");
     blob.pbData = encodedGreaterThanCN;
     blob.cbData = sizeof(encodedGreaterThanCN);
-    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\">\"", FALSE);
-    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\">\"", FALSE);
+    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\">\"");
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\">\"");
     blob.pbData = encodedHashCN;
     blob.cbData = sizeof(encodedHashCN);
-    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"#\"", FALSE);
-    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"#\"", FALSE);
+    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"#\"");
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"#\"");
     blob.pbData = encodedSemiCN;
     blob.cbData = sizeof(encodedSemiCN);
-    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\";\"", FALSE);
-    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\";\"", FALSE);
+    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\";\"");
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\";\"");
     blob.pbData = encodedNewlineCN;
     blob.cbData = sizeof(encodedNewlineCN);
-    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"a\nb\"", FALSE);
-    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"a\nb\"", FALSE);
+    test_NameToStrConversionA(&blob, CERT_X500_NAME_STR, "CN=\"a\nb\"");
+    test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"a\nb\"");
 }
 
 #define test_NameToStrConversionW(a, b, c) test_NameToStrConversionW_(__LINE__, a, b, c)
