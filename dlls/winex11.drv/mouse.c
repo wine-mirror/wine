@@ -377,7 +377,7 @@ static BOOL grab_clipping_window( const RECT *clip )
     HWND msg_hwnd = 0;
     POINT pos;
 
-    if (GetWindowThreadProcessId( GetDesktopWindow(), NULL ) == GetCurrentThreadId())
+    if (NtUserGetWindowThread( NtUserGetDesktopWindow(), NULL ) == GetCurrentThreadId())
         return TRUE;  /* don't clip in the desktop process */
 
     if (!data) return FALSE;
@@ -391,7 +391,7 @@ static BOOL grab_clipping_window( const RECT *clip )
     {
         WARN( "refusing to clip to %s\n", wine_dbgstr_rect(clip) );
         last_clip_refused = TRUE;
-        last_clip_foreground_window = GetForegroundWindow();
+        last_clip_foreground_window = NtUserGetForegroundWindow();
         last_clip_rect = *clip;
         return FALSE;
     }
@@ -407,7 +407,7 @@ static BOOL grab_clipping_window( const RECT *clip )
     {
         WARN( "XInput2 not supported, refusing to clip to %s\n", wine_dbgstr_rect(clip) );
         DestroyWindow( msg_hwnd );
-        ClipCursor( NULL );
+        NtUserClipCursor( NULL );
         return TRUE;
     }
 
@@ -439,7 +439,7 @@ static BOOL grab_clipping_window( const RECT *clip )
     if (!data->clip_hwnd) sync_window_cursor( clip_window );
     InterlockedExchangePointer( (void **)&cursor_window, msg_hwnd );
     data->clip_hwnd = msg_hwnd;
-    SendNotifyMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR_NOTIFY, 0, (LPARAM)msg_hwnd );
+    send_notify_message( NtUserGetDesktopWindow(), WM_X11DRV_CLIP_CURSOR_NOTIFY, 0, (LPARAM)msg_hwnd );
     return TRUE;
 #else
     WARN( "XInput2 was not available at compile time\n" );
@@ -463,7 +463,7 @@ void ungrab_clipping_window(void)
     XUnmapWindow( display, clip_window );
     if (clipping_cursor) XUngrabPointer( display, CurrentTime );
     clipping_cursor = FALSE;
-    SendNotifyMessageW( GetDesktopWindow(), WM_X11DRV_CLIP_CURSOR_NOTIFY, 0, 0 );
+    send_notify_message( NtUserGetDesktopWindow(), WM_X11DRV_CLIP_CURSOR_NOTIFY, 0, 0 );
 }
 
 /***********************************************************************
@@ -474,7 +474,7 @@ void ungrab_clipping_window(void)
 void reset_clipping_window(void)
 {
     ungrab_clipping_window();
-    ClipCursor( NULL );  /* make sure the clip rectangle is reset too */
+    NtUserClipCursor( NULL );  /* make sure the clip rectangle is reset too */
 }
 
 /***********************************************************************
@@ -486,9 +486,9 @@ void reset_clipping_window(void)
 void retry_grab_clipping_window(void)
 {
     if (clipping_cursor)
-        ClipCursor( &clip_rect );
-    else if (last_clip_refused && GetForegroundWindow() == last_clip_foreground_window)
-        ClipCursor( &last_clip_rect );
+        NtUserClipCursor( &clip_rect );
+    else if (last_clip_refused && NtUserGetForegroundWindow() == last_clip_foreground_window)
+        NtUserClipCursor( &last_clip_rect );
 }
 
 /***********************************************************************
@@ -500,14 +500,14 @@ LRESULT clip_cursor_notify( HWND hwnd, HWND prev_clip_hwnd, HWND new_clip_hwnd )
 {
     struct x11drv_thread_data *data = x11drv_init_thread_data();
 
-    if (hwnd == GetDesktopWindow())  /* change the clip window stored in the desktop process */
+    if (hwnd == NtUserGetDesktopWindow())  /* change the clip window stored in the desktop process */
     {
         static HWND clip_hwnd;
 
         HWND prev = clip_hwnd;
         clip_hwnd = new_clip_hwnd;
         if (prev || new_clip_hwnd) TRACE( "clip hwnd changed from %p to %p\n", prev, new_clip_hwnd );
-        if (prev) SendNotifyMessageW( prev, WM_X11DRV_CLIP_CURSOR_NOTIFY, (WPARAM)prev, 0 );
+        if (prev) send_notify_message( prev, WM_X11DRV_CLIP_CURSOR_NOTIFY, (WPARAM)prev, 0 );
     }
     else if (hwnd == data->clip_hwnd)  /* this is a notification that clipping has been reset */
     {
@@ -515,7 +515,7 @@ LRESULT clip_cursor_notify( HWND hwnd, HWND prev_clip_hwnd, HWND new_clip_hwnd )
         data->clip_hwnd = 0;
         data->clip_reset = GetTickCount();
         disable_xinput2();
-        DestroyWindow( hwnd );
+        NtUserDestroyWindow( hwnd );
     }
     else if (prev_clip_hwnd)
     {
@@ -523,7 +523,7 @@ LRESULT clip_cursor_notify( HWND hwnd, HWND prev_clip_hwnd, HWND new_clip_hwnd )
          * dangling clip window.
          */
         TRACE( "destroying old clip hwnd %p\n", prev_clip_hwnd );
-        DestroyWindow( prev_clip_hwnd );
+        NtUserDestroyWindow( prev_clip_hwnd );
     }
     return 0;
 }
@@ -542,8 +542,8 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     DWORD style;
     BOOL fullscreen;
 
-    if (hwnd == GetDesktopWindow()) return FALSE;
-    style = GetWindowLongW( hwnd, GWL_STYLE );
+    if (hwnd == NtUserGetDesktopWindow()) return FALSE;
+    style = NtUserGetWindowLongW( hwnd, GWL_STYLE );
     if (!(style & WS_VISIBLE)) return FALSE;
     if ((style & (WS_POPUP | WS_CHILD)) == WS_CHILD) return FALSE;
     /* maximized windows don't count as full screen */
@@ -556,10 +556,10 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     if (GetTickCount() - thread_data->clip_reset < 1000) return FALSE;
     if (!reset && clipping_cursor && thread_data->clip_hwnd) return FALSE;  /* already clipping */
 
-    monitor = MonitorFromWindow( hwnd, MONITOR_DEFAULTTONEAREST );
+    monitor = NtUserMonitorFromWindow( hwnd, MONITOR_DEFAULTTONEAREST );
     if (!monitor) return FALSE;
     monitor_info.cbSize = sizeof(monitor_info);
-    if (!GetMonitorInfoW( monitor, &monitor_info )) return FALSE;
+    if (!NtUserGetMonitorInfo( monitor, &monitor_info )) return FALSE;
     if (!grab_fullscreen)
     {
         RECT virtual_rect = NtUserGetVirtualScreenRect();
@@ -619,9 +619,9 @@ static void map_event_coords( HWND hwnd, Window window, Window event_root, int x
                 pt.y += data->whole_rect.top - data->client_rect.top;
             }
 
-            if (GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
+            if (NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL)
                 pt.x = data->client_rect.right - data->client_rect.left - 1 - pt.x;
-            MapWindowPoints( hwnd, 0, &pt, 1 );
+            NtUserMapWindowPoints( hwnd, 0, &pt, 1 );
         }
         release_win_data( data );
     }
@@ -669,10 +669,10 @@ static void send_mouse_input( HWND hwnd, Window window, unsigned int state, INPU
     }
     release_win_data( data );
 
-    if (hwnd != GetDesktopWindow())
+    if (hwnd != NtUserGetDesktopWindow())
     {
-        hwnd = GetAncestor( hwnd, GA_ROOT );
-        if ((input->u.mi.dwFlags & (MOUSEEVENTF_LEFTDOWN|MOUSEEVENTF_RIGHTDOWN)) && hwnd == GetForegroundWindow())
+        hwnd = NtUserGetAncestor( hwnd, GA_ROOT );
+        if ((input->u.mi.dwFlags & (MOUSEEVENTF_LEFTDOWN|MOUSEEVENTF_RIGHTDOWN)) && hwnd == NtUserGetForegroundWindow())
             clip_fullscreen_window( hwnd, FALSE );
     }
 
@@ -728,7 +728,7 @@ static XcursorImage *create_xcursor_frame( HDC hdc, const ICONINFOEXW *iinfo, HA
     image->yhot = iinfo->yHotspot;
 
     image->delay = 100; /* fallback delay, 100 ms */
-    if (GetCursorFrameInfo(icon, 0x0 /* unknown parameter */, istep, &delay_jiffies, &num_steps) != 0)
+    if (NtUserGetCursorFrameInfo(icon, istep, &delay_jiffies, &num_steps) != 0)
         image->delay = (100 * delay_jiffies) / 6; /* convert jiffies (1/60s) to milliseconds */
     else
         WARN("Failed to retrieve animated cursor frame-rate for frame %d.\n", istep);
@@ -736,7 +736,7 @@ static XcursorImage *create_xcursor_frame( HDC hdc, const ICONINFOEXW *iinfo, HA
     /* draw the cursor frame to a temporary buffer then copy it into the XcursorImage */
     memset( color_bits, 0x00, color_size );
     NtGdiSelectBitmap( hdc, hbmColor );
-    if (!DrawIconEx( hdc, 0, 0, icon, width, height, istep, NULL, DI_NORMAL ))
+    if (!NtUserDrawIconEx( hdc, 0, 0, icon, width, height, istep, NULL, DI_NORMAL ))
     {
         TRACE("Could not draw frame %d (walk past end of frames).\n", istep);
         goto cleanup;
@@ -755,7 +755,7 @@ static XcursorImage *create_xcursor_frame( HDC hdc, const ICONINFOEXW *iinfo, HA
         /* draw the cursor mask to a temporary buffer */
         memset( mask_bits, 0xFF, mask_size );
         NtGdiSelectBitmap( hdc, hbmMask );
-        if (!DrawIconEx( hdc, 0, 0, icon, width, height, istep, NULL, DI_MASK ))
+        if (!NtUserDrawIconEx( hdc, 0, 0, icon, width, height, istep, NULL, DI_MASK ))
         {
             ERR("Failed to draw frame mask %d.\n", istep);
             goto cleanup;
@@ -790,7 +790,7 @@ static Cursor create_xcursor_cursor( HDC hdc, const ICONINFOEXW *iinfo, HANDLE i
     Cursor cursor = 0;
 
     /* Retrieve the number of frames to render */
-    if (!GetCursorFrameInfo(icon, 0x0 /* unknown parameter */, 0, &delay_jiffies, &nFrames)) return 0;
+    if (!NtUserGetCursorFrameInfo(icon, 0, &delay_jiffies, &nFrames)) return 0;
     if (!(imgs = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(XcursorImage*)*nFrames ))) return 0;
 
     /* Allocate all of the resources necessary to obtain a cursor frame */
@@ -1257,7 +1257,7 @@ static Cursor create_xlib_load_mono_cursor( HDC hdc, HANDLE handle, int width, i
         else NtGdiDeleteObjectApp( info.hbmColor );
         NtGdiDeleteObjectApp( info.hbmMask );
     }
-    DestroyCursor( mono );
+    NtUserDestroyCursor( mono, 0 );
     return cursor;
 }
 
@@ -1475,7 +1475,7 @@ void X11DRV_SetCursor( HCURSOR handle )
         GetTickCount() - last_cursor_change > 100)
     {
         last_cursor_change = GetTickCount();
-        if (cursor_window) SendNotifyMessageW( cursor_window, WM_X11DRV_SET_CURSOR, 0, (LPARAM)handle );
+        if (cursor_window) send_notify_message( cursor_window, WM_X11DRV_SET_CURSOR, 0, (LPARAM)handle );
     }
 }
 
@@ -1546,15 +1546,15 @@ BOOL X11DRV_ClipCursor( LPCRECT clip )
 
     if (grab_pointer)
     {
-        HWND foreground = GetForegroundWindow();
+        HWND foreground = NtUserGetForegroundWindow();
         DWORD tid, pid;
 
         /* forward request to the foreground window if it's in a different thread */
-        tid = GetWindowThreadProcessId( foreground, &pid );
+        tid = NtUserGetWindowThread( foreground, &pid );
         if (tid && tid != GetCurrentThreadId() && pid == GetCurrentProcessId())
         {
             TRACE( "forwarding clip request to %p\n", foreground );
-            SendNotifyMessageW( foreground, WM_X11DRV_CLIP_CURSOR_REQUEST, FALSE, FALSE );
+            send_notify_message( foreground, WM_X11DRV_CLIP_CURSOR_REQUEST, FALSE, FALSE );
             return TRUE;
         }
 
@@ -1587,15 +1587,15 @@ LRESULT clip_cursor_request( HWND hwnd, BOOL fullscreen, BOOL reset )
 {
     RECT clip;
 
-    if (hwnd == GetDesktopWindow())
+    if (hwnd == NtUserGetDesktopWindow())
         WARN( "ignoring clip cursor request on desktop window.\n" );
-    else if (hwnd != GetForegroundWindow())
+    else if (hwnd != NtUserGetForegroundWindow())
         WARN( "ignoring clip cursor request on non-foreground window.\n" );
     else if (fullscreen)
         clip_fullscreen_window( hwnd, reset );
     else
     {
-        GetClipCursor( &clip );
+        NtUserGetClipCursor( &clip );
         X11DRV_ClipCursor( &clip );
     }
 
@@ -1617,12 +1617,12 @@ void move_resize_window( HWND hwnd, int dir )
 
     if (!(win = X11DRV_get_whole_window( hwnd ))) return;
 
-    pt = GetMessagePos();
+    pt = NtUserGetMessagePos();
     pos = virtual_screen_to_root( (short)LOWORD( pt ), (short)HIWORD( pt ) );
 
-    if (GetKeyState( VK_LBUTTON ) & 0x8000) button = 1;
-    else if (GetKeyState( VK_MBUTTON ) & 0x8000) button = 2;
-    else if (GetKeyState( VK_RBUTTON ) & 0x8000) button = 3;
+    if (NtUserGetKeyState( VK_LBUTTON ) & 0x8000) button = 1;
+    else if (NtUserGetKeyState( VK_MBUTTON ) & 0x8000) button = 2;
+    else if (NtUserGetKeyState( VK_RBUTTON ) & 0x8000) button = 3;
 
     TRACE( "hwnd %p/%lx, pos %s, dir %d, button %d\n", hwnd, win, wine_dbgstr_point(&pos), dir, button );
 
@@ -1648,7 +1648,7 @@ void move_resize_window( HWND hwnd, int dir )
     /* (some apps don't like it if we return before the size/move is done) */
 
     if (!button) return;
-    SendMessageW( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
+    send_message( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
 
     for (;;)
     {
@@ -1672,21 +1672,21 @@ void move_resize_window( HWND hwnd, int dir )
             __wine_send_input( hwnd, &input, NULL );
         }
 
-        while (PeekMessageW( &msg, 0, 0, 0, PM_REMOVE ))
+        while (NtUserPeekMessage( &msg, 0, 0, 0, PM_REMOVE ))
         {
             if (!CallMsgFilterW( &msg, MSGF_SIZE ))
             {
                 TranslateMessage( &msg );
-                DispatchMessageW( &msg );
+                NtUserDispatchMessage( &msg );
             }
         }
 
         if (!(xstate & (Button1Mask << (button - 1)))) break;
-        MsgWaitForMultipleObjects( 0, NULL, FALSE, 100, QS_ALLINPUT );
+        NtUserMsgWaitForMultipleObjectsEx( 0, NULL, 100, QS_ALLINPUT, 0 );
     }
 
     TRACE( "hwnd %p/%lx done\n", hwnd, win );
-    SendMessageW( hwnd, WM_EXITSIZEMOVE, 0, 0 );
+    send_message( hwnd, WM_EXITSIZEMOVE, 0, 0 );
 }
 
 
