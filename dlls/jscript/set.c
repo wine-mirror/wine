@@ -127,6 +127,42 @@ static void delete_map_entry(MapInstance *map, struct jsval_map_entry *entry)
     release_map_entry(entry);
 }
 
+static HRESULT set_map_entry(MapInstance *map, jsval_t key, jsval_t value, jsval_t *r)
+{
+    struct jsval_map_entry *entry;
+    HRESULT hres;
+
+    if((entry = get_map_entry(map, key))) {
+        jsval_t val;
+        hres = jsval_copy(value, &val);
+        if(FAILED(hres))
+            return hres;
+
+        jsval_release(entry->value);
+        entry->value = val;
+    }else {
+        if(!(entry = heap_alloc_zero(sizeof(*entry)))) return E_OUTOFMEMORY;
+
+        hres = jsval_copy(key, &entry->key);
+        if(SUCCEEDED(hres)) {
+            hres = jsval_copy(value, &entry->value);
+            if(FAILED(hres))
+                jsval_release(entry->key);
+        }
+        if(FAILED(hres)) {
+            heap_free(entry);
+            return hres;
+        }
+        grab_map_entry(entry);
+        wine_rb_put(&map->map, &entry->key, &entry->entry);
+        list_add_tail(&map->entries, &entry->list_entry);
+        map->size++;
+    }
+
+    if(r) *r = jsval_undefined();
+    return S_OK;
+}
+
 static HRESULT iterate_map(MapInstance *map, script_ctx_t *ctx, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     struct jsval_map_entry *entry;
@@ -243,7 +279,6 @@ static HRESULT Map_set(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned ar
 {
     jsval_t key = argc >= 1 ? argv[0] : jsval_undefined();
     jsval_t value = argc >= 2 ? argv[1] : jsval_undefined();
-    struct jsval_map_entry *entry;
     MapInstance *map;
     HRESULT hres;
 
@@ -253,35 +288,7 @@ static HRESULT Map_set(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned ar
 
     TRACE("%p (%s %s)\n", map, debugstr_jsval(key), debugstr_jsval(value));
 
-    if((entry = get_map_entry(map, key))) {
-        jsval_t val;
-        hres = jsval_copy(value, &val);
-        if(FAILED(hres))
-            return hres;
-
-        jsval_release(entry->value);
-        entry->value = val;
-    }else {
-        if(!(entry = heap_alloc_zero(sizeof(*entry)))) return E_OUTOFMEMORY;
-
-        hres = jsval_copy(key, &entry->key);
-        if(SUCCEEDED(hres)) {
-            hres = jsval_copy(value, &entry->value);
-            if(FAILED(hres))
-                jsval_release(entry->key);
-        }
-        if(FAILED(hres)) {
-            heap_free(entry);
-            return hres;
-        }
-        grab_map_entry(entry);
-        wine_rb_put(&map->map, &entry->key, &entry->entry);
-        list_add_tail(&map->entries, &entry->list_entry);
-        map->size++;
-    }
-
-    if(r) *r = jsval_undefined();
-    return S_OK;
+    return set_map_entry(map, key, value, r);
 }
 
 static HRESULT Map_has(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
