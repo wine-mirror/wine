@@ -96,8 +96,8 @@ DWORD WINAPI CertRDNValueToStrA(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
     return ret;
 }
 
-DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
- LPWSTR psz, DWORD csz)
+static DWORD rdn_value_to_strW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
+                               LPWSTR psz, DWORD csz, BOOL partial_copy)
 {
     DWORD ret = 0, len, i;
 
@@ -117,8 +117,9 @@ DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
     case CERT_RDN_GENERAL_STRING:
         len = pValue->cbData;
         if (!psz || !csz) ret = len;
-        else if (len < csz)
+        else if (len < csz || partial_copy)
         {
+            len = min(len, csz - 1);
             for (i = 0; i < len; ++i)
                 psz[i] = pValue->pbData[i];
             ret = len;
@@ -129,10 +130,11 @@ DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
         len = pValue->cbData / sizeof(WCHAR);
         if (!psz || !csz)
             ret = len;
-        else if (len < csz)
+        else if (len < csz || partial_copy)
         {
             WCHAR *ptr = psz;
 
+            len = min(len, csz - 1);
             for (i = 0; i < len; ++i)
                 ptr[i] = ((LPCWSTR)pValue->pbData)[i];
             ret = len;
@@ -144,6 +146,12 @@ DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
     if (psz && csz) psz[ret] = 0;
     TRACE("returning %ld (%s)\n", ret + 1, debugstr_w(psz));
     return ret + 1;
+}
+
+DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
+                                LPWSTR psz, DWORD csz)
+{
+    return rdn_value_to_strW(dwValueType, pValue, psz, csz, FALSE);
 }
 
 static inline BOOL is_quotable_char(WCHAR c)
@@ -1196,11 +1204,22 @@ static DWORD cert_get_name_from_rdn_attr(DWORD encodingType,
             oid = szOID_RSA_emailAddr;
         nameAttr = CertFindRDNAttr(oid, nameInfo);
         if (nameAttr)
-            ret = CertRDNValueToStrW(nameAttr->dwValueType, &nameAttr->Value,
-             pszNameString, cchNameString);
+            ret = rdn_value_to_strW(nameAttr->dwValueType, &nameAttr->Value,
+             pszNameString, cchNameString, TRUE);
         LocalFree(nameInfo);
     }
     return ret;
+}
+
+static DWORD copy_output_str(WCHAR *dst, const WCHAR *src, DWORD dst_size)
+{
+    DWORD len = wcslen(src);
+
+    if (!dst || !dst_size) return len + 1;
+    len = min(len, dst_size - 1);
+    memcpy(dst, src, len * sizeof(*dst));
+    dst[len] = 0;
+    return len + 1;
 }
 
 DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
@@ -1235,23 +1254,14 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
         PCERT_ALT_NAME_ENTRY entry = cert_find_alt_name_entry(pCertContext,
          altNameOID, CERT_ALT_NAME_RFC822_NAME, &info);
 
-        if (entry)
-        {
-            if (!pszNameString)
-                ret = lstrlenW(entry->u.pwszRfc822Name) + 1;
-            else if (cchNameString)
-            {
-                ret = min(lstrlenW(entry->u.pwszRfc822Name), cchNameString - 1);
-                memcpy(pszNameString, entry->u.pwszRfc822Name,
-                 ret * sizeof(WCHAR));
-                pszNameString[ret++] = 0;
-            }
-        }
+        if (entry) ret = copy_output_str(pszNameString, entry->u.pwszRfc822Name, cchNameString);
         if (info)
             LocalFree(info);
         if (!ret)
+        {
             ret = cert_get_name_from_rdn_attr(pCertContext->dwCertEncodingType,
              name, szOID_RSA_emailAddr, pszNameString, cchNameString);
+         }
         break;
     }
     case CERT_NAME_RDN_TYPE:
@@ -1308,8 +1318,8 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
             for (i = 0; !nameAttr && i < ARRAY_SIZE(simpleAttributeOIDs); i++)
                 nameAttr = CertFindRDNAttr(simpleAttributeOIDs[i], nameInfo);
             if (nameAttr)
-                ret = CertRDNValueToStrW(nameAttr->dwValueType,
-                 &nameAttr->Value, pszNameString, cchNameString);
+                ret = rdn_value_to_strW(nameAttr->dwValueType,
+                 &nameAttr->Value, pszNameString, cchNameString, TRUE);
             LocalFree(nameInfo);
         }
         if (!ret)
@@ -1322,19 +1332,7 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
             {
                 if (!entry && altInfo->cAltEntry)
                     entry = &altInfo->rgAltEntry[0];
-                if (entry)
-                {
-                    if (!pszNameString)
-                        ret = lstrlenW(entry->u.pwszRfc822Name) + 1;
-                    else if (cchNameString)
-                    {
-                        ret = min(lstrlenW(entry->u.pwszRfc822Name),
-                         cchNameString - 1);
-                        memcpy(pszNameString, entry->u.pwszRfc822Name,
-                         ret * sizeof(WCHAR));
-                        pszNameString[ret++] = 0;
-                    }
-                }
+                if (entry) ret = copy_output_str(pszNameString, entry->u.pwszRfc822Name, cchNameString);
                 LocalFree(altInfo);
             }
         }
@@ -1359,17 +1357,8 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
         PCERT_ALT_NAME_ENTRY entry = cert_find_alt_name_entry(pCertContext,
          altNameOID, CERT_ALT_NAME_DNS_NAME, &info);
 
-        if (entry)
-        {
-            if (!pszNameString)
-                ret = lstrlenW(entry->u.pwszDNSName) + 1;
-            else if (cchNameString)
-            {
-                ret = min(lstrlenW(entry->u.pwszDNSName), cchNameString - 1);
-                memcpy(pszNameString, entry->u.pwszDNSName, ret * sizeof(WCHAR));
-                pszNameString[ret++] = 0;
-            }
-        }
+        if (entry) ret = copy_output_str(pszNameString, entry->u.pwszDNSName, cchNameString);
+
         if (info)
             LocalFree(info);
         if (!ret)
@@ -1383,17 +1372,8 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
         PCERT_ALT_NAME_ENTRY entry = cert_find_alt_name_entry(pCertContext,
          altNameOID, CERT_ALT_NAME_URL, &info);
 
-        if (entry)
-        {
-            if (!pszNameString)
-                ret = lstrlenW(entry->u.pwszURL) + 1;
-            else if (cchNameString)
-            {
-                ret = min(lstrlenW(entry->u.pwszURL), cchNameString - 1);
-                memcpy(pszNameString, entry->u.pwszURL, ret * sizeof(WCHAR));
-                pszNameString[ret++] = 0;
-            }
-        }
+        if (entry) ret = copy_output_str(pszNameString, entry->u.pwszURL, cchNameString);
+
         if (info)
             LocalFree(info);
         break;
@@ -1401,17 +1381,13 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT pCertContext, DWORD dwType,
     default:
         FIXME("unimplemented for type %ld\n", dwType);
         ret = 0;
+        break;
     }
 done:
     if (!ret)
     {
-        if (!pszNameString)
-            ret = 1;
-        else if (cchNameString)
-        {
-            pszNameString[0] = 0;
-            ret = 1;
-        }
+        ret = 1;
+        if (pszNameString && cchNameString) pszNameString[0] = 0;
     }
     return ret;
 }
