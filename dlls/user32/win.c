@@ -869,35 +869,7 @@ HWND WINAPI GetDesktopWindow(void)
  */
 BOOL WINAPI EnableWindow( HWND hwnd, BOOL enable )
 {
-    BOOL retvalue;
-
-    if (is_broadcast(hwnd))
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return FALSE;
-    }
-
-    TRACE("( %p, %d )\n", hwnd, enable);
-
-    if (enable)
-    {
-        retvalue = (WIN_SetStyle( hwnd, 0, WS_DISABLED ) & WS_DISABLED) != 0;
-        if (retvalue) SendMessageW( hwnd, WM_ENABLE, TRUE, 0 );
-    }
-    else
-    {
-        SendMessageW( hwnd, WM_CANCELMODE, 0, 0 );
-
-        retvalue = (WIN_SetStyle( hwnd, WS_DISABLED, 0 ) & WS_DISABLED) != 0;
-        if (!retvalue)
-        {
-            if (hwnd == GetFocus())
-                NtUserSetFocus( 0 ); /* A disabled window can't have the focus */
-
-            SendMessageW( hwnd, WM_ENABLE, FALSE, 0 );
-        }
-    }
-    return retvalue;
+    return NtUserEnableWindow( hwnd, enable );
 }
 
 

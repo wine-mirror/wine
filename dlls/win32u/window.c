@@ -807,6 +807,40 @@ BOOL is_window_unicode( HWND hwnd )
     return ret;
 }
 
+/* see EnableWindow */
+static BOOL enable_window( HWND hwnd, BOOL enable )
+{
+    BOOL ret;
+
+    if (is_broadcast(hwnd))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    TRACE( "( %p, %d )\n", hwnd, enable );
+
+    if (enable)
+    {
+        ret = (set_window_style( hwnd, 0, WS_DISABLED ) & WS_DISABLED) != 0;
+        if (ret) send_message( hwnd, WM_ENABLE, TRUE, 0 );
+    }
+    else
+    {
+        send_message( hwnd, WM_CANCELMODE, 0, 0 );
+
+        ret = (set_window_style( hwnd, WS_DISABLED, 0 ) & WS_DISABLED) != 0;
+        if (!ret)
+        {
+            if (hwnd == get_focus())
+                NtUserSetFocus( 0 ); /* A disabled window can't have the focus */
+
+            send_message( hwnd, WM_ENABLE, FALSE, 0 );
+        }
+    }
+    return ret;
+}
+
 /* see IsWindowEnabled */
 BOOL is_window_enabled( HWND hwnd )
 {
@@ -5056,6 +5090,9 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
 {
     switch (code)
     {
+    case NtUserCallHwndParam_EnableWindow:
+        return enable_window( hwnd, param );
+
     case NtUserCallHwndParam_GetClassLongA:
         return get_class_long( hwnd, param, TRUE );
 

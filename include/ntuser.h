@@ -832,6 +832,7 @@ static inline BOOL NtUserIsWindowVisible( HWND hwnd )
 /* NtUserCallHwndParam codes, not compatible with Windows */
 enum
 {
+    NtUserCallHwndParam_EnableWindow,
     NtUserCallHwndParam_GetClassLongA,
     NtUserCallHwndParam_GetClassLongW,
     NtUserCallHwndParam_GetClassLongPtrA,
@@ -862,6 +863,11 @@ enum
     NtUserSetWindowStyle,
     NtUserSpyGetMsgName,
 };
+
+static inline BOOL NtUserEnableWindow( HWND hwnd, BOOL enable )
+{
+    return NtUserCallHwndParam( hwnd, enable, NtUserCallHwndParam_EnableWindow );
+}
 
 static inline DWORD NtUserGetClassLongA( HWND hwnd, INT offset )
 {
