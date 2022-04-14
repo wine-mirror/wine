@@ -373,7 +373,7 @@ LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, 
             if (*result >= 0)
             {
                 DWORD len;
-                RtlUnicodeToMultiByteN( (LPSTR)lParam, ~0u, &len,
+                RtlUnicodeToMultiByteN( (LPSTR)lParam, 512 * 3, &len,
                                         buffer, (lstrlenW(buffer) + 1) * sizeof(WCHAR) );
                 *result = len - 1;
             }
@@ -633,7 +633,7 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
             if (*result >= 0)
             {
                 DWORD len;
-                RtlMultiByteToUnicodeN( (LPWSTR)lParam, ~0u, &len, buffer, strlen(buffer) + 1 );
+                RtlMultiByteToUnicodeN( (LPWSTR)lParam, 512 * 3, &len, buffer, strlen(buffer) + 1 );
                 *result = len / sizeof(WCHAR) - 1;
             }
         }
