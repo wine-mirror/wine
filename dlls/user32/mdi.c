@@ -945,11 +945,11 @@ static BOOL MDI_RestoreFrameMenu( HWND frame, HWND hChild )
     }
 
     /* close */
-    DeleteMenu(menu, SC_CLOSE, MF_BYCOMMAND);
+    NtUserDeleteMenu( menu, SC_CLOSE, MF_BYCOMMAND );
     /* restore */
-    DeleteMenu(menu, SC_RESTORE, MF_BYCOMMAND);
+    NtUserDeleteMenu( menu, SC_RESTORE, MF_BYCOMMAND );
     /* minimize */
-    DeleteMenu(menu, SC_MINIMIZE, MF_BYCOMMAND);
+    NtUserDeleteMenu( menu, SC_MINIMIZE, MF_BYCOMMAND );
 
     DrawMenuBar(frame);
 

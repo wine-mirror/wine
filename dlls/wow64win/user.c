@@ -669,6 +669,15 @@ NTSTATUS WINAPI wow64_NtUserCheckMenuItem( UINT *args )
     return NtUserCheckMenuItem( handle, id, flags );
 }
 
+NTSTATUS WINAPI wow64_NtUserDeleteMenu( UINT *args )
+{
+    HMENU menu = get_handle( &args );
+    UINT id = get_ulong( &args );
+    UINT flags = get_ulong( &args );
+
+    return NtUserDeleteMenu( menu, id, flags );
+}
+
 NTSTATUS WINAPI wow64_NtUserGetMenuItemRect( UINT *args )
 {
     HWND hwnd = get_handle( &args );

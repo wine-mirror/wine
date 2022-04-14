@@ -410,7 +410,7 @@ static HMENU MENU_GetSysMenu( HWND hWnd, HMENU hPopupMenu )
 	if (hPopupMenu)
 	{
             if (GetClassLongW(hWnd, GCL_STYLE) & CS_NOCLOSE)
-                DeleteMenu(hPopupMenu, SC_CLOSE, MF_BYCOMMAND);
+                NtUserDeleteMenu( hPopupMenu, SC_CLOSE, MF_BYCOMMAND );
 
 	    InsertMenuW( hMenu, -1, MF_SYSMENU | MF_POPUP | MF_BYPOSITION,
                          (UINT_PTR)hPopupMenu, NULL );
@@ -3540,7 +3540,7 @@ BOOL WINAPI ChangeMenuA( HMENU hMenu, UINT pos, LPCSTR data,
     TRACE("menu=%p pos=%d data=%p id=%08x flags=%08x\n", hMenu, pos, data, id, flags );
     if (flags & MF_APPEND) return AppendMenuA( hMenu, flags & ~MF_APPEND,
                                                  id, data );
-    if (flags & MF_DELETE) return DeleteMenu(hMenu, pos, flags & ~MF_DELETE);
+    if (flags & MF_DELETE) return NtUserDeleteMenu( hMenu, pos, flags & ~MF_DELETE );
     if (flags & MF_CHANGE) return ModifyMenuA(hMenu, pos, flags & ~MF_CHANGE,
                                                 id, data );
     if (flags & MF_REMOVE) return NtUserRemoveMenu( hMenu,
@@ -3560,7 +3560,7 @@ BOOL WINAPI ChangeMenuW( HMENU hMenu, UINT pos, LPCWSTR data,
     TRACE("menu=%p pos=%d data=%p id=%08x flags=%08x\n", hMenu, pos, data, id, flags );
     if (flags & MF_APPEND) return AppendMenuW( hMenu, flags & ~MF_APPEND,
                                                  id, data );
-    if (flags & MF_DELETE) return DeleteMenu(hMenu, pos, flags & ~MF_DELETE);
+    if (flags & MF_DELETE) return NtUserDeleteMenu( hMenu, pos, flags & ~MF_DELETE );
     if (flags & MF_CHANGE) return ModifyMenuW(hMenu, pos, flags & ~MF_CHANGE,
                                                 id, data );
     if (flags & MF_REMOVE) return NtUserRemoveMenu( hMenu,
@@ -3822,26 +3822,6 @@ BOOL WINAPI AppendMenuW( HMENU hMenu, UINT flags,
                          UINT_PTR id, LPCWSTR data )
 {
     return InsertMenuW( hMenu, -1, flags | MF_BYPOSITION, id, data );
-}
-
-
-/**********************************************************************
- *         DeleteMenu    (USER32.@)
- */
-BOOL WINAPI DeleteMenu( HMENU hMenu, UINT id, UINT flags )
-{
-    POPUPMENU *menu;
-    UINT pos;
-
-    if (!(menu = find_menu_item(hMenu, id, flags, &pos)))
-        return FALSE;
-
-    if (menu->items[pos].fType & MF_POPUP)
-        NtUserDestroyMenu( menu->items[pos].hSubMenu );
-
-    NtUserRemoveMenu( menu->obj.handle, pos, flags | MF_BYPOSITION );
-    release_menu_ptr(menu);
-    return TRUE;
 }
 
 

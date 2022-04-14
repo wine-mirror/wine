@@ -977,6 +977,25 @@ BOOL WINAPI NtUserRemoveMenu( HMENU handle, UINT id, UINT flags )
 }
 
 /**********************************************************************
+ *         NtUserDeleteMenu    (win32u.@)
+ */
+BOOL WINAPI NtUserDeleteMenu( HMENU handle, UINT id, UINT flags )
+{
+    POPUPMENU *menu;
+    UINT pos;
+
+    if (!(menu = find_menu_item( handle, id, flags, &pos )))
+        return FALSE;
+
+    if (menu->items[pos].fType & MF_POPUP)
+        NtUserDestroyMenu( menu->items[pos].hSubMenu );
+
+    NtUserRemoveMenu( menu->obj.handle, pos, flags | MF_BYPOSITION );
+    release_menu_ptr( menu );
+    return TRUE;
+}
+
+/**********************************************************************
  *           NtUserSetMenuContextHelpId    (win32u.@)
  */
 BOOL WINAPI NtUserSetMenuContextHelpId( HMENU handle, DWORD id )
