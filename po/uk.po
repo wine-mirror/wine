@@ -4007,7 +4007,9 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "Неможливо змінити властивість, яка не підлягає запису '|'"
 
 #: dlls/jscript/jscript.rc:79
-msgid "'this' is not a Map object"
+#, fuzzy
+#| msgid "'this' is not a Map object"
+msgid "'this' is not a | object"
 msgstr "'це' не є Map об'єкта"
 
 #: dlls/jscript/jscript.rc:80

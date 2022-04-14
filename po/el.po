@@ -3949,7 +3949,7 @@ msgid "Cannot modify non-writable property '|'"
 msgstr ""
 
 #: dlls/jscript/jscript.rc:79
-msgid "'this' is not a Map object"
+msgid "'this' is not a | object"
 msgstr ""
 
 #: dlls/jscript/jscript.rc:80

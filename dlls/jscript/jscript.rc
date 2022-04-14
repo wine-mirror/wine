@@ -75,7 +75,7 @@ STRINGTABLE
     IDS_OBJECT_NONEXTENSIBLE       "Cannot define property '|': object is not extensible"
     IDS_NONCONFIGURABLE_REDEFINED  "Cannot redefine non-configurable property '|'"
     IDS_NONWRITABLE_MODIFIED       "Cannot modify non-writable property '|'"
-    IDS_MAP_EXPECTED               "'this' is not a Map object"
+    IDS_MAP_EXPECTED               "'this' is not a | object"
     IDS_PROP_DESC_MISMATCH         "Property cannot have both accessors and a value"
 
     IDS_COMPILATION_ERROR   "Microsoft JScript compilation error"

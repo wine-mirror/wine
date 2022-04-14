@@ -3978,7 +3978,7 @@ msgstr ""
 #: dlls/jscript/jscript.rc:79
 #, fuzzy
 #| msgid "'%s' is not a valid port name"
-msgid "'this' is not a Map object"
+msgid "'this' is not a | object"
 msgstr "„%s“ není platný název portu"
 
 #: dlls/jscript/jscript.rc:80

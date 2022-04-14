@@ -86,7 +86,7 @@ static int jsval_map_compare(const void *k, const struct wine_rb_entry *e)
     }
 }
 
-static HRESULT get_map_this(jsval_t vthis, MapInstance **ret)
+static HRESULT get_map_this(script_ctx_t *ctx, jsval_t vthis, MapInstance **ret)
 {
     jsdisp_t *jsdisp;
 
@@ -94,14 +94,14 @@ static HRESULT get_map_this(jsval_t vthis, MapInstance **ret)
         return JS_E_OBJECT_EXPECTED;
     if(!(jsdisp = to_jsdisp(get_object(vthis))) || !is_class(jsdisp, JSCLASS_MAP)) {
         WARN("not a Map object passed as 'this'\n");
-        return JS_E_MAP_EXPECTED;
+        return throw_error(ctx, JS_E_MAP_EXPECTED, L"Map");
     }
 
     *ret = CONTAINING_RECORD(jsdisp, MapInstance, dispex);
     return S_OK;
 }
 
-static HRESULT get_set_this(jsval_t vthis, MapInstance **ret)
+static HRESULT get_set_this(script_ctx_t *ctx, jsval_t vthis, MapInstance **ret)
 {
     jsdisp_t *jsdisp;
 
@@ -109,7 +109,7 @@ static HRESULT get_set_this(jsval_t vthis, MapInstance **ret)
         return JS_E_OBJECT_EXPECTED;
     if(!(jsdisp = to_jsdisp(get_object(vthis))) || !is_class(jsdisp, JSCLASS_SET)) {
         WARN("not a Set object passed as 'this'\n");
-        return JS_E_MAP_EXPECTED;
+        return throw_error(ctx, JS_E_MAP_EXPECTED, L"Set");
     }
 
     *ret = CONTAINING_RECORD(jsdisp, MapInstance, dispex);
@@ -226,7 +226,7 @@ static HRESULT Map_clear(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned 
     MapInstance *map;
     HRESULT hres;
 
-    hres = get_map_this(vthis, &map);
+    hres = get_map_this(ctx, vthis, &map);
     if(FAILED(hres))
         return hres;
 
@@ -249,7 +249,7 @@ static HRESULT Map_delete(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned
     MapInstance *map;
     HRESULT hres;
 
-    hres = get_map_this(vthis, &map);
+    hres = get_map_this(ctx, vthis, &map);
     if(FAILED(hres))
         return hres;
 
@@ -266,7 +266,7 @@ static HRESULT Map_forEach(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigne
     MapInstance *map;
     HRESULT hres;
 
-    hres = get_map_this(vthis, &map);
+    hres = get_map_this(ctx, vthis, &map);
     if(FAILED(hres))
         return hres;
 
@@ -283,7 +283,7 @@ static HRESULT Map_get(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned ar
     MapInstance *map;
     HRESULT hres;
 
-    hres = get_map_this(vthis, &map);
+    hres = get_map_this(ctx, vthis, &map);
     if(FAILED(hres))
         return hres;
 
@@ -305,7 +305,7 @@ static HRESULT Map_set(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned ar
     MapInstance *map;
     HRESULT hres;
 
-    hres = get_map_this(vthis, &map);
+    hres = get_map_this(ctx, vthis, &map);
     if(FAILED(hres))
         return hres;
 
@@ -322,7 +322,7 @@ static HRESULT Map_has(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned ar
     MapInstance *map;
     HRESULT hres;
 
-    hres = get_map_this(vthis, &map);
+    hres = get_map_this(ctx, vthis, &map);
     if(FAILED(hres))
         return hres;
 
@@ -431,7 +431,7 @@ static HRESULT Set_add(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned ar
     MapInstance *set;
     HRESULT hres;
 
-    hres = get_set_this(vthis, &set);
+    hres = get_set_this(ctx, vthis, &set);
     if(FAILED(hres))
         return hres;
 
@@ -446,7 +446,7 @@ static HRESULT Set_clear(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned 
     MapInstance *set;
     HRESULT hres;
 
-    hres = get_set_this(vthis, &set);
+    hres = get_set_this(ctx, vthis, &set);
     if(FAILED(hres))
         return hres;
 
@@ -469,7 +469,7 @@ static HRESULT Set_delete(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned
     MapInstance *set;
     HRESULT hres;
 
-    hres = get_set_this(vthis, &set);
+    hres = get_set_this(ctx, vthis, &set);
     if(FAILED(hres))
         return hres;
 
@@ -486,7 +486,7 @@ static HRESULT Set_forEach(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigne
     MapInstance *set;
     HRESULT hres;
 
-    hres = get_set_this(vthis, &set);
+    hres = get_set_this(ctx, vthis, &set);
     if(FAILED(hres))
         return hres;
 
@@ -503,7 +503,7 @@ static HRESULT Set_has(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned ar
     MapInstance *set;
     HRESULT hres;
 
-    hres = get_set_this(vthis, &set);
+    hres = get_set_this(ctx, vthis, &set);
     if(FAILED(hres))
         return hres;
 

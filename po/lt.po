@@ -3995,7 +3995,9 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "Negalima modifikuoti nerašomos savybės „|“"
 
 #: dlls/jscript/jscript.rc:79
-msgid "'this' is not a Map object"
+#, fuzzy
+#| msgid "'this' is not a Map object"
+msgid "'this' is not a | object"
 msgstr "„Šis“ nėra atvaizdžio objektas"
 
 #: dlls/jscript/jscript.rc:80

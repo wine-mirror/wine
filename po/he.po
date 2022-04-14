@@ -4033,7 +4033,7 @@ msgstr ""
 #: dlls/jscript/jscript.rc:79
 #, fuzzy
 #| msgid "'%s' is not a valid port name"
-msgid "'this' is not a Map object"
+msgid "'this' is not a | object"
 msgstr "'%s' אינו שם תקני לפתחה"
 
 #: dlls/jscript/jscript.rc:80

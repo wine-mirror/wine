@@ -3973,7 +3973,9 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "쓰기 가능하지 않은 속성 '|'을(를) 수정할 수 없습니다"
 
 #: dlls/jscript/jscript.rc:79
-msgid "'this' is not a Map object"
+#, fuzzy
+#| msgid "'this' is not a Map object"
+msgid "'this' is not a | object"
 msgstr "'this'는 Map 개체가 아닙니다"
 
 #: dlls/jscript/jscript.rc:80
