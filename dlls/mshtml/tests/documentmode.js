@@ -995,7 +995,7 @@ sync_test("map_obj", function() {
 
     var calls = [];
     i = 0;
-    r = s.forEach(function(value, key) {
+    r = s.forEach(function(value, key, map) {
         if(isNaN(test_keys[i])) {
             ok(isNaN(key), "key = " + key + " expected NaN");
             ok(isNaN(value), "value = " + value + " expected NaN");
@@ -1003,6 +1003,7 @@ sync_test("map_obj", function() {
             ok(key === test_keys[i], "key = " + key + " expected " + test_keys[i]);
             ok(value === key + 1, "value = " + value);
         }
+        ok(map === s, "map = " + map);
         i++;
     });
     ok(i === test_keys.length, "i = " + i);
