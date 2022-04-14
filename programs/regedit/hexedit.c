@@ -55,8 +55,6 @@ typedef struct tagHEXEDIT_INFO
     INT   nScrollPos; /* first visible line */
 } HEXEDIT_INFO;
 
-const WCHAR szHexEditClass[] = {'H','e','x','E','d','i','t',0};
-
 static inline LRESULT HexEdit_SetFont (HEXEDIT_INFO *infoPtr, HFONT hFont, BOOL redraw);
 
 static inline BYTE hexchar_to_byte(WCHAR ch)
@@ -73,16 +71,13 @@ static inline BYTE hexchar_to_byte(WCHAR ch)
 
 static LPWSTR HexEdit_GetLineText(int offset, BYTE *pData, LONG cbData, LONG pad)
 {
-    static const WCHAR percent_04xW[] = {'%','0','4','X',' ',' ',0};
-    static const WCHAR percent_02xW[] = {'%','0','2','X',' ',0};
-
     WCHAR *lpszLine = heap_xalloc((6 + cbData * 3 + pad * 3 + DIV_SPACES + cbData + 1) * sizeof(WCHAR));
     LONG i;
 
-    wsprintfW(lpszLine, percent_04xW, offset);
+    wsprintfW(lpszLine, L"%04X  ", offset);
 
     for (i = 0; i < cbData; i++)
-        wsprintfW(lpszLine + 6 + i*3, percent_02xW, pData[offset + i]);
+        wsprintfW(lpszLine + 6 + i*3, L"%02X ", pData[offset + i]);
     for (i = 0; i < pad * 3; i++)
         lpszLine[6 + cbData * 3 + i] = ' ';
 
@@ -645,7 +640,7 @@ void HexEdit_Register(void)
     wndClass.cbWndExtra    = sizeof(HEXEDIT_INFO *);
     wndClass.hCursor       = LoadCursorW(0, (const WCHAR *)IDC_IBEAM);
     wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-    wndClass.lpszClassName = szHexEditClass;
+    wndClass.lpszClassName = L"HexEdit";
 
     RegisterClassW(&wndClass);
 }
