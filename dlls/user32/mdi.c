@@ -217,7 +217,7 @@ static BOOL is_close_enabled(HWND hwnd, HMENU hSysMenu)
 {
     if (GetClassLongW(hwnd, GCL_STYLE) & CS_NOCLOSE) return FALSE;
 
-    if (!hSysMenu) hSysMenu = GetSystemMenu(hwnd, FALSE);
+    if (!hSysMenu) hSysMenu = NtUserGetSystemMenu( hwnd, FALSE );
     if (hSysMenu)
     {
         UINT state = GetMenuState(hSysMenu, SC_CLOSE, MF_BYCOMMAND);
@@ -835,7 +835,7 @@ static BOOL MDI_AugmentFrameMenu( HWND frame, HWND hChild )
     if (!menu) return FALSE;
 
     /* create a copy of sysmenu popup and insert it into frame menu bar */
-    if (!(hSysPopup = GetSystemMenu(hChild, FALSE)))
+    if (!(hSysPopup = NtUserGetSystemMenu( hChild, FALSE )))
     {
         TRACE("child %p doesn't have a system menu\n", hChild);
         return FALSE;

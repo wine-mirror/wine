@@ -951,6 +951,12 @@ BOOL WINAPI NtUserGetMessage( MSG *msg, HWND hwnd, UINT first, UINT last )
     return unix_funcs->pNtUserGetMessage( msg, hwnd, first, last );
 }
 
+HMENU WINAPI NtUserGetSystemMenu( HWND hwnd, BOOL revert )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserGetSystemMenu( hwnd, revert );
+}
+
 BOOL WINAPI NtUserGetUpdateRect( HWND hwnd, RECT *rect, BOOL erase )
 {
     if (!unix_funcs) return FALSE;

@@ -120,6 +120,7 @@ extern void MENU_TrackMouseMenuBar( HWND hwnd, INT ht, POINT pt ) DECLSPEC_HIDDE
 extern void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar ) DECLSPEC_HIDDEN;
 extern UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect, HWND hwnd ) DECLSPEC_HIDDEN;
 extern void MENU_EndMenu(HWND) DECLSPEC_HIDDEN;
+extern HMENU MENU_GetSysMenu( HWND hWnd, HMENU hPopupMenu ) DECLSPEC_HIDDEN;
 
 /* nonclient area */
 extern LRESULT NC_HandleNCPaint( HWND hwnd , HRGN clip) DECLSPEC_HIDDEN;

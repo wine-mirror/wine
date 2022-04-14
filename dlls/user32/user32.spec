@@ -381,7 +381,7 @@
 @ stdcall GetSubMenu(long long)
 @ stdcall GetSysColor(long)
 @ stdcall GetSysColorBrush(long)
-@ stdcall GetSystemMenu(long long)
+@ stdcall GetSystemMenu(long long) NtUserGetSystemMenu
 @ stdcall GetSystemMetrics(long)
 @ stdcall GetSystemMetricsForDpi(long long)
 @ stdcall GetTabbedTextExtentA(long str long long ptr)

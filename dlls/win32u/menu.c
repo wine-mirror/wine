@@ -1030,6 +1030,49 @@ static HMENU get_sub_menu( HMENU handle, INT pos )
 }
 
 /**********************************************************************
+ *           NtUserGetSystemMenu    (win32u.@)
+ */
+HMENU WINAPI NtUserGetSystemMenu( HWND hwnd, BOOL revert )
+{
+    WND *win = get_win_ptr( hwnd );
+    HMENU retvalue = 0;
+
+    if (win == WND_DESKTOP || !win) return 0;
+    if (win == WND_OTHER_PROCESS)
+    {
+        if (is_window( hwnd )) FIXME( "not supported on other process window %p\n", hwnd );
+        return 0;
+    }
+
+    if (win->hSysMenu && revert)
+    {
+        NtUserDestroyMenu( win->hSysMenu );
+        win->hSysMenu = 0;
+    }
+
+    if (!win->hSysMenu && (win->dwStyle & WS_SYSMENU) && user_callbacks)
+        win->hSysMenu = user_callbacks->get_sys_menu( hwnd, 0 );
+
+    if (win->hSysMenu)
+    {
+        POPUPMENU *menu;
+        retvalue = get_sub_menu( win->hSysMenu, 0 );
+
+        /* Store the dummy sysmenu handle to facilitate the refresh */
+        /* of the close button if the SC_CLOSE item change */
+        menu = grab_menu_ptr( retvalue );
+        if (menu)
+        {
+            menu->hSysMenuOwner = win->hSysMenu;
+            release_menu_ptr( menu );
+        }
+    }
+
+    release_win_ptr( win );
+    return revert ? 0 : retvalue;
+}
+
+/**********************************************************************
  *           NtUserSetMenuDefaultItem    (win32u.@)
  */
 BOOL WINAPI NtUserSetMenuDefaultItem( HMENU handle, UINT item, UINT bypos )

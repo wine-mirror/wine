@@ -66,7 +66,7 @@ static pthread_mutex_t winproc_lock = PTHREAD_MUTEX_INITIALIZER;
 
 static struct list class_list = LIST_INIT( class_list );
 
-static HINSTANCE user32_module;
+HINSTANCE user32_module = 0;
 
 /* find an existing winproc for a given function and type */
 /* FIXME: probably should do something more clever than a linear search */

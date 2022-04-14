@@ -387,7 +387,7 @@ static HMENU MENU_CopySysPopup(BOOL mdi)
  * However, the real system menu handle is sometimes seen in the
  * WM_MENUSELECT parameters (and Word 6 likes it this way).
  */
-static HMENU MENU_GetSysMenu( HWND hWnd, HMENU hPopupMenu )
+HMENU MENU_GetSysMenu( HWND hWnd, HMENU hPopupMenu )
 {
     HMENU hMenu;
 
@@ -3925,47 +3925,6 @@ HMENU WINAPI CreateMenu(void)
 }
 
 
-/**********************************************************************
- *         GetSystemMenu    (USER32.@)
- */
-HMENU WINAPI GetSystemMenu( HWND hWnd, BOOL bRevert )
-{
-    WND *wndPtr = WIN_GetPtr( hWnd );
-    HMENU retvalue = 0;
-
-    if (wndPtr == WND_DESKTOP) return 0;
-    if (wndPtr == WND_OTHER_PROCESS)
-    {
-        if (IsWindow( hWnd )) FIXME( "not supported on other process window %p\n", hWnd );
-    }
-    else if (wndPtr)
-    {
-	if (wndPtr->hSysMenu && bRevert)
-	{
-            NtUserDestroyMenu( wndPtr->hSysMenu );
-            wndPtr->hSysMenu = 0;
-	}
-
-	if(!wndPtr->hSysMenu && (wndPtr->dwStyle & WS_SYSMENU) )
-	    wndPtr->hSysMenu = MENU_GetSysMenu( hWnd, 0 );
-
-	if( wndPtr->hSysMenu )
-        {
-	    POPUPMENU *menu;
-	    retvalue = GetSubMenu(wndPtr->hSysMenu, 0);
-
-	    /* Store the dummy sysmenu handle to facilitate the refresh */
-	    /* of the close button if the SC_CLOSE item change */
-	    menu = MENU_GetMenu(retvalue);
-	    if ( menu )
-	       menu->hSysMenuOwner = wndPtr->hSysMenu;
-        }
-        WIN_ReleasePtr( wndPtr );
-    }
-    return bRevert ? 0 : retvalue;
-}
-
-
 /*******************************************************************
  *         SetSystemMenu    (USER32.@)
  */
@@ -4024,7 +3983,7 @@ BOOL WINAPI GetMenuBarInfo( HWND hwnd, LONG idObject, LONG idItem, PMENUBARINFO 
         hmenu = GetMenu(hwnd);
         break;
     case OBJID_SYSMENU:
-        hmenu = GetSystemMenu(hwnd, FALSE);
+        hmenu = NtUserGetSystemMenu( hwnd, FALSE );
         break;
     default:
         return FALSE;

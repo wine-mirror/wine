@@ -246,16 +246,16 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
             /* Track system popup if click was in the caption area. */
             if (hitcode==HTCAPTION || hitcode==HTSYSMENU)
-               TrackPopupMenu(GetSystemMenu(hwnd, FALSE),
+               TrackPopupMenu( NtUserGetSystemMenu(hwnd, FALSE),
                                TPM_LEFTBUTTON | TPM_RIGHTBUTTON,
-                               pt.x, pt.y, 0, hwnd, NULL);
+                               pt.x, pt.y, 0, hwnd, NULL );
         }
         break;
 
     case WM_POPUPSYSTEMMENU:
         /* This is an undocumented message used by the windows taskbar to
            display the system menu of windows that belong to other processes. */
-        TrackPopupMenu( GetSystemMenu(hwnd, FALSE), TPM_LEFTBUTTON|TPM_RIGHTBUTTON,
+        TrackPopupMenu( NtUserGetSystemMenu(hwnd, FALSE), TPM_LEFTBUTTON|TPM_RIGHTBUTTON,
                         (short)LOWORD(lParam), (short)HIWORD(lParam), 0, hwnd, NULL );
         return 0;
 

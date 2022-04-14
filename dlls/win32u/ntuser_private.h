@@ -39,6 +39,7 @@ struct user_callbacks
     BOOL (WINAPI *pImmTranslateMessage)(HWND, UINT, WPARAM, LPARAM);
     BOOL (WINAPI *pSetSystemMenu)( HWND hwnd, HMENU menu );
     void (CDECL *free_win_ptr)( struct tagWND *win );
+    HMENU (CDECL *get_sys_menu)( HWND hwnd, HMENU popup );
     HWND (CDECL *is_menu_active)(void);
     void (CDECL *notify_ime)( HWND hwnd, UINT param );
     BOOL (CDECL *post_dde_message)( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DWORD dest_tid,
@@ -289,6 +290,7 @@ extern void spy_exit_message( INT flag, HWND hwnd, UINT msg,
                               LRESULT lreturn, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;
 
 /* class.c */
+extern HINSTANCE user32_module DECLSPEC_HIDDEN;
 WNDPROC alloc_winproc( WNDPROC func, BOOL ansi ) DECLSPEC_HIDDEN;
 WINDOWPROC *get_winproc_ptr( WNDPROC handle ) DECLSPEC_HIDDEN;
 BOOL is_winproc_unicode( WNDPROC proc, BOOL def_val ) DECLSPEC_HIDDEN;
