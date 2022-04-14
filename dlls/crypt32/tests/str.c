@@ -766,9 +766,13 @@ static void test_CertGetNameString_value_(unsigned int line, PCCERT_CONTEXT cont
     ok(!strcmp(str, expected), "line %u: unexpected value %s.\n", line, str);
     str[0] = str[1] = 0xcc;
     retlen = CertGetNameStringA(context, type, 0, type_para, str, len - 1);
-    todo_wine ok(retlen == 1, "line %u: Unexpected len %lu, expected 1.\n", line, retlen);
-    todo_wine ok(!str[0], "line %u: unexpected str[0] %#x.\n", line, str[0]);
+    ok(retlen == 1, "line %u: Unexpected len %lu, expected 1.\n", line, retlen);
+    ok(!str[0], "line %u: unexpected str[0] %#x.\n", line, str[0]);
     ok(str[1] == expected[1], "line %u: unexpected str[1] %#x.\n", line, str[1]);
+
+    retlen = CertGetNameStringA(context, type, 0, type_para, str, 0);
+    ok(retlen == len, "line %u: Unexpected len %lu, expected 1.\n", line, retlen);
+
     retlen = CertGetNameStringW(context, type, 0, type_para, strW, len);
     ok(retlen == len, "line %u: unexpected len %lu, expected 1.\n", line, retlen);
     ok(!wcscmp(strW, expectedW), "line %u: unexpected value %s.\n", line, debugstr_w(strW));
