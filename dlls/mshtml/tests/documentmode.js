@@ -1051,6 +1051,15 @@ sync_test("map_obj", function() {
     });
     ok(i === 66, "i = " + i);
 
+    s = new Map();
+    s.set(0,  10);
+    s.set(-0, 20);
+    ok(s.size === 2, "size = " + s.size + " expected 2");
+    r = s.get(-0);
+    ok(r === 20, "get(-0) returned " + r);
+    r = s.get(0);
+    ok(r === 10, "get(0) returned " + r);
+
     try {
         Map.prototype.set.call({}, 1, 2);
         ok(false, "expected exception");

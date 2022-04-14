@@ -56,6 +56,10 @@ static int jsval_map_compare(const void *k, const struct wine_rb_entry *e)
 {
     const struct jsval_map_entry *entry = WINE_RB_ENTRY_VALUE(e, const struct jsval_map_entry, entry);
     const jsval_t *key = k;
+    union {
+        double d;
+        INT64 n;
+    } bits1, bits2;
 
     if(jsval_type(entry->key) != jsval_type(*key))
         return (int)jsval_type(entry->key) - (int)jsval_type(*key);
@@ -70,10 +74,13 @@ static int jsval_map_compare(const void *k, const struct wine_rb_entry *e)
     case JSV_STRING:
         return jsstr_cmp(get_string(*key), get_string(entry->key));
     case JSV_NUMBER:
-        if(get_number(*key) == get_number(entry->key)) return 0;
         if(isnan(get_number(*key))) return isnan(get_number(entry->key)) ? 0 : -1;
         if(isnan(get_number(entry->key))) return 1;
-        return get_number(*key) < get_number(entry->key) ? -1 : 1;
+
+        /* native treats -0 differently than 0, so need to compare bitwise */
+        bits1.d = get_number(*key);
+        bits2.d = get_number(entry->key);
+        return (bits1.n == bits2.n) ? 0 : (bits1.n < bits2.n ? -1 : 1);
     case JSV_BOOL:
         if(get_bool(*key) == get_bool(entry->key)) return 0;
         return get_bool(*key) ? 1 : -1;
