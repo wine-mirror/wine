@@ -1378,6 +1378,129 @@ BOOL WINAPI NtUserSetMenuContextHelpId( HMENU handle, DWORD id )
     return TRUE;
 }
 
+/***********************************************************************
+ *           copy_sys_popup
+ *
+ * Return the default system menu.
+ */
+static HMENU copy_sys_popup( BOOL mdi )
+{
+    struct load_sys_menu_params params;
+    MENUITEMINFOW item_info;
+    MENUINFO menu_info;
+    POPUPMENU *menu;
+    void *ret_ptr;
+    ULONG ret_len;
+    HMENU handle;
+
+    params.mdi = mdi;
+    handle = UlongToHandle( KeUserModeCallback( NtUserLoadSysMenu, &params, sizeof(params),
+                                                &ret_ptr, &ret_len ));
+
+    if (!handle || !(menu = grab_menu_ptr( handle )))
+    {
+        ERR("Unable to load default system menu\n" );
+        return 0;
+    }
+
+    menu->wFlags |= MF_SYSMENU | MF_POPUP;
+    release_menu_ptr( menu );
+
+    /* decorate the menu with bitmaps */
+    menu_info.cbSize = sizeof(MENUINFO);
+    menu_info.dwStyle = MNS_CHECKORBMP;
+    menu_info.fMask = MIM_STYLE;
+    NtUserThunkedMenuInfo( handle, &menu_info );
+    item_info.cbSize = sizeof(MENUITEMINFOW);
+    item_info.fMask = MIIM_BITMAP;
+    item_info.hbmpItem = HBMMENU_POPUP_CLOSE;
+    NtUserThunkedMenuItemInfo( handle, SC_CLOSE, 0, NtUserSetMenuItemInfo, &item_info, NULL );
+    item_info.hbmpItem = HBMMENU_POPUP_RESTORE;
+    NtUserThunkedMenuItemInfo( handle, SC_RESTORE, 0, NtUserSetMenuItemInfo, &item_info, NULL );
+    item_info.hbmpItem = HBMMENU_POPUP_MAXIMIZE;
+    NtUserThunkedMenuItemInfo( handle, SC_MAXIMIZE, 0, NtUserSetMenuItemInfo, &item_info, NULL );
+    item_info.hbmpItem = HBMMENU_POPUP_MINIMIZE;
+    NtUserThunkedMenuItemInfo( handle, SC_MINIMIZE, 0, NtUserSetMenuItemInfo, &item_info, NULL );
+    NtUserSetMenuDefaultItem( handle, SC_CLOSE, FALSE );
+
+    TRACE( "returning %p (mdi=%d).\n", handle, mdi );
+    return handle;
+}
+
+/**********************************************************************
+ *           get_sys_menu
+ *
+ * Create a copy of the system menu. System menu in Windows is
+ * a special menu bar with the single entry - system menu popup.
+ * This popup is presented to the outside world as a "system menu".
+ * However, the real system menu handle is sometimes seen in the
+ * WM_MENUSELECT parameters (and Word 6 likes it this way).
+ */
+static HMENU get_sys_menu( HWND hwnd, HMENU popup_menu )
+{
+    MENUITEMINFOW info;
+    POPUPMENU *menu;
+    HMENU handle;
+
+    TRACE("loading system menu, hwnd %p, popup_menu %p\n", hwnd, popup_menu);
+    if (!(handle = create_menu( FALSE )))
+    {
+        ERR("failed to load system menu!\n");
+        return 0;
+    }
+
+    if (!(menu = grab_menu_ptr( handle )))
+    {
+        NtUserDestroyMenu( handle );
+        return 0;
+    }
+    menu->wFlags = MF_SYSMENU;
+    menu->hWnd = get_full_window_handle( hwnd );
+    release_menu_ptr( menu );
+    TRACE("hwnd %p (handle %p)\n", menu->hWnd, handle);
+
+    if (!popup_menu)
+    {
+        if (get_window_long(hwnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
+            popup_menu = copy_sys_popup(TRUE);
+        else
+            popup_menu = copy_sys_popup(FALSE);
+    }
+    if (!popup_menu)
+    {
+        NtUserDestroyMenu( handle );
+        return 0;
+    }
+
+    if (get_class_long( hwnd, GCL_STYLE, FALSE ) & CS_NOCLOSE)
+        NtUserDeleteMenu(popup_menu, SC_CLOSE, MF_BYCOMMAND);
+
+    info.cbSize = sizeof(info);
+    info.fMask = MIIM_STATE | MIIM_ID | MIIM_FTYPE | MIIM_SUBMENU;
+    info.fState = 0;
+    info.fType = MF_SYSMENU | MF_POPUP;
+    info.wID = (UINT_PTR)popup_menu;
+    info.hSubMenu = popup_menu;
+
+    NtUserThunkedMenuItemInfo( handle, -1, MF_SYSMENU | MF_POPUP | MF_BYPOSITION,
+                               NtUserInsertMenuItem, &info, NULL );
+
+    if ((menu = grab_menu_ptr( handle )))
+    {
+        menu->items[0].fType = MF_SYSMENU | MF_POPUP;
+        menu->items[0].fState = 0;
+        release_menu_ptr( menu );
+    }
+    if ((menu = grab_menu_ptr(popup_menu)))
+    {
+        menu->wFlags |= MF_SYSMENU;
+        release_menu_ptr( menu );
+    }
+
+    TRACE("handle=%p (hPopup %p)\n", handle, popup_menu );
+    return handle;
+}
+
 /**********************************************************************
  *           NtUserMenuItemFromPoint    (win32u.@)
  */
@@ -1414,8 +1537,8 @@ HMENU WINAPI NtUserGetSystemMenu( HWND hwnd, BOOL revert )
         win->hSysMenu = 0;
     }
 
-    if (!win->hSysMenu && (win->dwStyle & WS_SYSMENU) && user_callbacks)
-        win->hSysMenu = user_callbacks->get_sys_menu( hwnd, 0 );
+    if (!win->hSysMenu && (win->dwStyle & WS_SYSMENU))
+        win->hSysMenu = get_sys_menu( hwnd, 0 );
 
     if (win->hSysMenu)
     {
@@ -1446,7 +1569,7 @@ BOOL WINAPI NtUserSetSystemMenu( HWND hwnd, HMENU menu )
     if (!win || win == WND_OTHER_PROCESS || win == WND_DESKTOP) return FALSE;
 
     if (win->hSysMenu) NtUserDestroyMenu( win->hSysMenu );
-    win->hSysMenu = user_callbacks ? user_callbacks->get_sys_menu( hwnd, menu ) : NULL;
+    win->hSysMenu = get_sys_menu( hwnd, menu );
     release_win_ptr( win );
     return TRUE;
 }

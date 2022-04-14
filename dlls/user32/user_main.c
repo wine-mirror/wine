@@ -159,7 +159,6 @@ static const struct user_callbacks user_funcs =
     NtWaitForMultipleObjects,
     SCROLL_DrawNCScrollBar,
     free_win_ptr,
-    MENU_GetSysMenu,
     notify_ime,
     post_dde_message,
     rawinput_update_device_list,
@@ -187,6 +186,12 @@ static NTSTATUS WINAPI User32LoadImage( const struct load_image_params *params, 
 {
     HANDLE ret = LoadImageW( params->hinst, params->name, params->type,
                              params->dx, params->dy, params->flags );
+    return HandleToUlong( ret );
+}
+
+static NTSTATUS WINAPI User32LoadSysMenu( const struct load_sys_menu_params *params, ULONG size )
+{
+    HMENU ret = LoadMenuW( user32_module, params->mdi ? L"SYSMENUMDI" : L"SYSMENU" );
     return HandleToUlong( ret );
 }
 
@@ -221,6 +226,7 @@ static const void *kernel_callback_table[NtUserCallCount] =
     User32FreeCachedClipboardData,
     User32LoadDriver,
     User32LoadImage,
+    User32LoadSysMenu,
     User32RegisterBuiltinClasses,
     User32RenderSsynthesizedFormat,
 };

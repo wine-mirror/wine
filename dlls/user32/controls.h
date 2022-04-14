@@ -112,12 +112,6 @@ extern HBRUSH DEFWND_ControlColor( HDC hDC, UINT ctlType ) DECLSPEC_HIDDEN;
 /* desktop */
 extern BOOL update_wallpaper( const WCHAR *wallpaper, const WCHAR *pattern ) DECLSPEC_HIDDEN;
 
-/* menu controls */
-extern void MENU_TrackMouseMenuBar( HWND hwnd, INT ht, POINT pt ) DECLSPEC_HIDDEN;
-extern void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar ) DECLSPEC_HIDDEN;
-extern void MENU_EndMenu(HWND) DECLSPEC_HIDDEN;
-extern HMENU MENU_GetSysMenu( HWND hWnd, HMENU hPopupMenu ) DECLSPEC_HIDDEN;
-
 /* nonclient area */
 extern LRESULT NC_HandleNCMouseMove( HWND hwnd, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;
 extern LRESULT NC_HandleNCMouseLeave( HWND hwnd ) DECLSPEC_HIDDEN;

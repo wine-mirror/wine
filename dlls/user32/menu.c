@@ -42,30 +42,16 @@
 #include <stdarg.h>
 #include <string.h>
 
-#define OEMRESOURCE
-
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
 #include "winnls.h"
-#include "wine/server.h"
-#include "wine/exception.h"
-#include "win.h"
 #include "controls.h"
 #include "user_private.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(menu);
 
-
-  /* Space between 2 columns */
-#define MENU_COL_SPACE 4
-
-  /* Margins for popup menus */
-#define MENU_MARGIN 3
-
-  /* (other menu->FocusedItem values give the position of the focused item) */
-#define NO_SELECTED_ITEM  0xffff
 
 #define MENU_ITEM_TYPE(flags) \
   ((flags) & (MF_STRING | MF_BITMAP | MF_OWNERDRAW | MF_SEPARATOR))
@@ -94,116 +80,6 @@ const struct builtin_class_descr MENU_builtin_class =
     IDC_ARROW,                     /* cursor */
     (HBRUSH)(COLOR_MENU+1)         /* brush */
 };
-
-
-/***********************************************************************
- *           MENU_GetMenu
- *
- * Validate the given menu handle and returns the menu structure pointer.
- */
-static POPUPMENU *MENU_GetMenu(HMENU hMenu)
-{
-    POPUPMENU *menu = get_user_handle_ptr( hMenu, NTUSER_OBJ_MENU );
-
-    if (menu == OBJ_OTHER_PROCESS)
-    {
-        WARN( "other process menu %p?\n", hMenu);
-        return NULL;
-    }
-    if (menu) release_user_handle_ptr( menu );  /* FIXME! */
-    else WARN("invalid menu handle=%p\n", hMenu);
-    return menu;
-}
-
-/***********************************************************************
- *           MENU_CopySysPopup
- *
- * Return the default system menu.
- */
-static HMENU MENU_CopySysPopup(BOOL mdi)
-{
-    HMENU hMenu = LoadMenuW(user32_module, mdi ? L"SYSMENUMDI" : L"SYSMENU");
-
-    if( hMenu ) {
-        MENUINFO minfo;
-        MENUITEMINFOW miteminfo;
-        POPUPMENU* menu = MENU_GetMenu(hMenu);
-        menu->wFlags |= MF_SYSMENU | MF_POPUP;
-        /* decorate the menu with bitmaps */
-        minfo.cbSize = sizeof( MENUINFO);
-        minfo.dwStyle = MNS_CHECKORBMP;
-        minfo.fMask = MIM_STYLE;
-        SetMenuInfo( hMenu, &minfo);
-        miteminfo.cbSize = sizeof( MENUITEMINFOW);
-        miteminfo.fMask = MIIM_BITMAP;
-        miteminfo.hbmpItem = HBMMENU_POPUP_CLOSE;
-        SetMenuItemInfoW( hMenu, SC_CLOSE, FALSE, &miteminfo);
-        miteminfo.hbmpItem = HBMMENU_POPUP_RESTORE;
-        SetMenuItemInfoW( hMenu, SC_RESTORE, FALSE, &miteminfo);
-        miteminfo.hbmpItem = HBMMENU_POPUP_MAXIMIZE;
-        SetMenuItemInfoW( hMenu, SC_MAXIMIZE, FALSE, &miteminfo);
-        miteminfo.hbmpItem = HBMMENU_POPUP_MINIMIZE;
-        SetMenuItemInfoW( hMenu, SC_MINIMIZE, FALSE, &miteminfo);
-        NtUserSetMenuDefaultItem( hMenu, SC_CLOSE, FALSE );
-    }
-    else
-	ERR("Unable to load default system menu\n" );
-
-    TRACE("returning %p (mdi=%d).\n", hMenu, mdi );
-
-    return hMenu;
-}
-
-
-/**********************************************************************
- *           MENU_GetSysMenu
- *
- * Create a copy of the system menu. System menu in Windows is
- * a special menu bar with the single entry - system menu popup.
- * This popup is presented to the outside world as a "system menu".
- * However, the real system menu handle is sometimes seen in the
- * WM_MENUSELECT parameters (and Word 6 likes it this way).
- */
-HMENU MENU_GetSysMenu( HWND hWnd, HMENU hPopupMenu )
-{
-    HMENU hMenu;
-
-    TRACE("loading system menu, hWnd %p, hPopupMenu %p\n", hWnd, hPopupMenu);
-    if ((hMenu = CreateMenu()))
-    {
-	POPUPMENU *menu = MENU_GetMenu(hMenu);
-	menu->wFlags = MF_SYSMENU;
-	menu->hWnd = WIN_GetFullHandle( hWnd );
-	TRACE("hWnd %p (hMenu %p)\n", menu->hWnd, hMenu);
-
-	if (!hPopupMenu)
-        {
-            if (GetWindowLongW(hWnd, GWL_EXSTYLE) & WS_EX_MDICHILD)
-	        hPopupMenu = MENU_CopySysPopup(TRUE);
-            else
-	        hPopupMenu = MENU_CopySysPopup(FALSE);
-        }
-
-	if (hPopupMenu)
-	{
-            if (GetClassLongW(hWnd, GCL_STYLE) & CS_NOCLOSE)
-                NtUserDeleteMenu( hPopupMenu, SC_CLOSE, MF_BYCOMMAND );
-
-	    InsertMenuW( hMenu, -1, MF_SYSMENU | MF_POPUP | MF_BYPOSITION,
-                         (UINT_PTR)hPopupMenu, NULL );
-
-            menu->items[0].fType = MF_SYSMENU | MF_POPUP;
-            menu->items[0].fState = 0;
-            if ((menu = MENU_GetMenu(hPopupMenu))) menu->wFlags |= MF_SYSMENU;
-
-	    TRACE("hMenu=%p (hPopup %p)\n", hMenu, hPopupMenu );
-	    return hMenu;
-	}
-	NtUserDestroyMenu( hMenu );
-    }
-    ERR("failed to load system menu!\n");
-    return 0;
-}
 
 
 /**********************************************************************

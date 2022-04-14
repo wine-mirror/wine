@@ -37,6 +37,7 @@ enum
     NtUserFreeCachedClipboardData,
     NtUserLoadDriver,
     NtUserLoadImage,
+    NtUserLoadSysMenu,
     NtUserRegisterBuiltinClasses,
     NtUserRenderSynthesizedFormat,
     /* win16 hooks */
@@ -185,6 +186,12 @@ struct load_image_params
     INT dx;
     INT dy;
     UINT flags;
+};
+
+/* NtUserLoadSysMenu params */
+struct load_sys_menu_params
+{
+    BOOL mdi;
 };
 
 /* NtUserRenderSynthesizedFormat params */

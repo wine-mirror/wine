@@ -37,7 +37,6 @@ struct user_callbacks
     NTSTATUS (WINAPI *pNtWaitForMultipleObjects)(ULONG,const HANDLE*,BOOLEAN,BOOLEAN,const LARGE_INTEGER*);
     void (CDECL *draw_nc_scrollbar)( HWND hwnd, HDC hdc, BOOL draw_horizontal, BOOL draw_vertical );
     void (CDECL *free_win_ptr)( struct tagWND *win );
-    HMENU (CDECL *get_sys_menu)( HWND hwnd, HMENU popup );
     void (CDECL *notify_ime)( HWND hwnd, UINT param );
     BOOL (CDECL *post_dde_message)( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DWORD dest_tid,
                                     DWORD type );
