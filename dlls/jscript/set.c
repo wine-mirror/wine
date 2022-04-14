@@ -37,101 +37,6 @@ typedef struct {
     size_t size;
 } MapInstance;
 
-static HRESULT Set_add(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
-{
-    FIXME("%p\n", debugstr_jsval(vthis));
-    return E_NOTIMPL;
-}
-
-static HRESULT Set_clear(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
-{
-    FIXME("%p\n", debugstr_jsval(vthis));
-    return E_NOTIMPL;
-}
-
-static HRESULT Set_delete(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
-{
-    FIXME("%p\n", debugstr_jsval(vthis));
-    return E_NOTIMPL;
-}
-
-static HRESULT Set_forEach(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
-{
-    FIXME("%p\n", debugstr_jsval(vthis));
-    return E_NOTIMPL;
-}
-
-static HRESULT Set_has(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
-{
-    FIXME("%p\n", debugstr_jsval(vthis));
-    return E_NOTIMPL;
-}
-
-static HRESULT Set_value(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
-{
-    FIXME("\n");
-    return E_NOTIMPL;
-}
-
-static const builtin_prop_t Set_props[] = {
-    {L"add",        Set_add,       PROPF_METHOD|1},
-    {L"clear",      Set_clear,     PROPF_METHOD},
-    {L"delete" ,    Set_delete,    PROPF_METHOD|1},
-    {L"forEach",    Set_forEach,   PROPF_METHOD|1},
-    {L"has",        Set_has,       PROPF_METHOD|1},
-};
-
-static const builtin_info_t Set_prototype_info = {
-    JSCLASS_SET,
-    Set_value,
-    ARRAY_SIZE(Set_props),
-    Set_props,
-    NULL,
-    NULL
-};
-
-static const builtin_info_t Set_info = {
-    JSCLASS_SET,
-    Set_value,
-    0, NULL,
-    NULL,
-    NULL
-};
-
-static HRESULT Set_constructor(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
-        jsval_t *r)
-{
-    SetInstance *set;
-    HRESULT hres;
-
-    switch(flags) {
-    case DISPATCH_CONSTRUCT:
-        TRACE("\n");
-
-        if(!r)
-            return S_OK;
-        if(!(set = heap_alloc_zero(sizeof(*set))))
-            return E_OUTOFMEMORY;
-
-        hres = init_dispex(&set->dispex, ctx, &Set_info, ctx->set_prototype);
-        if(FAILED(hres))
-            return hres;
-
-        *r = jsval_obj(&set->dispex);
-        return S_OK;
-
-    default:
-        FIXME("unimplemented flags %x\n", flags);
-        return E_NOTIMPL;
-    }
-}
-
 struct jsval_map_entry {
     struct wine_rb_entry entry;
     jsval_t key;
@@ -475,6 +380,101 @@ static HRESULT Map_constructor(script_ctx_t *ctx, jsval_t vthis, WORD flags, uns
         wine_rb_init(&map->map, jsval_map_compare);
         list_init(&map->entries);
         *r = jsval_obj(&map->dispex);
+        return S_OK;
+
+    default:
+        FIXME("unimplemented flags %x\n", flags);
+        return E_NOTIMPL;
+    }
+}
+
+static HRESULT Set_add(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    FIXME("%p\n", debugstr_jsval(vthis));
+    return E_NOTIMPL;
+}
+
+static HRESULT Set_clear(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    FIXME("%p\n", debugstr_jsval(vthis));
+    return E_NOTIMPL;
+}
+
+static HRESULT Set_delete(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    FIXME("%p\n", debugstr_jsval(vthis));
+    return E_NOTIMPL;
+}
+
+static HRESULT Set_forEach(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    FIXME("%p\n", debugstr_jsval(vthis));
+    return E_NOTIMPL;
+}
+
+static HRESULT Set_has(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    FIXME("%p\n", debugstr_jsval(vthis));
+    return E_NOTIMPL;
+}
+
+static HRESULT Set_value(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    FIXME("\n");
+    return E_NOTIMPL;
+}
+
+static const builtin_prop_t Set_props[] = {
+    {L"add",        Set_add,       PROPF_METHOD|1},
+    {L"clear",      Set_clear,     PROPF_METHOD},
+    {L"delete" ,    Set_delete,    PROPF_METHOD|1},
+    {L"forEach",    Set_forEach,   PROPF_METHOD|1},
+    {L"has",        Set_has,       PROPF_METHOD|1},
+};
+
+static const builtin_info_t Set_prototype_info = {
+    JSCLASS_SET,
+    Set_value,
+    ARRAY_SIZE(Set_props),
+    Set_props,
+    NULL,
+    NULL
+};
+
+static const builtin_info_t Set_info = {
+    JSCLASS_SET,
+    Set_value,
+    0, NULL,
+    NULL,
+    NULL
+};
+
+static HRESULT Set_constructor(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    SetInstance *set;
+    HRESULT hres;
+
+    switch(flags) {
+    case DISPATCH_CONSTRUCT:
+        TRACE("\n");
+
+        if(!r)
+            return S_OK;
+        if(!(set = heap_alloc_zero(sizeof(*set))))
+            return E_OUTOFMEMORY;
+
+        hres = init_dispex(&set->dispex, ctx, &Set_info, ctx->set_prototype);
+        if(FAILED(hres))
+            return hres;
+
+        *r = jsval_obj(&set->dispex);
         return S_OK;
 
     default:
