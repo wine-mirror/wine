@@ -429,23 +429,31 @@ static void test_CertNameToStrA(void)
     test_NameToStrConversionA(&blob, CERT_SIMPLE_NAME_STR, "\"a\nb\"", FALSE);
 }
 
-static void test_NameToStrConversionW(PCERT_NAME_BLOB pName, DWORD dwStrType,
- LPCWSTR expected, BOOL todo)
+#define test_NameToStrConversionW(a, b, c) test_NameToStrConversionW_(__LINE__, a, b, c)
+static void test_NameToStrConversionW_(unsigned int line, PCERT_NAME_BLOB pName, DWORD dwStrType, LPCWSTR expected)
 {
-    WCHAR buffer[2000] = { 0 };
-    DWORD i;
+    DWORD len, retlen, expected_len;
+    WCHAR buffer[2000];
 
-    i = CertNameToStrW(X509_ASN_ENCODING,pName, dwStrType, NULL, 0);
-    todo_wine_if (todo)
-        ok(i == lstrlenW(expected) + 1, "Expected %d chars, got %ld\n",
-         lstrlenW(expected) + 1, i);
-    i = CertNameToStrW(X509_ASN_ENCODING,pName, dwStrType, buffer, ARRAY_SIZE(buffer));
-    todo_wine_if (todo)
-        ok(i == lstrlenW(expected) + 1, "Expected %d chars, got %ld\n",
-         lstrlenW(expected) + 1, i);
-    todo_wine_if (todo)
-        ok(!lstrcmpW(buffer, expected), "Expected %s, got %s\n",
-         wine_dbgstr_w(expected), wine_dbgstr_w(buffer));
+    expected_len = wcslen(expected) + 1;
+    memset(buffer, 0xcc, sizeof(buffer));
+    len = CertNameToStrW(X509_ASN_ENCODING, pName, dwStrType, NULL, 0);
+    ok(len == expected_len, "line %u: expected %lu chars, got %lu\n", line, expected_len, len);
+    retlen = CertNameToStrW(X509_ASN_ENCODING, pName, dwStrType, buffer, ARRAY_SIZE(buffer));
+    ok(retlen == len, "line %u: expected %lu chars, got %lu.\n", line, len, retlen);
+    ok(!wcscmp(buffer, expected), "Expected %s, got %s\n", wine_dbgstr_w(expected), wine_dbgstr_w(buffer));
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    retlen = CertNameToStrW(X509_ASN_ENCODING, pName, dwStrType, buffer, len - 1);
+    todo_wine ok(retlen == len - 1, "line %u: expected %lu chars, got %lu\n", line, len - 1, retlen);
+    ok(!wcsncmp(buffer, expected, retlen - 1), "line %u: expected %s, got %s\n",
+            line, wine_dbgstr_w(expected), wine_dbgstr_w(buffer));
+    ok(!buffer[retlen - 1], "line %u: string is not zero terminated.\n", line);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    retlen = CertNameToStrW(X509_ASN_ENCODING, pName, dwStrType, buffer, 0);
+    todo_wine ok(retlen == len, "line %u: expected %lu chars, got %lu\n", line, len - 1, retlen);
+    ok(buffer[0] == 0xcccc, "line %u: got %s\n", line, wine_dbgstr_w(buffer));
 }
 
 static void test_CertNameToStrW(void)
@@ -479,95 +487,79 @@ static void test_CertNameToStrW(void)
 
         test_NameToStrConversionW(&context->pCertInfo->Issuer,
          CERT_SIMPLE_NAME_STR,
-         L"US, Minnesota, Minneapolis, CodeWeavers, Wine Development, localhost, aric@codeweavers.com", FALSE);
+         L"US, Minnesota, Minneapolis, CodeWeavers, Wine Development, localhost, aric@codeweavers.com");
         test_NameToStrConversionW(&context->pCertInfo->Issuer,
          CERT_SIMPLE_NAME_STR | CERT_NAME_STR_SEMICOLON_FLAG,
-         L"US; Minnesota; Minneapolis; CodeWeavers; Wine Development; localhost; aric@codeweavers.com", FALSE);
+         L"US; Minnesota; Minneapolis; CodeWeavers; Wine Development; localhost; aric@codeweavers.com");
         test_NameToStrConversionW(&context->pCertInfo->Issuer,
          CERT_SIMPLE_NAME_STR | CERT_NAME_STR_CRLF_FLAG,
-         L"US\r\nMinnesota\r\nMinneapolis\r\nCodeWeavers\r\nWine Development\r\nlocalhost\r\naric@codeweavers.com",
-         FALSE);
+         L"US\r\nMinnesota\r\nMinneapolis\r\nCodeWeavers\r\nWine Development\r\nlocalhost\r\naric@codeweavers.com");
         test_NameToStrConversionW(&context->pCertInfo->Subject,
          CERT_OID_NAME_STR,
          L"2.5.4.6=US, 2.5.4.8=Minnesota, 2.5.4.7=Minneapolis, 2.5.4.10=CodeWeavers, 2.5.4.11=Wine Development,"
-          " 2.5.4.3=localhost, 1.2.840.113549.1.9.1=aric@codeweavers.com", FALSE);
+          " 2.5.4.3=localhost, 1.2.840.113549.1.9.1=aric@codeweavers.com");
         test_NameToStrConversionW(&context->pCertInfo->Subject,
          CERT_OID_NAME_STR | CERT_NAME_STR_SEMICOLON_FLAG,
          L"2.5.4.6=US; 2.5.4.8=Minnesota; 2.5.4.7=Minneapolis; 2.5.4.10=CodeWeavers; 2.5.4.11=Wine Development;"
-          " 2.5.4.3=localhost; 1.2.840.113549.1.9.1=aric@codeweavers.com", FALSE);
+          " 2.5.4.3=localhost; 1.2.840.113549.1.9.1=aric@codeweavers.com");
         test_NameToStrConversionW(&context->pCertInfo->Subject,
          CERT_OID_NAME_STR | CERT_NAME_STR_CRLF_FLAG,
          L"2.5.4.6=US\r\n2.5.4.8=Minnesota\r\n2.5.4.7=Minneapolis\r\n2.5.4.10=CodeWeavers\r\n2.5.4.11=Wine "
-          "Development\r\n2.5.4.3=localhost\r\n1.2.840.113549.1.9.1=aric@codeweavers.com", FALSE);
+          "Development\r\n2.5.4.3=localhost\r\n1.2.840.113549.1.9.1=aric@codeweavers.com");
         test_NameToStrConversionW(&context->pCertInfo->Subject,
          CERT_X500_NAME_STR | CERT_NAME_STR_SEMICOLON_FLAG | CERT_NAME_STR_REVERSE_FLAG,
          L"E=aric@codeweavers.com; CN=localhost; OU=Wine Development; O=CodeWeavers; L=Minneapolis; S=Minnesota; "
-          "C=US", FALSE);
+          "C=US");
 
         CertFreeCertificateContext(context);
     }
     blob.pbData = encodedSimpleCN;
     blob.cbData = sizeof(encodedSimpleCN);
-    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=1", FALSE);
+    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=1");
     blob.pbData = encodedSingleQuotedCN;
     blob.cbData = sizeof(encodedSingleQuotedCN);
-    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN='1'",
-     FALSE);
-    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR,
-     L"'1'", FALSE);
+    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN='1'");
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, L"'1'");
     blob.pbData = encodedSpacedCN;
     blob.cbData = sizeof(encodedSpacedCN);
-    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=\" 1 \"", FALSE);
-    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, L"\" 1 \"",
-     FALSE);
+    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=\" 1 \"");
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, L"\" 1 \"");
     blob.pbData = encodedQuotedCN;
     blob.cbData = sizeof(encodedQuotedCN);
-    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=\"\"\"1\"\"\"",
-     FALSE);
-    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, L"\"\"\"1\"\"\"",
-     FALSE);
+    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=\"\"\"1\"\"\"");
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, L"\"\"\"1\"\"\"");
     blob.pbData = encodedMultipleAttrCN;
     blob.cbData = sizeof(encodedMultipleAttrCN);
-    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=\"1+2\"",
-     FALSE);
-    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR,
-     L"\"1+2\"", FALSE);
+    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=\"1+2\"");
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, L"\"1+2\"");
     blob.pbData = encodedCommaCN;
     blob.cbData = sizeof(encodedCommaCN);
-    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=\"a,b\"", FALSE);
-    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, L"\"a,b\"",
-     FALSE);
+    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=\"a,b\"");
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, L"\"a,b\"");
     blob.pbData = encodedEqualCN;
     blob.cbData = sizeof(encodedEqualCN);
-    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=\"a=b\"", FALSE);
-    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, L"\"a=b\"",
-     FALSE);
+    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=\"a=b\"");
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, L"\"a=b\"");
     blob.pbData = encodedLessThanCN;
     blob.cbData = sizeof(encodedLessThanCN);
-    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=\"<\"", FALSE);
-    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, L"\"<\"",
-     FALSE);
+    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=\"<\"");
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, L"\"<\"");
     blob.pbData = encodedGreaterThanCN;
     blob.cbData = sizeof(encodedGreaterThanCN);
-    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=\">\"",
-     FALSE);
-    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR,
-     L"\">\"", FALSE);
+    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=\">\"");
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, L"\">\"");
     blob.pbData = encodedHashCN;
     blob.cbData = sizeof(encodedHashCN);
-    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=\"#\"", FALSE);
-    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, L"\"#\"",
-     FALSE);
+    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=\"#\"");
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, L"\"#\"");
     blob.pbData = encodedSemiCN;
     blob.cbData = sizeof(encodedSemiCN);
-    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=\";\"", FALSE);
-    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, L"\";\"",
-     FALSE);
+    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=\";\"");
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, L"\";\"");
     blob.pbData = encodedNewlineCN;
     blob.cbData = sizeof(encodedNewlineCN);
-    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=\"a\nb\"", FALSE);
-    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, L"\"a\nb\"",
-     FALSE);
+    test_NameToStrConversionW(&blob, CERT_X500_NAME_STR, L"CN=\"a\nb\"");
+    test_NameToStrConversionW(&blob, CERT_SIMPLE_NAME_STR, L"\"a\nb\"");
 }
 
 struct StrToNameA
@@ -747,153 +739,84 @@ static void test_CertStrToNameW(void)
     }
 }
 
-static void test_CertGetNameStringA(void)
+#define test_CertGetNameString_value(a, b, c, d) test_CertGetNameString_value_(__LINE__, a, b, c, d)
+static void test_CertGetNameString_value_(unsigned int line, PCCERT_CONTEXT context, DWORD type, void *type_para,
+        const char *expected)
 {
+    WCHAR expectedW[512];
+    DWORD len, retlen;
+    WCHAR strW[512];
+    unsigned int i;
+    char str[512];
+
+    for (i = 0; expected[i]; ++i)
+        expectedW[i] = expected[i];
+    expectedW[i] = 0;
+
+    len = CertGetNameStringA(context, type, 0, type_para, NULL, 0);
+    ok(len == strlen(expected) + 1, "line %u: unexpected length %ld.\n", line, len);
+    retlen = CertGetNameStringA(context, type, 0, type_para, str, len);
+    ok(retlen == len, "line %u: unexpected len %lu, expected %lu.\n", line, retlen, len);
+    ok(!strcmp(str, expected), "line %u: unexpected value %s.\n", line, str);
+    str[0] = str[1] = 0xcc;
+    retlen = CertGetNameStringA(context, type, 0, type_para, str, len - 1);
+    todo_wine ok(retlen == 1, "line %u: Unexpected len %lu, expected 1.\n", line, retlen);
+    todo_wine ok(!str[0], "line %u: unexpected str[0] %#x.\n", line, str[0]);
+    ok(str[1] == expected[1], "line %u: unexpected str[1] %#x.\n", line, str[1]);
+    retlen = CertGetNameStringW(context, type, 0, type_para, strW, len);
+    ok(retlen == len, "line %u: unexpected len %lu, expected 1.\n", line, retlen);
+    ok(!wcscmp(strW, expectedW), "line %u: unexpected value %s.\n", line, debugstr_w(strW));
+    strW[0] = strW[1] = 0xcccc;
+    retlen = CertGetNameStringW(context, type, 0, type_para, strW, len - 1);
+    todo_wine ok(retlen == len - 1, "line %u: unexpected len %lu, expected %lu.\n", line, retlen, len - 1);
+    ok(!wcsncmp(strW, expectedW, retlen - 1), "line %u: string data mismatch.\n", line);
+    ok(!strW[retlen - 1], "line %u: string is not zero terminated.\n", line);
+    retlen = CertGetNameStringA(context, type, 0, type_para, NULL, len - 1);
+    ok(retlen == len, "line %u: unexpected len %lu, expected %lu\n", line, retlen, len);
+    retlen = CertGetNameStringW(context, type, 0, type_para, NULL, len - 1);
+    ok(retlen == len, "line %u: unexpected len %lu, expected %lu\n", line, retlen, len);
+}
+
+static void test_CertGetNameString(void)
+{
+    static const char aric[] = "aric@codeweavers.com";
+    static const char localhost[] = "localhost";
     PCCERT_CONTEXT context;
+    DWORD len, type;
 
     context = CertCreateCertificateContext(X509_ASN_ENCODING, cert,
      sizeof(cert));
-    ok(context != NULL, "CertCreateCertificateContext failed: %08lx\n",
-     GetLastError());
-    if (context)
-    {
-        static const char aric[] = "aric@codeweavers.com";
-        static const char localhost[] = "localhost";
-        DWORD len, type;
-        LPSTR str;
+    ok(!!context, "CertCreateCertificateContext failed, err %lu\n", GetLastError());
 
-        /* Bad string types/types missing from the cert */
-        len = CertGetNameStringA(NULL, 0, 0, NULL, NULL, 0);
-        ok(len == 1, "expected 1, got %ld\n", len);
-        len = CertGetNameStringA(context, 0, 0, NULL, NULL, 0);
-        ok(len == 1, "expected 1, got %ld\n", len);
-        len = CertGetNameStringA(context, CERT_NAME_URL_TYPE, 0, NULL, NULL,
-         0);
-        ok(len == 1, "expected 1, got %ld\n", len);
+    /* Bad string types/types missing from the cert */
+    len = CertGetNameStringA(NULL, 0, 0, NULL, NULL, 0);
+    ok(len == 1, "expected 1, got %lu\n", len);
+    len = CertGetNameStringA(context, 0, 0, NULL, NULL, 0);
+    ok(len == 1, "expected 1, got %lu\n", len);
+    len = CertGetNameStringA(context, CERT_NAME_URL_TYPE, 0, NULL, NULL, 0);
+    ok(len == 1, "expected 1, got %lu\n", len);
 
-        len = CertGetNameStringA(context, CERT_NAME_EMAIL_TYPE, 0, NULL, NULL,
-         0);
-        ok(len == strlen(aric) + 1, "unexpected length %ld\n", len);
-        str = HeapAlloc(GetProcessHeap(), 0, len);
-        if (str)
-        {
-            len = CertGetNameStringA(context, CERT_NAME_EMAIL_TYPE, 0, NULL,
-             str, len);
-            ok(!strcmp(str, aric), "unexpected value %s\n", str);
-            HeapFree(GetProcessHeap(), 0, str);
-        }
+    len = CertGetNameStringW(NULL, 0, 0, NULL, NULL, 0);
+    ok(len == 1, "expected 1, got %lu\n", len);
+    len = CertGetNameStringW(context, 0, 0, NULL, NULL, 0);
+    ok(len == 1, "expected 1, got %lu\n", len);
+    len = CertGetNameStringW(context, CERT_NAME_URL_TYPE, 0, NULL, NULL, 0);
+    ok(len == 1, "expected 1, got %lu\n", len);
 
-        len = CertGetNameStringA(context, CERT_NAME_RDN_TYPE, 0, NULL, NULL,
-         0);
-        ok(len == strlen(issuerStr) + 1, "unexpected length %ld\n", len);
-        str = HeapAlloc(GetProcessHeap(), 0, len);
-        if (str)
-        {
-            len = CertGetNameStringA(context, CERT_NAME_RDN_TYPE, 0, NULL,
-             str, len);
-            ok(!strcmp(str, issuerStr), "unexpected value %s\n", str);
-            HeapFree(GetProcessHeap(), 0, str);
-        }
-        type = 0;
-        len = CertGetNameStringA(context, CERT_NAME_RDN_TYPE, 0, &type, NULL,
-         0);
-        ok(len == strlen(issuerStr) + 1, "unexpected length %ld\n", len);
-        str = HeapAlloc(GetProcessHeap(), 0, len);
-        if (str)
-        {
-            len = CertGetNameStringA(context, CERT_NAME_RDN_TYPE, 0, &type,
-             str, len);
-            ok(!strcmp(str, issuerStr), "unexpected value %s\n", str);
-            HeapFree(GetProcessHeap(), 0, str);
-        }
-        type = CERT_OID_NAME_STR;
-        len = CertGetNameStringA(context, CERT_NAME_RDN_TYPE, 0, &type, NULL,
-         0);
-        ok(len == strlen(subjectStr) + 1, "unexpected length %ld\n", len);
-        str = HeapAlloc(GetProcessHeap(), 0, len);
-        if (str)
-        {
-            len = CertGetNameStringA(context, CERT_NAME_RDN_TYPE, 0, &type,
-             str, len);
-            ok(!strcmp(str, subjectStr), "unexpected value %s\n", str);
-            HeapFree(GetProcessHeap(), 0, str);
-        }
+    test_CertGetNameString_value(context, CERT_NAME_EMAIL_TYPE, NULL, aric);
+    test_CertGetNameString_value(context, CERT_NAME_RDN_TYPE, NULL, issuerStr);
+    type = 0;
+    test_CertGetNameString_value(context, CERT_NAME_RDN_TYPE, &type, issuerStr);
+    type = CERT_OID_NAME_STR;
+    test_CertGetNameString_value(context, CERT_NAME_RDN_TYPE, &type, subjectStr);
+    test_CertGetNameString_value(context, CERT_NAME_ATTR_TYPE, NULL, aric);
+    test_CertGetNameString_value(context, CERT_NAME_ATTR_TYPE, (void *)szOID_RSA_emailAddr, aric);
+    test_CertGetNameString_value(context, CERT_NAME_ATTR_TYPE, (void *)szOID_COMMON_NAME, localhost);
+    test_CertGetNameString_value(context, CERT_NAME_SIMPLE_DISPLAY_TYPE, NULL, localhost);
+    test_CertGetNameString_value(context, CERT_NAME_FRIENDLY_DISPLAY_TYPE, NULL, localhost);
+    test_CertGetNameString_value(context, CERT_NAME_DNS_TYPE, NULL, localhost);
 
-        len = CertGetNameStringA(context, CERT_NAME_ATTR_TYPE, 0, NULL, NULL,
-         0);
-        ok(len == strlen(aric) + 1, "unexpected length %ld\n", len);
-        str = HeapAlloc(GetProcessHeap(), 0, len);
-        if (str)
-        {
-            len = CertGetNameStringA(context, CERT_NAME_ATTR_TYPE, 0, NULL,
-             str, len);
-            ok(!strcmp(str, aric), "unexpected value %s\n", str);
-            HeapFree(GetProcessHeap(), 0, str);
-        }
-        len = CertGetNameStringA(context, CERT_NAME_ATTR_TYPE, 0,
-         (void *)szOID_RSA_emailAddr, NULL, 0);
-        ok(len == strlen(aric) + 1, "unexpected length %ld\n", len);
-        str = HeapAlloc(GetProcessHeap(), 0, len);
-        if (str)
-        {
-            len = CertGetNameStringA(context, CERT_NAME_ATTR_TYPE, 0,
-             (void *)szOID_RSA_emailAddr, str, len);
-            ok(!strcmp(str, aric), "unexpected value %s\n", str);
-            HeapFree(GetProcessHeap(), 0, str);
-        }
-        len = CertGetNameStringA(context, CERT_NAME_ATTR_TYPE, 0,
-         (void *)szOID_COMMON_NAME, NULL, 0);
-        ok(len == strlen(localhost) + 1, "unexpected length %ld\n", len);
-        str = HeapAlloc(GetProcessHeap(), 0, len);
-        if (str)
-        {
-            len = CertGetNameStringA(context, CERT_NAME_ATTR_TYPE, 0,
-             (void *)szOID_COMMON_NAME, str, len);
-            ok(!strcmp(str, localhost), "unexpected value %s\n", str);
-            HeapFree(GetProcessHeap(), 0, str);
-        }
-
-        len = CertGetNameStringA(context, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0,
-         NULL, NULL, 0);
-        ok(len == strlen(localhost) + 1, "unexpected length %ld\n", len);
-        str = HeapAlloc(GetProcessHeap(), 0, len);
-        if (str)
-        {
-            len = CertGetNameStringA(context, CERT_NAME_SIMPLE_DISPLAY_TYPE,
-             0, NULL, str, len);
-            ok(!strcmp(str, localhost), "unexpected value %s\n", str);
-            HeapFree(GetProcessHeap(), 0, str);
-        }
-
-        len = CertGetNameStringA(context, CERT_NAME_FRIENDLY_DISPLAY_TYPE, 0,
-         NULL, NULL, 0);
-        ok(len == strlen(localhost) + 1, "unexpected length %ld\n", len);
-        str = HeapAlloc(GetProcessHeap(), 0, len);
-        if (str)
-        {
-            len = CertGetNameStringA(context, CERT_NAME_FRIENDLY_DISPLAY_TYPE,
-             0, NULL, str, len);
-            ok(!strcmp(str, localhost), "unexpected value %s\n", str);
-            HeapFree(GetProcessHeap(), 0, str);
-        }
-
-        len = CertGetNameStringA(context, CERT_NAME_DNS_TYPE, 0, NULL, NULL,
-         0);
-        ok(len == strlen(localhost) + 1, "unexpected length %ld\n", len);
-        if (len > 1)
-        {
-            str = HeapAlloc(GetProcessHeap(), 0, len);
-            if (str)
-            {
-                len = CertGetNameStringA(context, CERT_NAME_DNS_TYPE, 0, NULL,
-                 str, len);
-                ok(!strcmp(str, localhost), "unexpected value %s\n", str);
-                HeapFree(GetProcessHeap(), 0, str);
-            }
-        }
-
-        CertFreeCertificateContext(context);
-    }
+    CertFreeCertificateContext(context);
 }
 
 START_TEST(str)
@@ -904,5 +827,5 @@ START_TEST(str)
     test_CertNameToStrW();
     test_CertStrToNameA();
     test_CertStrToNameW();
-    test_CertGetNameStringA();
+    test_CertGetNameString();
 }
