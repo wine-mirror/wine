@@ -1125,10 +1125,13 @@ static void release_dde(void)
  */
 DWORD WINAPI IEWinMain(const WCHAR *cmdline, int nShowWindow)
 {
+    BOOL embedding = FALSE, nohome = FALSE, manager = FALSE, activated = FALSE;
     MSG msg;
     HRESULT hres;
-    BOOL embedding = FALSE, nohome = FALSE, manager = FALSE;
-    DWORD reg_cookie;
+    HANDLE context = INVALID_HANDLE_VALUE;
+    DWORD reg_cookie, ret = 1;
+    ULONG_PTR context_cookie;
+    ACTCTXW actctx;
 
     static const WCHAR embeddingW[] = {'-','e','m','b','e','d','d','i','n','g',0};
     static const WCHAR nohomeW[] = {'-','n','o','h','o','m','e',0};
@@ -1137,6 +1140,15 @@ DWORD WINAPI IEWinMain(const WCHAR *cmdline, int nShowWindow)
     TRACE("%s %d\n", debugstr_w(cmdline), nShowWindow);
 
     CoInitialize(NULL);
+
+    memset(&actctx, 0, sizeof(actctx));
+    actctx.cbSize = sizeof(actctx);
+    actctx.hModule = ieframe_instance;
+    actctx.lpResourceName = MAKEINTRESOURCEW(123);
+    actctx.dwFlags = ACTCTX_FLAG_HMODULE_VALID | ACTCTX_FLAG_RESOURCE_NAME_VALID;
+    context = CreateActCtxW(&actctx);
+    if (context != INVALID_HANDLE_VALUE)
+        activated = ActivateActCtx(context, &context_cookie);
 
     init_dde();
 
@@ -1173,17 +1185,13 @@ DWORD WINAPI IEWinMain(const WCHAR *cmdline, int nShowWindow)
     if (FAILED(hres))
     {
         ERR("failed to register CLSID_InternetExplorer%s: %08lx\n", manager ? "Manager" : "", hres);
-        CoUninitialize();
-        ExitProcess(1);
+        goto done;
     }
 
     if (!embedding)
     {
         if(!create_ie_window(nohome, cmdline))
-        {
-            CoUninitialize();
-            ExitProcess(1);
-        }
+            goto done;
     }
 
     /* run the message loop for this thread */
@@ -1196,8 +1204,11 @@ DWORD WINAPI IEWinMain(const WCHAR *cmdline, int nShowWindow)
     CoRevokeClassObject(reg_cookie);
     release_dde();
 
+    ret = 0;
+done:
     CoUninitialize();
-
-    ExitProcess(0);
-    return 0;
+    if (activated)
+        DeactivateActCtx(0, context_cookie);
+    ReleaseActCtx(context);
+    ExitProcess(ret);
 }

@@ -108,6 +108,9 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 
 #include "wine/wine_common_ver.rc"
 
+/* @makedep: ieframe.manifest */
+123 RT_MANIFEST ieframe.manifest
+
 /* @makedep: ietoolbar.bmp */
 IDB_IETOOLBAR BITMAP ietoolbar.bmp
 
