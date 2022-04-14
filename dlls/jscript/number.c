@@ -554,11 +554,12 @@ static HRESULT NumberConstr_value(script_ctx_t *ctx, jsval_t vthis, WORD flags, 
             n = 0;
         }
 
-        hres = create_number(ctx, n, &obj);
-        if(FAILED(hres))
-            return hres;
-
-        *r = jsval_obj(obj);
+        if(r) {
+            hres = create_number(ctx, n, &obj);
+            if(FAILED(hres))
+                return hres;
+            *r = jsval_obj(obj);
+        }
         break;
     }
     default:

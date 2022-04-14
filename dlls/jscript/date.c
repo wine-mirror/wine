@@ -2248,7 +2248,8 @@ static HRESULT DateConstr_parse(script_ctx_t *ctx, jsval_t vthis, WORD flags, un
     if(FAILED(hres))
         return hres;
 
-    *r = jsval_number(n);
+    if(r)
+        *r = jsval_number(n);
     return S_OK;
 }
 
@@ -2403,7 +2404,8 @@ static HRESULT DateConstr_value(script_ctx_t *ctx, jsval_t vthis, WORD flags, un
         }
         }
 
-        *r = jsval_obj(&date->dispex);
+        if(r) *r = jsval_obj(&date->dispex);
+        else  jsdisp_release(&date->dispex);
         return S_OK;
 
     case INVOKE_FUNC: {
