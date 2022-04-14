@@ -992,6 +992,123 @@ UINT get_menu_state( HMENU handle, UINT item_id, UINT flags )
     return state;
 }
 
+static BOOL get_menu_item_info( HMENU handle, UINT id, UINT flags, MENUITEMINFOW *info, BOOL ansi )
+{
+    POPUPMENU *menu;
+    MENUITEM *item;
+    UINT pos;
+
+    if (!info || info->cbSize != sizeof(*info))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    menu = find_menu_item( handle, id, flags, &pos );
+    item = menu ? &menu->items[pos] : NULL;
+    TRACE( "%s\n", debugstr_menuitem( item ));
+    if (!menu)
+    {
+        SetLastError( ERROR_MENU_ITEM_NOT_FOUND);
+        return FALSE;
+    }
+
+    if (info->fMask & MIIM_TYPE)
+    {
+        if (info->fMask & ( MIIM_STRING | MIIM_FTYPE | MIIM_BITMAP))
+        {
+            release_menu_ptr( menu );
+            WARN( "invalid combination of fMask bits used\n" );
+            /* this does not happen on Win9x/ME */
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return FALSE;
+        }
+
+        info->fType = item->fType & MENUITEMINFO_TYPE_MASK;
+        if (item->hbmpItem && !IS_MAGIC_BITMAP(item->hbmpItem))
+            info->fType |= MFT_BITMAP;
+        info->hbmpItem = item->hbmpItem; /* not on Win9x/ME */
+        if (info->fType & MFT_BITMAP)
+        {
+            info->dwTypeData = (WCHAR *)item->hbmpItem;
+            info->cch = 0;
+        }
+        else if (info->fType & (MFT_OWNERDRAW | MFT_SEPARATOR))
+        {
+            /* this does not happen on Win9x/ME */
+            info->dwTypeData = 0;
+            info->cch = 0;
+        }
+    }
+
+    /* copy the text string */
+    if ((info->fMask & (MIIM_TYPE|MIIM_STRING)))
+    {
+        if (!item->text)
+        {
+            if (info->dwTypeData && info->cch)
+            {
+                if (ansi)
+                    *((char *)info->dwTypeData) = 0;
+                else
+                    *((WCHAR *)info->dwTypeData) = 0;
+            }
+            info->cch = 0;
+        }
+        else
+        {
+            DWORD len, text_len;
+            if (ansi)
+            {
+                text_len = wcslen( item->text );
+                len = win32u_wctomb_size( &ansi_cp, item->text, text_len );
+                if (info->dwTypeData && info->cch)
+                    if (!win32u_wctomb( &ansi_cp, (char *)info->dwTypeData, info->cch,
+                                        item->text, text_len + 1 ))
+                        ((char *)info->dwTypeData)[info->cch - 1] = 0;
+            }
+            else
+            {
+                len = lstrlenW( item->text );
+                if (info->dwTypeData && info->cch)
+                    lstrcpynW( info->dwTypeData, item->text, info->cch );
+            }
+
+            if (info->dwTypeData && info->cch)
+            {
+                /* if we've copied a substring we return its length */
+                if (info->cch <= len + 1)
+                    info->cch--;
+                else
+                    info->cch = len;
+            }
+            else
+            {
+                /* return length of string, not on Win9x/ME if fType & MFT_BITMAP */
+                info->cch = len;
+            }
+        }
+    }
+
+    if (info->fMask & MIIM_FTYPE)  info->fType = item->fType & MENUITEMINFO_TYPE_MASK;
+    if (info->fMask & MIIM_BITMAP) info->hbmpItem = item->hbmpItem;
+    if (info->fMask & MIIM_STATE)  info->fState = item->fState & MENUITEMINFO_STATE_MASK;
+    if (info->fMask & MIIM_ID)     info->wID = item->wID;
+    if (info->fMask & MIIM_DATA)   info->dwItemData = item->dwItemData;
+
+    if (info->fMask & MIIM_SUBMENU) info->hSubMenu = item->hSubMenu;
+    else info->hSubMenu = 0; /* hSubMenu is always cleared (not on Win9x/ME ) */
+
+    if (info->fMask & MIIM_CHECKMARKS)
+    {
+        info->hbmpChecked = item->hCheckBit;
+        info->hbmpUnchecked = item->hUnCheckBit;
+    }
+
+    release_menu_ptr( menu );
+    return TRUE;
+}
+
 /**********************************************************************
  *           NtUserThunkedMenuItemInfo    (win32u.@)
  */
@@ -1004,6 +1121,12 @@ UINT WINAPI NtUserThunkedMenuItemInfo( HMENU handle, UINT pos, UINT flags, UINT 
 
     switch (method)
     {
+    case NtUserGetMenuItemInfoA:
+        return get_menu_item_info( handle, pos, flags, info, TRUE );
+
+    case NtUserGetMenuItemInfoW:
+        return get_menu_item_info( handle, pos, flags, info, FALSE );
+
     case NtUserInsertMenuItem:
         if (!info || info->cbSize != sizeof(*info))
         {

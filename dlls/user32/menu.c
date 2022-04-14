@@ -97,91 +97,6 @@ const struct builtin_class_descr MENU_builtin_class =
 
 
 /***********************************************************************
- *           debug_print_menuitem
- *
- * Print a menuitem in readable form.
- */
-
-#define debug_print_menuitem(pre, mp, post) \
-    do { if (TRACE_ON(menu)) do_debug_print_menuitem(pre, mp, post); } while (0)
-
-#define MENUOUT(text) \
-  TRACE("%s%s", (count++ ? "," : ""), (text))
-
-#define MENUFLAG(bit,text) \
-  do { \
-    if (flags & (bit)) { flags &= ~(bit); MENUOUT ((text)); } \
-  } while (0)
-
-static void do_debug_print_menuitem(const char *prefix, const MENUITEM *mp,
-				    const char *postfix)
-{
-    static const char * const hbmmenus[] = { "HBMMENU_CALLBACK", "", "HBMMENU_SYSTEM",
-    "HBMMENU_MBAR_RESTORE", "HBMMENU_MBAR_MINIMIZE", "UNKNOWN BITMAP", "HBMMENU_MBAR_CLOSE",
-    "HBMMENU_MBAR_CLOSE_D", "HBMMENU_MBAR_MINIMIZE_D", "HBMMENU_POPUP_CLOSE",
-    "HBMMENU_POPUP_RESTORE", "HBMMENU_POPUP_MAXIMIZE", "HBMMENU_POPUP_MINIMIZE"};
-    TRACE("%s ", prefix);
-    if (mp) {
-        UINT flags = mp->fType;
-        TRACE( "{ ID=0x%Ix", mp->wID);
-        if ( mp->hSubMenu)
-            TRACE( ", Sub=%p", mp->hSubMenu);
-        if (flags) {
-            int count = 0;
-            TRACE( ", fType=");
-            MENUFLAG( MFT_SEPARATOR, "sep");
-            MENUFLAG( MFT_OWNERDRAW, "own");
-            MENUFLAG( MFT_BITMAP, "bit");
-            MENUFLAG(MF_POPUP, "pop");
-            MENUFLAG(MFT_MENUBARBREAK, "barbrk");
-            MENUFLAG(MFT_MENUBREAK, "brk");
-            MENUFLAG(MFT_RADIOCHECK, "radio");
-            MENUFLAG(MFT_RIGHTORDER, "rorder");
-            MENUFLAG(MF_SYSMENU, "sys");
-            MENUFLAG(MFT_RIGHTJUSTIFY, "right");  /* same as MF_HELP */
-            if (flags)
-                TRACE( "+0x%x", flags);
-        }
-        flags = mp->fState;
-        if (flags) {
-            int count = 0;
-            TRACE( ", State=");
-            MENUFLAG(MFS_GRAYED, "grey");
-            MENUFLAG(MFS_DEFAULT, "default");
-            MENUFLAG(MFS_DISABLED, "dis");
-            MENUFLAG(MFS_CHECKED, "check");
-            MENUFLAG(MFS_HILITE, "hi");
-            MENUFLAG(MF_USECHECKBITMAPS, "usebit");
-            MENUFLAG(MF_MOUSESELECT, "mouse");
-            if (flags)
-                TRACE( "+0x%x", flags);
-        }
-        if (mp->hCheckBit)
-            TRACE( ", Chk=%p", mp->hCheckBit);
-        if (mp->hUnCheckBit)
-            TRACE( ", Unc=%p", mp->hUnCheckBit);
-        if (mp->text)
-            TRACE( ", Text=%s", debugstr_w(mp->text));
-        if (mp->dwItemData)
-            TRACE( ", ItemData=0x%08Ix", mp->dwItemData);
-        if (mp->hbmpItem)
-        {
-            if( IS_MAGIC_BITMAP(mp->hbmpItem))
-                TRACE( ", hbitmap=%s", hbmmenus[ (INT_PTR)mp->hbmpItem + 1]);
-            else
-                TRACE( ", hbitmap=%p", mp->hbmpItem);
-        }
-        TRACE( " }");
-    } else
-        TRACE( "NULL");
-    TRACE(" %s\n", postfix);
-}
-
-#undef MENUOUT
-#undef MENUFLAG
-
-
-/***********************************************************************
  *           MENU_GetMenu
  *
  * Validate the given menu handle and returns the menu structure pointer.
@@ -1012,122 +927,6 @@ BOOL WINAPI IsMenu( HMENU menu )
     return FALSE;
 }
 
-/**********************************************************************
- *		GetMenuItemInfo_common
- */
-
-static BOOL GetMenuItemInfo_common ( HMENU hmenu, UINT id, BOOL bypos,
-					LPMENUITEMINFOW lpmii, BOOL unicode)
-{
-    POPUPMENU *menu;
-    MENUITEM *item;
-    UINT pos;
-
-    menu = find_menu_item(hmenu, id, bypos ? MF_BYPOSITION : 0, &pos);
-
-    item = menu ? &menu->items[pos] : NULL;
-
-    debug_print_menuitem("GetMenuItemInfo_common: ", item, "");
-
-    if (!menu)
-    {
-        SetLastError( ERROR_MENU_ITEM_NOT_FOUND);
-        return FALSE;
-    }
-
-    if( lpmii->fMask & MIIM_TYPE) {
-        if( lpmii->fMask & ( MIIM_STRING | MIIM_FTYPE | MIIM_BITMAP)) {
-            release_menu_ptr(menu);
-            WARN("invalid combination of fMask bits used\n");
-            /* this does not happen on Win9x/ME */
-            SetLastError( ERROR_INVALID_PARAMETER);
-            return FALSE;
-        }
-        lpmii->fType = item->fType & MENUITEMINFO_TYPE_MASK;
-        if (item->hbmpItem && !IS_MAGIC_BITMAP(item->hbmpItem))
-            lpmii->fType |= MFT_BITMAP;
-        lpmii->hbmpItem = item->hbmpItem; /* not on Win9x/ME */
-        if( lpmii->fType & MFT_BITMAP) {
-	    lpmii->dwTypeData = (LPWSTR) item->hbmpItem;
-	    lpmii->cch = 0;
-        } else if( lpmii->fType & (MFT_OWNERDRAW | MFT_SEPARATOR)) {
-            /* this does not happen on Win9x/ME */
-	    lpmii->dwTypeData = 0;
-	    lpmii->cch = 0;
-        }
-    }
-
-    /* copy the text string */
-    if ((lpmii->fMask & (MIIM_TYPE|MIIM_STRING))) {
-         if (!item->text) {
-                if(lpmii->dwTypeData && lpmii->cch) {
-                    if( unicode)
-                        *((WCHAR *)lpmii->dwTypeData) = 0;
-                    else
-                        *((CHAR *)lpmii->dwTypeData) = 0;
-                }
-                lpmii->cch = 0;
-         } else {
-            int len;
-            if (unicode)
-            {
-                len = lstrlenW(item->text);
-                if(lpmii->dwTypeData && lpmii->cch)
-                    lstrcpynW(lpmii->dwTypeData, item->text, lpmii->cch);
-            }
-            else
-            {
-                len = WideCharToMultiByte( CP_ACP, 0, item->text, -1, NULL,
-                        0, NULL, NULL ) - 1;
-                if(lpmii->dwTypeData && lpmii->cch)
-                    if (!WideCharToMultiByte( CP_ACP, 0, item->text, -1,
-                            (LPSTR)lpmii->dwTypeData, lpmii->cch, NULL, NULL ))
-                        ((LPSTR)lpmii->dwTypeData)[lpmii->cch - 1] = 0;
-            }
-            /* if we've copied a substring we return its length */
-            if(lpmii->dwTypeData && lpmii->cch)
-                if (lpmii->cch <= len + 1)
-                    lpmii->cch--;
-                else
-                    lpmii->cch = len;
-            else {
-                /* return length of string */
-                /* not on Win9x/ME if fType & MFT_BITMAP */
-                lpmii->cch = len;
-            }
-        }
-    }
-
-    if (lpmii->fMask & MIIM_FTYPE)
-        lpmii->fType = item->fType & MENUITEMINFO_TYPE_MASK;
-
-    if (lpmii->fMask & MIIM_BITMAP)
-        lpmii->hbmpItem = item->hbmpItem;
-
-    if (lpmii->fMask & MIIM_STATE)
-        lpmii->fState = item->fState & MENUITEMINFO_STATE_MASK;
-
-    if (lpmii->fMask & MIIM_ID)
-        lpmii->wID = item->wID;
-
-    if (lpmii->fMask & MIIM_SUBMENU)
-        lpmii->hSubMenu = item->hSubMenu;
-    else {
-        /* hSubMenu is always cleared 
-         * (not on Win9x/ME ) */
-        lpmii->hSubMenu = 0;
-    }
-
-    if (lpmii->fMask & MIIM_CHECKMARKS) {
-        lpmii->hbmpChecked = item->hCheckBit;
-        lpmii->hbmpUnchecked = item->hUnCheckBit;
-    }
-    if (lpmii->fMask & MIIM_DATA)
-        lpmii->dwItemData = item->dwItemData;
-
-    release_menu_ptr(menu);
-    return TRUE;
-}
 
 /**********************************************************************
  *		GetMenuItemInfoA    (USER32.@)
@@ -1144,10 +943,10 @@ BOOL WINAPI GetMenuItemInfoA( HMENU hmenu, UINT item, BOOL bypos,
     }
     memcpy( &mii, lpmii, lpmii->cbSize);
     mii.cbSize = sizeof( mii);
-    ret = GetMenuItemInfo_common (hmenu, item, bypos,
-                                    (LPMENUITEMINFOW)&mii, FALSE);
+    ret = NtUserThunkedMenuItemInfo( hmenu, item, bypos ? MF_BYPOSITION : 0,
+                                     NtUserGetMenuItemInfoA, (MENUITEMINFOW *)&mii, NULL );
     mii.cbSize = lpmii->cbSize;
-    memcpy( lpmii, &mii, mii.cbSize);
+    memcpy( lpmii, &mii, mii.cbSize );
     return ret;
 }
 
@@ -1166,9 +965,10 @@ BOOL WINAPI GetMenuItemInfoW( HMENU hmenu, UINT item, BOOL bypos,
     }
     memcpy( &mii, lpmii, lpmii->cbSize);
     mii.cbSize = sizeof( mii);
-    ret = GetMenuItemInfo_common (hmenu, item, bypos, &mii, TRUE);
+    ret = NtUserThunkedMenuItemInfo( hmenu, item, bypos ? MF_BYPOSITION : 0,
+                                     NtUserGetMenuItemInfoW, &mii, NULL );
     mii.cbSize = lpmii->cbSize;
-    memcpy( lpmii, &mii, mii.cbSize);
+    memcpy( lpmii, &mii, mii.cbSize );
     return ret;
 }
 
