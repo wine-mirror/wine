@@ -772,6 +772,37 @@ static BOOL set_menu_item_info( MENUITEM *menu, const MENUITEMINFOW *info )
     return TRUE;
 }
 
+/* see GetMenuState */
+static UINT get_menu_state( HMENU handle, UINT item_id, UINT flags )
+{
+    POPUPMENU *menu;
+    UINT state, pos;
+    MENUITEM *item;
+
+    TRACE( "(menu=%p, id=%04x, flags=%04x);\n", handle, item_id, flags );
+
+    if (!(menu = find_menu_item( handle, item_id, flags, &pos )))
+        return -1;
+
+    item = &menu->items[pos];
+    TRACE( "  item: %s\n", debugstr_menuitem( item ));
+    if (item->fType & MF_POPUP)
+    {
+        POPUPMENU *submenu = grab_menu_ptr( item->hSubMenu );
+        if (submenu)
+            state = (submenu->nItems << 8) | ((item->fState | item->fType) & 0xff);
+        else
+            state = -1;
+        release_menu_ptr( submenu );
+    }
+    else
+    {
+        state = item->fType | item->fState;
+    }
+    release_menu_ptr(menu);
+    return state;
+}
+
 /**********************************************************************
  *           NtUserThunkedMenuItemInfo    (win32u.@)
  */
@@ -821,6 +852,9 @@ UINT WINAPI NtUserThunkedMenuItemInfo( HMENU handle, UINT pos, UINT flags, UINT 
         if (ret) menu->Height = 0; /* force size recalculate */
         release_menu_ptr(menu);
         break;
+
+    case NtUserGetMenuState:
+        return get_menu_state( handle, pos, flags );
 
     default:
         FIXME( "unsupported method %u\n", method );

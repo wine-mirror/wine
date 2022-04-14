@@ -183,6 +183,8 @@ enum
 {
     NtUserSetMenuItemInfo,
     NtUserInsertMenuItem,
+    /* Wine extensions */
+    NtUserGetMenuState,
 };
 
 struct send_message_timeout_params

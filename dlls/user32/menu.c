@@ -3687,37 +3687,9 @@ BOOL WINAPI HiliteMenuItem( HWND hWnd, HMENU hMenu, UINT wItemID,
 /**********************************************************************
  *         GetMenuState    (USER32.@)
  */
-UINT WINAPI GetMenuState( HMENU hMenu, UINT wItemID, UINT wFlags )
+UINT WINAPI GetMenuState( HMENU menu, UINT item, UINT flags )
 {
-    POPUPMENU *menu;
-    UINT state, pos;
-    MENUITEM *item;
-
-    TRACE("(menu=%p, id=%04x, flags=%04x);\n", hMenu, wItemID, wFlags);
-
-    if (!(menu = find_menu_item(hMenu, wItemID, wFlags, &pos)))
-        return -1;
-
-    item = &menu->items[pos];
-    debug_print_menuitem ("  item: ", item, "");
-    if (item->fType & MF_POPUP)
-    {
-        POPUPMENU *submenu = grab_menu_ptr(item->hSubMenu);
-        if (submenu)
-            state = (submenu->nItems << 8) | ((item->fState | item->fType) & 0xff);
-        else
-            state = -1;
-        release_menu_ptr(submenu);
-    }
-    else
-    {
-	/* We used to (from way back then) mask the result to 0xff.  */
-	/* I don't know why and it seems wrong as the documented */
-	/* return flag MF_SEPARATOR is outside that mask.  */
-        state = (item->fType | item->fState);
-    }
-    release_menu_ptr(menu);
-    return state;
+    return NtUserThunkedMenuItemInfo( menu, item, flags, NtUserGetMenuState, NULL, NULL );
 }
 
 
