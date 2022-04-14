@@ -33,7 +33,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(wow);
 #include "pshpack1.h"
 struct thunk_32to64
 {
-    BYTE  ljmp;   /* ljmp %cs:1f */
+    BYTE  ljmp;   /* jump far, absolute indirect */
+    BYTE  modrm;  /* address=disp32, opcode=5 */
+    DWORD op;
     DWORD addr;
     WORD  cs;
 };
@@ -195,7 +197,9 @@ NTSTATUS WINAPI BTCpuProcessInit(void)
     ds64_sel = context.SegDs;
     fs32_sel = context.SegFs;
 
-    thunk->ljmp = 0xea;
+    thunk->ljmp = 0xff;
+    thunk->modrm = 0x2d;
+    thunk->op   = PtrToUlong( &thunk->addr );
     thunk->addr = PtrToUlong( syscall_32to64 );
     thunk->cs   = cs64_sel;
     NtProtectVirtualMemory( GetCurrentProcess(), (void **)&thunk, &size, PAGE_EXECUTE_READ, &old_prot );
