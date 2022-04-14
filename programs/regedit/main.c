@@ -53,7 +53,7 @@ UINT nClipboardFormat;
 #define MAX_LOADSTRING  100
 WCHAR szTitle[MAX_LOADSTRING];
 const WCHAR szChildClass[] = L"REGEDIT";
-const WCHAR szFrameClass[] = L"RegEdit_RegEdit";
+static const WCHAR szFrameClass[] = L"RegEdit_RegEdit";
 
 static BOOL InitInstance(HINSTANCE hInstance, int nCmdShow)
 {

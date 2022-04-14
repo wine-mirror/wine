@@ -96,7 +96,6 @@ extern HFONT     hFont;
 extern enum OPTION_FLAGS Options;
 
 extern WCHAR szTitle[];
-extern const WCHAR szFrameClass[];
 extern const WCHAR szChildClass[];
 extern const WCHAR szHexEditClass[];
 extern WCHAR g_pszDefaultValueName[];
