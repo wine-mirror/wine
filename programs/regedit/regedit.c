@@ -107,16 +107,14 @@ static void PerformRegAction(REGEDIT_ACTION action, WCHAR **argv, int *i)
     switch (action) {
     case ACTION_ADD: {
             WCHAR *filename = argv[*i];
-            WCHAR hyphen[] = {'-',0};
             WCHAR *realname = NULL;
             FILE *reg_file;
 
-            if (!lstrcmpW(filename, hyphen))
+            if (!lstrcmpW(filename, L"-"))
                 reg_file = stdin;
             else
             {
                 int size;
-                WCHAR rb_mode[] = {'r','b',0};
 
                 size = SearchPathW(NULL, filename, NULL, 0, NULL, NULL);
                 if (size > 0)
@@ -130,11 +128,10 @@ static void PerformRegAction(REGEDIT_ACTION action, WCHAR **argv, int *i)
                     heap_free(realname);
                     return;
                 }
-                reg_file = _wfopen(realname, rb_mode);
+                reg_file = _wfopen(realname, L"rb");
                 if (reg_file == NULL)
                 {
-                    WCHAR regedit[] = {'r','e','g','e','d','i','t',0};
-                    _wperror(regedit);
+                    _wperror(L"regedit");
                     output_message(STRING_CANNOT_OPEN_FILE, filename);
                     heap_free(realname);
                     return;
