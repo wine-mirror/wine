@@ -1312,7 +1312,7 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct wgl_pixel
     RECT rect;
     int width, height;
 
-    GetClientRect( hwnd, &rect );
+    NtUserGetClientRect( hwnd, &rect );
     width  = min( max( 1, rect.right ), 65535 );
     height = min( max( 1, rect.bottom ), 65535 );
 
@@ -1327,7 +1327,8 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct wgl_pixel
     gl->ref = 1;
     gl->mutable_pf = mutable_pf;
 
-    if (!known_child && !GetWindow( hwnd, GW_CHILD ) && GetAncestor( hwnd, GA_PARENT ) == GetDesktopWindow())  /* childless top-level window */
+    if (!known_child && !NtUserGetWindowRelative( hwnd, GW_CHILD ) &&
+        NtUserGetAncestor( hwnd, GA_PARENT ) == NtUserGetDesktopWindow())  /* childless top-level window */
     {
         gl->type = DC_GL_WINDOW;
         gl->window = create_client_window( hwnd, visual );
@@ -1407,11 +1408,11 @@ static BOOL set_pixel_format(HDC hdc, int format, BOOL allow_change)
 {
     const struct wgl_pixel_format *fmt;
     int value;
-    HWND hwnd = WindowFromDC( hdc );
+    HWND hwnd = NtUserWindowFromDC( hdc );
 
     TRACE("(%p,%d)\n", hdc, format);
 
-    if (!hwnd || hwnd == GetDesktopWindow())
+    if (!hwnd || hwnd == NtUserGetDesktopWindow())
     {
         WARN( "not a valid window DC %p/%p\n", hdc, hwnd );
         return FALSE;
@@ -1493,7 +1494,7 @@ void set_gl_drawable_parent( HWND hwnd, HWND parent )
         break;
     case DC_GL_CHILD_WIN:
     case DC_GL_PIXMAP_WIN:
-        if (parent == GetDesktopWindow()) break;
+        if (parent == NtUserGetDesktopWindow()) break;
         /* fall through */
     default:
         release_gl_drawable( old );
@@ -1684,7 +1685,7 @@ static int WINAPI glxdrv_wglGetPixelFormat( HDC hdc )
     struct gl_drawable *gl;
     int ret = 0;
 
-    if ((gl = get_gl_drawable( WindowFromDC( hdc ), hdc )))
+    if ((gl = get_gl_drawable( NtUserWindowFromDC( hdc ), hdc )))
     {
         ret = pixel_format_index( gl->format );
         /* Offscreen formats can't be used with traditional WGL calls.
@@ -1725,7 +1726,7 @@ static struct wgl_context * WINAPI glxdrv_wglCreateContext( HDC hdc )
     struct wgl_context *ret;
     struct gl_drawable *gl;
 
-    if (!(gl = get_gl_drawable( WindowFromDC( hdc ), hdc )))
+    if (!(gl = get_gl_drawable( NtUserWindowFromDC( hdc ), hdc )))
     {
         SetLastError( ERROR_INVALID_PIXEL_FORMAT );
         return NULL;
@@ -1815,7 +1816,7 @@ static BOOL WINAPI glxdrv_wglMakeCurrent(HDC hdc, struct wgl_context *ctx)
         return TRUE;
     }
 
-    if ((gl = get_gl_drawable( WindowFromDC( hdc ), hdc )))
+    if ((gl = get_gl_drawable( NtUserWindowFromDC( hdc ), hdc )))
     {
         if (ctx->fmt != gl->format)
         {
@@ -1868,9 +1869,9 @@ static BOOL X11DRV_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct 
 
     if (!pglXMakeContextCurrent) return FALSE;
 
-    if ((draw_gl = get_gl_drawable( WindowFromDC( draw_hdc ), draw_hdc )))
+    if ((draw_gl = get_gl_drawable( NtUserWindowFromDC( draw_hdc ), draw_hdc )))
     {
-        read_gl = get_gl_drawable( WindowFromDC( read_hdc ), read_hdc );
+        read_gl = get_gl_drawable( NtUserWindowFromDC( read_hdc ), read_hdc );
 
         EnterCriticalSection( &context_section );
         ret = pglXMakeContextCurrent(gdi_display, draw_gl->drawable,
@@ -1950,7 +1951,7 @@ static void wglFinish(void)
     escape.gl_drawable = 0;
     escape.flush = FALSE;
 
-    if ((gl = get_gl_drawable( WindowFromDC( ctx->hdc ), 0 )))
+    if ((gl = get_gl_drawable( NtUserWindowFromDC( ctx->hdc ), 0 )))
     {
         switch (gl->type)
         {
@@ -1977,7 +1978,7 @@ static void wglFlush(void)
     escape.gl_drawable = 0;
     escape.flush = FALSE;
 
-    if ((gl = get_gl_drawable( WindowFromDC( ctx->hdc ), 0 )))
+    if ((gl = get_gl_drawable( NtUserWindowFromDC( ctx->hdc ), 0 )))
     {
         switch (gl->type)
         {
@@ -2012,7 +2013,7 @@ static struct wgl_context *X11DRV_wglCreateContextAttribsARB( HDC hdc, struct wg
 
     TRACE("(%p %p %p)\n", hdc, hShareContext, attribList);
 
-    if (!(gl = get_gl_drawable( WindowFromDC( hdc ), hdc )))
+    if (!(gl = get_gl_drawable( NtUserWindowFromDC( hdc ), hdc )))
     {
         SetLastError( ERROR_INVALID_PIXEL_FORMAT );
         return NULL;
@@ -3055,7 +3056,7 @@ static int X11DRV_wglGetSwapIntervalEXT(void)
 
     TRACE("()\n");
 
-    if (!(gl = get_gl_drawable( WindowFromDC( ctx->hdc ), ctx->hdc )))
+    if (!(gl = get_gl_drawable( NtUserWindowFromDC( ctx->hdc ), ctx->hdc )))
     {
         /* This can't happen because a current WGL context is required to get
          * here. Likely the application is buggy.
@@ -3092,7 +3093,7 @@ static BOOL X11DRV_wglSwapIntervalEXT(int interval)
         return FALSE;
     }
 
-    if (!(gl = get_gl_drawable( WindowFromDC( ctx->hdc ), ctx->hdc )))
+    if (!(gl = get_gl_drawable( NtUserWindowFromDC( ctx->hdc ), ctx->hdc )))
     {
         SetLastError(ERROR_DC_NOT_FOUND);
         return FALSE;
@@ -3317,7 +3318,7 @@ static BOOL WINAPI glxdrv_wglSwapBuffers( HDC hdc )
     escape.gl_drawable = 0;
     escape.flush = !pglXWaitForSbcOML;
 
-    if (!(gl = get_gl_drawable( WindowFromDC( hdc ), hdc )))
+    if (!(gl = get_gl_drawable( NtUserWindowFromDC( hdc ), hdc )))
     {
         SetLastError( ERROR_INVALID_HANDLE );
         return FALSE;
