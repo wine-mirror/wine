@@ -331,18 +331,13 @@ static BOOL parse_data_type(struct parser *parser, WCHAR **line)
 {
     struct data_type { const WCHAR *tag; int len; int type; int parse_type; };
 
-    static const WCHAR quote[] = {'"'};
-    static const WCHAR hex[] = {'h','e','x',':'};
-    static const WCHAR dword[] = {'d','w','o','r','d',':'};
-    static const WCHAR hexp[] = {'h','e','x','('};
-
     static const struct data_type data_types[] = {
-    /*    tag    len  type         parse type    */
-        { quote,  1,  REG_SZ,      REG_SZ },
-        { hex,    4,  REG_BINARY,  REG_BINARY },
-        { dword,  6,  REG_DWORD,   REG_DWORD },
-        { hexp,   4,  -1,          REG_BINARY }, /* REG_NONE, REG_EXPAND_SZ, REG_MULTI_SZ */
-        { NULL,   0,  0,           0 }
+    /*    tag       len  type         parse type    */
+        { L"\"",     1,  REG_SZ,      REG_SZ },
+        { L"hex:",   4,  REG_BINARY,  REG_BINARY },
+        { L"dword:", 6,  REG_DWORD,   REG_DWORD },
+        { L"hex(",   4,  -1,          REG_BINARY }, /* REG_NONE, REG_EXPAND_SZ, REG_MULTI_SZ */
+        { NULL,      0,  0,           0 }
     };
 
     const struct data_type *ptr;
@@ -542,21 +537,17 @@ enum reg_versions {
 
 static enum reg_versions parse_file_header(const WCHAR *s)
 {
-    static const WCHAR header_31[] = {'R','E','G','E','D','I','T',0};
-    static const WCHAR header_40[] = {'R','E','G','E','D','I','T','4',0};
-    static const WCHAR header_50[] = {'W','i','n','d','o','w','s',' ',
-                                      'R','e','g','i','s','t','r','y',' ','E','d','i','t','o','r',' ',
-                                      'V','e','r','s','i','o','n',' ','5','.','0','0',0};
+    static const WCHAR header_31[] = L"REGEDIT";
 
     while (*s == ' ' || *s == '\t') s++;
 
     if (!lstrcmpW(s, header_31))
         return REG_VERSION_31;
 
-    if (!lstrcmpW(s, header_40))
+    if (!lstrcmpW(s, L"REGEDIT4"))
         return REG_VERSION_40;
 
-    if (!lstrcmpW(s, header_50))
+    if (!lstrcmpW(s, L"Windows Registry Editor Version 5.00"))
         return REG_VERSION_50;
 
     /* The Windows version accepts registry file headers beginning with "REGEDIT" and ending
@@ -610,13 +601,13 @@ static WCHAR *header_state(struct parser *parser, WCHAR *pos)
 static WCHAR *parse_win31_line_state(struct parser *parser, WCHAR *pos)
 {
     WCHAR *line, *value;
-    static WCHAR hkcr[] = {'H','K','E','Y','_','C','L','A','S','S','E','S','_','R','O','O','T'};
+    static WCHAR hkcr[] = L"HKEY_CLASSES_ROOT";
     unsigned int key_end = 0;
 
     if (!(line = get_line(parser->file)))
         return NULL;
 
-    if (wcsncmp(line, hkcr, ARRAY_SIZE(hkcr)))
+    if (wcsncmp(line, hkcr, lstrlenW(hkcr)))
         return line;
 
     /* get key name */
@@ -1037,8 +1028,7 @@ static WCHAR *get_lineW(FILE *fp)
 
     while (next)
     {
-        static const WCHAR line_endings[] = {'\r','\n',0};
-        WCHAR *p = wcspbrk(line, line_endings);
+        WCHAR *p = wcspbrk(line, L"\r\n");
         if (!p)
         {
             size_t len, count;
@@ -1207,15 +1197,14 @@ static WCHAR *REGPROC_escape_string(WCHAR *str, size_t str_len, size_t *line_len
 
 static size_t export_value_name(FILE *fp, WCHAR *name, size_t len, BOOL unicode)
 {
-    static const WCHAR quoted_fmt[] = {'"','%','s','"','=',0};
-    static const WCHAR default_name[] = {'@','=',0};
+    static const WCHAR default_name[] = L"@=";
     size_t line_len;
 
     if (name && *name)
     {
         WCHAR *str = REGPROC_escape_string(name, len, &line_len);
         WCHAR *buf = heap_xalloc((line_len + 4) * sizeof(WCHAR));
-        line_len = swprintf(buf, line_len + 4, quoted_fmt, str);
+        line_len = swprintf(buf, line_len + 4, L"\"%s\"=", str);
         REGPROC_write_line(fp, buf, unicode);
         heap_free(buf);
         heap_free(str);
@@ -1233,28 +1222,24 @@ static void export_string_data(WCHAR **buf, WCHAR *data, size_t size)
 {
     size_t len = 0, line_len;
     WCHAR *str;
-    static const WCHAR fmt[] = {'"','%','s','"',0};
 
     if (size)
         len = size / sizeof(WCHAR) - 1;
     str = REGPROC_escape_string(data, len, &line_len);
     *buf = heap_xalloc((line_len + 3) * sizeof(WCHAR));
-    swprintf(*buf, line_len + 3, fmt, str);
+    swprintf(*buf, line_len + 3, L"\"%s\"", str);
     heap_free(str);
 }
 
 static void export_dword_data(WCHAR **buf, DWORD *data)
 {
-    static const WCHAR fmt[] = {'d','w','o','r','d',':','%','0','8','x',0};
-
     *buf = heap_xalloc(15 * sizeof(WCHAR));
-    swprintf(*buf, 15, fmt, *data);
+    swprintf(*buf, 15, L"dword:%08x", *data);
 }
 
 static size_t export_hex_data_type(FILE *fp, DWORD type, BOOL unicode)
 {
-    static const WCHAR hex[] = {'h','e','x',':',0};
-    static const WCHAR hexp_fmt[] = {'h','e','x','(','%','x',')',':',0};
+    static const WCHAR hex[] = L"hex:";
     size_t line_len;
 
     if (type == REG_BINARY)
@@ -1265,7 +1250,7 @@ static size_t export_hex_data_type(FILE *fp, DWORD type, BOOL unicode)
     else
     {
         WCHAR *buf = heap_xalloc(15 * sizeof(WCHAR));
-        line_len = swprintf(buf, 15, hexp_fmt, type);
+        line_len = swprintf(buf, 15, L"hex(%x):", type);
         REGPROC_write_line(fp, buf, unicode);
         heap_free(buf);
     }
@@ -1278,8 +1263,6 @@ static size_t export_hex_data_type(FILE *fp, DWORD type, BOOL unicode)
 static void export_hex_data(FILE *fp, WCHAR **buf, DWORD type, DWORD line_len,
                             void *data, DWORD size, BOOL unicode)
 {
-    static const WCHAR fmt[] = {'%','0','2','x',0};
-    static const WCHAR hex_concat[] = {'\\','\r','\n',' ',' ',0};
     size_t num_commas, i, pos;
 
     line_len += export_hex_data_type(fp, type, unicode);
@@ -1294,7 +1277,7 @@ static void export_hex_data(FILE *fp, WCHAR **buf, DWORD type, DWORD line_len,
 
     for (i = 0, pos = 0; i < size; i++)
     {
-        pos += swprintf(*buf + pos, 3, fmt, ((BYTE *)data)[i]);
+        pos += swprintf(*buf + pos, 3, L"%02x", ((BYTE *)data)[i]);
         if (i == num_commas) break;
         (*buf)[pos++] = ',';
         (*buf)[pos] = 0;
@@ -1303,7 +1286,7 @@ static void export_hex_data(FILE *fp, WCHAR **buf, DWORD type, DWORD line_len,
         if (line_len >= MAX_HEX_CHARS)
         {
             REGPROC_write_line(fp, *buf, unicode);
-            REGPROC_write_line(fp, hex_concat, unicode);
+            REGPROC_write_line(fp, L"\\\r\n  ", unicode);
             line_len = 2;
             pos = 0;
         }
@@ -1312,9 +1295,7 @@ static void export_hex_data(FILE *fp, WCHAR **buf, DWORD type, DWORD line_len,
 
 static void export_newline(FILE *fp, BOOL unicode)
 {
-    static const WCHAR newline[] = {'\r','\n',0};
-
-    REGPROC_write_line(fp, newline, unicode);
+    REGPROC_write_line(fp, L"\r\n", unicode);
 }
 
 static void export_data(FILE *fp, WCHAR *value_name, DWORD value_len, DWORD type,
@@ -1356,21 +1337,19 @@ static void export_data(FILE *fp, WCHAR *value_name, DWORD value_len, DWORD type
 static WCHAR *build_subkey_path(WCHAR *path, DWORD path_len, WCHAR *subkey_name, DWORD subkey_len)
 {
     WCHAR *subkey_path;
-    static const WCHAR fmt[] = {'%','s','\\','%','s',0};
 
     subkey_path = heap_xalloc((path_len + subkey_len + 2) * sizeof(WCHAR));
-    swprintf(subkey_path, path_len + subkey_len + 2, fmt, path, subkey_name);
+    swprintf(subkey_path, path_len + subkey_len + 2, L"%s\\%s", path, subkey_name);
 
     return subkey_path;
 }
 
 static void export_key_name(FILE *fp, WCHAR *name, BOOL unicode)
 {
-    static const WCHAR fmt[] = {'\r','\n','[','%','s',']','\r','\n',0};
     WCHAR *buf;
 
     buf = heap_xalloc((lstrlenW(name) + 7) * sizeof(WCHAR));
-    swprintf(buf, lstrlenW(name) + 7, fmt, name);
+    swprintf(buf, lstrlenW(name) + 7, L"\r\n[%s]\r\n", name);
     REGPROC_write_line(fp, buf, unicode);
     heap_free(buf);
 }
@@ -1453,22 +1432,18 @@ static int export_registry_data(FILE *fp, HKEY key, WCHAR *path, BOOL unicode)
 static FILE *REGPROC_open_export_file(WCHAR *file_name, BOOL unicode)
 {
     FILE *file;
-    static const WCHAR hyphen[] = {'-',0};
 
-    if (!lstrcmpW(file_name, hyphen))
+    if (!lstrcmpW(file_name, L"-"))
     {
         file = stdout;
         _setmode(_fileno(file), _O_BINARY);
     }
     else
     {
-        static const WCHAR wb_mode[] = {'w','b',0};
-
-        file = _wfopen(file_name, wb_mode);
+        file = _wfopen(file_name, L"wb");
         if (!file)
         {
-            static const WCHAR regedit[] = {'r','e','g','e','d','i','t',0};
-            _wperror(regedit);
+            _wperror(L"regedit");
             error_exit(STRING_CANNOT_OPEN_FILE, file_name);
         }
     }
@@ -1476,12 +1451,10 @@ static FILE *REGPROC_open_export_file(WCHAR *file_name, BOOL unicode)
     if (unicode)
     {
         static const BYTE bom[] = {0xff,0xfe};
-        static const WCHAR header[] = {'W','i','n','d','o','w','s',' ',
-                                       'R','e','g','i','s','t','r','y',' ','E','d','i','t','o','r',' ',
-                                       'V','e','r','s','i','o','n',' ','5','.','0','0','\r','\n'};
+        static const WCHAR header[] = L"Windows Registry Editor Version 5.00\r\n";
 
         fwrite(bom, sizeof(BYTE), ARRAY_SIZE(bom), file);
-        fwrite(header, sizeof(WCHAR), ARRAY_SIZE(header), file);
+        fwrite(header, sizeof(WCHAR), lstrlenW(header), file);
     }
     else
         fputs("REGEDIT4\r\n", file);
