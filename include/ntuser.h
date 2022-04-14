@@ -578,6 +578,7 @@ enum
     NtUserCallNoParam_CreateMenu,
     NtUserCallNoParam_GetDesktopWindow,
     NtUserCallNoParam_GetInputState,
+    NtUserCallNoParam_GetMessagePos,
     NtUserCallNoParam_ReleaseCapture,
     /* temporary exports */
     NtUserExitingThread,
@@ -598,6 +599,11 @@ static inline HWND NtUserGetDesktopWindow(void)
 static inline BOOL NtUserGetInputState(void)
 {
     return NtUserCallNoParam( NtUserCallNoParam_GetInputState );
+}
+
+static inline DWORD NtUserGetMessagePos(void)
+{
+    return NtUserCallNoParam( NtUserCallNoParam_GetMessagePos );
 }
 
 static inline BOOL NtUserReleaseCapture(void)
