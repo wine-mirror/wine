@@ -802,7 +802,7 @@ static HRESULT WINAPI IPropertyStorage_fnWriteMultiple(
                 if (dictionary_num_entries(This->propid_to_prop) == 0 &&
                  rgpropvar[i].vt == VT_I2)
                 {
-                    This->codePage = rgpropvar[i].iVal;
+                    This->codePage = (USHORT)rgpropvar[i].iVal;
                     if (This->codePage == CP_UNICODE)
                         This->grfFlags &= ~PROPSETFLAG_ANSI;
                     else
@@ -1868,7 +1868,7 @@ static HRESULT PropertyStorage_ReadFromStream(PropertyStorage_impl *This)
                     {
                     case PID_CODEPAGE:
                         if (prop.vt == VT_I2)
-                            This->codePage = (UINT)prop.iVal;
+                            This->codePage = (USHORT)prop.iVal;
                         break;
                     case PID_LOCALE:
                         if (prop.vt == VT_I4)
