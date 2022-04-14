@@ -95,7 +95,7 @@ static void wsprintfATest(void)
         ok(!strcmp(buf, i64_formats[i].res), "%u: wrong result [%s]\n", i, buf);
     }
 
-    if (!GetCPInfo(CP_ACP, &cpinfo) || cpinfo.MaxCharSize <= 1)
+    if (!GetCPInfo(CP_ACP, &cpinfo) || cpinfo.MaxCharSize != 2)
     {
         skip("Multi-byte wsprintfA test isn't available for the current codepage\n");
         return;
@@ -199,7 +199,7 @@ static void wsprintfWTest(void)
     ok(buf[0] == L' ', "expected \\x0020, got \\x%04x\n", buf[0]);
     ok(buf[1] == wc99, "expected \\x%04x, got \\x%04x\n", wc99, buf[1]);
 
-    if (!GetCPInfoExW(CP_ACP, 0, &cpinfoex) || cpinfoex.MaxCharSize <= 1)
+    if (!GetCPInfoExW(CP_ACP, 0, &cpinfoex) || cpinfoex.MaxCharSize != 2)
     {
         skip("Multi-byte wsprintfW test isn't available for the current codepage\n");
         return;

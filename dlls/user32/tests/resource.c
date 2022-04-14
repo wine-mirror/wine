@@ -172,11 +172,11 @@ static void test_accel1(void)
     ac[n++].fVirt = (SHORT) 0xffff;
 
     ac[n].cmd = 0xfff0;
-    ac[n].key = 0xffff;
+    ac[n].key = 'B';
     ac[n++].fVirt = (SHORT) 0xfff0;
 
     ac[n].cmd = 0xfff0;
-    ac[n].key = 0xffff;
+    ac[n].key = 'C';
     ac[n++].fVirt = 0x0000;
 
     ac[n].cmd = 0xfff0;
@@ -204,12 +204,12 @@ static void test_accel1(void)
 
     if (++n == r) goto done;
     ok( ac[n].cmd == 0xfff0, "cmd 2 not preserved got %x\n", ac[n].cmd);
-    ok( (ac[n].key & 0xff) == 0xff, "key 2 not preserved got %x\n", ac[n].key);
+    ok( ac[n].key == 'B', "key 2 not preserved got %x\n", ac[n].key);
     ok( ac[n].fVirt == 0x0070, "fVirt 2 wrong got %x\n", ac[n].fVirt);
 
     if (++n == r) goto done;
     ok( ac[n].cmd == 0xfff0, "cmd 3 not preserved got %x\n", ac[n].cmd);
-    ok( (ac[n].key & 0xff) == 0xff, "key 3 not preserved got %x\n", ac[n].key);
+    ok( ac[n].key == 'C', "key 3 not preserved got %x\n", ac[n].key);
     ok( ac[n].fVirt == 0x0000, "fVirt 3 wrong got %x\n", ac[n].fVirt);
 
     if (++n == r) goto done;
