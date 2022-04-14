@@ -543,12 +543,12 @@ static BOOL InitTreeViewItems(HWND hwndTV, LPWSTR pHostName)
 {
     TVINSERTSTRUCTW tvins;
     HTREEITEM hRoot;
-    static WCHAR hkcr[] = {'H','K','E','Y','_','C','L','A','S','S','E','S','_','R','O','O','T',0},
-                 hkcu[] = {'H','K','E','Y','_','C','U','R','R','E','N','T','_','U','S','E','R',0},
-                 hklm[] = {'H','K','E','Y','_','L','O','C','A','L','_','M','A','C','H','I','N','E',0},
-                 hku[]  = {'H','K','E','Y','_','U','S','E','R','S',0},
-                 hkcc[] = {'H','K','E','Y','_','C','U','R','R','E','N','T','_','C','O','N','F','I','G',0},
-                 hkdd[] = {'H','K','E','Y','_','D','Y','N','_','D','A','T','A',0};
+    static WCHAR hkcr[] = L"HKEY_CLASSES_ROOT",
+                 hkcu[] = L"HKEY_CURRENT_USER",
+                 hklm[] = L"HKEY_LOCAL_MACHINE",
+                 hku[]  = L"HKEY_USERS",
+                 hkcc[] = L"HKEY_CURRENT_CONFIG",
+                 hkdd[] = L"HKEY_DYN_DATA";
 
     tvins.u.item.mask = TVIF_TEXT | TVIF_IMAGE | TVIF_SELECTEDIMAGE | TVIF_CHILDREN | TVIF_PARAM;
     /* Set the text of the item.  */
@@ -694,11 +694,10 @@ HWND CreateTreeView(HWND hwndParent, LPWSTR pHostName, UINT id)
 {
     RECT rcClient;
     HWND hwndTV;
-    WCHAR TreeView[] = {'T','r','e','e',' ','V','i','e','w',0};
 
     /* Get the dimensions of the parent window's client area, and create the tree view control.  */
     GetClientRect(hwndParent, &rcClient);
-    hwndTV = CreateWindowExW(WS_EX_CLIENTEDGE, WC_TREEVIEWW, TreeView,
+    hwndTV = CreateWindowExW(WS_EX_CLIENTEDGE, WC_TREEVIEWW, L"Tree View",
                             WS_VISIBLE | WS_CHILD | WS_TABSTOP | TVS_HASLINES | TVS_HASBUTTONS |
                             TVS_LINESATROOT | TVS_EDITLABELS | TVS_SHOWSELALWAYS,
                             0, 0, rcClient.right, rcClient.bottom,
