@@ -29,70 +29,38 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
-DWORD WINAPI CertRDNValueToStrA(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
- LPSTR psz, DWORD csz)
+DWORD WINAPI CertRDNValueToStrA(DWORD type, PCERT_RDN_VALUE_BLOB value_blob,
+                                LPSTR value, DWORD value_len)
 {
-    DWORD ret = 0, len;
+    DWORD len, len_mb, ret;
+    LPWSTR valueW;
 
-    TRACE("(%ld, %p, %p, %ld)\n", dwValueType, pValue, psz, csz);
+    TRACE("(%ld, %p, %p, %ld)\n", type, value_blob, value, value_len);
 
-    switch (dwValueType)
+    len = CertRDNValueToStrW(type, value_blob, NULL, 0);
+
+    if (!(valueW = CryptMemAlloc(len * sizeof(*valueW))))
     {
-    case CERT_RDN_ANY_TYPE:
-        break;
-    case CERT_RDN_NUMERIC_STRING:
-    case CERT_RDN_PRINTABLE_STRING:
-    case CERT_RDN_TELETEX_STRING:
-    case CERT_RDN_VIDEOTEX_STRING:
-    case CERT_RDN_IA5_STRING:
-    case CERT_RDN_GRAPHIC_STRING:
-    case CERT_RDN_VISIBLE_STRING:
-    case CERT_RDN_GENERAL_STRING:
-        len = pValue->cbData;
-        if (!psz || !csz)
-            ret = len;
-        else
-        {
-            DWORD chars = min(len, csz - 1);
-
-            if (chars)
-            {
-                memcpy(psz, pValue->pbData, chars);
-                ret += chars;
-                csz -= chars;
-            }
-        }
-        break;
-    case CERT_RDN_BMP_STRING:
-    case CERT_RDN_UTF8_STRING:
-        len = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)pValue->pbData,
-         pValue->cbData / sizeof(WCHAR), NULL, 0, NULL, NULL);
-        if (!psz || !csz)
-            ret = len;
-        else
-        {
-            DWORD chars = min(pValue->cbData / sizeof(WCHAR), csz - 1);
-
-            if (chars)
-            {
-                ret = WideCharToMultiByte(CP_ACP, 0, (LPCWSTR)pValue->pbData,
-                 chars, psz, csz - 1, NULL, NULL);
-                csz -= ret;
-            }
-        }
-        break;
-    default:
-        FIXME("string type %ld unimplemented\n", dwValueType);
+        ERR("No memory.\n");
+        if (value && value_len) *value = 0;
+        return 1;
     }
-    if (psz && csz)
+
+    len = CertRDNValueToStrW(type, value_blob, valueW, len);
+    len_mb = WideCharToMultiByte(CP_ACP, 0, valueW, len, NULL, 0, NULL, NULL);
+    if (!value || !value_len)
     {
-        *(psz + ret) = '\0';
-        csz--;
-        ret++;
+        CryptMemFree(valueW);
+        return len_mb;
     }
-    else
-        ret++;
-    TRACE("returning %ld (%s)\n", ret, debugstr_a(psz));
+
+    ret = WideCharToMultiByte(CP_ACP, 0, valueW, len, value, value_len, NULL, NULL);
+    if (ret < len_mb)
+    {
+        value[0] = 0;
+        ret = 1;
+    }
+    CryptMemFree(valueW);
     return ret;
 }
 
