@@ -704,6 +704,7 @@ enum
     NtUserCallOneParam_GetClipCursor,
     NtUserCallOneParam_GetCursorPos,
     NtUserCallOneParam_GetIconParam,
+    NtUserCallOneParam_GetMenuItemCount,
     NtUserCallOneParam_GetPrimaryMonitorRect,
     NtUserCallOneParam_GetSysColor,
     NtUserCallOneParam_GetSysColorBrush,
@@ -771,6 +772,11 @@ static inline BOOL NtUserGetCursorPos( POINT *pt )
 static inline UINT_PTR NtUserGetIconParam( HICON icon )
 {
     return NtUserCallOneParam( HandleToUlong(icon), NtUserCallOneParam_GetIconParam );
+}
+
+static inline UINT_PTR NtUserGetMenuItemCount( HMENU menu )
+{
+    return NtUserCallOneParam( HandleToUlong(menu), NtUserCallOneParam_GetMenuItemCount );
 }
 
 static inline RECT NtUserGetPrimaryMonitorRect(void)

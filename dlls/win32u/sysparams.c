@@ -4718,6 +4718,9 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
     case NtUserCallOneParam_GetIconParam:
         return get_icon_param( UlongToHandle(arg) );
 
+    case NtUserCallOneParam_GetMenuItemCount:
+        return get_menu_item_count( UlongToHandle(arg) );
+
     case NtUserCallOneParam_GetSysColor:
         return get_sys_color( arg );
 

@@ -3696,17 +3696,9 @@ UINT WINAPI GetMenuState( HMENU menu, UINT item, UINT flags )
 /**********************************************************************
  *         GetMenuItemCount    (USER32.@)
  */
-INT WINAPI GetMenuItemCount( HMENU hMenu )
+INT WINAPI GetMenuItemCount( HMENU menu )
 {
-    POPUPMENU *menu = grab_menu_ptr(hMenu);
-    INT count;
-
-    if (!menu) return -1;
-    count = menu->nItems;
-    release_menu_ptr(menu);
-
-    TRACE("(%p) returning %d\n", hMenu, count);
-    return count;
+    return NtUserGetMenuItemCount( menu );
 }
 
 

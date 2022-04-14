@@ -864,6 +864,20 @@ UINT WINAPI NtUserThunkedMenuItemInfo( HMENU handle, UINT pos, UINT flags, UINT 
     return ret;
 }
 
+/* see GetMenuItemCount */
+INT get_menu_item_count( HMENU handle )
+{
+    POPUPMENU *menu;
+    INT count;
+
+    if (!(menu = grab_menu_ptr( handle ))) return -1;
+    count = menu->nItems;
+    release_menu_ptr(menu);
+
+    TRACE( "(%p) returning %d\n", handle, count );
+    return count;
+}
+
 /**********************************************************************
  *           NtUserRemoveMenu    (win32u.@)
  */
