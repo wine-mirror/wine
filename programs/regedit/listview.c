@@ -112,10 +112,9 @@ void format_value_data(HWND hwndLV, int index, DWORD type, void *data, DWORD siz
         {
             DWORD value = *(DWORD *)data;
             WCHAR buf[64];
-            WCHAR format[] = {'0','x','%','0','8','x',' ','(','%','u',')',0};
             if (type == REG_DWORD_BIG_ENDIAN)
                 value = RtlUlongByteSwap(value);
-            wsprintfW(buf, format, value, value);
+            wsprintfW(buf, L"0x%08x (%u)", value, value);
             ListView_SetItemTextW(hwndLV, index, 2, buf);
             break;
         }
@@ -130,9 +129,8 @@ void format_value_data(HWND hwndLV, int index, DWORD type, void *data, DWORD siz
             unsigned int i;
             BYTE *pData = data;
             WCHAR *strBinary = heap_xalloc(size * sizeof(WCHAR) * 3 + sizeof(WCHAR));
-            WCHAR format[] = {'%','0','2','X',' ',0};
             for (i = 0; i < size; i++)
-                wsprintfW( strBinary + i*3, format, pData[i] );
+                wsprintfW( strBinary + i*3, L"%02X ", pData[i] );
             strBinary[size * 3] = 0;
             ListView_SetItemTextW(hwndLV, index, 2, strBinary);
             heap_free(strBinary);
@@ -242,17 +240,16 @@ static BOOL CreateListColumns(HWND hWndListView)
 void OnGetDispInfo(NMLVDISPINFOW *plvdi)
 {
     static WCHAR buffer[200];
-    static WCHAR reg_szT[]               = {'R','E','G','_','S','Z',0},
-                 reg_expand_szT[]        = {'R','E','G','_','E','X','P','A','N','D','_','S','Z',0},
-                 reg_binaryT[]           = {'R','E','G','_','B','I','N','A','R','Y',0},
-                 reg_dwordT[]            = {'R','E','G','_','D','W','O','R','D',0},
-                 reg_dword_big_endianT[] = {'R','E','G','_','D','W','O','R','D','_',
-                                            'B','I','G','_','E','N','D','I','A','N',0},
-                 reg_multi_szT[]         = {'R','E','G','_','M','U','L','T','I','_','S','Z',0},
-                 reg_linkT[]             = {'R','E','G','_','L','I','N','K',0},
-                 reg_resource_listT[]    = {'R','E','G','_','R','E','S','O','U','R','C','E','_','L','I','S','T',0},
-                 reg_noneT[]             = {'R','E','G','_','N','O','N','E',0},
-                 emptyT[]                = {0};
+    static WCHAR reg_szT[]               = L"REG_SZ",
+                 reg_expand_szT[]        = L"REG_EXPAND_SZ",
+                 reg_binaryT[]           = L"REG_BINARY",
+                 reg_dwordT[]            = L"REG_DWORD",
+                 reg_dword_big_endianT[] = L"REG_DWORD_BIG_ENDIAN",
+                 reg_multi_szT[]         = L"REG_MULTI_SZ",
+                 reg_linkT[]             = L"REG_LINK",
+                 reg_resource_listT[]    = L"REG_RESOURCE_LIST",
+                 reg_noneT[]             = L"REG_NONE",
+                 emptyT[]                = L"";
 
     plvdi->item.pszText = NULL;
     plvdi->item.cchTextMax = 0;
@@ -295,8 +292,7 @@ void OnGetDispInfo(NMLVDISPINFOW *plvdi)
             break;
         default:
           {
-            WCHAR fmt[] = {'0','x','%','x',0};
-            wsprintfW(buffer, fmt, data_type);
+            wsprintfW(buffer, L"0x%x", data_type);
             plvdi->item.pszText = buffer;
             break;
           }
@@ -348,14 +344,13 @@ HWND CreateListView(HWND hwndParent, UINT id)
 {
     RECT rcClient;
     HWND hwndLV;
-    WCHAR ListView[] = {'L','i','s','t',' ','V','i','e','w',0};
 
     /* prepare strings */
     LoadStringW(hInst, IDS_REGISTRY_VALUE_NOT_SET, g_szValueNotSet, ARRAY_SIZE(g_szValueNotSet));
 
     /* Get the dimensions of the parent window's client area, and create the list view control.  */
     GetClientRect(hwndParent, &rcClient);
-    hwndLV = CreateWindowExW(WS_EX_CLIENTEDGE, WC_LISTVIEWW, ListView,
+    hwndLV = CreateWindowExW(WS_EX_CLIENTEDGE, WC_LISTVIEWW, L"List View",
                             WS_VISIBLE | WS_CHILD | WS_TABSTOP | LVS_REPORT | LVS_EDITLABELS,
                             0, 0, rcClient.right, rcClient.bottom,
                             hwndParent, ULongToHandle(id), hInst, NULL);
