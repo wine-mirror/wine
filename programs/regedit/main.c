@@ -51,7 +51,7 @@ HMENU hPopupMenus = 0;
 UINT nClipboardFormat;
 
 #define MAX_LOADSTRING  100
-WCHAR szTitle[MAX_LOADSTRING];
+static WCHAR szTitle[MAX_LOADSTRING];
 const WCHAR szChildClass[] = L"REGEDIT";
 static const WCHAR szFrameClass[] = L"RegEdit_RegEdit";
 
