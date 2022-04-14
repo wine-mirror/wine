@@ -166,6 +166,7 @@ static HRESULT set_map_entry(MapInstance *map, jsval_t key, jsval_t value, jsval
 static HRESULT iterate_map(MapInstance *map, script_ctx_t *ctx, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     struct jsval_map_entry *entry;
+    IDispatch *context_obj = NULL;
     HRESULT hres;
 
     if(!argc || !is_object_instance(argv[0])) {
@@ -173,9 +174,12 @@ static HRESULT iterate_map(MapInstance *map, script_ctx_t *ctx, unsigned argc, j
         return E_FAIL;
     }
 
-    if(argc > 1) {
-        FIXME("Unsupported argument\n");
-        return E_NOTIMPL;
+    if(argc > 1 && !is_undefined(argv[1])) {
+        if(!is_object_instance(argv[1])) {
+            FIXME("Unsupported context this %s\n", debugstr_jsval(argv[1]));
+            return E_NOTIMPL;
+        }
+        context_obj = get_object(argv[1]);
     }
 
     LIST_FOR_EACH_ENTRY(entry, &map->entries, struct jsval_map_entry, list_entry) {
@@ -186,8 +190,8 @@ static HRESULT iterate_map(MapInstance *map, script_ctx_t *ctx, unsigned argc, j
         args[1] = entry->key;
         args[2] = jsval_obj(&map->dispex);
         grab_map_entry(entry);
-        hres = disp_call_value(ctx, get_object(argv[0]), NULL, DISPATCH_METHOD,
-                               ARRAY_SIZE(args), args, &v);
+        hres = disp_call_value(ctx, get_object(argv[0]), context_obj,
+                               DISPATCH_METHOD, ARRAY_SIZE(args), args, &v);
         release_map_entry(entry);
         if(FAILED(hres))
             return hres;

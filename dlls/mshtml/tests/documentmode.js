@@ -1004,8 +1004,9 @@ sync_test("map_obj", function() {
             ok(value === key + 1, "value = " + value);
         }
         ok(map === s, "map = " + map);
+        ok(this === test_keys, "this = " + this);
         i++;
-    });
+    }, test_keys);
     ok(i === test_keys.length, "i = " + i);
     ok(r === undefined, "forEach returned " + r);
 
