@@ -181,7 +181,8 @@ static HRESULT ActiveXObject_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flag
         return E_NOTIMPL;
     }
 
-    *r = jsval_disp(disp);
+    if(r) *r = jsval_disp(disp);
+    else  IDispatch_Release(disp);
     return S_OK;
 }
 

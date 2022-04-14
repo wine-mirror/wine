@@ -1325,6 +1325,8 @@ static HRESULT ArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, 
 
             if(n < 0 || !is_int32(n))
                 return JS_E_INVALID_LENGTH;
+            if(!r)
+                return S_OK;
 
             hres = create_array(ctx, n, &obj);
             if(FAILED(hres))
@@ -1334,6 +1336,8 @@ static HRESULT ArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags, 
             return S_OK;
         }
 
+        if(!r)
+            return S_OK;
         hres = create_array(ctx, argc, &obj);
         if(FAILED(hres))
             return hres;

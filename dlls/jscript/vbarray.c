@@ -294,11 +294,13 @@ static HRESULT VBArrayConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD flags
         if(argc<1 || !is_variant(argv[0]) || V_VT(get_variant(argv[0])) != (VT_ARRAY|VT_VARIANT))
             return JS_E_VBARRAY_EXPECTED;
 
-        return jsval_copy(argv[0], r);
+        return r ? jsval_copy(argv[0], r) : S_OK;
 
     case DISPATCH_CONSTRUCT:
         if(argc<1 || !is_variant(argv[0]) || V_VT(get_variant(argv[0])) != (VT_ARRAY|VT_VARIANT))
             return JS_E_VBARRAY_EXPECTED;
+        if(!r)
+            return S_OK;
 
         hres = alloc_vbarray(ctx, NULL, &vbarray);
         if(FAILED(hres))

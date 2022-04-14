@@ -114,6 +114,8 @@ static HRESULT Set_constructor(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     case DISPATCH_CONSTRUCT:
         TRACE("\n");
 
+        if(!r)
+            return S_OK;
         if(!(set = heap_alloc_zero(sizeof(*set))))
             return E_OUTOFMEMORY;
 
@@ -440,6 +442,8 @@ static HRESULT Map_constructor(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, u
     case DISPATCH_CONSTRUCT:
         TRACE("\n");
 
+        if(!r)
+            return S_OK;
         if(!(map = heap_alloc_zero(sizeof(*map))))
             return E_OUTOFMEMORY;
 

@@ -1000,7 +1000,8 @@ static HRESULT FunctionConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD fla
         if(FAILED(hres))
             return hres;
 
-        *r = jsval_disp(ret);
+        if(r) *r = jsval_disp(ret);
+        else  IDispatch_Release(ret);
         break;
     }
     default:

@@ -145,6 +145,9 @@ static HRESULT BoolConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags, 
     case DISPATCH_CONSTRUCT: {
         jsdisp_t *bool;
 
+        if(!r)
+            return S_OK;
+
         hres = create_bool(ctx, value, &bool);
         if(FAILED(hres))
             return hres;

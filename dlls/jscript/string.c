@@ -1642,7 +1642,8 @@ static HRESULT StringConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
             str = jsstr_empty();
         }
 
-        *r = jsval_string(str);
+        if(r) *r = jsval_string(str);
+        else  jsstr_release(str);
         break;
     }
     case DISPATCH_CONSTRUCT: {
@@ -1657,8 +1658,10 @@ static HRESULT StringConstr_value(script_ctx_t *ctx, vdisp_t *jsthis, WORD flags
             str = jsstr_empty();
         }
 
-        hres = create_string(ctx, str, &ret);
-        if (SUCCEEDED(hres)) *r = jsval_obj(ret);
+        if(r) {
+            hres = create_string(ctx, str, &ret);
+            if(SUCCEEDED(hres)) *r = jsval_obj(ret);
+        }
         jsstr_release(str);
         return hres;
     }

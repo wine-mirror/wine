@@ -304,7 +304,8 @@ static HRESULT EnumeratorConstr_value(script_ctx_t *ctx, vdisp_t *vthis, WORD fl
         if(FAILED(hres))
             return hres;
 
-        *r = jsval_obj(obj);
+        if(r) *r = jsval_obj(obj);
+        else  jsdisp_release(obj);
         break;
     }
     default:

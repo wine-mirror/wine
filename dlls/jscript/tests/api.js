@@ -278,6 +278,8 @@ ok(Object.prototype.hasOwnProperty('toString'), "Object.prototype.hasOwnProperty
 ok(Object.prototype.hasOwnProperty('isPrototypeOf'), "Object.prototype.hasOwnProperty('isPrototypeOf') is false");
 ok(Function.prototype.hasOwnProperty('call'), "Function.prototype.hasOwnProperty('call') is false");
 
+Object();
+new Object();
 obj = new Object();
 
 ok(!obj.hasOwnProperty('toString'), "obj.hasOwnProperty('toString') is true");
@@ -287,28 +289,37 @@ ok(!Object.hasOwnProperty('isPrototypeOf'), "Object.hasOwnProperty('isPrototypeO
 ok(!parseFloat.hasOwnProperty('call'), "parseFloat.hasOwnProperty('call') is true");
 ok(!Function.hasOwnProperty('call'), "Function.hasOwnProperty('call') is true");
 
+Array();
+new Array();
 obj = new Array();
 ok(Array.prototype.hasOwnProperty('sort'), "Array.prototype.hasOwnProperty('sort') is false");
 ok(Array.prototype.hasOwnProperty('length'), "Array.prototype.hasOwnProperty('length') is false");
 ok(!obj.hasOwnProperty('sort'), "obj.hasOwnProperty('sort') is true");
 ok(obj.hasOwnProperty('length'), "obj.hasOwnProperty('length') is true");
 
+Boolean();
+new Boolean();
 obj = new Boolean(false);
 ok(!obj.hasOwnProperty('toString'), "obj.hasOwnProperty('toString') is true");
 ok(!Boolean.hasOwnProperty('toString'), "Boolean.hasOwnProperty('toString') is true");
 ok(Boolean.prototype.hasOwnProperty('toString'), "Boolean.prototype.hasOwnProperty('toString') is false");
 
+Date();
+new Date();
 obj = new Date();
 ok(!obj.hasOwnProperty('getTime'), "obj.hasOwnProperty('getTime') is true");
 ok(!Date.hasOwnProperty('getTime'), "Date.hasOwnProperty('getTime') is true");
 ok(Date.prototype.hasOwnProperty('getTime'), "Date.prototype.hasOwnProperty('getTime') is false");
 ok(!("now" in Date), "now found in Date");
 
+Number();
+new Number();
 obj = new Number();
 ok(!obj.hasOwnProperty('toFixed'), "obj.hasOwnProperty('toFixed') is true");
 ok(!Number.hasOwnProperty('toFixed'), "Number.hasOwnProperty('toFixed') is true");
 ok(Number.prototype.hasOwnProperty('toFixed'), "Number.prototype.hasOwnProperty('toFixed') is false");
 
+/x/;
 obj = /x/;
 ok(!obj.hasOwnProperty('exec'), "obj.hasOwnProperty('exec') is true");
 ok(obj.hasOwnProperty('source'), "obj.hasOwnProperty('source') is false");
@@ -316,6 +327,8 @@ ok(!RegExp.hasOwnProperty('exec'), "RegExp.hasOwnProperty('exec') is true");
 ok(!RegExp.hasOwnProperty('source'), "RegExp.hasOwnProperty('source') is true");
 ok(RegExp.prototype.hasOwnProperty('source'), "RegExp.prototype.hasOwnProperty('source') is false");
 
+String();
+new String();
 obj = new String();
 ok(!obj.hasOwnProperty('charAt'), "obj.hasOwnProperty('charAt') is true");
 ok(obj.hasOwnProperty('length'), "obj.hasOwnProperty('length') is false");
@@ -3064,6 +3077,8 @@ ok(String.length == 1, "String.length = " + String.length);
 var tmp = createArray();
 ok(getVT(tmp) == "VT_ARRAY|VT_VARIANT", "getVT(createArray()) = " + getVT(tmp));
 ok(getVT(VBArray(tmp)) == "VT_ARRAY|VT_VARIANT", "getVT(VBArray(tmp)) = " + getVT(VBArray(tmp)));
+VBArray(tmp);
+new VBArray(tmp);
 tmp = new VBArray(tmp);
 tmp = new VBArray(VBArray(createArray()));
 ok(tmp.dimensions() == 2, "tmp.dimensions() = " + tmp.dimensions());
