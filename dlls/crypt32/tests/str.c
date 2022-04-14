@@ -445,14 +445,14 @@ static void test_NameToStrConversionW_(unsigned int line, PCERT_NAME_BLOB pName,
 
     memset(buffer, 0xcc, sizeof(buffer));
     retlen = CertNameToStrW(X509_ASN_ENCODING, pName, dwStrType, buffer, len - 1);
-    todo_wine ok(retlen == len - 1, "line %u: expected %lu chars, got %lu\n", line, len - 1, retlen);
+    ok(retlen == len - 1, "line %u: expected %lu chars, got %lu\n", line, len - 1, retlen);
     ok(!wcsncmp(buffer, expected, retlen - 1), "line %u: expected %s, got %s\n",
             line, wine_dbgstr_w(expected), wine_dbgstr_w(buffer));
     ok(!buffer[retlen - 1], "line %u: string is not zero terminated.\n", line);
 
     memset(buffer, 0xcc, sizeof(buffer));
     retlen = CertNameToStrW(X509_ASN_ENCODING, pName, dwStrType, buffer, 0);
-    todo_wine ok(retlen == len, "line %u: expected %lu chars, got %lu\n", line, len - 1, retlen);
+    ok(retlen == len, "line %u: expected %lu chars, got %lu\n", line, len - 1, retlen);
     ok(buffer[0] == 0xcccc, "line %u: got %s\n", line, wine_dbgstr_w(buffer));
 }
 
@@ -768,7 +768,8 @@ static void test_CertGetNameString_value_(unsigned int line, PCCERT_CONTEXT cont
     ok(!wcscmp(strW, expectedW), "line %u: unexpected value %s.\n", line, debugstr_w(strW));
     strW[0] = strW[1] = 0xcccc;
     retlen = CertGetNameStringW(context, type, 0, type_para, strW, len - 1);
-    todo_wine ok(retlen == len - 1, "line %u: unexpected len %lu, expected %lu.\n", line, retlen, len - 1);
+    todo_wine_if(type != CERT_NAME_RDN_TYPE)
+        ok(retlen == len - 1, "line %u: unexpected len %lu, expected %lu.\n", line, retlen, len - 1);
     ok(!wcsncmp(strW, expectedW, retlen - 1), "line %u: string data mismatch.\n", line);
     ok(!strW[retlen - 1], "line %u: string is not zero terminated.\n", line);
     retlen = CertGetNameStringA(context, type, 0, type_para, NULL, len - 1);

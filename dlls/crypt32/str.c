@@ -375,14 +375,6 @@ static DWORD quote_rdn_value_to_str_w(DWORD dwValueType,
     default:
         FIXME("string type %ld unimplemented\n", dwValueType);
     }
-    if (psz && csz)
-    {
-        *(psz + ret) = '\0';
-        csz--;
-        ret++;
-    }
-    else
-        ret++;
     TRACE("returning %ld (%s)\n", ret, debugstr_w(psz));
     return ret;
 }
@@ -580,6 +572,7 @@ DWORD cert_name_to_str_with_indent(DWORD dwCertEncodingType, DWORD indentLevel,
     DWORD ret = 0, bytes = 0;
     BOOL bRet;
     CERT_NAME_INFO *info;
+    DWORD chars;
 
     if (dwStrType & unsupportedFlags)
         FIXME("unsupported flags: %08lx\n", dwStrType & unsupportedFlags);
@@ -607,13 +600,16 @@ DWORD cert_name_to_str_with_indent(DWORD dwCertEncodingType, DWORD indentLevel,
         else
             rdnSep = L" + ";
         rdnSepLen = lstrlenW(rdnSep);
-        for (i = 0; (!psz || ret < csz) && i < info->cRDN; i++)
+        if (!csz) psz = NULL;
+        for (i = 0; i < info->cRDN; i++)
         {
-            for (j = 0; (!psz || ret < csz) && j < rdn->cRDNAttr; j++)
+            if (psz && ret + 1 == csz) break;
+            for (j = 0; j < rdn->cRDNAttr; j++)
             {
-                DWORD chars;
                 LPCSTR prefixA = NULL;
                 LPCWSTR prefixW = NULL;
+
+                if (psz && ret + 1 == csz) break;
 
                 if ((dwStrType & 0x000000ff) == CERT_OID_NAME_STR)
                     prefixA = rdn->rgRDNAttr[j].pszObjId;
@@ -644,6 +640,7 @@ DWORD cert_name_to_str_with_indent(DWORD dwCertEncodingType, DWORD indentLevel,
                             chars = lstrlenW(indent);
                         ret += chars;
                     }
+                    if (psz && ret + 1 == csz) break;
                 }
                 if (prefixW)
                 {
@@ -659,38 +656,40 @@ DWORD cert_name_to_str_with_indent(DWORD dwCertEncodingType, DWORD indentLevel,
                      psz ? psz + ret : NULL, psz ? csz - ret - 1 : 0);
                     ret += chars;
                 }
-                chars = quote_rdn_value_to_str_w(
-                 rdn->rgRDNAttr[j].dwValueType,
-                 &rdn->rgRDNAttr[j].Value, psz ? psz + ret : NULL,
-                 psz ? csz - ret : 0);
-                if (chars)
-                    ret += chars - 1;
+                if (psz && ret + 1 == csz) break;
+
+                chars = quote_rdn_value_to_str_w(rdn->rgRDNAttr[j].dwValueType, &rdn->rgRDNAttr[j].Value,
+                                                 psz ? psz + ret : NULL, psz ? csz - ret - 1 : 0);
+                ret += chars;
                 if (j < rdn->cRDNAttr - 1)
                 {
-                    if (psz && ret < csz - rdnSepLen - 1)
-                        memcpy(psz + ret, rdnSep, rdnSepLen * sizeof(WCHAR));
-                    ret += rdnSepLen;
+                    if (psz)
+                    {
+                        chars = min(rdnSepLen, csz - ret - 1);
+                        memcpy(psz + ret, rdnSep, chars * sizeof(WCHAR));
+                        ret += chars;
+                    }
+                    else ret += rdnSepLen;
                 }
             }
+            if (psz && ret + 1 == csz) break;
             if (i < info->cRDN - 1)
             {
-                if (psz && ret < csz - sepLen - 1)
-                    memcpy(psz + ret, sep, sepLen * sizeof(WCHAR));
-                ret += sepLen;
+                if (psz)
+                {
+                    chars = min(sepLen, csz - ret - 1);
+                    memcpy(psz + ret, sep, chars * sizeof(WCHAR));
+                    ret += chars;
+                }
+                else ret += sepLen;
             }
             if(reverse) rdn--;
             else rdn++;
         }
         LocalFree(info);
     }
-    if (psz && csz)
-    {
-        *(psz + ret) = '\0';
-        ret++;
-    }
-    else
-        ret++;
-    return ret;
+    if (psz && csz) psz[ret] = 0;
+    return ret + 1;
 }
 
 DWORD WINAPI CertNameToStrW(DWORD dwCertEncodingType, PCERT_NAME_BLOB pName,
