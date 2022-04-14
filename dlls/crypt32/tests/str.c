@@ -39,7 +39,6 @@ typedef struct _CertRDNAttrEncodingW {
     DWORD  dwValueType;
     CERT_RDN_VALUE_BLOB Value;
     LPCWSTR str;
-    BOOL todo;
 } CertRDNAttrEncodingW, *PCertRDNAttrEncodingW;
 
 static BYTE bin1[] = { 0x55, 0x53 };
@@ -202,33 +201,34 @@ static void test_CertRDNValueToStrW(void)
     static const WCHAR ePKIW[] = L"ePKI Root Certification Authority";
     CertRDNAttrEncodingW attrs[] = {
      { "2.5.4.6", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin1), bin1 }, L"US", FALSE },
+       { sizeof(bin1), bin1 }, L"US" },
      { "2.5.4.8", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin2), bin2 }, L"Minnesota", FALSE },
+       { sizeof(bin2), bin2 }, L"Minnesota" },
      { "2.5.4.7", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin3), bin3 }, L"Minneapolis", FALSE },
+       { sizeof(bin3), bin3 }, L"Minneapolis" },
      { "2.5.4.10", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin4), bin4 }, L"CodeWeavers", FALSE },
+       { sizeof(bin4), bin4 }, L"CodeWeavers" },
      { "2.5.4.11", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin5), bin5 }, L"Wine Development", FALSE },
+       { sizeof(bin5), bin5 }, L"Wine Development" },
      { "2.5.4.3", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin6), bin6 }, L"localhost", FALSE },
+       { sizeof(bin6), bin6 }, L"localhost" },
      { "1.2.840.113549.1.9.1", CERT_RDN_IA5_STRING,
-       { sizeof(bin7), bin7 }, L"aric@codeweavers.com", FALSE },
+       { sizeof(bin7), bin7 }, L"aric@codeweavers.com" },
      { "0", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin9), bin9 }, L"abc\"def", FALSE },
+       { sizeof(bin9), bin9 }, L"abc\"def" },
      { "0", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin10), bin10 }, L"abc'def", FALSE },
+       { sizeof(bin10), bin10 }, L"abc'def" },
      { "0", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin11), bin11 }, L"abc, def", FALSE },
+       { sizeof(bin11), bin11 }, L"abc, def" },
      { "0", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin12), bin12 }, L" abc ", FALSE },
+       { sizeof(bin12), bin12 }, L" abc " },
      { "0", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin13), bin13 }, L"\"def\"", FALSE },
+       { sizeof(bin13), bin13 }, L"\"def\"" },
      { "0", CERT_RDN_PRINTABLE_STRING,
-       { sizeof(bin14), bin14 }, L"1;3", FALSE },
+       { sizeof(bin14), bin14 }, L"1;3" },
     };
-    DWORD i, ret;
+    unsigned int i;
+    DWORD ret, len;
     WCHAR buffer[2000];
     CERT_RDN_VALUE_BLOB blob = { 0, NULL };
 
@@ -245,14 +245,20 @@ static void test_CertRDNValueToStrW(void)
 
     for (i = 0; i < ARRAY_SIZE(attrs); i++)
     {
-        ret = CertRDNValueToStrW(attrs[i].dwValueType, &attrs[i].Value, buffer, ARRAY_SIZE(buffer));
-        todo_wine_if (attrs[i].todo)
-        {
-            ok(ret == lstrlenW(attrs[i].str) + 1,
-             "Expected length %d, got %ld\n", lstrlenW(attrs[i].str) + 1, ret);
-            ok(!lstrcmpW(buffer, attrs[i].str), "Expected %s, got %s\n",
-             wine_dbgstr_w(attrs[i].str), wine_dbgstr_w(buffer));
-        }
+        len = CertRDNValueToStrW(attrs[i].dwValueType, &attrs[i].Value, buffer, ARRAY_SIZE(buffer));
+        ok(len == lstrlenW(attrs[i].str) + 1,
+         "Expected length %d, got %ld\n", lstrlenW(attrs[i].str) + 1, ret);
+        ok(!lstrcmpW(buffer, attrs[i].str), "Expected %s, got %s\n",
+         wine_dbgstr_w(attrs[i].str), wine_dbgstr_w(buffer));
+        memset(buffer, 0xcc, sizeof(buffer));
+        ret = CertRDNValueToStrW(attrs[i].dwValueType, &attrs[i].Value, buffer, len - 1);
+        ok(ret == 1, "Unexpected ret %lu, expected 1, test %u.\n", ret, i);
+        ok(!buffer[0], "Unexpected value %#x, test %u.\n", buffer[0], i);
+        ok(buffer[1] == 0xcccc, "Unexpected value %#x, test %u.\n", buffer[1], i);
+        memset(buffer, 0xcc, sizeof(buffer));
+        ret = CertRDNValueToStrW(attrs[i].dwValueType, &attrs[i].Value, buffer, 0);
+        ok(ret == len, "Unexpected ret %lu, expected %lu, test %u.\n", ret, len, i);
+        ok(buffer[0] == 0xcccc, "Unexpected value %#x, test %u.\n", buffer[0], i);
     }
     blob.pbData = bin8;
     blob.cbData = sizeof(bin8);

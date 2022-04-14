@@ -99,7 +99,7 @@ DWORD WINAPI CertRDNValueToStrA(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
 DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
  LPWSTR psz, DWORD csz)
 {
-    DWORD ret = 0, len, i, strLen;
+    DWORD ret = 0, len, i;
 
     TRACE("(%ld, %p, %p, %ld)\n", dwValueType, pValue, psz, csz);
 
@@ -116,44 +116,34 @@ DWORD WINAPI CertRDNValueToStrW(DWORD dwValueType, PCERT_RDN_VALUE_BLOB pValue,
     case CERT_RDN_VISIBLE_STRING:
     case CERT_RDN_GENERAL_STRING:
         len = pValue->cbData;
-        if (!psz || !csz)
-            ret = len;
-        else
+        if (!psz || !csz) ret = len;
+        else if (len < csz)
         {
-            WCHAR *ptr = psz;
-
-            for (i = 0; i < pValue->cbData && ptr - psz < csz; ptr++, i++)
-                *ptr = pValue->pbData[i];
-            ret = ptr - psz;
+            for (i = 0; i < len; ++i)
+                psz[i] = pValue->pbData[i];
+            ret = len;
         }
         break;
     case CERT_RDN_BMP_STRING:
     case CERT_RDN_UTF8_STRING:
-        strLen = len = pValue->cbData / sizeof(WCHAR);
+        len = pValue->cbData / sizeof(WCHAR);
         if (!psz || !csz)
             ret = len;
-        else
+        else if (len < csz)
         {
             WCHAR *ptr = psz;
 
-            for (i = 0; i < strLen && ptr - psz < csz; ptr++, i++)
-                *ptr = ((LPCWSTR)pValue->pbData)[i];
-            ret = ptr - psz;
+            for (i = 0; i < len; ++i)
+                ptr[i] = ((LPCWSTR)pValue->pbData)[i];
+            ret = len;
         }
         break;
     default:
         FIXME("string type %ld unimplemented\n", dwValueType);
     }
-    if (psz && csz)
-    {
-        *(psz + ret) = '\0';
-        csz--;
-        ret++;
-    }
-    else
-        ret++;
-    TRACE("returning %ld (%s)\n", ret, debugstr_w(psz));
-    return ret;
+    if (psz && csz) psz[ret] = 0;
+    TRACE("returning %ld (%s)\n", ret + 1, debugstr_w(psz));
+    return ret + 1;
 }
 
 static inline BOOL is_quotable_char(WCHAR c)
