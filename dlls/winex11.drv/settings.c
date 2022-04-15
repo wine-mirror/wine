@@ -192,16 +192,19 @@ void init_registry_display_settings(void)
 {
     DEVMODEW dm = {.dmSize = sizeof(dm)};
     DISPLAY_DEVICEW dd = {sizeof(dd)};
+    UNICODE_STRING device_name;
     DWORD i = 0;
     LONG ret;
 
-    while (EnumDisplayDevicesW(NULL, i++, &dd, 0))
+    while (!NtUserEnumDisplayDevices( NULL, i++, &dd, 0 ))
     {
+        RtlInitUnicodeString( &device_name, dd.DeviceName );
+
         /* Skip if the device already has registry display settings */
-        if (EnumDisplaySettingsExW(dd.DeviceName, ENUM_REGISTRY_SETTINGS, &dm, 0))
+        if (NtUserEnumDisplaySettings( &device_name, ENUM_REGISTRY_SETTINGS, &dm, 0 ))
             continue;
 
-        if (!EnumDisplaySettingsExW(dd.DeviceName, ENUM_CURRENT_SETTINGS, &dm, 0))
+        if (!NtUserEnumDisplaySettings( &device_name, ENUM_CURRENT_SETTINGS, &dm, 0 ))
         {
             ERR("Failed to query current display settings for %s.\n", wine_dbgstr_w(dd.DeviceName));
             continue;
@@ -211,8 +214,8 @@ void init_registry_display_settings(void)
               wine_dbgstr_w(dd.DeviceName), dm.dmPelsWidth, dm.dmPelsHeight, dm.dmBitsPerPel,
               dm.dmDisplayFrequency, dm.u1.s2.dmPosition.x, dm.u1.s2.dmPosition.y);
 
-        ret = ChangeDisplaySettingsExW(dd.DeviceName, &dm, NULL,
-                                       CDS_GLOBAL | CDS_NORESET | CDS_UPDATEREGISTRY, NULL);
+        ret = NtUserChangeDisplaySettings( &device_name, &dm, NULL,
+                                           CDS_GLOBAL | CDS_NORESET | CDS_UPDATEREGISTRY, NULL );
         if (ret != DISP_CHANGE_SUCCESSFUL)
             ERR("Failed to save registry display settings for %s, returned %d.\n",
                 wine_dbgstr_w(dd.DeviceName), ret);
@@ -360,7 +363,7 @@ BOOL get_primary_adapter(WCHAR *name)
     DWORD i;
 
     dd.cb = sizeof(dd);
-    for (i = 0; EnumDisplayDevicesW(NULL, i, &dd, 0); ++i)
+    for (i = 0; !NtUserEnumDisplayDevices( NULL, i, &dd, 0 ); ++i)
     {
         if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
         {
@@ -627,9 +630,10 @@ static LONG get_display_settings(struct x11drv_display_setting **new_displays,
     INT display_idx, display_count = 0;
     DISPLAY_DEVICEW display_device;
     LONG ret = DISP_CHANGE_FAILED;
+    UNICODE_STRING device_name;
 
     display_device.cb = sizeof(display_device);
-    for (display_idx = 0; EnumDisplayDevicesW(NULL, display_idx, &display_device, 0); ++display_idx)
+    for (display_idx = 0; !NtUserEnumDisplayDevices( NULL, display_idx, &display_device, 0 ); ++display_idx)
         ++display_count;
 
     displays = heap_calloc(display_count, sizeof(*displays));
@@ -638,7 +642,7 @@ static LONG get_display_settings(struct x11drv_display_setting **new_displays,
 
     for (display_idx = 0; display_idx < display_count; ++display_idx)
     {
-        if (!EnumDisplayDevicesW(NULL, display_idx, &display_device, 0))
+        if (NtUserEnumDisplayDevices( NULL, display_idx, &display_device, 0 ))
             goto done;
 
         if (!handler.get_id(display_device.DeviceName, &displays[display_idx].id))
@@ -647,11 +651,13 @@ static LONG get_display_settings(struct x11drv_display_setting **new_displays,
             goto done;
         }
 
+        RtlInitUnicodeString( &device_name, display_device.DeviceName );
+
         if (!dev_mode)
         {
             memset(&registry_mode, 0, sizeof(registry_mode));
             registry_mode.dmSize = sizeof(registry_mode);
-            if (!EnumDisplaySettingsExW(display_device.DeviceName, ENUM_REGISTRY_SETTINGS, &registry_mode, 0))
+            if (!NtUserEnumDisplaySettings( &device_name, ENUM_REGISTRY_SETTINGS, &registry_mode, 0 ))
                 goto done;
 
             displays[display_idx].desired_mode = registry_mode;
@@ -663,7 +669,7 @@ static LONG get_display_settings(struct x11drv_display_setting **new_displays,
             {
                 memset(&current_mode, 0, sizeof(current_mode));
                 current_mode.dmSize = sizeof(current_mode);
-                if (!EnumDisplaySettingsExW(display_device.DeviceName, ENUM_CURRENT_SETTINGS, &current_mode, 0))
+                if (!NtUserEnumDisplaySettings( &device_name, ENUM_CURRENT_SETTINGS, &current_mode, 0 ))
                     goto done;
 
                 displays[display_idx].desired_mode.dmFields |= DM_POSITION;
@@ -674,7 +680,7 @@ static LONG get_display_settings(struct x11drv_display_setting **new_displays,
         {
             memset(&current_mode, 0, sizeof(current_mode));
             current_mode.dmSize = sizeof(current_mode);
-            if (!EnumDisplaySettingsExW(display_device.DeviceName, ENUM_CURRENT_SETTINGS, &current_mode, 0))
+            if (!NtUserEnumDisplaySettings( &device_name, ENUM_CURRENT_SETTINGS, &current_mode, 0 ))
                 goto done;
 
             displays[display_idx].desired_mode = current_mode;
