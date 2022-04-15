@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-03-23 08:26+0200\n"
+"PO-Revision-Date: 2022-04-15 11:35+0300\n"
 "Last-Translator: Aurimas Fišeras <aurimas@members.fsf.org>\n"
 "Language-Team: Lithuanian <komp_lt@konf.lt>\n"
 "Language: lt\n"
@@ -3995,10 +3995,8 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "Negalima modifikuoti nerašomos savybės „|“"
 
 #: dlls/jscript/jscript.rc:79
-#, fuzzy
-#| msgid "'this' is not a Map object"
 msgid "'this' is not a | object"
-msgstr "„Šis“ nėra atvaizdžio objektas"
+msgstr "„Šis“ nėra | objektas"
 
 #: dlls/jscript/jscript.rc:80
 msgid "Property cannot have both accessors and a value"
