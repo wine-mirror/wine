@@ -193,6 +193,13 @@ struct get_next_packet_size_params
     UINT32 *frames;
 };
 
+struct get_frequency_params
+{
+    struct oss_stream *stream;
+    HRESULT result;
+    UINT64 *frequency;
+};
+
 struct set_event_handle_params
 {
     struct oss_stream *stream;
@@ -220,6 +227,7 @@ enum oss_funcs
     oss_get_latency,
     oss_get_current_padding,
     oss_get_next_packet_size,
+    oss_get_frequency,
     oss_set_event_handle,
 };
 
