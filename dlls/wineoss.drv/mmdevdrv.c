@@ -1442,52 +1442,19 @@ static HRESULT WINAPI AudioClock_GetPosition(IAudioClock *iface, UINT64 *pos,
         UINT64 *qpctime)
 {
     ACImpl *This = impl_from_IAudioClock(iface);
-    struct oss_stream *stream = This->stream;
+    struct get_position_params params;
 
     TRACE("(%p)->(%p, %p)\n", This, pos, qpctime);
 
     if(!pos)
         return E_POINTER;
 
-    oss_lock(stream);
+    params.stream = This->stream;
+    params.position = pos;
+    params.qpctime = qpctime;
+    OSS_CALL(get_position, &params);
 
-    if(stream->flow == eRender){
-        *pos = stream->written_frames - stream->held_frames;
-        if(*pos < stream->last_pos_frames)
-            *pos = stream->last_pos_frames;
-    }else if(stream->flow == eCapture){
-        audio_buf_info bi;
-        UINT32 held;
-
-        if(ioctl(stream->fd, SNDCTL_DSP_GETISPACE, &bi) < 0){
-            TRACE("GETISPACE failed: %d (%s)\n", errno, strerror(errno));
-            held = 0;
-        }else{
-            if(bi.bytes <= bi.fragsize)
-                held = 0;
-            else
-                held = bi.bytes / stream->fmt->nBlockAlign;
-        }
-
-        *pos = stream->written_frames + held;
-    }
-
-    stream->last_pos_frames = *pos;
-
-    TRACE("returning: %s\n", wine_dbgstr_longlong(*pos));
-    if(stream->share == AUDCLNT_SHAREMODE_SHARED)
-        *pos *= stream->fmt->nBlockAlign;
-
-    oss_unlock(stream);
-
-    if(qpctime){
-        LARGE_INTEGER stamp, freq;
-        QueryPerformanceCounter(&stamp);
-        QueryPerformanceFrequency(&freq);
-        *qpctime = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
-    }
-
-    return S_OK;
+    return params.result;
 }
 
 static HRESULT WINAPI AudioClock_GetCharacteristics(IAudioClock *iface,

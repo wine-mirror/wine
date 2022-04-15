@@ -1272,6 +1272,50 @@ static NTSTATUS get_frequency(void *args)
     return oss_unlock_result(stream, &params->result, S_OK);
 }
 
+static NTSTATUS get_position(void *args)
+{
+    struct get_position_params *params = args;
+    struct oss_stream *stream = params->stream;
+    UINT64 *pos = params->position, *qpctime = params->qpctime;
+
+    oss_lock(stream);
+
+    if(stream->flow == eRender){
+        *pos = stream->written_frames - stream->held_frames;
+        if(*pos < stream->last_pos_frames)
+            *pos = stream->last_pos_frames;
+    }else if(stream->flow == eCapture){
+        audio_buf_info bi;
+        UINT32 held;
+
+        if(ioctl(stream->fd, SNDCTL_DSP_GETISPACE, &bi) < 0){
+            TRACE("GETISPACE failed: %d (%s)\n", errno, strerror(errno));
+            held = 0;
+        }else{
+            if(bi.bytes <= bi.fragsize)
+                held = 0;
+            else
+                held = bi.bytes / stream->fmt->nBlockAlign;
+        }
+
+        *pos = stream->written_frames + held;
+    }
+
+    stream->last_pos_frames = *pos;
+
+    TRACE("returning: %s\n", wine_dbgstr_longlong(*pos));
+    if(stream->share == AUDCLNT_SHAREMODE_SHARED)
+        *pos *= stream->fmt->nBlockAlign;
+
+    if(qpctime){
+        LARGE_INTEGER stamp, freq;
+        NtQueryPerformanceCounter(&stamp, &freq);
+        *qpctime = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
+    }
+
+    return oss_unlock_result(stream, &params->result, S_OK);
+}
+
 static NTSTATUS set_event_handle(void *args)
 {
     struct set_event_handle_params *params = args;
@@ -1313,5 +1357,6 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_current_padding,
     get_next_packet_size,
     get_frequency,
+    get_position,
     set_event_handle,
 };

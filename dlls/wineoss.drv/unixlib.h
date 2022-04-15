@@ -200,6 +200,14 @@ struct get_frequency_params
     UINT64 *frequency;
 };
 
+struct get_position_params
+{
+    struct oss_stream *stream;
+    HRESULT result;
+    UINT64 *position;
+    UINT64 *qpctime;
+};
+
 struct set_event_handle_params
 {
     struct oss_stream *stream;
@@ -228,6 +236,7 @@ enum oss_funcs
     oss_get_current_padding,
     oss_get_next_packet_size,
     oss_get_frequency,
+    oss_get_position,
     oss_set_event_handle,
 };
 
