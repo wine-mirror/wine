@@ -457,7 +457,7 @@ static LRESULT MDI_RefreshMenu(MDICLIENTINFO *ci)
             AppendMenuW(ci->hWindowMenu, MF_STRING, id, buf);
 
             if (ci->child[i] == ci->hwndActiveChild)
-                CheckMenuItem(ci->hWindowMenu, id, MF_CHECKED);
+                NtUserCheckMenuItem(ci->hWindowMenu, id, MF_CHECKED);
         }
         else
             TRACE("MDI child %p is not visible, skipping\n", ci->child[i]);

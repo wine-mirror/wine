@@ -58,27 +58,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(menu);
 WINE_DECLARE_DEBUG_CHANNEL(accel);
 
-/* Menu item structure */
-typedef struct menu_item {
-    /* ----------- MENUITEMINFO Stuff ----------- */
-    UINT fType;			/* Item type. */
-    UINT fState;		/* Item state.  */
-    UINT_PTR wID;		/* Item id.  */
-    HMENU hSubMenu;		/* Pop-up menu.  */
-    HBITMAP hCheckBit;		/* Bitmap when checked.  */
-    HBITMAP hUnCheckBit;	/* Bitmap when unchecked.  */
-    LPWSTR text;		/* Item text. */
-    ULONG_PTR dwItemData;	/* Application defined.  */
-    LPWSTR dwTypeData;		/* depends on fMask */
-    HBITMAP hbmpItem;		/* bitmap */
-    /* ----------- Wine stuff ----------- */
-    RECT      rect;             /* Item area (relative to the items_rect).
-                                 * See MENU_AdjustMenuItemRect(). */
-    UINT      xTab;		/* X position of text after Tab */
-    SIZE   bmpsize;             /* size needed for the HBMMENU_CALLBACK
-                                 * bitmap */ 
-} MENUITEM;
-
 /* internal flags for menu tracking */
 
 #define TF_ENDMENU              0x10000
@@ -3662,28 +3641,6 @@ BOOL WINAPI ChangeMenuW( HMENU hMenu, UINT pos, LPCWSTR data,
                                               flags & ~MF_REMOVE );
     /* Default: MF_INSERT */
     return InsertMenuW( hMenu, pos, flags, id, data );
-}
-
-
-/*******************************************************************
- *         CheckMenuItem    (USER32.@)
- */
-DWORD WINAPI CheckMenuItem( HMENU hMenu, UINT id, UINT flags )
-{
-    POPUPMENU *menu;
-    MENUITEM *item;
-    DWORD ret;
-    UINT pos;
-
-    if (!(menu = find_menu_item(hMenu, id, flags, &pos)))
-        return -1;
-    item = &menu->items[pos];
-
-    ret = item->fState & MF_CHECKED;
-    if (flags & MF_CHECKED) item->fState |= MF_CHECKED;
-    else item->fState &= ~MF_CHECKED;
-    release_menu_ptr(menu);
-    return ret;
 }
 
 

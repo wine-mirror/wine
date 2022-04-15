@@ -616,3 +616,12 @@ NTSTATUS WINAPI wow64_NtUserDestroyAcceleratorTable( UINT *args )
 
     return NtUserDestroyAcceleratorTable( handle );
 }
+
+NTSTATUS WINAPI wow64_NtUserCheckMenuItem( UINT *args )
+{
+    HMENU handle = get_handle( &args );
+    UINT id = get_ulong( &args );
+    UINT flags = get_ulong( &args );
+
+    return NtUserCheckMenuItem( handle, id, flags );
+}

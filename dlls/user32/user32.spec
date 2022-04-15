@@ -63,7 +63,7 @@
 @ stdcall -import CharUpperBuffW(wstr long)
 @ stdcall -import CharUpperW(wstr)
 @ stdcall CheckDlgButton(long long long)
-@ stdcall CheckMenuItem(long long long)
+@ stdcall CheckMenuItem(long long long) NtUserCheckMenuItem
 @ stdcall CheckMenuRadioItem(long long long long long)
 @ stdcall CheckRadioButton(long long long long)
 @ stdcall ChildWindowFromPoint(long int64)

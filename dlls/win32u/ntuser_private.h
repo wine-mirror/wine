@@ -200,9 +200,29 @@ enum builtin_winprocs
     NB_BUILTIN_AW_WINPROCS = WINPROC_DESKTOP
 };
 
-struct menu_item;
-
 /* FIXME: make it private to menu.c */
+
+/* Menu item structure */
+typedef struct menu_item
+{
+    /* ----------- MENUITEMINFO Stuff ----------- */
+    UINT      fType;          /* Item type. */
+    UINT      fState;         /* Item state.  */
+    UINT_PTR  wID;            /* Item id.  */
+    HMENU     hSubMenu;       /* Pop-up menu.  */
+    HBITMAP   hCheckBit;      /* Bitmap when checked.  */
+    HBITMAP   hUnCheckBit;    /* Bitmap when unchecked.  */
+    LPWSTR    text;           /* Item text. */
+    ULONG_PTR dwItemData;     /* Application defined.  */
+    LPWSTR    dwTypeData;     /* depends on fMask */
+    HBITMAP   hbmpItem;       /* bitmap */
+    /* ----------- Wine stuff ----------- */
+    RECT      rect;           /* Item area (relative to the items_rect),
+                               * see MENU_AdjustMenuItemRect(). */
+    UINT      xTab;           /* X position of text after Tab */
+    SIZE      bmpsize;        /* size needed for the HBMMENU_CALLBACK bitmap */
+} MENUITEM;
+
 typedef struct
 {
     struct user_object obj;
