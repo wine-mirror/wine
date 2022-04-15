@@ -2154,9 +2154,11 @@ static void STDMETHODCALLTYPE d2d_device_context_SetUnitMode(ID2D1DeviceContext 
 
 static D2D1_UNIT_MODE STDMETHODCALLTYPE d2d_device_context_GetUnitMode(ID2D1DeviceContext *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
 
-    return D2D1_UNIT_MODE_DIPS;
+    TRACE("iface %p.\n", iface);
+
+    return context->drawing_state.unitMode;
 }
 
 static void STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_DrawGlyphRun(ID2D1DeviceContext *iface,
