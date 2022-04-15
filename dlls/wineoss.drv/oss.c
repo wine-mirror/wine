@@ -1243,6 +1243,19 @@ static NTSTATUS get_current_padding(void *args)
     return oss_unlock_result(stream, &params->result, S_OK);
 }
 
+static NTSTATUS get_next_packet_size(void *args)
+{
+    struct get_next_packet_size_params *params = args;
+    struct oss_stream *stream = params->stream;
+    UINT32 *frames = params->frames;
+
+    oss_lock(stream);
+
+    *frames = stream->held_frames < stream->period_frames ? 0 : stream->period_frames;
+
+    return oss_unlock_result(stream, &params->result, S_OK);
+}
+
 static NTSTATUS set_event_handle(void *args)
 {
     struct set_event_handle_params *params = args;
@@ -1282,5 +1295,6 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_buffer_size,
     get_latency,
     get_current_padding,
+    get_next_packet_size,
     set_event_handle,
 };

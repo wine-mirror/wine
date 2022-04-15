@@ -186,6 +186,13 @@ struct get_current_padding_params
     UINT32 *padding;
 };
 
+struct get_next_packet_size_params
+{
+    struct oss_stream *stream;
+    HRESULT result;
+    UINT32 *frames;
+};
+
 struct set_event_handle_params
 {
     struct oss_stream *stream;
@@ -212,6 +219,7 @@ enum oss_funcs
     oss_get_buffer_size,
     oss_get_latency,
     oss_get_current_padding,
+    oss_get_next_packet_size,
     oss_set_event_handle,
 };
 
