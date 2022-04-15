@@ -152,6 +152,13 @@ struct get_current_padding_params
     UINT32 *padding;
 };
 
+struct set_event_handle_params
+{
+    struct oss_stream *stream;
+    HANDLE event;
+    HRESULT result;
+};
+
 enum oss_funcs
 {
     oss_test_connect,
@@ -167,6 +174,7 @@ enum oss_funcs
     oss_get_buffer_size,
     oss_get_latency,
     oss_get_current_padding,
+    oss_set_event_handle,
 };
 
 extern unixlib_handle_t oss_handle;
