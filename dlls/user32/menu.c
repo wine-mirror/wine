@@ -4367,28 +4367,9 @@ HMENU WINAPI GetSubMenu( HMENU hMenu, INT nPos )
 /**********************************************************************
  *         DrawMenuBar    (USER32.@)
  */
-BOOL WINAPI DrawMenuBar( HWND hWnd )
+BOOL WINAPI DrawMenuBar( HWND hwnd )
 {
-    HMENU hMenu;
-
-    if (!IsWindow( hWnd ))
-        return FALSE;
-    if (is_win_menu_disallowed(hWnd))
-        return TRUE;
-
-    if ((hMenu = GetMenu( hWnd )))
-    {
-        POPUPMENU *menu = grab_menu_ptr(hMenu);
-        if (menu)
-        {
-            menu->Height = 0; /* Make sure we call MENU_MenuBarCalcSize */
-            menu->hwndOwner = hWnd;
-            release_menu_ptr(menu);
-        }
-    }
-
-    return NtUserSetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
-                               SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
+    return NtUserDrawMenuBar( hwnd );
 }
 
 /***********************************************************************

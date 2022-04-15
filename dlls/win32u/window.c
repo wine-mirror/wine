@@ -5069,6 +5069,9 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
     case NtUserCallHwnd_ArrangeIconicWindows:
         return arrange_iconic_windows( hwnd );
 
+    case NtUserCallHwnd_DrawMenuBar:
+        return draw_menu_bar( hwnd );
+
     case NtUserCallHwnd_GetDpiForWindow:
         return get_dpi_for_window( hwnd );
 

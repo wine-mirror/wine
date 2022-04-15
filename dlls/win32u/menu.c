@@ -196,6 +196,11 @@ static POPUPMENU *find_menu_item( HMENU handle, UINT id, UINT flags, UINT *pos )
     return menu;
 }
 
+static BOOL is_win_menu_disallowed( HWND hwnd )
+{
+    return (get_window_long(hwnd, GWL_STYLE) & (WS_CHILD | WS_POPUP)) == WS_CHILD;
+}
+
 /* see GetMenu */
 HMENU get_menu( HWND hwnd )
 {
@@ -318,4 +323,27 @@ BOOL WINAPI NtUserEnableMenuItem( HMENU handle, UINT id, UINT flags )
         release_menu_ptr( menu );
 
     return oldflags;
+}
+
+/* see DrawMenuBar */
+BOOL draw_menu_bar( HWND hwnd )
+{
+    HMENU handle;
+
+    if (!is_window( hwnd )) return FALSE;
+    if (is_win_menu_disallowed( hwnd )) return TRUE;
+
+    if ((handle = get_menu( hwnd )))
+    {
+        POPUPMENU *menu = grab_menu_ptr( handle );
+        if (menu)
+        {
+            menu->Height = 0; /* Make sure we call MENU_MenuBarCalcSize */
+            menu->hwndOwner = hwnd;
+            release_menu_ptr( menu );
+        }
+    }
+
+    return NtUserSetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
+                               SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
 }

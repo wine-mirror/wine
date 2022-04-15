@@ -777,6 +777,7 @@ static inline BOOL NtUserUnhookWindowsHook( INT id, HOOKPROC proc )
 enum
 {
     NtUserCallHwnd_ArrangeIconicWindows,
+    NtUserCallHwnd_DrawMenuBar,
     NtUserCallHwnd_GetDpiForWindow,
     NtUserCallHwnd_GetParent,
     NtUserCallHwnd_GetWindowContextHelpId,
@@ -791,6 +792,11 @@ enum
 static inline UINT NtUserArrangeIconicWindows( HWND parent )
 {
     return NtUserCallHwnd( parent, NtUserCallHwnd_ArrangeIconicWindows );
+}
+
+static inline BOOL NtUserDrawMenuBar( HWND hwnd )
+{
+    return NtUserCallHwnd( hwnd, NtUserCallHwnd_DrawMenuBar );
 }
 
 static inline DWORD NtUserGetWindowContextHelpId( HWND hwnd )

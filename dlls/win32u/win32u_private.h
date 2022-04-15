@@ -355,6 +355,7 @@ extern BOOL set_foreground_window( HWND hwnd, BOOL mouse ) DECLSPEC_HIDDEN;
 
 /* menu.c */
 extern HMENU create_menu( BOOL is_popup ) DECLSPEC_HIDDEN;
+extern BOOL draw_menu_bar( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HMENU get_menu( HWND hwnd ) DECLSPEC_HIDDEN;
 
 /* message.c */
