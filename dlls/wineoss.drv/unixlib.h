@@ -113,6 +113,14 @@ struct timer_loop_params
     struct oss_stream *stream;
 };
 
+struct get_render_buffer_params
+{
+    struct oss_stream *stream;
+    UINT32 frames;
+    HRESULT result;
+    BYTE **data;
+};
+
 struct is_format_supported_params
 {
     const char *device;
@@ -169,6 +177,7 @@ enum oss_funcs
     oss_stop,
     oss_reset,
     oss_timer_loop,
+    oss_get_render_buffer,
     oss_is_format_supported,
     oss_get_mix_format,
     oss_get_buffer_size,

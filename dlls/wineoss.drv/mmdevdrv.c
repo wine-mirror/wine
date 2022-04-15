@@ -1251,9 +1251,7 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
         UINT32 frames, BYTE **data)
 {
     ACImpl *This = impl_from_IAudioRenderClient(iface);
-    struct oss_stream *stream = This->stream;
-    UINT32 write_pos;
-    SIZE_T size;
+    struct get_render_buffer_params params;
 
     TRACE("(%p)->(%u, %p)\n", This, frames, data);
 
@@ -1262,53 +1260,12 @@ static HRESULT WINAPI AudioRenderClient_GetBuffer(IAudioRenderClient *iface,
 
     *data = NULL;
 
-    oss_lock(stream);
+    params.stream = This->stream;
+    params.frames = frames;
+    params.data = data;
+    OSS_CALL(get_render_buffer, &params);
 
-    if(stream->getbuf_last){
-        oss_unlock(stream);
-        return AUDCLNT_E_OUT_OF_ORDER;
-    }
-
-    if(!frames){
-        oss_unlock(stream);
-        return S_OK;
-    }
-
-    if(stream->held_frames + frames > stream->bufsize_frames){
-        oss_unlock(stream);
-        return AUDCLNT_E_BUFFER_TOO_LARGE;
-    }
-
-    write_pos =
-        (stream->lcl_offs_frames + stream->held_frames) % stream->bufsize_frames;
-    if(write_pos + frames > stream->bufsize_frames){
-        if(stream->tmp_buffer_frames < frames){
-            if(stream->tmp_buffer){
-                size = 0;
-                NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, &size, MEM_RELEASE);
-                stream->tmp_buffer = NULL;
-            }
-            size = frames * stream->fmt->nBlockAlign;
-            if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, 0, &size,
-                                       MEM_COMMIT, PAGE_READWRITE)){
-                stream->tmp_buffer_frames = 0;
-                oss_unlock(stream);
-                return E_OUTOFMEMORY;
-            }
-            stream->tmp_buffer_frames = frames;
-        }
-        *data = stream->tmp_buffer;
-        stream->getbuf_last = -frames;
-    }else{
-        *data = stream->local_buffer + write_pos * stream->fmt->nBlockAlign;
-        stream->getbuf_last = frames;
-    }
-
-    silence_buffer(stream, *data, frames);
-
-    oss_unlock(stream);
-
-    return S_OK;
+    return params.result;
 }
 
 static void oss_wrap_buffer(struct oss_stream *stream, BYTE *buffer, UINT32 written_frames)

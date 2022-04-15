@@ -876,6 +876,54 @@ static NTSTATUS timer_loop(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS get_render_buffer(void *args)
+{
+    struct get_render_buffer_params *params = args;
+    struct oss_stream *stream = params->stream;
+    UINT32 write_pos, frames = params->frames;
+    BYTE **data = params->data;
+    SIZE_T size;
+
+    oss_lock(stream);
+
+    if(stream->getbuf_last)
+        return oss_unlock_result(stream, &params->result, AUDCLNT_E_OUT_OF_ORDER);
+
+    if(!frames)
+        return oss_unlock_result(stream, &params->result, S_OK);
+
+    if(stream->held_frames + frames > stream->bufsize_frames)
+        return oss_unlock_result(stream, &params->result, AUDCLNT_E_BUFFER_TOO_LARGE);
+
+    write_pos =
+        (stream->lcl_offs_frames + stream->held_frames) % stream->bufsize_frames;
+    if(write_pos + frames > stream->bufsize_frames){
+        if(stream->tmp_buffer_frames < frames){
+            if(stream->tmp_buffer){
+                size = 0;
+                NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, &size, MEM_RELEASE);
+                stream->tmp_buffer = NULL;
+            }
+            size = frames * stream->fmt->nBlockAlign;
+            if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, 0, &size,
+                                       MEM_COMMIT, PAGE_READWRITE)){
+                stream->tmp_buffer_frames = 0;
+                return oss_unlock_result(stream, &params->result, E_OUTOFMEMORY);
+            }
+            stream->tmp_buffer_frames = frames;
+        }
+        *data = stream->tmp_buffer;
+        stream->getbuf_last = -frames;
+    }else{
+        *data = stream->local_buffer + write_pos * stream->fmt->nBlockAlign;
+        stream->getbuf_last = frames;
+    }
+
+    silence_buffer(stream, *data, frames);
+
+    return oss_unlock_result(stream, &params->result, S_OK);
+}
+
 static NTSTATUS is_format_supported(void *args)
 {
     struct is_format_supported_params *params = args;
@@ -1073,6 +1121,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     stop,
     reset,
     timer_loop,
+    get_render_buffer,
     is_format_supported,
     get_mix_format,
     get_buffer_size,
