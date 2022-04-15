@@ -579,6 +579,50 @@ static void test_menu(void)
     ok( ret, "NtUserDestroyMenu failed: %lu\n", GetLastError() );
 }
 
+static MSG *msg_ptr;
+
+static LRESULT WINAPI hook_proc( INT code, WPARAM wparam, LPARAM lparam )
+{
+    msg_ptr = (MSG *)lparam;
+    ok( code == 100, "code = %d\n", code );
+    ok( msg_ptr->time == 1, "time = %lx\n", msg_ptr->time );
+    ok( msg_ptr->wParam == 10, "wParam = %Ix\n", msg_ptr->wParam );
+    ok( msg_ptr->lParam == 20, "lParam = %Ix\n", msg_ptr->lParam );
+    msg_ptr->time = 3;
+    msg_ptr->wParam = 1;
+    msg_ptr->lParam = 2;
+    return CallNextHookEx( NULL, code, wparam, lparam );
+}
+
+static void test_message_filter(void)
+{
+    HHOOK hook;
+    MSG msg;
+    BOOL ret;
+
+    hook = SetWindowsHookExW( WH_MSGFILTER, hook_proc, NULL, GetCurrentThreadId() );
+    ok( hook != NULL, "SetWindowsHookExW failed\n");
+
+    memset( &msg, 0, sizeof(msg) );
+    msg.time = 1;
+    msg.wParam = 10;
+    msg.lParam = 20;
+    ret = NtUserCallMsgFilter( &msg, 100 );
+    ok( !ret, "CallMsgFilterW returned: %x\n", ret );
+    todo_wine
+    ok( msg_ptr != &msg, "our ptr was passed directly to hook\n" );
+
+    if (sizeof(void *) == 8) /* on some Windows versions, msg is not modified on wow64 */
+    {
+        ok( msg.time == 3, "time = %lx\n", msg.time );
+        ok( msg.wParam == 1, "wParam = %Ix\n", msg.wParam );
+        ok( msg.lParam == 2, "lParam = %Ix\n", msg.lParam );
+    }
+
+    ret = NtUserUnhookWindowsHookEx( hook );
+    ok( ret, "NtUserUnhookWindowsHook failed: %lu\n", GetLastError() );
+}
+
 START_TEST(win32u)
 {
     /* native win32u.dll fails if user32 is not loaded, so make sure it's fully initialized */
@@ -592,6 +636,7 @@ START_TEST(win32u)
     test_message_call();
     test_window_text();
     test_menu();
+    test_message_filter();
 
     test_NtUserCloseWindowStation();
 }

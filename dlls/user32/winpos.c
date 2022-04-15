@@ -786,7 +786,7 @@ static LONG start_size_move( HWND hwnd, WPARAM wParam, POINT *capturePoint, LONG
         while(!hittest)
         {
             if (!GetMessageW( &msg, 0, 0, 0 )) return 0;
-            if (CallMsgFilterW( &msg, MSGF_SIZE )) continue;
+            if (NtUserCallMsgFilter( &msg, MSGF_SIZE )) continue;
 
             switch(msg.message)
             {
@@ -952,7 +952,7 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
         int dx = 0, dy = 0;
 
         if (!GetMessageW( &msg, 0, 0, 0 )) break;
-        if (CallMsgFilterW( &msg, MSGF_SIZE )) continue;
+        if (NtUserCallMsgFilter( &msg, MSGF_SIZE )) continue;
 
         /* Exit on button-up, Return, or Esc */
         if ((msg.message == WM_LBUTTONUP) ||

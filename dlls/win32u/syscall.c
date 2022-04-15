@@ -106,6 +106,7 @@ static void * const syscalls[] =
     NtUserAddClipboardFormatListener,
     NtUserAttachThreadInput,
     NtUserBuildHwndList,
+    NtUserCallMsgFilter,
     NtUserCheckMenuItem,
     NtUserChildWindowFromPointEx,
     NtUserCloseDesktop,

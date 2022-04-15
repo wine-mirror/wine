@@ -1249,7 +1249,7 @@ static void NC_TrackMinMaxBox( HWND hwnd, WORD wParam )
         BOOL oldstate = pressed;
 
         if (!GetMessageW( &msg, 0, WM_MOUSEFIRST, WM_MOUSELAST )) break;
-        if (CallMsgFilterW( &msg, MSGF_MAX )) continue;
+        if (NtUserCallMsgFilter( &msg, MSGF_MAX )) continue;
 
         if(msg.message == WM_LBUTTONUP)
             break;
@@ -1314,7 +1314,7 @@ static void NC_TrackCloseButton (HWND hwnd, WPARAM wParam, LPARAM lParam)
         BOOL oldstate = pressed;
 
         if (!GetMessageW( &msg, 0, WM_MOUSEFIRST, WM_MOUSELAST )) break;
-        if (CallMsgFilterW( &msg, MSGF_MAX )) continue;
+        if (NtUserCallMsgFilter( &msg, MSGF_MAX )) continue;
 
         if(msg.message == WM_LBUTTONUP)
             break;
@@ -1464,7 +1464,7 @@ LRESULT NC_HandleNCRButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
         for (;;)
         {
             if (!GetMessageW( &msg, 0, WM_MOUSEFIRST, WM_MOUSELAST )) break;
-            if (CallMsgFilterW( &msg, MSGF_MAX )) continue;
+            if (NtUserCallMsgFilter( &msg, MSGF_MAX )) continue;
             if (msg.message == WM_RBUTTONUP)
             {
                 hittest = NC_HandleNCHitTest( hwnd, msg.pt );

@@ -172,6 +172,17 @@ BOOL unhook_windows_hook( INT id, HOOKPROC proc )
     return !status;
 }
 
+/***********************************************************************
+ *           NtUserCallMsgFilter (win32u.@)
+ */
+BOOL WINAPI NtUserCallMsgFilter( MSG *msg, INT code )
+{
+    /* FIXME: We should use NtCallbackReturn instead of passing (potentially kernel) pointer
+     * like that, but we need to consequently use syscall thunks first for that to work. */
+    if (call_hooks( WH_SYSMSGFILTER, code, 0, (LPARAM)msg, TRUE )) return TRUE;
+    return call_hooks( WH_MSGFILTER, code, 0, (LPARAM)msg, TRUE );
+}
+
 static UINT get_ll_hook_timeout(void)
 {
     /* FIXME: should retrieve LowLevelHooksTimeout in HKEY_CURRENT_USER\Control Panel\Desktop */

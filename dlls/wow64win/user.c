@@ -46,6 +46,42 @@ typedef struct
     UINT32  hbmpItem;
 } MENUITEMINFOW32;
 
+typedef struct
+{
+    UINT32  hwnd;
+    UINT    message;
+    UINT32  wParam;
+    UINT32  lParam;
+    DWORD   time;
+    POINT   pt;
+} MSG32;
+
+static MSG *msg_32to64( MSG *msg, MSG32 *msg32 )
+{
+    if (!msg32) return NULL;
+
+    msg->hwnd    = UlongToHandle( msg32->hwnd );
+    msg->message = msg32->message;
+    msg->wParam  = msg32->wParam;
+    msg->lParam  = msg32->lParam;
+    msg->time    = msg32->time;
+    msg->pt      = msg32->pt;
+    return msg;
+}
+
+static MSG32 *msg_64to32( MSG *msg, MSG32 *msg32 )
+{
+    if (!msg32) return NULL;
+
+    msg32->hwnd    = HandleToUlong( msg->hwnd );
+    msg32->message = msg->message;
+    msg32->wParam  = msg->wParam;
+    msg32->lParam  = msg->lParam;
+    msg32->time    = msg->time;
+    msg32->pt      = msg->pt;
+    return msg32;
+}
+
 NTSTATUS WINAPI wow64_NtUserInitializeClientPfnArrays( UINT *args )
 {
     FIXME( "\n" );
@@ -553,6 +589,18 @@ NTSTATUS WINAPI wow64_NtUserUnhookWindowsHookEx( UINT *args )
     HHOOK handle = get_handle( &args );
 
     return NtUserUnhookWindowsHookEx( handle );
+}
+
+NTSTATUS WINAPI wow64_NtUserCallMsgFilter( UINT *args )
+{
+    MSG32 *msg32 = get_ptr( &args );
+    INT code = get_ulong( &args );
+    MSG msg;
+    BOOL ret;
+
+    ret = NtUserCallMsgFilter( msg_32to64( &msg, msg32 ), code );
+    msg_64to32( &msg, msg32 );
+    return ret;
 }
 
 NTSTATUS WINAPI wow64_NtUserGetForegroundWindow( UINT *args )

@@ -2974,7 +2974,7 @@ static BOOL MENU_TrackMenu( HMENU hmenu, UINT wFlags, INT x, INT y,
         {
             if (PeekMessageW( &msg, 0, 0, 0, PM_NOREMOVE ))
             {
-                if (!CallMsgFilterW( &msg, MSGF_MENU )) break;
+                if (!NtUserCallMsgFilter( &msg, MSGF_MENU )) break;
                 /* remove the message from the queue */
                 PeekMessageW( &msg, 0, msg.message, msg.message, PM_REMOVE );
             }

@@ -776,7 +776,7 @@
 @ stub NtUserCallHwndParamLock
 @ stub NtUserCallHwndParamLockSafe
 @ stub NtUserCallHwndSafe
-@ stub NtUserCallMsgFilter
+@ stdcall -syscall NtUserCallMsgFilter(ptr long)
 @ stdcall NtUserCallNextHookEx(long long long long)
 @ stdcall NtUserCallNoParam(long)
 @ stdcall NtUserCallOneParam(long long)

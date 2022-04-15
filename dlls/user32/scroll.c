@@ -1110,7 +1110,7 @@ void SCROLL_TrackScrollBar( HWND hwnd, INT scrollbar, POINT pt )
     do
     {
         if (!GetMessageW( &msg, 0, 0, 0 )) break;
-        if (CallMsgFilterW( &msg, MSGF_SCROLLBAR )) continue;
+        if (NtUserCallMsgFilter( &msg, MSGF_SCROLLBAR )) continue;
         if (msg.message == WM_LBUTTONUP ||
             msg.message == WM_MOUSEMOVE ||
             msg.message == WM_MOUSELEAVE ||

@@ -25,9 +25,9 @@
 # @ stub BuildReasonArray
 @ stdcall CalcChildScroll(long long)
 @ stdcall CalcMenuBar(long long long long ptr) CalcMenuBar
-@ stdcall CallMsgFilter(ptr long) CallMsgFilterA
-@ stdcall CallMsgFilterA(ptr long)
-@ stdcall CallMsgFilterW(ptr long)
+@ stdcall CallMsgFilter(ptr long) NtUserCallMsgFilter
+@ stdcall CallMsgFilterA(ptr long) NtUserCallMsgFilter
+@ stdcall CallMsgFilterW(ptr long) NtUserCallMsgFilter
 @ stdcall CallNextHookEx(long long long long) NtUserCallNextHookEx
 @ stdcall CallWindowProcA(ptr long long long long)
 @ stdcall CallWindowProcW(ptr long long long long)

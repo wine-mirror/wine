@@ -1164,7 +1164,7 @@ BOOL WINAPI IsDialogMessageW( HWND hwndDlg, LPMSG msg )
     if (!IsWindow( hwndDlg ))
         return FALSE;
 
-    if (CallMsgFilterW( msg, MSGF_DIALOGBOX )) return TRUE;
+    if (NtUserCallMsgFilter( msg, MSGF_DIALOGBOX )) return TRUE;
 
     hwndDlg = WIN_GetFullHandle( hwndDlg );
     if (is_desktop_window(hwndDlg)) return FALSE;

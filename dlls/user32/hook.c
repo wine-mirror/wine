@@ -384,26 +384,6 @@ BOOL WINAPI UnhookWindowsHook( INT id, HOOKPROC proc )
 
 
 /***********************************************************************
- *		CallMsgFilterA (USER32.@)
- */
-BOOL WINAPI CallMsgFilterA( LPMSG msg, INT code )
-{
-    if (HOOK_CallHooks( WH_SYSMSGFILTER, code, 0, (LPARAM)msg, FALSE )) return TRUE;
-    return HOOK_CallHooks( WH_MSGFILTER, code, 0, (LPARAM)msg, FALSE );
-}
-
-
-/***********************************************************************
- *		CallMsgFilterW (USER32.@)
- */
-BOOL WINAPI CallMsgFilterW( LPMSG msg, INT code )
-{
-    if (HOOK_CallHooks( WH_SYSMSGFILTER, code, 0, (LPARAM)msg, TRUE )) return TRUE;
-    return HOOK_CallHooks( WH_MSGFILTER, code, 0, (LPARAM)msg, TRUE );
-}
-
-
-/***********************************************************************
  *           SetWinEventHook                            [USER32.@]
  *
  * Set up an event hook for a set of events.
