@@ -447,20 +447,20 @@ static void MENU_InitSysMenuPopup( HMENU hmenu, DWORD style, DWORD clsStyle )
     BOOL gray;
 
     gray = !(style & WS_THICKFRAME) || (style & (WS_MAXIMIZE | WS_MINIMIZE));
-    EnableMenuItem( hmenu, SC_SIZE, (gray ? MF_GRAYED : MF_ENABLED) );
+    NtUserEnableMenuItem( hmenu, SC_SIZE, (gray ? MF_GRAYED : MF_ENABLED) );
     gray = ((style & WS_MAXIMIZE) != 0);
-    EnableMenuItem( hmenu, SC_MOVE, (gray ? MF_GRAYED : MF_ENABLED) );
+    NtUserEnableMenuItem( hmenu, SC_MOVE, (gray ? MF_GRAYED : MF_ENABLED) );
     gray = !(style & WS_MINIMIZEBOX) || (style & WS_MINIMIZE);
-    EnableMenuItem( hmenu, SC_MINIMIZE, (gray ? MF_GRAYED : MF_ENABLED) );
+    NtUserEnableMenuItem( hmenu, SC_MINIMIZE, (gray ? MF_GRAYED : MF_ENABLED) );
     gray = !(style & WS_MAXIMIZEBOX) || (style & WS_MAXIMIZE);
-    EnableMenuItem( hmenu, SC_MAXIMIZE, (gray ? MF_GRAYED : MF_ENABLED) );
+    NtUserEnableMenuItem( hmenu, SC_MAXIMIZE, (gray ? MF_GRAYED : MF_ENABLED) );
     gray = !(style & (WS_MAXIMIZE | WS_MINIMIZE));
-    EnableMenuItem( hmenu, SC_RESTORE, (gray ? MF_GRAYED : MF_ENABLED) );
+    NtUserEnableMenuItem( hmenu, SC_RESTORE, (gray ? MF_GRAYED : MF_ENABLED) );
     gray = (clsStyle & CS_NOCLOSE) != 0;
 
     /* The menu item must keep its state if it's disabled */
     if(gray)
-	EnableMenuItem( hmenu, SC_CLOSE, MF_GRAYED);
+	NtUserEnableMenuItem( hmenu, SC_CLOSE, MF_GRAYED);
 }
 
 
@@ -3641,53 +3641,6 @@ BOOL WINAPI ChangeMenuW( HMENU hMenu, UINT pos, LPCWSTR data,
                                               flags & ~MF_REMOVE );
     /* Default: MF_INSERT */
     return InsertMenuW( hMenu, pos, flags, id, data );
-}
-
-
-/**********************************************************************
- *         EnableMenuItem    (USER32.@)
- */
-BOOL WINAPI EnableMenuItem( HMENU hMenu, UINT id, UINT wFlags )
-{
-    UINT oldflags, pos;
-    POPUPMENU *menu;
-    MENUITEM *item;
-
-    TRACE("(%p, %04x, %04x)\n", hMenu, id, wFlags);
-
-    /* Get the Popupmenu to access the owner menu */
-    if (!(menu = find_menu_item(hMenu, id, wFlags, &pos)))
-	return (UINT)-1;
-
-    item = &menu->items[pos];
-    oldflags = item->fState & (MF_GRAYED | MF_DISABLED);
-    item->fState ^= (oldflags ^ wFlags) & (MF_GRAYED | MF_DISABLED);
-
-    /* If the close item in the system menu change update the close button */
-    if ((item->wID == SC_CLOSE) && (oldflags != wFlags) && menu->hSysMenuOwner)
-    {
-        RECT rc;
-        POPUPMENU* parentMenu;
-        HWND hwnd;
-
-        /* Get the parent menu to access */
-        parentMenu = grab_menu_ptr(menu->hSysMenuOwner);
-        release_menu_ptr(menu);
-        if (!parentMenu)
-            return (UINT)-1;
-
-        hwnd = parentMenu->hWnd;
-        release_menu_ptr(parentMenu);
-
-        /* Refresh the frame to reflect the change */
-        WIN_GetRectangles(hwnd, COORDS_CLIENT, &rc, NULL);
-        rc.bottom = 0;
-        NtUserRedrawWindow( hwnd, &rc, 0, RDW_FRAME | RDW_INVALIDATE | RDW_NOCHILDREN );
-    }
-    else
-        release_menu_ptr(menu);
-
-    return oldflags;
 }
 
 

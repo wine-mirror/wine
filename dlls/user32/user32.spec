@@ -203,7 +203,7 @@
 @ stdcall DrawTextW(long wstr long ptr long)
 @ stdcall EditWndProc(long long long long) EditWndProcA
 @ stdcall EmptyClipboard()
-@ stdcall EnableMenuItem(long long long)
+@ stdcall EnableMenuItem(long long long) NtUserEnableMenuItem
 @ stdcall EnableMouseInPointer(long)
 @ stdcall EnableNonClientDpiScaling(long)
 @ stdcall EnableScrollBar(long long long)

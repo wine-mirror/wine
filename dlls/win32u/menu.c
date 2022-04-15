@@ -25,6 +25,7 @@
 
 #include "win32u_private.h"
 #include "ntuser_private.h"
+#include "wine/server.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(menu);
@@ -271,4 +272,50 @@ DWORD WINAPI NtUserCheckMenuItem( HMENU handle, UINT id, UINT flags )
     else item->fState &= ~MF_CHECKED;
     release_menu_ptr(menu);
     return ret;
+}
+
+/**********************************************************************
+ *           NtUserEnableMenuItem    (win32u.@)
+ */
+BOOL WINAPI NtUserEnableMenuItem( HMENU handle, UINT id, UINT flags )
+{
+    UINT oldflags, pos;
+    POPUPMENU *menu;
+    MENUITEM *item;
+
+    TRACE( "(%p, %04x, %04x)\n", handle, id, flags );
+
+    /* Get the Popupmenu to access the owner menu */
+    if (!(menu = find_menu_item( handle, id, flags, &pos )))
+	return ~0u;
+
+    item = &menu->items[pos];
+    oldflags = item->fState & (MF_GRAYED | MF_DISABLED);
+    item->fState ^= (oldflags ^ flags) & (MF_GRAYED | MF_DISABLED);
+
+    /* If the close item in the system menu change update the close button */
+    if (item->wID == SC_CLOSE && oldflags != flags && menu->hSysMenuOwner)
+    {
+        POPUPMENU *parent_menu;
+        RECT rc;
+        HWND hwnd;
+
+        /* Get the parent menu to access */
+        parent_menu = grab_menu_ptr( menu->hSysMenuOwner );
+        release_menu_ptr( menu );
+        if (!parent_menu)
+            return ~0u;
+
+        hwnd = parent_menu->hWnd;
+        release_menu_ptr( parent_menu );
+
+        /* Refresh the frame to reflect the change */
+        get_window_rects( hwnd, COORDS_CLIENT, &rc, NULL, get_thread_dpi() );
+        rc.bottom = 0;
+        NtUserRedrawWindow( hwnd, &rc, 0, RDW_FRAME | RDW_INVALIDATE | RDW_NOCHILDREN );
+    }
+    else
+        release_menu_ptr( menu );
+
+    return oldflags;
 }

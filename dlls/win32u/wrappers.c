@@ -826,6 +826,12 @@ BOOL WINAPI NtUserDrawIconEx( HDC hdc, INT x0, INT y0, HICON icon, INT width,
     return unix_funcs->pNtUserDrawIconEx( hdc, x0, y0, icon, width, height, istep, hbr, flags );
 }
 
+BOOL WINAPI NtUserEnableMenuItem( HMENU handle, UINT id, UINT flags )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserEnableMenuItem( handle, id, flags );
+}
+
 BOOL WINAPI NtUserEndDeferWindowPosEx( HDWP hdwp, BOOL async )
 {
     if (!unix_funcs) return FALSE;

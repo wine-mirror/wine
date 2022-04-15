@@ -3302,22 +3302,29 @@ static void EDIT_WM_ContextMenu(EDITSTATE *es, INT x, INT y)
 	HMENU popup = GetSubMenu(menu, 0);
 	UINT start = es->selection_start;
 	UINT end = es->selection_end;
+        BOOL enabled;
 	UINT cmd;
 
 	ORDER_UINT(start, end);
 
-	/* undo */
-	EnableMenuItem(popup, 0, MF_BYPOSITION | (EDIT_EM_CanUndo(es) && !(es->style & ES_READONLY) ? MF_ENABLED : MF_GRAYED));
-	/* cut */
-	EnableMenuItem(popup, 2, MF_BYPOSITION | ((end - start) && !(es->style & ES_PASSWORD) && !(es->style & ES_READONLY) ? MF_ENABLED : MF_GRAYED));
-	/* copy */
-	EnableMenuItem(popup, 3, MF_BYPOSITION | ((end - start) && !(es->style & ES_PASSWORD) ? MF_ENABLED : MF_GRAYED));
-	/* paste */
-	EnableMenuItem(popup, 4, MF_BYPOSITION | (NtUserIsClipboardFormatAvailable(CF_UNICODETEXT) && !(es->style & ES_READONLY) ? MF_ENABLED : MF_GRAYED));
-	/* delete */
-	EnableMenuItem(popup, 5, MF_BYPOSITION | ((end - start) && !(es->style & ES_READONLY) ? MF_ENABLED : MF_GRAYED));
-	/* select all */
-	EnableMenuItem(popup, 7, MF_BYPOSITION | (start || (end != get_text_length(es)) ? MF_ENABLED : MF_GRAYED));
+        /* undo */
+        enabled = EDIT_EM_CanUndo(es) && !(es->style & ES_READONLY);
+        NtUserEnableMenuItem( popup, 0, MF_BYPOSITION | (enabled ? MF_ENABLED : MF_GRAYED) );
+        /* cut */
+        enabled = (end - start) && !(es->style & ES_PASSWORD) && !(es->style & ES_READONLY);
+        NtUserEnableMenuItem( popup, 2, MF_BYPOSITION | (enabled ? MF_ENABLED : MF_GRAYED) );
+        /* copy */
+        enabled = (end - start) && !(es->style & ES_PASSWORD);
+        NtUserEnableMenuItem( popup, 3, MF_BYPOSITION | (enabled ? MF_ENABLED : MF_GRAYED) );
+        /* paste */
+        enabled = NtUserIsClipboardFormatAvailable(CF_UNICODETEXT) && !(es->style & ES_READONLY);
+        NtUserEnableMenuItem( popup, 4, MF_BYPOSITION | (enabled ? MF_ENABLED : MF_GRAYED) );
+        /* delete */
+        enabled = (end - start) && !(es->style & ES_READONLY);
+        NtUserEnableMenuItem( popup, 5, MF_BYPOSITION | (enabled ? MF_ENABLED : MF_GRAYED) );
+        /* select all */
+        enabled = start || end != get_text_length(es);
+        NtUserEnableMenuItem( popup, 7, MF_BYPOSITION | (enabled ? MF_ENABLED : MF_GRAYED) );
 
         if (x == -1 && y == -1) /* passed via VK_APPS press/release */
         {

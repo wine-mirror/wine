@@ -210,6 +210,7 @@ struct unix_funcs
     LRESULT  (WINAPI *pNtUserDispatchMessage)( const MSG *msg );
     BOOL     (WINAPI *pNtUserDrawIconEx)( HDC hdc, INT x0, INT y0, HICON icon, INT width,
                                           INT height, UINT istep, HBRUSH hbr, UINT flags );
+    BOOL     (WINAPI *pNtUserEnableMenuItem)( HMENU handle, UINT id, UINT flags );
     BOOL     (WINAPI *pNtUserEndDeferWindowPosEx)( HDWP hdwp, BOOL async );
     BOOL     (WINAPI *pNtUserEndPaint)( HWND hwnd, const PAINTSTRUCT *ps );
     NTSTATUS (WINAPI *pNtUserEnumDisplayDevices)( UNICODE_STRING *device, DWORD index,

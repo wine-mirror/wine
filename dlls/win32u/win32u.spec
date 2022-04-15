@@ -860,7 +860,7 @@
 @ stub NtUserEmptyClipboard
 @ stub NtUserEnableChildWindowDpiMessage
 @ stub NtUserEnableIAMAccess
-@ stub NtUserEnableMenuItem
+@ stdcall NtUserEnableMenuItem(long long long)
 @ stub NtUserEnableMouseInPointer
 @ stub NtUserEnableMouseInPointerForWindow
 @ stub NtUserEnableMouseInputForCursorSuppression

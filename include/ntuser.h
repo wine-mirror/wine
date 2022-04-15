@@ -431,6 +431,7 @@ BOOL    WINAPI NtUserDestroyWindow( HWND hwnd );
 LRESULT WINAPI NtUserDispatchMessage( const MSG *msg );
 BOOL    WINAPI NtUserDrawIconEx( HDC hdc, INT x0, INT y0, HICON icon, INT width,
                                  INT height, UINT istep, HBRUSH hbr, UINT flags );
+BOOL    WINAPI NtUserEnableMenuItem( HMENU handle, UINT id, UINT flags );
 BOOL    WINAPI NtUserEndDeferWindowPosEx( HDWP hdwp, BOOL async );
 BOOL    WINAPI NtUserEndPaint( HWND hwnd, const PAINTSTRUCT *ps );
 NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
