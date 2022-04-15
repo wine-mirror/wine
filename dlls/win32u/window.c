@@ -4237,6 +4237,42 @@ BOOL WINAPI NtUserShowWindow( HWND hwnd, INT cmd )
     return send_message( hwnd, WM_WINE_SHOWWINDOW, cmd, 0 );
 }
 
+/* see ShowOwnedPopups */
+static BOOL show_owned_popups( HWND owner, BOOL show )
+{
+    int count = 0;
+    HWND *win_array = list_window_children( 0, get_desktop_window(), NULL, 0 );
+
+    if (!win_array) return TRUE;
+
+    while (win_array[count]) count++;
+    while (--count >= 0)
+    {
+        if (get_window_relative( win_array[count], GW_OWNER ) != owner) continue;
+        if (show)
+        {
+            if (win_get_flags( win_array[count] ) & WIN_NEEDS_SHOW_OWNEDPOPUP)
+                /* In Windows, ShowOwnedPopups(TRUE) generates
+                 * WM_SHOWWINDOW messages with SW_PARENTOPENING,
+                 * regardless of the state of the owner
+                 */
+                send_message( win_array[count], WM_SHOWWINDOW, SW_SHOWNORMAL, SW_PARENTOPENING );
+        }
+        else
+        {
+            if (get_window_long( win_array[count], GWL_STYLE ) & WS_VISIBLE)
+                /* In Windows, ShowOwnedPopups(FALSE) generates
+                 * WM_SHOWWINDOW messages with SW_PARENTCLOSING,
+                 * regardless of the state of the owner
+                 */
+                send_message( win_array[count], WM_SHOWWINDOW, SW_HIDE, SW_PARENTCLOSING );
+        }
+    }
+
+    free( win_array );
+    return TRUE;
+}
+
 /*******************************************************************
  *           NtUserFlashWindowEx (win32u.@)
  */
@@ -5197,6 +5233,9 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
 
     case NtUserCallHwndParam_SetWindowPixelFormat:
         return set_window_pixel_format( hwnd, param );
+
+    case NtUserCallHwndParam_ShowOwnedPopups:
+        return show_owned_popups( hwnd, param );
 
     /* temporary exports */
     case NtUserIsWindowDrawable:

@@ -875,6 +875,7 @@ enum
     NtUserCallHwndParam_ScreenToClient,
     NtUserCallHwndParam_SetForegroundWindow,
     NtUserCallHwndParam_SetWindowPixelFormat,
+    NtUserCallHwndParam_ShowOwnedPopups,
     /* temporary exports */
     NtUserIsWindowDrawable,
     NtUserSetCaptureWindow,
@@ -1032,6 +1033,11 @@ static inline BOOL NtUserSetForegroundWindow( HWND hwnd, BOOL mouse )
 static inline BOOL NtUserSetWindowPixelFormat( HWND hwnd, int format )
 {
     return NtUserCallHwndParam( hwnd, format, NtUserCallHwndParam_SetWindowPixelFormat );
+}
+
+static inline BOOL NtUserShowOwnedPopups( HWND hwnd, BOOL show )
+{
+    return NtUserCallHwndParam( hwnd, show, NtUserCallHwndParam_ShowOwnedPopups );
 }
 
 #endif /* _NTUSER_ */

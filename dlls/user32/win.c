@@ -1283,38 +1283,9 @@ HWND WINAPI GetWindow( HWND hwnd, UINT rel )
 /*******************************************************************
  *		ShowOwnedPopups (USER32.@)
  */
-BOOL WINAPI ShowOwnedPopups( HWND owner, BOOL fShow )
+BOOL WINAPI ShowOwnedPopups( HWND owner, BOOL show )
 {
-    int count = 0;
-    HWND *win_array = WIN_ListChildren( GetDesktopWindow() );
-
-    if (!win_array) return TRUE;
-
-    while (win_array[count]) count++;
-    while (--count >= 0)
-    {
-        if (GetWindow( win_array[count], GW_OWNER ) != owner) continue;
-        if (fShow)
-        {
-            if (win_get_flags( win_array[count] ) & WIN_NEEDS_SHOW_OWNEDPOPUP)
-                /* In Windows, ShowOwnedPopups(TRUE) generates
-                 * WM_SHOWWINDOW messages with SW_PARENTOPENING,
-                 * regardless of the state of the owner
-                 */
-                SendMessageW(win_array[count], WM_SHOWWINDOW, SW_SHOWNORMAL, SW_PARENTOPENING);
-        }
-        else
-        {
-            if (GetWindowLongW( win_array[count], GWL_STYLE ) & WS_VISIBLE)
-                /* In Windows, ShowOwnedPopups(FALSE) generates
-                 * WM_SHOWWINDOW messages with SW_PARENTCLOSING,
-                 * regardless of the state of the owner
-                 */
-                SendMessageW(win_array[count], WM_SHOWWINDOW, SW_HIDE, SW_PARENTCLOSING);
-        }
-    }
-    HeapFree( GetProcessHeap(), 0, win_array );
-    return TRUE;
+    return NtUserShowOwnedPopups( owner, show );
 }
 
 
