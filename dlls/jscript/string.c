@@ -1628,7 +1628,7 @@ static HRESULT StringConstr_fromCharCode(script_ctx_t *ctx, jsval_t vthis, WORD 
 static HRESULT StringConstr_value(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    HRESULT hres;
+    HRESULT hres = S_OK;
 
     TRACE("\n");
 
