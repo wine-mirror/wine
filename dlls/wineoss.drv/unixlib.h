@@ -215,6 +215,12 @@ struct set_event_handle_params
     HRESULT result;
 };
 
+struct is_started_params
+{
+    struct oss_stream *stream;
+    HRESULT result;
+};
+
 enum oss_funcs
 {
     oss_test_connect,
@@ -238,6 +244,7 @@ enum oss_funcs
     oss_get_frequency,
     oss_get_position,
     oss_set_event_handle,
+    oss_is_started,
 };
 
 extern unixlib_handle_t oss_handle;
