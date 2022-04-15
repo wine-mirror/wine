@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2022-03-23 17:00+0100\n"
+"PO-Revision-Date: 2022-04-15 18:10+0200\n"
 "Last-Translator: Floris Renaud <jkfloris@dds.nl>\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -4006,10 +4006,8 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "Kan onschrijfbare eigenschap '|' niet veranderen"
 
 #: dlls/jscript/jscript.rc:79
-#, fuzzy
-#| msgid "'this' is not a Map object"
 msgid "'this' is not a | object"
-msgstr "'this' is geen Map object"
+msgstr "'this' is geen | object"
 
 #: dlls/jscript/jscript.rc:80
 msgid "Property cannot have both accessors and a value"
