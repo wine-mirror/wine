@@ -131,7 +131,27 @@ static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
     if (!user_driver->pSysCommand( hwnd, wparam, lparam ))
         return 0;
 
-    return 1;
+    switch (wparam & 0xfff0)
+    {
+    case SC_MINIMIZE:
+        show_owned_popups( hwnd, FALSE );
+        NtUserShowWindow( hwnd, SW_MINIMIZE );
+        break;
+
+    case SC_MAXIMIZE:
+        if (is_iconic(hwnd)) show_owned_popups( hwnd, TRUE );
+        NtUserShowWindow( hwnd, SW_MAXIMIZE );
+        break;
+
+    case SC_RESTORE:
+        if (is_iconic( hwnd )) show_owned_popups( hwnd, TRUE );
+        NtUserShowWindow( hwnd, SW_RESTORE );
+        break;
+
+    default:
+        return 1; /* handle on client side */
+    }
+    return 0;
 }
 
 LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi )

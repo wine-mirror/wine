@@ -4238,7 +4238,7 @@ BOOL WINAPI NtUserShowWindow( HWND hwnd, INT cmd )
 }
 
 /* see ShowOwnedPopups */
-static BOOL show_owned_popups( HWND owner, BOOL show )
+BOOL show_owned_popups( HWND owner, BOOL show )
 {
     int count = 0;
     HWND *win_array = list_window_children( 0, get_desktop_window(), NULL, 0 );

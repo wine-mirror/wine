@@ -1550,23 +1550,6 @@ LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
         WINPOS_SysCommandSizeMove( hwnd, wParam );
         break;
 
-    case SC_MINIMIZE:
-        ShowOwnedPopups(hwnd,FALSE);
-        NtUserShowWindow( hwnd, SW_MINIMIZE );
-        break;
-
-    case SC_MAXIMIZE:
-        if (IsIconic(hwnd))
-            ShowOwnedPopups(hwnd,TRUE);
-        NtUserShowWindow( hwnd, SW_MAXIMIZE );
-        break;
-
-    case SC_RESTORE:
-        if (IsIconic(hwnd))
-            ShowOwnedPopups(hwnd,TRUE);
-        NtUserShowWindow( hwnd, SW_RESTORE );
-        break;
-
     case SC_CLOSE:
         return SendMessageW( hwnd, WM_CLOSE, 0, 0 );
 

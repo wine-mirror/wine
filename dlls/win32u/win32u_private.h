@@ -431,6 +431,7 @@ extern LONG_PTR set_window_long( HWND hwnd, INT offset, UINT size, LONG_PTR newv
                                  BOOL ansi ) DECLSPEC_HIDDEN;
 extern BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y ) DECLSPEC_HIDDEN;
 extern ULONG set_window_style( HWND hwnd, ULONG set_bits, ULONG clear_bits ) DECLSPEC_HIDDEN;
+extern BOOL show_owned_popups( HWND owner, BOOL show ) DECLSPEC_HIDDEN;
 extern void update_window_state( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND window_from_point( HWND hwnd, POINT pt, INT *hittest ) DECLSPEC_HIDDEN;
 
