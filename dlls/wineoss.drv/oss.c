@@ -982,6 +982,72 @@ static NTSTATUS release_render_buffer(void *args)
     return oss_unlock_result(stream, &params->result, S_OK);
 }
 
+static NTSTATUS get_capture_buffer(void *args)
+{
+    struct get_capture_buffer_params *params = args;
+    struct oss_stream *stream = params->stream;
+    UINT64 *devpos = params->devpos, *qpcpos = params->qpcpos;
+    UINT32 *frames = params->frames;
+    UINT *flags = params->flags;
+    BYTE **data = params->data;
+    SIZE_T size;
+
+    oss_lock(stream);
+
+    if(stream->getbuf_last)
+        return oss_unlock_result(stream, &params->result, AUDCLNT_E_OUT_OF_ORDER);
+
+    if(stream->held_frames < stream->period_frames){
+        *frames = 0;
+        return oss_unlock_result(stream, &params->result, AUDCLNT_S_BUFFER_EMPTY);
+    }
+
+    *flags = 0;
+
+    *frames = stream->period_frames;
+
+    if(stream->lcl_offs_frames + *frames > stream->bufsize_frames){
+        UINT32 chunk_bytes, offs_bytes, frames_bytes;
+        if(stream->tmp_buffer_frames < *frames){
+            if(stream->tmp_buffer){
+                size = 0;
+                NtFreeVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, &size, MEM_RELEASE);
+                stream->tmp_buffer = NULL;
+            }
+            size = *frames * stream->fmt->nBlockAlign;
+            if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, 0, &size,
+                                       MEM_COMMIT, PAGE_READWRITE)){
+                stream->tmp_buffer_frames = 0;
+                return oss_unlock_result(stream, &params->result, E_OUTOFMEMORY);
+            }
+            stream->tmp_buffer_frames = *frames;
+        }
+
+        *data = stream->tmp_buffer;
+        chunk_bytes = (stream->bufsize_frames - stream->lcl_offs_frames) *
+            stream->fmt->nBlockAlign;
+        offs_bytes = stream->lcl_offs_frames * stream->fmt->nBlockAlign;
+        frames_bytes = *frames * stream->fmt->nBlockAlign;
+        memcpy(stream->tmp_buffer, stream->local_buffer + offs_bytes, chunk_bytes);
+        memcpy(stream->tmp_buffer + chunk_bytes, stream->local_buffer,
+                frames_bytes - chunk_bytes);
+    }else
+        *data = stream->local_buffer +
+            stream->lcl_offs_frames * stream->fmt->nBlockAlign;
+
+    stream->getbuf_last = *frames;
+
+    if(devpos)
+       *devpos = stream->written_frames;
+    if(qpcpos){
+        LARGE_INTEGER stamp, freq;
+        NtQueryPerformanceCounter(&stamp, &freq);
+        *qpcpos = (stamp.QuadPart * (INT64)10000000) / freq.QuadPart;
+    }
+
+    return oss_unlock_result(stream, &params->result, *frames ? S_OK : AUDCLNT_S_BUFFER_EMPTY);
+}
+
 static NTSTATUS is_format_supported(void *args)
 {
     struct is_format_supported_params *params = args;
@@ -1181,6 +1247,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     timer_loop,
     get_render_buffer,
     release_render_buffer,
+    get_capture_buffer,
     is_format_supported,
     get_mix_format,
     get_buffer_size,
