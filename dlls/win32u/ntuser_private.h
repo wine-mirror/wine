@@ -32,7 +32,6 @@ struct hardware_msg_data;
 
 struct user_callbacks
 {
-    BOOL (WINAPI *pAdjustWindowRectEx)( RECT *, DWORD, BOOL, DWORD );
     HANDLE (WINAPI *pCopyImage)( HANDLE, UINT, INT, INT, UINT );
     BOOL (WINAPI *pEndMenu)(void);
     BOOL (WINAPI *pImmProcessKey)(HWND, HKL, UINT, LPARAM, DWORD);

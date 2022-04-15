@@ -31,6 +31,44 @@
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 
+/***********************************************************************
+ *           AdjustWindowRectEx (win32u.so)
+ */
+BOOL WINAPI AdjustWindowRectEx( RECT *rect, DWORD style, BOOL menu, DWORD ex_style )
+{
+    NONCLIENTMETRICSW ncm;
+    int adjust = 0;
+
+    ncm.cbSize = sizeof(ncm);
+    NtUserSystemParametersInfo( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
+
+    if ((ex_style & (WS_EX_STATICEDGE|WS_EX_DLGMODALFRAME)) == WS_EX_STATICEDGE)
+        adjust = 1; /* for the outer frame always present */
+    else if ((ex_style & WS_EX_DLGMODALFRAME) || (style & (WS_THICKFRAME|WS_DLGFRAME)))
+        adjust = 2; /* outer */
+
+    if (style & WS_THICKFRAME)
+        adjust += ncm.iBorderWidth + ncm.iPaddedBorderWidth; /* The resize border */
+
+    if ((style & (WS_BORDER|WS_DLGFRAME)) || (ex_style & WS_EX_DLGMODALFRAME))
+        adjust++; /* The other border */
+
+    InflateRect( rect, adjust, adjust );
+
+    if ((style & WS_CAPTION) == WS_CAPTION)
+    {
+        if (ex_style & WS_EX_TOOLWINDOW)
+            rect->top -= ncm.iSmCaptionHeight + 1;
+        else
+            rect->top -= ncm.iCaptionHeight + 1;
+    }
+    if (menu) rect->top -= ncm.iMenuHeight + 1;
+
+    if (ex_style & WS_EX_CLIENTEDGE)
+        InflateRect( rect, get_system_metrics(SM_CXEDGE), get_system_metrics(SM_CYEDGE) );
+    return TRUE;
+}
+
 static BOOL set_window_text( HWND hwnd, const void *text, BOOL ansi )
 {
     static const WCHAR emptyW[] = { 0 };

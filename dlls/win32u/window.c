@@ -3683,9 +3683,7 @@ static MINMAXINFO get_min_max_info( HWND hwnd )
         adjusted_style = style;
 
     get_client_rect( NtUserGetAncestor( hwnd, GA_PARENT ), &rc );
-    if (user_callbacks)
-        user_callbacks->pAdjustWindowRectEx( &rc, adjusted_style,
-                                             (style & WS_POPUP) && get_menu( hwnd ), exstyle);
+    AdjustWindowRectEx( &rc, adjusted_style, (style & WS_POPUP) && get_menu( hwnd ), exstyle );
 
     xinc = -rc.left;
     yinc = -rc.top;
