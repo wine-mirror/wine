@@ -1209,6 +1209,7 @@ static struct unix_funcs unix_funcs =
     NtUserSystemParametersInfo,
     NtUserSystemParametersInfoForDpi,
     NtUserToUnicodeEx,
+    NtUserTranslateMessage,
     NtUserUnregisterClass,
     NtUserUnregisterHotKey,
     NtUserUpdateLayeredWindow,

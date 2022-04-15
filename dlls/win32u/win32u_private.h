@@ -283,6 +283,7 @@ struct unix_funcs
                                                          UINT winini, UINT dpi );
     INT      (WINAPI *pNtUserToUnicodeEx)( UINT virt, UINT scan, const BYTE *state,
                                            WCHAR *str, int size, UINT flags, HKL layout );
+    BOOL     (WINAPI *pNtUserTranslateMessage)( const MSG *msg, UINT flags );
     BOOL     (WINAPI *pNtUserUnregisterClass)( UNICODE_STRING *name, HINSTANCE instance,
                                                struct client_menu_name *client_menu_name );
     BOOL     (WINAPI *pNtUserUnregisterHotKey)( HWND hwnd, INT id );

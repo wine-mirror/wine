@@ -26,6 +26,7 @@
 #include "wingdi.h"
 #include "winuser.h"
 #include "imm.h"
+#include "ddk/imm.h"
 
 #include "controls.h"
 #include "user_private.h"
@@ -164,6 +165,7 @@ static const struct user_callbacks user_funcs =
     EndMenu,
     HideCaret,
     ImmProcessKey,
+    ImmTranslateMessage,
     SetSystemMenu,
     ShowCaret,
     free_menu_items,

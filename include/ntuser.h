@@ -559,6 +559,8 @@ BOOL    WINAPI NtUserSystemParametersInfo( UINT action, UINT val, void *ptr, UIN
 BOOL    WINAPI NtUserSystemParametersInfoForDpi( UINT action, UINT val, PVOID ptr, UINT winini, UINT dpi );
 INT     WINAPI NtUserToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
                                   WCHAR *str, int size, UINT flags, HKL layout );
+INT     WINAPI NtUserTranslateAccelerator( HWND hwnd, HACCEL accel, MSG *msg );
+BOOL    WINAPI NtUserTranslateMessage( const MSG *msg, UINT flags );
 BOOL    WINAPI NtUserUnhookWinEvent( HWINEVENTHOOK hEventHook );
 BOOL    WINAPI NtUserUnhookWindowsHookEx( HHOOK handle );
 BOOL    WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,

@@ -1186,6 +1186,12 @@ INT WINAPI NtUserToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
     return unix_funcs->pNtUserToUnicodeEx( virt, scan, state, str, size, flags, layout );
 }
 
+BOOL WINAPI NtUserTranslateMessage( const MSG *msg, UINT flags )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserTranslateMessage( msg, flags );
+}
+
 BOOL WINAPI NtUserUnregisterClass( UNICODE_STRING *name, HINSTANCE instance,
                                    struct client_menu_name *client_menu_name )
 {

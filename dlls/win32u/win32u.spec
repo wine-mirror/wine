@@ -1282,7 +1282,7 @@
 @ stub NtUserTransformPoint
 @ stub NtUserTransformRect
 @ stub NtUserTranslateAccelerator
-@ stub NtUserTranslateMessage
+@ stdcall NtUserTranslateMessage(ptr long)
 @ stub NtUserUndelegateInput
 @ stdcall -syscall NtUserUnhookWinEvent(long)
 @ stdcall -syscall NtUserUnhookWindowsHookEx(long)
