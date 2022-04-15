@@ -862,6 +862,13 @@ static inline BOOL send_notify_message( HWND hwnd, UINT msg, WPARAM wparam, LPAR
     return NtUserMessageCall( hwnd, msg, wparam, lparam, 0, NtUserSendNotifyMessage, FALSE );
 }
 
+static inline HWND get_focus(void)
+{
+    GUITHREADINFO info;
+    info.cbSize = sizeof(info);
+    return NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info ) ? info.hwndFocus : 0;
+}
+
 static inline HWND get_active_window(void)
 {
     GUITHREADINFO info;
