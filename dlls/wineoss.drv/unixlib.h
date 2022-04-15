@@ -121,6 +121,14 @@ struct get_render_buffer_params
     BYTE **data;
 };
 
+struct release_render_buffer_params
+{
+    struct oss_stream *stream;
+    UINT32 written_frames;
+    UINT flags;
+    HRESULT result;
+};
+
 struct is_format_supported_params
 {
     const char *device;
@@ -178,6 +186,7 @@ enum oss_funcs
     oss_reset,
     oss_timer_loop,
     oss_get_render_buffer,
+    oss_release_render_buffer,
     oss_is_format_supported,
     oss_get_mix_format,
     oss_get_buffer_size,
