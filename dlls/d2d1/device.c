@@ -2149,7 +2149,17 @@ static D2D1_PRIMITIVE_BLEND STDMETHODCALLTYPE d2d_device_context_GetPrimitiveBle
 
 static void STDMETHODCALLTYPE d2d_device_context_SetUnitMode(ID2D1DeviceContext *iface, D2D1_UNIT_MODE unit_mode)
 {
-    FIXME("iface %p, unit_mode %#x stub!\n", iface, unit_mode);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+
+    TRACE("iface %p, unit_mode %#x.\n", iface, unit_mode);
+
+    if (unit_mode != D2D1_UNIT_MODE_DIPS && unit_mode != D2D1_UNIT_MODE_PIXELS)
+    {
+        WARN("Unknown unit mode %#x.\n", unit_mode);
+        return;
+    }
+
+    context->drawing_state.unitMode = unit_mode;
 }
 
 static D2D1_UNIT_MODE STDMETHODCALLTYPE d2d_device_context_GetUnitMode(ID2D1DeviceContext *iface)

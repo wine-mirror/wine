@@ -9606,11 +9606,11 @@ static void test_unit_mode(BOOL d3d11)
 
     ID2D1DeviceContext_SetUnitMode(context, D2D1_UNIT_MODE_PIXELS);
     unit_mode = ID2D1DeviceContext_GetUnitMode(context);
-    todo_wine ok(unit_mode == D2D1_UNIT_MODE_PIXELS, "Got unexpected unit mode %#x.\n", unit_mode);
+    ok(unit_mode == D2D1_UNIT_MODE_PIXELS, "Got unexpected unit mode %#x.\n", unit_mode);
 
     ID2D1DeviceContext_SetUnitMode(context, 0xdeadbeef);
     unit_mode = ID2D1DeviceContext_GetUnitMode(context);
-    todo_wine ok(unit_mode == D2D1_UNIT_MODE_PIXELS, "Got unexpected unit mode %#x.\n", unit_mode);
+    ok(unit_mode == D2D1_UNIT_MODE_PIXELS, "Got unexpected unit mode %#x.\n", unit_mode);
 
     ID2D1DeviceContext_Release(context);
     release_test_context(&ctx);
@@ -10874,7 +10874,6 @@ static void test_image_bounds(BOOL d3d11)
         ok(unit_mode == D2D1_UNIT_MODE_DIPS, "Got unexpected unit mode %#x.\n", unit_mode);
         ID2D1DeviceContext_SetUnitMode(context, D2D1_UNIT_MODE_PIXELS);
         ID2D1DeviceContext_GetImageLocalBounds(context, (ID2D1Image *)bitmap, &bounds);
-        todo_wine_if(!compare_float(test->dpi_x, 96.0f, 0) || !compare_float(test->dpi_y, 96.0f, 0))
         ok(compare_rect(&bounds, 0.0f, 0.0f, test->pixel_size.width, test->pixel_size.height, 0),
                 "Got unexpected bounds {%.8e, %.8e, %.8e, %.8e}, expected {%.8e, %.8e, %.8e, %.8e}.\n",
                 bounds.left, bounds.top, bounds.right, bounds.bottom, 0.0f, 0.0f,
