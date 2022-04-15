@@ -18,27 +18,7 @@
 
 #include "mmdeviceapi.h"
 
-struct oss_stream
-{
-    WAVEFORMATEX *fmt;
-    EDataFlow flow;
-    UINT flags;
-    AUDCLNT_SHAREMODE share;
-    HANDLE event;
-
-    int fd;
-
-    BOOL playing, mute, please_quit;
-    UINT64 written_frames, last_pos_frames;
-    UINT32 period_frames, bufsize_frames, held_frames, tmp_buffer_frames, in_oss_frames;
-    UINT32 oss_bufsize_bytes, lcl_offs_frames; /* offs into local_buffer where valid data starts */
-    REFERENCE_TIME period;
-
-    BYTE *local_buffer, *tmp_buffer;
-    INT32 getbuf_last; /* <0 when using tmp_buffer */
-
-    pthread_mutex_t lock;
-};
+struct stream_oss;
 
 /* From <dlls/mmdevapi/mmdevapi.h> */
 enum DriverPriority
@@ -208,6 +188,14 @@ struct get_position_params
     UINT64 *qpctime;
 };
 
+struct set_volumes_params
+{
+    struct oss_stream *stream;
+    float master_volume;
+    const float *volumes;
+    const float *session_volumes;
+};
+
 struct set_event_handle_params
 {
     struct oss_stream *stream;
@@ -243,6 +231,7 @@ enum oss_funcs
     oss_get_next_packet_size,
     oss_get_frequency,
     oss_get_position,
+    oss_set_volumes,
     oss_set_event_handle,
     oss_is_started,
 };

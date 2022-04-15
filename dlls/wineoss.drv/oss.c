@@ -44,6 +44,28 @@
 
 #include "unixlib.h"
 
+struct oss_stream
+{
+    WAVEFORMATEX *fmt;
+    EDataFlow flow;
+    UINT flags;
+    AUDCLNT_SHAREMODE share;
+    HANDLE event;
+
+    int fd;
+
+    BOOL playing, mute, please_quit;
+    UINT64 written_frames, last_pos_frames;
+    UINT32 period_frames, bufsize_frames, held_frames, tmp_buffer_frames, in_oss_frames;
+    UINT32 oss_bufsize_bytes, lcl_offs_frames; /* offs into local_buffer where valid data starts */
+    REFERENCE_TIME period;
+
+    BYTE *local_buffer, *tmp_buffer;
+    INT32 getbuf_last; /* <0 when using tmp_buffer */
+
+    pthread_mutex_t lock;
+};
+
 WINE_DEFAULT_DEBUG_CHANNEL(oss);
 
 /* copied from kernelbase */
@@ -1316,6 +1338,18 @@ static NTSTATUS get_position(void *args)
     return oss_unlock_result(stream, &params->result, S_OK);
 }
 
+static NTSTATUS set_volumes(void *args)
+{
+    struct set_volumes_params *params = args;
+    struct oss_stream *stream = params->stream;
+
+    oss_lock(stream);
+    stream->mute = !params->master_volume;
+    oss_unlock(stream);
+
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS set_event_handle(void *args)
 {
     struct set_event_handle_params *params = args;
@@ -1368,6 +1402,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_next_packet_size,
     get_frequency,
     get_position,
+    set_volumes,
     set_event_handle,
     is_started,
 };

@@ -18,22 +18,7 @@
  */
 
 #define COBJMACROS
-#include "config.h"
-
 #include <stdarg.h>
-#include <errno.h>
-#include <limits.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <fcntl.h>
-#include <unistd.h>
-#include <math.h>
-#include <sys/soundcard.h>
-#include <pthread.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -277,16 +262,6 @@ static DWORD WINAPI timer_thread(void *user)
     return 0;
 }
 
-static void oss_lock(struct oss_stream *stream)
-{
-    pthread_mutex_lock(&stream->lock);
-}
-
-static void oss_unlock(struct oss_stream *stream)
-{
-    pthread_mutex_unlock(&stream->lock);
-}
-
 static void set_device_guid(EDataFlow flow, HKEY drv_key, const WCHAR *key_name,
         GUID *guid)
 {
@@ -361,11 +336,13 @@ static void get_device_guid(EDataFlow flow, const char *device, GUID *guid)
 
 static void set_stream_volumes(ACImpl *This)
 {
-    struct oss_stream *stream = This->stream;
+    struct set_volumes_params params;
 
-    oss_lock(stream);
-    stream->mute = This->session->mute;
-    oss_unlock(stream);
+    params.stream = This->stream;
+    params.master_volume = (This->session->mute ? 0.0f : This->session->master_vol);
+    params.volumes = This->vols;
+    params.session_volumes = This->session->channel_vols;
+    OSS_CALL(set_volumes, &params);
 }
 
 static const OSSDevice *get_ossdevice_from_guid(const GUID *guid)
