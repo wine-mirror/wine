@@ -1048,6 +1048,34 @@ static NTSTATUS get_capture_buffer(void *args)
     return oss_unlock_result(stream, &params->result, *frames ? S_OK : AUDCLNT_S_BUFFER_EMPTY);
 }
 
+static NTSTATUS release_capture_buffer(void *args)
+{
+    struct release_capture_buffer_params *params = args;
+    struct oss_stream *stream = params->stream;
+    UINT32 done = params->done;
+
+    oss_lock(stream);
+
+    if(!done){
+        stream->getbuf_last = 0;
+        return oss_unlock_result(stream, &params->result, S_OK);
+    }
+
+    if(!stream->getbuf_last)
+        return oss_unlock_result(stream, &params->result, AUDCLNT_E_OUT_OF_ORDER);
+
+    if(stream->getbuf_last != done)
+        return oss_unlock_result(stream, &params->result, AUDCLNT_E_INVALID_SIZE);
+
+    stream->written_frames += done;
+    stream->held_frames -= done;
+    stream->lcl_offs_frames += done;
+    stream->lcl_offs_frames %= stream->bufsize_frames;
+    stream->getbuf_last = 0;
+
+    return oss_unlock_result(stream, &params->result, S_OK);
+}
+
 static NTSTATUS is_format_supported(void *args)
 {
     struct is_format_supported_params *params = args;
@@ -1248,6 +1276,7 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     get_render_buffer,
     release_render_buffer,
     get_capture_buffer,
+    release_capture_buffer,
     is_format_supported,
     get_mix_format,
     get_buffer_size,

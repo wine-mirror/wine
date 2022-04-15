@@ -140,6 +140,13 @@ struct get_capture_buffer_params
     UINT64 *qpcpos;
 };
 
+struct release_capture_buffer_params
+{
+    struct oss_stream *stream;
+    UINT32 done;
+    HRESULT result;
+};
+
 struct is_format_supported_params
 {
     const char *device;
@@ -199,6 +206,7 @@ enum oss_funcs
     oss_get_render_buffer,
     oss_release_render_buffer,
     oss_get_capture_buffer,
+    oss_release_capture_buffer,
     oss_is_format_supported,
     oss_get_mix_format,
     oss_get_buffer_size,
