@@ -1420,7 +1420,7 @@ static void move_window_bits( HWND hwnd, Window window, const RECT *old_rect, co
      * still want to avoid copying invalid window bits when possible.
      */
     if (!(NtUserGetWindowLongW( hwnd, GWL_STYLE ) & WS_CLIPCHILDREN ))
-        ExcludeUpdateRgn( hdc_dst, hwnd );
+        NtUserExcludeUpdateRgn( hdc_dst, hwnd );
 
     code = X11DRV_START_EXPOSURES;
     NtGdiExtEscape( hdc_dst, NULL, 0, X11DRV_ESCAPE, sizeof(code), (LPSTR)&code, 0, NULL );
@@ -2188,7 +2188,7 @@ void X11DRV_GetDC( HDC hdc, HWND hwnd, HWND top, const RECT *win_rect,
         if (escape.drawable)
         {
             POINT pt = { 0, 0 };
-            MapWindowPoints( 0, parent, &pt, 1 );
+            NtUserMapWindowPoints( 0, parent, &pt, 1 );
             escape.dc_rect = *win_rect;
             OffsetRect( &escape.dc_rect, pt.x, pt.y );
             if (flags & DCX_CLIPCHILDREN) escape.mode = ClipByChildren;

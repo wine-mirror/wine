@@ -218,10 +218,11 @@ void X11DRV_DisplayDevices_Update(BOOL send_display_change)
     EnumWindows(update_windows_on_display_change, (LPARAM)mask);
 
     /* forward clip_fullscreen_window request to the foreground window */
-    if ((foreground = GetForegroundWindow()) && (tid = GetWindowThreadProcessId( foreground, &pid )) && pid == GetCurrentProcessId())
+    if ((foreground = NtUserGetForegroundWindow()) &&
+        (tid = NtUserGetWindowThread( foreground, &pid )) && pid == GetCurrentProcessId())
     {
         if (tid == GetCurrentThreadId()) clip_fullscreen_window( foreground, TRUE );
-        else SendNotifyMessageW( foreground, WM_X11DRV_CLIP_CURSOR_REQUEST, TRUE, TRUE );
+        else send_notify_message( foreground, WM_X11DRV_CLIP_CURSOR_REQUEST, TRUE, TRUE );
     }
 }
 

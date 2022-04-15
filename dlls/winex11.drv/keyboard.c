@@ -1885,10 +1885,10 @@ BOOL X11DRV_MappingNotify( HWND dummy, XEvent *event )
     XRefreshKeyboardMapping(&event->xmapping);
     X11DRV_InitKeyboard( event->xmapping.display );
 
-    hwnd = GetFocus();
-    if (!hwnd) hwnd = GetActiveWindow();
-    PostMessageW(hwnd, WM_INPUTLANGCHANGEREQUEST,
-                 0 /*FIXME*/, (LPARAM)GetKeyboardLayout(0));
+    hwnd = get_focus();
+    if (!hwnd) hwnd = get_active_window();
+    NtUserPostMessage( hwnd, WM_INPUTLANGCHANGEREQUEST,
+                       0 /*FIXME*/, (LPARAM)NtUserGetKeyboardLayout(0) );
     return TRUE;
 }
 
@@ -2136,7 +2136,7 @@ INT X11DRV_GetKeyNameText( LONG lParam, LPWSTR lpBuffer, INT nSize )
   scanCode = lParam >> 16;
   scanCode &= 0x1ff;  /* keep "extended-key" flag with code */
 
-  vkey = X11DRV_MapVirtualKeyEx(scanCode, MAPVK_VSC_TO_VK_EX, GetKeyboardLayout(0));
+  vkey = X11DRV_MapVirtualKeyEx( scanCode, MAPVK_VSC_TO_VK_EX, NtUserGetKeyboardLayout(0) );
 
   /*  handle "don't care" bit (0x02000000) */
   if (!(lParam & 0x02000000)) {
@@ -2159,7 +2159,7 @@ INT X11DRV_GetKeyNameText( LONG lParam, LPWSTR lpBuffer, INT nSize )
     }
   }
 
-  ansi = X11DRV_MapVirtualKeyEx(vkey, MAPVK_VK_TO_CHAR, GetKeyboardLayout(0));
+  ansi = X11DRV_MapVirtualKeyEx( vkey, MAPVK_VK_TO_CHAR, NtUserGetKeyboardLayout(0) );
   TRACE("scan 0x%04x, vkey 0x%04X, ANSI 0x%04x\n", scanCode, vkey, ansi);
 
   /* first get the name of the "regular" keys which is the Upper case
@@ -2374,9 +2374,9 @@ INT X11DRV_ToUnicodeEx( UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
     focus = x11drv_thread_data()->last_xic_hwnd;
     if (!focus)
     {
-        focus = GetFocus();
-        if (focus) focus = GetAncestor( focus, GA_ROOT );
-        if (!focus) focus = GetActiveWindow();
+        focus = get_focus();
+        if (focus) focus = NtUserGetAncestor( focus, GA_ROOT );
+        if (!focus) focus = get_active_window();
     }
     e.window = X11DRV_get_whole_window( focus );
     xic = X11DRV_get_ic( focus );

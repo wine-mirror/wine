@@ -318,7 +318,7 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
         FIXME("Support for allocation callbacks not implemented yet\n");
 
     /* TODO: support child window rendering. */
-    if (create_info->hwnd && GetAncestor(create_info->hwnd, GA_PARENT) != GetDesktopWindow())
+    if (create_info->hwnd && NtUserGetAncestor(create_info->hwnd, GA_PARENT) != NtUserGetDesktopWindow())
     {
         FIXME("Application requires child window rendering, which is not implemented yet!\n");
         return VK_ERROR_INCOMPATIBLE_DRIVER;
@@ -333,7 +333,7 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
     if (x11_surface->hwnd)
     {
         x11_surface->window = create_client_window(create_info->hwnd, &default_visual);
-        x11_surface->hwnd_thread_id = GetWindowThreadProcessId(x11_surface->hwnd, NULL);
+        x11_surface->hwnd_thread_id = NtUserGetWindowThread(x11_surface->hwnd, NULL);
     }
     else
     {

@@ -1182,7 +1182,7 @@ static void xrandr14_free_monitors( struct gdi_monitor *monitors, int count )
 static BOOL xrandr14_device_change_handler( HWND hwnd, XEvent *event )
 {
     xrandr14_invalidate_current_mode_cache();
-    if (hwnd == GetDesktopWindow() && GetWindowThreadProcessId( hwnd, NULL ) == GetCurrentThreadId())
+    if (hwnd == NtUserGetDesktopWindow() && NtUserGetWindowThread( hwnd, NULL ) == GetCurrentThreadId())
     {
         /* Don't send a WM_DISPLAYCHANGE message here because this event may be a result from
          * ChangeDisplaySettings(). Otherwise, ChangeDisplaySettings() would send multiple

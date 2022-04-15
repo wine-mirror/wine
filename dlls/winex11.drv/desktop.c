@@ -197,8 +197,8 @@ static void query_desktop_work_area( RECT *rc_work )
     RECT rect;
     HWND hwnd = FindWindowW( trayW, NULL );
 
-    if (!hwnd || !IsWindowVisible( hwnd )) return;
-    if (!GetWindowRect( hwnd, &rect )) return;
+    if (!hwnd || !NtUserIsWindowVisible( hwnd )) return;
+    if (!NtUserGetWindowRect( hwnd, &rect )) return;
     if (rect.top) rc_work->bottom = rect.top;
     else rc_work->top = rect.bottom;
     TRACE( "found tray %p %s work area %s\n", hwnd, wine_dbgstr_rect( &rect ), wine_dbgstr_rect( rc_work ) );
@@ -334,8 +334,8 @@ BOOL CDECL X11DRV_create_desktop( UINT width, UINT height )
     Display *display = thread_init_display();
     WCHAR name[MAX_PATH];
 
-    if (!GetUserObjectInformationW( GetThreadDesktop( GetCurrentThreadId() ),
-                                    UOI_NAME, name, sizeof(name), NULL ))
+    if (!NtUserGetObjectInformation( NtUserGetThreadDesktop( GetCurrentThreadId() ),
+                                     UOI_NAME, name, sizeof(name), NULL ))
         name[0] = 0;
 
     TRACE( "%s %ux%u\n", debugstr_w(name), width, height );
@@ -418,7 +418,7 @@ static void update_desktop_fullscreen( unsigned int width, unsigned int height)
 void X11DRV_resize_desktop( BOOL send_display_change )
 {
     RECT primary_rect, virtual_rect;
-    HWND hwnd = GetDesktopWindow();
+    HWND hwnd = NtUserGetDesktopWindow();
     INT width, height;
 
     virtual_rect = NtUserGetVirtualScreenRect();
@@ -426,23 +426,23 @@ void X11DRV_resize_desktop( BOOL send_display_change )
     width = primary_rect.right;
     height = primary_rect.bottom;
 
-    if (GetWindowThreadProcessId( hwnd, NULL ) != GetCurrentThreadId())
+    if (NtUserGetWindowThread( hwnd, NULL ) != GetCurrentThreadId())
     {
-        SendMessageW( hwnd, WM_X11DRV_RESIZE_DESKTOP, 0, (LPARAM)send_display_change );
+        send_message( hwnd, WM_X11DRV_RESIZE_DESKTOP, 0, (LPARAM)send_display_change );
     }
     else
     {
         TRACE( "desktop %p change to (%dx%d)\n", hwnd, width, height );
         update_desktop_fullscreen( width, height );
-        SetWindowPos( hwnd, 0, virtual_rect.left, virtual_rect.top,
-                      virtual_rect.right - virtual_rect.left, virtual_rect.bottom - virtual_rect.top,
-                      SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE );
+        NtUserSetWindowPos( hwnd, 0, virtual_rect.left, virtual_rect.top,
+                            virtual_rect.right - virtual_rect.left, virtual_rect.bottom - virtual_rect.top,
+                            SWP_NOZORDER | SWP_NOACTIVATE | SWP_DEFERERASE );
         ungrab_clipping_window();
 
         if (send_display_change)
         {
-            SendMessageTimeoutW( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_bpp, MAKELPARAM( width, height ),
-                                 SMTO_ABORTIFHUNG, 2000, NULL );
+            send_message_timeout( HWND_BROADCAST, WM_DISPLAYCHANGE, screen_bpp, MAKELPARAM( width, height ),
+                                  SMTO_ABORTIFHUNG, 2000, NULL );
         }
     }
 }
