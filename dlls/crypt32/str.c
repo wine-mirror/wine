@@ -905,6 +905,39 @@ DWORD WINAPI CertGetNameStringA(PCCERT_CONTEXT cert, DWORD type,
     return ret;
 }
 
+static BOOL cert_get_alt_name_info(PCCERT_CONTEXT cert, BOOL alt_name_issuer, PCERT_ALT_NAME_INFO *info)
+{
+    static const char *oids[][2] =
+    {
+        { szOID_SUBJECT_ALT_NAME2, szOID_SUBJECT_ALT_NAME },
+        { szOID_ISSUER_ALT_NAME2, szOID_ISSUER_ALT_NAME },
+    };
+    PCERT_EXTENSION ext;
+    DWORD bytes = 0;
+
+    ext = CertFindExtension(oids[!!alt_name_issuer][0], cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension);
+    if (!ext)
+        ext = CertFindExtension(oids[!!alt_name_issuer][1], cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension);
+    if (!ext) return FALSE;
+
+    return CryptDecodeObjectEx(cert->dwCertEncodingType, X509_ALTERNATE_NAME, ext->Value.pbData, ext->Value.cbData,
+                             CRYPT_DECODE_ALLOC_FLAG, NULL, info, &bytes);
+}
+
+static PCERT_ALT_NAME_ENTRY cert_find_next_alt_name_entry(PCERT_ALT_NAME_INFO info, DWORD entry_type,
+                                                          unsigned int *index)
+{
+    unsigned int i;
+
+    for (i = *index; i < info->cAltEntry; ++i)
+        if (info->rgAltEntry[i].dwAltNameChoice == entry_type)
+        {
+            *index = i + 1;
+            return &info->rgAltEntry[i];
+        }
+    return NULL;
+}
+
 /* Searches cert's extensions for the alternate name extension with OID
  * altNameOID, and if found, searches it for the alternate name type entryType.
  * If found, returns a pointer to the entry, otherwise returns NULL.
@@ -915,31 +948,12 @@ DWORD WINAPI CertGetNameStringA(PCCERT_CONTEXT cert, DWORD type,
  * you're done with the return value.
  */
 static PCERT_ALT_NAME_ENTRY cert_find_alt_name_entry(PCCERT_CONTEXT cert, BOOL alt_name_issuer,
-                                                     DWORD entryType, PCERT_ALT_NAME_INFO *info)
+                                                     DWORD entry_type, PCERT_ALT_NAME_INFO *info)
 {
-    static const char *oids[][2] =
-    {
-        { szOID_SUBJECT_ALT_NAME2, szOID_SUBJECT_ALT_NAME },
-        { szOID_ISSUER_ALT_NAME2, szOID_ISSUER_ALT_NAME },
-    };
-    PCERT_EXTENSION ext;
-    DWORD bytes = 0;
-    unsigned int i;
+    unsigned int index = 0;
 
-    ext = CertFindExtension(oids[!!alt_name_issuer][0], cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension);
-    if (!ext)
-        ext = CertFindExtension(oids[!!alt_name_issuer][1], cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension);
-    if (!ext) return NULL;
-
-    if (!CryptDecodeObjectEx(cert->dwCertEncodingType, X509_ALTERNATE_NAME, ext->Value.pbData, ext->Value.cbData,
-                             CRYPT_DECODE_ALLOC_FLAG, NULL, info, &bytes))
-        return NULL;
-
-    for (i = 0; i < (*info)->cAltEntry; ++i)
-        if ((*info)->rgAltEntry[i].dwAltNameChoice == entryType)
-            return &(*info)->rgAltEntry[i];
-
-    return NULL;
+    if (!cert_get_alt_name_info(cert, alt_name_issuer, info)) return NULL;
+    return cert_find_next_alt_name_entry(*info, entry_type, &index);
 }
 
 static DWORD cert_get_name_from_rdn_attr(DWORD encodingType,
@@ -978,9 +992,10 @@ static DWORD copy_output_str(WCHAR *dst, const WCHAR *src, DWORD dst_size)
 DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT cert, DWORD type, DWORD flags, void *type_para,
                                 LPWSTR name_string, DWORD name_len)
 {
+    static const DWORD supported_flags = CERT_NAME_ISSUER_FLAG | CERT_NAME_SEARCH_ALL_NAMES_FLAG;
+    BOOL alt_name_issuer, search_all_names;
     CERT_ALT_NAME_INFO *info = NULL;
     PCERT_ALT_NAME_ENTRY entry;
-    BOOL alt_name_issuer;
     PCERT_NAME_BLOB name;
     DWORD ret = 0;
 
@@ -988,6 +1003,16 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT cert, DWORD type, DWORD flags, vo
 
     if (!cert)
         goto done;
+
+    if (flags & ~supported_flags)
+        FIXME("Unsupported flags %#lx.\n", flags);
+
+    search_all_names = flags & CERT_NAME_SEARCH_ALL_NAMES_FLAG;
+    if (search_all_names && type != CERT_NAME_DNS_TYPE)
+    {
+        WARN("CERT_NAME_SEARCH_ALL_NAMES_FLAG used with type %lu.\n", type);
+        goto done;
+    }
 
     alt_name_issuer = flags & CERT_NAME_ISSUER_FLAG;
     name = alt_name_issuer ? &cert->pCertInfo->Issuer : &cert->pCertInfo->Subject;
@@ -1077,15 +1102,43 @@ DWORD WINAPI CertGetNameStringW(PCCERT_CONTEXT cert, DWORD type, DWORD flags, vo
     }
     case CERT_NAME_DNS_TYPE:
     {
-        entry = cert_find_alt_name_entry(cert, alt_name_issuer, CERT_ALT_NAME_DNS_NAME, &info);
+        unsigned int index = 0, len;
 
-        if (entry)
+        if (cert_get_alt_name_info(cert, alt_name_issuer, &info)
+            && (entry = cert_find_next_alt_name_entry(info, CERT_ALT_NAME_DNS_NAME, &index)))
         {
-            ret = copy_output_str(name_string, entry->u.pwszDNSName, name_len);
-            break;
+            if (search_all_names)
+            {
+                do
+                {
+                    if (name_string && name_len == 1) break;
+                    ret += len = copy_output_str(name_string, entry->u.pwszDNSName, name_len ? name_len - 1 : 0);
+                    if (name_string && name_len)
+                    {
+                        name_string += len;
+                        name_len -= len;
+                    }
+                }
+                while ((entry = cert_find_next_alt_name_entry(info, CERT_ALT_NAME_DNS_NAME, &index)));
+            }
+            else ret = copy_output_str(name_string, entry->u.pwszDNSName, name_len);
         }
-        ret = cert_get_name_from_rdn_attr(cert->dwCertEncodingType, name, szOID_COMMON_NAME,
-                                          name_string, name_len);
+        else
+        {
+            if (!search_all_names || name_len != 1)
+            {
+                len = search_all_names && name_len ? name_len - 1 : name_len;
+                ret = cert_get_name_from_rdn_attr(cert->dwCertEncodingType, name, szOID_COMMON_NAME,
+                                                  name_string, len);
+                if (name_string) name_string += ret;
+            }
+        }
+
+        if (search_all_names)
+        {
+            if (name_string && name_len) *name_string = 0;
+            ++ret;
+        }
         break;
     }
     case CERT_NAME_URL_TYPE:

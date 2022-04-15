@@ -847,39 +847,63 @@ static void test_CertStrToNameW(void)
 static void test_CertGetNameString_value_(unsigned int line, PCCERT_CONTEXT context, DWORD type, DWORD flags,
         void *type_para, const char *expected)
 {
+    DWORD len, retlen, expected_len;
     WCHAR expectedW[512];
-    DWORD len, retlen;
     WCHAR strW[512];
-    unsigned int i;
     char str[512];
 
-    for (i = 0; expected[i]; ++i)
-        expectedW[i] = expected[i];
-    expectedW[i] = 0;
+    expected_len = 0;
+    while(expected[expected_len])
+    {
+        while((expectedW[expected_len] = expected[expected_len]))
+            ++expected_len;
+        if (!(flags & CERT_NAME_SEARCH_ALL_NAMES_FLAG))
+            break;
+        expectedW[expected_len++] = 0;
+    }
+    expectedW[expected_len++] = 0;
 
     len = CertGetNameStringA(context, type, flags, type_para, NULL, 0);
-    ok(len == strlen(expected) + 1, "line %u: unexpected length %ld.\n", line, len);
+    ok(len == expected_len, "line %u: unexpected length %ld, expected %ld.\n", line, len, expected_len);
+    memset(str, 0xcc, len);
     retlen = CertGetNameStringA(context, type, flags, type_para, str, len);
     ok(retlen == len, "line %u: unexpected len %lu, expected %lu.\n", line, retlen, len);
-    ok(!strcmp(str, expected), "line %u: unexpected value %s.\n", line, str);
+    ok(!memcmp(str, expected, expected_len), "line %u: unexpected value %s.\n", line, debugstr_an(str, expected_len));
     str[0] = str[1] = 0xcc;
     retlen = CertGetNameStringA(context, type, flags, type_para, str, len - 1);
     ok(retlen == 1, "line %u: Unexpected len %lu, expected 1.\n", line, retlen);
     if (len == 1) return;
     ok(!str[0], "line %u: unexpected str[0] %#x.\n", line, str[0]);
     ok(str[1] == expected[1], "line %u: unexpected str[1] %#x.\n", line, str[1]);
-
+    ok(!memcmp(str + 1, expected + 1, len - 2),
+            "line %u: str %s, string data mismatch.\n", line, debugstr_a(str + 1));
     retlen = CertGetNameStringA(context, type, flags, type_para, str, 0);
     ok(retlen == len, "line %u: Unexpected len %lu, expected 1.\n", line, retlen);
 
+    memset(strW, 0xcc, len * sizeof(*strW));
     retlen = CertGetNameStringW(context, type, flags, type_para, strW, len);
-    ok(retlen == len, "line %u: unexpected len %lu, expected 1.\n", line, retlen);
-    ok(!wcscmp(strW, expectedW), "line %u: unexpected value %s.\n", line, debugstr_w(strW));
+    ok(retlen == expected_len, "line %u: unexpected len %lu, expected %lu.\n", line, retlen, expected_len);
+    ok(!memcmp(strW, expectedW, len * sizeof(*strW)), "line %u: unexpected value %s.\n", line, debugstr_wn(strW, len));
     strW[0] = strW[1] = 0xcccc;
     retlen = CertGetNameStringW(context, type, flags, type_para, strW, len - 1);
     ok(retlen == len - 1, "line %u: unexpected len %lu, expected %lu.\n", line, retlen, len - 1);
-    ok(!wcsncmp(strW, expectedW, retlen - 1), "line %u: string data mismatch.\n", line);
-    ok(!strW[retlen - 1], "line %u: string is not zero terminated.\n", line);
+    if (flags & CERT_NAME_SEARCH_ALL_NAMES_FLAG)
+    {
+        ok(!memcmp(strW, expectedW, (retlen - 2) * sizeof(*strW)),
+                "line %u: str %s, string data mismatch.\n", line, debugstr_wn(strW, retlen - 2));
+        ok(!strW[retlen - 2], "line %u: string is not zero terminated.\n", line);
+        ok(!strW[retlen - 1], "line %u: string sequence is not zero terminated.\n", line);
+
+        retlen = CertGetNameStringW(context, type, flags, type_para, strW, 1);
+        ok(retlen == 1, "line %u: unexpected len %lu, expected %lu.\n", line, retlen, len - 1);
+        ok(!strW[retlen - 1], "line %u: string sequence is not zero terminated.\n", line);
+    }
+    else
+    {
+        ok(!memcmp(strW, expectedW, (retlen - 1) * sizeof(*strW)),
+                "line %u: str %s, string data mismatch.\n", line, debugstr_wn(strW, retlen - 1));
+        ok(!strW[retlen - 1], "line %u: string is not zero terminated.\n", line);
+    }
     retlen = CertGetNameStringA(context, type, flags, type_para, NULL, len - 1);
     ok(retlen == len, "line %u: unexpected len %lu, expected %lu\n", line, retlen, len);
     retlen = CertGetNameStringW(context, type, flags, type_para, NULL, len - 1);
@@ -924,6 +948,9 @@ static void test_CertGetNameString(void)
     test_CertGetNameString_value(context, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, localhost);
     test_CertGetNameString_value(context, CERT_NAME_FRIENDLY_DISPLAY_TYPE, 0, NULL, localhost);
     test_CertGetNameString_value(context, CERT_NAME_DNS_TYPE, 0, NULL, localhost);
+    test_CertGetNameString_value(context, CERT_NAME_DNS_TYPE, CERT_NAME_SEARCH_ALL_NAMES_FLAG, NULL, "localhost\0");
+    test_CertGetNameString_value(context, CERT_NAME_EMAIL_TYPE, CERT_NAME_SEARCH_ALL_NAMES_FLAG, NULL, "");
+    test_CertGetNameString_value(context, CERT_NAME_SIMPLE_DISPLAY_TYPE, CERT_NAME_SEARCH_ALL_NAMES_FLAG, NULL, "");
 
     CertFreeCertificateContext(context);
 
@@ -945,6 +972,10 @@ static void test_CertGetNameString(void)
     test_CertGetNameString_value(context, CERT_NAME_DNS_TYPE, CERT_NAME_ISSUER_FLAG, NULL, "ex3.org");
     test_CertGetNameString_value(context, CERT_NAME_SIMPLE_DISPLAY_TYPE, 0, NULL, "server_cn.org");
     test_CertGetNameString_value(context, CERT_NAME_ATTR_TYPE, 0, (void *)szOID_SUR_NAME, "");
+    test_CertGetNameString_value(context, CERT_NAME_DNS_TYPE, CERT_NAME_SEARCH_ALL_NAMES_FLAG,
+            NULL, "ex1.org\0*.ex2.org\0");
+    test_CertGetNameString_value(context, CERT_NAME_DNS_TYPE, CERT_NAME_SEARCH_ALL_NAMES_FLAG | CERT_NAME_ISSUER_FLAG,
+            NULL, "ex3.org\0*.ex4.org\0");
     CertFreeCertificateContext(context);
 }
 
