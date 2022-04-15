@@ -2063,6 +2063,32 @@ static void HttpHeaders_test(void)
        "header still present\n");
     ok(GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND, "got %lu\n", GetLastError());
 
+    /* Header with empty value should cause a failure */
+    todo_wine
+    {
+    SetLastError(0xdeadbeef);
+    ok(!HttpAddRequestHeadersA(hRequest, "EmptyTest1:", -1, HTTP_ADDREQ_FLAG_ADD), "Empty header should not be added.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error code %lu.\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ok(!HttpAddRequestHeadersA(hRequest, "EmptyTest2:\r\n", -1, HTTP_ADDREQ_FLAG_ADD), "Empty header should not be added.\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected error code %lu.\n", GetLastError());
+
+    len = sizeof(buffer);
+    strcpy(buffer, "EmptyTest1");
+    SetLastError(0xdeadbeef);
+    ok(!HttpQueryInfoA(hRequest, HTTP_QUERY_CUSTOM | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &len, NULL),
+       "Header with empty value is present.\n");
+    ok(GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND, "Got unexpected error code %lu.\n", GetLastError());
+
+    len = sizeof(buffer);
+    strcpy(buffer, "EmptyTest2");
+    SetLastError(0xdeadbeef);
+    ok(!HttpQueryInfoA(hRequest, HTTP_QUERY_CUSTOM | HTTP_QUERY_FLAG_REQUEST_HEADERS, buffer, &len, NULL),
+       "Header with empty value is present.\n");
+    ok(GetLastError() == ERROR_HTTP_HEADER_NOT_FOUND, "Got unexpected error code %lu.\n", GetLastError());
+    }
+
     ok(InternetCloseHandle(hRequest), "Close request handle failed\n");
 done:
     ok(InternetCloseHandle(hConnect), "Close connect handle failed\n");
