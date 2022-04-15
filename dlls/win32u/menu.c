@@ -116,8 +116,8 @@ HMENU get_menu( HWND hwnd )
     return UlongToHandle( get_window_long( hwnd, GWLP_ID ));
 }
 
-/* see CreateMenu */
-HMENU create_menu(void)
+/* see CreateMenu and CreatePopupMenu */
+HMENU create_menu( BOOL is_popup )
 {
     POPUPMENU *menu;
     HMENU handle;
@@ -125,6 +125,7 @@ HMENU create_menu(void)
     if (!(menu = calloc( 1, sizeof(*menu) ))) return 0;
     menu->FocusedItem = NO_SELECTED_ITEM;
     menu->refcount = 1;
+    if (is_popup) menu->wFlags |= MF_POPUP;
 
     if (!(handle = alloc_user_handle( &menu->obj, NTUSER_OBJ_MENU ))) free( menu );
 

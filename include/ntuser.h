@@ -577,7 +577,6 @@ HWND    WINAPI NtUserWindowFromPoint( LONG x, LONG y );
 /* NtUserCallNoParam codes, not compatible with Windows */
 enum
 {
-    NtUserCallNoParam_CreateMenu,
     NtUserCallNoParam_GetDesktopWindow,
     NtUserCallNoParam_GetInputState,
     NtUserCallNoParam_GetMessagePos,
@@ -587,11 +586,6 @@ enum
     NtUserThreadDetach,
     NtUserUpdateClipboard,
 };
-
-static inline HMENU NtUserCreateMenu(void)
-{
-    return UlongToHandle( NtUserCallNoParam( NtUserCallNoParam_CreateMenu ));
-}
 
 static inline HWND NtUserGetDesktopWindow(void)
 {
@@ -618,6 +612,7 @@ enum
 {
     NtUserCallOneParam_BeginDeferWindowPos,
     NtUserCallOneParam_CreateCursorIcon,
+    NtUserCallOneParam_CreateMenu,
     NtUserCallOneParam_DispatchMessageA,
     NtUserCallOneParam_EnableDC,
     NtUserCallOneParam_EnableThunkLock,
@@ -649,6 +644,11 @@ static inline HDWP NtUserBeginDeferWindowPos( INT count )
 static inline HICON NtUserCreateCursorIcon( BOOL is_icon )
 {
     return UlongToHandle( NtUserCallOneParam( is_icon, NtUserCallOneParam_CreateCursorIcon ));
+}
+
+static inline HMENU NtUserCreateMenu( BOOL is_popup )
+{
+    return UlongToHandle( NtUserCallOneParam( is_popup, NtUserCallOneParam_CreateMenu ));
 }
 
 static inline LRESULT NtUserDispatchMessageA( const MSG *msg )

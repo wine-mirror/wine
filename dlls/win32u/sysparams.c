@@ -4632,9 +4632,6 @@ ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
 {
     switch(code)
     {
-    case NtUserCallNoParam_CreateMenu:
-        return HandleToUlong( create_menu() );
-
     case NtUserCallNoParam_GetDesktopWindow:
         return HandleToUlong( get_desktop_window() );
 
@@ -4678,6 +4675,9 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
 
     case NtUserCallOneParam_CreateCursorIcon:
         return HandleToUlong( alloc_cursoricon_handle( arg ));
+
+    case NtUserCallOneParam_CreateMenu:
+        return HandleToUlong( create_menu( arg ) );
 
     case NtUserCallOneParam_DispatchMessageA:
         return dispatch_message( (const MSG *)arg, TRUE );

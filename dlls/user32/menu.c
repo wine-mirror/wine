@@ -4158,13 +4158,7 @@ BOOL WINAPI ModifyMenuA( HMENU hMenu, UINT pos, UINT flags,
  */
 HMENU WINAPI CreatePopupMenu(void)
 {
-    HMENU hmenu;
-    POPUPMENU *menu;
-
-    if (!(hmenu = CreateMenu())) return 0;
-    menu = MENU_GetMenu( hmenu );
-    menu->wFlags |= MF_POPUP;
-    return hmenu;
+    return NtUserCreateMenu( TRUE );
 }
 
 
@@ -4213,7 +4207,7 @@ BOOL WINAPI SetMenuItemBitmaps( HMENU hMenu, UINT nPos, UINT wFlags,
  */
 HMENU WINAPI CreateMenu(void)
 {
-    return NtUserCreateMenu();
+    return NtUserCreateMenu( FALSE );
 }
 
 

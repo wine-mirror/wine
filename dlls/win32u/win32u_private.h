@@ -353,7 +353,7 @@ extern BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret ) DECL
 extern BOOL set_foreground_window( HWND hwnd, BOOL mouse ) DECLSPEC_HIDDEN;
 
 /* menu.c */
-extern HMENU create_menu(void) DECLSPEC_HIDDEN;
+extern HMENU create_menu( BOOL is_popup ) DECLSPEC_HIDDEN;
 extern HMENU get_menu( HWND hwnd ) DECLSPEC_HIDDEN;
 
 /* message.c */
