@@ -299,7 +299,7 @@ static NTSTATUS ipv4_icmpstats_get_all_parameters( const void *key, UINT key_siz
         fclose( fp );
         return status;
     }
-#elif defined(HAVE_SYS_SYSCTL_H) && defined(ICMPCTL_STATS)
+#elif defined(HAVE_SYS_SYSCTL_H) && defined(ICMPCTL_STATS) && defined(HAVE_STRUCT_ICMPSTAT_ICPS_ERROR)
     {
         int mib[] = { CTL_NET, PF_INET, IPPROTO_ICMP, ICMPCTL_STATS };
         struct icmpstat icmp_stat;

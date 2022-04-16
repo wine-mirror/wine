@@ -20619,6 +20619,32 @@ printf "%s\n" "#define HAVE_STRUCT_IP_STATS_IPS_TOTAL 1" >>confdefs.h
 fi
 
 
+ac_fn_c_check_member "$LINENO" "struct icmpstat" "icps_error" "ac_cv_member_struct_icmpstat_icps_error" "#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKETVAR_H
+#include <sys/socketvar.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_NETINET_IP_H
+#include <netinet/ip.h>
+#endif
+#ifdef HAVE_NETINET_IP_ICMP_H
+#include <netinet/ip_icmp.h>
+#endif
+#ifdef HAVE_NETINET_ICMP_VAR_H
+#include <netinet/icmp_var.h>
+#endif
+"
+if test "x$ac_cv_member_struct_icmpstat_icps_error" = xyes
+then :
+
+printf "%s\n" "#define HAVE_STRUCT_ICMPSTAT_ICPS_ERROR 1" >>confdefs.h
+
+
+fi
+
+
 ac_fn_c_check_member "$LINENO" "struct tcpstat" "tcps_connattempt" "ac_cv_member_struct_tcpstat_tcps_connattempt" "#include <sys/types.h>
 #ifdef HAVE_SYS_SOCKETVAR_H
 #include <sys/socketvar.h>
