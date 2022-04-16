@@ -545,8 +545,10 @@ DECL_HANDLER(get_directory_entries)
         unsigned int i;
         char *buffer;
 
+        reply->total_len = 0;
+
         size = 0;
-        for (i = 0; ; i++)
+        for (i = 0; i < req->max_count; i++)
         {
             const struct unicode_str *type_name;
             data_size_t name_len;
@@ -557,6 +559,7 @@ DECL_HANDLER(get_directory_entries)
             type_name = &obj->ops->type->name;
             get_object_name( obj, &name_len );
             entry_size = (sizeof(*entry) + name_len + type_name->len + 3) & ~3;
+            reply->total_len += name_len + type_name->len;
             release_object( obj );
 
             if (size + entry_size > get_reply_max_size())
@@ -603,41 +606,6 @@ DECL_HANDLER(get_directory_entries)
 
             release_object( obj );
         }
-        release_object( dir );
-    }
-}
-
-/* get a directory entry by index */
-DECL_HANDLER(get_directory_entry)
-{
-    struct directory *dir = (struct directory *)get_handle_obj( current->process, req->handle,
-                                                                DIRECTORY_QUERY, &directory_ops );
-    if (dir)
-    {
-        struct object *obj = find_object_index( dir->entries, req->index );
-        if (obj)
-        {
-            data_size_t name_len;
-            const struct unicode_str *type_name = &obj->ops->type->name;
-            const WCHAR *name = get_object_name( obj, &name_len );
-
-            reply->total_len = name_len + type_name->len;
-
-            if (reply->total_len <= get_reply_max_size())
-            {
-                void *ptr = set_reply_data_size( reply->total_len );
-                if (ptr)
-                {
-                    reply->name_len = name_len;
-                    memcpy( ptr, name, name_len );
-                    memcpy( (char *)ptr + name_len, type_name->str, type_name->len );
-                }
-            }
-            else set_error( STATUS_BUFFER_TOO_SMALL );
-
-            release_object( obj );
-        }
-        else set_error( STATUS_NO_MORE_ENTRIES );
         release_object( dir );
     }
 }

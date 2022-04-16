@@ -1143,49 +1143,9 @@ NTSTATUS WINAPI NtQueryDirectoryObject( HANDLE handle, DIRECTORY_BASIC_INFORMATI
                                         ULONG size, BOOLEAN single_entry, BOOLEAN restart,
                                         ULONG *context, ULONG *ret_size )
 {
-    unsigned int status, i, count, pos, used_size, used_count, strpool_head;
+    unsigned int status, i, count, total_len, pos, used_size, used_count, strpool_head;
     ULONG index = restart ? 0 : *context;
     struct directory_entry *entries;
-
-    if (single_entry)
-    {
-        SERVER_START_REQ( get_directory_entry )
-        {
-            req->handle = wine_server_obj_handle( handle );
-            req->index = index;
-            if (size >= 2 * sizeof(*buffer) + 2 * sizeof(WCHAR))
-                wine_server_set_reply( req, buffer + 2, size - 2 * sizeof(*buffer) - 2 * sizeof(WCHAR) );
-            if (!(status = wine_server_call( req )))
-            {
-                buffer->ObjectName.Buffer = (WCHAR *)(buffer + 2);
-                buffer->ObjectName.Length = reply->name_len;
-                buffer->ObjectName.MaximumLength = reply->name_len + sizeof(WCHAR);
-                buffer->ObjectTypeName.Buffer = (WCHAR *)(buffer + 2) + reply->name_len/sizeof(WCHAR) + 1;
-                buffer->ObjectTypeName.Length = wine_server_reply_size( reply ) - reply->name_len;
-                buffer->ObjectTypeName.MaximumLength = buffer->ObjectTypeName.Length + sizeof(WCHAR);
-                /* make room for the terminating null */
-                memmove( buffer->ObjectTypeName.Buffer, buffer->ObjectTypeName.Buffer - 1,
-                         buffer->ObjectTypeName.Length );
-                buffer->ObjectName.Buffer[buffer->ObjectName.Length/sizeof(WCHAR)] = 0;
-                buffer->ObjectTypeName.Buffer[buffer->ObjectTypeName.Length/sizeof(WCHAR)] = 0;
-
-                memset( &buffer[1], 0, sizeof(buffer[1]) );
-
-                *context = index + 1;
-            }
-            else if (status == STATUS_NO_MORE_ENTRIES)
-            {
-                if (size > sizeof(*buffer))
-                    memset( buffer, 0, sizeof(*buffer) );
-                if (ret_size) *ret_size = sizeof(*buffer);
-            }
-
-            if (ret_size && (!status || status == STATUS_BUFFER_TOO_SMALL))
-                *ret_size = 2 * sizeof(*buffer) + reply->total_len + 2 * sizeof(WCHAR);
-        }
-        SERVER_END_REQ;
-        return status;
-    }
 
     if (!(entries = malloc( size ))) return STATUS_NO_MEMORY;
 
@@ -1193,9 +1153,11 @@ NTSTATUS WINAPI NtQueryDirectoryObject( HANDLE handle, DIRECTORY_BASIC_INFORMATI
     {
         req->handle = wine_server_obj_handle( handle );
         req->index = index;
+        req->max_count = single_entry ? 1 : UINT_MAX;
         wine_server_set_reply( req, entries, size );
         status = wine_server_call( req );
         count = reply->count;
+        total_len = reply->total_len;
     }
     SERVER_END_REQ;
 
@@ -1258,6 +1220,12 @@ NTSTATUS WINAPI NtQueryDirectoryObject( HANDLE handle, DIRECTORY_BASIC_INFORMATI
     {
         if (ret_size) *ret_size = sizeof(*buffer);
         return STATUS_NO_MORE_ENTRIES;
+    }
+
+    if (single_entry && !used_count)
+    {
+        if (ret_size) *ret_size = 2 * sizeof(*buffer) + 2 * sizeof(WCHAR) + total_len;
+        return STATUS_BUFFER_TOO_SMALL;
     }
 
     *context = index + used_count;

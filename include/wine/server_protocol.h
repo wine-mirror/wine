@@ -4857,32 +4857,14 @@ struct get_directory_entries_request
     struct request_header __header;
     obj_handle_t   handle;
     unsigned int   index;
-    char __pad_20[4];
+    unsigned int   max_count;
 };
 struct get_directory_entries_reply
 {
     struct reply_header __header;
+    data_size_t    total_len;
     unsigned int   count;
     /* VARARG(entries,directory_entries); */
-    char __pad_12[4];
-};
-
-
-
-struct get_directory_entry_request
-{
-    struct request_header __header;
-    obj_handle_t   handle;
-    unsigned int   index;
-    char __pad_20[4];
-};
-struct get_directory_entry_reply
-{
-    struct reply_header __header;
-    data_size_t    total_len;
-    data_size_t    name_len;
-    /* VARARG(name,unicode_str,name_len); */
-    /* VARARG(type,unicode_str); */
 };
 
 
@@ -5915,7 +5897,6 @@ enum request
     REQ_create_directory,
     REQ_open_directory,
     REQ_get_directory_entries,
-    REQ_get_directory_entry,
     REQ_create_symlink,
     REQ_open_symlink,
     REQ_query_symlink,
@@ -6208,7 +6189,6 @@ union generic_request
     struct create_directory_request create_directory_request;
     struct open_directory_request open_directory_request;
     struct get_directory_entries_request get_directory_entries_request;
-    struct get_directory_entry_request get_directory_entry_request;
     struct create_symlink_request create_symlink_request;
     struct open_symlink_request open_symlink_request;
     struct query_symlink_request query_symlink_request;
@@ -6499,7 +6479,6 @@ union generic_reply
     struct create_directory_reply create_directory_reply;
     struct open_directory_reply open_directory_reply;
     struct get_directory_entries_reply get_directory_entries_reply;
-    struct get_directory_entry_reply get_directory_entry_reply;
     struct create_symlink_reply create_symlink_reply;
     struct open_symlink_reply open_symlink_reply;
     struct query_symlink_reply query_symlink_reply;
@@ -6555,7 +6534,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 805
+#define SERVER_PROTOCOL_VERSION 806
 
 /* ### protocol_version end ### */
 

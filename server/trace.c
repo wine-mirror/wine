@@ -4123,26 +4123,14 @@ static void dump_get_directory_entries_request( const struct get_directory_entri
 {
     fprintf( stderr, " handle=%04x", req->handle );
     fprintf( stderr, ", index=%08x", req->index );
+    fprintf( stderr, ", max_count=%08x", req->max_count );
 }
 
 static void dump_get_directory_entries_reply( const struct get_directory_entries_reply *req )
 {
-    fprintf( stderr, " count=%08x", req->count );
-    dump_varargs_directory_entries( ", entries=", cur_size );
-}
-
-static void dump_get_directory_entry_request( const struct get_directory_entry_request *req )
-{
-    fprintf( stderr, " handle=%04x", req->handle );
-    fprintf( stderr, ", index=%08x", req->index );
-}
-
-static void dump_get_directory_entry_reply( const struct get_directory_entry_reply *req )
-{
     fprintf( stderr, " total_len=%u", req->total_len );
-    fprintf( stderr, ", name_len=%u", req->name_len );
-    dump_varargs_unicode_str( ", name=", min(cur_size,req->name_len) );
-    dump_varargs_unicode_str( ", type=", cur_size );
+    fprintf( stderr, ", count=%08x", req->count );
+    dump_varargs_directory_entries( ", entries=", cur_size );
 }
 
 static void dump_create_symlink_request( const struct create_symlink_request *req )
@@ -4883,7 +4871,6 @@ static const dump_func req_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_directory_request,
     (dump_func)dump_open_directory_request,
     (dump_func)dump_get_directory_entries_request,
-    (dump_func)dump_get_directory_entry_request,
     (dump_func)dump_create_symlink_request,
     (dump_func)dump_open_symlink_request,
     (dump_func)dump_query_symlink_request,
@@ -5172,7 +5159,6 @@ static const dump_func reply_dumpers[REQ_NB_REQUESTS] = {
     (dump_func)dump_create_directory_reply,
     (dump_func)dump_open_directory_reply,
     (dump_func)dump_get_directory_entries_reply,
-    (dump_func)dump_get_directory_entry_reply,
     (dump_func)dump_create_symlink_reply,
     (dump_func)dump_open_symlink_reply,
     (dump_func)dump_query_symlink_reply,
@@ -5461,7 +5447,6 @@ static const char * const req_names[REQ_NB_REQUESTS] = {
     "create_directory",
     "open_directory",
     "get_directory_entries",
-    "get_directory_entry",
     "create_symlink",
     "open_symlink",
     "query_symlink",
