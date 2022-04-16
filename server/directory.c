@@ -562,6 +562,7 @@ DECL_HANDLER(get_directory_entry)
 
             release_object( obj );
         }
+        else set_error( STATUS_NO_MORE_ENTRIES );
         release_object( dir );
     }
 }

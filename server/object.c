@@ -495,7 +495,6 @@ struct object *find_object_index( const struct namespace *namespace, unsigned in
             if (!index--) return grab_object( ptr->obj );
         }
     }
-    set_error( STATUS_NO_MORE_ENTRIES );
     return NULL;
 }
 
