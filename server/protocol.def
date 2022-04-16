@@ -887,6 +887,14 @@ typedef struct
     lparam_t info;
 } cursor_pos_t;
 
+struct directory_entry
+{
+    data_size_t name_len;
+    data_size_t type_len;
+    /* VARARG(name,unicode_str,name_len); */
+    /* VARARG(type,unicode_str,type_len); */
+};
+
 /****************************************************************/
 /* Request declarations */
 
@@ -3404,6 +3412,16 @@ struct handle_info
     VARARG(directory_name,unicode_str); /* Directory name */
 @REPLY
     obj_handle_t   handle;        /* handle to the directory */
+@END
+
+
+/* Get directory entries */
+@REQ(get_directory_entries)
+    obj_handle_t   handle;             /* handle to the directory */
+    unsigned int   index;              /* index of first entry */
+@REPLY
+    unsigned int   count;              /* number of entries returned */
+    VARARG(entries,directory_entries);
 @END
 
 

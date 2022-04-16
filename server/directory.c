@@ -532,6 +532,81 @@ DECL_HANDLER(open_directory)
                                  &directory_ops, &name, req->attributes );
 }
 
+/* get directory entries */
+DECL_HANDLER(get_directory_entries)
+{
+    struct directory *dir = (struct directory *)get_handle_obj( current->process, req->handle,
+                                                                DIRECTORY_QUERY, &directory_ops );
+    if (dir)
+    {
+        struct directory_entry *entry;
+        struct object *obj;
+        data_size_t size;
+        unsigned int i;
+        char *buffer;
+
+        size = 0;
+        for (i = 0; ; i++)
+        {
+            const struct unicode_str *type_name;
+            data_size_t name_len;
+            size_t entry_size;
+
+            if (!(obj = find_object_index( dir->entries, req->index + i )))
+                break;
+            type_name = &obj->ops->type->name;
+            get_object_name( obj, &name_len );
+            entry_size = (sizeof(*entry) + name_len + type_name->len + 3) & ~3;
+            release_object( obj );
+
+            if (size + entry_size > get_reply_max_size())
+            {
+                set_error( STATUS_MORE_ENTRIES );
+                break;
+            }
+            size += entry_size;
+        }
+        reply->count = i;
+
+        if (!(buffer = set_reply_data_size( size )))
+        {
+            release_object( dir );
+            return;
+        }
+
+        size = 0;
+        for (i = 0; i < reply->count; i++)
+        {
+            const struct unicode_str *type_name;
+            data_size_t name_len;
+            const WCHAR *name;
+
+            obj = find_object_index( dir->entries, req->index + i );
+            assert( obj );
+            type_name = &obj->ops->type->name;
+            name = get_object_name( obj, &name_len );
+
+            entry = (struct directory_entry *)(buffer + size);
+            entry->name_len = name_len;
+            entry->type_len = type_name->len;
+
+            size += sizeof(*entry);
+            memcpy( buffer + size, name, name_len );
+            size += name_len;
+            memcpy( buffer + size, type_name->str, type_name->len );
+            size += type_name->len;
+            if (size & 3)
+            {
+                memset( buffer + size, 0, 4 - (size & 3) );
+                size += 4 - (size & 3);
+            }
+
+            release_object( obj );
+        }
+        release_object( dir );
+    }
+}
+
 /* get a directory entry by index */
 DECL_HANDLER(get_directory_entry)
 {

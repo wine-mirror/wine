@@ -1143,8 +1143,9 @@ NTSTATUS WINAPI NtQueryDirectoryObject( HANDLE handle, DIRECTORY_BASIC_INFORMATI
                                         ULONG size, BOOLEAN single_entry, BOOLEAN restart,
                                         ULONG *context, ULONG *ret_size )
 {
+    unsigned int status, i, count, pos, used_size, used_count, strpool_head;
     ULONG index = restart ? 0 : *context;
-    unsigned int ret;
+    struct directory_entry *entries;
 
     if (single_entry)
     {
@@ -1154,7 +1155,7 @@ NTSTATUS WINAPI NtQueryDirectoryObject( HANDLE handle, DIRECTORY_BASIC_INFORMATI
             req->index = index;
             if (size >= 2 * sizeof(*buffer) + 2 * sizeof(WCHAR))
                 wine_server_set_reply( req, buffer + 2, size - 2 * sizeof(*buffer) - 2 * sizeof(WCHAR) );
-            if (!(ret = wine_server_call( req )))
+            if (!(status = wine_server_call( req )))
             {
                 buffer->ObjectName.Buffer = (WCHAR *)(buffer + 2);
                 buffer->ObjectName.Length = reply->name_len;
@@ -1172,24 +1173,96 @@ NTSTATUS WINAPI NtQueryDirectoryObject( HANDLE handle, DIRECTORY_BASIC_INFORMATI
 
                 *context = index + 1;
             }
-            else if (ret == STATUS_NO_MORE_ENTRIES)
+            else if (status == STATUS_NO_MORE_ENTRIES)
             {
                 if (size > sizeof(*buffer))
                     memset( buffer, 0, sizeof(*buffer) );
                 if (ret_size) *ret_size = sizeof(*buffer);
             }
 
-            if (ret_size && (!ret || ret == STATUS_BUFFER_TOO_SMALL))
+            if (ret_size && (!status || status == STATUS_BUFFER_TOO_SMALL))
                 *ret_size = 2 * sizeof(*buffer) + reply->total_len + 2 * sizeof(WCHAR);
         }
         SERVER_END_REQ;
+        return status;
     }
-    else
+
+    if (!(entries = malloc( size ))) return STATUS_NO_MEMORY;
+
+    SERVER_START_REQ( get_directory_entries )
     {
-        FIXME("multiple entries not implemented\n");
-        ret = STATUS_NOT_IMPLEMENTED;
+        req->handle = wine_server_obj_handle( handle );
+        req->index = index;
+        wine_server_set_reply( req, entries, size );
+        status = wine_server_call( req );
+        count = reply->count;
     }
-    return ret;
+    SERVER_END_REQ;
+
+    if (status && status != STATUS_MORE_ENTRIES)
+    {
+        free( entries );
+        return status;
+    }
+
+    used_count = 0;
+    used_size = sizeof(*buffer);  /* "null terminator" entry */
+    for (i = pos = 0; i < count; i++)
+    {
+        const struct directory_entry *entry = (const struct directory_entry *)((char *)entries + pos);
+        unsigned int entry_size = sizeof(*buffer) + entry->name_len + entry->type_len + 2 * sizeof(WCHAR);
+
+        if (used_size + entry_size > size)
+        {
+            status = STATUS_MORE_ENTRIES;
+            break;
+        }
+        used_count++;
+        used_size += entry_size;
+        pos += sizeof(*entry) + ((entry->name_len + entry->type_len + 3) & ~3);
+    }
+
+    /*
+     * Avoid making strpool_head a pointer, since it can point beyond end
+     * of the buffer.  Out-of-bounds pointers trigger undefined behavior
+     * just by existing, even when they are never dereferenced.
+     */
+    strpool_head = sizeof(*buffer) * (used_count + 1);  /* after the "null terminator" entry */
+    for (i = pos = 0; i < used_count; i++)
+    {
+        const struct directory_entry *entry = (const struct directory_entry *)((char *)entries + pos);
+
+        buffer[i].ObjectName.Buffer = (WCHAR *)((char *)buffer + strpool_head);
+        buffer[i].ObjectName.Length = entry->name_len;
+        buffer[i].ObjectName.MaximumLength = entry->name_len + sizeof(WCHAR);
+        memcpy( buffer[i].ObjectName.Buffer, (entry + 1), entry->name_len );
+        buffer[i].ObjectName.Buffer[entry->name_len / sizeof(WCHAR)] = 0;
+        strpool_head += entry->name_len + sizeof(WCHAR);
+
+        buffer[i].ObjectTypeName.Buffer = (WCHAR *)((char *)buffer + strpool_head);
+        buffer[i].ObjectTypeName.Length = entry->type_len;
+        buffer[i].ObjectTypeName.MaximumLength = entry->type_len + sizeof(WCHAR);
+        memcpy( buffer[i].ObjectTypeName.Buffer, (char *)(entry + 1) + entry->name_len, entry->type_len );
+        buffer[i].ObjectTypeName.Buffer[entry->type_len / sizeof(WCHAR)] = 0;
+        strpool_head += entry->type_len + sizeof(WCHAR);
+
+        pos += sizeof(*entry) + ((entry->name_len + entry->type_len + 3) & ~3);
+    }
+
+    if (size >= sizeof(*buffer))
+        memset( &buffer[used_count], 0, sizeof(buffer[used_count]) );
+
+    free( entries );
+
+    if (!count && !status)
+    {
+        if (ret_size) *ret_size = sizeof(*buffer);
+        return STATUS_NO_MORE_ENTRIES;
+    }
+
+    *context = index + used_count;
+    if (ret_size) *ret_size = strpool_head;
+    return status;
 }
 
 

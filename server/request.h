@@ -352,6 +352,7 @@ DECL_HANDLER(create_mailslot);
 DECL_HANDLER(set_mailslot_info);
 DECL_HANDLER(create_directory);
 DECL_HANDLER(open_directory);
+DECL_HANDLER(get_directory_entries);
 DECL_HANDLER(get_directory_entry);
 DECL_HANDLER(create_symlink);
 DECL_HANDLER(open_symlink);
@@ -643,6 +644,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_set_mailslot_info,
     (req_handler)req_create_directory,
     (req_handler)req_open_directory,
+    (req_handler)req_get_directory_entries,
     (req_handler)req_get_directory_entry,
     (req_handler)req_create_symlink,
     (req_handler)req_open_symlink,
@@ -2094,6 +2096,11 @@ C_ASSERT( FIELD_OFFSET(struct open_directory_request, rootdir) == 20 );
 C_ASSERT( sizeof(struct open_directory_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct open_directory_reply, handle) == 8 );
 C_ASSERT( sizeof(struct open_directory_reply) == 16 );
+C_ASSERT( FIELD_OFFSET(struct get_directory_entries_request, handle) == 12 );
+C_ASSERT( FIELD_OFFSET(struct get_directory_entries_request, index) == 16 );
+C_ASSERT( sizeof(struct get_directory_entries_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct get_directory_entries_reply, count) == 8 );
+C_ASSERT( sizeof(struct get_directory_entries_reply) == 16 );
 C_ASSERT( FIELD_OFFSET(struct get_directory_entry_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct get_directory_entry_request, index) == 16 );
 C_ASSERT( sizeof(struct get_directory_entry_request) == 24 );
