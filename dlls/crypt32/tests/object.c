@@ -316,7 +316,7 @@ static void test_query_object(void)
     ret = CryptQueryObject(CERT_QUERY_OBJECT_BLOB, &blob,
         CERT_QUERY_CONTENT_FLAG_ALL, CERT_QUERY_FORMAT_FLAG_ALL, 0, NULL, &content_type,
         NULL, NULL, NULL, NULL);
-    ok(!ret, "CryptQueryObject succeded\n");
+    ok(!ret, "CryptQueryObject succeeded\n");
     ok(GetLastError() == CRYPT_E_NO_MATCH, "Unexpected error %lu.\n", GetLastError());
     SetEnvironmentVariableW(L"TMP", tmp_path);
 
