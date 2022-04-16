@@ -328,7 +328,7 @@ static void init_tty_output( struct console *console )
     console->tty_cursor_visible = TRUE;
 }
 
-/* no longer use relative cursor positionning (legacy API have been used) */
+/* no longer use relative cursor positioning (legacy API have been used) */
 static void enter_absolute_mode( struct console *console )
 {
     console->use_relative_cursor = 0;
