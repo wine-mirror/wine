@@ -218,7 +218,7 @@ NTSTATUS wg_transform_create(void *args)
     {
         case WG_MAJOR_TYPE_H264:
             /* Call of Duty: Black Ops 3 doesn't care about the ProcessInput/ProcessOutput
-             * return values, it calls them in a specific order and and expects the decoder
+             * return values, it calls them in a specific order and expects the decoder
              * transform to be able to queue its input buffers. We need to use a buffer list
              * to match its expectations.
              */
