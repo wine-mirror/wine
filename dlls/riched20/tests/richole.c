@@ -3421,7 +3421,7 @@ static void _insert_reobject(struct reolecb_obj *callback, IRichEditOle *reole,
   HRESULT hr;
 
   olecb_expect_QueryInsertObject(callback, line, 1,
-                                 &CLSID_NULL, NULL, REO_CP_SELECTION /* cp overriden */, S_OK);
+                                 &CLSID_NULL, NULL, REO_CP_SELECTION /* cp overridden */, S_OK);
   hr = IRichEditOle_GetClientSite(reole, &clientsite);
   ok_(__FILE__,line)(hr == S_OK, "IRichEditOle_GetClientSite got hr %#lx.\n", hr);
   fill_reobject_struct(reobj, cp, NULL, NULL, clientsite, 10, 10, DVASPECT_CONTENT, 0, user);
