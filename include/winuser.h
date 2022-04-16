@@ -2874,12 +2874,6 @@ typedef struct {
 #define	DSS_PREFIXONLY	0x0400
 #define	DSS_RIGHT	0x8000
 
-/* UserObjectInformation classes */
-#define UOI_FLAGS 1
-#define UOI_NAME 2
-#define UOI_TYPE 3
-#define UOI_USER_SID 4
-
 
 /* Sent as the lParam of a WM_DRAWITEM message to instruct how an
  * owner drawn control is to be drawn */
