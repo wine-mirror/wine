@@ -709,7 +709,7 @@ static BOOL overlap_placed_displays(const RECT *rect, const struct x11drv_displa
     for (display_idx = 0; display_idx < display_count; ++display_idx)
     {
         if (displays[display_idx].placed &&
-            IntersectRect(&intersect, &displays[display_idx].new_rect, rect))
+            intersect_rect(&intersect, &displays[display_idx].new_rect, rect))
             return TRUE;
     }
     return FALSE;

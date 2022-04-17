@@ -1912,7 +1912,7 @@ static void x11drv_surface_flush( struct window_surface *window_surface )
     coords.width  = surface->header.rect.right - surface->header.rect.left;
     coords.height = surface->header.rect.bottom - surface->header.rect.top;
     SetRect( &coords.visrect, 0, 0, coords.width, coords.height );
-    if (IntersectRect( &coords.visrect, &coords.visrect, &surface->bounds ))
+    if (intersect_rect( &coords.visrect, &coords.visrect, &surface->bounds ))
     {
         TRACE( "flushing %p %dx%d bounds %s bits %p\n",
                surface, coords.width, coords.height,

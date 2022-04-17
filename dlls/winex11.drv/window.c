@@ -2309,7 +2309,7 @@ static inline BOOL get_surface_rect( const RECT *visible_rect, RECT *surface_rec
 {
     *surface_rect = NtUserGetVirtualScreenRect();
 
-    if (!IntersectRect( surface_rect, surface_rect, visible_rect )) return FALSE;
+    if (!intersect_rect( surface_rect, surface_rect, visible_rect )) return FALSE;
     OffsetRect( surface_rect, -visible_rect->left, -visible_rect->top );
     surface_rect->left &= ~31;
     surface_rect->top  &= ~31;
@@ -2761,7 +2761,7 @@ BOOL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
 
     if (info->prcDirty)
     {
-        IntersectRect( &rect, &rect, info->prcDirty );
+        intersect_rect( &rect, &rect, info->prcDirty );
         memcpy( src_bits, dst_bits, bmi->bmiHeader.biSizeImage );
         NtGdiPatBlt( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, BLACKNESS );
     }

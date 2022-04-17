@@ -124,7 +124,7 @@ RECT get_work_area(const RECT *monitor_rect)
                 work_rect.right = work_rect.left + work_area[i * 4 + 2];
                 work_rect.bottom = work_rect.top + work_area[i * 4 + 3];
 
-                if (IntersectRect(&work_rect, &work_rect, monitor_rect))
+                if (intersect_rect( &work_rect, &work_rect, monitor_rect ))
                 {
                     TRACE("work_rect:%s.\n", wine_dbgstr_rect(&work_rect));
                     XFree(work_area);
@@ -146,7 +146,7 @@ RECT get_work_area(const RECT *monitor_rect)
             SetRect(&work_rect, work_area[0], work_area[1], work_area[0] + work_area[2],
                     work_area[1] + work_area[3]);
 
-            if (IntersectRect(&work_rect, &work_rect, monitor_rect))
+            if (intersect_rect( &work_rect, &work_rect, monitor_rect ))
             {
                 TRACE("work_rect:%s.\n", wine_dbgstr_rect(&work_rect));
                 XFree(work_area);

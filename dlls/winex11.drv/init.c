@@ -147,7 +147,7 @@ void add_device_bounds( X11DRV_PDEVICE *dev, const RECT *rect )
     if (!dev->bounds) return;
     if (dev->region && NtGdiGetRgnBox( dev->region, &rc ))
     {
-        if (IntersectRect( &rc, &rc, rect )) add_bounds_rect( dev->bounds, &rc );
+        if (intersect_rect( &rc, &rc, rect )) add_bounds_rect( dev->bounds, &rc );
     }
     else add_bounds_rect( dev->bounds, rect );
 }
