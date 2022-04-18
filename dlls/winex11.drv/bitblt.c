@@ -1583,7 +1583,7 @@ struct x11drv_window_surface
 #ifdef HAVE_LIBXXSHM
     XShmSegmentInfo       shminfo;
 #endif
-    CRITICAL_SECTION      crit;
+    pthread_mutex_t       mutex;
     BITMAPINFO            info;   /* variable size, must be last */
 };
 
@@ -1831,7 +1831,7 @@ static void x11drv_surface_lock( struct window_surface *window_surface )
 {
     struct x11drv_window_surface *surface = get_x11_surface( window_surface );
 
-    EnterCriticalSection( &surface->crit );
+    pthread_mutex_lock( &surface->mutex );
 }
 
 /***********************************************************************
@@ -1841,7 +1841,7 @@ static void x11drv_surface_unlock( struct window_surface *window_surface )
 {
     struct x11drv_window_surface *surface = get_x11_surface( window_surface );
 
-    LeaveCriticalSection( &surface->crit );
+    pthread_mutex_unlock( &surface->mutex );
 }
 
 /***********************************************************************
@@ -1987,8 +1987,6 @@ static void x11drv_surface_destroy( struct window_surface *window_surface )
         surface->image->data = NULL;
         XDestroyImage( surface->image );
     }
-    surface->crit.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection( &surface->crit );
     if (surface->region) NtGdiDeleteObjectApp( surface->region );
     HeapFree( GetProcessHeap(), 0, surface );
 }
@@ -2026,8 +2024,7 @@ struct window_surface *create_surface( Window window, const XVisualInfo *vis, co
     surface->info.bmiHeader.biSizeImage   = get_dib_image_size( &surface->info );
     if (format->bits_per_pixel > 8) set_color_info( vis, &surface->info, use_alpha );
 
-    InitializeCriticalSection( &surface->crit );
-    surface->crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": surface");
+    init_recursive_mutex( &surface->mutex );
 
     surface->header.funcs = &x11drv_surface_funcs;
     surface->header.rect  = *rect;
