@@ -118,9 +118,45 @@ static void test_dbg_hidden_thread_creation(void)
     CloseHandle( thread );
 }
 
+static void CALLBACK test_unique_teb_proc(void *param)
+{
+    TEB **teb = param;
+    *teb = NtCurrentTeb();
+}
+
+static void test_unique_teb(void)
+{
+    HANDLE threads[2];
+    TEB *teb1, *teb2;
+    NTSTATUS status;
+
+    if (!pNtCreateThreadEx)
+    {
+        win_skip( "NtCreateThreadEx is not available.\n" );
+        return;
+    }
+
+    status = pNtCreateThreadEx( &threads[0], THREAD_ALL_ACCESS, NULL, GetCurrentProcess(), test_unique_teb_proc,
+                                &teb1, 0, 0, 0, 0, NULL );
+    ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
+
+    status = pNtCreateThreadEx( &threads[1], THREAD_ALL_ACCESS, NULL, GetCurrentProcess(), test_unique_teb_proc,
+                                &teb2, 0, 0, 0, 0, NULL );
+    ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
+
+    WaitForMultipleObjects( 2, threads, TRUE, INFINITE );
+    CloseHandle( threads[0] );
+    CloseHandle( threads[1] );
+
+    ok( NtCurrentTeb() != teb1, "Multiple threads have TEB %p.\n", teb1 );
+    ok( NtCurrentTeb() != teb2, "Multiple threads have TEB %p.\n", teb2 );
+    ok( teb1 != teb2, "Multiple threads have TEB %p.\n", teb1 );
+}
+
 START_TEST(thread)
 {
     init_function_pointers();
 
     test_dbg_hidden_thread_creation();
+    test_unique_teb();
 }
