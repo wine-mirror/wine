@@ -96,15 +96,7 @@ static BOOL use_xim = TRUE;
 static WCHAR input_style[20];
 
 static pthread_mutex_t d3dkmt_mutex = PTHREAD_MUTEX_INITIALIZER;
-
-static CRITICAL_SECTION x11drv_error_section;
-static CRITICAL_SECTION_DEBUG x11drv_error_section_debug =
-{
-    0, 0, &x11drv_error_section,
-    { &x11drv_error_section_debug.ProcessLocksList, &x11drv_error_section_debug.ProcessLocksList },
-    0, 0, { (DWORD_PTR)(__FILE__ ": x11drv_error_section") }
-};
-static CRITICAL_SECTION x11drv_error_section = { &x11drv_error_section_debug, -1, 0, 0, 0, 0 };
+static pthread_mutex_t error_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 struct d3dkmt_vidpn_source
 {
@@ -255,7 +247,7 @@ static inline BOOL ignore_error( Display *display, XErrorEvent *event )
  */
 void X11DRV_expect_error( Display *display, x11drv_error_callback callback, void *arg )
 {
-    EnterCriticalSection( &x11drv_error_section );
+    pthread_mutex_lock( &error_mutex );
     err_callback         = callback;
     err_callback_display = display;
     err_callback_arg     = arg;
@@ -274,7 +266,7 @@ int X11DRV_check_error(void)
 {
     int res = err_callback_result;
     err_callback = NULL;
-    LeaveCriticalSection( &x11drv_error_section );
+    pthread_mutex_unlock( &error_mutex );
     return res;
 }
 
