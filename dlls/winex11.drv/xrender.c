@@ -190,14 +190,7 @@ MAKE_FUNCPTR(XRenderQueryExtension)
 
 #undef MAKE_FUNCPTR
 
-static CRITICAL_SECTION xrender_cs;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &xrender_cs,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": xrender_cs") }
-};
-static CRITICAL_SECTION xrender_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
+static pthread_mutex_t xrender_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 #define MS_MAKE_TAG( _x1, _x2, _x3, _x4 ) \
           ( ( (ULONG)_x4 << 24 ) |     \
@@ -566,7 +559,7 @@ static Picture get_no_alpha_mask(void)
     static Pixmap pixmap;
     static Picture pict;
 
-    EnterCriticalSection( &xrender_cs );
+    pthread_mutex_lock( &xrender_mutex );
     if (!pict)
     {
         XRenderPictureAttributes pa;
@@ -581,7 +574,7 @@ static Picture get_no_alpha_mask(void)
         col.alpha = 0;
         pXRenderFillRectangle( gdi_display, PictOpSrc, pict, &col, 0, 0, 1, 1 );
     }
-    LeaveCriticalSection( &xrender_cs );
+    pthread_mutex_unlock( &xrender_mutex );
     return pict;
 }
 
@@ -877,11 +870,11 @@ static HFONT CDECL xrenderdrv_SelectFont( PHYSDEV dev, HFONT hfont, UINT *aa_fla
 
     lfsz_calc_hash(&lfsz);
 
-    EnterCriticalSection(&xrender_cs);
+    pthread_mutex_lock( &xrender_mutex );
     if (physdev->cache_index != -1)
         dec_ref_cache( physdev->cache_index );
     physdev->cache_index = GetCacheEntry( &lfsz );
-    LeaveCriticalSection(&xrender_cs);
+    pthread_mutex_unlock( &xrender_mutex );
     return ret;
 }
 
@@ -970,9 +963,9 @@ static BOOL CDECL xrenderdrv_DeleteDC( PHYSDEV dev )
 
     free_xrender_picture( physdev );
 
-    EnterCriticalSection( &xrender_cs );
+    pthread_mutex_lock( &xrender_mutex );
     if (physdev->cache_index != -1) dec_ref_cache( physdev->cache_index );
-    LeaveCriticalSection( &xrender_cs );
+    pthread_mutex_unlock( &xrender_mutex );
 
     HeapFree( GetProcessHeap(), 0, physdev );
     return TRUE;
@@ -1022,7 +1015,7 @@ static void CDECL xrenderdrv_SetDeviceClipping( PHYSDEV dev, HRGN rgn )
 /************************************************************************
  *   UploadGlyph
  *
- * Helper to ExtTextOut.  Must be called inside xrender_cs
+ * Helper to ExtTextOut.  Must be called inside xrender_mutex
  */
 static void UploadGlyph(struct xrender_physdev *physDev, UINT glyph, enum glyph_type type)
 {
@@ -1224,7 +1217,7 @@ static void UploadGlyph(struct xrender_physdev *physDev, UINT glyph, enum glyph_
  *                 get_tile_pict
  *
  * Returns an appropriate Picture for tiling the text colour.
- * Call and use result within the xrender_cs
+ * Call and use result within the xrender_mutex
  */
 static Picture get_tile_pict( enum wxr_format wxr_format, const XRenderColor *color)
 {
@@ -1273,7 +1266,7 @@ static Picture get_tile_pict( enum wxr_format wxr_format, const XRenderColor *co
  *                 get_mask_pict
  *
  * Returns an appropriate Picture for masking with the specified alpha.
- * Call and use result within the xrender_cs
+ * Call and use result within the xrender_mutex
  */
 static Picture get_mask_pict( int alpha )
 {
@@ -1352,7 +1345,7 @@ static BOOL CDECL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
 
     if(count == 0) return TRUE;
 
-    EnterCriticalSection(&xrender_cs);
+    pthread_mutex_lock( &xrender_mutex );
 
     entry = glyphsetCache + physdev->cache_index;
     formatEntry = entry->format[type][aa_type_from_flags( physdev->aa_flags )];
@@ -1369,7 +1362,7 @@ static BOOL CDECL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     if (!formatEntry)
     {
         WARN("could not upload requested glyphs\n");
-        LeaveCriticalSection(&xrender_cs);
+        pthread_mutex_unlock( &xrender_mutex );
         return FALSE;
     }
 
@@ -1440,7 +1433,7 @@ static BOOL CDECL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
                             0, 0, 0, 0, elts, count);
     HeapFree(GetProcessHeap(), 0, elts);
 
-    LeaveCriticalSection(&xrender_cs);
+    pthread_mutex_unlock( &xrender_mutex );
     add_device_bounds( physdev->x11dev, &bounds );
     return TRUE;
 }
@@ -1557,7 +1550,7 @@ static void xrender_mono_blit( Picture src_pict, Picture dst_pict,
      * contains a 1x1 picture for tiling. The source data effectively acts as an alpha channel to
      * the tile data.
      */
-    EnterCriticalSection( &xrender_cs );
+    pthread_mutex_lock( &xrender_mutex );
     color = *bg;
     color.alpha = 0xffff;  /* tile pict needs 100% alpha */
     tile_pict = get_tile_pict( dst_format, &color );
@@ -1581,7 +1574,7 @@ static void xrender_mono_blit( Picture src_pict, Picture dst_pict,
     }
     pXRenderComposite(gdi_display, PictOpOver, tile_pict, src_pict, dst_pict,
                       0, 0, x_offset, y_offset, x_dst, y_dst, width_dst, height_dst );
-    LeaveCriticalSection( &xrender_cs );
+    pthread_mutex_unlock( &xrender_mutex );
 
     /* force the alpha channel for background pixels, it has been set to 100% by the tile */
     if (bg->alpha != 0xffff && (dst_format == WXR_FORMAT_A8R8G8B8 || dst_format == WXR_FORMAT_B8G8R8A8))
@@ -1919,7 +1912,7 @@ static DWORD CDECL xrenderdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const s
 
         dst_pict = get_xrender_picture( physdev, 0, &dst->visrect );
 
-        EnterCriticalSection( &xrender_cs );
+        pthread_mutex_lock( &xrender_mutex );
         mask_pict = get_mask_pict( func.SourceConstantAlpha * 257 );
 
         xrender_blit( PictOpOver, src_pict, mask_pict, dst_pict,
@@ -1931,7 +1924,7 @@ static DWORD CDECL xrenderdrv_BlendImage( PHYSDEV dev, BITMAPINFO *info, const s
         pXRenderFreePicture( gdi_display, src_pict );
         XFreePixmap( gdi_display, src_pixmap );
 
-        LeaveCriticalSection( &xrender_cs );
+        pthread_mutex_unlock( &xrender_mutex );
         add_device_bounds( physdev->x11dev, &dst->visrect );
     }
     return ret;
@@ -2008,7 +2001,7 @@ static BOOL CDECL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *
 
     if (tmp_pict) src_pict = tmp_pict;
 
-    EnterCriticalSection( &xrender_cs );
+    pthread_mutex_lock( &xrender_mutex );
     mask_pict = get_mask_pict( blendfn.SourceConstantAlpha * 257 );
 
     xrender_blit( PictOpOver, src_pict, mask_pict, dst_pict,
@@ -2022,7 +2015,7 @@ static BOOL CDECL xrenderdrv_AlphaBlend( PHYSDEV dst_dev, struct bitblt_coords *
     if (tmp_pict) pXRenderFreePicture( gdi_display, tmp_pict );
     if (tmp_pixmap) XFreePixmap( gdi_display, tmp_pixmap );
 
-    LeaveCriticalSection( &xrender_cs );
+    pthread_mutex_unlock( &xrender_mutex );
     add_device_bounds( physdev_dst->x11dev, &dst->visrect );
     return TRUE;
 }
