@@ -450,11 +450,11 @@ HWND get_desktop_window(void)
         params.Environment     = peb->ProcessParameters->Environment;
         params.EnvironmentSize = peb->ProcessParameters->EnvironmentSize;
         params.hStdError       = peb->ProcessParameters->hStdError;
-        init_unicode_string( &params.CurrentDirectory.DosPath, system_dir );
-        init_unicode_string( &params.ImagePathName, appnameW + 4 );
-        init_unicode_string( &params.CommandLine, cmdlineW );
-        init_unicode_string( &params.WindowTitle, appnameW + 4 );
-        init_unicode_string( &params.Desktop, desktop );
+        RtlInitUnicodeString( &params.CurrentDirectory.DosPath, system_dir );
+        RtlInitUnicodeString( &params.ImagePathName, appnameW + 4 );
+        RtlInitUnicodeString( &params.CommandLine, cmdlineW );
+        RtlInitUnicodeString( &params.WindowTitle, appnameW + 4 );
+        RtlInitUnicodeString( &params.Desktop, desktop );
 
         ps_attr.TotalLength = sizeof(ps_attr);
         ps_attr.Attributes[0].Attribute    = PS_ATTRIBUTE_IMAGE_NAME;
