@@ -2357,6 +2357,15 @@ NTSTATUS WINAPI RtlUnicodeToUTF8N( char *dst, DWORD dstlen, DWORD *reslen, const
 }
 
 /**********************************************************************
+ *      RtlInitUnicodeString  (ntdll.so)
+ */
+void WINAPI RtlInitUnicodeString( UNICODE_STRING *str, const WCHAR *data )
+{
+    if (data) init_unicode_string( str, data );
+    else str->Length = str->MaximumLength = 0;
+}
+
+/**********************************************************************
  *      RtlNtStatusToDosError  (ntdll.so)
  */
 ULONG WINAPI RtlNtStatusToDosError( NTSTATUS status )
