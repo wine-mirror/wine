@@ -44,14 +44,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(vulkan);
 #ifdef SONAME_LIBVULKAN
 WINE_DECLARE_DEBUG_CHANNEL(fps);
 
-static CRITICAL_SECTION context_section;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &context_section,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": context_section") }
-};
-static CRITICAL_SECTION context_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+static pthread_mutex_t vulkan_mutex;
 
 static XContext vulkan_hwnd_context;
 
@@ -109,12 +102,14 @@ static inline struct wine_vk_surface *surface_from_handle(VkSurfaceKHR handle)
 
 static void *vulkan_handle;
 
-static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
+static void wine_vk_init(void)
 {
+    init_recursive_mutex(&vulkan_mutex);
+
     if (!(vulkan_handle = dlopen(SONAME_LIBVULKAN, RTLD_NOW)))
     {
         ERR("Failed to load %s.\n", SONAME_LIBVULKAN);
-        return TRUE;
+        return;
     }
 
 #define LOAD_FUNCPTR(f) if (!(p##f = dlsym(vulkan_handle, #f))) goto fail
@@ -143,13 +138,11 @@ static BOOL WINAPI wine_vk_init(INIT_ONCE *once, void *param, void **context)
 #undef LOAD_OPTIONAL_FUNCPTR
 
     vulkan_hwnd_context = XUniqueContext();
-
-    return TRUE;
+    return;
 
 fail:
     dlclose(vulkan_handle);
     vulkan_handle = NULL;
-    return TRUE;
 }
 
 /* Helper function for converting between win32 and X11 compatible VkInstanceCreateInfo.
@@ -213,9 +206,9 @@ static void wine_vk_surface_release(struct wine_vk_surface *surface)
 
     if (surface->entry.next)
     {
-        EnterCriticalSection(&context_section);
+        pthread_mutex_lock(&vulkan_mutex);
         list_remove(&surface->entry);
-        LeaveCriticalSection(&context_section);
+        pthread_mutex_unlock(&vulkan_mutex);
     }
 
     if (surface->window)
@@ -227,7 +220,7 @@ static void wine_vk_surface_release(struct wine_vk_surface *surface)
 void wine_vk_surface_destroy(HWND hwnd)
 {
     struct wine_vk_surface *surface;
-    EnterCriticalSection(&context_section);
+    pthread_mutex_lock(&vulkan_mutex);
     if (!XFindContext(gdi_display, (XID)hwnd, vulkan_hwnd_context, (char **)&surface))
     {
         surface->hwnd_thread_id = 0;
@@ -235,7 +228,7 @@ void wine_vk_surface_destroy(HWND hwnd)
         wine_vk_surface_release(surface);
     }
     XDeleteContext(gdi_display, (XID)hwnd, vulkan_hwnd_context);
-    LeaveCriticalSection(&context_section);
+    pthread_mutex_unlock(&vulkan_mutex);
 }
 
 void vulkan_thread_detach(void)
@@ -243,7 +236,7 @@ void vulkan_thread_detach(void)
     struct wine_vk_surface *surface, *next;
     DWORD thread_id = GetCurrentThreadId();
 
-    EnterCriticalSection(&context_section);
+    pthread_mutex_lock(&vulkan_mutex);
     LIST_FOR_EACH_ENTRY_SAFE(surface, next, &surface_list, struct wine_vk_surface, entry)
     {
         if (surface->hwnd_thread_id != thread_id)
@@ -254,7 +247,7 @@ void vulkan_thread_detach(void)
         XSync(gdi_display, False);
         wine_vk_surface_destroy(surface->hwnd);
     }
-    LeaveCriticalSection(&context_section);
+    pthread_mutex_unlock(&vulkan_mutex);
 }
 
 static VkResult X11DRV_vkCreateInstance(const VkInstanceCreateInfo *create_info,
@@ -362,14 +355,14 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
         goto err;
     }
 
-    EnterCriticalSection(&context_section);
+    pthread_mutex_lock(&vulkan_mutex);
     if (x11_surface->hwnd)
     {
         wine_vk_surface_destroy( x11_surface->hwnd );
         XSaveContext(gdi_display, (XID)create_info->hwnd, vulkan_hwnd_context, (char *)wine_vk_surface_grab(x11_surface));
     }
     list_add_tail(&surface_list, &x11_surface->entry);
-    LeaveCriticalSection(&context_section);
+    pthread_mutex_unlock(&vulkan_mutex);
 
     *surface = (uintptr_t)x11_surface;
 
@@ -723,7 +716,7 @@ static void *X11DRV_get_vk_instance_proc_addr(VkInstance instance, const char *n
 
 const struct vulkan_funcs *get_vulkan_driver(UINT version)
 {
-    static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+    static pthread_once_t init_once = PTHREAD_ONCE_INIT;
 
     if (version != WINE_VULKAN_DRIVER_VERSION)
     {
@@ -731,7 +724,7 @@ const struct vulkan_funcs *get_vulkan_driver(UINT version)
         return NULL;
     }
 
-    InitOnceExecuteOnce(&init_once, wine_vk_init, NULL, NULL);
+    pthread_once(&init_once, wine_vk_init);
     if (vulkan_handle)
         return &vulkan_funcs;
 
