@@ -484,8 +484,6 @@ static void test_ChangeDisplaySettingsEx(void)
     }
     if (pSetThreadDpiAwarenessContext && context)
         pSetThreadDpiAwarenessContext(context);
-    res = ChangeDisplaySettingsExA(NULL, NULL, NULL, CDS_RESET, NULL);
-    ok(res == DISP_CHANGE_SUCCESSFUL, "Failed to reset default resolution: %ld\n", res);
 
     /* Save the original mode for all devices so that they can be restored at the end of tests */
     device_count = 0;
@@ -566,10 +564,6 @@ static void test_ChangeDisplaySettingsEx(void)
                 CDS_UPDATEREGISTRY | CDS_NORESET, NULL);
         ok(res == DISP_CHANGE_SUCCESSFUL ||
                 broken(res == DISP_CHANGE_BADPARAM) || /* win10 */
-                broken(res == DISP_CHANGE_FAILED), /* win8 TestBot */
-                "ChangeDisplaySettingsExA %s returned unexpected %ld\n", devices[0].name, res);
-        res = ChangeDisplaySettingsExA(NULL, NULL, NULL, 0, NULL);
-        ok(res == DISP_CHANGE_SUCCESSFUL ||
                 broken(res == DISP_CHANGE_FAILED), /* win8 TestBot */
                 "ChangeDisplaySettingsExA %s returned unexpected %ld\n", devices[0].name, res);
     }
@@ -2260,34 +2254,13 @@ static void test_display_dc(void)
     SelectObject(mem_dc, old_hbitmap);
     DeleteDC(mem_dc);
 
-    /* Tests after mode changes to a different resolution */
+    /* Tests after mode changes to a mode with different resolution and color depth */
     memset(&dm2, 0, sizeof(dm2));
     dm2.dmSize = sizeof(dm2);
     for (mode_idx = 0; EnumDisplaySettingsA(NULL, mode_idx, &dm2); ++mode_idx)
     {
-        if (dm2.dmPelsWidth != dm.dmPelsWidth && dm2.dmPelsHeight != dm.dmPelsHeight)
-            break;
-    }
-    ok(dm2.dmPelsWidth && dm2.dmPelsWidth != dm.dmPelsWidth && dm2.dmPelsHeight != dm.dmPelsHeight,
-            "Failed to find a different resolution.\n");
-
-    res = ChangeDisplaySettingsExA(NULL, &dm2, NULL, CDS_RESET, NULL);
-    ok(res == DISP_CHANGE_SUCCESSFUL || broken(res == DISP_CHANGE_FAILED), /* Win8 TestBots */
-            "ChangeDisplaySettingsExA returned unexpected %ld.\n", res);
-    if (res == DISP_CHANGE_SUCCESSFUL)
-    {
-        check_display_dc(hdc, &dm2, FALSE);
-
-        res = ChangeDisplaySettingsExA(NULL, NULL, NULL, 0, NULL);
-        ok(res == DISP_CHANGE_SUCCESSFUL, "ChangeDisplaySettingsExA returned unexpected %ld.\n", res);
-    }
-
-    /* Tests after mode changes to a different color depth */
-    memset(&dm2, 0, sizeof(dm2));
-    dm2.dmSize = sizeof(dm2);
-    for (mode_idx = 0; EnumDisplaySettingsA(NULL, mode_idx, &dm2); ++mode_idx)
-    {
-        if (dm2.dmBitsPerPel != dm.dmBitsPerPel && dm2.dmBitsPerPel != 1)
+        if (dm2.dmPelsWidth != dm.dmPelsWidth && dm2.dmPelsHeight != dm.dmPelsHeight &&
+            dm2.dmBitsPerPel != dm.dmBitsPerPel && dm2.dmBitsPerPel != 1)
             break;
     }
     if (dm2.dmBitsPerPel && dm2.dmBitsPerPel != dm.dmBitsPerPel)
@@ -2357,7 +2330,7 @@ static void test_display_dc(void)
     }
     else
     {
-        win_skip("Failed to find a different color depth other than %lu.\n", dm.dmBitsPerPel);
+        win_skip("Failed to find a required display mode.\n");
     }
 
     if (hbitmap)
