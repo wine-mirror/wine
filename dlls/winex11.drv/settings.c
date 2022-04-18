@@ -70,14 +70,7 @@ static DWORD cached_flags;
 static DEVMODEW *cached_modes;
 static UINT cached_mode_count;
 
-static CRITICAL_SECTION modes_section;
-static CRITICAL_SECTION_DEBUG modes_critsect_debug =
-{
-    0, 0, &modes_section,
-    {&modes_critsect_debug.ProcessLocksList, &modes_critsect_debug.ProcessLocksList},
-     0, 0, {(DWORD_PTR)(__FILE__ ": modes_section")}
-};
-static CRITICAL_SECTION modes_section = {&modes_critsect_debug, -1, 0, 0, 0, 0};
+static pthread_mutex_t settings_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void X11DRV_Settings_SetHandler(const struct x11drv_settings_handler *new_handler)
 {
@@ -427,13 +420,13 @@ static void set_display_depth(ULONG_PTR display_id, DWORD depth)
 {
     struct x11drv_display_depth *display_depth;
 
-    EnterCriticalSection(&modes_section);
+    pthread_mutex_lock( &settings_mutex );
     LIST_FOR_EACH_ENTRY(display_depth, &x11drv_display_depth_list, struct x11drv_display_depth, entry)
     {
         if (display_depth->display_id == display_id)
         {
             display_depth->depth = depth;
-            LeaveCriticalSection(&modes_section);
+            pthread_mutex_unlock( &settings_mutex );
             return;
         }
     }
@@ -442,14 +435,14 @@ static void set_display_depth(ULONG_PTR display_id, DWORD depth)
     if (!display_depth)
     {
         ERR("Failed to allocate memory.\n");
-        LeaveCriticalSection(&modes_section);
+        pthread_mutex_unlock( &settings_mutex );
         return;
     }
 
     display_depth->display_id = display_id;
     display_depth->depth = depth;
     list_add_head(&x11drv_display_depth_list, &display_depth->entry);
-    LeaveCriticalSection(&modes_section);
+    pthread_mutex_unlock( &settings_mutex );
 }
 
 static DWORD get_display_depth(ULONG_PTR display_id)
@@ -457,17 +450,17 @@ static DWORD get_display_depth(ULONG_PTR display_id)
     struct x11drv_display_depth *display_depth;
     DWORD depth;
 
-    EnterCriticalSection(&modes_section);
+    pthread_mutex_lock( &settings_mutex );
     LIST_FOR_EACH_ENTRY(display_depth, &x11drv_display_depth_list, struct x11drv_display_depth, entry)
     {
         if (display_depth->display_id == display_id)
         {
             depth = display_depth->depth;
-            LeaveCriticalSection(&modes_section);
+            pthread_mutex_unlock( &settings_mutex );
             return depth;
         }
     }
-    LeaveCriticalSection(&modes_section);
+    pthread_mutex_unlock( &settings_mutex );
     return screen_bpp;
 }
 
@@ -507,13 +500,13 @@ BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DW
         goto done;
     }
 
-    EnterCriticalSection(&modes_section);
+    pthread_mutex_lock( &settings_mutex );
     if (n == 0 || lstrcmpiW(cached_device_name, name) || cached_flags != flags)
     {
         if (!handler.get_id(name, &id) || !handler.get_modes(id, flags, &modes, &mode_count))
         {
             ERR("Failed to get %s supported display modes.\n", wine_dbgstr_w(name));
-            LeaveCriticalSection(&modes_section);
+            pthread_mutex_unlock( &settings_mutex );
             return FALSE;
         }
 
@@ -529,14 +522,14 @@ BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DW
 
     if (n >= cached_mode_count)
     {
-        LeaveCriticalSection(&modes_section);
+        pthread_mutex_unlock( &settings_mutex );
         WARN("handler:%s device:%s mode index:%#x not found.\n", handler.name, wine_dbgstr_w(name), n);
         SetLastError(ERROR_NO_MORE_FILES);
         return FALSE;
     }
 
     memcpy(devmode, (BYTE *)cached_modes + (sizeof(*cached_modes) + cached_modes[0].dmDriverExtra) * n, sizeof(*devmode));
-    LeaveCriticalSection(&modes_section);
+    pthread_mutex_unlock( &settings_mutex );
 
 done:
     /* Set generic fields */
