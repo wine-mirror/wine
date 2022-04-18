@@ -334,22 +334,15 @@ static struct current_mode
 } *current_modes;
 static int current_mode_count;
 
-static CRITICAL_SECTION current_modes_section;
-static CRITICAL_SECTION_DEBUG current_modes_critsect_debug =
-{
-    0, 0, &current_modes_section,
-    {&current_modes_critsect_debug.ProcessLocksList, &current_modes_critsect_debug.ProcessLocksList},
-     0, 0, {(DWORD_PTR)(__FILE__ ": current_modes_section")}
-};
-static CRITICAL_SECTION current_modes_section = {&current_modes_critsect_debug, -1, 0, 0, 0, 0};
+static pthread_mutex_t xrandr_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static void xrandr14_invalidate_current_mode_cache(void)
 {
-    EnterCriticalSection( &current_modes_section );
+    pthread_mutex_lock( &xrandr_mutex );
     heap_free( current_modes);
     current_modes = NULL;
     current_mode_count = 0;
-    LeaveCriticalSection( &current_modes_section );
+    pthread_mutex_unlock( &xrandr_mutex );
 }
 
 static XRRScreenResources *xrandr_get_screen_resources(void)
@@ -1228,12 +1221,12 @@ static BOOL xrandr14_get_id( const WCHAR *device_name, ULONG_PTR *id )
         return FALSE;
 
     /* Update cache */
-    EnterCriticalSection( &current_modes_section );
+    pthread_mutex_lock( &xrandr_mutex );
     if (!current_modes)
     {
         if (!xrandr14_get_gpus2( &gpus, &gpu_count, FALSE ))
         {
-            LeaveCriticalSection( &current_modes_section );
+            pthread_mutex_unlock( &xrandr_mutex );
             return FALSE;
         }
 
@@ -1274,12 +1267,12 @@ static BOOL xrandr14_get_id( const WCHAR *device_name, ULONG_PTR *id )
 
     if (display_idx >= current_mode_count)
     {
-        LeaveCriticalSection( &current_modes_section );
+        pthread_mutex_unlock( &xrandr_mutex );
         return FALSE;
     }
 
     *id = current_modes[display_idx].id;
-    LeaveCriticalSection( &current_modes_section );
+    pthread_mutex_unlock( &xrandr_mutex );
     return TRUE;
 }
 
@@ -1440,7 +1433,7 @@ static BOOL xrandr14_get_current_mode( ULONG_PTR id, DEVMODEW *mode )
     RECT primary;
     INT mode_idx;
 
-    EnterCriticalSection( &current_modes_section );
+    pthread_mutex_lock( &xrandr_mutex );
     for (mode_idx = 0; mode_idx < current_mode_count; ++mode_idx)
     {
         if (current_modes[mode_idx].id != id)
@@ -1453,7 +1446,7 @@ static BOOL xrandr14_get_current_mode( ULONG_PTR id, DEVMODEW *mode )
         }
 
         memcpy( mode, &current_modes[mode_idx].mode, sizeof(*mode) );
-        LeaveCriticalSection( &current_modes_section );
+        pthread_mutex_unlock( &xrandr_mutex );
         return TRUE;
     }
 
@@ -1524,7 +1517,7 @@ done:
         mode_ptr->mode.dmDriverExtra = 0;
         mode_ptr->loaded = TRUE;
     }
-    LeaveCriticalSection( &current_modes_section );
+    pthread_mutex_unlock( &xrandr_mutex );
     if (crtc_info)
         pXRRFreeCrtcInfo( crtc_info );
     if (output_info)
