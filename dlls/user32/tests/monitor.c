@@ -3,6 +3,7 @@
  *
  * Copyright 2005 Huw Davies
  * Copyright 2008 Dmitry Timoshkov
+ * Copyright 2019-2022 Zhiyi Zhang for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -2314,7 +2315,6 @@ static void test_display_dc(void)
 
             value = GetDeviceCaps(hdc, NUMCOLORS);
             if (bpps[i] > 8 || (bpps[i] == 8 && LOBYTE(LOWORD(GetVersion())) >= 6))
-                todo_wine_if(bpps[i] == 8 && LOBYTE(LOWORD(GetVersion())) >= 6)
                 ok(value == -1, "Expected -1, got %d.\n", value);
             else if (bpps[i] == 8 && LOBYTE(LOWORD(GetVersion())) < 6)
                 ok(value > 16 && value <= 256, "Got %d.\n", value);
