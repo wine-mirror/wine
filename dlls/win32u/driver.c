@@ -319,7 +319,8 @@ static INT CDECL nulldrv_GetDeviceCaps( PHYSDEV dev, INT cap )
     case LOGPIXELSY:      return get_system_dpi();
     case NUMCOLORS:
         bpp = NtGdiGetDeviceCaps( dev->hdc, BITSPIXEL );
-        return (bpp > 8) ? -1 : (1 << bpp);
+        /* Newer versions of Windows return -1 for 8-bit and higher */
+        return (bpp > 4) ? -1 : (1 << bpp);
     case COLORRES:
         /* The observed correspondence between BITSPIXEL and COLORRES is:
          * BITSPIXEL: 8  -> COLORRES: 18
