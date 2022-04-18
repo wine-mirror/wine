@@ -244,7 +244,7 @@ DWORD convert_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
     /* update coordinates, the destination rectangle is always stored at 0,0 */
     src->x -= src->visrect.left;
     src->y -= src->visrect.top;
-    offset_rect( &src->visrect, -src->visrect.left, -src->visrect.top );
+    OffsetRect( &src->visrect, -src->visrect.left, -src->visrect.top );
     return ERROR_SUCCESS;
 }
 
@@ -254,7 +254,7 @@ int get_dib_rect( const dib_info *dib, RECT *rc )
     rc->top    = max( 0, -dib->rect.top );
     rc->right  = min( dib->rect.right, dib->width ) - dib->rect.left;
     rc->bottom = min( dib->rect.bottom, dib->height ) - dib->rect.top;
-    return !is_rect_empty( rc );
+    return !IsRectEmpty( rc );
 }
 
 int clip_rect_to_dib( const dib_info *dib, RECT *rc )
@@ -317,8 +317,8 @@ void add_clipped_bounds( dibdrv_physdev *dev, const RECT *rect, HRGN clip )
     }
     else rc = *rect;
 
-    if (is_rect_empty( &rc )) return;
-    offset_rect( &rc, dev->dib.rect.left, dev->dib.rect.top );
+    if (IsRectEmpty( &rc )) return;
+    OffsetRect( &rc, dev->dib.rect.left, dev->dib.rect.top );
     add_bounds_rect( dev->bounds, &rc );
 }
 
@@ -742,7 +742,7 @@ static inline void lock_surface( struct windrv_physdev *dev )
 {
     /* gdi_lock should not be locked */
     dev->surface->funcs->lock( dev->surface );
-    if (is_rect_empty( dev->dibdrv->bounds )) dev->start_ticks = NtGetTickCount();
+    if (IsRectEmpty( dev->dibdrv->bounds )) dev->start_ticks = NtGetTickCount();
 }
 
 static inline void unlock_surface( struct windrv_physdev *dev )
@@ -788,7 +788,7 @@ void dibdrv_set_window_surface( DC *dc, struct window_surface *surface )
         bits = surface->funcs->get_info( surface, info );
         init_dib_info_from_bitmapinfo( &dibdrv->dib, info, bits );
         dibdrv->dib.rect = dc->attr->vis_rect;
-        offset_rect( &dibdrv->dib.rect, -dc->device_rect.left, -dc->device_rect.top );
+        OffsetRect( &dibdrv->dib.rect, -dc->device_rect.left, -dc->device_rect.top );
         dibdrv->bounds = surface->funcs->get_bounds( surface );
         DC_InitDC( dc );
     }

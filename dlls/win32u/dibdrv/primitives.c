@@ -275,7 +275,7 @@ static void solid_rects_32(const dib_info *dib, int num, const RECT *rc, DWORD a
 
     for(i = 0; i < num; i++, rc++)
     {
-        assert( !is_rect_empty( rc ));
+        assert( !IsRectEmpty( rc ));
 
         start = get_pixel_ptr_32(dib, rc->left, rc->top);
         if (and)
@@ -307,7 +307,7 @@ static void solid_rects_24(const dib_info *dib, int num, const RECT *rc, DWORD a
         int left = dib->rect.left + rc->left;
         int right = dib->rect.left + rc->right;
 
-        assert( !is_rect_empty( rc ));
+        assert( !IsRectEmpty( rc ));
 
         if ((left & ~3) == (right & ~3)) /* Special case for lines that start and end in the same DWORD triplet */
         {
@@ -426,7 +426,7 @@ static void solid_rects_16(const dib_info *dib, int num, const RECT *rc, DWORD a
 
     for(i = 0; i < num; i++, rc++)
     {
-        assert( !is_rect_empty( rc ));
+        assert( !IsRectEmpty( rc ));
 
         start = get_pixel_ptr_16(dib, rc->left, rc->top);
         if (and)
@@ -446,7 +446,7 @@ static void solid_rects_8(const dib_info *dib, int num, const RECT *rc, DWORD an
 
     for(i = 0; i < num; i++, rc++)
     {
-        assert( !is_rect_empty( rc ));
+        assert( !IsRectEmpty( rc ));
 
         start = get_pixel_ptr_8(dib, rc->left, rc->top);
         if (and)
@@ -471,7 +471,7 @@ static void solid_rects_4(const dib_info *dib, int num, const RECT *rc, DWORD an
         int left = dib->rect.left + rc->left;
         int right = dib->rect.left + rc->right;
 
-        assert( !is_rect_empty( rc ));
+        assert( !IsRectEmpty( rc ));
 
         start = get_pixel_ptr_4(dib, rc->left, rc->top);
         if (and)
@@ -520,7 +520,7 @@ static void solid_rects_1(const dib_info *dib, int num, const RECT *rc, DWORD an
         int left = dib->rect.left + rc->left;
         int right = dib->rect.left + rc->right;
 
-        assert( !is_rect_empty( rc ));
+        assert( !IsRectEmpty( rc ));
 
         start = get_pixel_ptr_1(dib, rc->left, rc->top);
 
@@ -7466,7 +7466,7 @@ static void calc_halftone_params( const struct bitblt_coords *dst, const struct 
     get_bounding_rect( dst_rect, dst->x, dst->y, dst->width, dst->height );
     intersect_rect( src_rect, &src->visrect, src_rect );
     intersect_rect( dst_rect, &dst->visrect, dst_rect );
-    offset_rect( dst_rect, -dst_rect->left, -dst_rect->top );
+    OffsetRect( dst_rect, -dst_rect->left, -dst_rect->top );
 
     src_width = src_rect->right - src_rect->left;
     src_height = src_rect->bottom - src_rect->top;

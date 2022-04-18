@@ -48,18 +48,18 @@ BOOL intersect_vis_rectangles( struct bitblt_coords *dst, struct bitblt_coords *
 
     if ((src->width == dst->width) && (src->height == dst->height)) /* no stretching */
     {
-        offset_rect( &src->visrect, dst->x - src->x, dst->y - src->y );
+        OffsetRect( &src->visrect, dst->x - src->x, dst->y - src->y );
         if (!intersect_rect( &rect, &src->visrect, &dst->visrect )) return FALSE;
         src->visrect = dst->visrect = rect;
-        offset_rect( &src->visrect, src->x - dst->x, src->y - dst->y );
+        OffsetRect( &src->visrect, src->x - dst->x, src->y - dst->y );
     }
     else  /* stretching */
     {
         /* map source rectangle into destination coordinates */
         rect = src->visrect;
-        offset_rect( &rect,
-                     -src->x - (src->width < 0 ? 1 : 0),
-                     -src->y - (src->height < 0 ? 1 : 0));
+        OffsetRect( &rect,
+                    -src->x - (src->width < 0 ? 1 : 0),
+                    -src->y - (src->height < 0 ? 1 : 0) );
         rect.left   = rect.left * dst->width / src->width;
         rect.top    = rect.top * dst->height / src->height;
         rect.right  = rect.right * dst->width / src->width;
@@ -82,7 +82,7 @@ BOOL intersect_vis_rectangles( struct bitblt_coords *dst, struct bitblt_coords *
                  (src->y < src->visrect.top || src->y + src->height > src->visrect.bottom))
             dst->y -= rect.bottom - (dst->height - rect.top);
 
-        offset_rect( &rect, dst->x, dst->y );
+        OffsetRect( &rect, dst->x, dst->y );
 
         /* avoid rounding errors */
         rect.left--;
@@ -93,9 +93,9 @@ BOOL intersect_vis_rectangles( struct bitblt_coords *dst, struct bitblt_coords *
 
         /* map destination rectangle back to source coordinates */
         rect = dst->visrect;
-        offset_rect( &rect,
-                     -dst->x - (dst->width < 0 ? 1 : 0),
-                     -dst->y - (dst->height < 0 ? 1 : 0));
+        OffsetRect( &rect,
+                    -dst->x - (dst->width < 0 ? 1 : 0),
+                    -dst->y - (dst->height < 0 ? 1 : 0) );
         rect.left   = src->x + rect.left * src->width / dst->width;
         rect.top    = src->y + rect.top * src->height / dst->height;
         rect.right  = src->x + rect.right * src->width / dst->width;
@@ -139,7 +139,7 @@ static BOOL get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
 
     /* get the source visible rectangle */
 
-    if (!src) return !is_rect_empty( &dst->visrect );
+    if (!src) return !IsRectEmpty( &dst->visrect );
 
     rect.left   = src->log_x;
     rect.top    = src->log_y;
@@ -158,7 +158,7 @@ static BOOL get_vis_rectangles( DC *dc_dst, struct bitblt_coords *dst,
     get_bounding_rect( &rect, src->x, src->y, src->width, src->height );
 
     if (!clip_device_rect( dc_src, &src->visrect, &rect )) return FALSE;
-    if (is_rect_empty( &dst->visrect )) return FALSE;
+    if (IsRectEmpty( &dst->visrect )) return FALSE;
 
     return intersect_vis_rectangles( dst, src );
 }
@@ -479,7 +479,7 @@ BOOL CDECL nulldrv_GradientFill( PHYSDEV dev, TRIVERTEX *vert_array, ULONG nvert
     src = dst;
     src.x -= dst.visrect.left;
     src.y -= dst.visrect.top;
-    offset_rect( &src.visrect, -dst.visrect.left, -dst.visrect.top );
+    OffsetRect( &src.visrect, -dst.visrect.left, -dst.visrect.top );
     for (i = 0; i < nvert; i++)
     {
         pts[i].x -= dst.visrect.left;
@@ -992,7 +992,7 @@ BOOL WINAPI NtGdiAlphaBlend( HDC hdcDst, int xDst, int yDst, int widthDst, int h
 
         if (src.x < 0 || src.y < 0 || src.width < 0 || src.height < 0 ||
             src.log_width < 0 || src.log_height < 0 ||
-            (!is_rect_empty( &dcSrc->device_rect ) &&
+            (!IsRectEmpty( &dcSrc->device_rect ) &&
              (src.width > dcSrc->device_rect.right - dcSrc->attr->vis_rect.left - src.x ||
               src.height > dcSrc->device_rect.bottom - dcSrc->attr->vis_rect.top - src.y)))
         {

@@ -1351,7 +1351,7 @@ static void add_join( dibdrv_physdev *pdev, HRGN region, HRGN round_cap, const P
         /* fall through */
     case PS_JOIN_ROUND:
         NtGdiGetRgnBox( round_cap, &rect );
-        offset_rect( &rect, pt->x, pt->y );
+        OffsetRect( &rect, pt->x, pt->y );
         if (clip_rect_to_dib( &pdev->dib, &rect ))
         {
             NtGdiOffsetRgn( round_cap, pt->x, pt->y );
@@ -1497,13 +1497,13 @@ static BOOL wide_line_segment( dibdrv_physdev *pdev, HRGN total,
         }
 
         if (dx > 0 && dy > 0)
-            set_rect( &clip_rect, seg_pts[0].x, seg_pts[1].y, seg_pts[2].x, seg_pts[3].y );
+            SetRect( &clip_rect, seg_pts[0].x, seg_pts[1].y, seg_pts[2].x, seg_pts[3].y );
         else if (dx > 0 && dy < 0)
-            set_rect( &clip_rect, seg_pts[1].x, seg_pts[2].y, seg_pts[3].x, seg_pts[0].y );
+            SetRect( &clip_rect, seg_pts[1].x, seg_pts[2].y, seg_pts[3].x, seg_pts[0].y );
         else if (dx < 0 && dy > 0)
-            set_rect( &clip_rect, seg_pts[3].x, seg_pts[0].y, seg_pts[1].x, seg_pts[2].y );
+            SetRect( &clip_rect, seg_pts[3].x, seg_pts[0].y, seg_pts[1].x, seg_pts[2].y );
         else
-            set_rect( &clip_rect, seg_pts[2].x, seg_pts[3].y, seg_pts[0].x, seg_pts[1].y );
+            SetRect( &clip_rect, seg_pts[2].x, seg_pts[3].y, seg_pts[0].x, seg_pts[1].y );
         if (clip_rect_to_dib( &pdev->dib, &clip_rect ))
         {
             segment = create_polygon_region( seg_pts, 4, ALTERNATE );

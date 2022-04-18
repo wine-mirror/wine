@@ -5635,7 +5635,7 @@ BOOL WINAPI NtGdiExtTextOutW( HDC hdc, INT x, INT y, UINT flags, const RECT *lpr
                 text_box.bottom = y + tm.tmDescent;
 
                 if (flags & ETO_CLIPPED) intersect_rect( &text_box, &text_box, &rc );
-                if (!is_rect_empty( &text_box ))
+                if (!IsRectEmpty( &text_box ))
                     physdev->funcs->pExtTextOut( physdev, 0, 0, ETO_OPAQUE, &text_box, NULL, 0, NULL );
             }
         }

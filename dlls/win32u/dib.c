@@ -733,10 +733,10 @@ INT WINAPI SetDIBits( HDC hdc, HBITMAP hbitmap, UINT startscan,
 
     result = lines;
 
-    offset_rect( &src.visrect, 0, src_to_dst_offset );
+    OffsetRect( &src.visrect, 0, src_to_dst_offset );
     if (!intersect_rect( &dst.visrect, &src.visrect, &dst.visrect )) goto done;
     src.visrect = dst.visrect;
-    offset_rect( &src.visrect, 0, -src_to_dst_offset );
+    OffsetRect( &src.visrect, 0, -src_to_dst_offset );
 
     src.x      = src.visrect.left;
     src.y      = src.visrect.top;
@@ -859,11 +859,11 @@ INT CDECL nulldrv_SetDIBitsToDevice( PHYSDEV dev, INT x_dst, INT y_dst, DWORD cx
     rect.bottom = dst.y + cy;
     if (!clip_visrect( dc, &dst.visrect, &rect )) goto done;
 
-    offset_rect( &src.visrect, dst.x - src.x, dst.y - src.y );
+    OffsetRect( &src.visrect, dst.x - src.x, dst.y - src.y );
     intersect_rect( &rect, &src.visrect, &dst.visrect );
     src.visrect = dst.visrect = rect;
-    offset_rect( &src.visrect, src.x - dst.x, src.y - dst.y );
-    if (is_rect_empty( &dst.visrect )) goto done;
+    OffsetRect( &src.visrect, src.x - dst.x, src.y - dst.y );
+    if (IsRectEmpty( &dst.visrect )) goto done;
     if (clip) NtGdiOffsetRgn( clip, dst.x - src.x, dst.y - src.y );
 
     dev = GET_DC_PHYSDEV( dc, pPutImage );
@@ -1308,10 +1308,10 @@ INT WINAPI NtGdiGetDIBitsInternal( HDC hdc, HBITMAP hbitmap, UINT startscan, UIN
             if (lines < dst.visrect.bottom) dst.visrect.bottom = lines;
         }
 
-        offset_rect( &dst.visrect, 0, dst_to_src_offset );
+        OffsetRect( &dst.visrect, 0, dst_to_src_offset );
         empty_rect = !intersect_rect( &src.visrect, &src.visrect, &dst.visrect );
         dst.visrect = src.visrect;
-        offset_rect( &dst.visrect, 0, -dst_to_src_offset );
+        OffsetRect( &dst.visrect, 0, -dst_to_src_offset );
 
         if (dst_info->bmiHeader.biHeight > 0)
         {

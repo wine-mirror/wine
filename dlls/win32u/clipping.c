@@ -37,8 +37,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipping);
 static inline BOOL get_dc_device_rect( DC *dc, RECT *rect )
 {
     *rect = dc->device_rect;
-    offset_rect( rect, -dc->attr->vis_rect.left, -dc->attr->vis_rect.top );
-    return !is_rect_empty( rect );
+    OffsetRect( rect, -dc->attr->vis_rect.left, -dc->attr->vis_rect.top );
+    return !IsRectEmpty( rect );
 }
 
 /***********************************************************************
@@ -377,7 +377,7 @@ INT WINAPI NtGdiGetAppClipBox( HDC hdc, RECT *rect )
     }
     else
     {
-        ret = is_rect_empty( &dc->attr->vis_rect ) ? ERROR : SIMPLEREGION;
+        ret = IsRectEmpty( &dc->attr->vis_rect ) ? ERROR : SIMPLEREGION;
         *rect = dc->attr->vis_rect;
     }
 
@@ -442,7 +442,7 @@ INT WINAPI NtGdiGetRandomRgn( HDC hDC, HRGN hRgn, INT iCode )
             if (NtCurrentTeb()->Peb->OSPlatformId != VER_PLATFORM_WIN32s)
                 NtGdiOffsetRgn( hRgn, dc->attr->vis_rect.left, dc->attr->vis_rect.top );
         }
-        else if (!is_rect_empty( &dc->device_rect ))
+        else if (!IsRectEmpty( &dc->device_rect ))
             NtGdiSetRectRgn( hRgn, dc->device_rect.left, dc->device_rect.top,
                              dc->device_rect.right, dc->device_rect.bottom );
         else

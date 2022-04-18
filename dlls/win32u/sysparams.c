@@ -1970,7 +1970,7 @@ BOOL WINAPI NtUserEnumDisplayMonitors( HDC hdc, RECT *rect, MONITORENUMPROC proc
 
         monrect = map_dpi_rect( monitor->rc_monitor, get_monitor_dpi( monitor->handle ),
                                 get_thread_dpi() );
-        offset_rect( &monrect, -origin.x, -origin.y );
+        OffsetRect( &monrect, -origin.x, -origin.y );
         if (!intersect_rect( &monrect, &monrect, &limit )) continue;
 
         enum_info[count].handle = monitor->handle;
@@ -2049,7 +2049,7 @@ HMONITOR monitor_from_rect( const RECT *rect, DWORD flags, UINT dpi )
     RECT r;
 
     r = map_dpi_rect( *rect, dpi, system_dpi );
-    if (is_rect_empty( &r ))
+    if (IsRectEmpty( &r ))
     {
         r.right = r.left + 1;
         r.bottom = r.top + 1;

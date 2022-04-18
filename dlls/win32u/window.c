@@ -1658,8 +1658,8 @@ BOOL get_window_rects( HWND hwnd, enum coords_relative relative, RECT *window_re
                 win = parent;
                 if (win->parent)
                 {
-                    offset_rect( &window, win->client_rect.left, win->client_rect.top );
-                    offset_rect( &client, win->client_rect.left, win->client_rect.top );
+                    OffsetRect( &window, win->client_rect.left, win->client_rect.top );
+                    OffsetRect( &client, win->client_rect.left, win->client_rect.top );
                 }
             }
             break;
@@ -2865,7 +2865,7 @@ static BOOL calc_winpos( WINDOWPOS *winpos, RECT *old_window_rect, RECT *old_cli
         new_window_rect->right  += winpos->x - old_window_rect->left;
         new_window_rect->bottom += winpos->y - old_window_rect->top;
 
-        offset_rect( new_client_rect, winpos->x - old_window_rect->left,
+        OffsetRect( new_client_rect, winpos->x - old_window_rect->left,
                      winpos->y - old_window_rect->top );
     }
     winpos->flags |= SWP_NOCLIENTMOVE | SWP_NOCLIENTSIZE;
@@ -3823,7 +3823,7 @@ static POINT get_minimized_pos( HWND hwnd, POINT pt )
     pt = get_first_minimized_child_pos( &parent_rect, &metrics, width, height );
     for (;;)
     {
-        set_rect( &rect, pt.x, pt.y, pt.x + width, pt.y + height );
+        SetRect( &rect, pt.x, pt.y, pt.x + width, pt.y + height );
         if (!NtGdiRectInRegion( hrgn, &rect ))
             break;
 
@@ -3862,9 +3862,9 @@ static UINT window_min_maximize( HWND hwnd, UINT cmd, RECT *rect )
         case SW_MINIMIZE:
             wpl.ptMinPosition = get_minimized_pos( hwnd, wpl.ptMinPosition );
 
-            set_rect( rect, wpl.ptMinPosition.x, wpl.ptMinPosition.y,
-                      wpl.ptMinPosition.x + get_system_metrics( SM_CXMINIMIZED ),
-                      wpl.ptMinPosition.y + get_system_metrics( SM_CYMINIMIZED ));
+            SetRect( rect, wpl.ptMinPosition.x, wpl.ptMinPosition.y,
+                     wpl.ptMinPosition.x + get_system_metrics( SM_CXMINIMIZED ),
+                     wpl.ptMinPosition.y + get_system_metrics( SM_CYMINIMIZED ));
             return SWP_NOSIZE | SWP_NOMOVE;
         }
         if (!send_message( hwnd, WM_QUERYOPEN, 0, 0 )) return SWP_NOSIZE | SWP_NOMOVE;
@@ -3893,9 +3893,9 @@ static UINT window_min_maximize( HWND hwnd, UINT cmd, RECT *rect )
         wpl.ptMinPosition = get_minimized_pos( hwnd, wpl.ptMinPosition );
 
         if (!(old_style & WS_MINIMIZE)) swp_flags |= SWP_STATECHANGED;
-        set_rect( rect, wpl.ptMinPosition.x, wpl.ptMinPosition.y,
-                  wpl.ptMinPosition.x + get_system_metrics(SM_CXMINIMIZED),
-                  wpl.ptMinPosition.y + get_system_metrics(SM_CYMINIMIZED) );
+        SetRect( rect, wpl.ptMinPosition.x, wpl.ptMinPosition.y,
+                 wpl.ptMinPosition.x + get_system_metrics(SM_CXMINIMIZED),
+                 wpl.ptMinPosition.y + get_system_metrics(SM_CYMINIMIZED) );
         swp_flags |= SWP_NOCOPYBITS;
         break;
 
@@ -3910,9 +3910,9 @@ static UINT window_min_maximize( HWND hwnd, UINT cmd, RECT *rect )
             win_set_flags( hwnd, WIN_RESTORE_MAX, 0 );
 
         if (!(old_style & WS_MAXIMIZE)) swp_flags |= SWP_STATECHANGED;
-        set_rect( rect, minmax.ptMaxPosition.x, minmax.ptMaxPosition.y,
-                  minmax.ptMaxPosition.x + minmax.ptMaxSize.x,
-                  minmax.ptMaxPosition.y + minmax.ptMaxSize.y );
+        SetRect( rect, minmax.ptMaxPosition.x, minmax.ptMaxPosition.y,
+                 minmax.ptMaxPosition.x + minmax.ptMaxSize.x,
+                 minmax.ptMaxPosition.y + minmax.ptMaxSize.y );
         break;
 
     case SW_SHOWNOACTIVATE:
@@ -3930,9 +3930,9 @@ static UINT window_min_maximize( HWND hwnd, UINT cmd, RECT *rect )
                 minmax = get_min_max_info( hwnd );
                 set_window_style( hwnd, WS_MAXIMIZE, 0 );
                 swp_flags |= SWP_STATECHANGED;
-                set_rect( rect, minmax.ptMaxPosition.x, minmax.ptMaxPosition.y,
-                          minmax.ptMaxPosition.x + minmax.ptMaxSize.x,
-                          minmax.ptMaxPosition.y + minmax.ptMaxSize.y );
+                SetRect( rect, minmax.ptMaxPosition.x, minmax.ptMaxPosition.y,
+                         minmax.ptMaxPosition.x + minmax.ptMaxSize.x,
+                         minmax.ptMaxPosition.y + minmax.ptMaxSize.y );
                 break;
             }
         }
@@ -4111,7 +4111,7 @@ static BOOL show_window( HWND hwnd, INT cmd )
         if (get_window_long( hwnd, GWL_STYLE ) & WS_CHILD) new_swp = swp;
         else if (is_iconic( hwnd ) && (newPos.left != -32000 || newPos.top != -32000))
         {
-            offset_rect( &newPos, -32000 - newPos.left, -32000 - newPos.top );
+            OffsetRect( &newPos, -32000 - newPos.left, -32000 - newPos.top );
             new_swp = swp & ~(SWP_NOMOVE | SWP_NOCLIENTMOVE);
         }
         else new_swp = swp;
@@ -4974,7 +4974,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
 
     if (cx < 0) cx = 0;
     if (cy < 0) cy = 0;
-    set_rect( &rect, cs.x, cs.y, cs.x + cx, cs.y + cy );
+    SetRect( &rect, cs.x, cs.y, cs.x + cx, cs.y + cy );
     /* check for wraparound */
     if (cs.x > 0x7fffffff - cx) rect.right = 0x7fffffff;
     if (cs.y > 0x7fffffff - cy) rect.bottom = 0x7fffffff;

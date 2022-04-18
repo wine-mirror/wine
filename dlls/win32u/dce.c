@@ -202,7 +202,7 @@ void create_offscreen_window_surface( const RECT *visible_rect, struct window_su
 
     TRACE( "visible_rect %s, surface %p.\n", wine_dbgstr_rect( visible_rect ), surface );
 
-    offset_rect( &surface_rect, -surface_rect.left, -surface_rect.top );
+    OffsetRect( &surface_rect, -surface_rect.left, -surface_rect.top );
     surface_rect.right  = (surface_rect.right + 0x1f) & ~0x1f;
     surface_rect.bottom = (surface_rect.bottom + 0x1f) & ~0x1f;
 
@@ -1319,9 +1319,9 @@ void move_window_bits_parent( HWND hwnd, HWND parent, const RECT *window_rect, c
 
     TRACE( "copying %s -> %s\n", wine_dbgstr_rect( &src ), wine_dbgstr_rect( &dst ));
     map_window_points( NtUserGetAncestor( hwnd, GA_PARENT ), parent, (POINT *)&src, 2, get_thread_dpi() );
-    offset_rect( &src, win->client_rect.left - win->visible_rect.left,
-                 win->client_rect.top - win->visible_rect.top );
-    offset_rect( &dst, -window_rect->left, -window_rect->top );
+    OffsetRect( &src, win->client_rect.left - win->visible_rect.left,
+                win->client_rect.top - win->visible_rect.top );
+    OffsetRect( &dst, -window_rect->left, -window_rect->top );
     window_surface_add_ref( surface );
     release_win_ptr( win );
 

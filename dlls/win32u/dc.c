@@ -1340,7 +1340,7 @@ UINT WINAPI NtGdiGetBoundsRect( HDC hdc, RECT *rect, UINT flags )
 
     if (rect)
     {
-        if (is_rect_empty( &dc->bounds ))
+        if (IsRectEmpty( &dc->bounds ))
         {
             rect->left = rect->top = rect->right = rect->bottom = 0;
             ret = DCB_RESET;
@@ -1385,7 +1385,7 @@ UINT WINAPI NtGdiSetBoundsRect( HDC hdc, const RECT *rect, UINT flags )
     }
 
     ret = (dc->bounds_enabled ? DCB_ENABLE : DCB_DISABLE) |
-          (is_rect_empty( &dc->bounds ) ? ret & DCB_SET : DCB_SET);
+          (IsRectEmpty( &dc->bounds ) ? ret & DCB_SET : DCB_SET);
 
     if (flags & DCB_RESET) reset_bounds( &dc->bounds );
 

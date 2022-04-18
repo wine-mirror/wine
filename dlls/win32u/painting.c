@@ -958,7 +958,7 @@ BOOL WINAPI NtUserScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const R
     else
         NtGdiGetAppClipBox( hdc, &clip_rect );
     src_rect = clip_rect;
-    offset_rect( &clip_rect, -dx, -dy );
+    OffsetRect( &clip_rect, -dx, -dy );
     intersect_rect( &src_rect, &src_rect, &clip_rect );
 
     /* if an scroll rectangle is specified, only the pixels within that

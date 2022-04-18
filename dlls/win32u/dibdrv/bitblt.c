@@ -716,7 +716,7 @@ static DWORD copy_src_bits( dib_info *src, RECT *src_rect )
     src->bits.free = free_heap_bits;
     src->bits.param = NULL;
 
-    offset_rect( src_rect, 0, -src_rect->top );
+    OffsetRect( src_rect, 0, -src_rect->top );
     return ERROR_SUCCESS;
 }
 
@@ -757,7 +757,7 @@ static DWORD execute_rop( dibdrv_physdev *pdev, const RECT *dst_rect, dib_info *
     rects[SRC] = *src_rect;
     rects[DST] = *dst_rect;
     rects[TMP] = *dst_rect;
-    offset_rect( &rects[TMP], -rects[TMP].left, -rects[TMP].top );
+    OffsetRect( &rects[TMP], -rects[TMP].left, -rects[TMP].top );
 
     for ( ; *opcode; opcode++)
     {
@@ -868,7 +868,7 @@ static DWORD get_image_dib_info( dib_info *dib, BITMAPINFO *info,
         if (dib->stride < 0) bits->ptr = (char *)bits->ptr + (dib->height - 1) * dib->stride;
         src->x += dib->rect.left;
         src->y += dib->rect.top;
-        offset_rect( &src->visrect, dib->rect.left, dib->rect.top );
+        OffsetRect( &src->visrect, dib->rect.left, dib->rect.top );
     }
     return ERROR_SUCCESS;
 }
@@ -1275,7 +1275,7 @@ DWORD stretch_bitmapinfo( const BITMAPINFO *src_info, void *src_bits, struct bit
                 last_row.top = dst_start.y - v_params.dst_inc;
                 last_row.bottom = last_row.top + 1;
                 this_row = last_row;
-                offset_rect( &this_row, 0, v_params.dst_inc );
+                OffsetRect( &this_row, 0, v_params.dst_inc );
                 copy_rect( &dst_dib, &this_row, &dst_dib, &last_row, NULL, R2_COPYPEN );
             }
 
@@ -1315,7 +1315,7 @@ done:
     *src = *dst;
     src->x -= src->visrect.left;
     src->y -= src->visrect.top;
-    offset_rect( &src->visrect, -src->visrect.left, -src->visrect.top );
+    OffsetRect( &src->visrect, -src->visrect.left, -src->visrect.top );
     return ERROR_SUCCESS;
 }
 
