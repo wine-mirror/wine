@@ -4874,6 +4874,8 @@ static const WS_XML_TEXT_NODE *read_text_node( WS_XML_READER *reader )
 
 static void test_binary_encoding(void)
 {
+    WS_XML_STRING str_s = {1, (BYTE *)"s"}, str_s_a = {3, (BYTE *)"s_a"}, str_s_b = {3, (BYTE *)"s_b"};
+    WS_XML_STRING str_a = {1, (BYTE *)"a"}, str_b = {1, (BYTE *)"b"};
     static WS_XML_STRING localname = {1, (BYTE *)"t"}, ns = {0, NULL};
     static const char test[] =
         {0x40,0x01,'t',0x01};
@@ -4949,6 +4951,9 @@ static void test_binary_encoding(void)
         {0x40,0x01,'t',0x05,0x02,'p','2',0x01,'t',0x98,0x04,'t','e','s','t',0x09,0x02,'p','2',0x02,'n','s',0x01};
     static const char test200[] =
         {0x02,0x07,'c','o','m','m','e','n','t'};
+    static const char test_endelem[] =
+        { 0x40, 0x01, 't', 0x40, 0x01, 'a', 0x83, 0x40, 0x01, 's', 0x40, 0x03, 's', '_', 'a', 0x82, 0x01, 0x01,
+          0x40, 0x01, 'b', 0x83, 0x01 };
     const WS_XML_NODE *node;
     const WS_XML_TEXT_NODE *text_node;
     const WS_XML_ELEMENT_NODE *elem;
@@ -4969,8 +4974,8 @@ static void test_binary_encoding(void)
     WS_HEAP *heap;
     BOOL found;
     HRESULT hr;
-    WS_STRUCT_DESCRIPTION s;
-    WS_FIELD_DESCRIPTION f, *fields[1];
+    WS_STRUCT_DESCRIPTION s, s2;
+    WS_FIELD_DESCRIPTION f, f1[3], f2[2], *fields[3], *fields2[2];
     struct typetest
     {
         WS_BYTES data;
@@ -4983,6 +4988,17 @@ static void test_binary_encoding(void)
     {
         UINT64 val;
     } *typetest3;
+    struct s
+    {
+        INT32 s_a;
+        INT32 s_b;
+    };
+    struct test
+    {
+        INT32     a;
+        struct s  *s;
+        INT32     b;
+    } *test_struct;
 
     hr = WsGetDictionary( WS_ENCODING_XML_BINARY_1, &dict, NULL );
     ok( hr == S_OK, "got %#lx\n", hr );
@@ -5688,6 +5704,75 @@ static void test_binary_encoding(void)
     hr = WsReadType( reader, WS_ELEMENT_CONTENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
                      WS_READ_REQUIRED_POINTER, heap, &typetest3, sizeof(typetest3), NULL );
     ok( hr == WS_E_NUMERIC_OVERFLOW, "got %#lx\n", hr );
+
+    /* Test optional ending field on a nested struct. */
+    hr = set_input_bin( reader, test_endelem, sizeof(test_endelem), NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    memset( &f1[0], 0, sizeof(f1[0]) );
+    f1[0].mapping   = WS_ELEMENT_FIELD_MAPPING;
+    f1[0].localName = &str_a;
+    f1[0].ns        = &ns;
+    f1[0].type      = WS_INT32_TYPE;
+    fields[0] = &f1[0];
+
+    memset( &f1[1], 0, sizeof(f1[1]) );
+    f1[1].mapping         = WS_ELEMENT_FIELD_MAPPING;
+    f1[1].localName       = &str_s;
+    f1[1].ns              = &ns;
+    f1[1].type            = WS_STRUCT_TYPE;
+    f1[1].typeDescription = &s2;
+    f1[1].options         = WS_FIELD_POINTER;
+    f1[1].offset          = FIELD_OFFSET(struct test, s);
+    fields[1] = &f1[1];
+
+    memset( &f1[2], 0, sizeof(f1[2]) );
+    f1[2].mapping      = WS_ELEMENT_FIELD_MAPPING;
+    f1[2].localName    = &str_b;
+    f1[2].ns           = &ns;
+    f1[2].type         = WS_INT32_TYPE;
+    f1[2].offset       = FIELD_OFFSET(struct test, b);
+    fields[2] = &f1[2];
+
+    memset( &f2[0], 0, sizeof(f2[0]) );
+    f2[0].mapping      = WS_ELEMENT_FIELD_MAPPING;
+    f2[0].localName    = &str_s_a;
+    f2[0].ns           = &ns;
+    f2[0].type         = WS_INT32_TYPE;
+    fields2[0] = &f2[0];
+
+    memset( &f2[1], 0, sizeof(f2[1]) );
+    f2[1].mapping      = WS_ELEMENT_FIELD_MAPPING;
+    f2[1].localName    = &str_s_b;
+    f2[1].ns           = &ns;
+    f2[1].type         = WS_INT32_TYPE;
+    f2[1].offset       = FIELD_OFFSET(struct s, s_b);
+    f2[1].options      = WS_FIELD_OPTIONAL;
+    fields2[1] = &f2[1];
+
+    memset( &s2, 0, sizeof(s2) );
+    s2.size       = sizeof(struct s);
+    s2.alignment  = TYPE_ALIGNMENT(struct s);
+    s2.fields     = fields2;
+    s2.fieldCount = 2;
+
+    memset( &s, 0, sizeof(s) );
+    s.size       = sizeof(struct test);
+    s.alignment  = TYPE_ALIGNMENT(struct test);
+    s.fields     = fields;
+    s.fieldCount = 3;
+
+    hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
+                     WS_READ_REQUIRED_POINTER, heap, &test_struct, sizeof(test_struct), NULL );
+    todo_wine ok( hr == S_OK, "got %#lx\n", hr );
+    if (SUCCEEDED(hr))
+    {
+        ok( test_struct->a == 1, "got %d\n", test_struct->a );
+        ok( !!test_struct->s, "s is not set\n" );
+        ok( test_struct->s->s_a == 1, "got %d\n", test_struct->s->s_a );
+        ok( test_struct->s->s_b == 0, "got %d\n", test_struct->s->s_b );
+        ok( test_struct->b == 1, "got %d\n", test_struct->b );
+    }
 
     WsFreeHeap( heap );
     WsFreeReader( reader );
