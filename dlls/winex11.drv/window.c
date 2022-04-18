@@ -86,7 +86,7 @@ BOOL clipping_cursor = FALSE;
 XContext winContext = 0;
 
 /* X context to associate a struct x11drv_win_data to an hwnd */
-XContext win_data_context = 0;
+static XContext win_data_context = 0;
 
 /* time of last user event and window where it's stored */
 static Time last_user_time;
@@ -99,14 +99,7 @@ static const WCHAR whole_window_prop[] =
 static const WCHAR clip_window_prop[] =
     {'_','_','w','i','n','e','_','x','1','1','_','c','l','i','p','_','w','i','n','d','o','w',0};
 
-static CRITICAL_SECTION win_data_section;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &win_data_section,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": win_data_section") }
-};
-static CRITICAL_SECTION win_data_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+static pthread_mutex_t win_data_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 
 /***********************************************************************
@@ -215,7 +208,7 @@ static struct x11drv_win_data *alloc_win_data( Display *display, HWND hwnd )
         data->display = display;
         data->vis = default_visual;
         data->hwnd = hwnd;
-        EnterCriticalSection( &win_data_section );
+        pthread_mutex_lock( &win_data_mutex );
         XSaveContext( gdi_display, (XID)hwnd, win_data_context, (char *)data );
     }
     return data;
@@ -1938,10 +1931,10 @@ struct x11drv_win_data *get_win_data( HWND hwnd )
     char *data;
 
     if (!hwnd) return NULL;
-    EnterCriticalSection( &win_data_section );
+    pthread_mutex_lock( &win_data_mutex );
     if (!XFindContext( gdi_display, (XID)hwnd, win_data_context, &data ))
         return (struct x11drv_win_data *)data;
-    LeaveCriticalSection( &win_data_section );
+    pthread_mutex_unlock( &win_data_mutex );
     return NULL;
 }
 
@@ -1953,7 +1946,7 @@ struct x11drv_win_data *get_win_data( HWND hwnd )
  */
 void release_win_data( struct x11drv_win_data *data )
 {
-    if (data) LeaveCriticalSection( &win_data_section );
+    if (data) pthread_mutex_unlock( &win_data_mutex );
 }
 
 
@@ -3038,4 +3031,13 @@ void X11DRV_FlashWindowEx( FLASHWINFO *pfinfo )
                     SubstructureNotifyMask, &xev );
     }
     release_win_data( data );
+}
+
+void init_win_context(void)
+{
+    init_recursive_mutex( &win_data_mutex );
+
+    winContext = XUniqueContext();
+    win_data_context = XUniqueContext();
+    cursor_context = XUniqueContext();
 }
