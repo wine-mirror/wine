@@ -81,7 +81,6 @@ BOOL client_side_with_render = TRUE;
 BOOL shape_layered_windows = TRUE;
 int copy_default_colors = 128;
 int alloc_system_colors = 256;
-DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
 int xrender_error_base = 0;
 HMODULE x11drv_module = 0;
 char *process_name = NULL;
@@ -650,8 +649,6 @@ static BOOL process_attach(void)
 
     setup_options();
 
-    if ((thread_data_tls_index = TlsAlloc()) == TLS_OUT_OF_INDEXES) return FALSE;
-
     /* Open display */
 
     if (!XInitThreads()) ERR( "XInitThreads failed, trouble ahead\n" );
@@ -702,7 +699,7 @@ static BOOL process_attach(void)
  */
 void X11DRV_ThreadDetach(void)
 {
-    struct x11drv_thread_data *data = TlsGetValue( thread_data_tls_index );
+    struct x11drv_thread_data *data = x11drv_thread_data();
 
     if (data)
     {
@@ -712,7 +709,7 @@ void X11DRV_ThreadDetach(void)
         XCloseDisplay( data->display );
         HeapFree( GetProcessHeap(), 0, data );
         /* clear data in case we get re-entered from user32 before the thread is truly dead */
-        TlsSetValue( thread_data_tls_index, NULL );
+        NtUserGetThreadInfo()->driver_data = NULL;
     }
 }
 
@@ -773,7 +770,7 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     if (TRACE_ON(synchronous)) XSynchronize( data->display, True );
 
     set_queue_display_fd( data->display );
-    TlsSetValue( thread_data_tls_index, data );
+    NtUserGetThreadInfo()->driver_data = data;
 
     if (use_xim) X11DRV_SetupXIM();
 

@@ -45,6 +45,7 @@ enum
 /* TEB thread info, not compatible with Windows */
 struct ntuser_thread_info
 {
+    void      *driver_data;       /* driver-specific data */
     DWORD      message_time;      /* value for GetMessageTime */
     DWORD      message_pos;       /* value for GetMessagePos */
     ULONG_PTR  message_extra;     /* value for GetMessageExtraInfo */

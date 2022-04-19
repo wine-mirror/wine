@@ -395,14 +395,10 @@ struct x11drv_thread_data
 };
 
 extern struct x11drv_thread_data *x11drv_init_thread_data(void) DECLSPEC_HIDDEN;
-extern DWORD thread_data_tls_index DECLSPEC_HIDDEN;
 
 static inline struct x11drv_thread_data *x11drv_thread_data(void)
 {
-    DWORD err = GetLastError();  /* TlsGetValue always resets last error */
-    struct x11drv_thread_data *data = TlsGetValue( thread_data_tls_index );
-    SetLastError( err );
-    return data;
+    return NtUserGetThreadInfo()->driver_data;
 }
 
 /* retrieve the thread display, or NULL if not created yet */
