@@ -2900,9 +2900,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH CancelIoEx( HANDLE handle, LPOVERLAPPED overlapped
  */
 BOOL WINAPI DECLSPEC_HOTPATCH CancelSynchronousIo( HANDLE thread )
 {
-    FIXME( "(%p): stub\n", thread );
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return FALSE;
+    IO_STATUS_BLOCK io;
+
+    return set_ntstatus( NtCancelSynchronousIoFile( thread, NULL, &io ));
 }
 
 

@@ -4247,14 +4247,12 @@ static void test_CancelSynchronousIo(void)
     SetLastError(0xdeadbeef);
     res = pCancelSynchronousIo((HANDLE)0xdeadbeef);
     ok(!res, "CancelSynchronousIo succeeded unexpectedly\n");
-    todo_wine
     ok(GetLastError() == ERROR_INVALID_HANDLE,
         "In CancelSynchronousIo failure, expected ERROR_INVALID_HANDLE, got %ld\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     res = pCancelSynchronousIo(GetCurrentThread());
     ok(!res, "CancelSynchronousIo succeeded unexpectedly\n");
-    todo_wine
     ok(GetLastError() == ERROR_NOT_FOUND,
         "In CancelSynchronousIo failure, expected ERROR_NOT_FOUND, got %ld\n", GetLastError());
 
@@ -4269,14 +4267,9 @@ static void test_CancelSynchronousIo(void)
     ok(wait == WAIT_TIMEOUT, "WaitForSingleObject returned %lu (error %lu)\n", wait, GetLastError());
     SetLastError(0xdeadbeef);
     res = pCancelSynchronousIo(thread);
-    todo_wine
-    {
     ok(res, "CancelSynchronousIo failed with error %ld\n", GetLastError());
     ok(GetLastError() == 0xdeadbeef,
         "In CancelSynchronousIo failure, expected 0xdeadbeef got %ld\n", GetLastError());
-    }
-    if (GetLastError() == ERROR_CALL_NOT_IMPLEMENTED)
-        CancelIoEx(pipe, NULL);
     wait = WaitForSingleObject(thread, 1000);
     ok(wait == WAIT_OBJECT_0, "WaitForSingleObject returned %lx\n", wait);
     CloseHandle(thread);
@@ -4294,7 +4287,6 @@ static void test_CancelSynchronousIo(void)
     SetLastError(0xdeadbeef);
     res = pCancelSynchronousIo(thread);
     ok(!res, "CancelSynchronousIo succeeded unexpectedly\n");
-    todo_wine
     ok(GetLastError() == ERROR_NOT_FOUND,
         "In CancelSynchronousIo failure, expected ERROR_NOT_FOUND, got %ld\n", GetLastError());
     file = CreateFileA(PIPENAME, GENERIC_READ | GENERIC_WRITE, 0, NULL, OPEN_EXISTING, 0, 0);
