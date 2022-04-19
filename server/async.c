@@ -588,6 +588,27 @@ restart:
     return woken;
 }
 
+static int cancel_blocking( struct process *process, struct thread *thread, client_ptr_t iosb )
+{
+    struct async *async;
+    int woken = 0;
+
+restart:
+    LIST_FOR_EACH_ENTRY( async, &process->asyncs, struct async, process_entry )
+    {
+        if (async->terminated || async->canceled) continue;
+        if (async->blocking && async->thread == thread &&
+            (!iosb || async->data.iosb == iosb))
+        {
+            async->canceled = 1;
+            fd_cancel_async( async->fd, async );
+            woken++;
+            goto restart;
+        }
+    }
+    return woken;
+}
+
 void cancel_process_asyncs( struct process *process )
 {
     cancel_async( process, NULL, NULL, 0 );
@@ -729,6 +750,19 @@ struct async *find_pending_async( struct async_queue *queue )
     LIST_FOR_EACH_ENTRY( async, &queue->queue, struct async, queue_entry )
         if (!async->terminated) return (struct async *)grab_object( async );
     return NULL;
+}
+
+/* cancels sync I/O on a thread */
+DECL_HANDLER(cancel_sync)
+{
+    struct thread *thread = get_thread_from_handle( req->handle, THREAD_TERMINATE );
+
+    if (thread)
+    {
+        if (!cancel_blocking( current->process, thread, req->iosb ))
+            set_error( STATUS_NOT_FOUND );
+        release_object( thread );
+    }
 }
 
 /* cancels all async I/O */

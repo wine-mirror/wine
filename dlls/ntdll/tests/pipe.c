@@ -648,7 +648,6 @@ static void test_cancelsynchronousio(void)
     struct synchronousio_thread_args ctx;
 
     /* bogus values */
-    todo_wine {
     res = pNtCancelSynchronousIoFile((HANDLE)0xdeadbeef, NULL, &iosb);
     ok(res == STATUS_INVALID_HANDLE, "NtCancelSynchronousIoFile returned %lx\n", res);
     res = pNtCancelSynchronousIoFile(GetCurrentThread(), NULL, NULL);
@@ -664,7 +663,6 @@ static void test_cancelsynchronousio(void)
         ok(U(iosb).Status == STATUS_NOT_FOUND, "iosb.Status got changed to %lx\n", U(iosb).Status);
         ok(U(iosb).Information == 0, "iosb.Information got changed to %Iu\n", U(iosb).Information);
     }
-    }
 
     /* synchronous i/o */
     res = create_pipe(&ctx.pipe, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT);
@@ -679,13 +677,9 @@ static void test_cancelsynchronousio(void)
     ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned %lu (error %lu)\n", ret, GetLastError());
     memset(&iosb, 0x55, sizeof(iosb));
     res = pNtCancelSynchronousIoFile(thread, NULL, &iosb);
-    todo_wine {
     ok(res == STATUS_SUCCESS, "Failed to cancel I/O\n");
     ok(U(iosb).Status == STATUS_SUCCESS, "iosb.Status got changed to %lx\n", U(iosb).Status);
     ok(U(iosb).Information == 0, "iosb.Information got changed to %Iu\n", U(iosb).Information);
-    }
-    if (res == STATUS_NOT_IMPLEMENTED)
-        pNtCancelIoFileEx(ctx.pipe, NULL, &iosb);
     ret = WaitForSingleObject(thread, 1000);
     ok(ret == WAIT_OBJECT_0, "wait returned %lx\n", ret);
     CloseHandle(thread);
@@ -705,7 +699,6 @@ static void test_cancelsynchronousio(void)
     ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned %lu (error %lu)\n", ret, GetLastError());
     memset(&iosb, 0x55, sizeof(iosb));
     res = pNtCancelSynchronousIoFile(thread, &iosb, &iosb);
-    todo_wine {
     ok(res == STATUS_NOT_FOUND, "NtCancelSynchronousIoFile returned %lx\n", res);
     res = pNtCancelSynchronousIoFile(NULL, &ctx.iosb, &iosb);
     ok(res == STATUS_INVALID_HANDLE, "NtCancelSynchronousIoFile returned %lx\n", res);
@@ -715,15 +708,12 @@ static void test_cancelsynchronousio(void)
     ok(U(iosb).Status == STATUS_SUCCESS || broken(is_wow64 && U(iosb).Status == STATUS_NOT_FOUND),
         "iosb.Status got changed to %lx\n", U(iosb).Status);
     ok(U(iosb).Information == 0, "iosb.Information got changed to %Iu\n", U(iosb).Information);
-    }
     if (res == STATUS_NOT_FOUND)
     {
         res = pNtCancelSynchronousIoFile(thread, NULL, &iosb);
         ok(res == STATUS_SUCCESS, "Failed to cancel I/O\n");
         ok(U(iosb).Status == STATUS_SUCCESS, "iosb.Status got changed to %lx\n", U(iosb).Status);
     }
-    if (res == STATUS_NOT_IMPLEMENTED)
-        pNtCancelIoFileEx(ctx.pipe, NULL, &iosb);
     ret = WaitForSingleObject(thread, 1000);
     ok(ret == WAIT_OBJECT_0, "wait returned %lx\n", ret);
     CloseHandle(thread);
@@ -742,7 +732,6 @@ static void test_cancelsynchronousio(void)
     ok(res == STATUS_PENDING, "NtFsControlFile returned %lx\n", res);
     memset(&iosb, 0x55, sizeof(iosb));
     res = pNtCancelSynchronousIoFile(GetCurrentThread(), NULL, &iosb);
-    todo_wine {
     ok(res == STATUS_NOT_FOUND, "NtCancelSynchronousIoFile returned %lx\n", res);
     ok(U(iosb).Status == STATUS_NOT_FOUND, "iosb.Status got changed to %lx\n", U(iosb).Status);
     ok(U(iosb).Information == 0, "iosb.Information got changed to %Iu\n", U(iosb).Information);
@@ -751,7 +740,6 @@ static void test_cancelsynchronousio(void)
     ok(res == STATUS_NOT_FOUND, "NtCancelSynchronousIoFile returned %lx\n", res);
     ok(U(iosb).Status == STATUS_NOT_FOUND, "iosb.Status got changed to %lx\n", U(iosb).Status);
     ok(U(iosb).Information == 0, "iosb.Information got changed to %Iu\n", U(iosb).Information);
-    }
     ret = WaitForSingleObject(event, 0);
     ok(ret == WAIT_TIMEOUT, "wait returned %lx\n", ret);
     client = CreateFileW(testpipe, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING,

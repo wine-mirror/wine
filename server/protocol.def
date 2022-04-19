@@ -2159,6 +2159,11 @@ enum message_type
 #define SERIALINFO_PENDING_WRITE 0x04
 #define SERIALINFO_PENDING_WAIT  0x08
 
+/* Cancel all sync io on a thread */
+@REQ(cancel_sync)
+    obj_handle_t handle;        /* thread handle on which to cancel io */
+    client_ptr_t iosb;          /* I/O status block (NULL=all) */
+@END
 
 /* Create an async I/O */
 @REQ(register_async)

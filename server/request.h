@@ -242,6 +242,7 @@ DECL_HANDLER(kill_win_timer);
 DECL_HANDLER(is_window_hung);
 DECL_HANDLER(get_serial_info);
 DECL_HANDLER(set_serial_info);
+DECL_HANDLER(cancel_sync);
 DECL_HANDLER(register_async);
 DECL_HANDLER(cancel_async);
 DECL_HANDLER(get_async_result);
@@ -525,6 +526,7 @@ static const req_handler req_handlers[REQ_NB_REQUESTS] =
     (req_handler)req_is_window_hung,
     (req_handler)req_get_serial_info,
     (req_handler)req_set_serial_info,
+    (req_handler)req_cancel_sync,
     (req_handler)req_register_async,
     (req_handler)req_cancel_async,
     (req_handler)req_get_async_result,
@@ -1402,6 +1404,9 @@ C_ASSERT( sizeof(struct get_serial_info_reply) == 24 );
 C_ASSERT( FIELD_OFFSET(struct set_serial_info_request, handle) == 12 );
 C_ASSERT( FIELD_OFFSET(struct set_serial_info_request, flags) == 16 );
 C_ASSERT( sizeof(struct set_serial_info_request) == 24 );
+C_ASSERT( FIELD_OFFSET(struct cancel_sync_request, handle) == 12 );
+C_ASSERT( FIELD_OFFSET(struct cancel_sync_request, iosb) == 16 );
+C_ASSERT( sizeof(struct cancel_sync_request) == 24 );
 C_ASSERT( FIELD_OFFSET(struct register_async_request, type) == 12 );
 C_ASSERT( FIELD_OFFSET(struct register_async_request, async) == 16 );
 C_ASSERT( FIELD_OFFSET(struct register_async_request, count) == 56 );

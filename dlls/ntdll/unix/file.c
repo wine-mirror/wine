@@ -6180,8 +6180,21 @@ NTSTATUS WINAPI NtCancelIoFileEx( HANDLE handle, IO_STATUS_BLOCK *io, IO_STATUS_
  */
 NTSTATUS WINAPI NtCancelSynchronousIoFile( HANDLE handle, IO_STATUS_BLOCK *io, IO_STATUS_BLOCK *io_status )
 {
-    FIXME( "(%p,%p,%p) stub\n", handle, io, io_status );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS status;
+
+    TRACE( "(%p %p %p)\n", handle, io, io_status );
+
+    SERVER_START_REQ( cancel_sync )
+    {
+        req->handle = wine_server_obj_handle( handle );
+        req->iosb   = wine_server_client_ptr( io );
+        status = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    io_status->u.Status = status;
+    io_status->Information = 0;
+    return status;
 }
 
 /******************************************************************
