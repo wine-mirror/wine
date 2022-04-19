@@ -738,65 +738,24 @@ BOOL WINAPI OpenIcon( HWND hwnd )
 /***********************************************************************
  *		FindWindowExW (USER32.@)
  */
-HWND WINAPI FindWindowExW( HWND parent, HWND child, LPCWSTR className, LPCWSTR title )
+HWND WINAPI FindWindowExW( HWND parent, HWND child, const WCHAR *class, const WCHAR *title )
 {
-    HWND *list;
-    HWND retvalue = 0;
-    int i = 0, len = 0;
-    WCHAR *buffer = NULL;
+    UNICODE_STRING class_str, title_str;
 
-    if (!parent && child) parent = GetDesktopWindow();
-    else if (parent == HWND_MESSAGE) parent = get_hwnd_message_parent();
+    if (title) RtlInitUnicodeString( &title_str, title );
 
-    if (title)
+    if (class)
     {
-        len = lstrlenW(title) + 1;  /* one extra char to check for chars beyond the end */
-        if (!(buffer = HeapAlloc( GetProcessHeap(), 0, (len + 1) * sizeof(WCHAR) ))) return 0;
-    }
-
-    if (className)
-    {
-        UNICODE_STRING str;
-        if (IS_INTRESOURCE(className))
+        if (IS_INTRESOURCE(class))
         {
-            str.Buffer = (WCHAR *)className;
-            str.Length = str.MaximumLength = 0;
+            class_str.Buffer = (WCHAR *)class;
+            class_str.Length = class_str.MaximumLength = 0;
         }
-        else RtlInitUnicodeString( &str, className );
-        list = list_window_children( 0, parent, &str, 0 );
-    }
-    else list = list_window_children( 0, parent, NULL, 0 );
-    if (!list) goto done;
-
-    if (child)
-    {
-        child = WIN_GetFullHandle( child );
-        while (list[i] && list[i] != child) i++;
-        if (!list[i]) goto done;
-        i++;  /* start from next window */
+        else RtlInitUnicodeString( &class_str, class );
     }
 
-    if (title)
-    {
-        while (list[i])
-        {
-            if (NtUserInternalGetWindowText( list[i], buffer, len + 1 ))
-            {
-                if (!wcsicmp( buffer, title )) break;
-            }
-            else
-            {
-                if (!title[0]) break;
-            }
-            i++;
-        }
-    }
-    retvalue = list[i];
-
- done:
-    HeapFree( GetProcessHeap(), 0, list );
-    HeapFree( GetProcessHeap(), 0, buffer );
-    return retvalue;
+    return NtUserFindWindowEx( parent, child, class ? &class_str : NULL,
+                               title ? &title_str : NULL, 0 );
 }
 
 

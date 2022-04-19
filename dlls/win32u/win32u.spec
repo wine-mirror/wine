@@ -882,7 +882,7 @@
 @ stdcall NtUserExcludeUpdateRgn(long long)
 @ stub NtUserFillWindow
 @ stdcall -syscall NtUserFindExistingCursorIcon(ptr ptr ptr)
-@ stub NtUserFindWindowEx
+@ stdcall -syscall NtUserFindWindowEx(long long ptr ptr long)
 @ stdcall NtUserFlashWindowEx(ptr)
 @ stub NtUserForceWindowToDpiForTest
 @ stub NtUserFrostCrashedWindow

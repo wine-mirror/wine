@@ -259,6 +259,22 @@ NTSTATUS WINAPI wow64_NtUserBuildHwndList( UINT *args )
     return status;
 }
 
+NTSTATUS WINAPI wow64_NtUserFindWindowEx( UINT *args )
+{
+    HWND parent = get_handle( &args );
+    HWND child = get_handle( &args );
+    UNICODE_STRING32 *class32 = get_ptr( &args );
+    UNICODE_STRING32 *title32 = get_ptr( &args );
+    ULONG unk = get_ulong( &args );
+
+    UNICODE_STRING class, title;
+    HWND ret;
+
+    ret = NtUserFindWindowEx( parent, child, unicode_str_32to64( &class, class32 ),
+                              unicode_str_32to64( &title, title32 ), unk );
+    return HandleToUlong( ret );
+}
+
 NTSTATUS WINAPI wow64_NtUserInternalGetWindowText( UINT *args )
 {
     HWND hwnd = get_handle( &args );

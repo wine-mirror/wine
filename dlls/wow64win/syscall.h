@@ -103,6 +103,7 @@
     SYSCALL_ENTRY( NtUserCreateWindowStation ) \
     SYSCALL_ENTRY( NtUserDestroyAcceleratorTable ) \
     SYSCALL_ENTRY( NtUserFindExistingCursorIcon ) \
+    SYSCALL_ENTRY( NtUserFindWindowEx ) \
     SYSCALL_ENTRY( NtUserGetAncestor ) \
     SYSCALL_ENTRY( NtUserGetAtomName ) \
     SYSCALL_ENTRY( NtUserGetClassName ) \

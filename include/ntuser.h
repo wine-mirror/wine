@@ -458,6 +458,8 @@ BOOL    WINAPI NtUserEnumDisplaySettings( UNICODE_STRING *device, DWORD mode,
 INT     WINAPI NtUserExcludeUpdateRgn( HDC hdc, HWND hwnd );
 HICON   WINAPI NtUserFindExistingCursorIcon( UNICODE_STRING *module, UNICODE_STRING *res_name,
                                              void *desc );
+HWND    WINAPI NtUserFindWindowEx( HWND parent, HWND child, UNICODE_STRING *class,
+                                   UNICODE_STRING *title, ULONG unk );
 BOOL    WINAPI NtUserFlashWindowEx( FLASHWINFO *info );
 HWND    WINAPI NtUserGetAncestor( HWND hwnd, UINT type );
 SHORT   WINAPI NtUserGetAsyncKeyState( INT key );

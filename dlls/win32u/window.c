@@ -2513,6 +2513,55 @@ NTSTATUS WINAPI NtUserBuildHwndList( HDESK desktop, ULONG unk2, ULONG unk3, ULON
     return STATUS_SUCCESS;
 }
 
+/***********************************************************************
+ *           NtUserFindWindowEx (USER32.@)
+ */
+HWND WINAPI NtUserFindWindowEx( HWND parent, HWND child, UNICODE_STRING *class, UNICODE_STRING *title,
+                                ULONG unk )
+{
+    HWND *list;
+    HWND retvalue = 0;
+    int i = 0, len = 0, title_len;
+    WCHAR *buffer = NULL;
+
+    if (!parent && child) parent = get_desktop_window();
+    else if (parent == HWND_MESSAGE) parent = get_hwnd_message_parent();
+
+    if (title)
+    {
+        len = title->Length / sizeof(WCHAR) + 1;  /* one extra char to check for chars beyond the end */
+        if (!(buffer = malloc( (len + 1) * sizeof(WCHAR) ))) return 0;
+    }
+
+    if (!(list = list_window_children( 0, parent, class, 0 ))) goto done;
+
+    if (child)
+    {
+        child = get_full_window_handle( child );
+        while (list[i] && list[i] != child) i++;
+        if (!list[i]) goto done;
+        i++;  /* start from next window */
+    }
+
+    if (title)
+    {
+        while (list[i])
+        {
+            title_len = NtUserInternalGetWindowText( list[i], buffer, len + 1 );
+            if (title_len * sizeof(WCHAR) == title->Length &&
+                (!title_len || !wcsnicmp( buffer, title->Buffer, title_len )))
+                break;
+            i++;
+        }
+    }
+    retvalue = list[i];
+
+ done:
+    free( list );
+    free( buffer );
+    return retvalue;
+}
+
 /* Retrieve the window text from the server. */
 static data_size_t get_server_window_text( HWND hwnd, WCHAR *text, data_size_t count )
 {
