@@ -1923,6 +1923,8 @@ static NTSTATUS map_view( struct file_view **view_ret, void *base, size_t size,
     {
         if (is_beyond_limit( base, size, address_space_limit ))
             return STATUS_WORKING_SET_LIMIT_RANGE;
+        if (limit && is_beyond_limit( base, size, (void *)limit ))
+            return STATUS_CONFLICTING_ADDRESSES;
         status = map_fixed_area( base, size, vprot );
         if (status != STATUS_SUCCESS) return status;
         ptr = base;
