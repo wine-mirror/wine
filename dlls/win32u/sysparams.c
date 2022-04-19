@@ -4639,7 +4639,7 @@ ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
         return get_input_state();
 
     case NtUserCallNoParam_GetMessagePos:
-        return get_user_thread_info()->GetMessagePosVal;
+        return NtUserGetThreadInfo()->message_pos;
 
     case NtUserCallNoParam_ReleaseCapture:
         return release_capture();

@@ -42,6 +42,21 @@ enum
     NtUserCallCount
 };
 
+/* TEB thread info, not compatible with Windows */
+struct ntuser_thread_info
+{
+    DWORD      message_time;      /* value for GetMessageTime */
+    DWORD      message_pos;       /* value for GetMessagePos */
+    ULONG_PTR  message_extra;     /* value for GetMessageExtraInfo */
+    HWND       top_window;        /* desktop window */
+    HWND       msg_window;        /* HWND_MESSAGE parent window */
+};
+
+static inline struct ntuser_thread_info *NtUserGetThreadInfo(void)
+{
+    return (struct ntuser_thread_info *)NtCurrentTeb()->Win32ClientInfo;
+}
+
 /* NtUserCallEnumDisplayMonitor params */
 struct enum_display_monitor_params
 {

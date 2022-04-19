@@ -113,7 +113,7 @@ static HWND *list_window_children( HDESK desktop, HWND hwnd, UNICODE_STRING *cla
  */
 HWND get_hwnd_message_parent(void)
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
+    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
 
     if (!thread_info->msg_window) GetDesktopWindow();  /* trigger creation */
     return thread_info->msg_window;
@@ -127,7 +127,7 @@ HWND get_hwnd_message_parent(void)
  */
 BOOL is_desktop_window( HWND hwnd )
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
+    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
 
     if (!hwnd) return FALSE;
     if (hwnd == thread_info->top_window) return TRUE;
@@ -857,7 +857,7 @@ HWND WINAPI FindWindowW( LPCWSTR className, LPCWSTR title )
  */
 HWND WINAPI GetDesktopWindow(void)
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
+    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
 
     if (thread_info->top_window) return thread_info->top_window;
     return NtUserGetDesktopWindow();

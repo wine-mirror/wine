@@ -138,6 +138,7 @@ static inline BOOL is_broadcast( HWND hwnd )
 /* no attempt is made to keep the layout compatible with the Windows one */
 struct user_thread_info
 {
+    struct ntuser_thread_info     client_info;            /* Data shared with client */
     HANDLE                        server_queue;           /* Handle to server-side queue */
     DWORD                         wake_mask;              /* Current queue wake mask */
     DWORD                         changed_mask;           /* Current queue changed mask */
@@ -151,14 +152,9 @@ struct user_thread_info
     INPUT_MESSAGE_SOURCE          msg_source;             /* Message source for current message */
     struct received_message_info *receive_info;           /* Message being currently received */
     struct wm_char_mapping_data  *wmchar_data;            /* Data for WM_CHAR mappings */
-    DWORD                         GetMessageTimeVal;      /* Value for GetMessageTime */
-    DWORD                         GetMessagePosVal;       /* Value for GetMessagePos */
-    ULONG_PTR                     GetMessageExtraInfoVal; /* Value for GetMessageExtraInfo */
     struct user_key_state_info   *key_state;              /* Cache of global key state */
     HKL                           kbd_layout;             /* Current keyboard layout */
     DWORD                         kbd_layout_id;          /* Current keyboard layout ID */
-    HWND                          top_window;             /* Desktop window */
-    HWND                          msg_window;             /* HWND_MESSAGE parent window */
     struct rawinput_thread_data  *rawinput;               /* RawInput thread local data / buffer */
     UINT                          spy_indent;             /* Current spy indent */
 };

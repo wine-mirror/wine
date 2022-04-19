@@ -166,7 +166,7 @@ static WND *next_thread_window_ptr( HWND *hwnd )
  */
 HWND get_hwnd_message_parent(void)
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
+    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
 
     if (!thread_info->msg_window) get_desktop_window(); /* trigger creation */
     return thread_info->msg_window;
@@ -218,7 +218,7 @@ HWND get_full_window_handle( HWND hwnd )
  */
 BOOL is_desktop_window( HWND hwnd )
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
+    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
 
     if (!hwnd) return FALSE;
     if (hwnd == thread_info->top_window) return TRUE;
@@ -4678,7 +4678,7 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
 
     if (!parent)  /* if parent is 0 we don't have a desktop window yet */
     {
-        struct user_thread_info *thread_info = get_user_thread_info();
+        struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
 
         if (name->Buffer == (const WCHAR *)DESKTOP_CLASS_ATOM)
         {

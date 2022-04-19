@@ -239,8 +239,8 @@ BOOL WINAPI NtUserSetThreadDesktop( HDESK handle )
     {
         struct user_thread_info *thread_info = get_user_thread_info();
         struct user_key_state_info *key_state_info = thread_info->key_state;
-        thread_info->top_window = 0;
-        thread_info->msg_window = 0;
+        thread_info->client_info.top_window = 0;
+        thread_info->client_info.msg_window = 0;
         if (key_state_info) key_state_info->time = 0;
     }
     return ret;
@@ -397,7 +397,7 @@ static inline TEB64 *NtCurrentTeb64(void) { return (TEB64 *)NtCurrentTeb()->GdiB
 
 HWND get_desktop_window(void)
 {
-    struct user_thread_info *thread_info = get_user_thread_info();
+    struct ntuser_thread_info *thread_info = NtUserGetThreadInfo();
 
     if (thread_info->top_window) return thread_info->top_window;
 
