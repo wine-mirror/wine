@@ -1248,7 +1248,6 @@ static const char test_public_dtd[] =
 
 static void test_read_public_dtd(void)
 {
-    static const WCHAR dtdnameW[] = {'t','e','s','t','d','t','d',0};
     IXmlReader *reader;
     const WCHAR *str;
     XmlNodeType type;
@@ -1299,8 +1298,8 @@ static void test_read_public_dtd(void)
     hr = IXmlReader_GetQualifiedName(reader, &str, &len);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 todo_wine {
-    ok(len == lstrlenW(dtdnameW), "got %u\n", len);
-    ok(!lstrcmpW(str, dtdnameW), "got %s\n", wine_dbgstr_w(str));
+    ok(len == 7, "got %u\n", len);
+    ok(!lstrcmpW(str, L"testdtd"), "got %s\n", wine_dbgstr_w(str));
 }
     IXmlReader_Release(reader);
 }
@@ -1311,7 +1310,6 @@ static const char test_system_dtd[] =
 
 static void test_read_system_dtd(void)
 {
-    static const WCHAR dtdnameW[] = {'t','e','s','t','d','t','d',0};
     IXmlReader *reader;
     const WCHAR *str;
     XmlNodeType type;
@@ -1352,8 +1350,8 @@ static void test_read_system_dtd(void)
     hr = IXmlReader_GetQualifiedName(reader, &str, &len);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 todo_wine {
-    ok(len == lstrlenW(dtdnameW), "got %u\n", len);
-    ok(!lstrcmpW(str, dtdnameW), "got %s\n", wine_dbgstr_w(str));
+    ok(len == 7, "got %u\n", len);
+    ok(!lstrcmpW(str, L"testdtd"), "got %s\n", wine_dbgstr_w(str));
 }
 
     read_node(reader, XmlNodeType_Comment);
@@ -2550,16 +2548,7 @@ static void test_attribute_by_name(void)
 {
     static const char *xml = "<a><elem xmlns=\"myns\" a=\"value a\" b=\"value b\" xmlns:ns=\"ns uri\" "
         "ns:c=\"value c\" c=\"value c2\"/></a>";
-    static const WCHAR xmlns_uriW[] = {'h','t','t','p',':','/','/','w','w','w','.','w','3','.','o','r','g','/',
-        '2','0','0','0','/','x','m','l','n','s','/',0};
-    static const WCHAR nsuriW[] = {'n','s',' ','u','r','i',0};
-    static const WCHAR xmlnsW[] = {'x','m','l','n','s',0};
-    static const WCHAR mynsW[] = {'m','y','n','s',0};
-    static const WCHAR nsW[] = {'n','s',0};
-    static const WCHAR emptyW[] = {0};
-    static const WCHAR aW[] = {'a',0};
-    static const WCHAR bW[] = {'b',0};
-    static const WCHAR cW[] = {'c',0};
+    static const WCHAR xmlns_uriW[] = L"http://www.w3.org/2000/xmlns/";
     IXmlReader *reader;
     HRESULT hr;
 
@@ -2571,12 +2560,12 @@ static void test_attribute_by_name(void)
     hr = IXmlReader_MoveToAttributeByName(reader, NULL, NULL);
     ok(hr == E_INVALIDARG || broken(hr == S_FALSE) /* WinXP */, "Unexpected hr %#lx.\n", hr);
 
-    hr = IXmlReader_MoveToAttributeByName(reader, emptyW, NULL);
+    hr = IXmlReader_MoveToAttributeByName(reader, L"", NULL);
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
 
     read_node(reader, XmlNodeType_Element);
 
-    hr = IXmlReader_MoveToAttributeByName(reader, emptyW, NULL);
+    hr = IXmlReader_MoveToAttributeByName(reader, L"", NULL);
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
 
     read_node(reader, XmlNodeType_Element);
@@ -2587,43 +2576,43 @@ static void test_attribute_by_name(void)
     hr = IXmlReader_MoveToAttributeByName(reader, NULL, xmlns_uriW);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
-    hr = IXmlReader_MoveToAttributeByName(reader, emptyW, xmlns_uriW);
+    hr = IXmlReader_MoveToAttributeByName(reader, L"", xmlns_uriW);
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
 
-    hr = IXmlReader_MoveToAttributeByName(reader, xmlnsW, NULL);
+    hr = IXmlReader_MoveToAttributeByName(reader, L"xmlns", NULL);
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
 
-    hr = IXmlReader_MoveToAttributeByName(reader, xmlnsW, xmlns_uriW);
+    hr = IXmlReader_MoveToAttributeByName(reader, L"xmlns", xmlns_uriW);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     reader_value(reader, L"myns");
 
-    hr = IXmlReader_MoveToAttributeByName(reader, aW, NULL);
+    hr = IXmlReader_MoveToAttributeByName(reader, L"a", NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     reader_value(reader, L"value a");
 
-    hr = IXmlReader_MoveToAttributeByName(reader, bW, NULL);
+    hr = IXmlReader_MoveToAttributeByName(reader, L"b", NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     reader_value(reader, L"value b");
 
-    hr = IXmlReader_MoveToAttributeByName(reader, aW, mynsW);
+    hr = IXmlReader_MoveToAttributeByName(reader, L"a", L"myns");
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
 
-    hr = IXmlReader_MoveToAttributeByName(reader, nsW, NULL);
+    hr = IXmlReader_MoveToAttributeByName(reader, L"ns", NULL);
     ok(hr == S_FALSE, "Unexpected hr %#lx.\n", hr);
 
-    hr = IXmlReader_MoveToAttributeByName(reader, nsW, xmlns_uriW);
+    hr = IXmlReader_MoveToAttributeByName(reader, L"ns", xmlns_uriW);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     reader_value(reader, L"ns uri");
 
-    hr = IXmlReader_MoveToAttributeByName(reader, bW, emptyW);
+    hr = IXmlReader_MoveToAttributeByName(reader, L"b", L"");
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     reader_value(reader, L"value b");
 
-    hr = IXmlReader_MoveToAttributeByName(reader, cW, NULL);
+    hr = IXmlReader_MoveToAttributeByName(reader, L"c", NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     reader_value(reader, L"value c2");
 
-    hr = IXmlReader_MoveToAttributeByName(reader, cW, nsuriW);
+    hr = IXmlReader_MoveToAttributeByName(reader, L"c", L"ns uri");
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     reader_value(reader, L"value c");
 
