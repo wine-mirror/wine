@@ -90,7 +90,8 @@ static int rec_cancel_pipe[2];
 static pthread_t rec_thread_id;
 
 static pthread_mutex_t notify_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_cond_t notify_cond = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t notify_read_cond = PTHREAD_COND_INITIALIZER;
+static pthread_cond_t notify_write_cond = PTHREAD_COND_INITIALIZER;
 static BOOL notify_quit;
 #define NOTIFY_BUFFER_SIZE 64 + 1 /* + 1 for the sentinel */
 static struct notify_context notify_buffer[NOTIFY_BUFFER_SIZE];
@@ -156,19 +157,23 @@ static struct notify_context *notify_buffer_next(struct notify_context *notify)
     return notify;
 }
 
-static void notify_buffer_add(struct notify_context *notify)
-{
-    struct notify_context *next = notify_buffer_next(notify_write);
-
-    if (next == notify_read) /* buffer is full - we can't issue a WARN() in a non-Win32 thread */
-        notify_read = notify_buffer_next(notify_read); /* drop the oldest notification */
-    *notify_write = *notify;
-    notify_write = next;
-}
-
 static BOOL notify_buffer_empty(void)
 {
     return notify_read == notify_write;
+}
+
+static BOOL notify_buffer_full(void)
+{
+    return notify_buffer_next(notify_write) == notify_read;
+}
+
+static BOOL notify_buffer_add(struct notify_context *notify)
+{
+    if (notify_buffer_full()) return FALSE;
+
+    *notify_write = *notify;
+    notify_write = notify_buffer_next(notify_write);
+    return TRUE;
 }
 
 static BOOL notify_buffer_remove(struct notify_context *notify)
@@ -184,9 +189,15 @@ static void notify_post(struct notify_context *notify)
 {
     pthread_mutex_lock(&notify_mutex);
 
-    if (notify) notify_buffer_add(notify);
+    if (notify)
+    {
+        while (notify_buffer_full())
+            pthread_cond_wait(&notify_write_cond, &notify_mutex);
+
+        notify_buffer_add(notify);
+    }
     else notify_quit = TRUE;
-    pthread_cond_signal(&notify_cond);
+    pthread_cond_signal(&notify_read_cond);
 
     pthread_mutex_unlock(&notify_mutex);
 }
@@ -1476,11 +1487,14 @@ NTSTATUS midi_notify_wait(void *args)
     pthread_mutex_lock(&notify_mutex);
 
     while (!notify_quit && notify_buffer_empty())
-        pthread_cond_wait(&notify_cond, &notify_mutex);
+        pthread_cond_wait(&notify_read_cond, &notify_mutex);
 
     *params->quit = notify_quit;
-    if (!notify_quit) notify_buffer_remove(params->notify);
-
+    if (!notify_quit)
+    {
+        notify_buffer_remove(params->notify);
+        pthread_cond_signal(&notify_write_cond);
+    }
     pthread_mutex_unlock(&notify_mutex);
 
     return STATUS_SUCCESS;
