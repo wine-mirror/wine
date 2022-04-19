@@ -13,4 +13,5 @@ C_SRCS = \
 	midipatch.c \
 	mmaux.c \
 	mmdevdrv.c \
-	oss.c
+	oss.c \
+	ossmidi.c

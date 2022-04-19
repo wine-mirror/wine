@@ -209,6 +209,41 @@ struct is_started_params
     HRESULT result;
 };
 
+#include <mmddk.h> /* temporary */
+
+typedef struct midi_src
+{
+    int                 state; /* -1 disabled, 0 is no recording started, 1 in recording, bit 2 set if in sys exclusive recording */
+    MIDIOPENDESC        midiDesc;
+    WORD                wFlags;
+    MIDIHDR            *lpQueueHdr;
+    unsigned char       incoming[3];
+    unsigned char       incPrev;
+    char                incLen;
+    UINT                startTime;
+    MIDIINCAPSW         caps;
+} WINE_MIDIIN;
+
+typedef struct midi_dest
+{
+    BOOL                bEnabled;
+    MIDIOPENDESC        midiDesc;
+    WORD                wFlags;
+    MIDIHDR            *lpQueueHdr;
+    void               *lpExtra; /* according to port type (MIDI, FM...), extra data when needed */
+    MIDIOUTCAPSW        caps;
+} WINE_MIDIOUT;
+
+struct midi_init_params
+{
+    UINT *err;
+    unsigned int num_dests;
+    unsigned int num_srcs;
+    unsigned int num_synths;
+    struct midi_dest *dests;
+    struct midi_src *srcs;
+};
+
 enum oss_funcs
 {
     oss_test_connect,
@@ -234,7 +269,10 @@ enum oss_funcs
     oss_set_volumes,
     oss_set_event_handle,
     oss_is_started,
+    oss_midi_init,
 };
+
+NTSTATUS midi_init(void *args) DECLSPEC_HIDDEN;
 
 extern unixlib_handle_t oss_handle;
 
