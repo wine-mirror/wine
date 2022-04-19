@@ -63,8 +63,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
-#ifdef SNDCTL_SEQ_NRMIDIS
-
 typedef struct {
     int			state;                  /* -1 disabled, 0 is no recording started, 1 in recording, bit 2 set if in sys exclusive recording */
     MIDIOPENDESC	midiDesc;
@@ -1616,8 +1614,6 @@ static DWORD modReset(WORD wDevID)
     return MMSYSERR_NOERROR;
 }
 
-#endif /* SNDCTL_SEQ_NRMIDIS */
-
 /*======================================================================*
  *                  	    MIDI entry points 				*
  *======================================================================*/
@@ -1631,7 +1627,6 @@ DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
     switch (wMsg) {
-#ifdef SNDCTL_SEQ_NRMIDIS
     case DRVM_INIT:
         return OSS_MidiInit();
     case DRVM_EXIT:
@@ -1660,11 +1655,6 @@ DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 	return midStart(wDevID);
     case MIDM_STOP:
 	return midStop(wDevID);
-#else
-    case DRVM_INIT:
-    case MIDM_GETNUMDEVS:
-        return 0;
-#endif
     default:
 	TRACE("Unsupported message\n");
     }
@@ -1681,7 +1671,6 @@ DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
-#ifdef SNDCTL_SEQ_NRMIDIS
     case DRVM_INIT:
         return OSS_MidiInit();
     case DRVM_EXIT:
@@ -1712,11 +1701,6 @@ DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 	return 0;
     case MODM_RESET:
 	return modReset(wDevID);
-#else
-    case DRVM_INIT:
-    case MODM_GETNUMDEVS:
-        return 0;
-#endif
     default:
 	TRACE("Unsupported message\n");
     }
