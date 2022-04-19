@@ -153,6 +153,7 @@ typedef struct tagHEAP
     /* For Vista through 10, 'flags' is at offset 0x40 (x86) / 0x70 (x64) */
     DWORD            flags;         /* Heap flags */
     DWORD            force_flags;   /* Forced heap flags for debugging */
+    BOOL             shared;        /* System shared heap */
     SUBHEAP          subheap;       /* First sub-heap */
     struct list      entry;         /* Entry in process heap list */
     struct list      subheap_list;  /* Sub-heap list */
@@ -687,7 +688,7 @@ static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
 
     /* Decommit the end of the heap */
 
-    if (!(subheap->heap->flags & HEAP_SHARED)) HEAP_Decommit( subheap, pFree + 1 );
+    if (!(subheap->heap->shared)) HEAP_Decommit( subheap, pFree + 1 );
 }
 
 
@@ -922,6 +923,7 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
 
         heap = address;
         heap->flags         = flags;
+        heap->shared        = (flags & HEAP_SHARED) != 0;
         heap->magic         = HEAP_MAGIC;
         heap->grow_size     = max( HEAP_DEF_SIZE, totalSize );
         list_init( &heap->subheap_list );
@@ -967,7 +969,7 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
             heap->critSection.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": HEAP.critSection");
         }
 
-        if (flags & HEAP_SHARED)
+        if (heap->shared)
         {
             /* let's assume that only one thread at a time will try to do this */
             HANDLE sem = heap->critSection.LockSemaphore;
