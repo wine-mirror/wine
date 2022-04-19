@@ -171,7 +171,7 @@ static BOOL is_managed( HWND hwnd )
     return ret;
 }
 
-static HWND *build_hwnd_list(void)
+HWND *build_hwnd_list(void)
 {
     NTSTATUS status;
     HWND *list;

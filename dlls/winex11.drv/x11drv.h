@@ -28,6 +28,7 @@
 
 #include <limits.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <pthread.h>
 #include <X11/Xlib.h>
 #include <X11/Xresource.h>
@@ -690,6 +691,7 @@ extern void move_resize_window( HWND hwnd, int dir ) DECLSPEC_HIDDEN;
 extern void X11DRV_InitKeyboard( Display *display ) DECLSPEC_HIDDEN;
 extern DWORD X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
                                                  DWORD mask, DWORD flags ) DECLSPEC_HIDDEN;
+extern HWND *build_hwnd_list(void) DECLSPEC_HIDDEN;
 
 typedef int (*x11drv_error_callback)( Display *display, XErrorEvent *event, void *arg );
 
