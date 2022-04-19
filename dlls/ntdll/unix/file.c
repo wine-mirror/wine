@@ -6175,6 +6175,15 @@ NTSTATUS WINAPI NtCancelIoFileEx( HANDLE handle, IO_STATUS_BLOCK *io, IO_STATUS_
 }
 
 
+/**************************************************************************
+ *           NtCancelSynchronousIoFile (NTDLL.@)
+ */
+NTSTATUS WINAPI NtCancelSynchronousIoFile( HANDLE handle, IO_STATUS_BLOCK *io, IO_STATUS_BLOCK *io_status )
+{
+    FIXME( "(%p,%p,%p) stub\n", handle, io, io_status );
+    return STATUS_NOT_IMPLEMENTED;
+}
+
 /******************************************************************
  *           NtLockFile   (NTDLL.@)
  */

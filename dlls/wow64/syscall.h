@@ -40,6 +40,7 @@
     SYSCALL_ENTRY( NtCallbackReturn ) \
     SYSCALL_ENTRY( NtCancelIoFile ) \
     SYSCALL_ENTRY( NtCancelIoFileEx ) \
+    SYSCALL_ENTRY( NtCancelSynchronousIoFile ) \
     SYSCALL_ENTRY( NtCancelTimer ) \
     SYSCALL_ENTRY( NtClearEvent ) \
     SYSCALL_ENTRY( NtClose ) \

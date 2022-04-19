@@ -75,6 +75,9 @@ typedef struct _FILE_PIPE_WAIT_FOR_BUFFER {
 #endif
 #endif
 
+static BOOL is_wow64;
+static BOOL (WINAPI *pIsWow64Process)(HANDLE, BOOL *);
+
 static NTSTATUS (WINAPI *pNtFsControlFile) (HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, PVOID apc_context, PIO_STATUS_BLOCK io, ULONG code, PVOID in_buffer, ULONG in_size, PVOID out_buffer, ULONG out_size);
 static NTSTATUS (WINAPI *pNtCreateDirectoryObject)(HANDLE *, ACCESS_MASK, OBJECT_ATTRIBUTES *);
 static NTSTATUS (WINAPI *pNtCreateNamedPipeFile) (PHANDLE handle, ULONG access,
@@ -90,6 +93,7 @@ static NTSTATUS (WINAPI *pNtQueryVolumeInformationFile)(HANDLE handle, PIO_STATU
 static NTSTATUS (WINAPI *pNtSetInformationFile) (HANDLE handle, PIO_STATUS_BLOCK io, PVOID ptr, ULONG len, FILE_INFORMATION_CLASS class);
 static NTSTATUS (WINAPI *pNtCancelIoFile) (HANDLE hFile, PIO_STATUS_BLOCK io_status);
 static NTSTATUS (WINAPI *pNtCancelIoFileEx) (HANDLE hFile, IO_STATUS_BLOCK *iosb, IO_STATUS_BLOCK *io_status);
+static NTSTATUS (WINAPI *pNtCancelSynchronousIoFile) (HANDLE hFile, IO_STATUS_BLOCK *iosb, IO_STATUS_BLOCK *io_status);
 static NTSTATUS (WINAPI *pNtRemoveIoCompletion)(HANDLE, PULONG_PTR, PULONG_PTR, PIO_STATUS_BLOCK, PLARGE_INTEGER);
 static void (WINAPI *pRtlInitUnicodeString) (PUNICODE_STRING target, PCWSTR source);
 
@@ -114,6 +118,7 @@ static BOOL init_func_ptrs(void)
     loadfunc(NtQueryVolumeInformationFile)
     loadfunc(NtSetInformationFile)
     loadfunc(NtCancelIoFile)
+    loadfunc(NtCancelSynchronousIoFile)
     loadfunc(RtlInitUnicodeString)
     loadfunc(NtRemoveIoCompletion)
 
@@ -122,6 +127,7 @@ static BOOL init_func_ptrs(void)
     module = GetModuleHandleA("kernel32.dll");
     pOpenThread = (void *)GetProcAddress(module, "OpenThread");
     pQueueUserAPC = (void *)GetProcAddress(module, "QueueUserAPC");
+    pIsWow64Process = (void *)GetProcAddress(module, "IsWow64Process");
     return TRUE;
 }
 
@@ -613,6 +619,149 @@ static void test_cancelio(void)
         win_skip("NtCancelIoFileEx not available\n");
 
     CloseHandle(hEvent);
+}
+
+struct synchronousio_thread_args
+{
+    HANDLE pipe;
+    IO_STATUS_BLOCK iosb;
+};
+
+static DWORD WINAPI synchronousio_thread(void *arg)
+{
+    struct synchronousio_thread_args *ctx = arg;
+    NTSTATUS res;
+
+    res = listen_pipe(ctx->pipe, NULL, &ctx->iosb, FALSE);
+    ok(res == STATUS_CANCELLED, "NtFsControlFile returned %lx\n", res);
+    return 0;
+}
+
+static void test_cancelsynchronousio(void)
+{
+    DWORD ret;
+    NTSTATUS res;
+    HANDLE event;
+    HANDLE thread;
+    HANDLE client;
+    IO_STATUS_BLOCK iosb;
+    struct synchronousio_thread_args ctx;
+
+    /* bogus values */
+    todo_wine {
+    res = pNtCancelSynchronousIoFile((HANDLE)0xdeadbeef, NULL, &iosb);
+    ok(res == STATUS_INVALID_HANDLE, "NtCancelSynchronousIoFile returned %lx\n", res);
+    res = pNtCancelSynchronousIoFile(GetCurrentThread(), NULL, NULL);
+    ok(res == STATUS_ACCESS_VIOLATION, "NtCancelSynchronousIoFile returned %lx\n", res);
+    res = pNtCancelSynchronousIoFile(GetCurrentThread(), NULL, (IO_STATUS_BLOCK*)0xdeadbeef);
+    ok(res == STATUS_ACCESS_VIOLATION, "NtCancelSynchronousIoFile returned %lx\n", res);
+    memset(&iosb, 0x55, sizeof(iosb));
+    res = pNtCancelSynchronousIoFile(GetCurrentThread(), (IO_STATUS_BLOCK*)0xdeadbeef, &iosb);
+    ok(res == STATUS_NOT_FOUND || broken(is_wow64 && res == STATUS_ACCESS_VIOLATION),
+        "NtCancelSynchronousIoFile returned %lx\n", res);
+    if (res != STATUS_ACCESS_VIOLATION)
+    {
+        ok(U(iosb).Status == STATUS_NOT_FOUND, "iosb.Status got changed to %lx\n", U(iosb).Status);
+        ok(U(iosb).Information == 0, "iosb.Information got changed to %Iu\n", U(iosb).Information);
+    }
+    }
+
+    /* synchronous i/o */
+    res = create_pipe(&ctx.pipe, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT);
+    ok(!res, "NtCreateNamedPipeFile returned %lx\n", res);
+
+    /* NULL io */
+    U(ctx.iosb).Status = 0xdeadbabe;
+    ctx.iosb.Information = 0xdeadbeef;
+    thread = CreateThread(NULL, 0, synchronousio_thread, &ctx, 0, 0);
+    /* wait for I/O to start, which transitions the pipe handle from signaled to nonsignaled state. */
+    while ((ret = WaitForSingleObject(ctx.pipe, 0)) == WAIT_OBJECT_0) Sleep(1);
+    ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned %lu (error %lu)\n", ret, GetLastError());
+    memset(&iosb, 0x55, sizeof(iosb));
+    res = pNtCancelSynchronousIoFile(thread, NULL, &iosb);
+    todo_wine {
+    ok(res == STATUS_SUCCESS, "Failed to cancel I/O\n");
+    ok(U(iosb).Status == STATUS_SUCCESS, "iosb.Status got changed to %lx\n", U(iosb).Status);
+    ok(U(iosb).Information == 0, "iosb.Information got changed to %Iu\n", U(iosb).Information);
+    }
+    if (res == STATUS_NOT_IMPLEMENTED)
+        pNtCancelIoFileEx(ctx.pipe, NULL, &iosb);
+    ret = WaitForSingleObject(thread, 1000);
+    ok(ret == WAIT_OBJECT_0, "wait returned %lx\n", ret);
+    CloseHandle(thread);
+    CloseHandle(ctx.pipe);
+    ok(U(ctx.iosb).Status == 0xdeadbabe, "wrong status %lx\n", U(ctx.iosb).Status);
+    ok(ctx.iosb.Information == 0xdeadbeef, "wrong info %Iu\n", ctx.iosb.Information);
+
+    /* specified io */
+    res = create_pipe(&ctx.pipe, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_SYNCHRONOUS_IO_NONALERT);
+    ok(!res, "NtCreateNamedPipeFile returned %lx\n", res);
+
+    U(ctx.iosb).Status = 0xdeadbabe;
+    ctx.iosb.Information = 0xdeadbeef;
+    thread = CreateThread(NULL, 0, synchronousio_thread, &ctx, 0, 0);
+    /* wait for I/O to start, which transitions the pipe handle from signaled to nonsignaled state. */
+    while ((ret = WaitForSingleObject(ctx.pipe, 0)) == WAIT_OBJECT_0) Sleep(1);
+    ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned %lu (error %lu)\n", ret, GetLastError());
+    memset(&iosb, 0x55, sizeof(iosb));
+    res = pNtCancelSynchronousIoFile(thread, &iosb, &iosb);
+    todo_wine {
+    ok(res == STATUS_NOT_FOUND, "NtCancelSynchronousIoFile returned %lx\n", res);
+    res = pNtCancelSynchronousIoFile(NULL, &ctx.iosb, &iosb);
+    ok(res == STATUS_INVALID_HANDLE, "NtCancelSynchronousIoFile returned %lx\n", res);
+    res = pNtCancelSynchronousIoFile(thread, &ctx.iosb, &iosb);
+    ok(res == STATUS_SUCCESS || broken(is_wow64 && res == STATUS_NOT_FOUND),
+        "Failed to cancel I/O\n");
+    ok(U(iosb).Status == STATUS_SUCCESS || broken(is_wow64 && U(iosb).Status == STATUS_NOT_FOUND),
+        "iosb.Status got changed to %lx\n", U(iosb).Status);
+    ok(U(iosb).Information == 0, "iosb.Information got changed to %Iu\n", U(iosb).Information);
+    }
+    if (res == STATUS_NOT_FOUND)
+    {
+        res = pNtCancelSynchronousIoFile(thread, NULL, &iosb);
+        ok(res == STATUS_SUCCESS, "Failed to cancel I/O\n");
+        ok(U(iosb).Status == STATUS_SUCCESS, "iosb.Status got changed to %lx\n", U(iosb).Status);
+    }
+    if (res == STATUS_NOT_IMPLEMENTED)
+        pNtCancelIoFileEx(ctx.pipe, NULL, &iosb);
+    ret = WaitForSingleObject(thread, 1000);
+    ok(ret == WAIT_OBJECT_0, "wait returned %lx\n", ret);
+    CloseHandle(thread);
+    CloseHandle(ctx.pipe);
+    ok(U(ctx.iosb).Status == 0xdeadbabe, "wrong status %lx\n", U(ctx.iosb).Status);
+    ok(ctx.iosb.Information == 0xdeadbeef, "wrong info %Iu\n", ctx.iosb.Information);
+
+    /* asynchronous i/o */
+    U(ctx.iosb).Status = 0xdeadbabe;
+    ctx.iosb.Information = 0xdeadbeef;
+    res = create_pipe(&ctx.pipe, 0, FILE_SHARE_READ | FILE_SHARE_WRITE, 0 /* OVERLAPPED */);
+    ok(!res, "NtCreateNamedPipeFile returned %lx\n", res);
+    event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    ok(event != INVALID_HANDLE_VALUE, "Can't create event, GetLastError: %lx\n", GetLastError());
+    res = listen_pipe(ctx.pipe, event, &ctx.iosb, FALSE);
+    ok(res == STATUS_PENDING, "NtFsControlFile returned %lx\n", res);
+    memset(&iosb, 0x55, sizeof(iosb));
+    res = pNtCancelSynchronousIoFile(GetCurrentThread(), NULL, &iosb);
+    todo_wine {
+    ok(res == STATUS_NOT_FOUND, "NtCancelSynchronousIoFile returned %lx\n", res);
+    ok(U(iosb).Status == STATUS_NOT_FOUND, "iosb.Status got changed to %lx\n", U(iosb).Status);
+    ok(U(iosb).Information == 0, "iosb.Information got changed to %Iu\n", U(iosb).Information);
+    memset(&iosb, 0x55, sizeof(iosb));
+    res = pNtCancelSynchronousIoFile(GetCurrentThread(), &ctx.iosb, &iosb);
+    ok(res == STATUS_NOT_FOUND, "NtCancelSynchronousIoFile returned %lx\n", res);
+    ok(U(iosb).Status == STATUS_NOT_FOUND, "iosb.Status got changed to %lx\n", U(iosb).Status);
+    ok(U(iosb).Information == 0, "iosb.Information got changed to %Iu\n", U(iosb).Information);
+    }
+    ret = WaitForSingleObject(event, 0);
+    ok(ret == WAIT_TIMEOUT, "wait returned %lx\n", ret);
+    client = CreateFileW(testpipe, GENERIC_READ | GENERIC_WRITE, 0, 0, OPEN_EXISTING,
+                         FILE_FLAG_OVERLAPPED, 0);
+    ok(client != INVALID_HANDLE_VALUE, "can't open pipe: %lu\n", GetLastError());
+    ret = WaitForSingleObject(event, 0);
+    ok(ret == WAIT_OBJECT_0, "wait returned %lx\n", ret);
+    CloseHandle(ctx.pipe);
+    CloseHandle(event);
+    CloseHandle(client);
 }
 
 static void _check_pipe_handle_state(int line, HANDLE handle, ULONG read, ULONG completion)
@@ -2663,6 +2812,8 @@ START_TEST(pipe)
     if (!init_func_ptrs())
         return;
 
+    if (!pIsWow64Process || !pIsWow64Process( GetCurrentProcess(), &is_wow64 )) is_wow64 = FALSE;
+
     trace("starting invalid create tests\n");
     test_create_invalid();
 
@@ -2693,6 +2844,9 @@ START_TEST(pipe)
 
     trace("starting cancelio tests\n");
     test_cancelio();
+
+    trace("starting cancelsynchronousio tests\n");
+    test_cancelsynchronousio();
 
     trace("starting byte read in byte mode client -> server\n");
     read_pipe_test(PIPE_ACCESS_INBOUND, PIPE_TYPE_BYTE);
