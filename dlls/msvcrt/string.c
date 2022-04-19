@@ -2675,19 +2675,62 @@ int CDECL I10_OUTPUT(MSVCRT__LDOUBLE ld80, int prec, int flag, struct _I10_OUTPU
 }
 #undef I10_OUTPUT_MAX_PREC
 
-/*********************************************************************
- *                  memcmp (MSVCRT.@)
- */
-int __cdecl memcmp(const void *ptr1, const void *ptr2, size_t n)
+static inline int memcmp_bytes(const void *ptr1, const void *ptr2, size_t n)
 {
     const unsigned char *p1, *p2;
 
     for (p1 = ptr1, p2 = ptr2; n; n--, p1++, p2++)
     {
-        if (*p1 < *p2) return -1;
-        if (*p1 > *p2) return 1;
+        if (*p1 != *p2)
+            return *p1 > *p2 ? 1 : -1;
     }
     return 0;
+}
+
+static inline int memcmp_blocks(const void *ptr1, const void *ptr2, size_t size)
+{
+    typedef uint64_t DECLSPEC_ALIGN(1) unaligned_ui64;
+
+    const uint64_t *p1 = ptr1;
+    const unaligned_ui64 *p2 = ptr2;
+    size_t remainder = size & (sizeof(uint64_t) - 1);
+    size_t block_count = size / sizeof(uint64_t);
+
+    while (block_count)
+    {
+        if (*p1 != *p2)
+            return memcmp_bytes(p1, p2, sizeof(uint64_t));
+
+        p1++;
+        p2++;
+        block_count--;
+    }
+
+    return memcmp_bytes(p1, p2, remainder);
+}
+
+/*********************************************************************
+ *                  memcmp (MSVCRT.@)
+ */
+int __cdecl memcmp(const void *ptr1, const void *ptr2, size_t n)
+{
+    const unsigned char *p1 = ptr1, *p2 = ptr2;
+    size_t align;
+    int result;
+
+    if (n < sizeof(uint64_t))
+        return memcmp_bytes(p1, p2, n);
+
+    align = -(size_t)p1 & (sizeof(uint64_t) - 1);
+
+    if ((result = memcmp_bytes(p1, p2, align)))
+        return result;
+
+    p1 += align;
+    p2 += align;
+    n  -= align;
+
+    return memcmp_blocks(p1, p2, n);
 }
 
 #if defined(__i386__) || defined(__x86_64__)
