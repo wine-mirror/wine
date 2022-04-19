@@ -1617,7 +1617,7 @@ void move_resize_window( HWND hwnd, int dir )
 
     if (!(win = X11DRV_get_whole_window( hwnd ))) return;
 
-    pt = NtUserGetMessagePos();
+    pt = NtUserGetThreadInfo()->message_pos;
     pos = virtual_screen_to_root( (short)LOWORD( pt ), (short)HIWORD( pt ) );
 
     if (NtUserGetKeyState( VK_LBUTTON ) & 0x8000) button = 1;
