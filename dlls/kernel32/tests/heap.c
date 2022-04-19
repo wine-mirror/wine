@@ -998,7 +998,7 @@ static void test_GlobalAlloc(void)
     mem = GlobalFree( mem );
     ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
 
-    for (alloc_size = 1; alloc_size < 0x10000000; alloc_size <<= 1)
+    for (alloc_size = 1; alloc_size < 0x10000000; alloc_size <<= 5)
     {
         winetest_push_context( "size %#Ix", alloc_size );
 
