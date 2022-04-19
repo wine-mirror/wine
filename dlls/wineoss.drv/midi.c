@@ -67,11 +67,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
 typedef struct {
     int			state;                  /* -1 disabled, 0 is no recording started, 1 in recording, bit 2 set if in sys exclusive recording */
-    DWORD		bufsize;
     MIDIOPENDESC	midiDesc;
     WORD		wFlags;
     LPMIDIHDR	 	lpQueueHdr;
-    DWORD		dwTotalPlayed;
     unsigned char	incoming[3];
     unsigned char	incPrev;
     char		incLen;
@@ -81,11 +79,9 @@ typedef struct {
 
 typedef struct {
     BOOL                bEnabled;
-    DWORD		bufsize;
     MIDIOPENDESC	midiDesc;
     WORD		wFlags;
     LPMIDIHDR	 	lpQueueHdr;
-    DWORD		dwTotalPlayed;
     void*		lpExtra;	 	/* according to port type (MIDI, FM...), extra data when needed */
     MIDIOUTCAPSW        caps;
 } WINE_MIDIOUT;
@@ -749,8 +745,6 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
     MidiInDev[wDevID].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 
     MidiInDev[wDevID].lpQueueHdr = NULL;
-    MidiInDev[wDevID].dwTotalPlayed = 0;
-    MidiInDev[wDevID].bufsize = 0x3FFF;
     MidiInDev[wDevID].midiDesc = *lpDesc;
     MidiInDev[wDevID].state = 0;
     MidiInDev[wDevID].incLen = 0;
@@ -796,7 +790,6 @@ static DWORD midClose(WORD wDevID)
     }
     midiCloseSeq();
 
-    MidiInDev[wDevID].bufsize = 0;
     MIDI_NotifyClient(wDevID, MIM_CLOSE, 0L, 0L);
     MidiInDev[wDevID].midiDesc.hMidi = 0;
     return ret;
@@ -1130,8 +1123,6 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
     MidiOutDev[wDevID].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 
     MidiOutDev[wDevID].lpQueueHdr = NULL;
-    MidiOutDev[wDevID].dwTotalPlayed = 0;
-    MidiOutDev[wDevID].bufsize = 0x3FFF;
     MidiOutDev[wDevID].midiDesc = *lpDesc;
 
     MIDI_NotifyClient(wDevID, MOM_OPEN, 0L, 0L);
@@ -1175,7 +1166,6 @@ static DWORD modClose(WORD wDevID)
     HeapFree(GetProcessHeap(), 0, MidiOutDev[wDevID].lpExtra);
     MidiOutDev[wDevID].lpExtra = 0;
 
-    MidiOutDev[wDevID].bufsize = 0;
     MIDI_NotifyClient(wDevID, MOM_CLOSE, 0L, 0L);
     MidiOutDev[wDevID].midiDesc.hMidi = 0;
     return ret;
