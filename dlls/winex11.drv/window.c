@@ -39,6 +39,8 @@
 
 /* avoid conflict with field names in included win32 headers */
 #undef Status
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
@@ -161,12 +163,6 @@ static void remove_startup_notification(Display *display, Window window)
 }
 
 
-struct has_popup_result
-{
-    HWND hwnd;
-    BOOL found;
-};
-
 static BOOL is_managed( HWND hwnd )
 {
     struct x11drv_win_data *data = get_win_data( hwnd );
@@ -175,24 +171,39 @@ static BOOL is_managed( HWND hwnd )
     return ret;
 }
 
-static BOOL CALLBACK has_managed_popup( HWND hwnd, LPARAM lparam )
+static HWND *build_hwnd_list(void)
 {
-    struct has_popup_result *result = (struct has_popup_result *)lparam;
+    NTSTATUS status;
+    HWND *list;
+    UINT count = 128;
 
-    if (hwnd == result->hwnd) return FALSE;  /* popups are always above owner */
-    if (GetWindow( hwnd, GW_OWNER ) != result->hwnd) return TRUE;
-    result->found = is_managed( hwnd );
-    return !result->found;
+    for (;;)
+    {
+        if (!(list = malloc( count * sizeof(*list) ))) return NULL;
+        status = NtUserBuildHwndList( 0, 0, 0, 0, 0, count, list, &count );
+        if (!status) return list;
+        free( list );
+        if (status != STATUS_BUFFER_TOO_SMALL) return NULL;
+    }
 }
 
 static BOOL has_owned_popups( HWND hwnd )
 {
-    struct has_popup_result result;
+    HWND *list;
+    UINT i;
+    BOOL ret = FALSE;
 
-    result.hwnd = hwnd;
-    result.found = FALSE;
-    EnumWindows( has_managed_popup, (LPARAM)&result );
-    return result.found;
+    if (!(list = build_hwnd_list())) return FALSE;
+
+    for (i = 0; list[i] != HWND_BOTTOM; i++)
+    {
+        if (list[i] == hwnd) break;  /* popups are always above owner */
+        if (NtUserGetWindowRelative( list[i], GW_OWNER ) != hwnd) continue;
+        if ((ret = is_managed( list[i] ))) break;
+    }
+
+    free( list );
+    return ret;
 }
 
 
