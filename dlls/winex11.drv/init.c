@@ -37,7 +37,7 @@ static int palette_size;
 
 static Pixmap stock_bitmap_pixmap;  /* phys bitmap for the default stock bitmap */
 
-static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
+static pthread_once_t init_once = PTHREAD_ONCE_INIT;
 
 static const struct user_driver_funcs x11drv_funcs;
 static const struct gdi_dc_funcs *xrender_funcs;
@@ -59,7 +59,7 @@ void init_recursive_mutex( pthread_mutex_t *mutex )
  *
  * Perform initializations needed upon creation of the first device.
  */
-static BOOL WINAPI device_init( INIT_ONCE *once, void *param, void **context )
+static void device_init(void)
 {
     /* Initialize XRender */
     xrender_funcs = X11DRV_XRender_Init();
@@ -70,8 +70,6 @@ static BOOL WINAPI device_init( INIT_ONCE *once, void *param, void **context )
     palette_size = X11DRV_PALETTE_Init();
 
     stock_bitmap_pixmap = XCreatePixmap( gdi_display, root_window, 1, 1, 1 );
-
-    return TRUE;
 }
 
 
@@ -79,7 +77,7 @@ static X11DRV_PDEVICE *create_x11_physdev( Drawable drawable )
 {
     X11DRV_PDEVICE *physDev;
 
-    InitOnceExecuteOnce( &init_once, device_init, NULL, NULL );
+    pthread_once( &init_once, device_init );
 
     if (!(physDev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physDev) ))) return NULL;
 
