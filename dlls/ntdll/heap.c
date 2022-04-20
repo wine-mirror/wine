@@ -2273,3 +2273,33 @@ NTSTATUS WINAPI RtlSetHeapInformation( HANDLE heap, HEAP_INFORMATION_CLASS info_
     FIXME("%p %d %p %ld stub\n", heap, info_class, info, size);
     return STATUS_SUCCESS;
 }
+
+/***********************************************************************
+ *           RtlGetUserInfoHeap    (NTDLL.@)
+ */
+BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE heap, ULONG flags, void *ptr, void **user_value, ULONG *user_flags )
+{
+    FIXME( "heap %p, flags %#x, ptr %p, user_value %p, user_flags %p semi-stub!\n",
+           heap, flags, ptr, user_value, user_flags );
+    *user_value = NULL;
+    *user_flags = 0;
+    return TRUE;
+}
+
+/***********************************************************************
+ *           RtlSetUserValueHeap    (NTDLL.@)
+ */
+BOOLEAN WINAPI RtlSetUserValueHeap( HANDLE heap, ULONG flags, void *ptr, void *user_value )
+{
+    FIXME( "heap %p, flags %#x, ptr %p, user_value %p stub!\n", heap, flags, ptr, user_value );
+    return FALSE;
+}
+
+/***********************************************************************
+ *           RtlSetUserFlagsHeap    (NTDLL.@)
+ */
+BOOLEAN WINAPI RtlSetUserFlagsHeap( HANDLE heap, ULONG flags, void *ptr, ULONG clear, ULONG set )
+{
+    FIXME( "heap %p, flags %#x, ptr %p, clear %#x, set %#x stub!\n", heap, flags, ptr, clear, set );
+    return FALSE;
+}

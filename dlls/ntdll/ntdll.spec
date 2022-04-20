@@ -748,7 +748,7 @@
 @ stdcall RtlGetThreadPreferredUILanguages(long ptr ptr ptr)
 @ stdcall RtlGetUnloadEventTrace()
 @ stdcall RtlGetUnloadEventTraceEx(ptr ptr ptr)
-@ stub RtlGetUserInfoHeap
+@ stdcall RtlGetUserInfoHeap(ptr long ptr ptr ptr)
 @ stdcall RtlGetUserPreferredUILanguages(long long ptr ptr ptr)
 @ stdcall RtlGetVersion(ptr)
 @ stdcall -arch=arm,arm64,x86_64 RtlGrowFunctionTable(ptr long)
@@ -1001,8 +1001,8 @@
 # @ stub RtlSetTimer
 @ stdcall RtlSetUnhandledExceptionFilter(ptr)
 @ stub RtlSetUnicodeCallouts
-@ stub RtlSetUserFlagsHeap
-@ stub RtlSetUserValueHeap
+@ stdcall RtlSetUserFlagsHeap(ptr long ptr long long)
+@ stdcall RtlSetUserValueHeap(ptr long ptr ptr)
 @ stdcall RtlSizeHeap(long long ptr)
 @ stdcall RtlSleepConditionVariableCS(ptr ptr ptr)
 @ stdcall RtlSleepConditionVariableSRW(ptr ptr ptr long)
