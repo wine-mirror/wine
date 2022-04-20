@@ -466,6 +466,24 @@ static inline DWORD context_generate_rt_mask_from_resource(struct wined3d_resour
     return (1u << 31) | wined3d_texture_get_gl_buffer(texture_from_resource(resource));
 }
 
+/* Context activation is done by the caller. */
+static void wined3d_context_gl_set_draw_buffer(struct wined3d_context_gl *context_gl, GLenum buffer)
+{
+    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
+    struct fbo_entry *current_fbo = context_gl->current_fbo;
+    uint32_t new_mask = context_generate_rt_mask(buffer);
+    uint32_t *current_mask;
+
+    current_mask = current_fbo ? &current_fbo->rt_mask : &context_gl->draw_buffers_mask;
+    if (new_mask == *current_mask)
+        return;
+
+    gl_info->gl_ops.gl.p_glDrawBuffer(buffer);
+    checkGLcall("glDrawBuffer()");
+
+    *current_mask = new_mask;
+}
+
 static inline void wined3d_context_gl_set_fbo_key_for_render_target(const struct wined3d_context_gl *context_gl,
         struct wined3d_fbo_entry_key *key, unsigned int idx, const struct wined3d_rendertarget_info *render_target,
         DWORD location)
@@ -2500,24 +2518,6 @@ static void wined3d_context_gl_apply_draw_buffers(struct wined3d_context_gl *con
     }
 
     checkGLcall("apply draw buffers");
-}
-
-/* Context activation is done by the caller. */
-void wined3d_context_gl_set_draw_buffer(struct wined3d_context_gl *context_gl, GLenum buffer)
-{
-    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
-    struct fbo_entry *current_fbo = context_gl->current_fbo;
-    uint32_t new_mask = context_generate_rt_mask(buffer);
-    uint32_t *current_mask;
-
-    current_mask = current_fbo ? &current_fbo->rt_mask : &context_gl->draw_buffers_mask;
-    if (new_mask == *current_mask)
-        return;
-
-    gl_info->gl_ops.gl.p_glDrawBuffer(buffer);
-    checkGLcall("glDrawBuffer()");
-
-    *current_mask = new_mask;
 }
 
 /* Context activation is done by the caller. */
