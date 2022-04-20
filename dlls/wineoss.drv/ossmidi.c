@@ -345,3 +345,46 @@ wrapup:
 
     return STATUS_SUCCESS;
 }
+
+extern const unsigned char midiFMInstrumentPatches[16 * 128];
+extern const unsigned char midiFMDrumsPatches[16 * 128];
+
+NTSTATUS midi_out_fm_load(void *args)
+{
+    struct midi_out_fm_load_params *params = args;
+    WORD dev_id = params->dev_id;
+    int fd = params->fd;
+    struct sbi_instrument sbi;
+    int i;
+
+    sbi.device = dev_id;
+    sbi.key = FM_PATCH;
+
+    memset(sbi.operators + 16, 0, 16);
+    for (i = 0; i < 128; i++)
+    {
+        sbi.channel = i;
+        memcpy(sbi.operators, midiFMInstrumentPatches + i * 16, 16);
+
+        if (write(fd, &sbi, sizeof(sbi)) == -1)
+        {
+            WARN("Couldn't write patch for instrument %d, errno %d (%s)!\n", sbi.channel, errno, strerror(errno));
+            params->ret = -1;
+            return STATUS_SUCCESS;
+        }
+    }
+    for (i = 0; i < 128; i++)
+    {
+        sbi.channel = 128 + i;
+        memcpy(sbi.operators, midiFMDrumsPatches + i * 16, 16);
+
+        if (write(fd, &sbi, sizeof(sbi)) == -1)
+        {
+            WARN("Couldn't write patch for drum %d, errno %d (%s)!\n", sbi.channel, errno, strerror(errno));
+            params->ret = -1;
+            return STATUS_SUCCESS;
+        }
+    }
+    params->ret = 0;
+    return STATUS_SUCCESS;
+}

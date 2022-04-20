@@ -723,40 +723,18 @@ typedef struct sFMextra {
      */
 } sFMextra;
 
-extern const unsigned char midiFMInstrumentPatches[16 * 128];
-extern const unsigned char midiFMDrumsPatches     [16 * 128];
-
 /**************************************************************************
  * 			modFMLoad				[internal]
  */
-static int modFMLoad(int dev, int fd)
+static int modFMLoad(WORD dev, int fd)
 {
-    int				i;
-    struct sbi_instrument	sbi;
+    struct midi_out_fm_load_params params;
 
-    sbi.device = dev;
-    sbi.key = FM_PATCH;
+    params.dev_id = dev;
+    params.fd = fd;
+    OSS_CALL(midi_out_fm_load, &params);
 
-    memset(sbi.operators + 16, 0, 16);
-    for (i = 0; i < 128; i++) {
-	sbi.channel = i;
-	memcpy(sbi.operators, midiFMInstrumentPatches + i * 16, 16);
-
-        if (write(fd, &sbi, sizeof(sbi)) == -1) {
-	    WARN("Couldn't write patch for instrument %d, errno %d (%s)!\n", sbi.channel, errno, strerror(errno));
-	    return -1;
-	}
-    }
-    for (i = 0; i < 128; i++) {
-	sbi.channel = 128 + i;
-	memcpy(sbi.operators, midiFMDrumsPatches + i * 16, 16);
-
-        if (write(fd, &sbi, sizeof(sbi)) == -1) {
-	    WARN("Couldn't write patch for drum %d, errno %d (%s)!\n", sbi.channel, errno, strerror(errno));
-	    return -1;
-	}
-    }
-    return 0;
+    return params.ret;
 }
 
 /**************************************************************************

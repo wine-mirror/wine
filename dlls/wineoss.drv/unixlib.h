@@ -252,6 +252,13 @@ struct midi_seq_open_params
     int fd;
 };
 
+struct midi_out_fm_load_params
+{
+    WORD dev_id;
+    int fd;
+    int ret;
+};
+
 enum oss_funcs
 {
     oss_test_connect,
@@ -280,10 +287,12 @@ enum oss_funcs
     oss_midi_init,
 
     oss_midi_seq_open, /* temporary */
+    oss_midi_out_fm_load,
 };
 
 NTSTATUS midi_init(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_seq_open(void *args) DECLSPEC_HIDDEN;
+NTSTATUS midi_out_fm_load(void *args) DECLSPEC_HIDDEN;
 
 extern unixlib_handle_t oss_handle;
 
