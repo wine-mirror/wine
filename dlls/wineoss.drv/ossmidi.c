@@ -424,11 +424,8 @@ void seqbuf_dump(void)
 extern const unsigned char midiFMInstrumentPatches[16 * 128];
 extern const unsigned char midiFMDrumsPatches[16 * 128];
 
-NTSTATUS midi_out_fm_load(void *args)
+static int midi_out_fm_load(WORD dev_id, int fd)
 {
-    struct midi_out_fm_load_params *params = args;
-    WORD dev_id = params->dev_id;
-    int fd = params->fd;
     struct sbi_instrument sbi;
     int i;
 
@@ -444,8 +441,7 @@ NTSTATUS midi_out_fm_load(void *args)
         if (write(fd, &sbi, sizeof(sbi)) == -1)
         {
             WARN("Couldn't write patch for instrument %d, errno %d (%s)!\n", sbi.channel, errno, strerror(errno));
-            params->ret = -1;
-            return STATUS_SUCCESS;
+            return -1;
         }
     }
     for (i = 0; i < 128; i++)
@@ -456,12 +452,10 @@ NTSTATUS midi_out_fm_load(void *args)
         if (write(fd, &sbi, sizeof(sbi)) == -1)
         {
             WARN("Couldn't write patch for drum %d, errno %d (%s)!\n", sbi.channel, errno, strerror(errno));
-            params->ret = -1;
-            return STATUS_SUCCESS;
+            return -1;
         }
     }
-    params->ret = 0;
-    return STATUS_SUCCESS;
+    return 0;
 }
 
 NTSTATUS midi_out_fm_reset(void *args)
@@ -498,6 +492,183 @@ NTSTATUS midi_out_fm_reset(void *args)
     extra->counter = 0;
     extra->drumSetMask = 1 << 9; /* channel 10 is normally drums, sometimes 16 also */
     SEQ_DUMPBUF();
+
+    return STATUS_SUCCESS;
+}
+
+static void set_out_notify(struct notify_context *notify, struct midi_dest *dest, WORD dev_id, WORD msg,
+                           UINT_PTR param_1, UINT_PTR param_2)
+{
+    notify->send_notify = TRUE;
+    notify->dev_id = dev_id;
+    notify->msg = msg;
+    notify->param_1 = param_1;
+    notify->param_2 = param_2;
+    notify->callback = dest->midiDesc.dwCallback;
+    notify->flags = dest->wFlags;
+    notify->device = dest->midiDesc.hMidi;
+    notify->instance = dest->midiDesc.dwInstance;
+}
+
+static UINT midi_out_open(WORD dev_id, MIDIOPENDESC *midi_desc, UINT flags, struct notify_context *notify)
+{
+    struct midi_dest *dest;
+    int fd = -1;
+
+    TRACE("(%04X, %p, %08X);\n", dev_id, midi_desc, flags);
+    if (midi_desc == NULL)
+    {
+        WARN("Invalid Parameter !\n");
+        return MMSYSERR_INVALPARAM;
+    }
+    if (dev_id >= num_dests)
+    {
+        TRACE("MAX_MIDIOUTDRV reached !\n");
+        return MMSYSERR_BADDEVICEID;
+    }
+    dest = dests + dev_id;
+    if (dest->midiDesc.hMidi != 0)
+    {
+        WARN("device already open !\n");
+        return MMSYSERR_ALLOCATED;
+    }
+    if (!dest->bEnabled)
+    {
+        WARN("device disabled !\n");
+        return MIDIERR_NODEVICE;
+    }
+    if ((flags & ~CALLBACK_TYPEMASK) != 0)
+    {
+        WARN("bad flags\n");
+        return MMSYSERR_INVALFLAG;
+    }
+
+    dest->lpExtra = NULL;
+
+    switch (dest->caps.wTechnology)
+    {
+    case MOD_FMSYNTH:
+    {
+        void *extra;
+
+        extra = malloc(offsetof(struct sFMextra, voice[dest->caps.wVoices]));
+        if (!extra)
+        {
+            WARN("can't alloc extra data !\n");
+            return MMSYSERR_NOMEM;
+        }
+        dest->lpExtra = extra;
+        fd = seq_open();
+        if (fd < 0)
+        {
+            dest->lpExtra = NULL;
+            free(extra);
+            return MMSYSERR_ERROR;
+        }
+        if (midi_out_fm_load(dev_id, fd) < 0)
+        {
+            seq_close(fd);
+            dest->lpExtra = NULL;
+            free(extra);
+            return MMSYSERR_ERROR;
+        }
+        midi_out_fm_reset((void *)(UINT_PTR)dev_id);
+        break;
+    }
+    case MOD_MIDIPORT:
+    case MOD_SYNTH:
+        fd = seq_open();
+        if (fd < 0)
+            return MMSYSERR_ALLOCATED;
+        break;
+    default:
+        WARN("Technology not supported (yet) %d !\n", dest->caps.wTechnology);
+        return MMSYSERR_NOTENABLED;
+    }
+
+    dest->wFlags = HIWORD(flags & CALLBACK_TYPEMASK);
+
+    dest->lpQueueHdr= NULL;
+    dest->midiDesc = *midi_desc;
+    dest->fd = fd;
+
+    set_out_notify(notify, dest, dev_id, MOM_OPEN, 0, 0);
+    TRACE("Successful !\n");
+    return MMSYSERR_NOERROR;
+}
+
+static UINT midi_out_close(WORD dev_id, struct notify_context *notify)
+{
+    struct midi_dest *dest;
+
+    TRACE("(%04X);\n", dev_id);
+
+    if (dev_id >= num_dests)
+    {
+        TRACE("MAX_MIDIOUTDRV reached !\n");
+        return MMSYSERR_BADDEVICEID;
+    }
+    dest = dests + dev_id;
+
+    if (dest->midiDesc.hMidi == 0)
+    {
+        WARN("device not opened !\n");
+        return MMSYSERR_ERROR;
+    }
+    /* FIXME: should test that no pending buffer is still in the queue for
+     * playing */
+
+    if (dest->fd == -1)
+    {
+        WARN("can't close !\n");
+        return MMSYSERR_ERROR;
+    }
+
+    switch (dest->caps.wTechnology)
+    {
+    case MOD_FMSYNTH:
+    case MOD_SYNTH:
+    case MOD_MIDIPORT:
+        seq_close(dest->fd);
+        break;
+    default:
+        WARN("Technology not supported (yet) %d !\n", dest->caps.wTechnology);
+        return MMSYSERR_NOTENABLED;
+    }
+
+    free(dest->lpExtra);
+    dest->lpExtra = NULL;
+    dest->fd = -1;
+
+    set_out_notify(notify, dest, dev_id, MOM_CLOSE, 0, 0);
+    dest->midiDesc.hMidi = 0;
+    return MMSYSERR_NOERROR;
+}
+
+
+NTSTATUS midi_out_message(void *args)
+{
+    struct midi_out_message_params *params = args;
+
+    params->notify->send_notify = FALSE;
+
+    switch (params->msg)
+    {
+    case DRVM_ENABLE:
+    case DRVM_DISABLE:
+        /* FIXME: Pretend this is supported */
+        *params->err = MMSYSERR_NOERROR;
+        break;
+    case MODM_OPEN:
+        *params->err = midi_out_open(params->dev_id, (MIDIOPENDESC *)params->param_1, params->param_2, params->notify);
+        break;
+    case MODM_CLOSE:
+        *params->err = midi_out_close(params->dev_id, params->notify);
+        break;
+    default:
+        TRACE("Unsupported message\n");
+        *params->err = MMSYSERR_NOTSUPPORTED;
+    }
 
     return STATUS_SUCCESS;
 }

@@ -149,6 +149,15 @@ static LRESULT OSS_MidiExit(void)
     return 0;
 }
 
+static void notify_client(struct notify_context *notify)
+{
+    TRACE("dev_id = %d msg = %d param1 = %04lX param2 = %04lX\n",
+          notify->dev_id, notify->msg, notify->param_1, notify->param_2);
+
+    DriverCallback(notify->callback, notify->flags, notify->device, notify->msg,
+                   notify->instance, notify->param_1, notify->param_2);
+}
+
 /**************************************************************************
  * 			MIDI_NotifyClient			[internal]
  */
@@ -164,8 +173,6 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg,
 	  wDevID, wMsg, dwParam1, dwParam2);
 
     switch (wMsg) {
-    case MOM_OPEN:
-    case MOM_CLOSE:
     case MOM_DONE:
     case MOM_POSITIONCB:
 	if (wDevID > MODM_NumDevs) return;
@@ -723,20 +730,6 @@ typedef struct sFMextra {
      */
 } sFMextra;
 
-/**************************************************************************
- * 			modFMLoad				[internal]
- */
-static int modFMLoad(WORD dev, int fd)
-{
-    struct midi_out_fm_load_params params;
-
-    params.dev_id = dev;
-    params.fd = fd;
-    OSS_CALL(midi_out_fm_load, &params);
-
-    return params.ret;
-}
-
 #define		IS_DRUM_CHANNEL(_xtra, _chn)	((_xtra)->drumSetMask & (1 << (_chn)))
 
 /**************************************************************************
@@ -752,132 +745,6 @@ static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPSW lpCaps, DWORD dwSize)
     memcpy(lpCaps, &MidiOutDev[wDevID].caps, min(dwSize, sizeof(*lpCaps)));
 
     return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
- * 			modOpen					[internal]
- */
-static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
-{
-    int fd = -1;
-
-    TRACE("(%04X, %p, %08X);\n", wDevID, lpDesc, dwFlags);
-    if (lpDesc == NULL) {
-	WARN("Invalid Parameter !\n");
-	return MMSYSERR_INVALPARAM;
-    }
-    if (wDevID >= MODM_NumDevs) {
-	TRACE("MAX_MIDIOUTDRV reached !\n");
-	return MMSYSERR_BADDEVICEID;
-    }
-    if (MidiOutDev[wDevID].midiDesc.hMidi != 0) {
-	WARN("device already open !\n");
-	return MMSYSERR_ALLOCATED;
-    }
-    if (!MidiOutDev[wDevID].bEnabled) {
-	WARN("device disabled !\n");
-	return MIDIERR_NODEVICE;
-    }
-    if ((dwFlags & ~CALLBACK_TYPEMASK) != 0) {
-	WARN("bad dwFlags\n");
-	return MMSYSERR_INVALFLAG;
-    }
-
-    MidiOutDev[wDevID].lpExtra = 0;
-
-    switch (MidiOutDev[wDevID].caps.wTechnology) {
-    case MOD_FMSYNTH:
-	{
-	    void*	extra;
-
-            extra = HeapAlloc(GetProcessHeap(), 0,
-                              offsetof(struct sFMextra, voice[MidiOutDev[wDevID].caps.wVoices]));
-
-	    if (extra == 0) {
-		WARN("can't alloc extra data !\n");
-		return MMSYSERR_NOMEM;
-	    }
-	    MidiOutDev[wDevID].lpExtra = extra;
-	    fd = midiOpenSeq();
-	    if (fd < 0) {
-		MidiOutDev[wDevID].lpExtra = 0;
-		HeapFree(GetProcessHeap(), 0, extra);
-		return MMSYSERR_ERROR;
-	    }
-	    if (modFMLoad(wDevID, fd) < 0) {
-		midiCloseSeq(fd);
-		MidiOutDev[wDevID].lpExtra = 0;
-		HeapFree(GetProcessHeap(), 0, extra);
-		return MMSYSERR_ERROR;
-	    }
-	    OSS_CALL(midi_out_fm_reset, (void *)(UINT_PTR)wDevID);
-	}
-	break;
-    case MOD_MIDIPORT:
-    case MOD_SYNTH:
-	fd = midiOpenSeq();
-	if (fd < 0) {
-	    return MMSYSERR_ALLOCATED;
-	}
-	break;
-    default:
-	WARN("Technology not supported (yet) %d !\n",
-	     MidiOutDev[wDevID].caps.wTechnology);
-	return MMSYSERR_NOTENABLED;
-    }
-
-    MidiOutDev[wDevID].wFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
-
-    MidiOutDev[wDevID].lpQueueHdr = NULL;
-    MidiOutDev[wDevID].midiDesc = *lpDesc;
-    MidiOutDev[wDevID].fd = fd;
-
-    MIDI_NotifyClient(wDevID, MOM_OPEN, 0L, 0L);
-    TRACE("Successful !\n");
-    return MMSYSERR_NOERROR;
-}
-
-
-/**************************************************************************
- * 			modClose				[internal]
- */
-static DWORD modClose(WORD wDevID)
-{
-    int	ret = MMSYSERR_NOERROR;
-
-    TRACE("(%04X);\n", wDevID);
-
-    if (MidiOutDev[wDevID].midiDesc.hMidi == 0) {
-	WARN("device not opened !\n");
-	return MMSYSERR_ERROR;
-    }
-    /* FIXME: should test that no pending buffer is still in the queue for
-     * playing */
-
-    if (MidiOutDev[wDevID].fd == -1) {
-	WARN("can't close !\n");
-	return MMSYSERR_ERROR;
-    }
-
-    switch (MidiOutDev[wDevID].caps.wTechnology) {
-    case MOD_FMSYNTH:
-    case MOD_SYNTH:
-    case MOD_MIDIPORT:
-	midiCloseSeq(MidiOutDev[wDevID].fd);
-	break;
-    default:
-	WARN("Technology not supported (yet) %d !\n",
-	     MidiOutDev[wDevID].caps.wTechnology);
-	return MMSYSERR_NOTENABLED;
-    }
-
-    HeapFree(GetProcessHeap(), 0, MidiOutDev[wDevID].lpExtra);
-    MidiOutDev[wDevID].lpExtra = 0;
-    MidiOutDev[wDevID].fd = -1;
-
-    MIDI_NotifyClient(wDevID, MOM_CLOSE, 0L, 0L);
-    MidiOutDev[wDevID].midiDesc.hMidi = 0;
-    return ret;
 }
 
 /**************************************************************************
@@ -1378,6 +1245,10 @@ DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 			    DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
+    struct midi_out_message_params params;
+    struct notify_context notify;
+    UINT err;
+
     TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
@@ -1386,14 +1257,6 @@ DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
         return OSS_MidiInit();
     case DRVM_EXIT:
         return OSS_MidiExit();
-    case DRVM_ENABLE:
-    case DRVM_DISABLE:
-	/* FIXME: Pretend this is supported */
-	return 0;
-    case MODM_OPEN:
-	return modOpen(wDevID, (LPMIDIOPENDESC)dwParam1, dwParam2);
-    case MODM_CLOSE:
-	return modClose(wDevID);
     case MODM_DATA:
 	return modData(wDevID, dwParam1);
     case MODM_LONGDATA:
@@ -1412,10 +1275,21 @@ DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 	return 0;
     case MODM_RESET:
 	return modReset(wDevID);
-    default:
-	TRACE("Unsupported message\n");
     }
-    return MMSYSERR_NOTSUPPORTED;
+
+    params.dev_id = wDevID;
+    params.msg = wMsg;
+    params.user = dwUser;
+    params.param_1 = dwParam1;
+    params.param_2 = dwParam2;
+    params.err = &err;
+    params.notify = &notify;
+
+    OSS_CALL(midi_out_message, &params);
+
+    if (!err && notify.send_notify) notify_client(&notify);
+
+    return err;
 }
 
 /**************************************************************************

@@ -246,6 +246,30 @@ struct midi_init_params
     struct midi_src *srcs;
 };
 
+struct notify_context
+{
+    BOOL send_notify;
+    WORD dev_id;
+    WORD msg;
+    UINT_PTR param_1;
+    UINT_PTR param_2;
+    UINT_PTR callback;
+    UINT flags;
+    HANDLE device;
+    UINT_PTR instance;
+};
+
+struct midi_out_message_params
+{
+    UINT dev_id;
+    UINT msg;
+    UINT_PTR user;
+    UINT_PTR param_1;
+    UINT_PTR param_2;
+    UINT *err;
+    struct notify_context *notify;
+};
+
 struct midi_seq_open_params
 {
     int close;
@@ -285,15 +309,15 @@ enum oss_funcs
     oss_set_event_handle,
     oss_is_started,
     oss_midi_init,
+    oss_midi_out_message,
 
     oss_midi_seq_open, /* temporary */
-    oss_midi_out_fm_load,
     oss_midi_out_fm_reset,
 };
 
 NTSTATUS midi_init(void *args) DECLSPEC_HIDDEN;
+NTSTATUS midi_out_message(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_seq_open(void *args) DECLSPEC_HIDDEN;
-NTSTATUS midi_out_fm_load(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_out_fm_reset(void *args) DECLSPEC_HIDDEN;
 
 extern unixlib_handle_t oss_handle;
