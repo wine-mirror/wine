@@ -33,12 +33,17 @@ import "windows.devices.power.idl";
 #endif
 
 namespace Windows.Gaming.Input {
+    typedef enum ArcadeStickButtons ArcadeStickButtons;
     typedef enum GamepadButtons GamepadButtons;
     typedef enum GameControllerButtonLabel GameControllerButtonLabel;
     typedef enum GameControllerSwitchKind GameControllerSwitchKind;
     typedef enum GameControllerSwitchPosition GameControllerSwitchPosition;
+    typedef struct ArcadeStickReading ArcadeStickReading;
     typedef struct GamepadReading GamepadReading;
     typedef struct GamepadVibration GamepadVibration;
+    interface IArcadeStick;
+    interface IArcadeStickStatics;
+    interface IArcadeStickStatics2;
     interface IGameController;
     interface IGameControllerBatteryInfo;
     interface IGamepad;
@@ -47,15 +52,20 @@ namespace Windows.Gaming.Input {
     interface IGamepadStatics2;
     interface IRawGameController;
     interface IRawGameController2;
+    runtimeclass ArcadeStick;
     runtimeclass Gamepad;
     runtimeclass Headset;
     runtimeclass RawGameController;
 
     declare {
+        interface Windows.Foundation.EventHandler<Windows.Gaming.Input.ArcadeStick *>;
         interface Windows.Foundation.EventHandler<Windows.Gaming.Input.Gamepad *>;
         interface Windows.Foundation.EventHandler<Windows.Gaming.Input.RawGameController *>;
         interface Windows.Foundation.TypedEventHandler<Windows.Gaming.Input.IGameController *, Windows.Gaming.Input.Headset *>;
         interface Windows.Foundation.TypedEventHandler<Windows.Gaming.Input.IGameController *, Windows.System.UserChangedEventArgs *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Gaming.Input.ArcadeStick *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Gaming.Input.ArcadeStick *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Gaming.Input.ArcadeStick *>;
         interface Windows.Foundation.Collections.IIterator<Windows.Gaming.Input.Gamepad *>;
         interface Windows.Foundation.Collections.IIterable<Windows.Gaming.Input.Gamepad *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Gaming.Input.Gamepad *>;
@@ -65,6 +75,27 @@ namespace Windows.Gaming.Input {
         interface Windows.Foundation.Collections.IVectorView<Windows.Gaming.Input.RawGameController *>;
         interface Windows.Foundation.Collections.IVector<Windows.Gaming.Input.RawGameController *>;
     }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        flags
+    ]
+    enum ArcadeStickButtons
+    {
+        None = 0x0,
+        StickUp = 0x1,
+        StickDown = 0x2,
+        StickLeft = 0x4,
+        StickRight = 0x8,
+        Action1 = 0x10,
+        Action2 = 0x20,
+        Action3 = 0x40,
+        Action4 = 0x80,
+        Action5 = 0x100,
+        Action6 = 0x200,
+        Special1 = 0x400,
+        Special2 = 0x800
+    };
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -193,6 +224,13 @@ namespace Windows.Gaming.Input {
         UpLeft    = 8
     };
 
+    [contract(Windows.Foundation.UniversalApiContract, 3.0)]
+    struct ArcadeStickReading
+    {
+        UINT64 Timestamp;
+        Windows.Gaming.Input.ArcadeStickButtons Buttons;
+    };
+
     [contract(Windows.Foundation.UniversalApiContract, 1.0)]
     struct GamepadReading
     {
@@ -214,6 +252,47 @@ namespace Windows.Gaming.Input {
         DOUBLE LeftTrigger;
         DOUBLE RightTrigger;
     };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        exclusiveto(Windows.Gaming.Input.ArcadeStick),
+        uuid(b14a539d-befb-4c81-8051-15ecf3b13036)
+    ]
+    interface IArcadeStick : IInspectable
+        requires Windows.Gaming.Input.IGameController
+    {
+        HRESULT GetButtonLabel([in] Windows.Gaming.Input.ArcadeStickButtons button,
+                               [out, retval] Windows.Gaming.Input.GameControllerButtonLabel *value);
+        HRESULT GetCurrentReading([out, retval] Windows.Gaming.Input.ArcadeStickReading *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        exclusiveto(Windows.Gaming.Input.ArcadeStick),
+        uuid(5c37b8c8-37b1-4ad8-9458-200f1a30018e)
+    ]
+    interface IArcadeStickStatics : IInspectable
+    {
+        [eventadd] HRESULT ArcadeStickAdded([in] Windows.Foundation.EventHandler<Windows.Gaming.Input.ArcadeStick *> *value,
+                                            [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT ArcadeStickAdded([in] EventRegistrationToken token);
+        [eventadd] HRESULT ArcadeStickRemoved([in] Windows.Foundation.EventHandler<Windows.Gaming.Input.ArcadeStick *> *value,
+                                              [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT ArcadeStickRemoved([in] EventRegistrationToken token);
+        [propget] HRESULT ArcadeSticks([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Gaming.Input.ArcadeStick *> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.Gaming.Input.ArcadeStick),
+        uuid(52b5d744-bb86-445a-b59c-596f0e2a49df)
+    ]
+    interface IArcadeStickStatics2 : IInspectable
+        requires Windows.Gaming.Input.IArcadeStickStatics
+    {
+        HRESULT FromGameController([in] Windows.Gaming.Input.IGameController *controller,
+                                   [out, retval] Windows.Gaming.Input.ArcadeStick **value);
+    }
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),
@@ -343,6 +422,20 @@ namespace Windows.Gaming.Input {
     interface IGameControllerBatteryInfo : IInspectable
     {
         HRESULT TryGetBatteryReport([out, retval] Windows.Devices.Power.BatteryReport **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        marshaling_behavior(agile),
+        static(Windows.Gaming.Input.IArcadeStickStatics, Windows.Foundation.UniversalApiContract, 3.0),
+        static(Windows.Gaming.Input.IArcadeStickStatics2, Windows.Foundation.UniversalApiContract, 4.0),
+        threading(both)
+    ]
+    runtimeclass ArcadeStick
+    {
+        [default] interface Windows.Gaming.Input.IArcadeStick;
+        interface Windows.Gaming.Input.IGameController;
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Gaming.Input.IGameControllerBatteryInfo;
     }
 
     [
