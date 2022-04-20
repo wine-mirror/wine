@@ -110,8 +110,8 @@ static pthread_mutex_t win_data_mutex = PTHREAD_MUTEX_INITIALIZER;
 static void remove_startup_notification(Display *display, Window window)
 {
     static LONG startup_notification_removed = 0;
-    char id[1024];
     char message[1024];
+    const char *id;
     int i;
     int pos;
     XEvent xevent;
@@ -121,9 +121,7 @@ static void remove_startup_notification(Display *display, Window window)
     if (InterlockedCompareExchange(&startup_notification_removed, 1, 0) != 0)
         return;
 
-    if (GetEnvironmentVariableA("DESKTOP_STARTUP_ID", id, sizeof(id)) == 0)
-        return;
-    SetEnvironmentVariableA("DESKTOP_STARTUP_ID", NULL);
+    if (!(id = getenv( "DESKTOP_STARTUP_ID" )) || !id[0]) return;
 
     if ((src = strstr( id, "_TIME" ))) update_user_time( atol( src + 5 ));
 
@@ -137,6 +135,7 @@ static void remove_startup_notification(Display *display, Window window)
     }
     message[pos++] = '"';
     message[pos++] = '\0';
+    unsetenv( "DESKTOP_STARTUP_ID" );
 
     xevent.xclient.type = ClientMessage;
     xevent.xclient.message_type = x11drv_atom(_NET_STARTUP_INFO_BEGIN);
