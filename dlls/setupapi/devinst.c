@@ -2281,8 +2281,8 @@ static void SETUPDI_AddDeviceInterfaces(struct device *device, HKEY key,
                                 (BYTE *)symbolicLink, &len);
                         if (!l && dataType == REG_SZ)
                             SETUPDI_SetInterfaceSymbolicLink(iface, symbolicLink);
-                        RegCloseKey(subKey);
                     }
+                    RegCloseKey(subKey);
                 }
             }
             /* Allow enumeration to continue */
