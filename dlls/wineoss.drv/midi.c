@@ -75,7 +75,6 @@ static	int		MODM_NumFMSynthDevs = 0;
 /* this is the total number of MIDI out devices found */
 static	int 		MIDM_NumDevs = 0;
 
-static	int		numOpenMidiSeq = 0;
 static	int		numStartedMidiIn = 0;
 
 static CRITICAL_SECTION crit_sect;   /* protects all MidiIn buffers queues */
@@ -199,49 +198,18 @@ static void MIDI_NotifyClient(UINT wDevID, WORD wMsg,
     DriverCallback(dwCallBack, uFlags, hDev, wMsg, dwInstance, dwParam1, dwParam2);
 }
 
-static int midi_warn = 1;
 /**************************************************************************
  * 			midiOpenSeq				[internal]
  */
 static int midiOpenSeq(void)
 {
-    static int midiSeqFD = -1;
+    struct midi_seq_open_params params;
 
-    if (numOpenMidiSeq == 0) {
-	const char* device;
-	device=getenv("MIDIDEV");
-	if (!device) device="/dev/sequencer";
-	midiSeqFD = open(device, O_RDWR, 0);
-	if (midiSeqFD == -1) {
-	    if (midi_warn)
-	    {
-		WARN("Can't open MIDI device '%s' ! (%s). If your "
-                        "program needs this (probably not): %s\n",
-			device, strerror(errno),
-			errno == ENOENT ?
-			"create it ! (\"man MAKEDEV\" ?)" :
-			errno == ENODEV ?
-			"load MIDI sequencer kernel driver !" :
-			errno == EACCES ?
-			"grant access ! (\"man chmod\")" : ""
-		);
-	    }
-	    midi_warn = 0;
-	    return -1;
-	}
-#if 0
-	if (fcntl(midiSeqFD, F_SETFL, O_NONBLOCK) < 0) {
-	    WARN("can't set sequencer fd to non-blocking, errno %d (%s)\n", errno, strerror(errno));
-	    close(midiSeqFD);
-	    midiSeqFD = -1;
-	    return -1;
-	}
-#endif
-	fcntl(midiSeqFD, F_SETFD, 1); /* set close on exec flag */
-	ioctl(midiSeqFD, SNDCTL_SEQ_RESET);
-    }
-    numOpenMidiSeq++;
-    return midiSeqFD;
+    params.close = 0;
+    params.fd = -1;
+    OSS_CALL(midi_seq_open, &params);
+
+    return params.fd;
 }
 
 /**************************************************************************
@@ -249,8 +217,11 @@ static int midiOpenSeq(void)
  */
 static int midiCloseSeq(int fd)
 {
-    if (--numOpenMidiSeq == 0)
-	close(fd);
+    struct midi_seq_open_params params;
+
+    params.close = 1;
+    params.fd = fd;
+    OSS_CALL(midi_seq_open, &params);
 
     return 0;
 }

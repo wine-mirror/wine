@@ -119,6 +119,18 @@ static int seq_close(int fd)
     return 0;
 }
 
+NTSTATUS midi_seq_open(void *args)
+{
+    struct midi_seq_open_params *params = args;
+
+    if (!params->close)
+        params->fd = seq_open();
+    else
+        seq_close(params->fd);
+
+    return STATUS_SUCCESS;
+}
+
 NTSTATUS midi_init(void *args)
 {
     struct midi_init_params *params = args;
