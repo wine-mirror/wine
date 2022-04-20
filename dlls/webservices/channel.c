@@ -2415,6 +2415,11 @@ HRESULT WINAPI WsReceiveMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_M
         LeaveCriticalSection( &channel->cs );
         return E_INVALIDARG;
     }
+    if (channel->state != WS_CHANNEL_STATE_OPEN)
+    {
+        LeaveCriticalSection( &channel->cs );
+        return WS_E_INVALID_OPERATION;
+    }
 
     if (!ctx) async_init( &async, &ctx_local );
     hr = queue_receive_message( channel, msg, desc, count, option, read_option, heap, value, size, index,

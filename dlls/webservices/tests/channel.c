@@ -626,6 +626,7 @@ static void server_duplex_session( WS_CHANNEL *channel )
 static void client_duplex_session( const struct listener_info *info )
 {
     WS_XML_STRING action = {6, (BYTE *)"action"}, localname = {9, (BYTE *)"localname"}, ns = {2, (BYTE *)"ns"};
+    const WS_MESSAGE_DESCRIPTION *descs[1];
     WS_ELEMENT_DESCRIPTION desc_body;
     WS_MESSAGE_DESCRIPTION desc;
     WS_ENDPOINT_ADDRESS addr;
@@ -645,6 +646,26 @@ static void client_duplex_session( const struct listener_info *info )
     hr = WsShutdownSessionChannel( channel, NULL, NULL );
     ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
 
+    desc_body.elementLocalName = &localname;
+    desc_body.elementNs        = &ns;
+    desc_body.type             = WS_INT32_TYPE;
+    desc_body.typeDescription  = NULL;
+    desc.action                 = &action;
+    desc.bodyElementDescription = &desc_body;
+    descs[0] = &desc;
+
+    hr = WsCreateMessageForChannel( channel, NULL, 0, &msg, NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+
+    hr = WsReceiveMessage( channel, msg, descs, 1, WS_RECEIVE_REQUIRED_MESSAGE, WS_READ_REQUIRED_VALUE,
+                           NULL, &val, sizeof(val), NULL, NULL, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr);
+
+    hr = WsSendMessage( channel, msg, &desc, WS_WRITE_REQUIRED_VALUE, &val, sizeof(val), NULL, NULL );
+    ok( hr == WS_E_INVALID_OPERATION, "got %#lx\n", hr );
+
+    WsFreeMessage( msg );
+
     memset( &addr, 0, sizeof(addr) );
     addr.url.length = wsprintfW( buf, L"net.tcp://localhost:%u", info->port );
     addr.url.chars  = buf;
@@ -653,13 +674,6 @@ static void client_duplex_session( const struct listener_info *info )
 
     hr = WsCreateMessageForChannel( channel, NULL, 0, &msg, NULL );
     ok( hr == S_OK, "got %#lx\n", hr );
-
-    desc_body.elementLocalName = &localname;
-    desc_body.elementNs        = &ns;
-    desc_body.type             = WS_INT32_TYPE;
-    desc_body.typeDescription  = NULL;
-    desc.action                 = &action;
-    desc.bodyElementDescription = &desc_body;
 
     hr = WsSendMessage( channel, msg, &desc, WS_WRITE_REQUIRED_VALUE, &val, sizeof(val), NULL, NULL );
     ok( hr == S_OK, "got %#lx\n", hr );
