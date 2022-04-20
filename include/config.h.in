@@ -257,6 +257,9 @@
 /* Define to 1 if you have the <netdb.h> header file. */
 #undef HAVE_NETDB_H
 
+/* Define to 1 if you have the <netinet/icmp6.h> header file. */
+#undef HAVE_NETINET_ICMP6_H
+
 /* Define to 1 if you have the <netinet/icmp_var.h> header file. */
 #undef HAVE_NETINET_ICMP_VAR_H
 
@@ -442,6 +445,9 @@
 
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
+
+/* Define to 1 if `icp6s_error' is a member of `struct icmp6stat'. */
+#undef HAVE_STRUCT_ICMP6STAT_ICP6S_ERROR
 
 /* Define to 1 if `icps_error' is a member of `struct icmpstat'. */
 #undef HAVE_STRUCT_ICMPSTAT_ICPS_ERROR

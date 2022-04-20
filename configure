@@ -8880,6 +8880,38 @@ then :
   printf "%s\n" "#define HAVE_NETINET_ICMP_VAR_H 1" >>confdefs.h
 
 fi
+ac_fn_c_check_header_compile "$LINENO" "netinet/icmp6.h" "ac_cv_header_netinet_icmp6_h" "#include <sys/types.h>
+     #include <sys/socket.h>
+     #ifdef HAVE_SYS_SOCKETVAR_H
+     # include <sys/socketvar.h>
+     #endif
+     #ifdef HAVE_NETINET_IN_H
+     # include <netinet/in.h>
+     #endif
+     #ifdef HAVE_NETINET_IN_SYSTM_H
+     # include <netinet/in_systm.h>
+     #endif
+     #ifdef HAVE_NETINET_IP_H
+     # include <netinet/ip.h>
+     #endif
+     #ifdef HAVE_NETINET_IP_VAR_H
+     # include <netinet/ip_var.h>
+     #endif
+     #ifdef HAVE_NETINET_IP_ICMP_H
+     # include <netinet/ip_icmp.h>
+     #endif
+     #ifdef HAVE_NETINET_UDP_H
+     # include <netinet/udp.h>
+     #endif
+     #ifdef HAVE_NETINET_TCP_H
+     # include <netinet/tcp.h>
+     #endif
+"
+if test "x$ac_cv_header_netinet_icmp6_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_NETINET_ICMP6_H 1" >>confdefs.h
+
+fi
 ac_fn_c_check_header_compile "$LINENO" "netinet/tcp_var.h" "ac_cv_header_netinet_tcp_var_h" "#include <sys/types.h>
      #include <sys/socket.h>
      #ifdef HAVE_SYS_SOCKETVAR_H
@@ -20640,6 +20672,26 @@ if test "x$ac_cv_member_struct_icmpstat_icps_error" = xyes
 then :
 
 printf "%s\n" "#define HAVE_STRUCT_ICMPSTAT_ICPS_ERROR 1" >>confdefs.h
+
+
+fi
+
+
+ac_fn_c_check_member "$LINENO" "struct icmp6stat" "icp6s_error" "ac_cv_member_struct_icmp6stat_icp6s_error" "#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKETVAR_H
+#include <sys/socketvar.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_NETINET_ICMP6_H
+#include <netinet/icmp6.h>
+#endif
+"
+if test "x$ac_cv_member_struct_icmp6stat_icp6s_error" = xyes
+then :
+
+printf "%s\n" "#define HAVE_STRUCT_ICMP6STAT_ICP6S_ERROR 1" >>confdefs.h
 
 
 fi

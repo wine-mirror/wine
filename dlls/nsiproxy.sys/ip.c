@@ -59,6 +59,24 @@
 #include <netinet/icmp_var.h>
 #endif
 
+#ifdef HAVE_NETINET_ICMP6_H
+#include <netinet/icmp6.h>
+#undef ICMP6_DST_UNREACH
+#undef ICMP6_PACKET_TOO_BIG
+#undef ICMP6_TIME_EXCEEDED
+#undef ICMP6_PARAM_PROB
+#undef ICMP6_ECHO_REQUEST
+#undef ICMP6_ECHO_REPLY
+#undef ICMP6_MEMBERSHIP_QUERY
+#undef ICMP6_MEMBERSHIP_REPORT
+#undef ICMP6_MEMBERSHIP_REDUCTION
+#undef ND_ROUTER_SOLICIT
+#undef ND_ROUTER_ADVERT
+#undef ND_NEIGHBOR_SOLICIT
+#undef ND_NEIGHBOR_ADVERT
+#undef ND_REDIRECT
+#endif
+
 #ifdef HAVE_NETINET_IF_ETHER_H
 #include <netinet/if_ether.h>
 #endif
@@ -469,6 +487,63 @@ static NTSTATUS ipv6_icmpstats_get_all_parameters( const void *key, UINT key_siz
             }
         }
         fclose( fp );
+        if (dynamic_data) *(struct nsi_ip_icmpstats_dynamic *)dynamic_data = dyn;
+        return STATUS_SUCCESS;
+    }
+#elif defined(HAVE_SYS_SYSCTL_H) && defined(ICMPV6CTL_STATS) && defined(HAVE_STRUCT_ICMP6STAT_ICP6S_ERROR)
+    {
+        int mib[] = { CTL_NET, PF_INET6, IPPROTO_ICMPV6, ICMPV6CTL_STATS };
+        struct icmp6stat icmp_stat;
+        size_t needed = sizeof(icmp_stat);
+        int i;
+
+        if (sysctl( mib, ARRAY_SIZE(mib), &icmp_stat, &needed, NULL, 0 ) == -1) return STATUS_NOT_SUPPORTED;
+
+        dyn.in_msgs = icmp_stat.icp6s_badcode + icmp_stat.icp6s_checksum + icmp_stat.icp6s_tooshort +
+            icmp_stat.icp6s_badlen + icmp_stat.icp6s_nd_toomanyopt;
+        for (i = 0; i <= ICMP6_MAXTYPE; i++)
+            dyn.in_msgs += icmp_stat.icp6s_inhist[i];
+
+        dyn.in_errors = icmp_stat.icp6s_badcode + icmp_stat.icp6s_checksum + icmp_stat.icp6s_tooshort +
+            icmp_stat.icp6s_badlen + icmp_stat.icp6s_nd_toomanyopt;
+
+        dyn.in_type_counts[ICMP6_DST_UNREACH] = icmp_stat.icp6s_inhist[ICMP6_DST_UNREACH];
+        dyn.in_type_counts[ICMP6_PACKET_TOO_BIG] = icmp_stat.icp6s_inhist[ICMP6_PACKET_TOO_BIG];
+        dyn.in_type_counts[ICMP6_TIME_EXCEEDED] = icmp_stat.icp6s_inhist[ICMP6_TIME_EXCEEDED];
+        dyn.in_type_counts[ICMP6_PARAM_PROB] = icmp_stat.icp6s_inhist[ICMP6_PARAM_PROB];
+        dyn.in_type_counts[ICMP6_ECHO_REQUEST] = icmp_stat.icp6s_inhist[ICMP6_ECHO_REQUEST];
+        dyn.in_type_counts[ICMP6_ECHO_REPLY] = icmp_stat.icp6s_inhist[ICMP6_ECHO_REPLY];
+        dyn.in_type_counts[ICMP6_MEMBERSHIP_QUERY] = icmp_stat.icp6s_inhist[ICMP6_MEMBERSHIP_QUERY];
+        dyn.in_type_counts[ICMP6_MEMBERSHIP_REPORT] = icmp_stat.icp6s_inhist[ICMP6_MEMBERSHIP_REPORT];
+        dyn.in_type_counts[ICMP6_MEMBERSHIP_REDUCTION] = icmp_stat.icp6s_inhist[ICMP6_MEMBERSHIP_REDUCTION];
+        dyn.in_type_counts[ND_ROUTER_SOLICIT] = icmp_stat.icp6s_inhist[ND_ROUTER_SOLICIT];
+        dyn.in_type_counts[ND_ROUTER_ADVERT] = icmp_stat.icp6s_inhist[ND_ROUTER_ADVERT];
+        dyn.in_type_counts[ND_NEIGHBOR_SOLICIT] = icmp_stat.icp6s_inhist[ND_NEIGHBOR_SOLICIT];
+        dyn.in_type_counts[ND_NEIGHBOR_ADVERT] = icmp_stat.icp6s_inhist[ND_NEIGHBOR_ADVERT];
+        dyn.in_type_counts[ND_REDIRECT] = icmp_stat.icp6s_inhist[ND_REDIRECT];
+        dyn.in_type_counts[ICMP6_V2_MEMBERSHIP_REPORT] = icmp_stat.icp6s_inhist[MLDV2_LISTENER_REPORT];
+
+        dyn.out_msgs = icmp_stat.icp6s_canterror + icmp_stat.icp6s_toofreq;
+        for (i = 0; i <= ICMP6_MAXTYPE; i++)
+            dyn.out_msgs += icmp_stat.icp6s_outhist[i];
+
+        dyn.out_errors = icmp_stat.icp6s_canterror + icmp_stat.icp6s_toofreq;
+
+        dyn.out_type_counts[ICMP6_DST_UNREACH] = icmp_stat.icp6s_outhist[ICMP6_DST_UNREACH];
+        dyn.out_type_counts[ICMP6_PACKET_TOO_BIG] = icmp_stat.icp6s_outhist[ICMP6_PACKET_TOO_BIG];
+        dyn.out_type_counts[ICMP6_TIME_EXCEEDED] = icmp_stat.icp6s_outhist[ICMP6_TIME_EXCEEDED];
+        dyn.out_type_counts[ICMP6_PARAM_PROB] = icmp_stat.icp6s_outhist[ICMP6_PARAM_PROB];
+        dyn.out_type_counts[ICMP6_ECHO_REQUEST] = icmp_stat.icp6s_outhist[ICMP6_ECHO_REQUEST];
+        dyn.out_type_counts[ICMP6_ECHO_REPLY] = icmp_stat.icp6s_outhist[ICMP6_ECHO_REPLY];
+        dyn.out_type_counts[ICMP6_MEMBERSHIP_QUERY] = icmp_stat.icp6s_outhist[ICMP6_MEMBERSHIP_QUERY];
+        dyn.out_type_counts[ICMP6_MEMBERSHIP_REPORT] = icmp_stat.icp6s_outhist[ICMP6_MEMBERSHIP_REPORT];
+        dyn.out_type_counts[ICMP6_MEMBERSHIP_REDUCTION] = icmp_stat.icp6s_outhist[ICMP6_MEMBERSHIP_REDUCTION];
+        dyn.out_type_counts[ND_ROUTER_SOLICIT] = icmp_stat.icp6s_outhist[ND_ROUTER_SOLICIT];
+        dyn.out_type_counts[ND_ROUTER_ADVERT] = icmp_stat.icp6s_outhist[ND_ROUTER_ADVERT];
+        dyn.out_type_counts[ND_NEIGHBOR_SOLICIT] = icmp_stat.icp6s_outhist[ND_NEIGHBOR_SOLICIT];
+        dyn.out_type_counts[ND_NEIGHBOR_ADVERT] = icmp_stat.icp6s_outhist[ND_NEIGHBOR_ADVERT];
+        dyn.out_type_counts[ND_REDIRECT] = icmp_stat.icp6s_outhist[ND_REDIRECT];
+        dyn.out_type_counts[ICMP6_V2_MEMBERSHIP_REPORT] = icmp_stat.icp6s_outhist[MLDV2_LISTENER_REPORT];
         if (dynamic_data) *(struct nsi_ip_icmpstats_dynamic *)dynamic_data = dyn;
         return STATUS_SUCCESS;
     }
