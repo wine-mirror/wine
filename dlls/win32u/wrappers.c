@@ -1113,6 +1113,12 @@ BOOL WINAPI NtUserSetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alph
     return unix_funcs->pNtUserSetLayeredWindowAttributes( hwnd, key, alpha, flags );
 }
 
+BOOL WINAPI NtUserSetMenu( HWND hwnd, HMENU menu )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserSetMenu( hwnd, menu );
+}
+
 HWND WINAPI NtUserSetParent( HWND hwnd, HWND parent )
 {
     if (!unix_funcs) return 0;

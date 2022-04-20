@@ -117,7 +117,6 @@ extern BOOL update_wallpaper( const WCHAR *wallpaper, const WCHAR *pattern ) DEC
 extern HWND MENU_IsMenuActive(void) DECLSPEC_HIDDEN;
 extern UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth,
                                      INT orgX, INT orgY ) DECLSPEC_HIDDEN;
-extern BOOL MENU_SetMenu(HWND, HMENU) DECLSPEC_HIDDEN;
 extern void MENU_TrackMouseMenuBar( HWND hwnd, INT ht, POINT pt ) DECLSPEC_HIDDEN;
 extern void MENU_TrackKbdMenuBar( HWND hwnd, UINT wParam, WCHAR wChar ) DECLSPEC_HIDDEN;
 extern UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect, HWND hwnd ) DECLSPEC_HIDDEN;

@@ -1206,7 +1206,7 @@
 @ stdcall NtUserSetLayeredWindowAttributes(ptr long long long)
 @ stub NtUserSetMagnificationDesktopMagnifierOffsetsDWMUpdated
 @ stub NtUserSetManipulationInputTarget
-@ stub NtUserSetMenu
+@ stdcall NtUserSetMenu(long long)
 @ stdcall -syscall NtUserSetMenuContextHelpId(long long)
 @ stub NtUserSetMenuDefaultItem
 @ stub NtUserSetMenuFlagRtoL

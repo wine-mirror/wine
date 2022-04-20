@@ -357,7 +357,7 @@ static LRESULT MDISetMenu( HWND hwnd, HMENU hmenuFrame,
 
     if (hmenuFrame)
     {
-        SetMenu(hwndFrame, hmenuFrame);
+        NtUserSetMenu(hwndFrame, hmenuFrame);
         if( hmenuFrame != ci->hFrameMenu )
         {
             HMENU oldFrameMenu = ci->hFrameMenu;

@@ -269,6 +269,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserSetCursorPos)( INT x, INT y );
     HWND     (WINAPI *pNtUserSetFocus)( HWND hwnd );
     BOOL     (WINAPI *pNtUserSetLayeredWindowAttributes)( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags );
+    BOOL     (WINAPI *pNtUserSetMenu)( HWND hwnd, HMENU menu );
     HWND     (WINAPI *pNtUserSetParent)( HWND hwnd, HWND parent );
     BOOL     (WINAPI *pNtUserSetSysColors)( INT count, const INT *colors, const COLORREF *values );
     LONG     (WINAPI *pNtUserSetWindowLong)( HWND hwnd, INT offset, LONG newval, BOOL ansi );
@@ -346,6 +347,7 @@ extern BOOL unhook_windows_hook( INT id, HOOKPROC proc ) DECLSPEC_HIDDEN;
 /* input.c */
 extern LONG global_key_state_counter DECLSPEC_HIDDEN;
 extern HWND get_active_window(void) DECLSPEC_HIDDEN;
+extern HWND get_capture(void) DECLSPEC_HIDDEN;
 extern BOOL get_cursor_pos( POINT *pt ) DECLSPEC_HIDDEN;
 extern HWND get_focus(void) DECLSPEC_HIDDEN;
 extern DWORD get_input_state(void) DECLSPEC_HIDDEN;
@@ -357,6 +359,7 @@ extern BOOL set_foreground_window( HWND hwnd, BOOL mouse ) DECLSPEC_HIDDEN;
 extern HMENU create_menu( BOOL is_popup ) DECLSPEC_HIDDEN;
 extern BOOL draw_menu_bar( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HMENU get_menu( HWND hwnd ) DECLSPEC_HIDDEN;
+extern BOOL set_window_menu( HWND hwnd, HMENU handle ) DECLSPEC_HIDDEN;
 
 /* message.c */
 extern LRESULT dispatch_message( const MSG *msg, BOOL ansi ) DECLSPEC_HIDDEN;

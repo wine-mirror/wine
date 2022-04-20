@@ -678,7 +678,7 @@
 @ stdcall SetLastErrorEx(long long)
 @ stdcall SetLayeredWindowAttributes(ptr long long long) NtUserSetLayeredWindowAttributes
 @ stdcall SetLogonNotifyWindow(long long)
-@ stdcall SetMenu(long long)
+@ stdcall SetMenu(long long) NtUserSetMenu
 @ stdcall SetMenuContextHelpId(long long) NtUserSetMenuContextHelpId
 @ stdcall SetMenuDefaultItem(long long long)
 @ stdcall SetMenuInfo(long ptr)

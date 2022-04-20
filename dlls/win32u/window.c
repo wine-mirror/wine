@@ -4994,7 +4994,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
 
     if ((win->dwStyle & (WS_CHILD | WS_POPUP)) != WS_CHILD)
     {
-        if (cs.hMenu && user_callbacks && !user_callbacks->set_menu( hwnd, cs.hMenu ))
+        if (cs.hMenu && !set_window_menu( hwnd, cs.hMenu ))
         {
             release_win_ptr( win );
             free_window_handle( hwnd );

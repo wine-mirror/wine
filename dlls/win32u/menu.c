@@ -137,6 +137,20 @@ static void release_menu_ptr( POPUPMENU *menu )
     }
 }
 
+/* see IsMenu */
+static BOOL is_menu( HMENU handle )
+{
+    POPUPMENU *menu;
+    BOOL is_menu;
+
+    menu = grab_menu_ptr( handle );
+    is_menu = menu != NULL;
+    release_menu_ptr( menu );
+
+    if (!is_menu) SetLastError( ERROR_INVALID_MENU_HANDLE );
+    return is_menu;
+}
+
 static POPUPMENU *find_menu_item( HMENU handle, UINT id, UINT flags, UINT *pos )
 {
     UINT fallback_pos = ~0u, i;
@@ -256,6 +270,55 @@ BOOL WINAPI NtUserDestroyMenu( HMENU handle )
 BOOL WINAPI NtUserSetSystemMenu( HWND hwnd, HMENU menu )
 {
     return user_callbacks && user_callbacks->pSetSystemMenu( hwnd, menu );
+}
+
+/*******************************************************************
+ *           set_window_menu
+ *
+ * Helper for NtUserSetMenu that does not call NtUserSetWindowPos.
+ */
+BOOL set_window_menu( HWND hwnd, HMENU handle )
+{
+    TRACE( "(%p, %p);\n", hwnd, handle );
+
+    if (handle && !is_menu( handle ))
+    {
+        WARN( "%p is not a menu handle\n", handle );
+        return FALSE;
+    }
+
+    if (is_win_menu_disallowed( hwnd ))
+        return FALSE;
+
+    hwnd = get_full_window_handle( hwnd );
+    if (get_capture() == hwnd)
+        set_capture_window( 0, GUI_INMENUMODE, NULL );  /* release the capture */
+
+    if (handle)
+    {
+        POPUPMENU *menu;
+
+        if (!(menu = grab_menu_ptr( handle ))) return FALSE;
+        menu->hWnd = hwnd;
+        menu->Height = 0;  /* Make sure we recalculate the size */
+        release_menu_ptr(menu);
+    }
+
+    NtUserSetWindowLong( hwnd, GWLP_ID, (LONG_PTR)handle, FALSE );
+    return TRUE;
+}
+
+/**********************************************************************
+ *           NtUserSetMenu    (win32u.@)
+ */
+BOOL WINAPI NtUserSetMenu( HWND hwnd, HMENU menu )
+{
+    if (!set_window_menu( hwnd, menu ))
+        return FALSE;
+
+    NtUserSetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
+                        SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
+    return TRUE;
 }
 
 /*******************************************************************

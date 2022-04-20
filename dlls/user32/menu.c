@@ -4292,55 +4292,6 @@ BOOL WINAPI GetMenuBarInfo( HWND hwnd, LONG idObject, LONG idItem, PMENUBARINFO 
     return TRUE;
 }
 
-/**********************************************************************
- *         MENU_SetMenu
- *
- * Helper for SetMenu. Also called by WIN_CreateWindowEx to avoid the
- * SetWindowPos call that would result if SetMenu were called directly.
- */
-BOOL MENU_SetMenu( HWND hWnd, HMENU hMenu )
-{
-    TRACE("(%p, %p);\n", hWnd, hMenu);
-
-    if (hMenu && !IsMenu(hMenu))
-    {
-        WARN("hMenu %p is not a menu handle\n", hMenu);
-        return FALSE;
-    }
-    if (is_win_menu_disallowed(hWnd))
-        return FALSE;
-
-    hWnd = WIN_GetFullHandle( hWnd );
-    if (GetCapture() == hWnd)
-        set_capture_window( 0, GUI_INMENUMODE, NULL );  /* release the capture */
-
-    if (hMenu)
-    {
-        POPUPMENU *menu;
-
-        if (!(menu = grab_menu_ptr(hMenu))) return FALSE;
-        menu->hWnd = hWnd;
-        menu->Height = 0;  /* Make sure we recalculate the size */
-        release_menu_ptr(menu);
-    }
-    SetWindowLongPtrW( hWnd, GWLP_ID, (LONG_PTR)hMenu );
-    return TRUE;
-}
-
-
-/**********************************************************************
- *         SetMenu    (USER32.@)
- */
-BOOL WINAPI SetMenu( HWND hWnd, HMENU hMenu )
-{   
-    if(!MENU_SetMenu(hWnd, hMenu))
-        return FALSE;
- 
-    NtUserSetWindowPos( hWnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
-                        SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
-    return TRUE;
-}
-
 
 /**********************************************************************
  *         GetSubMenu    (USER32.@)

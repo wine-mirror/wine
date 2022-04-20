@@ -1260,6 +1260,14 @@ HWND get_active_window(void)
     return NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info ) ? info.hwndActive : 0;
 }
 
+/* see GetCapture */
+HWND get_capture(void)
+{
+    GUITHREADINFO info;
+    info.cbSize = sizeof(info);
+    return NtUserGetGUIThreadInfo( GetCurrentThreadId(), &info ) ? info.hwndCapture : 0;
+}
+
 /* see GetFocus */
 HWND get_focus(void)
 {
