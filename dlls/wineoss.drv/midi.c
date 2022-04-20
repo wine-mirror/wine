@@ -737,42 +737,6 @@ static int modFMLoad(WORD dev, int fd)
     return params.ret;
 }
 
-/**************************************************************************
- * 			modFMReset				[internal]
- */
-static	void modFMReset(WORD wDevID)
-{
-    sFMextra*   extra   = MidiOutDev[wDevID].lpExtra;
-    sVoice* 	voice   = extra->voice;
-    sChannel*	channel = extra->channel;
-    int		i;
-
-    for (i = 0; i < MidiOutDev[wDevID].caps.wVoices; i++) {
-	if (voice[i].status != sVS_UNUSED) {
-	    SEQ_STOP_NOTE(wDevID, i, voice[i].note, 64);
-	}
-	SEQ_KEY_PRESSURE(wDevID, i, 127, 0);
-	SEQ_CONTROL(wDevID, i, SEQ_VOLMODE, VOL_METHOD_LINEAR);
-	voice[i].note = 0;
-	voice[i].channel = -1;
-	voice[i].cntMark = 0;
-	voice[i].status = sVS_UNUSED;
-    }
-    for (i = 0; i < 16; i++) {
-	channel[i].program = 0;
-	channel[i].bender = 8192;
-	channel[i].benderRange = 2;
-	channel[i].bank = 0;
-	channel[i].volume = 127;
-	channel[i].balance = 64;
-	channel[i].expression = 0;
-	channel[i].sustain = 0;
-    }
-    extra->counter = 0;
-    extra->drumSetMask = 1 << 9; /* channel 10 is normally drums, sometimes 16 also */
-    SEQ_DUMPBUF();
-}
-
 #define		IS_DRUM_CHANNEL(_xtra, _chn)	((_xtra)->drumSetMask & (1 << (_chn)))
 
 /**************************************************************************
@@ -846,7 +810,7 @@ static DWORD modOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 		HeapFree(GetProcessHeap(), 0, extra);
 		return MMSYSERR_ERROR;
 	    }
-	    modFMReset(wDevID);
+	    OSS_CALL(midi_out_fm_reset, (void *)(UINT_PTR)wDevID);
 	}
 	break;
     case MOD_MIDIPORT:
@@ -1120,7 +1084,7 @@ static DWORD modData(WORD wDevID, DWORD dwParam)
 	    case MIDI_SYSTEM_PREFIX:
 		switch (evt & 0x0F) {
 		case 0x0F: 	/* Reset */
-		    modFMReset(wDevID);
+		    OSS_CALL(midi_out_fm_reset, (void *)(UINT_PTR)wDevID);
 		    break;
 		default:
 		    WARN("Unsupported (yet) system event %02x\n", evt & 0x0F);

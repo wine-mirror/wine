@@ -52,6 +52,47 @@ static unsigned int num_dests, num_srcs, num_synths, seq_refs;
 static struct midi_dest dests[MAX_MIDIOUTDRV];
 static struct midi_src srcs[MAX_MIDIINDRV];
 
+typedef struct sVoice
+{
+    int note; /* 0 means not used */
+    int channel;
+    unsigned cntMark : 30,
+             status : 2;
+#define sVS_UNUSED    0
+#define sVS_PLAYING   1
+#define sVS_SUSTAINED 2
+} sVoice;
+
+typedef struct sChannel
+{
+    int program;
+
+    int bender;
+    int benderRange;
+    /* controllers */
+    int bank;       /* CTL_BANK_SELECT */
+    int volume;     /* CTL_MAIN_VOLUME */
+    int balance;    /* CTL_BALANCE     */
+    int expression; /* CTL_EXPRESSION  */
+    int sustain;    /* CTL_SUSTAIN     */
+
+    unsigned char nrgPmtMSB; /* Non register Parameters */
+    unsigned char nrgPmtLSB;
+    unsigned char regPmtMSB; /* Non register Parameters */
+    unsigned char regPmtLSB;
+} sChannel;
+
+typedef struct sFMextra
+{
+    unsigned counter;
+    int drumSetMask;
+    sChannel channel[16]; /* MIDI has only 16 channels */
+    sVoice voice[1]; /* dyn allocated according to sound card */
+    /* do not append fields below voice[1] since the size of this structure
+     * depends on the number of available voices on the FM synth...
+     */
+} sFMextra;
+
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
 static int oss_to_win_device_type(int type)
@@ -346,6 +387,40 @@ wrapup:
     return STATUS_SUCCESS;
 }
 
+/* FIXME: this is a bad idea, it's even not static... */
+SEQ_DEFINEBUF(1024);
+
+/* FIXME: this is not reentrant, not static - because of global variable
+ * _seqbuf and al.
+ */
+/**************************************************************************
+ *                     seqbuf_dump                             [internal]
+ *
+ * Used by SEQ_DUMPBUF to flush the buffer.
+ *
+ */
+void seqbuf_dump(void)
+{
+    int fd;
+
+    /* The device is already open, but there's no way to pass the
+       fd to this function.  Rather than rely on a global variable
+       we pretend to open the seq again. */
+    fd = seq_open();
+    if (_seqbufptr)
+    {
+        if (write(fd, _seqbuf, _seqbufptr) == -1)
+        {
+            WARN("Can't write data to sequencer %d, errno %d (%s)!\n",
+                 fd, errno, strerror(errno));
+        }
+        /* FIXME: In any case buffer is lost so that if many errors occur the buffer
+         * will not overrun */
+        _seqbufptr = 0;
+    }
+    seq_close(fd);
+}
+
 extern const unsigned char midiFMInstrumentPatches[16 * 128];
 extern const unsigned char midiFMDrumsPatches[16 * 128];
 
@@ -386,5 +461,43 @@ NTSTATUS midi_out_fm_load(void *args)
         }
     }
     params->ret = 0;
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS midi_out_fm_reset(void *args)
+{
+    WORD dev_id = (WORD)(UINT_PTR)args;
+    struct midi_dest *dest = dests + dev_id;
+    sFMextra *extra = dest->lpExtra;
+    sVoice *voice = extra->voice;
+    sChannel *channel = extra->channel;
+    int i;
+
+    for (i = 0; i < dest->caps.wVoices; i++)
+    {
+        if (voice[i].status != sVS_UNUSED)
+            SEQ_STOP_NOTE(dev_id, i, voice[i].note, 64);
+        SEQ_KEY_PRESSURE(dev_id, i, 127, 0);
+        SEQ_CONTROL(dev_id, i, SEQ_VOLMODE, VOL_METHOD_LINEAR);
+        voice[i].note = 0;
+        voice[i].channel = -1;
+        voice[i].cntMark = 0;
+        voice[i].status = sVS_UNUSED;
+    }
+    for (i = 0; i < 16; i++)
+    {
+        channel[i].program = 0;
+        channel[i].bender = 8192;
+        channel[i].benderRange = 2;
+        channel[i].bank = 0;
+        channel[i].volume = 127;
+        channel[i].balance = 64;
+        channel[i].expression = 0;
+        channel[i].sustain = 0;
+    }
+    extra->counter = 0;
+    extra->drumSetMask = 1 << 9; /* channel 10 is normally drums, sometimes 16 also */
+    SEQ_DUMPBUF();
+
     return STATUS_SUCCESS;
 }

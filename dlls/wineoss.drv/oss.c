@@ -1409,4 +1409,5 @@ unixlib_entry_t __wine_unix_call_funcs[] =
 
     midi_seq_open,
     midi_out_fm_load,
+    midi_out_fm_reset,
 };
