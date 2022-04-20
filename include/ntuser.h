@@ -642,6 +642,7 @@ enum
     NtUserCallOneParam_GetSysColorPen,
     NtUserCallOneParam_GetSystemMetrics,
     NtUserCallOneParam_GetVirtualScreenRect,
+    NtUserCallOneParam_IsWindowRectFullScreen,
     NtUserCallOneParam_MessageBeep,
     NtUserCallOneParam_RealizePalette,
     /* temporary exports */
@@ -730,6 +731,11 @@ static inline RECT NtUserGetVirtualScreenRect(void)
     RECT virtual;
     NtUserCallOneParam( (UINT_PTR)&virtual, NtUserCallOneParam_GetVirtualScreenRect );
     return virtual;
+}
+
+static inline BOOL NtUserIsWindowRectFullScreen( const RECT *rect )
+{
+    return NtUserCallOneParam( (UINT_PTR)rect, NtUserCallOneParam_IsWindowRectFullScreen );
 }
 
 static inline BOOL NtUserMessageBeep( UINT i )

@@ -549,7 +549,7 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     /* maximized windows don't count as full screen */
     if ((style & WS_MAXIMIZE) && (style & WS_CAPTION) == WS_CAPTION) return FALSE;
     if (!(data = get_win_data( hwnd ))) return FALSE;
-    fullscreen = is_window_rect_full_screen( &data->whole_rect );
+    fullscreen = NtUserIsWindowRectFullScreen( &data->whole_rect );
     release_win_data( data );
     if (!fullscreen) return FALSE;
     if (!(thread_data = x11drv_thread_data())) return FALSE;
