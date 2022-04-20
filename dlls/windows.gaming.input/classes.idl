@@ -29,11 +29,12 @@ import "asyncinfo.idl";
 import "eventtoken.idl";
 import "windowscontracts.idl";
 import "windows.foundation.idl";
+import "windows.foundation.numerics.idl";
 import "windows.devices.haptics.idl";
-import "windows.gaming.input.forcefeedback.idl";
 import "windows.system.idl";
 import "windows.devices.power.idl";
 
 #define DO_NO_IMPORTS
+#include "windows.gaming.input.forcefeedback.idl"
 #include "windows.gaming.input.idl"
 #include "windows.gaming.input.custom.idl"
