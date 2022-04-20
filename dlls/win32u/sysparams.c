@@ -4762,6 +4762,9 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
 {
     switch(code)
     {
+    case NtUserCallTwoParam_GetMenuInfo:
+        return get_menu_info( UlongToHandle(arg1), (MENUINFO *)arg2 );
+
     case NtUserCallTwoParam_GetMonitorInfo:
         return get_monitor_info( UlongToHandle(arg1), (MONITORINFO *)arg2 );
 

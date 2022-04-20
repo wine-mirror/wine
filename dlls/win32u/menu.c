@@ -451,6 +451,29 @@ BOOL WINAPI NtUserGetMenuItemRect( HWND hwnd, HMENU handle, UINT item, RECT *rec
     return TRUE;
 }
 
+/* see GetMenuInfo */
+BOOL get_menu_info( HMENU handle, MENUINFO *info )
+{
+    POPUPMENU *menu;
+
+    TRACE( "(%p %p)\n", handle, info );
+
+    if (!info || info->cbSize != sizeof(MENUINFO) || !(menu = grab_menu_ptr( handle )))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER);
+        return FALSE;
+    }
+
+    if (info->fMask & MIM_BACKGROUND) info->hbrBack = menu->hbrBack;
+    if (info->fMask & MIM_HELPID)     info->dwContextHelpID = menu->dwContextHelpID;
+    if (info->fMask & MIM_MAXHEIGHT)  info->cyMax = menu->cyMax;
+    if (info->fMask & MIM_MENUDATA)   info->dwMenuData = menu->dwMenuData;
+    if (info->fMask & MIM_STYLE)      info->dwStyle = menu->dwStyle;
+
+    release_menu_ptr(menu);
+    return TRUE;
+}
+
 /**********************************************************************
  *           NtUserSetMenuContextHelpId    (win32u.@)
  */

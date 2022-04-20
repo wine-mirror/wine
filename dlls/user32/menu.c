@@ -5124,40 +5124,11 @@ BOOL WINAPI SetMenuInfo (HMENU hMenu, LPCMENUINFO lpmi)
 }
 
 /**********************************************************************
- *		GetMenuInfo    (USER32.@)
- *
- *  NOTES
- *	win98/NT5.0
- *
+ *           GetMenuInfo    (USER32.@)
  */
-BOOL WINAPI GetMenuInfo (HMENU hMenu, LPMENUINFO lpmi)
+BOOL WINAPI GetMenuInfo( HMENU menu, MENUINFO *info )
 {
-    POPUPMENU *menu;
-
-    TRACE("(%p %p)\n", hMenu, lpmi);
-
-    if (lpmi && (lpmi->cbSize == sizeof(MENUINFO)) && (menu = grab_menu_ptr(hMenu)))
-    {
-	if (lpmi->fMask & MIM_BACKGROUND)
-	    lpmi->hbrBack = menu->hbrBack;
-
-	if (lpmi->fMask & MIM_HELPID)
-	    lpmi->dwContextHelpID = menu->dwContextHelpID;
-
-	if (lpmi->fMask & MIM_MAXHEIGHT)
-	    lpmi->cyMax = menu->cyMax;
-
-	if (lpmi->fMask & MIM_MENUDATA)
-	    lpmi->dwMenuData = menu->dwMenuData;
-
-	if (lpmi->fMask & MIM_STYLE)
-	    lpmi->dwStyle = menu->dwStyle;
-
-        release_menu_ptr(menu);
-	return TRUE;
-    }
-    SetLastError( ERROR_INVALID_PARAMETER);
-    return FALSE;
+    return NtUserGetMenuInfo( menu, info );
 }
 
 

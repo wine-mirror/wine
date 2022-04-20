@@ -745,6 +745,7 @@ static inline UINT NtUserRealizePalette( HDC hdc )
 /* NtUserCallTwoParam codes, not compatible with Windows */
 enum
 {
+    NtUserCallTwoParam_GetMenuInfo,
     NtUserCallTwoParam_GetMonitorInfo,
     NtUserCallTwoParam_GetSystemMetricsForDpi,
     NtUserCallTwoParam_MonitorFromRect,
@@ -755,6 +756,12 @@ enum
     NtUserAllocWinProc,
     NtUserGetHandlePtr,
 };
+
+static inline BOOL NtUserGetMenuInfo( HMENU menu, MENUINFO *info )
+{
+    return NtUserCallTwoParam( HandleToUlong(menu), (ULONG_PTR)info,
+                               NtUserCallTwoParam_GetMenuInfo );
+}
 
 static inline BOOL NtUserGetMonitorInfo( HMONITOR monitor, MONITORINFO *info )
 {
