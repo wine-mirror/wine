@@ -46,6 +46,7 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
     {
         DisableThreadLibraryCalls( hinst );
         IsWow64Process( GetCurrentProcess(), &is_wow64 );
+        init_global_data();
         init_locale( hinst );
         init_startup_info( NtCurrentTeb()->Peb->ProcessParameters );
         init_console();

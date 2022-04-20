@@ -608,14 +608,8 @@ struct mem_entry
 C_ASSERT(sizeof(struct mem_entry) == 2 * sizeof(void *));
 
 #define MAX_MEM_HANDLES  0x10000
-static struct mem_entry mem_entries[MAX_MEM_HANDLES];
-static struct mem_entry *next_free_mem = mem_entries;
-
-static struct kernelbase_global_data kernelbase_global_data =
-{
-    .mem_entries = mem_entries,
-    .mem_entries_end = mem_entries + MAX_MEM_HANDLES,
-};
+static struct mem_entry *next_free_mem;
+static struct kernelbase_global_data global_data = {0};
 
 /* align the storage needed for the HLOCAL on an 8-byte boundary thus
  * LocalAlloc/LocalReAlloc'ing with LMEM_MOVEABLE of memory with
@@ -627,7 +621,7 @@ static struct kernelbase_global_data kernelbase_global_data =
 static inline struct mem_entry *unsafe_mem_from_HLOCAL( HLOCAL handle )
 {
     struct mem_entry *mem = CONTAINING_RECORD( handle, struct mem_entry, ptr );
-    struct kernelbase_global_data *data = &kernelbase_global_data;
+    struct kernelbase_global_data *data = &global_data;
     if (((UINT_PTR)handle & ((sizeof(void *) << 1) - 1)) != sizeof(void *)) return NULL;
     if (mem < data->mem_entries || mem >= data->mem_entries_end) return NULL;
     if (!(mem->flags & MEM_FLAG_USED)) return NULL;
@@ -646,6 +640,12 @@ static inline void *unsafe_ptr_from_HLOCAL( HLOCAL handle )
     return handle;
 }
 
+void init_global_data(void)
+{
+    global_data.mem_entries = VirtualAlloc( NULL, MAX_MEM_HANDLES * sizeof(struct mem_entry), MEM_COMMIT, PAGE_READWRITE );
+    if (!(next_free_mem = global_data.mem_entries)) ERR( "Failed to allocate kernelbase global handle table\n" );
+    global_data.mem_entries_end = global_data.mem_entries + MAX_MEM_HANDLES;
+}
 
 /***********************************************************************
  *           KernelBaseGetGlobalData   (kernelbase.@)
@@ -653,7 +653,7 @@ static inline void *unsafe_ptr_from_HLOCAL( HLOCAL handle )
 void *WINAPI KernelBaseGetGlobalData(void)
 {
     WARN_(globalmem)( "semi-stub!\n" );
-    return &kernelbase_global_data;
+    return &global_data;
 }
 
 
@@ -709,7 +709,7 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalAlloc( UINT flags, SIZE_T size )
     }
 
     RtlLockHeap( heap );
-    if ((mem = next_free_mem) < mem_entries || mem >= mem_entries + MAX_MEM_HANDLES)
+    if ((mem = next_free_mem) < global_data.mem_entries || mem >= global_data.mem_entries_end)
         mem = NULL;
     else
     {
