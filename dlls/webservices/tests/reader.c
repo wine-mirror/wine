@@ -5764,15 +5764,12 @@ static void test_binary_encoding(void)
 
     hr = WsReadType( reader, WS_ELEMENT_TYPE_MAPPING, WS_STRUCT_TYPE, &s,
                      WS_READ_REQUIRED_POINTER, heap, &test_struct, sizeof(test_struct), NULL );
-    todo_wine ok( hr == S_OK, "got %#lx\n", hr );
-    if (SUCCEEDED(hr))
-    {
-        ok( test_struct->a == 1, "got %d\n", test_struct->a );
-        ok( !!test_struct->s, "s is not set\n" );
-        ok( test_struct->s->s_a == 1, "got %d\n", test_struct->s->s_a );
-        ok( test_struct->s->s_b == 0, "got %d\n", test_struct->s->s_b );
-        ok( test_struct->b == 1, "got %d\n", test_struct->b );
-    }
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( test_struct->a == 1, "got %d\n", test_struct->a );
+    ok( !!test_struct->s, "s is not set\n" );
+    ok( test_struct->s->s_a == 1, "got %d\n", test_struct->s->s_a );
+    ok( test_struct->s->s_b == 0, "got %d\n", test_struct->s->s_b );
+    ok( test_struct->b == 1, "got %d\n", test_struct->b );
 
     WsFreeHeap( heap );
     WsFreeReader( reader );

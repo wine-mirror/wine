@@ -1486,8 +1486,9 @@ static HRESULT read_attribute_value_bin( struct reader *reader, WS_XML_ATTRIBUTE
     GUID guid;
     HRESULT hr;
 
-    if ((hr = read_byte( reader, &type )) != S_OK) return hr;
+    if ((hr = read_peek( reader, &type, 1 )) != S_OK) return hr;
     if (!is_text_type( type )) return WS_E_INVALID_FORMAT;
+    read_skip( reader, 1 );
 
     switch (type)
     {
@@ -1771,9 +1772,10 @@ static HRESULT read_attribute_bin( struct reader *reader, WS_XML_ATTRIBUTE **ret
     unsigned char type = 0;
     HRESULT hr;
 
-    if ((hr = read_byte( reader, &type )) != S_OK) return hr;
+    if ((hr = read_peek( reader, &type, 1 )) != S_OK) return hr;
     if (!is_attribute_type( type )) return WS_E_INVALID_FORMAT;
     if (!(attr = calloc( 1, sizeof(*attr) ))) return E_OUTOFMEMORY;
+    read_skip( reader, 1 );
 
     if (type >= RECORD_PREFIX_ATTRIBUTE_A && type <= RECORD_PREFIX_ATTRIBUTE_Z)
     {
@@ -2068,8 +2070,9 @@ static HRESULT read_element_bin( struct reader *reader )
     unsigned char type;
     HRESULT hr;
 
-    if ((hr = read_byte( reader, &type )) != S_OK) return hr;
+    if ((hr = read_peek( reader, &type, 1 )) != S_OK) return hr;
     if (!is_element_type( type )) return WS_E_INVALID_FORMAT;
+    read_skip( reader, 1 );
 
     if (!(elem = alloc_element_pair())) return E_OUTOFMEMORY;
     node = (struct node *)elem;
@@ -2480,8 +2483,9 @@ static HRESULT read_text_bin( struct reader *reader )
     GUID uuid;
     HRESULT hr;
 
-    if ((hr = read_byte( reader, &type )) != S_OK) return hr;
+    if ((hr = read_peek( reader, &type, 1 )) != S_OK) return hr;
     if (!is_text_type( type ) || !(parent = find_parent( reader ))) return WS_E_INVALID_FORMAT;
+    read_skip( reader, 1 );
 
     switch (type)
     {
@@ -2835,8 +2839,9 @@ static HRESULT read_endelement_bin( struct reader *reader )
 
     if (!(reader->current->flags & NODE_FLAG_TEXT_WITH_IMPLICIT_END_ELEMENT))
     {
-        if ((hr = read_byte( reader, &type )) != S_OK) return hr;
+        if ((hr = read_peek( reader, &type, 1 )) != S_OK) return hr;
         if (type != RECORD_ENDELEMENT) return WS_E_INVALID_FORMAT;
+        read_skip( reader, 1 );
     }
     if (!(parent = find_parent( reader ))) return WS_E_INVALID_FORMAT;
 
@@ -2917,8 +2922,9 @@ static HRESULT read_comment_bin( struct reader *reader )
     ULONG len;
     HRESULT hr;
 
-    if ((hr = read_byte( reader, &type )) != S_OK) return hr;
+    if ((hr = read_peek( reader, &type, 1 )) != S_OK) return hr;
     if (type != RECORD_COMMENT) return WS_E_INVALID_FORMAT;
+    read_skip( reader, 1 );
     if ((hr = read_int31( reader, &len )) != S_OK) return hr;
 
     if (!(parent = find_parent( reader ))) return WS_E_INVALID_FORMAT;
