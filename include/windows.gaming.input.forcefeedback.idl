@@ -28,6 +28,7 @@ import "windows.foundation.idl";
 
 namespace Windows.Gaming.Input.ForceFeedback {
     typedef enum ForceFeedbackEffectAxes ForceFeedbackEffectAxes;
+    typedef enum ForceFeedbackEffectState ForceFeedbackEffectState;
     typedef enum ForceFeedbackLoadEffectResult ForceFeedbackLoadEffectResult;
     interface IForceFeedbackEffect;
     runtimeclass ForceFeedbackMotor;
@@ -51,12 +52,34 @@ namespace Windows.Gaming.Input.ForceFeedback {
     };
 
     [contract(Windows.Foundation.UniversalApiContract, 3.0)]
+    enum ForceFeedbackEffectState
+    {
+        Stopped = 0,
+        Running = 1,
+        Paused  = 2,
+        Faulted = 3,
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 3.0)]
     enum ForceFeedbackLoadEffectResult
     {
         Succeeded          = 0,
         EffectStorageFull  = 1,
         EffectNotSupported = 2
     };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        uuid(a17fba0c-2ae4-48c2-8063-eabd0777cb89)
+    ]
+    interface IForceFeedbackEffect : IInspectable
+    {
+        [propget] HRESULT Gain([out, retval] DOUBLE *value);
+        [propput] HRESULT Gain([in] DOUBLE value);
+        [propget] HRESULT State([out, retval] Windows.Gaming.Input.ForceFeedback.ForceFeedbackEffectState *value);
+        HRESULT Start();
+        HRESULT Stop();
+    }
 
     [
         contract(Windows.Foundation.UniversalApiContract, 3.0),
