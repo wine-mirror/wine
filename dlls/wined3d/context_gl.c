@@ -3613,6 +3613,44 @@ static uint32_t find_draw_buffers_mask(const struct wined3d_context_gl *context_
     return rt_mask;
 }
 
+void context_gl_apply_texture_draw_state(struct wined3d_context_gl *context_gl,
+        struct wined3d_texture *texture, unsigned int sub_resource_idx, unsigned int location)
+{
+    const struct wined3d_format *format = texture->resource.format;
+    GLenum buffer;
+
+    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
+        return;
+
+    if (format->depth_size || format->stencil_size)
+    {
+        wined3d_context_gl_apply_fbo_state_blit(context_gl, GL_DRAW_FRAMEBUFFER,
+                NULL, 0, &texture->resource, sub_resource_idx, location);
+
+        buffer = GL_NONE;
+    }
+    else
+    {
+        wined3d_context_gl_apply_fbo_state_blit(context_gl, GL_DRAW_FRAMEBUFFER,
+                &texture->resource, sub_resource_idx, NULL, 0, location);
+
+        if (location == WINED3D_LOCATION_DRAWABLE)
+        {
+            TRACE("Texture %p is onscreen.\n", texture);
+            buffer = wined3d_texture_get_gl_buffer(texture);
+        }
+        else
+        {
+            TRACE("Texture %p is offscreen.\n", texture);
+            buffer = GL_COLOR_ATTACHMENT0;
+        }
+    }
+
+    wined3d_context_gl_set_draw_buffer(context_gl, buffer);
+    wined3d_context_gl_check_fbo_status(context_gl, GL_DRAW_FRAMEBUFFER);
+    context_invalidate_state(&context_gl->c, STATE_FRAMEBUFFER);
+}
+
 /* Context activation is done by the caller. */
 void context_state_fb(struct wined3d_context *context, const struct wined3d_state *state, DWORD state_id)
 {
