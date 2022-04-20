@@ -166,7 +166,7 @@ static BOOL create_directory(const WCHAR *path)
 
 static BOOL create_parent_directory(const WCHAR *filename)
 {
-    WCHAR *p, *path = strdupW(filename);
+    WCHAR *p, *path = wcsdup(filename);
     BOOL ret = FALSE;
 
     if (!path) return FALSE;
@@ -430,7 +430,7 @@ static struct assembly_entry *lookup_assembly(struct list *manifest_list, struct
 
 static WCHAR *get_assembly_source(struct assembly_entry *assembly)
 {
-    WCHAR *p, *path = strdupW(assembly->filename);
+    WCHAR *p, *path = wcsdup(assembly->filename);
     if (path && (p = wcsrchr(path, '.'))) *p = 0;
     return path;
 }
@@ -527,7 +527,7 @@ static WCHAR *lookup_expression(struct assembly_entry *assembly, const WCHAR *ke
     if (!wcsicmp(key, L"runtime.inf")) wcscat(path, L"\\inf");
     else if (!wcsicmp(key, L"runtime.drivers")) wcscat(path, L"\\drivers");
     else if (!wcsicmp(key, L"runtime.wbem")) wcscat(path, L"\\wbem");
-    return strdupW(path);
+    return wcsdup(path);
 }
 
 static WCHAR *expand_expression(struct assembly_entry *assembly, const WCHAR *expression)

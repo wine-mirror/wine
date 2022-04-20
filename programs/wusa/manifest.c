@@ -160,7 +160,7 @@ static WCHAR *get_xml_attribute(IXMLDOMElement *root, const WCHAR *name)
         VariantInit(&var);
         if (SUCCEEDED(IXMLDOMElement_getAttribute(root, bstr, &var)))
         {
-            ret = (V_VT(&var) == VT_BSTR) ? strdupW(V_BSTR(&var)) : NULL;
+            ret = (V_VT(&var) == VT_BSTR) ? wcsdup(V_BSTR(&var)) : NULL;
             VariantClear(&var);
         }
         SysFreeString(bstr);
@@ -554,7 +554,7 @@ struct assembly_entry *load_manifest(const WCHAR *filename)
 
     if ((entry = alloc_assembly()))
     {
-        entry->filename = strdupW(filename);
+        entry->filename = wcsdup(filename);
         entry->displayname = get_xml_attribute(root, L"displayName");
         if (iter_assembly(root, entry)) goto done;
         free_assembly(entry);

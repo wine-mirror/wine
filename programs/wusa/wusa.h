@@ -100,14 +100,6 @@ static inline WCHAR *strdupAtoW(const char *str)
     return ret;
 }
 
-static inline WCHAR *strdupW(const WCHAR *str)
-{
-    WCHAR *ret;
-    if (!str) return NULL;
-    if ((ret = malloc((lstrlenW(str) + 1) * sizeof(WCHAR)))) lstrcpyW(ret, str);
-    return ret;
-}
-
 static inline WCHAR *strdupWn(const WCHAR *str, DWORD len)
 {
     WCHAR *ret;
