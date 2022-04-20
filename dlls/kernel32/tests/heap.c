@@ -31,6 +31,7 @@
 #include "wine/test.h"
 
 /* some undocumented flags (names are made up) */
+#define HEAP_ADD_USER_INFO    0x00000100
 #define HEAP_PRIVATE          0x00001000
 #define HEAP_PAGE_ALLOCS      0x01000000
 #define HEAP_VALIDATE         0x10000000
@@ -44,6 +45,9 @@
 static LPVOID (WINAPI *pHeapAlloc)(HANDLE,DWORD,SIZE_T);
 static LPVOID (WINAPI *pHeapReAlloc)(HANDLE,DWORD,LPVOID,SIZE_T);
 static BOOL (WINAPI *pGetPhysicallyInstalledSystemMemory)( ULONGLONG * );
+static BOOLEAN (WINAPI *pRtlGetUserInfoHeap)(HANDLE,ULONG,void*,void**,ULONG*);
+static BOOLEAN (WINAPI *pRtlSetUserValueHeap)(HANDLE,ULONG,void*,void*);
+static BOOLEAN (WINAPI *pRtlSetUserFlagsHeap)(HANDLE,ULONG,void*,ULONG,ULONG);
 
 #define MAKE_FUNC(f) static typeof(f) *p ## f
 MAKE_FUNC( HeapQueryInformation );
@@ -65,6 +69,9 @@ static void load_functions(void)
     LOAD_FUNC( kernel32, GetPhysicallyInstalledSystemMemory );
     LOAD_FUNC( kernel32, GlobalFlags );
     LOAD_FUNC( ntdll, RtlGetNtGlobalFlags );
+    LOAD_FUNC( ntdll, RtlGetUserInfoHeap );
+    LOAD_FUNC( ntdll, RtlSetUserValueHeap );
+    LOAD_FUNC( ntdll, RtlSetUserFlagsHeap );
 #undef LOAD_FUNC
 }
 
@@ -910,6 +917,7 @@ static void test_GlobalAlloc(void)
     SIZE_T size, alloc_size;
     HGLOBAL mem, tmp_mem;
     BYTE *ptr, *tmp_ptr;
+    ULONG tmp_flags;
     UINT i, flags;
     BOOL ret;
 
@@ -1028,6 +1036,25 @@ static void test_GlobalAlloc(void)
         size = HeapSize( GetProcessHeap(), 0, entry->ptr );
         todo_wine
         ok( size == alloc_size, "HeapSize returned %Iu\n", size );
+
+        tmp_mem = invalid_mem;
+        tmp_flags = 0xdeadbeef;
+        ret = pRtlGetUserInfoHeap( GetProcessHeap(), 0, entry->ptr, (void **)&tmp_mem, &tmp_flags );
+        ok( ret, "RtlGetUserInfoHeap failed, error %lu\n", GetLastError() );
+        todo_wine
+        ok( tmp_mem == mem, "got user ptr %p\n", tmp_mem );
+        todo_wine
+        ok( tmp_flags == 0x200, "got user flags %#lx\n", tmp_flags );
+
+        ret = pRtlSetUserValueHeap( GetProcessHeap(), 0, entry->ptr, invalid_mem );
+        todo_wine
+        ok( ret, "RtlSetUserValueHeap failed, error %lu\n", GetLastError() );
+        tmp_mem = GlobalHandle( entry->ptr );
+        todo_wine
+        ok( tmp_mem == invalid_mem, "GlobalHandle returned unexpected handle\n" );
+        ret = pRtlSetUserValueHeap( GetProcessHeap(), 0, entry->ptr, mem );
+        todo_wine
+        ok( ret, "RtlSetUserValueHeap failed, error %lu\n", GetLastError() );
 
         ptr = GlobalLock( mem );
         ok( !!ptr, "GlobalLock failed, error %lu\n", GetLastError() );
@@ -1737,7 +1764,9 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
     DWORD padd_flags = HEAP_VALIDATE | HEAP_VALIDATE_ALL | HEAP_VALIDATE_PARAMS;
     SIZE_T expect_size, alloc_size, extra_size, tail_size = 0;
     unsigned char *ptr0, *ptr1, *ptr2;
-    char tail_buf[64];
+    char tail_buf[64], padd_buf[64];
+    void *tmp_ptr, **user_ptr;
+    ULONG tmp_flags;
     BOOL ret;
 
     if (global_flags & (FLG_HEAP_DISABLE_COALESCING|FLG_HEAP_PAGE_ALLOCS|FLG_POOL_ENABLE_TAGGING|
@@ -1754,6 +1783,7 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
 
     if ((heap_flags & HEAP_TAIL_CHECKING_ENABLED)) tail_size = 2 * sizeof(void *);
     memset( tail_buf, 0xab, sizeof(tail_buf) );
+    memset( padd_buf, 0, sizeof(padd_buf) );
 
     for (alloc_size = 0x20000 * sizeof(void *) - 0x3000; alloc_size > 0; alloc_size >>= 1)
     {
@@ -1846,7 +1876,111 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
         ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
         ret = HeapFree( heap, 0, ptr0 );
         ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+        winetest_pop_context();
+    }
 
+    /* Undocumented HEAP_ADD_USER_INFO flag can be used to force an additional padding
+     * on small block sizes. Small block use it to store user info, larger blocks
+     * store them in their block header instead.
+     *
+     * RtlGetUserInfoHeap also requires the flag to work consistently, and otherwise
+     * causes crashes when heap flags are used, or on 32-bit.
+     */
+    if (!(heap_flags & padd_flags))
+    {
+        alloc_size = 0x1000;
+        winetest_push_context( "size %#Ix", alloc_size );
+        ptr0 = pHeapAlloc( heap, 0xc00|HEAP_ADD_USER_INFO, alloc_size );
+        ok( !!ptr0, "HeapAlloc failed, error %lu\n", GetLastError() );
+        ptr1 = HeapAlloc( heap, 0x200|HEAP_ADD_USER_INFO, alloc_size );
+        ok( !!ptr1, "HeapAlloc failed, error %lu\n", GetLastError() );
+        ptr2 = HeapAlloc( heap, HEAP_ADD_USER_INFO, alloc_size );
+        ok( !!ptr2, "HeapAlloc failed, error %lu\n", GetLastError() );
+
+        expect_size = max( alloc_size, 2 * sizeof(void *) );
+        expect_size = ALIGN_BLOCK_SIZE( expect_size + extra_size + 2 * sizeof(void *) );
+        todo_wine_if( heap_flags & (HEAP_VALIDATE_PARAMS|HEAP_VALIDATE_ALL) ||
+                      (ptr2 - ptr1 != expect_size && ptr1 - ptr0 != expect_size) )
+        ok( ptr2 - ptr1 == expect_size || ptr1 - ptr0 == expect_size,
+            "got diff %#Ix %#Ix\n", ptr2 - ptr1, ptr1 - ptr0 );
+
+        ok( !memcmp( ptr0 + alloc_size, tail_buf, tail_size ), "missing block tail\n" );
+        ok( !memcmp( ptr1 + alloc_size, tail_buf, tail_size ), "missing block tail\n" );
+        ok( !memcmp( ptr2 + alloc_size, tail_buf, tail_size ), "missing block tail\n" );
+
+        todo_wine
+        ok( !memcmp( ptr0 + alloc_size + tail_size, padd_buf, 2 * sizeof(void *) ), "unexpected padding\n" );
+
+        tmp_ptr = (void *)0xdeadbeef;
+        tmp_flags = 0xdeadbeef;
+        ret = pRtlGetUserInfoHeap( heap, 0, ptr0, (void **)&tmp_ptr, &tmp_flags );
+        ok( ret, "RtlGetUserInfoHeap failed, error %lu\n", GetLastError() );
+        ok( tmp_ptr == (void *)NULL, "got ptr %p\n", tmp_ptr );
+        todo_wine
+        ok( tmp_flags == 0xc00, "got flags %#lx\n", tmp_flags );
+
+        tmp_ptr = (void *)0xdeadbeef;
+        tmp_flags = 0xdeadbeef;
+        ret = pRtlGetUserInfoHeap( heap, 0, ptr1, (void **)&tmp_ptr, &tmp_flags );
+        ok( ret, "RtlGetUserInfoHeap failed, error %lu\n", GetLastError() );
+        ok( tmp_ptr == (void *)NULL, "got ptr %p\n", tmp_ptr );
+        todo_wine
+        ok( tmp_flags == 0x200, "got flags %#lx\n", tmp_flags );
+
+        ret = pRtlSetUserValueHeap( heap, 0, ptr0, (void *)0xdeadbeef );
+        todo_wine
+        ok( ret, "RtlSetUserValueHeap failed, error %lu\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        ret = pRtlSetUserFlagsHeap( heap, 0, ptr0, 0, 0x1000 );
+        ok( !ret, "RtlSetUserFlagsHeap succeeded\n" );
+        todo_wine
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
+        SetLastError( 0xdeadbeef );
+        ret = pRtlSetUserFlagsHeap( heap, 0, ptr0, 0x100, 0 );
+        ok( !ret, "RtlSetUserFlagsHeap succeeded\n" );
+        todo_wine
+        ok( GetLastError() == ERROR_INVALID_PARAMETER, "got error %lu\n", GetLastError() );
+        ret = pRtlSetUserFlagsHeap( heap, 0, ptr0, 0x400, 0x200 );
+        todo_wine
+        ok( ret, "RtlSetUserFlagsHeap failed, error %lu\n", GetLastError() );
+
+        tmp_ptr = NULL;
+        tmp_flags = 0;
+        ret = pRtlGetUserInfoHeap( heap, 0, ptr0, (void **)&tmp_ptr, &tmp_flags );
+        ok( ret, "RtlGetUserInfoHeap failed, error %lu\n", GetLastError() );
+        todo_wine
+        ok( tmp_ptr == (void *)0xdeadbeef, "got ptr %p\n", tmp_ptr );
+        todo_wine
+        ok( tmp_flags == 0xa00 || broken(tmp_flags == 0xc00) /* w1064v1507 */,
+            "got flags %#lx\n", tmp_flags );
+
+        user_ptr = (void **)(ptr0 + alloc_size + tail_size);
+        todo_wine
+        ok( user_ptr[0] == 0, "unexpected padding\n" );
+        todo_wine
+        ok( user_ptr[1] == (void *)0xdeadbeef, "unexpected user value\n" );
+        if (user_ptr[1] == (void *)0xdeadbeef)
+        {
+            user_ptr[0] = (void *)0xdeadbeef;
+            user_ptr[1] = (void *)0xdeadbee0;
+        }
+
+        tmp_ptr = NULL;
+        tmp_flags = 0;
+        ret = pRtlGetUserInfoHeap( heap, 0, ptr0, (void **)&tmp_ptr, &tmp_flags );
+        ok( ret, "RtlGetUserInfoHeap failed, error %lu\n", GetLastError() );
+        todo_wine
+        ok( tmp_ptr == (void *)0xdeadbee0, "got ptr %p\n", tmp_ptr );
+        todo_wine
+        ok( tmp_flags == 0xa00 || broken(tmp_flags == 0xc00) /* w1064v1507 */,
+            "got flags %#lx\n", tmp_flags );
+
+        ret = HeapFree( heap, 0, ptr2 );
+        ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+        ret = HeapFree( heap, 0, ptr1 );
+        ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+        ret = HeapFree( heap, 0, ptr0 );
+        ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
         winetest_pop_context();
     }
 }
