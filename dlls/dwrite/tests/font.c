@@ -157,7 +157,7 @@ enum TT_HEAD_MACSTYLE
     TT_HEAD_MACSTYLE_EXTENDED  = 1 << 6,
 };
 
-typedef struct
+struct tt_os2
 {
     USHORT version;
     SHORT xAvgCharWidth;
@@ -202,7 +202,7 @@ typedef struct
     USHORT usDefaultChar;
     USHORT usBreakChar;
     USHORT usMaxContext;
-} TT_OS2_V2;
+};
 
 enum OS2_FSSELECTION {
     OS2_FSSELECTION_ITALIC           = 1 << 0,
@@ -2024,7 +2024,7 @@ static void test_CreateFontFace(void)
 static void get_expected_font_metrics(IDWriteFontFace *fontface, DWRITE_FONT_METRICS1 *metrics)
 {
     void *os2_context, *head_context, *post_context, *hhea_context;
-    const TT_OS2_V2 *tt_os2;
+    const struct tt_os2 *tt_os2;
     const TT_HEAD *tt_head;
     const TT_POST *tt_post;
     const TT_HHEA *tt_hhea;
@@ -2684,8 +2684,8 @@ static void get_logfont_from_font(IDWriteFont *font, LOGFONTW *logfont)
     void *os2_context, *head_context;
     IDWriteLocalizedStrings *names;
     DWRITE_FONT_SIMULATIONS sim;
+    const struct tt_os2 *tt_os2;
     IDWriteFontFace *fontface;
-    const TT_OS2_V2 *tt_os2;
     DWRITE_FONT_STYLE style;
     const TT_HEAD *tt_head;
     LONG weight;
@@ -6479,8 +6479,8 @@ static void test_GetGdiCompatibleMetrics(void)
 
 static void get_expected_panose(IDWriteFont1 *font, DWRITE_PANOSE *panose)
 {
+    const struct tt_os2 *tt_os2;
     IDWriteFontFace *fontface;
-    const TT_OS2_V2 *tt_os2;
     void *os2_context;
     UINT32 size;
     BOOL exists;
@@ -7448,7 +7448,7 @@ static BOOL get_expected_is_symbol(IDWriteFontFace *fontface)
 {
     BOOL exists, is_symbol = FALSE;
     struct dwrite_fonttable cmap;
-    const TT_OS2_V2 *tt_os2;
+    const struct tt_os2 *tt_os2;
     const BYTE *tables;
     void *os2_context;
     WORD num_tables;
@@ -8188,10 +8188,9 @@ static void test_CreateFontFaceReference(void)
 
 static void get_expected_fontsig(IDWriteFont *font, FONTSIGNATURE *fontsig)
 {
-    void *os2_context;
+    struct dwrite_fonttable os2;
     IDWriteFontFace *fontface;
-    const TT_OS2_V2 *tt_os2;
-    UINT32 size;
+    WORD version;
     BOOL exists;
     HRESULT hr;
 
@@ -8200,25 +8199,29 @@ static void get_expected_fontsig(IDWriteFont *font, FONTSIGNATURE *fontsig)
     hr = IDWriteFont_CreateFontFace(font, &fontface);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_OS2_TAG, (const void **)&tt_os2, &size, &os2_context, &exists);
+    hr = IDWriteFontFace_TryGetFontTable(fontface, MS_OS2_TAG, (const void **)&os2.data, &os2.size, &os2.context, &exists);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-    if (tt_os2) {
-        fontsig->fsUsb[0] = GET_BE_DWORD(tt_os2->ulUnicodeRange1);
-        fontsig->fsUsb[1] = GET_BE_DWORD(tt_os2->ulUnicodeRange2);
-        fontsig->fsUsb[2] = GET_BE_DWORD(tt_os2->ulUnicodeRange3);
-        fontsig->fsUsb[3] = GET_BE_DWORD(tt_os2->ulUnicodeRange4);
+    if (os2.data)
+    {
+        fontsig->fsUsb[0] = table_read_be_dword(&os2, NULL, FIELD_OFFSET(struct tt_os2, ulUnicodeRange1));
+        fontsig->fsUsb[1] = table_read_be_dword(&os2, NULL, FIELD_OFFSET(struct tt_os2, ulUnicodeRange2));
+        fontsig->fsUsb[2] = table_read_be_dword(&os2, NULL, FIELD_OFFSET(struct tt_os2, ulUnicodeRange3));
+        fontsig->fsUsb[3] = table_read_be_dword(&os2, NULL, FIELD_OFFSET(struct tt_os2, ulUnicodeRange4));
 
-        if (GET_BE_WORD(tt_os2->version) == 0) {
+        version = table_read_be_word(&os2, NULL, FIELD_OFFSET(struct tt_os2, version));
+        if (version == 0)
+        {
             fontsig->fsCsb[0] = 0;
             fontsig->fsCsb[1] = 0;
         }
-        else {
-            fontsig->fsCsb[0] = GET_BE_DWORD(tt_os2->ulCodePageRange1);
-            fontsig->fsCsb[1] = GET_BE_DWORD(tt_os2->ulCodePageRange2);
+        else
+        {
+            fontsig->fsCsb[0] = table_read_be_dword(&os2, NULL, FIELD_OFFSET(struct tt_os2, ulCodePageRange1));
+            fontsig->fsCsb[1] = table_read_be_dword(&os2, NULL, FIELD_OFFSET(struct tt_os2, ulCodePageRange2));
         }
 
-        IDWriteFontFace_ReleaseFontTable(fontface, os2_context);
+        IDWriteFontFace_ReleaseFontTable(fontface, os2.context);
     }
 
     IDWriteFontFace_Release(fontface);
