@@ -37,6 +37,9 @@
 #define HEAP_VALIDATE_ALL     0x20000000
 #define HEAP_VALIDATE_PARAMS  0x40000000
 
+#define BLOCK_ALIGN         (2 * sizeof(void *) - 1)
+#define ALIGN_BLOCK_SIZE(x) (((x) + BLOCK_ALIGN) & ~BLOCK_ALIGN)
+
 /* use function pointers to avoid warnings for invalid parameter tests */
 static LPVOID (WINAPI *pHeapAlloc)(HANDLE,DWORD,SIZE_T);
 static LPVOID (WINAPI *pHeapReAlloc)(HANDLE,DWORD,LPVOID,SIZE_T);
@@ -1729,6 +1732,125 @@ static void test_LocalAlloc(void)
     }
 }
 
+static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags )
+{
+    DWORD padd_flags = HEAP_VALIDATE | HEAP_VALIDATE_ALL | HEAP_VALIDATE_PARAMS;
+    SIZE_T expect_size, alloc_size, extra_size, tail_size = 0;
+    unsigned char *ptr0, *ptr1, *ptr2;
+    char tail_buf[64];
+    BOOL ret;
+
+    if (global_flags & (FLG_HEAP_DISABLE_COALESCING|FLG_HEAP_PAGE_ALLOCS|FLG_POOL_ENABLE_TAGGING|
+                        FLG_HEAP_ENABLE_TAGGING|FLG_HEAP_ENABLE_TAG_BY_DLL))
+    {
+        skip( "skipping not yet implemented block layout tests\n" );
+        return;
+    }
+
+    if (!global_flags) extra_size = 8;
+    else extra_size = 2 * sizeof(void *);
+    if (heap_flags & HEAP_TAIL_CHECKING_ENABLED) extra_size += 2 * sizeof(void *);
+    if (heap_flags & padd_flags) extra_size += 2 * sizeof(void *);
+
+    if ((heap_flags & HEAP_TAIL_CHECKING_ENABLED)) tail_size = 2 * sizeof(void *);
+    memset( tail_buf, 0xab, sizeof(tail_buf) );
+
+    for (alloc_size = 0x20000 * sizeof(void *) - 0x3000; alloc_size > 0; alloc_size >>= 1)
+    {
+        winetest_push_context( "size %#Ix", alloc_size );
+
+        ptr0 = pHeapAlloc( heap, HEAP_ZERO_MEMORY, alloc_size );
+        ok( !!ptr0, "HeapAlloc failed, error %lu\n", GetLastError() );
+        ptr1 = pHeapAlloc( heap, HEAP_ZERO_MEMORY, alloc_size );
+        ok( !!ptr1, "HeapAlloc failed, error %lu\n", GetLastError() );
+        ptr2 = pHeapAlloc( heap, HEAP_ZERO_MEMORY, alloc_size );
+        ok( !!ptr2, "HeapAlloc failed, error %lu\n", GetLastError() );
+
+        ok( !((UINT_PTR)ptr0 & (2 * sizeof(void *) - 1)), "got unexpected ptr align\n" );
+        ok( !((UINT_PTR)ptr1 & (2 * sizeof(void *) - 1)), "got unexpected ptr align\n" );
+        ok( !((UINT_PTR)ptr2 & (2 * sizeof(void *) - 1)), "got unexpected ptr align\n" );
+
+        expect_size = max( alloc_size, 2 * sizeof(void *) );
+        expect_size = ALIGN_BLOCK_SIZE( expect_size + extra_size );
+        todo_wine_if( heap_flags & (HEAP_VALIDATE_PARAMS|HEAP_VALIDATE_ALL) ||
+                      min( llabs( ptr2 - ptr1 ), llabs( ptr1 - ptr0 ) ) != expect_size )
+        ok( min( llabs( ptr2 - ptr1 ), llabs( ptr1 - ptr0 ) ) == expect_size, "got diff %#I64x\n",
+            min( llabs( ptr2 - ptr1 ), llabs( ptr1 - ptr0 ) ) );
+
+        ok( !memcmp( ptr0 + alloc_size, tail_buf, tail_size ), "missing block tail\n" );
+        ok( !memcmp( ptr1 + alloc_size, tail_buf, tail_size ), "missing block tail\n" );
+        ok( !memcmp( ptr2 + alloc_size, tail_buf, tail_size ), "missing block tail\n" );
+
+        ret = HeapFree( heap, 0, ptr2 );
+        ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+        ret = HeapFree( heap, 0, ptr1 );
+        ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+        ret = HeapFree( heap, 0, ptr0 );
+        ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+
+        winetest_pop_context();
+    }
+
+
+    /* between the two thesholds, tail may still be set but block position is inconsistent */
+
+    alloc_size = 0x20000 * sizeof(void *) - 0x2000;
+    winetest_push_context( "size %#Ix", alloc_size );
+
+    ptr0 = pHeapAlloc( heap, HEAP_ZERO_MEMORY, alloc_size );
+    ok( !!ptr0, "HeapAlloc failed, error %lu\n", GetLastError() );
+    ok( !((UINT_PTR)ptr0 & (2 * sizeof(void *) - 1)), "got unexpected ptr align\n" );
+
+    ok( !memcmp( ptr0 + alloc_size, tail_buf, tail_size ), "missing block tail\n" );
+
+    ret = HeapFree( heap, 0, ptr0 );
+    ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+
+    winetest_pop_context();
+
+
+    for (alloc_size = 0x20000 * sizeof(void *) - 0x1000; alloc_size < 0x800000; alloc_size <<= 1)
+    {
+        winetest_push_context( "size %#Ix", alloc_size );
+
+        ptr0 = pHeapAlloc( heap, HEAP_ZERO_MEMORY, alloc_size );
+        ok( !!ptr0, "HeapAlloc failed, error %lu\n", GetLastError() );
+        ptr1 = pHeapAlloc( heap, 0, alloc_size );
+        ok( !!ptr1, "HeapAlloc failed, error %lu\n", GetLastError() );
+        ptr2 = pHeapAlloc( heap, 0, alloc_size );
+        ok( !!ptr2, "HeapAlloc failed, error %lu\n", GetLastError() );
+
+        todo_wine_if( sizeof(void *) == 8 || alloc_size == 0x7efe9 )
+        ok( !((UINT_PTR)ptr0 & (8 * sizeof(void *) - 1)), "got unexpected ptr align\n" );
+        todo_wine_if( sizeof(void *) == 8 || alloc_size == 0x7efe9 )
+        ok( !((UINT_PTR)ptr1 & (8 * sizeof(void *) - 1)), "got unexpected ptr align\n" );
+        todo_wine_if( sizeof(void *) == 8 || alloc_size == 0x7efe9 )
+        ok( !((UINT_PTR)ptr2 & (8 * sizeof(void *) - 1)), "got unexpected ptr align\n" );
+
+        expect_size = max( alloc_size, 2 * sizeof(void *) );
+        expect_size = ALIGN_BLOCK_SIZE( expect_size + extra_size );
+        todo_wine_if( alloc_size == 0x7efe9 )
+        ok( min( llabs( ptr2 - ptr1 ), llabs( ptr1 - ptr0 ) ) > expect_size, "got diff %#I64x\n",
+            min( llabs( ptr2 - ptr1 ), llabs( ptr1 - ptr0 ) ) );
+
+        todo_wine_if( heap_flags & HEAP_TAIL_CHECKING_ENABLED )
+        ok( !ptr0[alloc_size], "got block tail\n" );
+        todo_wine_if( heap_flags & HEAP_TAIL_CHECKING_ENABLED )
+        ok( !ptr1[alloc_size], "got block tail\n" );
+        todo_wine_if( heap_flags & HEAP_TAIL_CHECKING_ENABLED )
+        ok( !ptr2[alloc_size], "got block tail\n" );
+
+        ret = HeapFree( heap, 0, ptr2 );
+        ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+        ret = HeapFree( heap, 0, ptr1 );
+        ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+        ret = HeapFree( heap, 0, ptr0 );
+        ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+
+        winetest_pop_context();
+    }
+}
+
 static void test_heap_checks( DWORD flags )
 {
     BYTE old, *p, *p2;
@@ -2043,6 +2165,7 @@ static void test_child_heap( const char *arg )
     heap = HeapCreate( HEAP_NO_SERIALIZE, 0, 0 );
     ok( heap != GetProcessHeap(), "got unexpected heap\n" );
     test_heap_layout( heap, global_flags, heap_flags|HEAP_NO_SERIALIZE|HEAP_GROWABLE|HEAP_PRIVATE );
+    test_block_layout( heap, global_flags, heap_flags|HEAP_NO_SERIALIZE|HEAP_GROWABLE|HEAP_PRIVATE );
     ret = HeapDestroy( heap );
     ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
 
