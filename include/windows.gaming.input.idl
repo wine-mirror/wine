@@ -38,9 +38,11 @@ namespace Windows.Gaming.Input {
     typedef enum GameControllerButtonLabel GameControllerButtonLabel;
     typedef enum GameControllerSwitchKind GameControllerSwitchKind;
     typedef enum GameControllerSwitchPosition GameControllerSwitchPosition;
+    typedef enum RacingWheelButtons RacingWheelButtons;
     typedef struct ArcadeStickReading ArcadeStickReading;
     typedef struct GamepadReading GamepadReading;
     typedef struct GamepadVibration GamepadVibration;
+    typedef struct RacingWheelReading RacingWheelReading;
     interface IArcadeStick;
     interface IArcadeStickStatics;
     interface IArcadeStickStatics2;
@@ -50,16 +52,21 @@ namespace Windows.Gaming.Input {
     interface IGamepad2;
     interface IGamepadStatics;
     interface IGamepadStatics2;
+    interface IRacingWheel;
+    interface IRacingWheelStatics;
+    interface IRacingWheelStatics2;
     interface IRawGameController;
     interface IRawGameController2;
     runtimeclass ArcadeStick;
     runtimeclass Gamepad;
     runtimeclass Headset;
+    runtimeclass RacingWheel;
     runtimeclass RawGameController;
 
     declare {
         interface Windows.Foundation.EventHandler<Windows.Gaming.Input.ArcadeStick *>;
         interface Windows.Foundation.EventHandler<Windows.Gaming.Input.Gamepad *>;
+        interface Windows.Foundation.EventHandler<Windows.Gaming.Input.RacingWheel *>;
         interface Windows.Foundation.EventHandler<Windows.Gaming.Input.RawGameController *>;
         interface Windows.Foundation.TypedEventHandler<Windows.Gaming.Input.IGameController *, Windows.Gaming.Input.Headset *>;
         interface Windows.Foundation.TypedEventHandler<Windows.Gaming.Input.IGameController *, Windows.System.UserChangedEventArgs *>;
@@ -70,6 +77,10 @@ namespace Windows.Gaming.Input {
         interface Windows.Foundation.Collections.IIterable<Windows.Gaming.Input.Gamepad *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Gaming.Input.Gamepad *>;
         interface Windows.Foundation.Collections.IVector<Windows.Gaming.Input.Gamepad *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Gaming.Input.RacingWheel *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Gaming.Input.RacingWheel *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Gaming.Input.RacingWheel *>;
+        interface Windows.Foundation.Collections.IVector<Windows.Gaming.Input.RacingWheel *>;
         interface Windows.Foundation.Collections.IIterator<Windows.Gaming.Input.RawGameController *>;
         interface Windows.Foundation.Collections.IIterable<Windows.Gaming.Input.RawGameController *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Gaming.Input.RawGameController *>;
@@ -224,6 +235,37 @@ namespace Windows.Gaming.Input {
         UpLeft    = 8
     };
 
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        flags
+    ]
+    enum RacingWheelButtons
+    {
+        None         = 0x0,
+        PreviousGear = 0x1,
+        NextGear     = 0x2,
+        DPadUp       = 0x4,
+        DPadDown     = 0x8,
+        DPadLeft     = 0x10,
+        DPadRight    = 0x20,
+        Button1      = 0x40,
+        Button2      = 0x80,
+        Button3      = 0x100,
+        Button4      = 0x200,
+        Button5      = 0x400,
+        Button6      = 0x800,
+        Button7      = 0x1000,
+        Button8      = 0x2000,
+        Button9      = 0x4000,
+        Button10     = 0x8000,
+        Button11     = 0x10000,
+        Button12     = 0x20000,
+        Button13     = 0x40000,
+        Button14     = 0x80000,
+        Button15     = 0x100000,
+        Button16     = 0x200000,
+    };
+
     [contract(Windows.Foundation.UniversalApiContract, 3.0)]
     struct ArcadeStickReading
     {
@@ -251,6 +293,19 @@ namespace Windows.Gaming.Input {
         DOUBLE RightMotor;
         DOUBLE LeftTrigger;
         DOUBLE RightTrigger;
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 3.0)]
+    struct RacingWheelReading
+    {
+        UINT64 Timestamp;
+        Windows.Gaming.Input.RacingWheelButtons Buttons;
+        INT32 PatternShifterGear;
+        DOUBLE Wheel;
+        DOUBLE Throttle;
+        DOUBLE Brake;
+        DOUBLE Clutch;
+        DOUBLE Handbrake;
     };
 
     [
@@ -325,6 +380,50 @@ namespace Windows.Gaming.Input {
         [propget] HRESULT Vibration([out, retval] Windows.Gaming.Input.GamepadVibration *value);
         [propput] HRESULT Vibration([in] Windows.Gaming.Input.GamepadVibration value);
         HRESULT GetCurrentReading([out, retval] Windows.Gaming.Input.GamepadReading *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        exclusiveto(Windows.Gaming.Input.RacingWheel),
+        uuid(f546656f-e106-4c82-a90f-554012904b85)
+    ]
+    interface IRacingWheel : IInspectable
+        requires Windows.Gaming.Input.IGameController
+    {
+        [propget] HRESULT HasClutch([out, retval] boolean *value);
+        [propget] HRESULT HasHandbrake([out, retval] boolean *value);
+        [propget] HRESULT HasPatternShifter([out, retval] boolean *value);
+        [propget] HRESULT MaxPatternShifterGear([out, retval] INT32 *value);
+        [propget] HRESULT MaxWheelAngle([out, retval] DOUBLE *value);
+        [propget] HRESULT WheelMotor([out, retval] Windows.Gaming.Input.ForceFeedback.ForceFeedbackMotor **value);
+        HRESULT GetButtonLabel([in] Windows.Gaming.Input.RacingWheelButtons button, [out, retval] Windows.Gaming.Input.GameControllerButtonLabel *value);
+        HRESULT GetCurrentReading([out, retval] Windows.Gaming.Input.RacingWheelReading *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        exclusiveto(Windows.Gaming.Input.RacingWheel),
+        uuid(3ac12cd5-581b-4936-9f94-69f1e6514c7d)
+    ]
+    interface IRacingWheelStatics : IInspectable
+    {
+        [eventadd] HRESULT RacingWheelAdded([in] Windows.Foundation.EventHandler<RacingWheel *> *value, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT RacingWheelAdded([in] EventRegistrationToken token);
+        [eventadd] HRESULT RacingWheelRemoved([in] Windows.Foundation.EventHandler<RacingWheel *> *value, [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT RacingWheelRemoved([in] EventRegistrationToken token);
+        [propget] HRESULT RacingWheels([out, retval] Windows.Foundation.Collections.IVectorView<RacingWheel *> **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.Gaming.Input.RacingWheel),
+        uuid(e666bcaa-edfd-4323-a9f6-3c384048d1ed)
+    ]
+    interface IRacingWheelStatics2 : IInspectable
+        requires Windows.Gaming.Input.IRacingWheelStatics
+    {
+        HRESULT FromGameController([in] Windows.Gaming.Input.IGameController *controller,
+                                   [out, retval] Windows.Gaming.Input.RacingWheel **value);
     }
 
     [
@@ -461,6 +560,20 @@ namespace Windows.Gaming.Input {
     runtimeclass Headset
     {
         [default] interface Windows.Gaming.Input.IHeadset;
+        [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Gaming.Input.IGameControllerBatteryInfo;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        marshaling_behavior(agile),
+        static(Windows.Gaming.Input.IRacingWheelStatics, Windows.Foundation.UniversalApiContract, 3.0),
+        static(Windows.Gaming.Input.IRacingWheelStatics2, Windows.Foundation.UniversalApiContract, 4.0),
+        threading(both)
+    ]
+    runtimeclass RacingWheel
+    {
+        [default] interface Windows.Gaming.Input.IRacingWheel;
+        interface Windows.Gaming.Input.IGameController;
         [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Gaming.Input.IGameControllerBatteryInfo;
     }
 
