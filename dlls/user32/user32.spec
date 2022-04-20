@@ -338,7 +338,7 @@
 @ stdcall GetMenuItemID(long long)
 @ stdcall GetMenuItemInfoA(long long long ptr)
 @ stdcall GetMenuItemInfoW(long long long ptr)
-@ stdcall GetMenuItemRect(long long long ptr)
+@ stdcall GetMenuItemRect(long long long ptr) NtUserGetMenuItemRect
 @ stdcall GetMenuState(long long long)
 @ stdcall GetMenuStringA(long long ptr long long)
 @ stdcall GetMenuStringW(long long ptr long long)

@@ -642,6 +642,16 @@ NTSTATUS WINAPI wow64_NtUserCheckMenuItem( UINT *args )
     return NtUserCheckMenuItem( handle, id, flags );
 }
 
+NTSTATUS WINAPI wow64_NtUserGetMenuItemRect( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+    HMENU handle = get_handle( &args );
+    UINT item = get_ulong( &args );
+    RECT *rect = get_ptr( &args );
+
+    return NtUserGetMenuItemRect( hwnd, handle, item, rect );
+}
+
 NTSTATUS WINAPI wow64_NtUserSetMenuContextHelpId( UINT *args )
 {
     HMENU menu = get_handle( &args );

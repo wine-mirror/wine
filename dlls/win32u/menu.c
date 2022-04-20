@@ -349,6 +349,46 @@ BOOL draw_menu_bar( HWND hwnd )
 }
 
 /**********************************************************************
+ *           NtUserGetMenuItemRect    (win32u.@)
+ */
+BOOL WINAPI NtUserGetMenuItemRect( HWND hwnd, HMENU handle, UINT item, RECT *rect )
+{
+    POPUPMENU *menu;
+    UINT pos;
+    RECT window_rect;
+
+    TRACE( "(%p,%p,%d,%p)\n", hwnd, handle, item, rect );
+
+    if (!rect)
+        return FALSE;
+
+    if (!(menu = find_menu_item( handle, item, MF_BYPOSITION, &pos )))
+        return FALSE;
+
+    if (!hwnd) hwnd = menu->hWnd;
+    if (!hwnd)
+    {
+        release_menu_ptr( menu );
+        return FALSE;
+    }
+
+    *rect = menu->items[pos].rect;
+    OffsetRect( rect, menu->items_rect.left, menu->items_rect.top );
+
+    /* Popup menu item draws in the client area */
+    if (menu->wFlags & MF_POPUP) map_window_points( hwnd, 0, (POINT *)rect, 2, get_thread_dpi() );
+    else
+    {
+        /* Sysmenu draws in the non-client area */
+        get_window_rect( hwnd, &window_rect, get_thread_dpi() );
+        OffsetRect( rect, window_rect.left, window_rect.top );
+    }
+
+    release_menu_ptr(menu);
+    return TRUE;
+}
+
+/**********************************************************************
  *           NtUserSetMenuContextHelpId    (win32u.@)
  */
 BOOL WINAPI NtUserSetMenuContextHelpId( HMENU handle, DWORD id )

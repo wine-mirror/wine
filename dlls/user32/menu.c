@@ -4262,13 +4262,13 @@ BOOL WINAPI GetMenuBarInfo( HWND hwnd, LONG idObject, LONG idItem, PMENUBARINFO 
     }
     else if (idItem == 0)
     {
-        GetMenuItemRect(hwnd, hmenu, 0, &pmbi->rcBar);
+        NtUserGetMenuItemRect( hwnd, hmenu, 0, &pmbi->rcBar );
         pmbi->rcBar.right = pmbi->rcBar.left + menu->Width;
         pmbi->rcBar.bottom = pmbi->rcBar.top + menu->Height;
     }
     else
     {
-        GetMenuItemRect(hwnd, hmenu, idItem - 1, &pmbi->rcBar);
+        NtUserGetMenuItemRect( hwnd, hmenu, idItem - 1, &pmbi->rcBar );
     }
 
     pmbi->hMenu = hmenu;
@@ -5119,51 +5119,6 @@ BOOL WINAPI CheckMenuRadioItem(HMENU hMenu, UINT first, UINT last,
     return done;
 }
 
-
-/**********************************************************************
- *		GetMenuItemRect    (USER32.@)
- *
- *      ATTENTION: Here, the returned values in rect are the screen
- *                 coordinates of the item just like if the menu was
- *                 always on the upper left side of the application.
- *
- */
-BOOL WINAPI GetMenuItemRect(HWND hwnd, HMENU hMenu, UINT uItem, RECT *rect)
-{
-    POPUPMENU *menu;
-    UINT pos;
-    RECT window_rect;
-
-    TRACE("(%p,%p,%d,%p)\n", hwnd, hMenu, uItem, rect);
-
-    if (!rect)
-        return FALSE;
-
-    if (!(menu = find_menu_item(hMenu, uItem, MF_BYPOSITION, &pos)))
-        return FALSE;
-
-    if (!hwnd) hwnd = menu->hWnd;
-    if (!hwnd)
-    {
-        release_menu_ptr(menu);
-        return FALSE;
-    }
-
-    *rect = menu->items[pos].rect;
-    OffsetRect(rect, menu->items_rect.left, menu->items_rect.top);
-
-    /* Popup menu item draws in the client area */
-    if (menu->wFlags & MF_POPUP) MapWindowPoints(hwnd, 0, (POINT *)rect, 2);
-    else
-    {
-        /* Sysmenu draws in the non-client area */
-        GetWindowRect(hwnd, &window_rect);
-        OffsetRect(rect, window_rect.left, window_rect.top);
-    }
-
-    release_menu_ptr(menu);
-    return TRUE;
-}
 
 /**********************************************************************
  *		SetMenuInfo    (USER32.@)

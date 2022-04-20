@@ -123,6 +123,7 @@
     SYSCALL_ENTRY( NtUserGetKeyboardLayoutName ) \
     SYSCALL_ENTRY( NtUserGetKeyboardState ) \
     SYSCALL_ENTRY( NtUserGetLayeredWindowAttributes ) \
+    SYSCALL_ENTRY( NtUserGetMenuItemRect ) \
     SYSCALL_ENTRY( NtUserGetMouseMovePointsEx ) \
     SYSCALL_ENTRY( NtUserGetObjectInformation ) \
     SYSCALL_ENTRY( NtUserGetOpenClipboardWindow ) \
