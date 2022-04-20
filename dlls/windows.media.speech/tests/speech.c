@@ -858,6 +858,8 @@ static void test_SpeechRecognizer(void)
         goto done;
     }
 
+    check_interface(factory, &IID_IAgileObject, TRUE);
+
     hr = IActivationFactory_QueryInterface(factory, &IID_ISpeechRecognizerFactory, (void **)&sr_factory);
     ok(hr == S_OK, "IActivationFactory_QueryInterface IID_ISpeechRecognizer failed, hr %#lx.\n", hr);
 
@@ -901,7 +903,6 @@ static void test_SpeechRecognizer(void)
     if (hr == S_OK)
     {
         check_refcount(inspectable, 1);
-        check_interface(factory, &IID_IAgileObject, TRUE);
 
         hr = IInspectable_QueryInterface(inspectable, &IID_ISpeechRecognizer, (void **)&recognizer);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -1068,8 +1069,6 @@ static void test_SpeechRecognizer(void)
         todo_wine ok(hr == S_OK, "IAsyncInfo_get_Status failed, hr %#lx.\n", hr);
         todo_wine ok(async_status == Started || async_status == Completed, "Status was %#x.\n", async_status);
 
-        IAsyncInfo_Release(info);
-
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_put_Completed(operation, &compilation_handler2.IAsyncHandler_Compilation_iface);
         todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
@@ -1080,6 +1079,9 @@ static void test_SpeechRecognizer(void)
         hr = IAsyncInfo_get_Status(info, &async_status);
         todo_wine ok(hr == S_OK, "IAsyncInfo_get_Status failed, hr %#lx.\n", hr);
         todo_wine ok(async_status == Completed, "Status was %#x.\n", async_status);
+
+        ref = IAsyncInfo_Release(info);
+        todo_wine ok(ref == 1, "Got unexpected ref %lu.\n", ref);
 
 skip_operation:
         ref = IAsyncOperation_SpeechRecognitionCompilationResult_Release(operation);
