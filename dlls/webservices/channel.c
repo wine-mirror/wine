@@ -40,7 +40,7 @@ static const struct prop_desc channel_props[] =
     { sizeof(WS_ENCODING), TRUE },                          /* WS_CHANNEL_PROPERTY_ENCODING */
     { sizeof(WS_ENVELOPE_VERSION), FALSE },                 /* WS_CHANNEL_PROPERTY_ENVELOPE_VERSION */
     { sizeof(WS_ADDRESSING_VERSION), FALSE },               /* WS_CHANNEL_PROPERTY_ADDRESSING_VERSION */
-    { sizeof(ULONG), FALSE },                               /* WS_CHANNEL_PROPERTY_MAX_SESSION_DICTIONARY_SIZE */
+    { sizeof(ULONG), TRUE },                                /* WS_CHANNEL_PROPERTY_MAX_SESSION_DICTIONARY_SIZE */
     { sizeof(WS_CHANNEL_STATE), TRUE },                     /* WS_CHANNEL_PROPERTY_STATE */
     { sizeof(WS_CALLBACK_MODEL), FALSE },                   /* WS_CHANNEL_PROPERTY_ASYNC_CALLBACK_MODEL */
     { sizeof(WS_IP_VERSION), FALSE },                       /* WS_CHANNEL_PROPERTY_IP_VERSION */
@@ -236,6 +236,7 @@ struct channel
     char                   *send_buf;
     ULONG                   send_buflen;
     ULONG                   send_size;
+    ULONG                   dict_size;
     ULONG                   prop_count;
     struct prop             prop[ARRAY_SIZE( channel_props )];
 };
@@ -483,6 +484,7 @@ static HRESULT create_channel( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding,
     case WS_TCP_CHANNEL_BINDING:
         channel->u.tcp.socket = -1;
         channel->encoding     = WS_ENCODING_XML_BINARY_SESSION_1;
+        channel->dict_size    = 2048;
         break;
 
     case WS_UDP_CHANNEL_BINDING:
@@ -534,6 +536,16 @@ static HRESULT create_channel( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding,
             break;
 
         }
+        case WS_CHANNEL_PROPERTY_MAX_SESSION_DICTIONARY_SIZE:
+            if (channel->binding != WS_TCP_CHANNEL_BINDING || !prop->value || prop->valueSize != sizeof(channel->dict_size))
+            {
+                free_channel( channel );
+                return E_INVALIDARG;
+            }
+
+            channel->dict_size = *(ULONG *)prop->value;
+            break;
+
         default:
             if ((hr = prop_set( channel->prop, channel->prop_count, prop->id, prop->value, prop->valueSize )) != S_OK)
             {
@@ -710,6 +722,13 @@ HRESULT WINAPI WsGetChannelProperty( WS_CHANNEL *handle, WS_CHANNEL_PROPERTY_ID 
     case WS_CHANNEL_PROPERTY_STATE:
         if (!buf || size != sizeof(channel->state)) hr = E_INVALIDARG;
         else *(WS_CHANNEL_STATE *)buf = channel->state;
+        break;
+
+    case WS_CHANNEL_PROPERTY_MAX_SESSION_DICTIONARY_SIZE:
+        if (channel->binding != WS_TCP_CHANNEL_BINDING || !buf || size != sizeof(channel->dict_size))
+            hr = E_INVALIDARG;
+        else
+            *(ULONG *)buf = channel->dict_size;
         break;
 
     default:

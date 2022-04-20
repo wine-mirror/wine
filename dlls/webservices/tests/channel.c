@@ -66,6 +66,10 @@ static void test_WsCreateChannel(void)
     ok( hr == S_OK, "got %#lx\n", hr );
     ok( addr_version == WS_ADDRESSING_VERSION_1_0, "got %u\n", addr_version );
 
+    size = 0xdeadbeef;
+    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_MAX_SESSION_DICTIONARY_SIZE, &size, sizeof(size), NULL );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
+
     /* read-only property */
     state = 0xdeadbeef;
     hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_STATE, &state, sizeof(state), NULL );
@@ -112,10 +116,15 @@ static void test_WsCreateChannel(void)
     ok( hr == S_OK, "got %#lx\n", hr );
     ok( addr_version == WS_ADDRESSING_VERSION_1_0, "got %u\n", addr_version );
 
+    /* Read-only, only settable on channel creation. */
+    size = 4096;
+    hr = WsSetChannelProperty( channel, WS_CHANNEL_PROPERTY_MAX_SESSION_DICTIONARY_SIZE, &size, sizeof(size), NULL );
+    ok( hr == E_INVALIDARG, "got %#lx\n", hr );
+
     size = 0xdeadbeef;
     hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_MAX_SESSION_DICTIONARY_SIZE, &size, sizeof(size), NULL );
     ok( hr == S_OK, "got %#lx\n", hr );
-    todo_wine ok( size == 2048, "got %lu\n", size );
+    ok( size == 2048, "got %lu\n", size );
 
     WsFreeChannel( channel );
 }
