@@ -968,7 +968,7 @@ static void test_SpeechRecognizer(void)
         todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         todo_wine check_refcount(&compilation_handler.IAsyncHandler_Compilation_iface, 1);
 
-        WaitForSingleObject(compilation_handler.event_finished, INFINITE);
+        todo_wine ok(!WaitForSingleObject(compilation_handler.event_finished, 1000), "Wait for event_finished failed.\n");
         CloseHandle(compilation_handler.event_finished);
 
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_put_Completed(operation, NULL);
@@ -1072,7 +1072,7 @@ static void test_SpeechRecognizer(void)
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_put_Completed(operation, &compilation_handler2.IAsyncHandler_Compilation_iface);
         todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-        WaitForSingleObject(compilation_handler2.event_finished, INFINITE);
+        todo_wine ok(!WaitForSingleObject(compilation_handler2.event_finished, 1000), "Wait for event_finished failed.\n");
         CloseHandle(compilation_handler2.event_finished);
 
         async_status = 0xdeadbeef;
