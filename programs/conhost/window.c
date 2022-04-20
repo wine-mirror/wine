@@ -823,6 +823,7 @@ static int WINAPI get_first_font_sub_enum( const LOGFONTW *lf, const TEXTMETRICW
             load_config( fc->console->window->config_key, &config );
             config.cell_width  = fc->console->active->font.width;
             config.cell_height = fc->console->active->font.height;
+            config.font_pitch_family = fc->console->active->font.pitch_family;
             memcpy( config.face_name, fc->console->active->font.face_name,
                     fc->console->active->font.face_len * sizeof(WCHAR) );
             config.face_name[fc->console->active->font.face_len] = 0;
