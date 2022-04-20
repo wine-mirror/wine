@@ -155,6 +155,7 @@ static void * const syscalls[] =
     NtUserRemoveClipboardFormatListener,
     NtUserRemoveProp,
     NtUserSetKeyboardState,
+    NtUserSetMenuContextHelpId,
     NtUserSetObjectInformation,
     NtUserSetProcessDpiAwarenessContext,
     NtUserSetProcessWindowStation,

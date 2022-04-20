@@ -347,3 +347,18 @@ BOOL draw_menu_bar( HWND hwnd )
     return NtUserSetWindowPos( hwnd, 0, 0, 0, 0, 0, SWP_NOSIZE | SWP_NOMOVE |
                                SWP_NOACTIVATE | SWP_NOZORDER | SWP_FRAMECHANGED );
 }
+
+/**********************************************************************
+ *           NtUserSetMenuContextHelpId    (win32u.@)
+ */
+BOOL WINAPI NtUserSetMenuContextHelpId( HMENU handle, DWORD id )
+{
+    POPUPMENU *menu;
+
+    TRACE( "(%p 0x%08x)\n", handle, id );
+
+    if (!(menu = grab_menu_ptr( handle ))) return FALSE;
+    menu->dwContextHelpID = id;
+    release_menu_ptr( menu );
+    return TRUE;
+}

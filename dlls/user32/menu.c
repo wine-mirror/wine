@@ -5256,25 +5256,6 @@ BOOL WINAPI GetMenuInfo (HMENU hMenu, LPMENUINFO lpmi)
 
 
 /**********************************************************************
- *         SetMenuContextHelpId    (USER32.@)
- */
-BOOL WINAPI SetMenuContextHelpId( HMENU hMenu, DWORD dwContextHelpID)
-{
-    POPUPMENU *menu;
-
-    TRACE("(%p 0x%08x)\n", hMenu, dwContextHelpID);
-
-    if ((menu = grab_menu_ptr(hMenu)))
-    {
-        menu->dwContextHelpID = dwContextHelpID;
-        release_menu_ptr(menu);
-        return TRUE;
-    }
-    return FALSE;
-}
-
-
-/**********************************************************************
  *         GetMenuContextHelpId    (USER32.@)
  */
 DWORD WINAPI GetMenuContextHelpId( HMENU hMenu )

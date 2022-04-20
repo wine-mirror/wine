@@ -553,6 +553,7 @@ BOOL    WINAPI NtUserSetCursorPos( INT x, INT y );
 HWND    WINAPI NtUserSetFocus( HWND hwnd );
 BOOL    WINAPI NtUserSetKeyboardState( BYTE *state );
 BOOL    WINAPI NtUserSetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags );
+BOOL    WINAPI NtUserSetMenuContextHelpId( HMENU handle, DWORD id );
 HWND    WINAPI NtUserSetParent( HWND hwnd, HWND parent );
 BOOL    WINAPI NtUserSetProcessDpiAwarenessContext( ULONG awareness, ULONG unknown );
 BOOL    WINAPI NtUserSetProcessWindowStation( HWINSTA handle );

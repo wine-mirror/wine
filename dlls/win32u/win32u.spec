@@ -1207,7 +1207,7 @@
 @ stub NtUserSetMagnificationDesktopMagnifierOffsetsDWMUpdated
 @ stub NtUserSetManipulationInputTarget
 @ stub NtUserSetMenu
-@ stub NtUserSetMenuContextHelpId
+@ stdcall -syscall NtUserSetMenuContextHelpId(long long)
 @ stub NtUserSetMenuDefaultItem
 @ stub NtUserSetMenuFlagRtoL
 @ stub NtUserSetMirrorRendering
