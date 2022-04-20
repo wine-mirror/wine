@@ -23,7 +23,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
 
 static void dump_material(const D3DMATERIAL *mat)
 {
-    TRACE("  dwSize : %ld\n", mat->dwSize);
+    TRACE("  dwSize : %lu\n", mat->dwSize);
 }
 
 static inline struct d3d_material *impl_from_IDirect3DMaterial(IDirect3DMaterial *iface)

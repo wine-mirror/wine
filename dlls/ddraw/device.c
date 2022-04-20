@@ -1350,7 +1350,7 @@ static HRESULT WINAPI d3d_device1_CreateMatrix(IDirect3DDevice *iface, D3DMATRIX
 
     *D3DMatHandle = h + 1;
 
-    TRACE(" returning matrix handle %lx\n", *D3DMatHandle);
+    TRACE(" returning matrix handle %#lx\n", *D3DMatHandle);
 
     wined3d_mutex_unlock();
 

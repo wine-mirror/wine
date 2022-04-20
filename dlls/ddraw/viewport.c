@@ -181,9 +181,9 @@ void viewport_free_active_light_index(struct d3d_light *light)
  *****************************************************************************/
 static void _dump_D3DVIEWPORT(const D3DVIEWPORT *lpvp)
 {
-    TRACE("    - dwSize = %ld   dwX = %ld   dwY = %ld\n",
+    TRACE("    - dwSize = %lu   dwX = %lu   dwY = %lu\n",
             lpvp->dwSize, lpvp->dwX, lpvp->dwY);
-    TRACE("    - dwWidth = %ld   dwHeight = %ld\n",
+    TRACE("    - dwWidth = %lu   dwHeight = %lu\n",
             lpvp->dwWidth, lpvp->dwHeight);
     TRACE("    - dvScaleX = %f   dvScaleY = %f\n",
             lpvp->dvScaleX, lpvp->dvScaleY);
@@ -195,9 +195,9 @@ static void _dump_D3DVIEWPORT(const D3DVIEWPORT *lpvp)
 
 static void _dump_D3DVIEWPORT2(const D3DVIEWPORT2 *lpvp)
 {
-    TRACE("    - dwSize = %ld   dwX = %ld   dwY = %ld\n",
+    TRACE("    - dwSize = %lu   dwX = %lu   dwY = %lu\n",
             lpvp->dwSize, lpvp->dwX, lpvp->dwY);
-    TRACE("    - dwWidth = %ld   dwHeight = %ld\n",
+    TRACE("    - dwWidth = %lu   dwHeight = %lu\n",
             lpvp->dwWidth, lpvp->dwHeight);
     TRACE("    - dvClipX = %f   dvClipY = %f\n",
             lpvp->dvClipX, lpvp->dvClipY);

@@ -469,7 +469,7 @@ enum wined3d_format_id wined3dformat_from_ddrawformat(const DDPIXELFORMAT *DDPix
                     return WINED3DFMT_L8_UNORM;
 
                 default:
-                    WARN("Unknown luminance-only bit depth 0x%lx.\n", DDPixelFormat->u1.dwLuminanceBitCount);
+                    WARN("Unknown luminance-only bit depth %lu.\n", DDPixelFormat->u1.dwLuminanceBitCount);
                     return WINED3DFMT_UNKNOWN;
              }
         }
@@ -1138,7 +1138,7 @@ void DDRAW_dump_DDCAPS(const DDCAPS *lpcaps)
         FE(DDSVCAPS_STEREOSEQUENTIAL),
     };
 
-    TRACE(" - dwSize : %ld\n", lpcaps->dwSize);
+    TRACE(" - dwSize : %lu\n", lpcaps->dwSize);
     TRACE(" - dwCaps : "); DDRAW_dump_flags(lpcaps->dwCaps, flags1, ARRAY_SIZE(flags1));
     TRACE(" - dwCaps2 : "); DDRAW_dump_flags(lpcaps->dwCaps2, flags2, ARRAY_SIZE(flags2));
     TRACE(" - dwCKeyCaps : "); DDRAW_dump_flags(lpcaps->dwCKeyCaps, flags3, ARRAY_SIZE(flags3));
@@ -1147,10 +1147,10 @@ void DDRAW_dump_DDCAPS(const DDCAPS *lpcaps)
     TRACE(" - dwPalCaps : "); DDRAW_dump_flags(lpcaps->dwPalCaps, flags6, ARRAY_SIZE(flags6));
     TRACE(" - dwSVCaps : "); DDRAW_dump_flags(lpcaps->dwSVCaps, flags7, ARRAY_SIZE(flags7));
     TRACE("...\n");
-    TRACE(" - dwNumFourCCCodes : %ld\n", lpcaps->dwNumFourCCCodes);
-    TRACE(" - dwCurrVisibleOverlays : %ld\n", lpcaps->dwCurrVisibleOverlays);
-    TRACE(" - dwMinOverlayStretch : %ld\n", lpcaps->dwMinOverlayStretch);
-    TRACE(" - dwMaxOverlayStretch : %ld\n", lpcaps->dwMaxOverlayStretch);
+    TRACE(" - dwNumFourCCCodes : %lu\n", lpcaps->dwNumFourCCCodes);
+    TRACE(" - dwCurrVisibleOverlays : %lu\n", lpcaps->dwCurrVisibleOverlays);
+    TRACE(" - dwMinOverlayStretch : %lu\n", lpcaps->dwMinOverlayStretch);
+    TRACE(" - dwMaxOverlayStretch : %lu\n", lpcaps->dwMaxOverlayStretch);
     TRACE("...\n");
     TRACE(" - ddsCaps : "); DDRAW_dump_DDSCAPS2(&lpcaps->ddsCaps);
 }

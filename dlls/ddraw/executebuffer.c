@@ -31,17 +31,17 @@ WINE_DEFAULT_DEBUG_CHANNEL(ddraw);
  *****************************************************************************/
 
 static void _dump_executedata(const D3DEXECUTEDATA *lpData) {
-    TRACE("dwSize : %ld\n", lpData->dwSize);
-    TRACE("Vertex      Offset : %ld  Count  : %ld\n", lpData->dwVertexOffset, lpData->dwVertexCount);
-    TRACE("Instruction Offset : %ld  Length : %ld\n", lpData->dwInstructionOffset, lpData->dwInstructionLength);
-    TRACE("HVertex     Offset : %ld\n", lpData->dwHVertexOffset);
+    TRACE("dwSize : %lu\n", lpData->dwSize);
+    TRACE("Vertex      Offset : %lu  Count  : %lu\n", lpData->dwVertexOffset, lpData->dwVertexCount);
+    TRACE("Instruction Offset : %lu  Length : %lu\n", lpData->dwInstructionOffset, lpData->dwInstructionLength);
+    TRACE("HVertex     Offset : %lu\n", lpData->dwHVertexOffset);
 }
 
 static void _dump_D3DEXECUTEBUFFERDESC(const D3DEXECUTEBUFFERDESC *lpDesc) {
-    TRACE("dwSize       : %ld\n", lpDesc->dwSize);
-    TRACE("dwFlags      : %lx\n", lpDesc->dwFlags);
-    TRACE("dwCaps       : %lx\n", lpDesc->dwCaps);
-    TRACE("dwBufferSize : %ld\n", lpDesc->dwBufferSize);
+    TRACE("dwSize       : %lu\n", lpDesc->dwSize);
+    TRACE("dwFlags      : %#lx\n", lpDesc->dwFlags);
+    TRACE("dwCaps       : %#lx\n", lpDesc->dwCaps);
+    TRACE("dwBufferSize : %lu\n", lpDesc->dwBufferSize);
     TRACE("lpData       : %p\n", lpDesc->lpData);
 }
 
