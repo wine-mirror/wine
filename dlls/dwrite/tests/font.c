@@ -8286,7 +8286,7 @@ static void test_GetFontSignature(void)
 
         get_expected_fontsig(font, &expected_signature);
 
-        winetest_push_context("Font %s\n", wine_dbgstr_w(nameW));
+        winetest_push_context("Font %s", wine_dbgstr_w(nameW));
 
         ok(fontsig.fsUsb[0] == expected_signature.fsUsb[0], "fsUsb[0] %#lx, expected %#lx.\n",
                 fontsig.fsUsb[0], expected_signature.fsUsb[0]);
