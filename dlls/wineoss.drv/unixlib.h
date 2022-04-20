@@ -222,6 +222,7 @@ typedef struct midi_src
     char                incLen;
     UINT                startTime;
     MIDIINCAPSW         caps;
+    int                 fd;
 } WINE_MIDIIN;
 
 typedef struct midi_dest
@@ -232,6 +233,7 @@ typedef struct midi_dest
     MIDIHDR            *lpQueueHdr;
     void               *lpExtra; /* according to port type (MIDI, FM...), extra data when needed */
     MIDIOUTCAPSW        caps;
+    int                 fd;
 } WINE_MIDIOUT;
 
 struct midi_init_params
