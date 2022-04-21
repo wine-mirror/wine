@@ -527,7 +527,6 @@ typedef struct __TRACKINGLIST {
 
 /* FIXME: move tracking stuff into a per thread data */
 static _TRACKINGLIST tracking_info;
-static UINT_PTR timer;
 
 static void check_mouse_leave(HWND hwnd, int hittest)
 {
@@ -564,13 +563,12 @@ static void check_mouse_leave(HWND hwnd, int hittest)
     }
 }
 
-static void CALLBACK TrackMouseEventProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent,
-                                         DWORD dwTime)
+void CDECL update_mouse_tracking_info( HWND hwnd )
 {
     POINT pos;
     INT hoverwidth = 0, hoverheight = 0, hittest;
 
-    TRACE("hwnd %p, msg %04x, id %04lx, time %u\n", hwnd, uMsg, idEvent, dwTime);
+    TRACE( "hwnd %p\n", hwnd );
 
     GetCursorPos(&pos);
     hwnd = WINPOS_WindowFromPoint(hwnd, pos, &hittest);
@@ -632,8 +630,7 @@ static void CALLBACK TrackMouseEventProc(HWND hwnd, UINT uMsg, UINT_PTR idEvent,
     /* stop the timer if the tracking list is empty */
     if (!(tracking_info.tme.dwFlags & (TME_HOVER | TME_LEAVE)))
     {
-        KillSystemTimer(tracking_info.tme.hwndTrack, timer);
-        timer = 0;
+        KillSystemTimer( tracking_info.tme.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE );
         tracking_info.tme.hwndTrack = 0;
         tracking_info.tme.dwFlags = 0;
         tracking_info.tme.dwHoverTime = 0;
@@ -718,8 +715,7 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
             /* if we aren't tracking on hover or leave remove this entry */
             if (!(tracking_info.tme.dwFlags & (TME_HOVER | TME_LEAVE)))
             {
-                KillSystemTimer(tracking_info.tme.hwndTrack, timer);
-                timer = 0;
+                KillSystemTimer( tracking_info.tme.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE );
                 tracking_info.tme.hwndTrack = 0;
                 tracking_info.tme.dwFlags = 0;
                 tracking_info.tme.dwHoverTime = 0;
@@ -732,14 +728,10 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
         if (tracking_info.tme.dwFlags & TME_LEAVE && tracking_info.tme.hwndTrack != NULL)
             check_mouse_leave(hwnd, hittest);
 
-        if (timer)
-        {
-            KillSystemTimer(tracking_info.tme.hwndTrack, timer);
-            timer = 0;
-            tracking_info.tme.hwndTrack = 0;
-            tracking_info.tme.dwFlags = 0;
-            tracking_info.tme.dwHoverTime = 0;
-        }
+        KillSystemTimer( tracking_info.tme.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE );
+        tracking_info.tme.hwndTrack = 0;
+        tracking_info.tme.dwFlags = 0;
+        tracking_info.tme.dwHoverTime = 0;
 
         if (ptme->hwndTrack == hwnd)
         {
@@ -750,8 +742,7 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
             /* Initialize HoverInfo variables even if not hover tracking */
             tracking_info.pos = pos;
 
-            timer = NtUserSetSystemTimer( tracking_info.tme.hwndTrack, (UINT_PTR)&tracking_info.tme,
-                                          hover_time, TrackMouseEventProc );
+            NtUserSetSystemTimer( tracking_info.tme.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE, hover_time, NULL );
         }
     }
 

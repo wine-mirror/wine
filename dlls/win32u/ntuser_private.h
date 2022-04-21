@@ -54,6 +54,7 @@ struct user_callbacks
     void (CDECL *toggle_caret)( HWND hwnd );
     BOOL (CDECL *unpack_dde_message)( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
                                       void **buffer, size_t size );
+    void (CDECL *update_mouse_tracking_info)( HWND hwnd );
     BOOL (WINAPI *register_imm)( HWND hwnd );
     void (WINAPI *unregister_imm)( HWND hwnd );
 };
@@ -63,6 +64,7 @@ struct user_callbacks
 
 enum system_timer_id
 {
+    SYSTEM_TIMER_TRACK_MOUSE = 0xfffa,
     SYSTEM_TIMER_CARET = 0xffff,
 };
 
