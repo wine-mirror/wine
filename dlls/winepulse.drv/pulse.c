@@ -2239,3 +2239,386 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     pulse_is_started,
     pulse_get_prop_value,
 };
+
+#ifdef _WIN64
+
+typedef UINT PTR32;
+
+static NTSTATUS pulse_wow64_main_loop(void *args)
+{
+    struct
+    {
+        PTR32 event;
+    } *params32 = args;
+    struct main_loop_params params =
+    {
+        .event = ULongToHandle(params32->event)
+    };
+    return pulse_main_loop(&params);
+}
+
+static NTSTATUS pulse_wow64_get_endpoint_ids(void *args)
+{
+    struct
+    {
+        EDataFlow flow;
+        PTR32 endpoints;
+        unsigned int size;
+        HRESULT result;
+        unsigned int num;
+        unsigned int default_idx;
+    } *params32 = args;
+    struct get_endpoint_ids_params params =
+    {
+        .flow = params32->flow,
+        .endpoints = ULongToPtr(params32->endpoints),
+        .size = params32->size
+    };
+    pulse_get_endpoint_ids(&params);
+    params32->size = params.size;
+    params32->result = params.result;
+    params32->num = params.num;
+    params32->default_idx = params.default_idx;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS pulse_wow64_create_stream(void *args)
+{
+    struct
+    {
+        PTR32 name;
+        PTR32 pulse_name;
+        EDataFlow dataflow;
+        AUDCLNT_SHAREMODE mode;
+        DWORD flags;
+        REFERENCE_TIME duration;
+        PTR32 fmt;
+        HRESULT result;
+        PTR32 channel_count;
+        PTR32 stream;
+    } *params32 = args;
+    struct create_stream_params params =
+    {
+        .name = ULongToPtr(params32->name),
+        .pulse_name = ULongToPtr(params32->pulse_name),
+        .dataflow = params32->dataflow,
+        .mode = params32->mode,
+        .flags = params32->flags,
+        .duration = params32->duration,
+        .fmt = ULongToPtr(params32->fmt),
+        .channel_count = ULongToPtr(params32->channel_count),
+        .stream = ULongToPtr(params32->stream)
+    };
+    pulse_create_stream(&params);
+    params32->result = params.result;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS pulse_wow64_release_stream(void *args)
+{
+    struct
+    {
+        stream_handle stream;
+        PTR32 timer;
+        HRESULT result;
+    } *params32 = args;
+    struct release_stream_params params =
+    {
+        .stream = params32->stream,
+        .timer = ULongToHandle(params32->timer)
+    };
+    pulse_release_stream(&params);
+    params32->result = params.result;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS pulse_wow64_get_render_buffer(void *args)
+{
+    struct
+    {
+        stream_handle stream;
+        UINT32 frames;
+        HRESULT result;
+        PTR32 data;
+    } *params32 = args;
+    BYTE *data = NULL;
+    struct get_render_buffer_params params =
+    {
+        .stream = params32->stream,
+        .frames = params32->frames,
+        .data = &data
+    };
+    pulse_get_render_buffer(&params);
+    params32->result = params.result;
+    *(unsigned int *)ULongToPtr(params32->data) = PtrToUlong(data);
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS pulse_wow64_get_capture_buffer(void *args)
+{
+    struct
+    {
+        stream_handle stream;
+        HRESULT result;
+        PTR32 data;
+        PTR32 frames;
+        PTR32 flags;
+        PTR32 devpos;
+        PTR32 qpcpos;
+    } *params32 = args;
+    BYTE *data = NULL;
+    struct get_capture_buffer_params params =
+    {
+        .stream = params32->stream,
+        .data = &data,
+        .frames = ULongToPtr(params32->frames),
+        .flags = ULongToPtr(params32->flags),
+        .devpos = ULongToPtr(params32->devpos),
+        .qpcpos = ULongToPtr(params32->qpcpos)
+    };
+    pulse_get_capture_buffer(&params);
+    params32->result = params.result;
+    *(unsigned int *)ULongToPtr(params32->data) = PtrToUlong(data);
+    return STATUS_SUCCESS;
+};
+
+static NTSTATUS pulse_wow64_get_buffer_size(void *args)
+{
+    struct
+    {
+        stream_handle stream;
+        HRESULT result;
+        PTR32 size;
+    } *params32 = args;
+    struct get_buffer_size_params params =
+    {
+        .stream = params32->stream,
+        .size = ULongToPtr(params32->size)
+    };
+    pulse_get_buffer_size(&params);
+    params32->result = params.result;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS pulse_wow64_get_latency(void *args)
+{
+    struct
+    {
+        stream_handle stream;
+        HRESULT result;
+        PTR32 latency;
+    } *params32 = args;
+    struct get_latency_params params =
+    {
+        .stream = params32->stream,
+        .latency = ULongToPtr(params32->latency)
+    };
+    pulse_get_latency(&params);
+    params32->result = params.result;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS pulse_wow64_get_current_padding(void *args)
+{
+    struct
+    {
+        stream_handle stream;
+        HRESULT result;
+        PTR32 padding;
+    } *params32 = args;
+    struct get_current_padding_params params =
+    {
+        .stream = params32->stream,
+        .padding = ULongToPtr(params32->padding)
+    };
+    pulse_get_current_padding(&params);
+    params32->result = params.result;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS pulse_wow64_get_next_packet_size(void *args)
+{
+    struct
+    {
+        stream_handle stream;
+        HRESULT result;
+        PTR32 frames;
+    } *params32 = args;
+    struct get_next_packet_size_params params =
+    {
+        .stream = params32->stream,
+        .frames = ULongToPtr(params32->frames)
+    };
+    pulse_get_next_packet_size(&params);
+    params32->result = params.result;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS pulse_wow64_get_frequency(void *args)
+{
+    struct
+    {
+        stream_handle stream;
+        HRESULT result;
+        PTR32 freq;
+    } *params32 = args;
+    struct get_frequency_params params =
+    {
+        .stream = params32->stream,
+        .freq = ULongToPtr(params32->freq)
+    };
+    pulse_get_frequency(&params);
+    params32->result = params.result;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS pulse_wow64_get_position(void *args)
+{
+    struct
+    {
+        stream_handle stream;
+        BOOL device;
+        HRESULT result;
+        PTR32 pos;
+        PTR32 qpctime;
+    } *params32 = args;
+    struct get_position_params params =
+    {
+        .stream = params32->stream,
+        .device = params32->device,
+        .pos = ULongToPtr(params32->pos),
+        .qpctime = ULongToPtr(params32->qpctime)
+    };
+    pulse_get_position(&params);
+    params32->result = params.result;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS pulse_wow64_set_volumes(void *args)
+{
+    struct
+    {
+        stream_handle stream;
+        float master_volume;
+        PTR32 volumes;
+        PTR32 session_volumes;
+    } *params32 = args;
+    struct set_volumes_params params =
+    {
+        .stream = params32->stream,
+        .master_volume = params32->master_volume,
+        .volumes = ULongToPtr(params32->volumes),
+        .session_volumes = ULongToPtr(params32->session_volumes)
+    };
+    return pulse_set_volumes(&params);
+}
+
+static NTSTATUS pulse_wow64_set_event_handle(void *args)
+{
+    struct
+    {
+        stream_handle stream;
+        PTR32 event;
+        HRESULT result;
+    } *params32 = args;
+    struct set_event_handle_params params =
+    {
+        .stream = params32->stream,
+        .event = ULongToHandle(params32->event)
+    };
+    pulse_set_event_handle(&params);
+    params32->result = params.result;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS pulse_wow64_test_connect(void *args)
+{
+    struct
+    {
+        PTR32 name;
+        HRESULT result;
+        PTR32 config;
+    } *params32 = args;
+    struct test_connect_params params =
+    {
+        .name = ULongToPtr(params32->name),
+        .config = ULongToPtr(params32->config), /* struct pulse_config is identical */
+    };
+    pulse_test_connect(&params);
+    params32->result = params.result;
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS pulse_wow64_get_prop_value(void *args)
+{
+    struct
+    {
+        PTR32 pulse_name;
+        PTR32 guid;
+        PTR32 prop;
+        EDataFlow flow;
+        HRESULT result;
+        VARTYPE vt;
+        union
+        {
+            WCHAR wstr[128];
+            ULONG ulVal;
+        };
+    } *params32 = args;
+    struct get_prop_value_params params =
+    {
+        .pulse_name = ULongToPtr(params32->pulse_name),
+        .guid = ULongToPtr(params32->guid),
+        .prop = ULongToPtr(params32->prop),
+        .flow = params32->flow,
+    };
+    pulse_get_prop_value(&params);
+    params32->result = params.result;
+    params32->vt = params.vt;
+    if (SUCCEEDED(params.result))
+    {
+        switch (params.vt)
+        {
+        case VT_UI4:
+            params32->ulVal = params.ulVal;
+            break;
+        case VT_LPWSTR:
+            wcscpy(params32->wstr, params.wstr);
+            break;
+        default:
+            FIXME("Unhandled vt %04x\n", params.vt);
+        }
+    }
+    return STATUS_SUCCESS;
+}
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    pulse_process_attach,
+    pulse_process_detach,
+    pulse_wow64_main_loop,
+    pulse_wow64_get_endpoint_ids,
+    pulse_wow64_create_stream,
+    pulse_wow64_release_stream,
+    pulse_start,
+    pulse_stop,
+    pulse_reset,
+    pulse_timer_loop,
+    pulse_wow64_get_render_buffer,
+    pulse_release_render_buffer,
+    pulse_wow64_get_capture_buffer,
+    pulse_release_capture_buffer,
+    pulse_wow64_get_buffer_size,
+    pulse_wow64_get_latency,
+    pulse_wow64_get_current_padding,
+    pulse_wow64_get_next_packet_size,
+    pulse_wow64_get_frequency,
+    pulse_wow64_get_position,
+    pulse_wow64_set_volumes,
+    pulse_wow64_set_event_handle,
+    pulse_wow64_test_connect,
+    pulse_is_started,
+    pulse_wow64_get_prop_value,
+};
+
+#endif /* _WIN64 */
