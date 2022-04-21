@@ -1,1 +1,4 @@
 MODULE    = msmpeg2vdec.dll
+
+C_SRCS = \
+	main.c
