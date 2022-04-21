@@ -253,12 +253,11 @@ static NTSTATUS pulse_get_endpoint_ids(void *args)
     struct list *list = (params->flow == eRender) ? &g_phys_speakers : &g_phys_sources;
     struct endpoint *endpoint = params->endpoints;
     DWORD len, name_len, needed;
+    unsigned int offset;
     PhysDevice *dev;
-    char *ptr;
 
     params->num = list_count(list);
-    needed = params->num * sizeof(*params->endpoints);
-    ptr = (char*)(endpoint + params->num);
+    offset = needed = params->num * sizeof(*params->endpoints);
 
     LIST_FOR_EACH_ENTRY(dev, list, PhysDevice, entry) {
         name_len = lstrlenW(dev->name) + 1;
@@ -266,12 +265,12 @@ static NTSTATUS pulse_get_endpoint_ids(void *args)
         needed += name_len * sizeof(WCHAR) + ((len + 1) & ~1);
 
         if (needed <= params->size) {
-            endpoint->name = (WCHAR*)ptr;
-            memcpy(endpoint->name, dev->name, name_len * sizeof(WCHAR));
-            ptr += name_len * sizeof(WCHAR);
-            endpoint->pulse_name = ptr;
-            memcpy(endpoint->pulse_name, dev->pulse_name, len);
-            ptr += (len + 1) & ~1;
+            endpoint->name = offset;
+            memcpy((char *)params->endpoints + offset, dev->name, name_len * sizeof(WCHAR));
+            offset += name_len * sizeof(WCHAR);
+            endpoint->pulse_name = offset;
+            memcpy((char *)params->endpoints + offset, dev->pulse_name, len);
+            offset += (len + 1) & ~1;
             endpoint++;
         }
     }

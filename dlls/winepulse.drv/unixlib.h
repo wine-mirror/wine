@@ -41,8 +41,8 @@ struct pulse_config
 
 struct endpoint
 {
-    WCHAR *name;
-    char *pulse_name;
+    unsigned int name;
+    unsigned int pulse_name;
 };
 
 struct main_loop_params
