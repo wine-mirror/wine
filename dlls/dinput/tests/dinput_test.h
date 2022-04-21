@@ -103,8 +103,8 @@ BOOL sync_ioctl_( const char *file, int line, HANDLE device, DWORD code, void *i
 #define set_hid_expect( a, b, c ) set_hid_expect_( __FILE__, __LINE__, a, b, c )
 void set_hid_expect_( const char *file, int line, HANDLE device, struct hid_expect *expect, DWORD expect_size );
 
-#define wait_hid_expect( a, b ) wait_hid_expect_( __FILE__, __LINE__, a, b )
-void wait_hid_expect_( const char *file, int line, HANDLE device, DWORD timeout );
+#define wait_hid_expect( a, b ) wait_hid_expect_( __FILE__, __LINE__, a, b, FALSE )
+void wait_hid_expect_( const char *file, int line, HANDLE device, DWORD timeout, BOOL todo );
 
 #define send_hid_input( a, b, c ) send_hid_input_( __FILE__, __LINE__, a, b, c )
 void send_hid_input_( const char *file, int line, HANDLE device, struct hid_expect *expect, DWORD expect_size );

@@ -887,6 +887,11 @@ BOOL sync_ioctl_( const char *file, int line, HANDLE device, DWORD code, void *i
         ok_(file, line)( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
         ret = GetOverlappedResult( device, &ovl, &out_len, FALSE );
         ok_(file, line)( ret, "GetOverlappedResult returned %lu\n", GetLastError() );
+        if (!ret)
+        {
+            CancelIoEx( device, &ovl );
+            WaitForSingleObject( ovl.hEvent, timeout );
+        }
     }
     CloseHandle( ovl.hEvent );
 
@@ -906,10 +911,12 @@ void set_hid_expect_( const char *file, int line, HANDLE device, struct hid_expe
     ok_(file, line)( ret, "IOCTL_WINETEST_HID_SET_EXPECT failed, last error %lu\n", GetLastError() );
 }
 
-void wait_hid_expect_( const char *file, int line, HANDLE device, DWORD timeout )
+void wait_hid_expect_( const char *file, int line, HANDLE device, DWORD timeout, BOOL todo )
 {
+    todo_wine_if(todo) {
     BOOL ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_WAIT_EXPECT, NULL, 0, NULL, 0, timeout );
     ok_(file, line)( ret, "IOCTL_WINETEST_HID_WAIT_EXPECT failed, last error %lu\n", GetLastError() );
+    }
 
     set_hid_expect_( file, line, device, NULL, 0 );
 }
