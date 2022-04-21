@@ -1446,6 +1446,7 @@ enable_winspool_drv
 enable_winsta
 enable_wintab32
 enable_wintrust
+enable_wintypes
 enable_winusb
 enable_wlanapi
 enable_wlanui
@@ -21892,6 +21893,7 @@ wine_fn_config_makefile dlls/wintab32 enable_wintab32
 wine_fn_config_makefile dlls/wintab32/tests enable_tests
 wine_fn_config_makefile dlls/wintrust enable_wintrust
 wine_fn_config_makefile dlls/wintrust/tests enable_tests
+wine_fn_config_makefile dlls/wintypes enable_wintypes
 wine_fn_config_makefile dlls/winusb enable_winusb
 wine_fn_config_makefile dlls/wlanapi enable_wlanapi
 wine_fn_config_makefile dlls/wlanapi/tests enable_tests
