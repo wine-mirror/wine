@@ -93,6 +93,8 @@ typedef struct sFMextra
      */
 } sFMextra;
 
+#define IS_DRUM_CHANNEL(_xtra, _chn) ((_xtra)->drumSetMask & (1 << (_chn)))
+
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
 static int oss_to_win_device_type(int type)
@@ -458,9 +460,8 @@ static int midi_out_fm_load(WORD dev_id, int fd)
     return 0;
 }
 
-NTSTATUS midi_out_fm_reset(void *args)
+static void midi_out_fm_reset(WORD dev_id)
 {
-    WORD dev_id = (WORD)(UINT_PTR)args;
     struct midi_dest *dest = dests + dev_id;
     sFMextra *extra = dest->lpExtra;
     sVoice *voice = extra->voice;
@@ -492,8 +493,6 @@ NTSTATUS midi_out_fm_reset(void *args)
     extra->counter = 0;
     extra->drumSetMask = 1 << 9; /* channel 10 is normally drums, sometimes 16 also */
     SEQ_DUMPBUF();
-
-    return STATUS_SUCCESS;
 }
 
 static void set_out_notify(struct notify_context *notify, struct midi_dest *dest, WORD dev_id, WORD msg,
@@ -572,7 +571,7 @@ static UINT midi_out_open(WORD dev_id, MIDIOPENDESC *midi_desc, UINT flags, stru
             free(extra);
             return MMSYSERR_ERROR;
         }
-        midi_out_fm_reset((void *)(UINT_PTR)dev_id);
+        midi_out_fm_reset(dev_id);
         break;
     }
     case MOD_MIDIPORT:
@@ -645,6 +644,295 @@ static UINT midi_out_close(WORD dev_id, struct notify_context *notify)
     return MMSYSERR_NOERROR;
 }
 
+static UINT midi_out_fm_data(WORD dev_id, UINT data)
+{
+    struct midi_dest *dest = dests + dev_id;
+    WORD evt = LOBYTE(LOWORD(data));
+    WORD d1  = HIBYTE(LOWORD(data));
+    WORD d2  = LOBYTE(HIWORD(data));
+    sFMextra *extra = dest->lpExtra;
+    sVoice *voice = extra->voice;
+    sChannel *channel = extra->channel;
+    int chn = (evt & 0x0F), i, nv;
+
+    /* FIXME: chorus depth controller is not used */
+
+    switch (evt & 0xF0)
+    {
+    case MIDI_NOTEOFF:
+        for (i = 0; i < dest->caps.wVoices; i++)
+        {
+            /* don't stop sustained notes */
+            if (voice[i].status == sVS_PLAYING && voice[i].channel == chn && voice[i].note == d1)
+            {
+                voice[i].status = sVS_UNUSED;
+                SEQ_STOP_NOTE(dev_id, i, d1, d2);
+            }
+        }
+        break;
+    case MIDI_NOTEON:
+        if (d2 == 0) /* note off if velocity == 0 */
+        {
+            for (i = 0; i < dest->caps.wVoices; i++) /* don't stop sustained notes */
+            {
+                if (voice[i].status == sVS_PLAYING && voice[i].channel == chn && voice[i].note == d1)
+                {
+                    voice[i].status = sVS_UNUSED;
+                    SEQ_STOP_NOTE(dev_id, i, d1, 64);
+                }
+            }
+            break;
+        }
+        /* finding out in this order :
+         * - an empty voice
+         * - if replaying the same note on the same channel
+         * - the older voice (LRU)
+         */
+        for (i = nv = 0; i < dest->caps.wVoices; i++)
+        {
+            if (voice[i].status == sVS_UNUSED || (voice[i].note == d1 && voice[i].channel == chn))
+            {
+                nv = i;
+                break;
+            }
+            if (voice[i].cntMark < voice[0].cntMark)
+                nv = i;
+        }
+        TRACE("playing on voice=%d, pgm=%d, pan=0x%02X, vol=0x%02X, bender=0x%02X, note=0x%02X, vel=0x%02X\n",
+              nv, channel[chn].program, channel[chn].balance, channel[chn].volume, channel[chn].bender, d1, d2);
+
+        SEQ_SET_PATCH(dev_id, nv, IS_DRUM_CHANNEL(extra, chn) ?
+                      (128 + d1) : channel[chn].program);
+        SEQ_BENDER_RANGE(dev_id, nv, channel[chn].benderRange * 100);
+        SEQ_BENDER(dev_id, nv, channel[chn].bender);
+        SEQ_CONTROL(dev_id, nv, CTL_PAN, channel[chn].balance);
+        SEQ_CONTROL(dev_id, nv, CTL_EXPRESSION, channel[chn].expression);
+        SEQ_START_NOTE(dev_id, nv, d1, d2);
+        voice[nv].status = channel[chn].sustain ? sVS_SUSTAINED : sVS_PLAYING;
+        voice[nv].note = d1;
+        voice[nv].channel = chn;
+        voice[nv].cntMark = extra->counter++;
+        break;
+    case MIDI_KEY_PRESSURE:
+        for (i = 0; i < dest->caps.wVoices; i++)
+            if (voice[i].status != sVS_UNUSED && voice[i].channel == chn && voice[i].note == d1)
+                SEQ_KEY_PRESSURE(dev_id, i, d1, d2);
+        break;
+    case MIDI_CTL_CHANGE:
+        switch (d1)
+        {
+        case CTL_BANK_SELECT: channel[chn].bank = d2; break;
+        case CTL_MAIN_VOLUME: channel[chn].volume = d2; break;
+        case CTL_PAN:         channel[chn].balance = d2; break;
+        case CTL_EXPRESSION:  channel[chn].expression = d2; break;
+        case CTL_SUSTAIN:     channel[chn].sustain = d2;
+            if (d2)
+            {
+                for (i = 0; i < dest->caps.wVoices; i++)
+                    if (voice[i].status == sVS_PLAYING && voice[i].channel == chn)
+                        voice[i].status = sVS_SUSTAINED;
+            }
+            else
+            {
+                for (i = 0; i < dest->caps.wVoices; i++)
+                {
+                    if (voice[i].status == sVS_SUSTAINED && voice[i].channel == chn)
+                    {
+                        voice[i].status = sVS_UNUSED;
+                        SEQ_STOP_NOTE(dev_id, i, voice[i].note, 64);
+                    }
+                }
+            }
+            break;
+        case CTL_NONREG_PARM_NUM_LSB: channel[chn].nrgPmtLSB = d2; break;
+        case CTL_NONREG_PARM_NUM_MSB: channel[chn].nrgPmtMSB = d2; break;
+        case CTL_REGIST_PARM_NUM_LSB: channel[chn].regPmtLSB = d2; break;
+        case CTL_REGIST_PARM_NUM_MSB: channel[chn].regPmtMSB = d2; break;
+        case CTL_DATA_ENTRY:
+            switch ((channel[chn].regPmtMSB << 8) | channel[chn].regPmtLSB)
+            {
+            case 0x0000:
+                if (channel[chn].benderRange != d2)
+                {
+                    channel[chn].benderRange = d2;
+                    for (i = 0; i < dest->caps.wVoices; i++)
+                        if (voice[i].channel == chn)
+                            SEQ_BENDER_RANGE(dev_id, i, channel[chn].benderRange);
+                }
+                break;
+
+            case 0x7F7F:
+                channel[chn].benderRange = 2;
+                for (i = 0; i < dest->caps.wVoices; i++)
+                    if (voice[i].channel == chn)
+                        SEQ_BENDER_RANGE(dev_id, i, channel[chn].benderRange);
+                break;
+            default:
+                TRACE("Data entry: regPmt=0x%02x%02x, nrgPmt=0x%02x%02x with %x\n",
+                      channel[chn].regPmtMSB, channel[chn].regPmtLSB,
+                      channel[chn].nrgPmtMSB, channel[chn].nrgPmtLSB, d2);
+                break;
+            }
+            break;
+
+        case 0x78: /* all sounds off */
+            /* FIXME: I don't know if I have to take care of the channel for this control? */
+            for (i = 0; i < dest->caps.wVoices; i++)
+            {
+                if (voice[i].status != sVS_UNUSED && voice[i].channel == chn)
+                {
+                    voice[i].status = sVS_UNUSED;
+                    SEQ_STOP_NOTE(dev_id, i, voice[i].note, 64);
+                }
+            }
+            break;
+        case 0x7B: /* all notes off */
+            /* FIXME: I don't know if I have to take care of the channel for this control? */
+            for (i = 0; i < dest->caps.wVoices; i++)
+            {
+                if (voice[i].status == sVS_PLAYING && voice[i].channel == chn)
+                {
+                    voice[i].status = sVS_UNUSED;
+                    SEQ_STOP_NOTE(dev_id, i, voice[i].note, 64);
+                }
+            }
+            break;
+        default:
+            TRACE("Dropping MIDI control event 0x%02x(%02x) on channel %d\n", d1, d2, chn);
+            break;
+        }
+        break;
+    case MIDI_PGM_CHANGE:
+        channel[chn].program = d1;
+        break;
+    case MIDI_CHN_PRESSURE:
+        for (i = 0; i < dest->caps.wVoices; i++)
+            if (voice[i].status != sVS_UNUSED && voice[i].channel == chn)
+                SEQ_KEY_PRESSURE(dev_id, i, voice[i].note, d1);
+
+        break;
+    case MIDI_PITCH_BEND:
+        channel[chn].bender = (d2 << 7) + d1;
+        for (i = 0; i < dest->caps.wVoices; i++)
+            if (voice[i].channel == chn)
+                SEQ_BENDER(dev_id, i, channel[chn].bender);
+        break;
+    case MIDI_SYSTEM_PREFIX:
+        switch (evt & 0x0F)
+        {
+        case 0x0F: /* Reset */
+            midi_out_fm_reset(dev_id);
+            break;
+        default:
+            WARN("Unsupported (yet) system event %02x\n", evt & 0x0F);
+        }
+        break;
+    default:
+        WARN("Internal error, shouldn't happen (event=%08x)\n", evt & 0xF0);
+        return MMSYSERR_NOTENABLED;
+    }
+
+    SEQ_DUMPBUF();
+    return MMSYSERR_NOERROR;
+}
+
+static UINT midi_out_port_data(WORD dev_id, UINT data)
+{
+    WORD evt = LOBYTE(LOWORD(data));
+    WORD d1  = HIBYTE(LOWORD(data));
+    WORD d2  = LOBYTE(HIWORD(data));
+    int dev = dev_id - num_synths;
+
+    if (dev < 0)
+    {
+        WARN("Internal error on devID (%u) !\n", dev_id);
+        return MIDIERR_NODEVICE;
+    }
+
+    switch (evt & 0xF0)
+    {
+    case MIDI_NOTEOFF:
+    case MIDI_NOTEON:
+    case MIDI_KEY_PRESSURE:
+    case MIDI_CTL_CHANGE:
+    case MIDI_PITCH_BEND:
+        SEQ_MIDIOUT(dev, evt);
+        SEQ_MIDIOUT(dev, d1);
+        SEQ_MIDIOUT(dev, d2);
+        break;
+    case MIDI_PGM_CHANGE:
+    case MIDI_CHN_PRESSURE:
+        SEQ_MIDIOUT(dev, evt);
+        SEQ_MIDIOUT(dev, d1);
+        break;
+    case MIDI_SYSTEM_PREFIX:
+        switch (evt & 0x0F)
+        {
+        case 0x00: /* System Exclusive, don't do it on MODM_DATA, should require MODM_LONGDATA */
+        case 0x04: /* Undefined. */
+        case 0x05: /* Undefined. */
+        case 0x07: /* End of Exclusive. */
+        case 0x09: /* Undefined. */
+        case 0x0D: /* Undefined. */
+            break;
+        case 0x06: /* Tune Request */
+        case 0x08: /* Timing Clock. */
+        case 0x0A: /* Start. */
+        case 0x0B: /* Continue */
+        case 0x0C: /* Stop */
+        case 0x0E: /* Active Sensing. */
+            SEQ_MIDIOUT(dev, evt);
+            break;
+        case 0x0F: /* Reset */
+            SEQ_MIDIOUT(dev, MIDI_SYSTEM_PREFIX);
+            SEQ_MIDIOUT(dev, 0x7e);
+            SEQ_MIDIOUT(dev, 0x7f);
+            SEQ_MIDIOUT(dev, 0x09);
+            SEQ_MIDIOUT(dev, 0x01);
+            SEQ_MIDIOUT(dev, 0xf7);
+            break;
+        case 0x01: /* MTC Quarter frame */
+        case 0x03: /* Song Select. */
+            SEQ_MIDIOUT(dev, evt);
+            SEQ_MIDIOUT(dev, d1);
+        case 0x02: /* Song Position Pointer. */
+            SEQ_MIDIOUT(dev, evt);
+            SEQ_MIDIOUT(dev, d1);
+            SEQ_MIDIOUT(dev, d2);
+        }
+        break;
+    }
+
+    SEQ_DUMPBUF();
+    return MMSYSERR_NOERROR;
+}
+
+static UINT midi_out_data(WORD dev_id, UINT data)
+{
+    struct midi_dest *dest;
+
+    TRACE("(%04X, %08X);\n", dev_id, data);
+
+    if (dev_id >= num_dests) return MMSYSERR_BADDEVICEID;
+    dest = dests + dev_id;
+    if (!dest->bEnabled) return MIDIERR_NODEVICE;
+
+    if (dest->fd == -1)
+    {
+        WARN("can't play !\n");
+        return MIDIERR_NODEVICE;
+    }
+    switch (dest->caps.wTechnology)
+    {
+    case MOD_FMSYNTH:
+        return midi_out_fm_data(dev_id, data);
+    case MOD_MIDIPORT:
+        return midi_out_port_data(dev_id, data);
+    }
+
+    WARN("Technology not supported (yet) %d !\n", dest->caps.wTechnology);
+    return MMSYSERR_NOTENABLED;
+}
 
 NTSTATUS midi_out_message(void *args)
 {
@@ -664,6 +952,9 @@ NTSTATUS midi_out_message(void *args)
         break;
     case MODM_CLOSE:
         *params->err = midi_out_close(params->dev_id, params->notify);
+        break;
+    case MODM_DATA:
+        *params->err = midi_out_data(params->dev_id, params->param_1);
         break;
     default:
         TRACE("Unsupported message\n");
