@@ -2451,7 +2451,7 @@ LRESULT dispatch_message( const MSG *msg, BOOL ansi )
     LRESULT retval = 0;
 
     /* Process timer messages */
-    if (msg->lParam && (msg->message == WM_TIMER || msg->message == WM_SYSTIMER))
+    if (msg->lParam && msg->message == WM_TIMER)
     {
         params.func = (WNDPROC)msg->lParam;
         params.result = &retval; /* FIXME */
