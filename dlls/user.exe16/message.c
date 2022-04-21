@@ -1292,6 +1292,11 @@ LRESULT WINPROC_CallProc32ATo16( winproc_callback16_t callback, HWND hwnd, UINT 
         lParam = MAKELPARAM( 0, convert_handle_32_to_16( lParam, GMEM_DDESHARE ));
         ret = callback( HWND_16(hwnd), msg, wParam, lParam, result, arg );
         break; /* FIXME don't know how to free allocated memory (handle) !! */
+    case WM_TIMER:
+        if (wParam & SYSTEM_TIMER_FLAG)
+            msg = WM_SYSTIMER;
+        ret = callback( HWND_16(hwnd), msg, wParam, lParam, result, arg );
+        break;
     case SBM_SETRANGE:
         ret = callback( HWND_16(hwnd), SBM_SETRANGE16, 0, MAKELPARAM(wParam, lParam), result, arg );
         break;

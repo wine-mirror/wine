@@ -95,6 +95,8 @@ extern void call_WH_CALLWNDPROC_hook( HWND16 hwnd, UINT16 msg, WPARAM16 wp, LPAR
 
 #define WM_SYSTIMER 0x0118
 
+#define SYSTEM_TIMER_FLAG 0x10000
+
 /* Dialog info structure (must match the user32 one) */
 typedef struct tagDIALOGINFO
 {
