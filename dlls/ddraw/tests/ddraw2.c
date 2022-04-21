@@ -388,7 +388,7 @@ static void fill_surface(IDirectDrawSurface *surface, D3DCOLOR color)
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 }
 
-static void check_rect(IDirectDrawSurface *surface, RECT r, const char *message)
+static void check_rect(IDirectDrawSurface *surface, RECT r)
 {
     LONG x_coords[2][2] =
     {
@@ -419,8 +419,7 @@ static void check_rect(IDirectDrawSurface *surface, RECT r, const char *message)
                     if (x < 0 || x >= 640 || y < 0 || y >= 480)
                         continue;
                     color = get_surface_color(surface, x, y);
-                    ok(color == expected, "%s: Pixel (%d, %d) has color %08x, expected %08x\n",
-                            message, x, y, color, expected);
+                    ok(color == expected, "Pixel (%d, %d) has color %08x, expected %08x.\n", x, y, color, expected);
                 }
             }
         }
@@ -14149,7 +14148,11 @@ static void test_viewport(void)
         {{100, 100,  640,  480}, {100, 220, 579, 459}, "Viewport (100, 100) - (640, 480)"},
         {{  0,   0, 8192, 8192}, {-10, -10, -10, -10}, "Viewport (0, 0) - (8192, 8192)"},
     };
-    static const struct vec2 rt_sizes[] =
+    static const struct
+    {
+        unsigned int x, y;
+    }
+    rt_sizes[] =
     {
         {640, 480}, {1280, 960}, {320, 240}, {800, 600},
     };
@@ -14220,6 +14223,8 @@ static void test_viewport(void)
 
     for (i = 0; i < ARRAY_SIZE(rt_sizes); ++i)
     {
+        winetest_push_context("Size %ux%u", rt_sizes[i].x, rt_sizes[i].y);
+
         if (i)
         {
             memset(&surface_desc, 0, sizeof(surface_desc));
@@ -14229,23 +14234,23 @@ static void test_viewport(void)
             surface_desc.dwHeight = rt_sizes[i].y;
             surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE;
             hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &rt, NULL);
-            ok(SUCCEEDED(hr), "Failed to create render target, hr %#x (i %u).\n", hr, i);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
             surface_desc.dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT;
             surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
             surface_desc.ddpfPixelFormat = z_fmt;
             hr = IDirectDraw2_CreateSurface(ddraw, &surface_desc, &ds, NULL);
-            ok(SUCCEEDED(hr), "Failed to create depth buffer, hr %#x (i %u).\n", hr, i);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
             hr = IDirectDrawSurface_AddAttachedSurface(rt, ds);
-            ok(SUCCEEDED(hr), "Failed to attach depth buffer, hr %#x (i %u).\n", hr, i);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
             hr = IDirect3DDevice2_SetRenderTarget(device, rt, 0);
-            ok(SUCCEEDED(hr), "Failed to set render target, hr %#x (i %u).\n", hr, i);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
         }
         else
         {
             hr = IDirect3DDevice2_GetRenderTarget(device, &rt);
-            ok(SUCCEEDED(hr), "Failed to get render target, hr %#x.\n", hr);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
         }
 
         full_viewport = create_viewport(device, 0, 0, rt_sizes[i].x, rt_sizes[i].y);
@@ -14257,17 +14262,18 @@ static void test_viewport(void)
 
         for (j = 0; j < ARRAY_SIZE(tests); ++j)
         {
+            winetest_push_context(tests[j].message);
+
             expected_failure = tests[j].vp.dwX + tests[j].vp.dwWidth > rt_sizes[i].x
                     || tests[j].vp.dwY + tests[j].vp.dwHeight > rt_sizes[i].y;
 
             hr = IDirect3DViewport2_Clear(full_viewport, 1, &clear_rect, D3DCLEAR_TARGET);
-            ok(SUCCEEDED(hr), "Failed to clear viewport, hr %#x (i %u, j %u).\n", hr, i, j);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
             hr = IDirect3D2_CreateViewport(d3d, &viewport, NULL);
-            ok(SUCCEEDED(hr), "Failed to create viewport, hr %#x (i %u, j %u).\n", hr, i, j);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
             hr = IDirect3DViewport2_SetViewport2(viewport, NULL);
-            ok(hr == E_INVALIDARG, "Setting NULL viewport data returned unexpected hr %#x (i %u, j %u).\n",
-                    hr, i, j);
+            ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
             memset(&vp, 0, sizeof(vp));
             vp.dwSize = sizeof(vp);
             vp.dwX = tests[j].vp.dwX;
@@ -14279,35 +14285,32 @@ static void test_viewport(void)
             vp.dvMinZ = 0.0f;
             vp.dvMaxZ = 1.0f;
             hr = IDirect3DViewport2_SetViewport(viewport, &vp);
-            ok(hr == D3DERR_VIEWPORTHASNODEVICE,
-                    "Setting viewport data returned unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+            ok(hr == D3DERR_VIEWPORTHASNODEVICE, "Got unexpected hr %#x.\n", hr);
             hr = IDirect3DDevice2_AddViewport(device, viewport);
-            ok(SUCCEEDED(hr), "Failed to add viewport, hr %#x (i %u, j %u).\n", hr, i, j);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
             hr = IDirect3DViewport2_SetViewport(viewport, &vp);
-            if (expected_failure)
-                ok(hr == E_INVALIDARG, "Setting viewport data returned unexpected hr %#x (i %u, j %u).\n",
-                        hr, i, j);
-            else
-                ok(SUCCEEDED(hr), "Failed to set viewport data, hr %#x (i %u, j %u).\n", hr, i, j);
+            ok(hr == (expected_failure ? E_INVALIDARG : DD_OK), "Got unexpected hr %#x.\n", hr);
 
             hr = IDirect3DDevice2_SetCurrentViewport(device, viewport);
-            ok(SUCCEEDED(hr), "Failed to set the viewport, hr %#x (i %u, j %u).\n", hr, i, j);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
             if (expected_failure)
             {
                 destroy_viewport(device, viewport);
+                winetest_pop_context();
                 continue;
             }
 
             hr = IDirect3DDevice2_BeginScene(device);
-            ok(SUCCEEDED(hr), "Failed to begin scene, hr %#x (i %u, j %u).\n", hr, i, j);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
             hr = IDirect3DDevice2_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DVT_LVERTEX, quad, 4, 0);
-            ok(SUCCEEDED(hr), "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
             hr = IDirect3DDevice2_EndScene(device);
-            ok(SUCCEEDED(hr), "Failed to end scene, hr %#x (i %u, j %u).\n", hr, i, j);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
-            check_rect(rt, tests[j].expected_rect, tests[j].message);
+            check_rect(rt, tests[j].expected_rect);
 
             destroy_viewport(device, viewport);
+            winetest_pop_context();
         }
 
         destroy_viewport(device, full_viewport);
@@ -14317,6 +14320,8 @@ static void test_viewport(void)
         IDirectDrawSurface_Release(ds);
 
         IDirectDrawSurface_Release(rt);
+
+        winetest_pop_context();
     }
 
     destroy_material(black_background);

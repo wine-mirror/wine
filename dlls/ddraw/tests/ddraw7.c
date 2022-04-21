@@ -411,8 +411,8 @@ static void fill_surface(IDirectDrawSurface7 *surface, D3DCOLOR color)
     ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 }
 
-#define check_rect(a, b, c) check_rect_(__LINE__, a, b, c)
-static void check_rect_(unsigned int line, IDirectDrawSurface7 *surface, RECT r, const char *message)
+#define check_rect(a, b) check_rect_(__LINE__, a, b)
+static void check_rect_(unsigned int line, IDirectDrawSurface7 *surface, RECT r)
 {
     LONG x_coords[2][2] =
     {
@@ -443,8 +443,8 @@ static void check_rect_(unsigned int line, IDirectDrawSurface7 *surface, RECT r,
                     if (x < 0 || x >= 640 || y < 0 || y >= 480)
                         continue;
                     color = get_surface_color(surface, x, y);
-                    ok_(__FILE__, line)(color == expected, "%s: Pixel (%d, %d) has color %08x, expected %08x.\n",
-                            message, x, y, color, expected);
+                    ok_(__FILE__, line)(color == expected, "Pixel (%d, %d) has color %08x, expected %08x.\n",
+                            x, y, color, expected);
                 }
             }
         }
@@ -16191,7 +16191,11 @@ static void test_viewport(void)
         { 0.5f, -0.5f, 1.0f},
         { 0.5f,  0.5f, 1.0f},
     };
-    static const struct vec2 rt_sizes[] =
+    static const struct
+    {
+        unsigned int x, y;
+    }
+    rt_sizes[] =
     {
         {640, 480}, {1280, 960}, {320, 240}, {800, 600},
     };
@@ -16246,6 +16250,8 @@ static void test_viewport(void)
 
     for (i = 0; i < ARRAY_SIZE(rt_sizes); ++i)
     {
+        winetest_push_context("Size %ux%u", rt_sizes[i].x, rt_sizes[i].y);
+
         if (i)
         {
             memset(&surface_desc, 0, sizeof(surface_desc));
@@ -16255,80 +16261,87 @@ static void test_viewport(void)
             surface_desc.dwHeight = rt_sizes[i].y;
             surface_desc.ddsCaps.dwCaps = DDSCAPS_OFFSCREENPLAIN | DDSCAPS_3DDEVICE;
             hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &rt, NULL);
-            ok(hr == DD_OK, "Got unexpected hr %#x (i %u).\n", hr, i);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
             surface_desc.dwFlags = DDSD_CAPS | DDSD_PIXELFORMAT | DDSD_WIDTH | DDSD_HEIGHT;
             surface_desc.ddsCaps.dwCaps = DDSCAPS_ZBUFFER;
             U4(surface_desc).ddpfPixelFormat = z_fmt;
             hr = IDirectDraw7_CreateSurface(ddraw, &surface_desc, &ds, NULL);
-            ok(hr == DD_OK, "Got unexpected hr %#x (i %u).\n", hr, i);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
             hr = IDirectDrawSurface7_AddAttachedSurface(rt, ds);
-            ok(hr == DD_OK, "Got unexpected hr %#x (i %u).\n", hr, i);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
             hr = IDirect3DDevice7_SetRenderTarget(device, rt, 0);
-            ok(hr == DD_OK, "Got unexpected hr %#x (i %u).\n", hr, i);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
         }
         else
         {
             hr = IDirect3DDevice7_GetRenderTarget(device, &rt);
-            ok(hr == DD_OK, "Got unexpected hr %#x (i %u).\n", hr, i);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
         }
 
         for (j = 0; j < ARRAY_SIZE(tests); ++j)
         {
+            winetest_push_context(tests[j].message);
+
             hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff000000,
                     tests[j].expected_z - z_eps, 0);
-            ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
             hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZFUNC, D3DCMP_GREATER);
-            ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
             hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZENABLE, !i);
-            ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
             hr = IDirect3DDevice7_SetViewport(device, &tests[j].vp);
             if (tests[j].vp.dwX + tests[j].vp.dwWidth > rt_sizes[i].x
                     || tests[j].vp.dwY + tests[j].vp.dwHeight > rt_sizes[i].y)
             {
-                ok(hr == E_INVALIDARG, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+                ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+                winetest_pop_context();
                 continue;
             }
             else
             {
-                ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+                ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
             }
 
             hr = IDirect3DDevice7_BeginScene(device);
-            ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
             hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, quad, 4, 0);
-            ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
             hr = IDirect3DDevice7_EndScene(device);
-            ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+            ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
-            check_rect(rt, tests[j].expected_rect, tests[j].message);
+            check_rect(rt, tests[j].expected_rect);
 
             if (!i)
             {
                 hr = IDirect3DDevice7_Clear(device, 0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, 0xff000000,
                         tests[j].expected_z + z_eps, 0);
-                ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+                ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
                 hr = IDirect3DDevice7_SetRenderState(device, D3DRENDERSTATE_ZFUNC, D3DCMP_LESS);
-                ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+                ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
                 hr = IDirect3DDevice7_BeginScene(device);
-                ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+                ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
                 hr = IDirect3DDevice7_DrawPrimitive(device, D3DPT_TRIANGLESTRIP, D3DFVF_XYZ, quad, 4, 0);
-                ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+                ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
                 hr = IDirect3DDevice7_EndScene(device);
-                ok(hr == DD_OK, "Got unexpected hr %#x (i %u, j %u).\n", hr, i, j);
+                ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
 
-                check_rect(rt, tests[j].expected_rect, tests[j].message);
+                check_rect(rt, tests[j].expected_rect);
             }
+
+            winetest_pop_context();
         }
 
         hr = IDirectDrawSurface7_DeleteAttachedSurface(rt, 0, ds);
-        ok(hr == DD_OK, "Got unexpected hr %#x (i %u).\n", hr, i);
+        ok(hr == DD_OK, "Got unexpected hr %#x.\n", hr);
         IDirectDrawSurface7_Release(ds);
         IDirectDrawSurface7_Release(rt);
+
+        winetest_pop_context();
     }
 
     refcount = IDirect3DDevice7_Release(device);
