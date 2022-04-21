@@ -34,18 +34,22 @@ import "windows.devices.power.idl";
 
 namespace Windows.Gaming.Input {
     typedef enum ArcadeStickButtons ArcadeStickButtons;
+    typedef enum FlightStickButtons FlightStickButtons;
     typedef enum GamepadButtons GamepadButtons;
     typedef enum GameControllerButtonLabel GameControllerButtonLabel;
     typedef enum GameControllerSwitchKind GameControllerSwitchKind;
     typedef enum GameControllerSwitchPosition GameControllerSwitchPosition;
     typedef enum RacingWheelButtons RacingWheelButtons;
     typedef struct ArcadeStickReading ArcadeStickReading;
+    typedef struct FlightStickReading FlightStickReading;
     typedef struct GamepadReading GamepadReading;
     typedef struct GamepadVibration GamepadVibration;
     typedef struct RacingWheelReading RacingWheelReading;
     interface IArcadeStick;
     interface IArcadeStickStatics;
     interface IArcadeStickStatics2;
+    interface IFlightStick;
+    interface IFlightStickStatics;
     interface IGameController;
     interface IGameControllerBatteryInfo;
     interface IGamepad;
@@ -58,6 +62,7 @@ namespace Windows.Gaming.Input {
     interface IRawGameController;
     interface IRawGameController2;
     runtimeclass ArcadeStick;
+    runtimeclass FlightStick;
     runtimeclass Gamepad;
     runtimeclass Headset;
     runtimeclass RacingWheel;
@@ -65,6 +70,7 @@ namespace Windows.Gaming.Input {
 
     declare {
         interface Windows.Foundation.EventHandler<Windows.Gaming.Input.ArcadeStick *>;
+        interface Windows.Foundation.EventHandler<Windows.Gaming.Input.FlightStick *>;
         interface Windows.Foundation.EventHandler<Windows.Gaming.Input.Gamepad *>;
         interface Windows.Foundation.EventHandler<Windows.Gaming.Input.RacingWheel *>;
         interface Windows.Foundation.EventHandler<Windows.Gaming.Input.RawGameController *>;
@@ -73,6 +79,9 @@ namespace Windows.Gaming.Input {
         interface Windows.Foundation.Collections.IIterator<Windows.Gaming.Input.ArcadeStick *>;
         interface Windows.Foundation.Collections.IIterable<Windows.Gaming.Input.ArcadeStick *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Gaming.Input.ArcadeStick *>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Gaming.Input.FlightStick *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Gaming.Input.FlightStick *>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Gaming.Input.FlightStick *>;
         interface Windows.Foundation.Collections.IIterator<Windows.Gaming.Input.Gamepad *>;
         interface Windows.Foundation.Collections.IIterable<Windows.Gaming.Input.Gamepad *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Gaming.Input.Gamepad *>;
@@ -106,6 +115,17 @@ namespace Windows.Gaming.Input {
         Action6 = 0x200,
         Special1 = 0x400,
         Special2 = 0x800
+    };
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        flags
+    ]
+    enum FlightStickButtons
+    {
+        None = 0x0,
+        FirePrimary = 0x1,
+        FireSecondary = 0x2,
     };
 
     [
@@ -273,6 +293,18 @@ namespace Windows.Gaming.Input {
         Windows.Gaming.Input.ArcadeStickButtons Buttons;
     };
 
+    [contract(Windows.Foundation.UniversalApiContract, 4.0)]
+    struct FlightStickReading
+    {
+        UINT64 Timestamp;
+        Windows.Gaming.Input.FlightStickButtons Buttons;
+        Windows.Gaming.Input.GameControllerSwitchPosition HatSwitch;
+        DOUBLE Roll;
+        DOUBLE Pitch;
+        DOUBLE Yaw;
+        DOUBLE Throttle;
+    };
+
     [contract(Windows.Foundation.UniversalApiContract, 1.0)]
     struct GamepadReading
     {
@@ -347,6 +379,38 @@ namespace Windows.Gaming.Input {
     {
         HRESULT FromGameController([in] Windows.Gaming.Input.IGameController *controller,
                                    [out, retval] Windows.Gaming.Input.ArcadeStick **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.Gaming.Input.FlightStick),
+        uuid(b4a2c01c-b83b-4459-a1a9-97b03c33da7c)
+    ]
+    interface IFlightStick : IInspectable
+        requires Windows.Gaming.Input.IGameController
+    {
+        [propget] HRESULT HatSwitchKind([out, retval] Windows.Gaming.Input.GameControllerSwitchKind *value);
+        HRESULT GetButtonLabel([in] Windows.Gaming.Input.FlightStickButtons button,
+                               [out, retval] Windows.Gaming.Input.GameControllerButtonLabel *value);
+        HRESULT GetCurrentReading([out, retval] Windows.Gaming.Input.FlightStickReading *value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        exclusiveto(Windows.Gaming.Input.FlightStick),
+        uuid(5514924a-fecc-435e-83dc-5cec8a18a520)
+    ]
+    interface IFlightStickStatics : IInspectable
+    {
+        [eventadd] HRESULT FlightStickAdded([in] Windows.Foundation.EventHandler<Windows.Gaming.Input.FlightStick *> *value,
+                                            [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT FlightStickAdded([in] EventRegistrationToken token);
+        [eventadd] HRESULT FlightStickRemoved([in] Windows.Foundation.EventHandler<Windows.Gaming.Input.FlightStick *> *value,
+                                              [out, retval] EventRegistrationToken *token);
+        [eventremove] HRESULT FlightStickRemoved([in] EventRegistrationToken token);
+        [propget] HRESULT FlightSticks([out, retval] Windows.Foundation.Collections.IVectorView<Windows.Gaming.Input.FlightStick *> **value);
+        HRESULT FromGameController([in] Windows.Gaming.Input.IGameController *controller,
+                                   [out, retval] Windows.Gaming.Input.FlightStick **value);
     }
 
     [
@@ -535,6 +599,19 @@ namespace Windows.Gaming.Input {
         [default] interface Windows.Gaming.Input.IArcadeStick;
         interface Windows.Gaming.Input.IGameController;
         [contract(Windows.Foundation.UniversalApiContract, 4.0)] interface Windows.Gaming.Input.IGameControllerBatteryInfo;
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 4.0),
+        marshaling_behavior(agile),
+        static(Windows.Gaming.Input.IFlightStickStatics, Windows.Foundation.UniversalApiContract, 4.0),
+        threading(both)
+    ]
+    runtimeclass FlightStick
+    {
+        [default] interface Windows.Gaming.Input.IFlightStick;
+        interface Windows.Gaming.Input.IGameController;
+        interface Windows.Gaming.Input.IGameControllerBatteryInfo;
     }
 
     [
