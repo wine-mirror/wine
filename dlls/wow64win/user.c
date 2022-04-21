@@ -585,9 +585,8 @@ NTSTATUS WINAPI wow64_NtUserSetSystemTimer( UINT *args )
     HWND hwnd = get_handle( &args );
     UINT_PTR id = get_ulong( &args );
     UINT timeout = get_ulong( &args );
-    TIMERPROC proc = get_ptr( &args );
 
-    return NtUserSetSystemTimer( hwnd, id, timeout, proc );
+    return NtUserSetSystemTimer( hwnd, id, timeout );
 }
 
 NTSTATUS WINAPI wow64_NtUserSetTimer( UINT *args )

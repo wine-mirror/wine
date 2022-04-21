@@ -270,7 +270,7 @@ BOOL WINAPI SetCaretPos( INT x, INT y )
         r.left = x;
         r.top = y;
         CARET_DisplayCaret( hwnd, &r );
-        NtUserSetSystemTimer( hwnd, SYSTEM_TIMER_CARET, Caret.timeout, NULL );
+        NtUserSetSystemTimer( hwnd, SYSTEM_TIMER_CARET, Caret.timeout );
     }
     return ret;
 }
@@ -348,7 +348,7 @@ BOOL WINAPI ShowCaret( HWND hwnd )
     if (ret && (hidden == 1))  /* hidden was 1 so it's now 0 */
     {
         CARET_DisplayCaret( hwnd, &r );
-        NtUserSetSystemTimer( hwnd, SYSTEM_TIMER_CARET, Caret.timeout, NULL );
+        NtUserSetSystemTimer( hwnd, SYSTEM_TIMER_CARET, Caret.timeout );
     }
     return ret;
 }

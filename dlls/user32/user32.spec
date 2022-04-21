@@ -708,7 +708,7 @@
 @ stdcall SetSysColorsTemp(ptr ptr long)
 @ stdcall SetSystemCursor(long long)
 @ stdcall SetSystemMenu(long long)
-@ stdcall SetSystemTimer(long long long ptr) NtUserSetSystemTimer
+@ stdcall SetSystemTimer(long long long ptr)
 @ stdcall SetTaskmanWindow (long)
 @ stdcall SetThreadDesktop(long) NtUserSetThreadDesktop
 @ stdcall SetThreadDpiAwarenessContext(ptr)

@@ -742,7 +742,7 @@ TrackMouseEvent (TRACKMOUSEEVENT *ptme)
             /* Initialize HoverInfo variables even if not hover tracking */
             tracking_info.pos = pos;
 
-            NtUserSetSystemTimer( tracking_info.tme.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE, hover_time, NULL );
+            NtUserSetSystemTimer( tracking_info.tme.hwndTrack, SYSTEM_TIMER_TRACK_MOUSE, hover_time );
         }
     }
 

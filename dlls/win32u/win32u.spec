@@ -1230,7 +1230,7 @@
 @ stdcall NtUserSetSysColors(long ptr ptr)
 @ stub NtUserSetSystemCursor
 @ stub NtUserSetSystemMenu
-@ stdcall -syscall NtUserSetSystemTimer(long long long ptr)
+@ stdcall -syscall NtUserSetSystemTimer(long long long)
 @ stub NtUserSetTargetForResourceBrokering
 @ stdcall -syscall NtUserSetThreadDesktop(long)
 @ stub NtUserSetThreadInputBlocked

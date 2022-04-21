@@ -1269,6 +1269,17 @@ UINT_PTR WINAPI SetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc )
 }
 
 
+/******************************************************************
+ *      SetSystemTimer (USER32.@)
+ */
+UINT_PTR WINAPI SetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout, void *unknown )
+{
+    if (unknown) FIXME( "ignoring unknown parameter %p\n", unknown );
+
+    return NtUserSetSystemTimer( hwnd, id, timeout );
+}
+
+
 /***********************************************************************
  *		KillSystemTimer (USER32.@)
  */

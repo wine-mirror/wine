@@ -2651,12 +2651,11 @@ UINT_PTR WINAPI NtUserSetTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC 
 /***********************************************************************
  *           NtUserSetSystemTimer (win32u.@)
  */
-UINT_PTR WINAPI NtUserSetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIMERPROC proc )
+UINT_PTR WINAPI NtUserSetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout )
 {
     UINT_PTR ret;
-    WNDPROC winproc = 0;
 
-    if (proc) winproc = alloc_winproc( (WNDPROC)proc, TRUE );
+    TRACE( "window %p, id %#lx, timeout %u\n", hwnd, id, timeout );
 
     timeout = min( max( USER_TIMER_MINIMUM, timeout ), USER_TIMER_MAXIMUM );
 
@@ -2666,7 +2665,7 @@ UINT_PTR WINAPI NtUserSetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIME
         req->msg    = WM_SYSTIMER;
         req->id     = id;
         req->rate   = timeout;
-        req->lparam = (ULONG_PTR)winproc;
+        req->lparam = 0;
         if (!wine_server_call_err( req ))
         {
             ret = reply->id;
@@ -2676,7 +2675,6 @@ UINT_PTR WINAPI NtUserSetSystemTimer( HWND hwnd, UINT_PTR id, UINT timeout, TIME
     }
     SERVER_END_REQ;
 
-    TRACE( "Added %p %lx %p timeout %d\n", hwnd, id, winproc, timeout );
     return ret;
 }
 
