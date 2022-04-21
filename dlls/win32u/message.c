@@ -2469,6 +2469,17 @@ LRESULT dispatch_message( const MSG *msg, BOOL ansi )
         __ENDTRY
         return retval;
     }
+    if (msg->message == WM_SYSTIMER)
+    {
+        switch (msg->wParam)
+        {
+            case SYSTEM_TIMER_CARET:
+                if (!user_callbacks) break;
+                user_callbacks->toggle_caret( msg->hwnd );
+                return 0;
+        }
+    }
+
     if (!msg->hwnd) return 0;
 
     spy_enter_message( SPY_DISPATCHMESSAGE, msg->hwnd, msg->message, msg->wParam, msg->lParam );

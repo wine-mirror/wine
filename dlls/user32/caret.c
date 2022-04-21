@@ -27,6 +27,7 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "ntuser.h"
+#include "user_private.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 
@@ -39,8 +40,6 @@ typedef struct
 } CARET;
 
 static CARET Caret = { 0, 500 };
-
-#define TIMERID 0xffff  /* system timer id for the caret */
 
 
 /*****************************************************************
@@ -67,10 +66,7 @@ static void CARET_DisplayCaret( HWND hwnd, const RECT *r )
 }
 
 
-/*****************************************************************
- *               CARET_Callback
- */
-static void CALLBACK CARET_Callback( HWND hwnd, UINT msg, UINT_PTR id, DWORD ctime)
+void CDECL toggle_caret( HWND hwnd )
 {
     BOOL ret;
     RECT r;
@@ -183,7 +179,7 @@ BOOL WINAPI CreateCaret( HWND hwnd, HBITMAP bitmap, INT width, INT height )
     if (prev && !hidden)  /* hide the previous one */
     {
         /* FIXME: won't work if prev belongs to a different process */
-        KillSystemTimer( prev, TIMERID );
+        KillSystemTimer( prev, SYSTEM_TIMER_CARET );
         if (old_state) CARET_DisplayCaret( prev, &r );
     }
 
@@ -226,7 +222,7 @@ BOOL WINAPI DestroyCaret(void)
     if (ret && prev && !hidden)
     {
         /* FIXME: won't work if prev belongs to a different process */
-        KillSystemTimer( prev, TIMERID );
+        KillSystemTimer( prev, SYSTEM_TIMER_CARET );
         if (old_state) CARET_DisplayCaret( prev, &r );
     }
     if (Caret.hBmp) DeleteObject( Caret.hBmp );
@@ -274,7 +270,7 @@ BOOL WINAPI SetCaretPos( INT x, INT y )
         r.left = x;
         r.top = y;
         CARET_DisplayCaret( hwnd, &r );
-        NtUserSetSystemTimer( hwnd, TIMERID, Caret.timeout, CARET_Callback );
+        NtUserSetSystemTimer( hwnd, SYSTEM_TIMER_CARET, Caret.timeout, NULL );
     }
     return ret;
 }
@@ -314,7 +310,7 @@ BOOL WINAPI HideCaret( HWND hwnd )
     if (ret && !hidden)
     {
         if (old_state) CARET_DisplayCaret( hwnd, &r );
-        KillSystemTimer( hwnd, TIMERID );
+        KillSystemTimer( hwnd, SYSTEM_TIMER_CARET );
     }
     return ret;
 }
@@ -352,7 +348,7 @@ BOOL WINAPI ShowCaret( HWND hwnd )
     if (ret && (hidden == 1))  /* hidden was 1 so it's now 0 */
     {
         CARET_DisplayCaret( hwnd, &r );
-        NtUserSetSystemTimer( hwnd, TIMERID, Caret.timeout, CARET_Callback );
+        NtUserSetSystemTimer( hwnd, SYSTEM_TIMER_CARET, Caret.timeout, NULL );
     }
     return ret;
 }

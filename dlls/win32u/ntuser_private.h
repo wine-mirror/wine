@@ -51,6 +51,7 @@ struct user_callbacks
     BOOL (CDECL *rawinput_device_get_usages)(HANDLE handle, USHORT *usage_page, USHORT *usage);
     void (CDECL *register_builtin_classes)(void);
     void (WINAPI *set_standard_scroll_painted)( HWND hwnd, INT bar, BOOL visible );
+    void (CDECL *toggle_caret)( HWND hwnd );
     BOOL (CDECL *unpack_dde_message)( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
                                       void **buffer, size_t size );
     BOOL (WINAPI *register_imm)( HWND hwnd );
@@ -59,6 +60,11 @@ struct user_callbacks
 
 #define WM_SYSTIMER         0x0118
 #define WM_POPUPSYSTEMMENU  0x0313
+
+enum system_timer_id
+{
+    SYSTEM_TIMER_CARET = 0xffff,
+};
 
 struct user_object
 {
