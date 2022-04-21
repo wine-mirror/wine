@@ -822,6 +822,7 @@ static void client_duplex_session_dict( const struct listener_info *info )
     WS_MESSAGE_DESCRIPTION desc;
     WS_ENDPOINT_ADDRESS addr;
     WS_CHANNEL_PROPERTY prop;
+    WS_CHANNEL_STATE state;
     int dict_str_cnt = 0;
     char elem_name[128];
     WS_CHANNEL *channel;
@@ -893,12 +894,24 @@ static void client_duplex_session_dict( const struct listener_info *info )
     local_name.bytes = (BYTE *)short_dict_str;
     hr = WsReceiveMessage( channel, msg, descs, 1, WS_RECEIVE_REQUIRED_MESSAGE, WS_READ_REQUIRED_VALUE,
                            NULL, &val, sizeof(val), NULL, NULL, NULL );
-    todo_wine ok( hr == WS_E_QUOTA_EXCEEDED, "got %#lx\n", hr);
+    ok( hr == WS_E_QUOTA_EXCEEDED, "got %#lx\n", hr);
+
+    state = 0xdeadbeef;
+    hr = WsGetChannelProperty( channel, WS_CHANNEL_PROPERTY_STATE, &state, sizeof(state), NULL );
+    ok( hr == S_OK, "got %#lx\n", hr );
+    ok( state == WS_CHANNEL_STATE_FAULTED, "got %u\n", state );
+
+    hr = WsReceiveMessage( channel, msg, descs, 1, WS_RECEIVE_REQUIRED_MESSAGE, WS_READ_REQUIRED_VALUE,
+                           NULL, &val, sizeof(val), NULL, NULL, NULL );
+    ok( hr == WS_E_OBJECT_FAULTED, "got %#lx\n", hr );
+
+    hr = WsSendMessage( channel, msg, &desc, WS_WRITE_REQUIRED_VALUE, &val, sizeof(val), NULL, NULL );
+    ok( hr == WS_E_OBJECT_FAULTED, "got %#lx\n", hr );
 
     WsFreeMessage( msg );
 
     hr = WsShutdownSessionChannel( channel, NULL, NULL );
-    todo_wine ok( hr == WS_E_OBJECT_FAULTED, "got %#lx\n", hr );
+    ok( hr == WS_E_OBJECT_FAULTED, "got %#lx\n", hr );
 
     hr = WsCloseChannel( channel, NULL, NULL );
     ok( hr == S_OK, "got %#lx\n", hr );

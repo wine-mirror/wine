@@ -328,7 +328,7 @@ static void reset_channel( struct channel *channel )
     channel->session_state = SESSION_STATE_UNINITIALIZED;
     clear_addr( &channel->addr );
     init_dict( &channel->dict_send, channel->dict_size );
-    init_dict( &channel->dict_recv, 0 );
+    init_dict( &channel->dict_recv, channel->dict_size );
     channel->msg           = NULL;
     channel->read_size     = 0;
     channel->send_size     = 0;
@@ -486,6 +486,7 @@ static HRESULT create_channel( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding,
         channel->encoding     = WS_ENCODING_XML_BINARY_SESSION_1;
         channel->dict_size    = 2048;
         channel->dict_send.str_bytes_max = channel->dict_size;
+        channel->dict_recv.str_bytes_max = channel->dict_size;
         break;
 
     case WS_UDP_CHANNEL_BINDING:
@@ -546,6 +547,7 @@ static HRESULT create_channel( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding,
 
             channel->dict_size = *(ULONG *)prop->value;
             channel->dict_send.str_bytes_max = channel->dict_size;
+            channel->dict_recv.str_bytes_max = channel->dict_size;
             break;
 
         default:
@@ -875,6 +877,13 @@ static HRESULT queue_shutdown_session( struct channel *channel, const WS_ASYNC_C
     return queue_task( &channel->send_q, &s->task );
 }
 
+static HRESULT check_state( struct channel *channel, WS_CHANNEL_STATE state_expected )
+{
+    if (channel->state == WS_CHANNEL_STATE_FAULTED) return WS_E_OBJECT_FAULTED;
+    if (channel->state != state_expected) return WS_E_INVALID_OPERATION;
+    return S_OK;
+}
+
 HRESULT WINAPI WsShutdownSessionChannel( WS_CHANNEL *handle, const WS_ASYNC_CONTEXT *ctx, WS_ERROR *error )
 {
     struct channel *channel = (struct channel *)handle;
@@ -894,10 +903,10 @@ HRESULT WINAPI WsShutdownSessionChannel( WS_CHANNEL *handle, const WS_ASYNC_CONT
         LeaveCriticalSection( &channel->cs );
         return E_INVALIDARG;
     }
-    if (channel->state != WS_CHANNEL_STATE_OPEN)
+    if ((hr = check_state( channel, WS_CHANNEL_STATE_OPEN )) != S_OK)
     {
         LeaveCriticalSection( &channel->cs );
-        return WS_E_INVALID_OPERATION;
+        return hr;
     }
 
     if (!ctx) async_init( &async, &ctx_local );
@@ -1258,10 +1267,10 @@ HRESULT WINAPI WsOpenChannel( WS_CHANNEL *handle, const WS_ENDPOINT_ADDRESS *end
         LeaveCriticalSection( &channel->cs );
         return E_INVALIDARG;
     }
-    if (channel->state != WS_CHANNEL_STATE_CREATED)
+    if ((hr = check_state( channel, WS_CHANNEL_STATE_CREATED )) != S_OK)
     {
         LeaveCriticalSection( &channel->cs );
-        return WS_E_INVALID_OPERATION;
+        return hr;
     }
 
     if (!ctx) async_init( &async, &ctx_local );
@@ -1592,10 +1601,10 @@ HRESULT channel_send_message( WS_CHANNEL *handle, WS_MESSAGE *msg )
         LeaveCriticalSection( &channel->cs );
         return E_INVALIDARG;
     }
-    if (channel->state != WS_CHANNEL_STATE_OPEN)
+    if ((hr = check_state( channel, WS_CHANNEL_STATE_OPEN )) != S_OK)
     {
         LeaveCriticalSection( &channel->cs );
-        return WS_E_INVALID_OPERATION;
+        return hr;
     }
 
     hr = send_message_bytes( channel, msg );
@@ -1786,10 +1795,10 @@ HRESULT WINAPI WsSendMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_MESS
         LeaveCriticalSection( &channel->cs );
         return E_INVALIDARG;
     }
-    if (channel->state != WS_CHANNEL_STATE_OPEN)
+    if ((hr = check_state( channel, WS_CHANNEL_STATE_OPEN )) != S_OK)
     {
         LeaveCriticalSection( &channel->cs );
-        return WS_E_INVALID_OPERATION;
+        return hr;
     }
 
     WsInitializeMessage( msg, WS_BLANK_MESSAGE, NULL, NULL );
@@ -1832,10 +1841,10 @@ HRESULT WINAPI WsSendReplyMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS
         LeaveCriticalSection( &channel->cs );
         return E_INVALIDARG;
     }
-    if (channel->state != WS_CHANNEL_STATE_OPEN)
+    if ((hr = check_state( channel, WS_CHANNEL_STATE_OPEN )) != S_OK)
     {
         LeaveCriticalSection( &channel->cs );
-        return WS_E_INVALID_OPERATION;
+        return hr;
     }
 
     WsInitializeMessage( msg, WS_REPLY_MESSAGE, NULL, NULL );
@@ -2201,6 +2210,11 @@ static HRESULT build_dict( const BYTE *buf, ULONG buflen, struct dictionary *dic
             init_dict( dict, 0 );
             return WS_E_INVALID_FORMAT;
         }
+        if (size + dict->str_bytes + 1 > dict->str_bytes_max)
+        {
+            hr = WS_E_QUOTA_EXCEEDED;
+            goto error;
+        }
         buflen -= size;
         if (!(bytes = malloc( size )))
         {
@@ -2246,7 +2260,11 @@ static HRESULT receive_message_bytes_session( struct channel *channel )
     {
         ULONG size;
         if ((hr = build_dict( (const BYTE *)channel->read_buf, channel->read_size, &channel->dict_recv,
-                              &size )) != S_OK) return hr;
+                              &size )) != S_OK)
+        {
+            if (hr == WS_E_QUOTA_EXCEEDED) channel->state = WS_CHANNEL_STATE_FAULTED;
+            return hr;
+        }
         channel->read_size -= size;
         memmove( channel->read_buf, channel->read_buf + size, channel->read_size );
     }
@@ -2303,10 +2321,10 @@ HRESULT channel_receive_message( WS_CHANNEL *handle, WS_MESSAGE *msg )
         LeaveCriticalSection( &channel->cs );
         return E_INVALIDARG;
     }
-    if (channel->state != WS_CHANNEL_STATE_OPEN)
+    if ((hr = check_state( channel, WS_CHANNEL_STATE_OPEN )) != S_OK)
     {
         LeaveCriticalSection( &channel->cs );
-        return WS_E_INVALID_OPERATION;
+        return hr;
     }
 
     if ((hr = receive_message_bytes( channel, msg )) == S_OK) hr = init_reader( channel );
@@ -2443,10 +2461,10 @@ HRESULT WINAPI WsReceiveMessage( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_M
         LeaveCriticalSection( &channel->cs );
         return E_INVALIDARG;
     }
-    if (channel->state != WS_CHANNEL_STATE_OPEN)
+    if ((hr = check_state( channel, WS_CHANNEL_STATE_OPEN )) != S_OK)
     {
         LeaveCriticalSection( &channel->cs );
-        return WS_E_INVALID_OPERATION;
+        return hr;
     }
 
     if (!ctx) async_init( &async, &ctx_local );
@@ -2561,10 +2579,10 @@ HRESULT WINAPI WsRequestReply( WS_CHANNEL *handle, WS_MESSAGE *request, const WS
         LeaveCriticalSection( &channel->cs );
         return E_INVALIDARG;
     }
-    if (channel->state != WS_CHANNEL_STATE_OPEN)
+    if ((hr = check_state( channel, WS_CHANNEL_STATE_OPEN )) != S_OK)
     {
         LeaveCriticalSection( &channel->cs );
-        return WS_E_INVALID_OPERATION;
+        return hr;
     }
 
     WsInitializeMessage( request, WS_REQUEST_MESSAGE, NULL, NULL );
@@ -2645,10 +2663,10 @@ HRESULT WINAPI WsReadMessageStart( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS
         LeaveCriticalSection( &channel->cs );
         return E_INVALIDARG;
     }
-    if (channel->state != WS_CHANNEL_STATE_OPEN)
+    if ((hr = check_state( channel, WS_CHANNEL_STATE_OPEN )) != S_OK)
     {
         LeaveCriticalSection( &channel->cs );
-        return WS_E_INVALID_OPERATION;
+        return hr;
     }
 
     if (!ctx) async_init( &async, &ctx_local );
@@ -2797,10 +2815,10 @@ HRESULT WINAPI WsWriteMessageStart( WS_CHANNEL *handle, WS_MESSAGE *msg, const W
         LeaveCriticalSection( &channel->cs );
         return E_INVALIDARG;
     }
-    if (channel->state != WS_CHANNEL_STATE_OPEN)
+    if ((hr = check_state( channel, WS_CHANNEL_STATE_OPEN )) != S_OK)
     {
         LeaveCriticalSection( &channel->cs );
-        return WS_E_INVALID_OPERATION;
+        return hr;
     }
 
     if (!ctx) async_init( &async, &ctx_local );
@@ -2877,10 +2895,10 @@ HRESULT WINAPI WsWriteMessageEnd( WS_CHANNEL *handle, WS_MESSAGE *msg, const WS_
         LeaveCriticalSection( &channel->cs );
         return E_INVALIDARG;
     }
-    if (channel->state != WS_CHANNEL_STATE_OPEN)
+    if ((hr = check_state( channel, WS_CHANNEL_STATE_OPEN )) != S_OK)
     {
         LeaveCriticalSection( &channel->cs );
-        return WS_E_INVALID_OPERATION;
+        return hr;
     }
 
     if (!ctx) async_init( &async, &ctx_local );
