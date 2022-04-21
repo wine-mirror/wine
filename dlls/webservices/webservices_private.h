@@ -49,13 +49,15 @@ struct dictionary
     ULONG              size;
     ULONG              current_sequence;
     ULONG             *sequence;
+    ULONG              str_bytes;
+    ULONG              str_bytes_max;
 };
 extern struct dictionary dict_builtin DECLSPEC_HIDDEN;
 extern const struct dictionary dict_builtin_static DECLSPEC_HIDDEN;
 
 int find_string( const struct dictionary *, const unsigned char *, ULONG, ULONG * ) DECLSPEC_HIDDEN;
 HRESULT insert_string( struct dictionary *, unsigned char *, ULONG, int, ULONG * ) DECLSPEC_HIDDEN;
-void clear_dict( struct dictionary * ) DECLSPEC_HIDDEN;
+void init_dict( struct dictionary *, ULONG ) DECLSPEC_HIDDEN;
 HRESULT writer_set_lookup( WS_XML_WRITER *, BOOL ) DECLSPEC_HIDDEN;
 HRESULT writer_set_dict_callback( WS_XML_WRITER *, WS_DYNAMIC_STRING_CALLBACK, void * ) DECLSPEC_HIDDEN;
 

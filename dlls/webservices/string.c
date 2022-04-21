@@ -131,7 +131,7 @@ static HRESULT grow_dict( struct dictionary *dict, ULONG size )
     return S_OK;
 }
 
-void clear_dict( struct dictionary *dict )
+void init_dict( struct dictionary *dict, ULONG str_bytes_max )
 {
     ULONG i;
     assert( !dict->dict.isConst );
@@ -145,6 +145,8 @@ void clear_dict( struct dictionary *dict )
     dict->sequence = NULL;
     dict->current_sequence = 0;
     dict->size = 0;
+    dict->str_bytes = 0;
+    dict->str_bytes_max = str_bytes_max;
 }
 
 HRESULT insert_string( struct dictionary *dict, unsigned char *data, ULONG len, int i, ULONG *ret_id )
@@ -162,6 +164,7 @@ HRESULT insert_string( struct dictionary *dict, unsigned char *data, ULONG len, 
     dict->dict.strings[id].dictionary = &dict->dict;
     dict->dict.strings[id].id         = id;
     dict->dict.stringCount++;
+    dict->str_bytes += len + 1;
 
     dict->sequence[id] = dict->current_sequence;
 

@@ -327,8 +327,8 @@ static void reset_channel( struct channel *channel )
     channel->state         = WS_CHANNEL_STATE_CREATED;
     channel->session_state = SESSION_STATE_UNINITIALIZED;
     clear_addr( &channel->addr );
-    clear_dict( &channel->dict_send );
-    clear_dict( &channel->dict_recv );
+    init_dict( &channel->dict_send, channel->dict_size );
+    init_dict( &channel->dict_recv, 0 );
     channel->msg           = NULL;
     channel->read_size     = 0;
     channel->send_size     = 0;
@@ -485,6 +485,7 @@ static HRESULT create_channel( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding,
         channel->u.tcp.socket = -1;
         channel->encoding     = WS_ENCODING_XML_BINARY_SESSION_1;
         channel->dict_size    = 2048;
+        channel->dict_send.str_bytes_max = channel->dict_size;
         break;
 
     case WS_UDP_CHANNEL_BINDING:
@@ -544,6 +545,7 @@ static HRESULT create_channel( WS_CHANNEL_TYPE type, WS_CHANNEL_BINDING binding,
             }
 
             channel->dict_size = *(ULONG *)prop->value;
+            channel->dict_send.str_bytes_max = channel->dict_size;
             break;
 
         default:
@@ -1615,6 +1617,13 @@ static HRESULT CALLBACK dict_cb( void *state, const WS_XML_STRING *str, BOOL *fo
         return S_OK;
     }
 
+    if (str->length + dict->str_bytes + 1 > dict->str_bytes_max)
+    {
+        WARN( "max string bytes exceeded\n" );
+        *found = FALSE;
+        return hr;
+    }
+
     if (!(bytes = malloc( str->length ))) return E_OUTOFMEMORY;
     memcpy( bytes, str->bytes, str->length );
     if ((hr = insert_string( dict, bytes, str->length, index, id )) == S_OK)
@@ -2184,12 +2193,12 @@ static HRESULT build_dict( const BYTE *buf, ULONG buflen, struct dictionary *dic
     {
         if ((hr = read_size( &ptr, buflen, &size )) != S_OK)
         {
-            clear_dict( dict );
+            init_dict( dict, 0 );
             return hr;
         }
         if (size > buflen)
         {
-            clear_dict( dict );
+            init_dict( dict, 0 );
             return WS_E_INVALID_FORMAT;
         }
         buflen -= size;
@@ -2208,7 +2217,7 @@ static HRESULT build_dict( const BYTE *buf, ULONG buflen, struct dictionary *dic
         if ((hr = insert_string( dict, bytes, size, index, NULL )) != S_OK)
         {
             free( bytes );
-            clear_dict( dict );
+            init_dict( dict, 0 );
             return hr;
         }
         ptr += size;
@@ -2216,7 +2225,7 @@ static HRESULT build_dict( const BYTE *buf, ULONG buflen, struct dictionary *dic
     return S_OK;
 
 error:
-    clear_dict( dict );
+    init_dict( dict, 0 );
     return hr;
 }
 
