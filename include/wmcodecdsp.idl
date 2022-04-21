@@ -45,6 +45,11 @@ coclass CResamplerMediaObject {}
 coclass CMSH264DecoderMFT {}
 
 [
+    uuid(2d709e52-123f-49b5-9cbc-9af5cde28fb9)
+]
+coclass CMSMPEGDecoderMFT {}
+
+[
     uuid(2eeb4adf-4578-4d10-bca7-bb955f56320a)
 ]
 coclass CWMADecMediaObject {};
