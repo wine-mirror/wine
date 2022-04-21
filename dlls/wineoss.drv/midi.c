@@ -664,41 +664,6 @@ static DWORD modGetDevCaps(WORD wDevID, LPMIDIOUTCAPSW lpCaps, DWORD dwSize)
 }
 
 /**************************************************************************
- * 			modPrepare				[internal]
- */
-static DWORD modPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
-{
-    TRACE("(%04X, %p, %d);\n", wDevID, lpMidiHdr, dwSize);
-
-    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 || lpMidiHdr->lpData == 0)
-	return MMSYSERR_INVALPARAM;
-    if (lpMidiHdr->dwFlags & MHDR_PREPARED)
-	return MMSYSERR_NOERROR;
-
-    lpMidiHdr->lpNext = 0;
-    lpMidiHdr->dwFlags |= MHDR_PREPARED;
-    lpMidiHdr->dwFlags &= ~(MHDR_DONE|MHDR_INQUEUE); /* flags cleared since w2k */
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
- * 				modUnprepare			[internal]
- */
-static DWORD modUnprepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
-{
-    TRACE("(%04X, %p, %d);\n", wDevID, lpMidiHdr, dwSize);
-
-    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 || lpMidiHdr->lpData == 0)
-	return MMSYSERR_INVALPARAM;
-    if (!(lpMidiHdr->dwFlags & MHDR_PREPARED))
-	return MMSYSERR_NOERROR;
-    if (lpMidiHdr->dwFlags & MHDR_INQUEUE)
-	return MIDIERR_STILLPLAYING;
-    lpMidiHdr->dwFlags &= ~MHDR_PREPARED;
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
  * 			modGetVolume				[internal]
  */
 static DWORD modGetVolume(WORD wDevID, DWORD* lpdwVolume)
@@ -803,10 +768,6 @@ DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
         return OSS_MidiInit();
     case DRVM_EXIT:
         return OSS_MidiExit();
-    case MODM_PREPARE:
-	return modPrepare(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
-    case MODM_UNPREPARE:
-	return modUnprepare(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
     case MODM_GETDEVCAPS:
 	return modGetDevCaps(wDevID, (LPMIDIOUTCAPSW)dwParam1, dwParam2);
     case MODM_GETNUMDEVS:
