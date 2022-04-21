@@ -981,6 +981,15 @@ static HRESULT pulse_stream_connect(struct pulse_stream *stream, const char *pul
     return S_OK;
 }
 
+static ULONG_PTR zero_bits(void)
+{
+#ifdef _WIN64
+    return !NtCurrentTeb()->WowTebOffset ? 0 : 0x7fffffff;
+#else
+    return 0;
+#endif
+}
+
 static NTSTATUS pulse_create_stream(void *args)
 {
     struct create_stream_params *params = args;
@@ -1039,7 +1048,7 @@ static NTSTATUS pulse_create_stream(void *args)
             size = stream->real_bufsize_bytes =
                 stream->bufsize_frames * 2 * pa_frame_size(&stream->ss);
             if (NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer,
-                                        0, &size, MEM_COMMIT, PAGE_READWRITE))
+                                        zero_bits(), &size, MEM_COMMIT, PAGE_READWRITE))
                 hr = E_OUTOFMEMORY;
         } else {
             UINT32 i, capture_packets;
@@ -1053,7 +1062,7 @@ static NTSTATUS pulse_create_stream(void *args)
 
             size = stream->real_bufsize_bytes + capture_packets * sizeof(ACPacket);
             if (NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer,
-                                        0, &size, MEM_COMMIT, PAGE_READWRITE))
+                                        zero_bits(), &size, MEM_COMMIT, PAGE_READWRITE))
                 hr = E_OUTOFMEMORY;
             else {
                 ACPacket *cur_packet = (ACPacket*)((char*)stream->local_buffer + stream->real_bufsize_bytes);
@@ -1697,7 +1706,7 @@ static BOOL alloc_tmp_buffer(struct pulse_stream *stream, SIZE_T bytes)
         stream->tmp_buffer_bytes = 0;
     }
     if (NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer,
-                                0, &bytes, MEM_COMMIT, PAGE_READWRITE))
+                                zero_bits(), &bytes, MEM_COMMIT, PAGE_READWRITE))
         return FALSE;
 
     stream->tmp_buffer_bytes = bytes;
