@@ -861,22 +861,19 @@ LRESULT WINAPI DECLSPEC_HOTPATCH DispatchMessageA( const MSG* msg )
     LRESULT retval;
 
       /* Process timer messages */
-    if ((msg->message == WM_TIMER) || (msg->message == WM_SYSTIMER))
+    if (msg->lParam && msg->message == WM_TIMER)
     {
-        if (msg->lParam)
+        __TRY
         {
-            __TRY
-            {
-                retval = CallWindowProcA( (WNDPROC)msg->lParam, msg->hwnd,
-                                          msg->message, msg->wParam, GetTickCount() );
-            }
-            __EXCEPT_ALL
-            {
-                retval = 0;
-            }
-            __ENDTRY
-            return retval;
+            retval = CallWindowProcA( (WNDPROC)msg->lParam, msg->hwnd,
+                                      msg->message, msg->wParam, GetTickCount() );
         }
+        __EXCEPT_ALL
+        {
+            retval = 0;
+        }
+        __ENDTRY
+        return retval;
     }
     return NtUserDispatchMessageA( msg );
 }
