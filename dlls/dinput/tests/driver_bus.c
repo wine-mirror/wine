@@ -95,7 +95,6 @@ static void expect_queue_cleanup( struct expect_queue *queue )
 
     if (irp)
     {
-        irp->IoStatus.Information = 0;
         irp->IoStatus.Status = STATUS_DELETE_PENDING;
         IoCompleteRequest( irp, IO_NO_INCREMENT );
     }
@@ -162,27 +161,62 @@ static void WINAPI wait_cancel_routine( DEVICE_OBJECT *device, IRP *irp )
     IoCompleteRequest( irp, IO_NO_INCREMENT );
 }
 
-static NTSTATUS expect_queue_wait( struct expect_queue *queue, IRP *irp )
+static NTSTATUS expect_queue_add_pending_locked( struct expect_queue *queue, IRP *irp )
+{
+    if (queue->pending_wait) return STATUS_INVALID_PARAMETER;
+
+    IoSetCancelRoutine( irp, wait_cancel_routine );
+    if (irp->Cancel && !IoSetCancelRoutine( irp, NULL ))
+        return STATUS_CANCELLED;
+
+    irp->Tail.Overlay.DriverContext[0] = queue;
+    IoMarkIrpPending( irp );
+    queue->pending_wait = irp;
+
+    return STATUS_PENDING;
+}
+
+static NTSTATUS expect_queue_add_pending( struct expect_queue *queue, IRP *irp )
 {
     NTSTATUS status;
     KIRQL irql;
 
     KeAcquireSpinLock( &queue->lock, &irql );
-    if (queue->pos == queue->end)
-        status = STATUS_SUCCESS;
-    else
+    status = expect_queue_add_pending_locked( queue, irp );
+    KeReleaseSpinLock( &queue->lock, irql );
+
+    return status;
+}
+
+static void expect_queue_clear_pending( struct expect_queue *queue )
+{
+    KIRQL irql;
+    IRP *irp;
+
+    KeAcquireSpinLock( &queue->lock, &irql );
+    if ((irp = queue->pending_wait))
     {
-        IoSetCancelRoutine( irp, wait_cancel_routine );
-        if (irp->Cancel && !IoSetCancelRoutine( irp, NULL ))
-            status = STATUS_CANCELLED;
-        else
-        {
-            irp->Tail.Overlay.DriverContext[0] = queue;
-            IoMarkIrpPending( irp );
-            queue->pending_wait = irp;
-            status = STATUS_PENDING;
-        }
+        queue->pending_wait = NULL;
+        if (!IoSetCancelRoutine( irp, NULL )) irp = NULL;
     }
+    KeReleaseSpinLock( &queue->lock, irql );
+
+    if (irp)
+    {
+        irp->IoStatus.Status = STATUS_SUCCESS;
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+    }
+}
+
+static NTSTATUS expect_queue_wait( struct expect_queue *queue, IRP *irp )
+{
+    NTSTATUS status;
+    KIRQL irql;
+
+    irp->IoStatus.Information = 0;
+    KeAcquireSpinLock( &queue->lock, &irql );
+    if (queue->pos == queue->end) status = STATUS_SUCCESS;
+    else status = expect_queue_add_pending_locked( queue, irp );
     KeReleaseSpinLock( &queue->lock, irql );
 
     return status;
@@ -233,7 +267,6 @@ static void expect_queue_next( struct expect_queue *queue, ULONG code, HID_XFER_
 
     if (irp)
     {
-        irp->IoStatus.Information = 0;
         irp->IoStatus.Status = STATUS_SUCCESS;
         IoCompleteRequest( irp, IO_NO_INCREMENT );
     }
@@ -1055,6 +1088,7 @@ static NTSTATUS WINAPI pdo_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
 
         irp->IoStatus.Information = expect.ret_length ? expect.ret_length : expect.report_len;
         status = expect.ret_status;
+        if (status == STATUS_PENDING) status = expect_queue_add_pending( &impl->expect_queue, irp );
         break;
     }
 
@@ -1078,6 +1112,7 @@ static NTSTATUS WINAPI pdo_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
         irp->IoStatus.Information = expect.ret_length ? expect.ret_length : expect.report_len;
         memcpy( packet->reportBuffer, expect.report_buf, irp->IoStatus.Information );
         status = expect.ret_status;
+        if (status == STATUS_PENDING) status = expect_queue_add_pending( &impl->expect_queue, irp );
         break;
     }
 
@@ -1101,6 +1136,7 @@ static NTSTATUS WINAPI pdo_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
 
         irp->IoStatus.Information = expect.ret_length ? expect.ret_length : expect.report_len;
         status = expect.ret_status;
+        if (status == STATUS_PENDING) status = expect_queue_add_pending( &impl->expect_queue, irp );
         break;
     }
 
@@ -1124,6 +1160,7 @@ static NTSTATUS WINAPI pdo_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
         irp->IoStatus.Information = expect.ret_length ? expect.ret_length : expect.report_len;
         memcpy( packet->reportBuffer, expect.report_buf, irp->IoStatus.Information );
         status = expect.ret_status;
+        if (status == STATUS_PENDING) status = expect_queue_add_pending( &impl->expect_queue, irp );
         break;
     }
 
@@ -1147,6 +1184,7 @@ static NTSTATUS WINAPI pdo_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
 
         irp->IoStatus.Information = expect.ret_length ? expect.ret_length : expect.report_len;
         status = expect.ret_status;
+        if (status == STATUS_PENDING) status = expect_queue_add_pending( &impl->expect_queue, irp );
         break;
     }
 
@@ -1215,6 +1253,7 @@ static NTSTATUS WINAPI pdo_ioctl( DEVICE_OBJECT *device, IRP *irp )
         status = STATUS_SUCCESS;
         break;
     case IOCTL_WINETEST_HID_WAIT_EXPECT:
+        expect_queue_clear_pending( &impl->expect_queue );
         status = expect_queue_wait( &impl->expect_queue, irp );
         break;
     case IOCTL_WINETEST_HID_SEND_INPUT:
