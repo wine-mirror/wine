@@ -131,6 +131,11 @@ static void pulse_broadcast(void)
     pthread_cond_broadcast(&pulse_cond);
 }
 
+static struct pulse_stream *handle_get_stream(stream_handle h)
+{
+    return (struct pulse_stream *)(UINT_PTR)h;
+}
+
 static void dump_attr(const pa_buffer_attr *attr)
 {
     TRACE("maxlength: %u\n", attr->maxlength);
@@ -1067,7 +1072,7 @@ static NTSTATUS pulse_create_stream(void *args)
     }
 
     *params->channel_count = stream->ss.channels;
-    *params->stream = stream;
+    *params->stream = (stream_handle)(UINT_PTR)stream;
 
 exit:
     if (FAILED(params->result = hr)) {
@@ -1086,7 +1091,7 @@ exit:
 static NTSTATUS pulse_release_stream(void *args)
 {
     struct release_stream_params *params = args;
-    struct pulse_stream *stream = params->stream;
+    struct pulse_stream *stream = handle_get_stream(params->stream);
     SIZE_T size;
 
     if(params->timer) {
@@ -1407,7 +1412,7 @@ static void pulse_read(struct pulse_stream *stream)
 static NTSTATUS pulse_timer_loop(void *args)
 {
     struct timer_loop_params *params = args;
-    struct pulse_stream *stream = params->stream;
+    struct pulse_stream *stream = handle_get_stream(params->stream);
     LARGE_INTEGER delay;
     pa_usec_t last_time;
     UINT32 adv_bytes;
@@ -1515,7 +1520,7 @@ static NTSTATUS pulse_timer_loop(void *args)
 static NTSTATUS pulse_start(void *args)
 {
     struct start_params *params = args;
-    struct pulse_stream *stream = params->stream;
+    struct pulse_stream *stream = handle_get_stream(params->stream);
     int success;
     pa_operation *o;
 
@@ -1571,7 +1576,7 @@ static NTSTATUS pulse_start(void *args)
 static NTSTATUS pulse_stop(void *args)
 {
     struct stop_params *params = args;
-    struct pulse_stream *stream = params->stream;
+    struct pulse_stream *stream = handle_get_stream(params->stream);
     pa_operation *o;
     int success;
 
@@ -1614,7 +1619,7 @@ static NTSTATUS pulse_stop(void *args)
 static NTSTATUS pulse_reset(void *args)
 {
     struct reset_params *params = args;
-    struct pulse_stream *stream = params->stream;
+    struct pulse_stream *stream = handle_get_stream(params->stream);
 
     pulse_lock();
     if (!pulse_stream_valid(stream))
@@ -1720,7 +1725,7 @@ static UINT32 pulse_capture_padding(struct pulse_stream *stream)
 static NTSTATUS pulse_get_render_buffer(void *args)
 {
     struct get_render_buffer_params *params = args;
-    struct pulse_stream *stream = params->stream;
+    struct pulse_stream *stream = handle_get_stream(params->stream);
     size_t bytes;
     UINT32 wri_offs_bytes;
 
@@ -1799,7 +1804,7 @@ static void pulse_wrap_buffer(struct pulse_stream *stream, BYTE *buffer, UINT32 
 static NTSTATUS pulse_release_render_buffer(void *args)
 {
     struct release_render_buffer_params *params = args;
-    struct pulse_stream *stream = params->stream;
+    struct pulse_stream *stream = handle_get_stream(params->stream);
     UINT32 written_bytes;
     BYTE *buffer;
 
@@ -1856,7 +1861,7 @@ static NTSTATUS pulse_release_render_buffer(void *args)
 static NTSTATUS pulse_get_capture_buffer(void *args)
 {
     struct get_capture_buffer_params *params = args;
-    struct pulse_stream *stream = params->stream;
+    struct pulse_stream *stream = handle_get_stream(params->stream);
     ACPacket *packet;
 
     pulse_lock();
@@ -1902,7 +1907,7 @@ static NTSTATUS pulse_get_capture_buffer(void *args)
 static NTSTATUS pulse_release_capture_buffer(void *args)
 {
     struct release_capture_buffer_params *params = args;
-    struct pulse_stream *stream = params->stream;
+    struct pulse_stream *stream = handle_get_stream(params->stream);
 
     pulse_lock();
     if (!stream->locked && params->done)
@@ -1937,14 +1942,15 @@ static NTSTATUS pulse_release_capture_buffer(void *args)
 static NTSTATUS pulse_get_buffer_size(void *args)
 {
     struct get_buffer_size_params *params = args;
+    struct pulse_stream *stream = handle_get_stream(params->stream);
 
     params->result = S_OK;
 
     pulse_lock();
-    if (!pulse_stream_valid(params->stream))
+    if (!pulse_stream_valid(stream))
         params->result = AUDCLNT_E_DEVICE_INVALIDATED;
     else
-        *params->size = params->stream->bufsize_frames;
+        *params->size = stream->bufsize_frames;
     pulse_unlock();
 
     return STATUS_SUCCESS;
@@ -1953,7 +1959,7 @@ static NTSTATUS pulse_get_buffer_size(void *args)
 static NTSTATUS pulse_get_latency(void *args)
 {
     struct get_latency_params *params = args;
-    struct pulse_stream *stream = params->stream;
+    struct pulse_stream *stream = handle_get_stream(params->stream);
     const pa_buffer_attr *attr;
     REFERENCE_TIME lat;
 
@@ -1978,7 +1984,7 @@ static NTSTATUS pulse_get_latency(void *args)
 static NTSTATUS pulse_get_current_padding(void *args)
 {
     struct get_current_padding_params *params = args;
-    struct pulse_stream *stream = params->stream;
+    struct pulse_stream *stream = handle_get_stream(params->stream);
 
     pulse_lock();
     if (!pulse_stream_valid(stream))
@@ -2003,7 +2009,7 @@ static NTSTATUS pulse_get_current_padding(void *args)
 static NTSTATUS pulse_get_next_packet_size(void *args)
 {
     struct get_next_packet_size_params *params = args;
-    struct pulse_stream *stream = params->stream;
+    struct pulse_stream *stream = handle_get_stream(params->stream);
 
     pulse_lock();
     pulse_capture_padding(stream);
@@ -2020,7 +2026,7 @@ static NTSTATUS pulse_get_next_packet_size(void *args)
 static NTSTATUS pulse_get_frequency(void *args)
 {
     struct get_frequency_params *params = args;
-    struct pulse_stream *stream = params->stream;
+    struct pulse_stream *stream = handle_get_stream(params->stream);
 
     pulse_lock();
     if (!pulse_stream_valid(stream))
@@ -2041,7 +2047,7 @@ static NTSTATUS pulse_get_frequency(void *args)
 static NTSTATUS pulse_get_position(void *args)
 {
     struct get_position_params *params = args;
-    struct pulse_stream *stream = params->stream;
+    struct pulse_stream *stream = handle_get_stream(params->stream);
 
     pulse_lock();
     if (!pulse_stream_valid(stream))
@@ -2079,7 +2085,7 @@ static NTSTATUS pulse_get_position(void *args)
 static NTSTATUS pulse_set_volumes(void *args)
 {
     struct set_volumes_params *params = args;
-    struct pulse_stream *stream = params->stream;
+    struct pulse_stream *stream = handle_get_stream(params->stream);
     unsigned int i;
 
     for (i = 0; i < stream->ss.channels; i++)
@@ -2091,7 +2097,7 @@ static NTSTATUS pulse_set_volumes(void *args)
 static NTSTATUS pulse_set_event_handle(void *args)
 {
     struct set_event_handle_params *params = args;
-    struct pulse_stream *stream = params->stream;
+    struct pulse_stream *stream = handle_get_stream(params->stream);
     HRESULT hr = S_OK;
 
     pulse_lock();
@@ -2112,7 +2118,7 @@ static NTSTATUS pulse_set_event_handle(void *args)
 static NTSTATUS pulse_is_started(void *args)
 {
     struct is_started_params *params = args;
-    struct pulse_stream *stream = params->stream;
+    struct pulse_stream *stream = handle_get_stream(params->stream);
 
     pulse_lock();
     params->started = pulse_stream_valid(stream) && stream->started;
