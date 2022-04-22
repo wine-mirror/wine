@@ -191,6 +191,7 @@ struct unix_funcs
     ULONG_PTR (WINAPI *pNtUserCallNoParam)( ULONG code );
     ULONG_PTR (WINAPI *pNtUserCallOneParam)( ULONG_PTR arg, ULONG code );
     ULONG_PTR (WINAPI *pNtUserCallTwoParam)( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code );
+    BOOL     (WINAPI *pNtUserChangeClipboardChain)( HWND hwnd, HWND next );
     LONG     (WINAPI *pNtUserChangeDisplaySettings)( UNICODE_STRING *devname, DEVMODEW *devmode, HWND hwnd,
                                                      DWORD flags, void *lparam );
     BOOL     (WINAPI *pNtUserClipCursor)( const RECT *rect );

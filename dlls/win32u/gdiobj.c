@@ -1139,6 +1139,7 @@ static struct unix_funcs unix_funcs =
     NtUserCallNoParam,
     NtUserCallOneParam,
     NtUserCallTwoParam,
+    NtUserChangeClipboardChain,
     NtUserChangeDisplaySettings,
     NtUserClipCursor,
     NtUserCloseClipboard,

@@ -703,33 +703,6 @@ BOOL WINAPI EmptyClipboard(void)
 
 
 /**************************************************************************
- *              ChangeClipboardChain (USER32.@)
- */
-BOOL WINAPI ChangeClipboardChain( HWND hwnd, HWND next )
-{
-    NTSTATUS status;
-    HWND viewer;
-
-    if (!hwnd) return FALSE;
-
-    SERVER_START_REQ( set_clipboard_viewer )
-    {
-        req->viewer = wine_server_user_handle( next );
-        req->previous = wine_server_user_handle( hwnd );
-        status = wine_server_call( req );
-        viewer = wine_server_ptr_handle( reply->old_viewer );
-    }
-    SERVER_END_REQ;
-
-    if (status == STATUS_PENDING)
-        return !SendMessageW( viewer, WM_CHANGECBCHAIN, (WPARAM)hwnd, (LPARAM)next );
-
-    if (status) SetLastError( RtlNtStatusToDosError( status ));
-    return !status;
-}
-
-
-/**************************************************************************
  *		SetClipboardData (USER32.@)
  */
 HANDLE WINAPI SetClipboardData( UINT format, HANDLE data )

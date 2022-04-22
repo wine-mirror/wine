@@ -755,6 +755,12 @@ BOOL WINAPI NtUserCloseClipboard(void)
     return unix_funcs->pNtUserCloseClipboard();
 }
 
+BOOL WINAPI NtUserChangeClipboardChain( HWND hwnd, HWND next )
+{
+    if (!unix_funcs) return DISP_CHANGE_FAILED;
+    return unix_funcs->pNtUserChangeClipboardChain( hwnd, next );
+}
+
 LONG WINAPI NtUserChangeDisplaySettings( UNICODE_STRING *devname, DEVMODEW *devmode, HWND hwnd,
                                          DWORD flags, void *lparam )
 {

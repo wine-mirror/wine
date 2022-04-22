@@ -33,7 +33,7 @@
 @ stdcall CallWindowProcW(ptr long long long long)
 @ stdcall CascadeChildWindows(long long)
 @ stdcall CascadeWindows(long long ptr long ptr)
-@ stdcall ChangeClipboardChain(long long)
+@ stdcall ChangeClipboardChain(long long) NtUserChangeClipboardChain
 @ stdcall ChangeDisplaySettingsA(ptr long)
 @ stdcall ChangeDisplaySettingsExA(str ptr long long ptr)
 @ stdcall ChangeDisplaySettingsExW(wstr ptr long long ptr)
