@@ -42,7 +42,7 @@
 extern HINSTANCE windows_gaming_input;
 extern ICustomGameControllerFactory *controller_factory;
 extern ICustomGameControllerFactory *gamepad_factory;
-extern IActivationFactory *racing_wheel_factory;
+extern ICustomGameControllerFactory *racing_wheel_factory;
 extern IGameControllerFactoryManagerStatics2 *manager_factory;
 
 struct vector_iids

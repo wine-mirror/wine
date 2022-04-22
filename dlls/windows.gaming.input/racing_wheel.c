@@ -60,6 +60,7 @@ struct racing_wheel_statics
 {
     IActivationFactory IActivationFactory_iface;
     IRacingWheelStatics IRacingWheelStatics_iface;
+    ICustomGameControllerFactory ICustomGameControllerFactory_iface;
     LONG ref;
 };
 
@@ -86,6 +87,12 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
     if (IsEqualGUID( iid, &IID_IRacingWheelStatics ))
     {
         IInspectable_AddRef( (*out = &impl->IRacingWheelStatics_iface) );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_ICustomGameControllerFactory ))
+    {
+        IInspectable_AddRef( (*out = &impl->ICustomGameControllerFactory_iface) );
         return S_OK;
     }
 
@@ -207,11 +214,85 @@ static const struct IRacingWheelStaticsVtbl statics_vtbl =
     statics_get_RacingWheels,
 };
 
+DEFINE_IINSPECTABLE( controller_factory, ICustomGameControllerFactory, struct racing_wheel_statics, IActivationFactory_iface )
+
+static HRESULT WINAPI controller_factory_CreateGameController( ICustomGameControllerFactory *iface, IGameControllerProvider *provider,
+                                                               IInspectable **value )
+{
+    FIXME( "iface %p, provider %p, value %p stub!.\n", iface, provider, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI controller_factory_OnGameControllerAdded( ICustomGameControllerFactory *iface, IGameController *value )
+{
+    IRacingWheel *racing_wheel;
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (FAILED(hr = IGameController_QueryInterface( value, &IID_IRacingWheel, (void **)&racing_wheel )))
+        return hr;
+    event_handlers_notify( &racing_wheel_added_handlers, (IInspectable *)racing_wheel );
+    IRacingWheel_Release( racing_wheel );
+
+    return S_OK;
+}
+
+static HRESULT WINAPI controller_factory_OnGameControllerRemoved( ICustomGameControllerFactory *iface, IGameController *value )
+{
+    IRacingWheel *racing_wheel;
+    BOOLEAN found;
+    UINT32 index;
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (FAILED(hr = IGameController_QueryInterface( value, &IID_IRacingWheel, (void **)&racing_wheel )))
+        return hr;
+
+    EnterCriticalSection( &racing_wheel_cs );
+    if (SUCCEEDED(hr = init_racing_wheels()))
+    {
+        if (FAILED(hr = IVector_RacingWheel_IndexOf( racing_wheels, racing_wheel, &index, &found )) || !found)
+            WARN( "Could not find RacingWheel %p, hr %#lx!\n", racing_wheel, hr );
+        else
+            hr = IVector_RacingWheel_RemoveAt( racing_wheels, index );
+    }
+    LeaveCriticalSection( &racing_wheel_cs );
+
+    if (FAILED(hr))
+        WARN( "Failed to remove RacingWheel %p, hr %#lx!\n", racing_wheel, hr );
+    else if (found)
+    {
+        TRACE( "Removed RacingWheel %p.\n", racing_wheel );
+        event_handlers_notify( &racing_wheel_removed_handlers, (IInspectable *)racing_wheel );
+    }
+    IRacingWheel_Release( racing_wheel );
+
+    return S_OK;
+}
+
+static const struct ICustomGameControllerFactoryVtbl controller_factory_vtbl =
+{
+    controller_factory_QueryInterface,
+    controller_factory_AddRef,
+    controller_factory_Release,
+    /* IInspectable methods */
+    controller_factory_GetIids,
+    controller_factory_GetRuntimeClassName,
+    controller_factory_GetTrustLevel,
+    /* ICustomGameControllerFactory methods */
+    controller_factory_CreateGameController,
+    controller_factory_OnGameControllerAdded,
+    controller_factory_OnGameControllerRemoved,
+};
+
 static struct racing_wheel_statics racing_wheel_statics =
 {
     {&factory_vtbl},
     {&statics_vtbl},
+    {&controller_factory_vtbl},
     1,
 };
 
-IActivationFactory *racing_wheel_factory = &racing_wheel_statics.IActivationFactory_iface;
+ICustomGameControllerFactory *racing_wheel_factory = &racing_wheel_statics.ICustomGameControllerFactory_iface;
