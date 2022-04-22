@@ -1660,7 +1660,7 @@ static const WCHAR mntr_key[] =
      'V','e','r','s','i','o','n','\\','I','C','M','\\','m','n','t','r'};
 
 static const WCHAR color_path[] =
-    {'c',':','\\','w','i','n','d','o','w','s','\\','s','y','s','t','e','m','3','2',
+    {'\\','?','?','\\','c',':','\\','w','i','n','d','o','w','s','\\','s','y','s','t','e','m','3','2',
      '\\','s','p','o','o','l','\\','d','r','i','v','e','r','s','\\','c','o','l','o','r','\\'};
 
 /***********************************************************************
@@ -1679,6 +1679,8 @@ BOOL CDECL X11DRV_GetICMProfile( PHYSDEV dev, BOOL allow_default, LPDWORD size, 
     unsigned long buflen, i;
     ULONG full_size;
     WCHAR fullname[MAX_PATH + ARRAY_SIZE( color_path )], *p;
+    UNICODE_STRING name;
+    OBJECT_ATTRIBUTES attr;
 
     if (!size) return FALSE;
 
@@ -1697,8 +1699,10 @@ BOOL CDECL X11DRV_GetICMProfile( PHYSDEV dev, BOOL allow_default, LPDWORD size, 
     else if ((buffer = get_icm_profile( &buflen )))
     {
         static const WCHAR icm[] = {'.','i','c','m',0};
+        IO_STATUS_BLOCK io;
         UINT64 hash = 0;
         HANDLE file;
+        NTSTATUS status;
 
         for (i = 0; i < buflen; i++) hash = (hash << 16) - hash + buffer[i];
         for (i = 0; i < sizeof(hash) * 2; i++)
@@ -1710,14 +1714,15 @@ BOOL CDECL X11DRV_GetICMProfile( PHYSDEV dev, BOOL allow_default, LPDWORD size, 
 
         memcpy( p + i, icm, sizeof(icm) );
 
-        file = CreateFileW( fullname, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, 0 );
-        if (file != INVALID_HANDLE_VALUE)
+        RtlInitUnicodeString( &name, fullname );
+        InitializeObjectAttributes( &attr, &name, OBJ_CASE_INSENSITIVE, NULL, NULL );
+        status = NtCreateFile( &file, GENERIC_WRITE, &attr, &io, NULL, 0, 0, FILE_CREATE,
+                               FILE_SYNCHRONOUS_IO_NONALERT | FILE_NON_DIRECTORY_FILE, NULL, 0 );
+        if (!status)
         {
-            DWORD written;
-
-            if (!WriteFile( file, buffer, buflen, &written, NULL ) || written != buflen)
-                ERR( "Unable to write color profile\n" );
-            CloseHandle( file );
+            status = NtWriteFile( file, NULL, NULL, NULL, &io, buffer, buflen, NULL, NULL );
+            if (status) ERR( "Unable to write color profile: %x\n", status );
+            NtClose( file );
         }
         HeapFree( GetProcessHeap(), 0, buffer );
     }
@@ -1725,7 +1730,7 @@ BOOL CDECL X11DRV_GetICMProfile( PHYSDEV dev, BOOL allow_default, LPDWORD size, 
     else lstrcpyW( p, srgb );
 
     NtClose( hkey );
-    required = strlenW( fullname ) + 1;
+    required = strlenW( fullname ) + 1 - 4 /* skip NT prefix */;
     if (*size < required)
     {
         *size = required;
@@ -1734,9 +1739,12 @@ BOOL CDECL X11DRV_GetICMProfile( PHYSDEV dev, BOOL allow_default, LPDWORD size, 
     }
     if (filename)
     {
-        strcpyW( filename, fullname );
-        if (GetFileAttributesW( filename ) == INVALID_FILE_ATTRIBUTES)
-            WARN( "color profile not found\n" );
+        FILE_BASIC_INFORMATION info;
+        strcpyW( filename, fullname + 4 );
+        RtlInitUnicodeString( &name, fullname );
+        InitializeObjectAttributes( &attr, &name, OBJ_CASE_INSENSITIVE, NULL, NULL );
+        if (NtQueryAttributesFile( &attr, &info ))
+            WARN( "color profile not found in %s\n", debugstr_w(fullname) );
     }
     *size = required;
     return TRUE;
