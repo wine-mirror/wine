@@ -5173,6 +5173,56 @@ static void wined3d_texture_vk_download_data(struct wined3d_context *context,
     }
 }
 
+static void wined3d_texture_vk_clear(struct wined3d_texture_vk *texture_vk,
+        unsigned int sub_resource_idx, struct wined3d_context *context)
+{
+    struct wined3d_context_vk *context_vk = wined3d_context_vk(context);
+    const struct wined3d_format *format = texture_vk->t.resource.format;
+    const struct wined3d_vk_info *vk_info = context_vk->vk_info;
+    static const VkClearDepthStencilValue depth_value;
+    static const VkClearColorValue colour_value;
+    VkCommandBuffer vk_command_buffer;
+    VkImageSubresourceRange vk_range;
+    VkImageAspectFlags aspect_mask;
+    VkImage vk_image;
+
+    vk_image = texture_vk->image.vk_image;
+
+    if (!(vk_command_buffer = wined3d_context_vk_get_command_buffer(context_vk)))
+    {
+        ERR("Failed to get command buffer.\n");
+        return;
+    }
+
+    aspect_mask = vk_aspect_mask_from_format(format);
+
+    vk_range.aspectMask = aspect_mask;
+    vk_range.baseMipLevel = sub_resource_idx % texture_vk->t.level_count;
+    vk_range.levelCount = 1;
+    vk_range.baseArrayLayer = sub_resource_idx / texture_vk->t.level_count;
+    vk_range.layerCount = 1;
+
+    wined3d_context_vk_end_current_render_pass(context_vk);
+
+    wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
+            VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
+            vk_access_mask_from_bind_flags(texture_vk->t.resource.bind_flags), VK_ACCESS_TRANSFER_WRITE_BIT,
+            texture_vk->layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, vk_image, &vk_range);
+
+    if (format->depth_size || format->stencil_size)
+        VK_CALL(vkCmdClearDepthStencilImage(vk_command_buffer, vk_image,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &depth_value, 1, &vk_range));
+    else
+        VK_CALL(vkCmdClearColorImage(vk_command_buffer, vk_image,
+                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &colour_value, 1, &vk_range));
+
+    wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
+            VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
+            VK_ACCESS_TRANSFER_WRITE_BIT, vk_access_mask_from_bind_flags(texture_vk->t.resource.bind_flags),
+            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, texture_vk->layout, vk_image, &vk_range);
+    wined3d_context_vk_reference_texture(context_vk, texture_vk);
+}
+
 static BOOL wined3d_texture_vk_load_texture(struct wined3d_texture_vk *texture_vk,
         unsigned int sub_resource_idx, struct wined3d_context *context)
 {
@@ -5185,15 +5235,8 @@ static BOOL wined3d_texture_vk_load_texture(struct wined3d_texture_vk *texture_v
 
     if (sub_resource->locations & WINED3D_LOCATION_CLEARED)
     {
-        struct wined3d_bo_address addr;
-
-        /* FIXME: Clear textures on the GPU if possible. */
-
-        if (!wined3d_texture_prepare_location(&texture_vk->t, sub_resource_idx, context, WINED3D_LOCATION_SYSMEM))
-            return FALSE;
-        wined3d_texture_get_bo_address(&texture_vk->t, sub_resource_idx, &addr, WINED3D_LOCATION_SYSMEM);
-        memset(addr.addr, 0, sub_resource->size);
-        wined3d_texture_validate_location(&texture_vk->t, sub_resource_idx, WINED3D_LOCATION_SYSMEM);
+        wined3d_texture_vk_clear(texture_vk, sub_resource_idx, context);
+        return TRUE;
     }
 
     if (!(sub_resource->locations & wined3d_texture_sysmem_locations))
