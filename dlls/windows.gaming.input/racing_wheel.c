@@ -56,6 +56,232 @@ static HRESULT init_racing_wheels(void)
     return hr;
 }
 
+struct racing_wheel
+{
+    IGameControllerImpl IGameControllerImpl_iface;
+    IGameControllerInputSink IGameControllerInputSink_iface;
+    IRacingWheel IRacingWheel_iface;
+    IGameController *IGameController_outer;
+    LONG ref;
+
+    IGameControllerProvider *provider;
+    IWineGameControllerProvider *wine_provider;
+};
+
+static inline struct racing_wheel *impl_from_IGameControllerImpl( IGameControllerImpl *iface )
+{
+    return CONTAINING_RECORD( iface, struct racing_wheel, IGameControllerImpl_iface );
+}
+
+static HRESULT WINAPI controller_QueryInterface( IGameControllerImpl *iface, REFIID iid, void **out )
+{
+    struct racing_wheel *impl = impl_from_IGameControllerImpl( iface );
+
+    TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IInspectable ) ||
+        IsEqualGUID( iid, &IID_IGameControllerImpl ))
+    {
+        IInspectable_AddRef( (*out = &impl->IGameControllerImpl_iface) );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IGameControllerInputSink ))
+    {
+        IInspectable_AddRef( (*out = &impl->IGameControllerInputSink_iface) );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IRacingWheel ))
+    {
+        IInspectable_AddRef( (*out = &impl->IRacingWheel_iface) );
+        return S_OK;
+    }
+
+    WARN( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI controller_AddRef( IGameControllerImpl *iface )
+{
+    struct racing_wheel *impl = impl_from_IGameControllerImpl( iface );
+    ULONG ref = InterlockedIncrement( &impl->ref );
+    TRACE( "iface %p increasing refcount to %lu.\n", iface, ref );
+    return ref;
+}
+
+static ULONG WINAPI controller_Release( IGameControllerImpl *iface )
+{
+    struct racing_wheel *impl = impl_from_IGameControllerImpl( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+
+    TRACE( "iface %p decreasing refcount to %lu.\n", iface, ref );
+
+    if (!ref)
+    {
+        if (impl->wine_provider) IWineGameControllerProvider_Release( impl->wine_provider );
+        IGameControllerProvider_Release( impl->provider );
+        free( impl );
+    }
+
+    return ref;
+}
+
+static HRESULT WINAPI controller_GetIids( IGameControllerImpl *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME( "iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI controller_GetRuntimeClassName( IGameControllerImpl *iface, HSTRING *class_name )
+{
+    return WindowsCreateString( RuntimeClass_Windows_Gaming_Input_RacingWheel,
+                                ARRAY_SIZE(RuntimeClass_Windows_Gaming_Input_RacingWheel), class_name );
+}
+
+static HRESULT WINAPI controller_GetTrustLevel( IGameControllerImpl *iface, TrustLevel *trust_level )
+{
+    FIXME( "iface %p, trust_level %p stub!\n", iface, trust_level );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI controller_Initialize( IGameControllerImpl *iface, IGameController *outer,
+                                             IGameControllerProvider *provider )
+{
+    struct racing_wheel *impl = impl_from_IGameControllerImpl( iface );
+    HRESULT hr;
+
+    TRACE( "iface %p, outer %p, provider %p.\n", iface, outer, provider );
+
+    impl->IGameController_outer = outer;
+    IGameControllerProvider_AddRef( (impl->provider = provider) );
+
+    hr = IGameControllerProvider_QueryInterface( provider, &IID_IWineGameControllerProvider,
+                                                 (void **)&impl->wine_provider );
+    if (FAILED(hr)) return hr;
+
+    EnterCriticalSection( &racing_wheel_cs );
+    if (SUCCEEDED(hr = init_racing_wheels()))
+        hr = IVector_RacingWheel_Append( racing_wheels, &impl->IRacingWheel_iface );
+    LeaveCriticalSection( &racing_wheel_cs );
+
+    return hr;
+}
+
+static const struct IGameControllerImplVtbl controller_vtbl =
+{
+    controller_QueryInterface,
+    controller_AddRef,
+    controller_Release,
+    /* IInspectable methods */
+    controller_GetIids,
+    controller_GetRuntimeClassName,
+    controller_GetTrustLevel,
+    /* IGameControllerImpl methods */
+    controller_Initialize,
+};
+
+DEFINE_IINSPECTABLE_OUTER( input_sink, IGameControllerInputSink, struct racing_wheel, IGameController_outer )
+
+static HRESULT WINAPI input_sink_OnInputResumed( IGameControllerInputSink *iface, UINT64 timestamp )
+{
+    FIXME( "iface %p, timestamp %I64u stub!\n", iface, timestamp );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI input_sink_OnInputSuspended( IGameControllerInputSink *iface, UINT64 timestamp )
+{
+    FIXME( "iface %p, timestamp %I64u stub!\n", iface, timestamp );
+    return E_NOTIMPL;
+}
+
+static const struct IGameControllerInputSinkVtbl input_sink_vtbl =
+{
+    input_sink_QueryInterface,
+    input_sink_AddRef,
+    input_sink_Release,
+    /* IInspectable methods */
+    input_sink_GetIids,
+    input_sink_GetRuntimeClassName,
+    input_sink_GetTrustLevel,
+    /* IGameControllerInputSink methods */
+    input_sink_OnInputResumed,
+    input_sink_OnInputSuspended,
+};
+
+DEFINE_IINSPECTABLE_OUTER( racing_wheel, IRacingWheel, struct racing_wheel, IGameController_outer )
+
+static HRESULT WINAPI racing_wheel_get_HasClutch( IRacingWheel *iface, boolean *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI racing_wheel_get_HasHandbrake( IRacingWheel *iface, boolean *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI racing_wheel_get_HasPatternShifter( IRacingWheel *iface, boolean *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI racing_wheel_get_MaxPatternShifterGear( IRacingWheel *iface, INT32 *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI racing_wheel_get_MaxWheelAngle( IRacingWheel *iface, DOUBLE *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI racing_wheel_get_WheelMotor( IRacingWheel *iface, IForceFeedbackMotor **value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI racing_wheel_GetButtonLabel( IRacingWheel *iface, enum RacingWheelButtons button,
+                                                   enum GameControllerButtonLabel *value )
+{
+    FIXME( "iface %p, button %d, value %p stub!\n", iface, button, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI racing_wheel_GetCurrentReading( IRacingWheel *iface, struct RacingWheelReading *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static const struct IRacingWheelVtbl racing_wheel_vtbl =
+{
+    racing_wheel_QueryInterface,
+    racing_wheel_AddRef,
+    racing_wheel_Release,
+    /* IInspectable methods */
+    racing_wheel_GetIids,
+    racing_wheel_GetRuntimeClassName,
+    racing_wheel_GetTrustLevel,
+    /* IRacingWheel methods */
+    racing_wheel_get_HasClutch,
+    racing_wheel_get_HasHandbrake,
+    racing_wheel_get_HasPatternShifter,
+    racing_wheel_get_MaxPatternShifterGear,
+    racing_wheel_get_MaxWheelAngle,
+    racing_wheel_get_WheelMotor,
+    racing_wheel_GetButtonLabel,
+    racing_wheel_GetCurrentReading,
+};
+
 struct racing_wheel_statics
 {
     IActivationFactory IActivationFactory_iface;
@@ -259,8 +485,20 @@ DEFINE_IINSPECTABLE( controller_factory, ICustomGameControllerFactory, struct ra
 static HRESULT WINAPI controller_factory_CreateGameController( ICustomGameControllerFactory *iface, IGameControllerProvider *provider,
                                                                IInspectable **value )
 {
-    FIXME( "iface %p, provider %p, value %p stub!.\n", iface, provider, value );
-    return E_NOTIMPL;
+    struct racing_wheel *impl;
+
+    TRACE( "iface %p, provider %p, value %p.\n", iface, provider, value );
+
+    if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
+    impl->IGameControllerImpl_iface.lpVtbl = &controller_vtbl;
+    impl->IGameControllerInputSink_iface.lpVtbl = &input_sink_vtbl;
+    impl->IRacingWheel_iface.lpVtbl = &racing_wheel_vtbl;
+    impl->ref = 1;
+
+    TRACE( "created RacingWheel %p\n", impl );
+
+    *value = (IInspectable *)&impl->IGameControllerImpl_iface;
+    return S_OK;
 }
 
 static HRESULT WINAPI controller_factory_OnGameControllerAdded( ICustomGameControllerFactory *iface, IGameController *value )

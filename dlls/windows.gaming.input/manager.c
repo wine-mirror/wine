@@ -494,6 +494,10 @@ void manager_on_provider_created( IGameControllerProvider *provider )
         if (SUCCEEDED(controller_create( gamepad_factory, provider, &controller )))
             list_add_tail( &controller_list, &controller->entry );
         break;
+    case WineGameControllerType_RacingWheel:
+        if (SUCCEEDED(controller_create( racing_wheel_factory, provider, &controller )))
+            list_add_tail( &controller_list, &controller->entry );
+        break;
     }
 
     LIST_FOR_EACH_SAFE( entry, next, list )

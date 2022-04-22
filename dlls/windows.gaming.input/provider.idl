@@ -41,6 +41,7 @@ namespace Windows.Gaming.Input.Custom {
     {
         Joystick = 0,
         Gamepad = 1,
+        RacingWheel = 2,
     };
 
     struct WineGameControllerState
