@@ -225,24 +225,10 @@ typedef struct midi_src
     int                 fd;
 } WINE_MIDIIN;
 
-typedef struct midi_dest
-{
-    BOOL                bEnabled;
-    MIDIOPENDESC        midiDesc;
-    WORD                wFlags;
-    MIDIHDR            *lpQueueHdr;
-    void               *lpExtra; /* according to port type (MIDI, FM...), extra data when needed */
-    MIDIOUTCAPSW        caps;
-    int                 fd;
-} WINE_MIDIOUT;
-
 struct midi_init_params
 {
     UINT *err;
-    unsigned int num_dests;
     unsigned int num_srcs;
-    unsigned int num_synths;
-    struct midi_dest *dests;
     struct midi_src *srcs;
 };
 

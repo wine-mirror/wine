@@ -48,6 +48,17 @@
 
 #include "unixlib.h"
 
+struct midi_dest
+{
+    BOOL                bEnabled;
+    MIDIOPENDESC        midiDesc;
+    WORD                wFlags;
+    MIDIHDR            *lpQueueHdr;
+    void               *lpExtra; /* according to port type (MIDI, FM...), extra data when needed */
+    MIDIOUTCAPSW        caps;
+    int                 fd;
+};
+
 static unsigned int num_dests, num_srcs, num_synths, seq_refs;
 static struct midi_dest dests[MAX_MIDIOUTDRV];
 static struct midi_src srcs[MAX_MIDIINDRV];
@@ -381,10 +392,7 @@ wrapup:
 
     *params->err = 0;
     params->num_srcs = num_srcs;
-    params->num_dests = num_dests;
-    params->num_synths = num_synths;
     params->srcs = srcs;
-    params->dests = dests;
 
     return STATUS_SUCCESS;
 }
@@ -1065,6 +1073,32 @@ static UINT midi_out_get_volume(WORD dev_id, UINT *volume)
     return (dests[dev_id].caps.dwSupport & MIDICAPS_VOLUME) ? 0 : MMSYSERR_NOTSUPPORTED;
 }
 
+static UINT midi_out_reset(WORD dev_id)
+{
+    struct midi_dest *dest;
+    unsigned chn;
+
+    TRACE("(%04X);\n", dev_id);
+
+    if (dev_id >= num_dests) return MMSYSERR_BADDEVICEID;
+    dest = dests + dev_id;
+    if (!dest->bEnabled) return MIDIERR_NODEVICE;
+
+    /* stop all notes */
+    /* FIXME: check if 0x78B0 is channel dependent or not. I coded it so that
+     * it's channel dependent...
+     */
+    for (chn = 0; chn < 16; chn++)
+    {
+        /* turn off every note */
+        midi_out_data(dev_id, 0x7800 | MIDI_CTL_CHANGE | chn);
+        /* remove sustain on all channels */
+        midi_out_data(dev_id, (CTL_SUSTAIN << 8) | MIDI_CTL_CHANGE | chn);
+    }
+    /* FIXME: the LongData buffers must also be returned to the app */
+    return MMSYSERR_NOERROR;
+}
+
 NTSTATUS midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
@@ -1107,6 +1141,9 @@ NTSTATUS midi_out_message(void *args)
         break;
     case MODM_SETVOLUME:
         *params->err = 0;
+        break;
+    case MODM_RESET:
+        *params->err = midi_out_reset(params->dev_id);
         break;
     default:
         TRACE("Unsupported message\n");

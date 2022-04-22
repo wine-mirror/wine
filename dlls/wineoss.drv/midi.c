@@ -64,13 +64,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
 static WINE_MIDIIN *MidiInDev;
-static WINE_MIDIOUT *MidiOutDev;
-
-/* this is the total number of MIDI out devices found (synth and port) */
-static	int 		MODM_NumDevs = 0;
-/* this is the number of FM synthesizers (index from 0 to NUMFMSYNTHDEVS - 1) */
-static	int		MODM_NumFMSynthDevs = 0;
-/* the Midi ports have index from NUMFMSYNTHDEVS to NumDevs - 1 */
 
 /* this is the total number of MIDI out devices found */
 static	int 		MIDM_NumDevs = 0;
@@ -119,9 +112,6 @@ static LRESULT OSS_MidiInit(void)
     if (!err)
     {
         MidiInDev = params.srcs;
-        MidiOutDev = params.dests;
-        MODM_NumDevs = params.num_dests;
-        MODM_NumFMSynthDevs = params.num_synths;
         MIDM_NumDevs = params.num_srcs;
     }
     return err;
@@ -140,10 +130,6 @@ static LRESULT OSS_MidiExit(void)
         return 1;
 
     MidiInDev = NULL;
-    MidiOutDev = NULL;
-
-    MODM_NumDevs = 0;
-    MODM_NumFMSynthDevs = 0;
     MIDM_NumDevs = 0;
 
     return 0;
@@ -646,37 +632,6 @@ static DWORD midStop(WORD wDevID)
     return MMSYSERR_NOERROR;
 }
 
-/*-----------------------------------------------------------------------*/
-
-DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
-			    DWORD_PTR dwParam1, DWORD_PTR dwParam2);
-
-/**************************************************************************
- * 			modReset				[internal]
- */
-static DWORD modReset(WORD wDevID)
-{
-    unsigned chn;
-
-    TRACE("(%04X);\n", wDevID);
-
-    if (wDevID >= MODM_NumDevs) return MMSYSERR_BADDEVICEID;
-    if (!MidiOutDev[wDevID].bEnabled) return MIDIERR_NODEVICE;
-
-    /* stop all notes */
-    /* FIXME: check if 0x78B0 is channel dependent or not. I coded it so that
-     * it's channel dependent...
-     */
-    for (chn = 0; chn < 16; chn++) {
-	/* turn off every note */
-	OSS_modMessage(wDevID, MODM_DATA, 0, 0x7800 | MIDI_CTL_CHANGE | chn, 0);
-	/* remove sustain on all channels */
-	OSS_modMessage(wDevID, MODM_DATA, 0, (CTL_SUSTAIN << 8) | MIDI_CTL_CHANGE | chn, 0);
-    }
-    /* FIXME: the LongData buffers must also be returned to the app */
-    return MMSYSERR_NOERROR;
-}
-
 /*======================================================================*
  *                  	    MIDI entry points 				*
  *======================================================================*/
@@ -742,8 +697,6 @@ DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
         return OSS_MidiInit();
     case DRVM_EXIT:
         return OSS_MidiExit();
-    case MODM_RESET:
-	return modReset(wDevID);
     }
 
     params.dev_id = wDevID;
