@@ -834,7 +834,6 @@ static void test_SpeechRecognizer(void)
     struct completed_event_handler completed_handler;
     struct recognition_result_handler result_handler;
     struct compilation_handler compilation_handler;
-    struct compilation_handler compilation_handler2;
     SpeechRecognitionResultStatus result_status;
     EventRegistrationToken token = { .value = 0 };
     AsyncStatus async_status;
@@ -1034,11 +1033,11 @@ static void test_SpeechRecognizer(void)
         IAsyncOperation_SpeechRecognitionCompilationResult_Release(operation);
 
         /* Test if AsyncOperation is started immediately. */
-        compilation_handler_create_static(&compilation_handler2);
-        compilation_handler2.event_finished = CreateEventW(NULL, FALSE, FALSE, NULL);
-        compilation_handler2.thread_id = GetCurrentThreadId();
+        compilation_handler_create_static(&compilation_handler);
+        compilation_handler.event_finished = CreateEventW(NULL, FALSE, FALSE, NULL);
+        compilation_handler.thread_id = GetCurrentThreadId();
 
-        ok(compilation_handler2.event_finished != NULL, "Finished event wasn't created.\n");
+        ok(compilation_handler.event_finished != NULL, "Finished event wasn't created.\n");
 
         hr = ISpeechRecognizer_CompileConstraintsAsync(recognizer, &operation);
         todo_wine ok(hr == S_OK, "ISpeechRecognizer_CompileConstraintsAsync failed, hr %#lx.\n", hr);
@@ -1052,11 +1051,11 @@ static void test_SpeechRecognizer(void)
         todo_wine ok(hr == S_OK, "IAsyncInfo_get_Status failed, hr %#lx.\n", hr);
         todo_wine ok(async_status != AsyncStatus_Closed, "Status was %#x.\n", async_status);
 
-        hr = IAsyncOperation_SpeechRecognitionCompilationResult_put_Completed(operation, &compilation_handler2.IAsyncHandler_Compilation_iface);
+        hr = IAsyncOperation_SpeechRecognitionCompilationResult_put_Completed(operation, &compilation_handler.IAsyncHandler_Compilation_iface);
         todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-        todo_wine ok(!WaitForSingleObject(compilation_handler2.event_finished, 1000), "Wait for event_finished failed.\n");
-        CloseHandle(compilation_handler2.event_finished);
+        todo_wine ok(!WaitForSingleObject(compilation_handler.event_finished, 1000), "Wait for event_finished failed.\n");
+        CloseHandle(compilation_handler.event_finished);
 
         async_status = 0xdeadbeef;
         hr = IAsyncInfo_get_Status(info, &async_status);
