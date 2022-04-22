@@ -53,8 +53,8 @@ static void dump_import_object(const IMPORT_OBJECT_HEADER *ioh)
 
         printf("  Version      : %X\n", ioh->Version);
         printf("  Machine      : %X (%s)\n", ioh->Machine, get_machine_str(ioh->Machine));
-        printf("  TimeDateStamp: %08X %s\n", ioh->TimeDateStamp, get_time_str(ioh->TimeDateStamp));
-        printf("  SizeOfData   : %08X\n", ioh->SizeOfData);
+        printf("  TimeDateStamp: %08X %s\n", (UINT)ioh->TimeDateStamp, get_time_str(ioh->TimeDateStamp));
+        printf("  SizeOfData   : %08X\n", (UINT)ioh->SizeOfData);
         name = (const char *)ioh + sizeof(*ioh);
         printf("  DLL name     : %s\n", name + strlen(name) + 1);
         printf("  Symbol name  : %s\n", name);

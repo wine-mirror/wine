@@ -113,7 +113,7 @@ static void dump_ne_header( const IMAGE_OS2_HEADER *ne )
     printf( "File header:\n" );
     printf( "Linker version:      %d.%d\n", ne->ne_ver, ne->ne_rev );
     printf( "Entry table:         %x len %d\n", ne->ne_enttab, ne->ne_cbenttab );
-    printf( "Checksum:            %08x\n", ne->ne_crc );
+    printf( "Checksum:            %08x\n", (UINT)ne->ne_crc );
     printf( "Flags:               %04x\n", ne->ne_flags );
     printf( "Auto data segment:   %x\n", ne->ne_autodata );
     printf( "Heap size:           %d bytes\n", ne->ne_heap );
@@ -127,7 +127,7 @@ static void dump_ne_header( const IMAGE_OS2_HEADER *ne )
     printf( "Resident name table: %x\n", ne->ne_restab );
     printf( "Module table:        %x\n", ne->ne_modtab );
     printf( "Import table:        %x\n", ne->ne_imptab );
-    printf( "Non-resident table:  %x\n", ne->ne_nrestab );
+    printf( "Non-resident table:  %x\n", (UINT)ne->ne_nrestab );
     printf( "Exe type:            %x\n", ne->ne_exetyp );
     printf( "Other flags:         %x\n", ne->ne_flagsothers );
     printf( "Fast load area:      %x-%x\n", ne->ne_pretthunks << ne->ne_align,

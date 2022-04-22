@@ -80,8 +80,8 @@ static int dump_mfrecord(void)
         printf("%-20s %08x\n", "METAHEADER", size);
         printf("type %d header_size %#x version %#x size %#x object_count %d max_record_size %#x "
                "parameter_count %d\n",
-               header->mtType, header->mtHeaderSize * 2, header->mtVersion, header->mtSize * 2,
-               header->mtNoObjects, header->mtMaxRecord * 2, header->mtNoParameters);
+               header->mtType, header->mtHeaderSize * 2, header->mtVersion, (UINT)header->mtSize * 2,
+               header->mtNoObjects, (UINT)header->mtMaxRecord * 2, header->mtNoParameters);
         break;
     }
     MRCASE(META_SETBKCOLOR);

@@ -711,7 +711,7 @@ static void pdb_dump_fpo(struct pdb_reader* reader, unsigned stream_idx)
         for (i = 0; i < size; i++)
         {
             printf("\t%08x %08x %4d %4d %7d %4d %6s  %c   %c\n",
-                   fpo[i].ulOffStart, fpo[i].cbProcSize, fpo[i].cdwLocals, fpo[i].cdwParams,
+                   (UINT)fpo[i].ulOffStart, (UINT)fpo[i].cbProcSize, (UINT)fpo[i].cdwLocals, fpo[i].cdwParams,
                    fpo[i].cbProlog, fpo[i].cbRegs, frame_type[fpo[i].cbFrame],
                    fpo[i].fHasSEH ? 'Y' : 'N', fpo[i].fUseBP ? 'Y' : 'N');
         }

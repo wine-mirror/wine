@@ -71,7 +71,7 @@ enum FileSig get_kind_mdmp(void)
 void mdmp_dump(void)
 {
     const MINIDUMP_HEADER*      hdr = PRD(0, sizeof(MINIDUMP_HEADER));
-    ULONG                       idx, ndir = 0;
+    UINT                        idx, ndir = 0;
     const MINIDUMP_DIRECTORY*   dir;
     const void*                 stream;
 
@@ -81,13 +81,13 @@ void mdmp_dump(void)
         return;
     }
 
-    printf("Signature: %u (%.4s)\n", hdr->Signature, (const char*)&hdr->Signature);
-    printf("Version: %x\n", hdr->Version);
-    printf("NumberOfStreams: %u\n", hdr->NumberOfStreams);
-    printf("StreamDirectoryRva: %u\n", hdr->StreamDirectoryRva);
-    printf("CheckSum: %u\n", hdr->CheckSum);
+    printf("Signature: %u (%.4s)\n", (UINT)hdr->Signature, (const char*)&hdr->Signature);
+    printf("Version: %x\n", (UINT)hdr->Version);
+    printf("NumberOfStreams: %u\n", (UINT)hdr->NumberOfStreams);
+    printf("StreamDirectoryRva: %u\n", (UINT)hdr->StreamDirectoryRva);
+    printf("CheckSum: %u\n", (UINT)hdr->CheckSum);
     printf("TimeDateStamp: %s\n", get_time_str(hdr->u.TimeDateStamp));
-    printf("Flags: %x%08x\n", (DWORD)(hdr->Flags >> 32), (DWORD)hdr->Flags);
+    printf("Flags: %x%08x\n", (UINT)(hdr->Flags >> 32), (UINT)hdr->Flags);
 
     for (idx = 0; idx <= LastReservedStream; idx++)
     {
@@ -103,20 +103,20 @@ void mdmp_dump(void)
             const MINIDUMP_THREAD*      mt = mtl->Threads;
             unsigned int                i;
 
-            printf("Threads: %u\n", mtl->NumberOfThreads);
+            printf("Threads: %u\n", (UINT)mtl->NumberOfThreads);
             for (i = 0; i < mtl->NumberOfThreads; i++, mt++)
             {
                 printf("  Thread: #%d\n", i);
-                printf("    ThreadId: %u\n", mt->ThreadId);
-                printf("    SuspendCount: %u\n", mt->SuspendCount);
-                printf("    PriorityClass: %u\n", mt->PriorityClass);
-                printf("    Priority: %u\n", mt->Priority);
-                printf("    Teb: 0x%x%08x\n", (DWORD)(mt->Teb >> 32), (DWORD)mt->Teb);
+                printf("    ThreadId: %u\n", (UINT)mt->ThreadId);
+                printf("    SuspendCount: %u\n", (UINT)mt->SuspendCount);
+                printf("    PriorityClass: %u\n", (UINT)mt->PriorityClass);
+                printf("    Priority: %u\n", (UINT)mt->Priority);
+                printf("    Teb: 0x%x%08x\n", (UINT)(mt->Teb >> 32), (UINT)mt->Teb);
                 printf("    Stack: 0x%x%08x-0x%x%08x\n",
-                       (DWORD)(mt->Stack.StartOfMemoryRange >> 32),
-                       (DWORD)mt->Stack.StartOfMemoryRange,
-                       (DWORD)((mt->Stack.StartOfMemoryRange + mt->Stack.Memory.DataSize) >> 32),
-                       (DWORD)(mt->Stack.StartOfMemoryRange + mt->Stack.Memory.DataSize));
+                       (UINT)(mt->Stack.StartOfMemoryRange >> 32),
+                       (UINT)mt->Stack.StartOfMemoryRange,
+                       (UINT)((mt->Stack.StartOfMemoryRange + mt->Stack.Memory.DataSize) >> 32),
+                       (UINT)(mt->Stack.StartOfMemoryRange + mt->Stack.Memory.DataSize));
                 dump_mdmp_data(&mt->Stack.Memory, "    ");
                 printf("    ThreadContext:\n");
                 dump_mdmp_data(&mt->ThreadContext, "    ");
@@ -134,23 +134,22 @@ void mdmp_dump(void)
 
             printf("Modules (%s): %u\n",
                    dir->StreamType == ModuleListStream ? "PE" : "ELF",
-                   mml->NumberOfModules);
+                   (UINT)mml->NumberOfModules);
             for (i = 0; i < mml->NumberOfModules; i++, mm++)
             {
                 printf("  Module #%d:\n", i);
                 printf("    BaseOfImage: 0x%x%08x\n",
-		    (DWORD)(mm->BaseOfImage >> 32), (DWORD) mm->BaseOfImage);
-                printf("    SizeOfImage: %u\n", mm->SizeOfImage);
-                printf("    CheckSum: %u\n", mm->CheckSum);
+		    (UINT)(mm->BaseOfImage >> 32), (UINT) mm->BaseOfImage);
+                printf("    SizeOfImage: %u\n", (UINT)mm->SizeOfImage);
+                printf("    CheckSum: %u\n", (UINT)mm->CheckSum);
                 printf("    TimeDateStamp: %s\n", get_time_str(mm->TimeDateStamp));
                 printf("    ModuleName: ");
                 dump_mdmp_string(mm->ModuleNameRva);
                 printf("\n");
                 printf("    VersionInfo:\n");
-                printf("      dwSignature: %x\n", mm->VersionInfo.dwSignature);
-                printf("      dwStrucVersion: %x\n",
-                       mm->VersionInfo.dwStrucVersion);
-                printf("      dwFileVersion: %d,%d,%d,%d\n", 
+                printf("      dwSignature: %x\n", (UINT)mm->VersionInfo.dwSignature);
+                printf("      dwStrucVersion: %x\n", (UINT)mm->VersionInfo.dwStrucVersion);
+                printf("      dwFileVersion: %d,%d,%d,%d\n",
                        HIWORD(mm->VersionInfo.dwFileVersionMS),
                        LOWORD(mm->VersionInfo.dwFileVersionMS),
                        HIWORD(mm->VersionInfo.dwFileVersionLS),
@@ -160,9 +159,8 @@ void mdmp_dump(void)
                        LOWORD(mm->VersionInfo.dwProductVersionMS),
                        HIWORD(mm->VersionInfo.dwProductVersionLS),
                        LOWORD(mm->VersionInfo.dwProductVersionLS));
-                printf("      dwFileFlagsMask: %u\n",
-                       mm->VersionInfo.dwFileFlagsMask);
-                printf("      dwFileFlags: %s%s%s%s%s%s\n", 
+                printf("      dwFileFlagsMask: %u\n", (UINT)mm->VersionInfo.dwFileFlagsMask);
+                printf("      dwFileFlags: %s%s%s%s%s%s\n",
                        mm->VersionInfo.dwFileFlags & VS_FF_DEBUG ? "Debug " : "",
                        mm->VersionInfo.dwFileFlags & VS_FF_INFOINFERRED ? "Inferred " : "",
                        mm->VersionInfo.dwFileFlags & VS_FF_PATCHED ? "Patched " : "",
@@ -204,20 +202,19 @@ void mdmp_dump(void)
                 default:                p1 = "---"; break;
                 }
                 printf("      dwFileType: %s\n", p1);
-                printf("      dwFileSubtype: %u\n",
-                       mm->VersionInfo.dwFileSubtype);
+                printf("      dwFileSubtype: %u\n", (UINT)mm->VersionInfo.dwFileSubtype);
                 printf("      dwFileDate: %x%08x\n",
-                       mm->VersionInfo.dwFileDateMS, mm->VersionInfo.dwFileDateLS);
-                printf("    CvRecord: <%u>\n", mm->CvRecord.DataSize);
+                       (UINT)mm->VersionInfo.dwFileDateMS, (UINT)mm->VersionInfo.dwFileDateLS);
+                printf("    CvRecord: <%u>\n", (UINT)mm->CvRecord.DataSize);
                 dump_mdmp_data(&mm->CvRecord, "    ");
-                printf("    MiscRecord: <%u>\n", mm->MiscRecord.DataSize);
+                printf("    MiscRecord: <%u>\n", (UINT)mm->MiscRecord.DataSize);
                 dump_mdmp_data(&mm->MiscRecord, "    ");
                 printf("    Reserved0: 0x%x%08x\n",
-		    (DWORD)(mm->Reserved0 >> 32), (DWORD)mm->Reserved0);
+		    (UINT)(mm->Reserved0 >> 32), (UINT)mm->Reserved0);
                 printf("    Reserved1: 0x%x%08x\n",
-		    (DWORD)(mm->Reserved1 >> 32), (DWORD)mm->Reserved1);
+		    (UINT)(mm->Reserved1 >> 32), (UINT)mm->Reserved1);
             }
-        }       
+        }
         break;
         case MemoryListStream:
         {
@@ -225,17 +222,17 @@ void mdmp_dump(void)
             const MINIDUMP_MEMORY_DESCRIPTOR*   mmd = mml->MemoryRanges;
             unsigned int                        i;
 
-            printf("Memory Ranges: %u\n", mml->NumberOfMemoryRanges);
+            printf("Memory Ranges: %u\n", (UINT)mml->NumberOfMemoryRanges);
             for (i = 0; i < mml->NumberOfMemoryRanges; i++, mmd++)
             {
                 printf("  Memory Range #%d:\n", i);
                 printf("    Range: 0x%x%08x-0x%x%08x\n",
-                       (DWORD)(mmd->StartOfMemoryRange >> 32),
-                       (DWORD)mmd->StartOfMemoryRange,
-		       (DWORD)((mmd->StartOfMemoryRange + mmd->Memory.DataSize) >> 32),
-		       (DWORD)(mmd->StartOfMemoryRange + mmd->Memory.DataSize));
+                       (UINT)(mmd->StartOfMemoryRange >> 32),
+                       (UINT)mmd->StartOfMemoryRange,
+		       (UINT)((mmd->StartOfMemoryRange + mmd->Memory.DataSize) >> 32),
+		       (UINT)(mmd->StartOfMemoryRange + mmd->Memory.DataSize));
                 dump_mdmp_data(&mmd->Memory, "    ");
-            }   
+            }
         }
         break;
         case SystemInfoStream:
@@ -371,22 +368,19 @@ void mdmp_dump(void)
                 break;
             default: str = "???"; break;
             }
-            printf("  Version: Windows %s (%u)\n", str, msi->BuildNumber);
-            printf("  PlatformId: %u\n", msi->PlatformId);
+            printf("  Version: Windows %s (%u)\n", str, (UINT)msi->BuildNumber);
+            printf("  PlatformId: %u\n", (UINT)msi->PlatformId);
             printf("  CSD: ");
             dump_mdmp_string(msi->CSDVersionRva);
             printf("\n");
-            printf("  Reserved1: %u\n", msi->u1.Reserved1);
+            printf("  Reserved1: %u\n", (UINT)msi->u1.Reserved1);
             if (msi->ProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
             {
                 printf("  x86.VendorId: %.12s\n",
                        (const char*)msi->Cpu.X86CpuInfo.VendorId);
-                printf("  x86.VersionInformation: %x\n",
-                       msi->Cpu.X86CpuInfo.VersionInformation);
-                printf("  x86.FeatureInformation: %x\n",
-                       msi->Cpu.X86CpuInfo.FeatureInformation);
-                printf("  x86.AMDExtendedCpuFeatures: %x\n",
-                       msi->Cpu.X86CpuInfo.AMDExtendedCpuFeatures);
+                printf("  x86.VersionInformation: %x\n", (UINT)msi->Cpu.X86CpuInfo.VersionInformation);
+                printf("  x86.FeatureInformation: %x\n", (UINT)msi->Cpu.X86CpuInfo.FeatureInformation);
+                printf("  x86.AMDExtendedCpuFeatures: %x\n", (UINT)msi->Cpu.X86CpuInfo.AMDExtendedCpuFeatures);
             }
             if (sizeof(MINIDUMP_SYSTEM_INFO) + 4 > dir->Location.DataSize &&
                 msi->CSDVersionRva >= dir->Location.Rva + 4)
@@ -410,17 +404,17 @@ void mdmp_dump(void)
             const MINIDUMP_MISC_INFO* mmi = (const MINIDUMP_MISC_INFO*)stream;
 
             printf("Misc Information\n");
-            printf("  Size: %u\n", mmi->SizeOfInfo);
-            printf("  Flags: %s%s\n", 
+            printf("  Size: %u\n", (UINT)mmi->SizeOfInfo);
+            printf("  Flags: %s%s\n",
                    mmi->Flags1 & MINIDUMP_MISC1_PROCESS_ID ? "ProcessId " : "",
                    mmi->Flags1 & MINIDUMP_MISC1_PROCESS_TIMES ? "ProcessTimes " : "");
             if (mmi->Flags1 & MINIDUMP_MISC1_PROCESS_ID)
-                printf("  ProcessId: %u\n", mmi->ProcessId);
+                printf("  ProcessId: %u\n", (UINT)mmi->ProcessId);
             if (mmi->Flags1 & MINIDUMP_MISC1_PROCESS_TIMES)
             {
-                printf("  ProcessCreateTime: %u\n", mmi->ProcessCreateTime);
-                printf("  ProcessUserTime: %u\n", mmi->ProcessUserTime);
-                printf("  ProcessKernelTime: %u\n", mmi->ProcessKernelTime);
+                printf("  ProcessCreateTime: %u\n", (UINT)mmi->ProcessCreateTime);
+                printf("  ProcessUserTime: %u\n", (UINT)mmi->ProcessUserTime);
+                printf("  ProcessKernelTime: %u\n", (UINT)mmi->ProcessKernelTime);
             }
         }
         break;
@@ -430,23 +424,22 @@ void mdmp_dump(void)
             unsigned int                        i;
 
             printf("Exception:\n");
-            printf("  ThreadId: %08x\n", mes->ThreadId);
+            printf("  ThreadId: %08x\n", (UINT)mes->ThreadId);
             printf("  ExceptionRecord:\n");
-            printf("  ExceptionCode: %u\n", mes->ExceptionRecord.ExceptionCode);
-            printf("  ExceptionFlags: %u\n", mes->ExceptionRecord.ExceptionFlags);
+            printf("  ExceptionCode: %u\n", (UINT)mes->ExceptionRecord.ExceptionCode);
+            printf("  ExceptionFlags: %u\n", (UINT)mes->ExceptionRecord.ExceptionFlags);
             printf("  ExceptionRecord: 0x%x%08x\n",
-                   (DWORD)(mes->ExceptionRecord.ExceptionRecord  >> 32),
-                   (DWORD)mes->ExceptionRecord.ExceptionRecord);
+                   (UINT)(mes->ExceptionRecord.ExceptionRecord  >> 32),
+                   (UINT)mes->ExceptionRecord.ExceptionRecord);
             printf("  ExceptionAddress: 0x%x%08x\n",
-                   (DWORD)(mes->ExceptionRecord.ExceptionAddress >> 32),
-                   (DWORD)(mes->ExceptionRecord.ExceptionAddress));
-            printf("  ExceptionNumberParameters: %u\n",
-                   mes->ExceptionRecord.NumberParameters);
+                   (UINT)(mes->ExceptionRecord.ExceptionAddress >> 32),
+                   (UINT)(mes->ExceptionRecord.ExceptionAddress));
+            printf("  ExceptionNumberParameters: %u\n", (UINT)mes->ExceptionRecord.NumberParameters);
             for (i = 0; i < mes->ExceptionRecord.NumberParameters; i++)
             {
                 printf("    [%d]: 0x%x%08x\n", i,
-                       (DWORD)(mes->ExceptionRecord.ExceptionInformation[i] >> 32),
-                       (DWORD)mes->ExceptionRecord.ExceptionInformation[i]);
+                       (UINT)(mes->ExceptionRecord.ExceptionInformation[i] >> 32),
+                       (UINT)mes->ExceptionRecord.ExceptionInformation[i]);
             }
             printf("  ThreadContext:\n");
             dump_mdmp_data(&mes->ThreadContext, "    ");
@@ -454,9 +447,9 @@ void mdmp_dump(void)
         break;
 
         default:
-            printf("NIY %d\n", dir->StreamType);
-            printf("  RVA: %u\n", dir->Location.Rva);
-            printf("  Size: %u\n", dir->Location.DataSize);
+            printf("NIY %d\n", (UINT)dir->StreamType);
+            printf("  RVA: %u\n", (UINT)dir->Location.Rva);
+            printf("  Size: %u\n", (UINT)dir->Location.DataSize);
             dump_mdmp_data(&dir->Location, "    ");
             break;
         }

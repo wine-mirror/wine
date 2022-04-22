@@ -538,12 +538,12 @@ void    dump_coff_symbol_table(const IMAGE_SYMBOL *coff_symbols, unsigned num_sy
         case IMAGE_SYM_CLASS_LABEL:
             if (coff_sym->SectionNumber > 0)
             {
-                DWORD base = sectHead[coff_sym->SectionNumber - 1].VirtualAddress;
+                UINT base = sectHead[coff_sym->SectionNumber - 1].VirtualAddress;
                 nampnt = get_coff_name( coff_sym, coff_strtab );
 
                 printf("%05d | %02d:%08x [%08x] | %s | %s\n",
-                       i, coff_sym->SectionNumber - 1, coff_sym->Value,
-                       base + coff_sym->Value,
+                       i, coff_sym->SectionNumber - 1, (UINT)coff_sym->Value,
+                       base + (UINT)coff_sym->Value,
                        storage_class(coff_sym->StorageClass), nampnt);
             }
             break;
@@ -595,8 +595,8 @@ void	dump_frame_pointer_omission(unsigned long base, unsigned long len)
         default: x = NULL; break;
         }
         printf("%08x-%08x %4u %4u %4u %4u %s%s%s\n",
-               fpo->ulOffStart, fpo->ulOffStart + fpo->cbProcSize,
-               fpo->cdwLocals, fpo->cdwParams, fpo->cbProlog, fpo->cbRegs,
+               (UINT)fpo->ulOffStart, (UINT)(fpo->ulOffStart + fpo->cbProcSize),
+               (UINT)fpo->cdwLocals, fpo->cdwParams, fpo->cbProlog, fpo->cbRegs,
                x, fpo->fHasSEH ? " SEH" : "", fpo->fUseBP ? " UseBP" : "");
         fpo++;
     }

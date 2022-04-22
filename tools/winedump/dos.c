@@ -50,6 +50,6 @@ void dos_dump(void)
         printf("  Relocation (file):    %u\n", dh->e_lfarlc);
         printf("  Overlay number:       %u\n", dh->e_ovno);
         printf("  OEM id(info):         %x(%x)\n", dh->e_oemid, dh->e_oeminfo);
-        printf("  Offset to ext header: %x\n", dh->e_lfanew);
+        printf("  Offset to ext header: %x\n", (UINT)dh->e_lfanew);
     }
 }
