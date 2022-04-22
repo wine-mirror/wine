@@ -63,7 +63,7 @@ BOOL WINAPI GetSystemPowerStatus(LPSYSTEM_POWER_STATUS ps)
 
     if (bs.BatteryPresent)
     {
-        ps->BatteryLifePercent = bs.MaxCapacity ? bs.RemainingCapacity / bs.MaxCapacity : 100;
+        ps->BatteryLifePercent = bs.MaxCapacity ? 100 * bs.RemainingCapacity / bs.MaxCapacity : 100;
         ps->BatteryLifeTime = bs.EstimatedTime;
         if (!bs.Charging && (LONG)bs.Rate < 0)
             ps->BatteryFullLifeTime = 3600 * bs.MaxCapacity / -(LONG)bs.Rate;
