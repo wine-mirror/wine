@@ -3328,6 +3328,90 @@ static BOOL wined3d_texture_gl_prepare_location(struct wined3d_texture *texture,
     }
 }
 
+static bool use_ffp_clear(const struct wined3d_texture *texture, unsigned int location)
+{
+    if (location == WINED3D_LOCATION_DRAWABLE)
+        return true;
+
+    /* If we are not using FBOs (and not rendering to the drawable), always
+     * upload. The upload should always succeed in this case; we cannot have
+     * ARB_texture_multisample without ARB_framebuffer_object. */
+    if (wined3d_settings.offscreen_rendering_mode != ORM_FBO)
+        return false;
+
+    if (location == WINED3D_LOCATION_TEXTURE_RGB
+            && !(texture->resource.format_flags & WINED3DFMT_FLAG_FBO_ATTACHABLE))
+        return false;
+    if (location == WINED3D_LOCATION_TEXTURE_SRGB
+            && !(texture->resource.format_flags & WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB))
+        return false;
+
+    return location & (WINED3D_LOCATION_RB_MULTISAMPLE | WINED3D_LOCATION_RB_RESOLVED
+            | WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB);
+}
+
+static bool wined3d_texture_gl_clear(struct wined3d_texture *texture,
+        unsigned int sub_resource_idx, struct wined3d_context_gl *context_gl, unsigned int location)
+{
+    struct wined3d_texture_sub_resource *sub_resource = &texture->sub_resources[sub_resource_idx];
+    const struct wined3d_format *format = texture->resource.format;
+    const struct wined3d_gl_info *gl_info = context_gl->gl_info;
+    struct wined3d_bo_address addr;
+
+    if (use_ffp_clear(texture, location))
+    {
+        GLbitfield clear_mask = 0;
+
+        context_gl_apply_texture_draw_state(context_gl, texture, sub_resource_idx, location);
+
+        gl_info->gl_ops.gl.p_glDisable(GL_SCISSOR_TEST);
+        context_invalidate_state(&context_gl->c, STATE_RASTERIZER);
+
+        if (format->depth_size)
+        {
+            gl_info->gl_ops.gl.p_glDepthMask(GL_TRUE);
+            context_invalidate_state(&context_gl->c, STATE_DEPTH_STENCIL);
+
+            if (gl_info->supported[ARB_ES2_COMPATIBILITY])
+                GL_EXTCALL(glClearDepthf(0.0f));
+            else
+                gl_info->gl_ops.gl.p_glClearDepth(0.0);
+            clear_mask |= GL_DEPTH_BUFFER_BIT;
+        }
+
+        if (format->stencil_size)
+        {
+            if (gl_info->supported[EXT_STENCIL_TWO_SIDE])
+                gl_info->gl_ops.gl.p_glDisable(GL_STENCIL_TEST_TWO_SIDE_EXT);
+            gl_info->gl_ops.gl.p_glStencilMask(~0u);
+            context_invalidate_state(&context_gl->c, STATE_DEPTH_STENCIL);
+            gl_info->gl_ops.gl.p_glClearStencil(0);
+            clear_mask |= GL_STENCIL_BUFFER_BIT;
+        }
+
+        if (!format->depth_size && !format->stencil_size)
+        {
+            gl_info->gl_ops.gl.p_glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+            context_invalidate_state(&context_gl->c, STATE_BLEND);
+            gl_info->gl_ops.gl.p_glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+            clear_mask |= GL_COLOR_BUFFER_BIT;
+        }
+
+        gl_info->gl_ops.gl.p_glClear(clear_mask);
+        checkGLcall("clear texture");
+
+        wined3d_texture_validate_location(texture, sub_resource_idx, location);
+        return true;
+    }
+
+    if (!wined3d_texture_prepare_location(texture, sub_resource_idx, &context_gl->c, WINED3D_LOCATION_SYSMEM))
+        return false;
+    wined3d_texture_get_bo_address(texture, sub_resource_idx, &addr, WINED3D_LOCATION_SYSMEM);
+    memset(addr.addr, 0, sub_resource->size);
+    wined3d_texture_validate_location(texture, sub_resource_idx, WINED3D_LOCATION_SYSMEM);
+    return true;
+}
+
 /* Context activation is done by the caller. */
 static BOOL wined3d_texture_gl_load_location(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, struct wined3d_context *context, DWORD location)
@@ -3339,21 +3423,17 @@ static BOOL wined3d_texture_gl_load_location(struct wined3d_texture *texture,
     TRACE("texture %p, sub_resource_idx %u, context %p, location %s.\n",
             texture, sub_resource_idx, context, wined3d_debug_location(location));
 
-    if (sub_resource->locations & WINED3D_LOCATION_CLEARED)
-    {
-        struct wined3d_bo_address addr;
-
-        /* FIXME: Clear textures on the GPU if possible. */
-
-        if (!wined3d_texture_prepare_location(texture, sub_resource_idx, context, WINED3D_LOCATION_SYSMEM))
-            return FALSE;
-        wined3d_texture_get_bo_address(texture, sub_resource_idx, &addr, WINED3D_LOCATION_SYSMEM);
-        memset(addr.addr, 0, sub_resource->size);
-        wined3d_texture_validate_location(texture, sub_resource_idx, WINED3D_LOCATION_SYSMEM);
-    }
-
     if (!wined3d_texture_gl_prepare_location(texture, sub_resource_idx, context, location))
         return FALSE;
+
+    if (sub_resource->locations & WINED3D_LOCATION_CLEARED)
+    {
+        if (!wined3d_texture_gl_clear(texture, sub_resource_idx, context_gl, location))
+            return FALSE;
+
+        if (sub_resource->locations & location)
+            return TRUE;
+    }
 
     switch (location)
     {
