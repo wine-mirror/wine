@@ -166,6 +166,7 @@ static void * const syscalls[] =
     NtUserSetTimer,
     NtUserSetWinEventHook,
     NtUserSetWindowsHookEx,
+    NtUserThunkedMenuInfo,
     NtUserUnhookWinEvent,
     NtUserUnhookWindowsHookEx,
     NtUserWindowFromDC,

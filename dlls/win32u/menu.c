@@ -451,6 +451,59 @@ BOOL WINAPI NtUserGetMenuItemRect( HWND hwnd, HMENU handle, UINT item, RECT *rec
     return TRUE;
 }
 
+static BOOL set_menu_info( HMENU handle, const MENUINFO *info )
+{
+    POPUPMENU *menu;
+
+    if (!(menu = grab_menu_ptr( handle ))) return FALSE;
+
+    if (info->fMask & MIM_BACKGROUND) menu->hbrBack = info->hbrBack;
+    if (info->fMask & MIM_HELPID)     menu->dwContextHelpID = info->dwContextHelpID;
+    if (info->fMask & MIM_MAXHEIGHT)  menu->cyMax = info->cyMax;
+    if (info->fMask & MIM_MENUDATA)   menu->dwMenuData = info->dwMenuData;
+    if (info->fMask & MIM_STYLE)      menu->dwStyle = info->dwStyle;
+
+    if (info->fMask & MIM_APPLYTOSUBMENUS)
+    {
+        int i;
+        MENUITEM *item = menu->items;
+        for (i = menu->nItems; i; i--, item++)
+            if (item->fType & MF_POPUP)
+                set_menu_info( item->hSubMenu, info);
+    }
+
+    release_menu_ptr( menu );
+    return TRUE;
+}
+
+/**********************************************************************
+ *           NtUserThunkedMenuInfo    (win32u.@)
+ */
+BOOL WINAPI NtUserThunkedMenuInfo( HMENU menu, const MENUINFO *info )
+{
+    TRACE( "(%p %p)\n", menu, info );
+
+    if (!info)
+    {
+        SetLastError( ERROR_NOACCESS );
+        return FALSE;
+    }
+
+    if (!set_menu_info( menu, info ))
+    {
+        SetLastError( ERROR_INVALID_MENU_HANDLE );
+        return FALSE;
+    }
+
+    if (info->fMask & MIM_STYLE)
+    {
+        if (info->dwStyle & MNS_AUTODISMISS) FIXME("MNS_AUTODISMISS unimplemented\n");
+        if (info->dwStyle & MNS_DRAGDROP) FIXME("MNS_DRAGDROP unimplemented\n");
+        if (info->dwStyle & MNS_MODELESS) FIXME("MNS_MODELESS unimplemented\n");
+    }
+    return TRUE;
+}
+
 /* see GetMenuInfo */
 BOOL get_menu_info( HMENU handle, MENUINFO *info )
 {

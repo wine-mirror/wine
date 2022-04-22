@@ -658,3 +658,32 @@ NTSTATUS WINAPI wow64_NtUserSetMenuContextHelpId( UINT *args )
 
     return NtUserSetMenuContextHelpId( menu, id );
 }
+
+NTSTATUS WINAPI wow64_NtUserThunkedMenuInfo( UINT *args )
+{
+    HMENU menu = get_handle( &args );
+    const struct
+    {
+        DWORD cbSize;
+        DWORD fMask;
+        DWORD dwStyle;
+        UINT  cyMax;
+        ULONG hbrBack;
+        DWORD dwContextHelpID;
+        ULONG dwMenuData;
+    } *info32 = get_ptr( &args );
+    MENUINFO info;
+
+    if (info32)
+    {
+        info.cbSize = sizeof(info);
+        info.fMask = info32->fMask;
+        info.dwStyle = info32->dwStyle;
+        info.cyMax = info32->cyMax;
+        info.hbrBack = UlongToHandle( info32->hbrBack );
+        info.dwContextHelpID = info32->dwContextHelpID;
+        info.dwMenuData = info32->dwMenuData;
+    }
+
+    return NtUserThunkedMenuInfo( menu, info32 ? &info : NULL );
+}
