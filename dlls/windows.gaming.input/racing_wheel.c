@@ -24,9 +24,42 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(input);
 
+static CRITICAL_SECTION racing_wheel_cs;
+static CRITICAL_SECTION_DEBUG racing_wheel_cs_debug =
+{
+    0, 0, &racing_wheel_cs,
+    { &racing_wheel_cs_debug.ProcessLocksList, &racing_wheel_cs_debug.ProcessLocksList },
+      0, 0, { (DWORD_PTR)(__FILE__ ": racing_wheel_cs") }
+};
+static CRITICAL_SECTION racing_wheel_cs = { &racing_wheel_cs_debug, -1, 0, 0, 0, 0 };
+
+static IVector_RacingWheel *racing_wheels;
+static struct list racing_wheel_added_handlers = LIST_INIT( racing_wheel_added_handlers );
+static struct list racing_wheel_removed_handlers = LIST_INIT( racing_wheel_removed_handlers );
+
+static HRESULT init_racing_wheels(void)
+{
+    static const struct vector_iids iids =
+    {
+        .vector = &IID_IVector_RacingWheel,
+        .view = &IID_IVectorView_RacingWheel,
+        .iterable = &IID_IIterable_RacingWheel,
+        .iterator = &IID_IIterator_RacingWheel,
+    };
+    HRESULT hr;
+
+    EnterCriticalSection( &racing_wheel_cs );
+    if (racing_wheels) hr = S_OK;
+    else hr = vector_create( &iids, (void **)&racing_wheels );
+    LeaveCriticalSection( &racing_wheel_cs );
+
+    return hr;
+}
+
 struct racing_wheel_statics
 {
     IActivationFactory IActivationFactory_iface;
+    IRacingWheelStatics IRacingWheelStatics_iface;
     LONG ref;
 };
 
@@ -47,6 +80,12 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID( iid, &IID_IActivationFactory ))
     {
         IInspectable_AddRef( (*out = &impl->IActivationFactory_iface) );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IRacingWheelStatics ))
+    {
+        IInspectable_AddRef( (*out = &impl->IRacingWheelStatics_iface) );
         return S_OK;
     }
 
@@ -108,9 +147,70 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
+DEFINE_IINSPECTABLE( statics, IRacingWheelStatics, struct racing_wheel_statics, IActivationFactory_iface )
+
+static HRESULT WINAPI statics_add_RacingWheelAdded( IRacingWheelStatics *iface, IEventHandler_RacingWheel *handler,
+                                                    EventRegistrationToken *token )
+{
+    TRACE( "iface %p, handler %p, token %p.\n", iface, handler, token );
+    if (!handler) return E_INVALIDARG;
+    return event_handlers_append( &racing_wheel_added_handlers, (IEventHandler_IInspectable *)handler, token );
+}
+
+static HRESULT WINAPI statics_remove_RacingWheelAdded( IRacingWheelStatics *iface, EventRegistrationToken token )
+{
+    TRACE( "iface %p, token %#I64x.\n", iface, token.value );
+    return event_handlers_remove( &racing_wheel_added_handlers, &token );
+}
+
+static HRESULT WINAPI statics_add_RacingWheelRemoved( IRacingWheelStatics *iface, IEventHandler_RacingWheel *handler,
+                                                      EventRegistrationToken *token )
+{
+    TRACE( "iface %p, handler %p, token %p.\n", iface, handler, token );
+    if (!handler) return E_INVALIDARG;
+    return event_handlers_append( &racing_wheel_removed_handlers, (IEventHandler_IInspectable *)handler, token );
+}
+
+static HRESULT WINAPI statics_remove_RacingWheelRemoved( IRacingWheelStatics *iface, EventRegistrationToken token )
+{
+    TRACE( "iface %p, token %#I64x.\n", iface, token.value );
+    return event_handlers_remove( &racing_wheel_removed_handlers, &token );
+}
+
+static HRESULT WINAPI statics_get_RacingWheels( IRacingWheelStatics *iface, IVectorView_RacingWheel **value )
+{
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    EnterCriticalSection( &racing_wheel_cs );
+    if (SUCCEEDED(hr = init_racing_wheels())) hr = IVector_RacingWheel_GetView( racing_wheels, value );
+    LeaveCriticalSection( &racing_wheel_cs );
+
+    return hr;
+}
+
+static const struct IRacingWheelStaticsVtbl statics_vtbl =
+{
+    statics_QueryInterface,
+    statics_AddRef,
+    statics_Release,
+    /* IInspectable methods */
+    statics_GetIids,
+    statics_GetRuntimeClassName,
+    statics_GetTrustLevel,
+    /* IRacingWheelStatics methods */
+    statics_add_RacingWheelAdded,
+    statics_remove_RacingWheelAdded,
+    statics_add_RacingWheelRemoved,
+    statics_remove_RacingWheelRemoved,
+    statics_get_RacingWheels,
+};
+
 static struct racing_wheel_statics racing_wheel_statics =
 {
     {&factory_vtbl},
+    {&statics_vtbl},
     1,
 };
 
