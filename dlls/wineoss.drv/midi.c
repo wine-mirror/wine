@@ -753,8 +753,6 @@ DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
         return OSS_MidiInit();
     case DRVM_EXIT:
         return OSS_MidiExit();
-    case MODM_GETNUMDEVS:
-	return MODM_NumDevs;
     case MODM_GETVOLUME:
 	return modGetVolume(wDevID, (DWORD*)dwParam1);
     case MODM_SETVOLUME:
