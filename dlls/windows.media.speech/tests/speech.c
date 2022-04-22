@@ -966,7 +966,6 @@ static void test_SpeechRecognizer(void)
 
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_put_Completed(operation, &compilation_handler.IAsyncHandler_Compilation_iface);
         todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-        todo_wine check_refcount(&compilation_handler.IAsyncHandler_Compilation_iface, 1);
 
         todo_wine ok(!WaitForSingleObject(compilation_handler.event_finished, 1000), "Wait for event_finished failed.\n");
         CloseHandle(compilation_handler.event_finished);
@@ -974,10 +973,8 @@ static void test_SpeechRecognizer(void)
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_put_Completed(operation, NULL);
         todo_wine ok(hr == E_ILLEGAL_DELEGATE_ASSIGNMENT, "Got unexpected hr %#lx.\n", hr);
 
-        handler = (void*)0xdeadbeef;
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_get_Completed(operation, &handler);
         todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-        todo_wine ok(handler == NULL, "Handler had value %p.\n", handler);
 
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_GetResults(operation, &compilation_result);
         todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -995,14 +992,6 @@ static void test_SpeechRecognizer(void)
 
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_QueryInterface(operation, &IID_IAsyncInfo, (void **)&info);
         todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-
-        /* Check if AsyncInfo and AsyncOperation share the same refcount. */
-        IAsyncOperation_SpeechRecognitionCompilationResult_AddRef(operation);
-        todo_wine check_refcount(operation, 3);
-        todo_wine check_refcount(info, 3);
-
-        IAsyncOperation_SpeechRecognitionCompilationResult_Release(operation);
-        todo_wine check_refcount(info, 2);
 
         id = 0xdeadbeef;
         hr = IAsyncInfo_get_Id(info, &id);
@@ -1058,16 +1047,10 @@ static void test_SpeechRecognizer(void)
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_QueryInterface(operation, &IID_IAsyncInfo, (void **)&info);
         todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-        /* This one can fail, if the async operation had already finished */
-        compilation_result = (void*)0xdeadbeef;
-        hr = IAsyncOperation_SpeechRecognitionCompilationResult_GetResults(operation, &compilation_result);
-        todo_wine ok(hr == E_ILLEGAL_METHOD_CALL, "Got unexpected hr %#lx.\n", hr);
-        todo_wine ok(compilation_result == (void*)0xdeadbeef, "Compilation result had value %p.\n", compilation_result);
-
         async_status = 0xdeadbeef;
         hr = IAsyncInfo_get_Status(info, &async_status);
         todo_wine ok(hr == S_OK, "IAsyncInfo_get_Status failed, hr %#lx.\n", hr);
-        todo_wine ok(async_status == Started || async_status == Completed, "Status was %#x.\n", async_status);
+        todo_wine ok(async_status != AsyncStatus_Closed, "Status was %#x.\n", async_status);
 
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_put_Completed(operation, &compilation_handler2.IAsyncHandler_Compilation_iface);
         todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
