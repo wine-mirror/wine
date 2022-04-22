@@ -1711,9 +1711,21 @@ static BOOL WINAPI glxdrv_wglCopyContext(struct wgl_context *src, struct wgl_con
 {
     TRACE("%p -> %p mask %#x\n", src, dst, mask);
 
-    pglXCopyContext(gdi_display, src->ctx, dst->ctx, mask);
+    X11DRV_expect_error( gdi_display, GLXErrorHandler, NULL );
+    pglXCopyContext( gdi_display, src->ctx, dst->ctx, mask );
+    XSync( gdi_display, False );
+    if (X11DRV_check_error())
+    {
+        static unsigned int once;
 
-    /* As opposed to wglCopyContext, glXCopyContext doesn't return anything, so hopefully we passed */
+        if (!once++)
+        {
+            ERR("glXCopyContext failed. glXCopyContext() for direct rendering contexts not "
+                "implemented in the host graphics driver?\n");
+        }
+        return FALSE;
+    }
+
     return TRUE;
 }
 
