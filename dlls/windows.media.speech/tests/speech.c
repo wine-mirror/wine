@@ -239,8 +239,8 @@ struct compilation_handler
     IAsyncHandler_Compilation IAsyncHandler_Compilation_iface;
     LONG ref;
 
+    HANDLE event_block;
     HANDLE event_finished;
-    BOOLEAN sleeping;
     DWORD thread_id;
 };
 
@@ -290,8 +290,10 @@ HRESULT WINAPI compilation_handler_Invoke( IAsyncHandler_Compilation *iface,
     trace("Iface %p, info %p, status %d.\n", iface, info, status);
     trace("Caller thread id %lu callback thread id %lu.\n", impl->thread_id, id);
 
-    ok(status != Started, "Got unexpected status %#x.\n", status);
+    /* Signal finishing of the handler. */
     if (impl->event_finished) SetEvent(impl->event_finished);
+    /* Block handler until event is set. */
+    if (impl->event_block) WaitForSingleObject(impl->event_block, INFINITE);
 
     return S_OK;
 }
@@ -813,6 +815,23 @@ static void test_VoiceInformation(void)
     RoUninitialize();
 }
 
+struct async_operation_block_param
+{
+    IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResult *handler;
+    IAsyncOperation_SpeechRecognitionCompilationResult *operation;
+};
+
+static DWORD WINAPI async_operation_block_thread(void *arg)
+{
+    struct async_operation_block_param *param = arg;
+    HRESULT hr;
+
+    hr = IAsyncOperation_SpeechRecognitionCompilationResult_put_Completed(param->operation, param->handler);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    return 0;
+}
+
 static void test_SpeechRecognizer(void)
 {
     static const WCHAR *speech_recognition_name = L"Windows.Media.SpeechRecognition.SpeechRecognizer";
@@ -828,16 +847,17 @@ static void test_SpeechRecognizer(void)
     ISpeechRecognizer2 *recognizer2 = NULL;
     IActivationFactory *factory = NULL;
     IInspectable *inspectable = NULL;
-    IClosable *closable = NULL;
     ILanguage *language = NULL;
     IAsyncInfo *info = NULL;
     struct completed_event_handler completed_handler;
     struct recognition_result_handler result_handler;
+    struct async_operation_block_param block_param;
     struct compilation_handler compilation_handler;
     SpeechRecognitionResultStatus result_status;
     EventRegistrationToken token = { .value = 0 };
     AsyncStatus async_status;
     HSTRING hstr, hstr_lang;
+    HANDLE blocked_thread;
     HRESULT hr;
     UINT32 id;
     LONG ref;
@@ -909,10 +929,15 @@ static void test_SpeechRecognizer(void)
         hr = IInspectable_QueryInterface(inspectable, &IID_ISpeechRecognizer2, (void **)&recognizer2);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
+        check_interface(inspectable, &IID_IClosable, TRUE);
+
         hr = ISpeechRecognizer2_get_ContinuousRecognitionSession(recognizer2, &session);
         ok(hr == S_OK, "ISpeechRecognizer2_get_ContinuousRecognitionSession failed, hr %#lx.\n", hr);
         check_refcount(session, 2);
         check_refcount(inspectable, 3);
+
+        ref = ISpeechRecognizer2_Release(recognizer2);
+        ok(ref == 2, "Got unexpected ref %lu.\n", ref);
 
         hr = ISpeechContinuousRecognitionSession_add_Completed(session, NULL, &token);
         ok(hr == E_INVALIDARG, "ISpeechContinuousRecognitionSession_add_ResultGenerated failed, hr %#lx.\n", hr);
@@ -937,6 +962,9 @@ static void test_SpeechRecognizer(void)
 
         hr = ISpeechContinuousRecognitionSession_remove_ResultGenerated(session, token);
         ok(hr == S_OK, "ISpeechContinuousRecognitionSession_remove_ResultGenerated failed, hr %#lx.\n", hr);
+
+        ref = ISpeechContinuousRecognitionSession_Release(session);
+        ok(ref == 1, "Got unexpected ref %lu.\n", ref);
 
         hr = ISpeechRecognizer_get_Constraints(recognizer, &constraints);
         ok(hr == S_OK, "ISpeechContinuousRecognitionSession_get_Constraints failed, hr %#lx.\n", hr);
@@ -1064,22 +1092,62 @@ static void test_SpeechRecognizer(void)
 
         ref = IAsyncInfo_Release(info);
         todo_wine ok(ref == 1, "Got unexpected ref %lu.\n", ref);
+        ref = IAsyncOperation_SpeechRecognitionCompilationResult_Release(operation);
+        todo_wine ok(!ref, "Got unexpected ref %lu.\n", ref);
+
+        ref = ISpeechRecognizer_Release(recognizer);
+        todo_wine ok(ref == 1, "Got unexpected ref %lu.\n", ref);
+
+        ref = IInspectable_Release(inspectable);
+        todo_wine ok(!ref, "Got unexpected ref %lu.\n", ref);
+
+        /* Test if AsyncInfo_Close waits for the handler to finish. */
+        hr = RoActivateInstance(hstr, &inspectable);
+        todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = IInspectable_QueryInterface(inspectable, &IID_ISpeechRecognizer, (void **)&recognizer);
+        todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        compilation_handler_create_static(&compilation_handler);
+        compilation_handler.event_block = CreateEventW(NULL, FALSE, FALSE, NULL);
+        compilation_handler.event_finished = CreateEventW(NULL, FALSE, FALSE, NULL);
+        compilation_handler.thread_id = GetCurrentThreadId();
+
+        todo_wine ok(compilation_handler.event_finished != NULL, "Finished event wasn't created.\n");
+
+        hr = ISpeechRecognizer_CompileConstraintsAsync(recognizer, &operation);
+        todo_wine ok(hr == S_OK, "ISpeechRecognizer_CompileConstraintsAsync failed, hr %#lx.\n", hr);
+
+        block_param.handler = &compilation_handler.IAsyncHandler_Compilation_iface;
+        block_param.operation = operation;
+        blocked_thread = CreateThread(NULL, 0, async_operation_block_thread, &block_param, 0, NULL);
+
+        todo_wine ok(!WaitForSingleObject(compilation_handler.event_finished, 5000), "Wait for event_finished failed.\n");
+
+        todo_wine ok(WaitForSingleObject(blocked_thread, 100) == WAIT_TIMEOUT, "Wait for block_thread didn't time out.\n");
+
+        todo_wine ok(compilation_handler.ref == 3, "Got unexpected ref %lu.\n", compilation_handler.ref);
+        todo_wine check_refcount(operation, 3);
+
+        hr = IAsyncOperation_SpeechRecognitionCompilationResult_QueryInterface(operation, &IID_IAsyncInfo, (void **)&info);
+        todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = IAsyncInfo_Close(info); /* If IAsyncInfo_Close would wait for the handler to finish, the test would get stuck here. */
+        todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        SetEvent(compilation_handler.event_block);
+        todo_wine ok(!WaitForSingleObject(blocked_thread, 1000), "Wait for block_thread failed.\n");
+
+        CloseHandle(blocked_thread);
+        CloseHandle(compilation_handler.event_block);
+        CloseHandle(compilation_handler.event_finished);
+
+        ref = IAsyncInfo_Release(info);
+        todo_wine ok(ref == 1, "Got unexpected ref %lu.\n", ref);
 
 skip_operation:
         ref = IAsyncOperation_SpeechRecognitionCompilationResult_Release(operation);
         ok(!ref, "Got unexpected ref %lu.\n", ref);
-
-        ref = ISpeechContinuousRecognitionSession_Release(session);
-        ok(ref == 1, "Got unexpected ref %lu.\n", ref);
-
-        hr = IInspectable_QueryInterface(inspectable, &IID_IClosable, (void **)&closable);
-        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-
-        ref = IClosable_Release(closable);
-        ok(ref == 3, "Got unexpected ref %lu.\n", ref);
-
-        ref = ISpeechRecognizer2_Release(recognizer2);
-        ok(ref == 2, "Got unexpected ref %lu.\n", ref);
 
         ref = ISpeechRecognizer_Release(recognizer);
         ok(ref == 1, "Got unexpected ref %lu.\n", ref);
