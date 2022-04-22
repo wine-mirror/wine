@@ -20,12 +20,14 @@
 
 #include "config.h"
 
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
 
-#include "windef.h"
 #include "winedump.h"
+#include "winnls.h"
+#include "winternl.h"
 
 static const void *read_data( unsigned int *pos, unsigned int size )
 {
@@ -45,15 +47,27 @@ static unsigned short mapchar( const unsigned short *table, unsigned int len, un
 
 static void dump_offset_table( const unsigned short *table, unsigned int len )
 {
-    int i, ch;
+    int i, j, empty, ch;
 
-    for (i = 0; i < 0x10000; i++)
+    for (i = empty = 0; i < 0x10000; i += 16)
     {
-        if (!(i % 16)) printf( "\n%04x:", i );
-        ch = mapchar( table, len, i );
-        if (ch == i) printf( " ...." );
-        else printf( " %04x", ch );
+        for (j = 0; j < 16; j++) if (mapchar( table, len, i + j ) != i + j) break;
+        if (i && j == 16)
+        {
+            empty++;
+            continue;
+        }
+        if (empty) printf( "\n[...]" );
+        empty = 0;
+        printf( "\n%04x:", i );
+        for (j = 0; j < 16; j++)
+        {
+            ch = mapchar( table, len, i + j );
+            if (ch == i + j) printf( " ...." );
+            else printf( " %04x", ch );
+        }
     }
+    if (empty) printf( "\n[...]" );
 }
 
 struct ctype
@@ -97,6 +111,72 @@ static void dump_ctype_table( const USHORT *ptr )
         else  printf( "%04x  ??? %02x\n", i, *b );
     }
     printf( "\n" );
+}
+
+static void dump_geo_table( const void *ptr )
+{
+    const struct data
+    {
+        WCHAR signature[4];  /* L"geo" */
+        UINT  total_size;
+        UINT  ids_offset;
+        UINT  nb_ids;
+        UINT  locales_offset;
+        UINT  nb_locales;
+    } *data = ptr;
+
+    const struct id
+    {
+        UINT     id;
+        WCHAR    latitude[12];
+        WCHAR    longitude[12];
+        GEOCLASS class;
+        UINT     parent;
+        WCHAR    iso2[4];
+        WCHAR    iso3[4];
+        USHORT   uncode;
+        USHORT   dialcode;
+        /* new versions only */
+        WCHAR    currcode[4];
+        WCHAR    currsymbol[8];
+    } *id;
+
+    const union locale
+    {
+        struct /* old version */
+        {
+            UINT  lcid;
+            UINT  id;
+            UINT  lcid2;
+        } old;
+        struct /* new version */
+        {
+            WCHAR name[4];
+            UINT  idx;
+        } new;
+    } *locale;
+    int i;
+
+    id = (const struct id *)((const BYTE *)data + data->ids_offset);
+    printf( "GEOIDs: (count %u)\n\n", data->nb_ids );
+    for (i = 0; i < data->nb_ids; i++)
+    {
+        if (!id[i].id) continue;
+        printf( "%u %5s %5s %s parent=%u lat=%s long=%s uncode=%u dialcode=%u currency=%s %s\n", id[i].id,
+                get_unicode_str( id[i].iso2, -1 ), get_unicode_str( id[i].iso3, -1 ),
+                id[i].class == GEOCLASS_NATION ? "nation" : id[i].class == GEOCLASS_REGION ? "region" : "???",
+                id[i].parent, get_unicode_str( id[i].latitude, -1 ), get_unicode_str( id[i].longitude, -1 ),
+                id[i].uncode, id[i].dialcode, get_unicode_str( id[i].currcode, -1 ),
+                get_unicode_str( id[i].currsymbol, -1 ));
+    }
+
+    locale = (const union locale *)((const BYTE *)data + data->locales_offset);
+    printf( "\nIndex: (count %u)\n\n", data->nb_locales );
+    for (i = 0; i < data->nb_locales; i++)
+    {
+        printf( "%-5s -> %u %s\n", get_unicode_str( locale[i].new.name, -1 ),
+                id[locale[i].new.idx].id, get_unicode_str( id[locale[i].new.idx].iso3, -1 ) );
+    }
 }
 
 static void dump_casemap(void)
@@ -707,12 +787,460 @@ static void dump_sort( int old_version )
     printf( "\n" );
 }
 
+static const USHORT *locale_strings;
+static DWORD locale_strings_len;
+
+static const char *get_locale_string( DWORD offset )
+{
+    static char buffer[1024];
+    int i = 0, len;
+    const WCHAR *p;
+
+    if (offset >= locale_strings_len) return "<invalid>";
+    len = locale_strings[offset];
+    if (offset + len + 1 > locale_strings_len) return "<invalid>";
+    p = locale_strings + offset + 1;
+    buffer[i++] = '"';
+    while (len--)
+    {
+        if (*p < 0x20)
+        {
+            i += sprintf( buffer + i, "\\%03o", *p );
+        }
+        else if (*p < 0x80)
+        {
+            buffer[i++] = *p;
+        }
+        else if (*p < 0x800)
+        {
+            buffer[i++] = 0xc0 | (*p >> 6);
+            buffer[i++] = 0x80 | (*p & 0x3f);
+        }
+        else if (*p >= 0xd800 && *p <= 0xdbff)
+        {
+            int val = 0x10000 + ((*p & 0x3ff) << 10) + (p[1] & 0x3ff);
+            buffer[i++] = 0xf0 | (val >> 18);
+            buffer[i++] = 0x80 | ((val >> 12) & 0x3f);
+            buffer[i++] = 0x80 | ((val >> 6) & 0x3f);
+            buffer[i++] = 0x80 | (val & 0x3f);
+            p++;
+            len--;
+        }
+        else
+        {
+            buffer[i++] = 0xe0 | (*p >> 12);
+            buffer[i++] = 0x80 | ((*p >> 6) & 0x3f);
+            buffer[i++] = 0x80 | (*p & 0x3f);
+        }
+        p++;
+    }
+    buffer[i++] = '"';
+    buffer[i] = 0;
+    return buffer;
+}
+
+static const char *get_locale_strarray( DWORD offset )
+{
+    static char buffer[2048];
+    int i = 0, count;
+    const DWORD *array;
+
+    if (offset >= locale_strings_len) return "<invalid>";
+    count = locale_strings[offset];
+    if (offset + 1 + count * 2 > locale_strings_len) return "<invalid>";
+    array = (const DWORD *)(locale_strings + offset + 1);
+    buffer[i++] = '{';
+    while (count--)
+    {
+        if (i > 1) buffer[i++] = ' ';
+        i += sprintf( buffer + i, "%s", get_locale_string( *array++ ));
+    }
+    buffer[i++] = '}';
+    buffer[i] = 0;
+    return buffer;
+}
+
+static const char *get_locale_uints( DWORD offset )
+{
+    static char buffer[1024];
+    int len;
+    const unsigned int *p;
+
+    buffer[0] = 0;
+    if (offset >= locale_strings_len) return "<invalid>";
+    len = locale_strings[offset];
+    if (offset + len + 1 > locale_strings_len) return "<invalid>";
+    if (len < 2) return "[]";
+    for (p = (unsigned int *)(locale_strings + offset + 1); len >= 2; p++, len -= 2)
+        sprintf( buffer + strlen(buffer), " %08x", *p );
+    buffer[0] = '[';
+    strcat( buffer, "]" );
+    return buffer;
+}
+
+static void dump_locale_table( const void *data_ptr, unsigned int len )
+{
+    const struct calendar
+    {
+        USHORT icalintvalue;        /* 00 */
+        USHORT itwodigityearmax;    /* 02 */
+        UINT   sshortdate;          /* 04 */
+        UINT   syearmonth;          /* 08 */
+        UINT   slongdate;           /* 0c */
+        UINT   serastring;          /* 10 */
+        UINT   iyearoffsetrange;    /* 14 */
+        UINT   sdayname;            /* 18 */
+        UINT   sabbrevdayname;      /* 1c */
+        UINT   smonthname;          /* 20 */
+        UINT   sabbrevmonthname;    /* 24 */
+        UINT   scalname;            /* 28 */
+        UINT   smonthday;           /* 2c */
+        UINT   sabbreverastring;    /* 30 */
+        UINT   sshortestdayname;    /* 34 */
+        UINT   srelativelongdate;   /* 38 */
+        UINT   unused[3];           /* 3c */
+    } *calendar;
+
+    const NLS_LOCALE_HEADER *data = data_ptr;
+    const NLS_LOCALE_LCID_INDEX *id;
+    const NLS_LOCALE_LCNAME_INDEX *lcname;
+    const NLS_LOCALE_DATA *locale;
+    int i, j;
+    int *indices, nb_aliases = 0;
+
+    printf( "offset: %08x\n", data->offset );
+    printf( "version: %u\n", data->version );
+    printf( "magic: %.4s\n", (char *)&data->magic );
+
+    locale_strings = (const USHORT *)((const BYTE *)data + data->strings_offset);
+    locale_strings_len = (const USHORT *)((const BYTE *)data + len) - locale_strings;
+
+    printf( "\nLCID to locale: (count=%u)\n", data->nb_lcids );
+    id = (const NLS_LOCALE_LCID_INDEX *)((const BYTE *)data + data->lcids_offset);
+    for (i = 0; i < data->nb_lcids; i++)
+    {
+        printf( "  lcid %08x %s\n", id[i].id, get_locale_string( id[i].name ));
+    }
+
+    printf( "\nName to locale: (count=%u)\n", data->nb_lcnames );
+    indices = calloc( data->nb_locales, sizeof(*indices) );
+    lcname = (const NLS_LOCALE_LCNAME_INDEX *)((const BYTE *)data + data->lcnames_offset);
+    for (i = 0; i < data->nb_lcnames; i++)
+    {
+        printf( "  lcid %08x %s\n", lcname[i].id, get_locale_string( lcname[i].name ));
+        if (indices[lcname[i].idx]++) nb_aliases++;
+    }
+    printf( "\nAliases: (count=%u)\n", nb_aliases );
+    for (i = 0; i < data->nb_lcnames; i++)
+    {
+        int idx = lcname[i].idx;
+        if (indices[idx] == 1) continue;
+        if (!indices[idx]) printf( "  unused index %u\n", i );
+        else
+        {
+            printf( " " );
+            for (j = 0; j < data->nb_lcnames; j++)
+                if (lcname[j].idx == idx)
+                    printf( " %08x %s", lcname[j].id, get_locale_string( lcname[j].name ));
+            printf( "\n" );
+            indices[idx] = 1;
+        }
+    }
+
+    printf( "\nLocales: (count=%u)\n", data->nb_locales );
+    memset( indices, 0, data->nb_locales * sizeof(*indices) );
+    for (i = 0; i < data->nb_lcnames; i++)
+    {
+        if (indices[lcname[i].idx]++) continue;
+        locale = (const NLS_LOCALE_DATA *)((const BYTE *)data + data->locales_offset + lcname[i].idx * data->locale_size);
+        printf( "Locale %s\n", get_locale_string( locale->sname ));
+        printf( "    LOCALE_SNAME %s\n", get_locale_string( locale->sname ));
+        printf( "    LOCALE_SOPENTYPELANGUAGETAG %s\n", get_locale_string( locale->sopentypelanguagetag ));
+        printf( "    LOCALE_ILANGUAGE %04x\n", locale->ilanguage );
+        printf( "    unique_lcid %04x\n", locale->unique_lcid );
+        printf( "    LOCALE_IDIGITS %u\n", locale->idigits );
+        printf( "    LOCALE_INEGNUMBER %u\n", locale->inegnumber );
+        printf( "    LOCALE_ICURRDIGITS %u\n", locale->icurrdigits );
+        printf( "    LOCALE_ICURRENCY %u\n", locale->icurrency );
+        printf( "    LOCALE_INEGCURR %u\n", locale->inegcurr );
+        printf( "    LOCALE_ILZERO %u\n", locale->ilzero );
+        printf( "    LOCALE_INEUTRAL %u\n", !locale->inotneutral );
+        printf( "    LOCALE_IFIRSTDAYOFWEEK %u\n", (locale->ifirstdayofweek + 6) % 7 );
+        printf( "    LOCALE_IFIRSTWEEKOFYEAR %u\n", locale->ifirstweekofyear );
+        printf( "    LOCALE_ICOUNTRY %u\n", locale->icountry );
+        printf( "    LOCALE_IMEASURE %u\n", locale->imeasure );
+        printf( "    LOCALE_IDIGITSUBSTITUTION %u\n", locale->idigitsubstitution );
+        printf( "    LOCALE_SGROUPING %s\n", get_locale_string( locale->sgrouping ));
+        printf( "    LOCALE_SMONGROUPING %s\n", get_locale_string( locale->smongrouping ));
+        printf( "    LOCALE_SLIST %s\n", get_locale_string( locale->slist ));
+        printf( "    LOCALE_SDECIMAL %s\n", get_locale_string( locale->sdecimal ));
+        printf( "    LOCALE_STHOUSAND %s\n", get_locale_string( locale->sthousand ));
+        printf( "    LOCALE_SCURRENCY %s\n", get_locale_string( locale->scurrency ));
+        printf( "    LOCALE_SMONDECIMALSEP %s\n", get_locale_string( locale->smondecimalsep ));
+        printf( "    LOCALE_SMONTHOUSANDSEP %s\n", get_locale_string( locale->smonthousandsep ));
+        printf( "    LOCALE_SPOSITIVESIGN %s\n", get_locale_string( locale->spositivesign ));
+        printf( "    LOCALE_SNEGATIVESIGN %s\n", get_locale_string( locale->snegativesign ));
+        printf( "    LOCALE_S1159 %s\n", get_locale_string( locale->s1159 ));
+        printf( "    LOCALE_S2359 %s\n", get_locale_string( locale->s2359 ));
+        printf( "    LOCALE_SNATIVEDIGITS %s\n", get_locale_strarray( locale->snativedigits ));
+        printf( "    LOCALE_STIMEFORMAT %s\n", get_locale_strarray( locale->stimeformat ));
+        printf( "    LOCALE_SSHORTDATE %s\n", get_locale_strarray( locale->sshortdate ));
+        printf( "    LOCALE_SLONGDATE %s\n", get_locale_strarray( locale->slongdate ));
+        printf( "    LOCALE_SYEARMONTH %s\n", get_locale_strarray( locale->syearmonth ));
+        printf( "    LOCALE_SDURATION %s\n", get_locale_strarray( locale->sduration ));
+        printf( "    LOCALE_IDEFAULTLANGUAGE %04x\n", locale->idefaultlanguage );
+        printf( "    LOCALE_IDEFAULTANSICODEPAGE %u\n", locale->idefaultansicodepage );
+        printf( "    LOCALE_IDEFAULTCODEPAGE %u\n", locale->idefaultcodepage );
+        printf( "    LOCALE_IDEFAULTMACCODEPAGE %u\n", locale->idefaultmaccodepage );
+        printf( "    LOCALE_IDEFAULTEBCDICCODEPAGE %u\n", locale->idefaultebcdiccodepage );
+        printf( "    old_geoid(?) %u\n", locale->old_geoid );
+        printf( "    LOCALE_IPAPERSIZE %u\n", locale->ipapersize );
+        printf( "    islamic_cal %u %u\n", locale->islamic_cal[0], locale->islamic_cal[1] );
+        printf( "    LOCALE_SCALENDARTYPE %s\n", get_locale_string( locale->scalendartype ));
+        printf( "    LOCALE_SABBREVLANGNAME %s\n", get_locale_string( locale->sabbrevlangname ));
+        printf( "    LOCALE_SISO639LANGNAME %s\n", get_locale_string( locale->siso639langname ));
+        printf( "    LOCALE_SENGLANGUAGE %s\n", get_locale_string( locale->senglanguage ));
+        printf( "    LOCALE_SNATIVELANGNAME %s\n", get_locale_string( locale->snativelangname ));
+        printf( "    LOCALE_SENGCOUNTRY %s\n", get_locale_string( locale->sengcountry ));
+        printf( "    LOCALE_SNATIVECTRYNAME %s\n", get_locale_string( locale->snativectryname ));
+        printf( "    LOCALE_SABBREVCTRYNAME %s\n", get_locale_string( locale->sabbrevctryname ));
+        printf( "    LOCALE_SISO3166CTRYNAME %s\n", get_locale_string( locale->siso3166ctryname ));
+        printf( "    LOCALE_SINTLSYMBOL %s\n", get_locale_string( locale->sintlsymbol ));
+        printf( "    LOCALE_SENGCURRNAME %s\n", get_locale_string( locale->sengcurrname ));
+        printf( "    LOCALE_SNATIVECURRNAME %s\n", get_locale_string( locale->snativecurrname ));
+        printf( "    LOCALE_FONTSIGNATURE %s\n", get_locale_uints( locale->fontsignature ));
+        printf( "    LOCALE_SISO639LANGNAME2 %s\n", get_locale_string( locale->siso639langname2 ));
+        printf( "    LOCALE_SISO3166CTRYNAME2 %s\n", get_locale_string( locale->siso3166ctryname2 ));
+        printf( "    LOCALE_SPARENT %s\n", get_locale_string( locale->sparent ));
+        printf( "    LOCALE_SDAYNAME %s\n", get_locale_strarray( locale->sdayname ));
+        printf( "    LOCALE_SABBREVDAYNAME %s\n", get_locale_strarray( locale->sabbrevdayname ));
+        printf( "    LOCALE_SMONTHNAME %s\n", get_locale_strarray( locale->smonthname ));
+        printf( "    LOCALE_SABBREVMONTHNAME %s\n", get_locale_strarray( locale->sabbrevmonthname ));
+        printf( "    LOCALE_SGENITIVEMONTH %s\n", get_locale_strarray( locale->sgenitivemonth ));
+        printf( "    LOCALE_SABBREVGENITIVEMONTH %s\n", get_locale_strarray( locale->sabbrevgenitivemonth ));
+        printf( "    calendar names %s\n", get_locale_strarray( locale->calnames ));
+        printf( "    sort names %s\n", get_locale_strarray( locale->customsorts ));
+        printf( "    LOCALE_INEGATIVEPERCENT %u\n", locale->inegativepercent );
+        printf( "    LOCALE_IPOSITIVEPERCENT %u\n", locale->ipositivepercent );
+        printf( "    unknown1 %04x\n", locale->unknown1 );
+        printf( "    LOCALE_IREADINGLAYOUT %u\n", locale->ireadinglayout );
+        printf( "    unknown2 %04x %04x\n", locale->unknown2[0], locale->unknown2[1] );
+        printf( "    unused1 %04x\n", locale->unused1 );
+        printf( "    LOCALE_SENGLISHDISPLAYNAME %s\n", get_locale_string( locale->sengdisplayname ));
+        printf( "    LOCALE_SNATIVEDISPLAYNAME %s\n", get_locale_string( locale->snativedisplayname ));
+        printf( "    LOCALE_SPERCENT %s\n", get_locale_string( locale->spercent ));
+        printf( "    LOCALE_SNAN %s\n", get_locale_string( locale->snan ));
+        printf( "    LOCALE_SPOSINFINITY %s\n", get_locale_string( locale->sposinfinity ));
+        printf( "    LOCALE_SNEGINFINITY %s\n", get_locale_string( locale->sneginfinity ));
+        printf( "    unused2 %04x\n", locale->unused2 );
+        printf( "    CAL_SERASTRING %s\n", get_locale_string( locale->serastring ));
+        printf( "    CAL_SABBREVERASTRING %s\n", get_locale_string( locale->sabbreverastring ));
+        printf( "    unused3 %04x\n", locale->unused3 );
+        printf( "    LOCALE_SCONSOLEFALLBACKNAME %s\n", get_locale_string( locale->sconsolefallbackname ));
+        printf( "    LOCALE_SSHORTTIME %s\n", get_locale_strarray( locale->sshorttime ));
+        printf( "    LOCALE_SSHORTESTDAYNAME %s\n", get_locale_strarray( locale->sshortestdayname ));
+        printf( "    unused4 %04x\n", locale->unused4 );
+        printf( "    LOCALE_SSORTLOCALE %s\n", get_locale_string( locale->ssortlocale ));
+        printf( "    LOCALE_SKEYBOARDSTOINSTALL %s\n", get_locale_string( locale->skeyboardstoinstall ));
+        printf( "    LOCALE_SSCRIPTS %s\n", get_locale_string( locale->sscripts ));
+        printf( "    LOCALE_SRELATIVELONGDATE %s\n", get_locale_string( locale->srelativelongdate ));
+        printf( "    LOCALE_IGEOID %u\n", locale->igeoid );
+        printf( "    LOCALE_SSHORTESTAM %s\n", get_locale_string( locale->sshortestam ));
+        printf( "    LOCALE_SSHORTESTPM %s\n", get_locale_string( locale->sshortestpm ));
+        printf( "    LOCALE_SMONTHDAY %s\n", get_locale_strarray( locale->smonthday ));
+        printf( "    keyboard layout %s\n", get_locale_string( locale->keyboard_layout ));
+    }
+
+    printf( "\nCalendars: (count=%u)\n\n", data->nb_calendars );
+    for (i = 0; i < data->nb_calendars; i++)
+    {
+        calendar = (const struct calendar *)((const BYTE *)data + data->calendars_offset + i * data->calendar_size);
+        printf( "calendar %u:\n", i + 1 );
+        printf( "    CAL_ICALINTVALUE %u\n", calendar->icalintvalue );
+        printf( "    CAL_ITWODIGITYEARMAX %u\n", calendar->itwodigityearmax );
+        printf( "    CAL_SSHORTDATE %s\n", get_locale_strarray( calendar->sshortdate ));
+        printf( "    CAL_SYEARMONTH %s\n", get_locale_strarray( calendar->syearmonth ));
+        printf( "    CAL_SLONGDATE %s\n", get_locale_strarray( calendar->slongdate ));
+        printf( "    CAL_SERASTRING %s\n", get_locale_strarray( calendar->serastring ));
+        printf( "    CAL_IYEAROFFSETRANGE {" );
+        if (calendar->iyearoffsetrange)
+        {
+            UINT count = locale_strings[calendar->iyearoffsetrange];
+            const DWORD *array = (const DWORD *)(locale_strings + calendar->iyearoffsetrange + 1);
+            while (count--)
+            {
+                const short *p = (const short *)locale_strings + *array++;
+                printf( " era=%d,from=%d.%d.%d,zero=%d,first=%d", p[1], p[2], p[3], p[4], p[5], p[6] );
+            }
+        }
+        printf( " }\n" );
+        printf( "    CAL_SDAYNAME %s\n", get_locale_strarray( calendar->sdayname ));
+        printf( "    CAL_SABBREVDAYNAME %s\n", get_locale_strarray( calendar->sabbrevdayname ));
+        printf( "    CAL_SMONTHNAME %s\n", get_locale_strarray( calendar->smonthname ));
+        printf( "    CAL_SABBREVMONTHNAME %s\n", get_locale_strarray( calendar->sabbrevmonthname ));
+        printf( "    CAL_SCALNAME %s\n", get_locale_string( calendar->scalname ));
+        printf( "    CAL_SMONTHDAY %s\n", get_locale_strarray( calendar->smonthday ));
+        printf( "    CAL_SABBREVERASTRING %s\n", get_locale_strarray( calendar->sabbreverastring ));
+        printf( "    CAL_SSHORTESTDAYNAME %s\n", get_locale_strarray( calendar->sshortestdayname ));
+        printf( "    CAL_SRELATIVELONGDATE %s\n", get_locale_string( calendar->srelativelongdate ));
+        printf( "    unused %04x %04x %04x\n",
+                calendar->unused[0], calendar->unused[1], calendar->unused[2] );
+    }
+    free( indices );
+}
+
+static void dump_char_maps( const USHORT *ptr )
+{
+    int len;
+
+    printf( "\nMAP_FOLDDIGITS:\n\n" );
+    len = *ptr++ - 1;
+    dump_offset_table( ptr, len );
+    ptr += len;
+
+    printf( "\n\nCompatibility map:\n" );
+    len = *ptr++ - 1;
+    dump_offset_table( ptr, len );
+    ptr += len;
+
+    printf( "\n\nLCMAP_HIRAGANA:\n" );
+    len = *ptr++ - 1;
+    dump_offset_table( ptr, len );
+    ptr += len;
+
+    printf( "\n\nLCMAP_KATAKANA:\n" );
+    len = *ptr++ - 1;
+    dump_offset_table( ptr, len );
+    ptr += len;
+
+    printf( "\n\nLCMAP_HALFWIDTH:\n" );
+    len = *ptr++ - 1;
+    dump_offset_table( ptr, len );
+    ptr += len;
+
+    printf( "\n\nLCMAP_FULLWIDTH:\n" );
+    len = *ptr++ - 1;
+    dump_offset_table( ptr, len );
+    ptr += len;
+
+    printf( "\n\nLCMAP_TRADITIONAL_CHINESE:\n" );
+    len = *ptr++ - 1;
+    dump_offset_table( ptr, len );
+    ptr += len;
+
+    printf( "\n\nLCMAP_SIMPLIFIED_CHINESE:\n" );
+    len = *ptr++ - 1;
+    dump_offset_table( ptr, len );
+    ptr += len;
+
+    printf( "\n\nUnknown table 1\n" );
+    len = *ptr++ - 1;
+    dump_offset_table( ptr, len );
+    ptr += len;
+
+    printf( "\n\nUnknown table 2:\n" );
+    len = *ptr++;
+    ptr += 2;
+    dump_offset_table( ptr, len );
+    ptr += len;
+    dump_offset_table( ptr, len );
+    printf( "\n\n" );
+}
+
+static void dump_scripts( const DWORD *ptr )
+{
+    const struct range
+    {
+        UINT from;
+        UINT to;
+        BYTE mask[16];
+    } *range;
+    int i, j, nb_ranges, nb_names;
+    const WCHAR *names;
+
+    nb_ranges = *ptr++;
+    nb_names = *ptr++;
+    range = (const struct range *)ptr;
+    names = (const WCHAR *)(range + nb_ranges);
+    for (i = 0; i < nb_ranges; i++)
+    {
+        printf( "%08x-%08x", range[i].from, range[i].to );
+        for (j = 0; j < min( nb_names, 16 * 8 ); j++)
+            if ((range[i].mask[j / 8] & (1 << (j % 8))))
+               printf( " %s", get_unicode_str( names + j * 4, 4 ));
+        printf( "\n" );
+    }
+    printf( "\n" );
+}
+
+static void dump_locale(void)
+{
+    const struct
+    {
+        UINT ctypes;
+        UINT unused1;
+        UINT unused2;
+        UINT unused3;
+        UINT locales;
+        UINT charmaps;
+        UINT geoids;
+        UINT scripts;
+        UINT tables[4];
+    } *header;
+    int i, nb_tables;
+    const void *ptr;
+
+    if (!(header = PRD( 0, sizeof(*header) ))) return;
+    nb_tables = header->ctypes / 4;
+    for (i = 8; i < nb_tables; i++)
+        printf( "Table%u: %08x\n", i, header->tables[i - 8] );
+
+    if (!(ptr = PRD( header->ctypes, header->locales - header->ctypes ))) return;
+    printf( "\nCTYPE table:\n\n" );
+    dump_ctype_table( ptr );
+
+    if (!(ptr = PRD( header->locales, header->charmaps - header->locales ))) return;
+    printf( "\nLocales:\n" );
+    dump_locale_table( ptr, header->charmaps - header->locales );
+
+    if (!(ptr = PRD( header->charmaps, header->geoids - header->charmaps ))) return;
+    printf( "\nCharacter mapping tables:\n\n" );
+    dump_char_maps( ptr );
+
+    if (!(ptr = PRD( header->geoids, header->scripts - header->geoids ))) return;
+    printf( "\nGeographic regions:\n\n" );
+    dump_geo_table( ptr );
+
+    if (!(ptr = PRD( header->scripts, dump_total_len - header->scripts ))) return;
+    printf( "\nScripts:\n\n" );
+    dump_scripts( ptr );
+}
+
+static void dump_ctype(void)
+{
+    const USHORT *ptr;
+
+    if (!(ptr = PRD( 0, dump_total_len ))) return;
+    dump_ctype_table( ptr );
+}
+
+static void dump_geo(void)
+{
+    const USHORT *ptr;
+
+    if (!(ptr = PRD( 0, dump_total_len ))) return;
+    dump_geo_table( ptr );
+}
+
 void nls_dump(void)
 {
     const char *name = get_basename( globals.input_name );
     if (!strcasecmp( name, "l_intl.nls" )) return dump_casemap();
     if (!strncasecmp( name, "c_", 2 )) return dump_codepage();
     if (!strncasecmp( name, "norm", 4 )) return dump_norm();
+    if (!strcasecmp( name, "ctype.nls" )) return dump_ctype();
+    if (!strcasecmp( name, "geo.nls" )) return dump_geo();
+    if (!strcasecmp( name, "locale.nls" )) return dump_locale();
     if (!strcasecmp( name, "sortdefault.nls" )) return dump_sort( 0 );
     if (!strncasecmp( name, "sort", 4 )) return dump_sort( 1 );
     fprintf( stderr, "Unrecognized file name '%s'\n", globals.input_name );
