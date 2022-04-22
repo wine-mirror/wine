@@ -30,11 +30,11 @@
 
 struct o32_obj
 {
-    unsigned long       o32_size;
-    unsigned long       o32_base;
-    unsigned long       o32_flags;
-    unsigned long       o32_pagemap;
-    unsigned long       o32_mapsize;
+    unsigned int        o32_size;
+    unsigned int        o32_base;
+    unsigned int        o32_flags;
+    unsigned int        o32_pagemap;
+    unsigned int        o32_mapsize;
     char                o32_name[4];
 };
 
@@ -53,28 +53,28 @@ struct b32_bundle
 
 struct vxd_descriptor
 {
-    unsigned long       next;
+    unsigned int        next;
     unsigned short      sdk_version;
     unsigned short      device_number;
     unsigned char       version_major;
     unsigned char       version_minor;
     unsigned short      flags;
     char                name[8];
-    unsigned long       init_order;
-    unsigned long       ctrl_ofs;
-    unsigned long       v86_ctrl_ofs;
-    unsigned long       pm_ctrl_ofs;
-    unsigned long       v86_ctrl_csip;
-    unsigned long       pm_ctrl_csip;
-    unsigned long       rm_ref_data;
-    unsigned long       service_table_ofs;
-    unsigned long       service_table_size;
-    unsigned long       win32_service_table_ofs;
-    unsigned long       prev;
-    unsigned long       size;
-    unsigned long       reserved0;
-    unsigned long       reserved1;
-    unsigned long       reserved2;
+    unsigned int        init_order;
+    unsigned int        ctrl_ofs;
+    unsigned int        v86_ctrl_ofs;
+    unsigned int        pm_ctrl_ofs;
+    unsigned int        v86_ctrl_csip;
+    unsigned int        pm_ctrl_csip;
+    unsigned int        rm_ref_data;
+    unsigned int        service_table_ofs;
+    unsigned int        service_table_size;
+    unsigned int        win32_service_table_ofs;
+    unsigned int        prev;
+    unsigned int        size;
+    unsigned int        reserved0;
+    unsigned int        reserved1;
+    unsigned int        reserved2;
 };
 
 static inline WORD get_word( const BYTE *ptr )
@@ -234,7 +234,7 @@ static void dump_le_objects( const IMAGE_VXD_HEADER *le )
         const struct o32_map *pmap=0;
 
         printf("    Obj. Rel.Base Codesize Flags    Tableidx Tablesize Name\n");
-        printf("    %04X %08lx %08lx %08lx %08lx %08lx  ", i + 1,
+        printf("    %04X %08x %08x %08x %08x %08x  ", i + 1,
                pobj->o32_base, pobj->o32_size, pobj->o32_flags,
                pobj->o32_pagemap, pobj->o32_mapsize);
         for (j = 0; j < 4; j++)
@@ -271,7 +271,7 @@ static void dump_le_objects( const IMAGE_VXD_HEADER *le )
         pmap = &(pmap[pobj->o32_pagemap - 1]);
         for (j = 0; j < pobj->o32_mapsize; j++)
         {
-            printf("        %08lx %06x %02x\n",
+            printf("        %08x %06x %02x\n",
                    pobj->o32_pagemap + j,
                    (pmap->o32_pagedataoffset << 8) + pmap->o32_pagesize,
                    (int)pmap->o32_pageflags);

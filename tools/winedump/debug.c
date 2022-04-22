@@ -228,7 +228,7 @@ static BOOL dump_cv_sst_src_module(const OMFDirEntry* omfde)
 {
     int 		        i, j;
     const BYTE*		        rawdata;
-    const unsigned long*	seg_info_dw;
+    const unsigned int *seg_info_dw;
     const unsigned short*	seg_info_w;
     unsigned		        ofs;
     const OMFSourceModule*	sourceModule;
@@ -250,24 +250,24 @@ static BOOL dump_cv_sst_src_module(const OMFDirEntry* omfde)
 
     /* FIXME: check ptr validity */
     seg_info_dw = (const void*)((const char*)(sourceModule + 1) +
-			  sizeof(unsigned long) * (sourceModule->cFile - 1));
+			  sizeof(unsigned int) * (sourceModule->cFile - 1));
     seg_info_w = (const unsigned short*)(&seg_info_dw[sourceModule->cSeg * 2]);
     for (i = 0; i <  sourceModule->cSeg; i++)
     {
-	printf ("      Segment #%2d start = 0x%lx, end = 0x%lx, seg index = %u\n",
+	printf ("      Segment #%2d start = 0x%x, end = 0x%x, seg index = %u\n",
 		i + 1, seg_info_dw[i * 2], seg_info_dw[(i * 2) + 1],
 		seg_info_w[i]);
     }
-    ofs = sizeof(OMFSourceModule) + sizeof(unsigned long) * (sourceModule->cFile - 1) +
-	sourceModule->cSeg * (2 * sizeof(unsigned long) + sizeof(unsigned short));
+    ofs = sizeof(OMFSourceModule) + sizeof(unsigned int) * (sourceModule->cFile - 1) +
+	sourceModule->cSeg * (2 * sizeof(unsigned int) + sizeof(unsigned short));
     ofs = (ofs + 3) & ~3;
 
     /* the OMFSourceFile is quite unpleasant to use:
      * we have first:
      * 	unsigned short	number of segments
      *	unsigned short	reserved
-     *	unsigned long	baseSrcLn[# segments]
-     *  unsigned long	offset[2 * #segments]
+     *	unsigned int	baseSrcLn[# segments]
+     *  unsigned int	offset[2 * #segments]
      *				odd indices are start offsets
      *				even indices are end offsets
      * 	unsigned char	string length for file name
@@ -276,16 +276,16 @@ static BOOL dump_cv_sst_src_module(const OMFDirEntry* omfde)
     /* FIXME: check ptr validity */
     sourceFile = (const void*)(rawdata + ofs);
     seg_info_dw = (const void*)((const char*)sourceFile + 2 * sizeof(unsigned short) +
-			  sourceFile->cSeg * sizeof(unsigned long));
+			  sourceFile->cSeg * sizeof(unsigned int));
 
-    ofs += 2 * sizeof(unsigned short) + 3 * sourceFile->cSeg * sizeof(unsigned long);
+    ofs += 2 * sizeof(unsigned short) + 3 * sourceFile->cSeg * sizeof(unsigned int);
 
     printf("    File table: %.*s\n",
 	   *(const BYTE*)((const char*)sourceModule + ofs), (const char*)sourceModule + ofs + 1);
 
     for (i = 0; i < sourceFile->cSeg; i++)
     {
-	printf ("      Segment #%2d start = 0x%lx, end = 0x%lx, offset = 0x%x\n",
+	printf ("      Segment #%2d start = 0x%x, end = 0x%x, offset = 0x%x\n",
 		i + 1, seg_info_dw[i * 2], seg_info_dw[(i * 2) + 1], sourceFile->baseSrcLn[i]);
     }
     /* add file name length */
@@ -303,11 +303,11 @@ static BOOL dump_cv_sst_src_module(const OMFDirEntry* omfde)
 
 	for (j = 0; j < sourceLine->cLnOff; j++)
 	{
-	    printf ("      Pair #%2d: offset = [0x%8lx], linenumber = %d\n",
+	    printf ("      Pair #%2d: offset = [0x%8x], linenumber = %d\n",
 		    j + 1, seg_info_dw[j], seg_info_w[j]);
 	}
 	ofs += 2 * sizeof(unsigned short) +
-	    sourceLine->cLnOff * (sizeof(unsigned long) + sizeof(unsigned short));
+	    sourceLine->cLnOff * (sizeof(unsigned int) + sizeof(unsigned short));
 	ofs = (ofs + 3) & ~3;
     }
 
@@ -608,12 +608,12 @@ struct stab_nlist
     {
         char*                   n_name;
         struct stab_nlist*      n_next;
-        long                    n_strx;
+        int                     n_strx;
     } n_un;
     unsigned char       n_type;
     char                n_other;
     short               n_desc;
-    unsigned long       n_value;
+    unsigned int        n_value;
 };
 
 static const char * const stabs_defs[] = {
@@ -708,7 +708,7 @@ void    dump_stabs(const void* pv_stabs, unsigned szstabs, const char* stabstr, 
             sprintf(n_buffer, "<0x%02x>", stab_ptr->n_type);
         else
             sprintf(n_buffer, "%-6s", stabs_defs[stab_ptr->n_type / 2]);
-        printf("%4d %s %-8x % 6d %-8lx %-6lx %s\n", 
+        printf("%4d %s %-8x % 6d %-8x %-6x %s\n",
                i, n_buffer, stab_ptr->n_other, stab_ptr->n_desc, stab_ptr->n_value,
                stab_ptr->n_un.n_strx, ptr);
     }
