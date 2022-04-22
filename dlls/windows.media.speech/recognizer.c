@@ -348,12 +348,17 @@ static HRESULT WINAPI recognizer_get_UIOptions( ISpeechRecognizer *iface, ISpeec
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI compile_callback( IInspectable *invoker, IInspectable **result )
+{
+    return S_OK;
+}
+
 static HRESULT WINAPI recognizer_CompileConstraintsAsync( ISpeechRecognizer *iface,
                                                           IAsyncOperation_SpeechRecognitionCompilationResult **operation )
 {
     IAsyncOperation_IInspectable **value = (IAsyncOperation_IInspectable **)operation;
     FIXME("iface %p, operation %p semi-stub!\n", iface, operation);
-    return async_operation_create(&IID_IAsyncOperation_SpeechRecognitionCompilationResult, value);
+    return async_operation_create(&IID_IAsyncOperation_SpeechRecognitionCompilationResult, NULL, compile_callback, value);
 }
 
 static HRESULT WINAPI recognizer_RecognizeAsync( ISpeechRecognizer *iface,
