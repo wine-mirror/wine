@@ -840,19 +840,6 @@ BOOL wined3d_texture_load_location(struct wined3d_texture *texture,
     }
     else
     {
-        if (current & WINED3D_LOCATION_CLEARED)
-        {
-            struct wined3d_bo_address addr;
-
-            /* FIXME: Clear textures on the GPU if possible. */
-
-            if (!wined3d_texture_prepare_location(texture, sub_resource_idx, context, WINED3D_LOCATION_SYSMEM))
-                return FALSE;
-            wined3d_texture_get_bo_address(texture, sub_resource_idx, &addr, WINED3D_LOCATION_SYSMEM);
-            memset(addr.addr, 0, texture->sub_resources[sub_resource_idx].size);
-            wined3d_texture_validate_location(texture, sub_resource_idx, WINED3D_LOCATION_SYSMEM);
-        }
-
         ret = texture->texture_ops->texture_load_location(texture, sub_resource_idx, context, location);
     }
 
@@ -3345,11 +3332,25 @@ static BOOL wined3d_texture_gl_prepare_location(struct wined3d_texture *texture,
 static BOOL wined3d_texture_gl_load_location(struct wined3d_texture *texture,
         unsigned int sub_resource_idx, struct wined3d_context *context, DWORD location)
 {
+    struct wined3d_texture_sub_resource *sub_resource = &texture->sub_resources[sub_resource_idx];
     struct wined3d_texture_gl *texture_gl = wined3d_texture_gl(texture);
     struct wined3d_context_gl *context_gl = wined3d_context_gl(context);
 
     TRACE("texture %p, sub_resource_idx %u, context %p, location %s.\n",
             texture, sub_resource_idx, context, wined3d_debug_location(location));
+
+    if (sub_resource->locations & WINED3D_LOCATION_CLEARED)
+    {
+        struct wined3d_bo_address addr;
+
+        /* FIXME: Clear textures on the GPU if possible. */
+
+        if (!wined3d_texture_prepare_location(texture, sub_resource_idx, context, WINED3D_LOCATION_SYSMEM))
+            return FALSE;
+        wined3d_texture_get_bo_address(texture, sub_resource_idx, &addr, WINED3D_LOCATION_SYSMEM);
+        memset(addr.addr, 0, sub_resource->size);
+        wined3d_texture_validate_location(texture, sub_resource_idx, WINED3D_LOCATION_SYSMEM);
+    }
 
     if (!wined3d_texture_gl_prepare_location(texture, sub_resource_idx, context, location))
         return FALSE;
@@ -5181,6 +5182,20 @@ static BOOL wined3d_texture_vk_load_texture(struct wined3d_texture_vk *texture_v
     struct wined3d_box src_box;
 
     sub_resource = &texture_vk->t.sub_resources[sub_resource_idx];
+
+    if (sub_resource->locations & WINED3D_LOCATION_CLEARED)
+    {
+        struct wined3d_bo_address addr;
+
+        /* FIXME: Clear textures on the GPU if possible. */
+
+        if (!wined3d_texture_prepare_location(&texture_vk->t, sub_resource_idx, context, WINED3D_LOCATION_SYSMEM))
+            return FALSE;
+        wined3d_texture_get_bo_address(&texture_vk->t, sub_resource_idx, &addr, WINED3D_LOCATION_SYSMEM);
+        memset(addr.addr, 0, sub_resource->size);
+        wined3d_texture_validate_location(&texture_vk->t, sub_resource_idx, WINED3D_LOCATION_SYSMEM);
+    }
+
     if (!(sub_resource->locations & wined3d_texture_sysmem_locations))
     {
         ERR("Unimplemented load from %s.\n", wined3d_debug_location(sub_resource->locations));
