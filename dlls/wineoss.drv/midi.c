@@ -648,17 +648,6 @@ static DWORD midStop(WORD wDevID)
 
 /*-----------------------------------------------------------------------*/
 
-/**************************************************************************
- * 			modGetVolume				[internal]
- */
-static DWORD modGetVolume(WORD wDevID, DWORD* lpdwVolume)
-{
-    if (!lpdwVolume) return MMSYSERR_INVALPARAM;
-    if (wDevID >= MODM_NumDevs) return MMSYSERR_BADDEVICEID;
-    *lpdwVolume = 0xFFFFFFFF;
-    return (MidiOutDev[wDevID].caps.dwSupport & MIDICAPS_VOLUME) ? 0 : MMSYSERR_NOTSUPPORTED;
-}
-
 DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 			    DWORD_PTR dwParam1, DWORD_PTR dwParam2);
 
@@ -753,10 +742,6 @@ DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
         return OSS_MidiInit();
     case DRVM_EXIT:
         return OSS_MidiExit();
-    case MODM_GETVOLUME:
-	return modGetVolume(wDevID, (DWORD*)dwParam1);
-    case MODM_SETVOLUME:
-	return 0;
     case MODM_RESET:
 	return modReset(wDevID);
     }
