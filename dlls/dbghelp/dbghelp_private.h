@@ -540,8 +540,8 @@ struct pdb_lookup
 {
     const char*                 filename;
     enum pdb_kind               kind;
-    DWORD                       age;
-    DWORD                       timestamp;
+    unsigned int                age;
+    unsigned int                timestamp;
     GUID                        guid;
 };
 

@@ -2761,7 +2761,7 @@ static void* pdb_jg_read(const struct PDB_JG_HEADER* pdb, const WORD* block_list
     return buffer;
 }
 
-static void* pdb_ds_read(const struct PDB_DS_HEADER* pdb, const DWORD* block_list,
+static void* pdb_ds_read(const struct PDB_DS_HEADER* pdb, const UINT *block_list,
                          int size)
 {
     int                         i, num_blocks;
@@ -2797,7 +2797,7 @@ static void* pdb_read_jg_file(const struct PDB_JG_HEADER* pdb,
 static void* pdb_read_ds_file(const struct PDB_DS_HEADER* pdb,
                               const struct PDB_DS_TOC* toc, DWORD file_nr)
 {
-    const DWORD*                block_list;
+    const UINT *block_list;
     DWORD                       i;
 
     if (!toc || file_nr >= toc->num_files) return NULL;
@@ -3069,7 +3069,7 @@ static BOOL pdb_init_type_parse(const struct msc_debug_info* msc_dbg,
     case 20040203:      /* VC 8.0 */
         break;
     default:
-        ERR("-Unknown type info version %ld\n", types.version);
+        ERR("-Unknown type info version %d\n", types.version);
         return FALSE;
     }
 
@@ -3150,7 +3150,7 @@ static BOOL pdb_init(const struct pdb_lookup* pdb_lookup, struct pdb_file_info* 
         case 19970604:      /* VC 6.0 */
             break;
         default:
-            ERR("-Unknown root block version %ld\n", root->Version);
+            ERR("-Unknown root block version %d\n", root->Version);
         }
         if (pdb_lookup->kind != PDB_JG)
         {
@@ -3162,12 +3162,12 @@ static BOOL pdb_init(const struct pdb_lookup* pdb_lookup, struct pdb_file_info* 
         pdb_file->u.jg.timestamp = root->TimeDateStamp;
         pdb_file->age = root->Age;
         if (root->TimeDateStamp == pdb_lookup->timestamp) (*matched)++;
-        else WARN("Found %s, but wrong signature: %08lx %08lx\n",
+        else WARN("Found %s, but wrong signature: %08x %08x\n",
                   pdb_lookup->filename, root->TimeDateStamp, pdb_lookup->timestamp);
         if (root->Age == pdb_lookup->age) (*matched)++;
-        else WARN("Found %s, but wrong age: %08lx %08lx\n",
+        else WARN("Found %s, but wrong age: %08x %08x\n",
                   pdb_lookup->filename, root->Age, pdb_lookup->age);
-        TRACE("found JG for %s: age=%lx timestamp=%lx\n",
+        TRACE("found JG for %s: age=%x timestamp=%x\n",
               pdb_lookup->filename, root->Age, root->TimeDateStamp);
         pdb_load_stream_name_table(pdb_file, &root->names[0], root->cbNames);
 
@@ -3179,8 +3179,7 @@ static BOOL pdb_init(const struct pdb_lookup* pdb_lookup, struct pdb_file_info* 
         struct PDB_DS_ROOT*         root;
 
         pdb_file->u.ds.toc =
-            pdb_ds_read(pdb, 
-                        (const DWORD*)((const char*)pdb + pdb->toc_page * pdb->block_size), 
+            pdb_ds_read(pdb, (const UINT*)((const char*)pdb + pdb->toc_page * pdb->block_size),
                         pdb->toc_size);
         root = pdb_read_ds_file(pdb, pdb_file->u.ds.toc, 1);
         if (!root)
@@ -3193,7 +3192,7 @@ static BOOL pdb_init(const struct pdb_lookup* pdb_lookup, struct pdb_file_info* 
         case 20000404:
             break;
         default:
-            ERR("-Unknown root block version %ld\n", root->Version);
+            ERR("-Unknown root block version %u\n", root->Version);
         }
         pdb_file->kind = PDB_DS;
         pdb_file->u.ds.guid = root->guid;
@@ -3203,9 +3202,9 @@ static BOOL pdb_init(const struct pdb_lookup* pdb_lookup, struct pdb_file_info* 
                   pdb_lookup->filename, debugstr_guid(&root->guid),
                      debugstr_guid(&pdb_lookup->guid));
         if (root->Age == pdb_lookup->age) (*matched)++;
-        else WARN("Found %s, but wrong age: %08lx %08lx\n",
+        else WARN("Found %s, but wrong age: %08x %08x\n",
                   pdb_lookup->filename, root->Age, pdb_lookup->age);
-        TRACE("found DS for %s: age=%lx guid=%s\n",
+        TRACE("found DS for %s: age=%x guid=%s\n",
               pdb_lookup->filename, root->Age, debugstr_guid(&root->guid));
         pdb_load_stream_name_table(pdb_file, &root->names[0], root->cbNames);
 
@@ -3284,7 +3283,7 @@ static void pdb_process_symbol_imports(const struct process* pcs,
                 imp_pdb_lookup.kind = PDB_JG;
                 imp_pdb_lookup.timestamp = imp->TimeDateStamp;
                 imp_pdb_lookup.age = imp->Age;
-                TRACE("got for %s: age=%lu ts=%lx\n",
+                TRACE("got for %s: age=%u ts=%x\n",
                       imp->filename, imp->Age, imp->TimeDateStamp);
                 pdb_process_internal(pcs, msc_dbg, &imp_pdb_lookup, pdb_module_info, i);
             }
@@ -3359,7 +3358,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
         case 19990903:
             break;
         default:
-            ERR("-Unknown symbol info version %ld %08lx\n",
+            ERR("-Unknown symbol info version %u %08x\n",
                 symbols.version, symbols.version);
         }
 
@@ -3377,7 +3376,7 @@ static BOOL pdb_process_internal(const struct process* pcs,
             pdb_file->fpoext_stream = psi->FPO_EXT;
             break;
         default:
-            FIXME("Unknown PDB_STREAM_INDEXES size (%ld)\n", symbols.stream_index_size);
+            FIXME("Unknown PDB_STREAM_INDEXES size (%u)\n", symbols.stream_index_size);
             break;
         }
         files_image = pdb_read_strings(pdb_file);
@@ -3817,7 +3816,7 @@ BOOL pdb_virtual_unwind(struct cpu_stack_walk *csw, DWORD_PTR ip,
         {
             if (fpoext[i].start <= ip && ip < fpoext[i].start + fpoext[i].func_size)
             {
-                TRACE("\t%08lx %08lx %8lx %8lx %4lx %4x %4x %08lx %s\n",
+                TRACE("\t%08x %08x %8x %8x %4x %4x %4x %08x %s\n",
                       fpoext[i].start, fpoext[i].func_size, fpoext[i].locals_size,
                       fpoext[i].params_size, fpoext[i].maxstack_size, fpoext[i].prolog_size,
                       fpoext[i].savedregs_size, fpoext[i].flags,
@@ -3951,7 +3950,7 @@ static BOOL codeview_process_info(const struct process* pcs,
     {
         const OMFSignatureRSDS* rsds = (const OMFSignatureRSDS*)msc_dbg->root;
 
-        TRACE("Got RSDS type of PDB file: guid=%s age=%08lx name=%s\n",
+        TRACE("Got RSDS type of PDB file: guid=%s age=%08x name=%s\n",
               wine_dbgstr_guid(&rsds->guid), rsds->age, rsds->name);
         pdb_lookup.filename = rsds->name;
         pdb_lookup.kind = PDB_DS;

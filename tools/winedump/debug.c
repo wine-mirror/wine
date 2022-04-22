@@ -211,8 +211,8 @@ static BOOL dump_cv_sst_seg_map(const OMFDirEntry* omfde)
 	printf("      frame:         %u\n", segMapDesc[i].frame);
 	printf("      iSegName:      %u\n", segMapDesc[i].iSegName);
 	printf("      iClassName:    %u\n", segMapDesc[i].iClassName);
-	printf("      offset:        %lu\n", segMapDesc[i].offset);
-	printf("      cbSeg:         %lu\n", segMapDesc[i].cbSeg);
+	printf("      offset:        %u\n", segMapDesc[i].offset);
+	printf("      cbSeg:         %u\n", segMapDesc[i].cbSeg);
     }
 
     return TRUE;
@@ -244,7 +244,7 @@ static BOOL dump_cv_sst_src_module(const OMFDirEntry* omfde)
 	    sourceModule->cFile, sourceModule->cSeg);
     for (i = 0; i < sourceModule->cFile; i++)
     {
-	printf ("      File #%2d begins at an offset of 0x%lx in this section\n",
+	printf ("      File #%2d begins at an offset of 0x%x in this section\n",
 		i + 1, sourceModule->baseSrcFile[i]);
     }
 
@@ -285,7 +285,7 @@ static BOOL dump_cv_sst_src_module(const OMFDirEntry* omfde)
 
     for (i = 0; i < sourceFile->cSeg; i++)
     {
-	printf ("      Segment #%2d start = 0x%lx, end = 0x%lx, offset = 0x%lx\n",
+	printf ("      Segment #%2d start = 0x%lx, end = 0x%lx, offset = 0x%x\n",
 		i + 1, seg_info_dw[i * 2], seg_info_dw[(i * 2) + 1], sourceFile->baseSrcLn[i]);
     }
     /* add file name length */
@@ -402,7 +402,7 @@ static void dump_codeview_headers(unsigned long base, unsigned long len)
 	const CODEVIEW_PDB_DATA* pdb_data;
 	pdb_data = cv_base;
 
-        printf("      Filepos:           0x%08lX\n", pdb_data->filepos);
+        printf("      Filepos:           0x%08X\n", pdb_data->filepos);
 	printf("      TimeStamp:         %08X (%s)\n",
 	       pdb_data->timestamp, get_time_str(pdb_data->timestamp));
 	printf("      Age:               %08X\n", pdb_data->age);
@@ -428,7 +428,7 @@ static void dump_codeview_headers(unsigned long base, unsigned long len)
 
     sig = cv_base;
 
-    printf("      Filepos:           0x%08lX\n", sig->filepos);
+    printf("      Filepos:           0x%08X\n", sig->filepos);
 
     dirHeader = PRD(Offset(cv_base) + sig->filepos, sizeof(OMFDirHeader));
     if (!dirHeader) {printf("Can't get debug header, aborting\n"); return;}
