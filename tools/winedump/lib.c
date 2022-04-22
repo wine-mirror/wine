@@ -38,9 +38,9 @@ static inline USHORT ushort_bswap(USHORT s)
     return (s >> 8) | (s << 8);
 }
 
-static inline ULONG ulong_bswap(ULONG l)
+static inline UINT ulong_bswap(UINT l)
 {
-    return ((ULONG)ushort_bswap((USHORT)l) << 16) | ushort_bswap((USHORT)(l >> 16));
+    return ((UINT)ushort_bswap((USHORT)l) << 16) | ushort_bswap(l >> 16);
 }
 
 static void dump_import_object(const IMPORT_OBJECT_HEADER *ioh)
@@ -192,9 +192,9 @@ void lib_dump(void)
         }
         else if (!strncmp((const char *)iamh->Name, IMAGE_ARCHIVE_LINKER_MEMBER, sizeof(iamh->Name)))
         {
-            const DWORD *offset = (const DWORD *)ioh;
+            const UINT *offset = (const UINT *)ioh;
             const char *name;
-            DWORD i, count;
+            UINT i, count;
 
             if (first_linker_member) /* 1st archive linker member, BE format */
             {

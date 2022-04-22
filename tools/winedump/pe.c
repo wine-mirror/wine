@@ -161,7 +161,7 @@ static inline void print_word(const char *title, WORD value)
     printf("  %-34s 0x%-4X         %u\n", title, value, value);
 }
 
-static inline void print_dword(const char *title, DWORD value)
+static inline void print_dword(const char *title, UINT value)
 {
     printf("  %-34s 0x%-8x     %u\n", title, value, value);
 }
@@ -600,11 +600,10 @@ static	void	dump_dir_exported_functions(void)
 {
     unsigned int size = 0;
     const IMAGE_EXPORT_DIRECTORY*exportDir = get_dir_and_size(IMAGE_FILE_EXPORT_DIRECTORY, &size);
-    unsigned int		i;
-    const DWORD*		pFunc;
-    const DWORD*		pName;
-    const WORD* 		pOrdl;
-    DWORD*		        funcs;
+    UINT i, *funcs;
+    const UINT *pFunc;
+    const UINT *pName;
+    const WORD *pOrdl;
 
     if (!exportDir) return;
 
@@ -656,45 +655,45 @@ static	void	dump_dir_exported_functions(void)
 
 struct runtime_function_x86_64
 {
-    DWORD BeginAddress;
-    DWORD EndAddress;
-    DWORD UnwindData;
+    UINT BeginAddress;
+    UINT EndAddress;
+    UINT UnwindData;
 };
 
 struct runtime_function_armnt
 {
-    DWORD BeginAddress;
+    UINT BeginAddress;
     union {
-        DWORD UnwindData;
+        UINT UnwindData;
         struct {
-            DWORD Flag : 2;
-            DWORD FunctionLength : 11;
-            DWORD Ret : 2;
-            DWORD H : 1;
-            DWORD Reg : 3;
-            DWORD R : 1;
-            DWORD L : 1;
-            DWORD C : 1;
-            DWORD StackAdjust : 10;
+            UINT Flag : 2;
+            UINT FunctionLength : 11;
+            UINT Ret : 2;
+            UINT H : 1;
+            UINT Reg : 3;
+            UINT R : 1;
+            UINT L : 1;
+            UINT C : 1;
+            UINT StackAdjust : 10;
         } DUMMYSTRUCTNAME;
     } DUMMYUNIONNAME;
 };
 
 struct runtime_function_arm64
 {
-    DWORD BeginAddress;
+    UINT BeginAddress;
     union
     {
-        DWORD UnwindData;
+        UINT UnwindData;
         struct
         {
-            DWORD Flag : 2;
-            DWORD FunctionLength : 11;
-            DWORD RegF : 3;
-            DWORD RegI : 4;
-            DWORD H : 1;
-            DWORD CR : 2;
-            DWORD FrameSize : 9;
+            UINT Flag : 2;
+            UINT FunctionLength : 11;
+            UINT RegF : 3;
+            UINT RegI : 4;
+            UINT H : 1;
+            UINT CR : 2;
+            UINT FrameSize : 9;
         } DUMMYSTRUCTNAME;
     } DUMMYUNIONNAME;
 };
@@ -702,7 +701,7 @@ struct runtime_function_arm64
 union handler_data
 {
     struct runtime_function_x86_64 chain;
-    DWORD handler;
+    UINT handler;
 };
 
 struct opcode
@@ -726,13 +725,13 @@ struct unwind_info_x86_64
 
 struct unwind_info_armnt
 {
-    DWORD function_length : 18;
-    DWORD version : 2;
-    DWORD x : 1;
-    DWORD e : 1;
-    DWORD f : 1;
-    DWORD count : 5;
-    DWORD words : 4;
+    UINT function_length : 18;
+    UINT version : 2;
+    UINT x : 1;
+    UINT e : 1;
+    UINT f : 1;
+    UINT count : 5;
+    UINT words : 4;
 };
 
 struct unwind_info_ext_armnt
@@ -744,10 +743,10 @@ struct unwind_info_ext_armnt
 
 struct unwind_info_epilogue_armnt
 {
-    DWORD offset : 18;
-    DWORD res : 2;
-    DWORD cond : 4;
-    DWORD index : 8;
+    UINT offset : 18;
+    UINT res : 2;
+    UINT cond : 4;
+    UINT index : 8;
 };
 
 #define UWOP_PUSH_NONVOL     0
@@ -810,7 +809,7 @@ static void dump_x86_64_unwind_info( const struct runtime_function_x86_64 *funct
         case UWOP_ALLOC_LARGE:
             if (info->opcodes[i].info)
             {
-                count = *(const DWORD *)&info->opcodes[i+1];
+                count = *(const UINT *)&info->opcodes[i+1];
                 i += 2;
             }
             else
@@ -834,7 +833,7 @@ static void dump_x86_64_unwind_info( const struct runtime_function_x86_64 *funct
             i++;
             break;
         case UWOP_SAVE_NONVOL_FAR:
-            count = *(const DWORD *)&info->opcodes[i+1];
+            count = *(const UINT *)&info->opcodes[i+1];
             printf( "mov %%%s,0x%x(%%rsp)\n", reg_names[info->opcodes[i].info], count );
             i += 2;
             break;
@@ -844,7 +843,7 @@ static void dump_x86_64_unwind_info( const struct runtime_function_x86_64 *funct
             i++;
             break;
         case UWOP_SAVE_XMM128_FAR:
-            count = *(const DWORD *)&info->opcodes[i+1];
+            count = *(const UINT *)&info->opcodes[i+1];
             printf( "movaps %%xmm%u,0x%x(%%rsp)\n", info->opcodes[i].info, count );
             i += 2;
             break;
@@ -866,7 +865,7 @@ static void dump_x86_64_unwind_info( const struct runtime_function_x86_64 *funct
     }
     if (info->flags & (UNW_FLAG_EHANDLER | UNW_FLAG_UHANDLER))
         printf( "    handler %08x data at %08x\n", handler_data->handler,
-                (ULONG)(function->UnwindData + (const char *)(&handler_data->handler + 1) - (const char *)info ));
+                (UINT)(function->UnwindData + (const char *)(&handler_data->handler + 1) - (const char *)info ));
 }
 
 static const BYTE armnt_code_lengths[256] =
@@ -1281,12 +1280,12 @@ static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
 
 struct unwind_info_arm64
 {
-    DWORD function_length : 18;
-    DWORD version : 2;
-    DWORD x : 1;
-    DWORD e : 1;
-    DWORD epilog : 5;
-    DWORD codes : 5;
+    UINT function_length : 18;
+    UINT version : 2;
+    UINT x : 1;
+    UINT e : 1;
+    UINT epilog : 5;
+    UINT codes : 5;
 };
 
 struct unwind_info_ext_arm64
@@ -1298,9 +1297,9 @@ struct unwind_info_ext_arm64
 
 struct unwind_info_epilog_arm64
 {
-    DWORD offset : 18;
-    DWORD res : 4;
-    DWORD index : 10;
+    UINT offset : 18;
+    UINT res : 4;
+    UINT index : 10;
 };
 
 static const BYTE code_lengths[256] =
@@ -1601,7 +1600,7 @@ static void dump_arm64_unwind_info( const struct runtime_function_arm64 *func )
     rva += codes * 4;
     if (info->x)
     {
-        const DWORD *handler = RVA( rva, sizeof(*handler) );
+        const UINT *handler = RVA( rva, sizeof(*handler) );
         rva += sizeof(*handler);
         printf( "    handler: %08x data %08x\n", *handler, rva );
     }
@@ -1641,14 +1640,14 @@ static void dump_dir_exceptions(void)
 }
 
 
-static void dump_image_thunk_data64(const IMAGE_THUNK_DATA64 *il, DWORD thunk_rva)
+static void dump_image_thunk_data64(const IMAGE_THUNK_DATA64 *il, UINT thunk_rva)
 {
     /* FIXME: This does not properly handle large images */
     const IMAGE_IMPORT_BY_NAME* iibn;
     for (; il->u1.Ordinal; il++, thunk_rva += sizeof(LONGLONG))
     {
         if (IMAGE_SNAP_BY_ORDINAL64(il->u1.Ordinal))
-            printf("  %08x  %4u  <by ordinal>\n", thunk_rva, (DWORD)IMAGE_ORDINAL64(il->u1.Ordinal));
+            printf("  %08x  %4u  <by ordinal>\n", thunk_rva, (UINT)IMAGE_ORDINAL64(il->u1.Ordinal));
         else
         {
             iibn = RVA((DWORD)il->u1.AddressOfData, sizeof(DWORD));
@@ -1660,10 +1659,10 @@ static void dump_image_thunk_data64(const IMAGE_THUNK_DATA64 *il, DWORD thunk_rv
     }
 }
 
-static void dump_image_thunk_data32(const IMAGE_THUNK_DATA32 *il, int offset, DWORD thunk_rva)
+static void dump_image_thunk_data32(const IMAGE_THUNK_DATA32 *il, int offset, UINT thunk_rva)
 {
     const IMAGE_IMPORT_BY_NAME* iibn;
-    for (; il->u1.Ordinal; il++, thunk_rva += sizeof(DWORD))
+    for (; il->u1.Ordinal; il++, thunk_rva += sizeof(UINT))
     {
         if (IMAGE_SNAP_BY_ORDINAL32(il->u1.Ordinal))
             printf("  %08x  %4u  <by ordinal>\n", thunk_rva, IMAGE_ORDINAL32(il->u1.Ordinal));
@@ -1694,11 +1693,11 @@ static	void	dump_dir_imported_functions(void)
         if (!importDesc->Name || !importDesc->FirstThunk) break;
 
 	printf("  offset %08lx %s\n", Offset(importDesc), (const char*)RVA(importDesc->Name, sizeof(DWORD)));
-	printf("  Hint/Name Table: %08X\n", (DWORD)importDesc->u.OriginalFirstThunk);
+	printf("  Hint/Name Table: %08X\n", (UINT)importDesc->u.OriginalFirstThunk);
 	printf("  TimeDateStamp:   %08X (%s)\n",
 	       importDesc->TimeDateStamp, get_time_str(importDesc->TimeDateStamp));
 	printf("  ForwarderChain:  %08X\n", importDesc->ForwarderChain);
-	printf("  First thunk RVA: %08X\n", (DWORD)importDesc->FirstThunk);
+	printf("  First thunk RVA: %08X\n", (UINT)importDesc->FirstThunk);
 
 	printf("   Thunk    Ordn  Name\n");
 
@@ -1893,7 +1892,7 @@ static void	dump_dir_debug(void)
     printf("\n");
 }
 
-static inline void print_clrflags(const char *title, DWORD value)
+static inline void print_clrflags(const char *title, UINT value)
 {
     printf("  %-34s 0x%X\n", title, value);
 #define X(f,s) if (value & f) printf("    %s\n", s)
@@ -1983,7 +1982,7 @@ static void dump_dir_reloc(void)
 static void dump_dir_tls(void)
 {
     IMAGE_TLS_DIRECTORY64 dir;
-    const DWORD *callbacks;
+    const UINT *callbacks;
     const IMAGE_TLS_DIRECTORY32 *pdir = get_dir(IMAGE_FILE_THREAD_LOCAL_STORAGE);
 
     if (!pdir) return;
@@ -2003,19 +2002,19 @@ static void dump_dir_tls(void)
     /* FIXME: This does not properly handle large images */
     printf( "Thread Local Storage\n" );
     printf( "  Raw data        %08x-%08x (data size %x zero fill size %x)\n",
-            (DWORD)dir.StartAddressOfRawData, (DWORD)dir.EndAddressOfRawData,
-            (DWORD)(dir.EndAddressOfRawData - dir.StartAddressOfRawData),
-            (DWORD)dir.SizeOfZeroFill );
-    printf( "  Index address   %08x\n", (DWORD)dir.AddressOfIndex );
-    printf( "  Characteristics %08x\n", dir.Characteristics );
-    printf( "  Callbacks       %08x -> {", (DWORD)dir.AddressOfCallBacks );
+            (UINT)dir.StartAddressOfRawData, (UINT)dir.EndAddressOfRawData,
+            (UINT)(dir.EndAddressOfRawData - dir.StartAddressOfRawData),
+            (UINT)dir.SizeOfZeroFill );
+    printf( "  Index address   %08x\n", (UINT)dir.AddressOfIndex );
+    printf( "  Characteristics %08x\n", (UINT)dir.Characteristics );
+    printf( "  Callbacks       %08x -> {", (UINT)dir.AddressOfCallBacks );
     if (dir.AddressOfCallBacks)
     {
-        DWORD   addr = (DWORD)dir.AddressOfCallBacks - PE_nt_headers->OptionalHeader.ImageBase;
-        while ((callbacks = RVA(addr, sizeof(DWORD))) && *callbacks)
+        UINT   addr = (UINT)dir.AddressOfCallBacks - PE_nt_headers->OptionalHeader.ImageBase;
+        while ((callbacks = RVA(addr, sizeof(UINT))) && *callbacks)
         {
             printf( " %08x", *callbacks );
-            addr += sizeof(DWORD);
+            addr += sizeof(UINT);
         }
     }
     printf(" }\n\n");
@@ -2487,12 +2486,11 @@ static void dll_close (void)
 static	void	do_grab_sym( void )
 {
     const IMAGE_EXPORT_DIRECTORY*exportDir;
-    unsigned			i, j;
-    const DWORD*		pName;
-    const DWORD*		pFunc;
-    const WORD* 		pOrdl;
-    const char*			ptr;
-    DWORD*			map;
+    UINT i, j, *map;
+    const UINT *pName;
+    const UINT *pFunc;
+    const WORD *pOrdl;
+    const char *ptr;
 
     PE_nt_headers = get_nt_header();
     if (!(exportDir = get_dir(IMAGE_FILE_EXPORT_DIRECTORY))) return;

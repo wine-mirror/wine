@@ -472,11 +472,11 @@ static void dump_norm(void)
 struct sortguid
 {
     GUID  id;          /* sort GUID */
-    DWORD flags;       /* flags */
-    DWORD compr;       /* offset to compression table */
-    DWORD except;      /* exception table offset in sortkey table */
-    DWORD ling_except; /* exception table offset for linguistic casing */
-    DWORD casemap;     /* linguistic casemap table offset */
+    UINT  flags;       /* flags */
+    UINT  compr;       /* offset to compression table */
+    UINT  except;      /* exception table offset in sortkey table */
+    UINT  ling_except; /* exception table offset for linguistic casing */
+    UINT  casemap;     /* linguistic casemap table offset */
 };
 
 #define FLAG_HAS_3_BYTE_WEIGHTS 0x01
@@ -486,13 +486,13 @@ struct sortguid
 
 struct language_id
 {
-    DWORD offset;
+    UINT  offset;
     WCHAR name[32];
 };
 
 struct compression
 {
-    DWORD offset;
+    UINT  offset;
     WCHAR minchar, maxchar;
     WORD  len[8];
 };
@@ -503,7 +503,7 @@ struct comprlang
     WCHAR name[32];
 };
 
-static const char *get_sortkey( DWORD key )
+static const char *get_sortkey( UINT key )
 {
     static char buffer[16];
     if (!key) return "....";
@@ -514,9 +514,9 @@ static const char *get_sortkey( DWORD key )
     return buffer;
 }
 
-static const void *dump_expansions( const DWORD *ptr )
+static const void *dump_expansions( const UINT *ptr )
 {
-    DWORD i, count = *ptr++;
+    UINT i, count = *ptr++;
 
     printf( "\nExpansions: (count=%04x)\n\n", count );
     for (i = 0; i < count; i++)
@@ -527,10 +527,10 @@ static const void *dump_expansions( const DWORD *ptr )
     return ptr + count;
 }
 
-static void dump_exceptions( const DWORD *sortkeys, DWORD offset )
+static void dump_exceptions( const UINT *sortkeys, DWORD offset )
 {
     int i, j;
-    const DWORD *table = sortkeys + offset;
+    const UINT *table = sortkeys + offset;
 
     for (i = 0; i < 0x100; i++)
     {
@@ -566,9 +566,9 @@ static const void *dump_compression( const struct compression *compr, const WCHA
     return p;
 }
 
-static const void *dump_multiple_weights( const DWORD *ptr )
+static const void *dump_multiple_weights( const UINT *ptr )
 {
-    int i, count = *ptr++;
+    UINT i, count = *ptr++;
     const WCHAR *p;
 
     printf( "\nMultiple weights: (count=%u)\n\n", count );
@@ -586,10 +586,10 @@ static void dump_sort( int old_version )
 {
     const struct
     {
-        DWORD sortkeys;
-        DWORD casemaps;
-        DWORD ctypes;
-        DWORD sortids;
+        UINT sortkeys;
+        UINT casemaps;
+        UINT ctypes;
+        UINT sortids;
     } *header;
 
     const struct compression *compr;
@@ -597,7 +597,7 @@ static void dump_sort( int old_version )
     const struct comprlang *comprlangs;
     const struct language_id *language_ids = NULL;
     const WORD *casemaps, *map;
-    const DWORD *sortkeys, *ptr;
+    const UINT *sortkeys, *ptr;
     const WCHAR *p = NULL;
     int i, j, size, len;
     int nb_casemaps = 0, casemap_offsets[16];
@@ -618,7 +618,7 @@ static void dump_sort( int old_version )
     len = 0;
     if (old_version)
     {
-        ptr = (const DWORD *)casemaps;
+        ptr = (const UINT *)casemaps;
         len = *ptr++;
         language_ids = (const struct language_id *)ptr;
         casemaps = (const WORD *)(language_ids + len);
@@ -732,7 +732,7 @@ static void dump_sort( int old_version )
                     guids[i].flags, guids[i].compr, j < nb_casemaps ? j : -1 );
         }
 
-        ptr = dump_expansions( (const DWORD *)(guids + guid_count) );
+        ptr = dump_expansions( (const UINT *)(guids + guid_count) );
 
         size = *ptr++;
         printf( "\nCompressions:\n" );

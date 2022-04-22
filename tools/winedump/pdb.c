@@ -134,9 +134,8 @@ static DWORD    pdb_get_file_size(const struct pdb_reader* reader, unsigned idx)
 
 static void pdb_exit(struct pdb_reader* reader)
 {
-    unsigned            i;
+    unsigned            i, size;
     unsigned char*      file;
-    DWORD               size;
 
     for (i = 0; i < pdb_get_num_files(reader); i++)
     {
@@ -218,8 +217,8 @@ static void *read_string_table(struct pdb_reader* reader)
     if (stream_idx == -1) return NULL;
     ret = reader->read_file(reader, stream_idx);
     if (!ret) return NULL;
-    if(*(const DWORD*)ret == 0xeffeeffe) return ret;
-    printf("wrong header %x expecting 0xeffeeffe\n", *(const DWORD*)ret);
+    if(*(const UINT *)ret == 0xeffeeffe) return ret;
+    printf("wrong header %x expecting 0xeffeeffe\n", *(const UINT *)ret);
     free( ret );
     return NULL;
 }
@@ -766,14 +765,14 @@ static void pdb_dump_segments(struct pdb_reader* reader, unsigned stream_idx)
         {
             printf("Segment %s\n", ptr);
             ptr += (strlen(ptr) + 1 + 3) & ~3;
-            printf("\tdword[0]: %08x\n", *(DWORD*)ptr); ptr += 4;
-            printf("\tdword[1]: %08x\n", *(DWORD*)ptr); ptr += 4;
-            printf("\tdword[2]: %08x\n", *(DWORD*)ptr); ptr += 4;
-            printf("\tdword[3]: %08x\n", *(DWORD*)ptr); ptr += 4;
-            printf("\tdword[4]: %08x\n", *(DWORD*)ptr); ptr += 4;
-            printf("\tdword[5]: %08x\n", *(DWORD*)ptr); ptr += 4;
-            printf("\tdword[6]: %08x\n", *(DWORD*)ptr); ptr += 4;
-            printf("\tdword[7]: %08x\n", *(DWORD*)ptr); ptr += 4;
+            printf("\tdword[0]: %08x\n", *(UINT *)ptr); ptr += 4;
+            printf("\tdword[1]: %08x\n", *(UINT *)ptr); ptr += 4;
+            printf("\tdword[2]: %08x\n", *(UINT *)ptr); ptr += 4;
+            printf("\tdword[3]: %08x\n", *(UINT *)ptr); ptr += 4;
+            printf("\tdword[4]: %08x\n", *(UINT *)ptr); ptr += 4;
+            printf("\tdword[5]: %08x\n", *(UINT *)ptr); ptr += 4;
+            printf("\tdword[6]: %08x\n", *(UINT *)ptr); ptr += 4;
+            printf("\tdword[7]: %08x\n", *(UINT *)ptr); ptr += 4;
         }
         free((char*)segs);
     } else printf("nosdfsdffd\n");
@@ -804,10 +803,8 @@ static void pdb_jg_dump(void)
     reader.u.jg.root = reader.read_file(&reader, 1);
     if (reader.u.jg.root)
     {
-        DWORD*          pdw;
-        DWORD*          ok_bits;
-        DWORD           numok, count;
-        unsigned        i;
+        UINT *pdw, *ok_bits;
+        UINT i, numok, count;
         PDB_STREAM_INDEXES sidx;
 
         printf("Root:\n"
@@ -820,7 +817,7 @@ static void pdb_jg_dump(void)
                reader.u.jg.root->Age,
                (unsigned)reader.u.jg.root->cbNames);
 
-        pdw = (DWORD*)(reader.u.jg.root->names + reader.u.jg.root->cbNames);
+        pdw = (UINT *)(reader.u.jg.root->names + reader.u.jg.root->cbNames);
         numok = *pdw++;
         count = *pdw++;
         printf("\tStreams directory:\n"
@@ -842,7 +839,7 @@ static void pdb_jg_dump(void)
         {
             if (ok_bits[i / 32] & (1 << (i % 32)))
             {
-                DWORD string_idx, stream_idx;
+                UINT string_idx, stream_idx;
                 string_idx = *pdw++;
                 stream_idx = *pdw++;
                 printf("\t\t\t%2d) %-20s => %x\n", i, &reader.u.jg.root->names[string_idx], stream_idx);
@@ -873,7 +870,7 @@ static void pdb_jg_dump(void)
     pdb_exit(&reader);
 }
 
-static void* pdb_ds_read(const struct PDB_DS_HEADER* header, const DWORD* block_list, int size)
+static void* pdb_ds_read(const struct PDB_DS_HEADER* header, const UINT *block_list, int size)
 {
     int                 i, nBlocks;
     BYTE*               buffer;
@@ -892,8 +889,8 @@ static void* pdb_ds_read(const struct PDB_DS_HEADER* header, const DWORD* block_
 
 static void* pdb_ds_read_file(struct pdb_reader* reader, DWORD file_number)
 {
-    const DWORD*        block_list;
-    DWORD               i;
+    const UINT *block_list;
+    UINT i;
 
     if (!reader->u.ds.toc || file_number >= reader->u.ds.toc->num_files) return NULL;
 
@@ -914,8 +911,8 @@ static BOOL pdb_ds_init(struct pdb_reader* reader)
     reader->u.ds.header = PRD(0, sizeof(*reader->u.ds.header));
     if (!reader->u.ds.header) return FALSE;
     reader->read_file = pdb_ds_read_file;
-    reader->u.ds.toc = pdb_ds_read(reader->u.ds.header, 
-                                   (const DWORD*)((const char*)reader->u.ds.header + reader->u.ds.header->toc_page * reader->u.ds.header->block_size),
+    reader->u.ds.toc = pdb_ds_read(reader->u.ds.header,
+                                   (const UINT *)((const char*)reader->u.ds.header + reader->u.ds.header->toc_page * reader->u.ds.header->block_size),
                                    reader->u.ds.header->toc_size);
     memset(reader->file_used, 0, sizeof(reader->file_used));
     return TRUE;
@@ -963,10 +960,8 @@ static void pdb_ds_dump(void)
     reader.u.ds.root = reader.read_file(&reader, 1);
     if (reader.u.ds.root)
     {
-        DWORD*          pdw;
-        DWORD*          ok_bits;
-        DWORD           numok, count;
-        unsigned        i;
+        UINT *pdw, *ok_bits;
+        UINT i, numok, count;
         PDB_STREAM_INDEXES sidx;
 
         printf("Root:\n"
@@ -980,7 +975,7 @@ static void pdb_ds_dump(void)
                reader.u.ds.root->Age,
                get_guid_str(&reader.u.ds.root->guid),
                reader.u.ds.root->cbNames);
-        pdw = (DWORD*)(reader.u.ds.root->names + reader.u.ds.root->cbNames);
+        pdw = (UINT *)(reader.u.ds.root->names + reader.u.ds.root->cbNames);
         numok = *pdw++;
         count = *pdw++;
         printf("\tStreams directory:\n"
@@ -1002,7 +997,7 @@ static void pdb_ds_dump(void)
         {
             if (ok_bits[i / 32] & (1 << (i % 32)))
             {
-                DWORD string_idx, stream_idx;
+                UINT string_idx, stream_idx;
                 string_idx = *pdw++;
                 stream_idx = *pdw++;
                 printf("\t\t\t%2d) %-20s => %x\n", i, &reader.u.ds.root->names[string_idx], stream_idx);
