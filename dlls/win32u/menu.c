@@ -541,3 +541,51 @@ BOOL WINAPI NtUserSetMenuContextHelpId( HMENU handle, DWORD id )
     release_menu_ptr( menu );
     return TRUE;
 }
+
+/**********************************************************************
+ *           NtUserSetMenuDefaultItem    (win32u.@)
+ */
+BOOL WINAPI NtUserSetMenuDefaultItem( HMENU handle, UINT item, UINT bypos )
+{
+    MENUITEM *menu_item;
+    POPUPMENU *menu;
+    unsigned int i;
+    BOOL ret = FALSE;
+
+    TRACE( "(%p,%d,%d)\n", handle, item, bypos );
+
+    if (!(menu = grab_menu_ptr( handle ))) return FALSE;
+
+    /* reset all default-item flags */
+    menu_item = menu->items;
+    for (i = 0; i < menu->nItems; i++, menu_item++)
+    {
+        menu_item->fState &= ~MFS_DEFAULT;
+    }
+
+    if (item != -1)
+    {
+        menu_item = menu->items;
+
+        if (bypos)
+        {
+            ret = item < menu->nItems;
+            if (ret) menu->items[item].fState |= MFS_DEFAULT;
+        }
+        else
+        {
+            for (i = 0; i < menu->nItems; i++)
+            {
+                if (menu->items[i].wID == item)
+                {
+                    menu->items[i].fState |= MFS_DEFAULT;
+                    ret = TRUE;
+                }
+            }
+        }
+    }
+    else ret = TRUE;
+
+    release_menu_ptr( menu );
+    return ret;
+}

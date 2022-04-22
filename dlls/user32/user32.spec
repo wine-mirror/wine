@@ -680,7 +680,7 @@
 @ stdcall SetLogonNotifyWindow(long long)
 @ stdcall SetMenu(long long) NtUserSetMenu
 @ stdcall SetMenuContextHelpId(long long) NtUserSetMenuContextHelpId
-@ stdcall SetMenuDefaultItem(long long long)
+@ stdcall SetMenuDefaultItem(long long long) NtUserSetMenuDefaultItem
 @ stdcall SetMenuInfo(long ptr)
 @ stdcall SetMenuItemBitmaps(long long long long long)
 @ stdcall SetMenuItemInfoA(long long long ptr)

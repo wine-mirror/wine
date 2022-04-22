@@ -157,6 +157,7 @@ static void * const syscalls[] =
     NtUserRemoveProp,
     NtUserSetKeyboardState,
     NtUserSetMenuContextHelpId,
+    NtUserSetMenuDefaultItem,
     NtUserSetObjectInformation,
     NtUserSetProcessDpiAwarenessContext,
     NtUserSetProcessWindowStation,

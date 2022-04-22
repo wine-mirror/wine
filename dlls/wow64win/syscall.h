@@ -144,6 +144,7 @@
     SYSCALL_ENTRY( NtUserRemoveProp ) \
     SYSCALL_ENTRY( NtUserSetKeyboardState ) \
     SYSCALL_ENTRY( NtUserSetMenuContextHelpId ) \
+    SYSCALL_ENTRY( NtUserSetMenuDefaultItem ) \
     SYSCALL_ENTRY( NtUserSetObjectInformation ) \
     SYSCALL_ENTRY( NtUserSetProcessDpiAwarenessContext ) \
     SYSCALL_ENTRY( NtUserSetProcessWindowStation ) \

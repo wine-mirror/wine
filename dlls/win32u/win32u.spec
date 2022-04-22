@@ -1208,7 +1208,7 @@
 @ stub NtUserSetManipulationInputTarget
 @ stdcall NtUserSetMenu(long long)
 @ stdcall -syscall NtUserSetMenuContextHelpId(long long)
-@ stub NtUserSetMenuDefaultItem
+@ stdcall -syscall NtUserSetMenuDefaultItem(long long long)
 @ stub NtUserSetMenuFlagRtoL
 @ stub NtUserSetMirrorRendering
 @ stub NtUserSetMonitorWorkArea

@@ -556,6 +556,7 @@ BOOL    WINAPI NtUserSetKeyboardState( BYTE *state );
 BOOL    WINAPI NtUserSetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags );
 BOOL    WINAPI NtUserSetMenu( HWND hwnd, HMENU menu );
 BOOL    WINAPI NtUserSetMenuContextHelpId( HMENU handle, DWORD id );
+BOOL    WINAPI NtUserSetMenuDefaultItem( HMENU handle, UINT item, UINT bypos );
 HWND    WINAPI NtUserSetParent( HWND hwnd, HWND parent );
 BOOL    WINAPI NtUserSetProcessDpiAwarenessContext( ULONG awareness, ULONG unknown );
 BOOL    WINAPI NtUserSetProcessWindowStation( HWINSTA handle );

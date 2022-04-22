@@ -375,7 +375,7 @@ static HMENU MENU_CopySysPopup(BOOL mdi)
         SetMenuItemInfoW( hMenu, SC_MAXIMIZE, FALSE, &miteminfo);
         miteminfo.hbmpItem = HBMMENU_POPUP_MINIMIZE;
         SetMenuItemInfoW( hMenu, SC_MINIMIZE, FALSE, &miteminfo);
-	SetMenuDefaultItem(hMenu, SC_CLOSE, FALSE);
+        NtUserSetMenuDefaultItem( hMenu, SC_CLOSE, FALSE );
     }
     else
 	ERR("Unable to load default system menu\n" );
@@ -4872,62 +4872,6 @@ BOOL WINAPI SetMenuItemInfoW(HMENU hmenu, UINT item, BOOL bypos,
 
     ret = SetMenuItemInfo_common(&menu->items[pos], &mii, TRUE);
     release_menu_ptr(menu);
-    return ret;
-}
-
-static BOOL set_menu_default_item(POPUPMENU *menu, UINT uItem, UINT bypos)
-{
-    unsigned int i;
-    MENUITEM *item;
-
-    /* reset all default-item flags */
-    item = menu->items;
-    for (i = 0; i < menu->nItems; i++, item++)
-    {
-        item->fState &= ~MFS_DEFAULT;
-    }
-
-    /* no default item */
-    if (-1 == uItem)
-        return TRUE;
-
-    item = menu->items;
-    if ( bypos )
-    {
-        if ( uItem >= menu->nItems ) return FALSE;
-        item[uItem].fState |= MFS_DEFAULT;
-        return TRUE;
-    }
-    else
-    {
-        for (i = 0; i < menu->nItems; i++, item++)
-        {
-            if (item->wID == uItem)
-            {
-                item->fState |= MFS_DEFAULT;
-                return TRUE;
-            }
-        }
-    }
-
-    return FALSE;
-}
-
-/**********************************************************************
- *		SetMenuDefaultItem    (USER32.@)
- *
- */
-BOOL WINAPI SetMenuDefaultItem(HMENU hmenu, UINT uItem, UINT bypos)
-{
-    POPUPMENU *menu;
-    BOOL ret;
-
-    TRACE("(%p,%d,%d)\n", hmenu, uItem, bypos);
-
-    if (!(menu = grab_menu_ptr(hmenu))) return FALSE;
-    ret = set_menu_default_item(menu, uItem, bypos);
-    release_menu_ptr(menu);
-
     return ret;
 }
 
