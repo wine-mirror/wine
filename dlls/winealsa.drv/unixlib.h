@@ -22,8 +22,8 @@ typedef UINT64 stream_handle;
 
 struct endpoint
 {
-    WCHAR *name;
-    char *device;
+    unsigned int name;
+    unsigned int device;
 };
 
 struct get_endpoint_ids_params

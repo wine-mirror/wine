@@ -291,10 +291,16 @@ static WCHAR *construct_device_id(EDataFlow flow, const WCHAR *chunk1, const WCH
     return ret;
 }
 
+struct endpt
+{
+    WCHAR *name;
+    char *device;
+};
+
 struct endpoints_info
 {
     unsigned int num, size;
-    struct endpoint *endpoints;
+    struct endpt *endpoints;
 };
 
 static void endpoints_add(struct endpoints_info *endpoints, WCHAR *name, char *device)
@@ -467,10 +473,9 @@ static NTSTATUS get_endpoint_ids(void *args)
     static const WCHAR defaultW[] = {'d','e','f','a','u','l','t',0};
     struct get_endpoint_ids_params *params = args;
     struct endpoints_info endpoints_info;
-    unsigned int i, needed, name_len, device_len;
+    unsigned int i, needed, name_len, device_len, offset;
     struct endpoint *endpoint;
     int err, card;
-    char *ptr;
 
     card = -1;
 
@@ -505,9 +510,8 @@ static NTSTATUS get_endpoint_ids(void *args)
     if(err != 0)
         WARN("Got a failure during card enumeration: %d (%s)\n", err, snd_strerror(err));
 
-    needed = endpoints_info.num * sizeof(*params->endpoints);
+    offset = needed = endpoints_info.num * sizeof(*params->endpoints);
     endpoint = params->endpoints;
-    ptr = (char *)(endpoint + endpoints_info.num);
 
     for(i = 0; i < endpoints_info.num; i++){
         name_len = wcslen(endpoints_info.endpoints[i].name) + 1;
@@ -515,12 +519,12 @@ static NTSTATUS get_endpoint_ids(void *args)
         needed += name_len * sizeof(WCHAR) + ((device_len + 1) & ~1);
 
         if(needed <= params->size){
-            endpoint->name = (WCHAR *)ptr;
-            memcpy(endpoint->name, endpoints_info.endpoints[i].name, name_len * sizeof(WCHAR));
-            ptr += name_len * sizeof(WCHAR);
-            endpoint->device = ptr;
-            memcpy(endpoint->device, endpoints_info.endpoints[i].device, device_len);
-            ptr += (device_len + 1) & ~1;
+            endpoint->name = offset;
+            memcpy((char *)params->endpoints + offset, endpoints_info.endpoints[i].name, name_len * sizeof(WCHAR));
+            offset += name_len * sizeof(WCHAR);
+            endpoint->device = offset;
+            memcpy((char *)params->endpoints + offset, endpoints_info.endpoints[i].device, device_len);
+            offset += (device_len + 1) & ~1;
             endpoint++;
         }
         free(endpoints_info.endpoints[i].name);
