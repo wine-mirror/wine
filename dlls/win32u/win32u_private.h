@@ -313,6 +313,7 @@ struct unix_funcs
 };
 
 /* clipboard.c */
+extern UINT enum_clipboard_formats( UINT format ) DECLSPEC_HIDDEN;
 extern void release_clipboard_owner( HWND hwnd ) DECLSPEC_HIDDEN;
 
 /* cursoricon.c */

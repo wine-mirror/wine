@@ -4707,6 +4707,9 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         enable_thunk_lock = arg;
         return 0;
 
+    case NtUserCallOneParam_EnumClipboardFormats:
+        return enum_clipboard_formats( arg );
+
     case NtUserCallOneParam_GetClipCursor:
         return get_clip_cursor( (RECT *)arg );
 

@@ -637,6 +637,7 @@ enum
     NtUserCallOneParam_DispatchMessageA,
     NtUserCallOneParam_EnableDC,
     NtUserCallOneParam_EnableThunkLock,
+    NtUserCallOneParam_EnumClipboardFormats,
     NtUserCallOneParam_GetClipCursor,
     NtUserCallOneParam_GetCursorPos,
     NtUserCallOneParam_GetIconParam,
@@ -686,6 +687,11 @@ static inline WORD NtUserEnableDC( HDC hdc )
 static inline void NtUserEnableThunkLock( BOOL enable )
 {
     NtUserCallOneParam( enable, NtUserCallOneParam_EnableThunkLock );
+}
+
+static inline UINT NtUserEnumClipboardFormats( UINT format )
+{
+    return NtUserCallOneParam( format, NtUserCallOneParam_EnumClipboardFormats );
 }
 
 static inline BOOL NtUserGetClipCursor( RECT *rect )

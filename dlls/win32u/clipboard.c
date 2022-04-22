@@ -334,6 +334,26 @@ DWORD WINAPI NtUserGetClipboardSequenceNumber(void)
     return seqno;
 }
 
+/* see EnumClipboardFormats */
+UINT enum_clipboard_formats( UINT format )
+{
+    UINT ret = 0;
+
+    SERVER_START_REQ( enum_clipboard_formats )
+    {
+        req->previous = format;
+        if (!wine_server_call_err( req ))
+        {
+            ret = reply->format;
+            SetLastError( ERROR_SUCCESS );
+        }
+    }
+    SERVER_END_REQ;
+
+    TRACE( "%s -> %s\n", debugstr_format( format ), debugstr_format( ret ));
+    return ret;
+}
+
 /**************************************************************************
  *	     NtUserAddClipboardFormatListener    (win32u.@)
  */
