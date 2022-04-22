@@ -1044,6 +1044,19 @@ static UINT midi_out_unprepare(WORD dev_id, MIDIHDR *hdr, UINT hdr_size)
     return MMSYSERR_NOERROR;
 }
 
+static UINT midi_out_get_devcaps(WORD dev_id, MIDIOUTCAPSW *caps, UINT size)
+{
+    TRACE("(%04X, %p, %08X);\n", dev_id, caps, size);
+
+    if (dev_id >= num_dests) return MMSYSERR_BADDEVICEID;
+    if (!caps) return MMSYSERR_INVALPARAM;
+
+    memcpy(caps, &dests[dev_id].caps, min(size, sizeof(*caps)));
+
+    return MMSYSERR_NOERROR;
+}
+
+
 NTSTATUS midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
@@ -1074,6 +1087,9 @@ NTSTATUS midi_out_message(void *args)
         break;
     case MODM_UNPREPARE:
         *params->err = midi_out_unprepare(params->dev_id, (MIDIHDR *)params->param_1, params->param_2);
+        break;
+    case MODM_GETDEVCAPS:
+        *params->err = midi_out_get_devcaps(params->dev_id, (MIDIOUTCAPSW *)params->param_1, params->param_2);
         break;
     default:
         TRACE("Unsupported message\n");
