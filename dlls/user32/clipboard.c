@@ -703,31 +703,6 @@ BOOL WINAPI EmptyClipboard(void)
 
 
 /**************************************************************************
- *		SetClipboardViewer (USER32.@)
- */
-HWND WINAPI SetClipboardViewer( HWND hwnd )
-{
-    HWND prev = 0, owner = 0;
-
-    SERVER_START_REQ( set_clipboard_viewer )
-    {
-        req->viewer = wine_server_user_handle( hwnd );
-        if (!wine_server_call_err( req ))
-        {
-            prev = wine_server_ptr_handle( reply->old_viewer );
-            owner = wine_server_ptr_handle( reply->owner );
-        }
-    }
-    SERVER_END_REQ;
-
-    if (hwnd) SendNotifyMessageW( hwnd, WM_DRAWCLIPBOARD, (WPARAM)owner, 0 );
-
-    TRACE( "%p returning %p\n", hwnd, prev );
-    return prev;
-}
-
-
-/**************************************************************************
  *              ChangeClipboardChain (USER32.@)
  */
 BOOL WINAPI ChangeClipboardChain( HWND hwnd, HWND next )

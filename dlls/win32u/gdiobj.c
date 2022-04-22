@@ -1192,6 +1192,7 @@ static struct unix_funcs unix_funcs =
     NtUserSetClassLong,
     NtUserSetClassLongPtr,
     NtUserSetClassWord,
+    NtUserSetClipboardViewer,
     NtUserSetCursor,
     NtUserSetCursorIconData,
     NtUserSetCursorPos,
