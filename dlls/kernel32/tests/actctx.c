@@ -1108,7 +1108,7 @@ static void test_create_fail(void)
     trace("wrong_manifest10\n");
     test_create_and_fail(wrong_manifest10, NULL, 0, TRUE /* WinXP */);
     trace("wrong_manifest11\n");
-    test_create_and_fail(wrong_manifest11, NULL, 1, FALSE);
+    test_create_and_fail(wrong_manifest11, NULL, 1, TRUE /* w1064v1909 */);
     trace("UTF-16 manifest1 without BOM\n");
     test_create_wide_and_fail(manifest1, FALSE );
     trace("manifest2\n");
