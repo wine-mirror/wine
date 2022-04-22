@@ -284,6 +284,12 @@ NTSTATUS midi_out_message(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_in_message(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_notify_wait(void *args) DECLSPEC_HIDDEN;
 
+#ifdef _WIN64
+NTSTATUS wow64_midi_out_message(void *args) DECLSPEC_HIDDEN;
+NTSTATUS wow64_midi_in_message(void *args) DECLSPEC_HIDDEN;
+NTSTATUS wow64_midi_notify_wait(void *args) DECLSPEC_HIDDEN;
+#endif
+
 extern unixlib_handle_t alsa_handle;
 
 #define ALSA_CALL(func, params) __wine_unix_call(alsa_handle, alsa_ ## func, params)
