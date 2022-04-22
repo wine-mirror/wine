@@ -60,6 +60,7 @@ struct racing_wheel_statics
 {
     IActivationFactory IActivationFactory_iface;
     IRacingWheelStatics IRacingWheelStatics_iface;
+    IRacingWheelStatics2 IRacingWheelStatics2_iface;
     ICustomGameControllerFactory ICustomGameControllerFactory_iface;
     LONG ref;
 };
@@ -87,6 +88,12 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
     if (IsEqualGUID( iid, &IID_IRacingWheelStatics ))
     {
         IInspectable_AddRef( (*out = &impl->IRacingWheelStatics_iface) );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IRacingWheelStatics2 ))
+    {
+        IInspectable_AddRef( (*out = &impl->IRacingWheelStatics2_iface) );
         return S_OK;
     }
 
@@ -214,6 +221,39 @@ static const struct IRacingWheelStaticsVtbl statics_vtbl =
     statics_get_RacingWheels,
 };
 
+DEFINE_IINSPECTABLE( statics2, IRacingWheelStatics2, struct racing_wheel_statics, IActivationFactory_iface )
+
+static HRESULT WINAPI statics2_FromGameController( IRacingWheelStatics2 *iface, IGameController *game_controller, IRacingWheel **value )
+{
+    struct racing_wheel_statics *impl = impl_from_IRacingWheelStatics2( iface );
+    IGameController *controller;
+    HRESULT hr;
+
+    TRACE( "iface %p, game_controller %p, value %p.\n", iface, game_controller, value );
+
+    *value = NULL;
+    hr = IGameControllerFactoryManagerStatics2_TryGetFactoryControllerFromGameController( manager_factory, &impl->ICustomGameControllerFactory_iface,
+                                                                                          game_controller, &controller );
+    if (FAILED(hr) || !controller) return hr;
+
+    hr = IGameController_QueryInterface( controller, &IID_IRacingWheel, (void **)value );
+    IGameController_Release( controller );
+    return hr;
+}
+
+static const struct IRacingWheelStatics2Vtbl statics2_vtbl =
+{
+    statics2_QueryInterface,
+    statics2_AddRef,
+    statics2_Release,
+    /* IInspectable methods */
+    statics2_GetIids,
+    statics2_GetRuntimeClassName,
+    statics2_GetTrustLevel,
+    /* IRacingWheelStatics2 methods */
+    statics2_FromGameController,
+};
+
 DEFINE_IINSPECTABLE( controller_factory, ICustomGameControllerFactory, struct racing_wheel_statics, IActivationFactory_iface )
 
 static HRESULT WINAPI controller_factory_CreateGameController( ICustomGameControllerFactory *iface, IGameControllerProvider *provider,
@@ -291,6 +331,7 @@ static struct racing_wheel_statics racing_wheel_statics =
 {
     {&factory_vtbl},
     {&statics_vtbl},
+    {&statics2_vtbl},
     {&controller_factory_vtbl},
     1,
 };
