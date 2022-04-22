@@ -1005,19 +1005,16 @@ static void test_SpeechRecognizer(void)
 
         compilation_result = (void*)0xdeadbeef;
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_GetResults(operation, &compilation_result);
-        todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-        if (compilation_result != (void*)0xdeadbeef)
-        {
-            todo_wine check_interface(compilation_result, &IID_IAgileObject, TRUE);
+        check_interface(compilation_result, &IID_IAgileObject, TRUE);
 
-            hr = ISpeechRecognitionCompilationResult_get_Status(compilation_result, &result_status);
-            todo_wine ok(hr == S_OK, "ISpeechRecognitionCompilationResult_get_Status failed, hr %#lx.\n", hr);
-            todo_wine ok(result_status == SpeechRecognitionResultStatus_Success, "Got unexpected status %#x.\n", result_status);
+        hr = ISpeechRecognitionCompilationResult_get_Status(compilation_result, &result_status);
+        ok(hr == S_OK, "ISpeechRecognitionCompilationResult_get_Status failed, hr %#lx.\n", hr);
+        ok(result_status == SpeechRecognitionResultStatus_Success, "Got unexpected status %#x.\n", result_status);
 
-            ref = ISpeechRecognitionCompilationResult_Release(compilation_result);
-            todo_wine ok(!ref , "Got unexpected ref %lu.\n", ref);
-        }
+        ref = ISpeechRecognitionCompilationResult_Release(compilation_result);
+        ok(!ref , "Got unexpected ref %lu.\n", ref);
 
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_GetResults(operation, &compilation_result);
         ok(hr == E_UNEXPECTED, "Got unexpected hr %#lx.\n", hr);
