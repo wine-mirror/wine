@@ -965,7 +965,7 @@ static void test_bitmap_font_metrics(void)
 
             SetLastError(0xdeadbeef);
             ret = GetTextCharset(hdc);
-            if (is_CJK() && lf.lfCharSet == ANSI_CHARSET)
+            if ((is_CJK() || expected_cs == 254) && lf.lfCharSet == ANSI_CHARSET)
                 ok(ret == ANSI_CHARSET, "got charset %d, expected ANSI_CHARSETd\n", ret);
             else
                 ok(ret == expected_cs, "got charset %d, expected %d\n", ret, expected_cs);
@@ -2567,6 +2567,98 @@ static BOOL get_glyph_indices(INT charset, UINT code_page, WORD *idx, UINT count
     ReleaseDC(0, hdc);
 
     return TRUE;
+}
+
+static void test_TranslateCharsetInfo(void)
+{
+    static CHARSETINFO tests[] =
+    {
+        { ANSI_CHARSET,        1252,      { {0}, { FS_LATIN1 }}},
+        { EASTEUROPE_CHARSET,  1250,      { {0}, { FS_LATIN2 }}},
+        { RUSSIAN_CHARSET,     1251,      { {0}, { FS_CYRILLIC }}},
+        { GREEK_CHARSET,       1253,      { {0}, { FS_GREEK }}},
+        { TURKISH_CHARSET,     1254,      { {0}, { FS_TURKISH }}},
+        { HEBREW_CHARSET,      1255,      { {0}, { FS_HEBREW }}},
+        { ARABIC_CHARSET,      1256,      { {0}, { FS_ARABIC }}},
+        { BALTIC_CHARSET,      1257,      { {0}, { FS_BALTIC }}},
+        { VIETNAMESE_CHARSET,  1258,      { {0}, { FS_VIETNAMESE }}},
+        { THAI_CHARSET,        874,       { {0}, { FS_THAI }}},
+        { SHIFTJIS_CHARSET,    932,       { {0}, { FS_JISJAPAN }}},
+        { GB2312_CHARSET,      936,       { {0}, { FS_CHINESESIMP }}},
+        { HANGEUL_CHARSET,     949,       { {0}, { FS_WANSUNG }}},
+        { CHINESEBIG5_CHARSET, 950,       { {0}, { FS_CHINESETRAD }}},
+        { JOHAB_CHARSET,       1361,      { {0}, { FS_JOHAB }}},
+        { 254,                 CP_UTF8,   { {0}, { 0x04000000 }}},
+        { SYMBOL_CHARSET,      CP_SYMBOL, { {0}, { FS_SYMBOL }}}
+    };
+    CHARSETINFO csi;
+    DWORD i, j;
+    BOOL ret;
+
+    /* try all codepages */
+    for (i = 0; i < 65536; i++)
+    {
+        memset( &csi, 0xcc, sizeof(csi) );
+        ret = TranslateCharsetInfo( ULongToPtr(i), &csi, TCI_SRCCODEPAGE );
+        if (ret)
+        {
+            for (j = 0; j < ARRAY_SIZE(tests); j++)
+            {
+                if (tests[j].ciACP != i) continue;
+                ok( !memcmp( &csi, &tests[j], sizeof(csi) ),
+                    "%lu: wrong info %u %u %08lx %08lx %08lx %08lx %08lx %08lx\n", i,
+                    csi.ciCharset, csi.ciACP, csi.fs.fsUsb[0], csi.fs.fsUsb[1],
+                    csi.fs.fsUsb[2], csi.fs.fsUsb[3], csi.fs.fsCsb[0], csi.fs.fsCsb[1] );
+                break;
+            }
+            ok( j < ARRAY_SIZE(tests), "%lu: TranslateCharsetInfo succeeded\n", i );
+        }
+        else ok( !ret, "%lu: TranslateCharsetInfo succeeded\n", i );
+    }
+
+    /* try all charsets */
+    for (i = 0; i < 256; i++)
+    {
+        memset( &csi, 0xcc, sizeof(csi) );
+        ret = TranslateCharsetInfo( ULongToPtr(i), &csi, TCI_SRCCHARSET );
+        if (ret)
+        {
+            for (j = 0; j < ARRAY_SIZE(tests); j++)
+            {
+                if (tests[j].ciCharset != i) continue;
+                ok( !memcmp( &csi, &tests[j], sizeof(csi) ),
+                    "%lu: wrong info %u %u %08lx %08lx %08lx %08lx %08lx %08lx\n", i,
+                    csi.ciCharset, csi.ciACP, csi.fs.fsUsb[0], csi.fs.fsUsb[1],
+                    csi.fs.fsUsb[2], csi.fs.fsUsb[3], csi.fs.fsCsb[0], csi.fs.fsCsb[1] );
+                break;
+            }
+            ok( j < ARRAY_SIZE(tests), "%lu: TranslateCharsetInfo succeeded\n", i );
+        }
+        else ok( !ret, "%lu: TranslateCharsetInfo succeeded\n", i );
+    }
+
+    /* try all fontsigs */
+    for (i = 0; i < 64; i++)
+    {
+        DWORD csb[2] = { 0, 0 };
+        csb[i / 32] = 1 << (i % 32);
+        memset( &csi, 0xcc, sizeof(csi) );
+        ret = TranslateCharsetInfo( csb, &csi, TCI_SRCFONTSIG );
+        if (ret)
+        {
+            for (j = 0; j < ARRAY_SIZE(tests); j++)
+            {
+                if (tests[j].fs.fsCsb[0] != csb[0]) continue;
+                ok( !memcmp( &csi, &tests[j], sizeof(csi) ),
+                    "%lu: wrong info %u %u %08lx %08lx %08lx %08lx %08lx %08lx\n", i,
+                    csi.ciCharset, csi.ciACP, csi.fs.fsUsb[0], csi.fs.fsUsb[1],
+                    csi.fs.fsUsb[2], csi.fs.fsUsb[3], csi.fs.fsCsb[0], csi.fs.fsCsb[1] );
+                break;
+            }
+            ok( j < ARRAY_SIZE(tests), "%lu: TranslateCharsetInfo succeeded\n", i );
+        }
+        else ok( !ret, "%lu: TranslateCharsetInfo succeeded\n", i );
+    }
 }
 
 static void test_font_charset(void)
@@ -7685,6 +7777,7 @@ START_TEST(font)
     test_GetOutlineTextMetrics();
     test_GetOutlineTextMetrics_subst();
     test_SetTextJustification();
+    test_TranslateCharsetInfo();
     test_font_charset();
     test_GdiGetCodePage();
     test_GetFontUnicodeRanges();
