@@ -18,7 +18,7 @@
 
 #include "audioclient.h"
 
-struct alsa_stream;
+typedef UINT64 stream_handle;
 
 struct endpoint
 {
@@ -46,42 +46,42 @@ struct create_stream_params
     REFERENCE_TIME period;
     const WAVEFORMATEX *fmt;
     HRESULT result;
-    struct alsa_stream **stream;
+    stream_handle *stream;
 };
 
 struct release_stream_params
 {
-    struct alsa_stream *stream;
+    stream_handle stream;
     HANDLE timer_thread;
     HRESULT result;
 };
 
 struct start_params
 {
-    struct alsa_stream *stream;
+    stream_handle stream;
     HRESULT result;
 };
 
 struct stop_params
 {
-    struct alsa_stream *stream;
+    stream_handle stream;
     HRESULT result;
 };
 
 struct reset_params
 {
-    struct alsa_stream *stream;
+    stream_handle stream;
     HRESULT result;
 };
 
 struct timer_loop_params
 {
-    struct alsa_stream *stream;
+    stream_handle stream;
 };
 
 struct get_render_buffer_params
 {
-    struct alsa_stream *stream;
+    stream_handle stream;
     UINT32 frames;
     HRESULT result;
     BYTE **data;
@@ -89,7 +89,7 @@ struct get_render_buffer_params
 
 struct release_render_buffer_params
 {
-    struct alsa_stream *stream;
+    stream_handle stream;
     UINT32 written_frames;
     UINT flags;
     HRESULT result;
@@ -97,7 +97,7 @@ struct release_render_buffer_params
 
 struct get_capture_buffer_params
 {
-    struct alsa_stream *stream;
+    stream_handle stream;
     HRESULT result;
     BYTE **data;
     UINT32 *frames;
@@ -108,7 +108,7 @@ struct get_capture_buffer_params
 
 struct release_capture_buffer_params
 {
-    struct alsa_stream *stream;
+    stream_handle stream;
     UINT32 done;
     HRESULT result;
 };
@@ -133,42 +133,42 @@ struct get_mix_format_params
 
 struct get_buffer_size_params
 {
-    struct alsa_stream *stream;
+    stream_handle stream;
     HRESULT result;
     UINT32 *size;
 };
 
 struct get_latency_params
 {
-    struct alsa_stream *stream;
+    stream_handle stream;
     HRESULT result;
     REFERENCE_TIME *latency;
 };
 
 struct get_current_padding_params
 {
-    struct alsa_stream *stream;
+    stream_handle stream;
     HRESULT result;
     UINT32 *padding;
 };
 
 struct get_next_packet_size_params
 {
-    struct alsa_stream *stream;
+    stream_handle stream;
     HRESULT result;
     UINT32 *frames;
 };
 
 struct get_frequency_params
 {
-    struct alsa_stream *stream;
+    stream_handle stream;
     HRESULT result;
     UINT64 *freq;
 };
 
 struct get_position_params
 {
-    struct alsa_stream *stream;
+    stream_handle stream;
     HRESULT result;
     UINT64 *pos;
     UINT64 *qpctime;
@@ -176,7 +176,7 @@ struct get_position_params
 
 struct set_volumes_params
 {
-    struct alsa_stream *stream;
+    stream_handle stream;
     float master_volume;
     const float *volumes;
     const float *session_volumes;
@@ -184,14 +184,14 @@ struct set_volumes_params
 
 struct set_event_handle_params
 {
-    struct alsa_stream *stream;
+    stream_handle stream;
     HANDLE event;
     HRESULT result;
 };
 
 struct is_started_params
 {
-    struct alsa_stream *stream;
+    stream_handle stream;
     HRESULT result;
 };
 

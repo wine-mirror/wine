@@ -215,6 +215,11 @@ static NTSTATUS alsa_unlock_result(struct alsa_stream *stream,
     return STATUS_SUCCESS;
 }
 
+static struct alsa_stream *handle_get_stream(stream_handle h)
+{
+    return (struct alsa_stream *)(UINT_PTR)h;
+}
+
 static BOOL alsa_try_open(const char *devnode, EDataFlow flow)
 {
     snd_pcm_t *handle;
@@ -985,7 +990,7 @@ exit:
         free(stream->vols);
         free(stream);
     }else{
-        *params->stream = stream;
+        *params->stream = (stream_handle)(UINT_PTR)stream;
     }
 
     return STATUS_SUCCESS;
@@ -994,7 +999,7 @@ exit:
 static NTSTATUS release_stream(void *args)
 {
     struct release_stream_params *params = args;
-    struct alsa_stream *stream = params->stream;
+    struct alsa_stream *stream = handle_get_stream(params->stream);
     SIZE_T size;
 
     if(params->timer_thread){
@@ -1490,7 +1495,7 @@ static int alsa_rewind_best_effort(struct alsa_stream *stream)
 static NTSTATUS start(void *args)
 {
     struct start_params *params = args;
-    struct alsa_stream *stream = params->stream;
+    struct alsa_stream *stream = handle_get_stream(params->stream);
 
     alsa_lock(stream);
 
@@ -1536,7 +1541,7 @@ static NTSTATUS start(void *args)
 static NTSTATUS stop(void *args)
 {
     struct stop_params *params = args;
-    struct alsa_stream *stream = params->stream;
+    struct alsa_stream *stream = handle_get_stream(params->stream);
 
     alsa_lock(stream);
 
@@ -1554,7 +1559,7 @@ static NTSTATUS stop(void *args)
 static NTSTATUS reset(void *args)
 {
     struct reset_params *params = args;
-    struct alsa_stream *stream = params->stream;
+    struct alsa_stream *stream = handle_get_stream(params->stream);
 
     alsa_lock(stream);
 
@@ -1589,7 +1594,7 @@ static NTSTATUS reset(void *args)
 static NTSTATUS timer_loop(void *args)
 {
     struct timer_loop_params *params = args;
-    struct alsa_stream *stream = params->stream;
+    struct alsa_stream *stream = handle_get_stream(params->stream);
     LARGE_INTEGER delay, next;
     int adjust;
 
@@ -1627,7 +1632,7 @@ static NTSTATUS timer_loop(void *args)
 static NTSTATUS get_render_buffer(void *args)
 {
     struct get_render_buffer_params *params = args;
-    struct alsa_stream *stream = params->stream;
+    struct alsa_stream *stream = handle_get_stream(params->stream);
     UINT32 write_pos, frames = params->frames;
     SIZE_T size;
 
@@ -1691,7 +1696,7 @@ static void alsa_wrap_buffer(struct alsa_stream *stream, BYTE *buffer, UINT32 wr
 static NTSTATUS release_render_buffer(void *args)
 {
     struct release_render_buffer_params *params = args;
-    struct alsa_stream *stream = params->stream;
+    struct alsa_stream *stream = handle_get_stream(params->stream);
     UINT32 written_frames = params->written_frames;
     BYTE *buffer;
 
@@ -1731,7 +1736,7 @@ static NTSTATUS release_render_buffer(void *args)
 static NTSTATUS get_capture_buffer(void *args)
 {
     struct get_capture_buffer_params *params = args;
-    struct alsa_stream *stream = params->stream;
+    struct alsa_stream *stream = handle_get_stream(params->stream);
     UINT32 *frames = params->frames;
     SIZE_T size;
 
@@ -1792,7 +1797,7 @@ static NTSTATUS get_capture_buffer(void *args)
 static NTSTATUS release_capture_buffer(void *args)
 {
     struct release_capture_buffer_params *params = args;
-    struct alsa_stream *stream = params->stream;
+    struct alsa_stream *stream = handle_get_stream(params->stream);
     UINT32 done = params->done;
 
     alsa_lock(stream);
@@ -2076,7 +2081,7 @@ exit:
 static NTSTATUS get_buffer_size(void *args)
 {
     struct get_buffer_size_params *params = args;
-    struct alsa_stream *stream = params->stream;
+    struct alsa_stream *stream = handle_get_stream(params->stream);
 
     alsa_lock(stream);
 
@@ -2088,7 +2093,7 @@ static NTSTATUS get_buffer_size(void *args)
 static NTSTATUS get_latency(void *args)
 {
     struct get_latency_params *params = args;
-    struct alsa_stream *stream = params->stream;
+    struct alsa_stream *stream = handle_get_stream(params->stream);
 
     alsa_lock(stream);
 
@@ -2109,7 +2114,7 @@ static NTSTATUS get_latency(void *args)
 static NTSTATUS get_current_padding(void *args)
 {
     struct get_current_padding_params *params = args;
-    struct alsa_stream *stream = params->stream;
+    struct alsa_stream *stream = handle_get_stream(params->stream);
 
     alsa_lock(stream);
 
@@ -2122,7 +2127,7 @@ static NTSTATUS get_current_padding(void *args)
 static NTSTATUS get_next_packet_size(void *args)
 {
     struct get_next_packet_size_params *params = args;
-    struct alsa_stream *stream = params->stream;
+    struct alsa_stream *stream = handle_get_stream(params->stream);
 
     alsa_lock(stream);
 
@@ -2134,7 +2139,7 @@ static NTSTATUS get_next_packet_size(void *args)
 static NTSTATUS get_frequency(void *args)
 {
     struct get_frequency_params *params = args;
-    struct alsa_stream *stream = params->stream;
+    struct alsa_stream *stream = handle_get_stream(params->stream);
     UINT64 *freq = params->freq;
 
     alsa_lock(stream);
@@ -2150,7 +2155,7 @@ static NTSTATUS get_frequency(void *args)
 static NTSTATUS get_position(void *args)
 {
     struct get_position_params *params = args;
-    struct alsa_stream *stream = params->stream;
+    struct alsa_stream *stream = handle_get_stream(params->stream);
     UINT64 position;
     snd_pcm_state_t alsa_state;
 
@@ -2202,7 +2207,7 @@ static NTSTATUS get_position(void *args)
 static NTSTATUS set_volumes(void *args)
 {
     struct set_volumes_params *params = args;
-    struct alsa_stream *stream = params->stream;
+    struct alsa_stream *stream = handle_get_stream(params->stream);
     unsigned int i;
 
     for(i = 0; i < stream->fmt->nChannels; i++)
@@ -2214,7 +2219,7 @@ static NTSTATUS set_volumes(void *args)
 static NTSTATUS set_event_handle(void *args)
 {
     struct set_event_handle_params *params = args;
-    struct alsa_stream *stream = params->stream;
+    struct alsa_stream *stream = handle_get_stream(params->stream);
 
     alsa_lock(stream);
 
@@ -2234,7 +2239,7 @@ static NTSTATUS set_event_handle(void *args)
 static NTSTATUS is_started(void *args)
 {
     struct is_started_params *params = args;
-    struct alsa_stream *stream = params->stream;
+    struct alsa_stream *stream = handle_get_stream(params->stream);
 
     alsa_lock(stream);
 
