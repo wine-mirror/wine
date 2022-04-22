@@ -26,8 +26,6 @@
 #include <time.h>
 #include <fcntl.h>
 
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "winedump.h"

@@ -26,8 +26,6 @@
 #include <time.h>
 #include <fcntl.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "windef.h"
 #include "winbase.h"
 #include "winedump.h"
@@ -675,8 +673,8 @@ struct runtime_function_armnt
             UINT L : 1;
             UINT C : 1;
             UINT StackAdjust : 10;
-        } DUMMYSTRUCTNAME;
-    } DUMMYUNIONNAME;
+        };
+    };
 };
 
 struct runtime_function_arm64
@@ -694,8 +692,8 @@ struct runtime_function_arm64
             UINT H : 1;
             UINT CR : 2;
             UINT FrameSize : 9;
-        } DUMMYSTRUCTNAME;
-    } DUMMYUNIONNAME;
+        };
+    };
 };
 
 union handler_data
@@ -888,37 +886,37 @@ static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
     unsigned int rva;
     WORD i, count = 0, words = 0;
 
-    if (fnc->u.s.Flag)
+    if (fnc->Flag)
     {
         char intregs[32] = {0}, intregspop[32] = {0}, vfpregs[32] = {0};
-        WORD pf = 0, ef = 0, fpoffset = 0, stack = fnc->u.s.StackAdjust;
+        WORD pf = 0, ef = 0, fpoffset = 0, stack = fnc->StackAdjust;
 
         printf( "\nFunction %08x-%08x:\n", fnc->BeginAddress & ~1,
-                (fnc->BeginAddress & ~1) + fnc->u.s.FunctionLength * 2 );
-        printf( "    Flag           %x\n", fnc->u.s.Flag );
-        printf( "    FunctionLength %x\n", fnc->u.s.FunctionLength );
-        printf( "    Ret            %x\n", fnc->u.s.Ret );
-        printf( "    H              %x\n", fnc->u.s.H );
-        printf( "    Reg            %x\n", fnc->u.s.Reg );
-        printf( "    R              %x\n", fnc->u.s.R );
-        printf( "    L              %x\n", fnc->u.s.L );
-        printf( "    C              %x\n", fnc->u.s.C );
-        printf( "    StackAdjust    %x\n", fnc->u.s.StackAdjust );
+                (fnc->BeginAddress & ~1) + fnc->FunctionLength * 2 );
+        printf( "    Flag           %x\n", fnc->Flag );
+        printf( "    FunctionLength %x\n", fnc->FunctionLength );
+        printf( "    Ret            %x\n", fnc->Ret );
+        printf( "    H              %x\n", fnc->H );
+        printf( "    Reg            %x\n", fnc->Reg );
+        printf( "    R              %x\n", fnc->R );
+        printf( "    L              %x\n", fnc->L );
+        printf( "    C              %x\n", fnc->C );
+        printf( "    StackAdjust    %x\n", fnc->StackAdjust );
 
-        if (fnc->u.s.StackAdjust >= 0x03f4)
+        if (fnc->StackAdjust >= 0x03f4)
         {
-            pf = fnc->u.s.StackAdjust & 0x04;
-            ef = fnc->u.s.StackAdjust & 0x08;
-            stack = (fnc->u.s.StackAdjust & 3) + 1;
+            pf = fnc->StackAdjust & 0x04;
+            ef = fnc->StackAdjust & 0x08;
+            stack = (fnc->StackAdjust & 3) + 1;
         }
 
-        if (!fnc->u.s.R || pf)
+        if (!fnc->R || pf)
         {
-            int first = 4, last = fnc->u.s.Reg + 4;
+            int first = 4, last = fnc->Reg + 4;
             if (pf)
             {
-                first = (~fnc->u.s.StackAdjust) & 3;
-                if (fnc->u.s.R)
+                first = (~fnc->StackAdjust) & 3;
+                if (fnc->R)
                     last = 3;
             }
             if (first == last)
@@ -928,13 +926,13 @@ static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
             fpoffset = last + 1 - first;
         }
 
-        if (!fnc->u.s.R || ef)
+        if (!fnc->R || ef)
         {
-            int first = 4, last = fnc->u.s.Reg + 4;
+            int first = 4, last = fnc->Reg + 4;
             if (ef)
             {
-                first = (~fnc->u.s.StackAdjust) & 3;
-                if (fnc->u.s.R)
+                first = (~fnc->StackAdjust) & 3;
+                if (fnc->R)
                     last = 3;
             }
             if (first == last)
@@ -943,7 +941,7 @@ static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
                 sprintf(intregspop, "r%u-r%u", first, last);
         }
 
-        if (fnc->u.s.C)
+        if (fnc->C)
         {
             if (intregs[0])
                 strcat(intregs, ", ");
@@ -952,82 +950,82 @@ static void dump_armnt_unwind_info( const struct runtime_function_armnt *fnc )
             strcat(intregs, "r11");
             strcat(intregspop, "r11");
         }
-        if (fnc->u.s.L)
+        if (fnc->L)
         {
             if (intregs[0])
                 strcat(intregs, ", ");
             strcat(intregs, "lr");
 
-            if (intregspop[0] && (fnc->u.s.Ret != 0 || !fnc->u.s.H))
+            if (intregspop[0] && (fnc->Ret != 0 || !fnc->H))
                 strcat(intregspop, ", ");
-            if (fnc->u.s.Ret != 0)
+            if (fnc->Ret != 0)
                 strcat(intregspop, "lr");
-            else if (!fnc->u.s.H)
+            else if (!fnc->H)
                 strcat(intregspop, "pc");
         }
 
-        if (fnc->u.s.R)
+        if (fnc->R)
         {
-            if (fnc->u.s.Reg)
-                sprintf(vfpregs, "d8-d%u", fnc->u.s.Reg + 8);
+            if (fnc->Reg)
+                sprintf(vfpregs, "d8-d%u", fnc->Reg + 8);
             else
                 strcpy(vfpregs, "d8");
         }
 
-        if (fnc->u.s.Flag == 1) {
-            if (fnc->u.s.H)
+        if (fnc->Flag == 1) {
+            if (fnc->H)
                 printf( "    Unwind Code\tpush {r0-r3}\n" );
 
             if (intregs[0])
                 printf( "    Unwind Code\tpush {%s}\n", intregs );
 
-            if (fnc->u.s.C && fpoffset == 0)
+            if (fnc->C && fpoffset == 0)
                 printf( "    Unwind Code\tmov r11, sp\n" );
-            else if (fnc->u.s.C)
+            else if (fnc->C)
                 printf( "    Unwind Code\tadd r11, sp, #%d\n", fpoffset * 4 );
 
-            if (fnc->u.s.R && fnc->u.s.Reg != 0x07)
+            if (fnc->R && fnc->Reg != 0x07)
                 printf( "    Unwind Code\tvpush {%s}\n", vfpregs );
 
             if (stack && !pf)
                 printf( "    Unwind Code\tsub sp, sp, #%d\n", stack * 4 );
         }
 
-        if (fnc->u.s.Ret == 3)
+        if (fnc->Ret == 3)
             return;
         printf( "Epilogue:\n" );
 
         if (stack && !ef)
             printf( "    Unwind Code\tadd sp, sp, #%d\n", stack * 4 );
 
-        if (fnc->u.s.R && fnc->u.s.Reg != 0x07)
+        if (fnc->R && fnc->Reg != 0x07)
             printf( "    Unwind Code\tvpop {%s}\n", vfpregs );
 
         if (intregspop[0])
             printf( "    Unwind Code\tpop {%s}\n", intregspop );
 
-        if (fnc->u.s.H && !(fnc->u.s.L && fnc->u.s.Ret == 0))
+        if (fnc->H && !(fnc->L && fnc->Ret == 0))
             printf( "    Unwind Code\tadd sp, sp, #16\n" );
-        else if (fnc->u.s.H && (fnc->u.s.L && fnc->u.s.Ret == 0))
+        else if (fnc->H && (fnc->L && fnc->Ret == 0))
             printf( "    Unwind Code\tldr pc, [sp], #20\n" );
 
-        if (fnc->u.s.Ret == 1)
+        if (fnc->Ret == 1)
             printf( "    Unwind Code\tbx <reg>\n" );
-        else if (fnc->u.s.Ret == 2)
+        else if (fnc->Ret == 2)
             printf( "    Unwind Code\tb <address>\n" );
 
         return;
     }
 
-    info = RVA( fnc->u.UnwindData, sizeof(*info) );
-    rva = fnc->u.UnwindData + sizeof(*info);
+    info = RVA( fnc->UnwindData, sizeof(*info) );
+    rva = fnc->UnwindData + sizeof(*info);
     count = info->count;
     words = info->words;
 
     printf( "\nFunction %08x-%08x:\n", fnc->BeginAddress & ~1,
             (fnc->BeginAddress & ~1) + info->function_length * 2 );
-    printf( "  unwind info at %08x\n", fnc->u.UnwindData );
-    printf( "    Flag           %x\n", fnc->u.s.Flag );
+    printf( "  unwind info at %08x\n", fnc->UnwindData );
+    printf( "    Flag           %x\n", fnc->Flag );
     printf( "    FunctionLength %x\n", info->function_length );
     printf( "    Version        %x\n", info->version );
     printf( "    X              %x\n", info->x );
@@ -1461,15 +1459,15 @@ static void dump_arm64_codes( const BYTE *ptr, unsigned int count )
 
 static void dump_arm64_packed_info( const struct runtime_function_arm64 *func )
 {
-    int i, pos = 0, intsz = func->u.s.RegI * 8, fpsz = func->u.s.RegF * 8, savesz, locsz;
+    int i, pos = 0, intsz = func->RegI * 8, fpsz = func->RegF * 8, savesz, locsz;
 
-    if (func->u.s.CR == 1) intsz += 8;
-    if (func->u.s.RegF) fpsz += 8;
+    if (func->CR == 1) intsz += 8;
+    if (func->RegF) fpsz += 8;
 
-    savesz = ((intsz + fpsz + 8 * 8 * func->u.s.H) + 0xf) & ~0xf;
-    locsz = func->u.s.FrameSize * 16 - savesz;
+    savesz = ((intsz + fpsz + 8 * 8 * func->H) + 0xf) & ~0xf;
+    locsz = func->FrameSize * 16 - savesz;
 
-    switch (func->u.s.CR)
+    switch (func->CR)
     {
     case 3:
         printf( "    %04x:  mov x29,sp\n", pos++ );
@@ -1494,7 +1492,7 @@ static void dump_arm64_packed_info( const struct runtime_function_arm64 *func )
         break;
     }
 
-    if (func->u.s.H)
+    if (func->H)
     {
         printf( "    %04x:  stp x6,x7,[sp,#%#x]\n", pos++, intsz + fpsz + 48 );
         printf( "    %04x:  stp x4,x5,[sp,#%#x]\n", pos++, intsz + fpsz + 32 );
@@ -1502,11 +1500,11 @@ static void dump_arm64_packed_info( const struct runtime_function_arm64 *func )
         printf( "    %04x:  stp x0,x1,[sp,#%#x]\n", pos++, intsz + fpsz );
     }
 
-    if (func->u.s.RegF)
+    if (func->RegF)
     {
-        if (func->u.s.RegF % 2 == 0)
-            printf( "    %04x:  str d%u,[sp,#%#x]\n", pos++, 8 + func->u.s.RegF, intsz + fpsz - 8 );
-        for (i = (func->u.s.RegF - 1)/ 2; i >= 0; i--)
+        if (func->RegF % 2 == 0)
+            printf( "    %04x:  str d%u,[sp,#%#x]\n", pos++, 8 + func->RegF, intsz + fpsz - 8 );
+        for (i = (func->RegF - 1)/ 2; i >= 0; i--)
         {
             if (!i && !intsz)
                 printf( "    %04x:  stp d8,d9,[sp,-#%#x]!\n", pos++, savesz );
@@ -1515,30 +1513,30 @@ static void dump_arm64_packed_info( const struct runtime_function_arm64 *func )
         }
     }
 
-    switch (func->u.s.RegI)
+    switch (func->RegI)
     {
     case 0:
-        if (func->u.s.CR == 1)
+        if (func->CR == 1)
             printf( "    %04x:  str lr,[sp,-#%#x]!\n", pos++, savesz );
         break;
     case 1:
-        if (func->u.s.CR == 1)
+        if (func->CR == 1)
             printf( "    %04x:  stp x19,lr,[sp,-#%#x]!\n", pos++, savesz );
         else
             printf( "    %04x:  str x19,[sp,-#%#x]!\n", pos++, savesz );
         break;
     default:
-        if (func->u.s.RegI % 2)
+        if (func->RegI % 2)
         {
-            if (func->u.s.CR == 1)
-                printf( "    %04x:  stp x%u,lr,[sp,#%#x]\n", pos++, 18 + func->u.s.RegI, 8 * func->u.s.RegI - 8 );
+            if (func->CR == 1)
+                printf( "    %04x:  stp x%u,lr,[sp,#%#x]\n", pos++, 18 + func->RegI, 8 * func->RegI - 8 );
             else
-                printf( "    %04x:  str x%u,[sp,#%#x]\n", pos++, 18 + func->u.s.RegI, 8 * func->u.s.RegI - 8 );
+                printf( "    %04x:  str x%u,[sp,#%#x]\n", pos++, 18 + func->RegI, 8 * func->RegI - 8 );
         }
-        else if (func->u.s.CR == 1)
+        else if (func->CR == 1)
             printf( "    %04x:  str lr,[sp,#%#x]\n", pos++, intsz - 8 );
 
-        for (i = func->u.s.RegI / 2 - 1; i >= 0; i--)
+        for (i = func->RegI / 2 - 1; i >= 0; i--)
             if (i)
                 printf( "    %04x:  stp x%u,x%u,[sp,#%#x]\n", pos++, 19 + 2 * i, 20 + 2 * i, 16 * i );
             else
@@ -1556,18 +1554,18 @@ static void dump_arm64_unwind_info( const struct runtime_function_arm64 *func )
     const BYTE *ptr;
     unsigned int i, rva, codes, epilogs;
 
-    if (func->u.s.Flag)
+    if (func->Flag)
     {
         printf( "\nFunction %08x-%08x:\n", func->BeginAddress,
-                func->BeginAddress + func->u.s.FunctionLength * 4 );
+                func->BeginAddress + func->FunctionLength * 4 );
         printf( "    len=%#x flag=%x regF=%u regI=%u H=%u CR=%u frame=%x\n",
-                func->u.s.FunctionLength, func->u.s.Flag, func->u.s.RegF, func->u.s.RegI,
-                func->u.s.H, func->u.s.CR, func->u.s.FrameSize );
+                func->FunctionLength, func->Flag, func->RegF, func->RegI,
+                func->H, func->CR, func->FrameSize );
         dump_arm64_packed_info( func );
         return;
     }
 
-    rva = func->u.UnwindData;
+    rva = func->UnwindData;
     info = RVA( rva, sizeof(*info) );
     rva += sizeof(*info);
     epilogs = info->epilog;
@@ -1693,7 +1691,7 @@ static	void	dump_dir_imported_functions(void)
         if (!importDesc->Name || !importDesc->FirstThunk) break;
 
 	printf("  offset %08lx %s\n", Offset(importDesc), (const char*)RVA(importDesc->Name, sizeof(DWORD)));
-	printf("  Hint/Name Table: %08X\n", (UINT)importDesc->u.OriginalFirstThunk);
+	printf("  Hint/Name Table: %08X\n", (UINT)importDesc->OriginalFirstThunk);
 	printf("  TimeDateStamp:   %08X (%s)\n",
 	       (UINT)importDesc->TimeDateStamp, get_time_str(importDesc->TimeDateStamp));
 	printf("  ForwarderChain:  %08X\n", (UINT)importDesc->ForwarderChain);
@@ -1701,8 +1699,8 @@ static	void	dump_dir_imported_functions(void)
 
 	printf("   Thunk    Ordn  Name\n");
 
-	il = (importDesc->u.OriginalFirstThunk != 0) ?
-	    RVA((DWORD)importDesc->u.OriginalFirstThunk, sizeof(DWORD)) :
+	il = (importDesc->OriginalFirstThunk != 0) ?
+	    RVA((DWORD)importDesc->OriginalFirstThunk, sizeof(DWORD)) :
 	    RVA((DWORD)importDesc->FirstThunk, sizeof(DWORD));
 
 	if (!il)
@@ -1919,7 +1917,7 @@ static void dump_dir_clr_header(void)
     print_dword( "Header Size", dir->cb );
     print_ver( "Required runtime version", dir->MajorRuntimeVersion, dir->MinorRuntimeVersion );
     print_clrflags( "Flags", dir->Flags );
-    print_dword( "EntryPointToken", dir->u.EntryPointToken );
+    print_dword( "EntryPointToken", dir->EntryPointToken );
     printf("\n");
     printf( "CLR Data Directory\n" );
     print_clrdirectory( "MetaData", &dir->MetaData );
@@ -2271,51 +2269,50 @@ static void dump_dir_resource(void)
     for (i = 0; i< root->NumberOfNamedEntries + root->NumberOfIdEntries; i++)
     {
         e1 = (const IMAGE_RESOURCE_DIRECTORY_ENTRY*)(root + 1) + i;
-        namedir = (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + e1->u2.s2.OffsetToDirectory);
+        namedir = (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + e1->OffsetToDirectory);
         for (j = 0; j < namedir->NumberOfNamedEntries + namedir->NumberOfIdEntries; j++)
         {
             e2 = (const IMAGE_RESOURCE_DIRECTORY_ENTRY*)(namedir + 1) + j;
-            langdir = (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + e2->u2.s2.OffsetToDirectory);
+            langdir = (const IMAGE_RESOURCE_DIRECTORY *)((const char *)root + e2->OffsetToDirectory);
             for (k = 0; k < langdir->NumberOfNamedEntries + langdir->NumberOfIdEntries; k++)
             {
                 e3 = (const IMAGE_RESOURCE_DIRECTORY_ENTRY*)(langdir + 1) + k;
 
                 printf( "\n  " );
-                if (e1->u.s.NameIsString)
+                if (e1->NameIsString)
                 {
-                    string = (const IMAGE_RESOURCE_DIR_STRING_U*)((const char *)root + e1->u.s.NameOffset);
+                    string = (const IMAGE_RESOURCE_DIR_STRING_U*)((const char *)root + e1->NameOffset);
                     dump_unicode_str( string->NameString, string->Length );
                 }
                 else
                 {
-                    const char *type = get_resource_type( e1->u.Id );
+                    const char *type = get_resource_type( e1->Id );
                     if (type) printf( "%s", type );
-                    else printf( "%04x", e1->u.Id );
+                    else printf( "%04x", e1->Id );
                 }
 
                 printf( " Name=" );
-                if (e2->u.s.NameIsString)
+                if (e2->NameIsString)
                 {
-                    string = (const IMAGE_RESOURCE_DIR_STRING_U*) ((const char *)root + e2->u.s.NameOffset);
+                    string = (const IMAGE_RESOURCE_DIR_STRING_U*) ((const char *)root + e2->NameOffset);
                     dump_unicode_str( string->NameString, string->Length );
                 }
                 else
-                    printf( "%04x", e2->u.Id );
+                    printf( "%04x", e2->Id );
 
-                printf( " Language=%04x:\n", e3->u.Id );
-                data = (const IMAGE_RESOURCE_DATA_ENTRY *)((const char *)root + e3->u2.OffsetToData);
-                if (e1->u.s.NameIsString)
+                printf( " Language=%04x:\n", e3->Id );
+                data = (const IMAGE_RESOURCE_DATA_ENTRY *)((const char *)root + e3->OffsetToData);
+                if (e1->NameIsString)
                 {
                     dump_data( RVA( data->OffsetToData, data->Size ), data->Size, "    " );
                 }
-                else switch(e1->u.Id)
+                else switch(e1->Id)
                 {
                 case 6:
-                    dump_string_data( RVA( data->OffsetToData, data->Size ), data->Size,                                      e2->u.Id, "    " );
+                    dump_string_data( RVA( data->OffsetToData, data->Size ), data->Size, e2->Id, "    " );
                     break;
                 case 11:
-                    dump_msgtable_data( RVA( data->OffsetToData, data->Size ), data->Size,
-                                        e2->u.Id, "    " );
+                    dump_msgtable_data( RVA( data->OffsetToData, data->Size ), data->Size, e2->Id, "    " );
                     break;
                 default:
                     dump_data( RVA( data->OffsetToData, data->Size ), data->Size, "    " );

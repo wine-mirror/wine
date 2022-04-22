@@ -25,8 +25,6 @@
 #include <stdlib.h>
 #include <fcntl.h>
 
-#define NONAMELESSUNION
-
 #include "windef.h"
 #include "winbase.h"
 #include "winnt.h"
@@ -60,7 +58,7 @@ static void dump_import_object(const IMPORT_OBJECT_HEADER *ioh)
         printf("  Symbol name  : %s\n", name);
         printf("  Type         : %s\n", (ioh->Type < ARRAY_SIZE(obj_type)) ? obj_type[ioh->Type] : "unknown");
         printf("  Name type    : %s\n", (ioh->NameType < ARRAY_SIZE(name_type)) ? name_type[ioh->NameType] : "unknown");
-        printf("  %-13s: %u\n", (ioh->NameType == IMPORT_OBJECT_ORDINAL) ? "Ordinal" : "Hint", ioh->u.Ordinal);
+        printf("  %-13s: %u\n", (ioh->NameType == IMPORT_OBJECT_ORDINAL) ? "Ordinal" : "Hint", ioh->Ordinal);
         printf("\n");
     }
 }

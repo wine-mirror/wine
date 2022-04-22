@@ -21,8 +21,6 @@
 #include "config.h"
 #include <stdarg.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
 #include "winedump.h"
 #include "winver.h"
 #include "dbghelp.h"
@@ -86,7 +84,7 @@ void mdmp_dump(void)
     printf("NumberOfStreams: %u\n", (UINT)hdr->NumberOfStreams);
     printf("StreamDirectoryRva: %u\n", (UINT)hdr->StreamDirectoryRva);
     printf("CheckSum: %u\n", (UINT)hdr->CheckSum);
-    printf("TimeDateStamp: %s\n", get_time_str(hdr->u.TimeDateStamp));
+    printf("TimeDateStamp: %s\n", get_time_str(hdr->TimeDateStamp));
     printf("Flags: %x%08x\n", (UINT)(hdr->Flags >> 32), (UINT)hdr->Flags);
 
     for (idx = 0; idx <= LastReservedStream; idx++)
@@ -298,7 +296,7 @@ void mdmp_dump(void)
                 str = "???";
                 break;
             }
-            printf("  Processor: %s (#%d CPUs)\n", str, msi->u.s.NumberOfProcessors);
+            printf("  Processor: %s (#%d CPUs)\n", str, msi->NumberOfProcessors);
             switch (msi->MajorVersion)
             {
             case 3:
@@ -323,8 +321,8 @@ void mdmp_dump(void)
                 case 0: str = "2000"; break;
                 case 1: str = "XP"; break;
                 case 2:
-                    if (msi->u.s.ProductType == 1) str = "XP";
-                    else if (msi->u.s.ProductType == 3) str = "Server 2003";
+                    if (msi->ProductType == 1) str = "XP";
+                    else if (msi->ProductType == 3) str = "Server 2003";
                     else str = "5-????";
                     break;
                 default: str = "5-????"; break;
@@ -334,23 +332,23 @@ void mdmp_dump(void)
                 switch (msi->MinorVersion)
                 {
                 case 0:
-                    if (msi->u.s.ProductType == 1) str = "Vista";
-                    else if (msi->u.s.ProductType == 3) str = "Server 2008";
+                    if (msi->ProductType == 1) str = "Vista";
+                    else if (msi->ProductType == 3) str = "Server 2008";
                     else str = "6-????";
                     break;
                 case 1:
-                    if (msi->u.s.ProductType == 1) str = "Win7";
-                    else if (msi->u.s.ProductType == 3) str = "Server 2008 R2";
+                    if (msi->ProductType == 1) str = "Win7";
+                    else if (msi->ProductType == 3) str = "Server 2008 R2";
                     else str = "6-????";
                     break;
                 case 2:
-                    if (msi->u.s.ProductType == 1) str = "Win8";
-                    else if (msi->u.s.ProductType == 3) str = "Server 2012";
+                    if (msi->ProductType == 1) str = "Win8";
+                    else if (msi->ProductType == 3) str = "Server 2012";
                     else str = "6-????";
                     break;
                 case 3:
-                    if (msi->u.s.ProductType == 1) str = "Win8.1";
-                    else if (msi->u.s.ProductType == 3) str = "Server 2012 R2";
+                    if (msi->ProductType == 1) str = "Win8.1";
+                    else if (msi->ProductType == 3) str = "Server 2012 R2";
                     else str = "6-????";
                     break;
                 default: str = "6-????"; break;
@@ -360,7 +358,7 @@ void mdmp_dump(void)
                 switch (msi->MinorVersion)
                 {
                 case 0:
-                    if (msi->u.s.ProductType == 1) str = "Win10";
+                    if (msi->ProductType == 1) str = "Win10";
                     else str = "10-????";
                     break;
                 default: str = "10-????"; break;
@@ -373,7 +371,7 @@ void mdmp_dump(void)
             printf("  CSD: ");
             dump_mdmp_string(msi->CSDVersionRva);
             printf("\n");
-            printf("  Reserved1: %u\n", (UINT)msi->u1.Reserved1);
+            printf("  Reserved1: %u\n", (UINT)msi->Reserved1);
             if (msi->ProcessorArchitecture == PROCESSOR_ARCHITECTURE_INTEL)
             {
                 printf("  x86.VendorId: %.12s\n",
