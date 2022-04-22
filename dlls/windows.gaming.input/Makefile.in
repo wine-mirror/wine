@@ -8,6 +8,7 @@ C_SRCS = \
 	main.c \
 	manager.c \
 	provider.c \
+	racing_wheel.c \
 	vector.c
 
 IDL_SRCS = \

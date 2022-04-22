@@ -34,6 +34,7 @@
 #define WIDL_using_Windows_Devices_Power
 #define WIDL_using_Windows_Gaming_Input
 #define WIDL_using_Windows_Gaming_Input_Custom
+#define WIDL_using_Windows_Gaming_Input_ForceFeedback
 #include "windows.gaming.input.custom.h"
 
 #include "wine/list.h"
@@ -41,6 +42,7 @@
 extern HINSTANCE windows_gaming_input;
 extern ICustomGameControllerFactory *controller_factory;
 extern ICustomGameControllerFactory *gamepad_factory;
+extern IActivationFactory *racing_wheel_factory;
 extern IGameControllerFactoryManagerStatics2 *manager_factory;
 
 struct vector_iids
