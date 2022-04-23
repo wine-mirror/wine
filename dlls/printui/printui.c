@@ -227,7 +227,7 @@ void WINAPI PrintUIEntryW(HWND hWnd, HINSTANCE hInst, LPCWSTR pCommand, DWORD nC
     cx.nCmdShow = nCmdShow;
 
     if ((pCommand) && (pCommand[0])) {
-        /* result is allocated with GlobalAlloc() */
+        /* result is allocated with LocalAlloc() */
         cx.argv = CommandLineToArgvW(pCommand, &cx.argc);
         TRACE("got %d args at %p\n", cx.argc, cx.argv);
 
@@ -253,6 +253,6 @@ void WINAPI PrintUIEntryW(HWND hWnd, HINSTANCE hInst, LPCWSTR pCommand, DWORD nC
         FIXME("dialog: Printer / The operation was not successful\n");
     }
 
-    GlobalFree(cx.argv);
+    LocalFree(cx.argv);
 
 }
