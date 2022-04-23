@@ -6009,6 +6009,25 @@ uint32_t wined3d_format_pack(const struct wined3d_format *format, const struct w
     return p;
 }
 
+void wined3d_format_colour_to_vk(const struct wined3d_format *format, const struct wined3d_color *c,
+        VkClearColorValue *retval)
+{
+    if (format->attrs & WINED3D_FORMAT_ATTR_INTEGER)
+    {
+        retval->int32[0] = c->r;
+        retval->int32[1] = c->g;
+        retval->int32[2] = c->b;
+        retval->int32[3] = c->a;
+    }
+    else
+    {
+        retval->float32[0] = c->r;
+        retval->float32[1] = c->g;
+        retval->float32[2] = c->b;
+        retval->float32[3] = c->a;
+    }
+}
+
 /* Note: It's the caller's responsibility to ensure values can be expressed
  * in the requested format. UNORM formats for example can only express values
  * in the range 0.0f -> 1.0f.

@@ -4560,6 +4560,15 @@ struct wined3d_texture
         uint32_t map_flags;
         DWORD locations;
         struct wined3d_bo *bo;
+        union
+        {
+            struct wined3d_color colour;
+            struct
+            {
+                float depth;
+                unsigned int stencil;
+            };
+        } clear_value;
 
         void *user_memory;
     } *sub_resources;
@@ -6218,6 +6227,8 @@ void wined3d_format_calculate_pitch(const struct wined3d_format *format, unsigne
         unsigned int width, unsigned int height, unsigned int *row_pitch, unsigned int *slice_pitch) DECLSPEC_HIDDEN;
 UINT wined3d_format_calculate_size(const struct wined3d_format *format,
         UINT alignment, UINT width, UINT height, UINT depth) DECLSPEC_HIDDEN;
+void wined3d_format_colour_to_vk(const struct wined3d_format *format, const struct wined3d_color *c,
+        VkClearColorValue *retval) DECLSPEC_HIDDEN;
 void wined3d_format_convert_from_float(const struct wined3d_format *format,
         const struct wined3d_color *color, void *ret) DECLSPEC_HIDDEN;
 void wined3d_format_copy_data(const struct wined3d_format *format, const uint8_t *src,

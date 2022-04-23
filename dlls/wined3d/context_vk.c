@@ -2509,7 +2509,7 @@ static bool wined3d_context_vk_begin_render_pass(struct wined3d_context_vk *cont
         VkCommandBuffer vk_command_buffer, const struct wined3d_state *state, const struct wined3d_vk_info *vk_info)
 {
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
-    static const VkClearValue clear_values[WINED3D_MAX_RENDER_TARGETS + 1];
+    VkClearValue clear_values[WINED3D_MAX_RENDER_TARGETS + 1];
     VkImageView vk_views[WINED3D_MAX_RENDER_TARGETS + 1];
     unsigned int fb_width, fb_height, fb_layer_count;
     struct wined3d_rendertarget_view_vk *rtv_vk;
@@ -2518,6 +2518,7 @@ static bool wined3d_context_vk_begin_render_pass(struct wined3d_context_vk *cont
     struct wined3d_query_vk *query_vk;
     VkRenderPassBeginInfo begin_info;
     unsigned int attachment_count, i;
+    struct wined3d_texture *texture;
     VkFramebufferCreateInfo fb_desc;
     VkResult vr;
 
@@ -2549,10 +2550,25 @@ static bool wined3d_context_vk_begin_render_pass(struct wined3d_context_vk *cont
         if (view->layer_count < fb_layer_count)
             fb_layer_count = view->layer_count;
         context_vk->rt_count = i + 1;
-        ++attachment_count;
 
         if (wined3d_rendertarget_view_get_locations(view) & WINED3D_LOCATION_CLEARED)
-            begin_info.clearValueCount = attachment_count;
+        {
+            VkClearColorValue *c = &clear_values[attachment_count].color;
+
+            if (view->resource->type == WINED3D_RTYPE_BUFFER)
+            {
+                c->int32[0] = c->int32[1] = c->int32[2] = c->int32[3] = 0;
+            }
+            else
+            {
+                texture = texture_from_resource(view->resource);
+                wined3d_format_colour_to_vk(view->format,
+                        &texture->sub_resources[view->sub_resource_idx].clear_value.colour, c);
+            }
+
+            begin_info.clearValueCount = attachment_count + 1;
+        }
+        ++attachment_count;
     }
 
     if ((view = state->fb.depth_stencil))
@@ -2568,10 +2584,25 @@ static bool wined3d_context_vk_begin_render_pass(struct wined3d_context_vk *cont
             fb_height = view->height;
         if (view->layer_count < fb_layer_count)
             fb_layer_count = view->layer_count;
-        ++attachment_count;
 
         if (wined3d_rendertarget_view_get_locations(view) & WINED3D_LOCATION_CLEARED)
-            begin_info.clearValueCount = attachment_count;
+        {
+            VkClearDepthStencilValue *c = &clear_values[attachment_count].depthStencil;
+
+            if (view->resource->type == WINED3D_RTYPE_BUFFER)
+            {
+                c->depth = 0.0f;
+                c->stencil = 0;
+            }
+            else
+            {
+                texture = texture_from_resource(view->resource);
+                c->depth = texture->sub_resources[view->sub_resource_idx].clear_value.depth;
+                c->stencil = texture->sub_resources[view->sub_resource_idx].clear_value.stencil;
+            }
+            begin_info.clearValueCount = attachment_count + 1;
+        }
+        ++attachment_count;
     }
 
     if (!(context_vk->vk_render_pass = wined3d_context_vk_get_render_pass(context_vk, &state->fb,

@@ -823,10 +823,22 @@ BOOL wined3d_texture_load_location(struct wined3d_texture *texture,
         range.size = texture->sub_resources[sub_resource_idx].size;
         if (current & WINED3D_LOCATION_CLEARED)
         {
-            static const struct wined3d_color black;
             unsigned int level_idx = sub_resource_idx % texture->level_count;
             struct wined3d_map_desc map;
             struct wined3d_box box;
+            struct wined3d_color c;
+
+            if (texture->resource.format->caps[WINED3D_GL_RES_TYPE_TEX_2D]
+                    & WINED3D_FORMAT_CAP_DEPTH_STENCIL)
+            {
+                c.r = texture->sub_resources[sub_resource_idx].clear_value.depth;
+                c.g = texture->sub_resources[sub_resource_idx].clear_value.stencil;
+                c.b = c.a = 0.0f;
+            }
+            else
+            {
+                c = texture->sub_resources[sub_resource_idx].clear_value.colour;
+            }
 
             wined3d_texture_get_pitch(texture, level_idx, &map.row_pitch, &map.slice_pitch);
             if (destination.buffer_object)
@@ -836,7 +848,7 @@ BOOL wined3d_texture_load_location(struct wined3d_texture *texture,
                 map.data = destination.addr;
 
             wined3d_texture_get_level_box(texture, level_idx, &box);
-            wined3d_resource_memory_colour_fill(&texture->resource, &map, &black, &box, true);
+            wined3d_resource_memory_colour_fill(&texture->resource, &map, &c, &box, true);
 
             if (destination.buffer_object)
                 wined3d_context_unmap_bo_address(context, &destination, 1, &range);
@@ -3369,6 +3381,27 @@ static bool wined3d_texture_gl_clear(struct wined3d_texture *texture,
     const struct wined3d_gl_info *gl_info = context_gl->gl_info;
     struct wined3d_bo_address addr;
 
+    /* The code that delays clears is Vulkan-specific, so here we should only
+     * encounter WINED3D_LOCATION_CLEARED on newly created resources and thus
+     * a zero clear value. */
+    if (!format->depth_size && !format->stencil_size)
+    {
+        if (sub_resource->clear_value.colour.r || sub_resource->clear_value.colour.g
+                || sub_resource->clear_value.colour.b || sub_resource->clear_value.colour.a)
+        {
+            ERR("Unexpected color clear value r=%08e, g=%08e, b=%08e, a=%08e.\n",
+                    sub_resource->clear_value.colour.r, sub_resource->clear_value.colour.g,
+                    sub_resource->clear_value.colour.b, sub_resource->clear_value.colour.a);
+        }
+    }
+    else
+    {
+        if (format->depth_size && sub_resource->clear_value.depth)
+            ERR("Unexpected depth clear value %08e.\n", sub_resource->clear_value.depth);
+        if (format->stencil_size && sub_resource->clear_value.stencil)
+            ERR("Unexpected stencil clear value %x.\n", sub_resource->clear_value.stencil);
+    }
+
     if (use_ffp_clear(texture, location))
     {
         GLbitfield clear_mask = 0;
@@ -5279,16 +5312,20 @@ static bool wined3d_texture_vk_clear(struct wined3d_texture_vk *texture_vk,
     struct wined3d_context_vk *context_vk = wined3d_context_vk(context);
     const struct wined3d_format *format = texture_vk->t.resource.format;
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
-    static const VkClearDepthStencilValue depth_value;
-    static const VkClearColorValue colour_value;
+    VkClearDepthStencilValue depth_value;
     VkCommandBuffer vk_command_buffer;
     VkImageSubresourceRange vk_range;
+    VkClearColorValue colour_value;
     VkImageAspectFlags aspect_mask;
     VkImage vk_image;
 
     if (texture_vk->t.resource.format_attrs & WINED3D_FORMAT_ATTR_COMPRESSED)
     {
         struct wined3d_bo_address addr;
+        struct wined3d_color *c = &sub_resource->clear_value.colour;
+
+        if (c->r || c->g || c-> b || c->a)
+            FIXME("Compressed resource %p is cleared to a non-zero color.\n", &texture_vk->t);
 
         if (!wined3d_texture_prepare_location(&texture_vk->t, sub_resource_idx, context, WINED3D_LOCATION_SYSMEM))
             return false;
@@ -5322,11 +5359,18 @@ static bool wined3d_texture_vk_clear(struct wined3d_texture_vk *texture_vk,
             texture_vk->layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, vk_image, &vk_range);
 
     if (format->depth_size || format->stencil_size)
+    {
+        depth_value.depth = sub_resource->clear_value.depth;
+        depth_value.stencil = sub_resource->clear_value.stencil;
         VK_CALL(vkCmdClearDepthStencilImage(vk_command_buffer, vk_image,
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &depth_value, 1, &vk_range));
+    }
     else
+    {
+        wined3d_format_colour_to_vk(format, &sub_resource->clear_value.colour, &colour_value);
         VK_CALL(vkCmdClearColorImage(vk_command_buffer, vk_image,
                 VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &colour_value, 1, &vk_range));
+    }
 
     wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
             VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
@@ -6635,20 +6679,23 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
         if (!(view = fb->render_targets[i]))
             continue;
 
-        if (is_full_clear(view, draw_rect, clear_rects))
+        /* Don't delay typeless clears because the data written into the resource depends on the
+         * view format. Except all-zero clears, those should result in zeros in either case.
+         *
+         * We could store the clear format along with the clear value, but then we'd have to
+         * create a matching RTV at draw time, which would need its own render pass, thus mooting
+         * the point of the delayed clear. (Unless we are lucky enough that the application
+         * draws with the same RTV as it clears.) */
+        if (is_full_clear(view, draw_rect, clear_rects)
+                && (!wined3d_format_is_typeless(view->resource->format) || (!colour->r && !colour->g
+                && !colour->b && !colour->a)))
         {
-            if (!colour->r && !colour->g && !colour->b && !colour->a)
-            {
-                wined3d_rendertarget_view_validate_location(view, WINED3D_LOCATION_CLEARED);
-                wined3d_rendertarget_view_invalidate_location(view, ~WINED3D_LOCATION_CLEARED);
-                delay_count++;
-                continue;
-            }
-            else
-            {
-                TRACE_(d3d_perf)("non-zero clear\n");
-                wined3d_rendertarget_view_prepare_location(view, &context_vk->c, view->resource->draw_binding);
-            }
+            struct wined3d_texture *texture = texture_from_resource(view->resource);
+            wined3d_rendertarget_view_validate_location(view, WINED3D_LOCATION_CLEARED);
+            wined3d_rendertarget_view_invalidate_location(view, ~WINED3D_LOCATION_CLEARED);
+            texture->sub_resources[view->sub_resource_idx].clear_value.colour = *colour;
+            delay_count++;
+            continue;
         }
         else
         {
@@ -6662,20 +6709,7 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
         wined3d_rendertarget_view_vk_barrier(rtv_vk, context_vk, WINED3D_BIND_RENDER_TARGET);
 
         c = &clear_values[attachment_count].color;
-        if (view->format_attrs & WINED3D_FORMAT_ATTR_INTEGER)
-        {
-            c->int32[0] = colour->r;
-            c->int32[1] = colour->g;
-            c->int32[2] = colour->b;
-            c->int32[3] = colour->a;
-        }
-        else
-        {
-            c->float32[0] = colour->r;
-            c->float32[1] = colour->g;
-            c->float32[2] = colour->b;
-            c->float32[3] = colour->a;
-        }
+        wined3d_format_colour_to_vk(view->format, colour, c);
 
         if (view->layer_count > layer_count)
             layer_count = view->layer_count;
@@ -6699,8 +6733,8 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
         if (view->format->stencil_size)
             full_flags |= WINED3DCLEAR_STENCIL;
 
-        if (!is_full_clear(view, draw_rect, clear_rects)
-                || depth || stencil || (flags & full_flags) != full_flags)
+        if (!is_full_clear(view, draw_rect, clear_rects) || (flags & full_flags) != full_flags
+                || (wined3d_format_is_typeless(view->resource->format) && (depth || stencil)))
         {
             wined3d_rendertarget_view_load_location(view, &context_vk->c, view->resource->draw_binding);
             wined3d_rendertarget_view_validate_location(view, view->resource->draw_binding);
@@ -6721,6 +6755,9 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
         }
         else
         {
+            struct wined3d_texture *texture = texture_from_resource(view->resource);
+            texture->sub_resources[view->sub_resource_idx].clear_value.depth = depth;
+            texture->sub_resources[view->sub_resource_idx].clear_value.stencil = stencil;
             wined3d_rendertarget_view_validate_location(view, WINED3D_LOCATION_CLEARED);
             wined3d_rendertarget_view_invalidate_location(view, ~WINED3D_LOCATION_CLEARED);
             flags &= ~(WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL);
