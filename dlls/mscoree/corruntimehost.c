@@ -1093,7 +1093,7 @@ static void get_utf8_args(int *argc, char ***argv)
 
     (*argv)[*argc] = NULL;
 
-    HeapFree(GetProcessHeap(), 0, argvw);
+    LocalFree(argvw);
 }
 
 #if __i386__
