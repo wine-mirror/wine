@@ -511,6 +511,29 @@ void wined3d_rendertarget_view_invalidate_location(struct wined3d_rendertarget_v
     wined3d_view_invalidate_location(view->resource, &view->desc, location);
 }
 
+/* Note: This may return 0 if the selected layers do not have a location in common. */
+DWORD wined3d_rendertarget_view_get_locations(const struct wined3d_rendertarget_view *view)
+{
+    struct wined3d_resource *resource = view->resource;
+    unsigned int i, sub_resource_idx, layer_count;
+    const struct wined3d_texture *texture;
+    DWORD ret = ~0u;
+
+    if (resource->type == WINED3D_RTYPE_BUFFER)
+        return buffer_from_resource(resource)->locations;
+
+    texture = texture_from_resource(resource);
+    sub_resource_idx = view->sub_resource_idx;
+    layer_count = resource->type != WINED3D_RTYPE_TEXTURE_3D ? view->layer_count : 1;
+    for (i = 0; i < layer_count; ++i, sub_resource_idx += texture->level_count)
+        ret &= texture->sub_resources[sub_resource_idx].locations;
+
+    if (!ret)
+        WARN("View %p (texture %p) layers do not have a location in common.\n", view, texture);
+
+    return ret;
+}
+
 static void wined3d_render_target_view_gl_cs_init(void *object)
 {
     struct wined3d_rendertarget_view_gl *view_gl = object;

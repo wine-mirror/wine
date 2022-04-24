@@ -2456,11 +2456,17 @@ struct wined3d_retired_objects_vk
     SIZE_T count;
 };
 
+#define WINED3D_FB_ATTACHMENT_FLAG_DISCARDED   1
+#define WINED3D_FB_ATTACHMENT_FLAG_CLEAR_C     2
+#define WINED3D_FB_ATTACHMENT_FLAG_CLEAR_S     4
+#define WINED3D_FB_ATTACHMENT_FLAG_CLEAR_Z     8
+
 struct wined3d_render_pass_attachment_vk
 {
     VkFormat vk_format;
     VkSampleCountFlagBits vk_samples;
     VkImageLayout vk_layout;
+    uint32_t flags;
 };
 
 struct wined3d_render_pass_key_vk
@@ -2468,7 +2474,6 @@ struct wined3d_render_pass_key_vk
     struct wined3d_render_pass_attachment_vk rt[WINED3D_MAX_RENDER_TARGETS];
     struct wined3d_render_pass_attachment_vk ds;
     uint32_t rt_mask;
-    uint32_t clear_flags;
 };
 
 struct wined3d_render_pass_vk
@@ -5283,6 +5288,8 @@ void wined3d_rendertarget_view_prepare_location(struct wined3d_rendertarget_view
         struct wined3d_context *context, DWORD location) DECLSPEC_HIDDEN;
 void wined3d_rendertarget_view_validate_location(struct wined3d_rendertarget_view *view,
         DWORD location) DECLSPEC_HIDDEN;
+DWORD wined3d_rendertarget_view_get_locations(const struct wined3d_rendertarget_view *view)
+        DECLSPEC_HIDDEN;
 
 HRESULT wined3d_rendertarget_view_no3d_init(struct wined3d_rendertarget_view *view_no3d,
         const struct wined3d_view_desc *desc, struct wined3d_resource *resource,
