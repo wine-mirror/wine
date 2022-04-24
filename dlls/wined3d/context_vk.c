@@ -3375,7 +3375,12 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
 
         if (wined3d_blend_state_get_writemask(state->blend_state, i))
         {
-            wined3d_rendertarget_view_load_location(rtv, &context_vk->c, rtv->resource->draw_binding);
+            /* We handle clears at the beginning of the render pass, no need for an explicit clear
+             * first. */
+            if (wined3d_rendertarget_view_get_locations(rtv) & WINED3D_LOCATION_CLEARED)
+                wined3d_rendertarget_view_prepare_location(rtv, &context_vk->c, rtv->resource->draw_binding);
+            else
+                wined3d_rendertarget_view_load_location(rtv, &context_vk->c, rtv->resource->draw_binding);
             invalidate_rt |= (1 << i);
         }
         else
@@ -3393,9 +3398,17 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
     if ((dsv = state->fb.depth_stencil))
     {
         if (wined3d_state_uses_depth_buffer(state))
-            wined3d_rendertarget_view_load_location(dsv, &context_vk->c, dsv->resource->draw_binding);
+        {
+            if (wined3d_rendertarget_view_get_locations(dsv) & WINED3D_LOCATION_CLEARED)
+                wined3d_rendertarget_view_prepare_location(dsv, &context_vk->c, dsv->resource->draw_binding);
+            else
+                wined3d_rendertarget_view_load_location(dsv, &context_vk->c, dsv->resource->draw_binding);
+        }
         else
+        {
             wined3d_rendertarget_view_prepare_location(dsv, &context_vk->c, dsv->resource->draw_binding);
+        }
+
         if (!state->depth_stencil_state || state->depth_stencil_state->desc.depth_write)
             invalidate_ds = true;
 
@@ -3484,11 +3497,15 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
     {
         i = wined3d_bit_scan(&invalidate_rt);
         rtv = state->fb.render_targets[i];
+        wined3d_rendertarget_view_validate_location(rtv, rtv->resource->draw_binding);
         wined3d_rendertarget_view_invalidate_location(rtv, ~rtv->resource->draw_binding);
     }
 
     if (invalidate_ds)
+    {
+        wined3d_rendertarget_view_validate_location(dsv, dsv->resource->draw_binding);
         wined3d_rendertarget_view_invalidate_location(dsv, ~dsv->resource->draw_binding);
+    }
 
     if (wined3d_context_vk_update_graphics_pipeline_key(context_vk, state, context_vk->graphics.vk_pipeline_layout,
             &null_buffer_binding) || !context_vk->graphics.vk_pipeline)
