@@ -6500,19 +6500,15 @@ static void test_wma_decoder(void)
         ok(flags == 0, "got flags %#lx\n", flags);
         time = 0xdeadbeef;
         hr = IMFSample_GetSampleTime(sample, &time);
-        todo_wine
         ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
-        todo_wine
         ok(time == i * 928798, "got time %I64d\n", time);
         duration = 0xdeadbeef;
         hr = IMFSample_GetSampleDuration(sample, &duration);
-        todo_wine
         ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
         if (output.dwStatus == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE ||
                 broken(output.dwStatus == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|7)))
         {
             ok(length == wmadec_block_size, "got length %lu\n", length);
-            todo_wine
             ok(duration == 928798, "got duration %I64d\n", duration);
             check_sample_pcm16(sample, wmadec_data, output_file, TRUE);
             wmadec_data += wmadec_block_size;
@@ -7242,9 +7238,7 @@ static void test_h264_decoder(void)
     /* doesn't matter what frame rate we've selected, duration is defined by the stream */
     duration = 0xdeadbeef;
     hr = IMFSample_GetSampleDuration(output.pSample, &duration);
-    todo_wine
     ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
-    todo_wine
     ok(duration - 333666 <= 2, "got duration %I64d\n", duration);
 
     /* Win8 and before pad the data with garbage instead of original

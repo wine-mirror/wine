@@ -114,10 +114,15 @@ struct wg_format
 enum wg_sample_flag
 {
     WG_SAMPLE_FLAG_INCOMPLETE = 1,
+    WG_SAMPLE_FLAG_HAS_PTS = 2,
+    WG_SAMPLE_FLAG_HAS_DURATION = 4,
 };
 
 struct wg_sample
 {
+    /* timestamp and duration are in 100-nanosecond units. */
+    UINT64 pts;
+    UINT64 duration;
     UINT32 flags;
     UINT32 max_size;
     UINT32 size;

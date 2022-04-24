@@ -223,6 +223,9 @@ NTSTATUS wg_transform_create(void *args)
              * to match its expectations.
              */
             transform->input_max_length = 16;
+            if (!(element = create_element("h264parse", "base"))
+                    || !transform_append_element(transform, element, &first, &last))
+                goto out;
             /* fallthrough */
         case WG_MAJOR_TYPE_WMA:
             if (!(element = transform_find_element(GST_ELEMENT_FACTORY_TYPE_DECODER, src_caps, raw_caps))
@@ -362,6 +365,10 @@ NTSTATUS wg_transform_push_data(void *args)
         return STATUS_NO_MEMORY;
     }
     gst_buffer_fill(buffer, 0, sample->data, sample->size);
+    if (sample->flags & WG_SAMPLE_FLAG_HAS_PTS)
+        GST_BUFFER_PTS(buffer) = sample->pts * 100;
+    if (sample->flags & WG_SAMPLE_FLAG_HAS_DURATION)
+        GST_BUFFER_DURATION(buffer) = sample->duration * 100;
     gst_buffer_list_insert(transform->input, -1, buffer);
 
     GST_INFO("Copied %u bytes from sample %p to input buffer list", sample->size, sample);
@@ -390,6 +397,24 @@ static NTSTATUS read_transform_output_data(GstBuffer *buffer, struct wg_sample *
     memcpy(sample->data, info.data, sample->size);
     gst_buffer_unmap(buffer, &info);
     gst_buffer_resize(buffer, sample->size, -1);
+
+    if (GST_BUFFER_PTS_IS_VALID(buffer))
+    {
+        sample->flags |= WG_SAMPLE_FLAG_HAS_PTS;
+        sample->pts = GST_BUFFER_PTS(buffer) / 100;
+    }
+    if (GST_BUFFER_DURATION_IS_VALID(buffer))
+    {
+        GstClockTime duration = GST_BUFFER_DURATION(buffer) / 100;
+
+        duration = (duration * sample->size) / info.size;
+        GST_BUFFER_DURATION(buffer) -= duration * 100;
+        if (GST_BUFFER_PTS_IS_VALID(buffer))
+            GST_BUFFER_PTS(buffer) += duration * 100;
+
+        sample->flags |= WG_SAMPLE_FLAG_HAS_DURATION;
+        sample->duration = duration;
+    }
 
     GST_INFO("Copied %u bytes, sample %p, flags %#x", sample->size, sample, sample->flags);
     return STATUS_SUCCESS;
