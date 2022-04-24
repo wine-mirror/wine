@@ -1896,6 +1896,30 @@ static void handle_xdnd_position_event( HWND hwnd, XClientMessageEvent *event )
 }
 
 
+static void handle_xdnd_drop_event( HWND hwnd, XClientMessageEvent *event )
+{
+    struct dnd_drop_event_params params;
+    XClientMessageEvent e;
+    DWORD effect;
+
+    params.type = DND_DROP_EVENT;
+    params.hwnd = hwnd;
+    effect = handle_dnd_event( &params );
+
+    /* Tell the target we are finished. */
+    memset( &e, 0, sizeof(e) );
+    e.type = ClientMessage;
+    e.display = event->display;
+    e.window = event->data.l[0];
+    e.message_type = x11drv_atom(XdndFinished);
+    e.format = 32;
+    e.data.l[0] = event->window;
+    e.data.l[1] = !!effect;
+    e.data.l[2] = drop_effect_to_xdnd_action( effect );
+    XSendEvent( event->display, event->data.l[0], False, NoEventMask, (XEvent *)&e );
+}
+
+
 struct client_message_handler
 {
     int    atom;                                  /* protocol atom */
@@ -1910,7 +1934,7 @@ static const struct client_message_handler client_messages[] =
     { XATOM_DndProtocol,  handle_dnd_protocol },
     { XATOM_XdndEnter,    handle_xdnd_enter_event },
     { XATOM_XdndPosition, handle_xdnd_position_event },
-    { XATOM_XdndDrop,     X11DRV_XDND_DropEvent },
+    { XATOM_XdndDrop,     handle_xdnd_drop_event },
     { XATOM_XdndLeave,    X11DRV_XDND_LeaveEvent }
 };
 

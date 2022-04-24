@@ -142,20 +142,6 @@ static IDropTarget* get_droptarget_pointer(HWND hwnd)
     return droptarget;
 }
 
-/**************************************************************************
- * X11DRV_XDND_DROPEFFECTToXdndAction
- */
-static long X11DRV_XDND_DROPEFFECTToXdndAction(DWORD effect)
-{
-    if (effect == DROPEFFECT_COPY)
-        return x11drv_atom(XdndActionCopy);
-    else if (effect == DROPEFFECT_MOVE)
-        return x11drv_atom(XdndActionMove);
-    else if (effect == DROPEFFECT_LINK)
-        return x11drv_atom(XdndActionLink);
-    FIXME("unknown drop effect %u, assuming XdndActionCopy\n", effect);
-    return x11drv_atom(XdndActionCopy);
-}
 
 /* Recursively searches for a window on given coordinates in a drag&drop specific manner.
  *
@@ -278,14 +264,8 @@ static BOOL handle_position_event( struct dnd_position_event_params *params )
     return accept ? effect : 0;
 }
 
-/**************************************************************************
- * X11DRV_XDND_DropEvent
- *
- * Handle an XdndDrop event.
- */
-void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
+static DWORD handle_drop_event( struct dnd_drop_event_params *params )
 {
-    XClientMessageEvent e;
     IDropTarget *dropTarget;
     DWORD effect = XDNDDropEffect;
     int accept = 0; /* Assume we're not accepting */
@@ -338,7 +318,7 @@ void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
         /* Only send WM_DROPFILES if Drop didn't succeed or DROPEFFECT_NONE was set.
          * Doing both causes winamp to duplicate the dropped files (#29081) */
 
-        HWND hwnd_drop = window_accepting_files(window_from_point_dnd(hWnd, XDNDxy));
+        HWND hwnd_drop = window_accepting_files(window_from_point_dnd( params->hwnd, XDNDxy ));
 
         if (hwnd_drop && X11DRV_XDND_HasHDROP())
         {
@@ -354,20 +334,7 @@ void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event )
     TRACE("effectRequested(0x%x) accept(%d) performed(0x%x) at x(%d),y(%d)\n",
           XDNDDropEffect, accept, effect, XDNDxy.x, XDNDxy.y);
 
-    /* Tell the target we are finished. */
-    memset(&e, 0, sizeof(e));
-    e.type = ClientMessage;
-    e.display = event->display;
-    e.window = event->data.l[0];
-    e.message_type = x11drv_atom(XdndFinished);
-    e.format = 32;
-    e.data.l[0] = event->window;
-    e.data.l[1] = accept;
-    if (accept)
-        e.data.l[2] = X11DRV_XDND_DROPEFFECTToXdndAction(effect);
-    else
-        e.data.l[2] = None;
-    XSendEvent(event->display, event->data.l[0], False, NoEventMask, (XEvent*)&e);
+    return accept ? effect : 0;
 }
 
 /**************************************************************************
@@ -766,6 +733,9 @@ UINT handle_dnd_event( void *params )
 
     switch (*(UINT *)params)
     {
+    case DND_DROP_EVENT:
+        return handle_drop_event( params );
+
     case DND_POSITION_EVENT:
         return handle_position_event( params );
 

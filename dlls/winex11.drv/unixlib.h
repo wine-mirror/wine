@@ -30,7 +30,15 @@ struct format_entry
 
 enum dnd_event_type
 {
+    DND_DROP_EVENT,
     DND_POSITION_EVENT,
+};
+
+/* DND_DROP_EVENT params */
+struct dnd_drop_event_params
+{
+    UINT type;
+    HWND hwnd;
 };
 
 /* DND_POSITION_EVENT params */
