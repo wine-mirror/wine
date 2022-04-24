@@ -3309,12 +3309,14 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
     struct wined3d_device_vk *device_vk = wined3d_device_vk(context_vk->c.device);
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     struct wined3d_rendertarget_view *dsv;
+    struct wined3d_rendertarget_view *rtv;
     struct wined3d_buffer_vk *buffer_vk;
     VkSampleCountFlagBits sample_count;
     VkCommandBuffer vk_command_buffer;
+    unsigned int i, invalidate_rt = 0;
     struct wined3d_buffer *buffer;
     uint32_t null_buffer_binding;
-    unsigned int i;
+    bool invalidate_ds = false;
 
     if (wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL))
             || wined3d_context_is_graphics_state_dirty(&context_vk->c, STATE_FRAMEBUFFER))
@@ -3331,15 +3333,13 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
     context_vk->sample_count = 0;
     for (i = 0; i < ARRAY_SIZE(state->fb.render_targets); ++i)
     {
-        struct wined3d_rendertarget_view *rtv;
-
         if (!(rtv = state->fb.render_targets[i]) || rtv->format->id == WINED3DFMT_NULL)
             continue;
 
         if (wined3d_blend_state_get_writemask(state->blend_state, i))
         {
             wined3d_rendertarget_view_load_location(rtv, &context_vk->c, rtv->resource->draw_binding);
-            wined3d_rendertarget_view_invalidate_location(rtv, ~rtv->resource->draw_binding);
+            invalidate_rt |= (1 << i);
         }
         else
         {
@@ -3360,7 +3360,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
         else
             wined3d_rendertarget_view_prepare_location(dsv, &context_vk->c, dsv->resource->draw_binding);
         if (!state->depth_stencil_state || state->depth_stencil_state->desc.depth_write)
-            wined3d_rendertarget_view_invalidate_location(dsv, ~dsv->resource->draw_binding);
+            invalidate_ds = true;
 
         sample_count = max(1, wined3d_resource_get_sample_count(dsv->resource));
         if (!context_vk->sample_count)
@@ -3442,6 +3442,16 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
         ERR("Failed to begin render pass.\n");
         return VK_NULL_HANDLE;
     }
+
+    while (invalidate_rt)
+    {
+        i = wined3d_bit_scan(&invalidate_rt);
+        rtv = state->fb.render_targets[i];
+        wined3d_rendertarget_view_invalidate_location(rtv, ~rtv->resource->draw_binding);
+    }
+
+    if (invalidate_ds)
+        wined3d_rendertarget_view_invalidate_location(dsv, ~dsv->resource->draw_binding);
 
     if (wined3d_context_vk_update_graphics_pipeline_key(context_vk, state, context_vk->graphics.vk_pipeline_layout,
             &null_buffer_binding) || !context_vk->graphics.vk_pipeline)
