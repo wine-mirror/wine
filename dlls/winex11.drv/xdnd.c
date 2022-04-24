@@ -342,7 +342,7 @@ static DWORD handle_drop_event( struct dnd_drop_event_params *params )
  *
  * Handle an XdndLeave event.
  */
-void X11DRV_XDND_LeaveEvent( HWND hWnd, XClientMessageEvent *event )
+static NTSTATUS handle_leave_event(void)
 {
     IDropTarget *dropTarget;
 
@@ -362,6 +362,7 @@ void X11DRV_XDND_LeaveEvent( HWND hWnd, XClientMessageEvent *event )
     }
 
     X11DRV_XDND_FreeDragDropOp();
+    return 0;
 }
 
 
@@ -735,6 +736,9 @@ UINT handle_dnd_event( void *params )
     {
     case DND_DROP_EVENT:
         return handle_drop_event( params );
+
+    case DND_LEAVE_EVENT:
+        return handle_leave_event();
 
     case DND_POSITION_EVENT:
         return handle_position_event( params );

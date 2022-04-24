@@ -31,6 +31,7 @@ struct format_entry
 enum dnd_event_type
 {
     DND_DROP_EVENT,
+    DND_LEAVE_EVENT,
     DND_POSITION_EVENT,
 };
 

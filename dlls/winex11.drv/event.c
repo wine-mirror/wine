@@ -1920,6 +1920,13 @@ static void handle_xdnd_drop_event( HWND hwnd, XClientMessageEvent *event )
 }
 
 
+static void handle_xdnd_leave_event( HWND hwnd, XClientMessageEvent *event )
+{
+    UINT type = DND_LEAVE_EVENT;
+    handle_dnd_event( &type );
+}
+
+
 struct client_message_handler
 {
     int    atom;                                  /* protocol atom */
@@ -1935,7 +1942,7 @@ static const struct client_message_handler client_messages[] =
     { XATOM_XdndEnter,    handle_xdnd_enter_event },
     { XATOM_XdndPosition, handle_xdnd_position_event },
     { XATOM_XdndDrop,     handle_xdnd_drop_event },
-    { XATOM_XdndLeave,    X11DRV_XDND_LeaveEvent }
+    { XATOM_XdndLeave,    handle_xdnd_leave_event }
 };
 
 
