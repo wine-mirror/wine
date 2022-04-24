@@ -260,6 +260,10 @@ static const struct column col_operatingsystem[] =
     { L"TotalVisibleMemorySize",  CIM_UINT64 },
     { L"Version",                 CIM_STRING|COL_FLAG_DYNAMIC },
 };
+static const struct column col_pagefileusage[] =
+{
+    { L"Name", CIM_STRING },
+};
 static const struct column col_param[] =
 {
     { L"Class",        CIM_STRING },
@@ -687,6 +691,10 @@ struct record_operatingsystem
     UINT64       totalvisiblememorysize;
     const WCHAR *version;
 };
+struct record_pagefileusage
+{
+    const WCHAR *name;
+};
 struct record_param
 {
     const WCHAR *class;
@@ -910,6 +918,10 @@ static const struct record_associator data_associator[] =
 {
     { L"Win32_DiskDriveToDiskPartition", L"Win32_DiskPartition", L"Win32_DiskDrive" },
     { L"Win32_LogicalDiskToPartition", L"Win32_LogicalDisk", L"Win32_DiskPartition" },
+};
+static const struct record_pagefileusage data_pagefileusage[] =
+{
+    { L"c:\\pagefile.sys", },
 };
 static const struct record_param data_param[] =
 {
@@ -4148,6 +4160,7 @@ static struct table cimv2_builtin_classes[] =
     { L"Win32_NetworkAdapter", C(col_networkadapter), 0, 0, NULL, fill_networkadapter },
     { L"Win32_NetworkAdapterConfiguration", C(col_networkadapterconfig), 0, 0, NULL, fill_networkadapterconfig },
     { L"Win32_OperatingSystem", C(col_operatingsystem), 0, 0, NULL, fill_operatingsystem },
+    { L"Win32_PageFileUsage", C(col_pagefileusage), D(data_pagefileusage) },
     { L"Win32_PhysicalMedia", C(col_physicalmedia), D(data_physicalmedia) },
     { L"Win32_PhysicalMemory", C(col_physicalmemory), 0, 0, NULL, fill_physicalmemory },
     { L"Win32_PnPEntity", C(col_pnpentity), 0, 0, NULL, fill_pnpentity },
