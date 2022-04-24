@@ -398,7 +398,9 @@ static NTSTATUS read_transform_output_data(GstBuffer *buffer, struct wg_sample *
 
     memcpy(sample->data, info.data, sample->size);
     gst_buffer_unmap(buffer, &info);
-    gst_buffer_resize(buffer, sample->size, -1);
+
+    if (sample->flags & WG_SAMPLE_FLAG_INCOMPLETE)
+        gst_buffer_resize(buffer, sample->size, -1);
 
     if (GST_BUFFER_PTS_IS_VALID(buffer))
     {
