@@ -471,6 +471,36 @@ interface IShellItem2 : IShellItem
         [out] BOOL *pf);
 }
 
+/*****************************************************************************
+ * IShellItemImageFactory interface
+ */
+[
+    object,
+    uuid(bcc18b79-ba16-442f-80c4-8a59c30c463b),
+    pointer_default(unique)
+]
+interface IShellItemImageFactory : IUnknown
+{
+    [v1_enum] enum _SIIGBF {
+        SIIGBF_RESIZETOFIT     = 0x00000000,
+        SIIGBF_BIGGERSIZEOK    = 0x00000001,
+        SIIGBF_MEMORYONLY      = 0x00000002,
+        SIIGBF_ICONONLY        = 0x00000004,
+        SIIGBF_THUMBNAILONLY   = 0x00000008,
+        SIIGBF_INCACHEONLY     = 0x00000010,
+        SIIGBF_CROPTOSQUARE    = 0x00000020,
+        SIIGBF_WIDETHUMBNAILS  = 0x00000040,
+        SIIGBF_ICONBACKGROUND  = 0x00000080,
+        SIIGBF_SCALEUP         = 0x00000100,
+    };
+    typedef int SIIGBF;
+
+    HRESULT GetImage(
+        [in] SIZE size,
+        [in] SIIGBF flags,
+        [out] HBITMAP *phbm);
+}
+
 typedef [v1_enum] enum tagNWMF {
     NWMF_UNLOADING        = 0x00000001,
     NWMF_USERINITED       = 0x00000002,
