@@ -7982,9 +7982,10 @@ static void test_CreateFontFaceReference(void)
     IDWriteFontFace3 *fontface, *fontface1;
     DWRITE_FONT_AXIS_VALUE axis_values[16];
     IDWriteFontCollection1 *collection;
+    UINT32 axis_count, index, count, i;
+    IDWriteFontFaceReference1 *ref2;
     IDWriteFontFile *file, *file1;
     IDWriteFactory3 *factory;
-    UINT32 index, count, i;
     IDWriteFont3 *font3;
     ULONG refcount;
     WCHAR *path;
@@ -8091,6 +8092,13 @@ static void test_CreateFontFaceReference(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(file != file1, "got %p, previous file %p\n", file1, file);
 
+    if (SUCCEEDED(IDWriteFontFaceReference_QueryInterface(ref, &IID_IDWriteFontFaceReference1, (void **)&ref2)))
+    {
+        axis_count = IDWriteFontFaceReference1_GetFontAxisValueCount(ref2);
+        ok(!axis_count, "Unexpected axis value count.\n");
+        IDWriteFontFaceReference1_Release(ref2);
+    }
+
     IDWriteFontFaceReference_Release(ref);
     IDWriteFontFile_Release(file);
     IDWriteFontFile_Release(file1);
@@ -8112,8 +8120,6 @@ static void test_CreateFontFaceReference(void)
 
         for (j = 0; j < font_count; j++)
         {
-            IDWriteFontFaceReference1 *ref2;
-
             hr = IDWriteFontFamily1_GetFont(family, j, &font3);
             ok(hr == S_OK, "Failed to get font, hr %#lx.\n", hr);
 
@@ -8132,7 +8138,7 @@ static void test_CreateFontFaceReference(void)
             if (SUCCEEDED(hr = IDWriteFontFaceReference_QueryInterface(ref, &IID_IDWriteFontFaceReference1,
                     (void **)&ref2)))
             {
-                UINT32 axis_count = IDWriteFontFaceReference1_GetFontAxisValueCount(ref2);
+                axis_count = IDWriteFontFaceReference1_GetFontAxisValueCount(ref2);
                 todo_wine
                 ok(axis_count >= 4, "Unexpected axis value count.\n");
 
