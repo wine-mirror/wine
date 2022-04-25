@@ -182,7 +182,7 @@ STRING     \"(\\[^\n]|[^\\"\n])*\"
 <INITIAL,NOPROCESS>backtrace|backtrac|backtra|backt|back|bac|ba|bt { BEGIN(NOCMD); return tBACKTRACE; }
 <INITIAL,NOPROCESS>where|wher|whe       { BEGIN(NOCMD); return tBACKTRACE; }
 
-<INITIAL>cont|con|co|c   		{ BEGIN(NOCMD); return tCONT; }
+<INITIAL>continue|continu|contin|conti|cont|con|co|c	{ BEGIN(NOCMD); return tCONT; }
 <INITIAL>pass|pas|pa   			{ BEGIN(NOCMD); return tPASS; }
 <INITIAL>condition|conditio|conditi|condit|condi|cond	{ BEGIN(NOCMD); return tCOND; }
 <INITIAL>step|ste|st|s   		{ BEGIN(NOCMD); return tSTEP; }
