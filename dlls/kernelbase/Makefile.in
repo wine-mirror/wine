@@ -9,7 +9,6 @@ C_SRCS = \
 	collation.c \
 	console.c \
 	debug.c \
-	digitmap.c \
 	file.c \
 	loader.c \
 	locale.c \

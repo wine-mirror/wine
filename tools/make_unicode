@@ -3254,24 +3254,6 @@ sub dump_vertical($$)
 }
 
 ################################################################
-# dump the digit folding tables
-sub dump_digit_folding($)
-{
-    my ($filename) = shift;
-    open OUTPUT,">$filename.new" or die "Cannot create $filename";
-    print "Building $filename\n";
-    print OUTPUT "/* Unicode digit folding mappings */\n";
-    print OUTPUT "/* generated from $UNIDATA:UnicodeData.txt */\n";
-    print OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"windef.h\"\n\n";
-
-    dump_two_level_mapping( "wine_digitmap", 0, 16, @digitmap_table );
-    close OUTPUT;
-    save_file($filename);
-}
-
-
-################################################################
 # compress a mapping table by removing identical rows
 sub compress_array($$@)
 {
@@ -5393,7 +5375,6 @@ load_data();
 dump_sortkeys( "dlls/kernelbase/collation.c" );
 dump_bidi_dir_table( "dlls/gdi32/uniscribe/direction.c" );
 dump_bidi_dir_table( "dlls/dwrite/direction.c" );
-dump_digit_folding( "dlls/kernelbase/digitmap.c" );
 dump_mirroring( "dlls/gdi32/uniscribe/mirror.c" );
 dump_mirroring( "dlls/dwrite/mirror.c" );
 dump_bracket( "dlls/gdi32/uniscribe/bracket.c" );

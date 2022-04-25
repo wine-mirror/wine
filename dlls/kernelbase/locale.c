@@ -1856,12 +1856,6 @@ void init_locale( HMODULE module )
 }
 
 
-static inline USHORT get_table_entry( const USHORT *table, WCHAR ch )
-{
-    return table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];
-}
-
-
 static inline WCHAR casemap( const USHORT *table, WCHAR ch )
 {
     return ch + table[table[table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0x0f)];
@@ -2072,17 +2066,12 @@ static NTSTATUS expand_ligatures( const WCHAR *src, int srclen, WCHAR *dst, int 
 
 static NTSTATUS fold_digits( const WCHAR *src, int srclen, WCHAR *dst, int *dstlen )
 {
-    extern const WCHAR wine_digitmap[] DECLSPEC_HIDDEN;
     int i, len = *dstlen;
 
     *dstlen = srclen;
     if (!len) return STATUS_SUCCESS;
     if (srclen > len) return STATUS_BUFFER_TOO_SMALL;
-    for (i = 0; i < srclen; i++)
-    {
-        WCHAR digit = get_table_entry( wine_digitmap, src[i] );
-        dst[i] = digit ? digit : src[i];
-    }
+    for (i = 0; i < srclen; i++) dst[i] = casemap( charmaps[CHARMAP_FOLDDIGITS], src[i] );
     return STATUS_SUCCESS;
 }
 
