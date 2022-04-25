@@ -223,6 +223,7 @@ static NTSTATUS udp_endpoint_enumerate_all( void *key_data, UINT key_size, void 
         FILE *fp;
         char buf[512], *ptr;
         int inode;
+        UINT addr;
 
         if (!(fp = fopen( "/proc/net/udp", "r" ))) return ERROR_NOT_SUPPORTED;
 
@@ -235,10 +236,11 @@ static NTSTATUS udp_endpoint_enumerate_all( void *key_data, UINT key_size, void 
         while ((ptr = fgets( buf, sizeof(buf), fp )))
         {
             if (sscanf( ptr, "%*u: %x:%hx %*s %*s %*s %*s %*s %*s %*s %d",
-                        &key.local.Ipv4.sin_addr.WS_s_addr, &key.local.Ipv4.sin_port, &inode ) != 3)
+                        &addr, &key.local.Ipv4.sin_port, &inode ) != 3)
                 continue;
 
             key.local.Ipv4.sin_family = WS_AF_INET;
+            key.local.Ipv4.sin_addr.WS_s_addr = addr;
             key.local.Ipv4.sin_port = htons( key.local.Ipv4.sin_port );
 
             stat.pid = find_owning_pid( pid_map, pid_map_size, inode );

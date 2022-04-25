@@ -534,6 +534,7 @@ static NTSTATUS tcp_conns_enumerate_all( UINT filter, struct nsi_tcp_conn_key *k
         FILE *fp;
         char buf[512], *ptr;
         int inode;
+        UINT laddr, raddr;
 
         if (!(fp = fopen( "/proc/net/tcp", "r" ))) return ERROR_NOT_SUPPORTED;
 
@@ -547,15 +548,17 @@ static NTSTATUS tcp_conns_enumerate_all( UINT filter, struct nsi_tcp_conn_key *k
         while ((ptr = fgets( buf, sizeof(buf), fp )))
         {
             if (sscanf( ptr, "%*x: %x:%hx %x:%hx %x %*s %*s %*s %*s %*s %d",
-                        &key.local.Ipv4.sin_addr.WS_s_addr, &key.local.Ipv4.sin_port,
-                        &key.remote.Ipv4.sin_addr.WS_s_addr, &key.remote.Ipv4.sin_port,
+                        &laddr, &key.local.Ipv4.sin_port,
+                        &raddr, &key.remote.Ipv4.sin_port,
                         &dyn.state, &inode ) != 6)
                 continue;
             dyn.state = tcp_state_to_mib_state( dyn.state );
             if (filter && filter != dyn.state ) continue;
 
             key.local.Ipv4.sin_family = key.remote.Ipv4.sin_family = WS_AF_INET;
+            key.local.Ipv4.sin_addr.WS_s_addr = laddr;
             key.local.Ipv4.sin_port = htons( key.local.Ipv4.sin_port );
+            key.remote.Ipv4.sin_addr.WS_s_addr = raddr;
             key.remote.Ipv4.sin_port = htons( key.remote.Ipv4.sin_port );
 
             if (num < *count)
