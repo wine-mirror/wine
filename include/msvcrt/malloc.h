@@ -77,6 +77,10 @@ _ACRTIMP void*  __cdecl _aligned_offset_realloc(void*,size_t,size_t,size_t);
 _ACRTIMP size_t __cdecl _get_sbh_threshold(void);
 _ACRTIMP int    __cdecl _set_sbh_threshold(size_t size);
 
+#ifdef _MSC_VER
+void *_alloca(size_t size);
+#endif
+
 #ifdef __cplusplus
 }
 #endif
@@ -84,6 +88,8 @@ _ACRTIMP int    __cdecl _set_sbh_threshold(size_t size);
 # ifdef __GNUC__
 # define _alloca(x) __builtin_alloca((x))
 # define alloca(x) __builtin_alloca((x))
+# elif defined(_MSC_VER)
+# define alloca(x) _alloca((x))
 # endif
 
 #endif /* __WINE_MALLOC_H */
