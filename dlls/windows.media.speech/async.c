@@ -296,26 +296,22 @@ static HRESULT WINAPI async_operation_info_Cancel( IAsyncInfo *iface )
 static HRESULT WINAPI async_operation_info_Close( IAsyncInfo *iface )
 {
     struct async_operation *impl = impl_from_IAsyncInfo(iface);
+    HRESULT hr = S_OK;
 
     TRACE("iface %p.\n", iface);
 
     EnterCriticalSection(&impl->cs);
     if (impl->status == Started)
-    {
-        LeaveCriticalSection(&impl->cs);
-        return E_ILLEGAL_STATE_CHANGE;
-    }
-
-    if (impl->async_run_work)
+        hr = E_ILLEGAL_STATE_CHANGE;
+    else if (impl->status != Closed)
     {
         CloseThreadpoolWork(impl->async_run_work);
         impl->async_run_work = NULL;
+        impl->status = Closed;
     }
-
-    impl->status = Closed;
     LeaveCriticalSection(&impl->cs);
 
-    return S_OK;
+    return hr;
 }
 
 static const struct IAsyncInfoVtbl async_operation_info_vtbl =
