@@ -402,6 +402,54 @@ static void test_enum_pins(void)
     ok(!ref, "Got outstanding refcount %ld.\n", ref);
 }
 
+static void test_find_pin(void)
+{
+    IBaseFilter *filter;
+    IEnumPins *enum_pins;
+    IPin *pin, *pin2;
+    HRESULT hr;
+    ULONG ref;
+
+    filter = create_mpeg_audio_codec();
+    if (!filter)
+    {
+        skip("Failed to create MPEG audio decoder instance, skipping tests.\n");
+        return;
+    }
+
+    hr = IBaseFilter_EnumPins(filter, &enum_pins);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IBaseFilter_FindPin(filter, L"In", &pin);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(pin == pin2, "Pins didn't match.\n");
+    IPin_Release(pin);
+    IPin_Release(pin2);
+
+    hr = IBaseFilter_FindPin(filter, L"Out", &pin);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    hr = IEnumPins_Next(enum_pins, 1, &pin2, NULL);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(pin == pin2, "Pins didn't match.\n");
+    IPin_Release(pin);
+    IPin_Release(pin2);
+
+    hr = IBaseFilter_FindPin(filter, L"XForm In", &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#lx.\n", hr);
+    hr = IBaseFilter_FindPin(filter, L"XForm Out", &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#lx.\n", hr);
+    hr = IBaseFilter_FindPin(filter, L"input pin", &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#lx.\n", hr);
+    hr = IBaseFilter_FindPin(filter, L"output pin", &pin);
+    ok(hr == VFW_E_NOT_FOUND, "Got hr %#lx.\n", hr);
+
+    IEnumPins_Release(enum_pins);
+    ref = IBaseFilter_Release(filter);
+    ok(!ref, "Got outstanding refcount %ld.\n", ref);
+}
+
 START_TEST(mpegaudio)
 {
     CoInitialize(NULL);
@@ -410,6 +458,7 @@ START_TEST(mpegaudio)
     test_aggregation();
     test_unconnected_filter_state();
     test_enum_pins();
+    test_find_pin();
 
     CoUninitialize();
 }
