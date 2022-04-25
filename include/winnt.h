@@ -6371,6 +6371,10 @@ static FORCEINLINE void MemoryBarrier(void)
 
 #elif defined(__aarch64__)
 
+#pragma intrinsic(_InterlockedExchangeAdd64)
+
+long long _InterlockedExchangeAdd64(long long volatile *, long long);
+
 static FORCEINLINE void MemoryBarrier(void)
 {
     __dmb(_ARM64_BARRIER_SY);
