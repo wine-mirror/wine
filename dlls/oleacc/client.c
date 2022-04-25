@@ -32,6 +32,7 @@ typedef struct {
     IAccessible IAccessible_iface;
     IOleWindow IOleWindow_iface;
     IEnumVARIANT IEnumVARIANT_iface;
+    IServiceProvider IServiceProvider_iface;
 
     LONG ref;
 
@@ -114,6 +115,8 @@ static HRESULT WINAPI Client_QueryInterface(IAccessible *iface, REFIID riid, voi
         *ppv = &This->IOleWindow_iface;
     }else if(IsEqualIID(riid, &IID_IEnumVARIANT)) {
         *ppv = &This->IEnumVARIANT_iface;
+    }else if(IsEqualIID(riid, &IID_IServiceProvider)) {
+        *ppv = &This->IServiceProvider_iface;
     }else {
         WARN("no interface: %s\n", debugstr_guid(riid));
         *ppv = NULL;
@@ -703,6 +706,50 @@ static const IEnumVARIANTVtbl ClientEnumVARIANTVtbl = {
     Client_EnumVARIANT_Clone
 };
 
+static inline Client* impl_from_Client_ServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, Client, IServiceProvider_iface);
+}
+
+static HRESULT WINAPI Client_ServiceProvider_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
+{
+    Client *This = impl_from_Client_ServiceProvider(iface);
+    return IAccessible_QueryInterface(&This->IAccessible_iface, riid, ppv);
+}
+
+static ULONG WINAPI Client_ServiceProvider_AddRef(IServiceProvider *iface)
+{
+    Client *This = impl_from_Client_ServiceProvider(iface);
+    return IAccessible_AddRef(&This->IAccessible_iface);
+}
+
+static ULONG WINAPI Client_ServiceProvider_Release(IServiceProvider *iface)
+{
+    Client *This = impl_from_Client_ServiceProvider(iface);
+    return IAccessible_Release(&This->IAccessible_iface);
+}
+
+static HRESULT WINAPI Client_ServiceProvider_QueryService(IServiceProvider *iface, REFGUID guid_service,
+        REFIID riid, void **ppv)
+{
+    Client *This = impl_from_Client_ServiceProvider(iface);
+
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_guid(guid_service), debugstr_guid(riid), ppv);
+
+    *ppv = NULL;
+    if (IsEqualIID(guid_service, &IIS_IsOleaccProxy))
+        return IAccessible_QueryInterface(&This->IAccessible_iface, riid, ppv);
+
+    return E_INVALIDARG;
+}
+
+static const IServiceProviderVtbl ClientServiceProviderVtbl = {
+    Client_ServiceProvider_QueryInterface,
+    Client_ServiceProvider_AddRef,
+    Client_ServiceProvider_Release,
+    Client_ServiceProvider_QueryService
+};
+
 static void edit_init(Client *client)
 {
     client->role = ROLE_SYSTEM_TEXT;
@@ -872,6 +919,7 @@ HRESULT create_client_object(HWND hwnd, const IID *iid, void **obj)
     client->IAccessible_iface.lpVtbl = &ClientVtbl;
     client->IOleWindow_iface.lpVtbl = &ClientOleWindowVtbl;
     client->IEnumVARIANT_iface.lpVtbl = &ClientEnumVARIANTVtbl;
+    client->IServiceProvider_iface.lpVtbl = &ClientServiceProviderVtbl;
     client->ref = 1;
     client->hwnd = hwnd;
     client->enum_pos = 0;

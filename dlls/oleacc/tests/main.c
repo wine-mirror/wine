@@ -1419,21 +1419,19 @@ static void check_acc_proxy_service_(IAccessible *acc, int line)
     HRESULT hr;
 
     hr = IAccessible_QueryInterface(acc, &IID_IServiceProvider, (void **)&service);
-    todo_wine ok(hr == S_OK, "got %#lx\n", hr);
-    if (SUCCEEDED(hr))
-    {
-        hr = IServiceProvider_QueryService(service, &IIS_IsOleaccProxy, &IID_IUnknown, (void **)&unk);
-        ok(hr == S_OK, "got %#lx\n", hr);
-        ok(!!unk, "unk == NULL\n");
-        ok(iface_cmp(unk, (IUnknown*)acc), "unk != acc\n");
-        IUnknown_Release(unk);
+    ok(hr == S_OK, "got %#lx\n", hr);
 
-        unk = (IUnknown*)0xdeadbeef;
-        hr = IServiceProvider_QueryService(service, &IID_IUnknown, &IID_IUnknown, (void **)&unk);
-        ok(hr == E_INVALIDARG, "got %#lx\n", hr);
-        ok(!unk, "unk != NULL\n");
-        IServiceProvider_Release(service);
-    }
+    hr = IServiceProvider_QueryService(service, &IIS_IsOleaccProxy, &IID_IUnknown, (void **)&unk);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(!!unk, "unk == NULL\n");
+    ok(iface_cmp(unk, (IUnknown*)acc), "unk != acc\n");
+    IUnknown_Release(unk);
+
+    unk = (IUnknown*)0xdeadbeef;
+    hr = IServiceProvider_QueryService(service, &IID_IUnknown, &IID_IUnknown, (void **)&unk);
+    ok(hr == E_INVALIDARG, "got %#lx\n", hr);
+    ok(!unk, "unk != NULL\n");
+    IServiceProvider_Release(service);
 }
 
 static void test_CreateStdAccessibleObject_classes(void)

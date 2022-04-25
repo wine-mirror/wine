@@ -30,6 +30,7 @@ typedef struct {
     IAccessible IAccessible_iface;
     IOleWindow IOleWindow_iface;
     IEnumVARIANT IEnumVARIANT_iface;
+    IServiceProvider IServiceProvider_iface;
 
     LONG ref;
 
@@ -55,6 +56,8 @@ static HRESULT WINAPI Window_QueryInterface(IAccessible *iface, REFIID riid, voi
         *ppv = &This->IOleWindow_iface;
     }else if(IsEqualIID(riid, &IID_IEnumVARIANT)) {
         *ppv = &This->IEnumVARIANT_iface;
+    }else if(IsEqualIID(riid, &IID_IServiceProvider)) {
+        *ppv = &This->IServiceProvider_iface;
     }else {
         WARN("no interface: %s\n", debugstr_guid(riid));
         *ppv = NULL;
@@ -444,6 +447,50 @@ static const IEnumVARIANTVtbl WindowEnumVARIANTVtbl = {
     Window_EnumVARIANT_Clone
 };
 
+static inline Window* impl_from_Window_ServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, Window, IServiceProvider_iface);
+}
+
+static HRESULT WINAPI Window_ServiceProvider_QueryInterface(IServiceProvider *iface, REFIID riid, void **ppv)
+{
+    Window *This = impl_from_Window_ServiceProvider(iface);
+    return IAccessible_QueryInterface(&This->IAccessible_iface, riid, ppv);
+}
+
+static ULONG WINAPI Window_ServiceProvider_AddRef(IServiceProvider *iface)
+{
+    Window *This = impl_from_Window_ServiceProvider(iface);
+    return IAccessible_AddRef(&This->IAccessible_iface);
+}
+
+static ULONG WINAPI Window_ServiceProvider_Release(IServiceProvider *iface)
+{
+    Window *This = impl_from_Window_ServiceProvider(iface);
+    return IAccessible_Release(&This->IAccessible_iface);
+}
+
+static HRESULT WINAPI Window_ServiceProvider_QueryService(IServiceProvider *iface, REFGUID guid_service,
+        REFIID riid, void **ppv)
+{
+    Window *This = impl_from_Window_ServiceProvider(iface);
+
+    TRACE("(%p)->(%s %s %p)\n", This, debugstr_guid(guid_service), debugstr_guid(riid), ppv);
+
+    *ppv = NULL;
+    if (IsEqualIID(guid_service, &IIS_IsOleaccProxy))
+        return IAccessible_QueryInterface(&This->IAccessible_iface, riid, ppv);
+
+    return E_INVALIDARG;
+}
+
+static const IServiceProviderVtbl WindowServiceProviderVtbl = {
+    Window_ServiceProvider_QueryInterface,
+    Window_ServiceProvider_AddRef,
+    Window_ServiceProvider_Release,
+    Window_ServiceProvider_QueryService
+};
+
 static const struct win_class_data classes[] = {
     {WC_LISTBOXW,           0x10000, TRUE},
     {L"#32768",             0x10001, TRUE}, /* menu */
@@ -467,6 +514,7 @@ HRESULT create_window_object(HWND hwnd, const IID *iid, void **obj)
     window->IAccessible_iface.lpVtbl = &WindowVtbl;
     window->IOleWindow_iface.lpVtbl = &WindowOleWindowVtbl;
     window->IEnumVARIANT_iface.lpVtbl = &WindowEnumVARIANTVtbl;
+    window->IServiceProvider_iface.lpVtbl = &WindowServiceProviderVtbl;
     window->ref = 1;
     window->hwnd = hwnd;
 
