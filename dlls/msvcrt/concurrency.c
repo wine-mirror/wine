@@ -164,6 +164,11 @@ typedef struct
     yield_func yield_func;
 } SpinWait;
 
+typedef struct
+{
+    char dummy;
+} _StructuredTaskCollection;
+
 /* keep in sync with msvcp90/msvcp90.h */
 typedef struct cs_queue
 {
@@ -1737,6 +1742,20 @@ bool __thiscall SpinWait__SpinOnce(SpinWait *this)
         return FALSE;
     }
 }
+
+#if _MSVCR_VER >= 110
+
+/* ??0_StructuredTaskCollection@details@Concurrency@@QAE@PAV_CancellationTokenState@12@@Z */
+/* ??0_StructuredTaskCollection@details@Concurrency@@QEAA@PEAV_CancellationTokenState@12@@Z */
+DEFINE_THISCALL_WRAPPER(_StructuredTaskCollection_ctor, 8)
+_StructuredTaskCollection* __thiscall _StructuredTaskCollection_ctor(
+        _StructuredTaskCollection *this, /*_CancellationTokenState*/void *token)
+{
+    FIXME("(%p): stub\n", this);
+    return NULL;
+}
+
+#endif /* _MSVCR_VER >= 110 */
 
 /* ??0critical_section@Concurrency@@QAE@XZ */
 /* ??0critical_section@Concurrency@@QEAA@XZ */
