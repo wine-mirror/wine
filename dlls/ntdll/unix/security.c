@@ -230,6 +230,7 @@ NTSTATUS WINAPI NtQueryInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS c
         break;
 
     case TokenGroups:
+    case TokenLogonSid:
     {
         /* reply buffer is always shorter than output one */
         void *buffer = malloc( length );
@@ -239,6 +240,7 @@ NTSTATUS WINAPI NtQueryInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS c
         SERVER_START_REQ( get_token_groups )
         {
             req->handle = wine_server_obj_handle( token );
+            req->attr_mask = (class == TokenLogonSid) ? SE_GROUP_LOGON_ID : 0;
             wine_server_set_reply( req, buffer, length );
             status = wine_server_call( req );
 
@@ -463,28 +465,6 @@ NTSTATUS WINAPI NtQueryInformationToken( HANDLE token, TOKEN_INFORMATION_CLASS c
             *(DWORD *)info = 0;
             break;
         }
-
-    case TokenLogonSid:
-        SERVER_START_REQ( get_token_sid )
-        {
-            TOKEN_GROUPS * groups = info;
-            PSID sid = groups + 1;
-            DWORD sid_len = length < sizeof(TOKEN_GROUPS) ? 0 : length - sizeof(TOKEN_GROUPS);
-
-            req->handle = wine_server_obj_handle( token );
-            req->which_sid = class;
-            wine_server_set_reply( req, sid, sid_len );
-            status = wine_server_call( req );
-            if (retlen) *retlen = reply->sid_len + sizeof(TOKEN_GROUPS);
-            if (status == STATUS_SUCCESS)
-            {
-                groups->GroupCount = 1;
-                groups->Groups[0].Sid = sid;
-                groups->Groups[0].Attributes = 0;
-            }
-        }
-        SERVER_END_REQ;
-        break;
 
     case TokenLinkedToken:
         SERVER_START_REQ( create_linked_token )

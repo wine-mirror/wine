@@ -3176,6 +3176,7 @@ enum caret_state
 
 @REQ(get_token_groups)
     obj_handle_t    handle;       /* handle to the token */
+    unsigned int    attr_mask;    /* mask for wanted attributes */
 @REPLY
     data_size_t     attr_len;     /* length needed to store attrs */
     data_size_t     sid_len;      /* length needed to store sids */

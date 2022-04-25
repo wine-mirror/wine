@@ -3864,6 +3864,7 @@ static void dump_get_token_sid_reply( const struct get_token_sid_reply *req )
 static void dump_get_token_groups_request( const struct get_token_groups_request *req )
 {
     fprintf( stderr, " handle=%04x", req->handle );
+    fprintf( stderr, ", attr_mask=%08x", req->attr_mask );
 }
 
 static void dump_get_token_groups_reply( const struct get_token_groups_reply *req )

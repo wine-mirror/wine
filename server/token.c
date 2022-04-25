@@ -82,7 +82,6 @@ static const struct sid local_sid = { SID_REVISION, 1, SECURITY_LOCAL_SID_AUTHOR
 static const struct sid interactive_sid = { SID_REVISION, 1, SECURITY_NT_AUTHORITY, { SECURITY_INTERACTIVE_RID } };
 static const struct sid anonymous_logon_sid = { SID_REVISION, 1, SECURITY_NT_AUTHORITY, { SECURITY_ANONYMOUS_LOGON_RID } };
 static const struct sid authenticated_user_sid = { SID_REVISION, 1, SECURITY_NT_AUTHORITY, { SECURITY_AUTHENTICATED_USER_RID } };
-static const struct sid builtin_logon_sid = { SID_REVISION, 3, SECURITY_NT_AUTHORITY, { SECURITY_LOGON_IDS_RID, 0, 0 } };
 
 static struct luid prev_luid_value = { 1000, 0 };
 
@@ -731,7 +730,7 @@ struct token *token_create_admin( unsigned primary, int impersonation_level, int
     struct sid alias_admins_sid = { SID_REVISION, 2, SECURITY_NT_AUTHORITY, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_ADMINS }};
     struct sid alias_users_sid = { SID_REVISION, 2, SECURITY_NT_AUTHORITY, { SECURITY_BUILTIN_DOMAIN_RID, DOMAIN_ALIAS_RID_USERS }};
     /* on Windows, this value changes every time the user logs on */
-    struct sid logon_sid = { SID_REVISION, 3, SECURITY_NT_AUTHORITY, { SECURITY_LOGON_IDS_RID, 0, 1 /* FIXME: should be randomly generated when tokens are inherited by new processes */ }};
+    struct sid logon_sid = { SID_REVISION, 3, SECURITY_NT_AUTHORITY, { SECURITY_LOGON_IDS_RID, 0, 0 /* FIXME: should be randomly generated when tokens are inherited by new processes */ }};
     const struct sid *user_sid = security_unix_uid_to_sid( getuid() );
     struct acl *default_dacl = create_default_dacl( user_sid );
     const struct luid_attr admin_privs[] =
@@ -1354,9 +1353,6 @@ DECL_HANDLER(get_token_sid)
         case TokenOwner:
             sid = token->owner;
             break;
-        case TokenLogonSid:
-            sid = &builtin_logon_sid;
-            break;
         default:
             set_error( STATUS_INVALID_PARAMETER );
             break;
@@ -1384,6 +1380,7 @@ DECL_HANDLER(get_token_groups)
 
         LIST_FOR_EACH_ENTRY( group, &token->groups, const struct group, entry )
         {
+            if (req->attr_mask && !(group->attrs & req->attr_mask)) continue;
             group_count++;
             reply->sid_len += sid_len( &group->sid );
         }
@@ -1398,6 +1395,7 @@ DECL_HANDLER(get_token_groups)
             {
                 LIST_FOR_EACH_ENTRY( group, &token->groups, const struct group, entry )
                 {
+                    if (req->attr_mask && !(group->attrs & req->attr_mask)) continue;
                     sid = copy_sid( sid, &group->sid );
                     *attr_ptr++ = group->attrs;
                 }

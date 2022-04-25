@@ -1898,6 +1898,9 @@ static void test_token_attr(void)
                 /* S-1-5-5-0-XXXXXX */
                 ret = IsWellKnownSid(Groups->Groups[0].Sid, WinLogonIdsSid);
                 ok(ret, "Unknown SID\n");
+
+                ok(Groups->Groups[0].Attributes == (SE_GROUP_MANDATORY | SE_GROUP_ENABLED_BY_DEFAULT | SE_GROUP_ENABLED | SE_GROUP_LOGON_ID),
+                    "got %lx\n", Groups->Groups[0].Attributes);
             }
         }
 
