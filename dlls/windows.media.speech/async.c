@@ -367,6 +367,8 @@ HRESULT async_operation_create( const GUID *iid, IInspectable *invoker, async_op
 {
     struct async_operation *impl;
 
+    TRACE("iid %s, invoker %p, callback %p, out %p.\n", debugstr_guid(iid), invoker, callback, out);
+
     *out = NULL;
     if (!(impl = calloc(1, sizeof(*impl)))) return E_OUTOFMEMORY;
     impl->IAsyncOperation_IInspectable_iface.lpVtbl = &async_operation_vtbl;
