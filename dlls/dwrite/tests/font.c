@@ -321,11 +321,12 @@ typedef struct {
     BYTE data[1];
 } sbix_glyph_data;
 
-typedef struct {
+struct cblc_header
+{
     WORD majorVersion;
     WORD minorVersion;
     DWORD numSizes;
-} CBLCHeader;
+};
 
 typedef struct {
     BYTE res[12];
@@ -3525,6 +3526,14 @@ struct dwrite_fonttable
     void  *context;
     UINT32 size;
 };
+
+static const void *table_read_ensure(const struct dwrite_fonttable *table, unsigned int offset, unsigned int size)
+{
+    if (size > table->size || offset > table->size - size)
+        return NULL;
+
+    return table->data + offset;
+}
 
 static WORD table_read_be_word(const struct dwrite_fonttable *table, void *ptr, DWORD offset)
 {
@@ -9303,34 +9312,40 @@ static DWORD get_sbix_formats(IDWriteFontFace4 *fontface)
 
 static DWORD get_cblc_formats(IDWriteFontFace4 *fontface)
 {
-    CBLCBitmapSizeTable *sizes;
-    UINT32 num_sizes, size, s;
+    const CBLCBitmapSizeTable *sizes;
+    struct dwrite_fonttable cblc;
+    unsigned int i, num_sizes;
     BOOL exists = FALSE;
-    CBLCHeader *header;
     DWORD ret = 0;
-    void *context;
     HRESULT hr;
 
-    hr = IDWriteFontFace4_TryGetFontTable(fontface, MS_CBLC_TAG, (const void **)&header, &size, &context, &exists);
-    ok(hr == S_OK, "TryGetFontTable() failed, %#lx\n", hr);
-    ok(exists, "Expected CBLC table\n");
+    hr = IDWriteFontFace4_TryGetFontTable(fontface, MS_CBLC_TAG, (const void **)&cblc.data, &cblc.size, &cblc.context, &exists);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(exists, "Expected CBLC table.\n");
 
     if (!exists)
         return 0;
 
-    num_sizes = GET_BE_DWORD(header->numSizes);
-    sizes = (CBLCBitmapSizeTable *)(header + 1);
+    num_sizes = table_read_be_dword(&cblc, NULL, FIELD_OFFSET(struct cblc_header, numSizes));
+    if (!(sizes = table_read_ensure(&cblc, sizeof(struct cblc_header), num_sizes * sizeof(*sizes))))
+    {
+        skip("Malformed CBLC table.\n");
+        num_sizes = 0;
+    }
 
-    for (s = 0; s < num_sizes; s++) {
-        BYTE bpp = sizes[s].bitDepth;
-
+    for (i = 0; i < num_sizes; ++i)
+    {
+        BYTE bpp = sizes[i].bitDepth;
         if (bpp == 1 || bpp == 2 || bpp == 4 || bpp == 8)
             ret |= DWRITE_GLYPH_IMAGE_FORMATS_PNG;
         else if (bpp == 32)
             ret |= DWRITE_GLYPH_IMAGE_FORMATS_PREMULTIPLIED_B8G8R8A8;
+
+        if (ret == (DWRITE_GLYPH_IMAGE_FORMATS_PNG | DWRITE_GLYPH_IMAGE_FORMATS_PREMULTIPLIED_B8G8R8A8))
+            break;
     }
 
-    IDWriteFontFace4_ReleaseFontTable(fontface, context);
+    IDWriteFontFace4_ReleaseFontTable(fontface, cblc.context);
 
     return ret;
 }
