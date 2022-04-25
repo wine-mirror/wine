@@ -82,6 +82,8 @@ extern BOOL process_rawinput_message( MSG *msg, UINT hw_id,
                                       const struct hardware_msg_data *msg_data ) DECLSPEC_HIDDEN;
 extern BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
                                 void **buffer, size_t size ) DECLSPEC_HIDDEN;
+extern void free_cached_data( UINT format, HANDLE handle ) DECLSPEC_HIDDEN;
+extern HANDLE render_synthesized_format( UINT format, UINT from ) DECLSPEC_HIDDEN;
 
 extern void CLIPBOARD_ReleaseOwner( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL FOCUS_MouseActivate( HWND hwnd ) DECLSPEC_HIDDEN;

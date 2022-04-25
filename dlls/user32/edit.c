@@ -3134,7 +3134,7 @@ static void EDIT_WM_Copy(EDITSTATE *es)
 	TRACE("%s\n", debugstr_w(dst));
 	GlobalUnlock(hdst);
 	OpenClipboard(es->hwndSelf);
-	EmptyClipboard();
+	NtUserEmptyClipboard();
 	SetClipboardData(CF_UNICODETEXT, hdst);
 	NtUserCloseClipboard();
 }

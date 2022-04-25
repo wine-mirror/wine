@@ -32,7 +32,9 @@ enum
     NtUserCallWinEventHook,
     NtUserCallWinProc,
     NtUserCallWindowsHook,
+    NtUserFreeCachedClipboardData,
     NtUserLoadDriver,
+    NtUserRenderSynthesizedFormat,
     /* win16 hooks */
     NtUserCallFreeIcon,
     NtUserThunkLock,
@@ -140,6 +142,20 @@ struct win_hook_params
     WCHAR module[MAX_PATH];
 };
 
+/* NtUserFreeCachedClipboardData params */
+struct free_cached_data_params
+{
+    UINT format;
+    HANDLE handle;
+};
+
+/* NtUserRenderSynthesizedFormat params */
+struct render_synthesized_format_params
+{
+    UINT format;
+    UINT from;
+};
+
 /* process DPI awareness contexts */
 #define NTUSER_DPI_UNAWARE                0x00006010
 #define NTUSER_DPI_SYSTEM_AWARE           0x00006011
@@ -237,11 +253,19 @@ struct client_menu_name
 /* NtUserGetClipboardData params, not compatible with Windows */
 struct get_clipboard_params
 {
+    void  *data;
+    size_t size;
+    size_t data_size;
+    UINT   seqno;
 };
 
 /* NtUserSetClipboardData params, not compatible with Windows */
 struct set_clipboard_params
 {
+    void  *data;
+    size_t size;
+    BOOL   cache_only;
+    UINT   seqno;
 };
 
 /* internal messages codes */
@@ -624,7 +648,6 @@ enum
     /* temporary exports */
     NtUserExitingThread,
     NtUserThreadDetach,
-    NtUserUpdateClipboard,
 };
 
 static inline HWND NtUserGetDesktopWindow(void)

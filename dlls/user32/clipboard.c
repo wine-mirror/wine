@@ -48,17 +48,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 
 
-struct cached_format
-{
-    struct list entry;       /* entry in cache list */
-    UINT        format;      /* format id */
-    UINT        seqno;       /* sequence number when the data was set */
-    HANDLE      handle;      /* original data handle */
-};
-
-static struct list cached_formats = LIST_INIT( cached_formats );
-static struct list formats_to_free = LIST_INIT( formats_to_free );
-
 static CRITICAL_SECTION clipboard_cs;
 static CRITICAL_SECTION_DEBUG critsect_debug =
 {
@@ -119,7 +108,7 @@ static const char *debugstr_format( UINT id )
 }
 
 /* build the data to send to the server in SetClipboardData */
-static HANDLE marshal_data( UINT format, HANDLE handle, data_size_t *ret_size )
+static HANDLE marshal_data( UINT format, HANDLE handle, size_t *ret_size )
 {
     SIZE_T size;
 
@@ -258,110 +247,35 @@ static HANDLE unmarshal_data( UINT format, void *data, data_size_t size )
     return handle;
 }
 
-/* retrieve a data format from the cache */
-static struct cached_format *get_cached_format( UINT format )
-{
-    struct cached_format *cache;
-
-    LIST_FOR_EACH_ENTRY( cache, &cached_formats, struct cached_format, entry )
-        if (cache->format == format) return cache;
-    return NULL;
-}
-
-/* store data in the cache, or reuse the existing one if available */
-static HANDLE cache_data( UINT format, HANDLE data, data_size_t size, UINT seqno,
-                          struct cached_format *cache )
-{
-    if (cache)
-    {
-        if (seqno == cache->seqno)  /* we can reuse the cached data */
-        {
-            GlobalFree( data );
-            return cache->handle;
-        }
-        /* cache entry is stale, remove it */
-        list_remove( &cache->entry );
-        list_add_tail( &formats_to_free, &cache->entry );
-    }
-
-    /* allocate new cache entry */
-    if (!(cache = HeapAlloc( GetProcessHeap(), 0, sizeof(*cache) )))
-    {
-        GlobalFree( data );
-        return 0;
-    }
-    cache->format = format;
-    cache->seqno  = seqno;
-    cache->handle = unmarshal_data( format, data, size );
-    list_add_tail( &cached_formats, &cache->entry );
-    return cache->handle;
-}
-
 /* free a single cached format */
-static void free_cached_data( struct cached_format *cache )
+void free_cached_data( UINT format, HANDLE handle )
 {
     void *ptr;
 
-    switch (cache->format)
+    switch (format)
     {
     case CF_BITMAP:
     case CF_DSPBITMAP:
     case CF_PALETTE:
-        DeleteObject( cache->handle );
+        DeleteObject( handle );
         break;
     case CF_ENHMETAFILE:
     case CF_DSPENHMETAFILE:
-        DeleteEnhMetaFile( cache->handle );
+        DeleteEnhMetaFile( handle );
         break;
     case CF_METAFILEPICT:
     case CF_DSPMETAFILEPICT:
-        if ((ptr = GlobalLock( cache->handle )))
+        if ((ptr = GlobalLock( handle )))
         {
             DeleteMetaFile( ((METAFILEPICT *)ptr)->hMF );
-            GlobalUnlock( cache->handle );
+            GlobalUnlock( handle );
         }
-        GlobalFree( cache->handle );
+        GlobalFree( handle );
         break;
     default:
-        GlobalFree( cache->handle );
+        GlobalFree( handle );
         break;
     }
-    list_remove( &cache->entry );
-    HeapFree( GetProcessHeap(), 0, cache );
-}
-
-/* clear global memory formats; special types are freed on EmptyClipboard */
-static void invalidate_memory_formats(void)
-{
-    struct cached_format *cache, *next;
-
-    LIST_FOR_EACH_ENTRY_SAFE( cache, next, &cached_formats, struct cached_format, entry )
-    {
-        switch (cache->format)
-        {
-        case CF_BITMAP:
-        case CF_DSPBITMAP:
-        case CF_PALETTE:
-        case CF_ENHMETAFILE:
-        case CF_DSPENHMETAFILE:
-        case CF_METAFILEPICT:
-        case CF_DSPMETAFILEPICT:
-            continue;
-        default:
-            free_cached_data( cache );
-            break;
-        }
-    }
-}
-
-/* free all the data in the cache */
-static void free_cached_formats(void)
-{
-    struct list *ptr;
-
-    list_move_tail( &formats_to_free, &cached_formats );
-    while ((ptr = list_head( &formats_to_free )))
-        free_cached_data( LIST_ENTRY( ptr, struct cached_format, entry ));
 }
 
 /* get the clipboard locale stored in the CF_LOCALE format */
@@ -576,7 +490,7 @@ static HANDLE render_synthesized_enhmetafile( HANDLE data )
 }
 
 /* render a synthesized format */
-static HANDLE render_synthesized_format( UINT format, UINT from )
+HANDLE render_synthesized_format( UINT format, UINT from )
 {
     HANDLE data = GetClipboardData( from );
 
@@ -650,55 +564,7 @@ INT WINAPI GetClipboardFormatNameA( UINT format, LPSTR buffer, INT maxlen )
  */
 BOOL WINAPI OpenClipboard( HWND hwnd )
 {
-    BOOL ret;
-    HWND owner;
-
-    TRACE( "%p\n", hwnd );
-
-    NtUserCallNoParam( NtUserUpdateClipboard );
-
-    EnterCriticalSection( &clipboard_cs );
-
-    SERVER_START_REQ( open_clipboard )
-    {
-        req->window = wine_server_user_handle( hwnd );
-        ret = !wine_server_call_err( req );
-        owner = wine_server_ptr_handle( reply->owner );
-    }
-    SERVER_END_REQ;
-
-    if (ret && !WIN_IsCurrentProcess( owner )) invalidate_memory_formats();
-
-    LeaveCriticalSection( &clipboard_cs );
-    return ret;
-}
-
-
-/**************************************************************************
- *		EmptyClipboard (USER32.@)
- * Empties and acquires ownership of the clipboard
- */
-BOOL WINAPI EmptyClipboard(void)
-{
-    BOOL ret;
-    HWND owner = NtUserGetClipboardOwner();
-
-    TRACE( "owner %p\n", owner );
-
-    if (owner) SendMessageTimeoutW( owner, WM_DESTROYCLIPBOARD, 0, 0, SMTO_ABORTIFHUNG, 5000, NULL );
-
-    EnterCriticalSection( &clipboard_cs );
-
-    SERVER_START_REQ( empty_clipboard )
-    {
-        ret = !wine_server_call_err( req );
-    }
-    SERVER_END_REQ;
-
-    if (ret) free_cached_formats();
-
-    LeaveCriticalSection( &clipboard_cs );
-    return ret;
+    return NtUserOpenClipboard( hwnd, 0 );
 }
 
 
@@ -707,55 +573,28 @@ BOOL WINAPI EmptyClipboard(void)
  */
 HANDLE WINAPI SetClipboardData( UINT format, HANDLE data )
 {
-    struct cached_format *cache = NULL;
-    void *ptr = NULL;
-    data_size_t size = 0;
-    HANDLE handle = data, retval = 0;
-    NTSTATUS status = STATUS_SUCCESS;
+    struct set_clipboard_params params = { .size = 0 };
+    HANDLE handle = data;
+    NTSTATUS status;
 
     TRACE( "%s %p\n", debugstr_format( format ), data );
 
     if (data)
     {
-        if (!(handle = marshal_data( format, data, &size ))) return 0;
-        if (!(ptr = GlobalLock( handle ))) goto done;
-        if (!(cache = HeapAlloc( GetProcessHeap(), 0, sizeof(*cache) ))) goto done;
-        cache->format = format;
-        cache->handle = data;
+        if (!(handle = marshal_data( format, data, &params.size ))) return 0;
+        if (!(params.data = GlobalLock( handle ))) return 0;
     }
 
-    EnterCriticalSection( &clipboard_cs );
+    status = NtUserSetClipboardData( format, data, &params );
 
-    SERVER_START_REQ( set_clipboard_data )
-    {
-        req->format = format;
-        req->lcid = GetUserDefaultLCID();
-        wine_server_add_data( req, ptr, size );
-        if (!(status = wine_server_call( req )))
-        {
-            if (cache) cache->seqno = reply->seqno;
-        }
-    }
-    SERVER_END_REQ;
-
-    if (!status)
-    {
-        /* free the previous entry if any */
-        struct cached_format *prev;
-
-        if ((prev = get_cached_format( format ))) free_cached_data( prev );
-        if (cache) list_add_tail( &cached_formats, &cache->entry );
-        retval = data;
-    }
-    else HeapFree( GetProcessHeap(), 0, cache );
-
-    LeaveCriticalSection( &clipboard_cs );
-
-done:
-    if (ptr) GlobalUnlock( handle );
+    if (params.data) GlobalUnlock( handle );
     if (handle != data) GlobalFree( handle );
-    if (status) SetLastError( RtlNtStatusToDosError( status ));
-    return retval;
+    if (status)
+    {
+        SetLastError( RtlNtStatusToDosError( status ));
+        return 0;
+    }
+    return data;
 }
 
 
@@ -773,73 +612,34 @@ UINT WINAPI EnumClipboardFormats( UINT format )
  */
 HANDLE WINAPI GetClipboardData( UINT format )
 {
-    struct cached_format *cache;
-    NTSTATUS status;
-    UINT from, data_seqno;
-    HWND owner;
-    HANDLE data;
-    UINT size = 1024;
-    BOOL render = TRUE;
+    struct get_clipboard_params params = { .data_size = 1024 };
+    HANDLE ret = 0;
 
-    for (;;)
+    EnterCriticalSection( &clipboard_cs );
+
+    while (params.data_size)
     {
-        if (!(data = GlobalAlloc( GMEM_FIXED, size ))) return 0;
-
-        EnterCriticalSection( &clipboard_cs );
-        cache = get_cached_format( format );
-
-        SERVER_START_REQ( get_clipboard_data )
+        params.size = params.data_size;
+        params.data_size = 0;
+        if (!(params.data = GlobalAlloc( GMEM_FIXED, params.size ))) break;
+        ret = NtUserGetClipboardData( format, &params );
+        if (ret) break;
+        if (params.data_size == ~0) /* needs unmarshaling */
         {
-            req->format = format;
-            req->render = render;
-            if (cache)
-            {
-                req->cached = 1;
-                req->seqno = cache->seqno;
-            }
-            wine_server_set_reply( req, data, size );
-            status = wine_server_call( req );
-            from = reply->from;
-            size = reply->total;
-            data_seqno = reply->seqno;
-            owner = wine_server_ptr_handle( reply->owner );
-        }
-        SERVER_END_REQ;
+            struct set_clipboard_params set_params = { .cache_only = TRUE, .seqno = params.seqno };
 
-        if (!status && size)
-        {
-            data = cache_data( format, data, size, data_seqno, cache );
-            LeaveCriticalSection( &clipboard_cs );
-            TRACE( "%s returning %p\n", debugstr_format( format ), data );
-            return data;
-        }
-        LeaveCriticalSection( &clipboard_cs );
-        GlobalFree( data );
+            ret = unmarshal_data( format, params.data, params.size );
+            if (!NtUserSetClipboardData( format, ret, &set_params )) break;
 
-        if (status == STATUS_BUFFER_OVERFLOW) continue;  /* retry with the new size */
-        if (status == STATUS_OBJECT_NAME_NOT_FOUND) return 0; /* no such format */
-        if (status)
-        {
-            SetLastError( RtlNtStatusToDosError( status ));
-            TRACE( "%s error %08x\n", debugstr_format( format ), status );
-            return 0;
+            /* data changed, retry */
+            free_cached_data( format, ret );
+            ret = 0;
+            params.data_size = 1024;
+            continue;
         }
-        if (render)  /* try rendering it */
-        {
-            render = FALSE;
-            if (from)
-            {
-                render_synthesized_format( format, from );
-                continue;
-            }
-            else if (owner)
-            {
-                TRACE( "%s sending WM_RENDERFORMAT to %p\n", debugstr_format( format ), owner );
-                SendMessageW( owner, WM_RENDERFORMAT, format, 0 );
-                continue;
-            }
-        }
-        TRACE( "%s returning 0\n", debugstr_format( format ));
-        return 0;
+        GlobalFree( params.data );
     }
+
+    LeaveCriticalSection( &clipboard_cs );
+    return ret;
 }
