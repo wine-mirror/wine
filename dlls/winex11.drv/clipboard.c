@@ -1051,7 +1051,7 @@ static HANDLE import_selection( Display *display, Window win, Atom selection,
  */
 void X11DRV_CLIPBOARD_ImportSelection( Display *display, Window win, Atom selection,
                                        Atom *targets, UINT count,
-                                       void (*callback)( Atom, UINT, HANDLE ))
+                                       void (*callback)( UINT, HANDLE ))
 {
     UINT i;
     HANDLE handle;
@@ -1064,7 +1064,7 @@ void X11DRV_CLIPBOARD_ImportSelection( Display *display, Window win, Atom select
         if (!(format = find_x11_format( targets[i] ))) continue;
         if (!format->id) continue;
         if (!(handle = import_selection( display, win, selection, format ))) continue;
-        callback( targets[i], format->id, handle );
+        callback( format->id, handle );
     }
 }
 
