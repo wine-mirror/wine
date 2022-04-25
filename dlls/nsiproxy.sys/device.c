@@ -266,7 +266,7 @@ static NTSTATUS WINAPI nsi_ioctl( DEVICE_OBJECT *device, IRP *irp )
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     NTSTATUS status;
 
-    TRACE( "ioctl %x insize %u outsize %u\n",
+    TRACE( "ioctl %lx insize %lu outsize %lu\n",
            irpsp->Parameters.DeviceIoControl.IoControlCode,
            irpsp->Parameters.DeviceIoControl.InputBufferLength,
            irpsp->Parameters.DeviceIoControl.OutputBufferLength );
@@ -290,7 +290,7 @@ static NTSTATUS WINAPI nsi_ioctl( DEVICE_OBJECT *device, IRP *irp )
         break;
 
     default:
-        FIXME( "ioctl %x not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
+        FIXME( "ioctl %lx not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
         status = STATUS_NOT_SUPPORTED;
         break;
     }
@@ -316,7 +316,7 @@ static int add_device( DRIVER_OBJECT *driver )
         status = IoCreateSymbolicLink( &link, &name );
     if (status)
     {
-        FIXME( "failed to create device error %x\n", status );
+        FIXME( "failed to create device error %lx\n", status );
         return 0;
     }
 
@@ -341,7 +341,7 @@ static DWORD WINAPI listen_thread_proc( void *arg )
     params.reply_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
 
     status = nsiproxy_call( icmp_listen, &params );
-    TRACE( "icmp_listen rets %08x\n", status );
+    TRACE( "icmp_listen rets %08lx\n", status );
 
     EnterCriticalSection( &nsiproxy_cs );
 
@@ -375,7 +375,7 @@ static void handle_queued_send_echo( IRP *irp )
     params.dst = &in->dst;
 
     status = nsiproxy_call( icmp_send_echo, &params );
-    TRACE( "icmp_send_echo rets %08x\n", status );
+    TRACE( "icmp_send_echo rets %08lx\n", status );
 
     if (status != STATUS_PENDING)
     {

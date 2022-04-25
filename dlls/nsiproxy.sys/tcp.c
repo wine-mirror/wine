@@ -404,7 +404,7 @@ unsigned int find_owning_pid( struct pid_map *map, unsigned int num_entries, UIN
     unsigned int i, len_socket;
     char socket[32];
 
-    sprintf( socket, "socket:[%lu]", inode );
+    sprintf( socket, "socket:[%zu]", inode );
     len_socket = strlen( socket );
     for (i = 0; i < num_entries; i++)
     {
