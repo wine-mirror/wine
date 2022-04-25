@@ -103,7 +103,7 @@ struct ACImpl {
     AudioSession *session;
     AudioSessionWrapper *session_wrapper;
 
-    struct coreaudio_stream *stream;
+    stream_handle stream;
     struct list entry;
 };
 
@@ -666,7 +666,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     ACImpl *This = impl_from_IAudioClient3(iface);
     struct release_stream_params release_params;
     struct create_stream_params params;
-    struct coreaudio_stream *stream;
+    stream_handle stream;
     UINT32 i;
 
     TRACE("(%p)->(%x, %x, %s, %s, %p, %s)\n", This, mode, flags,

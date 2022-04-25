@@ -107,6 +107,11 @@ static HRESULT osstatus_to_hresult(OSStatus sc)
     return E_FAIL;
 }
 
+static struct coreaudio_stream *handle_get_stream(stream_handle h)
+{
+    return (struct coreaudio_stream *)(UINT_PTR)h;
+}
+
 /* copied from kernelbase */
 static int muldiv( int a, int b, int c )
 {
@@ -700,7 +705,7 @@ end:
         free(stream->fmt);
         free(stream);
     } else
-        *params->stream = stream;
+        *params->stream = (stream_handle)(UINT_PTR)stream;
 
     return STATUS_SUCCESS;
 }
@@ -708,7 +713,7 @@ end:
 static NTSTATUS release_stream( void *args )
 {
     struct release_stream_params *params = args;
-    struct coreaudio_stream *stream = params->stream;
+    struct coreaudio_stream *stream = handle_get_stream(params->stream);
     SIZE_T size;
 
     if(stream->unit){
@@ -1148,7 +1153,7 @@ static void capture_resample(struct coreaudio_stream *stream)
 static NTSTATUS get_buffer_size(void *args)
 {
     struct get_buffer_size_params *params = args;
-    struct coreaudio_stream *stream = params->stream;
+    struct coreaudio_stream *stream = handle_get_stream(params->stream);
 
     OSSpinLockLock(&stream->lock);
     *params->frames = stream->bufsize_frames;
@@ -1212,7 +1217,7 @@ static HRESULT ca_get_max_stream_latency(struct coreaudio_stream *stream, UInt32
 static NTSTATUS get_latency(void *args)
 {
     struct get_latency_params *params = args;
-    struct coreaudio_stream *stream = params->stream;
+    struct coreaudio_stream *stream = handle_get_stream(params->stream);
     UInt32 latency, stream_latency, size;
     AudioObjectPropertyAddress addr;
     OSStatus sc;
@@ -1258,7 +1263,7 @@ static UINT32 get_current_padding_nolock(struct coreaudio_stream *stream)
 static NTSTATUS get_current_padding(void *args)
 {
     struct get_current_padding_params *params = args;
-    struct coreaudio_stream *stream = params->stream;
+    struct coreaudio_stream *stream = handle_get_stream(params->stream);
 
     OSSpinLockLock(&stream->lock);
     *params->padding = get_current_padding_nolock(stream);
@@ -1270,7 +1275,7 @@ static NTSTATUS get_current_padding(void *args)
 static NTSTATUS start(void *args)
 {
     struct start_params *params = args;
-    struct coreaudio_stream *stream = params->stream;
+    struct coreaudio_stream *stream = handle_get_stream(params->stream);
 
     OSSpinLockLock(&stream->lock);
 
@@ -1289,7 +1294,7 @@ static NTSTATUS start(void *args)
 static NTSTATUS stop(void *args)
 {
     struct stop_params *params = args;
-    struct coreaudio_stream *stream = params->stream;
+    struct coreaudio_stream *stream = handle_get_stream(params->stream);
 
     OSSpinLockLock(&stream->lock);
 
@@ -1308,7 +1313,7 @@ static NTSTATUS stop(void *args)
 static NTSTATUS reset(void *args)
 {
     struct reset_params *params = args;
-    struct coreaudio_stream *stream = params->stream;
+    struct coreaudio_stream *stream = handle_get_stream(params->stream);
 
     OSSpinLockLock(&stream->lock);
 
@@ -1336,7 +1341,7 @@ static NTSTATUS reset(void *args)
 static NTSTATUS get_render_buffer(void *args)
 {
     struct get_render_buffer_params *params = args;
-    struct coreaudio_stream *stream = params->stream;
+    struct coreaudio_stream *stream = handle_get_stream(params->stream);
     SIZE_T size;
     UINT32 pad;
 
@@ -1393,7 +1398,7 @@ end:
 static NTSTATUS release_render_buffer(void *args)
 {
     struct release_render_buffer_params *params = args;
-    struct coreaudio_stream *stream = params->stream;
+    struct coreaudio_stream *stream = handle_get_stream(params->stream);
     BYTE *buffer;
 
     OSSpinLockLock(&stream->lock);
@@ -1437,7 +1442,7 @@ static NTSTATUS release_render_buffer(void *args)
 static NTSTATUS get_capture_buffer(void *args)
 {
     struct get_capture_buffer_params *params = args;
-    struct coreaudio_stream *stream = params->stream;
+    struct coreaudio_stream *stream = handle_get_stream(params->stream);
     UINT32 chunk_bytes, chunk_frames;
     LARGE_INTEGER stamp, freq;
     SIZE_T size;
@@ -1493,7 +1498,7 @@ end:
 static NTSTATUS release_capture_buffer(void *args)
 {
     struct release_capture_buffer_params *params = args;
-    struct coreaudio_stream *stream = params->stream;
+    struct coreaudio_stream *stream = handle_get_stream(params->stream);
 
     OSSpinLockLock(&stream->lock);
 
@@ -1521,7 +1526,7 @@ static NTSTATUS release_capture_buffer(void *args)
 static NTSTATUS get_next_packet_size(void *args)
 {
     struct get_next_packet_size_params *params = args;
-    struct coreaudio_stream *stream = params->stream;
+    struct coreaudio_stream *stream = handle_get_stream(params->stream);
 
     OSSpinLockLock(&stream->lock);
 
@@ -1541,7 +1546,7 @@ static NTSTATUS get_next_packet_size(void *args)
 static NTSTATUS get_position(void *args)
 {
     struct get_position_params *params = args;
-    struct coreaudio_stream *stream = params->stream;
+    struct coreaudio_stream *stream = handle_get_stream(params->stream);
     LARGE_INTEGER stamp, freq;
 
     OSSpinLockLock(&stream->lock);
@@ -1565,7 +1570,7 @@ static NTSTATUS get_position(void *args)
 static NTSTATUS get_frequency(void *args)
 {
     struct get_frequency_params *params = args;
-    struct coreaudio_stream *stream = params->stream;
+    struct coreaudio_stream *stream = handle_get_stream(params->stream);
 
     if(stream->share == AUDCLNT_SHAREMODE_SHARED)
         *params->freq = (UINT64)stream->fmt->nSamplesPerSec * stream->fmt->nBlockAlign;
@@ -1579,7 +1584,7 @@ static NTSTATUS get_frequency(void *args)
 static NTSTATUS is_started(void *args)
 {
     struct is_started_params *params = args;
-    struct coreaudio_stream *stream = params->stream;
+    struct coreaudio_stream *stream = handle_get_stream(params->stream);
 
     if(stream->playing)
         params->result = S_OK;
@@ -1592,7 +1597,7 @@ static NTSTATUS is_started(void *args)
 static NTSTATUS set_volumes(void *args)
 {
     struct set_volumes_params *params = args;
-    struct coreaudio_stream *stream = params->stream;
+    struct coreaudio_stream *stream = handle_get_stream(params->stream);
     Float32 level = 1.0, tmp;
     OSStatus sc;
     UINT32 i;
