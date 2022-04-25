@@ -7043,6 +7043,7 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
     struct wined3d_context_vk *context_vk = wined3d_context_vk(context);
     const struct wined3d_vk_info *vk_info = context_vk->vk_info;
     VkImageSubresourceRange vk_src_range, vk_dst_range;
+    VkImageLayout src_layout, dst_layout;
     VkCommandBuffer vk_command_buffer;
     struct wined3d_blitter *next;
     unsigned src_sample_count;
@@ -7103,17 +7104,25 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
         goto next;
     }
 
+    if (src_texture_vk->layout == VK_IMAGE_LAYOUT_GENERAL)
+        src_layout = VK_IMAGE_LAYOUT_GENERAL;
+    else
+        src_layout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
+
+    if (dst_texture_vk->layout == VK_IMAGE_LAYOUT_GENERAL)
+        dst_layout = VK_IMAGE_LAYOUT_GENERAL;
+    else
+        dst_layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+
     wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
             vk_access_mask_from_bind_flags(src_texture_vk->t.resource.bind_flags),
-            VK_ACCESS_TRANSFER_READ_BIT,
-            src_texture_vk->layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+            VK_ACCESS_TRANSFER_READ_BIT, src_texture_vk->layout, src_layout,
             src_texture_vk->image.vk_image, &vk_src_range);
     wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
             VK_PIPELINE_STAGE_ALL_COMMANDS_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
             vk_access_mask_from_bind_flags(dst_texture_vk->t.resource.bind_flags),
-            VK_ACCESS_TRANSFER_WRITE_BIT,
-            dst_texture_vk->layout, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+            VK_ACCESS_TRANSFER_WRITE_BIT, dst_texture_vk->layout, dst_layout,
             dst_texture_vk->image.vk_image, &vk_dst_range);
 
     if (resolve)
@@ -7122,6 +7131,7 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
         const struct wined3d_format_vk *dst_format_vk = wined3d_format_vk(dst_texture->resource.format);
         const unsigned int usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT
                 | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        VkImageLayout resolve_src_layout, resolve_dst_layout;
         VkImage src_vk_image, dst_vk_image;
         VkImageSubresourceRange vk_range;
         VkImageResolve resolve_region;
@@ -7211,7 +7221,7 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
             copy_region.extent.depth = 1;
 
             VK_CALL(vkCmdCopyImage(vk_command_buffer, src_texture_vk->image.vk_image,
-                    VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, src_vk_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                    src_layout, src_vk_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                     1, &copy_region));
 
             wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
@@ -7219,6 +7229,7 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
                     VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT,
                     VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                     src_vk_image, &vk_range);
+            resolve_src_layout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 
             resolve_region.srcSubresource.mipLevel = 0;
             resolve_region.srcSubresource.baseArrayLayer = 0;
@@ -7230,6 +7241,7 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
         else
         {
             src_vk_image = src_texture_vk->image.vk_image;
+            resolve_src_layout = src_layout;
 
             resolve_region.srcSubresource.mipLevel = vk_src_range.baseMipLevel;
             resolve_region.srcSubresource.baseArrayLayer = vk_src_range.baseArrayLayer;
@@ -7256,6 +7268,7 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
             wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
                     VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, VK_ACCESS_TRANSFER_WRITE_BIT,
                     VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, dst_vk_image, &vk_range);
+            resolve_dst_layout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
 
             resolve_region.dstSubresource.mipLevel = 0;
             resolve_region.dstSubresource.baseArrayLayer = 0;
@@ -7267,6 +7280,7 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
         else
         {
             dst_vk_image = dst_texture_vk->image.vk_image;
+            resolve_dst_layout = dst_layout;
 
             resolve_region.dstSubresource.mipLevel = vk_dst_range.baseMipLevel;
             resolve_region.dstSubresource.baseArrayLayer = vk_dst_range.baseArrayLayer;
@@ -7276,15 +7290,15 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
             resolve_region.dstOffset.z = 0;
         }
 
-        VK_CALL(vkCmdResolveImage(vk_command_buffer, src_vk_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                dst_vk_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &resolve_region));
+        VK_CALL(vkCmdResolveImage(vk_command_buffer, src_vk_image, resolve_src_layout,
+                dst_vk_image, resolve_dst_layout, 1, &resolve_region));
 
         if (dst_vk_image != dst_texture_vk->image.vk_image)
         {
             wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
                     VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT,
                     VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_TRANSFER_READ_BIT,
-                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
+                    resolve_dst_layout, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
                     dst_vk_image, &vk_range);
 
             copy_region.srcSubresource.aspectMask = vk_dst_range.aspectMask;
@@ -7306,7 +7320,7 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
             copy_region.extent.depth = 1;
 
             VK_CALL(vkCmdCopyImage(vk_command_buffer, dst_vk_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                    dst_texture_vk->image.vk_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &copy_region));
+                    dst_texture_vk->image.vk_image, dst_layout, 1, &copy_region));
         }
     }
     else
@@ -7331,22 +7345,20 @@ static DWORD vk_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit_
         region.extent.height = src_rect->bottom - src_rect->top;
         region.extent.depth = 1;
 
-        VK_CALL(vkCmdCopyImage(vk_command_buffer, src_texture_vk->image.vk_image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-                dst_texture_vk->image.vk_image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region));
+        VK_CALL(vkCmdCopyImage(vk_command_buffer, src_texture_vk->image.vk_image, src_layout,
+                dst_texture_vk->image.vk_image, dst_layout, 1, &region));
     }
 
     wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
             VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
             VK_ACCESS_TRANSFER_WRITE_BIT,
             vk_access_mask_from_bind_flags(dst_texture_vk->t.resource.bind_flags),
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, dst_texture_vk->layout,
-            dst_texture_vk->image.vk_image, &vk_dst_range);
+            dst_layout, dst_texture_vk->layout, dst_texture_vk->image.vk_image, &vk_dst_range);
     wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
             VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
             VK_ACCESS_TRANSFER_READ_BIT,
             vk_access_mask_from_bind_flags(src_texture_vk->t.resource.bind_flags),
-            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, src_texture_vk->layout,
-            src_texture_vk->image.vk_image, &vk_src_range);
+            src_layout, src_texture_vk->layout, src_texture_vk->image.vk_image, &vk_src_range);
 
     wined3d_texture_validate_location(dst_texture, dst_sub_resource_idx, WINED3D_LOCATION_TEXTURE_RGB);
     wined3d_texture_invalidate_location(dst_texture, dst_sub_resource_idx, ~WINED3D_LOCATION_TEXTURE_RGB);
@@ -7363,14 +7375,12 @@ barrier_next:
             VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
             VK_ACCESS_TRANSFER_WRITE_BIT,
             vk_access_mask_from_bind_flags(dst_texture_vk->t.resource.bind_flags),
-            VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, dst_texture_vk->layout,
-            dst_texture_vk->image.vk_image, &vk_dst_range);
+            dst_layout, dst_texture_vk->layout, dst_texture_vk->image.vk_image, &vk_dst_range);
     wined3d_context_vk_image_barrier(context_vk, vk_command_buffer,
             VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_ALL_COMMANDS_BIT,
             VK_ACCESS_TRANSFER_READ_BIT,
             vk_access_mask_from_bind_flags(src_texture_vk->t.resource.bind_flags),
-            VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL, src_texture_vk->layout,
-            src_texture_vk->image.vk_image, &vk_src_range);
+            src_layout, src_texture_vk->layout, src_texture_vk->image.vk_image, &vk_src_range);
 
 next:
     if (!(next = blitter->next))
