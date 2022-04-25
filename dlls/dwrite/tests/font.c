@@ -9656,14 +9656,10 @@ static void test_fontsetbuilder(void)
         hr = IDWriteFontSetBuilder1_CreateFontSet(builder1, &fontset);
         ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
         hr = IDWriteFactory3_CreateFontCollectionFromFontSet(factory, fontset, &collection);
-        todo_wine
         ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
-        if (SUCCEEDED(hr))
-        {
-            count = IDWriteFontCollection1_GetFontFamilyCount(collection);
-            ok(count == 1, "Unexpected family count %u.\n", count);
-            IDWriteFontCollection1_Release(collection);
-        }
+        count = IDWriteFontCollection1_GetFontFamilyCount(collection);
+        ok(count == 1, "Unexpected family count %u.\n", count);
+        IDWriteFontCollection1_Release(collection);
         IDWriteFontSet_Release(fontset);
 
         hr = IDWriteFontSetBuilder1_AddFontFile(builder1, file);
@@ -9673,15 +9669,11 @@ static void test_fontsetbuilder(void)
         ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
 
         hr = IDWriteFactory3_CreateFontCollectionFromFontSet(factory, fontset, &collection);
-        todo_wine
         ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
-        if (SUCCEEDED(hr))
-        {
-            check_familymodel(collection, DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE);
-            count = IDWriteFontCollection1_GetFontFamilyCount(collection);
-            ok(count == 1, "Unexpected family count %u.\n", count);
-            IDWriteFontCollection1_Release(collection);
-        }
+        check_familymodel(collection, DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE);
+        count = IDWriteFontCollection1_GetFontFamilyCount(collection);
+        ok(count == 1, "Unexpected family count %u.\n", count);
+        IDWriteFontCollection1_Release(collection);
 
         /* No attempt to eliminate duplicates. */
         count = IDWriteFontSet_GetFontCount(fontset);
@@ -10405,22 +10397,20 @@ static void test_CreateFontCollectionFromFontSet(void)
     ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
 
     hr = IDWriteFactory5_CreateFontCollectionFromFontSet(factory, fontset, &collection);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
 
-if (SUCCEEDED(hr))
-{
     count = IDWriteFontCollection1_GetFontFamilyCount(collection);
+    todo_wine
     ok(count == 2, "Unexpected family count %u.\n", count);
 
     /* Explicit fontset properties are prioritized and not replaced by actual properties from a file. */
     exists = FALSE;
     hr = IDWriteFontCollection1_FindFamilyName(collection, L"Another Font", &index, &exists);
     ok(hr == S_OK, "Unexpected hr %#lx.\n",hr);
+    todo_wine
     ok(!!exists, "Unexpected return value %d.\n", exists);
 
     IDWriteFontCollection1_Release(collection);
-}
     IDWriteFontSet_Release(fontset);
 
     IDWriteFontSetBuilder1_Release(builder);

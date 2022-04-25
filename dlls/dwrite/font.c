@@ -624,6 +624,8 @@ static struct dwrite_fontset *impl_from_IDWriteFontSet3(IDWriteFontSet3 *iface)
     return CONTAINING_RECORD(iface, struct dwrite_fontset, IDWriteFontSet3_iface);
 }
 
+static struct dwrite_fontset *unsafe_impl_from_IDWriteFontSet(IDWriteFontSet *iface);
+
 static HRESULT get_cached_glyph_metrics(struct dwrite_fontface *fontface, UINT16 glyph, DWRITE_GLYPH_METRICS *metrics)
 {
     static const DWRITE_GLYPH_METRICS nil;
@@ -4791,6 +4793,113 @@ HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerat
     return hr;
 }
 
+static HRESULT collection_add_font_entry(struct dwrite_fontcollection *collection, const struct fontface_desc *desc)
+{
+    struct dwrite_font_data *font_data;
+    WCHAR familyW[255];
+    UINT32 index;
+    HRESULT hr;
+
+    if (FAILED(hr = init_font_data(desc, collection->family_model, &font_data)))
+        return hr;
+
+    fontstrings_get_en_string(font_data->family_names, familyW, ARRAY_SIZE(familyW));
+
+    /* ignore dot named faces */
+    if (familyW[0] == '.')
+    {
+        WARN("Ignoring face %s\n", debugstr_w(familyW));
+        release_font_data(font_data);
+        return S_OK;
+    }
+
+    index = collection_find_family(collection, familyW);
+    if (index != ~0u)
+        hr = fontfamily_add_font(collection->family_data[index], font_data);
+    else
+    {
+        struct dwrite_fontfamily_data *family_data;
+
+        /* Create and initialize new family */
+        hr = init_fontfamily_data(font_data->family_names, &family_data);
+        if (hr == S_OK)
+        {
+            /* add font to family, family - to collection */
+            hr = fontfamily_add_font(family_data, font_data);
+            if (hr == S_OK)
+                hr = fontcollection_add_family(collection, family_data);
+
+            if (FAILED(hr))
+                release_fontfamily_data(family_data);
+        }
+    }
+
+    if (FAILED(hr))
+        release_font_data(font_data);
+
+    return hr;
+}
+
+HRESULT create_font_collection_from_set(IDWriteFactory7 *factory, IDWriteFontSet *fontset,
+        DWRITE_FONT_FAMILY_MODEL family_model, REFGUID riid, void **ret)
+{
+    struct dwrite_fontset *set = unsafe_impl_from_IDWriteFontSet(fontset);
+    struct dwrite_fontcollection *collection;
+    HRESULT hr = S_OK;
+    size_t i;
+
+    *ret = NULL;
+
+    if (!(collection = calloc(1, sizeof(*collection))))
+        return E_OUTOFMEMORY;
+
+    if (FAILED(hr = init_font_collection(collection, factory, family_model, FALSE)))
+    {
+        free(collection);
+        return hr;
+    }
+
+    for (i = 0; i < set->count; ++i)
+    {
+        const struct dwrite_fontset_entry *entry = set->entries[i];
+        IDWriteFontFileStream *stream;
+        struct fontface_desc desc;
+
+        if (FAILED(get_filestream_from_file(entry->desc.file, &stream)))
+        {
+            WARN("Failed to get file stream.\n");
+            continue;
+        }
+
+        desc.factory = factory;
+        desc.face_type = entry->desc.face_type;
+        desc.file = entry->desc.file;
+        desc.stream = stream;
+        desc.index = entry->desc.face_index;
+        desc.simulations = entry->desc.simulations;
+        desc.font_data = NULL;
+
+        if (FAILED(hr = collection_add_font_entry(collection, &desc)))
+            WARN("Failed to add font collection element, hr %#lx.\n", hr);
+
+        IDWriteFontFileStream_Release(stream);
+    }
+
+    if (family_model == DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE)
+    {
+        for (i = 0; i < collection->count; ++i)
+        {
+            fontfamily_add_bold_simulated_face(collection->family_data[i]);
+            fontfamily_add_oblique_simulated_face(collection->family_data[i]);
+        }
+    }
+
+    hr = IDWriteFontCollection3_QueryInterface(&collection->IDWriteFontCollection3_iface, riid, ret);
+    IDWriteFontCollection3_Release(&collection->IDWriteFontCollection3_iface);
+
+    return hr;
+}
+
 struct system_fontfile_enumerator
 {
     IDWriteFontFileEnumerator IDWriteFontFileEnumerator_iface;
@@ -7907,6 +8016,14 @@ static const IDWriteFontSet3Vtbl fontsetvtbl =
     dwritefontset3_GetFontSourceNameLength,
     dwritefontset3_GetFontSourceName,
 };
+
+static struct dwrite_fontset *unsafe_impl_from_IDWriteFontSet(IDWriteFontSet *iface)
+{
+    if (!iface)
+        return NULL;
+    assert(iface->lpVtbl == (IDWriteFontSetVtbl *)&fontsetvtbl);
+    return CONTAINING_RECORD(iface, struct dwrite_fontset, IDWriteFontSet3_iface);
+}
 
 static HRESULT fontset_create_entry(IDWriteFontFile *file, DWRITE_FONT_FACE_TYPE face_type,
         unsigned int face_index, unsigned int simulations, struct dwrite_fontset_entry **ret)
