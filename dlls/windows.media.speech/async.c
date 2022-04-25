@@ -268,13 +268,18 @@ static HRESULT WINAPI async_operation_info_get_Status( IAsyncInfo *iface, AsyncS
 static HRESULT WINAPI async_operation_info_get_ErrorCode( IAsyncInfo *iface, HRESULT *error_code )
 {
     struct async_operation *impl = impl_from_IAsyncInfo(iface);
+    HRESULT hr = S_OK;
+
     TRACE("iface %p, error_code %p.\n", iface, error_code);
 
     EnterCriticalSection(&impl->cs);
-    *error_code = impl->hr;
+    if (impl->status == Closed)
+        *error_code = hr = E_ILLEGAL_METHOD_CALL;
+    else
+        *error_code = impl->hr;
     LeaveCriticalSection(&impl->cs);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI async_operation_info_Cancel( IAsyncInfo *iface )

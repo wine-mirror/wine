@@ -858,7 +858,7 @@ static void test_SpeechRecognizer(void)
     AsyncStatus async_status;
     HSTRING hstr, hstr_lang;
     HANDLE blocked_thread;
-    HRESULT hr;
+    HRESULT hr, error_code;
     UINT32 id;
     LONG ref;
 
@@ -1032,6 +1032,11 @@ static void test_SpeechRecognizer(void)
         ok(hr == S_OK, "IAsyncInfo_get_Status failed, hr %#lx.\n", hr);
         ok(async_status == Completed, "Status was %#x.\n", async_status);
 
+        error_code = 0xdeadbeef;
+        hr = IAsyncInfo_get_ErrorCode(info, &error_code);
+        ok(hr == S_OK, "IAsyncInfo_get_ErrorCode failed, hr %#lx.\n", hr);
+        ok(error_code == S_OK, "ErrorCode was %#lx.\n", error_code);
+
         hr = IAsyncInfo_Cancel(info);
         ok(hr == S_OK, "IAsyncInfo_Cancel failed, hr %#lx.\n", hr);
 
@@ -1049,6 +1054,11 @@ static void test_SpeechRecognizer(void)
         hr = IAsyncInfo_get_Status(info, &async_status);
         ok(hr == E_ILLEGAL_METHOD_CALL, "IAsyncInfo_get_Status failed, hr %#lx.\n", hr);
         ok(async_status == AsyncStatus_Closed, "Status was %#x.\n", async_status);
+
+        error_code = 0xdeadbeef;
+        hr = IAsyncInfo_get_ErrorCode(info, &error_code);
+        ok(hr == E_ILLEGAL_METHOD_CALL, "IAsyncInfo_get_ErrorCode failed, hr %#lx.\n", hr);
+        ok(error_code == E_ILLEGAL_METHOD_CALL, "ErrorCode was %#lx.\n", error_code);
 
         ref = IAsyncInfo_Release(info);
         ok(ref == 1, "Got unexpected ref %lu.\n", ref);
