@@ -333,6 +333,7 @@ struct dwrite_fontcollection
     LONG refcount;
 
     IDWriteFactory7 *factory;
+    DWRITE_FONT_FAMILY_MODEL family_model;
     struct dwrite_fontfamily_data **family_data;
     size_t size;
     size_t count;
@@ -3438,9 +3439,11 @@ static HRESULT WINAPI dwritefontcollection2_GetMatchingFonts(IDWriteFontCollecti
 
 static DWRITE_FONT_FAMILY_MODEL WINAPI dwritefontcollection2_GetFontFamilyModel(IDWriteFontCollection3 *iface)
 {
-    FIXME("%p.\n", iface);
+    struct dwrite_fontcollection *collection = impl_from_IDWriteFontCollection3(iface);
 
-    return DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE;
+    TRACE("%p.\n", iface);
+
+    return collection->family_model;
 }
 
 static HRESULT WINAPI dwritefontcollection2_GetFontSet(IDWriteFontCollection3 *iface, IDWriteFontSet1 **fontset)
@@ -3525,12 +3528,13 @@ static HRESULT fontcollection_add_family(struct dwrite_fontcollection *collectio
 }
 
 static HRESULT init_font_collection(struct dwrite_fontcollection *collection, IDWriteFactory7 *factory,
-        BOOL is_system)
+        DWRITE_FONT_FAMILY_MODEL family_model, BOOL is_system)
 {
     collection->IDWriteFontCollection3_iface.lpVtbl = is_system ? &systemfontcollectionvtbl : &fontcollectionvtbl;
     collection->refcount = 1;
     collection->factory = factory;
     IDWriteFactory7_AddRef(collection->factory);
+    collection->family_model = family_model;
 
     return S_OK;
 }
@@ -4637,7 +4641,7 @@ HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerat
     if (!(collection = calloc(1, sizeof(*collection))))
         return E_OUTOFMEMORY;
 
-    hr = init_font_collection(collection, factory, is_system);
+    hr = init_font_collection(collection, factory, DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE, is_system);
     if (FAILED(hr))
     {
         free(collection);
@@ -5089,7 +5093,7 @@ HRESULT get_eudc_fontcollection(IDWriteFactory7 *factory, IDWriteFontCollection3
     if (!(collection = calloc(1, sizeof(*collection))))
         return E_OUTOFMEMORY;
 
-    hr = init_font_collection(collection, factory, FALSE);
+    hr = init_font_collection(collection, factory, DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE, FALSE);
     if (FAILED(hr))
     {
         free(collection);
