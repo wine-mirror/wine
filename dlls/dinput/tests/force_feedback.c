@@ -5283,10 +5283,8 @@ static void test_windows_gaming_input(void)
 
     set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IRawGameController_get_ForceFeedbackMotors( raw_controller, &motors_view );
-    todo_wine
     ok( hr == S_OK, "get_ForceFeedbackMotors returned %#lx\n", hr );
     wait_hid_expect_( __FILE__, __LINE__, file, 100, TRUE ); /* device gain reports are written asynchronously */
-    if (!motors_view) goto skip_tests;
 
     hr = IVectorView_ForceFeedbackMotor_get_Size( motors_view, &size );
     ok( hr == S_OK, "get_Size returned %#lx\n", hr );
@@ -5296,6 +5294,7 @@ static void test_windows_gaming_input(void)
     todo_wine
     ok( hr == S_OK, "GetAt returned %#lx\n", hr );
     IVectorView_ForceFeedbackMotor_Release( motors_view );
+    if (hr != S_OK) goto skip_tests;
 
     check_interface( motor, &IID_IUnknown, TRUE );
     check_interface( motor, &IID_IInspectable, TRUE );

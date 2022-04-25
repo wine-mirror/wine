@@ -229,8 +229,23 @@ static HRESULT WINAPI raw_controller_get_ButtonCount( IRawGameController *iface,
 
 static HRESULT WINAPI raw_controller_get_ForceFeedbackMotors( IRawGameController *iface, IVectorView_ForceFeedbackMotor **value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    static const struct vector_iids iids =
+    {
+        .vector = &IID_IVector_ForceFeedbackMotor,
+        .view = &IID_IVectorView_ForceFeedbackMotor,
+        .iterable = &IID_IIterable_ForceFeedbackMotor,
+        .iterator = &IID_IIterator_ForceFeedbackMotor,
+    };
+    IVector_ForceFeedbackMotor *vector;
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    if (FAILED(hr = vector_create( &iids, (void **)&vector ))) return hr;
+    hr = IVector_ForceFeedbackMotor_GetView( vector, value );
+    IVector_ForceFeedbackMotor_Release( vector );
+
+    return hr;
 }
 
 static HRESULT WINAPI raw_controller_get_HardwareProductId( IRawGameController *iface, UINT16 *value )

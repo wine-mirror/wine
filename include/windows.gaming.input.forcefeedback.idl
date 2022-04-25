@@ -36,7 +36,10 @@ namespace Windows.Gaming.Input.ForceFeedback {
     declare {
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Gaming.Input.ForceFeedback.ForceFeedbackLoadEffectResult>;
         interface Windows.Foundation.IAsyncOperation<Windows.Gaming.Input.ForceFeedback.ForceFeedbackLoadEffectResult>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Gaming.Input.ForceFeedback.ForceFeedbackMotor *>;
+        interface Windows.Foundation.Collections.IIterable<Windows.Gaming.Input.ForceFeedback.ForceFeedbackMotor *>;
         interface Windows.Foundation.Collections.IVectorView<Windows.Gaming.Input.ForceFeedback.ForceFeedbackMotor *>;
+        interface Windows.Foundation.Collections.IVector<Windows.Gaming.Input.ForceFeedback.ForceFeedbackMotor *>;
     }
 
     [
