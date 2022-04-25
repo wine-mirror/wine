@@ -988,7 +988,7 @@ static void test_SpeechRecognizer(void)
 
         compilation_result = (void*)0xdeadbeef;
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_GetResults(operation, &compilation_result);
-        todo_wine ok(hr == E_ILLEGAL_METHOD_CALL, "Got unexpected hr %#lx.\n", hr);
+        ok(hr == E_ILLEGAL_METHOD_CALL, "Got unexpected hr %#lx.\n", hr);
         ok(compilation_result == (void*)0xdeadbeef, "Compilation result had value %p.\n", compilation_result);
 
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_put_Completed(operation, &compilation_handler.IAsyncHandler_Compilation_iface);

@@ -201,16 +201,16 @@ static HRESULT WINAPI async_operation_GetResults( IAsyncOperation_IInspectable *
     TRACE("iface %p, results %p.\n", iface, results);
 
     EnterCriticalSection(&impl->cs);
-    if (impl->status == Closed)
+    if (impl->status != Completed && impl->status != Error)
         hr = E_ILLEGAL_METHOD_CALL;
-    else if (impl->status > Started && impl->result)
+    else if (!impl->result)
+        hr = E_UNEXPECTED;
+    else
     {
         *results = impl->result;
         impl->result = NULL; /* NOTE: AsyncOperation gives up it's reference to result here! */
-        hr = S_OK;
+        hr = impl->hr;
     }
-    else
-        hr = E_UNEXPECTED;
     LeaveCriticalSection(&impl->cs);
 
     return hr;
