@@ -793,6 +793,7 @@ SOURCES = \
 	windows.gaming.input.idl \
 	windows.globalization.idl \
 	windows.h \
+	windows.media.closedcaptioning.idl \
 	windows.media.devices.idl \
 	windows.media.idl \
 	windows.media.speechrecognition.idl \
