@@ -29,6 +29,7 @@ import "windowscontracts.idl";
 import "windows.foundation.idl";
 import "windows.gaming.input.idl";
 import "windows.gaming.input.custom.idl";
+import "windows.gaming.input.forcefeedback.idl";
 
 namespace Windows.Gaming.Input.Custom {
     typedef enum WineGameControllerType WineGameControllerType;
@@ -85,6 +86,8 @@ namespace Windows.Gaming.Input.Custom {
         [propget] HRESULT State([out, retval] WineGameControllerState *state);
         [propget] HRESULT Vibration([out, retval] WineGameControllerVibration *vibration);
         [propput] HRESULT Vibration([in] WineGameControllerVibration vibration);
+
+        [propget] HRESULT ForceFeedbackMotor([out, retval] Windows.Gaming.Input.ForceFeedback.ForceFeedbackMotor **motor);
     }
 
     [

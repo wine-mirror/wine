@@ -315,6 +315,21 @@ static HRESULT WINAPI wine_provider_put_Vibration( IWineGameControllerProvider *
     return S_OK;
 }
 
+static HRESULT WINAPI wine_provider_get_ForceFeedbackMotor( IWineGameControllerProvider *iface, IForceFeedbackMotor **value )
+{
+    struct provider *impl = impl_from_IWineGameControllerProvider( iface );
+    DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (SUCCEEDED(hr = IDirectInputDevice8_GetCapabilities( impl->dinput_device, &caps )) && (caps.dwFlags & DIDC_FORCEFEEDBACK))
+        return force_feedback_motor_create( impl->dinput_device, value );
+
+    *value = NULL;
+    return S_OK;
+}
+
 static const struct IWineGameControllerProviderVtbl wine_provider_vtbl =
 {
     wine_provider_QueryInterface,
@@ -332,6 +347,7 @@ static const struct IWineGameControllerProviderVtbl wine_provider_vtbl =
     wine_provider_get_State,
     wine_provider_get_Vibration,
     wine_provider_put_Vibration,
+    wine_provider_get_ForceFeedbackMotor,
 };
 
 DEFINE_IINSPECTABLE( game_provider, IGameControllerProvider, struct provider, IWineGameControllerProvider_iface )

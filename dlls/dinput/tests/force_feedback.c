@@ -5288,13 +5288,10 @@ static void test_windows_gaming_input(void)
 
     hr = IVectorView_ForceFeedbackMotor_get_Size( motors_view, &size );
     ok( hr == S_OK, "get_Size returned %#lx\n", hr );
-    todo_wine
     ok( size == 1, "got size %u\n", size );
     hr = IVectorView_ForceFeedbackMotor_GetAt( motors_view, 0, &motor );
-    todo_wine
     ok( hr == S_OK, "GetAt returned %#lx\n", hr );
     IVectorView_ForceFeedbackMotor_Release( motors_view );
-    if (hr != S_OK) goto skip_tests;
 
     check_interface( motor, &IID_IUnknown, TRUE );
     check_interface( motor, &IID_IInspectable, TRUE );
@@ -5355,6 +5352,7 @@ static void test_windows_gaming_input(void)
     todo_wine
     ok( hr == S_OK, "TryDisableAsync returned %#lx\n", hr );
     wait_hid_expect_( __FILE__, __LINE__, file, 100, TRUE );
+    if (hr != S_OK) goto skip_tests;
     check_bool_async( bool_async, 1, Completed, S_OK, TRUE );
 
     check_interface( bool_async, &IID_IUnknown, TRUE );
@@ -5528,9 +5526,9 @@ static void test_windows_gaming_input(void)
     IAsyncOperation_boolean_Release( bool_async );
 
 
+skip_tests:
     IForceFeedbackMotor_Release( motor );
 
-skip_tests:
     IRawGameController_Release( raw_controller );
 
     CloseHandle( file );

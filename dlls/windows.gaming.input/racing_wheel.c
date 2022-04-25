@@ -245,8 +245,11 @@ static HRESULT WINAPI racing_wheel_get_MaxWheelAngle( IRacingWheel *iface, DOUBL
 
 static HRESULT WINAPI racing_wheel_get_WheelMotor( IRacingWheel *iface, IForceFeedbackMotor **value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct racing_wheel *impl = impl_from_IRacingWheel( iface );
+
+    TRACE( "iface %p, value %p\n", iface, value );
+
+    return IWineGameControllerProvider_get_ForceFeedbackMotor( impl->wine_provider, value );
 }
 
 static HRESULT WINAPI racing_wheel_GetButtonLabel( IRacingWheel *iface, enum RacingWheelButtons button,

@@ -4,6 +4,7 @@ IMPORTS = combase uuid user32 dinput8 setupapi hid
 C_SRCS = \
 	controller.c \
 	event_handlers.c \
+	force_feedback.c \
 	gamepad.c \
 	main.c \
 	manager.c \
