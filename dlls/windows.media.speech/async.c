@@ -176,16 +176,13 @@ static HRESULT WINAPI async_operation_get_Completed( IAsyncOperation_IInspectabl
                                                      IAsyncOperationCompletedHandler_IInspectable **handler )
 {
     struct async_operation *impl = impl_from_IAsyncOperation_IInspectable(iface);
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     FIXME("iface %p, handler %p semi stub!\n", iface, handler);
 
     EnterCriticalSection(&impl->cs);
     if (impl->status == Closed)
         hr = E_ILLEGAL_METHOD_CALL;
-    else
-        hr = S_OK;
-
     *handler = (impl->handler != HANDLER_NOT_SET) ? impl->handler : NULL;
     LeaveCriticalSection(&impl->cs);
 
@@ -249,16 +246,13 @@ static HRESULT WINAPI async_operation_info_get_Id( IAsyncInfo *iface, UINT32 *id
 static HRESULT WINAPI async_operation_info_get_Status( IAsyncInfo *iface, AsyncStatus *status )
 {
     struct async_operation *impl = impl_from_IAsyncInfo(iface);
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     TRACE("iface %p, status %p.\n", iface, status);
 
     EnterCriticalSection(&impl->cs);
     if (impl->status == Closed)
         hr = E_ILLEGAL_METHOD_CALL;
-    else
-        hr = S_OK;
-
     *status = impl->status;
     LeaveCriticalSection(&impl->cs);
 
@@ -285,10 +279,9 @@ static HRESULT WINAPI async_operation_info_get_ErrorCode( IAsyncInfo *iface, HRE
 static HRESULT WINAPI async_operation_info_Cancel( IAsyncInfo *iface )
 {
     struct async_operation *impl = impl_from_IAsyncInfo(iface);
-    HRESULT hr;
+    HRESULT hr = S_OK;
 
     TRACE("iface %p.\n", iface);
-    hr = S_OK;
 
     EnterCriticalSection(&impl->cs);
     if (impl->status == Closed)
