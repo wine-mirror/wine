@@ -1265,6 +1265,32 @@ static void test_NtMapViewOfSection(void)
     CloseHandle(file);
     DeleteFileA(testfile);
 
+    /* test zero_bits > 31 with a 64-bit DLL file image mapping */
+    if (is_win64)
+    {
+        file = CreateFileA("c:\\windows\\system32\\version.dll", GENERIC_READ, 0, NULL, OPEN_EXISTING, 0, 0);
+        ok(file != INVALID_HANDLE_VALUE, "Failed to open version.dll\n");
+
+        mapping = CreateFileMappingA(file, NULL, PAGE_READONLY|SEC_IMAGE, 0, 0, NULL);
+        ok(mapping != 0, "CreateFileMapping failed\n");
+
+        ptr = NULL;
+        size = 0;
+        offset.QuadPart = 0;
+        zero_bits = 0x7fffffff;
+        status = NtMapViewOfSection(mapping, process, &ptr, zero_bits, 0, &offset, &size, 1, 0, PAGE_READONLY);
+
+        ok(status == STATUS_SUCCESS || status == STATUS_IMAGE_NOT_AT_BASE, "NtMapViewOfSection returned %08lx\n", status);
+        ok(!((ULONG_PTR)ptr & 0xffff), "returned memory %p is not aligned to 64k\n", ptr);
+        ok(((UINT_PTR)ptr & ~get_zero_bits_mask(zero_bits)) == 0, "NtMapViewOfSection returned address %p\n", ptr);
+
+        status = NtUnmapViewOfSection(process, ptr);
+        ok(status == STATUS_SUCCESS, "NtUnmapViewOfSection returned %08lx\n", status);
+
+        NtClose(mapping);
+        CloseHandle(file);
+    }
+
     TerminateProcess(process, 0);
     CloseHandle(process);
 }
