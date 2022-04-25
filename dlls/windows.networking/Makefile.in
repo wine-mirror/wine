@@ -1,0 +1,4 @@
+MODULE = windows.networking.dll
+
+C_SRCS = \
+	main.c

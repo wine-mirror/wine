@@ -682,6 +682,7 @@ SOURCES = \
 	slerror.h \
 	slpublic.h \
 	snmp.h \
+	socketapi.h \
 	softpub.h \
 	spatialaudioclient.idl \
 	specstrings.h \
