@@ -415,11 +415,6 @@ struct dwrite_colorglyphenum
     struct dwrite_fonttable colr;     /* used to access layers */
 };
 
-#define GLYPH_BLOCK_SHIFT 8
-#define GLYPH_BLOCK_SIZE  (1UL << GLYPH_BLOCK_SHIFT)
-#define GLYPH_BLOCK_MASK  (GLYPH_BLOCK_SIZE - 1)
-#define GLYPH_MAX         65536
-
 struct dwrite_fontfile
 {
     IDWriteFontFile IDWriteFontFile_iface;
