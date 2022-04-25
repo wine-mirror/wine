@@ -4279,7 +4279,8 @@ static BOOL font_apply_differentiation_rules(struct dwrite_font_data *font, WCHA
     return TRUE;
 }
 
-static HRESULT init_font_data(const struct fontface_desc *desc, struct dwrite_font_data **ret)
+static HRESULT init_font_data(const struct fontface_desc *desc, DWRITE_FONT_FAMILY_MODEL family_model,
+        struct dwrite_font_data **ret)
 {
     static const float width_axis_values[] =
     {
@@ -4319,10 +4320,9 @@ static HRESULT init_font_data(const struct fontface_desc *desc, struct dwrite_fo
     opentype_get_font_metrics(&stream_desc, &data->metrics, NULL);
     opentype_get_font_facename(&stream_desc, props.lf.lfFaceName, &data->names);
 
-    /* get family name from font file */
-    hr = opentype_get_font_familyname(&stream_desc, &data->family_names);
-    if (FAILED(hr)) {
-        WARN("unable to get family name from font\n");
+    if (FAILED(hr = opentype_get_font_familyname(&stream_desc, family_model, &data->family_names)))
+    {
+        WARN("Unable to get family name from the font file, hr %#lx.\n", hr);
         release_font_data(data);
         return hr;
     }
@@ -4337,7 +4337,10 @@ static HRESULT init_font_data(const struct fontface_desc *desc, struct dwrite_fo
 
     fontstrings_get_en_string(data->family_names, familyW, ARRAY_SIZE(familyW));
     fontstrings_get_en_string(data->names, faceW, ARRAY_SIZE(faceW));
-    if (font_apply_differentiation_rules(data, familyW, faceW)) {
+
+    if (family_model == DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE
+            && font_apply_differentiation_rules(data, familyW, faceW))
+    {
         set_en_localizedstring(data->family_names, familyW);
         set_en_localizedstring(data->names, faceW);
     }
@@ -4722,7 +4725,7 @@ HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerat
             desc.font_data = NULL;
 
             /* Allocate an initialize new font data structure. */
-            hr = init_font_data(&desc, &font_data);
+            hr = init_font_data(&desc, DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE, &font_data);
             if (FAILED(hr))
             {
                 /* move to next one */
@@ -5060,7 +5063,7 @@ static HRESULT eudc_collection_add_family(IDWriteFactory7 *factory, struct dwrit
         desc.simulations = DWRITE_FONT_SIMULATIONS_NONE;
         desc.font_data = NULL;
 
-        hr = init_font_data(&desc, &font_data);
+        hr = init_font_data(&desc, DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE, &font_data);
         if (FAILED(hr))
             continue;
 
@@ -5388,7 +5391,7 @@ HRESULT create_fontface(const struct fontface_desc *desc, struct list *cached_li
     }
     else
     {
-        hr = init_font_data(desc, &font_data);
+        hr = init_font_data(desc, DWRITE_FONT_FAMILY_MODEL_WEIGHT_STRETCH_STYLE, &font_data);
         if (FAILED(hr))
         {
             IDWriteFontFace5_Release(&fontface->IDWriteFontFace5_iface);

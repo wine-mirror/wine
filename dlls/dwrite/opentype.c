@@ -2565,12 +2565,26 @@ HRESULT opentype_get_font_info_strings(const struct file_stream_desc *stream_des
     return S_OK;
 }
 
-/* FamilyName locating order is WWS Family Name -> Preferred Family Name -> Family Name. If font claims to
-   have 'Preferred Family Name' in WWS format, then WWS name is not used. */
-HRESULT opentype_get_font_familyname(struct file_stream_desc *stream_desc, IDWriteLocalizedStrings **names)
+HRESULT opentype_get_font_familyname(const struct file_stream_desc *stream_desc, DWRITE_FONT_FAMILY_MODEL family_model,
+        IDWriteLocalizedStrings **names)
 {
+    static const unsigned int wws_candidates[] =
+    {
+        OPENTYPE_STRING_WWS_FAMILY_NAME,
+        OPENTYPE_STRING_TYPOGRAPHIC_FAMILY_NAME,
+        OPENTYPE_STRING_FAMILY_NAME,
+        ~0u,
+    };
+    static const unsigned int typographic_candidates[] =
+    {
+        OPENTYPE_STRING_TYPOGRAPHIC_FAMILY_NAME,
+        OPENTYPE_STRING_WWS_FAMILY_NAME,
+        OPENTYPE_STRING_FAMILY_NAME,
+        ~0u,
+    };
     struct dwrite_fonttable os2, name;
-    UINT16 fsselection;
+    const unsigned int *id;
+    BOOL try_wws_name;
     HRESULT hr;
 
     opentype_get_font_table(stream_desc, MS_OS2_TAG, &os2);
@@ -2578,20 +2592,32 @@ HRESULT opentype_get_font_familyname(struct file_stream_desc *stream_desc, IDWri
 
     *names = NULL;
 
-    /* If Preferred Family doesn't conform to WWS model try WWS name. */
-    fsselection = os2.data ? table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, fsSelection)) : 0;
-    if (os2.data && !(fsselection & OS2_FSSELECTION_WWS))
-        hr = opentype_get_font_strings_from_id(&name, OPENTYPE_STRING_WWS_FAMILY_NAME, names);
+    if (family_model == DWRITE_FONT_FAMILY_MODEL_TYPOGRAPHIC)
+    {
+        id = typographic_candidates;
+    }
     else
-        hr = E_FAIL;
+    {
+        /* FamilyName locating order is WWS Family Name -> Preferred Family Name -> Family Name. If font claims to
+           have 'Preferred Family Name' in WWS format, then WWS name is not used. */
 
-    if (FAILED(hr))
-        hr = opentype_get_font_strings_from_id(&name, OPENTYPE_STRING_TYPOGRAPHIC_FAMILY_NAME, names);
-    if (FAILED(hr))
-        hr = opentype_get_font_strings_from_id(&name, OPENTYPE_STRING_FAMILY_NAME, names);
+        opentype_get_font_table(stream_desc, MS_OS2_TAG, &os2);
+        /* If Preferred Family doesn't conform to WWS model try WWS name. */
+        try_wws_name = os2.data && !(table_read_be_word(&os2, FIELD_OFFSET(struct tt_os2, fsSelection)) & OS2_FSSELECTION_WWS);
+        if (os2.context)
+            IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, os2.context);
 
-    if (os2.context)
-        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, os2.context);
+        id = wws_candidates;
+        if (!try_wws_name) id++;
+    }
+
+    while (*id != ~0u)
+    {
+        if (SUCCEEDED(hr = opentype_get_font_strings_from_id(&name, *id, names)))
+            break;
+        id++;
+    }
+
     if (name.context)
         IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, name.context);
 

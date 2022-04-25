@@ -469,7 +469,8 @@ extern void opentype_get_font_typo_metrics(struct file_stream_desc *stream_desc,
         unsigned int *descent) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_font_info_strings(const struct file_stream_desc *stream_desc,
         DWRITE_INFORMATIONAL_STRING_ID id, IDWriteLocalizedStrings **strings) DECLSPEC_HIDDEN;
-extern HRESULT opentype_get_font_familyname(struct file_stream_desc*,IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
+extern HRESULT opentype_get_font_familyname(const struct file_stream_desc *desc, DWRITE_FONT_FAMILY_MODEL family_model,
+        IDWriteLocalizedStrings **names) DECLSPEC_HIDDEN;
 extern HRESULT opentype_get_font_facename(struct file_stream_desc*,WCHAR*,IDWriteLocalizedStrings**) DECLSPEC_HIDDEN;
 extern void opentype_get_typographic_features(struct ot_gsubgpos_table *table, unsigned int script_index,
         unsigned int language_index, struct tag_array *tags) DECLSPEC_HIDDEN;
