@@ -111,11 +111,10 @@ static HRESULT WINAPI motor_get_AreEffectsPaused( IForceFeedbackMotor *iface, BO
 
     TRACE( "iface %p, value %p.\n", iface, value );
 
-    if (FAILED(hr = IDirectInputDevice8_GetForceFeedbackState( impl->device, &state )))
-        return hr;
+    if (FAILED(hr = IDirectInputDevice8_GetForceFeedbackState( impl->device, &state ))) *value = FALSE;
+    else *value = (state & DIGFFS_PAUSED);
 
-    *value = (state & DIGFFS_PAUSED);
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI motor_get_MasterGain( IForceFeedbackMotor *iface, double *value )
