@@ -49,7 +49,7 @@ static const struct module *modules[] =
     &udp_module,
 };
 
-static const struct module_table *get_module_table( const NPI_MODULEID *id, DWORD table )
+static const struct module_table *get_module_table( const NPI_MODULEID *id, UINT table )
 {
     const struct module_table *entry;
     int i;
@@ -65,7 +65,7 @@ static const struct module_table *get_module_table( const NPI_MODULEID *id, DWOR
 NTSTATUS nsi_enumerate_all_ex( struct nsi_enumerate_all_ex *params )
 {
     const struct module_table *entry = get_module_table( params->module, params->table );
-    DWORD sizes[4] = { params->key_size, params->rw_size, params->dynamic_size, params->static_size };
+    UINT sizes[4] = { params->key_size, params->rw_size, params->dynamic_size, params->static_size };
     void *data[4] = { params->key_data, params->rw_data, params->dynamic_data, params->static_data };
     int i;
 

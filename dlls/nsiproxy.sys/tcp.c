@@ -143,7 +143,7 @@ static NTSTATUS tcp_stats_get_all_parameters( const void *key, UINT key_size, vo
             if (!(ptr = fgets( buf, sizeof(buf), fp ))) break;
             if (!ascii_strncasecmp( buf, hdr, sizeof(hdr) - 1 ))
             {
-                DWORD in_segs, out_segs;
+                UINT in_segs, out_segs;
                 ptr += sizeof(hdr);
                 sscanf( ptr, "%u %u %u %u %u %u %u %u %u %u %u %u %u %u",
                         &stat.rto_algo,
@@ -248,7 +248,7 @@ struct ipv6_addr_scope *get_ipv6_addr_scope_table( unsigned int *size )
         while ((ptr = fgets( buf, sizeof(buf), fp )))
         {
             WORD a[8];
-            DWORD scope;
+            UINT scope;
             struct ipv6_addr_scope *entry;
             unsigned int i;
 
@@ -519,7 +519,7 @@ static NTSTATUS tcp_conns_enumerate_all( UINT filter, struct nsi_tcp_conn_key *k
                                          struct nsi_tcp_conn_dynamic *dynamic_data, UINT dynamic_size,
                                          struct nsi_tcp_conn_static *static_data, UINT static_size, UINT_PTR *count )
 {
-    DWORD num = 0;
+    UINT num = 0;
     NTSTATUS status = STATUS_SUCCESS;
     BOOL want_data = key_size || rw_size || dynamic_size || static_size;
     struct nsi_tcp_conn_key key;
@@ -586,8 +586,8 @@ static NTSTATUS tcp_conns_enumerate_all( UINT filter, struct nsi_tcp_conn_key *k
             ptr = fgets( buf, sizeof(buf), fp );
             while ((ptr = fgets( buf, sizeof(buf), fp )))
             {
-                DWORD *local_addr = (DWORD *)&key.local.Ipv6.sin6_addr;
-                DWORD *remote_addr = (DWORD *)&key.remote.Ipv6.sin6_addr;
+                UINT *local_addr = (UINT *)&key.local.Ipv6.sin6_addr;
+                UINT *remote_addr = (UINT *)&key.remote.Ipv6.sin6_addr;
 
                 if (sscanf( ptr, "%*u: %8x%8x%8x%8x:%hx %8x%8x%8x%8x:%hx %x %*s %*s %*s %*s %*s %*s %*s %d",
                             local_addr, local_addr + 1, local_addr + 2, local_addr + 3, &key.local.Ipv6.sin6_port,

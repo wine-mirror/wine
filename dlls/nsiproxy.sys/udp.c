@@ -154,7 +154,7 @@ static NTSTATUS udp_stats_get_all_parameters( const void *key, UINT key_size, vo
             { "Udp6OutDatagrams", &out_dgrams },
         };
         char buf[512], *ptr, *value;
-        DWORD res, i;
+        UINT res, i;
         FILE *fp;
 
         if (!(fp = fopen( "/proc/net/snmp6", "r" ))) return STATUS_NOT_SUPPORTED;
@@ -206,7 +206,7 @@ static NTSTATUS udp_endpoint_enumerate_all( void *key_data, UINT key_size, void 
                                             void *dynamic_data, UINT dynamic_size,
                                             void *static_data, UINT static_size, UINT_PTR *count )
 {
-    DWORD num = 0;
+    UINT num = 0;
     NTSTATUS status = STATUS_SUCCESS;
     BOOL want_data = key_size || rw_size || dynamic_size || static_size;
     struct nsi_udp_endpoint_key key, *key_out = key_data;
@@ -266,7 +266,7 @@ static NTSTATUS udp_endpoint_enumerate_all( void *key_data, UINT key_size, void 
             ptr = fgets( buf, sizeof(buf), fp );
             while ((ptr = fgets( buf, sizeof(buf), fp )))
             {
-                DWORD *local_addr = (DWORD *)&key.local.Ipv6.sin6_addr;
+                UINT *local_addr = (UINT *)&key.local.Ipv6.sin6_addr;
 
                 if (sscanf( ptr, "%*u: %8x%8x%8x%8x:%hx %*s %*s %*s %*s %*s %*s %*s %d",
                             local_addr, local_addr + 1, local_addr + 2, local_addr + 3,

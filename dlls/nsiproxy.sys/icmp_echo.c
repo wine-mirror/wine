@@ -666,7 +666,7 @@ NTSTATUS icmp_send_echo( void *args )
     return params->handle ? STATUS_PENDING : STATUS_NO_MEMORY;
 }
 
-static int get_timeout( LARGE_INTEGER start, DWORD timeout )
+static int get_timeout( LARGE_INTEGER start, UINT timeout )
 {
     LARGE_INTEGER now, end;
 

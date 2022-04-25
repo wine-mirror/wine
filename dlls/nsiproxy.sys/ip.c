@@ -99,7 +99,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(nsi);
 
-static inline DWORD nsi_popcount( DWORD m )
+static inline UINT nsi_popcount( UINT m )
 {
 #ifdef HAVE___BUILTIN_POPCOUNT
     return __builtin_popcount( m );
@@ -110,19 +110,19 @@ static inline DWORD nsi_popcount( DWORD m )
 #endif
 }
 
-static DWORD mask_v4_to_prefix( struct in_addr *addr )
+static UINT mask_v4_to_prefix( struct in_addr *addr )
 {
     return nsi_popcount( addr->s_addr );
 }
 
-static DWORD mask_v6_to_prefix( struct in6_addr *addr )
+static UINT mask_v6_to_prefix( struct in6_addr *addr )
 {
-    DWORD ret;
+    UINT ret;
 
-    ret = nsi_popcount( *(DWORD *)addr->s6_addr );
-    ret += nsi_popcount( *(DWORD *)(addr->s6_addr + 4) );
-    ret += nsi_popcount( *(DWORD *)(addr->s6_addr + 8) );
-    ret += nsi_popcount( *(DWORD *)(addr->s6_addr + 12) );
+    ret = nsi_popcount( *(UINT *)addr->s6_addr );
+    ret += nsi_popcount( *(UINT *)(addr->s6_addr + 4) );
+    ret += nsi_popcount( *(UINT *)(addr->s6_addr + 8) );
+    ret += nsi_popcount( *(UINT *)(addr->s6_addr + 12) );
     return ret;
 }
 
@@ -159,7 +159,7 @@ static NTSTATUS ip_cmpt_get_all_parameters( UINT fam, const UINT *key, UINT key_
     const NPI_MODULEID *ip_mod = (fam == AF_INET) ? &NPI_MS_IPV4_MODULEID : &NPI_MS_IPV6_MODULEID;
     struct nsi_ip_cmpt_rw rw;
     struct nsi_ip_cmpt_dynamic dyn;
-    DWORD count;
+    UINT count;
 
     memset( &rw, 0, sizeof(rw) );
     memset( &dyn, 0, sizeof(dyn) );
@@ -367,7 +367,7 @@ static NTSTATUS ipv6_icmpstats_get_all_parameters( const void *key, UINT key_siz
         struct data
         {
             const char *name;
-            DWORD pos;
+            UINT pos;
         };
         static const struct data in_list[] =
         {
@@ -406,7 +406,7 @@ static NTSTATUS ipv6_icmpstats_get_all_parameters( const void *key, UINT key_siz
             { "Icmp6OutMLDv2Reports",           ICMP6_V2_MEMBERSHIP_REPORT },
         };
         char buf[512], *ptr, *value;
-        DWORD res, i;
+        UINT res, i;
         FILE *fp;
 
         if (!(fp = fopen( "/proc/net/snmp6", "r" ))) return STATUS_NOT_SUPPORTED;
@@ -506,7 +506,7 @@ static NTSTATUS ipv4_ipstats_get_all_parameters( const void *key, UINT key_size,
             if (!(ptr = fgets( buf, sizeof(buf), fp ))) break;
             if (!ascii_strncasecmp( buf, hdr, sizeof(hdr) - 1 ))
             {
-                DWORD in_recv, in_hdr_errs, fwd_dgrams, in_delivers, out_reqs;
+                UINT in_recv, in_hdr_errs, fwd_dgrams, in_delivers, out_reqs;
                 ptr += sizeof(hdr);
                 sscanf( ptr, "%*u %*u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u %u",
                         &in_recv,
@@ -625,7 +625,7 @@ static NTSTATUS ipv6_ipstats_get_all_parameters( const void *key, UINT key_size,
         };
         NTSTATUS status = STATUS_NOT_SUPPORTED;
         char buf[512], *ptr, *value;
-        DWORD i;
+        UINT i;
         FILE *fp;
 
         if (!(fp = fopen( "/proc/net/snmp6", "r" ))) return STATUS_NOT_SUPPORTED;
@@ -665,7 +665,7 @@ static void unicast_fill_entry( struct ifaddrs *entry, void *key, struct nsi_ip_
 {
     struct nsi_ipv6_unicast_key placeholder, *key6 = key;
     struct nsi_ipv4_unicast_key *key4 = key;
-    DWORD scope_id = 0;
+    UINT scope_id = 0;
 
     if (!key)
     {
@@ -723,7 +723,7 @@ static NTSTATUS ip_unicast_enumerate_all( int family, void *key_data, UINT key_s
                                           void *dynamic_data, UINT dynamic_size,
                                           void *static_data, UINT static_size, UINT_PTR *count )
 {
-    DWORD num = 0;
+    UINT num = 0;
     NTSTATUS status = STATUS_SUCCESS;
     BOOL want_data = key_size || rw_size || dynamic_size || static_size;
     struct ifaddrs *addrs, *entry;
@@ -815,7 +815,7 @@ struct ipv4_neighbour_data
     UINT if_index;
     struct in_addr addr;
     BYTE phys_addr[IF_MAX_PHYS_ADDRESS_LENGTH];
-    DWORD state;
+    UINT state;
     USHORT phys_addr_len;
     BOOL is_router;
     BOOL is_unreachable;
@@ -854,7 +854,7 @@ static NTSTATUS ipv4_neighbour_enumerate_all( void *key_data, UINT key_size, voi
                                               void *dynamic_data, UINT dynamic_size,
                                               void *static_data, UINT static_size, UINT_PTR *count )
 {
-    DWORD num = 0;
+    UINT num = 0;
     NTSTATUS status = STATUS_SUCCESS;
     BOOL want_data = key_size || rw_size || dynamic_size || static_size;
     struct ipv4_neighbour_data entry;
@@ -865,7 +865,7 @@ static NTSTATUS ipv4_neighbour_enumerate_all( void *key_data, UINT key_size, voi
 #ifdef __linux__
     {
         char buf[512], *ptr;
-        DWORD atf_flags;
+        UINT atf_flags;
         FILE *fp;
 
         if (!(fp = fopen( "/proc/net/arp", "r" ))) return STATUS_NOT_SUPPORTED;
@@ -1005,10 +1005,10 @@ struct ipv4_route_data
     NET_LUID luid;
     UINT if_index;
     struct in_addr prefix;
-    DWORD prefix_len;
+    UINT prefix_len;
     struct in_addr next_hop;
-    DWORD metric;
-    DWORD protocol;
+    UINT metric;
+    UINT protocol;
     BYTE loopback;
 };
 
@@ -1060,7 +1060,7 @@ static NTSTATUS ipv4_forward_enumerate_all( void *key_data, UINT key_size, void 
                                             void *dynamic_data, UINT dynamic_size,
                                             void *static_data, UINT static_size, UINT_PTR *count )
 {
-    DWORD num = 0;
+    UINT num = 0;
     NTSTATUS status = STATUS_SUCCESS;
     BOOL want_data = key_size || rw_size || dynamic_size || static_size;
     struct ipv4_route_data entry;
@@ -1072,7 +1072,7 @@ static NTSTATUS ipv4_forward_enumerate_all( void *key_data, UINT key_size, void 
     {
         char buf[512], *ptr;
         struct in_addr mask;
-        DWORD rtf_flags;
+        UINT rtf_flags;
         FILE *fp;
 
         if (!(fp = fopen( "/proc/net/route", "r" ))) return STATUS_NOT_SUPPORTED;
@@ -1249,7 +1249,7 @@ static struct module_table ipv4_tables[] =
     {
         NSI_IP_COMPARTMENT_TABLE,
         {
-            sizeof(DWORD), sizeof(struct nsi_ip_cmpt_rw),
+            sizeof(UINT), sizeof(struct nsi_ip_cmpt_rw),
             sizeof(struct nsi_ip_cmpt_dynamic), 0
         },
         NULL,
@@ -1314,7 +1314,7 @@ static struct module_table ipv6_tables[] =
     {
         NSI_IP_COMPARTMENT_TABLE,
         {
-            sizeof(DWORD), sizeof(struct nsi_ip_cmpt_rw),
+            sizeof(UINT), sizeof(struct nsi_ip_cmpt_rw),
             sizeof(struct nsi_ip_cmpt_dynamic), 0
         },
         NULL,
