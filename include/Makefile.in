@@ -801,6 +801,7 @@ SOURCES = \
 	windows.system.idl \
 	windows.system.power.idl \
 	windows.system.userprofile.idl \
+	windows.ui.idl \
 	windowscontracts.idl \
 	windowsx.h \
 	wine/debug.h \
