@@ -128,15 +128,9 @@ struct privilege
 
 struct group
 {
-    struct list entry;
-    unsigned    enabled  : 1; /* is the sid currently enabled? */
-    unsigned    def      : 1; /* is the sid enabled by default? */
-    unsigned    logon    : 1; /* is this a logon sid? */
-    unsigned    mandatory: 1; /* is this sid always enabled? */
-    unsigned    owner    : 1; /* can this sid be an owner of an object? */
-    unsigned    resource : 1; /* is this a domain-local group? */
-    unsigned    deny_only: 1; /* is this a sid that should be use for denying only? */
-    struct sid  sid;
+    struct list    entry;
+    unsigned int   attrs;
+    struct sid     sid;
 };
 
 static void token_dump( struct object *obj, int verbose );
@@ -523,17 +517,11 @@ static struct token *create_token( unsigned int primary, unsigned int session_id
                 release_object( token );
                 return NULL;
             }
+            group->attrs = groups[i].attrs;
             copy_sid( &group->sid, groups[i].sid );
-            group->enabled = TRUE;
-            group->def = TRUE;
-            group->logon = (groups[i].attrs & SE_GROUP_LOGON_ID) != 0;
-            group->mandatory = (groups[i].attrs & SE_GROUP_MANDATORY) != 0;
-            group->owner = (groups[i].attrs & SE_GROUP_OWNER) != 0;
-            group->resource = FALSE;
-            group->deny_only = FALSE;
             list_add_tail( &token->groups, &group->entry );
             /* Use first owner capable group as owner and primary group */
-            if (!token->primary_group && group->owner)
+            if (!token->primary_group && (group->attrs & SE_GROUP_OWNER))
             {
                 token->owner = &group->sid;
                 token->primary_group = &group->sid;
@@ -628,9 +616,8 @@ struct token *token_duplicate( struct token *src_token, unsigned primary,
         memcpy( newgroup, group, size );
         if (filter_group( group, remove_groups, remove_group_count ))
         {
-            newgroup->enabled = 0;
-            newgroup->def = 0;
-            newgroup->deny_only = 1;
+            newgroup->attrs &= ~(SE_GROUP_ENABLED | SE_GROUP_ENABLED_BY_DEFAULT);
+            newgroup->attrs |= SE_GROUP_USE_FOR_DENY_ONLY;
         }
         list_add_tail( &token->groups, &newgroup->entry );
         if (src_token->primary_group == &group->sid)
@@ -888,8 +875,8 @@ int token_sid_present( struct token *token, const struct sid *sid, int deny )
 
     LIST_FOR_EACH_ENTRY( group, &token->groups, struct group, entry )
     {
-        if (!group->enabled) continue;
-        if (group->deny_only && !deny) continue;
+        if (!(group->attrs & SE_GROUP_ENABLED)) continue;
+        if (!deny && (group->attrs & SE_GROUP_USE_FOR_DENY_ONLY)) continue;
         if (equal_sid( &group->sid, sid )) return TRUE;
     }
 
@@ -1411,16 +1398,8 @@ DECL_HANDLER(get_token_groups)
             {
                 LIST_FOR_EACH_ENTRY( group, &token->groups, const struct group, entry )
                 {
-                    *attr_ptr = 0;
-                    if (group->mandatory) *attr_ptr |= SE_GROUP_MANDATORY;
-                    if (group->def) *attr_ptr |= SE_GROUP_ENABLED_BY_DEFAULT;
-                    if (group->enabled) *attr_ptr |= SE_GROUP_ENABLED;
-                    if (group->owner) *attr_ptr |= SE_GROUP_OWNER;
-                    if (group->deny_only) *attr_ptr |= SE_GROUP_USE_FOR_DENY_ONLY;
-                    if (group->resource) *attr_ptr |= SE_GROUP_RESOURCE;
-                    if (group->logon) *attr_ptr |= SE_GROUP_LOGON_ID;
                     sid = copy_sid( sid, &group->sid );
-                    attr_ptr++;
+                    *attr_ptr++ = group->attrs;
                 }
             }
         }
