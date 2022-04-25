@@ -30,7 +30,6 @@
 #include "winbase.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "x11drv.h"
 
 #define VK_NO_PROTOTYPES
@@ -165,7 +164,7 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
 
     if (src->enabledExtensionCount > 0)
     {
-        enabled_extensions = heap_calloc(src->enabledExtensionCount, sizeof(*src->ppEnabledExtensionNames));
+        enabled_extensions = calloc(src->enabledExtensionCount, sizeof(*src->ppEnabledExtensionNames));
         if (!enabled_extensions)
         {
             ERR("Failed to allocate memory for enabled extensions\n");
@@ -214,7 +213,7 @@ static void wine_vk_surface_release(struct wine_vk_surface *surface)
     if (surface->window)
         XDestroyWindow(gdi_display, surface->window);
 
-    heap_free(surface);
+    free(surface);
 }
 
 void wine_vk_surface_destroy(HWND hwnd)
@@ -273,7 +272,7 @@ static VkResult X11DRV_vkCreateInstance(const VkInstanceCreateInfo *create_info,
 
     res = pvkCreateInstance(&create_info_host, NULL /* allocator */, instance);
 
-    heap_free((void *)create_info_host.ppEnabledExtensionNames);
+    free((void *)create_info_host.ppEnabledExtensionNames);
     return res;
 }
 
@@ -317,7 +316,7 @@ static VkResult X11DRV_vkCreateWin32SurfaceKHR(VkInstance instance,
         return VK_ERROR_INCOMPATIBLE_DRIVER;
     }
 
-    x11_surface = heap_alloc_zero(sizeof(*x11_surface));
+    x11_surface = calloc(1, sizeof(*x11_surface));
     if (!x11_surface)
         return VK_ERROR_OUT_OF_HOST_MEMORY;
 
@@ -578,7 +577,7 @@ static VkResult X11DRV_vkGetPhysicalDeviceSurfaceFormats2KHR(VkPhysicalDevice ph
     if (!formats)
         return pvkGetPhysicalDeviceSurfaceFormatsKHR(phys_dev, surface_info_host.surface, count, NULL);
 
-    formats_host = heap_calloc(*count, sizeof(*formats_host));
+    formats_host = calloc(*count, sizeof(*formats_host));
     if (!formats_host) return VK_ERROR_OUT_OF_HOST_MEMORY;
     result = pvkGetPhysicalDeviceSurfaceFormatsKHR(phys_dev, surface_info_host.surface, count, formats_host);
     if (result == VK_SUCCESS || result == VK_INCOMPLETE)
@@ -587,7 +586,7 @@ static VkResult X11DRV_vkGetPhysicalDeviceSurfaceFormats2KHR(VkPhysicalDevice ph
             formats[i].surfaceFormat = formats_host[i];
     }
 
-    heap_free(formats_host);
+    free(formats_host);
     return result;
 }
 

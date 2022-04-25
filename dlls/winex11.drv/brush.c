@@ -122,8 +122,7 @@ static Pixmap BRUSH_DitherColor( COLORREF color, int depth)
             XUnlockDisplay( gdi_display );
             return 0;
         }
-        ditherImage->data = HeapAlloc( GetProcessHeap(), 0,
-                                       ditherImage->height * ditherImage->bytes_per_line );
+        ditherImage->data = malloc( ditherImage->height * ditherImage->bytes_per_line );
     }
 
     if (color != prevColor)

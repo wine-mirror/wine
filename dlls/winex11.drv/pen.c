@@ -78,7 +78,7 @@ HPEN CDECL X11DRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern 
         if (!size) return 0;
 
         physDev->pen.ext = 1;
-        elp = HeapAlloc( GetProcessHeap(), 0, size );
+        elp = malloc( size );
 
         NtGdiExtGetObjectW( hpen, size, elp );
         logpen.lopnStyle = elp->elpPenStyle;
@@ -145,7 +145,7 @@ HPEN CDECL X11DRV_SelectPen( PHYSDEV dev, HPEN hpen, const struct brush_pattern 
         for(i = 0; i < physDev->pen.dash_len; i++)
             physDev->pen.dashes[i] = min( physDev->pen.dashes[i] * physDev->pen.width, 255 );
 
-    HeapFree( GetProcessHeap(), 0, elp );
+    free( elp );
 
     return hpen;
 }

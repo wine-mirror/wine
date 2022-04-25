@@ -31,7 +31,6 @@
 #include "winreg.h"
 #include "wingdi.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 #include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11settings);
@@ -101,7 +100,7 @@ static BOOL nores_get_modes(ULONG_PTR id, DWORD flags, DEVMODEW **new_modes, UIN
     RECT primary = get_host_primary_monitor_rect();
     DEVMODEW *modes;
 
-    modes = heap_calloc(1, sizeof(*modes));
+    modes = calloc(1, sizeof(*modes));
     if (!modes)
     {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
@@ -126,7 +125,7 @@ static BOOL nores_get_modes(ULONG_PTR id, DWORD flags, DEVMODEW **new_modes, UIN
 
 static void nores_free_modes(DEVMODEW *modes)
 {
-    heap_free(modes);
+    free(modes);
 }
 
 static BOOL nores_get_current_mode(ULONG_PTR id, DEVMODEW *mode)
@@ -431,7 +430,7 @@ static void set_display_depth(ULONG_PTR display_id, DWORD depth)
         }
     }
 
-    display_depth = heap_alloc(sizeof(*display_depth));
+    display_depth = malloc(sizeof(*display_depth));
     if (!display_depth)
     {
         ERR("Failed to allocate memory.\n");
@@ -595,7 +594,7 @@ static DEVMODEW *get_full_mode(ULONG_PTR id, DEVMODEW *dev_mode)
         return NULL;
     }
 
-    if (!(full_mode = heap_alloc(sizeof(*found_mode) + found_mode->dmDriverExtra)))
+    if (!(full_mode = malloc(sizeof(*found_mode) + found_mode->dmDriverExtra)))
     {
         handler.free_modes(modes);
         return NULL;
@@ -612,7 +611,7 @@ static DEVMODEW *get_full_mode(ULONG_PTR id, DEVMODEW *dev_mode)
 static void free_full_mode(DEVMODEW *mode)
 {
     if (!is_detached_mode(mode))
-        heap_free(mode);
+        free(mode);
 }
 
 static LONG get_display_settings(struct x11drv_display_setting **new_displays,
@@ -629,7 +628,7 @@ static LONG get_display_settings(struct x11drv_display_setting **new_displays,
     for (display_idx = 0; !NtUserEnumDisplayDevices( NULL, display_idx, &display_device, 0 ); ++display_idx)
         ++display_count;
 
-    displays = heap_calloc(display_count, sizeof(*displays));
+    displays = calloc(display_count, sizeof(*displays));
     if (!displays)
         goto done;
 
@@ -692,7 +691,7 @@ static LONG get_display_settings(struct x11drv_display_setting **new_displays,
     return DISP_CHANGE_SUCCESSFUL;
 
 done:
-    heap_free(displays);
+    free(displays);
     return ret;
 }
 
@@ -956,7 +955,7 @@ LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
                 full_mode = get_full_mode(displays[display_idx].id, &displays[display_idx].desired_mode);
                 if (!full_mode)
                 {
-                    heap_free(displays);
+                    free(displays);
                     return DISP_CHANGE_BADMODE;
                 }
 
@@ -964,7 +963,7 @@ LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
                 {
                     ERR("Failed to write %s display settings to registry.\n", wine_dbgstr_w(devname));
                     free_full_mode(full_mode);
-                    heap_free(displays);
+                    free(displays);
                     return DISP_CHANGE_NOTUPDATED;
                 }
 
@@ -976,14 +975,14 @@ LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
 
     if (flags & (CDS_TEST | CDS_NORESET))
     {
-        heap_free(displays);
+        free(displays);
         return DISP_CHANGE_SUCCESSFUL;
     }
 
     if (all_detached_settings(displays, display_count))
     {
         WARN("Detaching all displays is not permitted.\n");
-        heap_free(displays);
+        free(displays);
         return DISP_CHANGE_SUCCESSFUL;
     }
 
@@ -995,6 +994,6 @@ LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
         ret = apply_display_settings(displays, display_count, TRUE);
     if (ret == DISP_CHANGE_SUCCESSFUL)
         X11DRV_DisplayDevices_Update(TRUE);
-    heap_free(displays);
+    free(displays);
     return ret;
 }

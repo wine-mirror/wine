@@ -29,7 +29,6 @@
 #include <dlfcn.h>
 #include "x11drv.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 
@@ -87,8 +86,8 @@ static int query_screens(void)
         !pXineramaQueryExtension( gdi_display, &event_base, &error_base ) ||
         !(screens = pXineramaQueryScreens( gdi_display, &count ))) return 0;
 
-    if (monitors != &default_monitor) HeapFree( GetProcessHeap(), 0, monitors );
-    if ((monitors = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*monitors) )))
+    if (monitors != &default_monitor) free( monitors );
+    if ((monitors = malloc( count * sizeof(*monitors) )))
     {
         nb_monitors = count;
         for (i = 0; i < nb_monitors; i++)
@@ -125,7 +124,7 @@ static BOOL xinerama_get_gpus( struct gdi_gpu **new_gpus, int *count )
     struct gdi_gpu *gpus;
 
     /* Xinerama has no support for GPU, faking one */
-    gpus = heap_calloc( 1, sizeof(*gpus) );
+    gpus = calloc( 1, sizeof(*gpus) );
     if (!gpus)
         return FALSE;
 
@@ -139,7 +138,7 @@ static BOOL xinerama_get_gpus( struct gdi_gpu **new_gpus, int *count )
 
 static void xinerama_free_gpus( struct gdi_gpu *gpus )
 {
-    heap_free( gpus );
+    free( gpus );
 }
 
 static BOOL xinerama_get_adapters( ULONG_PTR gpu_id, struct gdi_adapter **new_adapters, int *count )
@@ -154,7 +153,7 @@ static BOOL xinerama_get_adapters( ULONG_PTR gpu_id, struct gdi_adapter **new_ad
         return FALSE;
 
     /* Being lazy, actual adapter count may be less */
-    adapters = heap_calloc( nb_monitors, sizeof(*adapters) );
+    adapters = calloc( nb_monitors, sizeof(*adapters) );
     if (!adapters)
         return FALSE;
 
@@ -206,7 +205,7 @@ static BOOL xinerama_get_adapters( ULONG_PTR gpu_id, struct gdi_adapter **new_ad
 
 static void xinerama_free_adapters( struct gdi_adapter *adapters )
 {
-    heap_free( adapters );
+    free( adapters );
 }
 
 static BOOL xinerama_get_monitors( ULONG_PTR adapter_id, struct gdi_monitor **new_monitors, int *count )
@@ -228,7 +227,7 @@ static BOOL xinerama_get_monitors( ULONG_PTR adapter_id, struct gdi_monitor **ne
             monitor_count++;
     }
 
-    monitor = heap_calloc( monitor_count, sizeof(*monitor) );
+    monitor = calloc( monitor_count, sizeof(*monitor) );
     if (!monitor)
         return FALSE;
 
@@ -259,7 +258,7 @@ static BOOL xinerama_get_monitors( ULONG_PTR adapter_id, struct gdi_monitor **ne
 
 static void xinerama_free_monitors( struct gdi_monitor *monitors, int count )
 {
-    heap_free( monitors );
+    free( monitors );
 }
 
 void xinerama_init( unsigned int width, unsigned int height )

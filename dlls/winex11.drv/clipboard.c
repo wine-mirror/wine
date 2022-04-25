@@ -291,7 +291,7 @@ static void register_builtin_formats(void)
     struct clipboard_format *formats;
     unsigned int i;
 
-    if (!(formats = HeapAlloc( GetProcessHeap(), 0, ARRAY_SIZE(builtin_formats) * sizeof(*formats)))) return;
+    if (!(formats = malloc( ARRAY_SIZE(builtin_formats) * sizeof(*formats)))) return;
 
     for (i = 0; i < ARRAY_SIZE(builtin_formats); i++)
     {
@@ -316,7 +316,7 @@ static void register_formats( const UINT *ids, const Atom *atoms, unsigned int c
     struct clipboard_format *formats;
     unsigned int i;
 
-    if (!(formats = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*formats)))) return;
+    if (!(formats = malloc( count * sizeof(*formats)))) return;
 
     for (i = 0; i < count; i++)
     {
@@ -352,7 +352,7 @@ static void register_win32_formats( const UINT *ids, UINT size )
             if (find_win32_format( *ids )) continue;  /* it already exists */
             if (!GetClipboardFormatNameW( *ids, buffer, 256 )) continue;  /* not a named format */
             if (!(len = WideCharToMultiByte( CP_UNIXCP, 0, buffer, -1, NULL, 0, NULL, NULL ))) continue;
-            if (!(names[count] = HeapAlloc( GetProcessHeap(), 0, len ))) continue;
+            if (!(names[count] = malloc( len ))) continue;
             WideCharToMultiByte( CP_UNIXCP, 0, buffer, -1, names[count], len, NULL, NULL );
             new_ids[count++] = *ids;
         }
@@ -360,7 +360,7 @@ static void register_win32_formats( const UINT *ids, UINT size )
 
         XInternAtoms( thread_display(), names, count, False, atoms );
         register_formats( new_ids, atoms, count );
-        while (count) HeapFree( GetProcessHeap(), 0, names[--count] );
+        while (count) free( names[--count] );
     }
 }
 
@@ -580,7 +580,7 @@ static WCHAR* uri_to_dos(char *encodedURI)
     WCHAR *ret = NULL;
     int i;
     int j = 0;
-    char *uri = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, strlen(encodedURI) + 1);
+    char *uri = calloc( 1, strlen(encodedURI) + 1 );
     if (uri == NULL)
         return NULL;
     for (i = 0; encodedURI[i]; ++i)
@@ -601,7 +601,7 @@ static WCHAR* uri_to_dos(char *encodedURI)
             else
             {
                 WARN("invalid URI encoding in %s\n", debugstr_a(encodedURI));
-                HeapFree(GetProcessHeap(), 0, uri);
+                free( uri );
                 return NULL;
             }
         }
@@ -649,7 +649,7 @@ static WCHAR* uri_to_dos(char *encodedURI)
             ret = wine_get_dos_file_name(&uri[5]);
         }
     }
-    HeapFree(GetProcessHeap(), 0, uri);
+    free( uri );
     return ret;
 }
 
@@ -865,7 +865,7 @@ static HANDLE import_text_html( Atom type, const void *data, size_t size )
     {
         len = WideCharToMultiByte( CP_UTF8, 0, (const WCHAR *)data + 1, size / sizeof(WCHAR) - 1,
                                    NULL, 0, NULL, NULL );
-        if (!(text = HeapAlloc( GetProcessHeap(), 0, len ))) return 0;
+        if (!(text = malloc( len ))) return 0;
         WideCharToMultiByte( CP_UTF8, 0, (const WCHAR *)data + 1, size / sizeof(WCHAR) - 1,
                              text, len, NULL, NULL );
         size = len;
@@ -882,7 +882,7 @@ static HANDLE import_text_html( Atom type, const void *data, size_t size )
         strcpy( p + size, trailer );
         TRACE( "returning %s\n", debugstr_a( ret ));
     }
-    HeapFree( GetProcessHeap(), 0, text );
+    free( text );
     return ret;
 }
 
@@ -904,7 +904,7 @@ static HANDLE import_text_uri_list( Atom type, const void *data, size_t size )
     int end = 0;
     DROPFILES *dropFiles = NULL;
 
-    if (!(out = HeapAlloc(GetProcessHeap(), 0, capacity * sizeof(WCHAR)))) return 0;
+    if (!(out = malloc( capacity * sizeof(WCHAR) ))) return 0;
 
     while (end < size)
     {
@@ -916,28 +916,30 @@ static HANDLE import_text_uri_list( Atom type, const void *data, size_t size )
             break;
         }
 
-        uri = HeapAlloc(GetProcessHeap(), 0, end - start + 1);
+        uri = malloc( end - start + 1 );
         if (uri == NULL)
             break;
         lstrcpynA(uri, &uriList[start], end - start + 1);
         path = uri_to_dos(uri);
         TRACE("converted URI %s to DOS path %s\n", debugstr_a(uri), debugstr_w(path));
-        HeapFree(GetProcessHeap(), 0, uri);
+        HeapFree( GetProcessHeap(), 0, uri );
 
         if (path)
         {
             int pathSize = strlenW(path) + 1;
             if (pathSize > capacity - total)
             {
+                WCHAR *new_out;
                 capacity = 2*capacity + pathSize;
-                out = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, out, (capacity + 1)*sizeof(WCHAR));
-                if (out == NULL)
+                new_out = realloc( out, (capacity + 1) * sizeof(WCHAR) );
+                if (!new_out)
                     goto done;
+                out = new_out;
             }
             memcpy(&out[total], path, pathSize * sizeof(WCHAR));
             total += pathSize;
         done:
-            HeapFree(GetProcessHeap(), 0, path);
+            free( path );
             if (out == NULL)
                 break;
         }
@@ -958,7 +960,7 @@ static HANDLE import_text_uri_list( Atom type, const void *data, size_t size )
             memcpy( (char*)dropFiles + dropFiles->pFiles, out, (total + 1) * sizeof(WCHAR) );
         }
     }
-    HeapFree(GetProcessHeap(), 0, out);
+    free( out );
     return dropFiles;
 }
 
@@ -979,7 +981,7 @@ static HANDLE import_targets( Atom type, const void *data, size_t size )
     register_x11_formats( properties, count );
 
     /* the builtin formats contain duplicates, so allocate some extra space */
-    if (!(formats = HeapAlloc( GetProcessHeap(), 0, (count + ARRAY_SIZE(builtin_formats)) * sizeof(*formats ))))
+    if (!(formats = malloc( (count + ARRAY_SIZE(builtin_formats)) * sizeof(*formats ))))
         return 0;
 
     pos = 0;
@@ -997,7 +999,7 @@ static HANDLE import_targets( Atom type, const void *data, size_t size )
         else TRACE( "property %s (ignoring)\n", debugstr_xatom( properties[i] ));
     }
 
-    HeapFree( GetProcessHeap(), 0, current_x11_formats );
+    free( current_x11_formats );
     current_x11_formats = formats;
     nb_current_x11_formats = pos;
     return (HANDLE)1;
@@ -1039,7 +1041,7 @@ static HANDLE import_selection( Display *display, Window win, Atom selection,
         return 0;
     }
     ret = format->import( type, data, size );
-    HeapFree( GetProcessHeap(), 0, data );
+    free( data );
     return ret;
 }
 
@@ -1121,7 +1123,7 @@ static char *string_from_unicode_text( UINT codepage, HANDLE handle, UINT *size 
     UINT lenW = GlobalSize( handle ) / sizeof(WCHAR);
     DWORD len = WideCharToMultiByte( codepage, 0, strW, lenW, NULL, 0, NULL, NULL );
 
-    if ((str = HeapAlloc( GetProcessHeap(), 0, len )))
+    if ((str = malloc( len )))
     {
         WideCharToMultiByte( codepage, 0, strW, lenW, str, len, NULL, NULL);
         GlobalUnlock( handle );
@@ -1153,7 +1155,7 @@ static BOOL export_string( Display *display, Window win, Atom prop, Atom target,
 
     if (!text) return FALSE;
     put_property( display, win, prop, target, 8, text, size );
-    HeapFree( GetProcessHeap(), 0, text );
+    free( text );
     GlobalUnlock( handle );
     return TRUE;
 }
@@ -1171,7 +1173,7 @@ static BOOL export_utf8_string( Display *display, Window win, Atom prop, Atom ta
 
     if (!text) return FALSE;
     put_property( display, win, prop, target, 8, text, size );
-    HeapFree( GetProcessHeap(), 0, text );
+    free( text );
     GlobalUnlock( handle );
     return TRUE;
 }
@@ -1213,7 +1215,7 @@ static BOOL export_compound_text( Display *display, Window win, Atom prop, Atom 
         XFree( textprop.value );
     }
 
-    HeapFree( GetProcessHeap(), 0, text );
+    free( text );
     return TRUE;
 }
 
@@ -1254,7 +1256,7 @@ static BOOL export_image_bmp( Display *display, Window win, Atom prop, Atom targ
     BITMAPFILEHEADER *bfh;
 
     bmpsize = sizeof(BITMAPFILEHEADER) + GlobalSize( handle );
-    bfh = HeapAlloc( GetProcessHeap(), 0, bmpsize );
+    bfh = malloc( bmpsize );
     if (bfh)
     {
         /* bitmap file header */
@@ -1269,7 +1271,7 @@ static BOOL export_image_bmp( Display *display, Window win, Atom prop, Atom targ
     }
     GlobalUnlock( handle );
     put_property( display, win, prop, target, 8, bfh, bmpsize );
-    HeapFree( GetProcessHeap(), 0, bfh );
+    free( bfh );
     return TRUE;
 }
 
@@ -1285,11 +1287,11 @@ static BOOL export_enhmetafile( Display *display, Window win, Atom prop, Atom ta
     void *ptr;
 
     if (!(size = GetEnhMetaFileBits( handle, 0, NULL ))) return FALSE;
-    if (!(ptr = HeapAlloc( GetProcessHeap(), 0, size ))) return FALSE;
+    if (!(ptr = malloc( size ))) return FALSE;
 
     GetEnhMetaFileBits( handle, size, ptr );
     put_property( display, win, prop, target, 8, ptr, size );
-    HeapFree( GetProcessHeap(), 0, ptr );
+    free( ptr );
     return TRUE;
 }
 
@@ -1340,7 +1342,7 @@ static BOOL export_hdrop( Display *display, Window win, Atom prop, Atom target, 
     UINT textUriListSize = 32;
     UINT next = 0;
 
-    textUriList = HeapAlloc( GetProcessHeap(), 0, textUriListSize );
+    textUriList = malloc( textUriListSize );
     if (!textUriList) return FALSE;
     numFiles = DragQueryFileW( handle, 0xFFFFFFFF, NULL, 0 );
     for (i = 0; i < numFiles; i++)
@@ -1352,11 +1354,11 @@ static BOOL export_hdrop( Display *display, Window win, Atom prop, Atom target, 
         UINT u;
 
         dosFilenameSize = 1 + DragQueryFileW( handle, i, NULL, 0 );
-        dosFilename = HeapAlloc(GetProcessHeap(), 0, dosFilenameSize*sizeof(WCHAR));
+        dosFilename = malloc( dosFilenameSize * sizeof(WCHAR) );
         if (dosFilename == NULL) goto failed;
         DragQueryFileW( handle, i, dosFilename, dosFilenameSize );
         unixFilename = wine_get_unix_file_name(dosFilename);
-        HeapFree(GetProcessHeap(), 0, dosFilename);
+        free( dosFilename );
         if (unixFilename == NULL) goto failed;
         uriSize = 8 + /* file:/// */
                 3 * (lstrlenA(unixFilename) - 1) + /* "%xy" per char except first '/' */
@@ -1364,7 +1366,7 @@ static BOOL export_hdrop( Display *display, Window win, Atom prop, Atom target, 
         if ((next + uriSize) > textUriListSize)
         {
             UINT biggerSize = max( 2 * textUriListSize, next + uriSize );
-            void *bigger = HeapReAlloc( GetProcessHeap(), 0, textUriList, biggerSize );
+            void *bigger = realloc( textUriList, biggerSize );
             if (bigger)
             {
                 textUriList = bigger;
@@ -1391,11 +1393,11 @@ static BOOL export_hdrop( Display *display, Window win, Atom prop, Atom target, 
         HeapFree(GetProcessHeap(), 0, unixFilename);
     }
     put_property( display, win, prop, target, 8, textUriList, next );
-    HeapFree( GetProcessHeap(), 0, textUriList );
+    free( textUriList );
     return TRUE;
 
 failed:
-    HeapFree( GetProcessHeap(), 0, textUriList );
+    free( textUriList );
     return FALSE;
 }
 
@@ -1413,9 +1415,9 @@ static UINT *get_clipboard_formats( UINT *size )
     *size = 256;
     for (;;)
     {
-        if (!(ids = HeapAlloc( GetProcessHeap(), 0, *size * sizeof(*ids) ))) return NULL;
+        if (!(ids = malloc( *size * sizeof(*ids) ))) return NULL;
         if (GetUpdatedClipboardFormats( ids, *size, size )) break;
-        HeapFree( GetProcessHeap(), 0, ids );
+        free( ids );
         if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return NULL;
     }
     register_win32_formats( ids, *size );
@@ -1450,10 +1452,9 @@ static BOOL export_targets( Display *display, Window win, Atom prop, Atom target
     if (!(formats = get_clipboard_formats( &count ))) return FALSE;
 
     /* the builtin formats contain duplicates, so allocate some extra space */
-    if (!(targets = HeapAlloc( GetProcessHeap(), 0,
-                               (count + ARRAY_SIZE(builtin_formats)) * sizeof(*targets) )))
+    if (!(targets = malloc( (count + ARRAY_SIZE(builtin_formats)) * sizeof(*targets) )))
     {
-        HeapFree( GetProcessHeap(), 0, formats );
+        free( formats );
         return FALSE;
     }
 
@@ -1468,8 +1469,8 @@ static BOOL export_targets( Display *display, Window win, Atom prop, Atom target
     }
 
     put_property( display, win, prop, XA_ATOM, 32, targets, pos );
-    HeapFree( GetProcessHeap(), 0, targets );
-    HeapFree( GetProcessHeap(), 0, formats );
+    free( targets );
+    free( formats );
     return TRUE;
 }
 
@@ -1600,18 +1601,17 @@ static BOOL X11DRV_CLIPBOARD_GetProperty(Display *display, Window w, Atom prop,
                                AnyPropertyType, atype, &aformat, &nitems, &remain, &buffer))
         {
             WARN("Failed to read property\n");
-            HeapFree( GetProcessHeap(), 0, val );
+            free( val );
             return FALSE;
         }
 
         count = get_property_size( aformat, nitems );
-        if (!val) *data = HeapAlloc( GetProcessHeap(), 0, pos * sizeof(int) + count + 1 );
-        else *data = HeapReAlloc( GetProcessHeap(), 0, val, pos * sizeof(int) + count + 1 );
+        *data = realloc( val, pos * sizeof(int) + count + 1 );
 
         if (!*data)
         {
             XFree( buffer );
-            HeapFree( GetProcessHeap(), 0, val );
+            free( val );
             return FALSE;
         }
         val = *data;
@@ -1669,7 +1669,7 @@ static BOOL read_property( Display *display, Window w, Atom prop,
         struct clipboard_data_packet *packet, *packet2;
         BOOL res;
 
-        HeapFree(GetProcessHeap(), 0, *data);
+        free( *data );
         *data = NULL;
 
         list_init(&packets);
@@ -1702,15 +1702,15 @@ static BOOL read_property( Display *display, Window w, Atom prop,
             /* Retrieved entire data. */
             if (prop_size == 0)
             {
-                HeapFree(GetProcessHeap(), 0, prop_data);
+                free( prop_data );
                 res = TRUE;
                 break;
             }
 
-            packet = HeapAlloc(GetProcessHeap(), 0, sizeof(*packet));
+            packet = malloc( sizeof(*packet) );
             if (!packet)
             {
-                HeapFree(GetProcessHeap(), 0, prop_data);
+                free( prop_data );
                 res = FALSE;
                 break;
             }
@@ -1723,7 +1723,7 @@ static BOOL read_property( Display *display, Window w, Atom prop,
 
         if (res)
         {
-            buf = HeapAlloc(GetProcessHeap(), 0, bufsize + 1);
+            buf = malloc( bufsize + 1 );
             if (buf)
             {
                 unsigned long bytes_copied = 0;
@@ -1742,8 +1742,8 @@ static BOOL read_property( Display *display, Window w, Atom prop,
 
         LIST_FOR_EACH_ENTRY_SAFE( packet, packet2, &packets, struct clipboard_data_packet, entry)
         {
-            HeapFree(GetProcessHeap(), 0, packet->data);
-            HeapFree(GetProcessHeap(), 0, packet);
+            free( packet->data );
+            free( packet );
         }
 
         return res;
@@ -1848,7 +1848,7 @@ static BOOL request_selection_contents( Display *display, BOOL changed )
 
     if (!changed || !OpenClipboard( clipboard_hwnd ))
     {
-        HeapFree( GetProcessHeap(), 0, data );
+        free( data );
         return FALSE;
     }
 
@@ -1859,7 +1859,7 @@ static BOOL request_selection_contents( Display *display, BOOL changed )
 
     if (format) format->import( type, data, size );
 
-    HeapFree( GetProcessHeap(), 0, last_data );
+    free( last_data );
     last_selection = current_selection;
     last_owner = owner;
     last_format = format;

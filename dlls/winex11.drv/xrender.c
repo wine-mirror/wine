@@ -362,8 +362,7 @@ const struct gdi_dc_funcs *X11DRV_XRender_Init(void)
         return NULL;
     }
 
-    glyphsetCache = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-                              sizeof(*glyphsetCache) * INIT_CACHE_SIZE);
+    glyphsetCache = calloc( sizeof(*glyphsetCache), INIT_CACHE_SIZE );
 
     glyphsetCacheSize = INIT_CACHE_SIZE;
     lastfree = 0;
@@ -471,7 +470,7 @@ static void update_xrender_clipping( struct xrender_physdev *dev, HRGN rgn )
         pXRenderSetPictureClipRectangles( gdi_display, dev->pict,
                                           dev->x11dev->dc_rect.left, dev->x11dev->dc_rect.top,
                                           (XRectangle *)data->Buffer, data->rdh.nCount );
-        HeapFree( GetProcessHeap(), 0, data );
+        free( data );
     }
 }
 
@@ -630,14 +629,14 @@ static void FreeEntry(int entry)
                 formatEntry->glyphset = 0;
             }
             if(formatEntry->nrealized) {
-                HeapFree(GetProcessHeap(), 0, formatEntry->realized);
+                free( formatEntry->realized );
                 formatEntry->realized = NULL;
-                HeapFree(GetProcessHeap(), 0, formatEntry->gis);
+                free( formatEntry->gis );
                 formatEntry->gis = NULL;
                 formatEntry->nrealized = 0;
             }
 
-            HeapFree(GetProcessHeap(), 0, formatEntry);
+            free( formatEntry );
             glyphsetCache[entry].format[type][format] = NULL;
         }
     }
@@ -684,18 +683,12 @@ static int AllocEntry(void)
 
   TRACE("Growing cache\n");
   
-  if (glyphsetCache)
-    glyphsetCache = HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-			      glyphsetCache,
-			      (glyphsetCacheSize + INIT_CACHE_SIZE)
-			      * sizeof(*glyphsetCache));
-  else
-    glyphsetCache = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
-			      (glyphsetCacheSize + INIT_CACHE_SIZE)
-			      * sizeof(*glyphsetCache));
+  glyphsetCache = realloc( glyphsetCache,
+                           (glyphsetCacheSize + INIT_CACHE_SIZE) * sizeof(*glyphsetCache) );
 
-  for(best = i = glyphsetCacheSize; i < glyphsetCacheSize + INIT_CACHE_SIZE;
-      i++) {
+  for (best = i = glyphsetCacheSize; i < glyphsetCacheSize + INIT_CACHE_SIZE; i++)
+  {
+    memset( &glyphsetCache[i], 0, sizeof(glyphsetCache[i]) );
     glyphsetCache[i].next = i + 1;
     glyphsetCache[i].count = -1;
   }
@@ -891,7 +884,7 @@ static void set_physdev_format( struct xrender_physdev *physdev, enum wxr_format
 static BOOL create_xrender_dc( PHYSDEV *pdev, enum wxr_format format )
 {
     X11DRV_PDEVICE *x11dev = get_x11drv_dev( *pdev );
-    struct xrender_physdev *physdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physdev) );
+    struct xrender_physdev *physdev = calloc( 1, sizeof(*physdev) );
 
     if (!physdev) return FALSE;
     physdev->x11dev = x11dev;
@@ -967,7 +960,7 @@ static BOOL CDECL xrenderdrv_DeleteDC( PHYSDEV dev )
     if (physdev->cache_index != -1) dec_ref_cache( physdev->cache_index );
     pthread_mutex_unlock( &xrender_mutex );
 
-    HeapFree( GetProcessHeap(), 0, physdev );
+    free( physdev );
     return TRUE;
 }
 
@@ -1061,34 +1054,22 @@ static void UploadGlyph(struct xrender_physdev *physDev, UINT glyph, enum glyph_
 
     /* If there is nothing for the current type, we create the entry. */
     if( !entry->format[type][format] ) {
-        entry->format[type][format] = HeapAlloc(GetProcessHeap(),
-                                          HEAP_ZERO_MEMORY,
-                                          sizeof(gsCacheEntryFormat));
+        entry->format[type][format] = calloc( 1, sizeof(gsCacheEntryFormat) );
     }
     formatEntry = entry->format[type][format];
 
     if(formatEntry->nrealized <= glyph) {
-        formatEntry->nrealized = (glyph / 128 + 1) * 128;
+        size_t new_size = (glyph / 128 + 1) * 128;
 
-	if (formatEntry->realized)
-	    formatEntry->realized = HeapReAlloc(GetProcessHeap(),
-				      HEAP_ZERO_MEMORY,
-				      formatEntry->realized,
-				      formatEntry->nrealized * sizeof(BOOL));
-	else
-	    formatEntry->realized = HeapAlloc(GetProcessHeap(),
-				      HEAP_ZERO_MEMORY,
-				      formatEntry->nrealized * sizeof(BOOL));
+        formatEntry->realized = realloc( formatEntry->realized, new_size * sizeof(BOOL) );
+        memset( formatEntry->realized + formatEntry->nrealized, 0,
+                (new_size - formatEntry->nrealized) * sizeof(BOOL) );
 
-        if (formatEntry->gis)
-	    formatEntry->gis = HeapReAlloc(GetProcessHeap(),
-				   HEAP_ZERO_MEMORY,
-				   formatEntry->gis,
-				   formatEntry->nrealized * sizeof(formatEntry->gis[0]));
-        else
-	    formatEntry->gis = HeapAlloc(GetProcessHeap(),
-				   HEAP_ZERO_MEMORY,
-                                   formatEntry->nrealized * sizeof(formatEntry->gis[0]));
+        formatEntry->gis = realloc( formatEntry->gis, new_size * sizeof(formatEntry->gis[0]) );
+        memset( formatEntry->gis + formatEntry->nrealized, 0,
+                (new_size - formatEntry->nrealized) * sizeof(formatEntry->gis[0]) );
+
+        formatEntry->nrealized = new_size;
     }
 
 
@@ -1118,7 +1099,7 @@ static void UploadGlyph(struct xrender_physdev *physDev, UINT glyph, enum glyph_
     }
 
 
-    buf = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, buflen);
+    buf = calloc( 1, buflen );
     if (buflen)
         NtGdiGetGlyphOutline( physDev->dev.hdc, glyph, ggo_format, &gm, buflen, buf, &identity, FALSE );
     else
@@ -1209,7 +1190,7 @@ static void UploadGlyph(struct xrender_physdev *physDev, UINT glyph, enum glyph_
                           buflen ? buf : zero, buflen ? buflen : sizeof(zero));
     }
 
-    HeapFree(GetProcessHeap(), 0, buf);
+    free( buf );
     formatEntry->gis[glyph] = gi;
 }
 
@@ -1369,7 +1350,7 @@ static BOOL CDECL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
     TRACE("Writing %s at %d,%d\n", debugstr_wn(wstr,count),
           physdev->x11dev->dc_rect.left + x, physdev->x11dev->dc_rect.top + y);
 
-    elts = HeapAlloc(GetProcessHeap(), 0, sizeof(XGlyphElt16) * count);
+    elts = malloc( sizeof(XGlyphElt16) * count );
 
     /* There's a bug in XRenderCompositeText that ignores the xDst and yDst parameters.
        So we pass zeros to the function and move to our starting position using the first
@@ -1431,7 +1412,7 @@ static BOOL CDECL xrenderdrv_ExtTextOut( PHYSDEV dev, INT x, INT y, UINT flags,
                             pict,
                             formatEntry->font_format,
                             0, 0, 0, 0, elts, count);
-    HeapFree(GetProcessHeap(), 0, elts);
+    free( elts );
 
     pthread_mutex_unlock( &xrender_mutex );
     add_device_bounds( physdev->x11dev, &bounds );
@@ -1701,7 +1682,7 @@ static void xrender_put_image( Pixmap src_pixmap, Picture src_pict, Picture mask
         if (clip_data)
             pXRenderSetPictureClipRectangles( gdi_display, dst_pict, 0, 0,
                                               (XRectangle *)clip_data->Buffer, clip_data->rdh.nCount );
-        HeapFree( GetProcessHeap(), 0, clip_data );
+        free( clip_data );
     }
     else
     {

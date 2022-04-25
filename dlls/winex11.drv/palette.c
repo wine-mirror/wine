@@ -332,7 +332,7 @@ int X11DRV_PALETTE_Init(void)
     {
         get_palette_entries( GetStockObject(DEFAULT_PALETTE), 0, NB_RESERVED_COLORS, sys_pal_template );
 
-        if ((mapping = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(int) * NB_RESERVED_COLORS )))
+        if ((mapping = calloc( 1, sizeof(int) * NB_RESERVED_COLORS )))
             palette_set_mapping( GetStockObject(DEFAULT_PALETTE), mapping );
 
         if (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_PRIVATE)
@@ -364,7 +364,8 @@ static BOOL X11DRV_PALETTE_BuildPrivateMap( const PALETTEENTRY *sys_pal_template
     XColor color;
     int i;
 
-    if((COLOR_sysPal = HeapAlloc(GetProcessHeap(), 0, sizeof(PALETTEENTRY)*palette_size)) == NULL) {
+    if((COLOR_sysPal = malloc( sizeof(PALETTEENTRY) * palette_size )) == NULL)
+    {
         WARN("Unable to allocate the system palette\n");
         return FALSE;
     }
@@ -526,7 +527,8 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
 	 * X guidelines and does binary search...
 	 */
 
-	if((pixDynMapping = HeapAlloc(GetProcessHeap(), 0, sizeof(long)*palette_size)) == NULL) {
+	if (!(pixDynMapping = malloc( sizeof(*pixDynMapping) * palette_size )))
+        {
 	    WARN("Out of memory while building system palette.\n");
 	    return FALSE;
         }
@@ -594,10 +596,10 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
 		      (X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_VIRTUAL || !(X11DRV_PALETTE_PaletteFlags & X11DRV_PALETTE_FIXED)) )
 		     ? NB_RESERVED_COLORS/2 : -1;
 
-   COLOR_sysPal = HeapAlloc(GetProcessHeap(),0,sizeof(PALETTEENTRY)*256);
+   COLOR_sysPal = malloc( sizeof(PALETTEENTRY) * 256 );
    if(COLOR_sysPal == NULL) {
        ERR("Unable to allocate the system palette!\n");
-       HeapFree(GetProcessHeap(), 0, pixDynMapping);
+       free( pixDynMapping );
        return FALSE;
    }
 
@@ -605,10 +607,10 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
 
    if (default_visual.depth <= 8)
    {
-       X11DRV_PALETTE_XPixelToPalette = HeapAlloc( GetProcessHeap(), 0, 256 * sizeof(int) );
+       X11DRV_PALETTE_XPixelToPalette = malloc( 256 * sizeof(int) );
        if(X11DRV_PALETTE_XPixelToPalette == NULL) {
            ERR("Out of memory: XPixelToPalette!\n");
-           HeapFree(GetProcessHeap(), 0, pixDynMapping);
+           free( pixDynMapping );
            return FALSE;
        }
        for( i = 0; i < 256; i++ )
@@ -619,10 +621,10 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
     * RGB->pixel calculation in X11DRV_PALETTE_ToPhysical().
     */
 
-   X11DRV_PALETTE_PaletteToXPixel = HeapAlloc(GetProcessHeap(),0,sizeof(int)*256);
+   X11DRV_PALETTE_PaletteToXPixel = malloc( sizeof(int) * 256 );
    if(X11DRV_PALETTE_PaletteToXPixel == NULL) {
        ERR("Out of memory: PaletteToXPixel!\n");
-       HeapFree(GetProcessHeap(), 0, pixDynMapping);
+       free( pixDynMapping );
        return FALSE;
    }
 
@@ -658,7 +660,7 @@ static BOOL X11DRV_PALETTE_BuildSharedMap( const PALETTEENTRY *sys_pal_template 
           X11DRV_PALETTE_XPixelToPalette[X11DRV_PALETTE_PaletteToXPixel[i]] = i;
    }
 
-   HeapFree(GetProcessHeap(), 0, pixDynMapping);
+   free( pixDynMapping );
 
    return TRUE;
 }
@@ -1194,10 +1196,7 @@ UINT CDECL X11DRV_RealizePalette( PHYSDEV dev, HPALETTE hpal, BOOL primary )
 
     /* initialize palette mapping table */
     prev_mapping = palette_get_mapping( hpal );
-    if (prev_mapping)
-        mapping = HeapReAlloc( GetProcessHeap(), 0, prev_mapping, sizeof(int)*num_entries);
-    else 
-	mapping = HeapAlloc( GetProcessHeap(), 0, sizeof(int)*num_entries);
+    mapping = realloc( prev_mapping, sizeof(int) * num_entries );
 
     if(mapping == NULL) {
         ERR("Unable to allocate new mapping -- memory exhausted!\n");
@@ -1302,7 +1301,7 @@ BOOL CDECL X11DRV_UnrealizePalette( HPALETTE hpal )
     if (mapping)
     {
         XDeleteContext( gdi_display, (XID)hpal, palette_context );
-        HeapFree( GetProcessHeap(), 0, mapping );
+        free( mapping );
     }
     return TRUE;
 }

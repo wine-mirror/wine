@@ -37,7 +37,6 @@
 #include "x11drv.h"
 #include "xcomposite.h"
 #include "winternl.h"
-#include "wine/heap.h"
 #include "wine/debug.h"
 
 #ifdef SONAME_LIBGL
@@ -467,7 +466,7 @@ static BOOL X11DRV_WineGL_InitOpenglInfo(void)
     gl_renderer = (const char *)opengl_funcs.gl.p_glGetString(GL_RENDERER);
     gl_version  = (const char *)opengl_funcs.gl.p_glGetString(GL_VERSION);
     str = (const char *) opengl_funcs.gl.p_glGetString(GL_EXTENSIONS);
-    glExtensions = HeapAlloc(GetProcessHeap(), 0, strlen(str)+sizeof(legacy_extensions));
+    glExtensions = malloc( strlen(str) + sizeof(legacy_extensions) );
     strcpy(glExtensions, str);
     strcat(glExtensions, legacy_extensions);
 
@@ -1023,7 +1022,7 @@ static void init_pixel_formats( Display *display )
     }
     TRACE("Found %d bitmap capable fbconfigs\n", bmp_formats);
 
-    list = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (nCfgs + bmp_formats) * sizeof(*list));
+    list = calloc( 1, (nCfgs + bmp_formats) * sizeof(*list) );
 
     /* Fill the pixel format list. Put onscreen formats at the top and offscreen ones at the bottom.
      * Do this as GLX doesn't guarantee that the list is sorted */
@@ -1165,7 +1164,7 @@ static void release_gl_drawable( struct gl_drawable *gl )
     default:
         break;
     }
-    HeapFree( GetProcessHeap(), 0, gl );
+    free( gl );
 }
 
 /* Mark any allocated context using the glx drawable 'old' to use 'new' */
@@ -1308,7 +1307,7 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct wgl_pixel
     width  = min( max( 1, rect.right ), 65535 );
     height = min( max( 1, rect.bottom ), 65535 );
 
-    if (!(gl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*gl) ))) return NULL;
+    if (!(gl = calloc( 1, sizeof(*gl) ))) return NULL;
 
     /* Default GLX and WGL swap interval is 1, but in case of glXSwapIntervalSGI
      * there is no way to query it, so we have to store it here.
@@ -1358,7 +1357,7 @@ static struct gl_drawable *create_gl_drawable( HWND hwnd, const struct wgl_pixel
 
     if (!gl->drawable)
     {
-        HeapFree( GetProcessHeap(), 0, gl );
+        free( gl );
         return NULL;
     }
 
@@ -1724,7 +1723,7 @@ static struct wgl_context * WINAPI glxdrv_wglCreateContext( HDC hdc )
         return NULL;
     }
 
-    if ((ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret))))
+    if ((ret = calloc( 1, sizeof(*ret) )))
     {
         ret->hdc = hdc;
         ret->fmt = gl->format;
@@ -1763,7 +1762,8 @@ static BOOL WINAPI glxdrv_wglDeleteContext(struct wgl_context *ctx)
     release_gl_drawable( ctx->drawables[1] );
     release_gl_drawable( ctx->new_drawables[0] );
     release_gl_drawable( ctx->new_drawables[1] );
-    return HeapFree( GetProcessHeap(), 0, ctx );
+    free( ctx );
+    return TRUE;
 }
 
 /***********************************************************************
@@ -2011,7 +2011,7 @@ static struct wgl_context *X11DRV_wglCreateContextAttribsARB( HDC hdc, struct wg
         return NULL;
     }
 
-    if ((ret = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*ret))))
+    if ((ret = calloc( 1, sizeof(*ret) )))
     {
         ret->hdc = hdc;
         ret->fmt = gl->format;
@@ -2077,7 +2077,7 @@ static struct wgl_context *X11DRV_wglCreateContextAttribsARB( HDC hdc, struct wg
         {
             /* In the future we should convert the GLX error to a win32 one here if needed */
             WARN("Context creation failed (error %#x).\n", err);
-            HeapFree( GetProcessHeap(), 0, ret );
+            free( ret );
             ret = NULL;
         }
         else
@@ -2127,7 +2127,7 @@ static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat
         return NULL;
     }
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    object = calloc( 1, sizeof(*object) );
     if (NULL == object) {
         SetLastError(ERROR_NO_SYSTEM_RESOURCES);
         return NULL;
@@ -2285,7 +2285,7 @@ static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat
     return object;
 
 create_failed:
-    HeapFree(GetProcessHeap(), 0, object);
+    free( object );
     TRACE("->(FAILED)\n");
     return NULL;
 }
@@ -2305,7 +2305,7 @@ static BOOL X11DRV_wglDestroyPbufferARB( struct wgl_pbuffer *object )
     pglXDestroyPbuffer(gdi_display, object->drawable);
     if (object->tmp_context)
         pglXDestroyContext(gdi_display, object->tmp_context);
-    HeapFree(GetProcessHeap(), 0, object);
+    free( object );
     return GL_TRUE;
 }
 
@@ -2323,7 +2323,7 @@ static HDC X11DRV_wglGetPbufferDCARB( struct wgl_pbuffer *object )
     hdc = NtGdiOpenDCW( NULL, NULL, NULL, 0, TRUE, NULL, NULL, NULL );
     if (!hdc) return 0;
 
-    if (!(gl = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*gl) )))
+    if (!(gl = calloc( 1, sizeof(*gl) )))
     {
         NtGdiDeleteObjectApp( hdc );
         return 0;
@@ -2589,7 +2589,7 @@ static BOOL X11DRV_wglChoosePixelFormatARB( HDC hdc, const int *piAttribIList, c
         return GL_FALSE;
     }
 
-    if (!(formats = heap_alloc(nCfgs * sizeof(*formats))))
+    if (!(formats = malloc( nCfgs * sizeof(*formats) )))
     {
         ERR("No memory.\n");
         XFree(cfgs);
@@ -2639,7 +2639,7 @@ static BOOL X11DRV_wglChoosePixelFormatARB( HDC hdc, const int *piAttribIList, c
     for (i = 0; i < *nNumFormats; ++i)
         piFormats[i] = formats[i].format;
 
-    heap_free(formats);
+    free( formats );
     XFree(cfgs);
     return GL_TRUE;
 }
@@ -2923,7 +2923,7 @@ static BOOL X11DRV_wglGetPixelFormatAttribfvARB( HDC hdc, int iPixelFormat, int 
     TRACE("(%p, %d, %d, %d, %p, %p)\n", hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, pfValues);
 
     /* Allocate a temporary array to store integer values */
-    attr = HeapAlloc(GetProcessHeap(), 0, nAttributes * sizeof(int));
+    attr = malloc( nAttributes * sizeof(int) );
     if (!attr) {
         ERR("couldn't allocate %d array\n", nAttributes);
         return GL_FALSE;
@@ -2939,7 +2939,7 @@ static BOOL X11DRV_wglGetPixelFormatAttribfvARB( HDC hdc, int iPixelFormat, int 
         }
     }
 
-    HeapFree(GetProcessHeap(), 0, attr);
+    free( attr );
     return ret;
 }
 
