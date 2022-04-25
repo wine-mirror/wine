@@ -77,6 +77,15 @@ static const char *debugstr_format( UINT id )
 }
 
 /**************************************************************************
+ *           NtUserOpenClipboard    (win32u.@)
+ */
+BOOL WINAPI NtUserOpenClipboard( HWND hwnd, ULONG unk )
+{
+    FIXME( "\n" );
+    return FALSE;
+}
+
+/**************************************************************************
  *           NtUserCloseClipboard    (win32u.@)
  */
 BOOL WINAPI NtUserCloseClipboard(void)
@@ -99,6 +108,15 @@ BOOL WINAPI NtUserCloseClipboard(void)
     if (viewer) NtUserMessageCall( viewer, WM_DRAWCLIPBOARD, (WPARAM)owner, 0,
                                    0, NtUserSendNotifyMessage, FALSE );
     return ret;
+}
+
+/**************************************************************************
+ *           NtUserEmptyClipboard    (win32u.@)
+ */
+BOOL WINAPI NtUserEmptyClipboard(void)
+{
+    FIXME( "\n" );
+    return FALSE;
 }
 
 /**************************************************************************
@@ -409,4 +427,22 @@ void release_clipboard_owner( HWND hwnd )
     if (viewer)
         NtUserMessageCall( viewer, WM_DRAWCLIPBOARD, (WPARAM)owner, 0,
                            0, NtUserSendNotifyMessage, FALSE );
+}
+
+/**************************************************************************
+ *           NtUserSetClipboardData    (win32u.@)
+ */
+NTSTATUS WINAPI NtUserSetClipboardData( UINT format, HANDLE handle, struct set_clipboard_params *params )
+{
+    FIXME( "\n" );
+    return 0;
+}
+
+/**************************************************************************
+ *           NtUserGetClipboardData    (win32u.@)
+ */
+HANDLE WINAPI NtUserGetClipboardData( UINT format, struct get_clipboard_params *params )
+{
+    FIXME( "\n" );
+    return 0;
 }

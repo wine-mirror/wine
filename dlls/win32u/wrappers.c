@@ -844,6 +844,12 @@ BOOL WINAPI NtUserEndDeferWindowPosEx( HDWP hdwp, BOOL async )
     return unix_funcs->pNtUserEndDeferWindowPosEx( hdwp, async );
 }
 
+BOOL WINAPI NtUserEmptyClipboard(void)
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserEmptyClipboard();
+}
+
 NTSTATUS WINAPI NtUserEnumDisplayDevices( UNICODE_STRING *device, DWORD index,
                                           DISPLAY_DEVICEW *info, DWORD flags )
 {
@@ -887,6 +893,12 @@ ATOM WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDC
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserGetClassInfoEx( instance, name, wc, menu_name, ansi );
+}
+
+HANDLE WINAPI NtUserGetClipboardData( UINT format, struct get_clipboard_params *params )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserGetClipboardData( format, params );
 }
 
 BOOL WINAPI NtUserGetCursorInfo( CURSORINFO *info )
@@ -995,6 +1007,12 @@ DWORD WINAPI NtUserMsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handl
     return unix_funcs->pNtUserMsgWaitForMultipleObjectsEx( count, handles, timeout, mask, flags );
 }
 
+BOOL WINAPI NtUserOpenClipboard( HWND hwnd, ULONG unk )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserOpenClipboard( hwnd, unk );
+}
+
 BOOL WINAPI NtUserPeekMessage( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT flags )
 {
     if (!unix_funcs) return FALSE;
@@ -1068,6 +1086,12 @@ HWND WINAPI NtUserSetCapture( HWND hwnd )
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserSetCapture( hwnd );
+}
+
+NTSTATUS WINAPI NtUserSetClipboardData( UINT format, HANDLE handle, struct set_clipboard_params *params )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserSetClipboardData( format, handle, params );
 }
 
 HCURSOR WINAPI NtUserSetCursor( HCURSOR cursor )

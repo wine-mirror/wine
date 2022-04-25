@@ -211,6 +211,7 @@ struct unix_funcs
     LRESULT  (WINAPI *pNtUserDispatchMessage)( const MSG *msg );
     BOOL     (WINAPI *pNtUserDrawIconEx)( HDC hdc, INT x0, INT y0, HICON icon, INT width,
                                           INT height, UINT istep, HBRUSH hbr, UINT flags );
+    BOOL     (WINAPI *pNtUserEmptyClipboard)(void);
     BOOL     (WINAPI *pNtUserEnableMenuItem)( HMENU handle, UINT id, UINT flags );
     BOOL     (WINAPI *pNtUserEndDeferWindowPosEx)( HDWP hdwp, BOOL async );
     BOOL     (WINAPI *pNtUserEndPaint)( HWND hwnd, const PAINTSTRUCT *ps );
@@ -224,6 +225,7 @@ struct unix_funcs
     SHORT    (WINAPI *pNtUserGetAsyncKeyState)( INT key );
     ATOM     (WINAPI *pNtUserGetClassInfoEx)( HINSTANCE instance, UNICODE_STRING *name, WNDCLASSEXW *wc,
                                               struct client_menu_name *menu_name, BOOL ansi );
+    HANDLE   (WINAPI *pNtUserGetClipboardData)( UINT format, struct get_clipboard_params *params );
     BOOL     (WINAPI *pNtUserGetCursorInfo)( CURSORINFO *info );
     HDC      (WINAPI *pNtUserGetDCEx)( HWND hwnd, HRGN clip_rgn, DWORD flags );
     LONG     (WINAPI *pNtUserGetDisplayConfigBufferSizes)( UINT32 flags, UINT32 *num_path_info,
@@ -245,6 +247,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserMoveWindow)( HWND hwnd, INT x, INT y, INT cx, INT cy, BOOL repaint );
     DWORD    (WINAPI *pNtUserMsgWaitForMultipleObjectsEx)( DWORD count, const HANDLE *handles,
                                                            DWORD timeout, DWORD mask, DWORD flags );
+    BOOL     (WINAPI *pNtUserOpenClipboard)( HWND hwnd, ULONG unk );
     BOOL     (WINAPI *pNtUserPeekMessage)( MSG *msg_out, HWND hwnd, UINT first, UINT last, UINT flags );
     BOOL     (WINAPI *pNtUserPostMessage)( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam );
     BOOL     (WINAPI *pNtUserPostThreadMessage)( DWORD thread, UINT msg, WPARAM wparam, LPARAM lparam );
@@ -261,6 +264,8 @@ struct unix_funcs
     UINT     (WINAPI *pNtUserSendInput)( UINT count, INPUT *inputs, int size );
     HWND     (WINAPI *pNtUserSetActiveWindow)( HWND hwnd );
     HWND     (WINAPI *pNtUserSetCapture)( HWND hwnd );
+    NTSTATUS (WINAPI *pNtUserSetClipboardData)( UINT format, HANDLE handle,
+                                                struct set_clipboard_params *params );
     DWORD    (WINAPI *pNtUserSetClassLong)( HWND hwnd, INT offset, LONG newval, BOOL ansi );
     ULONG_PTR (WINAPI *pNtUserSetClassLongPtr)( HWND hwnd, INT offset, LONG_PTR newval, BOOL ansi );
     WORD     (WINAPI *pNtUserSetClassWord)( HWND hwnd, INT offset, WORD newval );

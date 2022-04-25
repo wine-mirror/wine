@@ -857,7 +857,7 @@
 @ stub NtUserDwmKernelShutdown
 @ stub NtUserDwmKernelStartup
 @ stub NtUserDwmValidateWindow
-@ stub NtUserEmptyClipboard
+@ stdcall NtUserEmptyClipboard()
 @ stub NtUserEnableChildWindowDpiMessage
 @ stub NtUserEnableIAMAccess
 @ stdcall NtUserEnableMenuItem(long long long)
@@ -902,7 +902,7 @@
 @ stdcall -syscall NtUserGetClassName(long long ptr)
 @ stub NtUserGetClipCursor
 @ stub NtUserGetClipboardAccessToken
-@ stub NtUserGetClipboardData
+@ stdcall NtUserGetClipboardData(long ptr)
 @ stdcall -syscall NtUserGetClipboardFormatName(long ptr long)
 @ stdcall -syscall NtUserGetClipboardOwner()
 @ stdcall -syscall NtUserGetClipboardSequenceNumber()
@@ -1090,7 +1090,7 @@
 @ stub NtUserNotifyIMEStatus
 @ stub NtUserNotifyProcessCreate
 @ stdcall -syscall NtUserNotifyWinEvent(long long long long)
-@ stub NtUserOpenClipboard
+@ stdcall NtUserOpenClipboard(long long)
 @ stdcall -syscall NtUserOpenDesktop(ptr long long)
 @ stdcall -syscall NtUserOpenInputDesktop(long long long)
 @ stub NtUserOpenThreadDesktop
@@ -1174,7 +1174,7 @@
 @ stdcall NtUserSetClassLong(long long long long)
 @ stdcall NtUserSetClassLongPtr(long long long long)
 @ stdcall NtUserSetClassWord(long long long)
-@ stub NtUserSetClipboardData
+@ stdcall NtUserSetClipboardData(long ptr ptr)
 @ stdcall NtUserSetClipboardViewer(long)
 @ stub NtUserSetCoreWindow
 @ stub NtUserSetCoreWindowPartner
