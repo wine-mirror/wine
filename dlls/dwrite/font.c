@@ -2,7 +2,7 @@
  *    Font and collections
  *
  * Copyright 2011 Huw Davies
- * Copyright 2012, 2014-2017 Nikolay Sivov for CodeWeavers
+ * Copyright 2012, 2014-2022 Nikolay Sivov for CodeWeavers
  * Copyright 2014 Aric Stewart for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
@@ -3524,13 +3524,13 @@ static HRESULT fontcollection_add_family(struct dwrite_fontcollection *collectio
     return S_OK;
 }
 
-static HRESULT init_font_collection(struct dwrite_fontcollection *collection, BOOL is_system)
+static HRESULT init_font_collection(struct dwrite_fontcollection *collection, IDWriteFactory7 *factory,
+        BOOL is_system)
 {
     collection->IDWriteFontCollection3_iface.lpVtbl = is_system ? &systemfontcollectionvtbl : &fontcollectionvtbl;
     collection->refcount = 1;
-    collection->count = 0;
-    collection->size = 0;
-    collection->family_data = NULL;
+    collection->factory = factory;
+    IDWriteFactory7_AddRef(collection->factory);
 
     return S_OK;
 }
@@ -4637,7 +4637,7 @@ HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerat
     if (!(collection = calloc(1, sizeof(*collection))))
         return E_OUTOFMEMORY;
 
-    hr = init_font_collection(collection, is_system);
+    hr = init_font_collection(collection, factory, is_system);
     if (FAILED(hr))
     {
         free(collection);
@@ -4775,9 +4775,6 @@ HRESULT create_font_collection(IDWriteFactory7 *factory, IDWriteFontFileEnumerat
 
     if (is_system)
         fontcollection_add_replacements(collection);
-
-    collection->factory = factory;
-    IDWriteFactory7_AddRef(factory);
 
     return hr;
 }
@@ -5092,7 +5089,7 @@ HRESULT get_eudc_fontcollection(IDWriteFactory7 *factory, IDWriteFontCollection3
     if (!(collection = calloc(1, sizeof(*collection))))
         return E_OUTOFMEMORY;
 
-    hr = init_font_collection(collection, FALSE);
+    hr = init_font_collection(collection, factory, FALSE);
     if (FAILED(hr))
     {
         free(collection);
@@ -5100,8 +5097,6 @@ HRESULT get_eudc_fontcollection(IDWriteFactory7 *factory, IDWriteFontCollection3
     }
 
     *ret = &collection->IDWriteFontCollection3_iface;
-    collection->factory = factory;
-    IDWriteFactory7_AddRef(factory);
 
     /* return empty collection if EUDC fonts are not configured */
     swprintf(eudckeypathW, ARRAY_SIZE(eudckeypathW), L"EUDC\\%u", GetACP());
