@@ -6631,6 +6631,7 @@ static void test_h264_decoder(void)
     IMFMediaType *media_type;
     IMFTransform *transform;
     DWORD status, length;
+    BOOL is_win7 = FALSE;
     ULONG i, ret, flags;
     HANDLE output_file;
     IMFSample *sample;
@@ -6741,10 +6742,9 @@ static void test_h264_decoder(void)
         winetest_push_context("out %lu", i);
         ok(hr == S_OK, "GetOutputAvailableType returned %#lx\n", hr);
         check_media_type(media_type, default_outputs[i], -1);
-        if (FAILED(hr = IMFMediaType_GetItem(media_type, &MF_MT_VIDEO_ROTATION, NULL)))
-            check_media_type(media_type, default_outputs_win7[i], -1);
-        else
-            check_media_type(media_type, default_outputs_extra[i], -1);
+        hr = IMFMediaType_GetItem(media_type, &MF_MT_VIDEO_ROTATION, NULL);
+        is_win7 = broken(FAILED(hr));
+        check_media_type(media_type, is_win7 ? default_outputs_win7[i] : default_outputs_extra[i], -1);
         ret = IMFMediaType_Release(media_type);
         ok(ret == 0, "Release returned %lu\n", ret);
         winetest_pop_context();
@@ -6772,11 +6772,9 @@ static void test_h264_decoder(void)
         init_media_type(media_type, output_type_desc, i + 1);
     }
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    if (broken(hr == MF_E_INVALIDMEDIATYPE))
-    {
-        init_media_type(media_type, output_type_desc_win7, ARRAY_SIZE(output_type_desc_win7) - 1);
-        hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    }
+    ok(hr == (is_win7 ? MF_E_INVALIDMEDIATYPE : S_OK), "SetOutputType returned %#lx.\n", hr);
+    init_media_type(media_type, is_win7 ? output_type_desc_win7 : output_type_desc, -1);
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     ret = IMFMediaType_Release(media_type);
     ok(ret == 1, "Release returned %lu\n", ret);
