@@ -5193,7 +5193,6 @@ static void test_windows_gaming_input(void)
     UINT32 size;
     HRESULT hr;
     DWORD ret;
-    ULONG ref;
 
     if (!load_combase_functions()) return;
 
@@ -5395,8 +5394,7 @@ static void test_windows_gaming_input(void)
     check_bool_async( bool_async, 1, 4, S_OK, FALSE );
     IAsyncInfo_Release( async_info );
 
-    ref = IAsyncOperation_boolean_Release( bool_async );
-    ok( ref == 0, "Release returned %lu\n", ref );
+    IAsyncOperation_boolean_Release( bool_async );
 
 
     set_hid_expect( file, &expect_enable_fail, sizeof(expect_enable_fail) );
@@ -5423,8 +5421,7 @@ static void test_windows_gaming_input(void)
     check_bool_async( bool_async, 1, 4, 0x8685400d, FALSE );
     IAsyncInfo_Release( async_info );
 
-    ref = IAsyncOperation_boolean_Release( bool_async );
-    ok( ref == 0, "Release returned %lu\n", ref );
+    IAsyncOperation_boolean_Release( bool_async );
 
 
     /* canceling the async op is just ignored */
@@ -5468,8 +5465,7 @@ static void test_windows_gaming_input(void)
     ok( hr == S_OK, "get_Completed returned %#lx\n", hr );
     ok( tmp_handler == NULL, "got handler %p\n", tmp_handler );
 
-    ref = IAsyncOperation_boolean_Release( bool_async );
-    ok( ref == 0, "Release returned %lu\n", ref );
+    IAsyncOperation_boolean_Release( bool_async );
 
 
     /* canceling then closing it calls the handler with closed state */
@@ -5514,8 +5510,7 @@ static void test_windows_gaming_input(void)
     hr = IAsyncOperation_boolean_get_Completed( bool_async, &tmp_handler );
     ok( hr == E_ILLEGAL_METHOD_CALL, "get_Completed returned %#lx\n", hr );
 
-    ref = IAsyncOperation_boolean_Release( bool_async );
-    ok( ref == 0, "Release returned %lu\n", ref );
+    IAsyncOperation_boolean_Release( bool_async );
 
 
     set_hid_expect( file, &expect_enable, sizeof(expect_enable) );
@@ -5523,9 +5518,7 @@ static void test_windows_gaming_input(void)
     todo_wine
     ok( hr == S_OK, "TryEnableAsync returned %#lx\n", hr );
     wait_hid_expect_( __FILE__, __LINE__, file, 100, TRUE );
-    check_bool_async( bool_async, 1, Completed, S_OK, TRUE );
-    ref = IAsyncOperation_boolean_Release( bool_async );
-    ok( ref == 0, "Release returned %lu\n", ref );
+    IAsyncOperation_boolean_Release( bool_async );
 
 
     set_hid_expect( file, expect_reset, sizeof(expect_reset) );
@@ -5533,9 +5526,7 @@ static void test_windows_gaming_input(void)
     todo_wine
     ok( hr == S_OK, "TryResetAsync returned %#lx\n", hr );
     wait_hid_expect_( __FILE__, __LINE__, file, 100, TRUE );
-    check_bool_async( bool_async, 1, Completed, S_OK, TRUE );
-    ref = IAsyncOperation_boolean_Release( bool_async );
-    ok( ref == 0, "Release returned %lu\n", ref );
+    IAsyncOperation_boolean_Release( bool_async );
 
 
     IForceFeedbackMotor_Release( motor );
