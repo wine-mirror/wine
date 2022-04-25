@@ -4974,6 +4974,7 @@ static void test_windows_gaming_input(void)
     static const WCHAR *racing_wheel_class_name = RuntimeClass_Windows_Gaming_Input_RacingWheel;
     static const WCHAR *gamepad_class_name = RuntimeClass_Windows_Gaming_Input_Gamepad;
 
+    IVectorView_SimpleHapticsController *haptics_controllers;
     IRawGameController *raw_controller, *tmp_raw_controller;
     IVectorView_RawGameController *controllers_view;
     IRawGameControllerStatics *controller_statics;
@@ -4981,11 +4982,13 @@ static void test_windows_gaming_input(void)
     IVectorView_RacingWheel *racing_wheels_view;
     IRacingWheelStatics2 *racing_wheel_statics2;
     IRacingWheelStatics *racing_wheel_statics;
+    IRawGameController2 *raw_controller2;
     IVectorView_Gamepad *gamepads_view;
     IGamepadStatics *gamepad_statics;
     IGameController *game_controller;
     IRacingWheel *racing_wheel;
-    UINT32 size;
+    UINT32 size, length;
+    const WCHAR *buffer;
     HSTRING str;
     HRESULT hr;
     DWORD res;
@@ -5096,6 +5099,37 @@ static void test_windows_gaming_input(void)
     IRawGameController_Release( tmp_raw_controller );
 
     IGameController_Release( game_controller );
+
+    hr = IRawGameController_QueryInterface( raw_controller, &IID_IRawGameController2, (void **)&raw_controller2 );
+    todo_wine
+    ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
+    if (hr != S_OK) goto skip_tests;
+
+    hr = IRawGameController2_get_DisplayName( raw_controller2, &str );
+    ok( hr == S_OK, "get_DisplayName returned %#lx\n", hr );
+    buffer = pWindowsGetStringRawBuffer( str, &length );
+    ok( !wcscmp( buffer, L"HID-compliant game controller" ),
+        "get_DisplayName returned %s\n", debugstr_wn( buffer, length ) );
+    pWindowsDeleteString( str );
+
+    hr = IRawGameController2_get_NonRoamableId( raw_controller2, &str );
+    ok( hr == S_OK, "get_NonRoamableId returned %#lx\n", hr );
+    buffer = pWindowsGetStringRawBuffer( str, &length );
+    ok( !wcsncmp( buffer, L"{wgi/nrid/", 10 ),
+        "get_NonRoamableId returned %s\n", debugstr_wn( buffer, length ) );
+    pWindowsDeleteString( str );
+
+    /* FIXME: What kind of HID reports are needed to make this work? */
+    hr = IRawGameController2_get_SimpleHapticsControllers( raw_controller2, &haptics_controllers );
+    ok( hr == S_OK, "get_SimpleHapticsControllers returned %#lx\n", hr );
+    hr = IVectorView_SimpleHapticsController_get_Size( haptics_controllers, &length );
+    ok( hr == S_OK, "get_Size returned %#lx\n", hr );
+    ok( length == 0, "got length %u\n", length );
+    IVectorView_SimpleHapticsController_Release( haptics_controllers );
+
+    IRawGameController2_Release( raw_controller2 );
+
+skip_tests:
     IRawGameController_Release( raw_controller );
 
     hr = IRawGameControllerStatics_remove_RawGameControllerAdded( controller_statics, controller_added_token );
