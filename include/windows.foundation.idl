@@ -23,7 +23,7 @@
 import "inspectable.idl";
 import "asyncinfo.idl";
 import "windowscontracts.idl";
-/* import "eventtoken.idl"; */
+import "eventtoken.idl";
 /* import "ivectorchangedeventargs.idl"; */
 import "windows.foundation.collections.idl";
 
@@ -36,7 +36,11 @@ namespace Windows.Foundation {
     typedef struct TimeSpan TimeSpan;
     interface IAsyncAction;
     interface IClosable;
+    interface IMemoryBuffer;
+    interface IMemoryBufferFactory;
+    interface IMemoryBufferReference;
     interface IStringable;
+    runtimeclass MemoryBuffer;
 
     declare {
         interface Windows.Foundation.Collections.IIterable<HSTRING>;
@@ -55,6 +59,7 @@ namespace Windows.Foundation {
         interface Windows.Foundation.IAsyncOperation<boolean>;
         interface Windows.Foundation.IReference<INT32>;
         interface Windows.Foundation.TypedEventHandler<IInspectable *, IInspectable *>;
+        interface Windows.Foundation.TypedEventHandler<Windows.Foundation.IMemoryBufferReference *, IInspectable *>;
     }
 
     [
@@ -172,5 +177,51 @@ namespace Windows.Foundation {
         [propput] HRESULT Completed([in] Windows.Foundation.AsyncActionCompletedHandler *handler);
         [propget] HRESULT Completed([out, retval] Windows.Foundation.AsyncActionCompletedHandler **handler);
         HRESULT GetResults();
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(fbc4dd2a-245b-11e4-af98-689423260cf8)
+    ]
+    interface IMemoryBuffer : IInspectable
+        requires Windows.Foundation.IClosable
+    {
+        HRESULT CreateReference([out, retval] Windows.Foundation.IMemoryBufferReference **reference);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Foundation.MemoryBuffer),
+        uuid(fbc4dd2b-245b-11e4-af98-689423260cf8)
+    ]
+    interface IMemoryBufferFactory : IInspectable
+    {
+        HRESULT Create([in, range(0x00000000, 0x7fffffff)] UINT32 capacity,
+                       [out, retval] Windows.Foundation.MemoryBuffer **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(fbc4dd29-245b-11e4-af98-689423260cf8)
+    ]
+    interface IMemoryBufferReference : IInspectable
+        requires Windows.Foundation.IClosable
+    {
+        [propget] HRESULT Capacity([out, retval] UINT32 *value);
+        [eventadd] HRESULT Closed([in] Windows.Foundation.TypedEventHandler<Windows.Foundation.IMemoryBufferReference *, IInspectable *> *handler,
+                                  [out, retval] EventRegistrationToken *cookie);
+        [eventremove] HRESULT Closed([in] EventRegistrationToken cookie);
+    }
+
+    [
+        activatable(Windows.Foundation.IMemoryBufferFactory, Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass MemoryBuffer
+    {
+        [default] interface Windows.Foundation.IMemoryBuffer;
+        interface Windows.Foundation.IClosable;
     }
 }
