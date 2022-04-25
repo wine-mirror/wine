@@ -5048,7 +5048,6 @@ static void test_windows_gaming_input(void)
             .report_id = 1,
             .report_len = 2,
             .report_buf = {1, 0x01},
-            .todo = TRUE,
         },
         /* device gain */
         {
@@ -5056,7 +5055,6 @@ static void test_windows_gaming_input(void)
             .report_id = 6,
             .report_len = 2,
             .report_buf = {6, 0xff},
-            .todo = TRUE,
         },
     };
     static struct hid_expect expect_set_gain =
@@ -5284,7 +5282,7 @@ static void test_windows_gaming_input(void)
     set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IRawGameController_get_ForceFeedbackMotors( raw_controller, &motors_view );
     ok( hr == S_OK, "get_ForceFeedbackMotors returned %#lx\n", hr );
-    wait_hid_expect_( __FILE__, __LINE__, file, 100, TRUE ); /* device gain reports are written asynchronously */
+    wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
 
     hr = IVectorView_ForceFeedbackMotor_get_Size( motors_view, &size );
     ok( hr == S_OK, "get_Size returned %#lx\n", hr );

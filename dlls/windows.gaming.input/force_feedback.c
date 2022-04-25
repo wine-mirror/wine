@@ -211,8 +211,13 @@ static const struct IForceFeedbackMotorVtbl motor_vtbl =
 HRESULT force_feedback_motor_create( IDirectInputDevice8W *device, IForceFeedbackMotor **out )
 {
     struct motor *impl;
+    HRESULT hr;
 
     TRACE( "device %p, out %p\n", device, out );
+
+    if (FAILED(hr = IDirectInputDevice8_Unacquire( device ))) goto failed;
+    if (FAILED(hr = IDirectInputDevice8_SetCooperativeLevel( device, GetDesktopWindow(), DISCL_BACKGROUND | DISCL_EXCLUSIVE ))) goto failed;
+    if (FAILED(hr = IDirectInputDevice8_Acquire( device ))) goto failed;
 
     if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
     impl->IForceFeedbackMotor_iface.lpVtbl = &motor_vtbl;
@@ -224,4 +229,10 @@ HRESULT force_feedback_motor_create( IDirectInputDevice8W *device, IForceFeedbac
     *out = &impl->IForceFeedbackMotor_iface;
     TRACE( "created ForceFeedbackMotor %p\n", *out );
     return S_OK;
+
+failed:
+    IDirectInputDevice8_SetCooperativeLevel( device, 0, DISCL_BACKGROUND | DISCL_NONEXCLUSIVE );
+    IDirectInputDevice8_Acquire( device );
+    WARN( "Failed to acquire device exclusively, hr %#lx\n", hr );
+    return hr;
 }
