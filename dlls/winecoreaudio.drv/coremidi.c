@@ -1222,3 +1222,370 @@ NTSTATUS midi_notify_wait(void *args)
 
     return STATUS_SUCCESS;
 }
+
+#ifdef _WIN64
+
+typedef UINT PTR32;
+
+NTSTATUS wow64_midi_init(void *args)
+{
+    struct
+    {
+        PTR32 err;
+    } *params32 = args;
+    struct midi_init_params params =
+    {
+        .err = ULongToPtr(params32->err)
+    };
+    return midi_init(&params);
+}
+
+struct notify_context32
+{
+    BOOL send_notify;
+    WORD dev_id;
+    WORD msg;
+    UINT param_1;
+    UINT param_2;
+    UINT callback;
+    UINT flags;
+    PTR32 device;
+    UINT instance;
+};
+
+static void notify_to_notify32(struct notify_context32 *notify32,
+                               const struct notify_context *notify)
+{
+    notify32->send_notify = notify->send_notify;
+    notify32->dev_id = notify->dev_id;
+    notify32->msg = notify->msg;
+    notify32->param_1 = notify->param_1;
+    notify32->param_2 = notify->param_2;
+    notify32->callback = notify->callback;
+    notify32->flags = notify->flags;
+    notify32->device = PtrToUlong(notify->device);
+    notify32->instance = notify->instance;
+}
+
+struct midi_open_desc32
+{
+    PTR32 hMidi;
+    UINT dwCallback;
+    UINT dwInstance;
+    UINT dnDevNode;
+    UINT cIds;
+    MIDIOPENSTRMID rgIds;
+};
+
+struct midi_hdr32
+{
+    PTR32 lpData;
+    UINT dwBufferLength;
+    UINT dwBytesRecorded;
+    UINT dwUser;
+    UINT dwFlags;
+    PTR32 lpNext;
+    UINT reserved;
+    UINT dwOffset;
+    UINT dwReserved[8];
+};
+
+static UINT wow64_midi_out_prepare(WORD dev_id, struct midi_hdr32 *hdr, UINT hdr_size)
+{
+    TRACE("(%04X, %p, %d);\n", dev_id, hdr, hdr_size);
+
+    if (hdr_size < offsetof(struct midi_hdr32, dwOffset) || !hdr || !hdr->lpData)
+        return MMSYSERR_INVALPARAM;
+    if (hdr->dwFlags & MHDR_PREPARED)
+        return MMSYSERR_NOERROR;
+
+    hdr->lpNext = 0;
+    hdr->dwFlags |= MHDR_PREPARED;
+    hdr->dwFlags &= ~(MHDR_DONE | MHDR_INQUEUE);
+    return MMSYSERR_NOERROR;
+}
+
+static UINT wow64_midi_out_unprepare(WORD dev_id, struct midi_hdr32 *hdr, UINT hdr_size)
+{
+    TRACE("(%04X, %p, %d);\n", dev_id, hdr, hdr_size);
+
+    if (hdr_size < offsetof(struct midi_hdr32, dwOffset) || !hdr || !hdr->lpData)
+        return MMSYSERR_INVALPARAM;
+    if (!(hdr->dwFlags & MHDR_PREPARED))
+        return MMSYSERR_NOERROR;
+    if (hdr->dwFlags & MHDR_INQUEUE)
+        return MIDIERR_STILLPLAYING;
+
+    hdr->dwFlags &= ~MHDR_PREPARED;
+    return MMSYSERR_NOERROR;
+}
+
+NTSTATUS wow64_midi_out_message(void *args)
+{
+    struct
+    {
+        UINT dev_id;
+        UINT msg;
+        UINT user;
+        UINT param_1;
+        UINT param_2;
+        PTR32 err;
+        PTR32 notify;
+    } *params32 = args;
+    struct notify_context32 *notify32 = ULongToPtr(params32->notify);
+    struct midi_open_desc32 *desc32;
+    struct midi_hdr32 *hdr32;
+    struct notify_context notify;
+    MIDIOPENDESC open_desc;
+    MIDIHDR hdr;
+    struct midi_out_message_params params =
+    {
+        .dev_id = params32->dev_id,
+        .msg = params32->msg,
+        .user = params32->user,
+        .param_1 = params32->param_1,
+        .param_2 = params32->param_2,
+        .err = ULongToPtr(params32->err),
+        .notify = &notify
+    };
+    notify32->send_notify = FALSE;
+
+    switch (params32->msg)
+    {
+    case MODM_OPEN:
+        desc32 = ULongToPtr(params32->param_1);
+
+        open_desc.hMidi = ULongToPtr(desc32->hMidi);
+        open_desc.dwCallback = desc32->dwCallback;
+        open_desc.dwInstance = desc32->dwInstance;
+        open_desc.dnDevNode = desc32->dnDevNode;
+        open_desc.cIds = desc32->cIds;
+        open_desc.rgIds.dwStreamID = desc32->rgIds.dwStreamID;
+        open_desc.rgIds.wDeviceID = desc32->rgIds.wDeviceID;
+
+        params.param_1 = (UINT_PTR)&open_desc;
+        break;
+
+    case MODM_LONGDATA:
+        hdr32 = ULongToPtr(params32->param_1);
+
+        memset(&hdr, 0, sizeof(hdr));
+        hdr.lpData = ULongToPtr(hdr32->lpData);
+        hdr.dwBufferLength = hdr32->dwBufferLength;
+        hdr.dwFlags = hdr32->dwFlags;
+
+        params.param_1 = (UINT_PTR)&hdr;
+        params.param_2 = sizeof(hdr);
+        break;
+
+    case MODM_PREPARE: /* prepare and unprepare are easier to handle explicitly */
+        hdr32 = ULongToPtr(params32->param_1);
+
+        *params.err = wow64_midi_out_prepare(params32->dev_id, hdr32, params32->param_2);
+        return STATUS_SUCCESS;
+
+    case MODM_UNPREPARE:
+        hdr32 = ULongToPtr(params32->param_1);
+
+        *params.err = wow64_midi_out_unprepare(params32->dev_id, hdr32, params32->param_2);
+        return STATUS_SUCCESS;
+    }
+
+    midi_out_message(&params);
+
+    switch (params32->msg)
+    {
+    case MODM_LONGDATA:
+        hdr32 = ULongToPtr(params32->param_1);
+
+        hdr32->dwFlags = hdr.dwFlags;
+        break;
+    }
+
+    if (notify.send_notify)
+    {
+        notify_to_notify32(notify32, &notify);
+
+        if (notify.msg == MOM_DONE)
+            notify32->param_1 = params32->param_1; /* restore the 32-bit hdr */
+    }
+    return STATUS_SUCCESS;
+}
+
+static UINT wow64_midi_in_prepare(WORD dev_id, struct midi_hdr32 *hdr, UINT hdr_size)
+{
+    TRACE("(%04X, %p, %d);\n", dev_id, hdr, hdr_size);
+
+    if (hdr_size < offsetof(struct midi_hdr32, dwOffset) || !hdr || !hdr->lpData)
+        return MMSYSERR_INVALPARAM;
+    if (hdr->dwFlags & MHDR_PREPARED)
+        return MMSYSERR_NOERROR;
+
+    hdr->lpNext = 0;
+    hdr->dwFlags |= MHDR_PREPARED;
+    hdr->dwFlags &= ~(MHDR_DONE | MHDR_INQUEUE);
+
+    return MMSYSERR_NOERROR;
+}
+
+static UINT wow64_midi_in_unprepare(WORD dev_id, struct midi_hdr32 *hdr, UINT hdr_size)
+{
+    TRACE("(%04X, %p, %d);\n", dev_id, hdr, hdr_size);
+
+    if (hdr_size < offsetof(struct midi_hdr32, dwOffset) || !hdr || !hdr->lpData)
+        return MMSYSERR_INVALPARAM;
+    if (!(hdr->dwFlags & MHDR_PREPARED))
+        return MMSYSERR_NOERROR;
+    if (hdr->dwFlags & MHDR_INQUEUE)
+        return MIDIERR_STILLPLAYING;
+
+    hdr->dwFlags &= ~MHDR_PREPARED;
+
+    return MMSYSERR_NOERROR;
+}
+
+NTSTATUS wow64_midi_in_message(void *args)
+{
+    struct
+    {
+        UINT dev_id;
+        UINT msg;
+        UINT user;
+        UINT param_1;
+        UINT param_2;
+        PTR32 err;
+        PTR32 notify;
+    } *params32 = args;
+    struct notify_context32 *notify32 = ULongToPtr(params32->notify);
+    struct midi_open_desc32 *desc32;
+    struct midi_hdr32 *hdr32;
+    struct notify_context notify;
+    MIDIOPENDESC open_desc;
+    MIDIHDR *hdr = NULL;
+    struct midi_in_message_params params =
+    {
+        .dev_id = params32->dev_id,
+        .msg = params32->msg,
+        .user = params32->user,
+        .param_1 = params32->param_1,
+        .param_2 = params32->param_2,
+        .err = ULongToPtr(params32->err),
+        .notify = &notify
+    };
+    notify32->send_notify = FALSE;
+
+    switch (params32->msg)
+    {
+    case MIDM_OPEN:
+        desc32 = ULongToPtr(params32->param_1);
+
+        open_desc.hMidi = ULongToPtr(desc32->hMidi);
+        open_desc.dwCallback = desc32->dwCallback;
+        open_desc.dwInstance = desc32->dwInstance;
+        open_desc.dnDevNode = desc32->dnDevNode;
+        open_desc.cIds = desc32->cIds;
+        open_desc.rgIds.dwStreamID = desc32->rgIds.dwStreamID;
+        open_desc.rgIds.wDeviceID = desc32->rgIds.wDeviceID;
+
+        params.param_1 = (UINT_PTR)&open_desc;
+        break;
+
+    case MIDM_ADDBUFFER:
+        hdr32 = ULongToPtr(params32->param_1);
+
+        hdr = calloc(1, sizeof(*hdr));
+        hdr->lpData = ULongToPtr(hdr32->lpData);
+        hdr->dwBufferLength = hdr32->dwBufferLength;
+        hdr->dwFlags = hdr32->dwFlags;
+        hdr->dwReserved[7] = params32->param_1; /* keep hdr32 for MIM_LONGDATA notification */
+
+        params.param_1 = (UINT_PTR)hdr;
+        params.param_2 = sizeof(*hdr);
+        break;
+
+    case MIDM_PREPARE: /* prepare and unprepare are easier to handle explicitly */
+        hdr32 = ULongToPtr(params32->param_1);
+
+        *params.err = wow64_midi_in_prepare(params32->dev_id, hdr32, params32->param_2);
+        return STATUS_SUCCESS;
+
+    case MIDM_UNPREPARE:
+        hdr32 = ULongToPtr(params32->param_1);
+
+        *params.err = wow64_midi_in_unprepare(params32->dev_id, hdr32, params32->param_2);
+        return STATUS_SUCCESS;
+    }
+
+    midi_in_message(&params);
+
+    switch (params32->msg)
+    {
+    case MIDM_ADDBUFFER:
+        hdr32 = ULongToPtr(params32->param_1);
+
+        if (!*params.err)
+        {
+            hdr32->dwFlags = hdr->dwFlags;
+            hdr32->dwBytesRecorded = hdr->dwBytesRecorded;
+            hdr32->lpNext = 0;
+        }
+        else
+            free(hdr);
+        break;
+    }
+
+    if (notify.send_notify)
+    {
+        notify_to_notify32(notify32, &notify);
+
+        if (notify.msg == MIM_LONGDATA)
+        {
+            hdr = (MIDIHDR *)notify.param_1;
+            notify32->param_1 = hdr->dwReserved[7];
+            hdr32 = ULongToPtr(notify32->param_1);
+            hdr32->dwBytesRecorded = hdr->dwBytesRecorded;
+            hdr32->dwFlags = hdr->dwFlags;
+            free(hdr);
+        }
+    }
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS wow64_midi_notify_wait(void *args)
+{
+    struct
+    {
+        PTR32 quit;
+        PTR32 notify;
+    } *params32 = args;
+    struct notify_context32 *notify32 = ULongToPtr(params32->notify);
+    struct midi_hdr32 *hdr32;
+    struct notify_context notify;
+    MIDIHDR *hdr;
+    struct midi_notify_wait_params params =
+    {
+        .quit = ULongToPtr(params32->quit),
+        .notify = &notify
+    };
+    notify32->send_notify = FALSE;
+
+    midi_notify_wait(&params);
+
+    if (!*params.quit && notify.send_notify)
+    {
+        notify_to_notify32(notify32, &notify);
+
+        if (notify.msg == MIM_LONGDATA)
+        {
+            hdr = (MIDIHDR *)notify.param_1;
+            notify32->param_1 = hdr->dwReserved[7];
+            hdr32 = ULongToPtr(notify32->param_1);
+            hdr32->dwBytesRecorded = hdr->dwBytesRecorded;
+            hdr32->dwFlags = hdr->dwFlags;
+            free(hdr);
+        }
+    }
+    return STATUS_SUCCESS;
+}
+
+#endif /* _WIN64 */

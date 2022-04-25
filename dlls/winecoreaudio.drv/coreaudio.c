@@ -1966,11 +1966,11 @@ unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_get_frequency,
     is_started,
     wow64_set_volumes,
-    midi_init,
+    wow64_midi_init,
     midi_release,
-    midi_out_message,
-    midi_in_message,
-    midi_notify_wait,
+    wow64_midi_out_message,
+    wow64_midi_in_message,
+    wow64_midi_notify_wait,
 };
 
 #endif /* _WIN64 */

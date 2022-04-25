@@ -264,6 +264,13 @@ NTSTATUS midi_out_message( void * ) DECLSPEC_HIDDEN;
 NTSTATUS midi_in_message( void * ) DECLSPEC_HIDDEN;
 NTSTATUS midi_notify_wait( void * ) DECLSPEC_HIDDEN;
 
+#ifdef _WIN64
+NTSTATUS wow64_midi_init(void *args) DECLSPEC_HIDDEN;
+NTSTATUS wow64_midi_out_message(void *args) DECLSPEC_HIDDEN;
+NTSTATUS wow64_midi_in_message(void *args) DECLSPEC_HIDDEN;
+NTSTATUS wow64_midi_notify_wait(void *args) DECLSPEC_HIDDEN;
+#endif
+
 extern unixlib_handle_t coreaudio_handle;
 
 #define UNIX_CALL( func, params ) __wine_unix_call( coreaudio_handle, unix_ ## func, params )
