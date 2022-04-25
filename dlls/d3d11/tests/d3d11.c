@@ -6976,9 +6976,9 @@ static void test_device_context_state(void)
     ID3D11Texture2D *texture;
     enum DXGI_FORMAT format;
     float blend_factor[4];
-    DWORD data_size;
     BOOL pred_value;
     ULONG refcount;
+    UINT data_size;
     char data[64];
     HRESULT hr;
 
