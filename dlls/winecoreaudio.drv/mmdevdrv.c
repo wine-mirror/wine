@@ -341,13 +341,15 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out,
     }
 
     for(i = 0; i < params.num; i++){
-        int size = (wcslen(params.endpoints[i].name) + 1) * sizeof(WCHAR);
+        WCHAR *name = (WCHAR *)((char *)params.endpoints + params.endpoints[i].name);
+        int size = (wcslen(name) + 1) * sizeof(WCHAR);
+
         ids[i] = heap_alloc(size);
         if(!ids[i]){
             params.result = E_OUTOFMEMORY;
             goto end;
         }
-        memcpy(ids[i], params.endpoints[i].name, size);
+        memcpy(ids[i], name, size);
         get_device_guid(flow, params.endpoints[i].id, guids + i);
     }
     *def_index = params.default_idx;

@@ -23,7 +23,7 @@ typedef UINT64 stream_handle;
 
 struct endpoint
 {
-    WCHAR *name;
+    unsigned int name;
     DWORD id;
 };
 

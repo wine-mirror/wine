@@ -185,7 +185,7 @@ static BOOL device_has_channels(AudioDeviceID device, EDataFlow flow)
 static NTSTATUS get_endpoint_ids(void *args)
 {
     struct get_endpoint_ids_params *params = args;
-    unsigned int num_devices, i, needed;
+    unsigned int num_devices, i, needed, offset;
     AudioDeviceID *devices, default_id;
     AudioObjectPropertyAddress addr;
     struct endpoint *endpoint;
@@ -196,7 +196,7 @@ static NTSTATUS get_endpoint_ids(void *args)
         AudioDeviceID id;
     } *info;
     OSStatus sc;
-    WCHAR *ptr;
+    UniChar *ptr;
 
     params->num = 0;
     params->default_idx = 0;
@@ -262,21 +262,21 @@ static NTSTATUS get_endpoint_ids(void *args)
     }
     free(devices);
 
-    needed = sizeof(*endpoint) * params->num;
+    offset = needed = sizeof(*endpoint) * params->num;
     endpoint = params->endpoints;
-    ptr = (WCHAR *)(endpoint + params->num);
 
     for(i = 0; i < params->num; i++){
         SIZE_T len = CFStringGetLength(info[i].name);
         needed += (len + 1) * sizeof(WCHAR);
 
         if(needed <= params->size){
-            endpoint->name = ptr;
-            CFStringGetCharacters(info[i].name, CFRangeMake(0, len), (UniChar*)endpoint->name);
+            endpoint->name = offset;
+            ptr = (UniChar *)((char *)params->endpoints + offset);
+            CFStringGetCharacters(info[i].name, CFRangeMake(0, len), ptr);
             ptr[len] = 0;
             endpoint->id = info[i].id;
             endpoint++;
-            ptr += len + 1;
+            offset += (len + 1) * sizeof(WCHAR);
         }
         CFRelease(info[i].name);
         if(info[i].id == default_id) params->default_idx = i;
