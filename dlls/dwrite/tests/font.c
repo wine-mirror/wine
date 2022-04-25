@@ -2654,10 +2654,8 @@ static void test_system_fontcollection(void)
 
         hr = IDWriteFactory6_GetSystemFontCollection(factory6, FALSE, DWRITE_FONT_FAMILY_MODEL_TYPOGRAPHIC,
                 &collection2);
-    todo_wine
         ok(hr == S_OK, "Failed to get collection, hr %#lx.\n", hr);
-    if (SUCCEEDED(hr))
-    {
+
         hr = IDWriteFactory6_GetSystemFontCollection(factory6, FALSE, DWRITE_FONT_FAMILY_MODEL_TYPOGRAPHIC, &c2);
         ok(hr == S_OK, "Failed to get collection, hr %#lx.\n", hr);
         ok(c2 == collection2 && collection != (IDWriteFontCollection *)c2, "Unexpected collection instance.\n");
@@ -2668,7 +2666,6 @@ static void test_system_fontcollection(void)
                 &collection2);
         ok(hr == S_OK, "Failed to get collection, hr %#lx.\n", hr);
         IDWriteFontCollection2_Release(collection2);
-    }
         IDWriteFactory6_Release(factory6);
     }
     else

@@ -5092,20 +5092,34 @@ static HRESULT create_system_fontfile_enumerator(IDWriteFactory7 *factory, IDWri
     return S_OK;
 }
 
-HRESULT get_system_fontcollection(IDWriteFactory7 *factory, IDWriteFontCollection1 **collection)
+HRESULT get_system_fontcollection(IDWriteFactory7 *factory, DWRITE_FONT_FAMILY_MODEL family_model,
+        IDWriteFontCollection **collection)
 {
     IDWriteFontFileEnumerator *enumerator;
+    IDWriteFontSet *fontset;
     HRESULT hr;
 
     *collection = NULL;
 
-    hr = create_system_fontfile_enumerator(factory, &enumerator);
-    if (FAILED(hr))
-        return hr;
+    if (family_model == DWRITE_FONT_FAMILY_MODEL_TYPOGRAPHIC)
+    {
+        if (SUCCEEDED(hr = create_system_fontset(factory, &IID_IDWriteFontSet, (void **)&fontset)))
+        {
+            hr = create_font_collection_from_set(factory, fontset, family_model,
+                    &IID_IDWriteFontCollection, (void **)collection);
+            IDWriteFontSet_Release(fontset);
+        }
+    }
+    else
+    {
+        if (SUCCEEDED(hr = create_system_fontfile_enumerator(factory, &enumerator)))
+        {
+            TRACE("Building system font collection for factory %p.\n", factory);
+            hr = create_font_collection(factory, enumerator, TRUE, (IDWriteFontCollection3 **)collection);
+            IDWriteFontFileEnumerator_Release(enumerator);
+        }
+    }
 
-    TRACE("building system font collection for factory %p\n", factory);
-    hr = create_font_collection(factory, enumerator, TRUE, (IDWriteFontCollection3 **)collection);
-    IDWriteFontFileEnumerator_Release(enumerator);
     return hr;
 }
 
