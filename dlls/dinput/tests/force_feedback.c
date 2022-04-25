@@ -5070,7 +5070,6 @@ static void test_windows_gaming_input(void)
         .report_id = 1,
         .report_len = 2,
         .report_buf = {1, 0x02},
-        .todo = TRUE,
     };
     static struct hid_expect expect_resume =
     {
@@ -5078,7 +5077,6 @@ static void test_windows_gaming_input(void)
         .report_id = 1,
         .report_len = 2,
         .report_buf = {1, 0x03},
-        .todo = TRUE,
     };
     static struct hid_expect expect_stop =
     {
@@ -5086,7 +5084,6 @@ static void test_windows_gaming_input(void)
         .report_id = 1,
         .report_len = 2,
         .report_buf = {1, 0x06},
-        .todo = TRUE,
     };
     static struct hid_expect expect_disable =
     {
@@ -5298,9 +5295,7 @@ static void test_windows_gaming_input(void)
 
     paused = TRUE;
     hr = IForceFeedbackMotor_get_AreEffectsPaused( motor, &paused );
-    todo_wine
     ok( hr == S_OK, "get_AreEffectsPaused returned %#lx\n", hr );
-    todo_wine
     ok( paused == FALSE, "got paused %u\n", paused );
 
     gain = 12345.6;
@@ -5328,15 +5323,12 @@ static void test_windows_gaming_input(void)
 
     set_hid_expect( file, &expect_pause, sizeof(expect_pause) );
     hr = IForceFeedbackMotor_PauseAllEffects( motor );
-    todo_wine
     ok( hr == S_OK, "PauseAllEffects returned %#lx\n", hr );
     set_hid_expect( file, &expect_resume, sizeof(expect_resume) );
     hr = IForceFeedbackMotor_ResumeAllEffects( motor );
-    todo_wine
     ok( hr == S_OK, "ResumeAllEffects returned %#lx\n", hr );
     set_hid_expect( file, &expect_stop, sizeof(expect_stop) );
     hr = IForceFeedbackMotor_StopAllEffects( motor );
-    todo_wine
     ok( hr == S_OK, "StopAllEffects returned %#lx\n", hr );
     set_hid_expect( file, NULL, 0 );
 

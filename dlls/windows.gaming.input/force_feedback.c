@@ -105,8 +105,17 @@ static HRESULT WINAPI motor_GetTrustLevel( IForceFeedbackMotor *iface, TrustLeve
 
 static HRESULT WINAPI motor_get_AreEffectsPaused( IForceFeedbackMotor *iface, BOOLEAN *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct motor *impl = impl_from_IForceFeedbackMotor( iface );
+    DWORD state;
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (FAILED(hr = IDirectInputDevice8_GetForceFeedbackState( impl->device, &state )))
+        return hr;
+
+    *value = (state & DIGFFS_PAUSED);
+    return S_OK;
 }
 
 static HRESULT WINAPI motor_get_MasterGain( IForceFeedbackMotor *iface, double *value )
@@ -171,20 +180,29 @@ static HRESULT WINAPI motor_LoadEffectAsync( IForceFeedbackMotor *iface, IForceF
 
 static HRESULT WINAPI motor_PauseAllEffects( IForceFeedbackMotor *iface )
 {
-    FIXME( "iface %p stub!\n", iface );
-    return E_NOTIMPL;
+    struct motor *impl = impl_from_IForceFeedbackMotor( iface );
+
+    TRACE( "iface %p.\n", iface );
+
+    return IDirectInputDevice8_SendForceFeedbackCommand( impl->device, DISFFC_PAUSE );
 }
 
 static HRESULT WINAPI motor_ResumeAllEffects( IForceFeedbackMotor *iface )
 {
-    FIXME( "iface %p stub!\n", iface );
-    return E_NOTIMPL;
+    struct motor *impl = impl_from_IForceFeedbackMotor( iface );
+
+    TRACE( "iface %p.\n", iface );
+
+    return IDirectInputDevice8_SendForceFeedbackCommand( impl->device, DISFFC_CONTINUE );
 }
 
 static HRESULT WINAPI motor_StopAllEffects( IForceFeedbackMotor *iface )
 {
-    FIXME( "iface %p stub!\n", iface );
-    return E_NOTIMPL;
+    struct motor *impl = impl_from_IForceFeedbackMotor( iface );
+
+    TRACE( "iface %p.\n", iface );
+
+    return IDirectInputDevice8_SendForceFeedbackCommand( impl->device, DISFFC_STOPALL );
 }
 
 static HRESULT WINAPI motor_TryDisableAsync( IForceFeedbackMotor *iface, IAsyncOperation_boolean **async_op )
