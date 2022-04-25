@@ -46,7 +46,7 @@ struct create_stream_params
     REFERENCE_TIME period;
     const WAVEFORMATEX *fmt;
     HRESULT result;
-    struct coreaudio_stream *stream;
+    struct coreaudio_stream **stream;
 };
 
 struct release_stream_params

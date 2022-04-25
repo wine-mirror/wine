@@ -666,6 +666,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     ACImpl *This = impl_from_IAudioClient3(iface);
     struct release_stream_params release_params;
     struct create_stream_params params;
+    struct coreaudio_stream *stream;
     UINT32 i;
 
     TRACE("(%p)->(%x, %x, %s, %s, %p, %s)\n", This, mode, flags,
@@ -734,10 +735,13 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
     params.duration = duration;
     params.period = period;
     params.fmt = fmt;
-    params.stream = NULL;
+    params.stream = &stream;
 
     UNIX_CALL(create_stream, &params);
-    if(FAILED(params.result)) goto end;
+    if(FAILED(params.result)){
+        LeaveCriticalSection(&g_sessions_lock);
+        return params.result;
+    }
 
     This->flags = flags;
     This->channel_count = fmt->nChannels;
@@ -759,14 +763,12 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 
 end:
     if(FAILED(params.result)){
-        if(params.stream){
-            release_params.stream = params.stream;
-            UNIX_CALL(release_stream, &release_params);
-        }
+        release_params.stream = stream;
+        UNIX_CALL(release_stream, &release_params);
         HeapFree(GetProcessHeap(), 0, This->vols);
         This->vols = NULL;
     }else{
-        This->stream = params.stream;
+        This->stream = stream;
         set_stream_volumes(This, -1);
     }
 

@@ -700,7 +700,7 @@ end:
         free(stream->fmt);
         free(stream);
     } else
-        params->stream = stream;
+        *params->stream = stream;
 
     return STATUS_SUCCESS;
 }
