@@ -111,8 +111,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(nsi);
 
-static NTSTATUS tcp_stats_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
-                                              void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size )
+static NTSTATUS tcp_stats_get_all_parameters( const void *key, UINT key_size, void *rw_data, UINT rw_size,
+                                              void *dynamic_data, UINT dynamic_size, void *static_data, UINT static_size )
 {
     struct nsi_tcp_stats_dynamic dyn;
     struct nsi_tcp_stats_static stat;
@@ -322,7 +322,7 @@ failed:
     return NULL;
 }
 
-DWORD find_ipv6_addr_scope( const IN6_ADDR *addr, const struct ipv6_addr_scope *table, unsigned int size )
+UINT find_ipv6_addr_scope( const IN6_ADDR *addr, const struct ipv6_addr_scope *table, unsigned int size )
 {
     const BYTE multicast_scope_mask = 0x0F;
     const BYTE multicast_scope_shift = 0;
@@ -514,10 +514,10 @@ unsigned int find_owning_pid( struct pid_map *map, unsigned int num_entries, UIN
 #endif
 }
 
-static NTSTATUS tcp_conns_enumerate_all( DWORD filter, struct nsi_tcp_conn_key *key_data, DWORD key_size,
-                                         void *rw, DWORD rw_size,
-                                         struct nsi_tcp_conn_dynamic *dynamic_data, DWORD dynamic_size,
-                                         struct nsi_tcp_conn_static *static_data, DWORD static_size, DWORD_PTR *count )
+static NTSTATUS tcp_conns_enumerate_all( UINT filter, struct nsi_tcp_conn_key *key_data, UINT key_size,
+                                         void *rw, UINT rw_size,
+                                         struct nsi_tcp_conn_dynamic *dynamic_data, UINT dynamic_size,
+                                         struct nsi_tcp_conn_static *static_data, UINT static_size, UINT_PTR *count )
 {
     DWORD num = 0;
     NTSTATUS status = STATUS_SUCCESS;
@@ -741,9 +741,9 @@ static NTSTATUS tcp_conns_enumerate_all( DWORD filter, struct nsi_tcp_conn_key *
     return status;
 }
 
-static NTSTATUS tcp_all_enumerate_all( void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
-                                       void *dynamic_data, DWORD dynamic_size,
-                                       void *static_data, DWORD static_size, DWORD_PTR *count )
+static NTSTATUS tcp_all_enumerate_all( void *key_data, UINT key_size, void *rw_data, UINT rw_size,
+                                       void *dynamic_data, UINT dynamic_size,
+                                       void *static_data, UINT static_size, UINT_PTR *count )
 {
     TRACE( "%p %d %p %d %p %d %p %d %p\n", key_data, key_size, rw_data, rw_size,
            dynamic_data, dynamic_size, static_data, static_size, count );
@@ -752,9 +752,9 @@ static NTSTATUS tcp_all_enumerate_all( void *key_data, DWORD key_size, void *rw_
                                     dynamic_data, dynamic_size, static_data, static_size, count );
 }
 
-static NTSTATUS tcp_estab_enumerate_all( void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
-                                         void *dynamic_data, DWORD dynamic_size,
-                                         void *static_data, DWORD static_size, DWORD_PTR *count )
+static NTSTATUS tcp_estab_enumerate_all( void *key_data, UINT key_size, void *rw_data, UINT rw_size,
+                                         void *dynamic_data, UINT dynamic_size,
+                                         void *static_data, UINT static_size, UINT_PTR *count )
 {
     TRACE( "%p %d %p %d %p %d %p %d %p\n", key_data, key_size, rw_data, rw_size,
            dynamic_data, dynamic_size, static_data, static_size, count );
@@ -763,9 +763,9 @@ static NTSTATUS tcp_estab_enumerate_all( void *key_data, DWORD key_size, void *r
                                     dynamic_data, dynamic_size, static_data, static_size, count );
 }
 
-static NTSTATUS tcp_listen_enumerate_all( void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
-                                          void *dynamic_data, DWORD dynamic_size,
-                                          void *static_data, DWORD static_size, DWORD_PTR *count )
+static NTSTATUS tcp_listen_enumerate_all( void *key_data, UINT key_size, void *rw_data, UINT rw_size,
+                                          void *dynamic_data, UINT dynamic_size,
+                                          void *static_data, UINT static_size, UINT_PTR *count )
 {
     TRACE( "%p %d %p %d %p %d %p %d %p\n", key_data, key_size, rw_data, rw_size,
            dynamic_data, dynamic_size, static_data, static_size, count );

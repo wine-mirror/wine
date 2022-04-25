@@ -446,9 +446,9 @@ static void ifinfo_fill_entry( struct if_entry *entry, NET_LUID *key, struct nsi
     }
 }
 
-static NTSTATUS ifinfo_enumerate_all( void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
-                                      void *dynamic_data, DWORD dynamic_size,
-                                      void *static_data, DWORD static_size, DWORD_PTR *count )
+static NTSTATUS ifinfo_enumerate_all( void *key_data, UINT key_size, void *rw_data, UINT rw_size,
+                                      void *dynamic_data, UINT dynamic_size,
+                                      void *static_data, UINT static_size, UINT_PTR *count )
 {
     struct if_entry *entry;
     DWORD num = 0;
@@ -483,9 +483,9 @@ static NTSTATUS ifinfo_enumerate_all( void *key_data, DWORD key_size, void *rw_d
     return status;
 }
 
-static NTSTATUS ifinfo_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
-                                           void *dynamic_data, DWORD dynamic_size,
-                                           void *static_data, DWORD static_size )
+static NTSTATUS ifinfo_get_all_parameters( const void *key, UINT key_size, void *rw_data, UINT rw_size,
+                                           void *dynamic_data, UINT dynamic_size,
+                                           void *static_data, UINT static_size )
 {
     struct if_entry *entry;
     NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
@@ -547,8 +547,8 @@ static NTSTATUS ifinfo_get_static_parameter( struct if_entry *entry, void *data,
     return STATUS_INVALID_PARAMETER;
 }
 
-static NTSTATUS ifinfo_get_parameter( const void *key, DWORD key_size, DWORD param_type,
-                                      void *data, DWORD data_size, DWORD data_offset )
+static NTSTATUS ifinfo_get_parameter( const void *key, UINT key_size, UINT param_type,
+                                      void *data, UINT data_size, UINT data_offset )
 {
     struct if_entry *entry;
     NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;
@@ -578,8 +578,8 @@ static NTSTATUS ifinfo_get_parameter( const void *key, DWORD key_size, DWORD par
     return status;
 }
 
-static NTSTATUS index_luid_get_parameter( const void *key, DWORD key_size, DWORD param_type,
-                                          void *data, DWORD data_size, DWORD data_offset )
+static NTSTATUS index_luid_get_parameter( const void *key, UINT key_size, UINT param_type,
+                                          void *data, UINT data_size, UINT data_offset )
 {
     struct if_entry *entry;
     NTSTATUS status = STATUS_OBJECT_NAME_NOT_FOUND;

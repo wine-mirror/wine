@@ -83,9 +83,9 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(nsi);
 
-static DWORD udp_num_addrs( USHORT family )
+static UINT udp_num_addrs( USHORT family )
 {
-    DWORD endpoint_count = 0;
+    UINT endpoint_count = 0;
 
     nsi_enumerate_all( 1, 0, &NPI_MS_UDP_MODULEID, NSI_UDP_ENDPOINT_TABLE,
                        NULL, 0, NULL, 0, NULL, 0, NULL, 0, &endpoint_count );
@@ -93,8 +93,8 @@ static DWORD udp_num_addrs( USHORT family )
     return endpoint_count;
 }
 
-static NTSTATUS udp_stats_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
-                                              void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size )
+static NTSTATUS udp_stats_get_all_parameters( const void *key, UINT key_size, void *rw_data, UINT rw_size,
+                                              void *dynamic_data, UINT dynamic_size, void *static_data, UINT static_size )
 {
     struct nsi_udp_stats_dynamic dyn;
     const USHORT *family = key;
@@ -145,7 +145,7 @@ static NTSTATUS udp_stats_get_all_parameters( const void *key, DWORD key_size, v
         struct
         {
             const char *name;
-            DWORD *elem;
+            UINT *elem;
         } udp_stat_list[] =
         {
             { "Udp6InDatagrams",  &in_dgrams },
@@ -202,9 +202,9 @@ static NTSTATUS udp_stats_get_all_parameters( const void *key, DWORD key_size, v
     return STATUS_NOT_SUPPORTED;
 }
 
-static NTSTATUS udp_endpoint_enumerate_all( void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
-                                            void *dynamic_data, DWORD dynamic_size,
-                                            void *static_data, DWORD static_size, DWORD_PTR *count )
+static NTSTATUS udp_endpoint_enumerate_all( void *key_data, UINT key_size, void *rw_data, UINT rw_size,
+                                            void *dynamic_data, UINT dynamic_size,
+                                            void *static_data, UINT static_size, UINT_PTR *count )
 {
     DWORD num = 0;
     NTSTATUS status = STATUS_SUCCESS;

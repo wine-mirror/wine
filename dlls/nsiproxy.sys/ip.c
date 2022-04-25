@@ -151,10 +151,10 @@ static NTSTATUS read_sysctl_int( const char *file, int *val )
 }
 #endif
 
-static NTSTATUS ip_cmpt_get_all_parameters( DWORD fam, const DWORD *key, DWORD key_size,
-                                            struct nsi_ip_cmpt_rw *rw_data, DWORD rw_size,
-                                            struct nsi_ip_cmpt_dynamic *dynamic_data, DWORD dynamic_size,
-                                            void *static_data, DWORD static_size )
+static NTSTATUS ip_cmpt_get_all_parameters( UINT fam, const UINT *key, UINT key_size,
+                                            struct nsi_ip_cmpt_rw *rw_data, UINT rw_size,
+                                            struct nsi_ip_cmpt_dynamic *dynamic_data, UINT dynamic_size,
+                                            void *static_data, UINT static_size )
 {
     const NPI_MODULEID *ip_mod = (fam == AF_INET) ? &NPI_MS_IPV4_MODULEID : &NPI_MS_IPV6_MODULEID;
     struct nsi_ip_cmpt_rw rw;
@@ -219,8 +219,8 @@ static NTSTATUS ip_cmpt_get_all_parameters( DWORD fam, const DWORD *key, DWORD k
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS ipv4_cmpt_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
-                                              void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size )
+static NTSTATUS ipv4_cmpt_get_all_parameters( const void *key, UINT key_size, void *rw_data, UINT rw_size,
+                                              void *dynamic_data, UINT dynamic_size, void *static_data, UINT static_size )
 {
     TRACE( "%p %d %p %d %p %d %p %d\n", key, key_size, rw_data, rw_size, dynamic_data, dynamic_size,
            static_data, static_size );
@@ -228,8 +228,8 @@ static NTSTATUS ipv4_cmpt_get_all_parameters( const void *key, DWORD key_size, v
                                        dynamic_data, dynamic_size, static_data, static_size );
 }
 
-static NTSTATUS ipv6_cmpt_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
-                                              void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size )
+static NTSTATUS ipv6_cmpt_get_all_parameters( const void *key, UINT key_size, void *rw_data, UINT rw_size,
+                                              void *dynamic_data, UINT dynamic_size, void *static_data, UINT static_size )
 {
     TRACE( "%p %d %p %d %p %d %p %d\n", key, key_size, rw_data, rw_size, dynamic_data, dynamic_size,
            static_data, static_size );
@@ -237,8 +237,8 @@ static NTSTATUS ipv6_cmpt_get_all_parameters( const void *key, DWORD key_size, v
                                        dynamic_data, dynamic_size, static_data, static_size );
 }
 
-static NTSTATUS ipv4_icmpstats_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
-                                                   void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size )
+static NTSTATUS ipv4_icmpstats_get_all_parameters( const void *key, UINT key_size, void *rw_data, UINT rw_size,
+                                                   void *dynamic_data, UINT dynamic_size, void *static_data, UINT static_size )
 {
     struct nsi_ip_icmpstats_dynamic dyn;
 
@@ -352,8 +352,8 @@ static NTSTATUS ipv4_icmpstats_get_all_parameters( const void *key, DWORD key_si
 #endif
 }
 
-static NTSTATUS ipv6_icmpstats_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
-                                                   void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size )
+static NTSTATUS ipv6_icmpstats_get_all_parameters( const void *key, UINT key_size, void *rw_data, UINT rw_size,
+                                                   void *dynamic_data, UINT dynamic_size, void *static_data, UINT static_size )
 {
     struct nsi_ip_icmpstats_dynamic dyn;
 
@@ -478,8 +478,8 @@ static NTSTATUS ipv6_icmpstats_get_all_parameters( const void *key, DWORD key_si
 #endif
 }
 
-static NTSTATUS ipv4_ipstats_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
-                                                 void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size )
+static NTSTATUS ipv4_ipstats_get_all_parameters( const void *key, UINT key_size, void *rw_data, UINT rw_size,
+                                                 void *dynamic_data, UINT dynamic_size, void *static_data, UINT static_size )
 {
     struct nsi_ip_ipstats_dynamic dyn;
     struct nsi_ip_ipstats_static stat;
@@ -584,8 +584,8 @@ static NTSTATUS ipv4_ipstats_get_all_parameters( const void *key, DWORD key_size
 #endif
 }
 
-static NTSTATUS ipv6_ipstats_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
-                                                 void *dynamic_data, DWORD dynamic_size, void *static_data, DWORD static_size )
+static NTSTATUS ipv6_ipstats_get_all_parameters( const void *key, UINT key_size, void *rw_data, UINT rw_size,
+                                                 void *dynamic_data, UINT dynamic_size, void *static_data, UINT static_size )
 {
     struct nsi_ip_ipstats_dynamic dyn;
     struct nsi_ip_ipstats_static stat;
@@ -719,9 +719,9 @@ static void unicast_fill_entry( struct ifaddrs *entry, void *key, struct nsi_ip_
     if (stat) stat->creation_time = get_boot_time();
 }
 
-static NTSTATUS ip_unicast_enumerate_all( int family, void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
-                                          void *dynamic_data, DWORD dynamic_size,
-                                          void *static_data, DWORD static_size, DWORD_PTR *count )
+static NTSTATUS ip_unicast_enumerate_all( int family, void *key_data, UINT key_size, void *rw_data, UINT rw_size,
+                                          void *dynamic_data, UINT dynamic_size,
+                                          void *static_data, UINT static_size, UINT_PTR *count )
 {
     DWORD num = 0;
     NTSTATUS status = STATUS_SUCCESS;
@@ -756,25 +756,25 @@ static NTSTATUS ip_unicast_enumerate_all( int family, void *key_data, DWORD key_
     return status;
 }
 
-static NTSTATUS ipv4_unicast_enumerate_all( void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
-                                            void *dynamic_data, DWORD dynamic_size,
-                                            void *static_data, DWORD static_size, DWORD_PTR *count )
+static NTSTATUS ipv4_unicast_enumerate_all( void *key_data, UINT key_size, void *rw_data, UINT rw_size,
+                                            void *dynamic_data, UINT dynamic_size,
+                                            void *static_data, UINT static_size, UINT_PTR *count )
 {
     return ip_unicast_enumerate_all( AF_INET, key_data, key_size, rw_data, rw_size,
                                      dynamic_data, dynamic_size, static_data, static_size, count );
 }
 
-static NTSTATUS ipv6_unicast_enumerate_all( void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
-                                            void *dynamic_data, DWORD dynamic_size,
-                                            void *static_data, DWORD static_size, DWORD_PTR *count )
+static NTSTATUS ipv6_unicast_enumerate_all( void *key_data, UINT key_size, void *rw_data, UINT rw_size,
+                                            void *dynamic_data, UINT dynamic_size,
+                                            void *static_data, UINT static_size, UINT_PTR *count )
 {
     return ip_unicast_enumerate_all( AF_INET6, key_data, key_size, rw_data, rw_size,
                                      dynamic_data, dynamic_size, static_data, static_size, count );
 }
 
-static NTSTATUS ip_unicast_get_all_parameters( const void *key, DWORD key_size, void *rw_data, DWORD rw_size,
-                                               void *dynamic_data, DWORD dynamic_size,
-                                               void *static_data, DWORD static_size )
+static NTSTATUS ip_unicast_get_all_parameters( const void *key, UINT key_size, void *rw_data, UINT rw_size,
+                                               void *dynamic_data, UINT dynamic_size,
+                                               void *static_data, UINT static_size )
 {
     int family = (key_size == sizeof(struct nsi_ipv4_unicast_key)) ? AF_INET : AF_INET6;
     NTSTATUS status = STATUS_NOT_FOUND;
@@ -812,7 +812,7 @@ static NTSTATUS ip_unicast_get_all_parameters( const void *key, DWORD key_size, 
 struct ipv4_neighbour_data
 {
     NET_LUID luid;
-    DWORD if_index;
+    UINT if_index;
     struct in_addr addr;
     BYTE phys_addr[IF_MAX_PHYS_ADDRESS_LENGTH];
     DWORD state;
@@ -850,9 +850,9 @@ static void ipv4_neighbour_fill_entry( struct ipv4_neighbour_data *entry, struct
     }
 }
 
-static NTSTATUS ipv4_neighbour_enumerate_all( void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
-                                              void *dynamic_data, DWORD dynamic_size,
-                                              void *static_data, DWORD static_size, DWORD_PTR *count )
+static NTSTATUS ipv4_neighbour_enumerate_all( void *key_data, UINT key_size, void *rw_data, UINT rw_size,
+                                              void *dynamic_data, UINT dynamic_size,
+                                              void *static_data, UINT static_size, UINT_PTR *count )
 {
     DWORD num = 0;
     NTSTATUS status = STATUS_SUCCESS;
@@ -992,9 +992,9 @@ static NTSTATUS ipv4_neighbour_enumerate_all( void *key_data, DWORD key_size, vo
     return status;
 }
 
-static NTSTATUS ipv6_neighbour_enumerate_all( void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
-                                              void *dynamic_data, DWORD dynamic_size,
-                                              void *static_data, DWORD static_size, DWORD_PTR *count )
+static NTSTATUS ipv6_neighbour_enumerate_all( void *key_data, UINT key_size, void *rw_data, UINT rw_size,
+                                              void *dynamic_data, UINT dynamic_size,
+                                              void *static_data, UINT static_size, UINT_PTR *count )
 {
     FIXME( "not implemented\n" );
     return STATUS_NOT_IMPLEMENTED;
@@ -1003,7 +1003,7 @@ static NTSTATUS ipv6_neighbour_enumerate_all( void *key_data, DWORD key_size, vo
 struct ipv4_route_data
 {
     NET_LUID luid;
-    DWORD if_index;
+    UINT if_index;
     struct in_addr prefix;
     DWORD prefix_len;
     struct in_addr next_hop;
@@ -1056,9 +1056,9 @@ static void ipv4_forward_fill_entry( struct ipv4_route_data *entry, struct nsi_i
     }
 }
 
-static NTSTATUS ipv4_forward_enumerate_all( void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
-                                            void *dynamic_data, DWORD dynamic_size,
-                                            void *static_data, DWORD static_size, DWORD_PTR *count )
+static NTSTATUS ipv4_forward_enumerate_all( void *key_data, UINT key_size, void *rw_data, UINT rw_size,
+                                            void *dynamic_data, UINT dynamic_size,
+                                            void *static_data, UINT static_size, UINT_PTR *count )
 {
     DWORD num = 0;
     NTSTATUS status = STATUS_SUCCESS;
@@ -1235,9 +1235,9 @@ static NTSTATUS ipv4_forward_enumerate_all( void *key_data, DWORD key_size, void
     return status;
 }
 
-static NTSTATUS ipv6_forward_enumerate_all( void *key_data, DWORD key_size, void *rw_data, DWORD rw_size,
-                                            void *dynamic_data, DWORD dynamic_size,
-                                            void *static_data, DWORD static_size, DWORD_PTR *count )
+static NTSTATUS ipv6_forward_enumerate_all( void *key_data, UINT key_size, void *rw_data, UINT rw_size,
+                                            void *dynamic_data, UINT dynamic_size,
+                                            void *static_data, UINT static_size, UINT_PTR *count )
 {
     FIXME( "not implemented\n" );
     *count = 0;
