@@ -147,6 +147,7 @@ apiset api-ms-win-core-winrt-error-l1-1-1 = combase.dll
 apiset api-ms-win-core-winrt-errorprivate-l1-1-1 = combase.dll
 apiset api-ms-win-core-winrt-l1-1-0 = combase.dll
 apiset api-ms-win-core-winrt-registration-l1-1-0 = combase.dll
+apiset api-ms-win-core-winrt-robuffer-l1-1-0 = wintypes.dll
 apiset api-ms-win-core-winrt-roparameterizediid-l1-1-0 = combase.dll
 apiset api-ms-win-core-winrt-string-l1-1-1 = combase.dll
 apiset api-ms-win-core-wow64-l1-1-1 = kernelbase.dll
