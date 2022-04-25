@@ -27,153 +27,150 @@ import "windowscontracts.idl";
 /* import "ivectorchangedeventargs.idl"; */
 import "windows.foundation.collections.idl";
 
-namespace Windows {
-    namespace Foundation {
-        interface IAsyncAction;
+namespace Windows.Foundation {
+    typedef enum PropertyType PropertyType;
+    typedef struct Point Point;
+    typedef struct Size Size;
+    typedef struct Rect Rect;
+    typedef struct DateTime DateTime;
+    typedef struct TimeSpan TimeSpan;
+    interface IAsyncAction;
+    interface IClosable;
+    interface IStringable;
+
+    declare {
+        interface Windows.Foundation.Collections.IIterable<HSTRING>;
+        interface Windows.Foundation.Collections.IIterable<IInspectable *>;
+        interface Windows.Foundation.Collections.IIterator<HSTRING>;
+        interface Windows.Foundation.Collections.IIterator<IInspectable *>;
+        interface Windows.Foundation.Collections.IVectorView<HSTRING>;
+        interface Windows.Foundation.Collections.IVectorView<IInspectable *>;
+        interface Windows.Foundation.Collections.IVector<HSTRING>;
+        interface Windows.Foundation.Collections.IVector<IInspectable *>;
+        interface Windows.Foundation.Collections.IMapView<HSTRING, Windows.Foundation.Collections.IVectorView<HSTRING> *>;
+        interface Windows.Foundation.EventHandler<IInspectable *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<IInspectable *>;
+        interface Windows.Foundation.AsyncOperationCompletedHandler<boolean>;
+        interface Windows.Foundation.IAsyncOperation<IInspectable *>;
+        interface Windows.Foundation.IAsyncOperation<boolean>;
+        interface Windows.Foundation.IReference<INT32>;
+        interface Windows.Foundation.TypedEventHandler<IInspectable *, IInspectable *>;
     }
-}
 
-namespace Windows {
-    namespace Foundation {
-        typedef enum PropertyType PropertyType;
-        typedef struct Point Point;
-        typedef struct Size Size;
-        typedef struct Rect Rect;
-        typedef struct DateTime DateTime;
-        typedef struct TimeSpan TimeSpan;
+    [
+        contract(Windows.Foundation.FoundationContract, 1.0),
+        uuid(a4ed5c81-76c9-40bd-8be6-b1d90fb20ae7)
+    ]
+    delegate HRESULT AsyncActionCompletedHandler([in] Windows.Foundation.IAsyncAction *action, [in] AsyncStatus status);
 
-        [
-            contract(Windows.Foundation.FoundationContract, 1.0),
-            uuid(a4ed5c81-76c9-40bd-8be6-b1d90fb20ae7)
-        ]
-        delegate HRESULT AsyncActionCompletedHandler([in] Windows.Foundation.IAsyncAction *action, [in] AsyncStatus status);
+    [contract(Windows.Foundation.FoundationContract, 1.0)]
+    enum PropertyType
+    {
+        Empty       = 0,
+        UInt8       = 1,
+        Int16       = 2,
+        UInt16      = 3,
+        Int32       = 4,
+        UInt32      = 5,
+        Int64       = 6,
+        UInt64      = 7,
+        Single      = 8,
+        Double      = 9,
+        Char16      = 10,
+        Boolean     = 11,
+        String      = 12,
+        Inspectable = 13,
+        DateTime    = 14,
+        TimeSpan    = 15,
+        Guid        = 16,
+        Point       = 17,
+        Size        = 18,
+        Rect        = 19,
+        OtherType   = 20,
+        UInt8Array       = 1025,
+        Int16Array       = 1026,
+        UInt16Array      = 1027,
+        Int32Array       = 1028,
+        UInt32Array      = 1029,
+        Int64Array       = 1030,
+        UInt64Array      = 1031,
+        SingleArray      = 1032,
+        DoubleArray      = 1033,
+        Char16Array      = 1034,
+        BooleanArray     = 1035,
+        StringArray      = 1036,
+        InspectableArray = 1037,
+        DateTimeArray    = 1038,
+        TimeSpanArray    = 1039,
+        GuidArray        = 1040,
+        PointArray       = 1041,
+        SizeArray        = 1042,
+        RectArray        = 1043,
+        OtherTypeArray   = 1044,
+    };
 
-        [contract(Windows.Foundation.FoundationContract, 1.0)]
-        enum PropertyType {
-            Empty       = 0,
-            UInt8       = 1,
-            Int16       = 2,
-            UInt16      = 3,
-            Int32       = 4,
-            UInt32      = 5,
-            Int64       = 6,
-            UInt64      = 7,
-            Single      = 8,
-            Double      = 9,
-            Char16      = 10,
-            Boolean     = 11,
-            String      = 12,
-            Inspectable = 13,
-            DateTime    = 14,
-            TimeSpan    = 15,
-            Guid        = 16,
-            Point       = 17,
-            Size        = 18,
-            Rect        = 19,
-            OtherType   = 20,
-            UInt8Array       = 1025,
-            Int16Array       = 1026,
-            UInt16Array      = 1027,
-            Int32Array       = 1028,
-            UInt32Array      = 1029,
-            Int64Array       = 1030,
-            UInt64Array      = 1031,
-            SingleArray      = 1032,
-            DoubleArray      = 1033,
-            Char16Array      = 1034,
-            BooleanArray     = 1035,
-            StringArray      = 1036,
-            InspectableArray = 1037,
-            DateTimeArray    = 1038,
-            TimeSpanArray    = 1039,
-            GuidArray        = 1040,
-            PointArray       = 1041,
-            SizeArray        = 1042,
-            RectArray        = 1043,
-            OtherTypeArray   = 1044
-        };
+    [contract(Windows.Foundation.FoundationContract, 1.0)]
+    struct Point
+    {
+        FLOAT X;
+        FLOAT Y;
+    };
 
-        [contract(Windows.Foundation.FoundationContract, 1.0)]
-        struct Point {
-            FLOAT X;
-            FLOAT Y;
-        };
+    [contract(Windows.Foundation.FoundationContract, 1.0)]
+    struct Size
+    {
+        FLOAT Width;
+        FLOAT Height;
+    };
 
-        [contract(Windows.Foundation.FoundationContract, 1.0)]
-        struct Size {
-            FLOAT Width;
-            FLOAT Height;
-        };
+    [contract(Windows.Foundation.FoundationContract, 1.0)]
+    struct Rect
+    {
+        FLOAT X;
+        FLOAT Y;
+        FLOAT Width;
+        FLOAT Height;
+    };
 
-        [contract(Windows.Foundation.FoundationContract, 1.0)]
-        struct Rect {
-            FLOAT X;
-            FLOAT Y;
-            FLOAT Width;
-            FLOAT Height;
-        };
+    [contract(Windows.Foundation.FoundationContract, 1.0)]
+    struct DateTime
+    {
+        INT64 UniversalTime;
+    };
 
-        [contract(Windows.Foundation.FoundationContract, 1.0)]
-        struct DateTime {
-            INT64 UniversalTime;
-        };
+    [contract(Windows.Foundation.FoundationContract, 1.0)]
+    struct TimeSpan
+    {
+        INT64 Duration;
+    };
 
-        [contract(Windows.Foundation.FoundationContract, 1.0)]
-        struct TimeSpan {
-            INT64 Duration;
-        };
-
-        [
-            contract(Windows.Foundation.FoundationContract, 1.0),
-            uuid(96369f54-8eb6-48f0-abce-c1b211e627c3)
-        ]
-        interface IStringable : IInspectable
-        {
-            HRESULT ToString([out, retval] HSTRING *value);
-        }
-
-        [
-            contract(Windows.Foundation.FoundationContract, 1.0),
-            uuid(30d5a829-7fa4-4026-83bb-d75bae4ea99e)
-        ]
-        interface IClosable : IInspectable
-        {
-            HRESULT Close();
-        }
-
-        [
-            contract(Windows.Foundation.FoundationContract, 1.0),
-            uuid(5a648006-843a-4da9-865b-9d26e5dfad7b)
-        ]
-        interface IAsyncAction : IInspectable
-            requires IAsyncInfo
-        {
-            [propput] HRESULT Completed([in] Windows.Foundation.AsyncActionCompletedHandler *handler);
-            [propget] HRESULT Completed([out, retval] Windows.Foundation.AsyncActionCompletedHandler **handler);
-            HRESULT GetResults();
-        }
+    [
+        contract(Windows.Foundation.FoundationContract, 1.0),
+        uuid(96369f54-8eb6-48f0-abce-c1b211e627c3)
+    ]
+    interface IStringable : IInspectable
+    {
+        HRESULT ToString([out, retval] HSTRING *value);
     }
-}
 
-namespace Windows {
-    namespace Foundation {
-        declare {
-            interface Windows.Foundation.Collections.IIterable<HSTRING>;
-            interface Windows.Foundation.Collections.IIterable<IInspectable *>;
-            interface Windows.Foundation.Collections.IIterator<HSTRING>;
-            interface Windows.Foundation.Collections.IIterator<IInspectable *>;
-            interface Windows.Foundation.Collections.IVectorView<HSTRING>;
-            interface Windows.Foundation.Collections.IVectorView<IInspectable *>;
-            interface Windows.Foundation.Collections.IVector<HSTRING>;
-            interface Windows.Foundation.Collections.IVector<IInspectable *>;
-            interface Windows.Foundation.Collections.IMapView<HSTRING, Windows.Foundation.Collections.IVectorView<HSTRING>*>;
-            interface Windows.Foundation.EventHandler<IInspectable *>;
-            interface Windows.Foundation.AsyncOperationCompletedHandler<IInspectable *>;
-            interface Windows.Foundation.AsyncOperationCompletedHandler<boolean>;
-            interface Windows.Foundation.IAsyncOperation<IInspectable *>;
-            interface Windows.Foundation.IAsyncOperation<boolean>;
-            interface Windows.Foundation.IReference<INT32>;
-            interface Windows.Foundation.TypedEventHandler<IInspectable *, IInspectable *>;
-        }
+    [
+        contract(Windows.Foundation.FoundationContract, 1.0),
+        uuid(30d5a829-7fa4-4026-83bb-d75bae4ea99e)
+    ]
+    interface IClosable : IInspectable
+    {
+        HRESULT Close();
+    }
+
+    [
+        contract(Windows.Foundation.FoundationContract, 1.0),
+        uuid(5a648006-843a-4da9-865b-9d26e5dfad7b)
+    ]
+    interface IAsyncAction : IInspectable
+        requires IAsyncInfo
+    {
+        [propput] HRESULT Completed([in] Windows.Foundation.AsyncActionCompletedHandler *handler);
+        [propget] HRESULT Completed([out, retval] Windows.Foundation.AsyncActionCompletedHandler **handler);
+        HRESULT GetResults();
     }
 }
