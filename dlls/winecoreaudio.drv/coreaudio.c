@@ -615,6 +615,15 @@ static HRESULT ca_setup_audiounit(EDataFlow dataflow, AudioComponentInstance uni
     return S_OK;
 }
 
+static ULONG_PTR zero_bits(void)
+{
+#ifdef _WIN64
+    return !NtCurrentTeb()->WowTebOffset ? 0 : 0x7fffffff;
+#else
+    return 0;
+#endif
+}
+
 static NTSTATUS create_stream(void *args)
 {
     struct create_stream_params *params = args;
@@ -685,8 +694,8 @@ static NTSTATUS create_stream(void *args)
     }
 
     size = stream->bufsize_frames * stream->fmt->nBlockAlign;
-    if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer, 0, &size,
-                               MEM_COMMIT, PAGE_READWRITE)){
+    if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer, zero_bits(),
+                               &size, MEM_COMMIT, PAGE_READWRITE)){
         params->result = E_OUTOFMEMORY;
         goto end;
     }
@@ -1371,7 +1380,7 @@ static NTSTATUS get_render_buffer(void *args)
                 stream->tmp_buffer = NULL;
             }
             size = params->frames * stream->fmt->nBlockAlign;
-            if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, 0,
+            if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, zero_bits(),
                                        &size, MEM_COMMIT, PAGE_READWRITE)){
                 stream->tmp_buffer_frames = 0;
                 params->result = E_OUTOFMEMORY;
@@ -1469,7 +1478,7 @@ static NTSTATUS get_capture_buffer(void *args)
         chunk_bytes = chunk_frames * stream->fmt->nBlockAlign;
         if(!stream->tmp_buffer){
             size = stream->period_frames * stream->fmt->nBlockAlign;
-            NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, 0,
+            NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, zero_bits(),
                                     &size, MEM_COMMIT, PAGE_READWRITE);
         }
         *params->data = stream->tmp_buffer;
