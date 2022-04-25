@@ -111,6 +111,17 @@ static int futex_private = 128;
 
 static inline int futex_wait( const int *addr, int val, struct timespec *timeout )
 {
+#if (defined(__i386__) || defined(__arm__)) && _TIME_BITS==64
+    if (timeout && sizeof(*timeout) != 8)
+    {
+        struct {
+            long tv_sec;
+            long tv_nsec;
+        } timeout32 = { timeout->tv_sec, timeout->tv_nsec };
+
+        return syscall( __NR_futex, addr, FUTEX_WAIT | futex_private, val, &timeout32, 0, 0 );
+    }
+#endif
     return syscall( __NR_futex, addr, FUTEX_WAIT | futex_private, val, timeout, 0, 0 );
 }
 
