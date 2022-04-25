@@ -5717,8 +5717,8 @@ static IMFSample *create_sample(const BYTE *data, ULONG size)
     return sample;
 }
 
-#define check_sample(a, b, c, d) check_sample_(__LINE__, a, b, c, d)
-static void check_sample_(int line, IMFSample *sample, const void *expect_buf, ULONG expect_len, HANDLE output_file)
+#define check_sample(a, b, c) check_sample_(__LINE__, a, b, c)
+static void check_sample_(int line, IMFSample *sample, const void *expect_buf, HANDLE output_file)
 {
     IMFMediaBuffer *media_buffer;
     DWORD length;
@@ -5730,12 +5730,7 @@ static void check_sample_(int line, IMFSample *sample, const void *expect_buf, U
     ok_(__FILE__, line)(hr == S_OK, "ConvertToContiguousBuffer returned %#lx\n", hr);
     hr = IMFMediaBuffer_Lock(media_buffer, &buffer, NULL, &length);
     ok_(__FILE__, line)(hr == S_OK, "Lock returned %#lx\n", hr);
-    ok_(__FILE__, line)(expect_len == length, "got length %lu\n", length);
-    if (length && length == expect_len)
-    {
-        ok_(__FILE__, line)(!memcmp(expect_buf, buffer, expect_len),
-                "unexpected buffer data\n");
-    }
+    ok_(__FILE__, line)(!memcmp(expect_buf, buffer, length), "unexpected buffer data\n");
     if (output_file) WriteFile(output_file, buffer, length, &length, NULL);
     hr = IMFMediaBuffer_Unlock(media_buffer);
     ok_(__FILE__, line)(hr == S_OK, "Unlock returned %#lx\n", hr);
@@ -5809,11 +5804,11 @@ static void test_wma_encoder(void)
     ULONG wma_encoded_data_len;
     IMFMediaType *media_type;
     IMFTransform *transform;
+    DWORD status, length;
     HANDLE output_file;
     IMFSample *sample;
     HRSRC resource;
     GUID class_id;
-    DWORD status;
     ULONG i, ret;
     HRESULT hr;
 
@@ -5899,7 +5894,10 @@ static void test_wma_encoder(void)
                 "got dwStatus %#lx\n", output.dwStatus);
         ok(status == 0, "got status %#lx\n", status);
         ok(wma_encoded_data_len > i * wma_block_size, "got %lu blocks\n", i);
-        check_sample(sample, wma_encoded_data + i * wma_block_size, wma_block_size, output_file);
+        hr = IMFSample_GetTotalLength(sample, &length);
+        ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
+        ok(length == wma_block_size, "got length %lu\n", length);
+        check_sample(sample, wma_encoded_data + i * wma_block_size, output_file);
         winetest_pop_context();
         i++;
     }
@@ -5919,7 +5917,9 @@ static void test_wma_encoder(void)
     ok(output.pSample == sample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
     ok(status == 0, "got status %#lx\n", status);
-    check_sample(sample, NULL, 0, NULL);
+    hr = IMFSample_GetTotalLength(sample, &length);
+    ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
+    ok(length == 0, "got length %lu\n", length);
     ret = IMFSample_Release(sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
@@ -6046,10 +6046,10 @@ static void test_wma_decoder(void)
     ULONG wma_encoded_data_len;
     IMFMediaType *media_type;
     IMFTransform *transform;
+    DWORD status, length;
     IMFSample *sample;
     HRSRC resource;
     GUID class_id;
-    DWORD status;
     ULONG i, ret;
     HRESULT hr;
 
@@ -6290,26 +6290,23 @@ static void test_wma_decoder(void)
                 broken(output.dwStatus == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|7) || output.dwStatus == 7) /* Win7 */,
                 "got dwStatus %#lx\n", output.dwStatus);
         ok(status == 0, "got status %#lx\n", status);
+        hr = IMFSample_GetTotalLength(sample, &length);
+        ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
         if (output.dwStatus == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE ||
                 broken(output.dwStatus == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|7)))
         {
-            check_sample(sample, wma_decoded_data, sizeof(wma_decoded_data), NULL);
+            ok(length == sizeof(wma_decoded_data), "got length %lu\n", length);
+            check_sample(sample, wma_decoded_data, NULL);
             i += sizeof(wma_decoded_data);
         }
         else
         {
-            DWORD length;
-
             /* FFmpeg doesn't seem to decode WMA buffers in the same way as native */
-
-            hr = IMFSample_GetTotalLength(sample, &length);
-            ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
             todo_wine
             ok(length == sizeof(wma_decoded_data) / 2, "got length %lu\n", length);
-
             if (length == sizeof(wma_decoded_data) / 2)
             {
-                check_sample(sample, wma_decoded_data, sizeof(wma_decoded_data) / 2, NULL);
+                check_sample(sample, wma_decoded_data, NULL);
                 i += sizeof(wma_decoded_data) / 2;
             }
         }
@@ -6343,7 +6340,9 @@ static void test_wma_decoder(void)
             broken(output.dwStatus == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|7)) /* Win7 */,
             "got dwStatus %#lx\n", output.dwStatus);
     ok(status == 0, "got status %#lx\n", status);
-    check_sample(sample, NULL, 0, NULL);
+    hr = IMFSample_GetTotalLength(sample, &length);
+    ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
+    ok(length == 0, "got length %lu\n", length);
     ret = IMFSample_Release(sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
@@ -6902,7 +6901,9 @@ static void test_h264_decoder(void)
         ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
         ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
         ok(status == 0, "got status %#lx\n", status);
-        check_sample(output.pSample, NULL, 0, NULL);
+        hr = IMFSample_GetTotalLength(output.pSample, &length);
+        ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
+        ok(length == 0, "got length %lu\n", length);
         ret = IMFSample_Release(output.pSample);
         ok(ret == 0, "Release returned %lu\n", ret);
 
@@ -6937,8 +6938,10 @@ static void test_h264_decoder(void)
     todo_wine
     ok(status == MFT_PROCESS_OUTPUT_STATUS_NEW_STREAMS,
             "got status %#lx\n", status);
-    if (status == MFT_PROCESS_OUTPUT_STATUS_NEW_STREAMS)
-        check_sample(output.pSample, NULL, 0, NULL);
+    hr = IMFSample_GetTotalLength(output.pSample, &length);
+    ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
+    todo_wine_if(length == 1920 * 1080 * 3 / 2)
+    ok(length == 0, "got length %lu\n", length);
     ret = IMFSample_Release(output.pSample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
@@ -7021,7 +7024,7 @@ static void test_h264_decoder(void)
         IMFMediaBuffer_Release(media_buffer);
 
         if (length == nv12_frame_len)
-            check_sample(output.pSample, nv12_frame_data, nv12_frame_len, output_file);
+            check_sample(output.pSample, nv12_frame_data, output_file);
     }
     ret = IMFSample_Release(output.pSample);
     ok(ret == 0, "Release returned %lu\n", ret);
@@ -7063,7 +7066,9 @@ static void test_h264_decoder(void)
     ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
     todo_wine
     ok(status == MFT_PROCESS_OUTPUT_STATUS_NEW_STREAMS, "got status %#lx\n", status);
-    check_sample(output.pSample, NULL, 0, NULL);
+    hr = IMFSample_GetTotalLength(output.pSample, &length);
+    ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
+    ok(length == 0, "got length %lu\n", length);
     ret = IMFSample_Release(output.pSample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
