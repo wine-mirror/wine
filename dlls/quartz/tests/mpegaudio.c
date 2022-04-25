@@ -28,7 +28,7 @@ static IBaseFilter *create_mpeg_audio_codec(void)
     IBaseFilter *filter = NULL;
     HRESULT hr = CoCreateInstance(&CLSID_CMpegAudioCodec, NULL, CLSCTX_INPROC_SERVER,
             &IID_IBaseFilter, (void **)&filter);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     return filter;
 }
 
@@ -156,12 +156,12 @@ static void test_aggregation(void)
     filter = (IBaseFilter *)0xdeadbeef;
     hr = CoCreateInstance(&CLSID_CMpegAudioCodec, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IBaseFilter, (void **)&filter);
-    todo_wine ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
+    ok(hr == E_NOINTERFACE, "Got hr %#lx.\n", hr);
     ok(!filter, "Got interface %p.\n", filter);
 
     hr = CoCreateInstance(&CLSID_CMpegAudioCodec, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void **)&unk);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (FAILED(hr))
     {
         skip("Failed to create MPEG audio decoder instance, skipping tests.\n");

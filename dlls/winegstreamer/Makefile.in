@@ -13,6 +13,7 @@ C_SRCS = \
 	media_source.c \
 	mfplat.c \
 	quartz_parser.c \
+	quartz_transform.c \
 	wg_format.c \
 	wg_parser.c \
 	wg_transform.c \

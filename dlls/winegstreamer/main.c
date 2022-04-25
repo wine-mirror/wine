@@ -431,6 +431,7 @@ static const IClassFactoryVtbl class_factory_vtbl =
 
 static struct class_factory avi_splitter_cf = {{&class_factory_vtbl}, avi_splitter_create};
 static struct class_factory decodebin_parser_cf = {{&class_factory_vtbl}, decodebin_parser_create};
+static struct class_factory mpeg_audio_codec_cf = {{&class_factory_vtbl}, mpeg_audio_codec_create};
 static struct class_factory mpeg_splitter_cf = {{&class_factory_vtbl}, mpeg_splitter_create};
 static struct class_factory wave_parser_cf = {{&class_factory_vtbl}, wave_parser_create};
 static struct class_factory wma_decoder_cf = {{&class_factory_vtbl}, wma_decoder_create};
@@ -452,6 +453,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
         factory = &avi_splitter_cf;
     else if (IsEqualGUID(clsid, &CLSID_decodebin_parser))
         factory = &decodebin_parser_cf;
+    else if (IsEqualGUID(clsid, &CLSID_CMpegAudioCodec))
+        factory = &mpeg_audio_codec_cf;
     else if (IsEqualGUID(clsid, &CLSID_MPEG1Splitter))
         factory = &mpeg_splitter_cf;
     else if (IsEqualGUID(clsid, &CLSID_WAVEParser))

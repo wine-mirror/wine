@@ -29,6 +29,13 @@
 coclass AviSplitter {}
 
 [
+    helpstring("MPEG Audio Decoder"),
+    threading(both),
+    uuid(4a2286e0-7bef-11ce-9bd9-0000e202599c)
+]
+coclass CMpegAudioCodec {}
+
+[
     helpstring("MPEG-I Stream Splitter"),
     threading(both),
     uuid(336475d0-942a-11ce-a870-00aa002feab5)
