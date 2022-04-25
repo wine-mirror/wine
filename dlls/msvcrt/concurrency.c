@@ -1944,8 +1944,8 @@ bool __thiscall critical_section_try_lock_for(
 
         last->next = q;
         GetSystemTimeAsFileTime(&ft);
-        to.QuadPart = ((LONGLONG)ft.dwHighDateTime<<32) +
-            ft.dwLowDateTime + (LONGLONG)timeout*10000;
+        to.QuadPart = ((LONGLONG)ft.dwHighDateTime << 32) +
+            ft.dwLowDateTime + (LONGLONG)timeout * TICKSPERMSEC;
         status = NtWaitForKeyedEvent(keyed_event, q, 0, &to);
         if(status == STATUS_TIMEOUT) {
             if(!InterlockedExchange(&q->free, TRUE))
@@ -2128,7 +2128,7 @@ unsigned int __cdecl _GetConcurrency(void)
 static inline PLARGE_INTEGER evt_timeout(PLARGE_INTEGER pTime, unsigned int timeout)
 {
     if(timeout == COOPERATIVE_TIMEOUT_INFINITE) return NULL;
-    pTime->QuadPart = (ULONGLONG)timeout * -10000;
+    pTime->QuadPart = (ULONGLONG)timeout * -TICKSPERMSEC;
     return pTime;
 }
 
@@ -2396,7 +2396,7 @@ bool __thiscall _Condition_variable_wait_for(_Condition_variable *this,
 
     GetSystemTimeAsFileTime(&ft);
     to.QuadPart = ((LONGLONG)ft.dwHighDateTime << 32) +
-        ft.dwLowDateTime + (LONGLONG)timeout * 10000;
+        ft.dwLowDateTime + (LONGLONG)timeout * TICKSPERMSEC;
     while (q->next != CV_WAKE) {
         status = RtlWaitOnAddress(&q->next, &next, sizeof(next), &to);
         if(status == STATUS_TIMEOUT) {
