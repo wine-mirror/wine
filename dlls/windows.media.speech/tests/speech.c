@@ -230,6 +230,99 @@ static HRESULT WINAPI recognition_result_handler_create_static( struct recogniti
     return S_OK;
 }
 
+struct async_void_handler
+{
+    IAsyncActionCompletedHandler IAsyncActionCompletedHandler_iface;
+    LONG ref;
+
+    HANDLE event_block;
+    HANDLE event_finished;
+};
+
+static inline struct async_void_handler *impl_from_IAsyncActionCompletedHandler(IAsyncActionCompletedHandler *iface)
+{
+    return CONTAINING_RECORD(iface, struct async_void_handler, IAsyncActionCompletedHandler_iface);
+}
+
+HRESULT WINAPI async_void_handler_QueryInterface( IAsyncActionCompletedHandler *iface, REFIID iid, void **out )
+{
+    if (IsEqualGUID(iid, &IID_IUnknown) ||
+        IsEqualGUID(iid, &IID_IAgileObject) ||
+        IsEqualGUID(iid, &IID_IAsyncActionCompletedHandler))
+    {
+        IUnknown_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    trace("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+ULONG WINAPI async_void_handler_AddRef( IAsyncActionCompletedHandler *iface )
+{
+    struct async_void_handler *impl = impl_from_IAsyncActionCompletedHandler(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    return ref;
+}
+
+ULONG WINAPI async_void_handler_Release( IAsyncActionCompletedHandler *iface )
+{
+    struct async_void_handler *impl = impl_from_IAsyncActionCompletedHandler(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+    return ref;
+}
+
+HRESULT WINAPI async_void_handler_Invoke( IAsyncActionCompletedHandler *iface, IAsyncAction *sender, AsyncStatus status )
+{
+    struct async_void_handler *impl = impl_from_IAsyncActionCompletedHandler(iface);
+
+    trace("iface %p, sender %p, status %d.\n", iface, sender, status);
+
+    /* Signal finishing of the handler. */
+    if (impl->event_finished) SetEvent(impl->event_finished);
+    /* Block handler until event is set. */
+    if (impl->event_block) WaitForSingleObject(impl->event_block, INFINITE);
+
+    return S_OK;
+}
+
+static const struct IAsyncActionCompletedHandlerVtbl async_void_handler_vtbl =
+{
+    /* IUnknown methods */
+    async_void_handler_QueryInterface,
+    async_void_handler_AddRef,
+    async_void_handler_Release,
+    /* IAsyncActionCompletedHandler methods */
+    async_void_handler_Invoke
+};
+
+
+static HRESULT WINAPI async_void_handler_create_static( struct async_void_handler *impl )
+{
+    impl->IAsyncActionCompletedHandler_iface.lpVtbl = &async_void_handler_vtbl;
+    impl->ref = 1;
+
+    return S_OK;
+}
+
+#define await_async_void(operation, handler) await_async_void_(__LINE__, operation, handler)
+static void await_async_void_( unsigned int line, IAsyncAction *action, struct async_void_handler *handler )
+{
+    HRESULT hr;
+
+    async_void_handler_create_static(handler);
+    handler->event_block = NULL;
+    handler->event_finished = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok_(__FILE__, line)(!!handler->event_finished, "event_finished wasn't created.\n");
+
+    hr = IAsyncAction_put_Completed(action, &handler->IAsyncActionCompletedHandler_iface);
+    ok_(__FILE__, line)(hr == S_OK, "IAsyncAction_put_Completed failed, hr %#lx.\n", hr);
+    ok_(__FILE__, line)(!WaitForSingleObject(handler->event_finished , 5000), "Wait for event_finished failed.\n");
+    CloseHandle(handler->event_finished);
+}
+
 struct async_inspectable_handler
 {
     IAsyncOperationCompletedHandler_IInspectable IAsyncHandler_IInspectable_iface;
@@ -1339,6 +1432,259 @@ done:
     RoUninitialize();
 }
 
+struct action_put_completed_thread_param
+{
+    IAsyncActionCompletedHandler *handler;
+    IAsyncAction *action;
+};
+
+static DWORD WINAPI action_put_completed_thread(void *arg)
+{
+    struct action_put_completed_thread_param *param = arg;
+    HRESULT hr;
+
+    hr = IAsyncAction_put_Completed(param->action, param->handler);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    return 0;
+}
+
+static void test_Recognition(void)
+{
+    static const WCHAR *list_constraint_name = L"Windows.Media.SpeechRecognition.SpeechRecognitionListConstraint";
+    static const WCHAR *recognizer_name = L"Windows.Media.SpeechRecognition.SpeechRecognizer";
+    static const WCHAR *speech_constraint_tag = L"test_message";
+    static const WCHAR *speech_constraints[] = { L"This is a test.", L"Number 5!", L"What time is it?" };
+    ISpeechRecognitionListConstraintFactory *listconstraint_factory = NULL;
+    IAsyncOperation_SpeechRecognitionCompilationResult *operation = NULL;
+    IVector_ISpeechRecognitionConstraint *constraints = NULL;
+    ISpeechContinuousRecognitionSession *session = NULL;
+    ISpeechRecognitionListConstraint *listconstraint = NULL;
+    ISpeechRecognitionConstraint *constraint = NULL;
+    ISpeechRecognizer *recognizer = NULL;
+    ISpeechRecognizer2 *recognizer2 = NULL;
+    IAsyncActionCompletedHandler *handler = NULL;
+    IAsyncAction *action = NULL, *action2 = NULL;
+    IInspectable *inspectable = NULL;
+    IAsyncInfo *info = NULL;
+    struct async_inspectable_handler compilation_handler;
+    struct action_put_completed_thread_param put_param;
+    struct recognition_result_handler result_handler;
+    struct async_void_handler action_handler;
+    struct iterator_hstring iterator_hstring;
+    struct iterable_hstring iterable_hstring;
+    EventRegistrationToken token = { .value = 0 };
+    HSTRING commands[3], hstr, tag;
+    HANDLE put_thread;
+    LONG ref, old_ref;
+    HRESULT hr;
+    UINT32 i;
+    BOOL set;
+
+    hr = RoInitialize(RO_INIT_MULTITHREADED);
+    ok(hr == S_OK, "RoInitialize failed, hr %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(commands); i++)
+    {
+        hr = WindowsCreateString(speech_constraints[i], wcslen(speech_constraints[i]), &commands[i]);
+        ok(hr == S_OK, "WindowsCreateString failed, hr %#lx.\n", hr);
+    }
+
+    /* The create functions for ListConstraint are broken on Win10 1507 x32 - abort early.*/
+    if (broken(is_win10_1507 && (sizeof(void*) == 4)))
+    {
+        win_skip("SpeechRecognitionListConstraint object creation broken on Win10 1507 x32!\n");
+        goto done;
+    }
+
+    hr = WindowsCreateString(recognizer_name, wcslen(recognizer_name), &hstr);
+    ok(hr == S_OK, "WindowsCreateString failed, hr %#lx.\n", hr);
+
+    hr = RoActivateInstance(hstr, &inspectable);
+    ok(hr == S_OK || broken(hr == SPERR_WINRT_INTERNAL_ERROR || hr == REGDB_E_CLASSNOTREG), "Got unexpected hr %#lx.\n", hr);
+    WindowsDeleteString(hstr);
+
+    if (FAILED(hr))  /* Win 8 and 8.1 and Win10 without enabled SR. */
+    {
+        win_skip("SpeechRecognizer cannot be activated!\n");
+        goto done;
+    }
+
+    hr = WindowsCreateString(list_constraint_name, wcslen(list_constraint_name), &hstr);
+    ok(hr == S_OK, "WindowsCreateString failed, hr %#lx.\n", hr);
+
+    hr = RoGetActivationFactory(hstr, &IID_ISpeechRecognitionListConstraintFactory, (void **)&listconstraint_factory);
+    ok(hr == S_OK || broken(hr == REGDB_E_CLASSNOTREG), "RoGetActivationFactory failed, hr %#lx.\n", hr);
+    WindowsDeleteString(hstr);
+
+    hr = WindowsCreateString(speech_constraint_tag, wcslen(speech_constraint_tag), &tag);
+    ok(hr == S_OK, "WindowsCreateString failed, hr %#lx.\n", hr);
+
+    iterator_hstring_create_static(&iterator_hstring, commands, ARRAY_SIZE(commands));
+    iterable_hstring_create_static(&iterable_hstring, &iterator_hstring);
+    hr = ISpeechRecognitionListConstraintFactory_CreateWithTag(listconstraint_factory, &iterable_hstring.IIterable_HSTRING_iface, tag, &listconstraint);
+    ok(hr == S_OK, "ISpeechRecognitionListConstraintFactory_Create failed, hr %#lx.\n", hr);
+    WindowsDeleteString(tag);
+
+    ref = ISpeechRecognitionListConstraintFactory_Release(listconstraint_factory);
+    ok(ref == 1, "Got unexpected ref %lu.\n", ref);
+
+    hr = ISpeechRecognitionListConstraint_QueryInterface(listconstraint, &IID_ISpeechRecognitionConstraint, (void **)&constraint);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ISpeechRecognitionConstraint_put_IsEnabled(constraint, TRUE);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IInspectable_QueryInterface(inspectable, &IID_ISpeechRecognizer, (void **)&recognizer);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = IInspectable_QueryInterface(inspectable, &IID_ISpeechRecognizer2, (void **)&recognizer2);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ISpeechRecognizer2_get_ContinuousRecognitionSession(recognizer2, &session);
+    ok(hr == S_OK, "ISpeechRecognizer2_get_ContinuousRecognitionSession failed, hr %#lx.\n", hr);
+
+    hr = ISpeechRecognizer_get_Constraints(recognizer, &constraints);
+    ok(hr == S_OK, "ISpeechContinuousRecognitionSession_get_Constraints failed, hr %#lx.\n", hr);
+
+    hr = IVector_ISpeechRecognitionConstraint_Clear(constraints);
+    ok(hr == S_OK, "IVector_ISpeechRecognitionConstraint_Clear failed, hr %#lx.\n", hr);
+
+    hr = IVector_ISpeechRecognitionConstraint_Append(constraints, constraint);
+    ok(hr == S_OK, "IVector_ISpeechRecognitionConstraint_Append failed, hr %#lx.\n", hr);
+
+    ref = IVector_ISpeechRecognitionConstraint_Release(constraints);
+    ok(ref == 1, "Got unexpected ref %lu.\n", ref);
+
+    ref = ISpeechRecognitionConstraint_Release(constraint);
+    ok(ref == 2, "Got unexpected ref %lu.\n", ref);
+
+    ref = ISpeechRecognitionListConstraint_Release(listconstraint);
+    ok(ref == 1, "Got unexpected ref %lu.\n", ref);
+
+    token.value = 0xdeadbeef;
+    recognition_result_handler_create_static(&result_handler);
+    hr = ISpeechContinuousRecognitionSession_add_ResultGenerated(session, &result_handler.IHandler_RecognitionResult_iface, &token);
+    ok(hr == S_OK, "ISpeechContinuousRecognitionSession_add_ResultGenerated failed, hr %#lx.\n", hr);
+    ok(token.value != 0xdeadbeef, "Got unexpexted token: %#I64x.\n", token.value);
+
+    hr = ISpeechRecognizer_CompileConstraintsAsync(recognizer, &operation);
+    ok(hr == S_OK, "ISpeechRecognizer_CompileConstraintsAsync failed, hr %#lx.\n", hr);
+    await_async_inspectable((IAsyncOperation_IInspectable *)operation,
+                             &compilation_handler,
+                             &IID_IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResult);
+
+    IAsyncOperation_IInspectable_Release((IAsyncOperation_IInspectable *)operation);
+
+    hr = ISpeechContinuousRecognitionSession_StartAsync(session, &action);
+    todo_wine ok(hr == S_OK, "ISpeechContinuousRecognitionSession_StartAsync failed, hr %#lx.\n", hr);
+
+    if (FAILED(hr)) goto skip_action;
+
+    await_async_void(action, &action_handler);
+    check_async_info((IInspectable *)action, 1, Completed, S_OK);
+
+    handler = (void *)0xdeadbeef;
+    hr = IAsyncAction_get_Completed(action, &handler);
+    todo_wine ok(hr == S_OK, "IAsyncAction_put_Completed failed, hr %#lx.\n", hr);
+    todo_wine ok(handler == NULL, "Handler was %p.\n", handler);
+
+    hr = IAsyncAction_QueryInterface(action, &IID_IAsyncInfo, (void **)&info);
+    todo_wine ok(hr == S_OK, "IAsyncAction_QueryInterface failed, hr %#lx.\n", hr);
+
+    hr = IAsyncInfo_Cancel(info);
+    todo_wine ok(hr == S_OK, "IAsyncInfo_Cancel failed, hr %#lx.\n", hr);
+    check_async_info((IInspectable *)action, 1, Completed, S_OK);
+
+    hr = IAsyncInfo_Close(info);
+    todo_wine ok(hr == S_OK, "IAsyncInfo_Close failed, hr %#lx.\n", hr);
+    check_async_info((IInspectable *)action, 1, AsyncStatus_Closed, S_OK);
+
+    hr = IAsyncInfo_Close(info);
+    todo_wine ok(hr == S_OK, "IAsyncInfo_Close failed, hr %#lx.\n", hr);
+    check_async_info((IInspectable *)action, 1, AsyncStatus_Closed, S_OK);
+
+    hr = IAsyncInfo_Cancel(info);
+    todo_wine ok(hr == S_OK, "IAsyncInfo_Cancel failed, hr %#lx.\n", hr);
+    check_async_info((IInspectable *)action, 1, AsyncStatus_Closed, S_OK);
+
+    IAsyncInfo_Release(info);
+
+    /*
+     * TODO: Use a loopback device together with prerecorded audio files to test the recognizer's functionality.
+     */
+
+    hr = ISpeechContinuousRecognitionSession_StopAsync(session, &action2);
+    todo_wine ok(hr == S_OK, "ISpeechContinuousRecognitionSession_StopAsync failed, hr %#lx.\n", hr);
+
+    async_void_handler_create_static(&action_handler);
+    action_handler.event_block = CreateEventW(NULL, FALSE, FALSE, NULL);
+    action_handler.event_finished = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(!!action_handler.event_block, "Block event wasn't created.\n");
+    ok(!!action_handler.event_finished, "Finished event wasn't created.\n");
+
+    /* Check if IAsyncInfo_Close is non blocking. */
+    put_param.handler = &action_handler.IAsyncActionCompletedHandler_iface;
+    put_param.action = action2;
+    put_thread = CreateThread(NULL, 0, action_put_completed_thread, &put_param, 0, NULL);
+    todo_wine ok(!WaitForSingleObject(action_handler.event_finished , 5000), "Wait for event_finished failed.\n");
+
+    handler = (void *)0xdeadbeef;
+    old_ref = action_handler.ref;
+    hr = IAsyncAction_get_Completed(action2, &handler);
+    todo_wine ok(hr == S_OK, "IAsyncAction_get_Completed failed, hr %#lx.\n", hr);
+
+    todo_wine ok(handler == &action_handler.IAsyncActionCompletedHandler_iface || /* Broken on 1507. */
+                            broken(handler != NULL && handler != (void *)0xdeadbeef), "Handler was %p.\n", handler);
+
+    ref = action_handler.ref - old_ref;
+    todo_wine ok(ref == 1, "The ref was increased by %lu.\n", ref);
+    IAsyncActionCompletedHandler_Release(handler);
+
+    hr = IAsyncAction_QueryInterface(action2, &IID_IAsyncInfo, (void **)&info);
+    todo_wine ok(hr == S_OK, "IAsyncAction_QueryInterface failed, hr %#lx.\n", hr);
+
+    hr = IAsyncInfo_Close(info); /* If IAsyncInfo_Close would wait for the handler to finish, the test would get stuck here. */
+    todo_wine ok(hr == S_OK, "IAsyncInfo_Close failed, hr %#lx.\n", hr);
+    check_async_info((IInspectable *)action2, 3, AsyncStatus_Closed, S_OK);
+
+    set = SetEvent(action_handler.event_block);
+    todo_wine ok(set == TRUE, "Event 'event_block' wasn't set.\n");
+    todo_wine ok(!WaitForSingleObject(put_thread , 1000), "Wait for put_thread failed.\n");
+    IAsyncInfo_Release(info);
+
+    CloseHandle(action_handler.event_finished);
+    CloseHandle(action_handler.event_block);
+    CloseHandle(put_thread);
+
+    todo_wine ok(action != action2, "actions were the same!\n");
+
+    IAsyncAction_Release(action2);
+    IAsyncAction_Release(action);
+
+skip_action:
+    hr = ISpeechContinuousRecognitionSession_remove_ResultGenerated(session, token);
+    ok(hr == S_OK, "ISpeechContinuousRecognitionSession_remove_ResultGenerated failed, hr %#lx.\n", hr);
+
+    ref = ISpeechContinuousRecognitionSession_Release(session);
+    ok(ref == 1, "Got unexpected ref %lu.\n", ref);
+
+    ref = ISpeechRecognizer2_Release(recognizer2);
+    ok(ref == 2, "Got unexpected ref %lu.\n", ref);
+
+    ref = ISpeechRecognizer_Release(recognizer);
+    ok(ref == 1, "Got unexpected ref %lu.\n", ref);
+
+    ref = IInspectable_Release(inspectable);
+    ok(!ref, "Got unexpected ref %lu.\n", ref);
+
+done:
+    for (i = 0; i < ARRAY_SIZE(commands); i++)
+        WindowsDeleteString(commands[i]);
+
+    RoUninitialize();
+}
+
 START_TEST(speech)
 {
     test_ActivationFactory();
@@ -1346,4 +1692,5 @@ START_TEST(speech)
     test_VoiceInformation();
     test_SpeechRecognizer();
     test_SpeechRecognitionListConstraint();
+    test_Recognition();
 }
