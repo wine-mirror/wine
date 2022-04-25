@@ -6658,6 +6658,9 @@ static void test_h264_decoder(void)
 
     hr = IMFTransform_GetOutputAvailableType(transform, 0, 0, &media_type);
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputAvailableType returned %#lx\n", hr);
+    hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
+    todo_wine
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputCurrentType returned %#lx\n", hr);
 
     /* setting output media type first doesn't work */
 
@@ -6778,6 +6781,15 @@ static void test_h264_decoder(void)
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     ret = IMFMediaType_Release(media_type);
     ok(ret == 1, "Release returned %lu\n", ret);
+
+    hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
+    todo_wine
+    ok(hr == S_OK, "GetOutputCurrentType returned %#lx\n", hr);
+    if (hr != S_OK) MFCreateMediaType(&media_type);
+    todo_wine
+    check_media_type(media_type, is_win7 ? output_type_desc_win7 : output_type_desc, -1);
+    ret = IMFMediaType_Release(media_type);
+    ok(ret == 0, "Release returned %lu\n", ret);
 
     flags = MFT_INPUT_STREAM_WHOLE_SAMPLES | MFT_INPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER | MFT_INPUT_STREAM_FIXED_SAMPLE_SIZE;
     memset(&input_info, 0xcd, sizeof(input_info));
@@ -6903,6 +6915,18 @@ static void test_h264_decoder(void)
     }
     ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#lx\n", hr);
     ok(i == 5, "%lu output media types\n", i);
+
+    /* current output type is still the one we selected */
+    hr = IMFTransform_GetOutputCurrentType(transform, 0, &media_type);
+    todo_wine
+    ok(hr == S_OK, "GetOutputCurrentType returned %#lx\n", hr);
+    if (hr != S_OK) MFCreateMediaType(&media_type);
+    todo_wine
+    check_media_type(media_type, is_win7 ? output_type_desc_win7 : output_type_desc, -1);
+    hr = IMFMediaType_GetItemType(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, NULL);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "GetItemType returned %#lx\n", hr);
+    ret = IMFMediaType_Release(media_type);
+    ok(ret == 0, "Release returned %lu\n", ret);
 
     /* and generate a new one as well in a temporary directory */
     GetTempPathW(ARRAY_SIZE(output_path), output_path);
