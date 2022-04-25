@@ -26,6 +26,7 @@ use Encode;
 # base URLs for www.unicode.org files
 my $UNIVERSION = "14.0.0";
 my $UNIDATA  = "https://www.unicode.org/Public/$UNIVERSION/ucd/UCD.zip";
+my $UNIHAN   = "https://www.unicode.org/Public/$UNIVERSION/ucd/Unihan.zip";
 my $IDNADATA = "https://www.unicode.org/Public/idna/$UNIVERSION";
 my $JISDATA  = "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/JIS";
 my $KSCDATA  = "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/KSC";
@@ -1825,6 +1826,11 @@ my @uni2cp = ();
 my @tolower_table = ();
 my @toupper_table = ();
 my @digitmap_table = ();
+my @halfwidth_table = ();
+my @fullwidth_table = ();
+my @cjk_compat_table = ();
+my @chinese_traditional_table = ();
+my @chinese_simplified_table = ();
 my @category_table = ();
 my @initial_joining_table = ();
 my @direction_table = ();
@@ -2106,7 +2112,18 @@ sub load_data()
             $decomp_compat_table[$src] = \@seq;
         }
 
-        if ($decomp =~ /^<([a-zA-Z]+)>\s+([0-9a-fA-F]+)$/)
+        if ($decomp =~ /^<narrow>\s+([0-9a-fA-F]+)$/)
+        {
+            $halfwidth_table[hex $1] = $src;
+            $fullwidth_table[$src] = hex $1;
+        }
+        elsif ($decomp =~ /^<wide>\s+([0-9a-fA-F]+)$/)
+        {
+            next if hex $1 == 0x5c; # don't remap backslash
+            $fullwidth_table[hex $1] = $src;
+            $halfwidth_table[$src] = hex $1;
+        }
+        elsif ($decomp =~ /^<([a-zA-Z]+)>\s+([0-9a-fA-F]+)$/)
         {
             # decomposition of the form "<foo> 1234" -> use char if type is known
             if ($1 eq "isolated" || $1 eq "final" || $1 eq "initial" || $1 eq "medial")
@@ -2127,8 +2144,10 @@ sub load_data()
             }
             elsif ($decomp =~ /^([0-9a-fA-F]+)$/)
             {
+                my $dst = hex $1;
                 # Single char decomposition
-                $decomp_table[$src] = $decomp_compat_table[$src] = [ hex $1 ];
+                $decomp_table[$src] = $decomp_compat_table[$src] = [ $dst ];
+                $cjk_compat_table[$src] = $dst if $name =~ /^CJK COMPATIBILITY IDEOGRAPH/;
             }
         }
     }
@@ -2213,6 +2232,24 @@ sub load_data()
         }
     }
     close $IDNA;
+
+    # load the Unihan mappings
+
+    my $UNIHAN = open_data_file( $UNIHAN, "Unihan_Variants.txt" );
+    while (<$UNIHAN>)
+    {
+        s/\#.*//;  # remove comments
+        next if /^\s*$/;
+        if (/^U\+([0-9a-fA-F]+)\s+kTraditionalVariant\s+U\+([0-9a-fA-F]+)/)
+        {
+            $chinese_traditional_table[hex $1] = hex $2;
+        }
+        elsif (/^U\+([0-9a-fA-F]+)\s+kSimplifiedVariant\s+U\+([0-9a-fA-F]+)/)
+        {
+            $chinese_simplified_table[hex $1] = hex $2;
+        }
+    }
+    close $UNIHAN;
 }
 
 
@@ -5180,6 +5217,47 @@ sub build_locale_data()
 
 
 ################################################################
+# build the charmaps table for locale.nls
+sub build_charmaps_data()
+{
+    my $data = "";
+
+    # MAP_FOLDDIGITS
+    $data .= dump_binary_case_table( @digitmap_table );
+
+    # CJK compatibility map
+    $data .= dump_binary_case_table( @cjk_compat_table );
+
+    # LCMAP_HIRAGANA/KATAKANA
+    my (@hiragana_table, @katakana_table);
+    foreach my $ch (0x3041..0x3096, 0x309d..0x309e)
+    {
+        $hiragana_table[$ch + 0x60] = $ch;
+        $katakana_table[$ch] = $ch + 0x60;
+    }
+    $data .= dump_binary_case_table( @hiragana_table ) . dump_binary_case_table( @katakana_table );
+
+    # LCMAP_HALFWIDTH/FULLWIDTH
+    $halfwidth_table[0x2018] = 0x0027;
+    $halfwidth_table[0x2019] = 0x0027;
+    $halfwidth_table[0x201c] = 0x0022;
+    $halfwidth_table[0x201d] = 0x0022;
+    $halfwidth_table[0x309b] = 0xff9e;
+    $halfwidth_table[0x309c] = 0xff9f;
+    $fullwidth_table[0x309b] = 0x3099;
+    $fullwidth_table[0x309c] = 0x309a;
+    $data .= dump_binary_case_table( @halfwidth_table ) . dump_binary_case_table( @fullwidth_table );
+
+    # LCMAP_TRADITIONAL/SIMPLIFIED_CHINESE
+    $data .= dump_binary_case_table( @chinese_traditional_table ) . dump_binary_case_table( @chinese_simplified_table );
+
+    # FIXME: some more unknown tables here
+
+    return $data;
+}
+
+
+################################################################
 # build the geoids table for locale.nls
 sub build_geoids_data()
 {
@@ -5237,7 +5315,7 @@ sub dump_locales($$)
     printf "Building $filename\n";
 
     my $locale_data = build_locale_data();
-    my $charmaps_data = "";  # FIXME
+    my $charmaps_data = build_charmaps_data();
     my $geoids_data = build_geoids_data();
     my $scripts_data = "";  # FIXME
 
