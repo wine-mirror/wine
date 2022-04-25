@@ -62,19 +62,19 @@ static void test_nsi_api( void )
                                       (void **)&stat_tbl, sizeof(*stat_tbl), &count, 0 );
         if (!err) break;
     }
-    ok( !err, "got %d\n", err );
+    ok( !err, "got %ld\n", err );
     rw_size = rw_sizes[i];
 
     for (i = 0; i < count; i++)
     {
-        winetest_push_context( "%d", i );
+        winetest_push_context( "%ld", i );
         rw = (struct nsi_ndis_ifinfo_rw *)((BYTE *)rw_tbl + i * rw_size);
         dyn = dyn_tbl + i;
         stat = stat_tbl + i;
 
         err = NsiGetAllParameters( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid_tbl + i, sizeof(*luid_tbl),
                                    &get_rw, rw_size, &get_dyn, sizeof(get_dyn), &get_stat, sizeof(get_stat) );
-        ok( !err, "got %d\n", err );
+        ok( !err, "got %ld\n", err );
         /* test a selection of members */
         ok( IsEqualGUID( &get_rw.network_guid, &rw->network_guid ), "mismatch\n" );
         ok( get_rw.alias.Length == rw->alias.Length, "mismatch\n" );
@@ -103,7 +103,7 @@ static void test_nsi_api( void )
         get_all_params.static_size = sizeof(get_stat);
 
         err = NsiGetAllParametersEx( &get_all_params );
-        ok( !err, "got %d\n", err );
+        ok( !err, "got %ld\n", err );
         /* test a selection of members */
         ok( IsEqualGUID( &get_rw.network_guid, &rw->network_guid ), "mismatch\n" );
         ok( get_rw.alias.Length == rw->alias.Length, "mismatch\n" );
@@ -121,20 +121,20 @@ static void test_nsi_api( void )
         err = NsiGetParameter( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid_tbl + i, sizeof(*luid_tbl),
                                NSI_PARAM_TYPE_RW, &get_rw.alias, sizeof(get_rw.alias),
                                FIELD_OFFSET(struct nsi_ndis_ifinfo_rw, alias) );
-        ok( !err, "got %d\n", err );
+        ok( !err, "got %ld\n", err );
         ok( get_rw.alias.Length == rw->alias.Length, "mismatch\n" );
         ok( !memcmp( get_rw.alias.String, rw->alias.String, rw->alias.Length ), "mismatch\n" );
 
         err = NsiGetParameter( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid_tbl + i, sizeof(*luid_tbl),
                                NSI_PARAM_TYPE_STATIC, &get_stat.if_index, sizeof(get_stat.if_index),
                                FIELD_OFFSET(struct nsi_ndis_ifinfo_static, if_index) );
-        ok( !err, "got %d\n", err );
+        ok( !err, "got %ld\n", err );
         ok( get_stat.if_index == stat->if_index, "mismatch\n" );
 
         err = NsiGetParameter( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid_tbl + i, sizeof(*luid_tbl),
                                NSI_PARAM_TYPE_STATIC, &get_stat.if_guid, sizeof(get_stat.if_guid),
                                FIELD_OFFSET(struct nsi_ndis_ifinfo_static, if_guid) );
-        ok( !err, "got %d\n", err );
+        ok( !err, "got %ld\n", err );
         ok( IsEqualGUID( &get_stat.if_guid, &stat->if_guid ), "mismatch\n" );
 
         memset( &get_rw, 0xcc, sizeof(get_rw) );
@@ -153,7 +153,7 @@ static void test_nsi_api( void )
         get_param.data_size = sizeof(get_rw.alias);
         get_param.data_offset = FIELD_OFFSET(struct nsi_ndis_ifinfo_rw, alias);
         err = NsiGetParameterEx( &get_param );
-        ok( !err, "got %d\n", err );
+        ok( !err, "got %ld\n", err );
         ok( get_rw.alias.Length == rw->alias.Length, "mismatch\n" );
         ok( !memcmp( get_rw.alias.String, rw->alias.String, rw->alias.Length ), "mismatch\n" );
 
@@ -162,7 +162,7 @@ static void test_nsi_api( void )
         get_param.data_size = sizeof(get_stat.if_index);
         get_param.data_offset = FIELD_OFFSET(struct nsi_ndis_ifinfo_static, if_index);
         err = NsiGetParameterEx( &get_param );
-        ok( !err, "got %d\n", err );
+        ok( !err, "got %ld\n", err );
         ok( get_stat.if_index == stat->if_index, "mismatch\n" );
 
         get_param.param_type = NSI_PARAM_TYPE_STATIC;
@@ -170,7 +170,7 @@ static void test_nsi_api( void )
         get_param.data_size = sizeof(get_stat.if_guid);
         get_param.data_offset = FIELD_OFFSET(struct nsi_ndis_ifinfo_static, if_guid);
         err = NsiGetParameterEx( &get_param );
-        ok( !err, "got %d\n", err );
+        ok( !err, "got %ld\n", err );
         ok( IsEqualGUID( &get_stat.if_guid, &stat->if_guid ), "mismatch\n" );
         winetest_pop_context();
     }
@@ -179,7 +179,7 @@ static void test_nsi_api( void )
     err = NsiEnumerateObjectsAllParameters( 1, 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE,
                                             NULL, 0, NULL, 0,
                                             NULL, 0, NULL, 0, &enum_count );
-    ok( !err, "got %d\n", err );
+    ok( !err, "got %ld\n", err );
     ok( enum_count == count, "mismatch\n" );
 
     enum_luid_tbl = malloc( count * sizeof(*enum_luid_tbl) );
@@ -191,12 +191,12 @@ static void test_nsi_api( void )
                                             enum_luid_tbl, sizeof(*enum_luid_tbl), enum_rw_tbl, rw_size,
                                             enum_dyn_tbl, sizeof(*enum_dyn_tbl), enum_stat_tbl, sizeof(*enum_stat_tbl),
                                             &enum_count );
-    ok( !err, "got %d\n", err );
+    ok( !err, "got %ld\n", err );
     ok( enum_count == count, "mismatch\n" );
 
     for (i = 0; i < count; i++)
     {
-        winetest_push_context( "%d", i );
+        winetest_push_context( "%ld", i );
         rw = (struct nsi_ndis_ifinfo_rw *)((BYTE *)rw_tbl + i * rw_size);
         enum_rw = (struct nsi_ndis_ifinfo_rw *)((BYTE *)enum_rw_tbl + i * rw_size);
         dyn = dyn_tbl + i;
@@ -226,11 +226,11 @@ static void test_nsi_api( void )
                                                 enum_luid_tbl, sizeof(*enum_luid_tbl), enum_rw_tbl, rw_size,
                                                 enum_dyn_tbl, sizeof(*enum_dyn_tbl), enum_stat_tbl, sizeof(*enum_stat_tbl),
                                                 &enum_count );
-        ok( err == ERROR_MORE_DATA, "got %d\n", err );
+        ok( err == ERROR_MORE_DATA, "got %ld\n", err );
         ok( enum_count == count - 1, "mismatch\n" );
 
         for (i = 0; i < enum_count; i++) /* for simplicity just check the luids */
-            ok( enum_luid_tbl[i].Value == luid_tbl[i].Value, "%d: mismatch\n", i );
+            ok( enum_luid_tbl[i].Value == luid_tbl[i].Value, "%ld: mismatch\n", i );
     }
 
     memset( &enum_params, 0, sizeof(enum_params) );
@@ -249,7 +249,7 @@ static void test_nsi_api( void )
     enum_params.count = count;
 
     err = NsiEnumerateObjectsAllParametersEx( &enum_params );
-    ok( !err, "got %d\n", err );
+    ok( !err, "got %ld\n", err );
     ok( enum_params.count == count, "mismatch\n" );
 
     free( enum_luid_tbl );
@@ -279,21 +279,21 @@ static void test_ndis_ifinfo( void )
                                       (void **)&stat_tbl, sizeof(*stat_tbl), &count, 0 );
         if (!err) break;
     }
-    ok( !err, "got %d\n", err );
+    ok( !err, "got %ld\n", err );
     if (err) return;
     rw_size = rw_sizes[i];
 
     err = GetIfTable2( &table );
-    ok( !err, "got %d\n", err );
-    ok( table->NumEntries == count, "table entries %d count %d\n", table->NumEntries, count );
+    ok( !err, "got %ld\n", err );
+    ok( table->NumEntries == count, "table entries %ld count %ld\n", table->NumEntries, count );
 
     /* Grab the dyn table again to provide an upper bound for the stats returned from GetIfTable2().
        (The luids must be retrieved again otherwise NsiAllocateAndGetTable() fails). */
     err = NsiAllocateAndGetTable( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, (void **)&luid_tbl_2, sizeof(*luid_tbl_2),
                                   NULL, 0, (void **)&dyn_tbl_2, sizeof(*dyn_tbl_2),
                                   NULL, 0, &count, 0 );
-    ok( !err, "got %d\n", err );
-    ok( table->NumEntries == count, "table entries %d count %d\n", table->NumEntries, count );
+    ok( !err, "got %ld\n", err );
+    ok( table->NumEntries == count, "table entries %ld count %ld\n", table->NumEntries, count );
 
     for (i = 0; i < count; i++)
     {
@@ -303,7 +303,7 @@ static void test_ndis_ifinfo( void )
         struct nsi_ndis_ifinfo_dynamic *dyn = dyn_tbl + i, *dyn_2 = dyn_tbl_2 + i;
         struct nsi_ndis_ifinfo_static *stat = stat_tbl + i;
 
-        winetest_push_context( "%d", i );
+        winetest_push_context( "%ld", i );
         ok( row->InterfaceLuid.Value == luid->Value, "mismatch\n" );
         ok( row->InterfaceIndex == stat->if_index, "mismatch\n" );
         ok( IsEqualGUID( &row->InterfaceGuid, &stat->if_guid ), "mismatch\n" );
@@ -367,25 +367,25 @@ static void test_ndis_ifinfo( void )
     err = NsiGetAllParameters( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid_tbl, sizeof(*luid_tbl),
                                &rw_get, rw_size, &dyn_get, sizeof(dyn_get),
                                &stat_get, sizeof(stat_get) );
-    ok( !err, "got %d\n", err );
+    ok( !err, "got %ld\n", err );
     ok( IsEqualGUID( &stat_tbl[0].if_guid, &stat_get.if_guid ), "mismatch\n" );
 
     err = NsiGetParameter( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, luid_tbl, sizeof(*luid_tbl),
                            NSI_PARAM_TYPE_STATIC, &stat_get.if_guid, sizeof(stat_get.if_guid),
                            FIELD_OFFSET(struct nsi_ndis_ifinfo_static, if_guid) );
-    ok( !err, "got %d\n", err );
+    ok( !err, "got %ld\n", err );
     ok( IsEqualGUID( &stat_tbl[0].if_guid, &stat_get.if_guid ), "mismatch\n" );
 
     luid_get.Value = ~0u;
     err = NsiGetAllParameters( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, &luid_get, sizeof(luid_get),
                                &rw_get, rw_size, &dyn_get, sizeof(dyn_get),
                                &stat_get, sizeof(stat_get) );
-    ok( err == ERROR_FILE_NOT_FOUND, "got %d\n", err );
+    ok( err == ERROR_FILE_NOT_FOUND, "got %ld\n", err );
 
     err = NsiGetParameter( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, &luid_get, sizeof(luid_get),
                            NSI_PARAM_TYPE_STATIC, &stat_get.if_guid, sizeof(stat_get.if_guid),
                            FIELD_OFFSET(struct nsi_ndis_ifinfo_static, if_guid) );
-    ok( err == ERROR_FILE_NOT_FOUND, "got %d\n", err );
+    ok( err == ERROR_FILE_NOT_FOUND, "got %ld\n", err );
 
     FreeMibTable( table );
     NsiFreeTable( luid_tbl_2, NULL, dyn_tbl_2, NULL );
@@ -403,22 +403,22 @@ static void test_ndis_index_luid( void )
     /* first get the luids */
     err = NsiAllocateAndGetTable( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE, (void **)&luids, sizeof(*luids),
                                   NULL, 0, NULL, 0, NULL, 0, &count, 0 );
-    ok( !err, "got %d\n", err );
+    ok( !err, "got %ld\n", err );
 
     for (i = 0; i < count; i++)
     {
         ConvertInterfaceLuidToIndex( luids + i, &index );
         err = NsiGetParameter( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_INDEX_LUID_TABLE, &index, sizeof(index),
                                NSI_PARAM_TYPE_STATIC, &luid, sizeof(luid), 0 );
-        ok( !err, "got %d\n", err );
-        ok( luid.Value == luids[i].Value, "%d: luid mismatch\n", i );
+        ok( !err, "got %ld\n", err );
+        ok( luid.Value == luids[i].Value, "%ld: luid mismatch\n", i );
     }
     NsiFreeTable( luids, NULL, NULL, NULL );
 
     index = ~0u;
     err = NsiGetParameter( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_INDEX_LUID_TABLE, &index, sizeof(index),
                            NSI_PARAM_TYPE_STATIC, &luid, sizeof(luid), 0 );
-    ok( err == ERROR_FILE_NOT_FOUND, "got %d\n", err );
+    ok( err == ERROR_FILE_NOT_FOUND, "got %ld\n", err );
 }
 
 static void test_ip_cmpt( int family )
@@ -440,17 +440,17 @@ static void test_ip_cmpt( int family )
         err = NsiGetAllParameters( 1, mod, 2, &key, sizeof(key), &rw, rw_sizes[i], &dyn, sizeof(dyn), NULL, 0 );
         if (!err) break;
     }
-    ok( !err, "got %x\n", err );
+    ok( !err, "got %lx\n", err );
 
     err = GetIpStatisticsEx( &table, family );
-    ok( !err, "got %d\n", err );
+    ok( !err, "got %ld\n", err );
     if (err) goto err;
 
-    ok( table.dwForwarding - 1 == rw.not_forwarding, "%x vs %x\n", table.dwForwarding, rw.not_forwarding );
-    ok( table.dwDefaultTTL == rw.default_ttl, "%x vs %x\n", table.dwDefaultTTL, rw.default_ttl );
-    ok( table.dwNumIf == dyn.num_ifs, "%x vs %x\n", table.dwNumIf, dyn.num_ifs );
-    ok( table.dwNumAddr == dyn.num_addrs, "%x vs %x\n", table.dwNumAddr, dyn.num_addrs );
-    ok( table.dwNumRoutes == dyn.num_routes, "%x vs %x\n", table.dwNumRoutes, dyn.num_routes );
+    ok( table.dwForwarding - 1 == rw.not_forwarding, "%lx vs %x\n", table.dwForwarding, rw.not_forwarding );
+    ok( table.dwDefaultTTL == rw.default_ttl, "%lx vs %x\n", table.dwDefaultTTL, rw.default_ttl );
+    ok( table.dwNumIf == dyn.num_ifs, "%lx vs %x\n", table.dwNumIf, dyn.num_ifs );
+    ok( table.dwNumAddr == dyn.num_addrs, "%lx vs %x\n", table.dwNumAddr, dyn.num_addrs );
+    ok( table.dwNumRoutes == dyn.num_routes, "%lx vs %x\n", table.dwNumRoutes, dyn.num_routes );
 
 err:
     winetest_pop_context();
@@ -466,15 +466,15 @@ static void test_ip_icmpstats( int family )
     winetest_push_context( family == AF_INET ? "AF_INET" : "AF_INET6" );
 
     err = NsiGetAllParameters( 1, mod, NSI_IP_ICMPSTATS_TABLE, NULL, 0, NULL, 0, &nsi_stats, sizeof(nsi_stats), NULL, 0 );
-    ok( !err, "got %d\n", err );
+    ok( !err, "got %ld\n", err );
     if (err) goto err;
 
     err = GetIcmpStatisticsEx( &table, family );
-    ok( !err, "got %d\n", err );
+    ok( !err, "got %ld\n", err );
     if (err) goto err;
 
     err = NsiGetAllParameters( 1, mod, NSI_IP_ICMPSTATS_TABLE, NULL, 0, NULL, 0, &nsi_stats2, sizeof(nsi_stats2), NULL, 0 );
-    ok( !err, "got %d\n", err );
+    ok( !err, "got %ld\n", err );
 
     expect_bounded( "icmpInStats.dwMsgs", table.icmpInStats.dwMsgs, nsi_stats.in_msgs, nsi_stats2.in_msgs );
     expect_bounded( "icmpInStats.dwErrors", table.icmpInStats.dwErrors, nsi_stats.in_errors, nsi_stats2.in_errors );
@@ -482,7 +482,7 @@ static void test_ip_icmpstats( int family )
     expect_bounded( "icmpOutStats.dwErrors", table.icmpOutStats.dwErrors, nsi_stats.out_errors, nsi_stats2.out_errors );
     for (i = 0; i < ARRAY_SIZE(nsi_stats.in_type_counts); i++)
     {
-        winetest_push_context( "%d", i );
+        winetest_push_context( "%ld", i );
         expect_bounded( "icmpInStats.rgdwTypeCount", table.icmpInStats.rgdwTypeCount[i], nsi_stats.in_type_counts[i], nsi_stats2.in_type_counts[i] );
         expect_bounded( "icmpOutStats.rgdwTypeCount", table.icmpOutStats.rgdwTypeCount[i], nsi_stats.out_type_counts[i], nsi_stats2.out_type_counts[i] );
         winetest_pop_context();
@@ -505,14 +505,14 @@ static void test_ip_ipstats( int family )
     /* The table appears to consist of a single object without a key.  The rw data does exist but
        isn't part of GetIpStatisticsEx() and isn't yet tested */
     err = NsiGetAllParameters( 1, mod, NSI_IP_IPSTATS_TABLE, NULL, 0, NULL, 0, &dyn, sizeof(dyn), &stat, sizeof(stat) );
-    ok( !err, "got %x\n", err );
+    ok( !err, "got %lx\n", err );
     if (err) goto err;
 
     err = GetIpStatisticsEx( &table, family );
-    ok( !err, "got %d\n", err );
+    ok( !err, "got %ld\n", err );
 
     err = NsiGetAllParameters( 1, mod, NSI_IP_IPSTATS_TABLE, NULL, 0, NULL, 0, &dyn2, sizeof(dyn2), NULL, 0 );
-    ok( !err, "got %x\n", err );
+    ok( !err, "got %lx\n", err );
 
     /* dwForwarding and dwDefaultTTL come from the compartment table */
     expect_bounded( "dwInReceives", table.dwInReceives, dyn.in_recv, dyn2.in_recv );
@@ -526,7 +526,7 @@ static void test_ip_ipstats( int family )
     expect_bounded( "dwRoutingDiscards", table.dwRoutingDiscards, dyn.routing_discards, dyn2.routing_discards );
     expect_bounded( "dwOutDiscards", table.dwOutDiscards, dyn.out_discards, dyn2.out_discards );
     expect_bounded( "dwOutNoRoutes", table.dwOutNoRoutes, dyn.out_no_routes, dyn2.out_no_routes );
-    ok( table.dwReasmTimeout == stat.reasm_timeout, "bad timeout %d != %d\n",  table.dwReasmTimeout, stat.reasm_timeout );
+    ok( table.dwReasmTimeout == stat.reasm_timeout, "bad timeout %ld != %d\n",  table.dwReasmTimeout, stat.reasm_timeout );
     expect_bounded( "dwReasmReqds", table.dwReasmReqds, dyn.reasm_reqds, dyn2.reasm_reqds );
     expect_bounded( "dwReasmOks", table.dwReasmOks, dyn.reasm_oks, dyn2.reasm_oks );
     expect_bounded( "dwReasmFails", table.dwReasmFails, dyn.reasm_fails, dyn2.reasm_fails );
@@ -561,12 +561,12 @@ static void test_ip_unicast( int family )
                                       (void **)&stat_tbl, sizeof(*stat_tbl), &count, 0 );
         if (!err) break;
     }
-    ok( !err, "got %d\n", err );
+    ok( !err, "got %ld\n", err );
     rw_size = rw_sizes[i];
 
     err = GetUnicastIpAddressTable( family, &table );
-    ok( !err, "got %d\n", err );
-    ok( table->NumEntries == count, "table entries %d count %d\n", table->NumEntries, count );
+    ok( !err, "got %ld\n", err );
+    ok( table->NumEntries == count, "table entries %ld count %ld\n", table->NumEntries, count );
 
     for (i = 0; i < count; i++)
     {
@@ -574,7 +574,7 @@ static void test_ip_unicast( int family )
         rw = (struct nsi_ip_unicast_rw *)((BYTE *)rw_tbl + i * rw_size);
         dyn = dyn_tbl + i;
         stat = stat_tbl + i;
-        winetest_push_context( "%d", i );
+        winetest_push_context( "%ld", i );
 
         ok( row->Address.si_family == family, "mismatch\n" );
 
@@ -606,7 +606,7 @@ static void test_ip_unicast( int family )
     get_key.addr.s_addr = 0;
     err = NsiGetAllParameters( 1, &NPI_MS_IPV4_MODULEID, NSI_IP_UNICAST_TABLE, &get_key, sizeof(get_key),
                                    &get_rw, rw_size, &get_dyn, sizeof(get_dyn), &get_stat, sizeof(get_stat) );
-    ok( err == ERROR_NOT_FOUND, "got %d\n", err );
+    ok( err == ERROR_NOT_FOUND, "got %ld\n", err );
 
     FreeMibTable( table );
     NsiFreeTable( key_tbl, rw_tbl, dyn_tbl, stat_tbl );
@@ -632,22 +632,22 @@ static void test_ip_neighbour( int family )
                                       (void **)&rw_tbl, sizeof(*rw), (void **)&dyn_tbl, sizeof(*dyn),
                                       NULL, 0, &count, 0 );
         todo_wine_if( family == AF_INET6 )
-        ok( !err, "got %x\n", err );
+        ok( !err, "got %lx\n", err );
         if (err) goto err;
 
         err = GetIpNetTable2( family, &table );
-        ok( !err, "got %x\n", err );
+        ok( !err, "got %lx\n", err );
 
         err = NsiAllocateAndGetTable( 1, mod, NSI_IP_NEIGHBOUR_TABLE, (void **)&key_tbl_2, key_size,
                                       NULL, 0, (void **)&dyn_tbl_2, sizeof(*dyn),
                                       NULL, 0, &count2, 0 );
-        ok( !err, "got %x\n", err );
+        ok( !err, "got %lx\n", err );
         if (count == count2 && !memcmp( dyn_tbl, dyn_tbl_2, count * sizeof(*dyn) )) break;
         NsiFreeTable( key_tbl_2, NULL, dyn_tbl_2, NULL );
         NsiFreeTable( key_tbl, rw_tbl, dyn_tbl, NULL );
     }
 
-    ok( count == table->NumEntries, "%d vs %d\n", count, table->NumEntries );
+    ok( count == table->NumEntries, "%ld vs %ld\n", count, table->NumEntries );
 
     for (i = 0; i < count; i++)
     {
@@ -658,7 +658,7 @@ static void test_ip_neighbour( int family )
         if (family == AF_INET)
         {
             key4 = key_tbl + i;
-            ok( key4->addr.s_addr == row->Address.Ipv4.sin_addr.s_addr, "%08x vs %08x\n", key4->addr.s_addr,
+            ok( key4->addr.s_addr == row->Address.Ipv4.sin_addr.s_addr, "%08lx vs %08lx\n", key4->addr.s_addr,
                 row->Address.Ipv4.sin_addr.s_addr );
             ok( key4->luid.Value == row->InterfaceLuid.Value, "%s vs %s\n", wine_dbgstr_longlong( key4->luid.Value ),
                 wine_dbgstr_longlong( row->InterfaceLuid.Value ) );
@@ -677,7 +677,7 @@ static void test_ip_neighbour( int family )
         ok( dyn->state == row->State, "%x vs %x\n", dyn->state, row->State );
         ok( dyn->flags.is_router == row->IsRouter, "%x vs %x\n", dyn->flags.is_router, row->IsRouter );
         ok( dyn->flags.is_unreachable == row->IsUnreachable, "%x vs %x\n", dyn->flags.is_unreachable, row->IsUnreachable );
-        ok( dyn->time == row->ReachabilityTime.LastReachable, "%x vs %x\n", dyn->time, row->ReachabilityTime.LastReachable );
+        ok( dyn->time == row->ReachabilityTime.LastReachable, "%x vs %lx\n", dyn->time, row->ReachabilityTime.LastReachable );
     }
 
     NsiFreeTable( key_tbl_2, NULL, dyn_tbl_2, NULL );
@@ -716,7 +716,7 @@ static void test_ip_forward( int family )
                                       NULL, 0, &count, 0 );
         if (!err) break;
     }
-    ok( !err, "got %d\n", err );
+    ok( !err, "got %ld\n", err );
     if (err) { winetest_pop_context(); return; }
     rw_size = rw_sizes[i];
     NsiFreeTable( key_tbl, rw_tbl, NULL, NULL );
@@ -728,19 +728,19 @@ static void test_ip_forward( int family )
                                       (void **)&stat_tbl, sizeof(*stat_tbl), &count, 0 );
         if (!err) break;
     }
-    ok( !err, "got %d\n", err );
+    ok( !err, "got %ld\n", err );
     dyn_size = dyn_sizes[i];
 
     err = GetIpForwardTable2( family, &table );
-    ok( !err, "got %d\n", err );
-    ok( table->NumEntries == count, "table entries %d count %d\n", table->NumEntries, count );
+    ok( !err, "got %ld\n", err );
+    ok( table->NumEntries == count, "table entries %ld count %ld\n", table->NumEntries, count );
 
     for (i = 0; i < count; i++)
     {
         MIB_IPFORWARD_ROW2 *row = table->Table + i;
         rw = (struct nsi_ip_forward_rw *)((BYTE *)rw_tbl + i * rw_size);
         stat = stat_tbl + i;
-        winetest_push_context( "%d", i );
+        winetest_push_context( "%ld", i );
 
         ok( row->DestinationPrefix.Prefix.si_family == family, "mismatch\n" );
 
@@ -811,31 +811,31 @@ static void test_tcp_stats( int family )
 
     err = NsiGetAllParameters( 1, &NPI_MS_TCP_MODULEID, NSI_TCP_STATS_TABLE, &key, sizeof(key), NULL, 0,
                                &dyn, sizeof(dyn), &stat, sizeof(stat) );
-    ok( !err, "got %x\n", err );
+    ok( !err, "got %lx\n", err );
 
     err = GetTcpStatisticsEx( &table, family );
-    ok( !err, "got %d\n", err );
+    ok( !err, "got %ld\n", err );
 
     err = NsiGetAllParameters( 1, &NPI_MS_TCP_MODULEID, NSI_TCP_STATS_TABLE, &key, sizeof(key), NULL, 0,
                                &dyn2, sizeof(dyn), NULL, 0 );
-    ok( !err, "got %x\n", err );
+    ok( !err, "got %lx\n", err );
 
-    ok( table.dwRtoAlgorithm == stat.rto_algo, "%d vs %d\n", table.dwRtoAlgorithm, stat.rto_algo );
-    ok( table.dwRtoMin == stat.rto_min, "%d vs %d\n", table.dwRtoMin, stat.rto_min );
-    ok( table.dwRtoMax == stat.rto_max,  "%d vs %d\n", table.dwRtoMax, stat.rto_max );
-    ok( table.dwMaxConn == stat.max_conns, "%d vs %d\n", table.dwMaxConn, stat.max_conns );
+    ok( table.dwRtoAlgorithm == stat.rto_algo, "%ld vs %d\n", table.dwRtoAlgorithm, stat.rto_algo );
+    ok( table.dwRtoMin == stat.rto_min, "%ld vs %d\n", table.dwRtoMin, stat.rto_min );
+    ok( table.dwRtoMax == stat.rto_max,  "%ld vs %d\n", table.dwRtoMax, stat.rto_max );
+    ok( table.dwMaxConn == stat.max_conns, "%ld vs %d\n", table.dwMaxConn, stat.max_conns );
 
-    ok( unstable( table.dwActiveOpens == dyn.active_opens ), "%d vs %d\n", table.dwActiveOpens, dyn.active_opens );
-    ok( unstable( table.dwPassiveOpens == dyn.passive_opens ), "%d vs %d\n", table.dwPassiveOpens, dyn.passive_opens );
+    ok( unstable( table.dwActiveOpens == dyn.active_opens ), "%ld vs %d\n", table.dwActiveOpens, dyn.active_opens );
+    ok( unstable( table.dwPassiveOpens == dyn.passive_opens ), "%ld vs %d\n", table.dwPassiveOpens, dyn.passive_opens );
     expect_bounded( "dwAttemptFails", table.dwAttemptFails, dyn.attempt_fails, dyn2.attempt_fails );
     expect_bounded( "dwEstabResets", table.dwEstabResets, dyn.est_rsts, dyn2.est_rsts );
-    ok( unstable( table.dwCurrEstab == dyn.cur_est ), "%d vs %d\n", table.dwCurrEstab, dyn.cur_est );
+    ok( unstable( table.dwCurrEstab == dyn.cur_est ), "%ld vs %d\n", table.dwCurrEstab, dyn.cur_est );
     expect_bounded( "dwInSegs", table.dwInSegs, dyn.in_segs, dyn2.in_segs );
     expect_bounded( "dwOutSegs", table.dwOutSegs, dyn.out_segs, dyn2.out_segs );
     expect_bounded( "dwRetransSegs", table.dwRetransSegs, dyn.retrans_segs, dyn2.retrans_segs );
     expect_bounded( "dwInErrs", table.dwInErrs, dyn.in_errs, dyn2.in_errs );
     expect_bounded( "dwOutRsts", table.dwOutRsts, dyn.out_rsts, dyn2.out_rsts );
-    ok( unstable( table.dwNumConns == dyn.num_conns ), "%d vs %d\n", table.dwNumConns, dyn.num_conns );
+    ok( unstable( table.dwNumConns == dyn.num_conns ), "%ld vs %d\n", table.dwNumConns, dyn.num_conns );
 
     winetest_pop_context();
 }
@@ -868,7 +868,7 @@ static void test_tcp_tables( int family, int table_type )
                                       (void **)&dyn_tbl, dyn_sizes[i], (void **)&stat, sizeof(*stat), &count, 0 );
         if (!err) break;
     }
-    ok( !err, "got %d\n", err );
+    ok( !err, "got %ld\n", err );
     dyn_size = dyn_sizes[i];
 
     size = 0;
@@ -877,7 +877,7 @@ static void test_tcp_tables( int family, int table_type )
     table = malloc( size );
     table6 = (MIB_TCP6TABLE_OWNER_MODULE *)table;
     err = GetExtendedTcpTable( table, &size, 0, family, table_type, 0 );
-    ok( !err, "got %d\n", err );
+    ok( !err, "got %ld\n", err );
 
     row = table->table;
     row6 = table6->table;
@@ -889,16 +889,16 @@ static void test_tcp_tables( int family, int table_type )
 
         if (family == AF_INET)
         {
-            ok( unstable( row->dwLocalAddr == keys[i].local.Ipv4.sin_addr.s_addr ), "%08x vs %08x\n",
+            ok( unstable( row->dwLocalAddr == keys[i].local.Ipv4.sin_addr.s_addr ), "%08lx vs %08lx\n",
                 row->dwLocalAddr, keys[i].local.Ipv4.sin_addr.s_addr );
-            ok( unstable( row->dwLocalPort == keys[i].local.Ipv4.sin_port ), "%d vs %d\n",
+            ok( unstable( row->dwLocalPort == keys[i].local.Ipv4.sin_port ), "%ld vs %d\n",
                 row->dwLocalPort, keys[i].local.Ipv4.sin_port );
-            ok( unstable( row->dwRemoteAddr == keys[i].remote.Ipv4.sin_addr.s_addr ), "%08x vs %08x\n",
+            ok( unstable( row->dwRemoteAddr == keys[i].remote.Ipv4.sin_addr.s_addr ), "%08lx vs %08lx\n",
                 row->dwRemoteAddr, keys[i].remote.Ipv4.sin_addr.s_addr );
-            ok( unstable( row->dwRemotePort == keys[i].remote.Ipv4.sin_port ), "%d vs %d\n",
+            ok( unstable( row->dwRemotePort == keys[i].remote.Ipv4.sin_port ), "%ld vs %d\n",
                 row->dwRemotePort, keys[i].remote.Ipv4.sin_port );
-            ok( unstable( row->dwState == dyn->state ), "%x vs %x\n", row->dwState, dyn->state );
-            ok( unstable( row->dwOwningPid == stat[i].pid ), "%x vs %x\n", row->dwOwningPid, stat[i].pid );
+            ok( unstable( row->dwState == dyn->state ), "%lx vs %x\n", row->dwState, dyn->state );
+            ok( unstable( row->dwOwningPid == stat[i].pid ), "%lx vs %x\n", row->dwOwningPid, stat[i].pid );
             ok( unstable( row->liCreateTimestamp.QuadPart == stat[i].create_time ), "mismatch\n" );
             ok( unstable( row->OwningModuleInfo[0] == stat[i].mod_info ), "mismatch\n");
             row++;
@@ -907,18 +907,18 @@ static void test_tcp_tables( int family, int table_type )
         {
             ok( unstable( !memcmp( row6->ucLocalAddr, keys[i].local.Ipv6.sin6_addr.s6_addr, sizeof(IN6_ADDR) ) ),
                 "mismatch\n" );
-            ok( unstable( row6->dwLocalScopeId == keys[i].local.Ipv6.sin6_scope_id ), "%x vs %x\n",
+            ok( unstable( row6->dwLocalScopeId == keys[i].local.Ipv6.sin6_scope_id ), "%lx vs %lx\n",
                 row6->dwLocalScopeId, keys[i].local.Ipv6.sin6_scope_id );
-            ok( unstable( row6->dwLocalPort == keys[i].local.Ipv6.sin6_port ), "%d vs %d\n",
+            ok( unstable( row6->dwLocalPort == keys[i].local.Ipv6.sin6_port ), "%ld vs %d\n",
                 row6->dwLocalPort, keys[i].local.Ipv6.sin6_port );
             ok( unstable( !memcmp( row6->ucRemoteAddr, keys[i].remote.Ipv6.sin6_addr.s6_addr, sizeof(IN6_ADDR) ) ),
                 "mismatch\n" );
-            ok( unstable( row6->dwRemoteScopeId == keys[i].remote.Ipv6.sin6_scope_id ), "%x vs %x\n",
+            ok( unstable( row6->dwRemoteScopeId == keys[i].remote.Ipv6.sin6_scope_id ), "%lx vs %lx\n",
                 row6->dwRemoteScopeId, keys[i].remote.Ipv6.sin6_scope_id );
-            ok( unstable( row6->dwRemotePort == keys[i].remote.Ipv6.sin6_port ), "%d vs %d\n",
+            ok( unstable( row6->dwRemotePort == keys[i].remote.Ipv6.sin6_port ), "%ld vs %d\n",
                 row6->dwRemotePort, keys[i].remote.Ipv6.sin6_port );
-            ok( unstable( row6->dwState == dyn->state ), "%x vs %x\n", row6->dwState, dyn->state );
-            ok( unstable( row6->dwOwningPid == stat[i].pid ), "%x vs %x\n", row6->dwOwningPid, stat[i].pid );
+            ok( unstable( row6->dwState == dyn->state ), "%lx vs %x\n", row6->dwState, dyn->state );
+            ok( unstable( row6->dwOwningPid == stat[i].pid ), "%lx vs %x\n", row6->dwOwningPid, stat[i].pid );
             ok( unstable( row6->liCreateTimestamp.QuadPart == stat[i].create_time ), "mismatch\n" );
             ok( unstable( row6->OwningModuleInfo[0] == stat[i].mod_info ), "mismatch\n");
             row6++;
@@ -941,20 +941,20 @@ static void test_udp_stats( int family )
 
     err = NsiGetAllParameters( 1, &NPI_MS_UDP_MODULEID, NSI_UDP_STATS_TABLE, &key, sizeof(key), NULL, 0,
                                &dyn, sizeof(dyn), NULL, 0 );
-    ok( !err, "got %x\n", err );
+    ok( !err, "got %lx\n", err );
 
     err = GetUdpStatisticsEx( &table, family );
-    ok( !err, "got %d\n", err );
+    ok( !err, "got %ld\n", err );
 
     err = NsiGetAllParameters( 1, &NPI_MS_UDP_MODULEID, NSI_UDP_STATS_TABLE, &key, sizeof(key), NULL, 0,
                                &dyn2, sizeof(dyn2), NULL, 0 );
-    ok( !err, "got %x\n", err );
+    ok( !err, "got %lx\n", err );
 
     expect_bounded( "dwInDatagrams", table.dwInDatagrams, dyn.in_dgrams, dyn2.in_dgrams );
     expect_bounded( "dwNoPorts", table.dwNoPorts, dyn.no_ports, dyn2.no_ports );
     expect_bounded( "dwInErrors", table.dwInErrors, dyn.in_errs, dyn2.in_errs );
     expect_bounded( "dwOutDatagrams", table.dwOutDatagrams, dyn.out_dgrams, dyn2.out_dgrams );
-    ok( unstable( table.dwNumAddrs == dyn.num_addrs ), "%d %d\n", table.dwNumAddrs, dyn.num_addrs );
+    ok( unstable( table.dwNumAddrs == dyn.num_addrs ), "%ld %d\n", table.dwNumAddrs, dyn.num_addrs );
 
     winetest_pop_context();
 }
@@ -973,7 +973,7 @@ static void test_udp_tables( int family )
 
     err = NsiAllocateAndGetTable( 1, &NPI_MS_UDP_MODULEID, NSI_UDP_ENDPOINT_TABLE, (void **)&keys, sizeof(*keys),
                                   NULL, 0, NULL, 0, (void **)&stat, sizeof(*stat), &count, 0 );
-    ok( !err, "got %x\n", err );
+    ok( !err, "got %lx\n", err );
 
     size = 0;
     err = GetExtendedUdpTable( NULL, &size, 0, family, UDP_TABLE_OWNER_MODULE, 0 );
@@ -981,7 +981,7 @@ static void test_udp_tables( int family )
     table = malloc( size );
     table6 = (MIB_UDP6TABLE_OWNER_MODULE *)table;
     err = GetExtendedUdpTable( table, &size, 0, family, UDP_TABLE_OWNER_MODULE, 0 );
-    ok( !err, "got %d\n", err );
+    ok( !err, "got %ld\n", err );
 
     row = table->table;
     row6 = table6->table;
@@ -992,11 +992,11 @@ static void test_udp_tables( int family )
 
         if (family == AF_INET)
         {
-            ok( unstable( row->dwLocalAddr == keys[i].local.Ipv4.sin_addr.s_addr ), "%08x vs %08x\n",
+            ok( unstable( row->dwLocalAddr == keys[i].local.Ipv4.sin_addr.s_addr ), "%08lx vs %08lx\n",
                 row->dwLocalAddr, keys[i].local.Ipv4.sin_addr.s_addr );
-            ok( unstable( row->dwLocalPort == keys[i].local.Ipv4.sin_port ), "%d vs %d\n",
+            ok( unstable( row->dwLocalPort == keys[i].local.Ipv4.sin_port ), "%ld vs %d\n",
                 row->dwLocalPort, keys[i].local.Ipv4.sin_port );
-            ok( unstable( row->dwOwningPid == stat[i].pid ), "%x vs %x\n", row->dwOwningPid, stat[i].pid );
+            ok( unstable( row->dwOwningPid == stat[i].pid ), "%lx vs %x\n", row->dwOwningPid, stat[i].pid );
             ok( unstable( row->liCreateTimestamp.QuadPart == stat[i].create_time ), "mismatch\n" );
             ok( unstable( row->dwFlags == stat[i].flags ), "%x vs %x\n", row->dwFlags, stat[i].flags );
             ok( unstable( row->OwningModuleInfo[0] == stat[i].mod_info ), "mismatch\n");
@@ -1006,11 +1006,11 @@ static void test_udp_tables( int family )
         {
             ok( unstable( !memcmp( row6->ucLocalAddr, keys[i].local.Ipv6.sin6_addr.s6_addr, sizeof(IN6_ADDR) ) ),
                 "mismatch\n" );
-            ok( unstable( row6->dwLocalScopeId == keys[i].local.Ipv6.sin6_scope_id ), "%x vs %x\n",
+            ok( unstable( row6->dwLocalScopeId == keys[i].local.Ipv6.sin6_scope_id ), "%lx vs %lx\n",
                 row6->dwLocalScopeId, keys[i].local.Ipv6.sin6_scope_id );
-            ok( unstable( row6->dwLocalPort == keys[i].local.Ipv6.sin6_port ), "%d vs %d\n",
+            ok( unstable( row6->dwLocalPort == keys[i].local.Ipv6.sin6_port ), "%ld vs %d\n",
                 row6->dwLocalPort, keys[i].local.Ipv6.sin6_port );
-            ok( unstable( row6->dwOwningPid == stat[i].pid ), "%x vs %x\n", row6->dwOwningPid, stat[i].pid );
+            ok( unstable( row6->dwOwningPid == stat[i].pid ), "%lx vs %x\n", row6->dwOwningPid, stat[i].pid );
             ok( unstable( row6->liCreateTimestamp.QuadPart == stat[i].create_time ), "mismatch\n" );
             ok( unstable( row6->dwFlags == stat[i].flags ), "%x vs %x\n", row6->dwFlags, stat[i].flags );
             ok( unstable( row6->OwningModuleInfo[0] == stat[i].mod_info ), "mismatch\n");
