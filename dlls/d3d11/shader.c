@@ -64,7 +64,7 @@ static ULONG STDMETHODCALLTYPE d3d11_vertex_shader_AddRef(ID3D11VertexShader *if
     struct d3d_vertex_shader *shader = impl_from_ID3D11VertexShader(iface);
     ULONG refcount = InterlockedIncrement(&shader->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", shader, refcount);
+    TRACE("%p increasing refcount to %lu.\n", shader, refcount);
 
     if (refcount == 1)
     {
@@ -80,7 +80,7 @@ static ULONG STDMETHODCALLTYPE d3d11_vertex_shader_Release(ID3D11VertexShader *i
     struct d3d_vertex_shader *shader = impl_from_ID3D11VertexShader(iface);
     ULONG refcount = InterlockedDecrement(&shader->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", shader, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", shader, refcount);
 
     if (!refcount)
     {
@@ -272,7 +272,7 @@ static HRESULT d3d_vertex_shader_init(struct d3d_vertex_shader *shader, struct d
     if (FAILED(hr = wined3d_shader_create_vs(device->wined3d_device, &desc, shader,
             &d3d_vertex_shader_wined3d_parent_ops, &shader->wined3d_shader)))
     {
-        WARN("Failed to create wined3d vertex shader, hr %#x.\n", hr);
+        WARN("Failed to create wined3d vertex shader, hr %#lx.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
         wined3d_mutex_unlock();
         return E_INVALIDARG;
@@ -295,7 +295,7 @@ HRESULT d3d_vertex_shader_create(struct d3d_device *device, const void *byte_cod
 
     if (FAILED(hr = d3d_vertex_shader_init(object, device, byte_code, byte_code_length)))
     {
-        WARN("Failed to initialize vertex shader, hr %#x.\n", hr);
+        WARN("Failed to initialise vertex shader, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -356,7 +356,7 @@ static ULONG STDMETHODCALLTYPE d3d11_hull_shader_AddRef(ID3D11HullShader *iface)
     struct d3d11_hull_shader *shader = impl_from_ID3D11HullShader(iface);
     ULONG refcount = InterlockedIncrement(&shader->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", shader, refcount);
+    TRACE("%p increasing refcount to %lu.\n", shader, refcount);
 
     if (refcount == 1)
     {
@@ -372,7 +372,7 @@ static ULONG STDMETHODCALLTYPE d3d11_hull_shader_Release(ID3D11HullShader *iface
     struct d3d11_hull_shader *shader = impl_from_ID3D11HullShader(iface);
     ULONG refcount = InterlockedDecrement(&shader->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", shader, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", shader, refcount);
 
     if (!refcount)
     {
@@ -469,7 +469,7 @@ static HRESULT d3d11_hull_shader_init(struct d3d11_hull_shader *shader, struct d
     if (FAILED(hr = wined3d_shader_create_hs(device->wined3d_device, &desc, shader,
             &d3d11_hull_shader_wined3d_parent_ops, &shader->wined3d_shader)))
     {
-        WARN("Failed to create wined3d hull shader, hr %#x.\n", hr);
+        WARN("Failed to create wined3d hull shader, hr %#lx.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
         wined3d_mutex_unlock();
         return E_INVALIDARG;
@@ -543,7 +543,7 @@ static ULONG STDMETHODCALLTYPE d3d11_domain_shader_AddRef(ID3D11DomainShader *if
     struct d3d11_domain_shader *shader = impl_from_ID3D11DomainShader(iface);
     ULONG refcount = InterlockedIncrement(&shader->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", shader, refcount);
+    TRACE("%p increasing refcount to %lu.\n", shader, refcount);
 
     if (refcount == 1)
     {
@@ -559,7 +559,7 @@ static ULONG STDMETHODCALLTYPE d3d11_domain_shader_Release(ID3D11DomainShader *i
     struct d3d11_domain_shader *shader = impl_from_ID3D11DomainShader(iface);
     ULONG refcount = InterlockedDecrement(&shader->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", shader, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", shader, refcount);
 
     if (!refcount)
     {
@@ -656,7 +656,7 @@ static HRESULT d3d11_domain_shader_init(struct d3d11_domain_shader *shader, stru
     if (FAILED(hr = wined3d_shader_create_ds(device->wined3d_device, &desc, shader,
             &d3d11_domain_shader_wined3d_parent_ops, &shader->wined3d_shader)))
     {
-        WARN("Failed to create wined3d domain shader, hr %#x.\n", hr);
+        WARN("Failed to create wined3d domain shader, hr %#lx.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
         wined3d_mutex_unlock();
         return E_INVALIDARG;
@@ -740,7 +740,7 @@ static ULONG STDMETHODCALLTYPE d3d11_geometry_shader_AddRef(ID3D11GeometryShader
     struct d3d_geometry_shader *shader = impl_from_ID3D11GeometryShader(iface);
     ULONG refcount = InterlockedIncrement(&shader->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", shader, refcount);
+    TRACE("%p increasing refcount to %lu.\n", shader, refcount);
 
     if (refcount == 1)
     {
@@ -756,7 +756,7 @@ static ULONG STDMETHODCALLTYPE d3d11_geometry_shader_Release(ID3D11GeometryShade
     struct d3d_geometry_shader *shader = impl_from_ID3D11GeometryShader(iface);
     ULONG refcount = InterlockedDecrement(&shader->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", shader, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", shader, refcount);
 
     if (!refcount)
     {
@@ -1141,7 +1141,7 @@ static HRESULT d3d_geometry_shader_init(struct d3d_geometry_shader *shader,
     if (FAILED(hr = wined3d_shader_create_gs(device->wined3d_device, &desc, so_entries ? &so_desc : NULL,
             shader, &d3d_geometry_shader_wined3d_parent_ops, &shader->wined3d_shader)))
     {
-        WARN("Failed to create wined3d geometry shader, hr %#x.\n", hr);
+        WARN("Failed to create wined3d geometry shader, hr %#lx.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
         wined3d_mutex_unlock();
         return E_INVALIDARG;
@@ -1167,7 +1167,7 @@ HRESULT d3d_geometry_shader_create(struct d3d_device *device, const void *byte_c
     if (FAILED(hr = d3d_geometry_shader_init(object, device, byte_code, byte_code_length,
             so_entries, so_entry_count, buffer_strides, buffer_stride_count, rasterizer_stream)))
     {
-        WARN("Failed to initialize geometry shader, hr %#x.\n", hr);
+        WARN("Failed to initialise geometry shader, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -1238,7 +1238,7 @@ static ULONG STDMETHODCALLTYPE d3d11_pixel_shader_AddRef(ID3D11PixelShader *ifac
     struct d3d_pixel_shader *shader = impl_from_ID3D11PixelShader(iface);
     ULONG refcount = InterlockedIncrement(&shader->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", shader, refcount);
+    TRACE("%p increasing refcount to %lu.\n", shader, refcount);
 
     if (refcount == 1)
     {
@@ -1254,7 +1254,7 @@ static ULONG STDMETHODCALLTYPE d3d11_pixel_shader_Release(ID3D11PixelShader *ifa
     struct d3d_pixel_shader *shader = impl_from_ID3D11PixelShader(iface);
     ULONG refcount = InterlockedDecrement(&shader->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", shader, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", shader, refcount);
 
     if (!refcount)
     {
@@ -1445,7 +1445,7 @@ static HRESULT d3d_pixel_shader_init(struct d3d_pixel_shader *shader, struct d3d
     if (FAILED(hr = wined3d_shader_create_ps(device->wined3d_device, &desc, shader,
             &d3d_pixel_shader_wined3d_parent_ops, &shader->wined3d_shader)))
     {
-        WARN("Failed to create wined3d pixel shader, hr %#x.\n", hr);
+        WARN("Failed to create wined3d pixel shader, hr %#lx.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
         wined3d_mutex_unlock();
         return E_INVALIDARG;
@@ -1468,7 +1468,7 @@ HRESULT d3d_pixel_shader_create(struct d3d_device *device, const void *byte_code
 
     if (FAILED(hr = d3d_pixel_shader_init(object, device, byte_code, byte_code_length)))
     {
-        WARN("Failed to initialize pixel shader, hr %#x.\n", hr);
+        WARN("Failed to initialise pixel shader, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -1528,7 +1528,7 @@ static ULONG STDMETHODCALLTYPE d3d11_compute_shader_AddRef(ID3D11ComputeShader *
     struct d3d11_compute_shader *shader = impl_from_ID3D11ComputeShader(iface);
     ULONG refcount = InterlockedIncrement(&shader->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", shader, refcount);
+    TRACE("%p increasing refcount to %lu.\n", shader, refcount);
 
     if (refcount == 1)
     {
@@ -1544,7 +1544,7 @@ static ULONG STDMETHODCALLTYPE d3d11_compute_shader_Release(ID3D11ComputeShader 
     struct d3d11_compute_shader *shader = impl_from_ID3D11ComputeShader(iface);
     ULONG refcount = InterlockedDecrement(&shader->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", shader, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", shader, refcount);
 
     if (!refcount)
     {
@@ -1640,7 +1640,7 @@ static HRESULT d3d11_compute_shader_init(struct d3d11_compute_shader *shader, st
     if (FAILED(hr = wined3d_shader_create_cs(device->wined3d_device, &desc, shader,
             &d3d11_compute_shader_wined3d_parent_ops, &shader->wined3d_shader)))
     {
-        WARN("Failed to create wined3d compute shader, hr %#x.\n", hr);
+        WARN("Failed to create wined3d compute shader, hr %#lx.\n", hr);
         wined3d_private_store_cleanup(&shader->private_store);
         wined3d_mutex_unlock();
         return E_INVALIDARG;
@@ -1713,7 +1713,7 @@ static ULONG STDMETHODCALLTYPE d3d11_class_linkage_AddRef(ID3D11ClassLinkage *if
     struct d3d11_class_linkage *class_linkage = impl_from_ID3D11ClassLinkage(iface);
     ULONG refcount = InterlockedIncrement(&class_linkage->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", class_linkage, refcount);
+    TRACE("%p increasing refcount to %lu.\n", class_linkage, refcount);
 
     return refcount;
 }
@@ -1723,7 +1723,7 @@ static ULONG STDMETHODCALLTYPE d3d11_class_linkage_Release(ID3D11ClassLinkage *i
     struct d3d11_class_linkage *class_linkage = impl_from_ID3D11ClassLinkage(iface);
     ULONG refcount = InterlockedDecrement(&class_linkage->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", class_linkage, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", class_linkage, refcount);
 
     if (!refcount)
     {

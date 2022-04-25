@@ -99,7 +99,7 @@ static ULONG d3d_device_context_state_private_addref(struct d3d_device_context_s
 {
     ULONG refcount = InterlockedIncrement(&state->private_refcount);
 
-    TRACE("%p increasing private refcount to %u.\n", state, refcount);
+    TRACE("%p increasing private refcount to %lu.\n", state, refcount);
 
     return refcount;
 }
@@ -109,7 +109,7 @@ static ULONG STDMETHODCALLTYPE d3d_device_context_state_AddRef(ID3DDeviceContext
     struct d3d_device_context_state *state = impl_from_ID3DDeviceContextState(iface);
     ULONG refcount = InterlockedIncrement(&state->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", state, refcount);
+    TRACE("%p increasing refcount to %lu.\n", state, refcount);
 
     if (refcount == 1)
     {
@@ -143,7 +143,7 @@ static void d3d_device_context_state_private_release(struct d3d_device_context_s
     struct d3d_device *device;
     unsigned int i;
 
-    TRACE("%p decreasing private refcount to %u.\n", state, refcount);
+    TRACE("%p decreasing private refcount to %lu.\n", state, refcount);
 
     if (!refcount)
     {
@@ -169,7 +169,7 @@ static ULONG STDMETHODCALLTYPE d3d_device_context_state_Release(ID3DDeviceContex
     struct d3d_device_context_state *state = impl_from_ID3DDeviceContextState(iface);
     ULONG refcount = InterlockedDecrement(&state->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", state, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", state, refcount);
 
     if (!refcount)
     {
@@ -361,7 +361,7 @@ static ULONG STDMETHODCALLTYPE d3d11_command_list_AddRef(ID3D11CommandList *ifac
     struct d3d11_command_list *list = impl_from_ID3D11CommandList(iface);
     ULONG refcount = InterlockedIncrement(&list->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", list, refcount);
+    TRACE("%p increasing refcount to %lu.\n", list, refcount);
 
     return refcount;
 }
@@ -371,7 +371,7 @@ static ULONG STDMETHODCALLTYPE d3d11_command_list_Release(ID3D11CommandList *ifa
     struct d3d11_command_list *list = impl_from_ID3D11CommandList(iface);
     ULONG refcount = InterlockedDecrement(&list->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", list, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", list, refcount);
 
     if (!refcount)
     {
@@ -504,7 +504,7 @@ static ULONG STDMETHODCALLTYPE d3d11_device_context_AddRef(ID3D11DeviceContext1 
     struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
     ULONG refcount = InterlockedIncrement(&context->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", context, refcount);
+    TRACE("%p increasing refcount to %lu.\n", context, refcount);
 
     if (refcount == 1)
     {
@@ -519,7 +519,7 @@ static ULONG STDMETHODCALLTYPE d3d11_device_context_Release(ID3D11DeviceContext1
     struct d3d11_device_context *context = impl_from_ID3D11DeviceContext1(iface);
     ULONG refcount = InterlockedDecrement(&context->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", context, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", context, refcount);
 
     if (!refcount)
     {
@@ -1416,7 +1416,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_ClearRenderTargetView(ID3D11D
 
     if (FAILED(hr = wined3d_device_context_clear_rendertarget_view(context->wined3d_context, view->wined3d_view, NULL,
             WINED3DCLEAR_TARGET, &color, 0.0f, 0)))
-        ERR("Failed to clear view, hr %#x.\n", hr);
+        ERR("Failed to clear view, hr %#lx.\n", hr);
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_ClearUnorderedAccessViewUint(ID3D11DeviceContext1 *iface,
@@ -1465,7 +1465,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_ClearDepthStencilView(ID3D11D
 
     if (FAILED(hr = wined3d_device_context_clear_rendertarget_view(context->wined3d_context, view->wined3d_view, NULL,
             wined3d_flags, NULL, depth, stencil)))
-        ERR("Failed to clear view, hr %#x.\n", hr);
+        ERR("Failed to clear view, hr %#lx.\n", hr);
 }
 
 static void STDMETHODCALLTYPE d3d11_device_context_GenerateMips(ID3D11DeviceContext1 *iface,
@@ -2706,7 +2706,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_context_FinishCommandList(ID3D11De
     if (FAILED(hr = wined3d_deferred_context_record_command_list(context->wined3d_context,
             !!restore, &object->wined3d_list)))
     {
-        WARN("Failed to record wined3d command list, hr %#x.\n", hr);
+        WARN("Failed to record wined3d command list, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -3446,7 +3446,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateInputLayout(ID3D11Device2 *i
     struct d3d_input_layout *object;
     HRESULT hr;
 
-    TRACE("iface %p, element_descs %p, element_count %u, shader_byte_code %p, shader_byte_code_length %lu, "
+    TRACE("iface %p, element_descs %p, element_count %u, shader_byte_code %p, shader_byte_code_length %Iu, "
             "input_layout %p.\n", iface, element_descs, element_count, shader_byte_code,
             shader_byte_code_length, input_layout);
 
@@ -3466,7 +3466,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateVertexShader(ID3D11Device2 *
     struct d3d_vertex_shader *object;
     HRESULT hr;
 
-    TRACE("iface %p, byte_code %p, byte_code_length %lu, class_linkage %p, shader %p.\n",
+    TRACE("iface %p, byte_code %p, byte_code_length %Iu, class_linkage %p, shader %p.\n",
             iface, byte_code, byte_code_length, class_linkage, shader);
 
     if (class_linkage)
@@ -3487,7 +3487,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateGeometryShader(ID3D11Device2
     struct d3d_geometry_shader *object;
     HRESULT hr;
 
-    TRACE("iface %p, byte_code %p, byte_code_length %lu, class_linkage %p, shader %p.\n",
+    TRACE("iface %p, byte_code %p, byte_code_length %Iu, class_linkage %p, shader %p.\n",
             iface, byte_code, byte_code_length, class_linkage, shader);
 
     if (class_linkage)
@@ -3511,7 +3511,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateGeometryShaderWithStreamOutp
     struct d3d_geometry_shader *object;
     HRESULT hr;
 
-    TRACE("iface %p, byte_code %p, byte_code_length %lu, so_entries %p, entry_count %u, "
+    TRACE("iface %p, byte_code %p, byte_code_length %Iu, so_entries %p, entry_count %u, "
             "buffer_strides %p, strides_count %u, rasterizer_stream %u, class_linkage %p, shader %p.\n",
             iface, byte_code, byte_code_length, so_entries, entry_count, buffer_strides, strides_count,
             rasterizer_stream, class_linkage, shader);
@@ -3538,7 +3538,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreatePixelShader(ID3D11Device2 *i
     struct d3d_pixel_shader *object;
     HRESULT hr;
 
-    TRACE("iface %p, byte_code %p, byte_code_length %lu, class_linkage %p, shader %p.\n",
+    TRACE("iface %p, byte_code %p, byte_code_length %Iu, class_linkage %p, shader %p.\n",
             iface, byte_code, byte_code_length, class_linkage, shader);
 
     if (class_linkage)
@@ -3559,7 +3559,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateHullShader(ID3D11Device2 *if
     struct d3d11_hull_shader *object;
     HRESULT hr;
 
-    TRACE("iface %p, byte_code %p, byte_code_length %lu, class_linkage %p, shader %p.\n",
+    TRACE("iface %p, byte_code %p, byte_code_length %Iu, class_linkage %p, shader %p.\n",
             iface, byte_code, byte_code_length, class_linkage, shader);
 
     if (class_linkage)
@@ -3580,7 +3580,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDomainShader(ID3D11Device2 *
     struct d3d11_domain_shader *object;
     HRESULT hr;
 
-    TRACE("iface %p, byte_code %p, byte_code_length %lu, class_linkage %p, shader %p.\n",
+    TRACE("iface %p, byte_code %p, byte_code_length %Iu, class_linkage %p, shader %p.\n",
             iface, byte_code, byte_code_length, class_linkage, shader);
 
     if (class_linkage)
@@ -3601,7 +3601,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateComputeShader(ID3D11Device2 
     struct d3d11_compute_shader *object;
     HRESULT hr;
 
-    TRACE("iface %p, byte_code %p, byte_code_length %lu, class_linkage %p, shader %p.\n",
+    TRACE("iface %p, byte_code %p, byte_code_length %Iu, class_linkage %p, shader %p.\n",
             iface, byte_code, byte_code_length, class_linkage, shader);
 
     if (class_linkage)
@@ -3774,7 +3774,7 @@ static HRESULT d3d11_deferred_context_create(struct d3d_device *device,
 
     if (FAILED(hr = wined3d_deferred_context_create(device->wined3d_device, &object->wined3d_context)))
     {
-        WARN("Failed to create wined3d deferred context, hr %#x.\n", hr);
+        WARN("Failed to create wined3d deferred context, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -3869,7 +3869,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFormatSupport(ID3D11Device2 *
             continue;
         if (hr != WINED3D_OK)
         {
-            WARN("Failed to check device format support, hr %#x.\n", hr);
+            WARN("Failed to check device format support, hr %#lx.\n", hr);
             wined3d_mutex_unlock();
             return E_FAIL;
         }
@@ -4018,7 +4018,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device2 
             wined3d_mutex_unlock();
             if (FAILED(hr))
             {
-                WARN("Failed to get device caps, hr %#x.\n", hr);
+                WARN("Failed to get device caps, hr %#lx.\n", hr);
                 return hr;
             }
 
@@ -4040,7 +4040,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device2 
             wined3d_mutex_unlock();
             if (FAILED(hr))
             {
-                WARN("Failed to get device caps, hr %#x.\n", hr);
+                WARN("Failed to get device caps, hr %#lx.\n", hr);
                 return hr;
             }
 
@@ -4062,7 +4062,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device2 
             wined3d_mutex_unlock();
             if (FAILED(hr))
             {
-                WARN("Failed to get device caps, hr %#x.\n", hr);
+                WARN("Failed to get device caps, hr %#lx.\n", hr);
                 return hr;
             }
 
@@ -4129,7 +4129,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CheckFeatureSupport(ID3D11Device2 
             wined3d_mutex_unlock();
             if (FAILED(hr))
             {
-                WARN("Failed to get device caps, hr %#x.\n", hr);
+                WARN("Failed to get device caps, hr %#lx.\n", hr);
                 return hr;
             }
 
@@ -4389,7 +4389,7 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_OpenSharedResource1(ID3D11Device2 
 static HRESULT STDMETHODCALLTYPE d3d11_device_OpenSharedResourceByName(ID3D11Device2 *iface, const WCHAR *name,
         DWORD access, REFIID iid, void **resource)
 {
-    FIXME("iface %p, name %s, access %#x, iid %s, resource %p stub!\n", iface, debugstr_w(name), access,
+    FIXME("iface %p, name %s, access %#lx, iid %s, resource %p stub!\n", iface, debugstr_w(name), access,
             debugstr_guid(iid), resource);
 
     return E_NOTIMPL;
@@ -4541,7 +4541,7 @@ static ULONG STDMETHODCALLTYPE d3d_device_inner_AddRef(IUnknown *iface)
     struct d3d_device *device = impl_from_IUnknown(iface);
     ULONG refcount = InterlockedIncrement(&device->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", device, refcount);
+    TRACE("%p increasing refcount to %lu.\n", device, refcount);
 
     return refcount;
 }
@@ -4552,7 +4552,7 @@ static ULONG STDMETHODCALLTYPE d3d_device_inner_Release(IUnknown *iface)
     ULONG refcount = InterlockedDecrement(&device->refcount);
     unsigned int i;
 
-    TRACE("%p decreasing refcount to %u.\n", device, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", device, refcount);
 
     if (!refcount)
     {
@@ -5159,7 +5159,7 @@ static void STDMETHODCALLTYPE d3d10_device_ClearRenderTargetView(ID3D10Device1 *
 
     if (FAILED(hr = wined3d_device_context_clear_rendertarget_view(device->immediate_context.wined3d_context,
             view->wined3d_view, NULL, WINED3DCLEAR_TARGET, &color, 0.0f, 0)))
-        ERR("Failed to clear view, hr %#x.\n", hr);
+        ERR("Failed to clear view, hr %#lx.\n", hr);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_ClearDepthStencilView(ID3D10Device1 *iface,
@@ -5180,7 +5180,7 @@ static void STDMETHODCALLTYPE d3d10_device_ClearDepthStencilView(ID3D10Device1 *
 
     if (FAILED(hr = wined3d_device_context_clear_rendertarget_view(device->immediate_context.wined3d_context,
             view->wined3d_view, NULL, wined3d_flags, NULL, depth, stencil)))
-        ERR("Failed to clear view, hr %#x.\n", hr);
+        ERR("Failed to clear view, hr %#lx.\n", hr);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_GenerateMips(ID3D10Device1 *iface,
@@ -6129,7 +6129,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateInputLayout(ID3D10Device1 *i
     HRESULT hr;
 
     TRACE("iface %p, element_descs %p, element_count %u, shader_byte_code %p, "
-            "shader_byte_code_length %lu, input_layout %p\n",
+            "shader_byte_code_length %Iu, input_layout %p.\n",
             iface, element_descs, element_count, shader_byte_code,
             shader_byte_code_length, input_layout);
 
@@ -6149,7 +6149,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateVertexShader(ID3D10Device1 *
     struct d3d_vertex_shader *object;
     HRESULT hr;
 
-    TRACE("iface %p, byte_code %p, byte_code_length %lu, shader %p.\n",
+    TRACE("iface %p, byte_code %p, byte_code_length %Iu, shader %p.\n",
             iface, byte_code, byte_code_length, shader);
 
     if (FAILED(hr = d3d_vertex_shader_create(device, byte_code, byte_code_length, &object)))
@@ -6167,7 +6167,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShader(ID3D10Device1
     struct d3d_geometry_shader *object;
     HRESULT hr;
 
-    TRACE("iface %p, byte_code %p, byte_code_length %lu, shader %p.\n",
+    TRACE("iface %p, byte_code %p, byte_code_length %Iu, shader %p.\n",
             iface, byte_code, byte_code_length, shader);
 
     if (FAILED(hr = d3d_geometry_shader_create(device, byte_code, byte_code_length,
@@ -6189,7 +6189,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShaderWithStreamOutp
     unsigned int i, stride_count = 1;
     HRESULT hr;
 
-    TRACE("iface %p, byte_code %p, byte_code_length %lu, output_stream_decls %p, "
+    TRACE("iface %p, byte_code %p, byte_code_length %Iu, output_stream_decls %p, "
             "output_stream_decl_count %u, output_stream_stride %u, shader %p.\n",
             iface, byte_code, byte_code_length, output_stream_decls,
             output_stream_decl_count, output_stream_stride, shader);
@@ -6252,7 +6252,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreatePixelShader(ID3D10Device1 *i
     struct d3d_pixel_shader *object;
     HRESULT hr;
 
-    TRACE("iface %p, byte_code %p, byte_code_length %lu, shader %p.\n",
+    TRACE("iface %p, byte_code %p, byte_code_length %Iu, shader %p.\n",
             iface, byte_code, byte_code_length, shader);
 
     if (FAILED(hr = d3d_pixel_shader_create(device, byte_code, byte_code_length, &object)))
@@ -6808,7 +6808,7 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
     D3D11_TEXTURE2D_DESC desc;
     HRESULT hr;
 
-    TRACE("device_parent %p, container_parent %p, wined3d_desc %p, texture_flags %#x, wined3d_texture %p.\n",
+    TRACE("device_parent %p, container_parent %p, wined3d_desc %p, texture_flags %#lx, wined3d_texture %p.\n",
             device_parent, container_parent, wined3d_desc, texture_flags, wined3d_texture);
 
     desc.Width = wined3d_desc->width;
@@ -6830,12 +6830,12 @@ static HRESULT CDECL device_parent_create_swapchain_texture(struct wined3d_devic
     }
 
     if (texture_flags)
-        FIXME("Unhandled flags %#x.\n", texture_flags);
+        FIXME("Unhandled flags %#lx.\n", texture_flags);
 
     if (FAILED(hr = d3d11_device_CreateTexture2D(&device->ID3D11Device2_iface,
             &desc, NULL, &texture_iface)))
     {
-        WARN("Failed to create 2D texture, hr %#x.\n", hr);
+        WARN("Failed to create 2D texture, hr %#lx.\n", hr);
         return hr;
     }
 

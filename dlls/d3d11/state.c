@@ -59,7 +59,7 @@ static ULONG STDMETHODCALLTYPE d3d11_blend_state_AddRef(ID3D11BlendState *iface)
     struct d3d_blend_state *state = impl_from_ID3D11BlendState(iface);
     ULONG refcount = InterlockedIncrement(&state->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", state, refcount);
+    TRACE("%p increasing refcount to %lu.\n", state, refcount);
 
     if (refcount == 1)
     {
@@ -75,7 +75,7 @@ static ULONG STDMETHODCALLTYPE d3d11_blend_state_Release(ID3D11BlendState *iface
     struct d3d_blend_state *state = impl_from_ID3D11BlendState(iface);
     ULONG refcount = InterlockedDecrement(&state->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", state, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", state, refcount);
 
     if (!refcount)
     {
@@ -413,7 +413,7 @@ HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC
     if (FAILED(hr = wined3d_blend_state_create(device->wined3d_device, &wined3d_desc,
             object, &d3d_blend_state_wined3d_parent_ops, &object->wined3d_state)))
     {
-        WARN("Failed to create wined3d blend state, hr %#x.\n", hr);
+        WARN("Failed to create wined3d blend state, hr %#lx.\n", hr);
         wined3d_private_store_cleanup(&object->private_store);
         wine_rb_remove(&device->blend_states, &object->entry);
         heap_free(object);
@@ -485,7 +485,7 @@ static ULONG STDMETHODCALLTYPE d3d11_depthstencil_state_AddRef(ID3D11DepthStenci
     struct d3d_depthstencil_state *state = impl_from_ID3D11DepthStencilState(iface);
     ULONG refcount = InterlockedIncrement(&state->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", state, refcount);
+    TRACE("%p increasing refcount to %lu.\n", state, refcount);
 
     if (refcount == 1)
     {
@@ -501,7 +501,7 @@ static ULONG STDMETHODCALLTYPE d3d11_depthstencil_state_Release(ID3D11DepthStenc
     struct d3d_depthstencil_state *state = impl_from_ID3D11DepthStencilState(iface);
     ULONG refcount = InterlockedDecrement(&state->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", state, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", state, refcount);
 
     if (!refcount)
     {
@@ -804,7 +804,7 @@ HRESULT d3d_depthstencil_state_create(struct d3d_device *device, const D3D11_DEP
     if (FAILED(hr = wined3d_depth_stencil_state_create(device->wined3d_device, &wined3d_desc,
             object, &d3d_depthstencil_state_wined3d_parent_ops, &object->wined3d_state)))
     {
-        WARN("Failed to create wined3d depth/stencil state, hr %#x.\n", hr);
+        WARN("Failed to create wined3d depth/stencil state, hr %#lx.\n", hr);
         wined3d_private_store_cleanup(&object->private_store);
         wine_rb_remove(&device->depthstencil_states, &object->entry);
         heap_free(object);
@@ -882,7 +882,7 @@ static ULONG STDMETHODCALLTYPE d3d11_rasterizer_state_AddRef(ID3D11RasterizerSta
     struct d3d_rasterizer_state *state = impl_from_ID3D11RasterizerState1(iface);
     ULONG refcount = InterlockedIncrement(&state->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", state, refcount);
+    TRACE("%p increasing refcount to %lu.\n", state, refcount);
 
     if (refcount == 1)
     {
@@ -898,7 +898,7 @@ static ULONG STDMETHODCALLTYPE d3d11_rasterizer_state_Release(ID3D11RasterizerSt
     struct d3d_rasterizer_state *state = impl_from_ID3D11RasterizerState1(iface);
     ULONG refcount = InterlockedDecrement(&state->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", state, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", state, refcount);
 
     if (!refcount)
     {
@@ -1168,7 +1168,7 @@ static HRESULT d3d_rasterizer_state_init(struct d3d_rasterizer_state *state, str
     if (FAILED(hr = wined3d_rasterizer_state_create(device->wined3d_device, &wined3d_desc,
             state, &d3d_rasterizer_state_wined3d_parent_ops, &state->wined3d_state)))
     {
-        WARN("Failed to create wined3d rasterizer state, hr %#x.\n", hr);
+        WARN("Failed to create wined3d rasteriser state, hr %#lx.\n", hr);
         wined3d_private_store_cleanup(&state->private_store);
         wine_rb_remove(&device->rasterizer_states, &state->entry);
         return hr;
@@ -1209,7 +1209,7 @@ HRESULT d3d_rasterizer_state_create(struct d3d_device *device, const D3D11_RASTE
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
-        WARN("Failed to initialize rasterizer state, hr %#x.\n", hr);
+        WARN("Failed to initialise rasterizer state, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -1280,7 +1280,7 @@ static ULONG STDMETHODCALLTYPE d3d11_sampler_state_AddRef(ID3D11SamplerState *if
     struct d3d_sampler_state *state = impl_from_ID3D11SamplerState(iface);
     ULONG refcount = InterlockedIncrement(&state->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", state, refcount);
+    TRACE("%p increasing refcount to %lu.\n", state, refcount);
 
     if (refcount == 1)
     {
@@ -1296,7 +1296,7 @@ static ULONG STDMETHODCALLTYPE d3d11_sampler_state_Release(ID3D11SamplerState *i
     struct d3d_sampler_state *state = impl_from_ID3D11SamplerState(iface);
     ULONG refcount = InterlockedDecrement(&state->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", state, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", state, refcount);
 
     if (!refcount)
     {
@@ -1572,7 +1572,7 @@ static HRESULT d3d_sampler_state_init(struct d3d_sampler_state *state, struct d3
     if (FAILED(hr = wined3d_sampler_create(device->wined3d_device, &wined3d_desc,
             state, &d3d_sampler_wined3d_parent_ops, &state->wined3d_sampler)))
     {
-        WARN("Failed to create wined3d sampler, hr %#x.\n", hr);
+        WARN("Failed to create wined3d sampler, hr %#lx.\n", hr);
         wined3d_private_store_cleanup(&state->private_store);
         wine_rb_remove(&device->sampler_states, &state->entry);
         return hr;
@@ -1627,7 +1627,7 @@ HRESULT d3d_sampler_state_create(struct d3d_device *device, const D3D11_SAMPLER_
     wined3d_mutex_unlock();
     if (FAILED(hr))
     {
-        WARN("Failed to initialize sampler state, hr %#x.\n", hr);
+        WARN("Failed to initialise sampler state, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }

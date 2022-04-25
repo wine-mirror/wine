@@ -133,7 +133,7 @@ static ULONG STDMETHODCALLTYPE d3d11_input_layout_AddRef(ID3D11InputLayout *ifac
     struct d3d_input_layout *layout = impl_from_ID3D11InputLayout(iface);
     ULONG refcount = InterlockedIncrement(&layout->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", layout, refcount);
+    TRACE("%p increasing refcount to %lu.\n", layout, refcount);
 
     if (refcount == 1)
     {
@@ -149,7 +149,7 @@ static ULONG STDMETHODCALLTYPE d3d11_input_layout_Release(ID3D11InputLayout *ifa
     struct d3d_input_layout *layout = impl_from_ID3D11InputLayout(iface);
     ULONG refcount = InterlockedDecrement(&layout->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", layout, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", layout, refcount);
 
     if (!refcount)
     {
@@ -336,7 +336,7 @@ static HRESULT d3d_input_layout_init(struct d3d_input_layout *layout, struct d3d
     if (FAILED(hr = d3d11_input_layout_to_wined3d_declaration(element_descs, element_count,
             shader_byte_code, shader_byte_code_length, &wined3d_elements)))
     {
-        WARN("Failed to create wined3d vertex declaration elements, hr %#x.\n", hr);
+        WARN("Failed to create wined3d vertex declaration elements, hr %#lx.\n", hr);
         wined3d_private_store_cleanup(&layout->private_store);
         wined3d_mutex_unlock();
         return hr;
@@ -347,7 +347,7 @@ static HRESULT d3d_input_layout_init(struct d3d_input_layout *layout, struct d3d
     heap_free(wined3d_elements);
     if (FAILED(hr))
     {
-        WARN("Failed to create wined3d vertex declaration, hr %#x.\n", hr);
+        WARN("Failed to create wined3d vertex declaration, hr %#lx.\n", hr);
         wined3d_private_store_cleanup(&layout->private_store);
         wined3d_mutex_unlock();
         return hr;
@@ -373,7 +373,7 @@ HRESULT d3d_input_layout_create(struct d3d_device *device,
     if (FAILED(hr = d3d_input_layout_init(object, device, element_descs, element_count,
             shader_byte_code, shader_byte_code_length)))
     {
-        WARN("Failed to initialize input layout, hr %#x.\n", hr);
+        WARN("Failed to initialise input layout, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }

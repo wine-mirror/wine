@@ -958,7 +958,7 @@ static ULONG STDMETHODCALLTYPE d3d11_depthstencil_view_AddRef(ID3D11DepthStencil
     struct d3d_depthstencil_view *view = impl_from_ID3D11DepthStencilView(iface);
     ULONG refcount = InterlockedIncrement(&view->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", view, refcount);
+    TRACE("%p increasing refcount to %lu.\n", view, refcount);
 
     if (refcount == 1)
     {
@@ -974,7 +974,7 @@ static ULONG STDMETHODCALLTYPE d3d11_depthstencil_view_Release(ID3D11DepthStenci
     struct d3d_depthstencil_view *view = impl_from_ID3D11DepthStencilView(iface);
     ULONG refcount = InterlockedDecrement(&view->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", view, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", view, refcount);
 
     if (!refcount)
     {
@@ -1300,7 +1300,7 @@ static HRESULT d3d_depthstencil_view_init(struct d3d_depthstencil_view *view, st
             view, &d3d_depth_stencil_view_wined3d_parent_ops, &view->wined3d_view)))
     {
         wined3d_mutex_unlock();
-        WARN("Failed to create a wined3d rendertarget view, hr %#x.\n", hr);
+        WARN("Failed to create a wined3d rendertarget view, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -1323,7 +1323,7 @@ HRESULT d3d_depthstencil_view_create(struct d3d_device *device, ID3D11Resource *
 
     if (FAILED(hr = d3d_depthstencil_view_init(object, device, resource, desc)))
     {
-        WARN("Failed to initialize depthstencil view, hr %#x.\n", hr);
+        WARN("Failed to initialise depth/stencil view, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -1396,7 +1396,7 @@ static ULONG STDMETHODCALLTYPE d3d11_rendertarget_view_AddRef(ID3D11RenderTarget
     struct d3d_rendertarget_view *view = impl_from_ID3D11RenderTargetView(iface);
     ULONG refcount = InterlockedIncrement(&view->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", view, refcount);
+    TRACE("%p increasing refcount to %lu.\n", view, refcount);
 
     if (refcount == 1)
     {
@@ -1412,7 +1412,7 @@ static ULONG STDMETHODCALLTYPE d3d11_rendertarget_view_Release(ID3D11RenderTarge
     struct d3d_rendertarget_view *view = impl_from_ID3D11RenderTargetView(iface);
     ULONG refcount = InterlockedDecrement(&view->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", view, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", view, refcount);
 
     if (!refcount)
     {
@@ -1741,7 +1741,7 @@ static HRESULT d3d_rendertarget_view_init(struct d3d_rendertarget_view *view, st
             view, &d3d_render_target_view_wined3d_parent_ops, &view->wined3d_view)))
     {
         wined3d_mutex_unlock();
-        WARN("Failed to create a wined3d rendertarget view, hr %#x.\n", hr);
+        WARN("Failed to create a wined3d rendertarget view, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -1764,7 +1764,7 @@ HRESULT d3d_rendertarget_view_create(struct d3d_device *device, ID3D11Resource *
 
     if (FAILED(hr = d3d_rendertarget_view_init(object, device, resource, desc)))
     {
-        WARN("Failed to initialize rendertarget view, hr %#x.\n", hr);
+        WARN("Failed to initialise rendertarget view, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -1838,7 +1838,7 @@ static ULONG STDMETHODCALLTYPE d3d11_shader_resource_view_AddRef(ID3D11ShaderRes
     struct d3d_shader_resource_view *view = impl_from_ID3D11ShaderResourceView(iface);
     ULONG refcount = InterlockedIncrement(&view->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", view, refcount);
+    TRACE("%p increasing refcount to %lu.\n", view, refcount);
 
     if (refcount == 1)
     {
@@ -1854,7 +1854,7 @@ static ULONG STDMETHODCALLTYPE d3d11_shader_resource_view_Release(ID3D11ShaderRe
     struct d3d_shader_resource_view *view = impl_from_ID3D11ShaderResourceView(iface);
     ULONG refcount = InterlockedDecrement(&view->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", view, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", view, refcount);
 
     if (!refcount)
     {
@@ -2235,7 +2235,7 @@ static HRESULT d3d_shader_resource_view_init(struct d3d_shader_resource_view *vi
             view, &d3d_shader_resource_view_wined3d_parent_ops, &view->wined3d_view)))
     {
         wined3d_mutex_unlock();
-        WARN("Failed to create wined3d shader resource view, hr %#x.\n", hr);
+        WARN("Failed to create wined3d shader resource view, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -2258,7 +2258,7 @@ HRESULT d3d_shader_resource_view_create(struct d3d_device *device, ID3D11Resourc
 
     if (FAILED(hr = d3d_shader_resource_view_init(object, device, resource, desc)))
     {
-        WARN("Failed to initialize shader resource view, hr %#x.\n", hr);
+        WARN("Failed to initialise shader resource view, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
@@ -2317,7 +2317,7 @@ static ULONG STDMETHODCALLTYPE d3d11_unordered_access_view_AddRef(ID3D11Unordere
     struct d3d11_unordered_access_view *view = impl_from_ID3D11UnorderedAccessView(iface);
     ULONG refcount = InterlockedIncrement(&view->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", view, refcount);
+    TRACE("%p increasing refcount to %lu.\n", view, refcount);
 
     if (refcount == 1)
     {
@@ -2333,7 +2333,7 @@ static ULONG STDMETHODCALLTYPE d3d11_unordered_access_view_Release(ID3D11Unorder
     struct d3d11_unordered_access_view *view = impl_from_ID3D11UnorderedAccessView(iface);
     ULONG refcount = InterlockedDecrement(&view->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", view, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", view, refcount);
 
     if (!refcount)
     {
@@ -2538,7 +2538,7 @@ static HRESULT d3d11_unordered_access_view_init(struct d3d11_unordered_access_vi
             view, &d3d11_unordered_access_view_wined3d_parent_ops, &view->wined3d_view)))
     {
         wined3d_mutex_unlock();
-        WARN("Failed to create wined3d unordered access view, hr %#x.\n", hr);
+        WARN("Failed to create wined3d unordered access view, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -2561,7 +2561,7 @@ HRESULT d3d11_unordered_access_view_create(struct d3d_device *device, ID3D11Reso
 
     if (FAILED(hr = d3d11_unordered_access_view_init(object, device, resource, desc)))
     {
-        WARN("Failed to initialize unordered access view, hr %#x.\n", hr);
+        WARN("Failed to initialise unordered access view, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }

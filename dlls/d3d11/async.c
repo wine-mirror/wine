@@ -67,7 +67,7 @@ static ULONG STDMETHODCALLTYPE d3d11_query_AddRef(ID3D11Query *iface)
     struct d3d_query *query = impl_from_ID3D11Query(iface);
     ULONG refcount = InterlockedIncrement(&query->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", query, refcount);
+    TRACE("%p increasing refcount to %lu.\n", query, refcount);
 
     if (refcount == 1)
     {
@@ -83,7 +83,7 @@ static ULONG STDMETHODCALLTYPE d3d11_query_Release(ID3D11Query *iface)
     struct d3d_query *query = impl_from_ID3D11Query(iface);
     ULONG refcount = InterlockedDecrement(&query->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", query, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", query, refcount);
 
     if (!refcount)
     {
@@ -290,7 +290,7 @@ static void STDMETHODCALLTYPE d3d10_query_Begin(ID3D10Query *iface)
     TRACE("iface %p.\n", iface);
 
     if (FAILED(hr = wined3d_query_issue(query->wined3d_query, WINED3DISSUE_BEGIN)))
-        ERR("Failed to issue query, hr %#x.\n", hr);
+        ERR("Failed to issue query, hr %#lx.\n", hr);
 }
 
 static void STDMETHODCALLTYPE d3d10_query_End(ID3D10Query *iface)
@@ -301,7 +301,7 @@ static void STDMETHODCALLTYPE d3d10_query_End(ID3D10Query *iface)
     TRACE("iface %p.\n", iface);
 
     if (FAILED(hr = wined3d_query_issue(query->wined3d_query, WINED3DISSUE_END)))
-        ERR("Failed to issue query, hr %#x.\n", hr);
+        ERR("Failed to issue query, hr %#lx.\n", hr);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_query_GetData(ID3D10Query *iface, void *data, UINT data_size, UINT flags)
@@ -449,7 +449,7 @@ static HRESULT d3d_query_init(struct d3d_query *query, struct d3d_device *device
     if (FAILED(hr = wined3d_query_create(device->wined3d_device, query_type_map[desc->Query],
             query, &d3d_query_wined3d_parent_ops, &query->wined3d_query)))
     {
-        WARN("Failed to create wined3d query, hr %#x.\n", hr);
+        WARN("Failed to create wined3d query, hr %#lx.\n", hr);
         wined3d_private_store_cleanup(&query->private_store);
         wined3d_mutex_unlock();
         return hr;
@@ -493,7 +493,7 @@ HRESULT d3d_query_create(struct d3d_device *device, const D3D11_QUERY_DESC *desc
 
     if (FAILED(hr = d3d_query_init(object, device, desc, predicate)))
     {
-        WARN("Failed to initialize predicate, hr %#x.\n", hr);
+        WARN("Failed to initialise predicate, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }

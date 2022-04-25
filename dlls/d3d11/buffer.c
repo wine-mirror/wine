@@ -64,7 +64,7 @@ static ULONG STDMETHODCALLTYPE d3d11_buffer_AddRef(ID3D11Buffer *iface)
     struct d3d_buffer *buffer = impl_from_ID3D11Buffer(iface);
     ULONG refcount = InterlockedIncrement(&buffer->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", buffer, refcount);
+    TRACE("%p increasing refcount to %lu.\n", buffer, refcount);
 
     if (refcount == 1)
     {
@@ -80,7 +80,7 @@ static ULONG STDMETHODCALLTYPE d3d11_buffer_Release(ID3D11Buffer *iface)
     struct d3d_buffer *buffer = impl_from_ID3D11Buffer(iface);
     ULONG refcount = InterlockedDecrement(&buffer->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", buffer, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", buffer, refcount);
 
     if (!refcount)
     {
@@ -452,7 +452,7 @@ static HRESULT d3d_buffer_init(struct d3d_buffer *buffer, struct d3d_device *dev
             (const struct wined3d_sub_resource_data *)data, buffer,
             &d3d_buffer_wined3d_parent_ops, &buffer->wined3d_buffer)))
     {
-        WARN("Failed to create wined3d buffer, hr %#x.\n", hr);
+        WARN("Failed to create wined3d buffer, hr %#lx.\n", hr);
         wined3d_private_store_cleanup(&buffer->private_store);
         wined3d_mutex_unlock();
         return hr;
@@ -475,7 +475,7 @@ HRESULT d3d_buffer_create(struct d3d_device *device, const D3D11_BUFFER_DESC *de
 
     if (FAILED(hr = d3d_buffer_init(object, device, desc, data)))
     {
-        WARN("Failed to initialize buffer, hr %#x.\n", hr);
+        WARN("Failed to initialise buffer, hr %#lx.\n", hr);
         heap_free(object);
         return hr;
     }
