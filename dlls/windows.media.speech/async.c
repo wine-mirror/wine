@@ -370,16 +370,9 @@ static void CALLBACK async_run_cb(TP_CALLBACK_INSTANCE *instance, void *data, TP
 HRESULT async_operation_create( const GUID *iid, IInspectable *invoker, async_operation_callback callback, IAsyncOperation_IInspectable **out )
 {
     struct async_operation *impl;
-    HRESULT hr;
 
     *out = NULL;
-
-    if (!(impl = calloc(1, sizeof(*impl))))
-    {
-        hr = E_OUTOFMEMORY;
-        goto error;
-    }
-
+    if (!(impl = calloc(1, sizeof(*impl)))) return E_OUTOFMEMORY;
     impl->IAsyncOperation_IInspectable_iface.lpVtbl = &async_operation_vtbl;
     impl->IAsyncInfo_iface.lpVtbl = &async_operation_info_vtbl;
     impl->iid = iid;
@@ -389,11 +382,10 @@ HRESULT async_operation_create( const GUID *iid, IInspectable *invoker, async_op
     impl->callback = callback;
     impl->status = Started;
 
-    IAsyncOperation_IInspectable_AddRef(&impl->IAsyncOperation_IInspectable_iface); /* AddRef to keep the obj alive in the callback. */
     if (!(impl->async_run_work = CreateThreadpoolWork(async_run_cb, &impl->IAsyncOperation_IInspectable_iface, NULL)))
     {
-        hr = HRESULT_FROM_WIN32(GetLastError());
-        goto error;
+        free(impl);
+        return HRESULT_FROM_WIN32(GetLastError());
     }
 
     if (invoker) IInspectable_AddRef((impl->invoker = invoker));
@@ -401,13 +393,11 @@ HRESULT async_operation_create( const GUID *iid, IInspectable *invoker, async_op
     InitializeCriticalSection(&impl->cs);
     impl->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": async_operation.cs");
 
+    /* AddRef to keep the obj alive in the callback. */
+    IAsyncOperation_IInspectable_AddRef(&impl->IAsyncOperation_IInspectable_iface);
     SubmitThreadpoolWork(impl->async_run_work);
 
     *out = &impl->IAsyncOperation_IInspectable_iface;
     TRACE("created %p\n", *out);
     return S_OK;
-
-error:
-    free(impl);
-    return hr;
 }
