@@ -5063,7 +5063,6 @@ static void test_windows_gaming_input(void)
         .report_id = 6,
         .report_len = 2,
         .report_buf = {6, 0x7f},
-        .todo = TRUE,
     };
     static struct hid_expect expect_pause =
     {
@@ -5306,15 +5305,12 @@ static void test_windows_gaming_input(void)
 
     gain = 12345.6;
     hr = IForceFeedbackMotor_get_MasterGain( motor, &gain );
-    todo_wine
     ok( hr == S_OK, "get_MasterGain returned %#lx\n", hr );
-    todo_wine
     ok( gain == 1.0, "got gain %f\n", gain );
     set_hid_expect( file, &expect_set_gain, sizeof(expect_set_gain) );
     hr = IForceFeedbackMotor_put_MasterGain( motor, 0.5 );
-    todo_wine
     ok( hr == S_OK, "put_MasterGain returned %#lx\n", hr );
-    wait_hid_expect_( __FILE__, __LINE__, file, 100, TRUE ); /* device gain reports are written asynchronously */
+    wait_hid_expect( file, 100 ); /* device gain reports are written asynchronously */
 
     enabled = FALSE;
     hr = IForceFeedbackMotor_get_IsEnabled( motor, &enabled );

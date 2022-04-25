@@ -111,14 +111,43 @@ static HRESULT WINAPI motor_get_AreEffectsPaused( IForceFeedbackMotor *iface, BO
 
 static HRESULT WINAPI motor_get_MasterGain( IForceFeedbackMotor *iface, double *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct motor *impl = impl_from_IForceFeedbackMotor( iface );
+    DIPROPDWORD gain =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPDWORD),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+    };
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (FAILED(hr = IDirectInputDevice8_GetProperty( impl->device, DIPROP_FFGAIN, &gain.diph ))) *value = 1.;
+    else *value = gain.dwData / 10000.;
+
+    return hr;
 }
 
 static HRESULT WINAPI motor_put_MasterGain( IForceFeedbackMotor *iface, double value )
 {
-    FIXME( "iface %p, value %#I64x stub!\n", iface, *(UINT64 *)&value );
-    return E_NOTIMPL;
+    struct motor *impl = impl_from_IForceFeedbackMotor( iface );
+    DIPROPDWORD gain =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPDWORD),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+    };
+
+    TRACE( "iface %p, value %f.\n", iface, value );
+
+    gain.dwData = 10000 * value;
+    return IDirectInputDevice8_SetProperty( impl->device, DIPROP_FFGAIN, &gain.diph );
 }
 
 static HRESULT WINAPI motor_get_IsEnabled( IForceFeedbackMotor *iface, BOOLEAN *value )
