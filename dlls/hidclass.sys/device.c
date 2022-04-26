@@ -403,40 +403,18 @@ static const struct device_strings device_strings[] =
     { .id = L"VID_054C&PID_0CE6", .product = L"Wireless Controller" },
 };
 
-static const WCHAR *find_product_string( const WCHAR *device_id )
+static const WCHAR *find_device_string( const WCHAR *device_id, ULONG index )
 {
     const WCHAR *match_id = wcsrchr( device_id, '\\' ) + 1;
     DWORD i;
+
+    if (index != HID_STRING_ID_IPRODUCT) return NULL;
 
     for (i = 0; i < ARRAY_SIZE(device_strings); ++i)
         if (!wcsnicmp( device_strings[i].id, match_id, 17 ))
             return device_strings[i].product;
 
     return NULL;
-}
-
-static void handle_minidriver_string( BASE_DEVICE_EXTENSION *ext, IRP *irp, ULONG index )
-{
-    IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
-    WCHAR *output_buf = MmGetSystemAddressForMdlSafe( irp->MdlAddress, NormalPagePriority );
-    ULONG output_len = stack->Parameters.DeviceIoControl.OutputBufferLength;
-    const WCHAR *str = NULL;
-
-    if (index == HID_STRING_ID_IPRODUCT) str = find_product_string( ext->device_id );
-
-    if (!str) call_minidriver( IOCTL_HID_GET_STRING, ext->u.pdo.parent_fdo, ULongToPtr( index ),
-                               sizeof(index), output_buf, output_len, &irp->IoStatus );
-    else
-    {
-        irp->IoStatus.Information = (wcslen( str ) + 1) * sizeof(WCHAR);
-        if (irp->IoStatus.Information > output_len)
-            irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
-        else
-        {
-            memcpy( output_buf, str, irp->IoStatus.Information );
-            irp->IoStatus.Status = STATUS_SUCCESS;
-        }
-    }
 }
 
 static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP *irp )
@@ -520,9 +498,10 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
     struct hid_queue *queue = irp->Tail.Overlay.OriginalFileObject->FsContext;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    ULONG code, index;
+    const WCHAR *str;
     NTSTATUS status;
     BOOL removed;
-    ULONG code;
     KIRQL irql;
 
     irp->IoStatus.Information = 0;
@@ -569,18 +548,31 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
             break;
         }
         case IOCTL_HID_GET_PRODUCT_STRING:
-        {
-            handle_minidriver_string( ext, irp, HID_STRING_ID_IPRODUCT );
-            break;
-        }
         case IOCTL_HID_GET_SERIALNUMBER_STRING:
-        {
-            handle_minidriver_string( ext, irp, HID_STRING_ID_ISERIALNUMBER );
-            break;
-        }
         case IOCTL_HID_GET_MANUFACTURER_STRING:
         {
-            handle_minidriver_string( ext, irp, HID_STRING_ID_IMANUFACTURER );
+            WCHAR *output_buf = MmGetSystemAddressForMdlSafe( irp->MdlAddress, NormalPagePriority );
+            ULONG output_len = irpsp->Parameters.DeviceIoControl.OutputBufferLength;
+
+            if (code == IOCTL_HID_GET_PRODUCT_STRING) index = HID_STRING_ID_IPRODUCT;
+            if (code == IOCTL_HID_GET_SERIALNUMBER_STRING) index = HID_STRING_ID_ISERIALNUMBER;
+            if (code == IOCTL_HID_GET_MANUFACTURER_STRING) index = HID_STRING_ID_IMANUFACTURER;
+
+            if ((str = find_device_string( ext->device_id, index )))
+            {
+                irp->IoStatus.Information = (wcslen( str ) + 1) * sizeof(WCHAR);
+                if (irp->IoStatus.Information > output_len)
+                    irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
+                else
+                {
+                    memcpy( output_buf, str, irp->IoStatus.Information );
+                    irp->IoStatus.Status = STATUS_SUCCESS;
+                }
+                break;
+            }
+
+            call_minidriver( IOCTL_HID_GET_STRING, ext->u.pdo.parent_fdo, ULongToPtr( index ),
+                             sizeof(index), output_buf, output_len, &irp->IoStatus );
             break;
         }
         case IOCTL_HID_GET_COLLECTION_INFORMATION:
