@@ -541,44 +541,6 @@ static DWORD midAddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 }
 
 /**************************************************************************
- * 				midPrepare			[internal]
- */
-static DWORD midPrepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
-{
-    TRACE("(%04X, %p, %d);\n", wDevID, lpMidiHdr, dwSize);
-
-    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 || lpMidiHdr->lpData == 0)
-	return MMSYSERR_INVALPARAM;
-    if (lpMidiHdr->dwFlags & MHDR_PREPARED)
-	return MMSYSERR_NOERROR;
-
-    lpMidiHdr->lpNext = 0;
-    lpMidiHdr->dwFlags |= MHDR_PREPARED;
-    lpMidiHdr->dwFlags &= ~(MHDR_DONE|MHDR_INQUEUE); /* flags cleared since w2k */
-
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
- * 				midUnprepare			[internal]
- */
-static DWORD midUnprepare(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
-{
-    TRACE("(%04X, %p, %d);\n", wDevID, lpMidiHdr, dwSize);
-
-    if (dwSize < offsetof(MIDIHDR,dwOffset) || lpMidiHdr == 0 || lpMidiHdr->lpData == 0)
-	return MMSYSERR_INVALPARAM;
-    if (!(lpMidiHdr->dwFlags & MHDR_PREPARED))
-	return MMSYSERR_NOERROR;
-    if (lpMidiHdr->dwFlags & MHDR_INQUEUE)
-	return MIDIERR_STILLPLAYING;
-
-    lpMidiHdr->dwFlags &= ~MHDR_PREPARED;
-
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
  * 			midReset				[internal]
  */
 static DWORD midReset(WORD wDevID)
@@ -642,6 +604,9 @@ static DWORD midStop(WORD wDevID)
 DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 			    DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
+    struct midi_in_message_params params;
+    UINT err;
+
     TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
     switch (wMsg) {
@@ -649,20 +614,12 @@ DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
         return OSS_MidiInit();
     case DRVM_EXIT:
         return OSS_MidiExit();
-    case DRVM_ENABLE:
-    case DRVM_DISABLE:
-	/* FIXME: Pretend this is supported */
-	return 0;
     case MIDM_OPEN:
 	return midOpen(wDevID, (LPMIDIOPENDESC)dwParam1, dwParam2);
     case MIDM_CLOSE:
 	return midClose(wDevID);
     case MIDM_ADDBUFFER:
 	return midAddBuffer(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
-    case MIDM_PREPARE:
-	return midPrepare(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
-    case MIDM_UNPREPARE:
-	return midUnprepare(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
     case MIDM_GETDEVCAPS:
 	return midGetDevCaps(wDevID, (LPMIDIINCAPSW)dwParam1,dwParam2);
     case MIDM_GETNUMDEVS:
@@ -673,10 +630,18 @@ DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 	return midStart(wDevID);
     case MIDM_STOP:
 	return midStop(wDevID);
-    default:
-	TRACE("Unsupported message\n");
     }
-    return MMSYSERR_NOTSUPPORTED;
+
+    params.dev_id = wDevID;
+    params.msg = wMsg;
+    params.user = dwUser;
+    params.param_1 = dwParam1;
+    params.param_2 = dwParam2;
+    params.err = &err;
+
+    OSS_CALL(midi_in_message, &params);
+
+    return err;
 }
 
 /**************************************************************************

@@ -1099,6 +1099,38 @@ static UINT midi_out_reset(WORD dev_id)
     return MMSYSERR_NOERROR;
 }
 
+static UINT midi_in_prepare(WORD dev_id, MIDIHDR *hdr, UINT hdr_size)
+{
+    TRACE("(%04X, %p, %d);\n", dev_id, hdr, hdr_size);
+
+    if (hdr_size < offsetof(MIDIHDR, dwOffset) || !hdr || !hdr->lpData)
+        return MMSYSERR_INVALPARAM;
+    if (hdr->dwFlags & MHDR_PREPARED)
+        return MMSYSERR_NOERROR;
+
+    hdr->lpNext = NULL;
+    hdr->dwFlags |= MHDR_PREPARED;
+    hdr->dwFlags &= ~(MHDR_DONE | MHDR_INQUEUE);
+
+    return MMSYSERR_NOERROR;
+}
+
+static UINT midi_in_unprepare(WORD dev_id, MIDIHDR *hdr, UINT hdr_size)
+{
+    TRACE("(%04X, %p, %d);\n", dev_id, hdr, hdr_size);
+
+    if (hdr_size < offsetof(MIDIHDR, dwOffset) || !hdr || !hdr->lpData)
+        return MMSYSERR_INVALPARAM;
+    if (!(hdr->dwFlags & MHDR_PREPARED))
+        return MMSYSERR_NOERROR;
+    if (hdr->dwFlags & MHDR_INQUEUE)
+        return MIDIERR_STILLPLAYING;
+
+    hdr->dwFlags &= ~MHDR_PREPARED;
+
+    return MMSYSERR_NOERROR;
+}
+
 NTSTATUS midi_out_message(void *args)
 {
     struct midi_out_message_params *params = args;
@@ -1144,6 +1176,31 @@ NTSTATUS midi_out_message(void *args)
         break;
     case MODM_RESET:
         *params->err = midi_out_reset(params->dev_id);
+        break;
+    default:
+        TRACE("Unsupported message\n");
+        *params->err = MMSYSERR_NOTSUPPORTED;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS midi_in_message(void *args)
+{
+    struct midi_in_message_params *params = args;
+
+    switch (params->msg)
+    {
+    case DRVM_ENABLE:
+    case DRVM_DISABLE:
+        /* FIXME: Pretend this is supported */
+        *params->err = MMSYSERR_NOERROR;
+        break;
+    case MIDM_PREPARE:
+        *params->err = midi_in_prepare(params->dev_id, (MIDIHDR *)params->param_1, params->param_2);
+        break;
+    case MIDM_UNPREPARE:
+        *params->err = midi_in_unprepare(params->dev_id, (MIDIHDR *)params->param_1, params->param_2);
         break;
     default:
         TRACE("Unsupported message\n");
