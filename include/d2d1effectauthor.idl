@@ -212,3 +212,49 @@ interface ID2D1ComputeInfo : ID2D1RenderInfo
         [in] ID2D1ResourceTexture *texture
     );
 }
+
+[
+    object,
+    uuid(b2efe1e7-729f-4102-949f-505fa21bf666),
+    local,
+]
+interface ID2D1TransformNode : IUnknown
+{
+    UINT32 GetInputCount();
+}
+
+[
+    object,
+    uuid(13d29038-c3e6-4034-9081-13b53a417992),
+    local,
+]
+interface ID2D1TransformGraph : IUnknown
+{
+    UINT32 GetInputCount();
+    HRESULT SetSingleTransformNode(
+        [in] ID2D1TransformNode *node
+    );
+    HRESULT AddNode(
+        [in] ID2D1TransformNode *node
+    );
+    HRESULT RemoveNode(
+        [in] ID2D1TransformNode *node
+    );
+    HRESULT SetOutputNode(
+        [in] ID2D1TransformNode *node
+    );
+    HRESULT ConnectNode(
+        [in] ID2D1TransformNode *from_node,
+        [in] ID2D1TransformNode *to_node,
+        [in] UINT32 index
+    );
+    HRESULT ConnectToEffectInput(
+        [in] UINT32 input_index,
+        [in] ID2D1TransformNode *node,
+        [in] UINT32 node_index
+    );
+    void Clear();
+    HRESULT SetPassthroughGraph(
+        [in] UINT32 index
+    );
+}
