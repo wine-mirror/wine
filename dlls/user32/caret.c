@@ -96,6 +96,24 @@ void CDECL toggle_caret( HWND hwnd )
 }
 
 
+static unsigned int get_caret_registry_timeout(void)
+{
+    unsigned int ret = 500;
+    WCHAR value[11];
+    DWORD size;
+    HKEY key;
+
+    if (RegOpenKeyExW( HKEY_CURRENT_USER, L"Control Panel\\Desktop", 0, KEY_READ, &key ))
+        return ret;
+
+    size = sizeof(value);
+    if (!RegQueryValueExW( key, L"CursorBlinkRate", NULL, NULL, (BYTE *)value, &size ))
+        ret = wcstoul( value, NULL, 10 );
+    RegCloseKey( key );
+    return ret;
+}
+
+
 /*****************************************************************
  *		CreateCaret (USER32.@)
  */
@@ -185,7 +203,8 @@ BOOL WINAPI CreateCaret( HWND hwnd, HBITMAP bitmap, INT width, INT height )
 
     if (Caret.hBmp) DeleteObject( Caret.hBmp );
     Caret.hBmp = hBmp;
-    Caret.timeout = GetProfileIntA( "windows", "CursorBlinkRate", 500 );
+
+    Caret.timeout = get_caret_registry_timeout();
     return TRUE;
 }
 
