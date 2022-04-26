@@ -88,17 +88,75 @@ struct heap
 };
 
 
+struct heap_thread_params
+{
+    HANDLE ready_event;
+    HANDLE start_event;
+    BOOL done;
+
+    HANDLE heap;
+    DWORD flags;
+    BOOL lock;
+};
+
+DWORD WINAPI heap_thread_proc( void *arg )
+{
+    struct heap_thread_params *params = arg;
+    void *ptr;
+    DWORD res;
+    BOOL ret;
+
+    SetEvent( params->ready_event );
+
+    while (!(res = WaitForSingleObject( params->start_event, INFINITE )) && !params->done)
+    {
+        if (params->lock)
+        {
+            ret = HeapLock( params->heap );
+            ok( ret, "HeapLock failed, error %lu\n", GetLastError() );
+        }
+
+        ptr = HeapAlloc( params->heap, params->flags, 0 );
+        ok( !!ptr, "HeapAlloc failed, error %lu\n", GetLastError() );
+        ret = HeapFree( params->heap, params->flags, ptr );
+        ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
+
+        if (params->lock)
+        {
+            ret = HeapUnlock( params->heap );
+            ok( ret, "HeapUnlock failed, error %lu\n", GetLastError() );
+        }
+
+        SetEvent( params->ready_event );
+    }
+    ok( !res, "WaitForSingleObject returned %#lx, error %lu\n", res, GetLastError() );
+
+    return 0;
+}
+
+
 static void test_HeapCreate(void)
 {
     static const BYTE buffer[512] = {0};
     SIZE_T alloc_size = 0x8000 * sizeof(void *), size, i;
+    struct heap_thread_params thread_params = {0};
     PROCESS_HEAP_ENTRY entry, entries[256];
-    HANDLE heap, heap1, heaps[8];
+    HANDLE heap, heap1, heaps[8], thread;
     BYTE *ptr, *ptr1, *ptrs[128];
     DWORD heap_count, count;
     ULONG compat_info;
     UINT_PTR align;
+    DWORD res;
     BOOL ret;
+
+    thread_params.ready_event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( !!thread_params.ready_event, "CreateEventW failed, error %lu\n", GetLastError() );
+    thread_params.start_event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( !!thread_params.start_event, "CreateEventW failed, error %lu\n", GetLastError() );
+    thread = CreateThread( NULL, 0, heap_thread_proc, &thread_params, 0, NULL );
+    ok( !!thread, "CreateThread failed, error %lu\n", GetLastError() );
+    res = WaitForSingleObject( thread_params.ready_event, INFINITE );
+    ok( !res, "WaitForSingleObject returned %#lx, error %lu\n", res, GetLastError() );
 
     heap_count = GetProcessHeaps( 0, NULL );
     ok( heap_count <= 6, "GetProcessHeaps returned %lu\n", heap_count );
@@ -879,6 +937,148 @@ static void test_HeapCreate(void)
 
     ret = HeapDestroy( heap );
     ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
+
+
+    /* check HEAP_NO_SERIALIZE HeapCreate flag effect */
+
+    heap = HeapCreate( HEAP_NO_SERIALIZE, 0, 0 );
+    ok( !!heap, "HeapCreate failed, error %lu\n", GetLastError() );
+    ok( !((ULONG_PTR)heap & 0xffff), "wrong heap alignment\n" );
+
+    ret = HeapLock( heap );
+    ok( ret, "HeapLock failed, error %lu\n", GetLastError() );
+    thread_params.heap = heap;
+    thread_params.lock = TRUE;
+    thread_params.flags = 0;
+    SetEvent( thread_params.start_event );
+    res = WaitForSingleObject( thread_params.ready_event, 100 );
+    todo_wine
+    ok( !res, "WaitForSingleObject returned %#lx, error %lu\n", res, GetLastError() );
+    ret = HeapUnlock( heap );
+    ok( ret, "HeapUnlock failed, error %lu\n", GetLastError() );
+    if (res) WaitForSingleObject( thread_params.ready_event, 100 );
+
+    ret = HeapLock( heap );
+    ok( ret, "HeapLock failed, error %lu\n", GetLastError() );
+    thread_params.heap = heap;
+    thread_params.lock = FALSE;
+    thread_params.flags = 0;
+    SetEvent( thread_params.start_event );
+    res = WaitForSingleObject( thread_params.ready_event, 100 );
+    ok( !res, "WaitForSingleObject returned %#lx, error %lu\n", res, GetLastError() );
+    ret = HeapUnlock( heap );
+    ok( ret, "HeapUnlock failed, error %lu\n", GetLastError() );
+
+    ret = HeapDestroy( heap );
+    ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
+
+
+    /* check HEAP_NO_SERIALIZE HeapAlloc / HeapFree flag effect */
+
+    heap = HeapCreate( 0, 0, 0 );
+    ok( !!heap, "HeapCreate failed, error %lu\n", GetLastError() );
+    ok( !((ULONG_PTR)heap & 0xffff), "wrong heap alignment\n" );
+
+    ret = HeapLock( heap );
+    ok( ret, "HeapLock failed, error %lu\n", GetLastError() );
+    thread_params.heap = heap;
+    thread_params.lock = TRUE;
+    thread_params.flags = 0;
+    SetEvent( thread_params.start_event );
+    res = WaitForSingleObject( thread_params.ready_event, 100 );
+    ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx, error %lu\n", res, GetLastError() );
+    ret = HeapUnlock( heap );
+    ok( ret, "HeapUnlock failed, error %lu\n", GetLastError() );
+    res = WaitForSingleObject( thread_params.ready_event, 100 );
+    ok( !res, "WaitForSingleObject returned %#lx, error %lu\n", res, GetLastError() );
+
+    ret = HeapLock( heap );
+    ok( ret, "HeapLock failed, error %lu\n", GetLastError() );
+    thread_params.heap = heap;
+    thread_params.lock = FALSE;
+    thread_params.flags = 0;
+    SetEvent( thread_params.start_event );
+    res = WaitForSingleObject( thread_params.ready_event, 100 );
+    ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx, error %lu\n", res, GetLastError() );
+    ret = HeapUnlock( heap );
+    ok( ret, "HeapUnlock failed, error %lu\n", GetLastError() );
+    res = WaitForSingleObject( thread_params.ready_event, 100 );
+    ok( !res, "WaitForSingleObject returned %#lx, error %lu\n", res, GetLastError() );
+
+    ret = HeapLock( heap );
+    ok( ret, "HeapLock failed, error %lu\n", GetLastError() );
+    thread_params.heap = heap;
+    thread_params.lock = FALSE;
+    thread_params.flags = HEAP_NO_SERIALIZE;
+    SetEvent( thread_params.start_event );
+    res = WaitForSingleObject( thread_params.ready_event, 100 );
+    ok( !res, "WaitForSingleObject returned %#lx, error %lu\n", res, GetLastError() );
+    ret = HeapUnlock( heap );
+    ok( ret, "HeapUnlock failed, error %lu\n", GetLastError() );
+
+    ret = HeapDestroy( heap );
+    ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
+
+
+    /* check LFH heap locking */
+
+    heap = HeapCreate( 0, 0, 0 );
+    ok( !!heap, "HeapCreate failed, error %lu\n", GetLastError() );
+    ok( !((ULONG_PTR)heap & 0xffff), "wrong heap alignment\n" );
+
+    ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
+    ok( ret, "HeapQueryInformation failed, error %lu\n", GetLastError() );
+    ok( compat_info == 0, "got HeapCompatibilityInformation %lu\n", compat_info );
+
+    for (i = 0; i < 0x12; i++) ptrs[i] = pHeapAlloc( heap, 0, 0 );
+    for (i = 0; i < 0x12; i++) HeapFree( heap, 0, ptrs[i] );
+
+    ret = pHeapQueryInformation( heap, HeapCompatibilityInformation, &compat_info, sizeof(compat_info), &size );
+    ok( ret, "HeapQueryInformation failed, error %lu\n", GetLastError() );
+    todo_wine
+    ok( compat_info == 2, "got HeapCompatibilityInformation %lu\n", compat_info );
+
+    /* locking is serialized */
+
+    ret = HeapLock( heap );
+    ok( ret, "HeapLock failed, error %lu\n", GetLastError() );
+    thread_params.heap = heap;
+    thread_params.lock = TRUE;
+    thread_params.flags = 0;
+    SetEvent( thread_params.start_event );
+    res = WaitForSingleObject( thread_params.ready_event, 100 );
+    ok( res == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx, error %lu\n", res, GetLastError() );
+    ret = HeapUnlock( heap );
+    ok( ret, "HeapUnlock failed, error %lu\n", GetLastError() );
+    res = WaitForSingleObject( thread_params.ready_event, 100 );
+    ok( !res, "WaitForSingleObject returned %#lx, error %lu\n", res, GetLastError() );
+
+    /* but allocation is not */
+
+    ret = HeapLock( heap );
+    ok( ret, "HeapLock failed, error %lu\n", GetLastError() );
+    thread_params.heap = heap;
+    thread_params.lock = FALSE;
+    thread_params.flags = 0;
+    SetEvent( thread_params.start_event );
+    res = WaitForSingleObject( thread_params.ready_event, 100 );
+    todo_wine
+    ok( !res, "WaitForSingleObject returned %#lx, error %lu\n", res, GetLastError() );
+    ret = HeapUnlock( heap );
+    ok( ret, "HeapUnlock failed, error %lu\n", GetLastError() );
+    if (res) res = WaitForSingleObject( thread_params.ready_event, 100 );
+
+    ret = HeapDestroy( heap );
+    ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
+
+
+    thread_params.done = TRUE;
+    SetEvent( thread_params.start_event );
+    res = WaitForSingleObject( thread, INFINITE );
+    ok( !res, "WaitForSingleObject returned %#lx, error %lu\n", res, GetLastError() );
+    CloseHandle( thread_params.start_event );
+    CloseHandle( thread_params.ready_event );
+    CloseHandle( thread );
 }
 
 
