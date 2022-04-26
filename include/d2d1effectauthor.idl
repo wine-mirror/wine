@@ -31,3 +31,20 @@ interface ID2D1VertexBuffer : IUnknown
     );
     HRESULT Unmap();
 }
+
+[
+    object,
+    uuid(688d15c3-02b0-438d-b13a-d1b44c32c39a),
+    local,
+]
+interface ID2D1ResourceTexture : IUnknown
+{
+    HRESULT Update(
+        [in] const UINT32 *min_extents,
+        [in] const UINT32 *max_extents,
+        [in] const UINT32 *strides,
+        [in] UINT32 dimensions,
+        [in] const BYTE *data,
+        [in] UINT32 data_size
+    );
+}
