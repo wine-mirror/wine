@@ -1992,7 +1992,7 @@ BOOLEAN WINAPI RtlLockHeap( HANDLE heap )
 {
     HEAP *heapPtr = HEAP_GetPtr( heap );
     if (!heapPtr) return FALSE;
-    RtlEnterCriticalSection( &heapPtr->cs );
+    heap_lock( heapPtr, 0 );
     return TRUE;
 }
 
@@ -2013,7 +2013,7 @@ BOOLEAN WINAPI RtlUnlockHeap( HANDLE heap )
 {
     HEAP *heapPtr = HEAP_GetPtr( heap );
     if (!heapPtr) return FALSE;
-    RtlLeaveCriticalSection( &heapPtr->cs );
+    heap_unlock( heapPtr, 0 );
     return TRUE;
 }
 

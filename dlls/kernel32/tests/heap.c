@@ -952,11 +952,9 @@ static void test_HeapCreate(void)
     thread_params.flags = 0;
     SetEvent( thread_params.start_event );
     res = WaitForSingleObject( thread_params.ready_event, 100 );
-    todo_wine
     ok( !res, "WaitForSingleObject returned %#lx, error %lu\n", res, GetLastError() );
     ret = HeapUnlock( heap );
     ok( ret, "HeapUnlock failed, error %lu\n", GetLastError() );
-    if (res) WaitForSingleObject( thread_params.ready_event, 100 );
 
     ret = HeapLock( heap );
     ok( ret, "HeapLock failed, error %lu\n", GetLastError() );
