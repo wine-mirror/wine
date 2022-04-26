@@ -1047,41 +1047,41 @@ cleanup:
  * replaces it, then it contains the same number as the index itself, e.g.
  * index 5 would contain 5. */
 static HRESULT propagate_face_vertices(const DWORD *adjacency, DWORD *point_reps,
-        const DWORD *indices, DWORD *new_indices, DWORD face, DWORD numfaces)
+        const uint32_t *indices, uint32_t *new_indices, unsigned int face_idx, unsigned int face_count)
 {
-    const unsigned int VERTS_PER_FACE = 3;
-    DWORD edge, opp_edge;
-    DWORD face_base = VERTS_PER_FACE * face;
+    unsigned int face_base = 3 * face_idx;
+    unsigned int edge, opp_edge;
 
-    for (edge = 0; edge < VERTS_PER_FACE; edge++)
+    for (edge = 0; edge < 3; ++edge)
     {
-        DWORD adj_face = adjacency[face_base + edge];
-        DWORD adj_face_base;
-        DWORD i;
-        if (adj_face == -1) /* No adjacent face. */
+        unsigned int adj_face = adjacency[face_base + edge];
+        unsigned int adj_face_base;
+        unsigned int i;
+
+        if (adj_face == ~0u) /* No adjacent face. */
             continue;
-        else if (adj_face >= numfaces)
+        else if (adj_face >= face_count)
         {
-            /* This throws exception on Windows */
-            WARN("Index out of bounds. Got %d expected less than %d.\n",
-                adj_face, numfaces);
+            /* This crashes on Windows. */
+            WARN("Index out of bounds. Got %u, expected less than %u.\n", adj_face, face_count);
             return D3DERR_INVALIDCALL;
         }
         adj_face_base = 3 * adj_face;
 
         /* Find opposite edge in adjacent face. */
-        for (opp_edge = 0; opp_edge < VERTS_PER_FACE; opp_edge++)
+        for (opp_edge = 0; opp_edge < 3; ++opp_edge)
         {
-            DWORD opp_edge_index = adj_face_base + opp_edge;
-            if (adjacency[opp_edge_index] == face)
+            unsigned int opp_edge_index = adj_face_base + opp_edge;
+
+            if (adjacency[opp_edge_index] == face_idx)
                 break; /* Found opposite edge. */
         }
 
         /* Replaces vertices in opposite edge with vertices from current edge. */
-        for (i = 0; i < 2; i++)
+        for (i = 0; i < 2; ++i)
         {
-            DWORD from = face_base + (edge + (1 - i)) % VERTS_PER_FACE;
-            DWORD to = adj_face_base + (opp_edge + i) % VERTS_PER_FACE;
+            unsigned int from = face_base + (edge + (1 - i)) % 3;
+            unsigned int to = adj_face_base + (opp_edge + i) % 3;
 
             /* Propagate lowest index. */
             if (new_indices[to] > new_indices[from])
@@ -1098,65 +1098,56 @@ static HRESULT propagate_face_vertices(const DWORD *adjacency, DWORD *point_reps
 static HRESULT WINAPI d3dx9_mesh_ConvertAdjacencyToPointReps(ID3DXMesh *iface,
         const DWORD *adjacency, DWORD *point_reps)
 {
-    struct d3dx9_mesh *This = impl_from_ID3DXMesh(iface);
+    struct d3dx9_mesh *mesh = impl_from_ID3DXMesh(iface);
+    uint16_t *indices_16bit = NULL;
+    uint32_t *new_indices = NULL;
+    uint32_t *indices = NULL;
+    unsigned int face, i;
     HRESULT hr;
-    DWORD face;
-    DWORD i;
-    DWORD *indices = NULL;
-    WORD *indices_16bit = NULL;
-    DWORD *new_indices = NULL;
-    const unsigned int VERTS_PER_FACE = 3;
 
     TRACE("iface %p, adjacency %p, point_reps %p.\n", iface, adjacency, point_reps);
 
     if (!adjacency)
     {
         WARN("NULL adjacency.\n");
-        hr = D3DERR_INVALIDCALL;
-        goto cleanup;
+        return D3DERR_INVALIDCALL;
     }
 
     if (!point_reps)
     {
         WARN("NULL point_reps.\n");
-        hr = D3DERR_INVALIDCALL;
-        goto cleanup;
+        return D3DERR_INVALIDCALL;
     }
 
-    /* Should never happen as CreateMesh does not allow meshes with 0 faces */
-    if (This->numfaces == 0)
+    /* Should never happen as CreateMesh does not allow meshes with 0 faces. */
+    if (!mesh->numfaces)
     {
         ERR("Number of faces was zero.\n");
-        hr = D3DERR_INVALIDCALL;
-        goto cleanup;
+        return D3DERR_INVALIDCALL;
     }
 
-    new_indices = HeapAlloc(GetProcessHeap(), 0, VERTS_PER_FACE * This->numfaces * sizeof(*indices));
-    if (!new_indices)
-    {
-        hr = E_OUTOFMEMORY;
-        goto cleanup;
-    }
+    if (!(new_indices = HeapAlloc(GetProcessHeap(), 0, 3 * mesh->numfaces * sizeof(*indices))))
+        return E_OUTOFMEMORY;
 
-    if (This->options & D3DXMESH_32BIT)
+    if (mesh->options & D3DXMESH_32BIT)
     {
-        hr = iface->lpVtbl->LockIndexBuffer(iface, D3DLOCK_READONLY, (void**)&indices);
-        if (FAILED(hr)) goto cleanup;
-        memcpy(new_indices, indices, VERTS_PER_FACE * This->numfaces * sizeof(*indices));
+        if (FAILED(hr = iface->lpVtbl->LockIndexBuffer(iface, D3DLOCK_READONLY, (void **)&indices)))
+            goto cleanup;
+        memcpy(new_indices, indices, 3 * mesh->numfaces * sizeof(*indices));
     }
     else
     {
         /* Make a widening copy of indices_16bit into indices and new_indices
-         * in order to re-use the helper function */
-        hr = iface->lpVtbl->LockIndexBuffer(iface, D3DLOCK_READONLY, (void**)&indices_16bit);
-        if (FAILED(hr)) goto cleanup;
-        indices = HeapAlloc(GetProcessHeap(), 0, VERTS_PER_FACE * This->numfaces * sizeof(*indices));
-        if (!indices)
+         * in order to re-use the helper function. */
+        if (FAILED(hr = iface->lpVtbl->LockIndexBuffer(iface, D3DLOCK_READONLY, (void **)&indices_16bit)))
+            goto cleanup;
+
+        if (!(indices = HeapAlloc(GetProcessHeap(), 0, 3 * mesh->numfaces * sizeof(*indices))))
         {
             hr = E_OUTOFMEMORY;
             goto cleanup;
         }
-        for (i = 0; i < VERTS_PER_FACE * This->numfaces; i++)
+        for (i = 0; i < 3 * mesh->numfaces; ++i)
         {
             new_indices[i] = indices_16bit[i];
             indices[i] = indices_16bit[i];
@@ -1164,37 +1155,36 @@ static HRESULT WINAPI d3dx9_mesh_ConvertAdjacencyToPointReps(ID3DXMesh *iface,
     }
 
     /* Vertices are ordered sequentially in the point representation. */
-    for (i = 0; i < This->numvertices; i++)
-    {
+    for (i = 0; i < mesh->numvertices; ++i)
         point_reps[i] = i;
-    }
 
-    /* Propagate vertices with low indices so as few vertices as possible
-     * are used in the mesh.
-     */
-    for (face = 0; face < This->numfaces; face++)
+    /* Propagate vertices with low indices so as few vertices as possible are
+     * used in the mesh. */
+    for (face = 0; face < mesh->numfaces; ++face)
     {
-        hr = propagate_face_vertices(adjacency, point_reps, indices, new_indices, face, This->numfaces);
-        if (FAILED(hr)) goto cleanup;
+        if (FAILED(hr = propagate_face_vertices(adjacency, point_reps, indices, new_indices, face, mesh->numfaces)))
+            goto cleanup;
     }
-    /* Go in opposite direction to catch all face orderings */
-    for (face = 0; face < This->numfaces; face++)
+    /* Go in opposite direction to catch all face orderings. */
+    for (face = 0; face < mesh->numfaces; ++face)
     {
-        hr = propagate_face_vertices(adjacency, point_reps,
-                                     indices, new_indices,
-                                     (This->numfaces - 1) - face, This->numfaces);
-        if (FAILED(hr)) goto cleanup;
+        if (FAILED(hr = propagate_face_vertices(adjacency, point_reps, indices, new_indices,
+                (mesh->numfaces - 1) - face, mesh->numfaces)))
+            goto cleanup;
     }
 
     hr = D3D_OK;
-cleanup:
-    if (This->options & D3DXMESH_32BIT)
+
+ cleanup:
+    if (mesh->options & D3DXMESH_32BIT)
     {
-        if (indices) iface->lpVtbl->UnlockIndexBuffer(iface);
+        if (indices)
+            iface->lpVtbl->UnlockIndexBuffer(iface);
     }
     else
     {
-        if (indices_16bit) iface->lpVtbl->UnlockIndexBuffer(iface);
+        if (indices_16bit)
+            iface->lpVtbl->UnlockIndexBuffer(iface);
         HeapFree(GetProcessHeap(), 0, indices);
     }
     HeapFree(GetProcessHeap(), 0, new_indices);
@@ -2604,18 +2594,18 @@ HRESULT WINAPI D3DXCreateMeshFVF(DWORD numfaces, DWORD numvertices, DWORD option
 
 
 struct mesh_data {
-    DWORD num_vertices;
-    DWORD num_poly_faces;
-    DWORD num_tri_faces;
+    unsigned int num_vertices;
+    unsigned int num_poly_faces;
+    unsigned int num_tri_faces;
     D3DXVECTOR3 *vertices;
-    DWORD *num_tri_per_face;
+    unsigned int *num_tri_per_face;
     DWORD *indices;
 
     DWORD fvf;
 
     /* optional mesh data */
 
-    DWORD num_normals;
+    unsigned int num_normals;
     D3DXVECTOR3 *normals;
     DWORD *normal_indices;
 
@@ -2623,12 +2613,12 @@ struct mesh_data {
 
     DWORD *vertex_colors;
 
-    DWORD num_materials;
+    unsigned int num_materials;
     D3DXMATERIAL *materials;
     DWORD *material_indices;
 
     struct ID3DXSkinInfo *skin_info;
-    DWORD nb_bones;
+    unsigned int bone_count;
 };
 
 static HRESULT parse_texture_filename(ID3DXFileData *filedata, char **filename_out)
@@ -2758,8 +2748,9 @@ err:
 
 static void destroy_materials(struct mesh_data *mesh)
 {
-    DWORD i;
-    for (i = 0; i < mesh->num_materials; i++)
+    unsigned int i;
+
+    for (i = 0; i < mesh->num_materials; ++i)
         HeapFree(GetProcessHeap(), 0, mesh->materials[i].pTextureFilename);
     HeapFree(GetProcessHeap(), 0, mesh->materials);
     HeapFree(GetProcessHeap(), 0, mesh->material_indices);
@@ -2770,18 +2761,19 @@ static void destroy_materials(struct mesh_data *mesh)
 
 static HRESULT parse_material_list(ID3DXFileData *filedata, struct mesh_data *mesh)
 {
-    HRESULT hr;
-    SIZE_T data_size;
-    const DWORD *data, *in_ptr;
-    GUID type;
     ID3DXFileData *child = NULL;
-    DWORD num_materials;
-    DWORD i;
+    unsigned int material_count;
+    const uint32_t *in_ptr;
     SIZE_T nb_children;
+    SIZE_T data_size;
+    const void *data;
+    unsigned int i;
+    HRESULT hr;
+    GUID type;
 
     destroy_materials(mesh);
 
-    hr = filedata->lpVtbl->Lock(filedata, &data_size, (const void**)&data);
+    hr = filedata->lpVtbl->Lock(filedata, &data_size, &data);
     if (FAILED(hr)) return hr;
 
     /* template MeshMaterialList {
@@ -2795,44 +2787,50 @@ static HRESULT parse_material_list(ID3DXFileData *filedata, struct mesh_data *me
     in_ptr = data;
     hr = E_FAIL;
 
-    if (data_size < sizeof(DWORD)) {
-        WARN("truncated data (%ld bytes)\n", data_size);
+    if (data_size < sizeof(uint32_t))
+    {
+        WARN("Truncated data (%Id bytes).\n", data_size);
         goto end;
     }
-    num_materials = *in_ptr++;
-    if (!num_materials) {
+    material_count = *in_ptr++;
+    if (!material_count) {
         hr = D3D_OK;
         goto end;
     }
 
-    if (data_size < 2 * sizeof(DWORD)) {
-        WARN("truncated data (%ld bytes)\n", data_size);
+    if (data_size < 2 * sizeof(uint32_t))
+    {
+        WARN("Truncated data (%Id bytes).\n", data_size);
         goto end;
     }
-    if (*in_ptr++ != mesh->num_poly_faces) {
-        WARN("number of material face indices (%u) doesn't match number of faces (%u)\n",
+    if (*in_ptr++ != mesh->num_poly_faces)
+    {
+        WARN("Number of material face indices (%u) doesn't match number of faces (%u).\n",
              *(in_ptr - 1), mesh->num_poly_faces);
         goto end;
     }
-    if (data_size < 2 * sizeof(DWORD) + mesh->num_poly_faces * sizeof(DWORD)) {
-        WARN("truncated data (%ld bytes)\n", data_size);
+    if (data_size < 2 * sizeof(uint32_t) + mesh->num_poly_faces * sizeof(uint32_t))
+    {
+        WARN("Truncated data (%Id bytes).\n", data_size);
         goto end;
     }
-    for (i = 0; i < mesh->num_poly_faces; i++) {
-        if (*in_ptr++ >= num_materials) {
-            WARN("face %u: reference to undefined material %u (only %u materials)\n",
-                 i, *(in_ptr - 1), num_materials);
+    for (i = 0; i < mesh->num_poly_faces; ++i)
+    {
+        if (*in_ptr++ >= material_count)
+        {
+            WARN("Face %u: reference to undefined material %u (only %u materials).\n",
+                    i, *(in_ptr - 1), material_count);
             goto end;
         }
     }
 
-    mesh->materials = HeapAlloc(GetProcessHeap(), 0, num_materials * sizeof(*mesh->materials));
+    mesh->materials = HeapAlloc(GetProcessHeap(), 0, material_count * sizeof(*mesh->materials));
     mesh->material_indices = HeapAlloc(GetProcessHeap(), 0, mesh->num_poly_faces * sizeof(*mesh->material_indices));
     if (!mesh->materials || !mesh->material_indices) {
         hr = E_OUTOFMEMORY;
         goto end;
     }
-    memcpy(mesh->material_indices, data + 2, mesh->num_poly_faces * sizeof(DWORD));
+    memcpy(mesh->material_indices, (const uint32_t *)data + 2, mesh->num_poly_faces * sizeof(uint32_t));
 
     hr = filedata->lpVtbl->GetChildren(filedata, &nb_children);
     if (FAILED(hr))
@@ -2847,9 +2845,11 @@ static HRESULT parse_material_list(ID3DXFileData *filedata, struct mesh_data *me
         if (FAILED(hr))
             goto end;
 
-        if (IsEqualGUID(&type, &TID_D3DRMMaterial)) {
-            if (mesh->num_materials >= num_materials) {
-                WARN("more materials defined than declared\n");
+        if (IsEqualGUID(&type, &TID_D3DRMMaterial))
+        {
+            if (mesh->num_materials >= material_count)
+            {
+                WARN("%u materials defined, only %u declared.\n", mesh->num_materials, material_count);
                 hr = E_FAIL;
                 goto end;
             }
@@ -2861,8 +2861,9 @@ static HRESULT parse_material_list(ID3DXFileData *filedata, struct mesh_data *me
         IUnknown_Release(child);
         child = NULL;
     }
-    if (num_materials != mesh->num_materials) {
-        WARN("only %u of %u materials defined\n", num_materials, mesh->num_materials);
+    if (material_count != mesh->num_materials)
+    {
+        WARN("Only %u of %u materials defined.\n", material_count, mesh->num_materials);
         hr = E_FAIL;
     }
 
@@ -2875,14 +2876,14 @@ end:
 
 static HRESULT parse_texture_coords(ID3DXFileData *filedata, struct mesh_data *mesh)
 {
-    HRESULT hr;
+    const uint32_t *data;
     SIZE_T data_size;
-    const BYTE *data;
+    HRESULT hr;
 
     HeapFree(GetProcessHeap(), 0, mesh->tex_coords);
     mesh->tex_coords = NULL;
 
-    hr = filedata->lpVtbl->Lock(filedata, &data_size, (const void**)&data);
+    hr = filedata->lpVtbl->Lock(filedata, &data_size, (const void **)&data);
     if (FAILED(hr)) return hr;
 
     /* template Coords2d {
@@ -2897,18 +2898,21 @@ static HRESULT parse_texture_coords(ID3DXFileData *filedata, struct mesh_data *m
 
     hr = E_FAIL;
 
-    if (data_size < sizeof(DWORD)) {
-        WARN("truncated data (%ld bytes)\n", data_size);
+    if (data_size < sizeof(uint32_t))
+    {
+        WARN("Truncated data (%Id bytes).\n", data_size);
         goto end;
     }
-    if (*(DWORD*)data != mesh->num_vertices) {
-        WARN("number of texture coordinates (%u) doesn't match number of vertices (%u)\n",
-             *(DWORD*)data, mesh->num_vertices);
+    if (*data != mesh->num_vertices)
+    {
+        WARN("Number of texture coordinates (%u) doesn't match number of vertices (%u).\n",
+                *data, mesh->num_vertices);
         goto end;
     }
-    data += sizeof(DWORD);
-    if (data_size < sizeof(DWORD) + mesh->num_vertices * sizeof(*mesh->tex_coords)) {
-        WARN("truncated data (%ld bytes)\n", data_size);
+    ++data;
+    if (data_size < sizeof(uint32_t) + mesh->num_vertices * sizeof(*mesh->tex_coords))
+    {
+        WARN("Truncated data (%Id bytes).\n", data_size);
         goto end;
     }
 
@@ -2930,16 +2934,15 @@ end:
 
 static HRESULT parse_vertex_colors(ID3DXFileData *filedata, struct mesh_data *mesh)
 {
-    HRESULT hr;
+    unsigned int color_count, i;
+    const uint32_t *data;
     SIZE_T data_size;
-    const BYTE *data;
-    DWORD num_colors;
-    DWORD i;
+    HRESULT hr;
 
     HeapFree(GetProcessHeap(), 0, mesh->vertex_colors);
     mesh->vertex_colors = NULL;
 
-    hr = filedata->lpVtbl->Lock(filedata, &data_size, (const void**)&data);
+    hr = filedata->lpVtbl->Lock(filedata, &data_size, (const void **)&data);
     if (FAILED(hr)) return hr;
 
     /* template IndexedColor {
@@ -2954,18 +2957,20 @@ static HRESULT parse_vertex_colors(ID3DXFileData *filedata, struct mesh_data *me
 
     hr = E_FAIL;
 
-    if (data_size < sizeof(DWORD)) {
-        WARN("truncated data (%ld bytes)\n", data_size);
+    if (data_size < sizeof(uint32_t))
+    {
+        WARN("Truncated data (%Id bytes).\n", data_size);
         goto end;
     }
-    num_colors = *(DWORD*)data;
-    data += sizeof(DWORD);
-    if (data_size < sizeof(DWORD) + num_colors * (sizeof(DWORD) + sizeof(D3DCOLORVALUE))) {
-        WARN("truncated data (%ld bytes)\n", data_size);
+    color_count = *data;
+    ++data;
+    if (data_size < sizeof(uint32_t) + color_count * (sizeof(uint32_t) + sizeof(D3DCOLORVALUE)))
+    {
+        WARN("Truncated data (%Id bytes).\n", data_size);
         goto end;
     }
 
-    mesh->vertex_colors = HeapAlloc(GetProcessHeap(), 0, mesh->num_vertices * sizeof(DWORD));
+    mesh->vertex_colors = HeapAlloc(GetProcessHeap(), 0, mesh->num_vertices * sizeof(uint32_t));
     if (!mesh->vertex_colors) {
         hr = E_OUTOFMEMORY;
         goto end;
@@ -2973,18 +2978,20 @@ static HRESULT parse_vertex_colors(ID3DXFileData *filedata, struct mesh_data *me
 
     for (i = 0; i < mesh->num_vertices; i++)
         mesh->vertex_colors[i] = D3DCOLOR_ARGB(0, 0xff, 0xff, 0xff);
-    for (i = 0; i < num_colors; i++)
+    for (i = 0; i < color_count; ++i)
     {
         D3DCOLORVALUE color;
-        DWORD index = *(DWORD*)data;
-        data += sizeof(DWORD);
-        if (index >= mesh->num_vertices) {
-            WARN("vertex color %u references undefined vertex %u (only %u vertices)\n",
-                 i, index, mesh->num_vertices);
+        unsigned int index = *data;
+
+        ++data;
+        if (index >= mesh->num_vertices)
+        {
+            WARN("Vertex color %u references undefined vertex %u (only %u vertices).\n",
+                    i, index, mesh->num_vertices);
             goto end;
         }
         memcpy(&color, data, sizeof(color));
-        data += sizeof(color);
+        data += sizeof(color) / sizeof(*data);
         color.r = min(1.0f, max(0.0f, color.r));
         color.g = min(1.0f, max(0.0f, color.g));
         color.b = min(1.0f, max(0.0f, color.b));
@@ -3006,12 +3013,12 @@ end:
 
 static HRESULT parse_normals(ID3DXFileData *filedata, struct mesh_data *mesh)
 {
-    HRESULT hr;
+    unsigned int num_face_indices = mesh->num_poly_faces * 2 + mesh->num_tri_faces;
+    DWORD *index_out_ptr;
     SIZE_T data_size;
     const BYTE *data;
-    DWORD *index_out_ptr;
-    DWORD i;
-    DWORD num_face_indices = mesh->num_poly_faces * 2 + mesh->num_tri_faces;
+    unsigned int i;
+    HRESULT hr;
 
     HeapFree(GetProcessHeap(), 0, mesh->normals);
     mesh->num_normals = 0;
@@ -3019,7 +3026,7 @@ static HRESULT parse_normals(ID3DXFileData *filedata, struct mesh_data *mesh)
     mesh->normal_indices = NULL;
     mesh->fvf |= D3DFVF_NORMAL;
 
-    hr = filedata->lpVtbl->Lock(filedata, &data_size, (const void**)&data);
+    hr = filedata->lpVtbl->Lock(filedata, &data_size, (const void **)&data);
     if (FAILED(hr)) return hr;
 
     /* template Vector {
@@ -3041,20 +3048,22 @@ static HRESULT parse_normals(ID3DXFileData *filedata, struct mesh_data *mesh)
 
     hr = E_FAIL;
 
-    if (data_size < sizeof(DWORD) * 2) {
-        WARN("truncated data (%ld bytes)\n", data_size);
+    if (data_size < sizeof(uint32_t) * 2)
+    {
+        WARN("Truncated data (%Id bytes).\n", data_size);
         goto end;
     }
-    mesh->num_normals = *(DWORD*)data;
-    data += sizeof(DWORD);
-    if (data_size < sizeof(DWORD) * 2 + mesh->num_normals * sizeof(D3DXVECTOR3) +
-                    num_face_indices * sizeof(DWORD)) {
-        WARN("truncated data (%ld bytes)\n", data_size);
+    mesh->num_normals = *(uint32_t *)data;
+    data += sizeof(uint32_t);
+    if (data_size < sizeof(uint32_t) * 2 + mesh->num_normals * sizeof(D3DXVECTOR3) +
+            num_face_indices * sizeof(uint32_t))
+    {
+        WARN("Truncated data (%Id bytes).\n", data_size);
         goto end;
     }
 
     mesh->normals = HeapAlloc(GetProcessHeap(), 0, mesh->num_normals * sizeof(D3DXVECTOR3));
-    mesh->normal_indices = HeapAlloc(GetProcessHeap(), 0, num_face_indices * sizeof(DWORD));
+    mesh->normal_indices = HeapAlloc(GetProcessHeap(), 0, num_face_indices * sizeof(uint32_t));
     if (!mesh->normals || !mesh->normal_indices) {
         hr = E_OUTOFMEMORY;
         goto end;
@@ -3065,33 +3074,39 @@ static HRESULT parse_normals(ID3DXFileData *filedata, struct mesh_data *mesh)
     for (i = 0; i < mesh->num_normals; i++)
         D3DXVec3Normalize(&mesh->normals[i], &mesh->normals[i]);
 
-    if (*(DWORD*)data != mesh->num_poly_faces) {
-        WARN("number of face normals (%u) doesn't match number of faces (%u)\n",
-             *(DWORD*)data, mesh->num_poly_faces);
+    if (*(uint32_t *)data != mesh->num_poly_faces)
+    {
+        WARN("Number of face normals (%u) doesn't match number of faces (%u).\n",
+             *(uint32_t *)data, mesh->num_poly_faces);
         goto end;
     }
-    data += sizeof(DWORD);
+    data += sizeof(uint32_t);
     index_out_ptr = mesh->normal_indices;
     for (i = 0; i < mesh->num_poly_faces; i++)
     {
-        DWORD j;
-        DWORD count = *(DWORD*)data;
-        if (count != mesh->num_tri_per_face[i] + 2) {
-            WARN("face %u: number of normals (%u) doesn't match number of vertices (%u)\n",
+        unsigned int count = *(uint32_t *)data;
+        unsigned int j;
+
+        if (count != mesh->num_tri_per_face[i] + 2)
+        {
+            WARN("Face %u: number of normals (%u) doesn't match number of vertices (%u).\n",
                  i, count, mesh->num_tri_per_face[i] + 2);
             goto end;
         }
-        data += sizeof(DWORD);
+        data += sizeof(uint32_t);
 
-        for (j = 0; j < count; j++) {
-            DWORD normal_index = *(DWORD*)data;
-            if (normal_index >= mesh->num_normals) {
-                WARN("face %u, normal index %u: reference to undefined normal %u (only %u normals)\n",
-                     i, j, normal_index, mesh->num_normals);
+        for (j = 0; j < count; j++)
+        {
+            uint32_t normal_index = *(uint32_t *)data;
+
+            if (normal_index >= mesh->num_normals)
+            {
+                WARN("Face %u, normal index %u: reference to undefined normal %u (only %u normals).\n",
+                        i, j, normal_index, mesh->num_normals);
                 goto end;
             }
             *index_out_ptr++ = normal_index;
-            data += sizeof(DWORD);
+            data += sizeof(uint32_t);
         }
     }
 
@@ -3122,8 +3137,8 @@ static HRESULT parse_skin_mesh_info(ID3DXFileData *filedata, struct mesh_data *m
         }
         /* Skip nMaxSkinWeightsPerVertex and nMaxSkinWeightsPerFace */
         data += 2 * sizeof(WORD);
-        mesh_data->nb_bones = *(WORD*)data;
-        hr = D3DXCreateSkinInfoFVF(mesh_data->num_vertices, mesh_data->fvf, mesh_data->nb_bones, &mesh_data->skin_info);
+        mesh_data->bone_count = *(WORD*)data;
+        hr = D3DXCreateSkinInfoFVF(mesh_data->num_vertices, mesh_data->fvf, mesh_data->bone_count, &mesh_data->skin_info);
     } else {
         const char *name;
         DWORD nb_influences;
@@ -3161,15 +3176,15 @@ end:
 
 static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, DWORD provide_flags)
 {
-    HRESULT hr;
-    SIZE_T data_size;
+    unsigned int skin_weights_info_count = 0;
+    ID3DXFileData *child = NULL;
     const BYTE *data, *in_ptr;
     DWORD *index_out_ptr;
+    SIZE_T child_count;
+    SIZE_T data_size;
+    unsigned int i;
+    HRESULT hr;
     GUID type;
-    ID3DXFileData *child = NULL;
-    DWORD i;
-    SIZE_T nb_children;
-    DWORD nb_skin_weights_info = 0;
 
     /*
      * template Mesh {
@@ -3181,55 +3196,62 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
      * }
      */
 
-    hr = filedata->lpVtbl->Lock(filedata, &data_size, (const void**)&data);
+    hr = filedata->lpVtbl->Lock(filedata, &data_size, (const void **)&data);
     if (FAILED(hr)) return hr;
 
     in_ptr = data;
     hr = E_FAIL;
 
-    if (data_size < sizeof(DWORD) * 2) {
-        WARN("truncated data (%ld bytes)\n", data_size);
+    if (data_size < sizeof(uint32_t) * 2)
+    {
+        WARN("Truncated data (%Id bytes).\n", data_size);
         goto end;
     }
-    mesh_data->num_vertices = *(DWORD*)in_ptr;
-    if (data_size < sizeof(DWORD) * 2 + mesh_data->num_vertices * sizeof(D3DXVECTOR3)) {
-        WARN("truncated data (%ld bytes)\n", data_size);
+    mesh_data->num_vertices = *(uint32_t *)in_ptr;
+    if (data_size < sizeof(uint32_t) * 2 + mesh_data->num_vertices * sizeof(D3DXVECTOR3))
+    {
+        WARN("Truncated data (%Id bytes).\n", data_size);
         goto end;
     }
-    in_ptr += sizeof(DWORD) + mesh_data->num_vertices * sizeof(D3DXVECTOR3);
+    in_ptr += sizeof(uint32_t) + mesh_data->num_vertices * sizeof(D3DXVECTOR3);
 
-    mesh_data->num_poly_faces = *(DWORD*)in_ptr;
-    in_ptr += sizeof(DWORD);
+    mesh_data->num_poly_faces = *(uint32_t *)in_ptr;
+    in_ptr += sizeof(uint32_t);
 
     mesh_data->num_tri_faces = 0;
     for (i = 0; i < mesh_data->num_poly_faces; i++)
     {
-        DWORD num_poly_vertices;
-        DWORD j;
+        unsigned int poly_vertices_count;
+        unsigned int j;
 
-        if (data_size - (in_ptr - data) < sizeof(DWORD)) {
-            WARN("truncated data (%ld bytes)\n", data_size);
+        if (data_size - (in_ptr - data) < sizeof(uint32_t))
+        {
+            WARN("Truncated data (%Id bytes).\n", data_size);
             goto end;
         }
-        num_poly_vertices = *(DWORD*)in_ptr;
-        in_ptr += sizeof(DWORD);
-        if (data_size - (in_ptr - data) < num_poly_vertices * sizeof(DWORD)) {
-            WARN("truncated data (%ld bytes)\n", data_size);
+        poly_vertices_count = *(uint32_t *)in_ptr;
+        in_ptr += sizeof(uint32_t);
+        if (data_size - (in_ptr - data) < poly_vertices_count * sizeof(uint32_t))
+        {
+            WARN("Truncated data (%Id bytes).\n", data_size);
             goto end;
         }
-        if (num_poly_vertices < 3) {
-            WARN("face %u has only %u vertices\n", i, num_poly_vertices);
+        if (poly_vertices_count < 3)
+        {
+            WARN("Face %u has only %u vertices.\n", i, poly_vertices_count);
             goto end;
         }
-        for (j = 0; j < num_poly_vertices; j++) {
-            if (*(DWORD*)in_ptr >= mesh_data->num_vertices) {
-                WARN("face %u, index %u: undefined vertex %u (only %u vertices)\n",
-                     i, j, *(DWORD*)in_ptr, mesh_data->num_vertices);
+        for (j = 0; j < poly_vertices_count; j++)
+        {
+            if (*(uint32_t *)in_ptr >= mesh_data->num_vertices)
+            {
+                WARN("Face %u, index %u: undefined vertex %u (only %u vertices).\n",
+                     i, j, *(uint32_t *)in_ptr, mesh_data->num_vertices);
                 goto end;
             }
-            in_ptr += sizeof(DWORD);
+            in_ptr += sizeof(uint32_t);
         }
-        mesh_data->num_tri_faces += num_poly_vertices - 2;
+        mesh_data->num_tri_faces += poly_vertices_count - 2;
     }
 
     mesh_data->fvf = D3DFVF_XYZ;
@@ -3245,30 +3267,31 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
         goto end;
     }
 
-    in_ptr = data + sizeof(DWORD);
+    in_ptr = data + sizeof(uint32_t);
     memcpy(mesh_data->vertices, in_ptr, mesh_data->num_vertices * sizeof(D3DXVECTOR3));
-    in_ptr += mesh_data->num_vertices * sizeof(D3DXVECTOR3) + sizeof(DWORD);
+    in_ptr += mesh_data->num_vertices * sizeof(D3DXVECTOR3) + sizeof(uint32_t);
 
     index_out_ptr = mesh_data->indices;
     for (i = 0; i < mesh_data->num_poly_faces; i++)
     {
-        DWORD count;
+        unsigned int count;
 
-        count = *(DWORD*)in_ptr;
-        in_ptr += sizeof(DWORD);
+        count = *(uint32_t *)in_ptr;
+        in_ptr += sizeof(uint32_t);
         mesh_data->num_tri_per_face[i] = count - 2;
 
-        while (count--) {
-            *index_out_ptr++ = *(DWORD*)in_ptr;
-            in_ptr += sizeof(DWORD);
+        while (count--)
+        {
+            *index_out_ptr++ = *(uint32_t *)in_ptr;
+            in_ptr += sizeof(uint32_t);
         }
     }
 
-    hr = filedata->lpVtbl->GetChildren(filedata, &nb_children);
+    hr = filedata->lpVtbl->GetChildren(filedata, &child_count);
     if (FAILED(hr))
         goto end;
 
-    for (i = 0; i < nb_children; i++)
+    for (i = 0; i < child_count; i++)
     {
         hr = filedata->lpVtbl->GetChild(filedata, i, &child);
         if (FAILED(hr))
@@ -3303,10 +3326,10 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
                     hr = E_FAIL;
                     goto end;
                 }
-                hr = parse_skin_mesh_info(child, mesh_data, nb_skin_weights_info);
+                hr = parse_skin_mesh_info(child, mesh_data, skin_weights_info_count);
                 if (FAILED(hr))
                     goto end;
-                nb_skin_weights_info++;
+                skin_weights_info_count++;
             }
         }
         if (FAILED(hr))
@@ -3316,9 +3339,10 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
         child = NULL;
     }
 
-    if (mesh_data->skin_info && (nb_skin_weights_info != mesh_data->nb_bones)) {
-        WARN("Mismatch between nb skin weights info %u encountered and nb bones %u from skin mesh header\n",
-             nb_skin_weights_info, mesh_data->nb_bones);
+    if (mesh_data->skin_info && (skin_weights_info_count != mesh_data->bone_count))
+    {
+        WARN("Mismatch between skin weights info count %u and bones count %u from skin mesh header.\n",
+                skin_weights_info_count, mesh_data->bone_count);
         hr = E_FAIL;
         goto end;
     }
@@ -3326,7 +3350,7 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
     if ((provide_flags & PROVIDE_SKININFO) && !mesh_data->skin_info)
     {
         if (FAILED(hr = D3DXCreateSkinInfoFVF(mesh_data->num_vertices, mesh_data->fvf,
-                mesh_data->nb_bones, &mesh_data->skin_info)))
+                mesh_data->bone_count, &mesh_data->skin_info)))
             goto end;
     }
 
