@@ -203,7 +203,7 @@ static const char *debugstr_format( UINT id )
 {
     WCHAR buffer[256];
 
-    if (GetClipboardFormatNameW( id, buffer, 256 ))
+    if (NtUserGetClipboardFormatName( id, buffer, ARRAYSIZE(buffer) ))
         return wine_dbg_sprintf( "%04x %s", id, debugstr_w(buffer) );
 
     switch (id)
@@ -349,7 +349,8 @@ static void register_win32_formats( const UINT *ids, UINT size )
         for (count = 0; count < 256 && size; ids++, size--)
         {
             if (find_win32_format( *ids )) continue;  /* it already exists */
-            if (!GetClipboardFormatNameW( *ids, buffer, 256 )) continue;  /* not a named format */
+            if (!NtUserGetClipboardFormatName( *ids, buffer, ARRAYSIZE(buffer) ))
+                continue;  /* not a named format */
             if (!(len = WideCharToMultiByte( CP_UNIXCP, 0, buffer, -1, NULL, 0, NULL, NULL ))) continue;
             if (!(names[count] = malloc( len ))) continue;
             WideCharToMultiByte( CP_UNIXCP, 0, buffer, -1, names[count], len, NULL, NULL );
@@ -434,6 +435,14 @@ static void put_property( Display *display, Window win, Atom prop, Atom type, in
 }
 
 
+static void selection_sleep(void)
+{
+    LARGE_INTEGER timeout;
+    timeout.QuadPart = (ULONGLONG)SELECTION_WAIT * -10000;
+    NtDelayExecution( FALSE, &timeout );
+}
+
+
 /**************************************************************************
  *		convert_selection
  */
@@ -455,7 +464,7 @@ static BOOL convert_selection( Display *display, Window win, Atom selection,
         Bool res = XCheckTypedWindowEvent( display, win, SelectionNotify, &event );
         if (res && event.xselection.selection == selection && event.xselection.target == format->atom)
             return read_property( display, win, event.xselection.property, type, data, size );
-        Sleep( SELECTION_WAIT );
+        selection_sleep();
     }
     ERR( "Timed out waiting for SelectionNotify event\n" );
     return FALSE;
@@ -1414,7 +1423,7 @@ static UINT *get_clipboard_formats( UINT *size )
     for (;;)
     {
         if (!(ids = malloc( *size * sizeof(*ids) ))) return NULL;
-        if (GetUpdatedClipboardFormats( ids, *size, size )) break;
+        if (NtUserGetUpdatedClipboardFormats( ids, *size, size )) break;
         free( ids );
         if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return NULL;
     }
@@ -1706,7 +1715,7 @@ static BOOL read_property( Display *display, Window w, Atom prop,
                 if (res && xe.xproperty.atom == prop &&
                     xe.xproperty.state == PropertyNewValue)
                     break;
-                Sleep(SELECTION_WAIT);
+                selection_sleep();
             }
 
             if (i >= SELECTION_RETRIES ||
@@ -1863,14 +1872,14 @@ static BOOL request_selection_contents( Display *display, BOOL changed )
                last_size != size ||
                memcmp( last_data, data, size ));
 
-    if (!changed || !OpenClipboard( clipboard_hwnd ))
+    if (!changed || !NtUserOpenClipboard( clipboard_hwnd, 0 ))
     {
         free( data );
         return FALSE;
     }
 
     TRACE( "selection changed, importing\n" );
-    EmptyClipboard();
+    NtUserEmptyClipboard();
     is_clipboard_owner = TRUE;
     rendered_formats = 0;
 
@@ -1884,9 +1893,9 @@ static BOOL request_selection_contents( Display *display, BOOL changed )
     last_data = data;
     last_size = size;
     last_clipboard_update = GetTickCount64();
-    CloseClipboard();
+    NtUserCloseClipboard();
     if (!use_xfixes)
-        SetTimer( clipboard_hwnd, 1, SELECTION_UPDATE_DELAY, NULL );
+        NtUserSetTimer( clipboard_hwnd, 1, SELECTION_UPDATE_DELAY, NULL, TIMERV_DEFAULT_COALESCING );
     return TRUE;
 }
 
