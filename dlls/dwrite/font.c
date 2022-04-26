@@ -7431,7 +7431,7 @@ static UINT32 WINAPI dwritefontresource_GetFontAxisCount(IDWriteFontResource *if
 }
 
 static HRESULT WINAPI dwritefontresource_GetDefaultFontAxisValues(IDWriteFontResource *iface,
-        DWRITE_FONT_AXIS_VALUE const *values, UINT32 num_values)
+        DWRITE_FONT_AXIS_VALUE *values, UINT32 num_values)
 {
     FIXME("%p, %p, %u.\n", iface, values, num_values);
 
@@ -7439,7 +7439,7 @@ static HRESULT WINAPI dwritefontresource_GetDefaultFontAxisValues(IDWriteFontRes
 }
 
 static HRESULT WINAPI dwritefontresource_GetFontAxisRanges(IDWriteFontResource *iface,
-        DWRITE_FONT_AXIS_RANGE const *ranges, UINT32 num_ranges)
+        DWRITE_FONT_AXIS_RANGE *ranges, UINT32 num_ranges)
 {
     FIXME("%p, %p, %u.\n", iface, ranges, num_ranges);
 

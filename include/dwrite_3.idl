@@ -219,10 +219,10 @@ interface IDWriteFontResource : IUnknown
     UINT32 GetFontFaceIndex();
     UINT32 GetFontAxisCount();
     HRESULT GetDefaultFontAxisValues(
-        DWRITE_FONT_AXIS_VALUE const *values,
+        DWRITE_FONT_AXIS_VALUE *values,
         UINT32 num_values);
     HRESULT GetFontAxisRanges(
-        DWRITE_FONT_AXIS_RANGE const *ranges,
+        DWRITE_FONT_AXIS_RANGE *ranges,
         UINT32 num_ranges);
     DWRITE_FONT_AXIS_ATTRIBUTES GetFontAxisAttributes(
         UINT32 axis);
