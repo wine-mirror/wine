@@ -4866,10 +4866,11 @@ static void test_windows_gaming_input(void)
                     USAGE(1, PID_USAGE_ET_SQUARE),
                     USAGE(1, PID_USAGE_ET_SINE),
                     USAGE(1, PID_USAGE_ET_SPRING),
+                    USAGE(1, PID_USAGE_ET_CONSTANT_FORCE),
                     LOGICAL_MINIMUM(1, 1),
-                    LOGICAL_MAXIMUM(1, 3),
+                    LOGICAL_MAXIMUM(1, 4),
                     PHYSICAL_MINIMUM(1, 1),
-                    PHYSICAL_MAXIMUM(1, 3),
+                    PHYSICAL_MAXIMUM(1, 4),
                     REPORT_SIZE(1, 8),
                     REPORT_COUNT(1, 1),
                     OUTPUT(1, Data|Ary|Abs),
@@ -4895,6 +4896,8 @@ static void test_windows_gaming_input(void)
                 OUTPUT(1, Cnst|Var|Abs),
 
                 USAGE(1, PID_USAGE_DURATION),
+                USAGE(1, PID_USAGE_TRIGGER_REPEAT_INTERVAL),
+                USAGE(1, PID_USAGE_SAMPLE_PERIOD),
                 USAGE(1, PID_USAGE_START_DELAY),
                 UNIT(2, 0x1003),      /* Eng Lin:Time */
                 UNIT_EXPONENT(1, -3), /* 10^-3 */
@@ -4903,7 +4906,7 @@ static void test_windows_gaming_input(void)
                 PHYSICAL_MINIMUM(1, 0),
                 PHYSICAL_MAXIMUM(2, 0x7fff),
                 REPORT_SIZE(1, 16),
-                REPORT_COUNT(1, 2),
+                REPORT_COUNT(1, 4),
                 OUTPUT(1, Data|Var|Abs),
                 UNIT(1, 0),
                 UNIT_EXPONENT(1, 0),
@@ -4917,6 +4920,15 @@ static void test_windows_gaming_input(void)
                 REPORT_COUNT(1, 1),
                 OUTPUT(1, Data|Var|Abs),
 
+                USAGE(1, PID_USAGE_GAIN),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(2, 0x00ff),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(2, 0x2710),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+
                 USAGE(1, PID_USAGE_DIRECTION),
                 COLLECTION(1, Logical),
                     USAGE(4, (HID_USAGE_PAGE_ORDINAL << 16)|1),
@@ -4924,11 +4936,11 @@ static void test_windows_gaming_input(void)
                     UNIT(1, 0x14),        /* Eng Rot:Angular Pos */
                     UNIT_EXPONENT(1, -2), /* 10^-2 */
                     LOGICAL_MINIMUM(1, 0),
-                    LOGICAL_MAXIMUM(2, 0x00ff),
+                    LOGICAL_MAXIMUM(4, 360),
                     PHYSICAL_MINIMUM(1, 0),
-                    PHYSICAL_MAXIMUM(4, 0x00008ca0),
+                    PHYSICAL_MAXIMUM(4, 36000),
                     UNIT(1, 0),
-                    REPORT_SIZE(1, 8),
+                    REPORT_SIZE(1, 16),
                     REPORT_COUNT(1, 2),
                     OUTPUT(1, Data|Var|Abs),
                     UNIT_EXPONENT(1, 0),
@@ -5038,6 +5050,124 @@ static void test_windows_gaming_input(void)
                 OUTPUT(1, Data|Var|Abs),
             END_COLLECTION,
 
+            USAGE(1, PID_USAGE_SET_PERIODIC_REPORT),
+            COLLECTION(1, Logical),
+                REPORT_ID(1, 7),
+
+                USAGE(1, PID_USAGE_EFFECT_BLOCK_INDEX),
+                LOGICAL_MINIMUM(1, 1),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                PHYSICAL_MINIMUM(1, 1),
+                PHYSICAL_MAXIMUM(1, 0x7f),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+
+                USAGE(1, PID_USAGE_MAGNITUDE),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(2, 10000),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(2, 10000),
+                REPORT_SIZE(1, 16),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+
+                USAGE(1, PID_USAGE_OFFSET),
+                LOGICAL_MINIMUM(2, -10000),
+                LOGICAL_MAXIMUM(2, +10000),
+                PHYSICAL_MINIMUM(2, -10000),
+                PHYSICAL_MAXIMUM(2, +10000),
+                REPORT_SIZE(1, 16),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+
+                USAGE(1, PID_USAGE_PHASE),
+                UNIT(1, 0x14), /* Eng Rot:Angular Pos */
+                UNIT_EXPONENT(1, -2),
+                LOGICAL_MINIMUM(2, -180),
+                LOGICAL_MAXIMUM(2, +180),
+                PHYSICAL_MINIMUM(2, -18000),
+                PHYSICAL_MAXIMUM(2, +18000),
+                REPORT_SIZE(1, 16),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+
+                USAGE(1, PID_USAGE_PERIOD),
+                UNIT(2, 0x1003), /* Eng Lin:Time */
+                UNIT_EXPONENT(1, -3), /* 10^-3 */
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(2, 0x7fff),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(2, 0x7fff),
+                REPORT_SIZE(1, 16),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+
+                UNIT_EXPONENT(1, 0),
+                UNIT(1, 0), /* None */
+            END_COLLECTION,
+
+            USAGE(1, PID_USAGE_SET_ENVELOPE_REPORT),
+            COLLECTION(1, Logical),
+                REPORT_ID(1, 8),
+
+                USAGE(1, PID_USAGE_EFFECT_BLOCK_INDEX),
+                LOGICAL_MINIMUM(1, 1),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                PHYSICAL_MINIMUM(1, 1),
+                PHYSICAL_MAXIMUM(1, 0x7f),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+
+                USAGE(1, PID_USAGE_ATTACK_LEVEL),
+                USAGE(1, PID_USAGE_FADE_LEVEL),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(2, 0x00ff),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(2, 0x2710),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 2),
+                OUTPUT(1, Data|Var|Abs),
+
+                USAGE(1, PID_USAGE_ATTACK_TIME),
+                USAGE(1, PID_USAGE_FADE_TIME),
+                UNIT(2, 0x1003),      /* Eng Lin:Time */
+                UNIT_EXPONENT(1, -3), /* 10^-3 */
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(2, 0x7fff),
+                PHYSICAL_MINIMUM(1, 0),
+                PHYSICAL_MAXIMUM(2, 0x7fff),
+                REPORT_SIZE(1, 16),
+                REPORT_COUNT(1, 2),
+                OUTPUT(1, Data|Var|Abs),
+                UNIT_EXPONENT(1, 0),
+                UNIT(1, 0),
+            END_COLLECTION,
+
+            USAGE(1, PID_USAGE_SET_CONSTANT_FORCE_REPORT),
+            COLLECTION(1, Logical),
+                REPORT_ID(1, 9),
+
+                USAGE(1, PID_USAGE_EFFECT_BLOCK_INDEX),
+                LOGICAL_MINIMUM(1, 1),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                PHYSICAL_MINIMUM(1, 1),
+                PHYSICAL_MAXIMUM(1, 0x7f),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+
+                USAGE(1, PID_USAGE_MAGNITUDE),
+                LOGICAL_MINIMUM(2, -10000),
+                LOGICAL_MAXIMUM(2, +10000),
+                PHYSICAL_MINIMUM(2, -10000),
+                PHYSICAL_MAXIMUM(2, +10000),
+                REPORT_SIZE(1, 16),
+                REPORT_COUNT(1, 1),
+                OUTPUT(1, Data|Var|Abs),
+            END_COLLECTION,
+
             USAGE(1, PID_USAGE_POOL_REPORT),
             COLLECTION(1, Logical),
                 REPORT_ID(1, 1),
@@ -5080,14 +5210,24 @@ static void test_windows_gaming_input(void)
                     USAGE(1, PID_USAGE_ET_SQUARE),
                     USAGE(1, PID_USAGE_ET_SINE),
                     USAGE(1, PID_USAGE_ET_SPRING),
+                    USAGE(1, PID_USAGE_ET_CONSTANT_FORCE),
                     LOGICAL_MINIMUM(1, 1),
-                    LOGICAL_MAXIMUM(1, 3),
+                    LOGICAL_MAXIMUM(1, 4),
                     PHYSICAL_MINIMUM(1, 1),
-                    PHYSICAL_MAXIMUM(1, 3),
+                    PHYSICAL_MAXIMUM(1, 4),
                     REPORT_SIZE(1, 8),
                     REPORT_COUNT(1, 1),
                     FEATURE(1, Data|Ary|Abs),
                 END_COLLECTION,
+
+                USAGE(4, (HID_USAGE_PAGE_GENERIC<<16)|HID_USAGE_GENERIC_BYTE_COUNT),
+                LOGICAL_MINIMUM(1, 0x7f),
+                LOGICAL_MAXIMUM(1, 0x7f),
+                PHYSICAL_MINIMUM(1, 0x7f),
+                PHYSICAL_MAXIMUM(1, 0x7f),
+                REPORT_SIZE(1, 8),
+                REPORT_COUNT(1, 1),
+                FEATURE(1, Data|Ary|Abs),
             END_COLLECTION,
 
             USAGE(1, PID_USAGE_BLOCK_LOAD_REPORT),
@@ -5137,7 +5277,7 @@ static void test_windows_gaming_input(void)
         .caps =
         {
             .InputReportByteLength = 6,
-            .OutputReportByteLength = 11,
+            .OutputReportByteLength = 18,
             .FeatureReportByteLength = 5,
         },
         .attributes = default_attributes,
@@ -5149,7 +5289,7 @@ static void test_windows_gaming_input(void)
             .code = IOCTL_HID_GET_FEATURE,
             .report_id = 1,
             .report_len = 5,
-            .report_buf = {1,0x10,0x00,0x04,0x03},
+            .report_buf = {1,0xff,0x7f,0x7f,0x03},
             .todo = TRUE,
         },
     };
@@ -5160,7 +5300,7 @@ static void test_windows_gaming_input(void)
             .code = IOCTL_HID_GET_FEATURE,
             .report_id = 1,
             .report_len = 5,
-            .report_buf = {1,0x10,0x00,0x04,0x03},
+            .report_buf = {1,0xff,0x7f,0x7f,0x03},
             .todo = TRUE,
         },
         /* device control */
@@ -5279,6 +5419,138 @@ static void test_windows_gaming_input(void)
             .report_buf = {6, 0x7f},
         },
     };
+    struct hid_expect expect_create_periodic[] =
+    {
+        /* create new effect */
+        {
+            .code = IOCTL_HID_SET_FEATURE,
+            .report_id = 2,
+            .report_len = 3,
+            .report_buf = {2,0x02,0x00},
+        },
+        /* block load */
+        {
+            .code = IOCTL_HID_GET_FEATURE,
+            .report_id = 3,
+            .report_len = 5,
+            .report_buf = {3,0x01,0x01,0x00,0x00},
+        },
+        /* set periodic */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 7,
+            .report_len = 10,
+            .report_buf = {7,0x01,0xa0,0x0f,0xd0,0x07,0x70,0xff,0x0a,0x00},
+            .todo = TRUE,
+        },
+        /* set envelope */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 8,
+            .report_len = 8,
+            .report_buf = {8,0x01,0x4c,0x7f,0x28,0x00,0x50,0x00},
+            .todo = TRUE,
+        },
+        /* update effect */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 18,
+            .report_buf = {3,0x01,0x02,0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0x00,0x00,0x00,0x00},
+            .wine_only = TRUE,
+            .todo = TRUE,
+        },
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 18,
+            .report_buf = {3,0x01,0x02,0x08,0x78,0x00,0x00,0x00,0x00,0x00,0x0a,0x00,0xff,0xff,0x4e,0x01,0x00,0x00},
+            .todo = TRUE,
+        },
+    };
+    struct hid_expect expect_create_constant[] =
+    {
+        /* create new effect */
+        {
+            .code = IOCTL_HID_SET_FEATURE,
+            .report_id = 2,
+            .report_len = 3,
+            .report_buf = {2,0x04,0x00},
+        },
+        /* block load */
+        {
+            .code = IOCTL_HID_GET_FEATURE,
+            .report_id = 3,
+            .report_len = 5,
+            .report_buf = {3,0x01,0x01,0x00,0x00},
+        },
+        /* set constant */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 9,
+            .report_len = 4,
+            .report_buf = {9,0x01,0xc8,0x00},
+            .todo = TRUE,
+        },
+        /* set envelope */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 8,
+            .report_len = 8,
+            .report_buf = {8,0x01,0x19,0x4c,0x14,0x00,0x3c,0x00},
+            .todo = TRUE,
+        },
+        /* update effect */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 18,
+            .report_buf = {3,0x01,0x04,0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0x00,0x00,0x00,0x00},
+            .wine_only = TRUE,
+            .todo = TRUE,
+        },
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 3,
+            .report_len = 18,
+            .report_buf = {3,0x01,0x04,0x08,0x5a,0x00,0x00,0x00,0x00,0x00,0x0a,0x00,0xff,0x7f,0x4e,0x01,0x00,0x00},
+            .todo = TRUE,
+        },
+    };
+    struct hid_expect expect_effect_start =
+    {
+        .code = IOCTL_HID_WRITE_REPORT,
+        .report_id = 2,
+        .report_len = 4,
+        .report_buf = {2,0x01,0x01,0x01},
+        .todo = TRUE,
+    };
+    struct hid_expect expect_effect_stop =
+    {
+        .code = IOCTL_HID_WRITE_REPORT,
+        .report_id = 2,
+        .report_len = 4,
+        .report_buf = {2,0x01,0x03,0x00},
+        .todo = TRUE,
+    };
+    struct hid_expect expect_unload[] =
+    {
+        /* effect stop */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 2,
+            .report_len = 4,
+            .report_buf = {2,0x01,0x03,0x00},
+        },
+        /* effect free */
+        {
+            .code = IOCTL_HID_WRITE_REPORT,
+            .report_id = 5,
+            .report_len = 2,
+            .report_buf = {5,0x01},
+        },
+    };
+    static const WCHAR *periodic_effect_class_name = RuntimeClass_Windows_Gaming_Input_ForceFeedback_PeriodicForceEffect;
     static const WCHAR *constant_effect_class_name = RuntimeClass_Windows_Gaming_Input_ForceFeedback_ConstantForceEffect;
     static const WCHAR *force_feedback_motor = RuntimeClass_Windows_Gaming_Input_ForceFeedback_ForceFeedbackMotor;
     static const WCHAR *controller_class_name = RuntimeClass_Windows_Gaming_Input_RawGameController;
@@ -5292,6 +5564,7 @@ static void test_windows_gaming_input(void)
             .dwHow = DIPH_DEVICE,
         },
     };
+    TimeSpan delay = {100000}, attack_duration = {200000}, release_duration = {300000}, duration = {400000};
     DIDEVICEINSTANCEW devinst = {.dwSize = sizeof(DIDEVICEINSTANCEW)};
     IAsyncOperation_ForceFeedbackLoadEffectResult *result_async;
     IAsyncOperationCompletedHandler_boolean *tmp_handler;
@@ -5299,16 +5572,18 @@ static void test_windows_gaming_input(void)
     IVectorView_RawGameController *controllers_view;
     IRawGameControllerStatics *controller_statics;
     EventRegistrationToken controller_added_token;
+    IPeriodicForceEffectFactory *periodic_factory;
     struct bool_async_handler bool_async_handler;
     IVectorView_ForceFeedbackMotor *motors_view;
     ForceFeedbackEffectAxes supported_axes;
     IActivationFactory *activation_factory;
+    IPeriodicForceEffect *periodic_effect;
     IConstantForceEffect *constant_effect;
+    PeriodicForceEffectKind periodic_kind;
+    Vector3 direction = {0.1, 0.2, 0.3};
     IAsyncOperation_boolean *bool_async;
     IRawGameController *raw_controller;
     ForceFeedbackEffectState state;
-    Vector3 vector3 = {1., 0., 0.};
-    TimeSpan duration = {10000000};
     IInspectable *tmp_inspectable;
     IForceFeedbackEffect *effect;
     IDirectInputDevice8W *device;
@@ -5617,38 +5892,59 @@ static void test_windows_gaming_input(void)
     pWindowsDeleteString( str );
 
 
-    hr = pWindowsCreateString( constant_effect_class_name, wcslen( constant_effect_class_name ), &str );
+    hr = pWindowsCreateString( periodic_effect_class_name, wcslen( periodic_effect_class_name ), &str );
     ok( hr == S_OK, "WindowsCreateString returned %#lx\n", hr );
-    hr = pRoGetActivationFactory( str, &IID_IActivationFactory, (void **)&activation_factory );
+    hr = pRoGetActivationFactory( str, &IID_IPeriodicForceEffectFactory, (void **)&periodic_factory );
+    todo_wine
     ok( hr == S_OK, "RoGetActivationFactory returned %#lx\n", hr );
     pWindowsDeleteString( str );
+    if (hr != S_OK) goto skip_periodic;
 
-    hr = IActivationFactory_ActivateInstance( activation_factory, &tmp_inspectable );
+    check_interface( periodic_factory, &IID_IUnknown, TRUE );
+    check_interface( periodic_factory, &IID_IInspectable, TRUE );
+    check_interface( periodic_factory, &IID_IAgileObject, TRUE );
+    check_interface( periodic_factory, &IID_IActivationFactory, TRUE );
+    check_interface( periodic_factory, &IID_IPeriodicForceEffectFactory, TRUE );
+    check_interface( periodic_factory, &IID_IConditionForceEffectFactory, FALSE );
+
+    hr = IPeriodicForceEffectFactory_QueryInterface( periodic_factory, &IID_IActivationFactory, (void **)&activation_factory );
     ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
+    hr = IActivationFactory_ActivateInstance( activation_factory, &tmp_inspectable );
+    ok( hr == E_NOTIMPL, "ActivateInstance returned %#lx\n", hr );
     IActivationFactory_Release( activation_factory );
 
-    hr = IInspectable_QueryInterface( tmp_inspectable, &IID_IForceFeedbackEffect, (void **)&effect );
-    ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
-    IInspectable_Release( tmp_inspectable );
+    hr = IPeriodicForceEffectFactory_CreateInstance( periodic_factory, PeriodicForceEffectKind_SawtoothWaveUp, &effect );
+    ok( hr == S_OK, "CreateInstance returned %#lx\n", hr );
 
-    hr = IForceFeedbackEffect_QueryInterface( effect, &IID_IConstantForceEffect, (void **)&constant_effect );
+    check_interface( effect, &IID_IUnknown, TRUE );
+    check_interface( effect, &IID_IInspectable, TRUE );
+    check_interface( effect, &IID_IAgileObject, TRUE );
+    check_interface( effect, &IID_IForceFeedbackEffect, TRUE );
+    check_interface( effect, &IID_IPeriodicForceEffect, TRUE );
+    check_interface( effect, &IID_IConditionForceEffect, FALSE );
+    check_runtimeclass( effect, periodic_effect_class_name );
+
+    hr = IForceFeedbackEffect_QueryInterface( effect, &IID_IPeriodicForceEffect, (void **)&periodic_effect );
     ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
 
-    hr = IConstantForceEffect_SetParameters( constant_effect, vector3, duration );
+    hr = IPeriodicForceEffect_get_Kind( periodic_effect, &periodic_kind );
+    ok( hr == S_OK, "get_Kind returned %#lx\n", hr );
+    ok( periodic_kind == PeriodicForceEffectKind_SawtoothWaveUp, "got kind %u\n", periodic_kind );
+    hr = IPeriodicForceEffect_SetParameters( periodic_effect, direction, 1.0, 0.1, 0.0, duration );
     todo_wine
     ok( hr == S_OK, "SetParameters returned %#lx\n", hr );
-    hr = IConstantForceEffect_SetParametersWithEnvelope( constant_effect, vector3, 0.1, 0.2, 0.3,
-                                                         duration, duration, duration, duration, 1 );
+    hr = IPeriodicForceEffect_SetParametersWithEnvelope( periodic_effect, direction, 100.0, 0.1, 0.2, 0.3, 0.4, 0.5,
+                                                         delay, attack_duration, duration, release_duration, 1 );
     todo_wine
     ok( hr == S_OK, "SetParametersWithEnvelope returned %#lx\n", hr );
-    IConstantForceEffect_Release( constant_effect );
+    IPeriodicForceEffect_Release( periodic_effect );
 
     gain = 12345.6;
     hr = IForceFeedbackEffect_get_Gain( effect, &gain );
     todo_wine
     ok( hr == S_OK, "get_Gain returned %#lx\n", hr );
     todo_wine
-    ok( gain == 1.0, "get_MasterGain returned %f\n", gain );
+    ok( gain == 1.0, "got gain %f\n", gain );
     hr = IForceFeedbackEffect_put_Gain( effect, 0.5 );
     todo_wine
     ok( hr == S_FALSE, "put_Gain returned %#lx\n", hr );
@@ -5657,7 +5953,7 @@ static void test_windows_gaming_input(void)
     todo_wine
     ok( hr == S_OK, "get_State returned %#lx\n", hr );
     todo_wine
-    ok( state == ForceFeedbackEffectState_Stopped, "get_State returned %#lx\n", hr );
+    ok( state == ForceFeedbackEffectState_Stopped, "got state %#x\n", state );
     hr = IForceFeedbackEffect_Start( effect );
     todo_wine
     ok( hr == 0x86854003, "Start returned %#lx\n", hr );
@@ -5689,6 +5985,195 @@ static void test_windows_gaming_input(void)
     hr = IForceFeedbackMotor_TryUnloadEffectAsync( motor, effect, &bool_async );
     todo_wine
     ok( hr == 0x86854003, "TryUnloadEffectAsync returned %#lx\n", hr );
+
+    ref = IForceFeedbackEffect_Release( effect );
+    ok( ref == 0, "Release returned %lu\n", ref );
+
+
+    hr = IPeriodicForceEffectFactory_CreateInstance( periodic_factory, PeriodicForceEffectKind_SineWave, &effect );
+    ok( hr == S_OK, "CreateInstance returned %#lx\n", hr );
+
+    check_interface( effect, &IID_IUnknown, TRUE );
+    check_interface( effect, &IID_IInspectable, TRUE );
+    check_interface( effect, &IID_IAgileObject, TRUE );
+    check_interface( effect, &IID_IForceFeedbackEffect, TRUE );
+    check_interface( effect, &IID_IPeriodicForceEffect, TRUE );
+    check_interface( effect, &IID_IConditionForceEffect, FALSE );
+    check_runtimeclass( effect, periodic_effect_class_name );
+
+    hr = IForceFeedbackEffect_QueryInterface( effect, &IID_IPeriodicForceEffect, (void **)&periodic_effect );
+    ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
+
+    hr = IPeriodicForceEffect_get_Kind( periodic_effect, &periodic_kind );
+    ok( hr == S_OK, "get_Kind returned %#lx\n", hr );
+    ok( periodic_kind == PeriodicForceEffectKind_SineWave, "got kind %u\n", periodic_kind );
+    hr = IPeriodicForceEffect_SetParameters( periodic_effect, direction, 1.0, 0.1, 0.0, duration );
+    todo_wine
+    ok( hr == S_OK, "SetParameters returned %#lx\n", hr );
+    hr = IPeriodicForceEffect_SetParametersWithEnvelope( periodic_effect, direction, 100.0, 0.1, 0.2, 0.3, 0.4, 0.5,
+                                                         delay, duration, duration, duration, 1 );
+    todo_wine
+    ok( hr == S_OK, "SetParametersWithEnvelope returned %#lx\n", hr );
+    IPeriodicForceEffect_Release( periodic_effect );
+
+    set_hid_expect( file, expect_create_periodic, sizeof(expect_create_periodic) );
+    hr = IForceFeedbackMotor_LoadEffectAsync( motor, effect, &result_async );
+    ok( hr == S_OK, "LoadEffectAsync returned %#lx\n", hr );
+    result_async_handler = default_result_async_handler;
+    result_async_handler.event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( !!result_async_handler.event, "CreateEventW failed, error %lu\n", GetLastError() );
+    hr = IAsyncOperation_ForceFeedbackLoadEffectResult_put_Completed( result_async, &result_async_handler.IAsyncOperationCompletedHandler_ForceFeedbackLoadEffectResult_iface );
+    ok( hr == S_OK, "put_Completed returned %#lx\n", hr );
+    ret = WaitForSingleObject( result_async_handler.event, 5000 );
+    ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+    ret = CloseHandle( result_async_handler.event );
+    ok( ret, "CloseHandle failed, error %lu\n", GetLastError() );
+    check_result_async( result_async, 1, Completed, S_OK, ForceFeedbackLoadEffectResult_Succeeded );
+    ref = IAsyncOperation_ForceFeedbackLoadEffectResult_Release( result_async );
+    ok( ref == 0, "Release returned %lu\n", ref );
+    set_hid_expect( file, NULL, 0 );
+
+    set_hid_expect( file, &expect_effect_start, sizeof(expect_effect_start) );
+    hr = IForceFeedbackEffect_Start( effect );
+    todo_wine
+    ok( hr == S_OK, "Start returned %#lx\n", hr );
+    set_hid_expect( file, &expect_effect_start, sizeof(expect_effect_start) );
+    hr = IForceFeedbackEffect_Start( effect );
+    todo_wine
+    ok( hr == S_OK, "Start returned %#lx\n", hr );
+
+    set_hid_expect( file, &expect_effect_stop, sizeof(expect_effect_stop) );
+    hr = IForceFeedbackEffect_Stop( effect );
+    todo_wine
+    ok( hr == S_OK, "Stop returned %#lx\n", hr );
+    set_hid_expect( file, &expect_effect_stop, sizeof(expect_effect_stop) );
+    hr = IForceFeedbackEffect_Stop( effect );
+    todo_wine
+    ok( hr == S_OK, "Stop returned %#lx\n", hr );
+
+    set_hid_expect( file, expect_unload, sizeof(expect_unload) );
+    hr = IForceFeedbackMotor_TryUnloadEffectAsync( motor, effect, &bool_async );
+    ok( hr == S_OK, "TryUnloadEffectAsync returned %#lx\n", hr );
+    bool_async_handler = default_bool_async_handler;
+    bool_async_handler.event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( !!bool_async_handler.event, "CreateEventW failed, error %lu\n", GetLastError() );
+    hr = IAsyncOperation_boolean_put_Completed( bool_async, &bool_async_handler.IAsyncOperationCompletedHandler_boolean_iface );
+    ok( hr == S_OK, "put_Completed returned %#lx\n", hr );
+    ret = WaitForSingleObject( bool_async_handler.event, 5000 );
+    ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+    ret = CloseHandle( bool_async_handler.event );
+    ok( ret, "CloseHandle failed, error %lu\n", GetLastError() );
+    check_bool_async( bool_async, 1, Completed, S_OK, TRUE );
+    ref = IAsyncOperation_boolean_Release( bool_async );
+    ok( ref == 0, "Release returned %lu\n", ref );
+    set_hid_expect( file, NULL, 0 );
+
+    ref = IForceFeedbackEffect_Release( effect );
+    ok( ref == 0, "Release returned %lu\n", ref );
+
+    IPeriodicForceEffectFactory_Release( periodic_factory );
+
+
+skip_periodic:
+    hr = pWindowsCreateString( constant_effect_class_name, wcslen( constant_effect_class_name ), &str );
+    ok( hr == S_OK, "WindowsCreateString returned %#lx\n", hr );
+    hr = pRoGetActivationFactory( str, &IID_IActivationFactory, (void **)&activation_factory );
+    ok( hr == S_OK, "RoGetActivationFactory returned %#lx\n", hr );
+    pWindowsDeleteString( str );
+
+    hr = IActivationFactory_ActivateInstance( activation_factory, &tmp_inspectable );
+    ok( hr == S_OK, "ActivateInstance returned %#lx\n", hr );
+    IActivationFactory_Release( activation_factory );
+
+    hr = IInspectable_QueryInterface( tmp_inspectable, &IID_IForceFeedbackEffect, (void **)&effect );
+    ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
+    IInspectable_Release( tmp_inspectable );
+
+    hr = IForceFeedbackEffect_QueryInterface( effect, &IID_IConstantForceEffect, (void **)&constant_effect );
+    ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
+
+    hr = IConstantForceEffect_SetParameters( constant_effect, direction, duration );
+    todo_wine
+    ok( hr == S_OK, "SetParameters returned %#lx\n", hr );
+    hr = IConstantForceEffect_SetParametersWithEnvelope( constant_effect, direction, 0.1, 0.2, 0.3,
+                                                         delay, attack_duration, duration, release_duration, 1 );
+    todo_wine
+    ok( hr == S_OK, "SetParametersWithEnvelope returned %#lx\n", hr );
+    IConstantForceEffect_Release( constant_effect );
+
+    gain = 12345.6;
+    hr = IForceFeedbackEffect_get_Gain( effect, &gain );
+    todo_wine
+    ok( hr == S_OK, "get_Gain returned %#lx\n", hr );
+    todo_wine
+    ok( gain == 1.0, "get_MasterGain returned %f\n", gain );
+    hr = IForceFeedbackEffect_put_Gain( effect, 0.5 );
+    todo_wine
+    ok( hr == S_FALSE, "put_Gain returned %#lx\n", hr );
+    state = 0xdeadbeef;
+    hr = IForceFeedbackEffect_get_State( effect, &state );
+    todo_wine
+    ok( hr == S_OK, "get_State returned %#lx\n", hr );
+    todo_wine
+    ok( state == ForceFeedbackEffectState_Stopped, "get_State returned %#lx\n", hr );
+    hr = IForceFeedbackEffect_Start( effect );
+    todo_wine
+    ok( hr == 0x86854003, "Start returned %#lx\n", hr );
+    hr = IForceFeedbackEffect_Stop( effect );
+    todo_wine
+    ok( hr == 0x86854003, "Stop returned %#lx\n", hr );
+
+    set_hid_expect( file, expect_create_constant, sizeof(expect_create_constant) );
+    hr = IForceFeedbackMotor_LoadEffectAsync( motor, effect, &result_async );
+    ok( hr == S_OK, "LoadEffectAsync returned %#lx\n", hr );
+    result_async_handler = default_result_async_handler;
+    result_async_handler.event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( !!result_async_handler.event, "CreateEventW failed, error %lu\n", GetLastError() );
+    hr = IAsyncOperation_ForceFeedbackLoadEffectResult_put_Completed( result_async, &result_async_handler.IAsyncOperationCompletedHandler_ForceFeedbackLoadEffectResult_iface );
+    ok( hr == S_OK, "put_Completed returned %#lx\n", hr );
+    ret = WaitForSingleObject( result_async_handler.event, 5000 );
+    ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+    ret = CloseHandle( result_async_handler.event );
+    ok( ret, "CloseHandle failed, error %lu\n", GetLastError() );
+    check_result_async( result_async, 1, Completed, S_OK, ForceFeedbackLoadEffectResult_Succeeded );
+    ref = IAsyncOperation_ForceFeedbackLoadEffectResult_Release( result_async );
+    ok( ref == 0, "Release returned %lu\n", ref );
+    set_hid_expect( file, NULL, 0 );
+
+    set_hid_expect( file, &expect_effect_start, sizeof(expect_effect_start) );
+    hr = IForceFeedbackEffect_Start( effect );
+    todo_wine
+    ok( hr == S_OK, "Start returned %#lx\n", hr );
+    set_hid_expect( file, &expect_effect_start, sizeof(expect_effect_start) );
+    hr = IForceFeedbackEffect_Start( effect );
+    todo_wine
+    ok( hr == S_OK, "Start returned %#lx\n", hr );
+
+    set_hid_expect( file, &expect_effect_stop, sizeof(expect_effect_stop) );
+    hr = IForceFeedbackEffect_Stop( effect );
+    todo_wine
+    ok( hr == S_OK, "Stop returned %#lx\n", hr );
+    set_hid_expect( file, &expect_effect_stop, sizeof(expect_effect_stop) );
+    hr = IForceFeedbackEffect_Stop( effect );
+    todo_wine
+    ok( hr == S_OK, "Stop returned %#lx\n", hr );
+
+    set_hid_expect( file, expect_unload, sizeof(expect_unload) );
+    hr = IForceFeedbackMotor_TryUnloadEffectAsync( motor, effect, &bool_async );
+    ok( hr == S_OK, "TryUnloadEffectAsync returned %#lx\n", hr );
+    bool_async_handler = default_bool_async_handler;
+    bool_async_handler.event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( !!bool_async_handler.event, "CreateEventW failed, error %lu\n", GetLastError() );
+    hr = IAsyncOperation_boolean_put_Completed( bool_async, &bool_async_handler.IAsyncOperationCompletedHandler_boolean_iface );
+    ok( hr == S_OK, "put_Completed returned %#lx\n", hr );
+    ret = WaitForSingleObject( bool_async_handler.event, 5000 );
+    ok( !ret, "WaitForSingleObject returned %#lx\n", ret );
+    ret = CloseHandle( bool_async_handler.event );
+    ok( ret, "CloseHandle failed, error %lu\n", GetLastError() );
+    check_bool_async( bool_async, 1, Completed, S_OK, TRUE );
+    ref = IAsyncOperation_boolean_Release( bool_async );
+    ok( ref == 0, "Release returned %lu\n", ref );
+    set_hid_expect( file, NULL, 0 );
 
     ref = IForceFeedbackEffect_Release( effect );
     ok( ref == 0, "Release returned %lu\n", ref );
