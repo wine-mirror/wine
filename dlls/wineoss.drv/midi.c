@@ -379,21 +379,6 @@ static DWORD WINAPI midRecThread(void *arg)
 }
 
 /**************************************************************************
- * 				midGetDevCaps			[internal]
- */
-static DWORD midGetDevCaps(WORD wDevID, LPMIDIINCAPSW lpCaps, DWORD dwSize)
-{
-    TRACE("(%04X, %p, %08X);\n", wDevID, lpCaps, dwSize);
-
-    if (wDevID >= MIDM_NumDevs) return MMSYSERR_BADDEVICEID;
-    if (lpCaps == NULL)		return MMSYSERR_INVALPARAM;
-
-    memcpy(lpCaps, &MidiInDev[wDevID].caps, min(dwSize, sizeof(*lpCaps)));
-
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
  * 			midOpen					[internal]
  */
 static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
@@ -620,8 +605,6 @@ DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 	return midClose(wDevID);
     case MIDM_ADDBUFFER:
 	return midAddBuffer(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
-    case MIDM_GETDEVCAPS:
-	return midGetDevCaps(wDevID, (LPMIDIINCAPSW)dwParam1,dwParam2);
     case MIDM_GETNUMDEVS:
 	return MIDM_NumDevs;
     case MIDM_RESET:
