@@ -2782,7 +2782,7 @@ static BOOL get_font_entry( union sysparam_all_entry *entry, UINT int_param, voi
                   debugstr_a( entry->hdr.regval ));
             /* fall through */
         case 0: /* use the default GUI font */
-            NtGdiExtGetObjectW( get_stock_object( DEFAULT_GUI_FONT ), sizeof(font), &font );
+            NtGdiExtGetObjectW( GetStockObject( DEFAULT_GUI_FONT ), sizeof(font), &font );
             font.lfHeight = map_from_system_dpi( font.lfHeight );
             font.lfWeight = entry->font.weight;
             entry->font.val = font;
@@ -2821,7 +2821,7 @@ static BOOL set_font_entry( union sysparam_all_entry *entry, UINT int_param, voi
 /* initialize a font (binary) parameter */
 static BOOL init_font_entry( union sysparam_all_entry *entry )
 {
-    NtGdiExtGetObjectW( get_stock_object( DEFAULT_GUI_FONT ), sizeof(entry->font.val), &entry->font.val );
+    NtGdiExtGetObjectW( GetStockObject( DEFAULT_GUI_FONT ), sizeof(entry->font.val), &entry->font.val );
     entry->font.val.lfHeight = map_from_system_dpi( entry->font.val.lfHeight );
     entry->font.val.lfWeight = entry->font.weight;
     get_real_fontname( &entry->font.val, entry->font.fullname );

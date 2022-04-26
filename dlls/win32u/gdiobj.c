@@ -586,7 +586,10 @@ static void init_gdi_shared(void)
     NtCurrentTeb()->Peb->GdiSharedHandleTable = gdi_shared;
 }
 
-HGDIOBJ get_stock_object( INT obj )
+/***********************************************************************
+ *           GetStockObject    (win32u.so)
+ */
+HGDIOBJ WINAPI GetStockObject( INT obj )
 {
     assert( obj >= 0 && obj <= STOCK_LAST + 1 && obj != 9 );
 

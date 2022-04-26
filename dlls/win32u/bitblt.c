@@ -789,7 +789,7 @@ BOOL WINAPI NtGdiMaskBlt( HDC hdcDest, INT nXDest, INT nYDest, INT nWidth, INT n
                             nXSrc, nYSrc, FRGND_ROP3(dwRop), bk_color, 0 );
 
     hbrMask = NtGdiCreatePatternBrushInternal( hbmMask, FALSE, FALSE );
-    hbrDst = NtGdiSelectBrush( hdcDest, get_stock_object(NULL_BRUSH) );
+    hbrDst = NtGdiSelectBrush( hdcDest, GetStockObject(NULL_BRUSH) );
 
     /* make bitmap */
     hDC1 = NtGdiCreateCompatibleDC( hdcDest );

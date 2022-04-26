@@ -5634,7 +5634,7 @@ done:
         UINT size = NtGdiGetOutlineTextMetricsInternalW( hdc, 0, NULL, 0 );
         OUTLINETEXTMETRICW* otm = NULL;
         POINT pts[5];
-        HPEN hpen = NtGdiSelectPen( hdc, get_stock_object(NULL_PEN) );
+        HPEN hpen = NtGdiSelectPen( hdc, GetStockObject(NULL_PEN) );
         HBRUSH hbrush = NtGdiCreateSolidBrush( dc->attr->text_color, NULL );
 
         hbrush = NtGdiSelectBrush(hdc, hbrush);

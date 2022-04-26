@@ -381,7 +381,6 @@ extern void GDI_ReleaseObj( HGDIOBJ ) DECLSPEC_HIDDEN;
 extern UINT GDI_get_ref_count( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern HGDIOBJ GDI_inc_ref_count( HGDIOBJ handle ) DECLSPEC_HIDDEN;
 extern BOOL GDI_dec_ref_count( HGDIOBJ handle ) DECLSPEC_HIDDEN;
-extern HGDIOBJ get_stock_object( INT obj ) DECLSPEC_HIDDEN;
 extern DWORD get_gdi_object_type( HGDIOBJ obj ) DECLSPEC_HIDDEN;
 extern void make_gdi_object_system( HGDIOBJ handle, BOOL set ) DECLSPEC_HIDDEN;
 

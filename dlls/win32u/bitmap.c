@@ -391,7 +391,7 @@ HGDIOBJ WINAPI NtGdiSelectBitmap( HDC hdc, HGDIOBJ handle )
         goto done;
     }
 
-    if (handle != get_stock_object( DEFAULT_BITMAP ) && GDI_get_ref_count( handle ))
+    if (handle != GetStockObject( DEFAULT_BITMAP ) && GDI_get_ref_count( handle ))
     {
         WARN( "Bitmap already selected in another DC\n" );
         GDI_ReleaseObj( handle );
