@@ -1336,30 +1336,39 @@ static BOOL export_text_html( Display *display, Window win, Atom prop, Atom targ
  */
 static BOOL export_hdrop( Display *display, Window win, Atom prop, Atom target, HANDLE handle )
 {
-    UINT i;
-    UINT numFiles;
-    char *textUriList;
+    char *textUriList = NULL;
     UINT textUriListSize = 32;
     UINT next = 0;
+    const WCHAR *ptr;
+    WCHAR *unicode_data = NULL;
+    void *data = GlobalLock( handle );
+    DROPFILES *drop_files = data;
 
-    textUriList = malloc( textUriListSize );
-    if (!textUriList) return FALSE;
-    numFiles = DragQueryFileW( handle, 0xFFFFFFFF, NULL, 0 );
-    for (i = 0; i < numFiles; i++)
+    if (!drop_files->fWide)
     {
-        UINT dosFilenameSize;
-        WCHAR *dosFilename = NULL;
+        char *p, *files = (char *)data + drop_files->pFiles;
+        p = files;
+        while (*p) p += strlen( p ) + 1;
+        p++;
+
+        if (!(unicode_data = malloc( (p - files) * sizeof(WCHAR) ))) goto failed;
+        MultiByteToWideChar( CP_ACP, 0, files, p - files, unicode_data, p - files );
+        ptr = unicode_data;
+    }
+    else ptr = (const WCHAR *)((char *)data + drop_files->pFiles);
+
+    if (!(textUriList = malloc( textUriListSize ))) goto failed;
+
+    while (*ptr)
+    {
         char *unixFilename = NULL;
         UINT uriSize;
         UINT u;
 
-        dosFilenameSize = 1 + DragQueryFileW( handle, i, NULL, 0 );
-        dosFilename = malloc( dosFilenameSize * sizeof(WCHAR) );
-        if (dosFilename == NULL) goto failed;
-        DragQueryFileW( handle, i, dosFilename, dosFilenameSize );
-        unixFilename = wine_get_unix_file_name(dosFilename);
-        free( dosFilename );
+        unixFilename = wine_get_unix_file_name( ptr );
         if (unixFilename == NULL) goto failed;
+        ptr += lstrlenW( ptr ) + 1;
+
         uriSize = 8 + /* file:/// */
                 3 * (lstrlenA(unixFilename) - 1) + /* "%xy" per char except first '/' */
                 2; /* \r\n */
@@ -1397,6 +1406,8 @@ static BOOL export_hdrop( Display *display, Window win, Atom prop, Atom target, 
     return TRUE;
 
 failed:
+    GlobalUnlock( handle );
+    free( unicode_data );
     free( textUriList );
     return FALSE;
 }
