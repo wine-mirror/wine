@@ -922,7 +922,7 @@ static HANDLE import_text_uri_list( Atom type, const void *data, size_t size )
         lstrcpynA(uri, &uriList[start], end - start + 1);
         path = uri_to_dos(uri);
         TRACE("converted URI %s to DOS path %s\n", debugstr_a(uri), debugstr_w(path));
-        HeapFree( GetProcessHeap(), 0, uri );
+        free( uri );
 
         if (path)
         {
@@ -939,7 +939,7 @@ static HANDLE import_text_uri_list( Atom type, const void *data, size_t size )
             memcpy(&out[total], path, pathSize * sizeof(WCHAR));
             total += pathSize;
         done:
-            free( path );
+            HeapFree( GetProcessHeap(), 0, path );
             if (out == NULL)
                 break;
         }
