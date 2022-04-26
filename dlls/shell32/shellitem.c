@@ -1402,15 +1402,15 @@ HRESULT WINAPI SHCreateShellItemArrayFromIDLists(UINT cidl,
     if(SUCCEEDED(ret))
     {
         ret = create_shellitemarray(array, cidl, psia);
-        heap_free(array);
-        if(SUCCEEDED(ret))
-            return ret;
     }
 
-    for(i = 0; i < cidl; i++)
-        if(array[i]) IShellItem_Release(array[i]);
+    if(FAILED(ret))
+    {
+        for(i = 0; i < cidl; i++)
+            if(array[i]) IShellItem_Release(array[i]);
+        *psia = NULL;
+    }
     heap_free(array);
-    *psia = NULL;
     return ret;
 }
 
