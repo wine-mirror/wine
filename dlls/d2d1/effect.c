@@ -17,6 +17,7 @@
  */
 
 #include "d2d1_private.h"
+#include "d2d1effectauthor.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d2d);
 
