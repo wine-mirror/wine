@@ -3117,55 +3117,69 @@ end:
     return hr;
 }
 
-static HRESULT parse_skin_mesh_info(ID3DXFileData *filedata, struct mesh_data *mesh_data, DWORD index)
+static HRESULT parse_skin_mesh_header(ID3DXFileData *filedata, struct mesh_data *mesh_data)
 {
-    HRESULT hr;
-    SIZE_T data_size;
     const BYTE *data;
+    SIZE_T data_size;
+    HRESULT hr;
 
-    TRACE("(%p, %p, %u)\n", filedata, mesh_data, index);
+    TRACE("filedata %p, mesh_data %p.\n", filedata, mesh_data);
 
-    hr = filedata->lpVtbl->Lock(filedata, &data_size, (const void**)&data);
-    if (FAILED(hr)) return hr;
+    if (FAILED(hr = filedata->lpVtbl->Lock(filedata, &data_size, (const void **)&data)))
+        return hr;
 
-    hr = E_FAIL;
+    if (data_size < sizeof(WORD) * 3)
+    {
+        WARN("Truncated data (%Id bytes).\n", data_size);
+        filedata->lpVtbl->Unlock(filedata);
+        return E_FAIL;
+    }
+    /* Skip nMaxSkinWeightsPerVertex and nMaxSkinWeightsPerFace */
+    data += 2 * sizeof(WORD);
+    mesh_data->bone_count = *(WORD *)data;
+    hr = D3DXCreateSkinInfoFVF(mesh_data->num_vertices, mesh_data->fvf, mesh_data->bone_count,
+            &mesh_data->skin_info);
 
-    if (!mesh_data->skin_info) {
-        if (data_size < sizeof(WORD) * 3) {
-            WARN("truncated data (%ld bytes)\n", data_size);
-            goto end;
-        }
-        /* Skip nMaxSkinWeightsPerVertex and nMaxSkinWeightsPerFace */
-        data += 2 * sizeof(WORD);
-        mesh_data->bone_count = *(WORD*)data;
-        hr = D3DXCreateSkinInfoFVF(mesh_data->num_vertices, mesh_data->fvf, mesh_data->bone_count, &mesh_data->skin_info);
-    } else {
-        const char *name;
-        DWORD nb_influences;
+    return hr;
+}
 
-        /* FIXME: String must be retrieved directly instead of through a pointer once ID3DXFILE is fixed */
-        name = *(const char**)data;
-        data += sizeof(char*);
+static HRESULT parse_skin_weights_info(ID3DXFileData *filedata, struct mesh_data *mesh_data, unsigned int index)
+{
+    unsigned int influence_count;
+    const char *name;
+    const BYTE *data;
+    SIZE_T data_size;
+    HRESULT hr;
 
-        nb_influences = *(DWORD*)data;
-        data += sizeof(DWORD);
+    TRACE("filedata %p, mesh_data %p, index %u.\n", filedata, mesh_data, index);
 
-        if (data_size < (sizeof(char*) + sizeof(DWORD) + nb_influences * (sizeof(DWORD) + sizeof(FLOAT)) + 16 * sizeof(FLOAT))) {
-            WARN("truncated data (%ld bytes)\n", data_size);
-            goto end;
-        }
+    if (FAILED(hr = filedata->lpVtbl->Lock(filedata, &data_size, (const void **)&data)))
+        return hr;
 
-        hr = mesh_data->skin_info->lpVtbl->SetBoneName(mesh_data->skin_info, index, name);
-        if (SUCCEEDED(hr))
-            hr = mesh_data->skin_info->lpVtbl->SetBoneInfluence(mesh_data->skin_info, index, nb_influences,
-                     (const DWORD*)data, (const FLOAT*)(data + nb_influences * sizeof(DWORD)));
-        if (SUCCEEDED(hr))
-            hr = mesh_data->skin_info->lpVtbl->SetBoneOffsetMatrix(mesh_data->skin_info, index,
-                     (const D3DMATRIX*)(data + nb_influences * (sizeof(DWORD) + sizeof(FLOAT))));
+    /* FIXME: String will have to be retrieved directly instead of through a
+     * pointer once our ID3DXFileData implementation is fixed. */
+    name = *(const char **)data;
+    data += sizeof(char *);
+
+    influence_count = *(uint32_t *)data;
+    data += sizeof(uint32_t);
+
+    if (data_size < (sizeof(char *) + sizeof(uint32_t) + influence_count * (sizeof(uint32_t) + sizeof(float))
+            + 16 * sizeof(float)))
+    {
+        WARN("Truncated data (%Id bytes).\n", data_size);
+        filedata->lpVtbl->Unlock(filedata);
+        return E_FAIL;
     }
 
-end:
-    filedata->lpVtbl->Unlock(filedata);
+    hr = mesh_data->skin_info->lpVtbl->SetBoneName(mesh_data->skin_info, index, name);
+    if (SUCCEEDED(hr))
+        hr = mesh_data->skin_info->lpVtbl->SetBoneInfluence(mesh_data->skin_info, index, influence_count,
+                (const DWORD *)data, (const float *)(data + influence_count * sizeof(uint32_t)));
+    if (SUCCEEDED(hr))
+        hr = mesh_data->skin_info->lpVtbl->SetBoneOffsetMatrix(mesh_data->skin_info, index,
+                (const D3DMATRIX *)(data + influence_count * (sizeof(uint32_t) + sizeof(float))));
+
     return hr;
 }
 
@@ -3317,7 +3331,7 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
                     hr = E_FAIL;
                     goto end;
                 }
-                hr = parse_skin_mesh_info(child, mesh_data, 0);
+                hr = parse_skin_mesh_header(child, mesh_data);
                 if (FAILED(hr))
                     goto end;
             } else if (IsEqualGUID(&type, &DXFILEOBJ_SkinWeights)) {
@@ -3326,7 +3340,7 @@ static HRESULT parse_mesh(ID3DXFileData *filedata, struct mesh_data *mesh_data, 
                     hr = E_FAIL;
                     goto end;
                 }
-                hr = parse_skin_mesh_info(child, mesh_data, skin_weights_info_count);
+                hr = parse_skin_weights_info(child, mesh_data, skin_weights_info_count);
                 if (FAILED(hr))
                     goto end;
                 skin_weights_info_count++;
