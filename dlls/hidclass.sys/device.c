@@ -375,40 +375,6 @@ void HID_StartDeviceThread(DEVICE_OBJECT *device)
     ext->u.pdo.thread = CreateThread(NULL, 0, hid_device_thread, device, 0, NULL);
 }
 
-static void handle_IOCTL_HID_GET_COLLECTION_INFORMATION( IRP *irp, BASE_DEVICE_EXTENSION *ext )
-{
-    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
-    if (irpsp->Parameters.DeviceIoControl.OutputBufferLength <  sizeof(HID_COLLECTION_INFORMATION))
-    {
-        irp->IoStatus.Status = STATUS_BUFFER_OVERFLOW;
-        irp->IoStatus.Information = 0;
-    }
-    else
-    {
-        memcpy(irp->AssociatedIrp.SystemBuffer, &ext->u.pdo.information, sizeof(HID_COLLECTION_INFORMATION));
-        irp->IoStatus.Information = sizeof(HID_COLLECTION_INFORMATION);
-        irp->IoStatus.Status = STATUS_SUCCESS;
-    }
-}
-
-static void handle_IOCTL_HID_GET_COLLECTION_DESCRIPTOR( IRP *irp, BASE_DEVICE_EXTENSION *ext )
-{
-    HIDP_COLLECTION_DESC *desc = ext->u.pdo.device_desc.CollectionDesc;
-    IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
-
-    if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < desc->PreparsedDataLength)
-    {
-        irp->IoStatus.Status = STATUS_INVALID_BUFFER_SIZE;
-        irp->IoStatus.Information = 0;
-    }
-    else
-    {
-        memcpy( irp->UserBuffer, desc->PreparsedData, desc->PreparsedDataLength );
-        irp->IoStatus.Information = desc->PreparsedDataLength;
-        irp->IoStatus.Status = STATUS_SUCCESS;
-    }
-}
-
 struct device_strings
 {
     const WCHAR *id;
@@ -619,12 +585,29 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
         }
         case IOCTL_HID_GET_COLLECTION_INFORMATION:
         {
-            handle_IOCTL_HID_GET_COLLECTION_INFORMATION( irp, ext );
+            irp->IoStatus.Information = sizeof(HID_COLLECTION_INFORMATION);
+            if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(HID_COLLECTION_INFORMATION))
+                irp->IoStatus.Status = STATUS_BUFFER_OVERFLOW;
+            else
+            {
+                memcpy( irp->AssociatedIrp.SystemBuffer, &ext->u.pdo.information,
+                        sizeof(HID_COLLECTION_INFORMATION) );
+                irp->IoStatus.Status = STATUS_SUCCESS;
+            }
             break;
         }
         case IOCTL_HID_GET_COLLECTION_DESCRIPTOR:
         {
-            handle_IOCTL_HID_GET_COLLECTION_DESCRIPTOR( irp, ext );
+            HIDP_COLLECTION_DESC *desc = ext->u.pdo.device_desc.CollectionDesc;
+
+            irp->IoStatus.Information = desc->PreparsedDataLength;
+            if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < desc->PreparsedDataLength)
+                irp->IoStatus.Status = STATUS_INVALID_BUFFER_SIZE;
+            else
+            {
+                memcpy( irp->UserBuffer, desc->PreparsedData, desc->PreparsedDataLength );
+                irp->IoStatus.Status = STATUS_SUCCESS;
+            }
             break;
         }
         case IOCTL_SET_NUM_DEVICE_INPUT_BUFFERS:
