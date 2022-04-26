@@ -4432,6 +4432,57 @@ static void test_contextmenu(IContextMenu *menu, BOOL background)
     DestroyMenu(hmenu);
 }
 
+static void test_IShellItemImageFactory(void)
+{
+    HRESULT ret;
+    IShellItem *shellitem;
+    IShellItemImageFactory *siif;
+    LPITEMIDLIST pidl_desktop = NULL;
+
+    ret = SHGetSpecialFolderLocation(NULL, CSIDL_DESKTOP, &pidl_desktop);
+    ok(ret == S_OK, "SHGetSpecialFolderLocation returned 0x%08lx\n", ret);
+
+    ret = pSHCreateShellItem(NULL, NULL, pidl_desktop, &shellitem);
+    ILFree(pidl_desktop);
+    ok(SUCCEEDED(ret), "SHCreateShellItem returned 0x%08lx\n", ret);
+
+    ret = IShellItem_QueryInterface(shellitem, &IID_IShellItemImageFactory, (void **)&siif);
+    IShellItem_Release(shellitem);
+    todo_wine
+    ok(ret == S_OK, "QueryInterface returned 0x%08lx\n", ret);
+    if (SUCCEEDED(ret))
+    {
+        HBITMAP hbm = NULL;
+        SIZE size = {32, 32};
+
+        ret = IShellItemImageFactory_GetImage(siif, size, SIIGBF_BIGGERSIZEOK, &hbm);
+        IShellItemImageFactory_Release(siif);
+        todo_wine
+        ok(ret == S_OK, "GetImage returned %lx\n", ret);
+        ok(FAILED(ret) == !hbm, "result = %lx but bitmap = %p\n", ret, hbm);
+
+        if (SUCCEEDED(ret) && hbm)
+        {
+            DIBSECTION dib;
+            int infosz;
+
+            infosz = GetObjectW(hbm, sizeof(dib), &dib);
+            ok(infosz == sizeof(dib), "Expected GetObjectW to return sizeof(DIBSECTION), got %d\n", infosz);
+
+            /* Bitmap must have 32-bit pixels regardless of original image format */
+            ok(dib.dsBm.bmPlanes == 1, "Expected bmPlanes to be %d, got %d\n", 1, dib.dsBm.bmPlanes);
+            ok(dib.dsBm.bmBitsPixel == 32, "Expected bmBitsPixel to be %d, got %d\n", 32, dib.dsBm.bmBitsPixel);
+
+            /* DIB must be truecolor (32bppRGB/32bppARGB) regardless of original image format */
+            ok(dib.dsBmih.biPlanes == 1, "Expected biPlanes to be %d, got %d\n", 1, dib.dsBmih.biPlanes);
+            ok(dib.dsBmih.biBitCount == 32, "Expected biBitCount to be %d, got %d\n", 32, dib.dsBmih.biBitCount);
+            ok(dib.dsBmih.biCompression == BI_RGB, "Expected biCompression to be BI_RGB, got %lu\n", dib.dsBmih.biCompression);
+
+            DeleteObject(hbm);
+        }
+    }
+}
+
 static void test_GetUIObject(void)
 {
     IShellFolder *psf_desktop;
@@ -5384,6 +5435,7 @@ START_TEST(shlfolder)
     test_SHCreateShellItemArray();
     test_ShellItemArrayEnumItems();
     test_desktop_IPersist();
+    test_IShellItemImageFactory();
     test_GetUIObject();
     test_CreateViewObject_contextmenu();
     test_SHSimpleIDListFromPath();
