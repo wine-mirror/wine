@@ -861,16 +861,16 @@ static HRESULT get_constants_desc(unsigned int *byte_code, struct d3dx_const_tab
     D3DXHANDLE hc;
     unsigned int i, j;
 
-    hr = D3DXGetShaderConstantTable(byte_code, &ctab);
+    hr = D3DXGetShaderConstantTable((DWORD *)byte_code, &ctab);
     if (FAILED(hr) || !ctab)
     {
-        TRACE("Could not get CTAB data, hr %#x.\n", hr);
+        TRACE("Could not get CTAB data, hr %#lx.\n", hr);
         /* returning OK, shaders and preshaders without CTAB are valid */
         return D3D_OK;
     }
     if (FAILED(hr = ID3DXConstantTable_GetDesc(ctab, &desc)))
     {
-        FIXME("Could not get CTAB desc, hr %#x.\n", hr);
+        FIXME("Could not get CTAB desc, hr %#lx.\n", hr);
         goto cleanup;
     }
 
@@ -1294,7 +1294,7 @@ HRESULT d3dx_create_param_eval(struct d3dx_effect *effect, void *byte_code, unsi
         if (FAILED(ret = get_constants_desc(shader_ptr, &peval->shader_inputs, effect,
                 skip_constants, skip_constants_count, &peval->pres)))
         {
-            TRACE("Could not get shader constant table, hr %#x.\n", ret);
+            TRACE("Could not get shader constant table, hr %#lx.\n", ret);
             goto err_out;
         }
         update_table_sizes_consts(peval->pres.regs.table_sizes, &peval->shader_inputs);

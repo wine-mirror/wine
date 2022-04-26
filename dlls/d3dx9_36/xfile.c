@@ -40,7 +40,7 @@ static HRESULT error_dxfile_to_d3dxfile(HRESULT error)
         case DXFILEERR_BADVALUE:
             return D3DXFERR_BADVALUE;
         default:
-            FIXME("Cannot map error %#x\n", error);
+            FIXME("Cannot map error %#lx.\n", error);
             return E_FAIL;
     }
 }
@@ -108,7 +108,7 @@ static ULONG WINAPI d3dx9_file_data_AddRef(ID3DXFileData *iface)
     struct d3dx9_file_data *file_data = impl_from_ID3DXFileData(iface);
     ULONG refcount = InterlockedIncrement(&file_data->ref);
 
-    TRACE("%p increasing refcount to %u.\n", file_data, refcount);
+    TRACE("%p increasing refcount to %lu.\n", file_data, refcount);
 
     return refcount;
 }
@@ -118,7 +118,7 @@ static ULONG WINAPI d3dx9_file_data_Release(ID3DXFileData *iface)
     struct d3dx9_file_data *file_data = impl_from_ID3DXFileData(iface);
     ULONG refcount = InterlockedDecrement(&file_data->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", file_data, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", file_data, refcount);
 
     if (!refcount)
     {
@@ -265,7 +265,7 @@ static HRESULT WINAPI d3dx9_file_data_GetChild(ID3DXFileData *iface, SIZE_T id, 
 {
     struct d3dx9_file_data *file_data = impl_from_ID3DXFileData(iface);
 
-    TRACE("iface %p, id %#lx, object %p.\n", iface, id, object);
+    TRACE("iface %p, id %#Ix, object %p.\n", iface, id, object);
 
     if (!object)
         return E_POINTER;
@@ -410,7 +410,7 @@ static ULONG WINAPI d3dx9_file_enum_object_AddRef(ID3DXFileEnumObject *iface)
     struct d3dx9_file_enum_object *file_enum = impl_from_ID3DXFileEnumObject(iface);
     ULONG refcount = InterlockedIncrement(&file_enum->ref);
 
-    TRACE("%p increasing refcount to %u.\n", file_enum, refcount);
+    TRACE("%p increasing refcount to %lu.\n", file_enum, refcount);
 
     return refcount;
 }
@@ -420,7 +420,7 @@ static ULONG WINAPI d3dx9_file_enum_object_Release(ID3DXFileEnumObject *iface)
     struct d3dx9_file_enum_object *file_enum = impl_from_ID3DXFileEnumObject(iface);
     ULONG refcount = InterlockedDecrement(&file_enum->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", file_enum, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", file_enum, refcount);
 
     if (!refcount)
     {
@@ -463,7 +463,7 @@ static HRESULT WINAPI d3dx9_file_enum_object_GetChild(ID3DXFileEnumObject *iface
 {
     struct d3dx9_file_enum_object *file_enum = impl_from_ID3DXFileEnumObject(iface);
 
-    TRACE("iface %p, id %#lx, object %p.\n", iface, id, object);
+    TRACE("iface %p, id %#Ix, object %p.\n", iface, id, object);
 
     if (!object)
         return E_POINTER;
@@ -525,7 +525,7 @@ static ULONG WINAPI d3dx9_file_AddRef(ID3DXFile *iface)
     struct d3dx9_file *file = impl_from_ID3DXFile(iface);
     ULONG refcount = InterlockedIncrement(&file->ref);
 
-    TRACE("%p increasing refcount to %u.\n", file, refcount);
+    TRACE("%p increasing refcount to %lu.\n", file, refcount);
 
     return refcount;
 }
@@ -535,7 +535,7 @@ static ULONG WINAPI d3dx9_file_Release(ID3DXFile *iface)
     struct d3dx9_file *file = impl_from_ID3DXFile(iface);
     ULONG refcount = InterlockedDecrement(&file->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", file, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", file, refcount);
 
     if (!refcount)
     {
@@ -560,7 +560,7 @@ static HRESULT WINAPI d3dx9_file_CreateEnumObject(ID3DXFile *iface, const void *
     unsigned children_array_size = 0;
     HRESULT ret;
 
-    TRACE("iface %p, source %p, options %#x, enum_object %p.\n", iface, source, options, enum_object);
+    TRACE("iface %p, source %p, options %#lx, enum_object %p.\n", iface, source, options, enum_object);
 
     if (!enum_object)
         return E_POINTER;
@@ -593,7 +593,7 @@ static HRESULT WINAPI d3dx9_file_CreateEnumObject(ID3DXFile *iface, const void *
     }
     else
     {
-        FIXME("Source type %u is not handled yet\n", options);
+        FIXME("Source type %lu not handled yet.\n", options);
         return E_NOTIMPL;
     }
 
@@ -669,7 +669,7 @@ static HRESULT WINAPI d3dx9_file_CreateEnumObject(ID3DXFile *iface, const void *
 static HRESULT WINAPI d3dx9_file_CreateSaveObject(ID3DXFile *iface, const void *data,
         D3DXF_FILESAVEOPTIONS options, D3DXF_FILEFORMAT format, ID3DXFileSaveObject **save_object)
 {
-    FIXME("iface %p, data %p, options %#x, format %#x, save_object %p stub!\n",
+    FIXME("iface %p, data %p, options %#lx, format %#lx, save_object %p stub!\n",
             iface, data, options, format, save_object);
 
     return E_NOTIMPL;
@@ -680,12 +680,12 @@ static HRESULT WINAPI d3dx9_file_RegisterTemplates(ID3DXFile *iface, const void 
     struct d3dx9_file *file = impl_from_ID3DXFile(iface);
     HRESULT ret;
 
-    TRACE("iface %p, data %p, size %lu.\n", iface, data, size);
+    TRACE("iface %p, data %p, size %Iu.\n", iface, data, size);
 
     ret = IDirectXFile_RegisterTemplates(file->dxfile, (void *)data, size);
     if (ret != DXFILE_OK)
     {
-        WARN("Error %#x\n", ret);
+        WARN("Error registering templates, hr %#lx.\n", ret);
         return error_dxfile_to_d3dxfile(ret);
     }
 

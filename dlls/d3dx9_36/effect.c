@@ -1636,11 +1636,11 @@ static HRESULT d3dx9_apply_state(struct d3dx_effect *effect, struct d3dx_pass *p
     switch (state_table[state->operation].class)
     {
         case SC_RENDERSTATE:
-            TRACE("%s, operation %u, value %u.\n", state_table[state->operation].name,
+            TRACE("%s, operation %u, value %lu.\n", state_table[state->operation].name,
                     state_table[state->operation].op, *(DWORD *)param_value);
             return SET_D3D_STATE(effect, SetRenderState, state_table[state->operation].op, *(DWORD *)param_value);
         case SC_FVF:
-            TRACE("%s, value %#x.\n", state_table[state->operation].name, *(DWORD *)param_value);
+            TRACE("%s, value %#lx.\n", state_table[state->operation].name, *(DWORD *)param_value);
             return SET_D3D_STATE(effect, SetFVF, *(DWORD *)param_value);
         case SC_TEXTURE:
         {
@@ -1652,7 +1652,7 @@ static HRESULT d3dx9_apply_state(struct d3dx_effect *effect, struct d3dx_pass *p
             return SET_D3D_STATE(effect, SetTexture, unit, *(IDirect3DBaseTexture9 **)param_value);
         }
         case SC_TEXTURESTAGE:
-            TRACE("%s, stage %u, value %u.\n", state_table[state->operation].name, state->index, *(DWORD *)param_value);
+            TRACE("%s, stage %u, value %lu.\n", state_table[state->operation].name, state->index, *(DWORD *)param_value);
             return SET_D3D_STATE(effect, SetTextureStageState, state->index,
                         state_table[state->operation].op, *(DWORD *)param_value);
         case SC_SETSAMPLER:
@@ -1677,7 +1677,7 @@ static HRESULT d3dx9_apply_state(struct d3dx_effect *effect, struct d3dx_pass *p
             UINT sampler;
 
             sampler = parent_index == ~0u ? state->index : parent_index;
-            TRACE("%s, sampler %u, value %u.\n", state_table[state->operation].name, sampler, *(DWORD *)param_value);
+            TRACE("%s, sampler %u, value %lu.\n", state_table[state->operation].name, sampler, *(DWORD *)param_value);
             return SET_D3D_STATE(effect, SetSamplerState, sampler, state_table[state->operation].op,
                     *(DWORD *)param_value);
         }
@@ -1686,7 +1686,7 @@ static HRESULT d3dx9_apply_state(struct d3dx_effect *effect, struct d3dx_pass *p
             if ((update_all || param_dirty)
                     && FAILED(hr = SET_D3D_STATE(effect, SetVertexShader,
                     *(IDirect3DVertexShader9 **)param_value)))
-                ERR("Could not set vertex shader, hr %#x.\n", hr);
+                ERR("Could not set vertex shader, hr %#lx.\n", hr);
             else if (*(IDirect3DVertexShader9 **)param_value)
                 hr = d3dx_set_shader_constants(effect, pass, param, TRUE, update_all || param_dirty);
             return hr;
@@ -1695,7 +1695,7 @@ static HRESULT d3dx9_apply_state(struct d3dx_effect *effect, struct d3dx_pass *p
             if ((update_all || param_dirty)
                     && FAILED(hr = SET_D3D_STATE(effect, SetPixelShader,
                     *(IDirect3DPixelShader9 **)param_value)))
-                ERR("Could not set pixel shader, hr %#x.\n", hr);
+                ERR("Could not set pixel shader, hr %#lx.\n", hr);
             else if (*(IDirect3DPixelShader9 **)param_value)
                 hr = d3dx_set_shader_constants(effect, pass, param, FALSE, update_all || param_dirty);
             return hr;
@@ -1753,7 +1753,7 @@ static HRESULT d3dx9_apply_pass_states(struct d3dx_effect *effect, struct d3dx_p
     {
         if (FAILED(hr = d3dx9_apply_state(effect, pass, &pass->states[i], ~0u, update_all)))
         {
-            WARN("Error applying state, hr %#x.\n", hr);
+            WARN("Error applying state, hr %#lx.\n", hr);
             ret = hr;
         }
     }
@@ -1765,7 +1765,7 @@ static HRESULT d3dx9_apply_pass_states(struct d3dx_effect *effect, struct d3dx_p
             if ((effect->light_updated & (1u << i))
                     && FAILED(hr = SET_D3D_STATE(effect, SetLight, i, &effect->current_light[i])))
             {
-                WARN("Error setting light, hr %#x.\n", hr);
+                WARN("Error setting light, hr %#lx.\n", hr);
                 ret = hr;
             }
         }
@@ -1775,7 +1775,7 @@ static HRESULT d3dx9_apply_pass_states(struct d3dx_effect *effect, struct d3dx_p
     if (effect->material_updated
             && FAILED(hr = SET_D3D_STATE(effect, SetMaterial, &effect->current_material)))
     {
-        WARN("Error setting material, hr %#x.\n", hr);
+        WARN("Error setting material, hr %#lx.\n", hr);
         ret = hr;
     }
     effect->material_updated = FALSE;
@@ -1988,11 +1988,12 @@ static HRESULT WINAPI d3dx_effect_QueryInterface(ID3DXEffect *iface, REFIID riid
 
 static ULONG WINAPI d3dx_effect_AddRef(ID3DXEffect *iface)
 {
-    struct d3dx_effect *This = impl_from_ID3DXEffect(iface);
+    struct d3dx_effect *effect = impl_from_ID3DXEffect(iface);
+    ULONG refcount = InterlockedIncrement(&effect->ref);
 
-    TRACE("(%p)->(): AddRef from %u\n", This, This->ref);
+    TRACE("%p increasing refcount to %lu.\n", effect, refcount);
 
-    return InterlockedIncrement(&This->ref);
+    return refcount;
 }
 
 static ULONG WINAPI d3dx_effect_Release(ID3DXEffect *iface)
@@ -2000,7 +2001,7 @@ static ULONG WINAPI d3dx_effect_Release(ID3DXEffect *iface)
     struct d3dx_effect *effect = impl_from_ID3DXEffect(iface);
     ULONG refcount = InterlockedDecrement(&effect->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", effect, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", effect, refcount);
 
     if (!refcount)
         d3dx_effect_cleanup(effect);
@@ -3788,7 +3789,7 @@ static HRESULT WINAPI d3dx_effect_ValidateTechnique(ID3DXEffect *iface, D3DXHAND
         }
     }
 done:
-    TRACE("Returning %#x.\n", ret);
+    TRACE("Returning %#lx.\n", ret);
     return ret;
 }
 
@@ -3962,12 +3963,12 @@ static HRESULT WINAPI d3dx_effect_Begin(ID3DXEffect *iface, UINT *passes, DWORD 
     struct d3dx_effect *effect = impl_from_ID3DXEffect(iface);
     struct d3dx_technique *technique = effect->active_technique;
 
-    TRACE("iface %p, passes %p, flags %#x.\n", iface, passes, flags);
+    TRACE("iface %p, passes %p, flags %#lx.\n", iface, passes, flags);
 
     if (technique)
     {
         if (flags & ~(D3DXFX_DONOTSAVESTATE | D3DXFX_DONOTSAVESAMPLERSTATE | D3DXFX_DONOTSAVESHADERSTATE))
-            WARN("Invalid flags (%#x) specified.\n", flags);
+            WARN("Invalid flags %#lx specified.\n", flags);
 
         if (flags & D3DXFX_DONOTSAVESTATE)
         {
@@ -3985,15 +3986,15 @@ static HRESULT WINAPI d3dx_effect_Begin(ID3DXEffect *iface, UINT *passes, DWORD 
                 manager = effect->manager;
                 effect->manager = NULL;
                 if (FAILED(hr = IDirect3DDevice9_BeginStateBlock(effect->device)))
-                    ERR("BeginStateBlock failed, hr %#x.\n", hr);
+                    ERR("BeginStateBlock failed, hr %#lx.\n", hr);
                 for (i = 0; i < technique->pass_count; i++)
                     d3dx9_apply_pass_states(effect, &technique->passes[i], TRUE);
                 if (FAILED(hr = IDirect3DDevice9_EndStateBlock(effect->device, &technique->saved_state)))
-                    ERR("EndStateBlock failed, hr %#x.\n", hr);
+                    ERR("EndStateBlock failed, hr %#lx.\n", hr);
                 effect->manager = manager;
             }
             if (FAILED(hr = IDirect3DStateBlock9_Capture(technique->saved_state)))
-                ERR("StateBlock Capture failed, hr %#x.\n", hr);
+                ERR("StateBlock Capture failed, hr %#lx.\n", hr);
         }
 
         if (passes)
@@ -4091,7 +4092,7 @@ static HRESULT WINAPI d3dx_effect_End(ID3DXEffect *iface)
         if (technique && technique->saved_state)
         {
             if (FAILED(hr = IDirect3DStateBlock9_Apply(technique->saved_state)))
-                ERR("State block apply failed, hr %#x.\n", hr);
+                ERR("State block apply failed, hr %#lx.\n", hr);
         }
         else
             ERR("No saved state.\n");
@@ -4567,7 +4568,7 @@ static ULONG WINAPI ID3DXEffectCompilerImpl_AddRef(ID3DXEffectCompiler *iface)
     struct ID3DXEffectCompilerImpl *compiler = impl_from_ID3DXEffectCompiler(iface);
     ULONG refcount = InterlockedIncrement(&compiler->ref);
 
-    TRACE("%p increasing refcount to %u.\n", iface, refcount);
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
 
     return refcount;
 }
@@ -4577,7 +4578,7 @@ static ULONG WINAPI ID3DXEffectCompilerImpl_Release(ID3DXEffectCompiler *iface)
     struct ID3DXEffectCompilerImpl *compiler = impl_from_ID3DXEffectCompiler(iface);
     ULONG refcount = InterlockedDecrement(&compiler->ref);
 
-    TRACE("%p decreasing refcount to %u.\n", iface, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
     {
@@ -5026,7 +5027,7 @@ static HRESULT WINAPI ID3DXEffectCompilerImpl_GetLiteral(ID3DXEffectCompiler *if
 static HRESULT WINAPI ID3DXEffectCompilerImpl_CompileEffect(ID3DXEffectCompiler *iface, DWORD flags,
         ID3DXBuffer **effect, ID3DXBuffer **error_msgs)
 {
-    FIXME("iface %p, flags %#x, effect %p, error_msgs %p stub!\n", iface, flags, effect, error_msgs);
+    FIXME("iface %p, flags %#lx, effect %p, error_msgs %p stub!\n", iface, flags, effect, error_msgs);
 
     return E_NOTIMPL;
 }
@@ -5035,7 +5036,7 @@ static HRESULT WINAPI ID3DXEffectCompilerImpl_CompileShader(ID3DXEffectCompiler 
         const char *target, DWORD flags, ID3DXBuffer **shader, ID3DXBuffer **error_msgs,
         ID3DXConstantTable **constant_table)
 {
-    FIXME("iface %p, function %p, target %s, flags %#x, shader %p, error_msgs %p, constant_table %p stub!\n",
+    FIXME("iface %p, function %p, target %s, flags %#lx, shader %p, error_msgs %p, constant_table %p stub!\n",
             iface, function, debugstr_a(target), flags, shader, error_msgs, constant_table);
 
     return E_NOTIMPL;
@@ -6665,7 +6666,7 @@ static HRESULT d3dx9_effect_init(struct d3dx_effect *effect, struct IDirect3DDev
     unsigned int tag;
     HRESULT hr;
 
-    TRACE("effect %p, device %p, data %p, data_size %lu, defines %p, include %p, flags %#x, errors %p, "
+    TRACE("effect %p, device %p, data %p, data_size %Iu, defines %p, include %p, flags %#x, errors %p, "
             "pool %p, skip_constants %s.\n",
             effect, device, data, data_size, defines, include, flags, errors, pool,
             debugstr_a(skip_constants_string));
@@ -6730,8 +6731,8 @@ HRESULT WINAPI D3DXCreateEffectEx(struct IDirect3DDevice9 *device, const void *s
     struct d3dx_effect *object;
     HRESULT hr;
 
-    TRACE("device %p, srcdata %p, srcdatalen %u, defines %p, include %p,"
-            " skip_constants %p, flags %#x, pool %p, effect %p, compilation_errors %p.\n",
+    TRACE("device %p, srcdata %p, srcdatalen %u, defines %p, include %p, "
+            "skip_constants %p, flags %#lx, pool %p, effect %p, compilation_errors %p.\n",
             device, srcdata, srcdatalen, defines, include,
             skip_constants, flags, pool, effect, compilation_errors);
 
@@ -6756,7 +6757,7 @@ HRESULT WINAPI D3DXCreateEffectEx(struct IDirect3DDevice9 *device, const void *s
             (ID3DInclude *)include, flags, (ID3DBlob **)compilation_errors, pool, skip_constants);
     if (FAILED(hr))
     {
-        WARN("Failed to create effect object, hr %#x.\n", hr);
+        WARN("Failed to create effect object, hr %#lx.\n", hr);
         return hr;
     }
 
@@ -6767,22 +6768,23 @@ HRESULT WINAPI D3DXCreateEffectEx(struct IDirect3DDevice9 *device, const void *s
     return D3D_OK;
 }
 
-HRESULT WINAPI D3DXCreateEffect(struct IDirect3DDevice9 *device, const void *srcdata, UINT srcdatalen,
+HRESULT WINAPI D3DXCreateEffect(struct IDirect3DDevice9 *device, const void *data, UINT data_size,
         const D3DXMACRO *defines, struct ID3DXInclude *include, DWORD flags,
-        struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **compilation_errors)
+        struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **messages)
 {
-    TRACE("(%p, %p, %u, %p, %p, %#x, %p, %p, %p): Forwarded to D3DXCreateEffectEx\n", device, srcdata, srcdatalen, defines,
-        include, flags, pool, effect, compilation_errors);
+    TRACE("device %p, data %p, data_size %u, defines %p, include %p, flags %#lx, pool %p, "
+            "effect %p, messages %p.\n", device, data, data_size, defines,
+            include, flags, pool, effect, messages);
 
-    return D3DXCreateEffectEx(device, srcdata, srcdatalen, defines, include, NULL, flags, pool, effect, compilation_errors);
+    return D3DXCreateEffectEx(device, data, data_size, defines, include, NULL, flags, pool, effect, messages);
 }
 
 static HRESULT d3dx9_effect_compiler_init(struct ID3DXEffectCompilerImpl *compiler,
         const char *data, SIZE_T data_size, const D3D_SHADER_MACRO *defines, ID3DInclude *include,
-        UINT eflags, ID3DBlob **error_messages)
+        UINT eflags, ID3DBlob **messages)
 {
-    TRACE("compiler %p, data %p, data_size %lu, defines %p, include %p, eflags %#x, error_messages %p.\n",
-            compiler, data, data_size, defines, include, eflags, error_messages);
+    TRACE("compiler %p, data %p, data_size %Iu, defines %p, include %p, eflags %#x, messages %p.\n",
+            compiler, data, data_size, defines, include, eflags, messages);
 
     compiler->ID3DXEffectCompiler_iface.lpVtbl = &ID3DXEffectCompiler_Vtbl;
     compiler->ref = 1;
@@ -6792,16 +6794,16 @@ static HRESULT d3dx9_effect_compiler_init(struct ID3DXEffectCompilerImpl *compil
     return D3D_OK;
 }
 
-HRESULT WINAPI D3DXCreateEffectCompiler(const char *srcdata, UINT srcdatalen, const D3DXMACRO *defines,
-        ID3DXInclude *include, DWORD flags, ID3DXEffectCompiler **compiler, ID3DXBuffer **parse_errors)
+HRESULT WINAPI D3DXCreateEffectCompiler(const char *data, UINT data_size, const D3DXMACRO *defines,
+        ID3DXInclude *include, DWORD flags, ID3DXEffectCompiler **compiler, ID3DXBuffer **messages)
 {
     struct ID3DXEffectCompilerImpl *object;
     HRESULT hr;
 
-    TRACE("srcdata %p, srcdatalen %u, defines %p, include %p, flags %#x, compiler %p, parse_errors %p\n",
-            srcdata, srcdatalen, defines, include, flags, compiler, parse_errors);
+    TRACE("data %p, data_size %u, defines %p, include %p, flags %#lx, compiler %p, messages %p.\n",
+            data, data_size, defines, include, flags, compiler, messages);
 
-    if (!srcdata || !compiler)
+    if (!data || !compiler)
     {
         WARN("Invalid arguments supplied\n");
         return D3DERR_INVALIDCALL;
@@ -6811,8 +6813,8 @@ HRESULT WINAPI D3DXCreateEffectCompiler(const char *srcdata, UINT srcdatalen, co
     if (!object)
         return E_OUTOFMEMORY;
 
-    hr = d3dx9_effect_compiler_init(object, srcdata, srcdatalen, (const D3D_SHADER_MACRO *)defines,
-            (ID3DInclude *)include, flags, (ID3DBlob **)parse_errors);
+    hr = d3dx9_effect_compiler_init(object, data, data_size, (const D3D_SHADER_MACRO *)defines,
+            (ID3DInclude *)include, flags, (ID3DBlob **)messages);
     if (FAILED(hr))
     {
         WARN("Failed to initialize effect compiler\n");
@@ -6850,7 +6852,7 @@ static ULONG WINAPI d3dx_effect_pool_AddRef(ID3DXEffectPool *iface)
     struct d3dx_effect_pool *pool = impl_from_ID3DXEffectPool(iface);
     ULONG refcount = InterlockedIncrement(&pool->refcount);
 
-    TRACE("%p increasing refcount to %u.\n", pool, refcount);
+    TRACE("%p increasing refcount to %lu.\n", pool, refcount);
 
     return refcount;
 }
@@ -6887,7 +6889,7 @@ static ULONG WINAPI d3dx_effect_pool_Release(ID3DXEffectPool *iface)
     struct d3dx_effect_pool *pool = impl_from_ID3DXEffectPool(iface);
     ULONG refcount = InterlockedDecrement(&pool->refcount);
 
-    TRACE("%p decreasing refcount to %u.\n", pool, refcount);
+    TRACE("%p decreasing refcount to %lu.\n", pool, refcount);
 
     if (!refcount)
         free_effect_pool(pool);
@@ -6935,7 +6937,7 @@ HRESULT WINAPI D3DXCreateEffectPool(ID3DXEffectPool **pool)
 
 HRESULT WINAPI D3DXCreateEffectFromFileExW(struct IDirect3DDevice9 *device, const WCHAR *srcfile,
         const D3DXMACRO *defines, struct ID3DXInclude *include, const char *skipconstants, DWORD flags,
-        struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **compilationerrors)
+        struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **messages)
 {
     struct d3dx_include_from_file include_from_file;
     const void *buffer;
@@ -6944,9 +6946,9 @@ HRESULT WINAPI D3DXCreateEffectFromFileExW(struct IDirect3DDevice9 *device, cons
     HRESULT ret;
 
     TRACE("device %p, srcfile %s, defines %p, include %p, skipconstants %s, "
-            "flags %#x, pool %p, effect %p, compilationerrors %p.\n",
+            "flags %#lx, pool %p, effect %p, messages %p.\n",
             device, debugstr_w(srcfile), defines, include, debugstr_a(skipconstants),
-            flags, pool, effect, compilationerrors);
+            flags, pool, effect, messages);
 
     if (!device || !srcfile)
         return D3DERR_INVALIDCALL;
@@ -6973,7 +6975,7 @@ HRESULT WINAPI D3DXCreateEffectFromFileExW(struct IDirect3DDevice9 *device, cons
     }
 
     ret = D3DXCreateEffectEx(device, buffer, size, defines, include, skipconstants, flags, pool,
-            effect, compilationerrors);
+            effect, messages);
 
     ID3DXInclude_Close(include, buffer);
     LeaveCriticalSection(&from_file_mutex);
@@ -6983,16 +6985,16 @@ HRESULT WINAPI D3DXCreateEffectFromFileExW(struct IDirect3DDevice9 *device, cons
 
 HRESULT WINAPI D3DXCreateEffectFromFileExA(struct IDirect3DDevice9 *device, const char *srcfile,
         const D3DXMACRO *defines, struct ID3DXInclude *include, const char *skipconstants, DWORD flags,
-        struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **compilationerrors)
+        struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **messages)
 {
     WCHAR *srcfileW;
     HRESULT ret;
     DWORD len;
 
     TRACE("device %p, srcfile %s, defines %p, include %p, skipconstants %s, "
-            "flags %#x, pool %p, effect %p, compilationerrors %p.\n",
+            "flags %#lx, pool %p, effect %p, messages %p.\n",
             device, debugstr_a(srcfile), defines, include, debugstr_a(skipconstants),
-            flags, pool, effect, compilationerrors);
+            flags, pool, effect, messages);
 
     if (!srcfile)
         return D3DERR_INVALIDCALL;
@@ -7001,7 +7003,7 @@ HRESULT WINAPI D3DXCreateEffectFromFileExA(struct IDirect3DDevice9 *device, cons
     srcfileW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(*srcfileW));
     MultiByteToWideChar(CP_ACP, 0, srcfile, -1, srcfileW, len);
 
-    ret = D3DXCreateEffectFromFileExW(device, srcfileW, defines, include, skipconstants, flags, pool, effect, compilationerrors);
+    ret = D3DXCreateEffectFromFileExW(device, srcfileW, defines, include, skipconstants, flags, pool, effect, messages);
     HeapFree(GetProcessHeap(), 0, srcfileW);
 
     return ret;
@@ -7009,32 +7011,34 @@ HRESULT WINAPI D3DXCreateEffectFromFileExA(struct IDirect3DDevice9 *device, cons
 
 HRESULT WINAPI D3DXCreateEffectFromFileW(struct IDirect3DDevice9 *device, const WCHAR *srcfile,
         const D3DXMACRO *defines, struct ID3DXInclude *include, DWORD flags, struct ID3DXEffectPool *pool,
-        struct ID3DXEffect **effect, struct ID3DXBuffer **compilationerrors)
+        struct ID3DXEffect **effect, struct ID3DXBuffer **messages)
 {
     TRACE("(void): relay\n");
-    return D3DXCreateEffectFromFileExW(device, srcfile, defines, include, NULL, flags, pool, effect, compilationerrors);
+    return D3DXCreateEffectFromFileExW(device, srcfile, defines, include, NULL, flags, pool,
+            effect, messages);
 }
 
 HRESULT WINAPI D3DXCreateEffectFromFileA(struct IDirect3DDevice9 *device, const char *srcfile,
         const D3DXMACRO *defines, struct ID3DXInclude *include, DWORD flags, struct ID3DXEffectPool *pool,
-        struct ID3DXEffect **effect, struct ID3DXBuffer **compilationerrors)
+        struct ID3DXEffect **effect, struct ID3DXBuffer **messages)
 {
     TRACE("(void): relay\n");
-    return D3DXCreateEffectFromFileExA(device, srcfile, defines, include, NULL, flags, pool, effect, compilationerrors);
+    return D3DXCreateEffectFromFileExA(device, srcfile, defines, include, NULL, flags, pool,
+            effect, messages);
 }
 
 HRESULT WINAPI D3DXCreateEffectFromResourceExW(struct IDirect3DDevice9 *device, HMODULE srcmodule,
         const WCHAR *srcresource, const D3DXMACRO *defines, struct ID3DXInclude *include, const char *skipconstants,
-        DWORD flags, struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **compilationerrors)
+        DWORD flags, struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **messages)
 {
     HRSRC resinfo;
     void *buffer;
     DWORD size;
 
     TRACE("device %p, srcmodule %p, srcresource %s, defines %p, include %p, skipconstants %s, "
-            "flags %#x, pool %p, effect %p, compilationerrors %p.\n",
+            "flags %#lx, pool %p, effect %p, messages %p.\n",
             device, srcmodule, debugstr_w(srcresource), defines, include, debugstr_a(skipconstants),
-            flags, pool, effect, compilationerrors);
+            flags, pool, effect, messages);
 
     if (!device)
         return D3DERR_INVALIDCALL;
@@ -7046,21 +7050,22 @@ HRESULT WINAPI D3DXCreateEffectFromResourceExW(struct IDirect3DDevice9 *device, 
         return D3DXERR_INVALIDDATA;
 
     return D3DXCreateEffectEx(device, buffer, size, defines, include,
-            skipconstants, flags, pool, effect, compilationerrors);
+            skipconstants, flags, pool, effect, messages);
 }
 
 HRESULT WINAPI D3DXCreateEffectFromResourceExA(struct IDirect3DDevice9 *device, HMODULE srcmodule,
-        const char *srcresource, const D3DXMACRO *defines, struct ID3DXInclude *include, const char *skipconstants,
-        DWORD flags, struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **compilationerrors)
+        const char *srcresource, const D3DXMACRO *defines, struct ID3DXInclude *include,
+        const char *skipconstants, DWORD flags, struct ID3DXEffectPool *pool,
+        struct ID3DXEffect **effect, struct ID3DXBuffer **messages)
 {
     HRSRC resinfo;
     void *buffer;
     DWORD size;
 
     TRACE("device %p, srcmodule %p, srcresource %s, defines %p, include %p, skipconstants %s, "
-            "flags %#x, pool %p, effect %p, compilationerrors %p.\n",
+            "flags %#lx, pool %p, effect %p, messages %p.\n",
             device, srcmodule, debugstr_a(srcresource), defines, include, debugstr_a(skipconstants),
-            flags, pool, effect, compilationerrors);
+            flags, pool, effect, messages);
 
     if (!device)
         return D3DERR_INVALIDCALL;
@@ -7072,34 +7077,36 @@ HRESULT WINAPI D3DXCreateEffectFromResourceExA(struct IDirect3DDevice9 *device, 
         return D3DXERR_INVALIDDATA;
 
     return D3DXCreateEffectEx(device, buffer, size, defines, include,
-            skipconstants, flags, pool, effect, compilationerrors);
+            skipconstants, flags, pool, effect, messages);
 }
 
 HRESULT WINAPI D3DXCreateEffectFromResourceW(struct IDirect3DDevice9 *device, HMODULE srcmodule,
         const WCHAR *srcresource, const D3DXMACRO *defines, struct ID3DXInclude *include, DWORD flags,
-        struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **compilationerrors)
+        struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **messages)
 {
     TRACE("(void): relay\n");
-    return D3DXCreateEffectFromResourceExW(device, srcmodule, srcresource, defines, include, NULL, flags, pool, effect, compilationerrors);
+    return D3DXCreateEffectFromResourceExW(device, srcmodule, srcresource, defines, include, NULL,
+            flags, pool, effect, messages);
 }
 
 HRESULT WINAPI D3DXCreateEffectFromResourceA(struct IDirect3DDevice9 *device, HMODULE srcmodule,
         const char *srcresource, const D3DXMACRO *defines, struct ID3DXInclude *include, DWORD flags,
-        struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **compilationerrors)
+        struct ID3DXEffectPool *pool, struct ID3DXEffect **effect, struct ID3DXBuffer **messages)
 {
     TRACE("(void): relay\n");
-    return D3DXCreateEffectFromResourceExA(device, srcmodule, srcresource, defines, include, NULL, flags, pool, effect, compilationerrors);
+    return D3DXCreateEffectFromResourceExA(device, srcmodule, srcresource, defines, include, NULL,
+            flags, pool, effect, messages);
 }
 
 HRESULT WINAPI D3DXCreateEffectCompilerFromFileW(const WCHAR *srcfile, const D3DXMACRO *defines,
-        ID3DXInclude *include, DWORD flags, ID3DXEffectCompiler **effectcompiler, ID3DXBuffer **parseerrors)
+        ID3DXInclude *include, DWORD flags, ID3DXEffectCompiler **compiler, ID3DXBuffer **messages)
 {
     void *buffer;
     HRESULT ret;
     DWORD size;
 
-    TRACE("srcfile %s, defines %p, include %p, flags %#x, effectcompiler %p, parseerrors %p.\n",
-            debugstr_w(srcfile), defines, include, flags, effectcompiler, parseerrors);
+    TRACE("srcfile %s, defines %p, include %p, flags %#lx, compiler %p, messages %p.\n",
+            debugstr_w(srcfile), defines, include, flags, compiler, messages);
 
     if (!srcfile)
         return D3DERR_INVALIDCALL;
@@ -7109,21 +7116,21 @@ HRESULT WINAPI D3DXCreateEffectCompilerFromFileW(const WCHAR *srcfile, const D3D
     if (FAILED(ret))
         return D3DXERR_INVALIDDATA;
 
-    ret = D3DXCreateEffectCompiler(buffer, size, defines, include, flags, effectcompiler, parseerrors);
+    ret = D3DXCreateEffectCompiler(buffer, size, defines, include, flags, compiler, messages);
     UnmapViewOfFile(buffer);
 
     return ret;
 }
 
 HRESULT WINAPI D3DXCreateEffectCompilerFromFileA(const char *srcfile, const D3DXMACRO *defines,
-        ID3DXInclude *include, DWORD flags, ID3DXEffectCompiler **effectcompiler, ID3DXBuffer **parseerrors)
+        ID3DXInclude *include, DWORD flags, ID3DXEffectCompiler **compiler, ID3DXBuffer **messages)
 {
     WCHAR *srcfileW;
     HRESULT ret;
     DWORD len;
 
-    TRACE("srcfile %s, defines %p, include %p, flags %#x, effectcompiler %p, parseerrors %p.\n",
-            debugstr_a(srcfile), defines, include, flags, effectcompiler, parseerrors);
+    TRACE("srcfile %s, defines %p, include %p, flags %#lx, compiler %p, messages %p.\n",
+            debugstr_a(srcfile), defines, include, flags, compiler, messages);
 
     if (!srcfile)
         return D3DERR_INVALIDCALL;
@@ -7132,7 +7139,7 @@ HRESULT WINAPI D3DXCreateEffectCompilerFromFileA(const char *srcfile, const D3DX
     srcfileW = HeapAlloc(GetProcessHeap(), 0, len * sizeof(*srcfileW));
     MultiByteToWideChar(CP_ACP, 0, srcfile, -1, srcfileW, len);
 
-    ret = D3DXCreateEffectCompilerFromFileW(srcfileW, defines, include, flags, effectcompiler, parseerrors);
+    ret = D3DXCreateEffectCompilerFromFileW(srcfileW, defines, include, flags, compiler, messages);
     HeapFree(GetProcessHeap(), 0, srcfileW);
 
     return ret;
@@ -7140,14 +7147,14 @@ HRESULT WINAPI D3DXCreateEffectCompilerFromFileA(const char *srcfile, const D3DX
 
 HRESULT WINAPI D3DXCreateEffectCompilerFromResourceA(HMODULE srcmodule, const char *srcresource,
         const D3DXMACRO *defines, ID3DXInclude *include, DWORD flags,
-        ID3DXEffectCompiler **effectcompiler, ID3DXBuffer **parseerrors)
+        ID3DXEffectCompiler **compiler, ID3DXBuffer **messages)
 {
     HRSRC resinfo;
     void *buffer;
     DWORD size;
 
-    TRACE("srcmodule %p, srcresource %s, defines %p, include %p, flags %#x, effectcompiler %p, parseerrors %p.\n",
-            srcmodule, debugstr_a(srcresource), defines, include, flags, effectcompiler, parseerrors);
+    TRACE("srcmodule %p, srcresource %s, defines %p, include %p, flags %#lx, compiler %p, messages %p.\n",
+            srcmodule, debugstr_a(srcresource), defines, include, flags, compiler, messages);
 
     if (!(resinfo = FindResourceA(srcmodule, srcresource, (const char *)RT_RCDATA)))
         return D3DXERR_INVALIDDATA;
@@ -7155,19 +7162,19 @@ HRESULT WINAPI D3DXCreateEffectCompilerFromResourceA(HMODULE srcmodule, const ch
     if (FAILED(load_resource_into_memory(srcmodule, resinfo, &buffer, &size)))
         return D3DXERR_INVALIDDATA;
 
-    return D3DXCreateEffectCompiler(buffer, size, defines, include, flags, effectcompiler, parseerrors);
+    return D3DXCreateEffectCompiler(buffer, size, defines, include, flags, compiler, messages);
 }
 
 HRESULT WINAPI D3DXCreateEffectCompilerFromResourceW(HMODULE srcmodule, const WCHAR *srcresource,
         const D3DXMACRO *defines, ID3DXInclude *include, DWORD flags,
-        ID3DXEffectCompiler **effectcompiler, ID3DXBuffer **parseerrors)
+        ID3DXEffectCompiler **compiler, ID3DXBuffer **messages)
 {
     HRSRC resinfo;
     void *buffer;
     DWORD size;
 
-    TRACE("srcmodule %p, srcresource %s, defines %p, include %p, flags %#x, effectcompiler %p, parseerrors %p.\n",
-            srcmodule, debugstr_w(srcresource), defines, include, flags, effectcompiler, parseerrors);
+    TRACE("srcmodule %p, srcresource %s, defines %p, include %p, flags %#lx, compiler %p, messages %p.\n",
+            srcmodule, debugstr_w(srcresource), defines, include, flags, compiler, messages);
 
     if (!(resinfo = FindResourceW(srcmodule, srcresource, (const WCHAR *)RT_RCDATA)))
         return D3DXERR_INVALIDDATA;
@@ -7175,7 +7182,7 @@ HRESULT WINAPI D3DXCreateEffectCompilerFromResourceW(HMODULE srcmodule, const WC
     if (FAILED(load_resource_into_memory(srcmodule, resinfo, &buffer, &size)))
         return D3DXERR_INVALIDDATA;
 
-    return D3DXCreateEffectCompiler(buffer, size, defines, include, flags, effectcompiler, parseerrors);
+    return D3DXCreateEffectCompiler(buffer, size, defines, include, flags, compiler, messages);
 }
 
 HRESULT WINAPI D3DXDisassembleEffect(ID3DXEffect *effect, BOOL enable_color_code, ID3DXBuffer **disassembly)

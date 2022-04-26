@@ -97,7 +97,7 @@ static ULONG WINAPI ID3DXFontImpl_AddRef(ID3DXFont *iface)
     struct d3dx_font *font = impl_from_ID3DXFont(iface);
     ULONG ref = InterlockedIncrement(&font->ref);
 
-    TRACE("%p increasing refcount to %u\n", iface, ref);
+    TRACE("%p increasing refcount to %lu.\n", iface, ref);
     return ref;
 }
 
@@ -107,7 +107,7 @@ static ULONG WINAPI ID3DXFontImpl_Release(ID3DXFont *iface)
     ULONG ref = InterlockedDecrement(&font->ref);
     unsigned int i;
 
-    TRACE("%p decreasing refcount to %u\n", iface, ref);
+    TRACE("%p decreasing refcount to %lu.\n", iface, ref);
 
     if (!ref)
     {
@@ -486,7 +486,7 @@ static INT WINAPI ID3DXFontImpl_DrawTextA(ID3DXFont *iface, ID3DXSprite *sprite,
     int ret, countW;
     WCHAR *wstr;
 
-    TRACE("iface %p, sprite %p, string %s, count %d, rect %s, format %#x, color 0x%08x.\n",
+    TRACE("iface %p, sprite %p, string %s, count %d, rect %s, format %#lx, color 0x%08lx.\n",
           iface,  sprite, debugstr_an(string, count), count, wine_dbgstr_rect(rect), format, color);
 
     if (!string || !count)
@@ -658,7 +658,7 @@ static INT WINAPI ID3DXFontImpl_DrawTextW(ID3DXFont *iface, ID3DXSprite *sprite,
     WCHAR *line;
     SIZE size;
 
-    TRACE("iface %p, sprite %p, string %s, in_count %d, rect %s, format %#x, color 0x%08x.\n",
+    TRACE("iface %p, sprite %p, string %s, in_count %d, rect %s, format %#lx, color 0x%08lx.\n",
           iface,  sprite, debugstr_wn(string, in_count), in_count, wine_dbgstr_rect(rect), format, color);
 
     if (!string)
