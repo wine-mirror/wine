@@ -1875,6 +1875,26 @@ static void test_wglChoosePixelFormatARB(HDC hdc)
     }
 }
 
+static void test_copy_context(HDC hdc)
+{
+    HGLRC ctx, ctx2;
+    BOOL ret;
+
+    ctx = wglCreateContext(hdc);
+    ok(!!ctx, "Failed to create GL context, last error %#lx.\n", GetLastError());
+    ctx2 = wglCreateContext(hdc);
+    ok(!!ctx2, "Failed to create GL context, last error %#lx.\n", GetLastError());
+
+    ret = wglCopyContext(ctx, ctx2, GL_ALL_ATTRIB_BITS);
+    todo_wine
+    ok(ret, "Failed to copy GL context, last error %#lx.\n", GetLastError());
+
+    ret = wglDeleteContext(ctx2);
+    ok(ret, "Failed to delete GL context, last error %#lx.\n", GetLastError());
+    ret = wglDeleteContext(ctx);
+    ok(ret, "Failed to delete GL context, last error %#lx.\n", GetLastError());
+}
+
 START_TEST(opengl)
 {
     HWND hwnd;
@@ -1960,6 +1980,7 @@ START_TEST(opengl)
         test_getprocaddress(hdc);
         test_deletecontext(hwnd, hdc);
         test_makecurrent(hdc);
+        test_copy_context(hdc);
 
         /* The lack of wglGetExtensionsStringARB in general means broken software rendering or the lack of decent OpenGL support, skip tests in such cases */
         if (!pwglGetExtensionsStringARB)
