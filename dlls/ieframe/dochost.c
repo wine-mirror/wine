@@ -469,6 +469,8 @@ static void update_travellog(DocHost *This)
 
     if(This->travellog.loading_pos == -1) {
         This->travellog.position++;
+        This->travellog.log[This->travellog.position].stream = NULL;
+        This->travellog.log[This->travellog.position].url = NULL;
     }else {
          This->travellog.position = This->travellog.loading_pos;
          This->travellog.loading_pos = -1;
