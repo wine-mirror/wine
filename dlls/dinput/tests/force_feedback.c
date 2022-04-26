@@ -4587,17 +4587,15 @@ static void test_windows_gaming_input(void)
             COLLECTION(1, Physical),
                 REPORT_ID(1, 1),
 
-                USAGE(4, (HID_USAGE_PAGE_SIMULATION<<16)|HID_USAGE_SIMULATION_STEERING),
-                USAGE(4, (HID_USAGE_PAGE_SIMULATION<<16)|HID_USAGE_SIMULATION_ACCELERATOR),
-                USAGE(4, (HID_USAGE_PAGE_SIMULATION<<16)|HID_USAGE_SIMULATION_BRAKE),
-                USAGE(4, (HID_USAGE_PAGE_SIMULATION<<16)|HID_USAGE_SIMULATION_CLUTCH),
                 USAGE(1, HID_USAGE_GENERIC_X),
+                USAGE(1, HID_USAGE_GENERIC_Y),
+                USAGE(1, HID_USAGE_GENERIC_Z),
                 LOGICAL_MINIMUM(1, 0),
                 LOGICAL_MAXIMUM(1, 127),
                 PHYSICAL_MINIMUM(1, 0),
                 PHYSICAL_MAXIMUM(1, 127),
                 REPORT_SIZE(1, 8),
-                REPORT_COUNT(1, 5),
+                REPORT_COUNT(1, 3),
                 INPUT(1, Data|Var|Abs),
 
                 USAGE(1, HID_USAGE_GENERIC_HATSWITCH),
@@ -5006,7 +5004,7 @@ static void test_windows_gaming_input(void)
     struct hid_device_desc desc =
     {
         .use_report_id = TRUE,
-        .caps = { .InputReportByteLength = 8 },
+        .caps = { .InputReportByteLength = 6 },
         .attributes = default_attributes,
     };
     struct hid_expect expect_init[] =
@@ -5148,7 +5146,6 @@ static void test_windows_gaming_input(void)
     };
     static const WCHAR *force_feedback_motor = RuntimeClass_Windows_Gaming_Input_ForceFeedback_ForceFeedbackMotor;
     static const WCHAR *controller_class_name = RuntimeClass_Windows_Gaming_Input_RawGameController;
-    static const WCHAR *racing_wheel_class_name = RuntimeClass_Windows_Gaming_Input_RacingWheel;
 
     DIPROPGUIDANDPATH guid_path =
     {
@@ -5166,16 +5163,11 @@ static void test_windows_gaming_input(void)
     EventRegistrationToken controller_added_token;
     struct bool_async_handler bool_async_handler;
     IVectorView_ForceFeedbackMotor *motors_view;
-    IVectorView_RacingWheel *racing_wheels_view;
-    IRacingWheelStatics2 *racing_wheel_statics2;
-    IRacingWheelStatics *racing_wheel_statics;
     ForceFeedbackEffectAxes supported_axes;
     IAsyncOperation_boolean *bool_async;
     IRawGameController *raw_controller;
-    IGameController *game_controller;
     IDirectInputDevice8W *device;
     IForceFeedbackMotor *motor;
-    IRacingWheel *racing_wheel;
     BOOLEAN paused, enabled;
     IAsyncInfo *async_info;
     DOUBLE gain;
@@ -5243,34 +5235,6 @@ static void test_windows_gaming_input(void)
     hr = IVectorView_RawGameController_GetAt( controllers_view, 0, &raw_controller );
     ok( hr == S_OK, "GetAt returned %#lx\n", hr );
     IVectorView_RawGameController_Release( controllers_view );
-
-    hr = pWindowsCreateString( racing_wheel_class_name, wcslen( racing_wheel_class_name ), &str );
-    ok( hr == S_OK, "WindowsCreateString returned %#lx\n", hr );
-    hr = pRoGetActivationFactory( str, &IID_IRacingWheelStatics, (void **)&racing_wheel_statics );
-    ok( hr == S_OK, "RoGetActivationFactory returned %#lx\n", hr );
-    hr = pRoGetActivationFactory( str, &IID_IRacingWheelStatics2, (void **)&racing_wheel_statics2 );
-    ok( hr == S_OK, "RoGetActivationFactory returned %#lx\n", hr );
-    pWindowsDeleteString( str );
-
-    /* HID driving wheels aren't exposed as WGI gamepads on Windows */
-
-    hr = IRacingWheelStatics_get_RacingWheels( racing_wheel_statics, &racing_wheels_view );
-    ok( hr == S_OK, "get_RacingWheels returned %#lx\n", hr );
-    hr = IVectorView_RacingWheel_get_Size( racing_wheels_view, &size );
-    ok( hr == S_OK, "get_Size returned %#lx\n", hr );
-    todo_wine /* but Wine currently intentionally does */
-    ok( size == 0, "got size %u\n", size );
-    IVectorView_RacingWheel_Release( racing_wheels_view );
-    IRacingWheelStatics_Release( racing_wheel_statics );
-
-    hr = IRawGameController_QueryInterface( raw_controller, &IID_IGameController, (void **)&game_controller );
-    ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
-    hr = IRacingWheelStatics2_FromGameController( racing_wheel_statics2, game_controller, &racing_wheel );
-    ok( hr == S_OK, "FromGameController returned %#lx\n", hr );
-    todo_wine
-    ok( racing_wheel == NULL, "got racing_wheel %p\n", racing_wheel );
-    IGameController_Release( game_controller );
-    IRacingWheelStatics2_Release( racing_wheel_statics2 );
 
     set_hid_expect( file, expect_acquire, sizeof(expect_acquire) );
     hr = IRawGameController_get_ForceFeedbackMotors( raw_controller, &motors_view );
