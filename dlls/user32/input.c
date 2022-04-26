@@ -162,6 +162,33 @@ HWND WINAPI GetCapture(void)
 }
 
 
+/*****************************************************************
+ *		DestroyCaret (USER32.@)
+ */
+BOOL WINAPI DestroyCaret(void)
+{
+    return NtUserDestroyCaret();
+}
+
+
+/*****************************************************************
+ *		SetCaretPos (USER32.@)
+ */
+BOOL WINAPI SetCaretPos( int x, int y )
+{
+    return NtUserSetCaretPos( x, y );
+}
+
+
+/*****************************************************************
+ *		SetCaretBlinkTime (USER32.@)
+ */
+BOOL WINAPI SetCaretBlinkTime( unsigned int time )
+{
+    return NtUserSetCaretBlinkTime( time );
+}
+
+
 /***********************************************************************
  *		GetInputState   (USER32.@)
  */

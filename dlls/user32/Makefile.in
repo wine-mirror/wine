@@ -7,7 +7,6 @@ DELAYIMPORTS = hid setupapi imm32
 
 C_SRCS = \
 	button.c \
-	caret.c \
 	class.c \
 	clipboard.c \
 	combo.c \
