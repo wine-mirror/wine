@@ -780,6 +780,12 @@ INT WINAPI NtUserCountClipboardFormats(void)
     return unix_funcs->pNtUserCountClipboardFormats();
 }
 
+BOOL WINAPI NtUserCreateCaret( HWND hwnd, HBITMAP bitmap, int width, int height )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserCreateCaret( hwnd, bitmap, width, height );
+}
+
 HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
                                   UNICODE_STRING *version, UNICODE_STRING *window_name,
                                   DWORD style, INT x, INT y, INT width, INT height,
@@ -955,6 +961,12 @@ INT WINAPI NtUserGetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserGetUpdateRgn( hwnd, hrgn, erase );
+}
+
+BOOL WINAPI NtUserHideCaret( HWND hwnd )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserHideCaret( hwnd );
 }
 
 BOOL WINAPI NtUserMoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy, BOOL repaint )
@@ -1195,6 +1207,12 @@ WORD WINAPI NtUserSetWindowWord( HWND hwnd, INT offset, WORD newval )
 {
     if (!unix_funcs) return 0;
     return unix_funcs->pNtUserSetWindowWord( hwnd, offset, newval );
+}
+
+BOOL WINAPI NtUserShowCaret( HWND hwnd )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserShowCaret( hwnd );
 }
 
 INT WINAPI NtUserShowCursor( BOOL show )

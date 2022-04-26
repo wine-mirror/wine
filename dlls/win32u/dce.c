@@ -1340,7 +1340,7 @@ HDC WINAPI NtUserBeginPaint( HWND hwnd, PAINTSTRUCT *ps )
     RECT rect;
     UINT flags = UPDATE_NONCLIENT | UPDATE_ERASE | UPDATE_PAINT | UPDATE_INTERNALPAINT | UPDATE_NOCHILDREN;
 
-    if (user_callbacks) user_callbacks->pHideCaret( hwnd );
+    NtUserHideCaret( hwnd );
 
     if (!(hrgn = send_ncpaint( hwnd, NULL, &flags ))) return 0;
 
@@ -1364,7 +1364,7 @@ HDC WINAPI NtUserBeginPaint( HWND hwnd, PAINTSTRUCT *ps )
  */
 BOOL WINAPI NtUserEndPaint( HWND hwnd, const PAINTSTRUCT *ps )
 {
-    if (user_callbacks) user_callbacks->pShowCaret( hwnd );
+    NtUserShowCaret( hwnd );
     flush_window_surfaces( FALSE );
     if (!ps) return FALSE;
     release_dc( hwnd, ps->hdc, TRUE );

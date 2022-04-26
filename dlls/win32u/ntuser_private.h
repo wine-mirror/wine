@@ -34,13 +34,10 @@ struct user_callbacks
 {
     BOOL (WINAPI *pAdjustWindowRectEx)( RECT *, DWORD, BOOL, DWORD );
     HANDLE (WINAPI *pCopyImage)( HANDLE, UINT, INT, INT, UINT );
-    BOOL (WINAPI *pDestroyCaret)(void);
     BOOL (WINAPI *pEndMenu)(void);
-    BOOL (WINAPI *pHideCaret)( HWND hwnd );
     BOOL (WINAPI *pImmProcessKey)(HWND, HKL, UINT, LPARAM, DWORD);
     BOOL (WINAPI *pImmTranslateMessage)(HWND, UINT, WPARAM, LPARAM);
     BOOL (WINAPI *pSetSystemMenu)( HWND hwnd, HMENU menu );
-    BOOL (WINAPI *pShowCaret)( HWND hwnd );
     void (CDECL *free_menu_items)( void *ptr );
     void (CDECL *free_win_ptr)( struct tagWND *win );
     HWND (CDECL *is_menu_active)(void);
@@ -51,7 +48,6 @@ struct user_callbacks
     BOOL (CDECL *rawinput_device_get_usages)(HANDLE handle, USHORT *usage_page, USHORT *usage);
     void (CDECL *register_builtin_classes)(void);
     void (WINAPI *set_standard_scroll_painted)( HWND hwnd, INT bar, BOOL visible );
-    void (CDECL *toggle_caret)( HWND hwnd );
     BOOL (CDECL *unpack_dde_message)( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
                                       void **buffer, size_t size );
     BOOL (WINAPI *register_imm)( HWND hwnd );

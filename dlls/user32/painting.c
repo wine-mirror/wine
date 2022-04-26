@@ -285,7 +285,7 @@ static INT scroll_window( HWND hwnd, INT dx, INT dy, const RECT *rect, const REC
 
         hwndCaret = fix_caret(hwnd, &rc, dx, dy, flags, &moveCaret, &newCaretPos);
         if (hwndCaret)
-            HideCaret(hwndCaret);
+            NtUserHideCaret( hwndCaret );
 
         if (is_ex) dcxflags |= DCX_CACHE;
         if( style & WS_CLIPSIBLINGS) dcxflags |= DCX_CLIPSIBLINGS;
@@ -388,7 +388,7 @@ static INT scroll_window( HWND hwnd, INT dx, INT dy, const RECT *rect, const REC
     if( moveCaret )
         SetCaretPos( newCaretPos.x, newCaretPos.y );
     if( hwndCaret )
-        ShowCaret( hwndCaret );
+        NtUserShowCaret( hwndCaret );
 
     if( bOwnRgn && hrgnUpdate ) DeleteObject( hrgnUpdate );
 

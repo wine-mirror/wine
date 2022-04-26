@@ -3300,7 +3300,7 @@ static BOOL MENU_InitTracking(HWND hWnd, HMENU hMenu, BOOL bPopup, UINT wFlags)
     
     TRACE("hwnd=%p hmenu=%p\n", hWnd, hMenu);
 
-    HideCaret(0);
+    NtUserHideCaret( 0 );
 
     if (!(menu = MENU_GetMenu( hMenu ))) return FALSE;
 
@@ -3342,7 +3342,7 @@ static BOOL MENU_ExitTracking(HWND hWnd, BOOL bPopup)
     TRACE("hwnd=%p\n", hWnd);
 
     SendMessageW( hWnd, WM_EXITMENULOOP, bPopup, 0 );
-    ShowCaret(0);
+    NtUserShowCaret( 0 );
     top_popup = 0;
     top_popup_hmenu = NULL;
     return TRUE;

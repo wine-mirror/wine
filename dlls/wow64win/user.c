@@ -608,6 +608,18 @@ NTSTATUS WINAPI wow64_NtUserKillTimer( UINT *args )
     return NtUserKillTimer( hwnd, id );
 }
 
+NTSTATUS WINAPI wow64_NtUserGetCaretBlinkTime( UINT *args )
+{
+    return NtUserGetCaretBlinkTime();
+}
+
+NTSTATUS WINAPI wow64_NtUserGetCaretPos( UINT *args )
+{
+    POINT *pt = get_ptr( &args );
+
+    return NtUserGetCaretPos( pt );
+}
+
 NTSTATUS WINAPI wow64_NtUserCopyAcceleratorTable( UINT *args )
 {
     HACCEL src = get_handle( &args );

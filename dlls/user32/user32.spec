@@ -86,7 +86,7 @@
 @ stdcall CountClipboardFormats() NtUserCountClipboardFormats
 @ stdcall CreateAcceleratorTableA(ptr long)
 @ stdcall CreateAcceleratorTableW(ptr long) NtUserCreateAcceleratorTable
-@ stdcall CreateCaret(long long long long)
+@ stdcall CreateCaret(long long long long) NtUserCreateCaret
 @ stdcall CreateCursor(long long long long long ptr ptr)
 @ stdcall CreateDesktopA(str str ptr long long ptr)
 @ stdcall CreateDesktopW(wstr wstr ptr long long ptr)
@@ -259,8 +259,8 @@
 @ stdcall GetAutoRotationState(ptr)
 @ stdcall GetAwarenessFromDpiAwarenessContext(long)
 @ stdcall GetCapture()
-@ stdcall GetCaretBlinkTime()
-@ stdcall GetCaretPos(ptr)
+@ stdcall GetCaretBlinkTime() NtUserGetCaretBlinkTime
+@ stdcall GetCaretPos(ptr) NtUserGetCaretPos
 @ stdcall GetClassInfoA(long str ptr)
 @ stdcall GetClassInfoExA(long str ptr)
 @ stdcall GetClassInfoExW(long wstr ptr)
@@ -425,7 +425,7 @@
 @ stdcall GrayStringA(long long ptr long long long long long long)
 @ stdcall GrayStringW(long long ptr long long long long long long)
 # @ stub HasSystemSleepStarted
-@ stdcall HideCaret(long)
+@ stdcall HideCaret(long) NtUserHideCaret
 @ stdcall HiliteMenuItem(long long long long)
 # @ stub IMPGetIMEA
 # @ stub IMPGetIMEW
@@ -736,7 +736,7 @@
 @ stdcall SetWindowsHookExA(long long long long)
 @ stdcall SetWindowsHookExW(long long long long)
 @ stdcall SetWindowsHookW(long ptr)
-@ stdcall ShowCaret(long)
+@ stdcall ShowCaret(long) NtUserShowCaret
 @ stdcall -import ShowCursor(long) NtUserShowCursor
 @ stdcall ShowOwnedPopups(long long)
 @ stdcall ShowScrollBar(long long long)

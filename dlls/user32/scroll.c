@@ -756,7 +756,7 @@ static void SCROLL_HandleKbdEvent(HWND hwnd, WPARAM wParam, LPARAM lParam)
 
     /* hide caret on first KEYDOWN to prevent flicker */
     if ((lParam & PFD_DOUBLEBUFFER_DONTCARE) == 0)
-        HideCaret(hwnd);
+        NtUserHideCaret( hwnd );
 
     switch(wParam)
     {
@@ -814,7 +814,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt )
         switch(msg)
         {
             case WM_LBUTTONDOWN:  /* Initialise mouse tracking */
-                HideCaret(hwnd);  /* hide caret while holding down LBUTTON */
+                NtUserHideCaret( hwnd ); /* hide caret while holding down LBUTTON */
                 NtUserSetCapture( hwnd );
                 prevPt = pt;
                 g_tracking_info.hit_test = hittest = SCROLL_THUMB;
@@ -826,7 +826,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt )
             case WM_LBUTTONUP:
                 ReleaseCapture();
                 g_tracking_info.hit_test = hittest = SCROLL_NOWHERE;
-                if (hwnd==GetFocus()) ShowCaret(hwnd);
+                if (hwnd == GetFocus()) NtUserShowCaret( hwnd );
                 break;
             case WM_SYSTIMER:
                 pt = prevPt;
@@ -844,7 +844,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt )
     switch(msg)
     {
       case WM_LBUTTONDOWN:  /* Initialise mouse tracking */
-          HideCaret(hwnd);  /* hide caret while holding down LBUTTON */
+          NtUserHideCaret( hwnd ); /* hide caret while holding down LBUTTON */
           g_tracking_info.vertical = vertical;
           g_tracking_info.hit_test = hittest = SCROLL_HitTest( hwnd, nBar, pt, FALSE );
           lastClickPos  = vertical ? (pt.y - rect.top) : (pt.x - rect.left);
@@ -911,7 +911,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt )
           hittest = SCROLL_NOWHERE;
           ReleaseCapture();
           /* if scrollbar has focus, show back caret */
-          if (hwnd==GetFocus()) ShowCaret(hwnd);
+          if (hwnd == GetFocus()) NtUserShowCaret( hwnd );
           break;
 
       case WM_SYSTIMER:
@@ -1468,7 +1468,7 @@ LRESULT WINAPI USER_ScrollBarProc( HWND hwnd, UINT message, WPARAM wParam, LPARA
         break;
 
     case WM_KEYUP:
-        ShowCaret(hwnd);
+        NtUserShowCaret( hwnd );
         break;
 
     case WM_SETFOCUS:
@@ -1480,15 +1480,15 @@ LRESULT WINAPI USER_ScrollBarProc( HWND hwnd, UINT message, WPARAM wParam, LPARA
                                                 &arrowSize, &thumbSize, &thumbPos );
             if (!vertical)
             {
-                CreateCaret(hwnd, (HBITMAP)1, thumbSize-2, rect.bottom-rect.top-2);
+                NtUserCreateCaret( hwnd, (HBITMAP)1, thumbSize - 2, rect.bottom - rect.top - 2 );
                 SetCaretPos(thumbPos+1, rect.top+1);
             }
             else
             {
-                CreateCaret(hwnd, (HBITMAP)1, rect.right-rect.left-2,thumbSize-2);
+                NtUserCreateCaret( hwnd, (HBITMAP)1, rect.right - rect.left - 2, thumbSize - 2);
                 SetCaretPos(rect.top+1, thumbPos+1);
             }
-            ShowCaret(hwnd);
+            NtUserShowCaret( hwnd );
         }
         break;
 
@@ -1506,7 +1506,7 @@ LRESULT WINAPI USER_ScrollBarProc( HWND hwnd, UINT message, WPARAM wParam, LPARA
                 rect.top=thumbPos+1;
                 rect.bottom=rect.top+thumbSize;
             }
-            HideCaret(hwnd);
+            NtUserHideCaret( hwnd );
             InvalidateRect(hwnd,&rect,0);
             DestroyCaret();
         }

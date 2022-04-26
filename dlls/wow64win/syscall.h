@@ -106,6 +106,8 @@
     SYSCALL_ENTRY( NtUserFindWindowEx ) \
     SYSCALL_ENTRY( NtUserGetAncestor ) \
     SYSCALL_ENTRY( NtUserGetAtomName ) \
+    SYSCALL_ENTRY( NtUserGetCaretBlinkTime ) \
+    SYSCALL_ENTRY( NtUserGetCaretPos ) \
     SYSCALL_ENTRY( NtUserGetClassName ) \
     SYSCALL_ENTRY( NtUserGetClipboardFormatName ) \
     SYSCALL_ENTRY( NtUserGetClipboardOwner ) \

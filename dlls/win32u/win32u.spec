@@ -807,7 +807,7 @@
 @ stdcall -syscall NtUserCreateAcceleratorTable(ptr long)
 @ stub NtUserCreateActivationGroup
 @ stub NtUserCreateActivationObject
-@ stub NtUserCreateCaret
+@ stdcall NtUserCreateCaret(long long long long)
 @ stub NtUserCreateDCompositionHwndTarget
 @ stdcall -syscall NtUserCreateDesktopEx(ptr ptr ptr long long long)
 @ stub NtUserCreateEmptyCursorObject
@@ -896,8 +896,8 @@
 @ stub NtUserGetAutoRotationState
 @ stub NtUserGetCIMSSM
 @ stub NtUserGetCPD
-@ stub NtUserGetCaretBlinkTime
-@ stub NtUserGetCaretPos
+@ stdcall -syscall NtUserGetCaretBlinkTime()
+@ stdcall -syscall NtUserGetCaretPos(ptr)
 @ stdcall NtUserGetClassInfoEx(ptr ptr ptr ptr long)
 @ stdcall -syscall NtUserGetClassName(long long ptr)
 @ stub NtUserGetClipCursor
@@ -1020,7 +1020,7 @@
 @ stub NtUserGhostWindowFromHungWindow
 @ stub NtUserHandleDelegatedInput
 @ stub NtUserHardErrorControl
-@ stub NtUserHideCaret
+@ stdcall NtUserHideCaret(long)
 @ stub NtUserHidePointerContactVisualization
 @ stub NtUserHiliteMenuItem
 @ stub NtUserHungWindowFromGhostWindow
@@ -1257,7 +1257,7 @@
 @ stdcall NtUserSetWindowWord(long long long)
 @ stub NtUserSetWindowsHookAW
 @ stdcall -syscall NtUserSetWindowsHookEx(ptr ptr long long ptr long)
-@ stub NtUserShowCaret
+@ stdcall NtUserShowCaret(long)
 @ stdcall NtUserShowCursor(long)
 @ stub NtUserShowScrollBar
 @ stub NtUserShowSystemCursor

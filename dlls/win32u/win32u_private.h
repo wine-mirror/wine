@@ -197,6 +197,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserClipCursor)( const RECT *rect );
     BOOL     (WINAPI *pNtUserCloseClipboard)(void);
     INT      (WINAPI *pNtUserCountClipboardFormats)(void);
+    BOOL     (WINAPI *pNtUserCreateCaret)( HWND hwnd, HBITMAP bitmap, int width, int height );
     HWND     (WINAPI *pNtUserCreateWindowEx)( DWORD ex_style, UNICODE_STRING *class_name,
                                               UNICODE_STRING *version, UNICODE_STRING *window_name,
                                               DWORD style, INT x, INT y, INT width, INT height,
@@ -240,6 +241,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserGetUpdateRect)( HWND hwnd, RECT *rect, BOOL erase );
     INT      (WINAPI *pNtUserGetUpdateRgn)( HWND hwnd, HRGN hrgn, BOOL erase );
     BOOL     (WINAPI *pNtUserGetUpdatedClipboardFormats)( UINT *formats, UINT size, UINT *out_size );
+    BOOL     (WINAPI *pNtUserHideCaret)( HWND hwnd );
     BOOL     (WINAPI *pNtUserIsClipboardFormatAvailable)( UINT format );
     UINT     (WINAPI *pNtUserMapVirtualKeyEx)( UINT code, UINT type, HKL layout );
     LRESULT  (WINAPI *pNtUserMessageCall)( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
@@ -284,6 +286,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserSetWindowPos)( HWND hwnd, HWND after, INT x, INT y, INT cx, INT cy, UINT flags );
     int      (WINAPI *pNtUserSetWindowRgn)( HWND hwnd, HRGN hrgn, BOOL redraw );
     WORD     (WINAPI *pNtUserSetWindowWord)( HWND hwnd, INT offset, WORD newval );
+    BOOL     (WINAPI *pNtUserShowCaret)( HWND hwnd );
     INT      (WINAPI *pNtUserShowCursor)( BOOL show );
     BOOL     (WINAPI *pNtUserShowWindow)( HWND hwnd, INT cmd );
     BOOL     (WINAPI *pNtUserShowWindowAsync)( HWND hwnd, INT cmd );
@@ -354,6 +357,7 @@ extern LRESULT call_hooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL 
 extern BOOL unhook_windows_hook( INT id, HOOKPROC proc ) DECLSPEC_HIDDEN;
 
 /* input.c */
+extern BOOL destroy_caret(void) DECLSPEC_HIDDEN;
 extern LONG global_key_state_counter DECLSPEC_HIDDEN;
 extern HWND get_active_window(void) DECLSPEC_HIDDEN;
 extern HWND get_capture(void) DECLSPEC_HIDDEN;
@@ -362,7 +366,10 @@ extern HWND get_focus(void) DECLSPEC_HIDDEN;
 extern DWORD get_input_state(void) DECLSPEC_HIDDEN;
 extern BOOL WINAPI release_capture(void) DECLSPEC_HIDDEN;
 extern BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret ) DECLSPEC_HIDDEN;
+extern BOOL set_caret_blink_time( unsigned int time ) DECLSPEC_HIDDEN;
+extern BOOL set_caret_pos( int x, int y ) DECLSPEC_HIDDEN;
 extern BOOL set_foreground_window( HWND hwnd, BOOL mouse ) DECLSPEC_HIDDEN;
+extern void toggle_caret( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void update_mouse_tracking_info( HWND hwnd ) DECLSPEC_HIDDEN;
 
 /* menu.c */

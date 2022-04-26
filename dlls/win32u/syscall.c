@@ -119,6 +119,8 @@ static void * const syscalls[] =
     NtUserFindWindowEx,
     NtUserGetAncestor,
     NtUserGetAtomName,
+    NtUserGetCaretBlinkTime,
+    NtUserGetCaretPos,
     NtUserGetClassName,
     NtUserGetClipboardFormatName,
     NtUserGetClipboardOwner,

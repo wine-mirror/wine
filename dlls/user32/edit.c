@@ -3807,10 +3807,10 @@ static void EDIT_WM_SetFocus(EDITSTATE *es)
             NtUserReleaseDC( es->hwndSelf, hdc );
         }
 
-	CreateCaret(es->hwndSelf, 0, 1, es->line_height);
+        NtUserCreateCaret( es->hwndSelf, 0, 1, es->line_height );
 	EDIT_SetCaretPos(es, es->selection_end,
 			 es->flags & EF_AFTER_WRAP);
-	ShowCaret(es->hwndSelf);
+        NtUserShowCaret( es->hwndSelf );
 	EDIT_NOTIFY_PARENT(es, EN_SETFOCUS);
 }
 
@@ -3890,10 +3890,10 @@ static void EDIT_WM_SetFont(EDITSTATE *es, HFONT font, BOOL redraw)
 		EDIT_UpdateText(es, NULL, TRUE);
 	if (es->flags & EF_FOCUSED) {
 		DestroyCaret();
-		CreateCaret(es->hwndSelf, 0, 1, es->line_height);
+		NtUserCreateCaret( es->hwndSelf, 0, 1, es->line_height );
 		EDIT_SetCaretPos(es, es->selection_end,
 				 es->flags & EF_AFTER_WRAP);
-		ShowCaret(es->hwndSelf);
+		NtUserShowCaret( es->hwndSelf );
 	}
 }
 

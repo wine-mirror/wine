@@ -4653,6 +4653,9 @@ ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
 {
     switch(code)
     {
+    case NtUserCallNoParam_DestroyCaret:
+        return destroy_caret();
+
     case NtUserCallNoParam_GetDesktopWindow:
         return HandleToUlong( get_desktop_window() );
 
@@ -4744,6 +4747,9 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
     case NtUserCallOneParam_MessageBeep:
         return message_beep( arg );
 
+    case NtUserCallOneParam_SetCaretBlinkTime:
+        return set_caret_blink_time( arg );
+
     /* temporary exports */
     case NtUserCallHooks:
         {
@@ -4799,6 +4805,9 @@ ULONG_PTR WINAPI NtUserCallTwoParam( ULONG_PTR arg1, ULONG_PTR arg2, ULONG code 
 
     case NtUserCallTwoParam_ReplyMessage:
         return reply_message_result( arg1, (MSG *)arg2 );
+
+    case NtUserCallTwoParam_SetCaretPos:
+        return set_caret_pos( arg1, arg2 );
 
     case NtUserCallTwoParam_SetIconParam:
         return set_icon_param( UlongToHandle(arg1), arg2 );

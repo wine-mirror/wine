@@ -2,10 +2,14 @@
  * USER Input processing
  *
  * Copyright 1993 Bob Amstadt
+ * Copyright 1993 David Metcalfe
  * Copyright 1996 Albrecht Kleine
+ * Copyright 1996 Frans van Dorsselaer
  * Copyright 1997 David Faure
  * Copyright 1998 Morten Welinder
  * Copyright 1998 Ulrich Weigand
+ * Copyright 2001 Eric Pouech
+ * Copyright 2002 Alexandre Julliard
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1766,4 +1770,384 @@ BOOL set_foreground_window( HWND hwnd, BOOL mouse )
             ret = set_active_window( hwnd, NULL, mouse, TRUE );
     }
     return ret;
+}
+
+struct
+{
+    HBITMAP bitmap;
+    unsigned int timeout;
+} caret = {0, 500};
+
+static void display_caret( HWND hwnd, const RECT *r )
+{
+    HDC dc, mem_dc;
+
+    /* do not use DCX_CACHE here, since coördinates are in logical units */
+    if (!(dc = NtUserGetDCEx( hwnd, 0, DCX_USESTYLE )))
+        return;
+    mem_dc = NtGdiCreateCompatibleDC(dc);
+    if (mem_dc)
+    {
+        HBITMAP prev_bitmap;
+
+        prev_bitmap = NtGdiSelectBitmap( mem_dc, caret.bitmap );
+        NtGdiBitBlt( dc, r->left, r->top, r->right-r->left, r->bottom-r->top, mem_dc, 0, 0, SRCINVERT, 0, 0 );
+        NtGdiSelectBitmap( mem_dc, prev_bitmap );
+        NtGdiDeleteObjectApp( mem_dc );
+    }
+    NtUserReleaseDC( hwnd, dc );
+}
+
+static void fill_rect( HDC dc, const RECT *rect, HBRUSH hbrush )
+{
+    HBRUSH prev_brush;
+
+    prev_brush = NtGdiSelectBrush( dc, hbrush );
+    NtGdiPatBlt( dc, rect->left, rect->top, rect->right - rect->left, rect->bottom - rect->top, PATCOPY );
+    if (prev_brush) NtGdiSelectBrush( dc, prev_brush );
+}
+
+static unsigned int get_caret_registry_timeout(void)
+{
+    char value_buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[11 * sizeof(WCHAR)])];
+    KEY_VALUE_PARTIAL_INFORMATION *value = (void *)value_buffer;
+    unsigned int ret = 500;
+    HKEY key;
+
+    if (!(key = reg_open_hkcu_key( "Control Panel\\Desktop" )))
+        return ret;
+
+    if (query_reg_ascii_value( key, "CursorBlinkRate", value, sizeof(value_buffer) ))
+        ret = wcstoul( (WCHAR *)value->Data, NULL, 10 );
+    NtClose( key );
+    return ret;
+}
+
+/*****************************************************************
+ *           NtUserCreateCaret  (win32u.@)
+ */
+BOOL WINAPI NtUserCreateCaret( HWND hwnd, HBITMAP bitmap, int width, int height )
+{
+    HBITMAP caret_bitmap = 0;
+    int old_state = 0;
+    int hidden = 0;
+    HWND prev = 0;
+    BOOL ret;
+    RECT r;
+
+    TRACE( "hwnd %p, bitmap %p, width %d, height %d\n", hwnd, bitmap, width, height );
+
+    if (!hwnd) return FALSE;
+
+    if (bitmap && bitmap != (HBITMAP)1)
+    {
+        BITMAP bitmap_data;
+
+        if (!NtGdiExtGetObjectW( bitmap, sizeof(bitmap_data), &bitmap_data )) return FALSE;
+        caret_bitmap = NtGdiCreateBitmap( bitmap_data.bmWidth, bitmap_data.bmHeight,
+                                          bitmap_data.bmPlanes, bitmap_data.bmBitsPixel, NULL );
+        if (caret_bitmap)
+        {
+            size_t size = bitmap_data.bmWidthBytes * bitmap_data.bmHeight;
+            BYTE *bits = malloc( size );
+
+            NtGdiGetBitmapBits( bitmap, size, bits );
+            NtGdiSetBitmapBits( caret_bitmap, size, bits );
+            free( bits );
+        }
+    }
+    else
+    {
+        HDC dc;
+
+        if (!width) width = get_system_metrics( SM_CXBORDER );
+        if (!height) height = get_system_metrics( SM_CYBORDER );
+
+        /* create the uniform bitmap on the fly */
+        dc = NtUserGetDCEx( hwnd, 0, DCX_USESTYLE );
+        if (dc)
+        {
+            HDC mem_dc = NtGdiCreateCompatibleDC( dc );
+            if (mem_dc)
+            {
+                if ((caret_bitmap = NtGdiCreateCompatibleBitmap( mem_dc, width, height )))
+                {
+                    HBITMAP prev_bitmap = NtGdiSelectBitmap( mem_dc, caret_bitmap );
+                    SetRect( &r, 0, 0, width, height );
+                    fill_rect( mem_dc, &r, GetStockObject( bitmap ? GRAY_BRUSH : WHITE_BRUSH ));
+                    NtGdiSelectBitmap( mem_dc, prev_bitmap );
+                }
+                NtGdiDeleteObjectApp( mem_dc );
+            }
+            NtUserReleaseDC( hwnd, dc );
+        }
+    }
+    if (!caret_bitmap) return FALSE;
+
+    SERVER_START_REQ( set_caret_window )
+    {
+        req->handle = wine_server_user_handle( hwnd );
+        req->width  = width;
+        req->height = height;
+        if ((ret = !wine_server_call_err( req )))
+        {
+            prev      = wine_server_ptr_handle( reply->previous );
+            r.left    = reply->old_rect.left;
+            r.top     = reply->old_rect.top;
+            r.right   = reply->old_rect.right;
+            r.bottom  = reply->old_rect.bottom;
+            old_state = reply->old_state;
+            hidden    = reply->old_hide;
+        }
+    }
+    SERVER_END_REQ;
+    if (!ret) return FALSE;
+
+    if (prev && !hidden)  /* hide the previous one */
+    {
+        /* FIXME: won't work if prev belongs to a different process */
+        kill_system_timer( prev, SYSTEM_TIMER_CARET );
+        if (old_state) display_caret( prev, &r );
+    }
+
+    if (caret.bitmap) NtGdiDeleteObjectApp( caret.bitmap );
+    caret.bitmap = caret_bitmap;
+    caret.timeout = get_caret_registry_timeout();
+    return TRUE;
+}
+
+/*******************************************************************
+ *              destroy_caret
+ */
+BOOL destroy_caret(void)
+{
+    int old_state = 0;
+    int hidden = 0;
+    HWND prev = 0;
+    BOOL ret;
+    RECT r;
+
+    SERVER_START_REQ( set_caret_window )
+    {
+        req->handle = 0;
+        req->width  = 0;
+        req->height = 0;
+        if ((ret = !wine_server_call_err( req )))
+        {
+            prev      = wine_server_ptr_handle( reply->previous );
+            r.left    = reply->old_rect.left;
+            r.top     = reply->old_rect.top;
+            r.right   = reply->old_rect.right;
+            r.bottom  = reply->old_rect.bottom;
+            old_state = reply->old_state;
+            hidden    = reply->old_hide;
+        }
+    }
+    SERVER_END_REQ;
+
+    if (ret && prev && !hidden)
+    {
+        /* FIXME: won't work if prev belongs to a different process */
+        kill_system_timer( prev, SYSTEM_TIMER_CARET );
+        if (old_state) display_caret( prev, &r );
+    }
+    if (caret.bitmap) NtGdiDeleteObjectApp( caret.bitmap );
+    caret.bitmap = 0;
+    return ret;
+}
+
+/*****************************************************************
+ *           NtUserGetCaretBlinkTime  (win32u.@)
+ */
+UINT WINAPI NtUserGetCaretBlinkTime(void)
+{
+    return caret.timeout;
+}
+
+/*******************************************************************
+ *              set_caret_blink_time
+ */
+BOOL set_caret_blink_time( unsigned int time )
+{
+    TRACE( "time %u\n", time );
+
+    caret.timeout = time;
+    /* FIXME: update the timer */
+    return TRUE;
+}
+
+/*****************************************************************
+ *           NtUserGetCaretPos  (win32u.@)
+ */
+BOOL WINAPI NtUserGetCaretPos( POINT *pt )
+{
+    BOOL ret;
+
+    SERVER_START_REQ( set_caret_info )
+    {
+        req->flags  = 0;  /* don't set anything */
+        req->handle = 0;
+        req->x      = 0;
+        req->y      = 0;
+        req->hide   = 0;
+        req->state  = 0;
+        if ((ret = !wine_server_call_err( req )))
+        {
+            pt->x = reply->old_rect.left;
+            pt->y = reply->old_rect.top;
+        }
+    }
+    SERVER_END_REQ;
+    return ret;
+}
+
+/*******************************************************************
+ *              set_caret_pos
+ */
+BOOL set_caret_pos( int x, int y )
+{
+    int old_state = 0;
+    int hidden = 0;
+    HWND hwnd = 0;
+    BOOL ret;
+    RECT r;
+
+    TRACE( "(%d, %d)\n", x, y );
+
+    SERVER_START_REQ( set_caret_info )
+    {
+        req->flags  = SET_CARET_POS|SET_CARET_STATE;
+        req->handle = 0;
+        req->x      = x;
+        req->y      = y;
+        req->hide   = 0;
+        req->state  = CARET_STATE_ON_IF_MOVED;
+        if ((ret = !wine_server_call_err( req )))
+        {
+            hwnd      = wine_server_ptr_handle( reply->full_handle );
+            r.left    = reply->old_rect.left;
+            r.top     = reply->old_rect.top;
+            r.right   = reply->old_rect.right;
+            r.bottom  = reply->old_rect.bottom;
+            old_state = reply->old_state;
+            hidden    = reply->old_hide;
+        }
+    }
+    SERVER_END_REQ;
+    if (ret && !hidden && (x != r.left || y != r.top))
+    {
+        if (old_state) display_caret( hwnd, &r );
+        r.right += x - r.left;
+        r.bottom += y - r.top;
+        r.left = x;
+        r.top = y;
+        display_caret( hwnd, &r );
+        NtUserSetSystemTimer( hwnd, SYSTEM_TIMER_CARET, caret.timeout );
+    }
+    return ret;
+}
+
+/*****************************************************************
+ *           NtUserShowCaret  (win32u.@)
+ */
+BOOL WINAPI NtUserShowCaret( HWND hwnd )
+{
+    int hidden = 0;
+    BOOL ret;
+    RECT r;
+
+    SERVER_START_REQ( set_caret_info )
+    {
+        req->flags  = SET_CARET_HIDE | SET_CARET_STATE;
+        req->handle = wine_server_user_handle( hwnd );
+        req->x      = 0;
+        req->y      = 0;
+        req->hide   = -1;
+        req->state  = CARET_STATE_ON;
+        if ((ret = !wine_server_call_err( req )))
+        {
+            hwnd      = wine_server_ptr_handle( reply->full_handle );
+            r.left    = reply->old_rect.left;
+            r.top     = reply->old_rect.top;
+            r.right   = reply->old_rect.right;
+            r.bottom  = reply->old_rect.bottom;
+            hidden    = reply->old_hide;
+        }
+    }
+    SERVER_END_REQ;
+
+    if (ret && hidden == 1)  /* hidden was 1 so it's now 0 */
+    {
+        display_caret( hwnd, &r );
+        NtUserSetSystemTimer( hwnd, SYSTEM_TIMER_CARET, caret.timeout );
+    }
+    return ret;
+}
+
+/*****************************************************************
+ *           NtUserHideCaret  (win32u.@)
+ */
+BOOL WINAPI NtUserHideCaret( HWND hwnd )
+{
+    int old_state = 0;
+    int hidden = 0;
+    BOOL ret;
+    RECT r;
+
+    SERVER_START_REQ( set_caret_info )
+    {
+        req->flags  = SET_CARET_HIDE | SET_CARET_STATE;
+        req->handle = wine_server_user_handle( hwnd );
+        req->x      = 0;
+        req->y      = 0;
+        req->hide   = 1;
+        req->state  = CARET_STATE_OFF;
+        if ((ret = !wine_server_call_err( req )))
+        {
+            hwnd      = wine_server_ptr_handle( reply->full_handle );
+            r.left    = reply->old_rect.left;
+            r.top     = reply->old_rect.top;
+            r.right   = reply->old_rect.right;
+            r.bottom  = reply->old_rect.bottom;
+            old_state = reply->old_state;
+            hidden    = reply->old_hide;
+        }
+    }
+    SERVER_END_REQ;
+
+    if (ret && !hidden)
+    {
+        if (old_state) display_caret( hwnd, &r );
+        kill_system_timer( hwnd, SYSTEM_TIMER_CARET );
+    }
+    return ret;
+}
+
+void toggle_caret( HWND hwnd )
+{
+    BOOL ret;
+    RECT r;
+    int hidden = 0;
+
+    SERVER_START_REQ( set_caret_info )
+    {
+        req->flags  = SET_CARET_STATE;
+        req->handle = wine_server_user_handle( hwnd );
+        req->x      = 0;
+        req->y      = 0;
+        req->hide   = 0;
+        req->state  = CARET_STATE_TOGGLE;
+        if ((ret = !wine_server_call( req )))
+        {
+            hwnd      = wine_server_ptr_handle( reply->full_handle );
+            r.left    = reply->old_rect.left;
+            r.top     = reply->old_rect.top;
+            r.right   = reply->old_rect.right;
+            r.bottom  = reply->old_rect.bottom;
+            hidden    = reply->old_hide;
+        }
+    }
+    SERVER_END_REQ;
+
+    if (ret && !hidden) display_caret( hwnd, &r );
 }

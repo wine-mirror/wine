@@ -463,6 +463,7 @@ BOOL    WINAPI NtUserCloseWindowStation( HWINSTA handle );
 INT     WINAPI NtUserCopyAcceleratorTable( HACCEL src, ACCEL *dst, INT count );
 INT     WINAPI NtUserCountClipboardFormats(void);
 HACCEL  WINAPI NtUserCreateAcceleratorTable( ACCEL *table, INT count );
+BOOL    WINAPI NtUserCreateCaret( HWND hwnd, HBITMAP bitmap, int width, int height );
 HDESK   WINAPI NtUserCreateDesktopEx( OBJECT_ATTRIBUTES *attr, UNICODE_STRING *device,
                                       DEVMODEW *devmode, DWORD flags, ACCESS_MASK access,
                                       ULONG heap_size );
@@ -500,6 +501,8 @@ BOOL    WINAPI NtUserFlashWindowEx( FLASHWINFO *info );
 HWND    WINAPI NtUserGetAncestor( HWND hwnd, UINT type );
 SHORT   WINAPI NtUserGetAsyncKeyState( INT key );
 ULONG   WINAPI NtUserGetAtomName( ATOM atom, UNICODE_STRING *name );
+UINT    WINAPI NtUserGetCaretBlinkTime(void);
+BOOL    WINAPI NtUserGetCaretPos( POINT *point );
 ATOM    WINAPI NtUserGetClassInfoEx( HINSTANCE instance, UNICODE_STRING *name, WNDCLASSEXW *wc,
                                      struct client_menu_name *menu_name, BOOL ansi );
 INT     WINAPI NtUserGetClassName( HWND hwnd, BOOL real, UNICODE_STRING *name );
@@ -547,6 +550,7 @@ INT     WINAPI NtUserGetUpdateRgn( HWND hwnd, HRGN hrgn, BOOL erase );
 BOOL    WINAPI NtUserGetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *out_size );
 BOOL    WINAPI NtUserGetUpdateRect( HWND hwnd, RECT *rect, BOOL erase );
 int     WINAPI NtUserGetWindowRgnEx( HWND hwnd, HRGN hrgn, UINT unk );
+BOOL    WINAPI NtUserHideCaret( HWND hwnd );
 NTSTATUS WINAPI NtUserInitializeClientPfnArrays( const struct user_client_procs *client_procsA,
                                                  const struct user_client_procs *client_procsW,
                                                  const void *client_workers, HINSTANCE user_module );
@@ -616,6 +620,7 @@ HHOOK   WINAPI NtUserSetWindowsHookEx( HINSTANCE inst, UNICODE_STRING *module, D
 HWINEVENTHOOK WINAPI NtUserSetWinEventHook( DWORD event_min, DWORD event_max, HMODULE inst,
                                             UNICODE_STRING *module, WINEVENTPROC proc,
                                             DWORD pid, DWORD tid, DWORD flags );
+BOOL    WINAPI NtUserShowCaret( HWND hwnd );
 INT     WINAPI NtUserShowCursor( BOOL show );
 BOOL    WINAPI NtUserShowWindow( HWND hwnd, INT cmd );
 BOOL    WINAPI NtUserShowWindowAsync( HWND hwnd, INT cmd );
@@ -643,6 +648,7 @@ HWND    WINAPI NtUserWindowFromPoint( LONG x, LONG y );
 /* NtUserCallNoParam codes, not compatible with Windows */
 enum
 {
+    NtUserCallNoParam_DestroyCaret,
     NtUserCallNoParam_GetDesktopWindow,
     NtUserCallNoParam_GetInputState,
     NtUserCallNoParam_ReleaseCapture,
@@ -650,6 +656,11 @@ enum
     NtUserExitingThread,
     NtUserThreadDetach,
 };
+
+static inline BOOL NtUserDestroyCaret(void)
+{
+    return NtUserCallNoParam( NtUserCallNoParam_DestroyCaret );
+}
 
 static inline HWND NtUserGetDesktopWindow(void)
 {
@@ -688,6 +699,7 @@ enum
     NtUserCallOneParam_IsWindowRectFullScreen,
     NtUserCallOneParam_MessageBeep,
     NtUserCallOneParam_RealizePalette,
+    NtUserCallOneParam_SetCaretBlinkTime,
     /* temporary exports */
     NtUserCallHooks,
     NtUserGetDeskPattern,
@@ -754,6 +766,11 @@ static inline RECT NtUserGetPrimaryMonitorRect(void)
     return primary;
 }
 
+static inline BOOL NtUserSetCaretBlinkTime( unsigned int time )
+{
+    return NtUserCallOneParam( time, NtUserCallOneParam_SetCaretBlinkTime );
+}
+
 static inline COLORREF NtUserGetSysColor( INT index )
 {
     return NtUserCallOneParam( index, NtUserCallOneParam_GetSysColor );
@@ -804,6 +821,7 @@ enum
     NtUserCallTwoParam_GetSystemMetricsForDpi,
     NtUserCallTwoParam_MonitorFromRect,
     NtUserCallTwoParam_ReplyMessage,
+    NtUserCallTwoParam_SetCaretPos,
     NtUserCallTwoParam_SetIconParam,
     NtUserCallTwoParam_UnhookWindowsHook,
     /* temporary exports */
@@ -837,6 +855,11 @@ static inline HMONITOR NtUserMonitorFromRect( const RECT *rect, DWORD flags )
 static inline BOOL NtUserReplyMessage( LRESULT result, MSG *msg )
 {
     return NtUserCallTwoParam( result, (UINT_PTR)msg, NtUserCallTwoParam_ReplyMessage );
+}
+
+static inline BOOL NtUserSetCaretPos( int x, int y )
+{
+    return NtUserCallTwoParam( x, y, NtUserCallTwoParam_SetCaretPos );
 }
 
 static inline UINT_PTR NtUserSetIconParam( HICON icon, ULONG_PTR param )
