@@ -251,7 +251,7 @@ static HRESULT WINAPI BitmapScaler_CopyPixels(IWICBitmapScaler *iface,
         goto end;
     }
 
-    if ((cbStride * dest_rect.Height) > cbBufferSize)
+    if (cbStride * (dest_rect.Height - 1) + bytesperrow > cbBufferSize)
     {
         hr = E_INVALIDARG;
         goto end;

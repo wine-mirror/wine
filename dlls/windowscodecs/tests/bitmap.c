@@ -1151,7 +1151,7 @@ static void test_bitmap_scaler(void)
     double res_x, res_y;
     IWICBitmap *bitmap;
     UINT width, height;
-    BYTE buf[16];
+    BYTE buf[93];  /* capable of holding a 7*4px, 24bpp image with stride 24 -> buffer size = 3*24+21 */
     HRESULT hr;
 
     hr = IWICImagingFactory_CreateBitmap(factory, 4, 2, &GUID_WICPixelFormat24bppBGR, WICBitmapCacheOnLoad, &bitmap);
@@ -1243,7 +1243,7 @@ static void test_bitmap_scaler(void)
         WICBitmapInterpolationModeNearestNeighbor);
     ok(hr == E_INVALIDARG, "Failed to initialize bitmap scaler, hr %#lx.\n", hr);
 
-    hr = IWICBitmapScaler_Initialize(scaler, (IWICBitmapSource *)bitmap, 8, 4,
+    hr = IWICBitmapScaler_Initialize(scaler, (IWICBitmapSource *)bitmap, 7, 4,
         WICBitmapInterpolationModeNearestNeighbor);
     ok(hr == S_OK, "Failed to initialize bitmap scaler, hr %#lx.\n", hr);
 
@@ -1251,20 +1251,20 @@ static void test_bitmap_scaler(void)
         WICBitmapInterpolationModeNearestNeighbor);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
-    hr = IWICBitmapScaler_Initialize(scaler, (IWICBitmapSource *)bitmap, 8, 0,
+    hr = IWICBitmapScaler_Initialize(scaler, (IWICBitmapSource *)bitmap, 7, 0,
         WICBitmapInterpolationModeNearestNeighbor);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
     hr = IWICBitmapScaler_Initialize(scaler, NULL, 8, 4, WICBitmapInterpolationModeNearestNeighbor);
     ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
 
-    hr = IWICBitmapScaler_Initialize(scaler, (IWICBitmapSource *)bitmap, 8, 4,
+    hr = IWICBitmapScaler_Initialize(scaler, (IWICBitmapSource *)bitmap, 7, 4,
         WICBitmapInterpolationModeNearestNeighbor);
     ok(hr == WINCODEC_ERR_WRONGSTATE, "Unexpected hr %#lx.\n", hr);
 
     hr = IWICBitmapScaler_GetSize(scaler, &width, &height);
     ok(hr == S_OK, "Failed to get scaler size, hr %#lx.\n", hr);
-    ok(width == 8, "Unexpected width %u.\n", width);
+    ok(width == 7, "Unexpected width %u.\n", width);
     ok(height == 4, "Unexpected height %u.\n", height);
 
     hr = IWICBitmapScaler_GetSize(scaler, NULL, &height);
@@ -1306,6 +1306,9 @@ static void test_bitmap_scaler(void)
     hr = IWICBitmapScaler_CopyPalette(scaler, palette);
     ok(hr == WINCODEC_ERR_PALETTEUNAVAILABLE, "Unexpected hr %#lx.\n", hr);
     IWICPalette_Release(palette);
+
+    hr = IWICBitmapScaler_CopyPixels(scaler, NULL, /*cbStride=*/24, sizeof(buf), buf);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
     IWICBitmapScaler_Release(scaler);
 
