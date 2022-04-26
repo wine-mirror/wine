@@ -18,6 +18,34 @@
 
  import "d2d1_1.idl";
 
+typedef enum D2D1_FILTER
+{
+    D2D1_FILTER_MIN_MAG_MIP_POINT               = 0x00,
+    D2D1_FILTER_MIN_MAG_POINT_MIP_LINEAR        = 0x01,
+    D2D1_FILTER_MIN_POINT_MAG_LINEAR_MIP_POINT  = 0x04,
+    D2D1_FILTER_MIN_POINT_MAG_MIP_LINEAR        = 0x05,
+    D2D1_FILTER_MIN_LINEAR_MAG_MIP_POINT        = 0x10,
+    D2D1_FILTER_MIN_LINEAR_MAG_POINT_MIP_LINEAR = 0x11,
+    D2D1_FILTER_MIN_MAG_LINEAR_MIP_POINT        = 0x14,
+    D2D1_FILTER_MIN_MAG_MIP_LINEAR              = 0x15,
+    D2D1_FILTER_ANISOTROPIC                     = 0x55,
+    D2D1_FILTER_FORCE_DWORD = 0xffffffff
+} D2D1_FILTER;
+
+typedef enum D2D1_CHANNEL_DEPTH
+{
+    D2D1_CHANNEL_DEPTH_DEFAULT = 0x0,
+    D2D1_CHANNEL_DEPTH_1       = 0x1,
+    D2D1_CHANNEL_DEPTH_4       = 0x4,
+    D2D1_CHANNEL_DEPTH_FORCE_DWORD = 0xffffffff
+} D2D1_CHANNEL_DEPTH;
+
+typedef struct D2D1_INPUT_DESCRIPTION
+{
+    D2D1_FILTER filter;
+    UINT32 levelOfDetailCount;
+} D2D1_INPUT_DESCRIPTION;
+
 [
     object,
     uuid(9b8b1336-00a5-4668-92b7-ced5d8bf9b7b),
@@ -46,5 +74,28 @@ interface ID2D1ResourceTexture : IUnknown
         [in] UINT32 dimensions,
         [in] const BYTE *data,
         [in] UINT32 data_size
+    );
+}
+
+[
+    object,
+    uuid(519ae1bd-d19a-420d-b849-364f594776b7),
+    local,
+]
+interface ID2D1RenderInfo : IUnknown
+{
+    HRESULT SetInputDescription(
+        [in] UINT32 index,
+        [in] D2D1_INPUT_DESCRIPTION description
+    );
+    HRESULT SetOutputBuffer(
+        [in] D2D1_BUFFER_PRECISION precision,
+        [in] D2D1_CHANNEL_DEPTH depth
+    );
+    void SetCached(
+        [in] BOOL is_cached
+    );
+    void SetInstructionCountHint(
+        [in] UINT32 count
     );
 }
