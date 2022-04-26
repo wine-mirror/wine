@@ -37,6 +37,7 @@
 #include <fcntl.h>
 #include <sys/ioctl.h>
 #include <sys/soundcard.h>
+#include <pthread.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -58,6 +59,8 @@ struct midi_dest
     MIDIOUTCAPSW        caps;
     int                 fd;
 };
+
+static pthread_mutex_t in_buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static unsigned int num_dests, num_srcs, num_synths, seq_refs;
 static struct midi_dest dests[MAX_MIDIOUTDRV];
@@ -132,6 +135,24 @@ static int oss_to_win_device_type(int type)
             "Assuming FM Synth\n");
         return MOD_FMSYNTH;
     }
+}
+
+static void in_buffer_lock(void)
+{
+    pthread_mutex_lock(&in_buffer_mutex);
+}
+
+static void in_buffer_unlock(void)
+{
+    pthread_mutex_unlock(&in_buffer_mutex);
+}
+
+NTSTATUS midi_in_lock(void *args)
+{
+    if (args) in_buffer_lock();
+    else in_buffer_unlock();
+
+    return STATUS_SUCCESS;
 }
 
 static int seq_open(void)

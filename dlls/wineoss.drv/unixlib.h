@@ -302,12 +302,14 @@ enum oss_funcs
     oss_midi_in_message,
 
     oss_midi_seq_open, /* temporary */
+    oss_midi_in_lock,
 };
 
 NTSTATUS midi_init(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_out_message(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_in_message(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_seq_open(void *args) DECLSPEC_HIDDEN;
+NTSTATUS midi_in_lock(void *args) DECLSPEC_HIDDEN;
 
 extern unixlib_handle_t oss_handle;
 

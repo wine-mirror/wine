@@ -70,15 +70,6 @@ static	int 		MIDM_NumDevs = 0;
 
 static	int		numStartedMidiIn = 0;
 
-static CRITICAL_SECTION crit_sect;   /* protects all MidiIn buffers queues */
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &crit_sect,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": crit_sect") }
-};
-static CRITICAL_SECTION crit_sect = { &critsect_debug, -1, 0, 0, 0, 0 };
-
 static int end_thread;
 static HANDLE hThread;
 
@@ -133,6 +124,16 @@ static LRESULT OSS_MidiExit(void)
     MIDM_NumDevs = 0;
 
     return 0;
+}
+
+static void in_buffer_lock(void)
+{
+    OSS_CALL(midi_in_lock, ULongToPtr(1));
+}
+
+static void in_buffer_unlock(void)
+{
+    OSS_CALL(midi_in_lock, ULongToPtr(0));
 }
 
 static void notify_client(struct notify_context *notify)
@@ -231,7 +232,7 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 	LPMIDIHDR	lpMidiHdr;
         BOOL            sbfb = FALSE;
 
-	EnterCriticalSection(&crit_sect);
+	in_buffer_lock();
 	if ((lpMidiHdr = MidiInDev[wDevID].lpQueueHdr) != NULL) {
 	    LPBYTE	lpData = (LPBYTE) lpMidiHdr->lpData;
 
@@ -251,7 +252,7 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 	    lpMidiHdr->dwFlags |= MHDR_DONE;
 	    MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD_PTR)lpMidiHdr, dwTime);
 	}
-	LeaveCriticalSection(&crit_sect);
+	in_buffer_unlock();
 	return;
     }
 
@@ -505,7 +506,7 @@ static DWORD midAddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
     if (lpMidiHdr->dwFlags & MHDR_INQUEUE) return MIDIERR_STILLPLAYING;
     if (!(lpMidiHdr->dwFlags & MHDR_PREPARED)) return MIDIERR_UNPREPARED;
 
-    EnterCriticalSection(&crit_sect);
+    in_buffer_lock();
     lpMidiHdr->dwFlags &= ~WHDR_DONE;
     lpMidiHdr->dwFlags |= MHDR_INQUEUE;
     lpMidiHdr->dwBytesRecorded = 0;
@@ -520,7 +521,7 @@ static DWORD midAddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
 	     ptr = ptr->lpNext);
 	ptr->lpNext = lpMidiHdr;
     }
-    LeaveCriticalSection(&crit_sect);
+    in_buffer_unlock();
 
     return MMSYSERR_NOERROR;
 }
@@ -537,7 +538,7 @@ static DWORD midReset(WORD wDevID)
     if (wDevID >= MIDM_NumDevs) return MMSYSERR_BADDEVICEID;
     if (MidiInDev[wDevID].state == -1) return MIDIERR_NODEVICE;
 
-    EnterCriticalSection(&crit_sect);
+    in_buffer_lock();
     while (MidiInDev[wDevID].lpQueueHdr) {
 	LPMIDIHDR lpMidiHdr = MidiInDev[wDevID].lpQueueHdr;
 	MidiInDev[wDevID].lpQueueHdr = lpMidiHdr->lpNext;
@@ -545,7 +546,7 @@ static DWORD midReset(WORD wDevID)
 	lpMidiHdr->dwFlags |= MHDR_DONE;
 	MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD_PTR)lpMidiHdr, dwTime);
     }
-    LeaveCriticalSection(&crit_sect);
+    in_buffer_unlock();
 
     return MMSYSERR_NOERROR;
 }
