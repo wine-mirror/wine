@@ -286,8 +286,9 @@ struct dwrite_fontface
 };
 
 extern HRESULT create_numbersubstitution(DWRITE_NUMBER_SUBSTITUTION_METHOD,const WCHAR *locale,BOOL,IDWriteNumberSubstitution**) DECLSPEC_HIDDEN;
-extern HRESULT create_textformat(const WCHAR*,IDWriteFontCollection*,DWRITE_FONT_WEIGHT,DWRITE_FONT_STYLE,DWRITE_FONT_STRETCH,
-                                 FLOAT,const WCHAR*,IDWriteTextFormat**) DECLSPEC_HIDDEN;
+extern HRESULT create_text_format(const WCHAR *family_name, IDWriteFontCollection *collection, DWRITE_FONT_WEIGHT weight,
+        DWRITE_FONT_STYLE style, DWRITE_FONT_STRETCH stretch, float size, const WCHAR *locale, REFIID riid,
+        void **out) DECLSPEC_HIDDEN;
 extern HRESULT create_textlayout(const struct textlayout_desc*,IDWriteTextLayout**) DECLSPEC_HIDDEN;
 extern HRESULT create_trimmingsign(IDWriteFactory7 *factory, IDWriteTextFormat *format,
         IDWriteInlineObject **sign) DECLSPEC_HIDDEN;

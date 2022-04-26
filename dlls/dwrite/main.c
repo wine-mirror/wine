@@ -1199,7 +1199,8 @@ static HRESULT WINAPI dwritefactory_CreateTextFormat(IDWriteFactory7 *iface, WCH
         return hr;
     }
 
-    hr = create_textformat(family_name, collection, weight, style, stretch, size, locale, format);
+    hr = create_text_format(family_name, collection, weight, style, stretch, size, locale,
+            &IID_IDWriteTextFormat, (void **)format);
     IDWriteFontCollection_Release(collection);
     return hr;
 }
@@ -1895,14 +1896,35 @@ static HRESULT WINAPI dwritefactory6_CreateFontSetBuilder(IDWriteFactory7 *iface
     return create_fontset_builder(iface, builder);
 }
 
-static HRESULT WINAPI dwritefactory6_CreateTextFormat(IDWriteFactory7 *iface, const WCHAR *familyname,
+static HRESULT WINAPI dwritefactory6_CreateTextFormat(IDWriteFactory7 *iface, const WCHAR *family_name,
         IDWriteFontCollection *collection, DWRITE_FONT_AXIS_VALUE const *axis_values, UINT32 num_axis,
-        FLOAT fontsize, const WCHAR *localename, IDWriteTextFormat3 **format)
+        float size, const WCHAR *locale, IDWriteTextFormat3 **format)
 {
-    FIXME("%p, %s, %p, %p, %u, %.8e, %s, %p.\n", iface, debugstr_w(familyname), collection, axis_values, num_axis,
-            fontsize, debugstr_w(localename), format);
+    struct dwritefactory *factory = impl_from_IDWriteFactory7(iface);
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("%p, %s, %p, %p, %u, %.8e, %s, %p.\n", iface, debugstr_w(family_name), collection, axis_values, num_axis,
+            size, debugstr_w(locale), format);
+
+    *format = NULL;
+
+    if (axis_values)
+        FIXME("Axis values are ignored.\n");
+
+    if (collection)
+    {
+        IDWriteFontCollection_AddRef(collection);
+    }
+    else if (FAILED(hr = factory_get_system_collection(factory, DWRITE_FONT_FAMILY_MODEL_TYPOGRAPHIC,
+            &IID_IDWriteFontCollection, (void **)&collection)))
+    {
+        return hr;
+    }
+
+    hr = create_text_format(family_name, collection, DWRITE_FONT_WEIGHT_NORMAL, DWRITE_FONT_STYLE_NORMAL,
+            DWRITE_FONT_STRETCH_NORMAL, size, locale, &IID_IDWriteTextFormat3, (void **)format);
+    IDWriteFontCollection_Release(collection);
+    return hr;
 }
 
 static HRESULT WINAPI dwritefactory7_GetSystemFontSet(IDWriteFactory7 *iface, BOOL include_downloadable,

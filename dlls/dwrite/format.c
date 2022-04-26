@@ -711,12 +711,14 @@ struct dwrite_textformat *unsafe_impl_from_IDWriteTextFormat(IDWriteTextFormat *
         CONTAINING_RECORD(iface, struct dwrite_textformat, IDWriteTextFormat3_iface) : NULL;
 }
 
-HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *collection, DWRITE_FONT_WEIGHT weight,
-        DWRITE_FONT_STYLE style, DWRITE_FONT_STRETCH stretch, float size, const WCHAR *locale, IDWriteTextFormat **format)
+HRESULT create_text_format(const WCHAR *family_name, IDWriteFontCollection *collection, DWRITE_FONT_WEIGHT weight,
+        DWRITE_FONT_STYLE style, DWRITE_FONT_STRETCH stretch, float size, const WCHAR *locale,
+        REFIID riid, void **out)
 {
     struct dwrite_textformat *object;
+    HRESULT hr;
 
-    *format = NULL;
+    *out = NULL;
 
     if (size <= 0.0f)
         return E_INVALIDARG;
@@ -746,9 +748,10 @@ HRESULT create_textformat(const WCHAR *family_name, IDWriteFontCollection *colle
     object->format.collection = collection;
     IDWriteFontCollection_AddRef(object->format.collection);
 
-    *format = (IDWriteTextFormat *)&object->IDWriteTextFormat3_iface;
+    hr = IDWriteTextFormat3_QueryInterface(&object->IDWriteTextFormat3_iface, riid, out);
+    IDWriteTextFormat3_Release(&object->IDWriteTextFormat3_iface);
 
-    return S_OK;
+    return hr;
 }
 
 static HRESULT WINAPI dwritetrimmingsign_QueryInterface(IDWriteInlineObject *iface, REFIID riid, void **obj)

@@ -5986,11 +5986,8 @@ static void test_text_format_axes(void)
     }
 
     hr = IDWriteFactory6_CreateTextFormat(factory, L"test_family", NULL, NULL, 0, 10.0f, L"en-us", &format3);
-    todo_wine
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
-if (SUCCEEDED(hr))
-{
     hr = IDWriteTextFormat3_GetFontCollection(format3, &collection);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
 
@@ -6025,7 +6022,7 @@ if (SUCCEEDED(hr))
     ok(weight == DWRITE_FONT_WEIGHT_NORMAL, "Unexpected font weight %d.\n", weight);
 
     IDWriteTextFormat3_Release(format3);
-}
+
     hr = IDWriteFactory_CreateTextFormat((IDWriteFactory *)factory, L"test_family", NULL,
             DWRITE_FONT_WEIGHT_BOLD, DWRITE_FONT_STYLE_ITALIC, DWRITE_FONT_STRETCH_EXPANDED,
             10.0f, L"en-us", &format);
