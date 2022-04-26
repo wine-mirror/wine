@@ -39,6 +39,7 @@ typedef struct _ShellItem {
     LONG                    ref;
     LPITEMIDLIST            pidl;
     IPersistIDList          IPersistIDList_iface;
+    IShellItemImageFactory  IShellItemImageFactory_iface;
 } ShellItem;
 
 typedef struct _CustomDestinationList {
@@ -54,6 +55,11 @@ static inline ShellItem *impl_from_IShellItem2(IShellItem2 *iface)
 static inline ShellItem *impl_from_IPersistIDList( IPersistIDList *iface )
 {
     return CONTAINING_RECORD(iface, ShellItem, IPersistIDList_iface);
+}
+
+static inline ShellItem *impl_from_IShellItemImageFactory( IShellItemImageFactory *iface )
+{
+    return CONTAINING_RECORD(iface, ShellItem, IShellItemImageFactory_iface);
 }
 
 static inline CustomDestinationList *impl_from_ICustomDestinationList( ICustomDestinationList *iface )
@@ -78,6 +84,10 @@ static HRESULT WINAPI ShellItem_QueryInterface(IShellItem2 *iface, REFIID riid,
     else if (IsEqualIID(&IID_IPersist, riid) || IsEqualIID(&IID_IPersistIDList, riid))
     {
         *ppv = &This->IPersistIDList_iface;
+    }
+    else if (IsEqualIID(&IID_IShellItemImageFactory, riid))
+    {
+        *ppv = &This->IShellItemImageFactory_iface;
     }
     else {
         FIXME("not implemented for %s\n", shdebugstr_guid(riid));
@@ -536,6 +546,45 @@ static const IPersistIDListVtbl ShellItem_IPersistIDList_Vtbl = {
     ShellItem_IPersistIDList_GetIDList
 };
 
+static HRESULT WINAPI ShellItem_IShellItemImageFactory_QueryInterface(IShellItemImageFactory *iface,
+    REFIID riid, void **ppv)
+{
+    ShellItem *This = impl_from_IShellItemImageFactory(iface);
+    return IShellItem2_QueryInterface(&This->IShellItem2_iface, riid, ppv);
+}
+
+static ULONG WINAPI ShellItem_IShellItemImageFactory_AddRef(IShellItemImageFactory *iface)
+{
+    ShellItem *This = impl_from_IShellItemImageFactory(iface);
+    return IShellItem2_AddRef(&This->IShellItem2_iface);
+}
+
+static ULONG WINAPI ShellItem_IShellItemImageFactory_Release(IShellItemImageFactory *iface)
+{
+    ShellItem *This = impl_from_IShellItemImageFactory(iface);
+    return IShellItem2_Release(&This->IShellItem2_iface);
+}
+
+static HRESULT WINAPI ShellItem_IShellItemImageFactory_GetImage(IShellItemImageFactory *iface,
+    SIZE size, SIIGBF flags, HBITMAP *phbm)
+{
+    ShellItem *This = impl_from_IShellItemImageFactory(iface);
+    static int once;
+
+    if (!once++)
+        FIXME("%p ({%lu, %lu} %d %p): stub\n", This, size.cx, size.cy, flags, phbm);
+
+    *phbm = NULL;
+    return E_NOTIMPL;
+}
+
+static const IShellItemImageFactoryVtbl ShellItem_IShellItemImageFactory_Vtbl = {
+    ShellItem_IShellItemImageFactory_QueryInterface,
+    ShellItem_IShellItemImageFactory_AddRef,
+    ShellItem_IShellItemImageFactory_Release,
+    ShellItem_IShellItemImageFactory_GetImage,
+};
+
 
 HRESULT WINAPI IShellItem_Constructor(IUnknown *pUnkOuter, REFIID riid, void **ppv)
 {
@@ -553,6 +602,7 @@ HRESULT WINAPI IShellItem_Constructor(IUnknown *pUnkOuter, REFIID riid, void **p
     This->ref = 1;
     This->pidl = NULL;
     This->IPersistIDList_iface.lpVtbl = &ShellItem_IPersistIDList_Vtbl;
+    This->IShellItemImageFactory_iface.lpVtbl = &ShellItem_IShellItemImageFactory_Vtbl;
 
     ret = IShellItem2_QueryInterface(&This->IShellItem2_iface, riid, ppv);
     IShellItem2_Release(&This->IShellItem2_iface);

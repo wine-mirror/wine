@@ -4448,7 +4448,6 @@ static void test_IShellItemImageFactory(void)
 
     ret = IShellItem_QueryInterface(shellitem, &IID_IShellItemImageFactory, (void **)&siif);
     IShellItem_Release(shellitem);
-    todo_wine
     ok(ret == S_OK, "QueryInterface returned 0x%08lx\n", ret);
     if (SUCCEEDED(ret))
     {
