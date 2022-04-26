@@ -976,6 +976,7 @@ static const MFVIDEOFORMAT * WINAPI video_mediatype_GetVideoFormat(IMFVideoMedia
     TRACE("%p.\n", iface);
 
     CoTaskMemFree(media_type->video_format);
+    media_type->video_format = NULL;
     if (FAILED(hr = MFCreateMFVideoFormatFromMFMediaType(&media_type->IMFMediaType_iface, &media_type->video_format, &size)))
         WARN("Failed to create format description, hr %#lx.\n", hr);
 
@@ -1376,6 +1377,7 @@ static const WAVEFORMATEX * WINAPI audio_mediatype_GetAudioFormat(IMFAudioMediaT
     TRACE("%p.\n", iface);
 
     CoTaskMemFree(media_type->audio_format);
+    media_type->audio_format = NULL;
     if (FAILED(hr = MFCreateWaveFormatExFromMFMediaType(&media_type->IMFMediaType_iface, &media_type->audio_format,
             &size, MFWaveFormatExConvertFlag_Normal)))
     {
