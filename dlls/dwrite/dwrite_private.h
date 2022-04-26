@@ -439,6 +439,7 @@ struct dwrite_font_props
     FONTSIGNATURE fontsig;
     LOGFONTW lf;
     UINT32 flags;
+    float slant_angle;
 };
 
 struct file_stream_desc {
@@ -465,10 +466,20 @@ struct ot_gsubgpos_table
     unsigned int lookup_list;
 };
 
+struct dwrite_var_axis
+{
+    DWRITE_FONT_AXIS_TAG tag;
+    float default_value;
+    float min_value;
+    float max_value;
+    unsigned int attributes;
+};
+
 extern HRESULT opentype_analyze_font(IDWriteFontFileStream*,BOOL*,DWRITE_FONT_FILE_TYPE*,DWRITE_FONT_FACE_TYPE*,UINT32*) DECLSPEC_HIDDEN;
 extern HRESULT opentype_try_get_font_table(const struct file_stream_desc *stream_desc, UINT32 tag, const void **data,
         void **context, UINT32 *size, BOOL *exists) DECLSPEC_HIDDEN;
-extern void opentype_get_font_properties(struct file_stream_desc*,struct dwrite_font_props*) DECLSPEC_HIDDEN;
+extern void opentype_get_font_properties(const struct file_stream_desc *stream_desc,
+        struct dwrite_font_props *props) DECLSPEC_HIDDEN;
 extern void opentype_get_font_metrics(struct file_stream_desc*,DWRITE_FONT_METRICS1*,DWRITE_CARET_METRICS*) DECLSPEC_HIDDEN;
 extern void opentype_get_font_typo_metrics(struct file_stream_desc *stream_desc, unsigned int *ascent,
         unsigned int *descent) DECLSPEC_HIDDEN;
@@ -490,6 +501,8 @@ extern DWRITE_CONTAINER_TYPE opentype_analyze_container_type(void const *, UINT3
 extern HRESULT opentype_get_kerning_pairs(struct dwrite_fontface *fontface, unsigned int count,
         const UINT16 *glyphs, INT32 *values) DECLSPEC_HIDDEN;
 extern BOOL opentype_has_kerning_pairs(struct dwrite_fontface *fontface) DECLSPEC_HIDDEN;
+extern HRESULT opentype_get_font_var_axis(const struct file_stream_desc *stream_desc, struct dwrite_var_axis **axis,
+        unsigned int *axis_count) DECLSPEC_HIDDEN;
 
 struct dwrite_colorglyph {
     USHORT layer; /* [0, num_layers) index indicating current layer */

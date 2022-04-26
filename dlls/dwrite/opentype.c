@@ -21,6 +21,7 @@
 #define COBJMACROS
 #define NONAMELESSUNION
 
+#include <stdint.h>
 #include "dwrite_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
@@ -45,6 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #define MS_CMAP_TAG DWRITE_MAKE_OPENTYPE_TAG('c','m','a','p')
 #define MS_META_TAG DWRITE_MAKE_OPENTYPE_TAG('m','e','t','a')
 #define MS_KERN_TAG DWRITE_MAKE_OPENTYPE_TAG('k','e','r','n')
+#define MS_FVAR_TAG DWRITE_MAKE_OPENTYPE_TAG('f','v','a','r')
 
 /* 'sbix' formats */
 #define MS_PNG__TAG DWRITE_MAKE_OPENTYPE_TAG('p','n','g',' ')
@@ -61,9 +63,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #ifdef WORDS_BIGENDIAN
 #define GET_BE_WORD(x) (x)
 #define GET_BE_DWORD(x) (x)
+#define GET_BE_FIXED(x) (x / 65536.0f)
 #else
 #define GET_BE_WORD(x)  RtlUshortByteSwap(x)
 #define GET_BE_DWORD(x) RtlUlongByteSwap(x)
+#define GET_BE_FIXED(x) ((int32_t)GET_BE_DWORD(x) / 65536.0f)
 #endif
 
 #define GLYPH_CONTEXT_MAX_LENGTH 64
@@ -160,15 +164,15 @@ enum tt_head_macstyle
 
 struct tt_post
 {
-    ULONG Version;
-    ULONG italicAngle;
-    SHORT underlinePosition;
-    SHORT underlineThickness;
-    ULONG fixed_pitch;
-    ULONG minmemType42;
-    ULONG maxmemType42;
-    ULONG minmemType1;
-    ULONG maxmemType1;
+    uint32_t Version;
+    int32_t italicAngle;
+    int16_t underlinePosition;
+    int16_t underlineThickness;
+    uint32_t fixed_pitch;
+    uint32_t minmemType42;
+    uint32_t maxmemType42;
+    uint32_t minmemType1;
+    uint32_t maxmemType1;
 };
 
 struct tt_os2
@@ -1253,6 +1257,28 @@ struct meta_header
     struct meta_data_map maps[1];
 };
 
+struct fvar_header
+{
+    uint16_t major_version;
+    uint16_t minor_version;
+    uint16_t axes_array_offset;
+    uint16_t reserved;
+    uint16_t axis_count;
+    uint16_t axis_size;
+    uint16_t instance_count;
+    uint16_t instance_size;
+};
+
+struct var_axis_record
+{
+    uint32_t tag;
+    int32_t min_value;
+    int32_t default_value;
+    int32_t max_value;
+    uint16_t flags;
+    uint16_t nameid;
+};
+
 static const void *table_read_ensure(const struct dwrite_fonttable *table, unsigned int offset, unsigned int size)
 {
     if (size > table->size || offset > table->size - size)
@@ -1271,6 +1297,11 @@ static DWORD table_read_be_dword(const struct dwrite_fonttable *table, unsigned 
 {
     const DWORD *ptr = table_read_ensure(table, offset, sizeof(*ptr));
     return ptr ? GET_BE_DWORD(*ptr) : 0;
+}
+
+static float table_read_be_fixed(const struct dwrite_fonttable *table, unsigned int offset)
+{
+    return (int32_t)table_read_be_dword(table, offset) / 65536.0;
 }
 
 static DWORD table_read_dword(const struct dwrite_fonttable *table, unsigned int offset)
@@ -2022,22 +2053,20 @@ void opentype_get_font_metrics(struct file_stream_desc *stream_desc, DWRITE_FONT
         IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, hhea.context);
 }
 
-void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct dwrite_font_props *props)
+void opentype_get_font_properties(const struct file_stream_desc *stream_desc, struct dwrite_font_props *props)
 {
-    struct dwrite_fonttable os2, head, colr, cpal;
+    struct dwrite_fonttable os2, head, post, colr, cpal;
     BOOL is_symbol, is_monospaced;
 
     opentype_get_font_table(stream_desc, MS_OS2_TAG, &os2);
     opentype_get_font_table(stream_desc, MS_HEAD_TAG, &head);
 
-    /* default stretch, weight and style to normal */
+    memset(props, 0, sizeof(*props));
+
+    /* Default stretch, weight and style to normal */
     props->stretch = DWRITE_FONT_STRETCH_NORMAL;
     props->weight = DWRITE_FONT_WEIGHT_NORMAL;
     props->style = DWRITE_FONT_STYLE_NORMAL;
-    memset(&props->panose, 0, sizeof(props->panose));
-    memset(&props->fontsig, 0, sizeof(props->fontsig));
-    memset(&props->lf, 0, sizeof(props->lf));
-    props->flags = 0;
 
     /* DWRITE_FONT_STRETCH enumeration values directly match font data values */
     if (os2.data)
@@ -2132,20 +2161,18 @@ void opentype_get_font_properties(struct file_stream_desc *stream_desc, struct d
     if (is_symbol)
         props->flags |= FONT_IS_SYMBOL;
 
-    /* FONT_IS_MONOSPACED */
-    if (!(is_monospaced = props->panose.text.proportion == DWRITE_PANOSE_PROPORTION_MONOSPACED))
+    /* FONT_IS_MONOSPACED, slant angle */
+    opentype_get_font_table(stream_desc, MS_POST_TAG, &post);
+    is_monospaced = props->panose.text.proportion == DWRITE_PANOSE_PROPORTION_MONOSPACED;
+    if (post.data)
     {
-        struct dwrite_fonttable post;
-
-        opentype_get_font_table(stream_desc, MS_POST_TAG, &post);
-
-        if (post.data)
-        {
+        if (!is_monospaced)
             is_monospaced = !!table_read_dword(&post, FIELD_OFFSET(struct tt_post, fixed_pitch));
-
-            IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, post.context);
-        }
+        props->slant_angle = table_read_be_fixed(&post, FIELD_OFFSET(struct tt_post, italicAngle));
     }
+    if (post.context)
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, post.context);
+
     if (is_monospaced)
         props->flags |= FONT_IS_MONOSPACED;
 
@@ -6617,4 +6644,97 @@ HRESULT opentype_get_kerning_pairs(struct dwrite_fontface *fontface, unsigned in
     values[count - 1] = 0;
 
     return S_OK;
+}
+
+static void opentype_font_var_add_static_axis(struct dwrite_var_axis **axis, unsigned int *axis_count,
+        unsigned int tag, float value)
+{
+    struct dwrite_var_axis *entry = &(*axis)[(*axis_count)++];
+    entry->tag = tag;
+    entry->min_value = entry->max_value = entry->default_value = value;
+    entry->attributes = 0;
+}
+
+HRESULT opentype_get_font_var_axis(const struct file_stream_desc *stream_desc, struct dwrite_var_axis **axis,
+        unsigned int *axis_count)
+{
+    static const float width_axis_values[] =
+    {
+        0.0f, /* DWRITE_FONT_STRETCH_UNDEFINED */
+        50.0f, /* DWRITE_FONT_STRETCH_ULTRA_CONDENSED */
+        62.5f, /* DWRITE_FONT_STRETCH_EXTRA_CONDENSED */
+        75.0f, /* DWRITE_FONT_STRETCH_CONDENSED */
+        87.5f, /* DWRITE_FONT_STRETCH_SEMI_CONDENSED */
+        100.0f, /* DWRITE_FONT_STRETCH_NORMAL */
+        112.5f, /* DWRITE_FONT_STRETCH_SEMI_EXPANDED */
+        125.0f, /* DWRITE_FONT_STRETCH_EXPANDED */
+        150.0f, /* DWRITE_FONT_STRETCH_EXTRA_EXPANDED */
+        200.0f, /* DWRITE_FONT_STRETCH_ULTRA_EXPANDED */
+    };
+    BOOL has_wght = FALSE, has_wdth = FALSE, has_slnt = FALSE, has_ital = FALSE;
+    const struct var_axis_record *records;
+    const struct fvar_header *header;
+    unsigned int i, count, tag, size;
+    struct dwrite_font_props props;
+    struct dwrite_fonttable fvar;
+    HRESULT hr = S_OK;
+
+    *axis = NULL;
+    *axis_count = 0;
+
+    opentype_get_font_table(stream_desc, MS_FVAR_TAG, &fvar);
+
+    if (!(header = table_read_ensure(&fvar, 0, sizeof(*header)))) goto done;
+    if (!(GET_BE_WORD(header->major_version) == 1 && GET_BE_WORD(header->minor_version) == 0))
+    {
+        WARN("Unexpected fvar version.\n");
+        goto done;
+    }
+
+    count = GET_BE_WORD(header->axis_count);
+    size = GET_BE_WORD(header->axis_size);
+
+    if (!count || size != sizeof(*records)) goto done;
+    if (!(records = table_read_ensure(&fvar, GET_BE_WORD(header->axes_array_offset), size * count))) goto done;
+
+    if (!(*axis = calloc(count + 4, sizeof(**axis))))
+    {
+        hr = E_OUTOFMEMORY;
+        goto done;
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        (*axis)[i].tag = tag = records[i].tag;
+        (*axis)[i].default_value = GET_BE_FIXED(records[i].default_value);
+        (*axis)[i].min_value = GET_BE_FIXED(records[i].min_value);
+        (*axis)[i].max_value = GET_BE_FIXED(records[i].max_value);
+        if (GET_BE_WORD(records[i].flags & 0x1))
+            (*axis)[i].attributes |= DWRITE_FONT_AXIS_ATTRIBUTES_HIDDEN;
+        /* FIXME: set DWRITE_FONT_AXIS_ATTRIBUTES_VARIABLE */
+
+        if (tag == DWRITE_FONT_AXIS_TAG_WEIGHT) has_wght = TRUE;
+        if (tag == DWRITE_FONT_AXIS_TAG_WIDTH) has_wdth = TRUE;
+        if (tag == DWRITE_FONT_AXIS_TAG_SLANT) has_slnt = TRUE;
+        if (tag == DWRITE_FONT_AXIS_TAG_ITALIC) has_ital = TRUE;
+    }
+
+    if (!has_wght || !has_wdth || !has_slnt || !has_ital)
+    {
+        opentype_get_font_properties(stream_desc, &props);
+        if (!has_wght) opentype_font_var_add_static_axis(axis, &count, DWRITE_FONT_AXIS_TAG_WEIGHT, props.weight);
+        if (!has_ital) opentype_font_var_add_static_axis(axis, &count, DWRITE_FONT_AXIS_TAG_ITALIC,
+                props.style == DWRITE_FONT_STYLE_ITALIC ? 1.0f : 0.0f);
+        if (!has_wdth) opentype_font_var_add_static_axis(axis, &count, DWRITE_FONT_AXIS_TAG_WIDTH,
+                width_axis_values[props.stretch]);
+        if (!has_slnt) opentype_font_var_add_static_axis(axis, &count, DWRITE_FONT_AXIS_TAG_SLANT, props.slant_angle);
+    }
+
+    *axis_count = count;
+
+done:
+    if (fvar.context)
+        IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, fvar.context);
+
+    return hr;
 }

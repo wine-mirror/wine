@@ -450,6 +450,9 @@ struct dwrite_fontresource
     IDWriteFontFile *file;
     UINT32 face_index;
     IDWriteFactory7 *factory;
+
+    struct dwrite_var_axis *axis;
+    unsigned int axis_count;
 };
 
 struct dwrite_fontset_entry_desc
@@ -7396,6 +7399,7 @@ static ULONG WINAPI dwritefontresource_Release(IDWriteFontResource *iface)
     {
         IDWriteFactory7_Release(resource->factory);
         IDWriteFontFile_Release(resource->file);
+        free(resource->axis);
         free(resource);
     }
 
@@ -7425,33 +7429,62 @@ static UINT32 WINAPI dwritefontresource_GetFontFaceIndex(IDWriteFontResource *if
 
 static UINT32 WINAPI dwritefontresource_GetFontAxisCount(IDWriteFontResource *iface)
 {
-    FIXME("%p.\n", iface);
+    struct dwrite_fontresource *resource = impl_from_IDWriteFontResource(iface);
 
-    return 0;
+    TRACE("%p.\n", iface);
+
+    return resource->axis_count;
 }
 
 static HRESULT WINAPI dwritefontresource_GetDefaultFontAxisValues(IDWriteFontResource *iface,
-        DWRITE_FONT_AXIS_VALUE *values, UINT32 num_values)
+        DWRITE_FONT_AXIS_VALUE *values, UINT32 count)
 {
-    FIXME("%p, %p, %u.\n", iface, values, num_values);
+    struct dwrite_fontresource *resource = impl_from_IDWriteFontResource(iface);
+    unsigned int i;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %u.\n", iface, values, count);
+
+    if (count < resource->axis_count)
+        return E_NOT_SUFFICIENT_BUFFER;
+
+    for (i = 0; i < resource->axis_count; ++i)
+    {
+        values[i].axisTag = resource->axis[i].tag;
+        values[i].value = resource->axis[i].default_value;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI dwritefontresource_GetFontAxisRanges(IDWriteFontResource *iface,
-        DWRITE_FONT_AXIS_RANGE *ranges, UINT32 num_ranges)
+        DWRITE_FONT_AXIS_RANGE *ranges, UINT32 count)
 {
-    FIXME("%p, %p, %u.\n", iface, ranges, num_ranges);
+    struct dwrite_fontresource *resource = impl_from_IDWriteFontResource(iface);
+    unsigned int i;
 
-    return E_NOTIMPL;
+    TRACE("%p, %p, %u.\n", iface, ranges, count);
+
+    if (count < resource->axis_count)
+        return E_NOT_SUFFICIENT_BUFFER;
+
+    for (i = 0; i < resource->axis_count; ++i)
+    {
+        ranges[i].axisTag = resource->axis[i].tag;
+        ranges[i].minValue = resource->axis[i].min_value;
+        ranges[i].maxValue = resource->axis[i].max_value;
+    }
+
+    return S_OK;
 }
 
 static DWRITE_FONT_AXIS_ATTRIBUTES WINAPI dwritefontresource_GetFontAxisAttributes(IDWriteFontResource *iface,
         UINT32 axis)
 {
-    FIXME("%p, %u.\n", iface, axis);
+    struct dwrite_fontresource *resource = impl_from_IDWriteFontResource(iface);
 
-    return DWRITE_FONT_AXIS_ATTRIBUTES_NONE;
+    TRACE("%p, %u.\n", iface, axis);
+
+    return axis < resource->axis_count ? resource->axis[axis].attributes : 0;
 }
 
 static HRESULT WINAPI dwritefontresource_GetAxisNames(IDWriteFontResource *iface, UINT32 axis,
@@ -7540,8 +7573,20 @@ HRESULT create_font_resource(IDWriteFactory7 *factory, IDWriteFontFile *file, UI
         IDWriteFontResource **ret)
 {
     struct dwrite_fontresource *resource;
+    struct file_stream_desc stream_desc;
+    DWRITE_FONT_FILE_TYPE file_type;
+    DWRITE_FONT_FACE_TYPE face_type;
+    unsigned int face_count;
+    BOOL supported = FALSE;
+    HRESULT hr;
 
     *ret = NULL;
+
+    if (FAILED(hr = IDWriteFontFile_Analyze(file, &supported, &file_type, &face_type, &face_count)))
+        return hr;
+
+    if (!supported)
+        return DWRITE_E_FILEFORMAT;
 
     if (!(resource = calloc(1, sizeof(*resource))))
         return E_OUTOFMEMORY;
@@ -7553,6 +7598,15 @@ HRESULT create_font_resource(IDWriteFactory7 *factory, IDWriteFontFile *file, UI
     IDWriteFontFile_AddRef(resource->file);
     resource->factory = factory;
     IDWriteFactory7_AddRef(resource->factory);
+
+    get_filestream_from_file(file, &stream_desc.stream);
+    stream_desc.face_type = face_type;
+    stream_desc.face_index = face_index;
+
+    opentype_get_font_var_axis(&stream_desc, &resource->axis, &resource->axis_count);
+
+    if (stream_desc.stream)
+        IDWriteFontFileStream_Release(stream_desc.stream);
 
     *ret = &resource->IDWriteFontResource_iface;
 
