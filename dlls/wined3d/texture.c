@@ -6560,13 +6560,13 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
 {
     VkClearValue clear_values[WINED3D_MAX_RENDER_TARGETS + 1];
     VkImageView views[WINED3D_MAX_RENDER_TARGETS + 1];
+    unsigned int i, attachment_count, delay_count = 0;
     struct wined3d_rendertarget_view_vk *rtv_vk;
     struct wined3d_rendertarget_view *view;
     const struct wined3d_vk_info *vk_info;
     struct wined3d_device_vk *device_vk;
     VkCommandBuffer vk_command_buffer;
     VkRenderPassBeginInfo begin_desc;
-    unsigned int i, attachment_count;
     VkFramebufferCreateInfo fb_desc;
     VkFramebuffer vk_framebuffer;
     VkRenderPass vk_render_pass;
@@ -6592,10 +6592,25 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
         if (!(view = fb->render_targets[i]))
             continue;
 
-        if (!is_full_clear(view, draw_rect, clear_rects))
-            wined3d_rendertarget_view_load_location(view, &context_vk->c, view->resource->draw_binding);
+        if (is_full_clear(view, draw_rect, clear_rects))
+        {
+            if (!colour->r && !colour->g && !colour->b && !colour->a)
+            {
+                wined3d_rendertarget_view_validate_location(view, WINED3D_LOCATION_CLEARED);
+                wined3d_rendertarget_view_invalidate_location(view, ~WINED3D_LOCATION_CLEARED);
+                delay_count++;
+                continue;
+            }
+            else
+            {
+                TRACE_(d3d_perf)("non-zero clear\n");
+                wined3d_rendertarget_view_prepare_location(view, &context_vk->c, view->resource->draw_binding);
+            }
+        }
         else
-            wined3d_rendertarget_view_prepare_location(view, &context_vk->c, view->resource->draw_binding);
+        {
+            wined3d_rendertarget_view_load_location(view, &context_vk->c, view->resource->draw_binding);
+        }
         wined3d_rendertarget_view_validate_location(view, view->resource->draw_binding);
         wined3d_rendertarget_view_invalidate_location(view, ~view->resource->draw_binding);
 
@@ -6625,31 +6640,60 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
         ++attachment_count;
     }
 
+    if (!attachment_count)
+        flags &= ~WINED3DCLEAR_TARGET;
+
     if (flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL) && (view = fb->depth_stencil))
     {
-        if (!is_full_clear(view, draw_rect, clear_rects))
+        DWORD full_flags = 0;
+
+        /* Vulkan can clear only depth or stencil, but at the moment we can't put the depth and
+         * stencil parts in separate locations. It isn't easy to do either, as such a half-cleared
+         * texture would need to be handled not just as a DS target but also when used as a shader
+         * resource or accessed on sysmem. */
+        if (view->format->depth_size)
+            full_flags = WINED3DCLEAR_ZBUFFER;
+        if (view->format->stencil_size)
+            full_flags |= WINED3DCLEAR_STENCIL;
+
+        if (!is_full_clear(view, draw_rect, clear_rects)
+                || depth || stencil || (flags & full_flags) != full_flags)
+        {
             wined3d_rendertarget_view_load_location(view, &context_vk->c, view->resource->draw_binding);
+            wined3d_rendertarget_view_validate_location(view, view->resource->draw_binding);
+            wined3d_rendertarget_view_invalidate_location(view, ~view->resource->draw_binding);
+
+            rtv_vk = wined3d_rendertarget_view_vk(view);
+            views[attachment_count] = wined3d_rendertarget_view_vk_get_image_view(rtv_vk, context_vk);
+            wined3d_rendertarget_view_vk_barrier(rtv_vk, context_vk, WINED3D_BIND_DEPTH_STENCIL);
+
+            clear_values[attachment_count].depthStencil.depth = depth;
+            clear_values[attachment_count].depthStencil.stencil = stencil;
+
+            if (view->layer_count > layer_count)
+                layer_count = view->layer_count;
+
+            depth_stencil = true;
+            ++attachment_count;
+        }
         else
-            wined3d_rendertarget_view_prepare_location(view, &context_vk->c, view->resource->draw_binding);
-        wined3d_rendertarget_view_validate_location(view, view->resource->draw_binding);
-        wined3d_rendertarget_view_invalidate_location(view, ~view->resource->draw_binding);
-
-        rtv_vk = wined3d_rendertarget_view_vk(view);
-        views[attachment_count] = wined3d_rendertarget_view_vk_get_image_view(rtv_vk, context_vk);
-        wined3d_rendertarget_view_vk_barrier(rtv_vk, context_vk, WINED3D_BIND_DEPTH_STENCIL);
-
-        clear_values[attachment_count].depthStencil.depth = depth;
-        clear_values[attachment_count].depthStencil.stencil = stencil;
-
-        if (view->layer_count > layer_count)
-            layer_count = view->layer_count;
-
-        depth_stencil = true;
-        ++attachment_count;
+        {
+            wined3d_rendertarget_view_validate_location(view, WINED3D_LOCATION_CLEARED);
+            wined3d_rendertarget_view_invalidate_location(view, ~WINED3D_LOCATION_CLEARED);
+            flags &= ~(WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL);
+            delay_count++;
+        }
     }
 
     if (!attachment_count)
+    {
+        TRACE("The clear has been delayed until draw time.\n");
         return;
+    }
+
+    TRACE("Doing an immediate clear of %u attachments.\n", attachment_count);
+    if (delay_count)
+        TRACE_(d3d_perf)("Partial clear: %u immediate, %u delayed.\n", attachment_count, delay_count);
 
     if (!(vk_render_pass = wined3d_context_vk_get_render_pass(context_vk, fb,
             rt_count, flags & (WINED3DCLEAR_ZBUFFER | WINED3DCLEAR_STENCIL), flags)))
