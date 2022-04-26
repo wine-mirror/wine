@@ -569,6 +569,29 @@ static HGLOBAL create_dib_from_bitmap(HBITMAP hBmp)
 }
 
 
+/* based on wine_get_dos_file_name */
+static WCHAR *get_dos_file_name( const char *path )
+{
+    ULONG len = strlen( path ) + 9; /* \??\unix prefix */
+    WCHAR *ret;
+
+    if (!(ret = malloc( len * sizeof(WCHAR) ))) return NULL;
+    if (wine_unix_to_nt_file_name( path, ret, &len ))
+    {
+        free( ret );
+        return NULL;
+    }
+
+    if (ret[5] == ':')
+    {
+        /* get rid of the \??\ prefix */
+        memmove( ret, ret + 4, (len - 4) * sizeof(WCHAR) );
+    }
+    else ret[1] = '\\';
+    return ret;
+}
+
+
 /***********************************************************************
  *           uri_to_dos
  *
@@ -616,7 +639,7 @@ static WCHAR* uri_to_dos(char *encodedURI)
             if (uri[7] == '/')
             {
                 /* file:///path/to/file (nautilus, thunar) */
-                ret = wine_get_dos_file_name(&uri[7]);
+                ret = get_dos_file_name( &uri[7] );
             }
             else if (uri[7])
             {
@@ -629,14 +652,14 @@ static WCHAR* uri_to_dos(char *encodedURI)
                     if (strcmp(&uri[7], "localhost") == 0)
                     {
                         *path = '/';
-                        ret = wine_get_dos_file_name(path);
+                        ret = get_dos_file_name( path );
                     }
                     else if (gethostname(hostname, sizeof(hostname)) == 0)
                     {
                         if (strcmp(hostname, &uri[7]) == 0)
                         {
                             *path = '/';
-                            ret = wine_get_dos_file_name(path);
+                            ret = get_dos_file_name( path );
                         }
                     }
                 }
@@ -645,7 +668,7 @@ static WCHAR* uri_to_dos(char *encodedURI)
         else if (uri[6])
         {
             /* file:/path/to/file (konqueror) */
-            ret = wine_get_dos_file_name(&uri[5]);
+            ret = get_dos_file_name( &uri[5] );
         }
     }
     free( uri );
@@ -938,7 +961,7 @@ static HANDLE import_text_uri_list( Atom type, const void *data, size_t size )
             memcpy(&out[total], path, pathSize * sizeof(WCHAR));
             total += pathSize;
         done:
-            HeapFree( GetProcessHeap(), 0, path );
+            free( path );
             if (out == NULL)
                 break;
         }
