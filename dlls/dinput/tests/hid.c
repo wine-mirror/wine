@@ -2854,6 +2854,7 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
         END_COLLECTION,
     };
 #undef REPORT_ID_OR_USAGE_PAGE
+    C_ASSERT(sizeof(report_desc) < MAX_HID_DESCRIPTOR_LEN);
 #include "pop_hid_macros.h"
 
     const HIDP_CAPS caps =
@@ -3062,6 +3063,7 @@ static void test_hidp_kdr(void)
             END_COLLECTION,
         END_COLLECTION,
     };
+    C_ASSERT(sizeof(report_desc) < MAX_HID_DESCRIPTOR_LEN);
 #include "pop_hid_macros.h"
 
     struct hid_device_desc desc =
@@ -3571,6 +3573,7 @@ DWORD WINAPI dinput_test_device_thread( void *stop_event )
             END_COLLECTION,
         END_COLLECTION,
     };
+    C_ASSERT(sizeof(gamepad_desc) < MAX_HID_DESCRIPTOR_LEN);
 #include "pop_hid_macros.h"
     static const HID_DEVICE_ATTRIBUTES attributes =
     {
@@ -3615,6 +3618,7 @@ static void test_bus_driver(void)
             INPUT(1, Data|Var|Abs),
         END_COLLECTION,
     };
+    C_ASSERT(sizeof(report_desc) < MAX_HID_DESCRIPTOR_LEN);
 #include "pop_hid_macros.h"
 
     static const HID_DEVICE_ATTRIBUTES attributes =

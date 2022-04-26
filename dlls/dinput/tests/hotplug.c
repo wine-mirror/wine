@@ -133,6 +133,7 @@ static BOOL test_input_lost( DWORD version )
             END_COLLECTION,
         END_COLLECTION,
     };
+    C_ASSERT(sizeof(report_desc) < MAX_HID_DESCRIPTOR_LEN);
 #include "pop_hid_macros.h"
 
     struct hid_device_desc desc =

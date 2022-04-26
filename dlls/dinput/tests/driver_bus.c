@@ -458,7 +458,7 @@ struct phys_device
 
     BOOL use_report_id;
     DWORD report_descriptor_len;
-    char report_descriptor_buf[1024];
+    char report_descriptor_buf[MAX_HID_DESCRIPTOR_LEN];
 
     HIDP_CAPS caps;
     HID_DEVICE_ATTRIBUTES attributes;

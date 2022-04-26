@@ -396,7 +396,7 @@ static void test_simple_joystick( DWORD version )
             END_COLLECTION,
         END_COLLECTION,
     };
-#undef REPORT_ID_OR_USAGE_PAGE
+    C_ASSERT(sizeof(report_desc) < MAX_HID_DESCRIPTOR_LEN);
 #include "pop_hid_macros.h"
 
     struct hid_device_desc desc =
@@ -2110,6 +2110,7 @@ static BOOL test_device_types( DWORD version )
             END_COLLECTION,
         END_COLLECTION,
     };
+    C_ASSERT(sizeof(unknown_desc) < MAX_HID_DESCRIPTOR_LEN);
     static const unsigned char limited_desc[] =
     {
         USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
@@ -2140,6 +2141,7 @@ static BOOL test_device_types( DWORD version )
             END_COLLECTION,
         END_COLLECTION,
     };
+    C_ASSERT(sizeof(limited_desc) < MAX_HID_DESCRIPTOR_LEN);
     static const unsigned char gamepad_desc[] =
     {
         USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
@@ -2170,6 +2172,7 @@ static BOOL test_device_types( DWORD version )
             END_COLLECTION,
         END_COLLECTION,
     };
+    C_ASSERT(sizeof(gamepad_desc) < MAX_HID_DESCRIPTOR_LEN);
     static const unsigned char joystick_desc[] =
     {
         USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
@@ -2210,6 +2213,7 @@ static BOOL test_device_types( DWORD version )
             END_COLLECTION,
         END_COLLECTION,
     };
+    C_ASSERT(sizeof(joystick_desc) < MAX_HID_DESCRIPTOR_LEN);
     static const unsigned char wheel_steering_only_desc[] =
     {
         USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
@@ -2248,6 +2252,7 @@ static BOOL test_device_types( DWORD version )
             END_COLLECTION,
         END_COLLECTION,
     };
+    C_ASSERT(sizeof(wheel_steering_only_desc) < MAX_HID_DESCRIPTOR_LEN);
     static const unsigned char wheel_dualpedals_desc[] =
     {
         USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
@@ -2289,6 +2294,7 @@ static BOOL test_device_types( DWORD version )
             END_COLLECTION,
         END_COLLECTION,
     };
+    C_ASSERT(sizeof(wheel_dualpedals_desc) < MAX_HID_DESCRIPTOR_LEN);
     static const unsigned char wheel_threepedals_desc[] =
     {
         USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
@@ -2331,6 +2337,7 @@ static BOOL test_device_types( DWORD version )
             END_COLLECTION,
         END_COLLECTION,
     };
+    C_ASSERT(sizeof(wheel_threepedals_desc) < MAX_HID_DESCRIPTOR_LEN);
 #include "pop_hid_macros.h"
 
     static struct device_desc device_desc[] =
@@ -2690,7 +2697,7 @@ static void test_many_axes_joystick(void)
             END_COLLECTION,
         END_COLLECTION,
     };
-#undef REPORT_ID_OR_USAGE_PAGE
+    C_ASSERT(sizeof(report_desc) < MAX_HID_DESCRIPTOR_LEN);
 #include "pop_hid_macros.h"
 
     struct hid_device_desc desc =
@@ -3221,7 +3228,7 @@ static void test_driving_wheel_axes(void)
             END_COLLECTION,
         END_COLLECTION,
     };
-#undef REPORT_ID_OR_USAGE_PAGE
+    C_ASSERT(sizeof(report_desc) < MAX_HID_DESCRIPTOR_LEN);
 #include "pop_hid_macros.h"
 
     struct hid_device_desc desc =
@@ -3415,7 +3422,8 @@ done:
 static BOOL test_winmm_joystick(void)
 {
 #include "psh_hid_macros.h"
-    const unsigned char report_desc[] = {
+    const unsigned char report_desc[] =
+    {
         USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
         USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
         COLLECTION(1, Application),
@@ -3461,6 +3469,7 @@ static BOOL test_winmm_joystick(void)
             END_COLLECTION,
         END_COLLECTION,
     };
+    C_ASSERT(sizeof(report_desc) < MAX_HID_DESCRIPTOR_LEN);
 #include "pop_hid_macros.h"
 
     struct hid_device_desc desc =
@@ -3864,7 +3873,8 @@ static struct controller_handler controller_added = {{&controller_handler_vtbl}}
 static void test_windows_gaming_input(void)
 {
 #include "psh_hid_macros.h"
-    const unsigned char report_desc[] = {
+    const unsigned char report_desc[] =
+    {
         USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
         USAGE(1, HID_USAGE_GENERIC_GAMEPAD),
         COLLECTION(1, Application),
@@ -3906,6 +3916,7 @@ static void test_windows_gaming_input(void)
             END_COLLECTION,
         END_COLLECTION,
     };
+    C_ASSERT(sizeof(report_desc) < MAX_HID_DESCRIPTOR_LEN);
 #include "pop_hid_macros.h"
 
     struct hid_device_desc desc =

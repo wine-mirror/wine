@@ -1672,7 +1672,8 @@ static void test_condition_effect( IDirectInputDevice8W *device, HANDLE file, DW
 static BOOL test_force_feedback_joystick( DWORD version )
 {
 #include "psh_hid_macros.h"
-    const unsigned char report_descriptor[] = {
+    const unsigned char report_descriptor[] =
+    {
         USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
         USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
         COLLECTION(1, Application),
@@ -2005,7 +2006,7 @@ static BOOL test_force_feedback_joystick( DWORD version )
             END_COLLECTION,
         END_COLLECTION,
     };
-#undef REPORT_ID_OR_USAGE_PAGE
+    C_ASSERT(sizeof(report_descriptor) < MAX_HID_DESCRIPTOR_LEN);
 #include "pop_hid_macros.h"
 
     struct hid_device_desc desc =
@@ -3460,6 +3461,7 @@ static void test_device_managed_effect(void)
             END_COLLECTION,
         END_COLLECTION,
     };
+    C_ASSERT(sizeof(report_descriptor) < MAX_HID_DESCRIPTOR_LEN);
 #include "pop_hid_macros.h"
 
     struct hid_device_desc desc =
@@ -4576,7 +4578,8 @@ struct bool_async_handler default_bool_async_handler = {{&bool_async_handler_vtb
 static void test_windows_gaming_input(void)
 {
 #include "psh_hid_macros.h"
-    const unsigned char report_desc[] = {
+    const unsigned char report_desc[] =
+    {
         USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
         USAGE(1, HID_USAGE_GENERIC_JOYSTICK),
         COLLECTION(1, Application),
@@ -4997,7 +5000,7 @@ static void test_windows_gaming_input(void)
             END_COLLECTION,
         END_COLLECTION,
     };
-#undef REPORT_ID_OR_USAGE_PAGE
+    C_ASSERT(sizeof(report_desc) < MAX_HID_DESCRIPTOR_LEN);
 #include "pop_hid_macros.h"
 
     struct hid_device_desc desc =
