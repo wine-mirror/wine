@@ -417,12 +417,34 @@ static const WCHAR *find_device_string( const WCHAR *device_id, ULONG index )
     return NULL;
 }
 
+struct completion_params
+{
+    HID_XFER_PACKET packet;
+    ULONG padding;
+    IRP *irp;
+};
+
+static NTSTATUS CALLBACK xfer_completion( DEVICE_OBJECT *device, IRP *irp, void *context )
+{
+    struct completion_params *params = context;
+    IRP *orig_irp = params->irp;
+
+    TRACE( "device %p, irp %p, context %p\n", device, irp, context );
+
+    orig_irp->IoStatus = irp->IoStatus;
+    orig_irp->IoStatus.Information -= params->padding;
+    IoCompleteRequest( orig_irp, IO_NO_INCREMENT );
+
+    free( params );
+    return STATUS_SUCCESS;
+}
+
 static NTSTATUS hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP *irp )
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
-    ULONG offset = 0, report_len = 0, buffer_len = 0;
+    ULONG offset, report_len = 0, buffer_len = 0;
+    struct completion_params *params;
     HIDP_REPORT_IDS *report = NULL;
-    HID_XFER_PACKET packet;
     BYTE *buffer = NULL;
 
     switch (code)
@@ -462,28 +484,42 @@ static NTSTATUS hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, 
         break;
     }
     if (!report || buffer_len < report_len) return STATUS_INVALID_PARAMETER;
+    offset = report->ReportID ? 0 : 1;
 
-    if (!report->ReportID) offset = 1;
-    packet.reportId = report->ReportID;
-    packet.reportBuffer = buffer + offset;
+    if (!(params = calloc( 1, sizeof(struct completion_params) ))) return STATUS_NO_MEMORY;
+    params->packet.reportId = report->ReportID;
+    params->packet.reportBuffer = buffer + offset;
+    params->irp = irp;
 
     switch (code)
     {
     case IOCTL_HID_GET_FEATURE:
     case IOCTL_HID_GET_INPUT_REPORT:
-        packet.reportBufferLen = buffer_len - offset;
-        call_minidriver( code, ext->u.pdo.parent_fdo, NULL, 0, &packet, sizeof(packet), &irp->IoStatus );
+        params->packet.reportBufferLen = buffer_len - offset;
+        irp = IoBuildDeviceIoControlRequest( code, ext->u.pdo.parent_fdo, NULL, 0, &params->packet,
+                                             sizeof(params->packet), TRUE, NULL, NULL );
         break;
+    case IOCTL_HID_WRITE_REPORT:
+        params->padding = 1 - offset;
+        /* fallthrough */
     case IOCTL_HID_SET_FEATURE:
     case IOCTL_HID_SET_OUTPUT_REPORT:
-    case IOCTL_HID_WRITE_REPORT:
-        packet.reportBufferLen = report_len - offset;
-        call_minidriver( code, ext->u.pdo.parent_fdo, NULL, sizeof(packet), &packet, 0, &irp->IoStatus );
-        if (code == IOCTL_HID_WRITE_REPORT && packet.reportId) irp->IoStatus.Information--;
+        params->packet.reportBufferLen = report_len - offset;
+        irp = IoBuildDeviceIoControlRequest( code, ext->u.pdo.parent_fdo, NULL, sizeof(params->packet),
+                                             &params->packet, 0, TRUE, NULL, NULL );
         break;
     }
 
-    return irp->IoStatus.Status;
+    if (!irp)
+    {
+        free( params );
+        return STATUS_NO_MEMORY;
+    }
+
+    IoMarkIrpPending( params->irp );
+    IoSetCompletionRoutine( irp, xfer_completion, params, TRUE, TRUE, TRUE );
+    IoCallDriver( ext->u.pdo.parent_fdo, irp );
+    return STATUS_PENDING;
 }
 
 NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
