@@ -2695,7 +2695,7 @@ static HRESULT get_shader_semantics(const DWORD *byte_code, D3DXSEMANTIC *semant
         D3DDECLUSAGE_FOG,
         D3DDECLUSAGE_PSIZE
     };
-    DWORD reg_type, usage, index, version_token = *byte_code;
+    uint32_t reg_type, usage, index, version_token = *byte_code;
     BOOL is_ps = version_token >> 16 == 0xffff;
     unsigned int major, minor, i = 0, j;
     BYTE colors = 0, rastout = 0;
@@ -2717,8 +2717,8 @@ static HRESULT get_shader_semantics(const DWORD *byte_code, D3DXSEMANTIC *semant
     {
         if (has_dcl && (*byte_code & 0xffff) == D3DSIO_DCL)
         {
-            DWORD usage_token = byte_code[1];
-            DWORD reg = byte_code[2];
+            uint32_t usage_token = byte_code[1];
+            uint32_t reg = byte_code[2];
 
             reg_type = ((reg & D3DSP_REGTYPE_MASK) >> D3DSP_REGTYPE_SHIFT)
                     | ((reg & D3DSP_REGTYPE_MASK2) >> D3DSP_REGTYPE_SHIFT2);
