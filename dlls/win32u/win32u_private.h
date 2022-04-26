@@ -292,6 +292,7 @@ struct unix_funcs
                                                          UINT winini, UINT dpi );
     INT      (WINAPI *pNtUserToUnicodeEx)( UINT virt, UINT scan, const BYTE *state,
                                            WCHAR *str, int size, UINT flags, HKL layout );
+    BOOL     (WINAPI *pNtUserTrackMouseEvent)( TRACKMOUSEEVENT *info );
     BOOL     (WINAPI *pNtUserTranslateMessage)( const MSG *msg, UINT flags );
     BOOL     (WINAPI *pNtUserUnregisterClass)( UNICODE_STRING *name, HINSTANCE instance,
                                                struct client_menu_name *client_menu_name );
@@ -362,6 +363,7 @@ extern DWORD get_input_state(void) DECLSPEC_HIDDEN;
 extern BOOL WINAPI release_capture(void) DECLSPEC_HIDDEN;
 extern BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret ) DECLSPEC_HIDDEN;
 extern BOOL set_foreground_window( HWND hwnd, BOOL mouse ) DECLSPEC_HIDDEN;
+extern void update_mouse_tracking_info( HWND hwnd ) DECLSPEC_HIDDEN;
 
 /* menu.c */
 extern HMENU create_menu( BOOL is_popup ) DECLSPEC_HIDDEN;

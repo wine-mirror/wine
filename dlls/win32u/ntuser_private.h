@@ -54,7 +54,6 @@ struct user_callbacks
     void (CDECL *toggle_caret)( HWND hwnd );
     BOOL (CDECL *unpack_dde_message)( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
                                       void **buffer, size_t size );
-    void (CDECL *update_mouse_tracking_info)( HWND hwnd );
     BOOL (WINAPI *register_imm)( HWND hwnd );
     void (WINAPI *unregister_imm)( HWND hwnd );
 };

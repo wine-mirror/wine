@@ -624,6 +624,7 @@ BOOL    WINAPI NtUserSystemParametersInfoForDpi( UINT action, UINT val, PVOID pt
 BOOL    WINAPI NtUserThunkedMenuInfo( HMENU menu, const MENUINFO *info );
 INT     WINAPI NtUserToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
                                   WCHAR *str, int size, UINT flags, HKL layout );
+BOOL    WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info );
 INT     WINAPI NtUserTranslateAccelerator( HWND hwnd, HACCEL accel, MSG *msg );
 BOOL    WINAPI NtUserTranslateMessage( const MSG *msg, UINT flags );
 BOOL    WINAPI NtUserUnhookWinEvent( HWINEVENTHOOK hEventHook );

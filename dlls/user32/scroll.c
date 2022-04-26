@@ -864,12 +864,12 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt )
 
           tme.cbSize = sizeof(tme);
           tme.dwFlags = TME_QUERY;
-          TrackMouseEvent( &tme );
+          NtUserTrackMouseEvent( &tme );
           if (!(tme.dwFlags & TME_LEAVE) || tme.hwndTrack != hwnd)
           {
               tme.dwFlags = TME_LEAVE;
               tme.hwndTrack = hwnd;
-              TrackMouseEvent( &tme );
+              NtUserTrackMouseEvent( &tme );
           }
 
           break;
@@ -883,12 +883,12 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt )
 
           tme.cbSize = sizeof(tme);
           tme.dwFlags = TME_QUERY;
-          TrackMouseEvent( &tme );
+          NtUserTrackMouseEvent( &tme );
           if (((tme.dwFlags & (TME_NONCLIENT | TME_LEAVE)) != (TME_NONCLIENT | TME_LEAVE)) || tme.hwndTrack != hwnd)
           {
               tme.dwFlags = TME_NONCLIENT | TME_LEAVE;
               tme.hwndTrack = hwnd;
-              TrackMouseEvent( &tme );
+              NtUserTrackMouseEvent( &tme );
           }
 
           break;

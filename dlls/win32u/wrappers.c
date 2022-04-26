@@ -1234,6 +1234,12 @@ INT WINAPI NtUserToUnicodeEx( UINT virt, UINT scan, const BYTE *state,
     return unix_funcs->pNtUserToUnicodeEx( virt, scan, state, str, size, flags, layout );
 }
 
+BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserTrackMouseEvent( info );
+}
+
 BOOL WINAPI NtUserTranslateMessage( const MSG *msg, UINT flags )
 {
     if (!unix_funcs) return 0;

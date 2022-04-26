@@ -2479,8 +2479,7 @@ LRESULT dispatch_message( const MSG *msg, BOOL ansi )
                 return 0;
 
             case SYSTEM_TIMER_TRACK_MOUSE:
-                if (!user_callbacks) break;
-                user_callbacks->update_mouse_tracking_info( msg->hwnd );
+                update_mouse_tracking_info( msg->hwnd );
                 return 0;
         }
     }

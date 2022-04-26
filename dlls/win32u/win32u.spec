@@ -1277,7 +1277,7 @@
 @ stdcall -syscall NtUserThunkedMenuInfo(long ptr)
 @ stub NtUserThunkedMenuItemInfo
 @ stdcall NtUserToUnicodeEx(long long ptr ptr long long long)
-@ stub NtUserTrackMouseEvent
+@ stdcall NtUserTrackMouseEvent(ptr)
 @ stub NtUserTrackPopupMenuEx
 @ stub NtUserTransformPoint
 @ stub NtUserTransformRect
