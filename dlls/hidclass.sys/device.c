@@ -417,7 +417,7 @@ static const WCHAR *find_device_string( const WCHAR *device_id, ULONG index )
     return NULL;
 }
 
-static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP *irp )
+static NTSTATUS hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP *irp )
 {
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation( irp );
     ULONG offset = 0, report_len = 0, buffer_len = 0;
@@ -442,11 +442,7 @@ static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP 
         buffer = irp->AssociatedIrp.SystemBuffer;
         break;
     }
-    if (!buffer || !buffer_len)
-    {
-        irp->IoStatus.Status = STATUS_INVALID_USER_BUFFER;
-        return;
-    }
+    if (!buffer || !buffer_len) return STATUS_INVALID_USER_BUFFER;
 
     switch (code)
     {
@@ -465,12 +461,7 @@ static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP 
         if (report) report_len = report->FeatureLength;
         break;
     }
-
-    if (!report || buffer_len < report_len)
-    {
-        irp->IoStatus.Status = STATUS_INVALID_PARAMETER;
-        return;
-    }
+    if (!report || buffer_len < report_len) return STATUS_INVALID_PARAMETER;
 
     if (!report->ReportID) offset = 1;
     packet.reportId = report->ReportID;
@@ -491,6 +482,8 @@ static void hid_device_xfer_report( BASE_DEVICE_EXTENSION *ext, ULONG code, IRP 
         if (code == IOCTL_HID_WRITE_REPORT && packet.reportId) irp->IoStatus.Information--;
         break;
     }
+
+    return irp->IoStatus.Status;
 }
 
 NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
@@ -498,9 +491,9 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
     struct hid_queue *queue = irp->Tail.Overlay.OriginalFileObject->FsContext;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
+    NTSTATUS status = irp->IoStatus.Status;
     ULONG code, index;
     const WCHAR *str;
-    NTSTATUS status;
     BOOL removed;
     KIRQL irql;
 
@@ -522,29 +515,26 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
     switch ((code = irpsp->Parameters.DeviceIoControl.IoControlCode))
     {
         case IOCTL_HID_GET_POLL_FREQUENCY_MSEC:
-            TRACE("IOCTL_HID_GET_POLL_FREQUENCY_MSEC\n");
             if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(ULONG))
+                status = STATUS_BUFFER_OVERFLOW;
+            else
             {
-                irp->IoStatus.Status = STATUS_BUFFER_OVERFLOW;
-                irp->IoStatus.Information = 0;
-                break;
+                *(ULONG *)irp->AssociatedIrp.SystemBuffer = ext->u.pdo.poll_interval;
+                irp->IoStatus.Information = sizeof(ULONG);
+                status = STATUS_SUCCESS;
             }
-            *(ULONG *)irp->AssociatedIrp.SystemBuffer = ext->u.pdo.poll_interval;
-            irp->IoStatus.Information = sizeof(ULONG);
-            irp->IoStatus.Status = STATUS_SUCCESS;
             break;
         case IOCTL_HID_SET_POLL_FREQUENCY_MSEC:
         {
             ULONG poll_interval;
-            TRACE("IOCTL_HID_SET_POLL_FREQUENCY_MSEC\n");
             if (irpsp->Parameters.DeviceIoControl.InputBufferLength < sizeof(ULONG))
+                status = STATUS_BUFFER_TOO_SMALL;
+            else
             {
-                irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
-                break;
+                poll_interval = *(ULONG *)irp->AssociatedIrp.SystemBuffer;
+                if (poll_interval) ext->u.pdo.poll_interval = min( poll_interval, MAX_POLL_INTERVAL_MSEC );
+                status = STATUS_SUCCESS;
             }
-            poll_interval = *(ULONG *)irp->AssociatedIrp.SystemBuffer;
-            if (poll_interval) ext->u.pdo.poll_interval = min(poll_interval, MAX_POLL_INTERVAL_MSEC);
-            irp->IoStatus.Status = STATUS_SUCCESS;
             break;
         }
         case IOCTL_HID_GET_PRODUCT_STRING:
@@ -562,29 +552,30 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
             {
                 irp->IoStatus.Information = (wcslen( str ) + 1) * sizeof(WCHAR);
                 if (irp->IoStatus.Information > output_len)
-                    irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
+                    status = STATUS_BUFFER_TOO_SMALL;
                 else
                 {
                     memcpy( output_buf, str, irp->IoStatus.Information );
-                    irp->IoStatus.Status = STATUS_SUCCESS;
+                    status = STATUS_SUCCESS;
                 }
                 break;
             }
 
             call_minidriver( IOCTL_HID_GET_STRING, ext->u.pdo.parent_fdo, ULongToPtr( index ),
                              sizeof(index), output_buf, output_len, &irp->IoStatus );
+            status = irp->IoStatus.Status;
             break;
         }
         case IOCTL_HID_GET_COLLECTION_INFORMATION:
         {
             irp->IoStatus.Information = sizeof(HID_COLLECTION_INFORMATION);
             if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(HID_COLLECTION_INFORMATION))
-                irp->IoStatus.Status = STATUS_BUFFER_OVERFLOW;
+                status = STATUS_BUFFER_OVERFLOW;
             else
             {
                 memcpy( irp->AssociatedIrp.SystemBuffer, &ext->u.pdo.information,
                         sizeof(HID_COLLECTION_INFORMATION) );
-                irp->IoStatus.Status = STATUS_SUCCESS;
+                status = STATUS_SUCCESS;
             }
             break;
         }
@@ -594,36 +585,31 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
 
             irp->IoStatus.Information = desc->PreparsedDataLength;
             if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < desc->PreparsedDataLength)
-                irp->IoStatus.Status = STATUS_INVALID_BUFFER_SIZE;
+                status = STATUS_INVALID_BUFFER_SIZE;
             else
             {
                 memcpy( irp->UserBuffer, desc->PreparsedData, desc->PreparsedDataLength );
-                irp->IoStatus.Status = STATUS_SUCCESS;
+                status = STATUS_SUCCESS;
             }
             break;
         }
         case IOCTL_SET_NUM_DEVICE_INPUT_BUFFERS:
         {
-            irp->IoStatus.Information = 0;
-
             if (irpsp->Parameters.DeviceIoControl.InputBufferLength != sizeof(ULONG))
-                irp->IoStatus.Status = STATUS_BUFFER_OVERFLOW;
+                status = STATUS_BUFFER_OVERFLOW;
             else
-                irp->IoStatus.Status = hid_queue_resize( queue, *(ULONG *)irp->AssociatedIrp.SystemBuffer );
+                status = hid_queue_resize( queue, *(ULONG *)irp->AssociatedIrp.SystemBuffer );
             break;
         }
         case IOCTL_GET_NUM_DEVICE_INPUT_BUFFERS:
         {
             if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(ULONG))
-            {
-                irp->IoStatus.Information = 0;
-                irp->IoStatus.Status = STATUS_BUFFER_TOO_SMALL;
-            }
+                status = STATUS_BUFFER_TOO_SMALL;
             else
             {
                 *(ULONG *)irp->AssociatedIrp.SystemBuffer = queue->length;
                 irp->IoStatus.Information = sizeof(ULONG);
-                irp->IoStatus.Status = STATUS_SUCCESS;
+                status = STATUS_SUCCESS;
             }
             break;
         }
@@ -631,20 +617,23 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
         case IOCTL_HID_SET_FEATURE:
         case IOCTL_HID_GET_INPUT_REPORT:
         case IOCTL_HID_SET_OUTPUT_REPORT:
-            hid_device_xfer_report( ext, code, irp );
+            status = hid_device_xfer_report( ext, code, irp );
             break;
         default:
         {
             ULONG code = irpsp->Parameters.DeviceIoControl.IoControlCode;
             FIXME( "Unsupported ioctl %#lx (device=%lx access=%lx func=%lx method=%lx)\n", code,
                    code >> 16, (code >> 14) & 3, (code >> 2) & 0xfff, code & 3 );
-            irp->IoStatus.Status = STATUS_NOT_SUPPORTED;
+            status = STATUS_NOT_SUPPORTED;
             break;
         }
     }
 
-    status = irp->IoStatus.Status;
-    if (status != STATUS_PENDING) IoCompleteRequest( irp, IO_NO_INCREMENT );
+    if (status != STATUS_PENDING)
+    {
+        irp->IoStatus.Status = status;
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+    }
     return status;
 }
 
@@ -695,12 +684,12 @@ NTSTATUS WINAPI pdo_read(DEVICE_OBJECT *device, IRP *irp)
 NTSTATUS WINAPI pdo_write(DEVICE_OBJECT *device, IRP *irp)
 {
     BASE_DEVICE_EXTENSION *ext = device->DeviceExtension;
-    NTSTATUS status;
-
-    hid_device_xfer_report( ext, IOCTL_HID_WRITE_REPORT, irp );
-
-    status = irp->IoStatus.Status;
-    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    NTSTATUS status = hid_device_xfer_report( ext, IOCTL_HID_WRITE_REPORT, irp );
+    if (status != STATUS_PENDING)
+    {
+        irp->IoStatus.Status = status;
+        IoCompleteRequest( irp, IO_NO_INCREMENT );
+    }
     return status;
 }
 
