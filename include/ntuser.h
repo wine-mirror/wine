@@ -257,6 +257,7 @@ struct get_clipboard_params
     size_t size;
     size_t data_size;
     UINT   seqno;
+    BOOL data_only;
 };
 
 /* NtUserSetClipboardData params, not compatible with Windows */

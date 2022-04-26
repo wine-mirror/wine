@@ -631,7 +631,7 @@ done:
  */
 HANDLE WINAPI NtUserGetClipboardData( UINT format, struct get_clipboard_params *params )
 {
-    struct cached_format *cache;
+    struct cached_format *cache = NULL;
     NTSTATUS status;
     UINT from, data_seqno;
     size_t size;
@@ -642,7 +642,7 @@ HANDLE WINAPI NtUserGetClipboardData( UINT format, struct get_clipboard_params *
     {
         pthread_mutex_lock( &clipboard_mutex );
 
-        cache = get_cached_format( format );
+        if (!params->data_only) cache = get_cached_format( format );
 
         SERVER_START_REQ( get_clipboard_data )
         {
@@ -662,6 +662,8 @@ HANDLE WINAPI NtUserGetClipboardData( UINT format, struct get_clipboard_params *
         }
         SERVER_END_REQ;
 
+        params->size = size;
+
         if (!status && size)
         {
             if (cache)
@@ -679,8 +681,18 @@ HANDLE WINAPI NtUserGetClipboardData( UINT format, struct get_clipboard_params *
                 list_add_tail( &formats_to_free, &cache->entry );
             }
 
+            if (params->data_only)
+            {
+                pthread_mutex_unlock( &clipboard_mutex );
+                return params->data;
+            }
+
             /* allocate new cache entry */
-            if (!(cache = malloc( sizeof(*cache) ))) return 0;
+            if (!(cache = malloc( sizeof(*cache) )))
+            {
+                pthread_mutex_unlock( &clipboard_mutex );
+                return 0;
+            }
 
             cache->format = format;
             cache->seqno  = data_seqno;
@@ -690,7 +702,6 @@ HANDLE WINAPI NtUserGetClipboardData( UINT format, struct get_clipboard_params *
             pthread_mutex_unlock( &clipboard_mutex );
             TRACE( "%s needs unmarshaling\n", debugstr_format( format ) );
             params->data_size = ~0;
-            params->size = size;
             return 0;
         }
         pthread_mutex_unlock( &clipboard_mutex );
