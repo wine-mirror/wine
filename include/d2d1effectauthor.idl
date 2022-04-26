@@ -192,3 +192,23 @@ interface ID2D1DrawInfo : ID2D1RenderInfo
         [in, optional] const GUID *shader
     );
 }
+
+[
+    object,
+    uuid(5598b14b-9fd7-48b7-9bdb-8f0964eb38bc),
+    local,
+]
+interface ID2D1ComputeInfo : ID2D1RenderInfo
+{
+    HRESULT SetComputeShaderconstantBuffer(
+        [in] const BYTE *buffer,
+        [in] UINT32 size
+    );
+    HRESULT SetComputeShader(
+        [in] REFGUID id
+    );
+    HRESULT SetResourceTexture(
+        [in] UINT32 index,
+        [in] ID2D1ResourceTexture *texture
+    );
+}
