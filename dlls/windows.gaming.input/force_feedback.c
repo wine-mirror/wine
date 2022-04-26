@@ -161,8 +161,16 @@ static HRESULT WINAPI motor_put_MasterGain( IForceFeedbackMotor *iface, double v
 
 static HRESULT WINAPI motor_get_IsEnabled( IForceFeedbackMotor *iface, BOOLEAN *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct motor *impl = impl_from_IForceFeedbackMotor( iface );
+    DWORD state;
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    if (FAILED(hr = IDirectInputDevice8_GetForceFeedbackState( impl->device, &state ))) *value = FALSE;
+    else *value = !(state & DIGFFS_ACTUATORSOFF);
+
+    return hr;
 }
 
 static HRESULT WINAPI motor_get_SupportedAxes( IForceFeedbackMotor *iface, enum ForceFeedbackEffectAxes *value )
@@ -205,22 +213,55 @@ static HRESULT WINAPI motor_StopAllEffects( IForceFeedbackMotor *iface )
     return IDirectInputDevice8_SendForceFeedbackCommand( impl->device, DISFFC_STOPALL );
 }
 
+static HRESULT WINAPI motor_try_disable_async( IInspectable *iface, BOOLEAN *result )
+{
+    struct motor *impl = impl_from_IForceFeedbackMotor( (IForceFeedbackMotor *)iface );
+    HRESULT hr;
+
+    hr = IDirectInputDevice8_SendForceFeedbackCommand( impl->device, DISFFC_SETACTUATORSOFF );
+    *result = SUCCEEDED(hr);
+
+    return hr;
+}
+
 static HRESULT WINAPI motor_TryDisableAsync( IForceFeedbackMotor *iface, IAsyncOperation_boolean **async_op )
 {
-    FIXME( "iface %p, async_op %p stub!\n", iface, async_op );
-    return E_NOTIMPL;
+    TRACE( "iface %p, async_op %p.\n", iface, async_op );
+    return async_operation_boolean_create( (IInspectable *)iface, motor_try_disable_async, async_op );
+}
+
+static HRESULT WINAPI motor_try_enable_async( IInspectable *iface, BOOLEAN *result )
+{
+    struct motor *impl = impl_from_IForceFeedbackMotor( (IForceFeedbackMotor *)iface );
+    HRESULT hr;
+
+    hr = IDirectInputDevice8_SendForceFeedbackCommand( impl->device, DISFFC_SETACTUATORSON );
+    *result = SUCCEEDED(hr);
+
+    return hr;
 }
 
 static HRESULT WINAPI motor_TryEnableAsync( IForceFeedbackMotor *iface, IAsyncOperation_boolean **async_op )
 {
-    FIXME( "iface %p, async_op %p stub!\n", iface, async_op );
-    return E_NOTIMPL;
+    TRACE( "iface %p, async_op %p.\n", iface, async_op );
+    return async_operation_boolean_create( (IInspectable *)iface, motor_try_enable_async, async_op );
+}
+
+static HRESULT WINAPI motor_try_reset_async( IInspectable *iface, BOOLEAN *result )
+{
+    struct motor *impl = impl_from_IForceFeedbackMotor( (IForceFeedbackMotor *)iface );
+    HRESULT hr;
+
+    hr = IDirectInputDevice8_SendForceFeedbackCommand( impl->device, DISFFC_RESET );
+    *result = SUCCEEDED(hr);
+
+    return hr;
 }
 
 static HRESULT WINAPI motor_TryResetAsync( IForceFeedbackMotor *iface, IAsyncOperation_boolean **async_op )
 {
-    FIXME( "iface %p, async_op %p stub!\n", iface, async_op );
-    return E_NOTIMPL;
+    TRACE( "iface %p, async_op %p.\n", iface, async_op );
+    return async_operation_boolean_create( (IInspectable *)iface, motor_try_reset_async, async_op );
 }
 
 static HRESULT WINAPI motor_TryUnloadEffectAsync( IForceFeedbackMotor *iface, IForceFeedbackEffect *effect,

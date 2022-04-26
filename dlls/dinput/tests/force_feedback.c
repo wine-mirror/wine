@@ -4482,7 +4482,7 @@ static void check_bool_async_( int line, IAsyncOperation_boolean *async, UINT32 
     hr = IAsyncInfo_get_ErrorCode( async_info, &async_hr );
     if (expect_status < 4) ok_(__FILE__, line)( hr == S_OK, "get_ErrorCode returned %#lx\n", hr );
     else ok_(__FILE__, line)( hr == E_ILLEGAL_METHOD_CALL, "get_ErrorCode returned %#lx\n", hr );
-    if (expect_status < 4) ok_(__FILE__, line)( async_hr == expect_hr, "got error %#lx\n", async_hr );
+    if (expect_status < 4) todo_wine_if(FAILED(expect_hr)) ok_(__FILE__, line)( async_hr == expect_hr, "got error %#lx\n", async_hr );
     else ok_(__FILE__, line)( async_hr == E_ILLEGAL_METHOD_CALL, "got error %#lx\n", async_hr );
 
     IAsyncInfo_Release( async_info );
@@ -4493,6 +4493,7 @@ static void check_bool_async_( int line, IAsyncOperation_boolean *async, UINT32 
     {
     case Completed:
     case Error:
+        todo_wine_if(FAILED(expect_hr))
         ok_(__FILE__, line)( hr == expect_hr, "GetResults returned %#lx\n", hr );
         ok_(__FILE__, line)( result == expect_result, "got result %u\n", result );
         break;
@@ -5091,7 +5092,6 @@ static void test_windows_gaming_input(void)
         .report_id = 1,
         .report_len = 2,
         .report_buf = {1, 0x05},
-        .todo = TRUE,
     };
     static struct hid_expect expect_enable =
     {
@@ -5099,7 +5099,6 @@ static void test_windows_gaming_input(void)
         .report_id = 1,
         .report_len = 2,
         .report_buf = {1, 0x04},
-        .todo = TRUE,
     };
     static struct hid_expect expect_enable_fail =
     {
@@ -5108,7 +5107,6 @@ static void test_windows_gaming_input(void)
         .report_id = 1,
         .report_len = 2,
         .report_buf = {1, 0x04},
-        .todo = TRUE,
     };
     static struct hid_expect expect_reset_delay[] =
     {
@@ -5119,7 +5117,6 @@ static void test_windows_gaming_input(void)
             .report_id = 1,
             .report_len = 2,
             .report_buf = {1, 0x01},
-            .todo = TRUE,
         },
         /* device gain */
         {
@@ -5127,7 +5124,6 @@ static void test_windows_gaming_input(void)
             .report_id = 6,
             .report_len = 2,
             .report_buf = {6, 0x7f},
-            .todo = TRUE,
         },
     };
     struct hid_expect expect_reset[] =
@@ -5138,7 +5134,6 @@ static void test_windows_gaming_input(void)
             .report_id = 1,
             .report_len = 2,
             .report_buf = {1, 0x01},
-            .todo = TRUE,
         },
         /* device gain */
         {
@@ -5146,7 +5141,6 @@ static void test_windows_gaming_input(void)
             .report_id = 6,
             .report_len = 2,
             .report_buf = {6, 0x7f},
-            .todo = TRUE,
         },
     };
     static const WCHAR *force_feedback_motor = RuntimeClass_Windows_Gaming_Input_ForceFeedback_ForceFeedbackMotor;
@@ -5309,9 +5303,7 @@ static void test_windows_gaming_input(void)
 
     enabled = FALSE;
     hr = IForceFeedbackMotor_get_IsEnabled( motor, &enabled );
-    todo_wine
     ok( hr == S_OK, "get_IsEnabled returned %#lx\n", hr );
-    todo_wine
     ok( enabled == TRUE, "got enabled %u\n", enabled );
 
     supported_axes = 0xdeadbeef;
@@ -5335,10 +5327,8 @@ static void test_windows_gaming_input(void)
 
     set_hid_expect( file, &expect_disable, sizeof(expect_disable) );
     hr = IForceFeedbackMotor_TryDisableAsync( motor, &bool_async );
-    todo_wine
     ok( hr == S_OK, "TryDisableAsync returned %#lx\n", hr );
-    wait_hid_expect_( __FILE__, __LINE__, file, 100, TRUE );
-    if (hr != S_OK) goto skip_tests;
+    wait_hid_expect( file, 100 );
     check_bool_async( bool_async, 1, Completed, S_OK, TRUE );
 
     check_interface( bool_async, &IID_IUnknown, TRUE );
@@ -5382,9 +5372,8 @@ static void test_windows_gaming_input(void)
 
     set_hid_expect( file, &expect_enable_fail, sizeof(expect_enable_fail) );
     hr = IForceFeedbackMotor_TryEnableAsync( motor, &bool_async );
-    todo_wine
     ok( hr == S_OK, "TryEnableAsync returned %#lx\n", hr );
-    wait_hid_expect_( __FILE__, __LINE__, file, 100, TRUE );
+    wait_hid_expect( file, 100 );
     check_bool_async( bool_async, 1, Error, 0x8685400d, FALSE );
 
     bool_async_handler = default_bool_async_handler;
@@ -5411,7 +5400,6 @@ static void test_windows_gaming_input(void)
 
     set_hid_expect( file, expect_reset_delay, sizeof(expect_reset_delay) );
     hr = IForceFeedbackMotor_TryResetAsync( motor, &bool_async );
-    todo_wine
     ok( hr == S_OK, "TryResetAsync returned %#lx\n", hr );
     check_bool_async( bool_async, 1, Started, S_OK, FALSE );
 
@@ -5435,7 +5423,7 @@ static void test_windows_gaming_input(void)
     ok( !bool_async_handler.invoked, "handler invoked\n" );
     IAsyncInfo_Release( async_info );
 
-    wait_hid_expect_( __FILE__, __LINE__, file, 100, TRUE );
+    wait_hid_expect( file, 100 );
     ret = WaitForSingleObject( bool_async_handler.event, 100 );
     ok( ret == 0, "WaitForSingleObject returned %#lx\n", ret );
     CloseHandle( bool_async_handler.event );
@@ -5455,7 +5443,6 @@ static void test_windows_gaming_input(void)
 
     set_hid_expect( file, expect_reset_delay, sizeof(expect_reset_delay) );
     hr = IForceFeedbackMotor_TryResetAsync( motor, &bool_async );
-    todo_wine
     ok( hr == S_OK, "TryResetAsync returned %#lx\n", hr );
     check_bool_async( bool_async, 1, Started, S_OK, FALSE );
 
@@ -5481,7 +5468,7 @@ static void test_windows_gaming_input(void)
     ok( !bool_async_handler.invoked, "handler invoked\n" );
     IAsyncInfo_Release( async_info );
 
-    wait_hid_expect_( __FILE__, __LINE__, file, 100, TRUE );
+    wait_hid_expect( file, 100 );
     ret = WaitForSingleObject( bool_async_handler.event, 100 );
     ok( ret == 0, "WaitForSingleObject returned %#lx\n", ret );
     CloseHandle( bool_async_handler.event );
@@ -5498,21 +5485,18 @@ static void test_windows_gaming_input(void)
 
     set_hid_expect( file, &expect_enable, sizeof(expect_enable) );
     hr = IForceFeedbackMotor_TryEnableAsync( motor, &bool_async );
-    todo_wine
     ok( hr == S_OK, "TryEnableAsync returned %#lx\n", hr );
-    wait_hid_expect_( __FILE__, __LINE__, file, 100, TRUE );
+    wait_hid_expect( file, 100 );
     IAsyncOperation_boolean_Release( bool_async );
 
 
     set_hid_expect( file, expect_reset, sizeof(expect_reset) );
     hr = IForceFeedbackMotor_TryResetAsync( motor, &bool_async );
-    todo_wine
     ok( hr == S_OK, "TryResetAsync returned %#lx\n", hr );
-    wait_hid_expect_( __FILE__, __LINE__, file, 100, TRUE );
+    wait_hid_expect( file, 100 );
     IAsyncOperation_boolean_Release( bool_async );
 
 
-skip_tests:
     IForceFeedbackMotor_Release( motor );
 
     IRawGameController_Release( raw_controller );

@@ -2,6 +2,7 @@ MODULE = windows.gaming.input.dll
 IMPORTS = combase uuid user32 dinput8 setupapi hid
 
 C_SRCS = \
+	async.c \
 	controller.c \
 	event_handlers.c \
 	force_feedback.c \
