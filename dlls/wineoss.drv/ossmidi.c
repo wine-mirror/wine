@@ -1120,6 +1120,38 @@ static UINT midi_out_reset(WORD dev_id)
     return MMSYSERR_NOERROR;
 }
 
+static UINT midi_in_add_buffer(WORD dev_id, MIDIHDR *hdr, UINT hdr_size)
+{
+    struct midi_src *src;
+    MIDIHDR **next;
+
+    TRACE("(%04X, %p, %d);\n", dev_id, hdr, hdr_size);
+
+    if (dev_id >= num_srcs) return MMSYSERR_BADDEVICEID;
+    src = srcs + dev_id;
+    if (src->state == -1) return MIDIERR_NODEVICE;
+
+    if (!hdr || hdr_size < offsetof(MIDIHDR, dwOffset) || !hdr->dwBufferLength)
+        return MMSYSERR_INVALPARAM;
+    if (hdr->dwFlags & MHDR_INQUEUE) return MIDIERR_STILLPLAYING;
+    if (!(hdr->dwFlags & MHDR_PREPARED)) return MIDIERR_UNPREPARED;
+
+    in_buffer_lock();
+
+    hdr->dwFlags &= ~WHDR_DONE;
+    hdr->dwFlags |= MHDR_INQUEUE;
+    hdr->dwBytesRecorded = 0;
+    hdr->lpNext = NULL;
+
+    next = &src->lpQueueHdr;
+    while (*next) next = &(*next)->lpNext;
+    *next = hdr;
+
+    in_buffer_unlock();
+
+    return MMSYSERR_NOERROR;
+}
+
 static UINT midi_in_prepare(WORD dev_id, MIDIHDR *hdr, UINT hdr_size)
 {
     TRACE("(%04X, %p, %d);\n", dev_id, hdr, hdr_size);
@@ -1228,6 +1260,9 @@ NTSTATUS midi_in_message(void *args)
     case DRVM_DISABLE:
         /* FIXME: Pretend this is supported */
         *params->err = MMSYSERR_NOERROR;
+        break;
+    case MIDM_ADDBUFFER:
+        *params->err = midi_in_add_buffer(params->dev_id, (MIDIHDR *)params->param_1, params->param_2);
         break;
     case MIDM_PREPARE:
         *params->err = midi_in_prepare(params->dev_id, (MIDIHDR *)params->param_1, params->param_2);

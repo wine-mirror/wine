@@ -491,42 +491,6 @@ static DWORD midClose(WORD wDevID)
 }
 
 /**************************************************************************
- * 				midAddBuffer			[internal]
- */
-static DWORD midAddBuffer(WORD wDevID, LPMIDIHDR lpMidiHdr, DWORD dwSize)
-{
-    TRACE("(%04X, %p, %d);\n", wDevID, lpMidiHdr, dwSize);
-
-    if (wDevID >= MIDM_NumDevs) return MMSYSERR_BADDEVICEID;
-    if (MidiInDev[wDevID].state == -1) return MIDIERR_NODEVICE;
-
-    if (lpMidiHdr == NULL)	return MMSYSERR_INVALPARAM;
-    if (dwSize < offsetof(MIDIHDR,dwOffset)) return MMSYSERR_INVALPARAM;
-    if (lpMidiHdr->dwBufferLength == 0) return MMSYSERR_INVALPARAM;
-    if (lpMidiHdr->dwFlags & MHDR_INQUEUE) return MIDIERR_STILLPLAYING;
-    if (!(lpMidiHdr->dwFlags & MHDR_PREPARED)) return MIDIERR_UNPREPARED;
-
-    in_buffer_lock();
-    lpMidiHdr->dwFlags &= ~WHDR_DONE;
-    lpMidiHdr->dwFlags |= MHDR_INQUEUE;
-    lpMidiHdr->dwBytesRecorded = 0;
-    lpMidiHdr->lpNext = 0;
-    if (MidiInDev[wDevID].lpQueueHdr == 0) {
-	MidiInDev[wDevID].lpQueueHdr = lpMidiHdr;
-    } else {
-	LPMIDIHDR	ptr;
-
-	for (ptr = MidiInDev[wDevID].lpQueueHdr;
-	     ptr->lpNext != 0;
-	     ptr = ptr->lpNext);
-	ptr->lpNext = lpMidiHdr;
-    }
-    in_buffer_unlock();
-
-    return MMSYSERR_NOERROR;
-}
-
-/**************************************************************************
  * 			midReset				[internal]
  */
 static DWORD midReset(WORD wDevID)
@@ -604,8 +568,6 @@ DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 	return midOpen(wDevID, (LPMIDIOPENDESC)dwParam1, dwParam2);
     case MIDM_CLOSE:
 	return midClose(wDevID);
-    case MIDM_ADDBUFFER:
-	return midAddBuffer(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
     case MIDM_RESET:
 	return midReset(wDevID);
     case MIDM_START:
