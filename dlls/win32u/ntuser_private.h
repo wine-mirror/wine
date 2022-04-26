@@ -46,7 +46,6 @@ struct user_callbacks
                                     DWORD type );
     BOOL (CDECL *process_rawinput_message)( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data );
     BOOL (CDECL *rawinput_device_get_usages)(HANDLE handle, USHORT *usage_page, USHORT *usage);
-    void (CDECL *register_builtin_classes)(void);
     void (WINAPI *set_standard_scroll_painted)( HWND hwnd, INT bar, BOOL visible );
     BOOL (CDECL *unpack_dde_message)( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
                                       void **buffer, size_t size );
@@ -303,6 +302,7 @@ WNDPROC get_winproc( WNDPROC proc, BOOL ansi ) DECLSPEC_HIDDEN;
 void get_winproc_params( struct win_proc_params *params ) DECLSPEC_HIDDEN;
 struct dce *get_class_dce( struct tagCLASS *class ) DECLSPEC_HIDDEN;
 struct dce *set_class_dce( struct tagCLASS *class, struct dce *dce ) DECLSPEC_HIDDEN;
+extern void register_builtin_classes(void) DECLSPEC_HIDDEN;
 
 /* cursoricon.c */
 HICON alloc_cursoricon_handle( BOOL is_icon ) DECLSPEC_HIDDEN;

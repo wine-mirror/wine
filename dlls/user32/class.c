@@ -40,8 +40,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(class);
 
 #define MAX_ATOM_LEN 255 /* from dlls/kernel32/atom.c */
 
-static INIT_ONCE init_once = INIT_ONCE_STATIC_INIT;
-
 static inline const char *debugstr_us( const UNICODE_STRING *us )
 {
     if (!us) return "<null>";
@@ -307,9 +305,9 @@ static void load_uxtheme(void)
 }
 
 /***********************************************************************
- *           register_builtins
+ *           User32RegisterBuiltinClasses
  */
-static BOOL WINAPI register_builtins( INIT_ONCE *once, void *param, void **context )
+BOOL WINAPI User32RegisterBuiltinClasses( const struct win_hook_params *params, ULONG size )
 {
     register_builtin( &BUTTON_builtin_class );
     register_builtin( &COMBO_builtin_class );
@@ -327,15 +325,6 @@ static BOOL WINAPI register_builtins( INIT_ONCE *once, void *param, void **conte
     /* Load uxtheme.dll so that standard scrollbars and dialogs are hooked for theming support */
     load_uxtheme();
     return TRUE;
-}
-
-
-/***********************************************************************
- *           register_builtin_classes
- */
-void register_builtin_classes(void)
-{
-    InitOnceExecuteOnce( &init_once, register_builtins, NULL, NULL );
 }
 
 

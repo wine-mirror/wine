@@ -499,7 +499,7 @@ HWND get_desktop_window(void)
     if (!thread_info->top_window || !user_driver->pCreateDesktopWindow( thread_info->top_window ))
         ERR_(win)( "failed to create desktop window\n" );
 
-    if (user_callbacks) user_callbacks->register_builtin_classes();
+    register_builtin_classes();
     return thread_info->top_window;
 }
 

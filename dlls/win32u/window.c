@@ -4732,7 +4732,7 @@ static WND *create_window_handle( HWND parent, HWND owner, UNICODE_STRING *name,
             else assert( full_parent == thread_info->top_window );
             if (full_parent && !user_driver->pCreateDesktopWindow( thread_info->top_window ))
                 ERR( "failed to create desktop window\n" );
-            if (user_callbacks) user_callbacks->register_builtin_classes();
+            register_builtin_classes();
         }
         else  /* HWND_MESSAGE parent */
         {

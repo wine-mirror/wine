@@ -972,3 +972,19 @@ WORD get_class_word( HWND hwnd, INT offset )
     release_class_ptr( class );
     return retvalue;
 }
+
+static void register_builtins(void)
+{
+    void *ret_ptr;
+    ULONG ret_len;
+    KeUserModeCallback( NtUserRegisterBuiltinClasses, NULL, 0, &ret_ptr, &ret_len );
+}
+
+/***********************************************************************
+ *           register_builtin_classes
+ */
+void register_builtin_classes(void)
+{
+    static pthread_once_t init_once = PTHREAD_ONCE_INIT;
+    pthread_once( &init_once, register_builtins );
+}

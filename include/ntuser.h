@@ -34,6 +34,7 @@ enum
     NtUserCallWindowsHook,
     NtUserFreeCachedClipboardData,
     NtUserLoadDriver,
+    NtUserRegisterBuiltinClasses,
     NtUserRenderSynthesizedFormat,
     /* win16 hooks */
     NtUserCallFreeIcon,

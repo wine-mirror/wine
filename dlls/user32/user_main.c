@@ -172,7 +172,6 @@ static const struct user_callbacks user_funcs =
     post_dde_message,
     process_rawinput_message,
     rawinput_device_get_usages,
-    register_builtin_classes,
     SCROLL_SetStandardScrollPainted,
     unpack_dde_message,
     register_imm,
@@ -207,6 +206,7 @@ static const void *kernel_callback_table[NtUserCallCount] =
     User32CallWindowsHook,
     User32FreeCachedClipboardData,
     User32LoadDriver,
+    User32RegisterBuiltinClasses,
     User32RenderSsynthesizedFormat,
 };
 
