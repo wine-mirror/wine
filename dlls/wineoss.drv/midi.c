@@ -605,8 +605,6 @@ DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 	return midClose(wDevID);
     case MIDM_ADDBUFFER:
 	return midAddBuffer(wDevID, (LPMIDIHDR)dwParam1, dwParam2);
-    case MIDM_GETNUMDEVS:
-	return MIDM_NumDevs;
     case MIDM_RESET:
 	return midReset(wDevID);
     case MIDM_START:

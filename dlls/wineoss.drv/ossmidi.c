@@ -1217,6 +1217,9 @@ NTSTATUS midi_in_message(void *args)
     case MIDM_GETDEVCAPS:
         *params->err = midi_in_get_devcaps(params->dev_id, (MIDIINCAPSW *)params->param_1, params->param_2);
         break;
+    case MIDM_GETNUMDEVS:
+        *params->err = num_srcs;
+        break;
     default:
         TRACE("Unsupported message\n");
         *params->err = MMSYSERR_NOTSUPPORTED;
