@@ -2,7 +2,7 @@
 @ stub __std_atomic_compare_exchange_128
 @ stub __std_atomic_get_mutex
 @ stub __std_atomic_has_cmpxchg16b
-@ stub __std_atomic_notify_all_direct
+@ stdcall __std_atomic_notify_all_direct(ptr)
 @ stub __std_atomic_notify_all_indirect
 @ stdcall __std_atomic_notify_one_direct(ptr)
 @ stub __std_atomic_notify_one_indirect

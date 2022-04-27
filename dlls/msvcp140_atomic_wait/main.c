@@ -68,3 +68,9 @@ void __stdcall __std_atomic_notify_one_direct(void *addr)
     TRACE("(%p)\n", addr);
     WakeByAddressSingle(addr);
 }
+
+void __stdcall __std_atomic_notify_all_direct(void *addr)
+{
+    TRACE("(%p)\n", addr);
+    WakeByAddressAll(addr);
+}
