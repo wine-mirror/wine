@@ -436,10 +436,13 @@ state_table[] =
     {SC_SETSAMPLER, 0, "Sampler"},
 };
 
-static inline void read_dword(const char **ptr, DWORD *d)
+static inline DWORD read_dword(const char **ptr)
 {
-    memcpy(d, *ptr, sizeof(*d));
-    *ptr += sizeof(*d);
+    DWORD d;
+
+    memcpy(&d, *ptr, sizeof(d));
+    *ptr += sizeof(d);
+    return d;
 }
 
 static void skip_dword_unknown(const char **ptr, unsigned int count)
@@ -450,7 +453,7 @@ static void skip_dword_unknown(const char **ptr, unsigned int count)
     WARN("Skipping %u unknown DWORDs:\n", count);
     for (i = 0; i < count; ++i)
     {
-        read_dword(ptr, &d);
+        d = read_dword(ptr);
         WARN("\t0x%08x\n", d);
     }
 }
@@ -5112,7 +5115,7 @@ static HRESULT d3dx_parse_sampler(struct d3dx_effect *effect, struct d3dx_sample
     HRESULT hr;
     UINT i;
 
-    read_dword(ptr, &sampler->state_count);
+    sampler->state_count = read_dword(ptr);
     TRACE("Count: %u\n", sampler->state_count);
 
     sampler->states = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*sampler->states) * sampler->state_count);
@@ -5212,7 +5215,7 @@ static HRESULT d3dx_parse_value(struct d3dx_effect *effect, struct d3dx_paramete
                 case D3DXPT_TEXTURECUBE:
                 case D3DXPT_PIXELSHADER:
                 case D3DXPT_VERTEXSHADER:
-                    read_dword(ptr, &param->object_id);
+                    param->object_id = read_dword(ptr);
                     TRACE("Id: %u\n", param->object_id);
                     objects[param->object_id].param = param;
                     param->data = value;
@@ -5309,7 +5312,7 @@ static HRESULT d3dx9_parse_name(char **name, const char *ptr)
 {
     DWORD size;
 
-    read_dword(&ptr, &size);
+    size = read_dword(&ptr);
     TRACE("Name size: %#x\n", size);
 
     if (!size)
@@ -5345,7 +5348,7 @@ static HRESULT d3dx9_copy_data(struct d3dx_effect *effect, unsigned int object_i
         object->data = NULL;
     }
 
-    read_dword(ptr, &object->size);
+    object->size = read_dword(ptr);
     TRACE("Data size: %#x.\n", object->size);
 
     if (!object->size)
@@ -5459,13 +5462,13 @@ static HRESULT d3dx_parse_effect_typedef(struct d3dx_effect *effect, struct d3dx
 
     if (!parent)
     {
-        read_dword(ptr, (DWORD *)&param->type);
+        param->type = read_dword(ptr);
         TRACE("Type: %s\n", debug_d3dxparameter_type(param->type));
 
-        read_dword(ptr, (DWORD *)&param->class);
+        param->class = read_dword(ptr);
         TRACE("Class: %s\n", debug_d3dxparameter_class(param->class));
 
-        read_dword(ptr, &offset);
+        offset = read_dword(ptr);
         TRACE("Type name offset: %#x\n", offset);
         hr = d3dx9_parse_name(&param->name, data + offset);
         if (hr != D3D_OK)
@@ -5474,7 +5477,7 @@ static HRESULT d3dx_parse_effect_typedef(struct d3dx_effect *effect, struct d3dx
             goto err_out;
         }
 
-        read_dword(ptr, &offset);
+        offset = read_dword(ptr);
         TRACE("Type semantic offset: %#x\n", offset);
         hr = d3dx9_parse_name(&param->semantic, data + offset);
         if (hr != D3D_OK)
@@ -5483,16 +5486,16 @@ static HRESULT d3dx_parse_effect_typedef(struct d3dx_effect *effect, struct d3dx
             goto err_out;
         }
 
-        read_dword(ptr, &param->element_count);
+        param->element_count = read_dword(ptr);
         TRACE("Elements: %u\n", param->element_count);
 
         switch (param->class)
         {
             case D3DXPC_VECTOR:
-                read_dword(ptr, &param->columns);
+                param->columns = read_dword(ptr);
                 TRACE("Columns: %u\n", param->columns);
 
-                read_dword(ptr, &param->rows);
+                param->rows = read_dword(ptr);
                 TRACE("Rows: %u\n", param->rows);
 
                 /* sizeof(DWORD) * rows * columns */
@@ -5502,10 +5505,10 @@ static HRESULT d3dx_parse_effect_typedef(struct d3dx_effect *effect, struct d3dx
             case D3DXPC_SCALAR:
             case D3DXPC_MATRIX_ROWS:
             case D3DXPC_MATRIX_COLUMNS:
-                read_dword(ptr, &param->rows);
+                param->rows = read_dword(ptr);
                 TRACE("Rows: %u\n", param->rows);
 
-                read_dword(ptr, &param->columns);
+                param->columns = read_dword(ptr);
                 TRACE("Columns: %u\n", param->columns);
 
                 /* sizeof(DWORD) * rows * columns */
@@ -5513,7 +5516,7 @@ static HRESULT d3dx_parse_effect_typedef(struct d3dx_effect *effect, struct d3dx
                 break;
 
             case D3DXPC_STRUCT:
-                read_dword(ptr, &param->member_count);
+                param->member_count = read_dword(ptr);
                 TRACE("Members: %u\n", param->member_count);
                 break;
 
@@ -5651,7 +5654,7 @@ static HRESULT d3dx_parse_effect_annotation(struct d3dx_effect *effect, struct d
 
     anno->flags = D3DX_PARAMETER_ANNOTATION;
 
-    read_dword(ptr, &offset);
+    offset = read_dword(ptr);
     TRACE("Typedef offset: %#x\n", offset);
     ptr2 = data + offset;
     hr = d3dx_parse_effect_typedef(effect, anno, data, &ptr2, NULL, D3DX_PARAMETER_ANNOTATION);
@@ -5661,7 +5664,7 @@ static HRESULT d3dx_parse_effect_annotation(struct d3dx_effect *effect, struct d
         return hr;
     }
 
-    read_dword(ptr, &offset);
+    offset = read_dword(ptr);
     TRACE("Value offset: %#x\n", offset);
     hr = d3dx_parse_init_value(effect, anno, data, data + offset, objects);
     if (hr != D3D_OK)
@@ -5685,7 +5688,7 @@ static HRESULT d3dx_parse_state(struct d3dx_effect *effect, struct d3dx_state *s
 
     state->type = ST_CONSTANT;
 
-    read_dword(ptr, &state->operation);
+    state->operation = read_dword(ptr);
     if (state->operation >= ARRAY_SIZE(state_table))
     {
         WARN("Unknown state operation %u.\n", state->operation);
@@ -5694,10 +5697,10 @@ static HRESULT d3dx_parse_state(struct d3dx_effect *effect, struct d3dx_state *s
 
     TRACE("Operation: %#x (%s)\n", state->operation, state_table[state->operation].name);
 
-    read_dword(ptr, &state->index);
+    state->index = read_dword(ptr);
     TRACE("Index: %#x\n", state->index);
 
-    read_dword(ptr, &offset);
+    offset = read_dword(ptr);
     TRACE("Typedef offset: %#x\n", offset);
     ptr2 = data + offset;
     hr = d3dx_parse_effect_typedef(effect, param, data, &ptr2, NULL, 0);
@@ -5707,7 +5710,7 @@ static HRESULT d3dx_parse_state(struct d3dx_effect *effect, struct d3dx_state *s
         goto err_out;
     }
 
-    read_dword(ptr, &offset);
+    offset = read_dword(ptr);
     TRACE("Value offset: %#x\n", offset);
     hr = d3dx_parse_init_value(effect, param, data, data + offset, objects);
     if (hr != D3D_OK)
@@ -5757,17 +5760,17 @@ static HRESULT d3dx_parse_effect_parameter(struct d3dx_effect *effect, struct d3
     unsigned int i;
     const char *ptr2;
 
-    read_dword(ptr, &offset);
+    offset = read_dword(ptr);
     TRACE("Typedef offset: %#x.\n", offset);
     ptr2 = data + offset;
 
-    read_dword(ptr, &offset);
+    offset = read_dword(ptr);
     TRACE("Value offset: %#x.\n", offset);
 
-    read_dword(ptr, &param->param.flags);
+    param->param.flags = read_dword(ptr);
     TRACE("Flags: %#x.\n", param->param.flags);
 
-    read_dword(ptr, &param->annotation_count);
+    param->annotation_count = read_dword(ptr);
     TRACE("Annotation count: %u.\n", param->annotation_count);
 
     hr = d3dx_parse_effect_typedef(effect, &param->param, data, &ptr2, NULL, param->param.flags);
@@ -5831,7 +5834,7 @@ static HRESULT d3dx_parse_effect_pass(struct d3dx_effect *effect, struct d3dx_pa
     struct d3dx_state *states = NULL;
     char *name = NULL;
 
-    read_dword(ptr, &offset);
+    offset = read_dword(ptr);
     TRACE("Pass name offset: %#x\n", offset);
     hr = d3dx9_parse_name(&name, data + offset);
     if (hr != D3D_OK)
@@ -5840,10 +5843,10 @@ static HRESULT d3dx_parse_effect_pass(struct d3dx_effect *effect, struct d3dx_pa
         goto err_out;
     }
 
-    read_dword(ptr, &pass->annotation_count);
+    pass->annotation_count = read_dword(ptr);
     TRACE("Annotation count: %u\n", pass->annotation_count);
 
-    read_dword(ptr, &pass->state_count);
+    pass->state_count = read_dword(ptr);
     TRACE("State count: %u\n", pass->state_count);
 
     if (pass->annotation_count)
@@ -5927,7 +5930,7 @@ static HRESULT d3dx_parse_effect_technique(struct d3dx_effect *effect, struct d3
     unsigned int i;
     char *name = NULL;
 
-    read_dword(ptr, &offset);
+    offset = read_dword(ptr);
     TRACE("Technique name offset: %#x\n", offset);
     hr = d3dx9_parse_name(&name, data + offset);
     if (hr != D3D_OK)
@@ -5936,10 +5939,10 @@ static HRESULT d3dx_parse_effect_technique(struct d3dx_effect *effect, struct d3
         goto err_out;
     }
 
-    read_dword(ptr, &technique->annotation_count);
+    technique->annotation_count = read_dword(ptr);
     TRACE("Annotation count: %u\n", technique->annotation_count);
 
-    read_dword(ptr, &technique->pass_count);
+    technique->pass_count = read_dword(ptr);
     TRACE("Pass count: %u\n", technique->pass_count);
 
     if (technique->annotation_count)
@@ -6123,19 +6126,19 @@ static HRESULT d3dx_parse_resource(struct d3dx_effect *effect, const char *data,
     struct d3dx_object *object;
     HRESULT hr = E_FAIL;
 
-    read_dword(ptr, &technique_index);
+    technique_index = read_dword(ptr);
     TRACE("technique_index: %u\n", technique_index);
 
-    read_dword(ptr, &index);
+    index = read_dword(ptr);
     TRACE("index: %u\n", index);
 
-    read_dword(ptr, &element_index);
+    element_index = read_dword(ptr);
     TRACE("element_index: %u\n", element_index);
 
-    read_dword(ptr, &state_index);
+    state_index = read_dword(ptr);
     TRACE("state_index: %u\n", state_index);
 
-    read_dword(ptr, &usage);
+    usage = read_dword(ptr);
     TRACE("usage: %u\n", usage);
 
     if (technique_index == 0xffffffff)
@@ -6308,15 +6311,15 @@ static HRESULT d3dx_parse_effect(struct d3dx_effect *effect, const char *data, U
     HRESULT hr;
     UINT i;
 
-    read_dword(&ptr, &effect->parameter_count);
+    effect->parameter_count = read_dword(&ptr);
     TRACE("Parameter count: %u.\n", effect->parameter_count);
 
-    read_dword(&ptr, &effect->technique_count);
+    effect->technique_count = read_dword(&ptr);
     TRACE("Technique count: %u.\n", effect->technique_count);
 
     skip_dword_unknown(&ptr, 1);
 
-    read_dword(&ptr, &effect->object_count);
+    effect->object_count = read_dword(&ptr);
     TRACE("Object count: %u.\n", effect->object_count);
 
     effect->objects = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY,
@@ -6375,17 +6378,17 @@ static HRESULT d3dx_parse_effect(struct d3dx_effect *effect, const char *data, U
         }
     }
 
-    read_dword(&ptr, &stringcount);
+    stringcount = read_dword(&ptr);
     TRACE("String count: %u.\n", stringcount);
 
-    read_dword(&ptr, &resourcecount);
+    resourcecount = read_dword(&ptr);
     TRACE("Resource count: %u.\n", resourcecount);
 
     for (i = 0; i < stringcount; ++i)
     {
         DWORD id;
 
-        read_dword(&ptr, &id);
+        id = read_dword(&ptr);
         TRACE("id: %u.\n", id);
 
         if (FAILED(hr = d3dx9_copy_data(effect, id, &ptr)))
@@ -6526,7 +6529,7 @@ static HRESULT d3dx9_effect_init_from_dxbc(struct d3dx_effect *effect,
 
     list_init(&effect->parameter_block_list);
 
-    read_dword(&ptr, &tag);
+    tag = read_dword(&ptr);
     TRACE("Tag: %x\n", tag);
 
     if (!(flags & D3DXFX_NOT_CLONEABLE))
@@ -6570,7 +6573,7 @@ static HRESULT d3dx9_effect_init_from_dxbc(struct d3dx_effect *effect,
             goto fail;
         }
     }
-    read_dword(&ptr, &offset);
+    offset = read_dword(&ptr);
     TRACE("Offset: %x\n", offset);
 
     hr = d3dx_parse_effect(effect, ptr, data_size, offset, skip_constants, skip_constants_count);
@@ -6669,7 +6672,7 @@ static HRESULT d3dx9_effect_init(struct d3dx_effect *effect, struct IDirect3DDev
             effect, device, data, data_size, defines, include, flags, errors, pool,
             debugstr_a(skip_constants_string));
 
-    read_dword(&ptr, &tag);
+    tag = read_dword(&ptr);
 
     if (tag == d3dx9_effect_version(9, 1))
         return d3dx9_effect_init_from_dxbc(effect, device, data, data_size, flags, pool, skip_constants_string);
