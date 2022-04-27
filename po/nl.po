@@ -16761,6 +16761,10 @@ msgstr ""
 "                 plek aan waar het register informatie wordt geëxporteerd.\n"
 "  [sleutel]      De te wijzigen registersleutel.\n"
 "\n"
+"Bijvoorbeeld:\n"
+"  regedit \"import.reg\"\n"
+"  regedit /E \"export.reg\" \"HKEY_CURRENT_USER\\Console\"\n"
+"  regedit /D \"HKEY_LOCAL_MACHINE\\Sleutel\\Pad\"\n"
 
 #: programs/regedit/regedit.rc:409
 msgid "regedit: Invalid or unrecognized switch [%1]\n"
