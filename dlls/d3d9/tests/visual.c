@@ -19502,7 +19502,7 @@ static void add_dirty_rect_test(void)
     ok(color_match(color, 0x0000ff00, 1),
             "Expected color 0x0000ff00, got 0x%08x.\n", color);
 
-    /* Locks with NO_DIRTY_UPDATE are ignored. */
+    /* UpdateTexture() ignores locks made with D3DLOCK_NO_DIRTY_UPDATE. */
     fill_surface(surface_src_green, 0x00000080, D3DLOCK_NO_DIRTY_UPDATE);
     hr = IDirect3DDevice9_UpdateTexture(device, (IDirect3DBaseTexture9 *)tex_src_green,
             (IDirect3DBaseTexture9 *)tex_dst2);
@@ -19514,6 +19514,15 @@ static void add_dirty_rect_test(void)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
 
+    /* Manually copying the surface works, though. */
+    hr = IDirect3DDevice9_UpdateSurface(device, surface_src_green, NULL, surface_dst2, NULL);
+    ok(hr == D3D_OK, "Failed to copy surface, hr %#x.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x00000080, 1), "Got unexpected colour 0x%08x.\n", color);
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "Failed to present, hr %#x.\n", hr);
+
     /* Readonly maps write to D3DPOOL_SYSTEMMEM, but don't record a dirty rectangle. */
     fill_surface(surface_src_green, 0x000000ff, D3DLOCK_READONLY);
     hr = IDirect3DDevice9_UpdateTexture(device, (IDirect3DBaseTexture9 *)tex_src_green,
@@ -19521,8 +19530,7 @@ static void add_dirty_rect_test(void)
     ok(SUCCEEDED(hr), "Failed to update texture, hr %#x.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x0000ff00, 1),
-            "Expected color 0x0000ff00, got 0x%08x.\n", color);
+    ok(color_match(color, 0x00000080, 1), "Got unexpected colour 0x%08x.\n", color);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
 
@@ -19638,17 +19646,28 @@ static void add_dirty_rect_test(void)
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
 
     /* AddDirtyRect uploads the new contents.
-     * Side note, not tested in the test: Partial surface updates work, and two separate
-     * dirty rectangles are tracked individually. Tested on Nvidia Kepler, other drivers
-     * untested. */
-    hr = IDirect3DTexture9_AddDirtyRect(tex_managed, NULL);
-    ok(SUCCEEDED(hr), "Failed to add dirty rect, hr %#x.\n", hr);
+     * Partial surface updates work, and two separate dirty rectangles are
+     * tracked individually. Tested on Nvidia Kepler, other drivers untested. */
+    hr = IDirect3DTexture9_AddDirtyRect(tex_managed, &part_rect);
+    ok(hr == S_OK, "Failed to add dirty rect, hr %#x.\n", hr);
     add_dirty_rect_test_draw(device);
     color = getPixelColor(device, 320, 240);
-    ok(color_match(color, 0x0000ff00, 1),
-            "Expected color 0x0000ff00, got 0x%08x.\n", color);
+    ok(color_match(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 1, 1);
+    todo_wine ok(color_match(color, 0x00ff0000, 1), "Got unexpected color 0x%08x.\n", color);
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    hr = IDirect3DTexture9_AddDirtyRect(tex_managed, NULL);
+    ok(hr == S_OK, "Failed to add dirty rect, hr %#x.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    color = getPixelColor(device, 1, 1);
+    ok(color_match(color, 0x0000ff00, 1), "Got unexpected color 0x%08x.\n", color);
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
     hr = IDirect3DDevice9_SetSamplerState(device, 0, D3DSAMP_MAXMIPLEVEL, 1);
     ok(SUCCEEDED(hr), "Failed to set sampler state, hr %#x.\n", hr);
     add_dirty_rect_test_draw(device);
@@ -19720,10 +19739,6 @@ static void add_dirty_rect_test(void)
         ok(SUCCEEDED(hr), "[%u] Got unexpected hr %#x.\n", i, hr);
     }
 
-    hr = IDirect3DDevice9_SetTextureStageState(device, 0, D3DTSS_COLOROP, D3DTOP_DISABLE);
-    ok(SUCCEEDED(hr), "Failed to set color op, hr %#x.\n", hr);
-    hr = IDirect3DDevice9_SetTexture(device, 0, NULL);
-    ok(SUCCEEDED(hr), "Failed to set texture, hr %#x.\n", hr);
     IDirect3DSurface9_Release(surface_dst2);
     IDirect3DSurface9_Release(surface_managed1);
     IDirect3DSurface9_Release(surface_managed0);
@@ -19736,6 +19751,40 @@ static void add_dirty_rect_test(void)
     IDirect3DTexture9_Release(tex_dst2);
     IDirect3DTexture9_Release(tex_managed);
     IDirect3DTexture9_Release(tex_dynamic);
+
+    /* As above, test UpdateSurface() after locking the source with
+     * D3DLOCK_NO_DIRTY_UPDATE, but this time do it immediately after creating
+     * the destination texture. This is a regression test for a previously
+     * broken code path. */
+
+    hr = IDirect3DDevice9_CreateTexture(device, 256, 256, 1, 0, D3DFMT_X8R8G8B8,
+            D3DPOOL_DEFAULT, &tex_dst2, NULL);
+    ok(hr == D3D_OK, "Failed to create texture, hr %#x.\n", hr);
+    hr = IDirect3DDevice9_CreateTexture(device, 256, 256, 1, 0, D3DFMT_X8R8G8B8,
+            D3DPOOL_SYSTEMMEM, &tex_src_green, NULL);
+    ok(hr == D3D_OK, "Failed to create texture, hr %#x.\n", hr);
+
+    hr = IDirect3DTexture9_GetSurfaceLevel(tex_dst2, 0, &surface_dst2);
+    ok(hr == D3D_OK, "Failed to get surface level, hr %#x.\n", hr);
+    hr = IDirect3DTexture9_GetSurfaceLevel(tex_src_green, 0, &surface_src_green);
+    ok(hr == D3D_OK, "Failed to get surface level, hr %#x.\n", hr);
+
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)tex_dst2);
+    ok(hr == D3D_OK, "Failed to set texture, hr %#x.\n", hr);
+    fill_surface(surface_src_green, 0x00ff0000, D3DLOCK_NO_DIRTY_UPDATE);
+    hr = IDirect3DDevice9_UpdateSurface(device, surface_src_green, NULL, surface_dst2, NULL);
+    ok(hr == D3D_OK, "Failed to copy rects, hr %#x.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    todo_wine ok(color_match(color, 0x00ff0000, 1), "Got unexpected colour 0x%08x.\n", color);
+    hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
+    ok(hr == D3D_OK, "Failed to present, hr %#x.\n", hr);
+
+    IDirect3DSurface9_Release(surface_dst2);
+    IDirect3DSurface9_Release(surface_src_green);
+    IDirect3DTexture9_Release(tex_dst2);
+    IDirect3DTexture9_Release(tex_src_green);
+
     refcount = IDirect3DDevice9_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
     IDirect3D9_Release(d3d);
