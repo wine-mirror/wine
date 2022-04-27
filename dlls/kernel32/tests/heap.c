@@ -338,7 +338,7 @@ static void test_HeapCreate(void)
     ok( !!heap, "HeapCreate failed, error %lu\n", GetLastError() );
     ok( !((ULONG_PTR)heap & 0xffff), "wrong heap alignment\n" );
 
-    /* theshold between failure and success varies, and w7pro64 has a much larger overhead. */
+    /* threshold between failure and success varies, and w7pro64 has a much larger overhead. */
 
     ptr = HeapAlloc( heap, 0, alloc_size - (0x400 + 0x100 * sizeof(void *)) );
     ok( !!ptr, "HeapAlloc failed, error %lu\n", GetLastError() );
