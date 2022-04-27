@@ -508,7 +508,7 @@ static DWORD midReset(WORD wDevID)
 	MidiInDev[wDevID].lpQueueHdr = lpMidiHdr->lpNext;
 	lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
 	lpMidiHdr->dwFlags |= MHDR_DONE;
-	MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD_PTR)lpMidiHdr, dwTime);
+	MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD_PTR)lpMidiHdr, dwTime - MidiInDev[wDevID].startTime);
     }
     in_buffer_unlock();
 
