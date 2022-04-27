@@ -243,25 +243,25 @@ struct tt_hhea
 
 struct sbix_header
 {
-    WORD version;
-    WORD flags;
-    DWORD num_strikes;
-    DWORD strike_offset[1];
+    uint16_t version;
+    uint16_t flags;
+    uint32_t num_strikes;
+    uint32_t strike_offset[1];
 };
 
 struct sbix_strike
 {
-    WORD ppem;
-    WORD ppi;
-    DWORD glyphdata_offsets[1];
+    uint16_t ppem;
+    uint16_t ppi;
+    uint32_t glyphdata_offsets[1];
 };
 
 struct sbix_glyph_data
 {
-    WORD originOffsetX;
-    WORD originOffsetY;
-    DWORD graphic_type;
-    BYTE data[1];
+    int16_t originOffsetX;
+    int16_t originOffsetY;
+    uint32_t graphic_type;
+    uint8_t data[1];
 };
 
 struct maxp
@@ -272,29 +272,41 @@ struct maxp
 
 struct cblc_header
 {
-    WORD major_version;
-    WORD minor_version;
-    DWORD num_sizes;
+    uint16_t major_version;
+    uint16_t minor_version;
+    uint32_t num_sizes;
 };
 
-typedef struct {
-    BYTE res[12];
-} sbitLineMetrics;
+struct sbit_line_metrics
+{
+    int8_t ascender;
+    int8_t descender;
+    uint8_t widthMax;
+    int8_t caretSlopeNumerator;
+    int8_t caretSlopeDenominator;
+    int8_t caretOffset;
+    int8_t minOriginSB;
+    int8_t minAdvanceSB;
+    int8_t maxBeforeBL;
+    int8_t minAfterBL;
+    int8_t pad1;
+    int8_t pad2;
+};
 
 struct cblc_bitmapsize_table
 {
-    DWORD indexSubTableArrayOffset;
-    DWORD indexTablesSize;
-    DWORD numberofIndexSubTables;
-    DWORD colorRef;
-    sbitLineMetrics hori;
-    sbitLineMetrics vert;
-    WORD startGlyphIndex;
-    WORD endGlyphIndex;
-    BYTE ppemX;
-    BYTE ppemY;
-    BYTE bit_depth;
-    BYTE flags;
+    uint32_t indexSubTableArrayOffset;
+    uint32_t indexTablesSize;
+    uint32_t numberofIndexSubTables;
+    uint32_t colorRef;
+    struct sbit_line_metrics hori;
+    struct sbit_line_metrics vert;
+    uint16_t startGlyphIndex;
+    uint16_t endGlyphIndex;
+    uint8_t ppemX;
+    uint8_t ppemY;
+    uint8_t bit_depth;
+    int8_t flags;
 };
 
 struct gasp_range
@@ -1204,43 +1216,43 @@ static const UINT16 dwriteid_to_opentypeid[DWRITE_INFORMATIONAL_STRING_WEIGHT_ST
 /* CPAL table */
 struct cpal_header_0
 {
-    USHORT version;
-    USHORT num_palette_entries;
-    USHORT num_palettes;
-    USHORT num_color_records;
-    ULONG offset_first_color_record;
-    USHORT color_record_indices[1];
+    uint16_t version;
+    uint16_t num_palette_entries;
+    uint16_t num_palettes;
+    uint16_t num_color_records;
+    uint32_t offset_first_color_record;
+    uint16_t color_record_indices[1];
 };
 
 struct cpal_color_record
 {
-    BYTE blue;
-    BYTE green;
-    BYTE red;
-    BYTE alpha;
+    uint8_t blue;
+    uint8_t green;
+    uint8_t red;
+    uint8_t alpha;
 };
 
 /* COLR table */
 struct colr_header
 {
-    USHORT version;
-    USHORT num_baseglyph_records;
-    ULONG offset_baseglyph_records;
-    ULONG offset_layer_records;
-    USHORT num_layer_records;
+    uint16_t version;
+    uint16_t num_baseglyph_records;
+    uint32_t offset_baseglyph_records;
+    uint32_t offset_layer_records;
+    uint16_t num_layer_records;
 };
 
 struct colr_baseglyph_record
 {
-    USHORT glyph;
-    USHORT first_layer_index;
-    USHORT num_layers;
+    uint16_t glyph;
+    uint16_t first_layer_index;
+    uint16_t num_layers;
 };
 
 struct colr_layer_record
 {
-    USHORT glyph;
-    USHORT palette_index;
+    uint16_t glyph;
+    uint16_t palette_index;
 };
 
 struct meta_data_map
