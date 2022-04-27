@@ -2530,9 +2530,38 @@ static void test_display_dc(void)
     }
 }
 
+BOOL CALLBACK MonitorEnumProc(HMONITOR hMonitor, HDC hdcMonitor,
+                              LPRECT lprcMonitor, LPARAM dwData)
+{
+    MONITORINFOEXW info;
+    static int index;
+
+    info.cbSize = sizeof(info);
+    if (GetMonitorInfoW(hMonitor, (MONITORINFO*)&info))
+    {
+        printf("Monitor %d %7s [%02lx] %s %s\n", index,
+              (info.dwFlags & MONITORINFOF_PRIMARY) ? "primary" : "",
+               info.dwFlags, wine_dbgstr_rect(&info.rcMonitor),
+               wine_dbgstr_w(info.szDevice));
+    }
+    index++;
+    return TRUE;
+}
+
 START_TEST(monitor)
 {
+    char** myARGV;
+    int myARGC = winetest_get_mainargs(&myARGV);
+
     init_function_pointers();
+
+    if (myARGC >= 3 && strcmp(myARGV[2], "info") == 0)
+    {
+        printf("Monitor information:\n");
+        EnumDisplayMonitors(NULL, NULL, MonitorEnumProc, 0);
+        return;
+    }
+
     test_enumdisplaydevices();
     test_ChangeDisplaySettingsEx();
     test_DisplayConfigSetDeviceInfo();
