@@ -6744,7 +6744,8 @@ static inline void wined3d_context_gl_reference_bo(struct wined3d_context_gl *co
 static inline void wined3d_context_gl_reference_buffer(struct wined3d_context_gl *context_gl,
         struct wined3d_buffer *buffer)
 {
-    wined3d_context_gl_reference_bo(context_gl, wined3d_bo_gl(buffer->buffer_object));
+    if (buffer->buffer_object)
+        wined3d_context_gl_reference_bo(context_gl, wined3d_bo_gl(buffer->buffer_object));
 }
 
 static inline bool wined3d_map_persistent(void)
