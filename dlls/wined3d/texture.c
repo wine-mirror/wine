@@ -2096,7 +2096,8 @@ void wined3d_texture_gl_prepare_texture(struct wined3d_texture_gl *texture_gl,
     const struct wined3d_format_gl *format_gl;
     GLenum internal;
 
-    TRACE("texture_gl %p, context_gl %p, format %s.\n", texture_gl, context_gl, debug_d3dformat(format->id));
+    TRACE("texture_gl %p, context_gl %p, srgb %d, format %s.\n",
+            texture_gl, context_gl, srgb, debug_d3dformat(format->id));
 
     if (!d3d_info->shader_color_key
             && !(texture_gl->t.async.flags & WINED3D_TEXTURE_ASYNC_COLOR_KEY)
