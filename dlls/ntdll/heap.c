@@ -1725,60 +1725,45 @@ void *WINAPI DECLSPEC_HOTPATCH RtlAllocateHeap( HANDLE heap, ULONG flags, SIZE_T
 }
 
 
-/***********************************************************************
- *           RtlFreeHeap   (NTDLL.@)
- *
- * Free a memory block allocated with RtlAllocateHeap().
- *
- * PARAMS
- *  heap  [I] Heap that block was allocated from
- *  flags [I] HEAP_ flags from "winnt.h"
- *  ptr   [I] Block to free
- *
- * RETURNS
- *  Success: TRUE, if ptr is NULL or was freed successfully.
- *  Failure: FALSE.
- */
-BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE heap, ULONG flags, void *ptr )
+static NTSTATUS heap_free( HEAP *heap, void *ptr )
 {
-    ARENA_INUSE *pInUse;
+    ARENA_INUSE *block;
     SUBHEAP *subheap;
-    HEAP *heapPtr;
-
-    /* Validate the parameters */
-
-    if (!ptr) return TRUE;  /* freeing a NULL ptr isn't an error in Win2k */
-
-    heapPtr = HEAP_GetPtr( heap );
-    if (!heapPtr)
-    {
-        RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_HANDLE );
-        return FALSE;
-    }
-
-    heap_lock( heapPtr, flags );
 
     /* Inform valgrind we are trying to free memory, so it can throw up an error message */
     notify_free( ptr );
 
-    /* Some sanity checks */
-    pInUse  = (ARENA_INUSE *)ptr - 1;
-    if (!validate_block_pointer( heapPtr, &subheap, pInUse )) goto error;
+    block = (ARENA_INUSE *)ptr - 1;
+    if (!validate_block_pointer( heap, &subheap, block )) return STATUS_INVALID_PARAMETER;
 
-    if (!subheap)
-        free_large_block( heapPtr, ptr );
+    if (!subheap) free_large_block( heap, ptr );
+    else HEAP_MakeInUseBlockFree( subheap, block );
+
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *           RtlFreeHeap   (NTDLL.@)
+ */
+BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE heap, ULONG flags, void *ptr )
+{
+    NTSTATUS status;
+    HEAP *heapPtr;
+
+    if (!ptr) return TRUE;
+
+    if (!(heapPtr = HEAP_GetPtr( heap )))
+        status = STATUS_INVALID_PARAMETER;
     else
-        HEAP_MakeInUseBlockFree( subheap, pInUse );
+    {
+        heap_lock( heapPtr, flags );
+        status = heap_free( heapPtr, ptr );
+        heap_unlock( heapPtr, flags );
+    }
 
-    heap_unlock( heapPtr, flags );
-    TRACE("(%p,%08x,%p): returning TRUE\n", heap, flags, ptr );
-    return TRUE;
-
-error:
-    heap_unlock( heapPtr, flags );
-    RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_PARAMETER );
-    TRACE("(%p,%08x,%p): returning FALSE\n", heap, flags, ptr );
-    return FALSE;
+    TRACE( "heap %p, flags %#x, ptr %p, return %u, status %#x.\n", heap, flags, ptr, !status, status );
+    heap_set_status( heapPtr, flags, status );
+    return !status;
 }
 
 

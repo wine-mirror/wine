@@ -229,6 +229,8 @@ static void test_HeapCreate(void)
 
     /* test some border cases */
 
+    ret = HeapFree( NULL, 0, NULL );
+    ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
     ret = HeapFree( heap, 0, NULL );
     ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
 #if 0 /* crashes */
