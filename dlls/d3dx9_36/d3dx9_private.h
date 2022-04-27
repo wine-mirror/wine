@@ -318,13 +318,13 @@ struct d3dx_parameter
     void *data;
     D3DXPARAMETER_CLASS class;
     D3DXPARAMETER_TYPE  type;
-    UINT rows;
-    UINT columns;
-    UINT element_count;
-    UINT member_count;
-    DWORD flags;
-    UINT bytes;
-    DWORD object_id;
+    unsigned int rows;
+    unsigned int columns;
+    unsigned int element_count;
+    unsigned int member_count;
+    uint32_t flags;
+    unsigned int bytes;
+    unsigned int object_id;
 
     struct d3dx_parameter *members;
     char *semantic;
@@ -336,7 +336,7 @@ struct d3dx_parameter
 struct d3dx_top_level_parameter
 {
     struct d3dx_parameter param;
-    UINT annotation_count;
+    unsigned int annotation_count;
     struct d3dx_parameter *annotations;
     ULONG64 update_version;
     ULONG64 *version_counter;
