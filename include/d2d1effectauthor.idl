@@ -32,6 +32,13 @@ typedef enum D2D1_FILTER
     D2D1_FILTER_FORCE_DWORD = 0xffffffff
 } D2D1_FILTER;
 
+typedef enum D2D1_FEATURE
+{
+    D2D1_FEATURE_DOUBLES                  = 0x0,
+    D2D1_FEATURE_D3D10_X_HARDWARE_OPTIONS = 0x1,
+    D2D1_FEATURE_FORCE_DWORD = 0xffffffff
+} D2D1_FEATURE;
+
 typedef enum D2D1_CHANNEL_DEPTH
 {
     D2D1_CHANNEL_DEPTH_DEFAULT = 0x0,
@@ -55,6 +62,13 @@ typedef enum D2D1_VERTEX_OPTIONS
     D2D1_VERTEX_OPTIONS_ASSUME_NO_OVERLAP = 0x4,
     D2D1_VERTEX_OPTIONS_FORCE_DWORD = 0xffffffff
 } D2D1_VERTEX_OPTIONS;
+
+typedef enum D2D1_VERTEX_USAGE
+{
+    D2D1_VERTEX_USAGE_STATIC  = 0x0,
+    D2D1_VERTEX_USAGE_DYNAMIC = 0x1,
+    D2D1_VERTEX_USAGE_FORCE_DWORD = 0xffffffff
+} D2D1_VERTEX_USAGE;
 
 typedef enum D2D1_BLEND_OPERATION
 {
@@ -106,6 +120,42 @@ typedef struct D2D1_BLEND_DESCRIPTION
     D2D1_BLEND_OPERATION blendOperationAlpha;
     float blendFactor[4];
 } D2D1_BLEND_DESCRIPTION;
+
+typedef struct D2D1_RESOURCE_TEXTURE_PROPERTIES
+{
+    const UINT32 *extents;
+    UINT32 dimensions;
+    D2D1_BUFFER_PRECISION bufferPrecision;
+    D2D1_CHANNEL_DEPTH channelDepth;
+    D2D1_FILTER filter;
+    const D2D1_EXTEND_MODE *extendModes;
+} D2D1_RESOURCE_TEXTURE_PROPERTIES;
+
+typedef struct D2D1_INPUT_ELEMENT_DESC
+{
+    const char *semanticName;
+    UINT32 semanticIndex;
+    DXGI_FORMAT format;
+    UINT32 inputSlot;
+    UINT32 alignedByteOffset;
+} D2D1_INPUT_ELEMENT_DESC;
+
+typedef struct D2D1_VERTEX_BUFFER_PROPERTIES
+{
+    UINT32 inputCount;
+    D2D1_VERTEX_USAGE usage;
+    const BYTE *data;
+    UINT32 byteWidth;
+} D2D1_VERTEX_BUFFER_PROPERTIES;
+
+typedef struct D2D1_CUSTOM_VERTEX_BUFFER_PROPERTIES
+{
+    const BYTE *shaderBufferWithInputSignature;
+    UINT32 shaderBufferSize;
+    const D2D1_INPUT_ELEMENT_DESC *inputElements;
+    UINT32 elementCount;
+    UINT32 stride;
+} D2D1_CUSTOM_VERTEX_BUFFER_PROPERTIES;
 
 [
     object,
@@ -418,5 +468,111 @@ interface ID2D1BoundsAdjustmentTransform : ID2D1TransformNode
     );
     void GetOutputBounds(
         [out] D2D1_RECT_L *bounds
+    );
+}
+
+[
+    object,
+    uuid(3d9f916b-27dc-4ad7-b4f1-64945340f563),
+    local,
+]
+interface ID2D1EffectContext : IUnknown
+{
+    void GetDpi(
+        [out] float *dpi_x,
+        [out] float *dpi_y
+    );
+    HRESULT CreateEffect(
+        [in] REFCLSID clsid,
+        [out] ID2D1Effect **effect
+    );
+    HRESULT GetMaximumSupportedFeatureLevel(
+        [in] const D3D_FEATURE_LEVEL *levels,
+        [in] UINT32 level_count,
+        [out] D3D_FEATURE_LEVEL *max_level
+    );
+    HRESULT CreateTransformNodeFromEffect(
+        [in] ID2D1Effect *effect,
+        [out] ID2D1TransformNode **node
+    );
+    HRESULT CreateBlendTransform(
+        [in] UINT32 num_inputs,
+        [in] const D2D1_BLEND_DESCRIPTION *description,
+        [out] ID2D1BlendTransform **transform
+    );
+    HRESULT CreateBorderTransform(
+        [in] D2D1_EXTEND_MODE mode_x,
+        [in] D2D1_EXTEND_MODE mode_y,
+        [out] ID2D1BorderTransform **transform
+    );
+    HRESULT CreateOffsetTransform(
+        [in] D2D1_POINT_2L offset,
+        [out] ID2D1OffsetTransform **transform
+    );
+    HRESULT CreateBoundsAdjustmentTransform(
+        [in] const D2D1_RECT_L *output_rect,
+        [out] ID2D1BoundsAdjustmentTransform **transform
+    );
+    HRESULT LoadPixelShader(
+        [in] REFGUID shader_id,
+        [in] const BYTE *buffer,
+        [in] UINT32 buffer_size
+    );
+    HRESULT LoadVertexShader(
+        [in] REFGUID shader_id,
+        [in] const BYTE *buffer,
+        [in] UINT32 buffer_size
+    );
+    HRESULT LoadComputeShader(
+        [in] REFGUID shader_id,
+        [in] const BYTE *buffer,
+        [in] UINT32 buffer_size
+    );
+    BOOL IsShaderLoaded(
+        [in] REFGUID shader_id
+    );
+    HRESULT CreateResourceTexture(
+        [in, optional] const GUID *id,
+        [in] const D2D1_RESOURCE_TEXTURE_PROPERTIES *texture_properties,
+        [in] const BYTE *data,
+        [in] const UINT32 *strides,
+        [in] UINT32 data_size,
+        [out] ID2D1ResourceTexture **texture
+    );
+    HRESULT FindResourceTexture(
+        [in] const GUID *id,
+        [out] ID2D1ResourceTexture **texture
+    );
+    HRESULT CreateVertexBuffer(
+        [in] const D2D1_VERTEX_BUFFER_PROPERTIES *buffer_properties,
+        [in, optional] const GUID *id,
+        [in, optional] const D2D1_CUSTOM_VERTEX_BUFFER_PROPERTIES *custom_buffer_properties,
+        [out] ID2D1VertexBuffer **buffer
+    );
+    HRESULT FindVertexBuffer(
+        [in] const GUID *id,
+        [out] ID2D1VertexBuffer **buffer
+    );
+    HRESULT CreateColorContext(
+        [in] D2D1_COLOR_SPACE space,
+        [in] const BYTE *profile,
+        [in] UINT32 profile_size,
+        [out] ID2D1ColorContext **color_context
+    );
+    HRESULT CreateColorContextFromFilename(
+        [in] const WCHAR *filename,
+        [out] ID2D1ColorContext **color_context
+    );
+    HRESULT CreateColorContextFromWicColorContext(
+        [in] IWICColorContext *wic_color_context,
+        [out] ID2D1ColorContext **color_context
+    );
+    HRESULT CheckFeatureSupport(
+        [in] D2D1_FEATURE feature,
+        [out] void *data,
+        [in] UINT32 data_size
+    );
+    BOOL IsBufferPrecisionSupported(
+        [in] D2D1_BUFFER_PRECISION precision
     );
 }
