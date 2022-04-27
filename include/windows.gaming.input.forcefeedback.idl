@@ -25,13 +25,18 @@ import "asyncinfo.idl";
 import "eventtoken.idl";
 import "windowscontracts.idl";
 import "windows.foundation.idl";
+import "windows.foundation.numerics.idl";
 
 namespace Windows.Gaming.Input.ForceFeedback {
     typedef enum ForceFeedbackEffectAxes ForceFeedbackEffectAxes;
     typedef enum ForceFeedbackEffectState ForceFeedbackEffectState;
     typedef enum ForceFeedbackLoadEffectResult ForceFeedbackLoadEffectResult;
+    typedef enum PeriodicForceEffectKind PeriodicForceEffectKind;
     interface IForceFeedbackEffect;
+    interface IPeriodicForceEffect;
+    interface IPeriodicForceEffectFactory;
     runtimeclass ForceFeedbackMotor;
+    runtimeclass PeriodicForceEffect;
 
     declare {
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Gaming.Input.ForceFeedback.ForceFeedbackLoadEffectResult>;
@@ -69,6 +74,16 @@ namespace Windows.Gaming.Input.ForceFeedback {
         Succeeded          = 0,
         EffectStorageFull  = 1,
         EffectNotSupported = 2
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 3.0)]
+    enum PeriodicForceEffectKind
+    {
+        SquareWave       = 0,
+        SineWave         = 1,
+        TriangleWave     = 2,
+        SawtoothWaveUp   = 3,
+        SawtoothWaveDown = 4,
     };
 
     [
@@ -110,11 +125,52 @@ namespace Windows.Gaming.Input.ForceFeedback {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 3.0),
+        exclusiveto(Windows.Gaming.Input.ForceFeedback.PeriodicForceEffect),
+        uuid(5c5138d7-fc75-4d52-9a0a-efe4cab5fe64)
+    ]
+    interface IPeriodicForceEffect : IInspectable
+        requires Windows.Gaming.Input.ForceFeedback.IForceFeedbackEffect
+    {
+        [propget] HRESULT Kind([out, retval] Windows.Gaming.Input.ForceFeedback.PeriodicForceEffectKind *value);
+        HRESULT SetParameters([in] Windows.Foundation.Numerics.Vector3 vector, [in] FLOAT frequency, [in] FLOAT phase,
+                              [in] FLOAT bias, [in] Windows.Foundation.TimeSpan duration);
+        HRESULT SetParametersWithEnvelope([in] Windows.Foundation.Numerics.Vector3 vector, [in] FLOAT frequency, [in] FLOAT phase,
+                                          [in] FLOAT bias, [in] FLOAT attack_gain, [in] FLOAT sustain_gain, [in] FLOAT release_gain,
+                                          [in] Windows.Foundation.TimeSpan start_delay, [in] Windows.Foundation.TimeSpan attack_duration,
+                                          [in] Windows.Foundation.TimeSpan sustain_duration, [in] Windows.Foundation.TimeSpan release_duration,
+                                          [in] UINT32 repeat_count);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        exclusiveto(Windows.Gaming.Input.ForceFeedback.PeriodicForceEffect),
+        uuid(6f62eb1a-9851-477b-b318-35ecaa15070f)
+    ]
+    interface IPeriodicForceEffectFactory : IInspectable
+    {
+        HRESULT CreateInstance([in] Windows.Gaming.Input.ForceFeedback.PeriodicForceEffectKind kind,
+                               [out, retval] Windows.Gaming.Input.ForceFeedback.PeriodicForceEffect **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
         marshaling_behavior(agile),
         threading(both)
     ]
     runtimeclass ForceFeedbackMotor
     {
         [default] interface Windows.Gaming.Input.ForceFeedback.IForceFeedbackMotor;
+    }
+
+    [
+        activatable(Windows.Gaming.Input.ForceFeedback.IPeriodicForceEffectFactory, Windows.Foundation.UniversalApiContract, 3.0),
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass PeriodicForceEffect
+    {
+        [default] interface Windows.Gaming.Input.ForceFeedback.IForceFeedbackEffect;
+        interface Windows.Gaming.Input.ForceFeedback.IPeriodicForceEffect;
     }
 }
