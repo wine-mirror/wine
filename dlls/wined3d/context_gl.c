@@ -4818,7 +4818,8 @@ static void draw_primitive_immediate_mode(struct wined3d_context_gl *context_gl,
             unsigned int element_idx;
 
             stride_idx = get_stride_idx(idx_data, idx_size, base_vertex_idx, start_idx, vertex_idx);
-            for (element_idx = MAX_ATTRIBS - 1; use_map; use_map &= ~(1u << element_idx), --element_idx)
+            for (element_idx = gl_info->limits.vertex_attribs - 1; use_map;
+                     use_map &= ~(1u << element_idx), --element_idx)
             {
                 if (!(use_map & 1u << element_idx))
                     continue;
@@ -5657,7 +5658,15 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
     context->instance_count = 0;
     current_bo = gl_info->supported[ARB_VERTEX_BUFFER_OBJECT] ? ~0u : 0;
 
-    for (i = 0; i < MAX_ATTRIBS; ++i)
+    if (stream_info->use_map & ~wined3d_mask_from_size(gl_info->limits.vertex_attribs))
+    {
+        static unsigned int once;
+
+        if (!once++)
+            FIXME("More than the supported %u vertex attributes are in use.\n", gl_info->limits.vertex_attribs);
+    }
+
+    for (i = 0; i < gl_info->limits.vertex_attribs; ++i)
     {
         const struct wined3d_stream_info_element *element = &stream_info->elements[i];
         const void *offset = get_vertex_attrib_pointer(element, state);

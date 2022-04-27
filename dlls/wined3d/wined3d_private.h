@@ -737,8 +737,7 @@ enum wined3d_shader_conditional_op
 
 /* Shader backends */
 
-/* TODO: Make this dynamic, based on shader limits ? */
-#define MAX_ATTRIBS 16
+#define MAX_ATTRIBS 32
 #define MAX_REG_ADDR 1
 #define MAX_REG_TEXCRD 8
 #define MAX_REG_INPUT 32
@@ -1453,6 +1452,9 @@ enum fog_src_type
 
 struct vs_compile_args
 {
+    DWORD swizzle_map;   /* MAX_ATTRIBS, 32 */
+    unsigned int next_shader_input_count;
+    DWORD interpolation_mode[WINED3D_PACKED_INTERPOLATION_SIZE];
     BYTE fog_src;
     BYTE clip_enabled : 1;
     BYTE point_size : 1;
@@ -1460,9 +1462,6 @@ struct vs_compile_args
     BYTE flatshading : 1;
     BYTE next_shader_type : 3;
     BYTE padding : 1;
-    WORD swizzle_map;   /* MAX_ATTRIBS, 16 */
-    unsigned int next_shader_input_count;
-    DWORD interpolation_mode[WINED3D_PACKED_INTERPOLATION_SIZE];
 };
 
 struct ds_compile_args
@@ -1699,8 +1698,8 @@ struct wined3d_stream_info
     struct wined3d_stream_info_element elements[MAX_ATTRIBS];
     DWORD position_transformed : 1;
     DWORD all_vbo : 1;
-    WORD swizzle_map; /* MAX_ATTRIBS, 16 */
-    WORD use_map; /* MAX_ATTRIBS, 16 */
+    DWORD swizzle_map; /* MAX_ATTRIBS, 32 */
+    DWORD use_map; /* MAX_ATTRIBS, 32 */
 };
 
 void wined3d_stream_info_from_declaration(struct wined3d_stream_info *stream_info,
@@ -2149,28 +2148,28 @@ struct wined3d_context
     } current_rt;
 
     /* Stores some information about the context state for optimization */
+    DWORD last_swizzle_map; /* MAX_ATTRIBS, 32 */
+
     DWORD shader_update_mask : 6; /* WINED3D_SHADER_TYPE_COUNT, 6 */
     DWORD update_shader_resource_bindings : 1;
     DWORD update_compute_shader_resource_bindings : 1;
     DWORD update_unordered_access_view_bindings : 1;
     DWORD update_compute_unordered_access_view_bindings : 1;
-    DWORD last_swizzle_map : 16; /* MAX_ATTRIBS, 16 */
     DWORD last_was_rhw : 1; /* True iff last draw_primitive was in xyzrhw mode. */
     DWORD last_was_pshader : 1;
     DWORD last_was_vshader : 1;
     DWORD last_was_diffuse : 1;
     DWORD last_was_specular : 1;
     DWORD last_was_normal : 1;
-
     DWORD last_was_ffp_blit : 1;
     DWORD last_was_blit : 1;
     DWORD last_was_ckey : 1;
     DWORD last_was_dual_source_blend : 1;
     DWORD texShaderBumpMap : 8;         /* WINED3D_MAX_TEXTURES, 8 */
-    DWORD lastWasPow2Texture : 8;       /* WINED3D_MAX_TEXTURES, 8 */
-    DWORD fixed_function_usage_map : 8; /* WINED3D_MAX_TEXTURES, 8 */
     DWORD lowest_disabled_stage : 4;    /* Max WINED3D_MAX_TEXTURES, 8 */
 
+    DWORD lastWasPow2Texture : 8;       /* WINED3D_MAX_TEXTURES, 8 */
+    DWORD fixed_function_usage_map : 8; /* WINED3D_MAX_TEXTURES, 8 */
     DWORD use_immediate_mode_draw : 1;
     DWORD uses_uavs : 1;
     DWORD uses_fbo_attached_resources : 1;
@@ -2181,9 +2180,10 @@ struct wined3d_context
     DWORD current : 1;
     DWORD destroyed : 1;
     DWORD destroy_delayed : 1;
-    DWORD clip_distance_mask : 8; /* WINED3D_MAX_CLIP_DISTANCES, 8 */
     DWORD namedArraysLoaded : 1;
-    DWORD padding : 13;
+    DWORD padding : 5;
+
+    DWORD clip_distance_mask : 8; /* WINED3D_MAX_CLIP_DISTANCES, 8 */
 
     DWORD constant_update_mask;
     DWORD numbered_array_mask;
@@ -3653,8 +3653,9 @@ struct wined3d_ffp_vs_settings
     DWORD texcoords       : 8;  /* WINED3D_MAX_TEXTURES */
     DWORD ortho_fog       : 1;
     DWORD flatshading     : 1;
-    DWORD swizzle_map     : 16; /* MAX_ATTRIBS, 16 */
-    DWORD padding         : 2;
+    DWORD padding         : 18;
+
+    DWORD swizzle_map; /* MAX_ATTRIBS, 32 */
 
     DWORD texgen[WINED3D_MAX_TEXTURES];
 };
