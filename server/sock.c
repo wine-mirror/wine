@@ -567,7 +567,7 @@ void sock_init(void)
     }
 }
 
-static int sock_reselect( struct sock *sock )
+static void sock_reselect( struct sock *sock )
 {
     int ev = sock_get_poll_events( sock->fd );
 
@@ -575,7 +575,6 @@ static int sock_reselect( struct sock *sock )
         fprintf(stderr,"sock_reselect(%p): new mask %x\n", sock, ev);
 
     set_fd_events( sock->fd, ev );
-    return ev;
 }
 
 static unsigned int afd_poll_flag_to_win32( unsigned int flags )
