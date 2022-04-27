@@ -98,7 +98,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 #define SELECTION_UPDATE_DELAY 2000   /* delay between checks of the X11 selection */
 
 typedef BOOL (*EXPORTFUNC)( Display *display, Window win, Atom prop, Atom target, void *data, size_t size );
-typedef HANDLE (*IMPORTFUNC)( Atom type, const void *data, size_t size );
+typedef void *(*IMPORTFUNC)( Atom type, const void *data, size_t size, size_t *ret_size );
 
 struct clipboard_format
 {
@@ -109,17 +109,16 @@ struct clipboard_format
     EXPORTFUNC  export;
 };
 
-static HANDLE import_data( Atom type, const void *data, size_t size );
-static HANDLE import_enhmetafile( Atom type, const void *data, size_t size );
-static HANDLE import_pixmap( Atom type, const void *data, size_t size );
-static HANDLE import_image_bmp( Atom type, const void *data, size_t size );
-static HANDLE import_string( Atom type, const void *data, size_t size );
-static HANDLE import_utf8_string( Atom type, const void *data, size_t size );
-static HANDLE import_compound_text( Atom type, const void *data, size_t size );
-static HANDLE import_text( Atom type, const void *data, size_t size );
-static HANDLE import_text_html( Atom type, const void *data, size_t size );
-static HANDLE import_text_uri_list( Atom type, const void *data, size_t size );
-static HANDLE import_targets( Atom type, const void *data, size_t size );
+static void *import_data( Atom type, const void *data, size_t size, size_t *ret_size );
+static void *import_pixmap( Atom type, const void *data, size_t size, size_t *ret_size );
+static void *import_image_bmp( Atom type, const void *data, size_t size, size_t *ret_size );
+static void *import_string( Atom type, const void *data, size_t size, size_t *ret_size );
+static void *import_utf8_string( Atom type, const void *data, size_t size, size_t *ret_size );
+static void *import_compound_text( Atom type, const void *data, size_t size, size_t *ret_size );
+static void *import_text( Atom type, const void *data, size_t size, size_t *ret_size );
+static void *import_text_html( Atom type, const void *data, size_t size, size_t *ret_size );
+static void *import_text_uri_list( Atom type, const void *data, size_t size, size_t *ret_size );
+static void *import_targets( Atom type, const void *data, size_t size, size_t *ret_size );
 
 static BOOL export_data( Display *display, Window win, Atom prop, Atom target, void *data, size_t size );
 static BOOL export_string( Display *display, Window win, Atom prop, Atom target, void *data, size_t size );
@@ -135,7 +134,7 @@ static BOOL export_multiple( Display *display, Window win, Atom prop, Atom targe
 static BOOL export_timestamp( Display *display, Window win, Atom prop, Atom target, void *data, size_t size );
 
 static BOOL read_property( Display *display, Window w, Atom prop,
-                           Atom *type, unsigned char **data, unsigned long *datasize );
+                           Atom *type, unsigned char **data, size_t *datasize );
 
 /* Clipboard formats */
 
@@ -166,7 +165,7 @@ static const struct
     { 0, CF_PENDATA,         XATOM_WCF_PENDATA,         import_data,          export_data },
     { 0, CF_RIFF,            XATOM_WCF_RIFF,            import_data,          export_data },
     { 0, CF_WAVE,            XATOM_WCF_WAVE,            import_data,          export_data },
-    { 0, CF_ENHMETAFILE,     XATOM_WCF_ENHMETAFILE,     import_enhmetafile,   export_data },
+    { 0, CF_ENHMETAFILE,     XATOM_WCF_ENHMETAFILE,     import_data,          export_data },
     { 0, CF_HDROP,           XATOM_text_uri_list,       import_text_uri_list, export_hdrop },
     { 0, CF_DIB,             XATOM_image_bmp,           import_image_bmp,     export_image_bmp },
     { RichTextFormatW, 0,    XATOM_text_rtf,            import_data,          export_data },
@@ -442,13 +441,12 @@ static void selection_sleep(void)
     NtDelayExecution( FALSE, &timeout );
 }
 
-
 /**************************************************************************
  *		convert_selection
  */
 static BOOL convert_selection( Display *display, Window win, Atom selection,
                                struct clipboard_format *format, Atom *type,
-                               unsigned char **data, unsigned long *size )
+                               unsigned char **data, size_t *size )
 {
     int i;
     XEvent event;
@@ -504,15 +502,14 @@ static int bitmap_info_size( const BITMAPINFO * info, WORD coloruse )
  *
  *  Allocates a packed DIB and copies the bitmap data into it.
  */
-static HGLOBAL create_dib_from_bitmap(HBITMAP hBmp)
+static void *create_dib_from_bitmap( HBITMAP hBmp, size_t *size )
 {
     BITMAP bmp;
     HDC hdc;
-    HGLOBAL hPackedDIB;
-    LPBYTE pPackedDIB;
     LPBITMAPINFOHEADER pbmiHeader;
-    unsigned int cDataSize, cPackedSize, OffsetBits;
+    unsigned int cDataSize, OffsetBits;
     int nLinesCopied;
+    char *ret;
 
     if (!GetObjectW( hBmp, sizeof(bmp), &bmp )) return 0;
 
@@ -523,24 +520,22 @@ static HGLOBAL create_dib_from_bitmap(HBITMAP hBmp)
 
     /* Calculate the size of the packed DIB */
     cDataSize = abs( bmp.bmHeight ) * (((bmp.bmWidth * bmp.bmBitsPixel + 31) / 8) & ~3);
-    cPackedSize = sizeof(BITMAPINFOHEADER)
+    *size = sizeof(BITMAPINFOHEADER)
                   + ( (bmp.bmBitsPixel <= 8) ? (sizeof(RGBQUAD) * (1 << bmp.bmBitsPixel)) : 0 )
                   + cDataSize;
     /* Get the offset to the bits */
-    OffsetBits = cPackedSize - cDataSize;
+    OffsetBits = *size - cDataSize;
 
     /* Allocate the packed DIB */
-    TRACE("\tAllocating packed DIB of size %d\n", cPackedSize);
-    hPackedDIB = GlobalAlloc( GMEM_FIXED, cPackedSize );
-    if ( !hPackedDIB )
+    TRACE( "\tAllocating packed DIB\n" );
+    if (!(ret = malloc( *size )))
     {
-        WARN("Could not allocate packed DIB!\n");
+        WARN( "Could not allocate packed DIB!\n" );
         return 0;
     }
 
     /* A packed DIB starts with a BITMAPINFOHEADER */
-    pPackedDIB = GlobalLock(hPackedDIB);
-    pbmiHeader = (LPBITMAPINFOHEADER)pPackedDIB;
+    pbmiHeader = (LPBITMAPINFOHEADER)ret;
 
     /* Init the BITMAPINFOHEADER */
     pbmiHeader->biSize = sizeof(BITMAPINFOHEADER);
@@ -561,20 +556,19 @@ static HGLOBAL create_dib_from_bitmap(HBITMAP hBmp)
                              hBmp,                      /* Handle to bitmap */
                              0,                         /* First scan line to set in dest bitmap */
                              bmp.bmHeight,              /* Number of scan lines to copy */
-                             pPackedDIB + OffsetBits,   /* [out] Address of array for bitmap bits */
+                             ret + OffsetBits,          /* [out] Address of array for bitmap bits */
                              (LPBITMAPINFO) pbmiHeader, /* [out] Address of BITMAPINFO structure */
                              0);                        /* RGB or palette index */
-    GlobalUnlock(hPackedDIB);
     ReleaseDC( 0, hdc );
 
     /* Cleanup if GetDIBits failed */
     if (nLinesCopied != bmp.bmHeight)
     {
         TRACE("\tGetDIBits returned %d. Actual lines=%d\n", nLinesCopied, bmp.bmHeight);
-        GlobalFree(hPackedDIB);
-        hPackedDIB = 0;
+        free( ret );
+        ret = NULL;
     }
-    return hPackedDIB;
+    return ret;
 }
 
 
@@ -690,14 +684,14 @@ static WCHAR* uri_to_dos(char *encodedURI)
  *
  * Convert a string in the specified encoding to CF_UNICODETEXT format.
  */
-static HANDLE unicode_text_from_string( UINT codepage, const void *data, size_t size )
+static WCHAR *unicode_text_from_string( UINT codepage, const void *data, size_t size, size_t *ret_size )
 {
     DWORD i, j, count;
     WCHAR *strW;
 
     count = MultiByteToWideChar( codepage, 0, data, size, NULL, 0);
 
-    if (!(strW = GlobalAlloc( GMEM_FIXED, (count * 2 + 1) * sizeof(WCHAR) ))) return 0;
+    if (!(strW = malloc( (count * 2 + 1) * sizeof(WCHAR) ))) return 0;
 
     MultiByteToWideChar( codepage, 0, data, size, strW + count, count );
     for (i = j = 0; i < count; i++)
@@ -706,7 +700,7 @@ static HANDLE unicode_text_from_string( UINT codepage, const void *data, size_t 
         strW[j++] = strW[i + count];
     }
     strW[j++] = 0;
-    GlobalReAlloc( strW, j * sizeof(WCHAR), GMEM_FIXED );  /* release unused space */
+    *ret_size = j * sizeof(WCHAR);
     TRACE( "returning %s\n", debugstr_wn( strW, j - 1 ));
     return strW;
 }
@@ -717,9 +711,9 @@ static HANDLE unicode_text_from_string( UINT codepage, const void *data, size_t 
  *
  * Import XA_STRING, converting the string to CF_UNICODETEXT.
  */
-static HANDLE import_string( Atom type, const void *data, size_t size )
+static void *import_string( Atom type, const void *data, size_t size, size_t *ret_size )
 {
-    return unicode_text_from_string( 28591, data, size );
+    return unicode_text_from_string( 28591, data, size, ret_size );
 }
 
 
@@ -728,9 +722,9 @@ static HANDLE import_string( Atom type, const void *data, size_t size )
  *
  * Import XA_UTF8_STRING, converting the string to CF_UNICODETEXT.
  */
-static HANDLE import_utf8_string( Atom type, const void *data, size_t size )
+static void *import_utf8_string( Atom type, const void *data, size_t size, size_t *ret_size )
 {
-    return unicode_text_from_string( CP_UTF8, data, size );
+    return unicode_text_from_string( CP_UTF8, data, size, ret_size );
 }
 
 
@@ -739,12 +733,12 @@ static HANDLE import_utf8_string( Atom type, const void *data, size_t size )
  *
  * Import COMPOUND_TEXT to CF_UNICODETEXT.
  */
-static HANDLE import_compound_text( Atom type, const void *data, size_t size )
+static void *import_compound_text( Atom type, const void *data, size_t size, size_t *ret_size )
 {
     char** srcstr;
     int count;
-    HANDLE ret;
     XTextProperty txtprop;
+    void *ret;
 
     txtprop.value = (BYTE *)data;
     txtprop.nitems = size;
@@ -753,7 +747,7 @@ static HANDLE import_compound_text( Atom type, const void *data, size_t size )
     if (XmbTextPropertyToTextList( thread_display(), &txtprop, &srcstr, &count ) != Success) return 0;
     if (!count) return 0;
 
-    ret = unicode_text_from_string( CP_UNIXCP, srcstr[0], strlen(srcstr[0]) + 1 );
+    ret = unicode_text_from_string( CP_UNIXCP, srcstr[0], strlen(srcstr[0]) + 1, ret_size );
     XFreeStringList(srcstr);
     return ret;
 }
@@ -764,11 +758,11 @@ static HANDLE import_compound_text( Atom type, const void *data, size_t size )
  *
  * Import XA_TEXT, converting the string to CF_UNICODETEXT.
  */
-static HANDLE import_text( Atom type, const void *data, size_t size )
+static void *import_text( Atom type, const void *data, size_t size, size_t *ret_size )
 {
-    if (type == XA_STRING) return import_string( type, data, size );
-    if (type == x11drv_atom(UTF8_STRING)) return import_utf8_string( type, data, size );
-    if (type == x11drv_atom(COMPOUND_TEXT)) return import_compound_text( type, data, size );
+    if (type == XA_STRING) return import_string( type, data, size, ret_size );
+    if (type == x11drv_atom(UTF8_STRING)) return import_utf8_string( type, data, size, ret_size );
+    if (type == x11drv_atom(COMPOUND_TEXT)) return import_compound_text( type, data, size, ret_size );
     FIXME( "unsupported TEXT type %s\n", debugstr_xatom( type ));
     return 0;
 }
@@ -779,7 +773,7 @@ static HANDLE import_text( Atom type, const void *data, size_t size )
  *
  *  Import XA_PIXMAP, converting the image to CF_DIB.
  */
-static HANDLE import_pixmap( Atom type, const void *data, size_t size )
+static void *import_pixmap( Atom type, const void *data, size_t size, size_t *ret_size )
 {
     const Pixmap *pPixmap = (const Pixmap *)data;
     BYTE *ptr = NULL;
@@ -824,11 +818,12 @@ static HANDLE import_pixmap( Atom type, const void *data, size_t size )
     {
         DWORD info_size = bitmap_info_size( info, DIB_RGB_COLORS );
 
-        ptr = GlobalAlloc( GMEM_FIXED, info_size + info->bmiHeader.biSizeImage );
+        ptr = malloc( info_size + info->bmiHeader.biSizeImage );
         if (ptr)
         {
             memcpy( ptr, info, info_size );
             memcpy( ptr + info_size, bits.ptr, info->bmiHeader.biSizeImage );
+            *ret_size = info_size + info->bmiHeader.biSizeImage;
         }
         if (bits.free) bits.free( &bits );
     }
@@ -841,10 +836,10 @@ static HANDLE import_pixmap( Atom type, const void *data, size_t size )
  *
  *  Import image/bmp, converting the image to CF_DIB.
  */
-static HANDLE import_image_bmp( Atom type, const void *data, size_t size )
+static void *import_image_bmp( Atom type, const void *data, size_t size, size_t *ret_size )
 {
-    HANDLE hClipData = 0;
     const BITMAPFILEHEADER *bfh = data;
+    void *ret = NULL;
 
     if (size >= sizeof(BITMAPFILEHEADER)+sizeof(BITMAPCOREHEADER) &&
         bfh->bfType == 0x4d42 /* "BM" */)
@@ -856,28 +851,19 @@ static HANDLE import_image_bmp( Atom type, const void *data, size_t size )
         if ((hbmp = CreateDIBitmap( hdc, &bmi->bmiHeader, CBM_INIT,
                                     (const BYTE *)data + bfh->bfOffBits, bmi, DIB_RGB_COLORS )))
         {
-            hClipData = create_dib_from_bitmap( hbmp );
+            ret = create_dib_from_bitmap( hbmp, ret_size );
             DeleteObject(hbmp);
         }
         ReleaseDC(0, hdc);
     }
-    return hClipData;
-}
-
-
-/**************************************************************************
- *		import_enhmetafile
- */
-static HANDLE import_enhmetafile( Atom type, const void *data, size_t size )
-{
-    return SetEnhMetaFileBits( size, data );
+    return ret;
 }
 
 
 /**************************************************************************
  *              import_text_html
  */
-static HANDLE import_text_html( Atom type, const void *data, size_t size )
+static void *import_text_html( Atom type, const void *data, size_t size, size_t *ret_size )
 {
     static const char header[] =
         "Version:0.9\n"
@@ -905,12 +891,13 @@ static HANDLE import_text_html( Atom type, const void *data, size_t size )
 
     len = strlen( header ) + 12;  /* 3 * 4 extra chars for %010lu */
     total = len + size + sizeof(trailer);
-    if ((ret = GlobalAlloc( GMEM_FIXED, total )))
+    if ((ret = malloc( total )))
     {
         char *p = ret;
         p += sprintf( p, header, total - 1, len, len + size + 1 /* include the final \n in the data */ );
         memcpy( p, data, size );
         strcpy( p + size, trailer );
+        *ret_size = total;
         TRACE( "returning %s\n", debugstr_a( ret ));
     }
     free( text );
@@ -923,7 +910,7 @@ static HANDLE import_text_html( Atom type, const void *data, size_t size )
  *
  *  Import text/uri-list.
  */
-static HANDLE import_text_uri_list( Atom type, const void *data, size_t size )
+static void *import_text_uri_list( Atom type, const void *data, size_t size, size_t *ret_size )
 {
     const char *uriList = data;
     char *uri;
@@ -980,7 +967,8 @@ static HANDLE import_text_uri_list( Atom type, const void *data, size_t size )
     }
     if (out && end >= size)
     {
-        if ((dropFiles = GlobalAlloc( GMEM_FIXED, sizeof(DROPFILES) + (total + 1) * sizeof(WCHAR) )))
+        *ret_size = sizeof(DROPFILES) + (total + 1) * sizeof(WCHAR);
+        if ((dropFiles = malloc( *ret_size )))
         {
             dropFiles->pFiles = sizeof(DROPFILES);
             dropFiles->pt.x = 0;
@@ -1001,7 +989,7 @@ static HANDLE import_text_uri_list( Atom type, const void *data, size_t size )
  *
  *  Import TARGETS and mark the corresponding clipboard formats as available.
  */
-static HANDLE import_targets( Atom type, const void *data, size_t size )
+static void *import_targets( Atom type, const void *data, size_t size, size_t *ret_size )
 {
     UINT i, pos, count = size / sizeof(Atom);
     const Atom *properties = data;
@@ -1022,9 +1010,12 @@ static HANDLE import_targets( Atom type, const void *data, size_t size )
         if (i == count) continue;
         if (format->import && format->id)
         {
+            struct set_clipboard_params params = { .data = NULL };
+
             TRACE( "property %s -> format %s\n",
                    debugstr_xatom( properties[i] ), debugstr_format( format->id ));
-            SetClipboardData( format->id, 0 );
+
+            NtUserSetClipboardData( format->id, 0, &params );
             formats[pos++] = format;
         }
         else TRACE( "property %s (ignoring)\n", debugstr_xatom( properties[i] ));
@@ -1033,7 +1024,8 @@ static HANDLE import_targets( Atom type, const void *data, size_t size )
     free( current_x11_formats );
     current_x11_formats = formats;
     nb_current_x11_formats = pos;
-    return (HANDLE)1;
+    *ret_size = 0;
+    return (void *)1;
 }
 
 
@@ -1042,11 +1034,14 @@ static HANDLE import_targets( Atom type, const void *data, size_t size )
  *
  *  Generic import clipboard data routine.
  */
-static HANDLE import_data( Atom type, const void *data, size_t size )
+static void *import_data( Atom type, const void *data, size_t size, size_t *ret_size )
 {
-    void *ret = GlobalAlloc( GMEM_FIXED, size );
-
-    if (ret) memcpy( ret, data, size );
+    void *ret = malloc( size );
+    if (ret)
+    {
+        memcpy( ret, data, size );
+        *ret_size = size;
+    }
     return ret;
 }
 
@@ -1056,11 +1051,11 @@ static HANDLE import_data( Atom type, const void *data, size_t size )
  *
  * Import the specified format from the selection and return a global handle to the data.
  */
-static HANDLE import_selection( Display *display, Window win, Atom selection,
-                                struct clipboard_format *format )
+static void *import_selection( Display *display, Window win, Atom selection,
+                               struct clipboard_format *format, size_t *ret_size )
 {
     unsigned char *data;
-    unsigned long size;
+    size_t size;
     Atom type;
     HANDLE ret;
 
@@ -1071,7 +1066,7 @@ static HANDLE import_selection( Display *display, Window win, Atom selection,
         TRACE( "failed to convert selection\n" );
         return 0;
     }
-    ret = format->import( type, data, size );
+    ret = format->import( type, data, size, ret_size );
     free( data );
     return ret;
 }
@@ -1088,6 +1083,8 @@ void X11DRV_CLIPBOARD_ImportSelection( Display *display, Window win, Atom select
 {
     UINT i;
     HANDLE handle;
+    void *data;
+    size_t size;
     struct clipboard_format *format;
 
     register_x11_formats( targets, count );
@@ -1096,8 +1093,17 @@ void X11DRV_CLIPBOARD_ImportSelection( Display *display, Window win, Atom select
     {
         if (!(format = find_x11_format( targets[i] ))) continue;
         if (!format->id) continue;
-        if (!(handle = import_selection( display, win, selection, format ))) continue;
-        callback( format->id, handle );
+        if (!(data = import_selection( display, win, selection, format, &size ))) continue;
+
+        if ((handle = GlobalAlloc( GMEM_FIXED, size )))
+        {
+            void *ptr;
+            ptr = GlobalLock( handle );
+            memcpy( ptr, data, size );
+            GlobalUnlock( handle );
+            callback( format->id, handle );
+        }
+        free( data );
     }
 }
 
@@ -1105,23 +1111,25 @@ void X11DRV_CLIPBOARD_ImportSelection( Display *display, Window win, Atom select
 /**************************************************************************
  *		render_format
  */
-static HANDLE render_format( UINT id )
+static BOOL render_format( UINT id )
 {
     Display *display = thread_display();
     unsigned int i;
-    HANDLE handle = 0;
 
     if (!current_selection) return 0;
 
     for (i = 0; i < nb_current_x11_formats; i++)
     {
+        struct set_clipboard_params params;
         if (current_x11_formats[i]->id != id) continue;
-        if (!(handle = import_selection( display, import_window,
-                                         current_selection, current_x11_formats[i] ))) continue;
-        SetClipboardData( id, handle );
-        break;
+        if (!(params.data = import_selection( display, import_window, current_selection,
+                                              current_x11_formats[i], &params.size ))) continue;
+        params.seqno = 0;
+        NtUserSetClipboardData( id, 0, &params );
+        if (params.size) free( params.data );
+        return TRUE;
     }
-    return handle;
+    return FALSE;
 }
 
 
@@ -1615,7 +1623,7 @@ static BOOL export_timestamp( Display *display, Window win, Atom prop, Atom targ
  *  Gets type, data and size.
  */
 static BOOL X11DRV_CLIPBOARD_GetProperty(Display *display, Window w, Atom prop,
-    Atom *atype, unsigned char** data, unsigned long* datasize)
+    Atom *atype, unsigned char **data, size_t *datasize)
 {
     int aformat;
     unsigned long pos = 0, nitems, remain, count;
@@ -1652,7 +1660,7 @@ static BOOL X11DRV_CLIPBOARD_GetProperty(Display *display, Window w, Atom prop,
         pos += count / sizeof(int);
     }
 
-    TRACE( "got property %s type %s format %u len %lu from window %lx\n",
+    TRACE( "got property %s type %s format %u len %zu from window %lx\n",
            debugstr_xatom( prop ), debugstr_xatom( *atype ), aformat, *datasize, w );
 
     /* Delete the property on the window now that we are done
@@ -1674,7 +1682,7 @@ struct clipboard_data_packet {
  *  Reads the contents of the X selection property.
  */
 static BOOL read_property( Display *display, Window w, Atom prop,
-                           Atom *type, unsigned char **data, unsigned long *datasize )
+                           Atom *type, unsigned char **data, size_t *datasize )
 {
     XEvent xe;
 
@@ -1704,7 +1712,7 @@ static BOOL read_property( Display *display, Window w, Atom prop,
         {
             int i;
             unsigned char *prop_data;
-            unsigned long prop_size;
+            size_t prop_size;
 
             /* Wait until PropertyNotify is received */
             for (i = 0; i < SELECTION_RETRIES; i++)
@@ -1830,7 +1838,7 @@ static BOOL request_selection_contents( Display *display, BOOL changed )
     struct clipboard_format *format = NULL;
     Window owner = 0;
     unsigned char *data = NULL;
-    unsigned long size = 0;
+    size_t import_size, size = 0;
     Atom type = 0;
 
     static Atom last_selection;
@@ -1883,7 +1891,7 @@ static BOOL request_selection_contents( Display *display, BOOL changed )
     is_clipboard_owner = TRUE;
     rendered_formats = 0;
 
-    if (format) format->import( type, data, size );
+    if (format) format->import( type, data, size, &import_size );
 
     free( last_data );
     last_selection = current_selection;
