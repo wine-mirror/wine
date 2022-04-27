@@ -5620,15 +5620,14 @@ static void test_windows_gaming_input(void)
     hr = pWindowsCreateString( constant_effect_class_name, wcslen( constant_effect_class_name ), &str );
     ok( hr == S_OK, "WindowsCreateString returned %#lx\n", hr );
     hr = pRoGetActivationFactory( str, &IID_IActivationFactory, (void **)&activation_factory );
-    todo_wine
     ok( hr == S_OK, "RoGetActivationFactory returned %#lx\n", hr );
     pWindowsDeleteString( str );
-    if (hr != S_OK) goto skip_tests;
 
     hr = IActivationFactory_ActivateInstance( activation_factory, &tmp_inspectable );
     todo_wine
     ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
     IActivationFactory_Release( activation_factory );
+    if (hr != S_OK) goto skip_tests;
 
     hr = IInspectable_QueryInterface( tmp_inspectable, &IID_IForceFeedbackEffect, (void **)&effect );
     todo_wine

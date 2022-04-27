@@ -3,6 +3,7 @@ IMPORTS = combase uuid user32 dinput8 setupapi hid
 
 C_SRCS = \
 	async.c \
+	constant_effect.c \
 	controller.c \
 	event_handlers.c \
 	force_feedback.c \
