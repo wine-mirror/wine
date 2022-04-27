@@ -1210,6 +1210,21 @@ static UINT midi_in_get_devcaps(WORD dev_id, MIDIINCAPSW *caps, UINT size)
     return MMSYSERR_NOERROR;
 }
 
+static UINT midi_in_start(WORD dev_id)
+{
+    struct midi_src *src;
+
+    TRACE("(%04X);\n", dev_id);
+
+    if (dev_id >= num_srcs) return MMSYSERR_BADDEVICEID;
+    src = srcs + dev_id;
+    if (src->state == -1) return MIDIERR_NODEVICE;
+
+    src->state = 1;
+    src->startTime = NtGetTickCount();
+    return MMSYSERR_NOERROR;
+}
+
 static UINT midi_in_reset(WORD dev_id, struct notify_context *notify)
 {
     UINT cur_time = NtGetTickCount();
@@ -1321,6 +1336,9 @@ NTSTATUS midi_in_message(void *args)
         break;
     case MIDM_GETNUMDEVS:
         *params->err = num_srcs;
+        break;
+    case MIDM_START:
+        *params->err = midi_in_start(params->dev_id);
         break;
     case MIDM_RESET:
         *params->err = midi_in_reset(params->dev_id, params->notify);
