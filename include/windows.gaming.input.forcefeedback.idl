@@ -32,11 +32,15 @@ namespace Windows.Gaming.Input.ForceFeedback {
     typedef enum ForceFeedbackEffectState ForceFeedbackEffectState;
     typedef enum ForceFeedbackLoadEffectResult ForceFeedbackLoadEffectResult;
     typedef enum PeriodicForceEffectKind PeriodicForceEffectKind;
+    typedef enum ConditionForceEffectKind ConditionForceEffectKind;
     interface IForceFeedbackEffect;
     interface IPeriodicForceEffect;
     interface IPeriodicForceEffectFactory;
+    interface IConditionForceEffect;
+    interface IConditionForceEffectFactory;
     runtimeclass ForceFeedbackMotor;
     runtimeclass PeriodicForceEffect;
+    runtimeclass ConditionForceEffect;
 
     declare {
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Gaming.Input.ForceFeedback.ForceFeedbackLoadEffectResult>;
@@ -84,6 +88,15 @@ namespace Windows.Gaming.Input.ForceFeedback {
         TriangleWave     = 2,
         SawtoothWaveUp   = 3,
         SawtoothWaveDown = 4,
+    };
+
+    [contract(Windows.Foundation.UniversalApiContract, 3.0)]
+    enum ConditionForceEffectKind
+    {
+        Spring   = 0,
+        Damper   = 1,
+        Inertia  = 2,
+        Friction = 3,
     };
 
     [
@@ -154,6 +167,31 @@ namespace Windows.Gaming.Input.ForceFeedback {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 3.0),
+        exclusiveto(Windows.Gaming.Input.ForceFeedback.ConditionForceEffect),
+        uuid(32d1ea68-3695-4e69-85c0-cd1944189140)
+    ]
+    interface IConditionForceEffect : IInspectable
+        requires Windows.Gaming.Input.ForceFeedback.IForceFeedbackEffect
+    {
+        [propget] HRESULT Kind([out, retval] Windows.Gaming.Input.ForceFeedback.ConditionForceEffectKind *value);
+        HRESULT SetParameters([in] Windows.Foundation.Numerics.Vector3 direction, [in] FLOAT positive_coeff,
+                              [in] FLOAT negative_coeff, [in] FLOAT max_positive_magnitude, [in] FLOAT max_negative_magnitude,
+                              [in] FLOAT deadzone, [in] FLOAT bias);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        exclusiveto(Windows.Gaming.Input.ForceFeedback.ConditionForceEffect),
+        uuid(91a99264-1810-4eb6-a773-bfd3b8cddbab)
+    ]
+    interface IConditionForceEffectFactory : IInspectable
+    {
+        HRESULT CreateInstance([in] Windows.Gaming.Input.ForceFeedback.ConditionForceEffectKind kind,
+                               [out, retval] Windows.Gaming.Input.ForceFeedback.ConditionForceEffect **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
         marshaling_behavior(agile),
         threading(both)
     ]
@@ -172,5 +210,17 @@ namespace Windows.Gaming.Input.ForceFeedback {
     {
         [default] interface Windows.Gaming.Input.ForceFeedback.IForceFeedbackEffect;
         interface Windows.Gaming.Input.ForceFeedback.IPeriodicForceEffect;
+    }
+
+    [
+        activatable(Windows.Gaming.Input.ForceFeedback.IConditionForceEffectFactory, Windows.Foundation.UniversalApiContract, 3.0),
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass ConditionForceEffect
+    {
+        [default] interface Windows.Gaming.Input.ForceFeedback.IForceFeedbackEffect;
+        interface Windows.Gaming.Input.ForceFeedback.IConditionForceEffect;
     }
 }
