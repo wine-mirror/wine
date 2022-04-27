@@ -511,7 +511,7 @@ static void *create_dib_from_bitmap( HBITMAP hBmp, size_t *size )
     int nLinesCopied;
     char *ret;
 
-    if (!GetObjectW( hBmp, sizeof(bmp), &bmp )) return 0;
+    if (!NtGdiExtGetObjectW( hBmp, sizeof(bmp), &bmp )) return 0;
 
     /*
      * A packed DIB contains a BITMAPINFO structure followed immediately by
@@ -551,15 +551,10 @@ static void *create_dib_from_bitmap( HBITMAP hBmp, size_t *size )
 
     /* Retrieve the DIB bits from the bitmap and fill in the
      * DIB color table if present */
-    hdc = GetDC( 0 );
-    nLinesCopied = GetDIBits(hdc,                       /* Handle to device context */
-                             hBmp,                      /* Handle to bitmap */
-                             0,                         /* First scan line to set in dest bitmap */
-                             bmp.bmHeight,              /* Number of scan lines to copy */
-                             ret + OffsetBits,          /* [out] Address of array for bitmap bits */
-                             (LPBITMAPINFO) pbmiHeader, /* [out] Address of BITMAPINFO structure */
-                             0);                        /* RGB or palette index */
-    ReleaseDC( 0, hdc );
+    hdc = NtUserGetDCEx( 0, 0, DCX_CACHE | DCX_WINDOW );
+    nLinesCopied = NtGdiGetDIBitsInternal( hdc, hBmp, 0, bmp.bmHeight,  ret + OffsetBits,
+                                           (LPBITMAPINFO) pbmiHeader, 0, 0, 0 );
+    NtUserReleaseDC( 0, hdc );
 
     /* Cleanup if GetDIBits failed */
     if (nLinesCopied != bmp.bmHeight)
@@ -845,16 +840,36 @@ static void *import_image_bmp( Atom type, const void *data, size_t size, size_t 
         bfh->bfType == 0x4d42 /* "BM" */)
     {
         const BITMAPINFO *bmi = (const BITMAPINFO *)(bfh + 1);
+        int width, height;
         HBITMAP hbmp;
-        HDC hdc = GetDC(0);
+        HDC hdc;
 
-        if ((hbmp = CreateDIBitmap( hdc, &bmi->bmiHeader, CBM_INIT,
-                                    (const BYTE *)data + bfh->bfOffBits, bmi, DIB_RGB_COLORS )))
+        if (bmi->bmiHeader.biSize == sizeof(BITMAPCOREHEADER))
+        {
+            const BITMAPCOREHEADER *core = (const BITMAPCOREHEADER *)bmi;
+            width  = core->bcWidth;
+            height = core->bcHeight;
+        }
+        else if (bmi->bmiHeader.biSize >= sizeof(BITMAPINFOHEADER))
+        {
+            const BITMAPINFOHEADER *header = &bmi->bmiHeader;
+            if (header->biCompression == BI_JPEG || header->biCompression == BI_PNG) return 0;
+            width  = header->biWidth;
+            height = header->biHeight;
+        }
+        else return NULL;
+        if (!width || !height) return NULL;
+
+        hdc = NtUserGetDCEx( 0, 0, DCX_CACHE | DCX_WINDOW );
+
+        if ((hbmp = NtGdiCreateDIBitmapInternal( hdc, width, height, CBM_INIT,
+                                                 (const BYTE *)data + bfh->bfOffBits, bmi,
+                                                 DIB_RGB_COLORS, 0, 0, 0, 0 )))
         {
             ret = create_dib_from_bitmap( hbmp, ret_size );
-            DeleteObject(hbmp);
+            NtGdiDeleteObjectApp( hbmp );
         }
-        ReleaseDC(0, hdc);
+        NtUserReleaseDC(0, hdc);
     }
     return ret;
 }
