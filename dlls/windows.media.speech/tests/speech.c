@@ -860,7 +860,7 @@ static void test_SpeechRecognizer(void)
     HANDLE put_thread;
     HRESULT hr, error_code;
     UINT32 id;
-    LONG ref;
+    LONG ref, old_ref;
 
     hr = RoInitialize(RO_INIT_MULTITHREADED);
     ok(hr == S_OK, "RoInitialize failed, hr %#lx.\n", hr);
@@ -1136,6 +1136,16 @@ static void test_SpeechRecognizer(void)
 
         todo_wine ok(compilation_handler.ref == 3, "Got unexpected ref %lu.\n", compilation_handler.ref);
         todo_wine check_refcount(operation, 3);
+
+        handler = (void*)0xdeadbeef;
+        old_ref = compilation_handler.ref;
+        hr = IAsyncOperation_SpeechRecognitionCompilationResult_get_Completed(operation, &handler);
+        ok(hr == S_OK, "IAsyncOperation_SpeechRecognitionCompilationResult_get_Completed failed, hr %#lx.\n", hr);
+        todo_wine ok(handler == &compilation_handler.IAsyncHandler_Compilation_iface, "Handler was %p.\n", handler);
+
+        ref = compilation_handler.ref - old_ref;
+        todo_wine ok(ref == 1, "The ref was increased by %lu.\n", ref);
+        if (handler) IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResult_Release(handler);
 
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_QueryInterface(operation, &IID_IAsyncInfo, (void **)&info);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
