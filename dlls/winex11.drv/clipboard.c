@@ -191,7 +191,7 @@ static Window selection_window;
 static Window import_window;
 static Atom current_selection;
 static UINT rendered_formats;
-static ULONG64 last_clipboard_update;
+static ULONG last_clipboard_update;
 static struct clipboard_format **current_x11_formats;
 static unsigned int nb_current_x11_formats;
 static BOOL use_xfixes;
@@ -281,6 +281,14 @@ static struct clipboard_format *find_x11_format( Atom atom )
 }
 
 
+static ATOM register_clipboard_format( const WCHAR *name )
+{
+    ATOM atom;
+    if (NtAddAtom( name, lstrlenW( name ) * sizeof(WCHAR), &atom )) return 0;
+    return atom;
+}
+
+
 /**************************************************************************
  *		register_builtin_formats
  */
@@ -294,7 +302,7 @@ static void register_builtin_formats(void)
     for (i = 0; i < ARRAY_SIZE(builtin_formats); i++)
     {
         if (builtin_formats[i].name)
-            formats[i].id = RegisterClipboardFormatW( builtin_formats[i].name );
+            formats[i].id = register_clipboard_format( builtin_formats[i].name );
         else
             formats[i].id = builtin_formats[i].id;
 
@@ -398,7 +406,7 @@ static void register_x11_formats( const Atom *atoms, UINT size )
         for (i = pos = 0; i < count; i++)
         {
             if (MultiByteToWideChar( CP_UNIXCP, 0, names[i], -1, buffer, 256 ) &&
-                (ids[pos] = RegisterClipboardFormatW( buffer )))
+                (ids[pos] = register_clipboard_format( buffer )))
                 new_atoms[pos++] = new_atoms[i];
             XFree( names[i] );
         }
@@ -1915,7 +1923,7 @@ static BOOL request_selection_contents( Display *display, BOOL changed )
     last_type = type;
     last_data = data;
     last_size = size;
-    last_clipboard_update = GetTickCount64();
+    last_clipboard_update = NtGetTickCount();
     NtUserCloseClipboard();
     if (!use_xfixes)
         NtUserSetTimer( clipboard_hwnd, 1, SELECTION_UPDATE_DELAY, NULL, TIMERV_DEFAULT_COALESCING );
@@ -1933,7 +1941,7 @@ BOOL update_clipboard( HWND hwnd )
     if (use_xfixes) return TRUE;
     if (hwnd != clipboard_hwnd) return TRUE;
     if (!is_clipboard_owner) return TRUE;
-    if (GetTickCount64() - last_clipboard_update <= SELECTION_UPDATE_DELAY) return TRUE;
+    if (NtGetTickCount() - last_clipboard_update <= SELECTION_UPDATE_DELAY) return TRUE;
     return request_selection_contents( thread_display(), FALSE );
 }
 
@@ -2131,7 +2139,7 @@ void X11DRV_UpdateClipboard(void)
 
     if (use_xfixes) return;
     if (GetCurrentThreadId() == clipboard_thread_id) return;
-    now = GetTickCount();
+    now = NtGetTickCount();
     if ((int)(now - last_update) <= SELECTION_UPDATE_DELAY) return;
     if (SendMessageTimeoutW( GetClipboardOwner(), WM_X11DRV_UPDATE_CLIPBOARD, 0, 0,
                              SMTO_ABORTIFHUNG, 5000, &ret ) && ret)
