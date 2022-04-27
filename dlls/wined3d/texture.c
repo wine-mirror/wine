@@ -815,7 +815,6 @@ BOOL wined3d_texture_load_location(struct wined3d_texture *texture,
     {
         struct wined3d_bo_address source, destination;
         struct wined3d_range range;
-        void *map_ptr;
 
         if (!wined3d_texture_prepare_location(texture, sub_resource_idx, context, location))
             return FALSE;
@@ -824,12 +823,21 @@ BOOL wined3d_texture_load_location(struct wined3d_texture *texture,
         range.size = texture->sub_resources[sub_resource_idx].size;
         if (current & WINED3D_LOCATION_CLEARED)
         {
+            static const struct wined3d_color black;
+            unsigned int level_idx = sub_resource_idx % texture->level_count;
+            struct wined3d_map_desc map;
+            struct wined3d_box box;
+
+            wined3d_texture_get_pitch(texture, level_idx, &map.row_pitch, &map.slice_pitch);
             if (destination.buffer_object)
-                map_ptr = wined3d_context_map_bo_address(context, &destination, range.size,
+                map.data = wined3d_context_map_bo_address(context, &destination, range.size,
                         WINED3D_MAP_WRITE | WINED3D_MAP_DISCARD);
             else
-                map_ptr = destination.addr;
-            memset(map_ptr, 0, range.size);
+                map.data = destination.addr;
+
+            wined3d_texture_get_level_box(texture, level_idx, &box);
+            wined3d_resource_memory_colour_fill(&texture->resource, &map, &black, &box, true);
+
             if (destination.buffer_object)
                 wined3d_context_unmap_bo_address(context, &destination, 1, &range);
         }
