@@ -902,12 +902,14 @@ static void test_CopyFileW(void)
     SetLastError(0xdeadbeef);
     ret = CopyFileW(source, dest, FALSE);
     ok(ret, "CopyFileW: error %ld\n", GetLastError());
-    ok(GetLastError() == ERROR_SUCCESS, "Unexpected error %lu.\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS || broken(GetLastError() == ERROR_INVALID_PARAMETER) /* some win8 machines */,
+        "Unexpected error %lu.\n", GetLastError());
 
     SetLastError(0xdeadbeef);
     ret = CopyFileExW(source, dest, NULL, NULL, NULL,  0 );
     ok(ret, "CopyFileExW: error %ld\n", GetLastError());
-    ok(GetLastError() == ERROR_SUCCESS, "Unexpected error %lu.\n", GetLastError());
+    ok(GetLastError() == ERROR_SUCCESS || broken(GetLastError() == ERROR_INVALID_PARAMETER) /* some win8 machines */,
+        "Unexpected error %lu.\n", GetLastError());
 
     ret = DeleteFileW(source);
     ok(ret, "DeleteFileW: error %ld\n", GetLastError());
