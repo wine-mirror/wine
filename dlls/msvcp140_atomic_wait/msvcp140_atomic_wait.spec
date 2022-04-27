@@ -7,7 +7,7 @@
 @ stdcall __std_atomic_notify_one_direct(ptr)
 @ stub __std_atomic_notify_one_indirect
 @ stub __std_atomic_set_api_level
-@ stub __std_atomic_wait_direct
+@ stdcall __std_atomic_wait_direct(ptr ptr long long)
 @ stub __std_atomic_wait_get_deadline
 @ stub __std_atomic_wait_get_remaining_timeout
 @ stub __std_atomic_wait_indirect

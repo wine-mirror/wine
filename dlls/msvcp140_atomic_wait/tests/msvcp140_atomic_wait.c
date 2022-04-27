@@ -17,6 +17,7 @@
  */
 
 #include <stdio.h>
+#include <process.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -29,6 +30,8 @@ static void (__stdcall *p___std_close_threadpool_work)(PTP_WORK);
 static PTP_WORK (__stdcall *p___std_create_threadpool_work)(PTP_WORK_CALLBACK, void*, PTP_CALLBACK_ENVIRON);
 static void (__stdcall *p___std_submit_threadpool_work)(PTP_WORK);
 static void (__stdcall *p___std_wait_for_threadpool_work_callbacks)(PTP_WORK, BOOL);
+static BOOL (__stdcall *p___std_atomic_wait_direct)(volatile void*, void*, size_t, DWORD);
+static void (__stdcall *p___std_atomic_notify_one_direct)(void*);
 
 #define SETNOFAIL(x,y) x = (void*)GetProcAddress(msvcp,y)
 #define SET(x,y) do { SETNOFAIL(x,y); ok(x != NULL, "Export '%s' not found\n", y); } while(0)
@@ -46,6 +49,8 @@ static HMODULE init(void)
     SET(p___std_create_threadpool_work, "__std_create_threadpool_work");
     SET(p___std_submit_threadpool_work, "__std_submit_threadpool_work");
     SET(p___std_wait_for_threadpool_work_callbacks, "__std_wait_for_threadpool_work_callbacks");
+    SET(p___std_atomic_wait_direct, "__std_atomic_wait_direct");
+    SET(p___std_atomic_notify_one_direct, "__std_atomic_notify_one_direct");
     return msvcp;
 }
 
@@ -162,6 +167,76 @@ static void test_threadpool_work(void)
     ok(!work, "expected failure\n");
 }
 
+LONG64 address;
+static void __cdecl atomic_wait_thread(void *arg)
+{
+    LONG64 compare = 0;
+    int r;
+
+    r  = p___std_atomic_wait_direct(&address, &compare, sizeof(address), 2000);
+    ok(r == 1, "r = %d\n", r);
+}
+
+static void test___std_atomic_wait_direct(void)
+{
+    LONG64 compare;
+    HANDLE thread;
+    DWORD gle;
+    int r;
+
+    if (!GetProcAddress(GetModuleHandleA("kernelbase"), "WaitOnAddress"))
+    {
+        win_skip("WaitOnAddress not available\n");
+        return;
+    }
+
+    address = compare = 0;
+    SetLastError(0);
+    r = p___std_atomic_wait_direct(&address, &compare, 5, 0);
+    ok(!r, "r = %d\n", r);
+    gle = GetLastError();
+    ok(gle == ERROR_INVALID_PARAMETER, "expected %d, got %ld\n", ERROR_INVALID_PARAMETER, gle);
+
+    SetLastError(0);
+    r = p___std_atomic_wait_direct(&address, &compare, 1, 0);
+    ok(!r, "r = %d\n", r);
+    gle = GetLastError();
+    ok(gle == ERROR_TIMEOUT, "expected %d, got %ld\n", ERROR_TIMEOUT, gle);
+    r = p___std_atomic_wait_direct(&address, &compare, 2, 0);
+    ok(!r, "r = %d\n", r);
+    gle = GetLastError();
+    ok(gle == ERROR_TIMEOUT, "expected %d, got %ld\n", ERROR_TIMEOUT, gle);
+    r = p___std_atomic_wait_direct(&address, &compare, 4, 0);
+    ok(!r, "r = %d\n", r);
+    gle = GetLastError();
+    ok(gle == ERROR_TIMEOUT, "expected %d, got %ld\n", ERROR_TIMEOUT, gle);
+    r = p___std_atomic_wait_direct(&address, &compare, 8, 0);
+    ok(!r, "r = %d\n", r);
+    gle = GetLastError();
+    ok(gle == ERROR_TIMEOUT, "expected %d, got %ld\n", ERROR_TIMEOUT, gle);
+
+    SetLastError(0);
+    r = p___std_atomic_wait_direct(&address, &compare, 8, 1);
+    ok(!r, "r = %d\n", r);
+    gle = GetLastError();
+    ok(gle == ERROR_TIMEOUT, "expected %d, got %ld\n", ERROR_TIMEOUT, gle);
+
+    compare = 1;
+    SetLastError(0);
+    r = p___std_atomic_wait_direct(&address, &compare, 8, 0);
+    ok(r == 1, "r = %d\n", r);
+    gle = GetLastError();
+    ok(!gle, "expected 0, got %ld\n", gle);
+
+    thread = (HANDLE)_beginthread(atomic_wait_thread, 0, NULL);
+    ok(thread != INVALID_HANDLE_VALUE, "_beginthread failed\n");
+    Sleep(100);
+    address = 1;
+    p___std_atomic_notify_one_direct(&address);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+}
+
 START_TEST(msvcp140_atomic_wait)
 {
     HMODULE msvcp;
@@ -172,5 +247,6 @@ START_TEST(msvcp140_atomic_wait)
     }
     test___std_parallel_algorithms_hw_threads();
     test_threadpool_work();
+    test___std_atomic_wait_direct();
     FreeLibrary(msvcp);
 }

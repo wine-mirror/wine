@@ -74,3 +74,10 @@ void __stdcall __std_atomic_notify_all_direct(void *addr)
     TRACE("(%p)\n", addr);
     WakeByAddressAll(addr);
 }
+
+BOOL __stdcall __std_atomic_wait_direct(volatile void *addr, void *cmp,
+                                        SIZE_T size, DWORD timeout)
+{
+    TRACE("(%p %p %Id %ld)\n", addr, cmp, size, timeout);
+    return WaitOnAddress(addr, cmp, size, timeout);
+}
