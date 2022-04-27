@@ -60,9 +60,9 @@ HRESULT WINAPI D3DXLoadVolumeFromFileW(IDirect3DVolume9 *dst_volume,
                                        D3DCOLOR color_key,
                                        D3DXIMAGE_INFO *info)
 {
+    DWORD data_size;
     HRESULT hr;
     void *data;
-    UINT data_size;
 
     TRACE("(%p, %p, %p, %s, %p, %#x, %#x, %p)\n",
             dst_volume, dst_palette, dst_box, debugstr_w(filename), src_box,

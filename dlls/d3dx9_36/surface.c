@@ -1391,7 +1391,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromFileW(IDirect3DSurface9 *dst_surface,
         const PALETTEENTRY *dst_palette, const RECT *dst_rect, const WCHAR *src_file,
         const RECT *src_rect, DWORD filter, D3DCOLOR color_key, D3DXIMAGE_INFO *src_info)
 {
-    UINT data_size;
+    DWORD data_size;
     void *data;
     HRESULT hr;
 
@@ -1417,7 +1417,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromResourceA(IDirect3DSurface9 *dst_surface,
         const PALETTEENTRY *dst_palette, const RECT *dst_rect, HMODULE src_module, const char *resource,
         const RECT *src_rect, DWORD filter, D3DCOLOR color_key, D3DXIMAGE_INFO *src_info)
 {
-    UINT data_size;
+    DWORD data_size;
     HRSRC resinfo;
     void *data;
 
@@ -1445,7 +1445,7 @@ HRESULT WINAPI D3DXLoadSurfaceFromResourceW(IDirect3DSurface9 *dst_surface,
         const PALETTEENTRY *dst_palette, const RECT *dst_rect, HMODULE src_module, const WCHAR *resource,
         const RECT *src_rect, DWORD filter, D3DCOLOR color_key, D3DXIMAGE_INFO *src_info)
 {
-    UINT data_size;
+    DWORD data_size;
     HRSRC resinfo;
     void *data;
 

@@ -54,7 +54,7 @@ struct d3dx9_mesh
     IDirect3DVertexBuffer9 *vertex_buffer;
     IDirect3DIndexBuffer9 *index_buffer;
     DWORD *attrib_buffer;
-    int attrib_buffer_lock_count;
+    LONG attrib_buffer_lock_count;
     DWORD attrib_table_size;
     D3DXATTRIBUTERANGE *attrib_table;
 };

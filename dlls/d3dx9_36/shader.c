@@ -281,7 +281,7 @@ static HRESULT WINAPI d3dx_include_from_file_open(ID3DXInclude *iface, D3DXINCLU
     if(!buffer)
         goto error;
     *buffer = pathname;
-    if(!ReadFile(file, buffer + 1, size, bytes, NULL))
+    if (!ReadFile(file, buffer + 1, size, (DWORD *)bytes, NULL))
         goto error;
 
     *data = buffer + 1;
@@ -339,11 +339,11 @@ HRESULT WINAPI D3DXAssembleShaderFromFileA(const char *filename, const D3DXMACRO
 HRESULT WINAPI D3DXAssembleShaderFromFileW(const WCHAR *filename, const D3DXMACRO *defines,
         ID3DXInclude *include, DWORD flags, ID3DXBuffer **shader, ID3DXBuffer **error_messages)
 {
-    const void *buffer;
-    DWORD len;
-    HRESULT hr;
     struct d3dx_include_from_file include_from_file;
+    const void *buffer;
+    unsigned int len;
     char *filename_a;
+    HRESULT hr;
 
     TRACE("filename %s, defines %p, include %p, flags %#x, shader %p, error_messages %p.\n",
             debugstr_w(filename), defines, include, flags, shader, error_messages);
@@ -475,11 +475,12 @@ HRESULT WINAPI D3DXCompileShaderFromFileW(const WCHAR *filename, const D3DXMACRO
         ID3DXInclude *include, const char *entrypoint, const char *profile, DWORD flags,
         ID3DXBuffer **shader, ID3DXBuffer **error_messages, ID3DXConstantTable **constant_table)
 {
-    const void *buffer;
-    DWORD len, filename_len;
-    HRESULT hr;
     struct d3dx_include_from_file include_from_file;
+    unsigned int filename_len;
+    const void *buffer;
     char *filename_a;
+    HRESULT hr;
+    UINT len;
 
     TRACE("filename %s, defines %p, include %p, entrypoint %s, profile %s, "
             "flags %#x, shader %p, error_messages %p, constant_table %p.\n",
@@ -603,11 +604,11 @@ HRESULT WINAPI D3DXPreprocessShaderFromFileA(const char *filename, const D3DXMAC
 HRESULT WINAPI D3DXPreprocessShaderFromFileW(const WCHAR *filename, const D3DXMACRO *defines,
         ID3DXInclude *include, ID3DXBuffer **shader, ID3DXBuffer **error_messages)
 {
-    const void *buffer;
-    DWORD len;
-    HRESULT hr;
     struct d3dx_include_from_file include_from_file;
+    const void *buffer;
     char *filename_a;
+    HRESULT hr;
+    UINT len;
 
     TRACE("filename %s, defines %p, include %p, shader %p, error_messages %p.\n",
             debugstr_w(filename), defines, include, shader, error_messages);
