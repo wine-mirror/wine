@@ -62,3 +62,9 @@ void __stdcall __std_wait_for_threadpool_work_callbacks(PTP_WORK work, BOOL canc
     TRACE("(%p %d)\n", work, cancel);
     return WaitForThreadpoolWorkCallbacks(work, cancel);
 }
+
+void __stdcall __std_atomic_notify_one_direct(void *addr)
+{
+    TRACE("(%p)\n", addr);
+    WakeByAddressSingle(addr);
+}

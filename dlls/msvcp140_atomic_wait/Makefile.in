@@ -1,5 +1,5 @@
 MODULE  = msvcp140_atomic_wait.dll
-IMPORTS = msvcp140
+IMPORTS = kernelbase msvcp140
 
 C_SRCS = \
 	main.c
