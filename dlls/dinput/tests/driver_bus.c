@@ -1072,11 +1072,10 @@ static NTSTATUS WINAPI pdo_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     case IOCTL_HID_WRITE_REPORT:
     {
         HID_XFER_PACKET *packet = irp->UserBuffer;
-        ULONG expected_size = impl->caps.OutputReportByteLength - (impl->use_report_id ? 0 : 1);
 
         ok( in_size == sizeof(*packet), "got input size %lu\n", in_size );
         ok( !out_size, "got output size %lu\n", out_size );
-        ok( packet->reportBufferLen >= expected_size, "got report size %lu\n", packet->reportBufferLen );
+        ok( !!packet->reportBuffer, "got buffer %p\n", packet->reportBuffer );
 
         expect_queue_next( &impl->expect_queue, code, packet, &index, &expect, TRUE, context, sizeof(context) );
         winetest_push_context( "%s expect[%ld]", context, index );
@@ -1095,11 +1094,9 @@ static NTSTATUS WINAPI pdo_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     case IOCTL_HID_GET_INPUT_REPORT:
     {
         HID_XFER_PACKET *packet = irp->UserBuffer;
-        ULONG expected_size = impl->caps.InputReportByteLength - (impl->use_report_id ? 0 : 1);
+
         ok( !in_size, "got input size %lu\n", in_size );
         ok( out_size == sizeof(*packet), "got output size %lu\n", out_size );
-
-        ok( packet->reportBufferLen >= expected_size, "got len %lu\n", packet->reportBufferLen );
         ok( !!packet->reportBuffer, "got buffer %p\n", packet->reportBuffer );
 
         expect_queue_next( &impl->expect_queue, code, packet, &index, &expect, FALSE, context, sizeof(context) );
@@ -1119,11 +1116,9 @@ static NTSTATUS WINAPI pdo_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     case IOCTL_HID_SET_OUTPUT_REPORT:
     {
         HID_XFER_PACKET *packet = irp->UserBuffer;
-        ULONG expected_size = impl->caps.OutputReportByteLength - (impl->use_report_id ? 0 : 1);
+
         ok( in_size == sizeof(*packet), "got input size %lu\n", in_size );
         ok( !out_size, "got output size %lu\n", out_size );
-
-        ok( packet->reportBufferLen >= expected_size, "got len %lu\n", packet->reportBufferLen );
         ok( !!packet->reportBuffer, "got buffer %p\n", packet->reportBuffer );
 
         expect_queue_next( &impl->expect_queue, code, packet, &index, &expect, TRUE, context, sizeof(context) );
@@ -1143,11 +1138,9 @@ static NTSTATUS WINAPI pdo_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     case IOCTL_HID_GET_FEATURE:
     {
         HID_XFER_PACKET *packet = irp->UserBuffer;
-        ULONG expected_size = impl->caps.FeatureReportByteLength - (impl->use_report_id ? 0 : 1);
+
         ok( !in_size, "got input size %lu\n", in_size );
         ok( out_size == sizeof(*packet), "got output size %lu\n", out_size );
-
-        ok( packet->reportBufferLen >= expected_size, "got len %lu\n", packet->reportBufferLen );
         ok( !!packet->reportBuffer, "got buffer %p\n", packet->reportBuffer );
 
         expect_queue_next( &impl->expect_queue, code, packet, &index, &expect, FALSE, context, sizeof(context) );
@@ -1167,11 +1160,9 @@ static NTSTATUS WINAPI pdo_internal_ioctl( DEVICE_OBJECT *device, IRP *irp )
     case IOCTL_HID_SET_FEATURE:
     {
         HID_XFER_PACKET *packet = irp->UserBuffer;
-        ULONG expected_size = impl->caps.FeatureReportByteLength - (impl->use_report_id ? 0 : 1);
+
         ok( in_size == sizeof(*packet), "got input size %lu\n", in_size );
         ok( !out_size, "got output size %lu\n", out_size );
-
-        ok( packet->reportBufferLen >= expected_size, "got len %lu\n", packet->reportBufferLen );
         ok( !!packet->reportBuffer, "got buffer %p\n", packet->reportBuffer );
 
         expect_queue_next( &impl->expect_queue, code, packet, &index, &expect, TRUE, context, sizeof(context) );

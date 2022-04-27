@@ -2012,7 +2012,11 @@ static BOOL test_force_feedback_joystick( DWORD version )
     struct hid_device_desc desc =
     {
         .use_report_id = TRUE,
-        .caps = { .InputReportByteLength = 5 },
+        .caps =
+        {
+            .InputReportByteLength = 5,
+            .OutputReportByteLength = 11,
+        },
         .attributes = default_attributes,
     };
     const DIDEVCAPS expect_caps =
@@ -3467,7 +3471,12 @@ static void test_device_managed_effect(void)
     struct hid_device_desc desc =
     {
         .use_report_id = TRUE,
-        .caps = { .InputReportByteLength = 5 },
+        .caps =
+        {
+            .InputReportByteLength = 5,
+            .OutputReportByteLength = 11,
+            .FeatureReportByteLength = 5,
+        },
         .attributes = default_attributes,
     };
     struct hid_expect expect_acquire[] =
@@ -5004,7 +5013,12 @@ static void test_windows_gaming_input(void)
     struct hid_device_desc desc =
     {
         .use_report_id = TRUE,
-        .caps = { .InputReportByteLength = 6 },
+        .caps =
+        {
+            .InputReportByteLength = 6,
+            .OutputReportByteLength = 11,
+            .FeatureReportByteLength = 5,
+        },
         .attributes = default_attributes,
     };
     struct hid_expect expect_init[] =
