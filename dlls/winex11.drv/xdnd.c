@@ -55,8 +55,6 @@ static HWND XDNDLastTargetWnd;
 /* might be an ancestor of XDNDLastTargetWnd */
 static HWND XDNDLastDropTargetWnd;
 
-static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
-    Atom *types, unsigned long count);
 static BOOL X11DRV_XDND_HasHDROP(void);
 static HRESULT X11DRV_XDND_SendDropFiles(HWND hwnd);
 static void X11DRV_XDND_FreeDragDropOp(void);
@@ -178,73 +176,6 @@ static long X11DRV_XDND_DROPEFFECTToXdndAction(DWORD effect)
         return x11drv_atom(XdndActionLink);
     FIXME("unknown drop effect %u, assuming XdndActionCopy\n", effect);
     return x11drv_atom(XdndActionCopy);
-}
-
-/**************************************************************************
- * X11DRV_XDND_EnterEvent
- *
- * Handle an XdndEnter event.
- */
-void X11DRV_XDND_EnterEvent( HWND hWnd, XClientMessageEvent *event )
-{
-    int version;
-    Atom *xdndtypes;
-    unsigned long count = 0;
-
-    version = (event->data.l[1] & 0xFF000000) >> 24;
-    TRACE("ver(%d) check-XdndTypeList(%ld) data=%ld,%ld,%ld,%ld,%ld\n",
-          version, (event->data.l[1] & 1),
-          event->data.l[0], event->data.l[1], event->data.l[2],
-          event->data.l[3], event->data.l[4]);
-
-    if (version > WINE_XDND_VERSION)
-    {
-        ERR("ignoring unsupported XDND version %d\n", version);
-        return;
-    }
-
-    XDNDAccepted = FALSE;
-
-    /* If the source supports more than 3 data types we retrieve
-     * the entire list. */
-    if (event->data.l[1] & 1)
-    {
-        Atom acttype;
-        int actfmt;
-        unsigned long bytesret;
-
-        /* Request supported formats from source window */
-        XGetWindowProperty(event->display, event->data.l[0], x11drv_atom(XdndTypeList),
-                           0, 65535, FALSE, AnyPropertyType, &acttype, &actfmt, &count,
-                           &bytesret, (unsigned char**)&xdndtypes);
-    }
-    else
-    {
-        count = 3;
-        xdndtypes = (Atom*) &event->data.l[2];
-    }
-
-    if (TRACE_ON(xdnd))
-    {
-        unsigned int i;
-
-        for (i = 0; i < count; i++)
-        {
-            if (xdndtypes[i] != 0)
-            {
-                char * pn = XGetAtomName(event->display, xdndtypes[i]);
-                TRACE("XDNDEnterAtom %ld: %s\n", xdndtypes[i], pn);
-                XFree(pn);
-            }
-        }
-    }
-
-    /* Do a one-time data read and cache results */
-    X11DRV_XDND_ResolveProperty(event->display, event->window,
-                                event->data.l[1], xdndtypes, count);
-
-    if (event->data.l[1] & 1)
-        XFree(xdndtypes);
 }
 
 /* Recursively searches for a window on given coordinates in a drag&drop specific manner.
@@ -514,29 +445,18 @@ void X11DRV_XDND_LeaveEvent( HWND hWnd, XClientMessageEvent *event )
 
 
 /**************************************************************************
- * X11DRV_XDND_ResolveProperty
- *
- * Resolve all MIME types to windows clipboard formats. All data is cached.
+ *           handle_dnd_enter_event
  */
-static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
-                                        Atom *types, unsigned long count)
+void handle_dnd_enter_event( struct format_entry *formats, ULONG size )
 {
-    struct format_entry *formats;
-    size_t size;
-
-    TRACE("count(%ld)\n", count);
-
+    XDNDAccepted = FALSE;
     X11DRV_XDND_FreeDragDropOp(); /* Clear previously cached data */
-
-    formats = import_xdnd_selection( display, xwin, x11drv_atom(XdndSelection), types, count, &size );
-    if (!formats) return;
 
     if ((xdnd_formats = HeapAlloc( GetProcessHeap(), 0, size )))
     {
         memcpy( xdnd_formats, formats, size );
         xdnd_formats_end = (struct format_entry *)((char *)xdnd_formats + size);
     }
-    free( formats );
 }
 
 

@@ -49,6 +49,7 @@
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(event);
+WINE_DECLARE_DEBUG_CHANNEL(xdnd);
 
 extern BOOL ximInComposeMode;
 
@@ -1752,6 +1753,79 @@ static void handle_dnd_protocol( HWND hwnd, XClientMessageEvent *event )
 }
 
 
+/**************************************************************************
+ *           handle_xdnd_enter_event
+ *
+ * Handle an XdndEnter event.
+ */
+static void handle_xdnd_enter_event( HWND hWnd, XClientMessageEvent *event )
+{
+    struct format_entry *data;
+    unsigned long count = 0;
+    Atom *xdndtypes;
+    size_t size;
+    int version;
+
+    version = (event->data.l[1] & 0xFF000000) >> 24;
+
+    TRACE( "ver(%d) check-XdndTypeList(%ld) data=%ld,%ld,%ld,%ld,%ld\n",
+           version, (event->data.l[1] & 1),
+           event->data.l[0], event->data.l[1], event->data.l[2],
+           event->data.l[3], event->data.l[4] );
+
+    if (version > WINE_XDND_VERSION)
+    {
+        ERR("ignoring unsupported XDND version %d\n", version);
+        return;
+    }
+
+    /* If the source supports more than 3 data types we retrieve
+     * the entire list. */
+    if (event->data.l[1] & 1)
+    {
+        Atom acttype;
+        int actfmt;
+        unsigned long bytesret;
+
+        /* Request supported formats from source window */
+        XGetWindowProperty( event->display, event->data.l[0], x11drv_atom(XdndTypeList),
+                            0, 65535, FALSE, AnyPropertyType, &acttype, &actfmt, &count,
+                            &bytesret, (unsigned char **)&xdndtypes );
+    }
+    else
+    {
+        count = 3;
+        xdndtypes = (Atom *)&event->data.l[2];
+    }
+
+    if (TRACE_ON(xdnd))
+    {
+        unsigned int i;
+
+        for (i = 0; i < count; i++)
+        {
+            if (xdndtypes[i] != 0)
+            {
+                char * pn = XGetAtomName( event->display, xdndtypes[i] );
+                TRACE( "XDNDEnterAtom %ld: %s\n", xdndtypes[i], pn );
+                XFree( pn );
+            }
+        }
+    }
+
+    data = import_xdnd_selection( event->display, event->window, x11drv_atom(XdndSelection),
+                                  xdndtypes, count, &size );
+    if (data)
+    {
+        handle_dnd_enter_event( data, size );
+        free( data );
+    }
+
+    if (event->data.l[1] & 1)
+        XFree(xdndtypes);
+}
+
+
 struct client_message_handler
 {
     int    atom;                                  /* protocol atom */
@@ -1764,7 +1838,7 @@ static const struct client_message_handler client_messages[] =
     { XATOM_WM_PROTOCOLS, handle_wm_protocols },
     { XATOM__XEMBED,      handle_xembed_protocol },
     { XATOM_DndProtocol,  handle_dnd_protocol },
-    { XATOM_XdndEnter,    X11DRV_XDND_EnterEvent },
+    { XATOM_XdndEnter,    handle_xdnd_enter_event },
     { XATOM_XdndPosition, X11DRV_XDND_PositionEvent },
     { XATOM_XdndDrop,     X11DRV_XDND_DropEvent },
     { XATOM_XdndLeave,    X11DRV_XDND_LeaveEvent }
