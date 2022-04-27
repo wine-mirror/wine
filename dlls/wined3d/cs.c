@@ -3421,6 +3421,15 @@ struct wined3d_cs *wined3d_cs_create(struct wined3d_device *device,
     if (!(cs->data = heap_alloc(cs->data_size)))
         goto fail;
 
+    if (wined3d_settings.cs_multithreaded & WINED3D_CSMT_ENABLE)
+    {
+        if (!d3d_info->fences)
+        {
+            WARN("Disabling CSMT, adapter doesn't support fences.\n");
+            wined3d_settings.cs_multithreaded &= ~WINED3D_CSMT_ENABLE;
+        }
+    }
+
     if (wined3d_settings.cs_multithreaded & WINED3D_CSMT_ENABLE
             && !RtlIsCriticalSectionLockedByThread(NtCurrentTeb()->Peb->LoaderLock))
     {
