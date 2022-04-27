@@ -39,10 +39,12 @@ namespace Windows.Gaming.Input.ForceFeedback {
     interface IConditionForceEffect;
     interface IConditionForceEffectFactory;
     interface IConstantForceEffect;
+    interface IRampForceEffect;
     runtimeclass ForceFeedbackMotor;
     runtimeclass PeriodicForceEffect;
     runtimeclass ConditionForceEffect;
     runtimeclass ConstantForceEffect;
+    runtimeclass RampForceEffect;
 
     declare {
         interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Gaming.Input.ForceFeedback.ForceFeedbackLoadEffectResult>;
@@ -209,6 +211,22 @@ namespace Windows.Gaming.Input.ForceFeedback {
 
     [
         contract(Windows.Foundation.UniversalApiContract, 3.0),
+        exclusiveto(Windows.Gaming.Input.ForceFeedback.RampForceEffect),
+        uuid(f1f81259-1ca6-4080-b56d-b43f3354d052)
+    ]
+    interface IRampForceEffect : IInspectable
+        requires Windows.Gaming.Input.ForceFeedback.IForceFeedbackEffect
+    {
+        HRESULT SetParameters([in] Windows.Foundation.Numerics.Vector3 start_vector, [in] Windows.Foundation.Numerics.Vector3 end_vector,
+                              [in] Windows.Foundation.TimeSpan duration);
+        HRESULT SetParametersWithEnvelope([in] Windows.Foundation.Numerics.Vector3 start_vector, [in] Windows.Foundation.Numerics.Vector3 end_vector,
+                                          [in] FLOAT attack_gain, [in] FLOAT sustain_gain, [in] FLOAT release_gain, [in] Windows.Foundation.TimeSpan start_delay,
+                                          [in] Windows.Foundation.TimeSpan attack_duration, [in] Windows.Foundation.TimeSpan sustain_duration,
+                                          [in] Windows.Foundation.TimeSpan release_duration, [in] UINT32 repeat_count);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
         marshaling_behavior(agile),
         threading(both)
     ]
@@ -251,5 +269,17 @@ namespace Windows.Gaming.Input.ForceFeedback {
     {
         [default] interface Windows.Gaming.Input.ForceFeedback.IForceFeedbackEffect;
         interface Windows.Gaming.Input.ForceFeedback.IConstantForceEffect;
+    }
+
+    [
+        activatable(Windows.Foundation.UniversalApiContract, 3.0),
+        contract(Windows.Foundation.UniversalApiContract, 3.0),
+        marshaling_behavior(agile),
+        threading(both)
+    ]
+    runtimeclass RampForceEffect
+    {
+        [default] interface Windows.Gaming.Input.ForceFeedback.IForceFeedbackEffect;
+        interface Windows.Gaming.Input.ForceFeedback.IRampForceEffect;
     }
 }
