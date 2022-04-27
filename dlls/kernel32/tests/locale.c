@@ -4435,29 +4435,31 @@ static void test_GetCPInfo(void)
         ok( ret, "UnmapViewOfFile failed err %lu\n", GetLastError() );
 
         status = pNtGetNlsSectionPtr( 11, 65001, NULL, &ptr, &size );
-        ok( status == STATUS_OBJECT_NAME_NOT_FOUND, "failed %lx\n", status );
-         if (pRtlInitCodePageTable)
-         {
-             static USHORT utf8[20] = { 0, CP_UTF8 };
+        ok( status == STATUS_OBJECT_NAME_NOT_FOUND || broken(!status), /* win10 1709 */
+            "failed %lx\n", status );
+        if (!status) UnmapViewOfFile( ptr );
+        if (pRtlInitCodePageTable)
+        {
+            static USHORT utf8[20] = { 0, CP_UTF8 };
 
-             memset( &table, 0xcc, sizeof(table) );
-             pRtlInitCodePageTable( utf8, &table );
-             ok( table.CodePage == CP_UTF8, "wrong codepage %u\n", table.CodePage );
-             if (table.MaximumCharacterSize)
-             {
-                 ok( table.MaximumCharacterSize == 4, "wrong char size %u\n", table.MaximumCharacterSize );
-                 ok( table.DefaultChar == '?', "wrong default char %x\n", table.DefaultChar );
-                 ok( table.UniDefaultChar == 0xfffd, "wrong default char %x\n", table.UniDefaultChar );
-                 ok( table.TransDefaultChar == '?', "wrong default char %x\n", table.TransDefaultChar );
-                 ok( table.TransUniDefaultChar == '?', "wrong default char %x\n", table.TransUniDefaultChar );
-                 ok( !table.DBCSCodePage, "wrong dbcs %u\n", table.DBCSCodePage );
-                 ok( !table.MultiByteTable, "wrong mbtable %p\n", table.MultiByteTable );
-                 ok( !table.WideCharTable, "wrong wctable %p\n", table.WideCharTable );
-                 ok( !table.DBCSRanges, "wrong ranges %p\n", table.DBCSRanges );
-                 ok( !table.DBCSOffsets, "wrong offsets %p\n", table.DBCSOffsets );
-             }
-             else win_skip( "utf-8 codepage not supported\n" );
-         }
+            memset( &table, 0xcc, sizeof(table) );
+            pRtlInitCodePageTable( utf8, &table );
+            ok( table.CodePage == CP_UTF8, "wrong codepage %u\n", table.CodePage );
+            if (table.MaximumCharacterSize)
+            {
+                ok( table.MaximumCharacterSize == 4, "wrong char size %u\n", table.MaximumCharacterSize );
+                ok( table.DefaultChar == '?', "wrong default char %x\n", table.DefaultChar );
+                ok( table.UniDefaultChar == 0xfffd, "wrong default char %x\n", table.UniDefaultChar );
+                ok( table.TransDefaultChar == '?', "wrong default char %x\n", table.TransDefaultChar );
+                ok( table.TransUniDefaultChar == '?', "wrong default char %x\n", table.TransUniDefaultChar );
+                ok( !table.DBCSCodePage, "wrong dbcs %u\n", table.DBCSCodePage );
+                ok( !table.MultiByteTable, "wrong mbtable %p\n", table.MultiByteTable );
+                ok( !table.WideCharTable, "wrong wctable %p\n", table.WideCharTable );
+                ok( !table.DBCSRanges, "wrong ranges %p\n", table.DBCSRanges );
+                ok( !table.DBCSOffsets, "wrong offsets %p\n", table.DBCSOffsets );
+            }
+            else win_skip( "utf-8 codepage not supported\n" );
+        }
 
         /* normalization tables */
 
