@@ -143,27 +143,6 @@ static IDropTarget* get_droptarget_pointer(HWND hwnd)
 }
 
 /**************************************************************************
- * X11DRV_XDND_XdndActionToDROPEFFECT
- */
-static DWORD X11DRV_XDND_XdndActionToDROPEFFECT(long action)
-{
-    /* In Windows, nothing but the given effects is allowed.
-     * In X the given action is just a hint, and you can always
-     * XdndActionCopy and XdndActionPrivate, so be more permissive. */
-    if (action == x11drv_atom(XdndActionCopy))
-        return DROPEFFECT_COPY;
-    else if (action == x11drv_atom(XdndActionMove))
-        return DROPEFFECT_MOVE | DROPEFFECT_COPY;
-    else if (action == x11drv_atom(XdndActionLink))
-        return DROPEFFECT_LINK | DROPEFFECT_COPY;
-    else if (action == x11drv_atom(XdndActionAsk))
-        /* FIXME: should we somehow ask the user what to do here? */
-        return DROPEFFECT_COPY | DROPEFFECT_MOVE | DROPEFFECT_LINK;
-    FIXME("unknown action %ld, assuming DROPEFFECT_COPY\n", action);
-    return DROPEFFECT_COPY;
-}
-
-/**************************************************************************
  * X11DRV_XDND_DROPEFFECTToXdndAction
  */
 static long X11DRV_XDND_DROPEFFECTToXdndAction(DWORD effect)
@@ -215,22 +194,17 @@ static HWND window_accepting_files(HWND hwnd)
  *
  * Handle an XdndPosition event.
  */
-void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event )
+static BOOL handle_position_event( struct dnd_position_event_params *params )
 {
-    XClientMessageEvent e;
     int accept = 0; /* Assume we're not accepting */
     IDropTarget *dropTarget = NULL;
-    DWORD effect;
+    DWORD effect = params->effect;
     POINTL pointl;
     HWND targetWindow;
     HRESULT hr;
 
-    XDNDxy = root_to_virtual_screen( event->data.l[2] >> 16, event->data.l[2] & 0xFFFF );
-    targetWindow = window_from_point_dnd(hWnd, XDNDxy);
-
-    pointl.x = XDNDxy.x;
-    pointl.y = XDNDxy.y;
-    effect = X11DRV_XDND_XdndActionToDROPEFFECT(event->data.l[4]);
+    XDNDxy = params->point;
+    targetWindow = window_from_point_dnd( params->hwnd, XDNDxy );
 
     if (!XDNDAccepted || XDNDLastTargetWnd != targetWindow)
     {
@@ -301,27 +275,7 @@ void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event )
         }
     }
 
-    TRACE("actionRequested(%ld) accept(%d) chosen(0x%x) at x(%d),y(%d)\n",
-          event->data.l[4], accept, effect, XDNDxy.x, XDNDxy.y);
-
-    /*
-     * Let source know if we're accepting the drop by
-     * sending a status message.
-     */
-    e.type = ClientMessage;
-    e.display = event->display;
-    e.window = event->data.l[0];
-    e.message_type = x11drv_atom(XdndStatus);
-    e.format = 32;
-    e.data.l[0] = event->window;
-    e.data.l[1] = accept;
-    e.data.l[2] = 0; /* Empty Rect */
-    e.data.l[3] = 0; /* Empty Rect */
-    if (accept)
-        e.data.l[4] = X11DRV_XDND_DROPEFFECTToXdndAction(effect);
-    else
-        e.data.l[4] = None;
-    XSendEvent(event->display, event->data.l[0], False, NoEventMask, (XEvent*)&e);
+    return accept ? effect : 0;
 }
 
 /**************************************************************************
@@ -806,3 +760,17 @@ static IDataObjectVtbl xdndDataObjectVtbl =
 };
 
 static IDataObject XDNDDataObject = { &xdndDataObjectVtbl };
+
+UINT handle_dnd_event( void *params )
+{
+
+    switch (*(UINT *)params)
+    {
+    case DND_POSITION_EVENT:
+        return handle_position_event( params );
+
+    default:
+        ERR( "invalid event\n" );
+        return 0;
+    }
+}
