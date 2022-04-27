@@ -1837,6 +1837,11 @@ static void test_VarParseNumFromStrEn(void)
   EXPECT(1,NUMPRS_EXPONENT,NUMPRS_EXPONENT,3,0,1);
   EXPECT2(1,FAILDIG);
 
+  /* Spaces are not allowed before the exponent */
+  CONVERT("1 e1", NUMPRS_EXPONENT|NUMPRS_TRAILING_WHITE);
+  EXPECT(1,NUMPRS_EXPONENT|NUMPRS_TRAILING_WHITE,NUMPRS_TRAILING_WHITE,2,0,0);
+  EXPECT2(1,FAILDIG);
+
   /* With flag, incompatible with NUMPRS_HEX_OCT */
   CONVERT("&o1e1", NUMPRS_HEX_OCT|NUMPRS_EXPONENT);
   EXPECT(1,NUMPRS_HEX_OCT|NUMPRS_EXPONENT,NUMPRS_HEX_OCT,3,3,0);
@@ -2012,6 +2017,11 @@ static void test_VarParseNumFromStrFr(void)
       /* But not other spaces */
       EXPECTFAIL;
     }
+
+    /* No space of any type is allowed before the exponent... */
+    wsprintfW(wstr, L"1%ce1", spaces[i]);
+    WCONVERT(wstr, NUMPRS_EXPONENT|NUMPRS_TRAILING_WHITE|NUMPRS_USE_ALL);
+    EXPECTFAIL;
 
     winetest_pop_context();
   }
