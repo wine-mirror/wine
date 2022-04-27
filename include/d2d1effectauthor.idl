@@ -47,6 +47,15 @@ typedef enum D2D1_CHANNEL_DEPTH
     D2D1_CHANNEL_DEPTH_FORCE_DWORD = 0xffffffff
 } D2D1_CHANNEL_DEPTH;
 
+typedef enum D2D1_CHANGE_TYPE
+{
+    D2D1_CHANGE_TYPE_NONE       = 0x0,
+    D2D1_CHANGE_TYPE_PROPERTIES = 0x1,
+    D2D1_CHANGE_TYPE_CONTEXT    = 0x2,
+    D2D1_CHANGE_TYPE_GRAPH      = 0x3,
+    D2D1_CHANGE_TYPE_FORCE_DWORD = 0xffffffff
+} D2D1_CHANGE_TYPE;
+
 typedef enum D2D1_PIXEL_OPTIONS
 {
     D2D1_PIXEL_OPTIONS_NONE             = 0x0,
@@ -574,5 +583,24 @@ interface ID2D1EffectContext : IUnknown
     );
     BOOL IsBufferPrecisionSupported(
         [in] D2D1_BUFFER_PRECISION precision
+    );
+}
+
+[
+    object,
+    uuid(a248fd3f-3e6c-4e63-9f03-7f68ecc91db9),
+    local,
+]
+interface ID2D1EffectImpl : IUnknown
+{
+    HRESULT Initialize(
+        [in] ID2D1EffectContext *context,
+        [in] ID2D1TransformGraph *graph
+    );
+    HRESULT PrepareForRender(
+        [in] D2D1_CHANGE_TYPE type
+    );
+    HRESULT SetGraph(
+        [in] ID2D1TransformGraph *graph
     );
 }
