@@ -1958,58 +1958,47 @@ BOOLEAN WINAPI RtlUnlockHeap( HANDLE heap )
 }
 
 
-/***********************************************************************
- *           RtlSizeHeap   (NTDLL.@)
- *
- * Get the actual size of a memory block allocated from a Heap.
- *
- * PARAMS
- *  heap  [I] Heap that block was allocated from
- *  flags [I] HEAP_ flags from "winnt.h"
- *  ptr   [I] Block to get the size of
- *
- * RETURNS
- *  Success: The size of the block.
- *  Failure: -1, heap or ptr are invalid.
- *
- * NOTES
- *  The size may be bigger than what was passed to RtlAllocateHeap().
- */
-SIZE_T WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, const void *ptr )
+static NTSTATUS heap_size( HEAP *heap, const void *ptr, SIZE_T *size )
 {
-    SIZE_T ret;
-    const ARENA_INUSE *pArena;
+    const ARENA_INUSE *block;
     SUBHEAP *subheap;
-    HEAP *heapPtr = HEAP_GetPtr( heap );
 
-    if (!heapPtr)
-    {
-        RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_HANDLE );
-        return ~(SIZE_T)0;
-    }
-
-    heap_lock( heapPtr, flags );
-
-    pArena = (const ARENA_INUSE *)ptr - 1;
-    if (!validate_block_pointer( heapPtr, &subheap, pArena ))
-    {
-        RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_PARAMETER );
-        ret = ~(SIZE_T)0;
-    }
-    else if (!subheap)
+    block = (const ARENA_INUSE *)ptr - 1;
+    if (!validate_block_pointer( heap, &subheap, block )) return STATUS_INVALID_PARAMETER;
+    if (!subheap)
     {
         const ARENA_LARGE *large_arena = (const ARENA_LARGE *)ptr - 1;
-        ret = large_arena->data_size;
+        *size = large_arena->data_size;
     }
     else
     {
-        ret = (pArena->size & ARENA_SIZE_MASK) - pArena->unused_bytes;
+        *size = (block->size & ARENA_SIZE_MASK) - block->unused_bytes;
     }
 
-    heap_unlock( heapPtr, flags );
+    return STATUS_SUCCESS;
+}
 
-    TRACE("(%p,%08x,%p): returning %08lx\n", heap, flags, ptr, ret );
-    return ret;
+/***********************************************************************
+ *           RtlSizeHeap   (NTDLL.@)
+ */
+SIZE_T WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, const void *ptr )
+{
+    SIZE_T size = ~(SIZE_T)0;
+    NTSTATUS status;
+    HEAP *heapPtr;
+
+    if (!(heapPtr = HEAP_GetPtr( heap )))
+        status = STATUS_INVALID_PARAMETER;
+    else
+    {
+        heap_lock( heapPtr, flags );
+        status = heap_size( heapPtr, ptr, &size );
+        heap_unlock( heapPtr, flags );
+    }
+
+    TRACE( "heap %p, flags %#x, ptr %p, return %#Ix, status %#x.\n", heap, flags, ptr, size, status );
+    heap_set_status( heapPtr, flags, status );
+    return size;
 }
 
 
