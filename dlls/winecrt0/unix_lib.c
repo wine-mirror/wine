@@ -35,7 +35,7 @@ static void load_func( void **func, const char *name, void *def )
 {
     if (!*func)
     {
-        HMODULE module = GetModuleHandleA( "ntdll.dll" );
+        HMODULE module = GetModuleHandleW( L"ntdll.dll" );
         void *proc = GetProcAddress( module, name );
         InterlockedExchangePointer( func, proc ? proc : def );
     }
