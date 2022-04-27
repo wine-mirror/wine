@@ -49,9 +49,12 @@ static HMODULE kernelbase_handle;
 struct registry_entry
 {
     const WCHAR                         *value;
+    const WCHAR                         *subkey;
     enum { NOT_CACHED, CACHED, MISSING } status;
     WCHAR                                data[80];
 };
+
+static const WCHAR world_subkey[] = { 0xd83c, 0xdf0e, 0xd83c, 0xdf0f, 0xd83c, 0xdf0d, 0 }; /* 🌎🌏🌍 */
 
 static struct registry_entry entry_icalendartype      = { L"iCalendarType" };
 static struct registry_entry entry_icountry           = { L"iCountry" };
@@ -71,6 +74,7 @@ static struct registry_entry entry_s2359              = { L"s2359" };
 static struct registry_entry entry_scurrency          = { L"sCurrency" };
 static struct registry_entry entry_sdecimal           = { L"sDecimal" };
 static struct registry_entry entry_sgrouping          = { L"sGrouping" };
+static struct registry_entry entry_sintlsymbol        = { L"Currencies", world_subkey };
 static struct registry_entry entry_slist              = { L"sList" };
 static struct registry_entry entry_slongdate          = { L"sLongDate" };
 static struct registry_entry entry_smondecimalsep     = { L"sMonDecimalSep" };
@@ -655,7 +659,7 @@ static BOOL set_registry_entry( struct registry_entry *entry, const WCHAR *data 
     TRACE( "setting %s to %s\n", debugstr_w(entry->value), debugstr_w(data) );
 
     RtlEnterCriticalSection( &locale_section );
-    if (!(ret = RegSetValueExW( intl_key, entry->value, 0, REG_SZ, (BYTE *)data, size )))
+    if (!(ret = RegSetKeyValueW( intl_key, entry->subkey, entry->value, REG_SZ, (BYTE *)data, size )))
     {
         wcscpy( entry->data, data );
         entry->status = CACHED;
@@ -679,7 +683,17 @@ static int locale_return_reg_string( struct registry_entry *entry, LCTYPE type, 
     {
     case NOT_CACHED:
         size = sizeof(entry->data);
-        res = RegQueryValueExW( intl_key, entry->value, NULL, NULL, (BYTE *)entry->data, &size );
+        if (entry->subkey)
+        {
+            HKEY key;
+            if (!(res = RegOpenKeyExW( intl_key, entry->subkey, 0, KEY_READ, &key )))
+            {
+                res = RegQueryValueExW( key, entry->value, NULL, NULL, (BYTE *)entry->data, &size );
+                RegCloseKey( key );
+            }
+        }
+        else res = RegQueryValueExW( intl_key, entry->value, NULL, NULL, (BYTE *)entry->data, &size );
+
         if (res)
         {
             entry->status = MISSING;
@@ -1065,6 +1079,7 @@ static int get_locale_info( const NLS_LOCALE_DATA *locale, LCID lcid, LCTYPE typ
         return locale_return_string( locale->scurrency, type, buffer, len );
 
     case LOCALE_SINTLSYMBOL:
+        if ((ret = locale_return_reg_string( &entry_sintlsymbol, type, buffer, len )) != -1) return ret;
         return locale_return_string( locale->sintlsymbol, type, buffer, len );
 
     case LOCALE_SMONDECIMALSEP:
@@ -1704,11 +1719,11 @@ static int get_geo_info( const struct geo_id *geo, enum SYSGEOTYPE type,
 
 
 /* update a registry value based on the current user locale info */
-static void update_registry_value( UINT type, const WCHAR *value )
+static void update_registry_value( UINT type, const WCHAR *subkey, const WCHAR *value )
 {
     WCHAR buffer[80];
     UINT len = get_locale_info( user_locale, user_lcid, type, buffer, ARRAY_SIZE(buffer) );
-    if (len) RegSetValueExW( intl_key, value, 0, REG_SZ, (BYTE *)buffer, len * sizeof(WCHAR) );
+    if (len) RegSetKeyValueW( intl_key, subkey, value, REG_SZ, (BYTE *)buffer, len * sizeof(WCHAR) );
 }
 
 
@@ -1721,46 +1736,49 @@ static void update_locale_registry(void)
     len = swprintf( buffer, ARRAY_SIZE(buffer), L"%08x", GetUserDefaultLCID() );
     RegSetValueExW( intl_key, L"Locale", 0, REG_SZ, (BYTE *)buffer, (len + 1) * sizeof(WCHAR) );
 
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_ICALENDARTYPE, entry_icalendartype.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_ICOUNTRY, entry_icountry.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_ICURRDIGITS, entry_icurrdigits.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_ICURRENCY, entry_icurrency.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_IDIGITS, entry_idigits.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_IDIGITSUBSTITUTION, entry_idigitsubstitution.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_IFIRSTDAYOFWEEK, entry_ifirstdayofweek.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_IFIRSTWEEKOFYEAR, entry_ifirstweekofyear.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_ILZERO, entry_ilzero.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_IMEASURE, entry_imeasure.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_INEGCURR, entry_inegcurr.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_INEGNUMBER, entry_inegnumber.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_IPAPERSIZE, entry_ipapersize.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_S1159, entry_s1159.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_S2359, entry_s2359.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SCURRENCY, entry_scurrency.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SDECIMAL, entry_sdecimal.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SGROUPING, entry_sgrouping.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SLIST, entry_slist.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SLONGDATE, entry_slongdate.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SMONDECIMALSEP, entry_smondecimalsep.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SMONGROUPING, entry_smongrouping.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SMONTHOUSANDSEP, entry_smonthousandsep.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SNATIVEDIGITS, entry_snativedigits.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SNEGATIVESIGN, entry_snegativesign.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SPOSITIVESIGN, entry_spositivesign.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SSHORTDATE, entry_sshortdate.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SSHORTTIME, entry_sshorttime.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_STHOUSAND, entry_sthousand.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_STIMEFORMAT, entry_stimeformat.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SYEARMONTH, entry_syearmonth.value );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_IDATE, L"iDate" );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_ITIME, L"iTime" );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_ITIMEMARKPOSN, L"iTimePrefix" );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_ITLZERO, L"iTLZero" );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SDATE, L"sDate" );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_STIME, L"sTime" );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SABBREVLANGNAME, L"sLanguage" );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SCOUNTRY, L"sCountry" );
-    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SNAME, L"LocaleName" );
+#define UPDATE(val,entry) update_registry_value( LOCALE_NOUSEROVERRIDE | (val), (entry).subkey, (entry).value )
+    UPDATE( LOCALE_ICALENDARTYPE, entry_icalendartype );
+    UPDATE( LOCALE_ICOUNTRY, entry_icountry );
+    UPDATE( LOCALE_ICURRDIGITS, entry_icurrdigits );
+    UPDATE( LOCALE_ICURRENCY, entry_icurrency );
+    UPDATE( LOCALE_IDIGITS, entry_idigits );
+    UPDATE( LOCALE_IDIGITSUBSTITUTION, entry_idigitsubstitution );
+    UPDATE( LOCALE_IFIRSTDAYOFWEEK, entry_ifirstdayofweek );
+    UPDATE( LOCALE_IFIRSTWEEKOFYEAR, entry_ifirstweekofyear );
+    UPDATE( LOCALE_ILZERO, entry_ilzero );
+    UPDATE( LOCALE_IMEASURE, entry_imeasure );
+    UPDATE( LOCALE_INEGCURR, entry_inegcurr );
+    UPDATE( LOCALE_INEGNUMBER, entry_inegnumber );
+    UPDATE( LOCALE_IPAPERSIZE, entry_ipapersize );
+    UPDATE( LOCALE_S1159, entry_s1159 );
+    UPDATE( LOCALE_S2359, entry_s2359 );
+    UPDATE( LOCALE_SCURRENCY, entry_scurrency );
+    UPDATE( LOCALE_SDECIMAL, entry_sdecimal );
+    UPDATE( LOCALE_SGROUPING, entry_sgrouping );
+    UPDATE( LOCALE_SINTLSYMBOL, entry_sintlsymbol );
+    UPDATE( LOCALE_SLIST, entry_slist );
+    UPDATE( LOCALE_SLONGDATE, entry_slongdate );
+    UPDATE( LOCALE_SMONDECIMALSEP, entry_smondecimalsep );
+    UPDATE( LOCALE_SMONGROUPING, entry_smongrouping );
+    UPDATE( LOCALE_SMONTHOUSANDSEP, entry_smonthousandsep );
+    UPDATE( LOCALE_SNATIVEDIGITS, entry_snativedigits );
+    UPDATE( LOCALE_SNEGATIVESIGN, entry_snegativesign );
+    UPDATE( LOCALE_SPOSITIVESIGN, entry_spositivesign );
+    UPDATE( LOCALE_SSHORTDATE, entry_sshortdate );
+    UPDATE( LOCALE_SSHORTTIME, entry_sshorttime );
+    UPDATE( LOCALE_STHOUSAND, entry_sthousand );
+    UPDATE( LOCALE_STIMEFORMAT, entry_stimeformat );
+    UPDATE( LOCALE_SYEARMONTH, entry_syearmonth );
+#undef UPDATE
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_IDATE, NULL, L"iDate" );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_ITIME, NULL, L"iTime" );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_ITIMEMARKPOSN, NULL, L"iTimePrefix" );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_ITLZERO, NULL, L"iTLZero" );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SDATE, NULL, L"sDate" );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_STIME, NULL, L"sTime" );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SABBREVLANGNAME, NULL, L"sLanguage" );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SCOUNTRY, NULL, L"sCountry" );
+    update_registry_value( LOCALE_NOUSEROVERRIDE | LOCALE_SNAME, NULL, L"LocaleName" );
     SetUserGeoID( user_locale->igeoid );
 }
 
@@ -6096,8 +6114,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetLocaleInfoW( LCID lcid, LCTYPE lctype, const WC
         /* fall through */
     case LOCALE_SSHORTDATE:
         if (!set_registry_entry( &entry_sshortdate, data )) return FALSE;
-        update_registry_value( LOCALE_IDATE, L"iDate" );
-        update_registry_value( LOCALE_SDATE, L"sDate" );
+        update_registry_value( LOCALE_IDATE, NULL, L"iDate" );
+        update_registry_value( LOCALE_SDATE, NULL, L"sDate" );
         return TRUE;
 
     case LOCALE_STIME:
@@ -6106,10 +6124,10 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetLocaleInfoW( LCID lcid, LCTYPE lctype, const WC
         /* fall through */
     case LOCALE_STIMEFORMAT:
         if (!set_registry_entry( &entry_stimeformat, data )) return FALSE;
-        update_registry_value( LOCALE_ITIME, L"iTime" );
-        update_registry_value( LOCALE_ITIMEMARKPOSN, L"iTimePrefix" );
-        update_registry_value( LOCALE_ITLZERO, L"iTLZero" );
-        update_registry_value( LOCALE_STIME, L"sTime" );
+        update_registry_value( LOCALE_ITIME, NULL, L"iTime" );
+        update_registry_value( LOCALE_ITIMEMARKPOSN, NULL, L"iTimePrefix" );
+        update_registry_value( LOCALE_ITLZERO, NULL, L"iTLZero" );
+        update_registry_value( LOCALE_STIME, NULL, L"sTime" );
         return TRUE;
 
     case LOCALE_ITIME:
@@ -6117,11 +6135,14 @@ BOOL WINAPI DECLSPEC_HOTPATCH SetLocaleInfoW( LCID lcid, LCTYPE lctype, const WC
         if (!(str = find_format( tmp, L"Hh" ))) break;
         while (*str == 'h' || *str == 'H') *str++ = (*data == '0' ? 'h' : 'H');
         if (!set_registry_entry( &entry_stimeformat, tmp )) break;
-        update_registry_value( LOCALE_ITIME, L"iTime" );
+        update_registry_value( LOCALE_ITIME, NULL, L"iTime" );
         return TRUE;
 
     case LOCALE_SINTLSYMBOL:
-        /* FIXME: also store sintlsymbol */
+        if (!set_registry_entry( &entry_sintlsymbol, data )) return FALSE;
+        /* if restoring the original value, restore the original LOCALE_SCURRENCY as well */
+        if (!wcsicmp( data, locale_strings + user_locale->sintlsymbol + 1 ))
+            data = locale_strings + user_locale->scurrency + 1;
         set_registry_entry( &entry_scurrency, data );
         return TRUE;
     }
