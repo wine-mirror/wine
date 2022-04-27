@@ -437,114 +437,93 @@ HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj)
     return CLASS_E_CLASSNOTAVAILABLE;
 }
 
-static WCHAR audio_converterW[] = L"Audio Converter";
-static const GUID *const audio_converter_supported_types[] =
-{
-    &MFAudioFormat_PCM,
-    &MFAudioFormat_Float,
-};
-
-static WCHAR wma_decoderW[] = L"WMAudio Decoder MFT";
-static const GUID *const wma_decoder_input_types[] =
-{
-    &MEDIASUBTYPE_MSAUDIO1,
-    &MFAudioFormat_WMAudioV8,
-    &MFAudioFormat_WMAudioV9,
-    &MFAudioFormat_WMAudio_Lossless,
-};
-static const GUID *const wma_decoder_output_types[] =
-{
-    &MFAudioFormat_PCM,
-    &MFAudioFormat_Float,
-};
-
-static WCHAR h264_decoderW[] = L"Microsoft H264 Video Decoder MFT";
-static const GUID *const h264_decoder_input_types[] =
-{
-    &MFVideoFormat_H264,
-    &MFVideoFormat_H264_ES,
-};
-static const GUID *const h264_decoder_output_types[] =
-{
-    &MFVideoFormat_NV12,
-    &MFVideoFormat_YV12,
-    &MFVideoFormat_IYUV,
-    &MFVideoFormat_I420,
-    &MFVideoFormat_YUY2,
-};
-
-static const struct mft
-{
-    const GUID *clsid;
-    const GUID *category;
-    LPWSTR name;
-    const UINT32 flags;
-    const GUID *major_type;
-    const UINT32 input_types_count;
-    const GUID *const *input_types;
-    const UINT32 output_types_count;
-    const GUID *const *output_types;
-}
-mfts[] =
-{
-    {
-        &CLSID_WINEAudioConverter,
-        &MFT_CATEGORY_AUDIO_EFFECT,
-        audio_converterW,
-        MFT_ENUM_FLAG_SYNCMFT,
-        &MFMediaType_Audio,
-        ARRAY_SIZE(audio_converter_supported_types),
-        audio_converter_supported_types,
-        ARRAY_SIZE(audio_converter_supported_types),
-        audio_converter_supported_types,
-    },
-    {
-        &CLSID_WMADecMediaObject,
-        &MFT_CATEGORY_AUDIO_DECODER,
-        wma_decoderW,
-        MFT_ENUM_FLAG_SYNCMFT,
-        &MFMediaType_Audio,
-        ARRAY_SIZE(wma_decoder_input_types),
-        wma_decoder_input_types,
-        ARRAY_SIZE(wma_decoder_output_types),
-        wma_decoder_output_types,
-    },
-    {
-        &CLSID_MSH264DecoderMFT,
-        &MFT_CATEGORY_VIDEO_DECODER,
-        h264_decoderW,
-        MFT_ENUM_FLAG_SYNCMFT,
-        &MFMediaType_Video,
-        ARRAY_SIZE(h264_decoder_input_types),
-        h264_decoder_input_types,
-        ARRAY_SIZE(h264_decoder_output_types),
-        h264_decoder_output_types,
-    },
-};
-
 HRESULT mfplat_DllRegisterServer(void)
 {
-    unsigned int i, j;
+    MFT_REGISTER_TYPE_INFO audio_converter_supported_types[] =
+    {
+        {MFMediaType_Audio, MFAudioFormat_PCM},
+        {MFMediaType_Audio, MFAudioFormat_Float},
+    };
+
+    MFT_REGISTER_TYPE_INFO wma_decoder_input_types[] =
+    {
+        {MFMediaType_Audio, MEDIASUBTYPE_MSAUDIO1},
+        {MFMediaType_Audio, MFAudioFormat_WMAudioV8},
+        {MFMediaType_Audio, MFAudioFormat_WMAudioV9},
+        {MFMediaType_Audio, MFAudioFormat_WMAudio_Lossless},
+    };
+    MFT_REGISTER_TYPE_INFO wma_decoder_output_types[] =
+    {
+        {MFMediaType_Audio, MFAudioFormat_PCM},
+        {MFMediaType_Audio, MFAudioFormat_Float},
+    };
+
+    MFT_REGISTER_TYPE_INFO h264_decoder_input_types[] =
+    {
+        {MFMediaType_Video, MFVideoFormat_H264},
+        {MFMediaType_Video, MFVideoFormat_H264_ES},
+    };
+    MFT_REGISTER_TYPE_INFO h264_decoder_output_types[] =
+    {
+        {MFMediaType_Video, MFVideoFormat_NV12},
+        {MFMediaType_Video, MFVideoFormat_YV12},
+        {MFMediaType_Video, MFVideoFormat_IYUV},
+        {MFMediaType_Video, MFVideoFormat_I420},
+        {MFMediaType_Video, MFVideoFormat_YUY2},
+    };
+
+    struct mft
+    {
+        GUID clsid;
+        GUID category;
+        WCHAR name[MAX_PATH];
+        UINT32 flags;
+        UINT32 input_types_count;
+        MFT_REGISTER_TYPE_INFO *input_types;
+        UINT32 output_types_count;
+        MFT_REGISTER_TYPE_INFO *output_types;
+    }
+    mfts[] =
+    {
+        {
+            CLSID_WINEAudioConverter,
+            MFT_CATEGORY_AUDIO_EFFECT,
+            L"Audio Converter",
+            MFT_ENUM_FLAG_SYNCMFT,
+            ARRAY_SIZE(audio_converter_supported_types),
+            audio_converter_supported_types,
+            ARRAY_SIZE(audio_converter_supported_types),
+            audio_converter_supported_types,
+        },
+        {
+            CLSID_WMADecMediaObject,
+            MFT_CATEGORY_AUDIO_DECODER,
+            L"WMAudio Decoder MFT",
+            MFT_ENUM_FLAG_SYNCMFT,
+            ARRAY_SIZE(wma_decoder_input_types),
+            wma_decoder_input_types,
+            ARRAY_SIZE(wma_decoder_output_types),
+            wma_decoder_output_types,
+        },
+        {
+            CLSID_MSH264DecoderMFT,
+            MFT_CATEGORY_VIDEO_DECODER,
+            L"Microsoft H264 Video Decoder MFT",
+            MFT_ENUM_FLAG_SYNCMFT,
+            ARRAY_SIZE(h264_decoder_input_types),
+            h264_decoder_input_types,
+            ARRAY_SIZE(h264_decoder_output_types),
+            h264_decoder_output_types,
+        },
+    };
+
+    unsigned int i;
     HRESULT hr;
-    MFT_REGISTER_TYPE_INFO input_types[4], output_types[5];
 
     for (i = 0; i < ARRAY_SIZE(mfts); i++)
     {
-        const struct mft *cur = &mfts[i];
-
-        for (j = 0; j < cur->input_types_count; j++)
-        {
-            input_types[j].guidMajorType = *(cur->major_type);
-            input_types[j].guidSubtype = *(cur->input_types[j]);
-        }
-        for (j = 0; j < cur->output_types_count; j++)
-        {
-            output_types[j].guidMajorType = *(cur->major_type);
-            output_types[j].guidSubtype = *(cur->output_types[j]);
-        }
-
-        hr = MFTRegister(*(cur->clsid), *(cur->category), cur->name, cur->flags, cur->input_types_count,
-                    input_types, cur->output_types_count, output_types, NULL);
+        hr = MFTRegister(mfts[i].clsid, mfts[i].category, mfts[i].name, mfts[i].flags, mfts[i].input_types_count,
+                    mfts[i].input_types, mfts[i].output_types_count, mfts[i].output_types, NULL);
 
         if (FAILED(hr))
         {
@@ -552,6 +531,7 @@ HRESULT mfplat_DllRegisterServer(void)
             return hr;
         }
     }
+
     return S_OK;
 }
 
