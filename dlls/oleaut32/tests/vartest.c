@@ -2151,6 +2151,12 @@ static void test_VarParseNumFromStrFr(void)
   EXPECT2(1,2);
   EXPECTRGB(2,FAILDIG);
 
+  /* The three-letter Euro abbreviation is not allowed */
+  WCONVERT(L"12EUR", NUMPRS_CURRENCY);
+  EXPECT(2,NUMPRS_CURRENCY,0,2,0,0);
+  EXPECT2(1,2);
+  EXPECTRGB(2,FAILDIG);
+
   /* With flag and decimal flag, consumes decimal point and following digits */
   WCONVERT(L"12,1\x20ac", NUMPRS_CURRENCY|NUMPRS_DECIMAL|NUMPRS_USE_ALL);
   EXPECT(3,NUMPRS_CURRENCY|NUMPRS_DECIMAL|NUMPRS_USE_ALL,NUMPRS_CURRENCY|NUMPRS_DECIMAL,5,0,-1);
