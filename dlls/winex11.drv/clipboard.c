@@ -1108,6 +1108,7 @@ struct format_entry *import_xdnd_selection( Display *display, Window win, Atom s
     void *data;
     struct clipboard_format *format;
     struct format_entry *ret = NULL, *entry;
+    BOOL have_hdrop = FALSE;
 
     register_x11_formats( targets, count );
     *ret_size = 0;
@@ -1115,7 +1116,17 @@ struct format_entry *import_xdnd_selection( Display *display, Window win, Atom s
     for (i = 0; i < count; i++)
     {
         if (!(format = find_x11_format( targets[i] ))) continue;
+        if (format->id != CF_HDROP) continue;
+        have_hdrop = TRUE;
+        break;
+    }
+
+    for (i = 0; i < count; i++)
+    {
+        if (!(format = find_x11_format( targets[i] ))) continue;
         if (!format->id) continue;
+        if (have_hdrop && format->id != CF_HDROP && format->id < CF_MAX) continue;
+
         if (!(data = import_selection( display, win, selection, format, &size ))) continue;
 
         entry_size = (FIELD_OFFSET( struct format_entry, data[size] ) + 7) & ~7;

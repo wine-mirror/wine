@@ -530,8 +530,6 @@ static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
                                         Atom *types, unsigned long count)
 {
     struct format_entry *formats, *formats_end, *iter;
-    XDNDDATA *current, *next;
-    BOOL haveHDROP = FALSE;
     size_t size;
 
     TRACE("count(%ld)\n", count);
@@ -551,30 +549,6 @@ static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
                 memcpy( ptr, iter->data, iter->size );
                 GlobalUnlock( handle );
                 X11DRV_XDND_InsertXDNDData( iter->format, handle );
-            }
-        }
-    }
-
-    /* On Windows when there is a CF_HDROP, there are no other CF_ formats.
-     * foobar2000 relies on this (spaces -> %20's without it).
-     */
-    LIST_FOR_EACH_ENTRY(current, &xdndData, XDNDDATA, entry)
-    {
-        if (current->cf_win == CF_HDROP)
-        {
-            haveHDROP = TRUE;
-            break;
-        }
-    }
-    if (haveHDROP)
-    {
-        LIST_FOR_EACH_ENTRY_SAFE(current, next, &xdndData, XDNDDATA, entry)
-        {
-            if (current->cf_win != CF_HDROP && current->cf_win < CF_MAX)
-            {
-                list_remove(&current->entry);
-                GlobalFree(current->contents);
-                HeapFree(GetProcessHeap(), 0, current);
             }
         }
     }
