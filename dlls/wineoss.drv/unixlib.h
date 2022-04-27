@@ -264,6 +264,7 @@ struct midi_in_message_params
     UINT_PTR param_1;
     UINT_PTR param_2;
     UINT *err;
+    struct notify_context *notify;
 };
 
 struct midi_seq_open_params
