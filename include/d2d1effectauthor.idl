@@ -258,3 +258,165 @@ interface ID2D1TransformGraph : IUnknown
         [in] UINT32 index
     );
 }
+
+[
+    object,
+    uuid(ef1a287d-342a-4f76-8fdb-da0d6ea9f92b),
+    local,
+]
+interface ID2D1Transform : ID2D1TransformNode
+{
+    HRESULT MapOutputRectToInputRects(
+        [in] const D2D1_RECT_L *output_rect,
+        [out] D2D1_RECT_L *input_rects,
+        [in] UINT32 input_rects_count
+    );
+    HRESULT MapInputRectsToOutputRect(
+        [in] const D2D1_RECT_L *input_rects,
+        [in] const D2D1_RECT_L *input_opaque_rects,
+        [in] UINT32 input_rect_count,
+        [out] D2D1_RECT_L *output_rect,
+        [out] D2D1_RECT_L *output_opaque_rect
+    );
+    HRESULT MapInvalidRect(
+        [in] UINT32 index,
+        [in] D2D1_RECT_L input_rect,
+        [out] D2D1_RECT_L *output_rect
+    );
+}
+
+[
+    object,
+    uuid(36bfdcb6-9739-435d-a30d-a653beff6a6f),
+    local,
+]
+interface ID2D1DrawTransform : ID2D1Transform
+{
+    HRESULT SetDrawInfo(
+        [in] ID2D1DrawInfo *info
+    );
+}
+
+[
+    object,
+    uuid(0d85573c-01e3-4f7d-bfd9-0d60608bf3c3),
+    local,
+]
+interface ID2D1ComputeTransform : ID2D1Transform
+{
+    HRESULT SetComputeInfo(
+        [in] ID2D1ComputeInfo *info
+    );
+    HRESULT CalculateThreadgroups(
+        [in] const D2D1_RECT_L *output_rect,
+        [out] UINT32 *dimension_x,
+        [out] UINT32 *dimension_y,
+        [out] UINT32 *dimension_z
+    );
+}
+
+[
+    object,
+    uuid(0359dc30-95e6-4568-9055-27720d130e93),
+    local,
+]
+interface ID2D1AnalysisTransform : IUnknown
+{
+    HRESULT ProcessAnalysisResults(
+        [in] const BYTE *data,
+        [in] UINT32 size
+    );
+}
+
+[
+    object,
+    uuid(db1800dd-0c34-4cf9-be90-31cc0a5653e1),
+    local,
+]
+interface ID2D1SourceTransform : ID2D1Transform
+{
+    HRESULT SetRenderInfo(
+        [in] ID2D1RenderInfo *info
+    );
+    HRESULT Draw(
+        [in] ID2D1Bitmap1 *target,
+        [in] const D2D1_RECT_L *draw_rect,
+        [in] D2D1_POINT_2U target_origin
+    );
+}
+
+[
+    object,
+    uuid(1a799d8a-69f7-4e4c-9fed-437ccc6684cc),
+    local,
+]
+interface ID2D1ConcreteTransform : ID2D1TransformNode
+{
+    HRESULT SetOutputBuffer(
+        [in] D2D1_BUFFER_PRECISION precision,
+        [in] D2D1_CHANNEL_DEPTH depth
+    );
+    void SetCached(
+        [in] BOOL is_cached
+    );
+}
+
+[
+    object,
+    uuid(63ac0b32-ba44-450f-8806-7f4ca1ff2f1b),
+    local,
+]
+interface ID2D1BlendTransform : ID2D1ConcreteTransform
+{
+    void SetDescription(
+        [in] const D2D1_BLEND_DESCRIPTION *description
+    );
+    void GetDescription(
+        [out] D2D1_BLEND_DESCRIPTION *description
+    );
+}
+
+[
+    object,
+    uuid(4998735c-3a19-473c-9781-656847e3a347),
+    local,
+]
+interface ID2D1BorderTransform : ID2D1ConcreteTransform
+{
+    void SetExtendModeX(
+        [in] D2D1_EXTEND_MODE mode
+    );
+    void SetExtendModeY(
+        [in] D2D1_EXTEND_MODE mode
+    );
+    D2D1_EXTEND_MODE GetExtendModeX();
+    D2D1_EXTEND_MODE GetExtendModeY();
+}
+
+[
+    object,
+    uuid(3fe6adea-7643-4f53-bd14-a0ce63f24042),
+    local,
+]
+interface ID2D1OffsetTransform : ID2D1TransformNode
+{
+    void SetOffset(
+        [in] D2D1_POINT_2L offset
+    );
+    D2D1_POINT_2L GetOffset();
+}
+
+[
+    object,
+    uuid(90f732e2-5092-4606-a819-8651970baccd),
+    local,
+]
+interface ID2D1BoundsAdjustmentTransform : ID2D1TransformNode
+{
+    void SetOutputBounds(
+        [in] const D2D1_RECT_L *bounds
+    );
+    void GetOutputBounds(
+        [out] D2D1_RECT_L *bounds
+    );
+}
