@@ -853,9 +853,29 @@ static const IPropertyBagVtbl property_bag_vtbl =
 
 HRESULT wma_decoder_create(IUnknown *outer, IUnknown **out)
 {
+    struct wg_format output_format =
+    {
+        .major_type = WG_MAJOR_TYPE_AUDIO,
+        .u.audio =
+        {
+            .format = WG_AUDIO_FORMAT_F32LE,
+            .channel_mask = 1,
+            .channels = 1,
+            .rate = 44100,
+        },
+    };
+    struct wg_format input_format = {.major_type = WG_MAJOR_TYPE_WMA};
+    struct wg_transform *transform;
     struct wma_decoder *decoder;
 
     TRACE("outer %p, out %p.\n", outer, out);
+
+    if (!(transform = wg_transform_create(&input_format, &output_format)))
+    {
+        FIXME("GStreamer doesn't support WMA decoding, please install appropriate plugins\n");
+        return E_FAIL;
+    }
+    wg_transform_destroy(transform);
 
     if (!(decoder = calloc(1, sizeof(*decoder))))
         return E_OUTOFMEMORY;
