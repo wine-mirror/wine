@@ -73,39 +73,43 @@ WINE_DEFAULT_DEBUG_CHANNEL(dwrite);
 #define GLYPH_CONTEXT_MAX_LENGTH 64
 #define SHAPE_MAX_NESTING_LEVEL 6
 
-typedef struct {
-    CHAR TTCTag[4];
-    DWORD Version;
-    DWORD numFonts;
-    DWORD OffsetTable[1];
-} TTC_Header_V1;
+struct ttc_header
+{
+    uint32_t tag;
+    uint16_t major_version;
+    uint16_t minor_version;
+    uint32_t num_fonts;
+    uint32_t offsets[1];
+};
 
-typedef struct {
-    DWORD version;
-    WORD numTables;
-    WORD searchRange;
-    WORD entrySelector;
-    WORD rangeShift;
-} TTC_SFNT_V1;
+struct ot_table_dir
+{
+    uint32_t version;
+    uint16_t numTables;
+    uint16_t searchRange;
+    uint16_t entrySelector;
+    uint16_t rangeShift;
+};
 
-typedef struct {
-    DWORD tag;
-    DWORD checkSum;
-    DWORD offset;
-    DWORD length;
-} TT_TableRecord;
+struct ot_table_record
+{
+    uint32_t tag;
+    uint32_t checksum;
+    uint32_t offset;
+    uint32_t length;
+};
 
 struct cmap_encoding_record
 {
-    WORD platformID;
-    WORD encodingID;
-    DWORD offset;
+    uint16_t platformID;
+    uint16_t encodingID;
+    uint32_t offset;
 };
 
 struct cmap_header
 {
-    WORD version;
-    WORD num_tables;
+    uint16_t version;
+    uint16_t num_tables;
     struct cmap_encoding_record tables[1];
 };
 
@@ -224,21 +228,21 @@ struct tt_os2
 
 struct tt_hhea
 {
-    USHORT majorVersion;
-    USHORT minorVersion;
-    SHORT  ascender;
-    SHORT  descender;
-    SHORT  linegap;
-    USHORT advanceWidthMax;
-    SHORT  minLeftSideBearing;
-    SHORT  minRightSideBearing;
-    SHORT  xMaxExtent;
-    SHORT  caretSlopeRise;
-    SHORT  caretSlopeRun;
-    SHORT  caretOffset;
-    SHORT  reserved[4];
-    SHORT  metricDataFormat;
-    USHORT numberOfHMetrics;
+    uint16_t majorVersion;
+    uint16_t minorVersion;
+    int16_t ascender;
+    int16_t descender;
+    int16_t linegap;
+    uint16_t advanceWidthMax;
+    int16_t minLeftSideBearing;
+    int16_t minRightSideBearing;
+    int16_t xMaxExtent;
+    int16_t caretSlopeRise;
+    int16_t caretSlopeRun;
+    int16_t caretOffset;
+    int16_t reserved[4];
+    int16_t metricDataFormat;
+    uint16_t numberOfHMetrics;
 };
 
 struct sbix_header
@@ -337,49 +341,49 @@ enum OS2_FSSELECTION {
 
 struct name_record
 {
-    WORD platformID;
-    WORD encodingID;
-    WORD languageID;
-    WORD nameID;
-    WORD length;
-    WORD offset;
+    uint16_t platformID;
+    uint16_t encodingID;
+    uint16_t languageID;
+    uint16_t nameID;
+    uint16_t length;
+    uint16_t offset;
 };
 
 struct name_header
 {
-    WORD format;
-    WORD count;
-    WORD stringOffset;
+    uint16_t format;
+    uint16_t count;
+    uint16_t stringOffset;
     struct name_record records[1];
 };
 
 struct vdmx_header
 {
-    WORD version;
-    WORD num_recs;
-    WORD num_ratios;
+    uint16_t version;
+    uint16_t num_recs;
+    uint16_t num_ratios;
 };
 
 struct vdmx_ratio
 {
-    BYTE bCharSet;
-    BYTE xRatio;
-    BYTE yStartRatio;
-    BYTE yEndRatio;
+    uint8_t bCharSet;
+    uint8_t xRatio;
+    uint8_t yStartRatio;
+    uint8_t yEndRatio;
 };
 
 struct vdmx_vtable
 {
-    WORD yPelHeight;
-    SHORT yMax;
-    SHORT yMin;
+    uint16_t yPelHeight;
+    int16_t yMax;
+    int16_t yMin;
 };
 
 struct vdmx_group
 {
-    WORD recs;
-    BYTE startsz;
-    BYTE endsz;
+    uint16_t recs;
+    uint8_t startsz;
+    uint8_t endsz;
     struct vdmx_vtable entries[1];
 };
 
@@ -1257,17 +1261,17 @@ struct colr_layer_record
 
 struct meta_data_map
 {
-    DWORD tag;
-    DWORD offset;
-    DWORD length;
+    uint32_t tag;
+    uint32_t offset;
+    uint32_t length;
 };
 
 struct meta_header
 {
-    DWORD version;
-    DWORD flags;
-    DWORD reserved;
-    DWORD data_maps_count;
+    uint32_t version;
+    uint32_t flags;
+    uint32_t reserved;
+    uint32_t data_maps_count;
     struct meta_data_map maps[1];
 };
 
@@ -1338,8 +1342,7 @@ typedef HRESULT (*dwrite_fontfile_analyzer)(IDWriteFontFileStream *stream, UINT3
 static HRESULT opentype_ttc_analyzer(IDWriteFontFileStream *stream, UINT32 *font_count, DWRITE_FONT_FILE_TYPE *file_type,
     DWRITE_FONT_FACE_TYPE *face_type)
 {
-    static const DWORD ttctag = MS_TTCF_TAG;
-    const TTC_Header_V1 *header;
+    const struct ttc_header *header;
     void *context;
     HRESULT hr;
 
@@ -1347,8 +1350,9 @@ static HRESULT opentype_ttc_analyzer(IDWriteFontFileStream *stream, UINT32 *font
     if (FAILED(hr))
         return hr;
 
-    if (!memcmp(header->TTCTag, &ttctag, sizeof(ttctag))) {
-        *font_count = GET_BE_DWORD(header->numFonts);
+    if (header->tag == MS_TTCF_TAG)
+    {
+        *font_count = GET_BE_DWORD(header->num_fonts);
         *file_type = DWRITE_FONT_FILE_TYPE_OPENTYPE_COLLECTION;
         *face_type = DWRITE_FONT_FACE_TYPE_OPENTYPE_COLLECTION;
     }
@@ -1519,8 +1523,8 @@ HRESULT opentype_try_get_font_table(const struct file_stream_desc *stream_desc, 
     void **table_context, UINT32 *table_size, BOOL *found)
 {
     void *table_directory_context, *sfnt_context;
-    TT_TableRecord *table_record = NULL;
-    TTC_SFNT_V1 *font_header = NULL;
+    const struct ot_table_record *table_record = NULL;
+    const struct ot_table_dir *table_dir = NULL;
     UINT32 table_offset = 0;
     UINT16 table_count;
     HRESULT hr;
@@ -1531,38 +1535,48 @@ HRESULT opentype_try_get_font_table(const struct file_stream_desc *stream_desc, 
     *table_data = NULL;
     *table_context = NULL;
 
-    if (stream_desc->face_type == DWRITE_FONT_FACE_TYPE_OPENTYPE_COLLECTION) {
-        const TTC_Header_V1 *ttc_header;
+    if (stream_desc->face_type == DWRITE_FONT_FACE_TYPE_OPENTYPE_COLLECTION)
+    {
+        const struct ttc_header *ttc_header;
         void * ttc_context;
-        hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void**)&ttc_header, 0, sizeof(*ttc_header), &ttc_context);
-        if (SUCCEEDED(hr)) {
-            if (stream_desc->face_index >= GET_BE_DWORD(ttc_header->numFonts))
+
+        hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&ttc_header, 0,
+                sizeof(*ttc_header), &ttc_context);
+        if (SUCCEEDED(hr))
+        {
+            if (stream_desc->face_index >= GET_BE_DWORD(ttc_header->num_fonts))
                 hr = E_INVALIDARG;
-            else {
-                table_offset = GET_BE_DWORD(ttc_header->OffsetTable[stream_desc->face_index]);
-                hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void**)&font_header, table_offset, sizeof(*font_header), &sfnt_context);
+            else
+            {
+                table_offset = GET_BE_DWORD(ttc_header->offsets[stream_desc->face_index]);
+                hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&table_dir, table_offset,
+                        sizeof(*table_dir), &sfnt_context);
             }
             IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, ttc_context);
         }
     }
     else
-        hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void**)&font_header, 0, sizeof(*font_header), &sfnt_context);
+        hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&table_dir, 0,
+                sizeof(*table_dir), &sfnt_context);
 
     if (FAILED(hr))
         return hr;
 
-    table_count = GET_BE_WORD(font_header->numTables);
-    table_offset += sizeof(*font_header);
+    table_count = GET_BE_WORD(table_dir->numTables);
+    table_offset += sizeof(*table_dir);
 
     IDWriteFontFileStream_ReleaseFileFragment(stream_desc->stream, sfnt_context);
 
     hr = IDWriteFontFileStream_ReadFileFragment(stream_desc->stream, (const void **)&table_record, table_offset,
             table_count * sizeof(*table_record), &table_directory_context);
-    if (hr == S_OK) {
+    if (hr == S_OK)
+    {
         UINT16 i;
 
-        for (i = 0; i < table_count; i++) {
-            if (table_record->tag == tag) {
+        for (i = 0; i < table_count; ++i)
+        {
+            if (table_record->tag == tag)
+            {
                 UINT32 offset = GET_BE_DWORD(table_record->offset);
                 UINT32 length = GET_BE_DWORD(table_record->length);
 
