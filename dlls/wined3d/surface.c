@@ -31,9 +31,6 @@
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(d3d_perf);
 
-static const DWORD surface_simple_locations = WINED3D_LOCATION_SYSMEM
-        | WINED3D_LOCATION_BUFFER | WINED3D_LOCATION_CLEARED;
-
 /* Works correctly only for <= 4 bpp formats. */
 static void get_color_masks(const struct wined3d_format *format, uint32_t *masks)
 {
@@ -1481,6 +1478,19 @@ static bool wined3d_is_colour_blit(enum wined3d_blit_op blit_op)
     }
 }
 
+static bool sub_resource_is_on_cpu(const struct wined3d_texture *texture, unsigned int sub_resource_idx)
+{
+    DWORD locations = texture->sub_resources[sub_resource_idx].locations;
+
+    if (locations & (WINED3D_LOCATION_BUFFER | WINED3D_LOCATION_SYSMEM))
+        return true;
+
+    if (!(texture->resource.access & WINED3D_RESOURCE_ACCESS_GPU) && (locations & WINED3D_LOCATION_CLEARED))
+        return true;
+
+    return false;
+}
+
 HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_resource_idx,
         const struct wined3d_box *dst_box, struct wined3d_texture *src_texture, unsigned int src_sub_resource_idx,
         const struct wined3d_box *src_box, DWORD flags, const struct wined3d_blt_fx *fx,
@@ -1641,8 +1651,8 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
     {
         blit_op = WINED3D_BLIT_OP_COLOR_BLIT_ALPHATEST;
     }
-    else if ((src_sub_resource->locations & surface_simple_locations)
-            && !(dst_sub_resource->locations & surface_simple_locations)
+    else if (sub_resource_is_on_cpu(src_texture, src_sub_resource_idx)
+            && !sub_resource_is_on_cpu(dst_texture, dst_sub_resource_idx)
             && (dst_texture->resource.access & WINED3D_RESOURCE_ACCESS_GPU))
     {
         /* Upload */
@@ -1666,7 +1676,7 @@ HRESULT texture2d_blt(struct wined3d_texture *dst_texture, unsigned int dst_sub_
             return WINED3D_OK;
         }
     }
-    else if (!(src_sub_resource->locations & surface_simple_locations)
+    else if (!sub_resource_is_on_cpu(src_texture, src_sub_resource_idx)
             && (dst_sub_resource->locations & dst_texture->resource.map_binding)
             && !(dst_texture->resource.access & WINED3D_RESOURCE_ACCESS_GPU))
     {

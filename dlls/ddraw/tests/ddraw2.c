@@ -10930,9 +10930,9 @@ static void test_yv12_overlay(void)
         base = desc.lpSurface;
         ok(base[0] == 0x10, "Got unexpected Y data 0x%02x.\n", base[0]);
         base += desc.dwHeight * U1(desc).lPitch;
-        todo_wine ok(base[0] == 0x20, "Got unexpected V data 0x%02x.\n", base[0]);
+        ok(base[0] == 0x20, "Got unexpected V data 0x%02x.\n", base[0]);
         base += desc.dwHeight / 4 * U1(desc).lPitch;
-        todo_wine ok(base[0] == 0x30, "Got unexpected U data 0x%02x.\n", base[0]);
+        ok(base[0] == 0x30, "Got unexpected U data 0x%02x.\n", base[0]);
 
         hr = IDirectDrawSurface_Unlock(dst_surface, NULL);
         ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x.\n", hr);
