@@ -45,14 +45,7 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(xdnd);
 
-typedef struct tagXDNDDATA
-{
-    int cf_win;
-    HANDLE contents;
-    struct list entry;
-} XDNDDATA, *LPXDNDDATA;
-
-static struct list xdndData = LIST_INIT(xdndData);
+static struct format_entry *xdnd_formats, *xdnd_formats_end;
 static POINT XDNDxy = { 0, 0 };
 static IDataObject XDNDDataObject;
 static BOOL XDNDAccepted = FALSE;
@@ -62,7 +55,6 @@ static HWND XDNDLastTargetWnd;
 /* might be an ancestor of XDNDLastTargetWnd */
 static HWND XDNDLastDropTargetWnd;
 
-static void X11DRV_XDND_InsertXDNDData( UINT format, HANDLE contents );
 static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
     Atom *types, unsigned long count);
 static BOOL X11DRV_XDND_HasHDROP(void);
@@ -529,7 +521,7 @@ void X11DRV_XDND_LeaveEvent( HWND hWnd, XClientMessageEvent *event )
 static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
                                         Atom *types, unsigned long count)
 {
-    struct format_entry *formats, *formats_end, *iter;
+    struct format_entry *formats;
     size_t size;
 
     TRACE("count(%ld)\n", count);
@@ -537,41 +529,14 @@ static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
     X11DRV_XDND_FreeDragDropOp(); /* Clear previously cached data */
 
     formats = import_xdnd_selection( display, xwin, x11drv_atom(XdndSelection), types, count, &size );
-    if (formats)
+    if (!formats) return;
+
+    if ((xdnd_formats = HeapAlloc( GetProcessHeap(), 0, size )))
     {
-        formats_end = (struct format_entry *)((char *)formats + size);
-        for (iter = formats; iter < formats_end; iter = next_format( iter ))
-        {
-            HANDLE handle;
-            if ((handle = GlobalAlloc( GMEM_FIXED, iter->size )))
-            {
-                void *ptr = GlobalLock( handle );
-                memcpy( ptr, iter->data, iter->size );
-                GlobalUnlock( handle );
-                X11DRV_XDND_InsertXDNDData( iter->format, handle );
-            }
-        }
+        memcpy( xdnd_formats, formats, size );
+        xdnd_formats_end = (struct format_entry *)((char *)xdnd_formats + size);
     }
-}
-
-
-/**************************************************************************
- * X11DRV_XDND_InsertXDNDData
- *
- * Cache available XDND property
- */
-static void X11DRV_XDND_InsertXDNDData( UINT format, HANDLE contents )
-{
-    LPXDNDDATA current = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(XDNDDATA));
-
-    if (current)
-    {
-        EnterCriticalSection(&xdnd_cs);
-        current->cf_win = format;
-        current->contents = contents;
-        list_add_tail(&xdndData, &current->entry);
-        LeaveCriticalSection(&xdnd_cs);
-    }
+    free( formats );
 }
 
 
@@ -580,15 +545,15 @@ static void X11DRV_XDND_InsertXDNDData( UINT format, HANDLE contents )
  */
 static BOOL X11DRV_XDND_HasHDROP(void)
 {
-    LPXDNDDATA current = NULL;
+    struct format_entry *iter;
     BOOL found = FALSE;
 
     EnterCriticalSection(&xdnd_cs);
 
     /* Find CF_HDROP type if any */
-    LIST_FOR_EACH_ENTRY(current, &xdndData, XDNDDATA, entry)
+    for (iter = xdnd_formats; iter < xdnd_formats_end; iter = next_format( iter ))
     {
-        if (current->cf_win == CF_HDROP)
+        if (iter->format == CF_HDROP)
         {
             found = TRUE;
             break;
@@ -605,15 +570,15 @@ static BOOL X11DRV_XDND_HasHDROP(void)
  */
 static HRESULT X11DRV_XDND_SendDropFiles(HWND hwnd)
 {
+    struct format_entry *iter;
     HRESULT hr;
-    LPXDNDDATA current = NULL;
     BOOL found = FALSE;
 
     EnterCriticalSection(&xdnd_cs);
 
-    LIST_FOR_EACH_ENTRY(current, &xdndData, XDNDDATA, entry)
+    for (iter = xdnd_formats; iter < xdnd_formats_end; iter = next_format( iter ))
     {
-         if (current->cf_win == CF_HDROP)
+         if (iter->format == CF_HDROP)
          {
              found = TRUE;
              break;
@@ -621,13 +586,12 @@ static HRESULT X11DRV_XDND_SendDropFiles(HWND hwnd)
     }
     if (found)
     {
-        HGLOBAL dropHandle = GlobalAlloc(GMEM_FIXED, GlobalSize(current->contents));
+        HGLOBAL dropHandle = GlobalAlloc(GMEM_FIXED, iter->size);
         if (dropHandle)
         {
             RECT rect;
             DROPFILES *lpDrop = GlobalLock(dropHandle);
-            memcpy(lpDrop, GlobalLock(current->contents), GlobalSize(current->contents));
-            GlobalUnlock(current->contents);
+            memcpy(lpDrop, iter->data, iter->size);
             lpDrop->pt.x = XDNDxy.x;
             lpDrop->pt.y = XDNDxy.y;
             lpDrop->fNC  = !(ScreenToClient(hwnd, &lpDrop->pt) &&
@@ -662,20 +626,12 @@ static HRESULT X11DRV_XDND_SendDropFiles(HWND hwnd)
  */
 static void X11DRV_XDND_FreeDragDropOp(void)
 {
-    LPXDNDDATA next;
-    LPXDNDDATA current;
-
     TRACE("\n");
 
     EnterCriticalSection(&xdnd_cs);
 
-    /** Free data cache */
-    LIST_FOR_EACH_ENTRY_SAFE(current, next, &xdndData, XDNDDATA, entry)
-    {
-        list_remove(&current->entry);
-        GlobalFree(current->contents);
-        HeapFree(GetProcessHeap(), 0, current);
-    }
+    HeapFree( GetProcessHeap(), 0, xdnd_formats );
+    xdnd_formats = xdnd_formats_end = NULL;
 
     XDNDxy.x = XDNDxy.y = 0;
     XDNDLastTargetWnd = NULL;
@@ -772,18 +728,18 @@ static HRESULT WINAPI XDNDDATAOBJECT_GetData(IDataObject *dataObject,
     hr = IDataObject_QueryGetData(dataObject, formatEtc);
     if (SUCCEEDED(hr))
     {
-        XDNDDATA *current;
-        LIST_FOR_EACH_ENTRY(current, &xdndData, XDNDDATA, entry)
+        struct format_entry *iter;
+
+        for (iter = xdnd_formats; iter < xdnd_formats_end; iter = next_format( iter ))
         {
-            if (current->cf_win == formatEtc->cfFormat)
+            if (iter->format == formatEtc->cfFormat)
             {
                 pMedium->tymed = TYMED_HGLOBAL;
-                pMedium->u.hGlobal = GlobalAlloc(GMEM_FIXED | GMEM_ZEROINIT, GlobalSize(current->contents));
+                pMedium->u.hGlobal = GlobalAlloc(GMEM_FIXED | GMEM_ZEROINIT, iter->size);
                 if (pMedium->u.hGlobal == NULL)
                     return E_OUTOFMEMORY;
-                memcpy(GlobalLock(pMedium->u.hGlobal), GlobalLock(current->contents), GlobalSize(current->contents));
+                memcpy(GlobalLock(pMedium->u.hGlobal), iter->data, iter->size);
                 GlobalUnlock(pMedium->u.hGlobal);
-                GlobalUnlock(current->contents);
                 pMedium->pUnkForRelease = 0;
                 return S_OK;
             }
@@ -803,8 +759,8 @@ static HRESULT WINAPI XDNDDATAOBJECT_GetDataHere(IDataObject *dataObject,
 static HRESULT WINAPI XDNDDATAOBJECT_QueryGetData(IDataObject *dataObject,
                                                   FORMATETC *formatEtc)
 {
+    struct format_entry *iter;
     char formatDesc[1024];
-    XDNDDATA *current;
 
     TRACE("(%p, %p={.tymed=0x%x, .dwAspect=%d, .cfFormat=%d}\n",
         dataObject, formatEtc, formatEtc->tymed, formatEtc->dwAspect, formatEtc->cfFormat);
@@ -819,9 +775,9 @@ static HRESULT WINAPI XDNDDATAOBJECT_QueryGetData(IDataObject *dataObject,
      * and we have no way to implement them on XDnD anyway, so ignore them too.
      */
 
-    LIST_FOR_EACH_ENTRY(current, &xdndData, XDNDDATA, entry)
+    for (iter = xdnd_formats; iter < xdnd_formats_end; iter = next_format( iter ))
     {
-        if (current->cf_win == formatEtc->cfFormat)
+        if (iter->format == formatEtc->cfFormat)
         {
             TRACE("application found %s\n", formatDesc);
             return S_OK;
@@ -853,7 +809,8 @@ static HRESULT WINAPI XDNDDATAOBJECT_EnumFormatEtc(IDataObject *dataObject,
                                                    DWORD dwDirection,
                                                    IEnumFORMATETC **ppEnumFormatEtc)
 {
-    DWORD count;
+    struct format_entry *iter;
+    DWORD count = 0;
     FORMATETC *formats;
 
     TRACE("(%p, %u, %p)\n", dataObject, dwDirection, ppEnumFormatEtc);
@@ -864,16 +821,16 @@ static HRESULT WINAPI XDNDDATAOBJECT_EnumFormatEtc(IDataObject *dataObject,
         return E_NOTIMPL;
     }
 
-    count = list_count(&xdndData);
+    for (iter = xdnd_formats; iter < xdnd_formats_end; iter = next_format( iter )) count++;
+
     formats = HeapAlloc(GetProcessHeap(), 0, count * sizeof(FORMATETC));
     if (formats)
     {
-        XDNDDATA *current;
         DWORD i = 0;
         HRESULT hr;
-        LIST_FOR_EACH_ENTRY(current, &xdndData, XDNDDATA, entry)
+        for (iter = xdnd_formats; iter < xdnd_formats_end; iter = next_format( iter ))
         {
-            formats[i].cfFormat = current->cf_win;
+            formats[i].cfFormat = iter->format;
             formats[i].ptd = NULL;
             formats[i].dwAspect = DVASPECT_CONTENT;
             formats[i].lindex = -1;
