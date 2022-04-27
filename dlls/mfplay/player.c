@@ -1214,7 +1214,6 @@ static HRESULT media_item_create_sink_node(IUnknown *sink, IMFTopologyNode **nod
 
 static HRESULT media_item_create_topology(struct media_player *player, struct media_item *item, IMFTopology **out)
 {
-    IMFTopologyNode *src_node, *sink_node;
     BOOL selected, video_added = FALSE;
     IMFStreamDescriptor *sd;
     IMFTopology *topology;
@@ -1257,6 +1256,8 @@ static HRESULT media_item_create_topology(struct media_player *player, struct me
 
         if (sink)
         {
+            IMFTopologyNode *src_node = NULL, *sink_node = NULL;
+
             hr = media_item_create_source_node(item, sd, &src_node);
             if (SUCCEEDED(hr))
                 hr = media_item_create_sink_node(sink, &sink_node);
