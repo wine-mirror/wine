@@ -16954,7 +16954,7 @@ msgstr "Usu: taskkill [/?] [/f] [/im NomeProcesu | /pid IDProcesu]\n"
 msgid "Error: Unknown or invalid command line option specified.\n"
 msgstr ""
 "Fallu: Especificáronse na llinia de comandos opciones non\n"
-"válides o desconocíes\n"
+"válides o desconocíes.\n"
 
 #: programs/taskkill/taskkill.rc:32
 msgid "Error: Invalid command line parameter specified.\n"
