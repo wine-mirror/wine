@@ -18462,7 +18462,7 @@ msgid ""
 "The command is invalid.\n"
 msgstr ""
 "wineconsole: Falló l'aniciu del programa %s.\n"
-"El comandu nun ye válidu.s\n"
+"El comandu nun ye válidu.\n"
 
 #: programs/winedbg/winedbg.rc:50 programs/winedbg/winedbg.rc:38
 msgid "Program Error"
