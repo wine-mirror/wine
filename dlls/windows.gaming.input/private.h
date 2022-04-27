@@ -31,6 +31,7 @@
 
 #define WIDL_using_Windows_Foundation
 #define WIDL_using_Windows_Foundation_Collections
+#define WIDL_using_Windows_Foundation_Numerics
 #include "windows.foundation.h"
 #define WIDL_using_Windows_Devices_Power
 #define WIDL_using_Windows_Gaming_Input
@@ -38,6 +39,7 @@
 #define WIDL_using_Windows_Gaming_Input_ForceFeedback
 #include "windows.gaming.input.custom.h"
 
+#include "wine/debug.h"
 #include "wine/list.h"
 
 extern HINSTANCE windows_gaming_input;
@@ -111,3 +113,9 @@ extern HRESULT async_operation_boolean_create( IUnknown *invoker, IUnknown *para
     DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from_##iface_type, iface_type##_iface, &impl->base_iface )
 #define DEFINE_IINSPECTABLE_OUTER( pfx, iface_type, impl_type, outer_iface )                       \
     DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from_##iface_type, iface_type##_iface, impl->outer_iface )
+
+static inline const char *debugstr_vector3( const Vector3 *vector )
+{
+    if (!vector) return "(null)";
+    return wine_dbg_sprintf( "[%f, %f, %f]", vector->X, vector->Y, vector->Z );
+}

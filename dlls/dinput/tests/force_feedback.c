@@ -5624,15 +5624,14 @@ static void test_windows_gaming_input(void)
     pWindowsDeleteString( str );
 
     hr = IActivationFactory_ActivateInstance( activation_factory, &tmp_inspectable );
-    todo_wine
     ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
     IActivationFactory_Release( activation_factory );
-    if (hr != S_OK) goto skip_tests;
 
     hr = IInspectable_QueryInterface( tmp_inspectable, &IID_IForceFeedbackEffect, (void **)&effect );
     todo_wine
     ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
     IInspectable_Release( tmp_inspectable );
+    if (hr != S_OK) goto skip_tests;
 
     hr = IForceFeedbackEffect_QueryInterface( effect, &IID_IConstantForceEffect, (void **)&constant_effect );
     ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
