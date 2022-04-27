@@ -2951,7 +2951,7 @@ msgstr ""
 
 #: dlls/cryptui/cryptui.rc:125
 msgid "Proves your identity to a remote computer"
-msgstr "Je Vaším ověřením vůči vzdálenému počítači."
+msgstr "Je Vaším ověřením vůči vzdálenému počítači"
 
 #: dlls/cryptui/cryptui.rc:126
 msgid ""
@@ -2977,7 +2977,7 @@ msgstr ""
 
 #: dlls/cryptui/cryptui.rc:131
 msgid "Allows data on disk to be encrypted"
-msgstr "Umožní, aby data na disku byla šifrována."
+msgstr "Umožní, aby data na disku byla šifrována"
 
 #: dlls/cryptui/cryptui.rc:147
 msgid "Private Key Archival"
@@ -19707,7 +19707,7 @@ msgstr "Chyba: příkazová řádka není podporovaná\n"
 
 #: programs/wmic/wmic.rc:29
 msgid "Error: Alias not found\n"
-msgstr "Chyba: alternativní název nenalezen.\n"
+msgstr "Chyba: alternativní název nenalezen\n"
 
 #: programs/wmic/wmic.rc:30
 msgid "Error: Invalid query\n"
