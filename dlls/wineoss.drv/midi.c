@@ -490,20 +490,6 @@ static DWORD midClose(WORD wDevID)
     return ret;
 }
 
-/**************************************************************************
- *			midStop					[internal]
- */
-static DWORD midStop(WORD wDevID)
-{
-    TRACE("(%04X);\n", wDevID);
-
-    if (wDevID >= MIDM_NumDevs) return MMSYSERR_BADDEVICEID;
-    if (MidiInDev[wDevID].state == -1) return MIDIERR_NODEVICE;
-
-    MidiInDev[wDevID].state = 0;
-    return MMSYSERR_NOERROR;
-}
-
 /*======================================================================*
  *                  	    MIDI entry points 				*
  *======================================================================*/
@@ -529,8 +515,6 @@ DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 	return midOpen(wDevID, (LPMIDIOPENDESC)dwParam1, dwParam2);
     case MIDM_CLOSE:
 	return midClose(wDevID);
-    case MIDM_STOP:
-	return midStop(wDevID);
     }
 
     params.dev_id = wDevID;
