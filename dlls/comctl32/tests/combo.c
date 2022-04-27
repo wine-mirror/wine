@@ -1272,6 +1272,7 @@ static void test_combo_dropdown_size(DWORD style)
         RECT rect_list_client;
         int min_visible_expected;
 
+        winetest_push_context("Test %d", test);
         hCombo = CreateWindowA(WC_COMBOBOXA, "Combo", CBS_DROPDOWN | WS_VISIBLE | WS_CHILD | style, 5, 5, 100,
                 info_test->height_combo, hMainWnd, (HMENU)COMBO_ID, NULL, 0);
 
@@ -1297,8 +1298,8 @@ static void test_combo_dropdown_size(DWORD style)
             ret = SendMessageA(hCombo, CB_SETMINVISIBLE, min_visible_expected, 0);
             ok(ret, "Failed to set visible limit.\n");
             min_visible_actual = SendMessageA(hCombo, CB_GETMINVISIBLE, 0, 0);
-            ok(min_visible_expected == min_visible_actual, "test %d: unexpected number of items %d.\n",
-                    test, min_visible_actual);
+            ok(min_visible_expected == min_visible_actual, "unexpected number of items %d.\n",
+                    min_visible_actual);
         }
 
         ret = SendMessageA(hCombo, CB_SHOWDROPDOWN, TRUE,0);
@@ -1333,18 +1334,19 @@ static void test_combo_dropdown_size(DWORD style)
             if (expected_height_list < 0)
                 expected_height_list = 0;
 
-            ok(expected_height_list == height_list, "Test %d, expected list height to be %d, got %d\n",
-                    test, expected_height_list, height_list);
+            ok(expected_height_list == height_list, "expected list height to be %d, got %d\n",
+                    expected_height_list, height_list);
         }
         else
         {
             expected_height_list = min(info_test->num_items, min_visible_expected) * height_item;
 
-            ok(expected_height_list == height_list, "Test %d, expected list height to be %d, got %d\n",
-                    test, expected_height_list, height_list);
+            ok(expected_height_list == height_list, "expected list height to be %d, got %d\n",
+                    expected_height_list, height_list);
         }
 
         DestroyWindow(hCombo);
+        winetest_pop_context();
     }
 }
 
