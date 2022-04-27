@@ -242,6 +242,7 @@ struct wined3d_d3d_info
     uint32_t scaled_resolve : 1;
     uint32_t pbo : 1;
     uint32_t subpixel_viewport : 1;
+    uint32_t fences : 1;
     enum wined3d_feature_level feature_level;
 
     DWORD multisample_draw_location;
@@ -3281,6 +3282,11 @@ struct wined3d_gl_info
     void (WINE_GLAPI *p_glDisableWINE)(GLenum cap);
     void (WINE_GLAPI *p_glEnableWINE)(GLenum cap);
 };
+
+static inline BOOL wined3d_fence_supported(const struct wined3d_gl_info *gl_info)
+{
+    return gl_info->supported[ARB_SYNC] || gl_info->supported[NV_FENCE] || gl_info->supported[APPLE_FENCE];
+}
 
 /* The driver names reflect the lowest GPU supported
  * by a certain driver, so DRIVER_AMD_R300 supports
