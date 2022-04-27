@@ -8306,7 +8306,7 @@ msgstr "Kısayol oluşturuluyor"
 
 #: dlls/msi/msi.rc:99
 msgid "Deleting services"
-msgstr "Hizmetler siliniyor."
+msgstr "Hizmetler siliniyor"
 
 #: dlls/msi/msi.rc:100
 msgid "Creating duplicate files"
@@ -8330,7 +8330,7 @@ msgstr "ODBC bileşenleri yükleniyor"
 
 #: dlls/msi/msi.rc:106
 msgid "Installing new services"
-msgstr "Yeni hizmetler yükleniyor."
+msgstr "Yeni hizmetler yükleniyor"
 
 #: dlls/msi/msi.rc:107
 msgid "Installing system catalog"
@@ -12643,11 +12643,11 @@ msgstr "Bu dizi sabit veya geçici olarak kilitli"
 
 #: dlls/vbscript/vbscript.rc:34
 msgid "Type mismatch"
-msgstr "Tür eşleşmiyor."
+msgstr "Tür eşleşmiyor"
 
 #: dlls/vbscript/vbscript.rc:36
 msgid "Device I/O error"
-msgstr "Aygıt G/Ç hatası."
+msgstr "Aygıt G/Ç hatası"
 
 #: dlls/vbscript/vbscript.rc:37
 msgid "File already exists"
@@ -12663,7 +12663,7 @@ msgstr "Çok fazla dosya"
 
 #: dlls/vbscript/vbscript.rc:40
 msgid "Permission denied"
-msgstr "İzin engellendi."
+msgstr "İzin engellendi"
 
 #: dlls/vbscript/vbscript.rc:41
 msgid "Path/File access error"
@@ -17101,43 +17101,43 @@ msgstr ""
 
 #: programs/regsvr32/regsvr32.rc:43
 msgid "regsvr32: Failed to load DLL '%1'\n"
-msgstr "regsvr32: '%1' DLL dosyası yüklenemedi.\n"
+msgstr "regsvr32: '%1' DLL dosyası yüklenemedi\n"
 
 #: programs/regsvr32/regsvr32.rc:44
 msgid "regsvr32: '%1!S!' not implemented in DLL '%2'\n"
-msgstr "regsvr32: '%1!S!', '%2% DLL dosyasında yok.\n"
+msgstr "regsvr32: '%1!S!', '%2% DLL dosyasında yok\n"
 
 #: programs/regsvr32/regsvr32.rc:45
 msgid "regsvr32: Failed to register DLL '%1'\n"
-msgstr "regsvr32: '%1' DLL dosyası kaydedilemedi.\n"
+msgstr "regsvr32: '%1' DLL dosyası kaydedilemedi\n"
 
 #: programs/regsvr32/regsvr32.rc:46
 msgid "regsvr32: Successfully registered DLL '%1'\n"
-msgstr "regsvr32: '%1' DLL dosyası başarıyla kaydedildi.\n"
+msgstr "regsvr32: '%1' DLL dosyası başarıyla kaydedildi\n"
 
 #: programs/regsvr32/regsvr32.rc:47
 msgid "regsvr32: Failed to unregister DLL '%1'\n"
-msgstr "regsvr32: '%1' DLL dosyası kayıttan kaldırılamadı.\n"
+msgstr "regsvr32: '%1' DLL dosyası kayıttan kaldırılamadı\n"
 
 #: programs/regsvr32/regsvr32.rc:48
 msgid "regsvr32: Successfully unregistered DLL '%1'\n"
-msgstr "regsvr32: '%1' DLL dosyası başarıyla kayıttan kaldırıldı.\n"
+msgstr "regsvr32: '%1' DLL dosyası başarıyla kayıttan kaldırıldı\n"
 
 #: programs/regsvr32/regsvr32.rc:49
 msgid "regsvr32: Failed to install DLL '%1'\n"
-msgstr "regsvr32: '%1' DLL dosyası yüklenemedi.\n"
+msgstr "regsvr32: '%1' DLL dosyası yüklenemedi\n"
 
 #: programs/regsvr32/regsvr32.rc:50
 msgid "regsvr32: Successfully installed DLL '%1'\n"
-msgstr "regsvr32: '%1' DLL dosyası başarıyla yüklendi.\n"
+msgstr "regsvr32: '%1' DLL dosyası başarıyla yüklendi\n"
 
 #: programs/regsvr32/regsvr32.rc:51
 msgid "regsvr32: Failed to uninstall DLL '%1'\n"
-msgstr "regsvr32: '%1' DLL dosyası kaldırılamadı.\n"
+msgstr "regsvr32: '%1' DLL dosyası kaldırılamadı\n"
 
 #: programs/regsvr32/regsvr32.rc:52
 msgid "regsvr32: Successfully uninstalled DLL '%1'\n"
-msgstr "regsvr32: '%1' DLL dosyası başarıyla kaldırıldı.\n"
+msgstr "regsvr32: '%1' DLL dosyası başarıyla kaldırıldı\n"
 
 #: programs/start/start.rc:57
 #, fuzzy
@@ -18127,7 +18127,7 @@ msgstr ""
 
 #: programs/uninstaller/uninstaller.rc:33
 msgid "uninstaller: Invalid option [%1]\n"
-msgstr "uninstaller: '%1' geçersiz seçenek.\n"
+msgstr "uninstaller: '%1' geçersiz seçenek\n"
 
 #: programs/uninstaller/uninstaller.rc:35
 msgid ""
