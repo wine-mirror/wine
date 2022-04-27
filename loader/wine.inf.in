@@ -4766,7 +4766,7 @@ HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time,"MUI_Display",,"@tzre
 HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time,"MUI_Dlt",,"@tzres.dll,-46161"
 HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time,"MUI_Std",,"@tzres.dll,-46160"
 HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time,"Std",,"West Bank Standard Time"
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time,"TZI",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,04,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2000",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,03,00,00,00,00,00,00,00,00,00,00,00,04,00,05,00,03,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2001",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,03,00,00,00,00,00,00,00,00,00,00,00,04,00,05,00,03,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2002",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,03,00,00,00,00,00,00,00,00,00,00,00,04,00,05,00,03,00,00,00,00,00,00,00,00,00
@@ -4789,35 +4789,37 @@ HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2018",1,
 HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2019",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,06,00,04,00,00,00,00,00,00,00,00,00,00,00,03,00,05,00,05,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2020",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,06,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2021",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2022",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2023",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2024",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,05,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2025",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,05,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2026",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2027",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2028",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2029",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2030",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,05,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2031",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,05,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2032",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2033",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2034",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2035",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2036",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,05,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2037",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2038",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2039",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2040",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2041",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,05,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2042",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,05,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2043",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2044",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2045",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2046",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2047",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,05,00,00,00,00,00,00,00,00,00
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2048",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,06,00,04,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2022",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,04,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2023",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,04,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2024",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2025",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2026",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2027",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,04,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2028",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,04,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2029",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,04,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2030",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2031",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2032",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,04,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2033",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,04,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2034",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,04,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2035",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,04,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2036",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2037",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2038",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,04,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2039",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,04,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2040",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,04,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2041",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2042",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2043",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2044",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,04,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2045",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,04,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2046",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,04,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2047",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2048",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,05,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2049",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,05,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,04,00,00,00,00,00,00,00,00,00
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"2050",1,88,ff,ff,ff,00,00,00,00,c4,ff,ff,ff,00,00,0a,00,05,00,04,00,01,00,00,00,00,00,00,00,00,00,03,00,00,00,04,00,00,00,00,00,00,00,00,00
 HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"FirstEntry",0x10001,"2000"
-HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"LastEntry",0x10001,"2048"
+HKLM,%CurrentVersionNT%\Time Zones\West Bank Standard Time\Dynamic DST,"LastEntry",0x10001,"2050"
 HKLM,%CurrentVersionNT%\Time Zones\West Pacific Standard Time,"Display",,"(UTC+10:00) Guam, Port Moresby"
 HKLM,%CurrentVersionNT%\Time Zones\West Pacific Standard Time,"Dlt",,"West Pacific Daylight Time"
 HKLM,%CurrentVersionNT%\Time Zones\West Pacific Standard Time,"MUI_Display",,"@tzres.dll,-10226"
