@@ -25,6 +25,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(input);
 struct constant_effect
 {
     IConstantForceEffect IConstantForceEffect_iface;
+    IWineForceFeedbackEffectImpl *IWineForceFeedbackEffectImpl_inner;
     LONG ref;
 };
 
@@ -48,9 +49,7 @@ static HRESULT WINAPI effect_QueryInterface( IConstantForceEffect *iface, REFIID
         return S_OK;
     }
 
-    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
-    *out = NULL;
-    return E_NOINTERFACE;
+    return IWineForceFeedbackEffectImpl_QueryInterface( impl->IWineForceFeedbackEffectImpl_inner, iid, out );
 }
 
 static ULONG WINAPI effect_AddRef( IConstantForceEffect *iface )
@@ -68,7 +67,13 @@ static ULONG WINAPI effect_Release( IConstantForceEffect *iface )
 
     TRACE( "iface %p decreasing refcount to %lu.\n", iface, ref );
 
-    if (!ref) free( impl );
+    if (!ref)
+    {
+        /* guard against re-entry if inner releases an outer iface */
+        InterlockedIncrement( &impl->ref );
+        IWineForceFeedbackEffectImpl_Release( impl->IWineForceFeedbackEffectImpl_inner );
+        free( impl );
+    }
 
     return ref;
 }
@@ -192,12 +197,20 @@ static HRESULT WINAPI activation_GetTrustLevel( IActivationFactory *iface, Trust
 static HRESULT WINAPI activation_ActivateInstance( IActivationFactory *iface, IInspectable **instance )
 {
     struct constant_effect *impl;
+    HRESULT hr;
 
     TRACE( "iface %p, instance %p.\n", iface, instance );
 
     if (!(impl = calloc( 1, sizeof(struct constant_effect) ))) return E_OUTOFMEMORY;
     impl->IConstantForceEffect_iface.lpVtbl = &effect_vtbl;
     impl->ref = 1;
+
+    if (FAILED(hr = force_feedback_effect_create( (IInspectable *)&impl->IConstantForceEffect_iface,
+                                                  &impl->IWineForceFeedbackEffectImpl_inner )))
+    {
+        free( impl );
+        return hr;
+    }
 
     *instance = (IInspectable *)&impl->IConstantForceEffect_iface;
     TRACE( "created ConstantForceEffect %p\n", *instance );

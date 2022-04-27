@@ -27,6 +27,139 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(input);
 
+struct effect
+{
+    IWineForceFeedbackEffectImpl IWineForceFeedbackEffectImpl_iface;
+    IForceFeedbackEffect IForceFeedbackEffect_iface;
+    IInspectable *IInspectable_outer;
+    LONG ref;
+};
+
+static inline struct effect *impl_from_IWineForceFeedbackEffectImpl( IWineForceFeedbackEffectImpl *iface )
+{
+    return CONTAINING_RECORD( iface, struct effect, IWineForceFeedbackEffectImpl_iface );
+}
+
+static HRESULT WINAPI effect_impl_QueryInterface( IWineForceFeedbackEffectImpl *iface, REFIID iid, void **out )
+{
+    struct effect *impl = impl_from_IWineForceFeedbackEffectImpl( iface );
+
+    TRACE( "iface %p, iid %s, out %p.\n", iface, debugstr_guid( iid ), out );
+
+    if (IsEqualGUID( iid, &IID_IUnknown ) ||
+        IsEqualGUID( iid, &IID_IInspectable ) ||
+        IsEqualGUID( iid, &IID_IAgileObject ) ||
+        IsEqualGUID( iid, &IID_IWineForceFeedbackEffectImpl ))
+    {
+        IWineForceFeedbackEffectImpl_AddRef( (*out = &impl->IWineForceFeedbackEffectImpl_iface) );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IForceFeedbackEffect ))
+    {
+        IInspectable_AddRef( (*out = &impl->IForceFeedbackEffect_iface) );
+        return S_OK;
+    }
+
+    FIXME( "%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid( iid ) );
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI effect_impl_AddRef( IWineForceFeedbackEffectImpl *iface )
+{
+    struct effect *impl = impl_from_IWineForceFeedbackEffectImpl( iface );
+    ULONG ref = InterlockedIncrement( &impl->ref );
+    TRACE( "iface %p increasing refcount to %lu.\n", iface, ref );
+    return ref;
+}
+
+static ULONG WINAPI effect_impl_Release( IWineForceFeedbackEffectImpl *iface )
+{
+    struct effect *impl = impl_from_IWineForceFeedbackEffectImpl( iface );
+    ULONG ref = InterlockedDecrement( &impl->ref );
+
+    TRACE( "iface %p decreasing refcount to %lu.\n", iface, ref );
+
+    if (!ref) free( impl );
+
+    return ref;
+}
+
+static const struct IWineForceFeedbackEffectImplVtbl effect_impl_vtbl =
+{
+    effect_impl_QueryInterface,
+    effect_impl_AddRef,
+    effect_impl_Release,
+    /* IWineForceFeedbackEffectImpl methods */
+};
+
+DEFINE_IINSPECTABLE_OUTER( effect, IForceFeedbackEffect, struct effect, IInspectable_outer )
+
+static HRESULT WINAPI effect_get_Gain( IForceFeedbackEffect *iface, DOUBLE *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI effect_put_Gain( IForceFeedbackEffect *iface, DOUBLE value )
+{
+    FIXME( "iface %p, value %f stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI effect_get_State( IForceFeedbackEffect *iface, ForceFeedbackEffectState *value )
+{
+    FIXME( "iface %p, value %p stub!\n", iface, value );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI effect_Start( IForceFeedbackEffect *iface )
+{
+    FIXME( "iface %p stub!\n", iface );
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI effect_Stop( IForceFeedbackEffect *iface )
+{
+    FIXME( "iface %p stub!\n", iface );
+    return E_NOTIMPL;
+}
+
+static const struct IForceFeedbackEffectVtbl effect_vtbl =
+{
+    effect_QueryInterface,
+    effect_AddRef,
+    effect_Release,
+    /* IInspectable methods */
+    effect_GetIids,
+    effect_GetRuntimeClassName,
+    effect_GetTrustLevel,
+    /* IForceFeedbackEffect methods */
+    effect_get_Gain,
+    effect_put_Gain,
+    effect_get_State,
+    effect_Start,
+    effect_Stop,
+};
+
+HRESULT force_feedback_effect_create( IInspectable *outer, IWineForceFeedbackEffectImpl **out )
+{
+    struct effect *impl;
+
+    TRACE( "outer %p, out %p\n", outer, out );
+
+    if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
+    impl->IWineForceFeedbackEffectImpl_iface.lpVtbl = &effect_impl_vtbl;
+    impl->IForceFeedbackEffect_iface.lpVtbl = &effect_vtbl;
+    impl->IInspectable_outer = outer;
+    impl->ref = 1;
+
+    *out = &impl->IWineForceFeedbackEffectImpl_iface;
+    TRACE( "created ForceFeedbackEffect %p\n", *out );
+    return S_OK;
+}
+
 struct motor
 {
     IForceFeedbackMotor IForceFeedbackMotor_iface;

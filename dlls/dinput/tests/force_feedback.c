@@ -5628,10 +5628,8 @@ static void test_windows_gaming_input(void)
     IActivationFactory_Release( activation_factory );
 
     hr = IInspectable_QueryInterface( tmp_inspectable, &IID_IForceFeedbackEffect, (void **)&effect );
-    todo_wine
     ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
     IInspectable_Release( tmp_inspectable );
-    if (hr != S_OK) goto skip_tests;
 
     hr = IForceFeedbackEffect_QueryInterface( effect, &IID_IConstantForceEffect, (void **)&constant_effect );
     ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
@@ -5670,6 +5668,7 @@ static void test_windows_gaming_input(void)
     hr = IForceFeedbackMotor_LoadEffectAsync( motor, effect, &result_async );
     todo_wine
     ok( hr == S_OK, "LoadEffectAsync returned %#lx\n", hr );
+    if (hr != S_OK) goto skip_tests;
     result_async_handler = default_result_async_handler;
     result_async_handler.event = CreateEventW( NULL, FALSE, FALSE, NULL );
     ok( !!result_async_handler.event, "CreateEventW failed, error %lu\n", GetLastError() );

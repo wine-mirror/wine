@@ -42,6 +42,8 @@
 #include "wine/debug.h"
 #include "wine/list.h"
 
+#include "provider.h"
+
 extern HINSTANCE windows_gaming_input;
 extern ICustomGameControllerFactory *controller_factory;
 extern ICustomGameControllerFactory *gamepad_factory;
@@ -69,6 +71,7 @@ extern HRESULT event_handlers_remove( struct list *list, EventRegistrationToken 
 extern void event_handlers_notify( struct list *list, IInspectable *element );
 
 extern HRESULT force_feedback_motor_create( IDirectInputDevice8W *device, IForceFeedbackMotor **out );
+extern HRESULT force_feedback_effect_create( IInspectable *outer, IWineForceFeedbackEffectImpl **out );
 
 typedef HRESULT (WINAPI *async_operation_callback)( IUnknown *invoker, IUnknown *param, PROPVARIANT *result );
 extern HRESULT async_operation_boolean_create( IUnknown *invoker, IUnknown *param, async_operation_callback callback,
