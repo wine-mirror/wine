@@ -1201,9 +1201,12 @@ void wined3d_device_gl_delete_opengl_contexts_cs(void *object)
     device->shader_backend->shader_free_private(device, context);
     wined3d_device_gl_destroy_dummy_textures(device_gl, context_gl);
 
-    wined3d_context_gl_submit_command_fence(context_gl);
-    wined3d_context_gl_wait_command_fence(context_gl,
-            wined3d_device_gl(context_gl->c.device)->current_fence_id - 1);
+    if (context_gl->c.d3d_info->fences)
+    {
+        wined3d_context_gl_submit_command_fence(context_gl);
+        wined3d_context_gl_wait_command_fence(context_gl,
+                wined3d_device_gl(context_gl->c.device)->current_fence_id - 1);
+    }
     wined3d_allocator_cleanup(&device_gl->allocator);
 
     context_release(context);

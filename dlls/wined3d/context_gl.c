@@ -1393,13 +1393,16 @@ static void wined3d_context_gl_cleanup(struct wined3d_context_gl *context_gl)
     {
         /* If we're here because we're switching away from a previously
          * destroyed context, acquiring a context in order to submit a fence
-         * is problematic. (In particular, we'd end up back here again in the
-         * process of switching to the newly acquired context.) */
+         * is problematic. In particular, we'd end up back here again in the
+         * process of switching to the newly acquired context.
+         *
+         * If fences aren't supported there should be nothing to wait for
+         * anyway, so just do nothing in that case. */
         if (context_gl->c.destroyed)
         {
             gl_info->gl_ops.gl.p_glFinish();
         }
-        else
+        else if (context_gl->c.d3d_info->fences)
         {
             wined3d_context_gl_submit_command_fence(context_gl);
             wined3d_context_gl_wait_command_fence(context_gl,
