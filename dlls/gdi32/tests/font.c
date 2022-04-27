@@ -6523,6 +6523,7 @@ static void test_max_height(void)
 
     /* test an invalid value */
     for (i = 0; i < ARRAY_SIZE(invalid_height); i++) {
+        winetest_push_context("height=%ld", invalid_height[i]);
         lf.lfHeight = invalid_height[i];
         hfont = CreateFontIndirectA(&lf);
         hfont_old = SelectObject(hdc, hfont);
@@ -6534,6 +6535,7 @@ static void test_max_height(void)
         ok(tm.tmAveCharWidth == tm1.tmAveCharWidth,
            "expected 1 ppem value (%ld), got %ld\n", tm1.tmAveCharWidth, tm.tmAveCharWidth);
         DeleteObject(SelectObject(hdc, hfont_old));
+        winetest_pop_context();
     }
 
     ReleaseDC(NULL, hdc);
