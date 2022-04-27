@@ -79,6 +79,12 @@ static CRITICAL_SECTION_DEBUG critsect_debug =
 static CRITICAL_SECTION xdnd_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
 
 
+static struct format_entry *next_format( struct format_entry *entry )
+{
+    return (struct format_entry *)&entry->data[(entry->size + 7) & ~7];
+}
+
+
 /* Based on functions in dlls/ole32/ole2.c */
 static HANDLE get_droptarget_local_handle(HWND hwnd)
 {
@@ -523,15 +529,31 @@ void X11DRV_XDND_LeaveEvent( HWND hWnd, XClientMessageEvent *event )
 static void X11DRV_XDND_ResolveProperty(Display *display, Window xwin, Time tm,
                                         Atom *types, unsigned long count)
 {
+    struct format_entry *formats, *formats_end, *iter;
     XDNDDATA *current, *next;
     BOOL haveHDROP = FALSE;
+    size_t size;
 
     TRACE("count(%ld)\n", count);
 
     X11DRV_XDND_FreeDragDropOp(); /* Clear previously cached data */
 
-    X11DRV_CLIPBOARD_ImportSelection( display, xwin, x11drv_atom(XdndSelection),
-                                      types, count, X11DRV_XDND_InsertXDNDData );
+    formats = import_xdnd_selection( display, xwin, x11drv_atom(XdndSelection), types, count, &size );
+    if (formats)
+    {
+        formats_end = (struct format_entry *)((char *)formats + size);
+        for (iter = formats; iter < formats_end; iter = next_format( iter ))
+        {
+            HANDLE handle;
+            if ((handle = GlobalAlloc( GMEM_FIXED, iter->size )))
+            {
+                void *ptr = GlobalLock( handle );
+                memcpy( ptr, iter->data, iter->size );
+                GlobalUnlock( handle );
+                X11DRV_XDND_InsertXDNDData( iter->format, handle );
+            }
+        }
+    }
 
     /* On Windows when there is a CF_HDROP, there are no other CF_ formats.
      * foobar2000 relies on this (spaces -> %20's without it).

@@ -297,9 +297,17 @@ extern void X11DRV_XDND_EnterEvent( HWND hWnd, XClientMessageEvent *event ) DECL
 extern void X11DRV_XDND_PositionEvent( HWND hWnd, XClientMessageEvent *event ) DECLSPEC_HIDDEN;
 extern void X11DRV_XDND_DropEvent( HWND hWnd, XClientMessageEvent *event ) DECLSPEC_HIDDEN;
 extern void X11DRV_XDND_LeaveEvent( HWND hWnd, XClientMessageEvent *event ) DECLSPEC_HIDDEN;
-extern void X11DRV_CLIPBOARD_ImportSelection( Display *display, Window win, Atom selection,
-                                              Atom *targets, UINT count,
-                                              void (*callback)( UINT, HANDLE )) DECLSPEC_HIDDEN;
+
+struct format_entry
+{
+    UINT format;
+    UINT size;
+    char data[1];
+};
+
+extern struct format_entry *import_xdnd_selection( Display *display, Window win, Atom selection,
+                                                   Atom *targets, UINT count,
+                                                   size_t *size ) DECLSPEC_HIDDEN;
 
 /**************************************************************************
  * X11 GDI driver

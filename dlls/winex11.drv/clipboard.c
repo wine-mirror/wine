@@ -1096,21 +1096,21 @@ static void *import_selection( Display *display, Window win, Atom selection,
 
 
 /**************************************************************************
- *      X11DRV_CLIPBOARD_ImportSelection
+ *      import_xdnd_selection
  *
  *  Import the X selection into the clipboard format registered for the given X target.
  */
-void X11DRV_CLIPBOARD_ImportSelection( Display *display, Window win, Atom selection,
-                                       Atom *targets, UINT count,
-                                       void (*callback)( UINT, HANDLE ))
+struct format_entry *import_xdnd_selection( Display *display, Window win, Atom selection,
+                                            Atom *targets, UINT count, size_t *ret_size )
 {
+    size_t size, buf_size = 0, entry_size;
     UINT i;
-    HANDLE handle;
     void *data;
-    size_t size;
     struct clipboard_format *format;
+    struct format_entry *ret = NULL, *entry;
 
     register_x11_formats( targets, count );
+    *ret_size = 0;
 
     for (i = 0; i < count; i++)
     {
@@ -1118,16 +1118,21 @@ void X11DRV_CLIPBOARD_ImportSelection( Display *display, Window win, Atom select
         if (!format->id) continue;
         if (!(data = import_selection( display, win, selection, format, &size ))) continue;
 
-        if ((handle = GlobalAlloc( GMEM_FIXED, size )))
+        entry_size = (FIELD_OFFSET( struct format_entry, data[size] ) + 7) & ~7;
+        if (buf_size < size + entry_size)
         {
-            void *ptr;
-            ptr = GlobalLock( handle );
-            memcpy( ptr, data, size );
-            GlobalUnlock( handle );
-            callback( format->id, handle );
+            if (!(ret = realloc( ret, *ret_size + entry_size + 1024 ))) continue;
+            buf_size = *ret_size + entry_size + 1024; /* extra space for following entries */
         }
+        entry = (struct format_entry *)((char *)ret + *ret_size);
+        entry->format = format->id;
+        entry->size = size;
+        if (size) memcpy( entry->data, data, size );
+        *ret_size += entry_size;
         free( data );
     }
+
+    return ret;
 }
 
 
