@@ -1548,10 +1548,10 @@ done:
 
 static void color_fill_test(void)
 {
+    unsigned int fill_a, expected_a;
     IDirect3DSurface9 *surface;
     IDirect3DTexture9 *texture;
     D3DCOLOR fill_color, color;
-    DWORD fill_a, expected_a;
     IDirect3DDevice9 *device;
     IDirect3D9 *d3d;
     ULONG refcount;
@@ -1580,20 +1580,39 @@ static void color_fill_test(void)
         {
             CHECK_FILL_VALUE = 0x1,
             BLOCKS           = 0x2,
+            FLOAT_VALUES     = 0x4,
         } flags;
-        DWORD fill_value;
+        unsigned int fill_i[4];
+        float fill_f[4];
     }
     formats[] =
     {
-        {D3DFMT_A8R8G8B8, "D3DFMT_A8R8G8B8", CHECK_FILL_VALUE,                    0xdeadbeef},
+        {D3DFMT_A8R8G8B8,       "D3DFMT_A8R8G8B8", CHECK_FILL_VALUE,
+                {0xdeadbeef, 0xdeadbeef, 0xdeadbeef, 0xdeadbeef}},
         /* D3DFMT_X8R8G8B8 either set X = A or X = 0, depending on the driver. */
-        {D3DFMT_R5G6B5,   "D3DFMT_R5G6B5",   CHECK_FILL_VALUE,                    0xadfdadfd},
-        {D3DFMT_G16R16,   "D3DFMT_G16R16",   CHECK_FILL_VALUE,                    0xbebeadad},
+        {D3DFMT_R5G6B5,         "D3DFMT_R5G6B5",   CHECK_FILL_VALUE,
+                {0xadfdadfd, 0xadfdadfd, 0xadfdadfd, 0xadfdadfd}},
+        {D3DFMT_G16R16,         "D3DFMT_G16R16",   CHECK_FILL_VALUE,
+                {0xbebeadad, 0xbebeadad, 0xbebeadad, 0xbebeadad}},
+        {D3DFMT_A16B16G16R16,   "D3DFMT_A16B16G16R16",   CHECK_FILL_VALUE,
+                {0xbebeadad, 0xdedeefef, 0xbebeadad, 0xdedeefef}},
         /* Real hardware reliably fills the surface with the blue channel but
          * the testbot fills it with 0x00. Wine incorrectly uses the alpha
          * channel. Don't bother checking the result because P8 surfaces are
          * essentially useless in d3d9. */
-        {D3DFMT_P8,       "D3DFMT_P8",       0,                                   0xefefefef},
+        {D3DFMT_P8,             "D3DFMT_P8",       0,
+                {0xefefefef, 0xefefefef, 0xefefefef, 0xefefefef}},
+        /* Float formats. */
+        {D3DFMT_R32F,           "D3DFMT_R32F",     CHECK_FILL_VALUE | FLOAT_VALUES,
+                {0, 0, 0, 0}, {0xad / 255.0f, 0xad / 255.0f, 0xad / 255.0f, 0xad / 255.0f}},
+        {D3DFMT_A32B32G32R32F,  "D3DFMT_A32B32G32R32F",  CHECK_FILL_VALUE | FLOAT_VALUES,
+                {0, 0, 0, 0}, {0xad / 255.0f, 0xbe / 255.0f, 0xef / 255.0f, 0xde / 255.0f}},
+        {D3DFMT_R16F,           "D3DFMT_R16F",     CHECK_FILL_VALUE,
+                {0x396d396d, 0x396d396d, 0x396d396d, 0x396d396d}},
+        {D3DFMT_G16R16F,        "D3DFMT_G16R16F",  CHECK_FILL_VALUE,
+                {0x39f5396d, 0x39f5396d, 0x39f5396d, 0x39f5396d}},
+        {D3DFMT_A16B16G16R16F,  "D3DFMT_A16B16G16R16F",  CHECK_FILL_VALUE,
+                {0x39f5396d, 0x3af63b7f, 0x39f5396d, 0x3af63b7f}},
         /* Windows drivers produce different results for these formats.
          * No driver produces a YUV value that matches the input RGB
          * value, and no driver produces a proper DXT compression block.
@@ -1603,17 +1622,16 @@ static void color_fill_test(void)
          *
          * The YUV tests are disabled because they produce a driver-dependent
          * result on Wine.
-         * {D3DFMT_YUY2,     "D3DFMT_YUY2",     BLOCKS,                              0},
-         * {D3DFMT_UYVY,     "D3DFMT_UYVY",     BLOCKS,                              0}, */
-        {D3DFMT_DXT1,     "D3DFMT_DXT1",     BLOCKS,                              0x00000000},
+         * {D3DFMT_YUY2,     "D3DFMT_YUY2",     BLOCKS},
+         * {D3DFMT_UYVY,     "D3DFMT_UYVY",     BLOCKS}, */
+        {D3DFMT_DXT1,     "D3DFMT_DXT1",     BLOCKS},
         /* Vendor-specific formats like ATI2N are a non-issue here since they're not
          * supported as offscreen plain surfaces and do not support D3DUSAGE_RENDERTARGET
          * when created as texture. */
     };
-    unsigned int i;
-    D3DLOCKED_RECT locked_rect;
-    DWORD *surface_data;
     static const RECT rect = {4, 4, 8, 8}, rect2 = {5, 5, 7, 7};
+    D3DLOCKED_RECT locked_rect;
+    unsigned int i, j;
 
     window = create_window();
     d3d = Direct3DCreate9(D3D_SDK_VERSION);
@@ -1732,22 +1750,84 @@ static void color_fill_test(void)
                 ok(SUCCEEDED(hr), "Failed to color fill, hr %#x, fmt=%s.\n", hr, formats[i].name);
         }
 
-        if (formats[i].flags & CHECK_FILL_VALUE)
+        if (!(formats[i].flags & CHECK_FILL_VALUE))
         {
-            hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, D3DLOCK_READONLY);
-            ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x, fmt=%s.\n", hr, formats[i].name);
-            surface_data = locked_rect.pBits;
-            fill_a = (surface_data[0] & 0xff000000) >> 24;
-            expected_a = (formats[i].fill_value & 0xff000000) >> 24;
-            /* Windows drivers disagree on how to promote the 8 bit per channel
-             * input argument to 16 bit for D3DFMT_G16R16. */
-            ok(color_match(surface_data[0], formats[i].fill_value, 2) &&
-                    compare_uint(expected_a, fill_a, 2),
-                    "Expected clear value 0x%08x, got 0x%08x, fmt=%s.\n",
-                    formats[i].fill_value, surface_data[0], formats[i].name);
-            hr = IDirect3DSurface9_UnlockRect(surface);
-            ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, fmt=%s.\n", hr, formats[i].name);
+            IDirect3DSurface9_Release(surface);
+            continue;
         }
+
+        hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, 0);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x, fmt=%s.\n", hr, formats[i].name);
+        /* Windows drivers disagree on how to promote the 8 bit per channel
+         * input argument to 16 bit for D3DFMT_G16R16. */
+        if (formats[i].flags & FLOAT_VALUES)
+        {
+            const struct vec4 *surface_data = locked_rect.pBits;
+            ok(compare_vec4(surface_data, formats[i].fill_f[0], formats[i].fill_f[1],
+                    formats[i].fill_f[2], formats[i].fill_f[3], 1),
+                    "Expected clear values %f %f %f %f, got %f %f %f %f, fmt=%s\n",
+                    formats[i].fill_f[0], formats[i].fill_f[1],
+                    formats[i].fill_f[2], formats[i].fill_f[3],
+                    surface_data->x, surface_data->y, surface_data->z, surface_data->w,
+                    formats[i].name);
+        }
+        else
+        {
+            const unsigned int *surface_data = locked_rect.pBits;
+            for (j = 0; j < 4; ++j)
+            {
+                fill_a = (surface_data[j] & 0xff000000) >> 24;
+                expected_a = (formats[i].fill_i[j] & 0xff000000) >> 24;
+                ok(color_match(surface_data[j], formats[i].fill_i[j], 2) &&
+                        compare_uint(expected_a, fill_a, 2),
+                        "Expected clear value 0x%08x, got 0x%08x, fmt=%s, j=%u.\n",
+                        formats[i].fill_i[j], surface_data[j], formats[i].name, j);
+            }
+        }
+
+        /* Fill the surface with something else to make sure the test below doesn't pass
+         * due to stale contents by accident. */
+        memset(locked_rect.pBits, 0x55, locked_rect.Pitch * 32);
+
+        hr = IDirect3DSurface9_UnlockRect(surface);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, fmt=%s.\n", hr, formats[i].name);
+
+        /* Test clearing "to sysmem". Wined3d's delayed clear will perform the actual clear
+         * in the lock call and try to fill the sysmem buffer instead of clearing on the
+         * GPU and downloading it. */
+        hr = IDirect3DDevice9_ColorFill(device, surface, NULL, 0xdeadbeef);
+        ok(SUCCEEDED(hr), "Failed to color fill, hr %#x, fmt=%s.\n", hr, formats[i].name);
+        hr = IDirect3DSurface9_LockRect(surface, &locked_rect, NULL, D3DLOCK_READONLY);
+        ok(SUCCEEDED(hr), "Failed to lock surface, hr %#x, fmt=%s.\n", hr, formats[i].name);
+
+        if (formats[i].flags & FLOAT_VALUES)
+        {
+            const struct vec4 *surface_data = locked_rect.pBits;
+            ok(compare_vec4(surface_data, formats[i].fill_f[0], formats[i].fill_f[1],
+                    formats[i].fill_f[2], formats[i].fill_f[3], 1),
+                    "Expected clear values %f %f %f %f, got %f %f %f %f, fmt=%s\n",
+                    formats[i].fill_f[0], formats[i].fill_f[1],
+                    formats[i].fill_f[2], formats[i].fill_f[3],
+                    surface_data->x, surface_data->y, surface_data->z, surface_data->w,
+                    formats[i].name);
+        }
+        else
+        {
+            const unsigned int *surface_data = locked_rect.pBits;
+            for (j = 0; j < 4; ++j)
+            {
+                fill_a = (surface_data[j] & 0xff000000) >> 24;
+                expected_a = (formats[i].fill_i[j] & 0xff000000) >> 24;
+                ok(color_match(surface_data[j], formats[i].fill_i[j], 2) &&
+                        compare_uint(expected_a, fill_a, 2),
+                        "Expected clear value 0x%08x, got 0x%08x, fmt=%s, j=%u.\n",
+                        formats[i].fill_i[j], surface_data[j], formats[i].name, j);
+            }
+        }
+
+
+        hr = IDirect3DSurface9_UnlockRect(surface);
+        ok(SUCCEEDED(hr), "Failed to unlock surface, hr %#x, fmt=%s.\n", hr, formats[i].name);
 
         IDirect3DSurface9_Release(surface);
     }
