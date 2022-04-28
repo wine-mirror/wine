@@ -229,6 +229,7 @@ static const struct column col_networkadapterconfig[] =
 static const struct column col_operatingsystem[] =
 {
     { L"BuildNumber",             CIM_STRING|COL_FLAG_DYNAMIC },
+    { L"BuildType",               CIM_STRING },
     { L"Caption",                 CIM_STRING|COL_FLAG_DYNAMIC },
     { L"CodeSet",                 CIM_STRING|COL_FLAG_DYNAMIC },
     { L"CountryCode",             CIM_STRING|COL_FLAG_DYNAMIC },
@@ -660,6 +661,7 @@ struct record_networkadapterconfig
 struct record_operatingsystem
 {
     const WCHAR *buildnumber;
+    const WCHAR *buildtype;
     const WCHAR *caption;
     const WCHAR *codeset;
     const WCHAR *countrycode;
@@ -3625,6 +3627,7 @@ static enum fill_status fill_operatingsystem( struct table *table, const struct 
 
     rec = (struct record_operatingsystem *)table->data;
     rec->buildnumber            = get_osbuildnumber( &ver );
+    rec->buildtype              = L"Wine build";
     rec->caption                = get_oscaption( &ver );
     rec->codeset                = get_codeset();
     rec->countrycode            = get_countrycode();
