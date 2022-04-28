@@ -652,6 +652,7 @@ static BOOL get_gpu_properties_from_vulkan( struct gdi_gpu *gpu, const XRRProvid
     VkPhysicalDeviceIDProperties id;
     VkInstance vk_instance = NULL;
     VkDisplayKHR vk_display;
+    DWORD len;
     BOOL ret = FALSE;
     VkResult vr;
 
@@ -723,7 +724,8 @@ static BOOL get_gpu_properties_from_vulkan( struct gdi_gpu *gpu, const XRRProvid
                 gpu->vendor_id = properties2.properties.vendorID;
                 gpu->device_id = properties2.properties.deviceID;
             }
-            MultiByteToWideChar( CP_UTF8, 0, properties2.properties.deviceName, -1, gpu->name, ARRAY_SIZE(gpu->name) );
+            RtlUTF8ToUnicodeN( gpu->name, sizeof(gpu->name), &len, properties2.properties.deviceName,
+                               strlen( properties2.properties.deviceName ) + 1 );
             ret = TRUE;
             goto done;
         }
@@ -749,6 +751,7 @@ static BOOL xrandr14_get_gpus2( struct gdi_gpu **new_gpus, int *count, BOOL get_
     INT primary_provider = -1;
     RECT primary_rect;
     BOOL ret = FALSE;
+    DWORD len;
     INT i, j;
 
     screen_resources = xrandr_get_screen_resources();
@@ -803,7 +806,8 @@ static BOOL xrandr14_get_gpus2( struct gdi_gpu **new_gpus, int *count, BOOL get_
         if (get_properties)
         {
             if (!get_gpu_properties_from_vulkan( &gpus[i], provider_info ))
-                MultiByteToWideChar( CP_UTF8, 0, provider_info->name, -1, gpus[i].name, ARRAY_SIZE(gpus[i].name) );
+                RtlUTF8ToUnicodeN( gpus[i].name, sizeof(gpus[i].name), &len, provider_info->name,
+                                   strlen( provider_info->name ) + 1 );
             /* FIXME: Add an alternate method of getting PCI IDs, for systems that don't support Vulkan */
         }
         pXRRFreeProviderInfo( provider_info );

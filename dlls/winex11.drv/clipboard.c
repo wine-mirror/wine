@@ -914,12 +914,11 @@ static void *import_text_html( Atom type, const void *data, size_t size, size_t 
     /* Firefox uses UTF-16LE with byte order mark. Convert to UTF-8 without the BOM. */
     if (size >= sizeof(WCHAR) && ((const WCHAR *)data)[0] == 0xfeff)
     {
-        len = WideCharToMultiByte( CP_UTF8, 0, (const WCHAR *)data + 1, size / sizeof(WCHAR) - 1,
-                                   NULL, 0, NULL, NULL );
-        if (!(text = malloc( len ))) return 0;
-        WideCharToMultiByte( CP_UTF8, 0, (const WCHAR *)data + 1, size / sizeof(WCHAR) - 1,
-                             text, len, NULL, NULL );
-        size = len;
+        DWORD str_len;
+        RtlUnicodeToUTF8N( NULL, 0, &str_len, (const WCHAR *)data + 1, size - sizeof(WCHAR) );
+        if (!(text = malloc( str_len ))) return NULL;
+        RtlUnicodeToUTF8N( text, str_len, &str_len, (const WCHAR *)data + 1, size - sizeof(WCHAR) );
+        size = str_len;
         data = text;
     }
 
