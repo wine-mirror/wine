@@ -304,39 +304,28 @@ static void handle_regular_data(struct midi_src *src, unsigned char value, UINT 
     }
 }
 
-/**************************************************************************
- * 			midReceiveChar				[internal]
- */
-static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
-{
-    TRACE("Adding %02xh to %d[%d]\n", value, wDevID, MidiInDev[wDevID].incLen);
-
-    if (wDevID >= MIDM_NumDevs) {
-	WARN("bad devID\n");
-	return;
-    }
-    if (MidiInDev[wDevID].state <= 0) {
-	TRACE("disabled or input not started, thrown away\n");
-	return;
-    }
-
-    dwTime -= MidiInDev[wDevID].startTime;
-
-    if (value == 0xf0 || MidiInDev[wDevID].state & 2) /* system exclusive */
-        handle_sysex_data(MidiInDev + wDevID, value, dwTime);
-    else
-        handle_regular_data(MidiInDev + wDevID, value, dwTime);
-}
-
 static void handle_midi_data(unsigned char *buffer, unsigned int len)
 {
     unsigned int time = GetTickCount(), i;
+    struct midi_src *src;
+    unsigned char value;
+    WORD dev_id;
 
     for (i = 0; i < len; i += (buffer[i] & 0x80) ? 8 : 4)
     {
         if (buffer[i] != SEQ_MIDIPUTC) continue;
 
-        midReceiveChar(buffer[i + 2], buffer[i + 1], time);
+        dev_id = buffer[i + 2];
+        value = buffer[i + 1];
+
+        if (dev_id >= MIDM_NumDevs) continue;
+        src = MidiInDev + dev_id;
+        if (src->state <= 0) continue;
+
+        if (value == 0xf0 || src->state & 2) /* system exclusive */
+            handle_sysex_data(src, value, time - src->startTime);
+        else
+            handle_regular_data(src, value, time - src->startTime);
     }
 }
 
