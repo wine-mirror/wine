@@ -24,47 +24,23 @@ import "inspectable.idl";
 import "eventtoken.idl";
 import "windows.foundation.idl";
 
-namespace Windows
-{
-    namespace Foundation
-    {
-        interface IClosable;
-    }
-}
+namespace Windows.Storage.Streams {
+    interface IContentTypeProvider;
+    interface IInputStream;
+    interface IOutputStream;
+    interface IRandomAccessStream;
+    interface IRandomAccessStreamWithContentType;
 
-namespace Windows
-{
-    namespace Storage
+    [
+        uuid(cc254827-4b3d-438f-9232-10c76bc7e038),
+    ]
+    interface IRandomAccessStreamWithContentType : IInspectable
+        requires
+            Windows.Storage.Streams.IRandomAccessStream,
+            Windows.Foundation.IClosable,
+            Windows.Storage.Streams.IInputStream,
+            Windows.Storage.Streams.IOutputStream,
+            Windows.Storage.Streams.IContentTypeProvider
     {
-        namespace Streams
-        {
-            interface IContentTypeProvider;
-            interface IInputStream;
-            interface IOutputStream;
-            interface IRandomAccessStream;
-            interface IRandomAccessStreamWithContentType;
-        }
-    }
-}
-
-namespace Windows
-{
-    namespace Storage
-    {
-        namespace Streams
-        {
-            [
-                uuid(cc254827-4b3d-438f-9232-10c76bc7e038),
-            ]
-            interface IRandomAccessStreamWithContentType : IInspectable
-                requires
-                    Windows.Storage.Streams.IRandomAccessStream,
-                    Windows.Foundation.IClosable,
-                    Windows.Storage.Streams.IInputStream,
-                    Windows.Storage.Streams.IOutputStream,
-                    Windows.Storage.Streams.IContentTypeProvider
-            {
-            }
-        }
     }
 }
