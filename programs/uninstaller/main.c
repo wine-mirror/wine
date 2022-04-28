@@ -51,20 +51,20 @@ static const WCHAR PathUninstallW[] = L"Software\\Microsoft\\Windows\\CurrentVer
 
 static void output_writeconsole(const WCHAR *str, DWORD len)
 {
-    DWORD written, ret, lenA;
+    DWORD written, lenA;
     char *strA;
 
-    ret = WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), str, len, &written, NULL);
-    if (ret) return;
+    if (WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), str, len, &written, NULL))
+        return;
 
     /* WriteConsole fails if its output is redirected to a file.
      * If this occurs, we should use an OEM codepage and call WriteFile.
      */
-    lenA = WideCharToMultiByte(GetConsoleOutputCP(), 0, str, len, NULL, 0, NULL, NULL);
+    lenA = WideCharToMultiByte(GetOEMCP(), 0, str, len, NULL, 0, NULL, NULL);
     strA = HeapAlloc(GetProcessHeap(), 0, lenA);
     if (strA)
     {
-        WideCharToMultiByte(GetConsoleOutputCP(), 0, str, len, strA, lenA, NULL, NULL);
+        WideCharToMultiByte(GetOEMCP(), 0, str, len, strA, lenA, NULL, NULL);
         WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), strA, lenA, &written, FALSE);
         HeapFree(GetProcessHeap(), 0, strA);
     }
