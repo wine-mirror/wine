@@ -210,6 +210,43 @@ static int midiCloseSeq(int fd)
     return 0;
 }
 
+static void handle_sysex_data(struct midi_src *src, unsigned char value, UINT time)
+{
+    MIDIHDR *hdr;
+    BOOL done = FALSE;
+
+    src->state |= 2;
+    src->incLen = 0;
+
+    in_buffer_lock();
+
+    hdr = src->lpQueueHdr;
+    if (hdr)
+    {
+        BYTE *data = (BYTE *)hdr->lpData;
+
+        data[hdr->dwBytesRecorded++] = value;
+        if (hdr->dwBytesRecorded == hdr->dwBufferLength)
+            done = TRUE;
+    }
+
+    if (value == 0xf7) /* end */
+    {
+        src->state &= ~2;
+        done = TRUE;
+    }
+
+    if (done && hdr)
+    {
+        src->lpQueueHdr = hdr->lpNext;
+        hdr->dwFlags &= ~MHDR_INQUEUE;
+        hdr->dwFlags |= MHDR_DONE;
+        MIDI_NotifyClient(src - MidiInDev, MIM_LONGDATA, (UINT_PTR)hdr, time);
+    }
+
+    in_buffer_unlock();
+}
+
 /**************************************************************************
  * 			midReceiveChar				[internal]
  */
@@ -228,33 +265,9 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 	return;
     }
 
-    if (value == 0xf0 || MidiInDev[wDevID].state & 2) { /* system exclusive */
-	LPMIDIHDR	lpMidiHdr;
-        BOOL            sbfb = FALSE;
-
-	MidiInDev[wDevID].state |= 2;
-	MidiInDev[wDevID].incLen = 0;
-	in_buffer_lock();
-	if ((lpMidiHdr = MidiInDev[wDevID].lpQueueHdr) != NULL) {
-	    LPBYTE	lpData = (LPBYTE) lpMidiHdr->lpData;
-
-	    lpData[lpMidiHdr->dwBytesRecorded++] = value;
-	    if (lpMidiHdr->dwBytesRecorded == lpMidiHdr->dwBufferLength) {
-		sbfb = TRUE;
-	    }
-	}
-	if (value == 0xF7) { /* then end */
-	    MidiInDev[wDevID].state &= ~2;
-	    sbfb = TRUE;
-	}
-	if (sbfb && lpMidiHdr != NULL) {
-	    lpMidiHdr = MidiInDev[wDevID].lpQueueHdr;
-	    MidiInDev[wDevID].lpQueueHdr = lpMidiHdr->lpNext;
-	    lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
-	    lpMidiHdr->dwFlags |= MHDR_DONE;
-	    MIDI_NotifyClient(wDevID, MIM_LONGDATA, (DWORD_PTR)lpMidiHdr, dwTime);
-	}
-	in_buffer_unlock();
+    if (value == 0xf0 || MidiInDev[wDevID].state & 2) /* system exclusive */
+    {
+	handle_sysex_data(MidiInDev + wDevID, value, dwTime);
 	return;
     }
 
