@@ -263,6 +263,7 @@ static const struct column col_operatingsystem[] =
     { L"TotalVirtualMemorySize",  CIM_UINT64 },
     { L"TotalVisibleMemorySize",  CIM_UINT64 },
     { L"Version",                 CIM_STRING|COL_FLAG_DYNAMIC },
+    { L"WindowsDirectory",        CIM_STRING|COL_FLAG_DYNAMIC },
 };
 static const struct column col_pagefileusage[] =
 {
@@ -698,6 +699,7 @@ struct record_operatingsystem
     UINT64       totalvirtualmemorysize;
     UINT64       totalvisiblememorysize;
     const WCHAR *version;
+    const WCHAR *windowsdirectory;
 };
 struct record_pagefileusage
 {
@@ -3446,6 +3448,15 @@ static enum fill_status fill_processor( struct table *table, const struct expr *
     return status;
 }
 
+static INT16 get_currenttimezone(void)
+{
+    TIME_ZONE_INFORMATION info;
+    DWORD status = GetTimeZoneInformation( &info );
+    if (status == TIME_ZONE_ID_INVALID) return 0;
+    if (status == TIME_ZONE_ID_DAYLIGHT) return -(info.Bias + info.DaylightBias);
+    return -(info.Bias + info.StandardBias);
+}
+
 static WCHAR *get_lastbootuptime(void)
 {
     SYSTEM_TIMEOFDAY_INFORMATION ti;
@@ -3631,13 +3642,11 @@ static WCHAR *get_registereduser(void)
     return get_reg_str( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", L"RegisteredOwner" );
 }
 
-static INT16 get_currenttimezone(void)
+static WCHAR *get_windowsdirectory(void)
 {
-    TIME_ZONE_INFORMATION info;
-    DWORD status = GetTimeZoneInformation( &info );
-    if (status == TIME_ZONE_ID_INVALID) return 0;
-    if (status == TIME_ZONE_ID_DAYLIGHT) return -(info.Bias + info.DaylightBias);
-    return -(info.Bias + info.StandardBias);
+    WCHAR dir[MAX_PATH];
+    if (!GetWindowsDirectoryW( dir, ARRAY_SIZE(dir) )) return NULL;
+    return wcsdup( dir );
 }
 
 static enum fill_status fill_operatingsystem( struct table *table, const struct expr *cond )
@@ -3688,6 +3697,7 @@ static enum fill_status fill_operatingsystem( struct table *table, const struct 
     rec->totalvirtualmemorysize = get_total_physical_memory() / 1024;
     rec->totalvisiblememorysize = rec->totalvirtualmemorysize;
     rec->version                = get_osversion( &ver );
+    rec->windowsdirectory       = get_windowsdirectory();
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );
     else row++;
 
