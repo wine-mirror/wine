@@ -227,3 +227,23 @@ HRESULT __RPC_STUB IFolderView2_GetGroupBy_Proxy(
     TRACE("(%p)->(%p %p)\n", This, pkey, ascending);
     return IFolderView2_RemoteGetGroupBy_Proxy(This, pkey, ascending);
 }
+
+HRESULT __RPC_STUB IParentAndItem_GetParentAndItem_Stub(
+    IParentAndItem *This,
+    PIDLIST_ABSOLUTE *parent,
+    IShellFolder **folder,
+    PITEMID_CHILD *child)
+{
+    TRACE("(%p)->(%p %p %p)\n", This, parent, folder, child);
+    return IParentAndItem_GetParentAndItem(This, parent, folder, child);
+}
+
+HRESULT __RPC_STUB IParentAndItem_GetParentAndItem_Proxy(
+    IParentAndItem *This,
+    PIDLIST_ABSOLUTE *parent,
+    IShellFolder **folder,
+    PITEMID_CHILD *child)
+{
+    TRACE("(%p)->(%p %p %p)\n", This, parent, folder, child);
+    return IParentAndItem_RemoteGetParentAndItem_Proxy(This, parent, folder, child);
+}
