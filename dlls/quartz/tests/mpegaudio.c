@@ -819,7 +819,7 @@ static void test_media_types(void)
 
     init_pcm_mt(&mt, &format, 1, 32000, 16);
     hr = IPin_QueryAccept(pin, &mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     IPin_Release(pin);
 
@@ -951,42 +951,42 @@ static void test_connect_pin(void)
     init_pcm_mt(&req_mt, &req_format, 1, 32000, 16);
     req_mt.majortype = GUID_NULL;
     hr = IPin_QueryAccept(source, &req_mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     init_pcm_mt(&req_mt, &req_format, 1, 32000, 16);
     req_mt.subtype = GUID_NULL;
     hr = IPin_QueryAccept(source, &req_mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     init_pcm_mt(&req_mt, &req_format, 1, 32000, 16);
     req_mt.formattype = GUID_NULL;
     hr = IPin_QueryAccept(source, &req_mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     init_pcm_mt(&req_mt, &req_format, 2, 32000, 16);
     hr = IPin_QueryAccept(source, &req_mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     init_pcm_mt(&req_mt, &req_format, 1, 16000, 16);
     hr = IPin_QueryAccept(source, &req_mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     init_pcm_mt(&req_mt, &req_format, 1, 32000, 24);
     hr = IPin_QueryAccept(source, &req_mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     hr = IPin_QueryAccept(source, &pcm16ex_mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     init_pcm_mt(&req_mt, &req_format, 1, 32000, 16);
     req_format.nBlockAlign = 333;
     hr = IPin_QueryAccept(source, &req_mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     init_pcm_mt(&req_mt, &req_format, 1, 32000, 16);
     req_format.nAvgBytesPerSec = 333;
     hr = IPin_QueryAccept(source, &req_mt);
-    todo_wine ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
 
     hr = IMediaControl_Pause(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);

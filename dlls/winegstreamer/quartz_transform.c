@@ -35,6 +35,7 @@ struct transform
 struct transform_ops
 {
     HRESULT (*sink_query_accept)(struct transform *filter, const AM_MEDIA_TYPE *mt);
+    HRESULT (*source_query_accept)(struct transform *filter, const AM_MEDIA_TYPE *mt);
 };
 
 static inline struct transform *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -95,8 +96,16 @@ static const struct strmbase_sink_ops sink_ops =
     .base.pin_query_interface = transform_sink_query_interface,
 };
 
+static HRESULT transform_source_query_accept(struct strmbase_pin *pin, const AM_MEDIA_TYPE *mt)
+{
+    struct transform *filter = impl_from_strmbase_filter(pin->filter);
+
+    return filter->ops->source_query_accept(filter, mt);
+}
+
 static const struct strmbase_source_ops source_ops =
 {
+    .base.pin_query_accept = transform_source_query_accept,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
 };
@@ -145,9 +154,45 @@ static HRESULT mpeg_audio_codec_sink_query_accept(struct transform *filter, cons
     return S_OK;
 }
 
+static HRESULT mpeg_audio_codec_source_query_accept(struct transform *filter, const AM_MEDIA_TYPE *mt)
+{
+    const MPEG1WAVEFORMAT *input_format;
+    const WAVEFORMATEX *output_format;
+    DWORD expected_avg_bytes_per_sec;
+    WORD expected_block_align;
+
+    if (!filter->sink.pin.peer)
+        return S_FALSE;
+
+    if (!IsEqualGUID(&mt->majortype, &MEDIATYPE_Audio)
+            || !IsEqualGUID(&mt->subtype, &MEDIASUBTYPE_PCM)
+            || !IsEqualGUID(&mt->formattype, &FORMAT_WaveFormatEx)
+            || mt->cbFormat < sizeof(WAVEFORMATEX))
+        return S_FALSE;
+
+    input_format = (const MPEG1WAVEFORMAT *)filter->sink.pin.mt.pbFormat;
+    output_format = (const WAVEFORMATEX *)mt->pbFormat;
+
+    if (output_format->wFormatTag != WAVE_FORMAT_PCM
+            || input_format->wfx.nSamplesPerSec != output_format->nSamplesPerSec
+            || input_format->wfx.nChannels != output_format->nChannels
+            || (output_format->wBitsPerSample != 8 && output_format->wBitsPerSample != 16))
+        return S_FALSE;
+
+    expected_block_align = output_format->nChannels * output_format->wBitsPerSample / 8;
+    expected_avg_bytes_per_sec = expected_block_align * output_format->nSamplesPerSec;
+
+    if (output_format->nBlockAlign != expected_block_align
+            || output_format->nAvgBytesPerSec != expected_avg_bytes_per_sec)
+        return S_FALSE;
+
+    return S_OK;
+}
+
 static const struct transform_ops mpeg_audio_codec_transform_ops =
 {
     mpeg_audio_codec_sink_query_accept,
+    mpeg_audio_codec_source_query_accept,
 };
 
 HRESULT mpeg_audio_codec_create(IUnknown *outer, IUnknown **out)
