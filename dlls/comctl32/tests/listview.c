@@ -3529,6 +3529,56 @@ static void test_ownerdata(void)
     DestroyWindow(hwnd);
 }
 
+static void test_ownerdata_multiselect(void)
+{
+    HWND hwnd;
+    DWORD res;
+    LVITEMA item;
+
+    hwnd = create_listview_control(LVS_OWNERDATA | LVS_REPORT);
+    ok(hwnd != NULL, "failed to create a listview window\n");
+    res = SendMessageA(hwnd, LVM_SETITEMCOUNT, 20, 0);
+    expect(1, res);
+    res = SendMessageA(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
+    expect(0, res);
+
+    memset(&item, 0, sizeof(item));
+    item.state = LVIS_SELECTED | LVIS_FOCUSED;
+    item.stateMask = LVIS_SELECTED | LVIS_FOCUSED;
+    res = SendMessageA(hwnd, LVM_SETITEMSTATE, 0, (LPARAM)&item);
+    expect(TRUE, res);
+    res = SendMessageA(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
+    expect(1, res);
+
+    res = SendMessageA(hwnd, LVM_SETSELECTIONMARK, 0, 0);
+    expect(0, res);
+
+    hold_key(VK_SHIFT);
+
+    res = SendMessageA(hwnd, WM_KEYDOWN, VK_DOWN, 0);
+    expect(0, res);
+    res = SendMessageA(hwnd, WM_KEYUP, VK_DOWN, 0);
+    expect(0, res);
+
+    res = SendMessageA(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
+    expect(2, res);
+
+    hold_key(VK_CONTROL);
+
+    res = SendMessageA(hwnd, WM_KEYDOWN, VK_DOWN, 0);
+    expect(0, res);
+    res = SendMessageA(hwnd, WM_KEYUP, VK_DOWN, 0);
+    expect(0, res);
+
+    release_key(VK_CONTROL);
+    release_key(VK_SHIFT);
+
+    res = SendMessageA(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
+    expect(3, res);
+
+    DestroyWindow(hwnd);
+}
+
 static void test_norecompute(void)
 {
     static CHAR testA[] = "test";
@@ -6682,6 +6732,7 @@ START_TEST(listview)
     test_subitem_rect();
     test_sorting();
     test_ownerdata();
+    test_ownerdata_multiselect();
     test_norecompute();
     test_nosortheader();
     test_setredraw();
@@ -6740,6 +6791,7 @@ START_TEST(listview)
     test_columns();
     test_sorting();
     test_ownerdata();
+    test_ownerdata_multiselect();
     test_norecompute();
     test_nosortheader();
     test_indentation();
