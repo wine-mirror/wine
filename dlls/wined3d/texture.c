@@ -279,6 +279,9 @@ static bool fbo_blitter_supported(enum wined3d_blit_op blit_op, const struct win
     if ((wined3d_settings.offscreen_rendering_mode != ORM_FBO) || !gl_info->fbo_ops.glBlitFramebuffer)
         return false;
 
+    if ((src_resource->format_flags | dst_resource->format_flags) & WINED3DFMT_FLAG_HEIGHT_SCALE)
+        return false;
+
     /* Source and/or destination need to be on the GL side. */
     if (!(src_resource->access & dst_resource->access & WINED3D_RESOURCE_ACCESS_GPU))
         return false;
