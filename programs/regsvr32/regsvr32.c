@@ -41,7 +41,7 @@ static void WINAPIV output_write(UINT id, ...)
     WCHAR fmt[1024];
     va_list va_args;
     WCHAR *str;
-    DWORD len, nOut, ret;
+    DWORD len, nOut;
 
     if (Silent) return;
 
@@ -61,21 +61,19 @@ static void WINAPIV output_write(UINT id, ...)
         return;
     }
 
-    ret = WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), str, len, &nOut, NULL);
-
     /* WriteConsole fails if its output is redirected to a file.
      * If this occurs, we should use an OEM codepage and call WriteFile.
      */
-    if (!ret)
+    if (!WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), str, len, &nOut, NULL))
     {
         DWORD lenA;
         char *strA;
 
-        lenA = WideCharToMultiByte(GetConsoleOutputCP(), 0, str, len, NULL, 0, NULL, NULL);
+        lenA = WideCharToMultiByte(GetOEMCP(), 0, str, len, NULL, 0, NULL, NULL);
         strA = HeapAlloc(GetProcessHeap(), 0, lenA);
         if (strA)
         {
-            WideCharToMultiByte(GetConsoleOutputCP(), 0, str, len, strA, lenA, NULL, NULL);
+            WideCharToMultiByte(GetOEMCP(), 0, str, len, strA, lenA, NULL, NULL);
             WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), strA, lenA, &nOut, FALSE);
             HeapFree(GetProcessHeap(), 0, strA);
         }
