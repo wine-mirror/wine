@@ -37,6 +37,7 @@ enum seq_index {
     PARENT_SEQ_INDEX,
     PARENT_FULL_SEQ_INDEX,
     PARENT_CD_SEQ_INDEX,
+    PARENT_ODSTATECHANGED_SEQ_INDEX,
     LISTVIEW_SEQ_INDEX,
     EDITBOX_SEQ_INDEX,
     COMBINED_SEQ_INDEX,
@@ -240,6 +241,14 @@ static const struct message ownerdata_defocus_all_parent_seq[] = {
 
 static const struct message ownerdata_deselect_all_parent_seq[] = {
     { WM_NOTIFY, sent|id, 0, 0, LVN_ODCACHEHINT },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
+    { 0 }
+};
+
+static const struct message ownerdata_multiselect_odstatechanged_seq[] = {
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ODSTATECHANGED },
+    { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
     { WM_NOTIFY, sent|id, 0, 0, LVN_ITEMCHANGED },
     { 0 }
 };
@@ -522,6 +531,10 @@ static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LP
         add_message(sequences, PARENT_SEQ_INDEX, &msg);
         add_message(sequences, COMBINED_SEQ_INDEX, &msg);
     }
+    /* log change messages for single and multiple items changing in ownerdata listviews */
+    if (message == WM_NOTIFY && (msg.id == LVN_ITEMCHANGED || msg.id == LVN_ODSTATECHANGED))
+        add_message(sequences, PARENT_ODSTATECHANGED_SEQ_INDEX, &msg);
+
     add_message(sequences, PARENT_FULL_SEQ_INDEX, &msg);
 
     switch (message)
@@ -3555,8 +3568,15 @@ static void test_ownerdata_multiselect(void)
 
     hold_key(VK_SHIFT);
 
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
     res = SendMessageA(hwnd, WM_KEYDOWN, VK_DOWN, 0);
     expect(0, res);
+
+    ok_sequence(sequences, PARENT_ODSTATECHANGED_SEQ_INDEX,
+                ownerdata_multiselect_odstatechanged_seq,
+                "ownerdata select multiple notification", TRUE);
+
     res = SendMessageA(hwnd, WM_KEYUP, VK_DOWN, 0);
     expect(0, res);
 
@@ -3565,8 +3585,15 @@ static void test_ownerdata_multiselect(void)
 
     hold_key(VK_CONTROL);
 
+    flush_sequences(sequences, NUM_MSG_SEQUENCES);
+
     res = SendMessageA(hwnd, WM_KEYDOWN, VK_DOWN, 0);
     expect(0, res);
+
+    ok_sequence(sequences, PARENT_ODSTATECHANGED_SEQ_INDEX,
+                ownerdata_multiselect_odstatechanged_seq,
+                "ownerdata select multiple notification", TRUE);
+
     res = SendMessageA(hwnd, WM_KEYUP, VK_DOWN, 0);
     expect(0, res);
 
