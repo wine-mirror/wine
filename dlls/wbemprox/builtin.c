@@ -250,6 +250,7 @@ static const struct column col_operatingsystem[] =
     { L"OSType",                  CIM_UINT16 },
     { L"Primary",                 CIM_BOOLEAN },
     { L"ProductType",             CIM_UINT32 },
+    { L"RegisteredUser",          CIM_STRING|COL_FLAG_DYNAMIC },
     { L"SerialNumber",            CIM_STRING|COL_FLAG_DYNAMIC },
     { L"ServicePackMajorVersion", CIM_UINT16 },
     { L"ServicePackMinorVersion", CIM_UINT16 },
@@ -682,6 +683,7 @@ struct record_operatingsystem
     UINT16       ostype;
     int          primary;
     UINT32       producttype;
+    const WCHAR *registereduser;
     const WCHAR *serialnumber;
     UINT16       servicepackmajor;
     UINT16       servicepackminor;
@@ -3571,27 +3573,35 @@ static WCHAR *get_osname( const WCHAR *caption )
     memcpy( ret + len, partitionW, sizeof(partitionW) );
     return ret;
 }
-static WCHAR *get_osserialnumber(void)
+
+static WCHAR *get_reg_str( HKEY root, const WCHAR *path, const WCHAR *value )
 {
     HKEY hkey = 0;
     DWORD size, type;
     WCHAR *ret = NULL;
 
-    if (!RegOpenKeyExW( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", 0, KEY_READ, &hkey ) &&
-        !RegQueryValueExW( hkey, L"ProductId", NULL, &type, NULL, &size ) && type == REG_SZ &&
+    if (!RegOpenKeyExW( root, path, 0, KEY_READ, &hkey ) &&
+        !RegQueryValueExW( hkey, value, NULL, &type, NULL, &size ) && type == REG_SZ &&
         (ret = malloc( size + sizeof(WCHAR) )))
     {
         size += sizeof(WCHAR);
-        if (RegQueryValueExW( hkey, L"ProductId", NULL, NULL, (BYTE *)ret, &size ))
+        if (RegQueryValueExW( hkey, value, NULL, NULL, (BYTE *)ret, &size ))
         {
             free( ret );
             ret = NULL;
         }
     }
     if (hkey) RegCloseKey( hkey );
-    if (!ret) return wcsdup( L"12345-OEM-1234567-12345" );
     return ret;
 }
+
+static WCHAR *get_osserialnumber(void)
+{
+    WCHAR *ret = get_reg_str( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", L"ProductId" );
+    if (!ret) ret = wcsdup( L"12345-OEM-1234567-12345" );
+    return ret;
+}
+
 static WCHAR *get_osversion( OSVERSIONINFOEXW *ver )
 {
     WCHAR *ret = malloc( 33 * sizeof(WCHAR) );
@@ -3604,6 +3614,12 @@ static DWORD get_operatingsystemsku(void)
     GetProductInfo( 6, 0, 0, 0, &ret );
     return ret;
 }
+
+static WCHAR *get_registereduser(void)
+{
+    return get_reg_str( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion", L"RegisteredOwner" );
+}
+
 static INT16 get_currenttimezone(void)
 {
     TIME_ZONE_INFORMATION info;
@@ -3648,6 +3664,7 @@ static enum fill_status fill_operatingsystem( struct table *table, const struct 
     rec->ostype                 = 18;      /* WINNT */
     rec->primary                = -1;
     rec->producttype            = 1;
+    rec->registereduser         = get_registereduser();
     rec->serialnumber           = get_osserialnumber();
     rec->servicepackmajor       = ver.wServicePackMajor;
     rec->servicepackminor       = ver.wServicePackMinor;
