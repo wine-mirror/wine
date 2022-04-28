@@ -687,25 +687,19 @@ static WCHAR* uri_to_dos(char *encodedURI)
  *
  * Convert a string in the specified encoding to CF_UNICODETEXT format.
  */
-static WCHAR *unicode_text_from_string( UINT codepage, const void *data, size_t size, size_t *ret_size )
+static void *unicode_text_from_string( WCHAR *ret, const WCHAR *string, DWORD count, size_t *size )
 {
-    DWORD i, j, count;
-    WCHAR *strW;
+    DWORD i, j;
 
-    count = MultiByteToWideChar( codepage, 0, data, size, NULL, 0);
-
-    if (!(strW = malloc( (count * 2 + 1) * sizeof(WCHAR) ))) return 0;
-
-    MultiByteToWideChar( codepage, 0, data, size, strW + count, count );
     for (i = j = 0; i < count; i++)
     {
-        if (strW[i + count] == '\n' && (!i || strW[i + count - 1] != '\r')) strW[j++] = '\r';
-        strW[j++] = strW[i + count];
+        if (string[i] == '\n' && (!i || string[i - 1] != '\r')) ret[j++] = '\r';
+        ret[j++] = string[i];
     }
-    strW[j++] = 0;
-    *ret_size = j * sizeof(WCHAR);
-    TRACE( "returning %s\n", debugstr_wn( strW, j - 1 ));
-    return strW;
+    ret[j++] = 0;
+    *size = j * sizeof(WCHAR);
+    TRACE( "returning %s\n", debugstr_wn( ret, j - 1 ));
+    return ret;
 }
 
 
@@ -716,7 +710,12 @@ static WCHAR *unicode_text_from_string( UINT codepage, const void *data, size_t 
  */
 static void *import_string( Atom type, const void *data, size_t size, size_t *ret_size )
 {
-    return unicode_text_from_string( 28591, data, size, ret_size );
+    DWORD str_size;
+    WCHAR *ret;
+
+    if (!(ret = malloc( (size * 2 + 1) * sizeof(WCHAR) ))) return NULL;
+    str_size = MultiByteToWideChar( 28591, 0, data, size, ret + size, size );
+    return unicode_text_from_string( ret, ret + size, str_size, ret_size );
 }
 
 
@@ -727,7 +726,12 @@ static void *import_string( Atom type, const void *data, size_t size, size_t *re
  */
 static void *import_utf8_string( Atom type, const void *data, size_t size, size_t *ret_size )
 {
-    return unicode_text_from_string( CP_UTF8, data, size, ret_size );
+    DWORD str_size;
+    WCHAR *ret;
+
+    if (!(ret = malloc( (size * 2 + 1) * sizeof(WCHAR) ))) return NULL;
+    RtlUTF8ToUnicodeN( ret + size, size * sizeof(WCHAR), &str_size, data, size );
+    return unicode_text_from_string( ret, ret + size, str_size / sizeof(WCHAR), ret_size );
 }
 
 
@@ -741,7 +745,8 @@ static void *import_compound_text( Atom type, const void *data, size_t size, siz
     char** srcstr;
     int count;
     XTextProperty txtprop;
-    void *ret;
+    DWORD len;
+    WCHAR *ret;
 
     txtprop.value = (BYTE *)data;
     txtprop.nitems = size;
@@ -750,7 +755,11 @@ static void *import_compound_text( Atom type, const void *data, size_t size, siz
     if (XmbTextPropertyToTextList( thread_display(), &txtprop, &srcstr, &count ) != Success) return 0;
     if (!count) return 0;
 
-    ret = unicode_text_from_string( CP_UNIXCP, srcstr[0], strlen(srcstr[0]) + 1, ret_size );
+    len = strlen(srcstr[0]) + 1;
+    if (!(ret = malloc( (len * 2 + 1) * sizeof(WCHAR) ))) return NULL;
+    count = MultiByteToWideChar( CP_UNIXCP, 0, srcstr[0], len, ret + len, len );
+    ret = unicode_text_from_string( ret, ret + len, count, ret_size );
+
     XFreeStringList(srcstr);
     return ret;
 }
