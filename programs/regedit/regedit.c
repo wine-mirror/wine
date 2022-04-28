@@ -30,21 +30,21 @@ WINE_DEFAULT_DEBUG_CHANNEL(regedit);
 
 static void output_writeconsole(const WCHAR *str, DWORD wlen)
 {
-    DWORD count, ret;
+    DWORD count;
 
-    ret = WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), str, wlen, &count, NULL);
-    if (!ret)
+    if (!WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), str, wlen, &count, NULL))
     {
         DWORD len;
         char  *msgA;
 
         /* WriteConsole() fails on Windows if its output is redirected. If this occurs,
-         * we should call WriteFile() and assume the console encoding is still correct.
+         * we should call WriteFile() with OEM code page.
          */
-        len = WideCharToMultiByte(GetConsoleOutputCP(), 0, str, wlen, NULL, 0, NULL, NULL);
+        len = WideCharToMultiByte(GetOEMCP(), 0, str, wlen, NULL, 0, NULL, NULL);
         msgA = heap_xalloc(len);
+        if (!msgA) return;
 
-        WideCharToMultiByte(GetConsoleOutputCP(), 0, str, wlen, msgA, len, NULL, NULL);
+        WideCharToMultiByte(GetOEMCP(), 0, str, wlen, msgA, len, NULL, NULL);
         WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), msgA, len, &count, FALSE);
         heap_free(msgA);
     }
