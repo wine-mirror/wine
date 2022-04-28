@@ -105,6 +105,7 @@ static const struct column col_compsys[] =
     { L"Name",                      CIM_STRING|COL_FLAG_DYNAMIC },
     { L"NumberOfLogicalProcessors", CIM_UINT32 },
     { L"NumberOfProcessors",        CIM_UINT32 },
+    { L"SystemType",                CIM_STRING },
     { L"TotalPhysicalMemory",       CIM_UINT64 },
     { L"UserName",                  CIM_STRING|COL_FLAG_DYNAMIC },
 };
@@ -541,6 +542,7 @@ struct record_computersystem
     const WCHAR *name;
     UINT32       num_logical_processors;
     UINT32       num_processors;
+    const WCHAR *systemtype;
     UINT64       total_physical_memory;
     const WCHAR *username;
 };
@@ -1580,6 +1582,14 @@ static WCHAR *get_computername(void)
     return ret;
 }
 
+static const WCHAR *get_systemtype(void)
+{
+    SYSTEM_INFO info;
+    GetNativeSystemInfo( &info );
+    if (info.u.s.wProcessorArchitecture == PROCESSOR_ARCHITECTURE_AMD64) return L"x64 based PC";
+    return L"x86 based PC";
+}
+
 static WCHAR *get_username(void)
 {
     WCHAR *ret;
@@ -1614,6 +1624,7 @@ static enum fill_status fill_compsys( struct table *table, const struct expr *co
     rec->model                  = L"Wine";
     rec->name                   = get_computername();
     rec->num_logical_processors = get_logical_processor_count( NULL, &rec->num_processors );
+    rec->systemtype             = get_systemtype();
     rec->total_physical_memory  = get_total_physical_memory();
     rec->username               = get_username();
     if (!match_row( table, row, cond, &status )) free_row_values( table, row );

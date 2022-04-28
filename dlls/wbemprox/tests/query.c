@@ -752,6 +752,7 @@ static void test_Win32_ComputerSystem( IWbemServices *services )
     }
 
     check_property( obj, L"NumberOfProcessors", VT_I4, CIM_UINT32 );
+    check_property( obj, L"SystemType", VT_BSTR, CIM_STRING );
 
     type = 0xdeadbeef;
     VariantInit( &value );
