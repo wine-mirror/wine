@@ -5738,9 +5738,42 @@ static void check_sample_(int line, IMFSample *sample, const void *expect_buf, H
     ok_(__FILE__, line)(ret == 1, "Release returned %lu\n", ret);
 }
 
+#define check_sample_pcm16(a, b, c, d) check_sample_pcm16_(__LINE__, a, b, c, d)
+static void check_sample_pcm16_(int line, IMFSample *sample, const BYTE *expect_buf, HANDLE output_file, BOOL todo)
+{
+    IMFMediaBuffer *media_buffer;
+    DWORD i, length;
+    BYTE *buffer;
+    HRESULT hr;
+    ULONG ret;
+
+    hr = IMFSample_ConvertToContiguousBuffer(sample, &media_buffer);
+    ok_(__FILE__, line)(hr == S_OK, "ConvertToContiguousBuffer returned %#lx\n", hr);
+    hr = IMFMediaBuffer_Lock(media_buffer, &buffer, NULL, &length);
+    ok_(__FILE__, line)(hr == S_OK, "Lock returned %#lx\n", hr);
+
+    /* check that buffer values are close enough, there's some differences in
+     * the output of audio DSP between 32bit and 64bit implementation
+     */
+    for (i = 0; i < length; i += 2)
+    {
+        DWORD expect = *(INT16 *)(expect_buf + i), value = *(INT16 *)(buffer + i);
+        if (expect - value + 512 > 1024) break;
+    }
+
+    todo_wine_if(todo)
+    ok_(__FILE__, line)(i == length, "unexpected buffer data\n");
+
+    if (output_file) WriteFile(output_file, buffer, length, &length, NULL);
+    hr = IMFMediaBuffer_Unlock(media_buffer);
+    ok_(__FILE__, line)(hr == S_OK, "Unlock returned %#lx\n", hr);
+    ret = IMFMediaBuffer_Release(media_buffer);
+    ok_(__FILE__, line)(ret == 1, "Release returned %lu\n", ret);
+}
+
 static const BYTE wma_codec_data[10] = {0, 0x44, 0, 0, 0x17, 0, 0, 0, 0, 0};
-static const BYTE wma_decoded_data[0x4000] = {0};
-static const ULONG wma_block_size = 1487;
+static const ULONG wmaenc_block_size = 1487;
+static const ULONG wmadec_block_size = 0x2000;
 
 static void test_wma_encoder(void)
 {
@@ -5789,19 +5822,19 @@ static void test_wma_encoder(void)
         ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
         ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
         ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 4003),
-        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, wma_block_size),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, wmaenc_block_size),
         ATTR_BLOB(MF_MT_USER_DATA, wma_codec_data, sizeof(wma_codec_data)),
         {0},
     };
 
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_WMAudioV8};
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_Float};
+    ULONG audio_data_len, wmaenc_data_len;
+    const BYTE *audio_data, *wmaenc_data;
     MFT_OUTPUT_STREAM_INFO output_info;
     MFT_INPUT_STREAM_INFO input_info;
     MFT_OUTPUT_DATA_BUFFER output;
-    const BYTE *wma_encoded_data;
     WCHAR output_path[MAX_PATH];
-    ULONG wma_encoded_data_len;
     IMFMediaType *media_type;
     IMFTransform *transform;
     DWORD status, length;
@@ -5847,39 +5880,42 @@ static void test_wma_encoder(void)
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
     ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
     ok(output_info.dwFlags == 0, "got dwFlags %#lx\n", output_info.dwFlags);
-    ok(output_info.cbSize == wma_block_size, "got cbSize %#lx\n", output_info.cbSize);
+    ok(output_info.cbSize == wmaenc_block_size, "got cbSize %#lx\n", output_info.cbSize);
     ok(output_info.cbAlignment == 1, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
-    i = 0;
-    sample = create_sample(wma_decoded_data, sizeof(wma_decoded_data));
-    while (SUCCEEDED(hr = IMFTransform_ProcessInput(transform, 0, sample, 0)))
-    {
-        ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
-        i += sizeof(wma_decoded_data);
-    }
-    ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
-    ok(i == 0x204000, "ProcessInput consumed %#lx bytes\n", i);
+    resource = FindResourceW(NULL, L"audiodata.bin", (const WCHAR *)RT_RCDATA);
+    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
+    audio_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
+    audio_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    ok(audio_data_len == 179928, "got length %lu\n", audio_data_len);
 
+    sample = create_sample(audio_data, audio_data_len);
+    hr = IMFSample_SetSampleTime(sample, 0);
+    ok(hr == S_OK, "SetSampleTime returned %#lx\n", hr);
+    hr = IMFSample_SetSampleDuration(sample, 10000000);
+    ok(hr == S_OK, "SetSampleDuration returned %#lx\n", hr);
+    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
     hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
     ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
     hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
     ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
+    IMFSample_Release(sample);
 
     status = 0xdeadbeef;
     sample = create_sample(NULL, output_info.cbSize);
     memset(&output, 0, sizeof(output));
     output.pSample = sample;
 
-    /* check wmadata.bin against current encoder output */
-    resource = FindResourceW(NULL, L"wmadata.bin", (const WCHAR *)RT_RCDATA);
+    resource = FindResourceW(NULL, L"wmaencdata.bin", (const WCHAR *)RT_RCDATA);
     ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
-    wma_encoded_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
-    wma_encoded_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
-    ok(wma_encoded_data_len % wma_block_size == 0, "got wma encoded length %lu\n", wma_encoded_data_len);
+    wmaenc_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
+    wmaenc_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    ok(wmaenc_data_len % wmaenc_block_size == 0, "got length %lu\n", wmaenc_data_len);
 
     /* and generate a new one as well in a temporary directory */
     GetTempPathW(ARRAY_SIZE(output_path), output_path);
-    lstrcatW(output_path, L"wmadata.bin");
+    lstrcatW(output_path, L"wmaencdata.bin");
     output_file = CreateFileW(output_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
     ok(output_file != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu\n", GetLastError());
 
@@ -5890,14 +5926,14 @@ static void test_wma_encoder(void)
         ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
         ok(output.pSample == sample, "got pSample %p\n", output.pSample);
         ok(output.dwStatus == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE ||
-                broken(output.dwStatus == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|5)) /* win7 */,
+                broken(output.dwStatus == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|7)) /* win7 */,
                 "got dwStatus %#lx\n", output.dwStatus);
         ok(status == 0, "got status %#lx\n", status);
-        ok(wma_encoded_data_len > i * wma_block_size, "got %lu blocks\n", i);
         hr = IMFSample_GetTotalLength(sample, &length);
         ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
-        ok(length == wma_block_size, "got length %lu\n", length);
-        check_sample(sample, wma_encoded_data + i * wma_block_size, output_file);
+        ok(length == wmaenc_block_size, "got length %lu\n", length);
+        ok(wmaenc_data_len > i * wmaenc_block_size, "got %lu blocks\n", i);
+        check_sample(sample, wmaenc_data + i * wmaenc_block_size, output_file);
         winetest_pop_context();
         i++;
     }
@@ -6019,7 +6055,7 @@ static void test_wma_decoder(void)
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
         ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudioV8),
         ATTR_BLOB(MF_MT_USER_DATA, wma_codec_data, sizeof(wma_codec_data)),
-        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, wma_block_size),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, wmaenc_block_size),
         ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
         ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
         {0},
@@ -6027,26 +6063,28 @@ static void test_wma_decoder(void)
     static const struct attribute_desc output_type_desc[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float),
-        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 176400),
-        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 88200),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
         ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
         ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
-        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 8),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 4),
         {0},
     };
 
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_WMAudioV8};
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_Float};
+    ULONG wmadec_data_len, wmaenc_data_len;
+    const BYTE *wmadec_data, *wmaenc_data;
     MFT_OUTPUT_STREAM_INFO output_info;
     MFT_OUTPUT_DATA_BUFFER outputs[2];
     MFT_INPUT_STREAM_INFO input_info;
     MFT_OUTPUT_DATA_BUFFER output;
-    const BYTE *wma_encoded_data;
-    ULONG wma_encoded_data_len;
+    WCHAR output_path[MAX_PATH];
     IMFMediaType *media_type;
     IMFTransform *transform;
     DWORD status, length;
+    HANDLE output_file;
     IMFSample *sample;
     HRSRC resource;
     GUID class_id;
@@ -6166,7 +6204,7 @@ static void test_wma_decoder(void)
     ok(hr == S_OK, "GetInputStreamInfo returned %#lx\n", hr);
     ok(input_info.hnsMaxLatency == 0, "got hnsMaxLatency %s\n", wine_dbgstr_longlong(input_info.hnsMaxLatency));
     ok(input_info.dwFlags == 0, "got dwFlags %#lx\n", input_info.dwFlags);
-    ok(input_info.cbSize == wma_block_size, "got cbSize %lu\n", input_info.cbSize);
+    ok(input_info.cbSize == wmaenc_block_size, "got cbSize %lu\n", input_info.cbSize);
     ok(input_info.cbMaxLookahead == 0, "got cbMaxLookahead %#lx\n", input_info.cbMaxLookahead);
     ok(input_info.cbAlignment == 1, "got cbAlignment %#lx\n", input_info.cbAlignment);
 
@@ -6201,27 +6239,26 @@ static void test_wma_decoder(void)
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
     ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
     ok(output_info.dwFlags == 0, "got dwFlags %#lx\n", output_info.dwFlags);
-    ok(output_info.cbSize == sizeof(wma_decoded_data), "got cbSize %#lx\n", output_info.cbSize);
+    ok(output_info.cbSize == wmadec_block_size, "got cbSize %#lx\n", output_info.cbSize);
     ok(output_info.cbAlignment == 1, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
-    /* resource is generated using test_wma_encoder output file */
-    resource = FindResourceW(NULL, L"wmadata.bin", (const WCHAR *)RT_RCDATA);
+    resource = FindResourceW(NULL, L"wmaencdata.bin", (const WCHAR *)RT_RCDATA);
     ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
-    wma_encoded_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
-    wma_encoded_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
-    ok(wma_encoded_data_len % wma_block_size == 0, "got wma encoded length %lu\n", wma_encoded_data_len);
+    wmaenc_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
+    wmaenc_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    ok(wmaenc_data_len % wmaenc_block_size == 0, "got length %lu\n", wmaenc_data_len);
 
-    sample = create_sample(wma_encoded_data, wma_block_size / 2);
+    sample = create_sample(wmaenc_data, wmaenc_block_size / 2);
     hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
     ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
     ret = IMFSample_Release(sample);
     ok(ret == 0, "Release returned %lu\n", ret);
-    sample = create_sample(wma_encoded_data, wma_block_size + 1);
+    sample = create_sample(wmaenc_data, wmaenc_block_size + 1);
     hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
     ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
     ret = IMFSample_Release(sample);
     ok(ret == 0, "Release returned %lu\n", ret);
-    sample = create_sample(wma_encoded_data, wma_block_size);
+    sample = create_sample(wmaenc_data, wmaenc_block_size);
     hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
     ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
     hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
@@ -6245,7 +6282,7 @@ static void test_wma_decoder(void)
     ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
     ok(status == 0, "got status %#lx\n", status);
 
-    sample = create_sample(wma_encoded_data, wma_block_size);
+    sample = create_sample(wmaenc_data, wmaenc_block_size);
     hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
     ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
     ret = IMFSample_Release(sample);
@@ -6263,7 +6300,7 @@ static void test_wma_decoder(void)
 
     status = 0xdeadbeef;
     memset(&output, 0, sizeof(output));
-    output_info.cbSize = sizeof(wma_decoded_data);
+    output_info.cbSize = wmadec_block_size;
     sample = create_sample(NULL, output_info.cbSize);
     outputs[0].pSample = sample;
     sample = create_sample(NULL, output_info.cbSize);
@@ -6273,18 +6310,30 @@ static void test_wma_decoder(void)
     IMFSample_Release(outputs[0].pSample);
     IMFSample_Release(outputs[1].pSample);
 
+    resource = FindResourceW(NULL, L"wmadecdata.bin", (const WCHAR *)RT_RCDATA);
+    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
+    wmadec_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
+    wmadec_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    ok(wmadec_data_len == wmadec_block_size * 7 / 2, "got length %lu\n", wmadec_data_len);
+
+    /* and generate a new one as well in a temporary directory */
+    GetTempPathW(ARRAY_SIZE(output_path), output_path);
+    lstrcatW(output_path, L"wmadecdata.bin");
+    output_file = CreateFileW(output_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(output_file != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu\n", GetLastError());
+
     status = 0xdeadbeef;
-    output_info.cbSize = sizeof(wma_decoded_data);
+    output_info.cbSize = wmadec_block_size;
     sample = create_sample(NULL, output_info.cbSize);
     memset(&output, 0, sizeof(output));
     output.pSample = sample;
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
-    ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
-    ok(output.pSample == sample, "got pSample %p\n", output.pSample);
 
-    i = 0;
-    while (hr == S_OK)
+    for (i = 0; i < 4; ++i)
     {
+        winetest_push_context("%lu", i);
+
+        ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
         ok(output.pSample == sample, "got pSample %p\n", output.pSample);
         ok(output.dwStatus == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE || output.dwStatus == 0 ||
                 broken(output.dwStatus == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|7) || output.dwStatus == 7) /* Win7 */,
@@ -6295,20 +6344,21 @@ static void test_wma_decoder(void)
         if (output.dwStatus == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE ||
                 broken(output.dwStatus == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|7)))
         {
-            ok(length == sizeof(wma_decoded_data), "got length %lu\n", length);
-            check_sample(sample, wma_decoded_data, NULL);
-            i += sizeof(wma_decoded_data);
+            ok(length == wmadec_block_size, "got length %lu\n", length);
+            check_sample_pcm16(sample, wmadec_data, output_file, TRUE);
+            wmadec_data += wmadec_block_size;
+            wmadec_data_len -= wmadec_block_size;
         }
         else
         {
             /* FFmpeg doesn't seem to decode WMA buffers in the same way as native */
             todo_wine
-            ok(length == sizeof(wma_decoded_data) / 2, "got length %lu\n", length);
-            if (length == sizeof(wma_decoded_data) / 2)
-            {
-                check_sample(sample, wma_decoded_data, NULL);
-                i += sizeof(wma_decoded_data) / 2;
-            }
+            ok(length == wmadec_block_size / 2, "got length %lu\n", length);
+
+            if (length == wmadec_block_size / 2)
+                check_sample_pcm16(sample, wmadec_data, output_file, FALSE);
+            wmadec_data += length;
+            wmadec_data_len -= length;
         }
         ret = IMFSample_Release(sample);
         ok(ret == 0, "Release returned %lu\n", ret);
@@ -6318,9 +6368,14 @@ static void test_wma_decoder(void)
         memset(&output, 0, sizeof(output));
         output.pSample = sample;
         hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
+
+        winetest_pop_context();
     }
     todo_wine
-    ok(i == 0xe000, "ProcessOutput produced %#lx bytes\n", i);
+    ok(wmadec_data_len == 0, "missing %#lx bytes\n", wmadec_data_len);
+
+    trace("created %s\n", debugstr_w(output_path));
+    CloseHandle(output_file);
 
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
     ok(output.pSample == sample, "got pSample %p\n", output.pSample);
@@ -6346,7 +6401,7 @@ static void test_wma_decoder(void)
     ret = IMFSample_Release(sample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
-    sample = create_sample(wma_encoded_data, wma_block_size);
+    sample = create_sample(wmaenc_data, wmaenc_block_size);
     hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
     ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
 

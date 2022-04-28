@@ -20,8 +20,14 @@
 
 #include "windef.h"
 
-/* @makedep: wmadata.bin */
-wmadata.bin RCDATA wmadata.bin
+/* @makedep: audiodata.bin */
+audiodata.bin RCDATA audiodata.bin
+
+/* @makedep: wmaencdata.bin */
+wmaencdata.bin RCDATA wmaencdata.bin
+
+/* @makedep: wmadecdata.bin */
+wmadecdata.bin RCDATA wmadecdata.bin
 
 /* @makedep: h264data.bin */
 h264data.bin RCDATA h264data.bin
