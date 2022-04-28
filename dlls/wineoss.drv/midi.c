@@ -228,10 +228,12 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 	return;
     }
 
-    if (MidiInDev[wDevID].state & 2) { /* system exclusive */
+    if (value == 0xf0 || MidiInDev[wDevID].state & 2) { /* system exclusive */
 	LPMIDIHDR	lpMidiHdr;
         BOOL            sbfb = FALSE;
 
+	MidiInDev[wDevID].state |= 2;
+	MidiInDev[wDevID].incLen = 0;
 	in_buffer_lock();
 	if ((lpMidiHdr = MidiInDev[wDevID].lpQueueHdr) != NULL) {
 	    LPBYTE	lpData = (LPBYTE) lpMidiHdr->lpData;
@@ -300,14 +302,8 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 	}
 	break;
     case MIDI_SYSTEM_PREFIX:
-	if (MidiInDev[wDevID].incoming[0] == 0xF0) {
-	    MidiInDev[wDevID].state |= 2;
-	    MidiInDev[wDevID].incLen = 0;
-	} else {
-	    if (MidiInDev[wDevID].incLen == 1) {
-		toSend = (MidiInDev[wDevID].incoming[0] <<  0);
-	    }
-	}
+	if (MidiInDev[wDevID].incLen == 1)
+	    toSend = (MidiInDev[wDevID].incoming[0] <<  0);
 	break;
     default:
 	WARN("This shouldn't happen (%02X)\n", MidiInDev[wDevID].incoming[0]);
