@@ -320,12 +320,23 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
     }
 }
 
+static void handle_midi_data(unsigned char *buffer, unsigned int len)
+{
+    unsigned int time = GetTickCount(), i;
+
+    for (i = 0; i < len; i += (buffer[i] & 0x80) ? 8 : 4)
+    {
+        if (buffer[i] != SEQ_MIDIPUTC) continue;
+
+        midReceiveChar(buffer[i + 2], buffer[i + 1], time);
+    }
+}
+
 static DWORD WINAPI midRecThread(void *arg)
 {
     int fd = (int)(INT_PTR)arg;
     unsigned char buffer[256];
-    int len, idx;
-    DWORD dwTime;
+    int len;
     struct pollfd pfd;
 
     TRACE("Thread startup\n");
@@ -349,32 +360,7 @@ static DWORD WINAPI midRecThread(void *arg)
 	    continue;
 	}
 
-	dwTime = GetTickCount();
-	
-	for (idx = 0; idx < len; ) {
-	    if (buffer[idx] & 0x80) {
-		TRACE(
-		      "Reading<8> %02x %02x %02x %02x %02x %02x %02x %02x\n",
-		      buffer[idx + 0], buffer[idx + 1],
-		      buffer[idx + 2], buffer[idx + 3],
-		      buffer[idx + 4], buffer[idx + 5],
-		      buffer[idx + 6], buffer[idx + 7]);
-		      idx += 8;
-	    } else {
-		switch (buffer[idx + 0]) {
-		case SEQ_WAIT:
-		case SEQ_ECHO:
-		    break;
-		case SEQ_MIDIPUTC:
-		    midReceiveChar(buffer[idx + 2], buffer[idx + 1], dwTime);
-		    break;
-		default:
-		    TRACE("Unsupported event %d\n", buffer[idx + 0]);
-		    break;
-		}
-		idx += 4;
-	    }
-	}
+	handle_midi_data(buffer, len);
     }
     return 0;
 }
