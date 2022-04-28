@@ -5621,9 +5621,8 @@ static void test_MFRequireProtectedEnvironment(void)
 }
 
 static BOOL create_transform(GUID category, MFT_REGISTER_TYPE_INFO *input_type,
-        MFT_REGISTER_TYPE_INFO *output_type, const WCHAR *expect_name,
-        const media_type_desc *expect_input, ULONG expect_input_count,
-        const media_type_desc *expect_output, ULONG expect_output_count,
+        MFT_REGISTER_TYPE_INFO *output_type, const WCHAR *expect_name, const GUID *expect_major_type,
+        const GUID *expect_input, ULONG expect_input_count, const GUID *expect_output, ULONG expect_output_count,
         IMFTransform **transform, GUID *class_id)
 {
     MFT_REGISTER_TYPE_INFO *input_types = NULL, *output_types = NULL;
@@ -5658,17 +5657,17 @@ static BOOL create_transform(GUID category, MFT_REGISTER_TYPE_INFO *input_type,
         ok(input_count == expect_input_count, "got input_count %u\n", input_count);
         for (i = 0; i < input_count; ++i)
         {
-            ok(IsEqualGUID(&input_types[i].guidMajorType, expect_input[i][0].value.puuid),
+            ok(IsEqualGUID(&input_types[i].guidMajorType, expect_major_type),
                     "got input[%u] major %s\n", i, debugstr_guid(&input_types[i].guidMajorType));
-            ok(IsEqualGUID(&input_types[i].guidSubtype, expect_input[i][1].value.puuid),
+            ok(IsEqualGUID(&input_types[i].guidSubtype, expect_input + i),
                     "got input[%u] subtype %s\n", i, debugstr_guid(&input_types[i].guidSubtype));
         }
         ok(output_count == expect_output_count, "got output_count %u\n", output_count);
         for (i = 0; i < output_count; ++i)
         {
-            ok(IsEqualGUID(&output_types[i].guidMajorType, expect_output[i][0].value.puuid),
+            ok(IsEqualGUID(&output_types[i].guidMajorType, expect_major_type),
                     "got output[%u] major %s\n", i, debugstr_guid(&output_types[i].guidMajorType));
-            ok(IsEqualGUID(&output_types[i].guidSubtype, expect_output[i][1].value.puuid),
+            ok(IsEqualGUID(&output_types[i].guidSubtype, expect_output + i),
                     "got output[%u] subtype %s\n", i, debugstr_guid(&output_types[i].guidSubtype));
         }
         CoTaskMemFree(output_types);
@@ -5777,31 +5776,16 @@ static const ULONG wmadec_block_size = 0x2000;
 
 static void test_wma_encoder(void)
 {
-    static const media_type_desc transform_inputs[] =
+    const GUID transform_inputs[] =
     {
-        {
-            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
-        },
-        {
-            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float),
-        },
+        MFAudioFormat_PCM,
+        MFAudioFormat_Float,
     };
-    static const media_type_desc transform_outputs[] =
+    const GUID transform_outputs[] =
     {
-        {
-            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudioV8),
-        },
-        {
-            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudioV9),
-        },
-        {
-            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudio_Lossless),
-        },
+        MFAudioFormat_WMAudioV8,
+        MFAudioFormat_WMAudioV9,
+        MFAudioFormat_WMAudio_Lossless,
     };
 
     static const struct attribute_desc input_type_desc[] =
@@ -5848,7 +5832,7 @@ static void test_wma_encoder(void)
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
 
-    if (!create_transform(MFT_CATEGORY_AUDIO_ENCODER, &input_type, &output_type, L"WMAudio Encoder MFT",
+    if (!create_transform(MFT_CATEGORY_AUDIO_ENCODER, &input_type, &output_type, L"WMAudio Encoder MFT", &MFMediaType_Audio,
             transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
             &transform, &class_id))
         goto failed;
@@ -5968,35 +5952,17 @@ failed:
 
 static void test_wma_decoder(void)
 {
-    static const media_type_desc transform_inputs[] =
+    const GUID transform_inputs[] =
     {
-        {
-            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-            ATTR_GUID(MF_MT_SUBTYPE, MEDIASUBTYPE_MSAUDIO1),
-        },
-        {
-            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudioV8),
-        },
-        {
-            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudioV9),
-        },
-        {
-            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_WMAudio_Lossless),
-        },
+        MEDIASUBTYPE_MSAUDIO1,
+        MFAudioFormat_WMAudioV8,
+        MFAudioFormat_WMAudioV9,
+        MFAudioFormat_WMAudio_Lossless,
     };
-    static const media_type_desc transform_outputs[] =
+    const GUID transform_outputs[] =
     {
-        {
-            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
-        },
-        {
-            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
-            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float),
-        },
+        MFAudioFormat_PCM,
+        MFAudioFormat_Float,
     };
 
     static const media_type_desc expect_available_inputs[] =
@@ -6096,7 +6062,7 @@ static void test_wma_decoder(void)
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
 
-    if (!create_transform(MFT_CATEGORY_AUDIO_DECODER, &input_type, &output_type, L"WMAudio Decoder MFT",
+    if (!create_transform(MFT_CATEGORY_AUDIO_DECODER, &input_type, &output_type, L"WMAudio Decoder MFT", &MFMediaType_Audio,
             transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
             &transform, &class_id))
         goto failed;
@@ -6463,7 +6429,20 @@ static IMFSample *next_h264_sample_(int line, const BYTE **h264_buf, ULONG *h264
 
 static void test_h264_decoder(void)
 {
-    static const media_type_desc transform_inputs[] =
+    const GUID transform_inputs[] =
+    {
+        MFVideoFormat_H264,
+        MFVideoFormat_H264_ES,
+    };
+    const GUID transform_outputs[] =
+    {
+        MFVideoFormat_NV12,
+        MFVideoFormat_YV12,
+        MFVideoFormat_IYUV,
+        MFVideoFormat_I420,
+        MFVideoFormat_YUY2,
+    };
+    static const media_type_desc default_inputs[] =
     {
         {
             ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
@@ -6472,29 +6451,6 @@ static void test_h264_decoder(void)
         {
             ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
             ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_H264_ES),
-        },
-    };
-    static const media_type_desc transform_outputs[] =
-    {
-        {
-            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
-        },
-        {
-            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YV12),
-        },
-        {
-            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_IYUV),
-        },
-        {
-            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_I420),
-        },
-        {
-            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-            ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2),
         },
     };
     static const media_type_desc default_outputs[] =
@@ -6760,7 +6716,7 @@ static void test_h264_decoder(void)
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
 
-    if (!create_transform(MFT_CATEGORY_VIDEO_DECODER, &input_type, &output_type, L"Microsoft H264 Video Decoder MFT",
+    if (!create_transform(MFT_CATEGORY_VIDEO_DECODER, &input_type, &output_type, L"Microsoft H264 Video Decoder MFT", &MFMediaType_Video,
             transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
             &transform, &class_id))
         goto failed;
@@ -6819,7 +6775,7 @@ static void test_h264_decoder(void)
     {
         winetest_push_context("in %lu", i);
         ok(hr == S_OK, "GetInputAvailableType returned %#lx\n", hr);
-        check_media_type(media_type, transform_inputs[i], -1);
+        check_media_type(media_type, default_inputs[i], -1);
         ret = IMFMediaType_Release(media_type);
         ok(ret == 0, "Release returned %lu\n", ret);
         winetest_pop_context();
