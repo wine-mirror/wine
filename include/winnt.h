@@ -204,6 +204,12 @@ extern "C" {
 #define __WINE_ALLOC_SIZE(...)
 #endif
 
+#if defined(__GNUC__) && (__GNUC__ > 2)
+#define __WINE_MALLOC __attribute__((malloc))
+#else
+#define __WINE_MALLOC
+#endif
+
 /* Anonymous union/struct handling */
 
 #ifndef NONAMELESSSTRUCT

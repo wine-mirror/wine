@@ -317,7 +317,7 @@ HRESULT WINAPI CoGetInstanceFromFile(COSERVERINFO* pServerInfo, CLSID* pClsid, I
 HRESULT WINAPI CoGetInstanceFromIStorage(COSERVERINFO* pServerInfo, CLSID* pClsid, IUnknown* punkOuter, DWORD dwClsCtx, IStorage* pstg, DWORD dwCount, MULTI_QI* pResults);
 
 HRESULT WINAPI CoGetMalloc(DWORD dwMemContext, LPMALLOC* lpMalloc);
-LPVOID WINAPI CoTaskMemAlloc(SIZE_T size) __WINE_ALLOC_SIZE(1);
+LPVOID WINAPI CoTaskMemAlloc(SIZE_T size) __WINE_ALLOC_SIZE(1) __WINE_MALLOC;
 void WINAPI CoTaskMemFree(LPVOID ptr);
 LPVOID WINAPI CoTaskMemRealloc(LPVOID ptr, SIZE_T size) __WINE_ALLOC_SIZE(2);
 

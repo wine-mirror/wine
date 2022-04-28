@@ -658,7 +658,7 @@ RPCRTAPI LONG RPC_ENTRY
   NdrDcomAsyncStubCall( struct IRpcStubBuffer* pThis, struct IRpcChannelBuffer* pChannel, PRPC_MESSAGE pRpcMsg, DWORD * pdwStubPhase );
 
 RPCRTAPI void* RPC_ENTRY
-  NdrAllocate( PMIDL_STUB_MESSAGE pStubMsg, SIZE_T Len ) __WINE_ALLOC_SIZE(2);
+  NdrAllocate( PMIDL_STUB_MESSAGE pStubMsg, SIZE_T Len ) __WINE_ALLOC_SIZE(2) __WINE_MALLOC;
 
 RPCRTAPI void RPC_ENTRY
   NdrClearOutParameters( PMIDL_STUB_MESSAGE pStubMsg, PFORMAT_STRING pFormat, void *ArgAddr );
@@ -668,7 +668,7 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
                             ULONG *pFaultStatus, RPC_STATUS Status_ );
 
 RPCRTAPI void* RPC_ENTRY
-  NdrOleAllocate( SIZE_T Size ) __WINE_ALLOC_SIZE(1);
+  NdrOleAllocate( SIZE_T Size ) __WINE_ALLOC_SIZE(1) __WINE_MALLOC;
 RPCRTAPI void RPC_ENTRY
   NdrOleFree( void* NodeToFree );
 
@@ -729,11 +729,11 @@ RPCRTAPI void RPC_ENTRY
 RPCRTAPI void RPC_ENTRY
   NdrRpcSmSetClientToOsf( PMIDL_STUB_MESSAGE pMessage );
 RPCRTAPI void * RPC_ENTRY
-  NdrRpcSmClientAllocate( SIZE_T Size ) __WINE_ALLOC_SIZE(1);
+  NdrRpcSmClientAllocate( SIZE_T Size ) __WINE_ALLOC_SIZE(1) __WINE_MALLOC;
 RPCRTAPI void RPC_ENTRY
   NdrRpcSmClientFree( void *NodeToFree );
 RPCRTAPI void * RPC_ENTRY
-  NdrRpcSsDefaultAllocate( SIZE_T Size ) __WINE_ALLOC_SIZE(1);
+  NdrRpcSsDefaultAllocate( SIZE_T Size ) __WINE_ALLOC_SIZE(1) __WINE_MALLOC;
 RPCRTAPI void RPC_ENTRY
   NdrRpcSsDefaultFree( void *NodeToFree );
 
