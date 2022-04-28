@@ -239,6 +239,7 @@ static const struct column col_operatingsystem[] =
     { L"CSName",                  CIM_STRING|COL_FLAG_DYNAMIC },
     { L"CurrentTimeZone",         CIM_SINT16 },
     { L"FreePhysicalMemory",      CIM_UINT64 },
+    { L"FreeVirtualMemory",       CIM_UINT64 },
     { L"InstallDate",             CIM_DATETIME },
     { L"LastBootUpTime",          CIM_DATETIME|COL_FLAG_DYNAMIC },
     { L"LocalDateTime",           CIM_DATETIME|COL_FLAG_DYNAMIC },
@@ -676,6 +677,7 @@ struct record_operatingsystem
     const WCHAR *csname;
     INT16        currenttimezone;
     UINT64       freephysicalmemory;
+    UINT64       freevirtualmemory;
     const WCHAR *installdate;
     const WCHAR *lastbootuptime;
     const WCHAR *localdatetime;
@@ -1570,6 +1572,15 @@ static UINT64 get_available_physical_memory(void)
     status.dwLength = sizeof(status);
     if (!GlobalMemoryStatusEx( &status )) return 1024 * 1024 * 1024;
     return status.ullAvailPhys;
+}
+
+static UINT64 get_available_virtual_memory(void)
+{
+    MEMORYSTATUSEX status;
+
+    status.dwLength = sizeof(status);
+    if (!GlobalMemoryStatusEx( &status )) return 1024 * 1024 * 1024;
+    return status.ullAvailVirtual;
 }
 
 static WCHAR *get_computername(void)
@@ -3683,6 +3694,7 @@ static enum fill_status fill_operatingsystem( struct table *table, const struct 
     rec->csname                 = get_computername();
     rec->currenttimezone        = get_currenttimezone();
     rec->freephysicalmemory     = get_available_physical_memory() / 1024;
+    rec->freevirtualmemory      = get_available_virtual_memory() / 1024;
     rec->installdate            = L"20140101000000.000000+000";
     rec->lastbootuptime         = get_lastbootuptime();
     rec->localdatetime          = get_localdatetime();

@@ -1404,6 +1404,7 @@ static void test_Win32_OperatingSystem( IWbemServices *services )
     VariantClear( &val );
 
     check_property( obj, L"FreePhysicalMemory", VT_BSTR, CIM_UINT64 );
+    check_property( obj, L"FreeVirtualMemory", VT_BSTR, CIM_UINT64 );
     check_property( obj, L"Name", VT_BSTR, CIM_STRING );
 
     type = 0xdeadbeef;
