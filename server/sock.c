@@ -124,6 +124,7 @@ struct poll_req
     struct timeout_user *timeout;
     timeout_t orig_timeout;
     int exclusive;
+    int pending;
     unsigned int count;
     struct
     {
@@ -981,8 +982,11 @@ static void complete_async_polls( struct sock *sock, int event, int error )
             req->sockets[i].flags = req->sockets[i].mask & flags;
             req->sockets[i].status = sock_get_ntstatus( error );
 
-            complete_async_poll( req, STATUS_SUCCESS );
-            break;
+            if (req->pending)
+            {
+                complete_async_poll( req, STATUS_SUCCESS );
+                break;
+            }
         }
     }
 }
@@ -3002,32 +3006,6 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
     }
 }
 
-static int poll_single_socket( struct sock *sock, int mask )
-{
-    struct pollfd pollfd;
-
-    pollfd.fd = get_unix_fd( sock->fd );
-    pollfd.events = poll_flags_from_afd( sock, mask );
-    if (pollfd.events < 0 || poll( &pollfd, 1, 0 ) < 0)
-        return 0;
-
-    if (sock->state == SOCK_CONNECTING && (pollfd.revents & (POLLERR | POLLHUP)))
-        pollfd.revents &= ~POLLOUT;
-
-    if ((mask & AFD_POLL_HUP) && (pollfd.revents & POLLIN) && sock->type == WS_SOCK_STREAM)
-    {
-        char dummy;
-
-        if (!recv( get_unix_fd( sock->fd ), &dummy, 1, MSG_PEEK ))
-        {
-            pollfd.revents &= ~POLLIN;
-            pollfd.revents |= POLLHUP;
-        }
-    }
-
-    return get_poll_flags( sock, pollfd.revents ) & mask;
-}
-
 static void handle_exclusive_poll(struct poll_req *req)
 {
     unsigned int i;
@@ -3065,6 +3043,7 @@ static void poll_socket( struct sock *poll_sock, struct async *async, int exclus
         return;
 
     req->timeout = NULL;
+    req->pending = 0;
     if (timeout && timeout != TIMEOUT_INFINITE &&
         !(req->timeout = add_timeout_user( timeout, async_poll_timeout, req )))
     {
@@ -3103,26 +3082,28 @@ static void poll_socket( struct sock *poll_sock, struct async *async, int exclus
     {
         struct sock *sock = req->sockets[i].sock;
         int mask = req->sockets[i].mask;
-        int flags = poll_single_socket( sock, mask );
+        struct pollfd pollfd;
 
-        if (flags)
-        {
-            signaled = TRUE;
-            req->sockets[i].flags = flags;
-            req->sockets[i].status = sock_get_ntstatus( sock_error( sock ) );
-        }
+        pollfd.fd = get_unix_fd( sock->fd );
+        pollfd.events = poll_flags_from_afd( sock, mask );
+        if (pollfd.events >= 0 && poll( &pollfd, 1, 0 ) >= 0)
+            sock_poll_event( sock->fd, pollfd.revents );
 
         /* FIXME: do other error conditions deserve a similar treatment? */
         if (sock->state != SOCK_CONNECTING && sock->errors[AFD_POLL_BIT_CONNECT_ERR] && (mask & AFD_POLL_CONNECT_ERR))
         {
-            signaled = TRUE;
             req->sockets[i].flags |= AFD_POLL_CONNECT_ERR;
             req->sockets[i].status = sock_get_ntstatus( sock->errors[AFD_POLL_BIT_CONNECT_ERR] );
         }
+
+        if (req->sockets[i].flags)
+            signaled = TRUE;
     }
 
     if (!timeout || signaled)
         complete_async_poll( req, STATUS_SUCCESS );
+    else
+        req->pending = 1;
 
     for (i = 0; i < req->count; ++i)
         sock_reselect( req->sockets[i].sock );
