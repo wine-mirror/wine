@@ -125,7 +125,7 @@ static int WINAPIV NETSTAT_wprintf(const WCHAR *format, ...)
         }
 
         /* Convert to OEM, then output */
-        convertedChars = WideCharToMultiByte(GetConsoleOutputCP(), 0, output_bufW,
+        convertedChars = WideCharToMultiByte(GetOEMCP(), 0, output_bufW,
                                              len, output_bufA, MAX_WRITECONSOLE_SIZE,
                                              "?", &usedDefaultChar);
         WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), output_bufA, convertedChars,
