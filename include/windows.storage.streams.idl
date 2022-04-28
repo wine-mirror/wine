@@ -25,11 +25,50 @@ import "eventtoken.idl";
 import "windows.foundation.idl";
 
 namespace Windows.Storage.Streams {
+    interface IBuffer;
+    interface IBufferFactory;
+    interface IBufferStatics;
     interface IContentTypeProvider;
     interface IInputStream;
     interface IOutputStream;
     interface IRandomAccessStream;
     interface IRandomAccessStreamWithContentType;
+    runtimeclass Buffer;
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(905a0fe0-bc53-11df-8c49-001e4fc686da)
+    ]
+    interface IBuffer : IInspectable
+    {
+        [propget] HRESULT Capacity([out, retval] UINT32 *value);
+        [propget] HRESULT Length([out, retval] UINT32 *value);
+        [propput] HRESULT Length([in] UINT32 value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Storage.Streams.Buffer),
+        uuid(71af914d-c10f-484b-bc50-14bc623b3a27)
+    ]
+    interface IBufferFactory : IInspectable
+    {
+        HRESULT Create([in, range(0x00000000, 0x7fffffff)] UINT32 capacity,
+                       [out, retval] Windows.Storage.Streams.Buffer **value);
+    }
+
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        exclusiveto(Windows.Storage.Streams.Buffer),
+        uuid(e901e65b-d716-475a-a90a-af7229b1e741)
+    ]
+    interface IBufferStatics : IInspectable
+    {
+        HRESULT CreateCopyFromMemoryBuffer([in] Windows.Foundation.IMemoryBuffer *input,
+                                           [out, retval] Windows.Storage.Streams.Buffer **value);
+        HRESULT CreateMemoryBufferOverIBuffer([in] Windows.Storage.Streams.IBuffer *input,
+                                              [out, retval] Windows.Foundation.MemoryBuffer **value);
+    }
 
     [
         uuid(cc254827-4b3d-438f-9232-10c76bc7e038),
@@ -42,5 +81,17 @@ namespace Windows.Storage.Streams {
             Windows.Storage.Streams.IOutputStream,
             Windows.Storage.Streams.IContentTypeProvider
     {
+    }
+
+    [
+        activatable(Windows.Storage.Streams.IBufferFactory, Windows.Foundation.UniversalApiContract, 1.0),
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        marshaling_behavior(agile),
+        static(Windows.Storage.Streams.IBufferStatics, Windows.Foundation.UniversalApiContract, 1.0),
+        threading(both)
+    ]
+    runtimeclass Buffer
+    {
+        [default] interface Windows.Storage.Streams.IBuffer;
     }
 }
