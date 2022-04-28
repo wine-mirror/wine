@@ -23,6 +23,9 @@
 /* @makedep: audiodata.bin */
 audiodata.bin RCDATA audiodata.bin
 
+/* @makedep: audioconvdata.bin */
+audioconvdata.bin RCDATA audioconvdata.bin
+
 /* @makedep: wmaencdata.bin */
 wmaencdata.bin RCDATA wmaencdata.bin
 

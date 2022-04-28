@@ -38,6 +38,7 @@
 DEFINE_GUID(GUID_NULL,0,0,0,0,0,0,0,0,0,0,0);
 DEFINE_GUID(MFVideoFormat_P208, 0x38303250, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
 DEFINE_GUID(MFVideoFormat_ABGR32, 0x00000020, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71);
+DEFINE_GUID(CLSID_WINEAudioConverter, 0x6a170414, 0xaad9, 0x4693, 0xb8, 0x06, 0x3a, 0x0c, 0x47, 0xc5, 0x70, 0xd6);
 
 #undef INITGUID
 #include <guiddef.h>
@@ -5687,8 +5688,16 @@ static BOOL create_transform(GUID category, MFT_REGISTER_TYPE_INFO *input_type,
     }
 
     ok(hr == S_OK, "MFTEnum returned %lx\n", hr);
-    ok(count == 1, "got %u\n", count);
-    *class_id = class_ids[0];
+    ok(count > 0, "got %u\n", count);
+    for (i = 0; i < count; ++i)
+    {
+        if (IsEqualGUID(expect_class_id, class_ids + i))
+            break;
+    }
+    todo_wine_if(IsEqualGUID(class_ids, &CLSID_WINEAudioConverter))
+    ok(i < count, "failed to find %s transform\n", debugstr_w(expect_name));
+    if (i == count) return FALSE;
+    *class_id = class_ids[i];
     CoTaskMemFree(class_ids);
     ok(IsEqualGUID(class_id, expect_class_id), "got class id %s\n", debugstr_guid(class_id));
 
@@ -7323,6 +7332,395 @@ failed:
     CoUninitialize();
 }
 
+static void test_audio_convert(void)
+{
+    const GUID transform_inputs[2] =
+    {
+        MFAudioFormat_PCM,
+        MFAudioFormat_Float,
+    };
+    const GUID transform_outputs[2] =
+    {
+        MFAudioFormat_PCM,
+        MFAudioFormat_Float,
+    };
+
+    static const media_type_desc expect_available_inputs[] =
+    {
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        },
+    };
+    static const media_type_desc expect_available_outputs[] =
+    {
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float),
+            ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32),
+            ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
+            ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 48000),
+            ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 384000),
+            ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 8),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+            ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1),
+        },
+        {
+            ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+            ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
+            ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
+            ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
+            ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 48000),
+            ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 192000),
+            ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 4),
+            ATTR_UINT32(MF_MT_ALL_SAMPLES_INDEPENDENT, 1),
+            ATTR_UINT32(MF_MT_AUDIO_PREFER_WAVEFORMATEX, 1),
+        },
+    };
+
+    static const struct attribute_desc input_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_Float),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 32),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 22050),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 176400),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 8),
+        {0},
+    };
+    const struct attribute_desc output_type_desc[] =
+    {
+        ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Audio),
+        ATTR_GUID(MF_MT_SUBTYPE, MFAudioFormat_PCM),
+        ATTR_UINT32(MF_MT_AUDIO_BITS_PER_SAMPLE, 16),
+        ATTR_UINT32(MF_MT_AUDIO_NUM_CHANNELS, 2),
+        ATTR_UINT32(MF_MT_AUDIO_SAMPLES_PER_SECOND, 44100),
+        ATTR_UINT32(MF_MT_AUDIO_AVG_BYTES_PER_SECOND, 176400),
+        ATTR_UINT32(MF_MT_AUDIO_BLOCK_ALIGNMENT, 4),
+        {0},
+    };
+
+    MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_PCM};
+    MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_Float};
+    static const ULONG audioconv_block_size = 0x4000;
+    ULONG audio_data_len, audioconv_data_len;
+    const BYTE *audio_data, *audioconv_data;
+    MFT_OUTPUT_STREAM_INFO output_info;
+    MFT_INPUT_STREAM_INFO input_info;
+    MFT_OUTPUT_DATA_BUFFER output;
+    WCHAR output_path[MAX_PATH];
+    IMFMediaType *media_type;
+    LONGLONG time, duration;
+    IMFTransform *transform;
+    DWORD length, status;
+    HANDLE output_file;
+    IMFSample *sample;
+    HRSRC resource;
+    GUID class_id;
+    ULONG i, ret;
+    HRESULT hr;
+
+    hr = CoInitialize(NULL);
+    ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
+
+    if (!create_transform(MFT_CATEGORY_AUDIO_EFFECT, &input_type, &output_type, L"Resampler MFT", &MFMediaType_Audio,
+            transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
+            &transform, &CLSID_CResamplerMediaObject, &class_id))
+        goto failed;
+
+    check_dmo(&class_id, L"Resampler DMO", &MEDIATYPE_Audio, transform_inputs, ARRAY_SIZE(transform_inputs),
+            transform_outputs, ARRAY_SIZE(transform_outputs));
+
+    check_interface(transform, &IID_IMFTransform, TRUE);
+    check_interface(transform, &IID_IMediaObject, TRUE);
+    check_interface(transform, &IID_IPropertyStore, TRUE);
+    todo_wine
+    check_interface(transform, &IID_IPropertyBag, TRUE);
+    /* check_interface(transform, &IID_IWMResamplerProps, TRUE); */
+
+    /* check default media types */
+
+    hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetInputStreamInfo returned %#lx\n", hr);
+    hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputStreamInfo returned %#lx\n", hr);
+
+    i = -1;
+    while (SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(transform, 0, ++i, &media_type)))
+    {
+        winetest_push_context("out %lu", i);
+        ok(hr == S_OK, "GetOutputAvailableType returned %#lx\n", hr);
+        check_media_type(media_type, expect_available_outputs[i], -1);
+        ret = IMFMediaType_Release(media_type);
+        ok(ret == 0, "Release returned %lu\n", ret);
+        winetest_pop_context();
+    }
+    ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#lx\n", hr);
+    ok(i == 4, "%lu output media types\n", i);
+
+    i = -1;
+    while (SUCCEEDED(hr = IMFTransform_GetInputAvailableType(transform, 0, ++i, &media_type)))
+    {
+        winetest_push_context("in %lu", i);
+        ok(hr == S_OK, "GetInputAvailableType returned %#lx\n", hr);
+        check_media_type(media_type, expect_available_inputs[i], -1);
+        hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+        ok(hr == MF_E_INVALIDMEDIATYPE, "SetInputType returned %#lx.\n", hr);
+        ret = IMFMediaType_Release(media_type);
+        ok(ret == 0, "Release returned %lu\n", ret);
+        winetest_pop_context();
+    }
+    ok(hr == MF_E_NO_MORE_TYPES, "GetInputAvailableType returned %#lx\n", hr);
+    ok(i == 2, "%lu input media types\n", i);
+
+    /* setting output media type first doesn't work */
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
+    init_media_type(media_type, output_type_desc, -1);
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "SetOutputType returned %#lx.\n", hr);
+    ret = IMFMediaType_Release(media_type);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+    /* check required input media type attributes */
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
+    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetInputType returned %#lx.\n", hr);
+    init_media_type(media_type, input_type_desc, 1);
+    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetInputType returned %#lx.\n", hr);
+    init_media_type(media_type, input_type_desc, 2);
+    for (i = 2; i < ARRAY_SIZE(input_type_desc) - 1; ++i)
+    {
+        hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+        ok(hr == MF_E_INVALIDMEDIATYPE, "SetInputType returned %#lx.\n", hr);
+        init_media_type(media_type, input_type_desc, i + 1);
+    }
+    hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+    ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
+    ret = IMFMediaType_Release(media_type);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+    hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetInputStreamInfo returned %#lx\n", hr);
+    hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
+    ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputStreamInfo returned %#lx\n", hr);
+
+    /* check new output media types */
+
+    i = -1;
+    while (SUCCEEDED(hr = IMFTransform_GetOutputAvailableType(transform, 0, ++i, &media_type)))
+    {
+        winetest_push_context("out %lu", i);
+        ok(hr == S_OK, "GetOutputAvailableType returned %#lx\n", hr);
+        check_media_type(media_type, expect_available_outputs[i], -1);
+        ret = IMFMediaType_Release(media_type);
+        ok(ret == 0, "Release returned %lu\n", ret);
+        winetest_pop_context();
+    }
+    ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#lx\n", hr);
+    ok(i == 4, "%lu output media types\n", i);
+
+    /* check required output media type attributes */
+
+    hr = MFCreateMediaType(&media_type);
+    ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetOutputType returned %#lx.\n", hr);
+    init_media_type(media_type, output_type_desc, 1);
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetOutputType returned %#lx.\n", hr);
+    init_media_type(media_type, output_type_desc, 2);
+    for (i = 2; i < ARRAY_SIZE(output_type_desc) - 1; ++i)
+    {
+        hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+        ok(hr == MF_E_INVALIDMEDIATYPE, "SetOutputType returned %#lx.\n", hr);
+        init_media_type(media_type, output_type_desc, i + 1);
+    }
+    hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
+    ret = IMFMediaType_Release(media_type);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+    memset(&input_info, 0xcd, sizeof(input_info));
+    hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
+    ok(hr == S_OK, "GetInputStreamInfo returned %#lx\n", hr);
+    ok(input_info.hnsMaxLatency == 0, "got hnsMaxLatency %s\n", wine_dbgstr_longlong(input_info.hnsMaxLatency));
+    ok(input_info.dwFlags == 0, "got dwFlags %#lx\n", input_info.dwFlags);
+    ok(input_info.cbSize == 8, "got cbSize %lu\n", input_info.cbSize);
+    ok(input_info.cbMaxLookahead == 0, "got cbMaxLookahead %#lx\n", input_info.cbMaxLookahead);
+    ok(input_info.cbAlignment == 1, "got cbAlignment %#lx\n", input_info.cbAlignment);
+
+    memset(&output_info, 0xcd, sizeof(output_info));
+    hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
+    ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
+    ok(output_info.dwFlags == 0, "got dwFlags %#lx\n", output_info.dwFlags);
+    ok(output_info.cbSize == 4, "got cbSize %#lx\n", output_info.cbSize);
+    ok(output_info.cbAlignment == 1, "got cbAlignment %#lx\n", output_info.cbAlignment);
+
+    resource = FindResourceW(NULL, L"audiodata.bin", (const WCHAR *)RT_RCDATA);
+    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
+    audio_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
+    audio_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    ok(audio_data_len == 179928, "got length %lu\n", audio_data_len);
+
+    sample = create_sample(audio_data, audio_data_len);
+    hr = IMFSample_SetSampleTime(sample, 0);
+    ok(hr == S_OK, "SetSampleTime returned %#lx\n", hr);
+    hr = IMFSample_SetSampleDuration(sample, 10000000);
+    ok(hr == S_OK, "SetSampleDuration returned %#lx\n", hr);
+    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
+    hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
+    ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
+    hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
+    IMFSample_Release(sample);
+
+    status = 0xdeadbeef;
+    sample = create_sample(NULL, audioconv_block_size);
+    memset(&output, 0, sizeof(output));
+    output.pSample = sample;
+
+    resource = FindResourceW(NULL, L"audioconvdata.bin", (const WCHAR *)RT_RCDATA);
+    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
+    audioconv_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
+    audioconv_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    ok(audioconv_data_len == 179924, "got length %lu\n", audioconv_data_len);
+
+    /* and generate a new one as well in a temporary directory */
+    GetTempPathW(ARRAY_SIZE(output_path), output_path);
+    lstrcatW(output_path, L"audioconvdata.bin");
+    output_file = CreateFileW(output_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(output_file != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu\n", GetLastError());
+
+    i = 0;
+    while (SUCCEEDED(hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status)))
+    {
+        winetest_push_context("%lu", i);
+        ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
+        ok(output.pSample == sample, "got pSample %p\n", output.pSample);
+        ok(output.dwStatus == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE || output.dwStatus == 0 ||
+                broken(output.dwStatus == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|6) || output.dwStatus == 6) /* win7 */,
+                "got dwStatus %#lx\n", output.dwStatus);
+        ok(status == 0, "got status %#lx\n", status);
+        if (!(output.dwStatus & MFT_OUTPUT_DATA_BUFFER_INCOMPLETE))
+        {
+            winetest_pop_context();
+            break;
+        }
+
+        hr = IMFSample_GetSampleTime(sample, &time);
+        ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
+        ok(time == i * 928798, "got time %I64d\n", time);
+        hr = IMFSample_GetSampleDuration(sample, &duration);
+        ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
+        ok(duration == 928798, "got duration %I64d\n", duration);
+        hr = IMFSample_GetTotalLength(sample, &length);
+        ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
+        ok(length == audioconv_block_size, "got length %lu\n", length);
+        ok(audioconv_data_len > audioconv_block_size, "got remaining length %lu\n", audioconv_data_len);
+        check_sample_pcm16(sample, audioconv_data, output_file, FALSE);
+        audioconv_data_len -= audioconv_block_size;
+        audioconv_data += audioconv_block_size;
+
+        winetest_pop_context();
+        i++;
+    }
+
+    hr = IMFSample_GetSampleTime(sample, &time);
+    ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
+    ok(time == i * 928798, "got time %I64d\n", time);
+    hr = IMFSample_GetSampleDuration(sample, &duration);
+    ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
+    todo_wine
+    ok(duration == 897506, "got duration %I64d\n", duration);
+    hr = IMFSample_GetTotalLength(sample, &length);
+    ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
+    todo_wine
+    ok(length == 15832, "got length %lu\n", length);
+    ok(audioconv_data_len == 16084, "got remaining length %lu\n", audioconv_data_len);
+    check_sample_pcm16(sample, audioconv_data, output_file, FALSE);
+    audioconv_data_len -= length;
+    audioconv_data += length;
+
+    memset(&output, 0, sizeof(output));
+    output.pSample = sample;
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
+    todo_wine
+    ok(hr == S_OK || broken(hr == MF_E_TRANSFORM_NEED_MORE_INPUT) /* win7 */, "ProcessOutput returned %#lx\n", hr);
+    ok(output.pSample == sample, "got pSample %p\n", output.pSample);
+    todo_wine
+    ok(output.dwStatus == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE || broken(output.dwStatus == 0) /* win7 */,
+            "got dwStatus %#lx\n", output.dwStatus);
+    ok(status == 0, "got status %#lx\n", status);
+
+    if (hr == S_OK)
+    {
+        hr = IMFSample_GetSampleTime(sample, &time);
+        ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
+        todo_wine
+        ok(time == 10185486, "got time %I64d\n", time);
+        hr = IMFSample_GetSampleDuration(sample, &duration);
+        ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
+        todo_wine
+        ok(duration == 14286, "got duration %I64d\n", duration);
+        hr = IMFSample_GetTotalLength(sample, &length);
+        ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
+        todo_wine
+        ok(length == audioconv_data_len, "got length %lu\n", length);
+        if (length == audioconv_data_len)
+            check_sample_pcm16(sample, audioconv_data, output_file, FALSE);
+    }
+
+    trace("created %s\n", debugstr_w(output_path));
+    CloseHandle(output_file);
+
+    ret = IMFSample_Release(sample);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+    status = 0xdeadbeef;
+    sample = create_sample(NULL, audioconv_block_size);
+    memset(&output, 0, sizeof(output));
+    output.pSample = sample;
+    hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
+    ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
+    ok(output.pSample == sample, "got pSample %p\n", output.pSample);
+    ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
+    ok(status == 0, "got status %#lx\n", status);
+    hr = IMFSample_GetTotalLength(sample, &length);
+    ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
+    ok(length == 0, "got length %lu\n", length);
+    ret = IMFSample_Release(sample);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+    ret = IMFTransform_Release(transform);
+    ok(ret == 0, "Release returned %lu\n", ret);
+
+failed:
+    CoUninitialize();
+}
+
 START_TEST(mf)
 {
     init_functions();
@@ -7359,4 +7757,5 @@ START_TEST(mf)
     test_wma_encoder();
     test_wma_decoder();
     test_h264_decoder();
+    test_audio_convert();
 }
