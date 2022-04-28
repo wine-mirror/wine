@@ -244,6 +244,7 @@ static const struct column col_operatingsystem[] =
     { L"Manufacturer",            CIM_STRING },
     { L"Name",                    CIM_STRING|COL_FLAG_DYNAMIC },
     { L"OperatingSystemSKU",      CIM_UINT32 },
+    { L"Organization",            CIM_STRING|COL_FLAG_DYNAMIC },
     { L"OSArchitecture",          CIM_STRING },
     { L"OSLanguage",              CIM_UINT32 },
     { L"OSProductSuite",          CIM_UINT32 },
@@ -677,6 +678,7 @@ struct record_operatingsystem
     const WCHAR *manufacturer;
     const WCHAR *name;
     UINT32       operatingsystemsku;
+    const WCHAR *organization;
     const WCHAR *osarchitecture;
     UINT32       oslanguage;
     UINT32       osproductsuite;
@@ -3515,6 +3517,34 @@ static WCHAR *get_locale(void)
     if (ret) GetLocaleInfoW( LOCALE_SYSTEM_DEFAULT, LOCALE_ILANGUAGE, ret, 5 );
     return ret;
 }
+
+static WCHAR *get_reg_str( HKEY root, const WCHAR *path, const WCHAR *value )
+{
+    HKEY hkey = 0;
+    DWORD size, type;
+    WCHAR *ret = NULL;
+
+    if (!RegOpenKeyExW( root, path, 0, KEY_READ, &hkey ) &&
+        !RegQueryValueExW( hkey, value, NULL, &type, NULL, &size ) && type == REG_SZ &&
+        (ret = malloc( size + sizeof(WCHAR) )))
+    {
+        size += sizeof(WCHAR);
+        if (RegQueryValueExW( hkey, value, NULL, NULL, (BYTE *)ret, &size ))
+        {
+            free( ret );
+            ret = NULL;
+        }
+    }
+    if (hkey) RegCloseKey( hkey );
+    return ret;
+}
+
+static WCHAR *get_organization(void)
+{
+    return get_reg_str( HKEY_LOCAL_MACHINE, L"Software\\Microsoft\\Windows NT\\CurrentVersion",
+                        L"RegisteredOrganization" );
+}
+
 static WCHAR *get_osbuildnumber( OSVERSIONINFOEXW *ver )
 {
     WCHAR *ret = malloc( 11 * sizeof(WCHAR) );
@@ -3571,27 +3601,6 @@ static WCHAR *get_osname( const WCHAR *caption )
     if (!(ret = malloc( len * sizeof(WCHAR) + sizeof(partitionW) ))) return NULL;
     memcpy( ret, caption, len * sizeof(WCHAR) );
     memcpy( ret + len, partitionW, sizeof(partitionW) );
-    return ret;
-}
-
-static WCHAR *get_reg_str( HKEY root, const WCHAR *path, const WCHAR *value )
-{
-    HKEY hkey = 0;
-    DWORD size, type;
-    WCHAR *ret = NULL;
-
-    if (!RegOpenKeyExW( root, path, 0, KEY_READ, &hkey ) &&
-        !RegQueryValueExW( hkey, value, NULL, &type, NULL, &size ) && type == REG_SZ &&
-        (ret = malloc( size + sizeof(WCHAR) )))
-    {
-        size += sizeof(WCHAR);
-        if (RegQueryValueExW( hkey, value, NULL, NULL, (BYTE *)ret, &size ))
-        {
-            free( ret );
-            ret = NULL;
-        }
-    }
-    if (hkey) RegCloseKey( hkey );
     return ret;
 }
 
@@ -3658,6 +3667,7 @@ static enum fill_status fill_operatingsystem( struct table *table, const struct 
     rec->manufacturer           = L"The Wine Project";
     rec->name                   = get_osname( rec->caption );
     rec->operatingsystemsku     = get_operatingsystemsku();
+    rec->organization           = get_organization();
     rec->osarchitecture         = get_osarchitecture();
     rec->oslanguage             = GetSystemDefaultLangID();
     rec->osproductsuite         = 2461140; /* Windows XP Professional  */
