@@ -248,7 +248,7 @@ HRESULT WINAPI hwnd_host_provider_get_HostRawElementProvider(IRawElementProvider
     return S_OK;
 }
 
-IRawElementProviderSimpleVtbl hwnd_host_provider_vtbl = {
+static const IRawElementProviderSimpleVtbl hwnd_host_provider_vtbl = {
     hwnd_host_provider_QueryInterface,
     hwnd_host_provider_AddRef,
     hwnd_host_provider_Release,
