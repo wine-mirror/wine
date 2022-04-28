@@ -853,6 +853,14 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
         goto release;
     }
 
+    if ((src_fmt_flags | dst_fmt_flags) & WINED3DFMT_FLAG_HEIGHT_SCALE)
+    {
+        FIXME("Unsupported blit between height-scaled formats (src %s, dst %s).\n",
+                debug_d3dformat(src_format->id), debug_d3dformat(dst_format->id));
+        hr = E_NOTIMPL;
+        goto release;
+    }
+
     if (filter != WINED3D_TEXF_NONE && filter != WINED3D_TEXF_POINT
             && (src_width != dst_width || src_height != dst_height))
     {
