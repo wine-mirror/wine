@@ -6999,33 +6999,31 @@ static void test_h264_decoder(void)
     ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
     ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
     ok(status == 0, "got status %#lx\n", status);
-    if (hr == S_OK)
-    {
-        /* Win8 and before pad the data with garbage instead of original
-         * buffer data, make sure it's consistent.  */
-        hr = IMFSample_ConvertToContiguousBuffer(output.pSample, &media_buffer);
-        ok(hr == S_OK, "ConvertToContiguousBuffer returned %#lx\n", hr);
-        hr = IMFMediaBuffer_Lock(media_buffer, &data, NULL, &length);
-        ok(hr == S_OK, "Lock returned %#lx\n", hr);
-        todo_wine
-        ok(length == nv12_frame_len, "got length %lu\n", length);
-        if (length == nv12_frame_len)
-        {
-            for (i = 0; i < actual_aperture.Area.cy; ++i)
-            {
-                memset(data + actual_width * i + actual_aperture.Area.cx, 0xcd, actual_width - actual_aperture.Area.cx);
-                memset(data + actual_width * (actual_height + i) + actual_aperture.Area.cx, 0xcd, actual_width - actual_aperture.Area.cx);
-            }
-            memset(data + actual_width * actual_aperture.Area.cy, 0xcd, (actual_height - actual_aperture.Area.cy) * actual_width);
-            memset(data + actual_width * (actual_height + actual_aperture.Area.cy / 2), 0xcd, (actual_height - actual_aperture.Area.cy) / 2 * actual_width);
-        }
-        hr = IMFMediaBuffer_Unlock(media_buffer);
-        ok(hr == S_OK, "Unlock returned %#lx\n", hr);
-        IMFMediaBuffer_Release(media_buffer);
+    if (hr != S_OK) goto skip_nv12_tests;
 
-        if (length == nv12_frame_len)
-            check_sample(output.pSample, nv12_frame_data, output_file);
+    /* Win8 and before pad the data with garbage instead of original
+     * buffer data, make sure it's consistent.  */
+    hr = IMFSample_ConvertToContiguousBuffer(output.pSample, &media_buffer);
+    ok(hr == S_OK, "ConvertToContiguousBuffer returned %#lx\n", hr);
+    hr = IMFMediaBuffer_Lock(media_buffer, &data, NULL, &length);
+    ok(hr == S_OK, "Lock returned %#lx\n", hr);
+    ok(length == nv12_frame_len, "got length %lu\n", length);
+
+    for (i = 0; i < actual_aperture.Area.cy; ++i)
+    {
+        memset(data + actual_width * i + actual_aperture.Area.cx, 0xcd, actual_width - actual_aperture.Area.cx);
+        memset(data + actual_width * (actual_height + i) + actual_aperture.Area.cx, 0xcd, actual_width - actual_aperture.Area.cx);
     }
+    memset(data + actual_width * actual_aperture.Area.cy, 0xcd, (actual_height - actual_aperture.Area.cy) * actual_width);
+    memset(data + actual_width * (actual_height + actual_aperture.Area.cy / 2), 0xcd, (actual_height - actual_aperture.Area.cy) / 2 * actual_width);
+
+    hr = IMFMediaBuffer_Unlock(media_buffer);
+    ok(hr == S_OK, "Unlock returned %#lx\n", hr);
+    IMFMediaBuffer_Release(media_buffer);
+
+    check_sample(output.pSample, nv12_frame_data, output_file);
+
+skip_nv12_tests:
     ret = IMFSample_Release(output.pSample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
