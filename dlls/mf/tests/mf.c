@@ -6080,14 +6080,16 @@ static void test_wma_decoder(void)
     MFT_OUTPUT_DATA_BUFFER outputs[2];
     MFT_INPUT_STREAM_INFO input_info;
     MFT_OUTPUT_DATA_BUFFER output;
+    DWORD status, flags, length;
     WCHAR output_path[MAX_PATH];
     IMFMediaType *media_type;
     IMFTransform *transform;
-    DWORD status, length;
+    LONGLONG time, duration;
     HANDLE output_file;
     IMFSample *sample;
     HRSRC resource;
     GUID class_id;
+    UINT32 value;
     ULONG i, ret;
     HRESULT hr;
 
@@ -6339,12 +6341,34 @@ static void test_wma_decoder(void)
                 broken(output.dwStatus == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|7) || output.dwStatus == 7) /* Win7 */,
                 "got dwStatus %#lx\n", output.dwStatus);
         ok(status == 0, "got status %#lx\n", status);
+        value = 0xdeadbeef;
+        hr = IMFSample_GetUINT32(sample, &MFSampleExtension_CleanPoint, &value);
+        todo_wine
+        ok(hr == S_OK, "GetUINT32 MFSampleExtension_CleanPoint returned %#lx\n", hr);
+        todo_wine
+        ok(value == 1, "got MFSampleExtension_CleanPoint %u\n", value);
         hr = IMFSample_GetTotalLength(sample, &length);
         ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
+        flags = 0xdeadbeef;
+        hr = IMFSample_GetSampleFlags(sample, &flags);
+        ok(hr == S_OK, "GetSampleFlags returned %#lx\n", hr);
+        ok(flags == 0, "got flags %#lx\n", flags);
+        time = 0xdeadbeef;
+        hr = IMFSample_GetSampleTime(sample, &time);
+        todo_wine
+        ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
+        todo_wine
+        ok(time == i * 928798, "got time %I64d\n", time);
+        duration = 0xdeadbeef;
+        hr = IMFSample_GetSampleDuration(sample, &duration);
+        todo_wine
+        ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
         if (output.dwStatus == MFT_OUTPUT_DATA_BUFFER_INCOMPLETE ||
                 broken(output.dwStatus == (MFT_OUTPUT_DATA_BUFFER_INCOMPLETE|7)))
         {
             ok(length == wmadec_block_size, "got length %lu\n", length);
+            todo_wine
+            ok(duration == 928798, "got duration %I64d\n", duration);
             check_sample_pcm16(sample, wmadec_data, output_file, TRUE);
             wmadec_data += wmadec_block_size;
             wmadec_data_len -= wmadec_block_size;
@@ -6354,6 +6378,8 @@ static void test_wma_decoder(void)
             /* FFmpeg doesn't seem to decode WMA buffers in the same way as native */
             todo_wine
             ok(length == wmadec_block_size / 2, "got length %lu\n", length);
+            todo_wine
+            ok(duration == 464399, "got duration %I64d\n", duration);
 
             if (length == wmadec_block_size / 2)
                 check_sample_pcm16(sample, wmadec_data, output_file, FALSE);
@@ -6715,17 +6741,19 @@ static void test_h264_decoder(void)
     MFT_INPUT_STREAM_INFO input_info;
     MFT_OUTPUT_DATA_BUFFER output;
     IMFMediaBuffer *media_buffer;
+    DWORD status, length, count;
     WCHAR output_path[MAX_PATH];
     IMFAttributes *attributes;
     IMFMediaType *media_type;
+    LONGLONG time, duration;
     IMFTransform *transform;
-    DWORD status, length;
     BOOL is_win7 = FALSE;
     ULONG i, ret, flags;
     HANDLE output_file;
     IMFSample *sample;
     HRSRC resource;
     GUID class_id;
+    UINT32 value;
     BYTE *data;
     HRESULT hr;
 
@@ -7055,6 +7083,34 @@ static void test_h264_decoder(void)
     ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
     ok(status == 0, "got status %#lx\n", status);
     if (hr != S_OK) goto skip_nv12_tests;
+
+    hr = IMFSample_GetUINT32(sample, &MFSampleExtension_CleanPoint, &value);
+    ok(hr == MF_E_ATTRIBUTENOTFOUND, "GetUINT32 MFSampleExtension_CleanPoint returned %#lx\n", hr);
+
+    count = 0xdeadbeef;
+    hr = IMFSample_GetBufferCount(output.pSample, &count);
+    ok(hr == S_OK, "GetBufferCount returned %#lx\n", hr);
+    ok(count == 1, "got count %#lx\n", count);
+
+    flags = 0xdeadbeef;
+    hr = IMFSample_GetSampleFlags(output.pSample, &flags);
+    ok(hr == S_OK, "GetSampleFlags returned %#lx\n", hr);
+    ok(flags == 0, "got flags %#lx\n", flags);
+
+    time = 0xdeadbeef;
+    hr = IMFSample_GetSampleTime(output.pSample, &time);
+    todo_wine
+    ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
+    todo_wine
+    ok(time == 0, "got time %I64d\n", time);
+
+    /* doesn't matter what frame rate we've selected, duration is defined by the stream */
+    duration = 0xdeadbeef;
+    hr = IMFSample_GetSampleDuration(output.pSample, &duration);
+    todo_wine
+    ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
+    todo_wine
+    ok(duration - 333666 <= 2, "got duration %I64d\n", duration);
 
     /* Win8 and before pad the data with garbage instead of original
      * buffer data, make sure it's consistent.  */
