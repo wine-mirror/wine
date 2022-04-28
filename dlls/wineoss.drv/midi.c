@@ -247,13 +247,69 @@ static void handle_sysex_data(struct midi_src *src, unsigned char value, UINT ti
     in_buffer_unlock();
 }
 
+static void handle_regular_data(struct midi_src *src, unsigned char value, UINT time)
+{
+    UINT to_send = 0;
+
+#define IS_CMD(_x)     (((_x) & 0x80) == 0x80)
+#define IS_SYS_CMD(_x) (((_x) & 0xF0) == 0xF0)
+
+    if (!IS_CMD(value) && src->incLen == 0) /* try to reuse old cmd */
+    {
+        if (IS_CMD(src->incPrev) && !IS_SYS_CMD(src->incPrev))
+        {
+            src->incoming[0] = src->incPrev;
+            src->incLen = 1;
+        }
+        else
+        {
+            /* FIXME: should generate MIM_ERROR notification */
+            return;
+        }
+    }
+    src->incoming[(int)src->incLen++] = value;
+    if (src->incLen == 1 && !IS_SYS_CMD(src->incoming[0]))
+        /* store new cmd, just in case */
+        src->incPrev = src->incoming[0];
+
+#undef IS_CMD
+#undef IS_SYS_CMD
+
+    switch (src->incoming[0] & 0xF0)
+    {
+    case MIDI_NOTEOFF:
+    case MIDI_NOTEON:
+    case MIDI_KEY_PRESSURE:
+    case MIDI_CTL_CHANGE:
+    case MIDI_PITCH_BEND:
+        if (src->incLen == 3)
+            to_send = (src->incoming[2] << 16) | (src->incoming[1] << 8) |
+                src->incoming[0];
+        break;
+    case MIDI_PGM_CHANGE:
+    case MIDI_CHN_PRESSURE:
+        if (src->incLen == 2)
+            to_send = (src->incoming[1] << 8) | src->incoming[0];
+        break;
+    case MIDI_SYSTEM_PREFIX:
+        if (src->incLen == 1)
+            to_send = src->incoming[0];
+        break;
+    }
+
+    if (to_send)
+    {
+        src->incLen = 0;
+        time -= src->startTime;
+        MIDI_NotifyClient(src - MidiInDev, MIM_DATA, to_send, time);
+    }
+}
+
 /**************************************************************************
  * 			midReceiveChar				[internal]
  */
 static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 {
-    DWORD		toSend = 0;
-
     TRACE("Adding %02xh to %d[%d]\n", value, wDevID, MidiInDev[wDevID].incLen);
 
     if (wDevID >= MIDM_NumDevs) {
@@ -266,67 +322,9 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
     }
 
     if (value == 0xf0 || MidiInDev[wDevID].state & 2) /* system exclusive */
-    {
-	handle_sysex_data(MidiInDev + wDevID, value, dwTime);
-	return;
-    }
-
-#define IS_CMD(_x)	(((_x) & 0x80) == 0x80)
-#define IS_SYS_CMD(_x)	(((_x) & 0xF0) == 0xF0)
-
-    if (!IS_CMD(value) && MidiInDev[wDevID].incLen == 0) { /* try to reuse old cmd */
-	if (IS_CMD(MidiInDev[wDevID].incPrev) && !IS_SYS_CMD(MidiInDev[wDevID].incPrev)) {
-	    MidiInDev[wDevID].incoming[0] = MidiInDev[wDevID].incPrev;
-	    MidiInDev[wDevID].incLen = 1;
-	    TRACE("Reusing old command %02xh\n", MidiInDev[wDevID].incPrev);
-	} else {
-	    FIXME("error for midi-in, should generate MIM_ERROR notification:"
-		  " prev=%02Xh, incLen=%02Xh\n",
-		  MidiInDev[wDevID].incPrev, MidiInDev[wDevID].incLen);
-	    return;
-	}
-    }
-    MidiInDev[wDevID].incoming[(int)(MidiInDev[wDevID].incLen++)] = value;
-    if (MidiInDev[wDevID].incLen == 1 && !IS_SYS_CMD(MidiInDev[wDevID].incoming[0])) {
-	/* store new cmd, just in case */
-	MidiInDev[wDevID].incPrev = MidiInDev[wDevID].incoming[0];
-    }
-
-#undef IS_CMD
-#undef IS_SYS_CMD
-
-    switch (MidiInDev[wDevID].incoming[0] & 0xF0) {
-    case MIDI_NOTEOFF:
-    case MIDI_NOTEON:
-    case MIDI_KEY_PRESSURE:
-    case MIDI_CTL_CHANGE:
-    case MIDI_PITCH_BEND:
-	if (MidiInDev[wDevID].incLen == 3) {
-	    toSend = (MidiInDev[wDevID].incoming[2] << 16) |
-		(MidiInDev[wDevID].incoming[1] <<  8) |
-		(MidiInDev[wDevID].incoming[0] <<  0);
-	}
-	break;
-    case MIDI_PGM_CHANGE:
-    case MIDI_CHN_PRESSURE:
-	if (MidiInDev[wDevID].incLen == 2) {
-	    toSend = (MidiInDev[wDevID].incoming[1] <<  8) |
-		(MidiInDev[wDevID].incoming[0] <<  0);
-	}
-	break;
-    case MIDI_SYSTEM_PREFIX:
-	if (MidiInDev[wDevID].incLen == 1)
-	    toSend = (MidiInDev[wDevID].incoming[0] <<  0);
-	break;
-    default:
-	WARN("This shouldn't happen (%02X)\n", MidiInDev[wDevID].incoming[0]);
-    }
-    if (toSend != 0) {
-	TRACE("Sending event %08x\n", toSend);
-	MidiInDev[wDevID].incLen =	0;
-	dwTime -= MidiInDev[wDevID].startTime;
-	MIDI_NotifyClient(wDevID, MIM_DATA, toSend, dwTime);
-    }
+        handle_sysex_data(MidiInDev + wDevID, value, dwTime);
+    else
+        handle_regular_data(MidiInDev + wDevID, value, dwTime);
 }
 
 static void handle_midi_data(unsigned char *buffer, unsigned int len)
