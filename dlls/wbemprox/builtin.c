@@ -228,6 +228,7 @@ static const struct column col_networkadapterconfig[] =
 };
 static const struct column col_operatingsystem[] =
 {
+    { L"BootDevice",              CIM_STRING },
     { L"BuildNumber",             CIM_STRING|COL_FLAG_DYNAMIC },
     { L"BuildType",               CIM_STRING },
     { L"Caption",                 CIM_STRING|COL_FLAG_DYNAMIC },
@@ -662,6 +663,7 @@ struct record_networkadapterconfig
 };
 struct record_operatingsystem
 {
+    const WCHAR *bootdevice;
     const WCHAR *buildnumber;
     const WCHAR *buildtype;
     const WCHAR *caption;
@@ -3651,6 +3653,7 @@ static enum fill_status fill_operatingsystem( struct table *table, const struct 
     RtlGetVersion( &ver );
 
     rec = (struct record_operatingsystem *)table->data;
+    rec->bootdevice             = L"\\Device\\HarddiskVolume1";
     rec->buildnumber            = get_osbuildnumber( &ver );
     rec->buildtype              = L"Wine build";
     rec->caption                = get_oscaption( &ver );

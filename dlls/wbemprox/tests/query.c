@@ -1388,6 +1388,7 @@ static void test_Win32_OperatingSystem( IWbemServices *services )
     hr = IWbemClassObject_EndEnumeration( obj );
     ok( hr == S_OK, "got %#lx\n", hr );
 
+    check_property( obj, L"BootDevice", VT_BSTR, CIM_STRING );
     check_property( obj, L"BuildNumber", VT_BSTR, CIM_STRING );
     check_property( obj, L"BuildType", VT_BSTR, CIM_STRING );
     check_property( obj, L"Caption", VT_BSTR, CIM_STRING );
