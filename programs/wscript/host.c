@@ -80,12 +80,12 @@ static void print_string(const WCHAR *string)
         return;
     }
 
-    lena = WideCharToMultiByte(GetConsoleOutputCP(), 0, string, len, NULL, 0, NULL, NULL);
+    lena = WideCharToMultiByte(GetOEMCP(), 0, string, len, NULL, 0, NULL, NULL);
     buf = heap_alloc(len);
     if(!buf)
         return;
 
-    WideCharToMultiByte(GetConsoleOutputCP(), 0, string, len, buf, lena, NULL, NULL);
+    WideCharToMultiByte(GetOEMCP(), 0, string, len, buf, lena, NULL, NULL);
     WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), buf, lena, &count, FALSE);
     heap_free(buf);
     WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), "\r\n", 2, &count, FALSE);
