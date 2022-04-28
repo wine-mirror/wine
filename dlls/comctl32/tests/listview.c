@@ -461,6 +461,30 @@ static const struct message listview_end_label_edit_kill_focus[] = {
     { 0 }
 };
 
+static void hold_key(int vk)
+{
+    BYTE kstate[256];
+    BOOL res;
+
+    res = GetKeyboardState(kstate);
+    ok(res, "GetKeyboardState failed.\n");
+    kstate[vk] |= 0x80;
+    res = SetKeyboardState(kstate);
+    ok(res, "SetKeyboardState failed.\n");
+}
+
+static void release_key(int vk)
+{
+    BYTE kstate[256];
+    BOOL res;
+
+    res = GetKeyboardState(kstate);
+    ok(res, "GetKeyboardState failed.\n");
+    kstate[vk] &= ~0x80;
+    res = SetKeyboardState(kstate);
+    ok(res, "SetKeyboardState failed.\n");
+}
+
 static LRESULT WINAPI parent_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     static LONG defwndproc_counter = 0;
@@ -2355,7 +2379,6 @@ static void test_multiselect(void)
     int i, j;
     static const int items=5;
     DWORD item_count;
-    BYTE kstate[256];
     select_task task;
     LONG_PTR style;
     LVITEMA item;
@@ -2422,10 +2445,7 @@ static void test_multiselect(void)
 	selected_count = SendMessageA(hwnd, LVM_GETSELECTEDCOUNT, 0, 0);
 	ok(selected_count == 1, "expected 1, got %d\n", selected_count);
 
-	/* Set SHIFT key pressed */
-        GetKeyboardState(kstate);
-        kstate[VK_SHIFT]=0x80;
-        SetKeyboardState(kstate);
+        hold_key(VK_SHIFT);
 
 	for (j=1;j<=(task.count == -1 ? item_count : task.count);j++) {
 	    r = SendMessageA(hwnd, WM_KEYDOWN, task.loopVK, 0);
@@ -2440,10 +2460,7 @@ static void test_multiselect(void)
             "Failed multiple selection %s. There should be %d selected items (is %d)\n",
             task.descr, item_count, selected_count);
 
-	/* Set SHIFT key released */
-	GetKeyboardState(kstate);
-        kstate[VK_SHIFT]=0x00;
-        SetKeyboardState(kstate);
+        release_key(VK_SHIFT);
     }
     DestroyWindow(hwnd);
 
