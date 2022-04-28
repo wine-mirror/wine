@@ -6641,7 +6641,7 @@ static void test_h264_decoder(void)
     static const struct attribute_desc new_output_type_desc[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_I420),
         ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 96),
         ATTR_RATIO(MF_MT_FRAME_RATE, 1, 1),
         ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 2),
@@ -6650,7 +6650,7 @@ static void test_h264_decoder(void)
     static const struct attribute_desc new_output_type_desc_win7[] =
     {
         ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
-        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
+        ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_I420),
         ATTR_RATIO(MF_MT_FRAME_SIZE, 96, 96),
         ATTR_RATIO(MF_MT_FRAME_RATE, 1, 1),
         ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 2),
@@ -6734,9 +6734,9 @@ static void test_h264_decoder(void)
 
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_H264};
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
+    const BYTE *h264_encoded_data, *nv12_frame_data, *i420_frame_data;
+    ULONG h264_encoded_data_len, nv12_frame_len, i420_frame_len;
     DWORD input_id, output_id, input_count, output_count;
-    const BYTE *h264_encoded_data, *nv12_frame_data;
-    ULONG h264_encoded_data_len, nv12_frame_len;
     MFT_OUTPUT_STREAM_INFO output_info;
     MFT_INPUT_STREAM_INFO input_info;
     MFT_OUTPUT_DATA_BUFFER output;
@@ -7009,7 +7009,7 @@ static void test_h264_decoder(void)
     todo_wine
     ok(i == 2, "got %lu iterations\n", i);
     todo_wine
-    ok(h264_encoded_data_len == 48194, "got h264_encoded_data_len %lu\n", h264_encoded_data_len);
+    ok(h264_encoded_data_len == 1180, "got h264_encoded_data_len %lu\n", h264_encoded_data_len);
     todo_wine
     ok(hr == MF_E_TRANSFORM_STREAM_CHANGE, "ProcessOutput returned %#lx\n", hr);
     ok(output.dwStreamID == 0, "got dwStreamID %lu\n", output.dwStreamID);
@@ -7168,6 +7168,19 @@ skip_nv12_tests:
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
     todo_wine
     ok(hr == MF_E_TRANSFORM_STREAM_CHANGE, "ProcessOutput returned %#lx\n", hr);
+
+    if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
+    {
+        hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+        ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
+        ret = IMFSample_Release(sample);
+        ok(ret <= 1, "Release returned %lu\n", ret);
+        sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
+        hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
+        todo_wine
+        ok(hr == MF_E_TRANSFORM_STREAM_CHANGE, "ProcessOutput returned %#lx\n", hr);
+    }
+
     ok(output.dwStreamID == 0, "got dwStreamID %lu\n", output.dwStreamID);
     ok(!!output.pSample, "got pSample %p\n", output.pSample);
     todo_wine
@@ -7181,6 +7194,17 @@ skip_nv12_tests:
     ret = IMFSample_Release(output.pSample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
+    GetTempPathW(ARRAY_SIZE(output_path), output_path);
+    lstrcatW(output_path, L"i420frame.bin");
+    output_file = CreateFileW(output_path, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0);
+    ok(output_file != INVALID_HANDLE_VALUE, "CreateFileW failed, error %lu\n", GetLastError());
+
+    resource = FindResourceW(NULL, L"i420frame.bin", (const WCHAR *)RT_RCDATA);
+    ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
+    i420_frame_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
+    i420_frame_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    ok(i420_frame_len == actual_width * actual_height * 3 / 2, "got frame length %lu\n", i420_frame_len);
+
     status = 0;
     memset(&output, 0, sizeof(output));
     output.pSample = create_sample(NULL, actual_width * actual_height * 2);
@@ -7192,8 +7216,51 @@ skip_nv12_tests:
     ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
     ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
     ok(status == 0, "got status %#lx\n", status);
+    if (hr != S_OK) goto skip_i420_tests;
+
+    hr = IMFSample_GetSampleTime(output.pSample, &time);
+    ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
+    ok(time - 333666 <= 2, "got time %I64d\n", time);
+
+    duration = 0xdeadbeef;
+    hr = IMFSample_GetSampleDuration(output.pSample, &duration);
+    ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
+    ok(duration - 333666 <= 2, "got duration %I64d\n", duration);
+
+    /* Win8 and before pad the data with garbage instead of original
+     * buffer data, make sure it's consistent.  */
+    hr = IMFSample_ConvertToContiguousBuffer(output.pSample, &media_buffer);
+    ok(hr == S_OK, "ConvertToContiguousBuffer returned %#lx\n", hr);
+    hr = IMFMediaBuffer_Lock(media_buffer, &data, NULL, &length);
+    ok(hr == S_OK, "Lock returned %#lx\n", hr);
+    ok(length == i420_frame_len, "got length %lu\n", length);
+
+    for (i = 0; i < actual_aperture.Area.cy; ++i)
+    {
+        memset(data + actual_width * i + actual_aperture.Area.cx, 0xcd, actual_width - actual_aperture.Area.cx);
+        memset(data + actual_width * actual_height + actual_width / 2 * i + actual_aperture.Area.cx / 2, 0xcd,
+                actual_width / 2 - actual_aperture.Area.cx / 2);
+        memset(data + actual_width * actual_height + actual_width / 2 * (actual_height / 2 + i) + actual_aperture.Area.cx / 2, 0xcd,
+                actual_width / 2 - actual_aperture.Area.cx / 2);
+    }
+    memset(data + actual_width * actual_aperture.Area.cy, 0xcd, (actual_height - actual_aperture.Area.cy) * actual_width);
+    memset(data + actual_width * actual_height + actual_width / 2 * actual_aperture.Area.cy / 2, 0xcd,
+            (actual_height - actual_aperture.Area.cy) / 2 * actual_width / 2);
+    memset(data + actual_width * actual_height + actual_width / 2 * (actual_height / 2 + actual_aperture.Area.cy / 2), 0xcd,
+            (actual_height - actual_aperture.Area.cy) / 2 * actual_width / 2);
+
+    hr = IMFMediaBuffer_Unlock(media_buffer);
+    ok(hr == S_OK, "Unlock returned %#lx\n", hr);
+    IMFMediaBuffer_Release(media_buffer);
+
+    check_sample(output.pSample, i420_frame_data, output_file);
+
+skip_i420_tests:
     ret = IMFSample_Release(output.pSample);
     ok(ret == 0, "Release returned %lu\n", ret);
+
+    trace("created %s\n", debugstr_w(output_path));
+    CloseHandle(output_file);
 
     status = 0;
     memset(&output, 0, sizeof(output));

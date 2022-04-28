@@ -34,3 +34,6 @@ h264data.bin RCDATA h264data.bin
 
 /* @makedep: nv12frame.bin */
 nv12frame.bin RCDATA nv12frame.bin
+
+/* @makedep: i420frame.bin */
+i420frame.bin RCDATA i420frame.bin
