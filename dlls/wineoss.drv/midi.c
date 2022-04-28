@@ -300,7 +300,6 @@ static void handle_regular_data(struct midi_src *src, unsigned char value, UINT 
     if (to_send)
     {
         src->incLen = 0;
-        time -= src->startTime;
         MIDI_NotifyClient(src - MidiInDev, MIM_DATA, to_send, time);
     }
 }
@@ -320,6 +319,8 @@ static void midReceiveChar(WORD wDevID, unsigned char value, DWORD dwTime)
 	TRACE("disabled or input not started, thrown away\n");
 	return;
     }
+
+    dwTime -= MidiInDev[wDevID].startTime;
 
     if (value == 0xf0 || MidiInDev[wDevID].state & 2) /* system exclusive */
         handle_sysex_data(MidiInDev + wDevID, value, dwTime);
