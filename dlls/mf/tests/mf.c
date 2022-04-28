@@ -220,6 +220,80 @@ static HWND create_window(void)
             0, 0, r.right - r.left, r.bottom - r.top, NULL, NULL, NULL, NULL);
 }
 
+static BOOL create_transform(GUID category, MFT_REGISTER_TYPE_INFO *input_type,
+        MFT_REGISTER_TYPE_INFO *output_type, const WCHAR *expect_name, const GUID *expect_major_type,
+        const GUID *expect_input, ULONG expect_input_count, const GUID *expect_output, ULONG expect_output_count,
+        IMFTransform **transform, const GUID *expect_class_id, GUID *class_id)
+{
+    MFT_REGISTER_TYPE_INFO *input_types = NULL, *output_types = NULL;
+    UINT32 input_count = 0, output_count = 0, count = 0, i;
+    GUID *class_ids = NULL;
+    WCHAR *name;
+    HRESULT hr;
+
+    hr = MFTEnum(category, 0, input_type, output_type, NULL, &class_ids, &count);
+    if (FAILED(hr) || count == 0)
+    {
+        todo_wine
+        win_skip("Failed to enumerate %s, skipping tests.\n", debugstr_w(expect_name));
+        return FALSE;
+    }
+
+    ok(hr == S_OK, "MFTEnum returned %lx\n", hr);
+    for (i = 0; i < count; ++i)
+    {
+        if (IsEqualGUID(expect_class_id, class_ids + i))
+            break;
+    }
+    todo_wine_if(IsEqualGUID(class_ids, &CLSID_WINEAudioConverter))
+    ok(i < count, "failed to find %s transform\n", debugstr_w(expect_name));
+    if (i == count) return FALSE;
+    *class_id = class_ids[i];
+    CoTaskMemFree(class_ids);
+    ok(IsEqualGUID(class_id, expect_class_id), "got class id %s\n", debugstr_guid(class_id));
+
+    hr = MFTGetInfo(*class_id, &name, &input_types, &input_count, &output_types, &output_count, NULL);
+    if (FAILED(hr))
+    {
+        todo_wine
+        win_skip("Failed to get %s info, skipping tests.\n", debugstr_w(expect_name));
+    }
+    else
+    {
+        ok(hr == S_OK, "MFTEnum returned %lx\n", hr);
+        ok(!wcscmp(name, expect_name), "got name %s\n", debugstr_w(name));
+        ok(input_count == expect_input_count, "got input_count %u\n", input_count);
+        for (i = 0; i < input_count; ++i)
+        {
+            ok(IsEqualGUID(&input_types[i].guidMajorType, expect_major_type),
+                    "got input[%u] major %s\n", i, debugstr_guid(&input_types[i].guidMajorType));
+            ok(IsEqualGUID(&input_types[i].guidSubtype, expect_input + i),
+                    "got input[%u] subtype %s\n", i, debugstr_guid(&input_types[i].guidSubtype));
+        }
+        ok(output_count == expect_output_count, "got output_count %u\n", output_count);
+        for (i = 0; i < output_count; ++i)
+        {
+            ok(IsEqualGUID(&output_types[i].guidMajorType, expect_major_type),
+                    "got output[%u] major %s\n", i, debugstr_guid(&output_types[i].guidMajorType));
+            ok(IsEqualGUID(&output_types[i].guidSubtype, expect_output + i),
+                    "got output[%u] subtype %s\n", i, debugstr_guid(&output_types[i].guidSubtype));
+        }
+        CoTaskMemFree(output_types);
+        CoTaskMemFree(input_types);
+        CoTaskMemFree(name);
+    }
+
+    hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)transform);
+    if (FAILED(hr))
+    {
+        todo_wine
+        win_skip("Failed to create %s instance, skipping tests.\n", debugstr_w(expect_name));
+        return FALSE;
+    }
+
+    return TRUE;
+}
+
 static HRESULT WINAPI test_unk_QueryInterface(IUnknown *iface, REFIID riid, void **obj)
 {
     if (IsEqualIID(riid, &IID_IUnknown))
@@ -3473,6 +3547,57 @@ static BOOL is_supported_video_type(const GUID *guid)
 
 static void test_video_processor(void)
 {
+    const GUID transform_inputs[22] =
+    {
+        MFVideoFormat_IYUV,
+        MFVideoFormat_YV12,
+        MFVideoFormat_NV12,
+        MFVideoFormat_YUY2,
+        MFVideoFormat_ARGB32,
+        MFVideoFormat_RGB32,
+        MFVideoFormat_NV11,
+        MFVideoFormat_AYUV,
+        MFVideoFormat_UYVY,
+        MEDIASUBTYPE_P208,
+        MFVideoFormat_RGB24,
+        MFVideoFormat_RGB555,
+        MFVideoFormat_RGB565,
+        MFVideoFormat_RGB8,
+        MFVideoFormat_I420,
+        MFVideoFormat_Y216,
+        MFVideoFormat_v410,
+        MFVideoFormat_Y41P,
+        MFVideoFormat_Y41T,
+        MFVideoFormat_Y42T,
+        MFVideoFormat_YVYU,
+        MFVideoFormat_420O,
+    };
+    const GUID transform_outputs[21] =
+    {
+        MFVideoFormat_IYUV,
+        MFVideoFormat_YV12,
+        MFVideoFormat_NV12,
+        MFVideoFormat_YUY2,
+        MFVideoFormat_ARGB32,
+        MFVideoFormat_RGB32,
+        MFVideoFormat_NV11,
+        MFVideoFormat_AYUV,
+        MFVideoFormat_UYVY,
+        MEDIASUBTYPE_P208,
+        MFVideoFormat_RGB24,
+        MFVideoFormat_RGB555,
+        MFVideoFormat_RGB565,
+        MFVideoFormat_RGB8,
+        MFVideoFormat_I420,
+        MFVideoFormat_Y216,
+        MFVideoFormat_v410,
+        MFVideoFormat_Y41P,
+        MFVideoFormat_Y41T,
+        MFVideoFormat_Y42T,
+        MFVideoFormat_YVYU,
+    };
+    MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Video, MFVideoFormat_NV12};
+    MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Video, MFVideoFormat_I420};
     DWORD input_count, output_count, input_id, output_id, flags;
     DWORD input_min, input_max, output_min, output_max, i;
     IMFAttributes *attributes, *attributes2;
@@ -3485,6 +3610,7 @@ static void test_video_processor(void)
     IMFMediaBuffer *buffer;
     IMFMediaEvent *event;
     unsigned int value;
+    GUID class_id;
     UINT32 count;
     HRESULT hr;
     GUID guid;
@@ -3492,13 +3618,10 @@ static void test_video_processor(void)
     hr = CoInitialize(NULL);
     ok(hr == S_OK, "Failed to initialize, hr %#lx.\n", hr);
 
-    hr = CoCreateInstance(&CLSID_VideoProcessorMFT, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform,
-            (void **)&transform);
-    if (FAILED(hr))
-    {
-        skip("Failed to create Video Processor instance, skipping tests.\n");
+    if (!create_transform(MFT_CATEGORY_VIDEO_PROCESSOR, &input_type, &output_type, L"Microsoft Video Processor MFT", &MFMediaType_Video,
+            transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
+            &transform, &CLSID_VideoProcessorMFT, &class_id))
         goto failed;
-    }
 
     todo_wine
     check_interface(transform, &IID_IMFVideoProcessorControl, TRUE);
@@ -5666,81 +5789,6 @@ static void test_MFRequireProtectedEnvironment(void)
     IMFMediaType_Release(mediatype);
     IMFStreamDescriptor_Release(sd);
     IMFPresentationDescriptor_Release(pd);
-}
-
-static BOOL create_transform(GUID category, MFT_REGISTER_TYPE_INFO *input_type,
-        MFT_REGISTER_TYPE_INFO *output_type, const WCHAR *expect_name, const GUID *expect_major_type,
-        const GUID *expect_input, ULONG expect_input_count, const GUID *expect_output, ULONG expect_output_count,
-        IMFTransform **transform, const GUID *expect_class_id, GUID *class_id)
-{
-    MFT_REGISTER_TYPE_INFO *input_types = NULL, *output_types = NULL;
-    UINT32 input_count = 0, output_count = 0, count = 0, i;
-    GUID *class_ids = NULL;
-    WCHAR *name;
-    HRESULT hr;
-
-    hr = MFTEnum(category, 0, input_type, output_type, NULL, &class_ids, &count);
-    if (FAILED(hr))
-    {
-        todo_wine
-        win_skip("Failed to enumerate %s, skipping tests.\n", debugstr_w(expect_name));
-        return FALSE;
-    }
-
-    ok(hr == S_OK, "MFTEnum returned %lx\n", hr);
-    ok(count > 0, "got %u\n", count);
-    for (i = 0; i < count; ++i)
-    {
-        if (IsEqualGUID(expect_class_id, class_ids + i))
-            break;
-    }
-    todo_wine_if(IsEqualGUID(class_ids, &CLSID_WINEAudioConverter))
-    ok(i < count, "failed to find %s transform\n", debugstr_w(expect_name));
-    if (i == count) return FALSE;
-    *class_id = class_ids[i];
-    CoTaskMemFree(class_ids);
-    ok(IsEqualGUID(class_id, expect_class_id), "got class id %s\n", debugstr_guid(class_id));
-
-    hr = MFTGetInfo(*class_id, &name, &input_types, &input_count, &output_types, &output_count, NULL);
-    if (FAILED(hr))
-    {
-        todo_wine
-        win_skip("Failed to get %s info, skipping tests.\n", debugstr_w(expect_name));
-    }
-    else
-    {
-        ok(hr == S_OK, "MFTEnum returned %lx\n", hr);
-        ok(!wcscmp(name, expect_name), "got name %s\n", debugstr_w(name));
-        ok(input_count == expect_input_count, "got input_count %u\n", input_count);
-        for (i = 0; i < input_count; ++i)
-        {
-            ok(IsEqualGUID(&input_types[i].guidMajorType, expect_major_type),
-                    "got input[%u] major %s\n", i, debugstr_guid(&input_types[i].guidMajorType));
-            ok(IsEqualGUID(&input_types[i].guidSubtype, expect_input + i),
-                    "got input[%u] subtype %s\n", i, debugstr_guid(&input_types[i].guidSubtype));
-        }
-        ok(output_count == expect_output_count, "got output_count %u\n", output_count);
-        for (i = 0; i < output_count; ++i)
-        {
-            ok(IsEqualGUID(&output_types[i].guidMajorType, expect_major_type),
-                    "got output[%u] major %s\n", i, debugstr_guid(&output_types[i].guidMajorType));
-            ok(IsEqualGUID(&output_types[i].guidSubtype, expect_output + i),
-                    "got output[%u] subtype %s\n", i, debugstr_guid(&output_types[i].guidSubtype));
-        }
-        CoTaskMemFree(output_types);
-        CoTaskMemFree(input_types);
-        CoTaskMemFree(name);
-    }
-
-    hr = CoCreateInstance(class_id, NULL, CLSCTX_INPROC_SERVER, &IID_IMFTransform, (void **)transform);
-    if (FAILED(hr))
-    {
-        todo_wine
-        win_skip("Failed to create %s instance, skipping tests.\n", debugstr_w(expect_name));
-        return FALSE;
-    }
-
-    return TRUE;
 }
 
 static IMFSample *create_sample(const BYTE *data, ULONG size)
