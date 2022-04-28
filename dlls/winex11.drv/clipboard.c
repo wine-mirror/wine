@@ -729,9 +729,11 @@ static void *import_utf8_string( Atom type, const void *data, size_t size, size_
     DWORD str_size;
     WCHAR *ret;
 
-    if (!(ret = malloc( (size * 2 + 1) * sizeof(WCHAR) ))) return NULL;
-    RtlUTF8ToUnicodeN( ret + size, size * sizeof(WCHAR), &str_size, data, size );
-    return unicode_text_from_string( ret, ret + size, str_size / sizeof(WCHAR), ret_size );
+    RtlUTF8ToUnicodeN( NULL, 0, &str_size, data, size );
+    if (!(ret = malloc( str_size * 2 + sizeof(WCHAR) ))) return NULL;
+    RtlUTF8ToUnicodeN( ret + str_size / sizeof(WCHAR), str_size, &str_size, data, size );
+    return unicode_text_from_string( ret, ret + str_size / sizeof(WCHAR),
+                                     str_size / sizeof(WCHAR), ret_size );
 }
 
 
@@ -1198,31 +1200,19 @@ static BOOL export_data( Display *display, Window win, Atom prop, Atom target, v
  *
  * Convert CF_UNICODETEXT data to a string in the specified codepage.
  */
-static char *string_from_unicode_text( UINT codepage, const WCHAR *string, size_t string_size, size_t *size )
+static void string_from_unicode_text( char *str, size_t len, DWORD *size )
 {
-    UINT i, j;
-    char *str;
-    UINT lenW = string_size / sizeof(WCHAR);
-    DWORD len;
+    DWORD i, j;
 
-    if (!string_size) return NULL;
-
-    len = WideCharToMultiByte( codepage, 0, string, lenW, NULL, 0, NULL, NULL );
-    if ((str = malloc( len )))
+    /* remove carriage returns */
+    for (i = j = 0; i < len; i++)
     {
-        WideCharToMultiByte( codepage, 0, string, lenW, str, len, NULL, NULL);
-
-        /* remove carriage returns */
-        for (i = j = 0; i < len; i++)
-        {
-            if (str[i] == '\r' && (i == len - 1 || str[i + 1] == '\n')) continue;
-            str[j++] = str[i];
-        }
-        while (j && !str[j - 1]) j--;  /* remove trailing nulls */
-        *size = j;
-        TRACE( "returning %s\n", debugstr_an( str, j ));
+        if (str[i] == '\r' && (i == len - 1 || str[i + 1] == '\n')) continue;
+        str[j++] = str[i];
     }
-    return str;
+    while (j && !str[j - 1]) j--;  /* remove trailing nulls */
+    TRACE( "returning %s\n", debugstr_an( str, j ));
+    *size = j;
 }
 
 
@@ -1233,10 +1223,14 @@ static char *string_from_unicode_text( UINT codepage, const WCHAR *string, size_
  */
 static BOOL export_string( Display *display, Window win, Atom prop, Atom target, void *data, size_t size )
 {
-    char *text = string_from_unicode_text( 28591, data, size, &size );
+    DWORD len;
+    char *text;
 
-    if (!text) return FALSE;
-    put_property( display, win, prop, target, 8, text, size );
+    if (!(text = malloc( size ))) return FALSE;
+    len = WideCharToMultiByte( 28591, 0, data, size / sizeof(WCHAR), text, size, NULL, NULL );
+    string_from_unicode_text( text, len, &len );
+
+    put_property( display, win, prop, target, 8, text, len );
     free( text );
     return TRUE;
 }
@@ -1250,10 +1244,14 @@ static BOOL export_string( Display *display, Window win, Atom prop, Atom target,
 static BOOL export_utf8_string( Display *display, Window win, Atom prop, Atom target,
                                 void *data, size_t size )
 {
-    char *text = string_from_unicode_text( CP_UTF8, data, size, &size );
+    DWORD len;
+    char *text;
 
-    if (!text) return FALSE;
-    put_property( display, win, prop, target, 8, text, size );
+    if (!(text = malloc( size / sizeof(WCHAR) * 3 ))) return FALSE;
+    RtlUnicodeToUTF8N( text, size / sizeof(WCHAR) * 3, &len, data, size );
+    string_from_unicode_text( text, len, &len );
+
+    put_property( display, win, prop, target, 8, text, len );
     free( text );
     return TRUE;
 }
@@ -1280,9 +1278,15 @@ static BOOL export_compound_text( Display *display, Window win, Atom prop, Atom 
 {
     XTextProperty textprop;
     XICCEncodingStyle style;
-    char *text = string_from_unicode_text( CP_UNIXCP, data, size, &size );
+    DWORD len;
+    char *text;
 
-    if (!text) return FALSE;
+
+    if (!(text = malloc( size / sizeof(WCHAR) * 3 ))) return FALSE;
+    len = WideCharToMultiByte( CP_UNIXCP, 0, data, size / sizeof(WCHAR),
+                               text, size / sizeof(WCHAR) * 3, NULL, NULL );
+    string_from_unicode_text( text, len, &len );
+
     if (target == x11drv_atom(COMPOUND_TEXT))
         style = XCompoundTextStyle;
     else
