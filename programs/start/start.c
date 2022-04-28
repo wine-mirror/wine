@@ -38,25 +38,22 @@ WINE_DEFAULT_DEBUG_CHANNEL(start);
 static void output(const WCHAR *message)
 {
 	DWORD count;
-	DWORD   res;
 	int    wlen = lstrlenW(message);
 
 	if (!wlen) return;
 
-	res = WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), message, wlen, &count, NULL);
-
 	/* If writing to console fails, assume it's file
          * i/o so convert to OEM codepage and output
          */
-	if (!res)
+	if (!WriteConsoleW(GetStdHandle(STD_OUTPUT_HANDLE), message, wlen, &count, NULL))
 	{
 		DWORD len;
 		char  *mesA;
 		/* Convert to OEM, then output */
-		len = WideCharToMultiByte( GetConsoleOutputCP(), 0, message, wlen, NULL, 0, NULL, NULL );
+		len = WideCharToMultiByte( GetOEMCP(), 0, message, wlen, NULL, 0, NULL, NULL );
 		mesA = HeapAlloc(GetProcessHeap(), 0, len*sizeof(char));
 		if (!mesA) return;
-		WideCharToMultiByte( GetConsoleOutputCP(), 0, message, wlen, mesA, len, NULL, NULL );
+		WideCharToMultiByte( GetOEMCP(), 0, message, wlen, mesA, len, NULL, NULL );
 		WriteFile(GetStdHandle(STD_OUTPUT_HANDLE), mesA, len, &count, FALSE);
 		HeapFree(GetProcessHeap(), 0, mesA);
 	}
