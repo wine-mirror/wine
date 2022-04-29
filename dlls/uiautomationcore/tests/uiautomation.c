@@ -23,8 +23,321 @@
 #include "windows.h"
 #include "initguid.h"
 #include "uiautomation.h"
+#include "ocidl.h"
 
 #include "wine/test.h"
+
+static HRESULT (WINAPI *pUiaProviderFromIAccessible)(IAccessible *, long, DWORD, IRawElementProviderSimple **);
+
+#define DEFINE_EXPECT(func) \
+    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+
+#define SET_EXPECT(func) \
+    do { called_ ## func = FALSE; expect_ ## func = TRUE; } while(0)
+
+#define CHECK_EXPECT2(func) \
+    do { \
+        ok(expect_ ##func, "unexpected call " #func "\n"); \
+        called_ ## func = TRUE; \
+    }while(0)
+
+#define CHECK_EXPECT(func) \
+    do { \
+        CHECK_EXPECT2(func); \
+        expect_ ## func = FALSE; \
+    }while(0)
+
+#define CHECK_CALLED(func) \
+    do { \
+        ok(called_ ## func, "expected " #func "\n"); \
+        expect_ ## func = called_ ## func = FALSE; \
+    }while(0)
+
+DEFINE_EXPECT(Accessible_accNavigate);
+
+static LONG Accessible_ref = 1;
+static IAccessible Accessible;
+static IOleWindow OleWindow;
+static HWND Accessible_hwnd = NULL;
+static HWND OleWindow_hwnd = NULL;
+
+static BOOL check_variant_i4(VARIANT *v, int val)
+{
+    if (V_VT(v) == VT_I4 && V_I4(v) == val)
+        return TRUE;
+
+    return FALSE;
+}
+
+static HRESULT WINAPI Accessible_QueryInterface(IAccessible *iface, REFIID riid, void **obj)
+{
+    *obj = NULL;
+    if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDispatch) ||
+            IsEqualIID(riid, &IID_IAccessible))
+        *obj = iface;
+    else if (IsEqualIID(riid, &IID_IOleWindow))
+        *obj = &OleWindow;
+    else
+        return E_NOINTERFACE;
+
+    IAccessible_AddRef(iface);
+    return S_OK;
+}
+
+static ULONG WINAPI Accessible_AddRef(IAccessible *iface)
+{
+    return InterlockedIncrement(&Accessible_ref);
+}
+
+static ULONG WINAPI Accessible_Release(IAccessible *iface)
+{
+    return InterlockedDecrement(&Accessible_ref);
+}
+
+static HRESULT WINAPI Accessible_GetTypeInfoCount(IAccessible *iface, UINT *pctinfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_GetTypeInfo(IAccessible *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **out_tinfo)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_GetIDsOfNames(IAccessible *iface, REFIID riid,
+        LPOLESTR *rg_names, UINT name_count, LCID lcid, DISPID *rg_disp_id)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_Invoke(IAccessible *iface, DISPID disp_id_member,
+        REFIID riid, LCID lcid, WORD flags, DISPPARAMS *disp_params,
+        VARIANT *var_result, EXCEPINFO *excep_info, UINT *arg_err)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accParent(IAccessible *iface, IDispatch **out_parent)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accChildCount(IAccessible *iface, LONG *out_count)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accChild(IAccessible *iface, VARIANT child_id,
+        IDispatch **out_child)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accName(IAccessible *iface, VARIANT child_id,
+        BSTR *out_name)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accValue(IAccessible *iface, VARIANT child_id,
+        BSTR *out_value)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accDescription(IAccessible *iface, VARIANT child_id,
+        BSTR *out_description)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accRole(IAccessible *iface, VARIANT child_id,
+        VARIANT *out_role)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accState(IAccessible *iface, VARIANT child_id,
+        VARIANT *out_state)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accHelp(IAccessible *iface, VARIANT child_id,
+        BSTR *out_help)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accHelpTopic(IAccessible *iface,
+        BSTR *out_help_file, VARIANT child_id, LONG *out_topic_id)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accKeyboardShortcut(IAccessible *iface, VARIANT child_id,
+        BSTR *out_kbd_shortcut)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accFocus(IAccessible *iface, VARIANT *pchild_id)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accSelection(IAccessible *iface, VARIANT *out_selection)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_get_accDefaultAction(IAccessible *iface, VARIANT child_id,
+        BSTR *out_default_action)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_accSelect(IAccessible *iface, LONG select_flags,
+        VARIANT child_id)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_accLocation(IAccessible *iface, LONG *out_left,
+        LONG *out_top, LONG *out_width, LONG *out_height, VARIANT child_id)
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_accNavigate(IAccessible *iface, LONG nav_direction,
+        VARIANT child_id_start, VARIANT *out_var)
+{
+    CHECK_EXPECT(Accessible_accNavigate);
+    VariantInit(out_var);
+
+    /*
+     * This is an undocumented way for UI Automation to get an HWND for
+     * IAccessible's contained in a Direct Annotation wrapper object.
+     */
+    if ((nav_direction == 10) && check_variant_i4(&child_id_start, CHILDID_SELF))
+    {
+        V_VT(out_var) = VT_I4;
+        V_I4(out_var) = HandleToUlong(Accessible_hwnd);
+        return S_OK;
+    }
+    return S_FALSE;
+}
+
+static HRESULT WINAPI Accessible_accHitTest(IAccessible *iface, LONG left, LONG top,
+        VARIANT *out_child_id)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_accDoDefaultAction(IAccessible *iface, VARIANT child_id)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_put_accName(IAccessible *iface, VARIANT child_id,
+        BSTR name)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible_put_accValue(IAccessible *iface, VARIANT child_id,
+        BSTR value)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static IAccessibleVtbl AccessibleVtbl = {
+    Accessible_QueryInterface,
+    Accessible_AddRef,
+    Accessible_Release,
+    Accessible_GetTypeInfoCount,
+    Accessible_GetTypeInfo,
+    Accessible_GetIDsOfNames,
+    Accessible_Invoke,
+    Accessible_get_accParent,
+    Accessible_get_accChildCount,
+    Accessible_get_accChild,
+    Accessible_get_accName,
+    Accessible_get_accValue,
+    Accessible_get_accDescription,
+    Accessible_get_accRole,
+    Accessible_get_accState,
+    Accessible_get_accHelp,
+    Accessible_get_accHelpTopic,
+    Accessible_get_accKeyboardShortcut,
+    Accessible_get_accFocus,
+    Accessible_get_accSelection,
+    Accessible_get_accDefaultAction,
+    Accessible_accSelect,
+    Accessible_accLocation,
+    Accessible_accNavigate,
+    Accessible_accHitTest,
+    Accessible_accDoDefaultAction,
+    Accessible_put_accName,
+    Accessible_put_accValue
+};
+
+static HRESULT WINAPI OleWindow_QueryInterface(IOleWindow *iface, REFIID riid, void **obj)
+{
+    return IAccessible_QueryInterface(&Accessible, riid, obj);
+}
+
+static ULONG WINAPI OleWindow_AddRef(IOleWindow *iface)
+{
+    return IAccessible_AddRef(&Accessible);
+}
+
+static ULONG WINAPI OleWindow_Release(IOleWindow *iface)
+{
+    return IAccessible_Release(&Accessible);
+}
+
+static HRESULT WINAPI OleWindow_GetWindow(IOleWindow *iface, HWND *hwnd)
+{
+    *hwnd = OleWindow_hwnd;
+    return S_OK;
+}
+
+static HRESULT WINAPI OleWindow_ContextSensitiveHelp(IOleWindow *iface, BOOL f_enter_mode)
+{
+    return E_NOTIMPL;
+}
+
+static const IOleWindowVtbl OleWindowVtbl = {
+    OleWindow_QueryInterface,
+    OleWindow_AddRef,
+    OleWindow_Release,
+    OleWindow_GetWindow,
+    OleWindow_ContextSensitiveHelp
+};
+
+static IAccessible Accessible = {&AccessibleVtbl};
+static IOleWindow OleWindow   = {&OleWindowVtbl};
 
 static LRESULT WINAPI test_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
@@ -264,8 +577,119 @@ static void test_uia_reserved_value_ifaces(void)
     CoUninitialize();
 }
 
+static void test_UiaProviderFromIAccessible(void)
+{
+    IRawElementProviderSimple *elprov;
+    enum ProviderOptions prov_opt;
+    IAccessible *acc;
+    WNDCLASSA cls;
+    HRESULT hr;
+    HWND hwnd;
+    VARIANT v;
+
+
+    cls.style = 0;
+    cls.lpfnWndProc = test_wnd_proc;
+    cls.cbClsExtra = 0;
+    cls.cbWndExtra = 0;
+    cls.hInstance = GetModuleHandleA(NULL);
+    cls.hIcon = 0;
+    cls.hCursor = NULL;
+    cls.hbrBackground = NULL;
+    cls.lpszMenuName = NULL;
+    cls.lpszClassName = "UiaProviderFromIAccessible class";
+
+    RegisterClassA(&cls);
+
+    hwnd = CreateWindowA("UiaProviderFromIAccessible class", "Test window", WS_OVERLAPPEDWINDOW,
+            0, 0, 100, 100, NULL, NULL, NULL, NULL);
+
+    hr = pUiaProviderFromIAccessible(NULL, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+
+    hr = pUiaProviderFromIAccessible(&Accessible, CHILDID_SELF, UIA_PFIA_DEFAULT, NULL);
+    ok(hr == E_POINTER, "Unexpected hr %#lx.\n", hr);
+
+    /*
+     * UiaProviderFromIAccessible will not wrap an MSAA proxy, this is
+     * detected by checking for the 'IIS_IsOleaccProxy' service from the
+     * IServiceProvider interface.
+     */
+    hr = CreateStdAccessibleObject(hwnd, OBJID_CLIENT, &IID_IAccessible, (void**)&acc);
+    ok(hr == S_OK, "got %#lx\n", hr);
+    ok(!!acc, "acc == NULL\n");
+
+    hr = pUiaProviderFromIAccessible(acc, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    IAccessible_Release(acc);
+
+    /* Don't return an HWND from accNavigate or OleWindow. */
+    SET_EXPECT(Accessible_accNavigate);
+    Accessible_hwnd = NULL;
+    OleWindow_hwnd = NULL;
+    hr = pUiaProviderFromIAccessible(&Accessible, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
+    CHECK_CALLED(Accessible_accNavigate);
+
+    /* Return an HWND from accNavigate, not OleWindow. */
+    SET_EXPECT(Accessible_accNavigate);
+    Accessible_hwnd = hwnd;
+    OleWindow_hwnd = NULL;
+    hr = pUiaProviderFromIAccessible(&Accessible, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    CHECK_CALLED(Accessible_accNavigate);
+    ok(Accessible_ref == 2, "Unexpected refcnt %ld\n", Accessible_ref);
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible_ref == 1, "Unexpected refcnt %ld\n", Accessible_ref);
+
+    /* Return an HWND from OleWindow, not accNavigate. */
+    Accessible_hwnd = NULL;
+    OleWindow_hwnd = hwnd;
+    hr = pUiaProviderFromIAccessible(&Accessible, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Accessible_ref == 2, "Unexpected refcnt %ld\n", Accessible_ref);
+
+    hr = IRawElementProviderSimple_get_ProviderOptions(elprov, &prov_opt);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok((prov_opt == (ProviderOptions_ServerSideProvider | ProviderOptions_UseComThreading)) ||
+            broken(prov_opt == ProviderOptions_ClientSideProvider), /* Windows < 10 1507 */
+            "Unexpected provider options %#x\n", prov_opt);
+
+    hr = IRawElementProviderSimple_GetPropertyValue(elprov, UIA_ProviderDescriptionPropertyId, &v);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(&v) = %d\n", V_VT(&v));
+    VariantClear(&v);
+
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible_ref == 1, "Unexpected refcnt %ld\n", Accessible_ref);
+
+    /* ChildID other than CHILDID_SELF. */
+    hr = pUiaProviderFromIAccessible(&Accessible, 1, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Accessible_ref == 2, "Unexpected refcnt %ld\n", Accessible_ref);
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible_ref == 1, "Unexpected refcnt %ld\n", Accessible_ref);
+
+    DestroyWindow(hwnd);
+    UnregisterClassA("pUiaProviderFromIAccessible class", NULL);
+    Accessible_hwnd = NULL;
+    OleWindow_hwnd = NULL;
+}
+
 START_TEST(uiautomation)
 {
+    HMODULE uia_dll = LoadLibraryA("uiautomationcore.dll");
+
     test_UiaHostProviderFromHwnd();
     test_uia_reserved_value_ifaces();
+    if (uia_dll)
+    {
+        pUiaProviderFromIAccessible = (void *)GetProcAddress(uia_dll, "UiaProviderFromIAccessible");
+        if (pUiaProviderFromIAccessible)
+            test_UiaProviderFromIAccessible();
+        else
+            win_skip("UiaProviderFromIAccessible not exported by uiautomationcore.dll\n");
+
+        FreeLibrary(uia_dll);
+    }
 }
