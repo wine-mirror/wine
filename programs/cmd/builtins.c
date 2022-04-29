@@ -1355,6 +1355,13 @@ static BOOL WCMD_delete_one (const WCHAR *thisArg) {
             DIRECTORY_STACK *nextDir;
             WCHAR subParm[MAX_PATH];
 
+            if (wcslen(thisDir) + wcslen(fd.cFileName) + 1 + wcslen(fname) + wcslen(ext) >= MAX_PATH)
+            {
+                WINE_TRACE("Skipping path too long %s%s\\%s%s\n",
+                           debugstr_w(thisDir), debugstr_w(fd.cFileName),
+                           debugstr_w(fname), debugstr_w(ext));
+                continue;
+            }
             /* Work out search parameter in sub dir */
             lstrcpyW (subParm, thisDir);
             lstrcatW (subParm, fd.cFileName);
@@ -1761,7 +1768,14 @@ static void WCMD_add_dirstowalk(DIRECTORY_STACK *dirsToWalk) {
           (lstrcmpW(fd.cFileName, L"..") != 0) && (lstrcmpW(fd.cFileName, L".") != 0))
       {
         /* Allocate memory, add to list */
-        DIRECTORY_STACK *toWalk = heap_xalloc(sizeof(DIRECTORY_STACK));
+        DIRECTORY_STACK *toWalk;
+        if (wcslen(dirsToWalk->dirName) + 1 + wcslen(fd.cFileName) >= MAX_PATH)
+        {
+            WINE_TRACE("Skipping too long path %s\\%s\n",
+                       debugstr_w(dirsToWalk->dirName), debugstr_w(fd.cFileName));
+            continue;
+        }
+        toWalk = heap_xalloc(sizeof(DIRECTORY_STACK));
         WINE_TRACE("(%p->%p)\n", remainingDirs, remainingDirs->next);
         toWalk->next = remainingDirs->next;
         remainingDirs->next = toWalk;
@@ -2321,6 +2335,12 @@ void WCMD_for (WCHAR *p, CMD_LIST **cmdList) {
                       WINE_TRACE("Processing FOR filename %s\n", wine_dbgstr_w(fd.cFileName));
 
                       if (doRecurse) {
+                          if (wcslen(dirsToWalk->dirName) + 1 + wcslen(fd.cFileName) >= MAX_PATH)
+                          {
+                              WINE_TRACE("Skipping too long path %s\\%s\n",
+                                         debugstr_w(dirsToWalk->dirName), debugstr_w(fd.cFileName));
+                              continue;
+                          }
                           lstrcpyW(fullitem, dirsToWalk->dirName);
                           lstrcatW(fullitem, L"\\");
                           lstrcatW(fullitem, fd.cFileName);
