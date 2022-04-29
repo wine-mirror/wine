@@ -1046,10 +1046,8 @@ static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
         int status = sock_get_ntstatus( error );
         struct accept_req *req, *next;
 
-        if (sock->rd_shutdown || sock->hangup)
-            async_wake_up( &sock->read_q, status );
-        if (sock->wr_shutdown)
-            async_wake_up( &sock->write_q, status );
+        async_wake_up( &sock->read_q, status );
+        async_wake_up( &sock->write_q, status );
 
         LIST_FOR_EACH_ENTRY_SAFE( req, next, &sock->accept_list, struct accept_req, entry )
         {
