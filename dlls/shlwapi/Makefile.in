@@ -1,4 +1,3 @@
-EXTRADEFS = -D_SHLWAPI_
 MODULE    = shlwapi.dll
 IMPORTLIB = shlwapi
 IMPORTS   = uuid shcore user32 gdi32 advapi32 kernelbase
