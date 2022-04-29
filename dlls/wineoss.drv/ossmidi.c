@@ -30,6 +30,8 @@
 #include <stdarg.h>
 #include <string.h>
 #include <stdio.h>
+#include <stdint.h>
+#include <time.h>
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -153,6 +155,18 @@ static void in_buffer_lock(void)
 static void in_buffer_unlock(void)
 {
     pthread_mutex_unlock(&in_buffer_mutex);
+}
+
+static uint64_t get_time_msec(void)
+{
+    struct timespec now = {0, 0};
+
+#ifdef CLOCK_MONOTONIC_RAW
+    if (!clock_gettime(CLOCK_MONOTONIC_RAW, &now))
+        return (uint64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000;
+#endif
+    clock_gettime(CLOCK_MONOTONIC, &now);
+    return (uint64_t)now.tv_sec * 1000 + now.tv_nsec / 1000000;
 }
 
 /*
@@ -1304,7 +1318,7 @@ NTSTATUS midi_handle_data(void *args)
     struct midi_handle_data_params *params = args;
     unsigned char *buffer = params->buffer;
     unsigned int len = params->len;
-    unsigned int time = NtGetTickCount(), i;
+    unsigned int time = get_time_msec(), i;
     struct midi_src *src;
     unsigned char value;
     WORD dev_id;
@@ -1415,7 +1429,7 @@ static UINT midi_in_start(WORD dev_id)
     if (src->state == -1) return MIDIERR_NODEVICE;
 
     src->state = 1;
-    src->startTime = NtGetTickCount();
+    src->startTime = get_time_msec();
     return MMSYSERR_NOERROR;
 }
 
@@ -1435,7 +1449,7 @@ static UINT midi_in_stop(WORD dev_id)
 
 static UINT midi_in_reset(WORD dev_id, struct notify_context *notify)
 {
-    UINT cur_time = NtGetTickCount();
+    UINT cur_time = get_time_msec();
     UINT err = MMSYSERR_NOERROR;
     struct midi_src *src;
     MIDIHDR *hdr;
