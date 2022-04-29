@@ -1071,9 +1071,9 @@ static void expand_macro(macexpstackentry_t *mep)
 	assert(ppp->type == def_macro);
 	assert(ppp->expanding == 0);
 
-	if((ppp->nargs >= 0 && nargs != ppp->nargs) || (ppp->nargs < 0 && nargs < -ppp->nargs))
+	if((!ppp->variadic && nargs != ppp->nargs) || (ppp->variadic && nargs < ppp->nargs))
 	{
-		ppy_error("Too %s macro arguments (%d)", nargs < abs(ppp->nargs) ? "few" : "many", nargs);
+		ppy_error("Too %s macro arguments (%d)", nargs < ppp->nargs ? "few" : "many", nargs);
 		return;
 	}
 

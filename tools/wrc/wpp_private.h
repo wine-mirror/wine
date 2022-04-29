@@ -80,6 +80,7 @@ typedef struct pp_entry {
 	char		*ident;		/* The key */
 	char		**margs;	/* Macro arguments array or NULL if none */
 	int		nargs;
+	int             variadic;
 	union {
 		mtext_t	*mtext;		/* The substitution sequence or NULL if none */
 		char	*text;
@@ -156,7 +157,7 @@ typedef struct cval {
 
 pp_entry_t *pplookup(const char *ident);
 pp_entry_t *pp_add_define(const char *def, const char *text);
-pp_entry_t *pp_add_macro(char *ident, char *args[], int nargs, mtext_t *exp);
+pp_entry_t *pp_add_macro(char *ident, char *args[], int nargs, int variadic, mtext_t *exp);
 void pp_del_define(const char *name);
 void *pp_open_include(const char *name, int type, const char *parent_name, char **newpath);
 void pp_push_if(pp_if_state_t s);

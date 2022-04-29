@@ -239,7 +239,7 @@ pp_entry_t *pp_add_define(const char *def, const char *text)
 	return ppp;
 }
 
-pp_entry_t *pp_add_macro(char *id, char *args[], int nargs, mtext_t *exp)
+pp_entry_t *pp_add_macro(char *id, char *args[], int nargs, int variadic, mtext_t *exp)
 {
 	int idx;
 	pp_entry_t *ppp;
@@ -258,13 +258,14 @@ pp_entry_t *pp_add_macro(char *id, char *args[], int nargs, mtext_t *exp)
 	ppp->type	= def_macro;
 	ppp->margs	= args;
 	ppp->nargs	= nargs;
+	ppp->variadic   = variadic;
 	ppp->subst.mtext= exp;
 	ppp->filename = xstrdup(pp_status.input ? pp_status.input : "<internal or cmdline>");
 	ppp->linenumber = pp_status.input ? pp_status.line_number : 0;
         list_add_head( &pp_defines[idx], &ppp->entry );
 	if(pp_status.debug)
 	{
-		fprintf(stderr, "Added macro (%s, %d) <%s(%d)> to <", pp_status.input, pp_status.line_number, ppp->ident, nargs);
+		fprintf(stderr, "Added macro (%s, %d) <%s(%d%s)> to <", pp_status.input, pp_status.line_number, ppp->ident, nargs, variadic ? ",va" : "");
 		for(; exp; exp = exp->next)
 		{
 			switch(exp->type)

@@ -112,6 +112,7 @@ static char *merge_text(char *s1, char *s2);
  */
 static char   **macro_args;	/* Macro parameters array while parsing */
 static int	nmacro_args;
+static int	macro_variadic; /* Macro arguments end with (or consist entirely of) '...' */
 
 %}
 
@@ -267,7 +268,7 @@ preprocessor
 	| tUNDEF tIDENT tNL	{ pp_del_define($2); free($2); }
 	| tDEFINE opt_text tNL	{ pp_add_define($1, $2); free($1); free($2); }
 	| tMACRO res_arg allmargs tMACROEND opt_mtexts tNL	{
-		pp_add_macro($1, macro_args, nmacro_args, $5);
+		pp_add_macro($1, macro_args, nmacro_args, macro_variadic, $5);
 		}
 	| tLINE tSINT tDQSTRING	tNL	{ if($3) fprintf(ppy_out, "# %d %s\n", $2 , $3); free($3); }
 	| tGCCLINE tSINT tDQSTRING tNL	{ if($3) fprintf(ppy_out, "# %d %s\n", $2 , $3); free($3); }
@@ -305,16 +306,16 @@ text	: tLITERAL		{ $$ = $1; }
 	| text tSQSTRING	{ $$ = merge_text($1, $2); }
 	;
 
-res_arg	: /* Empty */	{ macro_args = NULL; nmacro_args = 0; }
+res_arg	: /* Empty */	{ macro_args = NULL; nmacro_args = 0; macro_variadic = 0; }
 	;
 
-allmargs: /* Empty */		{ $$ = 0; macro_args = NULL; nmacro_args = 0; }
+allmargs: /* Empty */		{ $$ = 0; macro_args = NULL; nmacro_args = 0; macro_variadic = 0; }
 	| emargs		{ $$ = nmacro_args; }
 	;
 
 emargs	: margs			{ $$ = $1; }
-	| margs ',' tELLIPSIS	{ nmacro_args *= -1; }
-	| tELLIPSIS	{ macro_args = NULL; nmacro_args = 0; }
+	| margs ',' tELLIPSIS	{ macro_variadic = 1; }
+	| tELLIPSIS	{ macro_args = NULL; nmacro_args = 0; macro_variadic = 1; }
 	;
 
 margs	: margs ',' tIDENT	{ $$ = add_new_marg($3); }
