@@ -4043,9 +4043,9 @@ WINADVAPI BOOL WINAPI CryptVerifySignatureW (HCRYPTHASH, const BYTE *, DWORD, HC
 #define               CryptVerifySignature WINELIB_NAME_AW(CryptVerifySignature)
 
 /* crypt32.dll functions */
-LPVOID WINAPI CryptMemAlloc(ULONG cbSize) __WINE_ALLOC_SIZE(1) __WINE_MALLOC;
-LPVOID WINAPI CryptMemRealloc(LPVOID pv, ULONG cbSize) __WINE_ALLOC_SIZE(2);
 VOID   WINAPI CryptMemFree(LPVOID pv);
+LPVOID WINAPI CryptMemAlloc(ULONG cbSize) __WINE_ALLOC_SIZE(1) __WINE_DEALLOC(CryptMemFree) __WINE_MALLOC;
+LPVOID WINAPI CryptMemRealloc(LPVOID pv, ULONG cbSize) __WINE_ALLOC_SIZE(2) __WINE_DEALLOC(CryptMemFree);
 
 BOOL WINAPI CryptBinaryToStringA(const BYTE *pbBinary,
  DWORD cbBinary, DWORD dwFlags, LPSTR pszString, DWORD *pcchString);

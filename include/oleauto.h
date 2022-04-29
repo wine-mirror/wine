@@ -38,10 +38,10 @@ DEFINE_OLEGUID(IID_StdOle, 0x00020430,0,0);
 ULONG WINAPI OaBuildVersion(void);
 
 /* BSTR functions */
-BSTR WINAPI SysAllocString(const OLECHAR*) __WINE_MALLOC;
-BSTR WINAPI SysAllocStringByteLen(LPCSTR,UINT) __WINE_MALLOC;
-BSTR WINAPI SysAllocStringLen(const OLECHAR*,UINT) __WINE_MALLOC;
 void WINAPI SysFreeString(BSTR);
+BSTR WINAPI SysAllocString(const OLECHAR*) __WINE_DEALLOC(SysFreeString) __WINE_MALLOC;
+BSTR WINAPI SysAllocStringByteLen(LPCSTR,UINT) __WINE_DEALLOC(SysFreeString) __WINE_MALLOC;
+BSTR WINAPI SysAllocStringLen(const OLECHAR*,UINT) __WINE_DEALLOC(SysFreeString) __WINE_MALLOC;
 INT  WINAPI SysReAllocString(LPBSTR,const OLECHAR*);
 int  WINAPI SysReAllocStringLen(BSTR*,const OLECHAR*,UINT);
 UINT WINAPI SysStringByteLen(BSTR);

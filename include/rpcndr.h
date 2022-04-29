@@ -667,10 +667,10 @@ RPCRTAPI RPC_STATUS RPC_ENTRY
   NdrMapCommAndFaultStatus( PMIDL_STUB_MESSAGE pStubMsg, ULONG *pCommStatus,
                             ULONG *pFaultStatus, RPC_STATUS Status_ );
 
-RPCRTAPI void* RPC_ENTRY
-  NdrOleAllocate( SIZE_T Size ) __WINE_ALLOC_SIZE(1) __WINE_MALLOC;
 RPCRTAPI void RPC_ENTRY
   NdrOleFree( void* NodeToFree );
+RPCRTAPI void* RPC_ENTRY
+  NdrOleAllocate( SIZE_T Size ) __WINE_ALLOC_SIZE(1) __WINE_DEALLOC(NdrOleFree) __WINE_MALLOC;
 
 RPCRTAPI void RPC_ENTRY
   NdrClientInitialize( PRPC_MESSAGE pRpcMessage, PMIDL_STUB_MESSAGE pStubMsg,
@@ -728,14 +728,14 @@ RPCRTAPI void RPC_ENTRY
   NdrRpcSsDisableAllocate( PMIDL_STUB_MESSAGE pMessage );
 RPCRTAPI void RPC_ENTRY
   NdrRpcSmSetClientToOsf( PMIDL_STUB_MESSAGE pMessage );
-RPCRTAPI void * RPC_ENTRY
-  NdrRpcSmClientAllocate( SIZE_T Size ) __WINE_ALLOC_SIZE(1) __WINE_MALLOC;
 RPCRTAPI void RPC_ENTRY
   NdrRpcSmClientFree( void *NodeToFree );
 RPCRTAPI void * RPC_ENTRY
-  NdrRpcSsDefaultAllocate( SIZE_T Size ) __WINE_ALLOC_SIZE(1) __WINE_MALLOC;
+  NdrRpcSmClientAllocate( SIZE_T Size ) __WINE_ALLOC_SIZE(1) __WINE_DEALLOC(NdrRpcSmClientFree) __WINE_MALLOC;
 RPCRTAPI void RPC_ENTRY
   NdrRpcSsDefaultFree( void *NodeToFree );
+RPCRTAPI void * RPC_ENTRY
+  NdrRpcSsDefaultAllocate( SIZE_T Size ) __WINE_ALLOC_SIZE(1) __WINE_DEALLOC(NdrRpcSsDefaultFree) __WINE_MALLOC;
 
 RPCRTAPI RPC_STATUS RPC_ENTRY
   NdrGetUserMarshalInfo( ULONG *pFlags, ULONG InformationLevel, NDR_USER_MARSHAL_INFO *pMarshalInfo );
