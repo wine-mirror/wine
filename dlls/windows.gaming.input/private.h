@@ -67,8 +67,8 @@ extern void event_handlers_notify( struct list *list, IInspectable *element );
 
 extern HRESULT force_feedback_motor_create( IDirectInputDevice8W *device, IForceFeedbackMotor **out );
 
-typedef HRESULT (WINAPI *async_operation_callback)( IInspectable *invoker, PROPVARIANT *result );
-extern HRESULT async_operation_boolean_create( IInspectable *invoker, async_operation_callback callback,
+typedef HRESULT (WINAPI *async_operation_callback)( IUnknown *invoker, IUnknown *param, PROPVARIANT *result );
+extern HRESULT async_operation_boolean_create( IUnknown *invoker, IUnknown *param, async_operation_callback callback,
                                                IAsyncOperation_boolean **out );
 
 #define DEFINE_IINSPECTABLE_( pfx, iface_type, impl_type, impl_from, iface_mem, expr )             \

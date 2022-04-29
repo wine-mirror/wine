@@ -37,7 +37,8 @@ struct async_info
 
     async_operation_callback callback;
     TP_WORK *async_run_work;
-    IInspectable *invoker;
+    IUnknown *invoker;
+    IUnknown *param;
 
     CRITICAL_SECTION cs;
     IWineAsyncOperationCompletedHandler *handler;
@@ -95,7 +96,8 @@ static ULONG WINAPI async_impl_Release( IWineAsyncInfoImpl *iface )
     {
         if (impl->handler && impl->handler != HANDLER_NOT_SET) IWineAsyncOperationCompletedHandler_Release( impl->handler );
         IAsyncInfo_Close( &impl->IAsyncInfo_iface );
-        IInspectable_Release( impl->invoker );
+        if (impl->param) IUnknown_Release( impl->param );
+        if (impl->invoker) IUnknown_Release( impl->invoker );
         DeleteCriticalSection( &impl->cs );
         free( impl );
     }
@@ -302,7 +304,7 @@ static void CALLBACK async_info_callback( TP_CALLBACK_INSTANCE *instance, void *
     PROPVARIANT result;
     HRESULT hr;
 
-    hr = impl->callback( impl->invoker, &result );
+    hr = impl->callback( impl->invoker, impl->param, &result );
 
     EnterCriticalSection( &impl->cs );
     if (impl->status != Closed) impl->status = FAILED(hr) ? Error : Completed;
@@ -327,7 +329,7 @@ static void CALLBACK async_info_callback( TP_CALLBACK_INSTANCE *instance, void *
     PropVariantClear( &result );
 }
 
-static HRESULT async_info_create( IInspectable *invoker, async_operation_callback callback,
+static HRESULT async_info_create( IUnknown *invoker, IUnknown *param, async_operation_callback callback,
                                   IInspectable *outer, IWineAsyncInfoImpl **out )
 {
     struct async_info *impl;
@@ -344,7 +346,9 @@ static HRESULT async_info_create( IInspectable *invoker, async_operation_callbac
     if (!(impl->async_run_work = CreateThreadpoolWork( async_info_callback, &impl->IWineAsyncInfoImpl_iface, NULL )))
         return HRESULT_FROM_WIN32( GetLastError() );
 
-    IInspectable_AddRef( (impl->invoker = invoker) );
+    if ((impl->invoker = invoker)) IUnknown_AddRef( impl->invoker );
+    if ((impl->param = param)) IUnknown_AddRef( impl->param );
+
     InitializeCriticalSection( &impl->cs );
     impl->cs.DebugInfo->Spare[0] = (DWORD_PTR)( __FILE__ ": async_info.cs" );
 
@@ -473,7 +477,7 @@ static const struct IAsyncOperation_booleanVtbl async_bool_vtbl =
     async_bool_GetResults,
 };
 
-HRESULT async_operation_boolean_create( IInspectable *invoker, async_operation_callback callback,
+HRESULT async_operation_boolean_create( IUnknown *invoker, IUnknown *param, async_operation_callback callback,
                                         IAsyncOperation_boolean **out )
 {
     struct async_bool *impl;
@@ -484,7 +488,7 @@ HRESULT async_operation_boolean_create( IInspectable *invoker, async_operation_c
     impl->IAsyncOperation_boolean_iface.lpVtbl = &async_bool_vtbl;
     impl->ref = 1;
 
-    if (FAILED(hr = async_info_create( invoker, callback, (IInspectable *)&impl->IAsyncOperation_boolean_iface, &impl->IWineAsyncInfoImpl_inner )) ||
+    if (FAILED(hr = async_info_create( invoker, param, callback, (IInspectable *)&impl->IAsyncOperation_boolean_iface, &impl->IWineAsyncInfoImpl_inner )) ||
         FAILED(hr = IWineAsyncInfoImpl_Start( impl->IWineAsyncInfoImpl_inner )))
     {
         if (impl->IWineAsyncInfoImpl_inner) IWineAsyncInfoImpl_Release( impl->IWineAsyncInfoImpl_inner );
