@@ -618,12 +618,21 @@ void *resource_offset_map_pointer(struct wined3d_resource *resource, unsigned in
 
 void wined3d_resource_memory_colour_fill(struct wined3d_resource *resource,
         const struct wined3d_map_desc *map, const struct wined3d_color *colour,
-        const struct wined3d_box *box)
+        const struct wined3d_box *box, bool full_subresource)
 {
     const struct wined3d_format *format = resource->format;
     unsigned int w, h, d, x, y, z, bpp;
     uint8_t *dst, *dst2;
     uint32_t c[4];
+
+    /* Fast and simple path for setting everything to zero. The C library's memset is
+     * more sophisticated than our code below. Also this works for block formats, which
+     * we still need to zero-initialize for newly created resources. */
+    if (full_subresource && !colour->r && !colour->g && !colour->b && !colour->a)
+    {
+        memset(map->data, 0, map->slice_pitch * box->back);
+        return;
+    }
 
     w = box->right - box->left;
     h = box->bottom - box->top;

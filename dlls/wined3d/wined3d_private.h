@@ -4429,7 +4429,7 @@ BOOL wined3d_resource_prepare_sysmem(struct wined3d_resource *resource) DECLSPEC
 void wined3d_resource_update_draw_binding(struct wined3d_resource *resource) DECLSPEC_HIDDEN;
 void wined3d_resource_memory_colour_fill(struct wined3d_resource *resource,
         const struct wined3d_map_desc *map, const struct wined3d_color *colour,
-        const struct wined3d_box *box) DECLSPEC_HIDDEN;
+        const struct wined3d_box *box, bool full_subresource) DECLSPEC_HIDDEN;
 
 /* Tests show that the start address of resources is 32 byte aligned */
 #define RESOURCE_ALIGNMENT 16

@@ -1181,8 +1181,10 @@ static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
     struct wined3d_context *context;
     struct wined3d_texture *texture;
     struct wined3d_bo_address data;
+    struct wined3d_box level_box;
     struct wined3d_map_desc map;
     struct wined3d_range range;
+    bool full_subresource;
     unsigned int level;
     DWORD map_binding;
 
@@ -1208,6 +1210,8 @@ static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
 
     texture = texture_from_resource(view->resource);
     level = view->sub_resource_idx % texture->level_count;
+    wined3d_texture_get_level_box(texture_from_resource(view->resource), level, &level_box);
+    full_subresource = !memcmp(box, &level_box, sizeof(*box));
 
     map_binding = texture->resource.map_binding;
     if (!wined3d_texture_load_location(texture, view->sub_resource_idx, context, map_binding))
@@ -1220,7 +1224,7 @@ static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
     range.offset = 0;
     range.size = texture->sub_resources[view->sub_resource_idx].size;
 
-    wined3d_resource_memory_colour_fill(view->resource, &map, colour, box);
+    wined3d_resource_memory_colour_fill(view->resource, &map, colour, box, full_subresource);
 
     wined3d_context_unmap_bo_address(context, &data, 1, &range);
     context_release(context);
