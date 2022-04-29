@@ -5709,10 +5709,15 @@ static void test_write_events(struct event_test_ctx *ctx)
 
 static void test_read_events(struct event_test_ctx *ctx)
 {
+    OVERLAPPED overlapped = {0};
     SOCKET server, client;
+    DWORD size, flags = 0;
     unsigned int i;
     char buffer[8];
+    WSABUF wsabuf;
     int ret;
+
+    overlapped.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
 
     tcp_socketpair(&client, &server);
     set_blocking(client, FALSE);
@@ -5788,8 +5793,36 @@ static void test_read_events(struct event_test_ctx *ctx)
 
     check_events(ctx, 0, 0, 200);
 
+    /* Send data while there is a pending WSARecv(). */
+
+    select_events(ctx, server, FD_ACCEPT | FD_CLOSE | FD_CONNECT | FD_OOB | FD_READ);
+
+    wsabuf.buf = buffer;
+    wsabuf.len = 1;
+    ret = WSARecv(server, &wsabuf, 1, NULL, &flags, &overlapped, NULL);
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
+
+    ret = send(client, "a", 1, 0);
+    ok(ret == 1, "got %d\n", ret);
+
+    ret = WaitForSingleObject(overlapped.hEvent, 200);
+    ok(!ret, "got %d\n", ret);
+    ret = GetOverlappedResult((HANDLE)server, &overlapped, &size, FALSE);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(size == 1, "got size %lu\n", size);
+
+    check_events(ctx, 0, 0, 0);
+
+    ret = send(client, "a", 1, 0);
+    ok(ret == 1, "got %d\n", ret);
+
+    check_events(ctx, FD_READ, 0, 200);
+    check_events(ctx, 0, 0, 0);
+
     closesocket(server);
     closesocket(client);
+    CloseHandle(overlapped.hEvent);
 }
 
 static void test_oob_events(struct event_test_ctx *ctx)
