@@ -724,7 +724,42 @@ static void test_poll(void)
     ok(out_params->sockets[0].flags == AFD_POLL_ACCEPT, "got flags %#x\n", out_params->sockets[0].flags);
     ok(!out_params->sockets[0].status, "got status %#x\n", out_params->sockets[0].status);
 
+    server = accept(listener, NULL, NULL);
+    ok(server != -1, "got error %u\n", WSAGetLastError());
+    closesocket(server);
     closesocket(client);
+
+    /* Verify that CONNECT and WRITE are signaled simultaneously. */
+
+    client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+    in_params->timeout = -1000 * 10000;
+    in_params->count = 1;
+    in_params->sockets[0].socket = client;
+    in_params->sockets[0].flags = ~0;
+    params_size = offsetof(struct afd_poll_params, sockets[1]);
+
+    ret = NtDeviceIoControlFile((HANDLE)client, event, NULL, NULL, &io,
+            IOCTL_AFD_POLL, in_params, params_size, out_params, params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    ret = connect(client, (struct sockaddr *)&addr, sizeof(addr));
+    ok(!ret, "got error %u\n", WSAGetLastError());
+
+    ret = WaitForSingleObject(event, 200);
+    ok(!ret, "got %#x\n", ret);
+    ok(!io.Status, "got %#lx\n", io.Status);
+    ok(io.Information == offsetof(struct afd_poll_params, sockets[1]), "got %#Ix\n", io.Information);
+    ok(out_params->count == 1, "got count %u\n", out_params->count);
+    ok(out_params->sockets[0].flags == (AFD_POLL_CONNECT | AFD_POLL_WRITE),
+            "got flags %#x\n", out_params->sockets[0].flags);
+    ok(!out_params->sockets[0].status, "got status %#x\n", out_params->sockets[0].status);
+
+    server = accept(listener, NULL, NULL);
+    ok(server != -1, "got error %u\n", WSAGetLastError());
+    closesocket(server);
+    closesocket(client);
+
     closesocket(listener);
 
     /* Test UDP sockets. */
