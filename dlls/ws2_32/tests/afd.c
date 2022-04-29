@@ -154,11 +154,14 @@ static void test_poll(void)
     struct afd_poll_params *out_params = (struct afd_poll_params *)out_buffer;
     int large_buffer_size = 1024 * 1024;
     SOCKET client, server, listener;
+    OVERLAPPED overlapped = {0};
     struct sockaddr_in addr;
+    DWORD size, flags = 0;
     char *large_buffer;
     IO_STATUS_BLOCK io;
     LARGE_INTEGER now;
     ULONG params_size;
+    WSABUF wsabuf;
     HANDLE event;
     int ret, len;
 
@@ -166,6 +169,7 @@ static void test_poll(void)
     memset(in_buffer, 0, sizeof(in_buffer));
     memset(out_buffer, 0, sizeof(out_buffer));
     event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    overlapped.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
 
     listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ret = bind(listener, (const struct sockaddr *)&bind_addr, sizeof(bind_addr));
@@ -328,6 +332,50 @@ static void test_poll(void)
 
     check_poll(client, event, AFD_POLL_WRITE | AFD_POLL_CONNECT | AFD_POLL_READ);
     check_poll(server, event, AFD_POLL_CONNECT);
+
+    /* Test sending data while there is a pending WSARecv(). */
+
+    in_params->timeout = -1000 * 10000;
+    in_params->count = 1;
+    in_params->sockets[0].socket = server;
+    in_params->sockets[0].flags = AFD_POLL_READ;
+
+    ret = NtDeviceIoControlFile((HANDLE)server, event, NULL, NULL, &io,
+            IOCTL_AFD_POLL, in_params, params_size, out_params, params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    wsabuf.buf = large_buffer;
+    wsabuf.len = 1;
+    ret = WSARecv(server, &wsabuf, 1, NULL, &flags, &overlapped, NULL);
+    ok(ret == -1, "got %d\n", ret);
+    ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
+
+    ret = send(client, "a", 1, 0);
+    ok(ret == 1, "got %d\n", ret);
+
+    ret = WaitForSingleObject(overlapped.hEvent, 200);
+    ok(!ret, "got %d\n", ret);
+    ret = GetOverlappedResult((HANDLE)server, &overlapped, &size, FALSE);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(size == 1, "got size %lu\n", size);
+
+    ret = WaitForSingleObject(event, 0);
+    todo_wine ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+
+    ret = send(client, "a", 1, 0);
+    ok(ret == 1, "got %d\n", ret);
+
+    ret = WaitForSingleObject(event, 200);
+    ok(!ret, "got %#x\n", ret);
+    ok(!io.Status, "got %#lx\n", io.Status);
+    ok(io.Information == offsetof(struct afd_poll_params, sockets[1]), "got %#Ix\n", io.Information);
+    ok(out_params->count == 1, "got count %u\n", out_params->count);
+    ok(out_params->sockets[0].socket == server, "got socket %#Ix\n", out_params->sockets[0].socket);
+    ok(out_params->sockets[0].flags == AFD_POLL_READ, "got flags %#x\n", out_params->sockets[0].flags);
+    ok(!out_params->sockets[0].status, "got status %#x\n", out_params->sockets[0].status);
+
+    ret = recv(server, large_buffer, 1, 0);
+    ok(ret == 1, "got %d\n", ret);
 
     /* Test sending out-of-band data. */
 
@@ -745,6 +793,7 @@ static void test_poll(void)
     closesocket(client);
     closesocket(server);
 
+    CloseHandle(overlapped.hEvent);
     CloseHandle(event);
     free(large_buffer);
 }
