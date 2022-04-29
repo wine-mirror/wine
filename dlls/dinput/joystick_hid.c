@@ -2307,6 +2307,7 @@ static void convert_directions_to_spherical( const DIEFFECT *in, DIEFFECT *out )
             for (j = 1; j < i; ++j) tmp = sqrt( tmp * tmp + in->rglDirection[j] * in->rglDirection[j] );
             tmp = atan2( in->rglDirection[i], tmp );
             out->rglDirection[i - 1] = tmp * 18000 / M_PI;
+            if (out->rglDirection[i - 1] < 0) out->rglDirection[i - 1] += 36000;
         }
         if (in->cAxes) out->rglDirection[in->cAxes - 1] = 0;
         out->cAxes = in->cAxes;

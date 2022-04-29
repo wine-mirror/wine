@@ -5480,16 +5480,7 @@ static void test_windows_gaming_input(void)
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 3,
             .report_len = 18,
-            .report_buf = {3,0x01,0x02,0x08,0x78,0x00,0x00,0x00,0x00,0x00,0x0a,0x00,0xff,0xff,0xce,0x00,0x00,0x00},
-            .wine_only = TRUE,
-            .todo = TRUE,
-        },
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 3,
-            .report_len = 18,
             .report_buf = {3,0x01,0x02,0x08,0x78,0x00,0x00,0x00,0x00,0x00,0x0a,0x00,0xff,0xff,0x4e,0x01,0x00,0x00},
-            .todo = TRUE,
         },
     };
     struct hid_expect expect_create_condition[] =
@@ -5558,16 +5549,7 @@ static void test_windows_gaming_input(void)
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 3,
             .report_len = 18,
-            .report_buf = {3,0x01,0x04,0x08,0x5a,0x00,0x00,0x00,0x00,0x00,0x0a,0x00,0xff,0x7f,0xce,0x00,0x00,0x00},
-            .wine_only = TRUE,
-            .todo = TRUE,
-        },
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 3,
-            .report_len = 18,
             .report_buf = {3,0x01,0x04,0x08,0x5a,0x00,0x00,0x00,0x00,0x00,0x0a,0x00,0xff,0x7f,0x4e,0x01,0x00,0x00},
-            .todo = TRUE,
         },
     };
     struct hid_expect expect_create_ramp[] =
@@ -5605,16 +5587,7 @@ static void test_windows_gaming_input(void)
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 3,
             .report_len = 18,
-            .report_buf = {3,0x01,0x05,0x08,0x5a,0x00,0x00,0x00,0x00,0x00,0x0a,0x00,0xff,0xff,0xce,0x00,0x00,0x00},
-            .wine_only = TRUE,
-            .todo = TRUE,
-        },
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 3,
-            .report_len = 18,
             .report_buf = {3,0x01,0x05,0x08,0x5a,0x00,0x00,0x00,0x00,0x00,0x0a,0x00,0xff,0xff,0x4e,0x01,0x00,0x00},
-            .todo = TRUE,
         },
     };
     struct hid_expect expect_effect_start =
