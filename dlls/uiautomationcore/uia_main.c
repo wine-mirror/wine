@@ -20,6 +20,7 @@
 
 #include "initguid.h"
 #include "uiautomation.h"
+#include "ocidl.h"
 
 #include "wine/debug.h"
 #include "wine/heap.h"

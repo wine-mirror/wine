@@ -34,6 +34,9 @@ extern "C" {
 #define UiaAppendRuntimeId  3
 #define UiaRootObjectId     -25
 
+#define UIA_PFIA_DEFAULT       0x00
+#define UIA_PFIA_UNWRAP_BRIDGE 0x01
+
 DECLARE_HANDLE(HUIANODE);
 DECLARE_HANDLE(HUIAPATTERNOBJECT);
 DECLARE_HANDLE(HUIATEXTRANGE);
@@ -71,6 +74,7 @@ void WINAPI UiaRegisterProviderCallback(UiaProviderCallback *pCallback);
 LRESULT WINAPI UiaReturnRawElementProvider(HWND hwnd, WPARAM wParam, LPARAM lParam, IRawElementProviderSimple *elprov);
 BOOL WINAPI UiaTextRangeRelease(HUIATEXTRANGE hobj);
 HRESULT WINAPI UiaHostProviderFromHwnd(HWND hwnd, IRawElementProviderSimple **elprov);
+HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, long child_id, DWORD flags, IRawElementProviderSimple **elprov);
 
 #ifdef __cplusplus
 }
