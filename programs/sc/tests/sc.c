@@ -168,13 +168,20 @@ static void test_create_service(BOOL elevated)
         DWORD expected_start_type;
         DWORD expected_service_type;
         const char * expected_binary_path;
+        DWORD broken;
     } start_types[] = {
-        { "boot type= kernel", SERVICE_BOOT_START, SERVICE_KERNEL_DRIVER, TEST_SERVICE_BINARY_START_BOOT },
-        { "system type= kernel", SERVICE_SYSTEM_START, SERVICE_KERNEL_DRIVER, TEST_SERVICE_BINARY_START_SYSTEM },
-        { "auto", SERVICE_AUTO_START, SERVICE_WIN32_OWN_PROCESS, TEST_SERVICE_BINARY },
-        { "demand", SERVICE_DEMAND_START, SERVICE_WIN32_OWN_PROCESS, TEST_SERVICE_BINARY },
-        { "disabled", SERVICE_DISABLED, SERVICE_WIN32_OWN_PROCESS, TEST_SERVICE_BINARY },
-        { "delayed-auto", SERVICE_DELAYED_AUTO_START, SERVICE_WIN32_OWN_PROCESS, TEST_SERVICE_BINARY }
+        { "boot type= kernel", SERVICE_BOOT_START, SERVICE_KERNEL_DRIVER, TEST_SERVICE_BINARY_START_BOOT,
+          BROKEN_BINPATH | BROKEN_DISPLAY_NAME },
+        { "system type= kernel", SERVICE_SYSTEM_START, SERVICE_KERNEL_DRIVER, TEST_SERVICE_BINARY_START_SYSTEM,
+          BROKEN_BINPATH | BROKEN_DISPLAY_NAME },
+        { "auto", SERVICE_AUTO_START, SERVICE_WIN32_OWN_PROCESS, TEST_SERVICE_BINARY,
+          BROKEN_DISPLAY_NAME },
+        { "demand", SERVICE_DEMAND_START, SERVICE_WIN32_OWN_PROCESS, TEST_SERVICE_BINARY,
+          BROKEN_DISPLAY_NAME },
+        { "disabled", SERVICE_DISABLED, SERVICE_WIN32_OWN_PROCESS, TEST_SERVICE_BINARY,
+          BROKEN_DISPLAY_NAME },
+        { "delayed-auto", SERVICE_DELAYED_AUTO_START, SERVICE_WIN32_OWN_PROCESS, TEST_SERVICE_BINARY,
+          BROKEN_START | BROKEN_DISPLAY_NAME | BROKEN_DELAYED_AUTO_START }
     };
     static struct {
         const char *param;
@@ -217,45 +224,45 @@ static void test_create_service(BOOL elevated)
     /* binpath= */
 
     run_sc_exe("sc create " TEST_SERVICE_NAME " binpath= \"" TEST_SERVICE_BINARY "\"", &r);
-    todo_wine check_exit_code(SC_EXIT_SUCCESS);
+    check_exit_code(SC_EXIT_SUCCESS);
     check_test_service(SERVICE_WIN32_OWN_PROCESS, SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL, "", NULL,
-                       BROKEN_CREATE);
+                       BROKEN_DISPLAY_NAME);
 
     /* existing service */
 
     run_sc_exe("sc create " TEST_SERVICE_NAME " binpath= \"" TEST_SERVICE_BINARY "\" start= auto", &r);
     todo_wine check_exit_code(SC_EXIT_SERVICE_EXISTS);
     check_test_service(SERVICE_WIN32_OWN_PROCESS, SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL, "", NULL,
-                       BROKEN_CREATE);
-    delete_test_service(TRUE, TRUE);
+                       BROKEN_DISPLAY_NAME);
+    delete_test_service(TRUE, FALSE);
 
     /* type= */
 
     run_sc_exe("sc create " TEST_SERVICE_NAME " binpath= \"" TEST_SERVICE_BINARY "\" type= invalid", &r);
     todo_wine check_exit_code(SC_EXIT_INVALID_COMMAND_LINE);
-    delete_test_service(FALSE, FALSE);
+    delete_test_service(FALSE, TRUE);
 
     run_sc_exe("sc create " TEST_SERVICE_NAME " binpath= \"" TEST_SERVICE_BINARY "\" type= own", &r);
-    todo_wine check_exit_code(SC_EXIT_SUCCESS);
+    check_exit_code(SC_EXIT_SUCCESS);
     check_test_service(SERVICE_WIN32_OWN_PROCESS, SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL, "", NULL,
-                       BROKEN_CREATE);
-    delete_test_service(TRUE, TRUE);
+                       BROKEN_DISPLAY_NAME);
+    delete_test_service(TRUE, FALSE);
 
     run_sc_exe("sc create " TEST_SERVICE_NAME " binpath= \"" TEST_SERVICE_BINARY "\" type= interact", &r);
     todo_wine check_exit_code(SC_EXIT_INVALID_PARAMETER);
-    delete_test_service(FALSE, FALSE);
+    delete_test_service(FALSE, TRUE);
 
     run_sc_exe("sc create " TEST_SERVICE_NAME " binpath= \"" TEST_SERVICE_BINARY "\" type= interact type= own", &r);
-    todo_wine check_exit_code(SC_EXIT_SUCCESS);
+    check_exit_code(SC_EXIT_SUCCESS);
     check_test_service(SERVICE_WIN32_OWN_PROCESS | SERVICE_INTERACTIVE_PROCESS, SERVICE_DEMAND_START,
-                       SERVICE_ERROR_NORMAL, "", NULL, BROKEN_CREATE);
-    delete_test_service(TRUE, TRUE);
+                       SERVICE_ERROR_NORMAL, "", NULL, BROKEN_TYPE | BROKEN_DISPLAY_NAME);
+    delete_test_service(TRUE, FALSE);
 
     /* start= */
 
     run_sc_exe("sc create " TEST_SERVICE_NAME " binpath= \"" TEST_SERVICE_BINARY "\" start= invalid", &r);
     todo_wine check_exit_code(SC_EXIT_INVALID_COMMAND_LINE);
-    delete_test_service(FALSE, FALSE);
+    delete_test_service(FALSE, TRUE);
 
     for (i = 0; i < ARRAY_SIZE(start_types); i++)
     {
@@ -264,11 +271,11 @@ static void test_create_service(BOOL elevated)
         strcpy(cmdline, "sc create " TEST_SERVICE_NAME " binpath= \"" TEST_SERVICE_BINARY "\" start= ");
         strcat(cmdline, start_types[i].param);
         run_sc_exe(cmdline, &r);
-        todo_wine check_exit_code(SC_EXIT_SUCCESS);
+        check_exit_code(SC_EXIT_SUCCESS);
         check_service_definition(TEST_SERVICE_NAME, start_types[i].expected_binary_path,
                                  start_types[i].expected_service_type, start_types[i].expected_start_type,
-                                 SERVICE_ERROR_NORMAL, "", TEST_SERVICE_NAME, BROKEN_CREATE);
-        delete_test_service(TRUE, TRUE);
+                                 SERVICE_ERROR_NORMAL, "", TEST_SERVICE_NAME, start_types[i].broken);
+        delete_test_service(TRUE, FALSE);
     }
 
     /* error= */
@@ -280,53 +287,53 @@ static void test_create_service(BOOL elevated)
         strcpy(cmdline, "sc create " TEST_SERVICE_NAME " binpath= \"" TEST_SERVICE_BINARY "\" error= ");
         strcat(cmdline, error_severities[i].param);
         run_sc_exe(cmdline, &r);
-        todo_wine check_exit_code(SC_EXIT_SUCCESS);
+        check_exit_code(SC_EXIT_SUCCESS);
         check_test_service(SERVICE_WIN32_OWN_PROCESS, SERVICE_DEMAND_START,
-                           error_severities[i].expected_error_control, "", NULL, BROKEN_CREATE);
-        delete_test_service(TRUE, TRUE);
+                           error_severities[i].expected_error_control, "", NULL, BROKEN_DISPLAY_NAME);
+        delete_test_service(TRUE, FALSE);
     }
 
     /* tag= */
 
     run_sc_exe("sc create " TEST_SERVICE_NAME " binpath= \"" TEST_SERVICE_BINARY "\" tag= yes", &r);
     todo_wine check_exit_code(SC_EXIT_INVALID_PARAMETER);
-    delete_test_service(FALSE, FALSE);
+    delete_test_service(FALSE, TRUE);
 
     run_sc_exe("sc create " TEST_SERVICE_NAME " binpath= \"" TEST_SERVICE_BINARY "\" tag= no", &r);
-    todo_wine check_exit_code(SC_EXIT_SUCCESS);
+    check_exit_code(SC_EXIT_SUCCESS);
     check_test_service(SERVICE_WIN32_OWN_PROCESS, SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL, "", NULL,
-                       BROKEN_CREATE);
-    delete_test_service(TRUE, TRUE);
+                       BROKEN_DISPLAY_NAME);
+    delete_test_service(TRUE, FALSE);
 
     /* depend= */
 
     run_sc_exe("sc create " TEST_SERVICE_NAME " binpath= \"" TEST_SERVICE_BINARY "\" depend= " TEST_SERVICE_NAME, &r);
     todo_wine check_exit_code(SC_EXIT_CIRCULAR_DEPENDENCY);
-    delete_test_service(FALSE, FALSE);
+    delete_test_service(FALSE, TRUE);
 
     run_sc_exe("sc create " TEST_SERVICE_NAME2 " binpath= \"" TEST_SERVICE_BINARY "\" depend= " TEST_SERVICE_NAME, &r);
-    todo_wine check_exit_code(SC_EXIT_SUCCESS);
+    check_exit_code(SC_EXIT_SUCCESS);
     check_test_service2(SERVICE_WIN32_OWN_PROCESS, SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL,
-                        TEST_SERVICE_NAME, NULL, BROKEN_CREATE);
-    delete_test_service2(TRUE, TRUE);
+                        TEST_SERVICE_NAME, NULL, BROKEN_DEPEND | BROKEN_DISPLAY_NAME);
+    delete_test_service2(TRUE, FALSE);
 
     run_sc_exe("sc create " TEST_SERVICE_NAME " binpath= " TEST_SERVICE_BINARY, &r);
-    todo_wine check_exit_code(SC_EXIT_SUCCESS);
+    check_exit_code(SC_EXIT_SUCCESS);
     run_sc_exe("sc create " TEST_SERVICE_NAME2 " binpath= \"" TEST_SERVICE_BINARY "\" depend= " TEST_SERVICE_NAME, &r);
-    todo_wine check_exit_code(SC_EXIT_SUCCESS);
+    check_exit_code(SC_EXIT_SUCCESS);
     check_test_service2(SERVICE_WIN32_OWN_PROCESS, SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL,
-                        TEST_SERVICE_NAME, NULL, BROKEN_CREATE);
-    delete_test_service2(TRUE, TRUE);
-    delete_test_service(TRUE, TRUE);
+                        TEST_SERVICE_NAME, NULL, BROKEN_DEPEND | BROKEN_DISPLAY_NAME);
+    delete_test_service2(TRUE, FALSE);
+    delete_test_service(TRUE, FALSE);
 
     /* displayname= */
 
     run_sc_exe("sc create " TEST_SERVICE_NAME " binpath= " TEST_SERVICE_BINARY
                " displayname= \"Wine Test Service\"", &r);
-    todo_wine check_exit_code(SC_EXIT_SUCCESS);
+    check_exit_code(SC_EXIT_SUCCESS);
     check_test_service(SERVICE_WIN32_OWN_PROCESS, SERVICE_DEMAND_START, SERVICE_ERROR_NORMAL, "",
-                       "Wine Test Service", BROKEN_CREATE);
-    delete_test_service(TRUE, TRUE);
+                       "Wine Test Service", 0);
+    delete_test_service(TRUE, FALSE);
 
     /* without spaces */
 
@@ -349,10 +356,10 @@ static void test_create_service(BOOL elevated)
 
     run_sc_exe("SC CREATE " TEST_SERVICE_NAME2 " BINPATH= \"" TEST_SERVICE_BINARY "\" TYPE= OWN START= AUTO"
                " ERROR= NORMAL TAG= NO DEPEND= " TEST_SERVICE_NAME " DISPLAYNAME= \"Wine Test Service\"", &r);
-    todo_wine check_exit_code(SC_EXIT_SUCCESS);
+    check_exit_code(SC_EXIT_SUCCESS);
     check_test_service2(SERVICE_WIN32_OWN_PROCESS, SERVICE_AUTO_START, SERVICE_ERROR_NORMAL,
-                        TEST_SERVICE_NAME, "Wine Test Service", BROKEN_CREATE);
-    delete_test_service2(TRUE, TRUE);
+                        TEST_SERVICE_NAME, "Wine Test Service", BROKEN_DEPEND);
+    delete_test_service2(TRUE, FALSE);
 
 #undef delete_test_service2
 #undef check_test_service2

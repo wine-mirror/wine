@@ -27,6 +27,26 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(sc);
 
+static BOOL parse_string_param( int argc, const WCHAR *argv[], unsigned int *index,
+                                const WCHAR *param_name, size_t name_len, const WCHAR **out )
+{
+    if (!wcsnicmp( argv[*index], param_name, name_len ))
+    {
+        if (argv[*index][name_len])
+        {
+            *out = &argv[*index][name_len];
+            return TRUE;
+        }
+        else if (*index < argc - 1)
+        {
+            *index += 1;
+            *out = argv[*index];
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
 struct create_params
 {
     const WCHAR *displayname;
@@ -56,48 +76,56 @@ static BOOL parse_create_params( int argc, const WCHAR *argv[], struct create_pa
     cp->obj         = NULL;
     cp->password    = NULL;
 
+#define PARSE(x, y) parse_string_param( (argc), (argv), &(i), (x), ARRAY_SIZE(x) - 1, (y) )
     for (i = 0; i < argc; i++)
     {
-        if (!wcsnicmp( argv[i], L"displayname=", 12 )) cp->displayname = argv[i] + 12;
-        if (!wcsnicmp( argv[i], L"binpath=", 8 )) cp->binpath = argv[i] + 8;
-        if (!wcsnicmp( argv[i], L"group=", 6 )) cp->group = argv[i] + 6;
-        if (!wcsnicmp( argv[i], L"depend=", 7 )) cp->depend = argv[i] + 7;
-        if (!wcsnicmp( argv[i], L"obj=", 4 )) cp->obj = argv[i] + 4;
-        if (!wcsnicmp( argv[i], L"password=", 9 )) cp->password = argv[i] + 9;
+        const WCHAR *tag, *type, *start, *error;
 
-        if (!wcsnicmp( argv[i], L"tag=", 4 ))
+        if (PARSE( L"displayname=", &cp->displayname )) continue;
+        if (PARSE( L"binpath=", &cp->binpath )) continue;
+        if (PARSE( L"group=", &cp->group )) continue;
+        if (PARSE( L"depend=", &cp->depend )) continue;
+        if (PARSE( L"obj=", &cp->obj )) continue;
+        if (PARSE( L"password=", &cp->password )) continue;
+
+        if (PARSE( L"tag=", &tag ))
         {
-            if (!wcsicmp( argv[i] + 4, L"yes" ))
+            if (!wcsicmp( tag, L"yes" ))
             {
                 WINE_FIXME("tag argument not supported\n");
                 cp->tag = TRUE;
             }
+            continue;
         }
-        if (!wcsnicmp( argv[i], L"type=", 5 ))
+        if (PARSE( L"type=", &type ))
         {
-            if (!wcsicmp( argv[i] + 5, L"own" )) cp->type = SERVICE_WIN32_OWN_PROCESS;
-            if (!wcsicmp( argv[i] + 5, L"share" )) cp->type = SERVICE_WIN32_SHARE_PROCESS;
-            if (!wcsicmp( argv[i] + 5, L"kernel" )) cp->type = SERVICE_KERNEL_DRIVER;
-            if (!wcsicmp( argv[i] + 5, L"filesys" )) cp->type = SERVICE_FILE_SYSTEM_DRIVER;
-            if (!wcsicmp( argv[i] + 5, L"rec" )) cp->type = SERVICE_RECOGNIZER_DRIVER;
-            if (!wcsicmp( argv[i] + 5, L"interact" )) cp->type |= SERVICE_INTERACTIVE_PROCESS;
+            if (!wcsicmp( type, L"own" )) cp->type = SERVICE_WIN32_OWN_PROCESS;
+            else if (!wcsicmp( type, L"share" )) cp->type = SERVICE_WIN32_SHARE_PROCESS;
+            else if (!wcsicmp( type, L"kernel" )) cp->type = SERVICE_KERNEL_DRIVER;
+            else if (!wcsicmp( type, L"filesys" )) cp->type = SERVICE_FILE_SYSTEM_DRIVER;
+            else if (!wcsicmp( type, L"rec" )) cp->type = SERVICE_RECOGNIZER_DRIVER;
+            else if (!wcsicmp( type, L"interact" )) cp->type |= SERVICE_INTERACTIVE_PROCESS;
+            continue;
         }
-        if (!wcsnicmp( argv[i], L"start=", 6 ))
+        if (PARSE( L"start=", &start ))
         {
-            if (!wcsicmp( argv[i] + 6, L"boot" )) cp->start = SERVICE_BOOT_START;
-            if (!wcsicmp( argv[i] + 6, L"system" )) cp->start = SERVICE_SYSTEM_START;
-            if (!wcsicmp( argv[i] + 6, L"auto" )) cp->start = SERVICE_AUTO_START;
-            if (!wcsicmp( argv[i] + 6, L"demand" )) cp->start = SERVICE_DEMAND_START;
-            if (!wcsicmp( argv[i] + 6, L"disabled" )) cp->start = SERVICE_DISABLED;
+            if (!wcsicmp( start, L"boot" )) cp->start = SERVICE_BOOT_START;
+            else if (!wcsicmp( start, L"system" )) cp->start = SERVICE_SYSTEM_START;
+            else if (!wcsicmp( start, L"auto" )) cp->start = SERVICE_AUTO_START;
+            else if (!wcsicmp( start, L"demand" )) cp->start = SERVICE_DEMAND_START;
+            else if (!wcsicmp( start, L"disabled" )) cp->start = SERVICE_DISABLED;
+            continue;
         }
-        if (!wcsnicmp( argv[i], L"error=", 6 ))
+        if (PARSE( L"error=", &error ))
         {
-            if (!wcsicmp( argv[i] + 6, L"normal" )) cp->error = SERVICE_ERROR_NORMAL;
-            if (!wcsicmp( argv[i] + 6, L"severe" )) cp->error = SERVICE_ERROR_SEVERE;
-            if (!wcsicmp( argv[i] + 6, L"critical" )) cp->error = SERVICE_ERROR_CRITICAL;
-            if (!wcsicmp( argv[i] + 6, L"ignore" )) cp->error = SERVICE_ERROR_IGNORE;
+            if (!wcsicmp( error, L"normal" )) cp->error = SERVICE_ERROR_NORMAL;
+            else if (!wcsicmp( error, L"severe" )) cp->error = SERVICE_ERROR_SEVERE;
+            else if (!wcsicmp( error, L"critical" )) cp->error = SERVICE_ERROR_CRITICAL;
+            else if (!wcsicmp( error, L"ignore" )) cp->error = SERVICE_ERROR_IGNORE;
+            continue;
         }
     }
+#undef PARSE
     if (!cp->binpath) return FALSE;
     return TRUE;
 }
@@ -156,16 +184,25 @@ static BOOL parse_failure_params( int argc, const WCHAR *argv[], SERVICE_FAILURE
     fa->cActions      = 0;
     fa->lpsaActions   = NULL;
 
+#define PARSE(x, y) parse_string_param( (argc), (argv), &(i), (x), ARRAY_SIZE(x) - 1, (y) )
     for (i = 0; i < argc; i++)
     {
-        if (!wcsnicmp( argv[i], L"reset=", 6 )) fa->dwResetPeriod = wcstol( argv[i] + 6, NULL, 10 );
-        if (!wcsnicmp( argv[i], L"reboot=", 7 )) fa->lpRebootMsg = (WCHAR *)argv[i] + 7;
-        if (!wcsnicmp( argv[i], L"command=", 8 )) fa->lpCommand = (WCHAR *)argv[i] + 8;
-        if (!wcsnicmp( argv[i], L"actions=", 8 ))
+        const WCHAR *reset, *actions;
+
+        if (PARSE( L"reset=", &reset ))
         {
-            if (!parse_failure_actions( argv[i] + 8, fa )) return FALSE;
+            fa->dwResetPeriod = wcstol( reset, NULL, 10 );
+            continue;
+        }
+        if (PARSE( L"reboot=", (const WCHAR **)&fa->lpRebootMsg )) continue;
+        if (PARSE( L"command=", (const WCHAR **)&fa->lpCommand )) continue;
+        if (PARSE( L"actions=", &actions ))
+        {
+            if (!parse_failure_actions( actions, fa )) return FALSE;
+            continue;
         }
     }
+#undef PARSE
     return TRUE;
 }
 
