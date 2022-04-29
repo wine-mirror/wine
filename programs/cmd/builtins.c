@@ -193,7 +193,8 @@ static BOOL WCMD_ask_confirm (const WCHAR *message, BOOL showSureText,
       if (showSureText)
         WCMD_output_asis (confirm);
       WCMD_output_asis (options);
-      WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, ARRAY_SIZE(answer), &count);
+      if (!WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, ARRAY_SIZE(answer), &count))
+          return FALSE;
       answer[0] = towupper(answer[0]);
       if (answer[0] == Ybuffer[0])
         return TRUE;
@@ -383,7 +384,12 @@ void WCMD_choice (const WCHAR * args) {
 
         /* FIXME: Add support for option /T */
         answer[1] = 0; /* terminate single character string */
-        WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, 1, &count);
+        if (!WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), answer, 1, &count))
+        {
+            heap_free(my_command);
+            errorlevel = 0;
+            return;
+        }
 
         if (!opt_s)
             answer[0] = towupper(answer[0]);
@@ -3506,8 +3512,8 @@ void WCMD_setshow_date (void) {
       WCMD_output (WCMD_LoadMessage(WCMD_CURRENTDATE), curdate);
       if (wcsstr(quals, L"/T") == NULL) {
         WCMD_output (WCMD_LoadMessage(WCMD_NEWDATE));
-        WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), buffer, ARRAY_SIZE(buffer), &count);
-        if (count > 2) {
+        if (WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), buffer, ARRAY_SIZE(buffer), &count) &&
+            count > 2) {
           WCMD_output_stderr (WCMD_LoadMessage(WCMD_NYI));
         }
       }
@@ -4142,8 +4148,7 @@ void WCMD_setshow_env (WCHAR *s) {
     if (*p) WCMD_output_asis(p);
 
     /* Read the reply */
-    WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, ARRAY_SIZE(string), &count);
-    if (count > 1) {
+    if (WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, ARRAY_SIZE(string), &count) && count > 1) {
       string[count-1] = '\0'; /* ReadFile output is not null-terminated! */
       if (string[count-2] == '\r') string[count-2] = '\0'; /* Under Windoze we get CRLF! */
       WINE_TRACE("set /p: Setting var '%s' to '%s'\n", wine_dbgstr_w(s),
@@ -4295,8 +4300,8 @@ void WCMD_setshow_time (void) {
       WCMD_output (WCMD_LoadMessage(WCMD_CURRENTTIME), curtime);
       if (wcsstr(quals, L"/T") == NULL) {
         WCMD_output (WCMD_LoadMessage(WCMD_NEWTIME));
-        WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), buffer, ARRAY_SIZE(buffer), &count);
-        if (count > 2) {
+        if (WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), buffer, ARRAY_SIZE(buffer), &count) &&
+            count > 2) {
           WCMD_output_stderr (WCMD_LoadMessage(WCMD_NYI));
         }
       }
@@ -4717,8 +4722,8 @@ int WCMD_volume(BOOL set_label, const WCHAR *path)
     	HIWORD(serial), LOWORD(serial));
   if (set_label) {
     WCMD_output (WCMD_LoadMessage(WCMD_VOLUMEPROMPT));
-    WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, ARRAY_SIZE(string), &count);
-    if (count > 1) {
+    if (WCMD_ReadFile(GetStdHandle(STD_INPUT_HANDLE), string, ARRAY_SIZE(string), &count) &&
+        count > 1) {
       string[count-1] = '\0';		/* ReadFile output is not null-terminated! */
       if (string[count-2] == '\r') string[count-2] = '\0'; /* Under Windoze we get CRLF! */
     }
