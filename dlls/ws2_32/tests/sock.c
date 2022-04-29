@@ -5308,11 +5308,22 @@ static void test_accept_events(struct event_test_ctx *ctx)
 {
     const struct sockaddr_in addr = {.sin_family = AF_INET, .sin_addr.s_addr = htonl(INADDR_LOOPBACK)};
     SOCKET listener, server, client, client2;
+    GUID acceptex_guid = WSAID_ACCEPTEX;
     struct sockaddr_in destaddr;
+    OVERLAPPED overlapped = {0};
+    LPFN_ACCEPTEX pAcceptEx;
+    char buffer[32];
     int len, ret;
+    DWORD size;
+
+    overlapped.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
 
     listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
     ok(listener != -1, "failed to create socket, error %u\n", WSAGetLastError());
+
+    ret = WSAIoctl(listener, SIO_GET_EXTENSION_FUNCTION_POINTER, &acceptex_guid, sizeof(acceptex_guid),
+            &pAcceptEx, sizeof(pAcceptEx), &size, NULL, NULL);
+    ok(!ret, "failed to get AcceptEx, error %u\n", WSAGetLastError());
 
     select_events(ctx, listener, FD_CONNECT | FD_READ | FD_OOB | FD_ACCEPT);
 
@@ -5511,7 +5522,44 @@ static void test_accept_events(struct event_test_ctx *ctx)
     closesocket(server);
     closesocket(client);
 
+    /* Connect while there is a pending AcceptEx(). */
+
+    select_events(ctx, listener, FD_CONNECT | FD_READ | FD_OOB | FD_ACCEPT);
+
+    server = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ret = pAcceptEx(listener, server, buffer, 0, 0, sizeof(buffer), NULL, &overlapped);
+    ok(!ret, "got %d\n", ret);
+    ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
+
+    client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ret = connect(client, (struct sockaddr *)&destaddr, sizeof(destaddr));
+    ok(!ret, "got error %u\n", WSAGetLastError());
+
+    ret = WaitForSingleObject(overlapped.hEvent, 200);
+    ok(!ret, "got %d\n", ret);
+    ret = GetOverlappedResult((HANDLE)listener, &overlapped, &size, FALSE);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(!size, "got size %lu\n", size);
+
+    check_events_todo(ctx, 0, 0, 0);
+
+    closesocket(server);
+    closesocket(client);
+
+    client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ret = connect(client, (struct sockaddr *)&destaddr, sizeof(destaddr));
+    ok(!ret, "got error %u\n", WSAGetLastError());
+
+    check_events_todo(ctx, FD_ACCEPT, 0, 200);
+    check_events(ctx, 0, 0, 0);
+
+    server = accept(listener, NULL, NULL);
+    ok(server != -1, "failed to accept, error %u\n", WSAGetLastError());
+    closesocket(server);
+    closesocket(client);
+
     closesocket(listener);
+    CloseHandle(overlapped.hEvent);
 }
 
 static void test_connect_events(struct event_test_ctx *ctx)
