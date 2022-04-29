@@ -33,6 +33,7 @@
 #include <stdint.h>
 #include <time.h>
 #include <unistd.h>
+#include <poll.h>
 #include <errno.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -45,6 +46,7 @@
 #define WIN32_NO_STATUS
 #include "winternl.h"
 #include "audioclient.h"
+#include "mmddk.h"
 
 #include "wine/debug.h"
 #include "wine/unixlib.h"
@@ -62,11 +64,29 @@ struct midi_dest
     int                 fd;
 };
 
+struct midi_src
+{
+    int                 state; /* -1 disabled, 0 is no recording started, 1 in recording, bit 2 set if in sys exclusive recording */
+    MIDIOPENDESC        midiDesc;
+    WORD                wFlags;
+    MIDIHDR            *lpQueueHdr;
+    unsigned char       incoming[3];
+    unsigned char       incPrev;
+    char                incLen;
+    UINT                startTime;
+    MIDIINCAPSW         caps;
+    int                 fd;
+};
+
 static pthread_mutex_t in_buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static unsigned int num_dests, num_srcs, num_synths, seq_refs;
 static struct midi_dest dests[MAX_MIDIOUTDRV];
 static struct midi_src srcs[MAX_MIDIINDRV];
+
+static unsigned int num_midi_in_started;
+static int rec_cancel_pipe[2];
+static pthread_t rec_thread_id;
 
 static pthread_mutex_t notify_mutex = PTHREAD_MUTEX_INITIALIZER;
 static pthread_cond_t notify_read_cond = PTHREAD_COND_INITIALIZER;
@@ -281,18 +301,6 @@ static int seq_close(int fd)
     return 0;
 }
 
-NTSTATUS midi_seq_open(void *args)
-{
-    struct midi_seq_open_params *params = args;
-
-    if (!params->close)
-        params->fd = seq_open();
-    else
-        seq_close(params->fd);
-
-    return STATUS_SUCCESS;
-}
-
 NTSTATUS midi_init(void *args)
 {
     struct midi_init_params *params = args;
@@ -499,8 +507,6 @@ wrapup:
     seq_close(fd);
 
     *params->err = 0;
-    params->num_srcs = num_srcs;
-    params->srcs = srcs;
 
     return STATUS_SUCCESS;
 }
@@ -1313,11 +1319,8 @@ static void handle_regular_data(struct midi_src *src, unsigned char value, UINT 
     }
 }
 
-NTSTATUS midi_handle_data(void *args)
+static void handle_midi_data(unsigned char *buffer, unsigned int len)
 {
-    struct midi_handle_data_params *params = args;
-    unsigned char *buffer = params->buffer;
-    unsigned int len = params->len;
     unsigned int time = get_time_msec(), i;
     struct midi_src *src;
     unsigned char value;
@@ -1339,7 +1342,153 @@ NTSTATUS midi_handle_data(void *args)
         else
             handle_regular_data(src, value, time - src->startTime);
     }
-    return STATUS_SUCCESS;
+}
+
+static void *rec_thread_proc(void *arg)
+{
+    int fd = PtrToLong(arg);
+    unsigned char buffer[256];
+    int len;
+    struct pollfd pollfd[2];
+
+    pollfd[0].fd = rec_cancel_pipe[0];
+    pollfd[0].events = POLLIN;
+    pollfd[1].fd = fd;
+    pollfd[1].events = POLLIN;
+
+    while (1)
+    {
+        /* Check if an event is present */
+        if (poll(pollfd, ARRAY_SIZE(pollfd), -1) <= 0)
+            continue;
+
+        if (pollfd[0].revents & POLLIN) /* cancelled */
+            break;
+
+        len = read(fd, buffer, sizeof(buffer));
+
+        if (len > 0 && len % 4 == 0)
+            handle_midi_data(buffer, len);
+    }
+    return NULL;
+}
+
+static UINT midi_in_open(WORD dev_id, MIDIOPENDESC *desc, UINT flags, struct notify_context *notify)
+{
+    struct midi_src *src;
+    int fd;
+
+    TRACE("(%04X, %p, %08X);\n", dev_id, desc, flags);
+
+    if (desc == NULL)
+    {
+        WARN("Invalid Parameter !\n");
+        return MMSYSERR_INVALPARAM;
+    }
+
+    /* FIXME :
+     * how to check that content of lpDesc is correct ?
+     */
+    if (dev_id >= num_srcs)
+    {
+        WARN("wDevID too large (%u) !\n", dev_id);
+        return MMSYSERR_BADDEVICEID;
+    }
+    src = srcs + dev_id;
+    if (src->state == -1)
+    {
+        WARN("device disabled\n");
+        return MIDIERR_NODEVICE;
+    }
+    if (src->midiDesc.hMidi != 0)
+    {
+        WARN("device already open !\n");
+        return MMSYSERR_ALLOCATED;
+    }
+    if ((flags & MIDI_IO_STATUS) != 0)
+    {
+        WARN("No support for MIDI_IO_STATUS in dwFlags yet, ignoring it\n");
+        flags &= ~MIDI_IO_STATUS;
+    }
+    if ((flags & ~CALLBACK_TYPEMASK) != 0)
+    {
+        FIXME("Bad flags\n");
+        return MMSYSERR_INVALFLAG;
+    }
+
+    fd = seq_open();
+    if (fd < 0)
+        return MMSYSERR_ERROR;
+
+    if (num_midi_in_started++ == 0)
+    {
+        pipe(rec_cancel_pipe);
+        if (pthread_create(&rec_thread_id, NULL, rec_thread_proc, LongToPtr(fd)))
+        {
+            close(rec_cancel_pipe[0]);
+            close(rec_cancel_pipe[1]);
+            num_midi_in_started = 0;
+            WARN("Couldn't create thread for midi-in\n");
+            seq_close(fd);
+            return MMSYSERR_ERROR;
+        }
+        TRACE("Created thread for midi-in\n");
+    }
+
+    src->wFlags = HIWORD(flags & CALLBACK_TYPEMASK);
+
+    src->lpQueueHdr = NULL;
+    src->midiDesc = *desc;
+    src->state = 0;
+    src->incLen = 0;
+    src->startTime = 0;
+    src->fd = fd;
+
+    set_in_notify(notify, src, dev_id, MIM_OPEN, 0, 0);
+    return MMSYSERR_NOERROR;
+}
+
+static UINT midi_in_close(WORD dev_id, struct notify_context *notify)
+{
+    struct midi_src *src;
+
+    TRACE("(%04X);\n", dev_id);
+
+    if (dev_id >= num_srcs)
+    {
+        WARN("dev_id too big (%u) !\n", dev_id);
+        return MMSYSERR_BADDEVICEID;
+    }
+    src = srcs + dev_id;
+    if (src->midiDesc.hMidi == 0)
+    {
+        WARN("device not opened !\n");
+        return MMSYSERR_ERROR;
+    }
+    if (src->lpQueueHdr != 0)
+        return MIDIERR_STILLPLAYING;
+
+    if (src->fd == -1)
+    {
+        WARN("ooops !\n");
+        return MMSYSERR_ERROR;
+    }
+    if (--num_midi_in_started == 0)
+    {
+        TRACE("Stopping thread for midi-in\n");
+        write(rec_cancel_pipe[1], "x", 1);
+        pthread_join(rec_thread_id, NULL);
+        close(rec_cancel_pipe[0]);
+        close(rec_cancel_pipe[1]);
+        TRACE("Stopped thread for midi-in\n");
+    }
+    seq_close(src->fd);
+    src->fd = -1;
+
+    set_in_notify(notify, src, dev_id, MIM_CLOSE, 0, 0);
+    src->midiDesc.hMidi = 0;
+
+    return MMSYSERR_NOERROR;
 }
 
 static UINT midi_in_add_buffer(WORD dev_id, MIDIHDR *hdr, UINT hdr_size)
@@ -1543,6 +1692,12 @@ NTSTATUS midi_in_message(void *args)
     case DRVM_DISABLE:
         /* FIXME: Pretend this is supported */
         *params->err = MMSYSERR_NOERROR;
+        break;
+    case MIDM_OPEN:
+        *params->err = midi_in_open(params->dev_id, (MIDIOPENDESC *)params->param_1, params->param_2, params->notify);
+        break;
+    case MIDM_CLOSE:
+        *params->err = midi_in_close(params->dev_id, params->notify);
         break;
     case MIDM_ADDBUFFER:
         *params->err = midi_in_add_buffer(params->dev_id, (MIDIHDR *)params->param_1, params->param_2);
