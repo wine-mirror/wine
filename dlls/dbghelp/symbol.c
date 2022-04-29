@@ -1027,7 +1027,7 @@ static void symt_get_length(struct module* module, const struct symt* symt, ULON
 
     if (symt_get_info(module, symt, TI_GET_TYPE, &type_index) &&
         symt_get_info(module, symt_index2ptr(module, type_index), TI_GET_LENGTH, size)) return;
-    *size = 0x1000; /* arbitrary value */
+    *size = 1; /* no size info */
 }
 
 /* needed by symt_find_nearest */
@@ -1102,6 +1102,20 @@ struct symt_ht* symt_find_nearest(struct module* module, DWORD_PTR addr)
     low = symt_get_best_at(module, low);
 
     return module->addr_sorttab[low];
+}
+
+struct symt_ht* symt_find_symbol_at(struct module* module, DWORD_PTR addr)
+{
+    struct symt_ht* nearest = symt_find_nearest(module, addr);
+    if (nearest)
+    {
+        ULONG64     symaddr, symsize;
+        symt_get_address(&nearest->symt, &symaddr);
+        symt_get_length(module, &nearest->symt, &symsize);
+        if (addr < symaddr || addr >= symaddr + symsize)
+            nearest = NULL;
+    }
+    return nearest;
 }
 
 static BOOL symt_enum_locals_helper(struct module_pair* pair,
@@ -1262,7 +1276,7 @@ struct symt* symt_get_upper_inlined(struct symt_inlinesite* inlined)
 /* lookup in module for an inline site (from addr and inline_ctx) */
 struct symt_inlinesite* symt_find_inlined_site(struct module* module, DWORD64 addr, DWORD inline_ctx)
 {
-    struct symt_ht* symt = symt_find_nearest(module, addr);
+    struct symt_ht* symt = symt_find_symbol_at(module, addr);
 
     if (symt_check_tag(&symt->symt, SymTagFunction))
     {
@@ -1284,7 +1298,7 @@ DWORD symt_get_inlinesite_depth(HANDLE hProcess, DWORD64 addr)
 
     if (module_init_pair(&pair, hProcess, addr))
     {
-        struct symt_ht* symt = symt_find_nearest(pair.effective, addr);
+        struct symt_ht* symt = symt_find_symbol_at(pair.effective, addr);
         if (symt_check_tag(&symt->symt, SymTagFunction))
         {
             struct symt_inlinesite* inlined = symt_find_lowest_inlined((struct symt_function*)symt, addr);
@@ -1518,7 +1532,7 @@ BOOL WINAPI SymFromAddr(HANDLE hProcess, DWORD64 Address,
     struct symt_ht*     sym;
 
     if (!module_init_pair(&pair, hProcess, Address)) return FALSE;
-    if ((sym = symt_find_nearest(pair.effective, Address)) == NULL) return FALSE;
+    if ((sym = symt_find_symbol_at(pair.effective, Address)) == NULL) return FALSE;
 
     symt_fill_sym_info(&pair, NULL, &sym->symt, Symbol);
     if (Displacement)
@@ -1905,7 +1919,7 @@ static BOOL get_line_from_addr(HANDLE hProcess, DWORD64 addr,
     struct symt_ht*             symt;
 
     if (!module_init_pair(&pair, hProcess, addr)) return FALSE;
-    if ((symt = symt_find_nearest(pair.effective, addr)) == NULL) return FALSE;
+    if ((symt = symt_find_symbol_at(pair.effective, addr)) == NULL) return FALSE;
 
     if (symt->symt.tag != SymTagFunction && symt->symt.tag != SymTagInlineSite) return FALSE;
     return get_line_from_function(&pair, (struct symt_function*)symt, addr, pdwDisplacement, intl);

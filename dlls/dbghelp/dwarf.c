@@ -2584,7 +2584,7 @@ static void dwarf2_set_line_number(struct module* module, ULONG_PTR address,
 
     TRACE("%s %Ix %s %u\n",
           debugstr_w(module->modulename), address, debugstr_a(source_get(module, *psrc)), line);
-    symt = symt_find_nearest(module, address);
+    symt = symt_find_symbol_at(module, address);
     if (symt_check_tag(&symt->symt, SymTagFunction))
     {
         func = (struct symt_function*)symt;

@@ -1461,7 +1461,7 @@ static void codeview_snarf_linetab(const struct msc_debug_info* msc_dbg, const B
                  */
                 if (!func || addr >= func->address + func->size)
                 {
-                    func = (struct symt_function*)symt_find_nearest(msc_dbg->module, addr);
+                    func = (struct symt_function*)symt_find_symbol_at(msc_dbg->module, addr);
                     /* FIXME: at least labels support line numbers */
                     if (!symt_check_tag(&func->symt, SymTagFunction) && !symt_check_tag(&func->symt, SymTagInlineSite))
                     {
@@ -1534,7 +1534,7 @@ static void codeview_snarf_linetab2(const struct msc_debug_info* msc_dbg, const 
                 lines = CV_RECORD_AFTER(files_hdr);
                 for (i = 0; i < files_hdr->nLines; i++)
                 {
-                    func = (struct symt_function*)symt_find_nearest(msc_dbg->module, lineblk_base + lines[i].offset);
+                    func = (struct symt_function*)symt_find_symbol_at(msc_dbg->module, lineblk_base + lines[i].offset);
                     /* FIXME: at least labels support line numbers */
                     if (!symt_check_tag(&func->symt, SymTagFunction) && !symt_check_tag(&func->symt, SymTagInlineSite))
                     {
@@ -1619,7 +1619,7 @@ static inline void codeview_add_variable(const struct msc_debug_info* msc_dbg,
         loc.kind = in_tls ? loc_tlsrel : loc_absolute;
         loc.reg = 0;
         loc.offset = in_tls ? offset : codeview_get_address(msc_dbg, segment, offset);
-        if (force || in_tls || !symt_find_nearest(msc_dbg->module, loc.offset))
+        if (force || in_tls || !symt_find_symbol_at(msc_dbg->module, loc.offset))
         {
             symt_new_global_variable(msc_dbg->module, compiland,
                                      name, is_local, loc, 0,
@@ -2501,7 +2501,7 @@ static BOOL codeview_snarf(const struct msc_debug_info* msc_dbg,
             if (!top_func)
             {
                 ULONG_PTR parent_addr = codeview_get_address(msc_dbg, sym->sepcode_v3.sectParent, sym->sepcode_v3.offParent);
-                struct symt_ht* parent = symt_find_nearest(msc_dbg->module, parent_addr);
+                struct symt_ht* parent = symt_find_symbol_at(msc_dbg->module, parent_addr);
                 if (symt_check_tag(&parent->symt, SymTagFunction))
                 {
                     struct symt_function* pfunc = (struct symt_function*)parent;

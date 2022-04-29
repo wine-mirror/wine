@@ -672,7 +672,7 @@ BOOL WINAPI SymSetScopeFromAddr(HANDLE hProcess, ULONG64 addr)
 
     if (!module_init_pair(&pair, hProcess, addr)) return FALSE;
     pair.pcs->localscope_pc = addr;
-    if ((sym = symt_find_nearest(pair.effective, addr)) != NULL && sym->symt.tag == SymTagFunction)
+    if ((sym = symt_find_symbol_at(pair.effective, addr)) != NULL && sym->symt.tag == SymTagFunction)
         pair.pcs->localscope_symt = &sym->symt;
     else
         pair.pcs->localscope_symt = NULL;

@@ -811,6 +811,8 @@ extern void         copy_symbolW(SYMBOL_INFOW* siw, const SYMBOL_INFO* si) DECLS
 extern void         symbol_setname(SYMBOL_INFO* si, const char* name) DECLSPEC_HIDDEN;
 extern struct symt_ht*
                     symt_find_nearest(struct module* module, DWORD_PTR addr) DECLSPEC_HIDDEN;
+extern struct symt_ht*
+                    symt_find_symbol_at(struct module* module, DWORD_PTR addr) DECLSPEC_HIDDEN;
 extern struct symt_module*
                     symt_new_module(struct module* module) DECLSPEC_HIDDEN;
 extern struct symt_compiland*
