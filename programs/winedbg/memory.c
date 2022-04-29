@@ -783,7 +783,7 @@ void memory_disassemble(const struct dbg_lvalue* xstart,
         memory_disasm_one_insn(&last);
 }
 
-BOOL memory_get_register(DWORD regno, DWORD_PTR** value, char* buffer, int len)
+BOOL memory_get_register(DWORD regno, struct dbg_lvalue* lvalue, char* buffer, int len)
 {
     const struct dbg_internal_var*  div;
 
@@ -813,7 +813,7 @@ BOOL memory_get_register(DWORD regno, DWORD_PTR** value, char* buffer, int len)
     {
         if (div->val == regno)
         {
-            if (!stack_get_register_frame(div, value))
+            if (!stack_get_register_frame(div, lvalue))
             {
                 if (buffer) snprintf(buffer, len, "<register %s not accessible in this frame>", div->name);
                 return FALSE;

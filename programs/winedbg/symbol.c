@@ -67,24 +67,20 @@ static BOOL fill_sym_lvalue(const SYMBOL_INFO* sym, ULONG_PTR base,
     if (buffer) buffer[0] = '\0';
     if (sym->Flags & SYMFLAG_REGISTER)
     {
-        DWORD_PTR* pval;
-
-        if (!memory_get_register(sym->Register, &pval, buffer, sz))
+        if (!memory_get_register(sym->Register, lvalue, buffer, sz))
             return FALSE;
-        init_lvalue(lvalue, FALSE, pval);
     }
     else if (sym->Flags & SYMFLAG_REGREL)
     {
-        DWORD_PTR* pval;
         size_t  l;
 
         *buffer++ = '['; sz--;
-        if (!memory_get_register(sym->Register, &pval, buffer, sz))
+        if (!memory_get_register(sym->Register, lvalue, buffer, sz))
             return FALSE;
         l = strlen(buffer);
         sz -= l;
         buffer += l;
-        init_lvalue(lvalue, TRUE, (void*)(DWORD_PTR)(*pval + sym->Address));
+        init_lvalue(lvalue, TRUE, (void*)(DWORD_PTR)(types_extract_as_integer(lvalue) + sym->Address));
         if ((LONG64)sym->Address >= 0)
             snprintf(buffer, sz, "+%I64d]", sym->Address);
         else

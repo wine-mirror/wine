@@ -98,12 +98,13 @@ static BOOL stack_set_frame_internal(int newframe)
     return TRUE;
 }
 
-BOOL stack_get_register_frame(const struct dbg_internal_var* div, DWORD_PTR** pval)
+BOOL stack_get_register_frame(const struct dbg_internal_var* div, struct dbg_lvalue* lvalue)
 {
     struct dbg_frame* currfrm = stack_get_curr_frame();
     if (currfrm == NULL) return FALSE;
     if (currfrm->is_ctx_valid)
-        *pval = (DWORD_PTR*)((char*)&currfrm->context + (DWORD_PTR)div->pval);
+        init_lvalue_in_debugger(lvalue, div->typeid,
+                                (char*)&currfrm->context + (DWORD_PTR)div->pval);
     else
     {
         enum be_cpu_addr        kind;
@@ -114,13 +115,13 @@ BOOL stack_get_register_frame(const struct dbg_internal_var* div, DWORD_PTR** pv
         switch (kind)
         {
         case be_cpu_addr_pc:
-            *pval = &currfrm->linear_pc;
+            init_lvalue_in_debugger(lvalue, dbg_itype_unsigned_long_int, &currfrm->linear_pc);
             break;
         case be_cpu_addr_stack:
-            *pval = &currfrm->linear_stack;
+            init_lvalue_in_debugger(lvalue, dbg_itype_unsigned_long_int, &currfrm->linear_stack);
             break;
         case be_cpu_addr_frame:
-            *pval = &currfrm->linear_frame;
+            init_lvalue_in_debugger(lvalue, dbg_itype_unsigned_long_int, &currfrm->linear_frame);
             break;
         }
     }
