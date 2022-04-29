@@ -319,7 +319,14 @@ static	void cvtMMms16K(const ACMDRVSTREAMINSTANCE *adsi,
     {
         const unsigned char*    in_src = src;
 
-        assert(*src <= 6);
+        /* Catch a problem from Lord of the Rings War of the Ring where it
+         * passes invalid data. */
+        if (*src > 6)
+        {
+                *ndst -= nblock * nsamp_blk * adsi->pwfxDst->nBlockAlign;
+                WARN("Invalid ADPCM data, stopping conversion\n");
+                break;
+        }
         coeff = MSADPCM_CoeffSet[*src++];
 
         idelta =  R16(src);     src += 2;
