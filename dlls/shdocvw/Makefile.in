@@ -1,4 +1,3 @@
-EXTRADEFS = -D_SHDOCVW_
 MODULE    = shdocvw.dll
 IMPORTLIB = shdocvw
 IMPORTS   = uuid shlwapi advapi32
