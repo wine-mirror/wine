@@ -153,8 +153,10 @@ static void test_poll(void)
     struct afd_poll_params *in_params = (struct afd_poll_params *)in_buffer;
     struct afd_poll_params *out_params = (struct afd_poll_params *)out_buffer;
     int large_buffer_size = 1024 * 1024;
+    GUID acceptex_guid = WSAID_ACCEPTEX;
     SOCKET client, server, listener;
     OVERLAPPED overlapped = {0};
+    LPFN_ACCEPTEX pAcceptEx;
     struct sockaddr_in addr;
     DWORD size, flags = 0;
     char *large_buffer;
@@ -179,6 +181,10 @@ static void test_poll(void)
     len = sizeof(addr);
     ret = getsockname(listener, (struct sockaddr *)&addr, &len);
     ok(!ret, "got error %u\n", WSAGetLastError());
+
+    ret = WSAIoctl(listener, SIO_GET_EXTENSION_FUNCTION_POINTER, &acceptex_guid, sizeof(acceptex_guid),
+            &pAcceptEx, sizeof(pAcceptEx), &size, NULL, NULL);
+    ok(!ret, "failed to get AcceptEx, error %u\n", WSAGetLastError());
 
     params_size = offsetof(struct afd_poll_params, sockets[1]);
     in_params->count = 1;
@@ -673,6 +679,52 @@ static void test_poll(void)
 
     closesocket(client);
 
+    /* Test connecting while there is a pending AcceptEx(). */
+
+    in_params->timeout = -1000 * 10000;
+    in_params->count = 1;
+    in_params->sockets[0].socket = listener;
+    in_params->sockets[0].flags = AFD_POLL_ACCEPT;
+
+    ret = NtDeviceIoControlFile((HANDLE)listener, event, NULL, NULL, &io,
+            IOCTL_AFD_POLL, in_params, params_size, out_params, params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    server = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ret = pAcceptEx(listener, server, large_buffer, 0, 0, sizeof(struct sockaddr_in) + 16, NULL, &overlapped);
+    ok(!ret, "got %d\n", ret);
+    ok(WSAGetLastError() == ERROR_IO_PENDING, "got error %u\n", WSAGetLastError());
+
+    client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ret = connect(client, (struct sockaddr *)&addr, sizeof(addr));
+    ok(!ret, "got error %u\n", WSAGetLastError());
+
+    ret = WaitForSingleObject(overlapped.hEvent, 200);
+    ok(!ret, "got %d\n", ret);
+    ret = GetOverlappedResult((HANDLE)listener, &overlapped, &size, FALSE);
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(!size, "got size %lu\n", size);
+
+    ret = WaitForSingleObject(event, 0);
+    todo_wine ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+
+    closesocket(server);
+    closesocket(client);
+
+    client = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ret = connect(client, (struct sockaddr *)&addr, sizeof(addr));
+    ok(!ret, "got error %u\n", WSAGetLastError());
+
+    ret = WaitForSingleObject(event, 200);
+    ok(!ret, "got %#x\n", ret);
+    ok(!io.Status, "got %#lx\n", io.Status);
+    ok(io.Information == offsetof(struct afd_poll_params, sockets[1]), "got %#Ix\n", io.Information);
+    ok(out_params->count == 1, "got count %u\n", out_params->count);
+    ok(out_params->sockets[0].socket == listener, "got socket %#Ix\n", out_params->sockets[0].socket);
+    ok(out_params->sockets[0].flags == AFD_POLL_ACCEPT, "got flags %#x\n", out_params->sockets[0].flags);
+    ok(!out_params->sockets[0].status, "got status %#x\n", out_params->sockets[0].status);
+
+    closesocket(client);
     closesocket(listener);
 
     /* Test UDP sockets. */
