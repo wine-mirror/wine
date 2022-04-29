@@ -78,6 +78,7 @@ struct effect_params
     BOOL axis_enabled[2];
     BOOL direction_enabled;
     UINT16 direction[2];
+    BYTE gain_percent;
     BYTE condition_count;
     /* only for periodic, constant or ramp forces */
     struct effect_envelope envelope;

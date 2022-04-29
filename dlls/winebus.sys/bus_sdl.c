@@ -647,7 +647,7 @@ static NTSTATUS sdl_device_physical_effect_update(struct unix_device *iface, BYT
         effect.periodic.direction.dir[0] = direction;
         effect.periodic.direction.dir[1] = params->direction[1];
         effect.periodic.period = params->periodic.period;
-        effect.periodic.magnitude = params->periodic.magnitude;
+        effect.periodic.magnitude = (params->periodic.magnitude * params->gain_percent) / 100;
         effect.periodic.offset = params->periodic.offset;
         effect.periodic.phase = params->periodic.phase;
         effect.periodic.attack_length = params->envelope.attack_time;
@@ -695,7 +695,7 @@ static NTSTATUS sdl_device_physical_effect_update(struct unix_device *iface, BYT
         effect.constant.direction.type = SDL_HAPTIC_SPHERICAL;
         effect.constant.direction.dir[0] = direction;
         effect.constant.direction.dir[1] = params->direction[1];
-        effect.constant.level = params->constant_force.magnitude;
+        effect.constant.level = (params->constant_force.magnitude * params->gain_percent) / 100;
         effect.constant.attack_length = params->envelope.attack_time;
         effect.constant.attack_level = params->envelope.attack_level;
         effect.constant.fade_length = params->envelope.fade_time;
@@ -712,8 +712,8 @@ static NTSTATUS sdl_device_physical_effect_update(struct unix_device *iface, BYT
         effect.ramp.direction.type = SDL_HAPTIC_SPHERICAL;
         effect.ramp.direction.dir[0] = params->direction[0];
         effect.ramp.direction.dir[1] = params->direction[1];
-        effect.ramp.start = params->ramp_force.ramp_start;
-        effect.ramp.end = params->ramp_force.ramp_end;
+        effect.ramp.start = (params->ramp_force.ramp_start * params->gain_percent) / 100;
+        effect.ramp.end = (params->ramp_force.ramp_end * params->gain_percent) / 100;
         effect.ramp.attack_length = params->envelope.attack_time;
         effect.ramp.attack_level = params->envelope.attack_level;
         effect.ramp.fade_length = params->envelope.fade_time;
