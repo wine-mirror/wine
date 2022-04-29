@@ -2603,7 +2603,7 @@ static void test_decodeRsaPublicKey_Bcrypt(DWORD dwEncoding)
              rsaPubKeys[i].modulus, rsaPubKeys[i].decodedModulusLen),
              "Unexpected modulus\n");
             LocalFree(buf);
-            LocalFree(leModulus);
+            HeapFree(GetProcessHeap(), 0, leModulus);
         }
     }
 }
