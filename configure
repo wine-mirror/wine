@@ -22076,6 +22076,7 @@ wine_fn_config_makefile programs/rpcss enable_rpcss
 wine_fn_config_makefile programs/rundll.exe16 enable_win16
 wine_fn_config_makefile programs/rundll32 enable_rundll32
 wine_fn_config_makefile programs/sc enable_sc
+wine_fn_config_makefile programs/sc/tests enable_tests
 wine_fn_config_makefile programs/schtasks enable_schtasks
 wine_fn_config_makefile programs/schtasks/tests enable_tests
 wine_fn_config_makefile programs/sdbinst enable_sdbinst
