@@ -253,4 +253,53 @@ library UIAutomationClient {
     /*
     }
     */
+    /* FIXME: Uncomment when properly supported in widl
+    [dllname("<no entry points>")]
+    module UIA_ControlTypeIds
+    {
+    */
+        const long UIA_ButtonControlTypeId = 50000;
+        const long UIA_CalendarControlTypeId = 50001;
+        const long UIA_CheckBoxControlTypeId = 50002;
+        const long UIA_ComboBoxControlTypeId = 50003;
+        const long UIA_EditControlTypeId = 50004;
+        const long UIA_HyperlinkControlTypeId = 50005;
+        const long UIA_ImageControlTypeId = 50006;
+        const long UIA_ListItemControlTypeId = 50007;
+        const long UIA_ListControlTypeId = 50008;
+        const long UIA_MenuControlTypeId = 50009;
+        const long UIA_MenuBarControlTypeId = 50010;
+        const long UIA_MenuItemControlTypeId = 50011;
+        const long UIA_ProgressBarControlTypeId = 50012;
+        const long UIA_RadioButtonControlTypeId = 50013;
+        const long UIA_ScrollBarControlTypeId = 50014;
+        const long UIA_SliderControlTypeId = 50015;
+        const long UIA_SpinnerControlTypeId = 50016;
+        const long UIA_StatusBarControlTypeId = 50017;
+        const long UIA_TabControlTypeId = 50018;
+        const long UIA_TabItemControlTypeId = 50019;
+        const long UIA_TextControlTypeId = 50020;
+        const long UIA_ToolBarControlTypeId = 50021;
+        const long UIA_ToolTipControlTypeId = 50022;
+        const long UIA_TreeControlTypeId = 50023;
+        const long UIA_TreeItemControlTypeId = 50024;
+        const long UIA_CustomControlTypeId = 50025;
+        const long UIA_GroupControlTypeId = 50026;
+        const long UIA_ThumbControlTypeId = 50027;
+        const long UIA_DataGridControlTypeId = 50028;
+        const long UIA_DataItemControlTypeId = 50029;
+        const long UIA_DocumentControlTypeId = 50030;
+        const long UIA_SplitButtonControlTypeId = 50031;
+        const long UIA_WindowControlTypeId = 50032;
+        const long UIA_PaneControlTypeId = 50033;
+        const long UIA_HeaderControlTypeId = 50034;
+        const long UIA_HeaderItemControlTypeId = 50035;
+        const long UIA_TableControlTypeId = 50036;
+        const long UIA_TitleBarControlTypeId = 50037;
+        const long UIA_SeparatorControlTypeId = 50038;
+        const long UIA_SemanticZoomControlTypeId = 50039;
+        const long UIA_AppBarControlTypeId = 50040;
+    /*
+    };
+    */
 }
