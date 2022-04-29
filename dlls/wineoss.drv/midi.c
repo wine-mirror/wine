@@ -126,16 +126,6 @@ static LRESULT OSS_MidiExit(void)
     return 0;
 }
 
-static void in_buffer_lock(void)
-{
-    OSS_CALL(midi_in_lock, ULongToPtr(1));
-}
-
-static void in_buffer_unlock(void)
-{
-    OSS_CALL(midi_in_lock, ULongToPtr(0));
-}
-
 static void notify_client(struct notify_context *notify)
 {
     TRACE("dev_id = %d msg = %d param1 = %04lX param2 = %04lX\n",
@@ -210,123 +200,13 @@ static int midiCloseSeq(int fd)
     return 0;
 }
 
-static void handle_sysex_data(struct midi_src *src, unsigned char value, UINT time)
-{
-    MIDIHDR *hdr;
-    BOOL done = FALSE;
-
-    src->state |= 2;
-    src->incLen = 0;
-
-    in_buffer_lock();
-
-    hdr = src->lpQueueHdr;
-    if (hdr)
-    {
-        BYTE *data = (BYTE *)hdr->lpData;
-
-        data[hdr->dwBytesRecorded++] = value;
-        if (hdr->dwBytesRecorded == hdr->dwBufferLength)
-            done = TRUE;
-    }
-
-    if (value == 0xf7) /* end */
-    {
-        src->state &= ~2;
-        done = TRUE;
-    }
-
-    if (done && hdr)
-    {
-        src->lpQueueHdr = hdr->lpNext;
-        hdr->dwFlags &= ~MHDR_INQUEUE;
-        hdr->dwFlags |= MHDR_DONE;
-        MIDI_NotifyClient(src - MidiInDev, MIM_LONGDATA, (UINT_PTR)hdr, time);
-    }
-
-    in_buffer_unlock();
-}
-
-static void handle_regular_data(struct midi_src *src, unsigned char value, UINT time)
-{
-    UINT to_send = 0;
-
-#define IS_CMD(_x)     (((_x) & 0x80) == 0x80)
-#define IS_SYS_CMD(_x) (((_x) & 0xF0) == 0xF0)
-
-    if (!IS_CMD(value) && src->incLen == 0) /* try to reuse old cmd */
-    {
-        if (IS_CMD(src->incPrev) && !IS_SYS_CMD(src->incPrev))
-        {
-            src->incoming[0] = src->incPrev;
-            src->incLen = 1;
-        }
-        else
-        {
-            /* FIXME: should generate MIM_ERROR notification */
-            return;
-        }
-    }
-    src->incoming[(int)src->incLen++] = value;
-    if (src->incLen == 1 && !IS_SYS_CMD(src->incoming[0]))
-        /* store new cmd, just in case */
-        src->incPrev = src->incoming[0];
-
-#undef IS_CMD
-#undef IS_SYS_CMD
-
-    switch (src->incoming[0] & 0xF0)
-    {
-    case MIDI_NOTEOFF:
-    case MIDI_NOTEON:
-    case MIDI_KEY_PRESSURE:
-    case MIDI_CTL_CHANGE:
-    case MIDI_PITCH_BEND:
-        if (src->incLen == 3)
-            to_send = (src->incoming[2] << 16) | (src->incoming[1] << 8) |
-                src->incoming[0];
-        break;
-    case MIDI_PGM_CHANGE:
-    case MIDI_CHN_PRESSURE:
-        if (src->incLen == 2)
-            to_send = (src->incoming[1] << 8) | src->incoming[0];
-        break;
-    case MIDI_SYSTEM_PREFIX:
-        if (src->incLen == 1)
-            to_send = src->incoming[0];
-        break;
-    }
-
-    if (to_send)
-    {
-        src->incLen = 0;
-        MIDI_NotifyClient(src - MidiInDev, MIM_DATA, to_send, time);
-    }
-}
-
 static void handle_midi_data(unsigned char *buffer, unsigned int len)
 {
-    unsigned int time = GetTickCount(), i;
-    struct midi_src *src;
-    unsigned char value;
-    WORD dev_id;
+    struct midi_handle_data_params params;
 
-    for (i = 0; i < len; i += (buffer[i] & 0x80) ? 8 : 4)
-    {
-        if (buffer[i] != SEQ_MIDIPUTC) continue;
-
-        dev_id = buffer[i + 2];
-        value = buffer[i + 1];
-
-        if (dev_id >= MIDM_NumDevs) continue;
-        src = MidiInDev + dev_id;
-        if (src->state <= 0) continue;
-
-        if (value == 0xf0 || src->state & 2) /* system exclusive */
-            handle_sysex_data(src, value, time - src->startTime);
-        else
-            handle_regular_data(src, value, time - src->startTime);
-    }
+    params.buffer = buffer;
+    params.len = len;
+    OSS_CALL(midi_handle_data, &params);
 }
 
 static DWORD WINAPI midRecThread(void *arg)
@@ -565,6 +445,7 @@ static DWORD WINAPI notify_thread(void *p)
     {
         OSS_CALL(midi_notify_wait, &params);
         if (quit) break;
+        if (notify.send_notify) notify_client(&notify);
     }
     return 0;
 }

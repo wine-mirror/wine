@@ -279,6 +279,12 @@ struct midi_seq_open_params
     int fd;
 };
 
+struct midi_handle_data_params
+{
+    unsigned char *buffer;
+    unsigned int len;
+};
+
 enum oss_funcs
 {
     oss_test_connect,
@@ -311,7 +317,7 @@ enum oss_funcs
     oss_midi_notify_wait,
 
     oss_midi_seq_open, /* temporary */
-    oss_midi_in_lock,
+    oss_midi_handle_data,
 };
 
 NTSTATUS midi_init(void *args) DECLSPEC_HIDDEN;
@@ -320,7 +326,7 @@ NTSTATUS midi_out_message(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_in_message(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_notify_wait(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_seq_open(void *args) DECLSPEC_HIDDEN;
-NTSTATUS midi_in_lock(void *args) DECLSPEC_HIDDEN;
+NTSTATUS midi_handle_data(void *args) DECLSPEC_HIDDEN;
 
 extern unixlib_handle_t oss_handle;
 
