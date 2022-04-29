@@ -552,6 +552,23 @@ DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     return err;
 }
 
+static DWORD WINAPI notify_thread(void *p)
+{
+    struct midi_notify_wait_params params;
+    struct notify_context notify;
+    BOOL quit;
+
+    params.notify = &notify;
+    params.quit = &quit;
+
+    while (1)
+    {
+        OSS_CALL(midi_notify_wait, &params);
+        if (quit) break;
+    }
+    return 0;
+}
+
 /**************************************************************************
  * 				DriverProc (WINEOSS.1)
  */
@@ -563,7 +580,11 @@ LRESULT CALLBACK OSS_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
 
     switch(wMsg) {
     case DRV_LOAD:
+        CloseHandle(CreateThread(NULL, 0, notify_thread, NULL, 0, NULL));
+        return 1;
     case DRV_FREE:
+        OSS_CALL(midi_release, NULL);
+        return 1;
     case DRV_OPEN:
     case DRV_CLOSE:
     case DRV_ENABLE:

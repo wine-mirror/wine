@@ -267,6 +267,12 @@ struct midi_in_message_params
     struct notify_context *notify;
 };
 
+struct midi_notify_wait_params
+{
+    BOOL *quit;
+    struct notify_context *notify;
+};
+
 struct midi_seq_open_params
 {
     int close;
@@ -299,16 +305,20 @@ enum oss_funcs
     oss_set_event_handle,
     oss_is_started,
     oss_midi_init,
+    oss_midi_release,
     oss_midi_out_message,
     oss_midi_in_message,
+    oss_midi_notify_wait,
 
     oss_midi_seq_open, /* temporary */
     oss_midi_in_lock,
 };
 
 NTSTATUS midi_init(void *args) DECLSPEC_HIDDEN;
+NTSTATUS midi_release(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_out_message(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_in_message(void *args) DECLSPEC_HIDDEN;
+NTSTATUS midi_notify_wait(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_seq_open(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_in_lock(void *args) DECLSPEC_HIDDEN;
 
