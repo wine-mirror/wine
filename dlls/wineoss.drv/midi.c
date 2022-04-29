@@ -70,7 +70,7 @@ static	int 		MIDM_NumDevs = 0;
 
 static	int		numStartedMidiIn = 0;
 
-static int end_thread;
+static int rec_cancel_pipe[2];
 static HANDLE hThread;
 
 /*======================================================================*
@@ -214,30 +214,26 @@ static DWORD WINAPI midRecThread(void *arg)
     int fd = (int)(INT_PTR)arg;
     unsigned char buffer[256];
     int len;
-    struct pollfd pfd;
+    struct pollfd pollfd[2];
 
-    TRACE("Thread startup\n");
+    pollfd[0].fd = rec_cancel_pipe[0];
+    pollfd[0].events = POLLIN;
+    pollfd[1].fd = fd;
+    pollfd[1].events = POLLIN;
 
-    pfd.fd = fd;
-    pfd.events = POLLIN;
-    
-    while(!end_thread) {
-	TRACE("Thread loop\n");
-
+    while (1)
+    {
 	/* Check if an event is present */
-	if (poll(&pfd, 1, 250) <= 0)
+	if (poll(pollfd, ARRAY_SIZE(pollfd), -1) <= 0)
 	    continue;
-	
+
+	if (pollfd[0].revents & POLLIN) /* cancelled */
+	    break;
+
 	len = read(fd, buffer, sizeof(buffer));
-	TRACE("Received %d bytes\n", len);
 
-	if (len < 0) continue;
-	if ((len % 4) != 0) {
-	    WARN("Bad length %d, errno %d (%s)\n", len, errno, strerror(errno));
-	    continue;
-	}
-
-	handle_midi_data(buffer, len);
+	if (len > 0 && len % 4 == 0)
+	    handle_midi_data(buffer, len);
     }
     return 0;
 }
@@ -286,9 +282,11 @@ static DWORD midOpen(WORD wDevID, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
     }
 
     if (numStartedMidiIn++ == 0) {
-	end_thread = 0;
+	pipe(rec_cancel_pipe);
 	hThread = CreateThread(NULL, 0, midRecThread, (void *)(INT_PTR)fd, 0, NULL);
 	if (!hThread) {
+	    close(rec_cancel_pipe[0]);
+	    close(rec_cancel_pipe[1]);
 	    numStartedMidiIn = 0;
 	    WARN("Couldn't create thread for midi-in\n");
 	    midiCloseSeq(fd);
@@ -338,11 +336,13 @@ static DWORD midClose(WORD wDevID)
     }
     if (--numStartedMidiIn == 0) {
 	TRACE("Stopping thread for midi-in\n");
-	end_thread = 1;
+	write(rec_cancel_pipe[1], "x", 1);
 	if (WaitForSingleObject(hThread, 5000) != WAIT_OBJECT_0) {
 	    WARN("Thread end not signaled, force termination\n");
 	    TerminateThread(hThread, 0);
 	}
+	close(rec_cancel_pipe[0]);
+	close(rec_cancel_pipe[1]);
     	TRACE("Stopped thread for midi-in\n");
     }
     midiCloseSeq(MidiInDev[wDevID].fd);
