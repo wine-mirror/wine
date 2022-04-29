@@ -205,7 +205,7 @@ static HRESULT WINAPI activation_ActivateInstance( IActivationFactory *iface, II
     impl->IConstantForceEffect_iface.lpVtbl = &effect_vtbl;
     impl->ref = 1;
 
-    if (FAILED(hr = force_feedback_effect_create( (IInspectable *)&impl->IConstantForceEffect_iface,
+    if (FAILED(hr = force_feedback_effect_create( WineForceFeedbackEffectType_Constant, (IInspectable *)&impl->IConstantForceEffect_iface,
                                                   &impl->IWineForceFeedbackEffectImpl_inner )))
     {
         free( impl );

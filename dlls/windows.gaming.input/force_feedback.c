@@ -33,6 +33,12 @@ struct effect
     IForceFeedbackEffect IForceFeedbackEffect_iface;
     IInspectable *IInspectable_outer;
     LONG ref;
+
+    GUID type;
+    DWORD axes[3];
+    LONG directions[3];
+    DICONSTANTFORCE constant_force;
+    DIEFFECT params;
 };
 
 static inline struct effect *impl_from_IWineForceFeedbackEffectImpl( IWineForceFeedbackEffectImpl *iface )
@@ -143,7 +149,7 @@ static const struct IForceFeedbackEffectVtbl effect_vtbl =
     effect_Stop,
 };
 
-HRESULT force_feedback_effect_create( IInspectable *outer, IWineForceFeedbackEffectImpl **out )
+HRESULT force_feedback_effect_create( enum WineForceFeedbackEffectType type, IInspectable *outer, IWineForceFeedbackEffectImpl **out )
 {
     struct effect *impl;
 
@@ -154,6 +160,26 @@ HRESULT force_feedback_effect_create( IInspectable *outer, IWineForceFeedbackEff
     impl->IForceFeedbackEffect_iface.lpVtbl = &effect_vtbl;
     impl->IInspectable_outer = outer;
     impl->ref = 1;
+
+    switch (type)
+    {
+    case WineForceFeedbackEffectType_Constant:
+        impl->type = GUID_ConstantForce;
+        impl->params.lpvTypeSpecificParams = &impl->constant_force;
+        impl->params.cbTypeSpecificParams = sizeof(impl->constant_force);
+        break;
+    }
+
+    impl->params.dwSize = sizeof(DIEFFECT);
+    impl->params.rgdwAxes = impl->axes;
+    impl->params.rglDirection = impl->directions;
+    impl->params.dwTriggerButton = -1;
+    impl->params.dwGain = 10000;
+    impl->params.dwFlags = DIEFF_CARTESIAN|DIEFF_OBJECTOFFSETS;
+    impl->params.cAxes = 0;
+    impl->axes[0] = DIJOFS_X;
+    impl->axes[1] = DIJOFS_Y;
+    impl->axes[2] = DIJOFS_Z;
 
     *out = &impl->IWineForceFeedbackEffectImpl_iface;
     TRACE( "created ForceFeedbackEffect %p\n", *out );
