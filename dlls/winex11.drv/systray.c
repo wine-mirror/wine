@@ -322,14 +322,13 @@ static void add_to_standalone_tray( struct tray_icon *icon )
 
     icon->display = nb_displayed;
     pos = get_icon_pos( icon );
-    icon->window = CreateWindowW( icon_classname, NULL, WS_CHILD | WS_VISIBLE,
-                                  pos.x, pos.y, icon_cx, icon_cy, standalone_tray, NULL, NULL, icon );
+    CreateWindowW( icon_classname, NULL, WS_CHILD | WS_VISIBLE,
+                   pos.x, pos.y, icon_cx, icon_cy, standalone_tray, NULL, NULL, icon );
     if (!icon->window)
     {
         icon->display = -1;
         return;
     }
-    create_tooltip( icon );
 
     nb_displayed++;
     size = get_window_size();
@@ -474,6 +473,11 @@ static LRESULT WINAPI tray_icon_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
 
     switch (msg)
     {
+    case WM_CREATE:
+        icon->window = hwnd;
+        create_tooltip( icon );
+        break;
+
     case WM_SIZE:
         if (icon->window && icon->layered) repaint_tray_icon( icon );
         break;
@@ -643,10 +647,10 @@ static void dock_systray_icon( Display *display, struct tray_icon *icon, Window 
     get_systray_visual_info( display, systray_window, &visual );
 
     icon->layered = (visual.depth == 32);
-    icon->window = CreateWindowExW( icon->layered ? WS_EX_LAYERED : 0,
-                                    icon_classname, NULL, WS_CLIPSIBLINGS | WS_POPUP,
-                                    CW_USEDEFAULT, CW_USEDEFAULT, icon_cx, icon_cy,
-                                    NULL, NULL, NULL, icon );
+    CreateWindowExW( icon->layered ? WS_EX_LAYERED : 0,
+                     icon_classname, NULL, WS_CLIPSIBLINGS | WS_POPUP,
+                     CW_USEDEFAULT, CW_USEDEFAULT, icon_cx, icon_cy,
+                     NULL, NULL, NULL, icon );
 
     if (!(data = get_win_data( icon->window ))) return;
     if (icon->layered) set_window_visual( data, &visual, TRUE );
@@ -654,7 +658,6 @@ static void dock_systray_icon( Display *display, struct tray_icon *icon, Window 
     window = data->whole_window;
     release_win_data( data );
 
-    create_tooltip( icon );
     ShowWindow( icon->window, SW_SHOWNA );
 
     TRACE( "icon window %p/%lx\n", icon->window, window );
