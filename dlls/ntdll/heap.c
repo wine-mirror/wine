@@ -1393,6 +1393,7 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, PVOID addr, SIZE_T totalSize, SIZE_T c
                              PVOID unknown, PRTL_HEAP_DEFINITION definition )
 {
     SUBHEAP *subheap;
+    HEAP *heap;
 
     /* Allocate the heap block */
 
@@ -1402,24 +1403,24 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, PVOID addr, SIZE_T totalSize, SIZE_T c
     if (!totalSize) totalSize = HEAP_DEF_SIZE;
 
     if (!(subheap = HEAP_CreateSubHeap( NULL, addr, flags, commitSize, totalSize ))) return 0;
+    heap = subheap->heap;
 
-    heap_set_debug_flags( subheap->heap );
+    heap_set_debug_flags( heap );
 
     /* link it into the per-process heap list */
     if (processHeap)
     {
-        HEAP *heapPtr = subheap->heap;
         RtlEnterCriticalSection( &processHeap->cs );
-        list_add_head( &processHeap->entry, &heapPtr->entry );
+        list_add_head( &processHeap->entry, &heap->entry );
         RtlLeaveCriticalSection( &processHeap->cs );
     }
     else if (!addr)
     {
-        processHeap = subheap->heap;  /* assume the first heap we create is the process main heap */
+        processHeap = heap;  /* assume the first heap we create is the process main heap */
         list_init( &processHeap->entry );
     }
 
-    return subheap->heap;
+    return heap;
 }
 
 
