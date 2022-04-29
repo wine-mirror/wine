@@ -236,8 +236,25 @@ static HRESULT WINAPI effect_put_Gain( IForceFeedbackEffect *iface, DOUBLE value
 
 static HRESULT WINAPI effect_get_State( IForceFeedbackEffect *iface, ForceFeedbackEffectState *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct effect *impl = impl_from_IForceFeedbackEffect( iface );
+    DWORD status;
+    HRESULT hr;
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    EnterCriticalSection( &impl->cs );
+    if (!impl->effect)
+        *value = ForceFeedbackEffectState_Stopped;
+    else if (FAILED(hr = IDirectInputEffect_GetEffectStatus( impl->effect, &status )))
+        *value = ForceFeedbackEffectState_Faulted;
+    else
+    {
+        if (status == DIEGES_PLAYING) *value = ForceFeedbackEffectState_Running;
+        else *value = ForceFeedbackEffectState_Stopped;
+    }
+    LeaveCriticalSection( &impl->cs );
+
+    return S_OK;
 }
 
 static HRESULT WINAPI effect_Start( IForceFeedbackEffect *iface )

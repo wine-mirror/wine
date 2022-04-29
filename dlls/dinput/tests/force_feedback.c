@@ -6020,9 +6020,7 @@ static void test_windows_gaming_input(void)
     ok( hr == S_FALSE, "put_Gain returned %#lx\n", hr );
     state = 0xdeadbeef;
     hr = IForceFeedbackEffect_get_State( effect, &state );
-    todo_wine
     ok( hr == S_OK, "get_State returned %#lx\n", hr );
-    todo_wine
     ok( state == ForceFeedbackEffectState_Stopped, "got state %#x\n", state );
     hr = IForceFeedbackEffect_Start( effect );
     todo_wine
@@ -6260,9 +6258,7 @@ static void test_windows_gaming_input(void)
     ok( hr == S_FALSE, "put_Gain returned %#lx\n", hr );
     state = 0xdeadbeef;
     hr = IForceFeedbackEffect_get_State( effect, &state );
-    todo_wine
     ok( hr == S_OK, "get_State returned %#lx\n", hr );
-    todo_wine
     ok( state == ForceFeedbackEffectState_Stopped, "get_State returned %#lx\n", hr );
     hr = IForceFeedbackEffect_Start( effect );
     todo_wine
