@@ -1405,7 +1405,6 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     set_volumes,
     set_event_handle,
     is_started,
-    midi_init,
     midi_release,
     midi_out_message,
     midi_in_message,

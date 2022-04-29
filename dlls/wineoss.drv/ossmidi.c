@@ -83,6 +83,7 @@ static pthread_mutex_t in_buffer_mutex = PTHREAD_MUTEX_INITIALIZER;
 static unsigned int num_dests, num_srcs, num_synths, seq_refs;
 static struct midi_dest dests[MAX_MIDIOUTDRV];
 static struct midi_src srcs[MAX_MIDIINDRV];
+static int load_count;
 
 static unsigned int num_midi_in_started;
 static int rec_cancel_pipe[2];
@@ -301,22 +302,23 @@ static int seq_close(int fd)
     return 0;
 }
 
-NTSTATUS midi_init(void *args)
+static UINT midi_init(void)
 {
-    struct midi_init_params *params = args;
     int i, status, synth_devs = 255, midi_devs = 255, fd, len;
     struct synth_info sinfo;
     struct midi_info minfo;
     struct midi_dest *dest;
     struct midi_src *src;
 
+    TRACE("(%i)\n", load_count);
+
+    if (load_count++)
+        return 1;
+
     /* try to open device */
     fd = seq_open();
     if (fd == -1)
-    {
-        *params->err = -1;
-        return STATUS_SUCCESS;
-    }
+        return -1;
 
     /* find how many Synth devices are there in the system */
     status = ioctl(fd, SNDCTL_SEQ_NRSYNTHS, &synth_devs);
@@ -324,8 +326,7 @@ NTSTATUS midi_init(void *args)
     {
         ERR("ioctl for nr synth failed.\n");
         seq_close(fd);
-        *params->err = -1;
-        return STATUS_SUCCESS;
+        return -1;
     }
 
     if (synth_devs > MAX_MIDIOUTDRV)
@@ -506,9 +507,17 @@ wrapup:
     /* close file and exit */
     seq_close(fd);
 
-    *params->err = 0;
+    return 0;
+}
 
-    return STATUS_SUCCESS;
+static UINT midi_exit(void)
+{
+    TRACE("(%i)\n", load_count);
+
+    if (--load_count)
+        return 1;
+
+    return 0;
 }
 
 NTSTATUS midi_release(void *args)
@@ -1634,6 +1643,12 @@ NTSTATUS midi_out_message(void *args)
 
     switch (params->msg)
     {
+    case DRVM_INIT:
+        *params->err = midi_init();
+        break;
+    case DRVM_EXIT:
+        *params->err = midi_exit();
+        break;
     case DRVM_ENABLE:
     case DRVM_DISABLE:
         /* FIXME: Pretend this is supported */
@@ -1688,6 +1703,12 @@ NTSTATUS midi_in_message(void *args)
 
     switch (params->msg)
     {
+    case DRVM_INIT:
+        *params->err = midi_init();
+        break;
+    case DRVM_EXIT:
+        *params->err = midi_exit();
+        break;
     case DRVM_ENABLE:
     case DRVM_DISABLE:
         /* FIXME: Pretend this is supported */

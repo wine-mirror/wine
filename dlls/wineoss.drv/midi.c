@@ -34,19 +34,7 @@
  *      timers (like select on fd)
  */
 
-#include "config.h"
-
-#include <stdlib.h>
-#include <string.h>
 #include <stdarg.h>
-#include <stdio.h>
-#include <sys/types.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <errno.h>
-#include <sys/ioctl.h>
-#include <poll.h>
-#include <sys/soundcard.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -66,44 +54,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(midi);
 /*======================================================================*
  *                  Low level MIDI implementation			*
  *======================================================================*/
-
-static int MIDI_loadcount;
-/**************************************************************************
- * 			OSS_MidiInit				[internal]
- *
- * Initializes the MIDI devices information variables
- */
-static LRESULT OSS_MidiInit(void)
-{
-    struct midi_init_params params;
-    UINT err;
-
-    TRACE("(%i)\n", MIDI_loadcount);
-    if (MIDI_loadcount++)
-        return 1;
-
-    TRACE("Initializing the MIDI variables.\n");
-
-    params.err = &err;
-    OSS_CALL(midi_init, &params);
-
-    return err;
-}
-
-/**************************************************************************
- * 			OSS_MidiExit				[internal]
- *
- * Release the MIDI devices information variables
- */
-static LRESULT OSS_MidiExit(void)
-{
-    TRACE("(%i)\n", MIDI_loadcount);
-
-    if (--MIDI_loadcount)
-        return 1;
-
-    return 0;
-}
 
 static void notify_client(struct notify_context *notify)
 {
@@ -130,12 +80,6 @@ DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 
     TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
-    switch (wMsg) {
-    case DRVM_INIT:
-        return OSS_MidiInit();
-    case DRVM_EXIT:
-        return OSS_MidiExit();
-    }
 
     params.dev_id = wDevID;
     params.msg = wMsg;
@@ -166,13 +110,6 @@ DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 
     TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
-
-    switch (wMsg) {
-    case DRVM_INIT:
-        return OSS_MidiInit();
-    case DRVM_EXIT:
-        return OSS_MidiExit();
-    }
 
     params.dev_id = wDevID;
     params.msg = wMsg;

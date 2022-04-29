@@ -209,11 +209,6 @@ struct is_started_params
     HRESULT result;
 };
 
-struct midi_init_params
-{
-    UINT *err;
-};
-
 struct notify_context
 {
     BOOL send_notify;
@@ -280,14 +275,12 @@ enum oss_funcs
     oss_set_volumes,
     oss_set_event_handle,
     oss_is_started,
-    oss_midi_init,
     oss_midi_release,
     oss_midi_out_message,
     oss_midi_in_message,
     oss_midi_notify_wait,
 };
 
-NTSTATUS midi_init(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_release(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_out_message(void *args) DECLSPEC_HIDDEN;
 NTSTATUS midi_in_message(void *args) DECLSPEC_HIDDEN;
