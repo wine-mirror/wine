@@ -793,6 +793,22 @@ static void test_css_style_declaration(IHTMLCSSStyleDeclaration *css_style)
     ok(!lstrcmpW(str, L"border-box"), "backgroundClip = %s\n", wine_dbgstr_w(str));
     SysFreeString(str);
 
+    str = (BSTR)0xdeadbeef;
+    hres = IHTMLCSSStyleDeclaration_get_backgroundSize(css_style, &str);
+    ok(hres == S_OK, "get_backgroundSize failed: %08lx\n", hres);
+    ok(str == NULL, "got %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
+    str = SysAllocString(L"100% 100%");
+    hres = IHTMLCSSStyleDeclaration_put_backgroundSize(css_style, str);
+    ok(hres == S_OK, "put_backgroundSize failed: %08lx\n", hres);
+    SysFreeString(str);
+
+    hres = IHTMLCSSStyleDeclaration_get_backgroundSize(css_style, &str);
+    ok(hres == S_OK, "get_backgroundSize failed: %08lx\n", hres);
+    ok(!lstrcmpW(str, L"100% 100%"), "backgroundSize = %s\n", wine_dbgstr_w(str));
+    SysFreeString(str);
+
     hres = IHTMLCSSStyleDeclaration_get_opacity(css_style, &v);
     ok(hres == S_OK, "get_opacity failed: %08lx\n", hres);
     test_var_bstr(&v, NULL);

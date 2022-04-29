@@ -182,6 +182,11 @@ static const style_tbl_entry_t style_tbl[] = {
         0, background_repeat_values
     },
     {
+        L"background-size",
+        DISPID_IHTMLCSSSTYLEDECLARATION_BACKGROUNDSIZE,
+        DISPID_A_IE9_BACKGROUNDSIZE,
+    },
+    {
         L"border",
         DISPID_IHTMLCSSSTYLEDECLARATION_BORDER,
         DISPID_A_BORDER
@@ -7628,15 +7633,15 @@ static HRESULT WINAPI HTMLCSSStyleDeclaration_get_backgroundOrigin(IHTMLCSSStyle
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_backgroundSize(IHTMLCSSStyleDeclaration *iface, BSTR v)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    FIXME("(%p)->(%s)\n", This, debugstr_w(v));
-    return E_NOTIMPL;
+    TRACE("(%p)->(%s)\n", This, debugstr_w(v));
+    return set_style_property(This, STYLEID_BACKGROUND_SIZE, v);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_get_backgroundSize(IHTMLCSSStyleDeclaration *iface, BSTR *p)
 {
     CSSStyle *This = impl_from_IHTMLCSSStyleDeclaration(iface);
-    FIXME("(%p)->(%p)\n", This, p);
-    return E_NOTIMPL;
+    TRACE("(%p)->(%p)\n", This, p);
+    return get_style_property(This, STYLEID_BACKGROUND_SIZE, p);
 }
 
 static HRESULT WINAPI HTMLCSSStyleDeclaration_put_boxShadow(IHTMLCSSStyleDeclaration *iface, BSTR v)
