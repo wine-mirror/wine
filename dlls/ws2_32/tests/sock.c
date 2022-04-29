@@ -7018,12 +7018,12 @@ static void test_WSARecv(void)
     close_with_rst(src);
 
     dwret = WaitForSingleObject(ov.hEvent, 1000);
-    ok(dwret == WAIT_OBJECT_0, "Waiting for disconnect event failed with %ld + errno %ld\n", dwret, GetLastError());
+    todo_wine ok(dwret == WAIT_OBJECT_0, "Waiting for disconnect event failed with %ld + errno %ld\n", dwret, GetLastError());
 
     bret = GetOverlappedResult((HANDLE)dest, &ov, &bytesReturned, FALSE);
-    todo_wine ok(!bret, "expected failure\n");
+    ok(!bret, "expected failure\n");
     todo_wine ok(GetLastError() == ERROR_NETNAME_DELETED, "got error %lu\n", GetLastError());
-    ok(bytesReturned == 0, "Bytes received is %ld\n", bytesReturned);
+    todo_wine ok(bytesReturned == 0, "Bytes received is %ld\n", bytesReturned);
     closesocket(dest);
     dest = INVALID_SOCKET;
 
@@ -9668,11 +9668,11 @@ static void test_completion_port(void)
     olp = (WSAOVERLAPPED *)0xdeadbeef;
 
     bret = GetQueuedCompletionStatus(io_port, &num_bytes, &key, &olp, 100);
-    todo_wine ok(bret == FALSE, "GetQueuedCompletionStatus returned %d\n", bret);
+    ok(bret == FALSE, "GetQueuedCompletionStatus returned %d\n", bret);
     todo_wine ok(GetLastError() == ERROR_NETNAME_DELETED, "Last error was %ld\n", GetLastError());
-    ok(key == 125, "Key is %Iu\n", key);
-    ok(num_bytes == 0, "Number of bytes received is %lu\n", num_bytes);
-    ok(olp == &ov, "Overlapped structure is at %p\n", olp);
+    todo_wine ok(key == 125, "Key is %Iu\n", key);
+    todo_wine ok(num_bytes == 0, "Number of bytes received is %lu\n", num_bytes);
+    todo_wine ok(olp == &ov, "Overlapped structure is at %p\n", olp);
 
     SetLastError(0xdeadbeef);
     key = 0xdeadbeef;
@@ -9721,10 +9721,10 @@ static void test_completion_port(void)
 
     bret = GetQueuedCompletionStatus( io_port, &num_bytes, &key, &olp, 200 );
     ok(bret == FALSE, "GetQueuedCompletionStatus returned %u\n", bret );
-    ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
-    ok(key == 0xdeadbeef, "Key is %Iu\n", key);
-    ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %lu\n", num_bytes);
-    ok(!olp, "Overlapped structure is at %p\n", olp);
+    todo_wine ok(GetLastError() == WAIT_TIMEOUT, "Last error was %ld\n", GetLastError());
+    todo_wine ok(key == 0xdeadbeef, "Key is %Iu\n", key);
+    todo_wine ok(num_bytes == 0xdeadbeef, "Number of bytes transferred is %lu\n", num_bytes);
+    todo_wine ok(!olp, "Overlapped structure is at %p\n", olp);
 
     if (dest != INVALID_SOCKET)
         closesocket(dest);
@@ -12851,11 +12851,11 @@ static void test_tcp_reset(void)
     close_with_rst(server);
 
     ret = WaitForSingleObject(overlapped.hEvent, 1000);
-    ok(!ret, "wait failed\n");
+    todo_wine ok(!ret, "wait failed\n");
     ret = GetOverlappedResult((HANDLE)client, &overlapped, &size, FALSE);
-    todo_wine ok(!ret, "expected failure\n");
+    ok(!ret, "expected failure\n");
     todo_wine ok(GetLastError() == ERROR_NETNAME_DELETED, "got error %lu\n", GetLastError());
-    ok(!size, "got size %lu\n", size);
+    todo_wine ok(!size, "got size %lu\n", size);
     todo_wine ok((NTSTATUS)overlapped.Internal == STATUS_CONNECTION_RESET, "got status %#lx\n", (NTSTATUS)overlapped.Internal);
 
     len = sizeof(error);
@@ -12868,7 +12868,7 @@ static void test_tcp_reset(void)
     WSASetLastError(0xdeadbeef);
     size = 0xdeadbeef;
     ret = WSARecv(client, &wsabuf, 1, &size, &flags, &overlapped, NULL);
-    todo_wine ok(ret == -1, "got %d\n", ret);
+    ok(ret == -1, "got %d\n", ret);
     todo_wine ok(WSAGetLastError() == WSAECONNRESET, "got error %u\n", WSAGetLastError());
 
     check_poll_todo(client, POLLERR | POLLHUP | POLLWRNORM);

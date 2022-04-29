@@ -1467,12 +1467,7 @@ static void sock_destroy( struct object *obj )
     free_async_queue( &sock->connect_q );
     free_async_queue( &sock->poll_q );
     if (sock->event) release_object( sock->event );
-    if (sock->fd)
-    {
-        /* shut the socket down to force pending poll() calls in the client to return */
-        shutdown( get_unix_fd(sock->fd), SHUT_RDWR );
-        release_object( sock->fd );
-    }
+    if (sock->fd) release_object( sock->fd );
 }
 
 static struct sock *create_socket(void)
