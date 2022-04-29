@@ -4482,19 +4482,16 @@ HMENU WINAPI LoadMenuIndirectA( LPCVOID template )
 /**********************************************************************
  *		IsMenu    (USER32.@)
  */
-BOOL WINAPI IsMenu(HMENU hmenu)
+BOOL WINAPI IsMenu( HMENU menu )
 {
-    POPUPMENU *menu;
-    BOOL is_menu;
+    MENUINFO info;
 
-    menu = grab_menu_ptr(hmenu);
-    is_menu = menu != NULL;
-    release_menu_ptr(menu);
+    info.cbSize = sizeof(info);
+    info.fMask = 0;
+    if (GetMenuInfo( menu, &info )) return TRUE;
 
-    if (!is_menu)
-        SetLastError(ERROR_INVALID_MENU_HANDLE);
-
-    return is_menu;
+    SetLastError(ERROR_INVALID_MENU_HANDLE);
+    return FALSE;
 }
 
 /**********************************************************************
