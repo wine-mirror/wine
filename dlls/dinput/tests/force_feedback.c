@@ -5596,7 +5596,6 @@ static void test_windows_gaming_input(void)
         .report_id = 2,
         .report_len = 4,
         .report_buf = {2,0x01,0x01,0x01},
-        .todo = TRUE,
     };
     struct hid_expect expect_effect_stop =
     {
@@ -5604,7 +5603,6 @@ static void test_windows_gaming_input(void)
         .report_id = 2,
         .report_len = 4,
         .report_buf = {2,0x01,0x03,0x00},
-        .todo = TRUE,
     };
     struct hid_expect expect_unload[] =
     {
@@ -6103,20 +6101,16 @@ static void test_windows_gaming_input(void)
 
     set_hid_expect( file, &expect_effect_start, sizeof(expect_effect_start) );
     hr = IForceFeedbackEffect_Start( effect );
-    todo_wine
     ok( hr == S_OK, "Start returned %#lx\n", hr );
     set_hid_expect( file, &expect_effect_start, sizeof(expect_effect_start) );
     hr = IForceFeedbackEffect_Start( effect );
-    todo_wine
     ok( hr == S_OK, "Start returned %#lx\n", hr );
 
     set_hid_expect( file, &expect_effect_stop, sizeof(expect_effect_stop) );
     hr = IForceFeedbackEffect_Stop( effect );
-    todo_wine
     ok( hr == S_OK, "Stop returned %#lx\n", hr );
     set_hid_expect( file, &expect_effect_stop, sizeof(expect_effect_stop) );
     hr = IForceFeedbackEffect_Stop( effect );
-    todo_wine
     ok( hr == S_OK, "Stop returned %#lx\n", hr );
 
     set_hid_expect( file, expect_unload, sizeof(expect_unload) );
@@ -6200,20 +6194,16 @@ static void test_windows_gaming_input(void)
 
     set_hid_expect( file, &expect_effect_start, sizeof(expect_effect_start) );
     hr = IForceFeedbackEffect_Start( effect );
-    todo_wine
     ok( hr == S_OK, "Start returned %#lx\n", hr );
     set_hid_expect( file, &expect_effect_start, sizeof(expect_effect_start) );
     hr = IForceFeedbackEffect_Start( effect );
-    todo_wine
     ok( hr == S_OK, "Start returned %#lx\n", hr );
 
     set_hid_expect( file, &expect_effect_stop, sizeof(expect_effect_stop) );
     hr = IForceFeedbackEffect_Stop( effect );
-    todo_wine
     ok( hr == S_OK, "Stop returned %#lx\n", hr );
     set_hid_expect( file, &expect_effect_stop, sizeof(expect_effect_stop) );
     hr = IForceFeedbackEffect_Stop( effect );
-    todo_wine
     ok( hr == S_OK, "Stop returned %#lx\n", hr );
 
     set_hid_expect( file, expect_unload, sizeof(expect_unload) );
@@ -6299,20 +6289,16 @@ static void test_windows_gaming_input(void)
 
     set_hid_expect( file, &expect_effect_start, sizeof(expect_effect_start) );
     hr = IForceFeedbackEffect_Start( effect );
-    todo_wine
     ok( hr == S_OK, "Start returned %#lx\n", hr );
     set_hid_expect( file, &expect_effect_start, sizeof(expect_effect_start) );
     hr = IForceFeedbackEffect_Start( effect );
-    todo_wine
     ok( hr == S_OK, "Start returned %#lx\n", hr );
 
     set_hid_expect( file, &expect_effect_stop, sizeof(expect_effect_stop) );
     hr = IForceFeedbackEffect_Stop( effect );
-    todo_wine
     ok( hr == S_OK, "Stop returned %#lx\n", hr );
     set_hid_expect( file, &expect_effect_stop, sizeof(expect_effect_stop) );
     hr = IForceFeedbackEffect_Stop( effect );
-    todo_wine
     ok( hr == S_OK, "Stop returned %#lx\n", hr );
 
     set_hid_expect( file, expect_unload, sizeof(expect_unload) );
@@ -6377,20 +6363,16 @@ static void test_windows_gaming_input(void)
 
     set_hid_expect( file, &expect_effect_start, sizeof(expect_effect_start) );
     hr = IForceFeedbackEffect_Start( effect );
-    todo_wine
     ok( hr == S_OK, "Start returned %#lx\n", hr );
     set_hid_expect( file, &expect_effect_start, sizeof(expect_effect_start) );
     hr = IForceFeedbackEffect_Start( effect );
-    todo_wine
     ok( hr == S_OK, "Start returned %#lx\n", hr );
 
     set_hid_expect( file, &expect_effect_stop, sizeof(expect_effect_stop) );
     hr = IForceFeedbackEffect_Stop( effect );
-    todo_wine
     ok( hr == S_OK, "Stop returned %#lx\n", hr );
     set_hid_expect( file, &expect_effect_stop, sizeof(expect_effect_stop) );
     hr = IForceFeedbackEffect_Stop( effect );
-    todo_wine
     ok( hr == S_OK, "Stop returned %#lx\n", hr );
 
     set_hid_expect( file, expect_unload, sizeof(expect_unload) );

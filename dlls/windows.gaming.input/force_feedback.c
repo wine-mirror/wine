@@ -242,14 +242,31 @@ static HRESULT WINAPI effect_get_State( IForceFeedbackEffect *iface, ForceFeedba
 
 static HRESULT WINAPI effect_Start( IForceFeedbackEffect *iface )
 {
-    FIXME( "iface %p stub!\n", iface );
-    return E_NOTIMPL;
+    struct effect *impl = impl_from_IForceFeedbackEffect( iface );
+    HRESULT hr = E_UNEXPECTED;
+    DWORD flags = 0;
+
+    TRACE( "iface %p.\n", iface );
+
+    EnterCriticalSection( &impl->cs );
+    if (impl->effect) hr = IDirectInputEffect_Start( impl->effect, impl->repeat_count, flags );
+    LeaveCriticalSection( &impl->cs );
+
+    return hr;
 }
 
 static HRESULT WINAPI effect_Stop( IForceFeedbackEffect *iface )
 {
-    FIXME( "iface %p stub!\n", iface );
-    return E_NOTIMPL;
+    struct effect *impl = impl_from_IForceFeedbackEffect( iface );
+    HRESULT hr = E_UNEXPECTED;
+
+    TRACE( "iface %p.\n", iface );
+
+    EnterCriticalSection( &impl->cs );
+    if (impl->effect) hr = IDirectInputEffect_Stop( impl->effect );
+    LeaveCriticalSection( &impl->cs );
+
+    return hr;
 }
 
 static const struct IForceFeedbackEffectVtbl effect_vtbl =
