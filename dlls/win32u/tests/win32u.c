@@ -505,6 +505,80 @@ static void test_window_text(void)
     DestroyWindow( hwnd );
 }
 
+#define test_menu_item_id(a, b, c) test_menu_item_id_(a, b, c, __LINE__)
+static void test_menu_item_id_( HMENU menu, int pos, int expect, int line )
+{
+    MENUITEMINFOW item;
+    BOOL ret;
+
+    item.cbSize = sizeof(item);
+    item.fMask = MIIM_ID;
+    ret = GetMenuItemInfoW( menu, pos, TRUE, &item );
+    ok_(__FILE__,line)( ret, "GetMenuItemInfoW failed: %lu\n", GetLastError() );
+    ok_(__FILE__,line)( item.wID == expect, "got if %d, expected %d\n", item.wID, expect );
+}
+
+static void test_menu(void)
+{
+    MENUITEMINFOW item;
+    HMENU menu;
+    int count;
+    BOOL ret;
+
+    menu = CreateMenu();
+
+    memset( &item, 0, sizeof(item) );
+    item.cbSize = sizeof(item);
+    item.fMask = MIIM_ID;
+    item.wID = 10;
+    ret = NtUserThunkedMenuItemInfo( menu, 0, MF_BYPOSITION, NtUserInsertMenuItem, &item, NULL );
+    ok( ret, "InsertMenuItemW failed: %lu\n", GetLastError() );
+
+    count = GetMenuItemCount( menu );
+    ok( count == 1, "count = %d\n", count );
+
+    item.wID = 20;
+    ret = NtUserThunkedMenuItemInfo( menu, 1, MF_BYPOSITION, NtUserInsertMenuItem, &item, NULL );
+    ok( ret, "InsertMenuItemW failed: %lu\n", GetLastError() );
+
+    count = GetMenuItemCount( menu );
+    ok( count == 2, "count = %d\n", count );
+    test_menu_item_id( menu, 0, 10 );
+    test_menu_item_id( menu, 1, 20 );
+
+    item.wID = 30;
+    ret = NtUserThunkedMenuItemInfo( menu, 1, MF_BYPOSITION, NtUserInsertMenuItem, &item, NULL );
+    ok( ret, "InsertMenuItemW failed: %lu\n", GetLastError() );
+
+    count = GetMenuItemCount( menu );
+    ok( count == 3, "count = %d\n", count );
+    test_menu_item_id( menu, 0, 10 );
+    test_menu_item_id( menu, 1, 30 );
+    test_menu_item_id( menu, 2, 20 );
+
+    item.wID = 50;
+    ret = NtUserThunkedMenuItemInfo( menu, 10, 0, NtUserInsertMenuItem, &item, NULL );
+    ok( ret, "InsertMenuItemW failed: %lu\n", GetLastError() );
+
+    count = GetMenuItemCount( menu );
+    ok( count == 4, "count = %d\n", count );
+    test_menu_item_id( menu, 0, 50 );
+    test_menu_item_id( menu, 1, 10 );
+    test_menu_item_id( menu, 2, 30 );
+    test_menu_item_id( menu, 3, 20 );
+
+    item.wID = 60;
+    ret = NtUserThunkedMenuItemInfo( menu, 1, MF_BYPOSITION, NtUserSetMenuItemInfo, &item, NULL );
+    ok( ret, "InsertMenuItemW failed: %lu\n", GetLastError() );
+
+    count = GetMenuItemCount( menu );
+    ok( count == 4, "count = %d\n", count );
+    test_menu_item_id( menu, 1, 60 );
+
+    ret = NtUserDestroyMenu( menu );
+    ok( ret, "NtUserDestroyMenu failed: %lu\n", GetLastError() );
+}
+
 START_TEST(win32u)
 {
     /* native win32u.dll fails if user32 is not loaded, so make sure it's fully initialized */
@@ -517,6 +591,7 @@ START_TEST(win32u)
     test_cursoricon();
     test_message_call();
     test_window_text();
+    test_menu();
 
     test_NtUserCloseWindowStation();
 }
