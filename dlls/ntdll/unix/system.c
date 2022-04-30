@@ -2095,7 +2095,7 @@ static BOOL reg_query_value( HKEY key, LPCWSTR name, DWORD type, void *data, DWO
     UNICODE_STRING nameW;
     KEY_VALUE_PARTIAL_INFORMATION *info = (KEY_VALUE_PARTIAL_INFORMATION *)buf;
 
-    if (count > sizeof(buf) - sizeof(KEY_VALUE_PARTIAL_INFORMATION)) return FALSE;
+    if (count > sizeof(buf) - offsetof(KEY_VALUE_PARTIAL_INFORMATION, Data)) return FALSE;
 
     nameW.Buffer = (WCHAR *)name;
     nameW.Length = wcslen( name ) * sizeof(WCHAR);
