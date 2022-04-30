@@ -127,7 +127,7 @@ static BOOL fEndMenu = FALSE;
 
 DWORD WINAPI DrawMenuBarTemp(HWND hwnd, HDC hDC, LPRECT lprect, HMENU hMenu, HFONT hFont);
 
-static BOOL SetMenuItemInfo_common( MENUITEM *, const MENUITEMINFOW *, BOOL);
+static BOOL SetMenuItemInfo_common( MENUITEM *, const MENUITEMINFOW * );
 
 static BOOL is_win_menu_disallowed(HWND hwnd)
 {
@@ -3895,7 +3895,7 @@ BOOL WINAPI InsertMenuW( HMENU hMenu, UINT pos, UINT flags,
     mii.fMask |= MIIM_CHECKMARKS;
 
     item = &menu->items[newpos];
-    ret = SetMenuItemInfo_common( item, &mii, TRUE);
+    ret = SetMenuItemInfo_common( item, &mii );
     if (!ret)
         RemoveMenu( hMenu, pos, flags );
     release_menu_ptr(menu);
@@ -4032,7 +4032,7 @@ BOOL WINAPI ModifyMenuW( HMENU hMenu, UINT pos, UINT flags,
     }
     menu->Height = 0; /* force size recalculate */
     MENU_mnu2mnuii( flags, id, str, &mii);
-    ret = SetMenuItemInfo_common(&menu->items[item_pos], &mii, TRUE);
+    ret = SetMenuItemInfo_common( &menu->items[item_pos], &mii );
     release_menu_ptr(menu);
     return ret;
 }
@@ -4654,26 +4654,6 @@ BOOL WINAPI GetMenuItemInfoW( HMENU hmenu, UINT item, BOOL bypos,
 }
 
 
-/* set a menu item text from an ANSI or Unicode string */
-static inline void set_menu_item_text( MENUITEM *menu, LPCWSTR text, BOOL unicode )
-{
-    if (!text)
-        menu->text = NULL;
-    else if (unicode)
-    {
-        if ((menu->text = HeapAlloc( GetProcessHeap(), 0, (lstrlenW(text)+1) * sizeof(WCHAR) )))
-            lstrcpyW( menu->text, text );
-    }
-    else
-    {
-        LPCSTR str = (LPCSTR)text;
-        int len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
-        if ((menu->text = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
-            MultiByteToWideChar( CP_ACP, 0, str, -1, menu->text, len );
-    }
-}
-
-
 /**********************************************************************
  *		MENU_depth
  *
@@ -4709,9 +4689,7 @@ static int MENU_depth( POPUPMENU *pmenu, int depth)
  * MIIM_BITMAP and MIIM_STRING flags instead.
  */
 
-static BOOL SetMenuItemInfo_common(MENUITEM * menu,
-				       const MENUITEMINFOW *lpmii,
-				       BOOL unicode)
+static BOOL SetMenuItemInfo_common( MENUITEM *menu, const MENUITEMINFOW *lpmii )
 {
     if (!menu) return FALSE;
 
@@ -4722,9 +4700,13 @@ static BOOL SetMenuItemInfo_common(MENUITEM * menu,
         menu->fType |= lpmii->fType & MENUITEMINFO_TYPE_MASK;
     }
     if (lpmii->fMask & MIIM_STRING ) {
+        const WCHAR *text = lpmii->dwTypeData;
         /* free the string when used */
         HeapFree(GetProcessHeap(), 0, menu->text);
-        set_menu_item_text( menu, lpmii->dwTypeData, unicode );
+        if (!text)
+            menu->text = NULL;
+        else if ((menu->text = HeapAlloc( GetProcessHeap(), 0, (lstrlenW(text)+1) * sizeof(WCHAR) )))
+            lstrcpyW( menu->text, text );
     }
 
     if (lpmii->fMask & MIIM_STATE)
@@ -4850,7 +4832,7 @@ BOOL WINAPI SetMenuItemInfoA(HMENU hmenu, UINT item, BOOL bypos,
         if (item == SC_TASKLIST && !bypos) return TRUE;
         return FALSE;
     }
-    ret = SetMenuItemInfo_common(&menu->items[pos], &mii, TRUE);
+    ret = SetMenuItemInfo_common( &menu->items[pos], &mii );
     release_menu_ptr(menu);
     HeapFree( GetProcessHeap(), 0, strW );
     return ret;
@@ -4878,7 +4860,7 @@ BOOL WINAPI SetMenuItemInfoW(HMENU hmenu, UINT item, BOOL bypos,
         return FALSE;
     }
 
-    ret = SetMenuItemInfo_common(&menu->items[pos], &mii, TRUE);
+    ret = SetMenuItemInfo_common(&menu->items[pos], &mii);
     release_menu_ptr(menu);
     return ret;
 }
@@ -4931,6 +4913,7 @@ UINT WINAPI GetMenuDefaultItem(HMENU hmenu, UINT bypos, UINT flags)
 BOOL WINAPI InsertMenuItemA(HMENU hMenu, UINT uItem, BOOL bypos,
                                 const MENUITEMINFOA *lpmii)
 {
+    WCHAR *strW = NULL;
     MENUITEMINFOW mii;
     POPUPMENU *menu;
     UINT pos;
@@ -4940,11 +4923,24 @@ BOOL WINAPI InsertMenuItemA(HMENU hMenu, UINT uItem, BOOL bypos,
 
     if (!MENU_NormalizeMenuItemInfoStruct( (const MENUITEMINFOW *)lpmii, &mii )) return FALSE;
 
-    if (!(menu = insert_menu_item(hMenu, uItem, bypos ? MF_BYPOSITION : 0, &pos)))
-        return FALSE;
+    if ((mii.fMask & MIIM_STRING) && mii.dwTypeData)
+    {
+        const char *str = (const char *)mii.dwTypeData;
+        UINT len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+        if (!(strW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return FALSE;
+        MultiByteToWideChar( CP_ACP, 0, str, -1, strW, len );
+        mii.dwTypeData = strW;
+    }
 
-    ret = SetMenuItemInfo_common(&menu->items[pos], &mii, FALSE);
+    if (!(menu = insert_menu_item(hMenu, uItem, bypos ? MF_BYPOSITION : 0, &pos)))
+    {
+        HeapFree( GetProcessHeap(), 0, strW );
+        return FALSE;
+    }
+
+    ret = SetMenuItemInfo_common( &menu->items[pos], &mii );
     release_menu_ptr(menu);
+    HeapFree( GetProcessHeap(), 0, strW );
     return ret;
 }
 
@@ -4967,7 +4963,7 @@ BOOL WINAPI InsertMenuItemW(HMENU hMenu, UINT uItem, BOOL bypos,
     if (!(menu = insert_menu_item(hMenu, uItem, bypos ? MF_BYPOSITION : 0, &pos)))
         return FALSE;
 
-    ret = SetMenuItemInfo_common(&menu->items[pos], &mii, TRUE);
+    ret = SetMenuItemInfo_common( &menu->items[pos], &mii );
     release_menu_ptr(menu);
     return ret;
 }
