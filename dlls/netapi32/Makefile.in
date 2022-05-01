@@ -1,4 +1,3 @@
-EXTRADEFS = -D_SVRAPI_
 MODULE    = netapi32.dll
 UNIXLIB   = netapi32.so
 IMPORTLIB = netapi32
