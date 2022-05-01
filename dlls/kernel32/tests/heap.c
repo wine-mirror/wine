@@ -88,6 +88,39 @@ struct heap
 };
 
 
+/* undocumented RtlWalkHeap structure */
+
+struct rtl_heap_entry
+{
+    LPVOID lpData;
+    SIZE_T cbData; /* differs from PROCESS_HEAP_ENTRY */
+    BYTE cbOverhead;
+    BYTE iRegionIndex;
+    WORD wFlags; /* value differs from PROCESS_HEAP_ENTRY */
+    union {
+        struct {
+            HANDLE hMem;
+            DWORD dwReserved[3];
+        } Block;
+        struct {
+            DWORD dwCommittedSize;
+            DWORD dwUnCommittedSize;
+            LPVOID lpFirstBlock;
+            LPVOID lpLastBlock;
+        } Region;
+    };
+};
+
+/* rtl_heap_entry flags, names made up */
+
+#define RTL_HEAP_ENTRY_BUSY         0x0001
+#define RTL_HEAP_ENTRY_REGION       0x0002
+#define RTL_HEAP_ENTRY_BLOCK        0x0010
+#define RTL_HEAP_ENTRY_UNCOMMITTED  0x1000
+#define RTL_HEAP_ENTRY_COMMITTED    0x4000
+#define RTL_HEAP_ENTRY_LFH          0x8000
+
+
 struct heap_thread_params
 {
     HANDLE ready_event;
@@ -139,6 +172,7 @@ static void test_HeapCreate(void)
 {
     static const BYTE buffer[512] = {0};
     SIZE_T alloc_size = 0x8000 * sizeof(void *), size, i;
+    struct rtl_heap_entry rtl_entry, rtl_entries[256];
     struct heap_thread_params thread_params = {0};
     PROCESS_HEAP_ENTRY entry, entries[256];
     HANDLE heap, heap1, heaps[8], thread;
@@ -485,6 +519,15 @@ static void test_HeapCreate(void)
     ok( !((ULONG_PTR)heap & 0xffff), "wrong heap alignment\n" );
 
     count = 0;
+    memset( &rtl_entries, 0, sizeof(rtl_entries) );
+    memset( &rtl_entry, 0xcd, sizeof(rtl_entry) );
+    rtl_entry.lpData = NULL;
+    SetLastError( 0xdeadbeef );
+    while (!RtlWalkHeap( heap, &rtl_entry )) rtl_entries[count++] = rtl_entry;
+    todo_wine
+    ok( count == 3, "got count %lu\n", count );
+
+    count = 0;
     memset( &entries, 0, sizeof(entries) );
     memset( &entry, 0xcd, sizeof(entry) );
     entry.lpData = NULL;
@@ -493,6 +536,41 @@ static void test_HeapCreate(void)
     ok( GetLastError() == ERROR_NO_MORE_ITEMS, "got error %lu\n", GetLastError() );
     todo_wine
     ok( count == 3, "got count %lu\n", count );
+
+    for (i = 0; i < count; ++i)
+    {
+        winetest_push_context( "%Iu", i );
+        ok( rtl_entries[i].lpData == entries[i].lpData, "got lpData %p\n", rtl_entries[i].lpData );
+        todo_wine_if(sizeof(void *) == 8)
+        ok( rtl_entries[i].cbData == entries[i].cbData, "got cbData %#Ix\n", rtl_entries[i].cbData );
+        todo_wine_if(sizeof(void *) == 8)
+        ok( rtl_entries[i].cbOverhead == entries[i].cbOverhead, "got cbOverhead %#x\n", rtl_entries[i].cbOverhead );
+        ok( rtl_entries[i].iRegionIndex == entries[i].iRegionIndex, "got iRegionIndex %#x\n", rtl_entries[i].iRegionIndex );
+        if (!entries[i].wFlags)
+            ok( rtl_entries[i].wFlags == 0, "got wFlags %#x\n", rtl_entries[i].wFlags );
+        else if (entries[i].wFlags & PROCESS_HEAP_ENTRY_BUSY)
+            ok( rtl_entries[i].wFlags == (RTL_HEAP_ENTRY_COMMITTED|RTL_HEAP_ENTRY_BLOCK|RTL_HEAP_ENTRY_BUSY) || broken(rtl_entries[i].wFlags == 0x411) /* win7 */,
+                "got wFlags %#x\n", rtl_entries[i].wFlags );
+        else if (entries[i].wFlags & PROCESS_HEAP_UNCOMMITTED_RANGE)
+        {
+            todo_wine
+            ok( rtl_entries[i].wFlags == RTL_HEAP_ENTRY_UNCOMMITTED || broken(rtl_entries[i].wFlags == 0x100) /* win7 */,
+                "got wFlags %#x\n", rtl_entries[i].wFlags );
+        }
+        else if (entries[i].wFlags & PROCESS_HEAP_REGION)
+        {
+            ok( rtl_entries[i].wFlags == RTL_HEAP_ENTRY_REGION, "got wFlags %#x\n", rtl_entries[i].wFlags );
+            ok( rtl_entries[i].Region.dwCommittedSize == entries[i].Region.dwCommittedSize,
+                "got Region.dwCommittedSize %#lx\n", rtl_entries[i].Region.dwCommittedSize );
+            ok( rtl_entries[i].Region.dwUnCommittedSize == entries[i].Region.dwUnCommittedSize,
+                "got Region.dwUnCommittedSize %#lx\n", rtl_entries[i].Region.dwUnCommittedSize );
+            ok( rtl_entries[i].Region.lpFirstBlock == entries[i].Region.lpFirstBlock,
+                "got Region.lpFirstBlock %p\n", rtl_entries[i].Region.lpFirstBlock );
+            ok( rtl_entries[i].Region.lpLastBlock == entries[i].Region.lpLastBlock,
+                "got Region.lpLastBlock %p\n", rtl_entries[i].Region.lpLastBlock );
+        }
+        winetest_pop_context();
+    }
 
     todo_wine
     ok( entries[0].wFlags == PROCESS_HEAP_REGION, "got wFlags %#x\n", entries[0].wFlags );
@@ -524,7 +602,7 @@ static void test_HeapCreate(void)
     todo_wine
     ok( entries[1].cbData != 0, "got cbData %#lx\n", entries[1].cbData );
     todo_wine
-    ok( entries[1].cbOverhead != 0, "got cbOverhead %#x\n", entries[1].cbOverhead );
+    ok( entries[1].cbOverhead == 4 * sizeof(void *), "got cbOverhead %#x\n", entries[1].cbOverhead );
     ok( entries[1].iRegionIndex == 0, "got iRegionIndex %d\n", entries[1].iRegionIndex );
 
     todo_wine
@@ -544,6 +622,15 @@ static void test_HeapCreate(void)
     ptr = HeapAlloc( heap, HEAP_ZERO_MEMORY, 5 * alloc_size );
     ok( !!ptr, "HeapAlloc failed, error %lu\n", GetLastError() );
 
+    count = 0;
+    memset( &rtl_entries, 0, sizeof(rtl_entries) );
+    memset( &rtl_entry, 0xcd, sizeof(rtl_entry) );
+    rtl_entry.lpData = NULL;
+    SetLastError( 0xdeadbeef );
+    while (!RtlWalkHeap( heap, &rtl_entry )) rtl_entries[count++] = rtl_entry;
+    todo_wine
+    ok( count == 4, "got count %lu\n", count );
+
     memmove( entries + 16, entries, 3 * sizeof(entry) );
     count = 0;
     memset( &entry, 0xcd, sizeof(entry) );
@@ -554,6 +641,41 @@ static void test_HeapCreate(void)
     todo_wine
     ok( count == 4, "got count %lu\n", count );
     ok( !memcmp( entries + 16, entries, 3 * sizeof(entry) ), "entries differ\n" );
+
+    for (i = 0; i < count; ++i)
+    {
+        winetest_push_context( "%Iu", i );
+        ok( rtl_entries[i].lpData == entries[i].lpData, "got lpData %p\n", rtl_entries[i].lpData );
+        todo_wine_if(sizeof(void *) == 8)
+        ok( rtl_entries[i].cbData == entries[i].cbData, "got cbData %#Ix\n", rtl_entries[i].cbData );
+        todo_wine_if(sizeof(void *) == 8)
+        ok( rtl_entries[i].cbOverhead == entries[i].cbOverhead, "got cbOverhead %#x\n", rtl_entries[i].cbOverhead );
+        ok( rtl_entries[i].iRegionIndex == entries[i].iRegionIndex, "got iRegionIndex %#x\n", rtl_entries[i].iRegionIndex );
+        if (!entries[i].wFlags)
+            ok( rtl_entries[i].wFlags == 0, "got wFlags %#x\n", rtl_entries[i].wFlags );
+        else if (entries[i].wFlags & PROCESS_HEAP_ENTRY_BUSY)
+            ok( rtl_entries[i].wFlags == (RTL_HEAP_ENTRY_COMMITTED|RTL_HEAP_ENTRY_BLOCK|RTL_HEAP_ENTRY_BUSY) || broken(rtl_entries[i].wFlags == 0x411) /* win7 */,
+                "got wFlags %#x\n", rtl_entries[i].wFlags );
+        else if (entries[i].wFlags & PROCESS_HEAP_UNCOMMITTED_RANGE)
+        {
+            todo_wine
+            ok( rtl_entries[i].wFlags == RTL_HEAP_ENTRY_UNCOMMITTED || broken(rtl_entries[i].wFlags == 0x100) /* win7 */,
+                "got wFlags %#x\n", rtl_entries[i].wFlags );
+        }
+        else if (entries[i].wFlags & PROCESS_HEAP_REGION)
+        {
+            ok( rtl_entries[i].wFlags == RTL_HEAP_ENTRY_REGION, "got wFlags %#x\n", rtl_entries[i].wFlags );
+            ok( rtl_entries[i].Region.dwCommittedSize == entries[i].Region.dwCommittedSize,
+                "got Region.dwCommittedSize %#lx\n", rtl_entries[i].Region.dwCommittedSize );
+            ok( rtl_entries[i].Region.dwUnCommittedSize == entries[i].Region.dwUnCommittedSize,
+                "got Region.dwUnCommittedSize %#lx\n", rtl_entries[i].Region.dwUnCommittedSize );
+            ok( rtl_entries[i].Region.lpFirstBlock == entries[i].Region.lpFirstBlock,
+                "got Region.lpFirstBlock %p\n", rtl_entries[i].Region.lpFirstBlock );
+            ok( rtl_entries[i].Region.lpLastBlock == entries[i].Region.lpLastBlock,
+                "got Region.lpLastBlock %p\n", rtl_entries[i].Region.lpLastBlock );
+        }
+        winetest_pop_context();
+    }
 
     todo_wine
     ok( entries[3].wFlags == PROCESS_HEAP_ENTRY_BUSY ||
@@ -571,6 +693,15 @@ static void test_HeapCreate(void)
     ptr1 = HeapAlloc( heap, HEAP_ZERO_MEMORY, 5 * alloc_size );
     ok( !!ptr1, "HeapAlloc failed, error %lu\n", GetLastError() );
 
+    count = 0;
+    memset( &rtl_entries, 0, sizeof(rtl_entries) );
+    memset( &rtl_entry, 0xcd, sizeof(rtl_entry) );
+    rtl_entry.lpData = NULL;
+    SetLastError( 0xdeadbeef );
+    while (!RtlWalkHeap( heap, &rtl_entry )) rtl_entries[count++] = rtl_entry;
+    todo_wine
+    ok( count == 5, "got count %lu\n", count );
+
     memmove( entries + 16, entries, 4 * sizeof(entry) );
     count = 0;
     memset( &entry, 0xcd, sizeof(entry) );
@@ -581,6 +712,41 @@ static void test_HeapCreate(void)
     todo_wine
     ok( count == 5, "got count %lu\n", count );
     ok( !memcmp( entries + 16, entries, 4 * sizeof(entry) ), "entries differ\n" );
+
+    for (i = 0; i < count; ++i)
+    {
+        winetest_push_context( "%Iu", i );
+        ok( rtl_entries[i].lpData == entries[i].lpData, "got lpData %p\n", rtl_entries[i].lpData );
+        todo_wine_if(sizeof(void *) == 8)
+        ok( rtl_entries[i].cbData == entries[i].cbData, "got cbData %#Ix\n", rtl_entries[i].cbData );
+        todo_wine_if(sizeof(void *) == 8)
+        ok( rtl_entries[i].cbOverhead == entries[i].cbOverhead, "got cbOverhead %#x\n", rtl_entries[i].cbOverhead );
+        ok( rtl_entries[i].iRegionIndex == entries[i].iRegionIndex, "got iRegionIndex %#x\n", rtl_entries[i].iRegionIndex );
+        if (!entries[i].wFlags)
+            ok( rtl_entries[i].wFlags == 0, "got wFlags %#x\n", rtl_entries[i].wFlags );
+        else if (entries[i].wFlags & PROCESS_HEAP_ENTRY_BUSY)
+            ok( rtl_entries[i].wFlags == (RTL_HEAP_ENTRY_COMMITTED|RTL_HEAP_ENTRY_BLOCK|RTL_HEAP_ENTRY_BUSY) || broken(rtl_entries[i].wFlags == 0x411) /* win7 */,
+                "got wFlags %#x\n", rtl_entries[i].wFlags );
+        else if (entries[i].wFlags & PROCESS_HEAP_UNCOMMITTED_RANGE)
+        {
+            todo_wine
+            ok( rtl_entries[i].wFlags == RTL_HEAP_ENTRY_UNCOMMITTED || broken(rtl_entries[i].wFlags == 0x100) /* win7 */,
+                "got wFlags %#x\n", rtl_entries[i].wFlags );
+        }
+        else if (entries[i].wFlags & PROCESS_HEAP_REGION)
+        {
+            ok( rtl_entries[i].wFlags == RTL_HEAP_ENTRY_REGION, "got wFlags %#x\n", rtl_entries[i].wFlags );
+            ok( rtl_entries[i].Region.dwCommittedSize == entries[i].Region.dwCommittedSize,
+                "got Region.dwCommittedSize %#lx\n", rtl_entries[i].Region.dwCommittedSize );
+            ok( rtl_entries[i].Region.dwUnCommittedSize == entries[i].Region.dwUnCommittedSize,
+                "got Region.dwUnCommittedSize %#lx\n", rtl_entries[i].Region.dwUnCommittedSize );
+            ok( rtl_entries[i].Region.lpFirstBlock == entries[i].Region.lpFirstBlock,
+                "got Region.lpFirstBlock %p\n", rtl_entries[i].Region.lpFirstBlock );
+            ok( rtl_entries[i].Region.lpLastBlock == entries[i].Region.lpLastBlock,
+                "got Region.lpLastBlock %p\n", rtl_entries[i].Region.lpLastBlock );
+        }
+        winetest_pop_context();
+    }
 
     todo_wine
     ok( entries[4].wFlags == PROCESS_HEAP_ENTRY_BUSY ||
@@ -644,7 +810,7 @@ static void test_HeapCreate(void)
     todo_wine
     ok( entries[2].cbData != 0, "got cbData %#lx\n", entries[2].cbData );
     todo_wine
-    ok( entries[2].cbOverhead != 0, "got cbOverhead %#x\n", entries[2].cbOverhead );
+    ok( entries[2].cbOverhead == 4 * sizeof(void *), "got cbOverhead %#x\n", entries[2].cbOverhead );
     ok( entries[2].iRegionIndex == 0, "got iRegionIndex %d\n", entries[2].iRegionIndex );
 
     todo_wine
@@ -694,7 +860,7 @@ static void test_HeapCreate(void)
     todo_wine
     ok( entries[3].cbData != 0, "got cbData %#lx\n", entries[3].cbData );
     todo_wine
-    ok( entries[3].cbOverhead != 0, "got cbOverhead %#x\n", entries[3].cbOverhead );
+    ok( entries[3].cbOverhead == 4 * sizeof(void *), "got cbOverhead %#x\n", entries[3].cbOverhead );
     ok( entries[3].iRegionIndex == 0, "got iRegionIndex %d\n", entries[3].iRegionIndex );
 
     todo_wine
@@ -897,6 +1063,48 @@ static void test_HeapCreate(void)
         ok( entries[count - 1].wFlags == PROCESS_HEAP_UNCOMMITTED_RANGE, "got wFlags %#x\n", entries[count - 2].wFlags );
     }
 
+    count = 0;
+    memset( &rtl_entries, 0, sizeof(rtl_entries) );
+    memset( &rtl_entry, 0xcd, sizeof(rtl_entry) );
+    rtl_entry.lpData = NULL;
+    SetLastError( 0xdeadbeef );
+    while (!RtlWalkHeap( heap, &rtl_entry )) rtl_entries[count++] = rtl_entry;
+    todo_wine
+    ok( count > 24, "got count %lu\n", count );
+    if (count < 2) count = 2;
+
+    for (i = 3; i < count; ++i)
+    {
+        winetest_push_context( "%Iu", i );
+        ok( rtl_entries[i].lpData == entries[i].lpData, "got lpData %p\n", rtl_entries[i].lpData );
+        todo_wine_if(sizeof(void *) == 8)
+        ok( rtl_entries[i].cbData == entries[i].cbData, "got cbData %#Ix\n", rtl_entries[i].cbData );
+        todo_wine_if(sizeof(void *) == 8)
+        ok( rtl_entries[i].cbOverhead == entries[i].cbOverhead, "got cbOverhead %#x\n", rtl_entries[i].cbOverhead );
+        ok( rtl_entries[i].iRegionIndex == entries[i].iRegionIndex, "got iRegionIndex %#x\n", rtl_entries[i].iRegionIndex );
+        if (!entries[i].wFlags)
+            ok( rtl_entries[i].wFlags == 0 || rtl_entries[i].wFlags == RTL_HEAP_ENTRY_LFH, "got wFlags %#x\n", rtl_entries[i].wFlags );
+        else if (entries[i].wFlags & PROCESS_HEAP_ENTRY_BUSY)
+            ok( rtl_entries[i].wFlags == (RTL_HEAP_ENTRY_LFH|RTL_HEAP_ENTRY_BUSY) || broken(rtl_entries[i].wFlags == 1) /* win7 */,
+                "got wFlags %#x\n", rtl_entries[i].wFlags );
+        else if (entries[i].wFlags & PROCESS_HEAP_UNCOMMITTED_RANGE)
+            ok( rtl_entries[i].wFlags == RTL_HEAP_ENTRY_UNCOMMITTED || broken(rtl_entries[i].wFlags == 0x100) /* win7 */,
+                "got wFlags %#x\n", rtl_entries[i].wFlags );
+        else if (entries[i].wFlags & PROCESS_HEAP_REGION)
+        {
+            ok( rtl_entries[i].wFlags == (RTL_HEAP_ENTRY_LFH|RTL_HEAP_ENTRY_REGION), "got wFlags %#x\n", rtl_entries[i].wFlags );
+            ok( rtl_entries[i].Region.dwCommittedSize == entries[i].Region.dwCommittedSize,
+                "got Region.dwCommittedSize %#lx\n", rtl_entries[i].Region.dwCommittedSize );
+            ok( rtl_entries[i].Region.dwUnCommittedSize == entries[i].Region.dwUnCommittedSize,
+                "got Region.dwUnCommittedSize %#lx\n", rtl_entries[i].Region.dwUnCommittedSize );
+            ok( rtl_entries[i].Region.lpFirstBlock == entries[i].Region.lpFirstBlock,
+                "got Region.lpFirstBlock %p\n", rtl_entries[i].Region.lpFirstBlock );
+            ok( rtl_entries[i].Region.lpLastBlock == entries[i].Region.lpLastBlock,
+                "got Region.lpLastBlock %p\n", rtl_entries[i].Region.lpLastBlock );
+        }
+        winetest_pop_context();
+    }
+
     for (i = 0; i < 0x12; i++) ptrs[i] = pHeapAlloc( heap, 0, 24 + 2 * sizeof(void *) );
 
     count = 0;
@@ -932,6 +1140,54 @@ static void test_HeapCreate(void)
         ok( entries[count - 2].wFlags == PROCESS_HEAP_UNCOMMITTED_RANGE, "got wFlags %#x\n", entries[count - 2].wFlags );
     else
         ok( entries[count - 1].wFlags == PROCESS_HEAP_UNCOMMITTED_RANGE, "got wFlags %#x\n", entries[count - 2].wFlags );
+
+    count = 0;
+    memset( &rtl_entries, 0, sizeof(rtl_entries) );
+    memset( &rtl_entry, 0xcd, sizeof(rtl_entry) );
+    rtl_entry.lpData = NULL;
+    SetLastError( 0xdeadbeef );
+    while (!RtlWalkHeap( heap, &rtl_entry )) rtl_entries[count++] = rtl_entry;
+    todo_wine
+    ok( count > 24, "got count %lu\n", count );
+    if (count < 2) count = 2;
+
+    for (i = 3; i < count; ++i)
+    {
+        winetest_push_context( "%Iu", i );
+        ok( rtl_entries[i].lpData == entries[i].lpData, "got lpData %p\n", rtl_entries[i].lpData );
+        todo_wine_if(sizeof(void *) == 8)
+        ok( rtl_entries[i].cbData == entries[i].cbData, "got cbData %#Ix\n", rtl_entries[i].cbData );
+        todo_wine_if(sizeof(void *) == 8)
+        ok( rtl_entries[i].cbOverhead == entries[i].cbOverhead, "got cbOverhead %#x\n", rtl_entries[i].cbOverhead );
+        ok( rtl_entries[i].iRegionIndex == entries[i].iRegionIndex, "got iRegionIndex %#x\n", rtl_entries[i].iRegionIndex );
+        if (!entries[i].wFlags)
+            ok( rtl_entries[i].wFlags == 0 || rtl_entries[i].wFlags == RTL_HEAP_ENTRY_LFH, "got wFlags %#x\n", rtl_entries[i].wFlags );
+        else if (entries[i].wFlags & PROCESS_HEAP_ENTRY_BUSY)
+        {
+            todo_wine
+            ok( rtl_entries[i].wFlags == (RTL_HEAP_ENTRY_LFH|RTL_HEAP_ENTRY_BUSY) || broken(rtl_entries[i].wFlags == 1) /* win7 */,
+                "got wFlags %#x\n", rtl_entries[i].wFlags );
+        }
+        else if (entries[i].wFlags & PROCESS_HEAP_UNCOMMITTED_RANGE)
+        {
+            todo_wine
+            ok( rtl_entries[i].wFlags == RTL_HEAP_ENTRY_UNCOMMITTED || broken(rtl_entries[i].wFlags == 0x100) /* win7 */,
+                "got wFlags %#x\n", rtl_entries[i].wFlags );
+        }
+        else if (entries[i].wFlags & PROCESS_HEAP_REGION)
+        {
+            ok( rtl_entries[i].wFlags == (RTL_HEAP_ENTRY_LFH|RTL_HEAP_ENTRY_REGION), "got wFlags %#x\n", rtl_entries[i].wFlags );
+            ok( rtl_entries[i].Region.dwCommittedSize == entries[i].Region.dwCommittedSize,
+                "got Region.dwCommittedSize %#lx\n", rtl_entries[i].Region.dwCommittedSize );
+            ok( rtl_entries[i].Region.dwUnCommittedSize == entries[i].Region.dwUnCommittedSize,
+                "got Region.dwUnCommittedSize %#lx\n", rtl_entries[i].Region.dwUnCommittedSize );
+            ok( rtl_entries[i].Region.lpFirstBlock == entries[i].Region.lpFirstBlock,
+                "got Region.lpFirstBlock %p\n", rtl_entries[i].Region.lpFirstBlock );
+            ok( rtl_entries[i].Region.lpLastBlock == entries[i].Region.lpLastBlock,
+                "got Region.lpLastBlock %p\n", rtl_entries[i].Region.lpLastBlock );
+        }
+        winetest_pop_context();
+    }
 
     for (i = 0; i < 0x12; i++) HeapFree( heap, 0, ptrs[i] );
 
