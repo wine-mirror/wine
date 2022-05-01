@@ -1228,6 +1228,27 @@ done:
     return cursor;
 }
 
+static BOOL get_icon_info( HICON handle, ICONINFOEXW *ret )
+{
+    UNICODE_STRING module, res_name;
+    ICONINFO info;
+
+    module.Buffer = ret->szModName;
+    module.MaximumLength = sizeof(ret->szModName) - sizeof(WCHAR);
+    res_name.Buffer = ret->szResName;
+    res_name.MaximumLength = sizeof(ret->szResName) - sizeof(WCHAR);
+    if (!NtUserGetIconInfo( handle, &info, &module, &res_name, NULL, 0 )) return FALSE;
+    ret->fIcon    = info.fIcon;
+    ret->xHotspot = info.xHotspot;
+    ret->yHotspot = info.yHotspot;
+    ret->hbmColor = info.hbmColor;
+    ret->hbmMask  = info.hbmMask;
+    ret->wResID   = res_name.Length ? 0 : LOWORD( res_name.Buffer );
+    ret->szModName[module.Length] = 0;
+    ret->szResName[res_name.Length] = 0;
+    return TRUE;
+}
+
 /***********************************************************************
  *		create_xlib_load_mono_cursor
  *
@@ -1243,8 +1264,7 @@ static Cursor create_xlib_load_mono_cursor( HDC hdc, HANDLE handle, int width, i
     if (!(mono = CopyImage( handle, IMAGE_CURSOR, width, height, LR_MONOCHROME | LR_COPYFROMRESOURCE )))
         return None;
 
-    info.cbSize = sizeof(info);
-    if (GetIconInfoExW( mono, &info ))
+    if (get_icon_info( mono, &info ))
     {
         if (!info.hbmColor)
         {
@@ -1413,8 +1433,7 @@ static Cursor create_cursor( HANDLE handle )
 
     if (!handle) return get_empty_cursor();
 
-    info.cbSize = sizeof(info);
-    if (!GetIconInfoExW( handle, &info )) return 0;
+    if (!get_icon_info( handle, &info )) return 0;
 
     if (use_system_cursors && (cursor = create_xcursor_system_cursor( &info )))
     {
