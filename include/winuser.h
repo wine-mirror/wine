@@ -19,7 +19,7 @@
 #ifndef _WINUSER_
 #define _WINUSER_
 
-#if !defined(_USER32_)
+#if !defined(_USER32_) && !defined(WINE_UNIX_LIB)
 #define WINUSERAPI DECLSPEC_HIDDEN
 #else
 #define WINUSERAPI

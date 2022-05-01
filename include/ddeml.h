@@ -26,7 +26,7 @@
 extern "C" {
 #endif /* defined(__cplusplus) */
 
-#ifdef _USER32_
+#if defined(_USER32_) || defined(WINE_UNIX_LIB)
 #define WINUSERAPI
 #else
 #define WINUSERAPI DECLSPEC_HIDDEN
