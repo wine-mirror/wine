@@ -217,8 +217,6 @@ void init_registry_display_settings(void)
 static HKEY get_display_device_reg_key( const WCHAR *device_name )
 {
     static const WCHAR display[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y'};
-    static const WCHAR video_value_fmt[] = {'\\','D','e','v','i','c','e','\\',
-                                            'V','i','d','e','o','%','d',0};
     static const WCHAR video_key[] = {
         '\\','R','e','g','i','s','t','r','y',
         '\\','M','a','c','h','i','n','e',
@@ -235,6 +233,7 @@ static HKEY get_display_device_reg_key( const WCHAR *device_name )
     WCHAR value_name[MAX_PATH], buffer[4096], *end_ptr;
     KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
     DWORD adapter_index, size;
+    char adapter_name[100];
     HKEY hkey;
 
     /* Device name has to be \\.\DISPLAY%d */
@@ -248,7 +247,8 @@ static HKEY get_display_device_reg_key( const WCHAR *device_name )
 
     /* Open \Device\Video* in HKLM\HARDWARE\DEVICEMAP\VIDEO\ */
     if (!(hkey = reg_open_key( NULL, video_key, sizeof(video_key) ))) return FALSE;
-    sprintfW(value_name, video_value_fmt, adapter_index);
+    sprintf( adapter_name, "\\Device\\Video%d", adapter_index );
+    asciiz_to_unicode( value_name, adapter_name );
     size = query_reg_value( hkey, value_name, value, sizeof(buffer) );
     NtClose( hkey );
     if (!size || value->Type != REG_SZ) return FALSE;

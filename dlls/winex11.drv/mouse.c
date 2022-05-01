@@ -1053,7 +1053,6 @@ static int find_fallback_shape( const char *name )
  */
 static Cursor create_xcursor_system_cursor( const ICONINFOEXW *info )
 {
-    static const WCHAR idW[] = {'%','h','u',0};
     const struct system_cursors *cursors;
     unsigned int i;
     Cursor cursor = 0;
@@ -1070,7 +1069,12 @@ static Cursor create_xcursor_system_cursor( const ICONINFOEXW *info )
     p = name + strlenW( name );
     *p++ = ',';
     if (info->szResName[0]) strcpyW( p, info->szResName );
-    else sprintfW( p, idW, info->wResID );
+    else
+    {
+        char buf[16];
+        sprintf( buf, "%hu", info->wResID );
+        asciiz_to_unicode( p, buf );
+    }
     valueA[0] = 0;
 
     /* @@ Wine registry key: HKCU\Software\Wine\X11 Driver\Cursors */
