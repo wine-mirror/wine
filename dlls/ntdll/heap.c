@@ -186,7 +186,6 @@ typedef struct tagHEAP
     /* end of the Windows 10 compatible struct layout */
 
     BOOL             shared;        /* System shared heap */
-    SUBHEAP          subheap;       /* First sub-heap */
     struct list      entry;         /* Entry in process heap list */
     struct list      subheap_list;  /* Sub-heap list */
     struct list      large_list;    /* Large blocks list */
@@ -195,7 +194,8 @@ typedef struct tagHEAP
     DWORD            pending_pos;   /* Position in pending free requests ring */
     ARENA_INUSE    **pending_free;  /* Ring buffer for pending free requests */
     RTL_CRITICAL_SECTION cs;
-    FREE_LIST_ENTRY *freeList;      /* Free lists */
+    FREE_LIST_ENTRY  freeList[HEAP_NB_FREE_LISTS];
+    SUBHEAP          subheap;
 } HEAP;
 
 #define HEAP_MAGIC       ((DWORD)('H' | ('E'<<8) | ('A'<<16) | ('P'<<24)))
@@ -1008,8 +1008,6 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
 
         /* Build the free lists */
 
-        heap->freeList = (FREE_LIST_ENTRY *)((char *)heap + subheap->headerSize);
-        subheap->headerSize += HEAP_NB_FREE_LISTS * sizeof(FREE_LIST_ENTRY);
         list_init( &heap->freeList[0].arena.entry );
         for (i = 0, pEntry = heap->freeList; i < HEAP_NB_FREE_LISTS; i++, pEntry++)
         {
