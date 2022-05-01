@@ -91,9 +91,9 @@ NTSTATUS WINAPI RtlpNtEnumerateSubKey( HANDLE handle, UNICODE_STRING *out, ULONG
   DWORD dwLen, dwResultLen;
   NTSTATUS ret;
 
-  if (out->Length)
+  if (out->MaximumLength)
   {
-    dwLen = out->Length + sizeof(KEY_BASIC_INFORMATION);
+    dwLen = out->MaximumLength + sizeof(KEY_BASIC_INFORMATION);
     info = RtlAllocateHeap( GetProcessHeap(), 0, dwLen );
     if (!info)
       return STATUS_NO_MEMORY;
@@ -111,7 +111,7 @@ NTSTATUS WINAPI RtlpNtEnumerateSubKey( HANDLE handle, UNICODE_STRING *out, ULONG
     out->Length = dwResultLen;
   else if (!ret)
   {
-    if (out->Length < info->NameLength)
+    if (out->MaximumLength < info->NameLength)
     {
       out->Length = dwResultLen;
       ret = STATUS_BUFFER_OVERFLOW;
