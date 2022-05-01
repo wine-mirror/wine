@@ -69,9 +69,9 @@ if [ "`uname -s`" = "Darwin" ]
 then
   if [ -n "$DYLD_LIBRARY_PATH" ]
   then
-    DYLD_LIBRARY_PATH="$topdir/libs/wine:$topdir/dlls/ntdll:$DYLD_LIBRARY_PATH"
+    DYLD_LIBRARY_PATH="$topdir/libs/wine:$topdir/dlls/ntdll:$topdir/dlls/win32u:$DYLD_LIBRARY_PATH"
   else
-    DYLD_LIBRARY_PATH="$topdir/libs/wine:$topdir/dlls/ntdll"
+    DYLD_LIBRARY_PATH="$topdir/libs/wine:$topdir/dlls/ntdll:$topdir/dlls/win32u"
   fi
   export DYLD_LIBRARY_PATH
 else

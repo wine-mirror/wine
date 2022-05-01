@@ -63,6 +63,10 @@
  * FIXME: global format list needs a critical section
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
 
 #include <string.h>

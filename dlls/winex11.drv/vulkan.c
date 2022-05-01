@@ -20,6 +20,10 @@
 /* NOTE: If making changes here, consider whether they should be reflected in
  * the other drivers. */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
 
 #include <stdarg.h>

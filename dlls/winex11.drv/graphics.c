@@ -24,6 +24,10 @@
  * graphics mode
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
 
 #include <stdarg.h>

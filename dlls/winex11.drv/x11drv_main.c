@@ -19,6 +19,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
 
 #include <fcntl.h>
@@ -84,6 +88,7 @@ int copy_default_colors = 128;
 int alloc_system_colors = 256;
 int xrender_error_base = 0;
 char *process_name = NULL;
+WNDPROC client_foreign_window_proc = NULL;
 
 static x11drv_error_callback err_callback;   /* current callback for error */
 static Display *err_callback_display;        /* display callback is set for */
@@ -203,6 +208,16 @@ static const char * const atom_names[NB_XATOMS - FIRST_XATOM] =
     "text/richtext",
     "text/uri-list"
 };
+
+/* We use use pointer to call NtWaitForMultipleObjects to make it go through
+ * syscall dispatcher. We need that because win32u bypasses syscall thunks and
+ * if we called NtWaitForMultipleObjects directly, it wouldn't be able to handle
+ * user APCs. This will be removed as soon as we may use syscall interface
+ * for NtUserMsgWaitForMultipleObjectsEx. */
+NTSTATUS (WINAPI *pNtWaitForMultipleObjects)( ULONG, const HANDLE *, BOOLEAN,
+                                              BOOLEAN, const LARGE_INTEGER* );
+
+static NTSTATUS CDECL unix_call( enum x11drv_funcs code, void *params );
 
 /***********************************************************************
  *		ignore_error
@@ -636,6 +651,7 @@ static void init_visuals( Display *display, int screen )
  */
 static NTSTATUS x11drv_init( void *arg )
 {
+    struct init_params *params = arg;
     Display *display;
     void *libx11 = dlopen( SONAME_LIBX11, RTLD_NOW|RTLD_GLOBAL );
 
@@ -656,6 +672,9 @@ static NTSTATUS x11drv_init( void *arg )
 
     if (!XInitThreads()) ERR( "XInitThreads failed, trouble ahead\n" );
     if (!(display = XOpenDisplay( NULL ))) return STATUS_UNSUCCESSFUL;
+
+    pNtWaitForMultipleObjects = params->pNtWaitForMultipleObjects;
+    client_foreign_window_proc = params->foreign_window_proc;
 
     fcntl( ConnectionNumber(display), F_SETFD, 1 ); /* set close on exec flag */
     root_window = DefaultRootWindow( display );
@@ -693,6 +712,8 @@ static NTSTATUS x11drv_init( void *arg )
 
     init_user_driver();
     X11DRV_DisplayDevices_Init(FALSE);
+    params->show_systray = show_systray;
+    params->unix_call = unix_call;
     return STATUS_SUCCESS;
 }
 
@@ -960,9 +981,9 @@ NTSTATUS CDECL X11DRV_D3DKMTCheckVidPnExclusiveOwnership( const D3DKMT_CHECKVIDP
 
 NTSTATUS x11drv_client_func( enum x11drv_client_funcs id, const void *params, ULONG size )
 {
-    /* FIXME: use KeUserModeCallback instead */
-    NTSTATUS (WINAPI *func)( const void *, ULONG ) = ((void **)NtCurrentTeb()->Peb->KernelCallbackTable)[id];
-    return func( params, size );
+    void *ret_ptr;
+    ULONG ret_len;
+    return KeUserModeCallback( id, params, size, &ret_ptr, &ret_len );
 }
 
 
@@ -995,7 +1016,7 @@ C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
 
 
 /* FIXME: Use __wine_unix_call instead */
-NTSTATUS x11drv_unix_call( enum x11drv_funcs code, void *params )
+static NTSTATUS CDECL unix_call( enum x11drv_funcs code, void *params )
 {
     return __wine_unix_call_funcs[code]( params );
 }

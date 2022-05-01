@@ -19,6 +19,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
 
 #include <poll.h>
@@ -485,8 +489,8 @@ NTSTATUS X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
     if (!data)
     {
         if (!count && timeout && !timeout->QuadPart) return WAIT_TIMEOUT;
-        return NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
-                                         !!(flags & MWMO_ALERTABLE), timeout );
+        return pNtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
+                                          !!(flags & MWMO_ALERTABLE), timeout );
     }
 
     if (data->current_event) mask = 0;  /* don't process nested events */
@@ -494,8 +498,8 @@ NTSTATUS X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
     if (process_events( data->display, filter_event, mask )) ret = count - 1;
     else if (count || !timeout || timeout->QuadPart)
     {
-        ret = NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
-                                        !!(flags & MWMO_ALERTABLE), timeout );
+        ret = pNtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
+                                         !!(flags & MWMO_ALERTABLE), timeout );
         if (ret == count - 1) process_events( data->display, filter_event, mask );
     }
     else ret = WAIT_TIMEOUT;

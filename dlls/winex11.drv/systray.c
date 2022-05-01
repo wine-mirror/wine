@@ -44,6 +44,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(systray);
 
+BOOL show_systray = TRUE;
+
 /* an individual systray icon */
 struct tray_icon
 {
