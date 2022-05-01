@@ -28,6 +28,13 @@ struct clipboard_message_params
     LPARAM lparam;
 };
 
+/* x11drv_create_desktop params */
+struct create_desktop_params
+{
+    UINT width;
+    UINT height;
+};
+
 /* DnD support */
 
 struct format_entry

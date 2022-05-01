@@ -321,13 +321,14 @@ void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
 
 
 /***********************************************************************
- *		X11DRV_create_desktop
+ *           x11drv_create_desktop
  *
  * Create the X11 desktop window for the desktop mode.
  */
-BOOL CDECL X11DRV_create_desktop( UINT width, UINT height )
+NTSTATUS x11drv_create_desktop( void *arg )
 {
     static const WCHAR rootW[] = {'r','o','o','t',0};
+    const struct create_desktop_params *params = arg;
     XSetWindowAttributes win_attr;
     Window win;
     Display *display = thread_init_display();
@@ -337,7 +338,7 @@ BOOL CDECL X11DRV_create_desktop( UINT width, UINT height )
                                      UOI_NAME, name, sizeof(name), NULL ))
         name[0] = 0;
 
-    TRACE( "%s %ux%u\n", debugstr_w(name), width, height );
+    TRACE( "%s %ux%u\n", debugstr_w(name), params->width, params->height );
 
     /* magic: desktop "root" means use the root window */
     if (!lstrcmpiW( name, rootW )) return FALSE;
@@ -354,12 +355,12 @@ BOOL CDECL X11DRV_create_desktop( UINT width, UINT height )
         win_attr.colormap = None;
 
     win = XCreateWindow( display, DefaultRootWindow(display),
-                         0, 0, width, height, 0, default_visual.depth, InputOutput, default_visual.visual,
-                         CWEventMask | CWCursor | CWColormap, &win_attr );
+                         0, 0, params->width, params->height, 0, default_visual.depth, InputOutput,
+                         default_visual.visual, CWEventMask | CWCursor | CWColormap, &win_attr );
     if (!win) return FALSE;
     if (!create_desktop_win_data( win )) return FALSE;
 
-    X11DRV_init_desktop( win, width, height );
+    X11DRV_init_desktop( win, params->width, params->height );
     if (is_desktop_fullscreen())
     {
         TRACE("setting desktop to fullscreen\n");

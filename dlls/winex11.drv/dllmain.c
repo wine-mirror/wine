@@ -134,3 +134,13 @@ BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
     x11drv_module = instance;
     return !x11drv_init( NULL );
 }
+
+
+/***********************************************************************
+ *           wine_create_desktop (winex11.@)
+ */
+BOOL CDECL wine_create_desktop( UINT width, UINT height )
+{
+    struct create_desktop_params params = { .width = width, .height = height };
+    return x11drv_create_desktop( &params );
+}

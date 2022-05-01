@@ -5,7 +5,7 @@
 @ cdecl WTInfoW(long long ptr) X11DRV_WTInfoW
 
 # Desktop
-@ cdecl wine_create_desktop(long long) X11DRV_create_desktop
+@ cdecl wine_create_desktop(long long)
 
 # System tray
 @ cdecl wine_notify_icon(long ptr)
