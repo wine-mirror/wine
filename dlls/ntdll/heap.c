@@ -1683,7 +1683,7 @@ static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size
     oldActualSize = (pArena->size & ARENA_SIZE_MASK) - pArena->unused_bytes;
     if (rounded_size > oldBlockSize)
     {
-        char *pNext = (char *)(pArena + 1) + oldBlockSize;
+        struct block *next;
 
         if (rounded_size >= HEAP_MIN_LARGE_BLOCK_SIZE && (flags & HEAP_GROWABLE))
         {
@@ -1694,14 +1694,14 @@ static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size
             HEAP_MakeInUseBlockFree( subheap, pArena );
             return STATUS_SUCCESS;
         }
-        if ((pNext < (char *)subheap->base + subheap->size) &&
-            (*(DWORD *)pNext & ARENA_FLAG_FREE) &&
-            (oldBlockSize + (*(DWORD *)pNext & ARENA_SIZE_MASK) + sizeof(ARENA_FREE) >= rounded_size))
+
+        if ((next = next_block( subheap, pArena )) && (block_get_flags( next ) & ARENA_FLAG_FREE) &&
+            (oldBlockSize + block_get_size( next ) >= rounded_size))
         {
             /* The next block is free and large enough */
-            ARENA_FREE *pFree = (ARENA_FREE *)pNext;
-            list_remove( &pFree->entry );
-            pArena->size += (pFree->size & ARENA_SIZE_MASK) + sizeof(*pFree);
+            struct entry *entry = (struct entry *)next;
+            list_remove( &entry->entry );
+            pArena->size += block_get_size( next );
             if (!HEAP_Commit( subheap, pArena, rounded_size )) return STATUS_NO_MEMORY;
             notify_realloc( pArena + 1, oldActualSize, size );
             HEAP_ShrinkBlock( subheap, pArena, rounded_size );
