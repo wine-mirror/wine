@@ -672,6 +672,35 @@ char *get_unix_file_name( const WCHAR *dosW )
 }
 
 
+static CPTABLEINFO *get_xstring_cp(void)
+{
+    static CPTABLEINFO cp;
+    if (!cp.CodePage)
+    {
+        USHORT *ptr;
+        SIZE_T nls_size;
+        if (NtGetNlsSectionPtr( 11, 28591, NULL, (void **)&ptr, &nls_size )) return NULL;
+        RtlInitCodePageTable( ptr, &cp );
+    }
+    return &cp;
+}
+
+
+static CPTABLEINFO *get_ansi_cp(void)
+{
+    USHORT utf8_hdr[2] = { 0, CP_UTF8 };
+    static CPTABLEINFO cp;
+    if (!cp.CodePage)
+    {
+        if (NtCurrentTeb()->Peb->AnsiCodePageData)
+            RtlInitCodePageTable( NtCurrentTeb()->Peb->AnsiCodePageData, &cp );
+        else
+            RtlInitCodePageTable( utf8_hdr, &cp );
+    }
+    return &cp;
+}
+
+
 /***********************************************************************
  *           uri_to_dos
  *
@@ -788,8 +817,8 @@ static void *import_string( Atom type, const void *data, size_t size, size_t *re
     WCHAR *ret;
 
     if (!(ret = malloc( (size * 2 + 1) * sizeof(WCHAR) ))) return NULL;
-    str_size = MultiByteToWideChar( 28591, 0, data, size, ret + size, size );
-    return unicode_text_from_string( ret, ret + size, str_size, ret_size );
+    RtlCustomCPToUnicodeN( get_xstring_cp(), ret + size, size * sizeof(WCHAR), &str_size, data, size );
+    return unicode_text_from_string( ret, ret + size, str_size / sizeof(WCHAR), ret_size );
 }
 
 
@@ -1301,7 +1330,7 @@ static BOOL export_string( Display *display, Window win, Atom prop, Atom target,
     char *text;
 
     if (!(text = malloc( size ))) return FALSE;
-    len = WideCharToMultiByte( 28591, 0, data, size / sizeof(WCHAR), text, size, NULL, NULL );
+    RtlUnicodeToCustomCPN( get_xstring_cp(), text, size, &len, data, size );
     string_from_unicode_text( text, len, &len );
 
     put_property( display, win, prop, target, 8, text, len );
@@ -1476,14 +1505,19 @@ static BOOL export_hdrop( Display *display, Window win, Atom prop, Atom target, 
 
     if (!drop_files->fWide)
     {
-        char *p, *files = (char *)data + drop_files->pFiles;
-        p = files;
-        while (*p) p += strlen( p ) + 1;
-        p++;
+        char *files = (char *)data + drop_files->pFiles;
+        CPTABLEINFO *cp = get_ansi_cp();
+        DWORD len = 0;
 
-        if (!(unicode_data = malloc( (p - files) * sizeof(WCHAR) ))) goto failed;
-        MultiByteToWideChar( CP_ACP, 0, files, p - files, unicode_data, p - files );
-        ptr = unicode_data;
+        while (files[len]) len += strlen( files + len ) + 1;
+        len++;
+
+        if (!(ptr = unicode_data = malloc( len * sizeof(WCHAR) ))) goto failed;
+
+        if (cp->CodePage == CP_UTF8)
+            RtlUTF8ToUnicodeN( unicode_data, len * sizeof(WCHAR), &len, files, len );
+        else
+            RtlCustomCPToUnicodeN( cp, unicode_data, len * sizeof(WCHAR), &len, files, len );
     }
     else ptr = (const WCHAR *)((char *)data + drop_files->pFiles);
 
