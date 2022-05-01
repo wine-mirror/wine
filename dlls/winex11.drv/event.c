@@ -1503,7 +1503,7 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
     unsigned long	aux_long;
     unsigned char*	p_data = NULL;
     Atom atom_aux;
-    int			x, y, cx, cy, dummy;
+    int x, y, cx, cy, dummy, format;
     Window		win, w_aux_root, w_aux_child;
 
     if (!(data = get_win_data( hWnd ))) return;
@@ -1529,50 +1529,23 @@ static void EVENT_DropFromOffiX( HWND hWnd, XClientMessageEvent *event )
 
     XGetWindowProperty( event->display, DefaultRootWindow(event->display),
                         x11drv_atom(DndSelection), 0, 65535, FALSE,
-                        AnyPropertyType, &atom_aux, &dummy,
+                        AnyPropertyType, &atom_aux, &format,
                         &data_length, &aux_long, &p_data);
 
-    if( !aux_long && p_data)  /* don't bother if > 64K */
+    if (!aux_long && p_data)  /* don't bother if > 64K */
     {
-        char *p = (char *)p_data;
-        char *p_drop;
+        DROPFILES *drop;
+        size_t drop_size;
 
-        aux_long = 0;
-        while( *p )  /* calculate buffer size */
+        drop = file_list_to_drop_files( p_data, get_property_size( format, data_length ), &drop_size );
+        if (drop)
         {
-            INT len = GetShortPathNameA( p, NULL, 0 );
-            if (len) aux_long += len + 1;
-            p += strlen(p) + 1;
-        }
-        if( aux_long && aux_long < 65535 )
-        {
-            HDROP                 hDrop;
-            DROPFILES *lpDrop;
-
-            aux_long += sizeof(DROPFILES) + 1;
-            hDrop = GlobalAlloc( GMEM_SHARE, aux_long );
-            lpDrop = GlobalLock( hDrop );
-
-            if( lpDrop )
-            {
-                lpDrop->pFiles = sizeof(DROPFILES);
-                lpDrop->pt = pt;
-                lpDrop->fNC = FALSE;
-                lpDrop->fWide = FALSE;
-                p_drop = (char *)(lpDrop + 1);
-                p = (char *)p_data;
-                while(*p)
-                {
-                    if (GetShortPathNameA( p, p_drop, aux_long - (p_drop - (char *)lpDrop) ))
-                        p_drop += strlen( p_drop ) + 1;
-                    p += strlen(p) + 1;
-                }
-                *p_drop = '\0';
-                PostMessageA( hWnd, WM_DROPFILES, (WPARAM)hDrop, 0L );
-            }
+            post_drop( hWnd, drop, drop_size );
+            free( drop );
         }
     }
-    if( p_data ) XFree(p_data);
+
+    if (p_data) XFree(p_data);
 }
 
 /**********************************************************************

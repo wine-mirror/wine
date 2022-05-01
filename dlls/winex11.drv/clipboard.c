@@ -1043,6 +1043,58 @@ static void *import_text_html( Atom type, const void *data, size_t size, size_t 
 
 
 /**************************************************************************
+ *      file_list_to_drop_files
+ */
+void *file_list_to_drop_files( const void *data, size_t size, size_t *ret_size )
+{
+    size_t buf_size = 4096, path_size;
+    DROPFILES *drop = NULL;
+    const char *ptr;
+    WCHAR *path;
+
+    for (ptr = data; ptr < (const char *)data + size; ptr += strlen( ptr ) + 1)
+    {
+        path = get_dos_file_name( ptr );
+
+        TRACE( "converted URI %s to DOS path %s\n", debugstr_a(ptr), debugstr_w(path) );
+
+        if (!path) continue;
+
+        if (!drop)
+        {
+            if (!(drop = malloc( buf_size ))) return NULL;
+            drop->pFiles = sizeof(*drop);
+            drop->pt.x = drop->pt.y = 0;
+            drop->fNC = FALSE;
+            drop->fWide = TRUE;
+            *ret_size = sizeof(*drop);
+        }
+
+        path_size = (lstrlenW( path ) + 1) * sizeof(WCHAR);
+        if (*ret_size + path_size > buf_size - sizeof(WCHAR))
+        {
+            void *new_buf;
+            if (!(new_buf = realloc( drop, buf_size * 2 + path_size )))
+            {
+                free( path );
+                continue;
+            }
+            buf_size = buf_size * 2 + path_size;
+            drop = new_buf;
+        }
+
+        memcpy( (char *)drop + *ret_size, path, path_size );
+        *ret_size += path_size;
+    }
+
+    if (!drop) return NULL;
+    *(WCHAR *)((char *)drop + *ret_size) = 0;
+    *ret_size += sizeof(WCHAR);
+    return drop;
+}
+
+
+/**************************************************************************
  *      uri_list_to_drop_files
  */
 void *uri_list_to_drop_files( const void *data, size_t size, size_t *ret_size )
