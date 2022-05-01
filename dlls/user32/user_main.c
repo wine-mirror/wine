@@ -164,7 +164,6 @@ static const struct user_callbacks user_funcs =
     EndMenu,
     ImmProcessKey,
     ImmTranslateMessage,
-    SetSystemMenu,
     free_win_ptr,
     MENU_GetSysMenu,
     MENU_IsMenuActive,

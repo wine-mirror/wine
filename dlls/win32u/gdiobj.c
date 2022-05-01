@@ -1212,6 +1212,7 @@ static struct unix_funcs unix_funcs =
     NtUserSetMenu,
     NtUserSetParent,
     NtUserSetSysColors,
+    NtUserSetSystemMenu,
     NtUserSetWindowLong,
     NtUserSetWindowLongPtr,
     NtUserSetWindowPos,

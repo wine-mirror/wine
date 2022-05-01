@@ -466,14 +466,6 @@ BOOL WINAPI NtUserDestroyMenu( HMENU handle )
 }
 
 /*******************************************************************
- *           NtUserSetSystemMenu    (win32u.@)
- */
-BOOL WINAPI NtUserSetSystemMenu( HWND hwnd, HMENU menu )
-{
-    return user_callbacks && user_callbacks->pSetSystemMenu( hwnd, menu );
-}
-
-/*******************************************************************
  *           set_window_menu
  *
  * Helper for NtUserSetMenu that does not call NtUserSetWindowPos.
@@ -1070,6 +1062,21 @@ HMENU WINAPI NtUserGetSystemMenu( HWND hwnd, BOOL revert )
 
     release_win_ptr( win );
     return revert ? 0 : retvalue;
+}
+
+/**********************************************************************
+ *           NtUserSetSystemMenu    (win32u.@)
+ */
+BOOL WINAPI NtUserSetSystemMenu( HWND hwnd, HMENU menu )
+{
+    WND *win = get_win_ptr( hwnd );
+
+    if (!win || win == WND_OTHER_PROCESS || win == WND_DESKTOP) return FALSE;
+
+    if (win->hSysMenu) NtUserDestroyMenu( win->hSysMenu );
+    win->hSysMenu = user_callbacks ? user_callbacks->get_sys_menu( hwnd, menu ) : NULL;
+    release_win_ptr( win );
+    return TRUE;
 }
 
 /**********************************************************************

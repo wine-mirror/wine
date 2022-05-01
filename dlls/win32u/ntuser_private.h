@@ -37,7 +37,6 @@ struct user_callbacks
     BOOL (WINAPI *pEndMenu)(void);
     BOOL (WINAPI *pImmProcessKey)(HWND, HKL, UINT, LPARAM, DWORD);
     BOOL (WINAPI *pImmTranslateMessage)(HWND, UINT, WPARAM, LPARAM);
-    BOOL (WINAPI *pSetSystemMenu)( HWND hwnd, HMENU menu );
     void (CDECL *free_win_ptr)( struct tagWND *win );
     HMENU (CDECL *get_sys_menu)( HWND hwnd, HMENU popup );
     HWND (CDECL *is_menu_active)(void);

@@ -1185,6 +1185,12 @@ BOOL WINAPI NtUserSetSysColors( INT count, const INT *colors, const COLORREF *va
     return unix_funcs->pNtUserSetSysColors( count, colors, values );
 }
 
+BOOL WINAPI NtUserSetSystemMenu( HWND hwnd, HMENU menu )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserSetSystemMenu( hwnd, menu );
+}
+
 LONG WINAPI NtUserSetWindowLong( HWND hwnd, INT offset, LONG newval, BOOL ansi )
 {
     if (!unix_funcs) return 0;

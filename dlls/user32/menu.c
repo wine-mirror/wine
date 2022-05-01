@@ -3925,24 +3925,6 @@ HMENU WINAPI CreateMenu(void)
 }
 
 
-/*******************************************************************
- *         SetSystemMenu    (USER32.@)
- */
-BOOL WINAPI SetSystemMenu( HWND hwnd, HMENU hMenu )
-{
-    WND *wndPtr = WIN_GetPtr( hwnd );
-
-    if (wndPtr && wndPtr != WND_OTHER_PROCESS && wndPtr != WND_DESKTOP)
-    {
-	if (wndPtr->hSysMenu) NtUserDestroyMenu( wndPtr->hSysMenu );
-	wndPtr->hSysMenu = MENU_GetSysMenu( hwnd, hMenu );
-        WIN_ReleasePtr( wndPtr );
-	return TRUE;
-    }
-    return FALSE;
-}
-
-
 /**********************************************************************
  *         GetMenu    (USER32.@)
  */
