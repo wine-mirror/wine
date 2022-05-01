@@ -1476,6 +1476,20 @@ static HWND find_drop_window( HWND hQueryWnd, LPPOINT lpPt )
     return hQueryWnd;
 }
 
+static void post_drop( HWND hwnd, DROPFILES *drop, ULONG size )
+{
+    HDROP handle;
+
+    if ((handle = GlobalAlloc( GMEM_SHARE, size )))
+    {
+        DROPFILES *ptr = GlobalLock( handle );
+        memcpy( ptr, drop, size );
+        ptr->fWide = TRUE;
+        GlobalUnlock( handle );
+        PostMessageW( hwnd, WM_DROPFILES, (WPARAM)handle, 0 );
+    }
+}
+
 /**********************************************************************
  *           EVENT_DropFromOffix
  *
@@ -1573,14 +1587,11 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 {
   struct x11drv_win_data *win_data;
   unsigned long	data_length;
-  unsigned long	aux_long, drop_len = 0;
+  unsigned long	aux_long;
   unsigned char	*p_data = NULL; /* property data */
-  char		*p_drop = NULL;
-  char          *p, *next;
   int		x, y;
-  POINT pos;
-  DROPFILES *lpDrop;
-  HDROP hDrop;
+  DROPFILES *drop;
+  int format;
   union {
     Atom	atom_aux;
     int         i;
@@ -1592,87 +1603,38 @@ static void EVENT_DropURLs( HWND hWnd, XClientMessageEvent *event )
 
   XGetWindowProperty( event->display, DefaultRootWindow(event->display),
                       x11drv_atom(DndSelection), 0, 65535, FALSE,
-                      AnyPropertyType, &u.atom_aux, &u.i,
+                      AnyPropertyType, &u.atom_aux, &format,
                       &data_length, &aux_long, &p_data);
   if (aux_long)
     WARN("property too large, truncated!\n");
   TRACE("urls=%s\n", p_data);
 
-  if( !aux_long && p_data) {	/* don't bother if > 64K */
-    /* calculate length */
-    p = (char*) p_data;
-    next = strchr(p, '\n');
-    while (p) {
-      if (next) *next=0;
-      if (strncmp(p,"file:",5) == 0 ) {
-	INT len = GetShortPathNameA( p+5, NULL, 0 );
-	if (len) drop_len += len + 1;
-      }
-      if (next) {
-	*next = '\n';
-	p = next + 1;
-	next = strchr(p, '\n');
-      } else {
-	p = NULL;
-      }
-    }
+  if (!aux_long && p_data) /* don't bother if > 64K */
+  {
+      size_t drop_size;
+      drop = uri_list_to_drop_files( p_data, get_property_size( format, data_length ), &drop_size );
 
-    if( drop_len && drop_len < 65535 ) {
-      XQueryPointer( event->display, root_window, &u.w_aux, &u.w_aux,
-                     &x, &y, &u.i, &u.i, &u.u);
-      pos = root_to_virtual_screen( x, y );
-
-      drop_len += sizeof(DROPFILES) + 1;
-      hDrop = GlobalAlloc( GMEM_SHARE, drop_len );
-      lpDrop = GlobalLock( hDrop );
-
-      if( lpDrop && (win_data = get_win_data( hWnd )))
+      if (drop)
       {
-	  lpDrop->pFiles = sizeof(DROPFILES);
-	  lpDrop->pt = pos;
-	  lpDrop->fNC =
-	    (pos.x < (win_data->client_rect.left - win_data->whole_rect.left)  ||
-	     pos.y < (win_data->client_rect.top - win_data->whole_rect.top)    ||
-	     pos.x > (win_data->client_rect.right - win_data->whole_rect.left) ||
-	     pos.y > (win_data->client_rect.bottom - win_data->whole_rect.top) );
-	  lpDrop->fWide = FALSE;
-	  p_drop = (char*)(lpDrop + 1);
-          release_win_data( win_data );
-      }
+          XQueryPointer( event->display, root_window, &u.w_aux, &u.w_aux,
+                         &x, &y, &u.i, &u.i, &u.u);
+          drop->pt = root_to_virtual_screen( x, y );
 
-      /* create message content */
-      if (p_drop) {
-	p = (char*) p_data;
-	next = strchr(p, '\n');
-	while (p) {
-	  if (next) *next=0;
-	  if (strncmp(p,"file:",5) == 0 ) {
-	    INT len = GetShortPathNameA( p+5, p_drop, 65535 );
-	    if (len) {
-	      TRACE("drop file %s as %s\n", p+5, p_drop);
-	      p_drop += len+1;
-	    } else {
-	      WARN("can't convert file %s to dos name\n", p+5);
-	    }
-	  } else {
-	    WARN("unknown mime type %s\n", p);
-	  }
-	  if (next) {
-	    *next = '\n';
-	    p = next + 1;
-	    next = strchr(p, '\n');
-	  } else {
-	    p = NULL;
-	  }
-	  *p_drop = '\0';
-	}
+          if ((win_data = get_win_data( hWnd )))
+          {
+              drop->fNC =
+                  (drop->pt.x < (win_data->client_rect.left - win_data->whole_rect.left)  ||
+                   drop->pt.y < (win_data->client_rect.top - win_data->whole_rect.top)    ||
+                   drop->pt.x > (win_data->client_rect.right - win_data->whole_rect.left) ||
+                   drop->pt.y > (win_data->client_rect.bottom - win_data->whole_rect.top) );
+              release_win_data( win_data );
+          }
 
-        GlobalUnlock(hDrop);
-        PostMessageA( hWnd, WM_DROPFILES, (WPARAM)hDrop, 0L );
+          post_drop( hWnd, drop, drop_size );
+          free( drop );
       }
-    }
   }
-  if( p_data ) XFree(p_data);
+  if (p_data) XFree( p_data );
 }
 
 

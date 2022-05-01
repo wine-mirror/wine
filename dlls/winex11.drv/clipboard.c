@@ -1043,11 +1043,9 @@ static void *import_text_html( Atom type, const void *data, size_t size, size_t 
 
 
 /**************************************************************************
- *      import_text_uri_list
- *
- *  Import text/uri-list.
+ *      uri_list_to_drop_files
  */
-static void *import_text_uri_list( Atom type, const void *data, size_t size, size_t *ret_size )
+void *uri_list_to_drop_files( const void *data, size_t size, size_t *ret_size )
 {
     const char *uriList = data;
     char *uri;
@@ -1118,6 +1116,17 @@ static void *import_text_uri_list( Atom type, const void *data, size_t size, siz
     }
     free( out );
     return dropFiles;
+}
+
+
+/**************************************************************************
+ *      import_text_uri_list
+ *
+ *  Import text/uri-list.
+ */
+static void *import_text_uri_list( Atom type, const void *data, size_t size, size_t *ret_size )
+{
+    return uri_list_to_drop_files( data, size, ret_size );
 }
 
 
