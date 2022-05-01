@@ -91,7 +91,7 @@ static BOOL nores_get_id(const WCHAR *device_name, ULONG_PTR *id)
     if (!get_primary_adapter( primary_adapter ))
         return FALSE;
 
-    *id = !lstrcmpiW( device_name, primary_adapter ) ? 1 : 0;
+    *id = !wcsicmp( device_name, primary_adapter ) ? 1 : 0;
     return TRUE;
 }
 
@@ -500,7 +500,7 @@ BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DW
     }
 
     pthread_mutex_lock( &settings_mutex );
-    if (n == 0 || lstrcmpiW(cached_device_name, name) || cached_flags != flags)
+    if (n == 0 || wcsicmp(cached_device_name, name) || cached_flags != flags)
     {
         if (!handler.get_id(name, &id) || !handler.get_modes(id, flags, &modes, &mode_count))
         {
@@ -654,7 +654,7 @@ static LONG get_display_settings(struct x11drv_display_setting **new_displays,
 
             displays[display_idx].desired_mode = registry_mode;
         }
-        else if (!lstrcmpiW(dev_name, display_device.DeviceName))
+        else if (!wcsicmp(dev_name, display_device.DeviceName))
         {
             displays[display_idx].desired_mode = *dev_mode;
             if (!(dev_mode->dmFields & DM_POSITION))
@@ -950,7 +950,7 @@ LONG X11DRV_ChangeDisplaySettingsEx( LPCWSTR devname, LPDEVMODEW devmode,
     {
         for (display_idx = 0; display_idx < display_count; ++display_idx)
         {
-            if (!lstrcmpiW(displays[display_idx].desired_mode.dmDeviceName, devname))
+            if (!wcsicmp(displays[display_idx].desired_mode.dmDeviceName, devname))
             {
                 full_mode = get_full_mode(displays[display_idx].id, &displays[display_idx].desired_mode);
                 if (!full_mode)

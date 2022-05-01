@@ -949,4 +949,6 @@ static inline int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DW
     return WideCharToMultiByte( CP_UNIXCP, 0, src, srclen, dst, dstlen, NULL, NULL );
 }
 
+#define wcsicmp lstrcmpiW
+
 #endif  /* __WINE_X11DRV_H */

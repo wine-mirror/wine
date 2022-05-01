@@ -91,7 +91,7 @@ static BOOL xf86vm_get_id(const WCHAR *device_name, ULONG_PTR *id)
     /* XVidMode only supports changing the primary adapter settings.
      * For non-primary adapters, an id is still provided but getting
      * and changing non-primary adapters' settings will be ignored. */
-    *id = !lstrcmpiW( device_name, primary_adapter ) ? 1 : 0;
+    *id = !wcsicmp( device_name, primary_adapter ) ? 1 : 0;
     return TRUE;
 }
 

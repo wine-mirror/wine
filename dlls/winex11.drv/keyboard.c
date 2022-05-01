@@ -2203,7 +2203,7 @@ INT X11DRV_GetKeyNameText( LONG lParam, LPWSTR lpBuffer, INT nSize )
       if (name && (vkey == VK_SHIFT || vkey == VK_CONTROL || vkey == VK_MENU))
       {
           char* idx = strrchr(name, '_');
-          if (idx && (_strnicmp(idx, "_r", -1) == 0 || _strnicmp(idx, "_l", -1) == 0))
+          if (idx && (idx[1] == 'r' || idx[1] == 'R' || idx[1] == 'l' || idx[1] == 'L') && !idx[2])
           {
               pthread_mutex_unlock( &kbd_mutex );
               TRACE("found scan=%04x keyc=%u keysym=%lx modified_string=%s\n",

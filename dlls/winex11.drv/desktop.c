@@ -90,7 +90,7 @@ static BOOL X11DRV_desktop_get_id( const WCHAR *device_name, ULONG_PTR *id )
 {
     WCHAR primary_adapter[CCHDEVICENAME];
 
-    if (!get_primary_adapter( primary_adapter ) || lstrcmpiW( primary_adapter, device_name ))
+    if (!get_primary_adapter( primary_adapter ) || wcsicmp( primary_adapter, device_name ))
         return FALSE;
 
     *id = 0;
@@ -342,7 +342,7 @@ NTSTATUS x11drv_create_desktop( void *arg )
     TRACE( "%s %ux%u\n", debugstr_w(name), params->width, params->height );
 
     /* magic: desktop "root" means use the root window */
-    if (!lstrcmpiW( name, rootW )) return FALSE;
+    if (!wcsicmp( name, rootW )) return FALSE;
 
     /* Create window */
     win_attr.event_mask = ExposureMask | KeyPressMask | KeyReleaseMask | EnterWindowMask |
