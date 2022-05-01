@@ -27,7 +27,6 @@
 
 #include "windef.h"
 #include "winbase.h"
-#include "winnls.h"
 #include "x11drv.h"
 #include "wine/unicode.h"
 #include "wine/debug.h"
@@ -616,7 +615,7 @@ BOOL CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
                 WARN("Unable to open device %s\n",target->name);
                 break;
             }
-            MultiByteToWideChar(CP_UNIXCP, 0, target->name, -1, cursor.NAME, WT_MAX_NAME_LEN);
+            ntdll_umbstowcs(target->name, strlen(target->name) + 1, cursor.NAME, WT_MAX_NAME_LEN);
 
             if (! is_tablet_cursor(target->name, device_type))
             {
@@ -1031,7 +1030,8 @@ int CDECL X11DRV_AttachEventQueueToTablet(HWND hOwner)
         if (!gSysCursor[cur_loop].ACTIVE) continue;
 
         /* the cursor name fits in the buffer because too long names are skipped */
-        WideCharToMultiByte(CP_UNIXCP, 0, gSysCursor[cur_loop].NAME, -1, cursorNameA, WT_MAX_NAME_LEN, NULL, NULL);
+        ntdll_wcstoumbs(gSysCursor[cur_loop].NAME, lstrlenW(gSysCursor[cur_loop].NAME) + 1,
+                        cursorNameA, WT_MAX_NAME_LEN, FALSE);
         for (loop=0; loop < num_devices; loop ++)
             if (strcmp(devices[loop].name, cursorNameA) == 0)
                 target = &devices[loop];

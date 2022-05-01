@@ -1084,7 +1084,7 @@ static Cursor create_xcursor_system_cursor( const ICONINFOEXW *info )
         {
             const WCHAR *valueW = (const WCHAR *)value->Data;
             if (!valueW[0]) return 0; /* force standard cursor */
-            if (!WideCharToMultiByte( CP_UNIXCP, 0, valueW, -1, valueA, sizeof(valueA), NULL, NULL ))
+            if (!ntdll_wcstoumbs( valueW, lstrlenW(valueW) + 1, valueA, sizeof(valueA), FALSE ))
                 valueA[0] = 0;
             goto done;
         }

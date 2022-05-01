@@ -358,9 +358,9 @@ static void register_win32_formats( const UINT *ids, UINT size )
             if (find_win32_format( *ids )) continue;  /* it already exists */
             if (!NtUserGetClipboardFormatName( *ids, buffer, ARRAYSIZE(buffer) ))
                 continue;  /* not a named format */
-            if (!(len = WideCharToMultiByte( CP_UNIXCP, 0, buffer, -1, NULL, 0, NULL, NULL ))) continue;
-            if (!(names[count] = malloc( len ))) continue;
-            WideCharToMultiByte( CP_UNIXCP, 0, buffer, -1, names[count], len, NULL, NULL );
+            len = lstrlenW( buffer );
+            if (!(names[count] = malloc( len * 3 + 1 ))) continue;
+            ntdll_wcstoumbs( buffer, len + 1, names[count], len * 3 + 1, FALSE );
             new_ids[count++] = *ids;
         }
         if (!count) return;
@@ -405,7 +405,7 @@ static void register_x11_formats( const Atom *atoms, UINT size )
 
         for (i = pos = 0; i < count; i++)
         {
-            if (MultiByteToWideChar( CP_UNIXCP, 0, names[i], -1, buffer, 256 ) &&
+            if (ntdll_umbstowcs( names[i], strlen( names[i] ) + 1, buffer, ARRAYSIZE(buffer) ) &&
                 (ids[pos] = register_clipboard_format( buffer )))
                 new_atoms[pos++] = new_atoms[i];
             XFree( names[i] );
@@ -759,7 +759,8 @@ static void *import_compound_text( Atom type, const void *data, size_t size, siz
 
     len = strlen(srcstr[0]) + 1;
     if (!(ret = malloc( (len * 2 + 1) * sizeof(WCHAR) ))) return NULL;
-    count = MultiByteToWideChar( CP_UNIXCP, 0, srcstr[0], len, ret + len, len );
+
+    count = ntdll_umbstowcs( srcstr[0], len, ret + len, len );
     ret = unicode_text_from_string( ret, ret + len, count, ret_size );
 
     XFreeStringList(srcstr);
@@ -1282,8 +1283,7 @@ static BOOL export_compound_text( Display *display, Window win, Atom prop, Atom 
 
 
     if (!(text = malloc( size / sizeof(WCHAR) * 3 ))) return FALSE;
-    len = WideCharToMultiByte( CP_UNIXCP, 0, data, size / sizeof(WCHAR),
-                               text, size / sizeof(WCHAR) * 3, NULL, NULL );
+    len = ntdll_wcstoumbs( data, size / sizeof(WCHAR), text, size / sizeof(WCHAR) * 3, FALSE );
     string_from_unicode_text( text, len, &len );
 
     if (target == x11drv_atom(COMPOUND_TEXT))

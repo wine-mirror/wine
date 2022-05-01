@@ -62,6 +62,7 @@ typedef int Status;
 #include "ntgdi.h"
 #include "wine/gdi_driver.h"
 #include "unixlib.h"
+#include "winnls.h"
 #include "wine/list.h"
 
 #define MAX_DASHLEN 16
@@ -914,6 +915,18 @@ static inline UINT asciiz_to_unicode( WCHAR *dst, const char *src )
     WCHAR *p = dst;
     while ((*p++ = *src++));
     return (p - dst) * sizeof(WCHAR);
+}
+
+/* FIXME: remove once we may use ntdll.so version */
+
+static inline DWORD ntdll_umbstowcs( const char *src, DWORD srclen, WCHAR *dst, DWORD dstlen )
+{
+    return MultiByteToWideChar( CP_UNIXCP, 0, src, srclen, dst, dstlen );
+}
+
+static inline int ntdll_wcstoumbs( const WCHAR *src, DWORD srclen, char *dst, DWORD dstlen, BOOL strict )
+{
+    return WideCharToMultiByte( CP_UNIXCP, 0, src, srclen, dst, dstlen, NULL, NULL );
 }
 
 #endif  /* __WINE_X11DRV_H */

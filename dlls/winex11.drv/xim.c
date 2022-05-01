@@ -101,23 +101,20 @@ static void X11DRV_ImmSetInternalString(DWORD dwOffset,
 
 void X11DRV_XIMLookupChars( const char *str, DWORD count )
 {
-    DWORD dwOutput;
-    WCHAR *wcOutput;
+    WCHAR *output;
+    DWORD len;
     HWND focus;
 
     TRACE("%p %u\n", str, count);
 
-    dwOutput = MultiByteToWideChar(CP_UNIXCP, 0, str, count, NULL, 0);
-    wcOutput = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR) * dwOutput);
-    if (wcOutput == NULL)
-        return;
-    MultiByteToWideChar(CP_UNIXCP, 0, str, count, wcOutput, dwOutput);
+    if (!(output = malloc( count * sizeof(WCHAR) ))) return;
+    len = ntdll_umbstowcs( str, count, output, count );
 
     if ((focus = GetFocus()))
         IME_UpdateAssociation(focus);
 
-    IME_SetResultString(wcOutput, dwOutput);
-    HeapFree(GetProcessHeap(), 0, wcOutput);
+    IME_SetResultString( output, len );
+    free( output );
 }
 
 static BOOL XIMPreEditStateNotifyCallback(XIC xic, XPointer p, XPointer data)
@@ -173,24 +170,18 @@ static void XIMPreEditDrawCallback(XIM ic, XPointer client_data,
         {
             if (! P_DR->text->encoding_is_wchar)
             {
-                DWORD dwOutput;
-                WCHAR *wcOutput;
+                size_t text_len;
+                WCHAR *output;
 
                 TRACE("multibyte\n");
-                dwOutput = MultiByteToWideChar(CP_UNIXCP, 0,
-                           P_DR->text->string.multi_byte, -1,
-                           NULL, 0);
-                wcOutput = HeapAlloc(GetProcessHeap(), 0, sizeof (WCHAR) * dwOutput);
-                if (wcOutput)
+                text_len = strlen( P_DR->text->string.multi_byte );
+                if ((output = malloc( text_len * sizeof(WCHAR) )))
                 {
-                    dwOutput = MultiByteToWideChar(CP_UNIXCP, 0,
-                               P_DR->text->string.multi_byte, -1,
-                               wcOutput, dwOutput);
+                    text_len = ntdll_umbstowcs( P_DR->text->string.multi_byte, text_len,
+                                                output, text_len );
 
-                    /* ignore null */
-                    dwOutput --;
-                    X11DRV_ImmSetInternalString (sel, len, wcOutput, dwOutput);
-                    HeapFree(GetProcessHeap(), 0, wcOutput);
+                    X11DRV_ImmSetInternalString( sel, len, output, text_len );
+                    free( output );
                 }
             }
             else

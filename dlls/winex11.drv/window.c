@@ -443,9 +443,9 @@ static void sync_window_text( Display *display, Window win, const WCHAR *text )
 
     /* allocate new buffer for window text */
     len = lstrlenW( text );
-    count = WideCharToMultiByte(CP_UNIXCP, 0, text, -1, NULL, 0, NULL, NULL);
+    count = len * 3 + 1;
     if (!(buffer = malloc( count ))) return;
-    WideCharToMultiByte(CP_UNIXCP, 0, text, -1, buffer, count, NULL, NULL);
+    ntdll_wcstoumbs( text, len + 1, buffer, count, FALSE );
 
     RtlUnicodeToUTF8N( NULL, 0, &count, text, len * sizeof(WCHAR) );
     if (!(utf8_buffer = malloc( count )))

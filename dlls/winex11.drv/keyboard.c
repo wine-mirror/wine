@@ -1904,7 +1904,7 @@ SHORT X11DRV_VkKeyScanEx( WCHAR wChar, HKL hkl )
     /* FIXME: what happens if wChar is not a Latin1 character and CP_UNIXCP
      * is UTF-8 (multibyte encoding)?
      */
-    if (!WideCharToMultiByte(CP_UNIXCP, 0, &wChar, 1, &cChar, 1, NULL, NULL))
+    if (!ntdll_wcstoumbs( &wChar, 1, &cChar, 1, FALSE ))
     {
         WARN("no translation from unicode to CP_UNIXCP for 0x%02x\n", wChar);
         return -1;
@@ -2100,7 +2100,7 @@ UINT X11DRV_MapVirtualKeyEx( UINT wCode, UINT wMapType, HKL hkl )
             if (len)
             {
                 WCHAR wch;
-                if (MultiByteToWideChar(CP_UNIXCP, 0, s, len, &wch, 1)) ret = toupperW(wch);
+                if (ntdll_umbstowcs( s, len, &wch, 1 )) ret = toupperW(wch);
             }
             break;
         }
@@ -2208,7 +2208,7 @@ INT X11DRV_GetKeyNameText( LONG lParam, LPWSTR lpBuffer, INT nSize )
               pthread_mutex_unlock( &kbd_mutex );
               TRACE("found scan=%04x keyc=%u keysym=%lx modified_string=%s\n",
                     scanCode, keyc, keys, debugstr_an(name,idx-name));
-              rc = MultiByteToWideChar(CP_UNIXCP, 0, name, idx-name+1, lpBuffer, nSize);
+              rc = ntdll_umbstowcs( name, idx - name + 1, lpBuffer, nSize );
               if (!rc) rc = nSize;
               lpBuffer[--rc] = 0;
               return rc;
@@ -2220,7 +2220,7 @@ INT X11DRV_GetKeyNameText( LONG lParam, LPWSTR lpBuffer, INT nSize )
           pthread_mutex_unlock( &kbd_mutex );
           TRACE("found scan=%04x keyc=%u keysym=%04x vkey=%04x string=%s\n",
                 scanCode, keyc, (int)keys, vkey, debugstr_a(name));
-          rc = MultiByteToWideChar(CP_UNIXCP, 0, name, -1, lpBuffer, nSize);
+          rc = ntdll_umbstowcs( name, strlen(name) + 1, lpBuffer, nSize );
           if (!rc) rc = nSize;
           lpBuffer[--rc] = 0;
           return rc;
@@ -2515,7 +2515,7 @@ INT X11DRV_ToUnicodeEx( UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
 	dead_char = KEYBOARD_MapDeadKeysym(keysym);
 	if (dead_char)
         {
-	    MultiByteToWideChar(CP_UNIXCP, 0, &dead_char, 1, bufW, bufW_size);
+	    ntdll_umbstowcs( &dead_char, 1, bufW, bufW_size );
 	    ret = -1;
             goto found;
         }
@@ -2611,7 +2611,7 @@ INT X11DRV_ToUnicodeEx( UINT virtKey, UINT scanCode, const BYTE *lpKeyState,
 	if(ret)
 	{
 	    TRACE_(key)("Translating char 0x%02x to unicode\n", *(BYTE *)lpChar);
-	    ret = MultiByteToWideChar(CP_UNIXCP, 0, lpChar, ret, bufW, bufW_size);
+            ret = ntdll_umbstowcs( lpChar, ret, bufW, bufW_size );
 	}
     }
 
