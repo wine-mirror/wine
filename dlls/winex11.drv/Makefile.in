@@ -13,6 +13,7 @@ C_SRCS = \
 	clipboard.c \
 	desktop.c \
 	display.c \
+	dllmain.c \
 	event.c \
 	graphics.c \
 	ime.c \

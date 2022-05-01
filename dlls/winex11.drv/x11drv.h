@@ -841,6 +841,10 @@ static inline BOOL is_window_rect_mapped( const RECT *rect )
             max( rect->bottom, rect->top + 1 ) > virtual_rect.top);
 }
 
+/* unixlib interface */
+
+extern NTSTATUS x11drv_init( void *arg ) DECLSPEC_HIDDEN;
+
 /* GDI helpers */
 
 static inline BOOL lp_to_dp( HDC hdc, POINT *points, INT count )

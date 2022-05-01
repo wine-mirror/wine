@@ -81,7 +81,6 @@ BOOL shape_layered_windows = TRUE;
 int copy_default_colors = 128;
 int alloc_system_colors = 256;
 int xrender_error_base = 0;
-HMODULE x11drv_module = 0;
 char *process_name = NULL;
 
 static x11drv_error_callback err_callback;   /* current callback for error */
@@ -630,7 +629,7 @@ static void init_visuals( Display *display, int screen )
 /***********************************************************************
  *           X11DRV process initialisation routine
  */
-static BOOL process_attach(void)
+NTSTATUS x11drv_init( void *arg )
 {
     Display *display;
     void *libx11 = dlopen( SONAME_LIBX11, RTLD_NOW|RTLD_GLOBAL );
@@ -638,7 +637,7 @@ static BOOL process_attach(void)
     if (!libx11)
     {
         ERR( "failed to load %s: %s\n", SONAME_LIBX11, dlerror() );
-        return FALSE;
+        return STATUS_UNSUCCESSFUL;
     }
     pXGetEventData = dlsym( libx11, "XGetEventData" );
     pXFreeEventData = dlsym( libx11, "XFreeEventData" );
@@ -651,7 +650,7 @@ static BOOL process_attach(void)
     /* Open display */
 
     if (!XInitThreads()) ERR( "XInitThreads failed, trouble ahead\n" );
-    if (!(display = XOpenDisplay( NULL ))) return FALSE;
+    if (!(display = XOpenDisplay( NULL ))) return STATUS_UNSUCCESSFUL;
 
     fcntl( ConnectionNumber(display), F_SETFD, 1 ); /* set close on exec flag */
     root_window = DefaultRootWindow( display );
@@ -689,7 +688,7 @@ static BOOL process_attach(void)
 
     init_user_driver();
     X11DRV_DisplayDevices_Init(FALSE);
-    return TRUE;
+    return STATUS_SUCCESS;
 }
 
 
@@ -774,25 +773,6 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     if (use_xim) X11DRV_SetupXIM();
 
     return data;
-}
-
-
-/***********************************************************************
- *           X11DRV initialisation routine
- */
-BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, LPVOID reserved )
-{
-    BOOL ret = TRUE;
-
-    switch(reason)
-    {
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls( hinst );
-        x11drv_module = hinst;
-        ret = process_attach();
-        break;
-    }
-    return ret;
 }
 
 
