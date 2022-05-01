@@ -2144,67 +2144,6 @@ BOOL update_clipboard( HWND hwnd )
 
 
 /**************************************************************************
- *		clipboard_wndproc
- *
- * Window procedure for the clipboard manager.
- */
-static LRESULT CALLBACK clipboard_wndproc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
-{
-    switch (msg)
-    {
-    case WM_NCCREATE:
-        return TRUE;
-    case WM_CLIPBOARDUPDATE:
-        if (is_clipboard_owner) break;  /* ignore our own changes */
-        acquire_selection( thread_init_display() );
-        break;
-    case WM_RENDERFORMAT:
-        if (render_format( wp )) rendered_formats++;
-        break;
-    case WM_TIMER:
-        if (!is_clipboard_owner) break;
-        request_selection_contents( thread_display(), FALSE );
-        break;
-    case WM_DESTROYCLIPBOARD:
-        TRACE( "WM_DESTROYCLIPBOARD: lost ownership\n" );
-        is_clipboard_owner = FALSE;
-        KillTimer( hwnd, 1 );
-        break;
-    }
-    return DefWindowProcW( hwnd, msg, wp, lp );
-}
-
-
-/**************************************************************************
- *		wait_clipboard_mutex
- *
- * Make sure that there's only one clipboard thread per window station.
- */
-static BOOL wait_clipboard_mutex(void)
-{
-    static const WCHAR prefix[] = {'_','_','w','i','n','e','_','c','l','i','p','b','o','a','r','d','_'};
-    WCHAR buffer[MAX_PATH + ARRAY_SIZE( prefix )];
-    HANDLE mutex;
-
-    memcpy( buffer, prefix, sizeof(prefix) );
-    if (!GetUserObjectInformationW( GetProcessWindowStation(), UOI_NAME,
-                                    buffer + ARRAY_SIZE( prefix ),
-                                    sizeof(buffer) - sizeof(prefix), NULL ))
-    {
-        ERR( "failed to get winstation name\n" );
-        return FALSE;
-    }
-    mutex = CreateMutexW( NULL, TRUE, buffer );
-    if (GetLastError() == ERROR_ALREADY_EXISTS)
-    {
-        TRACE( "waiting for mutex %s\n", debugstr_w( buffer ));
-        WaitForSingleObject( mutex, INFINITE );
-    }
-    return TRUE;
-}
-
-
-/**************************************************************************
  *              selection_notify_event
  *
  * Called when x11 clipboard content changes
@@ -2278,15 +2217,11 @@ static void xfixes_init(void)
  *
  * Thread running inside the desktop process to manage the clipboard
  */
-static DWORD WINAPI clipboard_thread( void *arg )
+static BOOL clipboard_init( HWND hwnd )
 {
-    static const WCHAR clipboard_classname[] = {'_','_','w','i','n','e','_','c','l','i','p','b','o','a','r','d','_','m','a','n','a','g','e','r',0};
     XSetWindowAttributes attr;
-    WNDCLASSW class;
-    MSG msg;
 
-    if (!wait_clipboard_mutex()) return 0;
-
+    clipboard_hwnd = hwnd;
     clipboard_display = thread_init_display();
     attr.event_mask = PropertyChangeMask;
     import_window = XCreateWindow( clipboard_display, root_window, 0, 0, 1, 1, 0, CopyFromParent,
@@ -2294,34 +2229,53 @@ static DWORD WINAPI clipboard_thread( void *arg )
     if (!import_window)
     {
         ERR( "failed to create import window\n" );
-        return 0;
-    }
-
-    memset( &class, 0, sizeof(class) );
-    class.lpfnWndProc   = clipboard_wndproc;
-    class.lpszClassName = clipboard_classname;
-
-    if (!RegisterClassW( &class ) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
-    {
-        ERR( "could not register clipboard window class err %u\n", GetLastError() );
-        return 0;
-    }
-    if (!(clipboard_hwnd = CreateWindowW( clipboard_classname, NULL, 0, 0, 0, 0, 0,
-                                          HWND_MESSAGE, 0, 0, NULL )))
-    {
-        ERR( "failed to create clipboard window err %u\n", GetLastError() );
-        return 0;
+        return FALSE;
     }
 
     clipboard_thread_id = GetCurrentThreadId();
-    AddClipboardFormatListener( clipboard_hwnd );
+    NtUserAddClipboardFormatListener( hwnd );
     register_builtin_formats();
     xfixes_init();
     request_selection_contents( clipboard_display, TRUE );
 
     TRACE( "clipboard thread %04x running\n", GetCurrentThreadId() );
-    while (GetMessageW( &msg, 0, 0, 0 )) DispatchMessageW( &msg );
-    return 0;
+    return TRUE;
+}
+
+
+
+
+/**************************************************************************
+ *           x11drv_clipboard_message
+ */
+NTSTATUS x11drv_clipboard_message( void *arg )
+{
+    struct clipboard_message_params *params = arg;
+
+    switch (params->msg)
+    {
+    case WM_NCCREATE:
+        return clipboard_init( params->hwnd );
+    case WM_CLIPBOARDUPDATE:
+        if (is_clipboard_owner) break;  /* ignore our own changes */
+        acquire_selection( thread_init_display() );
+        break;
+    case WM_RENDERFORMAT:
+        if (render_format( params->wparam )) rendered_formats++;
+        break;
+    case WM_TIMER:
+        if (!is_clipboard_owner) break;
+        request_selection_contents( thread_display(), FALSE );
+        break;
+    case WM_DESTROYCLIPBOARD:
+        TRACE( "WM_DESTROYCLIPBOARD: lost ownership\n" );
+        is_clipboard_owner = FALSE;
+        NtUserKillTimer( params->hwnd, 1 );
+        break;
+    }
+
+    return NtUserMessageCall( params->hwnd, params->msg, params->wparam, params->lparam,
+                              NULL, NtUserDefWindowProc, FALSE );
 }
 
 
@@ -2399,17 +2353,4 @@ BOOL X11DRV_SelectionClear( HWND hwnd, XEvent *xev )
     release_selection( event->display, event->time );
     request_selection_contents( event->display, TRUE );
     return FALSE;
-}
-
-
-/**************************************************************************
- *		X11DRV_InitClipboard
- */
-void X11DRV_InitClipboard(void)
-{
-    DWORD id;
-    HANDLE handle = CreateThread( NULL, 0, clipboard_thread, NULL, 0, &id );
-
-    if (handle) CloseHandle( handle );
-    else ERR( "failed to create clipboard thread\n" );
 }

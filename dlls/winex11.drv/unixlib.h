@@ -19,6 +19,15 @@
 #include "ntuser.h"
 #include "wine/unixlib.h"
 
+/* x11drv_clipboard_message params */
+struct clipboard_message_params
+{
+    HWND hwnd;
+    UINT msg;
+    WPARAM wparam;
+    LPARAM lparam;
+};
+
 /* DnD support */
 
 struct format_entry

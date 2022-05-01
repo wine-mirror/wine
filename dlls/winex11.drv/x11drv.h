@@ -844,6 +844,7 @@ static inline BOOL is_window_rect_mapped( const RECT *rect )
 /* unixlib interface */
 
 extern NTSTATUS x11drv_init( void *arg ) DECLSPEC_HIDDEN;
+extern NTSTATUS x11drv_clipboard_message( void *arg ) DECLSPEC_HIDDEN;
 
 /* GDI helpers */
 
