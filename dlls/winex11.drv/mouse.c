@@ -513,7 +513,7 @@ LRESULT clip_cursor_notify( HWND hwnd, HWND prev_clip_hwnd, HWND new_clip_hwnd )
     {
         TRACE( "clip hwnd reset from %p\n", hwnd );
         data->clip_hwnd = 0;
-        data->clip_reset = GetTickCount();
+        data->clip_reset = NtGetTickCount();
         disable_xinput2();
         NtUserDestroyWindow( hwnd );
     }
@@ -553,7 +553,7 @@ BOOL clip_fullscreen_window( HWND hwnd, BOOL reset )
     release_win_data( data );
     if (!fullscreen) return FALSE;
     if (!(thread_data = x11drv_thread_data())) return FALSE;
-    if (GetTickCount() - thread_data->clip_reset < 1000) return FALSE;
+    if (NtGetTickCount() - thread_data->clip_reset < 1000) return FALSE;
     if (!reset && clipping_cursor && thread_data->clip_hwnd) return FALSE;  /* already clipping */
 
     monitor = NtUserMonitorFromWindow( hwnd, MONITOR_DEFAULTTONEAREST );
@@ -1472,9 +1472,9 @@ void X11DRV_DestroyCursorIcon( HCURSOR handle )
 void X11DRV_SetCursor( HCURSOR handle )
 {
     if (InterlockedExchangePointer( (void **)&last_cursor, handle ) != handle ||
-        GetTickCount() - last_cursor_change > 100)
+        NtGetTickCount() - last_cursor_change > 100)
     {
-        last_cursor_change = GetTickCount();
+        last_cursor_change = NtGetTickCount();
         if (cursor_window) send_notify_message( cursor_window, WM_X11DRV_SET_CURSOR, 0, (LPARAM)handle );
     }
 }
@@ -1667,7 +1667,7 @@ void move_resize_window( HWND hwnd, int dir )
             input.u.mi.dy          = pos.y;
             input.u.mi.mouseData   = button_up_data[button - 1];
             input.u.mi.dwFlags     = button_up_flags[button - 1] | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE;
-            input.u.mi.time        = GetTickCount();
+            input.u.mi.time        = NtGetTickCount();
             input.u.mi.dwExtraInfo = 0;
             __wine_send_input( hwnd, &input, NULL );
         }

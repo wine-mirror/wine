@@ -1525,7 +1525,7 @@ X11DRV_KEYBOARD_DetectLayout( Display *display )
 
 static HKL get_locale_kbd_layout(void)
 {
-    ULONG_PTR layout;
+    LCID layout;
     LANGID langid;
 
     /* FIXME:
@@ -1539,7 +1539,7 @@ static HKL get_locale_kbd_layout(void)
      * locale id we return the US one.
      */
 
-    layout = GetUserDefaultLCID();
+    NtQueryDefaultLocale( TRUE, &layout );
 
     /*
      * Microsoft Office expects this value to be something specific
@@ -1553,7 +1553,7 @@ static HKL get_locale_kbd_layout(void)
     else
         layout |= layout << 16;
 
-    return (HKL)layout;
+    return (HKL)(UINT_PTR)layout;
 }
 
 

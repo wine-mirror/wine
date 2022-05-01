@@ -722,7 +722,7 @@ static void set_queue_display_fd( Display *display )
     if (wine_server_fd_to_handle( ConnectionNumber(display), GENERIC_READ | SYNCHRONIZE, 0, &handle ))
     {
         MESSAGE( "x11drv: Can't allocate handle for display fd\n" );
-        ExitProcess(1);
+        NtTerminateProcess( 0, 1 );
     }
     SERVER_START_REQ( set_queue_fd )
     {
@@ -733,9 +733,9 @@ static void set_queue_display_fd( Display *display )
     if (ret)
     {
         MESSAGE( "x11drv: Can't store handle for display fd\n" );
-        ExitProcess(1);
+        NtTerminateProcess( 0, 1 );
     }
-    CloseHandle( handle );
+    NtClose( handle );
 }
 
 
@@ -751,12 +751,12 @@ struct x11drv_thread_data *x11drv_init_thread_data(void)
     if (!(data = calloc( 1, sizeof(*data) )))
     {
         ERR( "could not create data\n" );
-        ExitProcess(1);
+        NtTerminateProcess( 0, 1 );
     }
     if (!(data->display = XOpenDisplay(NULL)))
     {
         ERR_(winediag)( "x11drv: Can't open display: %s. Please ensure that your X server is running and that $DISPLAY is set correctly.\n", XDisplayName(NULL));
-        ExitProcess(1);
+        NtTerminateProcess( 0, 1 );
     }
 
     fcntl( ConnectionNumber(data->display), F_SETFD, 1 ); /* set close on exec flag */

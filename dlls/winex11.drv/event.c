@@ -512,7 +512,7 @@ NTSTATUS X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
 DWORD EVENT_x11_time_to_win32_time(Time time)
 {
   static DWORD adjust = 0;
-  DWORD now = GetTickCount();
+  DWORD now = NtGetTickCount();
   DWORD ret;
 
   if (! adjust && time != 0)
@@ -1365,7 +1365,7 @@ void wait_for_withdrawn_state( HWND hwnd, BOOL set )
 {
     Display *display = thread_display();
     struct x11drv_win_data *data;
-    DWORD end = GetTickCount() + 2000;
+    DWORD end = NtGetTickCount() + 2000;
 
     TRACE( "waiting for window %p to become %swithdrawn\n", hwnd, set ? "" : "not " );
 
@@ -1401,7 +1401,7 @@ void wait_for_withdrawn_state( HWND hwnd, BOOL set )
         if (!count)
         {
             struct pollfd pfd;
-            int timeout = end - GetTickCount();
+            int timeout = end - NtGetTickCount();
 
             pfd.fd = ConnectionNumber(display);
             pfd.events = POLLIN;

@@ -1861,8 +1861,8 @@ static LRESULT CALLBACK desktop_wndproc_wrapper( HWND hwnd, UINT msg, WPARAM wp,
     {
     case WM_WINE_NOTIFY_ACTIVITY:
     {
-        static ULONGLONG last = 0;
-        ULONGLONG now = GetTickCount64();
+        static ULONG last = 0;
+        ULONG now = NtGetTickCount();
         /* calling XResetScreenSaver too often can cause performance
          * problems, so throttle it */
         if (now > last + 5000)
