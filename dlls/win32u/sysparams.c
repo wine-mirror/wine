@@ -1258,7 +1258,8 @@ static BOOL update_display_cache_from_registry(void)
                                                   sizeof(devicemap_video_keyW) )))
         return FALSE;
 
-    status = NtQueryKey( video_key, KeyFullInformation, &key, sizeof(key), &size );
+    status = NtQueryKey( video_key, KeyFullInformation, &key,
+                         offsetof(KEY_FULL_INFORMATION, Class), &size );
     if (status && status != STATUS_BUFFER_OVERFLOW)
         return FALSE;
 
@@ -3210,7 +3211,7 @@ void sysparams_init(void)
 
         if ((hkey = reg_open_key( config_key, software_fontsW, sizeof(software_fontsW) )))
         {
-            char buffer[sizeof(KEY_VALUE_PARTIAL_INFORMATION) + sizeof(DWORD)];
+            char buffer[offsetof(KEY_VALUE_PARTIAL_INFORMATION, Data[sizeof(DWORD)])];
             KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
 
             if (query_reg_value( hkey, log_pixelsW, value, sizeof(buffer) ) && value->Type == REG_DWORD)
