@@ -1,4 +1,4 @@
-EXTRADEFS = -D_RPCRT4_ -DMSWMSG
+EXTRADEFS = -DMSWMSG
 MODULE    = rpcrt4.dll
 IMPORTLIB = rpcrt4
 IMPORTS   = uuid advapi32
