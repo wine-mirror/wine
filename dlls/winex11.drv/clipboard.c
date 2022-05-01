@@ -2292,8 +2292,8 @@ void X11DRV_UpdateClipboard(void)
     if (GetCurrentThreadId() == clipboard_thread_id) return;
     now = NtGetTickCount();
     if ((int)(now - last_update) <= SELECTION_UPDATE_DELAY) return;
-    if (SendMessageTimeoutW( GetClipboardOwner(), WM_X11DRV_UPDATE_CLIPBOARD, 0, 0,
-                             SMTO_ABORTIFHUNG, 5000, &ret ) && ret)
+    if (send_message_timeout( NtUserGetClipboardOwner(), WM_X11DRV_UPDATE_CLIPBOARD, 0, 0,
+                              SMTO_ABORTIFHUNG, 5000, &ret ) && ret)
         last_update = now;
 }
 

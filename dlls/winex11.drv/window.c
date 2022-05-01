@@ -2007,13 +2007,16 @@ HWND create_foreign_window( Display *display, Window xwin )
 
     if (!class_registered)
     {
+        UNICODE_STRING class_name, version = { 0 };
         WNDCLASSEXW class;
 
         memset( &class, 0, sizeof(class) );
         class.cbSize        = sizeof(class);
         class.lpfnWndProc   = foreign_window_proc;
         class.lpszClassName = classW;
-        if (!RegisterClassExW( &class ) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
+        RtlInitUnicodeString( &class_name, classW );
+        if (!NtUserRegisterClassExWOW( &class, &class_name, &version, NULL, 0, 0, NULL ) &&
+            GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
         {
             ERR( "Could not register foreign window class\n" );
             return FALSE;
@@ -2052,7 +2055,7 @@ HWND create_foreign_window( Display *display, Window xwin )
 
     if (!(data = alloc_win_data( display, hwnd )))
     {
-        DestroyWindow( hwnd );
+        NtUserDestroyWindow( hwnd );
         return 0;
     }
     SetRect( &data->window_rect, pos.x, pos.y, pos.x + attr.width, pos.y + attr.height );
@@ -2681,12 +2684,13 @@ void X11DRV_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
 /* check if the window icon should be hidden (i.e. moved off-screen) */
 static BOOL hide_icon( struct x11drv_win_data *data )
 {
-    static const WCHAR trayW[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
+    static const WCHAR trayW[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d'};
+    UNICODE_STRING str = { sizeof(trayW), sizeof(trayW), (WCHAR *)trayW };
 
     if (data->managed) return TRUE;
     /* hide icons in desktop mode when the taskbar is active */
     if (!is_virtual_desktop()) return FALSE;
-    return NtUserIsWindowVisible( FindWindowW( trayW, NULL ));
+    return NtUserIsWindowVisible( NtUserFindWindowEx( 0, 0, &str, NULL, 0 ));
 }
 
 /***********************************************************************

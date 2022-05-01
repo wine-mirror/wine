@@ -665,10 +665,11 @@ static void handle_wm_protocols( HWND hwnd, XClientMessageEvent *event )
             HMENU hSysMenu;
 
             if (NtUserGetClassLongW( hwnd, GCL_STYLE ) & CS_NOCLOSE) return;
-            hSysMenu = GetSystemMenu(hwnd, FALSE);
+            hSysMenu = NtUserGetSystemMenu( hwnd, FALSE );
             if (hSysMenu)
             {
-                UINT state = GetMenuState(hSysMenu, SC_CLOSE, MF_BYCOMMAND);
+                UINT state = NtUserThunkedMenuItemInfo( hSysMenu, SC_CLOSE, MF_BYCOMMAND,
+                                                        NtUserGetMenuState, NULL, NULL );
                 if (state == 0xFFFFFFFF || (state & (MF_DISABLED | MF_GRAYED)))
                     return;
             }

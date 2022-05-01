@@ -406,7 +406,7 @@ static BOOL grab_clipping_window( const RECT *clip )
     if (data->xi2_state != xi_enabled)
     {
         WARN( "XInput2 not supported, refusing to clip to %s\n", wine_dbgstr_rect(clip) );
-        DestroyWindow( msg_hwnd );
+        NtUserDestroyWindow( msg_hwnd );
         NtUserClipCursor( NULL );
         return TRUE;
     }
@@ -432,7 +432,7 @@ static BOOL grab_clipping_window( const RECT *clip )
     if (!clipping_cursor)
     {
         disable_xinput2();
-        DestroyWindow( msg_hwnd );
+        NtUserDestroyWindow( msg_hwnd );
         return FALSE;
     }
     clip_rect = *clip;
@@ -1697,9 +1697,9 @@ void move_resize_window( HWND hwnd, int dir )
 
         while (NtUserPeekMessage( &msg, 0, 0, 0, PM_REMOVE ))
         {
-            if (!CallMsgFilterW( &msg, MSGF_SIZE ))
+            if (!NtUserCallMsgFilter( &msg, MSGF_SIZE ))
             {
-                TranslateMessage( &msg );
+                NtUserTranslateMessage( &msg, 0 );
                 NtUserDispatchMessage( &msg );
             }
         }
