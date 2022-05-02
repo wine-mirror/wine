@@ -841,6 +841,7 @@ static void *allocate_large_block( HEAP *heap, DWORD flags, SIZE_T size )
     SIZE_T block_size = sizeof(*arena) + ROUND_SIZE(size) + HEAP_TAIL_EXTRA_SIZE(flags);
     LPVOID address = NULL;
 
+    if (!(flags & HEAP_GROWABLE)) return NULL;
     if (block_size < size) return NULL;  /* overflow */
     if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &block_size,
                                  MEM_COMMIT, get_protection_type( flags )))
@@ -1561,7 +1562,7 @@ static NTSTATUS heap_allocate( HEAP *heap, ULONG flags, SIZE_T size, void **ret 
     if (rounded_size < size) return STATUS_NO_MEMORY;  /* overflow */
     if (rounded_size < HEAP_MIN_DATA_SIZE) rounded_size = HEAP_MIN_DATA_SIZE;
 
-    if (rounded_size >= HEAP_MIN_LARGE_BLOCK_SIZE && (flags & HEAP_GROWABLE))
+    if (rounded_size >= HEAP_MIN_LARGE_BLOCK_SIZE)
     {
         if (!(*ret = allocate_large_block( heap, flags, size ))) return STATUS_NO_MEMORY;
         return STATUS_SUCCESS;
@@ -1685,7 +1686,7 @@ static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size
     {
         struct block *next;
 
-        if (rounded_size >= HEAP_MIN_LARGE_BLOCK_SIZE && (flags & HEAP_GROWABLE))
+        if (rounded_size >= HEAP_MIN_LARGE_BLOCK_SIZE)
         {
             if (flags & HEAP_REALLOC_IN_PLACE_ONLY) return STATUS_NO_MEMORY;
             if (!(*ret = allocate_large_block( heap, flags, size ))) return STATUS_NO_MEMORY;

@@ -456,7 +456,7 @@ static void test_HeapCreate(void)
     ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
 
 
-    heap = HeapCreate( 0, 2 * alloc_size, 5 * alloc_size );
+    heap = HeapCreate( 0, 8 * alloc_size, 8 * alloc_size );
     ok( !!heap, "HeapCreate failed, error %lu\n", GetLastError() );
     ok( !((ULONG_PTR)heap & 0xffff), "wrong heap alignment\n" );
 
@@ -470,10 +470,8 @@ static void test_HeapCreate(void)
     /* cannot allocate large blocks from fixed size heap */
 
     SetLastError( 0xdeadbeef );
-    ptr1 = HeapAlloc( heap, 0, 3 * alloc_size );
-    todo_wine
+    ptr1 = HeapAlloc( heap, 0, 4 * alloc_size );
     ok( !ptr1, "HeapAlloc succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "got error %lu\n", GetLastError() );
     ret = HeapFree( heap, 0, ptr1 );
     ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
