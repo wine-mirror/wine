@@ -175,13 +175,14 @@ static inline BOOL compare_media_types(const AM_MEDIA_TYPE *a, const AM_MEDIA_TY
 static void init_pcm_mt(AM_MEDIA_TYPE *mt, WAVEFORMATEX *format,
         WORD channels, DWORD sample_rate, WORD depth)
 {
+    memset(format, 0, sizeof(WAVEFORMATEX));
     format->wFormatTag = WAVE_FORMAT_PCM;
     format->nChannels = channels;
     format->nSamplesPerSec = sample_rate;
     format->wBitsPerSample = depth;
     format->nBlockAlign = channels * depth / 8;
     format->nAvgBytesPerSec = format->nBlockAlign * format->nSamplesPerSec;
-    format->cbSize = 0;
+    memset(mt, 0, sizeof(AM_MEDIA_TYPE));
     mt->majortype = MEDIATYPE_Audio;
     mt->subtype = MEDIASUBTYPE_PCM;
     mt->bFixedSizeSamples = TRUE;
@@ -935,12 +936,14 @@ static void test_connect_pin(void)
     IBaseFilter *filter = create_mpeg_audio_codec();
     struct testfilter testsource;
     IPin *sink, *source, *peer;
+    IEnumMediaTypes *enummt;
     WAVEFORMATEX req_format;
     IMediaControl *control;
+    AM_MEDIA_TYPE mt, *pmt;
     IMemInputPin *meminput;
     AM_MEDIA_TYPE req_mt;
     IFilterGraph2 *graph;
-    AM_MEDIA_TYPE mt;
+    unsigned int i;
     HRESULT hr;
     ULONG ref;
 
@@ -1044,6 +1047,33 @@ static void test_connect_pin(void)
     ok(hr == VFW_E_NOT_STOPPED, "Got hr %#lx.\n", hr);
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IPin_EnumMediaTypes(source, &enummt);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    for (i = 0; i < 2; ++i)
+    {
+        WAVEFORMATEX expect_format;
+        AM_MEDIA_TYPE expect_mt;
+
+        init_pcm_mt(&expect_mt, &expect_format, 1, 32000, i ? 8 : 16);
+
+        hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        if (hr != S_OK)
+            break;
+        ok(!memcmp(pmt, &expect_mt, offsetof(AM_MEDIA_TYPE, cbFormat)),
+                "%u: Media types didn't match.\n", i);
+        ok(!memcmp(pmt->pbFormat, &expect_format, sizeof(WAVEFORMATEX)),
+                "%u: Format blocks didn't match.\n", i);
+
+        DeleteMediaType(pmt);
+    }
+
+    hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
+    ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
+
+    IEnumMediaTypes_Release(enummt);
 
     test_sink_allocator(meminput);
 
