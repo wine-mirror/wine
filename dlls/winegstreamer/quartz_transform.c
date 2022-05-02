@@ -37,6 +37,7 @@ struct transform_ops
     HRESULT (*sink_query_accept)(struct transform *filter, const AM_MEDIA_TYPE *mt);
     HRESULT (*source_query_accept)(struct transform *filter, const AM_MEDIA_TYPE *mt);
     HRESULT (*source_get_media_type)(struct transform *filter, unsigned int index, AM_MEDIA_TYPE *mt);
+    HRESULT (*source_decide_buffer_size)(struct transform *filter, IMemAllocator *allocator, ALLOCATOR_PROPERTIES *props);
 };
 
 static inline struct transform *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -111,12 +112,20 @@ static HRESULT transform_source_get_media_type(struct strmbase_pin *pin, unsigne
     return filter->ops->source_get_media_type(filter, index, mt);
 }
 
+static HRESULT WINAPI transform_source_DecideBufferSize(struct strmbase_source *pin, IMemAllocator *allocator, ALLOCATOR_PROPERTIES *props)
+{
+    struct transform *filter = impl_from_strmbase_filter(pin->pin.filter);
+
+    return filter->ops->source_decide_buffer_size(filter, allocator, props);
+}
+
 static const struct strmbase_source_ops source_ops =
 {
     .base.pin_query_accept = transform_source_query_accept,
     .base.pin_get_media_type = transform_source_get_media_type,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
+    .pfnDecideBufferSize = transform_source_DecideBufferSize,
 };
 
 static HRESULT transform_create(IUnknown *outer, const CLSID *clsid, const struct transform_ops *ops, struct transform **out)
@@ -235,11 +244,27 @@ static HRESULT mpeg_audio_codec_source_get_media_type(struct transform *filter, 
     return S_OK;
 }
 
+static HRESULT mpeg_audio_codec_source_decide_buffer_size(struct transform *filter, IMemAllocator *allocator, ALLOCATOR_PROPERTIES *props)
+{
+    MPEG1WAVEFORMAT *input_format = (MPEG1WAVEFORMAT *)filter->sink.pin.mt.pbFormat;
+    WAVEFORMATEX *output_format = (WAVEFORMATEX *)filter->source.pin.mt.pbFormat;
+    LONG frame_samples = (input_format->fwHeadLayer & ACM_MPEG_LAYER2) ? 1152 : 384;
+    LONG frame_size = frame_samples * output_format->nBlockAlign;
+    ALLOCATOR_PROPERTIES ret_props;
+
+    props->cBuffers = max(props->cBuffers, 8);
+    props->cbBuffer = max(props->cbBuffer, frame_size * 4);
+    props->cbAlign = max(props->cbAlign, 1);
+
+    return IMemAllocator_SetProperties(allocator, props, &ret_props);
+}
+
 static const struct transform_ops mpeg_audio_codec_transform_ops =
 {
     mpeg_audio_codec_sink_query_accept,
     mpeg_audio_codec_source_query_accept,
     mpeg_audio_codec_source_get_media_type,
+    mpeg_audio_codec_source_decide_buffer_size,
 };
 
 HRESULT mpeg_audio_codec_create(IUnknown *outer, IUnknown **out)
