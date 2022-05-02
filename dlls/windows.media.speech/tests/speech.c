@@ -1581,27 +1581,25 @@ static void test_Recognition(void)
 
     handler = (void *)0xdeadbeef;
     hr = IAsyncAction_get_Completed(action, &handler);
-    todo_wine ok(hr == S_OK, "IAsyncAction_put_Completed failed, hr %#lx.\n", hr);
-    todo_wine ok(handler == NULL, "Handler was %p.\n", handler);
-
-    if (FAILED(hr)) goto skip_action;
+    ok(hr == S_OK, "IAsyncAction_put_Completed failed, hr %#lx.\n", hr);
+    ok(handler == NULL, "Handler was %p.\n", handler);
 
     await_async_void(action, &action_handler);
 
     hr = IAsyncAction_QueryInterface(action, &IID_IAsyncInfo, (void **)&info);
-    todo_wine ok(hr == S_OK, "IAsyncAction_QueryInterface failed, hr %#lx.\n", hr);
+    ok(hr == S_OK, "IAsyncAction_QueryInterface failed, hr %#lx.\n", hr);
     check_async_info((IInspectable *)action, 1, Completed, S_OK);
 
     hr = IAsyncInfo_Cancel(info);
-    todo_wine ok(hr == S_OK, "IAsyncInfo_Cancel failed, hr %#lx.\n", hr);
+    ok(hr == S_OK, "IAsyncInfo_Cancel failed, hr %#lx.\n", hr);
     check_async_info((IInspectable *)action, 1, Completed, S_OK);
 
     hr = IAsyncInfo_Close(info);
-    todo_wine ok(hr == S_OK, "IAsyncInfo_Close failed, hr %#lx.\n", hr);
+    ok(hr == S_OK, "IAsyncInfo_Close failed, hr %#lx.\n", hr);
     check_async_info((IInspectable *)action, 1, AsyncStatus_Closed, S_OK);
 
     hr = IAsyncInfo_Close(info);
-    todo_wine ok(hr == S_OK, "IAsyncInfo_Close failed, hr %#lx.\n", hr);
+    ok(hr == S_OK, "IAsyncInfo_Close failed, hr %#lx.\n", hr);
     check_async_info((IInspectable *)action, 1, AsyncStatus_Closed, S_OK);
 
     hr = IAsyncInfo_Cancel(info);
@@ -1616,6 +1614,8 @@ static void test_Recognition(void)
 
     hr = ISpeechContinuousRecognitionSession_StopAsync(session, &action2);
     todo_wine ok(hr == S_OK, "ISpeechContinuousRecognitionSession_StopAsync failed, hr %#lx.\n", hr);
+
+    if (FAILED(hr)) goto skip_action;
 
     async_void_handler_create_static(&action_handler);
     action_handler.event_block = CreateEventW(NULL, FALSE, FALSE, NULL);

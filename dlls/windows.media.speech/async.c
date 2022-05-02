@@ -37,6 +37,11 @@ struct async_void
     IAsyncAction IAsyncAction_iface;
     IAsyncInfo IAsyncInfo_iface;
     LONG ref;
+
+    IAsyncActionCompletedHandler *handler;
+
+    AsyncStatus status;
+    HRESULT hr;
 };
 
 static inline struct async_void *impl_from_IAsyncAction( IAsyncAction *iface )
@@ -106,20 +111,56 @@ HRESULT WINAPI async_void_GetTrustLevel( IAsyncAction *iface, TrustLevel *trust_
 
 HRESULT WINAPI async_void_put_Completed( IAsyncAction *iface, IAsyncActionCompletedHandler *handler )
 {
-    FIXME("iface %p, handler %p stub!\n", iface, handler);
-    return E_NOTIMPL;
+    struct async_void *impl = impl_from_IAsyncAction(iface);
+    HRESULT hr = S_OK;
+
+    TRACE("iface %p, handler %p.\n", iface, handler);
+
+    if (impl->status == Closed)
+        hr = E_ILLEGAL_METHOD_CALL;
+    else if (impl->handler != HANDLER_NOT_SET)
+        hr = E_ILLEGAL_DELEGATE_ASSIGNMENT;
+    /*
+        impl->handler can only be set once with async_operation_put_Completed,
+        so by default we set a non HANDLER_NOT_SET value, in this case handler.
+    */
+    else if ((impl->handler = handler))
+    {
+        IAsyncActionCompletedHandler_AddRef(impl->handler);
+
+        if (impl->status > Started)
+        {
+            IAsyncAction *action = &impl->IAsyncAction_iface;
+            AsyncStatus status = impl->status;
+            impl->handler = NULL; /* Prevent concurrent invoke. */
+
+            IAsyncActionCompletedHandler_Invoke(handler, action, status);
+            IAsyncActionCompletedHandler_Release(handler);
+        }
+    }
+
+    return hr;
 }
 
 HRESULT WINAPI async_void_get_Completed( IAsyncAction *iface, IAsyncActionCompletedHandler **handler )
 {
-    FIXME("iface %p, handler %p stub!\n", iface, handler);
-    return E_NOTIMPL;
+    struct async_void *impl = impl_from_IAsyncAction(iface);
+    HRESULT hr = S_OK;
+
+    FIXME("iface %p, handler %p semi stub!\n", iface, handler);
+
+    if (impl->status == Closed)
+        hr = E_ILLEGAL_METHOD_CALL;
+    *handler = (impl->handler != HANDLER_NOT_SET) ? impl->handler : NULL;
+
+    return hr;
 }
 
 HRESULT WINAPI async_void_GetResults( IAsyncAction *iface )
 {
-    FIXME("iface %p stub!\n", iface);
-    return E_NOTIMPL;
+    /* According to the docs, this function doesn't return anything, so it's left empty. */
+    TRACE("iface %p.\n", iface);
+    return S_OK;
 }
 
 static const struct IAsyncActionVtbl async_void_vtbl =
@@ -154,26 +195,61 @@ static HRESULT WINAPI async_void_info_get_Id( IAsyncInfo *iface, UINT32 *id )
 
 static HRESULT WINAPI async_void_info_get_Status( IAsyncInfo *iface, AsyncStatus *status )
 {
-    FIXME("iface %p, status %p.\n", iface, status);
-    return E_NOTIMPL;
+    struct async_void *impl = impl_from_async_void_IAsyncInfo(iface);
+    HRESULT hr = S_OK;
+
+    TRACE("iface %p, status %p.\n", iface, status);
+
+    if (impl->status == Closed)
+        hr = E_ILLEGAL_METHOD_CALL;
+    *status = impl->status;
+
+    return hr;
 }
 
 static HRESULT WINAPI async_void_info_get_ErrorCode( IAsyncInfo *iface, HRESULT *error_code )
 {
-    FIXME("iface %p, error_code %p.\n", iface, error_code);
-    return E_NOTIMPL;
+    struct async_void *impl = impl_from_async_void_IAsyncInfo(iface);
+    HRESULT hr = S_OK;
+
+    TRACE("iface %p, error_code %p.\n", iface, error_code);
+
+    if (impl->status == Closed)
+        *error_code = hr = E_ILLEGAL_METHOD_CALL;
+    else
+        *error_code = impl->hr;
+
+    return hr;
 }
 
 static HRESULT WINAPI async_void_info_Cancel( IAsyncInfo *iface )
 {
+    struct async_void *impl = impl_from_async_void_IAsyncInfo(iface);
+    HRESULT hr = S_OK;
+
     TRACE("iface %p.\n", iface);
-    return E_NOTIMPL;
+
+    if (impl->status == Closed)
+        hr = E_ILLEGAL_METHOD_CALL;
+    else if (impl->status == Started)
+        impl->status = Canceled;
+
+    return hr;
 }
 
 static HRESULT WINAPI async_void_info_Close( IAsyncInfo *iface )
 {
+    struct async_void *impl = impl_from_async_void_IAsyncInfo(iface);
+    HRESULT hr = S_OK;
+
     TRACE("iface %p.\n", iface);
-    return E_NOTIMPL;
+
+    if (impl->status == Started)
+        hr = E_ILLEGAL_STATE_CHANGE;
+    else if (impl->status != Closed)
+        impl->status = Closed;
+
+    return hr;
 }
 
 static const struct IAsyncInfoVtbl async_void_info_vtbl =
@@ -209,6 +285,9 @@ HRESULT async_action_create( IAsyncAction **out )
     impl->IAsyncAction_iface.lpVtbl = &async_void_vtbl;
     impl->IAsyncInfo_iface.lpVtbl = &async_void_info_vtbl;
     impl->ref = 1;
+
+    impl->handler = HANDLER_NOT_SET;
+    impl->status = Completed;
 
     *out = &impl->IAsyncAction_iface;
     TRACE("created %p\n", *out);
