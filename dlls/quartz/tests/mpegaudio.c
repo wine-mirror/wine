@@ -1005,7 +1005,7 @@ static void test_source_allocator(IFilterGraph2 *graph, IMediaControl *control,
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMemAllocator_GetBuffer(testsink->sink.pAllocator, &sample, NULL, NULL, 0);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     if (hr == S_OK)
         IMediaSample_Release(sample);
 

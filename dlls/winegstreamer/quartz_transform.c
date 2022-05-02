@@ -66,10 +66,37 @@ static void transform_destroy(struct strmbase_filter *iface)
     free(filter);
 }
 
+static HRESULT transform_init_stream(struct strmbase_filter *iface)
+{
+    struct transform *filter = impl_from_strmbase_filter(iface);
+    HRESULT hr;
+
+    if (filter->source.pin.peer)
+    {
+        hr = IMemAllocator_Commit(filter->source.pAllocator);
+        if (FAILED(hr))
+            ERR("Failed to commit allocator, hr %#lx.\n", hr);
+    }
+
+    return S_OK;
+}
+
+static HRESULT transform_cleanup_stream(struct strmbase_filter *iface)
+{
+    struct transform *filter = impl_from_strmbase_filter(iface);
+
+    if (filter->source.pin.peer)
+        IMemAllocator_Decommit(filter->source.pAllocator);
+
+    return S_OK;
+}
+
 static const struct strmbase_filter_ops filter_ops =
 {
     .filter_get_pin = transform_get_pin,
     .filter_destroy = transform_destroy,
+    .filter_init_stream = transform_init_stream,
+    .filter_cleanup_stream = transform_cleanup_stream,
 };
 
 static HRESULT transform_sink_query_accept(struct strmbase_pin *pin, const AM_MEDIA_TYPE *mt)
