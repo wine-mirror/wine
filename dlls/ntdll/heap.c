@@ -134,7 +134,7 @@ C_ASSERT( sizeof(ARENA_LARGE) % LARGE_ALIGNMENT == 0 );
 /* minimum size that must remain to shrink an allocated block */
 #define HEAP_MIN_SHRINK_SIZE  (HEAP_MIN_DATA_SIZE+sizeof(ARENA_FREE))
 /* minimum size to start allocating large blocks */
-#define HEAP_MIN_LARGE_BLOCK_SIZE  0x7f000
+#define HEAP_MIN_LARGE_BLOCK_SIZE  (0x10000 * ALIGNMENT - 0x1000)
 /* extra size to add at the end of block for tail checking */
 #define HEAP_TAIL_EXTRA_SIZE(flags) \
     ((flags & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND ? ALIGNMENT : 0)
