@@ -629,7 +629,7 @@ static void init_visuals( Display *display, int screen )
 /***********************************************************************
  *           X11DRV process initialisation routine
  */
-NTSTATUS x11drv_init( void *arg )
+static NTSTATUS x11drv_init( void *arg )
 {
     Display *display;
     void *libx11 = dlopen( SONAME_LIBX11, RTLD_NOW|RTLD_GLOBAL );
@@ -950,4 +950,26 @@ NTSTATUS CDECL X11DRV_D3DKMTCheckVidPnExclusiveOwnership( const D3DKMT_CHECKVIDP
     }
     pthread_mutex_unlock( &d3dkmt_mutex );
     return STATUS_SUCCESS;
+}
+
+
+const unixlib_entry_t __wine_unix_call_funcs[] =
+{
+    x11drv_clipboard_message,
+    x11drv_create_desktop,
+    x11drv_init,
+    x11drv_tablet_attach_queue,
+    x11drv_tablet_get_packet,
+    x11drv_tablet_info,
+    x11drv_tablet_load_info,
+};
+
+
+C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
+
+
+/* FIXME: Use __wine_unix_call instead */
+NTSTATUS x11drv_unix_call( enum x11drv_funcs code, void *params )
+{
+    return __wine_unix_call_funcs[code]( params );
 }

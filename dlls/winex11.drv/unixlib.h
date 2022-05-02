@@ -19,6 +19,22 @@
 #include "ntuser.h"
 #include "wine/unixlib.h"
 
+enum x11drv_funcs
+{
+    unix_clipboard_message,
+    unix_create_desktop,
+    unix_init,
+    unix_tablet_attach_queue,
+    unix_tablet_get_packet,
+    unix_tablet_info,
+    unix_tablet_load_info,
+    unix_funcs_count,
+};
+
+/* FIXME: Use __wine_unix_call when the rest of the stack is ready */
+extern NTSTATUS x11drv_unix_call( enum x11drv_funcs code, void *params ) DECLSPEC_HIDDEN;
+#define X11DRV_CALL(func, params) x11drv_unix_call( unix_ ## func, params )
+
 /* x11drv_clipboard_message params */
 struct clipboard_message_params
 {
