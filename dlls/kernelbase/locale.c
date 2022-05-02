@@ -6057,10 +6057,41 @@ INT WINAPI DECLSPEC_HOTPATCH NormalizeString(NORM_FORM form, const WCHAR *src, I
  */
 INT WINAPI DECLSPEC_HOTPATCH ResolveLocaleName( LPCWSTR name, LPWSTR buffer, INT len )
 {
-    FIXME( "stub: %s, %p, %d\n", wine_dbgstr_w(name), buffer, len );
+    LCID lcid;
+    UINT pos, datalen;
+    const NLS_LOCALE_DATA *locale = get_locale_by_name( name, &lcid );
 
-    SetLastError( ERROR_CALL_NOT_IMPLEMENTED );
-    return 0;
+    if (!locale)
+    {
+        static const WCHAR valid[] = L"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
+        WCHAR *p, tmp[LOCALE_NAME_MAX_LENGTH];
+
+        if (wcsspn( name, valid ) < wcslen( name ))
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+        lstrcpynW( tmp, name, LOCALE_NAME_MAX_LENGTH );
+        while (!locale)
+        {
+            for (p = tmp + wcslen(tmp) - 1; p >= tmp; p--) if (*p == '-' || *p == '_') break;
+            if (p <= tmp) break;
+            *p = 0;
+            locale = get_locale_by_name( tmp, &lcid );
+        }
+    }
+
+    pos = locale ? (locale->inotneutral ? locale->sname : locale->ssortlocale) : 0;
+    datalen = locale_strings[pos] + 1;
+
+    if (!len) return datalen;
+    lstrcpynW( buffer, locale_strings + pos + 1, len );
+    if (datalen > len)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+    return datalen;
 }
 
 

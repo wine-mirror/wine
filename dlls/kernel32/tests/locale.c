@@ -72,6 +72,7 @@ static INT (WINAPI *pIdnToAscii)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 static INT (WINAPI *pIdnToUnicode)(DWORD, LPCWSTR, INT, LPWSTR, INT);
 static INT (WINAPI *pGetLocaleInfoEx)(LPCWSTR, LCTYPE, LPWSTR, INT);
 static BOOL (WINAPI *pIsValidLocaleName)(LPCWSTR);
+static INT (WINAPI *pResolveLocaleName)(LPCWSTR,LPWSTR,INT);
 static INT (WINAPI *pCompareStringOrdinal)(const WCHAR *, INT, const WCHAR *, INT, BOOL);
 static INT (WINAPI *pCompareStringEx)(LPCWSTR, DWORD, LPCWSTR, INT, LPCWSTR, INT,
                                       LPNLSVERSIONINFO, LPVOID, LPARAM);
@@ -125,6 +126,7 @@ static void InitFunctionPointers(void)
   X(IdnToUnicode);
   X(GetLocaleInfoEx);
   X(IsValidLocaleName);
+  X(ResolveLocaleName);
   X(CompareStringOrdinal);
   X(CompareStringEx);
   X(GetGeoInfoA);
@@ -5160,6 +5162,77 @@ static void test_IsValidLocaleName(void)
     ok(!ret, "RtlIsValidLocaleName should have failed\n");
 }
 
+static void test_ResolveLocaleName(void)
+{
+    static const struct { const WCHAR *name, *exp; BOOL broken; } tests[] =
+    {
+        { L"en-US", L"en-US" },
+        { L"en", L"en-US" },
+        { L"en-RR", L"en-US" },
+        { L"en-na", L"en-NA", TRUE /* <= win8 */ },
+        { L"EN-zz", L"en-US" },
+        { L"en-US", L"en-US" },
+        { L"de-DE_phoneb", L"de-DE" },
+        { L"DE-de-phoneb", L"de-DE" },
+        { L"fr-029", L"fr-029", TRUE /* <= win8 */ },
+        { L"fr-CH_XX", L"fr-CH", TRUE /* <= win10 1809 */ },
+        { L"fr-CHXX", L"fr-FR" },
+        { L"zh", L"zh-CN" },
+        { L"zh-Hant", L"zh-HK" },
+        { L"zh-hans", L"zh-CN" },
+        { L"ja-jp_radstr", L"ja-JP" },
+        { L"az", L"az-Latn-AZ" },
+        { L"uz", L"uz-Latn-UZ" },
+        { L"uz-cyrl", L"uz-Cyrl-UZ" },
+        { L"ia", L"ia-001", TRUE /* <= win10 1809 */ },
+        { L"zz", L"" },
+        { L"zzz-ZZZ", L"" },
+        { L"zzzz", L"" },
+        { L"zz+XX", NULL },
+        { L"zz.XX", NULL },
+        { LOCALE_NAME_INVARIANT, L"" },
+        { LOCALE_NAME_SYSTEM_DEFAULT, NULL },
+    };
+    INT i, ret;
+    WCHAR buffer[LOCALE_NAME_MAX_LENGTH];
+
+    if (!pResolveLocaleName)
+    {
+        win_skip( "ResolveLocaleName not available\n" );
+        return;
+    }
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
+        SetLastError( 0xdeadbeef );
+        memset( buffer, 0xcc, sizeof(buffer) );
+        ret = pResolveLocaleName( tests[i].name, buffer, sizeof(buffer) );
+        if (tests[i].exp)
+        {
+            ok( !wcscmp( buffer, tests[i].exp ) || broken( tests[i].broken ),
+                "%s: got %s\n", debugstr_w(tests[i].name), debugstr_w(buffer) );
+            ok( ret == wcslen(buffer) + 1, "%s: got %u\n", debugstr_w(tests[i].name), ret );
+        }
+        else
+        {
+            ok( !ret || broken( ret == 1 ) /* win7 */,
+                "%s: got %s\n", debugstr_w(tests[i].name), debugstr_w(buffer) );
+            if (!ret)
+                ok( GetLastError() == ERROR_INVALID_PARAMETER,
+                    "%s: wrong error %lu\n", debugstr_w(tests[i].name), GetLastError() );
+        }
+    }
+    SetLastError( 0xdeadbeef );
+    ret = pResolveLocaleName( L"en-US", buffer, 4 );
+    ok( !ret, "got %u\n", ret );
+    ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "wrong error %lu\n", GetLastError() );
+    ok( !wcscmp( buffer, L"en-" ), "got %s\n", debugstr_w(buffer) );
+
+    SetLastError( 0xdeadbeef );
+    ret = pResolveLocaleName( L"en-US", NULL, 0 );
+    ok( ret == 6, "got %u\n", ret );
+    ok( GetLastError() == 0xdeadbeef, "wrong error %lu\n", GetLastError() );
+}
+
 static void test_CompareStringOrdinal(void)
 {
     INT ret;
@@ -7635,6 +7708,7 @@ START_TEST(locale)
   test_GetStringTypeW();
   test_Idn();
   test_IsValidLocaleName();
+  test_ResolveLocaleName();
   test_CompareStringOrdinal();
   test_GetGeoInfo();
   test_EnumSystemGeoID();
