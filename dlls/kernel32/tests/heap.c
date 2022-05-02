@@ -1055,7 +1055,6 @@ static void test_HeapCreate(void)
     {
         if (entries[i].wFlags != PROCESS_HEAP_ENTRY_BUSY) continue;
         ok( entries[i].cbData == 0x18 + 2 * sizeof(void *), "got cbData %#lx\n", entries[i].cbData );
-        todo_wine_if(sizeof(void *) == 8)
         ok( entries[i].cbOverhead == 0x8, "got cbOverhead %#x\n", entries[i].cbOverhead );
     }
 
@@ -2175,10 +2174,7 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
         expect_size = max( alloc_size, 2 * sizeof(void *) );
         expect_size = ALIGN_BLOCK_SIZE( expect_size + extra_size );
         diff = min( llabs( ptr2 - ptr1 ), llabs( ptr1 - ptr0 ) );
-        todo_wine_if( (heap_flags & (HEAP_VALIDATE_PARAMS|HEAP_VALIDATE_ALL)) ||
-                      ((global_flags & ~FLG_HEAP_ENABLE_TAIL_CHECK) && alloc_size < 0x10000) ||
-                      (!global_flags && alloc_size < 2 * sizeof(void *)) ||
-                      (alloc_size == 0xfd000 && sizeof(void *) == 8) )
+        todo_wine_if( (!(global_flags & ~FLG_HEAP_ENABLE_FREE_CHECK) && alloc_size < 2 * sizeof(void *)) )
         ok( diff == expect_size, "got diff %#Ix exp %#Ix\n", diff, expect_size );
 
         ok( !memcmp( ptr0 + alloc_size, tail_buf, tail_size ), "missing block tail\n" );

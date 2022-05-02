@@ -127,20 +127,18 @@ typedef struct
 
 /* everything is aligned on 8 byte boundaries (16 for Win64) */
 #define LARGE_ALIGNMENT        16  /* large blocks have stricter alignment */
-#define ARENA_OFFSET           (ALIGNMENT - sizeof(struct block))
 #define COMMIT_MASK            0xffff  /* bitmask for commit/decommit granularity */
 
 C_ASSERT( sizeof(ARENA_LARGE) % LARGE_ALIGNMENT == 0 );
 
 #define ROUND_ADDR(addr, mask) ((void *)((UINT_PTR)(addr) & ~(UINT_PTR)(mask)))
-#define ROUND_SIZE(size)       ((((size) + ALIGNMENT - 1) & ~(ALIGNMENT-1)) + ARENA_OFFSET)
+#define ROUND_SIZE(size, mask) ((((SIZE_T)(size) + (mask)) & ~(SIZE_T)(mask)))
 
-/* minimum data size (without arenas) of an allocated block */
-/* make sure that it's larger than a free list entry */
-#define HEAP_MIN_DATA_SIZE    ROUND_SIZE(2 * sizeof(struct list))
-#define HEAP_MIN_BLOCK_SIZE   (HEAP_MIN_DATA_SIZE + sizeof(struct block))
-/* minimum size that must remain to shrink an allocated block */
-#define HEAP_MIN_SHRINK_SIZE  (HEAP_MIN_DATA_SIZE+sizeof(struct entry))
+#define HEAP_MIN_BLOCK_SIZE   ROUND_SIZE(sizeof(struct entry) + ALIGNMENT, ALIGNMENT - 1)
+
+C_ASSERT( sizeof(struct block) <= HEAP_MIN_BLOCK_SIZE );
+C_ASSERT( sizeof(struct entry) <= HEAP_MIN_BLOCK_SIZE );
+
 /* minimum size to start allocating large blocks */
 #define HEAP_MIN_LARGE_BLOCK_SIZE  (0x10000 * ALIGNMENT - 0x1000)
 /* extra size to add at the end of block for tail checking */
@@ -208,7 +206,7 @@ C_ASSERT( offsetof(HEAP, subheap) <= COMMIT_MASK );
 
 #define HEAP_MAGIC       ((DWORD)('H' | ('E'<<8) | ('A'<<16) | ('P'<<24)))
 
-#define HEAP_DEF_SIZE        0x110000   /* Default heap size = 1Mb + 64Kb */
+#define HEAP_DEF_SIZE        (0x40000 * ALIGNMENT)
 #define MAX_FREE_PENDING     1024    /* max number of free requests to delay */
 
 /* some undocumented flags (names are made up) */
@@ -217,6 +215,7 @@ C_ASSERT( offsetof(HEAP, subheap) <= COMMIT_MASK );
 #define HEAP_VALIDATE         0x10000000
 #define HEAP_VALIDATE_ALL     0x20000000
 #define HEAP_VALIDATE_PARAMS  0x40000000
+#define HEAP_CHECKING_ENABLED 0x80000000
 
 static HEAP *processHeap;  /* main process heap */
 
@@ -447,7 +446,8 @@ static RTL_CRITICAL_SECTION_DEBUG process_heap_cs_debug =
 
 static inline ULONG heap_get_flags( const HEAP *heap, ULONG flags )
 {
-    flags &= HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY | HEAP_REALLOC_IN_PLACE_ONLY;
+    if (flags & (HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED)) flags |= HEAP_CHECKING_ENABLED;
+    flags &= HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY | HEAP_REALLOC_IN_PLACE_ONLY | HEAP_CHECKING_ENABLED;
     return heap->flags | flags;
 }
 
@@ -760,7 +760,7 @@ static void free_used_block( SUBHEAP *subheap, struct block *block )
 static inline void shrink_used_block( SUBHEAP *subheap, struct block *block, UINT flags,
                                       SIZE_T old_block_size, SIZE_T block_size, SIZE_T size )
 {
-    if (old_block_size >= block_size + HEAP_MIN_SHRINK_SIZE)
+    if (old_block_size >= block_size + HEAP_MIN_BLOCK_SIZE)
     {
         block_set_size( block, flags, block_size );
         block->unused_bytes = block_size - sizeof(*block) - size;
@@ -782,7 +782,7 @@ static inline void shrink_used_block( SUBHEAP *subheap, struct block *block, UIN
 static void *allocate_large_block( HEAP *heap, DWORD flags, SIZE_T size )
 {
     ARENA_LARGE *arena;
-    SIZE_T block_size = sizeof(*arena) + ROUND_SIZE( size );
+    SIZE_T block_size = ROUND_SIZE( sizeof(*arena) + size, COMMIT_MASK );
     LPVOID address = NULL;
 
     if (!(flags & HEAP_GROWABLE)) return NULL;
@@ -1469,13 +1469,29 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
     return 0;
 }
 
+static SIZE_T heap_get_block_size( HEAP *heap, ULONG flags, SIZE_T size )
+{
+    static const ULONG padd_flags = HEAP_VALIDATE | HEAP_VALIDATE_ALL | HEAP_VALIDATE_PARAMS;
+    static const ULONG check_flags = HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED | HEAP_CHECKING_ENABLED;
+    SIZE_T overhead;
+
+    if ((flags & check_flags)) overhead = ALIGNMENT;
+    else overhead = sizeof(struct block);
+
+    if ((flags & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND) overhead += ALIGNMENT;
+    if (flags & padd_flags) overhead += ALIGNMENT;
+
+    if (size < ALIGNMENT) size = ALIGNMENT;
+    return ROUND_SIZE( size + overhead, ALIGNMENT - 1 );
+}
+
 static NTSTATUS heap_allocate( HEAP *heap, ULONG flags, SIZE_T size, void **ret )
 {
     SIZE_T old_block_size, block_size;
     struct block *block;
     SUBHEAP *subheap;
 
-    block_size = sizeof(*block) + ROUND_SIZE(size) + HEAP_TAIL_EXTRA_SIZE(flags);
+    block_size = heap_get_block_size( heap, flags, size );
     if (block_size < size) return STATUS_NO_MEMORY;  /* overflow */
     if (block_size < HEAP_MIN_BLOCK_SIZE) block_size = HEAP_MIN_BLOCK_SIZE;
 
@@ -1572,7 +1588,7 @@ static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size
     SUBHEAP *subheap;
     NTSTATUS status;
 
-    block_size = sizeof(*block) + ROUND_SIZE(size) + HEAP_TAIL_EXTRA_SIZE(flags);
+    block_size = heap_get_block_size( heap, flags, size );
     if (block_size < size) return STATUS_NO_MEMORY;  /* overflow */
     if (block_size < HEAP_MIN_BLOCK_SIZE) block_size = HEAP_MIN_BLOCK_SIZE;
 
