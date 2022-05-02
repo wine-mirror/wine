@@ -35,6 +35,14 @@ struct create_desktop_params
     UINT height;
 };
 
+/* x11drv_tablet_info params */
+struct tablet_info_params
+{
+    UINT category;
+    UINT index;
+    void *output;
+};
+
 /* DnD support */
 
 struct format_entry

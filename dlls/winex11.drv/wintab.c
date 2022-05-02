@@ -481,9 +481,9 @@ static void disable_system_cursors(void)
 
 
 /***********************************************************************
- *             X11DRV_LoadTabletInfo (X11DRV.@)
+ *           x11drv_tablet_load_info
  */
-BOOL CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
+NTSTATUS x11drv_tablet_load_info( void *hwnd )
 {
     static const WCHAR SZ_CONTEXT_NAME[] = {'W','i','n','e',' ','T','a','b','l','e','t',' ','C','o','n','t','e','x','t',0};
     static const WCHAR SZ_DEVICE_NAME[] = {'W','i','n','e',' ','T','a','b','l','e','t',' ','D','e','v','i','c','e',0};
@@ -509,7 +509,7 @@ BOOL CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
         return FALSE;
     }
 
-    hwndTabletDefault = hwnddefault;
+    hwndTabletDefault = hwnd;
 
     /* Do base initialization */
     strcpyW(gSysContext.lcName, SZ_CONTEXT_NAME);
@@ -1001,9 +1001,9 @@ static BOOL proximity_event( HWND hwnd, XEvent *event )
 }
 
 /***********************************************************************
- *		X11DRV_AttachEventQueueToTablet (X11DRV.@)
+ *           x11drv_tablet_attach_queue
  */
-int CDECL X11DRV_AttachEventQueueToTablet(HWND hOwner)
+NTSTATUS x11drv_tablet_attach_queue( void *owner )
 {
     struct x11drv_thread_data *data = x11drv_init_thread_data();
     int             num_devices;
@@ -1013,11 +1013,11 @@ int CDECL X11DRV_AttachEventQueueToTablet(HWND hOwner)
     XDeviceInfo     *target = NULL;
     XDevice         *the_device;
     XEventClass     event_list[7];
-    Window          win = X11DRV_get_whole_window( hOwner );
+    Window          win = X11DRV_get_whole_window( owner );
 
     if (!win || !xinput_handle) return 0;
 
-    TRACE("Creating context for window %p (%lx)  %i cursors\n", hOwner, win, gNumCursors);
+    TRACE("Creating context for window %p (%lx)  %i cursors\n", owner, win, gNumCursors);
 
     devices = pXListInputDevices(data->display, &num_devices);
 
@@ -1093,11 +1093,11 @@ int CDECL X11DRV_AttachEventQueueToTablet(HWND hOwner)
 }
 
 /***********************************************************************
- *		X11DRV_GetCurrentPacket (X11DRV.@)
+ *           x11drv_tablet_get_packet
  */
-int CDECL X11DRV_GetCurrentPacket(LPWTPACKET packet)
+NTSTATUS x11drv_tablet_get_packet( void *packet )
 {
-    *packet = gMsgPacket;
+    *(WTPACKET *)packet = gMsgPacket;
     return 1;
 }
 
@@ -1114,10 +1114,15 @@ static inline int CopyTabletData(LPVOID target, LPCVOID src, INT size)
 }
 
 /***********************************************************************
- *		X11DRV_WTInfoW (X11DRV.@)
+ *           x11drv_tablet_info
  */
-UINT CDECL X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
+NTSTATUS x11drv_tablet_info( void *arg )
 {
+    struct tablet_info_params *params = arg;
+    UINT wCategory = params->category;
+    UINT nIndex = params->index;
+    void *lpOutput = params->output;
+
     /*
      * It is valid to call WTInfoA with lpOutput == NULL, as per standard.
      * lpOutput == NULL signifies the user only wishes
@@ -1546,33 +1551,33 @@ UINT CDECL X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
 #else /* SONAME_LIBXI */
 
 /***********************************************************************
- *		AttachEventQueueToTablet (X11DRV.@)
+ *           x11drv_tablet_attach_queue
  */
-int CDECL X11DRV_AttachEventQueueToTablet(HWND hOwner)
+NTSTATUS x11drv_tablet_attach_queue( void *owner )
 {
     return 0;
 }
 
 /***********************************************************************
- *		GetCurrentPacket (X11DRV.@)
+ *           x11drv_tablet_get_packet
  */
-int CDECL X11DRV_GetCurrentPacket(LPWTPACKET packet)
+NTSTATUS x11drv_tablet_get_packet( void *arg )
 {
     return 0;
 }
 
 /***********************************************************************
- *		LoadTabletInfo (X11DRV.@)
+ *           x11drv_tablet_load_info
  */
-BOOL CDECL X11DRV_LoadTabletInfo(HWND hwnddefault)
+NTSTATUS x11drv_tablet_load_info( void *arg )
 {
     return FALSE;
 }
 
 /***********************************************************************
- *		WTInfoW (X11DRV.@)
+ *           x11drv_tablet_info
  */
-UINT CDECL X11DRV_WTInfoW(UINT wCategory, UINT nIndex, LPVOID lpOutput)
+NTSTATUS x11drv_tablet_info( void *arg )
 {
     return 0;
 }

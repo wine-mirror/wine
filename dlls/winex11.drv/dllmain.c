@@ -144,3 +144,39 @@ BOOL CDECL wine_create_desktop( UINT width, UINT height )
     struct create_desktop_params params = { .width = width, .height = height };
     return x11drv_create_desktop( &params );
 }
+
+/***********************************************************************
+ *           AttachEventQueueToTablet (winex11.@)
+ */
+int CDECL X11DRV_AttachEventQueueToTablet( HWND owner )
+{
+    return x11drv_tablet_attach_queue( owner );
+}
+
+/***********************************************************************
+ *           GetCurrentPacket (winex11.@)
+ */
+int CDECL X11DRV_GetCurrentPacket( void *packet )
+{
+    return x11drv_tablet_get_packet( packet );
+}
+
+/***********************************************************************
+ *           LoadTabletInfo (winex11.@)
+ */
+BOOL CDECL X11DRV_LoadTabletInfo( HWND hwnd )
+{
+    return x11drv_tablet_load_info( hwnd );
+}
+
+/***********************************************************************
+ *          WTInfoW (winex11.@)
+ */
+UINT CDECL X11DRV_WTInfoW( UINT category, UINT index, void *output )
+{
+    struct tablet_info_params params;
+    params.category = category;
+    params.index = index;
+    params.output = output;
+    return x11drv_tablet_info( &params );
+}
