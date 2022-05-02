@@ -38,6 +38,7 @@
 #include "user_private.h"
 
 #include "initguid.h"
+#include "ddk/hidclass.h"
 #include "devpkey.h"
 #include "ntddmou.h"
 #include "ntddkbd.h"
@@ -224,13 +225,10 @@ void rawinput_update_device_list(void)
 {
     SP_DEVICE_INTERFACE_DATA iface = { sizeof(iface) };
     struct device *device;
-    GUID hid_guid;
     HDEVINFO set;
     DWORD idx;
 
     TRACE("\n");
-
-    HidD_GetHidGuid(&hid_guid);
 
     EnterCriticalSection(&rawinput_devices_cs);
 
@@ -243,9 +241,9 @@ void rawinput_update_device_list(void)
     }
     rawinput_devices_count = 0;
 
-    set = SetupDiGetClassDevsW(&hid_guid, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
+    set = SetupDiGetClassDevsW(&GUID_DEVINTERFACE_HID, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
 
-    for (idx = 0; SetupDiEnumDeviceInterfaces(set, NULL, &hid_guid, idx, &iface); ++idx)
+    for (idx = 0; SetupDiEnumDeviceInterfaces(set, NULL, &GUID_DEVINTERFACE_HID, idx, &iface); ++idx)
     {
         if (!(device = add_device( set, &iface, RIM_TYPEHID )))
             continue;
