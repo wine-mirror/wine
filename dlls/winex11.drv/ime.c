@@ -637,6 +637,7 @@ UINT WINAPI ImeToAsciiEx (UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
 
 BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
 {
+    struct xim_preedit_state_params preedit_params;
     BOOL bRet = FALSE;
     LPINPUTCONTEXT lpIMC;
 
@@ -680,7 +681,9 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                     TRACE("IMC_SETOPENSTATUS\n");
 
                     bRet = TRUE;
-                    X11DRV_SetPreeditState(lpIMC->hWnd, lpIMC->fOpen);
+                    preedit_params.hwnd = lpIMC->hWnd;
+                    preedit_params.open = lpIMC->fOpen;
+                    X11DRV_CALL( xim_preedit_state, &preedit_params );
                     if (!lpIMC->fOpen)
                     {
                         LPIMEPRIVATE myPrivate;
@@ -688,7 +691,7 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
                         myPrivate = ImmLockIMCC(lpIMC->hPrivate);
                         if (myPrivate->bInComposition)
                         {
-                            X11DRV_ForceXIMReset(lpIMC->hWnd);
+                            X11DRV_CALL( xim_reset, lpIMC->hWnd );
                             GenerateIMEMessage(hIMC, WM_IME_ENDCOMPOSITION, 0, 0);
                             myPrivate->bInComposition = FALSE;
                         }
@@ -764,7 +767,7 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
 
                     TRACE("CPS_CANCEL\n");
 
-                    X11DRV_ForceXIMReset(lpIMC->hWnd);
+                    X11DRV_CALL( xim_reset, lpIMC->hWnd );
 
                     if (lpIMC->hCompStr)
                         ImmDestroyIMCC(lpIMC->hCompStr);

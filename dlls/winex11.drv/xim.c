@@ -241,7 +241,7 @@ static void XIMPreEditCaretCallback(XIC ic, XPointer client_data,
     TRACE("Finished\n");
 }
 
-void X11DRV_ForceXIMReset(HWND hwnd)
+NTSTATUS x11drv_xim_reset( void *hwnd )
 {
     XIC ic = X11DRV_get_ic(hwnd);
     if (ic)
@@ -251,19 +251,21 @@ void X11DRV_ForceXIMReset(HWND hwnd)
         leftover = XmbResetIC(ic);
         XFree(leftover);
     }
+    return 0;
 }
 
-void X11DRV_SetPreeditState(HWND hwnd, BOOL fOpen)
+NTSTATUS x11drv_xim_preedit_state( void *arg )
 {
+    struct xim_preedit_state_params *params = arg;
     XIC ic;
     XIMPreeditState state;
     XVaNestedList attr;
 
-    ic = X11DRV_get_ic(hwnd);
+    ic = X11DRV_get_ic( params->hwnd );
     if (!ic)
-        return;
+        return 0;
 
-    if (fOpen)
+    if (params->open)
         state = XIMPreeditEnable;
     else
         state = XIMPreeditDisable;
@@ -274,6 +276,7 @@ void X11DRV_SetPreeditState(HWND hwnd, BOOL fOpen)
         XSetICValues(ic, XNPreeditAttributes, attr, NULL);
         XFree(attr);
     }
+    return 0;
 }
 
 

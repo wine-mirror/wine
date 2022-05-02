@@ -827,8 +827,6 @@ extern BOOL X11DRV_InitXIM( const WCHAR *input_style ) DECLSPEC_HIDDEN;
 extern XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data) DECLSPEC_HIDDEN;
 extern void X11DRV_SetupXIM(void) DECLSPEC_HIDDEN;
 extern void X11DRV_XIMLookupChars( const char *str, DWORD count ) DECLSPEC_HIDDEN;
-extern void X11DRV_ForceXIMReset(HWND hwnd) DECLSPEC_HIDDEN;
-extern void X11DRV_SetPreeditState(HWND hwnd, BOOL fOpen) DECLSPEC_HIDDEN;
 
 #define XEMBED_MAPPED  (1 << 0)
 
@@ -849,6 +847,8 @@ extern NTSTATUS x11drv_tablet_attach_queue( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_tablet_get_packet( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_tablet_load_info( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_tablet_info( void *arg ) DECLSPEC_HIDDEN;
+extern NTSTATUS x11drv_xim_preedit_state( void *arg ) DECLSPEC_HIDDEN;
+extern NTSTATUS x11drv_xim_reset( void *arg ) DECLSPEC_HIDDEN;
 
 extern NTSTATUS WINAPI x11drv_post_drop( void *data, ULONG size ) DECLSPEC_HIDDEN;
 
