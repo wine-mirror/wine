@@ -13,4 +13,4 @@
 @ stdcall SfcGetNextProtectedFile(long ptr) sfc_os.SfcGetNextProtectedFile
 @ stdcall SfcIsFileProtected(ptr wstr) sfc_os.SfcIsFileProtected
 @ stdcall SfcIsKeyProtected(long wstr long) sfc_os.SfcIsKeyProtected
-@ stdcall SfpVerifyFile() sfc_os.SfpVerifyFile
+@ stdcall SfpVerifyFile(str ptr long) sfc_os.SfpVerifyFile
