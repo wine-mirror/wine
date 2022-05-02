@@ -2343,12 +2343,11 @@ static void test_hidp( HANDLE file, HANDLE async_file, int report_id, BOOL polle
         ok( ret, "GetOverlappedResult failed, last error %lu\n", GetLastError() );
         ok( value == (report_id ? 3 : 4), "GetOverlappedResult returned length %lu, expected %u\n",
             value, (report_id ? 3 : 4) );
-        /* first report should be ready and the same */
+        /* first report should be ready */
         ret = GetOverlappedResult( async_file, &overlapped, &value, FALSE );
         ok( ret, "GetOverlappedResult failed, last error %lu\n", GetLastError() );
         ok( value == (report_id ? 3 : 4), "GetOverlappedResult returned length %lu, expected %u\n",
             value, (report_id ? 3 : 4) );
-        ok( !memcmp( report, buffer, caps.InputReportByteLength ), "expected identical reports\n" );
 
         send_hid_input( file, expect_small, sizeof(expect_small) );
 
