@@ -475,6 +475,13 @@ struct ot_gdef_classdef_format2
     struct ot_gdef_class_range ranges[1];
 };
 
+struct ot_gdef_markglyphsets
+{
+    uint16_t format;
+    uint16_t count;
+    uint32_t offsets[1];
+};
+
 struct gpos_gsub_header
 {
     uint16_t major_version;
@@ -3762,7 +3769,7 @@ static BOOL opentype_match_coverage_func(UINT16 glyph, UINT16 glyph_data, const 
 static BOOL opentype_layout_mark_set_covers(const struct scriptshaping_cache *cache, unsigned int set_index,
         UINT16 glyph)
 {
-    unsigned int format, offset = cache->gdef.markglyphsetdef, coverage_offset, set_count;
+    unsigned int format, offset = cache->gdef.markglyphsetdef, coverage_offset, count;
 
     if (!offset)
         return FALSE;
@@ -3771,11 +3778,12 @@ static BOOL opentype_layout_mark_set_covers(const struct scriptshaping_cache *ca
 
     if (format == 1)
     {
-        set_count = table_read_be_word(&cache->gdef.table, offset + 2);
-        if (!set_count || set_index >= set_count)
+        count = table_read_be_word(&cache->gdef.table, offset + FIELD_OFFSET(struct ot_gdef_markglyphsets, count));
+        if (!count || set_index >= count)
             return FALSE;
 
-        coverage_offset = table_read_be_dword(&cache->gdef.table, offset + 2 + set_index * sizeof(coverage_offset));
+        coverage_offset = table_read_be_dword(&cache->gdef.table, offset +
+                FIELD_OFFSET(struct ot_gdef_markglyphsets, offsets[set_index]));
         return opentype_layout_is_glyph_covered(&cache->gdef.table, offset + coverage_offset, glyph) != GLYPH_NOT_COVERED;
     }
     else
