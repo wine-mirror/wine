@@ -1059,7 +1059,7 @@ static void test_connect_pin(void)
         init_pcm_mt(&expect_mt, &expect_format, 1, 32000, i ? 8 : 16);
 
         hr = IEnumMediaTypes_Next(enummt, 1, &pmt, NULL);
-        todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
         if (hr != S_OK)
             break;
         ok(!memcmp(pmt, &expect_mt, offsetof(AM_MEDIA_TYPE, cbFormat)),
