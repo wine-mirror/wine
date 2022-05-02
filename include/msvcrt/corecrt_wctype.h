@@ -36,8 +36,8 @@ _ACRTIMP int     __cdecl _iswprint_l(wint_t,_locale_t);
 _ACRTIMP int     __cdecl _iswpunct_l(wint_t,_locale_t);
 _ACRTIMP int     __cdecl _iswspace_l(wint_t,_locale_t);
 _ACRTIMP int     __cdecl _iswupper_l(wint_t,_locale_t);
-_ACRTIMP wchar_t __cdecl _towlower_l(wchar_t,_locale_t);
-_ACRTIMP wchar_t __cdecl _towupper_l(wchar_t,_locale_t);
+_ACRTIMP wint_t  __cdecl _towlower_l(wint_t,_locale_t);
+_ACRTIMP wint_t  __cdecl _towupper_l(wint_t,_locale_t);
 _ACRTIMP int     __cdecl is_wctype(wint_t,wctype_t);
 _ACRTIMP int     __cdecl isleadbyte(int);
 _ACRTIMP int     __cdecl iswalnum(wint_t);
@@ -54,8 +54,8 @@ _ACRTIMP int     __cdecl iswpunct(wint_t);
 _ACRTIMP int     __cdecl iswspace(wint_t);
 _ACRTIMP int     __cdecl iswupper(wint_t);
 _ACRTIMP int     __cdecl iswxdigit(wint_t);
-_ACRTIMP wchar_t __cdecl towlower(wchar_t);
-_ACRTIMP wchar_t __cdecl towupper(wchar_t);
+_ACRTIMP wint_t  __cdecl towlower(wint_t);
+_ACRTIMP wint_t  __cdecl towupper(wint_t);
 
 #ifdef __cplusplus
 }
