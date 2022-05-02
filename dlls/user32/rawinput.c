@@ -26,11 +26,11 @@
 #include "windef.h"
 #include "winbase.h"
 #include "wingdi.h"
+#include "winioctl.h"
 #include "winnls.h"
 #include "winreg.h"
 #include "winuser.h"
 #include "setupapi.h"
-#include "ddk/hidsdi.h"
 #include "wine/debug.h"
 #include "wine/server.h"
 #include "wine/hid.h"
@@ -53,7 +53,7 @@ struct device
     HANDLE file;
     HANDLE handle;
     RID_DEVICE_INFO info;
-    PHIDP_PREPARSED_DATA data;
+    struct hid_preparsed_data *data;
 };
 
 static struct device *rawinput_devices;
@@ -100,12 +100,13 @@ static struct device *add_device( HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface,
     static const RID_DEVICE_INFO_KEYBOARD keyboard_info = {0, 0, 1, 12, 3, 101};
     static const RID_DEVICE_INFO_MOUSE mouse_info = {1, 5, 0, FALSE};
     SP_DEVINFO_DATA device_data = {sizeof(device_data)};
-    PHIDP_PREPARSED_DATA preparsed_data = NULL;
+    struct hid_preparsed_data *preparsed = NULL;
     SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail;
-    struct hid_preparsed_data *preparsed;
+    HID_COLLECTION_INFORMATION hid_info;
     struct device *device = NULL;
     RID_DEVICE_INFO info;
-    HIDD_ATTRIBUTES attr;
+    IO_STATUS_BLOCK io;
+    NTSTATUS status;
     UINT32 handle;
     DWORD i, size;
     HANDLE file;
@@ -152,23 +153,33 @@ static struct device *add_device( HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface,
     switch (type)
     {
     case RIM_TYPEHID:
-        attr.Size = sizeof(HIDD_ATTRIBUTES);
-        if (!HidD_GetAttributes( device->file, &attr ))
+        status = NtDeviceIoControlFile( device->file, NULL, NULL, NULL, &io,
+                                        IOCTL_HID_GET_COLLECTION_INFORMATION,
+                                        NULL, 0, &hid_info, sizeof(hid_info) );
+        if (status)
         {
-            ERR( "Failed to get attributes.\n" );
+            ERR( "Failed to get collection information, status %#lx.\n", status );
             goto fail;
         }
 
-        info.hid.dwVendorId = attr.VendorID;
-        info.hid.dwProductId = attr.ProductID;
-        info.hid.dwVersionNumber = attr.VersionNumber;
+        info.hid.dwVendorId = hid_info.VendorID;
+        info.hid.dwProductId = hid_info.ProductID;
+        info.hid.dwVersionNumber = hid_info.VersionNumber;
 
-        if (!HidD_GetPreparsedData( file, &preparsed_data ))
+        if (!(preparsed = malloc( hid_info.DescriptorSize )))
         {
-            ERR( "Failed to get preparsed data.\n" );
+            ERR( "Failed to allocate memory.\n" );
             goto fail;
         }
-        preparsed = (struct hid_preparsed_data *)preparsed_data;
+
+        status = NtDeviceIoControlFile( device->file, NULL, NULL, NULL, &io,
+                                        IOCTL_HID_GET_COLLECTION_DESCRIPTOR,
+                                        NULL, 0, preparsed, hid_info.DescriptorSize );
+        if (status)
+        {
+            ERR( "Failed to get collection descriptor, status %#lx.\n", status );
+            goto fail;
+        }
 
         info.hid.usUsagePage = preparsed->usage_page;
         info.hid.usUsage = preparsed->usage;
@@ -190,7 +201,7 @@ static struct device *add_device( HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface,
     if (device)
     {
         TRACE("Updating device %x / %s.\n", handle, debugstr_w(detail->DevicePath));
-        HidD_FreePreparsedData(device->data);
+        free(device->data);
         CloseHandle(device->file);
         free(device->detail);
     }
@@ -210,12 +221,12 @@ static struct device *add_device( HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface,
     device->file = file;
     device->handle = ULongToHandle(handle);
     device->info = info;
-    device->data = preparsed_data;
+    device->data = preparsed;
 
     return device;
 
 fail:
-    free( preparsed_data );
+    free( preparsed );
     CloseHandle( file );
     free( detail );
     return NULL;
@@ -235,7 +246,7 @@ void rawinput_update_device_list(void)
     /* destroy previous list */
     for (idx = 0; idx < rawinput_devices_count; ++idx)
     {
-        HidD_FreePreparsedData(rawinput_devices[idx].data);
+        free(rawinput_devices[idx].data);
         CloseHandle(rawinput_devices[idx].file);
         free(rawinput_devices[idx].detail);
     }
@@ -779,12 +790,12 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT
         break;
 
     case RIDI_PREPARSEDDATA:
-        if (!(preparsed = (struct hid_preparsed_data *)device->data)) len = 0;
+        if (!(preparsed = device->data)) len = 0;
         else len = preparsed->caps_size + FIELD_OFFSET(struct hid_preparsed_data, value_caps[0]) +
                    preparsed->number_link_collection_nodes * sizeof(struct hid_collection_node);
 
-        if (device->data && len <= data_len && data)
-            memcpy(data, device->data, len);
+        if (preparsed && len <= data_len && data)
+            memcpy(data, preparsed, len);
         *data_size = len;
         break;
 
