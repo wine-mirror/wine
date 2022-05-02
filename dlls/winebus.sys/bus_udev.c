@@ -1773,7 +1773,7 @@ NTSTATUS udev_bus_init(void *args)
         goto error;
     }
 
-#if HAVE_SYS_INOTIFY_H
+#ifdef HAVE_SYS_INOTIFY_H
     if (options.disable_udevd) monitor_fd = create_inotify();
     if (monitor_fd < 0) options.disable_udevd = FALSE;
 #else
@@ -1798,7 +1798,7 @@ NTSTATUS udev_bus_init(void *args)
     poll_count = 2;
 
     if (!options.disable_udevd) build_initial_deviceset_udevd();
-#if HAVE_SYS_INOTIFY_H
+#ifdef HAVE_SYS_INOTIFY_H
     else build_initial_deviceset_direct();
 #endif
 
@@ -1841,7 +1841,7 @@ NTSTATUS udev_bus_wait(void *args)
         if (pfd[0].revents)
         {
             if (udev_monitor) process_monitor_event(udev_monitor);
-#if HAVE_SYS_INOTIFY_H
+#ifdef HAVE_SYS_INOTIFY_H
             else process_inotify_event(pfd[0].fd);
 #endif
         }
