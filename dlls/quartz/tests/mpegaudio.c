@@ -880,6 +880,56 @@ static void testfilter_init(struct testfilter *filter)
     strmbase_source_init(&filter->source, &filter->filter, L"source", &testsource_ops);
 }
 
+static void test_sink_allocator(IMemInputPin *input)
+{
+    IMemAllocator *req_allocator, *ret_allocator;
+    ALLOCATOR_PROPERTIES props, ret_props;
+    HRESULT hr;
+
+    hr = IMemInputPin_GetAllocatorRequirements(input, &props);
+    ok(hr == E_NOTIMPL, "Got hr %#lx.\n", hr);
+
+    hr = IMemInputPin_GetAllocator(input, &ret_allocator);
+    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    if (hr == S_OK)
+    {
+        hr = IMemAllocator_GetProperties(ret_allocator, &props);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        ok(!props.cBuffers, "Got %ld buffers.\n", props.cBuffers);
+        ok(!props.cbBuffer, "Got size %ld.\n", props.cbBuffer);
+        ok(!props.cbAlign, "Got alignment %ld.\n", props.cbAlign);
+        ok(!props.cbPrefix, "Got prefix %ld.\n", props.cbPrefix);
+
+        hr = IMemInputPin_NotifyAllocator(input, ret_allocator, TRUE);
+        ok(hr == S_OK, "Got hr %#lx.\n", hr);
+        IMemAllocator_Release(ret_allocator);
+    }
+
+    hr = IMemInputPin_NotifyAllocator(input, NULL, TRUE);
+    ok(hr == E_POINTER, "Got hr %#lx.\n", hr);
+
+    CoCreateInstance(&CLSID_MemoryAllocator, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IMemAllocator, (void **)&req_allocator);
+
+    props.cBuffers = 1;
+    props.cbBuffer = 256;
+    props.cbAlign = 1;
+    props.cbPrefix = 0;
+    hr = IMemAllocator_SetProperties(req_allocator, &props, &ret_props);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMemInputPin_NotifyAllocator(input, req_allocator, TRUE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IMemInputPin_GetAllocator(input, &ret_allocator);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(ret_allocator == req_allocator, "Allocators didn't match.\n");
+
+    IMemAllocator_Release(req_allocator);
+    IMemAllocator_Release(ret_allocator);
+}
+
 static void test_connect_pin(void)
 {
     IBaseFilter *filter = create_mpeg_audio_codec();
@@ -994,6 +1044,8 @@ static void test_connect_pin(void)
     ok(hr == VFW_E_NOT_STOPPED, "Got hr %#lx.\n", hr);
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    test_sink_allocator(meminput);
 
     IMemInputPin_Release(meminput);
     IPin_Release(sink);
