@@ -3619,10 +3619,10 @@ struct lookup
 {
     unsigned short index;
     unsigned short type;
-    unsigned short flags;
     unsigned short subtable_count;
 
     unsigned int mask;
+    unsigned int flags;
     unsigned int offset;
     unsigned int auto_zwnj : 1;
     unsigned int auto_zwj : 1;
@@ -4542,9 +4542,9 @@ static int __cdecl lookups_sorting_compare(const void *a, const void *b)
 static BOOL opentype_layout_init_lookup(const struct ot_gsubgpos_table *table, unsigned short lookup_index,
         const struct shaping_feature *feature, struct lookup *lookup)
 {
-    unsigned short subtable_count, lookup_type, flags, mark_filtering_set;
+    unsigned short subtable_count, lookup_type, mark_filtering_set;
     const struct ot_lookup_table *lookup_table;
-    unsigned int offset;
+    unsigned int offset, flags;
 
     if (!(offset = table_read_be_word(&table->table, table->lookup_list +
             FIELD_OFFSET(struct ot_lookup_list, lookup[lookup_index]))))
