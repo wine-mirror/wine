@@ -2163,7 +2163,7 @@ static void test_MoveFileW(void)
 
     ret = MoveFileW(source, dest);
     ok(!ret && GetLastError() == ERROR_ALREADY_EXISTS,
-       "CopyFileW: unexpected error %ld\n", GetLastError());
+       "MoveFileW: unexpected error %ld\n", GetLastError());
 
     ret = DeleteFileW(source);
     ok(ret, "DeleteFileW: error %ld\n", GetLastError());
