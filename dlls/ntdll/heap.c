@@ -600,7 +600,6 @@ static inline void HEAP_InsertFreeBlock( HEAP *heap, ARENA_FREE *pArena, BOOL la
         /* insert at head of free list */
         list_add_after( &pEntry->arena.entry, &pArena->entry );
     }
-    pArena->size |= ARENA_FLAG_FREE;
 }
 
 
@@ -726,7 +725,7 @@ static void HEAP_CreateFreeBlock( SUBHEAP *subheap, void *ptr, SIZE_T size )
 
     /* Last, insert the new block into the free list */
 
-    pFree->size = size - sizeof(*pFree);
+    pFree->size = (size - sizeof(*pFree)) | ARENA_FLAG_FREE;
     HEAP_InsertFreeBlock( subheap->heap, pFree, last );
 }
 
