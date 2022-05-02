@@ -4320,7 +4320,7 @@ static BOOL opentype_layout_apply_mark_array(struct scriptshaping_context *conte
     if (context->is_rtl)
         context->offsets[context->cur].advanceOffset = mark_x - base_x;
     else
-        context->offsets[context->cur].advanceOffset = -context->advances[glyph_pos] + base_x - mark_x;
+        context->offsets[context->cur].advanceOffset = base_x - mark_x;
     context->offsets[context->cur].ascenderOffset = base_y - mark_y;
     opentype_set_glyph_attach_type(context, context->cur, GLYPH_ATTACH_MARK);
     context->glyph_infos[context->cur].attach_chain = (int)glyph_pos - (int)context->cur;
