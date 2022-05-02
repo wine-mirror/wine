@@ -736,7 +736,7 @@ NTSTATUS x11drv_tablet_load_info( void *hwnd )
                         Button = (XButtonInfoPtr) any;
                         TRACE("    ButtonInput %d: [class %d|length %d|num_buttons %d]\n",
                                 class_loop, (int) Button->class, Button->length, Button->num_buttons);
-                        cursor.BTNNAMES = HeapAlloc(GetProcessHeap(), 0, sizeof(WCHAR)*cchBuf);
+                        cursor.BTNNAMES = malloc( sizeof(WCHAR) * cchBuf );
                         for (i = 0; i < cursor.BUTTONS; i++)
                         {
                             /* FIXME - these names are probably incorrect */
@@ -744,14 +744,14 @@ NTSTATUS x11drv_tablet_load_info( void *hwnd )
                             while (cch > cchBuf - cchPos - 1) /* we want one extra byte for the last NUL */
                             {
                                 cchBuf *= 2;
-                                cursor.BTNNAMES = HeapReAlloc(GetProcessHeap(), 0, cursor.BTNNAMES, sizeof(WCHAR)*cchBuf);
+                                cursor.BTNNAMES = realloc( cursor.BTNNAMES, sizeof(WCHAR) * cchBuf );
                             }
 
                             strcpyW(cursor.BTNNAMES + cchPos, cursor.NAME);
                             cchPos += cch;
                         }
                         cursor.BTNNAMES[cchPos++] = 0;
-                        cursor.BTNNAMES = HeapReAlloc(GetProcessHeap(), 0, cursor.BTNNAMES, sizeof(WCHAR)*cchPos);
+                        cursor.BTNNAMES = realloc( cursor.BTNNAMES, sizeof(WCHAR)*cchPos );
                         cursor.cchBTNNAMES = cchPos;
                     }
                     break;

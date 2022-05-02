@@ -28,6 +28,7 @@
 #include <string.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include <assert.h>
 #include <dlfcn.h>
 #include <X11/cursorfont.h>
 #include <X11/Xlib.h>
@@ -293,7 +294,7 @@ static int error_handler( Display *display, XErrorEvent *error_evt )
     {
         ERR( "X protocol error: serial=%ld, request_code=%d - breaking into debugger\n",
              error_evt->serial, error_evt->request_code );
-        DebugBreak();  /* force an entry in the debugger */
+        assert( 0 );
     }
     old_error_handler( display, error_evt );
     return 0;

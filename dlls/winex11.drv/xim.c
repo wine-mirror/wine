@@ -72,13 +72,7 @@ static void X11DRV_ImmSetInternalString(DWORD dwOffset,
 
     if (byte_expansion + dwCompStringLength >= dwCompStringSize)
     {
-        if (CompositionString)
-            ptr_new = HeapReAlloc(GetProcessHeap(), 0, CompositionString,
-                                  dwCompStringSize + byte_expansion);
-        else
-            ptr_new = HeapAlloc(GetProcessHeap(), 0,
-                                dwCompStringSize + byte_expansion);
-
+        ptr_new = realloc( CompositionString, dwCompStringSize + byte_expansion );
         if (ptr_new == NULL)
         {
             ERR("Couldn't expand composition string buffer\n");
@@ -150,7 +144,7 @@ static void XIMPreEditDoneCallback(XIC ic, XPointer client_data, XPointer call_d
     TRACE("PreeditDoneCallback %p\n",ic);
     ximInComposeMode = FALSE;
     if (dwCompStringSize)
-        HeapFree(GetProcessHeap(), 0, CompositionString);
+        free( CompositionString );
     dwCompStringSize = 0;
     dwCompStringLength = 0;
     CompositionString = NULL;
@@ -464,17 +458,24 @@ XIC X11DRV_CreateIC(XIM xim, struct x11drv_win_data *data)
     XIC xic;
     XICCallback destroy = {(XPointer)data, X11DRV_DestroyIC};
     XICCallback P_StateNotifyCB, P_StartCB, P_DoneCB, P_DrawCB, P_CaretCB;
-    LANGID langid = PRIMARYLANGID(LANGIDFROMLCID(GetThreadLocale()));
+    LCID lcid;
     Window win = data->whole_window;
     XFontSet fontSet = x11drv_thread_data()->font_set;
 
     TRACE("xim = %p\n", xim);
 
+    lcid = NtCurrentTeb()->CurrentLocale;
+    if (!lcid) NtQueryDefaultLocale( TRUE, &lcid );
+
     /* use complex and slow XIC initialization method only for CJK */
-    if (langid != LANG_CHINESE &&
-        langid != LANG_JAPANESE &&
-        langid != LANG_KOREAN)
+    switch (PRIMARYLANGID(LANGIDFROMLCID(lcid)))
     {
+    case LANG_CHINESE:
+    case LANG_JAPANESE:
+    case LANG_KOREAN:
+        break;
+
+    default:
         xic = XCreateIC(xim,
                         XNInputStyle, XIMPreeditNothing | XIMStatusNothing,
                         XNClientWindow, win,

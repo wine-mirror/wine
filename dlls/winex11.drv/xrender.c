@@ -774,7 +774,7 @@ static AA_Type aa_type_from_flags( UINT aa_flags )
 
 static UINT get_xft_aa_flags( const LOGFONTW *lf )
 {
-    char *value;
+    char *value, *p;
     UINT ret = 0;
 
     switch (lf->lfQuality)
@@ -785,8 +785,8 @@ static UINT get_xft_aa_flags( const LOGFONTW *lf )
     default:
         if (!(value = XGetDefault( gdi_display, "Xft", "antialias" ))) break;
         TRACE( "got antialias '%s'\n", value );
-        if (tolower(value[0]) == 'f' || tolower(value[0]) == 'n' ||
-            value[0] == '0' || !_strnicmp( value, "off", -1 ))
+        for (p = value; *p; p++) if ('A' <= *p && *p <= 'Z') *p += 'a' - 'A'; /* to lower */
+        if (value[0] == 'f' || value[0] == 'n' || value[0] == '0' || !strcmp( value, "off" ))
         {
             ret = GGO_BITMAP;
             break;
