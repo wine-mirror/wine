@@ -101,10 +101,10 @@ static struct device *add_device( HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface,
     SP_DEVINFO_DATA device_data = {sizeof(device_data)};
     PHIDP_PREPARSED_DATA preparsed_data = NULL;
     SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail;
+    struct hid_preparsed_data *preparsed;
     struct device *device = NULL;
     RID_DEVICE_INFO info;
     HIDD_ATTRIBUTES attr;
-    HIDP_CAPS caps;
     UINT32 handle;
     DWORD i, size;
     HANDLE file;
@@ -167,15 +167,10 @@ static struct device *add_device( HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface,
             ERR( "Failed to get preparsed data.\n" );
             goto fail;
         }
+        preparsed = (struct hid_preparsed_data *)preparsed_data;
 
-        if (!HidP_GetCaps( preparsed_data, &caps ))
-        {
-            ERR( "Failed to get caps.\n" );
-            goto fail;
-        }
-
-        info.hid.usUsagePage = caps.UsagePage;
-        info.hid.usUsage = caps.Usage;
+        info.hid.usUsagePage = preparsed->usage_page;
+        info.hid.usUsage = preparsed->usage;
         break;
 
     case RIM_TYPEMOUSE:
