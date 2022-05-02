@@ -373,6 +373,7 @@ static BOOL grab_clipping_window( const RECT *clip )
 #if HAVE_X11_EXTENSIONS_XINPUT2_H
     static const WCHAR messageW[] = {'M','e','s','s','a','g','e',0};
     struct x11drv_thread_data *data = x11drv_thread_data();
+    UNICODE_STRING class_name;
     Window clip_window;
     HWND msg_hwnd = 0;
     POINT pos;
@@ -383,8 +384,10 @@ static BOOL grab_clipping_window( const RECT *clip )
     if (!data) return FALSE;
     if (!(clip_window = init_clip_window())) return TRUE;
 
-    if (!(msg_hwnd = CreateWindowW( messageW, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, 0,
-                                    GetModuleHandleW(0), NULL )))
+    RtlInitUnicodeString( &class_name, messageW );
+    if (!(msg_hwnd = NtUserCreateWindowEx( 0, &class_name, &class_name, NULL, 0, 0, 0, 0, 0,
+                                           HWND_MESSAGE, 0, NtCurrentTeb()->Peb->ImageBaseAddress,
+                                           NULL, 0, NULL, 0, FALSE )))
         return TRUE;
 
     if (keyboard_grabbed)
