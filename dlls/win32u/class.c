@@ -443,7 +443,7 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
     class->hCursor       = wc->hCursor;
     class->hbrBackground = wc->hbrBackground;
     class->winproc       = alloc_winproc( wc->lpfnWndProc, ansi );
-    class->menu_name     = *client_menu_name;
+    if (client_menu_name) class->menu_name = *client_menu_name;
     if (wc->hIcon && !wc->hIconSm && user_callbacks)
         class->hIconSmIntern = user_callbacks->pCopyImage( wc->hIcon, IMAGE_ICON,
                                                            get_system_metrics( SM_CXSMICON ),
