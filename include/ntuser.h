@@ -42,6 +42,9 @@ enum
     /* Vulkan support */
     NtUserCallVulkanDebugReportCallback,
     NtUserCallVulkanDebugUtilsCallback,
+    /* Driver-specific callbacks */
+    NtUserDriverCallbackFirst,
+    NtUserDriverCallbackLast = NtUserDriverCallbackFirst + 10,
     NtUserCallCount
 };
 

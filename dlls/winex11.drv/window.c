@@ -1904,7 +1904,7 @@ BOOL X11DRV_CreateWindow( HWND hwnd )
                                            CWOverrideRedirect | CWEventMask, &attr );
         XFlush( data->display );
         NtUserSetProp( hwnd, clip_window_prop, (HANDLE)data->clip_window );
-        X11DRV_InitClipboard();
+        x11drv_client_call( client_clipboard_init, 0 );
         X11DRV_DisplayDevices_RegisterEventHandlers();
     }
     return TRUE;

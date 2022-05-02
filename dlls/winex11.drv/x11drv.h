@@ -296,9 +296,6 @@ extern BOOL IME_SetCompositionString(DWORD dwIndex, LPCVOID lpComp,
 extern void IME_SetResultString(LPWSTR lpResult, DWORD dwResultlen) DECLSPEC_HIDDEN;
 
 
-extern void handle_dnd_enter_event( struct format_entry *formats, ULONG size ) DECLSPEC_HIDDEN;
-extern UINT handle_dnd_event( void *params ) DECLSPEC_HIDDEN;
-
 extern struct format_entry *import_xdnd_selection( Display *display, Window win, Atom selection,
                                                    Atom *targets, UINT count,
                                                    size_t *size ) DECLSPEC_HIDDEN;
@@ -677,7 +674,6 @@ extern XContext winContext DECLSPEC_HIDDEN;
 /* X context to associate an X cursor to a Win32 cursor handle */
 extern XContext cursor_context DECLSPEC_HIDDEN;
 
-extern void X11DRV_InitClipboard(void) DECLSPEC_HIDDEN;
 extern void X11DRV_SetFocus( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void set_window_cursor( Window window, HCURSOR handle ) DECLSPEC_HIDDEN;
 extern void sync_window_cursor( Window window ) DECLSPEC_HIDDEN;
@@ -850,7 +846,17 @@ extern NTSTATUS x11drv_tablet_info( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_xim_preedit_state( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_xim_reset( void *arg ) DECLSPEC_HIDDEN;
 
-extern NTSTATUS WINAPI x11drv_post_drop( void *data, ULONG size ) DECLSPEC_HIDDEN;
+extern NTSTATUS WINAPI x11drv_dnd_enter_event( void *params, ULONG size ) DECLSPEC_HIDDEN;
+extern NTSTATUS WINAPI x11drv_dnd_position_event( void *params, ULONG size ) DECLSPEC_HIDDEN;
+extern NTSTATUS WINAPI x11drv_dnd_post_drop( void *data, ULONG size ) DECLSPEC_HIDDEN;
+
+extern NTSTATUS x11drv_dnd_drop_event( UINT arg ) DECLSPEC_HIDDEN;
+extern NTSTATUS x11drv_dnd_leave_event( UINT arg ) DECLSPEC_HIDDEN;
+
+
+extern NTSTATUS x11drv_client_func( enum x11drv_client_funcs func, const void *params,
+                                    ULONG size ) DECLSPEC_HIDDEN;
+extern NTSTATUS x11drv_client_call( enum client_callback func, UINT arg ) DECLSPEC_HIDDEN;
 
 /* GDI helpers */
 

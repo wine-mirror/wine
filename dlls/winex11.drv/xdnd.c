@@ -176,12 +176,13 @@ static HWND window_accepting_files(HWND hwnd)
 }
 
 /**************************************************************************
- * X11DRV_XDND_PositionEvent
+ *           x11drv_dnd_position_event
  *
  * Handle an XdndPosition event.
  */
-static BOOL handle_position_event( struct dnd_position_event_params *params )
+NTSTATUS WINAPI x11drv_dnd_position_event( void *arg, ULONG size )
 {
+    struct dnd_position_event_params *params = arg;
     int accept = 0; /* Assume we're not accepting */
     IDropTarget *dropTarget = NULL;
     DWORD effect = params->effect;
@@ -264,7 +265,7 @@ static BOOL handle_position_event( struct dnd_position_event_params *params )
     return accept ? effect : 0;
 }
 
-static DWORD handle_drop_event( struct dnd_drop_event_params *params )
+NTSTATUS x11drv_dnd_drop_event( UINT arg )
 {
     IDropTarget *dropTarget;
     DWORD effect = XDNDDropEffect;
@@ -318,7 +319,7 @@ static DWORD handle_drop_event( struct dnd_drop_event_params *params )
         /* Only send WM_DROPFILES if Drop didn't succeed or DROPEFFECT_NONE was set.
          * Doing both causes winamp to duplicate the dropped files (#29081) */
 
-        HWND hwnd_drop = window_accepting_files(window_from_point_dnd( params->hwnd, XDNDxy ));
+        HWND hwnd_drop = window_accepting_files(window_from_point_dnd( UlongToHandle(arg), XDNDxy ));
 
         if (hwnd_drop && X11DRV_XDND_HasHDROP())
         {
@@ -338,11 +339,11 @@ static DWORD handle_drop_event( struct dnd_drop_event_params *params )
 }
 
 /**************************************************************************
- * X11DRV_XDND_LeaveEvent
+ *           x11drv_dnd_leave_event
  *
  * Handle an XdndLeave event.
  */
-static NTSTATUS handle_leave_event(void)
+NTSTATUS x11drv_dnd_leave_event( UINT arg )
 {
     IDropTarget *dropTarget;
 
@@ -367,10 +368,11 @@ static NTSTATUS handle_leave_event(void)
 
 
 /**************************************************************************
- *           handle_dnd_enter_event
+ *           x11drv_dnd_enter_event
  */
-void handle_dnd_enter_event( struct format_entry *formats, ULONG size )
+NTSTATUS WINAPI x11drv_dnd_enter_event( void *params, ULONG size )
 {
+    struct format_entry *formats = params;
     XDNDAccepted = FALSE;
     X11DRV_XDND_FreeDragDropOp(); /* Clear previously cached data */
 
@@ -379,6 +381,7 @@ void handle_dnd_enter_event( struct format_entry *formats, ULONG size )
         memcpy( xdnd_formats, formats, size );
         xdnd_formats_end = (struct format_entry *)((char *)xdnd_formats + size);
     }
+    return 0;
 }
 
 
@@ -729,27 +732,7 @@ static IDataObjectVtbl xdndDataObjectVtbl =
 
 static IDataObject XDNDDataObject = { &xdndDataObjectVtbl };
 
-UINT handle_dnd_event( void *params )
-{
-
-    switch (*(UINT *)params)
-    {
-    case DND_DROP_EVENT:
-        return handle_drop_event( params );
-
-    case DND_LEAVE_EVENT:
-        return handle_leave_event();
-
-    case DND_POSITION_EVENT:
-        return handle_position_event( params );
-
-    default:
-        ERR( "invalid event\n" );
-        return 0;
-    }
-}
-
-NTSTATUS WINAPI x11drv_post_drop( void *data, ULONG size )
+NTSTATUS WINAPI x11drv_dnd_post_drop( void *data, ULONG size )
 {
     HDROP handle;
 

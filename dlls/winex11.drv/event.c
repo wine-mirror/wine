@@ -1479,7 +1479,7 @@ static HWND find_drop_window( HWND hQueryWnd, LPPOINT lpPt )
 static void post_drop( HWND hwnd, DROPFILES *drop, ULONG size )
 {
     drop->fWide = HandleToUlong( hwnd ); /* abuse fWide to pass window handle */
-    x11drv_post_drop( drop, size );
+    x11drv_client_func( client_func_dnd_post_drop, drop, size );
 }
 
 /**********************************************************************
@@ -1744,7 +1744,7 @@ static void handle_xdnd_enter_event( HWND hWnd, XClientMessageEvent *event )
                                   xdndtypes, count, &size );
     if (data)
     {
-        handle_dnd_enter_event( data, size );
+        x11drv_client_func( client_func_dnd_enter_event, data, size );
         free( data );
     }
 
@@ -1795,12 +1795,11 @@ static void handle_xdnd_position_event( HWND hwnd, XClientMessageEvent *event )
     XClientMessageEvent e;
     DWORD effect;
 
-    params.type = DND_POSITION_EVENT;
     params.hwnd = hwnd;
     params.point = root_to_virtual_screen( event->data.l[2] >> 16, event->data.l[2] & 0xFFFF );
     params.effect = effect = xdnd_action_to_drop_effect( event->data.l[4] );
 
-    effect = handle_dnd_event( &params );
+    effect = x11drv_client_func( client_func_dnd_position_event, &params, sizeof(params) );
 
     TRACE( "actionRequested(%ld) chosen(0x%x) at x(%d),y(%d)\n",
            event->data.l[4], effect, params.point.x, params.point.y );
@@ -1825,13 +1824,10 @@ static void handle_xdnd_position_event( HWND hwnd, XClientMessageEvent *event )
 
 static void handle_xdnd_drop_event( HWND hwnd, XClientMessageEvent *event )
 {
-    struct dnd_drop_event_params params;
     XClientMessageEvent e;
     DWORD effect;
 
-    params.type = DND_DROP_EVENT;
-    params.hwnd = hwnd;
-    effect = handle_dnd_event( &params );
+    effect = x11drv_client_call( client_dnd_drop_event, HandleToUlong( hwnd ));
 
     /* Tell the target we are finished. */
     memset( &e, 0, sizeof(e) );
@@ -1849,8 +1845,7 @@ static void handle_xdnd_drop_event( HWND hwnd, XClientMessageEvent *event )
 
 static void handle_xdnd_leave_event( HWND hwnd, XClientMessageEvent *event )
 {
-    UINT type = DND_LEAVE_EVENT;
-    handle_dnd_event( &type );
+    x11drv_client_call( client_dnd_leave_event, 0 );
 }
 
 

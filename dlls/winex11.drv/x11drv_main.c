@@ -957,6 +957,21 @@ NTSTATUS CDECL X11DRV_D3DKMTCheckVidPnExclusiveOwnership( const D3DKMT_CHECKVIDP
 }
 
 
+NTSTATUS x11drv_client_func( enum x11drv_client_funcs id, const void *params, ULONG size )
+{
+    /* FIXME: use KeUserModeCallback instead */
+    NTSTATUS (WINAPI *func)( const void *, ULONG ) = ((void **)NtCurrentTeb()->Peb->KernelCallbackTable)[id];
+    return func( params, size );
+}
+
+
+NTSTATUS x11drv_client_call( enum client_callback func, UINT arg )
+{
+    struct client_callback_params params = { .id = func, .arg = arg };
+    return x11drv_client_func( client_func_callback, &params, sizeof(params) );
+}
+
+
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     x11drv_clipboard_message,
