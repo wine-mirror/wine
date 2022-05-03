@@ -66,6 +66,15 @@ struct systray_dock_params
     BOOL *layered;
 };
 
+enum system_modules
+{
+    system_module_user32,
+    system_module_comctl32,
+    system_module_ole32,
+    system_module_riched20,
+    system_module_none = 0xffff,
+};
+
 /* x11drv_tablet_info params */
 struct tablet_info_params
 {
@@ -90,6 +99,7 @@ enum x11drv_client_funcs
     client_func_dnd_post_drop,
     client_func_ime_set_composition_string,
     client_func_ime_set_result,
+    client_func_is_system_module,
     client_func_systray_change_owner,
     client_func_last
 };

@@ -127,6 +127,30 @@ static NTSTATUS x11drv_clipboard_init( UINT arg )
 }
 
 
+static NTSTATUS WINAPI x11drv_is_system_module( void *arg, ULONG size )
+{
+    HMODULE module;
+    unsigned int i;
+
+    static const WCHAR cursor_modules[][16] =
+    {
+        { 'u','s','e','r','3','2','.','d','l','l',0 },
+        { 'c','o','m','c','t','l','3','2','.','d','l','l',0 },
+        { 'o','l','e','3','2','.','d','l','l',0 },
+        { 'r','i','c','h','e','d','2','0','.','d','l','l',0 }
+    };
+
+    if (!(module = GetModuleHandleW( arg ))) return system_module_none;
+
+    for (i = 0; i < ARRAYSIZE(cursor_modules); i++)
+    {
+        if (GetModuleHandleW( cursor_modules[i] ) == module) return i;
+    }
+
+    return system_module_none;
+}
+
+
 typedef NTSTATUS (*callback_func)( UINT arg );
 static const callback_func callback_funcs[] =
 {
@@ -157,10 +181,12 @@ static const kernel_callback kernel_callbacks[] =
     x11drv_dnd_post_drop,
     x11drv_ime_set_composition_string,
     x11drv_ime_set_result,
+    x11drv_is_system_module,
     x11drv_systray_change_owner,
 };
 
 C_ASSERT( NtUserDriverCallbackFirst + ARRAYSIZE(kernel_callbacks) == client_func_last );
+
 
 BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
 {

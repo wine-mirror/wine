@@ -930,16 +930,12 @@ static const struct system_cursors riched20_cursors[] =
     { 0 }
 };
 
-static const struct
+static const struct system_cursors *module_cursors[] =
 {
-    const struct system_cursors *cursors;
-    WCHAR name[16];
-} module_cursors[] =
-{
-    { user32_cursors, {'u','s','e','r','3','2','.','d','l','l',0} },
-    { comctl32_cursors, {'c','o','m','c','t','l','3','2','.','d','l','l',0} },
-    { ole32_cursors, {'o','l','e','3','2','.','d','l','l',0} },
-    { riched20_cursors, {'r','i','c','h','e','d','2','0','.','d','l','l',0} }
+    user32_cursors,
+    comctl32_cursors,
+    ole32_cursors,
+    riched20_cursors,
 };
 
 struct cursor_font_fallback
@@ -1059,7 +1055,6 @@ static Cursor create_xcursor_system_cursor( const ICONINFOEXW *info )
     const struct system_cursors *cursors;
     unsigned int i;
     Cursor cursor = 0;
-    HMODULE module;
     HKEY key;
     const char * const *names = NULL;
     WCHAR *p, name[MAX_PATH * 2];
@@ -1098,13 +1093,11 @@ static Cursor create_xcursor_system_cursor( const ICONINFOEXW *info )
     }
 
     if (info->szResName[0]) goto done;  /* only integer resources are supported here */
-    if (!(module = GetModuleHandleW( info->szModName ))) goto done;
+    i = x11drv_client_func( client_func_is_system_module, info->szModName,
+                            (lstrlenW( info->szModName ) + 1) * sizeof(WCHAR) );
+    if (i == system_module_none) goto done;
 
-    for (i = 0; i < ARRAY_SIZE( module_cursors ); i++)
-        if (GetModuleHandleW( module_cursors[i].name ) == module) break;
-    if (i == ARRAY_SIZE( module_cursors )) goto done;
-
-    cursors = module_cursors[i].cursors;
+    cursors = module_cursors[i];
     for (i = 0; cursors[i].id; i++)
         if (cursors[i].id == info->wResID)
         {
