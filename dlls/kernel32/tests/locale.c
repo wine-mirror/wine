@@ -1460,14 +1460,29 @@ static void test_GetNumberFormatA(void)
   format.Grouping = 3;
   ret = GetNumberFormatA(lcid, 0, "235", &format, buffer, ARRAY_SIZE(buffer));
   expect_str(ret, buffer, "235.0");
+  ret = GetNumberFormatA(lcid, 0, "000235", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "235.0");
+
+  format.Grouping = 23;
+  ret = GetNumberFormatA(lcid, 0, "123456789", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "1,234,567,89.0");
+
+  format.Grouping = 230;
+  ret = GetNumberFormatA(lcid, 0, "123456789", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "1234,567,89.0");
 
   /* Grouping of a negative number */
   format.NegativeOrder = NEG_LEFT;
+  format.Grouping = 3;
   ret = GetNumberFormatA(lcid, 0, "-235", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "-235.0");
+  ret = GetNumberFormatA(lcid, 0, "-000235", &format, buffer, ARRAY_SIZE(buffer));
   expect_str(ret, buffer, "-235.0");
 
   format.LeadingZero = 1; /* Always provide leading zero */
   ret = GetNumberFormatA(lcid, 0, ".5", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "0.5");
+  ret = GetNumberFormatA(lcid, 0, "0000.5", &format, buffer, ARRAY_SIZE(buffer));
   expect_str(ret, buffer, "0.5");
 
   format.NegativeOrder = NEG_PARENS;
@@ -1640,6 +1655,14 @@ static void test_GetNumberFormatEx(void)
   format.LeadingZero = 1;
   ret = pGetNumberFormatEx(enW, 0, L".5", &format, buffer, ARRAY_SIZE(buffer));
   expect_wstr(ret, buffer, L"0.5");
+  ret = pGetNumberFormatEx(enW, 0, L"0.5", &format, buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L"0.5");
+
+  format.LeadingZero = 0;
+  ret = pGetNumberFormatEx(enW, 0, L".5", &format, buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L".5");
+  ret = pGetNumberFormatEx(enW, 0, L"0.5", &format, buffer, ARRAY_SIZE(buffer));
+  expect_wstr(ret, buffer, L".5");
 
   format.NegativeOrder = NEG_PARENS;
   ret = pGetNumberFormatEx(enW, 0, L"-1", &format, buffer, ARRAY_SIZE(buffer));

@@ -6449,3 +6449,246 @@ BOOL WINAPI SetUserGeoName(PWSTR geo_name)
     }
     return SetUserGeoID( geo->id );
 }
+
+
+static void grouping_to_string( UINT grouping, WCHAR *buffer )
+{
+    WCHAR tmp[10], *p = tmp;
+
+    while (grouping)
+    {
+        *p++ = '0' + grouping % 10;
+        grouping /= 10;
+    }
+    while (p > tmp)
+    {
+        *buffer++ = *(--p);
+        if (p > tmp) *buffer++ = ';';
+    }
+    *buffer = 0;
+}
+
+
+static WCHAR *prepend_str( WCHAR *end, const WCHAR *str )
+{
+    UINT len = wcslen( str );
+    return memcpy( end - len, str, len * sizeof(WCHAR) );
+}
+
+
+/* format a positive number with decimal part; helper for get_number_format */
+static WCHAR *format_number( WCHAR *end, const WCHAR *value, const WCHAR *decimal_sep,
+                             const WCHAR *thousand_sep, const WCHAR *grouping, UINT digits, BOOL lzero )
+{
+    const WCHAR *frac = NULL;
+    BOOL round = FALSE;
+    UINT i, len = 0;
+
+    *(--end) = 0;
+
+    for (i = 0; value[i]; i++)
+    {
+        if (value[i] >= '0' && value[i] <= '9') continue;
+        if (value[i] != '.') return NULL;
+        if (frac) return NULL;
+        frac = value + i + 1;
+    }
+
+    /* format fractional part */
+
+    len = frac ? wcslen( frac ) : 0;
+
+    if (len > digits)
+    {
+        round = frac[digits] >= '5';
+        len = digits;
+    }
+    while (digits > len)
+    {
+        (*--end) = '0';
+        digits--;
+    }
+    while (len)
+    {
+        WCHAR ch = frac[--len];
+        if (round)
+        {
+            if (ch != '9')
+            {
+                ch++;
+                round = FALSE;
+            }
+            else ch = '0';
+        }
+        *(--end) = ch;
+    }
+    if (*end) end = prepend_str( end, decimal_sep );
+
+    /* format integer part */
+
+    len = frac ? frac - value - 1 : wcslen( value );
+
+    while (len && *value == '0')
+    {
+        value++;
+        len--;
+    }
+    if (len) lzero = FALSE;
+
+    while (len)
+    {
+        UINT limit = *grouping == '0' ? ~0u : *grouping - '0';
+        while (len && limit--)
+        {
+            WCHAR ch = value[--len];
+            if (round)
+            {
+                if (ch != '9')
+                {
+                    ch++;
+                    round = FALSE;
+                }
+                else ch = '0';
+            }
+            *(--end) = ch;
+        }
+        if (len) end = prepend_str( end, thousand_sep );
+        if (grouping[1] == ';') grouping += 2;
+    }
+    if (round) *(--end) = '1';
+    else if (lzero) *(--end) = '0';
+    return end;
+}
+
+
+static int get_number_format( const NLS_LOCALE_DATA *locale, DWORD flags, const WCHAR *value,
+                              const NUMBERFMTW *format, WCHAR *buffer, int len )
+{
+    WCHAR *num, fmt_decimal[4], fmt_thousand[4], fmt_neg[5], grouping[20], output[256];
+    const WCHAR *decimal_sep = fmt_decimal, *thousand_sep = fmt_thousand;
+    DWORD digits, lzero, order;
+    int ret = 0;
+    BOOL negative = (*value == '-');
+
+    flags &= LOCALE_NOUSEROVERRIDE;
+
+    if (!format)
+    {
+        get_locale_info( locale, 0, LOCALE_SGROUPING | flags, grouping, ARRAY_SIZE(grouping) );
+        get_locale_info( locale, 0, LOCALE_SDECIMAL | flags, fmt_decimal, ARRAY_SIZE(fmt_decimal) );
+        get_locale_info( locale, 0, LOCALE_STHOUSAND | flags, fmt_thousand, ARRAY_SIZE(fmt_thousand) );
+        get_locale_info( locale, 0, LOCALE_IDIGITS | LOCALE_RETURN_NUMBER | flags,
+                         (WCHAR *)&digits, sizeof(DWORD)/sizeof(WCHAR) );
+        get_locale_info( locale, 0, LOCALE_ILZERO | LOCALE_RETURN_NUMBER | flags,
+                         (WCHAR *)&lzero, sizeof(DWORD)/sizeof(WCHAR) );
+        get_locale_info( locale, 0, LOCALE_INEGNUMBER | LOCALE_RETURN_NUMBER | flags,
+                         (WCHAR *)&order, sizeof(DWORD)/sizeof(WCHAR) );
+    }
+    else
+    {
+        if (flags)
+        {
+            SetLastError( ERROR_INVALID_FLAGS );
+            return 0;
+        }
+        decimal_sep = format->lpDecimalSep;
+        thousand_sep = format->lpThousandSep;
+        grouping_to_string( format->Grouping, grouping );
+        digits = format->NumDigits;
+        lzero = format->LeadingZero;
+        order = format->NegativeOrder;
+        if (!decimal_sep || !thousand_sep)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+    }
+
+    if (negative)
+    {
+        value++;
+        get_locale_info( locale, 0, LOCALE_SNEGATIVESIGN | flags, fmt_neg, ARRAY_SIZE(fmt_neg) );
+    }
+
+    if (!(num = format_number( output + ARRAY_SIZE(output) - 6, value,
+                               decimal_sep, thousand_sep, grouping, digits, lzero )))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    if (negative)
+    {
+        switch (order)
+        {
+        case 0:  /* (1.1) */
+            num = prepend_str( num, L"(" );
+            wcscat( num, L")" );
+            break;
+        case 2:  /* - 1.1 */
+            num = prepend_str( num, L" " );
+            /* fall through */
+        case 1:  /* -1.1 */
+            num = prepend_str( num, fmt_neg );
+            break;
+        case 4:  /* 1.1 - */
+            wcscat( num, L" " );
+            /* fall through */
+        case 3:  /* 1.1- */
+            wcscat( num, fmt_neg );
+            break;
+        default:
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+    }
+
+    ret = wcslen( num ) + 1;
+    if (!len) return ret;
+    lstrcpynW( buffer, num, len );
+    if (ret > len)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+    return ret;
+}
+
+
+/**************************************************************************
+ *	GetNumberFormatW  (kernelbase.@)
+ */
+int WINAPI GetNumberFormatW( LCID lcid, DWORD flags, const WCHAR *value,
+                             const NUMBERFMTW *format, WCHAR *buffer, int len )
+{
+    const NLS_LOCALE_DATA *locale = NlsValidateLocale( &lcid, 0 );
+
+    if (len < 0 || (len && !buffer) || !value || !locale)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    TRACE( "(%04lx,%lx,%s,%p,%p,%d)\n", lcid, flags, debugstr_w(value), format, buffer, len );
+    return get_number_format( locale, flags, value, format, buffer, len );
+}
+
+
+/**************************************************************************
+ *	GetNumberFormatEx  (kernelbase.@)
+ */
+int WINAPI GetNumberFormatEx( const WCHAR *name, DWORD flags, const WCHAR *value,
+                              const NUMBERFMTW *format, WCHAR *buffer, int len )
+{
+    LCID lcid;
+    const NLS_LOCALE_DATA *locale = get_locale_by_name( name, &lcid );
+
+    if (len < 0 || (len && !buffer) || !value || !locale)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    TRACE( "(%s,%lx,%s,%p,%p,%d)\n", debugstr_w(name), flags, debugstr_w(value), format, buffer, len );
+    return get_number_format( locale, flags, value, format, buffer, len );
+}

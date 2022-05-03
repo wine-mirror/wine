@@ -604,8 +604,8 @@
 @ stdcall GetNumaHighestNodeNumber(ptr)
 @ stdcall GetNumaNodeProcessorMaskEx(long ptr)
 @ stdcall GetNumaProximityNodeEx(long ptr)
-@ stdcall GetNumberFormatEx(wstr long wstr ptr ptr long) kernel32.GetNumberFormatEx
-@ stdcall GetNumberFormatW(long long wstr ptr ptr long) kernel32.GetNumberFormatW
+@ stdcall GetNumberFormatEx(wstr long wstr ptr ptr long)
+@ stdcall GetNumberFormatW(long long wstr ptr ptr long)
 @ stdcall GetNumberOfConsoleInputEvents(long ptr)
 @ stdcall GetNumberOfConsoleMouseButtons(ptr)
 @ stdcall GetOEMCP()
