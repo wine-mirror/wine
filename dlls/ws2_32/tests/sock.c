@@ -219,6 +219,17 @@ static void check_poll_(int line, SOCKET s, short mask, short expect, BOOL todo)
     todo_wine_if (todo) ok_(__FILE__, line)(pollfd.revents == expect, "got wrong events %#x\n", pollfd.revents);
 }
 
+static DWORD WINAPI poll_async_thread(void *arg)
+{
+    WSAPOLLFD *pollfd = arg;
+    int ret;
+
+    ret = pWSAPoll(pollfd, 1, 500);
+    ok(ret == (pollfd->revents ? 1 : 0), "WSAPoll() returned %d\n", ret);
+
+    return 0;
+}
+
 static void set_so_opentype ( BOOL overlapped )
 {
     int optval = !overlapped, newval, len = sizeof (int);
@@ -5740,6 +5751,26 @@ static void test_write_events(struct event_test_ctx *ctx)
     closesocket(server);
     closesocket(client);
 
+    /* Select on a subset not containing FD_WRITE first. */
+
+    tcp_socketpair(&client, &server);
+    set_blocking(client, FALSE);
+
+    ret = send(client, "data", 5, 0);
+    ok(ret == 5, "got %d\n", ret);
+
+    select_events(ctx, client, FD_ACCEPT | FD_CONNECT | FD_OOB | FD_READ);
+    if (!ctx->is_message)
+        check_events(ctx, FD_CONNECT, 0, 200);
+    check_events(ctx, 0, 0, 0);
+
+    select_events(ctx, client, FD_ACCEPT | FD_CONNECT | FD_OOB | FD_READ | FD_WRITE);
+    check_events(ctx, FD_WRITE, 0, 200);
+    check_events(ctx, 0, 0, 0);
+
+    closesocket(client);
+    closesocket(server);
+
     /* Despite the documentation, and unlike FD_ACCEPT and FD_RECV, calling
      * send() doesn't clear the FD_WRITE bit. */
 
@@ -5763,9 +5794,11 @@ static void test_read_events(struct event_test_ctx *ctx)
     OVERLAPPED overlapped = {0};
     SOCKET server, client;
     DWORD size, flags = 0;
+    WSAPOLLFD pollfd;
     unsigned int i;
     char buffer[8];
     WSABUF wsabuf;
+    HANDLE thread;
     int ret;
 
     overlapped.hEvent = CreateEventA(NULL, TRUE, FALSE, NULL);
@@ -5843,6 +5876,31 @@ static void test_read_events(struct event_test_ctx *ctx)
     select_events(ctx, server, FD_ACCEPT | FD_CONNECT | FD_OOB | FD_READ);
 
     check_events(ctx, 0, 0, 200);
+
+    /* Send data while we're polling for data but not selecting for FD_READ. */
+
+    pollfd.fd = server;
+    pollfd.events = POLLIN;
+    thread = CreateThread(NULL, 0, poll_async_thread, &pollfd, 0, NULL);
+
+    select_events(ctx, server, 0);
+    ret = send(client, "data", 5, 0);
+    ok(ret == 5, "got %d\n", ret);
+
+    ret = WaitForSingleObject(thread, 1000);
+    ok(!ret, "wait timed out\n");
+    CloseHandle(thread);
+
+    /* And check events, to show that WSAEnumNetworkEvents() should not clear
+     * events we are not currently selecting for. */
+    check_events(ctx, 0, 0, 0);
+
+    select_events(ctx, server, FD_ACCEPT | FD_CONNECT | FD_OOB | FD_READ | FD_WRITE);
+    check_events_todo(ctx, FD_READ, FD_WRITE, 200);
+    check_events(ctx, 0, 0, 0);
+
+    ret = sync_recv(server, buffer, 5, 0);
+    ok(ret == 5, "got %d\n", ret);
 
     /* Send data while there is a pending WSARecv(). */
 
