@@ -233,6 +233,40 @@ sync_test("filter", function() {
     test([true,"b",42,Math,arr[9],"c"], function(v) { return v; }, Object);
 });
 
+sync_test("every & some", function() {
+    ok(Array.prototype.every.length === 1, "every.length = " + Array.prototype.every.length);
+    ok(Array.prototype.some.length === 1, "some.length = " + Array.prototype.some.length);
+    var arr = ["foobar"];
+
+    function test(expect_every, expect_some, fn, expect_this) {
+        var cb = function(v, i, a) {
+            ok(a === arr, "unexpected array " + arr);
+            ok(v === arr[i], "value = " + v + ", expected " + arr[i]);
+            ok(this === (expect_this ? expect_this : window), "this = " + this + ", expected " + expect_this);
+            return fn(v);
+        };
+        r = expect_this ? Array.prototype.every.call(arr, cb, expect_this) : Array.prototype.every.call(arr, cb);
+        ok(r === expect_every, "'every' = " + r);
+        r = expect_this ? Array.prototype.some.call(arr, cb, expect_this) : Array.prototype.some.call(arr, cb);
+        ok(r === expect_some, "'some' = " + r);
+    }
+
+    delete arr[0];
+    test(true, false, function(v) { return false; });
+    test(true, false, function(v) { return true; });
+
+    arr = [1,"2",3];
+    test(true, true, function(v) { return true; });
+    test(true, true, function(v) { if(arr[1] === "2") delete arr[1]; return typeof v === "number"; });
+    test(true, true, function(v) { if(arr[arr.length - 1] !== "a") arr.push("a"); return typeof v === "number"; }, Object);
+    test(false, true, function(v) { return typeof v === "number"; }, Object);
+
+    arr = [0,null,undefined,false];
+    test(false, false, function(v) { return v; });
+    arr.push(1);
+    test(false, true, function(v) { return v; });
+});
+
 sync_test("forEach", function() {
     ok(Array.prototype.forEach.length === 1, "forEach.length = " + Array.prototype.forEach.length);
 

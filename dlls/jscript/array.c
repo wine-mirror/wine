@@ -1414,6 +1414,72 @@ done:
     return hres;
 }
 
+static HRESULT Array_some(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    IDispatch *context_obj = NULL, *callback;
+    jsval_t value, args[3], res;
+    BOOL boolval, ret = FALSE;
+    unsigned length, i;
+    jsdisp_t *jsthis;
+    HRESULT hres;
+
+    TRACE("\n");
+
+    hres = get_length(ctx, vthis, &jsthis, &length);
+    if(FAILED(hres))
+        return hres;
+
+    /* FIXME: check IsCallable */
+    if(!argc || !is_object_instance(argv[0])) {
+        FIXME("Invalid arg %s\n", debugstr_jsval(argc ? argv[0] : jsval_undefined()));
+        hres = E_INVALIDARG;
+        goto done;
+    }
+    callback = get_object(argv[0]);
+
+    if(argc > 1 && !is_undefined(argv[1])) {
+        if(!is_object_instance(argv[1])) {
+            FIXME("Unsupported context this %s\n", debugstr_jsval(argv[1]));
+            hres = E_NOTIMPL;
+            goto done;
+        }
+        context_obj = get_object(argv[1]);
+    }
+
+    for(i = 0; i < length; i++) {
+        hres = jsdisp_get_idx(jsthis, i, &value);
+        if(FAILED(hres)) {
+            if(hres == DISP_E_UNKNOWNNAME)
+                continue;
+            goto done;
+        }
+        args[0] = value;
+        args[1] = jsval_number(i);
+        args[2] = jsval_obj(jsthis);
+        hres = disp_call_value(ctx, callback, context_obj, DISPATCH_METHOD, ARRAY_SIZE(args), args, &res);
+        jsval_release(value);
+        if(FAILED(hres))
+            goto done;
+
+        hres = to_boolean(res, &boolval);
+        jsval_release(res);
+        if(FAILED(hres))
+            goto done;
+        if(boolval) {
+            ret = TRUE;
+            break;
+        }
+    }
+
+    if(r)
+        *r = jsval_bool(ret);
+    hres = S_OK;
+done:
+    jsdisp_release(jsthis);
+    return hres;
+}
+
 /* ECMA-262 3rd Edition    15.4.4.13 */
 static HRESULT Array_unshift(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
@@ -1518,6 +1584,7 @@ static const builtin_prop_t Array_props[] = {
     {L"reverse",               Array_reverse,              PROPF_METHOD},
     {L"shift",                 Array_shift,                PROPF_METHOD},
     {L"slice",                 Array_slice,                PROPF_METHOD|2},
+    {L"some",                  Array_some,                 PROPF_METHOD|PROPF_ES5|1},
     {L"sort",                  Array_sort,                 PROPF_METHOD|1},
     {L"splice",                Array_splice,               PROPF_METHOD|2},
     {L"toLocaleString",        Array_toLocaleString,       PROPF_METHOD},
