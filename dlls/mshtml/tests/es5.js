@@ -205,6 +205,35 @@ sync_test("indexOf", function() {
     expect([1,2,3], [2, 1.9], 1);
 });
 
+sync_test("lastIndexOf", function() {
+    function expect(array, args, exr) {
+        var r = Array.prototype.lastIndexOf.apply(array, args);
+        ok(r == exr, "lastIndexOf returned " + r + " expected " + exr);
+    }
+
+    ok(Array.prototype.lastIndexOf.length == 1, "lastIndexOf.length = " + Array.prototype.lastIndexOf.length);
+
+    expect([1,2,3], [2], 1);
+    expect([1,undefined,3], [undefined], 1);
+    expect([1,undefined,3], [], 1);
+    expect([1,,3], [undefined], -1);
+    expect([1,undefined,undefined], [undefined], 2);
+    expect([1,2,3,2,5,6], [2, 2], 1);
+    expect([1,2,3,2,5,6], [2], 3);
+    expect([1,2,3,2,5,6], [2, -3], 3);
+    expect([1,2,3,2,5,6], [2, -4], 1);
+    expect([1,2,3,2,5,6], [1, -100], -1);
+    expect([1,2,3,2,5,6], [2, 100], 3);
+    expect("abcba", ["b"], 3);
+    expect(true, [true], -1);
+    expect({"4": 4, length: 5}, [4], 4);
+    expect({"4": 4, length: 5}, [undefined], -1);
+    expect({"4": 4, length: 3}, [4], -1);
+    expect({"test": true}, [true], -1);
+    expect([1,2,3], [2, 1.9], 1);
+    expect([1,2,3], [2, 0.9], -1);
+});
+
 sync_test("filter", function() {
     ok(Array.prototype.filter.length === 1, "filter.length = " + Array.prototype.filter.length);
 

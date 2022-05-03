@@ -1277,6 +1277,68 @@ done:
     return hres;
 }
 
+static HRESULT Array_lastIndexOf(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    jsval_t search, value;
+    unsigned i, length;
+    jsdisp_t *jsthis;
+    HRESULT hres;
+    BOOL eq;
+
+    TRACE("\n");
+
+    hres = get_length(ctx, vthis, &jsthis, &length);
+    if(FAILED(hres))
+        return hres;
+    if(!length)
+        goto notfound;
+
+    search = argc ? argv[0] : jsval_undefined();
+
+    i = length - 1;
+    if(argc > 1) {
+        double from_arg;
+
+        hres = to_integer(ctx, argv[1], &from_arg);
+        if(FAILED(hres))
+            goto done;
+
+        if(from_arg >= 0.0)
+            i = min(from_arg, i);
+        else {
+            from_arg += length;
+            if(from_arg < 0.0)
+                goto notfound;
+            i = from_arg;
+        }
+    }
+
+    do {
+        hres = jsdisp_get_idx(jsthis, i, &value);
+        if(hres == DISP_E_UNKNOWNNAME)
+            continue;
+        if(FAILED(hres))
+            goto done;
+
+        hres = jsval_strict_equal(value, search, &eq);
+        jsval_release(value);
+        if(FAILED(hres))
+            goto done;
+        if(eq) {
+            if(r) *r = jsval_number(i);
+            goto done;
+        }
+    } while(i--);
+
+notfound:
+    if(r) *r = jsval_number(-1);
+    hres = S_OK;
+done:
+    jsdisp_release(jsthis);
+    return hres;
+}
+
 static HRESULT Array_map(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     IDispatch *context_this = NULL, *callback;
@@ -1576,6 +1638,7 @@ static const builtin_prop_t Array_props[] = {
     {L"forEach",               Array_forEach,              PROPF_METHOD|PROPF_ES5|1},
     {L"indexOf",               Array_indexOf,              PROPF_METHOD|PROPF_ES5|1},
     {L"join",                  Array_join,                 PROPF_METHOD|1},
+    {L"lastIndexOf",           Array_lastIndexOf,          PROPF_METHOD|PROPF_ES5|1},
     {L"length",                NULL,0,                     Array_get_length, Array_set_length},
     {L"map",                   Array_map,                  PROPF_METHOD|PROPF_ES5|1},
     {L"pop",                   Array_pop,                  PROPF_METHOD},
