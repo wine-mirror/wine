@@ -1271,140 +1271,68 @@ static BOOL HEAP_ValidateFreeArena( SUBHEAP *subheap, ARENA_FREE *pArena )
 }
 
 
-/***********************************************************************
- *           HEAP_ValidateInUseArena
- */
-static BOOL HEAP_ValidateInUseArena( const SUBHEAP *subheap, const ARENA_INUSE *pArena, BOOL quiet )
+static BOOL validate_used_block( const SUBHEAP *subheap, const struct block *block )
 {
-    SIZE_T size;
-    DWORD i, flags = subheap->heap->flags;
-    const char *heapEnd = (const char *)subheap->base + subheap->size;
+    const char *err = NULL, *base = subheap_base( subheap ), *commit_end = subheap_commit_end( subheap );
+    SIZE_T blocks_size = (char *)last_block( subheap ) - (char *)first_block( subheap );
+    const HEAP *heap = subheap->heap;
+    DWORD flags = heap->flags;
+    const struct block *next;
+    int i;
 
-    /* Check for unaligned pointers */
-    if ((ULONG_PTR)pArena % ALIGNMENT != ARENA_OFFSET)
+    if ((ULONG_PTR)(block + 1) % ALIGNMENT)
+        err = "invalid block alignment";
+    else if (!contains( first_block( subheap ), blocks_size, block, sizeof(*block) ))
+        err = "invalid block pointer";
+    else if (block_get_type( block ) != ARENA_INUSE_MAGIC && block_get_type( block ) != ARENA_PENDING_MAGIC)
+        err = "invalid block header";
+    else if (block_get_flags( block ) & ARENA_FLAG_FREE)
+        err = "invalid block flags";
+    else if (!contains( base, commit_end - base, block, block_get_size( block ) ))
+        err = "invalid block size";
+    else if (block->unused_bytes > block_get_size( block ) - sizeof(*block))
+        err = "invalid block unused size";
+    else if ((next = next_block( subheap, block )) && (block_get_flags( next ) & ARENA_FLAG_PREV_FREE))
+        err = "invalid next block flags";
+    else if (block_get_flags( block ) & ARENA_FLAG_PREV_FREE)
     {
-        if ( quiet == NOISY )
-        {
-            ERR( "Heap %p: unaligned arena pointer %p\n", subheap->heap, pArena );
-            if ( TRACE_ON(heap) )
-                heap_dump( subheap->heap );
-        }
-        else if ( WARN_ON(heap) )
-        {
-            WARN( "Heap %p: unaligned arena pointer %p\n", subheap->heap, pArena );
-            if ( TRACE_ON(heap) )
-                heap_dump( subheap->heap );
-        }
-        return FALSE;
+        const struct block *prev = *((struct block **)block - 1);
+        if (!HEAP_IsValidArenaPtr( heap, (struct entry *)prev ))
+            err = "invalid previous block pointer";
+        else if (!(block_get_flags( prev ) & ARENA_FLAG_FREE) || block_get_type( prev ) != ARENA_FREE_MAGIC)
+            err = "invalid previous block flags";
+        if ((char *)prev + block_get_size( prev ) != (char *)block)
+            err = "invalid previous block size";
     }
 
-    /* Check magic number */
-    if (pArena->magic != ARENA_INUSE_MAGIC && pArena->magic != ARENA_PENDING_MAGIC)
+    if (!err && block_get_type( block ) == ARENA_PENDING_MAGIC)
     {
-        if (quiet == NOISY) {
-            ERR("Heap %p: invalid in-use arena magic %08x for %p\n", subheap->heap, pArena->magic, pArena );
-            if (TRACE_ON(heap))
-               heap_dump( subheap->heap );
-        }  else if (WARN_ON(heap)) {
-            WARN("Heap %p: invalid in-use arena magic %08x for %p\n", subheap->heap, pArena->magic, pArena );
-            if (TRACE_ON(heap))
-               heap_dump( subheap->heap );
-        }
-        return FALSE;
-    }
-    /* Check size flags */
-    if (pArena->size & ARENA_FLAG_FREE)
-    {
-        ERR("Heap %p: bad flags %08x for in-use arena %p\n",
-            subheap->heap, pArena->size & ~ARENA_SIZE_MASK, pArena );
-        return FALSE;
-    }
-    /* Check arena size */
-    size = pArena->size & ARENA_SIZE_MASK;
-    if ((const char *)(pArena + 1) + size > heapEnd ||
-        (const char *)(pArena + 1) + size < (const char *)(pArena + 1))
-    {
-        ERR("Heap %p: bad size %08lx for in-use arena %p\n", subheap->heap, size, pArena );
-        return FALSE;
-    }
-    /* Check next arena PREV_FREE flag */
-    if (((const char *)(pArena + 1) + size < heapEnd) &&
-        (*(const DWORD *)((const char *)(pArena + 1) + size) & ARENA_FLAG_PREV_FREE))
-    {
-        ERR("Heap %p: in-use arena %p next block %p has PREV_FREE flag %x\n",
-            subheap->heap, pArena, (const char *)(pArena + 1) + size,*(const DWORD *)((const char *)(pArena + 1) + size) );
-        return FALSE;
-    }
-    /* Check prev free arena */
-    if (pArena->size & ARENA_FLAG_PREV_FREE)
-    {
-        const ARENA_FREE *pPrev = *((const ARENA_FREE * const*)pArena - 1);
-        /* Check prev pointer */
-        if (!HEAP_IsValidArenaPtr( subheap->heap, pPrev ))
+        const char *ptr = (char *)(block + 1), *end = (char *)block + block_get_size( block );
+        while (!err && ptr < end)
         {
-            ERR("Heap %p: bad back ptr %p for arena %p\n",
-                subheap->heap, pPrev, pArena );
-            return FALSE;
-        }
-        /* Check that prev arena is free */
-        if (!(pPrev->size & ARENA_FLAG_FREE) ||
-            (pPrev->magic != ARENA_FREE_MAGIC))
-        {
-            ERR("Heap %p: prev arena %p invalid for in-use %p\n",
-                subheap->heap, pPrev, pArena );
-            return FALSE;
-        }
-        /* Check that prev arena is really the previous block */
-        if ((const char *)(pPrev + 1) + (pPrev->size & ARENA_SIZE_MASK) != (const char *)pArena)
-        {
-            ERR("Heap %p: prev arena %p is not prev for in-use %p\n",
-                subheap->heap, pPrev, pArena );
-            return FALSE;
+            if (*(DWORD *)ptr != ARENA_FREE_FILLER) err = "free block overwritten";
+            ptr += sizeof(DWORD);
         }
     }
-    /* Check unused size */
-    if (pArena->unused_bytes > size)
+    else if (!err && (flags & HEAP_TAIL_CHECKING_ENABLED))
     {
-        ERR("Heap %p: invalid unused size %08x/%08lx\n", subheap->heap, pArena->unused_bytes, size );
-        return FALSE;
+        const unsigned char *tail = (unsigned char *)block + block_get_size( block ) - block->unused_bytes;
+        for (i = 0; !err && i < block->unused_bytes; i++) if (tail[i] != ARENA_TAIL_FILLER) err = "invalid block tail";
     }
-    /* Check unused bytes */
-    if (pArena->magic == ARENA_PENDING_MAGIC)
-    {
-        const DWORD *ptr = (const DWORD *)(pArena + 1);
-        const DWORD *end = (const DWORD *)((const char *)ptr + size);
 
-        while (ptr < end)
-        {
-            if (*ptr != ARENA_FREE_FILLER)
-            {
-                ERR("Heap %p: free block %p overwritten at %p by %08x\n",
-                    subheap->heap, pArena + 1, ptr, *ptr );
-                if (!*ptr) { heap_dump( subheap->heap ); DbgBreakPoint(); }
-                return FALSE;
-            }
-            ptr++;
-        }
-    }
-    else if (flags & HEAP_TAIL_CHECKING_ENABLED)
+    if (err)
     {
-        const unsigned char *data = (const unsigned char *)(pArena + 1) + size - pArena->unused_bytes;
-
-        for (i = 0; i < pArena->unused_bytes; i++)
-        {
-            if (data[i] == ARENA_TAIL_FILLER) continue;
-            ERR("Heap %p: block %p tail overwritten at %p (byte %u/%u == 0x%02x)\n",
-                subheap->heap, pArena + 1, data + i, i, pArena->unused_bytes, data[i] );
-            return FALSE;
-        }
+        ERR( "heap %p, block %p: %s\n", heap, block, err );
+        if (TRACE_ON(heap)) heap_dump( heap );
     }
-    return TRUE;
+
+    return !err;
 }
 
 
 static BOOL heap_validate_ptr( const HEAP *heap, const void *ptr, SUBHEAP **subheap )
 {
-    const ARENA_INUSE *arena = (const ARENA_INUSE *)ptr - 1;
+    const struct block *arena = (struct block *)ptr - 1;
     const ARENA_LARGE *large_arena;
 
     if (!(*subheap = find_subheap( heap, arena )) ||
@@ -1419,7 +1347,7 @@ static BOOL heap_validate_ptr( const HEAP *heap, const void *ptr, SUBHEAP **subh
         return validate_large_arena( heap, large_arena );
     }
 
-    return HEAP_ValidateInUseArena( *subheap, arena, QUIET );
+    return validate_used_block( *subheap, arena );
 }
 
 static BOOL heap_validate( HEAP *heap, BOOL quiet )
@@ -1447,7 +1375,7 @@ static BOOL heap_validate( HEAP *heap, BOOL quiet )
             }
             else
             {
-                if (!HEAP_ValidateInUseArena( subheap, (ARENA_INUSE *)ptr, NOISY )) return FALSE;
+                if (!validate_used_block( subheap, (ARENA_INUSE *)ptr )) return FALSE;
                 ptr += sizeof(ARENA_INUSE) + (*(DWORD *)ptr & ARENA_SIZE_MASK);
             }
         }
