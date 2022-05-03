@@ -39,7 +39,6 @@
 
 #include "wine/debug.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 #include "wine/unixlib.h"
 
 #include "unixlib.h"
@@ -391,7 +390,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **gu
     }
 
     for(i = 0; i < params.num; i++){
-        unsigned int name_size = (strlenW(params.endpoints[i].name) + 1) * sizeof(WCHAR);
+        unsigned int name_size = (wcslen(params.endpoints[i].name) + 1) * sizeof(WCHAR);
         unsigned int dev_size = strlen(params.endpoints[i].device) + 1;
         OSSDevice *oss_dev;
 
