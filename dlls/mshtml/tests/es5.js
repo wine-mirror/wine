@@ -205,6 +205,34 @@ sync_test("indexOf", function() {
     expect([1,2,3], [2, 1.9], 1);
 });
 
+sync_test("filter", function() {
+    ok(Array.prototype.filter.length === 1, "filter.length = " + Array.prototype.filter.length);
+
+    var arr = ["a","foobar",true,"b",42,0,Math,null,undefined,[1,2,3,"4"]];
+    delete arr[1];
+
+    function test(expect, fn, expect_this) {
+        var mismatch = false, r = function(v, i, a) {
+            ok(a === arr, "unexpected array " + arr);
+            ok(v === arr[i], "value = " + v + ", expected " + arr[i]);
+            ok(this === (expect_this ? expect_this : window), "this = " + this + ", expected " + expect_this);
+            return fn(v);
+        };
+        r = expect_this ? Array.prototype.filter.call(arr, r, expect_this) : Array.prototype.filter.call(arr, r);
+        ok(r.length === expect.length, "filtered array length = " + r.length + ", expected " + expect.length);
+        for(var i = 0; i < r.length; i++)
+            if(r[i] !== expect[i])
+                mismatch = true;
+        ok(!mismatch, "filtered array = " + r + ", expected " + expect);
+    }
+
+    test([], function(v) { return false; });
+    test(["a",true,"b",42,0,Math,null,undefined,arr[9]], function(v) { if(arr[1] === "foobar") delete arr[1]; return true; });
+    test(["a","b"], function(v) { if(v === "b") delete arr[0]; return typeof v === "string"; });
+    test(["b"], function(v) { if(arr[arr.length - 1] !== "c") arr.push("c"); return typeof v === "string"; });
+    test([true,"b",42,Math,arr[9],"c"], function(v) { return v; }, Object);
+});
+
 sync_test("forEach", function() {
     ok(Array.prototype.forEach.length === 1, "forEach.length = " + Array.prototype.forEach.length);
 

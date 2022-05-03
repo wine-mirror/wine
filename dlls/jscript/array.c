@@ -1023,6 +1023,80 @@ static HRESULT Array_toLocaleString(script_ctx_t *ctx, jsval_t vthis, WORD flags
     return hres;
 }
 
+static HRESULT Array_filter(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
+        jsval_t *r)
+{
+    IDispatch *context_obj = NULL, *callback;
+    jsval_t value, args[3], res;
+    unsigned length, i, j = 0;
+    jsdisp_t *jsthis, *arr;
+    HRESULT hres;
+    BOOL boolval;
+
+    TRACE("\n");
+
+    hres = get_length(ctx, vthis, &jsthis, &length);
+    if(FAILED(hres))
+        return hres;
+
+    /* FIXME: check IsCallable */
+    if(!argc || !is_object_instance(argv[0])) {
+        FIXME("Invalid arg %s\n", debugstr_jsval(argc ? argv[0] : jsval_undefined()));
+        hres = E_INVALIDARG;
+        goto done;
+    }
+    callback = get_object(argv[0]);
+
+    if(argc > 1 && !is_undefined(argv[1])) {
+        if(!is_object_instance(argv[1])) {
+            FIXME("Unsupported context this %s\n", debugstr_jsval(argv[1]));
+            hres = E_NOTIMPL;
+            goto done;
+        }
+        context_obj = get_object(argv[1]);
+    }
+
+    hres = create_array(ctx, 0, &arr);
+    if(FAILED(hres))
+        goto done;
+
+    for(i = 0; i < length; i++) {
+        hres = jsdisp_get_idx(jsthis, i, &value);
+        if(FAILED(hres)) {
+            if(hres == DISP_E_UNKNOWNNAME) {
+                hres = S_OK;
+                continue;
+            }
+            break;
+        }
+        args[0] = value;
+        args[1] = jsval_number(i);
+        args[2] = jsval_obj(jsthis);
+        hres = disp_call_value(ctx, callback, context_obj, DISPATCH_METHOD, ARRAY_SIZE(args), args, &res);
+        if(SUCCEEDED(hres)) {
+            hres = to_boolean(res, &boolval);
+            jsval_release(res);
+            if(SUCCEEDED(hres) && boolval)
+                hres = jsdisp_propput_idx(arr, j++, value);
+        }
+        jsval_release(value);
+        if(FAILED(hres))
+            break;
+    }
+
+    if(FAILED(hres)) {
+        jsdisp_release(arr);
+        goto done;
+    }
+    set_length(arr, j);
+
+    if(r)
+        *r = jsval_obj(arr);
+done:
+    jsdisp_release(jsthis);
+    return hres;
+}
+
 static HRESULT Array_forEach(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
@@ -1365,6 +1439,7 @@ static void Array_on_put(jsdisp_t *dispex, const WCHAR *name)
 
 static const builtin_prop_t Array_props[] = {
     {L"concat",                Array_concat,               PROPF_METHOD|1},
+    {L"filter",                Array_filter,               PROPF_METHOD|PROPF_ES5|1},
     {L"forEach",               Array_forEach,              PROPF_METHOD|PROPF_ES5|1},
     {L"indexOf",               Array_indexOf,              PROPF_METHOD|PROPF_ES5|1},
     {L"join",                  Array_join,                 PROPF_METHOD|1},
