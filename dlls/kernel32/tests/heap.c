@@ -2435,9 +2435,7 @@ static void test_heap_layout( HANDLE handle, DWORD global_flag, DWORD heap_flags
     if (global_flag & FLG_HEAP_ENABLE_TAGGING) heap_flags |= HEAP_SHARED;
     if (!(global_flag & FLG_HEAP_PAGE_ALLOCS)) force_flags &= ~(HEAP_GROWABLE|HEAP_PRIVATE);
 
-    todo_wine_if( (heap->force_flags & ~heap_flags) & (HEAP_TAIL_CHECKING_ENABLED|HEAP_FREE_CHECKING_ENABLED) )
     ok( heap->force_flags == force_flags, "got force_flags %#x\n", heap->force_flags );
-    todo_wine_if( (heap->flags & ~heap_flags) & (HEAP_TAIL_CHECKING_ENABLED|HEAP_FREE_CHECKING_ENABLED) )
     ok( heap->flags == heap_flags, "got flags %#x\n", heap->flags );
 
     if (heap->flags & HEAP_PAGE_ALLOCS)

@@ -1570,6 +1570,7 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, PVOID addr, SIZE_T totalSize, SIZE_T c
 
     /* Allocate the heap block */
 
+    flags &= ~(HEAP_TAIL_CHECKING_ENABLED|HEAP_FREE_CHECKING_ENABLED);
     if (processHeap) flags |= HEAP_PRIVATE;
     if (!processHeap || !totalSize || (flags & HEAP_SHARED)) flags |= HEAP_GROWABLE;
     if (!totalSize) totalSize = HEAP_DEF_SIZE;
