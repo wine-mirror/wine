@@ -1646,17 +1646,16 @@ BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE heap, ULONG flags, void *pt
 
 static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size, void **ret )
 {
-    struct block *next;
-    ARENA_INUSE *pArena;
+    SIZE_T old_data_size, old_size, data_size;
+    struct block *next, *block;
     SUBHEAP *subheap;
-    SIZE_T oldBlockSize, oldActualSize, rounded_size;
     NTSTATUS status;
 
-    rounded_size = ROUND_SIZE(size) + HEAP_TAIL_EXTRA_SIZE(flags);
-    if (rounded_size < size) return STATUS_NO_MEMORY;  /* overflow */
-    if (rounded_size < HEAP_MIN_DATA_SIZE) rounded_size = HEAP_MIN_DATA_SIZE;
+    data_size = ROUND_SIZE(size) + HEAP_TAIL_EXTRA_SIZE(flags);
+    if (data_size < size) return STATUS_NO_MEMORY;  /* overflow */
+    if (data_size < HEAP_MIN_DATA_SIZE) data_size = HEAP_MIN_DATA_SIZE;
 
-    if (!(pArena = unsafe_block_from_ptr( heap, ptr, &subheap ))) return STATUS_INVALID_PARAMETER;
+    if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap ))) return STATUS_INVALID_PARAMETER;
     if (!subheap)
     {
         if (!(*ret = realloc_large_block( heap, flags, ptr, size ))) return STATUS_NO_MEMORY;
@@ -1665,49 +1664,46 @@ static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size
 
     /* Check if we need to grow the block */
 
-    oldBlockSize = (pArena->size & ARENA_SIZE_MASK);
-    oldActualSize = (pArena->size & ARENA_SIZE_MASK) - pArena->unused_bytes;
-    if (rounded_size > oldBlockSize)
+    old_data_size = (block->size & ARENA_SIZE_MASK);
+    old_size = (block->size & ARENA_SIZE_MASK) - block->unused_bytes;
+    if (data_size > old_data_size)
     {
-        if ((next = next_block( subheap, pArena )) && (block_get_flags( next ) & ARENA_FLAG_FREE) &&
-            rounded_size < HEAP_MIN_LARGE_BLOCK_SIZE && rounded_size <= oldBlockSize + block_get_size( next ))
+        if ((next = next_block( subheap, block )) && (block_get_flags( next ) & ARENA_FLAG_FREE) &&
+            data_size < HEAP_MIN_LARGE_BLOCK_SIZE && data_size <= old_data_size + block_get_size( next ))
         {
             /* The next block is free and large enough */
             struct entry *entry = (struct entry *)next;
             list_remove( &entry->entry );
-            pArena->size += block_get_size( next );
-            if (!HEAP_Commit( subheap, pArena, rounded_size )) return STATUS_NO_MEMORY;
-            notify_realloc( pArena + 1, oldActualSize, size );
-            shrink_used_block( subheap, pArena, rounded_size, size );
+            block->size += block_get_size( next );
+            if (!HEAP_Commit( subheap, block, data_size )) return STATUS_NO_MEMORY;
+            notify_realloc( block + 1, old_size, size );
+            shrink_used_block( subheap, block, data_size, size );
         }
         else
         {
             if (flags & HEAP_REALLOC_IN_PLACE_ONLY) return STATUS_NO_MEMORY;
             if ((status = heap_allocate( heap, flags & ~HEAP_ZERO_MEMORY, size, ret ))) return status;
-            memcpy( *ret, pArena + 1, oldActualSize );
-            if (flags & HEAP_ZERO_MEMORY) memset( (char *)*ret + oldActualSize, 0, size - oldActualSize );
-            notify_free( pArena + 1 );
-            HEAP_MakeInUseBlockFree( subheap, pArena );
+            memcpy( *ret, block + 1, old_size );
+            if (flags & HEAP_ZERO_MEMORY) memset( (char *)*ret + old_size, 0, size - old_size );
+            notify_free( ptr );
+            HEAP_MakeInUseBlockFree( subheap, block );
             return STATUS_SUCCESS;
         }
     }
     else
     {
-        notify_realloc( pArena + 1, oldActualSize, size );
-        shrink_used_block( subheap, pArena, rounded_size, size );
+        notify_realloc( block + 1, old_size, size );
+        shrink_used_block( subheap, block, data_size, size );
     }
 
     /* Clear the extra bytes if needed */
 
-    if (size > oldActualSize)
-        initialize_block( (char *)(pArena + 1) + oldActualSize, size - oldActualSize,
-                          pArena->unused_bytes, flags );
-    else
-        mark_block_tail( (char *)(pArena + 1) + size, pArena->unused_bytes, flags );
+    if (size <= old_size) mark_block_tail( (char *)(block + 1) + size, block->unused_bytes, flags );
+    else initialize_block( (char *)(block + 1) + old_size, size - old_size, block->unused_bytes, flags );
 
     /* Return the new arena */
 
-    *ret = pArena + 1;
+    *ret = block + 1;
     return STATUS_SUCCESS;
 }
 
