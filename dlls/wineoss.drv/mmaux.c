@@ -33,9 +33,9 @@
 #include "winbase.h"
 #include "mmddk.h"
 #include "audioclient.h"
+#include "winternl.h"
 
 #include "wine/debug.h"
-#include "wine/unicode.h"
 #include "wine/unixlib.h"
 
 #include "unixlib.h"
@@ -45,44 +45,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(mmaux);
 #define MIXER_DEV "/dev/mixer"
 
 /*-----------------------------------------------------------------------*/
-
-DWORD WINAPI OSS_auxMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
-			    DWORD_PTR dwParam1, DWORD_PTR dwParam2);
-
-/**************************************************************************
- * 				AUX_GetDevCaps			[internal]
- */
-static DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPSW lpCaps, DWORD dwSize)
-{
-    int 	mixer, volume;
-    static const WCHAR ini[] = {'O','S','S',' ','A','u','x',' ','#','0',0};
-    unsigned int num_aux = OSS_auxMessage(0, AUXDM_GETNUMDEVS, 0, 0, 0);
-
-    TRACE("(%04X, %p, %u);\n", wDevID, lpCaps, dwSize);
-    if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
-    if (wDevID >= num_aux) return MMSYSERR_BADDEVICEID;
-    if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
-	WARN("mixer device not available !\n");
-	return MMSYSERR_NOTENABLED;
-    }
-    if (ioctl(mixer, SOUND_MIXER_READ_LINE, &volume) == -1) {
-	close(mixer);
-	WARN("unable to read mixer !\n");
-	return MMSYSERR_NOTENABLED;
-    }
-    close(mixer);
-    lpCaps->wMid = 0xAA;
-    lpCaps->wPid = 0x55 + wDevID;
-    lpCaps->vDriverVersion = 0x0100;
-    strcpyW(lpCaps->szPname, ini);
-    lpCaps->szPname[9] = '0' + wDevID; /* 6  at max */
-    lpCaps->wTechnology = wDevID == 2 ? AUXCAPS_CDAUDIO : AUXCAPS_AUXIN;
-    lpCaps->wReserved1 = 0;
-    lpCaps->dwSupport = AUXCAPS_VOLUME | AUXCAPS_LRVOLUME;
-
-    return MMSYSERR_NOERROR;
-}
-
 
 /**************************************************************************
  * 				AUX_GetVolume			[internal]
@@ -212,8 +174,6 @@ DWORD WINAPI OSS_auxMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
-    case AUXDM_GETDEVCAPS:
-	return AUX_GetDevCaps(wDevID, (LPAUXCAPSW)dwParam1, dwParam2);
     case AUXDM_GETVOLUME:
 	return AUX_GetVolume(wDevID, (LPDWORD)dwParam1);
     case AUXDM_SETVOLUME:

@@ -1412,6 +1412,38 @@ static UINT aux_exit(void)
     return 0;
 }
 
+static UINT aux_get_devcaps(WORD dev_id, AUXCAPSW *caps, UINT size)
+{
+    int mixer, volume;
+    static const WCHAR ini[] = {'O','S','S',' ','A','u','x',' ','#','0',0};
+
+    TRACE("(%04X, %p, %u);\n", dev_id, caps, size);
+    if (caps == NULL) return MMSYSERR_NOTENABLED;
+    if (dev_id >= num_aux) return MMSYSERR_BADDEVICEID;
+    if ((mixer = open(MIXER_DEV, O_RDWR)) < 0)
+    {
+        WARN("mixer device not available !\n");
+        return MMSYSERR_NOTENABLED;
+    }
+    if (ioctl(mixer, SOUND_MIXER_READ_LINE, &volume) == -1)
+    {
+        close(mixer);
+        WARN("unable to read mixer !\n");
+        return MMSYSERR_NOTENABLED;
+    }
+    close(mixer);
+    caps->wMid = 0xAA;
+    caps->wPid = 0x55 + dev_id;
+    caps->vDriverVersion = 0x0100;
+    memcpy(caps->szPname, ini, sizeof(ini));
+    caps->szPname[9] = '0' + dev_id; /* 6  at max */
+    caps->wTechnology = (dev_id == 2) ? AUXCAPS_CDAUDIO : AUXCAPS_AUXIN;
+    caps->wReserved1 = 0;
+    caps->dwSupport = AUXCAPS_VOLUME | AUXCAPS_LRVOLUME;
+
+    return MMSYSERR_NOERROR;
+}
+
 static NTSTATUS aux_message(void *args)
 {
     struct aux_message_params *params = args;
@@ -1428,6 +1460,9 @@ static NTSTATUS aux_message(void *args)
     case DRVM_DISABLE:
         /* FIXME: Pretend this is supported */
         *params->err = 0;
+        break;
+    case AUXDM_GETDEVCAPS:
+        *params->err = aux_get_devcaps(params->dev_id, (AUXCAPSW *)params->param_1, params->param_2);
         break;
     case AUXDM_GETNUMDEVS:
         TRACE("return %d;\n", num_aux);
