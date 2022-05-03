@@ -76,6 +76,21 @@ static void set_blocking(SOCKET s, ULONG blocking)
     ok(!ret, "got error %u\n", WSAGetLastError());
 }
 
+/* Set the linger timeout to zero and close the socket. This will trigger an
+ * RST on the connection on Windows as well as on Unix systems. */
+static void close_with_rst(SOCKET s)
+{
+    static const struct linger linger = {.l_onoff = 1};
+    int ret;
+
+    SetLastError(0xdeadbeef);
+    ret = setsockopt(s, SOL_SOCKET, SO_LINGER, (const char *)&linger, sizeof(linger));
+    ok(!ret, "got %d\n", ret);
+    ok(!GetLastError(), "got error %lu\n", GetLastError());
+
+    closesocket(s);
+}
+
 static void test_open_device(void)
 {
     OBJECT_BASIC_INFORMATION info;
@@ -142,7 +157,8 @@ static void check_poll_(int line, SOCKET s, HANDLE event, int mask, int expect, 
     ok_(__FILE__, line)(out_params.count == 1, "got count %u\n", out_params.count);
     ok_(__FILE__, line)(out_params.sockets[0].socket == s, "got socket %#Ix\n", out_params.sockets[0].socket);
     todo_wine_if (todo) ok_(__FILE__, line)(out_params.sockets[0].flags == expect, "got flags %#x\n", out_params.sockets[0].flags);
-    ok_(__FILE__, line)(!out_params.sockets[0].status, "got status %#x\n", out_params.sockets[0].status);
+    todo_wine_if (expect & AFD_POLL_RESET)
+        ok_(__FILE__, line)(!out_params.sockets[0].status, "got status %#x\n", out_params.sockets[0].status);
 }
 
 static void test_poll(void)
@@ -1311,6 +1327,50 @@ static void test_poll_completion_port(void)
     CloseHandle(event);
 }
 
+static void test_poll_reset(void)
+{
+    char in_buffer[offsetof(struct afd_poll_params, sockets[3])];
+    char out_buffer[offsetof(struct afd_poll_params, sockets[3])];
+    struct afd_poll_params *in_params = (struct afd_poll_params *)in_buffer;
+    struct afd_poll_params *out_params = (struct afd_poll_params *)out_buffer;
+    SOCKET client, server;
+    IO_STATUS_BLOCK io;
+    ULONG params_size;
+    HANDLE event;
+    int ret;
+
+    memset(in_buffer, 0, sizeof(in_buffer));
+    memset(out_buffer, 0, sizeof(out_buffer));
+    event = CreateEventW(NULL, TRUE, FALSE, NULL);
+    tcp_socketpair(&client, &server);
+
+    in_params->timeout = -1000 * 10000;
+    in_params->count = 1;
+    in_params->sockets[0].socket = client;
+    in_params->sockets[0].flags = ~(AFD_POLL_WRITE | AFD_POLL_CONNECT);
+    params_size = offsetof(struct afd_poll_params, sockets[1]);
+
+    ret = NtDeviceIoControlFile((HANDLE)client, event, NULL, NULL, &io,
+            IOCTL_AFD_POLL, in_params, params_size, out_params, params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    close_with_rst(server);
+
+    ret = WaitForSingleObject(event, 100);
+    ok(!ret, "got %#x\n", ret);
+    ok(!io.Status, "got %#lx\n", io.Status);
+    ok(io.Information == offsetof(struct afd_poll_params, sockets[1]), "got %#Ix\n", io.Information);
+    ok(out_params->count == 1, "got count %u\n", out_params->count);
+    ok(out_params->sockets[0].socket == client, "got socket %#Ix\n", out_params->sockets[0].socket);
+    todo_wine ok(out_params->sockets[0].flags == AFD_POLL_RESET, "got flags %#x\n", out_params->sockets[0].flags);
+    ok(!out_params->sockets[0].status, "got status %#x\n", out_params->sockets[0].status);
+
+    check_poll_todo(client, event, AFD_POLL_WRITE | AFD_POLL_CONNECT | AFD_POLL_RESET);
+
+    closesocket(client);
+    CloseHandle(event);
+}
+
 static void test_recv(void)
 {
     const struct sockaddr_in bind_addr = {.sin_family = AF_INET, .sin_addr.s_addr = htonl(INADDR_LOOPBACK)};
@@ -1914,6 +1974,56 @@ static void test_get_events(void)
     CloseHandle(event);
 }
 
+static void test_get_events_reset(void)
+{
+    struct afd_get_events_params params;
+    SOCKET client, server;
+    IO_STATUS_BLOCK io;
+    unsigned int i;
+    HANDLE event;
+    int ret;
+
+    event = CreateEventW(NULL, TRUE, FALSE, NULL);
+
+    tcp_socketpair(&client, &server);
+
+    ret = WSAEventSelect(client, event, FD_ACCEPT | FD_CONNECT | FD_CLOSE | FD_OOB | FD_READ | FD_WRITE);
+    ok(!ret, "got error %lu\n", GetLastError());
+
+    close_with_rst(server);
+
+    memset(&params, 0xcc, sizeof(params));
+    memset(&io, 0xcc, sizeof(io));
+    ret = NtDeviceIoControlFile((HANDLE)client, NULL, NULL, NULL, &io,
+            IOCTL_AFD_GET_EVENTS, NULL, 0, &params, sizeof(params));
+    ok(!ret, "got %#x\n", ret);
+    todo_wine ok(params.flags == (AFD_POLL_RESET | AFD_POLL_CONNECT | AFD_POLL_WRITE), "got flags %#x\n", params.flags);
+    for (i = 0; i < ARRAY_SIZE(params.status); ++i)
+        ok(!params.status[i], "got status[%u] %#x\n", i, params.status[i]);
+
+    closesocket(client);
+
+    tcp_socketpair(&client, &server);
+
+    ret = WSAEventSelect(server, event, FD_ACCEPT | FD_CONNECT | FD_CLOSE | FD_OOB | FD_READ | FD_WRITE);
+    ok(!ret, "got error %lu\n", GetLastError());
+
+    close_with_rst(client);
+
+    memset(&params, 0xcc, sizeof(params));
+    memset(&io, 0xcc, sizeof(io));
+    ret = NtDeviceIoControlFile((HANDLE)server, NULL, NULL, NULL, &io,
+            IOCTL_AFD_GET_EVENTS, NULL, 0, &params, sizeof(params));
+    ok(!ret, "got %#x\n", ret);
+    todo_wine ok(params.flags == (AFD_POLL_RESET | AFD_POLL_WRITE), "got flags %#x\n", params.flags);
+    for (i = 0; i < ARRAY_SIZE(params.status); ++i)
+        ok(!params.status[i], "got status[%u] %#x\n", i, params.status[i]);
+
+    closesocket(server);
+
+    CloseHandle(event);
+}
+
 static void test_bind(void)
 {
     const struct sockaddr_in6 bind_addr6 = {.sin6_family = AF_INET6, .sin6_addr.s6_words = {0, 0, 0, 0, 0, 0, 0, htons(1)}};
@@ -2255,9 +2365,11 @@ START_TEST(afd)
     test_poll();
     test_poll_exclusive();
     test_poll_completion_port();
+    test_poll_reset();
     test_recv();
     test_event_select();
     test_get_events();
+    test_get_events_reset();
     test_bind();
     test_getsockname();
 
