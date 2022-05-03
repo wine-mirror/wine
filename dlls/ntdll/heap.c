@@ -94,9 +94,8 @@ C_ASSERT( sizeof(struct block) == 8 );
 
 typedef struct entry
 {
-    DWORD                 size;     /* Block size; must be the first field */
-    DWORD                 magic;    /* Magic number */
-    struct list           entry;    /* Entry in free list */
+    struct block block;
+    struct list entry;
 } ARENA_FREE;
 
 typedef struct
@@ -972,8 +971,8 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         list_init( &heap->freeList[0].arena.entry );
         for (i = 0, pEntry = heap->freeList; i < HEAP_NB_FREE_LISTS; i++, pEntry++)
         {
-            pEntry->arena.size = BLOCK_FLAG_FREE_LINK;
-            pEntry->arena.magic = ARENA_FREE_MAGIC;
+            block_set_size( &pEntry->arena.block, BLOCK_FLAG_FREE_LINK, 0 );
+            block_set_type( &pEntry->arena.block, ARENA_FREE_MAGIC );
             if (i) list_add_after( &pEntry[-1].arena.entry, &pEntry->arena.entry );
         }
 
@@ -1080,7 +1079,7 @@ static BOOL is_valid_free_block( const HEAP *heap, const struct block *block )
 
     if ((subheap = find_subheap( heap, block, FALSE ))) return TRUE;
     if (block_get_flags( block ) != BLOCK_FLAG_FREE_LINK) return FALSE;
-    for (i = 0; i < HEAP_NB_FREE_LISTS; i++) if (block == (struct block *)&heap->freeList[i].arena) return TRUE;
+    for (i = 0; i < HEAP_NB_FREE_LISTS; i++) if (block == &heap->freeList[i].arena.block) return TRUE;
     return FALSE;
 }
 
