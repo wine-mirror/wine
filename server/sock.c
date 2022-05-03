@@ -2516,7 +2516,7 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         for (i = 0; i < ARRAY_SIZE( params.status ); ++i)
             params.status[i] = sock_get_ntstatus( sock->errors[i] );
 
-        sock->pending_events = 0;
+        sock->pending_events &= ~sock->mask;
         sock_reselect( sock );
 
         set_reply_data( &params, sizeof(params) );
