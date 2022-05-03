@@ -76,12 +76,12 @@ struct rtl_heap_entry
 
 #define ALIGNMENT (2 * sizeof(void *))
 
-typedef struct block
+struct block
 {
     DWORD  size;                    /* Block size; must be the first field */
     DWORD  magic : 24;              /* Magic number */
     DWORD  unused_bytes : 8;        /* Number of bytes in the block not used by user data (max value is HEAP_MIN_DATA_SIZE+HEAP_MIN_SHRINK_SIZE) */
-} ARENA_INUSE;
+};
 
 C_ASSERT( sizeof(struct block) == 8 );
 
@@ -127,7 +127,7 @@ typedef struct
 
 /* everything is aligned on 8 byte boundaries (16 for Win64) */
 #define LARGE_ALIGNMENT        16  /* large blocks have stricter alignment */
-#define ARENA_OFFSET           (ALIGNMENT - sizeof(ARENA_INUSE))
+#define ARENA_OFFSET           (ALIGNMENT - sizeof(struct block))
 #define COMMIT_MASK            0xffff  /* bitmask for commit/decommit granularity */
 
 C_ASSERT( sizeof(ARENA_LARGE) % LARGE_ALIGNMENT == 0 );
@@ -138,7 +138,7 @@ C_ASSERT( sizeof(ARENA_LARGE) % LARGE_ALIGNMENT == 0 );
 /* minimum data size (without arenas) of an allocated block */
 /* make sure that it's larger than a free list entry */
 #define HEAP_MIN_DATA_SIZE    ROUND_SIZE(2 * sizeof(struct list))
-#define HEAP_MIN_BLOCK_SIZE   (HEAP_MIN_DATA_SIZE + sizeof(ARENA_INUSE))
+#define HEAP_MIN_BLOCK_SIZE   (HEAP_MIN_DATA_SIZE + sizeof(struct block))
 /* minimum size that must remain to shrink an allocated block */
 #define HEAP_MIN_SHRINK_SIZE  (HEAP_MIN_DATA_SIZE+sizeof(struct entry))
 /* minimum size to start allocating large blocks */
@@ -195,7 +195,7 @@ typedef struct tagHEAP
     SIZE_T           min_size;      /* Minimum committed size */
     DWORD            magic;         /* Magic number */
     DWORD            pending_pos;   /* Position in pending free requests ring */
-    ARENA_INUSE    **pending_free;  /* Ring buffer for pending free requests */
+    struct block   **pending_free;  /* Ring buffer for pending free requests */
     RTL_CRITICAL_SECTION cs;
     struct entry     free_lists[HEAP_NB_FREE_LISTS];
     SUBHEAP          subheap;
@@ -1528,7 +1528,7 @@ void *WINAPI DECLSPEC_HOTPATCH RtlAllocateHeap( HANDLE heap, ULONG flags, SIZE_T
 
 static NTSTATUS heap_free( HEAP *heap, void *ptr )
 {
-    ARENA_INUSE *block;
+    struct block *block;
     SUBHEAP *subheap;
 
     if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap ))) return STATUS_INVALID_PARAMETER;
@@ -1716,7 +1716,7 @@ BOOLEAN WINAPI RtlUnlockHeap( HANDLE heap )
 
 static NTSTATUS heap_size( HEAP *heap, const void *ptr, SIZE_T *size )
 {
-    const ARENA_INUSE *block;
+    const struct block *block;
     SUBHEAP *subheap;
 
     if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap ))) return STATUS_INVALID_PARAMETER;
