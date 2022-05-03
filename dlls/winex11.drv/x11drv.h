@@ -846,6 +846,8 @@ static inline BOOL is_window_rect_mapped( const RECT *rect )
 extern NTSTATUS x11drv_init( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_clipboard_message( void *arg ) DECLSPEC_HIDDEN;
 
+extern NTSTATUS WINAPI x11drv_post_drop( void *data, ULONG size ) DECLSPEC_HIDDEN;
+
 /* GDI helpers */
 
 static inline BOOL lp_to_dp( HDC hdc, POINT *points, INT count )

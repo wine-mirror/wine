@@ -1478,16 +1478,8 @@ static HWND find_drop_window( HWND hQueryWnd, LPPOINT lpPt )
 
 static void post_drop( HWND hwnd, DROPFILES *drop, ULONG size )
 {
-    HDROP handle;
-
-    if ((handle = GlobalAlloc( GMEM_SHARE, size )))
-    {
-        DROPFILES *ptr = GlobalLock( handle );
-        memcpy( ptr, drop, size );
-        ptr->fWide = TRUE;
-        GlobalUnlock( handle );
-        PostMessageW( hwnd, WM_DROPFILES, (WPARAM)handle, 0 );
-    }
+    drop->fWide = HandleToUlong( hwnd ); /* abuse fWide to pass window handle */
+    x11drv_post_drop( drop, size );
 }
 
 /**********************************************************************

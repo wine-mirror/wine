@@ -748,3 +748,21 @@ UINT handle_dnd_event( void *params )
         return 0;
     }
 }
+
+NTSTATUS WINAPI x11drv_post_drop( void *data, ULONG size )
+{
+    HDROP handle;
+
+    if ((handle = GlobalAlloc( GMEM_SHARE, size )))
+    {
+        DROPFILES *ptr = GlobalLock( handle );
+        HWND hwnd;
+        memcpy( ptr, data, size );
+        hwnd = UlongToHandle( ptr->fWide );
+        ptr->fWide = TRUE;
+        GlobalUnlock( handle );
+        PostMessageW( hwnd, WM_DROPFILES, (WPARAM)handle, 0 );
+    }
+
+    return 0;
+}
