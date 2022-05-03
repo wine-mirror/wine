@@ -333,7 +333,7 @@ static RTL_CRITICAL_SECTION_DEBUG process_heap_cs_debug =
 
 static inline ULONG heap_get_flags( const HEAP *heap, ULONG flags )
 {
-    flags &= HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY;
+    flags &= HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY | HEAP_REALLOC_IN_PLACE_ONLY;
     return heap->flags | flags;
 }
 
@@ -1767,53 +1767,23 @@ BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE heap, ULONG flags, void *pt
 }
 
 
-/***********************************************************************
- *           RtlReAllocateHeap   (NTDLL.@)
- *
- * Change the size of a memory block allocated with RtlAllocateHeap().
- *
- * PARAMS
- *  heap  [I] Heap that block was allocated from
- *  flags [I] HEAP_ flags from "winnt.h"
- *  ptr   [I] Block to resize
- *  size  [I] Size of the memory block to allocate
- *
- * RETURNS
- *  Success: A pointer to the resized block (which may be different).
- *  Failure: NULL.
- */
-PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size )
+static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size, void **ret )
 {
     ARENA_INUSE *pArena;
-    HEAP *heapPtr;
     SUBHEAP *subheap;
     SIZE_T oldBlockSize, oldActualSize, rounded_size;
-    void *ret;
-
-    if (!ptr) return NULL;
-    if (!(heapPtr = HEAP_GetPtr( heap )))
-    {
-        RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_HANDLE );
-        return NULL;
-    }
-
-    /* Validate the parameters */
-
-    flags &= HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY |
-             HEAP_REALLOC_IN_PLACE_ONLY;
-    flags |= heapPtr->flags;
-    heap_lock( heapPtr, flags );
 
     rounded_size = ROUND_SIZE(size) + HEAP_TAIL_EXTRA_SIZE(flags);
-    if (rounded_size < size) goto oom;  /* overflow */
+    if (rounded_size < size) return STATUS_NO_MEMORY;  /* overflow */
     if (rounded_size < HEAP_MIN_DATA_SIZE) rounded_size = HEAP_MIN_DATA_SIZE;
 
     pArena = (ARENA_INUSE *)ptr - 1;
-    if (!validate_block_pointer( heapPtr, &subheap, pArena )) goto error;
+    if (!validate_block_pointer( heap, &subheap, pArena )) return STATUS_INVALID_PARAMETER;
+
     if (!subheap)
     {
-        if (!(ret = realloc_large_block( heapPtr, flags, ptr, size ))) goto oom;
-        goto done;
+        if (!(*ret = realloc_large_block( heap, flags, ptr, size ))) return STATUS_NO_MEMORY;
+        return STATUS_SUCCESS;
     }
 
     /* Check if we need to grow the block */
@@ -1826,12 +1796,12 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
 
         if (rounded_size >= HEAP_MIN_LARGE_BLOCK_SIZE && (flags & HEAP_GROWABLE))
         {
-            if (flags & HEAP_REALLOC_IN_PLACE_ONLY) goto oom;
-            if (!(ret = allocate_large_block( heapPtr, flags, size ))) goto oom;
-            memcpy( ret, pArena + 1, oldActualSize );
+            if (flags & HEAP_REALLOC_IN_PLACE_ONLY) return STATUS_NO_MEMORY;
+            if (!(*ret = allocate_large_block( heap, flags, size ))) return STATUS_NO_MEMORY;
+            memcpy( *ret, pArena + 1, oldActualSize );
             notify_free( pArena + 1 );
             HEAP_MakeInUseBlockFree( subheap, pArena );
-            goto done;
+            return STATUS_SUCCESS;
         }
         if ((pNext < (char *)subheap->base + subheap->size) &&
             (*(DWORD *)pNext & ARENA_FLAG_FREE) &&
@@ -1841,7 +1811,7 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
             ARENA_FREE *pFree = (ARENA_FREE *)pNext;
             list_remove( &pFree->entry );
             pArena->size += (pFree->size & ARENA_SIZE_MASK) + sizeof(*pFree);
-            if (!HEAP_Commit( subheap, pArena, rounded_size )) goto oom;
+            if (!HEAP_Commit( subheap, pArena, rounded_size )) return STATUS_NO_MEMORY;
             notify_realloc( pArena + 1, oldActualSize, size );
             HEAP_ShrinkBlock( subheap, pArena, rounded_size );
         }
@@ -1851,9 +1821,8 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
             ARENA_INUSE *pInUse;
             SUBHEAP *newsubheap;
 
-            if ((flags & HEAP_REALLOC_IN_PLACE_ONLY) ||
-                !(pNew = HEAP_FindFreeBlock( heapPtr, rounded_size, &newsubheap )))
-                goto oom;
+            if (flags & HEAP_REALLOC_IN_PLACE_ONLY) return STATUS_NO_MEMORY;
+            if (!(pNew = HEAP_FindFreeBlock( heap, rounded_size, &newsubheap ))) return STATUS_NO_MEMORY;
 
             /* Build the in-use arena */
 
@@ -1894,24 +1863,33 @@ PVOID WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, PVOID ptr, SIZE_T size
 
     /* Return the new arena */
 
-    ret = pArena + 1;
-done:
-    heap_unlock( heapPtr, flags );
-    TRACE("(%p,%08x,%p,%08lx): returning %p\n", heap, flags, ptr, size, ret );
+    *ret = pArena + 1;
+    return STATUS_SUCCESS;
+}
+
+/***********************************************************************
+ *           RtlReAllocateHeap   (NTDLL.@)
+ */
+void *WINAPI RtlReAllocateHeap( HANDLE heap, ULONG flags, void *ptr, SIZE_T size )
+{
+    void *ret = NULL;
+    NTSTATUS status;
+    HEAP *heapPtr;
+
+    if (!ptr) return NULL;
+
+    if (!(heapPtr = HEAP_GetPtr( heap )))
+        status = STATUS_INVALID_HANDLE;
+    else
+    {
+        heap_lock( heapPtr, flags );
+        status = heap_reallocate( heapPtr, heap_get_flags( heapPtr, flags ), ptr, size, &ret );
+        heap_unlock( heapPtr, flags );
+    }
+
+    TRACE( "heap %p, flags %#x, ptr %p, size %#Ix, return %p, status %#x.\n", heap, flags, ptr, size, ret, status );
+    heap_set_status( heap, flags, status );
     return ret;
-
-oom:
-    heap_unlock( heapPtr, flags );
-    if (flags & HEAP_GENERATE_EXCEPTIONS) RtlRaiseStatus( STATUS_NO_MEMORY );
-    RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_NO_MEMORY );
-    TRACE("(%p,%08x,%p,%08lx): returning NULL\n", heap, flags, ptr, size );
-    return NULL;
-
-error:
-    heap_unlock( heapPtr, flags );
-    RtlSetLastWin32ErrorAndNtStatusFromNtStatus( STATUS_INVALID_PARAMETER );
-    TRACE("(%p,%08x,%p,%08lx): returning NULL\n", heap, flags, ptr, size );
-    return NULL;
 }
 
 
