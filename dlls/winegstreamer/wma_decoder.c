@@ -29,6 +29,7 @@
 #include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(wmadec);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 static const GUID *const wma_decoder_input_types[] =
 {
@@ -872,7 +873,7 @@ HRESULT wma_decoder_create(IUnknown *outer, IUnknown **out)
 
     if (!(transform = wg_transform_create(&input_format, &output_format)))
     {
-        FIXME("GStreamer doesn't support WMA decoding, please install appropriate plugins\n");
+        ERR_(winediag)("GStreamer doesn't support WMA decoding, please install appropriate plugins\n");
         return E_FAIL;
     }
     wg_transform_destroy(transform);
