@@ -185,7 +185,7 @@ static BOOL handle_position_event( struct dnd_position_event_params *params )
     int accept = 0; /* Assume we're not accepting */
     IDropTarget *dropTarget = NULL;
     DWORD effect = params->effect;
-    POINTL pointl;
+    POINTL pointl = { .x = params->point.x, .y = params->point.y };
     HWND targetWindow;
     HRESULT hr;
 
