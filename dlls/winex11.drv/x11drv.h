@@ -686,8 +686,9 @@ extern void retry_grab_clipping_window(void) DECLSPEC_HIDDEN;
 extern BOOL clip_fullscreen_window( HWND hwnd, BOOL reset ) DECLSPEC_HIDDEN;
 extern void move_resize_window( HWND hwnd, int dir ) DECLSPEC_HIDDEN;
 extern void X11DRV_InitKeyboard( Display *display ) DECLSPEC_HIDDEN;
-extern DWORD X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
-                                                 DWORD mask, DWORD flags ) DECLSPEC_HIDDEN;
+extern NTSTATUS X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
+                                                    const LARGE_INTEGER *timeout,
+                                                    DWORD mask, DWORD flags ) DECLSPEC_HIDDEN;
 extern HWND *build_hwnd_list(void) DECLSPEC_HIDDEN;
 
 typedef int (*x11drv_error_callback)( Display *display, XErrorEvent *event, void *arg );

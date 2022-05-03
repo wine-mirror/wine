@@ -476,26 +476,26 @@ static BOOL process_events( Display *display, Bool (*filter)(Display*, XEvent*,X
 /***********************************************************************
  *           MsgWaitForMultipleObjectsEx   (X11DRV.@)
  */
-DWORD X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
-                                          DWORD timeout, DWORD mask, DWORD flags )
+NTSTATUS X11DRV_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
+                                             const LARGE_INTEGER *timeout, DWORD mask, DWORD flags )
 {
     struct x11drv_thread_data *data = x11drv_thread_data();
-    DWORD ret;
+    NTSTATUS ret;
 
     if (!data)
     {
-        if (!count && !timeout) return WAIT_TIMEOUT;
-        return WaitForMultipleObjectsEx( count, handles, flags & MWMO_WAITALL,
-                                         timeout, flags & MWMO_ALERTABLE );
+        if (!count && timeout && !timeout->QuadPart) return WAIT_TIMEOUT;
+        return NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
+                                         !!(flags & MWMO_ALERTABLE), timeout );
     }
 
     if (data->current_event) mask = 0;  /* don't process nested events */
 
     if (process_events( data->display, filter_event, mask )) ret = count - 1;
-    else if (count || timeout)
+    else if (count || !timeout || timeout->QuadPart)
     {
-        ret = WaitForMultipleObjectsEx( count, handles, flags & MWMO_WAITALL,
-                                        timeout, flags & MWMO_ALERTABLE );
+        ret = NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
+                                        !!(flags & MWMO_ALERTABLE), timeout );
         if (ret == count - 1) process_events( data->display, filter_event, mask );
     }
     else ret = WAIT_TIMEOUT;

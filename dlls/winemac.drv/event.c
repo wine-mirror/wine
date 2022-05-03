@@ -339,21 +339,21 @@ static int process_events(macdrv_event_queue queue, macdrv_event_mask mask)
 /***********************************************************************
  *              MsgWaitForMultipleObjectsEx   (MACDRV.@)
  */
-DWORD macdrv_MsgWaitForMultipleObjectsEx(DWORD count, const HANDLE *handles,
-                                         DWORD timeout, DWORD mask, DWORD flags)
+NTSTATUS macdrv_MsgWaitForMultipleObjectsEx(DWORD count, const HANDLE *handles,
+                                            const LARGE_INTEGER *timeout, DWORD mask, DWORD flags)
 {
     DWORD ret;
     struct macdrv_thread_data *data = macdrv_thread_data();
     macdrv_event_mask event_mask = get_event_mask(mask);
 
-    TRACE("count %d, handles %p, timeout %u, mask %x, flags %x\n", count,
+    TRACE("count %d, handles %p, timeout %p, mask %x, flags %x\n", count,
           handles, timeout, mask, flags);
 
     if (!data)
     {
-        if (!count && !timeout) return WAIT_TIMEOUT;
-        return WaitForMultipleObjectsEx(count, handles, flags & MWMO_WAITALL,
-                                        timeout, flags & MWMO_ALERTABLE);
+        if (!count && timeout && !timeout->QuadPart) return WAIT_TIMEOUT;
+        return NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
+                                         !!(flags & MWMO_ALERTABLE), timeout );
     }
 
     if (data->current_event && data->current_event->type != QUERY_EVENT &&
@@ -363,10 +363,10 @@ DWORD macdrv_MsgWaitForMultipleObjectsEx(DWORD count, const HANDLE *handles,
         event_mask = 0;  /* don't process nested events */
 
     if (process_events(data->queue, event_mask)) ret = count - 1;
-    else if (count || timeout)
+    else if (count || !timeout || timeout->QuadPart)
     {
-        ret = WaitForMultipleObjectsEx(count, handles, flags & MWMO_WAITALL,
-                                       timeout, flags & MWMO_ALERTABLE);
+        ret = NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
+                                        !!(flags & MWMO_ALERTABLE), timeout );
         if (ret == count - 1) process_events(data->queue, event_mask);
     }
     else ret = WAIT_TIMEOUT;

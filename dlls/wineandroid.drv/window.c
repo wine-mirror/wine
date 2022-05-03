@@ -1201,8 +1201,9 @@ static LRESULT CALLBACK desktop_wndproc_wrapper( HWND hwnd, UINT msg, WPARAM wp,
 /***********************************************************************
  *           ANDROID_MsgWaitForMultipleObjectsEx
  */
-DWORD ANDROID_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
-                                           DWORD timeout, DWORD mask, DWORD flags )
+NTSTATUS ANDROID_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
+                                              const LARGE_INTEGER *timeout,
+                                              DWORD mask, DWORD flags )
 {
     if (GetCurrentThreadId() == desktop_tid)
     {
@@ -1210,8 +1211,8 @@ DWORD ANDROID_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles,
         if (current_event) mask = 0;
         if (process_events( mask )) return count - 1;
     }
-    return WaitForMultipleObjectsEx( count, handles, flags & MWMO_WAITALL,
-                                     timeout, flags & MWMO_ALERTABLE );
+    return NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
+                                     !!(flags & MWMO_ALERTABLE), timeout );
 }
 
 /**********************************************************************

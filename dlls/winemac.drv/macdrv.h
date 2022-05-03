@@ -173,8 +173,9 @@ extern UINT macdrv_GetKeyboardLayoutList(INT size, HKL *list) DECLSPEC_HIDDEN;
 extern INT macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size) DECLSPEC_HIDDEN;
 extern BOOL macdrv_SystemParametersInfo(UINT action, UINT int_param, void *ptr_param,
                                         UINT flags) DECLSPEC_HIDDEN;
-extern DWORD macdrv_MsgWaitForMultipleObjectsEx(DWORD count, const HANDLE *handles,
-                                                DWORD timeout, DWORD mask, DWORD flags) DECLSPEC_HIDDEN;
+extern NTSTATUS macdrv_MsgWaitForMultipleObjectsEx(DWORD count, const HANDLE *handles,
+                                                   const LARGE_INTEGER *timeout, DWORD mask,
+                                                   DWORD flags) DECLSPEC_HIDDEN;
 extern void macdrv_ThreadDetach(void) DECLSPEC_HIDDEN;
 
 
