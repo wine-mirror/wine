@@ -923,7 +923,6 @@ static LRESULT CALLBACK windows_gaming_input_wndproc( HWND hwnd, UINT msg, WPARA
         {
             ok( wparam == DBT_DEVICEREMOVECOMPLETE, "got wparam %#Ix\n", wparam );
             ok( controller_added.invoked, "controller added handler not invoked\n" );
-            ok( controller_removed.invoked, "controller removed handler not invoked\n" );
         }
         else
         {
