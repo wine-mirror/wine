@@ -5896,7 +5896,7 @@ static void test_read_events(struct event_test_ctx *ctx)
     check_events(ctx, 0, 0, 0);
 
     select_events(ctx, server, FD_ACCEPT | FD_CONNECT | FD_OOB | FD_READ | FD_WRITE);
-    check_events_todo(ctx, FD_READ, FD_WRITE, 200);
+    check_events_todo_event(ctx, FD_READ, FD_WRITE, 200);
     check_events(ctx, 0, 0, 0);
 
     ret = sync_recv(server, buffer, 5, 0);
