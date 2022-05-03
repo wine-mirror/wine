@@ -25,6 +25,7 @@ enum x11drv_funcs
     unix_create_desktop,
     unix_init,
     unix_systray_clear,
+    unix_systray_dock,
     unix_systray_hide,
     unix_systray_init,
     unix_tablet_attach_queue,
@@ -56,6 +57,15 @@ struct create_desktop_params
     UINT height;
 };
 
+struct systray_dock_params
+{
+    UINT64 event_handle;
+    void *icon;
+    int cx;
+    int cy;
+    BOOL *layered;
+};
+
 /* x11drv_tablet_info params */
 struct tablet_info_params
 {
@@ -80,6 +90,7 @@ enum x11drv_client_funcs
     client_func_dnd_post_drop,
     client_func_ime_set_composition_string,
     client_func_ime_set_result,
+    client_func_systray_change_owner,
     client_func_last
 };
 
@@ -120,4 +131,9 @@ struct dnd_position_event_params
     HWND  hwnd;
     POINT point;
     DWORD effect;
+};
+
+struct systray_change_owner_params
+{
+    UINT64 event_handle;
 };

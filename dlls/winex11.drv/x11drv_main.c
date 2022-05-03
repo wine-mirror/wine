@@ -60,6 +60,7 @@ XVisualInfo default_visual = { 0 };
 XVisualInfo argb_visual = { 0 };
 Colormap default_colormap = None;
 XPixmapFormatValues **pixmap_formats;
+Atom systray_atom = 0;
 unsigned int screen_bpp;
 Window root_window;
 BOOL usexvidmode = TRUE;
@@ -978,6 +979,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     x11drv_create_desktop,
     x11drv_init,
     x11drv_systray_clear,
+    x11drv_systray_dock,
     x11drv_systray_hide,
     x11drv_systray_init,
     x11drv_tablet_attach_queue,

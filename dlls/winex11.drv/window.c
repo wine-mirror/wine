@@ -53,6 +53,7 @@
 #include "mwm.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
+WINE_DECLARE_DEBUG_CHANNEL(systray);
 
 #define _NET_WM_MOVERESIZE_SIZE_TOPLEFT      0
 #define _NET_WM_MOVERESIZE_SIZE_TOP          1
@@ -69,6 +70,10 @@ WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
 #define _NET_WM_STATE_REMOVE  0
 #define _NET_WM_STATE_ADD     1
 #define _NET_WM_STATE_TOGGLE  2
+
+#define SYSTEM_TRAY_REQUEST_DOCK    0
+#define SYSTEM_TRAY_BEGIN_MESSAGE   1
+#define SYSTEM_TRAY_CANCEL_MESSAGE  2
 
 static const unsigned int net_wm_state_atoms[NB_NET_WM_STATES] =
 {
@@ -2135,6 +2140,115 @@ NTSTATUS x11drv_systray_hide( void *arg )
     }
 
     return 0;
+}
+
+
+/* find the X11 window owner the system tray selection */
+static Window get_systray_selection_owner( Display *display )
+{
+    return XGetSelectionOwner( display, systray_atom );
+}
+
+
+static void get_systray_visual_info( Display *display, Window systray_window, XVisualInfo *info )
+{
+    XVisualInfo *list, template;
+    VisualID *visual_id;
+    Atom type;
+    int format, num;
+    unsigned long count, remaining;
+
+    *info = default_visual;
+    if (XGetWindowProperty( display, systray_window, x11drv_atom(_NET_SYSTEM_TRAY_VISUAL), 0,
+                            65536/sizeof(CARD32), False, XA_VISUALID, &type, &format, &count,
+                            &remaining, (unsigned char **)&visual_id ))
+        return;
+
+    if (type == XA_VISUALID && format == 32)
+    {
+        template.visualid = visual_id[0];
+        if ((list = XGetVisualInfo( display, VisualIDMask, &template, &num )))
+        {
+            *info = list[0];
+            TRACE_(systray)( "systray window %lx got visual %lx\n", systray_window, info->visualid );
+            XFree( list );
+        }
+    }
+    XFree( visual_id );
+}
+
+
+NTSTATUS x11drv_systray_dock( void *arg )
+{
+    struct systray_dock_params *params = arg;
+    Window systray_window, window;
+    Display *display;
+    XEvent ev;
+    XSetWindowAttributes attr;
+    XVisualInfo visual;
+    struct x11drv_win_data *data;
+    BOOL layered;
+    HWND hwnd;
+
+    static const WCHAR icon_classname[] =
+        {'_','_','w','i','n','e','x','1','1','_','t','r','a','y','_','i','c','o','n',0};
+
+    if (params->event_handle)
+    {
+        XClientMessageEvent *event = (XClientMessageEvent *)(UINT_PTR)params->event_handle;
+        display = event->display;
+        systray_window = event->data.l[2];
+    }
+    else
+    {
+        display = thread_init_display();
+        if (!(systray_window = get_systray_selection_owner( display ))) return STATUS_UNSUCCESSFUL;
+    }
+
+    get_systray_visual_info( display, systray_window, &visual );
+
+    *params->layered = layered = (visual.depth == 32);
+
+    hwnd = CreateWindowExW( layered ? WS_EX_LAYERED : 0,
+                            icon_classname, NULL, WS_CLIPSIBLINGS | WS_POPUP,
+                            CW_USEDEFAULT, CW_USEDEFAULT, params->cx, params->cy,
+                            NULL, NULL, NULL, params->icon );
+
+    if (!(data = get_win_data( hwnd ))) return STATUS_UNSUCCESSFUL;
+    if (layered) set_window_visual( data, &visual, TRUE );
+    make_window_embedded( data );
+    window = data->whole_window;
+    release_win_data( data );
+
+    NtUserShowWindow( hwnd, SW_SHOWNA );
+
+    TRACE_(systray)( "icon window %p/%lx\n", hwnd, window );
+
+    /* send the docking request message */
+    ev.xclient.type = ClientMessage;
+    ev.xclient.window = systray_window;
+    ev.xclient.message_type = x11drv_atom( _NET_SYSTEM_TRAY_OPCODE );
+    ev.xclient.format = 32;
+    ev.xclient.data.l[0] = CurrentTime;
+    ev.xclient.data.l[1] = SYSTEM_TRAY_REQUEST_DOCK;
+    ev.xclient.data.l[2] = window;
+    ev.xclient.data.l[3] = 0;
+    ev.xclient.data.l[4] = 0;
+    XSendEvent( display, systray_window, False, NoEventMask, &ev );
+
+    if (!layered)
+    {
+        attr.background_pixmap = ParentRelative;
+        attr.bit_gravity = ForgetGravity;
+        XChangeWindowAttributes( display, window, CWBackPixmap | CWBitGravity, &attr );
+    }
+    else
+    {
+        /* force repainig */
+        send_message( hwnd, WM_SIZE, SIZE_RESTORED, MAKELONG( params->cx, params->cy ));
+    }
+
+    return STATUS_SUCCESS;
 }
 
 

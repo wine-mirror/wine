@@ -157,6 +157,7 @@ static const kernel_callback kernel_callbacks[] =
     x11drv_dnd_post_drop,
     x11drv_ime_set_composition_string,
     x11drv_ime_set_result,
+    x11drv_systray_change_owner,
 };
 
 C_ASSERT( NtUserDriverCallbackFirst + ARRAYSIZE(kernel_callbacks) == client_func_last );

@@ -75,12 +75,6 @@ static BOOL show_icon( struct tray_icon *icon );
 static BOOL hide_icon( struct tray_icon *icon );
 static BOOL delete_icon( struct tray_icon *icon );
 
-#define SYSTEM_TRAY_REQUEST_DOCK  0
-#define SYSTEM_TRAY_BEGIN_MESSAGE   1
-#define SYSTEM_TRAY_CANCEL_MESSAGE  2
-
-Atom systray_atom = 0;
-
 #define MIN_DISPLAYED 8
 #define ICON_BORDER 2
 
@@ -550,39 +544,6 @@ static LRESULT WINAPI tray_icon_wndproc(HWND hwnd, UINT msg, WPARAM wparam, LPAR
     return DefWindowProcW( hwnd, msg, wparam, lparam );
 }
 
-/* find the X11 window owner the system tray selection */
-static Window get_systray_selection_owner( Display *display )
-{
-    return XGetSelectionOwner( display, systray_atom );
-}
-
-static void get_systray_visual_info( Display *display, Window systray_window, XVisualInfo *info )
-{
-    XVisualInfo *list, template;
-    VisualID *visual_id;
-    Atom type;
-    int format, num;
-    unsigned long count, remaining;
-
-    *info = default_visual;
-    if (XGetWindowProperty( display, systray_window, x11drv_atom(_NET_SYSTEM_TRAY_VISUAL), 0,
-                            65536/sizeof(CARD32), False, XA_VISUALID, &type, &format, &count,
-                            &remaining, (unsigned char **)&visual_id ))
-        return;
-
-    if (type == XA_VISUALID && format == 32)
-    {
-        template.visualid = visual_id[0];
-        if ((list = XGetVisualInfo( display, VisualIDMask, &template, &num )))
-        {
-            *info = list[0];
-            TRACE( "systray window %lx got visual %lx\n", systray_window, info->visualid );
-            XFree( list );
-        }
-    }
-    XFree( visual_id );
-}
-
 static BOOL init_systray(void)
 {
     static BOOL init_done;
@@ -627,66 +588,27 @@ static BOOL init_systray(void)
     return TRUE;
 }
 
-/* dock the given icon with the NETWM system tray */
-static void dock_systray_icon( Display *display, struct tray_icon *icon, Window systray_window )
-{
-    Window window;
-    XEvent ev;
-    XSetWindowAttributes attr;
-    XVisualInfo visual;
-    struct x11drv_win_data *data;
-
-    get_systray_visual_info( display, systray_window, &visual );
-
-    icon->layered = (visual.depth == 32);
-    CreateWindowExW( icon->layered ? WS_EX_LAYERED : 0,
-                     icon_classname, NULL, WS_CLIPSIBLINGS | WS_POPUP,
-                     CW_USEDEFAULT, CW_USEDEFAULT, icon_cx, icon_cy,
-                     NULL, NULL, NULL, icon );
-
-    if (!(data = get_win_data( icon->window ))) return;
-    if (icon->layered) set_window_visual( data, &visual, TRUE );
-    make_window_embedded( data );
-    window = data->whole_window;
-    release_win_data( data );
-
-    ShowWindow( icon->window, SW_SHOWNA );
-
-    TRACE( "icon window %p/%lx\n", icon->window, window );
-
-    /* send the docking request message */
-    ev.xclient.type = ClientMessage;
-    ev.xclient.window = systray_window;
-    ev.xclient.message_type = x11drv_atom( _NET_SYSTEM_TRAY_OPCODE );
-    ev.xclient.format = 32;
-    ev.xclient.data.l[0] = CurrentTime;
-    ev.xclient.data.l[1] = SYSTEM_TRAY_REQUEST_DOCK;
-    ev.xclient.data.l[2] = window;
-    ev.xclient.data.l[3] = 0;
-    ev.xclient.data.l[4] = 0;
-    XSendEvent( display, systray_window, False, NoEventMask, &ev );
-
-    if (!icon->layered)
-    {
-        attr.background_pixmap = ParentRelative;
-        attr.bit_gravity = ForgetGravity;
-        XChangeWindowAttributes( display, window, CWBackPixmap | CWBitGravity, &attr );
-    }
-    else repaint_tray_icon( icon );
-}
-
 /* dock systray windows again with the new owner */
-void change_systray_owner( Display *display, Window systray_window )
+NTSTATUS WINAPI x11drv_systray_change_owner( void *arg, ULONG size )
 {
+    struct systray_change_owner_params *params = arg;
+    struct systray_dock_params dock_params;
     struct tray_icon *icon;
 
-    TRACE( "new owner %lx\n", systray_window );
     LIST_FOR_EACH_ENTRY( icon, &icon_list, struct tray_icon, entry )
     {
         if (icon->display == -1) continue;
         hide_icon( icon );
-        dock_systray_icon( display, icon, systray_window );
+
+        dock_params.event_handle = params->event_handle;
+        dock_params.icon = icon;
+        dock_params.cx = icon_cx;
+        dock_params.cy = icon_cy;
+        dock_params.layered = &icon->layered;
+        X11DRV_CALL( systray_dock, &dock_params );
     }
+
+    return 0;
 }
 
 /* hide a tray icon */
@@ -710,16 +632,19 @@ static BOOL hide_icon( struct tray_icon *icon )
 /* make the icon visible */
 static BOOL show_icon( struct tray_icon *icon )
 {
-    Window systray_window;
-    Display *display = thread_init_display();
-
-    TRACE( "id=0x%x, hwnd=%p\n", icon->id, icon->owner );
+    struct systray_dock_params params;
 
     if (icon->window) return TRUE;  /* already shown */
 
-    if ((systray_window = get_systray_selection_owner( display )))
-        dock_systray_icon( display, icon, systray_window );
-    else
+    TRACE( "id=0x%x, hwnd=%p\n", icon->id, icon->owner );
+
+    params.event_handle = 0;
+    params.icon = icon;
+    params.cx = icon_cx;
+    params.cy = icon_cy;
+    params.layered = &icon->layered;
+
+    if (X11DRV_CALL( systray_dock, &params ))
         add_to_standalone_tray( icon );
 
     update_balloon( icon );

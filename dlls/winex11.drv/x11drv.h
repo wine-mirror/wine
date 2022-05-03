@@ -828,6 +828,7 @@ static inline BOOL is_window_rect_mapped( const RECT *rect )
 extern NTSTATUS x11drv_clipboard_message( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_create_desktop( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_systray_clear( void *arg ) DECLSPEC_HIDDEN;
+extern NTSTATUS x11drv_systray_dock( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_systray_hide( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_systray_init( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_tablet_attach_queue( void *arg ) DECLSPEC_HIDDEN;
@@ -842,6 +843,7 @@ extern NTSTATUS WINAPI x11drv_dnd_position_event( void *params, ULONG size ) DEC
 extern NTSTATUS WINAPI x11drv_dnd_post_drop( void *data, ULONG size ) DECLSPEC_HIDDEN;
 extern NTSTATUS WINAPI x11drv_ime_set_composition_string( void *params, ULONG size ) DECLSPEC_HIDDEN;
 extern NTSTATUS WINAPI x11drv_ime_set_result( void *params, ULONG size ) DECLSPEC_HIDDEN;
+extern NTSTATUS WINAPI x11drv_systray_change_owner( void *params, ULONG size ) DECLSPEC_HIDDEN;
 
 extern NTSTATUS x11drv_dnd_drop_event( UINT arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_dnd_leave_event( UINT arg ) DECLSPEC_HIDDEN;
