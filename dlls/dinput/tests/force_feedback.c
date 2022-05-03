@@ -5468,7 +5468,7 @@ static void test_windows_gaming_input(void)
     ok( !bool_async_handler.invoked, "handler invoked\n" );
     IAsyncInfo_Release( async_info );
 
-    wait_hid_expect( file, 100 );
+    wait_hid_expect( file, 500 );
     ret = WaitForSingleObject( bool_async_handler.event, 100 );
     ok( ret == 0, "WaitForSingleObject returned %#lx\n", ret );
     CloseHandle( bool_async_handler.event );
