@@ -411,6 +411,7 @@ static void test_HeapCreate(void)
     /* shrinking a very large block decommits pages and fail to grow in place */
     ptr1 = HeapReAlloc( heap, HEAP_REALLOC_IN_PLACE_ONLY, ptr, alloc_size * 3 / 2 );
     ok( ptr1 == ptr, "HeapReAlloc HEAP_REALLOC_IN_PLACE_ONLY failed, error %lu\n", GetLastError() );
+    SetLastError( 0xdeadbeef );
     ptr1 = HeapReAlloc( heap, HEAP_REALLOC_IN_PLACE_ONLY, ptr, 2 * alloc_size );
     todo_wine
     ok( ptr1 != ptr, "HeapReAlloc HEAP_REALLOC_IN_PLACE_ONLY succeeded\n" );
@@ -482,7 +483,6 @@ static void test_HeapCreate(void)
     SetLastError( 0xdeadbeef );
     ptr1 = HeapAlloc( heap, 0, 4 * alloc_size );
     ok( !ptr1, "HeapAlloc succeeded\n" );
-    todo_wine
     ok( GetLastError() == ERROR_NOT_ENOUGH_MEMORY, "got error %lu\n", GetLastError() );
     ret = HeapFree( heap, 0, ptr1 );
     ok( ret, "HeapFree failed, error %lu\n", GetLastError() );

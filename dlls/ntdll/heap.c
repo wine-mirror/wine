@@ -349,6 +349,12 @@ static void heap_unlock( HEAP *heap, ULONG flags )
     RtlLeaveCriticalSection( &heap->cs );
 }
 
+static void heap_set_status( const HEAP *heap, ULONG flags, NTSTATUS status )
+{
+    if (status == STATUS_NO_MEMORY && (flags & HEAP_GENERATE_EXCEPTIONS)) RtlRaiseStatus( status );
+    if (status) RtlSetLastWin32ErrorAndNtStatusFromNtStatus( status );
+}
+
 /***********************************************************************
  *           HEAP_Dump
  */
@@ -1648,66 +1654,27 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
     return 0;
 }
 
-
-/***********************************************************************
- *           RtlAllocateHeap   (NTDLL.@)
- *
- * Allocate a memory block from a Heap.
- *
- * PARAMS
- *  heap  [I] Heap to allocate block from
- *  flags [I] HEAP_ flags from "winnt.h"
- *  size  [I] Size of the memory block to allocate
- *
- * RETURNS
- *  Success: A pointer to the newly allocated block
- *  Failure: NULL.
- *
- * NOTES
- *  This call does not SetLastError().
- */
-void * WINAPI DECLSPEC_HOTPATCH RtlAllocateHeap( HANDLE heap, ULONG flags, SIZE_T size )
+static NTSTATUS heap_allocate( HEAP *heap, ULONG flags, SIZE_T size, void **ret )
 {
     ARENA_FREE *pArena;
     ARENA_INUSE *pInUse;
     SUBHEAP *subheap;
-    HEAP *heapPtr = HEAP_GetPtr( heap );
     SIZE_T rounded_size;
 
-    /* Validate the parameters */
-
-    if (!heapPtr) return NULL;
-    flags &= HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY;
-    flags |= heapPtr->flags;
     rounded_size = ROUND_SIZE(size) + HEAP_TAIL_EXTRA_SIZE( flags );
-    if (rounded_size < size)  /* overflow */
-    {
-        if (flags & HEAP_GENERATE_EXCEPTIONS) RtlRaiseStatus( STATUS_NO_MEMORY );
-        return NULL;
-    }
-    if (rounded_size < HEAP_MIN_DATA_SIZE) rounded_size = HEAP_MIN_DATA_SIZE;
 
-    heap_lock( heapPtr, flags );
+    if (rounded_size < size) return STATUS_NO_MEMORY;  /* overflow */
+    if (rounded_size < HEAP_MIN_DATA_SIZE) rounded_size = HEAP_MIN_DATA_SIZE;
 
     if (rounded_size >= HEAP_MIN_LARGE_BLOCK_SIZE && (flags & HEAP_GROWABLE))
     {
-        void *ret = allocate_large_block( heap, flags, size );
-        heap_unlock( heapPtr, flags );
-        if (!ret && (flags & HEAP_GENERATE_EXCEPTIONS)) RtlRaiseStatus( STATUS_NO_MEMORY );
-        TRACE("(%p,%08x,%08lx): returning %p\n", heap, flags, size, ret );
-        return ret;
+        if (!(*ret = allocate_large_block( heap, flags, size ))) return STATUS_NO_MEMORY;
+        return STATUS_SUCCESS;
     }
 
     /* Locate a suitable free block */
 
-    if (!(pArena = HEAP_FindFreeBlock( heapPtr, rounded_size, &subheap )))
-    {
-        TRACE("(%p,%08x,%08lx): returning NULL\n",
-                  heap, flags, size  );
-        heap_unlock( heapPtr, flags );
-        if (flags & HEAP_GENERATE_EXCEPTIONS) RtlRaiseStatus( STATUS_NO_MEMORY );
-        return NULL;
-    }
+    if (!(pArena = HEAP_FindFreeBlock( heap, rounded_size, &subheap ))) return STATUS_NO_MEMORY;
 
     /* Remove the arena from the free list */
 
@@ -1730,10 +1697,31 @@ void * WINAPI DECLSPEC_HOTPATCH RtlAllocateHeap( HANDLE heap, ULONG flags, SIZE_
     notify_alloc( pInUse + 1, size, flags & HEAP_ZERO_MEMORY );
     initialize_block( pInUse + 1, size, pInUse->unused_bytes, flags );
 
-    heap_unlock( heapPtr, flags );
+    *ret = pInUse + 1;
+    return STATUS_SUCCESS;
+}
 
-    TRACE("(%p,%08x,%08lx): returning %p\n", heap, flags, size, pInUse + 1 );
-    return pInUse + 1;
+/***********************************************************************
+ *           RtlAllocateHeap   (NTDLL.@)
+ */
+void *WINAPI DECLSPEC_HOTPATCH RtlAllocateHeap( HANDLE heap, ULONG flags, SIZE_T size )
+{
+    void *ptr = NULL;
+    NTSTATUS status;
+    HEAP *heapPtr;
+
+    if (!(heapPtr = HEAP_GetPtr( heap )))
+        status = STATUS_INVALID_HANDLE;
+    else
+    {
+        heap_lock( heapPtr, flags );
+        status = heap_allocate( heapPtr, heap_get_flags( heapPtr, flags ), size, &ptr );
+        heap_unlock( heapPtr, flags );
+    }
+
+    TRACE( "heap %p, flags %#x, size %#Ix, return %p, status %#x.\n", heap, flags, size, ptr, status );
+    heap_set_status( heapPtr, flags, status );
+    return ptr;
 }
 
 
