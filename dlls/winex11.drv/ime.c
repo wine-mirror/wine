@@ -916,15 +916,16 @@ DWORD WINAPI ImeGetImeMenuItems(HIMC hIMC,  DWORD dwFlags,  DWORD dwType,
 
 /* Interfaces to XIM and other parts of winex11drv */
 
-void IME_SetOpenStatus(BOOL fOpen)
+NTSTATUS x11drv_ime_set_open_status( UINT open )
 {
     HIMC imc;
 
     imc = RealIMC(FROM_X11);
-    ImmSetOpenStatus(imc, fOpen);
+    ImmSetOpenStatus(imc, open);
+    return 0;
 }
 
-void IME_SetCompositionStatus(BOOL fOpen)
+NTSTATUS x11drv_ime_set_composition_status( UINT open )
 {
     HIMC imc;
     LPINPUTCONTEXT lpIMC;
@@ -933,28 +934,29 @@ void IME_SetCompositionStatus(BOOL fOpen)
     imc = RealIMC(FROM_X11);
     lpIMC = ImmLockIMC(imc);
     if (lpIMC == NULL)
-        return;
+        return 0;
 
     myPrivate = ImmLockIMCC(lpIMC->hPrivate);
 
-    if (fOpen && !myPrivate->bInComposition)
+    if (open && !myPrivate->bInComposition)
     {
         GenerateIMEMessage(imc, WM_IME_STARTCOMPOSITION, 0, 0);
     }
-    else if (!fOpen && myPrivate->bInComposition)
+    else if (!open && myPrivate->bInComposition)
     {
         ShowWindow(myPrivate->hwndDefault, SW_HIDE);
         ImmDestroyIMCC(lpIMC->hCompStr);
         lpIMC->hCompStr = ImeCreateBlankCompStr();
         GenerateIMEMessage(imc, WM_IME_ENDCOMPOSITION, 0, 0);
     }
-    myPrivate->bInComposition = fOpen;
+    myPrivate->bInComposition = open;
 
     ImmUnlockIMCC(lpIMC->hPrivate);
     ImmUnlockIMC(imc);
+    return 0;
 }
 
-INT IME_GetCursorPos(void)
+NTSTATUS x11drv_ime_get_cursor_pos( UINT arg )
 {
     LPINPUTCONTEXT lpIMC;
     INT rc = 0;
@@ -974,68 +976,73 @@ INT IME_GetCursorPos(void)
     return rc;
 }
 
-void IME_SetCursorPos(DWORD pos)
+NTSTATUS x11drv_ime_set_cursor_pos( UINT pos )
 {
     LPINPUTCONTEXT lpIMC;
     LPCOMPOSITIONSTRING compstr;
 
     if (!hSelectedFrom)
-        return;
+        return 0;
 
     lpIMC = LockRealIMC(FROM_X11);
     if (!lpIMC)
-        return;
+        return 0;
 
     compstr = ImmLockIMCC(lpIMC->hCompStr);
     if (!compstr)
     {
         UnlockRealIMC(FROM_X11);
-        return;
+        return 0;
     }
 
     compstr->dwCursorPos = pos;
     ImmUnlockIMCC(lpIMC->hCompStr);
     UnlockRealIMC(FROM_X11);
     GenerateIMEMessage(FROM_X11, WM_IME_COMPOSITION, pos, GCS_CURSORPOS);
-    return;
+    return 0;
 }
 
-void IME_UpdateAssociation(HWND focus)
+NTSTATUS x11drv_ime_update_association( UINT arg )
 {
+    HWND focus = UlongToHandle( arg );
+
     ImmGetContext(focus);
 
-    if (!focus || !hSelectedFrom)
-        return;
-
-    ImmAssociateContext(focus,RealIMC(FROM_X11));
+    if (focus && hSelectedFrom)
+        ImmAssociateContext(focus,RealIMC(FROM_X11));
+    return 0;
 }
 
 
-BOOL IME_SetCompositionString(DWORD dwIndex, LPCVOID lpComp, DWORD dwCompLen,
-                              LPCVOID lpRead, DWORD dwReadLen)
+NTSTATUS WINAPI x11drv_ime_set_composition_string( void *param, ULONG size )
 {
-    return ImeSetCompositionString(FROM_X11, dwIndex, lpComp, dwCompLen,
-                                    lpRead, dwReadLen);
+    return ImeSetCompositionString(FROM_X11, SCS_SETSTR, param, size, NULL, 0);
 }
 
-void IME_SetResultString(LPWSTR lpResult, DWORD dwResultLen)
+NTSTATUS WINAPI x11drv_ime_set_result( void *params, ULONG len )
 {
+    WCHAR *lpResult = params;
     HIMC imc;
     LPINPUTCONTEXT lpIMC;
     HIMCC newCompStr;
     LPIMEPRIVATE myPrivate;
     BOOL inComp;
+    HWND focus;
+
+    len /= sizeof(WCHAR);
+    if ((focus = GetFocus()))
+        x11drv_ime_update_association( HandleToUlong( focus ));
 
     imc = RealIMC(FROM_X11);
     lpIMC = ImmLockIMC(imc);
     if (lpIMC == NULL)
-        return;
+        return 0;
 
     newCompStr = updateCompStr(lpIMC->hCompStr, NULL, 0);
     ImmDestroyIMCC(lpIMC->hCompStr);
     lpIMC->hCompStr = newCompStr;
 
-    newCompStr = updateResultStr(lpIMC->hCompStr, lpResult, dwResultLen);
+    newCompStr = updateResultStr(lpIMC->hCompStr, lpResult, len);
     ImmDestroyIMCC(lpIMC->hCompStr);
     lpIMC->hCompStr = newCompStr;
 
@@ -1057,6 +1064,7 @@ void IME_SetResultString(LPWSTR lpResult, DWORD dwResultLen)
         ImmSetOpenStatus(imc, FALSE);
 
     ImmUnlockIMC(imc);
+    return 0;
 }
 
 /*****

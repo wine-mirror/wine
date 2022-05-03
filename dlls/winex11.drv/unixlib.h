@@ -75,6 +75,8 @@ enum x11drv_client_funcs
     client_func_dnd_enter_event,
     client_func_dnd_position_event,
     client_func_dnd_post_drop,
+    client_func_ime_set_composition_string,
+    client_func_ime_set_result,
     client_func_last
 };
 
@@ -86,6 +88,11 @@ enum client_callback
     client_clipboard_init,
     client_dnd_drop_event,
     client_dnd_leave_event,
+    client_ime_get_cursor_pos,
+    client_ime_set_composition_status,
+    client_ime_set_cursor_pos,
+    client_ime_set_open_status,
+    client_ime_update_association,
     client_funcs_count
 };
 

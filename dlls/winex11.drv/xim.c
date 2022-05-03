@@ -89,25 +89,21 @@ static void X11DRV_ImmSetInternalString(DWORD dwOffset,
     if (lpComp) memcpy(ptr_new, lpComp, byte_length);
     dwCompStringLength += byte_expansion;
 
-    IME_SetCompositionString(SCS_SETSTR, CompositionString,
-                             dwCompStringLength, NULL, 0);
+    x11drv_client_func( client_func_ime_set_composition_string,
+                        CompositionString, dwCompStringLength );
 }
 
 void X11DRV_XIMLookupChars( const char *str, DWORD count )
 {
     WCHAR *output;
     DWORD len;
-    HWND focus;
 
     TRACE("%p %u\n", str, count);
 
     if (!(output = malloc( count * sizeof(WCHAR) ))) return;
     len = ntdll_umbstowcs( str, count, output, count );
 
-    if ((focus = GetFocus()))
-        IME_UpdateAssociation(focus);
-
-    IME_SetResultString( output, len );
+    x11drv_client_func( client_func_ime_set_result, output, len * sizeof(WCHAR) );
     free( output );
 }
 
@@ -120,21 +116,22 @@ static BOOL XIMPreEditStateNotifyCallback(XIC xic, XPointer p, XPointer data)
     switch (state)
     {
     case XIMPreeditEnable:
-        IME_SetOpenStatus(TRUE);
+        x11drv_client_call( client_ime_set_open_status, TRUE );
         break;
     case XIMPreeditDisable:
-        IME_SetOpenStatus(FALSE);
+        x11drv_client_call( client_ime_set_open_status, FALSE );
         break;
     default:
         break;
     }
+
     return TRUE;
 }
 
 static int XIMPreEditStartCallback(XIC ic, XPointer client_data, XPointer call_data)
 {
     TRACE("PreEditStartCallback %p\n",ic);
-    IME_SetCompositionStatus(TRUE);
+    x11drv_client_call( client_ime_set_composition_status, TRUE );
     ximInComposeMode = TRUE;
     return -1;
 }
@@ -148,7 +145,7 @@ static void XIMPreEditDoneCallback(XIC ic, XPointer client_data, XPointer call_d
     dwCompStringSize = 0;
     dwCompStringLength = 0;
     CompositionString = NULL;
-    IME_SetCompositionStatus(FALSE);
+    x11drv_client_call( client_ime_set_composition_status, FALSE );
 }
 
 static void XIMPreEditDrawCallback(XIM ic, XPointer client_data,
@@ -188,7 +185,7 @@ static void XIMPreEditDrawCallback(XIM ic, XPointer client_data,
         }
         else
             X11DRV_ImmSetInternalString (sel, len, NULL, 0);
-        IME_SetCursorPos(P_DR->caret);
+        x11drv_client_call( client_ime_set_cursor_pos, P_DR->caret );
     }
     TRACE("Finished\n");
 }
@@ -200,7 +197,7 @@ static void XIMPreEditCaretCallback(XIC ic, XPointer client_data,
 
     if (P_C)
     {
-        int pos = IME_GetCursorPos();
+        int pos = x11drv_client_call( client_ime_get_cursor_pos, 0 );
         TRACE("pos: %d\n", pos);
         switch(P_C->direction)
         {
@@ -229,7 +226,7 @@ static void XIMPreEditCaretCallback(XIC ic, XPointer client_data,
                 FIXME("Not implemented\n");
                 break;
         }
-        IME_SetCursorPos(pos);
+        x11drv_client_call( client_ime_set_cursor_pos, pos );
         P_C->position = pos;
     }
     TRACE("Finished\n");
@@ -423,7 +420,7 @@ static BOOL open_xim( Display *display )
     else
         thread_data->font_set = NULL;
 
-    IME_UpdateAssociation(NULL);
+    x11drv_client_call( client_ime_update_association, 0 );
     return TRUE;
 }
 
