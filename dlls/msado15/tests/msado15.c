@@ -60,6 +60,7 @@ static void test_Recordset(void)
     BSTR name;
     HRESULT hr;
     VARIANT bookmark;
+    EditModeEnum editmode;
 
     hr = CoCreateInstance( &CLSID_Recordset, NULL, CLSCTX_INPROC_SERVER, &IID__Recordset, (void **)&recordset );
     ok( hr == S_OK, "got %08lx\n", hr );
@@ -109,6 +110,10 @@ static void test_Recordset(void)
     hr = _Recordset_get_CursorType( recordset, &cursor );
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( cursor == adOpenForwardOnly, "got %d\n", cursor );
+
+    editmode = -1;
+    hr = _Recordset_get_EditMode( recordset, &editmode );
+    ok( hr == MAKE_ADO_HRESULT( adErrObjectClosed ), "got %08lx\n", hr );
 
     VariantInit( &bookmark );
     hr = _Recordset_get_Bookmark( recordset, &bookmark );
@@ -197,6 +202,10 @@ static void test_Recordset(void)
     ok( is_eof( recordset ), "not eof\n" );
     ok( is_bof( recordset ), "not bof\n" );
 
+    editmode = -1;
+    hr = _Recordset_get_EditMode( recordset, &editmode );
+    ok( hr == MAKE_ADO_HRESULT( adErrNoCurrentRecord ), "got %08lx\n", hr );
+
     hr = _Recordset_Open( recordset, missing, missing, adOpenStatic, adLockBatchOptimistic, adCmdUnspecified );
     ok( hr == MAKE_ADO_HRESULT( adErrObjectOpen ), "got %08lx\n", hr );
 
@@ -222,6 +231,11 @@ static void test_Recordset(void)
     ok( hr == S_OK, "got %08lx\n", hr );
     ok( !is_eof( recordset ), "eof\n" );
     ok( !is_bof( recordset ), "bof\n" );
+
+    editmode = -1;
+    hr = _Recordset_get_EditMode( recordset, &editmode );
+    ok( hr == S_OK, "got %08lx\n", hr );
+    todo_wine ok( editmode == adEditAdd, "got %d\n", editmode );
 
     rec_count = -1;
     hr = _Recordset_get_RecordCount( recordset, &rec_count );

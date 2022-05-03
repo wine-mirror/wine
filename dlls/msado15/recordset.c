@@ -48,6 +48,7 @@ struct recordset
     CursorLocationEnum cursor_location;
     CursorTypeEnum     cursor_type;
     IRowset           *row_set;
+    EditModeEnum      editmode;
 };
 
 struct fields
@@ -1575,8 +1576,14 @@ static HRESULT WINAPI recordset_put_AbsolutePage( _Recordset *iface, PositionEnu
 
 static HRESULT WINAPI recordset_get_EditMode( _Recordset *iface, EditModeEnum *mode )
 {
-    FIXME( "%p, %p\n", iface, mode );
-    return E_NOTIMPL;
+    struct recordset *recordset = impl_from_Recordset( iface );
+    TRACE( "%p, %p\n", iface, mode );
+
+    if (recordset->state == adStateClosed) return MAKE_ADO_HRESULT( adErrObjectClosed );
+    if (recordset->index < 0) return MAKE_ADO_HRESULT( adErrNoCurrentRecord );
+
+    *mode = recordset->editmode;
+    return S_OK;
 }
 
 static HRESULT WINAPI recordset_get_Filter( _Recordset *iface, VARIANT *criteria )
@@ -2123,6 +2130,7 @@ HRESULT Recordset_create( void **obj )
     recordset->cursor_location = adUseServer;
     recordset->cursor_type = adOpenForwardOnly;
     recordset->row_set = NULL;
+    recordset->editmode = adEditNone;
 
     *obj = &recordset->Recordset_iface;
     TRACE( "returning iface %p\n", *obj );
