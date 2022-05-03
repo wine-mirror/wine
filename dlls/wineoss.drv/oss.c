@@ -38,6 +38,7 @@
 #include "winternl.h"
 #include "initguid.h"
 #include "audioclient.h"
+#include "mmddk.h"
 
 #include "wine/debug.h"
 #include "wine/unixlib.h"
@@ -1380,6 +1381,67 @@ static NTSTATUS is_started(void *args)
     return oss_unlock_result(stream, &params->result, stream->playing ? S_OK : S_FALSE);
 }
 
+/* Aux driver */
+
+static unsigned int num_aux;
+
+#define MIXER_DEV "/dev/mixer"
+
+static UINT aux_init(void)
+{
+    int mixer;
+
+    TRACE("()\n");
+
+    if ((mixer = open(MIXER_DEV, O_RDWR)) < 0)
+    {
+        WARN("mixer device not available !\n");
+        num_aux = 0;
+    }
+    else
+    {
+        close(mixer);
+        num_aux = 6;
+    }
+    return 0;
+}
+
+static UINT aux_exit(void)
+{
+    TRACE("()\n");
+    return 0;
+}
+
+static NTSTATUS aux_message(void *args)
+{
+    struct aux_message_params *params = args;
+
+    switch (params->msg)
+    {
+    case DRVM_INIT:
+        *params->err = aux_init();
+        break;
+    case DRVM_EXIT:
+        *params->err = aux_exit();
+        break;
+    case DRVM_ENABLE:
+    case DRVM_DISABLE:
+        /* FIXME: Pretend this is supported */
+        *params->err = 0;
+        break;
+    case AUXDM_GETNUMDEVS:
+        TRACE("return %d;\n", num_aux);
+        *params->err = num_aux;
+        break;
+    default:
+        WARN("unknown message !\n");
+        *params->err = MMSYSERR_NOTSUPPORTED;
+        break;
+    }
+
+    return STATUS_SUCCESS;
+}
+
 unixlib_entry_t __wine_unix_call_funcs[] =
 {
     test_connect,
@@ -1409,4 +1471,5 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     midi_out_message,
     midi_in_message,
     midi_notify_wait,
+    aux_message,
 };

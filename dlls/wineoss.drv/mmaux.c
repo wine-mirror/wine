@@ -32,39 +32,19 @@
 #include "windef.h"
 #include "winbase.h"
 #include "mmddk.h"
-#include "wine/unicode.h"
+#include "audioclient.h"
+
 #include "wine/debug.h"
+#include "wine/unicode.h"
+#include "wine/unixlib.h"
+
+#include "unixlib.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mmaux);
 
 #define MIXER_DEV "/dev/mixer"
 
-static int	NumDev = 6;
-
 /*-----------------------------------------------------------------------*/
-
-static LRESULT OSS_AuxInit(void)
-{
-    int	mixer;
-    TRACE("()\n");
-
-    if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
-	WARN("mixer device not available !\n");
-	NumDev = 0;
-    } else {
-	close(mixer);
-	NumDev = 6;
-    }
-    return 0;
-}
-
-/*-----------------------------------------------------------------------*/
-
-static LRESULT OSS_AuxExit(void)
-{
-    TRACE("()\n");
-    return 0;
-}
 
 DWORD WINAPI OSS_auxMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 			    DWORD_PTR dwParam1, DWORD_PTR dwParam2);
@@ -225,29 +205,28 @@ static DWORD AUX_SetVolume(WORD wDevID, DWORD dwParam)
 DWORD WINAPI OSS_auxMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
 			    DWORD_PTR dwParam1, DWORD_PTR dwParam2)
 {
+    struct aux_message_params params;
+    UINT err;
+
     TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     switch (wMsg) {
-    case DRVM_INIT:
-        return OSS_AuxInit();
-    case DRVM_EXIT:
-        return OSS_AuxExit();
-    case DRVM_ENABLE:
-    case DRVM_DISABLE:
-	/* FIXME: Pretend this is supported */
-	return 0;
     case AUXDM_GETDEVCAPS:
 	return AUX_GetDevCaps(wDevID, (LPAUXCAPSW)dwParam1, dwParam2);
-    case AUXDM_GETNUMDEVS:
-	TRACE("return %d;\n", NumDev);
-	return NumDev;
     case AUXDM_GETVOLUME:
 	return AUX_GetVolume(wDevID, (LPDWORD)dwParam1);
     case AUXDM_SETVOLUME:
 	return AUX_SetVolume(wDevID, dwParam1);
-    default:
-	WARN("unknown message !\n");
     }
-    return MMSYSERR_NOTSUPPORTED;
+
+    params.dev_id = wDevID;
+    params.msg = wMsg;
+    params.user = dwUser;
+    params.param_1 = dwParam1;
+    params.param_2 = dwParam2;
+    params.err = &err;
+    OSS_CALL(aux_message, &params);
+
+    return err;
 }

@@ -250,6 +250,16 @@ struct midi_notify_wait_params
     struct notify_context *notify;
 };
 
+struct aux_message_params
+{
+    UINT dev_id;
+    UINT msg;
+    UINT_PTR user;
+    UINT_PTR param_1;
+    UINT_PTR param_2;
+    UINT *err;
+};
+
 enum oss_funcs
 {
     oss_test_connect,
@@ -279,6 +289,7 @@ enum oss_funcs
     oss_midi_out_message,
     oss_midi_in_message,
     oss_midi_notify_wait,
+    oss_aux_message,
 };
 
 NTSTATUS midi_release(void *args) DECLSPEC_HIDDEN;
