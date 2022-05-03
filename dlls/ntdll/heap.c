@@ -1536,17 +1536,16 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
 
 static NTSTATUS heap_allocate( HEAP *heap, ULONG flags, SIZE_T size, void **ret )
 {
-    ARENA_FREE *pArena;
-    ARENA_INUSE *pInUse;
+    struct block *block;
+    struct entry *entry;
+    SIZE_T data_size;
     SUBHEAP *subheap;
-    SIZE_T rounded_size;
 
-    rounded_size = ROUND_SIZE(size) + HEAP_TAIL_EXTRA_SIZE( flags );
+    data_size = ROUND_SIZE(size) + HEAP_TAIL_EXTRA_SIZE(flags);
+    if (data_size < size) return STATUS_NO_MEMORY;  /* overflow */
+    if (data_size < HEAP_MIN_DATA_SIZE) data_size = HEAP_MIN_DATA_SIZE;
 
-    if (rounded_size < size) return STATUS_NO_MEMORY;  /* overflow */
-    if (rounded_size < HEAP_MIN_DATA_SIZE) rounded_size = HEAP_MIN_DATA_SIZE;
-
-    if (rounded_size >= HEAP_MIN_LARGE_BLOCK_SIZE)
+    if (data_size >= HEAP_MIN_LARGE_BLOCK_SIZE)
     {
         if (!(*ret = allocate_large_block( heap, flags, size ))) return STATUS_NO_MEMORY;
         return STATUS_SUCCESS;
@@ -1554,29 +1553,29 @@ static NTSTATUS heap_allocate( HEAP *heap, ULONG flags, SIZE_T size, void **ret 
 
     /* Locate a suitable free block */
 
-    if (!(pArena = HEAP_FindFreeBlock( heap, rounded_size, &subheap ))) return STATUS_NO_MEMORY;
+    if (!(entry = HEAP_FindFreeBlock( heap, data_size, &subheap ))) return STATUS_NO_MEMORY;
 
     /* Remove the arena from the free list */
 
-    list_remove( &pArena->entry );
+    list_remove( &entry->entry );
 
     /* Build the in-use arena */
 
-    pInUse = (ARENA_INUSE *)pArena;
+    block = (struct block *)entry;
 
     /* in-use arena is smaller than free arena,
      * so we have to add the difference to the size */
-    pInUse->size  = (pInUse->size & ~ARENA_FLAG_FREE) + sizeof(ARENA_FREE) - sizeof(ARENA_INUSE);
-    pInUse->magic = ARENA_INUSE_MAGIC;
+    block->size  = (block->size & ~ARENA_FLAG_FREE) + sizeof(*entry) - sizeof(*block);
+    block->magic = ARENA_INUSE_MAGIC;
 
     /* Shrink the block */
 
-    shrink_used_block( subheap, pInUse, rounded_size, size );
+    shrink_used_block( subheap, block, data_size, size );
 
-    notify_alloc( pInUse + 1, size, flags & HEAP_ZERO_MEMORY );
-    initialize_block( pInUse + 1, size, pInUse->unused_bytes, flags );
+    notify_alloc( block + 1, size, flags & HEAP_ZERO_MEMORY );
+    initialize_block( block + 1, size, block->unused_bytes, flags );
 
-    *ret = pInUse + 1;
+    *ret = block + 1;
     return STATUS_SUCCESS;
 }
 
