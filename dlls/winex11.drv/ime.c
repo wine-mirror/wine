@@ -40,19 +40,10 @@
  *  generate the messages that we want the IMM layer to send to the application.
  */
 
-#include "config.h"
-
-#include <stdarg.h>
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
-#include "winerror.h"
+#include "x11drv_dll.h"
 #include "wine/debug.h"
 #include "imm.h"
 #include "ddk/imm.h"
-#include "winnls.h"
-#include "x11drv.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(imm);
 

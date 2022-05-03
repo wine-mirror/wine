@@ -19,26 +19,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
-#include <string.h>
-#include <unistd.h>
-#include <stdarg.h>
-#include <stdio.h>
-
+#define COBJMACROS
 #define NONAMELESSUNION
 
-#include "windef.h"
-#include "winbase.h"
-#include "wingdi.h"
-#include "winuser.h"
-
-#define COBJMACROS
-#include "x11drv.h"
+#include "x11drv_dll.h"
 #include "shellapi.h"
-#include "shlobj.h"  /* DROPFILES */
-#include "oleidl.h"
-#include "objidl.h"
+#include "shlobj.h"
 
 #include "wine/debug.h"
 #include "wine/list.h"
