@@ -35,6 +35,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(speech);
 struct async_void
 {
     IAsyncAction IAsyncAction_iface;
+    IAsyncInfo IAsyncInfo_iface;
     LONG ref;
 };
 
@@ -55,6 +56,12 @@ HRESULT WINAPI async_void_QueryInterface( IAsyncAction *iface, REFIID iid, void 
         IsEqualGUID(iid, &IID_IAsyncAction))
     {
         IInspectable_AddRef((*out = &impl->IAsyncAction_iface));
+        return S_OK;
+    }
+
+    if (IsEqualGUID(iid, &IID_IAsyncInfo))
+    {
+        IInspectable_AddRef((*out = &impl->IAsyncInfo_iface));
         return S_OK;
     }
 
@@ -131,6 +138,61 @@ static const struct IAsyncActionVtbl async_void_vtbl =
     async_void_GetResults
 };
 
+/*
+ *
+ * IAsyncInfo for IAsyncAction
+ *
+ */
+
+DEFINE_IINSPECTABLE_(async_void_info, IAsyncInfo, struct async_void, impl_from_async_void_IAsyncInfo, IAsyncInfo_iface, &impl->IAsyncAction_iface)
+
+static HRESULT WINAPI async_void_info_get_Id( IAsyncInfo *iface, UINT32 *id )
+{
+    FIXME("iface %p, id %p stub!\n", iface, id);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI async_void_info_get_Status( IAsyncInfo *iface, AsyncStatus *status )
+{
+    FIXME("iface %p, status %p.\n", iface, status);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI async_void_info_get_ErrorCode( IAsyncInfo *iface, HRESULT *error_code )
+{
+    FIXME("iface %p, error_code %p.\n", iface, error_code);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI async_void_info_Cancel( IAsyncInfo *iface )
+{
+    TRACE("iface %p.\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI async_void_info_Close( IAsyncInfo *iface )
+{
+    TRACE("iface %p.\n", iface);
+    return E_NOTIMPL;
+}
+
+static const struct IAsyncInfoVtbl async_void_info_vtbl =
+{
+    /* IUnknown methods */
+    async_void_info_QueryInterface,
+    async_void_info_AddRef,
+    async_void_info_Release,
+    /* IInspectable methods */
+    async_void_info_GetIids,
+    async_void_info_GetRuntimeClassName,
+    async_void_info_GetTrustLevel,
+    /* IAsyncInfo */
+    async_void_info_get_Id,
+    async_void_info_get_Status,
+    async_void_info_get_ErrorCode,
+    async_void_info_Cancel,
+    async_void_info_Close
+};
 
 HRESULT async_action_create( IAsyncAction **out )
 {
@@ -145,6 +207,7 @@ HRESULT async_action_create( IAsyncAction **out )
     }
 
     impl->IAsyncAction_iface.lpVtbl = &async_void_vtbl;
+    impl->IAsyncInfo_iface.lpVtbl = &async_void_info_vtbl;
     impl->ref = 1;
 
     *out = &impl->IAsyncAction_iface;
