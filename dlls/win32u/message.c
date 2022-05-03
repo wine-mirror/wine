@@ -1963,6 +1963,18 @@ static DWORD wait_objects( DWORD count, const HANDLE *handles, DWORD timeout,
     return ret;
 }
 
+static HANDLE normalize_std_handle( HANDLE handle )
+{
+    if (handle == (HANDLE)STD_INPUT_HANDLE)
+        return NtCurrentTeb()->Peb->ProcessParameters->hStdInput;
+    if (handle == (HANDLE)STD_OUTPUT_HANDLE)
+        return NtCurrentTeb()->Peb->ProcessParameters->hStdOutput;
+    if (handle == (HANDLE)STD_ERROR_HANDLE)
+        return NtCurrentTeb()->Peb->ProcessParameters->hStdError;
+
+    return handle;
+}
+
 /***********************************************************************
  *           NtUserMsgWaitForMultipleObjectsEx   (win32u.@)
  */
@@ -1979,7 +1991,7 @@ DWORD WINAPI NtUserMsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handl
     }
 
     /* add the queue to the handle list */
-    for (i = 0; i < count; i++) wait_handles[i] = handles[i];
+    for (i = 0; i < count; i++) wait_handles[i] = normalize_std_handle( handles[i] );
     wait_handles[count] = get_server_queue_handle();
 
     return wait_objects( count+1, wait_handles, timeout,

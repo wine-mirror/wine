@@ -792,35 +792,15 @@ static inline LARGE_INTEGER *get_nt_timeout( LARGE_INTEGER *time, DWORD timeout 
     return time;
 }
 
-static HANDLE normalize_std_handle( HANDLE handle )
-{
-    if (handle == (HANDLE)STD_INPUT_HANDLE)
-        return NtCurrentTeb()->Peb->ProcessParameters->hStdInput;
-    if (handle == (HANDLE)STD_OUTPUT_HANDLE)
-        return NtCurrentTeb()->Peb->ProcessParameters->hStdOutput;
-    if (handle == (HANDLE)STD_ERROR_HANDLE)
-        return NtCurrentTeb()->Peb->ProcessParameters->hStdError;
-
-    return handle;
-}
-
 static DWORD nulldrv_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles, DWORD timeout,
                                                   DWORD mask, DWORD flags )
 {
     NTSTATUS status;
-    HANDLE hloc[MAXIMUM_WAIT_OBJECTS];
     LARGE_INTEGER time;
-    unsigned int i;
 
     if (!count && !timeout) return WAIT_TIMEOUT;
-    if (count > MAXIMUM_WAIT_OBJECTS)
-    {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return WAIT_FAILED;
-    }
-    for (i = 0; i < count; i++) hloc[i] = normalize_std_handle( handles[i] );
 
-    status = NtWaitForMultipleObjects( count, hloc, !(flags & MWMO_WAITALL), !!(flags & MWMO_ALERTABLE),
+    status = NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL), !!(flags & MWMO_ALERTABLE),
                                        get_nt_timeout( &time, timeout ) );
     if (HIWORD(status))  /* is it an error code? */
     {
