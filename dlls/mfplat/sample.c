@@ -182,11 +182,11 @@ static ULONG WINAPI sample_Release(IMFSample *iface)
 static ULONG WINAPI sample_tracked_Release(IMFSample *iface)
 {
     struct sample *sample = impl_from_IMFSample(iface);
-    ULONG refcount;
+    ULONG refcount = InterlockedDecrement(&sample->attributes.ref);
     HRESULT hr;
 
     EnterCriticalSection(&sample->attributes.cs);
-    if (sample->tracked_result && sample->tracked_refcount == (sample->attributes.ref - 1))
+    if (sample->tracked_result && sample->tracked_refcount == refcount)
     {
         IRtwqAsyncResult *tracked_result = sample->tracked_result;
         sample->tracked_result = NULL;
@@ -198,8 +198,6 @@ static ULONG WINAPI sample_tracked_Release(IMFSample *iface)
         IRtwqAsyncResult_Release(tracked_result);
     }
     LeaveCriticalSection(&sample->attributes.cs);
-
-    refcount = InterlockedDecrement(&sample->attributes.ref);
 
     TRACE("%p, refcount %lu.\n", iface, refcount);
 
