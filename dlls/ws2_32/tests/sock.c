@@ -5599,6 +5599,9 @@ static void test_connect_events(struct event_test_ctx *ctx)
     server = accept(listener, NULL, NULL);
     ok(server != -1, "failed to accept, error %u\n", WSAGetLastError());
 
+    select_events(ctx, server, FD_ACCEPT | FD_CONNECT | FD_OOB | FD_READ | FD_WRITE);
+    check_events(ctx, FD_WRITE, 0, 200);
+
     closesocket(client);
     closesocket(server);
 

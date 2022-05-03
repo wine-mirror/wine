@@ -1819,6 +1819,18 @@ static void test_get_events(void)
     ok(!ret, "got error %lu\n", GetLastError());
     ok(!events.lNetworkEvents, "got events %#lx\n", events.lNetworkEvents);
 
+    ret = WSAEventSelect(server, event, FD_ACCEPT | FD_CLOSE | FD_CONNECT | FD_OOB | FD_READ | FD_WRITE);
+    ok(!ret, "got error %lu\n", GetLastError());
+
+    memset(&params, 0xcc, sizeof(params));
+    memset(&io, 0xcc, sizeof(io));
+    ret = NtDeviceIoControlFile((HANDLE)server, NULL, NULL, NULL, &io,
+            IOCTL_AFD_GET_EVENTS, NULL, 0, &params, sizeof(params));
+    ok(!ret, "got %#x\n", ret);
+    ok(params.flags == AFD_POLL_WRITE, "got flags %#x\n", params.flags);
+    for (i = 0; i < ARRAY_SIZE(params.status); ++i)
+        ok(!params.status[i], "got status[%u] %#x\n", i, params.status[i]);
+
     closesocket(client);
     closesocket(server);
 
