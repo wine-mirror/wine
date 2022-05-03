@@ -1065,13 +1065,12 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
  * Find a free block at least as large as the requested size, and make sure
  * the requested size is committed.
  */
-static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T size,
-                                       SUBHEAP **ppSubHeap )
+static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T data_size, SUBHEAP **ppSubHeap )
 {
     SUBHEAP *subheap;
     struct list *ptr;
     SIZE_T total_size;
-    FREE_LIST_ENTRY *pEntry = heap->freeList + get_freelist_index( size + sizeof(ARENA_INUSE) );
+    FREE_LIST_ENTRY *pEntry = heap->freeList + get_freelist_index( data_size + sizeof(ARENA_INUSE) );
 
     /* Find a suitable free list, and in it find a block large enough */
 
@@ -1081,10 +1080,10 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T size,
         ARENA_FREE *pArena = LIST_ENTRY( ptr, ARENA_FREE, entry );
         SIZE_T arena_size = (pArena->size & ARENA_SIZE_MASK) +
                             sizeof(ARENA_FREE) - sizeof(ARENA_INUSE);
-        if (arena_size >= size)
+        if (arena_size >= data_size)
         {
             subheap = find_subheap( heap, (struct block *)pArena, FALSE );
-            if (!HEAP_Commit( subheap, (ARENA_INUSE *)pArena, size )) return NULL;
+            if (!HEAP_Commit( subheap, (ARENA_INUSE *)pArena, data_size )) return NULL;
             *ppSubHeap = subheap;
             return pArena;
         }
@@ -1094,7 +1093,7 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T size,
 
     if (!(heap->flags & HEAP_GROWABLE))
     {
-        WARN("Not enough space in heap %p for %08lx bytes\n", heap, size );
+        WARN("Not enough space in heap %p for %08lx bytes\n", heap, data_size );
         return NULL;
     }
     /* make sure that we have a big enough size *committed* to fit another
@@ -1102,8 +1101,8 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T size,
      * So just one heap struct, one first free arena which will eventually
      * get used, and a second free arena that might get assigned all remaining
      * free space in shrink_used_block() */
-    total_size = size + ROUND_SIZE(sizeof(SUBHEAP)) + sizeof(ARENA_INUSE) + sizeof(ARENA_FREE);
-    if (total_size < size) return NULL;  /* overflow */
+    total_size = data_size + ROUND_SIZE(sizeof(SUBHEAP)) + sizeof(ARENA_INUSE) + sizeof(ARENA_FREE);
+    if (total_size < data_size) return NULL;  /* overflow */
 
     if ((subheap = HEAP_CreateSubHeap( heap, NULL, heap->flags, total_size,
                                        max( heap->grow_size, total_size ) )))
