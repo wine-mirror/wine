@@ -1987,29 +1987,6 @@ static struct x11drv_win_data *X11DRV_create_win_data( HWND hwnd, const RECT *wi
 }
 
 
-/* window procedure for foreign windows */
-static LRESULT WINAPI foreign_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
-{
-    switch(msg)
-    {
-    case WM_WINDOWPOSCHANGED:
-        update_systray_balloon_position();
-        break;
-    case WM_PARENTNOTIFY:
-        if (LOWORD(wparam) == WM_DESTROY)
-        {
-            TRACE( "%p: got parent notify destroy for win %lx\n", hwnd, lparam );
-            NtUserPostMessage( hwnd, WM_CLOSE, 0, 0 );  /* so that we come back here once the child is gone */
-        }
-        return 0;
-    case WM_CLOSE:
-        if (NtUserGetWindowRelative( hwnd, GW_CHILD )) return 0;  /* refuse to die if we still have children */
-        break;
-    }
-    return DefWindowProcW( hwnd, msg, wparam, lparam );
-}
-
-
 /***********************************************************************
  *		create_foreign_window
  *

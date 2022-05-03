@@ -142,7 +142,7 @@ static void create_tooltip(struct tray_icon *icon)
     }
 }
 
-void update_systray_balloon_position(void)
+static void update_systray_balloon_position(void)
 {
     RECT rect;
     POINT pos;
@@ -782,4 +782,27 @@ int CDECL wine_notify_icon( DWORD msg, NOTIFYICONDATAW *data )
         break;
     }
     return ret;
+}
+
+
+/* window procedure for foreign windows */
+LRESULT WINAPI foreign_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    switch(msg)
+    {
+    case WM_WINDOWPOSCHANGED:
+        update_systray_balloon_position();
+        break;
+    case WM_PARENTNOTIFY:
+        if (LOWORD(wparam) == WM_DESTROY)
+        {
+            TRACE( "%p: got parent notify destroy for win %lx\n", hwnd, lparam );
+            PostMessageW( hwnd, WM_CLOSE, 0, 0 );  /* so that we come back here once the child is gone */
+        }
+        return 0;
+    case WM_CLOSE:
+        if (GetWindow( hwnd, GW_CHILD )) return 0;  /* refuse to die if we still have children */
+        break;
+    }
+    return DefWindowProcW( hwnd, msg, wparam, lparam );
 }
