@@ -6655,6 +6655,172 @@ static int get_number_format( const NLS_LOCALE_DATA *locale, DWORD flags, const 
 }
 
 
+static int get_currency_format( const NLS_LOCALE_DATA *locale, DWORD flags, const WCHAR *value,
+                                const CURRENCYFMTW *format, WCHAR *buffer, int len )
+{
+    WCHAR *num, fmt_decimal[4], fmt_thousand[4], fmt_symbol[13], fmt_neg[5], grouping[20], output[256];
+    const WCHAR *decimal_sep = fmt_decimal, *thousand_sep = fmt_thousand, *symbol = fmt_symbol;
+    DWORD digits, lzero, pos_order, neg_order;
+    int ret = 0;
+    BOOL negative = (*value == '-');
+
+    flags &= LOCALE_NOUSEROVERRIDE;
+
+    if (!format)
+    {
+        get_locale_info( locale, 0, LOCALE_SCURRENCY | flags, fmt_symbol, ARRAY_SIZE(fmt_symbol) );
+        get_locale_info( locale, 0, LOCALE_SMONGROUPING | flags, grouping, ARRAY_SIZE(grouping) );
+        get_locale_info( locale, 0, LOCALE_SMONDECIMALSEP | flags, fmt_decimal, ARRAY_SIZE(fmt_decimal) );
+        get_locale_info( locale, 0, LOCALE_SMONTHOUSANDSEP | flags, fmt_thousand, ARRAY_SIZE(fmt_thousand) );
+        get_locale_info( locale, 0, LOCALE_ICURRDIGITS | LOCALE_RETURN_NUMBER | flags,
+                         (WCHAR *)&digits, sizeof(DWORD)/sizeof(WCHAR) );
+        get_locale_info( locale, 0, LOCALE_ILZERO | LOCALE_RETURN_NUMBER | flags,
+                         (WCHAR *)&lzero, sizeof(DWORD)/sizeof(WCHAR) );
+        get_locale_info( locale, 0, LOCALE_ICURRENCY | LOCALE_RETURN_NUMBER | flags,
+                         (WCHAR *)&pos_order, sizeof(DWORD)/sizeof(WCHAR) );
+        get_locale_info( locale, 0, LOCALE_INEGCURR | LOCALE_RETURN_NUMBER | flags,
+                         (WCHAR *)&neg_order, sizeof(DWORD)/sizeof(WCHAR) );
+    }
+    else
+    {
+        if (flags)
+        {
+            SetLastError( ERROR_INVALID_FLAGS );
+            return 0;
+        }
+        decimal_sep = format->lpDecimalSep;
+        thousand_sep = format->lpThousandSep;
+        symbol = format->lpCurrencySymbol;
+        grouping_to_string( format->Grouping, grouping );
+        digits = format->NumDigits;
+        lzero = format->LeadingZero;
+        pos_order = format->PositiveOrder;
+        neg_order = format->NegativeOrder;
+        if (!decimal_sep || !thousand_sep || !symbol)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+    }
+
+    if (negative)
+    {
+        value++;
+        get_locale_info( locale, 0, LOCALE_SNEGATIVESIGN | flags, fmt_neg, ARRAY_SIZE(fmt_neg) );
+    }
+
+    if (!(num = format_number( output + ARRAY_SIZE(output) - 20, value,
+                               decimal_sep, thousand_sep, grouping, digits, lzero )))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    if (negative)
+    {
+        switch (neg_order)
+        {
+        case 14:  /* ($ 1.1) */
+            num = prepend_str( num, L" " );
+            /* fall through */
+        case 0:  /* ($1.1) */
+            num = prepend_str( num, symbol );
+            num = prepend_str( num, L"(" );
+            wcscat( num, L")" );
+            break;
+        case 9:  /* -$ 1.1 */
+            num = prepend_str( num, L" " );
+            /* fall through */
+        case 1:  /* -$1.1 */
+            num = prepend_str( num, symbol );
+            num = prepend_str( num, fmt_neg );
+            break;
+        case 2:  /* $-1.1 */
+            num = prepend_str( num, fmt_neg );
+            num = prepend_str( num, symbol );
+            break;
+        case 11:  /* $ 1.1- */
+            num = prepend_str( num, L" " );
+            /* fall through */
+        case 3:  /* $1.1- */
+            num = prepend_str( num, symbol );
+            wcscat( num, fmt_neg );
+            break;
+        case 15:  /* (1.1 $) */
+            wcscat( num, L" " );
+            /* fall through */
+        case 4:  /* (1.1$) */
+            wcscat( num, symbol );
+            num = prepend_str( num, L"(" );
+            wcscat( num, L")" );
+            break;
+        case 8:  /* -1.1 $ */
+            wcscat( num, L" " );
+            /* fall through */
+        case 5:  /* -1.1$ */
+            num = prepend_str( num, fmt_neg );
+            wcscat( num, symbol );
+            break;
+        case 6:  /* 1.1-$ */
+            wcscat( num, fmt_neg );
+            wcscat( num, symbol );
+            break;
+        case 10:  /* 1.1 $- */
+            wcscat( num, L" " );
+            /* fall through */
+        case 7:  /* 1.1$- */
+            wcscat( num, symbol );
+            wcscat( num, fmt_neg );
+            break;
+        case 12:  /* $ -1.1 */
+            num = prepend_str( num, fmt_neg );
+            num = prepend_str( num, L" " );
+            num = prepend_str( num, symbol );
+            break;
+        case 13:  /* 1.1- $ */
+            wcscat( num, fmt_neg );
+            wcscat( num, L" " );
+            wcscat( num, symbol );
+            break;
+        default:
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+    }
+    else
+    {
+        switch (pos_order)
+        {
+        case 2: /* $ 1.1 */
+            num = prepend_str( num, L" " );
+            /* fall through */
+        case 0: /* $1.1 */
+            num = prepend_str( num, symbol );
+            break;
+        case 3: /* 1.1 $ */
+            wcscat( num, L" " );
+            /* fall through */
+        case 1: /* 1.1$ */
+            wcscat( num, symbol );
+            break;
+        default:
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+    }
+
+    ret = wcslen( num ) + 1;
+    if (!len) return ret;
+    lstrcpynW( buffer, num, len );
+    if (ret > len)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+    return ret;
+}
+
+
 /**************************************************************************
  *	GetNumberFormatW  (kernelbase.@)
  */
@@ -6691,4 +6857,43 @@ int WINAPI GetNumberFormatEx( const WCHAR *name, DWORD flags, const WCHAR *value
 
     TRACE( "(%s,%lx,%s,%p,%p,%d)\n", debugstr_w(name), flags, debugstr_w(value), format, buffer, len );
     return get_number_format( locale, flags, value, format, buffer, len );
+}
+
+
+/***********************************************************************
+ *	GetCurrencyFormatW  (kernelbase.@)
+ */
+int WINAPI GetCurrencyFormatW( LCID lcid, DWORD flags, const WCHAR *value,
+                               const CURRENCYFMTW *format, WCHAR *buffer, int len )
+{
+    const NLS_LOCALE_DATA *locale = NlsValidateLocale( &lcid, 0 );
+
+    if (len < 0 || (len && !buffer) || !value || !locale)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    TRACE( "(%04lx,%lx,%s,%p,%p,%d)\n", lcid, flags, debugstr_w(value), format, buffer, len );
+    return get_currency_format( locale, flags, value, format, buffer, len );
+}
+
+
+/***********************************************************************
+ *	GetCurrencyFormatEx  (kernelbase.@)
+ */
+int WINAPI GetCurrencyFormatEx( const WCHAR *name, DWORD flags, const WCHAR *value,
+                                const CURRENCYFMTW *format, WCHAR *buffer, int len )
+{
+    LCID lcid;
+    const NLS_LOCALE_DATA *locale = get_locale_by_name( name, &lcid );
+
+    if (len < 0 || (len && !buffer) || !value || !locale)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    TRACE( "(%s,%lx,%s,%p,%p,%d)\n", debugstr_w(name), flags, debugstr_w(value), format, buffer, len );
+    return get_currency_format( locale, flags, value, format, buffer, len );
 }

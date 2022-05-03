@@ -1307,6 +1307,18 @@ static void test_GetCurrencyFormatA(void)
   ret = GetCurrencyFormatA(lcid, 0, "235", &format, buffer, ARRAY_SIZE(buffer));
   expect_str(ret, buffer, "$235.0");
 
+  format.Grouping = 31;
+  ret = GetCurrencyFormatA(lcid, 0, "1234567890", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "$1,2,3,4,5,6,7,890.0");
+
+  format.Grouping = 312;
+  ret = GetCurrencyFormatA(lcid, 0, "1234567890", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "$12,34,56,7,890.0");
+
+  format.Grouping = 310;
+  ret = GetCurrencyFormatA(lcid, 0, "1234567890", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "$123456,7,890.0");
+
   /* Grouping of a negative number */
   format.NegativeOrder = 2;
   ret = GetCurrencyFormatA(lcid, 0, "-235", &format, buffer, ARRAY_SIZE(buffer));
@@ -1316,6 +1328,14 @@ static void test_GetCurrencyFormatA(void)
   format.LeadingZero = 1;
   ret = GetCurrencyFormatA(lcid, 0, ".5", &format, buffer, ARRAY_SIZE(buffer));
   expect_str(ret, buffer, "$0.5");
+  ret = GetCurrencyFormatA(lcid, 0, "0.5", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "$0.5");
+
+  format.LeadingZero = 0;
+  ret = GetCurrencyFormatA(lcid, 0, "0.5", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "$.5");
+  ret = GetCurrencyFormatA(lcid, 0, "0.5", &format, buffer, ARRAY_SIZE(buffer));
+  expect_str(ret, buffer, "$.5");
 
   format.PositiveOrder = CY_POS_RIGHT;
   ret = GetCurrencyFormatA(lcid, 0, "1", &format, buffer, ARRAY_SIZE(buffer));
