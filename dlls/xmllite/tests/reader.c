@@ -767,6 +767,12 @@ static void test_readerinput(void)
     IXmlReader_Release(reader);
 
     IUnknown_Release(reader_input);
+
+    /* Using codepage */
+    hr = CreateXmlReaderInputWithEncodingCodePage(input, NULL, 1200, FALSE, NULL, &reader_input);
+    ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+    IUnknown_Release(reader_input);
+
     IUnknown_Release(input);
 }
 
