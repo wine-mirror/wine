@@ -66,6 +66,9 @@ static LRESULT OSS_AuxExit(void)
     return 0;
 }
 
+DWORD WINAPI OSS_auxMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
+			    DWORD_PTR dwParam1, DWORD_PTR dwParam2);
+
 /**************************************************************************
  * 				AUX_GetDevCaps			[internal]
  */
@@ -73,10 +76,11 @@ static DWORD AUX_GetDevCaps(WORD wDevID, LPAUXCAPSW lpCaps, DWORD dwSize)
 {
     int 	mixer, volume;
     static const WCHAR ini[] = {'O','S','S',' ','A','u','x',' ','#','0',0};
+    unsigned int num_aux = OSS_auxMessage(0, AUXDM_GETNUMDEVS, 0, 0, 0);
 
     TRACE("(%04X, %p, %u);\n", wDevID, lpCaps, dwSize);
     if (lpCaps == NULL) return MMSYSERR_NOTENABLED;
-    if (wDevID >= NumDev) return MMSYSERR_BADDEVICEID;
+    if (wDevID >= num_aux) return MMSYSERR_BADDEVICEID;
     if ((mixer = open(MIXER_DEV, O_RDWR)) < 0) {
 	WARN("mixer device not available !\n");
 	return MMSYSERR_NOTENABLED;
