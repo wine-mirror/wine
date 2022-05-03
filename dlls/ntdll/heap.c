@@ -1069,6 +1069,7 @@ static struct block *find_free_block( HEAP *heap, SIZE_T data_size, SUBHEAP **su
     while ((ptr = list_next( &heap->freeList[0].arena.entry, ptr )))
     {
         entry = LIST_ENTRY( ptr, struct entry, entry );
+        if (entry->size == (0 | ARENA_FLAG_FREE)) continue;
         arena_size = (entry->size & ARENA_SIZE_MASK) + sizeof(ARENA_FREE) - sizeof(ARENA_INUSE);
         if (arena_size >= data_size)
         {
