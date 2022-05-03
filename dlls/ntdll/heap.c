@@ -1437,14 +1437,13 @@ static BOOL HEAP_ValidateInUseArena( const SUBHEAP *subheap, const ARENA_INUSE *
 }
 
 
-static BOOL heap_validate_ptr( HEAP *heap, const void *ptr )
+static BOOL heap_validate_ptr( HEAP *heap, const void *ptr, SUBHEAP **subheap )
 {
     const ARENA_INUSE *arena = (const ARENA_INUSE *)ptr - 1;
     const ARENA_LARGE *large_arena;
-    SUBHEAP *subheap;
 
-    if (!(subheap = find_subheap( heap, arena )) ||
-        ((const char *)arena < (char *)subheap->base + subheap->headerSize))
+    if (!(*subheap = find_subheap( heap, arena )) ||
+        ((const char *)arena < (char *)(*subheap)->base + (*subheap)->headerSize))
     {
         if (!(large_arena = find_large_block( heap, ptr )))
         {
@@ -1455,7 +1454,7 @@ static BOOL heap_validate_ptr( HEAP *heap, const void *ptr )
         return validate_large_arena( heap, large_arena, QUIET );
     }
 
-    return HEAP_ValidateInUseArena( subheap, arena, QUIET );
+    return HEAP_ValidateInUseArena( *subheap, arena, QUIET );
 }
 
 static BOOL heap_validate( HEAP *heap, BOOL quiet )
@@ -1506,24 +1505,20 @@ static BOOL validate_block_pointer( HEAP *heap, SUBHEAP **ret_subheap, const ARE
     SUBHEAP *subheap;
     BOOL ret = FALSE;
 
+    if (heap->flags & HEAP_VALIDATE) return heap_validate_ptr( heap, arena + 1, ret_subheap );
+
     if (!(*ret_subheap = subheap = find_subheap( heap, arena )))
     {
-        ARENA_LARGE *large_arena = find_large_block( heap, arena + 1 );
-
-        if (!large_arena)
+        if (!find_large_block( heap, arena + 1 ))
         {
             WARN( "Heap %p: pointer %p is not inside heap\n", heap, arena + 1 );
             return FALSE;
         }
-        if ((heap->flags & HEAP_VALIDATE) && !validate_large_arena( heap, large_arena, QUIET ))
-            return FALSE;
         return TRUE;
     }
 
     if ((const char *)arena < (char *)subheap->base + subheap->headerSize)
         WARN( "Heap %p: pointer %p is inside subheap %p header\n", subheap->heap, arena + 1, subheap );
-    else if (subheap->heap->flags & HEAP_VALIDATE)  /* do the full validation */
-        ret = HEAP_ValidateInUseArena( subheap, arena, QUIET );
     else if ((ULONG_PTR)arena % ALIGNMENT != ARENA_OFFSET)
         WARN( "Heap %p: unaligned arena pointer %p\n", subheap->heap, arena );
     else if (arena->magic == ARENA_PENDING_MAGIC)
@@ -2102,6 +2097,7 @@ SIZE_T WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, const void *ptr )
  */
 BOOLEAN WINAPI RtlValidateHeap( HANDLE heap, ULONG flags, const void *ptr )
 {
+    SUBHEAP *subheap;
     HEAP *heapPtr;
     BOOLEAN ret;
 
@@ -2110,7 +2106,7 @@ BOOLEAN WINAPI RtlValidateHeap( HANDLE heap, ULONG flags, const void *ptr )
     else
     {
         heap_lock( heapPtr, flags );
-        if (ptr) ret = heap_validate_ptr( heapPtr, ptr );
+        if (ptr) ret = heap_validate_ptr( heapPtr, ptr, &subheap );
         else ret = heap_validate( heapPtr, QUIET );
         heap_unlock( heapPtr, flags );
     }
