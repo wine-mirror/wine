@@ -1662,8 +1662,8 @@ static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size
 
     /* Check if we need to grow the block */
 
-    old_data_size = (block->size & ARENA_SIZE_MASK);
-    old_size = (block->size & ARENA_SIZE_MASK) - block->unused_bytes;
+    old_data_size = block_get_size( block ) - sizeof(*block);
+    old_size = block_get_size( block ) - block_get_overhead( block );
     if (data_size > old_data_size)
     {
         if ((next = next_block( subheap, block )) && (block_get_flags( next ) & ARENA_FLAG_FREE) &&
