@@ -151,6 +151,12 @@ static NTSTATUS WINAPI x11drv_is_system_module( void *arg, ULONG size )
 }
 
 
+static NTSTATUS x11drv_load_icon( UINT id )
+{
+    return HandleToUlong( LoadIconW( NULL, UlongToPtr( id )));
+}
+
+
 typedef NTSTATUS (*callback_func)( UINT arg );
 static const callback_func callback_funcs[] =
 {
@@ -162,6 +168,7 @@ static const callback_func callback_funcs[] =
     x11drv_ime_set_cursor_pos,
     x11drv_ime_set_open_status,
     x11drv_ime_update_association,
+    x11drv_load_icon,
 };
 
 C_ASSERT( ARRAYSIZE(callback_funcs) == client_funcs_count );
