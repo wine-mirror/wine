@@ -1761,6 +1761,15 @@ static void test_Recognition(void)
      * TODO: Use a loopback device together with prerecorded audio files to test the recognizer's functionality.
      */
 
+    hr = ISpeechContinuousRecognitionSession_PauseAsync(session, &action2);
+    ok(hr == S_OK, "ISpeechContinuousRecognitionSession_PauseAsync failed, hr %#lx.\n", hr);
+    await_async_void(action2, &action_handler);
+    check_async_info((IInspectable *)action2, 3, Completed, S_OK);
+    IAsyncAction_Release(action2);
+
+    hr = ISpeechContinuousRecognitionSession_Resume(session);
+    todo_wine ok(hr == S_OK, "ISpeechContinuousRecognitionSession_Resume failed, hr %#lx.\n", hr);
+
     hr = ISpeechContinuousRecognitionSession_StopAsync(session, &action2);
     ok(hr == S_OK, "ISpeechContinuousRecognitionSession_StopAsync failed, hr %#lx.\n", hr);
 
@@ -1792,7 +1801,7 @@ static void test_Recognition(void)
 
     hr = IAsyncInfo_Close(info); /* If IAsyncInfo_Close would wait for the handler to finish, the test would get stuck here. */
     ok(hr == S_OK, "IAsyncInfo_Close failed, hr %#lx.\n", hr);
-    check_async_info((IInspectable *)action2, 3, AsyncStatus_Closed, S_OK);
+    check_async_info((IInspectable *)action2, 4, AsyncStatus_Closed, S_OK);
 
     set = SetEvent(action_handler.event_block);
     ok(set == TRUE, "Event 'event_block' wasn't set.\n");

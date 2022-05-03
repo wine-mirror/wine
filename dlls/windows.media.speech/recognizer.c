@@ -283,10 +283,15 @@ static HRESULT WINAPI session_CancelAsync( ISpeechContinuousRecognitionSession *
     return E_NOTIMPL;
 }
 
+static HRESULT session_pause_async( IInspectable *invoker )
+{
+    return S_OK;
+}
+
 static HRESULT WINAPI session_PauseAsync( ISpeechContinuousRecognitionSession *iface, IAsyncAction **action )
 {
     FIXME("iface %p, action %p stub!\n", iface, action);
-    return E_NOTIMPL;
+    return async_action_create(NULL, session_pause_async, action);
 }
 
 static HRESULT WINAPI session_Resume( ISpeechContinuousRecognitionSession *iface )
