@@ -557,13 +557,13 @@ static BOOL grow_logical_proc_ex_buf( SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **
     return TRUE;
 }
 
-static DWORD log_proc_ex_size_plus(DWORD size)
+static DWORD log_proc_ex_size_plus( DWORD size )
 {
     /* add SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX.Relationship and .Size */
     return sizeof(LOGICAL_PROCESSOR_RELATIONSHIP) + sizeof(DWORD) + size;
 }
 
-static DWORD count_bits(ULONG_PTR mask)
+static DWORD count_bits( ULONG_PTR mask )
 {
     DWORD count = 0;
     while (mask > 0)
@@ -585,10 +585,11 @@ static BOOL logical_proc_info_add_by_id( SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
                                          DWORD *pmax_len, LOGICAL_PROCESSOR_RELATIONSHIP rel,
                                          DWORD id, ULONG_PTR mask )
 {
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *dataex;
+    unsigned int ofs = 0, i;
+
     if (pdata)
     {
-        DWORD i;
-
         for (i = 0; i < *len; i++)
         {
             if (rel == RelationProcessorPackage && (*pdata)[i].Relationship == rel && (*pdata)[i].u.Reserved[1] == id)
@@ -611,54 +612,50 @@ static BOOL logical_proc_info_add_by_id( SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
             (*pdata)[i].u.ProcessorCore.Flags = count_bits(mask) > 1 ? LTP_PC_SMT : 0;
         (*pdata)[i].u.Reserved[0] = 0;
         (*pdata)[i].u.Reserved[1] = id;
-        *len = i+1;
+        *len = i + 1;
+        return TRUE;
     }
-    else
+
+    while (ofs < *len)
     {
-        SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *dataex;
-        DWORD ofs = 0;
-
-        while (ofs < *len)
-        {
-            dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)(((char *)*pdataex) + ofs);
-            if (rel == RelationProcessorPackage && dataex->Relationship == rel && dataex->u.Processor.Reserved[1] == id)
-            {
-                dataex->u.Processor.GroupMask[0].Mask |= mask;
-                return TRUE;
-            }
-            else if (rel == RelationProcessorCore && dataex->Relationship == rel && dataex->u.Processor.Reserved[1] == id)
-            {
-                return TRUE;
-            }
-            ofs += dataex->Size;
-        }
-
-        /* TODO: For now, just one group. If more than 64 processors, then we
-         * need another group. */
-
-        while (ofs + log_proc_ex_size_plus(sizeof(PROCESSOR_RELATIONSHIP)) > *pmax_len)
-        {
-            if (!grow_logical_proc_ex_buf(pdataex, pmax_len)) return FALSE;
-        }
-
         dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)(((char *)*pdataex) + ofs);
-
-        dataex->Relationship = rel;
-        dataex->Size = log_proc_ex_size_plus(sizeof(PROCESSOR_RELATIONSHIP));
-        if (rel == RelationProcessorCore)
-            dataex->u.Processor.Flags = count_bits(mask) > 1 ? LTP_PC_SMT : 0;
-        else
-            dataex->u.Processor.Flags = 0;
-        dataex->u.Processor.EfficiencyClass = 0;
-        dataex->u.Processor.GroupCount = 1;
-        dataex->u.Processor.GroupMask[0].Mask = mask;
-        dataex->u.Processor.GroupMask[0].Group = 0;
-        /* mark for future lookup */
-        dataex->u.Processor.Reserved[0] = 0;
-        dataex->u.Processor.Reserved[1] = id;
-
-        *len += dataex->Size;
+        if (rel == RelationProcessorPackage && dataex->Relationship == rel && dataex->u.Processor.Reserved[1] == id)
+        {
+            dataex->u.Processor.GroupMask[0].Mask |= mask;
+            return TRUE;
+        }
+        else if (rel == RelationProcessorCore && dataex->Relationship == rel && dataex->u.Processor.Reserved[1] == id)
+        {
+            return TRUE;
+        }
+        ofs += dataex->Size;
     }
+
+    /* TODO: For now, just one group. If more than 64 processors, then we
+     * need another group. */
+
+    while (ofs + log_proc_ex_size_plus( sizeof(PROCESSOR_RELATIONSHIP) ) > *pmax_len)
+    {
+        if (!grow_logical_proc_ex_buf(pdataex, pmax_len)) return FALSE;
+    }
+
+    dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)(((char *)*pdataex) + ofs);
+
+    dataex->Relationship = rel;
+    dataex->Size = log_proc_ex_size_plus( sizeof(PROCESSOR_RELATIONSHIP) );
+    if (rel == RelationProcessorCore)
+        dataex->u.Processor.Flags = count_bits( mask ) > 1 ? LTP_PC_SMT : 0;
+    else
+        dataex->u.Processor.Flags = 0;
+    dataex->u.Processor.EfficiencyClass = 0;
+    dataex->u.Processor.GroupCount = 1;
+    dataex->u.Processor.GroupMask[0].Mask = mask;
+    dataex->u.Processor.GroupMask[0].Group = 0;
+    /* mark for future lookup */
+    dataex->u.Processor.Reserved[0] = 0;
+    dataex->u.Processor.Reserved[1] = id;
+
+    *len += dataex->Size;
 
     return TRUE;
 }
@@ -667,10 +664,11 @@ static BOOL logical_proc_info_add_cache( SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
                                          SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **pdataex, DWORD *len,
                                          DWORD *pmax_len, ULONG_PTR mask, CACHE_DESCRIPTOR *cache )
 {
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *dataex;
+    unsigned int ofs = 0, i;
+
     if (pdata)
     {
-        DWORD i;
-
         for (i = 0; i < *len; i++)
         {
             if ((*pdata)[i].Relationship==RelationCache && (*pdata)[i].ProcessorMask==mask
@@ -684,41 +682,37 @@ static BOOL logical_proc_info_add_cache( SYSTEM_LOGICAL_PROCESSOR_INFORMATION **
         (*pdata)[i].Relationship = RelationCache;
         (*pdata)[i].ProcessorMask = mask;
         (*pdata)[i].u.Cache = *cache;
-        *len = i+1;
+        *len = i + 1;
+        return TRUE;
     }
-    else
+
+    for (ofs = 0; ofs < *len; )
     {
-        SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *dataex;
-        DWORD ofs;
-
-        for (ofs = 0; ofs < *len; )
-        {
-            dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)(((char *)*pdataex) + ofs);
-            if (dataex->Relationship == RelationCache && dataex->u.Cache.GroupMask.Mask == mask &&
-                    dataex->u.Cache.Level == cache->Level && dataex->u.Cache.Type == cache->Type)
-                return TRUE;
-            ofs += dataex->Size;
-        }
-
-        while (ofs + log_proc_ex_size_plus(sizeof(CACHE_RELATIONSHIP)) > *pmax_len)
-        {
-            if (!grow_logical_proc_ex_buf(pdataex, pmax_len)) return FALSE;
-        }
-
         dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)(((char *)*pdataex) + ofs);
-
-        dataex->Relationship = RelationCache;
-        dataex->Size = log_proc_ex_size_plus(sizeof(CACHE_RELATIONSHIP));
-        dataex->u.Cache.Level = cache->Level;
-        dataex->u.Cache.Associativity = cache->Associativity;
-        dataex->u.Cache.LineSize = cache->LineSize;
-        dataex->u.Cache.CacheSize = cache->Size;
-        dataex->u.Cache.Type = cache->Type;
-        dataex->u.Cache.GroupMask.Mask = mask;
-        dataex->u.Cache.GroupMask.Group = 0;
-
-        *len += dataex->Size;
+        if (dataex->Relationship == RelationCache && dataex->u.Cache.GroupMask.Mask == mask &&
+                dataex->u.Cache.Level == cache->Level && dataex->u.Cache.Type == cache->Type)
+            return TRUE;
+        ofs += dataex->Size;
     }
+
+    while (ofs + log_proc_ex_size_plus( sizeof(CACHE_RELATIONSHIP) ) > *pmax_len)
+    {
+        if (!grow_logical_proc_ex_buf(pdataex, pmax_len)) return FALSE;
+    }
+
+    dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)(((char *)*pdataex) + ofs);
+
+    dataex->Relationship = RelationCache;
+    dataex->Size = log_proc_ex_size_plus( sizeof(CACHE_RELATIONSHIP) );
+    dataex->u.Cache.Level = cache->Level;
+    dataex->u.Cache.Associativity = cache->Associativity;
+    dataex->u.Cache.LineSize = cache->LineSize;
+    dataex->u.Cache.CacheSize = cache->Size;
+    dataex->u.Cache.Type = cache->Type;
+    dataex->u.Cache.GroupMask.Mask = mask;
+    dataex->u.Cache.GroupMask.Group = 0;
+
+    *len += dataex->Size;
 
     return TRUE;
 }
@@ -727,6 +721,8 @@ static BOOL logical_proc_info_add_numa_node( SYSTEM_LOGICAL_PROCESSOR_INFORMATIO
                                              SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **pdataex, DWORD *len,
                                              DWORD *pmax_len, ULONG_PTR mask, DWORD node_id )
 {
+    SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *dataex;
+
     if (pdata)
     {
         while (*len == *pmax_len)
@@ -736,26 +732,23 @@ static BOOL logical_proc_info_add_numa_node( SYSTEM_LOGICAL_PROCESSOR_INFORMATIO
         (*pdata)[*len].ProcessorMask = mask;
         (*pdata)[*len].u.NumaNode.NodeNumber = node_id;
         (*len)++;
+        return TRUE;
     }
-    else
+
+    while (*len + log_proc_ex_size_plus( sizeof(NUMA_NODE_RELATIONSHIP) ) > *pmax_len)
     {
-        SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *dataex;
-
-        while (*len + log_proc_ex_size_plus(sizeof(NUMA_NODE_RELATIONSHIP)) > *pmax_len)
-        {
-            if (!grow_logical_proc_ex_buf(pdataex, pmax_len)) return FALSE;
-        }
-
-        dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)(((char *)*pdataex) + *len);
-
-        dataex->Relationship = RelationNumaNode;
-        dataex->Size = log_proc_ex_size_plus(sizeof(NUMA_NODE_RELATIONSHIP));
-        dataex->u.NumaNode.NodeNumber = node_id;
-        dataex->u.NumaNode.GroupMask.Mask = mask;
-        dataex->u.NumaNode.GroupMask.Group = 0;
-
-        *len += dataex->Size;
+        if (!grow_logical_proc_ex_buf(pdataex, pmax_len)) return FALSE;
     }
+
+    dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)(((char *)*pdataex) + *len);
+
+    dataex->Relationship = RelationNumaNode;
+    dataex->Size = log_proc_ex_size_plus( sizeof(NUMA_NODE_RELATIONSHIP) );
+    dataex->u.NumaNode.NodeNumber = node_id;
+    dataex->u.NumaNode.GroupMask.Mask = mask;
+    dataex->u.NumaNode.GroupMask.Group = 0;
+
+    *len += dataex->Size;
 
     return TRUE;
 }
@@ -765,13 +758,13 @@ static BOOL logical_proc_info_add_group( SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX
 {
     SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *dataex;
 
-    while (*len + log_proc_ex_size_plus(sizeof(GROUP_RELATIONSHIP)) > *pmax_len)
+    while (*len + log_proc_ex_size_plus( sizeof(GROUP_RELATIONSHIP) ) > *pmax_len)
         if (!grow_logical_proc_ex_buf(pdataex, pmax_len)) return FALSE;
 
     dataex = (SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *)(((char *)*pdataex) + *len);
 
     dataex->Relationship = RelationGroup;
-    dataex->Size = log_proc_ex_size_plus(sizeof(GROUP_RELATIONSHIP));
+    dataex->Size = log_proc_ex_size_plus( sizeof(GROUP_RELATIONSHIP) );
     dataex->u.Group.MaximumGroupCount = 1;
     dataex->u.Group.ActiveGroupCount = 1;
     dataex->u.Group.GroupInfo[0].MaximumProcessorCount = num_cpus;
