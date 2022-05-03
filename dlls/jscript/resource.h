@@ -73,7 +73,7 @@
 #define IDS_OBJECT_NONEXTENSIBLE            0x13D5
 #define IDS_NONCONFIGURABLE_REDEFINED       0x13D6
 #define IDS_NONWRITABLE_MODIFIED            0x13D7
-#define IDS_MAP_EXPECTED                    0x13FC
+#define IDS_WRONG_THIS                      0x13FC
 /* FIXME: This is not compatible with native, but we would
  * conflict with IDS_UNSUPPORTED_ACTION otherwise */
 #define IDS_PROP_DESC_MISMATCH              0x1F00

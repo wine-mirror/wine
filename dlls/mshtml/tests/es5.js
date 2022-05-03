@@ -97,7 +97,6 @@ sync_test("Number toLocaleString", function() {
         ok(false, "expected exception calling it on string");
     }catch(ex) {
         var n = ex.number >>> 0;
-        todo_wine.
         ok(n === JS_E_WRONG_THIS, "called on string threw " + n);
     }
     try {
@@ -105,7 +104,6 @@ sync_test("Number toLocaleString", function() {
         ok(false, "expected exception calling it on undefined");
     }catch(ex) {
         var n = ex.number >>> 0;
-        todo_wine.
         ok(n === JS_E_WRONG_THIS, "called on undefined threw " + n);
     }
     try {
@@ -113,7 +111,6 @@ sync_test("Number toLocaleString", function() {
         ok(false, "expected exception calling it on nullDisp");
     }catch(ex) {
         var n = ex.number >>> 0;
-        todo_wine.
         ok(n === JS_E_WRONG_THIS, "called on nullDisp threw " + n);
     }
 });

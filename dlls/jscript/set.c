@@ -94,7 +94,7 @@ static HRESULT get_map_this(script_ctx_t *ctx, jsval_t vthis, MapInstance **ret)
         return JS_E_OBJECT_EXPECTED;
     if(!(jsdisp = to_jsdisp(get_object(vthis))) || !is_class(jsdisp, JSCLASS_MAP)) {
         WARN("not a Map object passed as 'this'\n");
-        return throw_error(ctx, JS_E_MAP_EXPECTED, L"Map");
+        return throw_error(ctx, JS_E_WRONG_THIS, L"Map");
     }
 
     *ret = CONTAINING_RECORD(jsdisp, MapInstance, dispex);
@@ -109,7 +109,7 @@ static HRESULT get_set_this(script_ctx_t *ctx, jsval_t vthis, MapInstance **ret)
         return JS_E_OBJECT_EXPECTED;
     if(!(jsdisp = to_jsdisp(get_object(vthis))) || !is_class(jsdisp, JSCLASS_SET)) {
         WARN("not a Set object passed as 'this'\n");
-        return throw_error(ctx, JS_E_MAP_EXPECTED, L"Set");
+        return throw_error(ctx, JS_E_WRONG_THIS, L"Set");
     }
 
     *ret = CONTAINING_RECORD(jsdisp, MapInstance, dispex);

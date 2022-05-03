@@ -416,8 +416,11 @@ static HRESULT Number_toLocaleString(script_ctx_t *ctx, jsval_t vthis, WORD flag
     TRACE("\n");
 
     hres = numberval_this(vthis, &val);
-    if(FAILED(hres))
+    if(FAILED(hres)) {
+        if(hres == JS_E_NUMBER_EXPECTED && ctx->version >= SCRIPTLANGUAGEVERSION_ES5)
+            return throw_error(ctx, JS_E_WRONG_THIS, L"Number");
         return hres;
+    }
 
     if(r) {
         hres = localize_number(ctx, val, ctx->version >= SCRIPTLANGUAGEVERSION_ES5, &str);
