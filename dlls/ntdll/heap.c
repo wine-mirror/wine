@@ -586,7 +586,8 @@ static HEAP *HEAP_GetPtr(
  */
 static inline void HEAP_InsertFreeBlock( HEAP *heap, ARENA_FREE *pArena, BOOL last )
 {
-    FREE_LIST_ENTRY *pEntry = heap->freeList + get_freelist_index( pArena->size + sizeof(*pArena) );
+    SIZE_T block_size = (pArena->size & ARENA_SIZE_MASK) + sizeof(*pArena);
+    FREE_LIST_ENTRY *pEntry = heap->freeList + get_freelist_index( block_size );
     if (last)
     {
         /* insert at end of free list, i.e. before the next free list entry */
