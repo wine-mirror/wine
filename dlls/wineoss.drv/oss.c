@@ -1444,6 +1444,121 @@ static UINT aux_get_devcaps(WORD dev_id, AUXCAPSW *caps, UINT size)
     return MMSYSERR_NOERROR;
 }
 
+static UINT aux_get_volume(WORD dev_id, UINT *vol)
+{
+    int mixer, volume, left, right, cmd;
+
+    TRACE("(%04X, %p);\n", dev_id, vol);
+    if (vol == NULL) return MMSYSERR_NOTENABLED;
+    if ((mixer = open(MIXER_DEV, O_RDWR)) < 0)
+    {
+        WARN("mixer device not available !\n");
+        return MMSYSERR_NOTENABLED;
+    }
+    switch(dev_id)
+    {
+    case 0:
+        TRACE("SOUND_MIXER_READ_PCM !\n");
+        cmd = SOUND_MIXER_READ_PCM;
+        break;
+    case 1:
+        TRACE("SOUND_MIXER_READ_SYNTH !\n");
+        cmd = SOUND_MIXER_READ_SYNTH;
+        break;
+    case 2:
+        TRACE("SOUND_MIXER_READ_CD !\n");
+        cmd = SOUND_MIXER_READ_CD;
+        break;
+    case 3:
+        TRACE("SOUND_MIXER_READ_LINE !\n");
+        cmd = SOUND_MIXER_READ_LINE;
+        break;
+    case 4:
+        TRACE("SOUND_MIXER_READ_MIC !\n");
+        cmd = SOUND_MIXER_READ_MIC;
+        break;
+    case 5:
+        TRACE("SOUND_MIXER_READ_VOLUME !\n");
+        cmd = SOUND_MIXER_READ_VOLUME;
+        break;
+    default:
+        WARN("invalid device id=%04X !\n", dev_id);
+        close(mixer);
+        return MMSYSERR_NOTENABLED;
+    }
+    if (ioctl(mixer, cmd, &volume) == -1)
+    {
+        WARN("unable to read mixer !\n");
+        close(mixer);
+        return MMSYSERR_NOTENABLED;
+    }
+    close(mixer);
+    left = LOBYTE(LOWORD(volume));
+    right = HIBYTE(LOWORD(volume));
+    TRACE("left=%d right=%d !\n", left, right);
+    *vol = MAKELONG((left * 0xFFFFL) / 100, (right * 0xFFFFL) / 100);
+    return MMSYSERR_NOERROR;
+}
+
+static UINT aux_set_volume(WORD dev_id, UINT vol)
+{
+    int mixer;
+    int volume, left, right;
+    int cmd;
+
+    TRACE("(%04X, %08X);\n", dev_id, vol);
+
+    left   = (LOWORD(vol) * 100) >> 16;
+    right  = (HIWORD(vol) * 100) >> 16;
+    volume = (right << 8) | left;
+
+    if ((mixer = open(MIXER_DEV, O_RDWR)) < 0)
+    {
+        WARN("mixer device not available !\n");
+        return MMSYSERR_NOTENABLED;
+    }
+
+    switch(dev_id)
+    {
+    case 0:
+        TRACE("SOUND_MIXER_WRITE_PCM !\n");
+        cmd = SOUND_MIXER_WRITE_PCM;
+        break;
+    case 1:
+        TRACE("SOUND_MIXER_WRITE_SYNTH !\n");
+        cmd = SOUND_MIXER_WRITE_SYNTH;
+        break;
+    case 2:
+        TRACE("SOUND_MIXER_WRITE_CD !\n");
+        cmd = SOUND_MIXER_WRITE_CD;
+        break;
+    case 3:
+        TRACE("SOUND_MIXER_WRITE_LINE !\n");
+        cmd = SOUND_MIXER_WRITE_LINE;
+        break;
+    case 4:
+        TRACE("SOUND_MIXER_WRITE_MIC !\n");
+        cmd = SOUND_MIXER_WRITE_MIC;
+        break;
+    case 5:
+        TRACE("SOUND_MIXER_WRITE_VOLUME !\n");
+        cmd = SOUND_MIXER_WRITE_VOLUME;
+        break;
+    default:
+        WARN("invalid device id=%04X !\n", dev_id);
+        close(mixer);
+        return MMSYSERR_NOTENABLED;
+    }
+    if (ioctl(mixer, cmd, &volume) == -1)
+    {
+        WARN("unable to set mixer !\n");
+        close(mixer);
+        return MMSYSERR_NOTENABLED;
+    }
+    close(mixer);
+    return MMSYSERR_NOERROR;
+}
+
 static NTSTATUS aux_message(void *args)
 {
     struct aux_message_params *params = args;
@@ -1467,6 +1582,12 @@ static NTSTATUS aux_message(void *args)
     case AUXDM_GETNUMDEVS:
         TRACE("return %d;\n", num_aux);
         *params->err = num_aux;
+        break;
+    case AUXDM_GETVOLUME:
+        *params->err = aux_get_volume(params->dev_id, (UINT *)params->param_1);
+        break;
+    case AUXDM_SETVOLUME:
+        *params->err = aux_set_volume(params->dev_id, params->param_1);
         break;
     default:
         WARN("unknown message !\n");
