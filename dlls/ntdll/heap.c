@@ -1061,8 +1061,9 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
 static struct block *find_free_block( HEAP *heap, SIZE_T data_size, SUBHEAP **subheap )
 {
     struct list *ptr = &find_free_list( heap, data_size + sizeof(ARENA_INUSE), FALSE )->entry;
-    SIZE_T total_size, arena_size;
     struct entry *entry;
+    struct block *block;
+    SIZE_T total_size;
 
     /* Find a suitable free list, and in it find a block large enough */
 
@@ -1070,13 +1071,13 @@ static struct block *find_free_block( HEAP *heap, SIZE_T data_size, SUBHEAP **su
     {
         entry = LIST_ENTRY( ptr, struct entry, entry );
         if (entry->size == (0 | ARENA_FLAG_FREE)) continue;
-        arena_size = (entry->size & ARENA_SIZE_MASK) + sizeof(ARENA_FREE) - sizeof(ARENA_INUSE);
-        if (arena_size >= data_size)
+        block = (struct block *)entry;
+        if (block_get_size( block ) - sizeof(*block) >= data_size)
         {
-            *subheap = find_subheap( heap, (struct block *)entry, FALSE );
-            if (!HEAP_Commit( *subheap, (struct block *)entry, data_size )) return NULL;
+            *subheap = find_subheap( heap, block, FALSE );
+            if (!HEAP_Commit( *subheap, block, data_size )) return NULL;
             list_remove( &entry->entry );
-            return (struct block *)entry;
+            return block;
         }
     }
 
