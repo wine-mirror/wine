@@ -2054,10 +2054,7 @@ static NTSTATUS heap_size( HEAP *heap, const void *ptr, SIZE_T *size )
         const ARENA_LARGE *large_arena = (const ARENA_LARGE *)ptr - 1;
         *size = large_arena->data_size;
     }
-    else
-    {
-        *size = (block->size & ARENA_SIZE_MASK) - block->unused_bytes;
-    }
+    else *size = block_get_size( block ) - block_get_overhead( block );
 
     return STATUS_SUCCESS;
 }
