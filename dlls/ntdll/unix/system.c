@@ -536,46 +536,6 @@ static void get_cpuinfo( SYSTEM_CPU_INFORMATION *info )
 
 #endif /* End architecture specific feature detection for CPUs */
 
-/******************************************************************
- *		init_cpu_info
- *
- * inits a couple of places with CPU related information:
- * - cpu_info in this file
- * - Peb->NumberOfProcessors
- * - SharedUserData->ProcessFeatures[] array
- */
-void init_cpu_info(void)
-{
-    long num;
-
-#ifdef _SC_NPROCESSORS_ONLN
-    num = sysconf(_SC_NPROCESSORS_ONLN);
-    if (num < 1)
-    {
-        num = 1;
-        WARN("Failed to detect the number of processors.\n");
-    }
-#elif defined(CTL_HW) && defined(HW_NCPU)
-    int mib[2];
-    size_t len = sizeof(num);
-    mib[0] = CTL_HW;
-    mib[1] = HW_NCPU;
-    if (sysctl(mib, 2, &num, &len, NULL, 0) != 0)
-    {
-        num = 1;
-        WARN("Failed to detect the number of processors.\n");
-    }
-#else
-    num = 1;
-    FIXME("Detecting the number of processors is not supported.\n");
-#endif
-    peb->NumberOfProcessors = num;
-    get_cpuinfo( &cpu_info );
-    TRACE( "<- CPU arch %d, level %d, rev %d, features 0x%x\n",
-           cpu_info.ProcessorArchitecture, cpu_info.ProcessorLevel, cpu_info.ProcessorRevision,
-           cpu_info.ProcessorFeatureBits );
-}
-
 static BOOL grow_logical_proc_buf( SYSTEM_LOGICAL_PROCESSOR_INFORMATION **pdata, DWORD *max_len )
 {
     SYSTEM_LOGICAL_PROCESSOR_INFORMATION *new_data;
@@ -1253,6 +1213,46 @@ static NTSTATUS create_logical_proc_info( SYSTEM_LOGICAL_PROCESSOR_INFORMATION *
     return STATUS_NOT_IMPLEMENTED;
 }
 #endif
+
+/******************************************************************
+ *		init_cpu_info
+ *
+ * inits a couple of places with CPU related information:
+ * - cpu_info in this file
+ * - Peb->NumberOfProcessors
+ * - SharedUserData->ProcessFeatures[] array
+ */
+void init_cpu_info(void)
+{
+    long num;
+
+#ifdef _SC_NPROCESSORS_ONLN
+    num = sysconf(_SC_NPROCESSORS_ONLN);
+    if (num < 1)
+    {
+        num = 1;
+        WARN("Failed to detect the number of processors.\n");
+    }
+#elif defined(CTL_HW) && defined(HW_NCPU)
+    int mib[2];
+    size_t len = sizeof(num);
+    mib[0] = CTL_HW;
+    mib[1] = HW_NCPU;
+    if (sysctl(mib, 2, &num, &len, NULL, 0) != 0)
+    {
+        num = 1;
+        WARN("Failed to detect the number of processors.\n");
+    }
+#else
+    num = 1;
+    FIXME("Detecting the number of processors is not supported.\n");
+#endif
+    peb->NumberOfProcessors = num;
+    get_cpuinfo( &cpu_info );
+    TRACE( "<- CPU arch %d, level %d, rev %d, features 0x%x\n",
+           cpu_info.ProcessorArchitecture, cpu_info.ProcessorLevel, cpu_info.ProcessorRevision,
+           cpu_info.ProcessorFeatureBits );
+}
 
 static NTSTATUS create_cpuset_info(SYSTEM_CPU_SET_INFORMATION *info)
 {
