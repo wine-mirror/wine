@@ -39,7 +39,6 @@
 #include "winbase.h"
 #include "x11drv.h"
 #include "winternl.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xrender);
@@ -587,7 +586,7 @@ static BOOL fontcmp(LFANDSIZE *p1, LFANDSIZE *p2)
   if(memcmp(&p1->devsize, &p2->devsize, sizeof(p1->devsize))) return TRUE;
   if(memcmp(&p1->xform, &p2->xform, sizeof(p1->xform))) return TRUE;
   if(memcmp(&p1->lf, &p2->lf, offsetof(LOGFONTW, lfFaceName))) return TRUE;
-  return strcmpiW(p1->lf.lfFaceName, p2->lf.lfFaceName);
+  return wcsicmp( p1->lf.lfFaceName, p2->lf.lfFaceName );
 }
 
 static int LookupEntry(LFANDSIZE *plfsz)
@@ -744,9 +743,9 @@ static void lfsz_calc_hash(LFANDSIZE *plfsz)
     two_chars = *ptr;
     pwc = (WCHAR *)&two_chars;
     if(!*pwc) break;
-    *pwc = toupperW(*pwc);
+    *pwc = RtlUpcaseUnicodeChar( *pwc );
     pwc++;
-    *pwc = toupperW(*pwc);
+    *pwc = RtlUpcaseUnicodeChar( *pwc );
     hash ^= two_chars;
     if(!*pwc) break;
   }

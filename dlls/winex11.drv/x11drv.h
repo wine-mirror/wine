@@ -63,7 +63,6 @@ typedef int Status;
 #include "wine/gdi_driver.h"
 #include "unixlib.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 
 #define MAX_DASHLEN 16
 
@@ -970,6 +969,6 @@ static inline LONG x11drv_wcstol( LPCWSTR s, LPWSTR *end, INT base )
     return ret;
 }
 
-#define strtolW x11drv_wcstol
+#define wcstol x11drv_wcstol
 
 #endif  /* __WINE_X11DRV_H */

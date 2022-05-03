@@ -35,7 +35,6 @@
 #include "winreg.h"
 #include "wingdi.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11settings);
 
@@ -241,11 +240,11 @@ static HKEY get_display_device_reg_key( const WCHAR *device_name )
     HKEY hkey;
 
     /* Device name has to be \\.\DISPLAY%d */
-    if (strncmpiW(device_name, display, ARRAY_SIZE(display)))
+    if (wcsnicmp( device_name, display, ARRAY_SIZE(display) ))
         return FALSE;
 
     /* Parse \\.\DISPLAY* */
-    adapter_index = strtolW(device_name + ARRAY_SIZE(display), &end_ptr, 10) - 1;
+    adapter_index = wcstol( device_name + ARRAY_SIZE(display), &end_ptr, 10 ) - 1;
     if (*end_ptr)
         return FALSE;
 

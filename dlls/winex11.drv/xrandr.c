@@ -47,7 +47,6 @@ WINE_DECLARE_DEBUG_CHANNEL(winediag);
 #define VK_NO_PROTOTYPES
 #define WINE_VK_HOST
 
-#include "wine/unicode.h"
 #include "wine/vulkan.h"
 #include "wine/vulkan_driver.h"
 
@@ -1223,7 +1222,7 @@ static BOOL xrandr14_get_id( const WCHAR *device_name, ULONG_PTR *id )
     WCHAR *end;
 
     /* Parse \\.\DISPLAY%d */
-    display_idx = strtolW( device_name + 11, &end, 10 ) - 1;
+    display_idx = wcstol( device_name + 11, &end, 10 ) - 1;
     if (*end)
         return FALSE;
 

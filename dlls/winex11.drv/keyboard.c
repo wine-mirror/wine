@@ -53,7 +53,6 @@
 #include "ime.h"
 #include "x11drv.h"
 #include "wine/server.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 /* log format (add 0-padding as appropriate):
@@ -2104,7 +2103,7 @@ UINT X11DRV_MapVirtualKeyEx( UINT wCode, UINT wMapType, HKL hkl )
             if (len)
             {
                 WCHAR wch;
-                if (ntdll_umbstowcs( s, len, &wch, 1 )) ret = toupperW(wch);
+                if (ntdll_umbstowcs( s, len, &wch, 1 )) ret = RtlUpcaseUnicodeChar( wch );
             }
             break;
         }
@@ -2171,7 +2170,7 @@ INT X11DRV_GetKeyNameText( LONG lParam, LPWSTR lpBuffer, INT nSize )
       {
         if (nSize >= 2)
 	{
-          *lpBuffer = toupperW((WCHAR)ansi);
+          *lpBuffer = RtlUpcaseUnicodeChar( ansi );
           *(lpBuffer+1) = 0;
           return 1;
         }

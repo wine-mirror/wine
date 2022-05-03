@@ -49,7 +49,6 @@
 #include "winbase.h"
 #include "wingdi.h"
 #include "winuser.h"
-#include "wine/unicode.h"
 
 #include "x11drv.h"
 #include "wine/debug.h"

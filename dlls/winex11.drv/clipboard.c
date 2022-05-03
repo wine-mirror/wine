@@ -93,7 +93,6 @@
 #include "shlwapi.h"
 #include "wine/list.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
 
@@ -1135,7 +1134,7 @@ void *uri_list_to_drop_files( const void *data, size_t size, size_t *ret_size )
 
         if (path)
         {
-            int pathSize = strlenW(path) + 1;
+            int pathSize = wcslen( path ) + 1;
             if (pathSize > capacity - total)
             {
                 WCHAR *new_out;

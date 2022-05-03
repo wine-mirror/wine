@@ -52,7 +52,6 @@
 #include "x11drv.h"
 #include "xcomposite.h"
 #include "wine/server.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wine/list.h"
 
@@ -449,8 +448,8 @@ static void setup_options(void)
     /* open the app-specific key */
 
     appname = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
-    if ((p = strrchrW( appname, '/' ))) appname = p + 1;
-    if ((p = strrchrW( appname, '\\' ))) appname = p + 1;
+    if ((p = wcsrchr( appname, '/' ))) appname = p + 1;
+    if ((p = wcsrchr( appname, '\\' ))) appname = p + 1;
     len = lstrlenW( appname );
 
     if (len && len < MAX_PATH)
@@ -502,7 +501,7 @@ static void setup_options(void)
         grab_fullscreen = IS_OPTION_TRUE( buffer[0] );
 
     if (!get_config_key( hkey, appkey, "ScreenDepth", buffer, sizeof(buffer) ))
-        default_visual.depth = strtolW( buffer, NULL, 0 );
+        default_visual.depth = wcstol( buffer, NULL, 0 );
 
     if (!get_config_key( hkey, appkey, "ClientSideGraphics", buffer, sizeof(buffer) ))
         client_side_graphics = IS_OPTION_TRUE( buffer[0] );
@@ -520,13 +519,13 @@ static void setup_options(void)
         private_color_map = IS_OPTION_TRUE( buffer[0] );
 
     if (!get_config_key( hkey, appkey, "PrimaryMonitor", buffer, sizeof(buffer) ))
-        primary_monitor = strtolW( buffer, NULL, 0 );
+        primary_monitor = wcstol( buffer, NULL, 0 );
 
     if (!get_config_key( hkey, appkey, "CopyDefaultColors", buffer, sizeof(buffer) ))
-        copy_default_colors = strtolW( buffer, NULL, 0 );
+        copy_default_colors = wcstol( buffer, NULL, 0 );
 
     if (!get_config_key( hkey, appkey, "AllocSystemColors", buffer, sizeof(buffer) ))
-        alloc_system_colors = strtolW( buffer, NULL, 0 );
+        alloc_system_colors = wcstol( buffer, NULL, 0 );
 
     get_config_key( hkey, appkey, "InputStyle", input_style, sizeof(input_style) );
 

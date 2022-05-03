@@ -32,7 +32,6 @@
 #include "windef.h"
 #include "winbase.h"
 #include "x11drv.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 #include "wintab.h"
 
@@ -516,8 +515,8 @@ NTSTATUS x11drv_tablet_load_info( void *hwnd )
     hwndTabletDefault = hwnd;
 
     /* Do base initialization */
-    strcpyW(gSysContext.lcName, SZ_CONTEXT_NAME);
-    strcpyW(gSysDevice.NAME, SZ_DEVICE_NAME);
+    wcscpy(gSysContext.lcName, SZ_CONTEXT_NAME);
+    wcscpy(gSysDevice.NAME, SZ_DEVICE_NAME);
 
     gSysContext.lcOptions = CXO_SYSTEM;
     gSysContext.lcLocks = CXL_INSIZE | CXL_INASPECT | CXL_MARGIN |
@@ -553,7 +552,7 @@ NTSTATUS x11drv_tablet_load_info( void *hwnd )
     gSysDevice.PKTDATA =
         PK_CONTEXT | PK_STATUS | PK_SERIAL_NUMBER| PK_TIME | PK_CURSOR |
         PK_BUTTONS |  PK_X | PK_Y | PK_NORMAL_PRESSURE | PK_ORIENTATION;
-    strcpyW(gSysDevice.PNPID, SZ_NON_PLUG_N_PLAY);
+    wcscpy(gSysDevice.PNPID, SZ_NON_PLUG_N_PLAY);
 
     devices = pXListInputDevices(data->display, &num_devices);
     if (!devices)
@@ -744,14 +743,14 @@ NTSTATUS x11drv_tablet_load_info( void *hwnd )
                         for (i = 0; i < cursor.BUTTONS; i++)
                         {
                             /* FIXME - these names are probably incorrect */
-                            int cch = strlenW(cursor.NAME) + 1;
+                            int cch = wcslen(cursor.NAME) + 1;
                             while (cch > cchBuf - cchPos - 1) /* we want one extra byte for the last NUL */
                             {
                                 cchBuf *= 2;
                                 cursor.BTNNAMES = realloc( cursor.BTNNAMES, sizeof(WCHAR) * cchBuf );
                             }
 
-                            strcpyW(cursor.BTNNAMES + cchPos, cursor.NAME);
+                            wcscpy(cursor.BTNNAMES + cchPos, cursor.NAME);
                             cchPos += cch;
                         }
                         cursor.BTNNAMES[cchPos++] = 0;
@@ -1034,7 +1033,7 @@ NTSTATUS x11drv_tablet_attach_queue( void *owner )
         if (!gSysCursor[cur_loop].ACTIVE) continue;
 
         /* the cursor name fits in the buffer because too long names are skipped */
-        ntdll_wcstoumbs(gSysCursor[cur_loop].NAME, lstrlenW(gSysCursor[cur_loop].NAME) + 1,
+        ntdll_wcstoumbs(gSysCursor[cur_loop].NAME, wcslen(gSysCursor[cur_loop].NAME) + 1,
                         cursorNameA, WT_MAX_NAME_LEN, FALSE);
         for (loop=0; loop < num_devices; loop ++)
             if (strcmp(devices[loop].name, cursorNameA) == 0)
@@ -1160,7 +1159,7 @@ NTSTATUS x11drv_tablet_info( void *arg )
                 case IFC_WINTABID:
                 {
                     static const WCHAR driver[] = {'W','i','n','e',' ','W','i','n','t','a','b',' ','1','.','1',0};
-                    rc = CopyTabletData(lpOutput, driver, (strlenW(driver) + 1) * sizeof(WCHAR));
+                    rc = CopyTabletData(lpOutput, driver, (wcslen(driver) + 1) * sizeof(WCHAR));
                     break;
                 }
                 case IFC_SPECVERSION:
@@ -1199,7 +1198,7 @@ NTSTATUS x11drv_tablet_info( void *arg )
                     break;
                 case CTX_NAME:
                     rc = CopyTabletData(lpOutput, gSysContext.lcName,
-                         (strlenW(gSysContext.lcName)+1) * sizeof(WCHAR));
+                         (wcslen(gSysContext.lcName)+1) * sizeof(WCHAR));
                     break;
                 case CTX_OPTIONS:
                     rc = CopyTabletData(lpOutput, &gSysContext.lcOptions,
@@ -1363,7 +1362,7 @@ NTSTATUS x11drv_tablet_info( void *arg )
                 {
                     case CSR_NAME:
                         rc = CopyTabletData(lpOutput, tgtcursor->NAME,
-                                            (strlenW(tgtcursor->NAME)+1) * sizeof(WCHAR));
+                                            (wcslen(tgtcursor->NAME)+1) * sizeof(WCHAR));
                         break;
                     case CSR_ACTIVE:
                         rc = CopyTabletData(lpOutput,&tgtcursor->ACTIVE,
@@ -1455,7 +1454,7 @@ NTSTATUS x11drv_tablet_info( void *arg )
             {
                 case DVC_NAME:
                     rc = CopyTabletData(lpOutput,gSysDevice.NAME,
-                                        (strlenW(gSysDevice.NAME)+1) * sizeof(WCHAR));
+                                        (wcslen(gSysDevice.NAME)+1) * sizeof(WCHAR));
                     break;
                 case DVC_HARDWARE:
                     rc = CopyTabletData(lpOutput,&gSysDevice.HARDWARE,
@@ -1539,7 +1538,7 @@ NTSTATUS x11drv_tablet_info( void *arg )
                     break;
                 case DVC_PNPID:
                     rc = CopyTabletData(lpOutput,gSysDevice.PNPID,
-                                        (strlenW(gSysDevice.PNPID)+1)*sizeof(WCHAR));
+                                        (wcslen(gSysDevice.PNPID)+1)*sizeof(WCHAR));
                     break;
                 default:
                     FIXME("WTI_DEVICES unhandled index %i\n",nIndex);

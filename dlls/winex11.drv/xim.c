@@ -34,7 +34,6 @@
 #include "x11drv.h"
 #include "imm.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(xim);
 
@@ -286,11 +285,11 @@ BOOL X11DRV_InitXIM( const WCHAR *input_style )
     static const WCHAR overthespotW[] = {'o','v','e','r','t','h','e','s','p','o','t',0};
     static const WCHAR rootW[] = {'r','o','o','t',0};
 
-    if (!strcmpiW(input_style, offthespotW))
+    if (!wcsicmp( input_style, offthespotW ))
         ximStyleRequest = STYLE_OFFTHESPOT;
-    else if (!strcmpiW(input_style, overthespotW))
+    else if (!wcsicmp( input_style, overthespotW ))
         ximStyleRequest = STYLE_OVERTHESPOT;
-    else if (!strcmpiW(input_style, rootW))
+    else if (!wcsicmp( input_style, rootW ))
         ximStyleRequest = STYLE_ROOT;
 
     if (!XSupportsLocale())

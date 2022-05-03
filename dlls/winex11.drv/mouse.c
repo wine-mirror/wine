@@ -56,7 +56,6 @@ MAKE_FUNCPTR(XcursorLibraryLoadCursor);
 
 #include "x11drv.h"
 #include "wine/server.h"
-#include "wine/unicode.h"
 #include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cursor);
@@ -1066,11 +1065,11 @@ static Cursor create_xcursor_system_cursor( const ICONINFOEXW *info )
 
     if (!info->szModName[0]) return 0;
 
-    p = strrchrW( info->szModName, '\\' );
-    strcpyW( name, p ? p + 1 : info->szModName );
-    p = name + strlenW( name );
+    p = wcsrchr( info->szModName, '\\' );
+    wcscpy( name, p ? p + 1 : info->szModName );
+    p = name + lstrlenW( name );
     *p++ = ',';
-    if (info->szResName[0]) strcpyW( p, info->szResName );
+    if (info->szResName[0]) wcscpy( p, info->szResName );
     else
     {
         char buf[16];

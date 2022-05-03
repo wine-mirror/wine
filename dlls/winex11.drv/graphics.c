@@ -48,7 +48,6 @@
 
 #include "x11drv.h"
 #include "wine/debug.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(graphics);
 
@@ -1733,7 +1732,7 @@ BOOL CDECL X11DRV_GetICMProfile( PHYSDEV dev, BOOL allow_default, LPDWORD size, 
     else lstrcpyW( p, srgb );
 
     NtClose( hkey );
-    required = strlenW( fullname ) + 1 - 4 /* skip NT prefix */;
+    required = wcslen( fullname ) + 1 - 4 /* skip NT prefix */;
     if (*size < required)
     {
         *size = required;
@@ -1743,7 +1742,7 @@ BOOL CDECL X11DRV_GetICMProfile( PHYSDEV dev, BOOL allow_default, LPDWORD size, 
     if (filename)
     {
         FILE_BASIC_INFORMATION info;
-        strcpyW( filename, fullname + 4 );
+        wcscpy( filename, fullname + 4 );
         RtlInitUnicodeString( &name, fullname );
         InitializeObjectAttributes( &attr, &name, OBJ_CASE_INSENSITIVE, NULL, NULL );
         if (NtQueryAttributesFile( &attr, &info ))
