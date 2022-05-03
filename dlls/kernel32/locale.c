@@ -464,6 +464,62 @@ int WINAPI GetNumberFormatA( LCID lcid, DWORD flags, const char *value,
 }
 
 
+/**************************************************************************
+ *           GetCurrencyFormatA (KERNEL32.@)
+ */
+int WINAPI GetCurrencyFormatA( LCID lcid, DWORD flags, const char *value,
+                               const CURRENCYFMTA *format, char *buffer, int len )
+{
+    UINT cp = get_lcid_codepage( lcid, flags );
+    WCHAR input[128], output[128];
+    int ret;
+
+    TRACE( "(0x%04lx,0x%08lx,%s,%p,%p,%d)\n", lcid, flags, debugstr_a(value), format, buffer, len );
+
+    if (len < 0 || (len && !buffer) || !value)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    MultiByteToWideChar( cp, 0, value, -1, input, ARRAY_SIZE(input) );
+
+    if (len > (int)ARRAY_SIZE(output)) len = ARRAY_SIZE(output);
+
+    if (format)
+    {
+        CURRENCYFMTW fmt;
+        WCHAR fmt_decimal[4], fmt_thousand[4], fmt_symbol[13];
+
+        if (flags & LOCALE_NOUSEROVERRIDE)
+        {
+            SetLastError( ERROR_INVALID_FLAGS );
+            return 0;
+        }
+        if (!format->lpDecimalSep || !format->lpThousandSep || !format->lpCurrencySymbol)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+        MultiByteToWideChar( cp, 0, format->lpDecimalSep, -1, fmt_decimal, ARRAY_SIZE(fmt_decimal) );
+        MultiByteToWideChar( cp, 0, format->lpThousandSep, -1, fmt_thousand, ARRAY_SIZE(fmt_thousand) );
+        MultiByteToWideChar( cp, 0, format->lpCurrencySymbol, -1, fmt_symbol, ARRAY_SIZE(fmt_symbol) );
+        fmt.NumDigits = format->NumDigits;
+        fmt.LeadingZero = format->LeadingZero;
+        fmt.Grouping = format->Grouping;
+        fmt.NegativeOrder = format->NegativeOrder;
+        fmt.PositiveOrder = format->PositiveOrder;
+        fmt.lpDecimalSep = fmt_decimal;
+        fmt.lpThousandSep = fmt_thousand;
+        fmt.lpCurrencySymbol = fmt_symbol;
+        ret = GetCurrencyFormatW( lcid, flags, input, &fmt, output, len );
+    }
+    else ret = GetCurrencyFormatW( lcid, flags, input, NULL, output, len );
+
+    if (ret) ret = WideCharToMultiByte( cp, 0, output, -1, buffer, len, 0, 0 );
+    return ret;
+}
+
+
 /******************************************************************************
  *           GetGeoInfoA (KERNEL32.@)
  */
