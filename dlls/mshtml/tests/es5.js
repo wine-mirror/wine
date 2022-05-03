@@ -28,6 +28,7 @@ var JS_E_REGEXP_EXPECTED = 0x800a1398;
 var JS_E_INVALID_WRITABLE_PROP_DESC = 0x800a13ac;
 var JS_E_NONCONFIGURABLE_REDEFINED = 0x800a13d6;
 var JS_E_NONWRITABLE_MODIFIED = 0x800a13d7;
+var JS_E_WRONG_THIS = 0x800a13fc;
 
 var tests = [];
 
@@ -66,6 +67,55 @@ sync_test("toISOString", function() {
 
     expect_exception(function() { new Date(NaN).toISOString(); });
     expect_exception(function() { new Date(31494784780800001).toISOString(); });
+});
+
+sync_test("Number toLocaleString", function() {
+    var r = Number.prototype.toLocaleString.length;
+    ok(r === 0, "length = " + r);
+    var tests = [
+        [ 0.0,          "0" ],
+        [ 1234.5,       "1,234.5" ],
+        [ -1337.7331,   "-1,337.733" ],
+        [ -0.0123,      "-0.012" ],
+        [-0.0198,       "-0.02" ],
+        [ 0.004,        "0.004" ],
+        [ 99.004,       "99.004" ],
+        [ 99.0004,      "99" ],
+        [ 65536.5,      "65,536.5" ],
+        [ NaN,          "NaN" ]
+    ];
+
+    if(external.isEnglish) {
+        for(var i = 0; i < tests.length; i++) {
+            r = Number.prototype.toLocaleString.call(tests[i][0]);
+            ok(r === tests[i][1], "[" + i + "] got " + r);
+        }
+    }
+
+    try {
+        Number.prototype.toLocaleString.call("50");
+        ok(false, "expected exception calling it on string");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        todo_wine.
+        ok(n === JS_E_WRONG_THIS, "called on string threw " + n);
+    }
+    try {
+        Number.prototype.toLocaleString.call(undefined);
+        ok(false, "expected exception calling it on undefined");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        todo_wine.
+        ok(n === JS_E_WRONG_THIS, "called on undefined threw " + n);
+    }
+    try {
+        Number.prototype.toLocaleString.call(external.nullDisp);
+        ok(false, "expected exception calling it on nullDisp");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        todo_wine.
+        ok(n === JS_E_WRONG_THIS, "called on nullDisp threw " + n);
+    }
 });
 
 sync_test("indexOf", function() {

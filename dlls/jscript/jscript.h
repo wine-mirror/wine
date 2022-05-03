@@ -449,6 +449,7 @@ HRESULT regexp_string_match(script_ctx_t*,jsdisp_t*,jsstr_t*,jsval_t*) DECLSPEC_
 
 BOOL bool_obj_value(jsdisp_t*) DECLSPEC_HIDDEN;
 unsigned array_get_length(jsdisp_t*) DECLSPEC_HIDDEN;
+HRESULT localize_number(script_ctx_t*,DOUBLE,BOOL,jsstr_t**) DECLSPEC_HIDDEN;
 
 HRESULT JSGlobal_eval(script_ctx_t*,jsval_t,WORD,unsigned,jsval_t*,jsval_t*) DECLSPEC_HIDDEN;
 HRESULT Object_get_proto_(script_ctx_t*,jsval_t,WORD,unsigned,jsval_t*,jsval_t*) DECLSPEC_HIDDEN;

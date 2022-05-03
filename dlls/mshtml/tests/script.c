@@ -153,13 +153,14 @@ DEFINE_EXPECT(GetTypeInfo);
 #define DISPID_EXTERNAL_WRITESTREAM    0x300006
 #define DISPID_EXTERNAL_GETVT          0x300007
 #define DISPID_EXTERNAL_NULL_DISP      0x300008
+#define DISPID_EXTERNAL_IS_ENGLISH     0x300009
 
 static const GUID CLSID_TestScript =
     {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x07,0x46}};
 static const GUID CLSID_TestActiveX =
     {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x06,0x46}};
 
-static BOOL is_ie9plus;
+static BOOL is_ie9plus, is_english;
 static IHTMLDocument2 *notif_doc;
 static IOleDocumentView *view;
 static IDispatchEx *window_dispex;
@@ -599,6 +600,10 @@ static HRESULT WINAPI externalDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, 
         *pid = DISPID_EXTERNAL_NULL_DISP;
         return S_OK;
     }
+    if(!lstrcmpW(bstrName, L"isEnglish")) {
+        *pid = DISPID_EXTERNAL_IS_ENGLISH;
+        return S_OK;
+    }
 
     ok(0, "unexpected name %s\n", wine_dbgstr_w(bstrName));
     return DISP_E_UNKNOWNNAME;
@@ -782,6 +787,21 @@ static HRESULT WINAPI externalDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID 
 
         V_VT(pvarRes) = VT_DISPATCH;
         V_DISPATCH(pvarRes) = NULL;
+        return S_OK;
+
+    case DISPID_EXTERNAL_IS_ENGLISH:
+        ok(wFlags == INVOKE_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgvarg, "rgvarg != NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) == VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+
+        V_VT(pvarRes) = VT_BOOL;
+        V_BOOL(pvarRes) = is_english ? VARIANT_TRUE : VARIANT_FALSE;
         return S_OK;
 
     default:
@@ -3743,6 +3763,19 @@ static HWND create_container_window(void)
             300, 300, NULL, NULL, NULL, NULL);
 }
 
+static void detect_locale(void)
+{
+    HMODULE kernel32 = GetModuleHandleA("kernel32.dll");
+    LANGID (WINAPI *pGetThreadUILanguage)(void) = (void*)GetProcAddress(kernel32, "GetThreadUILanguage");
+
+    is_english = ((!pGetThreadUILanguage || PRIMARYLANGID(pGetThreadUILanguage()) == LANG_ENGLISH) &&
+                  PRIMARYLANGID(GetUserDefaultUILanguage()) == LANG_ENGLISH &&
+                  PRIMARYLANGID(GetUserDefaultLangID()) == LANG_ENGLISH);
+
+    if(!is_english)
+        skip("Skipping some tests in non-English locale\n");
+}
+
 static BOOL check_ie(void)
 {
     IHTMLDocument2 *doc;
@@ -3779,6 +3812,7 @@ START_TEST(script)
     CoInitialize(NULL);
     container_hwnd = create_container_window();
 
+    detect_locale();
     if(argc > 2) {
         init_protocol_handler();
         run_script_as_http_with_mode(argv[2], NULL, "11");

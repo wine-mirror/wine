@@ -1365,6 +1365,11 @@ ok(tmp === "0", "num().toString = " + tmp);
 tmp = (new Number(5.5)).toString(2);
 ok(tmp === "101.1", "num(5.5).toString(2) = " + tmp);
 
+tmp = (new Number(12)).toLocaleString();
+ok(tmp.indexOf(String.fromCharCode(0)) == -1, "invalid null byte");
+tmp = Number.prototype.toLocaleString.call(NaN);
+ok(tmp.indexOf(String.fromCharCode(0)) == -1, "invalid null byte");
+
 tmp = (new Number(3)).toFixed(3);
 ok(tmp === "3.000", "num(3).toFixed(3) = " + tmp);
 tmp = (new Number(3)).toFixed();
@@ -2594,6 +2599,8 @@ testException(function() {arr.test();}, "E_NO_PROPERTY");
 testException(function() {[1,2,3].sort(nullDisp);}, "E_JSCRIPT_EXPECTED");
 testException(function() {Number.prototype.toString.call(arr);}, "E_NOT_NUM");
 testException(function() {Number.prototype.toFixed.call(arr);}, "E_NOT_NUM");
+testException(function() {Number.prototype.toLocaleString.call(arr);}, "E_NOT_NUM");
+testException(function() {Number.prototype.toLocaleString.call(null);}, "E_NOT_NUM");
 testException(function() {(new Number(3)).toString(1);}, "E_INVALID_CALL_ARG");
 testException(function() {(new Number(3)).toFixed(21);}, "E_FRACTION_DIGITS_OUT_OF_RANGE");
 testException(function() {(new Number(1)).toPrecision(0);}, "E_PRECISION_OUT_OF_RANGE");

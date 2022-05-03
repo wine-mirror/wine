@@ -17,6 +17,7 @@
  */
 
 #include <math.h>
+#include <locale.h>
 #include <assert.h>
 
 #include "jscript.h"
@@ -341,11 +342,90 @@ static HRESULT Number_toString(script_ctx_t *ctx, jsval_t vthis, WORD flags, uns
     return S_OK;
 }
 
+HRESULT localize_number(script_ctx_t *ctx, DOUBLE val, BOOL new_format, jsstr_t **ret)
+{
+    WCHAR buf[316], decimal[8], thousands[8], *numstr;
+    NUMBERFMTW *format = NULL, format_buf;
+    LCID lcid = ctx->lcid;
+    _locale_t locale;
+    unsigned convlen;
+    jsstr_t *str;
+    int len;
+
+    /* FIXME: Localize this */
+    if(!isfinite(val))
+        return to_string(ctx, jsval_number(val), ret);
+
+    /* Native never uses an exponent, even if the number is very large, it will in fact
+       return all the digits (with thousands separators). jscript.dll uses two digits for
+       fraction even if they are zero (likely default numDigits) and always returns them,
+       while mshtml's jscript uses 3 digits and trims trailing zeros (on same locale).
+       This is even for very small numbers, such as 0.0000999, which will simply be 0. */
+    if(!(locale = _create_locale(LC_ALL, "C")))
+        return E_OUTOFMEMORY;
+    len = _swprintf_l(buf, ARRAY_SIZE(buf), L"%.3f", locale, val);
+    _free_locale(locale);
+
+    if(new_format) {
+        WCHAR grouping[10];
+
+        format = &format_buf;
+        format->NumDigits = 3;
+        while(buf[--len] == '0')
+            format->NumDigits--;
+
+        /* same logic as VarFormatNumber */
+        grouping[2] = '\0';
+        if(!GetLocaleInfoW(lcid, LOCALE_SGROUPING, grouping, ARRAY_SIZE(grouping)))
+            format->Grouping = 3;
+        else
+            format->Grouping = (grouping[2] == '2' ? 32 : grouping[0] - '0');
+
+        if(!GetLocaleInfoW(lcid, LOCALE_ILZERO | LOCALE_RETURN_NUMBER, (WCHAR*)&format->LeadingZero, 2))
+            format->LeadingZero = 0;
+        if(!GetLocaleInfoW(lcid, LOCALE_INEGNUMBER | LOCALE_RETURN_NUMBER, (WCHAR*)&format->NegativeOrder, 2))
+            format->NegativeOrder = 1;
+        format->lpDecimalSep = decimal;
+        if(!GetLocaleInfoW(lcid, LOCALE_SDECIMAL, decimal, ARRAY_SIZE(decimal)))
+            wcscpy(decimal, L".");
+        format->lpThousandSep = thousands;
+        if(!GetLocaleInfoW(lcid, LOCALE_STHOUSAND, thousands, ARRAY_SIZE(thousands)))
+            wcscpy(thousands, L",");
+    }
+
+    if(!(convlen = GetNumberFormatW(lcid, 0, buf, format, NULL, 0)) ||
+       !(str = jsstr_alloc_buf(convlen - 1, &numstr)))
+        return E_OUTOFMEMORY;
+
+    if(!GetNumberFormatW(lcid, 0, buf, format, numstr, convlen)) {
+        jsstr_release(str);
+        return E_OUTOFMEMORY;
+    }
+
+    *ret = str;
+    return S_OK;
+}
+
 static HRESULT Number_toLocaleString(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    jsstr_t *str;
+    HRESULT hres;
+    DOUBLE val;
+
+    TRACE("\n");
+
+    hres = numberval_this(vthis, &val);
+    if(FAILED(hres))
+        return hres;
+
+    if(r) {
+        hres = localize_number(ctx, val, ctx->version >= SCRIPTLANGUAGEVERSION_ES5, &str);
+        if(FAILED(hres))
+            return hres;
+        *r = jsval_string(str);
+    }
+    return S_OK;
 }
 
 static HRESULT Number_toFixed(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,

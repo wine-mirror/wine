@@ -186,6 +186,7 @@ static BOOL strict_dispid_check, testing_expr;
 static const char *test_name = "(null)";
 static IDispatch *script_disp;
 static int invoke_version;
+static BOOL use_english;
 static IActiveScriptError *script_error;
 static IActiveScript *script_engine;
 static const CLSID *engine_clsid = &CLSID_JScript;
@@ -1834,7 +1835,7 @@ static ULONG WINAPI ActiveScriptSite_Release(IActiveScriptSite *iface)
 
 static HRESULT WINAPI ActiveScriptSite_GetLCID(IActiveScriptSite *iface, LCID *plcid)
 {
-    *plcid = GetUserDefaultLCID();
+    *plcid = use_english ? MAKELCID(MAKELANGID(LANG_ENGLISH, SUBLANG_ENGLISH_US), SORT_DEFAULT) : GetUserDefaultLCID();
     return S_OK;
 }
 
@@ -2996,6 +2997,39 @@ static void test_default_value(void)
     close_script(script);
 }
 
+static void test_number_localization(void)
+{
+    static struct {
+        const WCHAR *num;
+        const WCHAR *expect;
+    } tests[] = {
+        { L"0",                 L"0.00" },
+        { L"+1234.5",           L"1,234.50" },
+        { L"-1337.7331",        L"-1,337.73" },
+        { L"-0.0123",           L"-0.01" },
+        { L"-0.0198",           L"-0.02" },
+        { L"0.004",             L"0.00" },
+        { L"65536.5",           L"65,536.50" },
+        { L"NaN",               L"NaN" }
+    };
+    static const WCHAR fmt[] = L"Number.prototype.toLocaleString.call(%s)";
+    WCHAR script_buf[ARRAY_SIZE(fmt) + 32];
+    HRESULT hres;
+    unsigned i;
+    VARIANT v;
+
+    use_english = TRUE;
+    for(i = 0; i < ARRAY_SIZE(tests); i++) {
+        swprintf(script_buf, ARRAY_SIZE(script_buf), fmt, tests[i].num);
+        hres = parse_script_expr(script_buf, &v, NULL);
+        ok(hres == S_OK, "[%u] parse_script_expr failed: %08lx\n", i, hres);
+        ok(V_VT(&v) == VT_BSTR, "[%u] V_VT(v) = %d\n", i, V_VT(&v));
+        ok(!lstrcmpW(V_BSTR(&v), tests[i].expect), "[%u] got %s\n", i, wine_dbgstr_w(V_BSTR(&v)));
+        VariantClear(&v);
+    }
+    use_english = FALSE;
+}
+
 static void test_script_exprs(void)
 {
     VARIANT v;
@@ -3060,6 +3094,7 @@ static void test_script_exprs(void)
     ok(!lstrcmpW(V_BSTR(&v), L"wine"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
 
+    test_number_localization();
     test_default_value();
     test_propputref();
     test_retval();
