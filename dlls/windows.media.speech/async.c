@@ -231,11 +231,12 @@ static const struct IAsyncOperation_IInspectableVtbl async_inspectable_vtbl =
 
 /*
  *
- * IAsyncInfo
+ * IAsyncInfo for IAsyncOperation<IInspectable*>
  *
  */
 
-DEFINE_IINSPECTABLE(async_inspectable_info, IAsyncInfo, struct async_inspectable, IAsyncOperation_IInspectable_iface)
+DEFINE_IINSPECTABLE_(async_inspectable_info, IAsyncInfo, struct async_inspectable,
+                     async_inspectable_impl_from_IAsyncInfo, IAsyncInfo_iface, &impl->IAsyncOperation_IInspectable_iface)
 
 static HRESULT WINAPI async_inspectable_info_get_Id( IAsyncInfo *iface, UINT32 *id )
 {
@@ -245,7 +246,7 @@ static HRESULT WINAPI async_inspectable_info_get_Id( IAsyncInfo *iface, UINT32 *
 
 static HRESULT WINAPI async_inspectable_info_get_Status( IAsyncInfo *iface, AsyncStatus *status )
 {
-    struct async_inspectable *impl = impl_from_IAsyncInfo(iface);
+    struct async_inspectable *impl = async_inspectable_impl_from_IAsyncInfo(iface);
     HRESULT hr = S_OK;
 
     TRACE("iface %p, status %p.\n", iface, status);
@@ -261,7 +262,7 @@ static HRESULT WINAPI async_inspectable_info_get_Status( IAsyncInfo *iface, Asyn
 
 static HRESULT WINAPI async_inspectable_info_get_ErrorCode( IAsyncInfo *iface, HRESULT *error_code )
 {
-    struct async_inspectable *impl = impl_from_IAsyncInfo(iface);
+    struct async_inspectable *impl = async_inspectable_impl_from_IAsyncInfo(iface);
     HRESULT hr = S_OK;
 
     TRACE("iface %p, error_code %p.\n", iface, error_code);
@@ -278,7 +279,7 @@ static HRESULT WINAPI async_inspectable_info_get_ErrorCode( IAsyncInfo *iface, H
 
 static HRESULT WINAPI async_inspectable_info_Cancel( IAsyncInfo *iface )
 {
-    struct async_inspectable *impl = impl_from_IAsyncInfo(iface);
+    struct async_inspectable *impl = async_inspectable_impl_from_IAsyncInfo(iface);
     HRESULT hr = S_OK;
 
     TRACE("iface %p.\n", iface);
@@ -295,7 +296,7 @@ static HRESULT WINAPI async_inspectable_info_Cancel( IAsyncInfo *iface )
 
 static HRESULT WINAPI async_inspectable_info_Close( IAsyncInfo *iface )
 {
-    struct async_inspectable *impl = impl_from_IAsyncInfo(iface);
+    struct async_inspectable *impl = async_inspectable_impl_from_IAsyncInfo(iface);
     HRESULT hr = S_OK;
 
     TRACE("iface %p.\n", iface);
