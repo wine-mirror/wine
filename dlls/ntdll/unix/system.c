@@ -590,8 +590,8 @@ static BOOL grow_logical_proc_ex_buf( SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX **
 {
     SYSTEM_LOGICAL_PROCESSOR_INFORMATION_EX *new_dataex;
     DWORD new_len = *max_len * 2;
-    if (!(new_dataex = realloc( *pdataex, new_len * sizeof(*new_dataex) ))) return FALSE;
-    memset( new_dataex + *max_len, 0, (new_len - *max_len) * sizeof(*new_dataex) );
+    if (!(new_dataex = realloc( *pdataex, new_len ))) return FALSE;
+    memset( (char *)new_dataex + *max_len, 0, new_len - *max_len );
     *pdataex = new_dataex;
     *max_len = new_len;
     return TRUE;
