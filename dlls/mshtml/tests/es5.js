@@ -69,6 +69,70 @@ sync_test("toISOString", function() {
     expect_exception(function() { new Date(31494784780800001).toISOString(); });
 });
 
+sync_test("Array toLocaleString", function() {
+    var r = Array.prototype.toLocaleString.length, old = Number.prototype.toLocaleString;
+    var s = external.listSeparator + ' ';
+    ok(r === 0, "length = " + r);
+
+    r = [5];
+    r.toLocaleString = function(a, b, c) { return a + " " + b + " " + c; };
+    Number.prototype.toLocaleString = function() { return "aBc"; };
+
+    r = [new Number(3), r, new Number(12)].toLocaleString("foo", "bar", "baz");
+    ok(r === "aBc"+s+"undefined undefined undefined"+s+"aBc", "toLocaleString returned " + r);
+
+    r = [3].toLocaleString();  /* primitive number value not affected */
+    if(external.isEnglish)
+        ok(r === "3.00", "[3].toLocaleString returned " + r);
+    else
+        ok(r !== "aBc", "[3].toLocaleString returned " + r);
+    Number.prototype.toLocaleString = old;
+
+    r = Object.create(null);
+    r.toString = function() { return "foo"; }
+    try {
+        Array.prototype.toLocaleString.call([r]);
+        ok(false, "expected exception calling it on array with object without toLocaleString");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_FUNCTION_EXPECTED, "called on array with object without toLocaleString threw " + n);
+    }
+
+    r = { length: 2 };
+    r[0] = { toLocaleString: function() { return "foo"; } }
+    r[1] = { toLocaleString: function() { return "bar"; } }
+    r = Array.prototype.toLocaleString.call(r);
+    ok(r === "foo"+s+"bar", "toLocaleString on array-like object returned " + r);
+
+    r = Array.prototype.toLocaleString.call({});
+    ok(r === "", "toLocaleString on {} returned " + r);
+
+    r = Array.prototype.toLocaleString.call("ab");
+    ok(r === "a"+s+"b", "toLocaleString on 'ab' returned " + r);
+
+    try {
+        Array.prototype.toLocaleString.call(undefined);
+        ok(false, "expected exception calling it on undefined");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_OBJECT_EXPECTED, "called on undefined threw " + n);
+    }
+    try {
+        Array.prototype.toLocaleString.call(null);
+        ok(false, "expected exception calling it on null");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_OBJECT_EXPECTED, "called on null threw " + n);
+    }
+    try {
+        Array.prototype.toLocaleString.call(external.nullDisp);
+        ok(false, "expected exception calling it on nullDisp");
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_OBJECT_EXPECTED, "called on nullDisp threw " + n);
+    }
+});
+
 sync_test("Number toLocaleString", function() {
     var r = Number.prototype.toLocaleString.length;
     ok(r === 0, "length = " + r);

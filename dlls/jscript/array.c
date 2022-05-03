@@ -229,7 +229,7 @@ done:
 }
 
 static HRESULT array_join(script_ctx_t *ctx, jsdisp_t *array, DWORD length, const WCHAR *sep,
-        unsigned seplen, jsval_t *r)
+        unsigned seplen, HRESULT (*to_string)(script_ctx_t*,jsval_t,jsstr_t**), jsval_t *r)
 {
     jsstr_t **str_tab, *ret = NULL;
     jsval_t val;
@@ -339,11 +339,11 @@ static HRESULT Array_join(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned
         if(FAILED(hres))
             goto done;
 
-        hres = array_join(ctx, jsthis, length, sep, jsstr_length(sep_str), r);
+        hres = array_join(ctx, jsthis, length, sep, jsstr_length(sep_str), to_string, r);
 
         jsstr_release(sep_str);
     }else {
-        hres = array_join(ctx, jsthis, length, L",", 1, r);
+        hres = array_join(ctx, jsthis, length, L",", 1, to_string, r);
     }
 
 done:
@@ -947,14 +947,80 @@ static HRESULT Array_toString(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsi
     if(!array)
         return JS_E_ARRAY_EXPECTED;
 
-    return array_join(ctx, &array->dispex, array->length, L",", 1, r);
+    return array_join(ctx, &array->dispex, array->length, L",", 1, to_string, r);
+}
+
+static HRESULT to_locale_string(script_ctx_t *ctx, jsval_t val, jsstr_t **str)
+{
+    jsdisp_t *jsdisp;
+    IDispatch *obj;
+    HRESULT hres;
+
+    switch(jsval_type(val)) {
+    case JSV_OBJECT:
+        hres = disp_call_name(ctx, get_object(val), L"toLocaleString", DISPATCH_METHOD, 0, NULL, &val);
+        if(FAILED(hres)) {
+            if(hres == JS_E_INVALID_PROPERTY && ctx->version >= SCRIPTLANGUAGEVERSION_ES5)
+                hres = JS_E_FUNCTION_EXPECTED;
+            return hres;
+        }
+        break;
+    case JSV_NUMBER:
+        if(ctx->version >= SCRIPTLANGUAGEVERSION_ES5)
+            return localize_number(ctx, get_number(val), FALSE, str);
+        /* fall through */
+    default:
+        if(ctx->version >= SCRIPTLANGUAGEVERSION_ES5)
+            break;
+
+        hres = to_object(ctx, val, &obj);
+        if(FAILED(hres))
+            return hres;
+
+        jsdisp = as_jsdisp(obj);
+        hres = jsdisp_call_name(jsdisp, L"toLocaleString", DISPATCH_METHOD, 0, NULL, &val);
+        jsdisp_release(jsdisp);
+        if(FAILED(hres))
+            return hres;
+        break;
+    }
+
+    return to_string(ctx, val, str);
 }
 
 static HRESULT Array_toLocaleString(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    jsdisp_t *jsthis;
+    UINT32 length;
+    HRESULT hres;
+    WCHAR buf[5];
+    int len;
+
+    TRACE("\n");
+
+    if(ctx->version < SCRIPTLANGUAGEVERSION_ES5) {
+        ArrayInstance *array = array_this(vthis);
+        if(!array)
+            return JS_E_ARRAY_EXPECTED;
+        jsthis = jsdisp_addref(&array->dispex);
+        length = array->length;
+    }else {
+        hres = get_length(ctx, vthis, &jsthis, &length);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(!(len = GetLocaleInfoW(ctx->lcid, LOCALE_SLIST, buf, ARRAY_SIZE(buf) - 1))) {
+        buf[len++] = ',';
+        len++;
+    }
+    buf[len - 1] = ' ';
+    buf[len] = '\0';
+
+    hres = array_join(ctx, jsthis, length, buf, len, to_locale_string, r);
+    jsdisp_release(jsthis);
+    return hres;
 }
 
 static HRESULT Array_forEach(script_ctx_t *ctx, jsval_t vthis, WORD flags, unsigned argc, jsval_t *argv,

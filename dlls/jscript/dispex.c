@@ -2146,6 +2146,33 @@ HRESULT disp_call(script_ctx_t *ctx, IDispatch *disp, DISPID id, WORD flags, uns
     return hres;
 }
 
+HRESULT disp_call_name(script_ctx_t *ctx, IDispatch *disp, const WCHAR *name, WORD flags, unsigned argc, jsval_t *argv, jsval_t *ret)
+{
+    IDispatchEx *dispex;
+    jsdisp_t *jsdisp;
+    HRESULT hres;
+    DISPID id;
+    BSTR bstr;
+
+    if((jsdisp = to_jsdisp(disp)) && jsdisp->ctx == ctx)
+        return jsdisp_call_name(jsdisp, name, flags, argc, argv, ret);
+
+    if(!(bstr = SysAllocString(name)))
+        return E_OUTOFMEMORY;
+    hres = IDispatch_QueryInterface(disp, &IID_IDispatchEx, (void**)&dispex);
+    if(SUCCEEDED(hres) && dispex) {
+        hres = IDispatchEx_GetDispID(dispex, bstr, make_grfdex(ctx, fdexNameCaseSensitive), &id);
+        IDispatchEx_Release(dispex);
+    }else {
+        hres = IDispatch_GetIDsOfNames(disp, &IID_NULL, &bstr, 1, 0, &id);
+    }
+    SysFreeString(bstr);
+    if(FAILED(hres))
+        return hres;
+
+    return disp_call(ctx, disp, id, flags, argc, argv, ret);
+}
+
 HRESULT disp_call_value(script_ctx_t *ctx, IDispatch *disp, IDispatch *jsthis, WORD flags, unsigned argc, jsval_t *argv,
         jsval_t *r)
 {

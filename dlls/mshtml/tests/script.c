@@ -154,6 +154,7 @@ DEFINE_EXPECT(GetTypeInfo);
 #define DISPID_EXTERNAL_GETVT          0x300007
 #define DISPID_EXTERNAL_NULL_DISP      0x300008
 #define DISPID_EXTERNAL_IS_ENGLISH     0x300009
+#define DISPID_EXTERNAL_LIST_SEP       0x30000A
 
 static const GUID CLSID_TestScript =
     {0x178fc163,0xf585,0x4e24,{0x9c,0x13,0x4b,0xb7,0xfa,0xf8,0x07,0x46}};
@@ -604,6 +605,10 @@ static HRESULT WINAPI externalDisp_GetDispID(IDispatchEx *iface, BSTR bstrName, 
         *pid = DISPID_EXTERNAL_IS_ENGLISH;
         return S_OK;
     }
+    if(!lstrcmpW(bstrName, L"listSeparator")) {
+        *pid = DISPID_EXTERNAL_LIST_SEP;
+        return S_OK;
+    }
 
     ok(0, "unexpected name %s\n", wine_dbgstr_w(bstrName));
     return DISP_E_UNKNOWNNAME;
@@ -803,6 +808,30 @@ static HRESULT WINAPI externalDisp_InvokeEx(IDispatchEx *iface, DISPID id, LCID 
         V_VT(pvarRes) = VT_BOOL;
         V_BOOL(pvarRes) = is_english ? VARIANT_TRUE : VARIANT_FALSE;
         return S_OK;
+
+    case DISPID_EXTERNAL_LIST_SEP: {
+        WCHAR buf[4];
+        int len;
+
+        ok(wFlags == INVOKE_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgvarg, "rgvarg != NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) == VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+
+        if(!(len = GetLocaleInfoW(GetUserDefaultLCID(), LOCALE_SLIST, buf, ARRAY_SIZE(buf))))
+            buf[len++] = ',';
+        else
+            len--;
+
+        V_VT(pvarRes) = VT_BSTR;
+        V_BSTR(pvarRes) = SysAllocStringLen(buf, len);
+        return S_OK;
+    }
 
     default:
         ok(0, "unexpected call\n");

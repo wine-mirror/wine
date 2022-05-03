@@ -112,6 +112,8 @@ DEFINE_EXPECT(testobj_onlydispid_i);
 DEFINE_EXPECT(testobj_notexists_d);
 DEFINE_EXPECT(testobj_newenum);
 DEFINE_EXPECT(testobj_getidfail_d);
+DEFINE_EXPECT(testobj_tolocalestr_d);
+DEFINE_EXPECT(testobj_tolocalestr_i);
 DEFINE_EXPECT(enumvariant_next_0);
 DEFINE_EXPECT(enumvariant_next_1);
 DEFINE_EXPECT(enumvariant_reset);
@@ -178,6 +180,7 @@ DEFINE_EXPECT(BindHandler);
 #define DISPID_TESTOBJ_PROP         0x2000
 #define DISPID_TESTOBJ_ONLYDISPID   0x2001
 #define DISPID_TESTOBJ_WITHPROP     0x2002
+#define DISPID_TESTOBJ_TOLOCALESTR  0x2003
 
 #define JS_E_OUT_OF_MEMORY 0x800a03ec
 #define JS_E_INVALID_CHAR 0x800a03f6
@@ -477,6 +480,12 @@ static HRESULT WINAPI testObj_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD
         *pid = DISPID_TESTOBJ_ONLYDISPID;
         return S_OK;
     }
+    if(!lstrcmpW(bstrName, L"toLocaleString")) {
+        CHECK_EXPECT(testobj_tolocalestr_d);
+        test_grfdex(grfdex, fdexNameCaseSensitive);
+        *pid = DISPID_TESTOBJ_TOLOCALESTR;
+        return S_OK;
+    }
     if(!lstrcmpW(bstrName, L"notExists")) {
         CHECK_EXPECT(testobj_notexists_d);
         test_grfdex(grfdex, fdexNameCaseSensitive);
@@ -556,6 +565,22 @@ static HRESULT WINAPI testObj_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid,
 
         V_VT(pvarRes) = VT_I4;
         V_I4(pvarRes) = 1;
+
+        return S_OK;
+     case DISPID_TESTOBJ_TOLOCALESTR:
+        CHECK_EXPECT(testobj_tolocalestr_i);
+
+        ok(wFlags == DISPATCH_METHOD, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) == VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+
+        V_VT(pvarRes) = VT_I4;
+        V_I4(pvarRes) = 1234;
 
         return S_OK;
     }
@@ -3032,6 +3057,7 @@ static void test_number_localization(void)
 
 static void test_script_exprs(void)
 {
+    WCHAR buf[64], sep[4];
     VARIANT v;
     HRESULT hres;
 
@@ -3093,6 +3119,25 @@ static void test_script_exprs(void)
     ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
     ok(!lstrcmpW(V_BSTR(&v), L"wine"), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
     VariantClear(&v);
+
+    if(!GetLocaleInfoW(GetUserDefaultLCID(), LOCALE_SLIST, sep, ARRAY_SIZE(sep))) wcscpy(sep, L",");
+    swprintf(buf, ARRAY_SIZE(buf), L"12%s 12%s undefined undefined undefined%s 12", sep, sep, sep);
+    hres = parse_script_expr(L"var arr = [5]; arr.toLocaleString = function(a,b,c) {return a+' '+b+' '+c;};"
+                             L"Number.prototype.toLocaleString = function() {return 12;};"
+                             L"[1,2,arr,3].toLocaleString('foo','bar','baz')", &v, NULL);
+    ok(hres == S_OK, "parse_script_expr failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
+    ok(!lstrcmpW(V_BSTR(&v), buf), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    hres = parse_script_expr(L"delete Object.prototype.toLocaleString; Array.prototype.toLocaleString.call([])", &v, NULL);
+    ok(hres == S_OK, "parse_script_expr failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
+    ok(!lstrcmpW(V_BSTR(&v), L""), "V_BSTR(v) = %s\n", wine_dbgstr_w(V_BSTR(&v)));
+    VariantClear(&v);
+
+    hres = parse_script_expr(L"delete Object.prototype.toLocaleString; Array.prototype.toLocaleString.call(['a'])", &v, NULL);
+    ok(hres == 0x800a01b6, "parse_script_expr failed: %08lx\n", hres);
 
     test_number_localization();
     test_default_value();
@@ -3690,6 +3735,12 @@ static BOOL run_tests(void)
     run_script(L"var t = (function () { with(testObj) { return withProp; }})(); ok(t === 1, 't = ' + t);");
     CHECK_CALLED(testobj_withprop_d);
     CHECK_CALLED(testobj_withprop_i);
+
+    SET_EXPECT(testobj_tolocalestr_d);
+    SET_EXPECT(testobj_tolocalestr_i);
+    run_script(L"var t = [testObj].toLocaleString(); ok(t === '1234', 't = ' + t);");
+    CHECK_CALLED(testobj_tolocalestr_d);
+    CHECK_CALLED(testobj_tolocalestr_i);
 
     run_script(L"@set @t=2\nok(@t === 2, '@t = ' + @t);");
 
