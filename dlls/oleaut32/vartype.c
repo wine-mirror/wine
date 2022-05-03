@@ -6512,11 +6512,13 @@ static BSTR VARIANT_BstrReplaceDecimal(const WCHAR * buff, LCID lcid, ULONG dwFl
     NUMBERFMTW minFormat;
 
     minFormat.NumDigits = 0;
-    minFormat.LeadingZero = 0;
     minFormat.Grouping = 0;
     minFormat.lpDecimalSep = lpDecimalSep;
     minFormat.lpThousandSep = empty;
     minFormat.NegativeOrder = 1; /* NLS_NEG_LEFT */
+
+    GetLocaleInfoW(lcid, LOCALE_ILZERO | LOCALE_RETURN_NUMBER | (dwFlags & LOCALE_NOUSEROVERRIDE),
+                   (WCHAR *)&minFormat.LeadingZero, sizeof(DWORD)/sizeof(WCHAR) );
 
     /* count number of decimal digits in string */
     p = wcschr( buff, '.' );
