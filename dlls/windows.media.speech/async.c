@@ -40,6 +40,11 @@ struct async_void
 
     IAsyncActionCompletedHandler *handler;
 
+    async_action_callback callback;
+    TP_WORK *async_run_work;
+    IInspectable *invoker;
+
+    CRITICAL_SECTION cs;
     AsyncStatus status;
     HRESULT hr;
 };
@@ -116,6 +121,7 @@ HRESULT WINAPI async_void_put_Completed( IAsyncAction *iface, IAsyncActionComple
 
     TRACE("iface %p, handler %p.\n", iface, handler);
 
+    EnterCriticalSection(&impl->cs);
     if (impl->status == Closed)
         hr = E_ILLEGAL_METHOD_CALL;
     else if (impl->handler != HANDLER_NOT_SET)
@@ -133,11 +139,15 @@ HRESULT WINAPI async_void_put_Completed( IAsyncAction *iface, IAsyncActionComple
             IAsyncAction *action = &impl->IAsyncAction_iface;
             AsyncStatus status = impl->status;
             impl->handler = NULL; /* Prevent concurrent invoke. */
+            LeaveCriticalSection(&impl->cs);
 
             IAsyncActionCompletedHandler_Invoke(handler, action, status);
             IAsyncActionCompletedHandler_Release(handler);
+
+            return S_OK;
         }
     }
+    LeaveCriticalSection(&impl->cs);
 
     return hr;
 }
@@ -149,9 +159,11 @@ HRESULT WINAPI async_void_get_Completed( IAsyncAction *iface, IAsyncActionComple
 
     FIXME("iface %p, handler %p semi stub!\n", iface, handler);
 
+    EnterCriticalSection(&impl->cs);
     if (impl->status == Closed)
         hr = E_ILLEGAL_METHOD_CALL;
     *handler = (impl->handler != HANDLER_NOT_SET) ? impl->handler : NULL;
+    LeaveCriticalSection(&impl->cs);
 
     return hr;
 }
@@ -200,9 +212,11 @@ static HRESULT WINAPI async_void_info_get_Status( IAsyncInfo *iface, AsyncStatus
 
     TRACE("iface %p, status %p.\n", iface, status);
 
+    EnterCriticalSection(&impl->cs);
     if (impl->status == Closed)
         hr = E_ILLEGAL_METHOD_CALL;
     *status = impl->status;
+    LeaveCriticalSection(&impl->cs);
 
     return hr;
 }
@@ -214,10 +228,12 @@ static HRESULT WINAPI async_void_info_get_ErrorCode( IAsyncInfo *iface, HRESULT 
 
     TRACE("iface %p, error_code %p.\n", iface, error_code);
 
+    EnterCriticalSection(&impl->cs);
     if (impl->status == Closed)
         *error_code = hr = E_ILLEGAL_METHOD_CALL;
     else
         *error_code = impl->hr;
+    LeaveCriticalSection(&impl->cs);
 
     return hr;
 }
@@ -229,10 +245,12 @@ static HRESULT WINAPI async_void_info_Cancel( IAsyncInfo *iface )
 
     TRACE("iface %p.\n", iface);
 
+    EnterCriticalSection(&impl->cs);
     if (impl->status == Closed)
         hr = E_ILLEGAL_METHOD_CALL;
     else if (impl->status == Started)
         impl->status = Canceled;
+    LeaveCriticalSection(&impl->cs);
 
     return hr;
 }
@@ -244,10 +262,16 @@ static HRESULT WINAPI async_void_info_Close( IAsyncInfo *iface )
 
     TRACE("iface %p.\n", iface);
 
+    EnterCriticalSection(&impl->cs);
     if (impl->status == Started)
         hr = E_ILLEGAL_STATE_CHANGE;
     else if (impl->status != Closed)
+    {
+        CloseThreadpoolWork(impl->async_run_work);
+        impl->async_run_work = NULL;
         impl->status = Closed;
+    }
+    LeaveCriticalSection(&impl->cs);
 
     return hr;
 }
@@ -270,11 +294,40 @@ static const struct IAsyncInfoVtbl async_void_info_vtbl =
     async_void_info_Close
 };
 
-HRESULT async_action_create( IAsyncAction **out )
+static void CALLBACK async_void_run_cb(TP_CALLBACK_INSTANCE *instance, void *data, TP_WORK *work)
+{
+    IAsyncAction *action = data;
+    struct async_void *impl = impl_from_IAsyncAction(action);
+    HRESULT hr;
+
+    hr = impl->callback(impl->invoker);
+
+    EnterCriticalSection(&impl->cs);
+    if (impl->status < Closed)
+        impl->status = FAILED(hr) ? Error : Completed;
+
+    impl->hr = hr;
+
+    if (impl->handler != NULL && impl->handler != HANDLER_NOT_SET)
+    {
+        IAsyncActionCompletedHandler*handler = impl->handler;
+        AsyncStatus status = impl->status;
+        impl->handler = NULL; /* Prevent concurrent invoke. */
+        LeaveCriticalSection(&impl->cs);
+
+        IAsyncActionCompletedHandler_Invoke(handler, action, status);
+        IAsyncActionCompletedHandler_Release(handler);
+    }
+    else LeaveCriticalSection(&impl->cs);
+
+    IAsyncAction_Release(action);
+}
+
+HRESULT async_action_create( IInspectable *invoker, async_action_callback callback, IAsyncAction **out )
 {
     struct async_void *impl;
 
-    TRACE("out %p.\n", out);
+    TRACE("invoker %p, callback %p, out %p.\n", invoker, callback, out);
 
     if (!(impl = calloc(1, sizeof(*impl))))
     {
@@ -287,7 +340,23 @@ HRESULT async_action_create( IAsyncAction **out )
     impl->ref = 1;
 
     impl->handler = HANDLER_NOT_SET;
-    impl->status = Completed;
+    impl->callback = callback;
+    impl->status = Started;
+
+    if (!(impl->async_run_work = CreateThreadpoolWork(async_void_run_cb, &impl->IAsyncAction_iface, NULL)))
+    {
+        free(impl);
+        return HRESULT_FROM_WIN32(GetLastError());
+    }
+
+    if (invoker) IInspectable_AddRef((impl->invoker = invoker));
+
+    InitializeCriticalSection(&impl->cs);
+    impl->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": async_action.cs");
+
+    /* AddRef to keep the obj alive in the callback. */
+    IAsyncAction_AddRef(&impl->IAsyncAction_iface);
+    SubmitThreadpoolWork(impl->async_run_work);
 
     *out = &impl->IAsyncAction_iface;
     TRACE("created %p\n", *out);

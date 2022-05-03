@@ -69,9 +69,10 @@ struct vector_iids
     const GUID *view;
 };
 
+typedef HRESULT (WINAPI *async_action_callback)( IInspectable *invoker );
 typedef HRESULT (WINAPI *async_operation_inspectable_callback)( IInspectable *invoker, IInspectable **result );
 
-HRESULT async_action_create( IAsyncAction **out );
+HRESULT async_action_create( IInspectable *invoker, async_action_callback callback, IAsyncAction **out );
 HRESULT async_operation_inspectable_create( const GUID *iid, IInspectable *invoker, async_operation_inspectable_callback callback,
                                             IAsyncOperation_IInspectable **out );
 

@@ -244,10 +244,15 @@ static HRESULT WINAPI session_set_AutoStopSilenceTimeout( ISpeechContinuousRecog
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI start_callback( IInspectable *invoker )
+{
+    return S_OK;
+}
+
 static HRESULT WINAPI session_StartAsync( ISpeechContinuousRecognitionSession *iface, IAsyncAction **action )
 {
     FIXME("iface %p, action %p stub!\n", iface, action);
-    return async_action_create(action);
+    return async_action_create(NULL, start_callback, action);
 }
 
 static HRESULT WINAPI session_StartWithModeAsync( ISpeechContinuousRecognitionSession *iface,
