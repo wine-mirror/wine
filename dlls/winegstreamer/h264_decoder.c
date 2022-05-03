@@ -596,7 +596,7 @@ static const IMFTransformVtbl transform_vtbl =
 
 HRESULT h264_decoder_create(REFIID riid, void **ret)
 {
-    struct wg_format output_format =
+    static const struct wg_format output_format =
     {
         .major_type = WG_MAJOR_TYPE_VIDEO,
         .u.video =
@@ -606,7 +606,7 @@ HRESULT h264_decoder_create(REFIID riid, void **ret)
             .height = 1080,
         },
     };
-    struct wg_format input_format = {.major_type = WG_MAJOR_TYPE_H264};
+    static const struct wg_format input_format = {.major_type = WG_MAJOR_TYPE_H264};
     struct wg_transform *transform;
     struct h264_decoder *decoder;
 

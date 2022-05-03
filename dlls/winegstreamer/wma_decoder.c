@@ -854,7 +854,7 @@ static const IPropertyBagVtbl property_bag_vtbl =
 
 HRESULT wma_decoder_create(IUnknown *outer, IUnknown **out)
 {
-    struct wg_format output_format =
+    static const struct wg_format output_format =
     {
         .major_type = WG_MAJOR_TYPE_AUDIO,
         .u.audio =
@@ -865,7 +865,7 @@ HRESULT wma_decoder_create(IUnknown *outer, IUnknown **out)
             .rate = 44100,
         },
     };
-    struct wg_format input_format = {.major_type = WG_MAJOR_TYPE_WMA};
+    static const struct wg_format input_format = {.major_type = WG_MAJOR_TYPE_WMA};
     struct wg_transform *transform;
     struct wma_decoder *decoder;
 
