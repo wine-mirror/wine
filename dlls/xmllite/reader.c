@@ -3663,18 +3663,11 @@ HRESULT WINAPI CreateXmlReader(REFIID riid, void **obj, IMalloc *imalloc)
     return hr;
 }
 
-HRESULT WINAPI CreateXmlReaderInputWithEncodingName(IUnknown *stream,
-                                                    IMalloc *imalloc,
-                                                    LPCWSTR encoding,
-                                                    BOOL hint,
-                                                    LPCWSTR base_uri,
-                                                    IXmlReaderInput **ppInput)
+static HRESULT create_reader_input(IUnknown *stream, IMalloc *imalloc, xml_encoding encoding,
+        BOOL hint, const WCHAR *base_uri, IXmlReaderInput **ppInput)
 {
     xmlreaderinput *readerinput;
     HRESULT hr;
-
-    TRACE("%p %p %s %d %s %p\n", stream, imalloc, wine_dbgstr_w(encoding),
-                                       hint, wine_dbgstr_w(base_uri), ppInput);
 
     if (!stream || !ppInput) return E_INVALIDARG;
 
@@ -3686,7 +3679,7 @@ HRESULT WINAPI CreateXmlReaderInputWithEncodingName(IUnknown *stream,
     readerinput->ref = 1;
     readerinput->imalloc = imalloc;
     if (imalloc) IMalloc_AddRef(imalloc);
-    readerinput->encoding = parse_encoding_name(encoding, -1);
+    readerinput->encoding = encoding;
     readerinput->hint = hint;
     readerinput->baseuri = readerinput_strdupW(readerinput, base_uri);
 
@@ -3705,4 +3698,27 @@ HRESULT WINAPI CreateXmlReaderInputWithEncodingName(IUnknown *stream,
     TRACE("returning iface %p\n", *ppInput);
 
     return S_OK;
+}
+
+/***********************************************************************
+ *      CreateXmlReaderInputWithEncodingName (xmllite.@)
+ */
+HRESULT WINAPI CreateXmlReaderInputWithEncodingName(IUnknown *stream, IMalloc *imalloc,
+        const WCHAR *encoding, BOOL hint, const WCHAR *base_uri, IXmlReaderInput **input)
+{
+    TRACE("%p, %p, %s, %d, %s, %p.\n", stream, imalloc, wine_dbgstr_w(encoding),
+            hint, wine_dbgstr_w(base_uri), input);
+
+    return create_reader_input(stream, imalloc, parse_encoding_name(encoding, -1), hint, base_uri, input);
+}
+
+/***********************************************************************
+ *      CreateXmlReaderInputWithEncodingCodePage (xmllite.@)
+ */
+HRESULT WINAPI CreateXmlReaderInputWithEncodingCodePage(IUnknown *stream, IMalloc *imalloc,
+        UINT codepage, BOOL hint, const WCHAR *base_uri, IXmlReaderInput **input)
+{
+    TRACE("%p, %p, %u, %d, %s, %p.\n", stream, imalloc, codepage, hint, wine_dbgstr_w(base_uri), input);
+
+    return create_reader_input(stream, imalloc, get_encoding_from_codepage(codepage), hint, base_uri, input);
 }
