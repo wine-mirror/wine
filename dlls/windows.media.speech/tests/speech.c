@@ -1762,9 +1762,7 @@ static void test_Recognition(void)
      */
 
     hr = ISpeechContinuousRecognitionSession_StopAsync(session, &action2);
-    todo_wine ok(hr == S_OK, "ISpeechContinuousRecognitionSession_StopAsync failed, hr %#lx.\n", hr);
-
-    if (FAILED(hr)) goto skip_action;
+    ok(hr == S_OK, "ISpeechContinuousRecognitionSession_StopAsync failed, hr %#lx.\n", hr);
 
     async_void_handler_create_static(&action_handler);
     action_handler.event_block = CreateEventW(NULL, FALSE, FALSE, NULL);
@@ -1776,40 +1774,38 @@ static void test_Recognition(void)
     put_param.handler = &action_handler.IAsyncActionCompletedHandler_iface;
     put_param.action = action2;
     put_thread = CreateThread(NULL, 0, action_put_completed_thread, &put_param, 0, NULL);
-    todo_wine ok(!WaitForSingleObject(action_handler.event_finished , 5000), "Wait for event_finished failed.\n");
+    ok(!WaitForSingleObject(action_handler.event_finished , 5000), "Wait for event_finished failed.\n");
 
     handler = (void *)0xdeadbeef;
     old_ref = action_handler.ref;
     hr = IAsyncAction_get_Completed(action2, &handler);
-    todo_wine ok(hr == S_OK, "IAsyncAction_get_Completed failed, hr %#lx.\n", hr);
+    ok(hr == S_OK, "IAsyncAction_get_Completed failed, hr %#lx.\n", hr);
 
-    todo_wine ok(handler == &action_handler.IAsyncActionCompletedHandler_iface || /* Broken on 1507. */
-                            broken(handler != NULL && handler != (void *)0xdeadbeef), "Handler was %p.\n", handler);
+    todo_wine ok(handler == &action_handler.IAsyncActionCompletedHandler_iface, "Handler was %p.\n", handler);
 
     ref = action_handler.ref - old_ref;
     todo_wine ok(ref == 1, "The ref was increased by %lu.\n", ref);
-    IAsyncActionCompletedHandler_Release(handler);
+    if (handler) IAsyncActionCompletedHandler_Release(handler);
 
     hr = IAsyncAction_QueryInterface(action2, &IID_IAsyncInfo, (void **)&info);
-    todo_wine ok(hr == S_OK, "IAsyncAction_QueryInterface failed, hr %#lx.\n", hr);
+    ok(hr == S_OK, "IAsyncAction_QueryInterface failed, hr %#lx.\n", hr);
 
     hr = IAsyncInfo_Close(info); /* If IAsyncInfo_Close would wait for the handler to finish, the test would get stuck here. */
-    todo_wine ok(hr == S_OK, "IAsyncInfo_Close failed, hr %#lx.\n", hr);
+    ok(hr == S_OK, "IAsyncInfo_Close failed, hr %#lx.\n", hr);
     check_async_info((IInspectable *)action2, 3, AsyncStatus_Closed, S_OK);
 
     set = SetEvent(action_handler.event_block);
-    todo_wine ok(set == TRUE, "Event 'event_block' wasn't set.\n");
-    todo_wine ok(!WaitForSingleObject(put_thread , 1000), "Wait for put_thread failed.\n");
+    ok(set == TRUE, "Event 'event_block' wasn't set.\n");
+    ok(!WaitForSingleObject(put_thread , 1000), "Wait for put_thread failed.\n");
     IAsyncInfo_Release(info);
 
     CloseHandle(action_handler.event_finished);
     CloseHandle(action_handler.event_block);
     CloseHandle(put_thread);
 
-    todo_wine ok(action != action2, "actions were the same!\n");
+    ok(action != action2, "actions were the same!\n");
 
     IAsyncAction_Release(action2);
-skip_action:
     IAsyncAction_Release(action);
 
     hr = ISpeechContinuousRecognitionSession_remove_ResultGenerated(session, token);
