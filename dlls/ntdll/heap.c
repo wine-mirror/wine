@@ -1067,23 +1067,24 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
 static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T data_size, SUBHEAP **ppSubHeap )
 {
     struct entry *entry = find_free_list( heap, data_size + sizeof(ARENA_INUSE), FALSE );
+    SIZE_T total_size, arena_size;
+    ARENA_FREE *pArena;
     SUBHEAP *subheap;
     struct list *ptr;
-    SIZE_T total_size;
 
     /* Find a suitable free list, and in it find a block large enough */
 
     ptr = &entry->entry;
     while ((ptr = list_next( &heap->freeList[0].arena.entry, ptr )))
     {
-        ARENA_FREE *pArena = LIST_ENTRY( ptr, ARENA_FREE, entry );
-        SIZE_T arena_size = (pArena->size & ARENA_SIZE_MASK) +
-                            sizeof(ARENA_FREE) - sizeof(ARENA_INUSE);
+        pArena = LIST_ENTRY( ptr, ARENA_FREE, entry );
+        arena_size = (pArena->size & ARENA_SIZE_MASK) + sizeof(ARENA_FREE) - sizeof(ARENA_INUSE);
         if (arena_size >= data_size)
         {
             subheap = find_subheap( heap, (struct block *)pArena, FALSE );
             if (!HEAP_Commit( subheap, (ARENA_INUSE *)pArena, data_size )) return NULL;
             *ppSubHeap = subheap;
+            list_remove( &pArena->entry );
             return pArena;
         }
     }
@@ -1120,7 +1121,9 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T data_size, SUBHEAP **p
           subheap, subheap->size, heap );
 
     *ppSubHeap = subheap;
-    return (ARENA_FREE *)((char *)subheap->base + subheap->headerSize);
+    pArena = (ARENA_FREE *)((char *)subheap->base + subheap->headerSize);
+    list_remove( &pArena->entry );
+    return pArena;
 }
 
 
@@ -1552,10 +1555,6 @@ static NTSTATUS heap_allocate( HEAP *heap, ULONG flags, SIZE_T size, void **ret 
     /* Locate a suitable free block */
 
     if (!(entry = HEAP_FindFreeBlock( heap, data_size, &subheap ))) return STATUS_NO_MEMORY;
-
-    /* Remove the arena from the free list */
-
-    list_remove( &entry->entry );
 
     /* Build the in-use arena */
 
