@@ -808,17 +808,19 @@ static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
 }
 
 
-static void shrink_used_block( SUBHEAP *subheap, struct block *block, SIZE_T data_size )
+static void shrink_used_block( SUBHEAP *subheap, struct block *block, SIZE_T data_size, SIZE_T size )
 {
     SIZE_T old_data_size = block_get_size( block ) - sizeof(*block);
     if (old_data_size >= data_size + HEAP_MIN_SHRINK_SIZE)
     {
         block->size = data_size | block_get_flags( block );
+        block->unused_bytes = data_size - size;
         HEAP_CreateFreeBlock( subheap, next_block( subheap, block ), old_data_size - data_size );
     }
     else
     {
         struct block *next;
+        block->unused_bytes = old_data_size - size;
         if ((next = next_block( subheap, block ))) next->size &= ~ARENA_FLAG_PREV_FREE;
     }
 }
@@ -1579,8 +1581,7 @@ static NTSTATUS heap_allocate( HEAP *heap, ULONG flags, SIZE_T size, void **ret 
 
     /* Shrink the block */
 
-    shrink_used_block( subheap, pInUse, rounded_size );
-    pInUse->unused_bytes = (pInUse->size & ARENA_SIZE_MASK) - size;
+    shrink_used_block( subheap, pInUse, rounded_size, size );
 
     notify_alloc( pInUse + 1, size, flags & HEAP_ZERO_MEMORY );
     initialize_block( pInUse + 1, size, pInUse->unused_bytes, flags );
@@ -1687,7 +1688,7 @@ static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size
             pArena->size += block_get_size( next );
             if (!HEAP_Commit( subheap, pArena, rounded_size )) return STATUS_NO_MEMORY;
             notify_realloc( pArena + 1, oldActualSize, size );
-            shrink_used_block( subheap, pArena, rounded_size );
+            shrink_used_block( subheap, pArena, rounded_size, size );
         }
         else
         {
@@ -1703,10 +1704,8 @@ static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size
     else
     {
         notify_realloc( pArena + 1, oldActualSize, size );
-        shrink_used_block( subheap, pArena, rounded_size );
+        shrink_used_block( subheap, pArena, rounded_size, size );
     }
-
-    pArena->unused_bytes = (pArena->size & ARENA_SIZE_MASK) - size;
 
     /* Clear the extra bytes if needed */
 
