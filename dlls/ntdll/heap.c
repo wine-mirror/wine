@@ -401,16 +401,19 @@ static void notify_free_all( SUBHEAP *subheap )
 
 /* locate a free list entry of the appropriate size */
 /* size is the size of the whole block including the arena header */
-static inline unsigned int get_freelist_index( SIZE_T size )
+static inline struct entry *find_free_list( HEAP *heap, SIZE_T size, BOOL last )
 {
+    FREE_LIST_ENTRY *list, *end = heap->freeList + ARRAY_SIZE(heap->freeList);
     unsigned int i;
 
     if (size <= HEAP_MAX_SMALL_FREE_LIST)
-        return (size - HEAP_MIN_ARENA_SIZE) / ALIGNMENT;
-
-    for (i = HEAP_NB_SMALL_FREE_LISTS; i < HEAP_NB_FREE_LISTS - 1; i++)
+        i = (size - HEAP_MIN_ARENA_SIZE) / ALIGNMENT;
+    else for (i = HEAP_NB_SMALL_FREE_LISTS; i < HEAP_NB_FREE_LISTS - 1; i++)
         if (size <= HEAP_freeListSizes[i - HEAP_NB_SMALL_FREE_LISTS]) break;
-    return i;
+
+    list = heap->freeList + i;
+    if (last && ++list == end) list = heap->freeList;
+    return &list->arena;
 }
 
 /* get the memory protection type to use for a given heap */
@@ -587,18 +590,16 @@ static HEAP *HEAP_GetPtr(
 static inline void HEAP_InsertFreeBlock( HEAP *heap, ARENA_FREE *pArena, BOOL last )
 {
     SIZE_T block_size = (pArena->size & ARENA_SIZE_MASK) + sizeof(*pArena);
-    FREE_LIST_ENTRY *pEntry = heap->freeList + get_freelist_index( block_size );
+    struct entry *list = find_free_list( heap, block_size, last );
     if (last)
     {
         /* insert at end of free list, i.e. before the next free list entry */
-        pEntry++;
-        if (pEntry == &heap->freeList[HEAP_NB_FREE_LISTS]) pEntry = heap->freeList;
-        list_add_before( &pEntry->arena.entry, &pArena->entry );
+        list_add_before( &list->entry, &pArena->entry );
     }
     else
     {
         /* insert at head of free list */
-        list_add_after( &pEntry->arena.entry, &pArena->entry );
+        list_add_after( &list->entry, &pArena->entry );
     }
 }
 
@@ -1065,14 +1066,14 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
  */
 static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T data_size, SUBHEAP **ppSubHeap )
 {
+    struct entry *entry = find_free_list( heap, data_size + sizeof(ARENA_INUSE), FALSE );
     SUBHEAP *subheap;
     struct list *ptr;
     SIZE_T total_size;
-    FREE_LIST_ENTRY *pEntry = heap->freeList + get_freelist_index( data_size + sizeof(ARENA_INUSE) );
 
     /* Find a suitable free list, and in it find a block large enough */
 
-    ptr = &pEntry->arena.entry;
+    ptr = &entry->entry;
     while ((ptr = list_next( &heap->freeList[0].arena.entry, ptr )))
     {
         ARENA_FREE *pArena = LIST_ENTRY( ptr, ARENA_FREE, entry );
