@@ -181,7 +181,7 @@ typedef struct tagHEAP
 
 static HEAP *processHeap;  /* main process heap */
 
-static BOOL HEAP_IsRealArena( HEAP *heapPtr, DWORD flags, LPCVOID block, BOOL quiet );
+static BOOL HEAP_IsRealArena( HEAP *heapPtr, LPCVOID block, BOOL quiet );
 
 /* mark a block of memory as free for debugging purposes */
 static inline void mark_block_free( void *ptr, SIZE_T size, DWORD flags )
@@ -470,21 +470,27 @@ static HEAP *HEAP_GetPtr(
              HANDLE heap /* [in] Handle to the heap */
 ) {
     HEAP *heapPtr = heap;
+    BOOL valid = TRUE;
+
     if (!heapPtr || (heapPtr->magic != HEAP_MAGIC))
     {
         ERR("Invalid heap %p!\n", heap );
         return NULL;
     }
-    if ((heapPtr->flags & HEAP_VALIDATE_ALL) && !HEAP_IsRealArena( heapPtr, 0, NULL, NOISY ))
+    if (heapPtr->flags & HEAP_VALIDATE_ALL)
     {
-        if (TRACE_ON(heap))
+        heap_lock( heapPtr, 0 );
+        valid = HEAP_IsRealArena( heapPtr, NULL, NOISY );
+        heap_unlock( heapPtr, 0 );
+
+        if (!valid && TRACE_ON(heap))
         {
             HEAP_Dump( heapPtr );
             assert( FALSE );
         }
-        return NULL;
     }
-    return heapPtr;
+
+    return valid ? heapPtr : NULL;
 }
 
 
@@ -1346,64 +1352,58 @@ static BOOL HEAP_ValidateInUseArena( const SUBHEAP *subheap, const ARENA_INUSE *
  *	TRUE: Success
  *	FALSE: Failure
  */
-static BOOL HEAP_IsRealArena( HEAP *heapPtr,   /* [in] ptr to the heap */
-              DWORD flags,   /* [in] Bit flags that control access during operation */
+static BOOL HEAP_IsRealArena( HEAP *heap,   /* [in] ptr to the heap */
               LPCVOID block, /* [in] Optional pointer to memory block to validate */
               BOOL quiet )   /* [in] Flag - if true, HEAP_ValidateInUseArena
                               *             does not complain    */
 {
     SUBHEAP *subheap;
-    BOOL ret = FALSE;
     const ARENA_LARGE *large_arena;
-
-    heap_lock( heapPtr, flags );
 
     if (block)  /* only check this single memory block */
     {
         const ARENA_INUSE *arena = (const ARENA_INUSE *)block - 1;
 
-        if (!(subheap = HEAP_FindSubHeap( heapPtr, arena )) ||
+        if (!(subheap = HEAP_FindSubHeap( heap, arena )) ||
             ((const char *)arena < (char *)subheap->base + subheap->headerSize))
         {
-            if (!(large_arena = find_large_block( heapPtr, block )))
+            if (!(large_arena = find_large_block( heap, block )))
             {
                 if (quiet == NOISY)
-                    ERR("Heap %p: block %p is not inside heap\n", heapPtr, block );
+                    ERR("Heap %p: block %p is not inside heap\n", heap, block );
                 else if (WARN_ON(heap))
-                    WARN("Heap %p: block %p is not inside heap\n", heapPtr, block );
+                    WARN("Heap %p: block %p is not inside heap\n", heap, block );
+                return FALSE;
             }
-            else ret = validate_large_arena( heapPtr, large_arena, quiet );
+
+            return validate_large_arena( heap, large_arena, quiet );
         }
-        else ret = HEAP_ValidateInUseArena( subheap, arena, quiet );
-        goto done;
+
+        return HEAP_ValidateInUseArena( subheap, arena, quiet );
     }
 
-    LIST_FOR_EACH_ENTRY( subheap, &heapPtr->subheap_list, SUBHEAP, entry )
+    LIST_FOR_EACH_ENTRY( subheap, &heap->subheap_list, SUBHEAP, entry )
     {
         char *ptr = (char *)subheap->base + subheap->headerSize;
         while (ptr < (char *)subheap->base + subheap->size)
         {
             if (*(DWORD *)ptr & ARENA_FLAG_FREE)
             {
-                if (!HEAP_ValidateFreeArena( subheap, (ARENA_FREE *)ptr )) goto done;
+                if (!HEAP_ValidateFreeArena( subheap, (ARENA_FREE *)ptr )) return FALSE;
                 ptr += sizeof(ARENA_FREE) + (*(DWORD *)ptr & ARENA_SIZE_MASK);
             }
             else
             {
-                if (!HEAP_ValidateInUseArena( subheap, (ARENA_INUSE *)ptr, NOISY )) goto done;
+                if (!HEAP_ValidateInUseArena( subheap, (ARENA_INUSE *)ptr, NOISY )) return FALSE;
                 ptr += sizeof(ARENA_INUSE) + (*(DWORD *)ptr & ARENA_SIZE_MASK);
             }
         }
     }
 
-    LIST_FOR_EACH_ENTRY( large_arena, &heapPtr->large_list, ARENA_LARGE, entry )
-        if (!validate_large_arena( heapPtr, large_arena, quiet )) goto done;
+    LIST_FOR_EACH_ENTRY( large_arena, &heap->large_list, ARENA_LARGE, entry )
+        if (!validate_large_arena( heap, large_arena, quiet )) return FALSE;
 
-    ret = TRUE;
-
-done:
-    heap_unlock( heapPtr, flags );
-    return ret;
+    return TRUE;
 }
 
 
@@ -2076,23 +2076,23 @@ SIZE_T WINAPI RtlSizeHeap( HANDLE heap, ULONG flags, const void *ptr )
 
 /***********************************************************************
  *           RtlValidateHeap   (NTDLL.@)
- *
- * Determine if a block is a valid allocation from a heap.
- *
- * PARAMS
- *  heap  [I] Heap that block was allocated from
- *  flags [I] HEAP_ flags from "winnt.h"
- *  ptr   [I] Block to check
- *
- * RETURNS
- *  Success: TRUE. The block was allocated from heap.
- *  Failure: FALSE, if heap is invalid or ptr was not allocated from it.
  */
-BOOLEAN WINAPI RtlValidateHeap( HANDLE heap, ULONG flags, LPCVOID ptr )
+BOOLEAN WINAPI RtlValidateHeap( HANDLE heap, ULONG flags, const void *ptr )
 {
-    HEAP *heapPtr = HEAP_GetPtr( heap );
-    if (!heapPtr) return FALSE;
-    return HEAP_IsRealArena( heapPtr, flags, ptr, QUIET );
+    HEAP *heapPtr;
+    BOOLEAN ret;
+
+    if (!(heapPtr = HEAP_GetPtr( heap )))
+        ret = FALSE;
+    else
+    {
+        heap_lock( heapPtr, flags );
+        ret = HEAP_IsRealArena( heapPtr, ptr, QUIET );
+        heap_unlock( heapPtr, flags );
+    }
+
+    TRACE( "heap %p, flags %#x, ptr %p, return %u.\n", heap, flags, ptr, !!ret );
+    return ret;
 }
 
 
