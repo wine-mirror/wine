@@ -7226,6 +7226,35 @@ int WINAPI GetDateFormatEx( const WCHAR *name, DWORD flags, const SYSTEMTIME *sy
 }
 
 
+/******************************************************************************
+ *	GetTimeFormatA  (kernelbase.@)
+ */
+int WINAPI GetTimeFormatA( LCID lcid, DWORD flags, const SYSTEMTIME *time,
+                           const char *format, char *buffer, int len )
+{
+    UINT cp = get_lcid_codepage( lcid, flags );
+    WCHAR formatW[128], output[128];
+    int ret;
+
+    TRACE( "(0x%04lx,0x%08lx,%p,%s,%p,%d)\n", lcid, flags, time, debugstr_a(format), buffer, len );
+
+    if (len < 0 || (len && !buffer))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    if (format)
+    {
+        MultiByteToWideChar( cp, 0, format, -1, formatW, ARRAY_SIZE(formatW) );
+        ret = GetTimeFormatW( lcid, flags, time, formatW, output, ARRAY_SIZE(output) );
+    }
+    else ret = GetTimeFormatW( lcid, flags, time, NULL, output, ARRAY_SIZE(output) );
+
+    if (ret) ret = WideCharToMultiByte( cp, 0, output, -1, buffer, len, 0, 0 );
+    return ret;
+}
+
+
 /***********************************************************************
  *	GetTimeFormatW  (kernelbase.@)
  */

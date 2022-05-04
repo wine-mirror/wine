@@ -869,7 +869,7 @@
 @ stdcall -import GetThreadUILanguage()
 @ stdcall GetTickCount()
 @ stdcall -ret64 GetTickCount64()
-@ stdcall GetTimeFormatA(long long ptr str ptr long)
+@ stdcall -import GetTimeFormatA(long long ptr str ptr long)
 @ stdcall -import GetTimeFormatEx(wstr long ptr wstr ptr long)
 @ stdcall -import GetTimeFormatW(long long ptr wstr ptr long)
 @ stdcall -import GetTimeZoneInformation(ptr)
