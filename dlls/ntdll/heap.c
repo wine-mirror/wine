@@ -39,6 +39,39 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(heap);
 
+/* undocumented RtlWalkHeap structure */
+
+struct rtl_heap_entry
+{
+    LPVOID lpData;
+    SIZE_T cbData; /* differs from PROCESS_HEAP_ENTRY */
+    BYTE cbOverhead;
+    BYTE iRegionIndex;
+    WORD wFlags; /* value differs from PROCESS_HEAP_ENTRY */
+    union {
+        struct {
+            HANDLE hMem;
+            DWORD dwReserved[3];
+        } Block;
+        struct {
+            DWORD dwCommittedSize;
+            DWORD dwUnCommittedSize;
+            LPVOID lpFirstBlock;
+            LPVOID lpLastBlock;
+        } Region;
+    };
+};
+
+/* rtl_heap_entry flags, names made up */
+
+#define RTL_HEAP_ENTRY_BUSY         0x0001
+#define RTL_HEAP_ENTRY_REGION       0x0002
+#define RTL_HEAP_ENTRY_BLOCK        0x0010
+#define RTL_HEAP_ENTRY_UNCOMMITTED  0x1000
+#define RTL_HEAP_ENTRY_COMMITTED    0x4000
+#define RTL_HEAP_ENTRY_LFH          0x8000
+
+
 /* header for heap blocks */
 
 typedef struct block
@@ -517,46 +550,13 @@ static void heap_dump( const HEAP *heap )
     }
 }
 
-
-static void HEAP_DumpEntry( LPPROCESS_HEAP_ENTRY entry )
+static const char *debugstr_heap_entry( struct rtl_heap_entry *entry )
 {
-    WORD rem_flags;
-    TRACE( "Dumping entry %p\n", entry );
-    TRACE( "lpData\t\t: %p\n", entry->lpData );
-    TRACE( "cbData\t\t: %08x\n", entry->cbData);
-    TRACE( "cbOverhead\t: %08x\n", entry->cbOverhead);
-    TRACE( "iRegionIndex\t: %08x\n", entry->iRegionIndex);
-    TRACE( "WFlags\t\t: ");
-    if (entry->wFlags & PROCESS_HEAP_REGION)
-        TRACE( "PROCESS_HEAP_REGION ");
-    if (entry->wFlags & PROCESS_HEAP_UNCOMMITTED_RANGE)
-        TRACE( "PROCESS_HEAP_UNCOMMITTED_RANGE ");
-    if (entry->wFlags & PROCESS_HEAP_ENTRY_BUSY)
-        TRACE( "PROCESS_HEAP_ENTRY_BUSY ");
-    if (entry->wFlags & PROCESS_HEAP_ENTRY_MOVEABLE)
-        TRACE( "PROCESS_HEAP_ENTRY_MOVEABLE ");
-    if (entry->wFlags & PROCESS_HEAP_ENTRY_DDESHARE)
-        TRACE( "PROCESS_HEAP_ENTRY_DDESHARE ");
-    rem_flags = entry->wFlags &
-        ~(PROCESS_HEAP_REGION | PROCESS_HEAP_UNCOMMITTED_RANGE |
-          PROCESS_HEAP_ENTRY_BUSY | PROCESS_HEAP_ENTRY_MOVEABLE|
-          PROCESS_HEAP_ENTRY_DDESHARE);
-    if (rem_flags)
-        TRACE( "Unknown %08x", rem_flags);
-    TRACE( "\n");
-    if ((entry->wFlags & PROCESS_HEAP_ENTRY_BUSY )
-        && (entry->wFlags & PROCESS_HEAP_ENTRY_MOVEABLE))
-    {
-        /* Treat as block */
-        TRACE( "BLOCK->hMem\t\t:%p\n", entry->u.Block.hMem);
-    }
-    if (entry->wFlags & PROCESS_HEAP_REGION)
-    {
-        TRACE( "Region.dwCommittedSize\t:%08x\n",entry->u.Region.dwCommittedSize);
-        TRACE( "Region.dwUnCommittedSize\t:%08x\n",entry->u.Region.dwUnCommittedSize);
-        TRACE( "Region.lpFirstBlock\t:%p\n",entry->u.Region.lpFirstBlock);
-        TRACE( "Region.lpLastBlock\t:%p\n",entry->u.Region.lpLastBlock);
-    }
+    const char *str = wine_dbg_sprintf( "data %p, size %#Ix, overhead %#x, region %#x, flags %#x", entry->lpData,
+                                        entry->cbData, entry->cbOverhead, entry->iRegionIndex, entry->wFlags );
+    if (!(entry->wFlags & RTL_HEAP_ENTRY_REGION)) return str;
+    return wine_dbg_sprintf( "%s, commit %#x, uncommit %#x, first %p, last %p", str, entry->Region.dwCommittedSize,
+                             entry->Region.dwUnCommittedSize, entry->Region.lpFirstBlock, entry->Region.lpLastBlock );
 }
 
 /***********************************************************************
@@ -916,7 +916,7 @@ static void *realloc_large_block( HEAP *heap, DWORD flags, void *ptr, SIZE_T siz
 /***********************************************************************
  *           find_large_block
  */
-static ARENA_LARGE *find_large_block( HEAP *heap, const void *ptr )
+static ARENA_LARGE *find_large_block( const HEAP *heap, const void *ptr )
 {
     ARENA_LARGE *arena;
 
@@ -2120,131 +2120,123 @@ BOOLEAN WINAPI RtlValidateHeap( HANDLE heap, ULONG flags, const void *ptr )
 }
 
 
+static NTSTATUS heap_walk_blocks( const HEAP *heap, const SUBHEAP *subheap, struct rtl_heap_entry *entry )
+{
+    const char *base = subheap_base( subheap ), *commit_end = subheap_commit_end( subheap ), *end = base + subheap_size( subheap );
+    const struct block *block, *blocks = first_block( subheap );
+
+    if (entry->lpData == commit_end) return STATUS_NO_MORE_ENTRIES;
+
+    if (entry->lpData == base) block = blocks;
+    else if (!(block = next_block( subheap, (struct block *)entry->lpData - 1 )))
+    {
+        entry->lpData = (void *)commit_end;
+        entry->cbData = end - commit_end;
+        entry->cbOverhead = 0;
+        entry->iRegionIndex = 0;
+        entry->wFlags = RTL_HEAP_ENTRY_UNCOMMITTED;
+        return STATUS_SUCCESS;
+    }
+
+    if (block_get_flags( block ) & ARENA_FLAG_FREE)
+    {
+        entry->lpData = (char *)block + block_get_overhead( block );
+        entry->cbData = block_get_size( block ) - block_get_overhead( block );
+        /* FIXME: last free block should not include uncommitted range, which also has its own overhead */
+        if (!contains( blocks, commit_end - (char *)blocks, block, block_get_size( block ) ))
+            entry->cbData = commit_end - (char *)entry->lpData - 8 * sizeof(void *);
+        entry->cbOverhead = 4 * sizeof(void *);
+        entry->iRegionIndex = 0;
+        entry->wFlags = 0;
+    }
+    else
+    {
+        entry->lpData = (void *)(block + 1);
+        entry->cbData = block_get_size( block ) - block_get_overhead( block );
+        entry->cbOverhead = block_get_overhead( block );
+        entry->iRegionIndex = 0;
+        entry->wFlags = RTL_HEAP_ENTRY_COMMITTED|RTL_HEAP_ENTRY_BLOCK|RTL_HEAP_ENTRY_BUSY;
+    }
+
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS heap_walk( const HEAP *heap, struct rtl_heap_entry *entry )
+{
+    const ARENA_LARGE *large;
+    const struct list *next;
+    const SUBHEAP *subheap;
+    NTSTATUS status;
+    char *base;
+
+    if ((large = find_large_block( heap, entry->lpData )))
+        next = &large->entry;
+    else if ((subheap = find_subheap( heap, entry->lpData )))
+    {
+        if (!(status = heap_walk_blocks( heap, subheap, entry ))) return STATUS_SUCCESS;
+        else if (status != STATUS_NO_MORE_ENTRIES) return status;
+        next = &subheap->entry;
+    }
+    else
+    {
+        if (entry->lpData) return STATUS_INVALID_PARAMETER;
+        next = &heap->subheap_list;
+    }
+
+    if (!large && (next = list_next( &heap->subheap_list, next )))
+    {
+        subheap = LIST_ENTRY( next, SUBHEAP, entry );
+        base = subheap_base( subheap );
+        entry->lpData = base;
+        entry->cbData = (char *)first_block( subheap ) - base;
+        entry->cbOverhead = 0;
+        entry->iRegionIndex = 0;
+        entry->wFlags = RTL_HEAP_ENTRY_REGION;
+        entry->Region.dwCommittedSize = (char *)subheap_commit_end( subheap ) - base;
+        entry->Region.dwUnCommittedSize = subheap_size( subheap ) - entry->Region.dwCommittedSize;
+        entry->Region.lpFirstBlock = base + entry->cbData;
+        entry->Region.lpLastBlock = base + subheap_size( subheap );
+        return STATUS_SUCCESS;
+    }
+
+    if (!next) next = &heap->large_list;
+    if ((next = list_next( &heap->large_list, next )))
+    {
+        large = LIST_ENTRY( next, ARENA_LARGE, entry );
+        entry->lpData = (void *)(large + 1);
+        entry->cbData = large->data_size;
+        entry->cbOverhead = 0;
+        entry->iRegionIndex = 64;
+        entry->wFlags = RTL_HEAP_ENTRY_COMMITTED|RTL_HEAP_ENTRY_BLOCK|RTL_HEAP_ENTRY_BUSY;
+        return STATUS_SUCCESS;
+    }
+
+    return STATUS_NO_MORE_ENTRIES;
+}
+
 /***********************************************************************
  *           RtlWalkHeap    (NTDLL.@)
- *
- * FIXME
- *  The PROCESS_HEAP_ENTRY flag values seem different between this
- *  function and HeapWalk(). To be checked.
  */
-NTSTATUS WINAPI RtlWalkHeap( HANDLE heap, PVOID entry_ptr )
+NTSTATUS WINAPI RtlWalkHeap( HANDLE heap, void *entry_ptr )
 {
-    LPPROCESS_HEAP_ENTRY entry = entry_ptr; /* FIXME */
-    HEAP *heapPtr = HEAP_GetPtr(heap);
-    SUBHEAP *sub, *currentheap = NULL;
-    NTSTATUS ret;
-    char *ptr;
-    int region_index = 0;
+    struct rtl_heap_entry *entry = entry_ptr;
+    NTSTATUS status;
+    HEAP *heapPtr;
 
-    if (!heapPtr || !entry) return STATUS_INVALID_PARAMETER;
+    if (!entry) return STATUS_INVALID_PARAMETER;
 
-    heap_lock( heapPtr, 0 );
-
-    /* FIXME: enumerate large blocks too */
-
-    /* set ptr to the next arena to be examined */
-
-    if (!entry->lpData) /* first call (init) ? */
-    {
-        TRACE("begin walking of heap %p.\n", heap);
-        currentheap = &heapPtr->subheap;
-        ptr = (char*)currentheap->base + currentheap->headerSize;
-    }
+    if (!(heapPtr = HEAP_GetPtr(heap)))
+        status = STATUS_INVALID_HANDLE;
     else
     {
-        ptr = entry->lpData;
-        LIST_FOR_EACH_ENTRY( sub, &heapPtr->subheap_list, SUBHEAP, entry )
-        {
-            if ((ptr >= (char *)sub->base) &&
-                (ptr < (char *)sub->base + sub->size))
-            {
-                currentheap = sub;
-                break;
-            }
-            region_index++;
-        }
-        if (currentheap == NULL)
-        {
-            ERR("no matching subheap found, shouldn't happen !\n");
-            ret = STATUS_NO_MORE_ENTRIES;
-            goto HW_end;
-        }
-
-        if (((ARENA_INUSE *)ptr - 1)->magic == ARENA_INUSE_MAGIC ||
-            ((ARENA_INUSE *)ptr - 1)->magic == ARENA_PENDING_MAGIC)
-        {
-            ARENA_INUSE *pArena = (ARENA_INUSE *)ptr - 1;
-            ptr += pArena->size & ARENA_SIZE_MASK;
-        }
-        else if (((ARENA_FREE *)ptr - 1)->magic == ARENA_FREE_MAGIC)
-        {
-            ARENA_FREE *pArena = (ARENA_FREE *)ptr - 1;
-            ptr += pArena->size & ARENA_SIZE_MASK;
-        }
-        else
-            ptr += entry->cbData; /* point to next arena */
-
-        if (ptr > (char *)currentheap->base + currentheap->size - 1)
-        {   /* proceed with next subheap */
-            struct list *next = list_next( &heapPtr->subheap_list, &currentheap->entry );
-            if (!next)
-            {  /* successfully finished */
-                TRACE("end reached.\n");
-                ret = STATUS_NO_MORE_ENTRIES;
-                goto HW_end;
-            }
-            currentheap = LIST_ENTRY( next, SUBHEAP, entry );
-            ptr = (char *)currentheap->base + currentheap->headerSize;
-        }
+        heap_lock( heapPtr, 0 );
+        status = heap_walk( heapPtr, entry );
+        heap_unlock( heapPtr, 0 );
     }
 
-    entry->wFlags = 0;
-    if (*(DWORD *)ptr & ARENA_FLAG_FREE)
-    {
-        ARENA_FREE *pArena = (ARENA_FREE *)ptr;
-
-        /*TRACE("free, magic: %04x\n", pArena->magic);*/
-
-        entry->lpData = pArena + 1;
-        entry->cbData = pArena->size & ARENA_SIZE_MASK;
-        entry->cbOverhead = sizeof(ARENA_FREE);
-        entry->wFlags = PROCESS_HEAP_UNCOMMITTED_RANGE;
-    }
-    else
-    {
-        ARENA_INUSE *pArena = (ARENA_INUSE *)ptr;
-
-        /*TRACE("busy, magic: %04x\n", pArena->magic);*/
-
-        entry->lpData = pArena + 1;
-        entry->cbData = pArena->size & ARENA_SIZE_MASK;
-        entry->cbOverhead = sizeof(ARENA_INUSE);
-        entry->wFlags = (pArena->magic == ARENA_PENDING_MAGIC) ?
-                        PROCESS_HEAP_UNCOMMITTED_RANGE : PROCESS_HEAP_ENTRY_BUSY;
-        /* FIXME: can't handle PROCESS_HEAP_ENTRY_MOVEABLE
-        and PROCESS_HEAP_ENTRY_DDESHARE yet */
-    }
-
-    entry->iRegionIndex = region_index;
-
-    /* first element of heap ? */
-    if (ptr == (char *)currentheap->base + currentheap->headerSize)
-    {
-        entry->wFlags |= PROCESS_HEAP_REGION;
-        entry->u.Region.dwCommittedSize = currentheap->commitSize;
-        entry->u.Region.dwUnCommittedSize =
-                currentheap->size - currentheap->commitSize;
-        entry->u.Region.lpFirstBlock = /* first valid block */
-                (char *)currentheap->base + currentheap->headerSize;
-        entry->u.Region.lpLastBlock  = /* first invalid block */
-                (char *)currentheap->base + currentheap->size;
-    }
-    ret = STATUS_SUCCESS;
-    if (TRACE_ON(heap)) HEAP_DumpEntry(entry);
-
-HW_end:
-    heap_unlock( heapPtr, 0 );
-    return ret;
+    TRACE( "heap %p, entry %p %s, return %#x\n", heap, entry,
+           status ? "<empty>" : debugstr_heap_entry(entry), status );
+    return status;
 }
 
 

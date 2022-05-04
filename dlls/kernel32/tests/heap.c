@@ -526,7 +526,6 @@ static void test_HeapCreate(void)
     rtl_entry.lpData = NULL;
     SetLastError( 0xdeadbeef );
     while (!RtlWalkHeap( heap, &rtl_entry )) rtl_entries[count++] = rtl_entry;
-    todo_wine
     ok( count == 3, "got count %lu\n", count );
 
     count = 0;
@@ -536,16 +535,13 @@ static void test_HeapCreate(void)
     SetLastError( 0xdeadbeef );
     while ((ret = HeapWalk( heap, &entry ))) entries[count++] = entry;
     ok( GetLastError() == ERROR_NO_MORE_ITEMS, "got error %lu\n", GetLastError() );
-    todo_wine
     ok( count == 3, "got count %lu\n", count );
 
     for (i = 0; i < count; ++i)
     {
         winetest_push_context( "%Iu", i );
         ok( rtl_entries[i].lpData == entries[i].lpData, "got lpData %p\n", rtl_entries[i].lpData );
-        todo_wine_if(sizeof(void *) == 8)
         ok( rtl_entries[i].cbData == entries[i].cbData, "got cbData %#Ix\n", rtl_entries[i].cbData );
-        todo_wine_if(sizeof(void *) == 8)
         ok( rtl_entries[i].cbOverhead == entries[i].cbOverhead, "got cbOverhead %#x\n", rtl_entries[i].cbOverhead );
         ok( rtl_entries[i].iRegionIndex == entries[i].iRegionIndex, "got iRegionIndex %#x\n", rtl_entries[i].iRegionIndex );
         if (!entries[i].wFlags)
@@ -554,11 +550,8 @@ static void test_HeapCreate(void)
             ok( rtl_entries[i].wFlags == (RTL_HEAP_ENTRY_COMMITTED|RTL_HEAP_ENTRY_BLOCK|RTL_HEAP_ENTRY_BUSY) || broken(rtl_entries[i].wFlags == 0x411) /* win7 */,
                 "got wFlags %#x\n", rtl_entries[i].wFlags );
         else if (entries[i].wFlags & PROCESS_HEAP_UNCOMMITTED_RANGE)
-        {
-            todo_wine
             ok( rtl_entries[i].wFlags == RTL_HEAP_ENTRY_UNCOMMITTED || broken(rtl_entries[i].wFlags == 0x100) /* win7 */,
                 "got wFlags %#x\n", rtl_entries[i].wFlags );
-        }
         else if (entries[i].wFlags & PROCESS_HEAP_REGION)
         {
             ok( rtl_entries[i].wFlags == RTL_HEAP_ENTRY_REGION, "got wFlags %#x\n", rtl_entries[i].wFlags );
@@ -574,13 +567,9 @@ static void test_HeapCreate(void)
         winetest_pop_context();
     }
 
-    todo_wine
     ok( entries[0].wFlags == PROCESS_HEAP_REGION, "got wFlags %#x\n", entries[0].wFlags );
-    todo_wine
     ok( entries[0].lpData == heap, "got lpData %p\n", entries[0].lpData );
-    todo_wine
     ok( entries[0].cbData <= 0x1000 /* sizeof(*heap) */, "got cbData %#lx\n", entries[0].cbData );
-    todo_wine
     ok( entries[0].cbOverhead == 0, "got cbOverhead %#x\n", entries[0].cbOverhead );
     ok( entries[0].iRegionIndex == 0, "got iRegionIndex %d\n", entries[0].iRegionIndex );
     todo_wine
@@ -594,27 +583,20 @@ static void test_HeapCreate(void)
     ok( (BYTE *)entries[0].Region.lpFirstBlock == (BYTE *)entries[0].lpData + entries[0].cbData + 2 * sizeof(void *) ||
         (BYTE *)entries[0].Region.lpFirstBlock == (BYTE *)entries[0].lpData + entries[0].cbData + 4 * sizeof(void *),
         "got Region.lpFirstBlock %p\n", entries[0].Region.lpFirstBlock );
-    todo_wine
     ok( entries[0].Region.lpLastBlock == (BYTE *)entries[2].lpData + entries[2].cbData,
         "got Region.lpLastBlock %p\n", entries[0].Region.lpLastBlock );
 
     ok( entries[1].wFlags == 0, "got wFlags %#x\n", entries[1].wFlags );
-    todo_wine
     ok( entries[1].lpData != NULL, "got lpData %p\n", entries[1].lpData );
-    todo_wine
     ok( entries[1].cbData != 0, "got cbData %#lx\n", entries[1].cbData );
-    todo_wine
     ok( entries[1].cbOverhead == 4 * sizeof(void *), "got cbOverhead %#x\n", entries[1].cbOverhead );
     ok( entries[1].iRegionIndex == 0, "got iRegionIndex %d\n", entries[1].iRegionIndex );
 
-    todo_wine
     ok( entries[2].wFlags == PROCESS_HEAP_UNCOMMITTED_RANGE, "got wFlags %#x\n", entries[2].wFlags );
-    todo_wine
     ok( entries[2].lpData == (BYTE *)entries[0].lpData + entries[0].Region.dwCommittedSize,
         "got lpData %p\n", entries[2].lpData );
     ok( entries[2].lpData == (BYTE *)entries[1].lpData + entries[1].cbData + 2 * entries[1].cbOverhead,
         "got lpData %p\n", entries[2].lpData );
-    todo_wine
     ok( entries[2].cbData == entries[0].Region.dwUnCommittedSize - 0x1000 ||
         entries[2].cbData == entries[0].Region.dwUnCommittedSize /* win7 */,
         "got cbData %#lx\n", entries[2].cbData );
@@ -630,7 +612,6 @@ static void test_HeapCreate(void)
     rtl_entry.lpData = NULL;
     SetLastError( 0xdeadbeef );
     while (!RtlWalkHeap( heap, &rtl_entry )) rtl_entries[count++] = rtl_entry;
-    todo_wine
     ok( count == 4, "got count %lu\n", count );
 
     memmove( entries + 16, entries, 3 * sizeof(entry) );
@@ -640,7 +621,6 @@ static void test_HeapCreate(void)
     SetLastError( 0xdeadbeef );
     while ((ret = HeapWalk( heap, &entry ))) entries[count++] = entry;
     ok( GetLastError() == ERROR_NO_MORE_ITEMS, "got error %lu\n", GetLastError() );
-    todo_wine
     ok( count == 4, "got count %lu\n", count );
     ok( !memcmp( entries + 16, entries, 3 * sizeof(entry) ), "entries differ\n" );
 
@@ -648,9 +628,7 @@ static void test_HeapCreate(void)
     {
         winetest_push_context( "%Iu", i );
         ok( rtl_entries[i].lpData == entries[i].lpData, "got lpData %p\n", rtl_entries[i].lpData );
-        todo_wine_if(sizeof(void *) == 8)
         ok( rtl_entries[i].cbData == entries[i].cbData, "got cbData %#Ix\n", rtl_entries[i].cbData );
-        todo_wine_if(sizeof(void *) == 8)
         ok( rtl_entries[i].cbOverhead == entries[i].cbOverhead, "got cbOverhead %#x\n", rtl_entries[i].cbOverhead );
         ok( rtl_entries[i].iRegionIndex == entries[i].iRegionIndex, "got iRegionIndex %#x\n", rtl_entries[i].iRegionIndex );
         if (!entries[i].wFlags)
@@ -659,11 +637,8 @@ static void test_HeapCreate(void)
             ok( rtl_entries[i].wFlags == (RTL_HEAP_ENTRY_COMMITTED|RTL_HEAP_ENTRY_BLOCK|RTL_HEAP_ENTRY_BUSY) || broken(rtl_entries[i].wFlags == 0x411) /* win7 */,
                 "got wFlags %#x\n", rtl_entries[i].wFlags );
         else if (entries[i].wFlags & PROCESS_HEAP_UNCOMMITTED_RANGE)
-        {
-            todo_wine
             ok( rtl_entries[i].wFlags == RTL_HEAP_ENTRY_UNCOMMITTED || broken(rtl_entries[i].wFlags == 0x100) /* win7 */,
                 "got wFlags %#x\n", rtl_entries[i].wFlags );
-        }
         else if (entries[i].wFlags & PROCESS_HEAP_REGION)
         {
             ok( rtl_entries[i].wFlags == RTL_HEAP_ENTRY_REGION, "got wFlags %#x\n", rtl_entries[i].wFlags );
@@ -679,17 +654,13 @@ static void test_HeapCreate(void)
         winetest_pop_context();
     }
 
-    todo_wine
     ok( entries[3].wFlags == PROCESS_HEAP_ENTRY_BUSY ||
         broken(entries[3].wFlags == (PROCESS_HEAP_ENTRY_BUSY | PROCESS_HEAP_ENTRY_DDESHARE)) /* win7 */,
         "got wFlags %#x\n", entries[3].wFlags );
-    todo_wine
     ok( entries[3].lpData == ptr, "got lpData %p\n", entries[3].lpData );
-    todo_wine
     ok( entries[3].cbData == 5 * alloc_size, "got cbData %#lx\n", entries[3].cbData );
     ok( entries[3].cbOverhead == 0 || entries[3].cbOverhead == 8 * sizeof(void *) /* win7 */,
         "got cbOverhead %#x\n", entries[3].cbOverhead );
-    todo_wine
     ok( entries[3].iRegionIndex == 64, "got iRegionIndex %d\n", entries[3].iRegionIndex );
 
     ptr1 = HeapAlloc( heap, HEAP_ZERO_MEMORY, 5 * alloc_size );
@@ -701,7 +672,6 @@ static void test_HeapCreate(void)
     rtl_entry.lpData = NULL;
     SetLastError( 0xdeadbeef );
     while (!RtlWalkHeap( heap, &rtl_entry )) rtl_entries[count++] = rtl_entry;
-    todo_wine
     ok( count == 5, "got count %lu\n", count );
 
     memmove( entries + 16, entries, 4 * sizeof(entry) );
@@ -711,7 +681,6 @@ static void test_HeapCreate(void)
     SetLastError( 0xdeadbeef );
     while ((ret = HeapWalk( heap, &entry ))) entries[count++] = entry;
     ok( GetLastError() == ERROR_NO_MORE_ITEMS, "got error %lu\n", GetLastError() );
-    todo_wine
     ok( count == 5, "got count %lu\n", count );
     ok( !memcmp( entries + 16, entries, 4 * sizeof(entry) ), "entries differ\n" );
 
@@ -719,9 +688,7 @@ static void test_HeapCreate(void)
     {
         winetest_push_context( "%Iu", i );
         ok( rtl_entries[i].lpData == entries[i].lpData, "got lpData %p\n", rtl_entries[i].lpData );
-        todo_wine_if(sizeof(void *) == 8)
         ok( rtl_entries[i].cbData == entries[i].cbData, "got cbData %#Ix\n", rtl_entries[i].cbData );
-        todo_wine_if(sizeof(void *) == 8)
         ok( rtl_entries[i].cbOverhead == entries[i].cbOverhead, "got cbOverhead %#x\n", rtl_entries[i].cbOverhead );
         ok( rtl_entries[i].iRegionIndex == entries[i].iRegionIndex, "got iRegionIndex %#x\n", rtl_entries[i].iRegionIndex );
         if (!entries[i].wFlags)
@@ -730,11 +697,8 @@ static void test_HeapCreate(void)
             ok( rtl_entries[i].wFlags == (RTL_HEAP_ENTRY_COMMITTED|RTL_HEAP_ENTRY_BLOCK|RTL_HEAP_ENTRY_BUSY) || broken(rtl_entries[i].wFlags == 0x411) /* win7 */,
                 "got wFlags %#x\n", rtl_entries[i].wFlags );
         else if (entries[i].wFlags & PROCESS_HEAP_UNCOMMITTED_RANGE)
-        {
-            todo_wine
             ok( rtl_entries[i].wFlags == RTL_HEAP_ENTRY_UNCOMMITTED || broken(rtl_entries[i].wFlags == 0x100) /* win7 */,
                 "got wFlags %#x\n", rtl_entries[i].wFlags );
-        }
         else if (entries[i].wFlags & PROCESS_HEAP_REGION)
         {
             ok( rtl_entries[i].wFlags == RTL_HEAP_ENTRY_REGION, "got wFlags %#x\n", rtl_entries[i].wFlags );
@@ -750,17 +714,13 @@ static void test_HeapCreate(void)
         winetest_pop_context();
     }
 
-    todo_wine
     ok( entries[4].wFlags == PROCESS_HEAP_ENTRY_BUSY ||
         broken(entries[4].wFlags == (PROCESS_HEAP_ENTRY_BUSY | PROCESS_HEAP_ENTRY_DDESHARE)) /* win7 */,
         "got wFlags %#x\n", entries[4].wFlags );
-    todo_wine
     ok( entries[4].lpData == ptr1, "got lpData %p\n", entries[4].lpData );
-    todo_wine
     ok( entries[4].cbData == 5 * alloc_size, "got cbData %#lx\n", entries[4].cbData );
     ok( entries[4].cbOverhead == 0 || entries[4].cbOverhead == 8 * sizeof(void *) /* win7 */,
         "got cbOverhead %#x\n", entries[4].cbOverhead );
-    todo_wine
     ok( entries[4].iRegionIndex == 64, "got iRegionIndex %d\n", entries[4].iRegionIndex );
 
     ret = HeapFree( heap, 0, ptr1 );
@@ -775,7 +735,6 @@ static void test_HeapCreate(void)
     SetLastError( 0xdeadbeef );
     while ((ret = HeapWalk( heap, &entry ))) entries[count++] = entry;
     ok( GetLastError() == ERROR_NO_MORE_ITEMS, "got error %lu\n", GetLastError() );
-    todo_wine
     ok( count == 3, "got count %lu\n", count );
     ok( !memcmp( entries + 16, entries, 3 * sizeof(entry) ), "entries differ\n" );
 
@@ -789,40 +748,28 @@ static void test_HeapCreate(void)
     SetLastError( 0xdeadbeef );
     while ((ret = HeapWalk( heap, &entry ))) entries[count++] = entry;
     ok( GetLastError() == ERROR_NO_MORE_ITEMS, "got error %lu\n", GetLastError() );
-    todo_wine
     ok( count == 4, "got count %lu\n", count );
-    todo_wine
     ok( !memcmp( entries + 16, entries, 1 * sizeof(entry) ), "entries differ\n" );
-    todo_wine
     ok( memcmp( entries + 17, entries + 2, 2 * sizeof(entry) ), "entries differ\n" );
 
-    todo_wine
     ok( entries[1].wFlags == PROCESS_HEAP_ENTRY_BUSY, "got wFlags %#x\n", entries[1].wFlags );
-    todo_wine
     ok( entries[1].lpData == ptr, "got lpData %p\n", entries[1].lpData );
-    todo_wine
     ok( entries[1].cbData == 123, "got cbData %#lx\n", entries[1].cbData );
     ok( entries[1].cbOverhead != 0, "got cbOverhead %#x\n", entries[1].cbOverhead );
     ok( entries[1].iRegionIndex == 0, "got iRegionIndex %d\n", entries[1].iRegionIndex );
 
     ok( entries[2].wFlags == 0, "got wFlags %#x\n", entries[2].wFlags );
-    todo_wine
     ok( entries[2].lpData == (BYTE *)entries[1].lpData + entries[1].cbData + entries[1].cbOverhead + 2 * sizeof(void *),
         "got lpData %p\n", entries[2].lpData );
-    todo_wine
     ok( entries[2].cbData != 0, "got cbData %#lx\n", entries[2].cbData );
-    todo_wine
     ok( entries[2].cbOverhead == 4 * sizeof(void *), "got cbOverhead %#x\n", entries[2].cbOverhead );
     ok( entries[2].iRegionIndex == 0, "got iRegionIndex %d\n", entries[2].iRegionIndex );
 
-    todo_wine
     ok( entries[3].wFlags == PROCESS_HEAP_UNCOMMITTED_RANGE, "got wFlags %#x\n", entries[3].wFlags );
-    todo_wine
     ok( entries[3].lpData == (BYTE *)entries[0].lpData + entries[0].Region.dwCommittedSize,
         "got lpData %p\n", entries[3].lpData );
     ok( entries[3].lpData == (BYTE *)entries[2].lpData + entries[2].cbData + 2 * entries[2].cbOverhead,
         "got lpData %p\n", entries[3].lpData );
-    todo_wine
     ok( entries[3].cbData == entries[0].Region.dwUnCommittedSize - 0x1000 ||
         entries[3].cbData == entries[0].Region.dwUnCommittedSize /* win7 */,
         "got cbData %#lx\n", entries[3].cbData );
@@ -839,40 +786,28 @@ static void test_HeapCreate(void)
     SetLastError( 0xdeadbeef );
     while ((ret = HeapWalk( heap, &entry ))) entries[count++] = entry;
     ok( GetLastError() == ERROR_NO_MORE_ITEMS, "got error %lu\n", GetLastError() );
-    todo_wine
     ok( count == 5, "got count %lu\n", count );
-    todo_wine
     ok( !memcmp( entries + 16, entries, 2 * sizeof(entry) ), "entries differ\n" );
-    todo_wine
     ok( memcmp( entries + 18, entries + 3, 2 * sizeof(entry) ), "entries differ\n" );
 
-    todo_wine
     ok( entries[2].wFlags == PROCESS_HEAP_ENTRY_BUSY, "got wFlags %#x\n", entries[2].wFlags );
-    todo_wine
     ok( entries[2].lpData == ptr1, "got lpData %p\n", entries[2].lpData );
-    todo_wine
     ok( entries[2].cbData == 456, "got cbData %#lx\n", entries[2].cbData );
     ok( entries[2].cbOverhead != 0, "got cbOverhead %#x\n", entries[2].cbOverhead );
     ok( entries[2].iRegionIndex == 0, "got iRegionIndex %d\n", entries[2].iRegionIndex );
 
     ok( entries[3].wFlags == 0, "got wFlags %#x\n", entries[3].wFlags );
-    todo_wine
     ok( entries[3].lpData == (BYTE *)entries[2].lpData + entries[2].cbData + entries[2].cbOverhead + 2 * sizeof(void *),
         "got lpData %p\n", entries[3].lpData );
-    todo_wine
     ok( entries[3].cbData != 0, "got cbData %#lx\n", entries[3].cbData );
-    todo_wine
     ok( entries[3].cbOverhead == 4 * sizeof(void *), "got cbOverhead %#x\n", entries[3].cbOverhead );
     ok( entries[3].iRegionIndex == 0, "got iRegionIndex %d\n", entries[3].iRegionIndex );
 
-    todo_wine
     ok( entries[4].wFlags == PROCESS_HEAP_UNCOMMITTED_RANGE, "got wFlags %#x\n", entries[4].wFlags );
-    todo_wine
     ok( entries[4].lpData == (BYTE *)entries[0].lpData + entries[0].Region.dwCommittedSize,
         "got lpData %p\n", entries[4].lpData );
     ok( entries[4].lpData == (BYTE *)entries[3].lpData + entries[3].cbData + 2 * entries[3].cbOverhead,
         "got lpData %p\n", entries[4].lpData );
-    todo_wine
     ok( entries[4].cbData == entries[0].Region.dwUnCommittedSize - 0x1000 ||
         entries[4].cbData == entries[0].Region.dwUnCommittedSize /* win7 */,
         "got cbData %#lx\n", entries[4].cbData );
@@ -1004,21 +939,14 @@ static void test_HeapCreate(void)
     SetLastError( 0xdeadbeef );
     while ((ret = HeapWalk( heap, &entry ))) entries[count++] = entry;
     ok( GetLastError() == ERROR_NO_MORE_ITEMS, "got error %lu\n", GetLastError() );
-    todo_wine
     ok( count == 3, "got count %lu\n", count );
 
-    todo_wine
     ok( entries[0].wFlags == PROCESS_HEAP_REGION, "got wFlags %#x\n", entries[0].wFlags );
-    todo_wine
     ok( entries[0].lpData == heap, "got lpData %p\n", entries[0].lpData );
-    todo_wine
     ok( entries[0].cbData <= 0x1000 /* sizeof(*heap) */, "got cbData %#lx\n", entries[0].cbData );
-    todo_wine
     ok( entries[0].cbOverhead == 0, "got cbOverhead %#x\n", entries[0].cbOverhead );
     ok( entries[0].iRegionIndex == 0, "got iRegionIndex %d\n", entries[0].iRegionIndex );
-    todo_wine
     ok( entries[1].wFlags == 0, "got wFlags %#x\n", entries[1].wFlags );
-    todo_wine
     ok( entries[2].wFlags == PROCESS_HEAP_UNCOMMITTED_RANGE, "got wFlags %#x\n", entries[2].wFlags );
 
     for (i = 0; i < 0x12; i++) ptrs[i] = pHeapAlloc( heap, 0, 24 + 2 * sizeof(void *) );
@@ -1035,16 +963,11 @@ static void test_HeapCreate(void)
     ok( count > 24, "got count %lu\n", count );
     if (count < 2) count = 2;
 
-    todo_wine
     ok( entries[0].wFlags == PROCESS_HEAP_REGION, "got wFlags %#x\n", entries[0].wFlags );
-    todo_wine
     ok( entries[0].lpData == heap, "got lpData %p\n", entries[0].lpData );
-    todo_wine
     ok( entries[0].cbData <= 0x1000 /* sizeof(*heap) */, "got cbData %#lx\n", entries[0].cbData );
-    todo_wine
     ok( entries[0].cbOverhead == 0, "got cbOverhead %#x\n", entries[0].cbOverhead );
     ok( entries[0].iRegionIndex == 0, "got iRegionIndex %d\n", entries[0].iRegionIndex );
-    todo_wine
     ok( entries[1].wFlags == 0, "got wFlags %#x\n", entries[1].wFlags );
 
     for (i = 0; i < 0x12; i++)
@@ -1060,10 +983,7 @@ static void test_HeapCreate(void)
     if (entries[count - 1].wFlags == PROCESS_HEAP_REGION) /* > win7 */
         ok( entries[count - 2].wFlags == PROCESS_HEAP_UNCOMMITTED_RANGE, "got wFlags %#x\n", entries[count - 2].wFlags );
     else
-    {
-        todo_wine
         ok( entries[count - 1].wFlags == PROCESS_HEAP_UNCOMMITTED_RANGE, "got wFlags %#x\n", entries[count - 2].wFlags );
-    }
 
     count = 0;
     memset( &rtl_entries, 0, sizeof(rtl_entries) );
@@ -1079,9 +999,7 @@ static void test_HeapCreate(void)
     {
         winetest_push_context( "%Iu", i );
         ok( rtl_entries[i].lpData == entries[i].lpData, "got lpData %p\n", rtl_entries[i].lpData );
-        todo_wine_if(sizeof(void *) == 8)
         ok( rtl_entries[i].cbData == entries[i].cbData, "got cbData %#Ix\n", rtl_entries[i].cbData );
-        todo_wine_if(sizeof(void *) == 8)
         ok( rtl_entries[i].cbOverhead == entries[i].cbOverhead, "got cbOverhead %#x\n", rtl_entries[i].cbOverhead );
         ok( rtl_entries[i].iRegionIndex == entries[i].iRegionIndex, "got iRegionIndex %#x\n", rtl_entries[i].iRegionIndex );
         if (!entries[i].wFlags)
@@ -1120,12 +1038,9 @@ static void test_HeapCreate(void)
     ok( count > 24, "got count %lu\n", count );
     if (count < 2) count = 2;
 
-    todo_wine
     ok( entries[0].wFlags == PROCESS_HEAP_REGION, "got wFlags %#x\n", entries[0].wFlags );
-    todo_wine
     ok( entries[0].lpData == heap, "got lpData %p\n", entries[0].lpData );
     ok( entries[0].cbData <= 0x1000 /* sizeof(*heap) */, "got cbData %#lx\n", entries[0].cbData );
-    todo_wine
     ok( entries[0].cbOverhead == 0, "got cbOverhead %#x\n", entries[0].cbOverhead );
     ok( entries[0].iRegionIndex == 0, "got iRegionIndex %d\n", entries[0].iRegionIndex );
     ok( entries[1].wFlags == 0 || entries[1].wFlags == PROCESS_HEAP_ENTRY_BUSY /* win7 */, "got wFlags %#x\n", entries[1].wFlags );
@@ -1133,8 +1048,8 @@ static void test_HeapCreate(void)
     for (i = 1; i < count - 2; i++)
     {
         if (entries[i].wFlags != PROCESS_HEAP_ENTRY_BUSY) continue;
-        todo_wine_if( sizeof(void *) == 8 )
         ok( entries[i].cbData == 0x18 + 2 * sizeof(void *), "got cbData %#lx\n", entries[i].cbData );
+        todo_wine_if(sizeof(void *) == 8)
         ok( entries[i].cbOverhead == 0x8, "got cbOverhead %#x\n", entries[i].cbOverhead );
     }
 
@@ -1157,9 +1072,7 @@ static void test_HeapCreate(void)
     {
         winetest_push_context( "%Iu", i );
         ok( rtl_entries[i].lpData == entries[i].lpData, "got lpData %p\n", rtl_entries[i].lpData );
-        todo_wine_if(sizeof(void *) == 8)
         ok( rtl_entries[i].cbData == entries[i].cbData, "got cbData %#Ix\n", rtl_entries[i].cbData );
-        todo_wine_if(sizeof(void *) == 8)
         ok( rtl_entries[i].cbOverhead == entries[i].cbOverhead, "got cbOverhead %#x\n", rtl_entries[i].cbOverhead );
         ok( rtl_entries[i].iRegionIndex == entries[i].iRegionIndex, "got iRegionIndex %#x\n", rtl_entries[i].iRegionIndex );
         if (!entries[i].wFlags)
@@ -1171,11 +1084,8 @@ static void test_HeapCreate(void)
                 "got wFlags %#x\n", rtl_entries[i].wFlags );
         }
         else if (entries[i].wFlags & PROCESS_HEAP_UNCOMMITTED_RANGE)
-        {
-            todo_wine
             ok( rtl_entries[i].wFlags == RTL_HEAP_ENTRY_UNCOMMITTED || broken(rtl_entries[i].wFlags == 0x100) /* win7 */,
                 "got wFlags %#x\n", rtl_entries[i].wFlags );
-        }
         else if (entries[i].wFlags & PROCESS_HEAP_REGION)
         {
             ok( rtl_entries[i].wFlags == (RTL_HEAP_ENTRY_LFH|RTL_HEAP_ENTRY_REGION), "got wFlags %#x\n", rtl_entries[i].wFlags );
