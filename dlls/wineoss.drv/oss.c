@@ -1987,9 +1987,9 @@ unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_set_event_handle,
     is_started,
     midi_release,
-    midi_out_message,
-    midi_in_message,
-    midi_notify_wait,
+    wow64_midi_out_message,
+    wow64_midi_in_message,
+    wow64_midi_notify_wait,
     aux_message,
 };
 
