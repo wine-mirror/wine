@@ -383,29 +383,18 @@ static inline void notify_realloc( void const *ptr, SIZE_T size_old, SIZE_T size
 #endif
 }
 
-static void subheap_notify_free_all(SUBHEAP const *subheap)
+static void notify_free_all( SUBHEAP *subheap )
 {
 #ifdef VALGRIND_FREELIKE_BLOCK
-    char const *ptr = (char const *)subheap->base + subheap->headerSize;
+    struct block *block;
 
     if (!RUNNING_ON_VALGRIND) return;
     if (!check_subheap( subheap )) return;
 
-    while (ptr < (char const *)subheap->base + subheap->size)
+    for (block = first_block( subheap ); block; block = next_block( subheap, block ))
     {
-        if (*(const DWORD *)ptr & ARENA_FLAG_FREE)
-        {
-            ARENA_FREE const *pArena = (ARENA_FREE const *)ptr;
-            if (pArena->magic!=ARENA_FREE_MAGIC) ERR("bad free_magic @%p\n", pArena);
-            ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
-        }
-        else
-        {
-            ARENA_INUSE const *pArena = (ARENA_INUSE const *)ptr;
-            if (pArena->magic == ARENA_INUSE_MAGIC) notify_free(pArena + 1);
-            else if (pArena->magic != ARENA_PENDING_MAGIC) ERR("bad inuse_magic @%p\n", pArena);
-            ptr += sizeof(*pArena) + (pArena->size & ARENA_SIZE_MASK);
-        }
+        if (block_get_flags( block ) & ARENA_FLAG_FREE) continue;
+        if (block_get_type( block ) == ARENA_INUSE_MAGIC) notify_free( block + 1 );
     }
 #endif
 }
@@ -1531,13 +1520,13 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
     LIST_FOR_EACH_ENTRY_SAFE( subheap, next, &heapPtr->subheap_list, SUBHEAP, entry )
     {
         if (subheap == &heapPtr->subheap) continue;  /* do this one last */
-        subheap_notify_free_all(subheap);
+        notify_free_all( subheap );
         list_remove( &subheap->entry );
         size = 0;
         addr = subheap->base;
         NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
     }
-    subheap_notify_free_all(&heapPtr->subheap);
+    notify_free_all( &heapPtr->subheap );
     RtlFreeHeap( GetProcessHeap(), 0, heapPtr->pending_free );
     size = 0;
     addr = heapPtr->subheap.base;
