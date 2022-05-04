@@ -22,6 +22,7 @@
 #pragma winrt ns_prefix
 #endif
 
+import "propidl.idl";
 import "inspectable.idl";
 import "asyncinfo.idl";
 import "eventtoken.idl";
@@ -91,6 +92,17 @@ namespace Windows.Gaming.Input.Custom {
         [propput] HRESULT Vibration([in] WineGameControllerVibration vibration);
 
         [propget] HRESULT ForceFeedbackMotor([out, retval] Windows.Gaming.Input.ForceFeedback.ForceFeedbackMotor **motor);
+    }
+
+    [
+        uuid(83f377ee-c799-11ec-9d64-0242ac120002)
+    ]
+    interface IWineAsyncInfoImpl : IUnknown
+    {
+        [propput] HRESULT Completed([in] WineAsyncOperationCompletedHandler *handler);
+        [propget] HRESULT Completed([out, retval] WineAsyncOperationCompletedHandler **handler);
+        [propget] HRESULT Result([out, retval] PROPVARIANT *result);
+        HRESULT Start();
     }
 
     [
