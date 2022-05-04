@@ -1961,6 +1961,29 @@ static NTSTATUS wow64_set_event_handle(void *args)
     return STATUS_SUCCESS;
 }
 
+static NTSTATUS wow64_aux_message(void *args)
+{
+    struct
+    {
+        UINT dev_id;
+        UINT msg;
+        UINT user;
+        UINT param_1;
+        UINT param_2;
+        PTR32 err;
+    } *params32 = args;
+    struct aux_message_params params =
+    {
+        .dev_id = params32->dev_id,
+        .msg = params32->msg,
+        .user = params32->user,
+        .param_1 = params32->param_1,
+        .param_2 = params32->param_2,
+        .err = ULongToPtr(params32->err),
+    };
+    return aux_message(&params);
+}
+
 unixlib_entry_t __wine_unix_call_wow64_funcs[] =
 {
     test_connect,
@@ -1990,7 +2013,7 @@ unixlib_entry_t __wine_unix_call_wow64_funcs[] =
     wow64_midi_out_message,
     wow64_midi_in_message,
     wow64_midi_notify_wait,
-    aux_message,
+    wow64_aux_message,
 };
 
 #endif /* _WIN64 */
