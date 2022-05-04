@@ -535,6 +535,15 @@ static HRESULT setup_oss_device(AUDCLNT_SHAREMODE share, int fd,
     return ret;
 }
 
+static ULONG_PTR zero_bits(void)
+{
+#ifdef _WIN64
+    return !NtCurrentTeb()->WowTebOffset ? 0 : 0x7fffffff;
+#else
+    return 0;
+#endif
+}
+
 static NTSTATUS create_stream(void *args)
 {
     struct create_stream_params *params = args;
@@ -597,8 +606,8 @@ static NTSTATUS create_stream(void *args)
     if(params->share == AUDCLNT_SHAREMODE_EXCLUSIVE)
         stream->bufsize_frames -= stream->bufsize_frames % stream->period_frames;
     size = stream->bufsize_frames * params->fmt->nBlockAlign;
-    if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer, 0, &size,
-                               MEM_COMMIT, PAGE_READWRITE)){
+    if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->local_buffer, zero_bits(),
+                               &size, MEM_COMMIT, PAGE_READWRITE)){
         params->result = E_OUTOFMEMORY;
         goto exit;
     }
@@ -931,8 +940,8 @@ static NTSTATUS get_render_buffer(void *args)
                 stream->tmp_buffer = NULL;
             }
             size = frames * stream->fmt->nBlockAlign;
-            if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, 0, &size,
-                                       MEM_COMMIT, PAGE_READWRITE)){
+            if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, zero_bits(),
+                                       &size, MEM_COMMIT, PAGE_READWRITE)){
                 stream->tmp_buffer_frames = 0;
                 return oss_unlock_result(stream, &params->result, E_OUTOFMEMORY);
             }
@@ -1041,8 +1050,8 @@ static NTSTATUS get_capture_buffer(void *args)
                 stream->tmp_buffer = NULL;
             }
             size = *frames * stream->fmt->nBlockAlign;
-            if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, 0, &size,
-                                       MEM_COMMIT, PAGE_READWRITE)){
+            if(NtAllocateVirtualMemory(GetCurrentProcess(), (void **)&stream->tmp_buffer, zero_bits(),
+                                       &size, MEM_COMMIT, PAGE_READWRITE)){
                 stream->tmp_buffer_frames = 0;
                 return oss_unlock_result(stream, &params->result, E_OUTOFMEMORY);
             }
