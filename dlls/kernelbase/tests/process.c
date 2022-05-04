@@ -31,6 +31,8 @@
 #include "wine/test.h"
 
 static BOOL (WINAPI *pCompareObjectHandles)(HANDLE, HANDLE);
+static LPVOID (WINAPI *pMapViewOfFile3)(HANDLE, HANDLE, PVOID, ULONG64 offset, SIZE_T size,
+        ULONG, ULONG, MEM_EXTENDED_PARAMETER *, ULONG);
 
 static void test_CompareObjectHandles(void)
 {
@@ -89,6 +91,37 @@ static void test_CompareObjectHandles(void)
     CloseHandle( h1 );
 }
 
+static void test_MapViewOfFile3(void)
+{
+    static const char testfile[] = "testfile.xxx";
+    HANDLE file, mapping;
+    void *ptr;
+
+    if (!pMapViewOfFile3)
+    {
+        win_skip("MapViewOfFile3() is not supported.\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    file = CreateFileA( testfile, GENERIC_READ|GENERIC_WRITE, 0, NULL, CREATE_ALWAYS, 0, 0 );
+    ok( file != INVALID_HANDLE_VALUE, "CreateFile error %lu\n", GetLastError() );
+    SetFilePointer( file, 12288, NULL, FILE_BEGIN );
+    SetEndOfFile( file );
+
+    SetLastError(0xdeadbeef);
+    mapping = CreateFileMappingA( file, NULL, PAGE_READWRITE, 0, 4096, NULL );
+    ok( mapping != 0, "CreateFileMapping error %lu\n", GetLastError() );
+
+    SetLastError(0xdeadbeef);
+    ptr = pMapViewOfFile3( mapping, GetCurrentProcess(), NULL, 0, 4096, 0, PAGE_READONLY, NULL, 0);
+    ok( ptr != NULL, "MapViewOfFile FILE_MAP_READ error %lu\n", GetLastError() );
+    UnmapViewOfFile( ptr );
+
+    CloseHandle( file );
+    DeleteFileA( testfile );
+}
+
 START_TEST(process)
 {
     HMODULE hmod;
@@ -99,6 +132,8 @@ START_TEST(process)
 
     hmod = GetModuleHandleA("kernelbase.dll");
     pCompareObjectHandles = (void *)GetProcAddress(hmod, "CompareObjectHandles");
+    pMapViewOfFile3 = (void *)GetProcAddress(hmod, "MapViewOfFile3");
 
     test_CompareObjectHandles();
+    test_MapViewOfFile3();
 }
