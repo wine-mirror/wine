@@ -390,8 +390,10 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **gu
     }
 
     for(i = 0; i < params.num; i++){
-        unsigned int name_size = (wcslen(params.endpoints[i].name) + 1) * sizeof(WCHAR);
-        unsigned int dev_size = strlen(params.endpoints[i].device) + 1;
+        WCHAR *name = (WCHAR *)((char *)params.endpoints + params.endpoints[i].name);
+        char *device = (char *)params.endpoints + params.endpoints[i].device;
+        unsigned int name_size = (wcslen(name) + 1) * sizeof(WCHAR);
+        unsigned int dev_size = strlen(device) + 1;
         OSSDevice *oss_dev;
 
         ids[i] = HeapAlloc(GetProcessHeap(), 0, name_size);
@@ -401,12 +403,12 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **gu
             params.result = E_OUTOFMEMORY;
             goto end;
         }
-        memcpy(ids[i], params.endpoints[i].name, name_size);
-        get_device_guid(flow, params.endpoints[i].device, guids + i);
+        memcpy(ids[i], name, name_size);
+        get_device_guid(flow, device, guids + i);
 
         oss_dev->flow = flow;
         oss_dev->guid = guids[i];
-        memcpy(oss_dev->devnode, params.endpoints[i].device, dev_size);
+        memcpy(oss_dev->devnode, device, dev_size);
         device_add(oss_dev);
     }
     *def_index = params.default_idx;

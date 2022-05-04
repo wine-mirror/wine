@@ -226,11 +226,10 @@ static NTSTATUS get_endpoint_ids(void *args)
         WCHAR name[ARRAY_SIZE(ai.name) + ARRAY_SIZE(outW)];
         char device[OSS_DEVNODE_SIZE];
     } *info;
-    unsigned int i, j, num, needed, name_len, device_len, default_idx = 0;
+    unsigned int i, j, num, needed, name_len, device_len, offset, default_idx = 0;
     char default_device[OSS_DEVNODE_SIZE];
     struct endpoint *endpoint;
     int mixer_fd;
-    char *ptr;
 
     mixer_fd = open("/dev/mixer", O_RDONLY, 0);
     if(mixer_fd < 0){
@@ -333,9 +332,8 @@ static NTSTATUS get_endpoint_ids(void *args)
     }
     close(mixer_fd);
 
-    needed = num * sizeof(*params->endpoints);
+    offset = needed = num * sizeof(*params->endpoints);
     endpoint = params->endpoints;
-    ptr = (char *)(endpoint + num);
 
     for(i = 0; i < num; i++){
         name_len = wcslen(info[i].name) + 1;
@@ -343,12 +341,12 @@ static NTSTATUS get_endpoint_ids(void *args)
         needed += name_len * sizeof(WCHAR) + ((device_len + 1) & ~1);
 
         if(needed <= params->size){
-            endpoint->name = (WCHAR *)ptr;
-            memcpy(endpoint->name, info[i].name, name_len * sizeof(WCHAR));
-            ptr += name_len * sizeof(WCHAR);
-            endpoint->device = ptr;
-            memcpy(endpoint->device, info[i].device, device_len);
-            ptr += (device_len + 1) & ~1;
+            endpoint->name = offset;
+            memcpy((char *)params->endpoints + offset, info[i].name, name_len * sizeof(WCHAR));
+            offset += name_len * sizeof(WCHAR);
+            endpoint->device = offset;
+            memcpy((char *)params->endpoints + offset, info[i].device, device_len);
+            offset += (device_len + 1) & ~1;
             endpoint++;
         }
     }
