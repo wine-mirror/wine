@@ -250,7 +250,7 @@ typedef struct tagLANGANDCODEPAGE
     WORD wCodePage;
 } LANGANDCODEPAGE;
 
-static BOOL query_productname(void *data, LANGANDCODEPAGE *lang, LPVOID *buffer, DWORD *len)
+static BOOL query_productname(void *data, LANGANDCODEPAGE *lang, LPVOID *buffer, UINT *len)
 {
     WCHAR pn[37];
     swprintf(pn, ARRAY_SIZE(pn), L"\\StringFileInfo\\%04x%04x\\ProductName", lang->wLanguage, lang->wCodePage);

@@ -87,7 +87,7 @@ typedef struct _PhysDevice {
     enum phys_device_bus_type bus_type;
     USHORT vendor_id, product_id;
     EndpointFormFactor form;
-    DWORD channel_mask;
+    UINT channel_mask;
     UINT index;
     char pulse_name[0];
 } PhysDevice;
@@ -252,7 +252,7 @@ static NTSTATUS pulse_get_endpoint_ids(void *args)
     struct get_endpoint_ids_params *params = args;
     struct list *list = (params->flow == eRender) ? &g_phys_speakers : &g_phys_sources;
     struct endpoint *endpoint = params->endpoints;
-    DWORD len, name_len, needed;
+    size_t len, name_len, needed;
     unsigned int offset;
     PhysDevice *dev;
 
@@ -393,10 +393,10 @@ fail:
     return E_FAIL;
 }
 
-static DWORD pulse_channel_map_to_channel_mask(const pa_channel_map *map)
+static UINT pulse_channel_map_to_channel_mask(const pa_channel_map *map)
 {
     int i;
-    DWORD mask = 0;
+    UINT mask = 0;
 
     for (i = 0; i < map->channels; ++i) {
         switch (map->map[i]) {
@@ -452,9 +452,9 @@ static void fill_device_info(PhysDevice *dev, pa_proplist *p)
 }
 
 static void pulse_add_device(struct list *list, pa_proplist *proplist, int index, EndpointFormFactor form,
-        DWORD channel_mask, const char *pulse_name, const char *name)
+                             UINT channel_mask, const char *pulse_name, const char *name)
 {
-    DWORD len = strlen(pulse_name), name_len = strlen(name);
+    size_t len = strlen(pulse_name), name_len = strlen(name);
     PhysDevice *dev = malloc(FIELD_OFFSET(PhysDevice, pulse_name[len + 1]));
     WCHAR *wname;
 
@@ -485,7 +485,7 @@ static void pulse_add_device(struct list *list, pa_proplist *proplist, int index
 static void pulse_phys_speakers_cb(pa_context *c, const pa_sink_info *i, int eol, void *userdata)
 {
     struct list *speaker;
-    DWORD channel_mask;
+    UINT channel_mask;
 
     if (!i || !i->name || !i->name[0])
         return;
@@ -516,7 +516,7 @@ static void pulse_phys_sources_cb(pa_context *c, const pa_source_info *i, int eo
  * would report for a given channel layout. */
 static void convert_channel_map(const pa_channel_map *pa_map, WAVEFORMATEXTENSIBLE *fmt)
 {
-    DWORD pa_mask = pulse_channel_map_to_channel_mask(pa_map);
+    UINT pa_mask = pulse_channel_map_to_channel_mask(pa_map);
 
     TRACE("got mask for PA: 0x%x\n", pa_mask);
 
@@ -772,7 +772,7 @@ fail:
     return STATUS_SUCCESS;
 }
 
-static DWORD get_channel_mask(unsigned int channels)
+static UINT get_channel_mask(unsigned int channels)
 {
     switch(channels) {
     case 0:
@@ -845,8 +845,8 @@ static HRESULT pulse_spec_from_waveformat(struct pulse_stream *stream, const WAV
         break;
     case WAVE_FORMAT_EXTENSIBLE: {
         WAVEFORMATEXTENSIBLE *wfe = (WAVEFORMATEXTENSIBLE*)fmt;
-        DWORD mask = wfe->dwChannelMask;
-        DWORD i = 0, j;
+        UINT mask = wfe->dwChannelMask;
+        unsigned i = 0, j;
         if (fmt->cbSize != (sizeof(*wfe) - sizeof(*fmt)) && fmt->cbSize != sizeof(*wfe))
             break;
         if (IsEqualGUID(&wfe->SubFormat, &KSDATAFORMAT_SUBTYPE_IEEE_FLOAT) &&
