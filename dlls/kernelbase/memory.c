@@ -713,6 +713,9 @@ BOOL WINAPI DECLSPEC_HOTPATCH HeapWalk( HANDLE heap, PROCESS_HEAP_ENTRY *entry )
  * Global/local heap functions
  ***********************************************************************/
 
+/* some undocumented flags (names are made up) */
+#define HEAP_ADD_USER_INFO    0x00000100
+
 /* not compatible with windows */
 struct kernelbase_global_data
 {
@@ -826,15 +829,15 @@ HGLOBAL WINAPI DECLSPEC_HOTPATCH GlobalFree( HLOCAL handle )
  */
 HLOCAL WINAPI DECLSPEC_HOTPATCH LocalAlloc( UINT flags, SIZE_T size )
 {
+    DWORD heap_flags = HEAP_ADD_USER_INFO;
     HANDLE heap = GetProcessHeap();
     struct mem_entry *mem;
-    DWORD heap_flags = 0;
     HLOCAL handle;
     void *ptr;
 
     TRACE_(globalmem)( "flags %#x, size %#Ix\n", flags, size );
 
-    if (flags & LMEM_ZEROINIT) heap_flags = HEAP_ZERO_MEMORY;
+    if (flags & LMEM_ZEROINIT) heap_flags |= HEAP_ZERO_MEMORY;
 
     if (!(flags & LMEM_MOVEABLE)) /* pointer */
     {
@@ -964,12 +967,14 @@ LPVOID WINAPI DECLSPEC_HOTPATCH LocalLock( HLOCAL handle )
  */
 HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT flags )
 {
+    DWORD heap_flags = HEAP_ADD_USER_INFO;
     struct mem_entry *mem;
     HLOCAL ret = 0;
-    DWORD heap_flags = (flags & LMEM_ZEROINIT) ? HEAP_ZERO_MEMORY : 0;
     void *ptr;
 
     TRACE_(globalmem)( "handle %p, size %#Ix, flags %#x\n", handle, size, flags );
+
+    if (flags & LMEM_ZEROINIT) heap_flags |= HEAP_ZERO_MEMORY;
 
     RtlLockHeap( GetProcessHeap() );
     if (flags & LMEM_MODIFY) /* modify flags */
