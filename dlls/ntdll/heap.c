@@ -250,6 +250,12 @@ static inline struct block *next_block( const SUBHEAP *subheap, const struct blo
     return (struct block *)next;
 }
 
+static inline BOOL check_subheap( const SUBHEAP *subheap )
+{
+    const char *base = subheap->base;
+    return contains( base, subheap->size, base + subheap->headerSize, subheap->commitSize - subheap->headerSize );
+}
+
 static BOOL heap_validate( HEAP *heap, BOOL quiet );
 
 /* mark a block of memory as free for debugging purposes */
@@ -353,6 +359,7 @@ static void subheap_notify_free_all(SUBHEAP const *subheap)
     char const *ptr = (char const *)subheap->base + subheap->headerSize;
 
     if (!RUNNING_ON_VALGRIND) return;
+    if (!check_subheap( subheap )) return;
 
     while (ptr < (char const *)subheap->base + subheap->size)
     {
@@ -453,6 +460,8 @@ static void heap_dump( const HEAP *heap )
 
         TRACE( "    %p: base %p first %p last %p end %p\n", subheap, base, first_block( subheap ),
                last_block( subheap ), base + subheap_size( subheap ) );
+
+        if (!check_subheap( subheap )) return;
 
         overhead += (char *)first_block( subheap ) - base;
         for (block = first_block( subheap ); block; block = next_block( subheap, block ))
@@ -614,6 +623,7 @@ static SUBHEAP *find_subheap( const HEAP *heap, const void *ptr )
 
     LIST_FOR_EACH_ENTRY( subheap, &heap->subheap_list, SUBHEAP, entry )
     {
+        if (!check_subheap( subheap )) return NULL;
         if (contains( subheap_base( subheap ), subheap_size( subheap ), ptr, sizeof(struct block) ))
             return subheap;
     }
@@ -1456,6 +1466,14 @@ static BOOL heap_validate( HEAP *heap, BOOL quiet )
     LIST_FOR_EACH_ENTRY( subheap, &heap->subheap_list, SUBHEAP, entry )
     {
         char *ptr = (char *)subheap->base + subheap->headerSize;
+
+        if (!check_subheap( subheap ))
+        {
+            ERR( "heap %p, subheap %p corrupted sizes\n", heap, subheap );
+            if (TRACE_ON(heap)) heap_dump( heap );
+            return FALSE;
+        }
+
         while (ptr < (char *)subheap->base + subheap->size)
         {
             if (*(DWORD *)ptr & ARENA_FLAG_FREE)
@@ -1577,6 +1595,9 @@ static void heap_set_debug_flags( HANDLE handle )
         {
             char *ptr = (char *)subheap->base + subheap->headerSize;
             char *end = (char *)subheap->base + subheap->commitSize;
+
+            if (!check_subheap( subheap )) break;
+
             while (ptr < end)
             {
                 ARENA_INUSE *arena = (ARENA_INUSE *)ptr;
