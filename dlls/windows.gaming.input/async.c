@@ -34,14 +34,13 @@ struct async_bool
     IAsyncInfo IAsyncInfo_iface;
     LONG ref;
 
-    BOOLEAN result;
-
-    async_operation_boolean_callback callback;
+    async_operation_callback callback;
     TP_WORK *async_run_work;
     IInspectable *invoker;
 
     CRITICAL_SECTION cs;
     IWineAsyncOperationCompletedHandler *handler;
+    PROPVARIANT result;
     AsyncStatus status;
     HRESULT hr;
 };
@@ -197,6 +196,7 @@ static ULONG WINAPI async_bool_Release( IAsyncOperation_boolean *iface )
     {
         IAsyncInfo_Close( &impl->IAsyncInfo_iface );
         if (impl->handler && impl->handler != HANDLER_NOT_SET) IWineAsyncOperationCompletedHandler_Release( impl->handler );
+        PropVariantClear( &impl->result );
         IInspectable_Release( impl->invoker );
         DeleteCriticalSection( &impl->cs );
         free( impl );
@@ -276,19 +276,24 @@ static HRESULT WINAPI async_bool_get_Completed( IAsyncOperation_boolean *iface, 
 static HRESULT WINAPI async_bool_GetResults( IAsyncOperation_boolean *iface, BOOLEAN *results )
 {
     struct async_bool *impl = impl_from_IAsyncOperation_boolean( iface );
+    PROPVARIANT result = {.vt = VT_BOOL};
     HRESULT hr;
 
     TRACE( "iface %p, results %p.\n", iface, results );
 
     EnterCriticalSection( &impl->cs );
     if (impl->status != Completed && impl->status != Error) hr = E_ILLEGAL_METHOD_CALL;
+    else if (impl->result.vt != result.vt) hr = E_UNEXPECTED;
     else
     {
-        *results = impl->result;
+        PropVariantCopy( &result, &impl->result );
+        if (impl->result.vt == VT_UNKNOWN) PropVariantClear( &impl->result );
         hr = impl->hr;
     }
     LeaveCriticalSection( &impl->cs );
 
+    *results = result.boolVal;
+    PropVariantClear( &result );
     return hr;
 }
 
@@ -312,14 +317,15 @@ static void CALLBACK async_run_cb( TP_CALLBACK_INSTANCE *instance, void *data, T
 {
     IAsyncOperation_boolean *operation = data;
     struct async_bool *impl = impl_from_IAsyncOperation_boolean( operation );
-    BOOLEAN result = FALSE;
+    PROPVARIANT result;
     HRESULT hr;
 
+    PropVariantInit( &result );
     hr = impl->callback( impl->invoker, &result );
 
     EnterCriticalSection( &impl->cs );
     if (impl->status != Closed) impl->status = FAILED(hr) ? Error : Completed;
-    impl->result = result;
+    PropVariantCopy( &impl->result, &result );
     impl->hr = hr;
 
     if (impl->handler != NULL && impl->handler != HANDLER_NOT_SET)
@@ -335,9 +341,10 @@ static void CALLBACK async_run_cb( TP_CALLBACK_INSTANCE *instance, void *data, T
     else LeaveCriticalSection( &impl->cs );
 
     IAsyncOperation_boolean_Release( operation );
+    PropVariantClear( &result );
 }
 
-HRESULT async_operation_boolean_create( IInspectable *invoker, async_operation_boolean_callback callback,
+HRESULT async_operation_boolean_create( IInspectable *invoker, async_operation_callback callback,
                                         IAsyncOperation_boolean **out )
 {
     struct async_bool *impl;
@@ -351,6 +358,7 @@ HRESULT async_operation_boolean_create( IInspectable *invoker, async_operation_b
     impl->handler = HANDLER_NOT_SET;
     impl->callback = callback;
     impl->status = Started;
+    impl->result.vt = VT_BOOL;
 
     if (!(impl->async_run_work = CreateThreadpoolWork( async_run_cb, &impl->IAsyncOperation_boolean_iface, NULL )))
     {
