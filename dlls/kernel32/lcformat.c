@@ -781,61 +781,6 @@ INT WINAPI GetDateFormatA( LCID lcid, DWORD dwFlags, const SYSTEMTIME* lpTime,
 }
 
 /******************************************************************************
- * GetDateFormatEx [KERNEL32.@]
- *
- * Format a date for a given locale.
- *
- * PARAMS
- *  localename [I] Locale to format for
- *  flags      [I] LOCALE_ and DATE_ flags from "winnls.h"
- *  date       [I] Date to format
- *  format     [I] Format string, or NULL to use the locale defaults
- *  outbuf     [O] Destination for formatted string
- *  bufsize    [I] Size of outbuf, or 0 to calculate the resulting size
- *  calendar   [I] Reserved, must be NULL
- *
- * See GetDateFormatA for notes.
- *
- * RETURNS
- *  Success: The number of characters written to outbuf, or that would have
- *           been written if bufsize is 0.
- *  Failure: 0. Use GetLastError() to determine the cause.
- */
-INT WINAPI GetDateFormatEx(LPCWSTR localename, DWORD flags,
-                           const SYSTEMTIME* date, LPCWSTR format,
-                           LPWSTR outbuf, INT bufsize, LPCWSTR calendar)
-{
-  TRACE("(%s,0x%08lx,%p,%s,%p,%d,%s)\n", debugstr_w(localename), flags,
-        date, debugstr_w(format), outbuf, bufsize, debugstr_w(calendar));
-
-  /* Parameter is currently reserved and Windows errors if set */
-  if (calendar != NULL)
-  {
-    SetLastError(ERROR_INVALID_PARAMETER);
-    return 0;
-  }
-
-  return NLS_GetDateTimeFormatW(LocaleNameToLCID(localename, 0),
-                                flags | DATE_DATEVARSONLY, date, format,
-                                outbuf, bufsize);
-}
-
-/******************************************************************************
- * GetDateFormatW	[KERNEL32.@]
- *
- * See GetDateFormatA.
- */
-INT WINAPI GetDateFormatW(LCID lcid, DWORD dwFlags, const SYSTEMTIME* lpTime,
-                          LPCWSTR lpFormat, LPWSTR lpDateStr, INT cchOut)
-{
-  TRACE("(0x%04lx,0x%08lx,%p,%s,%p,%d)\n", lcid, dwFlags, lpTime,
-        debugstr_w(lpFormat), lpDateStr, cchOut);
-
-  return NLS_GetDateTimeFormatW(lcid, dwFlags|DATE_DATEVARSONLY, lpTime,
-                                lpFormat, lpDateStr, cchOut);
-}
-
-/******************************************************************************
  *		GetTimeFormatA	[KERNEL32.@]
  *
  * Format a time for a given locale.

@@ -6821,6 +6821,151 @@ static int get_currency_format( const NLS_LOCALE_DATA *locale, DWORD flags, cons
 }
 
 
+/* get the length of a date/time formatting pattern */
+static int get_pattern_len( const WCHAR *pattern, const WCHAR *accept )
+{
+    int i;
+
+    if (*pattern == '\'')
+    {
+        for (i = 1; pattern[i]; i++)
+        {
+            if (pattern[i] != '\'') continue;
+            if (pattern[++i] != '\'') return i;
+        }
+        return i;
+    }
+    if (!wcschr( accept, *pattern )) return 1;
+    for (i = 1; pattern[i]; i++) if (pattern[i] != pattern[0]) break;
+    return i;
+}
+
+
+static int get_date_format( const NLS_LOCALE_DATA *locale, DWORD flags, const SYSTEMTIME *systime,
+                            const WCHAR *format, WCHAR *buffer, int len )
+{
+    DWORD override = flags & LOCALE_NOUSEROVERRIDE;
+    DWORD genitive = 0;
+    WCHAR *p, fmt[80], output[256];
+    SYSTEMTIME time;
+    int ret, val, count, i;
+
+    if (!format)
+    {
+        if (flags & DATE_USE_ALT_CALENDAR) FIXME( "alt calendar not supported\n" );
+        switch (flags & (DATE_SHORTDATE | DATE_LONGDATE | DATE_YEARMONTH | DATE_MONTHDAY))
+        {
+        case 0:
+        case DATE_SHORTDATE:
+            get_locale_info( locale, 0, LOCALE_SSHORTDATE | override, fmt, ARRAY_SIZE(fmt) );
+            break;
+        case DATE_LONGDATE:
+            get_locale_info( locale, 0, LOCALE_SLONGDATE | override, fmt, ARRAY_SIZE(fmt) );
+            break;
+        case DATE_YEARMONTH:
+            get_locale_info( locale, 0, LOCALE_SYEARMONTH | override, fmt, ARRAY_SIZE(fmt) );
+            break;
+        case DATE_MONTHDAY:
+            get_locale_info( locale, 0, LOCALE_SMONTHDAY | override, fmt, ARRAY_SIZE(fmt) );
+            break;
+        default:
+            SetLastError( ERROR_INVALID_FLAGS );
+            return 0;
+        }
+        format = fmt;
+    }
+    else if (override || (flags & (DATE_SHORTDATE | DATE_LONGDATE | DATE_YEARMONTH | DATE_MONTHDAY)))
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+
+    if (systime)
+    {
+        FILETIME ft;
+
+        time = *systime;
+        time.wHour = time.wMinute = time.wSecond = time.wMilliseconds = 0;
+        if (!SystemTimeToFileTime( &time, &ft ) || !FileTimeToSystemTime( &ft, &time )) return 0;
+    }
+    else GetLocalTime( &time );
+
+    for (p = output; *format; format += count)
+    {
+        count = get_pattern_len( format, L"yMd" );
+
+        switch (*format)
+        {
+        case '\'':
+            for (i = 1; i < count; i++)
+            {
+                if (format[i] == '\'') i++;
+                if (i < count) *p++ = format[i];
+            }
+            break;
+
+        case 'y':
+            p += swprintf( p, output + ARRAY_SIZE(output) - p, L"%02u",
+                           (count <= 2) ? time.wYear % 100 : time.wYear );
+            break;
+
+        case 'M':
+            if (count <= 2)
+            {
+                p += swprintf( p, output + ARRAY_SIZE(output) - p, L"%.*u", count, time.wMonth );
+                break;
+            }
+            val = (count == 3 ? LOCALE_SABBREVMONTHNAME1 : LOCALE_SMONTHNAME1) + time.wMonth - 1;
+            if (!genitive)
+            {
+                for (i = count; format[i]; i += get_pattern_len( format, L"yMd" ))
+                {
+                    if (format[i] != 'd') continue;
+                    if (format[i + 1] != 'd' || format[i + 2] != 'd')
+                        genitive = LOCALE_RETURN_GENITIVE_NAMES;
+                    break;
+                }
+            }
+            p += get_locale_info( locale, 0, val | override | genitive,
+                                  p, output + ARRAY_SIZE(output) - p ) - 1;
+            break;
+
+        case 'd':
+            if (count <= 2)
+            {
+                genitive = LOCALE_RETURN_GENITIVE_NAMES;
+                p += swprintf( p, output + ARRAY_SIZE(output) - p, L"%.*u", count, time.wDay );
+                break;
+            }
+            genitive = 0;
+            val = (count == 3 ? LOCALE_SABBREVDAYNAME1 : LOCALE_SDAYNAME1) + (time.wDayOfWeek + 6) % 7;
+            p += get_locale_info( locale, 0, val | override, p, output + ARRAY_SIZE(output) - p ) - 1;
+            break;
+
+        case 'g':
+            p += locale_return_string( count >= 2 ? locale->serastring : locale->sabbreverastring,
+                                       override, p, output + ARRAY_SIZE(output) - p ) - 1;
+            break;
+
+        default:
+            *p++ = *format;
+            break;
+        }
+    }
+    *p++ = 0;
+    ret = p - output;
+
+    if (!len) return ret;
+    lstrcpynW( buffer, output, len );
+    if (ret > len)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+    return ret;
+}
+
+
 /**************************************************************************
  *	GetNumberFormatW  (kernelbase.@)
  */
@@ -6896,4 +7041,43 @@ int WINAPI GetCurrencyFormatEx( const WCHAR *name, DWORD flags, const WCHAR *val
 
     TRACE( "(%s,%lx,%s,%p,%p,%d)\n", debugstr_w(name), flags, debugstr_w(value), format, buffer, len );
     return get_currency_format( locale, flags, value, format, buffer, len );
+}
+
+
+/***********************************************************************
+ *	GetDateFormatW  (kernelbase.@)
+ */
+int WINAPI GetDateFormatW( LCID lcid, DWORD flags, const SYSTEMTIME *systime,
+                           const WCHAR *format, WCHAR *buffer, int len )
+{
+    const NLS_LOCALE_DATA *locale = NlsValidateLocale( &lcid, 0 );
+
+    if (len < 0 || (len && !buffer) || !locale)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    TRACE( "(%04lx,%lx,%p,%s,%p,%d)\n", lcid, flags, systime, debugstr_w(format), buffer, len );
+    return get_date_format( locale, flags, systime, format, buffer, len );
+}
+
+
+/***********************************************************************
+ *	GetDateFormatEx  (kernelbase.@)
+ */
+int WINAPI GetDateFormatEx( const WCHAR *name, DWORD flags, const SYSTEMTIME *systime,
+                            const WCHAR *format, WCHAR *buffer, int len, const WCHAR *calendar )
+{
+    LCID lcid;
+    const NLS_LOCALE_DATA *locale = get_locale_by_name( name, &lcid );
+
+    if (len < 0 || (len && !buffer) || !locale || calendar)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    TRACE( "(%s,%lx,%p,%s,%p,%d)\n", debugstr_w(name), flags, systime, debugstr_w(format), buffer, len );
+    return get_date_format( locale, flags, systime, format, buffer, len );
 }
