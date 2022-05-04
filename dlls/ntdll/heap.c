@@ -1405,37 +1405,28 @@ static void heap_set_debug_flags( HANDLE handle )
 
     if (flags & (HEAP_FREE_CHECKING_ENABLED | HEAP_TAIL_CHECKING_ENABLED))  /* fix existing blocks */
     {
-        SUBHEAP *subheap;
+        struct block *block;
         ARENA_LARGE *large;
+        SUBHEAP *subheap;
 
         LIST_FOR_EACH_ENTRY( subheap, &heap->subheap_list, SUBHEAP, entry )
         {
-            char *ptr = (char *)subheap->base + subheap->headerSize;
-            char *end = (char *)subheap->base + subheap->commitSize;
+            const char *commit_end = subheap_commit_end( subheap );
 
             if (!check_subheap( subheap )) break;
 
-            while (ptr < end)
+            for (block = first_block( subheap ); block; block = next_block( subheap, block ))
             {
-                ARENA_INUSE *arena = (ARENA_INUSE *)ptr;
-                SIZE_T size = arena->size & ARENA_SIZE_MASK;
-                if (arena->size & ARENA_FLAG_FREE)
+                if (block_get_flags( block ) & ARENA_FLAG_FREE)
                 {
-                    SIZE_T count = size;
-
-                    ptr += sizeof(ARENA_FREE) + size;
-                    if (ptr >= end) count = end - (char *)((ARENA_FREE *)arena + 1);
-                    else count -= sizeof(ARENA_FREE *);
-                    mark_block_free( (ARENA_FREE *)arena + 1, count, flags );
+                    char *data = (char *)block + block_get_overhead( block ), *end = (char *)block + block_get_size( block );
+                    if (end >= commit_end) mark_block_free( data, commit_end - data, flags );
+                    else mark_block_free( data, end - sizeof(struct block *) - data, flags );
                 }
                 else
                 {
-                    if (arena->magic == ARENA_PENDING_MAGIC)
-                        mark_block_free( arena + 1, size, flags );
-                    else
-                        mark_block_tail( (char *)(arena + 1) + size - arena->unused_bytes,
-                                         arena->unused_bytes, flags );
-                    ptr += sizeof(ARENA_INUSE) + size;
+                    if (block_get_type( block ) == ARENA_PENDING_MAGIC) mark_block_free( block + 1, block_get_size( block ) - sizeof(*block), flags );
+                    else mark_block_tail( (char *)block + block_get_size( block ) - block->unused_bytes, block->unused_bytes, flags );
                 }
             }
         }
