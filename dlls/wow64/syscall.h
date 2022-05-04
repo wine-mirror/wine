@@ -108,6 +108,7 @@
     SYSCALL_ENTRY( NtLockVirtualMemory ) \
     SYSCALL_ENTRY( NtMakeTemporaryObject ) \
     SYSCALL_ENTRY( NtMapViewOfSection ) \
+    SYSCALL_ENTRY( NtMapViewOfSectionEx ) \
     SYSCALL_ENTRY( NtNotifyChangeDirectoryFile ) \
     SYSCALL_ENTRY( NtNotifyChangeKey ) \
     SYSCALL_ENTRY( NtNotifyChangeMultipleKeys ) \
