@@ -6966,6 +6966,120 @@ static int get_date_format( const NLS_LOCALE_DATA *locale, DWORD flags, const SY
 }
 
 
+static int get_time_format( const NLS_LOCALE_DATA *locale, DWORD flags, const SYSTEMTIME *systime,
+                            const WCHAR *format, WCHAR *buffer, int len )
+{
+    DWORD override = flags & LOCALE_NOUSEROVERRIDE;
+    WCHAR *p, *last, fmt[80], output[256];
+    SYSTEMTIME time;
+    int i, ret, val, count;
+    BOOL skip = FALSE;
+
+    if (!format)
+    {
+        get_locale_info( locale, 0, LOCALE_STIMEFORMAT | override, fmt, ARRAY_SIZE(fmt) );
+        format = fmt;
+    }
+    else if (override)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+
+    if (systime)
+    {
+        time = *systime;
+        if (time.wMilliseconds > 999 || time.wSecond > 59 || time.wMinute > 59 || time.wHour > 23)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+    }
+    else GetLocalTime( &time );
+
+    for (p = last = output; *format; format += count)
+    {
+        count = get_pattern_len( format, L"Hhmst" );
+
+        switch (*format)
+        {
+        case '\'':
+            for (i = 1; i < count; i++)
+            {
+                if (format[i] == '\'') i++;
+                if (!skip && i < count) *p++ = format[i];
+            }
+            continue;
+
+        case 'H':
+            val = time.wHour;
+            break;
+
+        case 'h':
+            val = time.wHour;
+            if (!(flags & TIME_FORCE24HOURFORMAT))
+            {
+                val %= 12;
+                if (!val) val = 12;
+            }
+            break;
+
+        case 'm':
+            if (flags & TIME_NOMINUTESORSECONDS)
+            {
+                p = last;
+                skip = TRUE;
+                continue;
+            }
+            val = time.wMinute;
+            break;
+
+        case 's':
+            if (flags & (TIME_NOMINUTESORSECONDS | TIME_NOSECONDS))
+            {
+                p = last;
+                skip = TRUE;
+                continue;
+            }
+            val = time.wSecond;
+            break;
+
+        case 't':
+            if (flags & TIME_NOTIMEMARKER)
+            {
+                p = last;
+                skip = TRUE;
+                continue;
+            }
+            val = time.wHour < 12 ? LOCALE_S1159 : LOCALE_S2359;
+            ret = get_locale_info( locale, 0, val | override, p, output + ARRAY_SIZE(output) - p );
+            p += (count > 1) ? ret - 1 : 1;
+            skip = FALSE;
+            continue;
+
+        default:
+            if (!skip || *format == ' ') *p++ = *format;
+            continue;
+        }
+
+        p += swprintf( p, output + ARRAY_SIZE(output) - p, L"%.*u", min( 2, count ), val );
+        last = p;
+        skip = FALSE;
+    }
+    *p++ = 0;
+    ret = p - output;
+
+    if (!len) return ret;
+    lstrcpynW( buffer, output, len );
+    if (ret > len)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+    return ret;
+}
+
+
 /**************************************************************************
  *	GetNumberFormatW  (kernelbase.@)
  */
@@ -7080,4 +7194,43 @@ int WINAPI GetDateFormatEx( const WCHAR *name, DWORD flags, const SYSTEMTIME *sy
 
     TRACE( "(%s,%lx,%p,%s,%p,%d)\n", debugstr_w(name), flags, systime, debugstr_w(format), buffer, len );
     return get_date_format( locale, flags, systime, format, buffer, len );
+}
+
+
+/***********************************************************************
+ *	GetTimeFormatW  (kernelbase.@)
+ */
+int WINAPI GetTimeFormatW( LCID lcid, DWORD flags, const SYSTEMTIME *systime,
+                            const WCHAR *format, WCHAR *buffer, int len )
+{
+    const NLS_LOCALE_DATA *locale = NlsValidateLocale( &lcid, 0 );
+
+    if (len < 0 || (len && !buffer) || !locale)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    TRACE( "(%04lx,%lx,%p,%s,%p,%d)\n", lcid, flags, systime, debugstr_w(format), buffer, len );
+    return get_time_format( locale, flags, systime, format, buffer, len );
+}
+
+
+/***********************************************************************
+ *	GetTimeFormatEx  (kernelbase.@)
+ */
+int WINAPI GetTimeFormatEx( const WCHAR *name, DWORD flags, const SYSTEMTIME *systime,
+                            const WCHAR *format, WCHAR *buffer, int len )
+{
+    LCID lcid;
+    const NLS_LOCALE_DATA *locale = get_locale_by_name( name, &lcid );
+
+    if (len < 0 || (len && !buffer) || !locale)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    TRACE( "(%s,%lx,%p,%s,%p,%d)\n", debugstr_w(name), flags, systime, debugstr_w(format), buffer, len );
+    return get_time_format( locale, flags, systime, format, buffer, len );
 }

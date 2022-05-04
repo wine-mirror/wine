@@ -756,8 +756,8 @@
 @ stdcall GetTickCount()
 @ stdcall -ret64 GetTickCount64()
 @ stdcall GetTimeFormatA(long long ptr str ptr long) kernel32.GetTimeFormatA
-@ stdcall GetTimeFormatEx(wstr long ptr wstr ptr long) kernel32.GetTimeFormatEx
-@ stdcall GetTimeFormatW(long long ptr wstr ptr long) kernel32.GetTimeFormatW
+@ stdcall GetTimeFormatEx(wstr long ptr wstr ptr long)
+@ stdcall GetTimeFormatW(long long ptr wstr ptr long)
 @ stdcall GetTimeZoneInformation(ptr)
 @ stdcall GetTimeZoneInformationForYear(long ptr ptr)
 @ stdcall GetTokenInformation(long long ptr long ptr)

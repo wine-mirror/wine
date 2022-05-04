@@ -870,8 +870,8 @@
 @ stdcall GetTickCount()
 @ stdcall -ret64 GetTickCount64()
 @ stdcall GetTimeFormatA(long long ptr str ptr long)
-@ stdcall GetTimeFormatEx(wstr long ptr wstr ptr long)
-@ stdcall GetTimeFormatW(long long ptr wstr ptr long)
+@ stdcall -import GetTimeFormatEx(wstr long ptr wstr ptr long)
+@ stdcall -import GetTimeFormatW(long long ptr wstr ptr long)
 @ stdcall -import GetTimeZoneInformation(ptr)
 @ stdcall -import GetTimeZoneInformationForYear(long ptr ptr)
 # @ stub GetUILanguageInfo
