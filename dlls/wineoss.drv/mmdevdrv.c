@@ -252,10 +252,10 @@ static HRESULT stream_release(struct oss_stream *stream, HANDLE timer_thread)
 
 static DWORD WINAPI timer_thread(void *user)
 {
-    struct oss_stream *stream = user;
     struct timer_loop_params params;
+    struct ACImpl *This = user;
 
-    params.stream = stream;
+    params.stream = This->stream;
     OSS_CALL(timer_loop, &params);
 
     return 0;
@@ -913,7 +913,7 @@ static HRESULT WINAPI AudioClient_Start(IAudioClient3 *iface)
     OSS_CALL(start, &params);
 
     if(SUCCEEDED(params.result) && !This->timer_thread){
-        This->timer_thread = CreateThread(NULL, 0, timer_thread, This->stream, 0, NULL);
+        This->timer_thread = CreateThread(NULL, 0, timer_thread, This, 0, NULL);
         SetThreadPriority(This->timer_thread, THREAD_PRIORITY_TIME_CRITICAL);
     }
 
