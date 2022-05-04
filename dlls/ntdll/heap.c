@@ -78,9 +78,10 @@ struct rtl_heap_entry
 
 struct block
 {
-    DWORD  size;                    /* Block size; must be the first field */
-    DWORD  magic : 24;              /* Magic number */
-    DWORD  unused_bytes : 8;        /* Number of bytes in the block not used by user data (max value is HEAP_MIN_DATA_SIZE+HEAP_MIN_SHRINK_SIZE) */
+    WORD block_size;   /* block size in multiple of ALIGNMENT */
+    BYTE block_flags;
+    BYTE tail_size;    /* unused size (used block) / high size bits (free block) */
+    DWORD magic;
 };
 
 C_ASSERT( sizeof(struct block) == 8 );
@@ -228,36 +229,39 @@ static inline BOOL contains( const void *a, SIZE_T a_size, const void *b, SIZE_T
 
 static inline UINT block_get_flags( const struct block *block )
 {
-    return block->size & ~ARENA_SIZE_MASK;
+    return block->block_flags;
 }
 
 static inline UINT block_get_type( const struct block *block )
 {
-    if (block_get_flags( block ) & BLOCK_FLAG_FREE) return (block->unused_bytes << 24)|block->magic;
     return block->magic;
 }
 
 static inline void block_set_type( struct block *block, UINT type )
 {
-    if (type >> 24) block->unused_bytes = type >> 24;
     block->magic = type;
 }
 
 static inline UINT block_get_overhead( const struct block *block )
 {
     if (block_get_flags( block ) & BLOCK_FLAG_FREE) return sizeof(*block) + sizeof(struct list);
-    return sizeof(*block) + block->unused_bytes;
+    return sizeof(*block) + block->tail_size;
 }
 
 /* return the size of a block, including its header */
 static inline UINT block_get_size( const struct block *block )
 {
-    return block->size & ARENA_SIZE_MASK;
+    UINT block_size = block->block_size;
+    if (block_get_flags( block ) & BLOCK_FLAG_FREE) block_size += (UINT)block->tail_size << 16;
+    return block_size * ALIGNMENT;
 }
 
-static inline void block_set_size( struct block *block, UINT flags, UINT block_size )
+static inline void block_set_size( struct block *block, UINT block_flags, UINT block_size )
 {
-    block->size = (block_size & ARENA_SIZE_MASK) | (flags & ~ARENA_SIZE_MASK);
+    block_size /= ALIGNMENT;
+    if (block_flags & BLOCK_FLAG_FREE) block->tail_size = block_size >> 16;
+    block->block_size = block_size;
+    block->block_flags = block_flags;
 }
 
 static inline void *subheap_base( const SUBHEAP *subheap )
@@ -350,7 +354,7 @@ static inline void mark_block_free( void *ptr, SIZE_T size, DWORD flags )
 /* mark a block of memory as a tail block */
 static inline void mark_block_tail( struct block *block, DWORD flags )
 {
-    char *tail = (char *)block + block_get_size( block ) - block->unused_bytes;
+    char *tail = (char *)block + block_get_size( block ) - block->tail_size;
     if (flags & HEAP_TAIL_CHECKING_ENABLED)
     {
         valgrind_make_writable( tail, ALIGNMENT );
@@ -518,7 +522,7 @@ static void heap_dump( const HEAP *heap )
             {
                 TRACE( "      %p: (used) type %#10x, size %#8x, flags %#4x, unused %#4x", block,
                        block_get_type( block ), block_get_size( block ), block_get_flags( block ),
-                       block->unused_bytes );
+                       block->tail_size );
                 if (!(block_get_flags( block ) & BLOCK_FLAG_PREV_FREE)) TRACE( "\n" );
                 else TRACE( ", back %p\n", *((struct block **)block - 1) );
 
@@ -548,7 +552,7 @@ static void heap_dump( const HEAP *heap )
             if (!(block = heap->pending_free[i])) break;
 
             TRACE( "   %c%p: (pend) type %#10x, size %#8x, flags %#4x, unused %#4x", i == heap->pending_pos ? '*' : ' ',
-                   block, block_get_type( block ), block_get_size( block ), block_get_flags( block ), block->unused_bytes );
+                   block, block_get_type( block ), block_get_size( block ), block_get_flags( block ), block->tail_size );
             if (!(block_get_flags( block ) & BLOCK_FLAG_PREV_FREE)) TRACE( "\n" );
             else TRACE( ", back %p\n", *((struct block **)block - 1) );
         }
@@ -763,15 +767,15 @@ static inline void shrink_used_block( SUBHEAP *subheap, struct block *block, UIN
     if (old_block_size >= block_size + HEAP_MIN_BLOCK_SIZE)
     {
         block_set_size( block, flags, block_size );
-        block->unused_bytes = block_size - sizeof(*block) - size;
+        block->tail_size = block_size - sizeof(*block) - size;
         create_free_block( subheap, next_block( subheap, block ), old_block_size - block_size );
     }
     else
     {
         struct block *next;
         block_set_size( block, flags, old_block_size );
-        block->unused_bytes = old_block_size - sizeof(*block) - size;
-        if ((next = next_block( subheap, block ))) next->size &= ~BLOCK_FLAG_PREV_FREE;
+        block->tail_size = old_block_size - sizeof(*block) - size;
+        if ((next = next_block( subheap, block ))) next->block_flags &= ~BLOCK_FLAG_PREV_FREE;
     }
 }
 
@@ -1136,7 +1140,7 @@ static BOOL validate_used_block( const SUBHEAP *subheap, const struct block *blo
         err = "invalid block flags";
     else if (!contains( base, commit_end - base, block, block_get_size( block ) ))
         err = "invalid block size";
-    else if (block->unused_bytes > block_get_size( block ) - sizeof(*block))
+    else if (block->tail_size > block_get_size( block ) - sizeof(*block))
         err = "invalid block unused size";
     else if ((next = next_block( subheap, block )) && (block_get_flags( next ) & BLOCK_FLAG_PREV_FREE))
         err = "invalid next block flags";
@@ -1162,7 +1166,7 @@ static BOOL validate_used_block( const SUBHEAP *subheap, const struct block *blo
     }
     else if (!err && (flags & HEAP_TAIL_CHECKING_ENABLED))
     {
-        const unsigned char *tail = (unsigned char *)block + block_get_size( block ) - block->unused_bytes;
+        const unsigned char *tail = (unsigned char *)block + block_get_size( block ) - block->tail_size;
         for (i = 0; !err && i < ALIGNMENT; i++) if (tail[i] != ARENA_TAIL_FILLER) err = "invalid block tail";
     }
 
