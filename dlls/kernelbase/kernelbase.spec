@@ -499,7 +499,7 @@
 @ stdcall -norelay GetCurrentThread() kernelbase_GetCurrentThread
 @ stdcall -norelay GetCurrentThreadId() kernelbase_GetCurrentThreadId
 @ stdcall GetCurrentThreadStackLimits(ptr ptr)
-@ stdcall GetDateFormatA(long long ptr str ptr long) kernel32.GetDateFormatA
+@ stdcall GetDateFormatA(long long ptr str ptr long)
 @ stdcall GetDateFormatEx(wstr long ptr wstr ptr long wstr)
 @ stdcall GetDateFormatW(long long ptr wstr ptr long)
 @ stdcall GetDeviceDriverBaseNameA(ptr ptr long)

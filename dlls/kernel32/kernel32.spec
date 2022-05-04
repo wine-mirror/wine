@@ -640,7 +640,7 @@
 @ stdcall -norelay GetCurrentThreadId() KERNEL32_GetCurrentThreadId
 @ stdcall -import GetCurrentThreadStackLimits(ptr ptr)
 @ stdcall -arch=x86_64 GetCurrentUmsThread()
-@ stdcall GetDateFormatA(long long ptr str ptr long)
+@ stdcall -import GetDateFormatA(long long ptr str ptr long)
 @ stdcall -import GetDateFormatEx(wstr long ptr wstr ptr long wstr)
 @ stdcall -import GetDateFormatW(long long ptr wstr ptr long)
 @ stdcall GetDaylightFlag()

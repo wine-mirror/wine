@@ -728,59 +728,6 @@ static INT NLS_GetDateTimeFormatA(LCID lcid, DWORD dwFlags,
 }
 
 /******************************************************************************
- * GetDateFormatA [KERNEL32.@]
- *
- * Format a date for a given locale.
- *
- * PARAMS
- *  lcid      [I] Locale to format for
- *  dwFlags   [I] LOCALE_ and DATE_ flags from "winnls.h"
- *  lpTime    [I] Date to format
- *  lpFormat  [I] Format string, or NULL to use the system defaults
- *  lpDateStr [O] Destination for formatted string
- *  cchOut    [I] Size of lpDateStr, or 0 to calculate the resulting size
- *
- * NOTES
- *  - If lpFormat is NULL, lpDateStr will be formatted according to the format
- *    details returned by GetLocaleInfoA() and modified by dwFlags.
- *  - lpFormat is a string of characters and formatting tokens. Any characters
- *    in the string are copied verbatim to lpDateStr, with tokens being replaced
- *    by the date values they represent.
- *  - The following tokens have special meanings in a date format string:
- *|  Token  Meaning
- *|  -----  -------
- *|  d      Single digit day of the month (no leading 0)
- *|  dd     Double digit day of the month
- *|  ddd    Short name for the day of the week
- *|  dddd   Long name for the day of the week
- *|  M      Single digit month of the year (no leading 0)
- *|  MM     Double digit month of the year
- *|  MMM    Short name for the month of the year
- *|  MMMM   Long name for the month of the year
- *|  y      Double digit year number (no leading 0)
- *|  yy     Double digit year number
- *|  yyyy   Four digit year number
- *|  gg     Era string, for example 'AD'.
- *  - To output any literal character that could be misidentified as a token,
- *    enclose it in single quotes.
- *  - The ANSI version of this function fails if lcid is Unicode only.
- *
- * RETURNS
- *  Success: The number of character written to lpDateStr, or that would
- *           have been written, if cchOut is 0.
- *  Failure: 0. Use GetLastError() to determine the cause.
- */
-INT WINAPI GetDateFormatA( LCID lcid, DWORD dwFlags, const SYSTEMTIME* lpTime,
-                           LPCSTR lpFormat, LPSTR lpDateStr, INT cchOut)
-{
-  TRACE("(0x%04lx,0x%08lx,%p,%s,%p,%d)\n",lcid, dwFlags, lpTime,
-        debugstr_a(lpFormat), lpDateStr, cchOut);
-
-  return NLS_GetDateTimeFormatA(lcid, dwFlags | DATE_DATEVARSONLY, lpTime,
-                                lpFormat, lpDateStr, cchOut);
-}
-
-/******************************************************************************
  *		GetTimeFormatA	[KERNEL32.@]
  *
  * Format a time for a given locale.
