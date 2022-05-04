@@ -286,7 +286,7 @@ static inline BOOL check_subheap( const SUBHEAP *subheap )
     return contains( base, subheap->size, base + subheap->headerSize, subheap->commitSize - subheap->headerSize );
 }
 
-static BOOL heap_validate( HEAP *heap );
+static BOOL heap_validate( const HEAP *heap );
 
 /* mark a block of memory as free for debugging purposes */
 static inline void mark_block_free( void *ptr, SIZE_T size, DWORD flags )
@@ -1287,15 +1287,14 @@ static BOOL heap_validate_ptr( const HEAP *heap, const void *ptr, SUBHEAP **subh
     return validate_used_block( *subheap, arena );
 }
 
-static BOOL heap_validate( HEAP *heap )
+static BOOL heap_validate( const HEAP *heap )
 {
     const ARENA_LARGE *large_arena;
+    const struct block *block;
     const SUBHEAP *subheap;
 
     LIST_FOR_EACH_ENTRY( subheap, &heap->subheap_list, SUBHEAP, entry )
     {
-        char *ptr = (char *)subheap->base + subheap->headerSize;
-
         if (!check_subheap( subheap ))
         {
             ERR( "heap %p, subheap %p corrupted sizes\n", heap, subheap );
@@ -1303,17 +1302,15 @@ static BOOL heap_validate( HEAP *heap )
             return FALSE;
         }
 
-        while (ptr < (char *)subheap->base + subheap->size)
+        for (block = first_block( subheap ); block; block = next_block( subheap, block ))
         {
-            if (*(DWORD *)ptr & ARENA_FLAG_FREE)
+            if (block_get_flags( block ) & ARENA_FLAG_FREE)
             {
-                if (!validate_free_block( subheap, (ARENA_INUSE *)ptr )) return FALSE;
-                ptr += sizeof(ARENA_FREE) + (*(DWORD *)ptr & ARENA_SIZE_MASK);
+                if (!validate_free_block( subheap, block )) return FALSE;
             }
             else
             {
-                if (!validate_used_block( subheap, (ARENA_INUSE *)ptr )) return FALSE;
-                ptr += sizeof(ARENA_INUSE) + (*(DWORD *)ptr & ARENA_SIZE_MASK);
+                if (!validate_used_block( subheap, block )) return FALSE;
             }
         }
     }
