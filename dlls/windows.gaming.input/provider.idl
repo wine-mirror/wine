@@ -38,6 +38,9 @@ namespace Windows.Gaming.Input.Custom {
     interface IWineGameControllerProvider;
     runtimeclass WineGameControllerProvider;
 
+    /* type-pruning version of AsyncOperationCompletedHandler<T> */
+    delegate HRESULT WineAsyncOperationCompletedHandler([in] IInspectable *async, [in] AsyncStatus status);
+
     enum WineGameControllerType
     {
         Joystick = 0,

@@ -19,6 +19,7 @@
  */
 
 #include "private.h"
+#include "provider.h"
 
 #include "wine/debug.h"
 
@@ -33,7 +34,6 @@ struct async_bool
     IAsyncInfo IAsyncInfo_iface;
     LONG ref;
 
-    IAsyncOperationCompletedHandler_boolean *handler;
     BOOLEAN result;
 
     async_operation_boolean_callback callback;
@@ -41,6 +41,7 @@ struct async_bool
     IInspectable *invoker;
 
     CRITICAL_SECTION cs;
+    IWineAsyncOperationCompletedHandler *handler;
     AsyncStatus status;
     HRESULT hr;
 };
@@ -195,7 +196,7 @@ static ULONG WINAPI async_bool_Release( IAsyncOperation_boolean *iface )
     if (!ref)
     {
         IAsyncInfo_Close( &impl->IAsyncInfo_iface );
-        if (impl->handler && impl->handler != HANDLER_NOT_SET) IAsyncOperationCompletedHandler_boolean_Release( impl->handler );
+        if (impl->handler && impl->handler != HANDLER_NOT_SET) IWineAsyncOperationCompletedHandler_Release( impl->handler );
         IInspectable_Release( impl->invoker );
         DeleteCriticalSection( &impl->cs );
         free( impl );
@@ -223,8 +224,9 @@ static HRESULT WINAPI async_bool_GetTrustLevel( IAsyncOperation_boolean *iface, 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI async_bool_put_Completed( IAsyncOperation_boolean *iface, IAsyncOperationCompletedHandler_boolean *handler )
+static HRESULT WINAPI async_bool_put_Completed( IAsyncOperation_boolean *iface, IAsyncOperationCompletedHandler_boolean *bool_handler )
 {
+    IWineAsyncOperationCompletedHandler *handler = (IWineAsyncOperationCompletedHandler *)bool_handler;
     struct async_bool *impl = impl_from_IAsyncOperation_boolean( iface );
     HRESULT hr = S_OK;
 
@@ -235,7 +237,7 @@ static HRESULT WINAPI async_bool_put_Completed( IAsyncOperation_boolean *iface, 
     else if (impl->handler != HANDLER_NOT_SET) hr = E_ILLEGAL_DELEGATE_ASSIGNMENT;
     else if ((impl->handler = handler))
     {
-        IAsyncOperationCompletedHandler_boolean_AddRef( impl->handler );
+        IWineAsyncOperationCompletedHandler_AddRef( impl->handler );
 
         if (impl->status > Started)
         {
@@ -244,8 +246,8 @@ static HRESULT WINAPI async_bool_put_Completed( IAsyncOperation_boolean *iface, 
             impl->handler = NULL; /* Prevent concurrent invoke. */
             LeaveCriticalSection( &impl->cs );
 
-            IAsyncOperationCompletedHandler_boolean_Invoke( handler, operation, status );
-            IAsyncOperationCompletedHandler_boolean_Release( handler );
+            IWineAsyncOperationCompletedHandler_Invoke( handler, (IInspectable *)operation, status );
+            IWineAsyncOperationCompletedHandler_Release( handler );
 
             return S_OK;
         }
@@ -255,8 +257,9 @@ static HRESULT WINAPI async_bool_put_Completed( IAsyncOperation_boolean *iface, 
     return hr;
 }
 
-static HRESULT WINAPI async_bool_get_Completed( IAsyncOperation_boolean *iface, IAsyncOperationCompletedHandler_boolean **handler )
+static HRESULT WINAPI async_bool_get_Completed( IAsyncOperation_boolean *iface, IAsyncOperationCompletedHandler_boolean **bool_handler )
 {
+    IWineAsyncOperationCompletedHandler **handler = (IWineAsyncOperationCompletedHandler **)bool_handler;
     struct async_bool *impl = impl_from_IAsyncOperation_boolean( iface );
     HRESULT hr = S_OK;
 
@@ -321,13 +324,13 @@ static void CALLBACK async_run_cb( TP_CALLBACK_INSTANCE *instance, void *data, T
 
     if (impl->handler != NULL && impl->handler != HANDLER_NOT_SET)
     {
-        IAsyncOperationCompletedHandler_boolean *handler = impl->handler;
+        IWineAsyncOperationCompletedHandler *handler = impl->handler;
         AsyncStatus status = impl->status;
         impl->handler = NULL; /* Prevent concurrent invoke. */
         LeaveCriticalSection( &impl->cs );
 
-        IAsyncOperationCompletedHandler_boolean_Invoke( handler, operation, status );
-        IAsyncOperationCompletedHandler_boolean_Release( handler );
+        IWineAsyncOperationCompletedHandler_Invoke( handler, (IInspectable *)operation, status );
+        IWineAsyncOperationCompletedHandler_Release( handler );
     }
     else LeaveCriticalSection( &impl->cs );
 
