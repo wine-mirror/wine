@@ -231,6 +231,12 @@ static inline UINT block_get_type( const struct block *block )
     return block->magic;
 }
 
+static inline void block_set_type( struct block *block, UINT type )
+{
+    if (type >> 24) block->unused_bytes = type >> 24;
+    block->magic = type;
+}
+
 static inline UINT block_get_overhead( const struct block *block )
 {
     if (block_get_flags( block ) & ARENA_FLAG_FREE) return sizeof(struct entry);
@@ -685,7 +691,7 @@ static void create_free_block( SUBHEAP *subheap, struct block *block, SIZE_T blo
     BOOL last;
 
     mark_block_uninitialized( block, sizeof(*entry) );
-    entry->magic = ARENA_FREE_MAGIC;
+    block_set_type( block, ARENA_FREE_MAGIC );
 
     /* If debugging, erase the freed block content */
 
@@ -737,7 +743,7 @@ static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
         ARENA_INUSE *prev = heap->pending_free[heap->pending_pos];
         heap->pending_free[heap->pending_pos] = pArena;
         heap->pending_pos = (heap->pending_pos + 1) % MAX_FREE_PENDING;
-        pArena->magic = ARENA_PENDING_MAGIC;
+        block_set_type( pArena, ARENA_PENDING_MAGIC );
         mark_block_free( pArena + 1, pArena->size & ARENA_SIZE_MASK, heap->flags );
         if (!prev) return;
         pArena = prev;
@@ -1536,7 +1542,7 @@ static NTSTATUS heap_allocate( HEAP *heap, ULONG flags, SIZE_T size, void **ret 
     /* in-use arena is smaller than free arena,
      * so we have to add the difference to the size */
     block->size  = (block->size & ~ARENA_FLAG_FREE) + sizeof(struct entry) - sizeof(*block);
-    block->magic = ARENA_INUSE_MAGIC;
+    block_set_type( block, ARENA_INUSE_MAGIC );
 
     /* Shrink the block */
 
