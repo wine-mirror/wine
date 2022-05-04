@@ -2277,14 +2277,13 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
         expect_size = max( alloc_size, 2 * sizeof(void *) );
         expect_size = ALIGN_BLOCK_SIZE( expect_size + extra_size + 2 * sizeof(void *) );
         diff = min( llabs( ptr2 - ptr1 ), llabs( ptr1 - ptr0 ) );
-        todo_wine
         ok( diff == expect_size, "got diff %#Ix\n", diff );
 
         ok( !memcmp( ptr0 + alloc_size, tail_buf, tail_size ), "missing block tail\n" );
         ok( !memcmp( ptr1 + alloc_size, tail_buf, tail_size ), "missing block tail\n" );
         ok( !memcmp( ptr2 + alloc_size, tail_buf, tail_size ), "missing block tail\n" );
 
-        todo_wine
+        todo_wine_if( global_flags & FLG_HEAP_ENABLE_FREE_CHECK )
         ok( !memcmp( ptr0 + alloc_size + tail_size, padd_buf, 2 * sizeof(void *) ), "unexpected padding\n" );
 
         tmp_ptr = (void *)0xdeadbeef;

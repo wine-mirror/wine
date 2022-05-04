@@ -212,6 +212,7 @@ C_ASSERT( offsetof(HEAP, subheap) <= COMMIT_MASK );
 
 /* some undocumented flags (names are made up) */
 #define HEAP_PRIVATE          0x00001000
+#define HEAP_ADD_USER_INFO    0x00000100
 #define HEAP_PAGE_ALLOCS      0x01000000
 #define HEAP_VALIDATE         0x10000000
 #define HEAP_VALIDATE_ALL     0x20000000
@@ -451,7 +452,7 @@ static RTL_CRITICAL_SECTION_DEBUG process_heap_cs_debug =
 static inline ULONG heap_get_flags( const HEAP *heap, ULONG flags )
 {
     if (flags & (HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED)) flags |= HEAP_CHECKING_ENABLED;
-    flags &= HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY | HEAP_REALLOC_IN_PLACE_ONLY | HEAP_CHECKING_ENABLED;
+    flags &= HEAP_GENERATE_EXCEPTIONS | HEAP_NO_SERIALIZE | HEAP_ZERO_MEMORY | HEAP_REALLOC_IN_PLACE_ONLY | HEAP_CHECKING_ENABLED | HEAP_ADD_USER_INFO;
     return heap->flags | flags;
 }
 
@@ -1476,7 +1477,7 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
 
 static SIZE_T heap_get_block_size( HEAP *heap, ULONG flags, SIZE_T size )
 {
-    static const ULONG padd_flags = HEAP_VALIDATE | HEAP_VALIDATE_ALL | HEAP_VALIDATE_PARAMS;
+    static const ULONG padd_flags = HEAP_VALIDATE | HEAP_VALIDATE_ALL | HEAP_VALIDATE_PARAMS | HEAP_ADD_USER_INFO;
     static const ULONG check_flags = HEAP_TAIL_CHECKING_ENABLED | HEAP_FREE_CHECKING_ENABLED | HEAP_CHECKING_ENABLED;
     SIZE_T overhead;
 
