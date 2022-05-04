@@ -253,17 +253,11 @@ static inline UINT block_get_overhead( const struct block *block )
 /* return the size of a block, including its header */
 static inline UINT block_get_size( const struct block *block )
 {
-    UINT data_size = block->size & ARENA_SIZE_MASK, size = data_size;
-    if (block_get_flags( block ) & ARENA_FLAG_FREE) size += sizeof(struct entry);
-    else size += sizeof(*block);
-    if (size < data_size) return ~0u;
-    return size;
+    return block->size & ARENA_SIZE_MASK;
 }
 
 static inline void block_set_size( struct block *block, UINT flags, UINT block_size )
 {
-    if (flags & ARENA_FLAG_FREE) block_size -= sizeof(struct entry);
-    else block_size -= sizeof(*block);
     block->size = (block_size & ARENA_SIZE_MASK) | (flags & ~ARENA_SIZE_MASK);
 }
 
