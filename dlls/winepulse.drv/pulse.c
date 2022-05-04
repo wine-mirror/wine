@@ -896,7 +896,7 @@ static HRESULT pulse_spec_from_waveformat(struct pulse_stream *stream, const WAV
 
         if (i < fmt->nChannels || (mask & SPEAKER_RESERVED)) {
             stream->map.channels = 0;
-            ERR("Invalid channel mask: %i/%i and %x(%x)\n", i, fmt->nChannels, mask, wfe->dwChannelMask);
+            ERR("Invalid channel mask: %i/%i and %x(%x)\n", i, fmt->nChannels, mask, (unsigned)wfe->dwChannelMask);
             break;
         }
         break;
@@ -1018,7 +1018,7 @@ static NTSTATUS pulse_create_stream(void *args)
         stream->vol[i] = 1.f;
 
     hr = pulse_spec_from_waveformat(stream, params->fmt);
-    TRACE("Obtaining format returns %08x\n", hr);
+    TRACE("Obtaining format returns %08x\n", (unsigned)hr);
 
     if (FAILED(hr))
         goto exit;
@@ -1984,7 +1984,7 @@ static NTSTATUS pulse_get_latency(void *args)
         lat = attr->fragsize / pa_frame_size(&stream->ss);
     *params->latency = (lat * 10000000) / stream->ss.rate + pulse_def_period[0];
     pulse_unlock();
-    TRACE("Latency: %u ms\n", (DWORD)(*params->latency / 10000));
+    TRACE("Latency: %u ms\n", (unsigned)(*params->latency / 10000));
     params->result = S_OK;
     return STATUS_SUCCESS;
 }
