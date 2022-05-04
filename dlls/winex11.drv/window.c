@@ -2092,6 +2092,52 @@ HWND create_foreign_window( Display *display, Window xwin )
 }
 
 
+NTSTATUS x11drv_systray_init( void *arg )
+{
+    Display *display;
+
+    if (is_virtual_desktop()) return FALSE;
+
+    display = thread_init_display();
+    if (DefaultScreen( display ) == 0)
+        systray_atom = x11drv_atom(_NET_SYSTEM_TRAY_S0);
+    else
+    {
+        char systray_buffer[29]; /* strlen(_NET_SYSTEM_TRAY_S4294967295)+1 */
+        sprintf( systray_buffer, "_NET_SYSTEM_TRAY_S%u", DefaultScreen( display ) );
+        systray_atom = XInternAtom( display, systray_buffer, False );
+    }
+    XSelectInput( display, root_window, StructureNotifyMask );
+
+    return TRUE;
+}
+
+
+NTSTATUS x11drv_systray_clear( void *arg )
+{
+    HWND hwnd = *(HWND*)arg;
+    Window win = X11DRV_get_whole_window( hwnd );
+    if (win) XClearArea( gdi_display, win, 0, 0, 0, 0, True );
+    return 0;
+}
+
+
+NTSTATUS x11drv_systray_hide( void *arg )
+{
+    HWND hwnd = *(HWND*)arg;
+    struct x11drv_win_data *data;
+
+    /* make sure we don't try to unmap it, it confuses some systray docks */
+    if ((data = get_win_data( hwnd )))
+    {
+        if (data->embedded) data->mapped = FALSE;
+        release_win_data( data );
+    }
+
+    return 0;
+}
+
+
 /***********************************************************************
  *		X11DRV_get_whole_window
  *

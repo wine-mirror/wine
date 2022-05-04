@@ -587,10 +587,13 @@ static BOOL init_systray(void)
 {
     static BOOL init_done;
     WNDCLASSEXW class;
-    Display *display;
 
-    if (is_virtual_desktop()) return FALSE;
     if (init_done) return TRUE;
+    if (!X11DRV_CALL( systray_init, NULL ))
+    {
+        init_done = TRUE;
+        return FALSE;
+    }
 
     icon_cx = GetSystemMetrics( SM_CXSMICON ) + 2 * ICON_BORDER;
     icon_cy = GetSystemMetrics( SM_CYSMICON ) + 2 * ICON_BORDER;
@@ -619,17 +622,6 @@ static BOOL init_systray(void)
         ERR( "Could not register standalone tray window class\n" );
         return FALSE;
     }
-
-    display = thread_init_display();
-    if (DefaultScreen( display ) == 0)
-        systray_atom = x11drv_atom(_NET_SYSTEM_TRAY_S0);
-    else
-    {
-        char systray_buffer[29]; /* strlen(_NET_SYSTEM_TRAY_S4294967295)+1 */
-        sprintf( systray_buffer, "_NET_SYSTEM_TRAY_S%u", DefaultScreen( display ) );
-        systray_atom = XInternAtom( display, systray_buffer, False );
-    }
-    XSelectInput( display, root_window, StructureNotifyMask );
 
     init_done = TRUE;
     return TRUE;
@@ -700,18 +692,11 @@ void change_systray_owner( Display *display, Window systray_window )
 /* hide a tray icon */
 static BOOL hide_icon( struct tray_icon *icon )
 {
-    struct x11drv_win_data *data;
-
     TRACE( "id=0x%x, hwnd=%p\n", icon->id, icon->owner );
 
     if (!icon->window) return TRUE;  /* already hidden */
 
-    /* make sure we don't try to unmap it, it confuses some systray docks */
-    if ((data = get_win_data( icon->window )))
-    {
-        if (data->embedded) data->mapped = FALSE;
-        release_win_data( data );
-    }
+    X11DRV_CALL( systray_hide, &icon->window );
     DestroyWindow(icon->window);
     DestroyWindow(icon->tooltip);
     icon->window = 0;
@@ -759,11 +744,7 @@ static BOOL modify_icon( struct tray_icon *icon, NOTIFYICONDATAW *nid )
         {
             if (icon->display != -1) InvalidateRect( icon->window, NULL, TRUE );
             else if (icon->layered) repaint_tray_icon( icon );
-            else
-            {
-                Window win = X11DRV_get_whole_window( icon->window );
-                if (win) XClearArea( gdi_display, win, 0, 0, 0, 0, True );
-            }
+            else X11DRV_CALL( systray_clear, &icon->window );
         }
     }
 
