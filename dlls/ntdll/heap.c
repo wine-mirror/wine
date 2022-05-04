@@ -595,28 +595,6 @@ static HEAP *HEAP_GetPtr(
 }
 
 
-/***********************************************************************
- *           HEAP_InsertFreeBlock
- *
- * Insert a free block into the free list.
- */
-static inline void HEAP_InsertFreeBlock( HEAP *heap, ARENA_FREE *pArena, BOOL last )
-{
-    SIZE_T block_size = (pArena->size & ARENA_SIZE_MASK) + sizeof(*pArena);
-    struct entry *list = find_free_list( heap, block_size, last );
-    if (last)
-    {
-        /* insert at end of free list, i.e. before the next free list entry */
-        list_add_before( &list->entry, &pArena->entry );
-    }
-    else
-    {
-        /* insert at head of free list */
-        list_add_after( &list->entry, &pArena->entry );
-    }
-}
-
-
 static SUBHEAP *find_subheap( const HEAP *heap, const struct block *block, BOOL heap_walk )
 {
     SUBHEAP *subheap;
@@ -692,7 +670,7 @@ static inline BOOL HEAP_Decommit( SUBHEAP *subheap, void *ptr )
 static void create_free_block( SUBHEAP *subheap, struct block *block, SIZE_T block_size )
 {
     const char *end = (char *)block + block_size, *commit_end = subheap_commit_end( subheap );
-    struct entry *entry = (struct entry *)block;
+    struct entry *entry = (struct entry *)block, *list;
     HEAP *heap = subheap->heap;
     DWORD flags = heap->flags;
     struct block *next;
@@ -724,7 +702,9 @@ static void create_free_block( SUBHEAP *subheap, struct block *block, SIZE_T blo
         *((struct block **)next - 1) = block;
     }
 
-    HEAP_InsertFreeBlock( heap, entry, !next );
+    list = find_free_list( heap, block_get_size( block ), !next );
+    if (!next) list_add_before( &list->entry, &entry->entry );
+    else list_add_after( &list->entry, &entry->entry );
 }
 
 
