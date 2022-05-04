@@ -127,9 +127,6 @@ C_ASSERT( sizeof(ARENA_LARGE) % LARGE_ALIGNMENT == 0 );
 
 #define ROUND_SIZE(size)       ((((size) + ALIGNMENT - 1) & ~(ALIGNMENT-1)) + ARENA_OFFSET)
 
-#define QUIET                  1           /* Suppress messages  */
-#define NOISY                  0           /* Report all errors  */
-
 /* minimum data size (without arenas) of an allocated block */
 /* make sure that it's larger than a free list entry */
 #define HEAP_MIN_DATA_SIZE    ROUND_SIZE(2 * sizeof(struct list))
@@ -289,7 +286,7 @@ static inline BOOL check_subheap( const SUBHEAP *subheap )
     return contains( base, subheap->size, base + subheap->headerSize, subheap->commitSize - subheap->headerSize );
 }
 
-static BOOL heap_validate( HEAP *heap, BOOL quiet );
+static BOOL heap_validate( HEAP *heap );
 
 /* mark a block of memory as free for debugging purposes */
 static inline void mark_block_free( void *ptr, SIZE_T size, DWORD flags )
@@ -579,7 +576,7 @@ static HEAP *HEAP_GetPtr(
     if (heapPtr->flags & HEAP_VALIDATE_ALL)
     {
         heap_lock( heapPtr, 0 );
-        valid = heap_validate( heapPtr, NOISY );
+        valid = heap_validate( heapPtr );
         heap_unlock( heapPtr, 0 );
 
         if (!valid && TRACE_ON(heap))
@@ -1290,7 +1287,7 @@ static BOOL heap_validate_ptr( const HEAP *heap, const void *ptr, SUBHEAP **subh
     return validate_used_block( *subheap, arena );
 }
 
-static BOOL heap_validate( HEAP *heap, BOOL quiet )
+static BOOL heap_validate( HEAP *heap )
 {
     const ARENA_LARGE *large_arena;
     const SUBHEAP *subheap;
@@ -1930,7 +1927,7 @@ BOOLEAN WINAPI RtlValidateHeap( HANDLE heap, ULONG flags, const void *ptr )
     {
         heap_lock( heapPtr, flags );
         if (ptr) ret = heap_validate_ptr( heapPtr, ptr, &subheap );
-        else ret = heap_validate( heapPtr, QUIET );
+        else ret = heap_validate( heapPtr );
         heap_unlock( heapPtr, flags );
     }
 
