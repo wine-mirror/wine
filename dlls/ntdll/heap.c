@@ -614,15 +614,17 @@ static inline void HEAP_InsertFreeBlock( HEAP *heap, ARENA_FREE *pArena, BOOL la
 }
 
 
-static SUBHEAP *find_subheap( const HEAP *heap, const void *ptr )
+static SUBHEAP *find_subheap( const HEAP *heap, const struct block *block, BOOL heap_walk )
 {
     SUBHEAP *subheap;
 
     LIST_FOR_EACH_ENTRY( subheap, &heap->subheap_list, SUBHEAP, entry )
     {
+        SIZE_T blocks_size = (char *)last_block( subheap ) - (char *)first_block( subheap );
         if (!check_subheap( subheap )) return NULL;
-        if (contains( subheap_base( subheap ), subheap_size( subheap ), ptr, sizeof(struct block) ))
-            return subheap;
+        if (contains( first_block( subheap ), blocks_size, block, sizeof(*block) )) return subheap;
+        /* outside of blocks region, possible corruption or heap_walk */
+        if (contains( subheap_base( subheap ), subheap_size( subheap ), block, 0 )) return heap_walk ? subheap : NULL;
     }
 
     return NULL;
@@ -760,7 +762,7 @@ static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
         mark_block_free( pArena + 1, pArena->size & ARENA_SIZE_MASK, heap->flags );
         if (!prev) return;
         pArena = prev;
-        subheap = find_subheap( heap, pArena );
+        subheap = find_subheap( heap, pArena, FALSE );
     }
 
     /* Check if we can merge with previous block */
@@ -1097,7 +1099,7 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T size,
                             sizeof(ARENA_FREE) - sizeof(ARENA_INUSE);
         if (arena_size >= size)
         {
-            subheap = find_subheap( heap, pArena );
+            subheap = find_subheap( heap, (struct block *)pArena, FALSE );
             if (!HEAP_Commit( subheap, (ARENA_INUSE *)pArena, size )) return NULL;
             *ppSubHeap = subheap;
             return pArena;
@@ -1145,9 +1147,7 @@ static BOOL is_valid_free_block( const HEAP *heap, const struct block *block )
     const SUBHEAP *subheap;
     unsigned int i;
 
-    if (!(subheap = find_subheap( heap, block ))) return FALSE;
-    if ((char *)block >= (char *)subheap->base + subheap->headerSize) return TRUE;
-    if (subheap != &heap->subheap) return FALSE;
+    if ((subheap = find_subheap( heap, block, FALSE ))) return TRUE;
     for (i = 0; i < HEAP_NB_FREE_LISTS; i++) if (block == (struct block *)&heap->freeList[i].arena) return TRUE;
     return FALSE;
 }
@@ -1155,7 +1155,6 @@ static BOOL is_valid_free_block( const HEAP *heap, const struct block *block )
 static BOOL validate_free_block( const SUBHEAP *subheap, const struct block *block )
 {
     const char *err = NULL, *base = subheap_base( subheap ), *commit_end = subheap_commit_end( subheap );
-    SIZE_T blocks_size = (char *)last_block( subheap ) - (char *)first_block( subheap );
     const struct entry *entry = (struct entry *)block;
     const struct block *prev, *next;
     HEAP *heap = subheap->heap;
@@ -1163,8 +1162,6 @@ static BOOL validate_free_block( const SUBHEAP *subheap, const struct block *blo
 
     if ((ULONG_PTR)(block + 1) % ALIGNMENT)
         err = "invalid block alignment";
-    else if (!contains( first_block( subheap ), blocks_size, block, sizeof(*block) ))
-        err = "invalid block pointer";
     else if (block_get_type( block ) != ARENA_FREE_MAGIC)
         err = "invalid block header";
     else if (!(block_get_flags( block ) & ARENA_FLAG_FREE) || (block_get_flags( block ) & ARENA_FLAG_PREV_FREE))
@@ -1211,7 +1208,6 @@ static BOOL validate_free_block( const SUBHEAP *subheap, const struct block *blo
 static BOOL validate_used_block( const SUBHEAP *subheap, const struct block *block )
 {
     const char *err = NULL, *base = subheap_base( subheap ), *commit_end = subheap_commit_end( subheap );
-    SIZE_T blocks_size = (char *)last_block( subheap ) - (char *)first_block( subheap );
     const HEAP *heap = subheap->heap;
     DWORD flags = heap->flags;
     const struct block *next;
@@ -1219,8 +1215,6 @@ static BOOL validate_used_block( const SUBHEAP *subheap, const struct block *blo
 
     if ((ULONG_PTR)(block + 1) % ALIGNMENT)
         err = "invalid block alignment";
-    else if (!contains( first_block( subheap ), blocks_size, block, sizeof(*block) ))
-        err = "invalid block pointer";
     else if (block_get_type( block ) != ARENA_INUSE_MAGIC && block_get_type( block ) != ARENA_PENDING_MAGIC)
         err = "invalid block header";
     else if (block_get_flags( block ) & ARENA_FLAG_FREE)
@@ -1272,12 +1266,11 @@ static BOOL heap_validate_ptr( const HEAP *heap, const void *ptr, SUBHEAP **subh
     const struct block *arena = (struct block *)ptr - 1;
     const ARENA_LARGE *large_arena;
 
-    if (!(*subheap = find_subheap( heap, arena )) ||
-        ((const char *)arena < (char *)(*subheap)->base + (*subheap)->headerSize))
+    if (!(*subheap = find_subheap( heap, arena, FALSE )))
     {
         if (!(large_arena = find_large_block( heap, ptr )))
         {
-            if (WARN_ON(heap)) WARN("heap %p, ptr %p is not inside heap\n", heap, ptr );
+            if (WARN_ON(heap)) WARN("heap %p, ptr %p: block region not found\n", heap, ptr );
             return FALSE;
         }
 
@@ -1325,7 +1318,6 @@ static inline struct block *unsafe_block_from_ptr( const HEAP *heap, const void 
 {
     struct block *block = (struct block *)ptr - 1;
     const char *err = NULL, *base, *commit_end;
-    SIZE_T blocks_size;
 
     if (heap->flags & HEAP_VALIDATE)
     {
@@ -1333,11 +1325,10 @@ static inline struct block *unsafe_block_from_ptr( const HEAP *heap, const void 
         return block;
     }
 
-    if ((*subheap = find_subheap( heap, block )))
+    if ((*subheap = find_subheap( heap, block, FALSE )))
     {
         base = subheap_base( *subheap );
         commit_end = subheap_commit_end( *subheap );
-        blocks_size = (char *)last_block( *subheap ) - (char *)first_block( *subheap );
     }
 
     if (!*subheap)
@@ -1347,8 +1338,6 @@ static inline struct block *unsafe_block_from_ptr( const HEAP *heap, const void 
     }
     else if ((ULONG_PTR)ptr % ALIGNMENT)
         err = "invalid ptr alignment";
-    else if (!contains( first_block( *subheap ), blocks_size, block, sizeof(*block) ))
-        err = "invalid block pointer";
     else if (block_get_type( block ) == ARENA_PENDING_MAGIC || (block_get_flags( block ) & ARENA_FLAG_FREE))
         err = "already freed block";
     else if (block_get_type( block ) != ARENA_INUSE_MAGIC)
@@ -1975,7 +1964,7 @@ static NTSTATUS heap_walk( const HEAP *heap, struct rtl_heap_entry *entry )
 
     if ((large = find_large_block( heap, entry->lpData )))
         next = &large->entry;
-    else if ((subheap = find_subheap( heap, entry->lpData )))
+    else if ((subheap = find_subheap( heap, entry->lpData, TRUE )))
     {
         if (!(status = heap_walk_blocks( heap, subheap, entry ))) return STATUS_SUCCESS;
         else if (status != STATUS_NO_MORE_ENTRIES) return status;
