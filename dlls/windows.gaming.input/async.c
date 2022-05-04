@@ -146,7 +146,8 @@ static HRESULT WINAPI async_impl_get_Completed( IWineAsyncInfoImpl *iface, IWine
 
     EnterCriticalSection( &impl->cs );
     if (impl->status == Closed) hr = E_ILLEGAL_METHOD_CALL;
-    *handler = (impl->handler != HANDLER_NOT_SET) ? impl->handler : NULL;
+    if (impl->handler == NULL || impl->handler == HANDLER_NOT_SET) *handler = NULL;
+    else IWineAsyncOperationCompletedHandler_AddRef( (*handler = impl->handler) );
     LeaveCriticalSection( &impl->cs );
 
     return hr;
