@@ -422,7 +422,7 @@ static inline DWORD get_config_key( HKEY defkey, HKEY appkey, const char *name,
 static void setup_options(void)
 {
     static const WCHAR x11driverW[] = {'\\','X','1','1',' ','D','r','i','v','e','r',0};
-    WCHAR buffer[MAX_PATH+16];
+    WCHAR buffer[MAX_PATH+16], *p, *appname;
     HKEY hkey, appkey = 0;
     DWORD len;
 
@@ -431,18 +431,21 @@ static void setup_options(void)
 
     /* open the app-specific key */
 
-    len = GetModuleFileNameW( 0, buffer, MAX_PATH );
+    appname = NtCurrentTeb()->Peb->ProcessParameters->ImagePathName.Buffer;
+    if ((p = strrchrW( appname, '/' ))) appname = p + 1;
+    if ((p = strrchrW( appname, '\\' ))) appname = p + 1;
+    len = lstrlenW( appname );
+
     if (len && len < MAX_PATH)
     {
         HKEY tmpkey;
-        WCHAR *p, *appname = buffer;
-        if ((p = strrchrW( appname, '/' ))) appname = p + 1;
-        if ((p = strrchrW( appname, '\\' ))) appname = p + 1;
-        CharLowerW(appname);
-        len = WideCharToMultiByte( CP_UNIXCP, 0, appname, -1, NULL, 0, NULL, NULL );
-        if ((process_name = malloc( len )))
-            WideCharToMultiByte( CP_UNIXCP, 0, appname, -1, process_name, len, NULL, NULL );
-        strcatW( appname, x11driverW );
+        int i;
+        for (i = 0; appname[i]; i++) buffer[i] = RtlDowncaseUnicodeChar( appname[i] );
+        buffer[i] = 0;
+        appname = buffer;
+        if ((process_name = malloc( len * 3 + 1 )))
+            ntdll_wcstoumbs( appname, len + 1, process_name, len * 3 + 1, FALSE );
+        memcpy( appname + i, x11driverW, sizeof(x11driverW) );
         /* @@ Wine registry key: HKCU\Software\Wine\AppDefaults\app.exe\X11 Driver */
         if ((tmpkey = open_hkcu_key( "Software\\Wine\\AppDefaults" )))
         {
