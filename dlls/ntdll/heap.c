@@ -349,14 +349,15 @@ static inline void mark_block_free( void *ptr, SIZE_T size, DWORD flags )
 }
 
 /* mark a block of memory as a tail block */
-static inline void mark_block_tail( void *ptr, SIZE_T size, DWORD flags )
+static inline void mark_block_tail( struct block *block, DWORD flags )
 {
+    char *tail = (char *)block + block_get_size( block ) - block->unused_bytes;
     if (flags & HEAP_TAIL_CHECKING_ENABLED)
     {
-        valgrind_make_writable( ptr, size );
-        memset( ptr, ARENA_TAIL_FILLER, size );
+        valgrind_make_writable( tail, ALIGNMENT );
+        memset( tail, ARENA_TAIL_FILLER, ALIGNMENT );
     }
-    valgrind_make_noaccess( ptr, size );
+    valgrind_make_noaccess( tail, ALIGNMENT );
 }
 
 /* initialize contents of a newly created block of memory */
@@ -1161,7 +1162,7 @@ static BOOL validate_used_block( const SUBHEAP *subheap, const struct block *blo
     else if (!err && (flags & HEAP_TAIL_CHECKING_ENABLED))
     {
         const unsigned char *tail = (unsigned char *)block + block_get_size( block ) - block->unused_bytes;
-        for (i = 0; !err && i < block->unused_bytes; i++) if (tail[i] != ARENA_TAIL_FILLER) err = "invalid block tail";
+        for (i = 0; !err && i < ALIGNMENT; i++) if (tail[i] != ARENA_TAIL_FILLER) err = "invalid block tail";
     }
 
     if (err)
@@ -1328,7 +1329,7 @@ static void heap_set_debug_flags( HANDLE handle )
                 else
                 {
                     if (block_get_type( block ) == ARENA_PENDING_MAGIC) mark_block_free( block + 1, block_get_size( block ) - sizeof(*block), flags );
-                    else mark_block_tail( (char *)block + block_get_size( block ) - block->unused_bytes, block->unused_bytes, flags );
+                    else mark_block_tail( block, flags );
                 }
             }
         }
@@ -1493,7 +1494,7 @@ static NTSTATUS heap_allocate( HEAP *heap, ULONG flags, SIZE_T size, void **ret 
     block_set_type( block, ARENA_INUSE_MAGIC );
     shrink_used_block( subheap, block, 0, old_block_size, block_size, size );
     initialize_block( block + 1, size, flags );
-    mark_block_tail( (char *)(block + 1) + size, block->unused_bytes, flags );
+    mark_block_tail( block, flags );
 
     *ret = block + 1;
     return STATUS_SUCCESS;
@@ -1614,7 +1615,7 @@ static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size
     shrink_used_block( subheap, block, block_get_flags( block ), old_block_size, block_size, size );
 
     if (size > old_size) initialize_block( (char *)(block + 1) + old_size, size - old_size, flags );
-    mark_block_tail( (char *)(block + 1) + size, block->unused_bytes, flags );
+    mark_block_tail( block, flags );
 
     /* Return the new arena */
 
