@@ -96,7 +96,7 @@ struct ACImpl {
     EDataFlow dataflow;
     float *vols;
     UINT32 channel_count;
-    struct oss_stream *stream;
+    stream_handle stream;
 
     HANDLE timer_thread;
 
@@ -239,7 +239,7 @@ int WINAPI AUDDRV_GetPriority(void)
     return params.priority;
 }
 
-static HRESULT stream_release(struct oss_stream *stream, HANDLE timer_thread)
+static HRESULT stream_release(stream_handle stream, HANDLE timer_thread)
 {
     struct release_stream_params params;
 
@@ -651,7 +651,7 @@ static HRESULT WINAPI AudioClient_Initialize(IAudioClient3 *iface,
 {
     ACImpl *This = impl_from_IAudioClient3(iface);
     struct create_stream_params params;
-    struct oss_stream *stream;
+    stream_handle stream;
     unsigned int i;
 
     TRACE("(%p)->(%x, %x, %s, %s, %p, %s)\n", This, mode, flags,

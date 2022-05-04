@@ -111,6 +111,11 @@ static NTSTATUS oss_unlock_result(struct oss_stream *stream,
     return STATUS_SUCCESS;
 }
 
+static struct oss_stream *handle_get_stream(stream_handle h)
+{
+    return (struct oss_stream *)(UINT_PTR)h;
+}
+
 static NTSTATUS test_connect(void *args)
 {
     struct test_connect_params *params = args;
@@ -615,7 +620,7 @@ exit:
         free(stream->fmt);
         free(stream);
     }else{
-        *params->stream = stream;
+        *params->stream = (stream_handle)(UINT_PTR)stream;
     }
 
     return STATUS_SUCCESS;
@@ -624,7 +629,7 @@ exit:
 static NTSTATUS release_stream(void *args)
 {
     struct release_stream_params *params = args;
-    struct oss_stream *stream = params->stream;
+    struct oss_stream *stream = handle_get_stream(params->stream);
     SIZE_T size;
 
     if(params->timer_thread){
@@ -653,7 +658,7 @@ static NTSTATUS release_stream(void *args)
 static NTSTATUS start(void *args)
 {
     struct start_params *params = args;
-    struct oss_stream *stream = params->stream;
+    struct oss_stream *stream = handle_get_stream(params->stream);
 
     oss_lock(stream);
 
@@ -671,7 +676,7 @@ static NTSTATUS start(void *args)
 static NTSTATUS stop(void *args)
 {
     struct stop_params *params = args;
-    struct oss_stream *stream = params->stream;
+    struct oss_stream *stream = handle_get_stream(params->stream);
 
     oss_lock(stream);
 
@@ -687,7 +692,7 @@ static NTSTATUS stop(void *args)
 static NTSTATUS reset(void *args)
 {
     struct reset_params *params = args;
-    struct oss_stream *stream = params->stream;
+    struct oss_stream *stream = handle_get_stream(params->stream);
 
     oss_lock(stream);
 
@@ -860,7 +865,7 @@ static void oss_read_data(struct oss_stream *stream)
 static NTSTATUS timer_loop(void *args)
 {
     struct timer_loop_params *params = args;
-    struct oss_stream *stream = params->stream;
+    struct oss_stream *stream = handle_get_stream(params->stream);
     LARGE_INTEGER delay, now, next;
     int adjust;
 
@@ -902,7 +907,7 @@ static NTSTATUS timer_loop(void *args)
 static NTSTATUS get_render_buffer(void *args)
 {
     struct get_render_buffer_params *params = args;
-    struct oss_stream *stream = params->stream;
+    struct oss_stream *stream = handle_get_stream(params->stream);
     UINT32 write_pos, frames = params->frames;
     BYTE **data = params->data;
     SIZE_T size;
@@ -968,7 +973,7 @@ static void oss_wrap_buffer(struct oss_stream *stream, BYTE *buffer, UINT32 writ
 static NTSTATUS release_render_buffer(void *args)
 {
     struct release_render_buffer_params *params = args;
-    struct oss_stream *stream = params->stream;
+    struct oss_stream *stream = handle_get_stream(params->stream);
     UINT32 written_frames = params->written_frames;
     UINT flags = params->flags;
     BYTE *buffer;
@@ -1008,7 +1013,7 @@ static NTSTATUS release_render_buffer(void *args)
 static NTSTATUS get_capture_buffer(void *args)
 {
     struct get_capture_buffer_params *params = args;
-    struct oss_stream *stream = params->stream;
+    struct oss_stream *stream = handle_get_stream(params->stream);
     UINT64 *devpos = params->devpos, *qpcpos = params->qpcpos;
     UINT32 *frames = params->frames;
     UINT *flags = params->flags;
@@ -1074,7 +1079,7 @@ static NTSTATUS get_capture_buffer(void *args)
 static NTSTATUS release_capture_buffer(void *args)
 {
     struct release_capture_buffer_params *params = args;
-    struct oss_stream *stream = params->stream;
+    struct oss_stream *stream = handle_get_stream(params->stream);
     UINT32 done = params->done;
 
     oss_lock(stream);
@@ -1231,7 +1236,7 @@ static NTSTATUS get_mix_format(void *args)
 static NTSTATUS get_buffer_size(void *args)
 {
     struct get_buffer_size_params *params = args;
-    struct oss_stream *stream = params->stream;
+    struct oss_stream *stream = handle_get_stream(params->stream);
 
     oss_lock(stream);
 
@@ -1243,7 +1248,7 @@ static NTSTATUS get_buffer_size(void *args)
 static NTSTATUS get_latency(void *args)
 {
     struct get_latency_params *params = args;
-    struct oss_stream *stream = params->stream;
+    struct oss_stream *stream = handle_get_stream(params->stream);
 
     oss_lock(stream);
 
@@ -1257,7 +1262,7 @@ static NTSTATUS get_latency(void *args)
 static NTSTATUS get_current_padding(void *args)
 {
     struct get_current_padding_params *params = args;
-    struct oss_stream *stream = params->stream;
+    struct oss_stream *stream = handle_get_stream(params->stream);
 
     oss_lock(stream);
 
@@ -1269,7 +1274,7 @@ static NTSTATUS get_current_padding(void *args)
 static NTSTATUS get_next_packet_size(void *args)
 {
     struct get_next_packet_size_params *params = args;
-    struct oss_stream *stream = params->stream;
+    struct oss_stream *stream = handle_get_stream(params->stream);
     UINT32 *frames = params->frames;
 
     oss_lock(stream);
@@ -1282,7 +1287,7 @@ static NTSTATUS get_next_packet_size(void *args)
 static NTSTATUS get_frequency(void *args)
 {
     struct get_frequency_params *params = args;
-    struct oss_stream *stream = params->stream;
+    struct oss_stream *stream = handle_get_stream(params->stream);
     UINT64 *freq = params->frequency;
 
     oss_lock(stream);
@@ -1298,7 +1303,7 @@ static NTSTATUS get_frequency(void *args)
 static NTSTATUS get_position(void *args)
 {
     struct get_position_params *params = args;
-    struct oss_stream *stream = params->stream;
+    struct oss_stream *stream = handle_get_stream(params->stream);
     UINT64 *pos = params->position, *qpctime = params->qpctime;
 
     oss_lock(stream);
@@ -1342,7 +1347,7 @@ static NTSTATUS get_position(void *args)
 static NTSTATUS set_volumes(void *args)
 {
     struct set_volumes_params *params = args;
-    struct oss_stream *stream = params->stream;
+    struct oss_stream *stream = handle_get_stream(params->stream);
 
     oss_lock(stream);
     stream->mute = !params->master_volume;
@@ -1354,7 +1359,7 @@ static NTSTATUS set_volumes(void *args)
 static NTSTATUS set_event_handle(void *args)
 {
     struct set_event_handle_params *params = args;
-    struct oss_stream *stream = params->stream;
+    struct oss_stream *stream = handle_get_stream(params->stream);
 
     oss_lock(stream);
 
@@ -1374,7 +1379,7 @@ static NTSTATUS set_event_handle(void *args)
 static NTSTATUS is_started(void *args)
 {
     struct is_started_params *params = args;
-    struct oss_stream *stream = params->stream;
+    struct oss_stream *stream = handle_get_stream(params->stream);
 
     oss_lock(stream);
 
