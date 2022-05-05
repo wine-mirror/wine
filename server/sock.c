@@ -1315,7 +1315,12 @@ static int sock_get_poll_events( struct fd *fd )
 
         if (async_queued( &sock->write_q ))
         {
-            if (async_waiting( &sock->write_q )) ev |= POLLOUT;
+            /* As with read asyncs above, clear POLLOUT if we have an alerted
+             * async. */
+            if (async_waiting( &sock->write_q ))
+                ev |= POLLOUT;
+            else
+                ev &= ~POLLOUT;
         }
         else if (!sock->wr_shutdown && (mask & AFD_POLL_WRITE))
         {
