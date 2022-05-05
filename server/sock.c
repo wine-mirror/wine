@@ -1011,10 +1011,13 @@ static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
         event &= ~(POLLIN | POLLPRI);
     }
 
-    if (event & POLLOUT && async_waiting( &sock->write_q ))
+    if ((event & POLLOUT) && async_queued( &sock->write_q ))
     {
-        if (debug_level) fprintf( stderr, "activating write queue for socket %p\n", sock );
-        async_wake_up( &sock->write_q, STATUS_ALERTED );
+        if (async_waiting( &sock->write_q ))
+        {
+            if (debug_level) fprintf( stderr, "activating write queue for socket %p\n", sock );
+            async_wake_up( &sock->write_q, STATUS_ALERTED );
+        }
         event &= ~POLLOUT;
     }
 
