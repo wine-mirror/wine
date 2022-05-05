@@ -1972,6 +1972,7 @@ static void test_MFCreateMFByteStreamOnStream(void)
     ULONG ref, size;
     HRESULT hr;
     UINT count;
+    QWORD to;
 
     if(!pMFCreateMFByteStreamOnStream)
     {
@@ -2055,10 +2056,44 @@ static void test_MFCreateMFByteStreamOnStream(void)
     ok(hr == S_OK, "Failed to get stream capabilities, hr %#lx.\n", hr);
     ok(caps == (MFBYTESTREAM_IS_READABLE | MFBYTESTREAM_IS_SEEKABLE), "Unexpected caps %#lx.\n", caps);
 
+    /* IMFByteStream maintains position separately from IStream */
+    caps = 0;
+    hr = IStream_Read(stream, &caps, sizeof(caps), &size);
+    ok(hr == S_OK, "Failed to read from raw stream, hr %#lx.\n", hr);
+    ok(size == 4, "Unexpected size.\n");
+    ok(caps == 0xffff0000, "Unexpected content.\n");
+
     caps = 0;
     hr = IMFByteStream_Read(bytestream, (BYTE *)&caps, sizeof(caps), &size);
     ok(hr == S_OK, "Failed to read from stream, hr %#lx.\n", hr);
+    ok(size == 4, "Unexpected size.\n");
     ok(caps == 0xffff0000, "Unexpected content.\n");
+
+    caps = 0;
+    hr = IStream_Read(stream, &caps, sizeof(caps), &size);
+    ok(hr == S_OK, "Failed to read from raw stream, hr %#lx.\n", hr);
+    ok(size == 0, "Unexpected size.\n");
+    ok(caps == 0, "Unexpected content.\n");
+
+    hr = IMFByteStream_Seek(bytestream, msoBegin, 0, 0, &to);
+    ok(hr == S_OK, "Failed to read from stream, hr %#lx.\n", hr);
+
+    hr = IStream_Read(stream, &caps, sizeof(caps), &size);
+    ok(hr == S_OK, "Failed to read from raw stream, hr %#lx.\n", hr);
+    ok(size == 0, "Unexpected size.\n");
+    ok(caps == 0, "Unexpected content.\n");
+
+    caps = 0;
+    hr = IMFByteStream_Read(bytestream, (BYTE *)&caps, sizeof(caps), &size);
+    ok(hr == S_OK, "Failed to read from stream, hr %#lx.\n", hr);
+    ok(size == 4, "Unexpected size.\n");
+    ok(caps == 0xffff0000, "Unexpected content.\n");
+
+    caps = 0;
+    hr = IMFByteStream_Read(bytestream, (BYTE *)&caps, sizeof(caps), &size);
+    ok(hr == S_OK, "Failed to read from stream, hr %#lx.\n", hr);
+    ok(size == 0, "Unexpected size.\n");
+    ok(caps == 0, "Unexpected content.\n");
 
     IMFAttributes_Release(attributes);
     IMFByteStream_Release(bytestream);
