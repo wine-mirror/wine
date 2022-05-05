@@ -1001,10 +1001,13 @@ static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
     if ((event & POLLOUT) && sock->connect_req && sock->connect_req->iosb->status == STATUS_PENDING)
         complete_async_connect( sock );
 
-    if (event & (POLLIN | POLLPRI) && async_waiting( &sock->read_q ))
+    if ((event & (POLLIN | POLLPRI)) && async_queued( &sock->read_q ))
     {
-        if (debug_level) fprintf( stderr, "activating read queue for socket %p\n", sock );
-        async_wake_up( &sock->read_q, STATUS_ALERTED );
+        if (async_waiting( &sock->read_q ))
+        {
+            if (debug_level) fprintf( stderr, "activating read queue for socket %p\n", sock );
+            async_wake_up( &sock->read_q, STATUS_ALERTED );
+        }
         event &= ~(POLLIN | POLLPRI);
     }
 
