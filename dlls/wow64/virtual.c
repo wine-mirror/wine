@@ -526,6 +526,19 @@ NTSTATUS WINAPI wow64_NtUnmapViewOfSection( UINT *args )
 
 
 /**********************************************************************
+ *           wow64_NtUnmapViewOfSectionEx
+ */
+NTSTATUS WINAPI wow64_NtUnmapViewOfSectionEx( UINT *args )
+{
+    HANDLE process = get_handle( &args );
+    void *addr = get_ptr( &args );
+    ULONG flags = get_ulong( &args );
+
+    return NtUnmapViewOfSectionEx( process, addr, flags );
+}
+
+
+/**********************************************************************
  *           wow64_NtWow64AllocateVirtualMemory64
  */
 NTSTATUS WINAPI wow64_NtWow64AllocateVirtualMemory64( UINT *args )

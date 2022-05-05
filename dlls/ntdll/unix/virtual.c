@@ -4610,6 +4610,15 @@ NTSTATUS WINAPI NtUnmapViewOfSection( HANDLE process, PVOID addr )
     return status;
 }
 
+/***********************************************************************
+ *             NtUnmapViewOfSectionEx   (NTDLL.@)
+ *             ZwUnmapViewOfSectionEx   (NTDLL.@)
+ */
+NTSTATUS WINAPI NtUnmapViewOfSectionEx( HANDLE process, PVOID addr, ULONG flags )
+{
+    if (flags) FIXME("Ignoring flags %#x.\n", flags);
+    return NtUnmapViewOfSection( process, addr );
+}
 
 /******************************************************************************
  *             virtual_fill_image_information

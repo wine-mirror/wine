@@ -237,6 +237,7 @@
     SYSCALL_ENTRY( NtUnlockFile ) \
     SYSCALL_ENTRY( NtUnlockVirtualMemory ) \
     SYSCALL_ENTRY( NtUnmapViewOfSection ) \
+    SYSCALL_ENTRY( NtUnmapViewOfSectionEx ) \
     SYSCALL_ENTRY( NtWaitForAlertByThreadId ) \
     SYSCALL_ENTRY( NtWaitForDebugEvent ) \
     SYSCALL_ENTRY( NtWaitForKeyedEvent ) \
