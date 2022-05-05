@@ -609,7 +609,8 @@ static DWORD WINAPI device_op_thread( void *arg )
 
 static DWORD WINAPI run_loop_thread( void *arg )
 {
-    return MOUNTMGR_CALL( run_loop, arg );
+    struct run_loop_params params = {.op_thread = arg, .op_apc = device_op};
+    return MOUNTMGR_CALL( run_loop, &params );
 }
 
 
@@ -624,7 +625,7 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     DEVICE_OBJECT *device;
     HKEY devicemap_key;
     NTSTATUS status;
-    struct run_loop_params params;
+    HANDLE thread;
 
     TRACE( "%s\n", debugstr_w(path->Buffer) );
 
@@ -655,9 +656,8 @@ NTSTATUS WINAPI DriverEntry( DRIVER_OBJECT *driver, UNICODE_STRING *path )
     RtlInitUnicodeString( &nameW, L"\\Driver\\Harddisk" );
     status = IoCreateDriver( &nameW, harddisk_driver_entry );
 
-    params.op_thread = CreateThread( NULL, 0, device_op_thread, NULL, 0, NULL );
-    params.op_apc = device_op;
-    CloseHandle( CreateThread( NULL, 0, run_loop_thread, &params, 0, NULL ));
+    thread = CreateThread( NULL, 0, device_op_thread, NULL, 0, NULL );
+    CloseHandle( CreateThread( NULL, 0, run_loop_thread, thread, 0, NULL ));
 
 #ifdef _WIN64
     /* create a symlink so that the Wine port overrides key can be edited with 32-bit reg or regedit */
