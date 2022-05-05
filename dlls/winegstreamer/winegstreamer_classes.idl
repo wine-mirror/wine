@@ -86,3 +86,9 @@ coclass CWMADecMediaObject {};
     uuid(62ce7e72-4c71-4d20-b15d-452831a87d9d)
 ]
 coclass CMSH264DecoderMFT {}
+
+[
+    threading(both),
+    uuid(f447b69e-1884-4a7e-8055-346f74d6edb3)
+]
+coclass CResamplerMediaObject {}

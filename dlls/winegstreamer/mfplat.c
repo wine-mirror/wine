@@ -440,7 +440,7 @@ HRESULT mfplat_get_class_object(REFCLSID rclsid, REFIID riid, void **obj)
 
 HRESULT mfplat_DllRegisterServer(void)
 {
-    MFT_REGISTER_TYPE_INFO audio_converter_supported_types[] =
+    MFT_REGISTER_TYPE_INFO resampler_types[] =
     {
         {MFMediaType_Audio, MFAudioFormat_PCM},
         {MFMediaType_Audio, MFAudioFormat_Float},
@@ -541,10 +541,10 @@ HRESULT mfplat_DllRegisterServer(void)
             MFT_CATEGORY_AUDIO_EFFECT,
             L"Audio Converter",
             MFT_ENUM_FLAG_SYNCMFT,
-            ARRAY_SIZE(audio_converter_supported_types),
-            audio_converter_supported_types,
-            ARRAY_SIZE(audio_converter_supported_types),
-            audio_converter_supported_types,
+            ARRAY_SIZE(resampler_types),
+            resampler_types,
+            ARRAY_SIZE(resampler_types),
+            resampler_types,
         },
         {
             CLSID_WMADecMediaObject,
@@ -575,6 +575,16 @@ HRESULT mfplat_DllRegisterServer(void)
             video_processor_input_types,
             ARRAY_SIZE(video_processor_output_types),
             video_processor_output_types,
+        },
+        {
+            CLSID_CResamplerMediaObject,
+            MFT_CATEGORY_AUDIO_EFFECT,
+            L"Resampler MFT",
+            MFT_ENUM_FLAG_SYNCMFT,
+            ARRAY_SIZE(resampler_types),
+            resampler_types,
+            ARRAY_SIZE(resampler_types),
+            resampler_types,
         },
     };
 

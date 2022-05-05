@@ -111,6 +111,7 @@ HRESULT mpeg_audio_codec_create(IUnknown *outer, IUnknown **out);
 HRESULT mpeg_splitter_create(IUnknown *outer, IUnknown **out);
 HRESULT wave_parser_create(IUnknown *outer, IUnknown **out);
 HRESULT wma_decoder_create(IUnknown *outer, IUnknown **out);
+HRESULT resampler_create(IUnknown *outer, IUnknown **out);
 
 bool amt_from_wg_format(AM_MEDIA_TYPE *mt, const struct wg_format *format, bool wm);
 bool amt_to_wg_format(const AM_MEDIA_TYPE *mt, struct wg_format *format);

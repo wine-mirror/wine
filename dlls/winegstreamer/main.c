@@ -437,6 +437,7 @@ static struct class_factory mpeg_audio_codec_cf = {{&class_factory_vtbl}, mpeg_a
 static struct class_factory mpeg_splitter_cf = {{&class_factory_vtbl}, mpeg_splitter_create};
 static struct class_factory wave_parser_cf = {{&class_factory_vtbl}, wave_parser_create};
 static struct class_factory wma_decoder_cf = {{&class_factory_vtbl}, wma_decoder_create};
+static struct class_factory resampler_cf = {{&class_factory_vtbl}, resampler_create};
 
 HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
 {
@@ -463,6 +464,8 @@ HRESULT WINAPI DllGetClassObject(REFCLSID clsid, REFIID iid, void **out)
         factory = &wave_parser_cf;
     else if (IsEqualGUID(clsid, &CLSID_WMADecMediaObject))
         factory = &wma_decoder_cf;
+    else if (IsEqualGUID(clsid, &CLSID_CResamplerMediaObject))
+        factory = &resampler_cf;
     else
     {
         FIXME("%s not implemented, returning CLASS_E_CLASSNOTAVAILABLE.\n", debugstr_guid(clsid));
@@ -657,6 +660,11 @@ static const REGFILTER2 reg_decodebin_parser =
 
 HRESULT WINAPI DllRegisterServer(void)
 {
+    DMO_PARTIAL_MEDIATYPE audio_convert_types[2] =
+    {
+        {.type = MEDIATYPE_Audio, .subtype = MEDIASUBTYPE_PCM},
+        {.type = MEDIATYPE_Audio, .subtype = MEDIASUBTYPE_IEEE_FLOAT},
+    };
     DMO_PARTIAL_MEDIATYPE wma_decoder_output[2] =
     {
         {.type = MEDIATYPE_Audio, .subtype = MEDIASUBTYPE_PCM},
@@ -696,6 +704,9 @@ HRESULT WINAPI DllRegisterServer(void)
     if (FAILED(hr = DMORegister(L"WMA Decoder DMO", &CLSID_WMADecMediaObject, &DMOCATEGORY_AUDIO_DECODER,
             0, ARRAY_SIZE(wma_decoder_input), wma_decoder_input, ARRAY_SIZE(wma_decoder_output), wma_decoder_output)))
         return hr;
+    if (FAILED(hr = DMORegister(L"Resampler DMO", &CLSID_CResamplerMediaObject, &DMOCATEGORY_AUDIO_EFFECT,
+            0, ARRAY_SIZE(audio_convert_types), audio_convert_types, ARRAY_SIZE(audio_convert_types), audio_convert_types)))
+        return hr;
 
     return mfplat_DllRegisterServer();
 }
@@ -722,6 +733,8 @@ HRESULT WINAPI DllUnregisterServer(void)
 
     IFilterMapper2_Release(mapper);
 
+    if (FAILED(hr = DMOUnregister(&CLSID_CResamplerMediaObject, &DMOCATEGORY_AUDIO_EFFECT)))
+        return hr;
     if (FAILED(hr = DMOUnregister(&CLSID_WMADecMediaObject, &DMOCATEGORY_AUDIO_DECODER)))
         return hr;
 
