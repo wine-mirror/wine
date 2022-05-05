@@ -1762,17 +1762,18 @@ static void test_LocalAlloc(void)
 static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags )
 {
     DWORD padd_flags = HEAP_VALIDATE | HEAP_VALIDATE_ALL | HEAP_VALIDATE_PARAMS;
-    SIZE_T expect_size, alloc_size, extra_size, tail_size = 0;
-    unsigned char *ptr0, *ptr1, *ptr2;
+    SIZE_T expect_size, diff, alloc_size, extra_size, tail_size = 0;
+    unsigned char *ptr0, *ptr1, *ptr2, tail;
     char tail_buf[64], padd_buf[64];
     void *tmp_ptr, **user_ptr;
     ULONG tmp_flags;
+    UINT_PTR align;
     BOOL ret;
 
     if (global_flags & (FLG_HEAP_DISABLE_COALESCING|FLG_HEAP_PAGE_ALLOCS|FLG_POOL_ENABLE_TAGGING|
                         FLG_HEAP_ENABLE_TAGGING|FLG_HEAP_ENABLE_TAG_BY_DLL))
     {
-        skip( "skipping not yet implemented block layout tests\n" );
+        skip( "skipping block tests\n" );
         return;
     }
 
@@ -1796,16 +1797,17 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
         ptr2 = pHeapAlloc( heap, HEAP_ZERO_MEMORY, alloc_size );
         ok( !!ptr2, "HeapAlloc failed, error %lu\n", GetLastError() );
 
-        ok( !((UINT_PTR)ptr0 & (2 * sizeof(void *) - 1)), "got unexpected ptr align\n" );
-        ok( !((UINT_PTR)ptr1 & (2 * sizeof(void *) - 1)), "got unexpected ptr align\n" );
-        ok( !((UINT_PTR)ptr2 & (2 * sizeof(void *) - 1)), "got unexpected ptr align\n" );
+        align = (UINT_PTR)ptr0 | (UINT_PTR)ptr1 | (UINT_PTR)ptr2;
+        ok( !(align & (2 * sizeof(void *) - 1)), "wrong align\n" );
 
         expect_size = max( alloc_size, 2 * sizeof(void *) );
         expect_size = ALIGN_BLOCK_SIZE( expect_size + extra_size );
-        todo_wine_if( heap_flags & (HEAP_VALIDATE_PARAMS|HEAP_VALIDATE_ALL) ||
-                      min( llabs( ptr2 - ptr1 ), llabs( ptr1 - ptr0 ) ) != expect_size )
-        ok( min( llabs( ptr2 - ptr1 ), llabs( ptr1 - ptr0 ) ) == expect_size, "got diff %#I64x\n",
-            min( llabs( ptr2 - ptr1 ), llabs( ptr1 - ptr0 ) ) );
+        diff = min( llabs( ptr2 - ptr1 ), llabs( ptr1 - ptr0 ) );
+        todo_wine_if( (heap_flags & (HEAP_VALIDATE_PARAMS|HEAP_VALIDATE_ALL)) ||
+                      ((global_flags & ~FLG_HEAP_ENABLE_TAIL_CHECK) && alloc_size < 0x10000) ||
+                      (!global_flags && alloc_size < 2 * sizeof(void *)) ||
+                      (alloc_size == 0xfd000 && sizeof(void *) == 8) )
+        ok( diff == expect_size, "got diff %#Ix exp %#Ix\n", diff, expect_size );
 
         ok( !memcmp( ptr0 + alloc_size, tail_buf, tail_size ), "missing block tail\n" );
         ok( !memcmp( ptr1 + alloc_size, tail_buf, tail_size ), "missing block tail\n" );
@@ -1819,6 +1821,13 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
         ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
 
         winetest_pop_context();
+
+        if (diff != expect_size)
+        {
+            todo_wine
+            win_skip("skipping sizes\n");
+            break;
+        }
     }
 
 
@@ -1850,25 +1859,19 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
         ptr2 = pHeapAlloc( heap, 0, alloc_size );
         ok( !!ptr2, "HeapAlloc failed, error %lu\n", GetLastError() );
 
+        align = (UINT_PTR)ptr0 | (UINT_PTR)ptr1 | (UINT_PTR)ptr2;
         todo_wine_if( sizeof(void *) == 8 || alloc_size == 0x7efe9 )
-        ok( !((UINT_PTR)ptr0 & (8 * sizeof(void *) - 1)), "got unexpected ptr align\n" );
-        todo_wine_if( sizeof(void *) == 8 || alloc_size == 0x7efe9 )
-        ok( !((UINT_PTR)ptr1 & (8 * sizeof(void *) - 1)), "got unexpected ptr align\n" );
-        todo_wine_if( sizeof(void *) == 8 || alloc_size == 0x7efe9 )
-        ok( !((UINT_PTR)ptr2 & (8 * sizeof(void *) - 1)), "got unexpected ptr align\n" );
+        ok( !(align & (8 * sizeof(void *) - 1)), "wrong align\n" );
 
         expect_size = max( alloc_size, 2 * sizeof(void *) );
         expect_size = ALIGN_BLOCK_SIZE( expect_size + extra_size );
+        diff = min( llabs( ptr2 - ptr1 ), llabs( ptr1 - ptr0 ) );
         todo_wine_if( alloc_size == 0x7efe9 )
-        ok( min( llabs( ptr2 - ptr1 ), llabs( ptr1 - ptr0 ) ) > expect_size, "got diff %#I64x\n",
-            min( llabs( ptr2 - ptr1 ), llabs( ptr1 - ptr0 ) ) );
+        ok( diff > expect_size, "got diff %#Ix\n", diff );
 
+        tail = ptr0[alloc_size] | ptr1[alloc_size] | ptr2[alloc_size];
         todo_wine_if( heap_flags & HEAP_TAIL_CHECKING_ENABLED )
-        ok( !ptr0[alloc_size], "got block tail\n" );
-        todo_wine_if( heap_flags & HEAP_TAIL_CHECKING_ENABLED )
-        ok( !ptr1[alloc_size], "got block tail\n" );
-        todo_wine_if( heap_flags & HEAP_TAIL_CHECKING_ENABLED )
-        ok( !ptr2[alloc_size], "got block tail\n" );
+        ok( !tail, "got tail\n" );
 
         ret = HeapFree( heap, 0, ptr2 );
         ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
@@ -1877,6 +1880,13 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
         ret = HeapFree( heap, 0, ptr0 );
         ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
         winetest_pop_context();
+
+        if (diff == expect_size || (align & (8 * sizeof(void *) - 1)) || tail)
+        {
+            todo_wine
+            win_skip("skipping sizes\n");
+            break;
+        }
     }
 
     /* Undocumented HEAP_ADD_USER_INFO flag can be used to force an additional padding
@@ -1899,10 +1909,9 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
 
         expect_size = max( alloc_size, 2 * sizeof(void *) );
         expect_size = ALIGN_BLOCK_SIZE( expect_size + extra_size + 2 * sizeof(void *) );
-        todo_wine_if( heap_flags & (HEAP_VALIDATE_PARAMS|HEAP_VALIDATE_ALL) ||
-                      (ptr2 - ptr1 != expect_size && ptr1 - ptr0 != expect_size) )
-        ok( ptr2 - ptr1 == expect_size || ptr1 - ptr0 == expect_size,
-            "got diff %#Ix %#Ix\n", ptr2 - ptr1, ptr1 - ptr0 );
+        diff = min( llabs( ptr2 - ptr1 ), llabs( ptr1 - ptr0 ) );
+        todo_wine
+        ok( diff == expect_size, "got diff %#Ix\n", diff );
 
         ok( !memcmp( ptr0 + alloc_size, tail_buf, tail_size ), "missing block tail\n" );
         ok( !memcmp( ptr1 + alloc_size, tail_buf, tail_size ), "missing block tail\n" );
@@ -1955,8 +1964,6 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
             "got flags %#lx\n", tmp_flags );
 
         user_ptr = (void **)(ptr0 + alloc_size + tail_size);
-        todo_wine
-        ok( user_ptr[0] == 0, "unexpected padding\n" );
         todo_wine
         ok( user_ptr[1] == (void *)0xdeadbeef, "unexpected user value\n" );
         if (user_ptr[1] == (void *)0xdeadbeef)
