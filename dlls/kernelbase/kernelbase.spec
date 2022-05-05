@@ -1653,6 +1653,7 @@
 @ stdcall UnlockFile(long long long long long)
 @ stdcall UnlockFileEx(long long long long ptr)
 @ stdcall UnmapViewOfFile(ptr)
+@ stdcall UnmapViewOfFile2(long ptr long)
 # @ stub UnmapViewOfFileEx
 # @ stub UnregisterBadMemoryNotification
 # @ stub UnregisterGPNotificationInternal
