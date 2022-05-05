@@ -1686,6 +1686,7 @@ HRESULT wm_reader_get_output_format_count(struct wm_reader *reader, DWORD output
             *count = ARRAY_SIZE(video_formats);
             break;
 
+        case WG_MAJOR_TYPE_MPEG1_AUDIO:
         case WG_MAJOR_TYPE_WMA:
         case WG_MAJOR_TYPE_H264:
             FIXME("Format %u not implemented!\n", format.major_type);
@@ -1736,6 +1737,7 @@ HRESULT wm_reader_get_output_format(struct wm_reader *reader, DWORD output,
             format.u.audio.format = WG_AUDIO_FORMAT_S16LE;
             break;
 
+        case WG_MAJOR_TYPE_MPEG1_AUDIO:
         case WG_MAJOR_TYPE_WMA:
         case WG_MAJOR_TYPE_H264:
             FIXME("Format %u not implemented!\n", format.major_type);
@@ -1815,6 +1817,8 @@ static const char *get_major_type_string(enum wg_major_type type)
             return "video";
         case WG_MAJOR_TYPE_UNKNOWN:
             return "unknown";
+        case WG_MAJOR_TYPE_MPEG1_AUDIO:
+            return "mpeg1-audio";
         case WG_MAJOR_TYPE_WMA:
             return "wma";
         case WG_MAJOR_TYPE_H264:
