@@ -1957,7 +1957,7 @@ static void test_LocalAlloc(void)
     }
 }
 
-static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags )
+static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags, DWORD alloc_flags )
 {
     DWORD padd_flags = HEAP_VALIDATE | HEAP_VALIDATE_ALL | HEAP_VALIDATE_PARAMS;
     SIZE_T expect_size, diff, alloc_size, extra_size, tail_size = 0;
@@ -1975,7 +1975,7 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
         return;
     }
 
-    if (!global_flags) extra_size = 8;
+    if (!global_flags && !alloc_flags) extra_size = 8;
     else extra_size = 2 * sizeof(void *);
     if (heap_flags & HEAP_TAIL_CHECKING_ENABLED) extra_size += 2 * sizeof(void *);
     if (heap_flags & padd_flags) extra_size += 2 * sizeof(void *);
@@ -1988,11 +1988,11 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
     {
         winetest_push_context( "size %#Ix", alloc_size );
 
-        ptr0 = pHeapAlloc( heap, HEAP_ZERO_MEMORY, alloc_size );
+        ptr0 = pHeapAlloc( heap, alloc_flags|HEAP_ZERO_MEMORY, alloc_size );
         ok( !!ptr0, "HeapAlloc failed, error %lu\n", GetLastError() );
-        ptr1 = pHeapAlloc( heap, HEAP_ZERO_MEMORY, alloc_size );
+        ptr1 = pHeapAlloc( heap, alloc_flags|HEAP_ZERO_MEMORY, alloc_size );
         ok( !!ptr1, "HeapAlloc failed, error %lu\n", GetLastError() );
-        ptr2 = pHeapAlloc( heap, HEAP_ZERO_MEMORY, alloc_size );
+        ptr2 = pHeapAlloc( heap, alloc_flags|HEAP_ZERO_MEMORY, alloc_size );
         ok( !!ptr2, "HeapAlloc failed, error %lu\n", GetLastError() );
 
         align = (UINT_PTR)ptr0 | (UINT_PTR)ptr1 | (UINT_PTR)ptr2;
@@ -2034,7 +2034,7 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
     alloc_size = 0x20000 * sizeof(void *) - 0x2000;
     winetest_push_context( "size %#Ix", alloc_size );
 
-    ptr0 = pHeapAlloc( heap, HEAP_ZERO_MEMORY, alloc_size );
+    ptr0 = pHeapAlloc( heap, alloc_flags|HEAP_ZERO_MEMORY, alloc_size );
     ok( !!ptr0, "HeapAlloc failed, error %lu\n", GetLastError() );
     ok( !((UINT_PTR)ptr0 & (2 * sizeof(void *) - 1)), "got unexpected ptr align\n" );
 
@@ -2050,11 +2050,11 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
     {
         winetest_push_context( "size %#Ix", alloc_size );
 
-        ptr0 = pHeapAlloc( heap, HEAP_ZERO_MEMORY, alloc_size );
+        ptr0 = pHeapAlloc( heap, alloc_flags|HEAP_ZERO_MEMORY, alloc_size );
         ok( !!ptr0, "HeapAlloc failed, error %lu\n", GetLastError() );
-        ptr1 = pHeapAlloc( heap, 0, alloc_size );
+        ptr1 = pHeapAlloc( heap, alloc_flags, alloc_size );
         ok( !!ptr1, "HeapAlloc failed, error %lu\n", GetLastError() );
-        ptr2 = pHeapAlloc( heap, 0, alloc_size );
+        ptr2 = pHeapAlloc( heap, alloc_flags, alloc_size );
         ok( !!ptr2, "HeapAlloc failed, error %lu\n", GetLastError() );
 
         align = (UINT_PTR)ptr0 | (UINT_PTR)ptr1 | (UINT_PTR)ptr2;
@@ -2504,13 +2504,20 @@ static void test_child_heap( const char *arg )
     heap = HeapCreate( HEAP_NO_SERIALIZE, 0, 0 );
     ok( heap != GetProcessHeap(), "got unexpected heap\n" );
     test_heap_layout( heap, global_flags, heap_flags|HEAP_NO_SERIALIZE|HEAP_GROWABLE|HEAP_PRIVATE );
-    test_block_layout( heap, global_flags, heap_flags|HEAP_NO_SERIALIZE|HEAP_GROWABLE|HEAP_PRIVATE );
+    test_block_layout( heap, global_flags, heap_flags|HEAP_NO_SERIALIZE|HEAP_GROWABLE|HEAP_PRIVATE, 0 );
     ret = HeapDestroy( heap );
     ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
 
     heap = HeapCreate( HEAP_TAIL_CHECKING_ENABLED|HEAP_FREE_CHECKING_ENABLED|HEAP_NO_SERIALIZE, 0, 0 );
     ok( heap != GetProcessHeap(), "got unexpected heap\n" );
     test_heap_layout( heap, global_flags, heap_flags|HEAP_NO_SERIALIZE|HEAP_GROWABLE|HEAP_PRIVATE );
+    ret = HeapDestroy( heap );
+    ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
+
+    heap = HeapCreate( HEAP_NO_SERIALIZE, 0, 0 );
+    ok( heap != GetProcessHeap(), "got unexpected heap\n" );
+    test_block_layout( heap, global_flags, heap_flags|HEAP_NO_SERIALIZE|HEAP_GROWABLE|HEAP_PRIVATE,
+                       HEAP_TAIL_CHECKING_ENABLED|HEAP_FREE_CHECKING_ENABLED );
     ret = HeapDestroy( heap );
     ok( ret, "HeapDestroy failed, error %lu\n", GetLastError() );
 
