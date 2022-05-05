@@ -3954,7 +3954,7 @@ static HRESULT WINAPI bytestream_stream_GetCapabilities(IMFByteStream *iface, DW
     return S_OK;
 }
 
-static HRESULT WINAPI bytestream_GetCapabilities(IMFByteStream *iface, DWORD *capabilities)
+static HRESULT WINAPI bytestream_file_GetCapabilities(IMFByteStream *iface, DWORD *capabilities)
 {
     struct bytestream *stream = impl_from_IMFByteStream(iface);
 
@@ -3965,14 +3965,14 @@ static HRESULT WINAPI bytestream_GetCapabilities(IMFByteStream *iface, DWORD *ca
     return S_OK;
 }
 
-static HRESULT WINAPI bytestream_SetLength(IMFByteStream *iface, QWORD length)
+static HRESULT WINAPI bytestream_file_SetLength(IMFByteStream *iface, QWORD length)
 {
     FIXME("%p, %s\n", iface, wine_dbgstr_longlong(length));
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI bytestream_file_GetCurrentPosition(IMFByteStream *iface, QWORD *position)
+static HRESULT WINAPI bytestream_GetCurrentPosition(IMFByteStream *iface, QWORD *position)
 {
     struct bytestream *stream = impl_from_IMFByteStream(iface);
 
@@ -4070,7 +4070,7 @@ static HRESULT WINAPI bytestream_EndRead(IMFByteStream *iface, IMFAsyncResult *r
     return bytestream_complete_io_request(stream, ASYNC_STREAM_OP_READ, result, byte_read);
 }
 
-static HRESULT WINAPI bytestream_Write(IMFByteStream *iface, const BYTE *data, ULONG count, ULONG *written)
+static HRESULT WINAPI bytestream_file_Write(IMFByteStream *iface, const BYTE *data, ULONG count, ULONG *written)
 {
     FIXME("%p, %p, %lu, %p\n", iface, data, count, written);
 
@@ -4096,22 +4096,44 @@ static HRESULT WINAPI bytestream_EndWrite(IMFByteStream *iface, IMFAsyncResult *
     return bytestream_complete_io_request(stream, ASYNC_STREAM_OP_WRITE, result, written);
 }
 
-static HRESULT WINAPI bytestream_Seek(IMFByteStream *iface, MFBYTESTREAM_SEEK_ORIGIN seek, LONGLONG offset,
-                        DWORD flags, QWORD *current)
+static HRESULT WINAPI bytestream_Seek(IMFByteStream *iface, MFBYTESTREAM_SEEK_ORIGIN origin, LONGLONG offset,
+        DWORD flags, QWORD *current)
 {
-    FIXME("%p, %u, %s, 0x%08lx, %p\n", iface, seek, wine_dbgstr_longlong(offset), flags, current);
+    struct bytestream *stream = impl_from_IMFByteStream(iface);
+    HRESULT hr = S_OK;
 
-    return E_NOTIMPL;
+    TRACE("%p, %u, %s, %#lx, %p.\n", iface, origin, wine_dbgstr_longlong(offset), flags, current);
+
+    EnterCriticalSection(&stream->cs);
+
+    switch (origin)
+    {
+        case msoBegin:
+            stream->position = offset;
+            break;
+        case msoCurrent:
+            stream->position += offset;
+            break;
+        default:
+            WARN("Unknown origin mode %d.\n", origin);
+            hr = E_INVALIDARG;
+    }
+
+    *current = stream->position;
+
+    LeaveCriticalSection(&stream->cs);
+
+    return hr;
 }
 
-static HRESULT WINAPI bytestream_Flush(IMFByteStream *iface)
+static HRESULT WINAPI bytestream_file_Flush(IMFByteStream *iface)
 {
     FIXME("%p\n", iface);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI bytestream_Close(IMFByteStream *iface)
+static HRESULT WINAPI bytestream_file_Close(IMFByteStream *iface)
 {
     FIXME("%p\n", iface);
 
@@ -4136,21 +4158,21 @@ static const IMFByteStreamVtbl bytestream_file_vtbl =
     bytestream_QueryInterface,
     bytestream_AddRef,
     bytestream_Release,
-    bytestream_GetCapabilities,
+    bytestream_file_GetCapabilities,
     bytestream_file_GetLength,
-    bytestream_SetLength,
-    bytestream_file_GetCurrentPosition,
+    bytestream_file_SetLength,
+    bytestream_GetCurrentPosition,
     bytestream_SetCurrentPosition,
     bytestream_file_IsEndOfStream,
     bytestream_file_Read,
     bytestream_BeginRead,
     bytestream_EndRead,
-    bytestream_Write,
+    bytestream_file_Write,
     bytestream_BeginWrite,
     bytestream_EndWrite,
     bytestream_Seek,
-    bytestream_Flush,
-    bytestream_Close
+    bytestream_file_Flush,
+    bytestream_file_Close
 };
 
 static HRESULT WINAPI bytestream_stream_GetLength(IMFByteStream *iface, QWORD *length)
@@ -4185,17 +4207,6 @@ static HRESULT WINAPI bytestream_stream_SetLength(IMFByteStream *iface, QWORD le
     LeaveCriticalSection(&stream->cs);
 
     return hr;
-}
-
-static HRESULT WINAPI bytestream_stream_GetCurrentPosition(IMFByteStream *iface, QWORD *position)
-{
-    struct bytestream *stream = impl_from_IMFByteStream(iface);
-
-    TRACE("%p, %p.\n", iface, position);
-
-    *position = stream->position;
-
-    return S_OK;
 }
 
 static HRESULT WINAPI bytestream_stream_IsEndOfStream(IMFByteStream *iface, BOOL *ret)
@@ -4260,36 +4271,6 @@ static HRESULT WINAPI bytestream_stream_Write(IMFByteStream *iface, const BYTE *
     return hr;
 }
 
-static HRESULT WINAPI bytestream_stream_Seek(IMFByteStream *iface, MFBYTESTREAM_SEEK_ORIGIN origin, LONGLONG offset,
-        DWORD flags, QWORD *current)
-{
-    struct bytestream *stream = impl_from_IMFByteStream(iface);
-    HRESULT hr = S_OK;
-
-    TRACE("%p, %u, %s, %#lx, %p.\n", iface, origin, wine_dbgstr_longlong(offset), flags, current);
-
-    EnterCriticalSection(&stream->cs);
-
-    switch (origin)
-    {
-        case msoBegin:
-            stream->position = offset;
-            break;
-        case msoCurrent:
-            stream->position += offset;
-            break;
-        default:
-            WARN("Unknown origin mode %d.\n", origin);
-            hr = E_INVALIDARG;
-    }
-
-    *current = stream->position;
-
-    LeaveCriticalSection(&stream->cs);
-
-    return hr;
-}
-
 static HRESULT WINAPI bytestream_stream_Flush(IMFByteStream *iface)
 {
     struct bytestream *stream = impl_from_IMFByteStream(iface);
@@ -4314,7 +4295,7 @@ static const IMFByteStreamVtbl bytestream_stream_vtbl =
     bytestream_stream_GetCapabilities,
     bytestream_stream_GetLength,
     bytestream_stream_SetLength,
-    bytestream_stream_GetCurrentPosition,
+    bytestream_GetCurrentPosition,
     bytestream_SetCurrentPosition,
     bytestream_stream_IsEndOfStream,
     bytestream_stream_Read,
@@ -4323,7 +4304,7 @@ static const IMFByteStreamVtbl bytestream_stream_vtbl =
     bytestream_stream_Write,
     bytestream_BeginWrite,
     bytestream_EndWrite,
-    bytestream_stream_Seek,
+    bytestream_Seek,
     bytestream_stream_Flush,
     bytestream_stream_Close,
 };
