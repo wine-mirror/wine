@@ -4369,7 +4369,7 @@ static const IMFAttributesVtbl bytestream_attributes_vtbl =
     mfattributes_CopyAllItems
 };
 
-static HRESULT WINAPI bytestream_stream_read_callback_Invoke(IRtwqAsyncCallback *iface, IRtwqAsyncResult *result)
+static HRESULT WINAPI bytestream_read_callback_Invoke(IRtwqAsyncCallback *iface, IRtwqAsyncResult *result)
 {
     struct bytestream *stream = impl_from_read_callback_IRtwqAsyncCallback(iface);
     struct async_stream_op *op;
@@ -4395,7 +4395,7 @@ static HRESULT WINAPI bytestream_stream_read_callback_Invoke(IRtwqAsyncCallback 
     return S_OK;
 }
 
-static HRESULT WINAPI bytestream_stream_write_callback_Invoke(IRtwqAsyncCallback *iface, IRtwqAsyncResult *result)
+static HRESULT WINAPI bytestream_write_callback_Invoke(IRtwqAsyncCallback *iface, IRtwqAsyncResult *result)
 {
     struct bytestream *stream = impl_from_read_callback_IRtwqAsyncCallback(iface);
     struct async_stream_op *op;
@@ -4421,22 +4421,22 @@ static HRESULT WINAPI bytestream_stream_write_callback_Invoke(IRtwqAsyncCallback
     return S_OK;
 }
 
-static const IRtwqAsyncCallbackVtbl bytestream_stream_read_callback_vtbl =
+static const IRtwqAsyncCallbackVtbl bytestream_read_callback_vtbl =
 {
     bytestream_callback_QueryInterface,
     bytestream_read_callback_AddRef,
     bytestream_read_callback_Release,
     bytestream_callback_GetParameters,
-    bytestream_stream_read_callback_Invoke,
+    bytestream_read_callback_Invoke,
 };
 
-static const IRtwqAsyncCallbackVtbl bytestream_stream_write_callback_vtbl =
+static const IRtwqAsyncCallbackVtbl bytestream_write_callback_vtbl =
 {
     bytestream_callback_QueryInterface,
     bytestream_write_callback_AddRef,
     bytestream_write_callback_Release,
     bytestream_callback_GetParameters,
-    bytestream_stream_write_callback_Invoke,
+    bytestream_write_callback_Invoke,
 };
 
 /***********************************************************************
@@ -4462,8 +4462,8 @@ HRESULT WINAPI MFCreateMFByteStreamOnStream(IStream *stream, IMFByteStream **byt
 
     object->IMFByteStream_iface.lpVtbl = &bytestream_stream_vtbl;
     object->attributes.IMFAttributes_iface.lpVtbl = &bytestream_attributes_vtbl;
-    object->read_callback.lpVtbl = &bytestream_stream_read_callback_vtbl;
-    object->write_callback.lpVtbl = &bytestream_stream_write_callback_vtbl;
+    object->read_callback.lpVtbl = &bytestream_read_callback_vtbl;
+    object->write_callback.lpVtbl = &bytestream_write_callback_vtbl;
     InitializeCriticalSection(&object->cs);
     list_init(&object->pending);
 
@@ -4486,38 +4486,6 @@ HRESULT WINAPI MFCreateMFByteStreamOnStream(IStream *stream, IMFByteStream **byt
 
     return S_OK;
 }
-
-static HRESULT WINAPI bytestream_file_read_callback_Invoke(IRtwqAsyncCallback *iface, IRtwqAsyncResult *result)
-{
-    FIXME("%p, %p.\n", iface, result);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI bytestream_file_write_callback_Invoke(IRtwqAsyncCallback *iface, IRtwqAsyncResult *result)
-{
-    FIXME("%p, %p.\n", iface, result);
-
-    return E_NOTIMPL;
-}
-
-static const IRtwqAsyncCallbackVtbl bytestream_file_read_callback_vtbl =
-{
-    bytestream_callback_QueryInterface,
-    bytestream_read_callback_AddRef,
-    bytestream_read_callback_Release,
-    bytestream_callback_GetParameters,
-    bytestream_file_read_callback_Invoke,
-};
-
-static const IRtwqAsyncCallbackVtbl bytestream_file_write_callback_vtbl =
-{
-    bytestream_callback_QueryInterface,
-    bytestream_write_callback_AddRef,
-    bytestream_write_callback_Release,
-    bytestream_callback_GetParameters,
-    bytestream_file_write_callback_Invoke,
-};
 
 static HRESULT WINAPI bytestream_file_getservice_QueryInterface(IMFGetService *iface, REFIID riid, void **obj)
 {
@@ -4625,8 +4593,8 @@ static HRESULT create_file_bytestream(MF_FILE_ACCESSMODE accessmode, MF_FILE_OPE
     object->IMFByteStream_iface.lpVtbl = &bytestream_file_vtbl;
     object->attributes.IMFAttributes_iface.lpVtbl = &bytestream_attributes_vtbl;
     object->IMFGetService_iface.lpVtbl = &bytestream_file_getservice_vtbl;
-    object->read_callback.lpVtbl = &bytestream_file_read_callback_vtbl;
-    object->write_callback.lpVtbl = &bytestream_file_write_callback_vtbl;
+    object->read_callback.lpVtbl = &bytestream_read_callback_vtbl;
+    object->write_callback.lpVtbl = &bytestream_write_callback_vtbl;
     InitializeCriticalSection(&object->cs);
     list_init(&object->pending);
     object->capabilities = capabilities;
