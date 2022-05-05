@@ -21,6 +21,7 @@
 #include "gst_private.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
+WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
 struct transform
 {
@@ -296,8 +297,38 @@ static const struct transform_ops mpeg_audio_codec_transform_ops =
 
 HRESULT mpeg_audio_codec_create(IUnknown *outer, IUnknown **out)
 {
+    static const struct wg_format output_format =
+    {
+        .major_type = WG_MAJOR_TYPE_AUDIO,
+        .u.audio =
+        {
+            .format = WG_AUDIO_FORMAT_S16LE,
+            .channel_mask = 1,
+            .channels = 1,
+            .rate = 44100,
+        },
+    };
+    static const struct wg_format input_format =
+    {
+        .major_type = WG_MAJOR_TYPE_MPEG1_AUDIO,
+        .u.mpeg1_audio =
+        {
+            .layer = 2,
+            .channels = 1,
+            .rate = 44100,
+        },
+    };
+    struct wg_transform *transform;
     struct transform *object;
     HRESULT hr;
+
+    transform = wg_transform_create(&input_format, &output_format);
+    if (!transform)
+    {
+        ERR_(winediag)("GStreamer doesn't support MPEG-1 audio decoding, please install appropriate plugins.\n");
+        return E_FAIL;
+    }
+    wg_transform_destroy(transform);
 
     hr = transform_create(outer, &CLSID_CMpegAudioCodec, &mpeg_audio_codec_transform_ops, &object);
     if (FAILED(hr))
