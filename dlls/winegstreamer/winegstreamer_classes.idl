@@ -86,3 +86,9 @@ coclass CMSH264DecoderMFT {}
     uuid(f447b69e-1884-4a7e-8055-346f74d6edb3)
 ]
 coclass CResamplerMediaObject {}
+
+[
+    threading(both),
+    uuid(98230571-0087-4204-b020-3282538e57d3)
+]
+coclass CColorConvertDMO {}

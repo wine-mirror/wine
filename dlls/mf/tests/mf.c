@@ -8020,14 +8020,17 @@ static void test_color_convert(void)
     check_interface(transform, &IID_IMFTransform, TRUE);
     check_interface(transform, &IID_IMediaObject, TRUE);
     check_interface(transform, &IID_IPropertyStore, TRUE);
+    todo_wine
     check_interface(transform, &IID_IMFRealTimeClient, TRUE);
     /* check_interface(transform, &IID_IWMColorConvProps, TRUE); */
 
     /* check default media types */
 
     hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
+    todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetInputStreamInfo returned %#lx\n", hr);
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
+    todo_wine
     ok(hr == MF_E_TRANSFORM_TYPE_NOT_SET, "GetOutputStreamInfo returned %#lx\n", hr);
 
     i = -1;
@@ -8041,7 +8044,9 @@ static void test_color_convert(void)
         ok(ret == 0, "Release returned %lu\n", ret);
         winetest_pop_context();
     }
+    todo_wine
     ok(hr == MF_E_NO_MORE_TYPES, "GetOutputAvailableType returned %#lx\n", hr);
+    todo_wine
     ok(i == 16, "%lu output media types\n", i);
 
     i = -1;
@@ -8063,7 +8068,9 @@ static void test_color_convert(void)
         ok(ret == 0, "Release returned %lu\n", ret);
         winetest_pop_context();
     }
+    todo_wine
     ok(hr == MF_E_NO_MORE_TYPES, "GetInputAvailableType returned %#lx\n", hr);
+    todo_wine
     ok(i == 20, "%lu input media types\n", i);
 
     /* check required output media type attributes */
@@ -8071,18 +8078,22 @@ static void test_color_convert(void)
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    todo_wine
     ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetOutputType returned %#lx.\n", hr);
     init_media_type(media_type, output_type_desc, 1);
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    todo_wine
     ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetOutputType returned %#lx.\n", hr);
     init_media_type(media_type, output_type_desc, 2);
     for (i = 2; i < ARRAY_SIZE(output_type_desc) - 1; ++i)
     {
         hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+        todo_wine
         ok(hr == E_INVALIDARG, "SetOutputType returned %#lx.\n", hr);
         init_media_type(media_type, output_type_desc, i + 1);
     }
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
+    todo_wine
     ok(hr == S_OK, "SetOutputType returned %#lx.\n", hr);
     ret = IMFMediaType_Release(media_type);
     ok(ret == 0, "Release returned %lu\n", ret);
@@ -8092,36 +8103,50 @@ static void test_color_convert(void)
     hr = MFCreateMediaType(&media_type);
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
     hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+    todo_wine
     ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetInputType returned %#lx.\n", hr);
     init_media_type(media_type, input_type_desc, 1);
     hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+    todo_wine
     ok(hr == MF_E_ATTRIBUTENOTFOUND, "SetInputType returned %#lx.\n", hr);
     init_media_type(media_type, input_type_desc, 2);
     for (i = 2; i < ARRAY_SIZE(input_type_desc) - 1; ++i)
     {
         hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+        todo_wine
         ok(hr == E_INVALIDARG, "SetInputType returned %#lx.\n", hr);
         init_media_type(media_type, input_type_desc, i + 1);
     }
     hr = IMFTransform_SetInputType(transform, 0, media_type, 0);
+    todo_wine
     ok(hr == S_OK, "SetInputType returned %#lx.\n", hr);
     ret = IMFMediaType_Release(media_type);
     ok(ret == 0, "Release returned %lu\n", ret);
 
     memset(&input_info, 0xcd, sizeof(input_info));
     hr = IMFTransform_GetInputStreamInfo(transform, 0, &input_info);
+    todo_wine
     ok(hr == S_OK, "GetInputStreamInfo returned %#lx\n", hr);
+    todo_wine
     ok(input_info.hnsMaxLatency == 0, "got hnsMaxLatency %s\n", wine_dbgstr_longlong(input_info.hnsMaxLatency));
+    todo_wine
     ok(input_info.dwFlags == 0, "got dwFlags %#lx\n", input_info.dwFlags);
+    todo_wine
     ok(input_info.cbSize == actual_width * actual_height * 3 / 2, "got cbSize %#lx\n", input_info.cbSize);
+    todo_wine
     ok(input_info.cbMaxLookahead == 0, "got cbMaxLookahead %#lx\n", input_info.cbMaxLookahead);
+    todo_wine
     ok(input_info.cbAlignment == 1, "got cbAlignment %#lx\n", input_info.cbAlignment);
 
     memset(&output_info, 0xcd, sizeof(output_info));
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
+    todo_wine
     ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
+    todo_wine
     ok(output_info.dwFlags == 0, "got dwFlags %#lx\n", output_info.dwFlags);
+    todo_wine
     ok(output_info.cbSize == actual_width * actual_height * 4, "got cbSize %#lx\n", output_info.cbSize);
+    todo_wine
     ok(output_info.cbAlignment == 1, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
     resource = FindResourceW(NULL, L"nv12frame.bin", (const WCHAR *)RT_RCDATA);
@@ -8136,10 +8161,13 @@ static void test_color_convert(void)
     hr = IMFSample_SetSampleDuration(sample, 10000000);
     ok(hr == S_OK, "SetSampleDuration returned %#lx\n", hr);
     hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    todo_wine
     ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
     hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
+    todo_wine
     ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
     hr = IMFTransform_ProcessMessage(transform, MFT_MESSAGE_COMMAND_DRAIN, 0);
+    todo_wine
     ok(hr == S_OK, "ProcessMessage returned %#lx\n", hr);
     IMFSample_Release(sample);
 
@@ -8147,7 +8175,9 @@ static void test_color_convert(void)
     ok(resource != 0, "FindResourceW failed, error %lu\n", GetLastError());
     rgb32_data = LockResource(LoadResource(GetModuleHandleW(NULL), resource));
     rgb32_data_len = SizeofResource(GetModuleHandleW(NULL), resource);
+    todo_wine
     ok(rgb32_data_len == output_info.cbSize, "got length %lu\n", rgb32_data_len);
+    if (rgb32_data_len != output_info.cbSize) output_info.cbSize = actual_width * actual_height * 4;
 
     /* and generate a new one as well in a temporary directory */
     GetTempPathW(ARRAY_SIZE(output_path), output_path);
@@ -8160,21 +8190,29 @@ static void test_color_convert(void)
     memset(&output, 0, sizeof(output));
     output.pSample = sample;
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
+    todo_wine
     ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
     ok(output.pSample == sample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == 0 || broken(output.dwStatus == 6) /* win7 */, "got dwStatus %#lx\n", output.dwStatus);
+    todo_wine
     ok(status == 0, "got status %#lx\n", status);
 
     hr = IMFSample_GetSampleTime(sample, &time);
+    todo_wine
     ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
+    todo_wine
     ok(time == 0, "got time %I64d\n", time);
     hr = IMFSample_GetSampleDuration(sample, &duration);
+    todo_wine
     ok(hr == S_OK, "GetSampleDuration returned %#lx\n", hr);
+    todo_wine
     ok(duration == 10000000, "got duration %I64d\n", duration);
     hr = IMFSample_GetTotalLength(sample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
+    todo_wine
     ok(length == output_info.cbSize, "got length %lu\n", length);
-    check_sample_rgb32(sample, rgb32_data, output_file);
+    if (length == output_info.cbSize)
+        check_sample_rgb32(sample, rgb32_data, output_file);
     rgb32_data_len -= output_info.cbSize;
     rgb32_data += output_info.cbSize;
 
@@ -8189,9 +8227,11 @@ static void test_color_convert(void)
     memset(&output, 0, sizeof(output));
     output.pSample = sample;
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
+    todo_wine
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
     ok(output.pSample == sample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
+    todo_wine
     ok(status == 0, "got status %#lx\n", status);
     hr = IMFSample_GetTotalLength(sample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);

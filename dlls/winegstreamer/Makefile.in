@@ -7,6 +7,7 @@ EXTRAINCL = $(GSTREAMER_CFLAGS)
 EXTRALIBS = $(GSTREAMER_LIBS) $(PTHREAD_LIBS)
 
 C_SRCS = \
+	color_convert.c \
 	h264_decoder.c \
 	main.c \
 	media_source.c \
