@@ -20,6 +20,8 @@
 
 #include "gst_private.h"
 
+#include "mferror.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
 
@@ -137,10 +139,94 @@ static HRESULT transform_sink_query_interface(struct strmbase_pin *pin, REFIID i
     return S_OK;
 }
 
+static HRESULT WINAPI transform_sink_receive(struct strmbase_sink *pin, IMediaSample *sample)
+{
+    struct transform *filter = impl_from_strmbase_filter(pin->pin.filter);
+    struct wg_sample input_wg_sample = {0};
+    HRESULT hr;
+
+    /* We do not expect pin connection state to change while the filter is
+     * running. This guarantee is necessary, since otherwise we would have to
+     * take the filter lock, and we can't take the filter lock from a streaming
+     * thread. */
+    if (!filter->source.pMemInputPin)
+    {
+        WARN("Source is not connected, returning VFW_E_NOT_CONNECTED.\n");
+        return VFW_E_NOT_CONNECTED;
+    }
+
+    if (filter->filter.state == State_Stopped)
+        return VFW_E_WRONG_STATE;
+
+    if (filter->sink.flushing)
+        return S_FALSE;
+
+    input_wg_sample.max_size = IMediaSample_GetSize(sample);
+    input_wg_sample.size = IMediaSample_GetActualDataLength(sample);
+
+    hr = IMediaSample_GetPointer(sample, &input_wg_sample.data);
+    if (FAILED(hr))
+        return hr;
+
+    hr = wg_transform_push_data(filter->transform, &input_wg_sample);
+    if (FAILED(hr))
+        return hr;
+
+    for (;;)
+    {
+        struct wg_sample output_wg_sample = {0};
+        IMediaSample *output_sample;
+
+        hr = IMemAllocator_GetBuffer(filter->source.pAllocator, &output_sample, NULL, NULL, 0);
+        if (FAILED(hr))
+            return hr;
+
+        output_wg_sample.max_size = IMediaSample_GetSize(output_sample);
+
+        hr = IMediaSample_GetPointer(output_sample, &output_wg_sample.data);
+        if (FAILED(hr))
+        {
+            IMediaSample_Release(output_sample);
+            return hr;
+        }
+
+        hr = wg_transform_read_data(filter->transform, &output_wg_sample);
+        if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
+        {
+            IMediaSample_Release(output_sample);
+            break;
+        }
+        if (FAILED(hr))
+        {
+            IMediaSample_Release(output_sample);
+            return hr;
+        }
+
+        hr = IMediaSample_SetActualDataLength(output_sample, output_wg_sample.size);
+        if (FAILED(hr))
+        {
+            IMediaSample_Release(output_sample);
+            return hr;
+        }
+
+        hr = IMemInputPin_Receive(filter->source.pMemInputPin, output_sample);
+        if (FAILED(hr))
+        {
+            IMediaSample_Release(output_sample);
+            return hr;
+        }
+
+        IMediaSample_Release(output_sample);
+    }
+
+    return S_OK;
+}
+
 static const struct strmbase_sink_ops sink_ops =
 {
     .base.pin_query_accept = transform_sink_query_accept,
     .base.pin_query_interface = transform_sink_query_interface,
+    .pfnReceive = transform_sink_receive,
 };
 
 static HRESULT transform_source_query_accept(struct strmbase_pin *pin, const AM_MEDIA_TYPE *mt)

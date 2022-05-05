@@ -1095,19 +1095,19 @@ static void test_sample_processing(IMediaControl *control, IMemInputPin *input, 
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMemInputPin_Receive(input, sample);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMemInputPin_Receive(input, sample);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
     hr = IMemInputPin_Receive(input, sample);
-    todo_wine ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine ok(sink->got_sample >= 1, "Got %u calls to Receive().\n", sink->got_sample);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(sink->got_sample >= 1, "Got %u calls to Receive().\n", sink->got_sample);
     sink->got_sample = 0;
 
     hr = IMediaControl_Stop(control);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IMemInputPin_Receive(input, sample);
-    todo_wine ok(hr == VFW_E_WRONG_STATE, "Got hr %#lx.\n", hr);
+    ok(hr == VFW_E_WRONG_STATE, "Got hr %#lx.\n", hr);
 
     IMediaSample_Release(sample);
     IMemAllocator_Release(allocator);
