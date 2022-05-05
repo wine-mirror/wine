@@ -331,6 +331,22 @@ static void wg_channel_mask_to_gst(GstAudioChannelPosition *positions, uint32_t 
     }
 }
 
+static GstCaps *wg_format_to_caps_mpeg1_audio(const struct wg_format *format)
+{
+    GstCaps *caps;
+
+    if (!(caps = gst_caps_new_empty_simple("audio/mpeg")))
+        return NULL;
+
+    gst_caps_set_simple(caps, "mpegversion", G_TYPE_INT, 1, NULL);
+    gst_caps_set_simple(caps, "layer", G_TYPE_INT, format->u.mpeg1_audio.layer, NULL);
+    gst_caps_set_simple(caps, "rate", G_TYPE_INT, format->u.mpeg1_audio.rate, NULL);
+    gst_caps_set_simple(caps, "channels", G_TYPE_INT, format->u.mpeg1_audio.channels, NULL);
+    gst_caps_set_simple(caps, "parsed", G_TYPE_BOOLEAN, TRUE, NULL);
+
+    return caps;
+}
+
 static GstCaps *wg_format_to_caps_audio(const struct wg_format *format)
 {
     GstAudioChannelPosition positions[32];
@@ -495,7 +511,7 @@ GstCaps *wg_format_to_caps(const struct wg_format *format)
         case WG_MAJOR_TYPE_UNKNOWN:
             return gst_caps_new_any();
         case WG_MAJOR_TYPE_MPEG1_AUDIO:
-            return NULL;
+            return wg_format_to_caps_mpeg1_audio(format);
         case WG_MAJOR_TYPE_WMA:
             return wg_format_to_caps_wma(format);
         case WG_MAJOR_TYPE_H264:
