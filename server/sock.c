@@ -1229,6 +1229,18 @@ static int sock_get_poll_events( struct fd *fd )
     if (!sock->type) /* not initialized yet */
         return -1;
 
+    LIST_FOR_EACH_ENTRY( req, &poll_list, struct poll_req, entry )
+    {
+        unsigned int i;
+
+        for (i = 0; i < req->count; ++i)
+        {
+            if (req->sockets[i].sock != sock) continue;
+
+            ev |= poll_flags_from_afd( sock, req->sockets[i].mask );
+        }
+    }
+
     switch (sock->state)
     {
     case SOCK_UNCONNECTED:
@@ -1271,7 +1283,15 @@ static int sock_get_poll_events( struct fd *fd )
         }
         else if (async_queued( &sock->read_q ))
         {
-            if (async_waiting( &sock->read_q )) ev |= POLLIN | POLLPRI;
+            /* Clear POLLIN and POLLPRI if we have an alerted async, even if
+             * we're polling this socket for READ or OOB. We can't signal the
+             * poll if the pending async will read all of the data [cf. the
+             * matching logic in sock_dispatch_asyncs()], but we also don't
+             * want to spin polling for POLLIN if we're not going to use it. */
+            if (async_waiting( &sock->read_q ))
+                ev |= POLLIN | POLLPRI;
+            else
+                ev &= ~(POLLIN | POLLPRI);
         }
         else
         {
@@ -1300,18 +1320,6 @@ static int sock_get_poll_events( struct fd *fd )
         }
 
         break;
-    }
-
-    LIST_FOR_EACH_ENTRY( req, &poll_list, struct poll_req, entry )
-    {
-        unsigned int i;
-
-        for (i = 0; i < req->count; ++i)
-        {
-            if (req->sockets[i].sock != sock) continue;
-
-            ev |= poll_flags_from_afd( sock, req->sockets[i].mask );
-        }
     }
 
     return ev;

@@ -382,7 +382,7 @@ static void test_poll(void)
     ok(size == 1, "got size %lu\n", size);
 
     ret = WaitForSingleObject(event, 0);
-    todo_wine ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
 
     ret = send(client, "a", 1, 0);
     ok(ret == 1, "got %d\n", ret);
