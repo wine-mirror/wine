@@ -30,6 +30,8 @@ struct transform
     struct strmbase_sink sink;
     struct strmbase_source source;
 
+    struct wg_transform *transform;
+
     const struct transform_ops *ops;
 };
 
@@ -70,10 +72,21 @@ static void transform_destroy(struct strmbase_filter *iface)
 static HRESULT transform_init_stream(struct strmbase_filter *iface)
 {
     struct transform *filter = impl_from_strmbase_filter(iface);
+    struct wg_format input_format, output_format;
     HRESULT hr;
 
     if (filter->source.pin.peer)
     {
+        if (!amt_to_wg_format(&filter->sink.pin.mt, &input_format))
+            return E_FAIL;
+
+        if (!amt_to_wg_format(&filter->source.pin.mt, &output_format))
+            return E_FAIL;
+
+        filter->transform = wg_transform_create(&input_format, &output_format);
+        if (!filter->transform)
+            return E_FAIL;
+
         hr = IMemAllocator_Commit(filter->source.pAllocator);
         if (FAILED(hr))
             ERR("Failed to commit allocator, hr %#lx.\n", hr);
@@ -87,7 +100,11 @@ static HRESULT transform_cleanup_stream(struct strmbase_filter *iface)
     struct transform *filter = impl_from_strmbase_filter(iface);
 
     if (filter->source.pin.peer)
+    {
         IMemAllocator_Decommit(filter->source.pAllocator);
+
+        wg_transform_destroy(filter->transform);
+    }
 
     return S_OK;
 }
