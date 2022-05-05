@@ -1179,10 +1179,9 @@ static void sock_poll_event( struct fd *fd, int event )
         break;
     }
 
-    complete_async_polls( sock, event, error );
-
     event = sock_dispatch_asyncs( sock, event, error );
     sock_dispatch_events( sock, prevstate, event, error );
+    complete_async_polls( sock, event, error );
 
     sock_reselect( sock );
 }
