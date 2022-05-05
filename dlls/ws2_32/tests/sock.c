@@ -5578,7 +5578,7 @@ static void test_accept_events(struct event_test_ctx *ctx)
     ok(ret, "got error %lu\n", GetLastError());
     ok(!size, "got size %lu\n", size);
 
-    check_events_todo(ctx, 0, 0, 0);
+    check_events(ctx, 0, 0, 0);
 
     closesocket(server);
     closesocket(client);
@@ -5587,7 +5587,7 @@ static void test_accept_events(struct event_test_ctx *ctx)
     ret = connect(client, (struct sockaddr *)&destaddr, sizeof(destaddr));
     ok(!ret, "got error %u\n", WSAGetLastError());
 
-    check_events_todo(ctx, FD_ACCEPT, 0, 200);
+    check_events(ctx, FD_ACCEPT, 0, 200);
     check_events(ctx, 0, 0, 0);
 
     server = accept(listener, NULL, NULL);

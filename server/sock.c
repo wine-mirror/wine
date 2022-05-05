@@ -990,6 +990,7 @@ static int sock_dispatch_asyncs( struct sock *sock, int event, int error )
             if (req->iosb->status == STATUS_PENDING && !req->accepted)
             {
                 complete_async_accept( sock, req );
+                event &= ~POLLIN;
                 break;
             }
         }

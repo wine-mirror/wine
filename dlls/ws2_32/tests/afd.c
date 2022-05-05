@@ -722,7 +722,7 @@ static void test_poll(void)
     ok(!size, "got size %lu\n", size);
 
     ret = WaitForSingleObject(event, 0);
-    todo_wine ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+    ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
 
     closesocket(server);
     closesocket(client);
