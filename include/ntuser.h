@@ -32,6 +32,7 @@ enum
     NtUserCallWinEventHook,
     NtUserCallWinProc,
     NtUserCallWindowsHook,
+    NtUserCopyImage,
     NtUserFreeCachedClipboardData,
     NtUserLoadDriver,
     NtUserRegisterBuiltinClasses,
@@ -144,6 +145,16 @@ struct win_hook_params
     BOOL prev_unicode;
     BOOL next_unicode;
     WCHAR module[MAX_PATH];
+};
+
+/* NtUserCopyMessage params */
+struct copy_image_params
+{
+    HANDLE hwnd;
+    UINT type;
+    INT dx;
+    INT dy;
+    UINT flags;
 };
 
 /* NtUserFreeCachedClipboardData params */

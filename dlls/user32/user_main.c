@@ -159,7 +159,6 @@ static void CDECL free_win_ptr( WND *win )
 
 static const struct user_callbacks user_funcs =
 {
-    CopyImage,
     EndMenu,
     ImmProcessKey,
     ImmTranslateMessage,
@@ -175,6 +174,12 @@ static const struct user_callbacks user_funcs =
     register_imm,
     unregister_imm,
 };
+
+static NTSTATUS WINAPI User32CopyImage( const struct copy_image_params *params, ULONG size )
+{
+    HANDLE ret = CopyImage( params->hwnd, params->type, params->dx, params->dy, params->flags );
+    return HandleToUlong( ret );
+}
 
 static NTSTATUS WINAPI User32FreeCachedClipboardData( const struct free_cached_data_params *params,
                                                       ULONG size )
@@ -202,6 +207,7 @@ static const void *kernel_callback_table[NtUserCallCount] =
     User32CallWinEventHook,
     User32CallWindowProc,
     User32CallWindowsHook,
+    User32CopyImage,
     User32FreeCachedClipboardData,
     User32LoadDriver,
     User32RegisterBuiltinClasses,

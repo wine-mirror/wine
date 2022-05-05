@@ -444,11 +444,11 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
     class->hbrBackground = wc->hbrBackground;
     class->winproc       = alloc_winproc( wc->lpfnWndProc, ansi );
     if (client_menu_name) class->menu_name = *client_menu_name;
-    if (wc->hIcon && !wc->hIconSm && user_callbacks)
-        class->hIconSmIntern = user_callbacks->pCopyImage( wc->hIcon, IMAGE_ICON,
-                                                           get_system_metrics( SM_CXSMICON ),
-                                                           get_system_metrics( SM_CYSMICON ),
-                                                           LR_COPYFROMRESOURCE );
+    if (wc->hIcon && !wc->hIconSm)
+        class->hIconSmIntern = CopyImage( wc->hIcon, IMAGE_ICON,
+                                          get_system_metrics( SM_CXSMICON ),
+                                          get_system_metrics( SM_CYSMICON ),
+                                          LR_COPYFROMRESOURCE );
     release_class_ptr( class );
     return atom;
 }
@@ -699,20 +699,20 @@ static ULONG_PTR set_class_long( HWND hwnd, INT offset, LONG_PTR newval, UINT si
             NtUserDestroyCursor( class->hIconSmIntern, 0 );
             class->hIconSmIntern = NULL;
         }
-        if (newval && !class->hIconSm && user_callbacks)
-            class->hIconSmIntern = user_callbacks->pCopyImage( (HICON)newval, IMAGE_ICON,
-                                                               get_system_metrics( SM_CXSMICON ),
-                                                               get_system_metrics( SM_CYSMICON ),
-                      LR_COPYFROMRESOURCE );
+        if (newval && !class->hIconSm)
+            class->hIconSmIntern = CopyImage( (HICON)newval, IMAGE_ICON,
+                                              get_system_metrics( SM_CXSMICON ),
+                                              get_system_metrics( SM_CYSMICON ),
+                                              LR_COPYFROMRESOURCE );
         class->hIcon = (HICON)newval;
         break;
     case GCLP_HICONSM:
         retval = (ULONG_PTR)class->hIconSm;
-        if (retval && !newval && class->hIcon && user_callbacks)
-            class->hIconSmIntern = user_callbacks->pCopyImage( class->hIcon, IMAGE_ICON,
-                                                               get_system_metrics( SM_CXSMICON ),
-                                                               get_system_metrics( SM_CYSMICON ),
-                                                               LR_COPYFROMRESOURCE );
+        if (retval && !newval && class->hIcon)
+            class->hIconSmIntern = CopyImage( class->hIcon, IMAGE_ICON,
+                                              get_system_metrics( SM_CXSMICON ),
+                                              get_system_metrics( SM_CYSMICON ),
+                                              LR_COPYFROMRESOURCE );
         else if (newval && class->hIconSmIntern)
         {
             NtUserDestroyCursor( class->hIconSmIntern, 0 );

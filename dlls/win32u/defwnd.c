@@ -123,11 +123,11 @@ static HICON set_window_icon( HWND hwnd, WPARAM type, HICON icon )
     {
     case ICON_SMALL:
         ret = win->hIconSmall;
-        if (ret && !icon && win->hIcon && user_callbacks)
+        if (ret && !icon && win->hIcon)
         {
-            win->hIconSmall2 = user_callbacks->pCopyImage( win->hIcon, IMAGE_ICON,
-                                                           get_system_metrics( SM_CXSMICON ),
-                                                           get_system_metrics( SM_CYSMICON ), 0 );
+            win->hIconSmall2 = CopyImage( win->hIcon, IMAGE_ICON,
+                                          get_system_metrics( SM_CXSMICON ),
+                                          get_system_metrics( SM_CYSMICON ), 0 );
         }
         else if (icon && win->hIconSmall2)
         {
@@ -144,11 +144,11 @@ static HICON set_window_icon( HWND hwnd, WPARAM type, HICON icon )
             NtUserDestroyCursor( win->hIconSmall2, 0 );
             win->hIconSmall2 = NULL;
         }
-        if (icon && !win->hIconSmall && user_callbacks)
+        if (icon && !win->hIconSmall)
         {
-            win->hIconSmall2 = user_callbacks->pCopyImage( icon, IMAGE_ICON,
-                                                           get_system_metrics( SM_CXSMICON ),
-                                                           get_system_metrics( SM_CYSMICON ), 0 );
+            win->hIconSmall2 = CopyImage( icon, IMAGE_ICON,
+                                          get_system_metrics( SM_CXSMICON ),
+                                          get_system_metrics( SM_CYSMICON ), 0 );
         }
         win->hIcon = icon;
         break;

@@ -786,3 +786,18 @@ ULONG_PTR set_icon_param( HICON handle, ULONG_PTR param )
     }
     return ret;
 }
+
+/******************************************************************************
+ *	     CopyImage (win32u.so)
+ */
+HANDLE WINAPI CopyImage( HANDLE hwnd, UINT type, INT dx, INT dy, UINT flags )
+{
+    void *ret_ptr;
+    ULONG ret_len;
+    NTSTATUS ret;
+    struct copy_image_params params =
+        { .hwnd = hwnd, .type = type, .dx = dx, .dy = dy, .flags = flags };
+
+    ret = KeUserModeCallback( NtUserCopyImage, &params, sizeof(params), &ret_ptr, &ret_len );
+    return UlongToHandle( ret );
+}
