@@ -216,15 +216,8 @@ static void check_interface_(unsigned int line, void *iface_ptr, REFIID iid, BOO
 
 static void test_interfaces(void)
 {
-    IBaseFilter *filter;
+    IBaseFilter *filter = create_mpeg_audio_codec();
     IPin *pin;
-
-    filter = create_mpeg_audio_codec();
-    if (!filter)
-    {
-        skip("Failed to create MPEG audio decoder instance, skipping tests.\n");
-        return;
-    }
 
     check_interface(filter, &IID_IBaseFilter, TRUE);
     check_interface(filter, &IID_IMediaFilter, TRUE);
@@ -322,11 +315,6 @@ static void test_aggregation(void)
     hr = CoCreateInstance(&CLSID_CMpegAudioCodec, &test_outer, CLSCTX_INPROC_SERVER,
             &IID_IUnknown, (void **)&unk);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (FAILED(hr))
-    {
-        skip("Failed to create MPEG audio decoder instance, skipping tests.\n");
-        return;
-    }
     ok(outer_ref == 1, "Got unexpected refcount %ld.\n", outer_ref);
     ok(unk != &test_outer, "Returned IUnknown should not be outer IUnknown.\n");
     ref = get_refcount(unk);
@@ -372,17 +360,10 @@ static void test_aggregation(void)
 
 static void test_unconnected_filter_state(void)
 {
-    IBaseFilter *filter;
+    IBaseFilter *filter = create_mpeg_audio_codec();
     FILTER_STATE state;
     HRESULT hr;
     ULONG ref;
-
-    filter = create_mpeg_audio_codec();
-    if (!filter)
-    {
-        skip("Failed to create MPEG audio decoder instance, skipping tests.\n");
-        return;
-    }
 
     hr = IBaseFilter_GetState(filter, 0, &state);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -436,18 +417,11 @@ static void test_unconnected_filter_state(void)
 
 static void test_enum_pins(void)
 {
-    IBaseFilter *filter;
+    IBaseFilter *filter = create_mpeg_audio_codec();
     IEnumPins *enum1, *enum2;
     ULONG count, ref;
     IPin *pins[3];
     HRESULT hr;
-
-    filter = create_mpeg_audio_codec();
-    if (!filter)
-    {
-        skip("Failed to create MPEG audio decoder instance, skipping tests.\n");
-        return;
-    }
 
     ref = get_refcount(filter);
     ok(ref == 1, "Got unexpected refcount %ld.\n", ref);
@@ -564,18 +538,11 @@ static void test_enum_pins(void)
 
 static void test_find_pin(void)
 {
-    IBaseFilter *filter;
+    IBaseFilter *filter = create_mpeg_audio_codec();
     IEnumPins *enum_pins;
     IPin *pin, *pin2;
     HRESULT hr;
     ULONG ref;
-
-    filter = create_mpeg_audio_codec();
-    if (!filter)
-    {
-        skip("Failed to create MPEG audio decoder instance, skipping tests.\n");
-        return;
-    }
 
     hr = IBaseFilter_EnumPins(filter, &enum_pins);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -612,20 +579,13 @@ static void test_find_pin(void)
 
 static void test_pin_info(void)
 {
-    IBaseFilter *filter;
+    IBaseFilter *filter = create_mpeg_audio_codec();
     PIN_DIRECTION dir;
     PIN_INFO info;
     HRESULT hr;
     WCHAR *id;
     ULONG ref;
     IPin *pin;
-
-    filter = create_mpeg_audio_codec();
-    if (!filter)
-    {
-        skip("Failed to create MPEG audio decoder instance, skipping tests.\n");
-        return;
-    }
 
     hr = IBaseFilter_FindPin(filter, L"In", &pin);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
@@ -1393,7 +1353,17 @@ static void test_connect_pin(void)
 
 START_TEST(mpegaudio)
 {
+    IBaseFilter *filter;
+
     CoInitialize(NULL);
+
+    if (FAILED(CoCreateInstance(&CLSID_CMpegAudioCodec, NULL, CLSCTX_INPROC_SERVER,
+            &IID_IBaseFilter, (void **)&filter)))
+    {
+        skip("Failed to create MPEG audio decoder instance.\n");
+        return;
+    }
+    IBaseFilter_Release(filter);
 
     test_interfaces();
     test_aggregation();
