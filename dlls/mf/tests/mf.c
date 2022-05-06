@@ -65,6 +65,7 @@ DEFINE_GUID(DMOVideoFormat_RGB8, D3DFMT_P8, 0x524f, 0x11ce, 0x9f, 0x53, 0x00, 0x
 static HRESULT (WINAPI *pMFCreateSampleCopierMFT)(IMFTransform **copier);
 static HRESULT (WINAPI *pMFGetTopoNodeCurrentType)(IMFTopologyNode *node, DWORD stream, BOOL output, IMFMediaType **type);
 
+static BOOL has_video_processor;
 static BOOL is_vista(void)
 {
     return !pMFGetTopoNodeCurrentType;
@@ -1885,6 +1886,7 @@ enum loader_test_flags
     LOADER_EXPECTED_DECODER = 0x1,
     LOADER_EXPECTED_CONVERTER = 0x2,
     LOADER_TODO = 0x4,
+    LOADER_NEEDS_VIDEO_PROCESSOR = 0x8,
 };
 
 static void test_topology_loader(void)
@@ -1972,7 +1974,7 @@ static void test_topology_loader(void)
 
             MF_CONNECT_ALLOW_CONVERTER,
             S_OK,
-            LOADER_EXPECTED_CONVERTER | LOADER_TODO,
+            LOADER_NEEDS_VIDEO_PROCESSOR | LOADER_EXPECTED_CONVERTER | LOADER_TODO,
         },
 
         {
@@ -2021,7 +2023,7 @@ static void test_topology_loader(void)
 
             MF_CONNECT_ALLOW_CONVERTER,
             MF_E_TRANSFORM_NOT_POSSIBLE_FOR_CURRENT_MEDIATYPE_COMBINATION,
-            LOADER_TODO,
+            LOADER_NEEDS_VIDEO_PROCESSOR | LOADER_TODO,
         },
 
         {
@@ -2185,9 +2187,14 @@ static void test_topology_loader(void)
         ok(!count, "Unexpected count %u.\n", count);
 
         hr = IMFTopoLoader_Load(loader, topology, &full_topology, NULL);
-        todo_wine_if(test->flags & LOADER_TODO)
-        ok(hr == test->expected_result, "Unexpected hr %#lx on test %u.\n", hr, i);
-        ok(full_topology != topology, "Unexpected instance.\n");
+        if (test->flags & LOADER_NEEDS_VIDEO_PROCESSOR && !has_video_processor)
+            ok(hr == MF_E_INVALIDMEDIATYPE, "Unexpected hr %#lx on test %u.\n", hr, i);
+        else
+        {
+            todo_wine_if(test->flags & LOADER_TODO)
+            ok(hr == test->expected_result, "Unexpected hr %#lx on test %u.\n", hr, i);
+            ok(full_topology != topology, "Unexpected instance.\n");
+        }
 
         if (test->expected_result == S_OK && hr == S_OK)
         {
@@ -3629,6 +3636,7 @@ static void test_video_processor(void)
             transform_inputs, ARRAY_SIZE(transform_inputs), transform_outputs, ARRAY_SIZE(transform_outputs),
             &transform, &CLSID_VideoProcessorMFT, &class_id))
         goto failed;
+    has_video_processor = TRUE;
 
     todo_wine
     check_interface(transform, &IID_IMFVideoProcessorControl, TRUE);
@@ -8183,6 +8191,7 @@ START_TEST(mf)
         return;
     }
 
+    test_video_processor();
     test_topology();
     test_topology_tee_node();
     test_topology_loader();
@@ -8195,7 +8204,6 @@ START_TEST(mf)
     test_presentation_clock();
     test_sample_grabber();
     test_sample_grabber_is_mediatype_supported();
-    test_video_processor();
     test_quality_manager();
     test_sar();
     test_evr();
