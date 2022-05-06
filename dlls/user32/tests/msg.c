@@ -8174,8 +8174,9 @@ void dump_region(HRGN hrgn)
     HeapFree( GetProcessHeap(), 0, data );
 }
 
-#define check_update_rgn( hwnd, hrgn ) check_update_rgn_( __LINE__, hwnd, hrgn )
-static void check_update_rgn_( int line, HWND hwnd, HRGN hrgn )
+#define todo_check_update_rgn( hwnd, hrgn ) check_update_rgn_( __LINE__, TRUE, hwnd, hrgn )
+#define check_update_rgn( hwnd, hrgn ) check_update_rgn_( __LINE__, FALSE, hwnd, hrgn )
+static void check_update_rgn_( int line, BOOL todo, HWND hwnd, HRGN hrgn )
 {
     INT ret;
     RECT r1, r2;
@@ -8186,7 +8187,10 @@ static void check_update_rgn_( int line, HWND hwnd, HRGN hrgn )
     ok( ret != ERROR, "GetUpdateRgn failed\n" );
     if (ret == NULLREGION)
     {
-        ok_(__FILE__,line)( !hrgn, "Update region shouldn't be empty\n" );
+        if(todo)
+            todo_wine ok_(__FILE__,line)( !hrgn, "Update region shouldn't be empty\n" );
+        else
+            ok_(__FILE__,line)( !hrgn, "Update region shouldn't be empty\n" );
     }
     else
     {
@@ -8392,6 +8396,61 @@ static void test_paint_messages(void)
     ret = RedrawWindow( hwnd, &rect, NULL, RDW_INVALIDATE );
     ok(ret, "RedrawWindow returned %d instead of TRUE\n", ret);
     check_update_rgn( hwnd, 0 );
+
+    /* test a zeroed rectangle */
+    RedrawWindow( hwnd, NULL, 0, RDW_VALIDATE|RDW_NOFRAME|RDW_NOERASE );
+    SetRect( &rect, 0, 0, 0, 0 );
+    ret = RedrawWindow( hwnd, &rect, NULL, RDW_INVALIDATE );
+    ok(ret, "RedrawWindow returned %d instead of TRUE\n", ret);
+    check_update_rgn( hwnd, 0 );
+
+    /* a well ordered rectangle */
+    RedrawWindow( hwnd, NULL, 0, RDW_VALIDATE|RDW_NOFRAME|RDW_NOERASE );
+    SetRect( &rect, 10, 5, 17, 21 );
+    ret = RedrawWindow( hwnd, &rect, NULL, RDW_INVALIDATE );
+    ok(ret, "RedrawWindow returned %d instead of TRUE\n", ret);
+    SetRectRgn( hrgn, 10, 5, 17, 21 );
+    check_update_rgn( hwnd, hrgn );
+
+    /* empty rectangle, top and bottom are swapped but left and right have
+       the same value */
+    RedrawWindow( hwnd, NULL, 0, RDW_VALIDATE|RDW_NOFRAME|RDW_NOERASE );
+    SetRect( &rect, 5, 30, 5, 10 );
+    ret = RedrawWindow( hwnd, &rect, NULL, RDW_INVALIDATE );
+    ok(ret, "RedrawWindow returned %d instead of TRUE\n", ret);
+    check_update_rgn( hwnd, 0 );
+
+    /* empty rectangle, left and right are swapped but top and bottom have
+       the same value */
+    RedrawWindow( hwnd, NULL, 0, RDW_VALIDATE|RDW_NOFRAME|RDW_NOERASE );
+    SetRect( &rect, 17, 10, 5, 10 );
+    ret = RedrawWindow( hwnd, &rect, NULL, RDW_INVALIDATE );
+    ok(ret, "RedrawWindow returned %d instead of TRUE\n", ret);
+    check_update_rgn( hwnd, 0 );
+
+    /* Left and right are swapped */
+    RedrawWindow( hwnd, NULL, 0, RDW_VALIDATE|RDW_NOFRAME|RDW_NOERASE );
+    SetRect( &rect, 21, 12, 7, 30 );
+    ret = RedrawWindow( hwnd, &rect, NULL, RDW_INVALIDATE );
+    ok(ret, "RedrawWindow returned %d instead of TRUE\n", ret);
+    SetRectRgn( hrgn, 7, 12, 21, 30 );
+    todo_check_update_rgn( hwnd, hrgn );
+
+    /* Top and bottom are swapped */
+    RedrawWindow( hwnd, NULL, 0, RDW_VALIDATE|RDW_NOFRAME|RDW_NOERASE );
+    SetRect( &rect, 7, 30, 21, 12 );
+    ret = RedrawWindow( hwnd, &rect, NULL, RDW_INVALIDATE );
+    ok(ret, "RedrawWindow returned %d instead of TRUE\n", ret);
+    SetRectRgn( hrgn, 7, 12, 21, 30 );
+    todo_check_update_rgn( hwnd, hrgn );
+
+    /* both reference points are swapped */
+    RedrawWindow( hwnd, NULL, 0, RDW_VALIDATE|RDW_NOFRAME|RDW_NOERASE );
+    SetRect( &rect, 21, 30, 7, 12 );
+    ret = RedrawWindow( hwnd, &rect, NULL, RDW_INVALIDATE );
+    ok(ret, "RedrawWindow returned %d instead of TRUE\n", ret);
+    SetRectRgn( hrgn, 7, 12, 21, 30 );
+    todo_check_update_rgn( hwnd, hrgn );
 
     /* flush pending messages */
     flush_events();
