@@ -531,7 +531,7 @@ static HRESULT setup_oss_device(AUDCLNT_SHAREMODE share, int fd,
     }
     free(closest);
 
-    TRACE("returning: %08x\n", ret);
+    TRACE("returning: %08x\n", (unsigned)ret);
     return ret;
 }
 

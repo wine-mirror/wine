@@ -57,7 +57,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
 static void notify_client(struct notify_context *notify)
 {
-    TRACE("dev_id = %d msg = %d param1 = %04lX param2 = %04lX\n",
+    TRACE("dev_id = %d msg = %d param1 = %04IX param2 = %04IX\n",
           notify->dev_id, notify->msg, notify->param_1, notify->param_2);
 
     DriverCallback(notify->callback, notify->flags, notify->device, notify->msg,
@@ -78,7 +78,7 @@ DWORD WINAPI OSS_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     struct notify_context notify;
     UINT err;
 
-    TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
+    TRACE("(%04X, %04X, %08IX, %08IX, %08IX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     params.dev_id = wDevID;
@@ -108,7 +108,7 @@ DWORD WINAPI OSS_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     struct notify_context notify;
     UINT err;
 
-    TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
+    TRACE("(%04X, %04X, %08IX, %08IX, %08IX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     params.dev_id = wDevID;
@@ -150,7 +150,7 @@ static DWORD WINAPI notify_thread(void *p)
 LRESULT CALLBACK OSS_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
                                 LPARAM dwParam1, LPARAM dwParam2)
 {
-     TRACE("(%08lX, %p, %08X, %08lX, %08lX)\n",
+     TRACE("(%08IX, %p, %08X, %08IX, %08IX)\n",
            dwDevID, hDriv, wMsg, dwParam1, dwParam2);
 
     switch(wMsg) {

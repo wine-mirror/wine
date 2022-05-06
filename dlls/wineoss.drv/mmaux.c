@@ -42,7 +42,7 @@ DWORD WINAPI OSS_auxMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     struct aux_message_params params;
     UINT err;
 
-    TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
+    TRACE("(%04X, %04X, %08IX, %08IX, %08IX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     params.dev_id = wDevID;

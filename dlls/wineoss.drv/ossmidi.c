@@ -397,12 +397,13 @@ static UINT midi_init(void)
                 FIXME("Synthesizer supports MIDI in. Not yet supported.\n");
 
             TRACE("SynthOut[%d]\tOSS info: synth type=%d/%d capa=%x\n",
-                  i, sinfo.synth_type, sinfo.synth_subtype, sinfo.capabilities);
+                  i, sinfo.synth_type, sinfo.synth_subtype, (unsigned)sinfo.capabilities);
         }
 
         TRACE("SynthOut[%d]\tname='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%d\n",
               i, wine_dbgstr_w(dest->caps.szPname), dest->caps.wTechnology,
-              dest->caps.wVoices, dest->caps.wNotes, dest->caps.wChannelMask, dest->caps.dwSupport);
+              dest->caps.wVoices, dest->caps.wNotes, dest->caps.wChannelMask,
+              (unsigned)dest->caps.dwSupport);
     }
 
     /* find how many MIDI devices are there in the system */
@@ -492,10 +493,10 @@ static UINT midi_init(void)
         TRACE("OSS info: midi[%d] dev-type=%d capa=%x\n"
               "\tMidiOut[%d] name='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%d\n"
               "\tMidiIn [%d] name='%s' support=%d\n",
-              i, minfo.dev_type, minfo.capabilities,
+              i, minfo.dev_type, (unsigned)minfo.capabilities,
               synth_devs + i, wine_dbgstr_w(dest->caps.szPname), dest->caps.wTechnology,
-              dest->caps.wVoices, dest->caps.wNotes, dest->caps.wChannelMask, dest->caps.dwSupport,
-              i, wine_dbgstr_w(src->caps.szPname), src->caps.dwSupport);
+              dest->caps.wVoices, dest->caps.wNotes, dest->caps.wChannelMask, (unsigned)dest->caps.dwSupport,
+              i, wine_dbgstr_w(src->caps.szPname), (unsigned)src->caps.dwSupport);
     }
 
 wrapup:
@@ -1115,7 +1116,7 @@ static UINT midi_out_long_data(WORD dev_id, MIDIHDR *hdr, UINT hdr_size, struct 
     if (data[0] != 0xF0 || data[hdr->dwBufferLength - 1] != 0xF7)
         WARN("The allegedly system exclusive buffer is not correct\n\tPlease report with MIDI file\n");
 
-    TRACE("dwBufferLength=%u !\n", hdr->dwBufferLength);
+    TRACE("dwBufferLength=%u !\n", (unsigned)hdr->dwBufferLength);
     TRACE("                 %02X %02X %02X ... %02X %02X %02X\n",
           data[0], data[1], data[2], data[hdr->dwBufferLength - 3],
           data[hdr->dwBufferLength - 2], data[hdr->dwBufferLength - 1]);
