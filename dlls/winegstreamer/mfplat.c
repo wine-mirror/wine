@@ -472,6 +472,56 @@ HRESULT mfplat_DllRegisterServer(void)
         {MFMediaType_Video, MFVideoFormat_YUY2},
     };
 
+    MFT_REGISTER_TYPE_INFO video_processor_input_types[] =
+    {
+        {MFMediaType_Video, MFVideoFormat_IYUV},
+        {MFMediaType_Video, MFVideoFormat_YV12},
+        {MFMediaType_Video, MFVideoFormat_NV12},
+        {MFMediaType_Video, MFVideoFormat_YUY2},
+        {MFMediaType_Video, MFVideoFormat_ARGB32},
+        {MFMediaType_Video, MFVideoFormat_RGB32},
+        {MFMediaType_Video, MFVideoFormat_NV11},
+        {MFMediaType_Video, MFVideoFormat_AYUV},
+        {MFMediaType_Video, MFVideoFormat_UYVY},
+        {MFMediaType_Video, MEDIASUBTYPE_P208},
+        {MFMediaType_Video, MFVideoFormat_RGB24},
+        {MFMediaType_Video, MFVideoFormat_RGB555},
+        {MFMediaType_Video, MFVideoFormat_RGB565},
+        {MFMediaType_Video, MFVideoFormat_RGB8},
+        {MFMediaType_Video, MFVideoFormat_I420},
+        {MFMediaType_Video, MFVideoFormat_Y216},
+        {MFMediaType_Video, MFVideoFormat_v410},
+        {MFMediaType_Video, MFVideoFormat_Y41P},
+        {MFMediaType_Video, MFVideoFormat_Y41T},
+        {MFMediaType_Video, MFVideoFormat_Y42T},
+        {MFMediaType_Video, MFVideoFormat_YVYU},
+        {MFMediaType_Video, MFVideoFormat_420O},
+    };
+    MFT_REGISTER_TYPE_INFO video_processor_output_types[] =
+    {
+        {MFMediaType_Video, MFVideoFormat_IYUV},
+        {MFMediaType_Video, MFVideoFormat_YV12},
+        {MFMediaType_Video, MFVideoFormat_NV12},
+        {MFMediaType_Video, MFVideoFormat_YUY2},
+        {MFMediaType_Video, MFVideoFormat_ARGB32},
+        {MFMediaType_Video, MFVideoFormat_RGB32},
+        {MFMediaType_Video, MFVideoFormat_NV11},
+        {MFMediaType_Video, MFVideoFormat_AYUV},
+        {MFMediaType_Video, MFVideoFormat_UYVY},
+        {MFMediaType_Video, MEDIASUBTYPE_P208},
+        {MFMediaType_Video, MFVideoFormat_RGB24},
+        {MFMediaType_Video, MFVideoFormat_RGB555},
+        {MFMediaType_Video, MFVideoFormat_RGB565},
+        {MFMediaType_Video, MFVideoFormat_RGB8},
+        {MFMediaType_Video, MFVideoFormat_I420},
+        {MFMediaType_Video, MFVideoFormat_Y216},
+        {MFMediaType_Video, MFVideoFormat_v410},
+        {MFMediaType_Video, MFVideoFormat_Y41P},
+        {MFMediaType_Video, MFVideoFormat_Y41T},
+        {MFMediaType_Video, MFVideoFormat_Y42T},
+        {MFMediaType_Video, MFVideoFormat_YVYU},
+    };
+
     struct mft
     {
         GUID clsid;
@@ -514,6 +564,16 @@ HRESULT mfplat_DllRegisterServer(void)
             h264_decoder_input_types,
             ARRAY_SIZE(h264_decoder_output_types),
             h264_decoder_output_types,
+        },
+        {
+            CLSID_VideoProcessorMFT,
+            MFT_CATEGORY_VIDEO_PROCESSOR,
+            L"Microsoft Video Processor MFT",
+            MFT_ENUM_FLAG_SYNCMFT,
+            ARRAY_SIZE(video_processor_input_types),
+            video_processor_input_types,
+            ARRAY_SIZE(video_processor_output_types),
+            video_processor_output_types,
         },
     };
 
