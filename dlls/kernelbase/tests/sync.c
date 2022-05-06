@@ -213,8 +213,11 @@ static void test_Sleep(void)
     min = 50.0 * (r1 < r2 ? r1 : r2) / 10000000.0;
     max = 50.0 * (r1 < r2 ? r2 : r1) / 10000000.0;
 
-    /* Add an extra 1s to account for potential scheduling delays */
-    ok(0.9 * min <= elapsed_time && elapsed_time <= 1.0 + max,
+    /* Windows tries to work around the timer resolution by sometimes
+     * returning early such that the total may be a bit less than requested!
+     * Also add an extra 1s to account for potential scheduling delays.
+     */
+    ok(0.7 * min <= elapsed_time && elapsed_time <= 1.0 + max,
        "got %f, expected between %f and %f\n", elapsed_time, min, max);
 }
 
