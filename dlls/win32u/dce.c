@@ -1457,8 +1457,11 @@ BOOL WINAPI NtUserRedrawWindow( HWND hwnd, const RECT *rect, HRGN hrgn, UINT fla
 
     if (rect && !hrgn)
     {
-        if (IsRectEmpty( rect )) rect = &empty;
-        ret = redraw_window_rects( hwnd, flags, rect, 1 );
+        RECT ordered = *rect;
+
+        order_rect( &ordered );
+        if (IsRectEmpty( &ordered )) ordered = empty;
+        ret = redraw_window_rects( hwnd, flags, &ordered, 1 );
     }
     else if (!hrgn)
     {

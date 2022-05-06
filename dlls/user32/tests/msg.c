@@ -8174,9 +8174,8 @@ void dump_region(HRGN hrgn)
     HeapFree( GetProcessHeap(), 0, data );
 }
 
-#define todo_check_update_rgn( hwnd, hrgn ) check_update_rgn_( __LINE__, TRUE, hwnd, hrgn )
-#define check_update_rgn( hwnd, hrgn ) check_update_rgn_( __LINE__, FALSE, hwnd, hrgn )
-static void check_update_rgn_( int line, BOOL todo, HWND hwnd, HRGN hrgn )
+#define check_update_rgn( hwnd, hrgn ) check_update_rgn_( __LINE__, hwnd, hrgn )
+static void check_update_rgn_( int line, HWND hwnd, HRGN hrgn )
 {
     INT ret;
     RECT r1, r2;
@@ -8187,10 +8186,7 @@ static void check_update_rgn_( int line, BOOL todo, HWND hwnd, HRGN hrgn )
     ok( ret != ERROR, "GetUpdateRgn failed\n" );
     if (ret == NULLREGION)
     {
-        if(todo)
-            todo_wine ok_(__FILE__,line)( !hrgn, "Update region shouldn't be empty\n" );
-        else
-            ok_(__FILE__,line)( !hrgn, "Update region shouldn't be empty\n" );
+        ok_(__FILE__,line)( !hrgn, "Update region shouldn't be empty\n" );
     }
     else
     {
@@ -8434,7 +8430,7 @@ static void test_paint_messages(void)
     ret = RedrawWindow( hwnd, &rect, NULL, RDW_INVALIDATE );
     ok(ret, "RedrawWindow returned %d instead of TRUE\n", ret);
     SetRectRgn( hrgn, 7, 12, 21, 30 );
-    todo_check_update_rgn( hwnd, hrgn );
+    check_update_rgn( hwnd, hrgn );
 
     /* Top and bottom are swapped */
     RedrawWindow( hwnd, NULL, 0, RDW_VALIDATE|RDW_NOFRAME|RDW_NOERASE );
@@ -8442,7 +8438,7 @@ static void test_paint_messages(void)
     ret = RedrawWindow( hwnd, &rect, NULL, RDW_INVALIDATE );
     ok(ret, "RedrawWindow returned %d instead of TRUE\n", ret);
     SetRectRgn( hrgn, 7, 12, 21, 30 );
-    todo_check_update_rgn( hwnd, hrgn );
+    check_update_rgn( hwnd, hrgn );
 
     /* both reference points are swapped */
     RedrawWindow( hwnd, NULL, 0, RDW_VALIDATE|RDW_NOFRAME|RDW_NOERASE );
@@ -8450,7 +8446,7 @@ static void test_paint_messages(void)
     ret = RedrawWindow( hwnd, &rect, NULL, RDW_INVALIDATE );
     ok(ret, "RedrawWindow returned %d instead of TRUE\n", ret);
     SetRectRgn( hrgn, 7, 12, 21, 30 );
-    todo_check_update_rgn( hwnd, hrgn );
+    check_update_rgn( hwnd, hrgn );
 
     /* flush pending messages */
     flush_events();
