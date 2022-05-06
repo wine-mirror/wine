@@ -1112,9 +1112,6 @@ static void sock_poll_event( struct fd *fd, int event )
     if (debug_level)
         fprintf(stderr, "socket %p select event: %x\n", sock, event);
 
-    /* we may change event later, remove from loop here */
-    if (event & (POLLERR|POLLHUP)) set_fd_events( sock->fd, -1 );
-
     switch (sock->state)
     {
     case SOCK_UNCONNECTED:
