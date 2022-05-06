@@ -572,7 +572,7 @@ void provider_create( const WCHAR *device_path )
 
     EnterCriticalSection( &provider_cs );
     LIST_FOR_EACH_ENTRY( entry, &provider_list, struct provider, entry )
-        if ((found = !wcscmp( entry->device_path, device_path ))) break;
+        if ((found = !wcsicmp( entry->device_path, device_path ))) break;
     if (!found) list_add_tail( &provider_list, &impl->entry );
     LeaveCriticalSection( &provider_cs );
 
@@ -592,11 +592,12 @@ void provider_remove( const WCHAR *device_path )
 
     EnterCriticalSection( &provider_cs );
     LIST_FOR_EACH_ENTRY( entry, &provider_list, struct provider, entry )
-        if ((found = !wcscmp( entry->device_path, device_path ))) break;
+        if ((found = !wcsicmp( entry->device_path, device_path ))) break;
     if (found) list_remove( &entry->entry );
     LeaveCriticalSection( &provider_cs );
 
-    if (found)
+    if (!found) WARN( "provider not found for device %s\n", debugstr_w( device_path ) );
+    else
     {
         provider = &entry->IGameControllerProvider_iface;
         manager_on_provider_removed( provider );
