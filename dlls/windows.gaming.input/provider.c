@@ -212,7 +212,7 @@ static HRESULT WINAPI wine_provider_get_State( IWineGameControllerProvider *ifac
     if (FAILED(hr = IDirectInputDevice8_GetDeviceState( impl->dinput_device, sizeof(state), &state )))
     {
         WARN( "Failed to read device state, hr %#lx\n", hr );
-        return hr;
+        return S_OK;
     }
 
     i = ARRAY_SIZE(state.rgbButtons);
