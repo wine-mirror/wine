@@ -21896,6 +21896,7 @@ wine_fn_config_makefile dlls/wintab32/tests enable_tests
 wine_fn_config_makefile dlls/wintrust enable_wintrust
 wine_fn_config_makefile dlls/wintrust/tests enable_tests
 wine_fn_config_makefile dlls/wintypes enable_wintypes
+wine_fn_config_makefile dlls/wintypes/tests enable_tests
 wine_fn_config_makefile dlls/winusb enable_winusb
 wine_fn_config_makefile dlls/wlanapi enable_wlanapi
 wine_fn_config_makefile dlls/wlanapi/tests enable_tests
