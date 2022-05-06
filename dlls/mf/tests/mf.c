@@ -4821,7 +4821,7 @@ todo_wine {
 
     /* Same test for a substream. */
     hr = IMFMediaSink_AddStreamSink(sink, 1, NULL, &stream_sink2);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK || broken(hr == E_INVALIDARG), "Unexpected hr %#lx.\n", hr);
 
     if (SUCCEEDED(hr))
     {
