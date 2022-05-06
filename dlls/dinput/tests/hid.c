@@ -911,10 +911,12 @@ void set_hid_expect_( const char *file, int line, HANDLE device, struct hid_expe
     ok_(file, line)( ret, "IOCTL_WINETEST_HID_SET_EXPECT failed, last error %lu\n", GetLastError() );
 }
 
-void wait_hid_expect_( const char *file, int line, HANDLE device, DWORD timeout, BOOL todo )
+void wait_hid_expect_( const char *file, int line, HANDLE device, DWORD timeout, BOOL wait_pending, BOOL todo )
 {
+    struct wait_expect_params params = {.wait_pending = wait_pending};
+
     todo_wine_if(todo) {
-    BOOL ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_WAIT_EXPECT, NULL, 0, NULL, 0, timeout );
+    BOOL ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_WAIT_EXPECT, &params, sizeof(params), NULL, 0, timeout );
     ok_(file, line)( ret, "IOCTL_WINETEST_HID_WAIT_EXPECT failed, last error %lu\n", GetLastError() );
     }
 

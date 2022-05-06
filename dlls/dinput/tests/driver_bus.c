@@ -188,26 +188,34 @@ static NTSTATUS expect_queue_add_pending( struct expect_queue *queue, IRP *irp )
     return status;
 }
 
-static void expect_queue_clear_pending( struct expect_queue *queue )
+/* complete an expect report previously marked as pending, or wait for one and then for the queue to empty */
+static NTSTATUS expect_queue_wait_pending( struct expect_queue *queue, IRP *irp )
 {
+    NTSTATUS status;
+    IRP *pending;
     KIRQL irql;
-    IRP *irp;
 
     KeAcquireSpinLock( &queue->lock, &irql );
-    if ((irp = queue->pending_wait))
+    if ((pending = queue->pending_wait))
     {
         queue->pending_wait = NULL;
-        if (!IoSetCancelRoutine( irp, NULL )) irp = NULL;
+        if (!IoSetCancelRoutine( pending, NULL )) pending = NULL;
     }
+
+    if (pending && queue->pos == queue->end) status = STATUS_SUCCESS;
+    else status = expect_queue_add_pending_locked( queue, irp );
     KeReleaseSpinLock( &queue->lock, irql );
 
-    if (irp)
+    if (pending)
     {
-        irp->IoStatus.Status = STATUS_SUCCESS;
-        IoCompleteRequest( irp, IO_NO_INCREMENT );
+        pending->IoStatus.Status = STATUS_SUCCESS;
+        IoCompleteRequest( pending, IO_NO_INCREMENT );
     }
+
+    return status;
 }
 
+/* wait for the expect queue to empty */
 static NTSTATUS expect_queue_wait( struct expect_queue *queue, IRP *irp )
 {
     NTSTATUS status;
@@ -257,11 +265,21 @@ static void expect_queue_next( struct expect_queue *queue, ULONG code, HID_XFER_
         if (running_under_wine || !queue->pos->wine_only) break;
         queue->pos++;
     }
-    if (queue->pos == queue->end && (irp = queue->pending_wait))
+
+    if ((irp = queue->pending_wait))
     {
-        queue->pending_wait = NULL;
-        if (!IoSetCancelRoutine( irp, NULL )) irp = NULL;
+        /* don't mark the IRP as pending if someone's already waiting */
+        if (expect->ret_status == STATUS_PENDING) expect->ret_status = STATUS_SUCCESS;
+
+        /* complete the pending wait IRP if the queue is now empty */
+        if (queue->pos != queue->end) irp = NULL;
+        else
+        {
+            queue->pending_wait = NULL;
+            if (!IoSetCancelRoutine( irp, NULL )) irp = NULL;
+        }
     }
+
     memcpy( context, queue->context, context_size );
     KeReleaseSpinLock( &queue->lock, irql );
 
@@ -1244,9 +1262,12 @@ static NTSTATUS WINAPI pdo_ioctl( DEVICE_OBJECT *device, IRP *irp )
         status = STATUS_SUCCESS;
         break;
     case IOCTL_WINETEST_HID_WAIT_EXPECT:
-        expect_queue_clear_pending( &impl->expect_queue );
-        status = expect_queue_wait( &impl->expect_queue, irp );
+    {
+        struct wait_expect_params wait_params = *(struct wait_expect_params *)irp->AssociatedIrp.SystemBuffer;
+        if (!wait_params.wait_pending) status = expect_queue_wait( &impl->expect_queue, irp );
+        else status = expect_queue_wait_pending( &impl->expect_queue, irp );
         break;
+    }
     case IOCTL_WINETEST_HID_SEND_INPUT:
         input_queue_reset( &impl->input_queue, irp->AssociatedIrp.SystemBuffer, in_size );
         status = STATUS_SUCCESS;
