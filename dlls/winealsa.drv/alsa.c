@@ -637,7 +637,7 @@ static snd_pcm_format_t alsa_format(const WAVEFORMATEX *fmt)
     return format;
 }
 
-static int alsa_channel_index(DWORD flag)
+static int alsa_channel_index(UINT flag)
 {
     switch(flag){
     case SPEAKER_FRONT_LEFT:
@@ -702,7 +702,7 @@ static HRESULT map_channels(EDataFlow flow, const WAVEFORMATEX *fmt, int *alsa_c
 
     if(flow != eCapture && (fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE || fmt->nChannels > 2) ){
         WAVEFORMATEXTENSIBLE *fmtex = (void*)fmt;
-        DWORD mask, flag = SPEAKER_FRONT_LEFT;
+        UINT mask, flag = SPEAKER_FRONT_LEFT;
         UINT i = 0;
 
         if(fmt->wFormatTag == WAVE_FORMAT_EXTENSIBLE &&
