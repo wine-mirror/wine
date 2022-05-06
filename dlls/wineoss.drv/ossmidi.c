@@ -396,8 +396,8 @@ static UINT midi_init(void)
             if (sinfo.capabilities & SYNTH_CAP_INPUT)
                 FIXME("Synthesizer supports MIDI in. Not yet supported.\n");
 
-            TRACE("SynthOut[%d]\tOSS info: synth type=%d/%d capa=%lx\n",
-                  i, sinfo.synth_type, sinfo.synth_subtype, (long)sinfo.capabilities);
+            TRACE("SynthOut[%d]\tOSS info: synth type=%d/%d capa=%x\n",
+                  i, sinfo.synth_type, sinfo.synth_subtype, sinfo.capabilities);
         }
 
         TRACE("SynthOut[%d]\tname='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%d\n",
@@ -489,10 +489,10 @@ static UINT midi_init(void)
         }
         src->caps.dwSupport = 0; /* mandatory with MIDIINCAPS */
 
-        TRACE("OSS info: midi[%d] dev-type=%d capa=%lx\n"
+        TRACE("OSS info: midi[%d] dev-type=%d capa=%x\n"
               "\tMidiOut[%d] name='%s' techn=%d voices=%d notes=%d chnMsk=%04x support=%d\n"
               "\tMidiIn [%d] name='%s' support=%d\n",
-              i, minfo.dev_type, (long)minfo.capabilities,
+              i, minfo.dev_type, minfo.capabilities,
               synth_devs + i, wine_dbgstr_w(dest->caps.szPname), dest->caps.wTechnology,
               dest->caps.wVoices, dest->caps.wNotes, dest->caps.wChannelMask, dest->caps.dwSupport,
               i, wine_dbgstr_w(src->caps.szPname), src->caps.dwSupport);

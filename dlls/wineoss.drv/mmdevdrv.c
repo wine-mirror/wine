@@ -1315,7 +1315,7 @@ static HRESULT WINAPI AudioCaptureClient_GetBuffer(IAudioCaptureClient *iface,
     params.stream = This->stream;
     params.data = data;
     params.frames = frames;
-    params.flags = flags;
+    params.flags = (UINT*)flags;
     params.devpos = devpos;
     params.qpcpos = qpcpos;
     OSS_CALL(get_capture_buffer, &params);
