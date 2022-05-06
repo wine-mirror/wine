@@ -2742,6 +2742,7 @@ WINBASEAPI BOOL        WINAPI UnlockFileEx(HANDLE,DWORD,DWORD,DWORD,LPOVERLAPPED
 #define                       UnlockSegment(handle) GlobalUnfix((HANDLE)(handle))
 WINBASEAPI BOOL        WINAPI UnmapViewOfFile(LPCVOID);
 WINBASEAPI BOOL        WINAPI UnmapViewOfFile2(HANDLE,PVOID,ULONG);
+WINBASEAPI BOOL        WINAPI UnmapViewOfFileEx(PVOID,ULONG);
 WINBASEAPI BOOL        WINAPI UmsThreadYield(void *);
 WINBASEAPI HRESULT     WINAPI UnregisterApplicationRestart(void);
 WINBASEAPI BOOL        WINAPI UnregisterWait(HANDLE);

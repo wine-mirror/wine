@@ -313,6 +313,15 @@ BOOL WINAPI DECLSPEC_HOTPATCH UnmapViewOfFile2( HANDLE process, void *addr, ULON
 
 
 /***********************************************************************
+ *             UnmapViewOfFileEx   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH UnmapViewOfFileEx( void *addr, ULONG flags )
+{
+    return set_ntstatus( NtUnmapViewOfSectionEx( GetCurrentProcess(), addr, flags ));
+}
+
+
+/***********************************************************************
  *             VirtualAlloc   (kernelbase.@)
  */
 LPVOID WINAPI DECLSPEC_HOTPATCH VirtualAlloc( void *addr, SIZE_T size, DWORD type, DWORD protect )

@@ -1557,6 +1557,7 @@
 @ stdcall -import UnlockFile(long long long long long)
 @ stdcall -import UnlockFileEx(long long long long ptr)
 @ stdcall -import UnmapViewOfFile(ptr)
+@ stdcall -import UnmapViewOfFileEx(ptr long)
 # @ stub UnregisterApplicationRecoveryCallback
 @ stdcall UnregisterApplicationRestart()
 # @ stub UnregisterConsoleIME
