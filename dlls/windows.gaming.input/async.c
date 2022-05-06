@@ -98,6 +98,7 @@ static ULONG WINAPI async_impl_Release( IWineAsyncInfoImpl *iface )
         IAsyncInfo_Close( &impl->IAsyncInfo_iface );
         if (impl->param) IUnknown_Release( impl->param );
         if (impl->invoker) IUnknown_Release( impl->invoker );
+        impl->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection( &impl->cs );
         free( impl );
     }
