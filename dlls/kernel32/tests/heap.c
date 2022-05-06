@@ -2285,7 +2285,7 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
     }
 
 
-    /* between the two thesholds, tail may still be set but block position is inconsistent */
+    /* between the two thresholds, tail may still be set but block position is inconsistent */
 
     alloc_size = 0x20000 * sizeof(void *) - 0x2000;
     winetest_push_context( "size %#Ix", alloc_size );
