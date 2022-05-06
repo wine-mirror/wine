@@ -1264,7 +1264,7 @@
 # @ stub QuirkIsEnabledForPackage4
 # @ stub QuirkIsEnabledForProcess
 @ stdcall RaiseException(long long long ptr)
-# @ stub RaiseFailFastException
+@ stdcall RaiseFailFastException(ptr ptr long)
 @ stdcall ReOpenFile(ptr long long long)
 @ stdcall ReadConsoleA(long ptr long ptr ptr)
 @ stdcall ReadConsoleInputA(long ptr long ptr)

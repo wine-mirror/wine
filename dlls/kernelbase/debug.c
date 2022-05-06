@@ -303,6 +303,14 @@ void WINAPI DECLSPEC_HOTPATCH RaiseException( DWORD code, DWORD flags, DWORD cou
 }
 __ASM_STDCALL_IMPORT(RaiseException,16)
 
+/*******************************************************************
+ *           RaiseFailFastException  (kernelbase.@)
+ */
+void WINAPI DECLSPEC_HOTPATCH RaiseFailFastException( EXCEPTION_RECORD *record, CONTEXT *context, DWORD flags )
+{
+    FIXME( "(%p, %p, %ld) stub\n", record, context, flags );
+    TerminateProcess( GetCurrentProcess(), STATUS_FAIL_FAST_EXCEPTION );
+}
 
 /***********************************************************************
  *           SetUnhandledExceptionFilter   (kernelbase.@)
