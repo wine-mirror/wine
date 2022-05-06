@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = winealsa.drv
 UNIXLIB   = winealsa.so
 IMPORTS   = uuid ole32 advapi32

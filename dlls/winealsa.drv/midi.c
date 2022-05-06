@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
 static void notify_client(struct notify_context *notify)
 {
-    TRACE("dev_id = %d msg = %d param1 = %04lX param2 = %04lX\n", notify->dev_id, notify->msg, notify->param_1, notify->param_2);
+    TRACE("dev_id = %d msg = %d param1 = %04IX param2 = %04IX\n", notify->dev_id, notify->msg, notify->param_1, notify->param_2);
 
     DriverCallback(notify->callback, notify->flags, notify->device, notify->msg,
                    notify->instance, notify->param_1, notify->param_2);
@@ -60,7 +60,7 @@ DWORD WINAPI ALSA_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     struct notify_context notify;
     UINT err;
 
-    TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
+    TRACE("(%04X, %04X, %08IX, %08IX, %08IX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     params.dev_id = wDevID;
@@ -90,7 +90,7 @@ DWORD WINAPI ALSA_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser,
     struct notify_context notify;
     UINT err;
 
-    TRACE("(%04X, %04X, %08lX, %08lX, %08lX);\n",
+    TRACE("(%04X, %04X, %08IX, %08IX, %08IX);\n",
 	  wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     params.dev_id = wDevID;

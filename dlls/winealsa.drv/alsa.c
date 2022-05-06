@@ -123,10 +123,10 @@ static HKEY open_hkcu(void)
 
     sid = ((TOKEN_USER *)sid_data)->User.Sid;
     len = sprintf( buffer, "\\Registry\\User\\S-%u-%u", sid->Revision,
-                 MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5], sid->IdentifierAuthority.Value[4] ),
-                           MAKEWORD( sid->IdentifierAuthority.Value[3], sid->IdentifierAuthority.Value[2] )));
+                   (unsigned)MAKELONG( MAKEWORD( sid->IdentifierAuthority.Value[5], sid->IdentifierAuthority.Value[4] ),
+                                       MAKEWORD( sid->IdentifierAuthority.Value[3], sid->IdentifierAuthority.Value[2] )));
     for (i = 0; i < sid->SubAuthorityCount; i++)
-        len += sprintf( buffer + len, "-%u", sid->SubAuthority[i] );
+        len += sprintf( buffer + len, "-%u", (unsigned)sid->SubAuthority[i] );
     ascii_to_unicode( bufferW, buffer, len + 1 );
 
     return reg_open_key( NULL, bufferW, len * sizeof(WCHAR) );
@@ -2431,7 +2431,7 @@ static NTSTATUS get_prop_value(void *args)
         return STATUS_SUCCESS;
     }
 
-    TRACE("Unimplemented property %s,%u\n", wine_dbgstr_guid(&prop->fmtid), prop->pid);
+    TRACE("Unimplemented property %s,%u\n", wine_dbgstr_guid(&prop->fmtid), (unsigned)prop->pid);
 
     params->result = E_NOTIMPL;
     return STATUS_SUCCESS;

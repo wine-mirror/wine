@@ -359,7 +359,7 @@ static void port_add(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* pinfo, u
               num_dests, wine_dbgstr_w(dest->caps.szPname),
               dest->caps.wTechnology,
               dest->caps.wVoices, dest->caps.wNotes,
-              dest->caps.wChannelMask, dest->caps.dwSupport,
+              dest->caps.wChannelMask, (unsigned)dest->caps.dwSupport,
               type);
 
         num_dests++;
@@ -407,7 +407,7 @@ static void port_add(snd_seq_client_info_t* cinfo, snd_seq_port_info_t* pinfo, u
 
         TRACE("MidiIn [%d]\tname='%s' support=%d\n"
               "\tALSA info: midi dev-type=%x, capa=0\n",
-              num_srcs, wine_dbgstr_w(src->caps.szPname), src->caps.dwSupport, type);
+              num_srcs, wine_dbgstr_w(src->caps.szPname), (unsigned)src->caps.dwSupport, type);
 
         num_srcs++;
     }
@@ -810,7 +810,7 @@ static UINT midi_out_long_data(WORD dev_id, MIDIHDR *hdr, UINT hdr_size, struct 
         new_data = malloc(hdr->dwBufferLength + 2);
     }
 
-    TRACE("dwBufferLength=%u !\n", hdr->dwBufferLength);
+    TRACE("dwBufferLength=%u !\n", (unsigned)hdr->dwBufferLength);
     TRACE("                 %02X %02X %02X ... %02X %02X %02X\n",
           data[0], data[1], data[2], data[hdr->dwBufferLength-3],
           data[hdr->dwBufferLength-2], data[hdr->dwBufferLength-1]);
