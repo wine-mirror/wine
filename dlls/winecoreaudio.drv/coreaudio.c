@@ -750,10 +750,10 @@ static NTSTATUS release_stream( void *args )
     return STATUS_SUCCESS;
 }
 
-static DWORD ca_channel_layout_to_channel_mask(const AudioChannelLayout *layout)
+static UINT ca_channel_layout_to_channel_mask(const AudioChannelLayout *layout)
 {
     int i;
-    DWORD mask = 0;
+    UINT mask = 0;
 
     for (i = 0; i < layout->mNumberChannelDescriptions; ++i) {
         switch (layout->mChannelDescriptions[i].mChannelLabel) {
@@ -792,7 +792,7 @@ static DWORD ca_channel_layout_to_channel_mask(const AudioChannelLayout *layout)
  * would report for a given channel layout. */
 static void convert_channel_layout(const AudioChannelLayout *ca_layout, WAVEFORMATEXTENSIBLE *fmt)
 {
-    DWORD ca_mask = ca_channel_layout_to_channel_mask(ca_layout);
+    UINT ca_mask = ca_channel_layout_to_channel_mask(ca_layout);
 
     TRACE("Got channel mask for CA: 0x%x\n", ca_mask);
 

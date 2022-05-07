@@ -43,7 +43,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(midi);
 
 static void notify_client(struct notify_context *notify)
 {
-    TRACE("dev_id=%d msg=%d param1=%04lX param2=%04lX\n", notify->dev_id, notify->msg, notify->param_1, notify->param_2);
+    TRACE("dev_id=%d msg=%d param1=%04IX param2=%04IX\n", notify->dev_id, notify->msg, notify->param_1, notify->param_2);
 
     DriverCallback(notify->callback, notify->flags, notify->device, notify->msg,
                    notify->instance, notify->param_1, notify->param_2);
@@ -104,7 +104,7 @@ DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser, DWOR
     struct notify_context notify;
     UINT err;
 
-    TRACE("%d %08x %08lx %08lx %08lx\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    TRACE("%d %08x %08Ix %08Ix %08Ix\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     params.dev_id = wDevID;
     params.msg = wMsg;
@@ -130,7 +130,7 @@ DWORD WINAPI CoreAudio_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser, DWOR
     struct notify_context notify;
     UINT err;
 
-    TRACE("%d %08x %08lx %08lx %08lx\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
+    TRACE("%d %08x %08Ix %08Ix %08Ix\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
     params.dev_id = wDevID;
     params.msg = wMsg;
@@ -186,7 +186,7 @@ static LRESULT CoreAudio_drvOpen(LPSTR str)
  */
 static DWORD CoreAudio_drvClose(DWORD dwDevID)
 {
-    TRACE("(%08x)\n", dwDevID);
+    TRACE("(%08lx)\n", dwDevID);
     return 1;
 }
 
@@ -196,7 +196,7 @@ static DWORD CoreAudio_drvClose(DWORD dwDevID)
 LRESULT CALLBACK CoreAudio_DriverProc(DWORD_PTR dwDevID, HDRVR hDriv, UINT wMsg,
                                       LPARAM dwParam1, LPARAM dwParam2)
 {
-     TRACE("(%08lX, %p, %s (%08X), %08lX, %08lX)\n",
+     TRACE("(%08IX, %p, %s (%08X), %08IX, %08IX)\n",
            dwDevID, hDriv, wMsg == DRV_LOAD ? "DRV_LOAD" :
            wMsg == DRV_FREE ? "DRV_FREE" :
            wMsg == DRV_OPEN ? "DRV_OPEN" :
