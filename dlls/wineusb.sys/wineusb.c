@@ -114,7 +114,6 @@ static void add_usb_device(libusb_device *libusb_device)
             FILE_DEVICE_USB, 0, FALSE, &device_obj)))
     {
         ERR("Failed to create device, status %#x.\n", status);
-        LeaveCriticalSection(&wineusb_cs);
         libusb_close(handle);
         return;
     }
