@@ -2466,11 +2466,15 @@ static void test_font(void)
     hr = ID3DX10Font_PreloadCharacters(font, 'a', 'z');
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
 
-    /* Test glyphs that are not rendered */
-    hr = ID3DX10Font_PreloadGlyphs(font, 0, 5);
+#if D3DX10_SDK_VERSION > 34
+    /* Test multiple textures.
+     * Native d3dx10_34.dll shows signs of memory corruption in this call. */
+    hr = ID3DX10Font_PreloadGlyphs(font, 0, 1000);
     todo_wine
     ok(hr == S_OK, "Unexpected hr %#x.\n", hr);
+#endif
 
+    /* Test glyphs that are not rendered */
     for (glyph = 1; glyph < 4; ++glyph)
     {
         srv = (void *)0xdeadbeef;
