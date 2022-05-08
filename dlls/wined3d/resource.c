@@ -123,19 +123,19 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
             break;
 
         if ((bind_flags & WINED3D_BIND_RENDER_TARGET)
-                && !(format->flags[gl_type] & WINED3DFMT_FLAG_RENDERTARGET))
+                && !(format->caps[gl_type] & WINED3D_FORMAT_CAP_RENDERTARGET))
         {
             WARN("Format %s cannot be used for render targets.\n", debug_d3dformat(format->id));
             continue;
         }
         if ((bind_flags & WINED3D_BIND_DEPTH_STENCIL)
-                && !(format->flags[gl_type] & WINED3DFMT_FLAG_DEPTH_STENCIL))
+                && !(format->caps[gl_type] & WINED3D_FORMAT_CAP_DEPTH_STENCIL))
         {
             WARN("Format %s cannot be used for depth/stencil buffers.\n", debug_d3dformat(format->id));
             continue;
         }
         if ((bind_flags & WINED3D_BIND_SHADER_RESOURCE)
-                && !(format->flags[gl_type] & WINED3DFMT_FLAG_TEXTURE))
+                && !(format->caps[gl_type] & WINED3D_FORMAT_CAP_TEXTURE))
         {
             WARN("Format %s cannot be used for texturing.\n", debug_d3dformat(format->id));
             continue;
@@ -190,7 +190,7 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     resource->format = format;
     resource->format_attrs = format->attrs;
     if (gl_type < WINED3D_GL_RES_TYPE_COUNT)
-        resource->format_flags = format->flags[gl_type];
+        resource->format_caps = format->caps[gl_type];
     resource->multisample_type = multisample_type;
     resource->multisample_quality = multisample_quality;
     resource->usage = usage;
@@ -465,7 +465,7 @@ void wined3d_resource_update_draw_binding(struct wined3d_resource *resource)
 const struct wined3d_format *wined3d_resource_get_decompress_format(const struct wined3d_resource *resource)
 {
     const struct wined3d_adapter *adapter = resource->device->adapter;
-    if (resource->format_flags & (WINED3DFMT_FLAG_SRGB_READ | WINED3DFMT_FLAG_SRGB_WRITE)
+    if (resource->format_caps & (WINED3D_FORMAT_CAP_SRGB_READ | WINED3D_FORMAT_CAP_SRGB_WRITE)
             && !(adapter->d3d_info.wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL))
         return wined3d_get_format(adapter, WINED3DFMT_B8G8R8A8_UNORM_SRGB, resource->bind_flags);
     return wined3d_get_format(adapter, WINED3DFMT_B8G8R8A8_UNORM, resource->bind_flags);

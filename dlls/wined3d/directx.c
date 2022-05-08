@@ -1819,12 +1819,12 @@ HRESULT CDECL wined3d_check_depth_stencil_match(const struct wined3d_adapter *ad
     rt_format = wined3d_get_format(adapter, render_target_format_id, WINED3D_BIND_RENDER_TARGET);
     ds_format = wined3d_get_format(adapter, depth_stencil_format_id, WINED3D_BIND_DEPTH_STENCIL);
 
-    if (!(rt_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_RENDERTARGET))
+    if (!(rt_format->caps[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3D_FORMAT_CAP_RENDERTARGET))
     {
         WARN("Format %s is not render target format.\n", debug_d3dformat(rt_format->id));
         return WINED3DERR_NOTAVAILABLE;
     }
-    if (!(ds_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_DEPTH_STENCIL))
+    if (!(ds_format->caps[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3D_FORMAT_CAP_DEPTH_STENCIL))
     {
         WARN("Format %s is not depth/stencil format.\n", debug_d3dformat(ds_format->id));
         return WINED3DERR_NOTAVAILABLE;
@@ -1898,11 +1898,12 @@ static BOOL wined3d_check_depth_stencil_format(const struct wined3d_adapter *ada
 
 static BOOL wined3d_check_surface_format(const struct wined3d_format *format)
 {
-    if ((format->flags[WINED3D_GL_RES_TYPE_TEX_2D] | format->flags[WINED3D_GL_RES_TYPE_RB]) & WINED3DFMT_FLAG_BLIT)
+    if ((format->caps[WINED3D_GL_RES_TYPE_TEX_2D] | format->caps[WINED3D_GL_RES_TYPE_RB])
+            & WINED3D_FORMAT_CAP_BLIT)
         return TRUE;
 
     if ((format->attrs & WINED3D_FORMAT_ATTR_EXTENSION)
-            && (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_TEXTURE))
+            && (format->caps[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3D_FORMAT_CAP_TEXTURE))
         return TRUE;
 
     return FALSE;
@@ -1923,7 +1924,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
 {
     const struct wined3d_format *adapter_format, *format;
     enum wined3d_gl_resource_type gl_type, gl_type_end;
-    unsigned int format_flags = 0, format_attrs = 0;
+    unsigned int format_caps = 0, format_attrs = 0;
     BOOL mipmap_gen_supported = TRUE;
     unsigned int allowed_bind_flags;
     DWORD allowed_usage;
@@ -2051,32 +2052,32 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
     }
 
     if (bind_flags & WINED3D_BIND_SHADER_RESOURCE)
-        format_flags |= WINED3DFMT_FLAG_TEXTURE;
+        format_caps |= WINED3D_FORMAT_CAP_TEXTURE;
     if (bind_flags & WINED3D_BIND_RENDER_TARGET)
-        format_flags |= WINED3DFMT_FLAG_RENDERTARGET;
+        format_caps |= WINED3D_FORMAT_CAP_RENDERTARGET;
     if (bind_flags & WINED3D_BIND_DEPTH_STENCIL)
-        format_flags |= WINED3DFMT_FLAG_DEPTH_STENCIL;
+        format_caps |= WINED3D_FORMAT_CAP_DEPTH_STENCIL;
     if (bind_flags & WINED3D_BIND_UNORDERED_ACCESS)
-        format_flags |= WINED3DFMT_FLAG_UNORDERED_ACCESS;
+        format_caps |= WINED3D_FORMAT_CAP_UNORDERED_ACCESS;
     if (bind_flags & WINED3D_BIND_VERTEX_BUFFER)
-        format_flags |= WINED3DFMT_FLAG_VERTEX_ATTRIBUTE;
+        format_caps |= WINED3D_FORMAT_CAP_VERTEX_ATTRIBUTE;
     if (bind_flags & WINED3D_BIND_INDEX_BUFFER)
-        format_flags |= WINED3DFMT_FLAG_INDEX_BUFFER;
+        format_caps |= WINED3D_FORMAT_CAP_INDEX_BUFFER;
 
     if (usage & WINED3DUSAGE_QUERY_FILTER)
-        format_flags |= WINED3DFMT_FLAG_FILTERING;
+        format_caps |= WINED3D_FORMAT_CAP_FILTERING;
     if (usage & WINED3DUSAGE_QUERY_POSTPIXELSHADER_BLENDING)
-        format_flags |= WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING;
+        format_caps |= WINED3D_FORMAT_CAP_POSTPIXELSHADER_BLENDING;
     if (usage & WINED3DUSAGE_QUERY_SRGBREAD)
-        format_flags |= WINED3DFMT_FLAG_SRGB_READ;
+        format_caps |= WINED3D_FORMAT_CAP_SRGB_READ;
     if (usage & WINED3DUSAGE_QUERY_SRGBWRITE)
-        format_flags |= WINED3DFMT_FLAG_SRGB_WRITE;
+        format_caps |= WINED3D_FORMAT_CAP_SRGB_WRITE;
     if (usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE)
-        format_flags |= WINED3DFMT_FLAG_VTF;
+        format_caps |= WINED3D_FORMAT_CAP_VTF;
     if (usage & WINED3DUSAGE_QUERY_LEGACYBUMPMAP)
         format_attrs |= WINED3D_FORMAT_ATTR_BUMPMAP;
 
-    if ((format_flags & WINED3DFMT_FLAG_TEXTURE) && (wined3d->flags & WINED3D_NO3D))
+    if ((format_caps & WINED3D_FORMAT_CAP_TEXTURE) && (wined3d->flags & WINED3D_NO3D))
     {
         TRACE("Requested texturing support, but wined3d was created with WINED3D_NO3D.\n");
         return WINED3DERR_NOTAVAILABLE;
@@ -2091,6 +2092,13 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
 
     for (; gl_type <= gl_type_end; ++gl_type)
     {
+        if ((format->caps[gl_type] & format_caps) != format_caps)
+        {
+            TRACE("Requested format caps %#x, but format %s only has %#x.\n",
+                    format_caps, debug_d3dformat(check_format_id), format->caps[gl_type]);
+            return WINED3DERR_NOTAVAILABLE;
+        }
+
         if ((bind_flags & WINED3D_BIND_RENDER_TARGET)
                 && !adapter->adapter_ops->adapter_check_format(adapter, adapter_format, format, NULL))
         {
@@ -2118,14 +2126,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
             return WINED3DERR_NOTAVAILABLE;
         }
 
-        if ((format->flags[gl_type] & format_flags) != format_flags)
-        {
-            TRACE("Requested format flags %#x, but format %s only has %#x.\n",
-                    format_flags, debug_d3dformat(check_format_id), format->flags[gl_type]);
-            return WINED3DERR_NOTAVAILABLE;
-        }
-
-        if (!(format->flags[gl_type] & WINED3DFMT_FLAG_GEN_MIPMAP))
+        if (!(format->caps[gl_type] & WINED3D_FORMAT_CAP_GEN_MIPMAP))
             mipmap_gen_supported = FALSE;
     }
 

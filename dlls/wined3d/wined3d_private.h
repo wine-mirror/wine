@@ -4354,7 +4354,7 @@ struct wined3d_resource
     enum wined3d_gl_resource_type gl_type;
     const struct wined3d_format *format;
     unsigned int format_attrs;
-    unsigned int format_flags;
+    unsigned int format_caps;
     enum wined3d_multisample_type multisample_type;
     UINT multisample_quality;
     DWORD usage;
@@ -5341,7 +5341,7 @@ struct wined3d_rendertarget_view
 
     const struct wined3d_format *format;
     unsigned int format_attrs;
-    unsigned int format_flags;
+    unsigned int format_caps;
     unsigned int sub_resource_idx;
     unsigned int layer_count;
 
@@ -6121,24 +6121,24 @@ extern enum wined3d_format_id pixelformat_for_depth(DWORD depth) DECLSPEC_HIDDEN
 #define WINED3D_FORMAT_ATTR_MAPPABLE                0x00000400
 #define WINED3D_FORMAT_ATTR_CAST_TO_BLOCK           0x00000800
 
-/* WineD3D pixel format flags */
-#define WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING    0x00000001
-#define WINED3DFMT_FLAG_FILTERING                   0x00000002
-#define WINED3DFMT_FLAG_UNORDERED_ACCESS            0x00000004
-#define WINED3DFMT_FLAG_DEPTH_STENCIL               0x00000008
-#define WINED3DFMT_FLAG_RENDERTARGET                0x00000010
-#define WINED3DFMT_FLAG_FBO_ATTACHABLE              0x00000040
-#define WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB         0x00000080
-#define WINED3DFMT_FLAG_DECOMPRESS                  0x00000100
-#define WINED3DFMT_FLAG_SRGB_READ                   0x00000800
-#define WINED3DFMT_FLAG_SRGB_WRITE                  0x00001000
-#define WINED3DFMT_FLAG_VTF                         0x00002000
-#define WINED3DFMT_FLAG_SHADOW                      0x00004000
-#define WINED3DFMT_FLAG_TEXTURE                     0x00080000
-#define WINED3DFMT_FLAG_GEN_MIPMAP                  0x00400000
-#define WINED3DFMT_FLAG_VERTEX_ATTRIBUTE            0x01000000
-#define WINED3DFMT_FLAG_BLIT                        0x02000000
-#define WINED3DFMT_FLAG_INDEX_BUFFER                0x10000000
+/* Pixel format capabilities */
+#define WINED3D_FORMAT_CAP_POSTPIXELSHADER_BLENDING     0x00000001
+#define WINED3D_FORMAT_CAP_FILTERING                    0x00000002
+#define WINED3D_FORMAT_CAP_UNORDERED_ACCESS             0x00000004
+#define WINED3D_FORMAT_CAP_DEPTH_STENCIL                0x00000008
+#define WINED3D_FORMAT_CAP_RENDERTARGET                 0x00000010
+#define WINED3D_FORMAT_CAP_FBO_ATTACHABLE               0x00000020
+#define WINED3D_FORMAT_CAP_FBO_ATTACHABLE_SRGB          0x00000040
+#define WINED3D_FORMAT_CAP_DECOMPRESS                   0x00000080
+#define WINED3D_FORMAT_CAP_SRGB_READ                    0x00000100
+#define WINED3D_FORMAT_CAP_SRGB_WRITE                   0x00000200
+#define WINED3D_FORMAT_CAP_VTF                          0x00000400
+#define WINED3D_FORMAT_CAP_SHADOW                       0x00000800
+#define WINED3D_FORMAT_CAP_TEXTURE                      0x00001000
+#define WINED3D_FORMAT_CAP_GEN_MIPMAP                   0x00002000
+#define WINED3D_FORMAT_CAP_VERTEX_ATTRIBUTE             0x00004000
+#define WINED3D_FORMAT_CAP_BLIT                         0x00008000
+#define WINED3D_FORMAT_CAP_INDEX_BUFFER                 0x00010000
 
 struct wined3d_rational
 {
@@ -6193,7 +6193,7 @@ struct wined3d_format
     UINT  conv_byte_count;
     DWORD multisample_types;
     unsigned int attrs;
-    unsigned int flags[WINED3D_GL_RES_TYPE_COUNT];
+    unsigned int caps[WINED3D_GL_RES_TYPE_COUNT];
     float depth_bias_scale;
     struct wined3d_rational height_scale;
     struct color_fixup_desc color_fixup;
@@ -6323,12 +6323,12 @@ static inline BOOL needs_separate_srgb_gl_texture(const struct wined3d_context *
 
     if (!context->d3d_info->srgb_read_control
             && (texture->resource.bind_flags & WINED3D_BIND_SHADER_RESOURCE)
-            && (texture->resource.format_flags & WINED3DFMT_FLAG_SRGB_READ))
+            && (texture->resource.format_caps & WINED3D_FORMAT_CAP_SRGB_READ))
         return TRUE;
 
     if (!context->d3d_info->srgb_write_control
             && (texture->resource.bind_flags & WINED3D_BIND_RENDER_TARGET)
-            && (texture->resource.format_flags & WINED3DFMT_FLAG_SRGB_WRITE))
+            && (texture->resource.format_caps & WINED3D_FORMAT_CAP_SRGB_WRITE))
         return TRUE;
 
     return FALSE;
@@ -6339,7 +6339,7 @@ static inline BOOL needs_srgb_write(const struct wined3d_d3d_info *d3d_info,
 {
     return (!(d3d_info->wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
             || state->render_states[WINED3D_RS_SRGBWRITEENABLE])
-            && fb->render_targets[0] && fb->render_targets[0]->format_flags & WINED3DFMT_FLAG_SRGB_WRITE;
+            && fb->render_targets[0] && fb->render_targets[0]->format_caps & WINED3D_FORMAT_CAP_SRGB_WRITE;
 }
 
 static inline GLuint wined3d_texture_gl_get_texture_name(const struct wined3d_texture_gl *texture_gl,

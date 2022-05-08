@@ -1206,8 +1206,8 @@ static void wined3d_cs_exec_set_rendertarget_views(struct wined3d_cs *cs, const 
         if (!(device->adapter->d3d_info.wined3d_creation_flags & WINED3D_SRGB_READ_WRITE_CONTROL)
                 || cs->state.render_states[WINED3D_RS_SRGBWRITEENABLE])
         {
-            prev_srgb_write = prev && prev->format_flags & WINED3DFMT_FLAG_SRGB_WRITE;
-            curr_srgb_write = view && view->format_flags & WINED3DFMT_FLAG_SRGB_WRITE;
+            prev_srgb_write = prev && prev->format_caps & WINED3D_FORMAT_CAP_SRGB_WRITE;
+            curr_srgb_write = view && view->format_caps & WINED3D_FORMAT_CAP_SRGB_WRITE;
             if (prev_srgb_write != curr_srgb_write)
                 device_invalidate_state(device, STATE_RENDER(WINED3D_RS_SRGBWRITEENABLE));
         }
@@ -1450,8 +1450,8 @@ static void wined3d_cs_exec_set_texture(struct wined3d_cs *cs, const void *data)
     {
         const struct wined3d_format *new_format = op->texture->resource.format;
         const struct wined3d_format *old_format = prev ? prev->resource.format : NULL;
-        unsigned int old_fmt_flags = prev ? prev->resource.format_flags : 0;
-        unsigned int new_fmt_flags = op->texture->resource.format_flags;
+        unsigned int old_fmt_caps = prev ? prev->resource.format_caps : 0;
+        unsigned int new_fmt_caps = op->texture->resource.format_caps;
 
         if (InterlockedIncrement(&op->texture->resource.bind_count) == 1)
             op->texture->sampler = op->stage;
@@ -1459,7 +1459,7 @@ static void wined3d_cs_exec_set_texture(struct wined3d_cs *cs, const void *data)
         if (!prev || wined3d_texture_gl(op->texture)->target != wined3d_texture_gl(prev)->target
                 || (!is_same_fixup(new_format->color_fixup, old_format->color_fixup)
                 && !(can_use_texture_swizzle(d3d_info, new_format) && can_use_texture_swizzle(d3d_info, old_format)))
-                || (new_fmt_flags & WINED3DFMT_FLAG_SHADOW) != (old_fmt_flags & WINED3DFMT_FLAG_SHADOW))
+                || (new_fmt_caps & WINED3D_FORMAT_CAP_SHADOW) != (old_fmt_caps & WINED3D_FORMAT_CAP_SHADOW))
             device_invalidate_state(cs->c.device, STATE_SHADER(WINED3D_SHADER_TYPE_PIXEL));
 
         if (!prev && op->stage < d3d_info->limits.ffp_blend_stages)

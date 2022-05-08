@@ -226,7 +226,7 @@ static HRESULT vertexdeclaration_init(struct wined3d_vertex_declaration *declara
         if (e->input_slot >= WINED3D_MAX_STREAMS)
             continue;
 
-        if (!(e->format->flags[WINED3D_GL_RES_TYPE_BUFFER] & WINED3DFMT_FLAG_VERTEX_ATTRIBUTE))
+        if (!(e->format->caps[WINED3D_GL_RES_TYPE_BUFFER] & WINED3D_FORMAT_CAP_VERTEX_ATTRIBUTE))
         {
             FIXME("The application tries to use an unsupported format (%s).\n",
                     debug_d3dformat(elements[i].format));
