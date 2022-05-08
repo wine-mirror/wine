@@ -4474,7 +4474,7 @@ static BOOL wined3d_check_pixel_format_color(const struct wined3d_pixel_format *
         const struct wined3d_format *format)
 {
     /* Float formats need FBOs. If FBOs are used this function isn't called */
-    if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FLOAT)
+    if (format->attrs & WINED3D_FORMAT_ATTR_FLOAT)
         return FALSE;
 
     /* Probably a RGBA_float or color index mode. */
@@ -4496,7 +4496,7 @@ static BOOL wined3d_check_pixel_format_depth(const struct wined3d_pixel_format *
     BOOL lockable = FALSE;
 
     /* Float formats need FBOs. If FBOs are used this function isn't called */
-    if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FLOAT)
+    if (format->attrs & WINED3D_FORMAT_ATTR_FLOAT)
         return FALSE;
 
     if ((format->id == WINED3DFMT_D16_LOCKABLE) || (format->id == WINED3DFMT_D32_FLOAT))

@@ -188,6 +188,7 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     resource->type = type;
     resource->gl_type = gl_type;
     resource->format = format;
+    resource->format_attrs = format->attrs;
     if (gl_type < WINED3D_GL_RES_TYPE_COUNT)
         resource->format_flags = format->flags[gl_type];
     resource->multisample_type = multisample_type;

@@ -4353,6 +4353,7 @@ struct wined3d_resource
     enum wined3d_resource_type type;
     enum wined3d_gl_resource_type gl_type;
     const struct wined3d_format *format;
+    unsigned int format_attrs;
     unsigned int format_flags;
     enum wined3d_multisample_type multisample_type;
     UINT multisample_quality;
@@ -5339,6 +5340,7 @@ struct wined3d_rendertarget_view
     const struct wined3d_parent_ops *parent_ops;
 
     const struct wined3d_format *format;
+    unsigned int format_attrs;
     unsigned int format_flags;
     unsigned int sub_resource_idx;
     unsigned int layer_count;
@@ -6105,6 +6107,9 @@ extern enum wined3d_format_id pixelformat_for_depth(DWORD depth) DECLSPEC_HIDDEN
  * Pixel format management
  */
 
+/* Pixel format attributes */
+#define WINED3D_FORMAT_ATTR_FLOAT                   0x00000001
+
 /* WineD3D pixel format flags */
 #define WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING    0x00000001
 #define WINED3DFMT_FLAG_FILTERING                   0x00000002
@@ -6115,7 +6120,6 @@ extern enum wined3d_format_id pixelformat_for_depth(DWORD depth) DECLSPEC_HIDDEN
 #define WINED3DFMT_FLAG_FBO_ATTACHABLE              0x00000040
 #define WINED3DFMT_FLAG_FBO_ATTACHABLE_SRGB         0x00000080
 #define WINED3DFMT_FLAG_DECOMPRESS                  0x00000100
-#define WINED3DFMT_FLAG_FLOAT                       0x00000200
 #define WINED3DFMT_FLAG_BUMPMAP                     0x00000400
 #define WINED3DFMT_FLAG_SRGB_READ                   0x00000800
 #define WINED3DFMT_FLAG_SRGB_WRITE                  0x00001000
@@ -6188,6 +6192,7 @@ struct wined3d_format
 
     UINT  conv_byte_count;
     DWORD multisample_types;
+    unsigned int attrs;
     unsigned int flags[WINED3D_GL_RES_TYPE_COUNT];
     float depth_bias_scale;
     struct wined3d_rational height_scale;

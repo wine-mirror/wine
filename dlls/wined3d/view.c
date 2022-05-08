@@ -622,6 +622,7 @@ static HRESULT wined3d_rendertarget_view_init(struct wined3d_rendertarget_view *
     }
     if (!(view->format = validate_resource_view(desc, resource, TRUE, allow_srgb_toggle)))
         return E_INVALIDARG;
+    view->format_attrs = view->format->attrs;
     view->format_flags = view->format->flags[resource->gl_type];
     view->desc = *desc;
 
