@@ -1571,7 +1571,7 @@ void wined3d_unordered_access_view_gl_clear(struct wined3d_unordered_access_view
             packed = wined3d_format_pack(&format_gl->f, clear_value);
             data = &packed;
         }
-        else if (resource->format_flags & WINED3DFMT_FLAG_INTEGER)
+        else if (resource->format_attrs & WINED3D_FORMAT_ATTR_INTEGER)
         {
             gl_format = GL_RGBA_INTEGER;
             gl_type = GL_UNSIGNED_INT;

@@ -2117,7 +2117,7 @@ static BOOL init_format_base_info(struct wined3d_adapter *adapter)
             if (channel_type == WINED3D_CHANNEL_TYPE_UNORM || channel_type == WINED3D_CHANNEL_TYPE_SNORM)
                 flags |= WINED3DFMT_FLAG_NORMALISED;
             if (channel_type == WINED3D_CHANNEL_TYPE_UINT || channel_type == WINED3D_CHANNEL_TYPE_SINT)
-                flags |= WINED3DFMT_FLAG_INTEGER;
+                attrs |= WINED3D_FORMAT_ATTR_INTEGER;
             if (channel_type == WINED3D_CHANNEL_TYPE_FLOAT)
                 attrs |= WINED3D_FORMAT_ATTR_FLOAT;
             if (channel_type != WINED3D_CHANNEL_TYPE_UNUSED)
@@ -2598,7 +2598,7 @@ static void check_fbo_compat(struct wined3d_caps_gl_ctx *ctx, struct wined3d_for
         if (status == GL_FRAMEBUFFER_COMPLETE
                 && ((format->f.flags[type] & WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING)
                 || !(gl_info->quirks & WINED3D_QUIRK_LIMITED_TEX_FILTERING))
-                && !(format->f.flags[type] & WINED3DFMT_FLAG_INTEGER)
+                && !(format->f.attrs & WINED3D_FORMAT_ATTR_INTEGER)
                 && format->f.id != WINED3DFMT_NULL && format->f.id != WINED3DFMT_P8_UINT
                 && format->format != GL_LUMINANCE && format->format != GL_LUMINANCE_ALPHA
                 && (format->f.red_size || format->f.alpha_size))
@@ -3214,7 +3214,7 @@ static BOOL init_format_texture_info(struct wined3d_adapter *adapter, struct win
 
         /* ARB_texture_rg defines integer formats if EXT_texture_integer is also supported. */
         if (!gl_info->supported[EXT_TEXTURE_INTEGER]
-                && (format->f.flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_INTEGER))
+                && (format->f.attrs & WINED3D_FORMAT_ATTR_INTEGER))
             continue;
 
         if (wined3d_settings.offscreen_rendering_mode != ORM_FBO

@@ -6655,7 +6655,7 @@ static void vk_blitter_clear_rendertargets(struct wined3d_context_vk *context_vk
         wined3d_rendertarget_view_vk_barrier(rtv_vk, context_vk, WINED3D_BIND_RENDER_TARGET);
 
         c = &clear_values[attachment_count].color;
-        if (view->format_flags & WINED3DFMT_FLAG_INTEGER)
+        if (view->format_attrs & WINED3D_FORMAT_ATTR_INTEGER)
         {
             c->int32[0] = colour->r;
             c->int32[1] = colour->g;
