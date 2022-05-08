@@ -1923,9 +1923,9 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
 {
     const struct wined3d_format *adapter_format, *format;
     enum wined3d_gl_resource_type gl_type, gl_type_end;
+    unsigned int format_flags = 0, format_attrs = 0;
     BOOL mipmap_gen_supported = TRUE;
     unsigned int allowed_bind_flags;
-    DWORD format_flags = 0;
     DWORD allowed_usage;
 
     TRACE("wined3d %p, adapter %p, device_type %s, adapter_format %s, usage %s, "
@@ -2074,11 +2074,18 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
     if (usage & WINED3DUSAGE_QUERY_VERTEXTEXTURE)
         format_flags |= WINED3DFMT_FLAG_VTF;
     if (usage & WINED3DUSAGE_QUERY_LEGACYBUMPMAP)
-        format_flags |= WINED3DFMT_FLAG_BUMPMAP;
+        format_attrs |= WINED3D_FORMAT_ATTR_BUMPMAP;
 
     if ((format_flags & WINED3DFMT_FLAG_TEXTURE) && (wined3d->flags & WINED3D_NO3D))
     {
         TRACE("Requested texturing support, but wined3d was created with WINED3D_NO3D.\n");
+        return WINED3DERR_NOTAVAILABLE;
+    }
+
+    if ((format->attrs & format_attrs) != format_attrs)
+    {
+        TRACE("Requested format attributes %#x, but format %s only has %#x.\n",
+                format_attrs, debug_d3dformat(check_format_id), format->attrs);
         return WINED3DERR_NOTAVAILABLE;
     }
 
