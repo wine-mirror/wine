@@ -4722,11 +4722,11 @@ static bool resources_format_compatible(const struct wined3d_resource *src_resou
         return true;
     if (src_resource->device->cs->c.state->feature_level < WINED3D_FEATURE_LEVEL_10_1)
         return false;
-    if ((src_resource->format_flags & WINED3DFMT_FLAG_BLOCKS)
+    if ((src_resource->format_attrs & WINED3D_FORMAT_ATTR_BLOCKS)
             && (dst_resource->format_flags & WINED3DFMT_FLAG_CAST_TO_BLOCK))
         return src_resource->format->block_byte_count == dst_resource->format->byte_count;
     if ((src_resource->format_flags & WINED3DFMT_FLAG_CAST_TO_BLOCK)
-            && (dst_resource->format_flags & WINED3DFMT_FLAG_BLOCKS))
+            && (dst_resource->format_attrs & WINED3D_FORMAT_ATTR_BLOCKS))
         return src_resource->format->byte_count == dst_resource->format->block_byte_count;
     return false;
 }
@@ -5222,7 +5222,8 @@ HRESULT CDECL wined3d_device_context_map(struct wined3d_device_context *context,
         if (resource->type != WINED3D_RTYPE_BUFFER && resource->type != WINED3D_RTYPE_TEXTURE_2D)
             return WINED3DERR_INVALIDCALL;
 
-        if ((resource->format_flags & WINED3DFMT_FLAG_BLOCKS) && !(resource->access & WINED3D_RESOURCE_ACCESS_CPU))
+        if ((resource->format_attrs & WINED3D_FORMAT_ATTR_BLOCKS) &&
+                !(resource->access & WINED3D_RESOURCE_ACCESS_CPU))
             return WINED3DERR_INVALIDCALL;
     }
 

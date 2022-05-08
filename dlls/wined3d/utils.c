@@ -315,10 +315,14 @@ struct wined3d_format_base_flags
  * resource size. */
 static const struct wined3d_format_base_flags format_base_flags[] =
 {
-    {WINED3DFMT_ATI1N,                 0, WINED3DFMT_FLAG_MAPPABLE | WINED3DFMT_FLAG_BROKEN_PITCH},
-    {WINED3DFMT_ATI2N,                 0, WINED3DFMT_FLAG_MAPPABLE | WINED3DFMT_FLAG_BROKEN_PITCH},
-    {WINED3DFMT_D16_LOCKABLE,          0, WINED3DFMT_FLAG_MAPPABLE},
-    {WINED3DFMT_INTZ,                  0, WINED3DFMT_FLAG_MAPPABLE},
+    {WINED3DFMT_ATI1N,                 WINED3D_FORMAT_ATTR_BROKEN_PITCH,
+        WINED3DFMT_FLAG_MAPPABLE},
+    {WINED3DFMT_ATI2N,                 WINED3D_FORMAT_ATTR_BROKEN_PITCH,
+        WINED3DFMT_FLAG_MAPPABLE},
+    {WINED3DFMT_D16_LOCKABLE,          0,
+        WINED3DFMT_FLAG_MAPPABLE},
+    {WINED3DFMT_INTZ,                  0,
+        WINED3DFMT_FLAG_MAPPABLE},
     {WINED3DFMT_R11G11B10_FLOAT,       WINED3D_FORMAT_ATTR_FLOAT},
     {WINED3DFMT_D32_FLOAT,             WINED3D_FORMAT_ATTR_FLOAT},
     {WINED3DFMT_S8_UINT_D24_FLOAT,     WINED3D_FORMAT_ATTR_FLOAT},
@@ -328,25 +332,44 @@ static const struct wined3d_format_base_flags format_base_flags[] =
     {WINED3DFMT_NVDB,                  WINED3D_FORMAT_ATTR_EXTENSION},
     {WINED3DFMT_ATOC,                  WINED3D_FORMAT_ATTR_EXTENSION},
     {WINED3DFMT_RESZ,                  WINED3D_FORMAT_ATTR_EXTENSION},
-    {WINED3DFMT_R32G32B32A32_TYPELESS, 0, WINED3DFMT_FLAG_CAST_TO_BLOCK},
-    {WINED3DFMT_R32G32B32A32_FLOAT,    0, WINED3DFMT_FLAG_CAST_TO_BLOCK},
-    {WINED3DFMT_R32G32B32A32_UINT,     0, WINED3DFMT_FLAG_CAST_TO_BLOCK},
-    {WINED3DFMT_R32G32B32A32_SINT,     0, WINED3DFMT_FLAG_CAST_TO_BLOCK},
-    {WINED3DFMT_R16G16B16A16_TYPELESS, 0, WINED3DFMT_FLAG_CAST_TO_BLOCK},
-    {WINED3DFMT_R16G16B16A16_FLOAT,    0, WINED3DFMT_FLAG_CAST_TO_BLOCK},
-    {WINED3DFMT_R16G16B16A16_UNORM,    0, WINED3DFMT_FLAG_CAST_TO_BLOCK},
-    {WINED3DFMT_R16G16B16A16_UINT,     0, WINED3DFMT_FLAG_CAST_TO_BLOCK},
-    {WINED3DFMT_R16G16B16A16_SNORM,    0, WINED3DFMT_FLAG_CAST_TO_BLOCK},
-    {WINED3DFMT_R16G16B16A16_SINT,     0, WINED3DFMT_FLAG_CAST_TO_BLOCK},
-    {WINED3DFMT_R32G32_TYPELESS,       0, WINED3DFMT_FLAG_CAST_TO_BLOCK},
-    {WINED3DFMT_R32G32_FLOAT,          0, WINED3DFMT_FLAG_CAST_TO_BLOCK},
-    {WINED3DFMT_R32G32_UINT,           0, WINED3DFMT_FLAG_CAST_TO_BLOCK},
-    {WINED3DFMT_R32G32_SINT,           0, WINED3DFMT_FLAG_CAST_TO_BLOCK},
-    {WINED3DFMT_R32_TYPELESS,          0, WINED3DFMT_FLAG_CAST_TO_BLOCK},
-    {WINED3DFMT_R32_FLOAT,             0, WINED3DFMT_FLAG_CAST_TO_BLOCK},
-    {WINED3DFMT_R32_UINT,              0, WINED3DFMT_FLAG_CAST_TO_BLOCK | WINED3DFMT_FLAG_INDEX_BUFFER},
-    {WINED3DFMT_R32_SINT,              0, WINED3DFMT_FLAG_CAST_TO_BLOCK},
-    {WINED3DFMT_R16_UINT,              0, WINED3DFMT_FLAG_INDEX_BUFFER},
+    {WINED3DFMT_R32G32B32A32_TYPELESS, 0,
+        WINED3DFMT_FLAG_CAST_TO_BLOCK},
+    {WINED3DFMT_R32G32B32A32_FLOAT,    0,
+        WINED3DFMT_FLAG_CAST_TO_BLOCK},
+    {WINED3DFMT_R32G32B32A32_UINT,     0,
+        WINED3DFMT_FLAG_CAST_TO_BLOCK},
+    {WINED3DFMT_R32G32B32A32_SINT,     0,
+        WINED3DFMT_FLAG_CAST_TO_BLOCK},
+    {WINED3DFMT_R16G16B16A16_TYPELESS, 0,
+        WINED3DFMT_FLAG_CAST_TO_BLOCK},
+    {WINED3DFMT_R16G16B16A16_FLOAT,    0,
+        WINED3DFMT_FLAG_CAST_TO_BLOCK},
+    {WINED3DFMT_R16G16B16A16_UNORM,    0,
+        WINED3DFMT_FLAG_CAST_TO_BLOCK},
+    {WINED3DFMT_R16G16B16A16_UINT,     0,
+        WINED3DFMT_FLAG_CAST_TO_BLOCK},
+    {WINED3DFMT_R16G16B16A16_SNORM,    0,
+        WINED3DFMT_FLAG_CAST_TO_BLOCK},
+    {WINED3DFMT_R16G16B16A16_SINT,     0,
+        WINED3DFMT_FLAG_CAST_TO_BLOCK},
+    {WINED3DFMT_R32G32_TYPELESS,       0,
+        WINED3DFMT_FLAG_CAST_TO_BLOCK},
+    {WINED3DFMT_R32G32_FLOAT,          0,
+        WINED3DFMT_FLAG_CAST_TO_BLOCK},
+    {WINED3DFMT_R32G32_UINT,           0,
+        WINED3DFMT_FLAG_CAST_TO_BLOCK},
+    {WINED3DFMT_R32G32_SINT,           0,
+        WINED3DFMT_FLAG_CAST_TO_BLOCK},
+    {WINED3DFMT_R32_TYPELESS,          0,
+        WINED3DFMT_FLAG_CAST_TO_BLOCK},
+    {WINED3DFMT_R32_FLOAT,             0,
+        WINED3DFMT_FLAG_CAST_TO_BLOCK},
+    {WINED3DFMT_R32_UINT,              0,
+        WINED3DFMT_FLAG_CAST_TO_BLOCK | WINED3DFMT_FLAG_INDEX_BUFFER},
+    {WINED3DFMT_R32_SINT,              0,
+        WINED3DFMT_FLAG_CAST_TO_BLOCK},
+    {WINED3DFMT_R16_UINT,              0,
+        WINED3DFMT_FLAG_INDEX_BUFFER},
     {WINED3DFMT_A8_UNORM,              WINED3D_FORMAT_ATTR_NORMALISED},
     {WINED3DFMT_B10G10R10A2_UNORM,     WINED3D_FORMAT_ATTR_NORMALISED},
     {WINED3DFMT_B2G3R3_UNORM,          WINED3D_FORMAT_ATTR_NORMALISED},
@@ -673,30 +696,31 @@ struct wined3d_format_block_info
     UINT block_width;
     UINT block_height;
     UINT block_byte_count;
+    unsigned int attrs;
     unsigned int flags;
 };
 
 static const struct wined3d_format_block_info format_block_info[] =
 {
-    {WINED3DFMT_DXT1,               4, 4, 8,  WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_DXT2,               4, 4, 16, WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_DXT3,               4, 4, 16, WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_DXT4,               4, 4, 16, WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_DXT5,               4, 4, 16, WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_BC1_UNORM,          4, 4, 8,  WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_BC2_UNORM,          4, 4, 16, WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_BC3_UNORM,          4, 4, 16, WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_BC4_UNORM,          4, 4, 8,  WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_BC4_SNORM,          4, 4, 8,  WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_BC5_UNORM,          4, 4, 16, WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_BC5_SNORM,          4, 4, 16, WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_BC6H_UF16,          4, 4, 16, WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_BC6H_SF16,          4, 4, 16, WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_BC7_UNORM,          4, 4, 16, WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_ATI1N,              4, 4, 8,  WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_BLOCKS_NO_VERIFY},
-    {WINED3DFMT_ATI2N,              4, 4, 16, WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_BLOCKS_NO_VERIFY},
-    {WINED3DFMT_YUY2,               2, 1, 4,  WINED3DFMT_FLAG_BLOCKS_NO_VERIFY},
-    {WINED3DFMT_UYVY,               2, 1, 4,  WINED3DFMT_FLAG_BLOCKS_NO_VERIFY},
+    {WINED3DFMT_DXT1,               4, 4, 8,  0,                                WINED3DFMT_FLAG_COMPRESSED},
+    {WINED3DFMT_DXT2,               4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
+    {WINED3DFMT_DXT3,               4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
+    {WINED3DFMT_DXT4,               4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
+    {WINED3DFMT_DXT5,               4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
+    {WINED3DFMT_BC1_UNORM,          4, 4, 8,  0,                                WINED3DFMT_FLAG_COMPRESSED},
+    {WINED3DFMT_BC2_UNORM,          4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
+    {WINED3DFMT_BC3_UNORM,          4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
+    {WINED3DFMT_BC4_UNORM,          4, 4, 8,  0,                                WINED3DFMT_FLAG_COMPRESSED},
+    {WINED3DFMT_BC4_SNORM,          4, 4, 8,  0,                                WINED3DFMT_FLAG_COMPRESSED},
+    {WINED3DFMT_BC5_UNORM,          4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
+    {WINED3DFMT_BC5_SNORM,          4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
+    {WINED3DFMT_BC6H_UF16,          4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
+    {WINED3DFMT_BC6H_SF16,          4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
+    {WINED3DFMT_BC7_UNORM,          4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
+    {WINED3DFMT_ATI1N,              4, 4, 8,  WINED3D_FORMAT_ATTR_BLOCKS_NO_VERIFY, WINED3DFMT_FLAG_COMPRESSED},
+    {WINED3DFMT_ATI2N,              4, 4, 16, WINED3D_FORMAT_ATTR_BLOCKS_NO_VERIFY, WINED3DFMT_FLAG_COMPRESSED},
+    {WINED3DFMT_YUY2,               2, 1, 4,  WINED3D_FORMAT_ATTR_BLOCKS_NO_VERIFY},
+    {WINED3DFMT_UYVY,               2, 1, 4,  WINED3D_FORMAT_ATTR_BLOCKS_NO_VERIFY},
     {WINED3DFMT_R9G9B9E5_SHAREDEXP, 1, 1, 4},
 };
 
@@ -2167,7 +2191,8 @@ static BOOL init_format_block_info(struct wined3d_adapter *adapter)
         format->block_width = format_block_info[i].block_width;
         format->block_height = format_block_info[i].block_height;
         format->block_byte_count = format_block_info[i].block_byte_count;
-        format_set_flag(format, WINED3DFMT_FLAG_BLOCKS | format_block_info[i].flags);
+        format->attrs |= WINED3D_FORMAT_ATTR_BLOCKS | format_block_info[i].attrs;
+        format_set_flag(format, format_block_info[i].flags);
     }
 
     return TRUE;
@@ -4521,7 +4546,7 @@ void wined3d_format_calculate_pitch(const struct wined3d_format *format, unsigne
 {
     /* For block based formats, pitch means the amount of bytes to the next
      * row of blocks rather than the next row of pixels. */
-    if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_BLOCKS)
+    if (format->attrs & WINED3D_FORMAT_ATTR_BLOCKS)
     {
         unsigned int row_block_count = (width + format->block_width - 1) / format->block_width;
         unsigned int slice_block_count = (height + format->block_height - 1) / format->block_height;
@@ -4554,7 +4579,7 @@ UINT wined3d_format_calculate_size(const struct wined3d_format *format, UINT ali
     if (format->id == WINED3DFMT_UNKNOWN)
         return 0;
 
-    if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_BROKEN_PITCH)
+    if (format->attrs & WINED3D_FORMAT_ATTR_BROKEN_PITCH)
         return width * height * depth * format->byte_count;
 
     wined3d_format_calculate_pitch(format, alignment, width, height, &row_pitch, &slice_pitch);

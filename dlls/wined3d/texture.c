@@ -2537,7 +2537,7 @@ static void wined3d_texture_gl_upload_data(struct wined3d_context *context,
 
     bo.buffer_object = src_bo_addr->buffer_object;
     bo.addr = (BYTE *)src_bo_addr->addr + src_box->front * src_slice_pitch;
-    if (dst_texture->resource.format_flags & WINED3DFMT_FLAG_BLOCKS)
+    if (dst_texture->resource.format_attrs & WINED3D_FORMAT_ATTR_BLOCKS)
     {
         bo.addr += (src_box->top / src_format->block_height) * src_row_pitch;
         bo.addr += (src_box->left / src_format->block_width) * src_format->block_byte_count;
@@ -2573,7 +2573,7 @@ static void wined3d_texture_gl_upload_data(struct wined3d_context *context,
         }
         else
         {
-            if (dst_texture->resource.format_flags & WINED3DFMT_FLAG_BLOCKS)
+            if (dst_texture->resource.format_attrs & WINED3D_FORMAT_ATTR_BLOCKS)
                 ERR("Converting a block-based format.\n");
 
             f = *wined3d_format_gl(src_format);
@@ -3635,7 +3635,7 @@ static void texture_resource_sub_resource_get_map_pitch(struct wined3d_resource 
     const struct wined3d_texture *texture = texture_from_resource(resource);
     unsigned int level = sub_resource_idx % texture->level_count;
 
-    if (resource->format_flags & WINED3DFMT_FLAG_BROKEN_PITCH)
+    if (resource->format_attrs & WINED3D_FORMAT_ATTR_BROKEN_PITCH)
     {
         *row_pitch = wined3d_texture_get_level_width(texture, level) * resource->format->byte_count;
         *slice_pitch = wined3d_texture_get_level_height(texture, level) * (*row_pitch);
@@ -3927,7 +3927,7 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
      * compressed block. It is questionable how useful these mip-levels are to
      * the application with "broken pitch" formats, but we want to avoid
      * memory corruption when loading textures into WINED3D_LOCATION_SYSMEM. */
-    if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_BROKEN_PITCH)
+    if (format->attrs & WINED3D_FORMAT_ATTR_BROKEN_PITCH)
     {
         unsigned int min_size;
 

@@ -652,6 +652,7 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
     const struct wined3d_format *src_format, *dst_format;
     struct wined3d_texture *converted_texture = NULL;
     struct wined3d_bo_address src_data, dst_data;
+    unsigned int src_fmt_attrs, dst_fmt_attrs;
     unsigned int src_fmt_flags, dst_fmt_flags;
     struct wined3d_map_desc dst_map, src_map;
     unsigned int x, sx, xinc, y, sy, yinc;
@@ -707,12 +708,12 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
     else
     {
         same_sub_resource = FALSE;
-        upload = dst_format->flags[dst_texture->resource.gl_type] & WINED3DFMT_FLAG_BLOCKS
+        upload = dst_format->attrs & WINED3D_FORMAT_ATTR_BLOCKS
                 && (dst_width != src_width || dst_height != src_height);
 
         if (upload)
         {
-            dst_format = src_format->flags[dst_texture->resource.gl_type] & WINED3DFMT_FLAG_BLOCKS
+            dst_format = src_format->attrs & WINED3D_FORMAT_ATTR_BLOCKS
                     ? wined3d_get_format(device->adapter, WINED3DFMT_B8G8R8A8_UNORM, 0) : src_format;
         }
 
@@ -759,7 +760,9 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
                     dst_texture->sub_resources[dst_sub_resource_idx].size, WINED3D_MAP_WRITE);
         }
     }
+    src_fmt_attrs = src_format->attrs;
     src_fmt_flags = src_format->flags[src_texture->resource.gl_type];
+    dst_fmt_attrs = dst_format->attrs;
     dst_fmt_flags = dst_format->flags[dst_texture->resource.gl_type];
     flags &= ~WINED3D_BLT_RAW;
 
@@ -773,7 +776,7 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
             + ((dst_box->top / dst_format->block_height) * dst_map.row_pitch)
             + ((dst_box->left / dst_format->block_width) * dst_format->block_byte_count);
 
-    if (src_fmt_flags & dst_fmt_flags & WINED3DFMT_FLAG_BLOCKS)
+    if (src_fmt_attrs & dst_fmt_attrs & WINED3D_FORMAT_ATTR_BLOCKS)
     {
         TRACE("%s -> %s copy.\n", debug_d3dformat(src_format->id), debug_d3dformat(dst_format->id));
 
@@ -1188,7 +1191,7 @@ static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
 
     TRACE("view %p, box %s, colour %s.\n", view, debug_box(box), debug_color(colour));
 
-    if (view->format_flags & WINED3DFMT_FLAG_BLOCKS)
+    if (view->format_attrs & WINED3D_FORMAT_ATTR_BLOCKS)
     {
         FIXME("Not implemented for format %s.\n", debug_d3dformat(view->format->id));
         return;

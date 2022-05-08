@@ -174,8 +174,8 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     }
 
     if (base_type != WINED3D_GL_RES_TYPE_COUNT
-            && (format->flags[base_type] & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BLOCKS_NO_VERIFY))
-            == WINED3DFMT_FLAG_BLOCKS)
+            && (format->attrs & (WINED3D_FORMAT_ATTR_BLOCKS | WINED3D_FORMAT_ATTR_BLOCKS_NO_VERIFY))
+            == WINED3D_FORMAT_ATTR_BLOCKS)
     {
         UINT width_mask = format->block_width - 1;
         UINT height_mask = format->block_height - 1;
@@ -520,7 +520,7 @@ HRESULT wined3d_resource_check_box_dimensions(struct wined3d_resource *resource,
         return WINEDDERR_INVALIDRECT;
     }
 
-    if (resource->format_flags & WINED3DFMT_FLAG_BLOCKS)
+    if (resource->format_attrs & WINED3D_FORMAT_ATTR_BLOCKS)
     {
         /* This assumes power of two block sizes, but NPOT block sizes would
          * be silly anyway.
@@ -597,7 +597,8 @@ void *resource_offset_map_pointer(struct wined3d_resource *resource, unsigned in
 
     wined3d_resource_get_sub_resource_map_pitch(resource, sub_resource_idx, &row_pitch, &slice_pitch);
 
-    if ((resource->format_flags & (WINED3DFMT_FLAG_BLOCKS | WINED3DFMT_FLAG_BROKEN_PITCH)) == WINED3DFMT_FLAG_BLOCKS)
+    if ((resource->format_attrs & (WINED3D_FORMAT_ATTR_BLOCKS | WINED3D_FORMAT_ATTR_BROKEN_PITCH))
+            == WINED3D_FORMAT_ATTR_BLOCKS)
     {
         /* Compressed textures are block based, so calculate the offset of
          * the block that contains the top-left pixel of the mapped box. */
