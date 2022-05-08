@@ -1901,8 +1901,8 @@ static BOOL wined3d_check_surface_format(const struct wined3d_format *format)
     if ((format->flags[WINED3D_GL_RES_TYPE_TEX_2D] | format->flags[WINED3D_GL_RES_TYPE_RB]) & WINED3DFMT_FLAG_BLIT)
         return TRUE;
 
-    if ((format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & (WINED3DFMT_FLAG_EXTENSION | WINED3DFMT_FLAG_TEXTURE))
-            == (WINED3DFMT_FLAG_EXTENSION | WINED3DFMT_FLAG_TEXTURE))
+    if ((format->attrs & WINED3D_FORMAT_ATTR_EXTENSION)
+            && (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_TEXTURE))
         return TRUE;
 
     return FALSE;
