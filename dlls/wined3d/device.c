@@ -5120,8 +5120,7 @@ void CDECL wined3d_device_context_clear_uav_float(struct wined3d_device_context 
 {
     TRACE("context %p, view %p, clear_value %s.\n", context, view, debug_vec4(clear_value));
 
-    if (!((view->format->attrs & WINED3D_FORMAT_ATTR_FLOAT) ||
-            (view->format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_NORMALISED)))
+    if (!(view->format->attrs & (WINED3D_FORMAT_ATTR_FLOAT | WINED3D_FORMAT_ATTR_NORMALISED)))
     {
         WARN("Not supported for view format %s.\n", debug_d3dformat(view->format->id));
         return;

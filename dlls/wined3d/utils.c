@@ -347,16 +347,16 @@ static const struct wined3d_format_base_flags format_base_flags[] =
     {WINED3DFMT_R32_UINT,              0, WINED3DFMT_FLAG_CAST_TO_BLOCK | WINED3DFMT_FLAG_INDEX_BUFFER},
     {WINED3DFMT_R32_SINT,              0, WINED3DFMT_FLAG_CAST_TO_BLOCK},
     {WINED3DFMT_R16_UINT,              0, WINED3DFMT_FLAG_INDEX_BUFFER},
-    {WINED3DFMT_A8_UNORM,              0, WINED3DFMT_FLAG_NORMALISED},
-    {WINED3DFMT_B10G10R10A2_UNORM,     0, WINED3DFMT_FLAG_NORMALISED},
-    {WINED3DFMT_B2G3R3_UNORM,          0, WINED3DFMT_FLAG_NORMALISED},
-    {WINED3DFMT_B4G4R4A4_UNORM,        0, WINED3DFMT_FLAG_NORMALISED},
-    {WINED3DFMT_B4G4R4X4_UNORM,        0, WINED3DFMT_FLAG_NORMALISED},
-    {WINED3DFMT_B5G5R5A1_UNORM,        0, WINED3DFMT_FLAG_NORMALISED},
-    {WINED3DFMT_B5G5R5X1_UNORM,        0, WINED3DFMT_FLAG_NORMALISED},
-    {WINED3DFMT_B5G6R5_UNORM,          0, WINED3DFMT_FLAG_NORMALISED},
-    {WINED3DFMT_B8G8R8_UNORM,          0, WINED3DFMT_FLAG_NORMALISED},
-    {WINED3DFMT_R10G10B10A2_UNORM,     0, WINED3DFMT_FLAG_NORMALISED},
+    {WINED3DFMT_A8_UNORM,              WINED3D_FORMAT_ATTR_NORMALISED},
+    {WINED3DFMT_B10G10R10A2_UNORM,     WINED3D_FORMAT_ATTR_NORMALISED},
+    {WINED3DFMT_B2G3R3_UNORM,          WINED3D_FORMAT_ATTR_NORMALISED},
+    {WINED3DFMT_B4G4R4A4_UNORM,        WINED3D_FORMAT_ATTR_NORMALISED},
+    {WINED3DFMT_B4G4R4X4_UNORM,        WINED3D_FORMAT_ATTR_NORMALISED},
+    {WINED3DFMT_B5G5R5A1_UNORM,        WINED3D_FORMAT_ATTR_NORMALISED},
+    {WINED3DFMT_B5G5R5X1_UNORM,        WINED3D_FORMAT_ATTR_NORMALISED},
+    {WINED3DFMT_B5G6R5_UNORM,          WINED3D_FORMAT_ATTR_NORMALISED},
+    {WINED3DFMT_B8G8R8_UNORM,          WINED3D_FORMAT_ATTR_NORMALISED},
+    {WINED3DFMT_R10G10B10A2_UNORM,     WINED3D_FORMAT_ATTR_NORMALISED},
 };
 
 static void rgb888_from_rgb565(WORD rgb565, BYTE *r, BYTE *g, BYTE *b)
@@ -2082,8 +2082,8 @@ static BOOL init_format_base_info(struct wined3d_adapter *adapter)
     for (i = 0; i < ARRAY_SIZE(typed_formats); ++i)
     {
         struct wined3d_format *typeless_format;
-        unsigned int flags = 0, attrs = 0;
         unsigned int component_count = 0;
+        unsigned int attrs = 0;
 
         if (!(format = get_format_internal(adapter, typed_formats[i].id)))
             return FALSE;
@@ -2115,7 +2115,7 @@ static BOOL init_format_base_info(struct wined3d_adapter *adapter)
             enum wined3d_channel_type channel_type = map_channel_type(typed_formats[i].channels[j]);
 
             if (channel_type == WINED3D_CHANNEL_TYPE_UNORM || channel_type == WINED3D_CHANNEL_TYPE_SNORM)
-                flags |= WINED3DFMT_FLAG_NORMALISED;
+                attrs |= WINED3D_FORMAT_ATTR_NORMALISED;
             if (channel_type == WINED3D_CHANNEL_TYPE_UINT || channel_type == WINED3D_CHANNEL_TYPE_SINT)
                 attrs |= WINED3D_FORMAT_ATTR_INTEGER;
             if (channel_type == WINED3D_CHANNEL_TYPE_FLOAT)
@@ -2138,7 +2138,6 @@ static BOOL init_format_base_info(struct wined3d_adapter *adapter)
 
         format->component_count = component_count;
         format->attrs |= attrs;
-        format_set_flag(format, flags);
     }
 
     for (i = 0; i < ARRAY_SIZE(ddi_formats); ++i)
@@ -6117,7 +6116,7 @@ void wined3d_format_convert_from_float(const struct wined3d_format *format,
         return;
     }
 
-    if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_NORMALISED)
+    if (format->attrs & WINED3D_FORMAT_ATTR_NORMALISED)
     {
         uint32_t *ret_i = ret;
 

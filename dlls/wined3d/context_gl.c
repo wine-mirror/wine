@@ -5733,7 +5733,6 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
 
         if (element->stride)
         {
-            DWORD format_flags = format_gl->f.flags[WINED3D_GL_RES_TYPE_BUFFER];
             unsigned int format_attrs = format_gl->f.attrs;
 
             bo = wined3d_bo_gl_id(element->data.buffer_object);
@@ -5755,7 +5754,7 @@ static void wined3d_context_gl_load_numbered_arrays(struct wined3d_context_gl *c
             else
             {
                 GL_EXTCALL(glVertexAttribPointer(i, format_gl->vtx_format, format_gl->vtx_type,
-                        !!(format_flags & WINED3DFMT_FLAG_NORMALISED), element->stride, offset));
+                        !!(format_attrs & WINED3D_FORMAT_ATTR_NORMALISED), element->stride, offset));
             }
 
             if (!(context->numbered_array_mask & (1u << i)))
