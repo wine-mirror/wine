@@ -6115,7 +6115,9 @@ extern enum wined3d_format_id pixelformat_for_depth(DWORD depth) DECLSPEC_HIDDEN
 #define WINED3D_FORMAT_ATTR_EXTENSION               0x00000010
 #define WINED3D_FORMAT_ATTR_BLOCKS                  0x00000020
 #define WINED3D_FORMAT_ATTR_BLOCKS_NO_VERIFY        0x00000040
-#define WINED3D_FORMAT_ATTR_BROKEN_PITCH            0x00000080
+#define WINED3D_FORMAT_ATTR_COMPRESSED              0x00000080
+#define WINED3D_FORMAT_ATTR_BROKEN_PITCH            0x00000100
+#define WINED3D_FORMAT_ATTR_HEIGHT_SCALE            0x00000200
 
 /* WineD3D pixel format flags */
 #define WINED3DFMT_FLAG_POSTPIXELSHADER_BLENDING    0x00000001
@@ -6130,8 +6132,6 @@ extern enum wined3d_format_id pixelformat_for_depth(DWORD depth) DECLSPEC_HIDDEN
 #define WINED3DFMT_FLAG_SRGB_WRITE                  0x00001000
 #define WINED3DFMT_FLAG_VTF                         0x00002000
 #define WINED3DFMT_FLAG_SHADOW                      0x00004000
-#define WINED3DFMT_FLAG_COMPRESSED                  0x00008000
-#define WINED3DFMT_FLAG_HEIGHT_SCALE                0x00040000
 #define WINED3DFMT_FLAG_TEXTURE                     0x00080000
 #define WINED3DFMT_FLAG_GEN_MIPMAP                  0x00400000
 #define WINED3DFMT_FLAG_VERTEX_ATTRIBUTE            0x01000000

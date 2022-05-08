@@ -255,7 +255,7 @@ static struct wined3d_texture *surface_convert_format(struct wined3d_texture *sr
     if (!(conv = find_converter(src_format->id, dst_format->id)) && ((device->wined3d->flags & WINED3D_NO3D)
             || !is_identity_fixup(src_format->color_fixup) || src_format->conv_byte_count
             || !is_identity_fixup(dst_format->color_fixup) || dst_format->conv_byte_count
-            || ((src_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_COMPRESSED)
+            || ((src_format->attrs & WINED3D_FORMAT_ATTR_COMPRESSED)
             && !src_format->decompress)))
     {
         FIXME("Cannot find a conversion function from format %s to %s.\n",
@@ -653,7 +653,6 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
     struct wined3d_texture *converted_texture = NULL;
     struct wined3d_bo_address src_data, dst_data;
     unsigned int src_fmt_attrs, dst_fmt_attrs;
-    unsigned int src_fmt_flags, dst_fmt_flags;
     struct wined3d_map_desc dst_map, src_map;
     unsigned int x, sx, xinc, y, sy, yinc;
     struct wined3d_context *context;
@@ -761,9 +760,7 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
         }
     }
     src_fmt_attrs = src_format->attrs;
-    src_fmt_flags = src_format->flags[src_texture->resource.gl_type];
     dst_fmt_attrs = dst_format->attrs;
-    dst_fmt_flags = dst_format->flags[dst_texture->resource.gl_type];
     flags &= ~WINED3D_BLT_RAW;
 
     bpp = dst_format->byte_count;
@@ -793,7 +790,7 @@ static HRESULT surface_cpu_blt(struct wined3d_texture *dst_texture, unsigned int
         goto release;
     }
 
-    if ((src_fmt_flags | dst_fmt_flags) & WINED3DFMT_FLAG_HEIGHT_SCALE)
+    if ((src_fmt_attrs | dst_fmt_attrs) & WINED3D_FORMAT_ATTR_HEIGHT_SCALE)
     {
         FIXME("Unsupported blit between height-scaled formats (src %s, dst %s).\n",
                 debug_d3dformat(src_format->id), debug_d3dformat(dst_format->id));

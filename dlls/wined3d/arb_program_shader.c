@@ -7744,8 +7744,8 @@ static BOOL arbfp_blit_supported(enum wined3d_blit_op blit_op, const struct wine
             return FALSE;
     }
 
-    decompress = (src_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_COMPRESSED)
-            && !(dst_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_COMPRESSED);
+    decompress = (src_format->attrs & WINED3D_FORMAT_ATTR_COMPRESSED)
+            && !(dst_format->attrs & WINED3D_FORMAT_ATTR_COMPRESSED);
     if (!decompress && !(src_resource->access & dst_resource->access & WINED3D_RESOURCE_ACCESS_GPU))
         return FALSE;
 

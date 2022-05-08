@@ -71,7 +71,7 @@ static BOOL wined3d_texture_use_immutable_storage(const struct wined3d_texture *
     /* We don't expect to create texture views for textures with height-scaled formats.
      * Besides, ARB_texture_storage doesn't allow specifying exact sizes for all levels. */
     return gl_info->supported[ARB_TEXTURE_STORAGE]
-            && !(texture->resource.format_flags & WINED3DFMT_FLAG_HEIGHT_SCALE);
+            && !(texture->resource.format_attrs & WINED3D_FORMAT_ATTR_HEIGHT_SCALE);
 }
 
 /* Front buffer coordinates are always full screen coordinates, but our GL
@@ -279,7 +279,7 @@ static bool fbo_blitter_supported(enum wined3d_blit_op blit_op, const struct win
     if ((wined3d_settings.offscreen_rendering_mode != ORM_FBO) || !gl_info->fbo_ops.glBlitFramebuffer)
         return false;
 
-    if ((src_resource->format_flags | dst_resource->format_flags) & WINED3DFMT_FLAG_HEIGHT_SCALE)
+    if ((src_resource->format_attrs | dst_resource->format_attrs) & WINED3D_FORMAT_ATTR_HEIGHT_SCALE)
         return false;
 
     /* Source and/or destination need to be on the GL side. */
@@ -978,7 +978,7 @@ static void wined3d_texture_gl_allocate_mutable_storage(struct wined3d_texture_g
         {
             width = wined3d_texture_get_level_pow2_width(&texture_gl->t, level);
             height = wined3d_texture_get_level_pow2_height(&texture_gl->t, level);
-            if (texture_gl->t.resource.format_flags & WINED3DFMT_FLAG_HEIGHT_SCALE)
+            if (texture_gl->t.resource.format_attrs & WINED3D_FORMAT_ATTR_HEIGHT_SCALE)
             {
                 height *= format->f.height_scale.numerator;
                 height /= format->f.height_scale.denominator;
@@ -2268,7 +2268,7 @@ static void wined3d_texture_gl_upload_bo(const struct wined3d_format *src_format
 {
     const struct wined3d_format_gl *format_gl = wined3d_format_gl(src_format);
 
-    if (src_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_COMPRESSED)
+    if (src_format->attrs & WINED3D_FORMAT_ATTR_COMPRESSED)
     {
         GLenum internal = wined3d_gl_get_internal_format(&dst_texture->resource, format_gl, srgb);
         unsigned int dst_row_pitch, dst_slice_pitch;
@@ -2411,8 +2411,7 @@ static enum wined3d_format_id wined3d_get_alpha_fixup_format(enum wined3d_format
 {
     unsigned int i;
 
-    if (!(dst_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_COMPRESSED)
-            && !dst_format->alpha_size)
+    if (!(dst_format->attrs & WINED3D_FORMAT_ATTR_COMPRESSED) && !dst_format->alpha_size)
         return WINED3DFMT_UNKNOWN;
 
     for (i = 0; i < ARRAY_SIZE(formats_src_alpha_fixup); ++i)
@@ -2510,7 +2509,7 @@ static void wined3d_texture_gl_upload_data(struct wined3d_context *context,
         dst_texture->resource.pin_sysmem = 1;
     }
 
-    if (src_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_HEIGHT_SCALE)
+    if (src_format->attrs & WINED3D_FORMAT_ATTR_HEIGHT_SCALE)
     {
         update_h *= src_format->height_scale.numerator;
         update_h /= src_format->height_scale.denominator;
@@ -2723,7 +2722,7 @@ static void wined3d_texture_gl_download_data_slow_path(struct wined3d_texture_gl
 
         if (bo)
             ERR("NP2 emulated texture uses PBO unexpectedly.\n");
-        if (texture_gl->t.resource.format_flags & WINED3DFMT_FLAG_COMPRESSED)
+        if (texture_gl->t.resource.format_attrs & WINED3D_FORMAT_ATTR_COMPRESSED)
             ERR("Unexpected compressed format for NP2 emulated texture.\n");
     }
 
@@ -2771,7 +2770,7 @@ static void wined3d_texture_gl_download_data_slow_path(struct wined3d_texture_gl
         mem = data->addr;
     }
 
-    if (texture_gl->t.resource.format_flags & WINED3DFMT_FLAG_COMPRESSED)
+    if (texture_gl->t.resource.format_attrs & WINED3D_FORMAT_ATTR_COMPRESSED)
     {
         TRACE("Downloading compressed texture %p, %u, level %u, format %#x, type %#x, data %p.\n",
                 texture_gl, sub_resource_idx, level, format_gl->format, format_gl->type, mem);
@@ -2987,7 +2986,7 @@ static void wined3d_texture_gl_download_data(struct wined3d_context *context,
         checkGLcall("glBindBuffer");
     }
 
-    if (src_texture->resource.format_flags & WINED3DFMT_FLAG_COMPRESSED)
+    if (src_texture->resource.format_attrs & WINED3D_FORMAT_ATTR_COMPRESSED)
     {
         TRACE("Downloading compressed texture %p, %u, level %u, format %#x, type %#x, data %p.\n",
                 src_texture, src_sub_resource_idx, src_level, format_gl->format, format_gl->type, offset);
@@ -3862,8 +3861,7 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
         if (desc->resource_type != WINED3D_RTYPE_TEXTURE_3D && !d3d_info->texture_npot_conditional)
         {
             /* TODO: Add support for non-power-of-two compressed textures. */
-            if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D]
-                    & (WINED3DFMT_FLAG_COMPRESSED | WINED3DFMT_FLAG_HEIGHT_SCALE))
+            if (format->attrs & (WINED3D_FORMAT_ATTR_COMPRESSED | WINED3D_FORMAT_ATTR_HEIGHT_SCALE))
             {
                 FIXME("Compressed or height scaled non-power-of-two (%ux%u) textures are not supported.\n",
                         desc->width, desc->height);
@@ -5280,7 +5278,7 @@ static bool wined3d_texture_vk_clear(struct wined3d_texture_vk *texture_vk,
     VkImageAspectFlags aspect_mask;
     VkImage vk_image;
 
-    if (texture_vk->t.resource.format_flags & WINED3DFMT_FLAG_COMPRESSED)
+    if (texture_vk->t.resource.format_attrs & WINED3D_FORMAT_ATTR_COMPRESSED)
     {
         struct wined3d_bo_address addr;
 
@@ -5714,8 +5712,8 @@ static bool ffp_blit_supported(enum wined3d_blit_op blit_op, const struct wined3
     if (src_resource->type != WINED3D_RTYPE_TEXTURE_2D)
         return false;
 
-    decompress = (src_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_COMPRESSED)
-            && !(dst_format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_COMPRESSED);
+    decompress = (src_format->attrs & WINED3D_FORMAT_ATTR_COMPRESSED)
+            && !(dst_format->attrs & WINED3D_FORMAT_ATTR_COMPRESSED);
     if (!decompress && !(src_resource->access & dst_resource->access & WINED3D_RESOURCE_ACCESS_GPU))
     {
         TRACE("Source or destination resource is not GPU accessible.\n");
@@ -6489,7 +6487,8 @@ static DWORD raw_blitter_blit(struct wined3d_blitter *blitter, enum wined3d_blit
      * We also can't copy between depth/stencil and colour resources, since
      * the formats are considered incompatible in OpenGL. */
     if (op != WINED3D_BLIT_OP_RAW_BLIT || !gl_formats_compatible(src_texture, src_location, dst_texture, dst_location)
-            || ((src_texture->resource.format_flags | dst_texture->resource.format_flags) & WINED3DFMT_FLAG_HEIGHT_SCALE)
+            || ((src_texture->resource.format_attrs | dst_texture->resource.format_attrs)
+                    & WINED3D_FORMAT_ATTR_HEIGHT_SCALE)
             || (src_texture->resource.format->id == dst_texture->resource.format->id
             && (!(src_location & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB))
             || !(dst_location & (WINED3D_LOCATION_TEXTURE_RGB | WINED3D_LOCATION_TEXTURE_SRGB)))))

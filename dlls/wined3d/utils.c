@@ -697,28 +697,27 @@ struct wined3d_format_block_info
     UINT block_height;
     UINT block_byte_count;
     unsigned int attrs;
-    unsigned int flags;
 };
 
 static const struct wined3d_format_block_info format_block_info[] =
 {
-    {WINED3DFMT_DXT1,               4, 4, 8,  0,                                WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_DXT2,               4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_DXT3,               4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_DXT4,               4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_DXT5,               4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_BC1_UNORM,          4, 4, 8,  0,                                WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_BC2_UNORM,          4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_BC3_UNORM,          4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_BC4_UNORM,          4, 4, 8,  0,                                WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_BC4_SNORM,          4, 4, 8,  0,                                WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_BC5_UNORM,          4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_BC5_SNORM,          4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_BC6H_UF16,          4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_BC6H_SF16,          4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_BC7_UNORM,          4, 4, 16, 0,                                WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_ATI1N,              4, 4, 8,  WINED3D_FORMAT_ATTR_BLOCKS_NO_VERIFY, WINED3DFMT_FLAG_COMPRESSED},
-    {WINED3DFMT_ATI2N,              4, 4, 16, WINED3D_FORMAT_ATTR_BLOCKS_NO_VERIFY, WINED3DFMT_FLAG_COMPRESSED},
+    {WINED3DFMT_DXT1,               4, 4, 8,  WINED3D_FORMAT_ATTR_COMPRESSED},
+    {WINED3DFMT_DXT2,               4, 4, 16, WINED3D_FORMAT_ATTR_COMPRESSED},
+    {WINED3DFMT_DXT3,               4, 4, 16, WINED3D_FORMAT_ATTR_COMPRESSED},
+    {WINED3DFMT_DXT4,               4, 4, 16, WINED3D_FORMAT_ATTR_COMPRESSED},
+    {WINED3DFMT_DXT5,               4, 4, 16, WINED3D_FORMAT_ATTR_COMPRESSED},
+    {WINED3DFMT_BC1_UNORM,          4, 4, 8,  WINED3D_FORMAT_ATTR_COMPRESSED},
+    {WINED3DFMT_BC2_UNORM,          4, 4, 16, WINED3D_FORMAT_ATTR_COMPRESSED},
+    {WINED3DFMT_BC3_UNORM,          4, 4, 16, WINED3D_FORMAT_ATTR_COMPRESSED},
+    {WINED3DFMT_BC4_UNORM,          4, 4, 8,  WINED3D_FORMAT_ATTR_COMPRESSED},
+    {WINED3DFMT_BC4_SNORM,          4, 4, 8,  WINED3D_FORMAT_ATTR_COMPRESSED},
+    {WINED3DFMT_BC5_UNORM,          4, 4, 16, WINED3D_FORMAT_ATTR_COMPRESSED},
+    {WINED3DFMT_BC5_SNORM,          4, 4, 16, WINED3D_FORMAT_ATTR_COMPRESSED},
+    {WINED3DFMT_BC6H_UF16,          4, 4, 16, WINED3D_FORMAT_ATTR_COMPRESSED},
+    {WINED3DFMT_BC6H_SF16,          4, 4, 16, WINED3D_FORMAT_ATTR_COMPRESSED},
+    {WINED3DFMT_BC7_UNORM,          4, 4, 16, WINED3D_FORMAT_ATTR_COMPRESSED},
+    {WINED3DFMT_ATI1N,              4, 4, 8,  WINED3D_FORMAT_ATTR_COMPRESSED | WINED3D_FORMAT_ATTR_BLOCKS_NO_VERIFY},
+    {WINED3DFMT_ATI2N,              4, 4, 16, WINED3D_FORMAT_ATTR_COMPRESSED | WINED3D_FORMAT_ATTR_BLOCKS_NO_VERIFY},
     {WINED3DFMT_YUY2,               2, 1, 4,  WINED3D_FORMAT_ATTR_BLOCKS_NO_VERIFY},
     {WINED3DFMT_UYVY,               2, 1, 4,  WINED3D_FORMAT_ATTR_BLOCKS_NO_VERIFY},
     {WINED3DFMT_R9G9B9E5_SHAREDEXP, 1, 1, 4},
@@ -2192,7 +2191,6 @@ static BOOL init_format_block_info(struct wined3d_adapter *adapter)
         format->block_height = format_block_info[i].block_height;
         format->block_byte_count = format_block_info[i].block_byte_count;
         format->attrs |= WINED3D_FORMAT_ATTR_BLOCKS | format_block_info[i].attrs;
-        format_set_flag(format, format_block_info[i].flags);
     }
 
     return TRUE;
@@ -2940,7 +2938,7 @@ static void init_format_fbo_compat_info(const struct wined3d_adapter *adapter,
         if (!format->internal)
             continue;
 
-        if (format->f.flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_COMPRESSED)
+        if (format->f.attrs & WINED3D_FORMAT_ATTR_COMPRESSED)
         {
             TRACE("Skipping format %s because it's a compressed format.\n",
                     debug_d3dformat(format->f.id));
@@ -3659,13 +3657,13 @@ static void apply_format_fixups(struct wined3d_adapter *adapter, struct wined3d_
             || (gl_info->supported[ARB_FRAGMENT_SHADER] && gl_info->supported[ARB_VERTEX_SHADER]))
     {
         format = get_format_gl_internal(adapter, WINED3DFMT_YV12);
-        format_set_flag(&format->f, WINED3DFMT_FLAG_HEIGHT_SCALE);
+        format->f.attrs |= WINED3D_FORMAT_ATTR_HEIGHT_SCALE;
         format->f.height_scale.numerator = 3;
         format->f.height_scale.denominator = 2;
         format->f.color_fixup = create_complex_fixup_desc(COMPLEX_FIXUP_YV12);
 
         format = get_format_gl_internal(adapter, WINED3DFMT_NV12);
-        format_set_flag(&format->f, WINED3DFMT_FLAG_HEIGHT_SCALE);
+        format->f.attrs |= WINED3D_FORMAT_ATTR_HEIGHT_SCALE;
         format->f.height_scale.numerator = 3;
         format->f.height_scale.denominator = 2;
         format->f.color_fixup = create_complex_fixup_desc(COMPLEX_FIXUP_NV12);
@@ -4561,7 +4559,7 @@ void wined3d_format_calculate_pitch(const struct wined3d_format *format, unsigne
         *slice_pitch = *row_pitch * height;
     }
 
-    if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_HEIGHT_SCALE)
+    if (format->attrs & WINED3D_FORMAT_ATTR_HEIGHT_SCALE)
     {
         /* The D3D format requirements make sure that the resulting format is an integer again */
         *slice_pitch *= format->height_scale.numerator;
