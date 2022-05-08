@@ -1848,6 +1848,22 @@ static void get_performance_info( SYSTEM_PERFORMANCE_INFORMATION *info )
                 info->IdleTime.QuadPart = (ULONGLONG)ptimes[CP_IDLE] * 10000000 / clockrate.stathz;
         }
     }
+#elif defined(__APPLE__)
+    {
+        host_name_port_t host = mach_host_self();
+        struct host_cpu_load_info load_info;
+        mach_msg_type_number_t count;
+
+        count = HOST_CPU_LOAD_INFO_COUNT;
+        if (host_statistics(host, HOST_CPU_LOAD_INFO, (host_info_t)&load_info, &count) == KERN_SUCCESS)
+        {
+            /* Believe it or not, based on my reading of XNU source, this is
+             * already in the units we want (100 ns).
+             */
+            info->IdleTime.QuadPart = load_info.cpu_ticks[CPU_STATE_IDLE];
+        }
+        mach_port_deallocate(mach_task_self(), host);
+    }
 #else
     {
         static ULONGLONG idle;
