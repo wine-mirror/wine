@@ -4723,9 +4723,9 @@ static bool resources_format_compatible(const struct wined3d_resource *src_resou
     if (src_resource->device->cs->c.state->feature_level < WINED3D_FEATURE_LEVEL_10_1)
         return false;
     if ((src_resource->format_attrs & WINED3D_FORMAT_ATTR_BLOCKS)
-            && (dst_resource->format_flags & WINED3DFMT_FLAG_CAST_TO_BLOCK))
+            && (dst_resource->format_attrs & WINED3D_FORMAT_ATTR_CAST_TO_BLOCK))
         return src_resource->format->block_byte_count == dst_resource->format->byte_count;
-    if ((src_resource->format_flags & WINED3DFMT_FLAG_CAST_TO_BLOCK)
+    if ((src_resource->format_attrs & WINED3D_FORMAT_ATTR_CAST_TO_BLOCK)
             && (dst_resource->format_attrs & WINED3D_FORMAT_ATTR_BLOCKS))
         return src_resource->format->byte_count == dst_resource->format->block_byte_count;
     return false;
