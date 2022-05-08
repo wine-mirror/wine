@@ -8762,6 +8762,32 @@ then :
   printf "%s\n" "#define HAVE_NETINET_UDP_H 1" >>confdefs.h
 
 fi
+ac_fn_c_check_header_compile "$LINENO" "netinet6/ip6_var.h" "ac_cv_header_netinet6_ip6_var_h" "#include <sys/types.h>
+     #include <sys/socket.h>
+     #ifdef HAVE_SYS_SOCKETVAR_H
+     # include <sys/socketvar.h>
+     #endif
+     #ifdef HAVE_NET_ROUTE_H
+     # include <net/route.h>
+     #endif
+     #ifdef HAVE_NETINET_IN_H
+     # include <netinet/in.h>
+     #endif
+     #ifdef HAVE_NETINET_IN_SYSTM_H
+     # include <netinet/in_systm.h>
+     #endif
+     #ifdef HAVE_NET_IF_H
+     # include <net/if.h>
+     #endif
+     #ifdef HAVE_NETINET_IP_H
+     # include <netinet/ip.h>
+     #endif
+"
+if test "x$ac_cv_header_netinet6_ip6_var_h" = xyes
+then :
+  printf "%s\n" "#define HAVE_NETINET6_IP6_VAR_H 1" >>confdefs.h
+
+fi
 ac_fn_c_check_header_compile "$LINENO" "netipx/ipx.h" "ac_cv_header_netipx_ipx_h" "#include <sys/types.h>
      #include <sys/socket.h>
      #ifdef HAVE_SYS_SOCKETVAR_H
@@ -20646,6 +20672,26 @@ if test "x$ac_cv_member_struct_ip_stats_ips_total" = xyes
 then :
 
 printf "%s\n" "#define HAVE_STRUCT_IP_STATS_IPS_TOTAL 1" >>confdefs.h
+
+
+fi
+
+
+ac_fn_c_check_member "$LINENO" "struct ip6stat" "ip6s_total" "ac_cv_member_struct_ip6stat_ip6s_total" "#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKETVAR_H
+#include <sys/socketvar.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_NETINET6_IP6_VAR_H
+#include <netinet6/ip6_var.h>
+#endif
+"
+if test "x$ac_cv_member_struct_ip6stat_ip6s_total" = xyes
+then :
+
+printf "%s\n" "#define HAVE_STRUCT_IP6STAT_IP6S_TOTAL 1" >>confdefs.h
 
 
 fi

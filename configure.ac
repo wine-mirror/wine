@@ -532,6 +532,7 @@ AC_CHECK_HEADERS(\
 	netinet/ip_icmp.h \
 	netinet/ip_var.h \
 	netinet/udp.h \
+	netinet6/ip6_var.h \
 	netipx/ipx.h \
 	sys/un.h \
 ,,,[#include <sys/types.h>
@@ -2216,6 +2217,19 @@ dnl Check for struct ip_stats
 AC_CHECK_MEMBERS([struct ip_stats.ips_total],,,
 [#ifdef HAVE_NETINET_IP_VAR_H
 #include <netinet/ip_var.h>
+#endif])
+
+dnl Check for struct ip6stat
+AC_CHECK_MEMBERS([struct ip6stat.ip6s_total],,,
+[#include <sys/types.h>
+#ifdef HAVE_SYS_SOCKETVAR_H
+#include <sys/socketvar.h>
+#endif
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
+#ifdef HAVE_NETINET6_IP6_VAR_H
+#include <netinet6/ip6_var.h>
 #endif])
 
 dnl Check for struct icmpstat

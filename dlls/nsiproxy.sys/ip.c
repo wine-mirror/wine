@@ -55,6 +55,50 @@
 #include <netinet/ip_var.h>
 #endif
 
+#ifdef HAVE_NETINET6_IP6_VAR_H
+#include <netinet6/ip6_var.h>
+#endif
+
+#ifdef __APPLE__
+/* For reasons unknown, Mac OS doesn't export <netinet6/ip6_var.h> to user-
+ * space. We'll have to define the needed struct ourselves.
+ */
+struct ip6stat {
+    u_quad_t ip6s_total;
+    u_quad_t ip6s_tooshort;
+    u_quad_t ip6s_toosmall;
+    u_quad_t ip6s_fragments;
+    u_quad_t ip6s_fragdropped;
+    u_quad_t ip6s_fragtimeout;
+    u_quad_t ip6s_fragoverflow;
+    u_quad_t ip6s_forward;
+    u_quad_t ip6s_cantforward;
+    u_quad_t ip6s_redirectsent;
+    u_quad_t ip6s_delivered;
+    u_quad_t ip6s_localout;
+    u_quad_t ip6s_odropped;
+    u_quad_t ip6s_reassembled;
+    u_quad_t ip6s_atmfrag_rcvd;
+    u_quad_t ip6s_fragmented;
+    u_quad_t ip6s_ofragments;
+    u_quad_t ip6s_cantfrag;
+    u_quad_t ip6s_badoptions;
+    u_quad_t ip6s_noroute;
+    u_quad_t ip6s_badvers;
+    u_quad_t ip6s_rawout;
+    u_quad_t ip6s_badscope;
+    u_quad_t ip6s_notmember;
+    u_quad_t ip6s_nxthist[256];
+    u_quad_t ip6s_m1;
+    u_quad_t ip6s_m2m[32];
+    u_quad_t ip6s_mext1;
+    u_quad_t ip6s_mext2m;
+    u_quad_t ip6s_exthdrtoolong;
+    u_quad_t ip6s_nogif;
+    u_quad_t ip6s_toomanyhdr;
+};
+#endif
+
 #ifdef HAVE_NETINET_ICMP_VAR_H
 #include <netinet/icmp_var.h>
 #endif
@@ -728,6 +772,37 @@ static NTSTATUS ipv6_ipstats_get_all_parameters( const void *key, UINT key_size,
         if (dynamic_data) *(struct nsi_ip_ipstats_dynamic *)dynamic_data = dyn;
         if (static_data) *(struct nsi_ip_ipstats_static *)static_data = stat;
         return status;
+    }
+#elif defined(HAVE_SYS_SYSCTL_H) && defined(IPV6CTL_STATS) && (defined(HAVE_STRUCT_IP6STAT_IP6S_TOTAL) || defined(__APPLE__))
+    {
+        int mib[] = { CTL_NET, PF_INET6, IPPROTO_IPV6, IPV6CTL_STATS };
+        struct ip6stat ip_stat;
+        size_t needed;
+
+        needed = sizeof(ip_stat);
+        if (sysctl( mib, ARRAY_SIZE(mib), &ip_stat, &needed, NULL, 0 ) == -1) return STATUS_NOT_SUPPORTED;
+
+        dyn.in_recv = ip_stat.ip6s_total;
+        dyn.in_hdr_errs = ip_stat.ip6s_tooshort + ip_stat.ip6s_toosmall + ip_stat.ip6s_badvers +
+            ip_stat.ip6s_badoptions + ip_stat.ip6s_exthdrtoolong + ip_stat.ip6s_toomanyhdr;
+        dyn.in_addr_errs = ip_stat.ip6s_cantforward + ip_stat.ip6s_badscope + ip_stat.ip6s_notmember;
+        dyn.fwd_dgrams = ip_stat.ip6s_forward;
+        dyn.in_discards = ip_stat.ip6s_fragdropped;
+        dyn.in_delivers = ip_stat.ip6s_delivered;
+        dyn.out_reqs = ip_stat.ip6s_localout;
+        dyn.out_discards = ip_stat.ip6s_odropped;
+        dyn.out_no_routes = ip_stat.ip6s_noroute;
+        stat.reasm_timeout = ip_stat.ip6s_fragtimeout;
+        dyn.reasm_reqds = ip_stat.ip6s_fragments;
+        dyn.reasm_oks = ip_stat.ip6s_reassembled;
+        dyn.reasm_fails = ip_stat.ip6s_fragments - ip_stat.ip6s_reassembled;
+        dyn.frag_oks = ip_stat.ip6s_fragmented;
+        dyn.frag_fails = ip_stat.ip6s_cantfrag;
+        dyn.frag_creates = ip_stat.ip6s_ofragments;
+
+        if (dynamic_data) *(struct nsi_ip_ipstats_dynamic *)dynamic_data = dyn;
+        if (static_data) *(struct nsi_ip_ipstats_static *)static_data = stat;
+        return STATUS_SUCCESS;
     }
 #else
     FIXME( "not implemented\n" );

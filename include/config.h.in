@@ -257,6 +257,9 @@
 /* Define to 1 if you have the <netdb.h> header file. */
 #undef HAVE_NETDB_H
 
+/* Define to 1 if you have the <netinet6/ip6_var.h> header file. */
+#undef HAVE_NETINET6_IP6_VAR_H
+
 /* Define to 1 if you have the <netinet/icmp6.h> header file. */
 #undef HAVE_NETINET_ICMP6_H
 
@@ -457,6 +460,9 @@
 
 /* Define to 1 if `ipi6_addr' is a member of `struct in6_pktinfo'. */
 #undef HAVE_STRUCT_IN6_PKTINFO_IPI6_ADDR
+
+/* Define to 1 if `ip6s_total' is a member of `struct ip6stat'. */
+#undef HAVE_STRUCT_IP6STAT_IP6S_TOTAL
 
 /* Define to 1 if `ips_total' is a member of `struct ipstat'. */
 #undef HAVE_STRUCT_IPSTAT_IPS_TOTAL
