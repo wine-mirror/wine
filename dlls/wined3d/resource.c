@@ -195,7 +195,7 @@ HRESULT resource_init(struct wined3d_resource *resource, struct wined3d_device *
     resource->multisample_quality = multisample_quality;
     resource->usage = usage;
     resource->bind_flags = bind_flags;
-    if (resource->format_flags & WINED3DFMT_FLAG_MAPPABLE)
+    if (resource->format_attrs & WINED3D_FORMAT_ATTR_MAPPABLE)
         access |= WINED3D_RESOURCE_ACCESS_MAP_R | WINED3D_RESOURCE_ACCESS_MAP_W;
     resource->access = access;
     resource->width = width;
