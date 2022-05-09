@@ -972,7 +972,7 @@ static void *unwind_full_data( ULONG_PTR base, ULONG_PTR pc, RUNTIME_FUNCTION *f
     end = (BYTE *)data + codes * 4;
 
     TRACE( "function %lx-%lx: len=%#x ver=%u X=%u E=%u F=%u epilogs=%u codes=%u\n",
-           base + func->BeginAddress, base + func->BeginAddress + info->function_length * 4,
+           base + func->BeginAddress, base + func->BeginAddress + info->function_length * 2,
            info->function_length, info->version, info->x, info->e, info->f, epilogs, codes * 4 );
 
     /* check for prolog */
