@@ -1638,6 +1638,11 @@ static void test_attributes(void)
     ok(hr == S_OK, "Failed to get string length, hr %#lx.\n", hr);
     ok(string_length == lstrlenW(stringW), "Unexpected length %u.\n", string_length);
 
+    hr = IMFAttributes_GetAllocatedString(attributes, &DUMMY_GUID1, &string, NULL);
+    ok(hr == S_OK, "Failed to get allocated string, hr %#lx.\n", hr);
+    ok(!lstrcmpW(string, stringW), "Unexpected string %s.\n", wine_dbgstr_w(string));
+    CoTaskMemFree(string);
+
     string_length = 0xdeadbeef;
     hr = IMFAttributes_GetAllocatedString(attributes, &DUMMY_GUID1, &string, &string_length);
     ok(hr == S_OK, "Failed to get allocated string, hr %#lx.\n", hr);

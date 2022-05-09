@@ -2670,7 +2670,8 @@ HRESULT attributes_GetAllocatedString(struct attributes *attributes, REFGUID key
     if (SUCCEEDED(hr))
     {
         *value = attrval.pwszVal;
-        *length = lstrlenW(*value);
+        if (length)
+            *length = lstrlenW(*value);
     }
 
     return hr;
