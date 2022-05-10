@@ -544,6 +544,13 @@ static inline void* dbg_heap_realloc(void* buffer, size_t size)
         HeapAlloc(GetProcessHeap(), 0, size);
 }
 
+struct data_model
+{
+    unsigned            base_type;
+    unsigned            size;
+    const WCHAR*        name;
+};
+
 extern struct dbg_internal_var          dbg_internal_vars[];
 
 #define  DBG_IVARNAME(_var)	dbg_internal_var_##_var

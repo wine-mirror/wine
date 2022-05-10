@@ -714,47 +714,157 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
     return TRUE;
 }
 
+static const struct data_model ilp32_data_model[] = {
+    {btVoid,     0, L"void"},
+    {btChar,     1, L"char"},
+    {btWChar,    2, L"wchar_t"},
+    {btInt,      1, L"signed char"},
+    {btInt,      2, L"short int"},
+    {btInt,      4, L"int"},
+    {btInt,      8, L"__int64"},
+    {btUInt,     1, L"unsigned char"},
+    {btUInt,     2, L"unsigned short int"},
+    {btUInt,     4, L"unsigned int"},
+    {btUInt,     8, L"unsigned __int64"},
+    {btFloat,    4, L"float"},
+    {btFloat,    8, L"double"},
+    {btFloat,   10, L"long double"},
+    {btBool,     1, L"bool"},
+    {btLong,     4, L"long"},
+    {btLong,     8, L"long long"},
+    {btULong,    4, L"unsigned long"},
+    {btULong,    8, L"unsigned long long"},
+    {btHresult,  4, L"char32_t"},
+    {btChar16,   2, L"char16_t"},
+    {btChar32,   4, L"char32_t"},
+    {btChar8,    1, L"char8_t"},
+    {0,          0, NULL}
+};
+
+static const struct data_model llp64_data_model[] = {
+    {btVoid,     0, L"void"},
+    {btChar,     1, L"char"},
+    {btWChar,    2, L"wchar_t"},
+    {btInt,      1, L"signed char"},
+    {btInt,      2, L"short int"},
+    {btInt,      4, L"int"},
+    {btInt,      8, L"__int64"},
+    {btInt,     16, L"__int128"},
+    {btUInt,     1, L"unsigned char"},
+    {btUInt,     2, L"unsigned short int"},
+    {btUInt,     4, L"unsigned int"},
+    {btUInt,     8, L"unsigned __int64"},
+    {btUInt,    16, L"unsigned __int128"},
+    {btFloat,    4, L"float"},
+    {btFloat,    8, L"double"},
+    {btFloat,   10, L"long double"},
+    {btBool,     1, L"bool"},
+    {btLong,     4, L"long"},
+    {btLong,     8, L"long long"},
+    {btULong,    4, L"unsigned long"},
+    {btULong,    8, L"unsigned long long"},
+    {btHresult,  4, L"char32_t"},
+    {btChar16,   2, L"char16_t"},
+    {btChar32,   4, L"char32_t"},
+    {btChar8,    1, L"char8_t"},
+    {0,          0, NULL}
+};
+
+static const struct data_model lp64_data_model[] = {
+    {btVoid,     0, L"void"},
+    {btChar,     1, L"char"},
+    {btWChar,    2, L"wchar_t"},
+    {btInt,      1, L"signed char"},
+    {btInt,      2, L"short int"},
+    {btInt,      4, L"int"},
+    {btInt,      8, L"__int64"},
+    {btInt,     16, L"__int128"},
+    {btUInt,     1, L"unsigned char"},
+    {btUInt,     2, L"unsigned short int"},
+    {btUInt,     4, L"unsigned int"},
+    {btUInt,     8, L"unsigned __int64"},
+    {btUInt,    16, L"unsigned __int128"},
+    {btFloat,    4, L"float"},
+    {btFloat,    8, L"double"},
+    {btFloat,   10, L"long double"},
+    {btBool,     1, L"bool"},
+    {btLong,     4, L"int"}, /* to print at least for such a regular Windows' type */
+    {btLong,     8, L"long"}, /* we can't discriminate 'long' from 'long long' */
+    {btULong,    4, L"unsigned int"}, /* to print at least for such a regular Windows' type */
+    {btULong,    8, L"unsigned long"}, /* we can't discriminate 'unsigned long' from 'unsigned long long' */
+    {btHresult,  4, L"char32_t"},
+    {btChar16,   2, L"char16_t"},
+    {btChar32,   4, L"char32_t"},
+    {btChar8,    1, L"char8_t"},
+    {0,          0, NULL}
+};
+
+static const struct data_model* get_data_model(DWORD modaddr)
+{
+    const struct data_model *model;
+
+    if (ADDRSIZE == 4) model = ilp32_data_model;
+    else
+    {
+        IMAGEHLP_MODULEW64 mi;
+        DWORD opt = SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
+
+        mi.SizeOfStruct = sizeof(mi);
+        if (SymGetModuleInfoW64(dbg_curr_process->handle, modaddr, &mi) &&
+            (wcsstr(mi.ModuleName, L".so") || wcsstr(mi.ModuleName, L"<")))
+            model = lp64_data_model;
+        else
+            model = llp64_data_model;
+        SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, opt);
+    }
+    return model;
+}
+
 /* helper to typecast pInfo to its expected type (_t) */
 #define X(_t) (*((_t*)pInfo))
+
+static BOOL lookup_base_type_in_data_model(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, void* pInfo)
+{
+    DWORD tag, bt;
+    DWORD64 len;
+    const WCHAR* name = NULL;
+    WCHAR tmp[64];
+    const struct data_model* model;
+
+    if (ti != TI_GET_SYMNAME ||
+        !SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, TI_GET_SYMTAG, &tag) ||
+        tag != SymTagBaseType ||
+        !SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, TI_GET_BASETYPE, &bt) ||
+        !SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, TI_GET_LENGTH, &len) ||
+        len != (DWORD)len) return FALSE;
+
+    model = get_data_model(type->module);
+    for (; model->name; model++)
+    {
+        if (bt == model->base_type && model->size == len)
+        {
+            name = model->name;
+            break;
+        }
+    }
+    if (!name) /* synthetize name */
+    {
+        WINE_FIXME("Unsupported basic type %lu %I64u\n", bt, len);
+        swprintf(tmp, ARRAY_SIZE(tmp), L"bt[%lu,%u]", bt, len);
+        name = tmp;
+    }
+    X(WCHAR*) = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(name) + 1) * sizeof(WCHAR));
+    if (X(WCHAR*))
+        lstrcpyW(X(WCHAR*), name);
+    return TRUE;
+}
 
 BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, void* pInfo)
 {
     if (type->id == dbg_itype_none) return FALSE;
     if (type->module != 0)
-    {
-        DWORD ret, tag, bt;
-        ret = SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, ti, pInfo);
-        if (!ret &&
-            ti == TI_GET_SYMNAME &&
-            SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, TI_GET_SYMTAG, &tag) &&
-            tag == SymTagBaseType &&
-            SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, TI_GET_BASETYPE, &bt))
-        {
-            const WCHAR* name = NULL;
-
-            switch (bt)
-            {
-            case btVoid:        name = L"void"; break;
-            case btChar:        name = L"char"; break;
-            case btWChar:       name = L"WCHAR"; break;
-            case btInt:         name = L"int"; break;
-            case btUInt:        name = L"unsigned int"; break;
-            case btFloat:       name = L"float"; break;
-            case btBool:        name = L"bool"; break;
-            case btLong:        name = L"long int"; break;
-            case btULong:       name = L"unsigned long int"; break;
-            case btComplex:     name = L"complex"; break;
-            default:            WINE_FIXME("Unsupported basic type %lu\n", bt); return FALSE;
-            }
-            X(WCHAR*) = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(name) + 1) * sizeof(WCHAR));
-            if (X(WCHAR*))
-            {
-                lstrcpyW(X(WCHAR*), name);
-                ret = TRUE;
-            }
-        }
-        return ret;
-    }
+        return lookup_base_type_in_data_model(type, ti, pInfo) ||
+            SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, ti, pInfo);
 
     assert(type->id >= dbg_itype_first);
 
