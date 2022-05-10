@@ -2369,6 +2369,8 @@ static HRESULT WINAPI session_commands_callback_GetParameters(IMFAsyncCallback *
     return E_NOTIMPL;
 }
 
+static void session_deliver_pending_samples(struct media_session *session, IMFTopologyNode *node);
+
 static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, IMFAsyncResult *result)
 {
     struct session_op *op = impl_op_from_IUnknown(IMFAsyncResult_GetStateNoAddRef(result));
@@ -2411,7 +2413,7 @@ static HRESULT WINAPI session_commands_callback_Invoke(IMFAsyncCallback *iface, 
             {
                 if (SUCCEEDED(IMFTopologyNode_GetInput(topo_node->node, 0, &upstream_node, &upstream_output)))
                 {
-                    session_request_sample_from_node(session, upstream_node, upstream_output);
+                    session_deliver_pending_samples(session, upstream_node);
                     IMFTopologyNode_Release(upstream_node);
                 }
             }
@@ -2952,19 +2954,19 @@ static void session_deliver_sample_to_node(struct media_session *session, IMFTop
     switch (node_type)
     {
         case MF_TOPOLOGY_OUTPUT_NODE:
-            if (sample)
+            if (topo_node->u.sink.requests)
             {
-                if (topo_node->u.sink.requests)
+                if (sample)
                 {
                     if (FAILED(hr = IMFStreamSink_ProcessSample(topo_node->object.sink_stream, sample)))
                         WARN("Stream sink failed to process sample, hr %#lx.\n", hr);
-                    topo_node->u.sink.requests--;
                 }
-            }
-            else if (FAILED(hr = IMFStreamSink_PlaceMarker(topo_node->object.sink_stream, MFSTREAMSINK_MARKER_ENDOFSEGMENT,
-                    NULL, NULL)))
-            {
-                WARN("Failed to place sink marker, hr %#lx.\n", hr);
+                else if (FAILED(hr = IMFStreamSink_PlaceMarker(topo_node->object.sink_stream, MFSTREAMSINK_MARKER_ENDOFSEGMENT,
+                        NULL, NULL)))
+                {
+                    WARN("Failed to place sink marker, hr %#lx.\n", hr);
+                }
+                topo_node->u.sink.requests--;
             }
             break;
         case MF_TOPOLOGY_TRANSFORM_NODE:
@@ -3047,6 +3049,57 @@ static void session_deliver_sample_to_node(struct media_session *session, IMFTop
             ;
     }
 }
+
+static void session_deliver_pending_samples(struct media_session *session, IMFTopologyNode *node)
+{
+    struct sample *sample_entry, *sample_entry2;
+    IMFTopologyNode *downstream_node;
+    struct topo_node *topo_node;
+    MF_TOPOLOGY_TYPE node_type;
+    DWORD downstream_input;
+    TOPOID node_id;
+    unsigned int i;
+
+    IMFTopologyNode_GetNodeType(node, &node_type);
+    IMFTopologyNode_GetTopoNodeID(node, &node_id);
+
+    topo_node = session_get_node_by_id(session, node_id);
+
+    switch (node_type)
+    {
+        case MF_TOPOLOGY_TRANSFORM_NODE:
+
+            transform_node_pull_samples(session, topo_node);
+
+            /* Push down all available output. */
+            for (i = 0; i < topo_node->u.transform.output_count; ++i)
+            {
+                if (FAILED(IMFTopologyNode_GetOutput(node, i, &downstream_node, &downstream_input)))
+                {
+                    WARN("Failed to get connected node for output %u.\n", i);
+                    continue;
+                }
+
+                LIST_FOR_EACH_ENTRY_SAFE(sample_entry, sample_entry2, &topo_node->u.transform.outputs[i].samples,
+                        struct sample, entry)
+                {
+                    if (!topo_node->u.transform.outputs[i].requests)
+                        break;
+
+                    session_deliver_sample_to_node(session, downstream_node, downstream_input, sample_entry->sample);
+                    topo_node->u.transform.outputs[i].requests--;
+
+                    transform_release_sample(sample_entry);
+                }
+
+                IMFTopologyNode_Release(downstream_node);
+            }
+            break;
+        default:
+            FIXME("Unexpected node type %u.\n", node_type);
+    }
+}
+
 
 static HRESULT session_request_sample_from_node(struct media_session *session, IMFTopologyNode *node, DWORD output)
 {
