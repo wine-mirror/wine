@@ -923,7 +923,7 @@ static ULONG WINAPI video_sample_Release(IMFSample *iface)
     ULONG refcount = InterlockedDecrement(&sample->refcount);
     IMFAsyncResult *tracked_result = NULL;
 
-    IMFSample_LockStore(sample->sample);
+    EnterCriticalSection(&sample->cs);
     if (sample->tracked_result && sample->tracked_refcount == refcount)
     {
         tracked_result = sample->tracked_result;
@@ -931,7 +931,7 @@ static ULONG WINAPI video_sample_Release(IMFSample *iface)
         sample->tracked_result = NULL;
         sample->tracked_refcount = 0;
     }
-    IMFSample_UnlockStore(sample->sample);
+    LeaveCriticalSection(&sample->cs);
 
     if (tracked_result)
         IMFAsyncResult_Release(tracked_result);
