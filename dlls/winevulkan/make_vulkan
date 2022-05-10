@@ -2043,6 +2043,8 @@ class VkStruct(Sequence):
         """
 
         for m in self.members:
+            if self.name == m.type:
+                continue
             if m.needs_alignment():
                 return True
         return False
@@ -2057,6 +2059,8 @@ class VkStruct(Sequence):
             return True
 
         for m in self.members:
+            if self.name == m.type:
+                continue
             if m.needs_conversion():
                 return True
         return False
@@ -2065,6 +2069,8 @@ class VkStruct(Sequence):
         """ Returns if struct members need unwrapping of handle. """
 
         for m in self.members:
+            if self.name == m.type:
+                continue
             if m.needs_unwrapping():
                 return True
         return False
@@ -2073,10 +2079,10 @@ class VkStruct(Sequence):
         """ Check if any struct member needs some memory freeing."""
 
         for m in self.members:
+            if self.name == m.type:
+                continue
             if m.needs_free():
                 return True
-
-            continue
 
         return False
 
@@ -3350,7 +3356,7 @@ class VkRegistry(object):
                 if "data" in type_info:
                     types[m.type]["data"].required = True
 
-                if type_info["category"] == "struct":
+                if type_info["category"] == "struct" and struct.name != m.type:
                     # Yay, recurse
                     mark_struct_dependencies(type_info["data"], types)
                 elif type_info["category"] == "funcpointer":
