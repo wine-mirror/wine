@@ -37,6 +37,15 @@ static inline struct d2d_effect_context *impl_from_ID2D1EffectContext(ID2D1Effec
 
 static void d2d_effect_context_cleanup(struct d2d_effect_context *effect_context)
 {
+    unsigned int i;
+
+    for (i = 0; i < effect_context->shader_count; ++i)
+    {
+        if (effect_context->shaders[i].shader)
+            IUnknown_Release(effect_context->shaders[i].shader);
+    }
+    heap_free(effect_context->shaders);
+
     ID2D1DeviceContext_Release(&effect_context->device_context->ID2D1DeviceContext_iface);
 }
 
@@ -178,10 +187,37 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_LoadPixelShader(ID2D1EffectC
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_LoadVertexShader(ID2D1EffectContext *iface,
         REFGUID shader_id, const BYTE *buffer, UINT32 buffer_size)
 {
-    FIXME("iface %p, shader_id %s, buffer %p, buffer_size %u stub!\n",
+    struct d2d_effect_context *effect_context = impl_from_ID2D1EffectContext(iface);
+    ID3D11VertexShader *vertex_shader;
+    struct d2d_shader *shader;
+    HRESULT hr;
+
+    TRACE("iface %p, shader_id %s, buffer %p, buffer_size %u.\n",
             iface, debugstr_guid(shader_id), buffer, buffer_size);
 
-    return E_NOTIMPL;
+    if (FAILED(hr = ID3D11Device1_CreateVertexShader(effect_context->device_context->d3d_device,
+            buffer, buffer_size, NULL, &vertex_shader)))
+    {
+        WARN("Failed to create vertex shader, hr %#lx.\n", hr);
+        return hr;
+    }
+
+    if (!d2d_array_reserve((void **)&effect_context->shaders, &effect_context->shaders_size,
+            effect_context->shader_count + 1, sizeof(*effect_context->shaders)))
+    {
+        ERR("Failed to resize shaders array.\n");
+        ID3D11VertexShader_Release(vertex_shader);
+        return E_OUTOFMEMORY;
+    }
+    memset(effect_context->shaders + effect_context->shader_count, 0,
+            sizeof(*effect_context->shaders) * (effect_context->shaders_size - effect_context->shader_count));
+
+    effect_context->shader_count++;
+    shader = &effect_context->shaders[effect_context->shader_count - 1];
+    shader->id = shader_id;
+    shader->shader = (IUnknown *)vertex_shader;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_LoadComputeShader(ID2D1EffectContext *iface,

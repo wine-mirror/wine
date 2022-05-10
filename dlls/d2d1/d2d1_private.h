@@ -568,12 +568,22 @@ struct d2d_device
 
 void d2d_device_init(struct d2d_device *device, ID2D1Factory1 *factory, IDXGIDevice *dxgi_device) DECLSPEC_HIDDEN;
 
+struct d2d_shader
+{
+    const GUID *id;
+    IUnknown *shader;
+};
+
 struct d2d_effect_context
 {
     ID2D1EffectContext ID2D1EffectContext_iface;
     LONG refcount;
 
     struct d2d_device_context *device_context;
+
+    struct d2d_shader *shaders;
+    size_t shaders_size;
+    size_t shader_count;
 };
 
 void d2d_effect_context_init(struct d2d_effect_context *effect_context,
