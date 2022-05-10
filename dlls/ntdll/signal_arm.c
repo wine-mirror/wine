@@ -731,6 +731,8 @@ static void process_unwind_codes( BYTE *ptr, BYTE *end, CONTEXT *context,
             WARN( "unsupported code %02x\n", *ptr );
         else if (*ptr <= 0xef && ((val & 0xff) <= 0x0f)) /* ldr lr, [sp], #x */
             pop_lr( 4 * (val & 0x0f), context, ptrs );
+        else if (*ptr == 0xf4) /* Custom private (unallocated) opcode, saved a full CONTEXT on the stack */
+            memcpy( context, (DWORD *)context->Sp, sizeof(CONTEXT) );
         else if (*ptr <= 0xf4) /* Available */
             WARN( "unsupported code %02x\n", *ptr );
         else if (*ptr <= 0xf5) /* vpop {dS-dE} */
@@ -1075,11 +1077,18 @@ extern void * WINAPI call_consolidate_callback( CONTEXT *context,
                                                 EXCEPTION_RECORD *rec );
 __ASM_GLOBAL_FUNC( call_consolidate_callback,
                    "push {r0-r2,lr}\n\t"
+                   __ASM_SEH(".seh_nop\n\t")
                    "sub sp, sp, #0x1a0\n\t"
+                   __ASM_SEH(".seh_nop\n\t")
                    "mov r1, r0\n\t"
+                   __ASM_SEH(".seh_nop\n\t")
                    "mov r0, sp\n\t"
+                   __ASM_SEH(".seh_nop\n\t")
                    "mov r2, #0x1a0\n\t"
+                   __ASM_SEH(".seh_nop_w\n\t")
                    "bl " __ASM_NAME("memcpy") "\n\t"
+                   __ASM_SEH(".seh_custom 0xf4\n\t") /* A custom (unallocated) SEH opcode for CONTEXT on stack */
+                   __ASM_SEH(".seh_endprologue\n\t")
                    __ASM_CFI(".cfi_def_cfa 13, 0\n\t")
                    __ASM_CFI(".cfi_escape 0x0f,0x04,0x7d,0xb8,0x00,0x06\n\t") /* DW_CFA_def_cfa_expression: DW_OP_breg13 + 56, DW_OP_deref */
                    __ASM_CFI(".cfi_escape 0x10,0x04,0x02,0x7d,0x14\n\t") /* DW_CFA_expression: R4 DW_OP_breg13 + 20 */
@@ -1300,6 +1309,8 @@ extern LONG __C_ExecuteExceptionFilter(PEXCEPTION_POINTERS ptrs, PVOID frame,
                                        PUCHAR nonvolatile);
 __ASM_GLOBAL_FUNC( __C_ExecuteExceptionFilter,
                    "push {r4-r11,lr}\n\t"
+                   __ASM_SEH(".seh_save_regs_w {r4-r11,lr}\n\t")
+                   __ASM_SEH(".seh_endprologue\n\t")
 
                    __ASM_CFI(".cfi_def_cfa 13, 36\n\t")
                    __ASM_CFI(".cfi_offset r4, -36\n\t")
@@ -1410,7 +1421,10 @@ EXCEPTION_DISPOSITION WINAPI __C_specific_handler( EXCEPTION_RECORD *rec,
  */
 __ASM_STDCALL_FUNC( RtlRaiseException, 4,
                     "push {r0, lr}\n\t"
+                    __ASM_SEH(".seh_save_regs {r0, lr}\n\t")
                     "sub sp, sp, #0x1a0\n\t"  /* sizeof(CONTEXT) */
+                    __ASM_SEH(".seh_stackalloc 0x1a0\n\t")
+                    __ASM_SEH(".seh_endprologue\n\t")
                     __ASM_CFI(".cfi_adjust_cfa_offset 424\n\t")
                     __ASM_CFI(".cfi_offset lr, -4\n\t")
                     "mov r0, sp\n\t"  /* context */
