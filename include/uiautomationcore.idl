@@ -151,4 +151,35 @@ library UIA
 
         HRESULT GetFocus([out, retval] IRawElementProviderFragment **pRetVal);
     }
+
+    [
+        object,
+        uuid(e44c3566-915d-4070-99c6-047bff5a08f5),
+        pointer_default(unique),
+        oleautomation
+    ]
+    interface ILegacyIAccessibleProvider : IUnknown
+    {
+        HRESULT Select(long flagsSelect);
+        HRESULT DoDefaultAction();
+        HRESULT SetValue(LPCWSTR szValue);
+        HRESULT GetIAccessible([out, retval] IAccessible **ppAccessible);
+
+        [propget] HRESULT ChildId([out, retval] int *pRetVal);
+        [propget] HRESULT Name([out, retval] BSTR *pszName);
+        [propget] HRESULT Value([out, retval] BSTR *pszValue);
+        [propget] HRESULT Description([out, retval] BSTR *pszDescription);
+        [propget] HRESULT Role([out, retval] DWORD *pdwRole);
+        [propget] HRESULT State([out, retval] DWORD *pdwState);
+        [propget] HRESULT Help([out, retval] BSTR *pszHelp);
+        [propget] HRESULT KeyboardShortcut([out, retval] BSTR *pszKeyboardShortcut);
+        /*
+         * FIXME: Current versions of Windows SDK use
+         * SAFEARRAY(IRawElementProviderSimple *) instead of
+         * SAFEARRAY(VARIANT). The new type is currently unsupported
+         * in widl, we should switch to it when it is.
+         */
+        HRESULT GetSelection([out, retval] SAFEARRAY(VARIANT) *pvarSelectedChildren);
+        [propget] HRESULT DefaultAction([out, retval] BSTR *pszDefaultAction);
+    }
 }
