@@ -1890,25 +1890,19 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateEffect(ID2D1DeviceCont
         REFCLSID effect_id, ID2D1Effect **effect)
 {
     struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
-    struct d2d_effect *object;
+    struct d2d_effect_context *effect_context;
     HRESULT hr;
 
     FIXME("iface %p, effect_id %s, effect %p stub!\n", iface, debugstr_guid(effect_id), effect);
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(effect_context = heap_alloc_zero(sizeof(*effect_context))))
         return E_OUTOFMEMORY;
+    d2d_effect_context_init(effect_context, context);
 
-    if (FAILED(hr = d2d_effect_init(object, context->factory, effect_id)))
-    {
-        WARN("Failed to initialise effect, hr %#lx.\n", hr);
-        heap_free(object);
-        return hr;
-    }
+    hr = ID2D1EffectContext_CreateEffect(&effect_context->ID2D1EffectContext_iface, effect_id, effect);
 
-    TRACE("Created effect %p.\n", object);
-    *effect = &object->ID2D1Effect_iface;
-
-    return S_OK;
+    ID2D1EffectContext_Release(&effect_context->ID2D1EffectContext_iface);
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_CreateGradientStopCollection(
