@@ -158,13 +158,13 @@ static void codeview_init_basic_types(struct module* module)
     cv_basic_types[T_NOTYPE] = NULL;
     cv_basic_types[T_ABS]    = NULL;
     cv_basic_types[T_VOID]   = &symt_get_basic(btVoid,   0)->symt; /* void */
-    cv_basic_types[T_CHAR]   = &symt_get_basic(btChar,   1)->symt; /* char */
+    cv_basic_types[T_CHAR]   = &symt_get_basic(btInt,    1)->symt; /* signed char (and char in C) */
     cv_basic_types[T_SHORT]  = &symt_get_basic(btInt,    2)->symt; /* short int */
-    cv_basic_types[T_LONG]   = &symt_get_basic(btInt,    4)->symt; /* long int */
+    cv_basic_types[T_LONG]   = &symt_get_basic(btLong,   4)->symt; /* long int */
     cv_basic_types[T_QUAD]   = &symt_get_basic(btInt,    8)->symt; /* long long int */
     cv_basic_types[T_UCHAR]  = &symt_get_basic(btUInt,   1)->symt; /* unsigned char */
     cv_basic_types[T_USHORT] = &symt_get_basic(btUInt,   2)->symt; /* unsigned short */
-    cv_basic_types[T_ULONG]  = &symt_get_basic(btUInt,   4)->symt; /* unsigned long */
+    cv_basic_types[T_ULONG]  = &symt_get_basic(btULong,  4)->symt; /* unsigned long */
     cv_basic_types[T_UQUAD]  = &symt_get_basic(btUInt,   8)->symt; /* unsigned long long */
     cv_basic_types[T_BOOL08] = &symt_get_basic(btBool,   1)->symt; /* BOOL08 */
     cv_basic_types[T_BOOL16] = &symt_get_basic(btBool,   2)->symt; /* BOOL16 */
@@ -173,7 +173,7 @@ static void codeview_init_basic_types(struct module* module)
     cv_basic_types[T_REAL32] = &symt_get_basic(btFloat,  4)->symt; /* float */
     cv_basic_types[T_REAL64] = &symt_get_basic(btFloat,  8)->symt; /* double */
     cv_basic_types[T_REAL80] = &symt_get_basic(btFloat, 10)->symt; /* long double */
-    cv_basic_types[T_RCHAR]  = &symt_get_basic(btInt,    1)->symt; /* signed char */
+    cv_basic_types[T_RCHAR]  = &symt_get_basic(btChar,   1)->symt; /* "real" char (char in C++) */
     cv_basic_types[T_WCHAR]  = &symt_get_basic(btWChar,  2)->symt; /* char8_t */
     cv_basic_types[T_CHAR16] = &symt_get_basic(btChar16, 2)->symt; /* char16_t */
     cv_basic_types[T_CHAR32] = &symt_get_basic(btChar32, 4)->symt; /* char32_t */
