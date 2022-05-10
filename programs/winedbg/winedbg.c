@@ -284,6 +284,7 @@ struct dbg_process*	dbg_add_process(const struct be_process_io* pio, DWORD pid, 
     p->source_current_file[0] = '\0';
     p->source_start_line = -1;
     p->source_end_line = -1;
+    p->data_model = NULL;
 
     list_add_head(&dbg_process_list, &p->entry);
 
@@ -466,6 +467,29 @@ void dbg_set_option(const char* option, const char* val)
             dbg_printf("Syntax: symbol_picker [interactive|scoped]\n");
             return;
         }
+    }
+    else if (!strcasecmp(option, "data_model"))
+    {
+        if (!dbg_curr_process)
+        {
+            dbg_printf("Not attached to a process\n");
+            return;
+        }
+        if (!val)
+        {
+            const char* model = "";
+            if      (dbg_curr_process->data_model == NULL)             model = "auto";
+            else if (dbg_curr_process->data_model == ilp32_data_model) model = "ilp32";
+            else if (dbg_curr_process->data_model == llp64_data_model) model = "llp64";
+            else if (dbg_curr_process->data_model == lp64_data_model)  model = "lp64";
+            dbg_printf("Option: data_model %s\n", model);
+        }
+        else if (!strcasecmp(val, "auto"))  dbg_curr_process->data_model = NULL;
+        else if (!strcasecmp(val, "ilp32")) dbg_curr_process->data_model = ilp32_data_model;
+        else if (!strcasecmp(val, "llp64")) dbg_curr_process->data_model = llp64_data_model;
+        else if (!strcasecmp(val, "lp64"))  dbg_curr_process->data_model = lp64_data_model;
+        else
+            dbg_printf("Unknown data model %s\n", val);
     }
     else dbg_printf("Unknown option '%s'\n", option);
 }

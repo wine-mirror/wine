@@ -714,7 +714,7 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
     return TRUE;
 }
 
-static const struct data_model ilp32_data_model[] = {
+const struct data_model ilp32_data_model[] = {
     {btVoid,     0, L"void"},
     {btChar,     1, L"char"},
     {btWChar,    2, L"wchar_t"},
@@ -741,7 +741,7 @@ static const struct data_model ilp32_data_model[] = {
     {0,          0, NULL}
 };
 
-static const struct data_model llp64_data_model[] = {
+const struct data_model llp64_data_model[] = {
     {btVoid,     0, L"void"},
     {btChar,     1, L"char"},
     {btWChar,    2, L"wchar_t"},
@@ -770,7 +770,7 @@ static const struct data_model llp64_data_model[] = {
     {0,          0, NULL}
 };
 
-static const struct data_model lp64_data_model[] = {
+const struct data_model lp64_data_model[] = {
     {btVoid,     0, L"void"},
     {btChar,     1, L"char"},
     {btWChar,    2, L"wchar_t"},
@@ -803,7 +803,9 @@ static const struct data_model* get_data_model(DWORD modaddr)
 {
     const struct data_model *model;
 
-    if (ADDRSIZE == 4) model = ilp32_data_model;
+    if (dbg_curr_process->data_model)
+        model = dbg_curr_process->data_model;
+    else if (ADDRSIZE == 4) model = ilp32_data_model;
     else
     {
         IMAGEHLP_MODULEW64 mi;
