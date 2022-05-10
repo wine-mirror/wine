@@ -1710,6 +1710,14 @@ void WINAPI vkCmdSubpassShadingHUAWEI(VkCommandBuffer commandBuffer)
     unix_funcs->p_vk_call(unix_vkCmdSubpassShadingHUAWEI, &params);
 }
 
+void WINAPI vkCmdTraceRaysIndirect2KHR(VkCommandBuffer commandBuffer, VkDeviceAddress indirectDeviceAddress)
+{
+    struct vkCmdTraceRaysIndirect2KHR_params params;
+    params.commandBuffer = commandBuffer;
+    params.indirectDeviceAddress = indirectDeviceAddress;
+    unix_funcs->p_vk_call(unix_vkCmdTraceRaysIndirect2KHR, &params);
+}
+
 void WINAPI vkCmdTraceRaysIndirectKHR(VkCommandBuffer commandBuffer, const VkStridedDeviceAddressRegionKHR *pRaygenShaderBindingTable, const VkStridedDeviceAddressRegionKHR *pMissShaderBindingTable, const VkStridedDeviceAddressRegionKHR *pHitShaderBindingTable, const VkStridedDeviceAddressRegionKHR *pCallableShaderBindingTable, VkDeviceAddress indirectDeviceAddress)
 {
     struct vkCmdTraceRaysIndirectKHR_params params;
@@ -3691,6 +3699,15 @@ VkResult WINAPI vkGetPipelineExecutableStatisticsKHR(VkDevice device, const VkPi
     return vk_unix_call(unix_vkGetPipelineExecutableStatisticsKHR, &params);
 }
 
+VkResult WINAPI vkGetPipelinePropertiesEXT(VkDevice device, const VkPipelineInfoEXT *pPipelineInfo, VkBaseOutStructure *pPipelineProperties)
+{
+    struct vkGetPipelinePropertiesEXT_params params;
+    params.device = device;
+    params.pPipelineInfo = pPipelineInfo;
+    params.pPipelineProperties = pPipelineProperties;
+    return vk_unix_call(unix_vkGetPipelinePropertiesEXT, &params);
+}
+
 void WINAPI vkGetPrivateData(VkDevice device, VkObjectType objectType, uint64_t objectHandle, VkPrivateDataSlot privateDataSlot, uint64_t *pData)
 {
     struct vkGetPrivateData_params params;
@@ -4440,6 +4457,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkCmdSetViewportWithCount", vkCmdSetViewportWithCount},
     {"vkCmdSetViewportWithCountEXT", vkCmdSetViewportWithCountEXT},
     {"vkCmdSubpassShadingHUAWEI", vkCmdSubpassShadingHUAWEI},
+    {"vkCmdTraceRaysIndirect2KHR", vkCmdTraceRaysIndirect2KHR},
     {"vkCmdTraceRaysIndirectKHR", vkCmdTraceRaysIndirectKHR},
     {"vkCmdTraceRaysKHR", vkCmdTraceRaysKHR},
     {"vkCmdTraceRaysNV", vkCmdTraceRaysNV},
@@ -4592,6 +4610,7 @@ static const struct vulkan_func vk_device_dispatch_table[] =
     {"vkGetPipelineExecutableInternalRepresentationsKHR", vkGetPipelineExecutableInternalRepresentationsKHR},
     {"vkGetPipelineExecutablePropertiesKHR", vkGetPipelineExecutablePropertiesKHR},
     {"vkGetPipelineExecutableStatisticsKHR", vkGetPipelineExecutableStatisticsKHR},
+    {"vkGetPipelinePropertiesEXT", vkGetPipelinePropertiesEXT},
     {"vkGetPrivateData", vkGetPrivateData},
     {"vkGetPrivateDataEXT", vkGetPrivateDataEXT},
     {"vkGetQueryPoolResults", vkGetQueryPoolResults},

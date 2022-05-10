@@ -2248,6 +2248,17 @@ static inline void convert_VkPipelineInfoKHR_win_to_host(const VkPipelineInfoKHR
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkPipelineInfoEXT_win_to_host(const VkPipelineInfoEXT *in, VkPipelineInfoEXT_host *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    out->pipeline = in->pipeline;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline VkSparseMemoryBind_host *convert_VkSparseMemoryBind_array_win_to_host(const VkSparseMemoryBind *in, uint32_t count)
 {
     VkSparseMemoryBind_host *out;
@@ -3594,6 +3605,23 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_MAINTENANCE_1_FEATURES_KHR:
+        {
+            const VkPhysicalDeviceRayTracingMaintenance1FeaturesKHR *in = (const VkPhysicalDeviceRayTracingMaintenance1FeaturesKHR *)in_header;
+            VkPhysicalDeviceRayTracingMaintenance1FeaturesKHR *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->rayTracingMaintenance1 = in->rayTracingMaintenance1;
+            out->rayTracingPipelineTraceRaysIndirect2 = in->rayTracingPipelineTraceRaysIndirect2;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_DEVICE_MEMORY_OVERALLOCATION_CREATE_INFO_AMD:
         {
             const VkDeviceMemoryOverallocationCreateInfoAMD *in = (const VkDeviceMemoryOverallocationCreateInfoAMD *)in_header;
@@ -4819,6 +4847,38 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             out->sType = in->sType;
             out->pNext = NULL;
             out->descriptorSetHostMapping = in->descriptorSetHostMapping;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_MERGE_FEEDBACK_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceSubpassMergeFeedbackFeaturesEXT *in = (const VkPhysicalDeviceSubpassMergeFeedbackFeaturesEXT *)in_header;
+            VkPhysicalDeviceSubpassMergeFeedbackFeaturesEXT *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->subpassMergeFeedback = in->subpassMergeFeedback;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PIPELINE_PROPERTIES_FEATURES_EXT:
+        {
+            const VkPhysicalDevicePipelinePropertiesFeaturesEXT *in = (const VkPhysicalDevicePipelinePropertiesFeaturesEXT *)in_header;
+            VkPhysicalDevicePipelinePropertiesFeaturesEXT *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->pipelinePropertiesIdentifier = in->pipelinePropertiesIdentifier;
 
             out_header->pNext = (VkBaseOutStructure *)out;
             out_header = out_header->pNext;
@@ -6918,6 +6978,14 @@ static NTSTATUS wine_vkCmdSubpassShadingHUAWEI(void *args)
     struct vkCmdSubpassShadingHUAWEI_params *params = args;
     TRACE("%p\n", params->commandBuffer);
     params->commandBuffer->device->funcs.p_vkCmdSubpassShadingHUAWEI(params->commandBuffer->command_buffer);
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wine_vkCmdTraceRaysIndirect2KHR(void *args)
+{
+    struct vkCmdTraceRaysIndirect2KHR_params *params = args;
+    TRACE("%p, 0x%s\n", params->commandBuffer, wine_dbgstr_longlong(params->indirectDeviceAddress));
+    params->commandBuffer->device->funcs.p_vkCmdTraceRaysIndirect2KHR(params->commandBuffer->command_buffer, params->indirectDeviceAddress);
     return STATUS_SUCCESS;
 }
 
@@ -9058,6 +9126,24 @@ static NTSTATUS wine_vkGetPipelineExecutableStatisticsKHR(void *args)
 #endif
 }
 
+static NTSTATUS wine_vkGetPipelinePropertiesEXT(void *args)
+{
+    struct vkGetPipelinePropertiesEXT_params *params = args;
+#if defined(USE_STRUCT_CONVERSION)
+    VkResult result;
+    VkPipelineInfoEXT_host pPipelineInfo_host;
+    TRACE("%p, %p, %p\n", params->device, params->pPipelineInfo, params->pPipelineProperties);
+
+    convert_VkPipelineInfoEXT_win_to_host(params->pPipelineInfo, &pPipelineInfo_host);
+    result = params->device->funcs.p_vkGetPipelinePropertiesEXT(params->device->device, &pPipelineInfo_host, params->pPipelineProperties);
+
+    return result;
+#else
+    TRACE("%p, %p, %p\n", params->device, params->pPipelineInfo, params->pPipelineProperties);
+    return params->device->funcs.p_vkGetPipelinePropertiesEXT(params->device->device, params->pPipelineInfo, params->pPipelineProperties);
+#endif
+}
+
 static NTSTATUS wine_vkGetPrivateData(void *args)
 {
     struct vkGetPrivateData_params *params = args;
@@ -9717,6 +9803,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_pci_bus_info",
     "VK_EXT_pipeline_creation_cache_control",
     "VK_EXT_pipeline_creation_feedback",
+    "VK_EXT_pipeline_properties",
     "VK_EXT_post_depth_coverage",
     "VK_EXT_primitive_topology_list_restart",
     "VK_EXT_primitives_generated_query",
@@ -9738,6 +9825,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_shader_subgroup_vote",
     "VK_EXT_shader_viewport_index_layer",
     "VK_EXT_subgroup_size_control",
+    "VK_EXT_subpass_merge_feedback",
     "VK_EXT_texel_buffer_alignment",
     "VK_EXT_texture_compression_astc_hdr",
     "VK_EXT_tooling_info",
@@ -9793,6 +9881,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_present_wait",
     "VK_KHR_push_descriptor",
     "VK_KHR_ray_query",
+    "VK_KHR_ray_tracing_maintenance1",
     "VK_KHR_ray_tracing_pipeline",
     "VK_KHR_relaxed_block_layout",
     "VK_KHR_sampler_mirror_clamp_to_edge",
@@ -10123,6 +10212,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     wine_vkCmdSetViewportWithCount,
     wine_vkCmdSetViewportWithCountEXT,
     wine_vkCmdSubpassShadingHUAWEI,
+    wine_vkCmdTraceRaysIndirect2KHR,
     wine_vkCmdTraceRaysIndirectKHR,
     wine_vkCmdTraceRaysKHR,
     wine_vkCmdTraceRaysNV,
@@ -10335,6 +10425,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     wine_vkGetPipelineExecutableInternalRepresentationsKHR,
     wine_vkGetPipelineExecutablePropertiesKHR,
     wine_vkGetPipelineExecutableStatisticsKHR,
+    wine_vkGetPipelinePropertiesEXT,
     wine_vkGetPrivateData,
     wine_vkGetPrivateDataEXT,
     wine_vkGetQueryPoolResults,

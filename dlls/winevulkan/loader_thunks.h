@@ -193,6 +193,7 @@ enum unix_call
     unix_vkCmdSetViewportWithCount,
     unix_vkCmdSetViewportWithCountEXT,
     unix_vkCmdSubpassShadingHUAWEI,
+    unix_vkCmdTraceRaysIndirect2KHR,
     unix_vkCmdTraceRaysIndirectKHR,
     unix_vkCmdTraceRaysKHR,
     unix_vkCmdTraceRaysNV,
@@ -405,6 +406,7 @@ enum unix_call
     unix_vkGetPipelineExecutableInternalRepresentationsKHR,
     unix_vkGetPipelineExecutablePropertiesKHR,
     unix_vkGetPipelineExecutableStatisticsKHR,
+    unix_vkGetPipelinePropertiesEXT,
     unix_vkGetPrivateData,
     unix_vkGetPrivateDataEXT,
     unix_vkGetQueryPoolResults,
@@ -1809,6 +1811,12 @@ struct vkCmdSetViewportWithCountEXT_params
 struct vkCmdSubpassShadingHUAWEI_params
 {
     VkCommandBuffer commandBuffer;
+};
+
+struct vkCmdTraceRaysIndirect2KHR_params
+{
+    VkCommandBuffer commandBuffer;
+    VkDeviceAddress indirectDeviceAddress;
 };
 
 struct vkCmdTraceRaysIndirectKHR_params
@@ -3407,6 +3415,13 @@ struct vkGetPipelineExecutableStatisticsKHR_params
     const VkPipelineExecutableInfoKHR *pExecutableInfo;
     uint32_t *pStatisticCount;
     VkPipelineExecutableStatisticKHR *pStatistics;
+};
+
+struct vkGetPipelinePropertiesEXT_params
+{
+    VkDevice device;
+    const VkPipelineInfoEXT *pPipelineInfo;
+    VkBaseOutStructure *pPipelineProperties;
 };
 
 struct vkGetPrivateData_params
