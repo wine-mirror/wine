@@ -97,7 +97,6 @@ const char* symt_get_name(const struct symt* sym)
     case SymTagFunction:        return ((const struct symt_function*)sym)->hash_elt.name;
     case SymTagInlineSite:      return ((const struct symt_inlinesite*)sym)->func.hash_elt.name;
     case SymTagPublicSymbol:    return ((const struct symt_public*)sym)->hash_elt.name;
-    case SymTagBaseType:        return ((const struct symt_basic*)sym)->hash_elt.name;
     case SymTagLabel:           return ((const struct symt_hierarchy_point*)sym)->hash_elt.name;
     case SymTagThunk:           return ((const struct symt_thunk*)sym)->hash_elt.name;
     case SymTagCustom:          return ((const struct symt_custom*)sym)->hash_elt.name;
@@ -110,6 +109,7 @@ const char* symt_get_name(const struct symt* sym)
     default:
         FIXME("Unsupported sym-tag %s\n", symt_get_tag_str(sym->tag));
         /* fall through */
+    case SymTagBaseType:
     case SymTagArrayType:
     case SymTagPointerType:
     case SymTagFunctionType:
@@ -224,31 +224,26 @@ static void symt_add_type(struct module* module, struct symt* symt)
     *p = symt;
 }
 
-struct symt_basic* symt_new_basic(struct module* module, enum BasicType bt, 
-                                  const char* typename, unsigned size)
+struct symt_basic* symt_get_basic(enum BasicType bt, unsigned size)
 {
-    struct symt_basic*          sym;
+    static struct symt_basic cache[32] = { { {SymTagBaseType}, btNoType, 0 } };
+    int i;
 
-    if (typename)
+    if (bt == btNoType) return &cache[0];
+    for (i = 1; i < ARRAY_SIZE(cache); i++)
     {
-        sym = (struct symt_basic*)symt_find_type_by_name(module, SymTagBaseType,
-                                                         typename);
-        if (sym && sym->bt == bt && sym->size == size)
-            return sym;
-    }
-    if ((sym = pool_alloc(&module->pool, sizeof(*sym))))
-    {
-        sym->symt.tag = SymTagBaseType;
-        if (typename)
+        if (cache[i].bt == btNoType) /* empty slot, create new entry */
         {
-            sym->hash_elt.name = pool_strdup(&module->pool, typename);
-            hash_table_add(&module->ht_types, &sym->hash_elt);
-        } else sym->hash_elt.name = NULL;
-        sym->bt = bt;
-        sym->size = size;
-        symt_add_type(module, &sym->symt);
+            cache[i].symt.tag = SymTagBaseType;
+            cache[i].bt = bt;
+            cache[i].size = size;
+            return &cache[i];
+        }
+        if (cache[i].bt == bt && cache[i].size == size)
+            return &cache[i];
     }
-    return sym;
+    FIXME("Too few slots in basic types cache\n");
+    return &cache[0];
 }
 
 struct symt_udt* symt_new_udt(struct module* module, const char* typename, 

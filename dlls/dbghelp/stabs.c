@@ -322,31 +322,31 @@ static int stabs_get_basic(struct ParseTypedefData* ptd, unsigned basic, struct 
     {
         switch (basic)
         {
-        case  1: stabs_basic[basic] = symt_new_basic(ptd->module, btInt,     "int", 4); break;
-        case  2: stabs_basic[basic] = symt_new_basic(ptd->module, btChar,    "char", 1); break;
-        case  3: stabs_basic[basic] = symt_new_basic(ptd->module, btInt,     "short int", 2); break;
-        case  4: stabs_basic[basic] = symt_new_basic(ptd->module, btInt,     "long int", 4); break;
-        case  5: stabs_basic[basic] = symt_new_basic(ptd->module, btUInt,    "unsigned char", 1); break;
-        case  6: stabs_basic[basic] = symt_new_basic(ptd->module, btInt,     "signed char", 1); break;
-        case  7: stabs_basic[basic] = symt_new_basic(ptd->module, btUInt,    "unsigned short int", 2); break;
-        case  8: stabs_basic[basic] = symt_new_basic(ptd->module, btUInt,    "unsigned int", 4); break;
-        case  9: stabs_basic[basic] = symt_new_basic(ptd->module, btUInt,    "unsigned", 2); break;
-        case 10: stabs_basic[basic] = symt_new_basic(ptd->module, btUInt,    "unsigned long int", 2); break;
-        case 11: stabs_basic[basic] = symt_new_basic(ptd->module, btVoid,    "void", 0); break;
-        case 12: stabs_basic[basic] = symt_new_basic(ptd->module, btFloat,   "float", 4); break;
-        case 13: stabs_basic[basic] = symt_new_basic(ptd->module, btFloat,   "double", 8); break;
-        case 14: stabs_basic[basic] = symt_new_basic(ptd->module, btFloat,   "long double", 12); break;
-        case 15: stabs_basic[basic] = symt_new_basic(ptd->module, btInt,     "integer", 4); break;
-        case 16: stabs_basic[basic] = symt_new_basic(ptd->module, btBool,    "bool", 1); break;
+        case  1: stabs_basic[basic] = symt_get_basic(btInt,     4); break; /* int */
+        case  2: stabs_basic[basic] = symt_get_basic(btChar,    1); break; /* char */
+        case  3: stabs_basic[basic] = symt_get_basic(btInt,     2); break; /* short int */
+        case  4: stabs_basic[basic] = symt_get_basic(btInt,     4); break; /* long int */
+        case  5: stabs_basic[basic] = symt_get_basic(btUInt,    1); break; /* unsigned char */
+        case  6: stabs_basic[basic] = symt_get_basic(btInt,     1); break; /* signed char */
+        case  7: stabs_basic[basic] = symt_get_basic(btUInt,    2); break; /* unsigned short int */
+        case  8: stabs_basic[basic] = symt_get_basic(btUInt,    4); break; /* unsigned int */
+        case  9: stabs_basic[basic] = symt_get_basic(btUInt,    2); break; /* unsigned */
+        case 10: stabs_basic[basic] = symt_get_basic(btUInt,    2); break; /* unsigned long int */
+        case 11: stabs_basic[basic] = symt_get_basic(btVoid,    0); break; /* void */
+        case 12: stabs_basic[basic] = symt_get_basic(btFloat,   4); break; /* float */
+        case 13: stabs_basic[basic] = symt_get_basic(btFloat,   8); break; /* double */
+        case 14: stabs_basic[basic] = symt_get_basic(btFloat,   2); break; /* long double", */
+        case 15: stabs_basic[basic] = symt_get_basic(btInt,     4); break; /* integer */
+        case 16: stabs_basic[basic] = symt_get_basic(btBool,    1); break; /* bool */
         /*    case 17: short real */
         /*    case 18: real */
-        case 25: stabs_basic[basic] = symt_new_basic(ptd->module, btComplex, "float complex", 8); break;
-        case 26: stabs_basic[basic] = symt_new_basic(ptd->module, btComplex, "double complex", 16); break;
-        case 30: stabs_basic[basic] = symt_new_basic(ptd->module, btWChar,   "wchar_t", 2); break;
-        case 31: stabs_basic[basic] = symt_new_basic(ptd->module, btInt,     "long long int", 8); break;
-        case 32: stabs_basic[basic] = symt_new_basic(ptd->module, btUInt,    "long long unsigned", 8); break;
+        case 25: stabs_basic[basic] = symt_get_basic(btComplex, 8); break; /* float complex */
+        case 26: stabs_basic[basic] = symt_get_basic(btComplex, 6); break; /* double complex", */
+        case 30: stabs_basic[basic] = symt_get_basic(btWChar,   2); break; /* wchar_t */
+        case 31: stabs_basic[basic] = symt_get_basic(btInt,     8); break; /* long long int */
+        case 32: stabs_basic[basic] = symt_get_basic(btUInt,    8); break; /* long long unsigned */
             /* starting at 35 are wine extensions (especially for R implementation) */
-        case 35: stabs_basic[basic] = symt_new_basic(ptd->module, btComplex, "long double complex", 24); break;
+        case 35: stabs_basic[basic] = symt_get_basic(btComplex, 4); break; /* long double complex", */
         default: PTS_ABORTIF(ptd, 1);
         }
     }   
@@ -541,7 +541,7 @@ static int stabs_pts_read_range(struct ParseTypedefData* ptd, const char* typena
     }
     else PTS_ABORTIF(ptd, 1);
 
-    *dt = &symt_new_basic(ptd->module, bt, typename, size)->symt;
+    *dt = &symt_get_basic(bt, size)->symt;
     return 0;
 }
 
@@ -967,7 +967,7 @@ static int stabs_pts_read_type_def(struct ParseTypedefData* ptd, const char* typ
          */
         if (!new_dt && typename)
         {
-            new_dt = &symt_new_basic(ptd->module, btVoid, typename, 0)->symt;
+            new_dt = &symt_get_basic(btVoid, 0)->symt;
             PTS_ABORTIF(ptd, strcmp(typename, "void"));
         }
     }            

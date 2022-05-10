@@ -336,7 +336,6 @@ struct symt_array
 struct symt_basic
 {
     struct symt                 symt;
-    struct hash_table_elt       hash_elt;
     enum BasicType              bt;
     ULONG_PTR                   size;
 };
@@ -901,8 +900,7 @@ extern void         symt_init_basic(struct module* module) DECLSPEC_HIDDEN;
 extern BOOL         symt_get_info(struct module* module, const struct symt* type,
                                   IMAGEHLP_SYMBOL_TYPE_INFO req, void* pInfo) DECLSPEC_HIDDEN;
 extern struct symt_basic*
-                    symt_new_basic(struct module* module, enum BasicType, 
-                                   const char* typename, unsigned size) DECLSPEC_HIDDEN;
+                    symt_get_basic(enum BasicType, unsigned size) DECLSPEC_HIDDEN;
 extern struct symt_udt*
                     symt_new_udt(struct module* module, const char* typename,
                                  unsigned size, enum UdtKind kind) DECLSPEC_HIDDEN;
