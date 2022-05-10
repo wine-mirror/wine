@@ -3805,10 +3805,10 @@ static HRESULT wined3d_texture_init(struct wined3d_texture *texture, const struc
     HRESULT hr;
 
     TRACE("texture %p, resource_type %s, format %s, multisample_type %#x, multisample_quality %#x, "
-            "usage %s, access %s, width %u, height %u, depth %u, layer_count %u, level_count %u, "
+            "usage %s, bind_flags %s, access %s, width %u, height %u, depth %u, layer_count %u, level_count %u, "
             "flags %#x, device %p, parent %p, parent_ops %p, sub_resources %p, texture_ops %p.\n",
-            texture, debug_d3dresourcetype(desc->resource_type), debug_d3dformat(desc->format),
-            desc->multisample_type, desc->multisample_quality, debug_d3dusage(desc->usage),
+            texture, debug_d3dresourcetype(desc->resource_type), debug_d3dformat(desc->format), desc->multisample_type,
+            desc->multisample_quality, debug_d3dusage(desc->usage), wined3d_debug_bind_flags(desc->bind_flags),
             wined3d_debug_resource_access(desc->access), desc->width, desc->height, desc->depth,
             layer_count, level_count, flags, device, parent, parent_ops, sub_resources, texture_ops);
 
