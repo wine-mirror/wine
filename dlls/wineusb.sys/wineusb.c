@@ -86,7 +86,6 @@ struct usb_device
 
     uint16_t vendor, product, revision;
 
-    libusb_device *libusb_device;
     libusb_device_handle *handle;
 
     LIST_ENTRY irp_list;
@@ -114,7 +113,6 @@ static void add_usb_interface(struct usb_device *parent, const struct libusb_int
     device->device_obj = device_obj;
     device->parent = parent;
     device->handle = parent->handle;
-    device->libusb_device = parent->libusb_device;
     device->interface_index = desc->bInterfaceNumber;
     device->class = desc->bInterfaceClass;
     device->subclass = desc->bInterfaceSubClass;
@@ -166,7 +164,6 @@ static void add_usb_device(libusb_device *libusb_device)
 
     device = device_obj->DeviceExtension;
     device->device_obj = device_obj;
-    device->libusb_device = libusb_ref_device(libusb_device);
     device->handle = handle;
     InitializeListHead(&device->irp_list);
 
@@ -227,7 +224,7 @@ static void remove_usb_device(libusb_device *libusb_device)
     EnterCriticalSection(&wineusb_cs);
     LIST_FOR_EACH_ENTRY(device, &device_list, struct usb_device, entry)
     {
-        if (device->libusb_device == libusb_device)
+        if (libusb_get_device(device->handle) == libusb_device)
         {
             if (!device->removed)
             {
@@ -364,10 +361,7 @@ static NTSTATUS fdo_pnp(IRP *irp)
             {
                 assert(!device->removed);
                 if (!device->parent)
-                {
-                    libusb_unref_device(device->libusb_device);
                     libusb_close(device->handle);
-                }
                 list_remove(&device->entry);
                 IoDeleteDevice(device->device_obj);
             }
@@ -564,10 +558,7 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
             remove_pending_irps(device);
 
             if (!device->parent)
-            {
-                libusb_unref_device(device->libusb_device);
                 libusb_close(device->handle);
-            }
 
             IoDeleteDevice(device->device_obj);
             ret = STATUS_SUCCESS;
