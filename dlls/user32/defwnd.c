@@ -262,9 +262,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     case WM_NCACTIVATE:
         return NC_HandleNCActivate( hwnd, wParam, lParam );
 
-    case WM_NCDESTROY:
-        return NtUserMessageCall( hwnd, msg, wParam, lParam, 0, NtUserDefWindowProc, FALSE );
-
     case WM_PRINT:
         DEFWND_Print(hwnd, (HDC)wParam, lParam);
         return 0;
@@ -524,30 +521,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             return res;
         }
 
-    case WM_GETICON:
-        {
-            HICON ret;
-            WND *wndPtr = WIN_GetPtr( hwnd );
-
-            switch(wParam)
-            {
-            case ICON_SMALL:
-                ret = wndPtr->hIconSmall;
-                break;
-            case ICON_BIG:
-                ret = wndPtr->hIcon;
-                break;
-            case ICON_SMALL2:
-                ret = wndPtr->hIconSmall ? wndPtr->hIconSmall : wndPtr->hIconSmall2;
-                break;
-            default:
-                ret = 0;
-                break;
-            }
-            WIN_ReleasePtr( wndPtr );
-            return (LRESULT)ret;
-        }
-
     case WM_HELP:
         SendMessageW( GetParent(hwnd), msg, wParam, lParam );
         break;
@@ -613,6 +586,9 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             HeapFree(GetProcessHeap(),0,win_array);
             break;
         }
+
+    default:
+        return NtUserMessageCall( hwnd, msg, wParam, lParam, 0, NtUserDefWindowProc, FALSE );
 
     }
 

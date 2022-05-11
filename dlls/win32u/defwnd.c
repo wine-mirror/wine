@@ -112,6 +112,33 @@ static BOOL set_window_text( HWND hwnd, const void *text, BOOL ansi )
     return TRUE;
 }
 
+static HICON get_window_icon( HWND hwnd, WPARAM type )
+{
+    HICON ret;
+    WND *win;
+
+    if (!(win = get_win_ptr( hwnd ))) return 0;
+
+    switch(type)
+    {
+    case ICON_SMALL:
+        ret = win->hIconSmall;
+        break;
+    case ICON_BIG:
+        ret = win->hIcon;
+        break;
+    case ICON_SMALL2:
+        ret = win->hIconSmall ? win->hIconSmall : win->hIconSmall2;
+        break;
+    default:
+        ret = 0;
+        break;
+    }
+
+    release_win_ptr( win );
+    return ret;
+}
+
 static HICON set_window_icon( HWND hwnd, WPARAM type, HICON icon )
 {
     HICON ret = 0;
@@ -225,6 +252,10 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
 
     case WM_SETICON:
         result = (LRESULT)set_window_icon( hwnd, wparam, (HICON)lparam );
+        break;
+
+    case WM_GETICON:
+        result = (LRESULT)get_window_icon( hwnd, wparam );
         break;
 
     case WM_SYSCOMMAND:
