@@ -434,6 +434,7 @@ extern HWND get_parent( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND get_hwnd_message_parent(void) DECLSPEC_HIDDEN;
 extern DPI_AWARENESS_CONTEXT get_window_dpi_awareness_context( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL get_window_placement( HWND hwnd, WINDOWPLACEMENT *placement ) DECLSPEC_HIDDEN;
+extern MINMAXINFO get_min_max_info( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND get_window_relative( HWND hwnd, UINT rel ) DECLSPEC_HIDDEN;
 extern DWORD get_window_thread( HWND hwnd, DWORD *process ) DECLSPEC_HIDDEN;
 extern HWND is_current_process_window( HWND hwnd ) DECLSPEC_HIDDEN;

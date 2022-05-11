@@ -195,6 +195,25 @@ static HICON set_window_icon( HWND hwnd, WPARAM type, HICON icon )
     return ret;
 }
 
+static LONG handle_window_pos_changing( HWND hwnd, WINDOWPOS *winpos )
+{
+    LONG style = get_window_long( hwnd, GWL_STYLE );
+
+    if (winpos->flags & SWP_NOSIZE) return 0;
+    if ((style & WS_THICKFRAME) || ((style & (WS_POPUP | WS_CHILD)) == 0))
+    {
+        MINMAXINFO info = get_min_max_info( hwnd );
+        winpos->cx = min( winpos->cx, info.ptMaxTrackSize.x );
+        winpos->cy = min( winpos->cy, info.ptMaxTrackSize.y );
+        if (!(style & WS_MINIMIZE))
+        {
+            winpos->cx = max( winpos->cx, info.ptMinTrackSize.x );
+            winpos->cy = max( winpos->cy, info.ptMinTrackSize.y );
+        }
+    }
+    return 0;
+}
+
 static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
     if (!is_window_enabled( hwnd )) return 0;
@@ -254,6 +273,9 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
             release_win_ptr( win );
             break;
         }
+
+    case WM_WINDOWPOSCHANGING:
+        return handle_window_pos_changing( hwnd, (WINDOWPOS *)lparam );
 
     case WM_PAINTICON:
     case WM_PAINT:

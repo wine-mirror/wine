@@ -3657,7 +3657,7 @@ static void send_parent_notify( HWND hwnd, UINT msg )
  *
  * Get the minimized and maximized information for a window.
  */
-static MINMAXINFO get_min_max_info( HWND hwnd )
+MINMAXINFO get_min_max_info( HWND hwnd )
 {
     LONG style = get_window_long( hwnd, GWL_STYLE );
     LONG exstyle = get_window_long( hwnd, GWL_EXSTYLE );
