@@ -1799,15 +1799,6 @@ static void display_caret( HWND hwnd, const RECT *r )
     NtUserReleaseDC( hwnd, dc );
 }
 
-static void fill_rect( HDC dc, const RECT *rect, HBRUSH hbrush )
-{
-    HBRUSH prev_brush;
-
-    prev_brush = NtGdiSelectBrush( dc, hbrush );
-    NtGdiPatBlt( dc, rect->left, rect->top, rect->right - rect->left, rect->bottom - rect->top, PATCOPY );
-    if (prev_brush) NtGdiSelectBrush( dc, prev_brush );
-}
-
 static unsigned int get_caret_registry_timeout(void)
 {
     char value_buffer[FIELD_OFFSET(KEY_VALUE_PARTIAL_INFORMATION, Data[11 * sizeof(WCHAR)])];

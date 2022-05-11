@@ -266,25 +266,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         DEFWND_Print(hwnd, (HDC)wParam, lParam);
         return 0;
 
-    case WM_ERASEBKGND:
-    case WM_ICONERASEBKGND:
-        {
-            RECT rect;
-            HDC hdc = (HDC)wParam;
-            HBRUSH hbr = (HBRUSH)GetClassLongPtrW( hwnd, GCLP_HBRBACKGROUND );
-            if (!hbr) return 0;
-
-            if (GetClassLongW( hwnd, GCL_STYLE ) & CS_PARENTDC)
-            {
-                /* can't use GetClipBox with a parent DC or we fill the whole parent */
-                GetClientRect( hwnd, &rect );
-                DPtoLP( hdc, (LPPOINT)&rect, 2 );
-            }
-            else GetClipBox( hdc, &rect );
-            FillRect( hdc, &rect, hbr );
-            return 1;
-        }
-
     case WM_CTLCOLORMSGBOX:
     case WM_CTLCOLOREDIT:
     case WM_CTLCOLORLISTBOX:

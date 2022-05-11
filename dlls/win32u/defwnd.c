@@ -31,6 +31,15 @@
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
 
+void fill_rect( HDC dc, const RECT *rect, HBRUSH hbrush )
+{
+    HBRUSH prev_brush;
+
+    prev_brush = NtGdiSelectBrush( dc, hbrush );
+    NtGdiPatBlt( dc, rect->left, rect->top, rect->right - rect->left, rect->bottom - rect->top, PATCOPY );
+    if (prev_brush) NtGdiSelectBrush( dc, prev_brush );
+}
+
 /***********************************************************************
  *           AdjustWindowRectEx (win32u.so)
  */
@@ -309,6 +318,25 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
         if (get_window_long( hwnd, GWL_STYLE ) & WS_CHILD)
             result = send_message( get_parent( hwnd ), WM_MOUSEWHEEL, wparam, lparam );
         break;
+
+    case WM_ERASEBKGND:
+    case WM_ICONERASEBKGND:
+        {
+            RECT rect;
+            HDC hdc = (HDC)wparam;
+            HBRUSH hbr = UlongToHandle( get_class_long( hwnd, GCLP_HBRBACKGROUND, FALSE ));
+            if (!hbr) break;
+
+            if (get_class_long( hwnd, GCL_STYLE, FALSE ) & CS_PARENTDC)
+            {
+                /* can't use GetClipBox with a parent DC or we fill the whole parent */
+                get_client_rect( hwnd, &rect );
+                NtGdiTransformPoints( hdc, (POINT *)&rect, (POINT *)&rect, 1, NtGdiDPtoLP );
+            }
+            else NtGdiGetAppClipBox( hdc, &rect );
+            fill_rect( hdc, &rect, hbr );
+            return 1;
+        }
 
     case WM_GETDLGCODE:
         break;
