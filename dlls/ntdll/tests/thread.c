@@ -118,16 +118,25 @@ static void test_dbg_hidden_thread_creation(void)
     CloseHandle( thread );
 }
 
+struct unique_teb_thread_args
+{
+    TEB *teb;
+    HANDLE running_event;
+    HANDLE quit_event;
+};
+
 static void CALLBACK test_unique_teb_proc(void *param)
 {
-    TEB **teb = param;
-    *teb = NtCurrentTeb();
+    struct unique_teb_thread_args *args = param;
+    args->teb = NtCurrentTeb();
+    SetEvent( args->running_event );
+    WaitForSingleObject( args->quit_event, INFINITE );
 }
 
 static void test_unique_teb(void)
 {
-    HANDLE threads[2];
-    TEB *teb1, *teb2;
+    HANDLE threads[2], running_events[2];
+    struct unique_teb_thread_args args1, args2;
     NTSTATUS status;
 
     if (!pNtCreateThreadEx)
@@ -136,21 +145,36 @@ static void test_unique_teb(void)
         return;
     }
 
+    args1.running_event = running_events[0] = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( args1.running_event != NULL, "CreateEventW failed %lu.\n", GetLastError() );
+
+    args2.running_event = running_events[1] = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( args2.running_event != NULL, "CreateEventW failed %lu.\n", GetLastError() );
+
+    args1.quit_event = args2.quit_event = CreateEventW( NULL, TRUE, FALSE, NULL );
+    ok( args1.quit_event != NULL, "CreateEventW failed %lu.\n", GetLastError() );
+
     status = pNtCreateThreadEx( &threads[0], THREAD_ALL_ACCESS, NULL, GetCurrentProcess(), test_unique_teb_proc,
-                                &teb1, 0, 0, 0, 0, NULL );
+                                &args1, 0, 0, 0, 0, NULL );
     ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
 
     status = pNtCreateThreadEx( &threads[1], THREAD_ALL_ACCESS, NULL, GetCurrentProcess(), test_unique_teb_proc,
-                                &teb2, 0, 0, 0, 0, NULL );
+                                &args2, 0, 0, 0, 0, NULL );
     ok( status == STATUS_SUCCESS, "Got unexpected status %#lx.\n", status );
+
+    WaitForMultipleObjects( 2, running_events, TRUE, INFINITE );
+    SetEvent( args1.quit_event );
 
     WaitForMultipleObjects( 2, threads, TRUE, INFINITE );
     CloseHandle( threads[0] );
     CloseHandle( threads[1] );
+    CloseHandle( args1.running_event );
+    CloseHandle( args2.running_event );
+    CloseHandle( args1.quit_event );
 
-    ok( NtCurrentTeb() != teb1, "Multiple threads have TEB %p.\n", teb1 );
-    ok( NtCurrentTeb() != teb2, "Multiple threads have TEB %p.\n", teb2 );
-    ok( teb1 != teb2, "Multiple threads have TEB %p.\n", teb1 );
+    ok( NtCurrentTeb() != args1.teb, "Multiple threads have TEB %p.\n", args1.teb );
+    ok( NtCurrentTeb() != args2.teb, "Multiple threads have TEB %p.\n", args2.teb );
+    ok( args1.teb != args2.teb, "Multiple threads have TEB %p.\n", args1.teb );
 }
 
 START_TEST(thread)
