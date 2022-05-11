@@ -13394,7 +13394,7 @@ then :
   XSLT_PE_LIBS=xslt
    if ${XSLT_PE_CFLAGS:+false} :
 then :
-  XSLT_PE_CFLAGS="-I\$(top_srcdir)/libs/xslt -DLIBXSLT_STATIC"
+  XSLT_PE_CFLAGS="-I\$(top_srcdir)/libs/xslt/libxslt -I\$(top_srcdir)/libs/xslt -DLIBXSLT_STATIC"
 else $as_nop
   enable_xslt=no
 fi
