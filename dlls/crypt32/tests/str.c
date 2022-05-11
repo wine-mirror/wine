@@ -864,6 +864,13 @@ static void test_CertGetNameString_value_(unsigned int line, PCCERT_CONTEXT cont
     expectedW[expected_len++] = 0;
 
     len = CertGetNameStringA(context, type, flags, type_para, NULL, 0);
+    if (flags & CERT_NAME_SEARCH_ALL_NAMES_FLAG && ((type == CERT_NAME_DNS_TYPE && len < expected_len)
+        || (type != CERT_NAME_DNS_TYPE && len > expected_len)))
+    {
+        /* Supported since Win8. */
+        win_skip("line %u: CERT_NAME_SEARCH_ALL_NAMES_FLAG is not supported.\n", line);
+        return;
+    }
     ok(len == expected_len, "line %u: unexpected length %ld, expected %ld.\n", line, len, expected_len);
     memset(str, 0xcc, len);
     retlen = CertGetNameStringA(context, type, flags, type_para, str, len);
