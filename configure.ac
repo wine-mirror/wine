@@ -1142,7 +1142,7 @@ WINE_EXTLIB_FLAGS(PNG, png, "png \$(ZLIB_PE_LIBS)", "-I\$(top_srcdir)/libs/png")
 WINE_EXTLIB_FLAGS(TIFF, tiff, "tiff \$(ZLIB_PE_LIBS)", "-I\$(top_srcdir)/libs/tiff/libtiff")
 WINE_EXTLIB_FLAGS(VKD3D, vkd3d, vkd3d, "-I\$(top_srcdir)/libs/vkd3d/include")
 WINE_EXTLIB_FLAGS(XML2, xml2, xml2, "-I\$(top_srcdir)/libs/xml2/include -DLIBXML_STATIC")
-WINE_EXTLIB_FLAGS(XSLT, xslt, xslt, "-I\$(top_srcdir)/libs/xslt -DLIBXSLT_STATIC")
+WINE_EXTLIB_FLAGS(XSLT, xslt, xslt, "-I\$(top_srcdir)/libs/xslt/libxslt -I\$(top_srcdir)/libs/xslt -DLIBXSLT_STATIC")
 WINE_EXTLIB_FLAGS(ZLIB, zlib, z, "-I\$(top_srcdir)/libs/zlib -DFAR= -DZ_SOLO")
 
 dnl **** Check for pthread ****
