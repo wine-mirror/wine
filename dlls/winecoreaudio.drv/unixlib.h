@@ -185,7 +185,7 @@ struct set_volumes_params
 
 struct midi_init_params
 {
-    DWORD *err;
+    UINT *err;
 };
 
 struct notify_context
@@ -193,22 +193,22 @@ struct notify_context
     BOOL send_notify;
     WORD dev_id;
     WORD msg;
-    DWORD_PTR param_1;
-    DWORD_PTR param_2;
-    DWORD_PTR callback;
-    DWORD flags;
+    UINT_PTR param_1;
+    UINT_PTR param_2;
+    UINT_PTR callback;
+    UINT flags;
     HANDLE device;
-    DWORD_PTR instance;
+    UINT_PTR instance;
 };
 
 struct midi_out_message_params
 {
     UINT dev_id;
     UINT msg;
-    DWORD_PTR user;
-    DWORD_PTR param_1;
-    DWORD_PTR param_2;
-    DWORD *err;
+    UINT_PTR user;
+    UINT_PTR param_1;
+    UINT_PTR param_2;
+    UINT *err;
     struct notify_context *notify;
 };
 
@@ -216,10 +216,10 @@ struct midi_in_message_params
 {
     UINT dev_id;
     UINT msg;
-    DWORD_PTR user;
-    DWORD_PTR param_1;
-    DWORD_PTR param_2;
-    DWORD *err;
+    UINT_PTR user;
+    UINT_PTR param_1;
+    UINT_PTR param_2;
+    UINT *err;
     struct notify_context *notify;
 };
 

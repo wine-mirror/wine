@@ -70,7 +70,7 @@ static DWORD WINAPI notify_thread(void *p)
 static LONG CoreAudio_MIDIInit(void)
 {
     struct midi_init_params params;
-    DWORD err;
+    UINT err;
 
     params.err = &err;
 
@@ -102,7 +102,7 @@ DWORD WINAPI CoreAudio_modMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser, DWOR
 {
     struct midi_out_message_params params;
     struct notify_context notify;
-    DWORD err;
+    UINT err;
 
     TRACE("%d %08x %08lx %08lx %08lx\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
@@ -128,7 +128,7 @@ DWORD WINAPI CoreAudio_midMessage(UINT wDevID, UINT wMsg, DWORD_PTR dwUser, DWOR
 {
     struct midi_in_message_params params;
     struct notify_context notify;
-    DWORD err;
+    UINT err;
 
     TRACE("%d %08x %08lx %08lx %08lx\n", wDevID, wMsg, dwUser, dwParam1, dwParam2);
 
