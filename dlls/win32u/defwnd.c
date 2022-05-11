@@ -243,7 +243,31 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
             if (user_callbacks) user_callbacks->free_win_ptr( win );
             win->pScroll = NULL;
             release_win_ptr( win );
-            return 0;
+            break;
+        }
+
+    case WM_PAINTICON:
+    case WM_PAINT:
+        {
+            PAINTSTRUCT ps;
+            HDC hdc = NtUserBeginPaint( hwnd, &ps );
+            if (hdc)
+            {
+                HICON icon;
+                if (is_iconic(hwnd) && ((icon = UlongToHandle( get_class_long( hwnd, GCLP_HICON, FALSE )))))
+                {
+                    RECT rc;
+                    int x, y;
+
+                    get_client_rect( hwnd, &rc );
+                    x = (rc.right - rc.left - get_system_metrics( SM_CXICON )) / 2;
+                    y = (rc.bottom - rc.top - get_system_metrics( SM_CYICON )) / 2;
+                    TRACE( "Painting class icon: vis rect=(%s)\n", wine_dbgstr_rect(&ps.rcPaint) );
+                    NtUserDrawIconEx( hdc, x, y, icon, 0, 0, 0, 0, DI_NORMAL | DI_COMPAT | DI_DEFAULTSIZE );
+                }
+                NtUserEndPaint( hwnd, &ps );
+            }
+            break;
         }
 
     case WM_SETTEXT:

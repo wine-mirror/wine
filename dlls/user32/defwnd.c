@@ -266,31 +266,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         DEFWND_Print(hwnd, (HDC)wParam, lParam);
         return 0;
 
-    case WM_PAINTICON:
-    case WM_PAINT:
-        {
-            PAINTSTRUCT ps;
-            HDC hdc = NtUserBeginPaint( hwnd, &ps );
-            if( hdc )
-            {
-              HICON hIcon;
-              if (IsIconic(hwnd) && ((hIcon = (HICON)GetClassLongPtrW( hwnd, GCLP_HICON))) )
-              {
-                  RECT rc;
-                  int x, y;
-
-                  GetClientRect( hwnd, &rc );
-                  x = (rc.right - rc.left - GetSystemMetrics(SM_CXICON))/2;
-                  y = (rc.bottom - rc.top - GetSystemMetrics(SM_CYICON))/2;
-                  TRACE("Painting class icon: vis rect=(%s)\n",
-                        wine_dbgstr_rect(&ps.rcPaint));
-                  DrawIcon( hdc, x, y, hIcon );
-              }
-              NtUserEndPaint( hwnd, &ps );
-            }
-            return 0;
-        }
-
     case WM_SYNCPAINT:
         NtUserRedrawWindow ( hwnd, NULL, 0, RDW_ERASENOW | RDW_ERASE | RDW_ALLCHILDREN );
         return 0;
