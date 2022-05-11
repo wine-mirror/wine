@@ -266,46 +266,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         DEFWND_Print(hwnd, (HDC)wParam, lParam);
         return 0;
 
-    case WM_SYNCPAINT:
-        NtUserRedrawWindow ( hwnd, NULL, 0, RDW_ERASENOW | RDW_ERASE | RDW_ALLCHILDREN );
-        return 0;
-
-    case WM_SETREDRAW:
-        if (wParam) WIN_SetStyle( hwnd, WS_VISIBLE, 0 );
-        else
-        {
-            NtUserRedrawWindow( hwnd, NULL, 0, RDW_ALLCHILDREN | RDW_VALIDATE );
-            WIN_SetStyle( hwnd, 0, WS_VISIBLE );
-        }
-        return 0;
-
-    case WM_CLOSE:
-        NtUserDestroyWindow( hwnd );
-        return 0;
-
-    case WM_MOUSEACTIVATE:
-        if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD)
-        {
-            LONG ret = SendMessageW( GetParent(hwnd), WM_MOUSEACTIVATE, wParam, lParam );
-            if (ret) return ret;
-        }
-
-        /* Caption clicks are handled by NC_HandleNCLButtonDown() */
-        return ( HIWORD(lParam) == WM_LBUTTONDOWN && LOWORD(lParam) == HTCAPTION ? MA_NOACTIVATE : MA_ACTIVATE );
-
-    case WM_ACTIVATE:
-        /* The default action in Windows is to set the keyboard focus to
-         * the window, if it's being activated and not minimized */
-        if (LOWORD(wParam) != WA_INACTIVE) {
-            if (!IsIconic(hwnd)) NtUserSetFocus( hwnd );
-        }
-        break;
-
-    case WM_MOUSEWHEEL:
-        if (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CHILD)
-            return SendMessageW( GetParent(hwnd), WM_MOUSEWHEEL, wParam, lParam );
-        break;
-
     case WM_ERASEBKGND:
     case WM_ICONERASEBKGND:
         {
@@ -324,9 +284,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             FillRect( hdc, &rect, hbr );
             return 1;
         }
-
-    case WM_GETDLGCODE:
-        return 0;
 
     case WM_CTLCOLORMSGBOX:
     case WM_CTLCOLOREDIT:

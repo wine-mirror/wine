@@ -270,6 +270,49 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
             break;
         }
 
+    case WM_SYNCPAINT:
+        NtUserRedrawWindow ( hwnd, NULL, 0, RDW_ERASENOW | RDW_ERASE | RDW_ALLCHILDREN );
+        return 0;
+
+    case WM_SETREDRAW:
+        if (wparam) set_window_style( hwnd, WS_VISIBLE, 0 );
+        else
+        {
+            NtUserRedrawWindow( hwnd, NULL, 0, RDW_ALLCHILDREN | RDW_VALIDATE );
+            set_window_style( hwnd, 0, WS_VISIBLE );
+        }
+        return 0;
+
+    case WM_CLOSE:
+        NtUserDestroyWindow( hwnd );
+        return 0;
+
+    case WM_MOUSEACTIVATE:
+        if (get_window_long( hwnd, GWL_STYLE ) & WS_CHILD)
+        {
+            result = send_message( get_parent(hwnd), WM_MOUSEACTIVATE, wparam, lparam );
+            if (result) break;
+        }
+
+        /* Caption clicks are handled by NC_HandleNCLButtonDown() */
+        result = HIWORD(lparam) == WM_LBUTTONDOWN && LOWORD(lparam) == HTCAPTION ?
+            MA_NOACTIVATE : MA_ACTIVATE;
+        break;
+
+    case WM_ACTIVATE:
+        /* The default action in Windows is to set the keyboard focus to
+         * the window, if it's being activated and not minimized */
+        if (LOWORD(wparam) != WA_INACTIVE && !is_iconic( hwnd )) NtUserSetFocus( hwnd );
+        break;
+
+    case WM_MOUSEWHEEL:
+        if (get_window_long( hwnd, GWL_STYLE ) & WS_CHILD)
+            result = send_message( get_parent( hwnd ), WM_MOUSEWHEEL, wparam, lparam );
+        break;
+
+    case WM_GETDLGCODE:
+        break;
+
     case WM_SETTEXT:
         result = set_window_text( hwnd, (void *)lparam, ansi );
         break;
