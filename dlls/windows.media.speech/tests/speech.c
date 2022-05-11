@@ -54,11 +54,7 @@
 #define impl_from_IHandler_RecognitionCompleted impl_from_ITypedEventHandler_SpeechContinuousRecognitionSession_SpeechContinuousRecognitionCompletedEventArgs
 #define IHandler_RecognitionCompleted_iface ITypedEventHandler_SpeechContinuousRecognitionSession_SpeechContinuousRecognitionCompletedEventArgs_iface
 
-#define IAsyncHandler_Compilation IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResult
-#define IAsyncHandler_CompilationVtbl IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResultVtbl
-#define IID_IAsyncHandler_Compilation IID_IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResult
-#define impl_from_IAsyncHandler_Compilation impl_from_IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResult
-#define IAsyncHandler_Compilation_iface IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResult_iface
+#define IAsyncHandler_IInspectable_iface IAsyncOperationCompletedHandler_IInspectable_iface
 
 HRESULT WINAPI (*pDllGetActivationFactory)(HSTRING, IActivationFactory **);
 static BOOL is_win10_1507 = FALSE;
@@ -234,9 +230,10 @@ static HRESULT WINAPI recognition_result_handler_create_static( struct recogniti
     return S_OK;
 }
 
-struct compilation_handler
+struct async_inspectable_handler
 {
-    IAsyncHandler_Compilation IAsyncHandler_Compilation_iface;
+    IAsyncOperationCompletedHandler_IInspectable IAsyncHandler_IInspectable_iface;
+    const GUID *iid;
     LONG ref;
 
     HANDLE event_block;
@@ -244,18 +241,20 @@ struct compilation_handler
     DWORD thread_id;
 };
 
-static inline struct compilation_handler *impl_from_IAsyncHandler_Compilation( IAsyncHandler_Compilation *iface )
+static inline struct async_inspectable_handler *impl_from_IAsyncOperationCompletedHandler_IInspectable( IAsyncOperationCompletedHandler_IInspectable *iface )
 {
-    return CONTAINING_RECORD(iface, struct compilation_handler, IAsyncHandler_Compilation_iface);
+    return CONTAINING_RECORD(iface, struct async_inspectable_handler, IAsyncHandler_IInspectable_iface);
 }
 
-HRESULT WINAPI compilation_handler_QueryInterface( IAsyncHandler_Compilation *iface,
-                                                   REFIID iid,
-                                                   void **out )
+HRESULT WINAPI async_inspectable_handler_QueryInterface( IAsyncOperationCompletedHandler_IInspectable *iface,
+                                                         REFIID iid,
+                                                         void **out )
 {
+    struct async_inspectable_handler *impl = impl_from_IAsyncOperationCompletedHandler_IInspectable(iface);
+
     if (IsEqualGUID(iid, &IID_IUnknown) ||
         IsEqualGUID(iid, &IID_IAgileObject) ||
-        IsEqualGUID(iid, &IID_IAsyncHandler_Compilation))
+        IsEqualGUID(iid, impl->iid))
     {
         IUnknown_AddRef(iface);
         *out = iface;
@@ -267,27 +266,27 @@ HRESULT WINAPI compilation_handler_QueryInterface( IAsyncHandler_Compilation *if
     return E_NOINTERFACE;
 }
 
-ULONG WINAPI compilation_handler_AddRef( IAsyncHandler_Compilation *iface )
+ULONG WINAPI async_inspectable_handler_AddRef( IAsyncOperationCompletedHandler_IInspectable *iface )
 {
-    struct compilation_handler *impl = impl_from_IAsyncHandler_Compilation(iface);
+    struct async_inspectable_handler *impl = impl_from_IAsyncOperationCompletedHandler_IInspectable(iface);
     ULONG ref = InterlockedIncrement(&impl->ref);
     return ref;
 }
 
-ULONG WINAPI compilation_handler_Release( IAsyncHandler_Compilation *iface )
+ULONG WINAPI async_inspectable_handler_Release( IAsyncOperationCompletedHandler_IInspectable *iface )
 {
-    struct compilation_handler *impl = impl_from_IAsyncHandler_Compilation(iface);
+    struct async_inspectable_handler *impl = impl_from_IAsyncOperationCompletedHandler_IInspectable(iface);
     ULONG ref = InterlockedDecrement(&impl->ref);
     return ref;
 }
 
-HRESULT WINAPI compilation_handler_Invoke( IAsyncHandler_Compilation *iface,
-                                           IAsyncOperation_SpeechRecognitionCompilationResult *info,
-                                           AsyncStatus status )
+HRESULT WINAPI async_inspectable_handler_Invoke( IAsyncOperationCompletedHandler_IInspectable *iface,
+                                                 IAsyncOperation_IInspectable *sender,
+                                                 AsyncStatus status )
 {
-    struct compilation_handler *impl = impl_from_IAsyncHandler_Compilation(iface);
+    struct async_inspectable_handler *impl = impl_from_IAsyncOperationCompletedHandler_IInspectable(iface);
     DWORD id = GetCurrentThreadId();
-    trace("Iface %p, info %p, status %d.\n", iface, info, status);
+    trace("Iface %p, sender %p, status %d.\n", iface, sender, status);
     trace("Caller thread id %lu callback thread id %lu.\n", impl->thread_id, id);
 
     /* Signal finishing of the handler. */
@@ -298,20 +297,21 @@ HRESULT WINAPI compilation_handler_Invoke( IAsyncHandler_Compilation *iface,
     return S_OK;
 }
 
-static const struct IAsyncHandler_CompilationVtbl compilation_handler_vtbl =
+static const struct IAsyncOperationCompletedHandler_IInspectableVtbl asnyc_inspectable_handler_vtbl =
 {
     /* IUnknown methods */
-    compilation_handler_QueryInterface,
-    compilation_handler_AddRef,
-    compilation_handler_Release,
-    /* IAsyncOperationCompletedHandler<SpeechRecognitionCompilationResult* > methods */
-    compilation_handler_Invoke
+    async_inspectable_handler_QueryInterface,
+    async_inspectable_handler_AddRef,
+    async_inspectable_handler_Release,
+    /* IAsyncOperationCompletedHandler<IInspectable* > methods */
+    async_inspectable_handler_Invoke
 };
 
 
-static HRESULT WINAPI compilation_handler_create_static( struct compilation_handler *impl )
+static HRESULT WINAPI async_inspectable_handler_create_static( struct async_inspectable_handler *impl, const GUID *iid )
 {
-    impl->IAsyncHandler_Compilation_iface.lpVtbl = &compilation_handler_vtbl;
+    impl->IAsyncOperationCompletedHandler_IInspectable_iface.lpVtbl = &asnyc_inspectable_handler_vtbl;
+    impl->iid = iid;
     impl->ref = 1;
 
     return S_OK;
@@ -817,8 +817,8 @@ static void test_VoiceInformation(void)
 
 struct put_completed_thread_param
 {
-    IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResult *handler;
-    IAsyncOperation_SpeechRecognitionCompilationResult *operation;
+    IAsyncOperationCompletedHandler_IInspectable *handler;
+    IAsyncOperation_IInspectable *operation;
 };
 
 static DWORD WINAPI put_completed_thread(void *arg)
@@ -826,7 +826,7 @@ static DWORD WINAPI put_completed_thread(void *arg)
     struct put_completed_thread_param *param = arg;
     HRESULT hr;
 
-    hr = IAsyncOperation_SpeechRecognitionCompilationResult_put_Completed(param->operation, param->handler);
+    hr = IAsyncOperation_IInspectable_put_Completed(param->operation, param->handler);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     return 0;
@@ -850,9 +850,9 @@ static void test_SpeechRecognizer(void)
     ILanguage *language = NULL;
     IAsyncInfo *info = NULL;
     struct put_completed_thread_param put_completed_param;
+    struct async_inspectable_handler compilation_handler;
     struct completed_event_handler completed_handler;
     struct recognition_result_handler result_handler;
-    struct compilation_handler compilation_handler;
     SpeechRecognitionResultStatus result_status;
     EventRegistrationToken token = { .value = 0 };
     AsyncStatus async_status;
@@ -972,7 +972,7 @@ static void test_SpeechRecognizer(void)
         ref = IVector_ISpeechRecognitionConstraint_Release(constraints);
         ok(ref == 1, "Got unexpected ref %lu.\n", ref);
 
-        compilation_handler_create_static(&compilation_handler);
+        async_inspectable_handler_create_static(&compilation_handler, &IID_IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResult);
         compilation_handler.event_finished = CreateEventW(NULL, FALSE, FALSE, NULL);
         compilation_handler.thread_id = GetCurrentThreadId();
 
@@ -991,7 +991,7 @@ static void test_SpeechRecognizer(void)
         ok(hr == E_ILLEGAL_METHOD_CALL, "Got unexpected hr %#lx.\n", hr);
         ok(compilation_result == (void*)0xdeadbeef, "Compilation result had value %p.\n", compilation_result);
 
-        hr = IAsyncOperation_SpeechRecognitionCompilationResult_put_Completed(operation, &compilation_handler.IAsyncHandler_Compilation_iface);
+        hr = IAsyncOperation_IInspectable_put_Completed((IAsyncOperation_IInspectable *) operation, &compilation_handler.IAsyncHandler_IInspectable_iface);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         ok(!WaitForSingleObject(compilation_handler.event_finished, 1000), "Wait for event_finished failed.\n");
@@ -1072,7 +1072,7 @@ static void test_SpeechRecognizer(void)
         IAsyncOperation_SpeechRecognitionCompilationResult_Release(operation);
 
         /* Test if AsyncOperation is started immediately. */
-        compilation_handler_create_static(&compilation_handler);
+        async_inspectable_handler_create_static(&compilation_handler, &IID_IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResult);
         compilation_handler.event_finished = CreateEventW(NULL, FALSE, FALSE, NULL);
         compilation_handler.thread_id = GetCurrentThreadId();
 
@@ -1090,7 +1090,7 @@ static void test_SpeechRecognizer(void)
         ok(hr == S_OK, "IAsyncInfo_get_Status failed, hr %#lx.\n", hr);
         ok(async_status != AsyncStatus_Closed, "Status was %#x.\n", async_status);
 
-        hr = IAsyncOperation_SpeechRecognitionCompilationResult_put_Completed(operation, &compilation_handler.IAsyncHandler_Compilation_iface);
+        hr = IAsyncOperation_IInspectable_put_Completed((IAsyncOperation_IInspectable *) operation, &compilation_handler.IAsyncHandler_IInspectable_iface);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         ok(!WaitForSingleObject(compilation_handler.event_finished, 1000), "Wait for event_finished failed.\n");
@@ -1117,7 +1117,7 @@ static void test_SpeechRecognizer(void)
         hr = IInspectable_QueryInterface(inspectable, &IID_ISpeechRecognizer, (void **)&recognizer);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-        compilation_handler_create_static(&compilation_handler);
+        async_inspectable_handler_create_static(&compilation_handler, &IID_IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResult);
         compilation_handler.event_block = CreateEventW(NULL, FALSE, FALSE, NULL);
         compilation_handler.event_finished = CreateEventW(NULL, FALSE, FALSE, NULL);
         compilation_handler.thread_id = GetCurrentThreadId();
@@ -1128,8 +1128,8 @@ static void test_SpeechRecognizer(void)
         hr = ISpeechRecognizer_CompileConstraintsAsync(recognizer, &operation);
         ok(hr == S_OK, "ISpeechRecognizer_CompileConstraintsAsync failed, hr %#lx.\n", hr);
 
-        put_completed_param.handler = &compilation_handler.IAsyncHandler_Compilation_iface;
-        put_completed_param.operation = operation;
+        put_completed_param.handler = &compilation_handler.IAsyncHandler_IInspectable_iface;
+        put_completed_param.operation = (IAsyncOperation_IInspectable *)operation;
         put_thread = CreateThread(NULL, 0, put_completed_thread, &put_completed_param, 0, NULL);
 
         ok(!WaitForSingleObject(compilation_handler.event_finished, 5000), "Wait for event_finished failed.\n");
@@ -1140,7 +1140,7 @@ static void test_SpeechRecognizer(void)
         old_ref = compilation_handler.ref;
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_get_Completed(operation, &handler);
         ok(hr == S_OK, "IAsyncOperation_SpeechRecognitionCompilationResult_get_Completed failed, hr %#lx.\n", hr);
-        todo_wine ok(handler == &compilation_handler.IAsyncHandler_Compilation_iface, "Handler was %p.\n", handler);
+        todo_wine ok(handler == (void *)&compilation_handler.IAsyncHandler_IInspectable_iface, "Handler was %p.\n", handler);
 
         ref = compilation_handler.ref - old_ref;
         todo_wine ok(ref == 1, "The ref was increased by %lu.\n", ref);
