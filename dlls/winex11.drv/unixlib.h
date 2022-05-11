@@ -105,7 +105,6 @@ enum client_callback
     client_ime_set_cursor_pos,
     client_ime_set_open_status,
     client_ime_update_association,
-    client_load_icon,
     client_funcs_count
 };
 

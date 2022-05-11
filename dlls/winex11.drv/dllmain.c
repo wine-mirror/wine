@@ -27,12 +27,6 @@ static unixlib_handle_t x11drv_handle;
 NTSTATUS (CDECL *x11drv_unix_call)( enum x11drv_funcs code, void *params );
 
 
-static NTSTATUS x11drv_load_icon( UINT id )
-{
-    return HandleToUlong( LoadIconW( NULL, UlongToPtr( id )));
-}
-
-
 typedef NTSTATUS (*callback_func)( UINT arg );
 static const callback_func callback_funcs[] =
 {
@@ -43,7 +37,6 @@ static const callback_func callback_funcs[] =
     x11drv_ime_set_cursor_pos,
     x11drv_ime_set_open_status,
     x11drv_ime_update_association,
-    x11drv_load_icon,
 };
 
 C_ASSERT( ARRAYSIZE(callback_funcs) == client_funcs_count );

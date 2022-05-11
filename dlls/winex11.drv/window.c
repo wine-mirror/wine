@@ -631,8 +631,9 @@ static void fetch_icon_data( HWND hwnd, HICON icon_big, HICON icon_small )
             icon_big = get_icon_info( (HICON)NtUserGetClassLongPtrW( hwnd, GCLP_HICON ), &ii );
         if (!icon_big)
         {
-            UINT winlogo = x11drv_client_call( client_load_icon, IDI_WINLOGO );
-            icon_big = get_icon_info( UlongToHandle( winlogo ), &ii );
+            icon_big = LoadImageW( 0, (const WCHAR *)IDI_WINLOGO, IMAGE_ICON, 0, 0,
+                                   LR_SHARED | LR_DEFAULTSIZE );
+            icon_big = get_icon_info( icon_big, &ii );
         }
     }
     if (!icon_small)
