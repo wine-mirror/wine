@@ -307,7 +307,6 @@ static const struct IAsyncOperationCompletedHandler_IInspectableVtbl asnyc_inspe
     async_inspectable_handler_Invoke
 };
 
-
 static HRESULT WINAPI async_inspectable_handler_create_static( struct async_inspectable_handler *impl, const GUID *iid )
 {
     impl->IAsyncOperationCompletedHandler_IInspectable_iface.lpVtbl = &asnyc_inspectable_handler_vtbl;
@@ -315,6 +314,22 @@ static HRESULT WINAPI async_inspectable_handler_create_static( struct async_insp
     impl->ref = 1;
 
     return S_OK;
+}
+
+#define await_async_inspectable(operation, handler, iid) await_async_inspectable_(__LINE__, operation, handler, iid)
+static void await_async_inspectable_( unsigned int line, IAsyncOperation_IInspectable *operation, struct async_inspectable_handler *handler, const GUID *handler_iid )
+{
+    HRESULT hr;
+
+    async_inspectable_handler_create_static(handler, handler_iid);
+    handler->event_block = NULL;
+    handler->event_finished = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok_(__FILE__, line)(!!handler->event_finished, "event_finished wasn't created.\n");
+
+    hr = IAsyncOperation_IInspectable_put_Completed(operation, &handler->IAsyncHandler_IInspectable_iface);
+    ok_(__FILE__, line)(hr == S_OK, "IAsyncOperation_IInspectable_put_Completed failed, hr %#lx.\n", hr);
+    ok_(__FILE__, line)(!WaitForSingleObject(handler->event_finished , 5000), "Wait for event_finished failed.\n");
+    CloseHandle(handler->event_finished);
 }
 
 struct iterator_hstring
@@ -972,10 +987,6 @@ static void test_SpeechRecognizer(void)
         ref = IVector_ISpeechRecognitionConstraint_Release(constraints);
         ok(ref == 1, "Got unexpected ref %lu.\n", ref);
 
-        async_inspectable_handler_create_static(&compilation_handler, &IID_IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResult);
-        compilation_handler.event_finished = CreateEventW(NULL, FALSE, FALSE, NULL);
-        compilation_handler.thread_id = GetCurrentThreadId();
-
         hr = ISpeechRecognizer_CompileConstraintsAsync(recognizer, &operation);
         ok(hr == S_OK, "ISpeechRecognizer_CompileConstraintsAsync failed, hr %#lx.\n", hr);
 
@@ -991,11 +1002,9 @@ static void test_SpeechRecognizer(void)
         ok(hr == E_ILLEGAL_METHOD_CALL, "Got unexpected hr %#lx.\n", hr);
         ok(compilation_result == (void*)0xdeadbeef, "Compilation result had value %p.\n", compilation_result);
 
-        hr = IAsyncOperation_IInspectable_put_Completed((IAsyncOperation_IInspectable *) operation, &compilation_handler.IAsyncHandler_IInspectable_iface);
-        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-
-        ok(!WaitForSingleObject(compilation_handler.event_finished, 1000), "Wait for event_finished failed.\n");
-        CloseHandle(compilation_handler.event_finished);
+        await_async_inspectable((IAsyncOperation_IInspectable *)operation,
+                                 &compilation_handler,
+                                 &IID_IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResult);
 
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_put_Completed(operation, NULL);
         ok(hr == E_ILLEGAL_DELEGATE_ASSIGNMENT, "Got unexpected hr %#lx.\n", hr);
@@ -1072,12 +1081,6 @@ static void test_SpeechRecognizer(void)
         IAsyncOperation_SpeechRecognitionCompilationResult_Release(operation);
 
         /* Test if AsyncOperation is started immediately. */
-        async_inspectable_handler_create_static(&compilation_handler, &IID_IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResult);
-        compilation_handler.event_finished = CreateEventW(NULL, FALSE, FALSE, NULL);
-        compilation_handler.thread_id = GetCurrentThreadId();
-
-        ok(compilation_handler.event_finished != NULL, "Finished event wasn't created.\n");
-
         hr = ISpeechRecognizer_CompileConstraintsAsync(recognizer, &operation);
         ok(hr == S_OK, "ISpeechRecognizer_CompileConstraintsAsync failed, hr %#lx.\n", hr);
         check_interface(operation, &IID_IAgileObject, TRUE);
@@ -1090,11 +1093,9 @@ static void test_SpeechRecognizer(void)
         ok(hr == S_OK, "IAsyncInfo_get_Status failed, hr %#lx.\n", hr);
         ok(async_status != AsyncStatus_Closed, "Status was %#x.\n", async_status);
 
-        hr = IAsyncOperation_IInspectable_put_Completed((IAsyncOperation_IInspectable *) operation, &compilation_handler.IAsyncHandler_IInspectable_iface);
-        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-
-        ok(!WaitForSingleObject(compilation_handler.event_finished, 1000), "Wait for event_finished failed.\n");
-        CloseHandle(compilation_handler.event_finished);
+        await_async_inspectable((IAsyncOperation_IInspectable *)operation,
+                                 &compilation_handler,
+                                 &IID_IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResult);
 
         async_status = 0xdeadbeef;
         hr = IAsyncInfo_get_Status(info, &async_status);
