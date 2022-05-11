@@ -332,6 +332,39 @@ static void await_async_inspectable_( unsigned int line, IAsyncOperation_IInspec
     CloseHandle(handler->event_finished);
 }
 
+#define check_async_info(obj, exp_id, exp_status, exp_hr) check_asnyc_info_(__LINE__, obj, exp_id, exp_status, exp_hr)
+static void check_asnyc_info_( unsigned int line, IInspectable *async_obj, UINT32 expect_id, AsyncStatus expect_status, HRESULT expect_hr)
+{
+    IAsyncInfo *async_info;
+    AsyncStatus async_status;
+    UINT32 async_id;
+    HRESULT hr, async_hr;
+
+    hr = IInspectable_QueryInterface(async_obj, &IID_IAsyncInfo, (void **)&async_info);
+    ok_(__FILE__, line)(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    async_id = 0xdeadbeef;
+    hr = IAsyncInfo_get_Id(async_info, &async_id);
+    if (expect_status < 4) todo_wine ok_(__FILE__, line)(hr == S_OK, "IAsyncInfo_get_Id returned %#lx\n", hr);
+    else todo_wine ok_(__FILE__, line)(hr == E_ILLEGAL_METHOD_CALL, "IAsyncInfo_get_Id returned %#lx\n", hr);
+    todo_wine ok_(__FILE__, line)(async_id == expect_id, "got async_id %#x\n", async_id);
+
+    async_status = 0xdeadbeef;
+    hr = IAsyncInfo_get_Status(async_info, &async_status);
+    if (expect_status < 4) ok_(__FILE__, line)(hr == S_OK, "IAsyncInfo_get_Status returned %#lx\n", hr);
+    else ok_(__FILE__, line)(hr == E_ILLEGAL_METHOD_CALL, "IAsyncInfo_get_Status returned %#lx\n", hr);
+    ok_(__FILE__, line)(async_status == expect_status, "got async_status %#x\n", async_status);
+
+    async_hr = 0xdeadbeef;
+    hr = IAsyncInfo_get_ErrorCode(async_info, &async_hr);
+    if (expect_status < 4) ok_(__FILE__, line)(hr == S_OK, "IAsyncInfo_get_ErrorCode returned %#lx\n", hr);
+    else ok_(__FILE__, line)(hr == E_ILLEGAL_METHOD_CALL, "IAsyncInfo_get_ErrorCode returned %#lx\n", hr);
+    if (expect_status < 4) todo_wine_if(FAILED(expect_hr)) ok_(__FILE__, line)(async_hr == expect_hr, "got async_hr %#lx\n", async_hr);
+    else ok_(__FILE__, line)(async_hr == E_ILLEGAL_METHOD_CALL, "got async_hr %#lx\n", async_hr);
+
+    IAsyncInfo_Release(async_info);
+}
+
 struct iterator_hstring
 {
     IIterator_HSTRING IIterator_HSTRING_iface;
@@ -873,9 +906,8 @@ static void test_SpeechRecognizer(void)
     AsyncStatus async_status;
     HSTRING hstr, hstr_lang;
     HANDLE put_thread;
-    HRESULT hr, error_code;
-    UINT32 id;
     LONG ref, old_ref;
+    HRESULT hr;
 
     hr = RoInitialize(RO_INIT_MULTITHREADED);
     ok(hr == S_OK, "RoInitialize failed, hr %#lx.\n", hr);
@@ -1005,6 +1037,7 @@ static void test_SpeechRecognizer(void)
         await_async_inspectable((IAsyncOperation_IInspectable *)operation,
                                  &compilation_handler,
                                  &IID_IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResult);
+        check_async_info((IInspectable *)operation, 1, Completed, S_OK);
 
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_put_Completed(operation, NULL);
         ok(hr == E_ILLEGAL_DELEGATE_ASSIGNMENT, "Got unexpected hr %#lx.\n", hr);
@@ -1031,43 +1064,17 @@ static void test_SpeechRecognizer(void)
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_QueryInterface(operation, &IID_IAsyncInfo, (void **)&info);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-        id = 0xdeadbeef;
-        hr = IAsyncInfo_get_Id(info, &id);
-        todo_wine ok(hr == S_OK, "IAsyncInfo_get_Id failed, hr %#lx.\n", hr);
-        todo_wine ok(id != 0xdeadbeef, "Id was %#x.\n", id);
-
-        async_status = 0xdeadbeef;
-        hr = IAsyncInfo_get_Status(info, &async_status);
-        ok(hr == S_OK, "IAsyncInfo_get_Status failed, hr %#lx.\n", hr);
-        ok(async_status == Completed, "Status was %#x.\n", async_status);
-
-        error_code = 0xdeadbeef;
-        hr = IAsyncInfo_get_ErrorCode(info, &error_code);
-        ok(hr == S_OK, "IAsyncInfo_get_ErrorCode failed, hr %#lx.\n", hr);
-        ok(error_code == S_OK, "ErrorCode was %#lx.\n", error_code);
-
         hr = IAsyncInfo_Cancel(info);
         ok(hr == S_OK, "IAsyncInfo_Cancel failed, hr %#lx.\n", hr);
-
-        async_status = 0xdeadbeef;
-        hr = IAsyncInfo_get_Status(info, &async_status);
-        ok(hr == S_OK, "IAsyncInfo_get_Status failed, hr %#lx.\n", hr);
-        ok(async_status == Completed, "Status was %#x.\n", async_status);
+        check_async_info((IInspectable *)operation, 1, Completed, S_OK);
 
         hr = IAsyncInfo_Close(info);
         ok(hr == S_OK, "IAsyncInfo_Close failed, hr %#lx.\n", hr);
+        check_async_info((IInspectable *)operation, 1, AsyncStatus_Closed, S_OK);
+
         hr = IAsyncInfo_Close(info);
         ok(hr == S_OK, "IAsyncInfo_Close failed, hr %#lx.\n", hr);
-
-        async_status = 0xdeadbeef;
-        hr = IAsyncInfo_get_Status(info, &async_status);
-        ok(hr == E_ILLEGAL_METHOD_CALL, "IAsyncInfo_get_Status failed, hr %#lx.\n", hr);
-        ok(async_status == AsyncStatus_Closed, "Status was %#x.\n", async_status);
-
-        error_code = 0xdeadbeef;
-        hr = IAsyncInfo_get_ErrorCode(info, &error_code);
-        ok(hr == E_ILLEGAL_METHOD_CALL, "IAsyncInfo_get_ErrorCode failed, hr %#lx.\n", hr);
-        ok(error_code == E_ILLEGAL_METHOD_CALL, "ErrorCode was %#lx.\n", error_code);
+        check_async_info((IInspectable *)operation, 1, AsyncStatus_Closed, S_OK);
 
         IAsyncInfo_Release(info);
 
@@ -1092,17 +1099,13 @@ static void test_SpeechRecognizer(void)
         hr = IAsyncInfo_get_Status(info, &async_status);
         ok(hr == S_OK, "IAsyncInfo_get_Status failed, hr %#lx.\n", hr);
         ok(async_status != AsyncStatus_Closed, "Status was %#x.\n", async_status);
+        IAsyncInfo_Release(info);
 
         await_async_inspectable((IAsyncOperation_IInspectable *)operation,
                                  &compilation_handler,
                                  &IID_IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResult);
+        check_async_info((IInspectable *)operation, 2, Completed, S_OK);
 
-        async_status = 0xdeadbeef;
-        hr = IAsyncInfo_get_Status(info, &async_status);
-        ok(hr == S_OK, "IAsyncInfo_get_Status failed, hr %#lx.\n", hr);
-        ok(async_status == Completed, "Status was %#x.\n", async_status);
-
-        IAsyncInfo_Release(info);
         IAsyncOperation_SpeechRecognitionCompilationResult_Release(operation);
 
         ref = ISpeechRecognizer_Release(recognizer);
@@ -1155,6 +1158,7 @@ static void test_SpeechRecognizer(void)
 
         SetEvent(compilation_handler.event_block);
         ok(!WaitForSingleObject(put_thread, 1000), "Wait for block_thread failed.\n");
+        check_async_info((IInspectable *)operation, 1, AsyncStatus_Closed, S_OK);
 
         CloseHandle(put_thread);
         CloseHandle(compilation_handler.event_block);
