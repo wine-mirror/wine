@@ -164,6 +164,13 @@ static NTSTATUS WINAPI User32CopyImage( const struct copy_image_params *params, 
     return HandleToUlong( ret );
 }
 
+static NTSTATUS WINAPI User32LoadImage( const struct load_image_params *params, ULONG size )
+{
+    HANDLE ret = LoadImageW( params->hinst, params->name, params->type,
+                             params->dx, params->dy, params->flags );
+    return HandleToUlong( ret );
+}
+
 static NTSTATUS WINAPI User32FreeCachedClipboardData( const struct free_cached_data_params *params,
                                                       ULONG size )
 {
@@ -193,6 +200,7 @@ static const void *kernel_callback_table[NtUserCallCount] =
     User32CopyImage,
     User32FreeCachedClipboardData,
     User32LoadDriver,
+    User32LoadImage,
     User32RegisterBuiltinClasses,
     User32RenderSsynthesizedFormat,
 };

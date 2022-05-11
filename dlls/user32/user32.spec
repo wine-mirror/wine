@@ -445,7 +445,7 @@
 @ stdcall InsertMenuItemA(long long long ptr)
 @ stdcall InsertMenuItemW(long long long ptr)
 @ stdcall InsertMenuW(long long long long ptr)
-@ stdcall InternalGetWindowIcon(ptr long)
+@ stdcall InternalGetWindowIcon(ptr long) NtUserInternalGetWindowIcon
 @ stdcall InternalGetWindowText(long ptr long) NtUserInternalGetWindowText
 @ stdcall IntersectRect(ptr ptr ptr)
 @ stdcall InvalidateRect(long ptr long)

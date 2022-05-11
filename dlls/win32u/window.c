@@ -4555,6 +4555,54 @@ static BOOL set_window_context_help_id( HWND hwnd, DWORD id )
 }
 
 /***********************************************************************
+ *           NtUserInternalGetWindowIcon   (win32u.@)
+ */
+HICON WINAPI NtUserInternalGetWindowIcon( HWND hwnd, UINT type )
+{
+    WND *win = get_win_ptr( hwnd );
+    HICON ret;
+
+    TRACE( "hwnd %p, type %#x\n", hwnd, type );
+
+    if (!win)
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return 0;
+    }
+    if (win == WND_OTHER_PROCESS || win == WND_DESKTOP)
+    {
+        if (is_window( hwnd )) FIXME( "not supported on other process window %p\n", hwnd );
+        return 0;
+    }
+
+    switch (type)
+    {
+        case ICON_BIG:
+            ret = win->hIcon;
+            if (!ret) ret = (HICON)get_class_long_ptr( hwnd, GCLP_HICON, FALSE );
+            break;
+
+        case ICON_SMALL:
+        case ICON_SMALL2:
+            ret = win->hIconSmall ? win->hIconSmall : win->hIconSmall2;
+            if (!ret) ret = (HICON)get_class_long_ptr( hwnd, GCLP_HICONSM, FALSE );
+            if (!ret) ret = (HICON)get_class_long_ptr( hwnd, GCLP_HICON, FALSE );
+            break;
+
+        default:
+            SetLastError( ERROR_INVALID_PARAMETER );
+            release_win_ptr( win );
+            return 0;
+    }
+    release_win_ptr( win );
+
+    if (!ret) ret = LoadImageW( 0, (const WCHAR *)IDI_APPLICATION, IMAGE_ICON,
+                                0, 0, LR_SHARED | LR_DEFAULTSIZE );
+
+    return CopyImage( ret, IMAGE_ICON, 0, 0, 0 );
+}
+
+/***********************************************************************
  *           send_destroy_message
  */
 static void send_destroy_message( HWND hwnd )

@@ -801,3 +801,24 @@ HANDLE WINAPI CopyImage( HANDLE hwnd, UINT type, INT dx, INT dy, UINT flags )
     ret = KeUserModeCallback( NtUserCopyImage, &params, sizeof(params), &ret_ptr, &ret_len );
     return UlongToHandle( ret );
 }
+
+/******************************************************************************
+ *           LoadImage (win32u.so)
+ */
+HANDLE WINAPI LoadImageW( HINSTANCE hinst, const WCHAR *name, UINT type,
+                          INT dx, INT dy, UINT flags )
+{
+    void *ret_ptr;
+    ULONG ret_len;
+    NTSTATUS ret;
+    struct load_image_params params =
+        { .hinst = hinst, .name = name, .type = type, .dx = dx, .dy = dy, .flags = flags };
+
+    if (HIWORD(name))
+    {
+        ERR( "name %s not supported in Unix modules\n", debugstr_w( name ));
+        return 0;
+    }
+    ret = KeUserModeCallback( NtUserLoadImage, &params, sizeof(params), &ret_ptr, &ret_len );
+    return UlongToHandle( ret );
+}

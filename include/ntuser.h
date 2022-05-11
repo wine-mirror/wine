@@ -35,6 +35,7 @@ enum
     NtUserCopyImage,
     NtUserFreeCachedClipboardData,
     NtUserLoadDriver,
+    NtUserLoadImage,
     NtUserRegisterBuiltinClasses,
     NtUserRenderSynthesizedFormat,
     /* win16 hooks */
@@ -147,7 +148,7 @@ struct win_hook_params
     WCHAR module[MAX_PATH];
 };
 
-/* NtUserCopyMessage params */
+/* NtUserCopyImage params */
 struct copy_image_params
 {
     HANDLE hwnd;
@@ -162,6 +163,17 @@ struct free_cached_data_params
 {
     UINT format;
     HANDLE handle;
+};
+
+/* NtUserLoadImage params */
+struct load_image_params
+{
+    HINSTANCE hinst;
+    const WCHAR *name;
+    UINT type;
+    INT dx;
+    INT dy;
+    UINT flags;
 };
 
 /* NtUserRenderSynthesizedFormat params */
@@ -589,6 +601,7 @@ BOOL    WINAPI NtUserHideCaret( HWND hwnd );
 NTSTATUS WINAPI NtUserInitializeClientPfnArrays( const struct user_client_procs *client_procsA,
                                                  const struct user_client_procs *client_procsW,
                                                  const void *client_workers, HINSTANCE user_module );
+HICON   WINAPI NtUserInternalGetWindowIcon( HWND hwnd, UINT type );
 INT     WINAPI NtUserInternalGetWindowText( HWND hwnd, WCHAR *text, INT count );
 BOOL    WINAPI NtUserIsClipboardFormatAvailable( UINT format );
 BOOL    WINAPI NtUserKillTimer( HWND hwnd, UINT_PTR id );

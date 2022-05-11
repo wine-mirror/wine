@@ -1044,7 +1044,7 @@
 @ stub NtUserInjectPointerInput
 @ stub NtUserInjectTouchInput
 @ stub NtUserInteractiveControlQueryUsage
-@ stub NtUserInternalGetWindowIcon
+@ stdcall NtUserInternalGetWindowIcon(ptr long)
 @ stdcall -syscall NtUserInternalGetWindowText(long ptr long)
 @ stub NtUserInternalToUnicode
 @ stub NtUserInvalidateRect

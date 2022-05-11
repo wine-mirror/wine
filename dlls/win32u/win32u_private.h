@@ -249,6 +249,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserGetUpdatedClipboardFormats)( UINT *formats, UINT size, UINT *out_size );
     BOOL     (WINAPI *pNtUserGetWindowPlacement)( HWND hwnd, WINDOWPLACEMENT *placement );
     BOOL     (WINAPI *pNtUserHideCaret)( HWND hwnd );
+    HICON    (WINAPI *pNtUserInternalGetWindowIcon)( HWND hwnd, UINT type );
     BOOL     (WINAPI *pNtUserIsClipboardFormatAvailable)( UINT format );
     UINT     (WINAPI *pNtUserMapVirtualKeyEx)( UINT code, UINT type, HKL layout );
     LRESULT  (WINAPI *pNtUserMessageCall)( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
