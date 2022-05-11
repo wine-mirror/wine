@@ -433,6 +433,7 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
 {
     struct h264_decoder *decoder = impl_from_IMFTransform(iface);
     GUID major, subtype;
+    UINT64 frame_size;
     HRESULT hr;
     ULONG i;
 
@@ -452,6 +453,11 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
         if (IsEqualGUID(&subtype, h264_decoder_output_types[i]))
             break;
     if (i == ARRAY_SIZE(h264_decoder_output_types))
+        return MF_E_INVALIDMEDIATYPE;
+
+    if (FAILED(hr = IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &frame_size))
+            || (frame_size >> 32) != decoder->wg_format.u.video.width
+            || (UINT32)frame_size != decoder->wg_format.u.video.height)
         return MF_E_INVALIDMEDIATYPE;
 
     if (decoder->output_type)

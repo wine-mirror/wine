@@ -7311,7 +7311,6 @@ static void test_h264_decoder(void)
     ok(hr == S_OK, "MFCreateMediaType returned %#lx\n", hr);
     init_media_type(media_type, is_win7 ? output_type_desc_win7 : output_type_desc, -1);
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
-    todo_wine
     ok(hr == MF_E_INVALIDMEDIATYPE, "SetOutputType returned %#lx.\n", hr);
     init_media_type(media_type, is_win7 ? new_output_type_desc_win7 : new_output_type_desc, -1);
     hr = IMFTransform_SetOutputType(transform, 0, media_type, 0);
