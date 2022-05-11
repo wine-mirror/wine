@@ -319,7 +319,7 @@ HRESULT WINAPI CoGetInstanceFromIStorage(COSERVERINFO* pServerInfo, CLSID* pClsi
 HRESULT WINAPI CoGetMalloc(DWORD dwMemContext, LPMALLOC* lpMalloc);
 LPVOID WINAPI CoTaskMemAlloc(SIZE_T size) __WINE_ALLOC_SIZE(1);
 void WINAPI CoTaskMemFree(LPVOID ptr);
-LPVOID WINAPI CoTaskMemRealloc(LPVOID ptr, SIZE_T size);
+LPVOID WINAPI CoTaskMemRealloc(LPVOID ptr, SIZE_T size) __WINE_ALLOC_SIZE(2);
 
 HRESULT WINAPI CoRegisterMallocSpy(LPMALLOCSPY pMallocSpy);
 HRESULT WINAPI CoRevokeMallocSpy(void);
