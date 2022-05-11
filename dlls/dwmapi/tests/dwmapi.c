@@ -33,7 +33,36 @@ static void test_DwmIsCompositionEnabled(void)
     ok(enabled == TRUE || enabled == FALSE, "Got unexpected %#x.\n", enabled);
 }
 
+static void test_DwmGetCompositionTimingInfo(void)
+{
+    DWM_TIMING_INFO timing_info;
+    BOOL enabled;
+    HRESULT hr;
+
+    enabled = FALSE;
+    hr = DwmIsCompositionEnabled(&enabled);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    if (!enabled)
+    {
+        skip("DWM is disabled.\n");
+        return;
+    }
+
+    hr = DwmGetCompositionTimingInfo(NULL, NULL);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    memset(&timing_info, 0, sizeof(timing_info));
+    hr = DwmGetCompositionTimingInfo(NULL, &timing_info);
+    ok(hr == MILERR_MISMATCHED_SIZE, "Got hr %#lx.\n", hr);
+
+    timing_info.cbSize = sizeof(timing_info);
+    hr = DwmGetCompositionTimingInfo(NULL, &timing_info);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+}
+
 START_TEST(dwmapi)
 {
     test_DwmIsCompositionEnabled();
+    test_DwmGetCompositionTimingInfo();
 }
