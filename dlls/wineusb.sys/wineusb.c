@@ -84,6 +84,8 @@ struct usb_device
 
     uint8_t class, subclass, protocol;
 
+    uint16_t vendor, product, revision;
+
     libusb_device *libusb_device;
     libusb_device_handle *handle;
 
@@ -117,6 +119,9 @@ static void add_usb_interface(struct usb_device *parent, const struct libusb_int
     device->class = desc->bInterfaceClass;
     device->subclass = desc->bInterfaceSubClass;
     device->protocol = desc->bInterfaceProtocol;
+    device->vendor = parent->vendor;
+    device->product = parent->product;
+    device->revision = parent->revision;
     InitializeListHead(&device->irp_list);
 
     EnterCriticalSection(&wineusb_cs);
@@ -173,6 +178,9 @@ static void add_usb_device(libusb_device *libusb_device)
     device->class = device_desc.bDeviceClass;
     device->subclass = device_desc.bDeviceSubClass;
     device->protocol = device_desc.bDeviceProtocol;
+    device->vendor = device_desc.idVendor;
+    device->product = device_desc.idProduct;
+    device->revision = device_desc.bcdDevice;
 
     if (!(ret = libusb_get_active_config_descriptor(libusb_device, &config_desc)))
     {
@@ -423,13 +431,11 @@ static void get_device_id(const struct usb_device *device, struct string_buffer 
             '&','P','I','D','_','%','0','4','X','&','M','I','_','%','0','2','X',0};
     static const WCHAR formatW[] = {'U','S','B','\\','V','I','D','_','%','0','4','X',
             '&','P','I','D','_','%','0','4','X',0};
-    struct libusb_device_descriptor desc;
 
-    libusb_get_device_descriptor(device->libusb_device, &desc);
     if (device->parent)
-        append_id(buffer, interface_formatW, desc.idVendor, desc.idProduct, device->interface_index);
+        append_id(buffer, interface_formatW, device->vendor, device->product, device->interface_index);
     else
-        append_id(buffer, formatW, desc.idVendor, desc.idProduct);
+        append_id(buffer, formatW, device->vendor, device->product);
 }
 
 static void get_hardware_ids(const struct usb_device *device, struct string_buffer *buffer)
@@ -438,14 +444,11 @@ static void get_hardware_ids(const struct usb_device *device, struct string_buff
                 '&','P','I','D','_','%','0','4','X','&','R','E','V','_','%','0','4','X','&','M','I','_','%','0','2','X',0};
     static const WCHAR formatW[] = {'U','S','B','\\','V','I','D','_','%','0','4','X',
                 '&','P','I','D','_','%','0','4','X','&','R','E','V','_','%','0','4','X',0};
-    struct libusb_device_descriptor desc;
-
-    libusb_get_device_descriptor(device->libusb_device, &desc);
 
     if (device->parent)
-        append_id(buffer, interface_formatW, desc.idVendor, desc.idProduct, desc.bcdDevice, device->interface_index);
+        append_id(buffer, interface_formatW, device->vendor, device->product, device->revision, device->interface_index);
     else
-        append_id(buffer, formatW, desc.idVendor, desc.idProduct, desc.bcdDevice);
+        append_id(buffer, formatW, device->vendor, device->product, device->revision);
     get_device_id(device, buffer);
     append_id(buffer, emptyW);
 }
