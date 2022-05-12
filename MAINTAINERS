@@ -58,7 +58,8 @@ F:	dlls/comdlg32/itemdlg.c
 F:	dlls/comdlg32/tests/itemdlg.c
 
 Direct2D
-M:	Henri Verbeet <hverbeet@codeweavers.com>
+M:	Nikolay Sivov <nsivov@codeweavers.com>
+P:	Henri Verbeet <hverbeet@codeweavers.com>
 F:	dlls/d2d*/
 
 Direct3D
