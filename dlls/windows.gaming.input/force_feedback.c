@@ -232,7 +232,7 @@ HRESULT force_feedback_effect_create( enum WineForceFeedbackEffectType type, IIn
     impl->params.dwTriggerButton = -1;
     impl->params.dwGain = 10000;
     impl->params.dwFlags = DIEFF_CARTESIAN|DIEFF_OBJECTOFFSETS;
-    impl->params.cAxes = 0;
+    impl->params.cAxes = 2;
     impl->axes[0] = DIJOFS_X;
     impl->axes[1] = DIJOFS_Y;
     impl->axes[2] = DIJOFS_Z;
