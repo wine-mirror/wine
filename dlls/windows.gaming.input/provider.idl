@@ -38,6 +38,7 @@ namespace Windows.Gaming.Input.Custom {
     typedef struct WineGameControllerState WineGameControllerState;
     typedef struct WineGameControllerVibration WineGameControllerVibration;
     typedef struct WineConstantEffectParameters WineConstantEffectParameters;
+    typedef struct WineRampEffectParameters WineRampEffectParameters;
     typedef struct WineForceFeedbackEffectEnvelope WineForceFeedbackEffectEnvelope;
     typedef union WineForceFeedbackEffectParameters WineForceFeedbackEffectParameters;
     interface IWineGameControllerProvider;
@@ -100,6 +101,17 @@ namespace Windows.Gaming.Input.Custom {
         FLOAT gain;
     };
 
+    struct WineRampEffectParameters
+    {
+        WineForceFeedbackEffectType type;
+        Windows.Foundation.Numerics.Vector3 start_vector;
+        Windows.Foundation.Numerics.Vector3 end_vector;
+        Windows.Foundation.TimeSpan duration;
+        Windows.Foundation.TimeSpan start_delay;
+        UINT32 repeat_count;
+        FLOAT gain;
+    };
+
     struct WineForceFeedbackEffectEnvelope
     {
         FLOAT attack_gain;
@@ -112,6 +124,7 @@ namespace Windows.Gaming.Input.Custom {
     {
         WineForceFeedbackEffectType type;
         WineConstantEffectParameters constant;
+        WineRampEffectParameters ramp;
     };
 
     [

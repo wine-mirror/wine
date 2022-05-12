@@ -99,9 +99,23 @@ static HRESULT WINAPI effect_GetTrustLevel( IRampForceEffect *iface, TrustLevel 
 
 static HRESULT WINAPI effect_SetParameters( IRampForceEffect *iface, Vector3 start_vector, Vector3 end_vector, TimeSpan duration )
 {
-    FIXME( "iface %p, start_vector %s, end_vector %s, duration %I64u stub!\n", iface,
+    WineForceFeedbackEffectParameters params =
+    {
+        .ramp =
+        {
+            .type = WineForceFeedbackEffectType_Ramp,
+            .start_vector = start_vector,
+            .end_vector = end_vector,
+            .duration = duration,
+            .repeat_count = 1,
+        },
+    };
+    struct ramp_effect *impl = impl_from_IRampForceEffect( iface );
+
+    TRACE( "iface %p, start_vector %s, end_vector %s, duration %I64u.\n", iface,
            debugstr_vector3( &start_vector ), debugstr_vector3( &end_vector ), duration.Duration );
-    return E_NOTIMPL;
+
+    return IWineForceFeedbackEffectImpl_put_Parameters( impl->IWineForceFeedbackEffectImpl_inner, params, NULL );
 }
 
 static HRESULT WINAPI effect_SetParametersWithEnvelope( IRampForceEffect *iface, Vector3 start_vector, Vector3 end_vector, FLOAT attack_gain,
@@ -109,11 +123,34 @@ static HRESULT WINAPI effect_SetParametersWithEnvelope( IRampForceEffect *iface,
                                                         TimeSpan attack_duration, TimeSpan sustain_duration,
                                                         TimeSpan release_duration, UINT32 repeat_count )
 {
-    FIXME( "iface %p, start_vector %s, end_vector %s, attack_gain %f, sustain_gain %f, release_gain %f, start_delay %I64u, attack_duration %I64u, "
-           "sustain_duration %I64u, release_duration %I64u, repeat_count %u stub!\n", iface, debugstr_vector3( &start_vector ), debugstr_vector3( &end_vector ),
+    WineForceFeedbackEffectParameters params =
+    {
+        .ramp =
+        {
+            .type = WineForceFeedbackEffectType_Ramp,
+            .start_vector = start_vector,
+            .end_vector = end_vector,
+            .duration = {attack_duration.Duration + sustain_duration.Duration + release_duration.Duration},
+            .start_delay = start_delay,
+            .repeat_count = repeat_count,
+            .gain = sustain_gain,
+        },
+    };
+    WineForceFeedbackEffectEnvelope envelope =
+    {
+        .attack_gain = attack_gain,
+        .release_gain = release_gain,
+        .attack_duration = attack_duration,
+        .release_duration = release_duration,
+    };
+    struct ramp_effect *impl = impl_from_IRampForceEffect( iface );
+
+    TRACE( "iface %p, start_vector %s, end_vector %s, attack_gain %f, sustain_gain %f, release_gain %f, start_delay %I64u, attack_duration %I64u, "
+           "sustain_duration %I64u, release_duration %I64u, repeat_count %u.\n", iface, debugstr_vector3( &start_vector ), debugstr_vector3( &end_vector ),
            attack_gain, sustain_gain, release_gain, start_delay.Duration, attack_duration.Duration, sustain_duration.Duration,
            release_duration.Duration, repeat_count );
-    return E_NOTIMPL;
+
+    return IWineForceFeedbackEffectImpl_put_Parameters( impl->IWineForceFeedbackEffectImpl_inner, params, &envelope );
 }
 
 static const struct IRampForceEffectVtbl effect_vtbl =

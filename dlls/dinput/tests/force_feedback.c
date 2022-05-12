@@ -5604,7 +5604,6 @@ static void test_windows_gaming_input(void)
             .report_id = 10,
             .report_len = 6,
             .report_buf = {10,0x01,0xc8,0x00,0x20,0x03},
-            .todo = TRUE,
         },
         /* set envelope */
         {
@@ -5612,14 +5611,13 @@ static void test_windows_gaming_input(void)
             .report_id = 8,
             .report_len = 8,
             .report_buf = {8,0x01,0x19,0x4c,0x14,0x00,0x3c,0x00},
-            .todo = TRUE,
         },
         /* update effect */
         {
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 3,
             .report_len = 18,
-            .report_buf = {3,0x01,0x05,0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0x5a,0x00,0x00,0x00},
+            .report_buf = {3,0x01,0x05,0x08,0x5a,0x00,0x00,0x00,0x00,0x00,0x0a,0x00,0xff,0xff,0xce,0x00,0x00,0x00},
             .wine_only = TRUE,
             .todo = TRUE,
         },
@@ -6399,11 +6397,9 @@ static void test_windows_gaming_input(void)
     ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
 
     hr = IRampForceEffect_SetParameters( ramp_effect, direction, end_direction, duration );
-    todo_wine
     ok( hr == S_OK, "SetParameters returned %#lx\n", hr );
     hr = IRampForceEffect_SetParametersWithEnvelope( ramp_effect, direction, end_direction, 0.1, 0.2, 0.3,
                                                      delay, attack_duration, duration, release_duration, 1 );
-    todo_wine
     ok( hr == S_OK, "SetParametersWithEnvelope returned %#lx\n", hr );
     IRampForceEffect_Release( ramp_effect );
 

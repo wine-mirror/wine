@@ -131,7 +131,14 @@ static HRESULT WINAPI effect_impl_put_Parameters( IWineForceFeedbackEffectImpl *
         break;
 
     case WineForceFeedbackEffectType_Ramp:
-        FIXME("stub!\n");
+        impl->repeat_count = params.ramp.repeat_count;
+        impl->ramp_force.lStart = round( params.ramp.gain * params.ramp.start_vector.X * 10000 );
+        impl->ramp_force.lEnd = round( params.ramp.gain * params.ramp.end_vector.X * 10000 );
+        impl->params.dwDuration = params.ramp.duration.Duration / 10;
+        impl->params.dwStartDelay = params.ramp.start_delay.Duration / 10;
+        impl->directions[0] = round( -params.ramp.start_vector.X * 10000 );
+        impl->directions[1] = round( -params.ramp.start_vector.Y * 10000 );
+        impl->directions[2] = round( -params.ramp.start_vector.Z * 10000 );
         break;
 
     case WineForceFeedbackEffectType_Periodic_SineWave:
