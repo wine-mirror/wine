@@ -1749,6 +1749,11 @@ static void test_attributes(void)
     ok(!memcmp(blob_buf, blob, size), "Unexpected blob.\n");
     CoTaskMemFree(blob_buf);
 
+    hr = IMFAttributes_GetAllocatedBlob(attributes, &DUMMY_GUID1, &blob_buf, NULL);
+    ok(hr == S_OK, "Failed to get allocated blob, hr %#lx.\n", hr);
+    ok(!memcmp(blob_buf, blob, size), "Unexpected blob.\n");
+    CoTaskMemFree(blob_buf);
+
     hr = IMFAttributes_GetAllocatedBlob(attributes, &DUMMY_GUID2, &blob_buf, &size);
     ok(hr == MF_E_ATTRIBUTENOTFOUND, "Unexpected hr %#lx.\n", hr);
 
