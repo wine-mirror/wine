@@ -134,7 +134,7 @@ static void test_setlocale(void)
         ok(ret != NULL, "expected success, but got NULL\n");
         if(!strcmp(names[i], "syr-SY") && GetACP() == CP_UTF8)
         {
-            todo_wine ok(!strcmp(ret, "LC_COLLATE=syr-SY;LC_CTYPE=EN-US;LC_MONETARY=syr-SY;"
+            ok(!strcmp(ret, "LC_COLLATE=syr-SY;LC_CTYPE=EN-US;LC_MONETARY=syr-SY;"
                         "LC_NUMERIC=syr-SY;LC_TIME=syr-SY"), "got %s\n", ret);
         }
         else

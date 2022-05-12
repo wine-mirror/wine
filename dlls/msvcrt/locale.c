@@ -1334,6 +1334,14 @@ static pthreadlocinfo create_locinfo(int category,
     }
 
     for(i=1; i<6; i++) {
+#if _MSVCR_VER < 140
+        if(i==LC_CTYPE && cp[i]==CP_UTF8) {
+            locale_name[i] = NULL;
+            locale_len[i] = 0;
+            lcid[i] = old_locinfo ? old_locinfo->lc_handle[i] : 0;
+            cp[i] = old_locinfo ? old_locinfo->lc_id[i].wCodePage : 0;
+        }
+#endif
         if(category!=LC_ALL && category!=i) {
             if(old_locinfo) {
                 lcid[i] = old_locinfo->lc_handle[i];
