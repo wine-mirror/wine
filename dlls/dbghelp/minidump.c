@@ -607,7 +607,7 @@ static  unsigned        dump_system_info(struct dump_context* dc)
 {
     MINIDUMP_SYSTEM_INFO        mdSysInfo;
     SYSTEM_INFO                 sysInfo;
-    OSVERSIONINFOW              osInfo;
+    RTL_OSVERSIONINFOEXW        osInfo;
     DWORD                       written;
     ULONG                       slen;
     DWORD                       wine_extra = 0;
@@ -620,7 +620,7 @@ static  unsigned        dump_system_info(struct dump_context* dc)
 
     GetSystemInfo(&sysInfo);
     osInfo.dwOSVersionInfoSize = sizeof(osInfo);
-    GetVersionExW(&osInfo);
+    RtlGetVersion(&osInfo);
 
     wine_get_build_id = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_build_id");
     wine_get_host_version = (void *)GetProcAddress(GetModuleHandleA("ntdll.dll"), "wine_get_host_version");
