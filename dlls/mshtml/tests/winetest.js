@@ -54,6 +54,11 @@ function win_skip(m) {
     external.win_skip(m);
 }
 
+function broken(e)
+{
+    return external.broken(e);
+}
+
 function reportSuccess() {
     external.reportSuccess();
 }
