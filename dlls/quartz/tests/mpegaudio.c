@@ -120,9 +120,9 @@ static const MPEGLAYER3WAVEFORMAT mp3_format1 =
 
 static const AM_MEDIA_TYPE mp3_mt1 =
 {
-    /* MEDIATYPE_Audio, MEDIASUBTYPE_MPEG1AudioPayload, FORMAT_WaveFormatEx */
+    /* MEDIATYPE_Audio, MEDIASUBTYPE_MP3, FORMAT_WaveFormatEx */
     .majortype = {0x73647561, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}},
-    .subtype = {0x00000050, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}},
+    .subtype = {0x00000055, 0x0000, 0x0010, {0x80, 0x00, 0x00, 0xaa, 0x00, 0x38, 0x9b, 0x71}},
     .bFixedSizeSamples = TRUE,
     .lSampleSize = 1,
     .formattype = {0x05589f81, 0xc356, 0x11ce, {0xbf, 0x01, 0x00, 0xaa, 0x00, 0x55, 0x59, 0x5a}},
@@ -741,12 +741,12 @@ static void test_media_types(void)
 
     mt = mp2_mt;
     mt.subtype = MEDIASUBTYPE_MPEG1Packet;
-    hr = IPin_QueryAccept(pin, &mp2_mt);
+    hr = IPin_QueryAccept(pin, &mt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     mt = mp2_mt;
     mt.subtype = MEDIASUBTYPE_MPEG1Payload;
-    hr = IPin_QueryAccept(pin, &mp2_mt);
+    hr = IPin_QueryAccept(pin, &mt);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     mt = mp2_mt;
