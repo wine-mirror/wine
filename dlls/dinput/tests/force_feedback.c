@@ -5514,23 +5514,13 @@ static void test_windows_gaming_input(void)
             .report_id = 4,
             .report_len = 12,
             .report_buf = {4,0x01,0x00,0x70,0x17,0x7b,0x02,0xe9,0x04,0x4c,0x66,0x7f},
-            .todo = TRUE,
         },
         /* update effect */
         {
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 3,
             .report_len = 18,
-            .report_buf = {3,0x01,0x03,0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0x5a,0x00,0x00,0x00},
-            .wine_only = TRUE,
-            .todo = TRUE,
-        },
-        {
-            .code = IOCTL_HID_WRITE_REPORT,
-            .report_id = 3,
-            .report_len = 18,
             .report_buf = {3,0x01,0x03,0x08,0xff,0xff,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0x99,0x00,0x00,0x00},
-            .todo = TRUE,
         },
     };
     struct hid_expect expect_create_constant[] =
@@ -6216,7 +6206,6 @@ static void test_windows_gaming_input(void)
     ok( hr == S_OK, "get_Kind returned %#lx\n", hr );
     ok( condition_kind == ConditionForceEffectKind_Spring, "got kind %u\n", condition_kind );
     hr = IConditionForceEffect_SetParameters( condition_effect, direction, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6 );
-    todo_wine
     ok( hr == S_OK, "SetParameters returned %#lx\n", hr );
     IConditionForceEffect_Release( condition_effect );
 

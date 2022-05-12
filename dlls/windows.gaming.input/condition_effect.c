@@ -110,10 +110,26 @@ static HRESULT WINAPI effect_get_Kind( IConditionForceEffect *iface, ConditionFo
 static HRESULT WINAPI effect_SetParameters( IConditionForceEffect *iface, Vector3 direction, FLOAT positive_coeff, FLOAT negative_coeff,
                                             FLOAT max_positive_magnitude, FLOAT max_negative_magnitude, FLOAT deadzone, FLOAT bias )
 {
-    FIXME( "iface %p, direction %s, positive_coeff %f, negative_coeff %f, max_positive_magnitude %f, max_negative_magnitude %f, deadzone %f, bias %f stub!\n",
+    struct condition_effect *impl = impl_from_IConditionForceEffect( iface );
+    WineForceFeedbackEffectParameters params =
+    {
+        .condition =
+        {
+            .type = WineForceFeedbackEffectType_Condition + impl->kind,
+            .direction = direction,
+            .positive_coeff = positive_coeff,
+            .negative_coeff = negative_coeff,
+            .max_positive_magnitude = max_positive_magnitude,
+            .max_negative_magnitude = max_negative_magnitude,
+            .deadzone = deadzone,
+            .bias = bias,
+        },
+    };
+
+    TRACE( "iface %p, direction %s, positive_coeff %f, negative_coeff %f, max_positive_magnitude %f, max_negative_magnitude %f, deadzone %f, bias %f.\n",
            iface, debugstr_vector3( &direction ), positive_coeff, negative_coeff, max_positive_magnitude, max_negative_magnitude, deadzone, bias );
 
-    return E_NOTIMPL;
+    return IWineForceFeedbackEffectImpl_put_Parameters( impl->IWineForceFeedbackEffectImpl_inner, params, NULL );
 }
 
 static const struct IConditionForceEffectVtbl effect_vtbl =

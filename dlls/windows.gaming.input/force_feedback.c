@@ -162,7 +162,18 @@ static HRESULT WINAPI effect_impl_put_Parameters( IWineForceFeedbackEffectImpl *
     case WineForceFeedbackEffectType_Condition_Damper:
     case WineForceFeedbackEffectType_Condition_Inertia:
     case WineForceFeedbackEffectType_Condition_Friction:
-        FIXME("stub!\n");
+        impl->repeat_count = 1;
+        impl->condition.lPositiveCoefficient = round( atan( params.condition.positive_coeff ) / M_PI_2 * 10000 );
+        impl->condition.lNegativeCoefficient = round( atan( params.condition.negative_coeff ) / M_PI_2 * 10000 );
+        impl->condition.dwPositiveSaturation = round( params.condition.max_positive_magnitude * 10000 );
+        impl->condition.dwNegativeSaturation = round( params.condition.max_negative_magnitude * 10000 );
+        impl->condition.lDeadBand = round( params.condition.deadzone * 10000 );
+        impl->condition.lOffset = round( params.condition.bias * 10000 );
+        impl->params.dwDuration = -1;
+        impl->params.dwStartDelay = 0;
+        impl->directions[0] = round( params.condition.direction.X * 10000 );
+        impl->directions[1] = round( params.condition.direction.Y * 10000 );
+        impl->directions[2] = round( params.condition.direction.Z * 10000 );
         break;
     }
 
