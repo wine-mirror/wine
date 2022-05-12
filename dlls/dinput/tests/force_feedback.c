@@ -6197,10 +6197,8 @@ static void test_windows_gaming_input(void)
     hr = pWindowsCreateString( condition_effect_class_name, wcslen( condition_effect_class_name ), &str );
     ok( hr == S_OK, "WindowsCreateString returned %#lx\n", hr );
     hr = pRoGetActivationFactory( str, &IID_IConditionForceEffectFactory, (void **)&condition_factory );
-    todo_wine
     ok( hr == S_OK, "RoGetActivationFactory returned %#lx\n", hr );
     pWindowsDeleteString( str );
-    if (hr != S_OK) goto skip_condition;
 
     check_interface( condition_factory, &IID_IUnknown, TRUE );
     check_interface( condition_factory, &IID_IInspectable, TRUE );
@@ -6296,7 +6294,6 @@ static void test_windows_gaming_input(void)
     IConditionForceEffectFactory_Release( condition_factory );
 
 
-skip_condition:
     hr = pWindowsCreateString( constant_effect_class_name, wcslen( constant_effect_class_name ), &str );
     ok( hr == S_OK, "WindowsCreateString returned %#lx\n", hr );
     hr = pRoGetActivationFactory( str, &IID_IActivationFactory, (void **)&activation_factory );

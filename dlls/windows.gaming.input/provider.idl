@@ -62,6 +62,13 @@ namespace Windows.Gaming.Input.Custom {
         Periodic_TriangleWave = 12,
         Periodic_SawtoothWaveUp = 13,
         Periodic_SawtoothWaveDown = 14,
+
+        Condition = 20,
+        /* same order as ConditionForceEffectKind */
+        Condition_Spring = 20,
+        Condition_Damper = 21,
+        Condition_Inertia = 22,
+        Condition_Friction = 23,
     };
 
     struct WineGameControllerState

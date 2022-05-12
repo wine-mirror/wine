@@ -52,6 +52,7 @@ extern IGameControllerFactoryManagerStatics2 *manager_factory;
 extern IInspectable *constant_effect_factory;
 extern IInspectable *ramp_effect_factory;
 extern IInspectable *periodic_effect_factory;
+extern IInspectable *condition_effect_factory;
 
 struct vector_iids
 {
