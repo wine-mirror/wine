@@ -25,6 +25,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <assert.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -2627,6 +2628,23 @@ BOOL WINAPI RSAENH_CPEncrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
         return FALSE;
     }
 
+    if (pCryptKey->aiAlgid == CALG_RC2)
+    {
+        const PROV_ENUMALGS_EX *info;
+
+        if (!(info = get_algid_info(hProv, pCryptKey->aiAlgid)))
+        {
+            FIXME("Can't get algid info.\n");
+            SetLastError(NTE_BAD_KEY);
+            return FALSE;
+        }
+        if (pCryptKey->dwKeyLen > info->dwMaxLen / 8)
+        {
+            SetLastError(NTE_BAD_KEY);
+            return FALSE;
+        }
+    }
+
     if (pCryptKey->dwState == RSAENH_KEYSTATE_IDLE) 
         pCryptKey->dwState = RSAENH_KEYSTATE_ENCRYPTING;
 
@@ -3318,7 +3336,30 @@ static BOOL import_symmetric_key(HCRYPTPROV hProv, const BYTE *pbData, DWORD dwD
         return FALSE;
     }
 
-    *phKey = new_key(hProv, pBlobHeader->aiKeyAlg, dwKeyLen<<19, &pCryptKey);
+    if (pBlobHeader->aiKeyAlg == CALG_RC2)
+    {
+        const PROV_ENUMALGS_EX *info;
+
+        info = get_algid_info(hProv, CALG_RC2);
+        assert(info);
+        if (!dwKeyLen)
+            dwKeyLen = info->dwDefaultLen;
+        if (dwKeyLen < info->dwMinLen / 8 || dwKeyLen > 128)
+        {
+            WARN("Invalid RC2 key, len %ld.\n", dwKeyLen);
+            *phKey = (HCRYPTKEY)INVALID_HANDLE_VALUE;
+            SetLastError(NTE_BAD_DATA);
+        }
+        else if ((*phKey = alloc_key(hProv, pBlobHeader->aiKeyAlg, 0, dwKeyLen << 3, &pCryptKey))
+                  != (HCRYPTKEY)INVALID_HANDLE_VALUE && info->dwDefaultLen == 40 && dwKeyLen > info->dwMaxLen / 8)
+        {
+            pCryptKey->dwEffectiveKeyLen = 40;
+        }
+    }
+    else
+    {
+        *phKey = new_key(hProv, pBlobHeader->aiKeyAlg, dwKeyLen<<19, &pCryptKey);
+    }
     if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE)
     {
         free(pbDecrypted);

@@ -3985,6 +3985,221 @@ err:
     }
 }
 
+static void test_rc2_import(void)
+{
+    static const DWORD test_lengths[] = { 128 + 8, 256, 512, 1024 };
+    static const DWORD mac_results[ARRAY_SIZE(test_lengths)][2] =
+    {
+        {0xc13650cf, 0xa3e93efb},
+        {0x6f7be248, 0x444b38b2},
+        {0x2c3534d2, 0x29fca10c},
+        {0x2c3534d2, 0x29fca10c},
+    };
+    static const DWORD mac_baseprov_results[ARRAY_SIZE(test_lengths)][2] =
+    {
+        {0x7e94a244, 0x12a9ae17},
+        {0x2aaa6719, 0xa671d9a6},
+        {0x2e730ce2, 0x9ebe6016},
+        {0x2e730ce2, 0x9ebe6016},
+    };
+    static const DWORD mac_results_old[ARRAY_SIZE(test_lengths)][2] =
+    {
+        {0xebe2155a, 0xab2f58b7},
+        {0x4394ccb2, 0xbe5c629b},
+        {0xd7bc2195, 0x63fb2785},
+        {0xd7bc2195, 0x63fb2785},
+    };
+    static const DWORD mac_baseprov_results_old[ARRAY_SIZE(test_lengths)][2] =
+    {
+        {0xe2ed2dec, 0x5ae837ed},
+        {0x12f4b193, 0xe3f6afc1},
+        {0x04d7f905, 0x686d357b},
+        {0x04d7f905, 0x686d357b},
+    };
+    static const DWORD hmac_results[ARRAY_SIZE(test_lengths)][4] =
+    {
+        {0x2f44586d, 0x76d04c9f, 0xdae8fc03, 0x27e870bd},
+        {0xbcde3186, 0xd9892cd5, 0x578c89f5, 0xc2cba8e5},
+        {0xad2bf1cc, 0xae4e2c1f, 0xd1599a67, 0x0167d802},
+        {0x6ee75968, 0x52a0eff5, 0x75340d85, 0x87b64962},
+    };
+    static const DWORD decrypt_baseprov_results[ARRAY_SIZE(test_lengths)][2] =
+    {
+        {0x48c4ff05, 0x9d880b90},
+        {0xcfee0629, 0xfeab04a1},
+        {0x23c9336c, 0x7f67b26e},
+        {0x23c9336c, 0x7f67b26e},
+    };
+    static const DWORD decrypt_results[ARRAY_SIZE(test_lengths)][2] =
+    {
+        {0xb37e1be2, 0x1ed67048},
+        {0x7c7d0b04, 0x3a74bb76},
+        {0x7bfd232c, 0x93d52c4f},
+        {0x7bfd232c, 0x93d52c4f},
+    };
+
+    struct key_blob
+    {
+        BLOBHEADER h;
+        union
+        {
+            DWORD key_size;
+            DWORD alg_id;
+        } param;
+        BYTE data[512];
+    }
+    key_data;
+    const DWORD *results, *broken_results;
+    HCRYPTKEY exchange_key, key;
+    DWORD len, value, expected;
+    DWORD test_length;
+    BYTE data[2048];
+    HCRYPTPROV prov;
+    HCRYPTHASH hash;
+    unsigned int i;
+    HMAC_INFO hmac;
+    BOOL ret;
+
+    ret = CryptAcquireContextA(&prov, NULL, NULL, PROV_RSA_AES, CRYPT_VERIFYCONTEXT | CRYPT_NEWKEYSET);
+    ok(ret, "Failed, error %#lx.\n", GetLastError());
+
+    /* CryptGenKey() favours advertised key length limit. */
+    ret = CryptGenKey(prov, CALG_RC2, 128 << 16, &key);
+    ok(ret, "Failed, error %#lx.\n", GetLastError());
+
+    CryptDestroyKey(key);
+
+    ret = CryptGenKey(prov, CALG_RC2, (128 + 8) << 16, &key);
+    ok(!ret, "Expected failure.\n");
+
+    CryptReleaseContext(prov, 0);
+
+    ret = CryptGetUserKey(hProv, AT_KEYEXCHANGE, &exchange_key);
+    ok(ret, "CryptGetUserKey failed.\n");
+
+    memset(&key_data.h, 0, sizeof(key_data.h));
+    key_data.h.bVersion = CUR_BLOB_VERSION;
+    key_data.h.aiKeyAlg = CALG_RC2;
+
+    for (i = 0; i < ARRAY_SIZE(test_lengths); ++i)
+    {
+        memset(key_data.data, 0xcc, sizeof(key_data.data));
+        test_length = test_lengths[i];
+        winetest_push_context("length %lu", test_length);
+        len = min(test_length / 8, 64);
+
+
+        ret = CryptEncrypt(exchange_key, 0, TRUE, 0, key_data.data, &len, sizeof(key_data) - 12);
+        ok(ret, "Failed, error %#lx.\n", GetLastError());
+        memset(key_data.data + len, 0xee, sizeof(key_data.data) - len);
+
+        /* Importing a larger key as plaintext fails. */
+        key_data.h.bType = PLAINTEXTKEYBLOB;
+        key_data.param.key_size = test_length / 8;
+        ret = CryptImportKey(hProv, (BYTE *)&key_data, offsetof(struct key_blob, data[test_length / 8]), 0, 0, &key);
+        ok(!ret, "Expected failure.\n");
+
+        /* Importing a larger key as SIMPLEBLOB succeeds. */
+        key_data.h.bType = SIMPLEBLOB;
+        key_data.param.alg_id = CALG_RSA_KEYX;
+        ret = CryptImportKey(hProv, (BYTE *)&key_data, offsetof(struct key_blob, data[len]),
+                exchange_key, 0, &key);
+        ok(ret, "Failed, error %#lx.\n", GetLastError());
+
+        /* Effective key length is a public key decrypted length except for the base provider
+         * where it is default length. */
+        len = sizeof(value);
+        value = 0xdeadbeef;
+        ret = CryptGetKeyParam(key, KP_EFFECTIVE_KEYLEN, (BYTE *)&value, &len, 0);
+        ok(ret, "Failed, error %#lx.\n", GetLastError());
+        expected = BASE_PROV ? 40 : test_length;
+        expected = min(expected, 512);
+        ok(value == expected, "Unexpected value %lu, expected %lu.\n", value, expected);
+
+        expected = min(test_length, 512);
+        ret = CryptGetKeyParam(key, KP_KEYLEN, (BYTE *)&value, &len, 0);
+        ok(ret, "Failed, error %#lx.\n", GetLastError());
+        ok(value == expected, "Unexpected value %lu, expected %lu.\n", value, expected);
+
+        /* The resulting key is not good for encryption. */
+        memset(data, 0xcc, 8);
+        len = 8;
+        ret = CryptEncrypt(key, 0, FALSE, 0, data, &len, sizeof(data));
+        ok(!ret, "Expected failure.\n");
+        ok(GetLastError() == NTE_BAD_KEY, "Unexpected error %#lx.\n", GetLastError());
+        len = 8;
+        ret = CryptEncrypt(key, 0, TRUE, 0, data, &len, sizeof(data));
+        ok(!ret, "Expected failure.\n");
+        ok(GetLastError() == NTE_BAD_KEY, "Unexpected error %#lx.\n", GetLastError());
+        /* But decryption works. */
+        len = 8;
+        ret = CryptDecrypt(key, 0, FALSE, 0, data, &len);
+        ok(ret, "Failed, error %#lx.\n", GetLastError());
+        ok(len == 8, "Unexpected len %lu.\n", len);
+        results = BASE_PROV ? decrypt_baseprov_results[i] : decrypt_results[i];
+        ok(!memcmp(data, results, len), "Data does not match.\n");
+
+        ret = CryptCreateHash(hProv, CALG_MAC, key, 0, &hash);
+        ok(ret, "Failed, error %#lx.\n", GetLastError());
+
+        data[0] = 0;
+        ret = CryptHashData(hash, data, 1, 0);
+        ok(ret, "Failed, error %#lx.\n", GetLastError());
+
+        len = sizeof(value);
+        ret = CryptGetHashParam(hash, HP_HASHSIZE, (BYTE *)&value, &len, 0);
+        ok(ret, "Failed, error %#lx.\n", GetLastError());
+        ok(value == 8, "Unexpected value %lu.\n", value);
+
+        len = 32;
+        memset(data, 0xcc, 8);
+        ret = CryptGetHashParam(hash, HP_HASHVAL, data, &len, 0);
+        ok(ret, "Failed, error %#lx.\n", GetLastError());
+        ok(len == 8, "Unexpected len %lu.\n", len);
+
+        results = BASE_PROV ? mac_baseprov_results[i] : mac_results[i];
+        broken_results = BASE_PROV ? mac_baseprov_results_old[i] : mac_results_old[i];
+        /* Hash state is affected by key state before Win8. */
+        ok(!memcmp(data, results, len) || broken(!memcmp(data, broken_results, len)), "Hash does not match.\n");
+
+        CryptDestroyHash(hash);
+
+        ret = CryptCreateHash(hProv, CALG_HMAC, key, 0, &hash);
+        ok(ret, "Failed, error %#lx.\n", GetLastError());
+        memset(&hmac, 0, sizeof(hmac));
+        hmac.HashAlgid = CALG_MD5;
+        memset(data, 0, sizeof(data));
+        hmac.pbInnerString = data;
+        hmac.cbInnerString = test_length;
+        hmac.pbOuterString = data;
+        hmac.cbOuterString = test_length;
+
+        ret = CryptSetHashParam(hash, HP_HMAC_INFO, (BYTE *)&hmac, 0);
+        ok(ret, "Failed, error %#lx.\n", GetLastError());
+
+        data[0] = 0;
+        ret = CryptHashData(hash, data, 1, 0);
+        ok(ret, "Failed, error %#lx.\n", GetLastError());
+
+        len = sizeof(value);
+        ret = CryptGetHashParam(hash, HP_HASHSIZE, (BYTE *)&value, &len, 0);
+        ok(ret, "Failed, error %#lx.\n", GetLastError());
+        ok(value == 16, "Unexpected value %lu.\n", value);
+
+        len = 16;
+        ret = CryptGetHashParam(hash, HP_HASHVAL, data, &len, 0);
+        ok(ret, "Failed, error %#lx.\n", GetLastError());
+        ok(len == 16, "Unexpected len %lu.\n", len);
+
+        ok(!memcmp(data, hmac_results[i], len), "Hash does not match.\n");
+
+        CryptDestroyHash(hash);
+        CryptDestroyKey(key);
+        winetest_pop_context();
+    }
+    CryptDestroyKey(exchange_key);
+}
+
 START_TEST(rsaenh)
 {
     for (iProv = 0; iProv < ARRAY_SIZE(szProviders); iProv++)
@@ -4016,6 +4231,7 @@ START_TEST(rsaenh)
         test_import_hmac();
         test_enum_container();
         if(!BASE_PROV) test_key_derivation(STRONG_PROV ? "STRONG" : "ENH");
+        test_rc2_import();
         clean_up_base_environment();
     }
 
@@ -4026,10 +4242,12 @@ START_TEST(rsaenh)
     test_rsa_round_trip();
     if (!init_aes_environment())
         return;
+    trace("Testing AES provider.\n");
     test_aes(128);
     test_aes(192);
     test_aes(256);
     test_sha2();
     test_key_derivation("AES");
+    test_rc2_import();
     clean_up_aes_environment();
 }
