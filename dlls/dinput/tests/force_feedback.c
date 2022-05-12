@@ -5572,7 +5572,7 @@ static void test_windows_gaming_input(void)
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 3,
             .report_len = 18,
-            .report_buf = {3,0x01,0x04,0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0x5a,0x00,0x00,0x00},
+            .report_buf = {3,0x01,0x04,0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0x7f,0x5a,0x00,0x00,0x00},
             .wine_only = TRUE,
             .todo = TRUE,
         },
@@ -6061,12 +6061,9 @@ static void test_windows_gaming_input(void)
 
     gain = 12345.6;
     hr = IForceFeedbackEffect_get_Gain( effect, &gain );
-    todo_wine
     ok( hr == S_OK, "get_Gain returned %#lx\n", hr );
-    todo_wine
     ok( gain == 1.0, "got gain %f\n", gain );
     hr = IForceFeedbackEffect_put_Gain( effect, 0.5 );
-    todo_wine
     ok( hr == S_FALSE, "put_Gain returned %#lx\n", hr );
     state = 0xdeadbeef;
     hr = IForceFeedbackEffect_get_State( effect, &state );
@@ -6317,12 +6314,9 @@ static void test_windows_gaming_input(void)
 
     gain = 12345.6;
     hr = IForceFeedbackEffect_get_Gain( effect, &gain );
-    todo_wine
     ok( hr == S_OK, "get_Gain returned %#lx\n", hr );
-    todo_wine
     ok( gain == 1.0, "get_MasterGain returned %f\n", gain );
     hr = IForceFeedbackEffect_put_Gain( effect, 0.5 );
-    todo_wine
     ok( hr == S_FALSE, "put_Gain returned %#lx\n", hr );
     state = 0xdeadbeef;
     hr = IForceFeedbackEffect_get_State( effect, &state );

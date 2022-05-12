@@ -19,6 +19,8 @@
 
 #include "private.h"
 
+#include "math.h"
+
 #include "ddk/hidsdi.h"
 #include "dinput.h"
 #include "hidusage.h"
@@ -117,14 +119,31 @@ DEFINE_IINSPECTABLE_OUTER( effect, IForceFeedbackEffect, struct effect, IInspect
 
 static HRESULT WINAPI effect_get_Gain( IForceFeedbackEffect *iface, DOUBLE *value )
 {
-    FIXME( "iface %p, value %p stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct effect *impl = impl_from_IForceFeedbackEffect( iface );
+
+    TRACE( "iface %p, value %p.\n", iface, value );
+
+    EnterCriticalSection( &impl->cs );
+    *value = impl->params.dwGain / 10000.;
+    LeaveCriticalSection( &impl->cs );
+
+    return S_OK;
 }
 
 static HRESULT WINAPI effect_put_Gain( IForceFeedbackEffect *iface, DOUBLE value )
 {
-    FIXME( "iface %p, value %f stub!\n", iface, value );
-    return E_NOTIMPL;
+    struct effect *impl = impl_from_IForceFeedbackEffect( iface );
+    HRESULT hr;
+
+    TRACE( "iface %p, value %f.\n", iface, value );
+
+    EnterCriticalSection( &impl->cs );
+    impl->params.dwGain = round( value * 10000 );
+    if (!impl->effect) hr = S_FALSE;
+    else hr = IDirectInputEffect_SetParameters( impl->effect, &impl->params, DIEP_GAIN );
+    LeaveCriticalSection( &impl->cs );
+
+    return hr;
 }
 
 static HRESULT WINAPI effect_get_State( IForceFeedbackEffect *iface, ForceFeedbackEffectState *value )
