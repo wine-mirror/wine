@@ -268,6 +268,11 @@ NTSTATUS wg_transform_create(void *args)
             break;
 
         case WG_MAJOR_TYPE_VIDEO:
+            if (!(element = create_element("videoconvert", "base"))
+                    || !transform_append_element(transform, element, &first, &last))
+                goto out;
+            /* Let GStreamer choose a default number of threads. */
+            gst_util_set_object_arg(G_OBJECT(element), "n-threads", "0");
             break;
 
         case WG_MAJOR_TYPE_MPEG1_AUDIO:
