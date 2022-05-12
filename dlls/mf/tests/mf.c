@@ -29,6 +29,7 @@
 #include "d3d9types.h"
 
 #include "initguid.h"
+#include "control.h"
 #include "dmo.h"
 #include "mediaobj.h"
 #include "ole2.h"
@@ -6220,6 +6221,7 @@ static void test_wma_decoder(void)
 
     MFT_REGISTER_TYPE_INFO input_type = {MFMediaType_Audio, MFAudioFormat_WMAudioV8};
     MFT_REGISTER_TYPE_INFO output_type = {MFMediaType_Audio, MFAudioFormat_Float};
+    IUnknown *unknown, *tmp_unknown, outer = {&test_unk_vtbl};
     ULONG wmadec_data_len, wmaenc_data_len;
     const BYTE *wmadec_data, *wmaenc_data;
     MFT_OUTPUT_STREAM_INFO output_info;
@@ -6228,15 +6230,17 @@ static void test_wma_decoder(void)
     MFT_OUTPUT_DATA_BUFFER output;
     DWORD status, flags, length;
     WCHAR output_path[MAX_PATH];
+    IMediaObject *media_object;
+    IPropertyBag *property_bag;
     IMFMediaType *media_type;
     IMFTransform *transform;
     LONGLONG time, duration;
     HANDLE output_file;
     IMFSample *sample;
+    ULONG i, ret, ref;
     HRSRC resource;
     GUID class_id;
     UINT32 value;
-    ULONG i, ret;
     HRESULT hr;
 
     hr = CoInitialize(NULL);
@@ -6582,6 +6586,42 @@ static void test_wma_decoder(void)
     ok(ret == 0, "Release returned %lu\n", ret);
     ret = IMFSample_Release(sample);
     ok(ret == 0, "Release returned %lu\n", ret);
+
+    hr = CoCreateInstance( &CLSID_CWMADecMediaObject, &outer, CLSCTX_INPROC_SERVER, &IID_IUnknown,
+                           (void **)&unknown );
+    ok( hr == S_OK, "CoCreateInstance returned %#lx\n", hr );
+    hr = IUnknown_QueryInterface( unknown, &IID_IMFTransform, (void **)&transform );
+    ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
+    hr = IUnknown_QueryInterface( unknown, &IID_IMediaObject, (void **)&media_object );
+    ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
+    hr = IUnknown_QueryInterface( unknown, &IID_IPropertyBag, (void **)&property_bag );
+    ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
+    hr = IUnknown_QueryInterface( media_object, &IID_IUnknown, (void **)&tmp_unknown );
+    ok( hr == S_OK, "QueryInterface returned %#lx\n", hr );
+
+    ok( unknown != &outer, "got outer IUnknown\n" );
+    ok( transform != (void *)unknown, "got IUnknown == IMFTransform\n" );
+    ok( media_object != (void *)unknown, "got IUnknown == IMediaObject\n" );
+    ok( property_bag != (void *)unknown, "got IUnknown == IPropertyBag\n" );
+    ok( tmp_unknown != unknown, "got inner IUnknown\n" );
+
+    check_interface( unknown, &IID_IPersistPropertyBag, FALSE );
+    check_interface( unknown, &IID_IAMFilterMiscFlags, FALSE );
+    check_interface( unknown, &IID_IMediaSeeking, FALSE );
+    check_interface( unknown, &IID_IMediaPosition, FALSE );
+    check_interface( unknown, &IID_IReferenceClock, FALSE );
+    check_interface( unknown, &IID_IBasicAudio, FALSE );
+
+    ref = IUnknown_Release( tmp_unknown );
+    ok( ref == 1, "Release returned %lu\n", ref );
+    ref = IPropertyBag_Release( property_bag );
+    ok( ref == 1, "Release returned %lu\n", ref );
+    ref = IMediaObject_Release( media_object );
+    ok( ref == 1, "Release returned %lu\n", ref );
+    ref = IMFTransform_Release( transform );
+    ok( ref == 1, "Release returned %lu\n", ref );
+    ref = IUnknown_Release( unknown );
+    ok( ref == 0, "Release returned %lu\n", ref );
 
 failed:
     CoUninitialize();
