@@ -37,6 +37,9 @@ namespace Windows.Gaming.Input.Custom {
     typedef enum WineForceFeedbackEffectType WineForceFeedbackEffectType;
     typedef struct WineGameControllerState WineGameControllerState;
     typedef struct WineGameControllerVibration WineGameControllerVibration;
+    typedef struct WineConstantEffectParameters WineConstantEffectParameters;
+    typedef struct WineForceFeedbackEffectEnvelope WineForceFeedbackEffectEnvelope;
+    typedef union WineForceFeedbackEffectParameters WineForceFeedbackEffectParameters;
     interface IWineGameControllerProvider;
     runtimeclass WineGameControllerProvider;
 
@@ -87,6 +90,30 @@ namespace Windows.Gaming.Input.Custom {
         UINT16 right;
     };
 
+    struct WineConstantEffectParameters
+    {
+        WineForceFeedbackEffectType type;
+        Windows.Foundation.Numerics.Vector3 direction;
+        Windows.Foundation.TimeSpan duration;
+        Windows.Foundation.TimeSpan start_delay;
+        UINT32 repeat_count;
+        FLOAT gain;
+    };
+
+    struct WineForceFeedbackEffectEnvelope
+    {
+        FLOAT attack_gain;
+        FLOAT release_gain;
+        Windows.Foundation.TimeSpan attack_duration;
+        Windows.Foundation.TimeSpan release_duration;
+    };
+
+    union WineForceFeedbackEffectParameters
+    {
+        WineForceFeedbackEffectType type;
+        WineConstantEffectParameters constant;
+    };
+
     [
         uuid(06e58977-7684-4dc5-bad1-cda52a4aa06d)
     ]
@@ -122,6 +149,8 @@ namespace Windows.Gaming.Input.Custom {
     interface IWineForceFeedbackEffectImpl : IUnknown
         requires Windows.Gaming.Input.ForceFeedback.IForceFeedbackEffect
     {
+        [propput] HRESULT Parameters([in] WineForceFeedbackEffectParameters parameters,
+                                     [in, optional] WineForceFeedbackEffectEnvelope *envelope);
     }
 
     [

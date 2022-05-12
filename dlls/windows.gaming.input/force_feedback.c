@@ -43,10 +43,12 @@ struct effect
     GUID type;
     DWORD axes[3];
     LONG directions[3];
+    ULONG repeat_count;
     DICONSTANTFORCE constant_force;
     DIRAMPFORCE ramp_force;
     DICONDITION condition;
     DIPERIODIC periodic;
+    DIENVELOPE envelope;
     DIEFFECT params;
 };
 
@@ -107,12 +109,71 @@ static ULONG WINAPI effect_impl_Release( IWineForceFeedbackEffectImpl *iface )
     return ref;
 }
 
+static HRESULT WINAPI effect_impl_put_Parameters( IWineForceFeedbackEffectImpl *iface, WineForceFeedbackEffectParameters params,
+                                                  WineForceFeedbackEffectEnvelope *envelope )
+{
+    struct effect *impl = impl_from_IWineForceFeedbackEffectImpl( iface );
+    HRESULT hr;
+
+    TRACE( "iface %p, params %p, envelope %p.\n", iface, &params, envelope );
+
+    EnterCriticalSection( &impl->cs );
+    switch (params.type)
+    {
+    case WineForceFeedbackEffectType_Constant:
+        impl->repeat_count = params.constant.repeat_count;
+        impl->constant_force.lMagnitude = round( params.constant.gain * params.constant.direction.X * 10000 );
+        impl->params.dwDuration = params.constant.duration.Duration / 10;
+        impl->params.dwStartDelay = params.constant.start_delay.Duration / 10;
+        impl->directions[0] = round( -params.constant.direction.X * 10000 );
+        impl->directions[1] = round( -params.constant.direction.Y * 10000 );
+        impl->directions[2] = round( -params.constant.direction.Z * 10000 );
+        break;
+
+    case WineForceFeedbackEffectType_Ramp:
+        FIXME("stub!\n");
+        break;
+
+    case WineForceFeedbackEffectType_Periodic_SineWave:
+    case WineForceFeedbackEffectType_Periodic_TriangleWave:
+    case WineForceFeedbackEffectType_Periodic_SquareWave:
+    case WineForceFeedbackEffectType_Periodic_SawtoothWaveDown:
+    case WineForceFeedbackEffectType_Periodic_SawtoothWaveUp:
+        FIXME("stub!\n");
+        break;
+
+    case WineForceFeedbackEffectType_Condition_Spring:
+    case WineForceFeedbackEffectType_Condition_Damper:
+    case WineForceFeedbackEffectType_Condition_Inertia:
+    case WineForceFeedbackEffectType_Condition_Friction:
+        FIXME("stub!\n");
+        break;
+    }
+
+    if (!envelope) impl->params.lpEnvelope = NULL;
+    else
+    {
+        impl->envelope.dwAttackTime = envelope->attack_duration.Duration / 10;
+        impl->envelope.dwAttackLevel = round( envelope->attack_gain * 10000 );
+        impl->envelope.dwFadeTime = impl->params.dwDuration - envelope->release_duration.Duration / 10;
+        impl->envelope.dwFadeLevel = round( envelope->release_gain * 10000 );
+        impl->params.lpEnvelope = &impl->envelope;
+    }
+
+    if (!impl->effect) hr = S_OK;
+    else hr = IDirectInputEffect_SetParameters( impl->effect, &impl->params, DIEP_ALLPARAMS & ~DIEP_AXES );
+    LeaveCriticalSection( &impl->cs );
+
+    return hr;
+}
+
 static const struct IWineForceFeedbackEffectImplVtbl effect_impl_vtbl =
 {
     effect_impl_QueryInterface,
     effect_impl_AddRef,
     effect_impl_Release,
     /* IWineForceFeedbackEffectImpl methods */
+    effect_impl_put_Parameters,
 };
 
 DEFINE_IINSPECTABLE_OUTER( effect, IForceFeedbackEffect, struct effect, IInspectable_outer )
@@ -245,6 +306,7 @@ HRESULT force_feedback_effect_create( enum WineForceFeedbackEffectType type, IIn
         break;
     }
 
+    impl->envelope.dwSize = sizeof(DIENVELOPE);
     impl->params.dwSize = sizeof(DIEFFECT);
     impl->params.rgdwAxes = impl->axes;
     impl->params.rglDirection = impl->directions;

@@ -99,8 +99,21 @@ static HRESULT WINAPI effect_GetTrustLevel( IConstantForceEffect *iface, TrustLe
 
 static HRESULT WINAPI effect_SetParameters( IConstantForceEffect *iface, Vector3 direction, TimeSpan duration )
 {
-    FIXME( "iface %p, direction %s, duration %I64u stub!\n", iface, debugstr_vector3( &direction ), duration.Duration );
-    return E_NOTIMPL;
+    WineForceFeedbackEffectParameters params =
+    {
+        .constant =
+        {
+            .type = WineForceFeedbackEffectType_Constant,
+            .direction = direction,
+            .duration = duration,
+            .repeat_count = 1,
+        },
+    };
+    struct constant_effect *impl = impl_from_IConstantForceEffect( iface );
+
+    TRACE( "iface %p, direction %s, duration %I64u.\n", iface, debugstr_vector3( &direction ), duration.Duration );
+
+    return IWineForceFeedbackEffectImpl_put_Parameters( impl->IWineForceFeedbackEffectImpl_inner, params, NULL );
 }
 
 static HRESULT WINAPI effect_SetParametersWithEnvelope( IConstantForceEffect *iface, Vector3 direction, FLOAT attack_gain,
@@ -108,11 +121,33 @@ static HRESULT WINAPI effect_SetParametersWithEnvelope( IConstantForceEffect *if
                                                         TimeSpan attack_duration, TimeSpan sustain_duration,
                                                         TimeSpan release_duration, UINT32 repeat_count )
 {
-    FIXME( "iface %p, direction %s, attack_gain %f, sustain_gain %f, release_gain %f, start_delay %I64u, attack_duration %I64u, "
-           "sustain_duration %I64u, release_duration %I64u, repeat_count %u stub!\n", iface, debugstr_vector3( &direction ),
+    WineForceFeedbackEffectParameters params =
+    {
+        .constant =
+        {
+            .type = WineForceFeedbackEffectType_Constant,
+            .direction = direction,
+            .duration = {attack_duration.Duration + sustain_duration.Duration + release_duration.Duration},
+            .start_delay = start_delay,
+            .repeat_count = repeat_count,
+            .gain = sustain_gain,
+        },
+    };
+    WineForceFeedbackEffectEnvelope envelope =
+    {
+        .attack_gain = attack_gain,
+        .release_gain = release_gain,
+        .attack_duration = attack_duration,
+        .release_duration = release_duration,
+    };
+    struct constant_effect *impl = impl_from_IConstantForceEffect( iface );
+
+    TRACE( "iface %p, direction %s, attack_gain %f, sustain_gain %f, release_gain %f, start_delay %I64u, attack_duration %I64u, "
+           "sustain_duration %I64u, release_duration %I64u, repeat_count %u.\n", iface, debugstr_vector3( &direction ),
            attack_gain, sustain_gain, release_gain, start_delay.Duration, attack_duration.Duration, sustain_duration.Duration,
            release_duration.Duration, repeat_count );
-    return E_NOTIMPL;
+
+    return IWineForceFeedbackEffectImpl_put_Parameters( impl->IWineForceFeedbackEffectImpl_inner, params, &envelope );
 }
 
 static const struct IConstantForceEffectVtbl effect_vtbl =
