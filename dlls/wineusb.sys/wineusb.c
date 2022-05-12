@@ -384,6 +384,8 @@ static NTSTATUS query_id(const struct usb_device *device, IRP *irp, BUS_QUERY_ID
     static const WCHAR instance_idW[] = {'0',0};
     struct string_buffer buffer = {0};
 
+    TRACE("type %#x.\n", type);
+
     switch (type)
     {
         case BusQueryDeviceID:
