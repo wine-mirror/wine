@@ -58,6 +58,17 @@ struct wg_transform
     GstCaps *output_caps;
 };
 
+static bool is_caps_video(GstCaps *caps)
+{
+    const gchar *media_type;
+
+    if (!caps || !gst_caps_get_size(caps))
+        return false;
+
+    media_type = gst_structure_get_name(gst_caps_get_structure(caps, 0));
+    return g_str_has_prefix(media_type, "video/");
+}
+
 static GstFlowReturn transform_sink_chain_cb(GstPad *pad, GstObject *parent, GstBuffer *buffer)
 {
     struct wg_transform *transform = gst_pad_get_element_private(pad);
@@ -79,6 +90,56 @@ static GstFlowReturn transform_sink_chain_cb(GstPad *pad, GstObject *parent, Gst
     gst_atomic_queue_push(transform->output_queue, sample);
     gst_buffer_unref(buffer);
     return GST_FLOW_OK;
+}
+
+static gboolean transform_sink_query_cb(GstPad *pad, GstObject *parent, GstQuery *query)
+{
+    struct wg_transform *transform = gst_pad_get_element_private(pad);
+
+    GST_LOG("transform %p, type \"%s\".", transform, gst_query_type_get_name(query->type));
+
+    switch (query->type)
+    {
+        case GST_QUERY_ALLOCATION:
+        {
+            GstStructure *config;
+            gboolean needs_pool;
+            GstBufferPool *pool;
+            GstVideoInfo info;
+            GstCaps *caps;
+
+            gst_query_parse_allocation(query, &caps, &needs_pool);
+            if (!is_caps_video(caps) || !needs_pool)
+                break;
+
+            if (!gst_video_info_from_caps(&info, caps)
+                    || !(pool = gst_video_buffer_pool_new()))
+                break;
+
+            if (!(config = gst_buffer_pool_get_config(pool)))
+                GST_ERROR("Failed to get pool %p config.", pool);
+            else
+            {
+                gst_buffer_pool_config_set_params(config, caps,
+                        info.size, 0, 0);
+                if (!gst_buffer_pool_set_config(pool, config))
+                    GST_ERROR("Failed to set pool %p config.", pool);
+            }
+
+            gst_query_add_allocation_pool(query, pool, info.size, 0, 0);
+
+            GST_INFO("Proposing pool %p, buffer size %#zx, for query %p.",
+                    pool, info.size, query);
+
+            g_object_unref(pool);
+            return true;
+        }
+        default:
+            GST_WARNING("Ignoring \"%s\" query.", gst_query_type_get_name(query->type));
+            break;
+    }
+
+    return gst_pad_query_default(pad, parent, query);
 }
 
 static gboolean transform_sink_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
@@ -252,6 +313,7 @@ NTSTATUS wg_transform_create(void *args)
 
     gst_pad_set_element_private(transform->my_sink, transform);
     gst_pad_set_event_function(transform->my_sink, transform_sink_event_cb);
+    gst_pad_set_query_function(transform->my_sink, transform_sink_query_cb);
     gst_pad_set_chain_function(transform->my_sink, transform_sink_chain_cb);
 
     /* Since we append conversion elements, we don't want to filter decoders
