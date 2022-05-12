@@ -464,11 +464,43 @@ static HRESULT WINAPI motor_TryResetAsync( IForceFeedbackMotor *iface, IAsyncOpe
     return async_operation_boolean_create( (IUnknown *)iface, NULL, motor_try_reset_async, async_op );
 }
 
+static HRESULT WINAPI motor_unload_effect_async( IUnknown *iface, IUnknown *param, PROPVARIANT *result )
+{
+    struct effect *effect = impl_from_IForceFeedbackEffect( (IForceFeedbackEffect *)param );
+    IDirectInputEffect *dinput_effect;
+    HRESULT hr;
+
+    EnterCriticalSection( &effect->cs );
+    dinput_effect = effect->effect;
+    effect->effect = NULL;
+    LeaveCriticalSection( &effect->cs );
+
+    if (!dinput_effect) hr = S_OK;
+    else
+    {
+        hr = IDirectInputEffect_Unload( dinput_effect );
+        IDirectInputEffect_Release( dinput_effect );
+    }
+
+    result->vt = VT_BOOL;
+    result->boolVal = SUCCEEDED(hr);
+    return hr;
+}
+
 static HRESULT WINAPI motor_TryUnloadEffectAsync( IForceFeedbackMotor *iface, IForceFeedbackEffect *effect,
                                                   IAsyncOperation_boolean **async_op )
 {
-    FIXME( "iface %p, effect %p, async_op %p stub!\n", iface, effect, async_op );
-    return E_NOTIMPL;
+    struct effect *impl = impl_from_IForceFeedbackEffect( (IForceFeedbackEffect *)effect );
+    HRESULT hr = S_OK;
+
+    TRACE( "iface %p, effect %p, async_op %p.\n", iface, effect, async_op );
+
+    EnterCriticalSection( &impl->cs );
+    if (!impl->effect) hr = E_FAIL;
+    LeaveCriticalSection( &impl->cs );
+    if (FAILED(hr)) return hr;
+
+    return async_operation_boolean_create( (IUnknown *)iface, (IUnknown *)effect, motor_unload_effect_async, async_op );
 }
 
 static const struct IForceFeedbackMotorVtbl motor_vtbl =
