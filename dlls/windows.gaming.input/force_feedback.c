@@ -34,6 +34,9 @@ struct effect
     IInspectable *IInspectable_outer;
     LONG ref;
 
+    CRITICAL_SECTION cs;
+    IDirectInputEffect *effect;
+
     GUID type;
     DWORD axes[3];
     LONG directions[3];
@@ -87,7 +90,13 @@ static ULONG WINAPI effect_impl_Release( IWineForceFeedbackEffectImpl *iface )
 
     TRACE( "iface %p decreasing refcount to %lu.\n", iface, ref );
 
-    if (!ref) free( impl );
+    if (!ref)
+    {
+        if (impl->effect) IDirectInputEffect_Release( impl->effect );
+        impl->cs.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection( &impl->cs );
+        free( impl );
+    }
 
     return ref;
 }
@@ -180,6 +189,9 @@ HRESULT force_feedback_effect_create( enum WineForceFeedbackEffectType type, IIn
     impl->axes[0] = DIJOFS_X;
     impl->axes[1] = DIJOFS_Y;
     impl->axes[2] = DIJOFS_Z;
+
+    InitializeCriticalSection( &impl->cs );
+    impl->cs.DebugInfo->Spare[0] = (DWORD_PTR)( __FILE__ ": effect.cs" );
 
     *out = &impl->IWineForceFeedbackEffectImpl_iface;
     TRACE( "created ForceFeedbackEffect %p\n", *out );
@@ -337,11 +349,38 @@ static HRESULT WINAPI motor_get_SupportedAxes( IForceFeedbackMotor *iface, enum 
     return E_NOTIMPL;
 }
 
+static HRESULT WINAPI motor_load_effect_async( IUnknown *invoker, IUnknown *param, PROPVARIANT *result )
+{
+    struct effect *effect = impl_from_IForceFeedbackEffect( (IForceFeedbackEffect *)param );
+    struct motor *impl = impl_from_IForceFeedbackMotor( (IForceFeedbackMotor *)invoker );
+    IDirectInputEffect *dinput_effect;
+    HRESULT hr;
+
+    if (SUCCEEDED(hr = IDirectInputDevice8_CreateEffect( impl->device, &effect->type, &effect->params, &dinput_effect, NULL )))
+    {
+        EnterCriticalSection( &effect->cs );
+        if (!effect->effect)
+        {
+            effect->effect = dinput_effect;
+            IDirectInputEffect_AddRef( effect->effect );
+        }
+        LeaveCriticalSection( &effect->cs );
+        IDirectInputEffect_Release( dinput_effect );
+    }
+
+    result->vt = VT_UI4;
+    if (SUCCEEDED(hr)) result->ulVal = ForceFeedbackLoadEffectResult_Succeeded;
+    else if (hr == DIERR_DEVICEFULL) result->ulVal = ForceFeedbackLoadEffectResult_EffectStorageFull;
+    else result->ulVal = ForceFeedbackLoadEffectResult_EffectNotSupported;
+
+    return hr;
+}
+
 static HRESULT WINAPI motor_LoadEffectAsync( IForceFeedbackMotor *iface, IForceFeedbackEffect *effect,
                                              IAsyncOperation_ForceFeedbackLoadEffectResult **async_op )
 {
-    FIXME( "iface %p, effect %p, async_op %p stub!\n", iface, effect, async_op );
-    return E_NOTIMPL;
+    TRACE( "iface %p, effect %p, async_op %p.\n", iface, effect, async_op );
+    return async_operation_effect_result_create( (IUnknown *)iface, (IUnknown *)effect, motor_load_effect_async, async_op );
 }
 
 static HRESULT WINAPI motor_PauseAllEffects( IForceFeedbackMotor *iface )

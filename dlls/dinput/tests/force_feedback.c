@@ -5666,9 +5666,7 @@ static void test_windows_gaming_input(void)
     ok( hr == 0x86854003, "Stop returned %#lx\n", hr );
 
     hr = IForceFeedbackMotor_LoadEffectAsync( motor, effect, &result_async );
-    todo_wine
     ok( hr == S_OK, "LoadEffectAsync returned %#lx\n", hr );
-    if (hr != S_OK) goto skip_tests;
     result_async_handler = default_result_async_handler;
     result_async_handler.event = CreateEventW( NULL, FALSE, FALSE, NULL );
     ok( !!result_async_handler.event, "CreateEventW failed, error %lu\n", GetLastError() );
@@ -5696,7 +5694,6 @@ static void test_windows_gaming_input(void)
     ok( ref == 0, "Release returned %lu\n", ref );
 
 
-skip_tests:
     IForceFeedbackMotor_Release( motor );
 
     IRawGameController_Release( raw_controller );
