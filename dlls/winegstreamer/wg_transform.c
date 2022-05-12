@@ -51,40 +51,77 @@ struct wg_transform
     GstBufferList *input;
     guint input_max_length;
     GstAtomicQueue *output_queue;
-    GstBuffer *output_buffer;
+    GstSample *output_sample;
+    GstCaps *output_caps;
 };
 
 static GstFlowReturn transform_sink_chain_cb(GstPad *pad, GstObject *parent, GstBuffer *buffer)
 {
     struct wg_transform *transform = gst_pad_get_element_private(pad);
+    GstSample *sample;
 
     GST_LOG("transform %p, buffer %p.", transform, buffer);
 
-    gst_atomic_queue_push(transform->output_queue, buffer);
+    if (!(sample = gst_sample_new(buffer, transform->output_caps, NULL, NULL)))
+    {
+        GST_ERROR("Failed to allocate transform %p output sample.", transform);
+        gst_buffer_unref(buffer);
+        return GST_FLOW_ERROR;
+    }
 
+    gst_atomic_queue_push(transform->output_queue, sample);
+    gst_buffer_unref(buffer);
     return GST_FLOW_OK;
+}
+
+static gboolean transform_sink_event_cb(GstPad *pad, GstObject *parent, GstEvent *event)
+{
+    struct wg_transform *transform = gst_pad_get_element_private(pad);
+
+    GST_LOG("transform %p, type \"%s\".", transform, GST_EVENT_TYPE_NAME(event));
+
+    switch (event->type)
+    {
+        case GST_EVENT_CAPS:
+        {
+            GstCaps *caps;
+
+            gst_event_parse_caps(event, &caps);
+
+            gst_caps_unref(transform->output_caps);
+            transform->output_caps = gst_caps_ref(caps);
+            break;
+        }
+        default:
+            GST_WARNING("Ignoring \"%s\" event.", GST_EVENT_TYPE_NAME(event));
+            break;
+    }
+
+    gst_event_unref(event);
+    return TRUE;
 }
 
 NTSTATUS wg_transform_destroy(void *args)
 {
     struct wg_transform *transform = args;
-    GstBuffer *buffer;
+    GstSample *sample;
 
     if (transform->input)
         gst_buffer_list_unref(transform->input);
 
     gst_element_set_state(transform->container, GST_STATE_NULL);
 
-    if (transform->output_buffer)
-        gst_buffer_unref(transform->output_buffer);
-    while ((buffer = gst_atomic_queue_pop(transform->output_queue)))
-        gst_buffer_unref(buffer);
+    if (transform->output_sample)
+        gst_sample_unref(transform->output_sample);
+    while ((sample = gst_atomic_queue_pop(transform->output_queue)))
+        gst_sample_unref(sample);
 
     g_object_unref(transform->their_sink);
     g_object_unref(transform->their_src);
     g_object_unref(transform->container);
     g_object_unref(transform->my_sink);
     g_object_unref(transform->my_src);
+    gst_caps_unref(transform->output_caps);
     gst_atomic_queue_unref(transform->output_queue);
     free(transform);
 
@@ -162,10 +199,10 @@ static bool transform_append_element(struct wg_transform *transform, GstElement 
 NTSTATUS wg_transform_create(void *args)
 {
     struct wg_transform_create_params *params = args;
-    GstCaps *raw_caps = NULL, *src_caps = NULL, *sink_caps = NULL;
     struct wg_format output_format = *params->output_format;
     struct wg_format input_format = *params->input_format;
     GstElement *first = NULL, *last = NULL, *element;
+    GstCaps *raw_caps = NULL, *src_caps = NULL;
     NTSTATUS status = STATUS_UNSUCCESSFUL;
     GstPadTemplate *template = NULL;
     struct wg_transform *transform;
@@ -194,9 +231,9 @@ NTSTATUS wg_transform_create(void *args)
     if (!transform->my_src)
         goto out;
 
-    if (!(sink_caps = wg_format_to_caps(&output_format)))
+    if (!(transform->output_caps = wg_format_to_caps(&output_format)))
         goto out;
-    if (!(template = gst_pad_template_new("sink", GST_PAD_SINK, GST_PAD_ALWAYS, sink_caps)))
+    if (!(template = gst_pad_template_new("sink", GST_PAD_SINK, GST_PAD_ALWAYS, transform->output_caps)))
         goto out;
     transform->my_sink = gst_pad_new_from_template(template, "sink");
     g_object_unref(template);
@@ -204,13 +241,14 @@ NTSTATUS wg_transform_create(void *args)
         goto out;
 
     gst_pad_set_element_private(transform->my_sink, transform);
+    gst_pad_set_event_function(transform->my_sink, transform_sink_event_cb);
     gst_pad_set_chain_function(transform->my_sink, transform_sink_chain_cb);
 
     /* Since we append conversion elements, we don't want to filter decoders
      * based on the actual output caps now. Matching decoders with the
      * raw output media type should be enough.
      */
-    media_type = gst_structure_get_name(gst_caps_get_structure(sink_caps, 0));
+    media_type = gst_structure_get_name(gst_caps_get_structure(transform->output_caps, 0));
     if (!(raw_caps = gst_caps_new_empty_simple(media_type)))
         goto out;
 
@@ -316,7 +354,6 @@ NTSTATUS wg_transform_create(void *args)
             || !gst_pad_push_event(transform->my_src, event))
         goto out;
 
-    gst_caps_unref(sink_caps);
     gst_caps_unref(src_caps);
 
     GST_INFO("Created winegstreamer transform %p.", transform);
@@ -330,8 +367,8 @@ out:
         gst_object_unref(transform->their_src);
     if (transform->my_sink)
         gst_object_unref(transform->my_sink);
-    if (sink_caps)
-        gst_caps_unref(sink_caps);
+    if (transform->output_caps)
+        gst_caps_unref(transform->output_caps);
     if (transform->my_src)
         gst_object_unref(transform->my_src);
     if (src_caps)
@@ -440,6 +477,7 @@ NTSTATUS wg_transform_read_data(void *args)
     struct wg_transform *transform = params->transform;
     struct wg_sample *sample = params->sample;
     GstBufferList *input = transform->input;
+    GstBuffer *output_buffer;
     GstFlowReturn ret;
     NTSTATUS status;
 
@@ -457,7 +495,7 @@ NTSTATUS wg_transform_read_data(void *args)
         return STATUS_UNSUCCESSFUL;
     }
 
-    if (!transform->output_buffer && !(transform->output_buffer = gst_atomic_queue_pop(transform->output_queue)))
+    if (!transform->output_sample && !(transform->output_sample = gst_atomic_queue_pop(transform->output_queue)))
     {
         sample->size = 0;
         params->result = MF_E_TRANSFORM_NEED_MORE_INPUT;
@@ -465,13 +503,15 @@ NTSTATUS wg_transform_read_data(void *args)
         return STATUS_SUCCESS;
     }
 
-    if ((status = read_transform_output_data(transform->output_buffer, sample)))
+    output_buffer = gst_sample_get_buffer(transform->output_sample);
+
+    if ((status = read_transform_output_data(output_buffer, sample)))
         return status;
 
     if (!(sample->flags & WG_SAMPLE_FLAG_INCOMPLETE))
     {
-        gst_buffer_unref(transform->output_buffer);
-        transform->output_buffer = NULL;
+        gst_sample_unref(transform->output_sample);
+        transform->output_sample = NULL;
     }
 
     params->result = S_OK;
