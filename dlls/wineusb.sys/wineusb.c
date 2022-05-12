@@ -300,30 +300,66 @@ static NTSTATUS fdo_pnp(IRP *irp)
     return IoCallDriver(bus_pdo, irp);
 }
 
-static void get_device_id(const struct usb_device *device, WCHAR *buffer)
+struct string_buffer
+{
+    WCHAR *string;
+    size_t len;
+};
+
+static void WINAPIV append_id(struct string_buffer *buffer, const WCHAR *format, ...)
+{
+    __ms_va_list args;
+    WCHAR *string;
+    int len;
+
+    __ms_va_start(args, format);
+
+    len = _vsnwprintf(NULL, 0, format, args) + 1;
+    if (!(string = ExAllocatePool(PagedPool, (buffer->len + len) * sizeof(WCHAR))))
+    {
+        if (buffer->string)
+            ExFreePool(buffer->string);
+        buffer->string = NULL;
+        return;
+    }
+    if (buffer->string)
+    {
+        memcpy(string, buffer->string, buffer->len * sizeof(WCHAR));
+        ExFreePool(buffer->string);
+    }
+    _vsnwprintf(string + buffer->len, len, format, args);
+    buffer->string = string;
+    buffer->len += len;
+
+    __ms_va_end(args);
+}
+
+static const WCHAR emptyW[] = {0};
+
+static void get_device_id(const struct usb_device *device, struct string_buffer *buffer)
 {
     static const WCHAR formatW[] = {'U','S','B','\\','V','I','D','_','%','0','4','X',
             '&','P','I','D','_','%','0','4','X',0};
     struct libusb_device_descriptor desc;
 
     libusb_get_device_descriptor(device->libusb_device, &desc);
-    sprintfW(buffer, formatW, desc.idVendor, desc.idProduct);
+    append_id(buffer, formatW, desc.idVendor, desc.idProduct);
 }
 
-static void get_hardware_ids(const struct usb_device *device, WCHAR *buffer)
+static void get_hardware_ids(const struct usb_device *device, struct string_buffer *buffer)
 {
     static const WCHAR formatW[] = {'U','S','B','\\','V','I','D','_','%','0','4','X',
                 '&','P','I','D','_','%','0','4','X','&','R','E','V','_','%','0','4','X',0};
     struct libusb_device_descriptor desc;
 
     libusb_get_device_descriptor(device->libusb_device, &desc);
-    buffer += sprintfW(buffer, formatW, desc.idVendor, desc.idProduct, desc.bcdDevice) + 1;
+
+    append_id(buffer, formatW, desc.idVendor, desc.idProduct, desc.bcdDevice);
     get_device_id(device, buffer);
-    buffer += strlenW(buffer) + 1;
-    *buffer = 0;
+    append_id(buffer, emptyW);
 }
 
-static void get_compatible_ids(const struct usb_device *device, WCHAR *buffer)
+static void get_compatible_ids(const struct usb_device *device, struct string_buffer *buffer)
 {
     static const WCHAR prot_format[] = {'U','S','B','\\','C','l','a','s','s','_','%','0','2','x',
             '&','S','u','b','C','l','a','s','s','_','%','0','2','x',
@@ -336,40 +372,34 @@ static void get_compatible_ids(const struct usb_device *device, WCHAR *buffer)
 
     libusb_get_device_descriptor(device->libusb_device, &device_desc);
 
-    buffer += sprintfW(buffer, prot_format, device_desc.bDeviceClass, device_desc.bDeviceSubClass,
-            device_desc.bDeviceProtocol) + 1;
-    buffer += sprintfW(buffer, subclass_format, device_desc.bDeviceClass, device_desc.bDeviceSubClass) + 1;
-    buffer += sprintfW(buffer, class_format, device_desc.bDeviceClass) + 1;
-    *buffer = 0;
+    append_id(buffer, prot_format, device_desc.bDeviceClass,
+            device_desc.bDeviceSubClass, device_desc.bDeviceProtocol);
+    append_id(buffer, subclass_format, device_desc.bDeviceClass, device_desc.bDeviceSubClass);
+    append_id(buffer, class_format, device_desc.bDeviceClass);
+    append_id(buffer, emptyW);
 }
 
 static NTSTATUS query_id(const struct usb_device *device, IRP *irp, BUS_QUERY_ID_TYPE type)
 {
-    WCHAR *id = NULL;
+    static const WCHAR instance_idW[] = {'0',0};
+    struct string_buffer buffer = {0};
 
     switch (type)
     {
         case BusQueryDeviceID:
-            if ((id = ExAllocatePool(PagedPool, 28 * sizeof(WCHAR))))
-                get_device_id(device, id);
+            get_device_id(device, &buffer);
             break;
 
         case BusQueryInstanceID:
-            if ((id = ExAllocatePool(PagedPool, 2 * sizeof(WCHAR))))
-            {
-                id[0] = '0';
-                id[1] = 0;
-            }
+            append_id(&buffer, instance_idW);
             break;
 
         case BusQueryHardwareIDs:
-            if ((id = ExAllocatePool(PagedPool, (28 + 37 + 1) * sizeof(WCHAR))))
-                get_hardware_ids(device, id);
+            get_hardware_ids(device, &buffer);
             break;
 
         case BusQueryCompatibleIDs:
-            if ((id = ExAllocatePool(PagedPool, (33 + 25 + 13 + 1) * sizeof(WCHAR))))
-                get_compatible_ids(device, id);
+            get_compatible_ids(device, &buffer);
             break;
 
         default:
@@ -377,7 +407,10 @@ static NTSTATUS query_id(const struct usb_device *device, IRP *irp, BUS_QUERY_ID
             return irp->IoStatus.Status;
     }
 
-    irp->IoStatus.Information = (ULONG_PTR)id;
+    if (!buffer.string)
+        return STATUS_NO_MEMORY;
+
+    irp->IoStatus.Information = (ULONG_PTR)buffer.string;
     return STATUS_SUCCESS;
 }
 
