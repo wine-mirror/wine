@@ -6841,7 +6841,7 @@ static void test_h264_decoder(void)
             ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
             ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_NV12),
             ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
-            ATTR_RATIO(MF_MT_FRAME_RATE, 60000, 1000, .todo_value = TRUE),
+            ATTR_RATIO(MF_MT_FRAME_RATE, 60000, 1000),
             ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .todo_value = TRUE),
             ATTR_UINT32(MF_MT_SAMPLE_SIZE, actual_width * actual_height * 3 / 2, .todo_value = TRUE),
             ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width, .todo_value = TRUE),
@@ -6855,7 +6855,7 @@ static void test_h264_decoder(void)
             ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
             ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YV12),
             ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
-            ATTR_RATIO(MF_MT_FRAME_RATE, 60000, 1000, .todo_value = TRUE),
+            ATTR_RATIO(MF_MT_FRAME_RATE, 60000, 1000),
             ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .todo_value = TRUE),
             ATTR_UINT32(MF_MT_SAMPLE_SIZE, actual_width * actual_height * 3 / 2, .todo_value = TRUE),
             ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width, .todo_value = TRUE),
@@ -6869,7 +6869,7 @@ static void test_h264_decoder(void)
             ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
             ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_IYUV),
             ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
-            ATTR_RATIO(MF_MT_FRAME_RATE, 60000, 1000, .todo_value = TRUE),
+            ATTR_RATIO(MF_MT_FRAME_RATE, 60000, 1000),
             ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .todo_value = TRUE),
             ATTR_UINT32(MF_MT_SAMPLE_SIZE, actual_width * actual_height * 3 / 2, .todo_value = TRUE),
             ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width, .todo_value = TRUE),
@@ -6883,7 +6883,7 @@ static void test_h264_decoder(void)
             ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
             ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_I420),
             ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
-            ATTR_RATIO(MF_MT_FRAME_RATE, 60000, 1000, .todo_value = TRUE),
+            ATTR_RATIO(MF_MT_FRAME_RATE, 60000, 1000),
             ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .todo_value = TRUE),
             ATTR_UINT32(MF_MT_SAMPLE_SIZE, actual_width * actual_height * 3 / 2, .todo_value = TRUE),
             ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width, .todo_value = TRUE),
@@ -6897,7 +6897,7 @@ static void test_h264_decoder(void)
             ATTR_GUID(MF_MT_MAJOR_TYPE, MFMediaType_Video),
             ATTR_GUID(MF_MT_SUBTYPE, MFVideoFormat_YUY2),
             ATTR_RATIO(MF_MT_PIXEL_ASPECT_RATIO, 1, 1),
-            ATTR_RATIO(MF_MT_FRAME_RATE, 60000, 1000, .todo_value = TRUE),
+            ATTR_RATIO(MF_MT_FRAME_RATE, 60000, 1000),
             ATTR_RATIO(MF_MT_FRAME_SIZE, actual_width, actual_height, .todo_value = TRUE),
             ATTR_UINT32(MF_MT_SAMPLE_SIZE, actual_width * actual_height * 2, .todo_value = TRUE),
             ATTR_UINT32(MF_MT_DEFAULT_STRIDE, actual_width * 2, .todo_value = TRUE),
@@ -7206,7 +7206,6 @@ static void test_h264_decoder(void)
     hr = IMFTransform_GetOutputStreamInfo(transform, 0, &output_info);
     ok(hr == S_OK, "GetOutputStreamInfo returned %#lx\n", hr);
     ok(output_info.dwFlags == flags, "got dwFlags %#lx\n", output_info.dwFlags);
-    todo_wine
     ok(output_info.cbSize == actual_width * actual_height * 2, "got cbSize %#lx\n", output_info.cbSize);
     ok(output_info.cbAlignment == 0, "got cbAlignment %#lx\n", output_info.cbAlignment);
 
@@ -7248,14 +7247,12 @@ static void test_h264_decoder(void)
     memset(&output, 0, sizeof(output));
     output.pSample = create_sample(NULL, actual_width * actual_height * 2);
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
-    todo_wine
     ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
     ok(output.dwStreamID == 0, "got dwStreamID %lu\n", output.dwStreamID);
     ok(!!output.pSample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
     ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
     ok(status == 0, "got status %#lx\n", status);
-    if (hr != S_OK) goto skip_nv12_tests;
 
     hr = IMFSample_GetUINT32(sample, &MFSampleExtension_CleanPoint, &value);
     ok(hr == MF_E_ATTRIBUTENOTFOUND, "GetUINT32 MFSampleExtension_CleanPoint returned %#lx\n", hr);
@@ -7272,9 +7269,7 @@ static void test_h264_decoder(void)
 
     time = 0xdeadbeef;
     hr = IMFSample_GetSampleTime(output.pSample, &time);
-    todo_wine
     ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
-    todo_wine
     ok(time == 0, "got time %I64d\n", time);
 
     /* doesn't matter what frame rate we've selected, duration is defined by the stream */
@@ -7289,7 +7284,9 @@ static void test_h264_decoder(void)
     ok(hr == S_OK, "ConvertToContiguousBuffer returned %#lx\n", hr);
     hr = IMFMediaBuffer_Lock(media_buffer, &data, NULL, &length);
     ok(hr == S_OK, "Lock returned %#lx\n", hr);
+    todo_wine
     ok(length == nv12_frame_len, "got length %lu\n", length);
+    if (length != nv12_frame_len) goto skip_nv12_tests;
 
     for (i = 0; i < actual_aperture.Area.cy; ++i)
     {

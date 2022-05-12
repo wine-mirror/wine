@@ -489,8 +489,10 @@ NTSTATUS wg_transform_read_data(void *args)
     struct wg_transform_read_data_params *params = args;
     struct wg_transform *transform = params->transform;
     struct wg_sample *sample = params->sample;
+    struct wg_format *format = params->format;
     GstBufferList *input = transform->input;
     GstBuffer *output_buffer;
+    GstCaps *output_caps;
     GstFlowReturn ret;
     NTSTATUS status;
 
@@ -517,10 +519,14 @@ NTSTATUS wg_transform_read_data(void *args)
     }
 
     output_buffer = gst_sample_get_buffer(transform->output_sample);
+    output_caps = gst_sample_get_caps(transform->output_sample);
 
     if (gst_sample_get_info(transform->output_sample))
     {
         gst_sample_set_info(transform->output_sample, NULL);
+
+        if (format)
+            wg_format_from_caps(format, output_caps);
 
         params->result = MF_E_TRANSFORM_STREAM_CHANGE;
         GST_INFO("Format changed detected, returning no output");

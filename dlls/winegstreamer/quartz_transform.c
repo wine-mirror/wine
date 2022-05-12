@@ -350,7 +350,7 @@ static HRESULT WINAPI transform_sink_receive(struct strmbase_sink *pin, IMediaSa
             return hr;
         }
 
-        hr = wg_transform_read_data(filter->transform, &output_wg_sample);
+        hr = wg_transform_read_data(filter->transform, &output_wg_sample, NULL);
         if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
         {
             IMediaSample_Release(output_sample);

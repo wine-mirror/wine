@@ -50,6 +50,7 @@ struct h264_decoder
     IMFMediaType *input_type;
     IMFMediaType *output_type;
 
+    struct wg_format wg_format;
     struct wg_transform *wg_transform;
 };
 
@@ -89,8 +90,10 @@ static HRESULT try_create_wg_transform(struct h264_decoder *decoder)
     return S_OK;
 }
 
-static HRESULT fill_output_media_type(IMFMediaType *media_type, IMFMediaType *default_type)
+static HRESULT fill_output_media_type(struct h264_decoder *decoder, IMFMediaType *media_type)
 {
+    IMFMediaType *default_type = decoder->output_type;
+    struct wg_format *wg_format = &decoder->wg_format;
     UINT32 value, width, height;
     UINT64 ratio;
     GUID subtype;
@@ -101,8 +104,7 @@ static HRESULT fill_output_media_type(IMFMediaType *media_type, IMFMediaType *de
 
     if (FAILED(hr = IMFMediaType_GetUINT64(media_type, &MF_MT_FRAME_SIZE, &ratio)))
     {
-        if (!default_type || FAILED(hr = IMFMediaType_GetUINT64(default_type, &MF_MT_FRAME_SIZE, &ratio)))
-            ratio = (UINT64)1920 << 32 | 1080;
+        ratio = (UINT64)wg_format->u.video.width << 32 | wg_format->u.video.height;
         if (FAILED(hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_SIZE, ratio)))
             return hr;
     }
@@ -111,24 +113,21 @@ static HRESULT fill_output_media_type(IMFMediaType *media_type, IMFMediaType *de
 
     if (FAILED(hr = IMFMediaType_GetItem(media_type, &MF_MT_FRAME_RATE, NULL)))
     {
-        if (!default_type || FAILED(hr = IMFMediaType_GetUINT64(default_type, &MF_MT_FRAME_RATE, &ratio)))
-            ratio = (UINT64)30000 << 32 | 1001;
+        ratio = (UINT64)wg_format->u.video.fps_n << 32 | wg_format->u.video.fps_d;
         if (FAILED(hr = IMFMediaType_SetUINT64(media_type, &MF_MT_FRAME_RATE, ratio)))
             return hr;
     }
 
     if (FAILED(hr = IMFMediaType_GetItem(media_type, &MF_MT_PIXEL_ASPECT_RATIO, NULL)))
     {
-        if (!default_type || FAILED(hr = IMFMediaType_GetUINT64(default_type, &MF_MT_PIXEL_ASPECT_RATIO, &ratio)))
-            ratio = (UINT64)1 << 32 | 1;
+        ratio = (UINT64)1 << 32 | 1; /* FIXME: read it from format */
         if (FAILED(hr = IMFMediaType_SetUINT64(media_type, &MF_MT_PIXEL_ASPECT_RATIO, ratio)))
             return hr;
     }
 
     if (FAILED(hr = IMFMediaType_GetItem(media_type, &MF_MT_SAMPLE_SIZE, NULL)))
     {
-        if ((!default_type || FAILED(hr = IMFMediaType_GetUINT32(default_type, &MF_MT_SAMPLE_SIZE, &value))) &&
-                FAILED(hr = MFCalculateImageSize(&subtype, width, height, &value)))
+        if (FAILED(hr = MFCalculateImageSize(&subtype, width, height, &value)))
             return hr;
         if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_SAMPLE_SIZE, value)))
             return hr;
@@ -136,8 +135,7 @@ static HRESULT fill_output_media_type(IMFMediaType *media_type, IMFMediaType *de
 
     if (FAILED(hr = IMFMediaType_GetItem(media_type, &MF_MT_DEFAULT_STRIDE, NULL)))
     {
-        if ((!default_type || FAILED(hr = IMFMediaType_GetUINT32(default_type, &MF_MT_DEFAULT_STRIDE, &value))) &&
-                FAILED(hr = MFGetStrideForBitmapInfoHeader(subtype.Data1, width, (LONG *)&value)))
+        if (FAILED(hr = MFGetStrideForBitmapInfoHeader(subtype.Data1, width, (LONG *)&value)))
             return hr;
         if (FAILED(hr = IMFMediaType_SetUINT32(media_type, &MF_MT_DEFAULT_STRIDE, value)))
             return hr;
@@ -272,23 +270,15 @@ static HRESULT WINAPI transform_GetInputStreamInfo(IMFTransform *iface, DWORD id
 static HRESULT WINAPI transform_GetOutputStreamInfo(IMFTransform *iface, DWORD id, MFT_OUTPUT_STREAM_INFO *info)
 {
     struct h264_decoder *decoder = impl_from_IMFTransform(iface);
-    UINT32 sample_size;
-    UINT64 frame_size;
+    UINT32 actual_width, actual_height;
 
     TRACE("iface %p, id %#lx, info %p.\n", iface, id, info);
 
-    if (!decoder->output_type)
-        sample_size = 1920 * 1088 * 2;
-    else if (FAILED(IMFMediaType_GetUINT32(decoder->output_type, &MF_MT_SAMPLE_SIZE, &sample_size)))
-    {
-        if (FAILED(IMFMediaType_GetUINT64(decoder->output_type, &MF_MT_FRAME_SIZE, &frame_size)))
-            sample_size = 1920 * 1088 * 2;
-        else
-            sample_size = (frame_size >> 32) * (UINT32)frame_size * 2;
-    }
+    actual_width = (decoder->wg_format.u.video.width + 15) & ~15;
+    actual_height = (decoder->wg_format.u.video.height + 15) & ~15;
 
     info->dwFlags = MFT_OUTPUT_STREAM_WHOLE_SAMPLES | MFT_OUTPUT_STREAM_SINGLE_SAMPLE_PER_BUFFER | MFT_OUTPUT_STREAM_FIXED_SAMPLE_SIZE;
-    info->cbSize = sample_size;
+    info->cbSize = actual_width * actual_height * 2;
     info->cbAlignment = 0;
 
     return S_OK;
@@ -378,7 +368,7 @@ static HRESULT WINAPI transform_GetOutputAvailableType(IMFTransform *iface, DWOR
     if (FAILED(hr = IMFMediaType_SetGUID(media_type, &MF_MT_SUBTYPE, output_type)))
         goto done;
 
-    hr = fill_output_media_type(media_type, NULL);
+    hr = fill_output_media_type(decoder, media_type);
 
 done:
     if (SUCCEEDED(hr))
@@ -543,6 +533,8 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
     struct h264_decoder *decoder = impl_from_IMFTransform(iface);
     MFT_OUTPUT_STREAM_INFO info;
     struct wg_sample *wg_sample;
+    struct wg_format wg_format;
+    UINT64 frame_rate;
     HRESULT hr;
 
     TRACE("iface %p, flags %#lx, count %lu, samples %p, status %p.\n", iface, flags, count, samples, status);
@@ -569,11 +561,21 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
         return MF_E_BUFFERTOOSMALL;
     }
 
-    hr = wg_transform_read_data(decoder->wg_transform, wg_sample);
+    hr = wg_transform_read_data(decoder->wg_transform, wg_sample,
+            &wg_format);
     mf_destroy_wg_sample(wg_sample);
 
     if (hr == MF_E_TRANSFORM_STREAM_CHANGE)
     {
+        decoder->wg_format = wg_format;
+
+        /* keep the frame rate that was requested, GStreamer doesn't provide any */
+        if (SUCCEEDED(IMFMediaType_GetUINT64(decoder->output_type, &MF_MT_FRAME_RATE, &frame_rate)))
+        {
+            decoder->wg_format.u.video.fps_n = frame_rate >> 32;
+            decoder->wg_format.u.video.fps_d = (UINT32)frame_rate;
+        }
+
         samples[0].dwStatus |= MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE;
         *status |= MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE;
     }
@@ -641,6 +643,11 @@ HRESULT h264_decoder_create(REFIID riid, void **ret)
 
     decoder->IMFTransform_iface.lpVtbl = &transform_vtbl;
     decoder->refcount = 1;
+    decoder->wg_format.u.video.format = WG_VIDEO_FORMAT_UNKNOWN;
+    decoder->wg_format.u.video.width = 1920;
+    decoder->wg_format.u.video.height = 1080;
+    decoder->wg_format.u.video.fps_n = 30000;
+    decoder->wg_format.u.video.fps_d = 1001;
 
     *ret = &decoder->IMFTransform_iface;
     TRACE("Created decoder %p\n", *ret);

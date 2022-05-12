@@ -257,6 +257,7 @@ struct wg_transform_read_data_params
 {
     struct wg_transform *transform;
     struct wg_sample *sample;
+    struct wg_format *format;
     HRESULT result;
 };
 

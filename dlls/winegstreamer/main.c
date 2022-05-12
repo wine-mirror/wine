@@ -329,16 +329,18 @@ HRESULT wg_transform_push_data(struct wg_transform *transform, struct wg_sample 
     return params.result;
 }
 
-HRESULT wg_transform_read_data(struct wg_transform *transform, struct wg_sample *sample)
+HRESULT wg_transform_read_data(struct wg_transform *transform, struct wg_sample *sample,
+        struct wg_format *format)
 {
     struct wg_transform_read_data_params params =
     {
         .transform = transform,
         .sample = sample,
+        .format = format,
     };
     NTSTATUS status;
 
-    TRACE("transform %p, sample %p.\n", transform, sample);
+    TRACE("transform %p, sample %p, format %p.\n", transform, sample, format);
 
     if ((status = __wine_unix_call(unix_handle, unix_wg_transform_read_data, &params)))
         return HRESULT_FROM_NT(status);
