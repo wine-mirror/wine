@@ -483,7 +483,7 @@ static NTSTATUS usbd_status_from_libusb(enum libusb_transfer_status status)
     }
 }
 
-static void transfer_cb(struct libusb_transfer *transfer)
+static void LIBUSB_CALL transfer_cb(struct libusb_transfer *transfer)
 {
     IRP *irp = transfer->user_data;
     URB *urb = IoGetCurrentIrpStackLocation(irp)->Parameters.Others.Argument1;
