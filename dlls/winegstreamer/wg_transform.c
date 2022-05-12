@@ -392,6 +392,7 @@ static NTSTATUS read_transform_output_data(GstBuffer *buffer, struct wg_sample *
     if (!gst_buffer_map(buffer, &info, GST_MAP_READ))
     {
         GST_ERROR("Failed to map buffer %p", buffer);
+        sample->size = 0;
         return STATUS_UNSUCCESSFUL;
     }
 
@@ -464,10 +465,7 @@ NTSTATUS wg_transform_read_data(void *args)
     }
 
     if ((status = read_transform_output_data(transform->output_buffer, sample)))
-    {
-        sample->size = 0;
         return status;
-    }
 
     if (!(sample->flags & WG_SAMPLE_FLAG_INCOMPLETE))
     {
