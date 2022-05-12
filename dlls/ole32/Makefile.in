@@ -2,7 +2,6 @@ MODULE    = ole32.dll
 IMPORTLIB = ole32
 IMPORTS   = uuid advapi32 user32 gdi32 combase rpcrt4 kernelbase
 DELAYIMPORTS = oleaut32
-EXTRADEFS = -D_OLE32_
 
 C_SRCS = \
 	antimoniker.c \
