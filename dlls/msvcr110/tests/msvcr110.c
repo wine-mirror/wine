@@ -132,7 +132,15 @@ static void test_setlocale(void)
     for(i=0; i<ARRAY_SIZE(names); i++) {
         ret = p_setlocale(LC_ALL, names[i]);
         ok(ret != NULL, "expected success, but got NULL\n");
-        ok(!strcmp(ret, names[i]), "expected %s, got %s\n", names[i], ret);
+        if(!strcmp(names[i], "syr-SY") && GetACP() == CP_UTF8)
+        {
+            todo_wine ok(!strcmp(ret, "LC_COLLATE=syr-SY;LC_CTYPE=EN-US;LC_MONETARY=syr-SY;"
+                        "LC_NUMERIC=syr-SY;LC_TIME=syr-SY"), "got %s\n", ret);
+        }
+        else
+        {
+            ok(!strcmp(ret, names[i]), "expected %s, got %s\n", names[i], ret);
+        }
     }
 
     ret = p_setlocale(LC_ALL, "en-us.1250");
