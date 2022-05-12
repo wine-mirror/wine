@@ -62,7 +62,9 @@ M:	Henri Verbeet <hverbeet@codeweavers.com>
 F:	dlls/d2d*/
 
 Direct3D
-M:	Henri Verbeet <hverbeet@codeweavers.com>
+M:	Zebediah Figura <z.figura12@gmail.com>
+M:	Jan Sikorski <jsikorski@codeweavers.com>
+P:	Henri Verbeet <hverbeet@codeweavers.com>
 P:	Stefan Dösinger <stefan@codeweavers.com>
 P:	Matteo Bruni <mbruni@codeweavers.com>
 F:	dlls/d3d10core/
