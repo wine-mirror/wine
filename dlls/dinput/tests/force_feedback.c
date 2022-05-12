@@ -5467,7 +5467,6 @@ static void test_windows_gaming_input(void)
             .report_id = 7,
             .report_len = 10,
             .report_buf = {7,0x01,0xa0,0x0f,0xd0,0x07,0x70,0xff,0x0a,0x00},
-            .todo = TRUE,
         },
         /* set envelope */
         {
@@ -5475,14 +5474,13 @@ static void test_windows_gaming_input(void)
             .report_id = 8,
             .report_len = 8,
             .report_buf = {8,0x01,0x4c,0x7f,0x28,0x00,0x50,0x00},
-            .todo = TRUE,
         },
         /* update effect */
         {
             .code = IOCTL_HID_WRITE_REPORT,
             .report_id = 3,
             .report_len = 18,
-            .report_buf = {3,0x01,0x02,0x08,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0xff,0xff,0x5a,0x00,0x00,0x00},
+            .report_buf = {3,0x01,0x02,0x08,0x78,0x00,0x00,0x00,0x00,0x00,0x0a,0x00,0xff,0xff,0xce,0x00,0x00,0x00},
             .wine_only = TRUE,
             .todo = TRUE,
         },
@@ -6047,11 +6045,9 @@ static void test_windows_gaming_input(void)
     ok( hr == S_OK, "get_Kind returned %#lx\n", hr );
     ok( periodic_kind == PeriodicForceEffectKind_SawtoothWaveUp, "got kind %u\n", periodic_kind );
     hr = IPeriodicForceEffect_SetParameters( periodic_effect, direction, 1.0, 0.1, 0.0, duration );
-    todo_wine
     ok( hr == S_OK, "SetParameters returned %#lx\n", hr );
     hr = IPeriodicForceEffect_SetParametersWithEnvelope( periodic_effect, direction, 100.0, 0.1, 0.2, 0.3, 0.4, 0.5,
                                                          delay, attack_duration, duration, release_duration, 1 );
-    todo_wine
     ok( hr == S_OK, "SetParametersWithEnvelope returned %#lx\n", hr );
     IPeriodicForceEffect_Release( periodic_effect );
 
@@ -6120,11 +6116,9 @@ static void test_windows_gaming_input(void)
     ok( hr == S_OK, "get_Kind returned %#lx\n", hr );
     ok( periodic_kind == PeriodicForceEffectKind_SineWave, "got kind %u\n", periodic_kind );
     hr = IPeriodicForceEffect_SetParameters( periodic_effect, direction, 1.0, 0.1, 0.0, duration );
-    todo_wine
     ok( hr == S_OK, "SetParameters returned %#lx\n", hr );
     hr = IPeriodicForceEffect_SetParametersWithEnvelope( periodic_effect, direction, 100.0, 0.1, 0.2, 0.3, 0.4, 0.5,
                                                          delay, duration, duration, duration, 1 );
-    todo_wine
     ok( hr == S_OK, "SetParametersWithEnvelope returned %#lx\n", hr );
     IPeriodicForceEffect_Release( periodic_effect );
 

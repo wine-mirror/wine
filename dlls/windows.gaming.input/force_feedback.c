@@ -146,7 +146,16 @@ static HRESULT WINAPI effect_impl_put_Parameters( IWineForceFeedbackEffectImpl *
     case WineForceFeedbackEffectType_Periodic_SquareWave:
     case WineForceFeedbackEffectType_Periodic_SawtoothWaveDown:
     case WineForceFeedbackEffectType_Periodic_SawtoothWaveUp:
-        FIXME("stub!\n");
+        impl->repeat_count = params.periodic.repeat_count;
+        impl->periodic.dwMagnitude = round( params.periodic.gain * 10000 );
+        impl->periodic.dwPeriod = 1000000 / params.periodic.frequency;
+        impl->periodic.dwPhase = round( params.periodic.phase * 36000 );
+        impl->periodic.lOffset = round( params.periodic.bias * 10000 );
+        impl->params.dwDuration = params.periodic.duration.Duration / 10;
+        impl->params.dwStartDelay = params.periodic.start_delay.Duration / 10;
+        impl->directions[0] = round( -params.periodic.direction.X * 10000 );
+        impl->directions[1] = round( -params.periodic.direction.Y * 10000 );
+        impl->directions[2] = round( -params.periodic.direction.Z * 10000 );
         break;
 
     case WineForceFeedbackEffectType_Condition_Spring:

@@ -110,9 +110,26 @@ static HRESULT WINAPI effect_get_Kind( IPeriodicForceEffect *iface, PeriodicForc
 static HRESULT WINAPI effect_SetParameters( IPeriodicForceEffect *iface, Vector3 direction, FLOAT frequency, FLOAT phase,
                                             FLOAT bias, TimeSpan duration )
 {
-    FIXME( "iface %p, direction %s, frequency %f, phase %f, bias %f, duration %I64u stub!\n", iface,
+    struct periodic_effect *impl = impl_from_IPeriodicForceEffect( iface );
+    WineForceFeedbackEffectParameters params =
+    {
+        .periodic =
+        {
+            .type = WineForceFeedbackEffectType_Periodic_SquareWave + impl->kind,
+            .direction = direction,
+            .frequency = frequency,
+            .phase = phase,
+            .bias = bias,
+            .duration = duration,
+            .repeat_count = 1,
+            .gain = 1.,
+        },
+    };
+
+    TRACE( "iface %p, direction %s, frequency %f, phase %f, bias %f, duration %I64u.\n", iface,
            debugstr_vector3( &direction ), frequency, phase, bias, duration.Duration );
-    return E_NOTIMPL;
+
+    return IWineForceFeedbackEffectImpl_put_Parameters( impl->IWineForceFeedbackEffectImpl_inner, params, NULL );
 }
 
 static HRESULT WINAPI effect_SetParametersWithEnvelope( IPeriodicForceEffect *iface, Vector3 direction, FLOAT frequency, FLOAT phase, FLOAT bias,
@@ -120,11 +137,36 @@ static HRESULT WINAPI effect_SetParametersWithEnvelope( IPeriodicForceEffect *if
                                                         TimeSpan attack_duration, TimeSpan sustain_duration,
                                                         TimeSpan release_duration, UINT32 repeat_count )
 {
-    FIXME( "iface %p, direction %s, frequency %f, phase %f, bias %f, attack_gain %f, sustain_gain %f, release_gain %f, start_delay %I64u, "
-           "attack_duration %I64u, sustain_duration %I64u, release_duration %I64u, repeat_count %u stub!\n", iface, debugstr_vector3( &direction ),
+    struct periodic_effect *impl = impl_from_IPeriodicForceEffect( iface );
+    WineForceFeedbackEffectParameters params =
+    {
+        .periodic =
+        {
+            .type = WineForceFeedbackEffectType_Periodic_SquareWave + impl->kind,
+            .direction = direction,
+            .frequency = frequency,
+            .phase = phase,
+            .bias = bias,
+            .duration = {attack_duration.Duration + sustain_duration.Duration + release_duration.Duration},
+            .start_delay = start_delay,
+            .repeat_count = repeat_count,
+            .gain = sustain_gain,
+        },
+    };
+    WineForceFeedbackEffectEnvelope envelope =
+    {
+        .attack_gain = attack_gain,
+        .release_gain = release_gain,
+        .attack_duration = attack_duration,
+        .release_duration = release_duration,
+    };
+
+    TRACE( "iface %p, direction %s, frequency %f, phase %f, bias %f, attack_gain %f, sustain_gain %f, release_gain %f, start_delay %I64u, "
+           "attack_duration %I64u, sustain_duration %I64u, release_duration %I64u, repeat_count %u.\n", iface, debugstr_vector3( &direction ),
            frequency, phase, bias, attack_gain, sustain_gain, release_gain, start_delay.Duration, attack_duration.Duration, sustain_duration.Duration,
            release_duration.Duration, repeat_count );
-    return E_NOTIMPL;
+
+    return IWineForceFeedbackEffectImpl_put_Parameters( impl->IWineForceFeedbackEffectImpl_inner, params, &envelope );
 }
 
 static const struct IPeriodicForceEffectVtbl effect_vtbl =
