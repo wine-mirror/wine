@@ -7187,20 +7187,16 @@ static void test_h264_decoder(void)
     ok(i == 2, "got %lu iterations\n", i);
     todo_wine
     ok(h264_encoded_data_len == 1180, "got h264_encoded_data_len %lu\n", h264_encoded_data_len);
-    todo_wine
     ok(hr == MF_E_TRANSFORM_STREAM_CHANGE, "ProcessOutput returned %#lx\n", hr);
     ok(output.dwStreamID == 0, "got dwStreamID %lu\n", output.dwStreamID);
     ok(!!output.pSample, "got pSample %p\n", output.pSample);
-    todo_wine
     ok(output.dwStatus == MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE,
             "got dwStatus %#lx\n", output.dwStatus);
     ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
-    todo_wine
     ok(status == MFT_PROCESS_OUTPUT_STATUS_NEW_STREAMS,
             "got status %#lx\n", status);
     hr = IMFSample_GetTotalLength(output.pSample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
-    todo_wine
     ok(length == 0, "got length %lu\n", length);
     ret = IMFSample_Release(output.pSample);
     ok(ret == 0, "Release returned %lu\n", ret);

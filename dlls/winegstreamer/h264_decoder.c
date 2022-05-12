@@ -571,6 +571,13 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
 
     hr = wg_transform_read_data(decoder->wg_transform, wg_sample);
     mf_destroy_wg_sample(wg_sample);
+
+    if (hr == MF_E_TRANSFORM_STREAM_CHANGE)
+    {
+        samples[0].dwStatus |= MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE;
+        *status |= MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE;
+    }
+
     return hr;
 }
 

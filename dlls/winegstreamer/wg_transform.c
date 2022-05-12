@@ -52,17 +52,27 @@ struct wg_transform
     guint input_max_length;
     GstAtomicQueue *output_queue;
     GstSample *output_sample;
+    bool output_caps_changed;
     GstCaps *output_caps;
 };
 
 static GstFlowReturn transform_sink_chain_cb(GstPad *pad, GstObject *parent, GstBuffer *buffer)
 {
     struct wg_transform *transform = gst_pad_get_element_private(pad);
+    GstStructure *info = NULL;
     GstSample *sample;
 
     GST_LOG("transform %p, buffer %p.", transform, buffer);
 
-    if (!(sample = gst_sample_new(buffer, transform->output_caps, NULL, NULL)))
+    if (transform->output_caps_changed && !(info = gst_structure_new_empty("format-changed")))
+    {
+        GST_ERROR("Failed to allocate transform %p output sample info.", transform);
+        gst_buffer_unref(buffer);
+        return GST_FLOW_ERROR;
+    }
+    transform->output_caps_changed = false;
+
+    if (!(sample = gst_sample_new(buffer, transform->output_caps, NULL, info)))
     {
         GST_ERROR("Failed to allocate transform %p output sample.", transform);
         gst_buffer_unref(buffer);
@@ -87,6 +97,9 @@ static gboolean transform_sink_event_cb(GstPad *pad, GstObject *parent, GstEvent
             GstCaps *caps;
 
             gst_event_parse_caps(event, &caps);
+
+            transform->output_caps_changed = transform->output_caps_changed
+                    || !gst_caps_is_always_compatible(transform->output_caps, caps);
 
             gst_caps_unref(transform->output_caps);
             transform->output_caps = gst_caps_ref(caps);
@@ -504,6 +517,15 @@ NTSTATUS wg_transform_read_data(void *args)
     }
 
     output_buffer = gst_sample_get_buffer(transform->output_sample);
+
+    if (gst_sample_get_info(transform->output_sample))
+    {
+        gst_sample_set_info(transform->output_sample, NULL);
+
+        params->result = MF_E_TRANSFORM_STREAM_CHANGE;
+        GST_INFO("Format changed detected, returning no output");
+        return STATUS_SUCCESS;
+    }
 
     if ((status = read_transform_output_data(output_buffer, sample)))
         return status;
