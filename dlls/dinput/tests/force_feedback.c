@@ -6017,10 +6017,8 @@ static void test_windows_gaming_input(void)
     hr = pWindowsCreateString( periodic_effect_class_name, wcslen( periodic_effect_class_name ), &str );
     ok( hr == S_OK, "WindowsCreateString returned %#lx\n", hr );
     hr = pRoGetActivationFactory( str, &IID_IPeriodicForceEffectFactory, (void **)&periodic_factory );
-    todo_wine
     ok( hr == S_OK, "RoGetActivationFactory returned %#lx\n", hr );
     pWindowsDeleteString( str );
-    if (hr != S_OK) goto skip_periodic;
 
     check_interface( periodic_factory, &IID_IUnknown, TRUE );
     check_interface( periodic_factory, &IID_IInspectable, TRUE );
@@ -6196,7 +6194,6 @@ static void test_windows_gaming_input(void)
     IPeriodicForceEffectFactory_Release( periodic_factory );
 
 
-skip_periodic:
     hr = pWindowsCreateString( condition_effect_class_name, wcslen( condition_effect_class_name ), &str );
     ok( hr == S_OK, "WindowsCreateString returned %#lx\n", hr );
     hr = pRoGetActivationFactory( str, &IID_IConditionForceEffectFactory, (void **)&condition_factory );

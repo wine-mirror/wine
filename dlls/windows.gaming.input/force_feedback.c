@@ -43,6 +43,7 @@ struct effect
     LONG directions[3];
     DICONSTANTFORCE constant_force;
     DIRAMPFORCE ramp_force;
+    DIPERIODIC periodic;
     DIEFFECT params;
 };
 
@@ -184,6 +185,26 @@ HRESULT force_feedback_effect_create( enum WineForceFeedbackEffectType type, IIn
         impl->type = GUID_RampForce;
         impl->params.lpvTypeSpecificParams = &impl->ramp_force;
         impl->params.cbTypeSpecificParams = sizeof(impl->ramp_force);
+        break;
+
+    case WineForceFeedbackEffectType_Periodic_SineWave:
+        impl->type = GUID_Sine;
+        goto WineForceFeedbackEffectType_Periodic;
+    case WineForceFeedbackEffectType_Periodic_TriangleWave:
+        impl->type = GUID_Triangle;
+        goto WineForceFeedbackEffectType_Periodic;
+    case WineForceFeedbackEffectType_Periodic_SquareWave:
+        impl->type = GUID_Square;
+        goto WineForceFeedbackEffectType_Periodic;
+    case WineForceFeedbackEffectType_Periodic_SawtoothWaveDown:
+        impl->type = GUID_SawtoothDown;
+        goto WineForceFeedbackEffectType_Periodic;
+    case WineForceFeedbackEffectType_Periodic_SawtoothWaveUp:
+        impl->type = GUID_SawtoothUp;
+        goto WineForceFeedbackEffectType_Periodic;
+    WineForceFeedbackEffectType_Periodic:
+        impl->params.lpvTypeSpecificParams = &impl->periodic;
+        impl->params.cbTypeSpecificParams = sizeof(impl->periodic);
         break;
     }
 
