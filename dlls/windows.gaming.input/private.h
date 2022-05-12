@@ -50,6 +50,7 @@ extern ICustomGameControllerFactory *gamepad_factory;
 extern ICustomGameControllerFactory *racing_wheel_factory;
 extern IGameControllerFactoryManagerStatics2 *manager_factory;
 extern IInspectable *constant_effect_factory;
+extern IInspectable *ramp_effect_factory;
 
 struct vector_iids
 {

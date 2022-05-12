@@ -12,6 +12,7 @@ C_SRCS = \
 	manager.c \
 	provider.c \
 	racing_wheel.c \
+	ramp_effect.c \
 	vector.c
 
 IDL_SRCS = \

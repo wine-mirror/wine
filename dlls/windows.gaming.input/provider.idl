@@ -53,6 +53,7 @@ namespace Windows.Gaming.Input.Custom {
     enum WineForceFeedbackEffectType
     {
         Constant = 1,
+        Ramp = 2,
     };
 
     struct WineGameControllerState

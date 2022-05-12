@@ -22,6 +22,7 @@
 #include "ddk/hidsdi.h"
 #include "dinput.h"
 #include "hidusage.h"
+#include "provider.h"
 
 #include "wine/debug.h"
 
@@ -41,6 +42,7 @@ struct effect
     DWORD axes[3];
     LONG directions[3];
     DICONSTANTFORCE constant_force;
+    DIRAMPFORCE ramp_force;
     DIEFFECT params;
 };
 
@@ -176,6 +178,12 @@ HRESULT force_feedback_effect_create( enum WineForceFeedbackEffectType type, IIn
         impl->type = GUID_ConstantForce;
         impl->params.lpvTypeSpecificParams = &impl->constant_force;
         impl->params.cbTypeSpecificParams = sizeof(impl->constant_force);
+        break;
+
+    case WineForceFeedbackEffectType_Ramp:
+        impl->type = GUID_RampForce;
+        impl->params.lpvTypeSpecificParams = &impl->ramp_force;
+        impl->params.cbTypeSpecificParams = sizeof(impl->ramp_force);
         break;
     }
 

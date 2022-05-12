@@ -6407,10 +6407,8 @@ skip_condition:
     hr = pWindowsCreateString( ramp_effect_class_name, wcslen( ramp_effect_class_name ), &str );
     ok( hr == S_OK, "WindowsCreateString returned %#lx\n", hr );
     hr = pRoGetActivationFactory( str, &IID_IActivationFactory, (void **)&activation_factory );
-    todo_wine
     ok( hr == S_OK, "RoGetActivationFactory returned %#lx\n", hr );
     pWindowsDeleteString( str );
-    if (hr != S_OK) goto skip_ramp;
 
     hr = IActivationFactory_ActivateInstance( activation_factory, &tmp_inspectable );
     ok( hr == S_OK, "ActivateInstance returned %#lx\n", hr );
@@ -6488,7 +6486,6 @@ skip_condition:
     ok( ref == 0, "Release returned %lu\n", ref );
 
 
-skip_ramp:
     IForceFeedbackMotor_Release( motor );
 
     IRawGameController_Release( raw_controller );
