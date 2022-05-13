@@ -1,4 +1,3 @@
-EXTRADEFS = -DWINE_NO_LONG_TYPES
 TESTDLL   = d3drm.dll
 IMPORTS   = dxguid uuid d3drm ddraw user32
 
