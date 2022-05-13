@@ -97,7 +97,7 @@ BOOL load_backend(void)
 
     LeaveCriticalSection(&backend_cs);
 
-    WARN("failed to load the backend: %u\n", GetLastError());
+    WARN("failed to load the backend: %lu\n", GetLastError());
     SetLastError(RPC_S_SERVER_UNAVAILABLE);
     return FALSE;
 }
