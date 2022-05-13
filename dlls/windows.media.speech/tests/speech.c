@@ -815,15 +815,15 @@ static void test_VoiceInformation(void)
     RoUninitialize();
 }
 
-struct async_operation_block_param
+struct put_completed_thread_param
 {
     IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResult *handler;
     IAsyncOperation_SpeechRecognitionCompilationResult *operation;
 };
 
-static DWORD WINAPI async_operation_block_thread(void *arg)
+static DWORD WINAPI put_completed_thread(void *arg)
 {
-    struct async_operation_block_param *param = arg;
+    struct put_completed_thread_param *param = arg;
     HRESULT hr;
 
     hr = IAsyncOperation_SpeechRecognitionCompilationResult_put_Completed(param->operation, param->handler);
@@ -849,15 +849,15 @@ static void test_SpeechRecognizer(void)
     IInspectable *inspectable = NULL;
     ILanguage *language = NULL;
     IAsyncInfo *info = NULL;
+    struct put_completed_thread_param put_completed_param;
     struct completed_event_handler completed_handler;
     struct recognition_result_handler result_handler;
-    struct async_operation_block_param block_param;
     struct compilation_handler compilation_handler;
     SpeechRecognitionResultStatus result_status;
     EventRegistrationToken token = { .value = 0 };
     AsyncStatus async_status;
     HSTRING hstr, hstr_lang;
-    HANDLE blocked_thread;
+    HANDLE put_thread;
     HRESULT hr, error_code;
     UINT32 id;
     LONG ref;
@@ -1125,18 +1125,17 @@ static void test_SpeechRecognizer(void)
         compilation_handler.event_finished = CreateEventW(NULL, FALSE, FALSE, NULL);
         compilation_handler.thread_id = GetCurrentThreadId();
 
-        ok(compilation_handler.event_finished != NULL, "Finished event wasn't created.\n");
+        ok(!!compilation_handler.event_block, "event_block wasn't created.\n");
+        ok(!!compilation_handler.event_finished, "event_finished wasn't created.\n");
 
         hr = ISpeechRecognizer_CompileConstraintsAsync(recognizer, &operation);
         ok(hr == S_OK, "ISpeechRecognizer_CompileConstraintsAsync failed, hr %#lx.\n", hr);
 
-        block_param.handler = &compilation_handler.IAsyncHandler_Compilation_iface;
-        block_param.operation = operation;
-        blocked_thread = CreateThread(NULL, 0, async_operation_block_thread, &block_param, 0, NULL);
+        put_completed_param.handler = &compilation_handler.IAsyncHandler_Compilation_iface;
+        put_completed_param.operation = operation;
+        put_thread = CreateThread(NULL, 0, put_completed_thread, &put_completed_param, 0, NULL);
 
         ok(!WaitForSingleObject(compilation_handler.event_finished, 5000), "Wait for event_finished failed.\n");
-
-        ok(WaitForSingleObject(blocked_thread, 100) == WAIT_TIMEOUT, "Wait for block_thread didn't time out.\n");
 
         todo_wine ok(compilation_handler.ref == 3, "Got unexpected ref %lu.\n", compilation_handler.ref);
         todo_wine check_refcount(operation, 3);
@@ -1148,9 +1147,9 @@ static void test_SpeechRecognizer(void)
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         SetEvent(compilation_handler.event_block);
-        ok(!WaitForSingleObject(blocked_thread, 1000), "Wait for block_thread failed.\n");
+        ok(!WaitForSingleObject(put_thread, 1000), "Wait for block_thread failed.\n");
 
-        CloseHandle(blocked_thread);
+        CloseHandle(put_thread);
         CloseHandle(compilation_handler.event_block);
         CloseHandle(compilation_handler.event_finished);
 
