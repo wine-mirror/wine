@@ -35,7 +35,7 @@ static DWORD obj_refcount(void *obj_to_check)
     return IUnknown_Release(obj);
 }
 
-static BOOL compare_trigger_state(TASK_TRIGGER found_state,
+static void compare_trigger_state(TASK_TRIGGER found_state,
         TASK_TRIGGER expected_state)
 {
     ok(found_state.cbTriggerSize == expected_state.cbTriggerSize,
@@ -105,8 +105,6 @@ static BOOL compare_trigger_state(TASK_TRIGGER found_state,
     ok(found_state.wRandomMinutesInterval == expected_state.wRandomMinutesInterval,
             "wRandomMinutesInterval: Found %d but expected %d\n",
             found_state.wRandomMinutesInterval, expected_state.wRandomMinutesInterval);
-
-    return TRUE;
 }
 
 static void test_SetTrigger_GetTrigger(void)
@@ -342,14 +340,12 @@ static void test_SetTrigger_GetTrigger(void)
     trigger_state.cbTriggerSize = sizeof(trigger_state) - 1;
     hres = ITaskTrigger_GetTrigger(test_trigger, &trigger_state);
     ok(hres == S_OK, "Failed to GetTrigger\n");
-    ok(compare_trigger_state(trigger_state, normal_trigger_state),
-            "Invalid state\n");
+    compare_trigger_state(trigger_state, normal_trigger_state);
     memset(&trigger_state, 0xcf, sizeof(trigger_state));
     trigger_state.cbTriggerSize = 0;
     hres = ITaskTrigger_GetTrigger(test_trigger, &trigger_state);
     ok(hres == S_OK, "Failed to GetTrigger\n");
-    ok(compare_trigger_state(trigger_state, normal_trigger_state),
-            "Invalid state\n");
+    compare_trigger_state(trigger_state, normal_trigger_state);
 
     ITaskTrigger_Release(test_trigger);
     ITask_Release(test_task);
