@@ -297,6 +297,7 @@ extern BOOL query_ime_char_rect(macdrv_query* query) DECLSPEC_HIDDEN;
 
 extern ULONG query_reg_value(HKEY hkey, const WCHAR *name, KEY_VALUE_PARTIAL_INFORMATION *info,
                              ULONG size) DECLSPEC_HIDDEN;
+extern HKEY reg_open_key(HKEY root, const WCHAR *name, ULONG name_len) DECLSPEC_HIDDEN;
 
 /* string helpers */
 
@@ -313,6 +314,8 @@ static inline UINT asciiz_to_unicode(WCHAR *dst, const char *src)
 }
 
 /* FIXME: remove once we use unixlib */
+#define wcsnicmp strncmpiW
 #define wcsrchr strrchrW
+#define wcstol strtolW
 
 #endif  /* __WINE_MACDRV_H */

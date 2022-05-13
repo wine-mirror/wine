@@ -103,7 +103,7 @@ const char* debugstr_cf(CFTypeRef t)
 }
 
 
-static HKEY reg_open_key(HKEY root, const WCHAR *name, ULONG name_len)
+HKEY reg_open_key(HKEY root, const WCHAR *name, ULONG name_len)
 {
     UNICODE_STRING nameW = { name_len, name_len, (WCHAR *)name };
     OBJECT_ATTRIBUTES attr;

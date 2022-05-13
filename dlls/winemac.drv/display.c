@@ -48,15 +48,6 @@ BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, LPDEVMODEW devmod
 
 static const char initial_mode_key[] = "Initial Display Mode";
 static const WCHAR pixelencodingW[] = {'P','i','x','e','l','E','n','c','o','d','i','n','g',0};
-static const WCHAR adapter_prefixW[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y'};
-static const WCHAR video_keyW[] = {
-    'H','A','R','D','W','A','R','E','\\',
-    'D','E','V','I','C','E','M','A','P','\\',
-    'V','I','D','E','O',0};
-static const WCHAR device_video_fmtW[] = {
-    '\\','D','e','v','i','c','e','\\',
-    'V','i','d','e','o','%','d',0};
-
 
 static CFArrayRef modes;
 static BOOL modes_has_8bpp, modes_has_16bpp;
@@ -91,33 +82,52 @@ static void release_display_device_init_mutex(HANDLE mutex)
     NtClose(mutex);
 }
 
-static BOOL get_display_device_reg_key(const WCHAR *device_name, WCHAR *key, unsigned len)
+static HKEY get_display_device_reg_key(const WCHAR *device_name)
 {
-    WCHAR value_name[MAX_PATH], buffer[MAX_PATH], *end_ptr;
+    static const WCHAR display[] = {'\\','\\','.','\\','D','I','S','P','L','A','Y'};
+    static const WCHAR video_key[] = {
+        '\\','R','e','g','i','s','t','r','y',
+        '\\','M','a','c','h','i','n','e',
+        '\\','H','A','R','D','W','A','R','E',
+        '\\','D','E','V','I','C','E','M','A','P',
+        '\\','V','I','D','E','O'};
+    static const WCHAR current_config_key[] = {
+        '\\','R','e','g','i','s','t','r','y',
+        '\\','M','a','c','h','i','n','e',
+        '\\','S','y','s','t','e','m',
+        '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
+        '\\','H','a','r','d','w','a','r','e',' ','P','r','o','f','i','l','e','s',
+        '\\','C','u','r','r','e','n','t'};
+    WCHAR value_name[MAX_PATH], buffer[4096], *end_ptr;
+    KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
     DWORD adapter_index, size;
+    char adapter_name[100];
+    HKEY hkey;
 
     /* Device name has to be \\.\DISPLAY%d */
-    if (strncmpiW(device_name, adapter_prefixW, ARRAY_SIZE(adapter_prefixW)))
+    if (wcsnicmp(device_name, display, ARRAY_SIZE(display)))
         return FALSE;
 
     /* Parse \\.\DISPLAY* */
-    adapter_index = strtolW(device_name + ARRAY_SIZE(adapter_prefixW), &end_ptr, 10) - 1;
+    adapter_index = wcstol(device_name + ARRAY_SIZE(display), &end_ptr, 10) - 1;
     if (*end_ptr)
         return FALSE;
 
     /* Open \Device\Video* in HKLM\HARDWARE\DEVICEMAP\VIDEO\ */
-    sprintfW(value_name, device_video_fmtW, adapter_index);
-    size = sizeof(buffer);
-    if (RegGetValueW(HKEY_LOCAL_MACHINE, video_keyW, value_name, RRF_RT_REG_SZ, NULL, buffer, &size))
-        return FALSE;
+    if (!(hkey = reg_open_key(NULL, video_key, sizeof(video_key)))) return FALSE;
+    sprintf(adapter_name, "\\Device\\Video%d", adapter_index);
+    asciiz_to_unicode(value_name, adapter_name);
+    size = query_reg_value(hkey, value_name, value, sizeof(buffer));
+    NtClose(hkey);
+    if (!size || value->Type != REG_SZ) return FALSE;
 
-    if (len < lstrlenW(buffer + 18) + 1)
-        return FALSE;
-
-    /* Skip \Registry\Machine\ prefix */
-    lstrcpyW(key, buffer + 18);
-    TRACE("display device %s registry settings key %s.\n", wine_dbgstr_w(device_name), wine_dbgstr_w(key));
-    return TRUE;
+    /* Replace \Registry\Machine\ prefix with HKEY_CURRENT_CONFIG */
+    memmove(buffer + ARRAYSIZE(current_config_key), (const WCHAR *)value->Data + 17,
+             size - 17 * sizeof(WCHAR));
+    memcpy(buffer, current_config_key, sizeof(current_config_key));
+    TRACE("display device %s registry settings key %s.\n", wine_dbgstr_w(device_name),
+           wine_dbgstr_w(buffer));
+    return reg_open_key(NULL, buffer, lstrlenW(buffer) * sizeof(WCHAR));
 }
 
 
@@ -139,7 +149,6 @@ static BOOL query_display_setting(HKEY hkey, const char *name, DWORD *ret)
 
 static BOOL read_registry_settings(const WCHAR *device_name, DEVMODEW *dm)
 {
-    WCHAR wine_mac_reg_key[MAX_PATH];
     HANDLE mutex;
     HKEY hkey;
     BOOL ret = TRUE;
@@ -147,13 +156,7 @@ static BOOL read_registry_settings(const WCHAR *device_name, DEVMODEW *dm)
     dm->dmFields = 0;
 
     mutex = get_display_device_init_mutex();
-    if (!get_display_device_reg_key(device_name, wine_mac_reg_key, ARRAY_SIZE(wine_mac_reg_key)))
-    {
-        release_display_device_init_mutex(mutex);
-        return FALSE;
-    }
-
-    if (RegOpenKeyExW(HKEY_CURRENT_CONFIG, wine_mac_reg_key, 0, KEY_READ, &hkey))
+    if (!(hkey = get_display_device_reg_key(device_name)))
     {
         release_display_device_init_mutex(mutex);
         return FALSE;
@@ -192,20 +195,12 @@ static BOOL set_setting_value(HKEY hkey, const char *name, DWORD val)
 
 static BOOL write_registry_settings(const WCHAR *device_name, const DEVMODEW *dm)
 {
-    WCHAR wine_mac_reg_key[MAX_PATH];
     HANDLE mutex;
     HKEY hkey;
     BOOL ret = TRUE;
 
     mutex = get_display_device_init_mutex();
-    if (!get_display_device_reg_key(device_name, wine_mac_reg_key, ARRAY_SIZE(wine_mac_reg_key)))
-    {
-        release_display_device_init_mutex(mutex);
-        return FALSE;
-    }
-
-    if (RegCreateKeyExW(HKEY_CURRENT_CONFIG, wine_mac_reg_key, 0, NULL,
-                        REG_OPTION_VOLATILE, KEY_WRITE, NULL, &hkey, NULL))
+    if (!(hkey = get_display_device_reg_key(device_name)))
     {
         release_display_device_init_mutex(mutex);
         return FALSE;
