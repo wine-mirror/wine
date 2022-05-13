@@ -188,6 +188,7 @@ static void test_customdraw(void) {
        HWND parent, hwndTip;
        RECT rect;
        TTTOOLINFOA toolInfo = { 0 };
+       winetest_push_context("%ld", iterationNumber);
 
        /* Create a main window */
        parent = CreateWindowExA(0, "CustomDrawClass", NULL,
@@ -196,7 +197,7 @@ static void test_customdraw(void) {
                                50, 50,
                                300, 300,
                                NULL, NULL, NULL, 0);
-       ok(parent != NULL, "%ld: Creation of main window failed\n", iterationNumber);
+       ok(parent != NULL, "Creation of main window failed\n");
 
        /* Make it show */
        ShowWindow(parent, SW_SHOWNORMAL);
@@ -208,7 +209,7 @@ static void test_customdraw(void) {
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 CW_USEDEFAULT, CW_USEDEFAULT,
                                 parent, NULL, GetModuleHandleA(NULL), 0);
-       ok(hwndTip != NULL, "%ld: Creation of tooltip window failed\n", iterationNumber);
+       ok(hwndTip != NULL, "Creation of tooltip window failed\n");
 
        /* Set up parms for the wndproc to handle */
        CD_Stages = 0;
@@ -229,7 +230,7 @@ static void test_customdraw(void) {
        toolInfo.lParam = 0xdeadbeef;
        GetClientRect (parent, &toolInfo.rect);
        ret = SendMessageA(hwndTip, TTM_ADDTOOLA, 0, (LPARAM)&toolInfo);
-       ok(ret, "%ld: Failed to add the tool.\n", iterationNumber);
+       ok(ret, "Failed to add the tool.\n");
 
        /* Make tooltip appear quickly */
        SendMessageA(hwndTip, TTM_SETDELAYTIME, TTDT_INITIAL, MAKELPARAM(1,0));
@@ -243,27 +244,28 @@ static void test_customdraw(void) {
        {
            /* Check CustomDraw results */
            ok(CD_Stages == expectedResults[iterationNumber].ExpectedCalls,
-              "%ld: CustomDraw stages %x, expected %x\n", iterationNumber, CD_Stages,
+              "CustomDraw stages %x, expected %x\n", CD_Stages,
               expectedResults[iterationNumber].ExpectedCalls);
        }
 
        ret = SendMessageA(hwndTip, TTM_GETCURRENTTOOLA, 0, 0);
-       ok(ret, "%ld: Failed to get current tool %#Ix.\n", iterationNumber, ret);
+       ok(ret, "Failed to get current tool %#Ix.\n", ret);
 
        memset(&toolInfo, 0xcc, sizeof(toolInfo));
        toolInfo.cbSize = sizeof(toolInfo);
        toolInfo.lpszText = NULL;
        toolInfo.lpReserved = (void *)0xdeadbeef;
        SendMessageA(hwndTip, TTM_GETCURRENTTOOLA, 0, (LPARAM)&toolInfo);
-       ok(toolInfo.hwnd == parent, "%ld: Unexpected hwnd %p.\n", iterationNumber, toolInfo.hwnd);
-       ok(toolInfo.hinst == GetModuleHandleA(NULL), "%ld: Unexpected hinst %p.\n", iterationNumber, toolInfo.hinst);
-       ok(toolInfo.uId == 0x1234abcd, "%ld: Unexpected uId %Ix.\n", iterationNumber, toolInfo.uId);
-       ok(toolInfo.lParam == 0, "%ld: Unexpected lParam %Ix.\n", iterationNumber, toolInfo.lParam);
-       ok(toolInfo.lpReserved == (void *)0xdeadbeef, "%ld: Unexpected lpReserved %p.\n", iterationNumber, toolInfo.lpReserved);
+       ok(toolInfo.hwnd == parent, "Unexpected hwnd %p.\n", toolInfo.hwnd);
+       ok(toolInfo.hinst == GetModuleHandleA(NULL), "Unexpected hinst %p.\n", toolInfo.hinst);
+       ok(toolInfo.uId == 0x1234abcd, "Unexpected uId %Ix.\n", toolInfo.uId);
+       ok(toolInfo.lParam == 0, "Unexpected lParam %Ix.\n", toolInfo.lParam);
+       ok(toolInfo.lpReserved == (void *)0xdeadbeef, "Unexpected lpReserved %p.\n", toolInfo.lpReserved);
 
        /* Clean up */
        DestroyWindow(hwndTip);
        DestroyWindow(parent);
+       winetest_pop_context();
    }
 
    SetCursorPos(orig_pos.x, orig_pos.y);
