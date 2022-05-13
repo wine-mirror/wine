@@ -2954,14 +2954,14 @@ static void test_PathResolve(void)
         const WCHAR *expected_path;
     } tests[] = {
         /* no flags */
-        { L"test", 0, FALSE, L"test" },
-        { L"C:\\test", 0, TRUE, L"C:\\test" },
+        { L"shellpath", 0, FALSE, L"shellpath" },
+        { L"C:\\shellpath", 0, TRUE, L"C:\\shellpath" },
         { L"regedit", 0, FALSE, L"regedit" },
         { testfile, 0, TRUE, testfile },
 
         /* PRF_VERIFYEXISTS */
-        { L"test", PRF_VERIFYEXISTS, TRUE, testfile_lnk },
-        { L"C:\\test", PRF_VERIFYEXISTS, FALSE, L"C:\\test" },
+        { L"shellpath", PRF_VERIFYEXISTS, TRUE, testfile_lnk },
+        { L"C:\\shellpath", PRF_VERIFYEXISTS, FALSE, L"C:\\shellpath" },
         /* common extensions are tried even if PRF_TRYPROGRAMEXTENSIONS isn't passed */
         /* directories in dirs parameter are always searched first even if PRF_FIRSTDIRDEF isn't passed */
         { L"regedit", PRF_VERIFYEXISTS, TRUE, regedit_cmd },
@@ -2987,14 +2987,14 @@ static void test_PathResolve(void)
 
         /* PRF_VERIFYEXISTS | PRF_REQUIREABSOLUTE */
         /* only PRF_VERIFYEXISTS matters*/
-        { L"test", PRF_VERIFYEXISTS | PRF_REQUIREABSOLUTE, TRUE, testfile_lnk },
-        { L"C:\\test", PRF_VERIFYEXISTS | PRF_REQUIREABSOLUTE, FALSE, L"C:\\test" },
+        { L"shellpath", PRF_VERIFYEXISTS | PRF_REQUIREABSOLUTE, TRUE, testfile_lnk },
+        { L"C:\\shellpath", PRF_VERIFYEXISTS | PRF_REQUIREABSOLUTE, FALSE, L"C:\\shellpath" },
         { L"regedit", PRF_VERIFYEXISTS | PRF_REQUIREABSOLUTE, TRUE, regedit_cmd },
         { testfile, PRF_VERIFYEXISTS | PRF_REQUIREABSOLUTE, TRUE, testfile_lnk },
 
         /* PRF_TRYPROGRAMEXTENSIONS */
-        { L"test", PRF_TRYPROGRAMEXTENSIONS, TRUE, testfile_lnk},
-        { L"C:\\test", PRF_TRYPROGRAMEXTENSIONS, FALSE, L"C:\\test" },
+        { L"shellpath", PRF_TRYPROGRAMEXTENSIONS, TRUE, testfile_lnk},
+        { L"C:\\shellpath", PRF_TRYPROGRAMEXTENSIONS, FALSE, L"C:\\shellpath" },
         { L"regedit", PRF_TRYPROGRAMEXTENSIONS, TRUE, regedit_cmd },
         /* .dll is not tried */
         { L"bcrypt", PRF_TRYPROGRAMEXTENSIONS, FALSE, L"bcrypt" },
@@ -3016,7 +3016,7 @@ static void test_PathResolve(void)
     GetTempPathW(MAX_PATH, tempdir);
 
     lstrcpyW(testfile, tempdir);
-    lstrcatW(testfile, L"test");
+    lstrcatW(testfile, L"shellpath");
     lstrcpyW(testfile_lnk, testfile);
     lstrcatW(testfile_lnk, L".lnk");
 
