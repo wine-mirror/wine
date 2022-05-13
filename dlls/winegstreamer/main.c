@@ -348,6 +348,19 @@ HRESULT wg_transform_read_data(struct wg_transform *transform, struct wg_sample 
     return params.result;
 }
 
+bool wg_transform_set_output_format(struct wg_transform *transform, struct wg_format *format)
+{
+    struct wg_transform_set_output_format_params params =
+    {
+        .transform = transform,
+        .format = format,
+    };
+
+    TRACE("transform %p, format %p.\n", transform, format);
+
+    return !__wine_unix_call(unix_handle, unix_wg_transform_set_output_format, &params);
+}
+
 BOOL WINAPI DllMain(HINSTANCE instance, DWORD reason, void *reserved)
 {
     if (reason == DLL_PROCESS_ATTACH)

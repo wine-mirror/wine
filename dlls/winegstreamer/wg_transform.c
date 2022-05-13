@@ -51,6 +51,7 @@ struct wg_transform
     GstPad *my_src, *my_sink;
     GstPad *their_sink, *their_src;
     GstSegment segment;
+    GstQuery *drain_query;
 
     guint input_max_length;
     GstAtomicQueue *input_queue;
@@ -175,6 +176,31 @@ static gboolean transform_sink_query_cb(GstPad *pad, GstObject *parent, GstQuery
             g_object_unref(pool);
             return true;
         }
+
+        case GST_QUERY_CAPS:
+        {
+            GstCaps *caps, *filter, *temp;
+            gchar *str;
+
+            gst_query_parse_caps(query, &filter);
+            caps = gst_caps_ref(transform->output_caps);
+
+            if (filter)
+            {
+                temp = gst_caps_intersect(caps, filter);
+                gst_caps_unref(caps);
+                caps = temp;
+            }
+
+            str = gst_caps_to_string(caps);
+            GST_INFO("Returning caps %s", str);
+            g_free(str);
+
+            gst_query_set_caps_result(query, caps);
+            gst_caps_unref(caps);
+            return true;
+        }
+
         default:
             GST_WARNING("Ignoring \"%s\" query.", gst_query_type_get_name(query->type));
             break;
@@ -236,6 +262,7 @@ NTSTATUS wg_transform_destroy(void *args)
     g_object_unref(transform->container);
     g_object_unref(transform->my_sink);
     g_object_unref(transform->my_src);
+    gst_query_unref(transform->drain_query);
     gst_caps_unref(transform->output_caps);
     gst_atomic_queue_unref(transform->output_queue);
     free(transform);
@@ -343,6 +370,8 @@ NTSTATUS wg_transform_create(void *args)
     if (!(transform->input_queue = gst_atomic_queue_new(8)))
         goto out;
     if (!(transform->output_queue = gst_atomic_queue_new(8)))
+        goto out;
+    if (!(transform->drain_query = gst_query_new_drain()))
         goto out;
     if (!(transform->allocator = wg_allocator_create(transform_request_sample, transform)))
         goto out;
@@ -505,6 +534,8 @@ out:
         gst_caps_unref(src_caps);
     if (transform->allocator)
         wg_allocator_destroy(transform->allocator);
+    if (transform->drain_query)
+        gst_query_unref(transform->drain_query);
     if (transform->output_queue)
         gst_atomic_queue_unref(transform->output_queue);
     if (transform->input_queue)
@@ -517,6 +548,59 @@ out:
     free(transform);
     GST_ERROR("Failed to create winegstreamer transform.");
     return status;
+}
+
+NTSTATUS wg_transform_set_output_format(void *args)
+{
+    struct wg_transform_set_output_format_params *params = args;
+    struct wg_transform *transform = params->transform;
+    const struct wg_format *format = params->format;
+    GstSample *sample;
+    GstCaps *caps;
+    gchar *str;
+
+    if (!(caps = wg_format_to_caps(format)))
+    {
+        GST_ERROR("Failed to convert format %p to caps.", format);
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    if (gst_caps_is_always_compatible(transform->output_caps, caps))
+    {
+        gst_caps_unref(caps);
+        return STATUS_SUCCESS;
+    }
+
+    if (!gst_pad_peer_query(transform->my_src, transform->drain_query))
+    {
+        GST_ERROR("Failed to drain transform %p.", transform);
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    gst_caps_unref(transform->output_caps);
+    transform->output_caps = caps;
+
+    if (!gst_pad_push_event(transform->my_sink, gst_event_new_reconfigure()))
+    {
+        GST_ERROR("Failed to reconfigure transform %p.", transform);
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    str = gst_caps_to_string(caps);
+    GST_INFO("Configured new caps %s.", str);
+    g_free(str);
+
+    /* Ideally and to be fully compatible with native transform, the queued
+     * output buffers will need to be converted to the new output format and
+     * kept queued.
+     */
+    if (transform->output_sample)
+        gst_sample_unref(transform->output_sample);
+    while ((sample = gst_atomic_queue_pop(transform->output_queue)))
+        gst_sample_unref(sample);
+    transform->output_sample = NULL;
+
+    return STATUS_SUCCESS;
 }
 
 static void wg_sample_free_notify(void *arg)

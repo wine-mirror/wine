@@ -467,7 +467,28 @@ static HRESULT WINAPI transform_SetOutputType(IMFTransform *iface, DWORD id, IMF
         IMFMediaType_Release(decoder->output_type);
     IMFMediaType_AddRef((decoder->output_type = type));
 
-    if (FAILED(hr = try_create_wg_transform(decoder)))
+    if (decoder->wg_transform)
+    {
+        struct wg_format output_format;
+        mf_media_type_to_wg_format(decoder->output_type, &output_format);
+
+        /* Don't force any specific size, H264 streams already have the metadata for it
+         * and will generate a MF_E_TRANSFORM_STREAM_CHANGE result later.
+         */
+        output_format.u.video.width = 0;
+        output_format.u.video.height = 0;
+        output_format.u.video.fps_d = 0;
+        output_format.u.video.fps_n = 0;
+
+        if (output_format.major_type == WG_MAJOR_TYPE_UNKNOWN
+                || !wg_transform_set_output_format(decoder->wg_transform, &output_format))
+        {
+            IMFMediaType_Release(decoder->output_type);
+            decoder->output_type = NULL;
+            return MF_E_INVALIDMEDIATYPE;
+        }
+    }
+    else if (FAILED(hr = try_create_wg_transform(decoder)))
     {
         IMFMediaType_Release(decoder->output_type);
         decoder->output_type = NULL;

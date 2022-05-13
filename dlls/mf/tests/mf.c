@@ -7818,7 +7818,7 @@ static void test_h264_decoder(void)
     todo_wine
     ok(hr == MF_E_TRANSFORM_STREAM_CHANGE, "ProcessOutput returned %#lx\n", hr);
 
-    if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
+    while (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
     {
         hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
         ok(hr == S_OK, "ProcessInput returned %#lx\n", hr);
@@ -7826,16 +7826,14 @@ static void test_h264_decoder(void)
         ok(ret <= 1, "Release returned %lu\n", ret);
         sample = next_h264_sample(&h264_encoded_data, &h264_encoded_data_len);
         hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
-        todo_wine
+        todo_wine_if(hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
         ok(hr == MF_E_TRANSFORM_STREAM_CHANGE, "ProcessOutput returned %#lx\n", hr);
     }
 
     ok(output.dwStreamID == 0, "got dwStreamID %lu\n", output.dwStreamID);
     ok(!!output.pSample, "got pSample %p\n", output.pSample);
-    todo_wine
     ok(output.dwStatus == MFT_OUTPUT_DATA_BUFFER_FORMAT_CHANGE, "got dwStatus %#lx\n", output.dwStatus);
     ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
-    todo_wine
     ok(status == MFT_PROCESS_OUTPUT_STATUS_NEW_STREAMS, "got status %#lx\n", status);
     hr = IMFSample_GetTotalLength(output.pSample, &length);
     ok(hr == S_OK, "GetTotalLength returned %#lx\n", hr);
@@ -7858,17 +7856,16 @@ static void test_h264_decoder(void)
     memset(&output, 0, sizeof(output));
     output.pSample = create_sample(NULL, actual_width * actual_height * 2);
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
-    todo_wine
     ok(hr == S_OK, "ProcessOutput returned %#lx\n", hr);
     ok(output.dwStreamID == 0, "got dwStreamID %lu\n", output.dwStreamID);
     ok(!!output.pSample, "got pSample %p\n", output.pSample);
     ok(output.dwStatus == 0, "got dwStatus %#lx\n", output.dwStatus);
     ok(!output.pEvents, "got pEvents %p\n", output.pEvents);
     ok(status == 0, "got status %#lx\n", status);
-    if (hr != S_OK) goto skip_i420_tests;
 
     hr = IMFSample_GetSampleTime(output.pSample, &time);
     ok(hr == S_OK, "GetSampleTime returned %#lx\n", hr);
+    todo_wine_if(time == 1334666)  /* when VA-API plugin is used */
     ok(time - 333666 <= 2, "got time %I64d\n", time);
 
     duration = 0xdeadbeef;
@@ -7904,7 +7901,6 @@ static void test_h264_decoder(void)
 
     check_sample(output.pSample, i420_frame_data, output_file);
 
-skip_i420_tests:
     ret = IMFSample_Release(output.pSample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
@@ -7915,6 +7911,7 @@ skip_i420_tests:
     memset(&output, 0, sizeof(output));
     output.pSample = create_sample(NULL, actual_width * actual_height * 2);
     hr = IMFTransform_ProcessOutput(transform, 0, 1, &output, &status);
+    todo_wine_if(hr == S_OK)  /* when VA-API plugin is used */
     ok(hr == MF_E_TRANSFORM_NEED_MORE_INPUT, "ProcessOutput returned %#lx\n", hr);
     ok(output.dwStreamID == 0, "got dwStreamID %lu\n", output.dwStreamID);
     ok(!!output.pSample, "got pSample %p\n", output.pSample);
