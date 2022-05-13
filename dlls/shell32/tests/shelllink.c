@@ -452,41 +452,45 @@ void create_lnk_(int line, const WCHAR* path, lnk_desc_t* desc)
 
         init_dirty = IPersistFile_IsDirty(pf); /* empty links start off as clean */
         r = IPersistFile_Save(pf, NULL, FALSE);
-        lok(r == S_OK || r == E_INVALIDARG /* before Windows 7 */, "save failed (0x%08lx)\n", r);
+        lok(r == S_OK || r == E_INVALIDARG /* before Windows 7 */,
+            "save(NULL, FALSE) failed (0x%08lx)\n", r);
+
         r = IPersistFile_IsDirty(pf);
-        lok(r == init_dirty, "dirty (0x%08lx)\n", r);
+        lok(r == init_dirty, "dirty(NULL, FALSE) (0x%08lx)\n", r);
 
         r = IPersistFile_Save(pf, NULL, TRUE);
-        lok(r == S_OK || r == E_INVALIDARG /* before Windows 7 */, "save failed (0x%08lx)\n", r);
+        lok(r == S_OK || r == E_INVALIDARG /* before Windows 7 */,
+            "save(NULL, TRUE) failed (0x%08lx)\n", r);
+
         r = IPersistFile_IsDirty(pf);
-        lok(r == init_dirty, "dirty (0x%08lx)\n", r);
+        lok(r == init_dirty, "dirty(NULL, TRUE) (0x%08lx)\n", r);
 
         /* test GetCurFile before ::Save */
         str = (LPWSTR)0xdeadbeef;
         r = IPersistFile_GetCurFile(pf, &str);
-        lok(r == S_FALSE, "got 0x%08lx\n", r);
-        lok(str == NULL, "got %p\n", str);
+        lok(r == S_FALSE, "GetCurFile:before got 0x%08lx\n", r);
+        lok(str == NULL, "GetCurFile:before got %p\n", str);
 
         r = IPersistFile_Save(pf, path, TRUE);
-        lok(r == S_OK, "save failed (0x%08lx)\n", r);
+        lok(r == S_OK, "save(path, TRUE) failed (0x%08lx)\n", r);
         r = IPersistFile_IsDirty(pf);
-        lok(r == S_FALSE, "dirty (0x%08lx)\n", r);
+        lok(r == S_FALSE, "dirty(path, TRUE) (0x%08lx)\n", r);
 
         /* test GetCurFile after ::Save */
         r = IPersistFile_GetCurFile(pf, &str);
-        lok(r == S_OK, "got 0x%08lx\n", r);
-        lok(str != NULL, "Didn't expect NULL\n");
-        lok(!wcscmp(path, str), "Expected %s, got %s\n", wine_dbgstr_w(path), wine_dbgstr_w(str));
+        lok(r == S_OK, "GetCurFile(path, TRUE) got 0x%08lx\n", r);
+        lok(str != NULL, "GetCurFile(path, TRUE) Didn't expect NULL\n");
+        lok(!wcscmp(path, str), "GetCurFile(path, TRUE) Expected %s, got %s\n", wine_dbgstr_w(path), wine_dbgstr_w(str));
         CoTaskMemFree(str);
 
         r = IPersistFile_Save(pf, NULL, TRUE);
-        lok(r == S_OK, "save failed (0x%08lx)\n", r);
+        lok(r == S_OK, "save(NULL, TRUE) failed (0x%08lx)\n", r);
 
         /* test GetCurFile after ::Save */
         r = IPersistFile_GetCurFile(pf, &str);
-        lok(r == S_OK, "got 0x%08lx\n", r);
-        lok(str != NULL, "Didn't expect NULL\n");
-        lok(!wcscmp(path, str), "Expected %s, got %s\n", wine_dbgstr_w(path), wine_dbgstr_w(str));
+        lok(r == S_OK, "GetCurFile(NULL, TRUE) got 0x%08lx\n", r);
+        lok(str != NULL, "GetCurFile(NULL, TRUE) Didn't expect NULL\n");
+        lok(!wcscmp(path, str), "GetCurFile(NULL, TRUE) Expected %s, got %s\n", wine_dbgstr_w(path), wine_dbgstr_w(str));
         CoTaskMemFree(str);
 
         IPersistFile_Release(pf);
