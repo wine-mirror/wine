@@ -363,7 +363,7 @@ static void fill_luid_property(VkPhysicalDeviceProperties2 *properties2)
     SetupDiDestroyDeviceInfoList(devinfo);
     release_display_device_init_mutex(mutex);
 
-    TRACE("deviceName:%s deviceLUIDValid:%d LUID:%08x:%08x deviceNodeMask:%#x.\n",
+    TRACE("deviceName:%s deviceLUIDValid:%d LUID:%08lx:%08lx deviceNodeMask:%#x.\n",
             properties2->properties.deviceName, id->deviceLUIDValid, luid.HighPart, luid.LowPart,
             id->deviceNodeMask);
 }
@@ -409,7 +409,7 @@ BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, void *reserved)
 {
     void **kernel_callback_table;
 
-    TRACE("%p, %u, %p\n", hinst, reason, reserved);
+    TRACE("%p, %lu, %p\n", hinst, reason, reserved);
 
     switch (reason)
     {
