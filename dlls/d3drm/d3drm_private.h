@@ -64,6 +64,8 @@ struct d3drm_texture
     IDirect3DRM *d3drm;
     D3DRMIMAGE *image;
     IDirectDrawSurface *surface;
+    LONG decal_x;
+    LONG decal_y;
 };
 
 struct d3drm_frame

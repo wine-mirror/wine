@@ -1194,9 +1194,14 @@ static HRESULT WINAPI d3drm_texture3_SetDecalSize(IDirect3DRMTexture3 *iface, D3
 
 static HRESULT WINAPI d3drm_texture3_SetDecalOrigin(IDirect3DRMTexture3 *iface, LONG x, LONG y)
 {
-    FIXME("iface %p, x %ld, y %ld stub!\n", iface, x, y);
+    struct d3drm_texture *texture = impl_from_IDirect3DRMTexture3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, x %ld, y %ld\n", iface, x, y);
+
+    texture->decal_x = x;
+    texture->decal_y = y;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI d3drm_texture3_SetDecalScale(IDirect3DRMTexture3 *iface, DWORD scale)
@@ -1229,9 +1234,14 @@ static HRESULT WINAPI d3drm_texture3_GetDecalSize(IDirect3DRMTexture3 *iface, D3
 
 static HRESULT WINAPI d3drm_texture3_GetDecalOrigin(IDirect3DRMTexture3 *iface, LONG *x, LONG *y)
 {
-    FIXME("iface %p, x %p, y %p stub!\n", iface, x, y);
+    struct d3drm_texture *texture = impl_from_IDirect3DRMTexture3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, x %p, y %p\n", iface, x, y);
+
+    *x = texture->decal_x;
+    *y = texture->decal_y;
+
+    return S_OK;
 }
 
 static D3DRMIMAGE * WINAPI d3drm_texture3_GetImage(IDirect3DRMTexture3 *iface)
