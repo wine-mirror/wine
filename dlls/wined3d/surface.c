@@ -1276,17 +1276,9 @@ static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
 
     c = wined3d_format_convert_from_float(view->format, colour);
     bpp = view->format->byte_count;
-    w = min(box->right, view->width) - min(box->left, view->width);
-    h = min(box->bottom, view->height) - min(box->top, view->height);
-    if (view->resource->type != WINED3D_RTYPE_TEXTURE_3D)
-    {
-        d = 1;
-    }
-    else
-    {
-        d = wined3d_texture_get_level_depth(texture, level);
-        d = min(box->back, d) - min(box->front, d);
-    }
+    w = box->right - box->left;
+    h = box->bottom - box->top;
+    d = box->back - box->front;
 
     map_binding = texture->resource.map_binding;
     if (!wined3d_texture_load_location(texture, view->sub_resource_idx, context, map_binding))
@@ -1361,13 +1353,22 @@ static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
     context_release(context);
 }
 
+static bool wined3d_box_intersect(struct wined3d_box *ret, const struct wined3d_box *b1,
+        const struct wined3d_box *b2)
+{
+    wined3d_box_set(ret, max(b1->left, b2->left), max(b1->top, b2->top),
+            min(b1->right, b2->right), min(b1->bottom, b2->bottom),
+            max(b1->front, b2->front), min(b1->back, b2->back));
+    return ret->right > ret->left && ret->bottom > ret->top && ret->back > ret->front;
+}
+
 static void cpu_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_device *device,
         unsigned int rt_count, const struct wined3d_fb_state *fb, unsigned int rect_count, const RECT *clear_rects,
         const RECT *draw_rect, DWORD flags, const struct wined3d_color *colour, float depth, DWORD stencil)
 {
     struct wined3d_color c = {depth, 0.0f, 0.0f, 0.0f};
+    struct wined3d_box box, box_clip, box_view;
     struct wined3d_rendertarget_view *view;
-    struct wined3d_box box;
     unsigned int i, j;
 
     if (!rect_count)
@@ -1393,7 +1394,11 @@ static void cpu_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_de
             for (j = 0; j < rt_count; ++j)
             {
                 if ((view = fb->render_targets[j]))
-                    surface_cpu_blt_colour_fill(view, &box, colour);
+                {
+                    wined3d_rendertarget_view_get_box(view, &box_view);
+                    if (wined3d_box_intersect(&box_clip, &box_view, &box))
+                        surface_cpu_blt_colour_fill(view, &box_clip, colour);
+                }
             }
         }
 
@@ -1403,7 +1408,9 @@ static void cpu_blitter_clear(struct wined3d_blitter *blitter, struct wined3d_de
                     || (view->format->stencil_size && !(flags & WINED3DCLEAR_STENCIL)))
                 FIXME("Clearing %#x on %s.\n", flags, debug_d3dformat(view->format->id));
 
-            surface_cpu_blt_colour_fill(view, &box, &c);
+            wined3d_rendertarget_view_get_box(view, &box_view);
+            if (wined3d_box_intersect(&box_clip, &box_view, &box))
+                surface_cpu_blt_colour_fill(view, &box_clip, &c);
         }
     }
 }

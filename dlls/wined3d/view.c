@@ -534,6 +534,20 @@ DWORD wined3d_rendertarget_view_get_locations(const struct wined3d_rendertarget_
     return ret;
 }
 
+void wined3d_rendertarget_view_get_box(struct wined3d_rendertarget_view *view,
+        struct wined3d_box *box)
+{
+    if (view->resource->type != WINED3D_RTYPE_TEXTURE_3D)
+    {
+        wined3d_box_set(box, 0, 0, view->width, view->height, 0, 1);
+    }
+    else
+    {
+        struct wined3d_texture *texture = texture_from_resource(view->resource);
+        wined3d_texture_get_level_box(texture, view->sub_resource_idx, box);
+    }
+}
+
 static void wined3d_render_target_view_gl_cs_init(void *object)
 {
     struct wined3d_rendertarget_view_gl *view_gl = object;

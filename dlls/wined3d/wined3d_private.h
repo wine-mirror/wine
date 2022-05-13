@@ -5286,6 +5286,8 @@ struct wined3d_rendertarget_view
 void wined3d_rendertarget_view_cleanup(struct wined3d_rendertarget_view *view) DECLSPEC_HIDDEN;
 void wined3d_rendertarget_view_get_drawable_size(const struct wined3d_rendertarget_view *view,
         const struct wined3d_context *context, unsigned int *width, unsigned int *height) DECLSPEC_HIDDEN;
+void wined3d_rendertarget_view_get_box(struct wined3d_rendertarget_view *view,
+        struct wined3d_box *box) DECLSPEC_HIDDEN;
 void wined3d_rendertarget_view_invalidate_location(struct wined3d_rendertarget_view *view,
         DWORD location) DECLSPEC_HIDDEN;
 void wined3d_rendertarget_view_load_location(struct wined3d_rendertarget_view *view,
