@@ -293,6 +293,11 @@ extern void macdrv_im_set_text(const macdrv_event *event) DECLSPEC_HIDDEN;
 extern void macdrv_sent_text_input(const macdrv_event *event) DECLSPEC_HIDDEN;
 extern BOOL query_ime_char_rect(macdrv_query* query) DECLSPEC_HIDDEN;
 
+/* registry helpers */
+
+extern ULONG query_reg_value(HKEY hkey, const WCHAR *name, KEY_VALUE_PARTIAL_INFORMATION *info,
+                             ULONG size) DECLSPEC_HIDDEN;
+
 /* string helpers */
 
 static inline void ascii_to_unicode(WCHAR *dst, const char *src, size_t len)

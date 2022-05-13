@@ -117,12 +117,27 @@ static BOOL get_display_device_reg_key(const WCHAR *device_name, WCHAR *key, uns
 }
 
 
+static BOOL query_display_setting(HKEY hkey, const char *name, DWORD *ret)
+{
+    char buffer[1024];
+    WCHAR nameW[128];
+    KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
+
+    asciiz_to_unicode(nameW, name);
+    if (query_reg_value(hkey, nameW, value, sizeof(buffer)) != sizeof(DWORD) ||
+        value->Type != REG_DWORD)
+        return FALSE;
+
+    *ret = *(DWORD *)value->Data;
+    return TRUE;
+}
+
+
 static BOOL read_registry_settings(const WCHAR *device_name, DEVMODEW *dm)
 {
     WCHAR wine_mac_reg_key[MAX_PATH];
     HANDLE mutex;
     HKEY hkey;
-    DWORD type, size;
     BOOL ret = TRUE;
 
     dm->dmFields = 0;
@@ -140,32 +155,24 @@ static BOOL read_registry_settings(const WCHAR *device_name, DEVMODEW *dm)
         return FALSE;
     }
 
-#define query_value(name, data) \
-    size = sizeof(DWORD); \
-    if (RegQueryValueExA(hkey, name, 0, &type, (LPBYTE)(data), &size) || \
-        type != REG_DWORD || size != sizeof(DWORD)) \
-        ret = FALSE
-
-    query_value("DefaultSettings.BitsPerPel", &dm->dmBitsPerPel);
+    ret &= query_display_setting(hkey, "DefaultSettings.BitsPerPel", &dm->dmBitsPerPel);
     dm->dmFields |= DM_BITSPERPEL;
-    query_value("DefaultSettings.XResolution", &dm->dmPelsWidth);
+    ret &= query_display_setting(hkey, "DefaultSettings.XResolution", &dm->dmPelsWidth);
     dm->dmFields |= DM_PELSWIDTH;
-    query_value("DefaultSettings.YResolution", &dm->dmPelsHeight);
+    ret &= query_display_setting(hkey, "DefaultSettings.YResolution", &dm->dmPelsHeight);
     dm->dmFields |= DM_PELSHEIGHT;
-    query_value("DefaultSettings.VRefresh", &dm->dmDisplayFrequency);
+    ret &= query_display_setting(hkey, "DefaultSettings.VRefresh", &dm->dmDisplayFrequency);
     dm->dmFields |= DM_DISPLAYFREQUENCY;
-    query_value("DefaultSettings.Flags", &dm->dmDisplayFlags);
+    ret &= query_display_setting(hkey, "DefaultSettings.Flags", &dm->dmDisplayFlags);
     dm->dmFields |= DM_DISPLAYFLAGS;
-    query_value("DefaultSettings.XPanning", &dm->dmPosition.x);
-    query_value("DefaultSettings.YPanning", &dm->dmPosition.y);
+    ret &= query_display_setting(hkey, "DefaultSettings.XPanning", (DWORD *)&dm->dmPosition.x);
+    ret &= query_display_setting(hkey, "DefaultSettings.YPanning", (DWORD *)&dm->dmPosition.y);
     dm->dmFields |= DM_POSITION;
-    query_value("DefaultSettings.Orientation", &dm->dmDisplayOrientation);
+    ret &= query_display_setting(hkey, "DefaultSettings.Orientation", &dm->dmDisplayOrientation);
     dm->dmFields |= DM_DISPLAYORIENTATION;
-    query_value("DefaultSettings.FixedOutput", &dm->dmDisplayFixedOutput);
+    ret &= query_display_setting(hkey, "DefaultSettings.FixedOutput", &dm->dmDisplayFixedOutput);
 
-#undef query_value
-
-    RegCloseKey(hkey);
+    NtClose(hkey);
     release_display_device_init_mutex(mutex);
     return ret;
 }

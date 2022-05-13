@@ -152,7 +152,7 @@ static HKEY open_hkcu_key(const char *name)
 }
 
 
-static ULONG query_reg_value(HKEY hkey, const WCHAR *name, KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size)
+ULONG query_reg_value(HKEY hkey, const WCHAR *name, KEY_VALUE_PARTIAL_INFORMATION *info, ULONG size)
 {
     UNICODE_STRING str;
 
