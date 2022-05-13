@@ -63,6 +63,7 @@ typedef struct tagCRYPTHASH
     BYTE         abHashValue[RSAENH_MAX_HASH_SIZE];
     PHMAC_INFO   pHMACInfo;
     RSAENH_TLS1PRF_PARAMS tpPRFParams;
+    DWORD        buffered_hash_bytes;
 } CRYPTHASH;
 
 /******************************************************************************
@@ -661,6 +662,7 @@ static inline BOOL init_hash(CRYPTHASH *pCryptHash) {
 static inline void update_hash(CRYPTHASH *pCryptHash, const BYTE *pbData, DWORD dwDataLen)
 {
     BYTE *pbTemp;
+    DWORD len;
 
     switch (pCryptHash->aiAlgid)
     {
@@ -670,12 +672,49 @@ static inline void update_hash(CRYPTHASH *pCryptHash, const BYTE *pbData, DWORD 
             break;
 
         case CALG_MAC:
-            pbTemp = malloc(dwDataLen);
-            if (!pbTemp) return;
-            memcpy(pbTemp, pbData, dwDataLen);
-            RSAENH_CPEncrypt(pCryptHash->hProv, pCryptHash->hKey, 0, FALSE, 0,
-                             pbTemp, &dwDataLen, dwDataLen);
-            free(pbTemp);
+            if (pCryptHash->buffered_hash_bytes)
+            {
+                len = min(pCryptHash->dwHashSize - pCryptHash->buffered_hash_bytes, dwDataLen);
+                memcpy(pCryptHash->abHashValue + pCryptHash->buffered_hash_bytes, pbData, len);
+                pbData += len;
+                dwDataLen -= len;
+                pCryptHash->buffered_hash_bytes += len;
+                if (pCryptHash->buffered_hash_bytes < pCryptHash->dwHashSize)
+                    return;
+                pCryptHash->buffered_hash_bytes = 0;
+                len = pCryptHash->dwHashSize;
+                if (!RSAENH_CPEncrypt(pCryptHash->hProv, pCryptHash->hKey, 0, FALSE, 0,
+                                      pCryptHash->abHashValue, &len, len))
+                {
+                    FIXME("RSAENH_CPEncrypt failed.\n");
+                    return;
+                }
+            }
+            len = dwDataLen - dwDataLen % pCryptHash->dwHashSize;
+            if (len)
+            {
+                pbTemp = malloc(len);
+                if (!pbTemp)
+                {
+                    ERR("No memory.\n");
+                    return;
+                }
+                memcpy(pbTemp, pbData, len);
+                pbData += len;
+                dwDataLen -= len;
+                if (!RSAENH_CPEncrypt(pCryptHash->hProv, pCryptHash->hKey, 0, FALSE, 0,
+                                      pbTemp, &len, len))
+                {
+                    FIXME("RSAENH_CPEncrypt failed.\n");
+                    return;
+                }
+                free(pbTemp);
+            }
+            if (dwDataLen)
+            {
+                memcpy(pCryptHash->abHashValue, pbData, dwDataLen);
+                pCryptHash->buffered_hash_bytes = dwDataLen;
+            }
             break;
 
         default:
@@ -715,9 +754,10 @@ static inline void finalize_hash(CRYPTHASH *pCryptHash) {
             break;
 
         case CALG_MAC:
-            dwDataLen = 0;
-            RSAENH_CPEncrypt(pCryptHash->hProv, pCryptHash->hKey, 0, TRUE, 0,
-                             pCryptHash->abHashValue, &dwDataLen, pCryptHash->dwHashSize);
+            dwDataLen = pCryptHash->buffered_hash_bytes;
+            if (!RSAENH_CPEncrypt(pCryptHash->hProv, pCryptHash->hKey, 0, TRUE, 0,
+                                  pCryptHash->abHashValue, &dwDataLen, pCryptHash->dwHashSize))
+                FIXME("RSAENH_CPEncrypt failed.\n");
             break;
 
         default:
@@ -2217,6 +2257,7 @@ BOOL WINAPI RSAENH_CPCreateHash(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTKEY hKey, 
     pCryptHash->pHMACInfo = NULL;
     pCryptHash->hash_handle = NULL;
     pCryptHash->dwHashSize = peaAlgidInfo->dwDefaultLen >> 3;
+    pCryptHash->buffered_hash_bytes = 0;
     init_data_blob(&pCryptHash->tpPRFParams.blobLabel);
     init_data_blob(&pCryptHash->tpPRFParams.blobSeed);
 

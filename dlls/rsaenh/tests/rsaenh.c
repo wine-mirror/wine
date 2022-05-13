@@ -1853,6 +1853,7 @@ static void test_mac(void) {
     DWORD dwLen;
     BYTE abData[256], abEnc[264];
     static const BYTE mac_40[8] = { 0xb7, 0xa2, 0x46, 0xe9, 0x11, 0x31, 0xe0, 0xad};
+    static const BYTE mac_40_2[8] = { 0xef, 0x22, 0x0a, 0x3b, 0xd0, 0xab, 0x48, 0x49};
     int i;
 
     for (i=0; i < ARRAY_SIZE(abData); i++) abData[i] = (BYTE)i;
@@ -1876,7 +1877,34 @@ static void test_mac(void) {
     ok(result && dwLen == 8, "%08lx, dwLen: %ld\n", GetLastError(), dwLen);
 
     ok(!memcmp(abData, mac_40, sizeof(mac_40)), "MAC failed!\n");
-    
+
+    for (i = 0; i < ARRAY_SIZE(abData); ++i)
+        abData[i] = (BYTE)i;
+
+    result = CryptHashData(hHash, abData, 1, 0);
+    ok(!result && GetLastError() == NTE_BAD_HASH_STATE, "Unexpected result %d, error %#lx\n", result, GetLastError());
+
+    result = CryptDestroyHash(hHash);
+    ok(result, "%08lx\n", GetLastError());
+
+    result = CryptCreateHash(hProv, CALG_MAC, hKey, 0, &hHash);
+    ok(result, "%08lx\n", GetLastError());
+
+    result = CryptHashData(hHash, abData, 1, 0);
+    ok(result, "%08lx\n", GetLastError());
+    result = CryptHashData(hHash, abData + 1, 1, 0);
+    ok(result, "%08lx\n", GetLastError());
+    result = CryptHashData(hHash, abData + 2, 6, 0);
+    ok(result, "%08lx\n", GetLastError());
+    result = CryptHashData(hHash, abData + 8, 9, 0);
+    ok(result, "%08lx\n", GetLastError());
+
+    dwLen = ARRAY_SIZE(abData);
+    result = CryptGetHashParam(hHash, HP_HASHVAL, abData, &dwLen, 0);
+    ok(result && dwLen == 8, "%08lx, dwLen %ld\n", GetLastError(), dwLen);
+
+    ok(!memcmp(abData, mac_40_2, sizeof(mac_40)), "Hash does not match.\n");
+
     result = CryptDestroyHash(hHash);
     ok(result, "%08lx\n", GetLastError());
     
