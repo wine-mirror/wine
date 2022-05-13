@@ -1183,9 +1183,12 @@ static HRESULT WINAPI d3drm_texture3_SetColors(IDirect3DRMTexture3 *iface, DWORD
 
 static HRESULT WINAPI d3drm_texture3_SetShades(IDirect3DRMTexture3 *iface, DWORD max_shades)
 {
-    FIXME("iface %p, max_shades %lu stub!\n", iface, max_shades);
+    struct d3drm_texture *texture = impl_from_IDirect3DRMTexture3(iface);
+    TRACE("iface %p, max_shades %lu\n", iface, max_shades);
 
-    return E_NOTIMPL;
+    texture->max_shades = max_shades;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI d3drm_texture3_SetDecalSize(IDirect3DRMTexture3 *iface, D3DVALUE width, D3DVALUE height)
@@ -1258,9 +1261,9 @@ static D3DRMIMAGE * WINAPI d3drm_texture3_GetImage(IDirect3DRMTexture3 *iface)
 
 static DWORD WINAPI d3drm_texture3_GetShades(IDirect3DRMTexture3 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
-
-    return 0;
+    struct d3drm_texture *texture = impl_from_IDirect3DRMTexture3(iface);
+    TRACE("iface %p\n", iface);
+    return texture->max_shades;
 }
 
 static DWORD WINAPI d3drm_texture3_GetColors(IDirect3DRMTexture3 *iface)
@@ -1437,6 +1440,7 @@ HRESULT d3drm_texture_create(struct d3drm_texture **texture, IDirect3DRM *d3drm)
     object->IDirect3DRMTexture3_iface.lpVtbl = &d3drm_texture3_vtbl;
     object->d3drm = d3drm;
     object->max_colors = 8;
+    object->max_shades = 16;
 
     d3drm_object_init(&object->obj, classname);
 
