@@ -165,6 +165,7 @@ struct d3drm_mesh_builder
     DWORD nb_materials;
     struct mesh_material *materials;
     DWORD *material_indices;
+    D3DRMRENDERQUALITY quality;
 };
 
 struct mesh_group

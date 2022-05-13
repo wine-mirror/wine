@@ -670,9 +670,10 @@ static HRESULT WINAPI d3drm_mesh_builder2_SetTextureTopology(IDirect3DRMMeshBuil
 static HRESULT WINAPI d3drm_mesh_builder2_SetQuality(IDirect3DRMMeshBuilder2 *iface,
         D3DRMRENDERQUALITY quality)
 {
-    FIXME("iface %p, quality %#lx stub!\n", iface, quality);
+    struct d3drm_mesh_builder *mesh_builder = impl_from_IDirect3DRMMeshBuilder2(iface);
+    TRACE("iface %p, quality %#lx\n", iface, quality);
 
-    return E_NOTIMPL;
+    return IDirect3DRMMeshBuilder3_SetQuality(&mesh_builder->IDirect3DRMMeshBuilder3_iface, quality);
 }
 
 static HRESULT WINAPI d3drm_mesh_builder2_SetPerspective(IDirect3DRMMeshBuilder2 *iface, BOOL enable)
@@ -815,9 +816,11 @@ static HRESULT WINAPI d3drm_mesh_builder2_CreateFace(IDirect3DRMMeshBuilder2 *if
 
 static D3DRMRENDERQUALITY WINAPI d3drm_mesh_builder2_GetQuality(IDirect3DRMMeshBuilder2 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3drm_mesh_builder *mesh_builder = impl_from_IDirect3DRMMeshBuilder2(iface);
 
-    return 0;
+    TRACE("iface %p\n", iface);
+
+    return mesh_builder->quality;
 }
 
 static BOOL WINAPI d3drm_mesh_builder2_GetPerspective(IDirect3DRMMeshBuilder2 *iface)
@@ -1754,9 +1757,13 @@ static HRESULT WINAPI d3drm_mesh_builder3_SetTextureTopology(IDirect3DRMMeshBuil
 static HRESULT WINAPI d3drm_mesh_builder3_SetQuality(IDirect3DRMMeshBuilder3 *iface,
         D3DRMRENDERQUALITY quality)
 {
-    FIXME("iface %p, quality %#lx stub!\n", iface, quality);
+    struct d3drm_mesh_builder *mesh_builder = impl_from_IDirect3DRMMeshBuilder3(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, quality %#lx\n", iface, quality);
+
+    mesh_builder->quality = quality;
+
+    return S_OK;
 }
 
 static HRESULT WINAPI d3drm_mesh_builder3_SetPerspective(IDirect3DRMMeshBuilder3 *iface,
@@ -1904,9 +1911,11 @@ static HRESULT WINAPI d3drm_mesh_builder3_CreateFace(IDirect3DRMMeshBuilder3 *if
 
 static D3DRMRENDERQUALITY WINAPI d3drm_mesh_builder3_GetQuality(IDirect3DRMMeshBuilder3 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d3drm_mesh_builder *mesh_builder = impl_from_IDirect3DRMMeshBuilder3(iface);
 
-    return 0;
+    TRACE("iface %p\n", iface);
+
+    return mesh_builder->quality;
 }
 
 static BOOL WINAPI d3drm_mesh_builder3_GetPerspective(IDirect3DRMMeshBuilder3 *iface)
@@ -2345,6 +2354,7 @@ HRESULT d3drm_mesh_builder_create(struct d3drm_mesh_builder **mesh_builder, IDir
     object->IDirect3DRMMeshBuilder3_iface.lpVtbl = &d3drm_mesh_builder3_vtbl;
     object->ref = 1;
     object->d3drm = d3drm;
+    object->quality = D3DRMRENDER_GOURAUD;
     IDirect3DRM_AddRef(object->d3drm);
 
     d3drm_object_init(&object->obj, classname);

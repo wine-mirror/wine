@@ -863,6 +863,7 @@ static void test_Face(void)
     D3DCOLOR color;
     DWORD count;
     int icount;
+    D3DRMRENDERQUALITY quality;
 
     hr = Direct3DRMCreate(&d3drm);
     ok(hr == D3DRM_OK, "Cannot get IDirect3DRM interface, hr %#lx\n", hr);
@@ -933,6 +934,18 @@ static void test_Face(void)
 
     icount = IDirect3DRMFace_GetVertexCount(face1);
     ok(!icount, "wrong VertexCount: %i\n", icount);
+
+    quality = IDirect3DRMMeshBuilder3_GetQuality(MeshBuilder2);
+    ok(quality == D3DRMRENDER_GOURAUD, "Unexpected %lx.\n", quality);
+
+    hr = IDirect3DRMMeshBuilder3_SetQuality(MeshBuilder2, D3DRMRENDER_PHONG);
+    ok(hr == S_OK, "got %lx.\n", hr);
+
+    quality = IDirect3DRMMeshBuilder3_GetQuality(MeshBuilder2);
+    ok(quality == D3DRMRENDER_PHONG, "got %lx.\n", quality);
+
+    hr = IDirect3DRMMeshBuilder3_SetQuality(MeshBuilder2, D3DRMRENDER_GOURAUD);
+    ok(hr == S_OK, "got %lx.\n", hr);
 
     IDirect3DRMFace_Release(face1);
     IDirect3DRMMeshBuilder2_Release(MeshBuilder2);
