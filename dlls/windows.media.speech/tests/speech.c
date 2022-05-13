@@ -1060,8 +1060,7 @@ static void test_SpeechRecognizer(void)
         ok(hr == E_ILLEGAL_METHOD_CALL, "IAsyncInfo_get_ErrorCode failed, hr %#lx.\n", hr);
         ok(error_code == E_ILLEGAL_METHOD_CALL, "ErrorCode was %#lx.\n", error_code);
 
-        ref = IAsyncInfo_Release(info);
-        ok(ref == 1, "Got unexpected ref %lu.\n", ref);
+        IAsyncInfo_Release(info);
 
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_put_Completed(operation, NULL);
         ok(hr == E_ILLEGAL_METHOD_CALL, "Got unexpected hr %#lx.\n", hr);
@@ -1102,10 +1101,8 @@ static void test_SpeechRecognizer(void)
         ok(hr == S_OK, "IAsyncInfo_get_Status failed, hr %#lx.\n", hr);
         ok(async_status == Completed, "Status was %#x.\n", async_status);
 
-        ref = IAsyncInfo_Release(info);
-        ok(ref >= 1, "Got unexpected ref %lu.\n", ref);
-        ref = IAsyncOperation_SpeechRecognitionCompilationResult_Release(operation);
-        ok(ref >= 0, "Got unexpected ref %lu.\n", ref);
+        IAsyncInfo_Release(info);
+        IAsyncOperation_SpeechRecognitionCompilationResult_Release(operation);
 
         ref = ISpeechRecognizer_Release(recognizer);
         ok(ref == 1, "Got unexpected ref %lu.\n", ref);
@@ -1153,12 +1150,10 @@ static void test_SpeechRecognizer(void)
         CloseHandle(compilation_handler.event_block);
         CloseHandle(compilation_handler.event_finished);
 
-        ref = IAsyncInfo_Release(info);
-        ok(ref == 1, "Got unexpected ref %lu.\n", ref);
+        IAsyncInfo_Release(info);
 
 skip_operation:
-        ref = IAsyncOperation_SpeechRecognitionCompilationResult_Release(operation);
-        ok(!ref, "Got unexpected ref %lu.\n", ref);
+        IAsyncOperation_SpeechRecognitionCompilationResult_Release(operation);
 
         ref = ISpeechRecognizer_Release(recognizer);
         ok(ref == 1, "Got unexpected ref %lu.\n", ref);
