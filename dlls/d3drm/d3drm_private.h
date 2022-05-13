@@ -66,6 +66,7 @@ struct d3drm_texture
     IDirectDrawSurface *surface;
     LONG decal_x;
     LONG decal_y;
+    DWORD max_colors;
 };
 
 struct d3drm_frame

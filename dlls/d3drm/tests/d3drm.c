@@ -2707,6 +2707,7 @@ static void test_Texture(void)
     IDirect3DRMTexture3 *texture3;
     IDirectDrawSurface *surface;
     LONG decalx, decaly;
+    DWORD colors;
 
     D3DRMIMAGE initimg =
     {
@@ -2882,6 +2883,18 @@ static void test_Texture(void)
     ok(decaly == 1, "got %ld.\n", decaly);
 
     hr = IDirect3DRMTexture_SetDecalOrigin(texture1, 0, 0);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    colors = IDirect3DRMTexture_GetColors(texture1);
+    ok(colors == 8, "got %ld.\n", colors);
+
+    hr = IDirect3DRMTexture_SetColors(texture1, 256);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    colors = IDirect3DRMTexture_GetColors(texture1);
+    ok(colors == 256, "got %ld.\n", colors);
+
+    hr = IDirect3DRMTexture_SetColors(texture1, 8);
     ok(hr == S_OK, "got %#lx.\n", hr);
 
     d3drm_img = IDirect3DRMTexture_GetImage(texture1);
