@@ -96,7 +96,7 @@ typedef struct tagCRYPTKEY
     DWORD       dwSaltLen;
     DWORD       dwBlockLen;
     DWORD       dwState;
-    KEY_CONTEXT context;    
+    KEY_CONTEXT context;
     BYTE        abKeyValue[RSAENH_MAX_KEY_SIZE];
     BYTE        abInitVector[RSAENH_MAX_BLOCK_SIZE];
     BYTE        abChainVector[RSAENH_MAX_BLOCK_SIZE];
@@ -524,6 +524,73 @@ static inline void free_data_blob(PCRYPT_DATA_BLOB pBlob) {
 static inline void init_data_blob(PCRYPT_DATA_BLOB pBlob) {
     pBlob->pbData = NULL;
     pBlob->cbData = 0;
+}
+
+/******************************************************************************
+ * block_encrypt [Internal]
+ */
+BOOL block_encrypt(CRYPTKEY *key, BYTE *data, DWORD *data_len, DWORD buf_len,
+                   BOOL final, KEY_CONTEXT *context, BYTE *chain_vector)
+{
+    BYTE *in, out[RSAENH_MAX_BLOCK_SIZE], o[RSAENH_MAX_BLOCK_SIZE];
+    unsigned int encrypted_len, i, j, k;
+
+    if (!final && (*data_len % key->dwBlockLen))
+    {
+        SetLastError(NTE_BAD_DATA);
+        return FALSE;
+    }
+
+    encrypted_len = (*data_len / key->dwBlockLen + (final ? 1 : 0)) * key->dwBlockLen;
+
+    if (data == NULL)
+    {
+        *data_len = encrypted_len;
+        return TRUE;
+    }
+    if (encrypted_len > buf_len)
+    {
+        *data_len = encrypted_len;
+        SetLastError(ERROR_MORE_DATA);
+        return FALSE;
+    }
+
+    /* Pad final block with length bytes */
+    for (i = *data_len; i < encrypted_len; i++) data[i] = encrypted_len - *data_len;
+    *data_len = encrypted_len;
+
+    for (i = 0, in = data; i < *data_len; i += key->dwBlockLen, in += key->dwBlockLen)
+    {
+        switch (key->dwMode) {
+            case CRYPT_MODE_ECB:
+                encrypt_block_impl(key->aiAlgid, 0, context, in, out,
+                                   RSAENH_ENCRYPT);
+                break;
+            case CRYPT_MODE_CBC:
+                for (j = 0; j < key->dwBlockLen; j++)
+                    in[j] ^= chain_vector[j];
+                encrypt_block_impl(key->aiAlgid, 0, context, in, out,
+                                   RSAENH_ENCRYPT);
+                memcpy(chain_vector, out, key->dwBlockLen);
+                break;
+            case CRYPT_MODE_CFB:
+                for (j = 0; j < key->dwBlockLen; j++)
+                {
+                    encrypt_block_impl(key->aiAlgid, 0, context,
+                                       chain_vector, o, RSAENH_ENCRYPT);
+                    out[j] = in[j] ^ o[0];
+                    for (k = 0; k < key->dwBlockLen - 1; k++)
+                        chain_vector[k] = chain_vector[k+1];
+                    chain_vector[k] = out[j];
+                }
+                break;
+            default:
+                SetLastError(NTE_BAD_ALGID);
+                return FALSE;
+        }
+        memcpy(in, out, key->dwBlockLen);
+    }
+    return TRUE;
 }
 
 /******************************************************************************
@@ -2515,8 +2582,6 @@ BOOL WINAPI RSAENH_CPEncrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
                              DWORD dwFlags, BYTE *pbData, DWORD *pdwDataLen, DWORD dwBufLen)
 {
     CRYPTKEY *pCryptKey;
-    BYTE *in, out[RSAENH_MAX_BLOCK_SIZE], o[RSAENH_MAX_BLOCK_SIZE];
-    DWORD dwEncryptedLen, i, j, k;
         
     TRACE("(hProv=%08Ix, hKey=%08Ix, hHash=%08Ix, Final=%d, dwFlags=%08lx, pbData=%p, "
           "pdwDataLen=%p, dwBufLen=%ld)\n", hProv, hKey, hHash, Final, dwFlags, pbData, pdwDataLen,
@@ -2554,58 +2619,9 @@ BOOL WINAPI RSAENH_CPEncrypt(HCRYPTPROV hProv, HCRYPTKEY hKey, HCRYPTHASH hHash,
     }
     
     if (GET_ALG_TYPE(pCryptKey->aiAlgid) == ALG_TYPE_BLOCK) {
-        if (!Final && (*pdwDataLen % pCryptKey->dwBlockLen)) {
-            SetLastError(NTE_BAD_DATA);
+        if (!block_encrypt(pCryptKey, pbData, pdwDataLen, dwBufLen, Final,
+                           &pCryptKey->context, pCryptKey->abChainVector))
             return FALSE;
-        }
-
-        dwEncryptedLen = (*pdwDataLen/pCryptKey->dwBlockLen+(Final?1:0))*pCryptKey->dwBlockLen;
-
-        if (pbData == NULL) {
-            *pdwDataLen = dwEncryptedLen;
-            return TRUE;
-        }
-        else if (dwEncryptedLen > dwBufLen) {
-            *pdwDataLen = dwEncryptedLen;
-            SetLastError(ERROR_MORE_DATA);
-            return FALSE;
-        }
-
-        /* Pad final block with length bytes */
-        for (i=*pdwDataLen; i<dwEncryptedLen; i++) pbData[i] = dwEncryptedLen - *pdwDataLen;
-        *pdwDataLen = dwEncryptedLen;
-
-        for (i=0, in=pbData; i<*pdwDataLen; i+=pCryptKey->dwBlockLen, in+=pCryptKey->dwBlockLen) {
-            switch (pCryptKey->dwMode) {
-                case CRYPT_MODE_ECB:
-                    encrypt_block_impl(pCryptKey->aiAlgid, 0, &pCryptKey->context, in, out, 
-                                       RSAENH_ENCRYPT);
-                    break;
-                
-                case CRYPT_MODE_CBC:
-                    for (j=0; j<pCryptKey->dwBlockLen; j++) in[j] ^= pCryptKey->abChainVector[j];
-                    encrypt_block_impl(pCryptKey->aiAlgid, 0, &pCryptKey->context, in, out, 
-                                       RSAENH_ENCRYPT);
-                    memcpy(pCryptKey->abChainVector, out, pCryptKey->dwBlockLen);
-                    break;
-
-                case CRYPT_MODE_CFB:
-                    for (j=0; j<pCryptKey->dwBlockLen; j++) {
-                        encrypt_block_impl(pCryptKey->aiAlgid, 0, &pCryptKey->context, 
-                                           pCryptKey->abChainVector, o, RSAENH_ENCRYPT);
-                        out[j] = in[j] ^ o[0];
-                        for (k=0; k<pCryptKey->dwBlockLen-1; k++) 
-                            pCryptKey->abChainVector[k] = pCryptKey->abChainVector[k+1];
-                        pCryptKey->abChainVector[k] = out[j];
-                    }
-                    break;
-                    
-                default:
-                    SetLastError(NTE_BAD_ALGID);
-                    return FALSE;
-            }
-            memcpy(in, out, pCryptKey->dwBlockLen); 
-        }
     } else if (GET_ALG_TYPE(pCryptKey->aiAlgid) == ALG_TYPE_STREAM) {
         if (pbData == NULL) {
             *pdwDataLen = dwBufLen;
