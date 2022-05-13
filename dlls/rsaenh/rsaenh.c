@@ -690,7 +690,13 @@ static inline BOOL init_hash(CRYPTHASH *pCryptHash) {
                 const PROV_ENUMALGS_EX *pAlgInfo;
                 
                 pAlgInfo = get_algid_info(pCryptHash->hProv, pCryptHash->pHMACInfo->HashAlgid);
-                if (!pAlgInfo) return FALSE;
+                if (!pAlgInfo)
+                {
+                    /* A number of hash algorithms (e. g., _SHA256) are supported for HMAC even for providers
+                     * which don't list the algorithm, so print a fixme here. */
+                    FIXME("Hash algroithm %#x not found.\n", pCryptHash->pHMACInfo->HashAlgid);
+                    return FALSE;
+                }
                 pCryptHash->dwHashSize = pAlgInfo->dwDefaultLen >> 3;
                 init_hash_impl(pCryptHash->pHMACInfo->HashAlgid, &pCryptHash->hash_handle);
                 update_hash_impl(pCryptHash->hash_handle,
