@@ -208,6 +208,8 @@ __ASM_GLOBAL_FUNC( alloc_fs_sel,
 
 #elif defined (__APPLE__)
 
+#include <i386/user_ldt.h>
+
 #define RAX_sig(context)     ((context)->uc_mcontext->__ss.__rax)
 #define RBX_sig(context)     ((context)->uc_mcontext->__ss.__rbx)
 #define RCX_sig(context)     ((context)->uc_mcontext->__ss.__rcx)
@@ -2833,6 +2835,80 @@ static void usr1_handler( int signal, siginfo_t *siginfo, void *ucontext )
 }
 
 
+/***********************************************************************
+ *           LDT support
+ */
+
+#define LDT_SIZE 8192
+
+#define LDT_FLAGS_DATA      0x13  /* Data segment */
+#define LDT_FLAGS_CODE      0x1b  /* Code segment */
+#define LDT_FLAGS_32BIT     0x40  /* Segment is 32-bit (code or stack) */
+#define LDT_FLAGS_ALLOCATED 0x80  /* Segment is allocated */
+
+static ULONG first_ldt_entry = 32;
+
+struct ldt_copy
+{
+    void         *base[LDT_SIZE];
+    unsigned int  limit[LDT_SIZE];
+    unsigned char flags[LDT_SIZE];
+} __wine_ldt_copy;
+
+static pthread_mutex_t ldt_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static inline void *ldt_get_base( LDT_ENTRY ent )
+{
+    return (void *)(ent.BaseLow |
+                    (ULONG_PTR)ent.HighWord.Bits.BaseMid << 16 |
+                    (ULONG_PTR)ent.HighWord.Bits.BaseHi << 24);
+}
+
+static inline unsigned int ldt_get_limit( LDT_ENTRY ent )
+{
+    unsigned int limit = ent.LimitLow | (ent.HighWord.Bits.LimitHi << 16);
+    if (ent.HighWord.Bits.Granularity) limit = (limit << 12) | 0xfff;
+    return limit;
+}
+
+static LDT_ENTRY ldt_make_entry( void *base, unsigned int limit, unsigned char flags )
+{
+    LDT_ENTRY entry;
+
+    entry.BaseLow                   = (WORD)(ULONG_PTR)base;
+    entry.HighWord.Bits.BaseMid     = (BYTE)((ULONG_PTR)base >> 16);
+    entry.HighWord.Bits.BaseHi      = (BYTE)((ULONG_PTR)base >> 24);
+    if ((entry.HighWord.Bits.Granularity = (limit >= 0x100000))) limit >>= 12;
+    entry.LimitLow                  = (WORD)limit;
+    entry.HighWord.Bits.LimitHi     = limit >> 16;
+    entry.HighWord.Bits.Dpl         = 3;
+    entry.HighWord.Bits.Pres        = 1;
+    entry.HighWord.Bits.Type        = flags;
+    entry.HighWord.Bits.Sys         = 0;
+    entry.HighWord.Bits.Reserved_0  = 0;
+    entry.HighWord.Bits.Default_Big = (flags & LDT_FLAGS_32BIT) != 0;
+    return entry;
+}
+
+static void ldt_set_entry( WORD sel, LDT_ENTRY entry )
+{
+    int index = sel >> 3;
+
+#if defined(__APPLE__)
+    if (i386_set_ldt(index, (union ldt_entry *)&entry, 1) < 0) perror("i386_set_ldt");
+#else
+    fprintf( stderr, "No LDT support on this platform\n" );
+    exit(1);
+#endif
+
+    __wine_ldt_copy.base[index]  = ldt_get_base( entry );
+    __wine_ldt_copy.limit[index] = ldt_get_limit( entry );
+    __wine_ldt_copy.flags[index] = (entry.HighWord.Bits.Type |
+                                    (entry.HighWord.Bits.Default_Big ? LDT_FLAGS_32BIT : 0) |
+                                    LDT_FLAGS_ALLOCATED);
+}
+
+
 /**********************************************************************
  *           get_thread_ldt_entry
  */
@@ -2871,8 +2947,25 @@ NTSTATUS signal_alloc_thread( TEB *teb )
 
     if (teb->WowTebOffset)
     {
-        if (fs32_sel)
-            thread_data->fs = fs32_sel;
+        if (!fs32_sel)
+        {
+            void *teb32 = (char *)teb + teb->WowTebOffset;
+            sigset_t sigset;
+            int idx;
+            LDT_ENTRY entry = ldt_make_entry( teb32, page_size - 1, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
+
+            server_enter_uninterrupted_section( &ldt_mutex, &sigset );
+            for (idx = first_ldt_entry; idx < LDT_SIZE; idx++)
+            {
+                if (__wine_ldt_copy.flags[idx]) continue;
+                ldt_set_entry( (idx << 3) | 7, entry );
+                break;
+            }
+            server_leave_uninterrupted_section( &ldt_mutex, &sigset );
+            if (idx == LDT_SIZE) return STATUS_TOO_MANY_THREADS;
+            thread_data->fs = (idx << 3) | 7;
+        }
+        else thread_data->fs = fs32_sel;
     }
     return STATUS_SUCCESS;
 }
@@ -2883,6 +2976,15 @@ NTSTATUS signal_alloc_thread( TEB *teb )
  */
 void signal_free_thread( TEB *teb )
 {
+    struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&teb->GdiTebBatch;
+    sigset_t sigset;
+
+    if (teb->WowTebOffset && !fs32_sel)
+    {
+        server_enter_uninterrupted_section( &ldt_mutex, &sigset );
+        __wine_ldt_copy.flags[thread_data->fs >> 3] = 0;
+        server_leave_uninterrupted_section( &ldt_mutex, &sigset );
+    }
 }
 
 #ifdef __APPLE__
@@ -3011,6 +3113,32 @@ void signal_init_process(void)
             if (getauxval( AT_HWCAP2 ) & 2) syscall_flags |= SYSCALL_HAVE_WRFSGSBASE;
         }
         else ERR_(seh)( "failed to allocate %%fs selector\n" );
+    }
+#elif defined(__APPLE__)
+    if (NtCurrentTeb()->WowTebOffset)
+    {
+        void *teb32 = (char *)NtCurrentTeb() + NtCurrentTeb()->WowTebOffset;
+        LDT_ENTRY cs32_entry, fs32_entry;
+        int idx;
+
+        cs32_entry = ldt_make_entry( NULL, -1, LDT_FLAGS_CODE | LDT_FLAGS_32BIT );
+        fs32_entry = ldt_make_entry( teb32, page_size - 1, LDT_FLAGS_DATA | LDT_FLAGS_32BIT );
+
+        for (idx = first_ldt_entry; idx < LDT_SIZE; idx++)
+        {
+            if (__wine_ldt_copy.flags[idx]) continue;
+            cs32_sel = (idx << 3) | 7;
+            ldt_set_entry( cs32_sel, cs32_entry );
+            break;
+        }
+
+        for (idx = first_ldt_entry; idx < LDT_SIZE; idx++)
+        {
+            if (__wine_ldt_copy.flags[idx]) continue;
+            amd64_thread_data()->fs = (idx << 3) | 7;
+            ldt_set_entry( amd64_thread_data()->fs, fs32_entry );
+            break;
+        }
     }
 #endif
 
