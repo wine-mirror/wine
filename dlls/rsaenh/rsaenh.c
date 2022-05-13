@@ -23,6 +23,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 #include <stdio.h>
 
 #include "windef.h"
@@ -463,7 +464,7 @@ static inline const PROV_ENUMALGS_EX* get_algid_info(HCRYPTPROV hProv, ALG_ID al
  */
 static inline BOOL copy_data_blob(PCRYPT_DATA_BLOB dst, const PCRYPT_DATA_BLOB src)
 {
-    dst->pbData = HeapAlloc(GetProcessHeap(), 0, src->cbData);
+    dst->pbData = malloc(src->cbData);
     if (!dst->pbData) {
         SetLastError(NTE_NO_MEMORY);
         return FALSE;
@@ -494,7 +495,7 @@ static inline BOOL concat_data_blobs(PCRYPT_DATA_BLOB dst, const PCRYPT_DATA_BLO
                                      const PCRYPT_DATA_BLOB src2)
 {
     dst->cbData = src1->cbData + src2->cbData;
-    dst->pbData = HeapAlloc(GetProcessHeap(), 0, dst->cbData);
+    dst->pbData = malloc(dst->cbData);
     if (!dst->pbData) {
         SetLastError(NTE_NO_MEMORY);
         return FALSE;
@@ -513,7 +514,7 @@ static inline BOOL concat_data_blobs(PCRYPT_DATA_BLOB dst, const PCRYPT_DATA_BLO
  *  pBlob [I] Heap space occupied by pBlob->pbData is released
  */
 static inline void free_data_blob(PCRYPT_DATA_BLOB pBlob) {
-    HeapFree(GetProcessHeap(), 0, pBlob->pbData);
+    free(pBlob->pbData);
 }
 
 /******************************************************************************
@@ -537,9 +538,9 @@ static inline void init_data_blob(PCRYPT_DATA_BLOB pBlob) {
  */
 static inline void free_hmac_info(PHMAC_INFO hmac_info) {
     if (!hmac_info) return;
-    HeapFree(GetProcessHeap(), 0, hmac_info->pbInnerString);
-    HeapFree(GetProcessHeap(), 0, hmac_info->pbOuterString);
-    HeapFree(GetProcessHeap(), 0, hmac_info);
+    free(hmac_info->pbInnerString);
+    free(hmac_info->pbOuterString);
+    free(hmac_info);
 }
 
 /******************************************************************************
@@ -560,13 +561,13 @@ static inline void free_hmac_info(PHMAC_INFO hmac_info) {
  */
 static BOOL copy_hmac_info(PHMAC_INFO *dst, const HMAC_INFO *src) {
     if (!src) return FALSE;
-    *dst = HeapAlloc(GetProcessHeap(), 0, sizeof(HMAC_INFO));
+    *dst = malloc(sizeof(HMAC_INFO));
     if (!*dst) return FALSE;
     **dst = *src;
     (*dst)->pbInnerString = NULL;
     (*dst)->pbOuterString = NULL;
     if ((*dst)->cbInnerString == 0) (*dst)->cbInnerString = RSAENH_HMAC_DEF_PAD_LEN;
-    (*dst)->pbInnerString = HeapAlloc(GetProcessHeap(), 0, (*dst)->cbInnerString);
+    (*dst)->pbInnerString = malloc((*dst)->cbInnerString);
     if (!(*dst)->pbInnerString) {
         free_hmac_info(*dst);
         return FALSE;
@@ -576,7 +577,7 @@ static BOOL copy_hmac_info(PHMAC_INFO *dst, const HMAC_INFO *src) {
     else 
         memset((*dst)->pbInnerString, RSAENH_HMAC_DEF_IPAD_CHAR, RSAENH_HMAC_DEF_PAD_LEN);
     if ((*dst)->cbOuterString == 0) (*dst)->cbOuterString = RSAENH_HMAC_DEF_PAD_LEN;
-    (*dst)->pbOuterString = HeapAlloc(GetProcessHeap(), 0, (*dst)->cbOuterString);
+    (*dst)->pbOuterString = malloc((*dst)->cbOuterString);
     if (!(*dst)->pbOuterString) {
         free_hmac_info(*dst);
         return FALSE;
@@ -605,7 +606,7 @@ static void destroy_hash(OBJECTHDR *pObject)
     free_hmac_info(pCryptHash->pHMACInfo);
     free_data_blob(&pCryptHash->tpPRFParams.blobLabel);
     free_data_blob(&pCryptHash->tpPRFParams.blobSeed);
-    HeapFree(GetProcessHeap(), 0, pCryptHash);
+    free(pCryptHash);
 }
 
 /******************************************************************************
@@ -669,12 +670,12 @@ static inline void update_hash(CRYPTHASH *pCryptHash, const BYTE *pbData, DWORD 
             break;
 
         case CALG_MAC:
-            pbTemp = HeapAlloc(GetProcessHeap(), 0, dwDataLen);
+            pbTemp = malloc(dwDataLen);
             if (!pbTemp) return;
             memcpy(pbTemp, pbData, dwDataLen);
             RSAENH_CPEncrypt(pCryptHash->hProv, pCryptHash->hKey, 0, FALSE, 0,
                              pbTemp, &dwDataLen, dwDataLen);
-            HeapFree(GetProcessHeap(), 0, pbTemp);
+            free(pbTemp);
             break;
 
         default:
@@ -742,7 +743,7 @@ static void destroy_key(OBJECTHDR *pObject)
     free_data_blob(&pCryptKey->siSChannelInfo.blobClientRandom);
     free_data_blob(&pCryptKey->siSChannelInfo.blobServerRandom);
     free_data_blob(&pCryptKey->blobHmacKey);
-    HeapFree(GetProcessHeap(), 0, pCryptKey);
+    free(pCryptKey);
 }
 
 /******************************************************************************
@@ -990,7 +991,7 @@ static void store_key_pair(HCRYPTKEY hCryptKey, HKEY hKey, DWORD dwKeySpec, DWOR
     {
         if (crypt_export_key(pKey, 0, PRIVATEKEYBLOB, 0, TRUE, 0, &dwLen))
         {
-            pbKey = HeapAlloc(GetProcessHeap(), 0, dwLen);
+            pbKey = malloc(dwLen);
             if (pbKey)
             {
                 if (crypt_export_key(pKey, 0, PRIVATEKEYBLOB, 0, TRUE, pbKey,
@@ -1007,7 +1008,7 @@ static void store_key_pair(HCRYPTKEY hCryptKey, HKEY hKey, DWORD dwKeySpec, DWOR
                         LocalFree(blobOut.pbData);
                     }
                 }
-                HeapFree(GetProcessHeap(), 0, pbKey);
+                free(pbKey);
             }
         }
     }
@@ -1248,7 +1249,7 @@ static void destroy_key_container(OBJECTHDR *pObjectHdr)
     }
     else
         release_key_container_keys(pKeyContainer);
-    HeapFree( GetProcessHeap(), 0, pKeyContainer );
+    free( pKeyContainer );
 }
 
 /******************************************************************************
@@ -1333,7 +1334,7 @@ static BOOL read_key_value(HCRYPTPROV hKeyContainer, HKEY hKey, DWORD dwKeySpec,
     if (RegQueryValueExA(hKey, szValueName, 0, &dwValueType, NULL, &dwLen) ==
         ERROR_SUCCESS)
     {
-        pbKey = HeapAlloc(GetProcessHeap(), 0, dwLen);
+        pbKey = malloc(dwLen);
         if (pbKey)
         {
             if (RegQueryValueExA(hKey, szValueName, 0, &dwValueType, pbKey, &dwLen) ==
@@ -1350,7 +1351,7 @@ static BOOL read_key_value(HCRYPTPROV hKeyContainer, HKEY hKey, DWORD dwKeySpec,
                     LocalFree(blobOut.pbData);
                 }
             }
-            HeapFree(GetProcessHeap(), 0, pbKey);
+            free(pbKey);
         }
     }
     if (ret)
@@ -1720,7 +1721,7 @@ static BOOL pkcs1_mgf1(HCRYPTPROV hProv, const BYTE *pbSeed, DWORD dwSeedLength,
     RSAENH_CPDestroyHash(hProv, hHash);
 
     /* Allocate multiples of hash value */
-    pbMask->pbData = HeapAlloc(GetProcessHeap(), 0, (dwLength + dwHashLen - 1) / dwHashLen * dwHashLen);
+    pbMask->pbData = malloc((dwLength + dwHashLen - 1) / dwHashLen * dwHashLen);
     if (!pbMask->pbData)
     {
         SetLastError(NTE_NO_MEMORY);
@@ -1728,7 +1729,7 @@ static BOOL pkcs1_mgf1(HCRYPTPROV hProv, const BYTE *pbSeed, DWORD dwSeedLength,
     }
     pbMask->cbData = dwLength;
 
-    pbHashInput = HeapAlloc(GetProcessHeap(), 0, dwSeedLength + sizeof(DWORD));
+    pbHashInput = malloc(dwSeedLength + sizeof(DWORD));
     if (!pbHashInput)
     {
         free_data_blob(pbMask);
@@ -1752,7 +1753,7 @@ static BOOL pkcs1_mgf1(HCRYPTPROV hProv, const BYTE *pbSeed, DWORD dwSeedLength,
         RSAENH_CPDestroyHash(hProv, hHash);
     }
 
-    HeapFree(GetProcessHeap(), 0, pbHashInput);
+    free(pbHashInput);
     return TRUE;
 }
 
@@ -1802,7 +1803,7 @@ static BOOL pad_data_oaep(HCRYPTPROV hProv, const BYTE *abData, DWORD dwDataLen,
         goto done;
     }
 
-    pbPadded = HeapAlloc(GetProcessHeap(), 0, dwBufferLen);
+    pbPadded = malloc(dwBufferLen);
     if (!pbPadded)
     {
         SetLastError(NTE_NO_MEMORY);
@@ -1843,7 +1844,7 @@ static BOOL pad_data_oaep(HCRYPTPROV hProv, const BYTE *abData, DWORD dwDataLen,
     ret = TRUE;
 done:
     RSAENH_CPDestroyHash(hProv, hHash);
-    HeapFree(GetProcessHeap(), 0, pbPadded);
+    free(pbPadded);
     free_data_blob(&blobDbMask);
     free_data_blob(&blobSeedMask);
     return ret;
@@ -1958,7 +1959,7 @@ static BOOL unpad_data_oaep(HCRYPTPROV hProv, const BYTE *abData, DWORD dwDataLe
     }
 
     /* Get default hash value */
-    pbHashValue = HeapAlloc(GetProcessHeap(), 0, dwHashLen);
+    pbHashValue = malloc(dwHashLen);
     if (!pbHashValue)
     {
         SetLastError(NTE_NO_MEMORY);
@@ -1968,7 +1969,7 @@ static BOOL unpad_data_oaep(HCRYPTPROV hProv, const BYTE *abData, DWORD dwDataLe
     RSAENH_CPGetHashParam(hProv, hHash, HP_HASHVAL, pbHashValue, &dwLen, 0);
 
     /* Store seed and DB */
-    pbBuffer = HeapAlloc(GetProcessHeap(), 0, dwDataLen - 1);
+    pbBuffer = malloc(dwDataLen - 1);
     if (!pbBuffer)
     {
         SetLastError(NTE_NO_MEMORY);
@@ -2012,8 +2013,8 @@ static BOOL unpad_data_oaep(HCRYPTPROV hProv, const BYTE *abData, DWORD dwDataLe
     ret = TRUE;
 done:
     RSAENH_CPDestroyHash(hProv, hHash);
-    HeapFree(GetProcessHeap(), 0, pbHashValue);
-    HeapFree(GetProcessHeap(), 0, pbBuffer);
+    free(pbHashValue);
+    free(pbBuffer);
     free_data_blob(&blobDbMask);
     free_data_blob(&blobSeedMask);
     return ret;
@@ -3227,25 +3228,25 @@ static BOOL import_symmetric_key(HCRYPTPROV hProv, const BYTE *pbData, DWORD dwD
         return FALSE;
     }
 
-    pbDecrypted = HeapAlloc(GetProcessHeap(), 0, pPubKey->dwBlockLen);
+    pbDecrypted = malloc(pPubKey->dwBlockLen);
     if (!pbDecrypted) return FALSE;
     encrypt_block_impl(pPubKey->aiAlgid, PK_PRIVATE, &pPubKey->context, pbKeyStream, pbDecrypted,
                        RSAENH_DECRYPT);
 
     dwKeyLen = RSAENH_MAX_KEY_SIZE;
     if (!unpad_data(hProv, pbDecrypted, pPubKey->dwBlockLen, pbDecrypted, &dwKeyLen, dwFlags)) {
-        HeapFree(GetProcessHeap(), 0, pbDecrypted);
+        free(pbDecrypted);
         return FALSE;
     }
 
     *phKey = new_key(hProv, pBlobHeader->aiKeyAlg, dwKeyLen<<19, &pCryptKey);
     if (*phKey == (HCRYPTKEY)INVALID_HANDLE_VALUE)
     {
-        HeapFree(GetProcessHeap(), 0, pbDecrypted);
+        free(pbDecrypted);
         return FALSE;
     }
     memcpy(pCryptKey->abKeyValue, pbDecrypted, dwKeyLen);
-    HeapFree(GetProcessHeap(), 0, pbDecrypted);
+    free(pbDecrypted);
     setup_key(pCryptKey);
     if (dwFlags & CRYPT_EXPORTABLE)
         pCryptKey->dwPermissions |= CRYPT_EXPORT;
@@ -4897,13 +4898,13 @@ BOOL WINAPI RSAENH_CPVerifySignature(HCRYPTPROV hProv, HCRYPTHASH hHash, const B
     dwHashLen = RSAENH_MAX_HASH_SIZE;
     if (!RSAENH_CPGetHashParam(hProv, hHash, HP_HASHVAL, abHashValue, &dwHashLen, 0)) return FALSE;
 
-    pbConstructed = HeapAlloc(GetProcessHeap(), 0, dwSigLen);
+    pbConstructed = malloc(dwSigLen);
     if (!pbConstructed) {
         SetLastError(NTE_NO_MEMORY);
         goto cleanup;
     }
 
-    pbDecrypted = HeapAlloc(GetProcessHeap(), 0, dwSigLen);
+    pbDecrypted = malloc(dwSigLen);
     if (!pbDecrypted) {
         SetLastError(NTE_NO_MEMORY);
         goto cleanup;
@@ -4931,7 +4932,7 @@ BOOL WINAPI RSAENH_CPVerifySignature(HCRYPTPROV hProv, HCRYPTHASH hHash, const B
     SetLastError(NTE_BAD_SIGNATURE);
 
 cleanup:
-    HeapFree(GetProcessHeap(), 0, pbConstructed);
-    HeapFree(GetProcessHeap(), 0, pbDecrypted);
+    free(pbConstructed);
+    free(pbDecrypted);
     return res;
 }
