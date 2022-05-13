@@ -367,6 +367,7 @@ struct amd64_thread_data
     void                 *exit_frame;    /* 0320 exit frame pointer */
     struct syscall_frame *syscall_frame; /* 0328 syscall frame pointer */
     void                 *pthread_teb;   /* 0330 thread data for pthread */
+    DWORD                 fs;            /* 0338 WOW TEB selector */
 };
 
 C_ASSERT( sizeof(struct amd64_thread_data) <= sizeof(((struct ntdll_thread_data *)0)->cpu_data) );
@@ -2008,7 +2009,7 @@ NTSTATUS set_thread_wow64_context( HANDLE handle, const void *ctx, ULONG size )
     {
         wow_frame->SegDs = ds64_sel;
         wow_frame->SegEs = ds64_sel;
-        wow_frame->SegFs = fs32_sel;
+        wow_frame->SegFs = amd64_thread_data()->fs;
         wow_frame->SegGs = ds64_sel;
     }
     if (flags & CONTEXT_I386_DEBUG_REGISTERS)
@@ -2355,7 +2356,7 @@ NTSTATUS WINAPI KeUserModeCallback( ULONG id, const void *args, ULONG len, void 
         callback_frame.frame.rdx           = (ULONG_PTR)args;
         callback_frame.frame.r8            = len;
         callback_frame.frame.cs            = cs64_sel;
-        callback_frame.frame.fs            = fs32_sel;
+        callback_frame.frame.fs            = amd64_thread_data()->fs;
         callback_frame.frame.gs            = ds64_sel;
         callback_frame.frame.ss            = ds64_sel;
         callback_frame.frame.rsp           = (ULONG_PTR)args_data - 0x28;
@@ -2866,6 +2867,13 @@ void signal_init_threading(void)
  */
 NTSTATUS signal_alloc_thread( TEB *teb )
 {
+    struct amd64_thread_data *thread_data = (struct amd64_thread_data *)&teb->GdiTebBatch;
+
+    if (teb->WowTebOffset)
+    {
+        if (fs32_sel)
+            thread_data->fs = fs32_sel;
+    }
     return STATUS_SUCCESS;
 }
 
@@ -2998,7 +3006,7 @@ void signal_init_process(void)
         cs32_sel = 0x23;
         if ((sel = alloc_fs_sel( -1, teb32 )) != -1)
         {
-            fs32_sel = (sel << 3) | 3;
+            amd64_thread_data()->fs = fs32_sel = (sel << 3) | 3;
             syscall_flags |= SYSCALL_HAVE_PTHREAD_TEB;
             if (getauxval( AT_HWCAP2 ) & 2) syscall_flags |= SYSCALL_HAVE_WRFSGSBASE;
         }
@@ -3051,7 +3059,7 @@ void DECLSPEC_HIDDEN call_init_thunk( LPTHREAD_START_ROUTINE entry, void *arg, B
     context.SegCs  = cs64_sel;
     context.SegDs  = ds64_sel;
     context.SegEs  = ds64_sel;
-    context.SegFs  = fs32_sel;
+    context.SegFs  = thread_data->fs;
     context.SegGs  = ds64_sel;
     context.SegSs  = ds64_sel;
     context.EFlags = 0x200;
