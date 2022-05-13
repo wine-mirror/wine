@@ -74,17 +74,21 @@ static BOOL inited_original_display_mode;
 
 static HANDLE get_display_device_init_mutex(void)
 {
-    static const WCHAR init_mutexW[] = {'d','i','s','p','l','a','y','_','d','e','v','i','c','e','_','i','n','i','t',0};
-    HANDLE mutex = CreateMutexW(NULL, FALSE, init_mutexW);
+    static const WCHAR init_mutexW[] = {'d','i','s','p','l','a','y','_','d','e','v','i','c','e','_','i','n','i','t'};
+    UNICODE_STRING name = { sizeof(init_mutexW), sizeof(init_mutexW), (WCHAR *)init_mutexW };
+    OBJECT_ATTRIBUTES attr;
+    HANDLE mutex = 0;
 
-    WaitForSingleObject(mutex, INFINITE);
+    InitializeObjectAttributes(&attr, &name, OBJ_OPENIF, NULL, NULL);
+    NtCreateMutant(&mutex, MUTEX_ALL_ACCESS, &attr, FALSE);
+    if (mutex) NtWaitForSingleObject(mutex, FALSE, NULL);
     return mutex;
 }
 
 static void release_display_device_init_mutex(HANDLE mutex)
 {
-    ReleaseMutex(mutex);
-    CloseHandle(mutex);
+    NtReleaseMutant(mutex, NULL);
+    NtClose(mutex);
 }
 
 static BOOL get_display_device_reg_key(const WCHAR *device_name, WCHAR *key, unsigned len)
