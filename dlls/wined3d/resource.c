@@ -613,3 +613,79 @@ void *resource_offset_map_pointer(struct wined3d_resource *resource, unsigned in
                 + (box->left * format->byte_count);
     }
 }
+
+void wined3d_resource_memory_colour_fill(struct wined3d_resource *resource,
+        const struct wined3d_map_desc *map, const struct wined3d_color *colour,
+        const struct wined3d_box *box)
+{
+    const struct wined3d_format *format = resource->format;
+    unsigned int w, h, d, x, y, z, bpp;
+    uint8_t *dst, *dst2;
+    uint32_t c;
+
+    w = box->right - box->left;
+    h = box->bottom - box->top;
+    d = box->back - box->front;
+
+    dst = (uint8_t *)map->data
+            + (box->front * map->slice_pitch)
+            + ((box->top / format->block_height) * map->row_pitch)
+            + ((box->left / format->block_width) * format->block_byte_count);
+
+    c = wined3d_format_convert_from_float(format, colour);
+    bpp = format->byte_count;
+
+    switch (bpp)
+    {
+        case 1:
+            for (x = 0; x < w; ++x)
+            {
+                dst[x] = c;
+            }
+            break;
+
+        case 2:
+            for (x = 0; x < w; ++x)
+            {
+                ((uint16_t *)dst)[x] = c;
+            }
+            break;
+
+        case 3:
+        {
+            dst2 = dst;
+            for (x = 0; x < w; ++x, dst2 += 3)
+            {
+                dst2[0] = (c      ) & 0xff;
+                dst2[1] = (c >>  8) & 0xff;
+                dst2[2] = (c >> 16) & 0xff;
+            }
+            break;
+        }
+        case 4:
+            for (x = 0; x < w; ++x)
+            {
+                ((uint32_t *)dst)[x] = c;
+            }
+            break;
+
+        default:
+            FIXME("Not implemented for bpp %u.\n", bpp);
+            return;
+    }
+
+    dst2 = dst;
+    for (y = 1; y < h; ++y)
+    {
+        dst2 += map->row_pitch;
+        memcpy(dst2, dst, w * bpp);
+    }
+
+    dst2 = dst;
+    for (z = 1; z < d; ++z)
+    {
+        dst2 += map->slice_pitch;
+        memcpy(dst2, dst, w * h * bpp);
+    }
+
+}

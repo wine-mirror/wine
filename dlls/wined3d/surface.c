@@ -1241,15 +1241,13 @@ static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
         const struct wined3d_box *box, const struct wined3d_color *colour)
 {
     struct wined3d_device *device = view->resource->device;
-    unsigned int x, y, z, w, h, d, bpp, level;
     struct wined3d_context *context;
     struct wined3d_texture *texture;
     struct wined3d_bo_address data;
     struct wined3d_map_desc map;
     struct wined3d_range range;
+    unsigned int level;
     DWORD map_binding;
-    uint8_t *dst;
-    DWORD c;
 
     TRACE("view %p, box %s, colour %s.\n", view, debug_box(box), debug_color(colour));
 
@@ -1274,12 +1272,6 @@ static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
     texture = texture_from_resource(view->resource);
     level = view->sub_resource_idx % texture->level_count;
 
-    c = wined3d_format_convert_from_float(view->format, colour);
-    bpp = view->format->byte_count;
-    w = box->right - box->left;
-    h = box->bottom - box->top;
-    d = box->back - box->front;
-
     map_binding = texture->resource.map_binding;
     if (!wined3d_texture_load_location(texture, view->sub_resource_idx, context, map_binding))
         ERR("Failed to load the sub-resource into %s.\n", wined3d_debug_location(map_binding));
@@ -1288,66 +1280,10 @@ static void surface_cpu_blt_colour_fill(struct wined3d_rendertarget_view *view,
     wined3d_texture_get_bo_address(texture, view->sub_resource_idx, &data, map_binding);
     map.data = wined3d_context_map_bo_address(context, &data,
             texture->sub_resources[view->sub_resource_idx].size, WINED3D_MAP_WRITE);
-    map.data = (BYTE *)map.data
-            + (box->front * map.slice_pitch)
-            + ((box->top / view->format->block_height) * map.row_pitch)
-            + ((box->left / view->format->block_width) * view->format->block_byte_count);
     range.offset = 0;
     range.size = texture->sub_resources[view->sub_resource_idx].size;
 
-    switch (bpp)
-    {
-        case 1:
-            for (x = 0; x < w; ++x)
-            {
-                ((BYTE *)map.data)[x] = c;
-            }
-            break;
-
-        case 2:
-            for (x = 0; x < w; ++x)
-            {
-                ((WORD *)map.data)[x] = c;
-            }
-            break;
-
-        case 3:
-        {
-            dst = map.data;
-            for (x = 0; x < w; ++x, dst += 3)
-            {
-                dst[0] = (c      ) & 0xff;
-                dst[1] = (c >>  8) & 0xff;
-                dst[2] = (c >> 16) & 0xff;
-            }
-            break;
-        }
-        case 4:
-            for (x = 0; x < w; ++x)
-            {
-                ((DWORD *)map.data)[x] = c;
-            }
-            break;
-
-        default:
-            FIXME("Not implemented for bpp %u.\n", bpp);
-            wined3d_resource_unmap(view->resource, view->sub_resource_idx);
-            return;
-    }
-
-    dst = map.data;
-    for (y = 1; y < h; ++y)
-    {
-        dst += map.row_pitch;
-        memcpy(dst, map.data, w * bpp);
-    }
-
-    dst = map.data;
-    for (z = 1; z < d; ++z)
-    {
-        dst += map.slice_pitch;
-        memcpy(dst, map.data, w * h * bpp);
-    }
+    wined3d_resource_memory_colour_fill(view->resource, &map, colour, box);
 
     wined3d_context_unmap_bo_address(context, &data, 1, &range);
     context_release(context);
