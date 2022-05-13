@@ -608,23 +608,16 @@ static inline void HEAP_InsertFreeBlock( HEAP *heap, ARENA_FREE *pArena, BOOL la
 }
 
 
-/***********************************************************************
- *           HEAP_FindSubHeap
- * Find the sub-heap containing a given address.
- *
- * RETURNS
- *	Pointer: Success
- *	NULL: Failure
- */
-static SUBHEAP *HEAP_FindSubHeap(
-                const HEAP *heap, /* [in] Heap pointer */
-                LPCVOID ptr ) /* [in] Address */
+static SUBHEAP *find_subheap( const HEAP *heap, const void *ptr )
 {
-    SUBHEAP *sub;
-    LIST_FOR_EACH_ENTRY( sub, &heap->subheap_list, SUBHEAP, entry )
-        if ((ptr >= sub->base) &&
-            ((const char *)ptr < (const char *)sub->base + sub->size - sizeof(ARENA_INUSE)))
-            return sub;
+    SUBHEAP *subheap;
+
+    LIST_FOR_EACH_ENTRY( subheap, &heap->subheap_list, SUBHEAP, entry )
+    {
+        if (contains( subheap_base( subheap ), subheap_size( subheap ), ptr, sizeof(struct block) ))
+            return subheap;
+    }
+
     return NULL;
 }
 
@@ -760,7 +753,7 @@ static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
         mark_block_free( pArena + 1, pArena->size & ARENA_SIZE_MASK, heap->flags );
         if (!prev) return;
         pArena = prev;
-        subheap = HEAP_FindSubHeap( heap, pArena );
+        subheap = find_subheap( heap, pArena );
     }
 
     /* Check if we can merge with previous block */
@@ -1132,7 +1125,7 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T size,
                             sizeof(ARENA_FREE) - sizeof(ARENA_INUSE);
         if (arena_size >= size)
         {
-            subheap = HEAP_FindSubHeap( heap, pArena );
+            subheap = find_subheap( heap, pArena );
             if (!HEAP_Commit( subheap, (ARENA_INUSE *)pArena, size )) return NULL;
             *ppSubHeap = subheap;
             return pArena;
@@ -1183,7 +1176,7 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T size,
 static BOOL HEAP_IsValidArenaPtr( const HEAP *heap, const ARENA_FREE *ptr )
 {
     unsigned int i;
-    const SUBHEAP *subheap = HEAP_FindSubHeap( heap, ptr );
+    const SUBHEAP *subheap = find_subheap( heap, ptr );
     if (!subheap) return FALSE;
     if ((const char *)ptr >= (const char *)subheap->base + subheap->headerSize) return TRUE;
     if (subheap != &heap->subheap) return FALSE;
@@ -1440,7 +1433,7 @@ static BOOL heap_validate_ptr( HEAP *heap, const void *ptr )
     const ARENA_LARGE *large_arena;
     SUBHEAP *subheap;
 
-    if (!(subheap = HEAP_FindSubHeap( heap, arena )) ||
+    if (!(subheap = find_subheap( heap, arena )) ||
         ((const char *)arena < (char *)subheap->base + subheap->headerSize))
     {
         if (!(large_arena = find_large_block( heap, ptr )))
@@ -1495,7 +1488,7 @@ static BOOL validate_block_pointer( HEAP *heap, SUBHEAP **ret_subheap, const ARE
     SUBHEAP *subheap;
     BOOL ret = FALSE;
 
-    if (!(*ret_subheap = subheap = HEAP_FindSubHeap( heap, arena )))
+    if (!(*ret_subheap = subheap = find_subheap( heap, arena )))
     {
         ARENA_LARGE *large_arena = find_large_block( heap, arena + 1 );
 
