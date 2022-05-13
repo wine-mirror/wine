@@ -39,6 +39,13 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(crypt);
 
+#define RSAENH_MAGIC_KEY           0x73620457u
+#define RSAENH_MAX_KEY_SIZE        64
+#define RSAENH_MAX_BLOCK_SIZE      24
+#define RSAENH_KEYSTATE_IDLE       0
+#define RSAENH_KEYSTATE_ENCRYPTING 1
+#define RSAENH_KEYSTATE_MASTERKEY  2
+
 /******************************************************************************
  * CRYPTHASH - hash objects
  */
@@ -64,17 +71,14 @@ typedef struct tagCRYPTHASH
     PHMAC_INFO   pHMACInfo;
     RSAENH_TLS1PRF_PARAMS tpPRFParams;
     DWORD        buffered_hash_bytes;
+    ALG_ID       key_alg_id;
+    KEY_CONTEXT  key_context;
+    BYTE         abChainVector[RSAENH_MAX_BLOCK_SIZE];
 } CRYPTHASH;
 
 /******************************************************************************
  * CRYPTKEY - key objects
  */
-#define RSAENH_MAGIC_KEY           0x73620457u
-#define RSAENH_MAX_KEY_SIZE        64
-#define RSAENH_MAX_BLOCK_SIZE      24
-#define RSAENH_KEYSTATE_IDLE       0
-#define RSAENH_KEYSTATE_ENCRYPTING 1
-#define RSAENH_KEYSTATE_MASTERKEY  2
 typedef struct _RSAENH_SCHANNEL_INFO 
 {
     SCHANNEL_ALG saEncAlg;
@@ -269,18 +273,6 @@ RSAENH_CPGetKeyParam(
     BYTE *pbData, 
     DWORD *pdwDataLen, 
     DWORD dwFlags
-);
-
-BOOL WINAPI 
-RSAENH_CPEncrypt(
-    HCRYPTPROV hProv, 
-    HCRYPTKEY hKey, 
-    HCRYPTHASH hHash, 
-    BOOL Final, 
-    DWORD dwFlags, 
-    BYTE *pbData,
-    DWORD *pdwDataLen, 
-    DWORD dwBufLen
 );
 
 BOOL WINAPI 
@@ -674,6 +666,8 @@ static void destroy_hash(OBJECTHDR *pObject)
     free_hmac_info(pCryptHash->pHMACInfo);
     free_data_blob(&pCryptHash->tpPRFParams.blobLabel);
     free_data_blob(&pCryptHash->tpPRFParams.blobSeed);
+    if (pCryptHash->aiAlgid == CALG_MAC)
+        free_key_impl(pCryptHash->key_alg_id, &pCryptHash->key_context);
     free(pCryptHash);
 }
 
@@ -728,6 +722,7 @@ static inline BOOL init_hash(CRYPTHASH *pCryptHash) {
  */
 static inline void update_hash(CRYPTHASH *pCryptHash, const BYTE *pbData, DWORD dwDataLen)
 {
+    CRYPTKEY *key;
     BYTE *pbTemp;
     DWORD len;
 
@@ -739,6 +734,11 @@ static inline void update_hash(CRYPTHASH *pCryptHash, const BYTE *pbData, DWORD 
             break;
 
         case CALG_MAC:
+            if (!lookup_handle(&handle_table, pCryptHash->hKey, RSAENH_MAGIC_KEY, (OBJECTHDR**)&key))
+            {
+                FIXME("Key lookup failed.\n");
+                return;
+            }
             if (pCryptHash->buffered_hash_bytes)
             {
                 len = min(pCryptHash->dwHashSize - pCryptHash->buffered_hash_bytes, dwDataLen);
@@ -750,10 +750,10 @@ static inline void update_hash(CRYPTHASH *pCryptHash, const BYTE *pbData, DWORD 
                     return;
                 pCryptHash->buffered_hash_bytes = 0;
                 len = pCryptHash->dwHashSize;
-                if (!RSAENH_CPEncrypt(pCryptHash->hProv, pCryptHash->hKey, 0, FALSE, 0,
-                                      pCryptHash->abHashValue, &len, len))
+                if (!block_encrypt(key, pCryptHash->abHashValue, &len, len, FALSE,
+                                   &pCryptHash->key_context, pCryptHash->abChainVector))
                 {
-                    FIXME("RSAENH_CPEncrypt failed.\n");
+                    FIXME("block_encrypt failed.\n");
                     return;
                 }
             }
@@ -769,10 +769,10 @@ static inline void update_hash(CRYPTHASH *pCryptHash, const BYTE *pbData, DWORD 
                 memcpy(pbTemp, pbData, len);
                 pbData += len;
                 dwDataLen -= len;
-                if (!RSAENH_CPEncrypt(pCryptHash->hProv, pCryptHash->hKey, 0, FALSE, 0,
-                                      pbTemp, &len, len))
+                if (!block_encrypt(key, pbTemp, &len, len, FALSE,
+                                   &pCryptHash->key_context, pCryptHash->abChainVector))
                 {
-                    FIXME("RSAENH_CPEncrypt failed.\n");
+                    FIXME("block_encrypt failed.\n");
                     return;
                 }
                 free(pbTemp);
@@ -798,8 +798,10 @@ static inline void update_hash(CRYPTHASH *pCryptHash, const BYTE *pbData, DWORD 
  * PARAMS
  *  pCryptHash [I] Hash object to be finalized.
  */
-static inline void finalize_hash(CRYPTHASH *pCryptHash) {
+static inline void finalize_hash(CRYPTHASH *pCryptHash)
+{
     DWORD dwDataLen;
+    CRYPTKEY *key;
         
     switch (pCryptHash->aiAlgid)
     {
@@ -821,10 +823,15 @@ static inline void finalize_hash(CRYPTHASH *pCryptHash) {
             break;
 
         case CALG_MAC:
+            if (!lookup_handle(&handle_table, pCryptHash->hKey, RSAENH_MAGIC_KEY, (OBJECTHDR**)&key))
+            {
+                FIXME("Key lookup failed.\n");
+                return;
+            }
             dwDataLen = pCryptHash->buffered_hash_bytes;
-            if (!RSAENH_CPEncrypt(pCryptHash->hProv, pCryptHash->hKey, 0, TRUE, 0,
-                                  pCryptHash->abHashValue, &dwDataLen, pCryptHash->dwHashSize))
-                FIXME("RSAENH_CPEncrypt failed.\n");
+            if (!block_encrypt(key, pCryptHash->abHashValue, &dwDataLen, pCryptHash->dwHashSize, TRUE,
+                               &pCryptHash->key_context, pCryptHash->abChainVector))
+                FIXME("block_encrypt failed.\n");
             break;
 
         default:
@@ -2264,7 +2271,7 @@ BOOL WINAPI RSAENH_CPAcquireContext(HCRYPTPROV *phProv, LPSTR pszContainer,
 BOOL WINAPI RSAENH_CPCreateHash(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTKEY hKey, DWORD dwFlags, 
                                 HCRYPTHASH *phHash)
 {
-    CRYPTKEY *pCryptKey;
+    CRYPTKEY *pCryptKey = NULL;
     CRYPTHASH *pCryptHash;
     const PROV_ENUMALGS_EX *peaAlgidInfo;
         
@@ -2319,6 +2326,13 @@ BOOL WINAPI RSAENH_CPCreateHash(HCRYPTPROV hProv, ALG_ID Algid, HCRYPTKEY hKey, 
 
     pCryptHash->aiAlgid = Algid;
     pCryptHash->hKey = hKey;
+    if (Algid == CALG_MAC)
+    {
+        pCryptHash->key_alg_id = pCryptKey->aiAlgid;
+        setup_key(pCryptKey);
+        duplicate_key_impl(pCryptKey->aiAlgid, &pCryptKey->context, &pCryptHash->key_context);
+        memcpy(pCryptHash->abChainVector, pCryptKey->abChainVector, sizeof(pCryptHash->abChainVector));
+    }
     pCryptHash->hProv = hProv;
     pCryptHash->dwState = RSAENH_HASHSTATE_HASHING;
     pCryptHash->pHMACInfo = NULL;

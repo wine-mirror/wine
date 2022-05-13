@@ -1853,7 +1853,9 @@ static void test_mac(void) {
     DWORD dwLen;
     BYTE abData[256], abEnc[264];
     static const BYTE mac_40[8] = { 0xb7, 0xa2, 0x46, 0xe9, 0x11, 0x31, 0xe0, 0xad};
+    static const BYTE mac_40_old[8] = { 0x44, 0x78, 0x38, 0xad, 0x10, 0x13, 0x60, 0x8e};
     static const BYTE mac_40_2[8] = { 0xef, 0x22, 0x0a, 0x3b, 0xd0, 0xab, 0x48, 0x49};
+    static const BYTE mac_40_2_old[8] = { 0xa3, 0xf3, 0xfc, 0x70, 0xf4, 0xfa, 0xb0, 0x3e};
     int i;
 
     for (i=0; i < ARRAY_SIZE(abData); i++) abData[i] = (BYTE)i;
@@ -1869,6 +1871,10 @@ static void test_mac(void) {
     ok(result, "%08lx\n", GetLastError());
     if (!result) return;
 
+    dwLen = 8;
+    result = CryptEncrypt(hKey, 0, FALSE, 0, abEnc, &dwLen, dwLen);
+    ok(result, "%08lx\n", GetLastError());
+
     result = CryptHashData(hHash, abData, sizeof(abData), 0);
     ok(result, "%08lx\n", GetLastError());
 
@@ -1876,7 +1882,9 @@ static void test_mac(void) {
     result = CryptGetHashParam(hHash, HP_HASHVAL, abData, &dwLen, 0);
     ok(result && dwLen == 8, "%08lx, dwLen: %ld\n", GetLastError(), dwLen);
 
-    ok(!memcmp(abData, mac_40, sizeof(mac_40)), "MAC failed!\n");
+    /* Hash state is affected by key state before Win8. */
+    ok(!memcmp(abData, mac_40, sizeof(mac_40)) || broken(!memcmp(abData, mac_40_old, sizeof(mac_40_old))),
+            "Hash does not match.\n");
 
     for (i = 0; i < ARRAY_SIZE(abData); ++i)
         abData[i] = (BYTE)i;
@@ -1890,8 +1898,17 @@ static void test_mac(void) {
     result = CryptCreateHash(hProv, CALG_MAC, hKey, 0, &hHash);
     ok(result, "%08lx\n", GetLastError());
 
+    dwLen = 8;
+    result = CryptEncrypt(hKey, 0, FALSE, 0, abEnc, &dwLen, dwLen);
+    ok(result, "%08lx\n", GetLastError());
+
     result = CryptHashData(hHash, abData, 1, 0);
     ok(result, "%08lx\n", GetLastError());
+
+    dwLen = 8;
+    result = CryptDecrypt(hKey, 0, FALSE, 0, abEnc, &dwLen);
+    ok(result, "%08lx\n", GetLastError());
+
     result = CryptHashData(hHash, abData + 1, 1, 0);
     ok(result, "%08lx\n", GetLastError());
     result = CryptHashData(hHash, abData + 2, 6, 0);
@@ -1899,11 +1916,17 @@ static void test_mac(void) {
     result = CryptHashData(hHash, abData + 8, 9, 0);
     ok(result, "%08lx\n", GetLastError());
 
+    dwLen = 8;
+    result = CryptDecrypt(hKey, 0, FALSE, 0, abEnc, &dwLen);
+    ok(result, "%08lx\n", GetLastError());
+
     dwLen = ARRAY_SIZE(abData);
     result = CryptGetHashParam(hHash, HP_HASHVAL, abData, &dwLen, 0);
     ok(result && dwLen == 8, "%08lx, dwLen %ld\n", GetLastError(), dwLen);
 
-    ok(!memcmp(abData, mac_40_2, sizeof(mac_40)), "Hash does not match.\n");
+    /* Hash state is affected by key state before Win8. */
+    ok(!memcmp(abData, mac_40_2, sizeof(mac_40_2))
+            || broken(!memcmp(abData, mac_40_2_old, sizeof(mac_40_2_old))), "Hash does not match.\n");
 
     result = CryptDestroyHash(hHash);
     ok(result, "%08lx\n", GetLastError());
