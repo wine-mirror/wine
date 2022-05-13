@@ -52,14 +52,27 @@ static void d3drm_texture_destroy(struct d3drm_texture *texture)
 
 static BOOL d3drm_validate_image(D3DRMIMAGE *image)
 {
-    if (!image
-            || !image->red_mask
-            || !image->green_mask
-            || !image->blue_mask
-            || !image->buffer1
-            || !(image->rgb || (image->palette && image->palette_size)))
-    {
+    if (!image)
         return FALSE;
+
+    TRACE("size (%d, %d), aspect (%d, %d), depth %d, red %#lx, green %#lx, blue %#lx, "
+          "buffer1 %p, buffer2 %p, rgb %d, pal %p, size %d\n",
+          image->width, image->height, image->aspectx, image->aspecty,
+          image->depth, image->red_mask, image->green_mask, image->blue_mask, image->buffer1,
+          image->buffer2, image->rgb, image->palette, image->palette_size );
+
+    if (!image->buffer1)
+        return FALSE;
+
+    if (image->rgb)
+    {
+        if (!image->red_mask || !image->green_mask || !image->blue_mask)
+            return FALSE;
+    }
+    else
+    {
+        if (!image->palette || !image->palette_size)
+            return FALSE;
     }
 
     return TRUE;

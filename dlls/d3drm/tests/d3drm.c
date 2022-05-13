@@ -2724,6 +2724,12 @@ static void test_Texture(void)
         TRUE, 0, (void *)0xcafebabe, NULL,
         0x000000ff, 0x0000ff00, 0x00ff0000, 0, 0, NULL
     },
+    testimg_palette =
+    {
+        2, 2, 1, 1, 32,
+        FALSE, 2 * sizeof(DWORD), (void *)0xcafebabe, NULL,
+        0x00000000, 0x00000000, 0x00000000, 0, 2, (void *)0xcafebabe
+    },
     *d3drm_img = NULL;
 
     DWORD pixel[4] = { 20000, 30000, 10000, 0 };
@@ -2780,6 +2786,17 @@ static void test_Texture(void)
     hr = IDirect3DRM2_CreateTexture(d3drm2, &testimg, &texture2);
     ok(SUCCEEDED(hr), "Cannot get IDirect3DRMTexture2 interface, hr %#lx\n", hr);
     hr = IDirect3DRM3_CreateTexture(d3drm3, &testimg, &texture3);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRMTexture3 interface, hr %#lx\n", hr);
+    IDirect3DRMTexture_Release(texture1);
+    IDirect3DRMTexture2_Release(texture2);
+    IDirect3DRMTexture3_Release(texture3);
+
+    /* Just palette set */
+    hr = IDirect3DRM_CreateTexture(d3drm1, &testimg_palette, &texture1);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRMTexture interface, hr %#lx\n", hr);
+    hr = IDirect3DRM2_CreateTexture(d3drm2, &testimg_palette, &texture2);
+    ok(SUCCEEDED(hr), "Cannot get IDirect3DRMTexture2 interface, hr %#lx\n", hr);
+    hr = IDirect3DRM3_CreateTexture(d3drm3, &testimg_palette, &texture3);
     ok(SUCCEEDED(hr), "Cannot get IDirect3DRMTexture3 interface, hr %#lx\n", hr);
     IDirect3DRMTexture_Release(texture1);
     IDirect3DRMTexture2_Release(texture2);
