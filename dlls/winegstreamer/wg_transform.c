@@ -47,6 +47,7 @@ GST_DEBUG_CATEGORY_EXTERN(wine);
 struct wg_transform
 {
     GstElement *container;
+    GstAllocator *allocator;
     GstPad *my_src, *my_sink;
     GstPad *their_sink, *their_src;
     GstSegment segment;
@@ -153,6 +154,7 @@ static gboolean transform_sink_query_cb(GstPad *pad, GstObject *parent, GstQuery
 
                 gst_buffer_pool_config_set_params(config, caps,
                         info.size, 0, 0);
+                gst_buffer_pool_config_set_allocator(config, transform->allocator, NULL);
                 if (!gst_buffer_pool_set_config(pool, config))
                     GST_ERROR("Failed to set pool %p config.", pool);
             }
@@ -162,9 +164,10 @@ static gboolean transform_sink_query_cb(GstPad *pad, GstObject *parent, GstQuery
                 GST_ERROR("Pool %p failed to activate.", pool);
 
             gst_query_add_allocation_pool(query, pool, info.size, 0, 0);
+            gst_query_add_allocation_param(query, transform->allocator, NULL);
 
-            GST_INFO("Proposing pool %p, buffer size %#zx, for query %p.",
-                    pool, info.size, query);
+            GST_INFO("Proposing pool %p, buffer size %#zx, allocator %p, for query %p.",
+                    pool, info.size, transform->allocator, query);
 
             g_object_unref(pool);
             return true;
@@ -222,6 +225,7 @@ NTSTATUS wg_transform_destroy(void *args)
     while ((sample = gst_atomic_queue_pop(transform->output_queue)))
         gst_sample_unref(sample);
 
+    wg_allocator_destroy(transform->allocator);
     g_object_unref(transform->their_sink);
     g_object_unref(transform->their_src);
     g_object_unref(transform->container);
@@ -325,6 +329,8 @@ NTSTATUS wg_transform_create(void *args)
     if (!(transform->input = gst_buffer_list_new()))
         goto out;
     if (!(transform->output_queue = gst_atomic_queue_new(8)))
+        goto out;
+    if (!(transform->allocator = wg_allocator_create()))
         goto out;
     transform->input_max_length = 1;
     transform->output_plane_align = 0;
@@ -482,6 +488,8 @@ out:
         gst_object_unref(transform->my_src);
     if (src_caps)
         gst_caps_unref(src_caps);
+    if (transform->allocator)
+        wg_allocator_destroy(transform->allocator);
     if (transform->output_queue)
         gst_atomic_queue_unref(transform->output_queue);
     if (transform->input)

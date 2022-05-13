@@ -37,4 +37,7 @@ extern NTSTATUS wg_transform_destroy(void *args) DECLSPEC_HIDDEN;
 extern NTSTATUS wg_transform_push_data(void *args) DECLSPEC_HIDDEN;
 extern NTSTATUS wg_transform_read_data(void *args) DECLSPEC_HIDDEN;
 
+extern GstAllocator *wg_allocator_create(void) DECLSPEC_HIDDEN;
+extern void wg_allocator_destroy(GstAllocator *allocator) DECLSPEC_HIDDEN;
+
 #endif /* __WINE_WINEGSTREAMER_UNIX_PRIVATE_H */
