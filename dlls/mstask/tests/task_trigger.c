@@ -35,74 +35,75 @@ static DWORD obj_refcount(void *obj_to_check)
     return IUnknown_Release(obj);
 }
 
-static void compare_trigger_state(TASK_TRIGGER found_state,
-        TASK_TRIGGER expected_state)
+#define compare_trigger_state(found,expected) compare_trigger_state_(__LINE__,found,expected)
+static void compare_trigger_state_(int line, TASK_TRIGGER found_state,
+                                   TASK_TRIGGER expected_state)
 {
-    ok(found_state.cbTriggerSize == expected_state.cbTriggerSize,
+    ok_(__FILE__, line)(found_state.cbTriggerSize == expected_state.cbTriggerSize,
             "cbTriggerSize: Found %d but expected %d\n",
             found_state.cbTriggerSize, expected_state.cbTriggerSize);
 
-    ok(found_state.Reserved1 == expected_state.Reserved1,
+    ok_(__FILE__, line)(found_state.Reserved1 == expected_state.Reserved1,
             "Reserved1: Found %d but expected %d\n",
             found_state.Reserved1, expected_state.Reserved1);
 
-    ok(found_state.wBeginYear == expected_state.wBeginYear,
+    ok_(__FILE__, line)(found_state.wBeginYear == expected_state.wBeginYear,
             "wBeginYear: Found %d but expected %d\n",
             found_state.wBeginYear, expected_state.wBeginYear);
 
-    ok(found_state.wBeginMonth == expected_state.wBeginMonth,
+    ok_(__FILE__, line)(found_state.wBeginMonth == expected_state.wBeginMonth,
             "wBeginMonth: Found %d but expected %d\n",
             found_state.wBeginMonth, expected_state.wBeginMonth);
 
-    ok(found_state.wBeginDay == expected_state.wBeginDay,
+    ok_(__FILE__, line)(found_state.wBeginDay == expected_state.wBeginDay,
             "wBeginDay: Found %d but expected %d\n",
             found_state.wBeginDay, expected_state.wBeginDay);
 
-    ok(found_state.wEndYear == expected_state.wEndYear,
+    ok_(__FILE__, line)(found_state.wEndYear == expected_state.wEndYear,
             "wEndYear: Found %d but expected %d\n",
             found_state.wEndYear, expected_state.wEndYear);
 
-    ok(found_state.wEndMonth == expected_state.wEndMonth,
+    ok_(__FILE__, line)(found_state.wEndMonth == expected_state.wEndMonth,
             "wEndMonth: Found %d but expected %d\n",
             found_state.wEndMonth, expected_state.wEndMonth);
 
-    ok(found_state.wEndDay == expected_state.wEndDay,
+    ok_(__FILE__, line)(found_state.wEndDay == expected_state.wEndDay,
             "wEndDay: Found %d but expected %d\n",
             found_state.wEndDay, expected_state.wEndDay);
 
-    ok(found_state.wStartHour == expected_state.wStartHour,
+    ok_(__FILE__, line)(found_state.wStartHour == expected_state.wStartHour,
             "wStartHour: Found %d but expected %d\n",
             found_state.wStartHour, expected_state.wStartHour);
 
-    ok(found_state.wStartMinute == expected_state.wStartMinute,
+    ok_(__FILE__, line)(found_state.wStartMinute == expected_state.wStartMinute,
             "wStartMinute: Found %d but expected %d\n",
             found_state.wStartMinute, expected_state.wStartMinute);
 
-    ok(found_state.MinutesDuration == expected_state.MinutesDuration,
+    ok_(__FILE__, line)(found_state.MinutesDuration == expected_state.MinutesDuration,
             "MinutesDuration: Found %ld but expected %ld\n",
             found_state.MinutesDuration, expected_state.MinutesDuration);
 
-    ok(found_state.MinutesInterval == expected_state.MinutesInterval,
+    ok_(__FILE__, line)(found_state.MinutesInterval == expected_state.MinutesInterval,
             "MinutesInterval: Found %ld but expected %ld\n",
             found_state.MinutesInterval, expected_state.MinutesInterval);
 
-    ok(found_state.rgFlags == expected_state.rgFlags,
+    ok_(__FILE__, line)(found_state.rgFlags == expected_state.rgFlags,
             "rgFlags: Found %ld but expected %ld\n",
             found_state.rgFlags, expected_state.rgFlags);
 
-    ok(found_state.TriggerType == expected_state.TriggerType,
+    ok_(__FILE__, line)(found_state.TriggerType == expected_state.TriggerType,
             "TriggerType: Found %d but expected %d\n",
             found_state.TriggerType, expected_state.TriggerType);
 
-    ok(found_state.Type.Daily.DaysInterval == expected_state.Type.Daily.DaysInterval,
+    ok_(__FILE__, line)(found_state.Type.Daily.DaysInterval == expected_state.Type.Daily.DaysInterval,
             "Type.Daily.DaysInterval: Found %d but expected %d\n",
             found_state.Type.Daily.DaysInterval, expected_state.Type.Daily.DaysInterval);
 
-    ok(found_state.Reserved2 == expected_state.Reserved2,
+    ok_(__FILE__, line)(found_state.Reserved2 == expected_state.Reserved2,
             "Reserved2: Found %d but expected %d\n",
             found_state.Reserved2, expected_state.Reserved2);
 
-    ok(found_state.wRandomMinutesInterval == expected_state.wRandomMinutesInterval,
+    ok_(__FILE__, line)(found_state.wRandomMinutesInterval == expected_state.wRandomMinutesInterval,
             "wRandomMinutesInterval: Found %d but expected %d\n",
             found_state.wRandomMinutesInterval, expected_state.wRandomMinutesInterval);
 }
