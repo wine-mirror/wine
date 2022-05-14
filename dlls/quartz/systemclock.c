@@ -45,7 +45,6 @@ struct system_clock
     LONG thread_created;
     BOOL thread_stopped;
     HANDLE thread;
-    LARGE_INTEGER frequency;
     REFERENCE_TIME last_time;
     CRITICAL_SECTION cs;
     CONDITION_VARIABLE cv;
@@ -53,12 +52,9 @@ struct system_clock
     struct list sinks;
 };
 
-static REFERENCE_TIME get_current_time(const struct system_clock *clock)
+static REFERENCE_TIME get_current_time(void)
 {
-    LARGE_INTEGER time;
-
-    QueryPerformanceCounter(&time);
-    return (time.QuadPart * 1000) / clock->frequency.QuadPart * 10000;
+    return (REFERENCE_TIME)timeGetTime() * 10000;
 }
 
 static inline struct system_clock *impl_from_IUnknown(IUnknown *iface)
@@ -155,7 +151,7 @@ static DWORD WINAPI SystemClockAdviseThread(void *param)
 
         EnterCriticalSection(&clock->cs);
 
-        current_time = get_current_time(clock);
+        current_time = get_current_time();
 
         LIST_FOR_EACH_ENTRY_SAFE(sink, cursor, &clock->sinks, struct advise_sink, entry)
         {
@@ -250,7 +246,7 @@ static HRESULT WINAPI SystemClockImpl_GetTime(IReferenceClock *iface, REFERENCE_
         return E_POINTER;
     }
 
-    ret = get_current_time(clock);
+    ret = get_current_time();
 
     EnterCriticalSection(&clock->cs);
 
@@ -346,7 +342,6 @@ HRESULT system_clock_create(IUnknown *outer, IUnknown **out)
     list_init(&object->sinks);
     InitializeCriticalSection(&object->cs);
     object->cs.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": SystemClockImpl.cs");
-    QueryPerformanceFrequency(&object->frequency);
 
     TRACE("Created system clock %p.\n", object);
     *out = &object->IUnknown_inner;
