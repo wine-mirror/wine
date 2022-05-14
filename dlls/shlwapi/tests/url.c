@@ -674,10 +674,10 @@ static void test_UrlGetPart(void)
 
         /* All characters, other than those with special meaning, are allowed. */
         {"http://foo:bar@google.*.com:21/internal.php?query=x&return=y", URL_PART_HOSTNAME, 0, S_OK, "google.*.com"},
-        {"http:// !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff:pass@host", URL_PART_USERNAME, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff"},
-        {"http://user: !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff@host", URL_PART_PASSWORD, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff"},
-        {"http:// !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", URL_PART_HOSTNAME, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff"},
-        {"http://host: !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff", URL_PART_PORT, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}\x01\x7f\xff"},
+        {"http:// !\"$%&'()*+,-.;<=>[]^_`{|~}:pass@host", URL_PART_USERNAME, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}"},
+        {"http://user: !\"$%&'()*+,-.;<=>[]^_`{|~}@host", URL_PART_PASSWORD, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}"},
+        {"http:// !\"$%&'()*+,-.;<=>[]^_`{|~}", URL_PART_HOSTNAME, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}"},
+        {"http://host: !\"$%&'()*+,-.;<=>[]^_`{|~}", URL_PART_PORT, 0, S_OK, " !\"$%&'()*+,-.;<=>[]^_`{|~}"},
 
         {"http:///index.html", URL_PART_HOSTNAME, 0, S_FALSE, ""},
         {"http:///index.html", URL_PART_HOSTNAME, URL_PARTFLAG_KEEPSCHEME, S_OK, "http:"},
@@ -855,6 +855,15 @@ static void test_UrlGetPart(void)
 
         winetest_pop_context();
     }
+
+    /* Test non-ASCII characters. */
+
+    size = ARRAY_SIZE(bufferW);
+    wcscpy(bufferW, L"x");
+    hr = UrlGetPartW(L"http://\x01\x7f\x80\xff:pass@host", bufferW, &size, URL_PART_USERNAME, 0);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(size == wcslen(bufferW), "Got size %lu.\n", size);
+    ok(!wcscmp(bufferW, L"\x01\x7f\x80\xff"), "Got result %s.\n", debugstr_w(bufferW));
 }
 
 /* ########################### */
