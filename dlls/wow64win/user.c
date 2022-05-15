@@ -72,6 +72,12 @@ typedef struct
     UINT32 hwndTarget;
 } RAWINPUTDEVICE32;
 
+typedef struct
+{
+    UINT32 hDevice;
+    DWORD dwType;
+} RAWINPUTDEVICELIST32;
+
 static MSG *msg_32to64( MSG *msg, MSG32 *msg32 )
 {
     if (!msg32) return NULL;
@@ -1054,5 +1060,54 @@ NTSTATUS WINAPI wow64_NtUserGetRegisteredRawInputDevices( UINT *args )
     else
     {
         return NtUserGetRegisteredRawInputDevices( NULL, count, sizeof(RAWINPUTDEVICE) );
+    }
+}
+
+NTSTATUS WINAPI wow64_NtUserGetRawInputDeviceInfo( UINT *args )
+{
+    HANDLE handle = get_handle( &args );
+    UINT command = get_ulong( &args );
+    void *data = get_ptr( &args );
+    UINT *data_size = get_ptr( &args );
+
+    return NtUserGetRawInputDeviceInfo( handle, command, data, data_size );
+}
+
+NTSTATUS WINAPI wow64_NtUserGetRawInputDeviceList( UINT *args )
+{
+    RAWINPUTDEVICELIST32 *devices32 = get_ptr( &args );
+    UINT *count = get_ptr( &args );
+    UINT size = get_ulong( &args );
+
+    if (size != sizeof(RAWINPUTDEVICELIST32))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return ~0u;
+    }
+
+    if (devices32)
+    {
+        RAWINPUTDEVICELIST *devices64;
+        unsigned int ret, i;
+
+        if (!(devices64 = Wow64AllocateTemp( (*count) * sizeof(*devices64) )))
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            return ~0u;
+        }
+
+        ret = NtUserGetRawInputDeviceList( devices64, count, sizeof(RAWINPUTDEVICELIST) );
+        if (ret == ~0u) return ret;
+
+        for (i = 0; i < *count; ++i)
+        {
+            devices32[i].hDevice = (UINT_PTR)devices64[i].hDevice;
+            devices32[i].dwType  = devices64[i].dwType;
+        }
+        return ret;
+    }
+    else
+    {
+        return NtUserGetRawInputDeviceList( NULL, count, sizeof(RAWINPUTDEVICELIST) );
     }
 }

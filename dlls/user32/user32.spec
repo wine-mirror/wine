@@ -369,8 +369,8 @@
 @ stdcall GetRawInputBuffer(ptr ptr long) NtUserGetRawInputBuffer
 @ stdcall GetRawInputData(ptr long ptr ptr long) NtUserGetRawInputData
 @ stdcall GetRawInputDeviceInfoA(ptr long ptr ptr)
-@ stdcall GetRawInputDeviceInfoW(ptr long ptr ptr)
-@ stdcall GetRawInputDeviceList(ptr ptr long)
+@ stdcall GetRawInputDeviceInfoW(ptr long ptr ptr) NtUserGetRawInputDeviceInfo
+@ stdcall GetRawInputDeviceList(ptr ptr long) NtUserGetRawInputDeviceList
 # @ stub GetReasonTitleFromReasonCode
 @ stdcall GetRegisteredRawInputDevices(ptr ptr long) NtUserGetRegisteredRawInputDevices
 @ stdcall GetScrollBarInfo(long long ptr)

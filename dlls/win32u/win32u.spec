@@ -985,8 +985,8 @@
 @ stub NtUserGetQueueStatusReadonly
 @ stdcall -syscall NtUserGetRawInputBuffer(ptr ptr long)
 @ stdcall -syscall NtUserGetRawInputData(ptr long ptr ptr long)
-@ stub NtUserGetRawInputDeviceInfo
-@ stub NtUserGetRawInputDeviceList
+@ stdcall -syscall NtUserGetRawInputDeviceInfo(ptr long ptr ptr)
+@ stdcall -syscall NtUserGetRawInputDeviceList(ptr ptr long)
 @ stub NtUserGetRawPointerDeviceData
 @ stdcall -syscall NtUserGetRegisteredRawInputDevices(ptr ptr long)
 @ stub NtUserGetRequiredCursorSizes

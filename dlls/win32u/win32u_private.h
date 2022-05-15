@@ -437,6 +437,7 @@ extern LRESULT send_message_timeout( HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
 
 /* rawinput.c */
 extern BOOL process_rawinput_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data ) DECLSPEC_HIDDEN;
+extern BOOL rawinput_device_get_usages( HANDLE handle, USHORT *usage_page, USHORT *usage ) DECLSPEC_HIDDEN;
 
 /* sysparams.c */
 extern BOOL enable_thunk_lock DECLSPEC_HIDDEN;

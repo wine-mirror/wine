@@ -60,14 +60,8 @@ extern HMODULE user32_module DECLSPEC_HIDDEN;
 struct dce;
 struct tagWND;
 
-struct hardware_msg_data;
-extern BOOL rawinput_device_get_usages(HANDLE handle, USAGE *usage_page, USAGE *usage);
-extern void CDECL rawinput_update_device_list(void);
-
 extern BOOL post_dde_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DWORD dest_tid,
                               DWORD type ) DECLSPEC_HIDDEN;
-extern BOOL process_rawinput_message( MSG *msg, UINT hw_id,
-                                      const struct hardware_msg_data *msg_data ) DECLSPEC_HIDDEN;
 extern BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam,
                                 void **buffer, size_t size ) DECLSPEC_HIDDEN;
 extern void free_cached_data( UINT format, HANDLE handle ) DECLSPEC_HIDDEN;

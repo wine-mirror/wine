@@ -134,6 +134,8 @@
     SYSCALL_ENTRY( NtUserGetProp ) \
     SYSCALL_ENTRY( NtUserGetRawInputBuffer ) \
     SYSCALL_ENTRY( NtUserGetRawInputData ) \
+    SYSCALL_ENTRY( NtUserGetRawInputDeviceInfo ) \
+    SYSCALL_ENTRY( NtUserGetRawInputDeviceList ) \
     SYSCALL_ENTRY( NtUserGetRegisteredRawInputDevices ) \
     SYSCALL_ENTRY( NtUserGetSystemDpiForProcess ) \
     SYSCALL_ENTRY( NtUserGetThreadDesktop ) \
