@@ -470,7 +470,7 @@ UINT WINAPI GetRawInputDeviceList(RAWINPUTDEVICELIST *devices, UINT *device_coun
 /***********************************************************************
  *              RegisterRawInputDevices   (USER32.@)
  */
-BOOL WINAPI DECLSPEC_HOTPATCH RegisterRawInputDevices(RAWINPUTDEVICE *devices, UINT device_count, UINT size)
+BOOL WINAPI DECLSPEC_HOTPATCH RegisterRawInputDevices(const RAWINPUTDEVICE *devices, UINT device_count, UINT size)
 {
     struct rawinput_device *d;
     BOOL ret;
