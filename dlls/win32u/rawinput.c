@@ -334,3 +334,26 @@ UINT WINAPI NtUserGetRawInputData( HRAWINPUT rawinput, UINT command, void *data,
     memcpy( data, thread_data->buffer, size );
     return size;
 }
+
+BOOL process_rawinput_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data )
+{
+    struct rawinput_thread_data *thread_data;
+
+    if (!user_callbacks || !(thread_data = user_callbacks->get_rawinput_thread_data()))
+        return FALSE;
+
+    if (msg->message == WM_INPUT_DEVICE_CHANGE)
+    {
+        if (user_callbacks) user_callbacks->rawinput_update_device_list();
+    }
+    else
+    {
+        thread_data->buffer->header.dwSize = RAWINPUT_BUFFER_SIZE;
+        if (!rawinput_from_hardware_message( thread_data->buffer, msg_data )) return FALSE;
+        thread_data->hw_id = hw_id;
+        msg->lParam = (LPARAM)hw_id;
+    }
+
+    msg->pt = point_phys_to_win_dpi( msg->hwnd, msg->pt );
+    return TRUE;
+}

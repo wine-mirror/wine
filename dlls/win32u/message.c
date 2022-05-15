@@ -1602,7 +1602,7 @@ static BOOL process_hardware_message( MSG *msg, UINT hw_id, const struct hardwar
     context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
 
     if (msg->message == WM_INPUT || msg->message == WM_INPUT_DEVICE_CHANGE)
-        ret = user_callbacks && user_callbacks->process_rawinput_message( msg, hw_id, msg_data );
+        ret = process_rawinput_message( msg, hw_id, msg_data );
     else if (is_keyboard_message( msg->message ))
         ret = process_keyboard_message( msg, hw_id, hwnd_filter, first, last, remove );
     else if (is_mouse_message( msg->message ))

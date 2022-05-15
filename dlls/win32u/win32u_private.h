@@ -30,6 +30,7 @@
 #include "wine/gdi_driver.h"
 #include "wine/unixlib.h"
 #include "wine/debug.h"
+#include "wine/server.h"
 
 extern const struct user_callbacks *user_callbacks DECLSPEC_HIDDEN;
 
@@ -436,6 +437,9 @@ extern LRESULT send_internal_message_timeout( DWORD dest_pid, DWORD dest_tid, UI
 extern LRESULT send_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;
 extern LRESULT send_message_timeout( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,
                                      UINT flags, UINT timeout, PDWORD_PTR res_ptr, BOOL ansi );
+
+/* rawinput.c */
+extern BOOL process_rawinput_message( MSG *msg, UINT hw_id, const struct hardware_msg_data *msg_data ) DECLSPEC_HIDDEN;
 
 /* sysparams.c */
 extern BOOL enable_thunk_lock DECLSPEC_HIDDEN;

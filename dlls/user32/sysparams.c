@@ -724,7 +724,7 @@ POINT point_win_to_phys_dpi( HWND hwnd, POINT pt )
 /**********************************************************************
  *              point_phys_to_win_dpi
  */
-POINT point_phys_to_win_dpi( HWND hwnd, POINT pt )
+static POINT point_phys_to_win_dpi( HWND hwnd, POINT pt )
 {
     return map_dpi_point( pt, get_win_monitor_dpi( hwnd ), GetDpiForWindow( hwnd ));
 }
