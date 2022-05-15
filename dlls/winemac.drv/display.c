@@ -349,9 +349,13 @@ fail:
 
 static BOOL read_dword(HKEY hkey, const char* name, DWORD* val)
 {
-    DWORD type, size = sizeof(*val);
-    if (RegQueryValueExA(hkey, name, 0, &type, (BYTE*)val, &size) || type != REG_DWORD || size != sizeof(*val))
+    char buffer[offsetof(KEY_VALUE_PARTIAL_INFORMATION, Data[sizeof(*val)])];
+    KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
+    WCHAR nameW[64];
+    asciiz_to_unicode(nameW, name);
+    if (query_reg_value(hkey, nameW, value, sizeof(buffer)) != sizeof(*val) || value->Type != REG_DWORD)
         return FALSE;
+    *val = *(DWORD *)value->Data;
     return TRUE;
 }
 
@@ -369,20 +373,22 @@ static void free_display_mode_descriptor(struct display_mode_descriptor* desc)
 
 static struct display_mode_descriptor* create_original_display_mode_descriptor(CGDirectDisplayID displayID)
 {
-    static const char display_key_format[] = "Software\\Wine\\Mac Driver\\Initial Display Mode\\Display 0x%08x";
+    static const char display_key_format[] =
+        "\\Registry\\Machine\\Software\\Wine\\Mac Driver\\Initial Display Mode\\Display 0x%08x";
     struct display_mode_descriptor* ret = NULL;
     struct display_mode_descriptor* desc;
     char display_key[sizeof(display_key_format) + 10];
+    WCHAR nameW[ARRAYSIZE(display_key)];
+    char buffer[4096];
+    KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
     HKEY hkey;
-    DWORD type, size;
     DWORD refresh100;
-    WCHAR* pixel_encoding = NULL;
 
     init_original_display_mode();
 
     snprintf(display_key, sizeof(display_key), display_key_format, CGDisplayUnitNumber(displayID));
     /* @@ Wine registry key: HKLM\Software\Wine\Mac Driver\Initial Display Mode\Display 0xnnnnnnnn */
-    if (RegOpenKeyExA(HKEY_LOCAL_MACHINE, display_key, 0, KEY_READ, &hkey))
+    if (!(hkey = reg_open_key(NULL, nameW, asciiz_to_unicode(nameW, display_key))))
         return NULL;
 
     desc = HeapAlloc(GetProcessHeap(), 0, sizeof(*desc));
@@ -405,22 +411,17 @@ static struct display_mode_descriptor* create_original_display_mode_descriptor(C
         desc->pixel_height = desc->height;
     }
 
-    size = 0;
-    if (RegQueryValueExW(hkey, pixelencodingW, 0, &type, NULL, &size) || type != REG_SZ)
+    if (!query_reg_value(hkey, pixelencodingW, value, sizeof(buffer)) || value->Type != REG_SZ)
         goto done;
-    size += sizeof(WCHAR);
-    pixel_encoding = HeapAlloc(GetProcessHeap(), 0, size);
-    if (RegQueryValueExW(hkey, pixelencodingW, 0, &type, (BYTE*)pixel_encoding, &size) || type != REG_SZ)
-        goto done;
-    desc->pixel_encoding = CFStringCreateWithCharacters(NULL, (const UniChar*)pixel_encoding, strlenW(pixel_encoding));
+    desc->pixel_encoding = CFStringCreateWithCharacters(NULL, (const UniChar*)value->Data,
+                                                        lstrlenW((const WCHAR *)value->Data));
 
     ret = desc;
 
 done:
     if (!ret)
         free_display_mode_descriptor(desc);
-    HeapFree(GetProcessHeap(), 0, pixel_encoding);
-    RegCloseKey(hkey);
+    NtClose(hkey);
     return ret;
 }
 
