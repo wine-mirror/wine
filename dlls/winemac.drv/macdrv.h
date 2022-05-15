@@ -297,6 +297,11 @@ extern BOOL query_ime_char_rect(macdrv_query* query) DECLSPEC_HIDDEN;
 
 extern ULONG query_reg_value(HKEY hkey, const WCHAR *name, KEY_VALUE_PARTIAL_INFORMATION *info,
                              ULONG size) DECLSPEC_HIDDEN;
+extern HKEY reg_create_ascii_key(HKEY root, const char *name, DWORD options,
+                                 DWORD *disposition) DECLSPEC_HIDDEN;
+extern HKEY reg_create_key(HKEY root, const WCHAR *name, ULONG name_len,
+                           DWORD options, DWORD *disposition) DECLSPEC_HIDDEN;
+extern BOOL reg_delete_tree(HKEY parent, const WCHAR *name, ULONG name_len) DECLSPEC_HIDDEN;
 extern HKEY reg_open_key(HKEY root, const WCHAR *name, ULONG name_len) DECLSPEC_HIDDEN;
 
 /* string helpers */

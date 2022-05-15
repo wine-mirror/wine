@@ -46,7 +46,8 @@ struct display_mode_descriptor
 
 BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, LPDEVMODEW devmode, DWORD flags);
 
-static const char initial_mode_key[] = "Initial Display Mode";
+static const WCHAR initial_mode_keyW[] = {'I','n','i','t','i','a','l',' ','D','i','s','p','l','a','y',
+    ' ','M','o','d','e'};
 static const WCHAR pixelencodingW[] = {'P','i','x','e','l','E','n','c','o','d','i','n','g',0};
 
 static CFArrayRef modes;
@@ -301,13 +302,14 @@ static void init_original_display_mode(void)
         return;
 
     /* @@ Wine registry key: HKLM\Software\Wine\Mac Driver */
-    if (RegCreateKeyExA(HKEY_LOCAL_MACHINE, "Software\\Wine\\Mac Driver", 0, NULL,
-                        0, KEY_ALL_ACCESS, NULL, &mac_driver_hkey, NULL))
+    mac_driver_hkey = reg_create_ascii_key(NULL, "\\Registry\\Machine\\Software\\Wine\\Mac Driver",
+                                           0, NULL);
+    if (!mac_driver_hkey)
         return;
 
     /* @@ Wine registry key: HKLM\Software\Wine\Mac Driver\Initial Display Mode */
-    if (RegCreateKeyExA(mac_driver_hkey, initial_mode_key, 0, NULL,
-                        REG_OPTION_VOLATILE, KEY_WRITE, NULL, &parent_hkey, &disposition))
+    if (!(parent_hkey = reg_create_key(mac_driver_hkey, initial_mode_keyW, sizeof(initial_mode_keyW),
+                                       REG_OPTION_VOLATILE, &disposition)))
     {
         parent_hkey = NULL;
         goto fail;
@@ -332,10 +334,10 @@ done:
 
 fail:
     macdrv_free_displays(displays);
-    RegCloseKey(parent_hkey);
+    NtClose(parent_hkey);
     if (!success && parent_hkey)
-        RegDeleteTreeA(mac_driver_hkey, initial_mode_key);
-    RegCloseKey(mac_driver_hkey);
+        reg_delete_tree(mac_driver_hkey, initial_mode_keyW, sizeof(initial_mode_keyW));
+    NtClose(mac_driver_hkey);
     if (success)
         inited_original_display_mode = TRUE;
 }

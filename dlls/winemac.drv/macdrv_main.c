@@ -24,6 +24,8 @@
 #include <Security/AuthSession.h>
 #include <IOKit/pwr_mgt/IOPMLib.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "macdrv.h"
 #include "winuser.h"
 #include "winreg.h"
@@ -149,6 +151,83 @@ static HKEY open_hkcu_key(const char *name)
     }
 
     return reg_open_key(hkcu, bufferW, asciiz_to_unicode(bufferW, name) - sizeof(WCHAR));
+}
+
+
+/* wrapper for NtCreateKey that creates the key recursively if necessary */
+HKEY reg_create_key(HKEY root, const WCHAR *name, ULONG name_len,
+                    DWORD options, DWORD *disposition)
+{
+    UNICODE_STRING nameW = { name_len, name_len, (WCHAR *)name };
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+    HANDLE ret;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = root;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    status = NtCreateKey(&ret, MAXIMUM_ALLOWED, &attr, 0, NULL, options, disposition);
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
+        static const WCHAR registry_rootW[] = { '\\','R','e','g','i','s','t','r','y','\\' };
+        DWORD pos = 0, i = 0, len = name_len / sizeof(WCHAR);
+
+        /* don't try to create registry root */
+        if (!root && len > ARRAY_SIZE(registry_rootW) &&
+            !memcmp(name, registry_rootW, sizeof(registry_rootW)))
+            i += ARRAY_SIZE(registry_rootW);
+
+        while (i < len && name[i] != '\\') i++;
+        if (i == len) return 0;
+        for (;;)
+        {
+            unsigned int subkey_options = options;
+            if (i < len) subkey_options &= ~(REG_OPTION_CREATE_LINK | REG_OPTION_OPEN_LINK);
+            nameW.Buffer = (WCHAR *)name + pos;
+            nameW.Length = (i - pos) * sizeof(WCHAR);
+            status = NtCreateKey(&ret, MAXIMUM_ALLOWED, &attr, 0, NULL, subkey_options, disposition);
+
+            if (attr.RootDirectory != root) NtClose(attr.RootDirectory);
+            if (!NT_SUCCESS(status)) return 0;
+            if (i == len) break;
+            attr.RootDirectory = ret;
+            while (i < len && name[i] == '\\') i++;
+            pos = i;
+            while (i < len && name[i] != '\\') i++;
+        }
+    }
+    return ret;
+}
+
+
+HKEY reg_create_ascii_key(HKEY root, const char *name, DWORD options, DWORD *disposition)
+{
+    WCHAR buf[256];
+    return reg_create_key(root, buf, asciiz_to_unicode(buf, name) - sizeof(WCHAR),
+                          options, disposition);
+}
+
+
+BOOL reg_delete_tree(HKEY parent, const WCHAR *name, ULONG name_len)
+{
+    char buffer[4096];
+    KEY_NODE_INFORMATION *key_info = (KEY_NODE_INFORMATION *)buffer;
+    DWORD size;
+    HKEY key;
+    BOOL ret = TRUE;
+
+    if (!(key = reg_open_key(parent, name, name_len))) return FALSE;
+
+    while (ret && !NtEnumerateKey(key, 0, KeyNodeInformation, key_info, sizeof(buffer), &size))
+        ret = reg_delete_tree(key, key_info->Name, key_info->NameLength);
+
+    if (ret) ret = !NtDeleteKey(key);
+    NtClose(key);
+    return ret;
 }
 
 
