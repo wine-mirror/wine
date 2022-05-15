@@ -2044,10 +2044,35 @@ static HRESULT Global_TimeValue(BuiltinDisp *This, VARIANT *arg, unsigned args_c
     return E_NOTIMPL;
 }
 
-static HRESULT Global_DateSerial(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_DateSerial(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    int year, month, day;
+    UDATE ud = {{ 0 }};
+    HRESULT hres;
+    double date;
+
+    TRACE("\n");
+
+    assert(args_cnt == 3);
+
+    hres = to_int(args, &year);
+    if (SUCCEEDED(hres))
+        hres = to_int(args + 1, &month);
+    if (SUCCEEDED(hres))
+        hres = to_int(args + 2, &day);
+
+    if (SUCCEEDED(hres))
+    {
+        ud.st.wYear = year;
+        ud.st.wMonth = month;
+        ud.st.wDay = day;
+        hres = VarDateFromUdateEx(&ud, 0, 0, &date);
+    }
+
+    if (SUCCEEDED(hres))
+        hres = return_date(res, date);
+
+    return hres;
 }
 
 static HRESULT Global_TimeSerial(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
