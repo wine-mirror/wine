@@ -957,3 +957,21 @@ NTSTATUS WINAPI wow64_NtUserGetRawInputData( UINT *args )
         return ~0u;
     }
 }
+
+NTSTATUS WINAPI wow64_NtUserGetRawInputBuffer( UINT *args )
+{
+    RAWINPUT *data = get_ptr( &args );
+    UINT *data_size = get_ptr( &args );
+    UINT header_size = get_ulong( &args );
+
+    if (header_size != sizeof(RAWINPUTHEADER32))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return ~0u;
+    }
+
+    /* RAWINPUT has different sizes on 32-bit and 64-bit, but no translation is
+     * done. The function actually returns different structures depending on
+     * whether it's operating under WoW64 or not. */
+    return NtUserGetRawInputBuffer( data, data_size, sizeof(RAWINPUTHEADER) );
+}

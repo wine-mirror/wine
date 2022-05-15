@@ -1048,12 +1048,6 @@ DWORD WINAPI NtUserGetQueueStatus( UINT flags )
     return unix_funcs->pNtUserGetQueueStatus( flags );
 }
 
-UINT WINAPI DECLSPEC_HOTPATCH NtUserGetRawInputBuffer( RAWINPUT *data, UINT *data_size, UINT header_size )
-{
-    if (!unix_funcs) return ~0u;
-    return unix_funcs->pNtUserGetRawInputBuffer( data, data_size, header_size );
-}
-
 BOOL WINAPI NtUserGetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *out_size )
 {
     if (!unix_funcs) return FALSE;

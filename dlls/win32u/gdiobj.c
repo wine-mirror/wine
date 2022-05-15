@@ -1184,7 +1184,6 @@ static struct unix_funcs unix_funcs =
     NtUserGetMessage,
     NtUserGetPriorityClipboardFormat,
     NtUserGetQueueStatus,
-    NtUserGetRawInputBuffer,
     NtUserGetSystemMenu,
     NtUserGetUpdateRect,
     NtUserGetUpdateRgn,

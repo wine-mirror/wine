@@ -132,6 +132,7 @@
     SYSCALL_ENTRY( NtUserGetProcessDpiAwarenessContext ) \
     SYSCALL_ENTRY( NtUserGetProcessWindowStation ) \
     SYSCALL_ENTRY( NtUserGetProp ) \
+    SYSCALL_ENTRY( NtUserGetRawInputBuffer ) \
     SYSCALL_ENTRY( NtUserGetRawInputData ) \
     SYSCALL_ENTRY( NtUserGetSystemDpiForProcess ) \
     SYSCALL_ENTRY( NtUserGetThreadDesktop ) \

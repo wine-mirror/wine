@@ -145,6 +145,7 @@ static void * const syscalls[] =
     NtUserGetProcessDpiAwarenessContext,
     NtUserGetProcessWindowStation,
     NtUserGetProp,
+    NtUserGetRawInputBuffer,
     NtUserGetRawInputData,
     NtUserGetSystemDpiForProcess,
     NtUserGetThreadDesktop,
