@@ -172,7 +172,7 @@
 @ extern _HUGE MSVCRT__HUGE
 @ cdecl _Strftime(ptr long str ptr ptr)
 @ cdecl _XcptFilter(long ptr)
-@ stdcall -arch=x86_64,arm64 __C_specific_handler(ptr long ptr ptr) ntdll.__C_specific_handler
+@ stdcall -arch=x86_64,arm,arm64 __C_specific_handler(ptr long ptr ptr) ntdll.__C_specific_handler
 @ cdecl -arch=i386,x86_64,arm,arm64 __CppXcptFilter(long ptr)
 # stub __CxxCallUnwindDelDtor
 # stub __CxxCallUnwindDtor
@@ -218,6 +218,7 @@
 @ cdecl __isascii(long)
 @ cdecl __iscsym(long)
 @ cdecl __iscsymf(long)
+@ stdcall -arch=arm __jump_unwind(ptr ptr) ntdll.__jump_unwind
 @ extern __lc_codepage MSVCRT___lc_codepage
 @ stub __lc_collate
 @ extern __lc_collate_cp MSVCRT___lc_collate_cp
