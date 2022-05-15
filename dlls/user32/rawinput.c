@@ -232,11 +232,22 @@ fail:
     return NULL;
 }
 
+static void enumerate_devices( DWORD type, const GUID *guid )
+{
+    SP_DEVICE_INTERFACE_DATA iface = {sizeof(iface)};
+    HDEVINFO set;
+    DWORD idx;
+
+    set = SetupDiGetClassDevsW( guid, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT );
+
+    for (idx = 0; SetupDiEnumDeviceInterfaces( set, NULL, &GUID_DEVINTERFACE_HID, idx, &iface); ++idx )
+        add_device( set, &iface, type );
+
+    SetupDiDestroyDeviceInfoList( set );
+}
+
 void rawinput_update_device_list(void)
 {
-    SP_DEVICE_INTERFACE_DATA iface = { sizeof(iface) };
-    struct device *device;
-    HDEVINFO set;
     DWORD idx;
 
     TRACE("\n");
@@ -252,35 +263,9 @@ void rawinput_update_device_list(void)
     }
     rawinput_devices_count = 0;
 
-    set = SetupDiGetClassDevsW(&GUID_DEVINTERFACE_HID, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
-
-    for (idx = 0; SetupDiEnumDeviceInterfaces(set, NULL, &GUID_DEVINTERFACE_HID, idx, &iface); ++idx)
-    {
-        if (!(device = add_device( set, &iface, RIM_TYPEHID )))
-            continue;
-    }
-
-    SetupDiDestroyDeviceInfoList(set);
-
-    set = SetupDiGetClassDevsW(&GUID_DEVINTERFACE_MOUSE, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
-
-    for (idx = 0; SetupDiEnumDeviceInterfaces(set, NULL, &GUID_DEVINTERFACE_MOUSE, idx, &iface); ++idx)
-    {
-        if (!(device = add_device( set, &iface, RIM_TYPEMOUSE )))
-            continue;
-    }
-
-    SetupDiDestroyDeviceInfoList(set);
-
-    set = SetupDiGetClassDevsW(&GUID_DEVINTERFACE_KEYBOARD, NULL, NULL, DIGCF_DEVICEINTERFACE | DIGCF_PRESENT);
-
-    for (idx = 0; SetupDiEnumDeviceInterfaces(set, NULL, &GUID_DEVINTERFACE_KEYBOARD, idx, &iface); ++idx)
-    {
-        if (!(device = add_device( set, &iface, RIM_TYPEHID )))
-            continue;
-    }
-
-    SetupDiDestroyDeviceInfoList(set);
+    enumerate_devices( RIM_TYPEHID, &GUID_DEVINTERFACE_HID );
+    enumerate_devices( RIM_TYPEMOUSE, &GUID_DEVINTERFACE_MOUSE );
+    enumerate_devices( RIM_TYPEKEYBOARD, &GUID_DEVINTERFACE_KEYBOARD );
 
     LeaveCriticalSection(&rawinput_devices_cs);
 }
