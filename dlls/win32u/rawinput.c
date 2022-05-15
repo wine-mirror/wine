@@ -58,6 +58,15 @@ typedef struct
 } RAWINPUT64;
 #endif
 
+static struct rawinput_thread_data *get_rawinput_thread_data(void)
+{
+    struct user_thread_info *thread_info = get_user_thread_info();
+    struct rawinput_thread_data *data = thread_info->rawinput;
+    if (data) return data;
+    data = thread_info->rawinput = calloc( 1, RAWINPUT_BUFFER_SIZE + sizeof(struct user_thread_info) );
+    return data;
+}
+
 static bool rawinput_from_hardware_message( RAWINPUT *rawinput, const struct hardware_msg_data *msg_data )
 {
     SIZE_T size;
@@ -223,7 +232,7 @@ UINT WINAPI NtUserGetRawInputBuffer( RAWINPUT *data, UINT *data_size, UINT heade
         return 0;
     }
 
-    if (!user_callbacks || !(thread_data = user_callbacks->get_rawinput_thread_data())) return ~0u;
+    if (!(thread_data = get_rawinput_thread_data())) return ~0u;
     rawinput = thread_data->buffer;
 
     /* first RAWINPUT block in the buffer is used for WM_INPUT message data */
@@ -286,7 +295,7 @@ UINT WINAPI NtUserGetRawInputData( HRAWINPUT rawinput, UINT command, void *data,
     TRACE( "rawinput %p, command %#x, data %p, data_size %p, header_size %u.\n",
            rawinput, command, data, data_size, header_size );
 
-    if (!user_callbacks || !(thread_data = user_callbacks->get_rawinput_thread_data()))
+    if (!(thread_data = get_rawinput_thread_data()))
     {
         SetLastError( ERROR_OUTOFMEMORY );
         return ~0u;
@@ -339,7 +348,7 @@ BOOL process_rawinput_message( MSG *msg, UINT hw_id, const struct hardware_msg_d
 {
     struct rawinput_thread_data *thread_data;
 
-    if (!user_callbacks || !(thread_data = user_callbacks->get_rawinput_thread_data()))
+    if (!(thread_data = get_rawinput_thread_data()))
         return FALSE;
 
     if (msg->message == WM_INPUT_DEVICE_CHANGE)

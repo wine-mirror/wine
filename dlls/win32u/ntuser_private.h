@@ -50,7 +50,6 @@ struct user_callbacks
     void (WINAPI *unregister_imm)( HWND hwnd );
     NTSTATUS (CDECL *try_finally)( NTSTATUS (CDECL *func)( void *), void *arg,
                                    void (CALLBACK *finally_func)( BOOL ));
-    struct rawinput_thread_data *(WINAPI *get_rawinput_thread_data)(void);
 };
 
 #define WM_SYSTIMER         0x0118

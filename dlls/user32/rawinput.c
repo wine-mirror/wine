@@ -351,17 +351,6 @@ BOOL rawinput_device_get_usages(HANDLE handle, USAGE *usage_page, USAGE *usage)
 }
 
 
-struct rawinput_thread_data * WINAPI rawinput_thread_data(void)
-{
-    struct user_thread_info *thread_info = get_user_thread_info();
-    struct rawinput_thread_data *data = thread_info->rawinput;
-    if (data) return data;
-    data = thread_info->rawinput = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                              RAWINPUT_BUFFER_SIZE + sizeof(struct user_thread_info) );
-    return data;
-}
-
-
 /***********************************************************************
  *              GetRawInputDeviceList   (USER32.@)
  */

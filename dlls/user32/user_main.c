@@ -169,7 +169,6 @@ static const struct user_callbacks user_funcs =
     register_imm,
     unregister_imm,
     try_finally,
-    rawinput_thread_data,
 };
 
 static NTSTATUS WINAPI User32CopyImage( const struct copy_image_params *params, ULONG size )
@@ -271,7 +270,6 @@ static void thread_detach(void)
 
     NtUserCallNoParam( NtUserThreadDetach );
     HeapFree( GetProcessHeap(), 0, thread_info->wmchar_data );
-    HeapFree( GetProcessHeap(), 0, thread_info->rawinput );
 
     exiting_thread_id = 0;
 }

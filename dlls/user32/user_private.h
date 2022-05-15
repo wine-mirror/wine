@@ -62,7 +62,6 @@ struct tagWND;
 
 struct hardware_msg_data;
 extern BOOL rawinput_device_get_usages(HANDLE handle, USAGE *usage_page, USAGE *usage);
-extern struct rawinput_thread_data * WINAPI rawinput_thread_data(void);
 extern void CDECL rawinput_update_device_list(void);
 
 extern BOOL post_dde_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DWORD dest_tid,

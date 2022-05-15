@@ -4689,6 +4689,7 @@ static void thread_detach(void)
 
     free( thread_info->key_state );
     thread_info->key_state = 0;
+    free( thread_info->rawinput );
 
     destroy_thread_windows();
     NtClose( thread_info->server_queue );
