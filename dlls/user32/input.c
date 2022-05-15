@@ -6,6 +6,8 @@
  * Copyright 1997 David Faure
  * Copyright 1998 Morten Welinder
  * Copyright 1998 Ulrich Weigand
+ * Copyright 2012 Henri Verbeet
+ * Copyright 2018 Zebediah Figura for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -622,4 +624,51 @@ BOOL WINAPI UnregisterDeviceNotification( HDEVNOTIFY handle )
     TRACE("%p\n", handle);
 
     return I_ScUnregisterDeviceNotification( handle );
+}
+
+/***********************************************************************
+ *              GetRawInputDeviceInfoA   (USER32.@)
+ */
+UINT WINAPI GetRawInputDeviceInfoA( HANDLE device, UINT command, void *data, UINT *size )
+{
+    TRACE( "device %p, command %#x, data %p, size %p.\n", device, command, data, size );
+
+    /* RIDI_DEVICENAME size is in chars, not bytes */
+    if (command == RIDI_DEVICENAME)
+    {
+        WCHAR *nameW;
+        UINT ret, sizeW;
+
+        if (!size) return ~0U;
+
+        sizeW = *size;
+
+        if (data && sizeW > 0)
+            nameW = HeapAlloc( GetProcessHeap(), 0, sizeof(WCHAR) * sizeW );
+        else
+            nameW = NULL;
+
+        ret = NtUserGetRawInputDeviceInfo( device, command, nameW, &sizeW );
+
+        if (ret && ret != ~0U)
+            WideCharToMultiByte( CP_ACP, 0, nameW, -1, data, *size, NULL, NULL );
+
+        *size = sizeW;
+
+        HeapFree( GetProcessHeap(), 0, nameW );
+
+        return ret;
+    }
+
+    return NtUserGetRawInputDeviceInfo( device, command, data, size );
+}
+
+/***********************************************************************
+ *              DefRawInputProc   (USER32.@)
+ */
+LRESULT WINAPI DefRawInputProc( RAWINPUT **data, INT data_count, UINT header_size )
+{
+    FIXME( "data %p, data_count %d, header_size %u stub!\n", data, data_count, header_size );
+
+    return 0;
 }
