@@ -47,10 +47,6 @@ struct wm_char_mapping_data
     MSG  get_msg;
 };
 
-/* on windows the buffer capacity is quite large as well, enough to */
-/* hold up to 10s of 1kHz mouse rawinput events */
-#define RAWINPUT_BUFFER_SIZE (512*1024)
-
 extern BOOL (WINAPI *imm_register_window)(HWND) DECLSPEC_HIDDEN;
 extern void (WINAPI *imm_unregister_window)(HWND) DECLSPEC_HIDDEN;
 

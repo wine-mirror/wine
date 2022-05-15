@@ -366,7 +366,7 @@
 @ stdcall GetPropA(long str)
 @ stdcall GetPropW(long wstr)
 @ stdcall GetQueueStatus(long) NtUserGetQueueStatus
-@ stdcall GetRawInputBuffer(ptr ptr long)
+@ stdcall GetRawInputBuffer(ptr ptr long) NtUserGetRawInputBuffer
 @ stdcall GetRawInputData(ptr long ptr ptr long) NtUserGetRawInputData
 @ stdcall GetRawInputDeviceInfoA(ptr long ptr ptr)
 @ stdcall GetRawInputDeviceInfoW(ptr long ptr ptr)

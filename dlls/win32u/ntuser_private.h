@@ -68,6 +68,10 @@ struct rawinput_thread_data
     RAWINPUT buffer[1]; /* rawinput message data buffer */
 };
 
+/* on windows the buffer capacity is quite large as well, enough to */
+/* hold up to 10s of 1kHz mouse rawinput events */
+#define RAWINPUT_BUFFER_SIZE (512 * 1024)
+
 struct user_object
 {
     HANDLE       handle;

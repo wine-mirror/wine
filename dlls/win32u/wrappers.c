@@ -1048,6 +1048,12 @@ DWORD WINAPI NtUserGetQueueStatus( UINT flags )
     return unix_funcs->pNtUserGetQueueStatus( flags );
 }
 
+UINT WINAPI DECLSPEC_HOTPATCH NtUserGetRawInputBuffer( RAWINPUT *data, UINT *data_size, UINT header_size )
+{
+    if (!unix_funcs) return ~0u;
+    return unix_funcs->pNtUserGetRawInputBuffer( data, data_size, header_size );
+}
+
 UINT WINAPI NtUserGetRawInputData( HRAWINPUT rawinput, UINT command, void *data, UINT *data_size, UINT header_size )
 {
     if (!unix_funcs) return ~0u;
