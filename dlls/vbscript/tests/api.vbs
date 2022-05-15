@@ -1958,4 +1958,34 @@ sub testErrRaise()
 end sub
 call testErrRaise()
 
+sub testDateSerial(yy, mm, dd, yyexp, mmexp, ddexp)
+    dim x
+    x = DateSerial(yy, mm, dd)
+    call ok(Year(x) = yyexp, "year = " & Year(x) & " expected " & yyexp)
+    call ok(Month(x) = mmexp, "month = " & Month(x) & " expected " & mmexp)
+    call ok(Day(x) = ddexp, "day = " & Day(x) & " expected " & ddexp)
+    call ok(Hour(x) = 0, "hour = " & Hour(x))
+    call ok(Minute(x) = 0, "minute = " & Minute(x))
+    call ok(Second(x) = 0, "second = " & Second(x))
+    call ok(getVT(x) = "VT_DATE*", "getVT = " & getVT(x))
+end sub
+
+sub testDateSerialError()
+    on error resume next
+    call Err.clear()
+    call DateSerial(10000, 1, 1)
+    call ok(Err.number = 5, "Err.number = " & Err.number)
+    call Err.clear()
+    call DateSerial(-10000, 1, 1)
+    call ok(Err.number = 5, "Err.number = " & Err.number)
+end sub
+
+call testDateSerial(100, 2, 1, 100, 2, 1)
+call testDateSerial(0, 2, 1, 2000, 2, 1)
+call testDateSerial(50, 2, 1, 1950, 2, 1)
+call testDateSerial(99, 2, 1, 1999, 2, 1)
+call testDateSerial(2000, 14, 2, 2001, 2, 2)
+call testDateSerial(9999, 12, 1, 9999, 12, 1)
+call testDateSerialError()
+
 Call reportSuccess()
