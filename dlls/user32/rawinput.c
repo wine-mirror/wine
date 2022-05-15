@@ -46,7 +46,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(rawinput);
 
 struct device
 {
-    SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail;
+    WCHAR *path;
     HANDLE file;
     HANDLE handle;
     RID_DEVICE_INFO info;
@@ -103,11 +103,11 @@ static struct device *add_device( HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface,
     struct device *device = NULL;
     RID_DEVICE_INFO info;
     IO_STATUS_BLOCK io;
+    WCHAR *path, *pos;
     NTSTATUS status;
     UINT32 handle;
     DWORD i, size;
     HANDLE file;
-    WCHAR *pos;
 
     SetupDiGetDeviceInterfaceDetailW(set, iface, NULL, 0, &size, &device_data);
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
@@ -123,16 +123,19 @@ static struct device *add_device( HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface,
     }
     detail->cbSize = sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W);
     SetupDiGetDeviceInterfaceDetailW(set, iface, detail, size, NULL, NULL);
+    path = wcsdup( detail->DevicePath );
+    free( detail );
+    if (!path) return NULL;
 
     /* upper case everything but the GUID */
-    for (pos = detail->DevicePath; *pos && *pos != '{'; pos++) *pos = towupper(*pos);
+    for (pos = path; *pos && *pos != '{'; pos++) *pos = towupper(*pos);
 
-    file = CreateFileW(detail->DevicePath, GENERIC_READ | GENERIC_WRITE,
-            FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
+    file = CreateFileW( path, GENERIC_READ | GENERIC_WRITE,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
     if (file == INVALID_HANDLE_VALUE)
     {
-        ERR("Failed to open device file %s, error %lu.\n", debugstr_w(detail->DevicePath), GetLastError());
-        free(detail);
+        ERR( "Failed to open device file %s, error %lu.\n", debugstr_w(path), GetLastError() );
+        free( path );
         return NULL;
     }
 
@@ -199,16 +202,16 @@ static struct device *add_device( HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface,
 
     if (device)
     {
-        TRACE("Updating device %x / %s.\n", handle, debugstr_w(detail->DevicePath));
+        TRACE( "Updating device %#x / %s.\n", handle, debugstr_w(path) );
         free(device->data);
         CloseHandle(device->file);
-        free(device->detail);
+        free( device->path );
     }
     else if (array_reserve((void **)&rawinput_devices, &rawinput_devices_max,
                            rawinput_devices_count + 1, sizeof(*rawinput_devices)))
     {
         device = &rawinput_devices[rawinput_devices_count++];
-        TRACE("Adding device %x / %s.\n", handle, debugstr_w(detail->DevicePath));
+        TRACE( "Adding device %#x / %s.\n", handle, debugstr_w(path) );
     }
     else
     {
@@ -216,7 +219,7 @@ static struct device *add_device( HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface,
         goto fail;
     }
 
-    device->detail = detail;
+    device->path = path;
     device->file = file;
     device->handle = ULongToHandle(handle);
     device->info = info;
@@ -227,7 +230,7 @@ static struct device *add_device( HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface,
 fail:
     free( preparsed );
     CloseHandle( file );
-    free( detail );
+    free( path );
     return NULL;
 }
 
@@ -258,7 +261,7 @@ void rawinput_update_device_list(void)
     {
         free(rawinput_devices[idx].data);
         CloseHandle(rawinput_devices[idx].file);
-        free(rawinput_devices[idx].detail);
+        free( rawinput_devices[idx].path );
     }
     rawinput_devices_count = 0;
 
@@ -762,8 +765,8 @@ UINT WINAPI GetRawInputDeviceInfoW(HANDLE handle, UINT command, void *data, UINT
     switch (command)
     {
     case RIDI_DEVICENAME:
-        if ((len = wcslen(device->detail->DevicePath) + 1) <= data_len && data)
-            memcpy(data, device->detail->DevicePath, len * sizeof(WCHAR));
+        if ((len = wcslen( device->path ) + 1) <= data_len && data)
+            memcpy( data, device->path, len * sizeof(WCHAR) );
         *data_size = len;
         break;
 
