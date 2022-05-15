@@ -988,7 +988,7 @@
 @ stub NtUserGetRawInputDeviceInfo
 @ stub NtUserGetRawInputDeviceList
 @ stub NtUserGetRawPointerDeviceData
-@ stub NtUserGetRegisteredRawInputDevices
+@ stdcall -syscall NtUserGetRegisteredRawInputDevices(ptr ptr long)
 @ stub NtUserGetRequiredCursorSizes
 @ stub NtUserGetResizeDCompositionSynchronizationObject
 @ stub NtUserGetScrollBarInfo

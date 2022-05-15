@@ -147,6 +147,7 @@ static void * const syscalls[] =
     NtUserGetProp,
     NtUserGetRawInputBuffer,
     NtUserGetRawInputData,
+    NtUserGetRegisteredRawInputDevices,
     NtUserGetSystemDpiForProcess,
     NtUserGetThreadDesktop,
     NtUserGetTitleBarInfo,

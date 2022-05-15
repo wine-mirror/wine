@@ -427,3 +427,62 @@ BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT d
 
     return ret;
 }
+
+static int compare_raw_input_devices( const void *ap, const void *bp )
+{
+    const RAWINPUTDEVICE a = *(const RAWINPUTDEVICE *)ap;
+    const RAWINPUTDEVICE b = *(const RAWINPUTDEVICE *)bp;
+
+    if (a.usUsagePage != b.usUsagePage) return a.usUsagePage - b.usUsagePage;
+    if (a.usUsage != b.usUsage) return a.usUsage - b.usUsage;
+    return 0;
+}
+
+/**********************************************************************
+ *         NtUserGetRegisteredRawInputDevices   (win32u.@)
+ */
+UINT WINAPI NtUserGetRegisteredRawInputDevices( RAWINPUTDEVICE *devices, UINT *device_count, UINT size )
+{
+    struct rawinput_device *buffer = NULL;
+    unsigned int i, status, buffer_size;
+
+    TRACE("devices %p, device_count %p, size %u\n", devices, device_count, size);
+
+    if (size != sizeof(RAWINPUTDEVICE) || !device_count || (devices && !*device_count))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return ~0u;
+    }
+
+    buffer_size = *device_count * sizeof(*buffer);
+    if (devices && !(buffer = malloc( buffer_size )))
+        return ~0u;
+
+    SERVER_START_REQ(get_rawinput_devices)
+    {
+        if (buffer) wine_server_set_reply( req, buffer, buffer_size );
+        status = wine_server_call_err(req);
+        *device_count = reply->device_count;
+    }
+    SERVER_END_REQ;
+    if (status)
+    {
+        free( buffer );
+        return ~0u;
+    }
+
+    if (!devices) return 0;
+
+    for (i = 0; i < *device_count; ++i)
+    {
+        devices[i].usUsagePage = buffer[i].usage_page;
+        devices[i].usUsage = buffer[i].usage;
+        devices[i].dwFlags = buffer[i].flags;
+        devices[i].hwndTarget = wine_server_ptr_handle(buffer[i].target);
+    }
+
+    qsort( devices, *device_count, sizeof(*devices), compare_raw_input_devices );
+
+    free( buffer );
+    return *device_count;
+}

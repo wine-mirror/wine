@@ -1015,3 +1015,44 @@ NTSTATUS WINAPI wow64_NtUserRegisterRawInputDevices( UINT *args )
 
     return NtUserRegisterRawInputDevices( devices64, count, sizeof(*devices64) );
 }
+
+NTSTATUS WINAPI wow64_NtUserGetRegisteredRawInputDevices( UINT *args )
+{
+    RAWINPUTDEVICE32 *devices32 = get_ptr( &args );
+    UINT *count = get_ptr( &args );
+    UINT size = get_ulong( &args );
+
+    if (size != sizeof(RAWINPUTDEVICE32))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return ~0u;
+    }
+
+    if (devices32)
+    {
+        RAWINPUTDEVICE *devices64;
+        unsigned int ret, i;
+
+        if (!(devices64 = Wow64AllocateTemp( (*count) * sizeof(*devices64) )))
+        {
+            SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+            return ~0u;
+        }
+
+        ret = NtUserGetRegisteredRawInputDevices( devices64, count, sizeof(RAWINPUTDEVICE) );
+        if (ret == ~0u) return ret;
+
+        for (i = 0; i < *count; ++i)
+        {
+            devices32[i].usUsagePage = devices64[i].usUsagePage;
+            devices32[i].usUsage     = devices64[i].usUsage;
+            devices32[i].dwFlags     = devices64[i].dwFlags;
+            devices32[i].hwndTarget  = (ULONG_PTR)devices64[i].hwndTarget;
+        }
+        return ret;
+    }
+    else
+    {
+        return NtUserGetRegisteredRawInputDevices( NULL, count, sizeof(RAWINPUTDEVICE) );
+    }
+}
