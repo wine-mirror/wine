@@ -229,6 +229,7 @@ static BOOL write_display_settings(HKEY parent_hkey, CGDirectDisplayID displayID
     char display_key_name[19];
     HKEY display_hkey;
     CGDisplayModeRef display_mode;
+    UNICODE_STRING str;
     DWORD val;
     CFStringRef pixel_encoding;
     size_t len;
@@ -236,8 +237,7 @@ static BOOL write_display_settings(HKEY parent_hkey, CGDirectDisplayID displayID
 
     snprintf(display_key_name, sizeof(display_key_name), "Display 0x%08x", CGDisplayUnitNumber(displayID));
     /* @@ Wine registry key: HKLM\Software\Wine\Mac Driver\Initial Display Mode\Display 0xnnnnnnnn */
-    if (RegCreateKeyExA(parent_hkey, display_key_name, 0, NULL,
-                        REG_OPTION_VOLATILE, KEY_WRITE, NULL, &display_hkey, NULL))
+    if (!(display_hkey = reg_create_ascii_key(parent_hkey, display_key_name, REG_OPTION_VOLATILE, NULL)))
         return FALSE;
 
     display_mode = CGDisplayCopyDisplayMode(displayID);
@@ -245,26 +245,26 @@ static BOOL write_display_settings(HKEY parent_hkey, CGDirectDisplayID displayID
         goto fail;
 
     val = CGDisplayModeGetWidth(display_mode);
-    if (RegSetValueExA(display_hkey, "Width", 0, REG_DWORD, (const BYTE*)&val, sizeof(val)))
+    if (!set_setting_value(display_hkey, "Width", val))
         goto fail;
     val = CGDisplayModeGetHeight(display_mode);
-    if (RegSetValueExA(display_hkey, "Height", 0, REG_DWORD, (const BYTE*)&val, sizeof(val)))
+    if (!set_setting_value(display_hkey, "Height", val))
         goto fail;
     val = CGDisplayModeGetRefreshRate(display_mode) * 100;
-    if (RegSetValueExA(display_hkey, "RefreshRateTimes100", 0, REG_DWORD, (const BYTE*)&val, sizeof(val)))
+    if (!set_setting_value(display_hkey, "RefreshRateTimes100", val))
         goto fail;
     val = CGDisplayModeGetIOFlags(display_mode);
-    if (RegSetValueExA(display_hkey, "IOFlags", 0, REG_DWORD, (const BYTE*)&val, sizeof(val)))
+    if (!set_setting_value(display_hkey, "IOFlags", val))
         goto fail;
 
 #if defined(MAC_OS_X_VERSION_10_8) && MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_8
     if (&CGDisplayModeGetPixelWidth != NULL && &CGDisplayModeGetPixelHeight != NULL)
     {
         val = CGDisplayModeGetPixelWidth(display_mode);
-        if (RegSetValueExA(display_hkey, "PixelWidth", 0, REG_DWORD, (const BYTE*)&val, sizeof(val)))
+        if (!set_setting_value(display_hkey, "PixelWidth", val))
             goto fail;
         val = CGDisplayModeGetPixelHeight(display_mode);
-        if (RegSetValueExA(display_hkey, "PixelHeight", 0, REG_DWORD, (const BYTE*)&val, sizeof(val)))
+        if (!set_setting_value(display_hkey, "PixelHeight", val))
             goto fail;
     }
 #endif
@@ -275,7 +275,8 @@ static BOOL write_display_settings(HKEY parent_hkey, CGDirectDisplayID displayID
     CFStringGetCharacters(pixel_encoding, CFRangeMake(0, len), (UniChar*)buf);
     buf[len] = 0;
     CFRelease(pixel_encoding);
-    if (RegSetValueExW(display_hkey, pixelencodingW, 0, REG_SZ, (const BYTE*)buf, (len + 1) * sizeof(WCHAR)))
+    RtlInitUnicodeString(&str, pixelencodingW);
+    if (NtSetValueKey(display_hkey, &str, 0, REG_SZ, (const BYTE*)buf, (len + 1) * sizeof(WCHAR)))
         goto fail;
 
     ret = TRUE;
@@ -283,9 +284,12 @@ static BOOL write_display_settings(HKEY parent_hkey, CGDirectDisplayID displayID
 fail:
     HeapFree(GetProcessHeap(), 0, buf);
     if (display_mode) CGDisplayModeRelease(display_mode);
-    RegCloseKey(display_hkey);
+    NtClose(display_hkey);
     if (!ret)
-        RegDeleteKeyA(parent_hkey, display_key_name);
+    {
+        WCHAR nameW[64];
+        reg_delete_tree(parent_hkey, nameW, asciiz_to_unicode(nameW, display_key_name) - sizeof(WCHAR));
+    }
     return ret;
 }
 
