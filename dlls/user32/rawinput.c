@@ -402,69 +402,6 @@ UINT WINAPI GetRawInputDeviceList(RAWINPUTDEVICELIST *devices, UINT *device_coun
 }
 
 /***********************************************************************
- *              RegisterRawInputDevices   (USER32.@)
- */
-BOOL WINAPI DECLSPEC_HOTPATCH RegisterRawInputDevices(const RAWINPUTDEVICE *devices, UINT device_count, UINT size)
-{
-    struct rawinput_device *d;
-    BOOL ret;
-    UINT i;
-
-    TRACE("devices %p, device_count %u, size %u.\n", devices, device_count, size);
-
-    if (size != sizeof(*devices))
-    {
-        WARN("Invalid structure size %u.\n", size);
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return FALSE;
-    }
-
-    for (i = 0; i < device_count; ++i)
-    {
-        if ((devices[i].dwFlags & RIDEV_INPUTSINK) &&
-            (devices[i].hwndTarget == NULL))
-        {
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return FALSE;
-        }
-
-        if ((devices[i].dwFlags & RIDEV_REMOVE) &&
-            (devices[i].hwndTarget != NULL))
-        {
-            SetLastError(ERROR_INVALID_PARAMETER);
-            return FALSE;
-        }
-    }
-
-    if (!(d = HeapAlloc( GetProcessHeap(), 0, device_count * sizeof(*d) ))) return FALSE;
-
-    for (i = 0; i < device_count; ++i)
-    {
-        TRACE("device %u: page %#x, usage %#x, flags %#lx, target %p.\n",
-                i, devices[i].usUsagePage, devices[i].usUsage,
-                devices[i].dwFlags, devices[i].hwndTarget);
-        if (devices[i].dwFlags & ~(RIDEV_REMOVE|RIDEV_NOLEGACY|RIDEV_INPUTSINK|RIDEV_DEVNOTIFY))
-            FIXME("Unhandled flags %#lx for device %u.\n", devices[i].dwFlags, i);
-
-        d[i].usage_page = devices[i].usUsagePage;
-        d[i].usage = devices[i].usUsage;
-        d[i].flags = devices[i].dwFlags;
-        d[i].target = wine_server_user_handle( devices[i].hwndTarget );
-    }
-
-    SERVER_START_REQ( update_rawinput_devices )
-    {
-        wine_server_add_data( req, d, device_count * sizeof(*d) );
-        ret = !wine_server_call( req );
-    }
-    SERVER_END_REQ;
-
-    HeapFree( GetProcessHeap(), 0, d );
-
-    return ret;
-}
-
-/***********************************************************************
  *              GetRawInputDeviceInfoA   (USER32.@)
  */
 UINT WINAPI GetRawInputDeviceInfoA(HANDLE device, UINT command, void *data, UINT *data_size)

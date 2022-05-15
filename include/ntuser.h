@@ -663,6 +663,7 @@ ATOM    WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *
                                          struct client_menu_name *client_menu_name, DWORD fnid, DWORD flags,
                                          DWORD *wow );
 BOOL    WINAPI NtUserRegisterHotKey( HWND hwnd, INT id, UINT modifiers, UINT vk );
+BOOL    WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT device_count, UINT size );
 INT     WINAPI NtUserReleaseDC( HWND hwnd, HDC hdc );
 BOOL    WINAPI NtUserRemoveClipboardFormatListener( HWND hwnd );
 BOOL    WINAPI NtUserRemoveMenu( HMENU menu, UINT id, UINT flags );

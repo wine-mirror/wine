@@ -64,6 +64,14 @@ typedef struct
     UINT32 wParam;
 } RAWINPUTHEADER32;
 
+typedef struct
+{
+    USHORT usUsagePage;
+    USHORT usUsage;
+    DWORD dwFlags;
+    UINT32 hwndTarget;
+} RAWINPUTDEVICE32;
+
 static MSG *msg_32to64( MSG *msg, MSG32 *msg32 )
 {
     if (!msg32) return NULL;
@@ -974,4 +982,36 @@ NTSTATUS WINAPI wow64_NtUserGetRawInputBuffer( UINT *args )
      * done. The function actually returns different structures depending on
      * whether it's operating under WoW64 or not. */
     return NtUserGetRawInputBuffer( data, data_size, sizeof(RAWINPUTHEADER) );
+}
+
+NTSTATUS WINAPI wow64_NtUserRegisterRawInputDevices( UINT *args )
+{
+    const RAWINPUTDEVICE32 *devices32 = get_ptr( &args );
+    UINT count = get_ulong( &args );
+    UINT size = get_ulong( &args );
+
+    RAWINPUTDEVICE *devices64;
+    unsigned int i;
+
+    if (size != sizeof(RAWINPUTDEVICE32))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    if (!(devices64 = Wow64AllocateTemp( count * sizeof(*devices64) )))
+    {
+        SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        return FALSE;
+    }
+
+    for (i = 0; i < count; ++i)
+    {
+        devices64[i].usUsagePage = devices32[i].usUsagePage;
+        devices64[i].usUsage = devices32[i].usUsage;
+        devices64[i].dwFlags = devices32[i].dwFlags;
+        devices64[i].hwndTarget = UlongToPtr( devices32[i].hwndTarget );
+    }
+
+    return NtUserRegisterRawInputDevices( devices64, count, sizeof(*devices64) );
 }

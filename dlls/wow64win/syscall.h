@@ -147,6 +147,7 @@
     SYSCALL_ENTRY( NtUserOpenDesktop ) \
     SYSCALL_ENTRY( NtUserOpenInputDesktop ) \
     SYSCALL_ENTRY( NtUserOpenWindowStation ) \
+    SYSCALL_ENTRY( NtUserRegisterRawInputDevices ) \
     SYSCALL_ENTRY( NtUserRemoveClipboardFormatListener ) \
     SYSCALL_ENTRY( NtUserRemoveMenu ) \
     SYSCALL_ENTRY( NtUserRemoveProp ) \

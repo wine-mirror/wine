@@ -1130,7 +1130,7 @@
 @ stub NtUserRegisterManipulationThread
 @ stub NtUserRegisterPointerDeviceNotifications
 @ stub NtUserRegisterPointerInputTarget
-@ stub NtUserRegisterRawInputDevices
+@ stdcall -syscall NtUserRegisterRawInputDevices(ptr long long)
 @ stub NtUserRegisterServicesProcess
 @ stub NtUserRegisterSessionPort
 @ stub NtUserRegisterShellPTPListener

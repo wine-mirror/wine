@@ -366,3 +366,64 @@ BOOL process_rawinput_message( MSG *msg, UINT hw_id, const struct hardware_msg_d
     msg->pt = point_phys_to_win_dpi( msg->hwnd, msg->pt );
     return TRUE;
 }
+
+/**********************************************************************
+ *         NtUserRegisterRawInputDevices   (win32u.@)
+ */
+BOOL WINAPI NtUserRegisterRawInputDevices( const RAWINPUTDEVICE *devices, UINT device_count, UINT size )
+{
+    struct rawinput_device *server_devices;
+    BOOL ret;
+    UINT i;
+
+    TRACE( "devices %p, device_count %u, size %u.\n", devices, device_count, size );
+
+    if (size != sizeof(*devices))
+    {
+        WARN( "Invalid structure size %u.\n", size );
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return FALSE;
+    }
+
+    for (i = 0; i < device_count; ++i)
+    {
+        if ((devices[i].dwFlags & RIDEV_INPUTSINK) && !devices[i].hwndTarget)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return FALSE;
+        }
+
+        if ((devices[i].dwFlags & RIDEV_REMOVE) && devices[i].hwndTarget)
+        {
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return FALSE;
+        }
+    }
+
+    if (!(server_devices = malloc( device_count * sizeof(*server_devices) ))) return FALSE;
+
+    for (i = 0; i < device_count; ++i)
+    {
+        TRACE( "device %u: page %#x, usage %#x, flags %#x, target %p.\n",
+               i, devices[i].usUsagePage, devices[i].usUsage,
+               devices[i].dwFlags, devices[i].hwndTarget );
+        if (devices[i].dwFlags & ~(RIDEV_REMOVE|RIDEV_NOLEGACY|RIDEV_INPUTSINK|RIDEV_DEVNOTIFY))
+            FIXME( "Unhandled flags %#x for device %u.\n", devices[i].dwFlags, i );
+
+        server_devices[i].usage_page = devices[i].usUsagePage;
+        server_devices[i].usage = devices[i].usUsage;
+        server_devices[i].flags = devices[i].dwFlags;
+        server_devices[i].target = wine_server_user_handle( devices[i].hwndTarget );
+    }
+
+    SERVER_START_REQ( update_rawinput_devices )
+    {
+        wine_server_add_data( req, server_devices, device_count * sizeof(*server_devices) );
+        ret = !wine_server_call( req );
+    }
+    SERVER_END_REQ;
+
+    free( server_devices );
+
+    return ret;
+}

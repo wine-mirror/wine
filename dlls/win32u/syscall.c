@@ -160,6 +160,7 @@ static void * const syscalls[] =
     NtUserOpenDesktop,
     NtUserOpenInputDesktop,
     NtUserOpenWindowStation,
+    NtUserRegisterRawInputDevices,
     NtUserRemoveClipboardFormatListener,
     NtUserRemoveMenu,
     NtUserRemoveProp,
