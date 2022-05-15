@@ -984,7 +984,7 @@
 @ stdcall NtUserGetQueueStatus(long)
 @ stub NtUserGetQueueStatusReadonly
 @ stub NtUserGetRawInputBuffer
-@ stub NtUserGetRawInputData
+@ stdcall NtUserGetRawInputData(ptr long ptr ptr long)
 @ stub NtUserGetRawInputDeviceInfo
 @ stub NtUserGetRawInputDeviceList
 @ stub NtUserGetRawPointerDeviceData

@@ -50,6 +50,7 @@ struct user_callbacks
     void (WINAPI *unregister_imm)( HWND hwnd );
     NTSTATUS (CDECL *try_finally)( NTSTATUS (CDECL *func)( void *), void *arg,
                                    void (CALLBACK *finally_func)( BOOL ));
+    struct rawinput_thread_data *(WINAPI *get_rawinput_thread_data)(void);
 };
 
 #define WM_SYSTIMER         0x0118
@@ -59,6 +60,12 @@ enum system_timer_id
 {
     SYSTEM_TIMER_TRACK_MOUSE = 0xfffa,
     SYSTEM_TIMER_CARET = 0xffff,
+};
+
+struct rawinput_thread_data
+{
+    UINT     hw_id;     /* current rawinput message id */
+    RAWINPUT buffer[1]; /* rawinput message data buffer */
 };
 
 struct user_object

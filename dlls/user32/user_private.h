@@ -51,12 +51,6 @@ struct wm_char_mapping_data
 /* hold up to 10s of 1kHz mouse rawinput events */
 #define RAWINPUT_BUFFER_SIZE (512*1024)
 
-struct rawinput_thread_data
-{
-    UINT     hw_id;     /* current rawinput message id */
-    RAWINPUT buffer[1]; /* rawinput message data buffer */
-};
-
 extern BOOL (WINAPI *imm_register_window)(HWND) DECLSPEC_HIDDEN;
 extern void (WINAPI *imm_unregister_window)(HWND) DECLSPEC_HIDDEN;
 
@@ -73,7 +67,7 @@ struct tagWND;
 struct hardware_msg_data;
 extern BOOL rawinput_from_hardware_message(RAWINPUT *rawinput, const struct hardware_msg_data *msg_data);
 extern BOOL rawinput_device_get_usages(HANDLE handle, USAGE *usage_page, USAGE *usage);
-extern struct rawinput_thread_data *rawinput_thread_data(void);
+extern struct rawinput_thread_data * WINAPI rawinput_thread_data(void);
 extern void rawinput_update_device_list(void);
 
 extern BOOL post_dde_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DWORD dest_tid,

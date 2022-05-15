@@ -43,6 +43,7 @@ C_SRCS = \
 	path.c \
 	pen.c \
 	printdrv.c \
+	rawinput.c \
 	region.c \
 	spy.c \
 	syscall.c \
