@@ -2291,6 +2291,120 @@ static void test_bitmap_brush(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_image_brush(BOOL d3d11)
+{
+    D2D1_IMAGE_BRUSH_PROPERTIES image_brush_desc;
+    D2D1_INTERPOLATION_MODE interp_mode;
+    ID2D1DeviceContext *device_context;
+    D2D1_BITMAP_PROPERTIES bitmap_desc;
+    D2D1_BRUSH_PROPERTIES brush_desc;
+    ID2D1Image *image, *tmp_image;
+    struct d2d1_test_context ctx;
+    D2D1_EXTEND_MODE extend_mode;
+    D2D1_MATRIX_3X2_F matrix;
+    ID2D1ImageBrush *brush;
+    ID2D1Bitmap *bitmap;
+    D2D1_SIZE_U size;
+    D2D1_RECT_F rect;
+    ULONG refcount;
+    float opacity;
+    HRESULT hr;
+    BOOL match;
+
+    static const DWORD bitmap_data[] =
+    {
+        0xffff0000, 0xffffff00, 0xff00ff00, 0xff00ffff,
+        0xff0000ff, 0xffff00ff, 0xff000000, 0xff7f7f7f,
+        0xffffffff, 0xffffffff, 0xffffffff, 0xff000000,
+        0xffffffff, 0xff000000, 0xff000000, 0xff000000,
+    };
+    static const D2D1_MATRIX_3X2_F identity =
+    {{{
+        1.0f, 0.0f,
+        0.0f, 1.0f,
+        0.0f, 0.0f,
+    }}};
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    hr = ID2D1RenderTarget_QueryInterface(ctx.rt, &IID_ID2D1DeviceContext, (void **)&device_context);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    set_size_u(&size, 4, 4);
+    bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+    bitmap_desc.dpiX = 96.0f;
+    bitmap_desc.dpiY = 96.0f;
+    hr = ID2D1RenderTarget_CreateBitmap(ctx.rt, size, bitmap_data, 4 * sizeof(*bitmap_data), &bitmap_desc, &bitmap);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1Bitmap_QueryInterface(bitmap, &IID_ID2D1Image, (void **)&image);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Only image brush description is required. */
+    set_rect(&image_brush_desc.sourceRectangle, 1.0f, 2.0f, 3.0f, 4.0f);
+    image_brush_desc.extendModeX = D2D1_EXTEND_MODE_WRAP;
+    image_brush_desc.extendModeY = D2D1_EXTEND_MODE_MIRROR;
+    image_brush_desc.interpolationMode = D2D1_INTERPOLATION_MODE_LINEAR;
+
+    hr = ID2D1DeviceContext_CreateImageBrush(device_context, NULL, &image_brush_desc, NULL, &brush);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    tmp_image = (void *)0xdeadbeef;
+    ID2D1ImageBrush_GetImage(brush, &tmp_image);
+    ok(!tmp_image, "Unexpected image %p.\n", image);
+
+    opacity = ID2D1ImageBrush_GetOpacity(brush);
+    ok(opacity == 1.0f, "Unexpected opacity %.8e.\n", opacity);
+    ID2D1ImageBrush_GetTransform(brush, &matrix);
+    ok(!memcmp(&matrix, &identity, sizeof(matrix)),
+            "Got unexpected matrix {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
+            matrix._11, matrix._12, matrix._21, matrix._22, matrix._31, matrix._32);
+
+    ID2D1ImageBrush_GetSourceRectangle(brush, &rect);
+    match = compare_rect(&rect, 1.0f, 2.0f, 3.0f, 4.0f, 0);
+    ok(match, "Got unexpected rectangle {%.8e, %.8e, %.8e, %.8e}.\n",
+            rect.left, rect.top, rect.right, rect.bottom);
+
+    extend_mode = ID2D1ImageBrush_GetExtendModeX(brush);
+    ok(extend_mode == D2D1_EXTEND_MODE_WRAP, "Unexpected extend mode %u.\n", extend_mode);
+    extend_mode = ID2D1ImageBrush_GetExtendModeY(brush);
+    ok(extend_mode == D2D1_EXTEND_MODE_MIRROR, "Unexpected extend mode %u.\n", extend_mode);
+    interp_mode = ID2D1ImageBrush_GetInterpolationMode(brush);
+    ok(interp_mode == D2D1_INTERPOLATION_MODE_LINEAR, "Unexpected interpolation mode %u.\n", interp_mode);
+
+    ID2D1ImageBrush_Release(brush);
+
+    /* Custom brush description and image pointer. */
+    brush_desc.opacity = 2.0f;
+    set_matrix_identity(&brush_desc.transform);
+    scale_matrix(&brush_desc.transform, 2.0f, 3.0f);
+
+    hr = ID2D1DeviceContext_CreateImageBrush(device_context, image, &image_brush_desc, &brush_desc, &brush);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID2D1ImageBrush_GetImage(brush, &tmp_image);
+    ok(tmp_image == image, "Got unexpected image %p, expected %p.\n", tmp_image, image);
+    ID2D1Image_Release(tmp_image);
+
+    opacity = ID2D1ImageBrush_GetOpacity(brush);
+    ok(opacity == 2.0f, "Unexpected opacity %.8e.\n", opacity);
+    ID2D1ImageBrush_GetTransform(brush, &matrix);
+    ok(!memcmp(&matrix, &brush_desc.transform, sizeof(matrix)),
+            "Got unexpected matrix {%.8e, %.8e, %.8e, %.8e, %.8e, %.8e}.\n",
+            matrix._11, matrix._12, matrix._21, matrix._22, matrix._31, matrix._32);
+
+    ID2D1ImageBrush_Release(brush);
+
+    ID2D1Image_Release(image);
+    refcount = ID2D1Bitmap_Release(bitmap);
+    ok(!refcount, "Bitmap has %lu references left.\n", refcount);
+
+    ID2D1DeviceContext_Release(device_context);
+    release_test_context(&ctx);
+}
+
 static void test_linear_brush(BOOL d3d11)
 {
     D2D1_LINEAR_GRADIENT_BRUSH_PROPERTIES gradient_properties;
@@ -10919,6 +11033,7 @@ START_TEST(d2d1)
     queue_test(test_state_block);
     queue_test(test_color_brush);
     queue_test(test_bitmap_brush);
+    queue_test(test_image_brush);
     queue_test(test_linear_brush);
     queue_test(test_radial_brush);
     queue_test(test_path_geometry);
