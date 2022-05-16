@@ -2204,7 +2204,7 @@ static void STDMETHODCALLTYPE d3d11_device_context_OMGetBlendState(ID3D11DeviceC
         if (wined3d_state)
         {
             blend_state_impl = wined3d_blend_state_get_parent(wined3d_state);
-            ID3D11BlendState_AddRef(*blend_state = &blend_state_impl->ID3D11BlendState_iface);
+            ID3D11BlendState_AddRef(*blend_state = (ID3D11BlendState *)&blend_state_impl->ID3D11BlendState1_iface);
         }
         else
             *blend_state = NULL;
@@ -3632,21 +3632,51 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateClassLinkage(ID3D11Device2 *
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d3d11_device_CreateBlendState(ID3D11Device2 *iface,
-        const D3D11_BLEND_DESC *desc, ID3D11BlendState **blend_state)
+static HRESULT STDMETHODCALLTYPE d3d11_device_CreateBlendState1(ID3D11Device2 *iface,
+        const D3D11_BLEND_DESC1 *desc, ID3D11BlendState1 **state)
 {
     struct d3d_device *device = impl_from_ID3D11Device2(iface);
     struct d3d_blend_state *object;
     HRESULT hr;
 
-    TRACE("iface %p, desc %p, blend_state %p.\n", iface, desc, blend_state);
+    TRACE("iface %p, desc %p, state %p.\n", iface, desc, state);
 
     if (FAILED(hr = d3d_blend_state_create(device, desc, &object)))
         return hr;
 
-    *blend_state = &object->ID3D11BlendState_iface;
+    *state = &object->ID3D11BlendState1_iface;
 
     return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE d3d11_device_CreateBlendState(ID3D11Device2 *iface,
+        const D3D11_BLEND_DESC *desc, ID3D11BlendState **blend_state)
+{
+    D3D11_BLEND_DESC1 d3d11_1_desc;
+    unsigned int i;
+
+    TRACE("iface %p, desc %p, blend_state %p.\n", iface, desc, blend_state);
+
+    if (!desc)
+        return E_INVALIDARG;
+
+    d3d11_1_desc.AlphaToCoverageEnable = desc->AlphaToCoverageEnable;
+    d3d11_1_desc.IndependentBlendEnable = desc->IndependentBlendEnable;
+    for (i = 0; i < D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT; ++i)
+    {
+        d3d11_1_desc.RenderTarget[i].BlendEnable = desc->RenderTarget[i].BlendEnable;
+        d3d11_1_desc.RenderTarget[i].LogicOpEnable = FALSE;
+        d3d11_1_desc.RenderTarget[i].SrcBlend = desc->RenderTarget[i].SrcBlend;
+        d3d11_1_desc.RenderTarget[i].DestBlend = desc->RenderTarget[i].DestBlend;
+        d3d11_1_desc.RenderTarget[i].BlendOp = desc->RenderTarget[i].BlendOp;
+        d3d11_1_desc.RenderTarget[i].SrcBlendAlpha = desc->RenderTarget[i].SrcBlendAlpha;
+        d3d11_1_desc.RenderTarget[i].DestBlendAlpha = desc->RenderTarget[i].DestBlendAlpha;
+        d3d11_1_desc.RenderTarget[i].BlendOpAlpha = desc->RenderTarget[i].BlendOpAlpha;
+        d3d11_1_desc.RenderTarget[i].LogicOp = D3D11_LOGIC_OP_COPY;
+        d3d11_1_desc.RenderTarget[i].RenderTargetWriteMask = desc->RenderTarget[i].RenderTargetWriteMask;
+    }
+
+    return d3d11_device_CreateBlendState1(iface, &d3d11_1_desc, (ID3D11BlendState1 **)blend_state);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDepthStencilState(ID3D11Device2 *iface,
@@ -4279,14 +4309,6 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateDeferredContext1(ID3D11Devic
 
     *context = &object->ID3D11DeviceContext1_iface;
     return S_OK;
-}
-
-static HRESULT STDMETHODCALLTYPE d3d11_device_CreateBlendState1(ID3D11Device2 *iface,
-        const D3D11_BLEND_DESC1 *desc, ID3D11BlendState1 **state)
-{
-    FIXME("iface %p, desc %p, state %p stub!\n", iface, desc, state);
-
-    return E_NOTIMPL;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_device_CreateRasterizerState1(ID3D11Device2 *iface,
@@ -4993,7 +5015,8 @@ static void STDMETHODCALLTYPE d3d10_device_OMSetBlendState(ID3D10Device1 *iface,
 
     blend_state_object = unsafe_impl_from_ID3D10BlendState(blend_state);
     d3d11_device_context_OMSetBlendState(&device->immediate_context.ID3D11DeviceContext1_iface,
-            blend_state_object ? &blend_state_object->ID3D11BlendState_iface : NULL, blend_factor, sample_mask);
+            blend_state_object ? (ID3D11BlendState *)&blend_state_object->ID3D11BlendState1_iface : NULL,
+            blend_factor, sample_mask);
 }
 
 static void STDMETHODCALLTYPE d3d10_device_OMSetDepthStencilState(ID3D10Device1 *iface,
@@ -5670,7 +5693,8 @@ static void STDMETHODCALLTYPE d3d10_device_OMGetBlendState(ID3D10Device1 *iface,
     {
         if (d3d11_blend_state)
         {
-            *blend_state = (ID3D10BlendState *)&impl_from_ID3D11BlendState(d3d11_blend_state)->ID3D10BlendState1_iface;
+            *blend_state = (ID3D10BlendState *)&impl_from_ID3D11BlendState1(
+                    (ID3D11BlendState1 *)d3d11_blend_state)->ID3D10BlendState1_iface;
             ID3D10BlendState_AddRef(*blend_state);
         }
         else
@@ -6267,16 +6291,15 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateBlendState1(ID3D10Device1 *i
         const D3D10_BLEND_DESC1 *desc, ID3D10BlendState1 **blend_state)
 {
     struct d3d_device *device = impl_from_ID3D10Device(iface);
-    struct d3d_blend_state *object;
+    ID3D11BlendState *object;
     HRESULT hr;
 
     TRACE("iface %p, desc %p, blend_state %p.\n", iface, desc, blend_state);
 
-    if (FAILED(hr = d3d_blend_state_create(device, (const D3D11_BLEND_DESC *)desc, &object)))
+    if (FAILED(hr = d3d11_device_CreateBlendState(&device->ID3D11Device2_iface, (const D3D11_BLEND_DESC *)desc, &object)))
         return hr;
 
-    *blend_state = &object->ID3D10BlendState1_iface;
-
+    *blend_state = &impl_from_ID3D11BlendState1((ID3D11BlendState1 *)object)->ID3D10BlendState1_iface;
     return S_OK;
 }
 
@@ -6867,8 +6890,8 @@ static int d3d_sampler_state_compare(const void *key, const struct wine_rb_entry
 
 static int d3d_blend_state_compare(const void *key, const struct wine_rb_entry *entry)
 {
-    const D3D11_BLEND_DESC *ka = key;
-    const D3D11_BLEND_DESC *kb = &WINE_RB_ENTRY_VALUE(entry, const struct d3d_blend_state, entry)->desc;
+    const D3D11_BLEND_DESC1 *ka = key;
+    const D3D11_BLEND_DESC1 *kb = &WINE_RB_ENTRY_VALUE(entry, const struct d3d_blend_state, entry)->desc;
 
     return memcmp(ka, kb, sizeof(*ka));
 }

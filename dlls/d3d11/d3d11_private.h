@@ -408,26 +408,26 @@ struct d3d11_class_linkage
 HRESULT d3d11_class_linkage_create(struct d3d_device *device,
         struct d3d11_class_linkage **class_linkage) DECLSPEC_HIDDEN;
 
-/* ID3D11BlendState, ID3D10BlendState1 */
+/* ID3D11BlendState1, ID3D10BlendState1 */
 struct d3d_blend_state
 {
-    ID3D11BlendState ID3D11BlendState_iface;
+    ID3D11BlendState1 ID3D11BlendState1_iface;
     ID3D10BlendState1 ID3D10BlendState1_iface;
     LONG refcount;
 
     struct wined3d_private_store private_store;
     struct wined3d_blend_state *wined3d_state;
-    D3D11_BLEND_DESC desc;
+    D3D11_BLEND_DESC1 desc;
     struct wine_rb_entry entry;
     ID3D11Device2 *device;
 };
 
-static inline struct d3d_blend_state *impl_from_ID3D11BlendState(ID3D11BlendState *iface)
+static inline struct d3d_blend_state *impl_from_ID3D11BlendState1(ID3D11BlendState1 *iface)
 {
-    return CONTAINING_RECORD(iface, struct d3d_blend_state, ID3D11BlendState_iface);
+    return CONTAINING_RECORD(iface, struct d3d_blend_state, ID3D11BlendState1_iface);
 }
 
-HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC *desc,
+HRESULT d3d_blend_state_create(struct d3d_device *device, const D3D11_BLEND_DESC1 *desc,
         struct d3d_blend_state **state) DECLSPEC_HIDDEN;
 struct d3d_blend_state *unsafe_impl_from_ID3D11BlendState(ID3D11BlendState *iface) DECLSPEC_HIDDEN;
 struct d3d_blend_state *unsafe_impl_from_ID3D10BlendState(ID3D10BlendState *iface) DECLSPEC_HIDDEN;
