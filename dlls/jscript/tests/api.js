@@ -2634,6 +2634,8 @@ testException(function() {null.toString();}, "E_OBJECT_EXPECTED");
 testException(function() {RegExp.prototype.toString.call(new Object());}, "E_REGEXP_EXPECTED");
 testException(function() {/a/.lastIndex();}, "E_NOT_FUNC");
 testException(function() {"a".length();}, "E_NOT_FUNC");
+testException(function() {((function() { var f = Number.prototype.toString; return (function() { return f(); }); })())();}, "E_NOT_NUM");
+testException(function() {((function() { var f = Object.prototype.hasOwnProperty; return (function() { return f("f"); }); })())();}, "E_OBJECT_EXPECTED");
 
 testException(function() { return arguments.callee(); }, "E_STACK_OVERFLOW");
 

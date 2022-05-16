@@ -314,9 +314,13 @@ static HRESULT exprval_propget(script_ctx_t *ctx, exprval_t *ref, jsval_t *r)
 
 static HRESULT exprval_call(script_ctx_t *ctx, exprval_t *ref, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
+    jsdisp_t *jsdisp;
+    HRESULT hres;
+    jsval_t v;
+
     switch(ref->type) {
     case EXPRVAL_STACK_REF: {
-        jsval_t v = ctx->stack[ref->u.off];
+        v = ctx->stack[ref->u.off];
 
         if(!is_object_instance(v)) {
             FIXME("invoke %s\n", debugstr_jsval(v));
@@ -326,10 +330,24 @@ static HRESULT exprval_call(script_ctx_t *ctx, exprval_t *ref, WORD flags, unsig
         return disp_call_value(ctx, get_object(v), NULL, flags, argc, argv, r);
     }
     case EXPRVAL_IDREF:
+        /* ECMA-262 3rd Edition 11.2.3.7 / ECMA-262 5.1 Edition 11.2.3.6 *
+         * Don't treat scope object props as PropertyReferences.         */
+        if((jsdisp = to_jsdisp(ref->u.idref.disp)) && jsdisp->builtin_info->class == JSCLASS_NONE) {
+            hres = disp_propget(ctx, ref->u.idref.disp, ref->u.idref.id, &v);
+            if(FAILED(hres))
+                return hres;
+            if(!is_object_instance(v)) {
+                FIXME("invoke %s\n", debugstr_jsval(v));
+                hres = E_FAIL;
+            }else {
+                hres = disp_call_value(ctx, get_object(v), NULL, flags, argc, argv, r);
+            }
+            jsval_release(v);
+            return hres;
+        }
         return disp_call(ctx, ref->u.idref.disp, ref->u.idref.id, flags, argc, argv, r);
     case EXPRVAL_JSVAL: {
         IDispatch *obj;
-        HRESULT hres;
 
         hres = to_object(ctx, ref->u.val, &obj);
         if(SUCCEEDED(hres)) {
@@ -3300,16 +3318,11 @@ HRESULT exec_source(script_ctx_t *ctx, DWORD flags, bytecode_t *bytecode, functi
         }
     }
 
-    /* ECMA-262 3rd Edition    11.2.3.7 */
     if(this_obj) {
-        jsdisp_t *jsthis;
+        jsdisp_t *jsthis = to_jsdisp(this_obj);
 
-        jsthis = iface_to_jsdisp(this_obj);
-        if(jsthis) {
-            if(jsthis->builtin_info->class == JSCLASS_GLOBAL || jsthis->builtin_info->class == JSCLASS_NONE)
-                this_obj = NULL;
-            jsdisp_release(jsthis);
-        }
+        if(jsthis && jsthis->builtin_info->class == JSCLASS_GLOBAL)
+            this_obj = NULL;
     }
 
     if(ctx->call_ctx && (flags & EXEC_EVAL)) {

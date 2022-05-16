@@ -1791,6 +1791,26 @@ sync_test("let scope instances", function() {
     ok(f() == 2, "f() = " + f());
 });
 
+sync_test("substituted this", function() {
+    try {
+        ((function() { var f = Number.prototype.toString; return (function() { return f(); }); })())();
+    }catch(ex) {
+        var n = ex.number >>> 0;
+        ok(n === JS_E_NUMBER_EXPECTED, "Number.toString threw " + n);
+    }
+
+    var r = ((function() { var f = Object.prototype.toString; return (function() { return f(); }); })())();
+    todo_wine.
+    ok(r === "[object Undefined]", "detached scope Object.toString returned " + r);
+
+    var r = (function() { this.f = Object.prototype.toString; return this.f(); })();
+    todo_wine.
+    ok(r === "[object Window]", "Object.toString returned " + r);
+
+    var r = ((function() { return (function() { return this; }); })())();
+    ok(r === window, "detached scope this = " + r);
+});
+
 sync_test("functions scope", function() {
     function f(){ return 1; }
     function f(){ return 2; }

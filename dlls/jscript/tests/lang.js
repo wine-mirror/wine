@@ -310,6 +310,9 @@ argumentsTest();
     ok(callAsExprTest.arguments === null, "callAsExprTest.arguments = " + callAsExprTest.arguments);
 })(1,2);
 
+tmp = ((function() { var f = function() {return this}; return (function() { return f(); }); })())();
+ok(tmp === this, "detached scope function call this != global this");
+
 tmp = (function() {1;})();
 ok(tmp === undefined, "tmp = " + tmp);
 tmp = eval("1;");
