@@ -286,17 +286,19 @@ static struct if_entry *add_entry( UINT index, char *name )
     return entry;
 }
 
-static void update_if_table( void )
+static unsigned int update_if_table( void )
 {
     struct if_nameindex *indices = if_nameindex(), *entry;
+    unsigned int append_count = 0;
 
     for (entry = indices; entry->if_index; entry++)
     {
-        if (!find_entry_from_index( entry->if_index ))
-            add_entry( entry->if_index, entry->if_name );
+        if (!find_entry_from_index( entry->if_index ) && add_entry( entry->if_index, entry->if_name ))
+            ++append_count;
     }
 
     if_freenameindex( indices );
+    return append_count;
 }
 
 static void if_counted_string_init( IF_COUNTED_STRING *str, const WCHAR *value )
@@ -634,18 +636,24 @@ BOOL convert_luid_to_unix_name( const NET_LUID *luid, const char **unix_name )
 {
     struct if_entry *entry;
     BOOL ret = FALSE;
+    int updated = 0;
 
     pthread_mutex_lock( &if_list_lock );
 
-    update_if_table();
-
-    LIST_FOR_EACH_ENTRY( entry, &if_list, struct if_entry, entry )
-        if (entry->if_luid.Value == luid->Value)
+    do
+    {
+        LIST_FOR_EACH_ENTRY( entry, &if_list, struct if_entry, entry )
         {
-            *unix_name = entry->if_unix_name;
-            ret = TRUE;
-            break;
+            if (entry->if_luid.Value == luid->Value)
+            {
+                *unix_name = entry->if_unix_name;
+                ret = TRUE;
+                goto done;
+            }
         }
+    } while (!updated++ && update_if_table());
+
+done:
     pthread_mutex_unlock( &if_list_lock );
 
     return ret;
