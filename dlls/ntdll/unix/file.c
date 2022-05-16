@@ -4417,12 +4417,12 @@ NTSTATUS WINAPI NtQueryInformationFile( HANDLE handle, IO_STATUS_BLOCK *io,
                 if (size > 0x10000) size = 0x10000;
                 if ((tmpbuf = malloc( size )))
                 {
+                    if (needs_close) close( fd );
                     if (!server_get_unix_fd( handle, FILE_READ_DATA, &fd, &needs_close, NULL, NULL ))
                     {
                         int res = recv( fd, tmpbuf, size, MSG_PEEK );
                         info->MessagesAvailable = (res > 0);
                         info->NextMessageSize = (res >= 0) ? res : MAILSLOT_NO_MESSAGE;
-                        if (needs_close) close( fd );
                     }
                     free( tmpbuf );
                 }
