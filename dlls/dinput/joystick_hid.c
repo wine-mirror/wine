@@ -2049,8 +2049,8 @@ HRESULT hid_joystick_create_device( struct dinput *dinput, const GUID *guid, IDi
         if (!IsEqualGUID( &device_path_guid, &instance.guidInstance )) return DIERR_DEVICENOTREG;
     }
 
-    hr = dinput_device_alloc( sizeof(struct hid_joystick), &hid_joystick_vtbl, guid, dinput, (void **)&impl );
-    if (FAILED(hr)) return hr;
+    if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
+    dinput_device_init( &impl->base, &hid_joystick_vtbl, guid, dinput );
     impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": hid_joystick.base.crit");
     impl->base.dwCoopLevel = DISCL_NONEXCLUSIVE | DISCL_BACKGROUND;
     impl->base.read_event = CreateEventW( NULL, TRUE, FALSE, NULL );

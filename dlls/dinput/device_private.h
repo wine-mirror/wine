@@ -123,8 +123,8 @@ struct dinput_device
     struct object_properties *object_properties;
 };
 
-extern HRESULT dinput_device_alloc( SIZE_T size, const struct dinput_device_vtbl *vtbl, const GUID *guid,
-                                    struct dinput *dinput, void **out ) DECLSPEC_HIDDEN;
+extern void dinput_device_init( struct dinput_device *device, const struct dinput_device_vtbl *vtbl,
+                                const GUID *guid, struct dinput *dinput );
 extern HRESULT dinput_device_init_device_format( IDirectInputDevice8W *iface );
 extern void dinput_device_destroy( IDirectInputDevice8W *iface );
 

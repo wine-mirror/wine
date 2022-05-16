@@ -2144,13 +2144,9 @@ static const IDirectInputDevice8WVtbl dinput_device_w_vtbl =
     dinput_device_GetImageInfo,
 };
 
-HRESULT dinput_device_alloc( SIZE_T size, const struct dinput_device_vtbl *vtbl, const GUID *guid,
-                             struct dinput *dinput, void **out )
+void dinput_device_init( struct dinput_device *device, const struct dinput_device_vtbl *vtbl,
+                         const GUID *guid, struct dinput *dinput )
 {
-    struct dinput_device *device;
-
-    if (!(device = calloc( 1, size ))) return DIERR_OUTOFMEMORY;
-
     device->IDirectInputDevice8A_iface.lpVtbl = &dinput_device_a_vtbl;
     device->IDirectInputDevice8W_iface.lpVtbl = &dinput_device_w_vtbl;
     device->ref = 1;
@@ -2164,9 +2160,6 @@ HRESULT dinput_device_alloc( SIZE_T size, const struct dinput_device_vtbl *vtbl,
     device->dinput = dinput;
     IDirectInput_AddRef( &dinput->IDirectInput7A_iface );
     device->vtbl = vtbl;
-
-    *out = device;
-    return DI_OK;
 }
 
 static const GUID *object_instance_guid( const DIDEVICEOBJECTINSTANCEW *instance )

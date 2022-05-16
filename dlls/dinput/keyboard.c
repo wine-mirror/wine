@@ -167,15 +167,14 @@ HRESULT keyboard_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *instan
 HRESULT keyboard_create_device( struct dinput *dinput, const GUID *guid, IDirectInputDevice8W **out )
 {
     struct keyboard *impl;
-    HRESULT hr;
 
     TRACE( "dinput %p, guid %s, out %p.\n", dinput, debugstr_guid( guid ), out );
 
     *out = NULL;
     if (!IsEqualGUID( &GUID_SysKeyboard, guid )) return DIERR_DEVICENOTREG;
 
-    if (FAILED(hr = dinput_device_alloc( sizeof(struct keyboard), &keyboard_vtbl, guid, dinput, (void **)&impl )))
-        return hr;
+    if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
+    dinput_device_init( &impl->base, &keyboard_vtbl, guid, dinput );
     impl->base.crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": struct keyboard*->base.crit");
 
     keyboard_enum_device( 0, 0, &impl->base.instance, dinput->dwVersion );
