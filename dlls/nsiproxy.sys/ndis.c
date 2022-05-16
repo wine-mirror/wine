@@ -495,9 +495,11 @@ static NTSTATUS ifinfo_get_all_parameters( const void *key, UINT key_size, void 
 
     pthread_mutex_lock( &if_list_lock );
 
-    update_if_table();
-
-    entry = find_entry_from_luid( (const NET_LUID *)key );
+    if (!(entry = find_entry_from_luid( (const NET_LUID *)key )))
+    {
+        update_if_table();
+        entry = find_entry_from_luid( (const NET_LUID *)key );
+    }
     if (entry)
     {
         ifinfo_fill_entry( entry, NULL, rw_data, dynamic_data, static_data );
@@ -557,9 +559,11 @@ static NTSTATUS ifinfo_get_parameter( const void *key, UINT key_size, UINT param
 
     pthread_mutex_lock( &if_list_lock );
 
-    update_if_table();
-
-    entry = find_entry_from_luid( (const NET_LUID *)key );
+    if (!(entry = find_entry_from_luid( (const NET_LUID *)key )))
+    {
+        update_if_table();
+        entry = find_entry_from_luid( (const NET_LUID *)key );
+    }
     if (entry)
     {
         switch (param_type)
@@ -591,9 +595,11 @@ static NTSTATUS index_luid_get_parameter( const void *key, UINT key_size, UINT p
 
     pthread_mutex_lock( &if_list_lock );
 
-    update_if_table();
-
-    entry = find_entry_from_index( *(UINT *)key );
+    if (!(entry = find_entry_from_index( *(UINT *)key )))
+    {
+        update_if_table();
+        entry = find_entry_from_index( *(UINT *)key );
+    }
     if (entry)
     {
         *(NET_LUID *)data = entry->if_luid;
