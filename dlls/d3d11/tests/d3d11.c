@@ -34034,6 +34034,171 @@ static void test_user_defined_annotation(void)
     release_test_context(&test_context);
 }
 
+static void test_logic_op(void)
+{
+    D3D11_FEATURE_DATA_D3D11_OPTIONS options;
+    struct d3d11_test_context test_context;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    ID3D11RenderTargetView *rtvs[8];
+    ID3D11BlendState1 *blend_state;
+    ID3D11DeviceContext *context;
+    struct resource_readback rb;
+    ID3D11Texture2D *rts[8];
+    ID3D11Device1 *device1;
+    ID3D11PixelShader *ps;
+    ID3D11Device *device;
+    unsigned int i, j;
+    DWORD color;
+    HRESULT hr;
+
+    static const DWORD ps_code[] =
+    {
+#if 0
+        void main(float4 position : SV_Position,
+                out uint4 t0 : SV_Target0, out uint4 t1 : SV_Target1,
+                out uint4 t2 : SV_Target2, out uint4 t3 : SV_Target3,
+                out uint4 t4 : SV_Target4, out uint4 t5 : SV_Target5,
+                out uint4 t6 : SV_Target6, out uint4 t7 : SV_Target7)
+        {
+            t0 = t1 = t2 = t3 = t4 = t5 = t6 = t7 = uint4(0x00, 0x00, 0xff, 0xff);
+        }
+#endif
+         0x43425844, 0x4ed0bba7, 0x9f7d54c4, 0xba1e3dce, 0xc29634f8, 0x00000001, 0x000002b0, 0x00000003,
+         0x0000002c, 0x00000060, 0x0000013c, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+         0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000000f, 0x505f5653, 0x7469736f, 0x006e6f69,
+         0x4e47534f, 0x000000d4, 0x00000008, 0x00000008, 0x000000c8, 0x00000000, 0x00000000, 0x00000001,
+         0x00000000, 0x0000000f, 0x000000c8, 0x00000001, 0x00000000, 0x00000001, 0x00000001, 0x0000000f,
+         0x000000c8, 0x00000002, 0x00000000, 0x00000001, 0x00000002, 0x0000000f, 0x000000c8, 0x00000003,
+         0x00000000, 0x00000001, 0x00000003, 0x0000000f, 0x000000c8, 0x00000004, 0x00000000, 0x00000001,
+         0x00000004, 0x0000000f, 0x000000c8, 0x00000005, 0x00000000, 0x00000001, 0x00000005, 0x0000000f,
+         0x000000c8, 0x00000006, 0x00000000, 0x00000001, 0x00000006, 0x0000000f, 0x000000c8, 0x00000007,
+         0x00000000, 0x00000001, 0x00000007, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853,
+         0x0000016c, 0x00000040, 0x0000005b, 0x03000065, 0x001020f2, 0x00000000, 0x03000065, 0x001020f2,
+         0x00000001, 0x03000065, 0x001020f2, 0x00000002, 0x03000065, 0x001020f2, 0x00000003, 0x03000065,
+         0x001020f2, 0x00000004, 0x03000065, 0x001020f2, 0x00000005, 0x03000065, 0x001020f2, 0x00000006,
+         0x03000065, 0x001020f2, 0x00000007, 0x08000036, 0x001020f2, 0x00000000, 0x00004002, 0x00000000,
+         0x00000000, 0x000000ff, 0x000000ff, 0x08000036, 0x001020f2, 0x00000001, 0x00004002, 0x00000000,
+         0x00000000, 0x000000ff, 0x000000ff, 0x08000036, 0x001020f2, 0x00000002, 0x00004002, 0x00000000,
+         0x00000000, 0x000000ff, 0x000000ff, 0x08000036, 0x001020f2, 0x00000003, 0x00004002, 0x00000000,
+         0x00000000, 0x000000ff, 0x000000ff, 0x08000036, 0x001020f2, 0x00000004, 0x00004002, 0x00000000,
+         0x00000000, 0x000000ff, 0x000000ff, 0x08000036, 0x001020f2, 0x00000005, 0x00004002, 0x00000000,
+         0x00000000, 0x000000ff, 0x000000ff, 0x08000036, 0x001020f2, 0x00000006, 0x00004002, 0x00000000,
+         0x00000000, 0x000000ff, 0x000000ff, 0x08000036, 0x001020f2, 0x00000007, 0x00004002, 0x00000000,
+         0x00000000, 0x000000ff, 0x000000ff, 0x0100003e
+    };
+
+    D3D11_BLEND_DESC1 blend_desc =
+    {
+        .IndependentBlendEnable = TRUE,
+        .RenderTarget =
+        {
+            {FALSE, TRUE, D3D11_BLEND_ONE, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD,
+                    D3D11_BLEND_ONE, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD, D3D11_LOGIC_OP_CLEAR,
+                    D3D11_COLOR_WRITE_ENABLE_ALL},
+            {FALSE, TRUE, D3D11_BLEND_ONE, D3D11_BLEND_ZERO, D3D11_BLEND_OP_ADD,
+                    D3D11_BLEND_ZERO, D3D11_BLEND_ONE, D3D11_BLEND_OP_ADD, D3D11_LOGIC_OP_CLEAR,
+                    D3D11_COLOR_WRITE_ENABLE_ALL},
+        },
+    };
+
+    static const struct
+    {
+        D3D11_LOGIC_OP op;
+        DWORD color;
+    }
+    tests[] =
+    {
+        {D3D11_LOGIC_OP_CLEAR,          0x00000000},
+        {D3D11_LOGIC_OP_NOR,            0x000000ff},
+        {D3D11_LOGIC_OP_AND_INVERTED,   0x0000ff00},
+        {D3D11_LOGIC_OP_COPY_INVERTED,  0x0000ffff},
+        {D3D11_LOGIC_OP_AND_REVERSE,    0x00ff0000},
+        {D3D11_LOGIC_OP_INVERT,         0x00ff00ff},
+        {D3D11_LOGIC_OP_XOR,            0x00ffff00},
+        {D3D11_LOGIC_OP_NAND,           0x00ffffff},
+        {D3D11_LOGIC_OP_AND,            0xff000000},
+        {D3D11_LOGIC_OP_EQUIV,          0xff0000ff},
+        {D3D11_LOGIC_OP_NOOP,           0xff00ff00},
+        {D3D11_LOGIC_OP_OR_INVERTED,    0xff00ffff},
+        {D3D11_LOGIC_OP_COPY,           0xffff0000},
+        {D3D11_LOGIC_OP_OR_REVERSE,     0xffff00ff},
+        {D3D11_LOGIC_OP_OR,             0xffffff00},
+        {D3D11_LOGIC_OP_SET,            0xffffffff},
+    };
+    static const float clear_color[] = {0.0f, 255.0f, 0.0f, 255.0f};
+
+    if (!init_test_context(&test_context, NULL))
+        return;
+    device = test_context.device;
+    context = test_context.immediate_context;
+
+    if (FAILED(hr = ID3D11Device_CheckFeatureSupport(device, D3D11_FEATURE_D3D11_OPTIONS, &options, sizeof(options)))
+            || !options.OutputMergerLogicOp)
+    {
+        skip("Logic op is not supported.\n");
+        release_test_context(&test_context);
+        return;
+    }
+
+    hr = ID3D11Device_QueryInterface(device, &IID_ID3D11Device1, (void **)&device1);
+    ok(hr == S_OK, "Failed to get ID3D11Device1 interface, hr %#lx.\n", hr);
+
+    hr = ID3D11Device_CreatePixelShader(device, ps_code, sizeof(ps_code), NULL, &ps);
+    ok(hr == S_OK, "Failed to create pixel shader, hr %#lx.\n", hr);
+    ID3D11DeviceContext_PSSetShader(context, ps, NULL, 0);
+
+    hr = ID3D11Device1_CreateBlendState1(device1, &blend_desc, &blend_state);
+    ok(hr == E_INVALIDARG, "Got hr %#lx.\n", hr);
+
+    blend_desc.IndependentBlendEnable = FALSE;
+    hr = ID3D11Device1_CreateBlendState1(device1, &blend_desc, &blend_state);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ID3D11BlendState1_Release(blend_state);
+
+    ID3D11Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+    texture_desc.Format = DXGI_FORMAT_R8G8B8A8_UINT;
+    for (i = 0; i < 8; ++i)
+    {
+        hr = ID3D11Device_CreateTexture2D(device, &texture_desc, NULL, &rts[i]);
+        ok(hr == S_OK, "Failed to create texture %u, hr %#lx.\n", i, hr);
+
+        hr = ID3D11Device_CreateRenderTargetView(device, (ID3D11Resource *)rts[i], NULL, &rtvs[i]);
+        ok(hr == S_OK, "Failed to create rendertarget view %u, hr %#lx.\n", i, hr);
+    }
+
+    ID3D11DeviceContext_OMSetRenderTargets(context, 8, rtvs, NULL);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        blend_desc.RenderTarget[0].LogicOp = tests[i].op;
+        hr = ID3D11Device1_CreateBlendState1(device1, &blend_desc, &blend_state);
+        ok(hr == S_OK, "Failed to create blend state, hr %#lx.\n", hr);
+        ID3D11DeviceContext_OMSetBlendState(context, (ID3D11BlendState *)blend_state, NULL, D3D11_DEFAULT_SAMPLE_MASK);
+        ID3D11BlendState1_Release(blend_state);
+
+        for (j = 0; j < 8; ++j)
+            ID3D11DeviceContext_ClearRenderTargetView(context, rtvs[j], clear_color);
+        draw_quad(&test_context);
+
+        for (j = 0; j < 8; ++j)
+        {
+            get_texture_readback(rts[j], 0, &rb);
+            color = get_readback_color(&rb, 320, 240, 0);
+            ok(compare_color(color, tests[i].color, 1), "%u: Got unexpected color 0x%08lx.\n", i, color);
+            release_resource_readback(&rb);
+        }
+    }
+
+    for (i = 0; i < 8; i++)
+    {
+        ID3D11Texture2D_Release(rts[i]);
+        ID3D11RenderTargetView_Release(rtvs[i]);
+    }
+    ID3D11PixelShader_Release(ps);
+    ID3D11Device1_Release(device1);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d11)
 {
     unsigned int argc, i;
@@ -34214,6 +34379,7 @@ START_TEST(d3d11)
     queue_test(test_constant_buffer_offset);
     queue_test(test_dynamic_map_synchronization);
     queue_test(test_user_defined_annotation);
+    queue_test(test_logic_op);
 
     run_queued_tests();
 
