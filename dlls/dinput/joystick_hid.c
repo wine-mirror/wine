@@ -1413,9 +1413,9 @@ static DWORD device_type_for_version( DWORD type, DWORD version )
     }
 }
 
-static BOOL hid_joystick_device_try_open( UINT32 handle, const WCHAR *path, HANDLE *device,
-                                          PHIDP_PREPARSED_DATA *preparsed, HIDD_ATTRIBUTES *attrs,
-                                          HIDP_CAPS *caps, DIDEVICEINSTANCEW *instance, DWORD version )
+static HRESULT hid_joystick_device_try_open( UINT32 handle, const WCHAR *path, HANDLE *device,
+                                             PHIDP_PREPARSED_DATA *preparsed, HIDD_ATTRIBUTES *attrs,
+                                             HIDP_CAPS *caps, DIDEVICEINSTANCEW *instance, DWORD version )
 {
     BOOL has_accelerator, has_brake, has_clutch, has_z, has_pov;
     PHIDP_PREPARSED_DATA preparsed_data = NULL;
@@ -1430,7 +1430,7 @@ static BOOL hid_joystick_device_try_open( UINT32 handle, const WCHAR *path, HAND
 
     device_file = CreateFileW( path, GENERIC_READ | GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE,
                                NULL, OPEN_EXISTING, FILE_FLAG_OVERLAPPED | FILE_FLAG_NO_BUFFERING, 0 );
-    if (device_file == INVALID_HANDLE_VALUE) return FALSE;
+    if (device_file == INVALID_HANDLE_VALUE) return DIERR_DEVICENOTREG;
 
     if (!HidD_GetPreparsedData( device_file, &preparsed_data )) goto failed;
     if (!HidD_GetAttributes( device_file, attrs )) goto failed;
@@ -1556,12 +1556,12 @@ static BOOL hid_joystick_device_try_open( UINT32 handle, const WCHAR *path, HAND
 
     *device = device_file;
     *preparsed = preparsed_data;
-    return TRUE;
+    return DI_OK;
 
 failed:
     CloseHandle( device_file );
     HidD_FreePreparsedData( preparsed_data );
-    return FALSE;
+    return DIERR_DEVICENOTREG;
 }
 
 static HRESULT hid_joystick_device_open( int index, DIDEVICEINSTANCEW *filter, WCHAR *device_path,
@@ -1600,8 +1600,8 @@ static HRESULT hid_joystick_device_open( int index, DIDEVICEINSTANCEW *filter, W
                                         (BYTE *)&handle, sizeof(handle), NULL, 0 ) ||
             type != DEVPROP_TYPE_UINT32)
             continue;
-        if (!hid_joystick_device_try_open( handle, detail->DevicePath, device, preparsed,
-                                           attrs, caps, &instance, version ))
+        if (FAILED(hid_joystick_device_try_open( handle, detail->DevicePath, device, preparsed,
+                                                 attrs, caps, &instance, version )))
             continue;
 
         if (device_instance_is_disabled( &instance, &override ))
@@ -1620,8 +1620,8 @@ static HRESULT hid_joystick_device_open( int index, DIDEVICEINSTANCEW *filter, W
 
             CloseHandle( *device );
             HidD_FreePreparsedData( *preparsed );
-            if (!hid_joystick_device_try_open( handle, detail->DevicePath, device, preparsed,
-                                               attrs, caps, &instance, version ))
+            if (FAILED(hid_joystick_device_try_open( handle, detail->DevicePath, device, preparsed,
+                                                     attrs, caps, &instance, version )))
                 continue;
         }
 
@@ -2062,9 +2062,8 @@ HRESULT hid_joystick_create_device( struct dinput *dinput, const GUID *guid, IDi
     else
     {
         wcscpy( impl->device_path, *(const WCHAR **)guid );
-        if (!hid_joystick_device_try_open( 0, impl->device_path, &impl->device, &impl->preparsed, &attrs,
-                                           &impl->caps, &instance, dinput->dwVersion ))
-            hr = DIERR_DEVICENOTREG;
+        hr = hid_joystick_device_try_open( 0, impl->device_path, &impl->device, &impl->preparsed, &attrs,
+                                           &impl->caps, &instance, dinput->dwVersion );
     }
     if (hr != DI_OK) goto failed;
 
