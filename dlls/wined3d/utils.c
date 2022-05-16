@@ -6137,6 +6137,31 @@ void wined3d_format_convert_from_float(const struct wined3d_format *format,
         return;
     }
 
+    if ((format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_FLOAT) && format->red_size == 16)
+    {
+        uint16_t *ret_s = ret;
+
+        switch (format->byte_count)
+        {
+            case 8:
+                ret_s[3] = float_32_to_16(&color->a);
+                ret_s[2] = float_32_to_16(&color->b);
+                /* fall through */
+            case 4:
+                ret_s[1] = float_32_to_16(&color->g);
+                /* fall through */
+            case 2:
+                ret_s[0] = float_32_to_16(&color->r);
+                break;
+
+            default:
+                ERR("Unexpected byte count %u, format %s.\n", format->byte_count, debug_d3dformat(format_id));
+                break;
+        }
+
+        return;
+    }
+
     FIXME("Conversion for format %s not implemented.\n", debug_d3dformat(format_id));
 }
 
