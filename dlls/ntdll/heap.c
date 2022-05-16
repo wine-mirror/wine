@@ -926,66 +926,31 @@ static ARENA_LARGE *find_large_block( const HEAP *heap, const void *ptr )
     return NULL;
 }
 
-
-/***********************************************************************
- *           validate_large_arena
- */
-static BOOL validate_large_arena( const HEAP *heap, const ARENA_LARGE *arena, BOOL quiet )
+static BOOL validate_large_arena( const HEAP *heap, const ARENA_LARGE *arena )
 {
-    DWORD flags = heap->flags;
+    const char *err = NULL;
 
-    if ((ULONG_PTR)arena % page_size)
-    {
-        if (quiet == NOISY)
-        {
-            ERR( "Heap %p: invalid large arena pointer %p\n", heap, arena );
-            if (TRACE_ON(heap)) heap_dump( heap );
-        }
-        else if (WARN_ON(heap))
-        {
-            WARN( "Heap %p: unaligned arena pointer %p\n", heap, arena );
-            if (TRACE_ON(heap)) heap_dump( heap );
-        }
-        return FALSE;
-    }
-    if (arena->size != ARENA_LARGE_SIZE || arena->magic != ARENA_LARGE_MAGIC)
-    {
-        if (quiet == NOISY)
-        {
-            ERR( "Heap %p: invalid large arena %p values %x/%x\n",
-                 heap, arena, arena->size, arena->magic );
-            if (TRACE_ON(heap)) heap_dump( heap );
-        }
-        else if (WARN_ON(heap))
-        {
-            WARN( "Heap %p: invalid large arena %p values %x/%x\n",
-                  heap, arena, arena->size, arena->magic );
-            if (TRACE_ON(heap)) heap_dump( heap );
-        }
-        return FALSE;
-    }
-    if (arena->data_size > arena->block_size - sizeof(*arena))
-    {
-        ERR( "Heap %p: invalid large arena %p size %lx/%lx\n",
-             heap, arena, arena->data_size, arena->block_size );
-        return FALSE;
-    }
-    if (flags & HEAP_TAIL_CHECKING_ENABLED)
+    if ((ULONG_PTR)arena & COMMIT_MASK)
+        err = "invalid block alignment";
+    else if (arena->size != ARENA_LARGE_SIZE || arena->magic != ARENA_LARGE_MAGIC)
+        err = "invalid block header";
+    else if (!contains( arena, arena->block_size, arena + 1, arena->data_size ))
+        err = "invalid block size";
+    else if (heap->flags & HEAP_TAIL_CHECKING_ENABLED)
     {
         SIZE_T i, unused = arena->block_size - sizeof(*arena) - arena->data_size;
         const unsigned char *data = (const unsigned char *)(arena + 1) + arena->data_size;
-
-        for (i = 0; i < unused; i++)
-        {
-            if (data[i] == ARENA_TAIL_FILLER) continue;
-            ERR("Heap %p: block %p tail overwritten at %p (byte %lu/%lu == 0x%02x)\n",
-                heap, arena + 1, data + i, i, unused, data[i] );
-            return FALSE;
-        }
+        for (i = 0; i < unused && !err; i++) if (data[i] != ARENA_TAIL_FILLER) err = "invalid block tail";
     }
-    return TRUE;
-}
 
+    if (err)
+    {
+        ERR( "heap %p, block %p: %s\n", heap, arena, err );
+        if (TRACE_ON(heap)) heap_dump( heap );
+    }
+
+    return !err;
+}
 
 /***********************************************************************
  *           HEAP_CreateSubHeap
@@ -1451,7 +1416,7 @@ static BOOL heap_validate_ptr( const HEAP *heap, const void *ptr, SUBHEAP **subh
             return FALSE;
         }
 
-        return validate_large_arena( heap, large_arena, QUIET );
+        return validate_large_arena( heap, large_arena );
     }
 
     return HEAP_ValidateInUseArena( *subheap, arena, QUIET );
@@ -1489,7 +1454,7 @@ static BOOL heap_validate( HEAP *heap, BOOL quiet )
     }
 
     LIST_FOR_EACH_ENTRY( large_arena, &heap->large_list, ARENA_LARGE, entry )
-        if (!validate_large_arena( heap, large_arena, quiet )) return FALSE;
+        if (!validate_large_arena( heap, large_arena )) return FALSE;
 
     return TRUE;
 }
