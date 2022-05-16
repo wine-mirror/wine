@@ -195,17 +195,17 @@ CFStringRef copy_system_cursor_name(ICONINFOEXW *info)
     else sprintfW(p, idW, info->wResID);
 
     /* @@ Wine registry key: HKCU\Software\Wine\Mac Driver\Cursors */
-    if (!RegOpenKeyA(HKEY_CURRENT_USER, "Software\\Wine\\Mac Driver\\Cursors", &key))
+    if (!(key = open_hkcu_key("Software\\Wine\\Mac Driver\\Cursors")))
     {
-        WCHAR value[64];
-        DWORD size, ret;
+        char buffer[2048];
+        KEY_VALUE_PARTIAL_INFORMATION *info = (void *)buffer;
+        DWORD ret;
 
-        value[0] = 0;
-        size = sizeof(value);
-        ret = RegQueryValueExW(key, name, NULL, NULL, (BYTE *)value, &size);
-        RegCloseKey(key);
-        if (!ret)
+        ret = query_reg_value(key, name, info, sizeof(buffer));
+        NtClose(key);
+        if (ret)
         {
+            const WCHAR *value = (const WCHAR *)info->Data;
             if (!value[0])
             {
                 TRACE("registry forces standard cursor for %s\n", debugstr_w(name));

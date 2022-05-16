@@ -122,7 +122,7 @@ HKEY reg_open_key(HKEY root, const WCHAR *name, ULONG name_len)
 }
 
 
-static HKEY open_hkcu_key(const char *name)
+HKEY open_hkcu_key(const char *name)
 {
     WCHAR bufferW[256];
     static HKEY hkcu;
