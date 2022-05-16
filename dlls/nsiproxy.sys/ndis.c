@@ -644,7 +644,7 @@ BOOL convert_luid_to_unix_name( const NET_LUID *luid, const char **unix_name )
         {
             *unix_name = entry->if_unix_name;
             ret = TRUE;
-
+            break;
         }
     pthread_mutex_unlock( &if_list_lock );
 
