@@ -47,15 +47,7 @@ static int device_data_valid;   /* do the above variables have up-to-date values
 
 int retina_on = FALSE;
 
-static CRITICAL_SECTION device_data_section;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &device_data_section,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": device_data_section") }
-};
-static CRITICAL_SECTION device_data_section = { &critsect_debug, -1, 0, 0, 0, 0 };
-
+static pthread_mutex_t device_data_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static const struct user_driver_funcs macdrv_funcs;
 
@@ -90,7 +82,7 @@ CGRect macdrv_get_desktop_rect(void)
 {
     CGRect ret;
 
-    EnterCriticalSection(&device_data_section);
+    pthread_mutex_lock(&device_data_mutex);
 
     if (!device_data_valid)
     {
@@ -99,7 +91,7 @@ CGRect macdrv_get_desktop_rect(void)
     }
     ret = desktop_rect;
 
-    LeaveCriticalSection(&device_data_section);
+    pthread_mutex_unlock(&device_data_mutex);
 
     TRACE("%s\n", wine_dbgstr_cgrect(ret));
 
@@ -151,9 +143,9 @@ static void device_init(void)
 
 void macdrv_reset_device_metrics(void)
 {
-    EnterCriticalSection(&device_data_section);
+    pthread_mutex_lock(&device_data_mutex);
     device_data_valid = FALSE;
-    LeaveCriticalSection(&device_data_section);
+    pthread_mutex_unlock(&device_data_mutex);
 }
 
 
@@ -161,9 +153,9 @@ static MACDRV_PDEVICE *create_mac_physdev(void)
 {
     MACDRV_PDEVICE *physDev;
 
-    EnterCriticalSection(&device_data_section);
+    pthread_mutex_lock(&device_data_mutex);
     if (!device_data_valid) device_init();
-    LeaveCriticalSection(&device_data_section);
+    pthread_mutex_unlock(&device_data_mutex);
 
     if (!(physDev = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physDev)))) return NULL;
 
@@ -227,7 +219,7 @@ static INT CDECL macdrv_GetDeviceCaps(PHYSDEV dev, INT cap)
 {
     INT ret;
 
-    EnterCriticalSection(&device_data_section);
+    pthread_mutex_lock(&device_data_mutex);
 
     if (!device_data_valid) device_init();
 
@@ -245,7 +237,7 @@ static INT CDECL macdrv_GetDeviceCaps(PHYSDEV dev, INT cap)
     case HORZRES:
     case VERTRES:
     default:
-        LeaveCriticalSection(&device_data_section);
+        pthread_mutex_unlock(&device_data_mutex);
         dev = GET_NEXT_PHYSDEV( dev, pGetDeviceCaps );
         ret = dev->funcs->pGetDeviceCaps( dev, cap );
         if ((cap == HORZRES || cap == VERTRES) && retina_on)
@@ -255,7 +247,7 @@ static INT CDECL macdrv_GetDeviceCaps(PHYSDEV dev, INT cap)
 
     TRACE("cap %d -> %d\n", cap, ret);
 
-    LeaveCriticalSection(&device_data_section);
+    pthread_mutex_unlock(&device_data_mutex);
     return ret;
 }
 
