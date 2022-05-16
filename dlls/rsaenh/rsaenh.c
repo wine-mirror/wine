@@ -877,6 +877,92 @@ static inline void setup_key(CRYPTKEY *pCryptKey) {
 }
 
 /******************************************************************************
+ * alloc_key [Internal]
+ *
+ */
+static HCRYPTKEY alloc_key(HCRYPTPROV hprov, ALG_ID alg_id, DWORD flags, DWORD key_len, CRYPTKEY **ret_key)
+{
+    KEYCONTAINER *key_container = get_key_container(hprov);
+    HCRYPTKEY hkey;
+    CRYPTKEY *key;
+
+    hkey = new_object(&handle_table, sizeof(CRYPTKEY), RSAENH_MAGIC_KEY,
+                      destroy_key, (OBJECTHDR**)&key);
+    if (hkey == (HCRYPTKEY)INVALID_HANDLE_VALUE)
+        return hkey;
+
+    key->aiAlgid = alg_id;
+    key->hProv = hprov;
+    key->dwModeBits = 0;
+    key->dwPermissions = CRYPT_ENCRYPT | CRYPT_DECRYPT | CRYPT_READ | CRYPT_WRITE | CRYPT_MAC;
+    if (flags & CRYPT_EXPORTABLE)
+        key->dwPermissions |= CRYPT_EXPORT;
+    key->dwKeyLen = key_len >> 3;
+    key->dwEffectiveKeyLen = 0;
+
+    /*
+     * For compatibility reasons a 40 bit key on the Enhanced
+     * provider will not have salt
+     */
+    if (key_container->dwPersonality == RSAENH_PERSONALITY_ENHANCED
+        && (alg_id == CALG_RC2 || alg_id == CALG_RC4)
+        && (flags & CRYPT_CREATE_SALT) && key_len == 40)
+        key->dwSaltLen = 0;
+    else if ((flags & CRYPT_CREATE_SALT) || (key_len == 40 && !(flags & CRYPT_NO_SALT)))
+        key->dwSaltLen = 16 /*FIXME*/ - key->dwKeyLen;
+    else
+        key->dwSaltLen = 0;
+    memset(key->abKeyValue, 0, sizeof(key->abKeyValue));
+    memset(key->abInitVector, 0, sizeof(key->abInitVector));
+    memset(&key->siSChannelInfo.saEncAlg, 0, sizeof(key->siSChannelInfo.saEncAlg));
+    memset(&key->siSChannelInfo.saMACAlg, 0, sizeof(key->siSChannelInfo.saMACAlg));
+    init_data_blob(&key->siSChannelInfo.blobClientRandom);
+    init_data_blob(&key->siSChannelInfo.blobServerRandom);
+    init_data_blob(&key->blobHmacKey);
+
+    switch(alg_id)
+    {
+        case CALG_PCT1_MASTER:
+        case CALG_SSL2_MASTER:
+        case CALG_SSL3_MASTER:
+        case CALG_TLS1_MASTER:
+        case CALG_RC4:
+            key->dwBlockLen = 0;
+            key->dwMode = 0;
+            break;
+
+        case CALG_RC2:
+        case CALG_DES:
+        case CALG_3DES_112:
+        case CALG_3DES:
+            key->dwBlockLen = 8;
+            key->dwMode = CRYPT_MODE_CBC;
+            break;
+
+        case CALG_AES_128:
+        case CALG_AES_192:
+        case CALG_AES_256:
+            key->dwBlockLen = 16;
+            key->dwMode = CRYPT_MODE_CBC;
+            break;
+
+        case CALG_RSA_KEYX:
+        case CALG_RSA_SIGN:
+            key->dwBlockLen = key_len >> 3;
+            key->dwMode = 0;
+            break;
+
+        case CALG_HMAC:
+            key->dwBlockLen = 0;
+            key->dwMode = 0;
+            break;
+    }
+
+    *ret_key = key;
+    return hkey;
+}
+
+/******************************************************************************
  * new_key [Internal]
  *
  * Creates a new key object without assigning the actual binary key value. 
@@ -896,8 +982,6 @@ static inline void setup_key(CRYPTKEY *pCryptKey) {
  */
 static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTKEY **ppCryptKey)
 {
-    HCRYPTKEY hCryptKey;
-    CRYPTKEY *pCryptKey;
     DWORD dwKeyLen = HIWORD(dwFlags);
     const PROV_ENUMALGS_EX *peaAlgidInfo;
 
@@ -969,83 +1053,7 @@ static HCRYPTKEY new_key(HCRYPTPROV hProv, ALG_ID aiAlgid, DWORD dwFlags, CRYPTK
             }
     }
 
-    hCryptKey = new_object(&handle_table, sizeof(CRYPTKEY), RSAENH_MAGIC_KEY,
-                           destroy_key, (OBJECTHDR**)&pCryptKey);
-    if (hCryptKey != (HCRYPTKEY)INVALID_HANDLE_VALUE)
-    {
-        KEYCONTAINER *pKeyContainer = get_key_container(hProv);
-        pCryptKey->aiAlgid = aiAlgid;
-        pCryptKey->hProv = hProv;
-        pCryptKey->dwModeBits = 0;
-        pCryptKey->dwPermissions = CRYPT_ENCRYPT | CRYPT_DECRYPT | CRYPT_READ | CRYPT_WRITE | 
-                                   CRYPT_MAC;
-        if (dwFlags & CRYPT_EXPORTABLE)
-            pCryptKey->dwPermissions |= CRYPT_EXPORT;
-        pCryptKey->dwKeyLen = dwKeyLen >> 3;
-        pCryptKey->dwEffectiveKeyLen = 0;
-
-        /*
-         * For compatibility reasons a 40 bit key on the Enhanced
-         * provider will not have salt
-         */
-        if (pKeyContainer->dwPersonality == RSAENH_PERSONALITY_ENHANCED
-            && (aiAlgid == CALG_RC2 || aiAlgid == CALG_RC4)
-            && (dwFlags & CRYPT_CREATE_SALT) && dwKeyLen == 40)
-            pCryptKey->dwSaltLen = 0;
-        else if ((dwFlags & CRYPT_CREATE_SALT) || (dwKeyLen == 40 && !(dwFlags & CRYPT_NO_SALT)))
-            pCryptKey->dwSaltLen = 16 /*FIXME*/ - pCryptKey->dwKeyLen;
-        else
-            pCryptKey->dwSaltLen = 0;
-        memset(pCryptKey->abKeyValue, 0, sizeof(pCryptKey->abKeyValue));
-        memset(pCryptKey->abInitVector, 0, sizeof(pCryptKey->abInitVector));
-        memset(&pCryptKey->siSChannelInfo.saEncAlg, 0, sizeof(pCryptKey->siSChannelInfo.saEncAlg));
-        memset(&pCryptKey->siSChannelInfo.saMACAlg, 0, sizeof(pCryptKey->siSChannelInfo.saMACAlg));
-        init_data_blob(&pCryptKey->siSChannelInfo.blobClientRandom);
-        init_data_blob(&pCryptKey->siSChannelInfo.blobServerRandom);
-        init_data_blob(&pCryptKey->blobHmacKey);
-            
-        switch(aiAlgid)
-        {
-            case CALG_PCT1_MASTER:
-            case CALG_SSL2_MASTER:
-            case CALG_SSL3_MASTER:
-            case CALG_TLS1_MASTER:
-            case CALG_RC4:
-                pCryptKey->dwBlockLen = 0;
-                pCryptKey->dwMode = 0;
-                break;
-
-            case CALG_RC2:
-            case CALG_DES:
-            case CALG_3DES_112:
-            case CALG_3DES:
-                pCryptKey->dwBlockLen = 8;
-                pCryptKey->dwMode = CRYPT_MODE_CBC;
-                break;
-
-            case CALG_AES_128:
-            case CALG_AES_192:
-            case CALG_AES_256:
-                pCryptKey->dwBlockLen = 16;
-                pCryptKey->dwMode = CRYPT_MODE_CBC;
-                break;
-
-            case CALG_RSA_KEYX:
-            case CALG_RSA_SIGN:
-                pCryptKey->dwBlockLen = dwKeyLen >> 3;
-                pCryptKey->dwMode = 0;
-                break;
-
-            case CALG_HMAC:
-                pCryptKey->dwBlockLen = 0;
-                pCryptKey->dwMode = 0;
-                break;
-        }
-
-        *ppCryptKey = pCryptKey;
-    }
-
-    return hCryptKey;
+    return alloc_key(hProv, aiAlgid, dwFlags, dwKeyLen, ppCryptKey);
 }
 
 /******************************************************************************
