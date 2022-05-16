@@ -192,8 +192,8 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
 {
     BASE_DEVICE_EXTENSION *fdo_ext = fdo->DeviceExtension, *pdo_ext;
     HID_DEVICE_ATTRIBUTES attr = {0};
+    HID_DESCRIPTOR descriptor = {0};
     HIDP_COLLECTION_DESC *desc;
-    HID_DESCRIPTOR descriptor;
     DEVICE_OBJECT *child_pdo;
     BYTE *reportDescriptor;
     UNICODE_STRING string;
