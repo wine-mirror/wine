@@ -6027,21 +6027,6 @@ void wined3d_format_convert_from_float(const struct wined3d_format *format,
     }
     float_conv[] =
     {
-        {WINED3DFMT_B8G8R8A8_UNORM,    {       255.0f,  255.0f,  255.0f, 255.0f}, {16,  8,  0, 24}},
-        {WINED3DFMT_B8G8R8X8_UNORM,    {       255.0f,  255.0f,  255.0f, 255.0f}, {16,  8,  0, 24}},
-        {WINED3DFMT_B8G8R8_UNORM,      {       255.0f,  255.0f,  255.0f, 255.0f}, {16,  8,  0, 24}},
-        {WINED3DFMT_B5G6R5_UNORM,      {        31.0f,   63.0f,   31.0f,   0.0f}, {11,  5,  0,  0}},
-        {WINED3DFMT_B5G5R5A1_UNORM,    {        31.0f,   31.0f,   31.0f,   1.0f}, {10,  5,  0, 15}},
-        {WINED3DFMT_B5G5R5X1_UNORM,    {        31.0f,   31.0f,   31.0f,   1.0f}, {10,  5,  0, 15}},
-        {WINED3DFMT_R8_UNORM,          {       255.0f,    0.0f,    0.0f,   0.0f}, { 0,  0,  0,  0}},
-        {WINED3DFMT_A8_UNORM,          {         0.0f,    0.0f,    0.0f, 255.0f}, { 0,  0,  0,  0}},
-        {WINED3DFMT_B4G4R4A4_UNORM,    {        15.0f,   15.0f,   15.0f,  15.0f}, { 8,  4,  0, 12}},
-        {WINED3DFMT_B4G4R4X4_UNORM,    {        15.0f,   15.0f,   15.0f,  15.0f}, { 8,  4,  0, 12}},
-        {WINED3DFMT_B2G3R3_UNORM,      {         7.0f,    7.0f,    3.0f,   0.0f}, { 5,  2,  0,  0}},
-        {WINED3DFMT_R8G8B8A8_UNORM,    {       255.0f,  255.0f,  255.0f, 255.0f}, { 0,  8, 16, 24}},
-        {WINED3DFMT_R8G8B8X8_UNORM,    {       255.0f,  255.0f,  255.0f, 255.0f}, { 0,  8, 16, 24}},
-        {WINED3DFMT_B10G10R10A2_UNORM, {      1023.0f, 1023.0f, 1023.0f,   3.0f}, {20, 10,  0, 30}},
-        {WINED3DFMT_R10G10B10A2_UNORM, {      1023.0f, 1023.0f, 1023.0f,   3.0f}, { 0, 10, 20, 30}},
         {WINED3DFMT_P8_UINT,           {         0.0f,    0.0f,    0.0f, 255.0f}, { 0,  0,  0,  0}},
         {WINED3DFMT_S1_UINT_D15_UNORM, {     32767.0f,    0.0f,    0.0f,   0.0f}, { 0,  0,  0,  0}},
         {WINED3DFMT_D16_UNORM,         {     65535.0f,    0.0f,    0.0f,   0.0f}, { 0,  0,  0,  0}},
@@ -6122,6 +6107,27 @@ void wined3d_format_convert_from_float(const struct wined3d_format *format,
         ret_i[idx.y] |= ((uint32_t)((color->g * double_conv[i].mul.y) + 0.5)) << shift.y;
         ret_i[idx.z] |= ((uint32_t)((color->b * double_conv[i].mul.z) + 0.5)) << shift.z;
         ret_i[idx.w] |= ((uint32_t)((color->a * double_conv[i].mul.w) + 0.5)) << shift.w;
+
+        return;
+    }
+
+    if (format->flags[WINED3D_GL_RES_TYPE_TEX_2D] & WINED3DFMT_FLAG_NORMALISED)
+    {
+        uint32_t *ret_i = ret;
+
+        idx.x = format->red_offset / 32;
+        idx.y = format->green_offset / 32;
+        idx.z = format->blue_offset / 32;
+        idx.w = format->alpha_offset / 32;
+        shift.x = format->red_offset % 32;
+        shift.y = format->green_offset % 32;
+        shift.z = format->blue_offset % 32;
+        shift.w = format->alpha_offset % 32;
+
+        ret_i[idx.x] = ((uint32_t)((color->r * wined3d_mask_from_size(format->red_size)) + 0.5f)) << shift.x;
+        ret_i[idx.y] |= ((uint32_t)((color->g * wined3d_mask_from_size(format->green_size)) + 0.5f)) << shift.y;
+        ret_i[idx.z] |= ((uint32_t)((color->b * wined3d_mask_from_size(format->blue_size)) + 0.5f)) << shift.z;
+        ret_i[idx.w] |= ((uint32_t)((color->a * wined3d_mask_from_size(format->alpha_size)) + 0.5f)) << shift.w;
 
         return;
     }
