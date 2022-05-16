@@ -4506,7 +4506,7 @@ static HBRUSH get_55aa_brush(void)
     return brush_55aa;
 }
 
-static HBRUSH get_sys_color_brush( unsigned int index )
+HBRUSH get_sys_color_brush( unsigned int index )
 {
     if (index == COLOR_55AA_BRUSH) return get_55aa_brush();
     if (index >= ARRAY_SIZE( system_colors )) return 0;

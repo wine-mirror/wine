@@ -35,6 +35,8 @@ void fill_rect( HDC dc, const RECT *rect, HBRUSH hbrush )
 {
     HBRUSH prev_brush;
 
+    if (hbrush <= (HBRUSH)(COLOR_MENUBAR + 1)) hbrush = get_sys_color_brush( HandleToULong(hbrush) - 1 );
+
     prev_brush = NtGdiSelectBrush( dc, hbrush );
     NtGdiPatBlt( dc, rect->left, rect->top, rect->right - rect->left, rect->bottom - rect->top, PATCOPY );
     if (prev_brush) NtGdiSelectBrush( dc, prev_brush );
