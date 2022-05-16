@@ -645,9 +645,9 @@ static NTSTATUS initialize_device(DEVICE_OBJECT *device)
     PHIDP_REPORT_DESCRIPTOR report_desc;
     PHIDP_PREPARSED_DATA preparsed;
     HIDP_BUTTON_CAPS *button_caps;
+    HID_DESCRIPTOR hid_desc = {0};
     HIDP_VALUE_CAPS *value_caps;
     HIDP_REPORT_IDS *reports;
-    HID_DESCRIPTOR hid_desc;
     NTSTATUS status;
     HIDP_CAPS caps;
 
