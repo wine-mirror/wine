@@ -2147,25 +2147,25 @@ static const IDirectInputDevice8WVtbl dinput_device_w_vtbl =
 HRESULT dinput_device_alloc( SIZE_T size, const struct dinput_device_vtbl *vtbl, const GUID *guid,
                              struct dinput *dinput, void **out )
 {
-    struct dinput_device *This;
+    struct dinput_device *device;
 
-    if (!(This = calloc( 1, size ))) return DIERR_OUTOFMEMORY;
+    if (!(device = calloc( 1, size ))) return DIERR_OUTOFMEMORY;
 
-    This->IDirectInputDevice8A_iface.lpVtbl = &dinput_device_a_vtbl;
-    This->IDirectInputDevice8W_iface.lpVtbl = &dinput_device_w_vtbl;
-    This->ref = 1;
-    This->guid = *guid;
-    This->instance.dwSize = sizeof(DIDEVICEINSTANCEW);
-    This->caps.dwSize = sizeof(DIDEVCAPS);
-    This->caps.dwFlags = DIDC_ATTACHED | DIDC_EMULATED;
-    This->device_gain = 10000;
-    This->force_feedback_state = DIGFFS_STOPPED | DIGFFS_EMPTY;
-    InitializeCriticalSection( &This->crit );
-    This->dinput = dinput;
+    device->IDirectInputDevice8A_iface.lpVtbl = &dinput_device_a_vtbl;
+    device->IDirectInputDevice8W_iface.lpVtbl = &dinput_device_w_vtbl;
+    device->ref = 1;
+    device->guid = *guid;
+    device->instance.dwSize = sizeof(DIDEVICEINSTANCEW);
+    device->caps.dwSize = sizeof(DIDEVCAPS);
+    device->caps.dwFlags = DIDC_ATTACHED | DIDC_EMULATED;
+    device->device_gain = 10000;
+    device->force_feedback_state = DIGFFS_STOPPED | DIGFFS_EMPTY;
+    InitializeCriticalSection( &device->crit );
+    device->dinput = dinput;
     IDirectInput_AddRef( &dinput->IDirectInput7A_iface );
-    This->vtbl = vtbl;
+    device->vtbl = vtbl;
 
-    *out = This;
+    *out = device;
     return DI_OK;
 }
 
