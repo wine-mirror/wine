@@ -2073,6 +2073,7 @@ HRESULT hid_joystick_create_device( struct dinput *dinput, const GUID *guid, IDi
     impl->attrs = attrs;
     list_init( &impl->effect_list );
 
+    hr = E_OUTOFMEMORY;
     preparsed = (struct hid_preparsed_data *)impl->preparsed;
     size = preparsed->input_caps_count * sizeof(struct object_properties);
     if (!(object_properties = calloc( 1, size ))) goto failed;
