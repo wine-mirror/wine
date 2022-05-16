@@ -39,7 +39,7 @@ DWORD WINAPI NsiAllocateAndGetTable( DWORD unk, const NPI_MODULEID *module, DWOR
                                      void **rw_data, DWORD rw_size, void **dynamic_data, DWORD dynamic_size,
                                      void **static_data, DWORD static_size, DWORD *count, DWORD unk2 )
 {
-    DWORD err, num = 0;
+    DWORD err, num = 64;
     void *data[4] = { NULL };
     DWORD sizes[4] = { key_size, rw_size, dynamic_size, static_size };
     int i, attempt;
@@ -49,9 +49,6 @@ DWORD WINAPI NsiAllocateAndGetTable( DWORD unk, const NPI_MODULEID *module, DWOR
 
     for (attempt = 0; attempt < 5; attempt++)
     {
-        err = NsiEnumerateObjectsAllParameters( unk, 0, module, table, NULL, 0, NULL, 0, NULL, 0, NULL, 0, &num );
-        if (err) return err;
-
         for (i = 0; i < ARRAY_SIZE(data); i++)
         {
             if (sizes[i])
@@ -68,9 +65,11 @@ DWORD WINAPI NsiAllocateAndGetTable( DWORD unk, const NPI_MODULEID *module, DWOR
         err = NsiEnumerateObjectsAllParameters( unk, 0, module, table, data[0], sizes[0], data[1], sizes[1],
                                                 data[2], sizes[2], data[3], sizes[3], &num );
         if (err != ERROR_MORE_DATA) break;
-
+        TRACE( "Short buffer, attempt %d.\n", attempt );
         NsiFreeTable( data[0], data[1], data[2], data[3] );
         memset( data, 0, sizeof(data) );
+        err = NsiEnumerateObjectsAllParameters( unk, 0, module, table, NULL, 0, NULL, 0, NULL, 0, NULL, 0, &num );
+        if (err) return err;
     }
 
     if (!err)
