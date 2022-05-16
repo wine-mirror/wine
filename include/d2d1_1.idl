@@ -20,7 +20,6 @@ import "d2d1.idl";
 import "d2d1effects.idl";
 
 interface ID2D1DeviceContext;
-interface ID2D1PathGeometry1;
 interface ID2D1Properties;
 interface IPrintDocumentPackageTarget;
 interface ID2D1PrintControl;
@@ -346,6 +345,22 @@ interface ID2D1GdiMetafile : ID2D1Resource
     );
     HRESULT GetBounds(
         [out] D2D1_RECT_F *bounds
+    );
+}
+
+[
+    object,
+    uuid(62baa2d2-ab54-41b7-b872-787e0106a421),
+    local,
+]
+interface ID2D1PathGeometry1 : ID2D1PathGeometry
+{
+    HRESULT ComputePointAndSegmentAtLength(
+        [in] float length,
+        [in] UINT32 start_segment,
+        [in, optional] const D2D1_MATRIX_3X2_F *transform,
+        [in] float tolerance,
+        [out] D2D1_POINT_DESCRIPTION *point_desc
     );
 }
 
