@@ -439,49 +439,6 @@ static const struct sortguid *find_sortguid( const GUID *guid )
 }
 
 
-static const struct sortguid *get_language_sort( const WCHAR *locale )
-{
-    WCHAR *p, *end, buffer[LOCALE_NAME_MAX_LENGTH], guidstr[39];
-    const struct sortguid *ret;
-    UNICODE_STRING str;
-    GUID guid;
-    HKEY key = 0;
-    DWORD size, type;
-
-    if (locale == LOCALE_NAME_USER_DEFAULT)
-    {
-        if (current_locale_sort) return current_locale_sort;
-        GetUserDefaultLocaleName( buffer, ARRAY_SIZE( buffer ));
-    }
-    else lstrcpynW( buffer, locale, LOCALE_NAME_MAX_LENGTH );
-
-    if (buffer[0] && !RegOpenKeyExW( nls_key, L"Sorting\\Ids", 0, KEY_READ, &key ))
-    {
-        for (;;)
-        {
-            size = sizeof(guidstr);
-            if (!RegQueryValueExW( key, buffer, NULL, &type, (BYTE *)guidstr, &size ) && type == REG_SZ)
-            {
-                RtlInitUnicodeString( &str, guidstr );
-                if (!RtlGUIDFromString( &str, &guid ))
-                {
-                    ret = find_sortguid( &guid );
-                    goto done;
-                }
-                break;
-            }
-            for (p = end = buffer; *p; p++) if (*p == '-' || *p == '_') end = p;
-            if (end == buffer) break;
-            *end = 0;
-        }
-    }
-    ret = find_sortguid( &default_sort_guid );
-done:
-    RegCloseKey( key );
-    return ret;
-}
-
-
 static const NLS_LOCALE_DATA *get_locale_data( UINT idx )
 {
     ULONG offset = locale_table->locales_offset + idx * locale_table->locale_size;
@@ -590,6 +547,49 @@ static const NLS_LOCALE_DATA *get_locale_by_name( const WCHAR *name, LCID *lcid 
     if (!(entry = find_lcname_entry( name ))) return NULL;
     *lcid = entry->id;
     return get_locale_data( entry->idx );
+}
+
+
+static const struct sortguid *get_language_sort( const WCHAR *locale )
+{
+    WCHAR *p, *end, buffer[LOCALE_NAME_MAX_LENGTH], guidstr[39];
+    const struct sortguid *ret;
+    UNICODE_STRING str;
+    GUID guid;
+    HKEY key = 0;
+    DWORD size, type;
+
+    if (locale == LOCALE_NAME_USER_DEFAULT)
+    {
+        if (current_locale_sort) return current_locale_sort;
+        GetUserDefaultLocaleName( buffer, ARRAY_SIZE( buffer ));
+    }
+    else lstrcpynW( buffer, locale, LOCALE_NAME_MAX_LENGTH );
+
+    if (buffer[0] && !RegOpenKeyExW( nls_key, L"Sorting\\Ids", 0, KEY_READ, &key ))
+    {
+        for (;;)
+        {
+            size = sizeof(guidstr);
+            if (!RegQueryValueExW( key, buffer, NULL, &type, (BYTE *)guidstr, &size ) && type == REG_SZ)
+            {
+                RtlInitUnicodeString( &str, guidstr );
+                if (!RtlGUIDFromString( &str, &guid ))
+                {
+                    ret = find_sortguid( &guid );
+                    goto done;
+                }
+                break;
+            }
+            for (p = end = buffer; *p; p++) if (*p == '-' || *p == '_') end = p;
+            if (end == buffer) break;
+            *end = 0;
+        }
+    }
+    ret = find_sortguid( &default_sort_guid );
+done:
+    RegCloseKey( key );
+    return ret;
 }
 
 
