@@ -598,7 +598,6 @@ DWORD WINAPI GetAdaptersInfo( IP_ADAPTER_INFO *info, ULONG *size )
     DWORD len, i, uni, fwd;
     NET_LUID *if_keys = NULL;
     struct nsi_ndis_ifinfo_rw *if_rw = NULL;
-    struct nsi_ndis_ifinfo_dynamic *if_dyn = NULL;
     struct nsi_ndis_ifinfo_static *if_stat = NULL;
     struct nsi_ipv4_unicast_key *uni_keys = NULL;
     struct nsi_ip_unicast_rw *uni_rw = NULL;
@@ -612,7 +611,8 @@ DWORD WINAPI GetAdaptersInfo( IP_ADAPTER_INFO *info, ULONG *size )
 
     err = NsiAllocateAndGetTable( 1, &NPI_MS_NDIS_MODULEID, NSI_NDIS_IFINFO_TABLE,
                                   (void **)&if_keys, sizeof(*if_keys), (void **)&if_rw, sizeof(*if_rw),
-                                  (void **)&if_dyn, sizeof(*if_dyn), (void **)&if_stat, sizeof(*if_stat), &if_count, 0 );
+                                  NULL, 0, (void **)&if_stat, sizeof(*if_stat), &if_count, 0 );
+
     if (err) return err;
     for (i = 0; i < if_count; i++)
     {
@@ -726,7 +726,7 @@ err:
     heap_free( wins_servers );
     NsiFreeTable( fwd_keys, NULL, NULL, NULL );
     NsiFreeTable( uni_keys, uni_rw, NULL, NULL );
-    NsiFreeTable( if_keys, if_rw, if_dyn, if_stat );
+    NsiFreeTable( if_keys, if_rw, NULL, if_stat );
     return err;
 }
 
