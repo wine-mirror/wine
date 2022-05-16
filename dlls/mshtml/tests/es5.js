@@ -1800,12 +1800,14 @@ sync_test("substituted this", function() {
     }
 
     var r = ((function() { var f = Object.prototype.toString; return (function() { return f(); }); })())();
-    todo_wine.
     ok(r === "[object Undefined]", "detached scope Object.toString returned " + r);
 
     var r = (function() { this.f = Object.prototype.toString; return this.f(); })();
     todo_wine.
     ok(r === "[object Window]", "Object.toString returned " + r);
+
+    var r = (function() { var f = Object.prototype.toString; return f(); })();
+    ok(r === "[object Undefined]", "Object.toString returned " + r);
 
     var r = ((function() { return (function() { return this; }); })())();
     ok(r === window, "detached scope this = " + r);

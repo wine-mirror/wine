@@ -250,13 +250,18 @@ void detach_arguments_object(jsdisp_t *args_disp)
 HRESULT Function_invoke(jsdisp_t *func_this, IDispatch *jsthis, WORD flags, unsigned argc, jsval_t *argv, jsval_t *r)
 {
     FunctionInstance *function;
+    jsval_t vthis;
 
     TRACE("func %p this %p\n", func_this, jsthis);
 
     assert(is_class(func_this, JSCLASS_FUNCTION));
     function = function_from_jsdisp(func_this);
 
-    return function->vtbl->call(function->dispex.ctx, function, jsthis ? jsval_disp(jsthis) : jsval_null(), flags, argc, argv, r);
+    if(jsthis)
+        vthis = jsval_disp(jsthis);
+    else
+        vthis = function->dispex.ctx->version < SCRIPTLANGUAGEVERSION_ES5 ? jsval_null() : jsval_undefined();
+    return function->vtbl->call(function->dispex.ctx, function, vthis, flags, argc, argv, r);
 }
 
 static HRESULT Function_get_length(script_ctx_t *ctx, jsdisp_t *jsthis, jsval_t *r)
