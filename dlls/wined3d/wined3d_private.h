@@ -6150,8 +6150,8 @@ void wined3d_format_calculate_pitch(const struct wined3d_format *format, unsigne
         unsigned int width, unsigned int height, unsigned int *row_pitch, unsigned int *slice_pitch) DECLSPEC_HIDDEN;
 UINT wined3d_format_calculate_size(const struct wined3d_format *format,
         UINT alignment, UINT width, UINT height, UINT depth) DECLSPEC_HIDDEN;
-DWORD wined3d_format_convert_from_float(const struct wined3d_format *format,
-        const struct wined3d_color *color) DECLSPEC_HIDDEN;
+void wined3d_format_convert_from_float(const struct wined3d_format *format,
+        const struct wined3d_color *color, void *ret) DECLSPEC_HIDDEN;
 void wined3d_format_copy_data(const struct wined3d_format *format, const uint8_t *src,
         unsigned int src_row_pitch, unsigned int src_slice_pitch, uint8_t *dst, unsigned int dst_row_pitch,
         unsigned int dst_slice_pitch, unsigned int w, unsigned int h, unsigned int d) DECLSPEC_HIDDEN;

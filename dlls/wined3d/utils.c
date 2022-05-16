@@ -6000,8 +6000,14 @@ uint32_t wined3d_format_pack(const struct wined3d_format *format, const struct w
 
 /* Note: It's the caller's responsibility to ensure values can be expressed
  * in the requested format. UNORM formats for example can only express values
- * in the range 0.0f -> 1.0f. */
-DWORD wined3d_format_convert_from_float(const struct wined3d_format *format, const struct wined3d_color *color)
+ * in the range 0.0f -> 1.0f.
+ *
+ * The code below assumes that no component crosses the 32 bit boundary (like
+ * e.g. a hypothetical, and totally braindead, B30G30R4 format would).
+ * This function writes at least sizeof(uint32_t) bytes, or format->byte_count,
+ * whichever is larger. */
+void wined3d_format_convert_from_float(const struct wined3d_format *format,
+        const struct wined3d_color *color, void *ret)
 {
     static const struct
     {
@@ -6044,10 +6050,11 @@ DWORD wined3d_format_convert_from_float(const struct wined3d_format *format, con
     };
     enum wined3d_format_id format_id = format->id;
     struct wined3d_color colour_srgb;
+    struct wined3d_uvec4 idx, shift;
     unsigned int i;
-    DWORD ret;
 
     TRACE("Converting colour %s to format %s.\n", debug_color(color), debug_d3dformat(format_id));
+    memset(ret, 0, max(sizeof(uint32_t), format->byte_count));
 
     for (i = 0; i < ARRAY_SIZE(format_srgb_info); ++i)
     {
@@ -6062,37 +6069,54 @@ DWORD wined3d_format_convert_from_float(const struct wined3d_format *format, con
 
     for (i = 0; i < ARRAY_SIZE(float_conv); ++i)
     {
+        uint32_t *ret_i = ret;
+
         if (format_id != float_conv[i].format_id)
             continue;
 
-        ret = ((DWORD)((color->r * float_conv[i].mul.x) + 0.5f)) << float_conv[i].shift.x;
-        ret |= ((DWORD)((color->g * float_conv[i].mul.y) + 0.5f)) << float_conv[i].shift.y;
-        ret |= ((DWORD)((color->b * float_conv[i].mul.z) + 0.5f)) << float_conv[i].shift.z;
-        ret |= ((DWORD)((color->a * float_conv[i].mul.w) + 0.5f)) << float_conv[i].shift.w;
+        idx.x = float_conv[i].shift.x / 32;
+        idx.y = float_conv[i].shift.y / 32;
+        idx.z = float_conv[i].shift.z / 32;
+        idx.w = float_conv[i].shift.w / 32;
+        shift.x = float_conv[i].shift.x % 32;
+        shift.y = float_conv[i].shift.y % 32;
+        shift.z = float_conv[i].shift.z % 32;
+        shift.w = float_conv[i].shift.w % 32;
 
-        TRACE("Returning 0x%08x.\n", ret);
+        ret_i[idx.x] = ((uint32_t)((color->r * float_conv[i].mul.x) + 0.5f)) << shift.x;
+        ret_i[idx.y] |= ((uint32_t)((color->g * float_conv[i].mul.y) + 0.5f)) << shift.y;
+        ret_i[idx.z] |= ((uint32_t)((color->b * float_conv[i].mul.z) + 0.5f)) << shift.z;
+        ret_i[idx.w] |= ((uint32_t)((color->a * float_conv[i].mul.w) + 0.5f)) << shift.w;
 
-        return ret;
+        return;
     }
 
     for (i = 0; i < ARRAY_SIZE(double_conv); ++i)
     {
+        uint32_t *ret_i;
+
         if (format_id != double_conv[i].format_id)
             continue;
 
-        ret = ((DWORD)((color->r * double_conv[i].mul.x) + 0.5)) << double_conv[i].shift.x;
-        ret |= ((DWORD)((color->g * double_conv[i].mul.y) + 0.5)) << double_conv[i].shift.y;
-        ret |= ((DWORD)((color->b * double_conv[i].mul.z) + 0.5)) << double_conv[i].shift.z;
-        ret |= ((DWORD)((color->a * double_conv[i].mul.w) + 0.5)) << double_conv[i].shift.w;
+        idx.x = double_conv[i].shift.x / 32;
+        idx.y = double_conv[i].shift.y / 32;
+        idx.z = double_conv[i].shift.z / 32;
+        idx.w = double_conv[i].shift.w / 32;
+        shift.x = double_conv[i].shift.x % 32;
+        shift.y = double_conv[i].shift.y % 32;
+        shift.z = double_conv[i].shift.z % 32;
+        shift.w = double_conv[i].shift.w % 32;
 
-        TRACE("Returning 0x%08x.\n", ret);
+        ret_i = ret;
+        ret_i[idx.x] = ((uint32_t)((color->r * double_conv[i].mul.x) + 0.5)) << shift.x;
+        ret_i[idx.y] |= ((uint32_t)((color->g * double_conv[i].mul.y) + 0.5)) << shift.y;
+        ret_i[idx.z] |= ((uint32_t)((color->b * double_conv[i].mul.z) + 0.5)) << shift.z;
+        ret_i[idx.w] |= ((uint32_t)((color->a * double_conv[i].mul.w) + 0.5)) << shift.w;
 
-        return ret;
+        return;
     }
 
     FIXME("Conversion for format %s not implemented.\n", debug_d3dformat(format_id));
-
-    return 0;
 }
 
 static float color_to_float(DWORD color, DWORD size, DWORD offset)

@@ -3689,7 +3689,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
                 diffuse_colour = material_diffuse;
             }
             wined3d_color_clamp(&diffuse_colour, &diffuse_colour, 0.0f, 1.0f);
-            *((DWORD *)dest_ptr) = wined3d_format_convert_from_float(output_colour_format, &diffuse_colour);
+            wined3d_format_convert_from_float(output_colour_format, &diffuse_colour, dest_ptr);
             dest_ptr += sizeof(DWORD);
         }
 
@@ -3713,7 +3713,7 @@ static HRESULT process_vertices_strided(const struct wined3d_device *device, DWO
             }
             update_fog_factor(&specular_colour.a, &ls);
             wined3d_color_clamp(&specular_colour, &specular_colour, 0.0f, 1.0f);
-            *((DWORD *)dest_ptr) = wined3d_format_convert_from_float(output_colour_format, &specular_colour);
+            wined3d_format_convert_from_float(output_colour_format, &specular_colour, dest_ptr);
             dest_ptr += sizeof(DWORD);
         }
 

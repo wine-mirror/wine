@@ -621,7 +621,7 @@ void wined3d_resource_memory_colour_fill(struct wined3d_resource *resource,
     const struct wined3d_format *format = resource->format;
     unsigned int w, h, d, x, y, z, bpp;
     uint8_t *dst, *dst2;
-    uint32_t c;
+    uint32_t c[4];
 
     w = box->right - box->left;
     h = box->bottom - box->top;
@@ -632,7 +632,7 @@ void wined3d_resource_memory_colour_fill(struct wined3d_resource *resource,
             + ((box->top / format->block_height) * map->row_pitch)
             + ((box->left / format->block_width) * format->block_byte_count);
 
-    c = wined3d_format_convert_from_float(format, colour);
+    wined3d_format_convert_from_float(format, colour, c);
     bpp = format->byte_count;
 
     switch (bpp)
@@ -640,14 +640,14 @@ void wined3d_resource_memory_colour_fill(struct wined3d_resource *resource,
         case 1:
             for (x = 0; x < w; ++x)
             {
-                dst[x] = c;
+                dst[x] = c[0];
             }
             break;
 
         case 2:
             for (x = 0; x < w; ++x)
             {
-                ((uint16_t *)dst)[x] = c;
+                ((uint16_t *)dst)[x] = c[0];
             }
             break;
 
@@ -656,16 +656,16 @@ void wined3d_resource_memory_colour_fill(struct wined3d_resource *resource,
             dst2 = dst;
             for (x = 0; x < w; ++x, dst2 += 3)
             {
-                dst2[0] = (c      ) & 0xff;
-                dst2[1] = (c >>  8) & 0xff;
-                dst2[2] = (c >> 16) & 0xff;
+                dst2[0] = (c[0]      ) & 0xff;
+                dst2[1] = (c[0] >>  8) & 0xff;
+                dst2[2] = (c[0] >> 16) & 0xff;
             }
             break;
         }
         case 4:
             for (x = 0; x < w; ++x)
             {
-                ((uint32_t *)dst)[x] = c;
+                ((uint32_t *)dst)[x] = c[0];
             }
             break;
 
