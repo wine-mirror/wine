@@ -2044,8 +2044,13 @@ BOOL WINAPI WritePrivateProfileStructW (LPCWSTR section, LPCWSTR key,
     LPWSTR outstring, p;
     DWORD sum = 0;
 
+    TRACE("(%s %s %p %u %s)\n", debugstr_w(section), debugstr_w(key), buf, bufsize, debugstr_w(filename));
+
     if (!section && !key && !buf)  /* flush the cache */
         return WritePrivateProfileStringW( NULL, NULL, NULL, filename );
+
+    if (!buf)
+        return WritePrivateProfileStringW(section, key, NULL, filename);
 
     /* allocate string buffer for hex chars + checksum hex char + '\0' */
     outstring = HeapAlloc( GetProcessHeap(), 0, (bufsize*2 + 2 + 1) * sizeof(WCHAR) );
