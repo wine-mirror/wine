@@ -183,12 +183,6 @@ HRESULT keyboard_create_device( struct dinput *dinput, const GUID *guid, IDirect
     impl->base.caps.dwFirmwareRevision = 100;
     impl->base.caps.dwHardwareRevision = 100;
 
-    if (FAILED(hr = dinput_device_init( &impl->base.IDirectInputDevice8W_iface )))
-    {
-        IDirectInputDevice_Release( &impl->base.IDirectInputDevice8W_iface );
-        return hr;
-    }
-
     *out = &impl->base.IDirectInputDevice8W_iface;
     return DI_OK;
 }

@@ -545,6 +545,13 @@ static HRESULT WINAPI dinput7_CreateDeviceEx( IDirectInput7W *iface, const GUID 
     else hr = hid_joystick_create_device( impl, guid, &device );
 
     if (FAILED(hr)) return hr;
+
+    if (FAILED(hr = dinput_device_init( device )))
+    {
+        IDirectInputDevice8_Release( device );
+        return hr;
+    }
+
     hr = IDirectInputDevice8_QueryInterface( device, iid, out );
     IDirectInputDevice8_Release( device );
     return hr;

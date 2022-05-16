@@ -2138,8 +2138,6 @@ HRESULT hid_joystick_create_device( struct dinput *dinput, const GUID *guid, IDi
         impl->base.caps.dwFFDriverVersion = 1;
     }
 
-    if (FAILED(hr = dinput_device_init( &impl->base.IDirectInputDevice8W_iface ))) goto failed;
-
     *out = &impl->base.IDirectInputDevice8W_iface;
     return DI_OK;
 

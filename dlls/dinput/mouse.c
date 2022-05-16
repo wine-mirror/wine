@@ -122,12 +122,6 @@ HRESULT mouse_create_device( struct dinput *dinput, const GUID *guid, IDirectInp
     if (appkey) RegCloseKey(appkey);
     if (hkey) RegCloseKey(hkey);
 
-    if (FAILED(hr = dinput_device_init( &impl->base.IDirectInputDevice8W_iface )))
-    {
-        IDirectInputDevice_Release( &impl->base.IDirectInputDevice8W_iface );
-        return hr;
-    }
-
     if (dinput->dwVersion >= 0x0800)
     {
         impl->base.use_raw_input = TRUE;
