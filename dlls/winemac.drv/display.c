@@ -53,14 +53,7 @@ static const WCHAR pixelencodingW[] = {'P','i','x','e','l','E','n','c','o','d','
 static CFArrayRef modes;
 static BOOL modes_has_8bpp, modes_has_16bpp;
 static int default_mode_bpp;
-static CRITICAL_SECTION modes_section;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &modes_section,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": modes_section") }
-};
-static CRITICAL_SECTION modes_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+static pthread_mutex_t modes_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static BOOL inited_original_display_mode;
 
@@ -515,8 +508,6 @@ static int get_default_bpp(void)
 {
     int ret;
 
-    EnterCriticalSection(&modes_section);
-
     if (!default_mode_bpp)
     {
         CGDisplayModeRef mode = CGDisplayCopyDisplayMode(kCGDirectMainDisplay);
@@ -531,8 +522,6 @@ static int get_default_bpp(void)
     }
 
     ret = default_mode_bpp;
-
-    LeaveCriticalSection(&modes_section);
 
     TRACE(" -> %d\n", ret);
     return ret;
@@ -895,7 +884,9 @@ LONG macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
         return DISP_CHANGE_FAILED;
     }
 
+    pthread_mutex_lock(&modes_mutex);
     bpp = get_default_bpp();
+    pthread_mutex_unlock(&modes_mutex);
     if ((devmode->dmFields & DM_BITSPERPEL) && devmode->dmBitsPerPel != bpp)
         TRACE("using default %d bpp instead of caller's request %d bpp\n", bpp, devmode->dmBitsPerPel);
 
@@ -1088,7 +1079,7 @@ BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, DEVMODEW *devmode
     {
         DWORD count, i;
 
-        EnterCriticalSection(&modes_section);
+        pthread_mutex_lock(&modes_mutex);
 
         if (mode == 0 || !modes)
         {
@@ -1168,7 +1159,7 @@ BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode, DEVMODEW *devmode
             }
         }
 
-        LeaveCriticalSection(&modes_section);
+        pthread_mutex_unlock(&modes_mutex);
     }
 
     if (!display_mode)
