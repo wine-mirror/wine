@@ -437,14 +437,7 @@ struct layout
     BOOL enabled; /* is the input source enabled - ie displayed in the input source selector UI */
 };
 
-static CRITICAL_SECTION layout_list_section;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &layout_list_section,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-    0, 0, { (DWORD_PTR)(__FILE__ ": layout_list_section") }
-};
-static CRITICAL_SECTION layout_list_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+static pthread_mutex_t layout_list_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int macdrv_layout_list_needs_update = TRUE;
 
@@ -486,7 +479,7 @@ static HKL get_hkl(CFStringRef lang, CFStringRef type)
 /******************************************************************
  *                get_layout_from_source
  *
- * Must be called while holding the layout_list_section.
+ * Must be called while holding the layout_list_mutex.
  * Note, returned layout may not currently be enabled.
  */
 static struct layout *get_layout_from_source(TISInputSourceRef input)
@@ -507,7 +500,7 @@ static struct layout *get_layout_from_source(TISInputSourceRef input)
 /***********************************************************************
  *            update_layout_list
  *
- * Must be called while holding the layout_list_section
+ * Must be called while holding the layout_list_mutex
  *
  * If an input source has been disabled (ie. removed from the UI) its
  * entry remains in the layout list but is marked as such and is not
@@ -563,13 +556,13 @@ HKL macdrv_get_hkl_from_source(TISInputSourceRef input)
     struct layout *layout;
     HKL ret = 0;
 
-    EnterCriticalSection(&layout_list_section);
+    pthread_mutex_lock(&layout_list_mutex);
 
     update_layout_list();
     layout = get_layout_from_source(input);
     if (layout) ret = layout->hkl;
 
-    LeaveCriticalSection(&layout_list_section);
+    pthread_mutex_unlock(&layout_list_mutex);
 
     return ret;
 }
@@ -1172,7 +1165,7 @@ BOOL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
     if (hkl == thread_data->active_keyboard_layout)
         return TRUE;
 
-    EnterCriticalSection(&layout_list_section);
+    pthread_mutex_lock(&layout_list_mutex);
     update_layout_list();
 
     LIST_FOR_EACH_ENTRY(layout, &layout_list, struct layout, entry)
@@ -1195,7 +1188,7 @@ BOOL macdrv_ActivateKeyboardLayout(HKL hkl, UINT flags)
             break;
         }
     }
-    LeaveCriticalSection(&layout_list_section);
+    pthread_mutex_unlock(&layout_list_mutex);
 
     return ret;
 }
@@ -1306,7 +1299,7 @@ UINT macdrv_GetKeyboardLayoutList(INT size, HKL *list)
 
     TRACE("%d, %p\n", size, list);
 
-    EnterCriticalSection(&layout_list_section);
+    pthread_mutex_lock(&layout_list_mutex);
 
     update_layout_list();
 
@@ -1321,7 +1314,7 @@ UINT macdrv_GetKeyboardLayoutList(INT size, HKL *list)
         }
         count++;
     }
-    LeaveCriticalSection(&layout_list_section);
+    pthread_mutex_unlock(&layout_list_mutex);
 
     TRACE("returning %d\n", count);
     return count;
