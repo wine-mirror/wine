@@ -669,6 +669,13 @@ void wined3d_resource_memory_colour_fill(struct wined3d_resource *resource,
             }
             break;
 
+        case 8:
+        case 12:
+        case 16:
+            for (x = 0; x < w; ++x)
+                memcpy(((uint8_t *)map->data) + x * bpp, c, bpp);
+            break;
+
         default:
             FIXME("Not implemented for bpp %u.\n", bpp);
             return;
