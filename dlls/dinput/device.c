@@ -2220,7 +2220,7 @@ static BOOL CALLBACK enum_objects_init( const DIDEVICEOBJECTINSTANCEW *instance,
     return DIENUM_CONTINUE;
 }
 
-HRESULT dinput_device_init( IDirectInputDevice8W *iface )
+HRESULT dinput_device_init_device_format( IDirectInputDevice8W *iface )
 {
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
     DIDATAFORMAT *format = &impl->device_format;

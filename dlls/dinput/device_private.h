@@ -125,7 +125,7 @@ struct dinput_device
 
 extern HRESULT dinput_device_alloc( SIZE_T size, const struct dinput_device_vtbl *vtbl, const GUID *guid,
                                     struct dinput *dinput, void **out ) DECLSPEC_HIDDEN;
-extern HRESULT dinput_device_init( IDirectInputDevice8W *iface );
+extern HRESULT dinput_device_init_device_format( IDirectInputDevice8W *iface );
 extern void dinput_device_destroy( IDirectInputDevice8W *iface );
 
 extern BOOL get_app_key(HKEY*, HKEY*) DECLSPEC_HIDDEN;
