@@ -42,6 +42,7 @@ enum d2d_brush_type
     D2D_BRUSH_TYPE_LINEAR,
     D2D_BRUSH_TYPE_RADIAL,
     D2D_BRUSH_TYPE_BITMAP,
+    D2D_BRUSH_TYPE_IMAGE,
     D2D_BRUSH_TYPE_COUNT,
 };
 
@@ -319,6 +320,14 @@ struct d2d_brush
             D2D1_EXTEND_MODE extend_mode_y;
             D2D1_INTERPOLATION_MODE interpolation_mode;
         } bitmap;
+        struct
+        {
+            ID2D1Image *image;
+            D2D1_EXTEND_MODE extend_mode_x;
+            D2D1_EXTEND_MODE extend_mode_y;
+            D2D1_INTERPOLATION_MODE interpolation_mode;
+            D2D1_RECT_F source_rect;
+        } image;
     } u;
 };
 
@@ -332,6 +341,9 @@ HRESULT d2d_radial_gradient_brush_create(ID2D1Factory *factory,
         ID2D1GradientStopCollection *gradient, struct d2d_brush **brush) DECLSPEC_HIDDEN;
 HRESULT d2d_bitmap_brush_create(ID2D1Factory *factory, ID2D1Bitmap *bitmap,
         const D2D1_BITMAP_BRUSH_PROPERTIES1 *bitmap_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
+        struct d2d_brush **brush) DECLSPEC_HIDDEN;
+HRESULT d2d_image_brush_create(ID2D1Factory *factory, ID2D1Image *image,
+        const D2D1_IMAGE_BRUSH_PROPERTIES *image_brush_desc, const D2D1_BRUSH_PROPERTIES *brush_desc,
         struct d2d_brush **brush) DECLSPEC_HIDDEN;
 void d2d_brush_bind_resources(struct d2d_brush *brush, struct d2d_device_context *context,
         unsigned int brush_idx) DECLSPEC_HIDDEN;

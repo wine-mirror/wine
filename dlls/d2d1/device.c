@@ -1923,10 +1923,18 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateImageBrush(ID2D1Device
         ID2D1Image *image, const D2D1_IMAGE_BRUSH_PROPERTIES *image_brush_desc,
         const D2D1_BRUSH_PROPERTIES *brush_desc, ID2D1ImageBrush **brush)
 {
-    FIXME("iface %p, image %p, image_brush_desc %p, brush_desc %p, brush %p stub!\n",
-            iface, image, image_brush_desc, brush_desc, brush);
+    struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
+    struct d2d_brush *object;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, image %p, image_brush_desc %p, brush_desc %p, brush %p.\n", iface, image, image_brush_desc,
+            brush_desc, brush);
+
+    if (SUCCEEDED(hr = d2d_image_brush_create(context->factory, image, image_brush_desc,
+            brush_desc, &object)))
+        *brush = (ID2D1ImageBrush *)&object->ID2D1Brush_iface;
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_device_context_ID2D1DeviceContext_CreateBitmapBrush(ID2D1DeviceContext *iface,
