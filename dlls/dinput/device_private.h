@@ -103,7 +103,7 @@ struct dinput_device
     BOOL                        overflow;    /* return DI_BUFFEROVERFLOW in 'GetDeviceData' */
     DWORD                       buffersize;  /* size of the queue - set in 'SetProperty'    */
 
-    DIDATAFORMAT *device_format;
+    DIDATAFORMAT device_format;
     DIDATAFORMAT *user_format;
 
     /* Action mapping */

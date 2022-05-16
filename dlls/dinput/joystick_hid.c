@@ -1224,7 +1224,7 @@ static HRESULT hid_joystick_read( IDirectInputDevice8W *iface )
     };
     struct hid_joystick *impl = impl_from_IDirectInputDevice8W( iface );
     ULONG i, index, count, report_len = impl->caps.InputReportByteLength;
-    DIDATAFORMAT *format = impl->base.device_format;
+    DIDATAFORMAT *format = &impl->base.device_format;
     char *report_buf = impl->input_report_buf;
     struct parse_device_state_params params;
     struct hid_joystick_effect *effect;
@@ -2300,7 +2300,7 @@ static BOOL get_parameters_object_id( struct hid_joystick *impl, struct hid_valu
 static BOOL get_parameters_object_ofs( struct hid_joystick *impl, struct hid_value_caps *caps,
                                        DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
-    DIDATAFORMAT *device_format = impl->base.device_format, *user_format = impl->base.user_format;
+    DIDATAFORMAT *device_format = &impl->base.device_format, *user_format = impl->base.user_format;
     DIOBJECTDATAFORMAT *device_obj, *user_obj;
 
     if (!user_format) return DIENUM_CONTINUE;
