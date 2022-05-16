@@ -3354,21 +3354,22 @@ static const struct ID2D1GeometrySinkVtbl d2d_geometry_sink_vtbl =
     d2d_geometry_sink_AddArc,
 };
 
-static inline struct d2d_geometry *impl_from_ID2D1PathGeometry(ID2D1PathGeometry *iface)
+static inline struct d2d_geometry *impl_from_ID2D1PathGeometry1(ID2D1PathGeometry1 *iface)
 {
     return CONTAINING_RECORD(iface, struct d2d_geometry, ID2D1Geometry_iface);
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_path_geometry_QueryInterface(ID2D1PathGeometry *iface, REFIID iid, void **out)
+static HRESULT STDMETHODCALLTYPE d2d_path_geometry_QueryInterface(ID2D1PathGeometry1 *iface, REFIID iid, void **out)
 {
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
 
-    if (IsEqualGUID(iid, &IID_ID2D1PathGeometry)
+    if (IsEqualGUID(iid, &IID_ID2D1PathGeometry1)
+            || IsEqualGUID(iid, &IID_ID2D1PathGeometry)
             || IsEqualGUID(iid, &IID_ID2D1Geometry)
             || IsEqualGUID(iid, &IID_ID2D1Resource)
             || IsEqualGUID(iid, &IID_IUnknown))
     {
-        ID2D1PathGeometry_AddRef(iface);
+        ID2D1PathGeometry1_AddRef(iface);
         *out = iface;
         return S_OK;
     }
@@ -3379,9 +3380,9 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_QueryInterface(ID2D1PathGeome
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE d2d_path_geometry_AddRef(ID2D1PathGeometry *iface)
+static ULONG STDMETHODCALLTYPE d2d_path_geometry_AddRef(ID2D1PathGeometry1 *iface)
 {
-    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry(iface);
+    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry1(iface);
     ULONG refcount = InterlockedIncrement(&geometry->refcount);
 
     TRACE("%p increasing refcount to %lu.\n", iface, refcount);
@@ -3389,9 +3390,9 @@ static ULONG STDMETHODCALLTYPE d2d_path_geometry_AddRef(ID2D1PathGeometry *iface
     return refcount;
 }
 
-static ULONG STDMETHODCALLTYPE d2d_path_geometry_Release(ID2D1PathGeometry *iface)
+static ULONG STDMETHODCALLTYPE d2d_path_geometry_Release(ID2D1PathGeometry1 *iface)
 {
-    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry(iface);
+    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry1(iface);
     ULONG refcount = InterlockedDecrement(&geometry->refcount);
 
     TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
@@ -3406,19 +3407,19 @@ static ULONG STDMETHODCALLTYPE d2d_path_geometry_Release(ID2D1PathGeometry *ifac
     return refcount;
 }
 
-static void STDMETHODCALLTYPE d2d_path_geometry_GetFactory(ID2D1PathGeometry *iface, ID2D1Factory **factory)
+static void STDMETHODCALLTYPE d2d_path_geometry_GetFactory(ID2D1PathGeometry1 *iface, ID2D1Factory **factory)
 {
-    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry(iface);
+    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry1(iface);
 
     TRACE("iface %p, factory %p.\n", iface, factory);
 
     ID2D1Factory_AddRef(*factory = geometry->factory);
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetBounds(ID2D1PathGeometry *iface,
+static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetBounds(ID2D1PathGeometry1 *iface,
         const D2D1_MATRIX_3X2_F *transform, D2D1_RECT_F *bounds)
 {
-    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry(iface);
+    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry1(iface);
     size_t i;
 
     TRACE("iface %p, transform %p, bounds %p.\n", iface, transform, bounds);
@@ -3536,7 +3537,7 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetBounds(ID2D1PathGeometry *
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetWidenedBounds(ID2D1PathGeometry *iface, float stroke_width,
+static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetWidenedBounds(ID2D1PathGeometry1 *iface, float stroke_width,
         ID2D1StrokeStyle *stroke_style, const D2D1_MATRIX_3X2_F *transform, float tolerance, D2D1_RECT_F *bounds)
 {
     FIXME("iface %p, stroke_width %.8e, stroke_style %p, transform %p, tolerance %.8e, bounds %p stub!\n",
@@ -3545,11 +3546,11 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetWidenedBounds(ID2D1PathGeo
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_path_geometry_StrokeContainsPoint(ID2D1PathGeometry *iface,
+static HRESULT STDMETHODCALLTYPE d2d_path_geometry_StrokeContainsPoint(ID2D1PathGeometry1 *iface,
         D2D1_POINT_2F point, float stroke_width, ID2D1StrokeStyle *stroke_style, const D2D1_MATRIX_3X2_F *transform,
         float tolerance, BOOL *contains)
 {
-    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry(iface);
+    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry1(iface);
     enum d2d_vertex_type type = D2D_VERTEX_TYPE_NONE;
     unsigned int i, j, bezier_idx;
     D2D1_BEZIER_SEGMENT b;
@@ -3630,10 +3631,10 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_StrokeContainsPoint(ID2D1Path
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_path_geometry_FillContainsPoint(ID2D1PathGeometry *iface,
+static HRESULT STDMETHODCALLTYPE d2d_path_geometry_FillContainsPoint(ID2D1PathGeometry1 *iface,
         D2D1_POINT_2F point, const D2D1_MATRIX_3X2_F *transform, float tolerance, BOOL *contains)
 {
-    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry(iface);
+    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry1(iface);
     D2D1_MATRIX_3X2_F g_i;
 
     TRACE("iface %p, point %s, transform %p, tolerance %.8e, contains %p.\n",
@@ -3653,7 +3654,7 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_FillContainsPoint(ID2D1PathGe
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_path_geometry_CompareWithGeometry(ID2D1PathGeometry *iface,
+static HRESULT STDMETHODCALLTYPE d2d_path_geometry_CompareWithGeometry(ID2D1PathGeometry1 *iface,
         ID2D1Geometry *geometry, const D2D1_MATRIX_3X2_F *transform, float tolerance, D2D1_GEOMETRY_RELATION *relation)
 {
     FIXME("iface %p, geometry %p, transform %p, tolerance %.8e, relation %p stub!\n",
@@ -3707,11 +3708,11 @@ static void d2d_geometry_flatten_cubic(ID2D1SimplifiedGeometrySink *sink, const 
     ID2D1SimplifiedGeometrySink_SetSegmentFlags(sink, D2D1_PATH_SEGMENT_NONE);
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Simplify(ID2D1PathGeometry *iface,
+static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Simplify(ID2D1PathGeometry1 *iface,
         D2D1_GEOMETRY_SIMPLIFICATION_OPTION option, const D2D1_MATRIX_3X2_F *transform, float tolerance,
         ID2D1SimplifiedGeometrySink *sink)
 {
-    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry(iface);
+    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry1(iface);
     enum d2d_vertex_type type = D2D_VERTEX_TYPE_NONE;
     unsigned int i, j, bezier_idx;
     D2D1_FIGURE_BEGIN begin;
@@ -3795,7 +3796,7 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Simplify(ID2D1PathGeometry *i
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Tessellate(ID2D1PathGeometry *iface,
+static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Tessellate(ID2D1PathGeometry1 *iface,
         const D2D1_MATRIX_3X2_F *transform, float tolerance, ID2D1TessellationSink *sink)
 {
     FIXME("iface %p, transform %p, tolerance %.8e, sink %p stub!\n", iface, transform, tolerance, sink);
@@ -3803,7 +3804,7 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Tessellate(ID2D1PathGeometry 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_path_geometry_CombineWithGeometry(ID2D1PathGeometry *iface,
+static HRESULT STDMETHODCALLTYPE d2d_path_geometry_CombineWithGeometry(ID2D1PathGeometry1 *iface,
         ID2D1Geometry *geometry, D2D1_COMBINE_MODE combine_mode, const D2D1_MATRIX_3X2_F *transform,
         float tolerance, ID2D1SimplifiedGeometrySink *sink)
 {
@@ -3813,7 +3814,7 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_CombineWithGeometry(ID2D1Path
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Outline(ID2D1PathGeometry *iface,
+static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Outline(ID2D1PathGeometry1 *iface,
         const D2D1_MATRIX_3X2_F *transform, float tolerance, ID2D1SimplifiedGeometrySink *sink)
 {
     FIXME("iface %p, transform %p, tolerance %.8e, sink %p stub!\n", iface, transform, tolerance, sink);
@@ -3821,7 +3822,7 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Outline(ID2D1PathGeometry *if
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_path_geometry_ComputeArea(ID2D1PathGeometry *iface,
+static HRESULT STDMETHODCALLTYPE d2d_path_geometry_ComputeArea(ID2D1PathGeometry1 *iface,
         const D2D1_MATRIX_3X2_F *transform, float tolerance, float *area)
 {
     FIXME("iface %p, transform %p, tolerance %.8e, area %p stub!\n", iface, transform, tolerance, area);
@@ -3829,7 +3830,7 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_ComputeArea(ID2D1PathGeometry
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_path_geometry_ComputeLength(ID2D1PathGeometry *iface,
+static HRESULT STDMETHODCALLTYPE d2d_path_geometry_ComputeLength(ID2D1PathGeometry1 *iface,
         const D2D1_MATRIX_3X2_F *transform, float tolerance, float *length)
 {
     FIXME("iface %p, transform %p, tolerance %.8e, length %p stub!\n", iface, transform, tolerance, length);
@@ -3837,7 +3838,7 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_ComputeLength(ID2D1PathGeomet
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_path_geometry_ComputePointAtLength(ID2D1PathGeometry *iface, float length,
+static HRESULT STDMETHODCALLTYPE d2d_path_geometry_ComputePointAtLength(ID2D1PathGeometry1 *iface, float length,
         const D2D1_MATRIX_3X2_F *transform, float tolerance, D2D1_POINT_2F *point, D2D1_POINT_2F *tangent)
 {
     FIXME("iface %p, length %.8e, transform %p, tolerance %.8e, point %p, tangent %p stub!\n",
@@ -3846,7 +3847,7 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_ComputePointAtLength(ID2D1Pat
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Widen(ID2D1PathGeometry *iface, float stroke_width,
+static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Widen(ID2D1PathGeometry1 *iface, float stroke_width,
         ID2D1StrokeStyle *stroke_style, const D2D1_MATRIX_3X2_F *transform, float tolerance,
         ID2D1SimplifiedGeometrySink *sink)
 {
@@ -3856,9 +3857,9 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Widen(ID2D1PathGeometry *ifac
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Open(ID2D1PathGeometry *iface, ID2D1GeometrySink **sink)
+static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Open(ID2D1PathGeometry1 *iface, ID2D1GeometrySink **sink)
 {
-    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry(iface);
+    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry1(iface);
 
     TRACE("iface %p, sink %p.\n", iface, sink);
 
@@ -3873,16 +3874,16 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Open(ID2D1PathGeometry *iface
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Stream(ID2D1PathGeometry *iface, ID2D1GeometrySink *sink)
+static HRESULT STDMETHODCALLTYPE d2d_path_geometry_Stream(ID2D1PathGeometry1 *iface, ID2D1GeometrySink *sink)
 {
     FIXME("iface %p, sink %p stub!\n", iface, sink);
 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetSegmentCount(ID2D1PathGeometry *iface, UINT32 *count)
+static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetSegmentCount(ID2D1PathGeometry1 *iface, UINT32 *count)
 {
-    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry(iface);
+    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry1(iface);
 
     TRACE("iface %p, count %p.\n", iface, count);
 
@@ -3894,9 +3895,9 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetSegmentCount(ID2D1PathGeom
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetFigureCount(ID2D1PathGeometry *iface, UINT32 *count)
+static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetFigureCount(ID2D1PathGeometry1 *iface, UINT32 *count)
 {
-    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry(iface);
+    struct d2d_geometry *geometry = impl_from_ID2D1PathGeometry1(iface);
 
     TRACE("iface %p, count %p.\n", iface, count);
 
@@ -3908,7 +3909,17 @@ static HRESULT STDMETHODCALLTYPE d2d_path_geometry_GetFigureCount(ID2D1PathGeome
     return S_OK;
 }
 
-static const struct ID2D1PathGeometryVtbl d2d_path_geometry_vtbl =
+static HRESULT STDMETHODCALLTYPE d2d_path_geometry1_ComputePointAndSegmentAtLength(ID2D1PathGeometry1 *iface,
+        float length, UINT32 start_segment, const D2D1_MATRIX_3X2_F *transform, float tolerance,
+        D2D1_POINT_DESCRIPTION *point_desc)
+{
+    FIXME("iface %p, length %.8e, start_segment %u, transform %p, tolerance %.8e, point_desc %p.\n",
+            iface, length, start_segment, transform, tolerance, point_desc);
+
+    return E_NOTIMPL;
+}
+
+static const struct ID2D1PathGeometry1Vtbl d2d_path_geometry_vtbl =
 {
     d2d_path_geometry_QueryInterface,
     d2d_path_geometry_AddRef,
@@ -3931,6 +3942,7 @@ static const struct ID2D1PathGeometryVtbl d2d_path_geometry_vtbl =
     d2d_path_geometry_Stream,
     d2d_path_geometry_GetSegmentCount,
     d2d_path_geometry_GetFigureCount,
+    d2d_path_geometry1_ComputePointAndSegmentAtLength,
 };
 
 void d2d_path_geometry_init(struct d2d_geometry *geometry, ID2D1Factory *factory)
