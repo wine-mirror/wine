@@ -104,7 +104,7 @@ struct dinput_device
     DWORD                       buffersize;  /* size of the queue - set in 'SetProperty'    */
 
     DIDATAFORMAT device_format;
-    DIDATAFORMAT *user_format;
+    DIDATAFORMAT user_format;
 
     /* Action mapping */
     int                         num_actions; /* number of actions mapped */

@@ -2300,10 +2300,10 @@ static BOOL get_parameters_object_id( struct hid_joystick *impl, struct hid_valu
 static BOOL get_parameters_object_ofs( struct hid_joystick *impl, struct hid_value_caps *caps,
                                        DIDEVICEOBJECTINSTANCEW *instance, void *data )
 {
-    DIDATAFORMAT *device_format = &impl->base.device_format, *user_format = impl->base.user_format;
+    DIDATAFORMAT *device_format = &impl->base.device_format, *user_format = &impl->base.user_format;
     DIOBJECTDATAFORMAT *device_obj, *user_obj;
 
-    if (!user_format) return DIENUM_CONTINUE;
+    if (!user_format->rgodf) return DIENUM_CONTINUE;
 
     user_obj = user_format->rgodf + device_format->dwNumObjs;
     device_obj = device_format->rgodf + device_format->dwNumObjs;

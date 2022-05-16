@@ -210,9 +210,8 @@ BOOL device_instance_is_disabled( DIDEVICEINSTANCEW *instance, BOOL *override )
 
 static void dinput_device_release_user_format( struct dinput_device *impl )
 {
-    if (impl->user_format) free( impl->user_format->rgodf );
-    free( impl->user_format );
-    impl->user_format = NULL;
+    free( impl->user_format.rgodf );
+    impl->user_format.rgodf = NULL;
 }
 
 static inline LPDIOBJECTDATAFORMAT dataformat_to_odf(LPCDIDATAFORMAT df, int idx)
@@ -276,20 +275,15 @@ static BOOL match_device_object( const DIDATAFORMAT *device_format, DIDATAFORMAT
 
 static HRESULT dinput_device_init_user_format( struct dinput_device *impl, const DIDATAFORMAT *format )
 {
-    DIDATAFORMAT *user_format, *device_format = &impl->device_format;
+    DIDATAFORMAT *user_format = &impl->user_format, *device_format = &impl->device_format;
     DIOBJECTDATAFORMAT *user_obj, *match_obj;
     DWORD i;
 
-    if (!(user_format = malloc( sizeof(DIDATAFORMAT) ))) return DIERR_OUTOFMEMORY;
     *user_format = *device_format;
     user_format->dwFlags = format->dwFlags;
     user_format->dwDataSize = format->dwDataSize;
     user_format->dwNumObjs += format->dwNumObjs;
-    if (!(user_format->rgodf = calloc( user_format->dwNumObjs, sizeof(DIOBJECTDATAFORMAT) )))
-    {
-        free( user_format );
-        return DIERR_OUTOFMEMORY;
-    }
+    if (!(user_format->rgodf = calloc( user_format->dwNumObjs, sizeof(DIOBJECTDATAFORMAT) ))) return DIERR_OUTOFMEMORY;
 
     user_obj = user_format->rgodf + user_format->dwNumObjs;
     while (user_obj-- > user_format->rgodf) user_obj->dwType |= DIDFT_OPTIONAL;
@@ -310,21 +304,20 @@ static HRESULT dinput_device_init_user_format( struct dinput_device *impl, const
     user_obj = user_format->rgodf + user_format->dwNumObjs;
     while (user_obj-- > user_format->rgodf) user_obj->dwType &= ~DIDFT_OPTIONAL;
 
-    impl->user_format = user_format;
     return DI_OK;
 
 failed:
     free( user_format->rgodf );
-    free( user_format );
+    user_format->rgodf = NULL;
     return DIERR_INVALIDPARAM;
 }
 
 static int id_to_offset( struct dinput_device *impl, int id )
 {
-    DIDATAFORMAT *user_format = impl->user_format;
+    DIDATAFORMAT *user_format = &impl->user_format;
     DIOBJECTDATAFORMAT *user_obj;
 
-    if (!user_format) return -1;
+    if (!user_format->rgodf) return -1;
 
     user_obj = user_format->rgodf + impl->device_format.dwNumObjs;
     while (user_obj-- > user_format->rgodf)
@@ -582,7 +575,7 @@ static HRESULT WINAPI dinput_device_Acquire( IDirectInputDevice8W *iface )
     EnterCriticalSection( &impl->crit );
     if (impl->status == STATUS_ACQUIRED)
         hr = DI_NOEFFECT;
-    else if (!impl->user_format)
+    else if (!impl->user_format.rgodf)
         hr = DIERR_INVALIDPARAM;
     else if ((impl->dwCoopLevel & DISCL_FOREGROUND) && impl->win != GetForegroundWindow())
         hr = DIERR_OTHERAPPHASPRIO;
@@ -887,14 +880,14 @@ static HRESULT WINAPI dinput_device_EnumObjects( IDirectInputDevice8W *iface,
 
 static HRESULT enum_object_filter_init( struct dinput_device *impl, DIPROPHEADER *filter )
 {
-    DIDATAFORMAT *device_format = &impl->device_format, *user_format = impl->user_format;
+    DIDATAFORMAT *device_format = &impl->device_format, *user_format = &impl->user_format;
     DIOBJECTDATAFORMAT *device_obj, *user_obj;
 
     if (filter->dwHow > DIPH_BYUSAGE) return DIERR_INVALIDPARAM;
     if (filter->dwHow == DIPH_BYUSAGE && !(impl->instance.dwDevType & DIDEVTYPE_HID)) return DIERR_UNSUPPORTED;
     if (filter->dwHow != DIPH_BYOFFSET) return DI_OK;
 
-    if (!impl->user_format) return DIERR_NOTFOUND;
+    if (!user_format->rgodf) return DIERR_NOTFOUND;
 
     user_obj = user_format->rgodf + device_format->dwNumObjs;
     device_obj = device_format->rgodf + device_format->dwNumObjs;
@@ -1411,11 +1404,10 @@ static HRESULT WINAPI dinput_device_set_property( IDirectInputDevice8W *iface, c
         const DIPROPDWORD *value = (const DIPROPDWORD *)header;
 
         TRACE( "Axis mode: %s\n", value->dwData == DIPROPAXISMODE_ABS ? "absolute" : "relative" );
-        if (impl->user_format)
-        {
-            impl->user_format->dwFlags &= ~DIDFT_AXIS;
-            impl->user_format->dwFlags |= value->dwData == DIPROPAXISMODE_ABS ? DIDF_ABSAXIS : DIDF_RELAXIS;
-        }
+
+        impl->user_format.dwFlags &= ~DIDFT_AXIS;
+        impl->user_format.dwFlags |= value->dwData == DIPROPAXISMODE_ABS ? DIDF_ABSAXIS : DIDF_RELAXIS;
+
         return DI_OK;
     }
     case (DWORD_PTR)DIPROP_BUFFERSIZE:
@@ -1533,7 +1525,7 @@ static HRESULT WINAPI dinput_device_GetObjectInfo( IDirectInputDevice8W *iface,
 static HRESULT WINAPI dinput_device_GetDeviceState( IDirectInputDevice8W *iface, DWORD size, void *data )
 {
     struct dinput_device *impl = impl_from_IDirectInputDevice8W( iface );
-    DIDATAFORMAT *device_format = &impl->device_format, *user_format;
+    DIDATAFORMAT *device_format = &impl->device_format, *user_format = &impl->user_format;
     DIOBJECTDATAFORMAT *device_obj, *user_obj;
     BYTE *user_state = data;
     DIPROPHEADER filter =
@@ -1556,7 +1548,7 @@ static HRESULT WINAPI dinput_device_GetDeviceState( IDirectInputDevice8W *iface,
         hr = DIERR_INPUTLOST;
     else if (impl->status != STATUS_ACQUIRED)
         hr = DIERR_NOTACQUIRED;
-    else if (!(user_format = impl->user_format))
+    else if (!user_format->rgodf)
         hr = DIERR_INVALIDPARAM;
     else if (size != user_format->dwDataSize)
         hr = DIERR_INVALIDPARAM;

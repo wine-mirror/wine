@@ -179,7 +179,7 @@ void dinput_mouse_rawinput_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPA
     state->lX += rel.x;
     state->lY += rel.y;
 
-    if (impl->base.user_format->dwFlags & DIDF_ABSAXIS)
+    if (impl->base.user_format.dwFlags & DIDF_ABSAXIS)
     {
         pt.x = state->lX;
         pt.y = state->lY;
@@ -259,7 +259,7 @@ int dinput_mouse_hook( IDirectInputDevice8W *iface, WPARAM wparam, LPARAM lparam
             state->lX += pt.x = hook->pt.x - pt.x;
             state->lY += pt.y = hook->pt.y - pt.y;
 
-            if (impl->base.user_format->dwFlags & DIDF_ABSAXIS)
+            if (impl->base.user_format.dwFlags & DIDF_ABSAXIS)
             {
                 pt1.x = state->lX;
                 pt1.y = state->lY;
@@ -399,7 +399,7 @@ static HRESULT mouse_acquire( IDirectInputDevice8W *iface )
 
     /* Init the mouse state */
     GetCursorPos( &point );
-    if (impl->base.user_format->dwFlags & DIDF_ABSAXIS)
+    if (impl->base.user_format.dwFlags & DIDF_ABSAXIS)
     {
         state->lX = point.x;
         state->lY = point.y;
