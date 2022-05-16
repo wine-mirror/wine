@@ -1109,6 +1109,7 @@ static void test_WritePrivateProfileString(void)
 static void test_profile_struct(void)
 {
     static const char expect_data[] = "[s]\r\nkey=616261637573006F\r\n";
+    static const char expect_data_empty[] = "[s]\r\n";
     char buffer[20];
     BOOL ret;
 
@@ -1172,6 +1173,11 @@ static void test_profile_struct(void)
     ret = GetPrivateProfileStructA("s", "key", buffer, 7, "./winetest.ini");
     ok(!ret, "expected failure\n");
     todo_wine ok(GetLastError() == ERROR_BAD_LENGTH, "got error %lu\n", GetLastError());
+
+    /* Test deleting struct */
+    ret = WritePrivateProfileStructA("s", "key", NULL, sizeof("abacus"), "./winetest.ini");
+    ok(ret, "got error %lu\n", GetLastError());
+    ok(check_file_data("./winetest.ini", expect_data_empty), "file doesn't match\n");
 
     ret = DeleteFileA("./winetest.ini");
     ok(ret, "got error %lu\n", GetLastError());
