@@ -53,6 +53,7 @@ static HRESULT (WINAPI *pUiaProviderFromIAccessible)(IAccessible *, long, DWORD,
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+DEFINE_EXPECT(winproc_GETOBJECT_CLIENT);
 DEFINE_EXPECT(Accessible_accNavigate);
 
 static LONG Accessible_ref = 1;
@@ -60,6 +61,7 @@ static IAccessible Accessible;
 static IOleWindow OleWindow;
 static HWND Accessible_hwnd = NULL;
 static HWND OleWindow_hwnd = NULL;
+static IAccessible *acc_client;
 
 static BOOL check_variant_i4(VARIANT *v, int val)
 {
@@ -130,6 +132,7 @@ static HRESULT WINAPI Accessible_get_accParent(IAccessible *iface, IDispatch **o
 
 static HRESULT WINAPI Accessible_get_accChildCount(IAccessible *iface, LONG *out_count)
 {
+    ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
@@ -143,6 +146,7 @@ static HRESULT WINAPI Accessible_get_accChild(IAccessible *iface, VARIANT child_
 static HRESULT WINAPI Accessible_get_accName(IAccessible *iface, VARIANT child_id,
         BSTR *out_name)
 {
+    ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
@@ -163,12 +167,14 @@ static HRESULT WINAPI Accessible_get_accDescription(IAccessible *iface, VARIANT 
 static HRESULT WINAPI Accessible_get_accRole(IAccessible *iface, VARIANT child_id,
         VARIANT *out_role)
 {
+    ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI Accessible_get_accState(IAccessible *iface, VARIANT child_id,
         VARIANT *out_state)
 {
+    ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
@@ -222,6 +228,7 @@ static HRESULT WINAPI Accessible_accSelect(IAccessible *iface, LONG select_flags
 static HRESULT WINAPI Accessible_accLocation(IAccessible *iface, LONG *out_left,
         LONG *out_top, LONG *out_width, LONG *out_height, VARIANT child_id)
 {
+    ok(0, "unexpected call\n");
     return E_NOTIMPL;
 }
 
@@ -341,6 +348,24 @@ static IOleWindow OleWindow   = {&OleWindowVtbl};
 
 static LRESULT WINAPI test_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
+    switch (message)
+    {
+    case WM_GETOBJECT:
+        if (lParam == (DWORD)OBJID_CLIENT)
+        {
+            CHECK_EXPECT(winproc_GETOBJECT_CLIENT);
+            if (acc_client)
+                return LresultFromObject(&IID_IAccessible, wParam, (IUnknown *)acc_client);
+
+            break;
+        }
+
+        break;
+
+    default:
+        break;
+    }
+
     return DefWindowProcA(hwnd, message, wParam, lParam);
 }
 
@@ -633,6 +658,8 @@ static void test_UiaProviderFromIAccessible(void)
 
     /* Return an HWND from accNavigate, not OleWindow. */
     SET_EXPECT(Accessible_accNavigate);
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    acc_client = &Accessible;
     Accessible_hwnd = hwnd;
     OleWindow_hwnd = NULL;
     hr = pUiaProviderFromIAccessible(&Accessible, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
@@ -641,6 +668,15 @@ static void test_UiaProviderFromIAccessible(void)
     ok(Accessible_ref == 2, "Unexpected refcnt %ld\n", Accessible_ref);
     IRawElementProviderSimple_Release(elprov);
     ok(Accessible_ref == 1, "Unexpected refcnt %ld\n", Accessible_ref);
+    acc_client = NULL;
+
+    /* Skip tests on Win10v1507. */
+    if (called_winproc_GETOBJECT_CLIENT)
+    {
+        win_skip("UiaProviderFromIAccessible behaves inconsistently on Win10 1507, skipping tests.\n");
+        return;
+    }
+    expect_winproc_GETOBJECT_CLIENT = FALSE;
 
     /* Return an HWND from OleWindow, not accNavigate. */
     Accessible_hwnd = NULL;
