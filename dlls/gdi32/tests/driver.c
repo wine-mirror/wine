@@ -48,7 +48,26 @@ static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromDeviceName)(D3DKMT_OPENADAPTERFRO
 static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromGdiDisplayName)(D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME *);
 static NTSTATUS (WINAPI *pD3DKMTOpenAdapterFromHdc)(D3DKMT_OPENADAPTERFROMHDC *);
 static NTSTATUS (WINAPI *pD3DKMTSetVidPnSourceOwner)(const D3DKMT_SETVIDPNSOURCEOWNER *);
+static NTSTATUS (WINAPI *pD3DKMTQueryVideoMemoryInfo)(D3DKMT_QUERYVIDEOMEMORYINFO *);
 static HRESULT  (WINAPI *pDwmEnableComposition)(UINT);
+
+static BOOL get_primary_adapter_name(WCHAR *name)
+{
+    DISPLAY_DEVICEW dd;
+    DWORD adapter_idx;
+
+    dd.cb = sizeof(dd);
+    for (adapter_idx = 0; EnumDisplayDevicesW(NULL, adapter_idx, &dd, 0); ++adapter_idx)
+    {
+        if (dd.StateFlags & DISPLAY_DEVICE_PRIMARY_DEVICE)
+        {
+            lstrcpyW(name, dd.DeviceName);
+            return TRUE;
+        }
+    }
+
+    return FALSE;
+}
 
 static void test_D3DKMTOpenAdapterFromGdiDisplayName(void)
 {
@@ -886,6 +905,91 @@ static void test_D3DKMTOpenAdapterFromDeviceName(void)
     winetest_pop_context();
 }
 
+static void test_D3DKMTQueryVideoMemoryInfo(void)
+{
+    static const D3DKMT_MEMORY_SEGMENT_GROUP groups[] = {D3DKMT_MEMORY_SEGMENT_GROUP_LOCAL,
+                                                         D3DKMT_MEMORY_SEGMENT_GROUP_NON_LOCAL};
+    D3DKMT_OPENADAPTERFROMGDIDISPLAYNAME open_adapter_desc;
+    D3DKMT_QUERYVIDEOMEMORYINFO query_memory_info;
+    D3DKMT_CLOSEADAPTER close_adapter_desc;
+    NTSTATUS status;
+    unsigned int i;
+    BOOL ret;
+
+    if (!pD3DKMTQueryVideoMemoryInfo)
+    {
+        skip("D3DKMTQueryVideoMemoryInfo() is unavailable.\n");
+        return;
+    }
+
+    ret = get_primary_adapter_name(open_adapter_desc.DeviceName);
+    ok(ret, "Failed to get primary adapter name.\n");
+    status = pD3DKMTOpenAdapterFromGdiDisplayName(&open_adapter_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status);
+
+    /* Normal query */
+    for (i = 0; i < ARRAY_SIZE(groups); ++i)
+    {
+        winetest_push_context("group %d", groups[i]);
+
+        query_memory_info.hProcess = NULL;
+        query_memory_info.hAdapter = open_adapter_desc.hAdapter;
+        query_memory_info.PhysicalAdapterIndex = 0;
+        query_memory_info.MemorySegmentGroup = groups[i];
+        status = pD3DKMTQueryVideoMemoryInfo(&query_memory_info);
+        ok(status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status);
+        ok(query_memory_info.Budget >= query_memory_info.AvailableForReservation,
+           "Unexpected budget %I64u and reservation %I64u.\n", query_memory_info.Budget,
+           query_memory_info.AvailableForReservation);
+        ok(query_memory_info.CurrentUsage <= query_memory_info.Budget,
+           "Unexpected current usage %I64u.\n", query_memory_info.CurrentUsage);
+        ok(query_memory_info.CurrentReservation == 0,
+           "Unexpected current reservation %I64u.\n", query_memory_info.CurrentReservation);
+
+        winetest_pop_context();
+    }
+
+    /* Query using the current process handle */
+    query_memory_info.hProcess = GetCurrentProcess();
+    status = pD3DKMTQueryVideoMemoryInfo(&query_memory_info);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status);
+
+    /* Query using a process handle without PROCESS_QUERY_INFORMATION privilege */
+    query_memory_info.hProcess = OpenProcess(PROCESS_SET_INFORMATION, FALSE, GetCurrentProcessId());
+    ok(!!query_memory_info.hProcess, "OpenProcess failed, error %ld.\n", GetLastError());
+    status = pD3DKMTQueryVideoMemoryInfo(&query_memory_info);
+    ok(status == STATUS_ACCESS_DENIED, "Got unexpected return code %#lx.\n", status);
+    CloseHandle(query_memory_info.hProcess);
+    query_memory_info.hProcess = NULL;
+
+    /* Query using an invalid process handle */
+    query_memory_info.hProcess = (HANDLE)0xdeadbeef;
+    status = pD3DKMTQueryVideoMemoryInfo(&query_memory_info);
+    ok(status == STATUS_INVALID_HANDLE, "Got unexpected return code %#lx.\n", status);
+    query_memory_info.hProcess = NULL;
+
+    /* Query using an invalid adapter handle */
+    query_memory_info.hAdapter = (D3DKMT_HANDLE)0xdeadbeef;
+    status = pD3DKMTQueryVideoMemoryInfo(&query_memory_info);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#lx.\n", status);
+    query_memory_info.hAdapter = open_adapter_desc.hAdapter;
+
+    /* Query using an invalid adapter index */
+    query_memory_info.PhysicalAdapterIndex = 99;
+    status = pD3DKMTQueryVideoMemoryInfo(&query_memory_info);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#lx.\n", status);
+    query_memory_info.PhysicalAdapterIndex = 0;
+
+    /* Query using an invalid memory segment group */
+    query_memory_info.MemorySegmentGroup = D3DKMT_MEMORY_SEGMENT_GROUP_NON_LOCAL + 1;
+    status = pD3DKMTQueryVideoMemoryInfo(&query_memory_info);
+    ok(status == STATUS_INVALID_PARAMETER, "Got unexpected return code %#lx.\n", status);
+
+    close_adapter_desc.hAdapter = open_adapter_desc.hAdapter;
+    status = pD3DKMTCloseAdapter(&close_adapter_desc);
+    ok(status == STATUS_SUCCESS, "Got unexpected return code %#lx.\n", status);
+}
+
 START_TEST(driver)
 {
     HMODULE gdi32 = GetModuleHandleA("gdi32.dll");
@@ -900,6 +1004,7 @@ START_TEST(driver)
     pD3DKMTOpenAdapterFromGdiDisplayName = (void *)GetProcAddress(gdi32, "D3DKMTOpenAdapterFromGdiDisplayName");
     pD3DKMTOpenAdapterFromHdc = (void *)GetProcAddress(gdi32, "D3DKMTOpenAdapterFromHdc");
     pD3DKMTSetVidPnSourceOwner = (void *)GetProcAddress(gdi32, "D3DKMTSetVidPnSourceOwner");
+    pD3DKMTQueryVideoMemoryInfo = (void *)GetProcAddress(gdi32, "D3DKMTQueryVideoMemoryInfo");
 
     if (dwmapi)
         pDwmEnableComposition = (void *)GetProcAddress(dwmapi, "DwmEnableComposition");
@@ -913,6 +1018,7 @@ START_TEST(driver)
     test_D3DKMTSetVidPnSourceOwner();
     test_D3DKMTCheckOcclusion();
     test_D3DKMTOpenAdapterFromDeviceName();
+    test_D3DKMTQueryVideoMemoryInfo();
 
     FreeLibrary(dwmapi);
 }
