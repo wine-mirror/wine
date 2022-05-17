@@ -1564,7 +1564,7 @@ failed:
     return DIERR_DEVICENOTREG;
 }
 
-static HRESULT hid_joystick_device_open( int index, const GUID *guid, DIDEVICEINSTANCEW *filter,
+static HRESULT hid_joystick_device_open( int index, const GUID *guid, DIDEVICEINSTANCEW *instance,
                                          WCHAR *device_path, HANDLE *device, PHIDP_PREPARSED_DATA *preparsed,
                                          HIDD_ATTRIBUTES *attrs, HIDP_CAPS *caps, DWORD version )
 {
@@ -1572,7 +1572,6 @@ static HRESULT hid_joystick_device_open( int index, const GUID *guid, DIDEVICEIN
     SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail = (void *)buffer;
     SP_DEVICE_INTERFACE_DATA iface = {.cbSize = sizeof(iface)};
     SP_DEVINFO_DATA devinfo = {.cbSize = sizeof(devinfo)};
-    DIDEVICEINSTANCEW instance = *filter;
     WCHAR device_id[MAX_PATH], *tmp;
     HDEVINFO set, xi_set;
     UINT32 i = 0, handle;
@@ -1600,10 +1599,10 @@ static HRESULT hid_joystick_device_open( int index, const GUID *guid, DIDEVICEIN
             type != DEVPROP_TYPE_UINT32)
             continue;
         if (FAILED(hid_joystick_device_try_open( handle, detail->DevicePath, device, preparsed,
-                                                 attrs, caps, &instance, version )))
+                                                 attrs, caps, instance, version )))
             continue;
 
-        if (device_instance_is_disabled( &instance, &override ))
+        if (device_instance_is_disabled( instance, &override ))
             goto next;
 
         if (override && SetupDiGetDeviceInstanceIdW( set, &devinfo, device_id, MAX_PATH, NULL ) &&
@@ -1620,12 +1619,12 @@ static HRESULT hid_joystick_device_open( int index, const GUID *guid, DIDEVICEIN
             CloseHandle( *device );
             HidD_FreePreparsedData( *preparsed );
             if (FAILED(hid_joystick_device_try_open( handle, detail->DevicePath, device, preparsed,
-                                                     attrs, caps, &instance, version )))
+                                                     attrs, caps, instance, version )))
                 continue;
         }
 
         /* enumerate device by GUID */
-        if (IsEqualGUID( guid, &instance.guidProduct ) || IsEqualGUID( guid, &instance.guidInstance )) break;
+        if (IsEqualGUID( guid, &instance->guidProduct ) || IsEqualGUID( guid, &instance->guidInstance )) break;
 
         /* enumerate all devices */
         if (index >= 0 && !index--) break;
@@ -1642,7 +1641,6 @@ static HRESULT hid_joystick_device_open( int index, const GUID *guid, DIDEVICEIN
     if (!*device || !*preparsed) return DIERR_DEVICENOTREG;
 
     lstrcpynW( device_path, detail->DevicePath, MAX_PATH );
-    *filter = instance;
     return DI_OK;
 }
 
@@ -2007,12 +2005,6 @@ HRESULT hid_joystick_create_device( struct dinput *dinput, const GUID *guid, IDi
         .dwHeaderSize = sizeof(filter),
         .dwHow = DIPH_DEVICE,
     };
-    DIDEVICEINSTANCEW instance =
-    {
-        .dwSize = sizeof(instance),
-        .guidProduct = *guid,
-        .guidInstance = *guid
-    };
     DIPROPRANGE range =
     {
         .diph =
@@ -2043,18 +2035,17 @@ HRESULT hid_joystick_create_device( struct dinput *dinput, const GUID *guid, IDi
     impl->internal_ref = 1;
 
     if (memcmp( device_path_guid.Data4, guid->Data4, sizeof(device_path_guid.Data4) ))
-        hr = hid_joystick_device_open( -1, guid, &instance, impl->device_path, &impl->device, &impl->preparsed,
+        hr = hid_joystick_device_open( -1, guid, &impl->base.instance, impl->device_path, &impl->device, &impl->preparsed,
                                        &attrs, &impl->caps, dinput->dwVersion );
     else
     {
         wcscpy( impl->device_path, *(const WCHAR **)guid );
         hr = hid_joystick_device_try_open( 0, impl->device_path, &impl->device, &impl->preparsed, &attrs,
-                                           &impl->caps, &instance, dinput->dwVersion );
+                                           &impl->caps, &impl->base.instance, dinput->dwVersion );
     }
     if (hr != DI_OK) goto failed;
 
-    impl->base.instance = instance;
-    impl->base.caps.dwDevType = instance.dwDevType;
+    impl->base.caps.dwDevType = impl->base.instance.dwDevType;
     impl->attrs = attrs;
     list_init( &impl->effect_list );
 
