@@ -307,7 +307,7 @@
 @ stub NtGdiDdDDIQueryResourceInfoFromNtHandle
 @ stdcall -syscall NtGdiDdDDIQueryStatistics(ptr)
 @ stub NtGdiDdDDIQueryVidPnExclusiveOwnership
-@ stub NtGdiDdDDIQueryVideoMemoryInfo
+@ stdcall NtGdiDdDDIQueryVideoMemoryInfo(ptr)
 @ stub NtGdiDdDDIReclaimAllocations
 @ stub NtGdiDdDDIReclaimAllocations2
 @ stub NtGdiDdDDIReleaseKeyedMutex

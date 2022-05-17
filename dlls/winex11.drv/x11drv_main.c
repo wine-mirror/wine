@@ -1228,6 +1228,65 @@ done:
     return status;
 }
 
+NTSTATUS CDECL X11DRV_D3DKMTQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *desc )
+{
+    const struct vulkan_funcs *vulkan_funcs = get_vulkan_driver(WINE_VULKAN_DRIVER_VERSION);
+    PFN_vkGetPhysicalDeviceMemoryProperties2KHR pvkGetPhysicalDeviceMemoryProperties2KHR;
+    VkPhysicalDeviceMemoryBudgetPropertiesEXT budget;
+    VkPhysicalDeviceMemoryProperties2 properties2;
+    NTSTATUS status = STATUS_INVALID_PARAMETER;
+    struct x11_d3dkmt_adapter *adapter;
+    unsigned int i;
+
+    desc->Budget = 0;
+    desc->CurrentUsage = 0;
+    desc->CurrentReservation = 0;
+    desc->AvailableForReservation = 0;
+
+    if (!vulkan_funcs)
+    {
+        WARN("Vulkan is unavailable.\n");
+        return STATUS_UNSUCCESSFUL;
+    }
+
+    pthread_mutex_lock(&d3dkmt_mutex);
+    LIST_FOR_EACH_ENTRY(adapter, &x11_d3dkmt_adapters, struct x11_d3dkmt_adapter, entry)
+    {
+        if (adapter->handle != desc->hAdapter)
+            continue;
+
+        if (!(pvkGetPhysicalDeviceMemoryProperties2KHR = (void *)vulkan_funcs->p_vkGetInstanceProcAddr(adapter->vk_instance, "vkGetPhysicalDeviceMemoryProperties2KHR")))
+        {
+            WARN("Failed to load vkGetPhysicalDeviceMemoryProperties2KHR.\n");
+            status = STATUS_UNSUCCESSFUL;
+            goto done;
+        }
+
+        memset(&budget, 0, sizeof(budget));
+        budget.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_BUDGET_PROPERTIES_EXT;
+        properties2.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MEMORY_PROPERTIES_2;
+        properties2.pNext = &budget;
+        pvkGetPhysicalDeviceMemoryProperties2KHR(adapter->vk_device, &properties2);
+        for (i = 0; i < properties2.memoryProperties.memoryHeapCount; ++i)
+        {
+            if ((desc->MemorySegmentGroup == D3DKMT_MEMORY_SEGMENT_GROUP_LOCAL
+                && properties2.memoryProperties.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)
+                || (desc->MemorySegmentGroup == D3DKMT_MEMORY_SEGMENT_GROUP_NON_LOCAL
+                && !(properties2.memoryProperties.memoryHeaps[i].flags & VK_MEMORY_HEAP_DEVICE_LOCAL_BIT)))
+            {
+                desc->Budget += budget.heapBudget[i];
+                desc->CurrentUsage += budget.heapUsage[i];
+            }
+        }
+        desc->AvailableForReservation = desc->Budget / 2;
+        status = STATUS_SUCCESS;
+        break;
+    }
+done:
+    pthread_mutex_unlock(&d3dkmt_mutex);
+    return status;
+}
+
 NTSTATUS x11drv_client_func( enum x11drv_client_funcs id, const void *params, ULONG size )
 {
     void *ret_ptr;

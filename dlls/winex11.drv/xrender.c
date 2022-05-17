@@ -2238,6 +2238,7 @@ static const struct gdi_dc_funcs xrender_funcs =
     NULL,                               /* pD3DKMTCheckVidPnExclusiveOwnership */
     NULL,                               /* pD3DKMTCloseAdapter */
     NULL,                               /* pD3DKMTOpenAdapterFromLuid */
+    NULL,                               /* pD3DKMTQueryVideoMemoryInfo */
     NULL,                               /* pD3DKMTSetVidPnSourceOwner */
     GDI_PRIORITY_GRAPHICS_DRV + 10      /* priority */
 };

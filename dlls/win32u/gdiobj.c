@@ -1053,6 +1053,7 @@ static struct unix_funcs unix_funcs =
     NtGdiDdDDIEscape,
     NtGdiDdDDIOpenAdapterFromDeviceName,
     NtGdiDdDDIOpenAdapterFromLuid,
+    NtGdiDdDDIQueryVideoMemoryInfo,
     NtGdiDdDDISetVidPnSourceOwner,
     NtGdiDeleteObjectApp,
     NtGdiDoPalette,

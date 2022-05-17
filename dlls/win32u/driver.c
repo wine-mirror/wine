@@ -560,6 +560,11 @@ static NTSTATUS CDECL nulldrv_D3DKMTOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROML
     return STATUS_PROCEDURE_NOT_FOUND;
 }
 
+static NTSTATUS CDECL nulldrv_D3DKMTQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *desc )
+{
+    return STATUS_PROCEDURE_NOT_FOUND;
+}
+
 static NTSTATUS CDECL nulldrv_D3DKMTSetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER *desc )
 {
     return STATUS_PROCEDURE_NOT_FOUND;
@@ -659,6 +664,7 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_D3DKMTCheckVidPnExclusiveOwnership, /* pD3DKMTCheckVidPnExclusiveOwnership */
     nulldrv_D3DKMTCloseAdapter,         /* pD3DKMTCloseAdapter */
     nulldrv_D3DKMTOpenAdapterFromLuid,  /* pD3DKMTOpenAdapterFromLuid */
+    nulldrv_D3DKMTQueryVideoMemoryInfo, /* pD3DKMTQueryVideoMemoryInfo */
     nulldrv_D3DKMTSetVidPnSourceOwner,  /* pD3DKMTSetVidPnSourceOwner */
 
     GDI_PRIORITY_NULL_DRV               /* priority */
@@ -1473,6 +1479,37 @@ NTSTATUS WINAPI NtGdiDdDDIQueryStatistics( D3DKMT_QUERYSTATISTICS *stats )
 {
     FIXME("(%p): stub\n", stats);
     return STATUS_SUCCESS;
+}
+
+/******************************************************************************
+ *           NtGdiDdDDIQueryVideoMemoryInfo    (win32u.@)
+ */
+NTSTATUS WINAPI NtGdiDdDDIQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *desc )
+{
+    OBJECT_BASIC_INFORMATION info;
+    NTSTATUS status;
+
+    TRACE("(%p)\n", desc);
+
+    if (!desc || !desc->hAdapter ||
+        (desc->MemorySegmentGroup != D3DKMT_MEMORY_SEGMENT_GROUP_LOCAL &&
+         desc->MemorySegmentGroup != D3DKMT_MEMORY_SEGMENT_GROUP_NON_LOCAL))
+        return STATUS_INVALID_PARAMETER;
+
+    /* FIXME: Wine currently doesn't support linked adapters */
+    if (desc->PhysicalAdapterIndex > 0)
+        return STATUS_INVALID_PARAMETER;
+
+    status = NtQueryObject(desc->hProcess ? desc->hProcess : GetCurrentProcess(),
+                           ObjectBasicInformation, &info, sizeof(info), NULL);
+    if (status != STATUS_SUCCESS)
+        return status;
+    if (!(info.GrantedAccess & PROCESS_QUERY_INFORMATION))
+        return STATUS_ACCESS_DENIED;
+
+    if (!get_display_driver()->pD3DKMTQueryVideoMemoryInfo)
+        return STATUS_PROCEDURE_NOT_FOUND;
+    return get_display_driver()->pD3DKMTQueryVideoMemoryInfo(desc);
 }
 
 /******************************************************************************

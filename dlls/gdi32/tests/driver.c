@@ -918,7 +918,7 @@ static void test_D3DKMTQueryVideoMemoryInfo(void)
 
     if (!pD3DKMTQueryVideoMemoryInfo)
     {
-        skip("D3DKMTQueryVideoMemoryInfo() is unavailable.\n");
+        win_skip("D3DKMTQueryVideoMemoryInfo() is unavailable.\n");
         return;
     }
 

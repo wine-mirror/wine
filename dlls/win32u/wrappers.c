@@ -713,6 +713,12 @@ NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *desc 
     return unix_funcs->pNtGdiDdDDIOpenAdapterFromLuid( desc );
 }
 
+NTSTATUS WINAPI NtGdiDdDDIQueryVideoMemoryInfo( D3DKMT_QUERYVIDEOMEMORYINFO *desc )
+{
+    if (!unix_funcs) return STATUS_NOT_SUPPORTED;
+    return unix_funcs->pNtGdiDdDDIQueryVideoMemoryInfo( desc );
+}
+
 NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER *desc )
 {
     if (!unix_funcs) return STATUS_NOT_SUPPORTED;
