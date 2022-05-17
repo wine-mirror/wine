@@ -30,6 +30,9 @@ WINE_DEFAULT_DEBUG_CHANNEL(oleacc);
 
 static const WCHAR lresult_atom_prefix[] = {'w','i','n','e','_','o','l','e','a','c','c',':'};
 
+#define NAVDIR_INTERNAL_HWND 10
+DEFINE_GUID(SID_AccFromDAWrapper, 0x33f139ee, 0xe509, 0x47f7, 0xbf,0x39, 0x83,0x76,0x44,0xf7,0x45,0x76);
+
 extern HRESULT WINAPI OLEACC_DllGetClassObject(REFCLSID, REFIID, void**) DECLSPEC_HIDDEN;
 extern BOOL WINAPI OLEACC_DllMain(HINSTANCE, DWORD, void*) DECLSPEC_HIDDEN;
 extern HRESULT WINAPI OLEACC_DllRegisterServer(void) DECLSPEC_HIDDEN;
@@ -400,35 +403,71 @@ HRESULT WINAPI AccessibleObjectFromWindow( HWND hwnd, DWORD dwObjectID,
 
 HRESULT WINAPI WindowFromAccessibleObject(IAccessible *acc, HWND *phwnd)
 {
+    IServiceProvider *sp;
+    IAccessible *acc2;
     IDispatch *parent;
     IOleWindow *ow;
+    VARIANT v, cid;
     HRESULT hres;
 
     TRACE("%p %p\n", acc, phwnd);
 
-    IAccessible_AddRef(acc);
+    hres = IAccessible_QueryInterface(acc, &IID_IOleWindow, (void**)&ow);
+    if(SUCCEEDED(hres)) {
+        hres = IOleWindow_GetWindow(ow, phwnd);
+        IOleWindow_Release(ow);
+        if(SUCCEEDED(hres) && *phwnd)
+            return S_OK;
+    }
+
+    VariantInit(&v);
+    variant_init_i4(&cid, CHILDID_SELF);
+    hres = IAccessible_accNavigate(acc, NAVDIR_INTERNAL_HWND, cid, &v);
+    if(SUCCEEDED(hres)) {
+        if(hres == S_OK && V_VT(&v) == VT_I4 && V_I4(&v)) {
+            *phwnd = LongToHandle(V_I4(&v));
+            return S_OK;
+        }
+        /* native leaks v here */
+        VariantClear(&v);
+    }
+
+    hres = IAccessible_QueryInterface(acc, &IID_IServiceProvider, (void**)&sp);
+    if(SUCCEEDED(hres)) {
+        hres = IServiceProvider_QueryService(sp, &SID_AccFromDAWrapper,
+                &IID_IAccessible, (void**)&acc2);
+        IServiceProvider_Release(sp);
+    }
+    if(FAILED(hres)) {
+        acc2 = acc;
+        IAccessible_AddRef(acc2);
+    }
+
     while(1) {
-        hres = IAccessible_QueryInterface(acc, &IID_IOleWindow, (void**)&ow);
+        hres = IAccessible_QueryInterface(acc2, &IID_IOleWindow, (void**)&ow);
         if(SUCCEEDED(hres)) {
             hres = IOleWindow_GetWindow(ow, phwnd);
             IOleWindow_Release(ow);
-            IAccessible_Release(acc);
-            return hres;
+            if(SUCCEEDED(hres)) {
+                IAccessible_Release(acc2);
+                return hres;
+            }
         }
 
         hres = IAccessible_get_accParent(acc, &parent);
-        IAccessible_Release(acc);
+        IAccessible_Release(acc2);
         if(FAILED(hres))
             return hres;
-        if(hres!=S_OK || !parent) {
+        if(!parent) {
             *phwnd = NULL;
             return hres;
         }
 
-        hres = IDispatch_QueryInterface(parent, &IID_IAccessible, (void**)&acc);
+        hres = IDispatch_QueryInterface(parent, &IID_IAccessible, (void**)&acc2);
         IDispatch_Release(parent);
         if(FAILED(hres))
             return hres;
+        acc = acc2;
     }
 }
 

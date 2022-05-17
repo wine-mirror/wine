@@ -59,9 +59,12 @@ DEFINE_EXPECT(Accessible_get_accChildCount);
 DEFINE_EXPECT(Accessible_get_accChild);
 DEFINE_EXPECT(Accessible_get_accName);
 DEFINE_EXPECT(Accessible_get_accParent);
+DEFINE_EXPECT(Accessible_accNavigate);
 DEFINE_EXPECT(Accessible_child_get_accName);
 DEFINE_EXPECT(Accessible_child_get_accParent);
+DEFINE_EXPECT(Accessible_child_accNavigate);
 
+#define NAVDIR_INTERNAL_HWND 10
 DEFINE_GUID(SID_AccFromDAWrapper, 0x33f139ee, 0xe509, 0x47f7, 0xbf,0x39, 0x83,0x76,0x44,0xf7,0x45,0x76);
 
 static HANDLE (WINAPI *pGetProcessHandleFromHwnd)(HWND);
@@ -93,7 +96,11 @@ static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
     return unk1 == unk2;
 }
 
+static IAccessible Accessible;
 static IAccessible Accessible_child;
+static IOleWindow OleWindow;
+static HWND Accessible_hwnd;
+static HWND OleWindow_hwnd;
 
 static HRESULT WINAPI Accessible_QueryInterface(
         IAccessible *iface, REFIID riid, void **ppvObject)
@@ -103,6 +110,12 @@ static HRESULT WINAPI Accessible_QueryInterface(
             IsEqualIID(riid, &IID_IAccessible)) {
         IAccessible_AddRef(iface);
         *ppvObject = iface;
+        return S_OK;
+    }
+
+    if(IsEqualIID(riid, &IID_IOleWindow) && (iface == &Accessible)) {
+        *ppvObject = &OleWindow;
+        IOleWindow_AddRef(&OleWindow);
         return S_OK;
     }
 
@@ -157,11 +170,16 @@ static HRESULT WINAPI Accessible_get_accParent(
         IAccessible *iface, IDispatch **ppdispParent)
 {
     if(iface == &Accessible_child)
+    {
         CHECK_EXPECT(Accessible_child_get_accParent);
+        return IAccessible_QueryInterface(&Accessible, &IID_IDispatch,
+                (void **)ppdispParent);
+    }
     else
         CHECK_EXPECT(Accessible_get_accParent);
 
-    return E_NOTIMPL;
+    *ppdispParent = NULL;
+    return S_FALSE;
 }
 
 static HRESULT WINAPI Accessible_get_accChildCount(
@@ -297,7 +315,21 @@ static HRESULT WINAPI Accessible_accLocation(IAccessible *iface, LONG *pxLeft,
 static HRESULT WINAPI Accessible_accNavigate(IAccessible *iface,
         LONG navDir, VARIANT varStart, VARIANT *pvarEnd)
 {
-    ok(0, "unexpected call\n");
+    if(iface == &Accessible_child)
+        CHECK_EXPECT(Accessible_child_accNavigate);
+    else
+        CHECK_EXPECT(Accessible_accNavigate);
+
+    /*
+     * Magic number value for retrieving an HWND. Used by DynamicAnnotation
+     * IAccessible wrapper.
+     */
+    if(navDir == NAVDIR_INTERNAL_HWND && Accessible_hwnd) {
+        V_VT(pvarEnd) = VT_I4;
+        V_I4(pvarEnd) = HandleToULong(Accessible_hwnd);
+        return Accessible_hwnd ? S_OK : S_FALSE;
+    }
+
     return E_NOTIMPL;
 }
 
@@ -360,8 +392,47 @@ static IAccessibleVtbl AccessibleVtbl = {
     Accessible_put_accValue
 };
 
+static HRESULT WINAPI OleWindow_QueryInterface(IOleWindow *iface, REFIID riid, void **obj)
+{
+    return IAccessible_QueryInterface(&Accessible, riid, obj);
+}
+
+static ULONG WINAPI OleWindow_AddRef(IOleWindow *iface)
+{
+    return IAccessible_AddRef(&Accessible);
+}
+
+static ULONG WINAPI OleWindow_Release(IOleWindow *iface)
+{
+    return IAccessible_Release(&Accessible);
+}
+
+static HRESULT WINAPI OleWindow_GetWindow(IOleWindow *iface, HWND *hwnd)
+{
+    if(OleWindow_hwnd) {
+        *hwnd = OleWindow_hwnd;
+        return S_OK;
+    }
+    return E_FAIL;
+}
+
+static HRESULT WINAPI OleWindow_ContextSensitiveHelp(IOleWindow *iface, BOOL f_enter_mode)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IOleWindowVtbl OleWindowVtbl = {
+    OleWindow_QueryInterface,
+    OleWindow_AddRef,
+    OleWindow_Release,
+    OleWindow_GetWindow,
+    OleWindow_ContextSensitiveHelp
+};
+
 static IAccessible Accessible = {&AccessibleVtbl};
 static IAccessible Accessible_child = {&AccessibleVtbl};
+static IOleWindow OleWindow = {&OleWindowVtbl};
 
 static void test_getroletext(void)
 {
@@ -1844,6 +1915,59 @@ static void test_default_edit_accessible_object(void)
     DestroyWindow(hwnd);
 }
 
+static void test_WindowFromAccessibleObject(void)
+{
+    HRESULT hr;
+    HWND hwnd;
+
+    /* Successfully retrieve an HWND from the IOleWindow interface. */
+    Accessible_hwnd = NULL;
+    OleWindow_hwnd = (HWND)0xdeadf00d;
+    hwnd = (HWND)0xdeadbeef;
+    hr = WindowFromAccessibleObject(&Accessible, &hwnd);
+    ok(hr == S_OK, "got %lx\n", hr);
+    ok(hwnd == (HWND)0xdeadf00d, "hwnd != 0xdeadf00d!\n");
+
+    /* Successfully retrieve an HWND from IAccessible::accNavigate. */
+    Accessible_hwnd = (HWND)0xdeadf00d;
+    OleWindow_hwnd = NULL;
+    hwnd = (HWND)0xdeadbeef;
+    SET_EXPECT(Accessible_accNavigate);
+    hr = WindowFromAccessibleObject(&Accessible, &hwnd);
+    ok(hr == S_OK, "got %lx\n", hr);
+    /* This value gets sign-extended on 64-bit. */
+    ok(hwnd == IntToPtr(0xdeadf00d), "hwnd != 0xdeadf00d!\n");
+    CHECK_CALLED(Accessible_accNavigate);
+
+    /* Don't return an HWND from either method. */
+    Accessible_hwnd = NULL;
+    OleWindow_hwnd = NULL;
+    hwnd = (HWND)0xdeadbeef;
+    SET_EXPECT(Accessible_accNavigate);
+    SET_EXPECT(Accessible_get_accParent);
+    hr = WindowFromAccessibleObject(&Accessible, &hwnd);
+    /* Return value from IAccessible::get_accParent. */
+    ok(hr == S_FALSE, "got %lx\n", hr);
+    ok(!hwnd, "hwnd %p\n", hwnd);
+    CHECK_CALLED(Accessible_accNavigate);
+    CHECK_CALLED(Accessible_get_accParent);
+
+    /* Successfully retrieve an HWND from a parent IAccessible's IOleWindow interface. */
+    Accessible_hwnd = NULL;
+    OleWindow_hwnd = (HWND)0xdeadf00d;
+    hwnd = (HWND)0xdeadbeef;
+    SET_EXPECT(Accessible_child_accNavigate);
+    SET_EXPECT(Accessible_child_get_accParent);
+    hr = WindowFromAccessibleObject(&Accessible_child, &hwnd);
+    ok(hr == S_OK, "got %lx\n", hr);
+    ok(hwnd == (HWND)0xdeadf00d, "hwnd != 0xdeadf00d!\n");
+    CHECK_CALLED(Accessible_child_accNavigate);
+    CHECK_CALLED(Accessible_child_get_accParent);
+
+    Accessible_hwnd = NULL;
+    OleWindow_hwnd = NULL;
+}
+
 START_TEST(main)
 {
     int argc;
@@ -1885,6 +2009,7 @@ START_TEST(main)
     test_AccessibleObjectFromPoint();
     test_CreateStdAccessibleObject_classes();
     test_default_edit_accessible_object();
+    test_WindowFromAccessibleObject();
 
     unregister_window_class();
     CoUninitialize();
