@@ -40,21 +40,6 @@ static void dump_mdmp_string(DWORD rva)
         printf("<<?>>");
 }
 
-static const MINIDUMP_DIRECTORY* get_mdmp_dir(const MINIDUMP_HEADER* hdr, unsigned int str_idx)
-{
-    const MINIDUMP_DIRECTORY*   dir;
-    unsigned int                i;
-
-    for (i = 0; i < hdr->NumberOfStreams; i++)
-    {
-        dir = PRD(hdr->StreamDirectoryRva + i * sizeof(MINIDUMP_DIRECTORY), 
-                  sizeof(MINIDUMP_DIRECTORY));
-        if (!dir) continue;
-        if (dir->StreamType == str_idx) return dir;
-    }
-    return NULL;
-}
-
 enum FileSig get_kind_mdmp(void)
 {
     const DWORD*        pdw;
@@ -69,9 +54,9 @@ enum FileSig get_kind_mdmp(void)
 void mdmp_dump(void)
 {
     const MINIDUMP_HEADER*      hdr = PRD(0, sizeof(MINIDUMP_HEADER));
-    UINT                        idx, ndir = 0;
     const MINIDUMP_DIRECTORY*   dir;
     const void*                 stream;
+    unsigned int idx;
 
     if (!hdr)
     {
@@ -79,27 +64,29 @@ void mdmp_dump(void)
         return;
     }
 
-    printf("Signature: %u (%.4s)\n", (UINT)hdr->Signature, (const char*)&hdr->Signature);
-    printf("Version: %x\n", (UINT)hdr->Version);
-    printf("NumberOfStreams: %u\n", (UINT)hdr->NumberOfStreams);
+    printf("Signature: %#x (%.4s)\n", hdr->Signature, (const char*)&hdr->Signature);
+    printf("Version: %#x\n", hdr->Version);
+    printf("NumberOfStreams: %u\n", hdr->NumberOfStreams);
     printf("StreamDirectoryRva: %u\n", (UINT)hdr->StreamDirectoryRva);
-    printf("CheckSum: %u\n", (UINT)hdr->CheckSum);
+    printf("CheckSum: %u\n", hdr->CheckSum);
     printf("TimeDateStamp: %s\n", get_time_str(hdr->TimeDateStamp));
     printf("Flags: %x%08x\n", (UINT)(hdr->Flags >> 32), (UINT)hdr->Flags);
 
-    for (idx = 0; idx <= LastReservedStream; idx++)
+    for (idx = 0; idx < hdr->NumberOfStreams; ++idx)
     {
-        if (!(dir = get_mdmp_dir(hdr, idx))) continue;
+        dir = PRD(hdr->StreamDirectoryRva + idx * sizeof(MINIDUMP_DIRECTORY), sizeof(*dir));
+        if (!dir) break;
 
         stream = PRD(dir->Location.Rva, dir->Location.DataSize);
-        printf("Directory [%u]: ", ndir++);
+
+        printf("Stream [%u]: ", idx);
         switch (dir->StreamType)
         {
         case ThreadListStream:
         {
-            const MINIDUMP_THREAD_LIST* mtl = (const MINIDUMP_THREAD_LIST*)stream;
-            const MINIDUMP_THREAD*      mt = mtl->Threads;
-            unsigned int                i;
+            const MINIDUMP_THREAD_LIST *mtl = stream;
+            const MINIDUMP_THREAD *mt = mtl->Threads;
+            unsigned int i;
 
             printf("Threads: %u\n", (UINT)mtl->NumberOfThreads);
             for (i = 0; i < mtl->NumberOfThreads; i++, mt++)
