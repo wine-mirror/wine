@@ -5753,10 +5753,13 @@ static bool ffp_blit_supported(enum wined3d_blit_op blit_op, const struct wined3
             if (!is_identity_fixup(src_format->color_fixup)
                     || !is_identity_fixup(dst_format->color_fixup))
             {
-                if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER
-                        && dst_format->id == src_format->id && dst_location == WINED3D_LOCATION_DRAWABLE)
+                if (dst_format->id == src_format->id && dst_location == WINED3D_LOCATION_DRAWABLE)
                 {
-                    WARN("Claiming fixup support because of ORM_BACKBUFFER.\n");
+                    if (wined3d_settings.offscreen_rendering_mode == ORM_BACKBUFFER)
+                        WARN("Claiming fixup support because of ORM_BACKBUFFER.\n");
+                    else if (context->device->shader_backend == &none_shader_backend)
+                        WARN("Claiming fixup support because of no shader backend.\n");
+                    return true;
                 }
                 else
                 {
