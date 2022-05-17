@@ -427,7 +427,7 @@
 #define VK_EXT_PRIVATE_DATA_EXTENSION_NAME "VK_EXT_private_data"
 #define VK_EXT_PIPELINE_CREATION_CACHE_CONTROL_SPEC_VERSION 3
 #define VK_EXT_PIPELINE_CREATION_CACHE_CONTROL_EXTENSION_NAME "VK_EXT_pipeline_creation_cache_control"
-#define VK_NV_DEVICE_DIAGNOSTICS_CONFIG_SPEC_VERSION 1
+#define VK_NV_DEVICE_DIAGNOSTICS_CONFIG_SPEC_VERSION 2
 #define VK_NV_DEVICE_DIAGNOSTICS_CONFIG_EXTENSION_NAME "VK_NV_device_diagnostics_config"
 #define VK_QCOM_RENDER_PASS_STORE_OPS_SPEC_VERSION 2
 #define VK_QCOM_RENDER_PASS_STORE_OPS_EXTENSION_NAME "VK_QCOM_render_pass_store_ops"
@@ -435,6 +435,8 @@
 #define VK_KHR_SYNCHRONIZATION_2_EXTENSION_NAME "VK_KHR_synchronization2"
 #define VK_EXT_GRAPHICS_PIPELINE_LIBRARY_SPEC_VERSION 1
 #define VK_EXT_GRAPHICS_PIPELINE_LIBRARY_EXTENSION_NAME "VK_EXT_graphics_pipeline_library"
+#define VK_AMD_SHADER_EARLY_AND_LATE_FRAGMENT_TESTS_SPEC_VERSION 1
+#define VK_AMD_SHADER_EARLY_AND_LATE_FRAGMENT_TESTS_EXTENSION_NAME "VK_AMD_shader_early_and_late_fragment_tests"
 #define VK_KHR_SHADER_SUBGROUP_UNIFORM_CONTROL_FLOW_SPEC_VERSION 1
 #define VK_KHR_SHADER_SUBGROUP_UNIFORM_CONTROL_FLOW_EXTENSION_NAME "VK_KHR_shader_subgroup_uniform_control_flow"
 #define VK_KHR_ZERO_INITIALIZE_WORKGROUP_MEMORY_SPEC_VERSION 1
@@ -455,6 +457,8 @@
 #define VK_KHR_WORKGROUP_MEMORY_EXPLICIT_LAYOUT_EXTENSION_NAME "VK_KHR_workgroup_memory_explicit_layout"
 #define VK_KHR_COPY_COMMANDS_2_SPEC_VERSION 1
 #define VK_KHR_COPY_COMMANDS_2_EXTENSION_NAME "VK_KHR_copy_commands2"
+#define VK_EXT_IMAGE_COMPRESSION_CONTROL_SPEC_VERSION 1
+#define VK_EXT_IMAGE_COMPRESSION_CONTROL_EXTENSION_NAME "VK_EXT_image_compression_control"
 #define VK_EXT_4444_FORMATS_SPEC_VERSION 1
 #define VK_EXT_4444_FORMATS_EXTENSION_NAME "VK_EXT_4444_formats"
 #define VK_ARM_RASTERIZATION_ORDER_ATTACHMENT_ACCESS_SPEC_VERSION 1
@@ -509,6 +513,8 @@
 #define VK_QCOM_FRAGMENT_DENSITY_MAP_OFFSET_EXTENSION_NAME "VK_QCOM_fragment_density_map_offset"
 #define VK_NV_LINEAR_COLOR_ATTACHMENT_SPEC_VERSION 1
 #define VK_NV_LINEAR_COLOR_ATTACHMENT_EXTENSION_NAME "VK_NV_linear_color_attachment"
+#define VK_EXT_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_SPEC_VERSION 1
+#define VK_EXT_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_EXTENSION_NAME "VK_EXT_image_compression_control_swapchain"
 #define VK_EXT_SUBPASS_MERGE_FEEDBACK_SPEC_VERSION 1
 #define VK_EXT_SUBPASS_MERGE_FEEDBACK_EXTENSION_NAME "VK_EXT_subpass_merge_feedback"
 #define VK_KHR_ACCELERATION_STRUCTURE_SPEC_VERSION 13
@@ -533,32 +539,32 @@
 #define VK_API_VERSION_1_1 VK_MAKE_API_VERSION(0, 1, 1, 0)
 #define VK_API_VERSION_1_2 VK_MAKE_API_VERSION(0, 1, 2, 0)
 #define VK_API_VERSION_1_3 VK_MAKE_API_VERSION(0, 1, 3, 0)
-#define VK_HEADER_VERSION 213
+#define VK_HEADER_VERSION 214
 #define VK_HEADER_VERSION_COMPLETE VK_MAKE_API_VERSION(0, 1, 3, VK_HEADER_VERSION)
 #define VK_DEFINE_HANDLE(object) typedef struct object##_T* object;
 #define VK_USE_64_BIT_PTR_DEFINES 0
 
 #ifndef VK_DEFINE_NON_DISPATCHABLE_HANDLE
-#if (VK_USE_64_BIT_PTR_DEFINES==1)
-#if (defined(__cplusplus) && (__cplusplus >= 201103L)) || (defined(_MSVC_LANG) && (_MSVC_LANG >= 201103L))
-#define VK_NULL_HANDLE nullptr
-#else
-#define VK_NULL_HANDLE ((void*)0)
-#endif
-#else
-#define VK_NULL_HANDLE 0ULL
-#endif
+    #if (VK_USE_64_BIT_PTR_DEFINES==1)
+        #if (defined(__cplusplus) && (__cplusplus >= 201103L)) || (defined(_MSVC_LANG) && (_MSVC_LANG >= 201103L))
+            #define VK_NULL_HANDLE nullptr
+        #else
+            #define VK_NULL_HANDLE ((void*)0)
+        #endif
+    #else
+        #define VK_NULL_HANDLE 0ULL
+    #endif
 #endif
 #ifndef VK_NULL_HANDLE
-#define VK_NULL_HANDLE 0
+    #define VK_NULL_HANDLE 0
 #endif
 
 #ifndef VK_DEFINE_NON_DISPATCHABLE_HANDLE
-#if (VK_USE_64_BIT_PTR_DEFINES==1)
-#define VK_DEFINE_NON_DISPATCHABLE_HANDLE(object) typedef struct object##_T *object;
-#else
-#define VK_DEFINE_NON_DISPATCHABLE_HANDLE(object) typedef uint64_t object;
-#endif
+    #if (VK_USE_64_BIT_PTR_DEFINES==1)
+        #define VK_DEFINE_NON_DISPATCHABLE_HANDLE(object) typedef struct object##_T *object;
+    #else
+        #define VK_DEFINE_NON_DISPATCHABLE_HANDLE(object) typedef uint64_t object;
+    #endif
 #endif
 VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkAccelerationStructureKHR)
 VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkAccelerationStructureNV)
@@ -1487,6 +1493,7 @@ typedef enum VkDeviceDiagnosticsConfigFlagBitsNV
     VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_SHADER_DEBUG_INFO_BIT_NV = 0x00000001,
     VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_RESOURCE_TRACKING_BIT_NV = 0x00000002,
     VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_AUTOMATIC_CHECKPOINTS_BIT_NV = 0x00000004,
+    VK_DEVICE_DIAGNOSTICS_CONFIG_ENABLE_SHADER_ERROR_REPORTING_BIT_NV = 0x00000008,
     VK_DEVICE_DIAGNOSTICS_CONFIG_FLAG_BITS_NV_MAX_ENUM = 0x7fffffff,
 } VkDeviceDiagnosticsConfigFlagBitsNV;
 
@@ -2244,6 +2251,45 @@ typedef enum VkImageAspectFlagBits
     VK_IMAGE_ASPECT_NONE_KHR = VK_IMAGE_ASPECT_NONE,
     VK_IMAGE_ASPECT_FLAG_BITS_MAX_ENUM = 0x7fffffff,
 } VkImageAspectFlagBits;
+
+typedef enum VkImageCompressionFixedRateFlagBitsEXT
+{
+    VK_IMAGE_COMPRESSION_FIXED_RATE_NONE_EXT = 0,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_1BPC_BIT_EXT = 0x00000001,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_2BPC_BIT_EXT = 0x00000002,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_3BPC_BIT_EXT = 0x00000004,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_4BPC_BIT_EXT = 0x00000008,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_5BPC_BIT_EXT = 0x00000010,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_6BPC_BIT_EXT = 0x00000020,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_7BPC_BIT_EXT = 0x00000040,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_8BPC_BIT_EXT = 0x00000080,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_9BPC_BIT_EXT = 0x00000100,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_10BPC_BIT_EXT = 0x00000200,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_11BPC_BIT_EXT = 0x00000400,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_12BPC_BIT_EXT = 0x00000800,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_13BPC_BIT_EXT = 0x00001000,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_14BPC_BIT_EXT = 0x00002000,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_15BPC_BIT_EXT = 0x00004000,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_16BPC_BIT_EXT = 0x00008000,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_17BPC_BIT_EXT = 0x00010000,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_18BPC_BIT_EXT = 0x00020000,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_19BPC_BIT_EXT = 0x00040000,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_20BPC_BIT_EXT = 0x00080000,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_21BPC_BIT_EXT = 0x00100000,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_22BPC_BIT_EXT = 0x00200000,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_23BPC_BIT_EXT = 0x00400000,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_24BPC_BIT_EXT = 0x00800000,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_FLAG_BITS_EXT_MAX_ENUM = 0x7fffffff,
+} VkImageCompressionFixedRateFlagBitsEXT;
+
+typedef enum VkImageCompressionFlagBitsEXT
+{
+    VK_IMAGE_COMPRESSION_DEFAULT_EXT = 0,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_DEFAULT_EXT = 0x00000001,
+    VK_IMAGE_COMPRESSION_FIXED_RATE_EXPLICIT_EXT = 0x00000002,
+    VK_IMAGE_COMPRESSION_DISABLED_EXT = 0x00000004,
+    VK_IMAGE_COMPRESSION_FLAG_BITS_EXT_MAX_ENUM = 0x7fffffff,
+} VkImageCompressionFlagBitsEXT;
 
 typedef enum VkImageCreateFlagBits
 {
@@ -3032,6 +3078,7 @@ typedef VkResolveModeFlagBits VkResolveModeFlagBitsKHR;
 
 typedef enum VkResult
 {
+    VK_ERROR_COMPRESSION_EXHAUSTED_EXT = -1000338000,
     VK_ERROR_INVALID_OPAQUE_CAPTURE_ADDRESS = -1000257000,
     VK_ERROR_NOT_PERMITTED_KHR = -1000174001,
     VK_ERROR_FRAGMENTATION = -1000161000,
@@ -3726,6 +3773,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_FEATURES_EXT = 1000320000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_GRAPHICS_PIPELINE_LIBRARY_PROPERTIES_EXT = 1000320001,
     VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_LIBRARY_CREATE_INFO_EXT = 1000320002,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_EARLY_AND_LATE_FRAGMENT_TESTS_FEATURES_EXT = 1000321000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_SUBGROUP_UNIFORM_CONTROL_FLOW_FEATURES_KHR = 1000323000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ZERO_INITIALIZE_WORKGROUP_MEMORY_FEATURES = 1000325000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADING_RATE_ENUMS_PROPERTIES_NV = 1000326000,
@@ -3751,6 +3799,11 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_IMAGE_BLIT_2 = 1000337008,
     VK_STRUCTURE_TYPE_BUFFER_IMAGE_COPY_2 = 1000337009,
     VK_STRUCTURE_TYPE_IMAGE_RESOLVE_2 = 1000337010,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_FEATURES_EXT = 1000338000,
+    VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_CONTROL_EXT = 1000338001,
+    VK_STRUCTURE_TYPE_SUBRESOURCE_LAYOUT_2_EXT = 1000338002,
+    VK_STRUCTURE_TYPE_IMAGE_SUBRESOURCE_2_EXT = 1000338003,
+    VK_STRUCTURE_TYPE_IMAGE_COMPRESSION_PROPERTIES_EXT = 1000338004,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_4444_FORMATS_FEATURES_EXT = 1000340000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RASTERIZATION_ORDER_ATTACHMENT_ACCESS_FEATURES_ARM = 1000342000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RGBA10X6_FORMATS_FEATURES_EXT = 1000344000,
@@ -3798,6 +3851,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_PROPERTIES_QCOM = 1000425001,
     VK_STRUCTURE_TYPE_SUBPASS_FRAGMENT_DENSITY_MAP_OFFSET_END_INFO_QCOM = 1000425002,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_LINEAR_COLOR_ATTACHMENT_FEATURES_NV = 1000430000,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_FEATURES_EXT = 1000437000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_MERGE_FEEDBACK_FEATURES_EXT = 1000458000,
     VK_STRUCTURE_TYPE_RENDER_PASS_CREATION_CONTROL_EXT = 1000458001,
     VK_STRUCTURE_TYPE_RENDER_PASS_CREATION_FEEDBACK_INFO_EXT = 1000458002,
@@ -5434,6 +5488,23 @@ typedef struct VkGraphicsPipelineLibraryCreateInfoEXT
     VkGraphicsPipelineLibraryFlagsEXT flags;
 } VkGraphicsPipelineLibraryCreateInfoEXT;
 
+typedef struct VkImageCompressionControlEXT
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkImageCompressionFlagsEXT flags;
+    uint32_t compressionControlPlaneCount;
+    VkImageCompressionFixedRateFlagsEXT *pFixedRateFlags;
+} VkImageCompressionControlEXT;
+
+typedef struct VkImageCompressionPropertiesEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    VkImageCompressionFlagsEXT imageCompressionFlags;
+    VkImageCompressionFixedRateFlagsEXT imageCompressionFixedRateFlags;
+} VkImageCompressionPropertiesEXT;
+
 typedef struct VkImageCreateInfo
 {
     VkStructureType sType;
@@ -5517,6 +5588,13 @@ typedef struct VkImageSubresource
     uint32_t mipLevel;
     uint32_t arrayLayer;
 } VkImageSubresource;
+
+typedef struct VkImageSubresource2EXT
+{
+    VkStructureType sType;
+    void *pNext;
+    VkImageSubresource imageSubresource;
+} VkImageSubresource2EXT;
 
 typedef struct VkImageSubresourceLayers
 {
@@ -6612,6 +6690,20 @@ typedef struct VkPhysicalDeviceImage2DViewOf3DFeaturesEXT
     VkBool32 sampler2DViewOf3D;
 } VkPhysicalDeviceImage2DViewOf3DFeaturesEXT;
 
+typedef struct VkPhysicalDeviceImageCompressionControlFeaturesEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 imageCompressionControl;
+} VkPhysicalDeviceImageCompressionControlFeaturesEXT;
+
+typedef struct VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 imageCompressionControlSwapchain;
+} VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT;
+
 typedef struct VkPhysicalDeviceImageFormatInfo2
 {
     VkStructureType sType;
@@ -7336,6 +7428,13 @@ typedef struct VkPhysicalDeviceShaderDrawParametersFeatures
     VkBool32 shaderDrawParameters;
 } VkPhysicalDeviceShaderDrawParametersFeatures;
 typedef VkPhysicalDeviceShaderDrawParametersFeatures VkPhysicalDeviceShaderDrawParameterFeatures;
+
+typedef struct VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 shaderEarlyAndLateFragmentTests;
+} VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT;
 
 typedef struct VkPhysicalDeviceShaderFloat16Int8Features
 {
@@ -8994,6 +9093,13 @@ typedef struct VkSubresourceLayout
     VkDeviceSize WINE_VK_ALIGN(8) depthPitch;
 } VkSubresourceLayout;
 
+typedef struct VkSubresourceLayout2EXT
+{
+    VkStructureType sType;
+    void *pNext;
+    VkSubresourceLayout WINE_VK_ALIGN(8) subresourceLayout;
+} VkSubresourceLayout2EXT;
+
 typedef struct VkSurfaceCapabilitiesKHR
 {
     uint32_t minImageCount;
@@ -10455,6 +10561,7 @@ typedef void (VKAPI_PTR *PFN_vkGetImageSparseMemoryRequirements)(VkDevice, VkIma
 typedef void (VKAPI_PTR *PFN_vkGetImageSparseMemoryRequirements2)(VkDevice, const VkImageSparseMemoryRequirementsInfo2 *, uint32_t *, VkSparseImageMemoryRequirements2 *);
 typedef void (VKAPI_PTR *PFN_vkGetImageSparseMemoryRequirements2KHR)(VkDevice, const VkImageSparseMemoryRequirementsInfo2 *, uint32_t *, VkSparseImageMemoryRequirements2 *);
 typedef void (VKAPI_PTR *PFN_vkGetImageSubresourceLayout)(VkDevice, VkImage, const VkImageSubresource *, VkSubresourceLayout *);
+typedef void (VKAPI_PTR *PFN_vkGetImageSubresourceLayout2EXT)(VkDevice, VkImage, const VkImageSubresource2EXT *, VkSubresourceLayout2EXT *);
 typedef VkResult (VKAPI_PTR *PFN_vkGetImageViewAddressNVX)(VkDevice, VkImageView, VkImageViewAddressPropertiesNVX *);
 typedef uint32_t (VKAPI_PTR *PFN_vkGetImageViewHandleNVX)(VkDevice, const VkImageViewHandleInfoNVX *);
 typedef PFN_vkVoidFunction (VKAPI_PTR *PFN_vkGetInstanceProcAddr)(VkInstance, const char *);
@@ -10914,6 +11021,7 @@ void VKAPI_CALL vkGetImageSparseMemoryRequirements(VkDevice device, VkImage imag
 void VKAPI_CALL vkGetImageSparseMemoryRequirements2(VkDevice device, const VkImageSparseMemoryRequirementsInfo2 *pInfo, uint32_t *pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements2 *pSparseMemoryRequirements);
 void VKAPI_CALL vkGetImageSparseMemoryRequirements2KHR(VkDevice device, const VkImageSparseMemoryRequirementsInfo2 *pInfo, uint32_t *pSparseMemoryRequirementCount, VkSparseImageMemoryRequirements2 *pSparseMemoryRequirements);
 void VKAPI_CALL vkGetImageSubresourceLayout(VkDevice device, VkImage image, const VkImageSubresource *pSubresource, VkSubresourceLayout *pLayout);
+void VKAPI_CALL vkGetImageSubresourceLayout2EXT(VkDevice device, VkImage image, const VkImageSubresource2EXT *pSubresource, VkSubresourceLayout2EXT *pLayout);
 VkResult VKAPI_CALL vkGetImageViewAddressNVX(VkDevice device, VkImageView imageView, VkImageViewAddressPropertiesNVX *pProperties);
 uint32_t VKAPI_CALL vkGetImageViewHandleNVX(VkDevice device, const VkImageViewHandleInfoNVX *pInfo);
 PFN_vkVoidFunction VKAPI_CALL vkGetInstanceProcAddr(VkInstance instance, const char *pName);

@@ -1304,6 +1304,17 @@ typedef VkSubresourceLayout VkSubresourceLayout_host;
 #endif
 
 #if defined(USE_STRUCT_CONVERSION)
+typedef struct VkSubresourceLayout2EXT_host
+{
+    VkStructureType sType;
+    void *pNext;
+    VkSubresourceLayout_host subresourceLayout;
+} VkSubresourceLayout2EXT_host;
+#else
+typedef VkSubresourceLayout2EXT VkSubresourceLayout2EXT_host;
+#endif
+
+#if defined(USE_STRUCT_CONVERSION)
 typedef struct VkImageViewAddressPropertiesNVX_host
 {
     VkStructureType sType;
@@ -2140,6 +2151,7 @@ struct vulkan_device_funcs
     void (*p_vkGetImageSparseMemoryRequirements2)(VkDevice, const VkImageSparseMemoryRequirementsInfo2_host *, uint32_t *, VkSparseImageMemoryRequirements2 *);
     void (*p_vkGetImageSparseMemoryRequirements2KHR)(VkDevice, const VkImageSparseMemoryRequirementsInfo2_host *, uint32_t *, VkSparseImageMemoryRequirements2 *);
     void (*p_vkGetImageSubresourceLayout)(VkDevice, VkImage, const VkImageSubresource *, VkSubresourceLayout_host *);
+    void (*p_vkGetImageSubresourceLayout2EXT)(VkDevice, VkImage, const VkImageSubresource2EXT *, VkSubresourceLayout2EXT_host *);
     VkResult (*p_vkGetImageViewAddressNVX)(VkDevice, VkImageView, VkImageViewAddressPropertiesNVX_host *);
     uint32_t (*p_vkGetImageViewHandleNVX)(VkDevice, const VkImageViewHandleInfoNVX_host *);
     VkResult (*p_vkGetMemoryHostPointerPropertiesEXT)(VkDevice, VkExternalMemoryHandleTypeFlagBits, const void *, VkMemoryHostPointerPropertiesEXT *);
@@ -2592,6 +2604,7 @@ struct vulkan_instance_funcs
     USE_VK_FUNC(vkGetImageSparseMemoryRequirements2) \
     USE_VK_FUNC(vkGetImageSparseMemoryRequirements2KHR) \
     USE_VK_FUNC(vkGetImageSubresourceLayout) \
+    USE_VK_FUNC(vkGetImageSubresourceLayout2EXT) \
     USE_VK_FUNC(vkGetImageViewAddressNVX) \
     USE_VK_FUNC(vkGetImageViewHandleNVX) \
     USE_VK_FUNC(vkGetMemoryHostPointerPropertiesEXT) \

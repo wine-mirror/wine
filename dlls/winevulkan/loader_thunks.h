@@ -355,6 +355,7 @@ enum unix_call
     unix_vkGetImageSparseMemoryRequirements2,
     unix_vkGetImageSparseMemoryRequirements2KHR,
     unix_vkGetImageSubresourceLayout,
+    unix_vkGetImageSubresourceLayout2EXT,
     unix_vkGetImageViewAddressNVX,
     unix_vkGetImageViewHandleNVX,
     unix_vkGetMemoryHostPointerPropertiesEXT,
@@ -3048,6 +3049,14 @@ struct vkGetImageSubresourceLayout_params
     VkImage image;
     const VkImageSubresource *pSubresource;
     VkSubresourceLayout *pLayout;
+};
+
+struct vkGetImageSubresourceLayout2EXT_params
+{
+    VkDevice device;
+    VkImage image;
+    const VkImageSubresource2EXT *pSubresource;
+    VkSubresourceLayout2EXT *pLayout;
 };
 
 struct vkGetImageViewAddressNVX_params

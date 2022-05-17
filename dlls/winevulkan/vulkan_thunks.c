@@ -1931,6 +1931,27 @@ static inline void convert_VkSubresourceLayout_host_to_win(const VkSubresourceLa
 #endif /* USE_STRUCT_CONVERSION */
 
 #if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkSubresourceLayout2EXT_win_to_host(const VkSubresourceLayout2EXT *in, VkSubresourceLayout2EXT_host *out)
+{
+    if (!in) return;
+
+    out->pNext = in->pNext;
+    out->sType = in->sType;
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
+static inline void convert_VkSubresourceLayout2EXT_host_to_win(const VkSubresourceLayout2EXT_host *in, VkSubresourceLayout2EXT *out)
+{
+    if (!in) return;
+
+    out->sType = in->sType;
+    out->pNext = in->pNext;
+    convert_VkSubresourceLayout_host_to_win(&in->subresourceLayout, &out->subresourceLayout);
+}
+#endif /* USE_STRUCT_CONVERSION */
+
+#if defined(USE_STRUCT_CONVERSION)
 static inline void convert_VkImageViewAddressPropertiesNVX_win_to_host(const VkImageViewAddressPropertiesNVX *in, VkImageViewAddressPropertiesNVX_host *out)
 {
     if (!in) return;
@@ -4853,6 +4874,38 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceImageCompressionControlFeaturesEXT *in = (const VkPhysicalDeviceImageCompressionControlFeaturesEXT *)in_header;
+            VkPhysicalDeviceImageCompressionControlFeaturesEXT *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->imageCompressionControl = in->imageCompressionControl;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT *in = (const VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT *)in_header;
+            VkPhysicalDeviceImageCompressionControlSwapchainFeaturesEXT *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->imageCompressionControlSwapchain = in->imageCompressionControlSwapchain;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_MERGE_FEEDBACK_FEATURES_EXT:
         {
             const VkPhysicalDeviceSubpassMergeFeedbackFeaturesEXT *in = (const VkPhysicalDeviceSubpassMergeFeedbackFeaturesEXT *)in_header;
@@ -4879,6 +4932,22 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             out->sType = in->sType;
             out->pNext = NULL;
             out->pipelinePropertiesIdentifier = in->pipelinePropertiesIdentifier;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_EARLY_AND_LATE_FRAGMENT_TESTS_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT *in = (const VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT *)in_header;
+            VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->shaderEarlyAndLateFragmentTests = in->shaderEarlyAndLateFragmentTests;
 
             out_header->pNext = (VkBaseOutStructure *)out;
             out_header = out_header->pNext;
@@ -8624,6 +8693,25 @@ static NTSTATUS wine_vkGetImageSubresourceLayout(void *args)
 #endif
 }
 
+static NTSTATUS wine_vkGetImageSubresourceLayout2EXT(void *args)
+{
+    struct vkGetImageSubresourceLayout2EXT_params *params = args;
+#if defined(USE_STRUCT_CONVERSION)
+    VkSubresourceLayout2EXT_host pLayout_host;
+    TRACE("%p, 0x%s, %p, %p\n", params->device, wine_dbgstr_longlong(params->image), params->pSubresource, params->pLayout);
+
+    convert_VkSubresourceLayout2EXT_win_to_host(params->pLayout, &pLayout_host);
+    params->device->funcs.p_vkGetImageSubresourceLayout2EXT(params->device->device, params->image, params->pSubresource, &pLayout_host);
+
+    convert_VkSubresourceLayout2EXT_host_to_win(&pLayout_host, params->pLayout);
+    return STATUS_SUCCESS;
+#else
+    TRACE("%p, 0x%s, %p, %p\n", params->device, wine_dbgstr_longlong(params->image), params->pSubresource, params->pLayout);
+    params->device->funcs.p_vkGetImageSubresourceLayout2EXT(params->device->device, params->image, params->pSubresource, params->pLayout);
+    return STATUS_SUCCESS;
+#endif
+}
+
 static NTSTATUS wine_vkGetImageViewAddressNVX(void *args)
 {
     struct vkGetImageViewAddressNVX_params *params = args;
@@ -9755,6 +9843,7 @@ static const char * const vk_device_extensions[] =
     "VK_AMD_shader_ballot",
     "VK_AMD_shader_core_properties",
     "VK_AMD_shader_core_properties2",
+    "VK_AMD_shader_early_and_late_fragment_tests",
     "VK_AMD_shader_explicit_vertex_parameter",
     "VK_AMD_shader_fragment_mask",
     "VK_AMD_shader_image_load_store_lod",
@@ -9790,6 +9879,8 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_graphics_pipeline_library",
     "VK_EXT_host_query_reset",
     "VK_EXT_image_2d_view_of_3d",
+    "VK_EXT_image_compression_control",
+    "VK_EXT_image_compression_control_swapchain",
     "VK_EXT_image_robustness",
     "VK_EXT_image_view_min_lod",
     "VK_EXT_index_type_uint8",
@@ -10374,6 +10465,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     wine_vkGetImageSparseMemoryRequirements2,
     wine_vkGetImageSparseMemoryRequirements2KHR,
     wine_vkGetImageSubresourceLayout,
+    wine_vkGetImageSubresourceLayout2EXT,
     wine_vkGetImageViewAddressNVX,
     wine_vkGetImageViewHandleNVX,
     wine_vkGetMemoryHostPointerPropertiesEXT,
