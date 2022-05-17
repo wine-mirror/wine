@@ -373,6 +373,38 @@ typedef struct _MINIDUMP_USER_STREAM_INFORMATION
     PMINIDUMP_USER_STREAM UserStreamArray;
 } MINIDUMP_USER_STREAM_INFORMATION, *PMINIDUMP_USER_STREAM_INFORMATION;
 
+typedef struct _MINIDUMP_HANDLE_DATA_STREAM
+{
+    ULONG32 SizeOfHeader;
+    ULONG32 SizeOfDescriptor;
+    ULONG32 NumberOfDescriptors;
+    ULONG32 Reserved;
+} MINIDUMP_HANDLE_DATA_STREAM, *PMINIDUMP_HANDLE_DATA_STREAM;
+
+typedef struct _MINIDUMP_HANDLE_DESCRIPTOR
+{
+    ULONG64 Handle;
+    RVA TypeNameRva;
+    RVA ObjectNameRva;
+    ULONG32 Attributes;
+    ULONG32 GrantedAccess;
+    ULONG32 HandleCount;
+    ULONG32 PointerCount;
+} MINIDUMP_HANDLE_DESCRIPTOR, *PMINIDUMP_HANDLE_DESCRIPTOR;
+
+typedef struct _MINIDUMP_HANDLE_DESCRIPTOR_2
+{
+    ULONG64 Handle;
+    RVA TypeNameRva;
+    RVA ObjectNameRva;
+    ULONG32 Attributes;
+    ULONG32 GrantedAccess;
+    ULONG32 HandleCount;
+    ULONG32 PointerCount;
+    RVA ObjectInfoRva;
+    ULONG32 Reserved0;
+} MINIDUMP_HANDLE_DESCRIPTOR_2, *PMINIDUMP_HANDLE_DESCRIPTOR_2;
+
 typedef enum _MINIDUMP_STREAM_TYPE
 {
     UnusedStream                = 0,
@@ -393,6 +425,13 @@ typedef enum _MINIDUMP_STREAM_TYPE
     MiscInfoStream              = 15,
     MemoryInfoListStream        = 16,
     ThreadInfoListStream        = 17,
+    HandleOperationListStream   = 18,
+    TokenStream                 = 19,
+    JavaScriptDataStream        = 20,
+    SystemMemoryInfoStream      = 21,
+    ProcessVmCountersStream     = 22,
+    IptTraceStream              = 23,
+    ThreadNamesStream           = 24,
 
     LastReservedStream          = 0xffff
 } MINIDUMP_STREAM_TYPE;

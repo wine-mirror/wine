@@ -34,7 +34,9 @@ static void dump_mdmp_data(const MINIDUMP_LOCATION_DESCRIPTOR* md, const char* p
 static void dump_mdmp_string(DWORD rva)
 {
     const MINIDUMP_STRING*      ms = PRD(rva, sizeof(MINIDUMP_STRING));
-    if (ms)
+    if (!rva)
+        printf("<<rva=0>>");
+    else if (ms)
         dump_unicode_str( ms->Buffer, ms->Length / sizeof(WCHAR) );
     else
         printf("<<?>>");
@@ -80,7 +82,7 @@ void mdmp_dump(void)
     const MINIDUMP_HEADER*      hdr = PRD(0, sizeof(MINIDUMP_HEADER));
     const MINIDUMP_DIRECTORY*   dir;
     const void*                 stream;
-    unsigned int idx;
+    unsigned int i, idx;
 
     if (!hdr)
     {
@@ -110,7 +112,6 @@ void mdmp_dump(void)
         {
             const MINIDUMP_THREAD_LIST *mtl = stream;
             const MINIDUMP_THREAD *mt = mtl->Threads;
-            unsigned int i;
 
             printf("Threads: %u\n", (UINT)mtl->NumberOfThreads);
             for (i = 0; i < mtl->NumberOfThreads; i++, mt++)
@@ -133,7 +134,6 @@ void mdmp_dump(void)
         {
             const MINIDUMP_MODULE_LIST *mml = stream;
             const MINIDUMP_MODULE*      mm = mml->Modules;
-            unsigned int                i;
             const char*                 p1;
             const char*                 p2;
 
@@ -224,7 +224,6 @@ void mdmp_dump(void)
         {
             const MINIDUMP_MEMORY_LIST *mml = stream;
             const MINIDUMP_MEMORY_DESCRIPTOR*   mmd = mml->MemoryRanges;
-            unsigned int                        i;
 
             printf("Memory Ranges: %u\n", mml->NumberOfMemoryRanges);
             for (i = 0; i < mml->NumberOfMemoryRanges; i++, mmd++)
@@ -419,7 +418,6 @@ void mdmp_dump(void)
         case ExceptionStream:
         {
             const MINIDUMP_EXCEPTION_STREAM *mes = stream;
-            unsigned int                        i;
 
             printf("Exception:\n");
             printf("  ThreadId: %#x\n", mes->ThreadId);
@@ -436,6 +434,46 @@ void mdmp_dump(void)
             }
             printf("  ThreadContext:\n");
             dump_mdmp_data(&mes->ThreadContext, "    ");
+        }
+        break;
+        case HandleDataStream:
+        {
+            const MINIDUMP_HANDLE_DATA_STREAM *mhd = stream;
+            const BYTE *desc;
+
+            printf("Handle data:\n");
+            printf("  SizeOfHeader: %u\n", mhd->SizeOfHeader);
+            printf("  SizeOfDescriptor: %u\n", mhd->SizeOfDescriptor);
+            printf("  NumberOfDescriptors: %u\n", mhd->NumberOfDescriptors);
+
+            desc = (BYTE *)mhd + sizeof(*mhd);
+            for (i = 0; i < mhd->NumberOfDescriptors; ++i)
+            {
+                const MINIDUMP_HANDLE_DESCRIPTOR_2 *hd = (void *)desc;
+
+                printf("  Handle [%u]:\n", i);
+                print_longlong("    Handle", hd->Handle);
+                printf("    TypeName: ");
+                dump_mdmp_string(hd->TypeNameRva);
+                printf("\n");
+                printf("    ObjectName: ");
+                dump_mdmp_string(hd->ObjectNameRva);
+                printf("\n");
+                printf("    Attributes: %#x\n", hd->Attributes);
+                printf("    GrantedAccess: %#x\n", hd->GrantedAccess);
+                printf("    HandleCount: %u\n", hd->HandleCount);
+                printf("    PointerCount: %#x\n", hd->PointerCount);
+
+                if (mhd->SizeOfDescriptor >= sizeof(MINIDUMP_HANDLE_DESCRIPTOR_2))
+                {
+                    printf("    ObjectInfo: ");
+                    dump_mdmp_string(hd->ObjectInfoRva);
+                    printf("\n");
+                    printf("    Reserved0: %#x\n", hd->Reserved0);
+                }
+
+                desc += mhd->SizeOfDescriptor;
+            }
         }
         break;
 
