@@ -205,6 +205,7 @@ struct macdrv_win_data
 
 extern struct macdrv_win_data *get_win_data(HWND hwnd) DECLSPEC_HIDDEN;
 extern void release_win_data(struct macdrv_win_data *data) DECLSPEC_HIDDEN;
+extern void init_win_context(void) DECLSPEC_HIDDEN;
 extern macdrv_window macdrv_get_cocoa_window(HWND hwnd, BOOL require_on_screen) DECLSPEC_HIDDEN;
 extern RGNDATA *get_region_data(HRGN hrgn, HDC hdc_lptodp) DECLSPEC_HIDDEN;
 extern void activate_on_following_focus(void) DECLSPEC_HIDDEN;

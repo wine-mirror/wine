@@ -459,6 +459,7 @@ static BOOL process_attach(void)
     if (status != noErr || !(attributes & sessionHasGraphicAccess))
         return FALSE;
 
+    init_win_context();
     setup_options();
     load_strings(macdrv_module);
 

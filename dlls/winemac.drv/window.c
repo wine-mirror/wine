@@ -38,15 +38,7 @@
 WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
 
 
-static CRITICAL_SECTION win_data_section;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &win_data_section,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": win_data_section") }
-};
-static CRITICAL_SECTION win_data_section = { &critsect_debug, -1, 0, 0, 0, 0 };
-
+static pthread_mutex_t win_data_mutex;
 static CFMutableDictionaryRef win_datas;
 
 static DWORD activate_on_focus_time;
@@ -251,7 +243,7 @@ static struct macdrv_win_data *alloc_win_data(HWND hwnd)
         data->hwnd = hwnd;
         data->color_key = CLR_INVALID;
         data->swap_interval = 1;
-        EnterCriticalSection(&win_data_section);
+        pthread_mutex_lock(&win_data_mutex);
         if (!win_datas)
             win_datas = CFDictionaryCreateMutable(NULL, 0, NULL, NULL);
         CFDictionarySetValue(win_datas, hwnd, data);
@@ -270,10 +262,10 @@ struct macdrv_win_data *get_win_data(HWND hwnd)
     struct macdrv_win_data *data;
 
     if (!hwnd) return NULL;
-    EnterCriticalSection(&win_data_section);
+    pthread_mutex_lock(&win_data_mutex);
     if (win_datas && (data = (struct macdrv_win_data*)CFDictionaryGetValue(win_datas, hwnd)))
         return data;
-    LeaveCriticalSection(&win_data_section);
+    pthread_mutex_unlock(&win_data_mutex);
     return NULL;
 }
 
@@ -285,7 +277,7 @@ struct macdrv_win_data *get_win_data(HWND hwnd)
  */
 void release_win_data(struct macdrv_win_data *data)
 {
-    if (data) LeaveCriticalSection(&win_data_section);
+    if (data) pthread_mutex_unlock(&win_data_mutex);
 }
 
 
@@ -2909,4 +2901,18 @@ BOOL query_min_max_info(HWND hwnd)
     TRACE("hwnd %p\n", hwnd);
     sync_window_min_max_info(hwnd);
     return TRUE;
+}
+
+
+/***********************************************************************
+ *              init_win_context
+ */
+void init_win_context(void)
+{
+    pthread_mutexattr_t attr;
+
+    pthread_mutexattr_init(&attr);
+    pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE);
+    pthread_mutex_init(&win_data_mutex, &attr);
+    pthread_mutexattr_destroy(&attr);
 }
