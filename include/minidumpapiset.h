@@ -405,6 +405,27 @@ typedef struct _MINIDUMP_HANDLE_DESCRIPTOR_2
     ULONG32 Reserved0;
 } MINIDUMP_HANDLE_DESCRIPTOR_2, *PMINIDUMP_HANDLE_DESCRIPTOR_2;
 
+typedef struct _MINIDUMP_THREAD_INFO
+{
+    ULONG32 ThreadId;
+    ULONG32 DumpFlags;
+    ULONG32 DumpError;
+    ULONG32 ExitStatus;
+    ULONG64 CreateTime;
+    ULONG64 ExitTime;
+    ULONG64 KernelTime;
+    ULONG64 UserTime;
+    ULONG64 StartAddress;
+    ULONG64 Affinity;
+} MINIDUMP_THREAD_INFO, *PMINIDUMP_THREAD_INFO;
+
+typedef struct _MINIDUMP_THREAD_INFO_LIST
+{
+    ULONG SizeOfHeader;
+    ULONG SizeOfEntry;
+    ULONG NumberOfEntries;
+} MINIDUMP_THREAD_INFO_LIST, *PMINIDUMP_THREAD_INFO_LIST;
+
 typedef enum _MINIDUMP_STREAM_TYPE
 {
     UnusedStream                = 0,

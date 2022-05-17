@@ -476,6 +476,37 @@ void mdmp_dump(void)
             }
         }
         break;
+        case ThreadInfoListStream:
+        {
+            const MINIDUMP_THREAD_INFO_LIST *til = stream;
+            const BYTE *desc;
+
+            printf("Thread Info List:\n");
+            printf("  SizeOfHeader: %u\n", (UINT)til->SizeOfHeader);
+            printf("  SizeOfEntry: %u\n", (UINT)til->SizeOfEntry);
+            printf("  NumberOfEntries: %u\n", (UINT)til->NumberOfEntries);
+
+            desc = (BYTE *)til + sizeof(*til);
+            for (i = 0; i < til->NumberOfEntries; ++i)
+            {
+                const MINIDUMP_THREAD_INFO *ti = (void *)desc;
+
+                printf("  Thread [%u]:\n", i);
+                printf("    ThreadId: %u\n", ti->ThreadId);
+                printf("    DumpFlags: %#x\n", ti->DumpFlags);
+                printf("    DumpError: %u\n", ti->DumpError);
+                printf("    ExitStatus: %u\n", ti->ExitStatus);
+                print_longlong("    CreateTime", ti->CreateTime);
+                print_longlong("    ExitTime", ti->ExitTime);
+                print_longlong("    KernelTime", ti->KernelTime);
+                print_longlong("    UserTime", ti->UserTime);
+                print_longlong("    StartAddress", ti->StartAddress);
+                print_longlong("    Affinity", ti->Affinity);
+
+                desc += til->SizeOfEntry;
+            }
+        }
+        break;
 
         default:
             printf("NIY %d\n", dir->StreamType);
