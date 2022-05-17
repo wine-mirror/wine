@@ -857,6 +857,8 @@ static const struct gdi_dc_funcs psdrv_funcs =
     PSDRV_StrokePath,                   /* pStrokePath */
     NULL,                               /* pUnrealizePalette */
     NULL,                               /* pD3DKMTCheckVidPnExclusiveOwnership */
+    NULL,                               /* pD3DKMTCloseAdapter */
+    NULL,                               /* pD3DKMTOpenAdapterFromLuid */
     NULL,                               /* pD3DKMTSetVidPnSourceOwner */
     GDI_PRIORITY_GRAPHICS_DRV           /* priority */
 };

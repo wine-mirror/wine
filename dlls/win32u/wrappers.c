@@ -671,6 +671,12 @@ NTSTATUS WINAPI NtGdiDdDDICheckVidPnExclusiveOwnership( const D3DKMT_CHECKVIDPNE
     return unix_funcs->pNtGdiDdDDICheckVidPnExclusiveOwnership( desc );
 }
 
+NTSTATUS WINAPI NtGdiDdDDICloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
+{
+    if (!unix_funcs) return STATUS_NOT_SUPPORTED;
+    return unix_funcs->pNtGdiDdDDICloseAdapter( desc );
+}
+
 NTSTATUS WINAPI NtGdiDdDDICreateDCFromMemory( D3DKMT_CREATEDCFROMMEMORY *desc )
 {
     if (!unix_funcs) return STATUS_NOT_SUPPORTED;
@@ -693,6 +699,18 @@ NTSTATUS WINAPI NtGdiDdDDIEscape( const D3DKMT_ESCAPE *desc )
 {
     if (!unix_funcs) return STATUS_NOT_SUPPORTED;
     return unix_funcs->pNtGdiDdDDIEscape( desc );
+}
+
+NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromDeviceName( D3DKMT_OPENADAPTERFROMDEVICENAME *desc )
+{
+    if (!unix_funcs) return STATUS_NOT_SUPPORTED;
+    return unix_funcs->pNtGdiDdDDIOpenAdapterFromDeviceName( desc );
+}
+
+NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *desc )
+{
+    if (!unix_funcs) return STATUS_NOT_SUPPORTED;
+    return unix_funcs->pNtGdiDdDDIOpenAdapterFromLuid( desc );
 }
 
 NTSTATUS WINAPI NtGdiDdDDISetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER *desc )

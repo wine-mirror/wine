@@ -158,6 +158,8 @@ struct gdi_dc_funcs
     BOOL     (CDECL *pStrokePath)(PHYSDEV);
     BOOL     (CDECL *pUnrealizePalette)(HPALETTE);
     NTSTATUS (CDECL *pD3DKMTCheckVidPnExclusiveOwnership)(const D3DKMT_CHECKVIDPNEXCLUSIVEOWNERSHIP *);
+    NTSTATUS (CDECL *pD3DKMTCloseAdapter)(const D3DKMT_CLOSEADAPTER *);
+    NTSTATUS (CDECL *pD3DKMTOpenAdapterFromLuid)(D3DKMT_OPENADAPTERFROMLUID *);
     NTSTATUS (CDECL *pD3DKMTSetVidPnSourceOwner)(const D3DKMT_SETVIDPNSOURCEOWNER *);
 
     /* priority order for the driver on the stack */

@@ -602,13 +602,6 @@ NTSTATUS WINAPI wow64_NtGdiFlush( UINT *args )
     return NtGdiFlush();
 }
 
-NTSTATUS WINAPI wow64_NtGdiDdDDICloseAdapter( UINT *args )
-{
-    const D3DKMT_CLOSEADAPTER *desc = get_ptr( &args );
-
-    return NtGdiDdDDICloseAdapter( desc );
-}
-
 NTSTATUS WINAPI wow64_NtGdiDdDDICreateDevice( UINT *args )
 {
     struct
@@ -644,26 +637,6 @@ NTSTATUS WINAPI wow64_NtGdiDdDDICreateDevice( UINT *args )
     return status;
 }
 
-NTSTATUS WINAPI wow64_NtGdiDdDDIOpenAdapterFromDeviceName( UINT *args )
-{
-    struct
-    {
-        ULONG pDeviceName;
-        D3DKMT_HANDLE hAdapter;
-        LUID AdapterLuid;
-    } *desc32 = get_ptr( &args );
-
-    D3DKMT_OPENADAPTERFROMDEVICENAME desc = { UlongToPtr( desc32->pDeviceName ) };
-    NTSTATUS status;
-
-    if (!(status = NtGdiDdDDIOpenAdapterFromDeviceName( &desc )))
-    {
-        desc32->hAdapter = desc.hAdapter;
-        desc32->AdapterLuid = desc.AdapterLuid;
-    }
-    return status;
-}
-
 NTSTATUS WINAPI wow64_NtGdiDdDDIOpenAdapterFromHdc( UINT *args )
 {
     struct
@@ -684,13 +657,6 @@ NTSTATUS WINAPI wow64_NtGdiDdDDIOpenAdapterFromHdc( UINT *args )
         desc32->VidPnSourceId = desc.VidPnSourceId;
     }
     return status;
-}
-
-NTSTATUS WINAPI wow64_NtGdiDdDDIOpenAdapterFromLuid( UINT *args )
-{
-    D3DKMT_OPENADAPTERFROMLUID *desc = get_ptr( &args );
-
-    return NtGdiDdDDIOpenAdapterFromLuid( desc );
 }
 
 NTSTATUS WINAPI wow64_NtGdiDdDDIQueryStatistics( UINT *args )

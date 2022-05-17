@@ -187,7 +187,7 @@
 @ stub NtGdiDdDDICheckOcclusion
 @ stub NtGdiDdDDICheckSharedResourceAccess
 @ stdcall NtGdiDdDDICheckVidPnExclusiveOwnership(ptr)
-@ stdcall -syscall NtGdiDdDDICloseAdapter(ptr)
+@ stdcall NtGdiDdDDICloseAdapter(ptr)
 @ stub NtGdiDdDDIConfigureSharedResource
 @ stub NtGdiDdDDICreateAllocation
 @ stub NtGdiDdDDICreateBundleObject
@@ -268,9 +268,9 @@
 @ stub NtGdiDdDDINetDispStartMiracastDisplayDevice
 @ stub NtGdiDdDDINetDispStopMiracastDisplayDevice
 @ stub NtGdiDdDDIOfferAllocations
-@ stdcall -syscall NtGdiDdDDIOpenAdapterFromDeviceName(ptr)
+@ stdcall NtGdiDdDDIOpenAdapterFromDeviceName(ptr)
 @ stdcall -syscall NtGdiDdDDIOpenAdapterFromHdc(ptr)
-@ stdcall -syscall NtGdiDdDDIOpenAdapterFromLuid(ptr)
+@ stdcall NtGdiDdDDIOpenAdapterFromLuid(ptr)
 @ stub NtGdiDdDDIOpenBundleObjectNtHandleFromName
 @ stub NtGdiDdDDIOpenKeyedMutex
 @ stub NtGdiDdDDIOpenKeyedMutex2

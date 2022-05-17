@@ -550,6 +550,16 @@ static NTSTATUS CDECL nulldrv_D3DKMTCheckVidPnExclusiveOwnership( const D3DKMT_C
     return STATUS_PROCEDURE_NOT_FOUND;
 }
 
+static NTSTATUS CDECL nulldrv_D3DKMTCloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
+{
+    return STATUS_PROCEDURE_NOT_FOUND;
+}
+
+static NTSTATUS CDECL nulldrv_D3DKMTOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *desc )
+{
+    return STATUS_PROCEDURE_NOT_FOUND;
+}
+
 static NTSTATUS CDECL nulldrv_D3DKMTSetVidPnSourceOwner( const D3DKMT_SETVIDPNSOURCEOWNER *desc )
 {
     return STATUS_PROCEDURE_NOT_FOUND;
@@ -647,6 +657,8 @@ const struct gdi_dc_funcs null_driver =
     nulldrv_StrokePath,                 /* pStrokePath */
     nulldrv_UnrealizePalette,           /* pUnrealizePalette */
     nulldrv_D3DKMTCheckVidPnExclusiveOwnership, /* pD3DKMTCheckVidPnExclusiveOwnership */
+    nulldrv_D3DKMTCloseAdapter,         /* pD3DKMTCloseAdapter */
+    nulldrv_D3DKMTOpenAdapterFromLuid,  /* pD3DKMTOpenAdapterFromLuid */
     nulldrv_D3DKMTSetVidPnSourceOwner,  /* pD3DKMTSetVidPnSourceOwner */
 
     GDI_PRIORITY_NULL_DRV               /* priority */
@@ -1316,6 +1328,9 @@ NTSTATUS WINAPI NtGdiDdDDICloseAdapter( const D3DKMT_CLOSEADAPTER *desc )
     if (!desc || !desc->hAdapter)
         return STATUS_INVALID_PARAMETER;
 
+    if (get_display_driver()->pD3DKMTCloseAdapter)
+        get_display_driver()->pD3DKMTCloseAdapter( desc );
+
     pthread_mutex_lock( &driver_lock );
     LIST_FOR_EACH_ENTRY( adapter, &d3dkmt_adapters, struct d3dkmt_adapter, entry )
     {
@@ -1366,6 +1381,10 @@ NTSTATUS WINAPI NtGdiDdDDIOpenAdapterFromLuid( D3DKMT_OPENADAPTERFROMLUID *desc 
     desc->hAdapter = adapter->handle = ++handle_start;
     list_add_tail( &d3dkmt_adapters, &adapter->entry );
     pthread_mutex_unlock( &driver_lock );
+
+    if (get_display_driver()->pD3DKMTOpenAdapterFromLuid)
+        get_display_driver()->pD3DKMTOpenAdapterFromLuid( desc );
+
     return STATUS_SUCCESS;
 }
 
