@@ -333,6 +333,11 @@ F:	dlls/wbemdisp/
 F:	dlls/wbemprox/
 F:	dlls/wmiutils/
 
+Windows Media Format
+M:	Zebediah Figura <z.figura12@gmail.com>
+F:	dlls/wmp/
+F:	dlls/wmvcore/
+
 Windows Media Foundation
 M:	Nikolay Sivov <nsivov@codeweavers.com>
 F:	dlls/mf/
