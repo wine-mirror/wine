@@ -27,11 +27,11 @@ struct asf_reader
     struct strmbase_filter filter;
     IFileSourceFilter IFileSourceFilter_iface;
 
-    AM_MEDIA_TYPE type;
-    WCHAR *filename;
+    AM_MEDIA_TYPE media_type;
+    WCHAR *file_name;
 };
 
-static inline struct asf_reader *impl_reader_from_strmbase_filter(struct strmbase_filter *iface)
+static inline struct asf_reader *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
     return CONTAINING_RECORD(iface, struct asf_reader, filter);
 }
@@ -43,10 +43,10 @@ static struct strmbase_pin *asf_reader_get_pin(struct strmbase_filter *iface, un
 
 static void asf_reader_destroy(struct strmbase_filter *iface)
 {
-    struct asf_reader *filter = impl_reader_from_strmbase_filter(iface);
+    struct asf_reader *filter = impl_from_strmbase_filter(iface);
 
-    free(filter->filename);
-    FreeMediaType(&filter->type);
+    free(filter->file_name);
+    FreeMediaType(&filter->media_type);
 
     strmbase_filter_cleanup(&filter->filter);
     free(filter);
@@ -54,7 +54,7 @@ static void asf_reader_destroy(struct strmbase_filter *iface)
 
 static HRESULT asf_reader_query_interface(struct strmbase_filter *iface, REFIID iid, void **out)
 {
-    struct asf_reader *filter = impl_reader_from_strmbase_filter(iface);
+    struct asf_reader *filter = impl_from_strmbase_filter(iface);
 
     if (IsEqualGUID(iid, &IID_IFileSourceFilter))
     {
@@ -78,84 +78,84 @@ static inline struct asf_reader *impl_from_IFileSourceFilter(IFileSourceFilter *
     return CONTAINING_RECORD(iface, struct asf_reader, IFileSourceFilter_iface);
 }
 
-static HRESULT WINAPI filesourcefilter_QueryInterface(IFileSourceFilter *iface, REFIID iid, void **out)
+static HRESULT WINAPI file_source_QueryInterface(IFileSourceFilter *iface, REFIID iid, void **out)
 {
     struct asf_reader *filter = impl_from_IFileSourceFilter(iface);
 
     return IBaseFilter_QueryInterface(&filter->filter.IBaseFilter_iface, iid, out);
 }
 
-static ULONG WINAPI filesourcefilter_AddRef(IFileSourceFilter *iface)
+static ULONG WINAPI file_source_AddRef(IFileSourceFilter *iface)
 {
     struct asf_reader *filter = impl_from_IFileSourceFilter(iface);
 
     return IBaseFilter_AddRef(&filter->filter.IBaseFilter_iface);
 }
 
-static ULONG WINAPI filesourcefilter_Release(IFileSourceFilter *iface)
+static ULONG WINAPI file_source_Release(IFileSourceFilter *iface)
 {
     struct asf_reader *filter = impl_from_IFileSourceFilter(iface);
 
     return IBaseFilter_Release(&filter->filter.IBaseFilter_iface);
 }
 
-static HRESULT WINAPI filesourcefilter_Load(IFileSourceFilter *iface, LPCOLESTR filename, const AM_MEDIA_TYPE *type)
+static HRESULT WINAPI file_source_Load(IFileSourceFilter *iface, LPCOLESTR file_name, const AM_MEDIA_TYPE *media_type)
 {
     struct asf_reader *filter = impl_from_IFileSourceFilter(iface);
 
-    TRACE("filter %p, filename %s, type %p.\n", filter, debugstr_w(filename), type);
-    strmbase_dump_media_type(type);
+    TRACE("filter %p, file_name %s, media_type %p.\n", filter, debugstr_w(file_name), media_type);
+    strmbase_dump_media_type(media_type);
 
-    if (!filename)
+    if (!file_name)
         return E_POINTER;
 
-    if (filter->filename)
+    if (filter->file_name)
         return E_FAIL;
 
-    if (!(filter->filename = wcsdup(filename)))
+    if (!(filter->file_name = wcsdup(file_name)))
         return E_OUTOFMEMORY;
 
-    if (type)
-        CopyMediaType(&filter->type, type);
+    if (media_type)
+        CopyMediaType(&filter->media_type, media_type);
 
     return S_OK;
 }
 
-static HRESULT WINAPI filesourcefilter_GetCurFile(IFileSourceFilter *iface, LPOLESTR *filename, AM_MEDIA_TYPE *type)
+static HRESULT WINAPI file_source_GetCurFile(IFileSourceFilter *iface, LPOLESTR *file_name, AM_MEDIA_TYPE *media_type)
 {
     struct asf_reader *filter = impl_from_IFileSourceFilter(iface);
 
-    TRACE("filter %p, filename %p, type %p.\n", filter, filename, type);
+    TRACE("filter %p, file_name %p, media_type %p.\n", filter, file_name, media_type);
 
-    if (!filename)
+    if (!file_name)
         return E_POINTER;
-    *filename = NULL;
+    *file_name = NULL;
 
-    if (type)
+    if (media_type)
     {
-        type->majortype = filter->type.majortype;
-        type->subtype = filter->type.subtype;
-        type->lSampleSize = filter->type.lSampleSize;
-        type->pUnk = filter->type.pUnk;
-        type->cbFormat = filter->type.cbFormat;
+        media_type->majortype = filter->media_type.majortype;
+        media_type->subtype = filter->media_type.subtype;
+        media_type->lSampleSize = filter->media_type.lSampleSize;
+        media_type->pUnk = filter->media_type.pUnk;
+        media_type->cbFormat = filter->media_type.cbFormat;
     }
 
-    if (filter->filename)
+    if (filter->file_name)
     {
-        *filename = CoTaskMemAlloc((wcslen(filter->filename) + 1) * sizeof(WCHAR));
-        wcscpy(*filename, filter->filename);
+        *file_name = CoTaskMemAlloc((wcslen(filter->file_name) + 1) * sizeof(WCHAR));
+        wcscpy(*file_name, filter->file_name);
     }
 
     return S_OK;
 }
 
-static const IFileSourceFilterVtbl filesourcefilter_vtbl =
+static const IFileSourceFilterVtbl file_source_vtbl =
 {
-    filesourcefilter_QueryInterface,
-    filesourcefilter_AddRef,
-    filesourcefilter_Release,
-    filesourcefilter_Load,
-    filesourcefilter_GetCurFile,
+    file_source_QueryInterface,
+    file_source_AddRef,
+    file_source_Release,
+    file_source_Load,
+    file_source_GetCurFile,
 };
 
 HRESULT asf_reader_create(IUnknown *outer, IUnknown **out)
@@ -166,7 +166,7 @@ HRESULT asf_reader_create(IUnknown *outer, IUnknown **out)
         return E_OUTOFMEMORY;
 
     strmbase_filter_init(&object->filter, outer, &CLSID_WMAsfReader, &filter_ops);
-    object->IFileSourceFilter_iface.lpVtbl = &filesourcefilter_vtbl;
+    object->IFileSourceFilter_iface.lpVtbl = &file_source_vtbl;
 
     TRACE("Created WM ASF reader %p.\n", object);
     *out = &object->filter.IUnknown_inner;
