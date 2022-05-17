@@ -62,6 +62,8 @@ DEFINE_EXPECT(Accessible_get_accParent);
 DEFINE_EXPECT(Accessible_child_get_accName);
 DEFINE_EXPECT(Accessible_child_get_accParent);
 
+DEFINE_GUID(SID_AccFromDAWrapper, 0x33f139ee, 0xe509, 0x47f7, 0xbf,0x39, 0x83,0x76,0x44,0xf7,0x45,0x76);
+
 static HANDLE (WINAPI *pGetProcessHandleFromHwnd)(HWND);
 
 static BOOL init(void)
@@ -684,7 +686,8 @@ static void test_AccessibleObjectFromWindow(void)
 
 static void test_AccessibleObjectFromEvent(void)
 {
-    IAccessible *acc;
+    IAccessible *acc, *acc2;
+    IServiceProvider *sp;
     VARIANT cid;
     HRESULT hr;
     HWND hwnd;
@@ -720,6 +723,21 @@ static void test_AccessibleObjectFromEvent(void)
     CHECK_CALLED(Accessible_get_accChild);
     ok(hr == S_OK, "got %#lx\n", hr);
     todo_wine ok(!iface_cmp((IUnknown*)acc, (IUnknown*)&Accessible), "acc == &Accessible\n");
+    /* Get &Accessible out of the Dynamic Annotation IAccessible wrapper. */
+    if (!iface_cmp((IUnknown*)acc, (IUnknown*)&Accessible))
+    {
+        hr = IAccessible_QueryInterface(acc, &IID_IServiceProvider, (void **)&sp);
+        ok(hr == S_OK, "got %#lx\n", hr);
+        ok(!!sp, "sp == NULL\n");
+
+        hr = IServiceProvider_QueryService(sp, &SID_AccFromDAWrapper, &IID_IAccessible,
+                (void**)&acc2);
+        ok(hr == S_OK, "got %#lx\n", hr);
+        ok(iface_cmp((IUnknown*)acc2, (IUnknown*)&Accessible), "acc != &Accessible\n");
+        IAccessible_Release(acc2);
+        IServiceProvider_Release(sp);
+    }
+
     ok(V_VT(&cid) == VT_I4, "got %#x, expected %#x\n", V_VT(&cid), VT_I4);
     ok(V_I4(&cid) == 1, "got %#lx, expected 1\n", V_I4(&cid));
     SET_EXPECT(Accessible_get_accParent);
