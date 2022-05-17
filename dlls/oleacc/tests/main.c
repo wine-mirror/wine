@@ -100,6 +100,7 @@ static struct Accessible
 {
     IAccessible IAccessible_iface;
     IOleWindow IOleWindow_iface;
+    LONG ref;
 
     IAccessible *parent;
     HWND acc_hwnd;
@@ -140,12 +141,14 @@ static HRESULT WINAPI Accessible_QueryInterface(
 
 static ULONG WINAPI Accessible_AddRef(IAccessible *iface)
 {
-    return 2;
+    struct Accessible *This = impl_from_Accessible(iface);
+    return InterlockedIncrement(&This->ref);
 }
 
 static ULONG WINAPI Accessible_Release(IAccessible *iface)
 {
-    return 1;
+    struct Accessible *This = impl_from_Accessible(iface);
+    return InterlockedDecrement(&This->ref);
 }
 
 static HRESULT WINAPI Accessible_GetTypeInfoCount(
@@ -226,9 +229,11 @@ static HRESULT WINAPI Accessible_get_accChild(IAccessible *iface,
         return S_FALSE;
     case 3:
         *ppdispChild = (IDispatch*)&Accessible_child.IAccessible_iface;
+        IDispatch_AddRef(*ppdispChild);
         return S_OK;
     case 4:
         *ppdispChild = (IDispatch*)&Accessible_child.IAccessible_iface;
+        IDispatch_AddRef(*ppdispChild);
         return S_FALSE;
     default:
         ok(0, "unexpected call\n");
@@ -464,6 +469,7 @@ static struct Accessible Accessible =
 {
     { &AccessibleVtbl },
     { &OleWindowVtbl },
+    1,
     NULL,
     0, 0
 };
@@ -471,6 +477,7 @@ static struct Accessible Accessible_child =
 {
     { &AccessibleVtbl },
     { &OleWindowVtbl },
+    1,
     &Accessible.IAccessible_iface,
     0, 0
 };
@@ -906,6 +913,8 @@ static void test_AccessibleObjectFromEvent(void)
     IAccessible_Release(acc);
 
     DestroyWindow(hwnd);
+    ok(Accessible.ref == 1, "Accessible.ref = %ld\n", Accessible.ref);
+    ok(Accessible_child.ref == 1, "Accessible.ref = %ld\n", Accessible_child.ref);
 }
 
 static void test_GetProcessHandleFromHwnd(void)
@@ -1014,6 +1023,9 @@ static void test_AccessibleChildren(IAccessible *acc)
         IDispatch_Release(V_DISPATCH(children+1));
     }
     ok(V_VT(children+2) == VT_EMPTY, "V_VT(children+2) = %d\n", V_VT(children+2));
+
+    ok(Accessible.ref == 1, "Accessible.ref = %ld\n", Accessible.ref);
+    ok(Accessible_child.ref == 1, "Accessible.ref = %ld\n", Accessible_child.ref);
 }
 
 #define check_acc_state(acc, state) _check_acc_state(__LINE__, acc, state)
@@ -2003,6 +2015,8 @@ static void test_WindowFromAccessibleObject(void)
     CHECK_CALLED(Accessible_child_get_accParent);
 
     Accessible.ow_hwnd = NULL;
+    ok(Accessible.ref == 1, "Accessible.ref = %ld\n", Accessible.ref);
+    ok(Accessible_child.ref == 1, "Accessible.ref = %ld\n", Accessible_child.ref);
 }
 
 START_TEST(main)
