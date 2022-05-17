@@ -1111,7 +1111,7 @@ void *get_cpu_area( USHORT machine )
     case IMAGE_FILE_MACHINE_ARM64: align = TYPE_ALIGNMENT(ARM64_NT_CONTEXT); break;
     default: return NULL;
     }
-    return (void *)(((ULONG_PTR)(cpu + 1) + align - 1) & ~(align - 1));
+    return (void *)(((ULONG_PTR)(cpu + 1) + align - 1) & ~((ULONG_PTR)align - 1));
 }
 
 
