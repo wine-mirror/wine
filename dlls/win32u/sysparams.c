@@ -673,7 +673,6 @@ static void cleanup_devices(void)
 
     hkey = reg_open_key( enum_key, pciW, sizeof(pciW) );
 
-restart:
     while (!NtEnumerateKey( hkey, i++, KeyNodeInformation, key, sizeof(buffer), &size ))
     {
         unsigned int j = 0;
@@ -706,7 +705,7 @@ restart:
             NtClose( device_key );
 
             if (!present && reg_delete_tree( subkey, bufferW, lstrlenW( bufferW ) * sizeof(WCHAR) ))
-                goto restart;
+                j = 0;
         }
 
         NtClose( subkey );
