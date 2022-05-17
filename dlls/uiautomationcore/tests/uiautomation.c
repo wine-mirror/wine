@@ -53,11 +53,18 @@ static HRESULT (WINAPI *pUiaProviderFromIAccessible)(IAccessible *, long, DWORD,
         expect_ ## func = called_ ## func = FALSE; \
     }while(0)
 
+#define NAVDIR_INTERNAL_HWND 10
+
 DEFINE_EXPECT(winproc_GETOBJECT_CLIENT);
 DEFINE_EXPECT(Accessible_accNavigate);
+DEFINE_EXPECT(Accessible_get_accParent);
+DEFINE_EXPECT(Accessible_child_accNavigate);
+DEFINE_EXPECT(Accessible_child_get_accParent);
 
 static LONG Accessible_ref = 1;
+static LONG Accessible_child_ref = 1;
 static IAccessible Accessible;
+static IAccessible Accessible_child;
 static IOleWindow OleWindow;
 static HWND Accessible_hwnd = NULL;
 static HWND OleWindow_hwnd = NULL;
@@ -77,7 +84,7 @@ static HRESULT WINAPI Accessible_QueryInterface(IAccessible *iface, REFIID riid,
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDispatch) ||
             IsEqualIID(riid, &IID_IAccessible))
         *obj = iface;
-    else if (IsEqualIID(riid, &IID_IOleWindow))
+    else if (IsEqualIID(riid, &IID_IOleWindow) && (iface == &Accessible))
         *obj = &OleWindow;
     else
         return E_NOINTERFACE;
@@ -88,12 +95,18 @@ static HRESULT WINAPI Accessible_QueryInterface(IAccessible *iface, REFIID riid,
 
 static ULONG WINAPI Accessible_AddRef(IAccessible *iface)
 {
-    return InterlockedIncrement(&Accessible_ref);
+    if (iface == &Accessible_child)
+        return InterlockedIncrement(&Accessible_child_ref);
+    else
+        return InterlockedIncrement(&Accessible_ref);
 }
 
 static ULONG WINAPI Accessible_Release(IAccessible *iface)
 {
-    return InterlockedDecrement(&Accessible_ref);
+    if (iface == &Accessible_child)
+        return InterlockedDecrement(&Accessible_child_ref);
+    else
+        return InterlockedDecrement(&Accessible_ref);
 }
 
 static HRESULT WINAPI Accessible_GetTypeInfoCount(IAccessible *iface, UINT *pctinfo)
@@ -126,8 +139,16 @@ static HRESULT WINAPI Accessible_Invoke(IAccessible *iface, DISPID disp_id_membe
 
 static HRESULT WINAPI Accessible_get_accParent(IAccessible *iface, IDispatch **out_parent)
 {
-    ok(0, "unexpected call\n");
-    return E_NOTIMPL;
+    if (iface == &Accessible_child)
+    {
+        CHECK_EXPECT(Accessible_child_get_accParent);
+        return IAccessible_QueryInterface(&Accessible, &IID_IDispatch, (void **)out_parent);
+    }
+    else
+        CHECK_EXPECT(Accessible_get_accParent);
+
+    *out_parent = NULL;
+    return S_FALSE;
 }
 
 static HRESULT WINAPI Accessible_get_accChildCount(IAccessible *iface, LONG *out_count)
@@ -235,14 +256,18 @@ static HRESULT WINAPI Accessible_accLocation(IAccessible *iface, LONG *out_left,
 static HRESULT WINAPI Accessible_accNavigate(IAccessible *iface, LONG nav_direction,
         VARIANT child_id_start, VARIANT *out_var)
 {
-    CHECK_EXPECT(Accessible_accNavigate);
+    if (iface == &Accessible_child)
+        CHECK_EXPECT(Accessible_child_accNavigate);
+    else
+        CHECK_EXPECT(Accessible_accNavigate);
     VariantInit(out_var);
 
     /*
      * This is an undocumented way for UI Automation to get an HWND for
      * IAccessible's contained in a Direct Annotation wrapper object.
      */
-    if ((nav_direction == 10) && check_variant_i4(&child_id_start, CHILDID_SELF))
+    if ((nav_direction == NAVDIR_INTERNAL_HWND) && check_variant_i4(&child_id_start, CHILDID_SELF) &&
+            Accessible_hwnd)
     {
         V_VT(out_var) = VT_I4;
         V_I4(out_var) = HandleToUlong(Accessible_hwnd);
@@ -326,8 +351,13 @@ static ULONG WINAPI OleWindow_Release(IOleWindow *iface)
 
 static HRESULT WINAPI OleWindow_GetWindow(IOleWindow *iface, HWND *hwnd)
 {
-    *hwnd = OleWindow_hwnd;
-    return S_OK;
+    if (OleWindow_hwnd)
+    {
+        *hwnd = OleWindow_hwnd;
+        return S_OK;
+    }
+
+    return E_FAIL;
 }
 
 static HRESULT WINAPI OleWindow_ContextSensitiveHelp(IOleWindow *iface, BOOL f_enter_mode)
@@ -344,6 +374,7 @@ static const IOleWindowVtbl OleWindowVtbl = {
 };
 
 static IAccessible Accessible = {&AccessibleVtbl};
+static IAccessible Accessible_child = {&AccessibleVtbl};
 static IOleWindow OleWindow   = {&OleWindowVtbl};
 
 static LRESULT WINAPI test_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -650,11 +681,13 @@ static void test_UiaProviderFromIAccessible(void)
 
     /* Don't return an HWND from accNavigate or OleWindow. */
     SET_EXPECT(Accessible_accNavigate);
+    SET_EXPECT(Accessible_get_accParent);
     Accessible_hwnd = NULL;
     OleWindow_hwnd = NULL;
     hr = pUiaProviderFromIAccessible(&Accessible, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
     ok(hr == E_FAIL, "Unexpected hr %#lx.\n", hr);
     CHECK_CALLED(Accessible_accNavigate);
+    CHECK_CALLED(Accessible_get_accParent);
 
     /* Return an HWND from accNavigate, not OleWindow. */
     SET_EXPECT(Accessible_accNavigate);
@@ -677,6 +710,19 @@ static void test_UiaProviderFromIAccessible(void)
         return;
     }
     expect_winproc_GETOBJECT_CLIENT = FALSE;
+
+    /* Return an HWND from parent IAccessible's IOleWindow interface. */
+    SET_EXPECT(Accessible_child_accNavigate);
+    SET_EXPECT(Accessible_child_get_accParent);
+    Accessible_hwnd = NULL;
+    OleWindow_hwnd = hwnd;
+    hr = pUiaProviderFromIAccessible(&Accessible_child, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    CHECK_CALLED(Accessible_child_accNavigate);
+    CHECK_CALLED(Accessible_child_get_accParent);
+    ok(Accessible_child_ref == 2, "Unexpected refcnt %ld\n", Accessible_child_ref);
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible_child_ref == 1, "Unexpected refcnt %ld\n", Accessible_child_ref);
 
     /* Return an HWND from OleWindow, not accNavigate. */
     Accessible_hwnd = NULL;

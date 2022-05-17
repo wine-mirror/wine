@@ -151,7 +151,6 @@ HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, long child_id, DWORD
     struct msaa_provider *msaa_prov;
     IServiceProvider *serv_prov;
     HWND hwnd = NULL;
-    IOleWindow *win;
     HRESULT hr;
 
     TRACE("(%p, %ld, %#lx, %p)\n", acc, child_id, flags, elprov);
@@ -187,28 +186,11 @@ HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, long child_id, DWORD
         IServiceProvider_Release(serv_prov);
     }
 
-    hr = IAccessible_QueryInterface(acc, &IID_IOleWindow, (void **)&win);
-    if (SUCCEEDED(hr))
-    {
-        hr = IOleWindow_GetWindow(win, &hwnd);
-        if (FAILED(hr))
-            hwnd = NULL;
-        IOleWindow_Release(win);
-    }
-
-    if (!IsWindow(hwnd))
-    {
-        VARIANT v, cid;
-
-        VariantInit(&v);
-        variant_init_i4(&cid, CHILDID_SELF);
-        hr = IAccessible_accNavigate(acc, 10, cid, &v);
-        if (SUCCEEDED(hr) && V_VT(&v) == VT_I4)
-            hwnd = ULongToHandle(V_I4(&v));
-
-        if (!IsWindow(hwnd))
-            return E_FAIL;
-    }
+    hr = WindowFromAccessibleObject(acc, &hwnd);
+    if (FAILED(hr))
+       return hr;
+    if (!hwnd)
+        return E_FAIL;
 
     msaa_prov = heap_alloc(sizeof(*msaa_prov));
     if (!msaa_prov)
