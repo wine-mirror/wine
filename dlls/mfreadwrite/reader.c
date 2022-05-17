@@ -1651,9 +1651,30 @@ static HRESULT source_reader_set_compatible_media_type(struct source_reader *rea
     return type_set ? S_OK : S_FALSE;
 }
 
+static HRESULT source_reader_create_sample_allocator_attributes(const struct source_reader *reader,
+        IMFAttributes **attributes)
+{
+    UINT32 shared = 0, shared_without_mutex = 0;
+    HRESULT hr;
+
+    if (FAILED(hr = MFCreateAttributes(attributes, 1)))
+        return hr;
+
+    IMFAttributes_GetUINT32(reader->attributes, &MF_SA_D3D11_SHARED, &shared);
+    IMFAttributes_GetUINT32(reader->attributes, &MF_SA_D3D11_SHARED_WITHOUT_MUTEX, &shared_without_mutex);
+
+    if (shared_without_mutex)
+        hr = IMFAttributes_SetUINT32(*attributes, &MF_SA_D3D11_SHARED_WITHOUT_MUTEX, TRUE);
+    else if (shared)
+        hr = IMFAttributes_SetUINT32(*attributes, &MF_SA_D3D11_SHARED, TRUE);
+
+    return hr;
+}
+
 static HRESULT source_reader_setup_sample_allocator(struct source_reader *reader, unsigned int index)
 {
     struct media_stream *stream = &reader->streams[index];
+    IMFAttributes *attributes = NULL;
     GUID major = { 0 };
     HRESULT hr;
 
@@ -1680,8 +1701,17 @@ static HRESULT source_reader_setup_sample_allocator(struct source_reader *reader
         return hr;
     }
 
-    if (FAILED(hr = IMFVideoSampleAllocatorEx_InitializeSampleAllocatorEx(stream->allocator, 2, 8, NULL, stream->current)))
+    if (FAILED(hr = source_reader_create_sample_allocator_attributes(reader, &attributes)))
+        WARN("Failed to create allocator attributes, hr %#lx.\n", hr);
+
+    if (FAILED(hr = IMFVideoSampleAllocatorEx_InitializeSampleAllocatorEx(stream->allocator, 2, 8,
+            attributes, stream->current)))
+    {
         WARN("Failed to initialize sample allocator, hr %#lx.\n", hr);
+    }
+
+    if (attributes)
+        IMFAttributes_Release(attributes);
 
     return hr;
 }
