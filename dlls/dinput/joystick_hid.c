@@ -1564,8 +1564,8 @@ failed:
     return DIERR_DEVICENOTREG;
 }
 
-static HRESULT hid_joystick_device_open( int index, DIDEVICEINSTANCEW *filter, WCHAR *device_path,
-                                         HANDLE *device, PHIDP_PREPARSED_DATA *preparsed,
+static HRESULT hid_joystick_device_open( int index, const GUID *guid, DIDEVICEINSTANCEW *filter,
+                                         WCHAR *device_path, HANDLE *device, PHIDP_PREPARSED_DATA *preparsed,
                                          HIDD_ATTRIBUTES *attrs, HIDP_CAPS *caps, DWORD version )
 {
     char buffer[sizeof(SP_DEVICE_INTERFACE_DETAIL_DATA_W) + MAX_PATH * sizeof(WCHAR)];
@@ -1580,8 +1580,7 @@ static HRESULT hid_joystick_device_open( int index, DIDEVICEINSTANCEW *filter, W
     DWORD type;
     GUID hid;
 
-    TRACE( "index %d, product %s, instance %s\n", index, debugstr_guid( &filter->guidProduct ),
-           debugstr_guid( &filter->guidInstance ) );
+    TRACE( "index %d, guid %s\n", index, debugstr_guid( guid ) );
 
     HidD_GetHidGuid( &hid );
 
@@ -1626,8 +1625,7 @@ static HRESULT hid_joystick_device_open( int index, DIDEVICEINSTANCEW *filter, W
         }
 
         /* enumerate device by GUID */
-        if (index < 0 && IsEqualGUID( &filter->guidProduct, &instance.guidProduct )) break;
-        if (index < 0 && IsEqualGUID( &filter->guidInstance, &instance.guidInstance )) break;
+        if (IsEqualGUID( guid, &instance.guidProduct ) || IsEqualGUID( guid, &instance.guidInstance )) break;
 
         /* enumerate all devices */
         if (index >= 0 && !index--) break;
@@ -1653,13 +1651,14 @@ HRESULT hid_joystick_enum_device( DWORD type, DWORD flags, DIDEVICEINSTANCEW *in
     HIDD_ATTRIBUTES attrs = {.Size = sizeof(attrs)};
     PHIDP_PREPARSED_DATA preparsed;
     WCHAR device_path[MAX_PATH];
+    GUID guid = GUID_NULL;
     HIDP_CAPS caps;
     HANDLE device;
     HRESULT hr;
 
     TRACE( "type %#lx, flags %#lx, instance %p, version %#lx, index %d\n", type, flags, instance, version, index );
 
-    hr = hid_joystick_device_open( index, instance, device_path, &device, &preparsed,
+    hr = hid_joystick_device_open( index, &guid, instance, device_path, &device, &preparsed,
                                    &attrs, &caps, version );
     if (hr != DI_OK) return hr;
 
@@ -2035,19 +2034,6 @@ HRESULT hid_joystick_create_device( struct dinput *dinput, const GUID *guid, IDi
     TRACE( "dinput %p, guid %s, out %p\n", dinput, debugstr_guid( guid ), out );
 
     *out = NULL;
-    instance.guidProduct.Data1 = dinput_pidvid_guid.Data1;
-    instance.guidInstance.Data1 = hid_joystick_guid.Data1;
-    if (IsEqualGUID( &dinput_pidvid_guid, &instance.guidProduct ))
-        instance.guidProduct = *guid;
-    else if (IsEqualGUID( &hid_joystick_guid, &instance.guidInstance ))
-        instance.guidInstance = *guid;
-    else
-    {
-        instance.guidInstance.Data1 = device_path_guid.Data1;
-        instance.guidInstance.Data2 = device_path_guid.Data2;
-        instance.guidInstance.Data3 = device_path_guid.Data3;
-        if (!IsEqualGUID( &device_path_guid, &instance.guidInstance )) return DIERR_DEVICENOTREG;
-    }
 
     if (!(impl = calloc( 1, sizeof(*impl) ))) return E_OUTOFMEMORY;
     dinput_device_init( &impl->base, &hid_joystick_vtbl, guid, dinput );
@@ -2056,8 +2042,8 @@ HRESULT hid_joystick_create_device( struct dinput *dinput, const GUID *guid, IDi
     impl->base.read_event = CreateEventW( NULL, TRUE, FALSE, NULL );
     impl->internal_ref = 1;
 
-    if (!IsEqualGUID( &device_path_guid, &instance.guidInstance ))
-        hr = hid_joystick_device_open( -1, &instance, impl->device_path, &impl->device, &impl->preparsed,
+    if (memcmp( device_path_guid.Data4, guid->Data4, sizeof(device_path_guid.Data4) ))
+        hr = hid_joystick_device_open( -1, guid, &instance, impl->device_path, &impl->device, &impl->preparsed,
                                        &attrs, &impl->caps, dinput->dwVersion );
     else
     {
