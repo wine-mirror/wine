@@ -113,7 +113,6 @@ F:	dlls/qcap/
 F:	dlls/qdvd/
 F:	dlls/qedit/
 F:	dlls/quartz/
-F:	dlls/winegstreamer/quartz_parser.c
 F:	libs/strmbase/
 
 DirectWrite
@@ -155,6 +154,10 @@ F:	dlls/gdiplus/
 GPhoto Driver
 M:	Marcus Meissner <marcus@jet.franken.de>
 F:	dlls/gphoto2.ds/
+
+GStreamer multimedia backend
+M:	Zebediah Figura <z.figura12@gmail.com>
+F:	dlls/winegstreamer/
 
 HID support
 M:	Aric Stewart <aric@codeweavers.com>
