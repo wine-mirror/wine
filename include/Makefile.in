@@ -427,6 +427,7 @@ SOURCES = \
 	midles.h \
 	mimeinfo.idl \
 	mimeole.idl \
+	minidumpapiset.h \
 	minmax.h \
 	mlang.idl \
 	mmc.idl \
