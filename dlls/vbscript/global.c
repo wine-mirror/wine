@@ -2205,10 +2205,67 @@ static HRESULT Global_GetObject(BuiltinDisp *This, VARIANT *args, unsigned args_
     return hres;
 }
 
-static HRESULT Global_DateAdd(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_DateAdd(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    BSTR interval = NULL;
+    UDATE ud = {{ 0 }};
+    HRESULT hres;
+    double date;
+    int count;
+
+    TRACE("\n");
+
+    assert(args_cnt == 3);
+
+    if (V_VT(args) == VT_NULL || V_VT(args + 1) == VT_NULL)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
+    if (V_VT(args + 2) == VT_NULL)
+        return return_null(res);
+
+    hres = to_string(args, &interval);
+    if (SUCCEEDED(hres))
+        hres = to_int(args + 1, &count);
+    if (SUCCEEDED(hres))
+        hres = to_system_time(args + 2, &ud.st);
+    if (SUCCEEDED(hres))
+    {
+        if (!wcsicmp(interval, L"yyyy"))
+            ud.st.wYear += count;
+        else if (!wcsicmp(interval, L"q"))
+            ud.st.wMonth += 3 * count;
+        else if (!wcsicmp(interval, L"m"))
+            ud.st.wMonth += count;
+        else if (!wcsicmp(interval, L"y")
+                || !wcsicmp(interval, L"d")
+                || !wcsicmp(interval, L"w"))
+        {
+            ud.st.wDay += count;
+        }
+        else if (!wcsicmp(interval, L"ww"))
+            ud.st.wDay += 7 * count;
+        else if (!wcsicmp(interval, L"h"))
+            ud.st.wHour += count;
+        else if (!wcsicmp(interval, L"n"))
+            ud.st.wMinute += count;
+        else if (!wcsicmp(interval, L"s"))
+            ud.st.wSecond += count;
+        else
+        {
+            WARN("Unrecognized interval %s.\n", debugstr_w(interval));
+            hres = MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+        }
+    }
+
+    SysFreeString(interval);
+
+    if (SUCCEEDED(hres))
+        hres = VarDateFromUdateEx(&ud, 0, 0, &date);
+
+    if (SUCCEEDED(hres))
+        hres = return_date(res, date);
+
+    return hres;
 }
 
 static HRESULT Global_DateDiff(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
