@@ -50,6 +50,7 @@ F:	dlls/xaudio*/
 
 Common Controls Library
 P:	Nikolay Sivov <nsivov@codeweavers.com>
+P:	Zhiyi Zhang <zzhang@codeweavers.com>
 F:	dlls/comctl32/
 
 Common Item Dialog
@@ -278,6 +279,11 @@ P:	Huw Davies <huw@codeweavers.com>
 P:	Zebediah Figura <z.figura12@gmail.com>
 F:	dlls/rpcrt4
 
+Theming
+M:	Zhiyi Zhang <zzhang@codeweavers.com>
+F:	dlls/light.msstyles/
+F:	dlls/uxtheme/
+
 TWAIN
 P:	Esme Povirk <esme@codeweavers.com>
 F:	dlls/twain_32/
@@ -363,6 +369,7 @@ F:	dlls/wpcap/
 X11 Driver
 M:	Alexandre Julliard <julliard@winehq.org>
 P:	Rémi Bernon <rbernon@codeweavers.com>
+P:	Zhiyi Zhang <zzhang@codeweavers.com>
 F:	dlls/winex11.drv/
 
 XML parsing
