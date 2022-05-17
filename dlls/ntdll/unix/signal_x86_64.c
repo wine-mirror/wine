@@ -94,7 +94,7 @@ __ASM_GLOBAL_FUNC( alloc_fs_sel,
                    "pushq %rbx\n\t"
                    "pushq %rdi\n\t"
                    "movq %rsp,%rdi\n\t"
-                   "movq %gs:0x8,%rsp\n\t"    /* NtCurrentTeb()->Tib.StackBase */
+                   "movl 0x4(%rdx),%esp\n\t"  /* Tib.StackBase */
                    "subl $0x10,%esp\n\t"
                    /* setup modify_ldt struct on 32-bit stack */
                    "movl %ecx,(%rsp)\n\t"     /* entry_number */
