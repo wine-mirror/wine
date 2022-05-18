@@ -274,7 +274,13 @@ void free_dc_ptr( DC *dc )
     GDI_dec_ref_count( dc->hPen );
     GDI_dec_ref_count( dc->hBrush );
     GDI_dec_ref_count( dc->hFont );
-    if (dc->hBitmap) GDI_dec_ref_count( dc->hBitmap );
+    if (dc->hBitmap)
+    {
+        if (dc->is_display)
+            NtGdiDeleteClientObj( dc->hBitmap );
+        else
+            GDI_dec_ref_count( dc->hBitmap );
+    }
     free_gdi_handle( dc->hSelf );
     free_dc_state( dc );
 }
@@ -724,7 +730,10 @@ HDC WINAPI NtGdiOpenDCW( UNICODE_STRING *device, const DEVMODEW *devmode, UNICOD
     if (!(dc = alloc_dc_ptr( NTGDI_OBJ_DC ))) return 0;
     hdc = dc->hSelf;
 
-    dc->hBitmap = GDI_inc_ref_count( GetStockObject( DEFAULT_BITMAP ));
+    if (is_display)
+        dc->hBitmap = NtGdiCreateClientObj( NTGDI_OBJ_SURF );
+    else
+        dc->hBitmap = GDI_inc_ref_count( GetStockObject( DEFAULT_BITMAP ));
 
     TRACE("(device=%s, output=%s): returning %p\n",
           debugstr_us(device), debugstr_us(output), dc->hSelf );
