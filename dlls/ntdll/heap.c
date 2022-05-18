@@ -815,17 +815,17 @@ static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
  */
 static void HEAP_ShrinkBlock(SUBHEAP *subheap, ARENA_INUSE *pArena, SIZE_T size)
 {
-    if ((pArena->size & ARENA_SIZE_MASK) >= size + HEAP_MIN_SHRINK_SIZE)
+    SIZE_T old_data_size = pArena->size & ARENA_SIZE_MASK;
+    if (old_data_size >= size + HEAP_MIN_SHRINK_SIZE)
     {
-        HEAP_CreateFreeBlock( subheap, (char *)(pArena + 1) + size,
-                              (pArena->size & ARENA_SIZE_MASK) - size );
 	/* assign size plus previous arena flags */
         pArena->size = size | (pArena->size & ~ARENA_SIZE_MASK);
+        HEAP_CreateFreeBlock( subheap, (char *)(pArena + 1) + size, old_data_size - size );
     }
     else
     {
         /* Turn off PREV_FREE flag in next block */
-        char *pNext = (char *)(pArena + 1) + (pArena->size & ARENA_SIZE_MASK);
+        char *pNext = (char *)(pArena + 1) + old_data_size;
         if (pNext < (char *)subheap->base + subheap->size)
             *(DWORD *)pNext &= ~ARENA_FLAG_PREV_FREE;
     }
