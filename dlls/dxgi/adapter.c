@@ -21,6 +21,15 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(dxgi);
 
+static void dxgi_video_memory_info_from_wined3d(DXGI_QUERY_VIDEO_MEMORY_INFO *info,
+        const struct wined3d_video_memory_info *wined3d_info)
+{
+    info->Budget = wined3d_info->budget;
+    info->CurrentUsage = wined3d_info->current_usage;
+    info->CurrentReservation = wined3d_info->current_reservation;
+    info->AvailableForReservation = wined3d_info->available_reservation;
+}
+
 static inline struct dxgi_adapter *impl_from_IWineDXGIAdapter(IWineDXGIAdapter *iface)
 {
     return CONTAINING_RECORD(iface, struct dxgi_adapter, IWineDXGIAdapter_iface);
@@ -292,44 +301,22 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_QueryVideoMemoryInfo(IWineDXGIAdap
         UINT node_index, DXGI_MEMORY_SEGMENT_GROUP segment_group, DXGI_QUERY_VIDEO_MEMORY_INFO *info)
 {
     struct dxgi_adapter *adapter = impl_from_IWineDXGIAdapter(iface);
-    struct wined3d_adapter_identifier adapter_id;
-    static unsigned int once;
+    struct wined3d_video_memory_info wined3d_info;
     HRESULT hr;
 
     TRACE("iface %p, node_index %u, segment_group %#x, info %p.\n",
             iface, node_index, segment_group, info);
 
-    if (!once++)
-        FIXME("Returning fake video memory info.\n");
-
-    if (node_index)
-        FIXME("Ignoring node index %u.\n", node_index);
-
-    adapter_id.driver_size = 0;
-    adapter_id.description_size = 0;
-
-    if (FAILED(hr = wined3d_adapter_get_identifier(adapter->wined3d_adapter, 0, &adapter_id)))
-        return hr;
-
-    switch (segment_group)
+    if (SUCCEEDED(hr = wined3d_adapter_get_video_memory_info(adapter->wined3d_adapter, node_index,
+            (enum wined3d_memory_segment_group)segment_group, &wined3d_info)))
     {
-        case DXGI_MEMORY_SEGMENT_GROUP_LOCAL:
-            info->Budget = adapter_id.video_memory;
-            info->CurrentUsage = 0;
-            info->AvailableForReservation = adapter_id.video_memory / 2;
-            info->CurrentReservation = 0;
-            break;
-        case DXGI_MEMORY_SEGMENT_GROUP_NON_LOCAL:
-            memset(info, 0, sizeof(*info));
-            break;
-        default:
-            WARN("Invalid memory segment group %#x.\n", segment_group);
-            return E_INVALIDARG;
-    }
+        dxgi_video_memory_info_from_wined3d(info, &wined3d_info);
 
-    TRACE("Budget 0x%s, usage 0x%s, available for reservation 0x%s, reservation 0x%s.\n",
-            wine_dbgstr_longlong(info->Budget), wine_dbgstr_longlong(info->CurrentUsage),
-            wine_dbgstr_longlong(info->AvailableForReservation), wine_dbgstr_longlong(info->CurrentReservation));
+        TRACE("Budget 0x%s, usage 0x%s, available for reservation 0x%s, reservation 0x%s.\n",
+                wine_dbgstr_longlong(info->Budget), wine_dbgstr_longlong(info->CurrentUsage),
+                wine_dbgstr_longlong(info->AvailableForReservation),
+                wine_dbgstr_longlong(info->CurrentReservation));
+    }
 
     return hr;
 }

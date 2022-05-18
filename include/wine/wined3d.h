@@ -876,6 +876,12 @@ enum wined3d_pipeline
     WINED3D_PIPELINE_COUNT,
 };
 
+enum wined3d_memory_segment_group
+{
+    WINED3D_MEMORY_SEGMENT_GROUP_LOCAL = 0,
+    WINED3D_MEMORY_SEGMENT_GROUP_NON_LOCAL = 1,
+};
+
 #define WINED3DCOLORWRITEENABLE_RED                             (1u << 0)
 #define WINED3DCOLORWRITEENABLE_GREEN                           (1u << 1)
 #define WINED3DCOLORWRITEENABLE_BLUE                            (1u << 2)
@@ -1765,6 +1771,14 @@ struct wined3d_adapter_identifier
     SIZE_T shared_system_memory;
 };
 
+struct wined3d_video_memory_info
+{
+    UINT64 budget;
+    UINT64 current_usage;
+    UINT64 current_reservation;
+    UINT64 available_reservation;
+};
+
 struct wined3d_swapchain_desc
 {
     struct wined3d_output *output;
@@ -2347,6 +2361,9 @@ HRESULT __cdecl wined3d_adapter_get_identifier(const struct wined3d_adapter *ada
 struct wined3d_output * __cdecl wined3d_adapter_get_output(const struct wined3d_adapter *adapter,
         unsigned int idx);
 unsigned int __cdecl wined3d_adapter_get_output_count(const struct wined3d_adapter *adapter);
+HRESULT __cdecl wined3d_adapter_get_video_memory_info(const struct wined3d_adapter *adapter,
+        unsigned int node_idx, enum wined3d_memory_segment_group group,
+        struct wined3d_video_memory_info *info);
 
 HRESULT __cdecl wined3d_buffer_create(struct wined3d_device *device, const struct wined3d_buffer_desc *desc,
         const struct wined3d_sub_resource_data *data, void *parent, const struct wined3d_parent_ops *parent_ops,

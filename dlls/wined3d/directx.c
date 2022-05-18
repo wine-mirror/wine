@@ -987,6 +987,65 @@ unsigned int CDECL wined3d_adapter_get_output_count(const struct wined3d_adapter
     return adapter->output_count;
 }
 
+HRESULT CDECL wined3d_adapter_get_video_memory_info(const struct wined3d_adapter *adapter,
+        unsigned int node_idx, enum wined3d_memory_segment_group group,
+        struct wined3d_video_memory_info *info)
+{
+    static unsigned int once;
+    D3DKMT_QUERYVIDEOMEMORYINFO query_memory_info;
+    struct wined3d_adapter_identifier adapter_id;
+    NTSTATUS status;
+    HRESULT hr;
+
+    TRACE("adapter %p, node_idx %u, group %d, info %p.\n", adapter, node_idx, group, info);
+
+    if (group > WINED3D_MEMORY_SEGMENT_GROUP_NON_LOCAL)
+    {
+        WARN("Invalid memory segment group %#x.\n", group);
+        return E_INVALIDARG;
+    }
+
+    query_memory_info.hProcess = NULL;
+    query_memory_info.hAdapter = adapter->kmt_adapter;
+    query_memory_info.PhysicalAdapterIndex = node_idx;
+    query_memory_info.MemorySegmentGroup = (D3DKMT_MEMORY_SEGMENT_GROUP)group;
+    status = D3DKMTQueryVideoMemoryInfo(&query_memory_info);
+    if (status == STATUS_SUCCESS)
+    {
+        info->budget = query_memory_info.Budget;
+        info->current_usage = query_memory_info.CurrentUsage;
+        info->current_reservation = query_memory_info.CurrentReservation;
+        info->available_reservation = query_memory_info.AvailableForReservation;
+        return WINED3D_OK;
+    }
+
+    /* D3DKMTQueryVideoMemoryInfo() failed, fallback to fake memory info */
+    if (!once++)
+        FIXME("Returning fake video memory info.\n");
+
+    if (node_idx)
+        FIXME("Ignoring node index %u.\n", node_idx);
+
+    adapter_id.driver_size = 0;
+    adapter_id.description_size = 0;
+    if (FAILED(hr = wined3d_adapter_get_identifier(adapter, 0, &adapter_id)))
+        return hr;
+
+    switch (group)
+    {
+        case WINED3D_MEMORY_SEGMENT_GROUP_LOCAL:
+            info->budget = adapter_id.video_memory;
+            info->current_usage = 0;
+            info->available_reservation = adapter_id.video_memory / 2;
+            info->current_reservation = 0;
+            break;
+        case WINED3D_MEMORY_SEGMENT_GROUP_NON_LOCAL:
+            memset(info, 0, sizeof(*info));
+            break;
+    }
+    return WINED3D_OK;
+}
+
 HRESULT CDECL wined3d_register_software_device(struct wined3d *wined3d, void *init_function)
 {
     FIXME("wined3d %p, init_function %p stub!\n", wined3d, init_function);
