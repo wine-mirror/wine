@@ -192,15 +192,26 @@ static DWORD CALLBACK session_worker_thread_cb( void *args )
     ISpeechContinuousRecognitionSession *iface = args;
     struct session *impl = impl_from_ISpeechContinuousRecognitionSession(iface);
     BOOLEAN running = TRUE, paused = FALSE;
+    UINT32 frame_count, tmp_buf_size;
+    BYTE *audio_buf, *tmp_buf;
     DWORD flags, status;
     HANDLE events[2];
-    BYTE *audio_buf;
     HRESULT hr;
 
     SetThreadDescription(GetCurrentThread(), L"wine_speech_recognition_session_worker");
 
     if (FAILED(hr = IAudioClient_Start(impl->audio_client)))
         goto error;
+
+    if (FAILED(hr = IAudioClient_GetBufferSize(impl->audio_client, &frame_count)))
+        goto error;
+
+    tmp_buf_size = sizeof(*tmp_buf) * frame_count * impl->capture_wfx.nBlockAlign;
+    if (!(tmp_buf = malloc(tmp_buf_size)))
+    {
+        ERR("Memory allocation failed.\n");
+        return 1;
+    }
 
     while (running)
     {
@@ -232,13 +243,28 @@ static DWORD CALLBACK session_worker_thread_cb( void *args )
         }
         else if (status == 1) /* audio_buf_event signaled */
         {
+            SIZE_T packet_size = 0, tmp_buf_offset = 0;
             UINT32 frames_available = 0;
 
-            while (IAudioCaptureClient_GetBuffer(impl->capture_client, &audio_buf, &frames_available, &flags, NULL, NULL) == S_OK)
+            while (tmp_buf_offset < tmp_buf_size
+                   && IAudioCaptureClient_GetBuffer(impl->capture_client, &audio_buf, &frames_available, &flags, NULL, NULL) == S_OK)
             {
-                /* TODO: Send mic data to recognizer and handle results. */
+                packet_size = frames_available * impl->capture_wfx.nBlockAlign;
+                if (tmp_buf_offset + packet_size > tmp_buf_size)
+                {
+                    /* Defer processing until the next iteration of the worker loop. */
+                    IAudioCaptureClient_ReleaseBuffer(impl->capture_client, 0);
+                    SetEvent(impl->audio_buf_event);
+                    break;
+                }
+
+                memcpy(tmp_buf + tmp_buf_offset, audio_buf, packet_size);
+                tmp_buf_offset += packet_size;
+
                 IAudioCaptureClient_ReleaseBuffer(impl->capture_client, frames_available);
             }
+
+            /* TODO: Send mic data to recognizer and handle results. */
         }
         else
         {
@@ -252,6 +278,8 @@ static DWORD CALLBACK session_worker_thread_cb( void *args )
 
     if (FAILED(hr = IAudioClient_Reset(impl->audio_client)))
         ERR("IAudioClient_Reset failed with %#lx.\n", hr);
+
+    free(tmp_buf);
 
     return 0;
 
