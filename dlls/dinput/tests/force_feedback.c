@@ -6093,8 +6093,7 @@ static void test_windows_gaming_input(void)
     ret = CloseHandle( result_async_handler.event );
     ok( ret, "CloseHandle failed, error %lu\n", GetLastError() );
     check_result_async( result_async, 1, Error, 0x86854008, ForceFeedbackLoadEffectResult_EffectNotSupported );
-    ref = IAsyncOperation_ForceFeedbackLoadEffectResult_Release( result_async );
-    ok( ref == 0, "Release returned %lu\n", ref );
+    IAsyncOperation_ForceFeedbackLoadEffectResult_Release( result_async );
 
     hr = IForceFeedbackEffect_Start( effect );
     todo_wine
@@ -6149,8 +6148,7 @@ static void test_windows_gaming_input(void)
     ret = CloseHandle( result_async_handler.event );
     ok( ret, "CloseHandle failed, error %lu\n", GetLastError() );
     check_result_async( result_async, 1, Completed, S_OK, ForceFeedbackLoadEffectResult_Succeeded );
-    ref = IAsyncOperation_ForceFeedbackLoadEffectResult_Release( result_async );
-    ok( ref == 0, "Release returned %lu\n", ref );
+    IAsyncOperation_ForceFeedbackLoadEffectResult_Release( result_async );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, &expect_effect_start, sizeof(expect_effect_start) );
@@ -6184,8 +6182,7 @@ static void test_windows_gaming_input(void)
     ret = CloseHandle( bool_async_handler.event );
     ok( ret, "CloseHandle failed, error %lu\n", GetLastError() );
     check_bool_async( bool_async, 1, Completed, S_OK, TRUE );
-    ref = IAsyncOperation_boolean_Release( bool_async );
-    ok( ref == 0, "Release returned %lu\n", ref );
+    IAsyncOperation_boolean_Release( bool_async );
     set_hid_expect( file, NULL, 0 );
 
     ref = IForceFeedbackEffect_Release( effect );
@@ -6249,8 +6246,7 @@ static void test_windows_gaming_input(void)
     ret = CloseHandle( result_async_handler.event );
     ok( ret, "CloseHandle failed, error %lu\n", GetLastError() );
     check_result_async( result_async, 1, Completed, S_OK, ForceFeedbackLoadEffectResult_Succeeded );
-    ref = IAsyncOperation_ForceFeedbackLoadEffectResult_Release( result_async );
-    ok( ref == 0, "Release returned %lu\n", ref );
+    IAsyncOperation_ForceFeedbackLoadEffectResult_Release( result_async );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, &expect_effect_start, sizeof(expect_effect_start) );
@@ -6284,8 +6280,7 @@ static void test_windows_gaming_input(void)
     ret = CloseHandle( bool_async_handler.event );
     ok( ret, "CloseHandle failed, error %lu\n", GetLastError() );
     check_bool_async( bool_async, 1, Completed, S_OK, TRUE );
-    ref = IAsyncOperation_boolean_Release( bool_async );
-    ok( ref == 0, "Release returned %lu\n", ref );
+    IAsyncOperation_boolean_Release( bool_async );
     set_hid_expect( file, NULL, 0 );
 
     ref = IForceFeedbackEffect_Release( effect );
@@ -6355,8 +6350,7 @@ static void test_windows_gaming_input(void)
     ret = CloseHandle( result_async_handler.event );
     ok( ret, "CloseHandle failed, error %lu\n", GetLastError() );
     check_result_async( result_async, 1, Completed, S_OK, ForceFeedbackLoadEffectResult_Succeeded );
-    ref = IAsyncOperation_ForceFeedbackLoadEffectResult_Release( result_async );
-    ok( ref == 0, "Release returned %lu\n", ref );
+    IAsyncOperation_ForceFeedbackLoadEffectResult_Release( result_async );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, &expect_effect_start, sizeof(expect_effect_start) );
@@ -6390,8 +6384,7 @@ static void test_windows_gaming_input(void)
     ret = CloseHandle( bool_async_handler.event );
     ok( ret, "CloseHandle failed, error %lu\n", GetLastError() );
     check_bool_async( bool_async, 1, Completed, S_OK, TRUE );
-    ref = IAsyncOperation_boolean_Release( bool_async );
-    ok( ref == 0, "Release returned %lu\n", ref );
+    IAsyncOperation_boolean_Release( bool_async );
     set_hid_expect( file, NULL, 0 );
 
     ref = IForceFeedbackEffect_Release( effect );
@@ -6437,8 +6430,7 @@ static void test_windows_gaming_input(void)
     ret = CloseHandle( result_async_handler.event );
     ok( ret, "CloseHandle failed, error %lu\n", GetLastError() );
     check_result_async( result_async, 1, Completed, S_OK, ForceFeedbackLoadEffectResult_Succeeded );
-    ref = IAsyncOperation_ForceFeedbackLoadEffectResult_Release( result_async );
-    ok( ref == 0, "Release returned %lu\n", ref );
+    IAsyncOperation_ForceFeedbackLoadEffectResult_Release( result_async );
     set_hid_expect( file, NULL, 0 );
 
     set_hid_expect( file, &expect_effect_start, sizeof(expect_effect_start) );
@@ -6472,8 +6464,7 @@ static void test_windows_gaming_input(void)
     ret = CloseHandle( bool_async_handler.event );
     ok( ret, "CloseHandle failed, error %lu\n", GetLastError() );
     check_bool_async( bool_async, 1, Completed, S_OK, TRUE );
-    ref = IAsyncOperation_boolean_Release( bool_async );
-    ok( ref == 0, "Release returned %lu\n", ref );
+    IAsyncOperation_boolean_Release( bool_async );
     set_hid_expect( file, NULL, 0 );
 
     ref = IForceFeedbackEffect_Release( effect );
