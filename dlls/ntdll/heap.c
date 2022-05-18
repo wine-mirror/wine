@@ -808,26 +808,18 @@ static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
 }
 
 
-/***********************************************************************
- *           HEAP_ShrinkBlock
- *
- * Shrink an in-use block.
- */
-static void HEAP_ShrinkBlock(SUBHEAP *subheap, ARENA_INUSE *pArena, SIZE_T size)
+static void shrink_used_block( SUBHEAP *subheap, struct block *block, SIZE_T data_size )
 {
-    SIZE_T old_data_size = pArena->size & ARENA_SIZE_MASK;
-    if (old_data_size >= size + HEAP_MIN_SHRINK_SIZE)
+    SIZE_T old_data_size = block_get_size( block ) - sizeof(*block);
+    if (old_data_size >= data_size + HEAP_MIN_SHRINK_SIZE)
     {
-	/* assign size plus previous arena flags */
-        pArena->size = size | (pArena->size & ~ARENA_SIZE_MASK);
-        HEAP_CreateFreeBlock( subheap, (char *)(pArena + 1) + size, old_data_size - size );
+        block->size = data_size | block_get_flags( block );
+        HEAP_CreateFreeBlock( subheap, next_block( subheap, block ), old_data_size - data_size );
     }
     else
     {
-        /* Turn off PREV_FREE flag in next block */
-        char *pNext = (char *)(pArena + 1) + old_data_size;
-        if (pNext < (char *)subheap->base + subheap->size)
-            *(DWORD *)pNext &= ~ARENA_FLAG_PREV_FREE;
+        struct block *next;
+        if ((next = next_block( subheap, block ))) next->size &= ~ARENA_FLAG_PREV_FREE;
     }
 }
 
@@ -1118,7 +1110,7 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T size,
      * last free arena in !
      * So just one heap struct, one first free arena which will eventually
      * get used, and a second free arena that might get assigned all remaining
-     * free space in HEAP_ShrinkBlock() */
+     * free space in shrink_used_block() */
     total_size = size + ROUND_SIZE(sizeof(SUBHEAP)) + sizeof(ARENA_INUSE) + sizeof(ARENA_FREE);
     if (total_size < size) return NULL;  /* overflow */
 
@@ -1587,7 +1579,7 @@ static NTSTATUS heap_allocate( HEAP *heap, ULONG flags, SIZE_T size, void **ret 
 
     /* Shrink the block */
 
-    HEAP_ShrinkBlock( subheap, pInUse, rounded_size );
+    shrink_used_block( subheap, pInUse, rounded_size );
     pInUse->unused_bytes = (pInUse->size & ARENA_SIZE_MASK) - size;
 
     notify_alloc( pInUse + 1, size, flags & HEAP_ZERO_MEMORY );
@@ -1695,7 +1687,7 @@ static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size
             pArena->size += block_get_size( next );
             if (!HEAP_Commit( subheap, pArena, rounded_size )) return STATUS_NO_MEMORY;
             notify_realloc( pArena + 1, oldActualSize, size );
-            HEAP_ShrinkBlock( subheap, pArena, rounded_size );
+            shrink_used_block( subheap, pArena, rounded_size );
         }
         else
         {
@@ -1711,7 +1703,7 @@ static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size
     else
     {
         notify_realloc( pArena + 1, oldActualSize, size );
-        HEAP_ShrinkBlock( subheap, pArena, rounded_size );
+        shrink_used_block( subheap, pArena, rounded_size );
     }
 
     pArena->unused_bytes = (pArena->size & ARENA_SIZE_MASK) - size;
