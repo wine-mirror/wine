@@ -1663,9 +1663,11 @@ BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE heap, ULONG flags, void *pt
 
 static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size, void **ret )
 {
+    struct block *next;
     ARENA_INUSE *pArena;
     SUBHEAP *subheap;
     SIZE_T oldBlockSize, oldActualSize, rounded_size;
+    NTSTATUS status;
 
     rounded_size = ROUND_SIZE(size) + HEAP_TAIL_EXTRA_SIZE(flags);
     if (rounded_size < size) return STATUS_NO_MEMORY;  /* overflow */
@@ -1684,20 +1686,8 @@ static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size
     oldActualSize = (pArena->size & ARENA_SIZE_MASK) - pArena->unused_bytes;
     if (rounded_size > oldBlockSize)
     {
-        struct block *next;
-
-        if (rounded_size >= HEAP_MIN_LARGE_BLOCK_SIZE)
-        {
-            if (flags & HEAP_REALLOC_IN_PLACE_ONLY) return STATUS_NO_MEMORY;
-            if (!(*ret = allocate_large_block( heap, flags, size ))) return STATUS_NO_MEMORY;
-            memcpy( *ret, pArena + 1, oldActualSize );
-            notify_free( pArena + 1 );
-            HEAP_MakeInUseBlockFree( subheap, pArena );
-            return STATUS_SUCCESS;
-        }
-
         if ((next = next_block( subheap, pArena )) && (block_get_flags( next ) & ARENA_FLAG_FREE) &&
-            (oldBlockSize + block_get_size( next ) >= rounded_size))
+            rounded_size < HEAP_MIN_LARGE_BLOCK_SIZE && rounded_size <= oldBlockSize + block_get_size( next ))
         {
             /* The next block is free and large enough */
             struct entry *entry = (struct entry *)next;
@@ -1707,34 +1697,15 @@ static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size
             notify_realloc( pArena + 1, oldActualSize, size );
             HEAP_ShrinkBlock( subheap, pArena, rounded_size );
         }
-        else  /* Do it the hard way */
+        else
         {
-            ARENA_FREE *pNew;
-            ARENA_INUSE *pInUse;
-            SUBHEAP *newsubheap;
-
             if (flags & HEAP_REALLOC_IN_PLACE_ONLY) return STATUS_NO_MEMORY;
-            if (!(pNew = HEAP_FindFreeBlock( heap, rounded_size, &newsubheap ))) return STATUS_NO_MEMORY;
-
-            /* Build the in-use arena */
-
-            list_remove( &pNew->entry );
-            pInUse = (ARENA_INUSE *)pNew;
-            pInUse->size = (pInUse->size & ~ARENA_FLAG_FREE)
-                           + sizeof(ARENA_FREE) - sizeof(ARENA_INUSE);
-            pInUse->magic = ARENA_INUSE_MAGIC;
-            HEAP_ShrinkBlock( newsubheap, pInUse, rounded_size );
-
-            mark_block_initialized( pInUse + 1, oldActualSize );
-            notify_alloc( pInUse + 1, size, FALSE );
-            memcpy( pInUse + 1, pArena + 1, oldActualSize );
-
-            /* Free the previous block */
-
+            if ((status = heap_allocate( heap, flags & ~HEAP_ZERO_MEMORY, size, ret ))) return status;
+            memcpy( *ret, pArena + 1, oldActualSize );
+            if (flags & HEAP_ZERO_MEMORY) memset( (char *)*ret + oldActualSize, 0, size - oldActualSize );
             notify_free( pArena + 1 );
             HEAP_MakeInUseBlockFree( subheap, pArena );
-            subheap = newsubheap;
-            pArena  = pInUse;
+            return STATUS_SUCCESS;
         }
     }
     else
