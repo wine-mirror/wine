@@ -103,14 +103,11 @@ HRESULT CDECL wined3d_output_take_ownership(const struct wined3d_output *output,
 static void wined3d_output_cleanup(const struct wined3d_output *output)
 {
     D3DKMT_DESTROYDEVICE destroy_device_desc;
-    D3DKMT_CLOSEADAPTER close_adapter_desc;
 
     TRACE("output %p.\n", output);
 
     destroy_device_desc.hDevice = output->kmt_device;
     D3DKMTDestroyDevice(&destroy_device_desc);
-    close_adapter_desc.hAdapter = output->kmt_adapter;
-    D3DKMTCloseAdapter(&close_adapter_desc);
 }
 
 static HRESULT wined3d_output_init(struct wined3d_output *output, unsigned int ordinal,
@@ -125,20 +122,17 @@ static HRESULT wined3d_output_init(struct wined3d_output *output, unsigned int o
     lstrcpyW(open_adapter_desc.DeviceName, device_name);
     if (D3DKMTOpenAdapterFromGdiDisplayName(&open_adapter_desc))
         return E_INVALIDARG;
+    close_adapter_desc.hAdapter = open_adapter_desc.hAdapter;
+    D3DKMTCloseAdapter(&close_adapter_desc);
 
-    create_device_desc.u.hAdapter = open_adapter_desc.hAdapter;
+    create_device_desc.u.hAdapter = adapter->kmt_adapter;
     if (D3DKMTCreateDevice(&create_device_desc))
-    {
-        close_adapter_desc.hAdapter = open_adapter_desc.hAdapter;
-        D3DKMTCloseAdapter(&close_adapter_desc);
         return E_FAIL;
-    }
 
     output->ordinal = ordinal;
     lstrcpyW(output->device_name, device_name);
     output->adapter = adapter;
     output->screen_format = WINED3DFMT_UNKNOWN;
-    output->kmt_adapter = open_adapter_desc.hAdapter;
     output->kmt_device = create_device_desc.hDevice;
     output->vidpn_source_id = open_adapter_desc.VidPnSourceId;
 
@@ -166,12 +160,15 @@ ssize_t adapter_adjust_mapped_memory(struct wined3d_adapter *adapter, ssize_t si
 
 void wined3d_adapter_cleanup(struct wined3d_adapter *adapter)
 {
+    D3DKMT_CLOSEADAPTER close_adapter_desc;
     unsigned int output_idx;
 
     for (output_idx = 0; output_idx < adapter->output_count; ++output_idx)
         wined3d_output_cleanup(&adapter->outputs[output_idx]);
     heap_free(adapter->outputs);
     heap_free(adapter->formats);
+    close_adapter_desc.hAdapter = adapter->kmt_adapter;
+    D3DKMTCloseAdapter(&close_adapter_desc);
 }
 
 ULONG CDECL wined3d_incref(struct wined3d *wined3d)
@@ -3222,7 +3219,9 @@ static BOOL wined3d_adapter_create_output(struct wined3d_adapter *adapter, const
 BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int ordinal, const LUID *luid,
         const struct wined3d_adapter_ops *adapter_ops)
 {
+    D3DKMT_OPENADAPTERFROMLUID open_adapter_desc;
     unsigned int output_idx = 0, primary_idx = 0;
+    D3DKMT_CLOSEADAPTER close_adapter_desc;
     DISPLAY_DEVICEW display_device;
     BOOL ret = FALSE;
 
@@ -3244,6 +3243,11 @@ BOOL wined3d_adapter_init(struct wined3d_adapter *adapter, unsigned int ordinal,
         }
     }
     TRACE("adapter %p LUID %08x:%08x.\n", adapter, adapter->luid.HighPart, adapter->luid.LowPart);
+
+    open_adapter_desc.AdapterLuid = adapter->luid;
+    if (D3DKMTOpenAdapterFromLuid(&open_adapter_desc))
+        return FALSE;
+    adapter->kmt_adapter = open_adapter_desc.hAdapter;
 
     display_device.cb = sizeof(display_device);
     while (EnumDisplayDevicesW(NULL, output_idx++, &display_device, 0))
@@ -3282,6 +3286,8 @@ done:
         for (output_idx = 0; output_idx < adapter->output_count; ++output_idx)
             wined3d_output_cleanup(&adapter->outputs[output_idx]);
         heap_free(adapter->outputs);
+        close_adapter_desc.hAdapter = adapter->kmt_adapter;
+        D3DKMTCloseAdapter(&close_adapter_desc);
     }
     return ret;
 }

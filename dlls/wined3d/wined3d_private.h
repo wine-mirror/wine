@@ -3498,7 +3498,6 @@ struct wined3d_output
     struct wined3d_adapter *adapter;
     enum wined3d_format_id screen_format;
 
-    D3DKMT_HANDLE kmt_adapter;
     D3DKMT_HANDLE kmt_device;
     D3DDDI_VIDEO_PRESENT_SOURCE_ID vidpn_source_id;
 };
@@ -3521,6 +3520,7 @@ struct wined3d_adapter
     struct wined3d_driver_info driver_info;
     struct wined3d_output *outputs;
     unsigned int output_count;
+    D3DKMT_HANDLE kmt_adapter;
     UINT64 vram_bytes_used;
     GUID driver_uuid;
     GUID device_uuid;
