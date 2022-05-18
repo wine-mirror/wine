@@ -736,6 +736,8 @@ struct font_chooser
 {
     struct console *console;
     int             pass;
+    unsigned int    font_height;
+    unsigned int    font_width;
     BOOL            done;
 };
 
@@ -791,93 +793,82 @@ static BOOL validate_font( struct console *console, const LOGFONTW *lf, int pass
     return TRUE;
 }
 
-/* helper functions to get a decent font for the renderer */
-static int WINAPI get_first_font_sub_enum( const LOGFONTW *lf, const TEXTMETRICW *tm,
-                                           DWORD font_type, LPARAM lparam)
+static int CALLBACK enum_first_font_proc( const LOGFONTW *lf, const TEXTMETRICW *tm,
+                                          DWORD font_type, LPARAM lparam )
 {
     struct font_chooser *fc = (struct font_chooser *)lparam;
+    LOGFONTW mlf;
+
+    if (font_type != TRUETYPE_FONTTYPE) return 1;
+
+    TRACE( "%s\n", debugstr_logfont( lf, font_type ));
+
+    if (!validate_font( fc->console, lf, fc->pass ))
+        return 1;
 
     TRACE( "%s\n", debugstr_textmetric( tm, font_type ));
 
-    if (validate_font_metric( fc->console, tm, font_type, fc->pass ))
-    {
-        LOGFONTW mlf = *lf;
+    if (!validate_font_metric( fc->console, tm, font_type, fc->pass ))
+        return 1;
 
-        /* Use the default sizes for the font (this is needed, especially for
-         * TrueType fonts, so that we get a decent size, not the max size)
-         */
-        mlf.lfWidth  = fc->console->active->font.width;
-        mlf.lfHeight = fc->console->active->font.height;
-        if (!mlf.lfHeight)
-            mlf.lfHeight = MulDiv( 16, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI );
+    /* set default font size */
+    mlf = *lf;
+    mlf.lfHeight = fc->font_height;
+    mlf.lfWidth = fc->font_width;
 
-        if (set_console_font( fc->console, &mlf ))
-        {
-            struct console_config config;
+    if (!set_console_font( fc->console, &mlf ))
+        return 1;
 
-            fc->done = 1;
+    fc->done = TRUE;
 
-            /* since we've modified the current config with new font information,
-             * set this information as the new default.
-             */
-            load_config( fc->console->window->config_key, &config );
-            config.cell_width  = fc->console->active->font.width;
-            config.cell_height = fc->console->active->font.height;
-            config.font_pitch_family = fc->console->active->font.pitch_family;
-            memcpy( config.face_name, fc->console->active->font.face_name,
-                    fc->console->active->font.face_len * sizeof(WCHAR) );
-            config.face_name[fc->console->active->font.face_len] = 0;
-
-            /* Force also its writing back to the registry so that we can get it
-             * the next time.
-             */
-            save_config( fc->console->window->config_key, &config );
-            return 0;
-        }
-    }
-    return 1;
+    return 0;
 }
 
-static int WINAPI get_first_font_enum( const LOGFONTW *lf, const TEXTMETRICW *tm,
-                                       DWORD font_type, LPARAM lparam )
+static void set_first_font( struct console *console, struct console_config *config )
 {
-    struct font_chooser *fc = (struct font_chooser *)lparam;
+    LOGFONTW lf;
+    struct font_chooser fc;
 
-    TRACE("%s\n", debugstr_logfont( lf, font_type ));
+    TRACE("Looking for a suitable console font\n");
 
-    if (validate_font( fc->console, lf, fc->pass ))
+    memset( &lf, 0, sizeof(lf) );
+    lf.lfCharSet = DEFAULT_CHARSET;
+    lf.lfPitchAndFamily = FIXED_PITCH | FF_MODERN;
+
+    fc.console = console;
+    fc.font_height = config->cell_height;
+    fc.font_width = config->cell_width;
+    fc.done = FALSE;
+
+    for (fc.pass = 0; fc.pass <= 5; fc.pass++)
     {
-        EnumFontFamiliesW( fc->console->window->mem_dc, lf->lfFaceName,
-                           get_first_font_sub_enum, lparam );
-        return !fc->done; /* we just need the first matching one... */
+        EnumFontFamiliesExW( console->window->mem_dc, &lf, enum_first_font_proc, (LPARAM)&fc, 0);
+        if (fc.done) break;
     }
-    return 1;
+
+    if (fc.pass > 5)
+        ERR("Unable to find a valid console font\n");
+
+    /* Save font configuration to the registry */
+    config->cell_width  = console->active->font.width;
+    config->cell_height = console->active->font.height;
+    config->font_pitch_family = console->active->font.pitch_family;
+    memcpy( config->face_name, console->active->font.face_name,
+            console->active->font.face_len * sizeof(WCHAR) );
+    config->face_name[console->active->font.face_len] = 0;
+
+    save_config( console->window->config_key, config );
 }
 
-
-/* sets logfont as the new font for the console */
+/* Sets the font specified in the LOGFONT as the new console font */
 void update_console_font( struct console *console, const WCHAR *face_name, size_t face_name_size,
                           unsigned int height, unsigned int weight )
 {
-    struct font_chooser fc;
     LOGFONTW lf;
 
-    if (face_name[0] && height && weight)
-    {
-        fill_logfont( &lf, face_name, face_name_size, height, weight );
-        if (set_console_font( console, &lf )) return;
-    }
+    fill_logfont( &lf, face_name, face_name_size, height, weight );
 
-    /* try to find an acceptable font */
-    WARN( "Couldn't match the font from registry, trying to find one\n" );
-    fc.console = console;
-    fc.done = FALSE;
-    for (fc.pass = 0; fc.pass <= 5; fc.pass++)
-    {
-        EnumFontFamiliesW( console->window->mem_dc, NULL, get_first_font_enum, (LPARAM)&fc );
-        if (fc.done) return;
-    }
-    ERR( "Couldn't find a decent font\n" );
+    set_console_font( console, &lf );
 }
 
 /* get a cell from a relative coordinate in window (takes into account the scrolling) */
@@ -2439,6 +2430,9 @@ BOOL init_window( struct console *console )
                         WS_MAXIMIZEBOX|WS_HSCROLL|WS_VSCROLL, CW_USEDEFAULT, CW_USEDEFAULT,
                         0, 0, 0, 0, wndclass.hInstance, console ))
         return FALSE;
+
+    if (!config.face_name[0])
+        set_first_font( console, &config );
 
     apply_config( console, &config );
     return TRUE;
