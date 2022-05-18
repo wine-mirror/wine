@@ -1035,7 +1035,7 @@ HRESULT CDECL wined3d_adapter_get_video_memory_info(const struct wined3d_adapter
     {
         case WINED3D_MEMORY_SEGMENT_GROUP_LOCAL:
             info->budget = adapter_id.video_memory;
-            info->current_usage = 0;
+            info->current_usage = adapter->vram_bytes_used;
             info->available_reservation = adapter_id.video_memory / 2;
             info->current_reservation = 0;
             break;
