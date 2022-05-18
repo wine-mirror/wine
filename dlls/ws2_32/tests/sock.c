@@ -5113,6 +5113,19 @@ static void test_base_handle(void)
     }
 }
 
+static void test_circular_queueing(void)
+{
+        SOCKET s;
+        DWORD size;
+        int ret;
+
+        s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+        ret = WSAIoctl(s, SIO_ENABLE_CIRCULAR_QUEUEING, NULL, 0, NULL, 0, &size, NULL, NULL);
+        ok(!ret, "expected 0, got %d\n", ret);
+
+        closesocket(s);
+}
+
 static BOOL drain_pause = FALSE;
 static DWORD WINAPI drain_socket_thread(LPVOID arg)
 {
@@ -12578,6 +12591,7 @@ START_TEST( sock )
     test_sioRoutingInterfaceQuery();
     test_sioAddressListChange();
     test_base_handle();
+    test_circular_queueing();
     test_unsupported_ioctls();
 
     test_WSASendMsg();

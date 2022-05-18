@@ -2371,6 +2371,18 @@ INT WINAPI WSAIoctl(SOCKET s, DWORD code, LPVOID in_buff, DWORD in_size, LPVOID 
         return ret ? -1 : 0;
     }
 
+    case SIO_ENABLE_CIRCULAR_QUEUEING:
+    {
+        NTSTATUS status = STATUS_SUCCESS;
+        DWORD ret;
+
+        FIXME( "SIO_ENABLE_CIRCULAR_QUEUEING stub\n" );
+        ret = server_ioctl_sock( s, IOCTL_AFD_WINE_COMPLETE_ASYNC, &status, sizeof(status),
+                                 NULL, 0, ret_size, overlapped, completion );
+        SetLastError( ret );
+        return ret ? -1 : 0;
+    }
+
     case SIO_BASE_HANDLE:
     {
         NTSTATUS status;
