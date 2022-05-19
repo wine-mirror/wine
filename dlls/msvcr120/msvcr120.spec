@@ -290,6 +290,7 @@
 @ stub -arch=arm ??1_SpinLock@details@Concurrency@@QAA@XZ
 @ stub -arch=i386 ??1_SpinLock@details@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??1_SpinLock@details@Concurrency@@QEAA@XZ
+@ stub -arch=arm ??1_StructuredTaskCollection@details@Concurrency@@QAA@XZ
 @ stub -arch=i386 ??1_StructuredTaskCollection@details@Concurrency@@QAE@XZ
 @ stub -arch=win64 ??1_StructuredTaskCollection@details@Concurrency@@QEAA@XZ
 @ stub -arch=arm ??1_TaskCollection@details@Concurrency@@QAA@XZ
