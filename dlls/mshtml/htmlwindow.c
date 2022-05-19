@@ -3152,6 +3152,20 @@ static HRESULT WINAPI window_private_requestAnimationFrame(IWineHTMLWindowPrivat
     return hres;
 }
 
+static HRESULT WINAPI window_private_cancelAnimationFrame(IWineHTMLWindowPrivate *iface, VARIANT timer_id)
+{
+    HTMLWindow *This = impl_from_IWineHTMLWindowPrivateVtbl(iface);
+    HRESULT hres;
+
+    TRACE("iface %p, timer_id %s\n", iface, debugstr_variant(&timer_id));
+
+    hres = VariantChangeType(&timer_id, &timer_id, 0, VT_I4);
+    if(SUCCEEDED(hres))
+        clear_animation_timer(This->inner_window, V_I4(&timer_id));
+
+    return S_OK;
+}
+
 static HRESULT WINAPI window_private_get_console(IWineHTMLWindowPrivate *iface, IDispatch **console)
 {
     HTMLWindow *This = impl_from_IWineHTMLWindowPrivateVtbl(iface);
@@ -3176,6 +3190,7 @@ static const IWineHTMLWindowPrivateVtbl WineHTMLWindowPrivateVtbl = {
     window_private_GetIDsOfNames,
     window_private_Invoke,
     window_private_requestAnimationFrame,
+    window_private_cancelAnimationFrame,
     window_private_get_console,
 };
 

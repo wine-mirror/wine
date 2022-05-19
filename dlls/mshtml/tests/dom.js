@@ -494,13 +494,21 @@ sync_test("elem_props", function() {
 });
 
 async_test("animation_frame", function() {
-    var id = requestAnimationFrame(function(x) {
+    var id = requestAnimationFrame(function(x) { ok(false, "request was supposed to be cancelled"); });
+    id = cancelAnimationFrame(id);
+    ok(id === undefined, "cancelAnimationFrame returned " + id);
+
+    id = requestAnimationFrame(function(x) {
         ok(this === window, "this != window");
         ok(typeof(x) === "number", "x = " + x);
         ok(arguments.length === 1, "arguments.length = " + arguments.length);
         next_test();
     });
+    cancelAnimationFrame(0);
+    clearInterval(id);
+    clearTimeout(id);
     ok(typeof(id) === "number", "id = " + id);
+    ok(id !== 0, "id = 0");
 });
 
 sync_test("title", function() {

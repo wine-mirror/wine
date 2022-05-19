@@ -357,6 +357,7 @@ sync_test("window_props", function() {
     test_exposed("getSelection", v >= 9);
     test_exposed("onfocusout", v >= 9);
     test_exposed("getComputedStyle", v >= 9);
+    test_exposed("cancelAnimationFrame", v >= 10);
     test_exposed("requestAnimationFrame", v >= 10);
     test_exposed("Map", v >= 11);
     test_exposed("Set", v >= 11);

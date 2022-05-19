@@ -87,7 +87,9 @@ interface IWineHTMLWindowPrivate : IDispatch
 {
     [id(50)]
     HRESULT requestAnimationFrame([in] VARIANT *expr, [retval, out] VARIANT *timer_id);
-    [propget, id(51)]
+    [id(51)]
+    HRESULT cancelAnimationFrame([in] VARIANT timer_id);
+    [propget, id(52)]
     HRESULT console([retval, out] IDispatch **console);
 }
 
