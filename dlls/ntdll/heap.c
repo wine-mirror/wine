@@ -1182,6 +1182,7 @@ static BOOL validate_free_block( const SUBHEAP *subheap, const struct block *blo
     if (!err && (flags & HEAP_FREE_CHECKING_ENABLED))
     {
         const char *ptr = (char *)(entry + 1), *end = (char *)block + block_get_size( block );
+        if (next) end -= sizeof(struct block *);
         if (end > commit_end) end = commit_end;
         while (!err && ptr < end)
         {
