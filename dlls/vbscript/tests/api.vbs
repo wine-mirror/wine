@@ -1972,12 +1972,23 @@ end sub
 
 sub testDateSerialError()
     on error resume next
+    dim x
     call Err.clear()
     call DateSerial(10000, 1, 1)
     call ok(Err.number = 5, "Err.number = " & Err.number)
     call Err.clear()
     call DateSerial(-10000, 1, 1)
     call ok(Err.number = 5, "Err.number = " & Err.number)
+    call Err.clear()
+    x = DateSerial(null, 1, 1)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call ok(getVT(x) = "VT_EMPTY*", "getVT = " & getVT(x))
+    call Err.clear()
+    call DateSerial(2000, null, 1)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call Err.clear()
+    call DateSerial(2000, 1, null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
 end sub
 
 call testDateSerial(100, 2, 1, 100, 2, 1)

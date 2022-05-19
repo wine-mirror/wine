@@ -2095,6 +2095,9 @@ static HRESULT Global_DateSerial(BuiltinDisp *This, VARIANT *args, unsigned args
 
     assert(args_cnt == 3);
 
+    if (V_VT(args) == VT_NULL || V_VT(args + 1) == VT_NULL || V_VT(args + 2) == VT_NULL)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
     hres = to_int(args, &year);
     if (SUCCEEDED(hres))
         hres = to_int(args + 1, &month);
