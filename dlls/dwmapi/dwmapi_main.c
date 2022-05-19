@@ -226,6 +226,9 @@ HRESULT WINAPI DwmGetCompositionTimingInfo(HWND hwnd, DWM_TIMING_INFO *info)
 
     if(!i++) FIXME("(%p %p)\n", hwnd, info);
 
+    memset(info, 0, info->cbSize);
+    info->cbSize = sizeof(DWM_TIMING_INFO);
+
     return S_OK;
 }
 
