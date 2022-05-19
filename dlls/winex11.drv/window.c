@@ -1860,13 +1860,14 @@ BOOL X11DRV_CreateDesktopWindow( HWND hwnd )
 }
 
 
-static WNDPROC desktop_orig_wndproc;
-
 #define WM_WINE_NOTIFY_ACTIVITY WM_USER
 #define WM_WINE_DELETE_TAB      (WM_USER + 1)
 #define WM_WINE_ADD_TAB         (WM_USER + 2)
 
-static LRESULT CALLBACK desktop_wndproc_wrapper( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
+/**********************************************************************
+ *           DesktopWindowProc   (X11DRV.@)
+ */
+LRESULT X11DRV_DesktopWindowProc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 {
     switch (msg)
     {
@@ -1891,7 +1892,7 @@ static LRESULT CALLBACK desktop_wndproc_wrapper( HWND hwnd, UINT msg, WPARAM wp,
         send_notify_message( (HWND)wp, WM_X11DRV_ADD_TAB, 0, 0 );
         break;
     }
-    return desktop_orig_wndproc( hwnd, msg, wp, lp );
+    return NtUserMessageCall( hwnd, msg, wp, lp, 0, NtUserDefWindowProc, FALSE );
 }
 
 /**********************************************************************
@@ -1903,9 +1904,6 @@ BOOL X11DRV_CreateWindow( HWND hwnd )
     {
         struct x11drv_thread_data *data = x11drv_init_thread_data();
         XSetWindowAttributes attr;
-
-        desktop_orig_wndproc = (WNDPROC)NtUserSetWindowLongPtr( hwnd, GWLP_WNDPROC,
-                                                                (LONG_PTR)desktop_wndproc_wrapper, FALSE );
 
         /* create the cursor clipping window */
         attr.override_redirect = TRUE;
