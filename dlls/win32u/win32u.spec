@@ -1248,7 +1248,7 @@
 @ stub NtUserSetWindowGroup
 @ stdcall NtUserSetWindowLong(long long long long)
 @ stdcall NtUserSetWindowLongPtr(long long long long)
-@ stub NtUserSetWindowPlacement
+@ stdcall NtUserSetWindowPlacement(long ptr)
 @ stdcall NtUserSetWindowPos(long long long long long long long)
 @ stdcall NtUserSetWindowRgn(long long long)
 @ stub NtUserSetWindowRgnEx

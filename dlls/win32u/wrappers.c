@@ -1227,6 +1227,12 @@ LONG_PTR WINAPI NtUserSetWindowLongPtr( HWND hwnd, INT offset, LONG_PTR newval, 
     return unix_funcs->pNtUserSetWindowLongPtr( hwnd, offset, newval, ansi );
 }
 
+BOOL WINAPI NtUserSetWindowPlacement( HWND hwnd, const WINDOWPLACEMENT *wpl )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserSetWindowPlacement( hwnd, wpl );
+}
+
 BOOL WINAPI NtUserSetWindowPos( HWND hwnd, HWND after, INT x, INT y, INT cx, INT cy, UINT flags )
 {
     if (!unix_funcs) return 0;

@@ -1515,6 +1515,26 @@ POINT point_phys_to_win_dpi( HWND hwnd, POINT pt )
     return map_dpi_point( pt, get_win_monitor_dpi( hwnd ), get_dpi_for_window( hwnd ));
 }
 
+/**********************************************************************
+ *              point_thread_to_win_dpi
+ */
+POINT point_thread_to_win_dpi( HWND hwnd, POINT pt )
+{
+    UINT dpi = get_thread_dpi();
+    if (!dpi) dpi = get_win_monitor_dpi( hwnd );
+    return map_dpi_point( pt, dpi, get_dpi_for_window( hwnd ));
+}
+
+/**********************************************************************
+ *              rect_thread_to_win_dpi
+ */
+RECT rect_thread_to_win_dpi( HWND hwnd, RECT rect )
+{
+    UINT dpi = get_thread_dpi();
+    if (!dpi) dpi = get_win_monitor_dpi( hwnd );
+    return map_dpi_rect( rect, dpi, get_dpi_for_window( hwnd ) );
+}
+
 /* map value from system dpi to standard 96 dpi for storing in the registry */
 static int map_from_system_dpi( int val )
 {

@@ -725,7 +725,7 @@
 @ stdcall -arch=win64 SetWindowLongPtrA(long long long)
 @ stdcall -arch=win64 SetWindowLongPtrW(long long long)
 @ stdcall SetWindowLongW(long long long)
-@ stdcall SetWindowPlacement(long ptr)
+@ stdcall SetWindowPlacement(long ptr) NtUserSetWindowPlacement
 @ stdcall SetWindowPos(long long long long long long long) NtUserSetWindowPos
 @ stdcall SetWindowRgn(long long long) NtUserSetWindowRgn
 @ stdcall SetWindowStationUser(long long)

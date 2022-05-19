@@ -429,21 +429,6 @@ static BOOL WINPOS_SetPlacement( HWND hwnd, const WINDOWPLACEMENT *wndpl, UINT f
 
 
 /***********************************************************************
- *		SetWindowPlacement (USER32.@)
- *
- * Win95:
- * Fails if wndpl->length of Win95 (!) apps is invalid.
- */
-BOOL WINAPI SetWindowPlacement( HWND hwnd, const WINDOWPLACEMENT *wpl )
-{
-    UINT flags = PLACE_MAX | PLACE_RECT;
-    if (!wpl) return FALSE;
-    if (wpl->flags & WPF_SETMINPOSITION) flags |= PLACE_MIN;
-    return WINPOS_SetPlacement( hwnd, wpl, flags );
-}
-
-
-/***********************************************************************
  *		AnimateWindow (USER32.@)
  *		Shows/Hides a window with an animation
  *		NO ANIMATION YET
