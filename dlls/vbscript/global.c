@@ -1982,10 +1982,50 @@ static HRESULT Global_Month(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
     return FAILED(hres) ? hres : return_short(res, st.wMonth);
 }
 
-static HRESULT Global_Weekday(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_Weekday(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    HRESULT hres = S_OK;
+    int first_day = 0;
+    SYSTEMTIME st;
+
+    TRACE("(%s)\n", debugstr_variant(args));
+
+    assert(args_cnt == 1 || args_cnt == 2);
+
+    /* [vbSunday = 1, vbSaturday = 7] -> wDayOfWeek [0, 6] */
+    if (args_cnt == 2)
+    {
+        if (V_VT(args + 1) == VT_NULL)
+            return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
+        hres = to_int(args + 1, &first_day);
+        if (SUCCEEDED(hres))
+        {
+            if (!first_day)
+            {
+                /* vbUseSystemDayOfWeek */
+                GetLocaleInfoW(This->ctx->lcid, LOCALE_RETURN_NUMBER | LOCALE_IFIRSTDAYOFWEEK, (LPWSTR)&first_day,
+                        sizeof(&first_day) / sizeof(WCHAR));
+                first_day = (first_day + 1) % 7;
+            }
+            else if (first_day >= 1 && first_day <= 7)
+            {
+                first_day--;
+            }
+            else
+                return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
+        }
+    }
+
+    if (FAILED(hres))
+        return hres;
+
+    if (V_VT(args) == VT_NULL)
+        return return_null(res);
+
+    if (FAILED(hres = to_system_time(args, &st))) return hres;
+
+    return return_short(res, 1 + (7 - first_day + st.wDayOfWeek) % 7);
 }
 
 static HRESULT Global_Year(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

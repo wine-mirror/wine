@@ -2036,4 +2036,57 @@ call testDateAdd(DateSerial(2000, 1, 1), "ww", -1, DateSerial(1999, 12, 25))
 call testDateAdd(DateSerial(2000, 1, 1), "Ww", -1, DateSerial(1999, 12, 25))
 call testDateAddError()
 
+sub testWeekday(d, firstday, wd)
+    dim x, x2
+    x = Weekday(d, firstday)
+    call ok(x = wd, "weekday = " & x & " expected " & wd)
+    call ok(getVT(x) = "VT_I2*", "getVT = " & getVT(x))
+    if firstday = vbSunday then
+        x = Weekday(d)
+        call ok(x = wd, "weekday = " & x & " expected " & wd)
+    end if
+    x = Weekday(d, vbUseSystemDayOfWeek)
+    x2 = Weekday(d, firstDayOfWeek)
+    call ok(x = x2, "weekday = " & x & " expected " & x2)
+end sub
+
+sub testWeekdayError()
+    on error resume next
+    dim x
+    call Err.clear()
+    call Weekday(DateSerial(1000, 1, 1), 10)
+    call ok(Err.number = 5, "Err.number = " & Err.number)
+    call Err.clear()
+    call Weekday(DateSerial(1000, 1, 1), -1)
+    call ok(Err.number = 5, "Err.number = " & Err.number)
+    call Err.clear()
+    call Weekday(null, -1)
+    call ok(Err.number = 5, "Err.number = " & Err.number)
+    call Err.clear()
+    call Weekday(DateSerial(1000, 1, 1), null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call Err.clear()
+    x = Weekday(null, vbSunday)
+    call ok(Err.number = 0, "Err.number = " & Err.number)
+    call ok(getVT(x) = "VT_NULL*", "getVT = " & getVT(x))
+    call Err.clear()
+    call Weekday(null, null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call Err.clear()
+    call Weekday(null, "a")
+    call ok(Err.number = 13, "Err.number = " & Err.number)
+    call Err.clear()
+    call Weekday(DateSerial(1000, 1, 1), "a")
+    call ok(Err.number = 13, "Err.number = " & Err.number)
+end sub
+
+call testWeekday(DateSerial(2000, 1, 1), vbSunday, 7)
+call testWeekday(DateSerial(2000, 1, 1), vbMonday, 6)
+call testWeekday(DateSerial(2000, 1, 1), vbTuesday, 5)
+call testWeekday(DateSerial(2000, 1, 1), vbWednesday, 4)
+call testWeekday(DateSerial(2000, 1, 1), vbThursday, 3)
+call testWeekday(DateSerial(2000, 1, 1), vbFriday, 2)
+call testWeekday(DateSerial(2000, 1, 1), vbSaturday, 1)
+call testWeekdayError()
+
 Call reportSuccess()
