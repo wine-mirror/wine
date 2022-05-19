@@ -417,6 +417,10 @@ LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
     }
     case WM_NCCALCSIZE:
         return 0;
+
+    default:
+        if (msg >= WM_USER && hwnd == get_desktop_window())
+            return user_driver->pDesktopWindowProc( hwnd, msg, wparam, lparam );
     }
 
     return default_window_proc( hwnd, msg, wparam, lparam, FALSE );
