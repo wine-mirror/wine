@@ -1135,7 +1135,6 @@ static void test_SpeechRecognizer(void)
         ok(!WaitForSingleObject(compilation_handler.event_finished, 5000), "Wait for event_finished failed.\n");
 
         todo_wine ok(compilation_handler.ref == 3, "Got unexpected ref %lu.\n", compilation_handler.ref);
-        todo_wine check_refcount(operation, 3);
 
         handler = (void*)0xdeadbeef;
         old_ref = compilation_handler.ref;
