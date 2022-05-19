@@ -2550,6 +2550,9 @@ static void test_timeout(IHTMLDocument2 *doc)
     ok(hres == S_OK, "setTimeout failed: %08lx\n", hres);
     ok(id, "id = 0\n");
 
+    hres = IHTMLWindow2_clearTimeout(window, 0);
+    ok(hres == S_OK, "clearTimeout failed: %08lx\n", hres);
+
     SET_EXPECT(timeout);
     pump_msgs(&called_timeout);
     CHECK_CALLED(timeout);
@@ -2576,6 +2579,13 @@ static void test_timeout(IHTMLDocument2 *doc)
     SET_EXPECT(timeout);
     pump_msgs(&called_timeout);
     CHECK_CALLED(timeout);
+
+    SET_EXPECT(timeout);
+    pump_msgs(&called_timeout);
+    CHECK_CALLED(timeout);
+
+    hres = IHTMLWindow2_clearInterval(window, 0);
+    ok(hres == S_OK, "clearInterval failed: %08lx\n", hres);
 
     SET_EXPECT(timeout);
     pump_msgs(&called_timeout);
