@@ -28,7 +28,6 @@
 #include "combase_private.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -219,7 +218,7 @@ static ULONG WINAPI ftmarshaler_inner_Release(IUnknown *iface)
     TRACE("%p, refcount %lu\n", iface, refcount);
 
     if (!refcount)
-        heap_free(marshaler);
+        free(marshaler);
 
     return refcount;
 }
@@ -421,7 +420,7 @@ HRESULT WINAPI CoCreateFreeThreadedMarshaler(IUnknown *outer, IUnknown **marshal
 
     TRACE("%p, %p\n", outer, marshaler);
 
-    object = heap_alloc(sizeof(*object));
+    object = malloc(sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
@@ -1001,9 +1000,9 @@ static HRESULT WINAPI ClientIdentity_QueryMultipleInterfaces(IMultiQI *iface, UL
     ULONG nonlocal_mqis = 0;
     ULONG i;
     ULONG successful_mqis = 0;
-    IID *iids = HeapAlloc(GetProcessHeap(), 0, cMQIs * sizeof(*iids));
+    IID *iids = malloc(cMQIs * sizeof(*iids));
     /* mapping of RemQueryInterface index to QueryMultipleInterfaces index */
-    ULONG *mapping = HeapAlloc(GetProcessHeap(), 0, cMQIs * sizeof(*mapping));
+    ULONG *mapping = malloc(cMQIs * sizeof(*mapping));
 
     TRACE("cMQIs: %ld\n", cMQIs);
 
@@ -1084,8 +1083,8 @@ static HRESULT WINAPI ClientIdentity_QueryMultipleInterfaces(IMultiQI *iface, UL
 
     TRACE("%ld/%ld successfully queried\n", successful_mqis, cMQIs);
 
-    HeapFree(GetProcessHeap(), 0, iids);
-    HeapFree(GetProcessHeap(), 0, mapping);
+    free(iids);
+    free(mapping);
 
     if (successful_mqis == cMQIs)
         return S_OK; /* we got all requested interfaces */
@@ -1531,20 +1530,20 @@ static void ifproxy_destroy(struct ifproxy * This)
 
     if (This->proxy) IRpcProxyBuffer_Release(This->proxy);
 
-    HeapFree(GetProcessHeap(), 0, This);
+    free(This);
 }
 
 static HRESULT proxy_manager_construct(
     struct apartment * apt, ULONG sorflags, OXID oxid, OID oid,
     const OXID_INFO *oxid_info, struct proxy_manager ** proxy_manager)
 {
-    struct proxy_manager * This = HeapAlloc(GetProcessHeap(), 0, sizeof(*This));
+    struct proxy_manager * This = malloc(sizeof(*This));
     if (!This) return E_OUTOFMEMORY;
 
     This->remoting_mutex = CreateMutexW(NULL, FALSE, NULL);
     if (!This->remoting_mutex)
     {
-        HeapFree(GetProcessHeap(), 0, This);
+        free(This);
         return HRESULT_FROM_WIN32(GetLastError());
     }
 
@@ -1562,7 +1561,7 @@ static HRESULT proxy_manager_construct(
         if (FAILED(hr))
         {
             CloseHandle(This->remoting_mutex);
-            HeapFree(GetProcessHeap(), 0, This);
+            free(This);
             return hr;
         }
     }
@@ -1718,7 +1717,7 @@ static HRESULT proxy_manager_create_ifproxy(
 {
     HRESULT hr;
     IPSFactoryBuffer * psfb;
-    struct ifproxy * ifproxy = HeapAlloc(GetProcessHeap(), 0, sizeof(*ifproxy));
+    struct ifproxy * ifproxy = malloc(sizeof(*ifproxy));
     if (!ifproxy) return E_OUTOFMEMORY;
 
     list_init(&ifproxy->entry);
@@ -1931,7 +1930,7 @@ static void proxy_manager_destroy(struct proxy_manager * This)
 
     CloseHandle(This->remoting_mutex);
 
-    HeapFree(GetProcessHeap(), 0, This);
+    free(This);
 }
 
 /* finds the proxy manager corresponding to a given OXID and OID that has
@@ -2014,7 +2013,7 @@ static ULONG WINAPI StdMarshalImpl_Release(IMarshal *iface)
     ULONG refcount = InterlockedDecrement(&marshal->refcount);
 
     if (!refcount)
-        heap_free(marshal);
+        free(marshal);
 
     return refcount;
 }
@@ -2215,7 +2214,7 @@ static HRESULT StdMarshalImpl_Construct(REFIID riid, DWORD dest_context, void *d
     struct stdmarshal *object;
     HRESULT hr;
 
-    object = heap_alloc(sizeof(*object));
+    object = malloc(sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 

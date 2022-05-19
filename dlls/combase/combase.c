@@ -32,7 +32,6 @@
 #include "combase_private.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
 
@@ -392,7 +391,7 @@ BOOL WINAPI InternalIsProcessInitialized(void)
  */
 HRESULT WINAPI InternalTlsAllocData(struct tlsdata **data)
 {
-    if (!(*data = heap_alloc_zero(sizeof(**data))))
+    if (!(*data = calloc(1, sizeof(**data))))
         return E_OUTOFMEMORY;
 
     list_init(&(*data)->spies);
@@ -421,13 +420,13 @@ static void com_cleanup_tlsdata(void)
         list_remove(&cursor->entry);
         if (cursor->spy)
             IInitializeSpy_Release(cursor->spy);
-        heap_free(cursor);
+        free(cursor);
     }
 
     if (tlsdata->context_token)
         IObjContext_Release(tlsdata->context_token);
 
-    heap_free(tlsdata);
+    free(tlsdata);
     NtCurrentTeb()->ReservedForOle = NULL;
 }
 
@@ -478,7 +477,7 @@ static ULONG WINAPI global_options_Release(IGlobalOptions *iface)
     TRACE("%p, refcount %ld.\n", iface, refcount);
 
     if (!refcount)
-        heap_free(options);
+        free(options);
 
     return refcount;
 }
@@ -552,7 +551,7 @@ static HRESULT WINAPI global_options_CreateInstance(IClassFactory *iface, IUnkno
     if (outer)
         return E_INVALIDARG;
 
-    if (!(object = heap_alloc(sizeof(*object))))
+    if (!(object = malloc(sizeof(*object))))
         return E_OUTOFMEMORY;
     object->IGlobalOptions_iface.lpVtbl = &global_options_vtbl;
     object->refcount = 1;
@@ -1393,18 +1392,18 @@ static HRESULT clsid_from_string_reg(LPCOLESTR progid, CLSID *clsid)
     WCHAR *buf;
 
     memset(clsid, 0, sizeof(*clsid));
-    buf = heap_alloc((lstrlenW(progid) + 8) * sizeof(WCHAR));
+    buf = malloc((lstrlenW(progid) + 8) * sizeof(WCHAR));
     if (!buf) return E_OUTOFMEMORY;
 
     lstrcpyW(buf, progid);
     lstrcatW(buf, L"\\CLSID");
     if (open_classes_key(HKEY_CLASSES_ROOT, buf, MAXIMUM_ALLOWED, &xhkey))
     {
-        heap_free(buf);
+        free(buf);
         WARN("couldn't open key for ProgID %s\n", debugstr_w(progid));
         return CO_E_CLASSSTRING;
     }
-    heap_free(buf);
+    free(buf);
 
     if (RegQueryValueW(xhkey, NULL, buf2, &buf2len))
     {
@@ -1984,7 +1983,7 @@ HRESULT WINAPI CoRegisterInitializeSpy(IInitializeSpy *spy, ULARGE_INTEGER *cook
     if (FAILED(hr))
         return hr;
 
-    entry = heap_alloc(sizeof(*entry));
+    entry = malloc(sizeof(*entry));
     if (!entry)
     {
         IInitializeSpy_Release(spy);
@@ -2032,7 +2031,7 @@ HRESULT WINAPI CoRevokeInitializeSpy(ULARGE_INTEGER cookie)
     if (!tlsdata->spies_lock)
     {
         list_remove(&spy->entry);
-        heap_free(spy);
+        free(spy);
     }
     return S_OK;
 }
@@ -2245,7 +2244,7 @@ static void com_revoke_all_ps_clsids(void)
     LIST_FOR_EACH_ENTRY_SAFE(cur, cur2, &registered_proxystubs, struct registered_ps, entry)
     {
         list_remove(&cur->entry);
-        heap_free(cur);
+        free(cur);
     }
 
     LeaveCriticalSection(&cs_registered_ps);
@@ -2365,7 +2364,7 @@ HRESULT WINAPI CoRegisterPSClsid(REFIID riid, REFCLSID rclsid)
         }
     }
 
-    cur = heap_alloc(sizeof(*cur));
+    cur = malloc(sizeof(*cur));
     if (!cur)
     {
         LeaveCriticalSection(&cs_registered_ps);
@@ -2448,7 +2447,7 @@ static ULONG WINAPI thread_context_info_Release(IComThreadingInfo *iface)
        releasing context while refcount is at 0 destroys it. */
     if (!context->refcount)
     {
-        heap_free(context);
+        free(context);
         return 0;
     }
 
@@ -2673,7 +2672,7 @@ HRESULT WINAPI CoGetContextToken(ULONG_PTR *token)
     {
         struct thread_context *context;
 
-        context = heap_alloc_zero(sizeof(*context));
+        context = calloc(1, sizeof(*context));
         if (!context)
             return E_OUTOFMEMORY;
 
@@ -2768,7 +2767,7 @@ static void unlock_init_spies(struct tlsdata *tlsdata)
     {
         if (spy->spy) continue;
         list_remove(&spy->entry);
-        heap_free(spy);
+        free(spy);
     }
 }
 
@@ -3001,7 +3000,7 @@ HRESULT WINAPI CoRegisterClassObject(REFCLSID rclsid, IUnknown *object, DWORD cl
         return CO_E_OBJISREG;
     }
 
-    newclass = heap_alloc_zero(sizeof(*newclass));
+    newclass = calloc(1, sizeof(*newclass));
     if (!newclass)
     {
         apartment_release(apt);
@@ -3052,7 +3051,7 @@ static void com_revoke_class_object(struct registered_class *entry)
         rpc_revoke_local_server(entry->rpcss_cookie);
 
     IUnknown_Release(entry->object);
-    heap_free(entry);
+    free(entry);
 }
 
 /* Cleans up rpcss registry */

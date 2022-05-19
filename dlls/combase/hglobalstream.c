@@ -48,7 +48,7 @@ static void handle_release(struct handle_wrapper *handle)
     if (!ref)
     {
         if (handle->delete_on_release) GlobalFree(handle->hglobal);
-        HeapFree(GetProcessHeap(), 0, handle);
+        free(handle);
     }
 }
 
@@ -56,14 +56,14 @@ static struct handle_wrapper *handle_create(HGLOBAL hglobal, BOOL delete_on_rele
 {
     struct handle_wrapper *handle;
 
-    handle = HeapAlloc(GetProcessHeap(), 0, sizeof(*handle));
+    handle = malloc(sizeof(*handle));
     if (!handle) return NULL;
 
     /* allocate a handle if one is not supplied */
     if (!hglobal) hglobal = GlobalAlloc(GMEM_MOVEABLE | GMEM_NODISCARD | GMEM_SHARE, 0);
     if (!hglobal)
     {
-        HeapFree(GetProcessHeap(), 0, handle);
+        free(handle);
         return NULL;
     }
     handle->ref = 1;
@@ -92,7 +92,7 @@ static const IStreamVtbl hglobalstreamvtbl;
 
 static struct hglobal_stream *hglobalstream_construct(void)
 {
-    struct hglobal_stream *object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    struct hglobal_stream *object = calloc(1, sizeof(*object));
 
     if (object)
     {
@@ -134,7 +134,7 @@ static ULONG WINAPI stream_Release(IStream *iface)
     if (!ref)
     {
         handle_release(stream->handle);
-        HeapFree(GetProcessHeap(), 0, stream);
+        free(stream);
     }
 
     return ref;
@@ -422,7 +422,7 @@ HRESULT WINAPI CreateStreamOnHGlobal(HGLOBAL hGlobal, BOOL delete_on_release, IS
     object->handle = handle_create(hGlobal, delete_on_release);
     if (!object->handle)
     {
-        HeapFree(GetProcessHeap(), 0, object);
+        free(object);
         return E_OUTOFMEMORY;
     }
 

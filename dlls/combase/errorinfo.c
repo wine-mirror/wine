@@ -25,26 +25,8 @@
 #include "combase_private.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(ole);
-
-static WCHAR *heap_strdupW(const WCHAR *str)
-{
-    WCHAR *ret = NULL;
-
-    if (str)
-    {
-        size_t size;
-
-        size = (lstrlenW(str)+1)*sizeof(WCHAR);
-        ret = heap_alloc(size);
-        if (ret)
-            memcpy(ret, str, size);
-    }
-
-    return ret;
-}
 
 struct error_info
 {
@@ -125,10 +107,10 @@ static ULONG WINAPI errorinfo_Release(IErrorInfo *iface)
 
     if (!refcount)
     {
-        heap_free(error_info->source);
-        heap_free(error_info->description);
-        heap_free(error_info->help_file);
-        heap_free(error_info);
+        free(error_info->source);
+        free(error_info->description);
+        free(error_info->help_file);
+        free(error_info);
     }
 
     return refcount;
@@ -241,8 +223,8 @@ static HRESULT WINAPI create_errorinfo_SetSource(ICreateErrorInfo *iface, LPOLES
 
     TRACE("%p, %s.\n", iface, debugstr_w(source));
 
-    heap_free(error_info->source);
-    error_info->source = heap_strdupW(source);
+    free(error_info->source);
+    error_info->source = wcsdup(source);
 
     return S_OK;
 }
@@ -253,8 +235,8 @@ static HRESULT WINAPI create_errorinfo_SetDescription(ICreateErrorInfo *iface, L
 
     TRACE("%p, %s.\n", iface, debugstr_w(description));
 
-    heap_free(error_info->description);
-    error_info->description = heap_strdupW(description);
+    free(error_info->description);
+    error_info->description = wcsdup(description);
 
     return S_OK;
 }
@@ -265,8 +247,8 @@ static HRESULT WINAPI create_errorinfo_SetHelpFile(ICreateErrorInfo *iface, LPOL
 
     TRACE("%p, %s.\n", iface, debugstr_w(helpfile));
 
-    heap_free(error_info->help_file);
-    error_info->help_file = heap_strdupW(helpfile);
+    free(error_info->help_file);
+    error_info->help_file = wcsdup(helpfile);
 
     return S_OK;
 }
@@ -340,7 +322,7 @@ HRESULT WINAPI CreateErrorInfo(ICreateErrorInfo **ret)
 
     if (!ret) return E_INVALIDARG;
 
-    if (!(error_info = heap_alloc(sizeof(*error_info))))
+    if (!(error_info = malloc(sizeof(*error_info))))
         return E_OUTOFMEMORY;
 
     error_info->IErrorInfo_iface.lpVtbl = &errorinfo_vtbl;

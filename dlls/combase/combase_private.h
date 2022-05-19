@@ -17,7 +17,6 @@
 #include "winternl.h"
 #include "wine/orpc.h"
 
-#include "wine/heap.h"
 #include "wine/list.h"
 
 extern HINSTANCE hProxyDll;

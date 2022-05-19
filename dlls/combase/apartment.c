@@ -160,9 +160,9 @@ static HRESULT apartment_add_dll(const WCHAR *library_name, struct opendll **ret
     else
     {
         len = lstrlenW(library_name);
-        entry = heap_alloc(sizeof(*entry));
+        entry = malloc(sizeof(*entry));
         if (entry)
-            entry->library_name = heap_alloc((len + 1) * sizeof(WCHAR));
+            entry->library_name = malloc((len + 1) * sizeof(WCHAR));
         if (entry && entry->library_name)
         {
             memcpy(entry->library_name, library_name, (len + 1)*sizeof(WCHAR));
@@ -175,7 +175,7 @@ static HRESULT apartment_add_dll(const WCHAR *library_name, struct opendll **ret
         }
         else
         {
-            heap_free(entry);
+            free(entry);
             hr = E_OUTOFMEMORY;
             FreeLibrary(hLibrary);
         }
@@ -199,8 +199,8 @@ static void apartment_release_dll(struct opendll *entry, BOOL free_entry)
         TRACE("freeing %p\n", entry->library);
         FreeLibrary(entry->library);
 
-        heap_free(entry->library_name);
-        heap_free(entry);
+        free(entry->library_name);
+        free(entry);
     }
 }
 
@@ -212,8 +212,8 @@ static void apartment_release_dlls(void)
     LIST_FOR_EACH_ENTRY_SAFE(entry, cursor2, &dlls, struct opendll, entry)
     {
         list_remove(&entry->entry);
-        heap_free(entry->library_name);
-        heap_free(entry);
+        free(entry->library_name);
+        free(entry);
     }
     LeaveCriticalSection(&dlls_cs);
     DeleteCriticalSection(&dlls_cs);
@@ -279,7 +279,7 @@ static ULONG WINAPI local_server_Release(IServiceProvider *iface)
     if (!refcount)
     {
         assert(!local_server->apt);
-        heap_free(local_server);
+        free(local_server);
     }
 
     return refcount;
@@ -324,7 +324,7 @@ HRESULT apartment_get_local_server_stream(struct apartment *apt, IStream **ret)
     {
         struct local_server *obj;
 
-        obj = heap_alloc(sizeof(*obj));
+        obj = malloc(sizeof(*obj));
         if (obj)
         {
             obj->IServiceProvider_iface.lpVtbl = &local_server_vtbl;
@@ -343,7 +343,7 @@ HRESULT apartment_get_local_server_stream(struct apartment *apt, IStream **ret)
             if (SUCCEEDED(hr))
                 apt->local_server = obj;
             else
-                heap_free(obj);
+                free(obj);
         }
         else
             hr = E_OUTOFMEMORY;
@@ -367,7 +367,7 @@ static struct apartment *apartment_construct(DWORD model)
 
     TRACE("creating new apartment, model %ld\n", model);
 
-    apt = heap_alloc_zero(sizeof(*apt));
+    apt = calloc(1, sizeof(*apt));
     apt->tid = GetCurrentThreadId();
 
     list_init(&apt->proxies);
@@ -429,7 +429,7 @@ void apartment_freeunusedlibraries(struct apartment *apt, DWORD delay)
             {
                 list_remove(&entry->entry);
                 apartment_release_dll(entry->dll, TRUE);
-                heap_free(entry);
+                free(entry);
             }
             else
             {
@@ -531,13 +531,13 @@ void apartment_release(struct apartment *apt)
             struct apartment_loaded_dll *apartment_loaded_dll = LIST_ENTRY(cursor, struct apartment_loaded_dll, entry);
             apartment_release_dll(apartment_loaded_dll->dll, FALSE);
             list_remove(cursor);
-            heap_free(apartment_loaded_dll);
+            free(apartment_loaded_dll);
         }
 
         apt->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&apt->cs);
 
-        heap_free(apt);
+        free(apt);
     }
 }
 
@@ -796,7 +796,7 @@ static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
 
     if (!found)
     {
-        apartment_loaded_dll = heap_alloc(sizeof(*apartment_loaded_dll));
+        apartment_loaded_dll = malloc(sizeof(*apartment_loaded_dll));
         if (!apartment_loaded_dll)
             hr = E_OUTOFMEMORY;
         if (SUCCEEDED(hr))
@@ -805,7 +805,7 @@ static HRESULT apartment_getclassobject(struct apartment *apt, LPCWSTR dllpath,
             apartment_loaded_dll->multi_threaded = FALSE;
             hr = apartment_add_dll(dllpath, &apartment_loaded_dll->dll);
             if (FAILED(hr))
-                heap_free(apartment_loaded_dll);
+                free(apartment_loaded_dll);
         }
         if (SUCCEEDED(hr))
         {
@@ -1175,7 +1175,7 @@ HRESULT apartment_increment_mta_usage(CO_MTA_USAGE_COOKIE *cookie)
 
     *cookie = NULL;
 
-    if (!(mta_cookie = heap_alloc(sizeof(*mta_cookie))))
+    if (!(mta_cookie = malloc(sizeof(*mta_cookie))))
         return E_OUTOFMEMORY;
 
     EnterCriticalSection(&apt_cs);
@@ -1208,7 +1208,7 @@ void apartment_decrement_mta_usage(CO_MTA_USAGE_COOKIE cookie)
             if (mta_cookie == cur)
             {
                 list_remove(&cur->entry);
-                heap_free(cur);
+                free(cur);
                 apartment_release(mta);
                 break;
             }

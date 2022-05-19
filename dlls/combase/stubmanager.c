@@ -77,13 +77,13 @@ struct ifstub * stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *
     TRACE("oid=%s, stubbuffer=%p, iid=%s, dest_context=%lx\n", wine_dbgstr_longlong(m->oid), sb,
           debugstr_guid(iid), dest_context);
 
-    stub = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct ifstub));
+    stub = calloc(1, sizeof(struct ifstub));
     if (!stub) return NULL;
 
     hr = IUnknown_QueryInterface(m->object, iid, (void **)&stub->iface);
     if (hr != S_OK)
     {
-        HeapFree(GetProcessHeap(), 0, stub);
+        free(stub);
         return NULL;
     }
 
@@ -91,7 +91,7 @@ struct ifstub * stub_manager_new_ifstub(struct stub_manager *m, IRpcStubBuffer *
     if (hr != S_OK)
     {
         IUnknown_Release(stub->iface);
-        HeapFree(GetProcessHeap(), 0, stub);
+        free(stub);
         return NULL;
     }
 
@@ -132,7 +132,7 @@ static void stub_manager_delete_ifstub(struct stub_manager *m, struct ifstub *if
     IUnknown_Release(ifstub->iface);
     IRpcChannelBuffer_Release(ifstub->chan);
 
-    HeapFree(GetProcessHeap(), 0, ifstub);
+    free(ifstub);
 }
 
 static struct ifstub *stub_manager_ipid_to_ifstub(struct stub_manager *m, const IPID *ipid)
@@ -182,7 +182,7 @@ static struct stub_manager *new_stub_manager(struct apartment *apt, IUnknown *ob
 
     assert(apt);
 
-    sm = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct stub_manager));
+    sm = calloc(1, sizeof(struct stub_manager));
     if (!sm) return NULL;
 
     list_init(&sm->ifstubs);
@@ -288,7 +288,7 @@ static void stub_manager_delete(struct stub_manager *m)
     m->lock.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection(&m->lock);
 
-    HeapFree(GetProcessHeap(), 0, m);
+    free(m);
 }
 
 /* increments the internal refcount */
@@ -634,7 +634,7 @@ static inline RemUnknown *impl_from_IRemUnknown(IRemUnknown *iface)
 /* construct an IRemUnknown object with one outstanding reference */
 static HRESULT RemUnknown_Construct(IRemUnknown **ppRemUnknown)
 {
-    RemUnknown *object = HeapAlloc(GetProcessHeap(), 0, sizeof(*object));
+    RemUnknown *object = malloc(sizeof(*object));
 
     if (!object)
         return E_OUTOFMEMORY;
@@ -683,7 +683,7 @@ static ULONG WINAPI RemUnknown_Release(IRemUnknown *iface)
 
     refs = InterlockedDecrement(&remunk->refs);
     if (!refs)
-        HeapFree(GetProcessHeap(), 0, remunk);
+        free(remunk);
 
     TRACE("%p after: %ld\n", iface, refs);
     return refs;

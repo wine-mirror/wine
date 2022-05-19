@@ -69,7 +69,7 @@ static HRESULT get_library_for_classid(const WCHAR *classid, WCHAR **out)
         hr = REGDB_E_READREGDB;
         goto done;
     }
-    if (!(buf = HeapAlloc(GetProcessHeap(), 0, size)))
+    if (!(buf = malloc(size)))
     {
         hr = E_OUTOFMEMORY;
         goto done;
@@ -83,13 +83,13 @@ static HRESULT get_library_for_classid(const WCHAR *classid, WCHAR **out)
     {
         WCHAR *expanded;
         DWORD len = ExpandEnvironmentStringsW(buf, NULL, 0);
-        if (!(expanded = HeapAlloc(GetProcessHeap(), 0, len * sizeof(WCHAR))))
+        if (!(expanded = malloc(len * sizeof(WCHAR))))
         {
             hr = E_OUTOFMEMORY;
             goto done;
         }
         ExpandEnvironmentStringsW(buf, expanded, len);
-        HeapFree(GetProcessHeap(), 0, buf);
+        free(buf);
         buf = expanded;
     }
 
@@ -97,7 +97,7 @@ static HRESULT get_library_for_classid(const WCHAR *classid, WCHAR **out)
     return S_OK;
 
 done:
-    HeapFree(GetProcessHeap(), 0, buf);
+    free(buf);
     RegCloseKey(hkey_class);
     return hr;
 }
@@ -178,7 +178,7 @@ HRESULT WINAPI RoGetActivationFactory(HSTRING classid, REFIID iid, void **class_
     }
 
 done:
-    HeapFree(GetProcessHeap(), 0, library);
+    free(library);
     if (module) FreeLibrary(module);
     return hr;
 }
