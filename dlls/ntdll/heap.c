@@ -1058,34 +1058,24 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
 }
 
 
-/***********************************************************************
- *           HEAP_FindFreeBlock
- *
- * Find a free block at least as large as the requested size, and make sure
- * the requested size is committed.
- */
-static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T data_size, SUBHEAP **ppSubHeap )
+static struct block *find_free_block( HEAP *heap, SIZE_T data_size, SUBHEAP **subheap )
 {
-    struct entry *entry = find_free_list( heap, data_size + sizeof(ARENA_INUSE), FALSE );
+    struct list *ptr = &find_free_list( heap, data_size + sizeof(ARENA_INUSE), FALSE )->entry;
     SIZE_T total_size, arena_size;
-    ARENA_FREE *pArena;
-    SUBHEAP *subheap;
-    struct list *ptr;
+    struct entry *entry;
 
     /* Find a suitable free list, and in it find a block large enough */
 
-    ptr = &entry->entry;
     while ((ptr = list_next( &heap->freeList[0].arena.entry, ptr )))
     {
-        pArena = LIST_ENTRY( ptr, ARENA_FREE, entry );
-        arena_size = (pArena->size & ARENA_SIZE_MASK) + sizeof(ARENA_FREE) - sizeof(ARENA_INUSE);
+        entry = LIST_ENTRY( ptr, struct entry, entry );
+        arena_size = (entry->size & ARENA_SIZE_MASK) + sizeof(ARENA_FREE) - sizeof(ARENA_INUSE);
         if (arena_size >= data_size)
         {
-            subheap = find_subheap( heap, (struct block *)pArena, FALSE );
-            if (!HEAP_Commit( subheap, (ARENA_INUSE *)pArena, data_size )) return NULL;
-            *ppSubHeap = subheap;
-            list_remove( &pArena->entry );
-            return pArena;
+            *subheap = find_subheap( heap, (struct block *)entry, FALSE );
+            if (!HEAP_Commit( *subheap, (struct block *)entry, data_size )) return NULL;
+            list_remove( &entry->entry );
+            return (struct block *)entry;
         }
     }
 
@@ -1104,26 +1094,24 @@ static ARENA_FREE *HEAP_FindFreeBlock( HEAP *heap, SIZE_T data_size, SUBHEAP **p
     total_size = data_size + ROUND_SIZE(sizeof(SUBHEAP)) + sizeof(ARENA_INUSE) + sizeof(ARENA_FREE);
     if (total_size < data_size) return NULL;  /* overflow */
 
-    if ((subheap = HEAP_CreateSubHeap( heap, NULL, heap->flags, total_size,
-                                       max( heap->grow_size, total_size ) )))
+    if ((*subheap = HEAP_CreateSubHeap( heap, NULL, heap->flags, total_size,
+                                        max( heap->grow_size, total_size ) )))
     {
         if (heap->grow_size < 128 * 1024 * 1024) heap->grow_size *= 2;
     }
-    else while (!subheap)  /* shrink the grow size again if we are running out of space */
+    else while (!*subheap)  /* shrink the grow size again if we are running out of space */
     {
         if (heap->grow_size <= total_size || heap->grow_size <= 4 * 1024 * 1024) return NULL;
         heap->grow_size /= 2;
-        subheap = HEAP_CreateSubHeap( heap, NULL, heap->flags, total_size,
-                                      max( heap->grow_size, total_size ) );
+        *subheap = HEAP_CreateSubHeap( heap, NULL, heap->flags, total_size,
+                                       max( heap->grow_size, total_size ) );
     }
 
-    TRACE("created new sub-heap %p of %08lx bytes for heap %p\n",
-          subheap, subheap->size, heap );
+    TRACE( "created new sub-heap %p of %08lx bytes for heap %p\n", *subheap, subheap_size( *subheap ), heap );
 
-    *ppSubHeap = subheap;
-    pArena = (ARENA_FREE *)((char *)subheap->base + subheap->headerSize);
-    list_remove( &pArena->entry );
-    return pArena;
+    entry = first_block( *subheap );
+    list_remove( &entry->entry );
+    return (struct block *)entry;
 }
 
 
@@ -1538,7 +1526,6 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
 static NTSTATUS heap_allocate( HEAP *heap, ULONG flags, SIZE_T size, void **ret )
 {
     struct block *block;
-    struct entry *entry;
     SIZE_T data_size;
     SUBHEAP *subheap;
 
@@ -1554,15 +1541,11 @@ static NTSTATUS heap_allocate( HEAP *heap, ULONG flags, SIZE_T size, void **ret 
 
     /* Locate a suitable free block */
 
-    if (!(entry = HEAP_FindFreeBlock( heap, data_size, &subheap ))) return STATUS_NO_MEMORY;
-
-    /* Build the in-use arena */
-
-    block = (struct block *)entry;
+    if (!(block = find_free_block( heap, data_size, &subheap ))) return STATUS_NO_MEMORY;
 
     /* in-use arena is smaller than free arena,
      * so we have to add the difference to the size */
-    block->size  = (block->size & ~ARENA_FLAG_FREE) + sizeof(*entry) - sizeof(*block);
+    block->size  = (block->size & ~ARENA_FLAG_FREE) + sizeof(struct entry) - sizeof(*block);
     block->magic = ARENA_INUSE_MAGIC;
 
     /* Shrink the block */
