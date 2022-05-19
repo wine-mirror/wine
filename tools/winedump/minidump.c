@@ -83,6 +83,7 @@ void mdmp_dump(void)
     const MINIDUMP_DIRECTORY*   dir;
     const void*                 stream;
     unsigned int i, idx;
+    const BYTE *ptr;
 
     if (!hdr)
     {
@@ -439,17 +440,16 @@ void mdmp_dump(void)
         case HandleDataStream:
         {
             const MINIDUMP_HANDLE_DATA_STREAM *mhd = stream;
-            const BYTE *desc;
 
             printf("Handle data:\n");
             printf("  SizeOfHeader: %u\n", mhd->SizeOfHeader);
             printf("  SizeOfDescriptor: %u\n", mhd->SizeOfDescriptor);
             printf("  NumberOfDescriptors: %u\n", mhd->NumberOfDescriptors);
 
-            desc = (BYTE *)mhd + sizeof(*mhd);
+            ptr = (BYTE *)mhd + sizeof(*mhd);
             for (i = 0; i < mhd->NumberOfDescriptors; ++i)
             {
-                const MINIDUMP_HANDLE_DESCRIPTOR_2 *hd = (void *)desc;
+                const MINIDUMP_HANDLE_DESCRIPTOR_2 *hd = (void *)ptr;
 
                 printf("  Handle [%u]:\n", i);
                 print_longlong("    Handle", hd->Handle);
@@ -472,24 +472,23 @@ void mdmp_dump(void)
                     printf("    Reserved0: %#x\n", hd->Reserved0);
                 }
 
-                desc += mhd->SizeOfDescriptor;
+                ptr += mhd->SizeOfDescriptor;
             }
         }
         break;
         case ThreadInfoListStream:
         {
             const MINIDUMP_THREAD_INFO_LIST *til = stream;
-            const BYTE *desc;
 
             printf("Thread Info List:\n");
             printf("  SizeOfHeader: %u\n", (UINT)til->SizeOfHeader);
             printf("  SizeOfEntry: %u\n", (UINT)til->SizeOfEntry);
             printf("  NumberOfEntries: %u\n", (UINT)til->NumberOfEntries);
 
-            desc = (BYTE *)til + sizeof(*til);
+            ptr = (BYTE *)til + sizeof(*til);
             for (i = 0; i < til->NumberOfEntries; ++i)
             {
-                const MINIDUMP_THREAD_INFO *ti = (void *)desc;
+                const MINIDUMP_THREAD_INFO *ti = (void *)ptr;
 
                 printf("  Thread [%u]:\n", i);
                 printf("    ThreadId: %u\n", ti->ThreadId);
@@ -503,7 +502,35 @@ void mdmp_dump(void)
                 print_longlong("    StartAddress", ti->StartAddress);
                 print_longlong("    Affinity", ti->Affinity);
 
-                desc += til->SizeOfEntry;
+                ptr += til->SizeOfEntry;
+            }
+        }
+        break;
+
+        case UnloadedModuleListStream:
+        {
+            const MINIDUMP_UNLOADED_MODULE_LIST *uml = stream;
+
+            printf("Unloaded module list:\n");
+            printf("  SizeOfHeader: %u\n", uml->SizeOfHeader);
+            printf("  SizeOfEntry: %u\n", uml->SizeOfEntry);
+            printf("  NumberOfEntries: %u\n", uml->NumberOfEntries);
+
+            ptr = (BYTE *)uml + sizeof(*uml);
+            for (i = 0; i < uml->NumberOfEntries; ++i)
+            {
+                const MINIDUMP_UNLOADED_MODULE *mod = (void *)ptr;
+
+                printf("  Module [%u]:\n", i);
+                print_longlong("    BaseOfImage", mod->BaseOfImage);
+                printf("    SizeOfImage: %u\n", mod->SizeOfImage);
+                printf("    CheckSum: %#x\n", mod->CheckSum);
+                printf("    TimeDateStamp: %s\n", get_time_str(mod->TimeDateStamp));
+                printf("    ModuleName: ");
+                dump_mdmp_string(mod->ModuleNameRva);
+                printf("\n");
+
+                ptr += uml->SizeOfEntry;
             }
         }
         break;

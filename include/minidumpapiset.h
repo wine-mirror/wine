@@ -426,6 +426,22 @@ typedef struct _MINIDUMP_THREAD_INFO_LIST
     ULONG NumberOfEntries;
 } MINIDUMP_THREAD_INFO_LIST, *PMINIDUMP_THREAD_INFO_LIST;
 
+typedef struct _MINIDUMP_UNLOADED_MODULE
+{
+    ULONG64 BaseOfImage;
+    ULONG32 SizeOfImage;
+    ULONG32 CheckSum;
+    ULONG32 TimeDateStamp;
+    RVA ModuleNameRva;
+} MINIDUMP_UNLOADED_MODULE, *PMINIDUMP_UNLOADED_MODULE;
+
+typedef struct _MINIDUMP_UNLOADED_MODULE_LIST
+{
+    ULONG32 SizeOfHeader;
+    ULONG32 SizeOfEntry;
+    ULONG32 NumberOfEntries;
+} MINIDUMP_UNLOADED_MODULE_LIST, *PMINIDUMP_UNLOADED_MODULE_LIST;
+
 typedef enum _MINIDUMP_STREAM_TYPE
 {
     UnusedStream                = 0,
