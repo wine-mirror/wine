@@ -508,8 +508,12 @@ static HRESULT WINAPI HTMLXMLHttpRequest_open(IHTMLXMLHttpRequest *iface, BSTR b
     TRACE("(%p)->(%s %s %s %s %s)\n", This, debugstr_w(bstrMethod), debugstr_w(bstrUrl), debugstr_variant(&varAsync), debugstr_variant(&varUser), debugstr_variant(&varPassword));
 
     if(V_VT(&varAsync) != VT_BOOL) {
-        FIXME("varAsync not supported: %s\n", debugstr_variant(&varAsync));
-        return E_FAIL;
+        LCID lcid = MAKELCID(MAKELANGID(LANG_ENGLISH,SUBLANG_ENGLISH_US),SORT_DEFAULT);
+        hres = VariantChangeTypeEx(&varAsync, &varAsync, lcid, 0, VT_BOOL);
+        if(FAILED(hres)) {
+            WARN("Failed to convert varAsync to BOOL: %#lx\n", hres);
+            return hres;
+        }
     }
 
     /* Note: Starting with Gecko 30.0 (Firefox 30.0 / Thunderbird 30.0 / SeaMonkey 2.27),
