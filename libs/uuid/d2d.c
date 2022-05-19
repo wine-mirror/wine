@@ -19,3 +19,4 @@
 #include "d3d10_1.h"
 #include "initguid.h"
 #include "d2d1_3.h"
+#include "d2d1effectauthor.h"
