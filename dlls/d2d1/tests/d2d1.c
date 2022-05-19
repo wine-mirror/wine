@@ -10069,6 +10069,36 @@ static void test_mt_factory(BOOL d3d11)
     ID2D1Factory_Release(factory);
 }
 
+static void *create_factory(const GUID *iid, UINT32 *factory_version)
+{
+    IUnknown *factory, *tmp;
+    unsigned int i;
+
+    static const GUID *const factory_iid[] =
+    {
+        &IID_ID2D1Factory,
+        &IID_ID2D1Factory1,
+        &IID_ID2D1Factory2,
+        &IID_ID2D1Factory3,
+    };
+
+    if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, iid, NULL, (void **)&factory)))
+        return NULL;
+
+    if (factory_version)
+    {
+        for (i = 0; i < ARRAY_SIZE(factory_iid); ++i)
+        {
+            if (FAILED(IUnknown_QueryInterface(factory, factory_iid[i], (void **)&tmp)))
+                break;
+            IUnknown_Release(tmp);
+        }
+        *factory_version = i - 1;
+    }
+
+    return factory;
+}
+
 static void test_effect(BOOL d3d11)
 {
     unsigned int i, j, min_inputs, max_inputs, str_size, input_count, factory_version;
@@ -10077,9 +10107,7 @@ static void test_effect(BOOL d3d11)
     ID2D1Image *image_a, *image_b;
     struct d2d1_test_context ctx;
     ID2D1DeviceContext *context;
-    ID2D1Factory1 *factory1;
-    ID2D1Factory2 *factory2;
-    ID2D1Factory3 *factory3;
+    ID2D1Factory1 *factory;
     ID2D1Bitmap *bitmap;
     ID2D1Effect *effect;
     D2D1_SIZE_U size;
@@ -10109,22 +10137,11 @@ static void test_effect(BOOL d3d11)
     if (!init_test_context(&ctx, d3d11))
         return;
 
-    if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory1)))
+    if (!(factory = create_factory(&IID_ID2D1Factory1, &factory_version)))
     {
         win_skip("ID2D1Factory1 is not supported.\n");
         release_test_context(&ctx);
         return;
-    }
-    factory_version = 1;
-    if (SUCCEEDED(ID2D1Factory1_QueryInterface(factory1, &IID_ID2D1Factory2, (void **)&factory2)))
-    {
-        ID2D1Factory2_Release(factory2);
-        factory_version = 2;
-    }
-    if (SUCCEEDED(ID2D1Factory1_QueryInterface(factory1, &IID_ID2D1Factory3, (void **)&factory3)))
-    {
-        ID2D1Factory3_Release(factory3);
-        factory_version = 3;
     }
     if (factory_version < 3)
         win_skip("ID2D1Factory%u is not supported.\n", factory_version + 1);
@@ -10275,7 +10292,7 @@ static void test_effect(BOOL d3d11)
     }
 
     ID2D1DeviceContext_Release(context);
-    ID2D1Factory1_Release(factory1);
+    ID2D1Factory1_Release(factory);
     release_test_context(&ctx);
 }
 
