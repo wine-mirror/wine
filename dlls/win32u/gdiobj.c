@@ -1212,6 +1212,7 @@ static struct unix_funcs unix_funcs =
     NtUserSetCursorIconData,
     NtUserSetCursorPos,
     NtUserSetFocus,
+    NtUserSetInternalWindowPos,
     NtUserSetLayeredWindowAttributes,
     NtUserSetMenu,
     NtUserSetParent,

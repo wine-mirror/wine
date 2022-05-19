@@ -3679,6 +3679,32 @@ BOOL WINAPI NtUserEndDeferWindowPosEx( HDWP hdwp, BOOL async )
 }
 
 /***********************************************************************
+ *           NtUserSetInternalWindowPos (win32u.@)
+ */
+void WINAPI NtUserSetInternalWindowPos( HWND hwnd, UINT cmd, RECT *rect, POINT *pt )
+{
+    WINDOWPLACEMENT wndpl;
+    UINT flags;
+
+    wndpl.length  = sizeof(wndpl);
+    wndpl.showCmd = cmd;
+    wndpl.flags = flags = 0;
+
+    if (pt)
+    {
+        flags |= PLACE_MIN;
+        wndpl.flags |= WPF_SETMINPOSITION;
+        wndpl.ptMinPosition = *pt;
+    }
+    if( rect )
+    {
+        flags |= PLACE_RECT;
+        wndpl.rcNormalPosition = *rect;
+    }
+    set_window_placement( hwnd, &wndpl, flags );
+}
+
+/***********************************************************************
  *           win_set_flags
  *
  * Set the flags of a window and return the previous value.

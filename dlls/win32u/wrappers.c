@@ -1185,6 +1185,12 @@ HWND WINAPI NtUserSetFocus( HWND hwnd )
     return unix_funcs->pNtUserSetFocus( hwnd );
 }
 
+void WINAPI NtUserSetInternalWindowPos( HWND hwnd, UINT cmd, RECT *rect, POINT *pt )
+{
+    if (!unix_funcs) return;
+    return unix_funcs->pNtUserSetInternalWindowPos( hwnd, cmd, rect, pt );
+}
+
 BOOL WINAPI NtUserSetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags )
 {
     if (!unix_funcs) return FALSE;

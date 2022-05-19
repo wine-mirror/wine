@@ -1201,7 +1201,7 @@
 @ stub NtUserSetInputServiceState
 @ stub NtUserSetInteractiveControlFocus
 @ stub NtUserSetInteractiveCtrlRotationAngle
-@ stub NtUserSetInternalWindowPos
+@ stdcall NtUserSetInternalWindowPos(long long ptr ptr)
 @ stdcall -syscall NtUserSetKeyboardState(ptr)
 @ stdcall NtUserSetLayeredWindowAttributes(ptr long long long)
 @ stub NtUserSetMagnificationDesktopMagnifierOffsetsDWMUpdated

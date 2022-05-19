@@ -282,6 +282,7 @@ struct unix_funcs
                                                  UNICODE_STRING *res_name, struct cursoricon_desc *desc );
     BOOL     (WINAPI *pNtUserSetCursorPos)( INT x, INT y );
     HWND     (WINAPI *pNtUserSetFocus)( HWND hwnd );
+    void     (WINAPI *pNtUserSetInternalWindowPos)( HWND hwnd, UINT cmd, RECT *rect, POINT *pt );
     BOOL     (WINAPI *pNtUserSetLayeredWindowAttributes)( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags );
     BOOL     (WINAPI *pNtUserSetMenu)( HWND hwnd, HMENU menu );
     HWND     (WINAPI *pNtUserSetParent)( HWND hwnd, HWND parent );

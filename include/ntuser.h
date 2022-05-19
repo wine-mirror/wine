@@ -625,6 +625,7 @@ BOOL    WINAPI NtUserSetCursorIconData( HCURSOR cursor, UNICODE_STRING *module, 
                                         struct cursoricon_desc *desc );
 BOOL    WINAPI NtUserSetCursorPos( INT x, INT y );
 HWND    WINAPI NtUserSetFocus( HWND hwnd );
+void    WINAPI NtUserSetInternalWindowPos( HWND hwnd, UINT cmd, RECT *rect, POINT *pt );
 BOOL    WINAPI NtUserSetKeyboardState( BYTE *state );
 BOOL    WINAPI NtUserSetLayeredWindowAttributes( HWND hwnd, COLORREF key, BYTE alpha, DWORD flags );
 BOOL    WINAPI NtUserSetMenu( HWND hwnd, HMENU menu );
