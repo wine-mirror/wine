@@ -384,3 +384,40 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
 
     return result;
 }
+
+LRESULT desktop_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    static const WCHAR wine_display_device_guidW[] =
+        {'_','_','w','i','n','e','_','d','i','s','p','l','a','y','_','d','e','v','i','c','e',
+         '_','g','u','i','d',0};
+
+    switch (msg)
+    {
+    case WM_NCCREATE:
+    {
+        CREATESTRUCTW *cs = (CREATESTRUCTW *)lparam;
+        const GUID *guid = cs->lpCreateParams;
+
+        if (guid)
+        {
+            ATOM atom = 0;
+            char buffer[37];
+            WCHAR bufferW[37];
+
+            if (NtUserGetAncestor( hwnd, GA_PARENT )) return FALSE;  /* refuse to create non-desktop window */
+
+            sprintf( buffer, "%08x-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+                     (unsigned int)guid->Data1, guid->Data2, guid->Data3,
+                     guid->Data4[0], guid->Data4[1], guid->Data4[2], guid->Data4[3],
+                     guid->Data4[4], guid->Data4[5], guid->Data4[6], guid->Data4[7] );
+            NtAddAtom( bufferW, asciiz_to_unicode( bufferW, buffer ) - sizeof(WCHAR), &atom );
+            NtUserSetProp( hwnd, wine_display_device_guidW, ULongToHandle( atom ) );
+        }
+        return TRUE;
+    }
+    case WM_NCCALCSIZE:
+        return 0;
+    }
+
+    return default_window_proc( hwnd, msg, wparam, lparam, FALSE );
+}

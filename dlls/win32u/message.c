@@ -2890,6 +2890,8 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
 {
     switch (type)
     {
+    case NtUserDesktopWindowProc:
+        return desktop_window_proc( hwnd, msg, wparam, lparam );
     case NtUserDefWindowProc:
         return default_window_proc( hwnd, msg, wparam, lparam, ansi );
     case NtUserCallWindowProc:
