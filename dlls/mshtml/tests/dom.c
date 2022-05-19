@@ -3614,6 +3614,7 @@ static void test_dynamic_properties(IHTMLElement *elem)
 #define test_attr_node_name(a,b) _test_attr_node_name(__LINE__,a,b)
 static void _test_attr_node_name(unsigned line, IHTMLDOMAttribute *attr, const WCHAR *exname)
 {
+    IHTMLDOMAttribute2 *attr2 = _get_attr2_iface(line, (IUnknown*)attr);
     BSTR str;
     HRESULT hres;
 
@@ -3621,6 +3622,13 @@ static void _test_attr_node_name(unsigned line, IHTMLDOMAttribute *attr, const W
     ok_(__FILE__,line)(hres == S_OK, "get_nodeName failed: %08lx\n", hres);
     ok_(__FILE__,line)(!lstrcmpW(str, exname), "node name is %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(exname));
     SysFreeString(str);
+
+    hres = IHTMLDOMAttribute2_get_name(attr2, &str);
+    ok_(__FILE__,line)(hres == S_OK, "get_name failed: %08lx\n", hres);
+    ok_(__FILE__,line)(!lstrcmpW(str, exname), "name is %s, expected %s\n", wine_dbgstr_w(str), wine_dbgstr_w(exname));
+    SysFreeString(str);
+
+    IHTMLDOMAttribute2_Release(attr2);
 }
 
 #define test_attr_parent(a) _test_attr_parent(__LINE__,a)
