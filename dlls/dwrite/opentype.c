@@ -4025,7 +4025,7 @@ static BOOL opentype_layout_apply_gpos_pair_adjustment(struct scriptshaping_cont
                 value_len2 * sizeof(WORD);
 
         pairset_offset = subtable_offset + GET_BE_WORD(format1->pairsets[coverage_index]);
-        pairset = table_read_ensure(table, subtable_offset + pairset_offset, pairvalue_len * pairvalue_count);
+        pairset = table_read_ensure(table, pairset_offset, pairvalue_len * pairvalue_count);
         if (!pairset)
             return FALSE;
 
