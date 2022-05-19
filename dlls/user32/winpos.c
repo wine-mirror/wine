@@ -225,25 +225,13 @@ UINT WINAPI GetInternalWindowPos( HWND hwnd, LPRECT rectWnd,
     WINDOWPLACEMENT wndpl;
 
     wndpl.length = sizeof(wndpl);
-    if (GetWindowPlacement( hwnd, &wndpl ))
+    if (NtUserGetWindowPlacement( hwnd, &wndpl ))
     {
 	if (rectWnd) *rectWnd = wndpl.rcNormalPosition;
 	if (ptIcon)  *ptIcon = wndpl.ptMinPosition;
 	return wndpl.showCmd;
     }
     return 0;
-}
-
-
-/***********************************************************************
- *		GetWindowPlacement (USER32.@)
- *
- * Win95:
- * Fails if wndpl->length of Win95 (!) apps is invalid.
- */
-BOOL WINAPI GetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *wndpl )
-{
-    return NtUserGetWindowPlacement( hwnd, wndpl );
 }
 
 

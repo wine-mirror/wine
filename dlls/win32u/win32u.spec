@@ -1014,7 +1014,7 @@
 @ stub NtUserGetWindowFeedbackSetting
 @ stub NtUserGetWindowGroupId
 @ stub NtUserGetWindowMinimizeRect
-@ stub NtUserGetWindowPlacement
+@ stdcall NtUserGetWindowPlacement(long ptr)
 @ stub NtUserGetWindowProcessHandle
 @ stdcall -syscall NtUserGetWindowRgnEx(long long long)
 @ stub NtUserGhostWindowFromHungWindow

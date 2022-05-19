@@ -2163,7 +2163,7 @@ HMONITOR monitor_from_window( HWND hwnd, DWORD flags, UINT dpi )
     TRACE( "(%p, 0x%08x)\n", hwnd, flags );
 
     wp.length = sizeof(wp);
-    if (is_iconic( hwnd ) && get_window_placement( hwnd, &wp ))
+    if (is_iconic( hwnd ) && NtUserGetWindowPlacement( hwnd, &wp ))
         return monitor_from_rect( &wp.rcNormalPosition, flags, dpi );
 
     if (get_window_rect( hwnd, &rect, dpi ))

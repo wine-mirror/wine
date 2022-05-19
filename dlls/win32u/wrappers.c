@@ -1023,6 +1023,12 @@ BOOL WINAPI NtUserGetUpdatedClipboardFormats( UINT *formats, UINT size, UINT *ou
     return unix_funcs->pNtUserGetUpdatedClipboardFormats( formats, size, out_size );
 }
 
+BOOL WINAPI NtUserGetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *placement )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserGetWindowPlacement( hwnd, placement );
+}
+
 BOOL WINAPI NtUserIsClipboardFormatAvailable( UINT format )
 {
     if (!unix_funcs) return FALSE;

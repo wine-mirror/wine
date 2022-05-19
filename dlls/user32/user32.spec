@@ -412,7 +412,7 @@
 @ stdcall GetWindowModuleFileName(long ptr long) GetWindowModuleFileNameA
 @ stdcall GetWindowModuleFileNameA(long ptr long)
 @ stdcall GetWindowModuleFileNameW(long ptr long)
-@ stdcall GetWindowPlacement(long ptr)
+@ stdcall GetWindowPlacement(long ptr) NtUserGetWindowPlacement
 @ stdcall GetWindowRect(long ptr)
 @ stdcall GetWindowRgn(long long)
 @ stdcall GetWindowRgnBox(long ptr)

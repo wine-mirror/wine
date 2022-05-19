@@ -246,6 +246,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserGetUpdateRect)( HWND hwnd, RECT *rect, BOOL erase );
     INT      (WINAPI *pNtUserGetUpdateRgn)( HWND hwnd, HRGN hrgn, BOOL erase );
     BOOL     (WINAPI *pNtUserGetUpdatedClipboardFormats)( UINT *formats, UINT size, UINT *out_size );
+    BOOL     (WINAPI *pNtUserGetWindowPlacement)( HWND hwnd, WINDOWPLACEMENT *placement );
     BOOL     (WINAPI *pNtUserHideCaret)( HWND hwnd );
     BOOL     (WINAPI *pNtUserIsClipboardFormatAvailable)( UINT format );
     UINT     (WINAPI *pNtUserMapVirtualKeyEx)( UINT code, UINT type, HKL layout );
@@ -442,7 +443,6 @@ extern HWND get_full_window_handle( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND get_parent( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND get_hwnd_message_parent(void) DECLSPEC_HIDDEN;
 extern DPI_AWARENESS_CONTEXT get_window_dpi_awareness_context( HWND hwnd ) DECLSPEC_HIDDEN;
-extern BOOL get_window_placement( HWND hwnd, WINDOWPLACEMENT *placement ) DECLSPEC_HIDDEN;
 extern MINMAXINFO get_min_max_info( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND get_window_relative( HWND hwnd, UINT rel ) DECLSPEC_HIDDEN;
 extern DWORD get_window_thread( HWND hwnd, DWORD *process ) DECLSPEC_HIDDEN;

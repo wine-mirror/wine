@@ -2400,8 +2400,10 @@ static BOOL empty_point( POINT pt )
     return pt.x == -1 && pt.y == -1;
 }
 
-/* see GetWindowPlacement */
-BOOL get_window_placement( HWND hwnd, WINDOWPLACEMENT *placement )
+/***********************************************************************
+ *           NtUserGetWindowPlacement (win32u.@)
+ */
+BOOL WINAPI NtUserGetWindowPlacement( HWND hwnd, WINDOWPLACEMENT *placement )
 {
     RECT work_rect = get_maximized_work_rect( hwnd );
     WND *win = get_win_ptr( hwnd );
@@ -4036,7 +4038,7 @@ static UINT window_min_maximize( HWND hwnd, UINT cmd, RECT *rect )
     TRACE( "%p %u\n", hwnd, cmd );
 
     wpl.length = sizeof(wpl);
-    get_window_placement( hwnd, &wpl );
+    NtUserGetWindowPlacement( hwnd, &wpl );
 
     if (call_hooks( WH_CBT, HCBT_MINMAX, (WPARAM)hwnd, cmd, TRUE ))
         return SWP_NOSIZE | SWP_NOMOVE;
@@ -5392,9 +5394,6 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
 
     case NtUserCallHwndParam_GetWindowLongPtrW:
         return get_window_long_ptr( hwnd, param, FALSE );
-
-    case NtUserCallHwndParam_GetWindowPlacement:
-        return get_window_placement( hwnd, (WINDOWPLACEMENT *)param );
 
     case NtUserCallHwndParam_GetWindowRect:
         return get_window_rect( hwnd, (RECT *)param, get_thread_dpi() );
