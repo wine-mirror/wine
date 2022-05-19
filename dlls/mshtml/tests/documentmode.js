@@ -364,6 +364,23 @@ sync_test("window_props", function() {
     test_exposed("console", v >= 10);
 });
 
+sync_test("domimpl_props", function() {
+    var domimpl = document.implementation;
+    function test_exposed(prop, expect) {
+        if(expect)
+            ok(prop in domimpl, prop + " not found in DOMImplementation.");
+        else
+            ok(!(prop in domimpl), prop + " found in DOMImplementation.");
+    }
+
+    var v = document.documentMode;
+
+    test_exposed("hasFeature", true);
+    test_exposed("createDocument", v >= 9);
+    test_exposed("createDocumentType", v >= 9);
+    test_exposed("createHTMLDocument", v >= 9);
+});
+
 sync_test("xhr_props", function() {
     var xhr = new XMLHttpRequest();
 

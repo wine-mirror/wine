@@ -299,6 +299,12 @@ static const IHTMLDOMImplementation2Vtbl HTMLDOMImplementation2Vtbl = {
     HTMLDOMImplementation2_hasFeature
 };
 
+static void HTMLDOMImplementation_init_dispex_info(dispex_data_t *info, compat_mode_t compat_mode)
+{
+    if(compat_mode >= COMPAT_MODE_IE9)
+        dispex_info_add_interface(info, IHTMLDOMImplementation2_tid, NULL);
+}
+
 static const tid_t HTMLDOMImplementation_iface_tids[] = {
     IHTMLDOMImplementation_tid,
     0
@@ -307,7 +313,8 @@ static dispex_static_data_t HTMLDOMImplementation_dispex = {
     L"DOMImplementation",
     NULL,
     DispHTMLDOMImplementation_tid,
-    HTMLDOMImplementation_iface_tids
+    HTMLDOMImplementation_iface_tids,
+    HTMLDOMImplementation_init_dispex_info
 };
 
 HRESULT create_dom_implementation(HTMLDocumentNode *doc_node, IHTMLDOMImplementation **ret)
