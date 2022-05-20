@@ -78,10 +78,20 @@ static void test_VirtualAllocEx(void)
     char *src, *dst;
     SIZE_T bytes_written = 0, bytes_read = 0, i;
     void *addr1, *addr2;
-    BOOL b;
+    BOOL b, ret;
     DWORD old_prot;
     MEMORY_BASIC_INFORMATION info;
     HANDLE hProcess;
+
+    /* Same process */
+    addr1 = VirtualAllocEx(GetCurrentProcess(), NULL, alloc_size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    ok(!!addr1, "Failed to allocated, error %lu.\n", GetLastError());
+    ret = VirtualFreeEx(NULL, addr1, 0, MEM_RELEASE);
+    ok(!ret && GetLastError() == ERROR_INVALID_HANDLE, "Unexpected value %d, error %lu.\n", ret, GetLastError());
+    addr2 = VirtualAllocEx(NULL, NULL, alloc_size, MEM_COMMIT, PAGE_EXECUTE_READWRITE);
+    ok(!addr2 && GetLastError() == ERROR_INVALID_HANDLE, "Unexpected value %p, error %lu.\n", addr2, GetLastError());
+    ret = VirtualFreeEx(GetCurrentProcess(), addr1, 0, MEM_RELEASE);
+    ok(ret, "Unexpected value %d, error %lu.\n", ret, GetLastError());
 
     hProcess = create_target_process("sleep");
     ok(hProcess != NULL, "Can't start process\n");
