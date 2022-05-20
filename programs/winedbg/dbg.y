@@ -225,6 +225,7 @@ x_command:
 print_command:
       tPRINT expr_lvalue         { print_value(&$2, 0, 0); }
     | tPRINT tFORMAT expr_lvalue { if (($2 >> 8) == 1) print_value(&$3, $2 & 0xff, 0); else dbg_printf("Count is meaningless in print command\n"); }
+    | tPRINT type_expr           { types_print_type(&$2, TRUE); dbg_printf("\n"); }
     ;
 
 break_command:

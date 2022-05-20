@@ -591,7 +591,8 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
 {
     WCHAR*              ptr;
     const WCHAR*        name;
-    DWORD               tag, udt, count;
+    DWORD               tag, udt, count, bitoffset, bt;
+    DWORD64             bitlen;
     struct dbg_type     subtype;
 
     if (type->id == dbg_itype_none || !types_get_info(type, TI_GET_SYMTAG, &tag))
@@ -605,7 +606,13 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
     switch (tag)
     {
     case SymTagBaseType:
-        if (details) dbg_printf("Basic<%ls>", name); else dbg_printf("%ls", name);
+        dbg_printf("%ls", name);
+        if (details && types_get_info(type, TI_GET_LENGTH, &bitlen) && types_get_info(type, TI_GET_BASETYPE, &bt))
+        {
+            const char* longness = "";
+            if (bt == btLong || bt == btULong) longness = " long";
+            dbg_printf(": size=%I64d%s", bitlen, longness);
+        }
         break;
     case SymTagPointerType:
         types_get_info(type, TI_GET_TYPE, &subtype.id);
@@ -643,14 +650,21 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
                         type_elt.module = type->module;
                         type_elt.id = fcp->ChildId[i];
                         if (!types_get_info(&type_elt, TI_GET_SYMNAME, &ptr) || !ptr) continue;
-                        dbg_printf("%ls", ptr);
-                        HeapFree(GetProcessHeap(), 0, ptr);
+                        if (!types_get_info(&type_elt, TI_GET_BITPOSITION, &bitoffset) ||
+                            !types_get_info(&type_elt, TI_GET_LENGTH, &bitlen))
+                            bitlen = ~(DWORD64)0;
                         if (types_get_info(&type_elt, TI_GET_TYPE, &type_elt.id))
                         {
-                            dbg_printf(":");
-                            types_print_type(&type_elt, details);
+                            /* print details of embedded UDT:s */
+                            types_print_type(&type_elt, types_get_info(&type_elt, TI_GET_UDTKIND, &udt));
                         }
-                        if (i < min(fcp->Count, count) - 1 || count > 256) dbg_printf(", ");
+                        else dbg_printf("<unknown>");
+                        dbg_printf(" %ls", ptr);
+                        HeapFree(GetProcessHeap(), 0, ptr);
+                        if (bitlen != ~(DWORD64)0)
+                            dbg_printf(" : %I64u", bitlen);
+                        dbg_printf(";");
+                        if (i < min(fcp->Count, count) - 1 || count > 256) dbg_printf(" ");
                     }
                 }
                 count -= min(count, 256);
@@ -662,7 +676,7 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
     case SymTagArrayType:
         types_get_info(type, TI_GET_TYPE, &subtype.id);
         subtype.module = type->module;
-        types_print_type(&subtype, details);
+        types_print_type(&subtype, FALSE);
         if (types_get_info(type, TI_GET_COUNT, &count))
             dbg_printf(" %ls[%ld]", name, count);
         else
@@ -670,6 +684,51 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
         break;
     case SymTagEnum:
         dbg_printf("enum %ls", name);
+        if (details &&
+            types_get_info(type, TI_GET_CHILDRENCOUNT, &count))
+        {
+            char                        buffer[sizeof(TI_FINDCHILDREN_PARAMS) + 256 * sizeof(DWORD)];
+            TI_FINDCHILDREN_PARAMS*     fcp = (TI_FINDCHILDREN_PARAMS*)buffer;
+            WCHAR*                      ptr;
+            int                         i;
+            struct dbg_type             type_elt;
+            VARIANT                     variant;
+
+            dbg_printf(" {");
+
+            fcp->Start = 0;
+            while (count)
+            {
+                fcp->Count = min(count, 256);
+                if (types_get_info(type, TI_FINDCHILDREN, fcp))
+                {
+                    for (i = 0; i < min(fcp->Count, count); i++)
+                    {
+                        type_elt.module = type->module;
+                        type_elt.id = fcp->ChildId[i];
+                        if (!types_get_info(&type_elt, TI_GET_SYMNAME, &ptr) || !ptr) continue;
+                        if (!types_get_info(&type_elt, TI_GET_VALUE, &variant) || !ptr) continue;
+                        dbg_printf("%ls = ", ptr);
+                        switch (V_VT(&variant))
+                        {
+                        case VT_I1:  dbg_printf("%d",    V_I1(&variant)); break;
+                        case VT_I2:  dbg_printf("%d",    V_I2(&variant)); break;
+                        case VT_I4:  dbg_printf("%ld",   V_I4(&variant)); break;
+                        case VT_I8:  dbg_printf("%I64d", V_I8(&variant)); break;
+                        case VT_UI1: dbg_printf("%u",    V_UI1(&variant)); break;
+                        case VT_UI2: dbg_printf("%u",    V_UI2(&variant)); break;
+                        case VT_UI4: dbg_printf("%lu",   V_UI4(&variant)); break;
+                        case VT_UI8: dbg_printf("%I64u", V_UI8(&variant)); break;
+                        }
+                        HeapFree(GetProcessHeap(), 0, ptr);
+                        if (i < min(fcp->Count, count) - 1 || count > 256) dbg_printf(", ");
+                    }
+                }
+                count -= min(count, 256);
+                fcp->Start += 256;
+            }
+            dbg_printf("}");
+        }
         break;
     case SymTagFunctionType:
         types_get_info(type, TI_GET_TYPE, &subtype.id);
@@ -713,7 +772,13 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
         dbg_printf(")");
         break;
     case SymTagTypedef:
-        dbg_printf("%ls", name);
+        if (details && types_get_info(type, TI_GET_TYPE, &subtype.id))
+        {
+            dbg_printf("typedef %ls => ", name);
+            subtype.module = type->module;
+            types_print_type(&subtype, FALSE);
+        }
+        else dbg_printf("%ls", name);
         break;
     default:
         WINE_ERR("Unknown type %lu for %ls\n", tag, name);
