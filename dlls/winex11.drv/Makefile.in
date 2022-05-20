@@ -22,7 +22,6 @@ C_SRCS = \
 	opengl.c \
 	palette.c \
 	pen.c \
-	settings.c \
 	systray.c \
 	vulkan.c \
 	window.c \
