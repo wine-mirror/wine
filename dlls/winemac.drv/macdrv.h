@@ -309,6 +309,13 @@ static inline HWND get_active_window(void)
     return NtUserGetGUIThreadInfo(GetCurrentThreadId(), &info) ? info.hwndActive : 0;
 }
 
+static inline HWND get_capture(void)
+{
+    GUITHREADINFO info;
+    info.cbSize = sizeof(info);
+    return NtUserGetGUIThreadInfo(GetCurrentThreadId(), &info) ? info.hwndCapture : 0;
+}
+
 /* registry helpers */
 
 extern HKEY open_hkcu_key( const char *name ) DECLSPEC_HIDDEN;

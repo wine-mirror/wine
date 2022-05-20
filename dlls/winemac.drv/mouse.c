@@ -131,7 +131,7 @@ static void send_mouse_input(HWND hwnd, macdrv_window cocoa_window, UINT flags, 
     INPUT input;
     HWND top_level_hwnd;
 
-    top_level_hwnd = GetAncestor(hwnd, GA_ROOT);
+    top_level_hwnd = NtUserGetAncestor(hwnd, GA_ROOT);
 
     if ((flags & MOUSEEVENTF_MOVE) && (flags & MOUSEEVENTF_ABSOLUTE) && !drag &&
         cocoa_window != macdrv_thread_data()->capture_window)
@@ -500,7 +500,7 @@ static CFDictionaryRef create_cursor_frame(HDC hdc, const ICONINFOEXW *iinfo, HA
     CFDictionarySetValue(frame, CFSTR("hotSpot"), hot_spot_dict);
     CFRelease(hot_spot_dict);
 
-    if (GetCursorFrameInfo(icon, 0x0 /* unknown parameter */, istep, &delay_jiffies, &num_steps) != 0)
+    if (NtUserGetCursorFrameInfo(icon, istep, &delay_jiffies, &num_steps) != 0)
         duration = delay_jiffies / 60.0; /* convert jiffies (1/60s) to seconds */
     else
     {
@@ -554,7 +554,7 @@ static CFArrayRef create_color_cursor(HDC hdc, const ICONINFOEXW *iinfo, HANDLE 
     TRACE("hdc %p iinfo %p icon %p width %d height %d\n", hdc, iinfo, icon, width, height);
 
     /* Retrieve the number of frames to render */
-    if (!GetCursorFrameInfo(icon, 0x0 /* unknown parameter */, 0, &delay_jiffies, &nFrames))
+    if (!NtUserGetCursorFrameInfo(icon, 0, &delay_jiffies, &nFrames))
     {
         WARN("GetCursorFrameInfo failed\n");
         return NULL;
@@ -699,7 +699,7 @@ BOOL macdrv_GetCursorPos(LPPOINT pos)
  void macdrv_SetCapture(HWND hwnd, UINT flags)
 {
     struct macdrv_thread_data *thread_data = macdrv_thread_data();
-    HWND top = GetAncestor(hwnd, GA_ROOT);
+    HWND top = NtUserGetAncestor(hwnd, GA_ROOT);
     macdrv_window cocoa_window = macdrv_get_cocoa_window(top, FALSE);
 
     TRACE("hwnd %p top %p/%p flags 0x%08x\n", hwnd, top, cocoa_window, flags);
@@ -708,6 +708,28 @@ BOOL macdrv_GetCursorPos(LPPOINT pos)
 
     thread_data->capture_window = cocoa_window;
     macdrv_set_mouse_capture_window(cocoa_window);
+}
+
+
+static BOOL get_icon_info(HICON handle, ICONINFOEXW *ret)
+{
+    UNICODE_STRING module, res_name;
+    ICONINFO info;
+
+    module.Buffer = ret->szModName;
+    module.MaximumLength = sizeof(ret->szModName) - sizeof(WCHAR);
+    res_name.Buffer = ret->szResName;
+    res_name.MaximumLength = sizeof(ret->szResName) - sizeof(WCHAR);
+    if (!NtUserGetIconInfo(handle, &info, &module, &res_name, NULL, 0)) return FALSE;
+    ret->fIcon    = info.fIcon;
+    ret->xHotspot = info.xHotspot;
+    ret->yHotspot = info.yHotspot;
+    ret->hbmColor = info.hbmColor;
+    ret->hbmMask  = info.hbmMask;
+    ret->wResID   = res_name.Length ? 0 : LOWORD(res_name.Buffer);
+    ret->szModName[module.Length] = 0;
+    ret->szResName[res_name.Length] = 0;
+    return TRUE;
 }
 
 
@@ -742,7 +764,7 @@ void macdrv_SetCursor(HCURSOR cursor)
             goto done;
 
         info.cbSize = sizeof(info);
-        if (!GetIconInfoExW(cursor, &info))
+        if (!get_icon_info(cursor, &info))
         {
             WARN("GetIconInfoExW failed\n");
             return;
@@ -919,16 +941,16 @@ void macdrv_mouse_scroll(HWND hwnd, const macdrv_event *event)
 void macdrv_release_capture(HWND hwnd, const macdrv_event *event)
 {
     struct macdrv_thread_data *thread_data = macdrv_thread_data();
-    HWND capture = GetCapture();
-    HWND capture_top = GetAncestor(capture, GA_ROOT);
+    HWND capture = get_capture();
+    HWND capture_top = NtUserGetAncestor(capture, GA_ROOT);
 
     TRACE("win %p/%p thread_data->capture_window %p GetCapture() %p in %p\n", hwnd,
           event->window, thread_data->capture_window, capture, capture_top);
 
     if (event->window == thread_data->capture_window && hwnd == capture_top)
     {
-        ReleaseCapture();
-        if (!PostMessageW(capture, WM_CANCELMODE, 0, 0))
+        NtUserReleaseCapture();
+        if (!NtUserPostMessage(capture, WM_CANCELMODE, 0, 0))
             WARN("failed to post WM_CANCELMODE; error 0x%08x\n", GetLastError());
     }
 }
