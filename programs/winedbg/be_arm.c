@@ -1722,24 +1722,24 @@ static void be_arm_print_segment_info(HANDLE hThread, const dbg_ctx_t *ctx)
 
 static struct dbg_internal_var be_arm_ctx[] =
 {
-    {CV_ARM_R0 +  0,    "r0",           (void*)FIELD_OFFSET(CONTEXT, R0),     dbg_itype_unsigned_int},
-    {CV_ARM_R0 +  1,    "r1",           (void*)FIELD_OFFSET(CONTEXT, R1),     dbg_itype_unsigned_int},
-    {CV_ARM_R0 +  2,    "r2",           (void*)FIELD_OFFSET(CONTEXT, R2),     dbg_itype_unsigned_int},
-    {CV_ARM_R0 +  3,    "r3",           (void*)FIELD_OFFSET(CONTEXT, R3),     dbg_itype_unsigned_int},
-    {CV_ARM_R0 +  4,    "r4",           (void*)FIELD_OFFSET(CONTEXT, R4),     dbg_itype_unsigned_int},
-    {CV_ARM_R0 +  5,    "r5",           (void*)FIELD_OFFSET(CONTEXT, R5),     dbg_itype_unsigned_int},
-    {CV_ARM_R0 +  6,    "r6",           (void*)FIELD_OFFSET(CONTEXT, R6),     dbg_itype_unsigned_int},
-    {CV_ARM_R0 +  7,    "r7",           (void*)FIELD_OFFSET(CONTEXT, R7),     dbg_itype_unsigned_int},
-    {CV_ARM_R0 +  8,    "r8",           (void*)FIELD_OFFSET(CONTEXT, R8),     dbg_itype_unsigned_int},
-    {CV_ARM_R0 +  9,    "r9",           (void*)FIELD_OFFSET(CONTEXT, R9),     dbg_itype_unsigned_int},
-    {CV_ARM_R0 +  10,   "r10",          (void*)FIELD_OFFSET(CONTEXT, R10),    dbg_itype_unsigned_int},
-    {CV_ARM_R0 +  11,   "r11",          (void*)FIELD_OFFSET(CONTEXT, R11),    dbg_itype_unsigned_int},
-    {CV_ARM_R0 +  12,   "r12",          (void*)FIELD_OFFSET(CONTEXT, R12),    dbg_itype_unsigned_int},
-    {CV_ARM_SP,         "sp",           (void*)FIELD_OFFSET(CONTEXT, Sp),     dbg_itype_unsigned_int},
-    {CV_ARM_LR,         "lr",           (void*)FIELD_OFFSET(CONTEXT, Lr),     dbg_itype_unsigned_int},
-    {CV_ARM_PC,         "pc",           (void*)FIELD_OFFSET(CONTEXT, Pc),     dbg_itype_unsigned_int},
-    {CV_ARM_CPSR,       "cpsr",         (void*)FIELD_OFFSET(CONTEXT, Cpsr),   dbg_itype_unsigned_int},
-    {0,                 NULL,           0,                                         dbg_itype_none}
+    {CV_ARM_R0 +  0,    "r0",           (void*)FIELD_OFFSET(CONTEXT, R0),     dbg_itype_unsigned_int32},
+    {CV_ARM_R0 +  1,    "r1",           (void*)FIELD_OFFSET(CONTEXT, R1),     dbg_itype_unsigned_int32},
+    {CV_ARM_R0 +  2,    "r2",           (void*)FIELD_OFFSET(CONTEXT, R2),     dbg_itype_unsigned_int32},
+    {CV_ARM_R0 +  3,    "r3",           (void*)FIELD_OFFSET(CONTEXT, R3),     dbg_itype_unsigned_int32},
+    {CV_ARM_R0 +  4,    "r4",           (void*)FIELD_OFFSET(CONTEXT, R4),     dbg_itype_unsigned_int32},
+    {CV_ARM_R0 +  5,    "r5",           (void*)FIELD_OFFSET(CONTEXT, R5),     dbg_itype_unsigned_int32},
+    {CV_ARM_R0 +  6,    "r6",           (void*)FIELD_OFFSET(CONTEXT, R6),     dbg_itype_unsigned_int32},
+    {CV_ARM_R0 +  7,    "r7",           (void*)FIELD_OFFSET(CONTEXT, R7),     dbg_itype_unsigned_int32},
+    {CV_ARM_R0 +  8,    "r8",           (void*)FIELD_OFFSET(CONTEXT, R8),     dbg_itype_unsigned_int32},
+    {CV_ARM_R0 +  9,    "r9",           (void*)FIELD_OFFSET(CONTEXT, R9),     dbg_itype_unsigned_int32},
+    {CV_ARM_R0 +  10,   "r10",          (void*)FIELD_OFFSET(CONTEXT, R10),    dbg_itype_unsigned_int32},
+    {CV_ARM_R0 +  11,   "r11",          (void*)FIELD_OFFSET(CONTEXT, R11),    dbg_itype_unsigned_int32},
+    {CV_ARM_R0 +  12,   "r12",          (void*)FIELD_OFFSET(CONTEXT, R12),    dbg_itype_unsigned_int32},
+    {CV_ARM_SP,         "sp",           (void*)FIELD_OFFSET(CONTEXT, Sp),     dbg_itype_unsigned_int32},
+    {CV_ARM_LR,         "lr",           (void*)FIELD_OFFSET(CONTEXT, Lr),     dbg_itype_unsigned_int32},
+    {CV_ARM_PC,         "pc",           (void*)FIELD_OFFSET(CONTEXT, Pc),     dbg_itype_unsigned_int32},
+    {CV_ARM_CPSR,       "cpsr",         (void*)FIELD_OFFSET(CONTEXT, Cpsr),   dbg_itype_unsigned_int32},
+    {0,                 NULL,           0,                                    dbg_itype_none}
 };
 
 static BOOL be_arm_is_step_over_insn(const void* insn)

@@ -108,6 +108,7 @@ BOOL stack_get_register_frame(const struct dbg_internal_var* div, struct dbg_lva
     else
     {
         enum be_cpu_addr        kind;
+        DWORD                   itype = ADDRSIZE == 4 ? dbg_itype_unsigned_long32 : dbg_itype_unsigned_long64;
 
         if (!dbg_curr_process->be_cpu->get_register_info(div->val, &kind)) return FALSE;
 
@@ -115,13 +116,13 @@ BOOL stack_get_register_frame(const struct dbg_internal_var* div, struct dbg_lva
         switch (kind)
         {
         case be_cpu_addr_pc:
-            init_lvalue_in_debugger(lvalue, dbg_itype_unsigned_long_int, &currfrm->linear_pc);
+            init_lvalue_in_debugger(lvalue, itype, &currfrm->linear_pc);
             break;
         case be_cpu_addr_stack:
-            init_lvalue_in_debugger(lvalue, dbg_itype_unsigned_long_int, &currfrm->linear_stack);
+            init_lvalue_in_debugger(lvalue, itype, &currfrm->linear_stack);
             break;
         case be_cpu_addr_frame:
-            init_lvalue_in_debugger(lvalue, dbg_itype_unsigned_long_int, &currfrm->linear_frame);
+            init_lvalue_in_debugger(lvalue, itype, &currfrm->linear_frame);
             break;
         }
     }

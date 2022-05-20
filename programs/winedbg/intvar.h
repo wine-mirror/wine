@@ -20,22 +20,22 @@
  */
 
    /* break handling */
-INTERNAL_VAR(BreakAllThreadsStartup,	FALSE,		NULL,  			dbg_itype_unsigned_int)
-INTERNAL_VAR(BreakOnCritSectTimeOut,    FALSE,          NULL,  			dbg_itype_unsigned_int)
-INTERNAL_VAR(BreakOnAttach,		FALSE,		NULL,			dbg_itype_unsigned_int)
-INTERNAL_VAR(BreakOnFirstChance,	FALSE,		NULL,			dbg_itype_unsigned_int)
-INTERNAL_VAR(BreakOnDllLoad,		FALSE, 		NULL, 			dbg_itype_unsigned_int)
-INTERNAL_VAR(CanDeferOnBPByAddr,        FALSE,          NULL,                   dbg_itype_unsigned_int)
+INTERNAL_VAR(BreakAllThreadsStartup,    FALSE,  NULL,           dbg_itype_unsigned_int32)
+INTERNAL_VAR(BreakOnCritSectTimeOut,    FALSE,  NULL,           dbg_itype_unsigned_int32)
+INTERNAL_VAR(BreakOnAttach,             FALSE,  NULL,           dbg_itype_unsigned_int32)
+INTERNAL_VAR(BreakOnFirstChance,        FALSE,  NULL,           dbg_itype_unsigned_int32)
+INTERNAL_VAR(BreakOnDllLoad,            FALSE,  NULL,           dbg_itype_unsigned_int32)
+INTERNAL_VAR(CanDeferOnBPByAddr,        FALSE,  NULL,           dbg_itype_unsigned_int32)
 
    /* current process/thread */
-INTERNAL_VAR(ThreadId,			FALSE,		&dbg_curr_tid,		dbg_itype_unsigned_int)
-INTERNAL_VAR(ProcessId,			FALSE,		&dbg_curr_pid,		dbg_itype_unsigned_int)
+INTERNAL_VAR(ThreadId,                  FALSE,  &dbg_curr_tid,  dbg_itype_unsigned_int32)
+INTERNAL_VAR(ProcessId,                 FALSE,  &dbg_curr_pid,  dbg_itype_unsigned_int32)
 
    /* symbol manipulation */
-INTERNAL_VAR(AlwaysShowThunks,          FALSE,          NULL,                   dbg_itype_unsigned_int)
+INTERNAL_VAR(AlwaysShowThunks,          FALSE,  NULL,           dbg_itype_unsigned_int32)
 
    /* process manipulation */
-INTERNAL_VAR(AlsoDebugProcChild,        FALSE,          NULL,                   dbg_itype_unsigned_int)
+INTERNAL_VAR(AlsoDebugProcChild,        FALSE,  NULL,           dbg_itype_unsigned_int32)
 
    /* automatic invocation on failure */
-INTERNAL_VAR(ShowCrashDialog,           TRUE,           NULL,                   dbg_itype_unsigned_int)
+INTERNAL_VAR(ShowCrashDialog,           TRUE,   NULL,           dbg_itype_unsigned_int32)

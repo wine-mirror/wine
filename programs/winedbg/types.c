@@ -894,25 +894,79 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
         default: WINE_FIXME("unsupported %u for lgint_t\n", ti); return FALSE;
         }
         break;
-    case dbg_itype_unsigned_long_int:
+    case dbg_itype_unsigned_long32:
         switch (ti)
         {
         case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = ADDRSIZE; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 4; break;
         case TI_GET_BASETYPE:   X(DWORD)   = btUInt; break;
         default: WINE_FIXME("unsupported %u for u-long int\n", ti); return FALSE;
         }
         break;
-    case dbg_itype_signed_long_int:
+    case dbg_itype_signed_long32:
         switch (ti)
         {
         case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = ADDRSIZE; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 4; break;
         case TI_GET_BASETYPE:   X(DWORD)   = btInt; break;
         default: WINE_FIXME("unsupported %u for s-long int\n", ti); return FALSE;
         }
         break;
-    case dbg_itype_unsigned_int:
+    case dbg_itype_unsigned_long64:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 8; break;
+        case TI_GET_BASETYPE:   X(DWORD)   = btUInt; break;
+        default: WINE_FIXME("unsupported %u for u-long int\n", ti); return FALSE;
+        }
+        break;
+    case dbg_itype_signed_long64:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 8; break;
+        case TI_GET_BASETYPE:   X(DWORD)   = btInt; break;
+        default: WINE_FIXME("unsupported %u for s-long int\n", ti); return FALSE;
+        }
+        break;
+    case dbg_itype_unsigned_int8:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 1; break;
+        case TI_GET_BASETYPE:   X(DWORD)   = btUInt; break;
+        default: WINE_FIXME("unsupported %u for u-int\n", ti); return FALSE;
+        }
+        break;
+    case dbg_itype_signed_int8:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 1; break;
+        case TI_GET_BASETYPE:   X(DWORD)   = btInt; break;
+        default: WINE_FIXME("unsupported %u for s-int\n", ti); return FALSE;
+        }
+        break;
+    case dbg_itype_unsigned_int16:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 2; break;
+        case TI_GET_BASETYPE:   X(DWORD)   = btUInt; break;
+        default: WINE_FIXME("unsupported %u for u-int\n", ti); return FALSE;
+        }
+        break;
+    case dbg_itype_signed_int16:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 2; break;
+        case TI_GET_BASETYPE:   X(DWORD)   = btInt; break;
+        default: WINE_FIXME("unsupported %u for s-int\n", ti); return FALSE;
+        }
+        break;
+    case dbg_itype_unsigned_int32:
         switch (ti)
         {
         case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
@@ -921,7 +975,7 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
         default: WINE_FIXME("unsupported %u for u-int\n", ti); return FALSE;
         }
         break;
-    case dbg_itype_signed_int:
+    case dbg_itype_signed_int32:
         switch (ti)
         {
         case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
@@ -930,40 +984,40 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
         default: WINE_FIXME("unsupported %u for s-int\n", ti); return FALSE;
         }
         break;
-    case dbg_itype_unsigned_short_int:
+    case dbg_itype_unsigned_int64:
         switch (ti)
         {
         case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 2; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 8; break;
         case TI_GET_BASETYPE:   X(DWORD)   = btUInt; break;
-        default: WINE_FIXME("unsupported %u for u-short int\n", ti); return FALSE;
+        default: WINE_FIXME("unsupported %u for u-int\n", ti); return FALSE;
         }
         break;
-    case dbg_itype_signed_short_int:
+    case dbg_itype_signed_int64:
         switch (ti)
         {
         case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 2; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 8; break;
         case TI_GET_BASETYPE:   X(DWORD)   = btInt; break;
-        default: WINE_FIXME("unsupported %u for s-short int\n", ti); return FALSE;
+        default: WINE_FIXME("unsupported %u for s-int\n", ti); return FALSE;
         }
         break;
-    case dbg_itype_unsigned_char_int:
+    case dbg_itype_unsigned_int128:
         switch (ti)
         {
         case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 1; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 16; break;
         case TI_GET_BASETYPE:   X(DWORD)   = btUInt; break;
-        default: WINE_FIXME("unsupported %u for u-char int\n", ti); return FALSE;
+        default: WINE_FIXME("unsupported %u for u-int\n", ti); return FALSE;
         }
         break;
-    case dbg_itype_signed_char_int:
+    case dbg_itype_signed_int128:
         switch (ti)
         {
         case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 1; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 16; break;
         case TI_GET_BASETYPE:   X(DWORD)   = btInt; break;
-        default: WINE_FIXME("unsupported %u for s-char int\n", ti); return FALSE;
+        default: WINE_FIXME("unsupported %u for s-int\n", ti); return FALSE;
         }
         break;
     case dbg_itype_char:
@@ -972,6 +1026,15 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
         case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
         case TI_GET_LENGTH:     X(DWORD64) = 1; break;
         case TI_GET_BASETYPE:   X(DWORD)   = btChar; break;
+        default: WINE_FIXME("unsupported %u for char int\n", ti); return FALSE;
+        }
+        break;
+    case dbg_itype_wchar:
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = 2; break;
+        case TI_GET_BASETYPE:   X(DWORD)   = btWChar; break;
         default: WINE_FIXME("unsupported %u for char int\n", ti); return FALSE;
         }
         break;

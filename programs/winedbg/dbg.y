@@ -306,23 +306,23 @@ noprocess_state:
 
 type_expr:
       tCHAR			{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_char; }
-    | tINT			{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_signed_int; }
-    | tLONG tINT		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_signed_long_int; }
-    | tLONG     		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_signed_long_int; }
-    | tUNSIGNED tINT		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_unsigned_int; }
-    | tUNSIGNED 		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_unsigned_int; }
-    | tLONG tUNSIGNED tINT	{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_unsigned_long_int; }
-    | tLONG tUNSIGNED   	{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_unsigned_long_int; }
-    | tSHORT tINT		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_signed_short_int; }
-    | tSHORT    		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_signed_short_int; }
-    | tSHORT tUNSIGNED tINT	{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_unsigned_short_int; }
-    | tSHORT tUNSIGNED  	{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_unsigned_short_int; }
-    | tSIGNED tCHAR		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_signed_char_int; }
-    | tUNSIGNED tCHAR		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_unsigned_char_int; }
-    | tLONG tLONG tUNSIGNED tINT{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_unsigned_longlong_int; }
-    | tLONG tLONG tUNSIGNED     { $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_unsigned_longlong_int; }
-    | tLONG tLONG tINT          { $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_signed_longlong_int; }
-    | tLONG tLONG               { $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_signed_longlong_int; }
+    | tINT			{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_signed_int32; }
+    | tLONG tINT		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = ADDRSIZE == 4 ? dbg_itype_signed_long32 : dbg_itype_signed_long64; }
+    | tLONG     		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = ADDRSIZE == 4 ? dbg_itype_signed_long32 : dbg_itype_signed_long64; }
+    | tUNSIGNED tINT		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_unsigned_int32; }
+    | tUNSIGNED 		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_unsigned_int32; }
+    | tLONG tUNSIGNED tINT	{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = ADDRSIZE == 4 ? dbg_itype_unsigned_long32 : dbg_itype_unsigned_long64; }
+    | tLONG tUNSIGNED   	{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = ADDRSIZE == 4 ? dbg_itype_unsigned_long32 : dbg_itype_unsigned_long64; }
+    | tSHORT tINT		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_signed_int16; }
+    | tSHORT    		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_signed_int16; }
+    | tSHORT tUNSIGNED tINT	{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_unsigned_int16; }
+    | tSHORT tUNSIGNED  	{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_unsigned_int16; }
+    | tSIGNED tCHAR		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_signed_int8; }
+    | tUNSIGNED tCHAR		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_unsigned_int8; }
+    | tLONG tLONG tUNSIGNED tINT{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_unsigned_int64; }
+    | tLONG tLONG tUNSIGNED     { $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_unsigned_int64; }
+    | tLONG tLONG tINT          { $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_signed_int64; }
+    | tLONG tLONG               { $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_signed_int64; }
     | tFLOAT			{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_short_real; }
     | tDOUBLE			{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_real; }
     | tLONG tDOUBLE		{ $$.type = type_expr_type_id; $$.deref_count = 0; $$.u.type.module = 0; $$.u.type.id = dbg_itype_long_real; }

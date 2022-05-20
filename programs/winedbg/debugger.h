@@ -68,23 +68,29 @@ enum dbg_line_status
 enum dbg_internal_types
 {
     dbg_itype_first             = 0xffffff00,
-    dbg_itype_unsigned_int,
-    dbg_itype_signed_int,
-    dbg_itype_signed_char_int,
-    dbg_itype_unsigned_char_int,
-    dbg_itype_unsigned_short_int,
-    dbg_itype_signed_short_int,
-    dbg_itype_unsigned_long_int,
-    dbg_itype_signed_long_int,
-    dbg_itype_unsigned_longlong_int,
-    dbg_itype_signed_longlong_int,
+    dbg_itype_char,
+    dbg_itype_wchar,
+
+    dbg_itype_unsigned_int8,
+    dbg_itype_signed_int8,
+    dbg_itype_unsigned_int16,
+    dbg_itype_signed_int16,
+    dbg_itype_unsigned_int32,
+    dbg_itype_signed_int32,
+    dbg_itype_unsigned_int64,
+    dbg_itype_signed_int64,
+    dbg_itype_unsigned_int128,
+    dbg_itype_signed_int128,
+
+    dbg_itype_unsigned_long32,
+    dbg_itype_signed_long32,
+    dbg_itype_unsigned_long64,
+    dbg_itype_signed_long64,
 
     /* they represent the dbg_lg(u)int_t types */
     dbg_itype_lgint,
     dbg_itype_lguint,
 
-    dbg_itype_char,
-    dbg_itype_wchar,
     dbg_itype_short_real, /* aka float */
     dbg_itype_real,       /* aka double */
     dbg_itype_long_real,  /* aka long double */
