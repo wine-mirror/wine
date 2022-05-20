@@ -38,6 +38,8 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(x11settings);
 
+static struct x11drv_settings_handler settings_handler;
+
 struct x11drv_display_setting
 {
     ULONG_PTR id;
@@ -64,8 +66,6 @@ static const unsigned int depths_24[]  = {8, 16, 24};
 static const unsigned int depths_32[]  = {8, 16, 32};
 const unsigned int *depths;
 
-static struct x11drv_settings_handler handler;
-
 /* Cached display modes for a device, protected by modes_section */
 static WCHAR cached_device_name[CCHDEVICENAME];
 static DWORD cached_flags;
@@ -76,10 +76,10 @@ static pthread_mutex_t settings_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 void X11DRV_Settings_SetHandler(const struct x11drv_settings_handler *new_handler)
 {
-    if (new_handler->priority > handler.priority)
+    if (new_handler->priority > settings_handler.priority)
     {
-        handler = *new_handler;
-        TRACE("Display settings are now handled by: %s.\n", handler.name);
+        settings_handler = *new_handler;
+        TRACE("Display settings are now handled by: %s.\n", settings_handler.name);
     }
 }
 
@@ -490,7 +490,7 @@ BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DW
 
     if (n == ENUM_CURRENT_SETTINGS)
     {
-        if (!handler.get_id(name, &id) || !handler.get_current_mode(id, devmode))
+        if (!settings_handler.get_id(name, &id) || !settings_handler.get_current_mode(id, devmode))
         {
             ERR("Failed to get %s current display settings.\n", wine_dbgstr_w(name));
             return FALSE;
@@ -505,7 +505,7 @@ BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DW
     pthread_mutex_lock( &settings_mutex );
     if (n == 0 || wcsicmp(cached_device_name, name) || cached_flags != flags)
     {
-        if (!handler.get_id(name, &id) || !handler.get_modes(id, flags, &modes, &mode_count))
+        if (!settings_handler.get_id(name, &id) || !settings_handler.get_modes(id, flags, &modes, &mode_count))
         {
             ERR("Failed to get %s supported display modes.\n", wine_dbgstr_w(name));
             pthread_mutex_unlock( &settings_mutex );
@@ -515,7 +515,7 @@ BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DW
         qsort(modes, mode_count, sizeof(*modes) + modes[0].dmDriverExtra, mode_compare);
 
         if (cached_modes)
-            handler.free_modes(cached_modes);
+            settings_handler.free_modes(cached_modes);
         lstrcpyW(cached_device_name, name);
         cached_flags = flags;
         cached_modes = modes;
@@ -525,7 +525,7 @@ BOOL X11DRV_EnumDisplaySettingsEx( LPCWSTR name, DWORD n, LPDEVMODEW devmode, DW
     if (n >= cached_mode_count)
     {
         pthread_mutex_unlock( &settings_mutex );
-        WARN("handler:%s device:%s mode index:%#x not found.\n", handler.name, wine_dbgstr_w(name), n);
+        WARN("handler:%s device:%s mode index:%#x not found.\n", settings_handler.name, wine_dbgstr_w(name), n);
         SetLastError(ERROR_NO_MORE_FILES);
         return FALSE;
     }
@@ -562,7 +562,7 @@ static DEVMODEW *get_full_mode(ULONG_PTR id, DEVMODEW *dev_mode)
     if (is_detached_mode(dev_mode))
         return dev_mode;
 
-    if (!handler.get_modes(id, EDS_ROTATEDMODE, &modes, &mode_count))
+    if (!settings_handler.get_modes(id, EDS_ROTATEDMODE, &modes, &mode_count))
         return NULL;
 
     qsort(modes, mode_count, sizeof(*modes) + modes[0].dmDriverExtra, mode_compare);
@@ -593,18 +593,18 @@ static DEVMODEW *get_full_mode(ULONG_PTR id, DEVMODEW *dev_mode)
 
     if (!found_mode || mode_idx == mode_count)
     {
-        handler.free_modes(modes);
+        settings_handler.free_modes(modes);
         return NULL;
     }
 
     if (!(full_mode = malloc(sizeof(*found_mode) + found_mode->dmDriverExtra)))
     {
-        handler.free_modes(modes);
+        settings_handler.free_modes(modes);
         return NULL;
     }
 
     memcpy(full_mode, found_mode, sizeof(*found_mode) + found_mode->dmDriverExtra);
-    handler.free_modes(modes);
+    settings_handler.free_modes(modes);
 
     full_mode->dmFields |= DM_POSITION;
     full_mode->u1.s2.dmPosition = dev_mode->u1.s2.dmPosition;
@@ -640,7 +640,7 @@ static LONG get_display_settings(struct x11drv_display_setting **new_displays,
         if (NtUserEnumDisplayDevices( NULL, display_idx, &display_device, 0 ))
             goto done;
 
-        if (!handler.get_id(display_device.DeviceName, &displays[display_idx].id))
+        if (!settings_handler.get_id(display_device.DeviceName, &displays[display_idx].id))
         {
             ret = DISP_CHANGE_BADPARAM;
             goto done;
@@ -903,13 +903,13 @@ static LONG apply_display_settings(struct x11drv_display_setting *displays, INT 
             return DISP_CHANGE_BADMODE;
 
         TRACE("handler:%s changing %s to position:(%d,%d) resolution:%ux%u frequency:%uHz "
-              "depth:%ubits orientation:%#x.\n", handler.name,
+              "depth:%ubits orientation:%#x.\n", settings_handler.name,
               wine_dbgstr_w(displays[display_idx].desired_mode.dmDeviceName),
               full_mode->u1.s2.dmPosition.x, full_mode->u1.s2.dmPosition.y, full_mode->dmPelsWidth,
               full_mode->dmPelsHeight, full_mode->dmDisplayFrequency, full_mode->dmBitsPerPel,
               full_mode->u1.s2.dmDisplayOrientation);
 
-        ret = handler.set_current_mode(displays[display_idx].id, full_mode);
+        ret = settings_handler.set_current_mode(displays[display_idx].id, full_mode);
         if (attached_mode && ret == DISP_CHANGE_SUCCESSFUL)
             set_display_depth(displays[display_idx].id, full_mode->dmBitsPerPel);
         free_full_mode(full_mode);
