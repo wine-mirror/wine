@@ -32,6 +32,25 @@ static void variant_init_i4(VARIANT *v, int val)
     V_I4(v) = val;
 }
 
+static void variant_init_bool(VARIANT *v, BOOL val)
+{
+    V_VT(v) = VT_BOOL;
+    V_BOOL(v) = val ? VARIANT_TRUE : VARIANT_FALSE;
+}
+
+static BOOL msaa_check_acc_state(IAccessible *acc, VARIANT cid, ULONG flag)
+{
+    HRESULT hr;
+    VARIANT v;
+
+    VariantInit(&v);
+    hr = IAccessible_get_accState(acc, cid, &v);
+    if (SUCCEEDED(hr) && V_VT(&v) == VT_I4 && (V_I4(&v) & flag))
+        return TRUE;
+
+    return FALSE;
+}
+
 static LONG msaa_role_to_uia_control_type(LONG role)
 {
     switch (role)
@@ -212,6 +231,26 @@ HRESULT WINAPI msaa_provider_GetPropertyValue(IRawElementProviderSimple *iface,
         if (msaa_prov->control_type)
             variant_init_i4(ret_val, msaa_prov->control_type);
 
+        break;
+
+    case UIA_HasKeyboardFocusPropertyId:
+        variant_init_bool(ret_val, msaa_check_acc_state(msaa_prov->acc, msaa_prov->cid,
+                    STATE_SYSTEM_FOCUSED));
+        break;
+
+    case UIA_IsKeyboardFocusablePropertyId:
+        variant_init_bool(ret_val, msaa_check_acc_state(msaa_prov->acc, msaa_prov->cid,
+                    STATE_SYSTEM_FOCUSABLE));
+        break;
+
+    case UIA_IsEnabledPropertyId:
+        variant_init_bool(ret_val, !msaa_check_acc_state(msaa_prov->acc, msaa_prov->cid,
+                    STATE_SYSTEM_UNAVAILABLE));
+        break;
+
+    case UIA_IsPasswordPropertyId:
+        variant_init_bool(ret_val, msaa_check_acc_state(msaa_prov->acc, msaa_prov->cid,
+                    STATE_SYSTEM_PROTECTED));
         break;
 
     default:

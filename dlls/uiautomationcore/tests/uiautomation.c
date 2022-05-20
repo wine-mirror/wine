@@ -59,6 +59,7 @@ DEFINE_EXPECT(winproc_GETOBJECT_CLIENT);
 DEFINE_EXPECT(Accessible_accNavigate);
 DEFINE_EXPECT(Accessible_get_accParent);
 DEFINE_EXPECT(Accessible_get_accRole);
+DEFINE_EXPECT(Accessible_get_accState);
 DEFINE_EXPECT(Accessible_child_accNavigate);
 DEFINE_EXPECT(Accessible_child_get_accParent);
 
@@ -67,6 +68,14 @@ static IAccessible *acc_client;
 static BOOL check_variant_i4(VARIANT *v, int val)
 {
     if (V_VT(v) == VT_I4 && V_I4(v) == val)
+        return TRUE;
+
+    return FALSE;
+}
+
+static BOOL check_variant_bool(VARIANT *v, BOOL val)
+{
+    if (V_VT(v) == VT_BOOL && V_BOOL(v) == (val ? VARIANT_TRUE : VARIANT_FALSE))
         return TRUE;
 
     return FALSE;
@@ -82,6 +91,7 @@ static struct Accessible
     HWND acc_hwnd;
     HWND ow_hwnd;
     INT role;
+    INT state;
 } Accessible, Accessible_child;
 
 static inline struct Accessible* impl_from_Accessible(IAccessible *iface)
@@ -217,7 +227,18 @@ static HRESULT WINAPI Accessible_get_accRole(IAccessible *iface, VARIANT child_i
 static HRESULT WINAPI Accessible_get_accState(IAccessible *iface, VARIANT child_id,
         VARIANT *out_state)
 {
-    ok(0, "unexpected call\n");
+    struct Accessible *This = impl_from_Accessible(iface);
+
+    ok(This == &Accessible, "unexpected call\n");
+    CHECK_EXPECT(Accessible_get_accState);
+
+    if (This->state)
+    {
+        V_VT(out_state) = VT_I4;
+        V_I4(out_state) = This->state;
+        return S_OK;
+    }
+
     return E_NOTIMPL;
 }
 
@@ -409,7 +430,7 @@ static struct Accessible Accessible =
     1,
     NULL,
     0, 0,
-    0,
+    0, 0,
 };
 static struct Accessible Accessible_child =
 {
@@ -418,7 +439,7 @@ static struct Accessible Accessible_child =
     1,
     &Accessible.IAccessible_iface,
     0, 0,
-    0,
+    0, 0,
 };
 
 static LRESULT WINAPI test_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -749,12 +770,24 @@ static const struct msaa_role_uia_type msaa_role_uia_types[] = {
     { ROLE_SYSTEM_OUTLINEBUTTON,      0 },
 };
 
+struct msaa_state_uia_prop {
+    INT acc_state;
+    INT prop_id;
+};
+
+static const struct msaa_state_uia_prop msaa_state_uia_props[] = {
+    { STATE_SYSTEM_FOCUSED,      UIA_HasKeyboardFocusPropertyId },
+    { STATE_SYSTEM_FOCUSABLE,    UIA_IsKeyboardFocusablePropertyId },
+    { ~STATE_SYSTEM_UNAVAILABLE, UIA_IsEnabledPropertyId },
+    { STATE_SYSTEM_PROTECTED,    UIA_IsPasswordPropertyId },
+};
+
 static void test_uia_prov_from_acc_properties(void)
 {
     IRawElementProviderSimple *elprov;
     HRESULT hr;
     VARIANT v;
-    int i;
+    int i, x;
 
     /* MSAA role to UIA control type test. */
     for (i = 0; i < ARRAY_SIZE(msaa_role_uia_types); i++)
@@ -820,6 +853,30 @@ static void test_uia_prov_from_acc_properties(void)
         CHECK_CALLED(Accessible_get_accRole);
 
     Accessible.role = 0;
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    /* UIA PropertyId's that correspond directly to individual MSAA state flags. */
+    for (i = 0; i < ARRAY_SIZE(msaa_state_uia_props); i++)
+    {
+        const struct msaa_state_uia_prop *state = &msaa_state_uia_props[i];
+
+        for (x = 0; x < 2; x++)
+        {
+            Accessible.state = x ? state->acc_state : ~state->acc_state;
+            SET_EXPECT(Accessible_get_accState);
+            hr = IRawElementProviderSimple_GetPropertyValue(elprov, state->prop_id, &v);
+            ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            ok(check_variant_bool(&v, x), "V_BOOL(&v) = %#x\n", V_BOOL(&v));
+            CHECK_CALLED(Accessible_get_accState);
+        }
+    }
+    Accessible.state = 0;
+
     IRawElementProviderSimple_Release(elprov);
     ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
 }
