@@ -69,7 +69,7 @@ CGImageRef create_cgimage_from_icon_bitmaps(HDC hdc, HANDLE icon, HBITMAP hbmCol
 
     /* draw the cursor frame to a temporary buffer then create a CGImage from that */
     memset(color_bits, 0x00, color_size);
-    SelectObject(hdc, hbmColor);
+    NtGdiSelectBitmap(hdc, hbmColor);
     if (!DrawIconEx(hdc, 0, 0, icon, width, height, istep, NULL, DI_NORMAL))
     {
         WARN("Could not draw frame %d (walk past end of frames).\n", istep);
@@ -128,7 +128,7 @@ CGImageRef create_cgimage_from_icon_bitmaps(HDC hdc, HANDLE icon, HBITMAP hbmCol
 
         /* draw the cursor mask to a temporary buffer */
         memset(mask_bits, 0xFF, mask_size);
-        SelectObject(hdc, hbmMask);
+        NtGdiSelectBitmap(hdc, hbmMask);
         if (!DrawIconEx(hdc, 0, 0, icon, width, height, istep, NULL, DI_MASK))
         {
             WARN("Failed to draw frame mask %d.\n", istep);
@@ -202,17 +202,17 @@ CGImageRef create_cgimage_from_icon(HANDLE icon, int width, int height)
         if (!GetIconInfo(icon, &info))
             return NULL;
 
-        GetObjectW(info.hbmMask, sizeof(bm), &bm);
+        NtGdiExtGetObjectW(info.hbmMask, sizeof(bm), &bm);
         if (!info.hbmColor) bm.bmHeight = max(1, bm.bmHeight / 2);
         width = bm.bmWidth;
         height = bm.bmHeight;
         TRACE("new width %d height %d\n", width, height);
 
-        DeleteObject(info.hbmColor);
-        DeleteObject(info.hbmMask);
+        NtGdiDeleteObjectApp(info.hbmColor);
+        NtGdiDeleteObjectApp(info.hbmMask);
     }
 
-    hdc = CreateCompatibleDC(0);
+    hdc = NtGdiCreateCompatibleDC(0);
 
     bitmapinfo->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     bitmapinfo->bmiHeader.biWidth = width;
@@ -226,7 +226,8 @@ CGImageRef create_cgimage_from_icon(HANDLE icon, int width, int height)
     bitmapinfo->bmiHeader.biBitCount = 32;
     color_size = width * height * 4;
     bitmapinfo->bmiHeader.biSizeImage = color_size;
-    hbmColor = CreateDIBSection(hdc, bitmapinfo, DIB_RGB_COLORS, (VOID **) &color_bits, NULL, 0);
+    hbmColor = NtGdiCreateDIBSection(hdc, NULL, 0, bitmapinfo, DIB_RGB_COLORS,
+                                     0, 0, 0, (void **)&color_bits);
     if (!hbmColor)
     {
         WARN("failed to create DIB section for cursor color data\n");
@@ -244,7 +245,8 @@ CGImageRef create_cgimage_from_icon(HANDLE icon, int width, int height)
     bitmapinfo->bmiColors[1].rgbReserved = 0;
     mask_size = ((width + 31) / 32 * 4) * height;
     bitmapinfo->bmiHeader.biSizeImage = mask_size;
-    hbmMask = CreateDIBSection(hdc, bitmapinfo, DIB_RGB_COLORS, (VOID **) &mask_bits, NULL, 0);
+    hbmMask = NtGdiCreateDIBSection(hdc, NULL, 0, bitmapinfo, DIB_RGB_COLORS,
+                                    0, 0, 0, (void **)&mask_bits);
     if (!hbmMask)
     {
         WARN("failed to create DIB section for cursor mask data\n");
@@ -255,9 +257,9 @@ CGImageRef create_cgimage_from_icon(HANDLE icon, int width, int height)
                                            mask_bits, mask_size, width, height, 0);
 
 cleanup:
-    if (hbmColor) DeleteObject(hbmColor);
-    if (hbmMask) DeleteObject(hbmMask);
-    DeleteDC(hdc);
+    if (hbmColor) NtGdiDeleteObjectApp(hbmColor);
+    if (hbmMask) NtGdiDeleteObjectApp(hbmMask);
+    NtGdiDeleteObjectApp(hdc);
     return ret;
 }
 
