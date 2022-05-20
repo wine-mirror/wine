@@ -1,15 +1,14 @@
-The Wine development release 7.8 is now available.
+The Wine development release 7.9 is now available.
 
 What's new in this release:
-  - X11 and OSS drivers converted to PE.
-  - WoW64 support in the sound drivers.
-  - Number formatting using the new locale database.
+  - Preliminary work towards PE conversion of macOS driver.
+  - A number of fixes for test failures on Windows.
   - Various bug fixes.
 
 The source is available from the following locations:
 
-  https://dl.winehq.org/wine/source/7.x/wine-7.8.tar.xz
-  http://mirrors.ibiblio.org/wine/source/7.x/wine-7.8.tar.xz
+  https://dl.winehq.org/wine/source/7.x/wine-7.9.tar.xz
+  http://mirrors.ibiblio.org/wine/source/7.x/wine-7.9.tar.xz
 
 Binary packages for various distributions will be available from:
 
@@ -25,589 +24,452 @@ AUTHORS in the distribution for the complete list.
 
 ----------------------------------------------------------------
 
-Bugs fixed in 7.8 (total 37):
+Bugs fixed in 7.9 (total 35):
 
-  18635  Adobe Lightroom 2.3: Menu bar is hidden
-  43208  Assassin's Creed IV - Black Flag Hangs tightly
-  43995  Uplay - Assassin's Creed 4 Black Flag won't start
-  45388  user32:edit fails on Traditional Chinese and Korean locales
-  48045  comdlg32:filedlg crashes or times out randomly
-  48048  urlmon:protocol - The ftp test fails on Vista to Windows 8
-  51181  d3d10core:d3d10core fails systematically on AMD GPUs
-  51407  kernel32:time, msvcrt:time and shlwapi:ordinal fail in Wine because Hindi is Unicode-only
-  51460  oleaut32:vartest has a todo because Wine uses an outdated currency symbol for Swiss Francs
-  51619  advapi32:registry fails in Wine because French & German timezone name translations are too long
-  52079  oleacc:main crashes randomly on Windows 10 1709+
-  52149  user32:dialog fails in test_DialogBoxParam() on current Windows 10 21H1
-  52362  Powershell Core 7 installer hangs forever on Chinese locale (LC_ALL=zh_CN.UTF-8)
-  52554  Serbian locale mapping cause crash on multiple installshield wizards
-  52559  kernel32:resource times out since 2021-12-29 at two win10 testbot systems.
-  52684  Command and Conquer Generals (and C&C Zero Hour) have no ground textures
-  52704  FreeHand 9 demo: invalid handle exception (0xc0000008) when attaching uxtheme.dll
-  52743  cannot write to _fdopen'ed stdout when running in docker
-  52771  Wine console creation breaks comctl32:button, dinput:keyboard, user32:dialog, user32:input, user32:monitor and user32:win
-  52828  Incorrect instruments in MIDI playback over ALSA
-  52845  Recent versions of chromium have broken sandbox again
-  52847  GetACP() returns CP_UTF8 on some debian VM
-  52856  kernel32:process fails when Wine has no Unix terminal
-  52857  msvcp140:msvcp140 fails in Windows 8.1 on the cw-rx460 machine
-  52858  kernel32:file fails in Windows 8.1 on the cw-rx460 machine
-  52861  kernel32:locale fails on Windows 10 1709
-  52864  windows.media.speech:speech has a refcount failure on all Windows 10 versions
-  52865  windows.media.speech:speech has a Windows 10 1507-specific failure
-  52866  vbscript:run fails in Wine in Arabic and Hebrew
-  52867  Multiple applications crash because of ResolveLocaleName stub (dnSpy, dotnet-sdk-5.0.100-win-x64, Metatogger 7.2)
-  52869  kernel32:locale - test_CompareStringA() fails on Windows with a UTF-8 code page
-  52871  oleaut32:vartest has failures in Wine in the Arabic and Hebrew locales
-  52887  Get-Computerinfo from NoPowershell crashes
-  52904  kernel32:locale breaks oleaut32:varformat on Wine in the French locale
-  52922  The Evil Within crashes before entering the main menu using Vulkan renderer
-  52924  Guilty Gear XX #Reload: black screen since wine 5.0
-  52953  GuiPy crashes on unimplemented function xmllite.dll.CreateXmlReaderInputWithEncodingCodePage
+  14841  ntdll:file tests are flaky
+  19183  "make test" still fails on d3d9/tests/visual.c
+  28220  kernel32/process.ok: test fails when redirected
+  28508  user32:monitor tests fail occasionally
+  34782  crypt32/chain tests crash with gcc-4.8.1 (win64)
+  39346  Lego Rock Raiders crashes on startup (d3drm_device_init doesn't handle device version 3 case)
+  45959  Editpad Lite 7 GUI not rendered correctly
+  45960  Editpad Lite 7 displays empty boxes instead of text in some menus
+  49285  PNotesPortable crashes inside WritePrivateProfileStructW
+  50462  Ulead Photo Explorer 8.5 crashes on startup (needs {4a2286e0-7bef-11ce-9bd9-0000e202599c} CLSID_CMpegAudioCodec)
+  51104  mf:mf crashes on Windows + AMD/NVidia
+  51283  d3d8:device breaks evr:evr on w7u-2qxl
+  51297  d3d8:visual & d3d9:visual, test_sample_mask() fails on Nvidia (cw-gtx560)
+  51298  d3d8:visual: lighting_test() fails on Windows 10 >= 2004
+  51376  Wine causes PC to lock or crash wine when loading more than 1 VST addon into WaveLab 6
+  51612  Stellaris launcher (Paradox) does not launch
+  51680  nsi:nsi test_ip_neighbour() fails on unreachable link local entry
+  51783  The ieframe:webbrowser output is too big in Wine
+  51827  d3dx10_34:d3dx10 crashes on all versions of Windows
+  52686  DateAdd not implemented
+  52751  `winetricks nocrashdialog` no longer works properly with Wine 7.5(but works with 7.4)
+  52761  mscoree:mscoree test fails without a display or console
+  52821  Cxbx Reloaded needs unimplemented function msvcp140_atomic_wait.dll.__std_atomic_wait_direct
+  52848  Mavis Beacon Teaches Typing 15: Typed characters not spaced correctly
+  52874  win32u change prevents chromium from starting
+  52892  The 64-bit ntdll:thread fails on w7pro64 and w864
+  52908  mf:mf - The 64-bit test_wma_decoder() fails on 64-bit Debian 11 + Intel
+  52914  mf:mf - The 64-bit test_h264_decoder() fails on 64-bit Debian 11 + Intel GPU
+  52937  msvcr110:msvcr110 fails on Windows with the UTF-8 codepage
+  52961  crypt32:str - test_CertGetNameString() fails on Windows 7
+  52969  mshtml:script fails on up-to-date Windows 8.1 machines
+  52970  kernelbase:process breaks lz32:lzexpand_main on Windows 1809+
+  52975  VTFEdit fails to start: err:module:LdrInitializeThunk "MSVCP80.dll" failed to initialize, aborting
+  53004  63ce060 causes a white border line in winecfg
+  53015  winscp bookmark adding error
 
 ----------------------------------------------------------------
 
-Changes since 7.7:
+Changes since 7.8:
 
-Alexandre Julliard (23):
-      make_unicode: Generate the character mapping tables in locale.nls.
-      kernelbase: Use the mapping tables from locale.nls in LCMapStringEx().
-      kernelbase: Use the digit table from locale.nls in FoldStringW().
-      server: Store the full group attributes.
-      server: Return the full token group for TokenLogonSid.
-      kernelbase: Really skip alternate sorts in EnumUILanguagesW().
-      kernelbase: Add support for storing LOCALE_SINTLSYMBOL in the registry.
-      kernel32/tests: Mark a failing test as broken.
-      winecrt0: Avoid A->W conversion in initialization code.
-      user32/tests: Use the standard INPUT type definition.
-      kernelbase: Implement ResolveLocaleName().
-      sfc_os: Stub SfpVerifyFile().
-      oleaut32: Use the locale leading zero flag instead of hardcoding it.
-      shlwapi: Fix copy/paste typo in number format initialization.
-      kernel32: Reimplement GetNumberFormatA().
-      kernel32: Reimplement GetCurrencyFormatA().
-      kernelbase: Reimplement GetNumberFormatW/Ex() using get_locale_info().
-      kernelbase: Reimplement GetCurrencyFormatW/Ex() using get_locale_info().
-      kernelbase: Reimplement GetDateFormatW/Ex() using get_locale_info().
-      kernelbase: Reimplement GetTimeFormatW/Ex() using get_locale_info().
-      kernelbase: Reimplement GetDateFormatA().
-      kernelbase: Reimplement GetTimeFormatA().
-      nls: Update sort keys to NLS version 6.3.5.
+Alexandre Julliard (2):
+      kernelbase: Move get_language_sort() to avoid forward declarations.
+      kernelbase: Cache the sortid for each locale.
 
-Alistair Leslie-Hughes (1):
-      msado15: Implement _Recordset get_EditMode.
+Alistair Leslie-Hughes (7):
+      d3drm: Support IDirect3D3 when creating device.
+      include: Add TF_TMF/TMAW defines.
+      dwmapi: Clear DWM_TIMING_INFO structure before returning.
+      d3drm: IDirect3DRMMeshBuilder2 Get/SetQuality.
+      d3drm: IDirect3DRMTexture3 Get/SetDecalOrigin.
+      d3drm: IDirect3DRMTexture3 Get/SetColors.
+      d3drm: IDirect3DRMTexture3 Get/SetShades.
 
-Angelo Haller (3):
-      comctl32/tests: Add hold_key and release_key functions.
-      comctl32/tests: Add multi select tests for ownerdata listviews.
-      comctl32/tests: Add change sequence for ownerdata listviews.
+Andrew Eikum (5):
+      mfplat: Allow NULL length pointer in IMFAttributes::GetAllocatedString.
+      mfplat: Consolidate stream and file IMFByteStream vtables.
+      mfplat: Simplify IMFByteStream async Read/Write methods.
+      mfplat: Consolidate stream and file IMFByteStream Read/Write callback vtables.
+      mfplat/tests: Add tests for IMFByteStream position.
 
-Anton Baskanov (26):
-      quartz/tests: Add tests for MPEG audio decoder interfaces.
-      quartz/tests: Add tests for MPEG audio decoder aggregation.
-      quartz/tests: Add tests for MPEG audio decoder unconnected filter state change.
-      quartz/tests: Add tests for IBaseFilter_EnumPins() on MPEG audio decoder.
-      quartz/tests: Add tests for IBaseFilter_FindPin() on MPEG audio decoder.
-      quartz/tests: Add tests for querying MPEG audio decoder pin info.
-      winegstreamer: Add a skeleton MPEG audio decoder filter.
-      quartz/tests: Add tests for MPEG audio decoder IEnumMediaTypes.
-      quartz/tests: Add tests for MPEG audio decoder accepted media types.
-      winegstreamer: Reject incompatible input media types in MPEG audio decoder.
-      quartz/tests: Add tests for MPEG audio decoder sink connection.
-      winegstreamer: Reject incompatible output types in MPEG audio decoder.
-      quartz/tests: Add tests for MPEG audio decoder sink allocator.
-      quartz/tests: Add tests for MPEG audio decoder output media type enumeration.
-      winegstreamer: Implement output media type enumeration in MPEG audio decoder.
-      winegstreamer: Set allocator properties for MPEG audio decoder sink.
-      quartz/tests: Add tests for MPEG audio decoder source allocator.
-      quartz/tests: Add tests for MPEG audio decoder source connection.
-      winegstreamer: Commit allocator on pause in MPEG audio decoder.
-      winegstreamer: Convert MPEG-1 audio to a major type.
-      winegstreamer: Support MPEG-1 audio in wg_transform.
-      quartz/tests: Don't fail tests when MPEG audio decoder creation fails.
-      winegstreamer: Check whether transform is supported when creating MPEG audio decoder.
-      winegstreamer: Create wg_transform in MPEG audio decoder.
-      quartz/tests: Add tests for MPEG audio decoder sample processing.
-      winegstreamer: Implement Receive() for MPEG audio decoder sink.
+Anton Baskanov (5):
+      include: Add IMpegAudioDecoder definition.
+      winegstreamer: Add IMpegAudioDecoder stub to MPEG audio decoder.
+      winegstreamer: Register MPEG audio decoder.
+      quartz/tests: Add tests for MPEG audio decoder sample timestamps.
+      winegstreamer: Set sample timestamps in MPEG audio decoder.
 
-Biswapriyo Nath (3):
-      include: Use nested namespace declaration in windows.foundation.idl.
-      include: Add Windows.Foundation.MemoryBuffer runtimeclass declaration.
-      include: Add Windows.Storage.Streams.Buffer runtimeclass declaration.
+Bernhard Kölbl (11):
+      windows.media.speech: Add a missing trace to async_operation_create.
+      windows.media.speech/tests: Make the IAsyncInfo_Close block test more consistent.
+      windows.media.speech/tests: Remove some unreliable ref checks.
+      windows.media.speech/tests: Add a test for IAsyncOperation_get_Completed.
+      windows.media.speech: Rename async_operation to async_inspectable.
+      windows.media.speech/tests: Remove a inconsistent ref check.
+      windows.media.speech: Rename impl_from_IAsyncInfo to async_inspectable_impl_from_IAsyncInfo.
+      windows.media.speech/tests: Retype AsyncOperationCompletedHandler to IInspectable.
+      windows.media.speech/tests: Add await helper for IAsyncOperation.
+      windows.media.speech/tests: Make use of a helper function for IAsyncInfo checking.
+      windows.media.speech/tests: Add some recognition tests.
 
-Brendan Shanks (2):
-      wrc: Support function macros where varargs are the only argument.
-      include: Add WINE_ALLOC_SIZE attribute to heap_calloc().
+Brendan Shanks (10):
+      ntdll/tests: Fix thread test failure on Windows.
+      include: Add WINE_ALLOC_SIZE attribute to CoTaskMemRealloc().
+      include: Add WINE_ALLOC_SIZE attribute to RtlReAllocateHeap().
+      include: Add WINE_ALLOC_SIZE attribute to ExAllocatePool functions.
+      include: Add WINE_ALLOC_SIZE attribute to MmAllocate functions.
+      include: Add __WINE_MALLOC attribute and use it for allocation functions.
+      include: Add __WINE_DEALLOC attribute and use it for allocation functions.
+      crypt32/tests: Fix mismatched deallocation function.
+      ntdll: Use 32-bit stack in alloc_fs_sel().
+      ntdll: Avoid truncating pointer to 32-bits in get_cpu_area().
 
-Connor McAdams (5):
-      oleacc/tests: Add tests for IIS_IsOleaccProxy service on default accessible objects.
-      oleacc: Add IServiceProvider interface to default accessible objects.
-      uiautomationcore: Implement UiaProviderFromIAccessible.
-      uiautomationcore/tests: Add tests for UiaProviderFromIAccessible.
-      uiautomationcore: Make hwnd_host_provider_vtbl static const.
+Charles Davis (6):
+      configure: Check for struct icmpstat.
+      nsiproxy.sys: Implement IPv6 icmpstats get_all_parameters on Mac OS and BSD.
+      nsiproxy.sys: Implement IPv6 ipstats get_all_parameters on Mac OS and BSD.
+      d3d11/tests: Test logic op.
+      d3d11: Implement ID3D11Device1::CreateBlendState1().
+      ntdll: Implement idle time query for Mac OS.
 
-Dmitry Timoshkov (1):
-      ieframe: Initialize new history log entry.
+Connor McAdams (2):
+      oleacc/tests: Add tests for retrieving an IAccessible contained within a Dynamic Annotation wrapper.
+      oleacc: Add support for retrieving an HWND from accNavigate to WindowFromAccessibleObject.
 
-Drew Ronneberg (13):
-      shell32: Remove obsolete -D_SHELL32_ from Makefile.in.
-      crypt32: Remove obsolete -D_CRYPT32_ from Makefile.in.
-      comctl32: Remove obsolete -D_COMCTL32_ from Makefile.in.
-      shdocvw: Remove obsolete -D_SHDOCVW_ from Makefile.in.
-      winspool.drv: Remove obsolete -D_SPOOL32_ from Makefile.in.
-      netapi32: Remove obsolete -D_SVRAPI_ from Makefile.in.
-      rpcrt4: Remove obsolete -D_RPCRT4_ from Makefile.in.
-      user32: Remove obsolete -D_WINABLE_ from Makefile.in.
-      oleaut32: Remove obsolete -D_OLEAUT32_ from Makefile.in.
-      urlmon: Remove obsolete -D_URLMON_ from Makefile.in.
-      winmm: Remove obsolete -D_WINMM_ from Makefile.in.
-      shlwapi: Remove obsolete -D_SHLWAPI_ from Makefile.in.
-      setupapi: Remove obsolete -D_SETUPAPI_ from Makefile.in.
+Dmitry Timoshkov (2):
+      d2d1: Implement ID2D1DeviceContext::CreateImageBrush().
+      d2d1/tests: Add some tests for ID2D1DeviceContext::CreateImageBrush().
 
-Eric Pouech (36):
-      include: Don't use long types in nsi.h.
-      nsi/tests: Enable compilation with long types.
-      nsiproxy: Don't use long types in internal structure / helpers.
-      nsiproxy: Don't use long types for local types.
-      nsiproxy: Add intermediate variables for sscanf on ULONG.
-      nsiproxy: Enable compilation with long types.
-      d3d11/tests: Build without -DWINE_NO_LONG_TYPES.
-      d3d11: Build without -DWINE_NO_LONG_TYPES.
-      d3dx9/effect: Return the read value from read_dword().
-      d3dx9: Use correct integral type.
-      winedbg: Correctly read register values through dbg_lvalue structure.
-      attrib: Use OEM code page for output.
-      chcp: Use OEM code page for output.
-      fsutil: Use OEM code page for output.
-      hostname: Use OEM code page for output.
-      icinfo: Use OEM code page for output.
-      ipconfig: Use OEM code page for output.
-      net: Use OEM code page for output.
-      netstat: Use OEM code page for output.
-      regedit: Use OEM code page for output.
-      regsvr32: Use OEM code page for output.
-      start: Use OEM code page for output.
-      taskkill: Use OEM code page for output.
-      uninstaller: Use OEM code page for output.
-      whoami: Use OEM code page for output.
-      wscript: Use OEM code page for output.
-      xcopy: Use OEM code page for output.
-      include/msvcrt: Redefine towlower* & towupper* with wint_t types.
-      dbghelp: Properly fail on PDB files generated by MSVC compiler version 14.31.
-      dbghelp: Introduce symt_find_symbol_at().
-      cmd: Test that read is successful before using its result.
-      cmd: Skip too long paths.
-      wineoss.drv: Use correct integral type.
-      wineoss.drv: Enable compilation with long types.
-      winealsa.drv: Use correct integral types.
-      winealsa.drv: Enable compilation with long types.
+Drew Ronneberg (1):
+      ole32: Remove obsolete -D_OLE32_ from Makefile.in.
 
-Fabian Maurer (6):
-      mscoree: Use LocalFree for memory allocated by LocalAlloc.
-      printui: Use LocalFree for memory allocated by LocalAlloc (Coverity).
-      mfplay: Prevent usage of uninitialized pointer in error case (Coverity).
-      mfplat: Prevent use after free (Coverity).
-      shell32: Prevent user after free in error case (Coverity).
-      shell32: Refactor to keep style consistent.
+Eric Pouech (12):
+      winepulse.drv: Use correct integral type.
+      winepulse.drv: Enable compilation with long types.
+      winecoreaudio: Enable compilation with long types.
+      capi2032: Enable compilation with long types.
+      winspool: Enable compilation with long types.
+      winevulkan: Enable compilation with long types.
+      winedbg: Introduce struct data_model to describe the various models for base types.
+      winedbg: Add 'set' command to change data model.
+      dbghelp: Let symt_basic be trans-module and nameless.
+      dbghelp: Fix conversion of dwarf's basic types into dbghelp's basic types.
+      dbghelp: Set correct basic types definition.
+      include: Use Mingw64's __uuidof when present.
 
-Floris Renaud (1):
-      po: Add missing examples in Dutch translation.
+Fabian Maurer (1):
+      kernel32: Prevent null pointer dereference in WritePrivateProfileStructW.
 
-François Gouget (17):
-      gdi32/tests: Trace the invalid height in test_max_height().
-      kernel32/tests: Remove a couple of unnecessary NULL casts.
-      comctl32/tests: Use winetest_push_context() in test_combo_dropdown_size().
-      oleau32/tests: Show that spaces are not allowed before exponents.
-      oleaut32/tests: The EUR abbreviation is not recognized as a currency.
-      kernel32/tests: Fix the spelling of a comment.
-      user32/tests: Trace monitor information with 'monitor info'.
-      po: Fix a typo in the Asturian translation.
-      po: Fix the indentation of a usage message in the Brazilian translation.
-      po: Fix a trailing full stop inconsistency in the Asturian translation.
-      po: Fix trailing full stop inconsistencies in the Czech translation.
-      po: Fix trailing full stop inconsistencies in the Turkish translation.
-      kernel32/tests: Fix a copy/paste error in an ok() message.
-      winebus.sys: Fix the HAVE_SYS_INOTIFY_H checks.
-      kernel32/tests: Fix a typo in a comment.
-      user32/tests: Make the test_char_from_pos() failures more informative.
-      kernelbase/tests: Loosen up the Sleep() test lower bound.
+François Gouget (4):
+      shell32: Shelllink: Make the create_lnk() failure messages unique.
+      comctl32/tests: Use winetest_push_context() in tooltip:test_customdraw().
+      mstask/tests: Ignore the compare_trigger_state() return value.
+      mstask/tests: Fix the compare_trigger_state() failure lines.
 
-Gabriel Ivăncescu (7):
-      jscript: Implement Number.prototype.toLocaleString.
-      jscript: Return proper error in Number.toLocaleString with invalid 'this' in ES5 mode.
-      jscript: Implement Array.prototype.toLocaleString.
-      jscript: Implement Array.prototype.filter.
-      jscript: Implement Array.prototype.every.
-      jscript: Implement Array.prototype.some.
-      jscript: Implement Array.prototype.lastIndexOf.
+Gabriel Ivăncescu (8):
+      mshtml/tests: Fix Number toLocaleString test on updated Win 8.1.
+      jscript: Handle detached scope objects 'this' in all calls.
+      jscript: Pass undefined 'this' instead of null in ES5 mode.
+      mshtml: Expose IHTMLDOMImplementation2 members in IE9+ modes.
+      mshtml: Implement HTMLDOMAttribute2's name property.
+      mshtml: Implement window.cancelAnimationFrame.
+      mshtml/tests: Add test for clearing timers with id zero.
+      mshtml: Convert varAsync to bool if needed.
 
-Giovanni Mascellani (2):
-      loader/wine.inf: Update time zone data.
-      mfplat: Avoid a race condition when releasing a tracked sample.
+Georg Lehmann (3):
+      winevulkan: Prevent infinite recursion in make_vulkan.
+      winevulkan: Update to VK spec version 1.3.213.
+      winevulkan: Update to VK spec version 1.3.214.
+
+Gijs Vermeulen (1):
+      shell32/tests: Use 'shellpath' as tmpfile name in PathResolve tests.
 
 Hans Leidekker (1):
-      mshtml: Added IHTMLCSSStyleDeclaration::backgroundSize property implementation.
+      msi/tests: Fix an intermittent test failure.
 
 Henri Verbeet (2):
-      d3d11/tests: Declare "data_size" as UINT in test_device_context_state().
-      wined3d: Pass "quality_levels" as an unsigned int pointer to wined3d_check_device_multisample_type().
+      maintainers: Update the Direct3D section.
+      maintainers: Update the Direct2D section.
 
-Huw D. M. Davies (47):
-      winedbg: Accept "continue".
-      winecoreaudio: Pass a ptr to receive the stream in create_stream.
-      winecoreaudio: Use UINT64 handles to represent the stream.
-      winecoreaudio: Return offsets rather than ptrs to the strings.
-      winecoreaudio: Limit Wow64 buffer allocations to 32-bit addresses.
-      winecoreaudio: Implement Wow64 mmdevapi entry points in the Unix libraray.
-      winecoreaudio: Implement Wow64 midi entry points in the Unix libraray.
-      winemac: Use ULongToPtr() to cast format ids to void ptrs.
-      wineoss: Move MODM_GETDEVCAPS to the unixlib.
-      wineoss: Move MODM_GETNUMDEVS to the unixlib.
-      wineoss: Move MODM_GETVOLUME and MODM_SETVOLUME to the unixlib.
-      wineoss: Move MODM_RESET to the unixlib.
-      wineoss: Move MIDM_PREPARE and MIDM_UNPREPARE to the unixlib.
-      wineoss: Move MIDM_GETDEVCAPS to the unixlib.
-      wineoss: Move MIDM_GETNUMDEVS to the unixlib.
-      wineoss: Move the midi in buffer lock to the unixlib.
-      wineoss: Move MIDM_ADDBUFFER to the unixlib.
-      winex11: Free "path" and "uri" with the correct functions.
-      wineoss: Pass the time relative to the start time to the callback.
-      wineoss: Move MIDM_RESET to the unixlib.
-      wineoss: Move MIDM_START to the unixlib.
-      wineoss: Move MIDM_STOP to the unixlib.
-      wineoss: Simplify the midi in dispatcher.
-      wineoss: Add the leading 0xf0 to the sysex data.
-      wineoss: Move the sysex handling to a separate helper.
-      wineoss: Move the regular data handling to a separate helper.
-      wineoss: Make the MIM_LONGDATA time relative to the start time.
-      wineoss: Combine midReceiveChar() into handle_midi_data().
-      wineoss: Introduce a notification thread.
-      wineoss: Move the midi in data handlers to the unixlib.
-      wineoss: Introduce a helper to retrieve the time.
-      wineoss: Use a pipe to signal the end of the record thread.
-      wineoss: Move MIDM_OPEN and MIDM_CLOSE to the unixlib.
-      wineoss: Move DRVM_INIT and DRVM_EXIT to the unixlib.
-      wineoss: Use AUXDM_GETNUMDEVS to retrieve the number of devices.
-      wineoss: Move AUXDM_GETNUMDEVS to the unixlib.
-      wineoss: Move AUXDM_GETDEVCAPS to the unixlib.
-      wineoss: Move AUXDM_GETVOLUME and AUXDM_SETVOLUME to the unixlib.
-      wineoss: Build with msvcrt.
-      wineoss: Pass a client ptr to the callback instead of a stream.
-      wineoss: Use UINT64 handles to represent the stream.
-      wineoss: Return offsets rather than ptrs to the strings.
-      wineoss: Limit Wow64 buffer allocations to 32-bit addresses.
-      wineoss: Implement Wow64 mmdevapi entry points in the Unix library.
-      wineoss: Implement Wow64 midi entry points in the Unix library.
-      wineoss: Implement Wow64 aux entry point in the Unix library.
-      dllhost: Try to load the dll server's factory at the start.
+Huw D. M. Davies (1):
+      winecoreaudio: Remove DWORDs from the midi syscall interface.
 
-Jacek Caban (77):
-      win32u: Add more clipboard stubs.
-      win32u: Move clipboard data management from user32.
-      winex11: Remove unused cf_xdnd from XDNDDATA.
-      winex11: Use libc for driver memory allocation.
-      win32u: Use public declaration for GetStockObject.
-      win32u: Introduce data-only mode in NtUserGetClipboardData.
-      winex11: Don't use DragQueryFileW in export_hdrop.
-      winex11: Use data-only NtUserGetClipboardData to export clipboard data.
-      winex11: Directly use ntdll in uri_to_dos.
-      winex11: Directly use win32u and ntdll in a few more places.
-      win32u: Use user mode callback for registering builtin classes.
-      winex11: Use NtUserSetClipboardData to import clipboard data.
-      winex11: Directly use win32u in import_image_bmp.
-      winex11: Directly use ntdll in clipboard.c.
-      winex11: Return selection data as a single buffer from import_xdnd_selection.
-      winex11: Move CF_HDROP filtering to import_xdnd_selection.
-      winex11: Use format_entry to store cached XDND formats data.
-      winex11: Move XdndEnter event handler to event.c.
-      winex11: Move XdndPosition event handler to event.c.
-      winex11: Move XdndDrop event handler to event.c.
-      winex11: Move XdndLeave event handler to event.c.
-      winex11: Use inline intersect_rect helper instead of IntersectRect.
-      winex11: Move Unicode conversion out of unicode_text_from_string.
-      winex11: Move Unicode conversion out of string_from_unicode_text.
-      winex11: Directly use ntdll for utf8 conversion.
-      user32: Use GetMenuInfo for IsMenu implementation.
-      user32: Use MIIM_CHECKMARKS flag in InsertMenuW.
-      user32: Perform Unicode conversion in SetMenuItemInfoA.
-      user32: Perform Unicode conversion in InsertMenuItemA.
-      win32u: Move menu item info management from user32.
-      win32u/tests: Add NtUserThunkedMenuItemInfo tests.
-      win32u: Move GetMenuState implementation from user32.
-      win32u: Move GetMenuItemCount implementation from user32.
-      win32u: Move NtUserTranslateAccelerator from user32.
-      win32u: Move NtUserDeleteMenu implementation from user32.
-      win32u: Move NtUserGetSystemMenu implementation from user32.
-      win32u: Move NtUserSetSystemMenu implementation from user32.
-      win32u: Copy implementation of AdjustWindowRectEx from user32.
-      win32u: Move normalize_std_handle call to NtUserMsgWaitForMultipleObjectsEx.
-      win32u: Use NT interface for MsgWaitForMultipleObjectsEx user driver entry point.
-      winex11: Use passed point in handle_position_event.
-      winex11: Use ntdll_umbstowcs and ntdll_wcstoumbs for Unicode conversion.
-      winex11: Directly use wine_nt_to_unix_file_name to get Unix path name.
-      winex11: Use ntdll for Unicode conversion.
-      winex11: Use import_text_uri_list code in EVENT_DropURLs.
-      winex11: Reimplement EVENT_DropFromOffiX using get_dos_file_name.
-      win32u: Allow NULL client_menu_name in NtUserRegisterClassExWOW.
-      winex11: Directly use ntdll in more places.
-      winex11: Move DllMain to separated file.
-      winex11: Move X11DRV_InitClipboard to dllmain.c.
-      winex11: Move x11drv_post_drop to xdnd.c.
-      winex11: Move create_desktop implementation to dllmain.c.
-      winex11: Move wintab entry points to dllmain.c.
-      winex11: Introduce X11DRV_CALL macro.
-      winex11: Use X11DRV_CALL for XIM calls.
-      winex11: Call create_tooltip from WM_CREATE handler.
-      winex11: Avoid using sprintfW.
-      winex11: Avoid using kernel32 functions in get_config_key.
-      winex11: Avoid using kernel32 functions in user driver.
-      winex11: Introduce x11drv_client_call.
-      winex11: Use unixlib interface for IME calls.
-      winex11: Use unixlib interface for X11 calls from systray.c.
-      winex11: Use unixlib interface for systray docking.
-      winex11: Move foreign_window_proc to systray.c.
-      win32u: Move NtUserCallMsgFilter implementation from user32.
-      winex11: Directly use NtUserGetIconInfo.
-      winex11: Directly use win32u in more places.
-      win32u: Use KeUserModeCallback interface for CopyImage.
-      win32u: Allow NULL cbtc in NtUserCreateWindowEx.
-      winex11: Directly use NtUserCreateWindowEx.
-      winex11: Use unixlib interface for x11drv_is_system_module.
-      winex11: Move LoadIcon call to dllmain.
-      include: Don't use DECLSPEC_HIDDEN for WINGDIAPI and WINUSERAPI in unuxlibs.
-      winex11: Use wcsicmp for string comparison.
-      winex11: Move user driver to unixlib.
-      winex11: Build with msvcrt.
-      winex11: Don't use unicode.h.
+Jacek Caban (35):
+      win32u: Move default WM_GETICON implementation from user32.
+      win32u: Move default WM_PAINT implementation from user32.
+      win32u: Move more default window commands from user32.
+      win32u: Move default WM_ERASEBKGND implementation from user32.
+      win32u: Move default WM_WINDOWPOSCHANGING implementation from user32.
+      win32u: Handle sys color brushes in fill_rect.
+      user32: Remove no longer used WINPOS_WindowFromPoint.
+      winemac: Directly use ntdll in setup_options.
+      winemac: Directly use ntdll for querying display settings.
+      winemac: Directly use ntdll to write display settings.
+      winemac: Directly use ntdll for display device mutex.
+      winemac: Directly use ntdll in get_display_device_reg_key.
+      winemac: Directly use ntdll for registry access in init_original_display_mode.
+      winemac: Directly use ntdll for registry access in write_display_settings.
+      winemac: Directly use ntdll for registry access in create_original_display_mode_descriptor.
+      winemac: Directly use ntdll for registry access in copy_system_cursor_name.
+      winemac: Use pthread for display locking.
+      winemac: Use pthread for GDI device locking.
+      winemac: Use pthread for keyboard list locking.
+      winemac: Use pthread for cursor cache locking.
+      winemac: Use pthread for synchronization in opengl.c.
+      winemac: Use pthread for window data locking.
+      winemac: Use pthread_once for wine_vk_init.
+      win32u: Move NtUserSetWindowPlacement implementation from user32.
+      win32u: Move NtUserSetInternalWindowPos implementation from user32.
+      win32u: Export NtUserGetWindowPlacement.
+      win32u: Move desktop window proc implementation from user32.
+      win32u: Introduce DesktopWindowProc driver entry point.
+      winex11: Implement DesktopWindowProc driver entry point.
+      winemac: Implement DesktopWindowProc driver entry point.
+      winemac: Directly use win32u for GDI functions in image.c.
+      winemac: Directly use win32u for GDI functions in mouse.c.
+      winemac: Directly use win32u for GDI functions in opengl.c.
+      winemac: Directly use win32u for GDI functions in surface.c.
+      winemac: Directly use win32u for GDI functions in window.c.
 
-Jan Sikorski (1):
-      msvcrt: Faster memcmp().
+Jactry Zeng (4):
+      include: Add MIL/DWM HRESULT codes.
+      dbghelp: Use RtlGetVersion() for system version detection instead.
+      dwmapi: Use RtlGetVersion() for system version detection instead.
+      dwmapi: Partially implement DwmGetCompositionTimingInfo().
 
-Jinoh Kang (4):
-      include: Add definition for IShellItemImageFactory.
-      wineboot: Don't use ai_canonname for ComputerName if it is "localhost".
-      shell32/tests: Add tests for IShellItemImageFactory.
-      shell32: Add stub for IShellItemImageFactory.
+James McDonnell (2):
+      include: Add ID2D1PathGeometry1 definition.
+      d2d1: Add a stub for ID2D1PathGeometry1.
 
-Joachim Priesner (1):
-      windowscodecs: BitmapScaler_CopyPixels: Do not demand a larger buffer than necessary.
+Jan Sikorski (2):
+      wined3d: Reduce the size of staging BO's for texture uploads.
+      wined3d: Don't do a full cleanup when waiting for a command buffer.
 
-Louis Lenders (8):
-      wbemprox: Add Win32_PageFileUsage class.
-      wbemprox: Add BuildType property to Win32_OperatingSystem.
-      wbemprox: Add RegisterdUser property to Win32_Operatingsystem.
-      wbemprox: Add Organization property to Win32_Operatingsystem.
-      wbemprox: Add BootDevice property to Win32_Operatingsystem.
-      wbemprox: Add WindowsDirectory property to Win32_Operatingsystem.
-      wbemprox: Add SystemType property to Win32_Computersystem.
-      wbemprox: Add FreeVirtualMemory property to Win32_Operatingsystem.
+Jinoh Kang (1):
+      wineusb.sys: Remove erroneous call to LeaveCriticalSection() in add_usb_device.
 
-Martin Storsjö (2):
-      include: Add a declaration of _InterlockedExchangeAdd64 for MSVC mode for aarch64.
-      include: Add declarations of _alloca and alloca for MSVC mode.
+Julian Klemann (1):
+      ws2_32: Add stub for SIO_ENABLE_CIRCULAR_QUEUEING in WSAIoctl().
 
-Matteo Bruni (6):
-      d3dx9/effect: Return a uint32_t from the bytecode read helper.
-      wined3d: Raise MAX_ATTRIBS to 32.
-      wined3d: Don't submit fences when the GL context doesn't support them.
-      wined3d: Don't use fences on GL context cleanup when they are not supported.
-      wined3d: Disable CSMT when fences are not supported.
-      wined3d: Check BO existence before trying to update its fence counter.
+Louis Lenders (1):
+      msvcr80: Update manifest resource.
 
-Mohamad Al-Jaf (2):
-      include: Add windows.ui.idl file.
-      include: Add windows.media.closedcaptioning.idl file.
+Martin Storsjö (3):
+      ntdll: Fix a typo in a log message for arm unwind data.
+      ntdll: Fix accidentally used 64 bit types in signal_arm.c.
+      msvcrt: Hook up __C_specific_handler and __jump_unwind for arm.
 
-Nikolay Sivov (27):
-      uxtheme: Fix double free on registry key handle.
-      dwrite/tests: Add a test for unset axis for references created with IDWriteFactory3.
-      dwrite/tests: Use table access helpers for CBLC tests.
-      dwrite: Remove already defined macros.
-      dwrite: Simplify collection object initialization.
-      dwrite: Implement GetFontFamilyModel().
-      dwrite: Use separate structure for set entry description.
-      dwrite: Prefer different family names for typographical collections.
-      dwrite: Initial implementation of CreateFontCollectionFromFontSet().
-      dwrite: Implement newer GetSystemFontCollection() variants.
-      dwrite: Implement CreateTextFormat() for IDWriteFactory6.
-      include: Fix IDWriteFontResource definition.
-      dwrite: Implement variation axis value methods for the resource object.
-      dwrite/opentype: Use stdint types for layout table structures.
-      nls: Hardcode minus sign for all locales.
-      dwrite/opentype: Use stdint type for color font structures.
-      dwrite/opentype: Use stdint types for font file structures.
-      include: Add IParentAndItem definition.
-      dwrite/opentype: Correct flags field size for layout lookup structure.
-      dwrite/opentype: Fix incorrect MarkGlyphSets table handling.
-      dwrite/opentype: Do not include base advance to the mark advance offset.
-      xmllite/reader: Implement CreateXmlReaderInputWithEncodingCodePage().
-      ntdll: Add a partial implementation of NtMapViewOfSectionEx().
-      kernelbase: Implement MapViewOfFile3().
-      ntdll: Partially implement NtUnmapViewOfSectionEx().
-      kernelbase: Implement UnmapViewOfFile2().
-      kernel32: Implement UnmapViewOfFileEx().
+Matteo Bruni (7):
+      d3dx9/tests: Test D3DXAssembleShader() with both terminated and not terminated include data.
+      d3dcompiler/asm: Parse negative numbers with a whitespace after the sign.
+      d3dx9/mesh: Make use of more proper types.
+      d3dx9/mesh: Split skin header and weights parse functions.
+      d3dx9/shader: Use more proper integer types.
+      d3dx9/xfile: Don't unnecessarily use long integer type.
+      d3dx9: Build without -DWINE_NO_LONG_TYPES.
 
-Paul Gofman (12):
-      winex11.drv: Treat invalid icon as no icon in fetch_icon_data().
-      msvcp140/tests: Add a broken last error result in test_Copy_file().
-      kernel32/tests: Add a broken last error result in test_CopyFileW().
-      crypt32/tests: Add tests for short return string buffer.
-      crypt32: Fix filling short output in cert_name_to_str_with_indent().
-      crypt32: Fix filling short output in CertRDNValueToStrW().
-      crypt32: Fix filling short output in CertGetNameStringW().
-      crypt32: Fix filling short output in CertGetNameStringA().
-      crypt32: Reimplement CertRDNValueToStrA() on top of CertRDNValueToStrW().
-      crypt32: Reimplement CertNameToStrA() on top of CertNameToStrW().
-      crypt32: Support up to date subject and issuer alt names OIDs.
-      crypt32: Support CERT_NAME_SEARCH_ALL_NAMES_FLAG in CertGetNameStringW().
+Nikolay Sivov (26):
+      mf/session: Do not request more samples when SA sample becomes available.
+      mfplat/sample: Fix use-after-free of a critical section.
+      evr/sample: Avoid a race condition when releasing a tracked sample.
+      evr/sample: Use explicit critical section for release handling.
+      kernelbase/tests: Close mapping in MapViewOfFile3 test.
+      mfplat: Allow NULL size pointer in IMFAttributes::GetAllocatedBlob().
+      d3drm/tests: Build without -DWINE_NO_LONG_TYPES.
+      mfreadwrite/reader: Allocate output samples on read requests.
+      vbscript: Implement DateSerial().
+      mfreadwrite/reader: Propagate resource sharing mode to the sample allocator.
+      include: Move minidump types to a separate header.
+      winedump: Output minidump streams in order they appear in the file.
+      winedump: Cleanup minidump output helpers.
+      winedump: Add support for dumping handle data stream from minidumps.
+      winedump: Add support for ThreadInfoListStream stream.
+      vbscript: Implement DateAdd().
+      winedump: Add support for dumping UnloadedModuleListStream.
+      vbscript: Implement Weekday().
+      vbscript: Handle null arguments in DateSerial().
+      dwrite/opentype: Fix GPOS PairSet array offset.
+      ntdll/tests: Add a bit more tests for VM functions.
+      kernel32/tests: Extend VirtualAllocEx() tests.
+      kernelbase/tests: Add some VirtualAlloc2() tests.
+      kernelbase: Fix VirtualAlloc2() when called with NULL process handle.
+      ntdll/tests: Add a basic test for MEM_RESERVE_PLACEHOLDER.
+      kernelbase: Add SetThreadInformation().
+
+Paul Gofman (18):
+      crypt32/tests: Handle CERT_NAME_SEARCH_ALL_NAMES_FLAG being unsupported before Win8.
+      ntdll: Fix allocation size in grow_logical_proc_ex_buf().
+      ntdll: Move init_cpu_info() below create_logical_proc_info().
+      ntdll: Refactor logical processor info manipulation functions.
+      ntdll: Collect logical processor info at process start.
+      rsaenh: Use CRT memory allocators.
+      rsaenh: Handle uneven hash data updates sizes for CALG_MAC.
+      rsaenh: Factor out block_encrypt() function.
+      rsaenh: Store key state in hash data for _MAC hash algorithm.
+      rsaenh: Factor out alloc_key() function.
+      rsaenh: Allow importing bigger RC2 keys.
+      rsaenh: Output FIXME when HMAC hash algorithm is not found.
+      nsiproxy.sys: Update interface table only if find_entry_from_{luid|index} fails.
+      nsiproxy.sys: Finish search once found in convert_luid_to_unix_name().
+      nsiproxy.sys: Update interface table only if LUID is not found in convert_luid_to_unix_name().
+      nsiproxy.sys: Update interface table only if LUID is not found in convert_unix_name_to_luid().
+      nsi: Allocate a small buffer at once in NsiAllocateAndGetTable().
+      iphlpapi: Don't request unused dynamic interface data.
+
+Pedro Perdigão (2):
+      user32/tests: Test an out-of-order RECT in RedrawWindow().
+      win32u: Allow an out-of-order RECT in RedrawWindow().
+
+Philip Allison (1):
+      uiautomationcore: Fix header compatibility with C++.
 
 Piotr Caban (5):
-      msvcrt: Use TICKSPERMSEC define in concurrency functions.
-      ntdll: Use 32-bit time_t when calling __NR_futex syscall.
-      msvcp140_atomic_wait: Add __std_atomic_notify_one_direct implementation.
-      msvcp140_atomic_wait: Add __std_atomic_notify_all_direct implementation.
-      msvcp140_atomic_wait: Add __std_atomic_wait_direct implementation.
+      msvcr110/tests: Fix setlocale test failure on systems with UTF-8 locales enabled.
+      msvcrt: Reject UTF-8 locales in setlocale function.
+      oleacc: Store test IAccessible data in structure.
+      oleacc: Add IAccessible refcount tests.
+      msvcr120: Add missing _StructuredTaskCollection destructor spec file entry.
 
-Rémi Bernon (70):
-      kernel32/tests: Add some heap block layout tests.
-      ntdll: Stub RtlGetUserInfoHeap and RtlSetUser(Value|Flags)Heap.
-      kernel32/tests: Add some RtlGetUserInfoHeap tests.
-      dinput/tests: Remove unreliable IAsyncOperation_boolean checks.
-      windows.gaming.input: Return an empty vector from RawGameController_get_ForceFeedbackMotors.
-      windows.gaming.input: Implement ForceFeedbackMotor stub runtimeclass.
-      windows.gaming.input: Acquire the device exclusively when creating ForceFeedbackMotor.
-      windows.gaming.input: Implement IForceFeedbackMotor_(get|put)_MasterGain.
-      windows.gaming.input: Implement IForceFeedbackMotor_(Pause|Resume|StopAll)Effects.
-      server: Create message queue and thread input in set_key_state.
-      server: Lock thread input keystate whenever it is modified.
-      server: Create message queue and thread input in get_key_state.
-      hidclass.sys: Move HID_GET_COLLECTION_* handling inline.
-      hidclass.sys: Move handle_minidriver_string inline.
-      hidclass.sys: Use a local NTSTATUS variable to keep IRP status.
-      hidclass.sys: Call internal minidriver report ioctls asynchronously.
-      windows.gaming.input: Import IAsyncOperation from windows.media.speech.
-      windows.media.speech: Return operation error from IAsyncOperation_GetResults.
-      windows.media.speech: Return E_ILLEGAL_METHOD_CALL from get_ErrorCode.
-      windows.media.speech: Initialize HRESULT variables consistently.
-      windows.media.speech: Simplify error handling in async_operation_create.
-      windows.media.speech: Assume that async_run_work cannot be NULL in IAsyncInfo_Close.
-      mf/tests: Simplify handling of broken Win7 results.
-      mf/tests: Add some H264 decoder GetOutputCurrentType tests.
-      winegstreamer: Implement H264 decoder GetOutputCurrentType.
-      mf/tests: Add more tests for the H264 decoder output media type.
-      mf/tests: Only check sample data when length matches.
-      include: Add Windows.Foundation.Numerics.Vector3 struct declaration.
-      include: Add Windows.Gaming.Input.ForceFeedback.PeriodicForceEffect runtimeclass declaration.
-      include: Add Windows.Gaming.Input.ForceFeedback.ConditionForceEffect runtimeclass declaration.
-      include: Add Windows.Gaming.Input.ForceFeedback.ConstantForce runtimeclass declaration.
-      include: Add Windows.Gaming.Input.ForceFeedback.RampForce runtimeclass declaration.
-      include: Use nested namespaces in windows.storage.streams.idl.
-      winegstreamer: Ignore unset H264 format profile and level.
-      winegstreamer: Check caps pointer in wg_format_to_caps_h264.
-      winegstreamer: Check whether transforms are supported at creation time.
-      mf/tests: Skip todo_wine tests with a goto statement.
-      mf/tests: Use real audio data for WMA encoder / decoder tests.
-      mf/tests: Add some IMFTransform output sample attribute tests.
-      mf/tests: Add tests changing the H264 decoder output video format.
-      mf/tests: Expect identical major types for transform info.
-      dinput/tests: Remove racy controller removed handler check.
-      dinput/tests: Increase delayed TryResetAsync test wait timeout.
-      dinput/tests: Enforce HID report descriptor buffer size.
-      dinput/tests: Move Windows.Gaming.Input.RacingWheel tests to joystick8.c.
-      dinput/tests: Remove output and feature report buffers length checks.
-      dinput/tests: Add some Windows.Gaming.Input.ForceFeedback.ConstantForceEffect tests.
-      mf/tests: Check expected class GUID in create_transform.
-      mf/tests: Add more DMO class name, media type and interface checks.
-      mf/tests: Add tests for the ResamplerMediaObject audio transform.
-      mf/tests: Check VideoProcessorMFT transform media types.
-      mf/tests: Add tests for the ColorConvertDMO video transform.
-      kernel32/tests: Reduce layout tests verbosity by skipping some sizes.
-      kernel32/tests: Add some HEAP_NO_SERIALIZE flag / LFH locking tests.
-      ntdll: Factor out heap serialization to heap_(lock|unlock) helpers.
-      ntdll: Respect HEAP_NO_SERIALIZE flag in HeapLock / HeapUnlock.
-      kernel32/tests: Check that HeapCreate should ignore checking flags.
-      ntdll: Ignore HEAP_(TAIL|FREE)_CHECKING_ENABLED flags in RtlCreateHeap.
-      kernel32/tests: Add more block layout tests with alloc flags.
-      kernel32/tests: Add some RtlWalkHeap and more HeapWalk tests.
-      mountmgr.sys: Avoid passing a stack pointer to the run_loop thread.
-      windows.gaming.input: Set get_AreEffectsPaused value to FALSE when dinput fails.
-      windows.gaming.input: Introduce a new type-pruning WineAsyncOperationCompletedHandler.
-      windows.gaming.input: Use a PROPVARIANT as async operation result.
-      windows.gaming.input: Split IAsyncInfo interface to a separate struct.
-      windows.gaming.input: Use IUnknown invoker instead of IInspectable and add a parameter.
-      winegstreamer: Add timestamp and duration to struct wg_sample.
-      winegstreamer: Support the MFSampleExtension_CleanPoint sample attribute.
-      winegstreamer: Only resize buffer when read is incomplete.
-      dinput: Do not delete static critical section.
+Robert Wilhelm (1):
+      vbscript: Implement CDate().
 
-Stefan Dösinger (4):
-      wined3d: Invalidate framebuffer locations after setting up the renderpass.
-      wined3d: Tell Vulkan about discarded and cleared framebuffer attachments.
-      wined3d: Don't explicitly clear the draw location before starting a renderpass.
-      wined3d: Set WINED3D_LOCATION_CLEARED for full-subresource clears to black.
+Rémi Bernon (83):
+      winegstreamer: Move MFT registration list out of static scope.
+      winegstreamer: Register the video processor transform.
+      mf/tests: Tweak topology loader tests results based on the video processor presence.
+      mf/tests: Update a broken IMFMediaSink_AddStreamSink result check.
+      dinput/tests: Wait for the expected report to actually be pending.
+      windows.gaming.input: AddRef on the returned async handler in get_Completed.
+      windows.gaming.input: Reset spare CS pointer before deleting it.
+      windows.gaming.input: Use case insensitive compare when looking for devices.
+      windows.gaming.input: Register Windows.Gaming.Input.ForceFeedback classes.
+      windows.gaming.input: Implement stub ConstantForceEffect runtimeclass factory.
+      ntdll: Lock heap critical section outside of HEAP_IsRealArena.
+      ntdll: Split HEAP_IsRealArena to heap_validate and heap_validate_ptr.
+      ntdll: Split RtlAllocateHeap to a separate heap_allocate helper.
+      ntdll: Split RtlFreeHeap to a separate heap_free helper.
+      ntdll: Split RtlReAllocateHeap to a separate heap_reallocate helper.
+      ntdll: Split RtlSizeHeap to a separate heap_size helper.
+      ntdll: Introduce new block metadata access helpers.
+      ntdll: Use block size helpers in heap_size.
+      ntdll: Cleanup HEAP_FindSubHeap and rename it to find_subheap.
+      ntdll: Check subheap sizes for consistency before using them.
+      ntdll: Rewrite RtlWalkHeap and enumerate large blocks.
+      dinput/tests: Increase async bool handler wait timeout.
+      windows.gaming.input: Implement and instantiate ConstantForceEffect runtimeclass stubs.
+      windows.gaming.input: Implement IForceFeedbackEffect interface for ConstantForceEffect.
+      windows.gaming.input: Add a type parameter to force_feedback_effect_create.
+      windows.gaming.input: Implement IForceFeedbackMotor_LoadEffectAsync.
+      windows.gaming.input: Implement IForceFeedbackMotor_TryUnloadEffectAsync.
+      ntdll: Use heap_validate_ptr in validate_block_pointer.
+      ntdll: Simplify validate_block_pointer.
+      ntdll: Simplify validate_large_arena.
+      ntdll: Simplify validate_used_block.
+      ntdll: Simplify validate_free_block.
+      hidclass.sys: Clear the buffer passed to IOCTL_HID_GET_DEVICE_DESCRIPTOR.
+      winexinput.sys: Clear the buffer passed to IOCTL_HID_GET_DEVICE_DESCRIPTOR.
+      dinput: Store the user_format field inline in struct dinput_device.
+      dinput: Return an HRESULT from hid_joystick_device_try_open.
+      dinput: Rename This to device in dinput_device_alloc.
+      ntdll: Remove unused QUIET/NOISY constants and parameters.
+      ntdll: Use block helpers to iterate blocks in heap_validate.
+      ntdll: Use next_block helper to iterate in heap_set_debug_flags.
+      ntdll: Check that ptr is in committed blocks in find_subheap.
+      ntdll: Use next_block helper in heap_reallocate.
+      dinput/tests: Add some Windows.Gaming.Input.ForceFeedback.PeriodicForceEffect tests.
+      dinput/tests: Add some Windows.Gaming.Input.ForceFeedback.RampForceEffect tests.
+      dinput/tests: Add some Windows.Gaming.Input.ForceFeedback.ConditionForceEffect tests.
+      windows.gaming.input: Implement Windows.Gaming.Input.RampForceEffect runtimeclass.
+      windows.gaming.input: Implement Windows.Gaming.Input.PeriodicForceEffect runtimeclass.
+      windows.gaming.input: Implement Windows.Gaming.Input.ConditionForceEffect runtimeclass.
+      mf/tests: Move WMA decoder aggregation tests from wmadmod.
+      wmadmod: Remove unnecessary DLL.
+      ntdll: Increase heap large block min size for sizeof(void *) == 8.
+      ntdll: Fail to allocate large blocks if heap isn't growable.
+      ntdll: Simplify the fallback case in heap_reallocate.
+      ntdll: Create free block after updating the size in HEAP_ShrinkBlock.
+      ntdll: Cleanup HEAP_ShrinkBlock and rename it to shrink_used_block.
+      ntdll: Update block unused_bytes in shrink_used_block.
+      dinput/tests: Remove IAsyncOperation reference count checks.
+      windows.gaming.input: Always assume at least two force feedback axes.
+      windows.gaming.input: Implement IForceFeedbackEffect_(get|put)_Gain.
+      windows.gaming.input: Implement IConstantForceEffect_SetParameters(WithEnvelope).
+      windows.gaming.input: Implement IRampForceEffect_SetParameters(WithEnvelope).
+      windows.gaming.input: Implement IPeriodicForceEffect_SetParameters(WithEnvelope).
+      windows.gaming.input: Implement IConditionForceEffect_SetParameters.
+      dinput: Make sure converted direction values are always positive.
+      ntdll: Ignore back pointer when validating free block pattern.
+      ntdll: Use block helpers in subheap_notify_free_all.
+      ntdll: Rename local variables in heap_reallocate.
+      ntdll: Rename local variables in heap_allocate.
+      ntdll: Rename HEAP_FindFreeBlock size parameter.
+      ntdll: Use block size helpers in heap_reallocate.
+      winebus.sys: Add support for PID effect gain.
+      windows.gaming.input: Implement IForceFeedbackEffect_(Start|Stop).
+      windows.gaming.input: Implement IForceFeedbackEffect_get_State.
+      windows.gaming.input: Ignore IDirectInputDevice8_GetDeviceState failures.
+      kernel32/tests: Mark activatableClass wrong xmlns test as broken on w1064v1909.
+      combase: Use CRT memory allocation functions.
+      combase: Lookup activatable class library in the activation context.
+      ntdll: Mask block flags when computing HEAP_InsertFreeBlock size.
+      ntdll: Set ARENA_FLAG_FREE flag in HEAP_CreateFreeBlock.
+      ntdll: Move the main subheap after the free lists.
+      ntdll: Return an entry pointer when looking for a free list.
+      ntdll: Remove entries from the free list in HEAP_FindFreeBlock.
+      ntdll: Cleanup HEAP_FindFreeBlock and rename it to find_free_block.
 
-Torge Matthies (3):
-      msvcr110: Add _StructuredTaskCollection::_StructuredTaskCollection_ctor stub.
-      sc/tests: Add tests.
-      sc: Allow using separate arguments for parameter name and value.
+Stefan Dösinger (7):
+      wined3d: Move clear box clipping to cpu_blitter_clear.
+      wined3d: Separate mapping from data writing in surface_cpu_blt_colour_fill.
+      wined3d: Prepare wined3d_format_convert_from_float for > 32bpp formats.
+      wined3d: Add support for sysmem-clearing float32 formats.
+      wined3d: Support CPU clear of float16 formats.
+      wined3d: Mark some d3d9 formats as normalized formats.
+      wined3d: Make normalized format handling more generic in wined3d_format_convert_from_float.
 
-Zebediah Figura (38):
-      wined3d: Clear the texture BO when loading textures into WINED3D_LOCATION_BUFFER.
-      wined3d: Move loading from CLEARED into the texture_load_location op.
-      wined3d: Clear Vulkan textures on the GPU in wined3d_texture_vk_load_texture().
-      wined3d: Clear GL texture using glClear() if possible in wined3d_texture_gl_load_location().
-      win32u: Move NtUserTrackMouseEvent() implementation from user32.
-      user32: Query CursorBlinkRate from the registry.
-      win32u: Move caret APIs from user32.
-      user32: Merge caret.c into input.c.
-      d3d8/tests: Add more tests for D3DLOCK_NO_DIRTY_UPDATE.
-      d3d9/tests: Add more tests for D3DLOCK_NO_DIRTY_UPDATE.
-      wined3d: Consider WINED3D_LOCATION_CLEARED to be a GPU location for GPU-accessible textures.
-      wined3d: Trace the SRGB flag in wined3d_texture_gl_prepare_texture().
-      server: Return void from sock_reselect().
-      wined3d: Refuse blits between height-scaled formats in the CPU blitter.
-      wined3d: Refuse blits between height-scaled formats in the FBO blitter.
-      wined3d: Refuse blits between height-scaled formats in the raw blitter.
-      wined3d: Do not use vkCmdClearColorImage() to clear compressed images.
-      dinput/tests: Do not test that reports are identical when polling.
-      dinput/tests: Set the callback event after setting "impl->invoked".
-      ws2_32/tests: Test polling for AFD_POLL_READ while there is a pending WSARecv() call.
-      ws2_32/tests: Test polling for AFD_POLL_ACCEPT while there is a pending AcceptEx() call.
-      ws2_32/tests: Test selecting for FD_READ while there is a pending WSARecv() call.
-      ws2_32/tests: Test selecting for FD_ACCEPT while there is a pending AcceptEx() call.
-      ws2_32/tests: Verify that AFD_POLL_CONNECT and AFD_POLL_WRITE are signaled simultaneously.
-      winegstreamer: Print messages relating to missing decoders in the winediag channel.
-      winegstreamer: Make some wg_format variables static const.
-      ws2_32/tests: Test that sockets returned from accept() don't return FD_CONNECT from WSAEnumNetworkEvents().
-      ws2_32/tests: Add more tests for selecting for events after they are signaled.
-      server: Send AFD_POLL_READ messages before AFD_POLL_WRITE.
-      server: Clear only returned events in IOCTL_AFD_GET_EVENTS.
-      ws2_32/tests: Add some more tests for reset TCP connections.
-      server: Do not signal read/write bits if there are read/write asyncs waiting.
-      server: Don't poll for POLLIN or POLLPRI if there are alerted read asyncs.
-      server: Do not signal read bits if there are read asyncs alerted.
-      server: Don't poll for POLLOUT if there are alerted write asyncs.
-      server: Do not signal write bits if there are write asyncs alerted.
-      server: Do not signal accept bits if there are accept asyncs queued.
-      server: Remove a redundant call to set_fd_events().
+Sven Baars (1):
+      d3dx10/tests: Disable a PreloadGlyphs test for d3dx10_34.
 
-Zhiyi Zhang (3):
-      apisetschema: Add api-ms-win-core-winrt-robuffer-l1-1-0.
-      windows.networking: Add stub dll.
-      wintypes: Implement IApiInformationStatics stubs.
+Torge Matthies (5):
+      ntdll: Use correct output buffer size in RtlpNtEnumerateSubKey.
+      ntdll: Calculate buffer sizes from registry structs correctly.
+      win32u: Calculate buffer sizes from registry structs correctly.
+      win32u: Query basic instead of full key information to get the LastWriteTime.
+      msvcr120: Add tests for _StructuredTaskCollection.
 
-Ziqing Hui (11):
-      include: Add defines for ID2D1VertexBuffer.
-      include: Add defines for ID2D1ResourceTexture.
-      include: Add defines for ID2D1RenderInfo.
-      include: Add defines for ID2D1DrawInfo.
-      include: Add defines for ID2D1ComputeInfo.
-      include: Add defines for ID2D1TransformGraph.
-      include: Remove useless semi-colon in d2d1_3.idl.
-      include: Add defines for ID2D1Transform.
-      include: Add defines for ID2D1EffectContext.
-      include: Add defines for ID2D1EffectImpl.
-      wininet/tests: Test adding empty HTTP header.
+Zebediah Figura (18):
+      xslt: Use win32config.h from the correct directory.
+      wineusb.sys: Mark transfer_cb() as LIBUSB_CALL.
+      wineusb.sys: Avoid hard-coding ID string lengths.
+      wineusb.sys: Trace the type in query_id().
+      wineusb.sys: Expose composite device interfaces.
+      wined3d: Trace bind flags in wined3d_texture_init().
+      include: Constify the RAWINPUTDEVICE pointer parameter to RegisterRawInputDevices().
+      shlwapi/tests: Fix a test failure with the UTF-8 code page.
+      dinput: Store the device_format field inline in struct dinput_device.
+      dinput: Factor out the dinput_device_init() call into dinput7_CreateDeviceEx().
+      dinput: Rename dinput_device_init() to dinput_device_init_device_format().
+      dinput: Return E_OUTOFMEMORY on allocation failure in hid_joystick_create_device().
+      dinput: Allocate the dinput_device structure in the caller to dinput_device_alloc().
+      dinput: Pass a single GUID pointer to hid_joystick_device_open().
+      dinput: Pass the device instance directly to hid_joystick_device_(try_)open.
+      quartz/systemclock: Use timeGetTime() to retrieve the current time.
+      maintainers: Add a GStreamer section.
+      maintainers: Add a Windows Media Format section.
+
+Zhiyi Zhang (10):
+      maintainers: Add myself to some sections.
+      win32u: Fix a memory leak.
+      include: Add D3DKMTQueryVideoMemoryInfo() definition.
+      gdi32/tests: Add D3DKMTQueryVideoMemoryInfo() tests.
+      winex11.drv: Open a Vulkan device for D3DKMTOpenAdapterFromLuid().
+      gdi32: Implement D3DKMTQueryVideoMemoryInfo().
+      wined3d: Move kernel mode adapter handle from wined3d_output to wined3d_adapter.
+      dxgi: Implement dxgi_adapter_QueryVideoMemoryInfo() with D3DKMTQueryVideoMemoryInfo().
+      wined3d: Fill fake adapter video memory usage.
+      dxgi/tests: Test adapter video memory budget notification.
+
+Ziqing Hui (6):
+      d2d1: Add stubs for ID2D1EffectContext.
+      d2d1: Implement ID2D1EffectContext_GetDpi().
+      d2d1: Implement LoadVertexShader().
+      include: Add defines for D2D1_PROPERTY_BINDING.
+      d2d1/tests: Introduce create_factory().
+      uuid: Add d2d1effectauthor.h.
 
 --
 Alexandre Julliard
