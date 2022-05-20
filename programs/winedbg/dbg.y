@@ -44,7 +44,7 @@ static void parser(const char*);
     dbg_lgint_t         integer;
     IMAGEHLP_LINE64     listing;
     struct expr*        expression;
-    struct type_expr_t  type;
+    struct dbg_type     type;
     struct list_string* strings;
 }
 
@@ -57,6 +57,7 @@ static void parser(const char*);
 %token tSTEPI tNEXTI tFINISH tSHOW tDIR tWHATIS tSOURCE
 %token <string> tPATH tIDENTIFIER tSTRING tINTVAR
 %token <integer> tNUM tFORMAT
+%token <type> tTYPEDEF
 %token tSYMBOLFILE tRUN tATTACH tDETACH tKILL tMAINTENANCE tTYPE tMINIDUMP
 %token tNOPROCESS
 
@@ -346,11 +347,12 @@ type_expr:
     | tFLOAT                    { if (!types_find_basic(L"float",                  $1, &$$)) YYERROR; }
     | tDOUBLE                   { if (!types_find_basic(L"double",                 $1, &$$)) YYERROR; }
     | tLONG tDOUBLE             { if (!types_find_basic(L"long double",            $1, &$$)) YYERROR; }
-    | type_expr '*'		{ $$ = $1; $$.deref_count++; }
-    | tCLASS identifier         { $$.type = type_expr_udt_class; $$.deref_count = 0; $$.u.name = $2; }
-    | tSTRUCT identifier        { $$.type = type_expr_udt_struct; $$.deref_count = 0; $$.u.name = $2; }
-    | tUNION identifier         { $$.type = type_expr_udt_union; $$.deref_count = 0; $$.u.name = $2; }
-    | tENUM identifier          { $$.type = type_expr_enumeration; $$.deref_count = 0; $$.u.name = $2; }
+    | tTYPEDEF                  { $$ = $1; }
+    | type_expr '*'             { if (!types_find_pointer(&$1, &$$)) {yyerror("Cannot find pointer type\n"); YYERROR; } }
+    | tCLASS identifier         { if (!types_find_type($2, SymTagUDT, &$$)) {yyerror("Unknown type\n"); YYERROR; } }
+    | tSTRUCT identifier        { if (!types_find_type($2, SymTagUDT, &$$)) {yyerror("Unknown type\n"); YYERROR; } }
+    | tUNION identifier         { if (!types_find_type($2, SymTagUDT, &$$)) {yyerror("Unknown type\n"); YYERROR; } }
+    | tENUM identifier          { if (!types_find_type($2, SymTagEnum, &$$)) {yyerror("Unknown type\n"); YYERROR; } }
     ;
 
 expr_lvalue:

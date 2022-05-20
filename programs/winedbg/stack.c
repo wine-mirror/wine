@@ -103,7 +103,7 @@ BOOL stack_get_register_frame(const struct dbg_internal_var* div, struct dbg_lva
     struct dbg_frame* currfrm = stack_get_curr_frame();
     if (currfrm == NULL) return FALSE;
     if (currfrm->is_ctx_valid)
-        init_lvalue_in_debugger(lvalue, div->typeid,
+        init_lvalue_in_debugger(lvalue, 0, div->typeid,
                                 (char*)&currfrm->context + (DWORD_PTR)div->pval);
     else
     {
@@ -116,13 +116,13 @@ BOOL stack_get_register_frame(const struct dbg_internal_var* div, struct dbg_lva
         switch (kind)
         {
         case be_cpu_addr_pc:
-            init_lvalue_in_debugger(lvalue, itype, &currfrm->linear_pc);
+            init_lvalue_in_debugger(lvalue, 0, itype, &currfrm->linear_pc);
             break;
         case be_cpu_addr_stack:
-            init_lvalue_in_debugger(lvalue, itype, &currfrm->linear_stack);
+            init_lvalue_in_debugger(lvalue, 0, itype, &currfrm->linear_stack);
             break;
         case be_cpu_addr_frame:
-            init_lvalue_in_debugger(lvalue, itype, &currfrm->linear_frame);
+            init_lvalue_in_debugger(lvalue, 0, itype, &currfrm->linear_frame);
             break;
         }
     }

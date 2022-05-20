@@ -150,14 +150,15 @@ static inline void init_lvalue(struct dbg_lvalue* lv, BOOL in_debuggee, void* ad
     lv->type.id = dbg_itype_none;
 }
 
-static inline void init_lvalue_in_debugger(struct dbg_lvalue* lv, enum dbg_internal_types it, void* addr)
+static inline void init_lvalue_in_debugger(struct dbg_lvalue* lv, DWORD_PTR module,
+                                           enum dbg_internal_types it, void* addr)
 {
     lv->in_debuggee = 0;
     lv->bitstart = 0;
     lv->bitlen = 0;
     lv->addr.Mode = AddrModeFlat;
     lv->addr.Offset = (DWORD_PTR)addr;
-    lv->type.module = 0;
+    lv->type.module = module;
     lv->type.id = it;
 }
 
@@ -310,26 +311,6 @@ struct dbg_internal_var
 
 enum sym_get_lval {sglv_found, sglv_unknown, sglv_aborted};
 
-enum type_expr_e
-{
-    type_expr_type_id,
-    type_expr_udt_class,
-    type_expr_udt_struct,
-    type_expr_udt_union,
-    type_expr_enumeration
-};
-
-struct type_expr_t
-{ 
-    enum type_expr_e    type;
-    unsigned            deref_count;
-    union
-    {
-        struct dbg_type type;
-        const char*     name;
-    } u;
-};
-
 enum dbg_start {start_ok, start_error_parse, start_error_init};
 
   /* break.c */
@@ -385,7 +366,7 @@ extern struct expr*     expr_alloc_unary_op(int oper, struct expr*);
 extern struct expr*     expr_alloc_pstruct(struct expr*, const char* element);
 extern struct expr*     expr_alloc_struct(struct expr*, const char* element);
 extern struct expr*     WINAPIV expr_alloc_func_call(const char*, int nargs, ...);
-extern struct expr*     expr_alloc_typecast(struct type_expr_t*, struct expr*);
+extern struct expr*     expr_alloc_typecast(struct dbg_type*, struct expr*);
 extern struct dbg_lvalue expr_eval(struct expr*);
 extern struct expr*     expr_clone(const struct expr* exp, BOOL *local_binding);
 extern BOOL             expr_free(struct expr* exp);
@@ -510,12 +491,13 @@ extern BOOL             types_udt_find_element(struct dbg_lvalue* value, const c
 extern BOOL             types_array_index(const struct dbg_lvalue* value, int index, struct dbg_lvalue* result);
 extern BOOL             types_get_info(const struct dbg_type*, IMAGEHLP_SYMBOL_TYPE_INFO, void*);
 extern BOOL             types_get_real_type(struct dbg_type* type, DWORD* tag);
-extern struct dbg_type  types_find_pointer(const struct dbg_type* type);
-extern struct dbg_type  types_find_type(DWORD64 linear, const char* name, enum SymTagEnum tag);
+extern BOOL             types_find_pointer(const struct dbg_type* type, struct dbg_type* outtype);
+extern BOOL             types_find_type(const char* name, enum SymTagEnum tag, struct dbg_type* outtype);
 extern BOOL             types_compare(const struct dbg_type, const struct dbg_type, BOOL* equal);
 extern BOOL             types_is_integral_type(const struct dbg_lvalue*);
 extern BOOL             types_is_float_type(const struct dbg_lvalue*);
-extern BOOL             types_find_basic(const WCHAR*, const char*, struct type_expr_t* type);
+extern BOOL             types_is_pointer_type(const struct dbg_lvalue*);
+extern BOOL             types_find_basic(const WCHAR*, const char*, struct dbg_type* type);
 
   /* winedbg.c */
 #ifdef __GNUC__

@@ -300,7 +300,8 @@ BOOL types_array_index(const struct dbg_lvalue* lvalue, int index, struct dbg_lv
         }
         break;
     default:
-        assert(FALSE);
+        FIXME("unexpected tag %lx\n", tag);
+        return FALSE;
     }
     /*
      * Get the base type, so we know how much to index by.
@@ -332,13 +333,9 @@ BOOL types_array_index(const struct dbg_lvalue* lvalue, int index, struct dbg_lv
 
 struct type_find_t
 {
-    ULONG               result; /* out: the found type */
     enum SymTagEnum     tag;    /* in: the tag to look for */
-    union
-    {
-        ULONG                   typeid; /* when tag is SymTagUDT */
-        const char*             name;   /* when tag is SymTagPointerType */
-    } u;
+    struct dbg_type     type;   /* out: the type found */
+    ULONG               ptr_typeid; /* in: when tag is SymTagPointerType */
 };
 
 static BOOL CALLBACK types_cb(PSYMBOL_INFO sym, ULONG size, void* _user)
@@ -353,18 +350,18 @@ static BOOL CALLBACK types_cb(PSYMBOL_INFO sym, ULONG size, void* _user)
         switch (user->tag)
         {
         case SymTagUDT:
-            if (!strcmp(user->u.name, sym->Name))
-            {
-                user->result = sym->TypeIndex;
-                ret = FALSE;
-            }
+        case SymTagEnum:
+        case SymTagTypedef:
+            user->type.module = sym->ModBase;
+            user->type.id = sym->TypeIndex;
+            ret = FALSE;
             break;
         case SymTagPointerType:
             type.module = sym->ModBase;
             type.id = sym->TypeIndex;
-            if (types_get_info(&type, TI_GET_TYPE, &type_id) && type_id == user->u.typeid)
+            if (types_get_info(&type, TI_GET_TYPE, &type_id) && type_id == user->ptr_typeid)
             {
-                user->result = sym->TypeIndex;
+                user->type = type;
                 ret = FALSE;
             }
             break;
@@ -380,18 +377,17 @@ static BOOL CALLBACK types_cb(PSYMBOL_INFO sym, ULONG size, void* _user)
  * Should look up in module based at linear whether (typeid*) exists
  * Otherwise, we could create it locally
  */
-struct dbg_type types_find_pointer(const struct dbg_type* type)
+BOOL types_find_pointer(const struct dbg_type* type, struct dbg_type* outtype)
 {
     struct type_find_t  f;
-    struct dbg_type     ret;
 
-    f.result = dbg_itype_none;
+    f.type.id = dbg_itype_none;
     f.tag = SymTagPointerType;
-    f.u.typeid = type->id;
-    SymEnumTypes(dbg_curr_process->handle, type->module, types_cb, &f);
-    ret.module = type->module;
-    ret.id = f.result;
-    return ret;
+    f.ptr_typeid = type->id;
+    if (!SymEnumTypes(dbg_curr_process->handle, type->module, types_cb, &f) || f.type.id == dbg_itype_none)
+        return FALSE;
+    *outtype = f.type;
+    return TRUE;
 }
 
 /******************************************************************
@@ -400,19 +396,29 @@ struct dbg_type types_find_pointer(const struct dbg_type* type)
  * Should look up in the module based at linear address whether a type
  * named 'name' and with the correct tag exists
  */
-struct dbg_type types_find_type(DWORD64 linear, const char* name, enum SymTagEnum tag)
-
+BOOL types_find_type(const char* name, enum SymTagEnum tag, struct dbg_type* outtype)
 {
     struct type_find_t  f;
-    struct dbg_type     ret;
+    char* str = NULL;
+    BOOL ret;
 
-    f.result = dbg_itype_none;
+    if (!strchr(name, '!')) /* no module, lookup across all modules */
+    {
+        str = malloc(strlen(name) + 3);
+        if (!str) return FALSE;
+        str[0] = '*';
+        str[1] = '!';
+        strcpy(str + 2, name);
+        name = str;
+    }
+    f.type.id = dbg_itype_none;
     f.tag = tag;
-    f.u.name = name;
-    SymEnumTypes(dbg_curr_process->handle, linear, types_cb, &f);
-    ret.module = linear;
-    ret.id = f.result;
-    return ret;
+    ret = SymEnumTypesByName(dbg_curr_process->handle, 0, name, types_cb, &f);
+    free(str);
+    if (!ret || f.type.id == dbg_itype_none)
+        return FALSE;
+    *outtype = f.type;
+    return TRUE;
 }
 
 /***********************************************************************
@@ -916,7 +922,7 @@ static BOOL CALLBACK enum_mod_cb(const char* module, DWORD64 base, void* user)
     return TRUE;
 }
 
-BOOL             types_find_basic(const WCHAR* name, const char* mod, struct type_expr_t* type)
+BOOL             types_find_basic(const WCHAR* name, const char* mod, struct dbg_type* type)
 {
     const struct data_model* model;
     struct mod_by_name mbn = {mod, 0};
@@ -928,15 +934,13 @@ BOOL             types_find_basic(const WCHAR* name, const char* mod, struct typ
     SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, opt);
     if (!ret || mbn.base == 0)
         return FALSE;
-    type->type = type_expr_type_id;
-    type->deref_count = 0;
     model = get_data_model(mbn.base);
     for (; model->name; model++)
     {
         if (!wcscmp(name, model->name))
         {
-            type->u.type.module = 0;
-            type->u.type.id = model->itype;
+            type->module = 0;
+            type->id = model->itype;
             return TRUE;
         }
     }
@@ -1237,4 +1241,13 @@ BOOL types_is_float_type(const struct dbg_lvalue* lv)
     if (!types_get_real_type(&type, &tag) ||
         !types_get_info(&type, TI_GET_BASETYPE, &bt)) return FALSE;
     return bt == btFloat;
+}
+
+BOOL types_is_pointer_type(const struct dbg_lvalue* lv)
+{
+    struct dbg_type type = lv->type;
+    DWORD tag;
+    if (lv->bitlen) return FALSE;
+    return types_get_real_type(&type, &tag) &&
+        (tag == SymTagPointerType || tag == SymTagArrayType || tag == SymTagFunctionType);
 }

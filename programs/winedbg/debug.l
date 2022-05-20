@@ -100,6 +100,13 @@ static char* unescape_string(const char* str)
     return ret;
 }
 
+static int resolve_identifier(const char* id, DBG_STYPE* lval)
+{
+    if (types_find_type(id, SymTagTypedef, &lval->type)) return tTYPEDEF;
+    lval->string = lexeme_alloc(id);
+    return tIDENTIFIER;
+}
+
 #define YY_INPUT(buf,result,max_size) \
         (result = input_lex_read_buffer(buf, max_size))
 
@@ -258,7 +265,7 @@ union					{ return tUNION; }
 enum					{ return tENUM; }
 all                                     { return tALL; }
 
-{MODULE_IDENTIFIER}?{SCOPED_IDENTIFIER}*{IDENTIFIER}	{ dbg_lval.string = lexeme_alloc(yytext); return tIDENTIFIER; }
+{MODULE_IDENTIFIER}?{SCOPED_IDENTIFIER}*{IDENTIFIER} { return resolve_identifier(yytext, &dbg_lval); }
 "$"{IDENTIFIER}				{ dbg_lval.string = lexeme_alloc(yytext+1); return tINTVAR; }
 
 <PATH_EXPECTED,PATH_ACCEPTED>{PATHNAME}	{ dbg_lval.string = lexeme_alloc(yytext); return tPATH; }
