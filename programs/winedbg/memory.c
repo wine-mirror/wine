@@ -500,7 +500,6 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
         case btInt:
         case btLong:
             if (!memory_fetch_integer(lvalue, size, TRUE, &val_int)) return;
-            if (size == 1) goto print_char;
             dbg_print_hex(size, val_int);
             break;
         case btUInt:
@@ -513,17 +512,18 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
             dbg_printf("%f", val_real);
             break;
         case btChar:
-        case btWChar:
-            /* sometimes WCHAR is defined as btChar with size = 2, so discrimate
-             * Ansi/Unicode based on size, not on basetype
-             */
             if (!memory_fetch_integer(lvalue, size, TRUE, &val_int)) return;
-        print_char:
-            if ((size == 1 && isprint((char)val_int)) ||
-                 (size == 2 && val_int < 127 && isprint((char)val_int)))
+            if (size == 1 && isprint((char)val_int))
                 dbg_printf("'%c'", (char)val_int);
             else
-                dbg_printf("%d", (int)val_int);
+                dbg_print_hex(size, val_int);
+            break;
+        case btWChar:
+            if (!memory_fetch_integer(lvalue, size, TRUE, &val_int)) return;
+            if (size == 2 && iswprint((WCHAR)val_int))
+                dbg_printf("L'%lc'", (WCHAR)val_int);
+            else
+                dbg_print_hex(size, val_int);
             break;
         case btBool:
             if (!memory_fetch_integer(lvalue, size, TRUE, &val_int)) return;
@@ -549,11 +549,11 @@ static void print_typed_basic(const struct dbg_lvalue* lvalue)
             char    buffer[1024];
 
             if (!val_ptr) dbg_printf("0x0");
-            else if (((bt == btChar || bt == btInt) && size64 == 1) || (bt == btUInt && size64 == 2))
+            else if ((bt == btChar && size64 == 1) || (bt == btWChar && size64 == 2))
             {
                 if (memory_get_string(dbg_curr_process, val_ptr, sub_lvalue.in_debuggee,
-                                      size64 == 2, buffer, sizeof(buffer)))
-                    dbg_printf("\"%s\"", buffer);
+                                      bt == btWChar, buffer, sizeof(buffer)))
+                    dbg_printf("%s\"%s\"", bt == btWChar ? "L" : "", buffer);
                 else
                     dbg_printf("*** invalid address %p ***", val_ptr);
                 break;
