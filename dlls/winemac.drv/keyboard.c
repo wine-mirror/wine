@@ -1045,9 +1045,9 @@ void macdrv_keyboard_changed(const macdrv_event *event)
 
     macdrv_compute_keyboard_layout(thread_data);
 
-    ActivateKeyboardLayout(thread_data->active_keyboard_layout, 0);
+    NtUserActivateKeyboardLayout(thread_data->active_keyboard_layout, 0);
 
-    SendMessageW(GetActiveWindow(), WM_CANCELMODE, 0, 0);
+    send_message(get_active_window(), WM_CANCELMODE, 0, 0);
 }
 
 

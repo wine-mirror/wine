@@ -70,7 +70,7 @@ CGImageRef create_cgimage_from_icon_bitmaps(HDC hdc, HANDLE icon, HBITMAP hbmCol
     /* draw the cursor frame to a temporary buffer then create a CGImage from that */
     memset(color_bits, 0x00, color_size);
     NtGdiSelectBitmap(hdc, hbmColor);
-    if (!DrawIconEx(hdc, 0, 0, icon, width, height, istep, NULL, DI_NORMAL))
+    if (!NtUserDrawIconEx(hdc, 0, 0, icon, width, height, istep, NULL, DI_NORMAL))
     {
         WARN("Could not draw frame %d (walk past end of frames).\n", istep);
         return NULL;
@@ -129,7 +129,7 @@ CGImageRef create_cgimage_from_icon_bitmaps(HDC hdc, HANDLE icon, HBITMAP hbmCol
         /* draw the cursor mask to a temporary buffer */
         memset(mask_bits, 0xFF, mask_size);
         NtGdiSelectBitmap(hdc, hbmMask);
-        if (!DrawIconEx(hdc, 0, 0, icon, width, height, istep, NULL, DI_MASK))
+        if (!NtUserDrawIconEx(hdc, 0, 0, icon, width, height, istep, NULL, DI_MASK))
         {
             WARN("Failed to draw frame mask %d.\n", istep);
             CGImageRelease(cgimage);
@@ -199,7 +199,7 @@ CGImageRef create_cgimage_from_icon(HANDLE icon, int width, int height)
         ICONINFO info;
         BITMAP bm;
 
-        if (!GetIconInfo(icon, &info))
+        if (!NtUserGetIconInfo(icon, &info, NULL, NULL, NULL, 0))
             return NULL;
 
         NtGdiExtGetObjectW(info.hbmMask, sizeof(bm), &bm);
