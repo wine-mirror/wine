@@ -220,7 +220,7 @@ const char *debugstr_format(UINT id)
 {
     WCHAR buffer[256];
 
-    if (GetClipboardFormatNameW(id, buffer, 256))
+    if (NtUserGetClipboardFormatName(id, buffer, 256))
         return wine_dbg_sprintf("0x%04x %s", id, debugstr_w(buffer));
 
     switch (id)
@@ -280,7 +280,7 @@ static WINE_CLIPFORMAT *insert_clipboard_format(UINT id, CFStringRef type)
     {
         WCHAR buffer[256];
 
-        if (!GetClipboardFormatNameW(format->format_id, buffer, ARRAY_SIZE(buffer)))
+        if (!NtUserGetClipboardFormatName(format->format_id, buffer, ARRAY_SIZE(buffer)))
         {
             WARN("failed to get name for format %s; error 0x%08x\n", debugstr_format(format->format_id), GetLastError());
             HeapFree(GetProcessHeap(), 0, format);
@@ -338,6 +338,14 @@ static WINE_CLIPFORMAT* natural_format_for_format(UINT format_id)
 }
 
 
+static ATOM register_clipboard_format(const WCHAR *name)
+{
+    ATOM atom;
+    if (NtAddAtom(name, lstrlenW(name) * sizeof(WCHAR), &atom)) return 0;
+    return atom;
+}
+
+
 /**************************************************************************
  *              register_builtin_formats
  */
@@ -363,7 +371,7 @@ static void register_builtin_formats(void)
     for (i = 0; i < ARRAY_SIZE(builtin_format_names); i++)
     {
         if (!(format = HeapAlloc(GetProcessHeap(), 0, sizeof(*format)))) break;
-        format->format_id       = RegisterClipboardFormatW(builtin_format_names[i].name);
+        format->format_id       = register_clipboard_format(builtin_format_names[i].name);
         format->import_func     = builtin_format_names[i].import;
         format->export_func     = builtin_format_names[i].export;
         format->synthesized     = builtin_format_names[i].synthesized;
@@ -421,7 +429,7 @@ static WINE_CLIPFORMAT* format_for_type(CFStringRef type)
                               (UniChar*)name);
         name[len] = 0;
 
-        format = register_format(RegisterClipboardFormatW(name), type);
+        format = register_format(register_clipboard_format(name), type);
         if (!format)
             ERR("Failed to register format for type %s name %s\n", debugstr_cf(type), debugstr_w(name));
 
@@ -471,7 +479,7 @@ static HGLOBAL create_dib_from_bitmap(HBITMAP bitmap)
 {
     HANDLE ret = 0;
     BITMAPINFOHEADER header;
-    HDC hdc = GetDC(0);
+    HDC hdc = NtUserGetDCEx(0, 0, DCX_USESTYLE);
     DWORD header_size;
     BITMAPINFO *bmi;
 
@@ -487,7 +495,7 @@ static HGLOBAL create_dib_from_bitmap(HBITMAP bitmap)
     GetDIBits(hdc, bitmap, 0, abs(header.biHeight), (char *)bmi + header_size, bmi, DIB_RGB_COLORS);
 
 done:
-    ReleaseDC(0, hdc);
+    NtUserReleaseDC(0, hdc);
     return ret;
 }
 
@@ -507,7 +515,7 @@ static HANDLE create_bitmap_from_dib(HANDLE dib)
         HDC hdc;
         unsigned int offset;
 
-        hdc = GetDC(NULL);
+        hdc = NtUserGetDCEx(NULL, 0, DCX_USESTYLE);
 
         offset = bitmap_info_size(bmi, DIB_RGB_COLORS);
 
@@ -515,7 +523,7 @@ static HANDLE create_bitmap_from_dib(HANDLE dib)
                              bmi, DIB_RGB_COLORS);
 
         GlobalUnlock(dib);
-        ReleaseDC(NULL, hdc);
+        NtUserReleaseDC(NULL, hdc);
     }
 
     return ret;
@@ -1762,13 +1770,13 @@ static void grab_win32_clipboard(void)
     if (last_types) CFRelease(last_types);
     last_types = types; /* takes ownership */
 
-    if (!OpenClipboard(clipboard_hwnd)) return;
-    EmptyClipboard();
+    if (!NtUserOpenClipboard(clipboard_hwnd, 0)) return;
+    NtUserEmptyClipboard();
     is_clipboard_owner = TRUE;
     last_clipboard_update = GetTickCount64();
     set_win32_clipboard_formats_from_mac_pasteboard(types);
-    CloseClipboard();
-    SetTimer(clipboard_hwnd, 1, CLIPBOARD_UPDATE_DELAY, NULL);
+    NtUserCloseClipboard();
+    NtUserSetTimer(clipboard_hwnd, 1, CLIPBOARD_UPDATE_DELAY, NULL, TIMERV_DEFAULT_COALESCING);
 }
 
 
@@ -1965,7 +1973,7 @@ static DWORD WINAPI clipboard_thread(void *arg)
     }
 
     clipboard_thread_id = GetCurrentThreadId();
-    AddClipboardFormatListener(clipboard_hwnd);
+    NtUserAddClipboardFormatListener(clipboard_hwnd);
     register_builtin_formats();
     grab_win32_clipboard();
 
@@ -2217,7 +2225,7 @@ BOOL query_pasteboard_data(HWND hwnd, CFStringRef type)
 
     last_get_seqno = GetClipboardSequenceNumber();
 
-    CloseClipboard();
+    NtUserCloseClipboard();
 
     return ret;
 }
