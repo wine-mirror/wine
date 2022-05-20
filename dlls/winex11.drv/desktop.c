@@ -335,6 +335,16 @@ void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
     max_width = primary_rect.right;
     max_height = primary_rect.bottom;
 
+    /* Initialize virtual desktop display settings handler */
+    settings_handler.name = "Virtual Desktop";
+    settings_handler.priority = 1000;
+    settings_handler.get_id = X11DRV_desktop_get_id;
+    settings_handler.get_modes = X11DRV_desktop_get_modes;
+    settings_handler.free_modes = X11DRV_desktop_free_modes;
+    settings_handler.get_current_mode = X11DRV_desktop_get_current_mode;
+    settings_handler.set_current_mode = X11DRV_desktop_set_current_mode;
+    X11DRV_Settings_SetHandler( &settings_handler );
+
     /* Initialize virtual desktop mode display device handler */
     desktop_handler.name = "Virtual Desktop";
     desktop_handler.get_gpus = X11DRV_desktop_get_gpus;
@@ -346,16 +356,6 @@ void X11DRV_init_desktop( Window win, unsigned int width, unsigned int height )
     desktop_handler.register_event_handlers = NULL;
     TRACE("Display device functions are now handled by: Virtual Desktop\n");
     X11DRV_DisplayDevices_Init( TRUE );
-
-    /* Initialize virtual desktop display settings handler */
-    settings_handler.name = "Virtual Desktop";
-    settings_handler.priority = 1000;
-    settings_handler.get_id = X11DRV_desktop_get_id;
-    settings_handler.get_modes = X11DRV_desktop_get_modes;
-    settings_handler.free_modes = X11DRV_desktop_free_modes;
-    settings_handler.get_current_mode = X11DRV_desktop_get_current_mode;
-    settings_handler.set_current_mode = X11DRV_desktop_set_current_mode;
-    X11DRV_Settings_SetHandler( &settings_handler );
 }
 
 
