@@ -268,6 +268,7 @@ static const struct user_driver_funcs macdrv_funcs =
     .pClipCursor = macdrv_ClipCursor,
     .pCreateDesktopWindow = macdrv_CreateDesktopWindow,
     .pCreateWindow = macdrv_CreateWindow,
+    .pDesktopWindowProc = macdrv_DesktopWindowProc,
     .pDestroyCursorIcon = macdrv_DestroyCursorIcon,
     .pDestroyWindow = macdrv_DestroyWindow,
     .pEnumDisplaySettingsEx = macdrv_EnumDisplaySettingsEx,

@@ -1557,11 +1557,9 @@ BOOL macdrv_CreateDesktopWindow(HWND hwnd)
 }
 
 
-static WNDPROC desktop_orig_wndproc;
-
 #define WM_WINE_NOTIFY_ACTIVITY WM_USER
 
-static LRESULT CALLBACK desktop_wndproc_wrapper( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
+LRESULT macdrv_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg)
     {
@@ -1580,7 +1578,7 @@ static LRESULT CALLBACK desktop_wndproc_wrapper( HWND hwnd, UINT msg, WPARAM wp,
         break;
     }
     }
-    return desktop_orig_wndproc( hwnd, msg, wp, lp );
+    return NtUserMessageCall(hwnd, msg, wp, lp, 0, NtUserDefWindowProc, FALSE);
 }
 
 /**********************************************************************
@@ -1590,9 +1588,6 @@ BOOL macdrv_CreateWindow(HWND hwnd)
 {
     if (hwnd == GetDesktopWindow())
     {
-        desktop_orig_wndproc = (WNDPROC)SetWindowLongPtrW( GetDesktopWindow(),
-            GWLP_WNDPROC, (LONG_PTR)desktop_wndproc_wrapper );
-
         macdrv_init_clipboard();
     }
     return TRUE;
