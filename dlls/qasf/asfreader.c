@@ -471,6 +471,7 @@ static const IFileSourceFilterVtbl file_source_vtbl =
 struct asf_callback
 {
     IWMReaderCallback IWMReaderCallback_iface;
+    IWMReaderCallbackAdvanced IWMReaderCallbackAdvanced_iface;
     LONG ref;
 
     struct asf_reader *filter;
@@ -491,6 +492,8 @@ static HRESULT WINAPI reader_callback_QueryInterface(IWMReaderCallback *iface, c
             || IsEqualGUID(iid, &IID_IWMStatusCallback)
             || IsEqualGUID(iid, &IID_IWMReaderCallback))
         *out = &callback->IWMReaderCallback_iface;
+    else if (IsEqualGUID(iid, &IID_IWMReaderCallbackAdvanced))
+        *out = &callback->IWMReaderCallbackAdvanced_iface;
     else
     {
         *out = NULL;
@@ -628,6 +631,85 @@ static const IWMReaderCallbackVtbl reader_callback_vtbl =
     reader_callback_OnSample,
 };
 
+static inline struct asf_callback *impl_from_IWMReaderCallbackAdvanced(IWMReaderCallbackAdvanced *iface)
+{
+    return CONTAINING_RECORD(iface, struct asf_callback, IWMReaderCallbackAdvanced_iface);
+}
+
+static HRESULT WINAPI reader_callback_advanced_QueryInterface(IWMReaderCallbackAdvanced *iface, REFIID riid, LPVOID * ppv)
+{
+    struct asf_callback *impl = impl_from_IWMReaderCallbackAdvanced(iface);
+    return IUnknown_QueryInterface(&impl->IWMReaderCallback_iface, riid, ppv);
+}
+
+static ULONG WINAPI reader_callback_advanced_AddRef(IWMReaderCallbackAdvanced *iface)
+{
+    struct asf_callback *impl = impl_from_IWMReaderCallbackAdvanced(iface);
+    return IUnknown_AddRef(&impl->IWMReaderCallback_iface);
+}
+
+static ULONG WINAPI reader_callback_advanced_Release(IWMReaderCallbackAdvanced *iface)
+{
+    struct asf_callback *impl = impl_from_IWMReaderCallbackAdvanced(iface);
+    return IUnknown_Release(&impl->IWMReaderCallback_iface);
+}
+
+static HRESULT WINAPI reader_callback_advanced_OnStreamSample(IWMReaderCallbackAdvanced *iface,
+        WORD stream, QWORD time, QWORD duration, DWORD flags, INSSBuffer *sample, void *context)
+{
+    FIXME("iface %p, stream %u, time %I64u, duration %I64u, flags %#lx, sample %p, context %p stub!\n",
+            iface, stream, time, duration, flags, sample, context);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI reader_callback_advanced_OnTime(IWMReaderCallbackAdvanced *iface,
+        QWORD time, void *context)
+{
+    FIXME("iface %p stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI reader_callback_advanced_OnStreamSelection(IWMReaderCallbackAdvanced *iface,
+        WORD count, WORD *stream_numbers, WMT_STREAM_SELECTION *selections, void *context)
+{
+    FIXME("iface %p stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI reader_callback_advanced_OnOutputPropsChanged(IWMReaderCallbackAdvanced *iface,
+        DWORD output, WM_MEDIA_TYPE *mt, void *context)
+{
+    FIXME("iface %p stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI reader_callback_advanced_AllocateForStream(IWMReaderCallbackAdvanced *iface,
+        WORD stream, DWORD size, INSSBuffer **out, void *context)
+{
+    FIXME("iface %p stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI reader_callback_advanced_AllocateForOutput(IWMReaderCallbackAdvanced *iface,
+        DWORD output, DWORD size, INSSBuffer **out, void *context)
+{
+    FIXME("iface %p, output %lu, size %lu, out %p, context %p stub!\n", iface, output, size, out, context);
+    return E_NOTIMPL;
+}
+
+static const IWMReaderCallbackAdvancedVtbl reader_callback_advanced_vtbl =
+{
+    reader_callback_advanced_QueryInterface,
+    reader_callback_advanced_AddRef,
+    reader_callback_advanced_Release,
+    reader_callback_advanced_OnStreamSample,
+    reader_callback_advanced_OnTime,
+    reader_callback_advanced_OnStreamSelection,
+    reader_callback_advanced_OnOutputPropsChanged,
+    reader_callback_advanced_AllocateForStream,
+    reader_callback_advanced_AllocateForOutput,
+};
+
 static HRESULT asf_callback_create(struct asf_reader *filter, IWMReaderCallback **out)
 {
     struct asf_callback *callback;
@@ -636,6 +718,7 @@ static HRESULT asf_callback_create(struct asf_reader *filter, IWMReaderCallback 
         return E_OUTOFMEMORY;
 
     callback->IWMReaderCallback_iface.lpVtbl = &reader_callback_vtbl;
+    callback->IWMReaderCallbackAdvanced_iface.lpVtbl = &reader_callback_advanced_vtbl;
     callback->filter = filter;
     callback->ref = 1;
 
