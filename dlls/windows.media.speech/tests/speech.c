@@ -452,7 +452,7 @@ static void check_async_info_( unsigned int line, IInspectable *async_obj, UINT3
     hr = IAsyncInfo_get_ErrorCode(async_info, &async_hr);
     if (expect_status < 4) ok_(__FILE__, line)(hr == S_OK, "IAsyncInfo_get_ErrorCode returned %#lx\n", hr);
     else ok_(__FILE__, line)(hr == E_ILLEGAL_METHOD_CALL, "IAsyncInfo_get_ErrorCode returned %#lx\n", hr);
-    if (expect_status < 4) todo_wine_if(FAILED(expect_hr)) ok_(__FILE__, line)(async_hr == expect_hr, "got async_hr %#lx\n", async_hr);
+    if (expect_status < 4) ok_(__FILE__, line)(async_hr == expect_hr, "got async_hr %#lx\n", async_hr);
     else ok_(__FILE__, line)(async_hr == E_ILLEGAL_METHOD_CALL, "got async_hr %#lx\n", async_hr);
 
     IAsyncInfo_Release(async_info);
