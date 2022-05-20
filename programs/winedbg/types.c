@@ -718,92 +718,151 @@ BOOL types_print_type(const struct dbg_type* type, BOOL details)
     return TRUE;
 }
 
-const struct data_model ilp32_data_model[] = {
-    {btVoid,     0, L"void"},
-    {btChar,     1, L"char"},
-    {btWChar,    2, L"wchar_t"},
-    {btInt,      1, L"signed char"},
-    {btInt,      2, L"short int"},
-    {btInt,      4, L"int"},
-    {btInt,      8, L"__int64"},
-    {btUInt,     1, L"unsigned char"},
-    {btUInt,     2, L"unsigned short int"},
-    {btUInt,     4, L"unsigned int"},
-    {btUInt,     8, L"unsigned __int64"},
-    {btFloat,    4, L"float"},
-    {btFloat,    8, L"double"},
-    {btFloat,   10, L"long double"},
-    {btBool,     1, L"bool"},
-    {btLong,     4, L"long"},
-    {btLong,     8, L"long long"},
-    {btULong,    4, L"unsigned long"},
-    {btULong,    8, L"unsigned long long"},
-    {btHresult,  4, L"char32_t"},
-    {btChar16,   2, L"char16_t"},
-    {btChar32,   4, L"char32_t"},
-    {btChar8,    1, L"char8_t"},
-    {0,          0, NULL}
+/* order here must match order in enum dbg_internal_type */
+static struct
+{
+    unsigned char base_type;
+    unsigned char byte_size;
+}
+    basic_types_details[] =
+{
+    {btVoid,      0},
+    {btBool,      1},
+    /* chars */
+    {btChar,      1},
+    {btWChar,     2},
+    {btChar8,     1},
+    {btChar16,    2},
+    {btChar32,    4},
+    /* unsigned integers */
+    {btUInt,      1},
+    {btUInt,      2},
+    {btUInt,      4},
+    {btUInt,      8},
+    {btUInt,     16},
+    {btULong,     4},
+    {btULong,     8},
+    /* signed integers */
+    {btInt,       1},
+    {btInt,       2},
+    {btInt,       4},
+    {btInt,       8},
+    {btInt,      16},
+    {btLong,      4},
+    {btLong,      8},
+    /* floats */
+    {btFloat,     4},
+    {btFloat,     8},
+    {btFloat,    10},
 };
 
-const struct data_model llp64_data_model[] = {
-    {btVoid,     0, L"void"},
-    {btChar,     1, L"char"},
-    {btWChar,    2, L"wchar_t"},
-    {btInt,      1, L"signed char"},
-    {btInt,      2, L"short int"},
-    {btInt,      4, L"int"},
-    {btInt,      8, L"__int64"},
-    {btInt,     16, L"__int128"},
-    {btUInt,     1, L"unsigned char"},
-    {btUInt,     2, L"unsigned short int"},
-    {btUInt,     4, L"unsigned int"},
-    {btUInt,     8, L"unsigned __int64"},
-    {btUInt,    16, L"unsigned __int128"},
-    {btFloat,    4, L"float"},
-    {btFloat,    8, L"double"},
-    {btFloat,   10, L"long double"},
-    {btBool,     1, L"bool"},
-    {btLong,     4, L"long"},
-    {btLong,     8, L"long long"},
-    {btULong,    4, L"unsigned long"},
-    {btULong,    8, L"unsigned long long"},
-    {btHresult,  4, L"char32_t"},
-    {btChar16,   2, L"char16_t"},
-    {btChar32,   4, L"char32_t"},
-    {btChar8,    1, L"char8_t"},
-    {0,          0, NULL}
+C_ASSERT(ARRAY_SIZE(basic_types_details) == dbg_itype_last - dbg_itype_first);
+
+const struct data_model ilp32_data_model[] =
+{
+    {dbg_itype_void,                    L"void"},
+
+    {dbg_itype_bool,                    L"bool"},
+
+    {dbg_itype_char,                    L"char"},
+    {dbg_itype_wchar,                   L"WCHAR"},
+    {dbg_itype_char8,                   L"char8_t"},
+    {dbg_itype_char16,                  L"char16_t"},
+    {dbg_itype_char32,                  L"char32_t"},
+
+    {dbg_itype_unsigned_int8,           L"unsigned char"},
+    {dbg_itype_unsigned_int16,          L"unsigned short int"},
+    {dbg_itype_unsigned_int32,          L"unsigned int"},
+    {dbg_itype_unsigned_int64,          L"unsigned long long int"},
+    {dbg_itype_unsigned_int64,          L"unsigned __int64"},
+    {dbg_itype_unsigned_long32,         L"unsigned long int"},
+
+    {dbg_itype_signed_int8,             L"signed char"},
+    {dbg_itype_signed_int16,            L"short int"},
+    {dbg_itype_signed_int32,            L"int"},
+    {dbg_itype_signed_int64,            L"long long int"},
+    {dbg_itype_signed_int64,            L"__int64"},
+    {dbg_itype_signed_long32,           L"long int"},
+
+    {dbg_itype_short_real,              L"float"},
+    {dbg_itype_real,                    L"double"},
+    {dbg_itype_long_real,               L"long double"},
+
+    {0,                                 NULL}
 };
 
-const struct data_model lp64_data_model[] = {
-    {btVoid,     0, L"void"},
-    {btChar,     1, L"char"},
-    {btWChar,    2, L"wchar_t"},
-    {btInt,      1, L"signed char"},
-    {btInt,      2, L"short int"},
-    {btInt,      4, L"int"},
-    {btInt,      8, L"__int64"},
-    {btInt,     16, L"__int128"},
-    {btUInt,     1, L"unsigned char"},
-    {btUInt,     2, L"unsigned short int"},
-    {btUInt,     4, L"unsigned int"},
-    {btUInt,     8, L"unsigned __int64"},
-    {btUInt,    16, L"unsigned __int128"},
-    {btFloat,    4, L"float"},
-    {btFloat,    8, L"double"},
-    {btFloat,   10, L"long double"},
-    {btBool,     1, L"bool"},
-    {btLong,     4, L"int"}, /* to print at least for such a regular Windows' type */
-    {btLong,     8, L"long"}, /* we can't discriminate 'long' from 'long long' */
-    {btULong,    4, L"unsigned int"}, /* to print at least for such a regular Windows' type */
-    {btULong,    8, L"unsigned long"}, /* we can't discriminate 'unsigned long' from 'unsigned long long' */
-    {btHresult,  4, L"char32_t"},
-    {btChar16,   2, L"char16_t"},
-    {btChar32,   4, L"char32_t"},
-    {btChar8,    1, L"char8_t"},
-    {0,          0, NULL}
+const struct data_model llp64_data_model[] =
+{
+    {dbg_itype_void,                    L"void"},
+
+    {dbg_itype_bool,                    L"bool"},
+
+    {dbg_itype_char,                    L"char"},
+    {dbg_itype_wchar,                   L"WCHAR"},
+    {dbg_itype_char8,                   L"char8_t"},
+    {dbg_itype_char16,                  L"char16_t"},
+    {dbg_itype_char32,                  L"char32_t"},
+
+    {dbg_itype_unsigned_int8,           L"unsigned char"},
+    {dbg_itype_unsigned_int16,          L"unsigned short int"},
+    {dbg_itype_unsigned_int32,          L"unsigned int"},
+    {dbg_itype_unsigned_int64,          L"unsigned long long int"},
+    {dbg_itype_unsigned_int64,          L"unsigned __int64"},
+    {dbg_itype_unsigned_int128,         L"unsigned __int128"},
+
+    {dbg_itype_unsigned_long32,         L"unsigned long int"},
+
+    {dbg_itype_signed_int8,             L"signed char"},
+    {dbg_itype_signed_int16,            L"short int"},
+    {dbg_itype_signed_int32,            L"int"},
+    {dbg_itype_signed_int64,            L"long long int"},
+    {dbg_itype_signed_int64,            L"__int64"},
+    {dbg_itype_signed_int128,           L"__int128"},
+    {dbg_itype_signed_long32,           L"long int"},
+
+    {dbg_itype_short_real,              L"float"},
+    {dbg_itype_real,                    L"double"},
+    {dbg_itype_long_real,               L"long double"},
+
+    {0,                                 NULL}
 };
 
-static const struct data_model* get_data_model(DWORD modaddr)
+const struct data_model lp64_data_model[] =
+{
+    {dbg_itype_void,                    L"void"},
+
+    {dbg_itype_bool,                    L"bool"},
+
+    {dbg_itype_char,                    L"char"},
+    {dbg_itype_wchar,                   L"WCHAR"},
+    {dbg_itype_char8,                   L"char8_t"},
+    {dbg_itype_char16,                  L"char16_t"},
+    {dbg_itype_char32,                  L"char32_t"},
+
+    {dbg_itype_unsigned_int8,           L"unsigned char"},
+    {dbg_itype_unsigned_int16,          L"unsigned short int"},
+    {dbg_itype_unsigned_int32,          L"unsigned int"},
+    {dbg_itype_unsigned_int64,          L"unsigned long long int"},
+    {dbg_itype_unsigned_int64,          L"unsigned __int64"},
+    {dbg_itype_unsigned_int128,         L"unsigned __int128"},
+    {dbg_itype_unsigned_long64,         L"unsigned long int"}, /* we can't discriminate 'unsigned long' from 'unsigned long long' (on output) */
+
+    {dbg_itype_signed_int8,             L"signed char"},
+    {dbg_itype_signed_int16,            L"short int"},
+    {dbg_itype_signed_int32,            L"int"},
+    {dbg_itype_signed_int64,            L"long long int"},
+    {dbg_itype_signed_int64,            L"__int64"},
+    {dbg_itype_signed_int128,           L"__int128"},
+    {dbg_itype_signed_long64,           L"long int"}, /* we can't discriminate 'long' from 'long long' (on output)*/
+
+    {dbg_itype_short_real,              L"float"},
+    {dbg_itype_real,                    L"double"},
+    {dbg_itype_long_real,               L"long double"},
+
+    {0,                                 NULL}
+};
+
+static const struct data_model* get_data_model(DWORD64 modaddr)
 {
     const struct data_model *model;
 
@@ -826,28 +885,76 @@ static const struct data_model* get_data_model(DWORD modaddr)
     return model;
 }
 
-/* helper to typecast pInfo to its expected type (_t) */
-#define X(_t) (*((_t*)pInfo))
-
-static BOOL lookup_base_type_in_data_model(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, void* pInfo)
+struct mod_by_name
 {
-    DWORD tag, bt;
-    DWORD64 len;
+    const char* modname;
+    ULONG64 base;
+};
+
+static BOOL CALLBACK enum_mod_cb(const char* module, DWORD64 base, void* user)
+{
+    struct mod_by_name* mbn = user;
+    if (!mbn->modname) /* lookup data model from main module */
+    {
+        IMAGEHLP_MODULE64 mi;
+        mi.SizeOfStruct = sizeof(mi);
+        if (SymGetModuleInfo64(dbg_curr_process->handle, base, &mi))
+        {
+            size_t len = strlen(mi.ImageName);
+            if (len >= 4 && !strcmp(mi.ImageName + len - 4, ".exe"))
+            {
+                mbn->base = base;
+                return FALSE;
+            }
+        }
+    }
+    else if (SymMatchStringA(module, mbn->modname, FALSE))
+    {
+        mbn->base = base;
+        return FALSE;
+    }
+    return TRUE;
+}
+
+BOOL             types_find_basic(const WCHAR* name, const char* mod, struct type_expr_t* type)
+{
+    const struct data_model* model;
+    struct mod_by_name mbn = {mod, 0};
+    DWORD opt;
+    BOOL ret;
+
+    opt = SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, TRUE);
+    ret = SymEnumerateModules64(dbg_curr_process->handle, enum_mod_cb, &mbn);
+    SymSetExtendedOption(SYMOPT_EX_WINE_NATIVE_MODULES, opt);
+    if (!ret || mbn.base == 0)
+        return FALSE;
+    type->type = type_expr_type_id;
+    type->deref_count = 0;
+    model = get_data_model(mbn.base);
+    for (; model->name; model++)
+    {
+        if (!wcscmp(name, model->name))
+        {
+            type->u.type.module = 0;
+            type->u.type.id = model->itype;
+            return TRUE;
+        }
+    }
+    return FALSE;
+}
+
+static BOOL lookup_base_type_in_data_model(DWORD64 module, unsigned bt, unsigned len, WCHAR** pname)
+{
     const WCHAR* name = NULL;
     WCHAR tmp[64];
     const struct data_model* model;
 
-    if (ti != TI_GET_SYMNAME ||
-        !SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, TI_GET_SYMTAG, &tag) ||
-        tag != SymTagBaseType ||
-        !SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, TI_GET_BASETYPE, &bt) ||
-        !SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, TI_GET_LENGTH, &len) ||
-        len != (DWORD)len) return FALSE;
-
-    model = get_data_model(type->module);
+    model = get_data_model(module);
     for (; model->name; model++)
     {
-        if (bt == model->base_type && model->size == len)
+        if (model->itype >= dbg_itype_first && model->itype < dbg_itype_last &&
+            bt == basic_types_details[model->itype - dbg_itype_first].base_type &&
+            len == basic_types_details[model->itype - dbg_itype_first].byte_size)
         {
             name = model->name;
             break;
@@ -855,25 +962,58 @@ static BOOL lookup_base_type_in_data_model(const struct dbg_type* type, IMAGEHLP
     }
     if (!name) /* synthetize name */
     {
-        WINE_FIXME("Unsupported basic type %lu %I64u\n", bt, len);
-        swprintf(tmp, ARRAY_SIZE(tmp), L"bt[%lu,%u]", bt, len);
+        WINE_FIXME("Unsupported basic type %u %u\n", bt, len);
+        swprintf(tmp, ARRAY_SIZE(tmp), L"bt[%u,%u]", bt, len);
         name = tmp;
     }
-    X(WCHAR*) = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(name) + 1) * sizeof(WCHAR));
-    if (X(WCHAR*))
-        lstrcpyW(X(WCHAR*), name);
+    *pname = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(name) + 1) * sizeof(WCHAR));
+    if (!*pname) return FALSE;
+    lstrcpyW(*pname, name);
     return TRUE;
 }
+
+/* helper to typecast pInfo to its expected type (_t) */
+#define X(_t) (*((_t*)pInfo))
 
 BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, void* pInfo)
 {
     if (type->id == dbg_itype_none) return FALSE;
     if (type->module != 0)
-        return lookup_base_type_in_data_model(type, ti, pInfo) ||
-            SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, ti, pInfo);
+    {
+        if (ti == TI_GET_SYMNAME)
+        {
+            DWORD tag, bt;
+            DWORD64 len;
+            WCHAR* name;
+            if (SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, TI_GET_SYMTAG, &tag) &&
+                tag == SymTagBaseType &&
+                SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, TI_GET_BASETYPE, &bt) &&
+                SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, TI_GET_LENGTH, &len) &&
+                len == (DWORD)len)
+            {
+                if (!lookup_base_type_in_data_model(type->module, bt, len, &name)) return FALSE;
+                X(WCHAR*) = name;
+                return TRUE;
+            }
+        }
+        return SymGetTypeInfo(dbg_curr_process->handle, type->module, type->id, ti, pInfo);
+    }
 
     assert(type->id >= dbg_itype_first);
 
+    if (type->id >= dbg_itype_first && type->id < dbg_itype_last)
+    {
+        switch (ti)
+        {
+        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
+        case TI_GET_LENGTH:     X(DWORD64) = basic_types_details[type->id - dbg_itype_first].byte_size; break;
+        case TI_GET_BASETYPE:   X(DWORD)   = basic_types_details[type->id - dbg_itype_first].base_type; break;
+        case TI_GET_SYMNAME:    return lookup_base_type_in_data_model(0, basic_types_details[type->id - dbg_itype_first].base_type,
+                                                                      basic_types_details[type->id - dbg_itype_first].byte_size, &X(WCHAR*));
+        default: WINE_FIXME("unsupported %u for itype %#lx\n", ti, type->id); return FALSE;
+        }
+        return TRUE;
+    }
     switch (type->id)
     {
     case dbg_itype_lguint:
@@ -894,150 +1034,6 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
         default: WINE_FIXME("unsupported %u for lgint_t\n", ti); return FALSE;
         }
         break;
-    case dbg_itype_unsigned_long32:
-        switch (ti)
-        {
-        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 4; break;
-        case TI_GET_BASETYPE:   X(DWORD)   = btUInt; break;
-        default: WINE_FIXME("unsupported %u for u-long int\n", ti); return FALSE;
-        }
-        break;
-    case dbg_itype_signed_long32:
-        switch (ti)
-        {
-        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 4; break;
-        case TI_GET_BASETYPE:   X(DWORD)   = btInt; break;
-        default: WINE_FIXME("unsupported %u for s-long int\n", ti); return FALSE;
-        }
-        break;
-    case dbg_itype_unsigned_long64:
-        switch (ti)
-        {
-        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 8; break;
-        case TI_GET_BASETYPE:   X(DWORD)   = btUInt; break;
-        default: WINE_FIXME("unsupported %u for u-long int\n", ti); return FALSE;
-        }
-        break;
-    case dbg_itype_signed_long64:
-        switch (ti)
-        {
-        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 8; break;
-        case TI_GET_BASETYPE:   X(DWORD)   = btInt; break;
-        default: WINE_FIXME("unsupported %u for s-long int\n", ti); return FALSE;
-        }
-        break;
-    case dbg_itype_unsigned_int8:
-        switch (ti)
-        {
-        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 1; break;
-        case TI_GET_BASETYPE:   X(DWORD)   = btUInt; break;
-        default: WINE_FIXME("unsupported %u for u-int\n", ti); return FALSE;
-        }
-        break;
-    case dbg_itype_signed_int8:
-        switch (ti)
-        {
-        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 1; break;
-        case TI_GET_BASETYPE:   X(DWORD)   = btInt; break;
-        default: WINE_FIXME("unsupported %u for s-int\n", ti); return FALSE;
-        }
-        break;
-    case dbg_itype_unsigned_int16:
-        switch (ti)
-        {
-        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 2; break;
-        case TI_GET_BASETYPE:   X(DWORD)   = btUInt; break;
-        default: WINE_FIXME("unsupported %u for u-int\n", ti); return FALSE;
-        }
-        break;
-    case dbg_itype_signed_int16:
-        switch (ti)
-        {
-        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 2; break;
-        case TI_GET_BASETYPE:   X(DWORD)   = btInt; break;
-        default: WINE_FIXME("unsupported %u for s-int\n", ti); return FALSE;
-        }
-        break;
-    case dbg_itype_unsigned_int32:
-        switch (ti)
-        {
-        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 4; break;
-        case TI_GET_BASETYPE:   X(DWORD)   = btUInt; break;
-        default: WINE_FIXME("unsupported %u for u-int\n", ti); return FALSE;
-        }
-        break;
-    case dbg_itype_signed_int32:
-        switch (ti)
-        {
-        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 4; break;
-        case TI_GET_BASETYPE:   X(DWORD)   = btInt; break;
-        default: WINE_FIXME("unsupported %u for s-int\n", ti); return FALSE;
-        }
-        break;
-    case dbg_itype_unsigned_int64:
-        switch (ti)
-        {
-        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 8; break;
-        case TI_GET_BASETYPE:   X(DWORD)   = btUInt; break;
-        default: WINE_FIXME("unsupported %u for u-int\n", ti); return FALSE;
-        }
-        break;
-    case dbg_itype_signed_int64:
-        switch (ti)
-        {
-        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 8; break;
-        case TI_GET_BASETYPE:   X(DWORD)   = btInt; break;
-        default: WINE_FIXME("unsupported %u for s-int\n", ti); return FALSE;
-        }
-        break;
-    case dbg_itype_unsigned_int128:
-        switch (ti)
-        {
-        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 16; break;
-        case TI_GET_BASETYPE:   X(DWORD)   = btUInt; break;
-        default: WINE_FIXME("unsupported %u for u-int\n", ti); return FALSE;
-        }
-        break;
-    case dbg_itype_signed_int128:
-        switch (ti)
-        {
-        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 16; break;
-        case TI_GET_BASETYPE:   X(DWORD)   = btInt; break;
-        default: WINE_FIXME("unsupported %u for s-int\n", ti); return FALSE;
-        }
-        break;
-    case dbg_itype_char:
-        switch (ti)
-        {
-        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 1; break;
-        case TI_GET_BASETYPE:   X(DWORD)   = btChar; break;
-        default: WINE_FIXME("unsupported %u for char int\n", ti); return FALSE;
-        }
-        break;
-    case dbg_itype_wchar:
-        switch (ti)
-        {
-        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 2; break;
-        case TI_GET_BASETYPE:   X(DWORD)   = btWChar; break;
-        default: WINE_FIXME("unsupported %u for char int\n", ti); return FALSE;
-        }
-        break;
     case dbg_itype_astring:
         switch (ti)
         {
@@ -1054,33 +1050,6 @@ BOOL types_get_info(const struct dbg_type* type, IMAGEHLP_SYMBOL_TYPE_INFO ti, v
         case TI_GET_LENGTH:     X(DWORD64) = 4; break;
         case TI_GET_BASETYPE:   X(DWORD)   = btInt; break;
         default: WINE_FIXME("unsupported %u for seg-ptr\n", ti); return FALSE;
-        }
-        break;
-    case dbg_itype_short_real:
-        switch (ti)
-        {
-        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 4; break;
-        case TI_GET_BASETYPE:   X(DWORD)   = btFloat; break;
-        default: WINE_FIXME("unsupported %u for short real\n", ti); return FALSE;
-        }
-        break;
-    case dbg_itype_real:
-        switch (ti)
-        {
-        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 8; break;
-        case TI_GET_BASETYPE:   X(DWORD)   = btFloat; break;
-        default: WINE_FIXME("unsupported %u for real\n", ti); return FALSE;
-        }
-        break;
-    case dbg_itype_long_real:
-        switch (ti)
-        {
-        case TI_GET_SYMTAG:     X(DWORD)   = SymTagBaseType; break;
-        case TI_GET_LENGTH:     X(DWORD64) = 10; break;
-        case TI_GET_BASETYPE:   X(DWORD)   = btFloat; break;
-        default: WINE_FIXME("unsupported %u for long real\n", ti); return FALSE;
         }
         break;
     case dbg_itype_m128a:

@@ -67,33 +67,42 @@ enum dbg_line_status
 
 enum dbg_internal_types
 {
+    /* order here must match types.c:basic_types_details table */
     dbg_itype_first             = 0xffffff00,
+    dbg_itype_void              = dbg_itype_first,
+    dbg_itype_bool,
     dbg_itype_char,
     dbg_itype_wchar,
+    dbg_itype_char8,
+    dbg_itype_char16,
+    dbg_itype_char32,
 
     dbg_itype_unsigned_int8,
-    dbg_itype_signed_int8,
     dbg_itype_unsigned_int16,
-    dbg_itype_signed_int16,
     dbg_itype_unsigned_int32,
-    dbg_itype_signed_int32,
     dbg_itype_unsigned_int64,
-    dbg_itype_signed_int64,
     dbg_itype_unsigned_int128,
-    dbg_itype_signed_int128,
-
     dbg_itype_unsigned_long32,
-    dbg_itype_signed_long32,
     dbg_itype_unsigned_long64,
+
+    dbg_itype_signed_int8,
+    dbg_itype_signed_int16,
+    dbg_itype_signed_int32,
+    dbg_itype_signed_int64,
+    dbg_itype_signed_int128,
+    dbg_itype_signed_long32,
     dbg_itype_signed_long64,
+
+    dbg_itype_short_real, /* aka float */
+    dbg_itype_real,       /* aka double */
+    dbg_itype_long_real,  /* aka long double */
+
+    dbg_itype_last,
 
     /* they represent the dbg_lg(u)int_t types */
     dbg_itype_lgint,
     dbg_itype_lguint,
 
-    dbg_itype_short_real, /* aka float */
-    dbg_itype_real,       /* aka double */
-    dbg_itype_long_real,  /* aka long double */
     dbg_itype_astring,
     dbg_itype_ustring,
     dbg_itype_segptr,     /* hack for segmented pointers */
@@ -506,6 +515,7 @@ extern struct dbg_type  types_find_type(DWORD64 linear, const char* name, enum S
 extern BOOL             types_compare(const struct dbg_type, const struct dbg_type, BOOL* equal);
 extern BOOL             types_is_integral_type(const struct dbg_lvalue*);
 extern BOOL             types_is_float_type(const struct dbg_lvalue*);
+extern BOOL             types_find_basic(const WCHAR*, const char*, struct type_expr_t* type);
 
   /* winedbg.c */
 #ifdef __GNUC__
@@ -553,10 +563,10 @@ static inline void* dbg_heap_realloc(void* buffer, size_t size)
 
 struct data_model
 {
-    unsigned            base_type;
-    unsigned            size;
-    const WCHAR*        name;
+    enum dbg_internal_types     itype;
+    const WCHAR*                name;
 };
+
 extern const struct data_model ilp32_data_model[];
 extern const struct data_model lp64_data_model[];
 extern const struct data_model llp64_data_model[];

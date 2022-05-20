@@ -54,6 +54,18 @@ static char* lexeme_alloc(const char* lexeme)
     return strcpy(ptr, lexeme);
 }
 
+static char* lexeme_alloc_if(const char* lexeme, unsigned sz)
+{
+    size_t len = strlen(lexeme);
+    char* ptr;
+    if (len <= sz) return NULL;
+    len -= sz;
+    ptr = lexeme_alloc_size(len + 1);
+    memcpy(ptr, lexeme, len);
+    ptr[len] = '\0';
+    return ptr;
+}
+
 void lexeme_flush(void)
 {
     while (--next_lexeme >= 0) HeapFree(GetProcessHeap(), 0, local_lexemes[next_lexeme]);
@@ -100,7 +112,7 @@ HEXDIGIT   [0-9a-fA-F]
 FORMAT     [ubcdgiswxa]
 IDENTIFIER [_a-zA-Z~?][_a-zA-Z0-9~?@]*
 SCOPED_IDENTIFIER [_a-zA-Z~?][_a-zA-Z0-9~?@]*"::"
-MODULE_IDENTIFIER [_a-zA-Z~?\*][_a-zA-Z0-9~?\*@]*"!"
+MODULE_IDENTIFIER [_a-zA-Z~?\*][_a-zA-Z0-9~?\*@\.]*"!"
 PATHNAME   [\\/_a-zA-Z0-9\.~@][\\/\-_a-zA-Z0-9\.~@]*
 STRING     \"(\\[^\n]|[^\\"\n])*\"
 
@@ -231,14 +243,16 @@ STRING     \"(\\[^\n]|[^\\"\n])*\"
 <INITIAL,SHOW_CMD>directories|directorie|directori|director|directo|direct|direc|direc|dir {
 			                  BEGIN(PATH_EXPECTED); return tDIR; }
 
-char					{ return tCHAR; }
-short					{ return tSHORT; }
-int					{ return tINT; }
-long					{ return tLONG; }
-float					{ return tFLOAT; }
-double					{ return tDOUBLE; }
-unsigned				{ return tUNSIGNED; }
-signed					{ return tSIGNED; }
+{MODULE_IDENTIFIER}?void		{ dbg_lval.string = lexeme_alloc_if(yytext, 5); return tVOID; } /* return modulename if present */
+{MODULE_IDENTIFIER}?char		{ dbg_lval.string = lexeme_alloc_if(yytext, 5); return tCHAR; }
+{MODULE_IDENTIFIER}?WCHAR	        { dbg_lval.string = lexeme_alloc_if(yytext, 6); return tWCHAR; }
+{MODULE_IDENTIFIER}?short		{ dbg_lval.string = lexeme_alloc_if(yytext, 6); return tSHORT; }
+{MODULE_IDENTIFIER}?int			{ dbg_lval.string = lexeme_alloc_if(yytext, 4); return tINT; }
+{MODULE_IDENTIFIER}?long		{ dbg_lval.string = lexeme_alloc_if(yytext, 5); return tLONG; }
+{MODULE_IDENTIFIER}?float		{ dbg_lval.string = lexeme_alloc_if(yytext, 6); return tFLOAT; }
+{MODULE_IDENTIFIER}?double		{ dbg_lval.string = lexeme_alloc_if(yytext, 7); return tDOUBLE; }
+{MODULE_IDENTIFIER}?unsigned		{ dbg_lval.string = lexeme_alloc_if(yytext, 9); return tUNSIGNED; }
+{MODULE_IDENTIFIER}?signed		{ dbg_lval.string = lexeme_alloc_if(yytext, 7); return tSIGNED; }
 struct					{ return tSTRUCT; }
 union					{ return tUNION; }
 enum					{ return tENUM; }
