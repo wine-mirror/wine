@@ -66,7 +66,7 @@ static HRESULT asf_reader_query_interface(struct strmbase_filter *iface, REFIID 
     return E_NOINTERFACE;
 }
 
-static struct strmbase_filter_ops filter_ops =
+static const struct strmbase_filter_ops filter_ops =
 {
     .filter_get_pin = asf_reader_get_pin,
     .filter_destroy = asf_reader_destroy,
