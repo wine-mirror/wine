@@ -290,7 +290,7 @@ CFArrayRef create_monochrome_cursor(HDC hdc, const ICONINFOEXW *icon, int width,
     }
     xor_bits = (unsigned long*)((char*)and_bits + info->bmiHeader.biSizeImage / 2);
 
-    if (!GetDIBits(hdc, icon->hbmMask, 0, height * 2, and_bits, info, DIB_RGB_COLORS))
+    if (!NtGdiGetDIBitsInternal(hdc, icon->hbmMask, 0, height * 2, and_bits, info, DIB_RGB_COLORS, 0, 0))
     {
         WARN("GetDIBits failed\n");
         HeapFree(GetProcessHeap(), 0, and_bits);
@@ -579,7 +579,8 @@ static CFArrayRef create_color_cursor(HDC hdc, const ICONINFOEXW *iinfo, HANDLE 
     info->bmiHeader.biBitCount = 32;
     color_size = width * height * 4;
     info->bmiHeader.biSizeImage = color_size;
-    hbmColor = CreateDIBSection(hdc, info, DIB_RGB_COLORS, (VOID **) &color_bits, NULL, 0);
+    hbmColor = NtGdiCreateDIBSection(hdc, NULL, 0, info, DIB_RGB_COLORS,
+                                     0, 0, 0, (void **)&color_bits);
     if (!hbmColor)
     {
         WARN("failed to create DIB section for cursor color data\n");
@@ -597,7 +598,8 @@ static CFArrayRef create_color_cursor(HDC hdc, const ICONINFOEXW *iinfo, HANDLE 
 
     mask_size = ((width + 31) / 32 * 4) * height; /* width_bytes * height */
     info->bmiHeader.biSizeImage = mask_size;
-    hbmMask = CreateDIBSection(hdc, info, DIB_RGB_COLORS, (VOID **) &mask_bits, NULL, 0);
+    hbmMask = NtGdiCreateDIBSection(hdc, NULL, 0, info, DIB_RGB_COLORS,
+                                    0, 0, 0, (void **)&mask_bits);
     if (!hbmMask)
     {
         WARN("failed to create DIB section for cursor mask data\n");
@@ -625,8 +627,8 @@ cleanup:
     else
         TRACE("returning cursor with %d frames\n", nFrames);
     /* Cleanup all of the resources used to obtain the frame data */
-    if (hbmColor) DeleteObject(hbmColor);
-    if (hbmMask) DeleteObject(hbmMask);
+    if (hbmColor) NtGdiDeleteObjectApp(hbmColor);
+    if (hbmMask) NtGdiDeleteObjectApp(hbmMask);
     HeapFree(GetProcessHeap(), 0, info);
     return frames;
 }
@@ -748,15 +750,15 @@ void macdrv_SetCursor(HCURSOR cursor)
 
         if ((cursor_name = copy_system_cursor_name(&info)))
         {
-            DeleteObject(info.hbmColor);
-            DeleteObject(info.hbmMask);
+            NtGdiDeleteObjectApp(info.hbmColor);
+            NtGdiDeleteObjectApp(info.hbmMask);
         }
         else
         {
             BITMAP bm;
             HDC hdc;
 
-            GetObjectW(info.hbmMask, sizeof(bm), &bm);
+            NtGdiExtGetObjectW(info.hbmMask, sizeof(bm), &bm);
             if (!info.hbmColor) bm.bmHeight = max(1, bm.bmHeight / 2);
 
             /* make sure hotspot is valid */
@@ -766,18 +768,18 @@ void macdrv_SetCursor(HCURSOR cursor)
                 info.yHotspot = bm.bmHeight / 2;
             }
 
-            hdc = CreateCompatibleDC(0);
+            hdc = NtGdiCreateCompatibleDC(0);
 
             if (info.hbmColor)
             {
                 cursor_frames = create_color_cursor(hdc, &info, cursor, bm.bmWidth, bm.bmHeight);
-                DeleteObject(info.hbmColor);
+                NtGdiDeleteObjectApp(info.hbmColor);
             }
             else
                 cursor_frames = create_monochrome_cursor(hdc, &info, bm.bmWidth, bm.bmHeight);
 
-            DeleteObject(info.hbmMask);
-            DeleteDC(hdc);
+            NtGdiDeleteObjectApp(info.hbmMask);
+            NtGdiDeleteObjectApp(hdc);
         }
 
         if (cursor_name || cursor_frames)
