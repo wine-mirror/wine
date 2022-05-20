@@ -82,14 +82,14 @@ static void update_blit_data(struct macdrv_window_surface *surface)
 
     if (surface->drawn)
     {
-        HRGN blit = CreateRectRgn(0, 0, 0, 0);
+        HRGN blit = NtGdiCreateRectRgn(0, 0, 0, 0);
 
-        if (CombineRgn(blit, surface->drawn, 0, RGN_COPY) > NULLREGION &&
-            (!surface->region || CombineRgn(blit, blit, surface->region, RGN_AND) > NULLREGION) &&
+        if (NtGdiCombineRgn(blit, surface->drawn, 0, RGN_COPY) > NULLREGION &&
+            (!surface->region || NtGdiCombineRgn(blit, blit, surface->region, RGN_AND) > NULLREGION) &&
             OffsetRgn(blit, surface->header.rect.left, surface->header.rect.top) > NULLREGION)
             surface->blit_data = get_region_data(blit, 0);
 
-        DeleteObject(blit);
+        NtGdiDeleteObjectApp(blit);
     }
 }
 
@@ -148,12 +148,12 @@ static void macdrv_surface_set_region(struct window_surface *window_surface, HRG
 
     if (region)
     {
-        if (!surface->region) surface->region = CreateRectRgn(0, 0, 0, 0);
-        CombineRgn(surface->region, region, 0, RGN_COPY);
+        if (!surface->region) surface->region = NtGdiCreateRectRgn(0, 0, 0, 0);
+        NtGdiCombineRgn(surface->region, region, 0, RGN_COPY);
     }
     else
     {
-        if (surface->region) DeleteObject(surface->region);
+        if (surface->region) NtGdiDeleteObjectApp(surface->region);
         surface->region = 0;
     }
     update_blit_data(surface);
@@ -178,12 +178,14 @@ static void macdrv_surface_flush(struct window_surface *window_surface)
     rect = cgrect_from_rect(surface->bounds);
     rect = CGRectOffset(rect, surface->header.rect.left, surface->header.rect.top);
 
-    if (!IsRectEmpty(&surface->bounds) && (region = CreateRectRgnIndirect(&surface->bounds)))
+    if (!IsRectEmpty(&surface->bounds) &&
+        (region = NtGdiCreateRectRgn(surface->bounds.left, surface->bounds.top,
+                                     surface->bounds.right, surface->bounds.bottom)))
     {
         if (surface->drawn)
         {
-            CombineRgn(surface->drawn, surface->drawn, region, RGN_OR);
-            DeleteObject(region);
+            NtGdiCombineRgn(surface->drawn, surface->drawn, region, RGN_OR);
+            NtGdiDeleteObjectApp(region);
         }
         else
             surface->drawn = region;
@@ -205,8 +207,8 @@ static void macdrv_surface_destroy(struct window_surface *window_surface)
     struct macdrv_window_surface *surface = get_mac_surface(window_surface);
 
     TRACE("freeing %p bits %p\n", surface, surface->bits);
-    if (surface->region) DeleteObject(surface->region);
-    if (surface->drawn) DeleteObject(surface->drawn);
+    if (surface->region) NtGdiDeleteObjectApp(surface->region);
+    if (surface->drawn) NtGdiDeleteObjectApp(surface->drawn);
     HeapFree(GetProcessHeap(), 0, surface->blit_data);
     HeapFree(GetProcessHeap(), 0, surface->bits);
     pthread_mutex_destroy(&surface->mutex);
@@ -283,11 +285,11 @@ struct window_surface *create_surface(macdrv_window window, const RECT *rect,
     reset_bounds(&surface->bounds);
     if (old_mac_surface && old_mac_surface->drawn)
     {
-        surface->drawn = CreateRectRgnIndirect(rect);
+        surface->drawn = NtGdiCreateRectRgn(rect->left, rect->top, rect->right, rect->bottom);
         OffsetRgn(surface->drawn, -rect->left, -rect->top);
-        if (CombineRgn(surface->drawn, surface->drawn, old_mac_surface->drawn, RGN_AND) <= NULLREGION)
+        if (NtGdiCombineRgn(surface->drawn, surface->drawn, old_mac_surface->drawn, RGN_AND) <= NULLREGION)
         {
-            DeleteObject(surface->drawn);
+            NtGdiDeleteObjectApp(surface->drawn);
             surface->drawn = 0;
         }
     }
@@ -456,10 +458,10 @@ void surface_clip_to_visible_rect(struct window_surface *window_surface, const R
         rect = *visible_rect;
         OffsetRect(&rect, -rect.left, -rect.top);
 
-        if ((region = CreateRectRgnIndirect(&rect)))
+        if ((region = NtGdiCreateRectRgn(rect.left, rect.top, rect.right, rect.bottom)))
         {
-            CombineRgn(surface->drawn, surface->drawn, region, RGN_AND);
-            DeleteObject(region);
+            NtGdiCombineRgn(surface->drawn, surface->drawn, region, RGN_AND);
+            NtGdiDeleteObjectApp(region);
 
             update_blit_data(surface);
         }
