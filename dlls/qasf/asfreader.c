@@ -20,6 +20,11 @@
 
 #include "qasf_private.h"
 
+#include "mediaobj.h"
+#include "propsys.h"
+#include "initguid.h"
+#include "wmsdkidl.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
 struct asf_reader
@@ -29,6 +34,9 @@ struct asf_reader
 
     AM_MEDIA_TYPE media_type;
     WCHAR *file_name;
+
+    IWMReaderCallback *callback;
+    IWMReader *reader;
 };
 
 static inline struct asf_reader *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -47,6 +55,8 @@ static void asf_reader_destroy(struct strmbase_filter *iface)
 
     free(filter->file_name);
     FreeMediaType(&filter->media_type);
+    IWMReaderCallback_Release(filter->callback);
+    IWMReader_Release(filter->reader);
 
     strmbase_filter_cleanup(&filter->filter);
     free(filter);
@@ -102,6 +112,7 @@ static ULONG WINAPI file_source_Release(IFileSourceFilter *iface)
 static HRESULT WINAPI file_source_Load(IFileSourceFilter *iface, LPCOLESTR file_name, const AM_MEDIA_TYPE *media_type)
 {
     struct asf_reader *filter = impl_from_IFileSourceFilter(iface);
+    HRESULT hr;
 
     TRACE("filter %p, file_name %s, media_type %p.\n", filter, debugstr_w(file_name), media_type);
     strmbase_dump_media_type(media_type);
@@ -117,6 +128,9 @@ static HRESULT WINAPI file_source_Load(IFileSourceFilter *iface, LPCOLESTR file_
 
     if (media_type)
         CopyMediaType(&filter->media_type, media_type);
+
+    if (FAILED(hr = IWMReader_Open(filter->reader, filter->file_name, filter->callback, NULL)))
+        WARN("Failed to open WM reader, hr %#lx.\n", hr);
 
     return S_OK;
 }
@@ -158,12 +172,122 @@ static const IFileSourceFilterVtbl file_source_vtbl =
     file_source_GetCurFile,
 };
 
+struct asf_callback
+{
+    IWMReaderCallback IWMReaderCallback_iface;
+    LONG ref;
+
+    struct asf_reader *filter;
+};
+
+static inline struct asf_callback *impl_from_IWMReaderCallback(IWMReaderCallback *iface)
+{
+    return CONTAINING_RECORD(iface, struct asf_callback, IWMReaderCallback_iface);
+}
+
+static HRESULT WINAPI reader_callback_QueryInterface(IWMReaderCallback *iface, const IID *iid, void **out)
+{
+    struct asf_callback *callback = impl_from_IWMReaderCallback(iface);
+
+    TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown)
+            || IsEqualGUID(iid, &IID_IWMStatusCallback)
+            || IsEqualGUID(iid, &IID_IWMReaderCallback))
+        *out = &callback->IWMReaderCallback_iface;
+    else
+    {
+        *out = NULL;
+        WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static ULONG WINAPI reader_callback_AddRef(IWMReaderCallback *iface)
+{
+    struct asf_callback *callback = impl_from_IWMReaderCallback(iface);
+    ULONG ref = InterlockedIncrement(&callback->ref);
+
+    TRACE("%p increasing ref to %lu.\n", callback, ref);
+
+    return ref;
+}
+
+static ULONG WINAPI reader_callback_Release(IWMReaderCallback *iface)
+{
+    struct asf_callback *callback = impl_from_IWMReaderCallback(iface);
+    ULONG ref = InterlockedDecrement(&callback->ref);
+
+    TRACE("%p decreasing ref to %lu.\n", callback, ref);
+
+    if (!ref)
+        free(callback);
+
+    return ref;
+}
+
+static HRESULT WINAPI reader_callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS status, HRESULT hr,
+        WMT_ATTR_DATATYPE type, BYTE *value, void *context)
+{
+    FIXME("iface %p, status %d, hr %#lx, type %d, value %p, context %p stub!\n",
+            iface, status, hr, type, value, context);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI reader_callback_OnSample(IWMReaderCallback *iface, DWORD output, QWORD time,
+        QWORD duration, DWORD flags, INSSBuffer *sample, void *context)
+{
+    FIXME("iface %p, output %lu, time %I64u, duration %I64u, flags %#lx, sample %p, context %p stub!\n",
+            iface, output, time, duration, flags, sample, context);
+    return E_NOTIMPL;
+}
+
+static const IWMReaderCallbackVtbl reader_callback_vtbl =
+{
+    reader_callback_QueryInterface,
+    reader_callback_AddRef,
+    reader_callback_Release,
+    reader_callback_OnStatus,
+    reader_callback_OnSample,
+};
+
+static HRESULT asf_callback_create(struct asf_reader *filter, IWMReaderCallback **out)
+{
+    struct asf_callback *callback;
+
+    if (!(callback = calloc(1, sizeof(*callback))))
+        return E_OUTOFMEMORY;
+
+    callback->IWMReaderCallback_iface.lpVtbl = &reader_callback_vtbl;
+    callback->filter = filter;
+    callback->ref = 1;
+
+    *out = &callback->IWMReaderCallback_iface;
+    return S_OK;
+}
+
 HRESULT asf_reader_create(IUnknown *outer, IUnknown **out)
 {
     struct asf_reader *object;
+    HRESULT hr;
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
+
+    if (FAILED(hr = WMCreateReader(NULL, 0, &object->reader)))
+    {
+        free(object);
+        return hr;
+    }
+    if (FAILED(hr = asf_callback_create(object, &object->callback)))
+    {
+        IWMReader_Release(object->reader);
+        free(object);
+        return hr;
+    }
 
     strmbase_filter_init(&object->filter, outer, &CLSID_WMAsfReader, &filter_ops);
     object->IFileSourceFilter_iface.lpVtbl = &file_source_vtbl;

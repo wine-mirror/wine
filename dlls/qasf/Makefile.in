@@ -1,5 +1,5 @@
 MODULE    = qasf.dll
-IMPORTS   = strmbase dmoguids strmiids uuid ole32 oleaut32
+IMPORTS   = strmbase dmoguids strmiids uuid ole32 oleaut32 wmvcore
 
 C_SRCS = \
 	asfreader.c \
