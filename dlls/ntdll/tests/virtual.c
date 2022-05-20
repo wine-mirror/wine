@@ -264,6 +264,13 @@ static void test_NtAllocateVirtualMemory(void)
     ok(status == STATUS_SUCCESS, "NtFreeVirtualMemory failed %lx\n", status);
     ok( size == 0x10000, "wrong size %Ix\n", size );
     ok( addr2 == addr1, "wrong addr %p\n", addr2 );
+}
+
+static void test_NtAllocateVirtualMemoryEx(void)
+{
+    void *addr1, *addr2;
+    NTSTATUS status;
+    SIZE_T size;
 
     if (!pNtAllocateVirtualMemoryEx)
     {
@@ -271,17 +278,26 @@ static void test_NtAllocateVirtualMemory(void)
         return;
     }
 
-    /* simple allocation should succeed */
     size = 0x1000;
     addr1 = NULL;
     status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr1, &size, MEM_RESERVE | MEM_COMMIT,
                                         PAGE_EXECUTE_READWRITE, NULL, 0);
-    ok(status == STATUS_SUCCESS, "NtAllocateVirtualMemoryEx returned %08lx\n", status);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+
+    size = 0;
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr2, &size, MEM_RELEASE);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
 
     /* specifying a count of >0 with NULL parameters should fail */
     status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr1, &size, MEM_RESERVE | MEM_COMMIT,
                                         PAGE_EXECUTE_READWRITE, NULL, 1);
-    ok(status == STATUS_INVALID_PARAMETER, "NtAllocateVirtualMemoryEx returned %08lx\n", status);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    /* NULL process handle */
+    size = 0x1000;
+    addr1 = NULL;
+    status = pNtAllocateVirtualMemoryEx(NULL, &addr1, &size, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE, NULL, 0);
+    ok(status == STATUS_INVALID_HANDLE, "Unexpected status %08lx.\n", status);
 }
 
 struct test_stack_size_thread_args
@@ -1279,6 +1295,25 @@ static void test_syscalls(void)
     UnmapViewOfFile( ptr );
 }
 
+static void test_NtFreeVirtualMemory(void)
+{
+    NTSTATUS status;
+    void *addr1;
+    SIZE_T size;
+
+    size = 0x10000;
+    addr1 = NULL;
+    status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr1, 0, &size, MEM_RESERVE, PAGE_READWRITE);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+
+    size = 0;
+    status = NtFreeVirtualMemory(NULL, &addr1, &size, MEM_RELEASE);
+    ok(status == STATUS_INVALID_HANDLE, "Unexpected status %08lx.\n", status);
+
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr1, &size, MEM_RELEASE);
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+}
+
 START_TEST(virtual)
 {
     HMODULE mod;
@@ -1315,6 +1350,8 @@ START_TEST(virtual)
     if (!pIsWow64Process || !pIsWow64Process(NtCurrentProcess(), &is_wow64)) is_wow64 = FALSE;
 
     test_NtAllocateVirtualMemory();
+    test_NtAllocateVirtualMemoryEx();
+    test_NtFreeVirtualMemory();
     test_RtlCreateUserStack();
     test_NtMapViewOfSection();
     test_NtMapViewOfSectionEx();
