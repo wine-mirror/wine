@@ -742,8 +742,31 @@ static HRESULT Global_CByte(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
 
 static HRESULT Global_CDate(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    VARIANT v;
+    HRESULT hres;
+
+    TRACE("%s\n", debugstr_variant(arg));
+
+    assert(args_cnt == 1);
+
+    if(V_VT(arg) == VT_NULL)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = VariantChangeType(&v, arg, 0, VT_DATE);
+    if(FAILED(hres)) {
+        hres = VariantChangeType(&v, arg, 0, VT_R8);
+        if(FAILED(hres))
+            return hres;
+        hres = VariantChangeType(&v, &v, 0, VT_DATE);
+        if(FAILED(hres))
+            return hres;
+    }
+
+    if(!res)
+        return DISP_E_BADVARTYPE;
+    *res = v;
+    return S_OK;
 }
 
 static HRESULT Global_CDbl(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)

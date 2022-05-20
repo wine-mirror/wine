@@ -1183,6 +1183,39 @@ MyObject.myval = 0
 Call ok(CCur(MyObject) = 0, "CCur(MyObject) = " & CCur(MyObject))
 Call ok(getVT(CCur(MyObject)) = "VT_CY", "getVT(CCur(MyObject)) = " & getVT(CCur(MyObject)))
 
+Sub testCDateError(strings, error_num1, error_num2)
+    on error resume next
+    Dim x
+
+    Call Err.clear()
+    x = CDate(strings)
+    Call ok(Err.number = error_num1, "Err.number = " & Err.number)
+
+    Call Err.clear()
+    Call CDate(strings)
+    Call ok(Err.number = error_num2, "Err.number = " & Err.number)
+End Sub
+
+Call ok(CDate(Empty) = 0, "CDate(Empty) = " & CDate(Empty))
+Call ok(getVT(CDate(Empty)) = "VT_DATE", "getVT(CDate(Empty)) = " & getVT(CDate(Empty)))
+Call ok(CDate(0) = 0, "CDate(0) = " & CDate(0))
+Call ok(getVT(CDate(0)) = "VT_DATE", "getVT(CDate(0)) = " & getVT(CDate(0)))
+Call ok(CDate(1) = #1899-12-31#, "CDate(1) = " & CDate(1))
+Call ok(getVT(CDate(1)) = "VT_DATE", "getVT(CDate(1)) = " & getVT(CDate(1)))
+Call ok(CDate("1") = #1899-12-31#, "CDate(""1"") = " & CDate("1"))
+Call ok(getVT(CDate("1")) = "VT_DATE", "getVT(CDate(""1"")) = " & getVT(CDate("1")))
+If isEnglishLang Then
+    Call ok(CDate("1/1/2000") = #2000-1-1#, "CDate(""1/1/2000"") = " & CDate("1/1/2000"))
+    Call ok(getVT(CDate("1/1/2000")) = "VT_DATE", "getVT(CDate(""1/1/2000"")) = " & getVT(CDate("1/1/2000")))
+End If
+Call ok(CDate(-1) = #1899-12-29#, "CDate(-1) = " & CDate(-1))
+Call ok(getVT(CDate(-1)) = "VT_DATE", "getVT(CDate(-1)) = " & getVT(CDate(-1)))
+Call ok(CDate(100000) = #2173-10-14#, "CDate(100000) = " & CDate(100000))
+Call ok(getVT(CDate(100000)) = "VT_DATE", "getVT(CDate(100000)) = " & getVT(CDate(100000)))
+Call testCDateError("", 13, 13)
+Call testCDateError(null, 94, 94)
+Call testCDateError(1, 0, 458)
+
 Sub testCDblError(strings, error_num1, error_num2)
     on error resume next
     Dim x
