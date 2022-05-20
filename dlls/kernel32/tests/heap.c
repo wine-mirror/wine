@@ -44,10 +44,14 @@
 /* use function pointers to avoid warnings for invalid parameter tests */
 static LPVOID (WINAPI *pHeapAlloc)(HANDLE,DWORD,SIZE_T);
 static LPVOID (WINAPI *pHeapReAlloc)(HANDLE,DWORD,LPVOID,SIZE_T);
+static BOOL (WINAPI *pHeapFree)(HANDLE,DWORD,LPVOID);
 static BOOL (WINAPI *pGetPhysicallyInstalledSystemMemory)( ULONGLONG * );
 static BOOLEAN (WINAPI *pRtlGetUserInfoHeap)(HANDLE,ULONG,void*,void**,ULONG*);
 static BOOLEAN (WINAPI *pRtlSetUserValueHeap)(HANDLE,ULONG,void*,void*);
 static BOOLEAN (WINAPI *pRtlSetUserFlagsHeap)(HANDLE,ULONG,void*,ULONG,ULONG);
+static HGLOBAL (WINAPI *pGlobalAlloc)(UINT,SIZE_T);
+static HGLOBAL (WINAPI *pGlobalFree)(HGLOBAL);
+static HGLOBAL (WINAPI *pLocalFree)(HLOCAL);
 
 #define MAKE_FUNC(f) static typeof(f) *p ## f
 MAKE_FUNC( HeapQueryInformation );
@@ -64,10 +68,14 @@ static void load_functions(void)
 #define LOAD_FUNC(m, f) p ## f = (void *)GetProcAddress( m, #f );
     LOAD_FUNC( kernel32, HeapAlloc );
     LOAD_FUNC( kernel32, HeapReAlloc );
+    LOAD_FUNC( kernel32, HeapFree );
     LOAD_FUNC( kernel32, HeapQueryInformation );
     LOAD_FUNC( kernel32, HeapSetInformation );
     LOAD_FUNC( kernel32, GetPhysicallyInstalledSystemMemory );
+    LOAD_FUNC( kernel32, GlobalAlloc );
     LOAD_FUNC( kernel32, GlobalFlags );
+    LOAD_FUNC( kernel32, GlobalFree );
+    LOAD_FUNC( kernel32, LocalFree );
     LOAD_FUNC( ntdll, RtlGetNtGlobalFlags );
     LOAD_FUNC( ntdll, RtlGetUserInfoHeap );
     LOAD_FUNC( ntdll, RtlSetUserValueHeap );
@@ -287,7 +295,7 @@ static void test_HeapCreate(void)
     ok( !ptr1, "HeapReAlloc succeeded\n" );
     ret = HeapValidate( heap, 0, ptr );
     ok( ret, "HeapValidate failed, error %lu\n", GetLastError() );
-    ret = HeapFree( heap, 0, ptr );
+    ret = pHeapFree( heap, 0, ptr );
     ok( ret, "HeapFree failed, error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
     ret = HeapValidate( heap, 0, ptr );
@@ -1344,12 +1352,12 @@ static void test_GlobalAlloc(void)
     ok( !!mem, "GlobalReAlloc failed, error %lu\n", GetLastError() );
     size = GlobalSize( mem );
     ok( size >= 10 && size <= 16, "GlobalSize returned %Iu\n", size );
-    tmp_mem = GlobalFree( mem );
+    tmp_mem = pGlobalFree( mem );
     ok( !tmp_mem, "GlobalFree failed, error %lu\n", GetLastError() );
     size = GlobalSize( mem );
     ok( size == 0, "GlobalSize returned %Iu\n", size );
 
-    mem = GlobalAlloc( GMEM_MOVEABLE | GMEM_DISCARDABLE, 0 );
+    mem = pGlobalAlloc( GMEM_MOVEABLE | GMEM_DISCARDABLE, 0 );
     ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
     entry = mem_entry_from_HANDLE( mem );
     size = GlobalSize( mem );
@@ -1361,7 +1369,7 @@ static void test_GlobalAlloc(void)
     mem = GlobalFree( mem );
     ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
 
-    mem = GlobalAlloc( GMEM_MOVEABLE, 0 );
+    mem = pGlobalAlloc( GMEM_MOVEABLE, 0 );
     ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
     entry = mem_entry_from_HANDLE( mem );
     size = GlobalSize( mem );
@@ -1386,7 +1394,7 @@ static void test_GlobalAlloc(void)
         tmp_mem = GlobalFree( mem );
         ok( !tmp_mem, "GlobalFree failed, error %lu\n", GetLastError() );
 
-        mem = GlobalAlloc( GMEM_MOVEABLE, alloc_size );
+        mem = pGlobalAlloc( GMEM_MOVEABLE, alloc_size );
         ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
         ok( ((UINT_PTR)mem & sizeof(void *)), "got unexpected entry align\n" );
         ok( !((UINT_PTR)mem & (sizeof(void *) - 1)), "got unexpected entry align\n" );
@@ -1444,14 +1452,14 @@ static void test_GlobalAlloc(void)
         ok( !ret, "GlobalUnlock succeeded, error %lu\n", GetLastError() );
         ok( entry->flags == 0x3, "got unexpected flags %#Ix\n", entry->flags );
 
-        tmp_mem = GlobalFree( mem );
+        tmp_mem = pGlobalFree( mem );
         ok( !tmp_mem, "GlobalFree failed, error %lu\n", GetLastError() );
         ok( !!entry->flags, "got unexpected flags %#Ix\n", entry->flags );
         ok( !((UINT_PTR)entry->flags & sizeof(void *)), "got unexpected ptr align\n" );
         ok( !((UINT_PTR)entry->flags & (sizeof(void *) - 1)), "got unexpected ptr align\n" );
         ok( !entry->ptr, "got unexpected ptr %p\n", entry->ptr );
 
-        mem = GlobalAlloc( GMEM_MOVEABLE | GMEM_DISCARDABLE, 0 );
+        mem = pGlobalAlloc( GMEM_MOVEABLE | GMEM_DISCARDABLE, 0 );
         ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
         entry = mem_entry_from_HANDLE( mem );
         ok( entry->flags == 0xf, "got unexpected flags %#Ix\n", entry->flags );
@@ -1461,7 +1469,7 @@ static void test_GlobalAlloc(void)
         mem = GlobalFree( mem );
         ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
 
-        mem = GlobalAlloc( GMEM_MOVEABLE | GMEM_DISCARDABLE, 1 );
+        mem = pGlobalAlloc( GMEM_MOVEABLE | GMEM_DISCARDABLE, 1 );
         ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
         entry = mem_entry_from_HANDLE( mem );
         ok( entry->flags == 0x7, "got unexpected flags %#Ix\n", entry->flags );
@@ -1471,7 +1479,7 @@ static void test_GlobalAlloc(void)
         mem = GlobalFree( mem );
         ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
 
-        mem = GlobalAlloc( GMEM_MOVEABLE | GMEM_DISCARDABLE | GMEM_DDESHARE, 1 );
+        mem = pGlobalAlloc( GMEM_MOVEABLE | GMEM_DISCARDABLE | GMEM_DDESHARE, 1 );
         ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
         entry = mem_entry_from_HANDLE( mem );
         ok( entry->flags == 0x8007, "got unexpected flags %#Ix\n", entry->flags );
@@ -1515,12 +1523,12 @@ static void test_GlobalAlloc(void)
 
     mem = GlobalAlloc( GMEM_DDESHARE, 100 );
     ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
-    tmp_mem = GlobalFree( mem );
+    tmp_mem = pGlobalFree( mem );
     ok( !tmp_mem, "GlobalFree failed, error %lu\n", GetLastError() );
     if (sizeof(void *) != 8) /* crashes on 64-bit */
     {
         SetLastError( 0xdeadbeef );
-        tmp_mem = GlobalFree( mem );
+        tmp_mem = pGlobalFree( mem );
         ok( tmp_mem == mem, "GlobalFree succeeded\n" );
         ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
 
@@ -1533,10 +1541,10 @@ static void test_GlobalAlloc(void)
     /* freed handles are caught */
     mem = GlobalAlloc( GMEM_MOVEABLE, 256 );
     ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
-    tmp_mem = GlobalFree( mem );
+    tmp_mem = pGlobalFree( mem );
     ok( !tmp_mem, "GlobalFree failed, error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
-    tmp_mem = GlobalFree( mem );
+    tmp_mem = pGlobalFree( mem );
     ok( tmp_mem == mem, "GlobalFree succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
@@ -1567,7 +1575,7 @@ static void test_GlobalAlloc(void)
 
     /* invalid handles are caught */
     SetLastError( 0xdeadbeef );
-    tmp_mem = GlobalFree( invalid_mem );
+    tmp_mem = pGlobalFree( invalid_mem );
     ok( tmp_mem == invalid_mem, "GlobalFree succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
@@ -1594,7 +1602,7 @@ static void test_GlobalAlloc(void)
 
     /* invalid pointers are caught */
     SetLastError( 0xdeadbeef );
-    tmp_mem = GlobalFree( invalid_ptr );
+    tmp_mem = pGlobalFree( invalid_ptr );
     ok( tmp_mem == invalid_ptr, "GlobalFree succeeded\n" );
     todo_wine
     ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
@@ -1852,7 +1860,7 @@ static void test_LocalAlloc(void)
     ok( !!mem, "LocalReAlloc failed, error %lu\n", GetLastError() );
     size = LocalSize( mem );
     ok( size >= 10 && size <= 16, "LocalSize returned %Iu\n", size );
-    tmp_mem = LocalFree( mem );
+    tmp_mem = pLocalFree( mem );
     ok( !tmp_mem, "LocalFree failed, error %lu\n", GetLastError() );
     size = LocalSize( mem );
     ok( size == 0, "LocalSize returned %Iu\n", size );
@@ -1889,10 +1897,10 @@ static void test_LocalAlloc(void)
     /* freed handles are caught */
     mem = LocalAlloc( LMEM_MOVEABLE, 256 );
     ok( !!mem, "LocalAlloc failed, error %lu\n", GetLastError() );
-    tmp_mem = LocalFree( mem );
+    tmp_mem = pLocalFree( mem );
     ok( !tmp_mem, "LocalFree failed, error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
-    tmp_mem = LocalFree( mem );
+    tmp_mem = pLocalFree( mem );
     ok( tmp_mem == mem, "LocalFree succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
@@ -1922,7 +1930,7 @@ static void test_LocalAlloc(void)
 
     /* invalid handles are caught */
     SetLastError( 0xdeadbeef );
-    tmp_mem = LocalFree( invalid_mem );
+    tmp_mem = pLocalFree( invalid_mem );
     ok( tmp_mem == invalid_mem, "LocalFree succeeded\n" );
     ok( GetLastError() == ERROR_INVALID_HANDLE, "got error %lu\n", GetLastError() );
     SetLastError( 0xdeadbeef );
@@ -1948,7 +1956,7 @@ static void test_LocalAlloc(void)
 
     /* invalid pointers are caught */
     SetLastError( 0xdeadbeef );
-    tmp_mem = LocalFree( invalid_ptr );
+    tmp_mem = pLocalFree( invalid_ptr );
     ok( tmp_mem == invalid_ptr, "LocalFree succeeded\n" );
     todo_wine
     ok( GetLastError() == ERROR_NOACCESS, "got error %lu\n", GetLastError() );
@@ -2444,7 +2452,7 @@ static void test_heap_checks( DWORD flags )
     ok( p != NULL, "HeapAlloc failed\n" );
     memset( p, 0xcc, 37 );
 
-    ret = HeapFree( GetProcessHeap(), 0, p );
+    ret = pHeapFree( GetProcessHeap(), 0, p );
     ok( ret, "HeapFree failed\n" );
 
     if (flags & HEAP_FREE_CHECKING_ENABLED)
