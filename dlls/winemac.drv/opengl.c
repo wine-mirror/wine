@@ -3071,7 +3071,7 @@ static HDC macdrv_wglGetPbufferDCARB(struct wgl_pbuffer *pbuffer)
     HDC hdc;
     struct wgl_pbuffer *prev;
 
-    hdc = CreateDCA("DISPLAY", NULL, NULL, NULL);
+    hdc = NtGdiOpenDCW(NULL, NULL, NULL, 0, TRUE, NULL, NULL, NULL);
     if (!hdc) return 0;
 
     pthread_mutex_lock(&dc_pbuffers_mutex);
@@ -3932,7 +3932,7 @@ static int macdrv_wglReleasePbufferDCARB(struct wgl_pbuffer *pbuffer, HDC hdc)
 
     pthread_mutex_unlock(&dc_pbuffers_mutex);
 
-    return hdc && DeleteDC(hdc);
+    return hdc && NtGdiDeleteObjectApp(hdc);
 }
 
 
