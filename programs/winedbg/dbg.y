@@ -428,7 +428,7 @@ lvalue:
     | lvalue OP_DRF tIDENTIFIER	 { $$ = expr_alloc_pstruct($1, $3); }
     | lvalue '.' tIDENTIFIER	 { $$ = expr_alloc_struct($1, $3); }
     | lvalue '[' expr ']'	 { $$ = expr_alloc_binary_op(EXP_OP_ARR, $1, $3); }
-    | '*' expr			 { $$ = expr_alloc_unary_op(EXP_OP_FORCE_DEREF, $2); }
+    | '*' expr			 { $$ = expr_alloc_unary_op(EXP_OP_DEREF, $2); }
     ;
 
 %%

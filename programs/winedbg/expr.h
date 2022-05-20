@@ -41,4 +41,3 @@
 #define EXP_OP_ADDR		0x27
 #define EXP_OP_ARR		0x28
 #define EXP_OP_SEG		0x29
-#define EXP_OP_FORCE_DEREF	0x2a

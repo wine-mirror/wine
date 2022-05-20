@@ -600,11 +600,6 @@ struct dbg_lvalue expr_eval(struct expr* exp)
             if (!types_array_index(&exp1, 0, &rtn))
                 RaiseException(DEBUG_STATUS_BAD_TYPE, 0, 0, NULL);
             break;
-	case EXP_OP_FORCE_DEREF:
-            rtn = exp1;
-            if (exp1.in_debuggee)
-                dbg_read_memory(memory_to_linear_addr(&exp1.addr), &rtn.addr.Offset, sizeof(rtn.addr.Offset));
-            break;
 	case EXP_OP_ADDR:
             /* only do it on linear addresses */
             if (exp1.addr.Mode != AddrModeFlat)
