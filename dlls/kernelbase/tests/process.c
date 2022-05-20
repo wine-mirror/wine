@@ -142,10 +142,8 @@ static void test_VirtualAlloc2(void)
 
     size = 0x80000;
     addr = pVirtualAlloc2(NULL, NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE, NULL, 0);
-    todo_wine
     ok(!!addr, "Failed to allocate, error %lu.\n", GetLastError());
     ret = VirtualFree(addr, 0, MEM_RELEASE);
-    todo_wine
     ok(ret, "Unexpected return value %d, error %lu.\n", ret, GetLastError());
 
     /* Placeholder splitting functionality */

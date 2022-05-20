@@ -352,6 +352,7 @@ LPVOID WINAPI DECLSPEC_HOTPATCH VirtualAlloc2( HANDLE process, void *addr, SIZE_
 {
     LPVOID ret = addr;
 
+    if (!process) process = GetCurrentProcess();
     if (!set_ntstatus( NtAllocateVirtualMemoryEx( process, &ret, &size, type, protect, parameters, count )))
         return NULL;
     return ret;
