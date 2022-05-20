@@ -91,11 +91,15 @@ dbg_lgint_t types_extract_as_lgint(const struct dbg_lvalue* lvalue,
         switch (bt)
         {
         case btChar:
+        case btWChar:
+        case btBool:
         case btInt:
+        case btLong:
             if (!memory_fetch_integer(lvalue, (unsigned)size, s = TRUE, &rtn))
                 RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
             break;
         case btUInt:
+        case btULong:
             if (!memory_fetch_integer(lvalue, (unsigned)size, s = FALSE, &rtn))
                 RaiseException(DEBUG_STATUS_INTERNAL_ERROR, 0, 0, NULL);
             break;
