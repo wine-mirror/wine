@@ -390,7 +390,7 @@ HRESULT WINAPI async_inspectable_handler_Invoke( IAsyncOperationCompletedHandler
     return S_OK;
 }
 
-static const struct IAsyncOperationCompletedHandler_IInspectableVtbl asnyc_inspectable_handler_vtbl =
+static const struct IAsyncOperationCompletedHandler_IInspectableVtbl async_inspectable_handler_vtbl =
 {
     /* IUnknown methods */
     async_inspectable_handler_QueryInterface,
@@ -402,7 +402,7 @@ static const struct IAsyncOperationCompletedHandler_IInspectableVtbl asnyc_inspe
 
 static HRESULT WINAPI async_inspectable_handler_create_static( struct async_inspectable_handler *impl, const GUID *iid )
 {
-    impl->IAsyncOperationCompletedHandler_IInspectable_iface.lpVtbl = &asnyc_inspectable_handler_vtbl;
+    impl->IAsyncOperationCompletedHandler_IInspectable_iface.lpVtbl = &async_inspectable_handler_vtbl;
     impl->iid = iid;
     impl->ref = 1;
 
@@ -425,8 +425,8 @@ static void await_async_inspectable_( unsigned int line, IAsyncOperation_IInspec
     CloseHandle(handler->event_finished);
 }
 
-#define check_async_info(obj, exp_id, exp_status, exp_hr) check_asnyc_info_(__LINE__, obj, exp_id, exp_status, exp_hr)
-static void check_asnyc_info_( unsigned int line, IInspectable *async_obj, UINT32 expect_id, AsyncStatus expect_status, HRESULT expect_hr)
+#define check_async_info(obj, exp_id, exp_status, exp_hr) check_async_info_(__LINE__, obj, exp_id, exp_status, exp_hr)
+static void check_async_info_( unsigned int line, IInspectable *async_obj, UINT32 expect_id, AsyncStatus expect_status, HRESULT expect_hr)
 {
     IAsyncInfo *async_info;
     AsyncStatus async_status;
