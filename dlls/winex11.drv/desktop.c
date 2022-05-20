@@ -83,6 +83,39 @@ static struct screen_size {
 #define _NET_WM_STATE_REMOVE 0
 #define _NET_WM_STATE_ADD 1
 
+/* parse the desktop size specification */
+static BOOL parse_size( const WCHAR *size, unsigned int *width, unsigned int *height )
+{
+    WCHAR *end;
+
+    *width = wcstoul( size, &end, 10 );
+    if (end == size) return FALSE;
+    if (*end != 'x') return FALSE;
+    size = end + 1;
+    *height = wcstoul( size, &end, 10 );
+    return !*end;
+}
+
+/* retrieve the default desktop size from the registry */
+static BOOL get_default_desktop_size( unsigned int *width, unsigned int *height )
+{
+    static const WCHAR defaultW[] = {'D','e','f','a','u','l','t',0};
+    WCHAR buffer[4096];
+    KEY_VALUE_PARTIAL_INFORMATION *value = (void *)buffer;
+    DWORD size;
+    HKEY hkey;
+
+    /* @@ Wine registry key: HKCU\Software\Wine\Explorer\Desktops */
+    if (!(hkey = open_hkcu_key( "Software\\Wine\\Explorer\\Desktops" ))) return FALSE;
+
+    size = query_reg_value( hkey, defaultW, value, sizeof(buffer) );
+    NtClose( hkey );
+    if (!size || value->Type != REG_SZ) return FALSE;
+
+    if (!parse_size( (const WCHAR *)value->Data, width, height )) return FALSE;
+    return TRUE;
+}
+
 /* Return TRUE if Wine is currently in virtual desktop mode */
 BOOL is_virtual_desktop(void)
 {
@@ -118,12 +151,13 @@ static BOOL X11DRV_desktop_get_modes( ULONG_PTR id, DWORD flags, DEVMODEW **new_
 {
     UINT depth_idx, size_idx, mode_idx = 0;
     UINT screen_width, screen_height;
-    RECT primary_rect;
     DEVMODEW *modes;
 
-    primary_rect = NtUserGetPrimaryMonitorRect();
-    screen_width = primary_rect.right - primary_rect.left;
-    screen_height = primary_rect.bottom - primary_rect.top;
+    if (!get_default_desktop_size( &screen_width, &screen_height ))
+    {
+        screen_width = max_width;
+        screen_height = max_height;
+    }
 
     /* Allocate memory for modes in different color depths */
     if (!(modes = calloc( (ARRAY_SIZE(screen_sizes) + 2) * DEPTH_COUNT, sizeof(*modes))) )
