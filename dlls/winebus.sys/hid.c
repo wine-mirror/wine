@@ -1453,6 +1453,17 @@ BOOL hid_device_set_hatswitch_y(struct unix_device *iface, ULONG index, LONG new
     return TRUE;
 }
 
+BOOL hid_device_move_hatswitch(struct unix_device *iface, ULONG index, LONG x, LONG y)
+{
+    struct hid_device_state *state = &iface->hid_device_state;
+    ULONG offset = state->hatswitch_start + index;
+    LONG old_x, old_y;
+    if (index > state->hatswitch_count) return FALSE;
+    hatswitch_decompose(state->report_buf[offset], &old_x, &old_y);
+    hatswitch_compose(old_x + x, old_y + y, &state->report_buf[offset]);
+    return TRUE;
+}
+
 BOOL hid_device_sync_report(struct unix_device *iface)
 {
     BOOL dropped;
