@@ -26,9 +26,6 @@
 #include "config.h"
 #include <stdlib.h>
 
-#define NONAMELESSUNION
-#define NONAMELESSSTRUCT
-
 #include "x11drv.h"
 
 #include "windef.h"
@@ -114,11 +111,11 @@ static BOOL nores_get_modes(ULONG_PTR id, DWORD flags, DEVMODEW **new_modes, UIN
     modes[0].dmDriverExtra = 0;
     modes[0].dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT |
                         DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY;
-    modes[0].u1.s2.dmDisplayOrientation = DMDO_DEFAULT;
+    modes[0].dmDisplayOrientation = DMDO_DEFAULT;
     modes[0].dmBitsPerPel = screen_bpp;
     modes[0].dmPelsWidth = primary.right;
     modes[0].dmPelsHeight = primary.bottom;
-    modes[0].u2.dmDisplayFlags = 0;
+    modes[0].dmDisplayFlags = 0;
     modes[0].dmDisplayFrequency = 60;
 
     *new_modes = modes;
@@ -137,10 +134,10 @@ static BOOL nores_get_current_mode(ULONG_PTR id, DEVMODEW *mode)
 
     mode->dmFields = DM_DISPLAYORIENTATION | DM_BITSPERPEL | DM_PELSWIDTH | DM_PELSHEIGHT |
                      DM_DISPLAYFLAGS | DM_DISPLAYFREQUENCY | DM_POSITION;
-    mode->u1.s2.dmDisplayOrientation = DMDO_DEFAULT;
-    mode->u2.dmDisplayFlags = 0;
-    mode->u1.s2.dmPosition.x = 0;
-    mode->u1.s2.dmPosition.y = 0;
+    mode->dmDisplayOrientation = DMDO_DEFAULT;
+    mode->dmDisplayFlags = 0;
+    mode->dmPosition.x = 0;
+    mode->dmPosition.y = 0;
 
     if (id != 1)
     {
@@ -207,7 +204,7 @@ void init_registry_display_settings(void)
 
         TRACE("Device %s current display mode %ux%u %ubits %uHz at %d,%d.\n",
               wine_dbgstr_w(dd.DeviceName), dm.dmPelsWidth, dm.dmPelsHeight, dm.dmBitsPerPel,
-              dm.dmDisplayFrequency, dm.u1.s2.dmPosition.x, dm.u1.s2.dmPosition.y);
+              dm.dmDisplayFrequency, dm.dmPosition.x, dm.dmPosition.y);
 
         ret = NtUserChangeDisplaySettings( &device_name, &dm, NULL,
                                            CDS_GLOBAL | CDS_NORESET | CDS_UPDATEREGISTRY, NULL );
@@ -303,14 +300,14 @@ static BOOL read_registry_settings(const WCHAR *device_name, DEVMODEW *dm)
     dm->dmFields |= DM_PELSHEIGHT;
     ret &= query_display_setting( hkey, "DefaultSettings.VRefresh", &dm->dmDisplayFrequency );
     dm->dmFields |= DM_DISPLAYFREQUENCY;
-    ret &= query_display_setting( hkey, "DefaultSettings.Flags", &dm->u2.dmDisplayFlags );
+    ret &= query_display_setting( hkey, "DefaultSettings.Flags", &dm->dmDisplayFlags );
     dm->dmFields |= DM_DISPLAYFLAGS;
-    ret &= query_display_setting( hkey, "DefaultSettings.XPanning", (DWORD *)&dm->u1.s2.dmPosition.x );
-    ret &= query_display_setting( hkey, "DefaultSettings.YPanning", (DWORD *)&dm->u1.s2.dmPosition.y );
+    ret &= query_display_setting( hkey, "DefaultSettings.XPanning", (DWORD *)&dm->dmPosition.x );
+    ret &= query_display_setting( hkey, "DefaultSettings.YPanning", (DWORD *)&dm->dmPosition.y );
     dm->dmFields |= DM_POSITION;
-    ret &= query_display_setting( hkey, "DefaultSettings.Orientation", &dm->u1.s2.dmDisplayOrientation );
+    ret &= query_display_setting( hkey, "DefaultSettings.Orientation", &dm->dmDisplayOrientation );
     dm->dmFields |= DM_DISPLAYORIENTATION;
-    ret &= query_display_setting( hkey, "DefaultSettings.FixedOutput", &dm->u1.s2.dmDisplayFixedOutput );
+    ret &= query_display_setting( hkey, "DefaultSettings.FixedOutput", &dm->dmDisplayFixedOutput );
 
     NtClose( hkey );
     release_display_device_init_mutex(mutex);
@@ -341,11 +338,11 @@ static BOOL write_registry_settings(const WCHAR *device_name, const DEVMODEW *dm
     ret &= set_setting_value( hkey, "DefaultSettings.XResolution", dm->dmPelsWidth );
     ret &= set_setting_value( hkey, "DefaultSettings.YResolution", dm->dmPelsHeight );
     ret &= set_setting_value( hkey, "DefaultSettings.VRefresh", dm->dmDisplayFrequency );
-    ret &= set_setting_value( hkey, "DefaultSettings.Flags", dm->u2.dmDisplayFlags );
-    ret &= set_setting_value( hkey, "DefaultSettings.XPanning", dm->u1.s2.dmPosition.x );
-    ret &= set_setting_value( hkey, "DefaultSettings.YPanning", dm->u1.s2.dmPosition.y );
-    ret &= set_setting_value( hkey, "DefaultSettings.Orientation", dm->u1.s2.dmDisplayOrientation );
-    ret &= set_setting_value( hkey, "DefaultSettings.FixedOutput", dm->u1.s2.dmDisplayFixedOutput );
+    ret &= set_setting_value( hkey, "DefaultSettings.Flags", dm->dmDisplayFlags );
+    ret &= set_setting_value( hkey, "DefaultSettings.XPanning", dm->dmPosition.x );
+    ret &= set_setting_value( hkey, "DefaultSettings.YPanning", dm->dmPosition.y );
+    ret &= set_setting_value( hkey, "DefaultSettings.Orientation", dm->dmDisplayOrientation );
+    ret &= set_setting_value( hkey, "DefaultSettings.FixedOutput", dm->dmDisplayFixedOutput );
 
     NtClose( hkey );
     release_display_device_init_mutex(mutex);
@@ -376,7 +373,7 @@ static int mode_compare(const void *p1, const void *p2)
     const DEVMODEW *a = p1, *b = p2;
 
     /* Use the width and height in landscape mode for comparison */
-    if (a->u1.s2.dmDisplayOrientation == DMDO_DEFAULT || a->u1.s2.dmDisplayOrientation == DMDO_180)
+    if (a->dmDisplayOrientation == DMDO_DEFAULT || a->dmDisplayOrientation == DMDO_180)
     {
         a_width = a->dmPelsWidth;
         a_height = a->dmPelsHeight;
@@ -387,7 +384,7 @@ static int mode_compare(const void *p1, const void *p2)
         a_height = a->dmPelsWidth;
     }
 
-    if (b->u1.s2.dmDisplayOrientation == DMDO_DEFAULT || b->u1.s2.dmDisplayOrientation == DMDO_180)
+    if (b->dmDisplayOrientation == DMDO_DEFAULT || b->dmDisplayOrientation == DMDO_180)
     {
         b_width = b->dmPelsWidth;
         b_height = b->dmPelsHeight;
@@ -415,7 +412,7 @@ static int mode_compare(const void *p1, const void *p2)
         return b->dmDisplayFrequency - a->dmDisplayFrequency;
 
     /* Orientation in ascending order */
-    return a->u1.s2.dmDisplayOrientation - b->u1.s2.dmDisplayOrientation;
+    return a->dmDisplayOrientation - b->dmDisplayOrientation;
 }
 
 static void set_display_depth(ULONG_PTR display_id, DWORD depth)
@@ -585,7 +582,7 @@ static DEVMODEW *get_full_mode(ULONG_PTR id, DEVMODEW *dev_mode)
             dev_mode->dmDisplayFrequency != found_mode->dmDisplayFrequency)
             continue;
         if (dev_mode->dmFields & DM_DISPLAYORIENTATION &&
-            found_mode->u1.s2.dmDisplayOrientation != dev_mode->u1.s2.dmDisplayOrientation)
+            found_mode->dmDisplayOrientation != dev_mode->dmDisplayOrientation)
             continue;
 
         break;
@@ -607,7 +604,7 @@ static DEVMODEW *get_full_mode(ULONG_PTR id, DEVMODEW *dev_mode)
     settings_handler.free_modes(modes);
 
     full_mode->dmFields |= DM_POSITION;
-    full_mode->u1.s2.dmPosition = dev_mode->u1.s2.dmPosition;
+    full_mode->dmPosition = dev_mode->dmPosition;
     return full_mode;
 }
 
@@ -668,7 +665,7 @@ static LONG get_display_settings(struct x11drv_display_setting **new_displays,
                     goto done;
 
                 displays[display_idx].desired_mode.dmFields |= DM_POSITION;
-                displays[display_idx].desired_mode.u1.s2.dmPosition = current_mode.u1.s2.dmPosition;
+                displays[display_idx].desired_mode.dmPosition = current_mode.dmPosition;
             }
         }
         else
@@ -682,10 +679,10 @@ static LONG get_display_settings(struct x11drv_display_setting **new_displays,
         }
 
         SetRect(&displays[display_idx].desired_rect,
-                displays[display_idx].desired_mode.u1.s2.dmPosition.x,
-                displays[display_idx].desired_mode.u1.s2.dmPosition.y,
-                displays[display_idx].desired_mode.u1.s2.dmPosition.x + displays[display_idx].desired_mode.dmPelsWidth,
-                displays[display_idx].desired_mode.u1.s2.dmPosition.y + displays[display_idx].desired_mode.dmPelsHeight);
+                displays[display_idx].desired_mode.dmPosition.x,
+                displays[display_idx].desired_mode.dmPosition.y,
+                displays[display_idx].desired_mode.dmPosition.x + displays[display_idx].desired_mode.dmPelsWidth,
+                displays[display_idx].desired_mode.dmPosition.y + displays[display_idx].desired_mode.dmPelsHeight);
         lstrcpyW(displays[display_idx].desired_mode.dmDeviceName, display_device.DeviceName);
     }
 
@@ -871,8 +868,8 @@ static void place_all_displays(struct x11drv_display_setting *displays, INT disp
 
     for (display_idx = 0; display_idx < display_count; ++display_idx)
     {
-        displays[display_idx].desired_mode.u1.s2.dmPosition.x = displays[display_idx].new_rect.left;
-        displays[display_idx].desired_mode.u1.s2.dmPosition.y = displays[display_idx].new_rect.top;
+        displays[display_idx].desired_mode.dmPosition.x = displays[display_idx].new_rect.left;
+        displays[display_idx].desired_mode.dmPosition.y = displays[display_idx].new_rect.top;
         left_most = min(left_most, displays[display_idx].new_rect.left);
         top_most = min(top_most, displays[display_idx].new_rect.top);
     }
@@ -880,8 +877,8 @@ static void place_all_displays(struct x11drv_display_setting *displays, INT disp
     /* Convert virtual screen coordinates to root coordinates */
     for (display_idx = 0; display_idx < display_count; ++display_idx)
     {
-        displays[display_idx].desired_mode.u1.s2.dmPosition.x -= left_most;
-        displays[display_idx].desired_mode.u1.s2.dmPosition.y -= top_most;
+        displays[display_idx].desired_mode.dmPosition.x -= left_most;
+        displays[display_idx].desired_mode.dmPosition.y -= top_most;
     }
 }
 
@@ -905,9 +902,9 @@ static LONG apply_display_settings(struct x11drv_display_setting *displays, INT 
         TRACE("handler:%s changing %s to position:(%d,%d) resolution:%ux%u frequency:%uHz "
               "depth:%ubits orientation:%#x.\n", settings_handler.name,
               wine_dbgstr_w(displays[display_idx].desired_mode.dmDeviceName),
-              full_mode->u1.s2.dmPosition.x, full_mode->u1.s2.dmPosition.y, full_mode->dmPelsWidth,
+              full_mode->dmPosition.x, full_mode->dmPosition.y, full_mode->dmPelsWidth,
               full_mode->dmPelsHeight, full_mode->dmDisplayFrequency, full_mode->dmBitsPerPel,
-              full_mode->u1.s2.dmDisplayOrientation);
+              full_mode->dmDisplayOrientation);
 
         ret = settings_handler.set_current_mode(displays[display_idx].id, full_mode);
         if (attached_mode && ret == DISP_CHANGE_SUCCESSFUL)
