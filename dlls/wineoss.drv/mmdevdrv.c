@@ -399,7 +399,7 @@ HRESULT WINAPI AUDDRV_GetEndpointIDs(EDataFlow flow, WCHAR ***ids_out, GUID **gu
         ids[i] = HeapAlloc(GetProcessHeap(), 0, name_size);
         oss_dev = HeapAlloc(GetProcessHeap(), 0, offsetof(OSSDevice, devnode[dev_size]));
         if(!ids[i] || !oss_dev){
-            HeapFree(GetProcessHeap, 0, oss_dev);
+            HeapFree(GetProcessHeap(), 0, oss_dev);
             params.result = E_OUTOFMEMORY;
             goto end;
         }
