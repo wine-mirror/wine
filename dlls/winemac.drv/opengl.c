@@ -1330,7 +1330,7 @@ static int get_dc_pixel_format(HDC hdc)
     int format;
     HWND hwnd;
 
-    if ((hwnd = WindowFromDC(hdc)))
+    if ((hwnd = NtUserWindowFromDC(hdc)))
     {
         struct macdrv_win_data *data;
 
@@ -1526,12 +1526,12 @@ static BOOL set_pixel_format(HDC hdc, int fmt, BOOL allow_reset)
 {
     struct macdrv_win_data *data;
     const pixel_format *pf;
-    HWND hwnd = WindowFromDC(hdc);
+    HWND hwnd = NtUserWindowFromDC(hdc);
     BOOL ret = FALSE;
 
     TRACE("hdc %p format %d\n", hdc, fmt);
 
-    if (!hwnd || hwnd == GetDesktopWindow())
+    if (!hwnd || hwnd == NtUserGetDesktopWindow())
     {
         WARN("not a proper window DC %p/%p\n", hdc, hwnd);
         return FALSE;
@@ -3485,7 +3485,7 @@ static BOOL macdrv_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc, struct w
         return TRUE;
     }
 
-    if ((hwnd = WindowFromDC(draw_hdc)))
+    if ((hwnd = NtUserWindowFromDC(draw_hdc)))
     {
         if (!(data = get_win_data(hwnd)))
         {
@@ -3555,7 +3555,7 @@ static BOOL macdrv_wglMakeContextCurrentARB(HDC draw_hdc, HDC read_hdc, struct w
     context->read_pbuffer = NULL;
     if (read_hdc && read_hdc != draw_hdc)
     {
-        if ((hwnd = WindowFromDC(read_hdc)))
+        if ((hwnd = NtUserWindowFromDC(read_hdc)))
         {
             if ((data = get_win_data(hwnd)))
             {
@@ -4543,7 +4543,7 @@ static BOOL WINAPI macdrv_wglSwapBuffers(HDC hdc)
         sync_context(context);
     }
 
-    if ((hwnd = WindowFromDC(hdc)))
+    if ((hwnd = NtUserWindowFromDC(hdc)))
     {
         struct macdrv_win_data *data;
 
