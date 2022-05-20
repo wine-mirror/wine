@@ -198,8 +198,29 @@ static const struct strmbase_filter_ops filter_ops =
 static HRESULT WINAPI asf_reader_DecideBufferSize(struct strmbase_source *iface,
         IMemAllocator *allocator, ALLOCATOR_PROPERTIES *req_props)
 {
-    FIXME("iface %p, allocator %p, req_props %p stub!\n", iface, allocator, req_props);
-    return E_NOTIMPL;
+    struct asf_stream *stream = impl_from_strmbase_pin(&iface->pin);
+    unsigned int buffer_size = 16384;
+    ALLOCATOR_PROPERTIES ret_props;
+
+    TRACE("iface %p, allocator %p, req_props %p.\n", iface, allocator, req_props);
+
+    if (IsEqualGUID(&stream->source.pin.mt.formattype, &FORMAT_VideoInfo))
+    {
+        VIDEOINFOHEADER *format = (VIDEOINFOHEADER *)stream->source.pin.mt.pbFormat;
+        buffer_size = format->bmiHeader.biSizeImage;
+    }
+    else if (IsEqualGUID(&stream->source.pin.mt.formattype, &FORMAT_WaveFormatEx)
+            && (IsEqualGUID(&stream->source.pin.mt.subtype, &MEDIASUBTYPE_PCM)
+            || IsEqualGUID(&stream->source.pin.mt.subtype, &MEDIASUBTYPE_IEEE_FLOAT)))
+    {
+        WAVEFORMATEX *format = (WAVEFORMATEX *)stream->source.pin.mt.pbFormat;
+        buffer_size = format->nAvgBytesPerSec;
+    }
+
+    req_props->cBuffers = max(req_props->cBuffers, 1);
+    req_props->cbBuffer = max(req_props->cbBuffer, buffer_size);
+    req_props->cbAlign = max(req_props->cbAlign, 1);
+    return IMemAllocator_SetProperties(allocator, req_props, &ret_props);
 }
 
 static const struct strmbase_source_ops source_ops =
