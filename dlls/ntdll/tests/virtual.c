@@ -264,6 +264,12 @@ static void test_NtAllocateVirtualMemory(void)
     ok(status == STATUS_SUCCESS, "NtFreeVirtualMemory failed %lx\n", status);
     ok( size == 0x10000, "wrong size %Ix\n", size );
     ok( addr2 == addr1, "wrong addr %p\n", addr2 );
+
+    /* Placeholder functionality */
+    size = 0x10000;
+    addr1 = NULL;
+    status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr1, 0, &size, MEM_RESERVE | MEM_RESERVE_PLACEHOLDER, PAGE_NOACCESS);
+    ok(!!status, "Unexpected status %08lx.\n", status);
 }
 
 static void test_NtAllocateVirtualMemoryEx(void)
@@ -298,6 +304,24 @@ static void test_NtAllocateVirtualMemoryEx(void)
     addr1 = NULL;
     status = pNtAllocateVirtualMemoryEx(NULL, &addr1, &size, MEM_RESERVE | MEM_COMMIT, PAGE_EXECUTE_READWRITE, NULL, 0);
     ok(status == STATUS_INVALID_HANDLE, "Unexpected status %08lx.\n", status);
+
+    /* Placeholder functionality */
+    size = 0x10000;
+    addr1 = NULL;
+    status = NtAllocateVirtualMemory(NtCurrentProcess(), &addr1, 0, &size, MEM_RESERVE | MEM_RESERVE_PLACEHOLDER, PAGE_NOACCESS);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %08lx.\n", status);
+
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr1, &size, MEM_RESERVE | MEM_RESERVE_PLACEHOLDER,
+            PAGE_NOACCESS, NULL, 0);
+    todo_wine
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+
+    if (addr1)
+    {
+        size = 0;
+        status = NtFreeVirtualMemory(NtCurrentProcess(), &addr1, &size, MEM_RELEASE);
+        ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    }
 }
 
 struct test_stack_size_thread_args
