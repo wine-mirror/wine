@@ -33,6 +33,7 @@
 static BOOL (WINAPI *pCompareObjectHandles)(HANDLE, HANDLE);
 static LPVOID (WINAPI *pMapViewOfFile3)(HANDLE, HANDLE, PVOID, ULONG64 offset, SIZE_T size,
         ULONG, ULONG, MEM_EXTENDED_PARAMETER *, ULONG);
+static LPVOID (WINAPI *pVirtualAlloc2)(HANDLE, void *, SIZE_T, DWORD, DWORD, MEM_EXTENDED_PARAMETER *, ULONG);
 
 static void test_CompareObjectHandles(void)
 {
@@ -125,6 +126,76 @@ static void test_MapViewOfFile3(void)
     ok(ret, "Failed to delete a test file.\n");
 }
 
+static void test_VirtualAlloc2(void)
+{
+    void *placeholder1, *placeholder2, *view1, *view2, *addr;
+    MEMORY_BASIC_INFORMATION info;
+    HANDLE section;
+    SIZE_T size;
+    BOOL ret;
+
+    if (!pVirtualAlloc2)
+    {
+        win_skip("VirtualAlloc2() is not supported.\n");
+        return;
+    }
+
+    size = 0x80000;
+    addr = pVirtualAlloc2(NULL, NULL, size, MEM_COMMIT, PAGE_EXECUTE_READWRITE, NULL, 0);
+    todo_wine
+    ok(!!addr, "Failed to allocate, error %lu.\n", GetLastError());
+    ret = VirtualFree(addr, 0, MEM_RELEASE);
+    todo_wine
+    ok(ret, "Unexpected return value %d, error %lu.\n", ret, GetLastError());
+
+    /* Placeholder splitting functionality */
+    placeholder1 = pVirtualAlloc2(NULL, NULL, 2 * size, MEM_RESERVE_PLACEHOLDER | MEM_RESERVE, PAGE_NOACCESS, NULL, 0);
+    todo_wine
+    ok(!!placeholder1, "Failed to create a placeholder range.\n");
+    if (!placeholder1) return;
+
+    memset(&info, 0, sizeof(info));
+    VirtualQuery(placeholder1, &info, sizeof(info));
+    ok(info.AllocationProtect == PAGE_NOACCESS, "Unexpected protection %#lx.\n", info.AllocationProtect);
+    ok(info.State == MEM_RESERVE, "Unexpected state %#lx.\n", info.State);
+    ok(info.Type == MEM_PRIVATE, "Unexpected type %#lx.\n", info.Type);
+    ok(info.RegionSize == 2 * size, "Unexpected size.\n");
+
+    ret = VirtualFree(placeholder1, size, MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER);
+    ok(ret, "Failed to split placeholder.\n");
+
+    memset(&info, 0, sizeof(info));
+    VirtualQuery(placeholder1, &info, sizeof(info));
+    ok(info.AllocationProtect == PAGE_NOACCESS, "Unexpected protection %#lx.\n", info.AllocationProtect);
+    ok(info.State == MEM_RESERVE, "Unexpected state %#lx.\n", info.State);
+    ok(info.Type == MEM_PRIVATE, "Unexpected type %#lx.\n", info.Type);
+    ok(info.RegionSize == size, "Unexpected size.\n");
+
+    placeholder2 = (void *)((BYTE *)placeholder1 + size);
+    memset(&info, 0, sizeof(info));
+    VirtualQuery(placeholder2, &info, sizeof(info));
+    ok(info.AllocationProtect == PAGE_NOACCESS, "Unexpected protection %#lx.\n", info.AllocationProtect);
+    ok(info.State == MEM_RESERVE, "Unexpected state %#lx.\n", info.State);
+    ok(info.Type == MEM_PRIVATE, "Unexpected type %#lx.\n", info.Type);
+    ok(info.RegionSize == size, "Unexpected size.\n");
+
+    section = CreateFileMappingW(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, size, NULL);
+    ok(!!section, "Failed to create a section.\n");
+
+    view1 = pMapViewOfFile3(section, NULL, placeholder1, 0, size, MEM_REPLACE_PLACEHOLDER, PAGE_READWRITE, NULL, 0);
+    ok(!!view1, "Failed to map a section.\n");
+
+    view2 = pMapViewOfFile3(section, NULL, placeholder2, 0, size, MEM_REPLACE_PLACEHOLDER, PAGE_READWRITE, NULL, 0);
+    ok(!!view2, "Failed to map a section.\n");
+
+    CloseHandle(section);
+    UnmapViewOfFile(view1);
+    UnmapViewOfFile(view2);
+
+    VirtualFree(placeholder1, 0, MEM_RELEASE);
+    VirtualFree(placeholder2, 0, MEM_RELEASE);
+}
+
 START_TEST(process)
 {
     HMODULE hmod;
@@ -136,7 +207,9 @@ START_TEST(process)
     hmod = GetModuleHandleA("kernelbase.dll");
     pCompareObjectHandles = (void *)GetProcAddress(hmod, "CompareObjectHandles");
     pMapViewOfFile3 = (void *)GetProcAddress(hmod, "MapViewOfFile3");
+    pVirtualAlloc2 = (void *)GetProcAddress(hmod, "VirtualAlloc2");
 
     test_CompareObjectHandles();
     test_MapViewOfFile3();
+    test_VirtualAlloc2();
 }
