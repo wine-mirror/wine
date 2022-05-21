@@ -271,6 +271,11 @@ static inline SIZE_T subheap_size( const SUBHEAP *subheap )
     return subheap->size;
 }
 
+static inline SIZE_T subheap_overhead( const SUBHEAP *subheap )
+{
+    return subheap->headerSize;
+}
+
 static inline const void *subheap_commit_end( const SUBHEAP *subheap )
 {
     return (char *)subheap_base( subheap ) + subheap->commitSize;
@@ -499,7 +504,7 @@ static void heap_dump( const HEAP *heap )
 
         if (!check_subheap( subheap )) return;
 
-        overhead += (char *)first_block( subheap ) - base;
+        overhead += subheap_overhead( subheap );
         for (block = first_block( subheap ); block; block = next_block( subheap, block ))
         {
             if (block_get_flags( block ) & ARENA_FLAG_FREE)
@@ -1008,7 +1013,7 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
 
     /* Create the first free block */
 
-    create_free_block( subheap, first_block( subheap ), subheap->size - subheap->headerSize );
+    create_free_block( subheap, first_block( subheap ), subheap_size( subheap ) - subheap_overhead( subheap ) );
 
     return subheap;
 }
@@ -1863,7 +1868,7 @@ static NTSTATUS heap_walk( const HEAP *heap, struct rtl_heap_entry *entry )
         subheap = LIST_ENTRY( next, SUBHEAP, entry );
         base = subheap_base( subheap );
         entry->lpData = base;
-        entry->cbData = (char *)first_block( subheap ) - base;
+        entry->cbData = subheap_overhead( subheap );
         entry->cbOverhead = 0;
         entry->iRegionIndex = 0;
         entry->wFlags = RTL_HEAP_ENTRY_REGION;
