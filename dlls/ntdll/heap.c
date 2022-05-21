@@ -691,45 +691,40 @@ static inline BOOL HEAP_Decommit( SUBHEAP *subheap, void *ptr )
 
 static void create_free_block( SUBHEAP *subheap, struct block *block, SIZE_T block_size )
 {
+    const char *end = (char *)block + block_size, *commit_end = subheap_commit_end( subheap );
     struct entry *entry = (struct entry *)block;
     HEAP *heap = subheap->heap;
     DWORD flags = heap->flags;
-    char *end;
-    BOOL last;
+    struct block *next;
 
     mark_block_uninitialized( block, sizeof(*entry) );
     block_set_type( block, ARENA_FREE_MAGIC );
+    block_set_size( block, ARENA_FLAG_FREE, block_size );
 
     /* If debugging, erase the freed block content */
 
-    end = (char *)block + block_size;
-    if (end > (char *)subheap->base + subheap->commitSize)
-        end = (char *)subheap->base + subheap->commitSize;
+    if (end > commit_end) end = commit_end;
     if (end > (char *)(entry + 1)) mark_block_free( entry + 1, end - (char *)(entry + 1), flags );
 
-    if (((char *)block + block_size < (char *)subheap->base + subheap->size) &&
-        (*(DWORD *)((char *)block + block_size) & ARENA_FLAG_FREE))
+    if ((next = next_block( subheap, block )) && (block_get_flags( next ) & ARENA_FLAG_FREE))
     {
         /* merge with the next block if it is free */
-        struct entry *next_entry = (struct entry *)((char *)block + block_size);
+        struct entry *next_entry = (struct entry *)next;
         list_remove( &next_entry->entry );
-        block_size += (next_entry->size & ARENA_SIZE_MASK) + sizeof(*next_entry);
-        mark_block_free( next_entry, sizeof(struct entry), flags );
+        block_size += block_get_size( next );
+        block_set_size( block, ARENA_FLAG_FREE, block_size );
+        mark_block_free( next_entry, sizeof(*next_entry), flags );
     }
 
-
-    last = ((char *)block + block_size >= (char *)subheap->base + subheap->size);
-    if (!last)
+    if ((next = next_block( subheap, block )))
     {
         /* set the next block PREV_FREE flag and back pointer */
-        DWORD *next = (DWORD *)((char *)block + block_size);
-        *next |= ARENA_FLAG_PREV_FREE;
+        block_set_size( next, ARENA_FLAG_PREV_FREE, block_get_size( next ) );
         mark_block_initialized( (struct block **)next - 1, sizeof(struct block *) );
         *((struct block **)next - 1) = block;
     }
 
-    entry->size = (block_size - sizeof(*entry)) | ARENA_FLAG_FREE;
-    HEAP_InsertFreeBlock( subheap->heap, entry, last );
+    HEAP_InsertFreeBlock( heap, entry, !next );
 }
 
 
