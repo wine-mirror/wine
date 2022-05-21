@@ -2028,7 +2028,7 @@ static HRESULT Global_Weekday(BuiltinDisp *This, VARIANT *args, unsigned args_cn
             {
                 /* vbUseSystemDayOfWeek */
                 GetLocaleInfoW(This->ctx->lcid, LOCALE_RETURN_NUMBER | LOCALE_IFIRSTDAYOFWEEK, (LPWSTR)&first_day,
-                        sizeof(&first_day) / sizeof(WCHAR));
+                        sizeof(first_day) / sizeof(WCHAR));
                 first_day = (first_day + 1) % 7;
             }
             else if (first_day >= 1 && first_day <= 7)
