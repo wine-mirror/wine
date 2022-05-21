@@ -708,70 +708,51 @@ static void create_free_block( SUBHEAP *subheap, struct block *block, SIZE_T blo
 }
 
 
-/***********************************************************************
- *           HEAP_MakeInUseBlockFree
- *
- * Turn an in-use block into a free block. Can also decommit the end of
- * the heap, and possibly even free the sub-heap altogether.
- */
-static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
+static void free_used_block( SUBHEAP *subheap, struct block *block )
 {
     HEAP *heap = subheap->heap;
-    ARENA_FREE *pFree;
-    SIZE_T size;
+    struct entry *entry;
+    SIZE_T block_size;
 
     if (heap->pending_free)
     {
-        ARENA_INUSE *prev = heap->pending_free[heap->pending_pos];
-        heap->pending_free[heap->pending_pos] = pArena;
+        struct block *tmp = heap->pending_free[heap->pending_pos];
+        heap->pending_free[heap->pending_pos] = block;
         heap->pending_pos = (heap->pending_pos + 1) % MAX_FREE_PENDING;
-        block_set_type( pArena, ARENA_PENDING_MAGIC );
-        mark_block_free( pArena + 1, pArena->size & ARENA_SIZE_MASK, heap->flags );
-        if (!prev) return;
-        pArena = prev;
-        subheap = find_subheap( heap, pArena, FALSE );
+        block_set_type( block, ARENA_PENDING_MAGIC );
+        mark_block_free( block + 1, block->size & ARENA_SIZE_MASK, heap->flags );
+        if (!(block = tmp) || !(subheap = find_subheap( heap, block, FALSE ))) return;
     }
 
-    /* Check if we can merge with previous block */
-
-    size = (pArena->size & ARENA_SIZE_MASK) + sizeof(*pArena);
-    if (pArena->size & ARENA_FLAG_PREV_FREE)
+    block_size = (block->size & ARENA_SIZE_MASK) + sizeof(*block);
+    if (block->size & ARENA_FLAG_PREV_FREE)
     {
-        pFree = *((ARENA_FREE **)pArena - 1);
-        size += (pFree->size & ARENA_SIZE_MASK) + sizeof(ARENA_FREE);
-        /* Remove it from the free list */
-        list_remove( &pFree->entry );
+        /* merge with previous block if it is free */
+        block = *((struct block **)block - 1);
+        block_size += (block->size & ARENA_SIZE_MASK) + sizeof(*entry);
+        entry = (struct entry *)block;
+        list_remove( &entry->entry );
     }
-    else pFree = (ARENA_FREE *)pArena;
+    else entry = (struct entry *)block;
 
-    /* Create a free block */
+    create_free_block( subheap, block, block_size );
+    block_size = (block->size & ARENA_SIZE_MASK) + sizeof(*entry);
+    if ((char *)block + block_size < (char *)subheap->base + subheap->size) return;  /* not the last block */
 
-    create_free_block( subheap, (struct block *)pFree, size );
-    size = (pFree->size & ARENA_SIZE_MASK) + sizeof(ARENA_FREE);
-    if ((char *)pFree + size < (char *)subheap->base + subheap->size)
-        return;  /* Not the last block, so nothing more to do */
-
-    /* Free the whole sub-heap if it's empty and not the original one */
-
-    if (((char *)pFree == (char *)subheap->base + subheap->headerSize) &&
+    if (((char *)block == (char *)subheap->base + subheap->headerSize) &&
         (subheap != &subheap->heap->subheap))
     {
+        /* free the subheap if it's empty and not the main one */
         void *addr = subheap->base;
+        SIZE_T size = 0;
 
-        size = 0;
-        /* Remove the free block from the list */
-        list_remove( &pFree->entry );
-        /* Remove the subheap from the list */
+        list_remove( &entry->entry );
         list_remove( &subheap->entry );
-        /* Free the memory */
-        subheap->magic = 0;
         NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
         return;
     }
 
-    /* Decommit the end of the heap */
-
-    if (!(subheap->heap->shared)) HEAP_Decommit( subheap, pFree + 1 );
+    if (!heap->shared) HEAP_Decommit( subheap, entry + 1 );
 }
 
 
@@ -1568,7 +1549,7 @@ static NTSTATUS heap_free( HEAP *heap, void *ptr )
 
     if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap ))) return STATUS_INVALID_PARAMETER;
     if (!subheap) free_large_block( heap, ptr );
-    else HEAP_MakeInUseBlockFree( subheap, block );
+    else free_used_block( subheap, block );
 
     return STATUS_SUCCESS;
 }
@@ -1640,7 +1621,7 @@ static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size
             memcpy( *ret, block + 1, old_size );
             if (flags & HEAP_ZERO_MEMORY) memset( (char *)*ret + old_size, 0, size - old_size );
             notify_free( ptr );
-            HEAP_MakeInUseBlockFree( subheap, block );
+            free_used_block( subheap, block );
             return STATUS_SUCCESS;
         }
     }
