@@ -40,7 +40,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
  *              Types
  **************************************************************************/
 
-typedef HANDLE (*DRVIMPORTFUNC)(CFDataRef data);
+typedef void *(*DRVIMPORTFUNC)(CFDataRef data, size_t *ret_size);
 typedef CFDataRef (*DRVEXPORTFUNC)(HANDLE data);
 
 typedef struct _WINE_CLIPFORMAT
@@ -66,13 +66,12 @@ typedef struct _WINE_CLIPFORMAT
  *              Forward Function Declarations
  **************************************************************************/
 
-static HANDLE import_clipboard_data(CFDataRef data);
-static HANDLE import_bmp_to_dib(CFDataRef data);
-static HANDLE import_enhmetafile(CFDataRef data);
-static HANDLE import_html(CFDataRef data);
-static HANDLE import_nsfilenames_to_hdrop(CFDataRef data);
-static HANDLE import_utf8_to_unicodetext(CFDataRef data);
-static HANDLE import_utf16_to_unicodetext(CFDataRef data);
+static void *import_clipboard_data(CFDataRef data, size_t *ret_size);
+static void *import_bmp_to_dib(CFDataRef data, size_t *ret_size);
+static void *import_html(CFDataRef data, size_t *ret_size);
+static void *import_nsfilenames_to_hdrop(CFDataRef data, size_t *ret_size);
+static void *import_utf8_to_unicodetext(CFDataRef data, size_t *ret_size);
+static void *import_utf16_to_unicodetext(CFDataRef data, size_t *ret_size);
 
 static CFDataRef export_clipboard_data(HANDLE data);
 static CFDataRef export_dib_to_bmp(HANDLE data);
@@ -138,7 +137,7 @@ static const struct
 {
     { CF_DIBV5,             CFSTR("org.winehq.builtin.dibv5"),              import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_DIF,               CFSTR("org.winehq.builtin.dif"),                import_clipboard_data,          export_clipboard_data,      FALSE },
-    { CF_ENHMETAFILE,       CFSTR("org.winehq.builtin.enhmetafile"),        import_enhmetafile,             export_enhmetafile,         FALSE },
+    { CF_ENHMETAFILE,       CFSTR("org.winehq.builtin.enhmetafile"),        import_clipboard_data,          export_enhmetafile,         FALSE },
     { CF_LOCALE,            CFSTR("org.winehq.builtin.locale"),             import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_OEMTEXT,           CFSTR("org.winehq.builtin.oemtext"),            import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_PALETTE,           CFSTR("org.winehq.builtin.palette"),            import_clipboard_data,          export_clipboard_data,      FALSE },
@@ -489,33 +488,18 @@ static const char* get_html_description_field(const char* data, const char* keyw
  *
  *  Generic import clipboard data routine.
  */
-static HANDLE import_clipboard_data(CFDataRef data)
+static void *import_clipboard_data(CFDataRef data, size_t *ret_size)
 {
-    HANDLE data_handle = NULL;
+    void *ret = NULL;
 
     size_t len = CFDataGetLength(data);
-    if (len)
+    if (len && (ret = malloc(len)))
     {
-        LPVOID p;
-
-        /* Turn on the DDESHARE flag to enable shared 32 bit memory */
-        data_handle = GlobalAlloc(GMEM_FIXED, len);
-        if (!data_handle)
-            return NULL;
-
-        if ((p = GlobalLock(data_handle)))
-        {
-            memcpy(p, CFDataGetBytePtr(data), len);
-            GlobalUnlock(data_handle);
-        }
-        else
-        {
-            GlobalFree(data_handle);
-            data_handle = NULL;
-        }
+        memcpy(ret, CFDataGetBytePtr(data), len);
+        *ret_size = len;
     }
 
-    return data_handle;
+    return ret;
 }
 
 
@@ -525,48 +509,24 @@ static HANDLE import_clipboard_data(CFDataRef data)
  *  Import BMP data, converting to CF_DIB or CF_DIBV5 format.  This just
  *  entails stripping the BMP file format header.
  */
-static HANDLE import_bmp_to_dib(CFDataRef data)
+static void *import_bmp_to_dib(CFDataRef data, size_t *ret_size)
 {
-    HANDLE ret = 0;
     BITMAPFILEHEADER *bfh = (BITMAPFILEHEADER*)CFDataGetBytePtr(data);
     CFIndex len = CFDataGetLength(data);
+    void *ret = NULL;
 
     if (len >= sizeof(*bfh) + sizeof(BITMAPCOREHEADER) &&
         bfh->bfType == 0x4d42 /* "BM" */)
     {
         BITMAPINFO *bmi = (BITMAPINFO*)(bfh + 1);
-        BYTE* p;
 
         len -= sizeof(*bfh);
-        ret = GlobalAlloc(GMEM_FIXED, len);
-        if (!ret || !(p = GlobalLock(ret)))
+        if ((ret = malloc(len)))
         {
-            GlobalFree(ret);
-            return 0;
+            memcpy(ret, bmi, len);
+            *ret_size = len;
         }
-
-        memcpy(p, bmi, len);
-        GlobalUnlock(ret);
     }
-
-    return ret;
-}
-
-
-/**************************************************************************
- *              import_enhmetafile
- *
- *  Import enhanced metafile data, converting it to CF_ENHMETAFILE.
- */
-static HANDLE import_enhmetafile(CFDataRef data)
-{
-    HANDLE ret = 0;
-    CFIndex len = CFDataGetLength(data);
-
-    TRACE("data %s\n", debugstr_cf(data));
-
-    if (len)
-        ret = SetEnhMetaFileBits(len, (const BYTE*)CFDataGetBytePtr(data));
 
     return ret;
 }
@@ -577,7 +537,7 @@ static HANDLE import_enhmetafile(CFDataRef data)
  *
  *  Import HTML data.
  */
-static HANDLE import_html(CFDataRef data)
+static void *import_html(CFDataRef data, size_t *ret_size)
 {
     static const char header[] =
         "Version:0.9\n"
@@ -587,18 +547,19 @@ static HANDLE import_html(CFDataRef data)
         "EndFragment:%010lu\n"
         "<!--StartFragment-->";
     static const char trailer[] = "\n<!--EndFragment-->";
-    HANDLE ret;
+    void *ret;
     SIZE_T len, total;
     size_t size = CFDataGetLength(data);
 
     len = strlen(header) + 12;  /* 3 * 4 extra chars for %010lu */
     total = len + size + sizeof(trailer);
-    if ((ret = GlobalAlloc(GMEM_FIXED, total)))
+    if ((ret = malloc(total)))
     {
         char *p = ret;
         p += sprintf(p, header, total - 1, len, len + size + 1 /* include the final \n in the data */);
         CFDataGetBytes(data, CFRangeMake(0, size), (UInt8*)p);
         strcpy(p + size, trailer);
+        *ret_size = total;
         TRACE("returning %s\n", debugstr_a(ret));
     }
     return ret;
@@ -611,15 +572,14 @@ static HANDLE import_html(CFDataRef data)
  *  Import NSFilenamesPboardType data, converting the property-list-
  *  serialized array of path strings to CF_HDROP.
  */
-static HANDLE import_nsfilenames_to_hdrop(CFDataRef data)
+static void *import_nsfilenames_to_hdrop(CFDataRef data, size_t *ret_size)
 {
-    HDROP hdrop = NULL;
     CFArrayRef names;
     CFIndex count, i;
     size_t len;
     char *buffer = NULL;
     WCHAR **paths = NULL;
-    DROPFILES* dropfiles;
+    DROPFILES *dropfiles = NULL;
     UniChar* p;
 
     TRACE("data %s\n", debugstr_cf(data));
@@ -685,12 +645,10 @@ static HANDLE import_nsfilenames_to_hdrop(CFDataRef data)
     for (i = 0; i < count; i++)
         len += strlenW(paths[i]) + 1;
 
-    hdrop = GlobalAlloc(GMEM_FIXED, sizeof(*dropfiles) + len * sizeof(WCHAR));
-    if (!hdrop || !(dropfiles = GlobalLock(hdrop)))
+    *ret_size = sizeof(*dropfiles) + len * sizeof(WCHAR);
+    if (!(dropfiles = malloc(*ret_size)))
     {
         WARN("failed to allocate HDROP\n");
-        GlobalFree(hdrop);
-        hdrop = NULL;
         goto done;
     }
 
@@ -708,8 +666,6 @@ static HANDLE import_nsfilenames_to_hdrop(CFDataRef data)
     }
     *p = 0;
 
-    GlobalUnlock(hdrop);
-
 done:
     if (paths)
     {
@@ -719,7 +675,7 @@ done:
     }
     HeapFree(GetProcessHeap(), 0, buffer);
     if (names) CFRelease(names);
-    return hdrop;
+    return dropfiles;
 }
 
 
@@ -728,14 +684,14 @@ done:
  *
  *  Import a UTF-8 string, converting the string to CF_UNICODETEXT.
  */
-static HANDLE import_utf8_to_unicodetext(CFDataRef data)
+static void *import_utf8_to_unicodetext(CFDataRef data, size_t *ret_size)
 {
     const BYTE *src;
     unsigned long src_len;
     unsigned long new_lines = 0;
     LPSTR dst;
     unsigned long i, j;
-    HANDLE unicode_handle = NULL;
+    WCHAR *ret = NULL;
 
     src = CFDataGetBytePtr(data);
     src_len = CFDataGetLength(data);
@@ -747,8 +703,6 @@ static HANDLE import_utf8_to_unicodetext(CFDataRef data)
 
     if ((dst = HeapAlloc(GetProcessHeap(), 0, src_len + new_lines + 1)))
     {
-        UINT count;
-
         for (i = 0, j = 0; i < src_len; i++)
         {
             if (src[i] == '\n')
@@ -756,22 +710,15 @@ static HANDLE import_utf8_to_unicodetext(CFDataRef data)
 
             dst[j++] = src[i];
         }
-        dst[j] = 0;
+        dst[j++] = 0;
 
-        count = MultiByteToWideChar(CP_UTF8, 0, dst, -1, NULL, 0);
-        unicode_handle = GlobalAlloc(GMEM_FIXED, count * sizeof(WCHAR));
-
-        if (unicode_handle)
-        {
-            WCHAR *textW = GlobalLock(unicode_handle);
-            MultiByteToWideChar(CP_UTF8, 0, dst, -1, textW, count);
-            GlobalUnlock(unicode_handle);
-        }
+        if ((ret = malloc(j * sizeof(WCHAR))))
+            *ret_size = MultiByteToWideChar(CP_UTF8, 0, dst, j, ret, j) * sizeof(WCHAR);
 
         HeapFree(GetProcessHeap(), 0, dst);
     }
 
-    return unicode_handle;
+    return ret;
 }
 
 
@@ -780,14 +727,13 @@ static HANDLE import_utf8_to_unicodetext(CFDataRef data)
  *
  *  Import a UTF-8 string, converting the string to CF_UNICODETEXT.
  */
-static HANDLE import_utf16_to_unicodetext(CFDataRef data)
+static void *import_utf16_to_unicodetext(CFDataRef data, size_t *ret_size)
 {
     const WCHAR *src;
     unsigned long src_len;
     unsigned long new_lines = 0;
     LPWSTR dst;
     unsigned long i, j;
-    HANDLE unicode_handle;
 
     src = (const WCHAR *)CFDataGetBytePtr(data);
     src_len = CFDataGetLength(data) / sizeof(WCHAR);
@@ -799,10 +745,9 @@ static HANDLE import_utf16_to_unicodetext(CFDataRef data)
             new_lines++;
     }
 
-    if ((unicode_handle = GlobalAlloc(GMEM_FIXED, (src_len + new_lines + 1) * sizeof(WCHAR))))
+    *ret_size = (src_len + new_lines + 1) * sizeof(WCHAR);
+    if ((dst = malloc(*ret_size)))
     {
-        dst = GlobalLock(unicode_handle);
-
         for (i = 0, j = 0; i < src_len; i++)
         {
             if (src[i] == '\n')
@@ -814,11 +759,9 @@ static HANDLE import_utf16_to_unicodetext(CFDataRef data)
                 dst[j++] = '\n';
         }
         dst[j] = 0;
-
-        GlobalUnlock(unicode_handle);
     }
 
-    return unicode_handle;
+    return dst;
 }
 
 
@@ -1180,7 +1123,18 @@ HANDLE macdrv_get_pasteboard_data(CFTypeRef pasteboard, UINT desired_format)
 
         if (pasteboard_data)
         {
-            data = best_format->import_func(pasteboard_data);
+            size_t size;
+            void *import = best_format->import_func(pasteboard_data, &size), *ptr;
+            if (import)
+            {
+                data = GlobalAlloc(GMEM_FIXED, size);
+                if (data && (ptr = GlobalLock(data)))
+                {
+                    memcpy(ptr, import, size);
+                    GlobalUnlock(data);
+                }
+                free(import);
+            }
             CFRelease(pasteboard_data);
         }
     }
@@ -1494,9 +1448,12 @@ static void render_format(UINT id)
         pasteboard_data = macdrv_copy_pasteboard_data(NULL, current_mac_formats[i]->type);
         if (pasteboard_data)
         {
-            HANDLE handle = current_mac_formats[i]->import_func(pasteboard_data);
+            struct set_clipboard_params params = { 0 };
+            params.data = current_mac_formats[i]->import_func(pasteboard_data, &params.size);
             CFRelease(pasteboard_data);
-            if (handle) SetClipboardData(id, handle);
+            if (!params.data) continue;
+            NtUserSetClipboardData(id, 0, &params);
+            free(params.data);
             break;
         }
     }
