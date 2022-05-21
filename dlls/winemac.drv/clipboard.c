@@ -70,7 +70,6 @@ static HANDLE import_clipboard_data(CFDataRef data);
 static HANDLE import_bmp_to_dib(CFDataRef data);
 static HANDLE import_enhmetafile(CFDataRef data);
 static HANDLE import_html(CFDataRef data);
-static HANDLE import_metafilepict(CFDataRef data);
 static HANDLE import_nsfilenames_to_hdrop(CFDataRef data);
 static HANDLE import_utf8_to_text(CFDataRef data);
 static HANDLE import_utf8_to_unicodetext(CFDataRef data);
@@ -81,7 +80,6 @@ static CFDataRef export_dib_to_bmp(HANDLE data);
 static CFDataRef export_enhmetafile(HANDLE data);
 static CFDataRef export_hdrop_to_filenames(HANDLE data);
 static CFDataRef export_html(HANDLE data);
-static CFDataRef export_metafilepict(HANDLE data);
 static CFDataRef export_text_to_utf8(HANDLE data);
 static CFDataRef export_unicodetext_to_utf8(HANDLE data);
 static CFDataRef export_unicodetext_to_utf16(HANDLE data);
@@ -144,7 +142,6 @@ static const struct
     { CF_DIF,               CFSTR("org.winehq.builtin.dif"),                import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_ENHMETAFILE,       CFSTR("org.winehq.builtin.enhmetafile"),        import_enhmetafile,             export_enhmetafile,         FALSE },
     { CF_LOCALE,            CFSTR("org.winehq.builtin.locale"),             import_clipboard_data,          export_clipboard_data,      FALSE },
-    { CF_METAFILEPICT,      CFSTR("org.winehq.builtin.metafilepict"),       import_metafilepict,            export_metafilepict,        FALSE },
     { CF_OEMTEXT,           CFSTR("org.winehq.builtin.oemtext"),            import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_PALETTE,           CFSTR("org.winehq.builtin.palette"),            import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_PENDATA,           CFSTR("org.winehq.builtin.pendata"),            import_clipboard_data,          export_clipboard_data,      FALSE },
@@ -606,33 +603,6 @@ static HANDLE import_html(CFDataRef data)
         strcpy(p + size, trailer);
         TRACE("returning %s\n", debugstr_a(ret));
     }
-    return ret;
-}
-
-
-/**************************************************************************
- *              import_metafilepict
- *
- *  Import metafile picture data, converting it to CF_METAFILEPICT.
- */
-static HANDLE import_metafilepict(CFDataRef data)
-{
-    HANDLE ret = 0;
-    CFIndex len = CFDataGetLength(data);
-    METAFILEPICT *mfp;
-
-    TRACE("data %s\n", debugstr_cf(data));
-
-    if (len >= sizeof(*mfp) && (ret = GlobalAlloc(GMEM_FIXED, sizeof(*mfp))))
-    {
-        const BYTE *bytes = (const BYTE*)CFDataGetBytePtr(data);
-
-        mfp = GlobalLock(ret);
-        memcpy(mfp, bytes, sizeof(*mfp));
-        mfp->hMF = SetMetaFileBitsEx(len - sizeof(*mfp), bytes + sizeof(*mfp));
-        GlobalUnlock(ret);
-    }
-
     return ret;
 }
 
@@ -1110,33 +1080,6 @@ static CFDataRef export_html(HANDLE handle)
 failed:
     GlobalUnlock(handle);
     return NULL;
-}
-
-
-/**************************************************************************
- *              export_metafilepict
- *
- *  Export a metafile to data.
- */
-static CFDataRef export_metafilepict(HANDLE data)
-{
-    CFMutableDataRef ret = NULL;
-    METAFILEPICT *mfp = GlobalLock(data);
-    unsigned int size = GetMetaFileBitsEx(mfp->hMF, 0, NULL);
-
-    TRACE("data %p\n", data);
-
-    ret = CFDataCreateMutable(NULL, sizeof(*mfp) + size);
-    if (ret)
-    {
-        CFDataAppendBytes(ret, (UInt8*)mfp, sizeof(*mfp));
-        CFDataIncreaseLength(ret, size);
-        GetMetaFileBitsEx(mfp->hMF, size, (BYTE*)CFDataGetMutableBytePtr(ret) + sizeof(*mfp));
-    }
-
-    GlobalUnlock(data);
-    TRACE(" -> %s\n", debugstr_cf(ret));
-    return ret;
 }
 
 
