@@ -67,7 +67,6 @@ typedef struct _WINE_CLIPFORMAT
  **************************************************************************/
 
 static HANDLE import_clipboard_data(CFDataRef data);
-static HANDLE import_bmp_to_bitmap(CFDataRef data);
 static HANDLE import_bmp_to_dib(CFDataRef data);
 static HANDLE import_enhmetafile(CFDataRef data);
 static HANDLE import_html(CFDataRef data);
@@ -78,7 +77,6 @@ static HANDLE import_utf8_to_unicodetext(CFDataRef data);
 static HANDLE import_utf16_to_unicodetext(CFDataRef data);
 
 static CFDataRef export_clipboard_data(HANDLE data);
-static CFDataRef export_bitmap_to_bmp(HANDLE data);
 static CFDataRef export_dib_to_bmp(HANDLE data);
 static CFDataRef export_enhmetafile(HANDLE data);
 static CFDataRef export_hdrop_to_filenames(HANDLE data);
@@ -142,7 +140,6 @@ static const struct
     BOOL          synthesized;
 } builtin_format_ids[] =
 {
-    { CF_BITMAP,            CFSTR("org.winehq.builtin.bitmap"),             import_bmp_to_bitmap,           export_bitmap_to_bmp,       FALSE },
     { CF_DIBV5,             CFSTR("org.winehq.builtin.dibv5"),              import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_DIF,               CFSTR("org.winehq.builtin.dif"),                import_clipboard_data,          export_clipboard_data,      FALSE },
     { CF_ENHMETAFILE,       CFSTR("org.winehq.builtin.enhmetafile"),        import_enhmetafile,             export_enhmetafile,         FALSE },
@@ -470,66 +467,6 @@ static int bitmap_info_size(const BITMAPINFO *info, WORD coloruse)
 }
 
 
-/***********************************************************************
- *              create_dib_from_bitmap
- *
- * Allocates a packed DIB and copies the bitmap data into it.
- */
-static HGLOBAL create_dib_from_bitmap(HBITMAP bitmap)
-{
-    HANDLE ret = 0;
-    BITMAPINFOHEADER header;
-    HDC hdc = NtUserGetDCEx(0, 0, DCX_USESTYLE);
-    DWORD header_size;
-    BITMAPINFO *bmi;
-
-    memset(&header, 0, sizeof(header));
-    header.biSize = sizeof(header);
-    if (!GetDIBits(hdc, bitmap, 0, 0, NULL, (BITMAPINFO *)&header, DIB_RGB_COLORS)) goto done;
-
-    header_size = bitmap_info_size((BITMAPINFO *)&header, DIB_RGB_COLORS);
-    if (!(ret = GlobalAlloc(GMEM_FIXED, header_size + header.biSizeImage))) goto done;
-    bmi = (BITMAPINFO *)ret;
-    memset(bmi, 0, header_size);
-    memcpy(bmi, &header, header.biSize);
-    GetDIBits(hdc, bitmap, 0, abs(header.biHeight), (char *)bmi + header_size, bmi, DIB_RGB_COLORS);
-
-done:
-    NtUserReleaseDC(0, hdc);
-    return ret;
-}
-
-
-/**************************************************************************
- *              create_bitmap_from_dib
- *
- *  Given a packed DIB, creates a bitmap object from it.
- */
-static HANDLE create_bitmap_from_dib(HANDLE dib)
-{
-    HANDLE ret = 0;
-    BITMAPINFO *bmi;
-
-    if (dib && (bmi = GlobalLock(dib)))
-    {
-        HDC hdc;
-        unsigned int offset;
-
-        hdc = NtUserGetDCEx(NULL, 0, DCX_USESTYLE);
-
-        offset = bitmap_info_size(bmi, DIB_RGB_COLORS);
-
-        ret = CreateDIBitmap(hdc, &bmi->bmiHeader, CBM_INIT, (LPBYTE)bmi + offset,
-                             bmi, DIB_RGB_COLORS);
-
-        GlobalUnlock(dib);
-        NtUserReleaseDC(NULL, hdc);
-    }
-
-    return ret;
-}
-
-
 /**************************************************************************
  *		get_html_description_field
  *
@@ -584,23 +521,6 @@ static HANDLE import_clipboard_data(CFDataRef data)
     }
 
     return data_handle;
-}
-
-
-/**************************************************************************
- *              import_bmp_to_bitmap
- *
- *  Import BMP data, converting to CF_BITMAP format.
- */
-static HANDLE import_bmp_to_bitmap(CFDataRef data)
-{
-    HANDLE ret;
-    HANDLE dib = import_bmp_to_dib(data);
-
-    ret = create_bitmap_from_dib(dib);
-
-    GlobalFree(dib);
-    return ret;
 }
 
 
@@ -990,27 +910,6 @@ static CFDataRef export_clipboard_data(HANDLE data)
 
     ret = CFDataCreate(NULL, src, len);
     GlobalUnlock(data);
-
-    return ret;
-}
-
-
-/**************************************************************************
- *              export_bitmap_to_bmp
- *
- *  Export CF_BITMAP to BMP file format.
- */
-static CFDataRef export_bitmap_to_bmp(HANDLE data)
-{
-    CFDataRef ret = NULL;
-    HGLOBAL dib;
-
-    dib = create_dib_from_bitmap(data);
-    if (dib)
-    {
-        ret = export_dib_to_bmp(dib);
-        GlobalFree(dib);
-    }
 
     return ret;
 }
