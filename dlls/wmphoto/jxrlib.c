@@ -271,7 +271,7 @@ static HRESULT CDECL wmp_decoder_copy_pixels(struct decoder *iface, UINT frame, 
         pkrect.Width = This->frame.width;
         pkrect.Height = This->frame.height;
         This->frame_stride = (This->frame.width * This->frame.bpp + 7) / 8;
-        if (!(frame_data = RtlAllocateHeap(GetProcessHeap(), 0, This->frame.height * This->frame_stride)))
+        if (!(frame_data = RtlAllocateHeap(GetProcessHeap(), HEAP_ZERO_MEMORY, This->frame.height * This->frame_stride)))
             return E_FAIL;
         if (This->decoder->Copy(This->decoder, &pkrect, frame_data, stride))
         {
