@@ -71,7 +71,6 @@ static HANDLE import_bmp_to_dib(CFDataRef data);
 static HANDLE import_enhmetafile(CFDataRef data);
 static HANDLE import_html(CFDataRef data);
 static HANDLE import_nsfilenames_to_hdrop(CFDataRef data);
-static HANDLE import_utf8_to_text(CFDataRef data);
 static HANDLE import_utf8_to_unicodetext(CFDataRef data);
 static HANDLE import_utf16_to_unicodetext(CFDataRef data);
 
@@ -80,7 +79,6 @@ static CFDataRef export_dib_to_bmp(HANDLE data);
 static CFDataRef export_enhmetafile(HANDLE data);
 static CFDataRef export_hdrop_to_filenames(HANDLE data);
 static CFDataRef export_html(HANDLE data);
-static CFDataRef export_text_to_utf8(HANDLE data);
 static CFDataRef export_unicodetext_to_utf8(HANDLE data);
 static CFDataRef export_unicodetext_to_utf16(HANDLE data);
 
@@ -182,7 +180,7 @@ static const struct
     { wszPNG,               CFSTR("public.png"),                            import_clipboard_data,          export_clipboard_data },
     { wszHTMLFormat,        NULL,                                           import_clipboard_data,          export_clipboard_data },
     { wszHTMLFormat,        CFSTR("public.html"),                           import_html,                    export_html,            TRUE },
-    { CFSTR_SHELLURLW,      CFSTR("public.url"),                            import_utf8_to_text,            export_text_to_utf8 },
+    { CFSTR_INETURLW,       CFSTR("public.url"),                            import_utf8_to_unicodetext,     export_unicodetext_to_utf8 },
 };
 
 /* The prefix prepended to a Win32 clipboard format name to make a Mac pasteboard type. */
@@ -726,45 +724,6 @@ done:
 
 
 /**************************************************************************
- *              import_utf8_to_text
- *
- *  Import a UTF-8 string, converting the string to CF_TEXT.
- */
-static HANDLE import_utf8_to_text(CFDataRef data)
-{
-    HANDLE ret = NULL;
-    HANDLE unicode_handle = import_utf8_to_unicodetext(data);
-    LPWSTR unicode_string = GlobalLock(unicode_handle);
-
-    if (unicode_string)
-    {
-        int unicode_len;
-        HANDLE handle;
-        char *p;
-        INT len;
-
-        unicode_len = GlobalSize(unicode_handle) / sizeof(WCHAR);
-
-        len = WideCharToMultiByte(CP_ACP, 0, unicode_string, unicode_len, NULL, 0, NULL, NULL);
-        if (!unicode_len || unicode_string[unicode_len - 1]) len += 1;
-        handle = GlobalAlloc(GMEM_FIXED, len);
-
-        if (handle && (p = GlobalLock(handle)))
-        {
-            WideCharToMultiByte(CP_ACP, 0, unicode_string, unicode_len, p, len, NULL, NULL);
-            p[len - 1] = 0;
-            GlobalUnlock(handle);
-            ret = handle;
-        }
-        GlobalUnlock(unicode_handle);
-    }
-
-    GlobalFree(unicode_handle);
-    return ret;
-}
-
-
-/**************************************************************************
  *              import_utf8_to_unicodetext
  *
  *  Import a UTF-8 string, converting the string to CF_UNICODETEXT.
@@ -1080,47 +1039,6 @@ static CFDataRef export_html(HANDLE handle)
 failed:
     GlobalUnlock(handle);
     return NULL;
-}
-
-
-/**************************************************************************
- *              export_text_to_utf8
- *
- *  Export CF_TEXT to UTF-8.
- */
-static CFDataRef export_text_to_utf8(HANDLE data)
-{
-    CFDataRef ret = NULL;
-    const char* str;
-
-    if ((str = GlobalLock(data)))
-    {
-        int str_len = GlobalSize(data);
-        int wstr_len;
-        WCHAR *wstr;
-        HANDLE unicode;
-        char *p;
-
-        wstr_len = MultiByteToWideChar(CP_ACP, 0, str, str_len, NULL, 0);
-        if (!str_len || str[str_len - 1]) wstr_len += 1;
-        wstr = HeapAlloc(GetProcessHeap(), 0, wstr_len * sizeof(WCHAR));
-        MultiByteToWideChar(CP_ACP, 0, str, str_len, wstr, wstr_len);
-        wstr[wstr_len - 1] = 0;
-
-        unicode = GlobalAlloc(GMEM_FIXED, wstr_len * sizeof(WCHAR));
-        if (unicode && (p = GlobalLock(unicode)))
-        {
-            memcpy(p, wstr, wstr_len * sizeof(WCHAR));
-            GlobalUnlock(unicode);
-        }
-
-        ret = export_unicodetext_to_utf8(unicode);
-
-        GlobalFree(unicode);
-        GlobalUnlock(data);
-    }
-
-    return ret;
 }
 
 
