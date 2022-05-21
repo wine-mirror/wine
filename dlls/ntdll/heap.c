@@ -253,6 +253,13 @@ static inline UINT block_get_size( const struct block *block )
     return size;
 }
 
+static inline void block_set_size( struct block *block, UINT flags, UINT block_size )
+{
+    if (flags & ARENA_FLAG_FREE) block_size -= sizeof(struct entry);
+    else block_size -= sizeof(*block);
+    block->size = (block_size & ARENA_SIZE_MASK) | (flags & ~ARENA_SIZE_MASK);
+}
+
 static inline void *subheap_base( const SUBHEAP *subheap )
 {
     return subheap->base;
@@ -793,18 +800,19 @@ static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
 }
 
 
-static void shrink_used_block( SUBHEAP *subheap, struct block *block, SIZE_T data_size, SIZE_T size )
+static inline void shrink_used_block( SUBHEAP *subheap, struct block *block, UINT flags,
+                                      SIZE_T old_data_size, SIZE_T data_size, SIZE_T size )
 {
-    SIZE_T old_data_size = block_get_size( block ) - sizeof(*block);
     if (old_data_size >= data_size + HEAP_MIN_SHRINK_SIZE)
     {
-        block->size = data_size | block_get_flags( block );
+        block_set_size( block, flags, data_size + sizeof(*block) );
         block->unused_bytes = data_size - size;
         create_free_block( subheap, next_block( subheap, block ), old_data_size - data_size );
     }
     else
     {
         struct block *next;
+        block_set_size( block, flags, old_data_size + sizeof(*block) );
         block->unused_bytes = old_data_size - size;
         if ((next = next_block( subheap, block ))) next->size &= ~ARENA_FLAG_PREV_FREE;
     }
@@ -1521,8 +1529,8 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
 
 static NTSTATUS heap_allocate( HEAP *heap, ULONG flags, SIZE_T size, void **ret )
 {
+    SIZE_T old_data_size, data_size;
     struct block *block;
-    SIZE_T data_size;
     SUBHEAP *subheap;
 
     data_size = ROUND_SIZE(size) + HEAP_TAIL_EXTRA_SIZE(flags);
@@ -1538,15 +1546,11 @@ static NTSTATUS heap_allocate( HEAP *heap, ULONG flags, SIZE_T size, void **ret 
     /* Locate a suitable free block */
 
     if (!(block = find_free_block( heap, data_size, &subheap ))) return STATUS_NO_MEMORY;
+    /* read the free block size, changing block type or flags may alter it */
+    old_data_size = block_get_size( block ) - sizeof(*block);
 
-    /* in-use arena is smaller than free arena,
-     * so we have to add the difference to the size */
-    block->size  = (block->size & ~ARENA_FLAG_FREE) + sizeof(struct entry) - sizeof(*block);
     block_set_type( block, ARENA_INUSE_MAGIC );
-
-    /* Shrink the block */
-
-    shrink_used_block( subheap, block, data_size, size );
+    shrink_used_block( subheap, block, 0, old_data_size, data_size, size );
 
     notify_alloc( block + 1, size, flags & HEAP_ZERO_MEMORY );
     initialize_block( block + 1, size, block->unused_bytes, flags );
@@ -1649,10 +1653,10 @@ static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size
             /* The next block is free and large enough */
             struct entry *entry = (struct entry *)next;
             list_remove( &entry->entry );
-            block->size += block_get_size( next );
+            old_data_size += block_get_size( next );
             if (!HEAP_Commit( subheap, block, data_size )) return STATUS_NO_MEMORY;
             notify_realloc( block + 1, old_size, size );
-            shrink_used_block( subheap, block, data_size, size );
+            shrink_used_block( subheap, block, block_get_flags( block ), old_data_size, data_size, size );
         }
         else
         {
@@ -1668,7 +1672,7 @@ static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size
     else
     {
         notify_realloc( block + 1, old_size, size );
-        shrink_used_block( subheap, block, data_size, size );
+        shrink_used_block( subheap, block, block_get_flags( block ), old_data_size, data_size, size );
     }
 
     /* Clear the extra bytes if needed */
