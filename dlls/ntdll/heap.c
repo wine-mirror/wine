@@ -676,58 +676,47 @@ static inline BOOL HEAP_Decommit( SUBHEAP *subheap, void *ptr )
 }
 
 
-/***********************************************************************
- *           HEAP_CreateFreeBlock
- *
- * Create a free block at a specified address. 'size' is the size of the
- * whole block, including the new arena.
- */
-static void HEAP_CreateFreeBlock( SUBHEAP *subheap, void *ptr, SIZE_T size )
+static void create_free_block( SUBHEAP *subheap, struct block *block, SIZE_T block_size )
 {
-    ARENA_FREE *pFree;
-    char *pEnd;
+    struct entry *entry = (struct entry *)block;
+    HEAP *heap = subheap->heap;
+    DWORD flags = heap->flags;
+    char *end;
     BOOL last;
-    DWORD flags = subheap->heap->flags;
 
-    /* Create a free arena */
-    mark_block_uninitialized( ptr, sizeof(ARENA_FREE) );
-    pFree = ptr;
-    pFree->magic = ARENA_FREE_MAGIC;
+    mark_block_uninitialized( block, sizeof(*entry) );
+    entry->magic = ARENA_FREE_MAGIC;
 
     /* If debugging, erase the freed block content */
 
-    pEnd = (char *)ptr + size;
-    if (pEnd > (char *)subheap->base + subheap->commitSize)
-        pEnd = (char *)subheap->base + subheap->commitSize;
-    if (pEnd > (char *)(pFree + 1)) mark_block_free( pFree + 1, pEnd - (char *)(pFree + 1), flags );
+    end = (char *)block + block_size;
+    if (end > (char *)subheap->base + subheap->commitSize)
+        end = (char *)subheap->base + subheap->commitSize;
+    if (end > (char *)(entry + 1)) mark_block_free( entry + 1, end - (char *)(entry + 1), flags );
 
-    /* Check if next block is free also */
-
-    if (((char *)ptr + size < (char *)subheap->base + subheap->size) &&
-        (*(DWORD *)((char *)ptr + size) & ARENA_FLAG_FREE))
+    if (((char *)block + block_size < (char *)subheap->base + subheap->size) &&
+        (*(DWORD *)((char *)block + block_size) & ARENA_FLAG_FREE))
     {
-        /* Remove the next arena from the free list */
-        ARENA_FREE *pNext = (ARENA_FREE *)((char *)ptr + size);
-        list_remove( &pNext->entry );
-        size += (pNext->size & ARENA_SIZE_MASK) + sizeof(*pNext);
-        mark_block_free( pNext, sizeof(ARENA_FREE), flags );
+        /* merge with the next block if it is free */
+        struct entry *next_entry = (struct entry *)((char *)block + block_size);
+        list_remove( &next_entry->entry );
+        block_size += (next_entry->size & ARENA_SIZE_MASK) + sizeof(*next_entry);
+        mark_block_free( next_entry, sizeof(struct entry), flags );
     }
 
-    /* Set the next block PREV_FREE flag and pointer */
 
-    last = ((char *)ptr + size >= (char *)subheap->base + subheap->size);
+    last = ((char *)block + block_size >= (char *)subheap->base + subheap->size);
     if (!last)
     {
-        DWORD *pNext = (DWORD *)((char *)ptr + size);
-        *pNext |= ARENA_FLAG_PREV_FREE;
-        mark_block_initialized( (ARENA_FREE **)pNext - 1, sizeof( ARENA_FREE * ) );
-        *((ARENA_FREE **)pNext - 1) = pFree;
+        /* set the next block PREV_FREE flag and back pointer */
+        DWORD *next = (DWORD *)((char *)block + block_size);
+        *next |= ARENA_FLAG_PREV_FREE;
+        mark_block_initialized( (struct block **)next - 1, sizeof(struct block *) );
+        *((struct block **)next - 1) = block;
     }
 
-    /* Last, insert the new block into the free list */
-
-    pFree->size = (size - sizeof(*pFree)) | ARENA_FLAG_FREE;
-    HEAP_InsertFreeBlock( subheap->heap, pFree, last );
+    entry->size = (block_size - sizeof(*entry)) | ARENA_FLAG_FREE;
+    HEAP_InsertFreeBlock( subheap->heap, entry, last );
 }
 
 
@@ -769,7 +758,7 @@ static void HEAP_MakeInUseBlockFree( SUBHEAP *subheap, ARENA_INUSE *pArena )
 
     /* Create a free block */
 
-    HEAP_CreateFreeBlock( subheap, pFree, size );
+    create_free_block( subheap, (struct block *)pFree, size );
     size = (pFree->size & ARENA_SIZE_MASK) + sizeof(ARENA_FREE);
     if ((char *)pFree + size < (char *)subheap->base + subheap->size)
         return;  /* Not the last block, so nothing more to do */
@@ -805,7 +794,7 @@ static void shrink_used_block( SUBHEAP *subheap, struct block *block, SIZE_T dat
     {
         block->size = data_size | block_get_flags( block );
         block->unused_bytes = data_size - size;
-        HEAP_CreateFreeBlock( subheap, next_block( subheap, block ), old_data_size - data_size );
+        create_free_block( subheap, next_block( subheap, block ), old_data_size - data_size );
     }
     else
     {
@@ -1051,8 +1040,7 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
 
     /* Create the first free block */
 
-    HEAP_CreateFreeBlock( subheap, (LPBYTE)subheap->base + subheap->headerSize,
-                          subheap->size - subheap->headerSize );
+    create_free_block( subheap, first_block( subheap ), subheap->size - subheap->headerSize );
 
     return subheap;
 }
