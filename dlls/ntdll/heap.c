@@ -164,7 +164,6 @@ struct tagHEAP;
 typedef struct tagSUBHEAP
 {
     SIZE_T              size;       /* Size of the whole sub-heap */
-    SIZE_T              min_commit; /* Minimum committed size */
     SIZE_T              commitSize; /* Committed size of the sub-heap */
     struct list         entry;      /* Entry in sub-heap list */
     struct tagHEAP     *heap;       /* Main heap structure */
@@ -191,6 +190,7 @@ typedef struct tagHEAP
     struct list      subheap_list;  /* Sub-heap list */
     struct list      large_list;    /* Large blocks list */
     SIZE_T           grow_size;     /* Size of next subheap for growing heap */
+    SIZE_T           min_size;      /* Minimum committed size */
     DWORD            magic;         /* Magic number */
     DWORD            pending_pos;   /* Position in pending free requests ring */
     ARENA_INUSE    **pending_free;  /* Ring buffer for pending free requests */
@@ -649,12 +649,13 @@ static inline BOOL subheap_commit( SUBHEAP *subheap, const struct block *block, 
 
 static inline BOOL subheap_decommit( SUBHEAP *subheap, const void *commit_end )
 {
+    char *base = subheap_base( subheap );
     HEAP *heap = subheap->heap;
     SIZE_T size;
     void *addr;
 
     commit_end = ROUND_ADDR((char *)commit_end + COMMIT_MASK, COMMIT_MASK);
-    commit_end = max( (char *)commit_end, (char *)subheap_base( subheap ) + subheap->min_commit );
+    if (subheap == &heap->subheap) commit_end = max( (char *)commit_end, (char *)base + heap->min_size );
     if (commit_end >= subheap_commit_end( subheap )) return TRUE;
 
     size = (char *)subheap_commit_end( subheap ) - (char *)commit_end;
@@ -939,7 +940,6 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         subheap = address;
         subheap->heap       = heap;
         subheap->size       = totalSize;
-        subheap->min_commit = 0x10000;
         subheap->commitSize = commitSize;
         subheap->magic      = SUBHEAP_MAGIC;
         subheap->headerSize = ROUND_SIZE( sizeof(SUBHEAP) );
@@ -956,13 +956,13 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         heap->shared        = (flags & HEAP_SHARED) != 0;
         heap->magic         = HEAP_MAGIC;
         heap->grow_size     = max( HEAP_DEF_SIZE, totalSize );
+        heap->min_size      = commitSize;
         list_init( &heap->subheap_list );
         list_init( &heap->large_list );
 
         subheap = &heap->subheap;
         subheap->heap       = heap;
         subheap->size       = totalSize;
-        subheap->min_commit = commitSize;
         subheap->commitSize = commitSize;
         subheap->magic      = SUBHEAP_MAGIC;
         subheap->headerSize = ROUND_SIZE( sizeof(HEAP) );
