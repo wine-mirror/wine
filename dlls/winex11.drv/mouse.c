@@ -50,11 +50,9 @@ MAKE_FUNCPTR(XcursorLibraryLoadCursor);
 
 #define NONAMELESSUNION
 #define OEMRESOURCE
-#include "windef.h"
-#include "winbase.h"
-#include "winreg.h"
 
 #include "x11drv.h"
+#include "winreg.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 

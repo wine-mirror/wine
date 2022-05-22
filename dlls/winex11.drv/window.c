@@ -43,14 +43,14 @@
 
 /* avoid conflict with field names in included win32 headers */
 #undef Status
+
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#include "windef.h"
-#include "winbase.h"
+
+#include "x11drv.h"
 #include "wingdi.h"
 #include "winuser.h"
 
-#include "x11drv.h"
 #include "wine/debug.h"
 #include "wine/server.h"
 #include "mwm.h"

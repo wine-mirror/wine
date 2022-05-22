@@ -57,6 +57,9 @@
 #undef Status  /* avoid conflict with wintrnl.h */
 typedef int Status;
 
+/* avoid conflict with processthreadsapi.h */
+#undef ControlMask
+
 #include "windef.h"
 #include "winbase.h"
 #include "ntgdi.h"

@@ -44,14 +44,13 @@
 
 #define NONAMELESSUNION
 
-#include "windef.h"
-#include "winbase.h"
+#include "x11drv.h"
+
 #include "wingdi.h"
 #include "winuser.h"
 #include "winreg.h"
 #include "winnls.h"
 #include "ime.h"
-#include "x11drv.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 
@@ -63,6 +62,8 @@
 */
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
 WINE_DECLARE_DEBUG_CHANNEL(key);
+
+static const unsigned int ControlMask = 1 << 2;
 
 static int min_keycode, max_keycode, keysyms_per_keycode;
 static KeySym *key_mapping;

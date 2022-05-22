@@ -46,8 +46,6 @@
 # endif
 #endif
 
-#include "windef.h"
-#include "winbase.h"
 #include "x11drv.h"
 #include "winternl.h"
 #include "wine/debug.h"

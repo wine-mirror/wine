@@ -39,13 +39,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "windef.h"
-#include "winbase.h"
-
 #include "x11drv.h"
-
-/* avoid conflict with field names in included win32 headers */
-#undef Status
 #include "shlobj.h"  /* DROPFILES */
 #include "shellapi.h"
 

@@ -45,14 +45,12 @@
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#include "windef.h"
-#include "winbase.h"
-#include "winreg.h"
 
 #define VK_NO_PROTOTYPES
 #define WINE_VK_HOST
 
 #include "x11drv.h"
+#include "winreg.h"
 #include "xcomposite.h"
 #include "wine/server.h"
 #include "wine/debug.h"
