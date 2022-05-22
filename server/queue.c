@@ -3348,15 +3348,14 @@ DECL_HANDLER(get_cursor_history)
 DECL_HANDLER(get_rawinput_buffer)
 {
     struct thread_input *input = current->queue->input;
-    data_size_t size = 0, next_size = 0;
+    data_size_t size = 0, next_size = 0, pos = 0;
     struct list *ptr;
-    char *buf, *cur, *tmp;
+    char *buf, *tmp;
     int count = 0, buf_size = 16 * sizeof(struct hardware_msg_data);
 
     if (!req->buffer_size) buf = NULL;
     else if (!(buf = mem_alloc( buf_size ))) return;
 
-    cur = buf;
     ptr = list_head( &input->msg_list );
     while (ptr)
     {
@@ -3369,31 +3368,31 @@ DECL_HANDLER(get_rawinput_buffer)
 
         next_size = req->rawinput_size + extra_size;
         if (size + next_size > req->buffer_size) break;
-        if (cur + data->size > buf + get_reply_max_size()) break;
-        if (cur + data->size > buf + buf_size)
+        if (pos + data->size > get_reply_max_size()) break;
+        if (pos + data->size > buf_size)
         {
             buf_size += buf_size / 2 + extra_size;
             if (!(tmp = realloc( buf, buf_size )))
             {
+                free( buf );
                 set_error( STATUS_NO_MEMORY );
                 return;
             }
-            cur = tmp + (cur - buf);
             buf = tmp;
         }
 
-        memcpy( cur, data, data->size );
+        memcpy( buf + pos, data, data->size );
         list_remove( &msg->entry );
         free_message( msg );
 
         size += next_size;
-        cur += sizeof(*data);
+        pos += sizeof(*data);
         count++;
     }
 
     reply->next_size = next_size;
     reply->count = count;
-    set_reply_data_ptr( buf, cur - buf );
+    set_reply_data_ptr( buf, pos );
 }
 
 DECL_HANDLER(update_rawinput_devices)
