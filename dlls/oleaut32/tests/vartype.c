@@ -31,6 +31,8 @@
 
 DEFINE_GUID(UUID_test_struct, 0x4029f190, 0xca4a, 0x4611, 0xae,0xb9,0x67,0x39,0x83,0xcb,0x96,0xdd);
 
+static void (WINAPI *pSysFreeString)(BSTR);
+
 /* Some Visual C++ versions choke on __uint64 to float conversions.
  * To fix this you need either VC++ 6.0 plus the processor pack
  * or Visual C++ >=7.0.
@@ -5843,9 +5845,9 @@ static void test_bstr_cache(void)
 
     str = SysAllocString(testW);
     /* This should put the string into cache */
-    SysFreeString(str);
+    pSysFreeString(str);
     /* The string is in cache, this won't touch it */
-    SysFreeString(str);
+    pSysFreeString(str);
 
     ok(SysStringLen(str) == 4, "unexpected len\n");
     ok(!lstrcmpW(str, testW), "string changed\n");
@@ -5874,8 +5876,8 @@ static void test_bstr_cache(void)
     str2 = SysAllocStringLen(NULL, 16);
     ok(str2 == strs[1], "str2 != strs[1]\n");
 
-    SysFreeString(str);
-    SysFreeString(str2);
+    pSysFreeString(str);
+    pSysFreeString(str2);
     SysFreeString(str);
     SysFreeString(str2);
 }
@@ -6047,6 +6049,7 @@ static void test_recinfo(void)
 START_TEST(vartype)
 {
   hOleaut32 = GetModuleHandleA("oleaut32.dll");
+  pSysFreeString = (void *)GetProcAddress(hOleaut32, "SysFreeString");
 
   has_i8 = GetProcAddress(hOleaut32, "VarI8FromI1") != NULL;
   has_locales = has_i8 && GetProcAddress(hOleaut32, "GetVarConversionLocaleSetting") != NULL;
