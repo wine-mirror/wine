@@ -1446,8 +1446,7 @@ static HRESULT WINAPI tracked_video_sample_SetAllocator(IMFTrackedSample *iface,
 
     TRACE("%p, %p, %p.\n", iface, sample_allocator, state);
 
-    IMFSample_LockStore(sample->sample);
-
+    EnterCriticalSection(&sample->cs);
     if (sample->tracked_result)
         hr = MF_E_NOTACCEPTING;
     else
@@ -1464,8 +1463,7 @@ static HRESULT WINAPI tracked_video_sample_SetAllocator(IMFTrackedSample *iface,
             }
         }
     }
-
-    IMFSample_UnlockStore(sample->sample);
+    LeaveCriticalSection(&sample->cs);
 
     return hr;
 }
