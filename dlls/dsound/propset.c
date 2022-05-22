@@ -91,8 +91,8 @@ static ULONG WINAPI IKsPrivatePropertySetImpl_Release(LPKSPROPERTYSET iface)
     TRACE("(%p) ref %ld\n", This, ref);
 
     if (!ref) {
+        TRACE("(%p) released\n", This);
         HeapFree(GetProcessHeap(), 0, This);
-	TRACE("(%p) released\n", This);
     }
     return ref;
 }

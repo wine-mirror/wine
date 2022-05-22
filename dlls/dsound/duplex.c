@@ -61,8 +61,8 @@ static void fullduplex_destroy(IDirectSoundFullDuplexImpl *This)
         while(IDirectSoundCapture_Release(dsc8) > 0);
         IUnknown_Release(This->dsc8_unk);
     }
-    HeapFree(GetProcessHeap(), 0, This);
     TRACE("(%p) released\n", This);
+    HeapFree(GetProcessHeap(), 0, This);
 }
 
 /*******************************************************************************

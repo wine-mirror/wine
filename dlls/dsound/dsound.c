@@ -239,8 +239,8 @@ static ULONG DirectSoundDevice_Release(DirectSoundDevice * device)
         HeapFree(GetProcessHeap(), 0, device->buffer);
         device->mixlock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&device->mixlock);
-        HeapFree(GetProcessHeap(),0,device);
         TRACE("(%p) released\n", device);
+        HeapFree(GetProcessHeap(),0,device);
     }
     return ref;
 }
@@ -670,8 +670,8 @@ static void directsound_destroy(IDirectSoundImpl *This)
 {
     if (This->device)
         DirectSoundDevice_Release(This->device);
-    HeapFree(GetProcessHeap(),0,This);
     TRACE("(%p) released\n", This);
+    HeapFree(GetProcessHeap(),0,This);
 }
 
 static inline IDirectSoundImpl *impl_from_IUnknown(IUnknown *iface)

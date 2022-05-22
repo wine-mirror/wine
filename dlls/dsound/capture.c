@@ -109,8 +109,8 @@ static void capturebuffer_destroy(IDirectSoundCaptureBufferImpl *This)
     This->device->capture_buffer = NULL;
 
     HeapFree(GetProcessHeap(), 0, This->notifies);
-    HeapFree(GetProcessHeap(), 0, This);
     TRACE("(%p) released\n", This);
+    HeapFree(GetProcessHeap(), 0, This);
 }
 
 /*******************************************************************************
@@ -871,8 +871,8 @@ static ULONG DirectSoundCaptureDevice_Release(
         HeapFree(GetProcessHeap(), 0, device->pwfx);
         device->lock.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection( &(device->lock) );
+        TRACE("(%p) released\n", device);
         HeapFree(GetProcessHeap(), 0, device);
-	TRACE("(%p) released\n", device);
     }
     return ref;
 }
@@ -1099,8 +1099,8 @@ static void capture_destroy(IDirectSoundCaptureImpl *This)
 {
     if (This->device)
         DirectSoundCaptureDevice_Release(This->device);
-    HeapFree(GetProcessHeap(),0,This);
     TRACE("(%p) released\n", This);
+    HeapFree(GetProcessHeap(),0,This);
 }
 
 /*******************************************************************************
