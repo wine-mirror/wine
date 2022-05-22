@@ -1158,6 +1158,7 @@ NTSTATUS WINAPI wow64_NtSetInformationThread( UINT *args )
     case ThreadBasePriority:   /* ULONG */
     case ThreadHideFromDebugger:   /* void */
     case ThreadEnableAlignmentFaultFixup:   /* BOOLEAN */
+    case ThreadPowerThrottlingState:  /* THREAD_POWER_THROTTLING_STATE */
         return NtSetInformationThread( handle, class, ptr, len );
 
     case ThreadImpersonationToken:   /* HANDLE */
