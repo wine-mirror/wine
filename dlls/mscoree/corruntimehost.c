@@ -1917,7 +1917,7 @@ HRESULT create_monodata(REFCLSID clsid, LPVOID *ppObj)
             HeapFree(GetProcessHeap(), 0, filenameA);
             if (!assembly)
             {
-                ERR("Cannot open assembly %s, status=%i\n", filenameA, status);
+                ERR("Cannot open assembly %s, status=%i\n", debugstr_w(filename), status);
                 domain_restore(prev_domain);
                 goto cleanup;
             }
