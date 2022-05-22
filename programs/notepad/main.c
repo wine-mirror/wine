@@ -377,10 +377,9 @@ static LPWSTR NOTEPAD_StrRStr(LPWSTR pszSource, LPWSTR pszLast, LPWSTR pszSrch)
 void NOTEPAD_DoFind(FINDREPLACEW *fr)
 {
     LPWSTR content;
-    LPWSTR found;
     int len = lstrlenW(fr->lpstrFindWhat);
     int fileLen;
-    DWORD pos;
+    SIZE_T pos;
 
     fileLen = GetWindowTextLengthW(Globals.hEdit) + 1;
     content = HeapAlloc(GetProcessHeap(), 0, fileLen * sizeof(WCHAR));
@@ -391,30 +390,34 @@ void NOTEPAD_DoFind(FINDREPLACEW *fr)
     switch (fr->Flags & (FR_DOWN|FR_MATCHCASE))
     {
         case 0:
-            found = StrRStrIW(content, content+pos-len, fr->lpstrFindWhat);
+            pos = StrRStrIW(content, content+pos-len, fr->lpstrFindWhat) - content;
+            if (pos == -(SIZE_T)content) pos = ~(SIZE_T)0;
             break;
         case FR_DOWN:
-            found = StrStrIW(content+pos, fr->lpstrFindWhat);
+            pos = StrStrIW(content+pos, fr->lpstrFindWhat) - content;
+            if (pos == -(SIZE_T)content) pos = ~(SIZE_T)0;
             break;
         case FR_MATCHCASE:
-            found = NOTEPAD_StrRStr(content, content+pos-len, fr->lpstrFindWhat);
+            pos = NOTEPAD_StrRStr(content, content+pos-len, fr->lpstrFindWhat) - content;
+            if (pos == -(SIZE_T)content) pos = ~(SIZE_T)0;
             break;
         case FR_DOWN|FR_MATCHCASE:
-            found = StrStrW(content+pos, fr->lpstrFindWhat);
+            pos = StrStrW(content+pos, fr->lpstrFindWhat) - content;
+            if (pos == -(SIZE_T)content) pos = ~(SIZE_T)0;
             break;
         default:    /* shouldn't happen */
             return;
     }
     HeapFree(GetProcessHeap(), 0, content);
 
-    if (found == NULL)
+    if (pos == ~(SIZE_T)0)
     {
         DIALOG_StringMsgBox(Globals.hFindReplaceDlg, STRING_NOTFOUND, fr->lpstrFindWhat,
             MB_ICONINFORMATION|MB_OK);
         return;
     }
 
-    SendMessageW(Globals.hEdit, EM_SETSEL, found - content, found - content + len);
+    SendMessageW(Globals.hEdit, EM_SETSEL, pos, pos + len);
 }
 
 static void NOTEPAD_DoReplace(FINDREPLACEW *fr)
@@ -452,10 +455,9 @@ static void NOTEPAD_DoReplace(FINDREPLACEW *fr)
 static void NOTEPAD_DoReplaceAll(FINDREPLACEW *fr)
 {
     LPWSTR content;
-    LPWSTR found;
     int len = lstrlenW(fr->lpstrFindWhat);
     int fileLen;
-    DWORD pos;
+    SIZE_T pos;
 
     SendMessageW(Globals.hEdit, EM_SETSEL, 0, 0);
     while(TRUE){
@@ -468,22 +470,24 @@ static void NOTEPAD_DoReplaceAll(FINDREPLACEW *fr)
         switch (fr->Flags & (FR_DOWN|FR_MATCHCASE))
         {
             case FR_DOWN:
-                found = StrStrIW(content+pos, fr->lpstrFindWhat);
+                pos = StrStrIW(content+pos, fr->lpstrFindWhat) - content;
+                if (pos == -(SIZE_T)content) pos = ~(SIZE_T)0;
                 break;
             case FR_DOWN|FR_MATCHCASE:
-                found = StrStrW(content+pos, fr->lpstrFindWhat);
+                pos = StrStrW(content+pos, fr->lpstrFindWhat) - content;
+                if (pos == -(SIZE_T)content) pos = ~(SIZE_T)0;
                 break;
             default:    /* shouldn't happen */
                 return;
         }
         HeapFree(GetProcessHeap(), 0, content);
 
-        if(found == NULL)
+        if(pos == ~(SIZE_T)0)
         {
             SendMessageW(Globals.hEdit, EM_SETSEL, 0, 0);
             return;
         }
-        SendMessageW(Globals.hEdit, EM_SETSEL, found - content, found - content + len);
+        SendMessageW(Globals.hEdit, EM_SETSEL, pos, pos + len);
         SendMessageW(Globals.hEdit, EM_REPLACESEL, TRUE, (LPARAM)fr->lpstrReplaceWith);
     }
 }
