@@ -240,13 +240,13 @@ static void test_HTMLStorage(void)
     hres = IHTMLStorage_getItem(storage, key, &var);
     ok(hres == S_OK, "getItem failed: %08lx\n", hres);
     ok(V_VT(&var) == VT_NULL, "got %d\n", V_VT(&var));
-    SysFreeString(key);
 
     hres = IHTMLStorage_getItem(storage, NULL, NULL);
     ok(hres == E_POINTER, "getItem returned: %08lx\n", hres);
 
     hres = IHTMLStorage_getItem(storage, key, NULL);
     ok(hres == E_POINTER, "getItem failed: %08lx\n", hres);
+    SysFreeString(key);
 
     V_VT(&var) = 0xdead;
     hres = IHTMLStorage_getItem(storage, NULL, &var);
