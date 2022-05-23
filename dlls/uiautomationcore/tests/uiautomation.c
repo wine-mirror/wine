@@ -58,12 +58,20 @@ static HRESULT (WINAPI *pUiaProviderFromIAccessible)(IAccessible *, long, DWORD,
 DEFINE_EXPECT(winproc_GETOBJECT_CLIENT);
 DEFINE_EXPECT(Accessible_accNavigate);
 DEFINE_EXPECT(Accessible_get_accParent);
+DEFINE_EXPECT(Accessible_get_accChildCount);
+DEFINE_EXPECT(Accessible_get_accName);
 DEFINE_EXPECT(Accessible_get_accRole);
 DEFINE_EXPECT(Accessible_get_accState);
+DEFINE_EXPECT(Accessible_accLocation);
+DEFINE_EXPECT(Accessible2_get_accParent);
+DEFINE_EXPECT(Accessible2_get_accChildCount);
+DEFINE_EXPECT(Accessible2_get_accName);
+DEFINE_EXPECT(Accessible2_get_accRole);
+DEFINE_EXPECT(Accessible2_get_accState);
+DEFINE_EXPECT(Accessible2_accLocation);
+DEFINE_EXPECT(Accessible2_QI_IAccIdentity);
 DEFINE_EXPECT(Accessible_child_accNavigate);
 DEFINE_EXPECT(Accessible_child_get_accParent);
-
-static IAccessible *acc_client;
 
 static BOOL check_variant_i4(VARIANT *v, int val)
 {
@@ -92,7 +100,10 @@ static struct Accessible
     HWND ow_hwnd;
     INT role;
     INT state;
-} Accessible, Accessible_child;
+    LONG child_count;
+    LPCWSTR name;
+    LONG left, top, width, height;
+} Accessible, Accessible2, Accessible_child;
 
 static inline struct Accessible* impl_from_Accessible(IAccessible *iface)
 {
@@ -104,6 +115,14 @@ static HRESULT WINAPI Accessible_QueryInterface(IAccessible *iface, REFIID riid,
     struct Accessible *This = impl_from_Accessible(iface);
 
     *obj = NULL;
+    if (IsEqualIID(riid, &IID_IAccIdentity))
+    {
+        if (This == &Accessible2)
+            CHECK_EXPECT(Accessible2_QI_IAccIdentity);
+        ok(This == &Accessible2, "unexpected call\n");
+        return E_NOINTERFACE;
+    }
+
     if (IsEqualIID(riid, &IID_IUnknown) || IsEqualIID(riid, &IID_IDispatch) ||
             IsEqualIID(riid, &IID_IAccessible))
         *obj = iface;
@@ -162,6 +181,8 @@ static HRESULT WINAPI Accessible_get_accParent(IAccessible *iface, IDispatch **o
 
     if (This == &Accessible_child)
         CHECK_EXPECT(Accessible_child_get_accParent);
+    else if (This == &Accessible2)
+        CHECK_EXPECT(Accessible2_get_accParent);
     else
         CHECK_EXPECT(Accessible_get_accParent);
 
@@ -174,7 +195,19 @@ static HRESULT WINAPI Accessible_get_accParent(IAccessible *iface, IDispatch **o
 
 static HRESULT WINAPI Accessible_get_accChildCount(IAccessible *iface, LONG *out_count)
 {
-    ok(0, "unexpected call\n");
+    struct Accessible *This = impl_from_Accessible(iface);
+
+    if (This == &Accessible2)
+        CHECK_EXPECT(Accessible2_get_accChildCount);
+    else
+        CHECK_EXPECT(Accessible_get_accChildCount);
+
+    if (This->child_count)
+    {
+        *out_count = This->child_count;
+        return S_OK;
+    }
+
     return E_NOTIMPL;
 }
 
@@ -188,7 +221,20 @@ static HRESULT WINAPI Accessible_get_accChild(IAccessible *iface, VARIANT child_
 static HRESULT WINAPI Accessible_get_accName(IAccessible *iface, VARIANT child_id,
         BSTR *out_name)
 {
-    ok(0, "unexpected call\n");
+    struct Accessible *This = impl_from_Accessible(iface);
+
+    *out_name = NULL;
+    if (This == &Accessible2)
+        CHECK_EXPECT(Accessible2_get_accName);
+    else
+        CHECK_EXPECT(Accessible_get_accName);
+
+    if (This->name)
+    {
+        *out_name = SysAllocString(This->name);
+        return S_OK;
+    }
+
     return E_NOTIMPL;
 }
 
@@ -211,8 +257,10 @@ static HRESULT WINAPI Accessible_get_accRole(IAccessible *iface, VARIANT child_i
 {
     struct Accessible *This = impl_from_Accessible(iface);
 
-    ok(This == &Accessible, "unexpected call\n");
-    CHECK_EXPECT(Accessible_get_accRole);
+    if (This == &Accessible2)
+        CHECK_EXPECT(Accessible2_get_accRole);
+    else
+        CHECK_EXPECT(Accessible_get_accRole);
 
     if (This->role)
     {
@@ -229,8 +277,10 @@ static HRESULT WINAPI Accessible_get_accState(IAccessible *iface, VARIANT child_
 {
     struct Accessible *This = impl_from_Accessible(iface);
 
-    ok(This == &Accessible, "unexpected call\n");
-    CHECK_EXPECT(Accessible_get_accState);
+    if (This == &Accessible2)
+        CHECK_EXPECT(Accessible2_get_accState);
+    else
+        CHECK_EXPECT(Accessible_get_accState);
 
     if (This->state)
     {
@@ -292,7 +342,22 @@ static HRESULT WINAPI Accessible_accSelect(IAccessible *iface, LONG select_flags
 static HRESULT WINAPI Accessible_accLocation(IAccessible *iface, LONG *out_left,
         LONG *out_top, LONG *out_width, LONG *out_height, VARIANT child_id)
 {
-    ok(0, "unexpected call\n");
+    struct Accessible *This = impl_from_Accessible(iface);
+
+    if (This == &Accessible2)
+        CHECK_EXPECT(Accessible2_accLocation);
+    else
+        CHECK_EXPECT(Accessible_accLocation);
+
+    if (This->width && This->height)
+    {
+        *out_left = This->left;
+        *out_top = This->top;
+        *out_width = This->width;
+        *out_height = This->height;
+        return S_OK;
+    }
+
     return E_NOTIMPL;
 }
 
@@ -430,8 +495,21 @@ static struct Accessible Accessible =
     1,
     NULL,
     0, 0,
-    0, 0,
+    0, 0, 0, NULL,
+    0, 0, 0, 0,
 };
+
+static struct Accessible Accessible2 =
+{
+    { &AccessibleVtbl },
+    { &OleWindowVtbl },
+    1,
+    NULL,
+    0, 0,
+    0, 0, 0, NULL,
+    0, 0, 0, 0,
+};
+
 static struct Accessible Accessible_child =
 {
     { &AccessibleVtbl },
@@ -439,9 +517,11 @@ static struct Accessible Accessible_child =
     1,
     &Accessible.IAccessible_iface,
     0, 0,
-    0, 0,
+    0, 0, 0, NULL,
+    0, 0, 0, 0,
 };
 
+static IAccessible *acc_client;
 static LRESULT WINAPI test_wnd_proc(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     switch (message)
@@ -782,6 +862,20 @@ static const struct msaa_state_uia_prop msaa_state_uia_props[] = {
     { STATE_SYSTEM_PROTECTED,    UIA_IsPasswordPropertyId },
 };
 
+static void set_accessible_props(struct Accessible *acc, INT role, INT state,
+        LONG child_count, LPCWSTR name, LONG left, LONG top, LONG width, LONG height)
+{
+
+    acc->role = role;
+    acc->state = state;
+    acc->child_count = child_count;
+    acc->name = name;
+    acc->left = left;
+    acc->top = top;
+    acc->width = width;
+    acc->height = height;
+}
+
 static void test_uia_prov_from_acc_properties(void)
 {
     IRawElementProviderSimple *elprov;
@@ -883,7 +977,7 @@ static void test_uia_prov_from_acc_properties(void)
 
 static void test_UiaProviderFromIAccessible(void)
 {
-    IRawElementProviderSimple *elprov;
+    IRawElementProviderSimple *elprov, *elprov2;
     enum ProviderOptions prov_opt;
     IAccessible *acc;
     WNDCLASSA cls;
@@ -891,7 +985,7 @@ static void test_UiaProviderFromIAccessible(void)
     HWND hwnd;
     VARIANT v;
 
-
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
     cls.style = 0;
     cls.lpfnWndProc = test_wnd_proc;
     cls.cbClsExtra = 0;
@@ -997,11 +1091,370 @@ static void test_UiaProviderFromIAccessible(void)
     hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, 1, UIA_PFIA_DEFAULT, &elprov);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    /*
+     * Simple child element (IAccessible without CHILDID_SELF) cannot be root
+     * IAccessible. No checks against the root HWND IAccessible will be done.
+     */
+    elprov2 = (void *)0xdeadbeef;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elprov2, "elprov != NULL\n");
+
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    /*
+     * &Accessible.IAccessible_iface will be compared against the default
+     * client accessible object. Since we have all properties set to 0,
+     * we return failure HRESULTs and all properties will get queried but not
+     * compared.
+     */
+    hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    SET_EXPECT(Accessible_get_accRole);
+    SET_EXPECT(Accessible_get_accState);
+    SET_EXPECT(Accessible_get_accChildCount);
+    SET_EXPECT(Accessible_accLocation);
+    SET_EXPECT(Accessible_get_accName);
+    elprov2 = (void *)0xdeadbeef;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elprov2, "elprov != NULL\n");
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    CHECK_CALLED(Accessible_get_accRole);
+    CHECK_CALLED(Accessible_get_accState);
+    CHECK_CALLED(Accessible_get_accChildCount);
+    CHECK_CALLED(Accessible_accLocation);
+    CHECK_CALLED(Accessible_get_accName);
+
+    /* Second call won't send WM_GETOBJECT. */
+    elprov2 = (void *)0xdeadbeef;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elprov2, "elprov != NULL\n");
+
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    /*
+     * Return &Accessible.IAccessible_iface in response to OBJID_CLIENT,
+     * interface pointers will be compared, no method calls to check property
+     * values.
+     */
+    hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    elprov2 = (void *)0xdeadbeef;
+    acc_client = &Accessible.IAccessible_iface;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elprov2, "elprov == NULL, elprov %p\n", elprov2);
+    IRawElementProviderSimple_Release(elprov2);
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+
+    /* Second call, no checks. */
+    elprov2 = (void *)0xdeadbeef;
+    acc_client = NULL;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elprov2, "elprov == NULL, elprov %p\n", elprov2);
+    IRawElementProviderSimple_Release(elprov2);
+
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    /*
+     * Return &Accessible2.IAccessible_iface in response to OBJID_CLIENT,
+     * interface pointers won't match, so properties will be compared.
+     */
+    hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    set_accessible_props(&Accessible, ROLE_SYSTEM_DOCUMENT, STATE_SYSTEM_FOCUSABLE, 1,
+            L"acc_name", 0, 0, 50, 50);
+    set_accessible_props(&Accessible2, ROLE_SYSTEM_DOCUMENT, STATE_SYSTEM_FOCUSABLE, 1,
+            L"acc_name", 0, 0, 50, 50);
+
+    acc_client = &Accessible2.IAccessible_iface;
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    SET_EXPECT(Accessible_get_accRole);
+    SET_EXPECT(Accessible_get_accState);
+    SET_EXPECT(Accessible_get_accChildCount);
+    SET_EXPECT(Accessible_accLocation);
+    SET_EXPECT(Accessible_get_accName);
+    SET_EXPECT(Accessible2_get_accRole);
+    SET_EXPECT(Accessible2_get_accState);
+    SET_EXPECT(Accessible2_get_accChildCount);
+    SET_EXPECT(Accessible2_accLocation);
+    SET_EXPECT(Accessible2_get_accName);
+    /*
+     * The IAccessible returned by WM_GETOBJECT will be checked for an
+     * IAccIdentity interface to see if Dynamic Annotation properties should
+     * be queried. If not present on the current IAccessible, it will check
+     * the parent IAccessible for one.
+     */
+    SET_EXPECT(Accessible2_QI_IAccIdentity);
+    SET_EXPECT(Accessible2_get_accParent);
+    elprov2 = (void *)0xdeadbeef;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elprov2, "elprov == NULL, elprov %p\n", elprov2);
+    ok(Accessible2.ref == 1, "Unexpected refcnt %ld\n", Accessible2.ref);
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    CHECK_CALLED(Accessible_get_accRole);
+    CHECK_CALLED(Accessible_get_accState);
+    CHECK_CALLED(Accessible_get_accChildCount);
+    CHECK_CALLED(Accessible_accLocation);
+    CHECK_CALLED(Accessible_get_accName);
+    CHECK_CALLED(Accessible2_get_accRole);
+    CHECK_CALLED(Accessible2_get_accState);
+    CHECK_CALLED(Accessible2_get_accChildCount);
+    CHECK_CALLED(Accessible2_accLocation);
+    CHECK_CALLED(Accessible2_get_accName);
+    todo_wine CHECK_CALLED(Accessible2_QI_IAccIdentity);
+    todo_wine CHECK_CALLED(Accessible2_get_accParent);
+    IRawElementProviderSimple_Release(elprov2);
+
+    elprov2 = (void *)0xdeadbeef;
+    acc_client = NULL;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elprov2, "elprov == NULL, elprov %p\n", elprov2);
+    IRawElementProviderSimple_Release(elprov2);
+
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    /*
+     * If a failure HRESULT is returned from the IRawElementProviderSimple
+     * IAccessible, the corresponding AOFW IAccessible method isn't called.
+     * An exception is get_accChildCount, which is always called, but only
+     * checked if the HRESULT return value is not a failure. If Role/State/Name
+     * are not queried, no IAccIdentity check is done.
+     */
+    hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    set_accessible_props(&Accessible, 0, 0, 0, NULL, 0, 0, 0, 0);
+    set_accessible_props(&Accessible2, ROLE_SYSTEM_DOCUMENT, STATE_SYSTEM_FOCUSABLE, 1,
+            L"acc_name", 0, 0, 50, 50);
+
+    acc_client = &Accessible2.IAccessible_iface;
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    SET_EXPECT(Accessible_get_accRole);
+    SET_EXPECT(Accessible_get_accState);
+    SET_EXPECT(Accessible_get_accChildCount);
+    SET_EXPECT(Accessible2_get_accChildCount);
+    SET_EXPECT(Accessible_accLocation);
+    SET_EXPECT(Accessible_get_accName);
+    elprov2 = (void *)0xdeadbeef;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elprov2, "elprov != NULL, elprov %p\n", elprov2);
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    CHECK_CALLED(Accessible_get_accRole);
+    CHECK_CALLED(Accessible_get_accState);
+    CHECK_CALLED(Accessible_get_accChildCount);
+    CHECK_CALLED(Accessible2_get_accChildCount);
+    CHECK_CALLED(Accessible_accLocation);
+    CHECK_CALLED(Accessible_get_accName);
+
+    acc_client = NULL;
+    elprov2 = (void *)0xdeadbeef;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elprov2, "elprov != NULL, elprov %p\n", elprov2);
+
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    /*
+     * Properties are checked in a sequence of accRole, accState,
+     * accChildCount, accLocation, and finally accName. If a mismatch is found
+     * early in the sequence, the rest aren't checked.
+     */
+    hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    set_accessible_props(&Accessible, ROLE_SYSTEM_DOCUMENT, STATE_SYSTEM_FOCUSABLE, 0, NULL, 0, 0, 0, 0);
+    set_accessible_props(&Accessible2, ROLE_SYSTEM_CLIENT, STATE_SYSTEM_FOCUSABLE, 0, NULL, 0, 0, 0, 0);
+
+    acc_client = &Accessible2.IAccessible_iface;
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    SET_EXPECT(Accessible_get_accRole);
+    SET_EXPECT(Accessible2_get_accRole);
+    SET_EXPECT(Accessible2_QI_IAccIdentity);
+    SET_EXPECT(Accessible2_get_accParent);
+    elprov2 = (void *)0xdeadbeef;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elprov2, "elprov != NULL, elprov %p\n", elprov2);
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    CHECK_CALLED(Accessible_get_accRole);
+    CHECK_CALLED(Accessible2_get_accRole);
+    todo_wine CHECK_CALLED(Accessible2_QI_IAccIdentity);
+    todo_wine CHECK_CALLED(Accessible2_get_accParent);
+
+    elprov2 = (void *)0xdeadbeef;
+    acc_client = NULL;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elprov2, "elprov != NULL, elprov %p\n", elprov2);
+
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    /* 4/5 properties match, considered a match. */
+    hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    set_accessible_props(&Accessible, ROLE_SYSTEM_DOCUMENT, STATE_SYSTEM_FOCUSABLE, 1, NULL, 0, 0, 50, 50);
+    set_accessible_props(&Accessible2, ROLE_SYSTEM_DOCUMENT, STATE_SYSTEM_FOCUSABLE, 1, NULL, 0, 0, 50, 50);
+
+    acc_client = &Accessible2.IAccessible_iface;
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    SET_EXPECT(Accessible_get_accRole);
+    SET_EXPECT(Accessible_get_accState);
+    SET_EXPECT(Accessible_get_accChildCount);
+    SET_EXPECT(Accessible_accLocation);
+    SET_EXPECT(Accessible_get_accName);
+    SET_EXPECT(Accessible2_get_accRole);
+    SET_EXPECT(Accessible2_get_accState);
+    SET_EXPECT(Accessible2_get_accChildCount);
+    SET_EXPECT(Accessible2_accLocation);
+    SET_EXPECT(Accessible2_QI_IAccIdentity);
+    SET_EXPECT(Accessible2_get_accParent);
+    elprov2 = (void *)0xdeadbeef;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elprov2, "elprov == NULL, elprov %p\n", elprov2);
+    ok(Accessible2.ref == 1, "Unexpected refcnt %ld\n", Accessible2.ref);
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    CHECK_CALLED(Accessible_get_accRole);
+    CHECK_CALLED(Accessible_get_accState);
+    CHECK_CALLED(Accessible_get_accChildCount);
+    CHECK_CALLED(Accessible_accLocation);
+    CHECK_CALLED(Accessible_get_accName);
+    CHECK_CALLED(Accessible2_get_accRole);
+    CHECK_CALLED(Accessible2_get_accState);
+    CHECK_CALLED(Accessible2_get_accChildCount);
+    CHECK_CALLED(Accessible2_accLocation);
+    todo_wine CHECK_CALLED(Accessible2_QI_IAccIdentity);
+    todo_wine CHECK_CALLED(Accessible2_get_accParent);
+    IRawElementProviderSimple_Release(elprov2);
+
+    elprov2 = (void *)0xdeadbeef;
+    acc_client = NULL;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elprov2, "elprov == NULL, elprov %p\n", elprov2);
+    IRawElementProviderSimple_Release(elprov2);
+
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    /* 3/5 properties match, not considered a match. */
+    hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    set_accessible_props(&Accessible, ROLE_SYSTEM_DOCUMENT, STATE_SYSTEM_FOCUSABLE, 1, NULL, 0, 0, 0, 0);
+    set_accessible_props(&Accessible2, ROLE_SYSTEM_DOCUMENT, STATE_SYSTEM_FOCUSABLE, 1, NULL, 0, 0, 0, 0);
+
+    acc_client = &Accessible2.IAccessible_iface;
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    SET_EXPECT(Accessible_get_accRole);
+    SET_EXPECT(Accessible_get_accState);
+    SET_EXPECT(Accessible_get_accChildCount);
+    SET_EXPECT(Accessible_accLocation);
+    SET_EXPECT(Accessible_get_accName);
+    SET_EXPECT(Accessible2_get_accRole);
+    SET_EXPECT(Accessible2_get_accState);
+    SET_EXPECT(Accessible2_get_accChildCount);
+    SET_EXPECT(Accessible2_QI_IAccIdentity);
+    SET_EXPECT(Accessible2_get_accParent);
+    elprov2 = (void *)0xdeadbeef;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elprov2, "elprov != NULL, elprov %p\n", elprov2);
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    CHECK_CALLED(Accessible_get_accRole);
+    CHECK_CALLED(Accessible_get_accState);
+    CHECK_CALLED(Accessible_get_accChildCount);
+    CHECK_CALLED(Accessible_accLocation);
+    CHECK_CALLED(Accessible_get_accName);
+    CHECK_CALLED(Accessible2_get_accRole);
+    CHECK_CALLED(Accessible2_get_accState);
+    CHECK_CALLED(Accessible2_get_accChildCount);
+    todo_wine CHECK_CALLED(Accessible2_QI_IAccIdentity);
+    todo_wine CHECK_CALLED(Accessible2_get_accParent);
+
+    elprov2 = (void *)0xdeadbeef;
+    acc_client = NULL;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elprov2, "elprov != NULL, elprov %p\n", elprov2);
+
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    /* Only name matches, considered a match. */
+    hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    set_accessible_props(&Accessible, 0, 0, 0, L"acc_name", 0, 0, 0, 0);
+    set_accessible_props(&Accessible2, 0, 0, 0, L"acc_name", 0, 0, 0, 0);
+
+    acc_client = &Accessible2.IAccessible_iface;
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    SET_EXPECT(Accessible_get_accRole);
+    SET_EXPECT(Accessible_get_accState);
+    SET_EXPECT(Accessible_get_accChildCount);
+    SET_EXPECT(Accessible_accLocation);
+    SET_EXPECT(Accessible_get_accName);
+    SET_EXPECT(Accessible2_get_accChildCount);
+    SET_EXPECT(Accessible2_get_accName);
+    SET_EXPECT(Accessible2_QI_IAccIdentity);
+    SET_EXPECT(Accessible2_get_accParent);
+    elprov2 = (void *)0xdeadbeef;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elprov2, "elprov == NULL, elprov %p\n", elprov2);
+    ok(Accessible2.ref == 1, "Unexpected refcnt %ld\n", Accessible2.ref);
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    CHECK_CALLED(Accessible_get_accRole);
+    CHECK_CALLED(Accessible_get_accState);
+    CHECK_CALLED(Accessible_get_accChildCount);
+    CHECK_CALLED(Accessible_accLocation);
+    CHECK_CALLED(Accessible_get_accName);
+    CHECK_CALLED(Accessible2_get_accChildCount);
+    CHECK_CALLED(Accessible2_get_accName);
+    todo_wine CHECK_CALLED(Accessible2_QI_IAccIdentity);
+    todo_wine CHECK_CALLED(Accessible2_get_accParent);
+
+    elprov2 = (void *)0xdeadbeef;
+    acc_client = NULL;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elprov2, "elprov == NULL, elprov %p\n", elprov2);
+
     IRawElementProviderSimple_Release(elprov);
     ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
 
     test_uia_prov_from_acc_properties();
 
+    CoUninitialize();
     DestroyWindow(hwnd);
     UnregisterClassA("pUiaProviderFromIAccessible class", NULL);
     Accessible.acc_hwnd = NULL;
