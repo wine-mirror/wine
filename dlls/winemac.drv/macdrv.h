@@ -114,13 +114,11 @@ struct macdrv_thread_data
     WORD                        keyc2scan[128];
 };
 
-extern DWORD thread_data_tls_index DECLSPEC_HIDDEN;
-
 extern struct macdrv_thread_data *macdrv_init_thread_data(void) DECLSPEC_HIDDEN;
 
 static inline struct macdrv_thread_data *macdrv_thread_data(void)
 {
-    return TlsGetValue(thread_data_tls_index);
+    return NtUserGetThreadInfo()->driver_data;
 }
 
 

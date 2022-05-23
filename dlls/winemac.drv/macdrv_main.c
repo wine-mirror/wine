@@ -46,8 +46,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
 
 C_ASSERT(NUM_EVENT_TYPES <= sizeof(macdrv_event_mask) * 8);
 
-DWORD thread_data_tls_index = TLS_OUT_OF_INDEXES;
-
 int topmost_float_inactive = TOPMOST_FLOAT_INACTIVE_NONFULLSCREEN;
 int capture_displays_for_fullscreen = 0;
 BOOL skip_single_buffer_flushes = FALSE;
@@ -463,8 +461,6 @@ static BOOL process_attach(void)
     setup_options();
     load_strings(macdrv_module);
 
-    if ((thread_data_tls_index = TlsAlloc()) == TLS_OUT_OF_INDEXES) return FALSE;
-
     macdrv_err_on = ERR_ON(macdrv);
     if (macdrv_start_cocoa_app(GetTickCount64()))
     {
@@ -493,7 +489,7 @@ void macdrv_ThreadDetach(void)
             CFRelease(data->keyboard_layout_uchr);
         HeapFree(GetProcessHeap(), 0, data);
         /* clear data in case we get re-entered from user32 before the thread is truly dead */
-        TlsSetValue(thread_data_tls_index, NULL);
+        NtUserGetThreadInfo()->driver_data = 0;
     }
 }
 
@@ -556,7 +552,7 @@ struct macdrv_thread_data *macdrv_init_thread_data(void)
     macdrv_compute_keyboard_layout(data);
 
     set_queue_display_fd(macdrv_get_event_queue_fd(data->queue));
-    TlsSetValue(thread_data_tls_index, data);
+    NtUserGetThreadInfo()->driver_data = data;
 
     NtUserActivateKeyboardLayout(data->active_keyboard_layout, 0);
     return data;
