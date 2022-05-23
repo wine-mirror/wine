@@ -289,6 +289,7 @@ static LONG msaa_role_to_uia_control_type(LONG role)
  */
 struct msaa_provider {
     IRawElementProviderSimple IRawElementProviderSimple_iface;
+    ILegacyIAccessibleProvider ILegacyIAccessibleProvider_iface;
     LONG refcount;
 
     IAccessible *acc;
@@ -330,9 +331,13 @@ static inline struct msaa_provider *impl_from_msaa_provider(IRawElementProviderS
 
 HRESULT WINAPI msaa_provider_QueryInterface(IRawElementProviderSimple *iface, REFIID riid, void **ppv)
 {
+    struct msaa_provider *msaa_prov = impl_from_msaa_provider(iface);
+
     *ppv = NULL;
     if (IsEqualIID(riid, &IID_IRawElementProviderSimple) || IsEqualIID(riid, &IID_IUnknown))
         *ppv = iface;
+    else if (IsEqualIID(riid, &IID_ILegacyIAccessibleProvider))
+        *ppv = &msaa_prov->ILegacyIAccessibleProvider_iface;
     else
         return E_NOINTERFACE;
 
@@ -377,9 +382,20 @@ HRESULT WINAPI msaa_provider_get_ProviderOptions(IRawElementProviderSimple *ifac
 HRESULT WINAPI msaa_provider_GetPatternProvider(IRawElementProviderSimple *iface,
         PATTERNID pattern_id, IUnknown **ret_val)
 {
-    FIXME("%p, %d, %p: stub!\n", iface, pattern_id, ret_val);
+    TRACE("%p, %d, %p\n", iface, pattern_id, ret_val);
+
     *ret_val = NULL;
-    return E_NOTIMPL;
+    switch (pattern_id)
+    {
+    case UIA_LegacyIAccessiblePatternId:
+        return IRawElementProviderSimple_QueryInterface(iface, &IID_IUnknown, (void **)ret_val);
+
+    default:
+        FIXME("Unimplemented patternId %d\n", pattern_id);
+        break;
+    }
+
+    return S_OK;
 }
 
 HRESULT WINAPI msaa_provider_GetPropertyValue(IRawElementProviderSimple *iface,
@@ -465,6 +481,152 @@ static const IRawElementProviderSimpleVtbl msaa_provider_vtbl = {
     msaa_provider_get_HostRawElementProvider,
 };
 
+/*
+ * ILegacyIAccessibleProvider interface for UiaProviderFromIAccessible
+ * providers.
+ */
+static inline struct msaa_provider *impl_from_msaa_acc_provider(ILegacyIAccessibleProvider *iface)
+{
+    return CONTAINING_RECORD(iface, struct msaa_provider, ILegacyIAccessibleProvider_iface);
+}
+
+static HRESULT WINAPI msaa_acc_provider_QueryInterface(ILegacyIAccessibleProvider *iface, REFIID riid, void **ppv)
+{
+    struct msaa_provider *msaa_prov = impl_from_msaa_acc_provider(iface);
+    return IRawElementProviderSimple_QueryInterface(&msaa_prov->IRawElementProviderSimple_iface, riid, ppv);
+}
+
+static ULONG WINAPI msaa_acc_provider_AddRef(ILegacyIAccessibleProvider *iface)
+{
+    struct msaa_provider *msaa_prov = impl_from_msaa_acc_provider(iface);
+    return IRawElementProviderSimple_AddRef(&msaa_prov->IRawElementProviderSimple_iface);
+}
+
+static ULONG WINAPI msaa_acc_provider_Release(ILegacyIAccessibleProvider *iface)
+{
+    struct msaa_provider *msaa_prov = impl_from_msaa_acc_provider(iface);
+    return IRawElementProviderSimple_Release(&msaa_prov->IRawElementProviderSimple_iface);
+}
+
+static HRESULT WINAPI msaa_acc_provider_Select(ILegacyIAccessibleProvider *iface, LONG select_flags)
+{
+    FIXME("%p, %#lx: stub!\n", iface, select_flags);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msaa_acc_provider_DoDefaultAction(ILegacyIAccessibleProvider *iface)
+{
+    FIXME("%p: stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msaa_acc_provider_SetValue(ILegacyIAccessibleProvider *iface, LPCWSTR val)
+{
+    FIXME("%p, %p<%s>: stub!\n", iface, val, debugstr_w(val));
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msaa_acc_provider_GetIAccessible(ILegacyIAccessibleProvider *iface,
+        IAccessible **out_acc)
+{
+    struct msaa_provider *msaa_prov = impl_from_msaa_acc_provider(iface);
+
+    TRACE("%p, %p\n", iface, out_acc);
+
+    IAccessible_AddRef(msaa_prov->acc);
+    *out_acc = msaa_prov->acc;
+
+    return S_OK;
+}
+
+static HRESULT WINAPI msaa_acc_provider_get_ChildId(ILegacyIAccessibleProvider *iface, int *out_cid)
+{
+    struct msaa_provider *msaa_prov = impl_from_msaa_acc_provider(iface);
+
+    TRACE("%p, %p\n", iface, out_cid);
+    *out_cid = V_I4(&msaa_prov->cid);
+
+    return S_OK;
+}
+
+static HRESULT WINAPI msaa_acc_provider_get_Name(ILegacyIAccessibleProvider *iface, BSTR *out_name)
+{
+    FIXME("%p, %p: stub!\n", iface, out_name);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msaa_acc_provider_get_Value(ILegacyIAccessibleProvider *iface, BSTR *out_value)
+{
+    FIXME("%p, %p: stub!\n", iface, out_value);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msaa_acc_provider_get_Description(ILegacyIAccessibleProvider *iface,
+        BSTR *out_description)
+{
+    FIXME("%p, %p: stub!\n", iface, out_description);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msaa_acc_provider_get_Role(ILegacyIAccessibleProvider *iface, DWORD *out_role)
+{
+    FIXME("%p, %p: stub!\n", iface, out_role);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msaa_acc_provider_get_State(ILegacyIAccessibleProvider *iface, DWORD *out_state)
+{
+    FIXME("%p, %p: stub!\n", iface, out_state);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msaa_acc_provider_get_Help(ILegacyIAccessibleProvider *iface, BSTR *out_help)
+{
+    FIXME("%p, %p: stub!\n", iface, out_help);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msaa_acc_provider_get_KeyboardShortcut(ILegacyIAccessibleProvider *iface,
+        BSTR *out_kbd_shortcut)
+{
+    FIXME("%p, %p: stub!\n", iface, out_kbd_shortcut);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msaa_acc_provider_GetSelection(ILegacyIAccessibleProvider *iface,
+        SAFEARRAY **out_selected)
+{
+    FIXME("%p, %p: stub!\n", iface, out_selected);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msaa_acc_provider_get_DefaultAction(ILegacyIAccessibleProvider *iface,
+        BSTR *out_default_action)
+{
+    FIXME("%p, %p: stub!\n", iface, out_default_action);
+    return E_NOTIMPL;
+}
+
+static const ILegacyIAccessibleProviderVtbl msaa_acc_provider_vtbl = {
+    msaa_acc_provider_QueryInterface,
+    msaa_acc_provider_AddRef,
+    msaa_acc_provider_Release,
+    msaa_acc_provider_Select,
+    msaa_acc_provider_DoDefaultAction,
+    msaa_acc_provider_SetValue,
+    msaa_acc_provider_GetIAccessible,
+    msaa_acc_provider_get_ChildId,
+    msaa_acc_provider_get_Name,
+    msaa_acc_provider_get_Value,
+    msaa_acc_provider_get_Description,
+    msaa_acc_provider_get_Role,
+    msaa_acc_provider_get_State,
+    msaa_acc_provider_get_Help,
+    msaa_acc_provider_get_KeyboardShortcut,
+    msaa_acc_provider_GetSelection,
+    msaa_acc_provider_get_DefaultAction,
+};
+
 /***********************************************************************
  *          UiaProviderFromIAccessible (uiautomationcore.@)
  */
@@ -520,6 +682,7 @@ HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, long child_id, DWORD
         return E_OUTOFMEMORY;
 
     msaa_prov->IRawElementProviderSimple_iface.lpVtbl = &msaa_provider_vtbl;
+    msaa_prov->ILegacyIAccessibleProvider_iface.lpVtbl = &msaa_acc_provider_vtbl;
     msaa_prov->refcount = 1;
     msaa_prov->hwnd = hwnd;
     variant_init_i4(&msaa_prov->cid, child_id);

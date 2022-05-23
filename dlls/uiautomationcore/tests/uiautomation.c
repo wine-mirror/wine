@@ -89,6 +89,20 @@ static BOOL check_variant_bool(VARIANT *v, BOOL val)
     return FALSE;
 }
 
+static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
+{
+    IUnknown *unk1, *unk2;
+    BOOL cmp;
+
+    IUnknown_QueryInterface(iface1, &IID_IUnknown, (void**)&unk1);
+    IUnknown_QueryInterface(iface2, &IID_IUnknown, (void**)&unk2);
+    cmp = (unk1 == unk2) ? TRUE : FALSE;
+
+    IUnknown_Release(unk1);
+    IUnknown_Release(unk2);
+    return cmp;
+}
+
 static struct Accessible
 {
     IAccessible IAccessible_iface;
@@ -977,13 +991,16 @@ static void test_uia_prov_from_acc_properties(void)
 
 static void test_UiaProviderFromIAccessible(void)
 {
+    ILegacyIAccessibleProvider *accprov;
     IRawElementProviderSimple *elprov, *elprov2;
     enum ProviderOptions prov_opt;
     IAccessible *acc;
+    IUnknown *unk;
     WNDCLASSA cls;
     HRESULT hr;
     HWND hwnd;
     VARIANT v;
+    INT cid;
 
     CoInitializeEx(NULL, COINIT_MULTITHREADED);
     cls.style = 0;
@@ -1084,6 +1101,26 @@ static void test_UiaProviderFromIAccessible(void)
     ok(V_VT(&v) == VT_BSTR, "V_VT(&v) = %d\n", V_VT(&v));
     VariantClear(&v);
 
+    hr = IRawElementProviderSimple_GetPatternProvider(elprov, UIA_LegacyIAccessiblePatternId, &unk);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!unk, "unk == NULL\n");
+    ok(iface_cmp((IUnknown *)elprov, unk), "unk != elprov\n");
+
+    hr = IUnknown_QueryInterface(unk, &IID_ILegacyIAccessibleProvider, (void **)&accprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!accprov, "accprov == NULL\n");
+
+    hr = ILegacyIAccessibleProvider_get_ChildId(accprov, &cid);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(cid == CHILDID_SELF, "cid != CHILDID_SELF\n");
+
+    hr = ILegacyIAccessibleProvider_GetIAccessible(accprov, &acc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(acc == &Accessible.IAccessible_iface, "acc != &Accessible.IAccessible_iface\n");
+    IAccessible_Release(acc);
+    IUnknown_Release(unk);
+    ILegacyIAccessibleProvider_Release(accprov);
+
     IRawElementProviderSimple_Release(elprov);
     ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
 
@@ -1100,6 +1137,26 @@ static void test_UiaProviderFromIAccessible(void)
     hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!elprov2, "elprov != NULL\n");
+
+    hr = IRawElementProviderSimple_GetPatternProvider(elprov, UIA_LegacyIAccessiblePatternId, &unk);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!unk, "unk == NULL\n");
+    ok(iface_cmp((IUnknown *)elprov, unk), "unk != elprov\n");
+
+    hr = IUnknown_QueryInterface(unk, &IID_ILegacyIAccessibleProvider, (void **)&accprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!accprov, "accprov == NULL\n");
+
+    hr = ILegacyIAccessibleProvider_get_ChildId(accprov, &cid);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(cid == 1, "cid != CHILDID_SELF\n");
+
+    hr = ILegacyIAccessibleProvider_GetIAccessible(accprov, &acc);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(acc == &Accessible.IAccessible_iface, "acc != &Accessible.IAccessible_iface\n");
+    IAccessible_Release(acc);
+    IUnknown_Release(unk);
+    ILegacyIAccessibleProvider_Release(accprov);
 
     IRawElementProviderSimple_Release(elprov);
     ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
