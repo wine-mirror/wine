@@ -28496,6 +28496,68 @@ methods:
 }
 
 /*****************************************************************************
+ *    IDOMProgressEvent interface
+ */
+[
+    odl,
+    oleautomation,
+    dual,
+    uuid(3051071e-98b5-11cf-bb82-00aa00bdce0b)
+]
+interface IDOMProgressEvent : IDispatch
+{
+    [propget, id(DISPID_IDOMPROGRESSEVENT_LENGTHCOMPUTABLE)]
+    HRESULT lengthComputable([out, retval] VARIANT_BOOL *p);
+
+    [propget, id(DISPID_IDOMPROGRESSEVENT_LOADED)]
+    HRESULT loaded([out, retval] ULONGLONG *p);
+
+    [propget, id(DISPID_IDOMPROGRESSEVENT_TOTAL)]
+    HRESULT total([out, retval] ULONGLONG *p);
+
+    [id(DISPID_IDOMPROGRESSEVENT_INITPROGRESSEVENT)]
+    HRESULT initProgressEvent(
+            [in] BSTR eventType,
+            [in] VARIANT_BOOL canBubble,
+            [in] VARIANT_BOOL cancelable,
+            [in] VARIANT_BOOL lengthComputableArg,
+            [in] ULONGLONG loadedArg,
+            [in] ULONGLONG totalArg);
+};
+
+/*****************************************************************************
+ *    DispDOMProgressEvent dispinterface
+ */
+[
+    hidden,
+    uuid(30590091-98b5-11cf-bb82-00aa00bdce0b)
+]
+dispinterface DispDOMProgressEvent
+{
+properties:
+methods:
+    WINE_IDOMEVENT_DISPINTERFACE_DECL;
+
+    [propget, id(DISPID_IDOMPROGRESSEVENT_LENGTHCOMPUTABLE)]
+    VARIANT_BOOL lengthComputable();
+
+    [propget, id(DISPID_IDOMPROGRESSEVENT_LOADED)]
+    ULONGLONG loaded();
+
+    [propget, id(DISPID_IDOMPROGRESSEVENT_TOTAL)]
+    ULONGLONG total();
+
+    [id(DISPID_IDOMPROGRESSEVENT_INITPROGRESSEVENT)]
+    void initProgressEvent(
+            [in] BSTR eventType,
+            [in] VARIANT_BOOL canBubble,
+            [in] VARIANT_BOOL cancelable,
+            [in] VARIANT_BOOL lengthComputableArg,
+            [in] ULONGLONG loadedArg,
+            [in] ULONGLONG totalArg);
+};
+
+/*****************************************************************************
  *    IHTMLNamespaceCollection interface
  */
 [
