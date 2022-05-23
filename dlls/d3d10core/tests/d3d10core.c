@@ -19217,6 +19217,118 @@ static void test_dynamic_map_synchronization(void)
     release_test_context(&test_context);
 }
 
+static void test_rtv_depth_slice(void)
+{
+    D3D10_RENDER_TARGET_VIEW_DESC rtv_desc;
+    struct d3d10core_test_context test_context;
+    ID3D10ShaderResourceView *srv;
+    struct resource_readback rb;
+    ID3D10Texture3D *texture;
+    unsigned int i, colour;
+    ID3D10PixelShader *ps;
+    ID3D10Device *device;
+    HRESULT hr;
+
+    static const DWORD ps_code[] =
+    {
+#if 0
+        Texture3D t;
+
+        float4 main(float4 pos : SV_Position) : SV_Target
+        {
+            return t[int3(pos.x / 640, pos.y / 480, pos.y * 4 / 480)];
+        }
+#endif
+        0x43425844, 0xef9f40c6, 0xbc613d8c, 0x02b23c2b, 0xd2cfcfe7, 0x00000001, 0x00000148, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x0000030f, 0x505f5653, 0x7469736f, 0x006e6f69,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x000000ac, 0x00000040,
+        0x0000002b, 0x04002858, 0x00107000, 0x00000000, 0x00005555, 0x04002064, 0x00101032, 0x00000000,
+        0x00000001, 0x03000065, 0x001020f2, 0x00000000, 0x02000068, 0x00000001, 0x0a000038, 0x00100072,
+        0x00000000, 0x00101146, 0x00000000, 0x00004002, 0x3acccccd, 0x3b088889, 0x3c088889, 0x00000000,
+        0x0500001b, 0x00100072, 0x00000000, 0x00100246, 0x00000000, 0x05000036, 0x00100082, 0x00000000,
+        0x00004001, 0x00000000, 0x0700002d, 0x001020f2, 0x00000000, 0x00100e46, 0x00000000, 0x00107e46,
+        0x00000000, 0x0100003e,
+    };
+
+    static const struct
+    {
+        struct vec4 ps_colour;
+        unsigned int output;
+    }
+    colours[] =
+    {
+        {{1.0f, 0.0f, 0.0f, 1.0f}, 0xff0000ff},
+        {{0.0f, 1.0f, 0.0f, 1.0f}, 0xff00ff00},
+        {{0.0f, 0.0f, 1.0f, 1.0f}, 0xffff0000},
+        {{1.0f, 1.0f, 1.0f, 1.0f}, 0xffffffff},
+    };
+
+    static const D3D10_TEXTURE3D_DESC texture_desc =
+    {
+        .Width = 32,
+        .Height = 32,
+        .Depth = ARRAY_SIZE(colours),
+        .MipLevels = 1,
+        .Format = DXGI_FORMAT_R32G32B32A32_FLOAT,
+        .Usage = D3D10_USAGE_DEFAULT,
+        .BindFlags = D3D10_BIND_SHADER_RESOURCE | D3D10_BIND_RENDER_TARGET,
+    };
+
+    if (!init_test_context(&test_context))
+        return;
+    device = test_context.device;
+
+    hr = ID3D10Device_CreatePixelShader(device, ps_code, sizeof(ps_code), &ps);
+    ok(hr == S_OK, "Failed to create pixel shader, hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreateTexture3D(device, &texture_desc, NULL, &texture);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreateShaderResourceView(device, (ID3D10Resource *)texture, NULL, &srv);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    for (i = 0; i < texture_desc.Depth; ++i)
+    {
+        ID3D10RenderTargetView *rtv;
+
+        rtv_desc.ViewDimension = D3D10_RTV_DIMENSION_TEXTURE3D;
+        rtv_desc.Format = texture_desc.Format;
+        rtv_desc.Texture3D.MipSlice = 0;
+        rtv_desc.Texture3D.FirstWSlice = i;
+        rtv_desc.Texture3D.WSize = 1;
+        hr = ID3D10Device_CreateRenderTargetView(device, (ID3D10Resource *)texture, &rtv_desc, &rtv);
+        ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+        ID3D10Device_OMSetRenderTargets(device, 1, &rtv, NULL);
+        draw_color_quad(&test_context, &colours[i].ps_colour);
+
+        ID3D10RenderTargetView_Release(rtv);
+    }
+
+    ID3D10Device_OMSetRenderTargets(device, 1, &test_context.backbuffer_rtv, NULL);
+    ID3D10Device_PSSetShaderResources(device, 0, 1, &srv);
+    ID3D10Device_PSSetShader(device, ps);
+    draw_quad(&test_context);
+
+    get_texture_readback(test_context.backbuffer, 0, &rb);
+    for (i = 0; i < texture_desc.Depth; ++i)
+    {
+        unsigned int x = 320, y = 60 + i * 480 / 4;
+
+        colour = get_readback_color(&rb, x, y);
+        todo_wine ok(colour == colours[i].output, "Got unexpected colour 0x%08x at (%u, %u), expected 0x%08x.\n",
+                colour, x, y, colours[i].output);
+    }
+    release_resource_readback(&rb);
+
+    ID3D10ShaderResourceView_Release(srv);
+    ID3D10Texture3D_Release(texture);
+    ID3D10PixelShader_Release(ps);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d10core)
 {
     unsigned int argc, i;
@@ -19347,6 +19459,7 @@ START_TEST(d3d10core)
     queue_test(test_unbound_streams);
     queue_test(test_texture_compressed_3d);
     queue_test(test_dynamic_map_synchronization);
+    queue_test(test_rtv_depth_slice);
 
     run_queued_tests();
 
