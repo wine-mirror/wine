@@ -242,9 +242,7 @@ static void check_pin(IPin *pin, IBaseFilter *expect_filter, PIN_DIRECTION expec
     CoTaskMemFree(id);
 
     hr = IPin_EnumMediaTypes(pin, &enum_mt);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (hr != S_OK) goto skip_enum_mt;
     for (i = 0; (hr = IEnumMediaTypes_Next(enum_mt, 1, &mt, NULL)) == S_OK; i++)
     {
         if (i < expect_mt_count)
@@ -260,7 +258,6 @@ static void check_pin(IPin *pin, IBaseFilter *expect_filter, PIN_DIRECTION expec
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     IEnumMediaTypes_Release(enum_mt);
 
-skip_enum_mt:
     check_interface(pin, &IID_IPin, TRUE);
     check_interface(pin, &IID_IUnknown, TRUE);
     todo_wine
@@ -499,9 +496,7 @@ static void test_filesourcefilter(void)
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     hr = IEnumPins_Next(enumpins, 1, pins, NULL);
-    todo_wine
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    if (hr != S_OK) goto skip_pins;
     check_pin(pins[0], filter, PINDIR_OUTPUT, L"Raw Video 0", L"Raw Video 0", video_mt, ARRAY_SIZE(video_mt));
     IPin_Release(pins[0]);
 
@@ -511,7 +506,6 @@ static void test_filesourcefilter(void)
     IPin_Release(pins[0]);
 
     hr = IEnumPins_Next(enumpins, 1, pins, NULL);
-skip_pins:
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     IEnumPins_Release(enumpins);
 

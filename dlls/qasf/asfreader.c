@@ -27,6 +27,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
+struct asf_stream
+{
+    struct strmbase_source source;
+    DWORD index;
+};
+
 struct asf_reader
 {
     struct strmbase_filter filter;
@@ -37,6 +43,9 @@ struct asf_reader
 
     IWMReaderCallback *callback;
     IWMReader *reader;
+
+    UINT stream_count;
+    struct asf_stream streams[16];
 };
 
 static inline struct asf_reader *impl_from_strmbase_filter(struct strmbase_filter *iface)
@@ -46,12 +55,31 @@ static inline struct asf_reader *impl_from_strmbase_filter(struct strmbase_filte
 
 static struct strmbase_pin *asf_reader_get_pin(struct strmbase_filter *iface, unsigned int index)
 {
-    return NULL;
+    struct asf_reader *filter = impl_from_strmbase_filter(iface);
+    struct strmbase_pin *pin = NULL;
+
+    TRACE("iface %p, index %u.\n", iface, index);
+
+    EnterCriticalSection(&filter->filter.filter_cs);
+    if (index < filter->stream_count)
+        pin = &filter->streams[index].source.pin;
+    LeaveCriticalSection(&filter->filter.filter_cs);
+
+    return pin;
 }
 
 static void asf_reader_destroy(struct strmbase_filter *iface)
 {
     struct asf_reader *filter = impl_from_strmbase_filter(iface);
+    struct strmbase_source *source;
+
+    while (filter->stream_count--)
+    {
+        source = &filter->streams[filter->stream_count].source;
+        if (source->pin.peer) IPin_Disconnect(source->pin.peer);
+        IPin_Disconnect(&source->pin.IPin_iface);
+        strmbase_source_cleanup(source);
+    }
 
     free(filter->file_name);
     FreeMediaType(&filter->media_type);
@@ -81,6 +109,20 @@ static const struct strmbase_filter_ops filter_ops =
     .filter_get_pin = asf_reader_get_pin,
     .filter_destroy = asf_reader_destroy,
     .filter_query_interface = asf_reader_query_interface,
+};
+
+static HRESULT WINAPI asf_reader_DecideBufferSize(struct strmbase_source *iface,
+        IMemAllocator *allocator, ALLOCATOR_PROPERTIES *req_props)
+{
+    FIXME("iface %p, allocator %p, req_props %p stub!\n", iface, allocator, req_props);
+    return E_NOTIMPL;
+}
+
+static const struct strmbase_source_ops source_ops =
+{
+    .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
+    .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
+    .pfnDecideBufferSize = asf_reader_DecideBufferSize,
 };
 
 static inline struct asf_reader *impl_from_IFileSourceFilter(IFileSourceFilter *iface)
@@ -232,9 +274,51 @@ static ULONG WINAPI reader_callback_Release(IWMReaderCallback *iface)
 static HRESULT WINAPI reader_callback_OnStatus(IWMReaderCallback *iface, WMT_STATUS status, HRESULT hr,
         WMT_ATTR_DATATYPE type, BYTE *value, void *context)
 {
-    FIXME("iface %p, status %d, hr %#lx, type %d, value %p, context %p stub!\n",
+    struct asf_reader *filter = impl_from_IWMReaderCallback(iface)->filter;
+    DWORD i, stream_count;
+    WCHAR name[MAX_PATH];
+
+    TRACE("iface %p, status %d, hr %#lx, type %d, value %p, context %p.\n",
             iface, status, hr, type, value, context);
-    return E_NOTIMPL;
+
+    switch (status)
+    {
+        case WMT_OPENED:
+            if (FAILED(hr))
+            {
+                ERR("Failed to open WMReader, hr %#lx.\n", hr);
+                break;
+            }
+            if (FAILED(hr = IWMReader_GetOutputCount(filter->reader, &stream_count)))
+            {
+                ERR("Failed to get WMReader output count, hr %#lx.\n", hr);
+                break;
+            }
+            if (stream_count > ARRAY_SIZE(filter->streams))
+            {
+                FIXME("Found %lu streams, not supported!\n", stream_count);
+                stream_count = ARRAY_SIZE(filter->streams);
+            }
+
+            EnterCriticalSection(&filter->filter.filter_cs);
+            for (i = 0; i < stream_count; ++i)
+            {
+                struct asf_stream *stream = filter->streams + i;
+                swprintf(name, ARRAY_SIZE(name), L"Raw Stream %u", stream->index);
+                strmbase_source_init(&stream->source, &filter->filter, name, &source_ops);
+            }
+            filter->stream_count = stream_count;
+            LeaveCriticalSection(&filter->filter.filter_cs);
+
+            BaseFilterImpl_IncrementPinVersion(&filter->filter);
+            break;
+
+        default:
+            WARN("Ignoring status %#x.\n", status);
+            break;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI reader_callback_OnSample(IWMReaderCallback *iface, DWORD output, QWORD time,
@@ -273,6 +357,7 @@ HRESULT asf_reader_create(IUnknown *outer, IUnknown **out)
 {
     struct asf_reader *object;
     HRESULT hr;
+    int i;
 
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
@@ -289,6 +374,7 @@ HRESULT asf_reader_create(IUnknown *outer, IUnknown **out)
         return hr;
     }
 
+    for (i = 0; i < ARRAY_SIZE(object->streams); ++i) object->streams[i].index = i;
     strmbase_filter_init(&object->filter, outer, &CLSID_WMAsfReader, &filter_ops);
     object->IFileSourceFilter_iface.lpVtbl = &file_source_vtbl;
 
