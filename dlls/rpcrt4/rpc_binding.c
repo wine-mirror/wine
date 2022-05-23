@@ -1981,6 +1981,18 @@ RPC_STATUS WINAPI RpcBindingSetOption(RPC_BINDING_HANDLE BindingHandle, ULONG Op
 
 RPC_STATUS WINAPI I_RpcBindingInqLocalClientPID(RPC_BINDING_HANDLE ClientBinding, ULONG *ClientPID)
 {
-    FIXME("%p %p: stub\n", ClientBinding, ClientPID);
-    return RPC_S_INVALID_BINDING;
+    RpcConnection *connection = NULL;
+    RpcBinding *binding;
+
+    TRACE("%p %p\n", ClientBinding, ClientPID);
+
+    binding = ClientBinding ? ClientBinding : RPCRT4_GetThreadCurrentCallHandle();
+    if (!binding)
+        return RPC_S_NO_CALL_ACTIVE;
+
+    connection = binding->FromConn;
+    if (!connection->ops->inquire_client_pid)
+        return RPC_S_INVALID_BINDING;
+
+    return connection->ops->inquire_client_pid(connection, ClientPID);
 }

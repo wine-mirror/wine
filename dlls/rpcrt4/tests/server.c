@@ -1140,16 +1140,13 @@ static DWORD CALLBACK test_I_RpcBindingInqLocalClientPID_thread_func(void *args)
     winetest_push_context("%s", client_test_name);
 
     status = I_RpcBindingInqLocalClientPID(NULL, &pid);
-    todo_wine
     ok(status == RPC_S_NO_CALL_ACTIVE, "Got unexpected %ld.\n", status);
 
     /* Other protocol sequences throw exceptions */
     if (params->protseq == RPC_PROTSEQ_LRPC)
     {
         status = I_RpcBindingInqLocalClientPID(params->binding, &pid);
-        todo_wine
         ok(status == RPC_S_OK, "Got unexpected %ld.\n", status);
-        todo_wine
         ok(pid == client_info.dwProcessId, "Got unexpected pid.\n");
     }
 
@@ -1179,9 +1176,7 @@ void __cdecl s_test_I_RpcBindingInqLocalClientPID(unsigned int protseq, RPC_BIND
     status = I_RpcBindingInqLocalClientPID(NULL, &pid);
     if (protseq == RPC_PROTSEQ_LRPC)
     {
-        todo_wine
         ok(status == RPC_S_OK, "Got unexpected %ld.\n", status);
-        todo_wine
         ok(pid == client_info.dwProcessId, "Got unexpected pid.\n");
     }
     else
@@ -1192,9 +1187,7 @@ void __cdecl s_test_I_RpcBindingInqLocalClientPID(unsigned int protseq, RPC_BIND
     if (protseq == RPC_PROTSEQ_LRPC) /* Other protocol sequences throw exceptions */
     {
         status = I_RpcBindingInqLocalClientPID(binding, &pid);
-        todo_wine
         ok(status == RPC_S_OK, "Got unexpected %ld.\n", status);
-        todo_wine
         ok(pid == client_info.dwProcessId, "Got unexpected pid.\n");
     }
 

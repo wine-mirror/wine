@@ -118,6 +118,7 @@ struct connection_ops {
   RPC_STATUS (*impersonate_client)(RpcConnection *conn);
   RPC_STATUS (*revert_to_self)(RpcConnection *conn);
   RPC_STATUS (*inquire_auth_client)(RpcConnection *, RPC_AUTHZ_HANDLE *, RPC_WSTR *, ULONG *, ULONG *, ULONG *, ULONG);
+  RPC_STATUS (*inquire_client_pid)(RpcConnection *conn, ULONG *pid);
 };
 
 /* don't know what MS's structure looks like */
