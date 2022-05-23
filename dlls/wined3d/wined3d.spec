@@ -22,6 +22,8 @@
 @ cdecl wined3d_adapter_get_output(ptr long)
 @ cdecl wined3d_adapter_get_output_count(ptr)
 @ cdecl wined3d_adapter_get_video_memory_info(ptr long long ptr)
+@ cdecl wined3d_adapter_register_budget_change_notification(ptr ptr ptr)
+@ cdecl wined3d_adapter_unregister_budget_change_notification(long)
 
 @ cdecl wined3d_blend_state_create(ptr ptr ptr ptr ptr)
 @ cdecl wined3d_blend_state_decref(ptr)

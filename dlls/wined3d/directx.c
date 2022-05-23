@@ -23,6 +23,7 @@
 
 #include "wined3d_private.h"
 #include "winternl.h"
+#include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
@@ -37,6 +38,19 @@ enum wined3d_driver_model
     DRIVER_MODEL_NT5X,
     DRIVER_MODEL_NT6X
 };
+
+struct wined3d_adapter_budget_change_notification
+{
+    const struct wined3d_adapter *adapter;
+    HANDLE event;
+    DWORD cookie;
+    UINT64 last_local_budget;
+    UINT64 last_non_local_budget;
+    struct list entry;
+};
+
+static struct list adapter_budget_change_notifications = LIST_INIT( adapter_budget_change_notifications );
+static HANDLE notification_thread, notification_thread_stop_event;
 
 /* The d3d device ID */
 static const GUID IID_D3DDEVICE_D3DUID = { 0xaeb2cdd4, 0x6e41, 0x43ea, { 0x94,0x1c,0x83,0x61,0xcc,0x76,0x07,0x81 } };
@@ -1043,6 +1057,131 @@ HRESULT CDECL wined3d_adapter_get_video_memory_info(const struct wined3d_adapter
             memset(info, 0, sizeof(*info));
             break;
     }
+    return WINED3D_OK;
+}
+
+static DWORD CALLBACK notification_thread_func(void *stop_event)
+{
+    struct wined3d_adapter_budget_change_notification *notification;
+    struct wined3d_video_memory_info info;
+    HRESULT hr;
+
+    while (TRUE)
+    {
+        wined3d_mutex_lock();
+        LIST_FOR_EACH_ENTRY(notification, &adapter_budget_change_notifications,
+                struct wined3d_adapter_budget_change_notification, entry)
+        {
+            hr = wined3d_adapter_get_video_memory_info(notification->adapter, 0,
+                    WINED3D_MEMORY_SEGMENT_GROUP_LOCAL, &info);
+            if (SUCCEEDED(hr) && info.budget != notification->last_local_budget)
+            {
+                notification->last_local_budget = info.budget;
+                SetEvent(notification->event);
+                continue;
+            }
+
+            hr = wined3d_adapter_get_video_memory_info(notification->adapter, 0,
+                    WINED3D_MEMORY_SEGMENT_GROUP_NON_LOCAL, &info);
+            if (SUCCEEDED(hr) && info.budget != notification->last_non_local_budget)
+            {
+                notification->last_non_local_budget = info.budget;
+                SetEvent(notification->event);
+            }
+        }
+        wined3d_mutex_unlock();
+
+        if (WaitForSingleObject(stop_event, 1000) == WAIT_OBJECT_0)
+            break;
+    }
+
+    return TRUE;
+}
+
+HRESULT CDECL wined3d_adapter_register_budget_change_notification(const struct wined3d_adapter *adapter,
+        HANDLE event, DWORD *cookie)
+{
+    static DWORD cookie_counter;
+    static BOOL wrapped;
+    struct wined3d_adapter_budget_change_notification *notification, *new_notification;
+    BOOL found = FALSE;
+
+    new_notification = heap_alloc_zero(sizeof(*new_notification));
+    if (!new_notification)
+        return E_OUTOFMEMORY;
+
+    wined3d_mutex_lock();
+    new_notification->adapter = adapter;
+    new_notification->event = event;
+    new_notification->cookie = cookie_counter++;
+    if (cookie_counter < new_notification->cookie)
+        wrapped = TRUE;
+    if (wrapped)
+    {
+        while (TRUE)
+        {
+            LIST_FOR_EACH_ENTRY(notification, &adapter_budget_change_notifications,
+                    struct wined3d_adapter_budget_change_notification, entry)
+            {
+                if (notification->cookie == new_notification->cookie)
+                {
+                    found = TRUE;
+                    break;
+                }
+            }
+
+            if (!found)
+                break;
+
+            new_notification->cookie = cookie_counter++;
+        }
+    }
+
+    *cookie = new_notification->cookie;
+    list_add_head(&adapter_budget_change_notifications, &new_notification->entry);
+
+    if (!notification_thread)
+    {
+        notification_thread_stop_event = CreateEventW(0, FALSE, FALSE, NULL);
+        notification_thread = CreateThread(NULL, 0, notification_thread_func,
+                notification_thread_stop_event, 0, NULL);
+    }
+    wined3d_mutex_unlock();
+    return WINED3D_OK;
+}
+
+HRESULT CDECL wined3d_adapter_unregister_budget_change_notification(DWORD cookie)
+{
+    struct wined3d_adapter_budget_change_notification *notification;
+    HANDLE thread, thread_stop_event;
+
+    wined3d_mutex_lock();
+    LIST_FOR_EACH_ENTRY(notification, &adapter_budget_change_notifications,
+            struct wined3d_adapter_budget_change_notification, entry)
+    {
+        if (notification->cookie == cookie)
+        {
+            list_remove(&notification->entry);
+            heap_free(notification);
+            break;
+        }
+    }
+
+    if (!list_empty(&adapter_budget_change_notifications))
+    {
+        wined3d_mutex_unlock();
+        return WINED3D_OK;
+    }
+
+    thread = notification_thread;
+    thread_stop_event = notification_thread_stop_event;
+    notification_thread = NULL;
+    notification_thread_stop_event = NULL;
+    wined3d_mutex_unlock();
+    SetEvent(thread_stop_event);
+    WaitForSingleObject(thread, INFINITE);
+    CloseHandle(thread);
+    CloseHandle(thread_stop_event);
     return WINED3D_OK;
 }
 

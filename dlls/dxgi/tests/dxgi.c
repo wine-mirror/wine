@@ -7539,16 +7539,13 @@ static void test_video_memory_budget_notification(void)
         goto done;
 
     hr = IDXGIAdapter3_RegisterVideoMemoryBudgetChangeNotificationEvent(adapter3, NULL, &cookie);
-    todo_wine
     ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
 
     event = CreateEventW(NULL, FALSE, FALSE, NULL);
     hr = IDXGIAdapter3_RegisterVideoMemoryBudgetChangeNotificationEvent(adapter3, event, NULL);
-    todo_wine
     ok(hr == DXGI_ERROR_INVALID_CALL, "Got unexpected hr %#lx.\n", hr);
 
     hr = IDXGIAdapter3_RegisterVideoMemoryBudgetChangeNotificationEvent(adapter3, event, &cookie);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDXGIAdapter3_QueryVideoMemoryInfo(adapter3, 0, DXGI_MEMORY_SEGMENT_GROUP_LOCAL, &memory_info);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -7560,7 +7557,6 @@ static void test_video_memory_budget_notification(void)
     if (memory_info.Budget)
     {
         ret = WaitForSingleObject(event, 1000);
-        todo_wine
         ok(ret == WAIT_OBJECT_0, "Expected event fired.\n");
     }
 

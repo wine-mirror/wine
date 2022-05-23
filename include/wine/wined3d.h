@@ -2364,6 +2364,9 @@ unsigned int __cdecl wined3d_adapter_get_output_count(const struct wined3d_adapt
 HRESULT __cdecl wined3d_adapter_get_video_memory_info(const struct wined3d_adapter *adapter,
         unsigned int node_idx, enum wined3d_memory_segment_group group,
         struct wined3d_video_memory_info *info);
+HRESULT __cdecl wined3d_adapter_register_budget_change_notification(const struct wined3d_adapter *adapter,
+        HANDLE event, DWORD *cookie);
+HRESULT __cdecl wined3d_adapter_unregister_budget_change_notification(DWORD cookie);
 
 HRESULT __cdecl wined3d_buffer_create(struct wined3d_device *device, const struct wined3d_buffer_desc *desc,
         const struct wined3d_sub_resource_data *data, void *parent, const struct wined3d_parent_ops *parent_ops,

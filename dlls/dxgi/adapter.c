@@ -333,15 +333,22 @@ static HRESULT STDMETHODCALLTYPE dxgi_adapter_SetVideoMemoryReservation(IWineDXG
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_RegisterVideoMemoryBudgetChangeNotificationEvent(
         IWineDXGIAdapter *iface, HANDLE event, DWORD *cookie)
 {
-    FIXME("iface %p, event %p, cookie %p stub!\n", iface, event, cookie);
+    struct dxgi_adapter *adapter = impl_from_IWineDXGIAdapter(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p, event %p, cookie %p.\n", iface, event, cookie);
+
+    if (!event || !cookie)
+        return DXGI_ERROR_INVALID_CALL;
+
+    return wined3d_adapter_register_budget_change_notification(adapter->wined3d_adapter, event, cookie);
 }
 
 static void STDMETHODCALLTYPE dxgi_adapter_UnregisterVideoMemoryBudgetChangeNotification(
         IWineDXGIAdapter *iface, DWORD cookie)
 {
-    FIXME("iface %p, cookie %#lx stub!\n", iface, cookie);
+    TRACE("iface %p, cookie %#lx.\n", iface, cookie);
+
+    wined3d_adapter_unregister_budget_change_notification(cookie);
 }
 
 static HRESULT STDMETHODCALLTYPE dxgi_adapter_GetDesc3(IWineDXGIAdapter *iface, DXGI_ADAPTER_DESC3 *desc)
