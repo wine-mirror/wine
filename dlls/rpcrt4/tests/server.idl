@@ -485,4 +485,6 @@ cpp_quote("#endif")
   ctx_handle_t get_handle();
   void get_handle_by_ptr([out] ctx_handle_t *r);
   void test_handle(ctx_handle_t ctx_handle);
+
+  void test_I_RpcBindingInqLocalClientPID([in] unsigned int protseq, [in] handle_t binding);
 }
