@@ -317,7 +317,7 @@ static void create_buffer_view(struct wined3d_gl_view *view, struct wined3d_cont
 static void wined3d_view_invalidate_location(struct wined3d_resource *resource,
         const struct wined3d_view_desc *desc, DWORD location)
 {
-    unsigned int i, sub_resource_idx, layer_count;
+    unsigned int i, sub_resource_idx;
     struct wined3d_texture *texture;
 
     if (resource->type == WINED3D_RTYPE_BUFFER)
@@ -327,17 +327,21 @@ static void wined3d_view_invalidate_location(struct wined3d_resource *resource,
     }
 
     texture = texture_from_resource(resource);
+    if (resource->type == WINED3D_RTYPE_TEXTURE_3D)
+    {
+        wined3d_texture_invalidate_location(texture, desc->u.texture.level_idx, location);
+        return;
+    }
 
     sub_resource_idx = desc->u.texture.layer_idx * texture->level_count + desc->u.texture.level_idx;
-    layer_count = resource->type != WINED3D_RTYPE_TEXTURE_3D ? desc->u.texture.layer_count : 1;
-    for (i = 0; i < layer_count; ++i, sub_resource_idx += texture->level_count)
+    for (i = 0; i < desc->u.texture.layer_count; ++i, sub_resource_idx += texture->level_count)
         wined3d_texture_invalidate_location(texture, sub_resource_idx, location);
 }
 
 static void wined3d_view_load_location(struct wined3d_resource *resource,
         const struct wined3d_view_desc *desc, struct wined3d_context *context, DWORD location)
 {
-    unsigned int i, sub_resource_idx, layer_count;
+    unsigned int i, sub_resource_idx;
     struct wined3d_texture *texture;
 
     if (resource->type == WINED3D_RTYPE_BUFFER)
@@ -347,9 +351,14 @@ static void wined3d_view_load_location(struct wined3d_resource *resource,
     }
 
     texture = texture_from_resource(resource);
+    if (resource->type == WINED3D_RTYPE_TEXTURE_3D)
+    {
+        wined3d_texture_load_location(texture, desc->u.texture.level_idx, context, location);
+        return;
+    }
+
     sub_resource_idx = desc->u.texture.layer_idx * texture->level_count + desc->u.texture.level_idx;
-    layer_count = resource->type != WINED3D_RTYPE_TEXTURE_3D ? desc->u.texture.layer_count : 1;
-    for (i = 0; i < layer_count; ++i, sub_resource_idx += texture->level_count)
+    for (i = 0; i < desc->u.texture.layer_count; ++i, sub_resource_idx += texture->level_count)
         wined3d_texture_load_location(texture, sub_resource_idx, context, location);
 }
 
