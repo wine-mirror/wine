@@ -552,7 +552,8 @@ bool wg_format_compare(const struct wg_format *a, const struct wg_format *b)
             /* Do not compare FPS. */
             return a->u.video.format == b->u.video.format
                     && a->u.video.width == b->u.video.width
-                    && abs(a->u.video.height) == abs(b->u.video.height);
+                    && abs(a->u.video.height) == abs(b->u.video.height)
+                    && EqualRect( &a->u.video.padding, &b->u.video.padding );
     }
 
     assert(0);

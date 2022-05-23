@@ -695,7 +695,30 @@ NTSTATUS wg_transform_read_data(void *args)
         GST_MINI_OBJECT_FLAG_UNSET(transform->output_sample, GST_SAMPLE_FLAG_WG_CAPS_CHANGED);
 
         if (format)
+        {
+            gsize plane_align = transform->output_plane_align;
+            GstVideoAlignment align;
+            GstVideoInfo info;
+
             wg_format_from_caps(format, output_caps);
+
+            if (format->major_type == WG_MAJOR_TYPE_VIDEO
+                    && gst_video_info_from_caps(&info, output_caps)
+                    && align_video_info_planes(plane_align, &info, &align))
+            {
+                GST_INFO("Returning video alignment left %u, top %u, right %u, bottom %u.", align.padding_left,
+                        align.padding_top, align.padding_right, align.padding_bottom);
+
+                format->u.video.padding.left = align.padding_left;
+                format->u.video.width += format->u.video.padding.left;
+                format->u.video.padding.right = align.padding_right;
+                format->u.video.width += format->u.video.padding.right;
+                format->u.video.padding.top = align.padding_top;
+                format->u.video.height += format->u.video.padding.top;
+                format->u.video.padding.bottom = align.padding_bottom;
+                format->u.video.height += format->u.video.padding.bottom;
+            }
+        }
 
         params->result = MF_E_TRANSFORM_STREAM_CHANGE;
         GST_INFO("Format changed detected, returning no output");

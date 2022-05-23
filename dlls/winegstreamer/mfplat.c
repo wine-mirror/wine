@@ -688,6 +688,20 @@ static IMFMediaType *mf_media_type_from_wg_format_video(const struct wg_format *
             IMFMediaType_SetUINT32(type, &MF_MT_ALL_SAMPLES_INDEPENDENT, TRUE);
             IMFMediaType_SetUINT32(type, &MF_MT_VIDEO_ROTATION, MFVideoRotationFormat_0);
 
+            if (!IsRectEmpty(&format->u.video.padding))
+            {
+                MFVideoArea aperture =
+                {
+                    .OffsetX = {.value = format->u.video.padding.left},
+                    .OffsetY = {.value = format->u.video.padding.top},
+                    .Area.cx = format->u.video.width - format->u.video.padding.right - format->u.video.padding.left,
+                    .Area.cy = format->u.video.height - format->u.video.padding.bottom - format->u.video.padding.top,
+                };
+
+                IMFMediaType_SetBlob(type, &MF_MT_MINIMUM_DISPLAY_APERTURE,
+                        (BYTE *)&aperture, sizeof(aperture));
+            }
+
             return type;
         }
     }
@@ -770,7 +784,9 @@ static void mf_media_type_to_wg_format_audio(IMFMediaType *type, const GUID *sub
 static void mf_media_type_to_wg_format_video(IMFMediaType *type, const GUID *subtype, struct wg_format *format)
 {
     UINT64 frame_rate, frame_size;
+    MFVideoArea aperture;
     unsigned int i;
+    UINT32 size;
 
     if (FAILED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_SIZE, &frame_size)))
     {
@@ -783,6 +799,15 @@ static void mf_media_type_to_wg_format_video(IMFMediaType *type, const GUID *sub
     format->u.video.height = (UINT32)frame_size;
     format->u.video.fps_n = 1;
     format->u.video.fps_d = 1;
+
+    if (SUCCEEDED(IMFMediaType_GetBlob(type, &MF_MT_MINIMUM_DISPLAY_APERTURE, (BYTE *)&aperture,
+            sizeof(aperture), &size)) && size == sizeof(aperture))
+    {
+        format->u.video.padding.left = aperture.OffsetX.value;
+        format->u.video.padding.top = aperture.OffsetY.value;
+        format->u.video.padding.right = format->u.video.width - aperture.Area.cx - aperture.OffsetX.value;
+        format->u.video.padding.bottom = format->u.video.height - aperture.Area.cy - aperture.OffsetY.value;
+    }
 
     if (SUCCEEDED(IMFMediaType_GetUINT64(type, &MF_MT_FRAME_RATE, &frame_rate)) && (UINT32)frame_rate)
     {

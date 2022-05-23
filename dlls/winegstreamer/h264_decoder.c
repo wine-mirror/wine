@@ -173,6 +173,22 @@ static HRESULT fill_output_media_type(struct h264_decoder *decoder, IMFMediaType
             return hr;
     }
 
+    if (FAILED(hr = IMFMediaType_GetItem(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE, NULL))
+            && !IsRectEmpty(&wg_format->u.video.padding))
+    {
+        MFVideoArea aperture =
+        {
+            .OffsetX = {.value = wg_format->u.video.padding.left},
+            .OffsetY = {.value = wg_format->u.video.padding.top},
+            .Area.cx = wg_format->u.video.width - wg_format->u.video.padding.right - wg_format->u.video.padding.left,
+            .Area.cy = wg_format->u.video.height - wg_format->u.video.padding.bottom - wg_format->u.video.padding.top,
+        };
+
+        if (FAILED(hr = IMFMediaType_SetBlob(media_type, &MF_MT_MINIMUM_DISPLAY_APERTURE,
+                (BYTE *)&aperture, sizeof(aperture))))
+            return hr;
+    }
+
     return S_OK;
 }
 

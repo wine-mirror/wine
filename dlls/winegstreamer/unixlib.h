@@ -68,6 +68,7 @@ struct wg_format
             } format;
             int32_t width, height;
             uint32_t fps_n, fps_d;
+            RECT padding;
         } video;
         struct
         {
