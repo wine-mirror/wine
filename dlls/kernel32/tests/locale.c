@@ -2332,7 +2332,7 @@ static void test_LCMapStringA(void)
     ok(ret2, "LCMapStringA must succeed\n");
     ok(buf2[ret2-1] == 0, "LCMapStringA not null-terminated\n" );
     ok(ret == ret2, "lengths of sort keys must be equal\n");
-    ok(!lstrcmpA(buf, buf2), "sort keys must be equal\n");
+    ok(!memcmp(buf, buf2, ret), "sort keys must be equal\n");
 
     /* test we get the same length when no dest buffer is provided */
     ret2 = LCMapStringA(LOCALE_USER_DEFAULT, LCMAP_SORTKEY,
@@ -2348,7 +2348,7 @@ static void test_LCMapStringA(void)
                        lower_case, -1, buf2, sizeof(buf2));
     ok(ret2, "LCMapStringA must succeed\n");
     ok(ret == ret2, "lengths of sort keys must be equal\n");
-    ok(!lstrcmpA(buf, buf2), "sort keys must be equal\n");
+    ok(!memcmp(buf, buf2, ret), "sort keys must be equal\n");
 
     /* Don't test LCMAP_SORTKEY | NORM_IGNORENONSPACE, produces different
        results from plain LCMAP_SORTKEY on Vista */
@@ -2361,7 +2361,7 @@ static void test_LCMapStringA(void)
                        symbols_stripped, -1, buf2, sizeof(buf2));
     ok(ret2, "LCMapStringA must succeed\n");
     ok(ret == ret2, "lengths of sort keys must be equal\n");
-    ok(!lstrcmpA(buf, buf2), "sort keys must be equal\n");
+    ok(!memcmp(buf, buf2, ret), "sort keys must be equal\n");
 
     /* test NORM_IGNORENONSPACE */
     lstrcpyA(buf, "foo");
@@ -2585,7 +2585,7 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
                        upper_case, lstrlenW(upper_case), buf2, sizeof(buf2));
     ok(ret, "%s func_ptr must succeed\n", func_name);
     ok(ret == ret2, "%s lengths of sort keys must be equal\n", func_name);
-    ok(!lstrcmpA(p_buf, p_buf2), "%s sort keys must be equal\n", func_name);
+    ok(!memcmp(p_buf, p_buf2, ret), "%s sort keys must be equal\n", func_name);
 
     /* test LCMAP_SORTKEY | NORM_IGNORECASE */
     ret = func_ptr(LCMAP_SORTKEY | NORM_IGNORECASE,
@@ -2595,7 +2595,7 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
                        lower_case, -1, buf2, sizeof(buf2));
     ok(ret2, "%s func_ptr must succeed\n", func_name);
     ok(ret == ret2, "%s lengths of sort keys must be equal\n", func_name);
-    ok(!lstrcmpA(p_buf, p_buf2), "%s sort keys must be equal\n", func_name);
+    ok(!memcmp(p_buf, p_buf2, ret), "%s sort keys must be equal\n", func_name);
 
     /* Don't test LCMAP_SORTKEY | NORM_IGNORENONSPACE, produces different
        results from plain LCMAP_SORTKEY on Vista */
@@ -2608,7 +2608,7 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
                        symbols_stripped, -1, buf2, sizeof(buf2));
     ok(ret2, "%s func_ptr must succeed\n", func_name);
     ok(ret == ret2, "%s lengths of sort keys must be equal\n", func_name);
-    ok(!lstrcmpA(p_buf, p_buf2), "%s sort keys must be equal\n", func_name);
+    ok(!memcmp(p_buf, p_buf2, ret), "%s sort keys must be equal\n", func_name);
 
     /* test NORM_IGNORENONSPACE */
     lstrcpyW(buf, fooW);
@@ -3221,9 +3221,11 @@ static int compare_string3(const void *e1, const void *e2)
     const char *s2 = *(const char *const *)e2;
     char key1[256], key2[256];
 
-    LCMapStringA(0, LCMAP_SORTKEY, s1, -1, key1, sizeof(key1));
-    LCMapStringA(0, LCMAP_SORTKEY, s2, -1, key2, sizeof(key2));
-    return strcmp(key1, key2);
+    int len1 = LCMapStringA(0, LCMAP_SORTKEY, s1, -1, key1, sizeof(key1));
+    int len2 = LCMapStringA(0, LCMAP_SORTKEY, s2, -1, key2, sizeof(key2));
+    int ret = memcmp(key1, key2, min(len1, len2));
+    if (!ret) ret = len1 - len2;
+    return ret;
 }
 
 static void test_sorting(void)
