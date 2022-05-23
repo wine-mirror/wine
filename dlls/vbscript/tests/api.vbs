@@ -747,6 +747,21 @@ Call ok(Space(4.5) = "    ", "Space(4.5) = " & Space(4.5) & """")
 Call ok(Space(0.5) = "", "Space(0.5) = " & Space(0.5) & """")
 Call ok(Space(1.5) = "  ", "Space(1.5) = " & Space(1.5) & """")
 Call ok(Space("1") = " ", "Space(""1"") = " & Space("1") & """")
+Call ok(Space(Empty) = "", "Space(Empty) = " & Space(Empty) & """")
+
+sub testSpaceError()
+    on error resume next
+    call Err.clear()
+    call Space(-1)
+    call ok(Err.number = 5, "Err.number = " & Err.number)
+    call Err.clear()
+    call Space("-1")
+    call ok(Err.number = 5, "Err.number = " & Err.number)
+    call Err.clear()
+    call Space(Null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+end sub
+call testSpaceError()
 
 sub test_string(cnt, char, exp)
     call ok(String(cnt, char) = exp, "String(" & cnt & ", """ & char & """ = """ & _

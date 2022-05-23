@@ -1586,14 +1586,17 @@ static HRESULT Global_Space(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, 
 
     TRACE("%s\n", debugstr_variant(arg));
 
+    assert(args_cnt == 1);
+
+    if(V_VT(arg) == VT_NULL)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
     hres = to_int(arg, &n);
     if(FAILED(hres))
         return hres;
 
-    if(n < 0) {
-        FIXME("n = %d\n", n);
-        return E_NOTIMPL;
-    }
+    if(n < 0)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_FUNC_CALL);
 
     if(!res)
         return S_OK;
