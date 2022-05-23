@@ -21,6 +21,7 @@
 #include <math.h>
 #include <float.h>
 #include "d2d1_3.h"
+#include "d2d1effectauthor.h"
 #include "d3d11.h"
 #include "wincrypt.h"
 #include "wine/test.h"
@@ -28,6 +29,62 @@
 #include "dwrite.h"
 #include "wincodec.h"
 #include "wine/heap.h"
+
+DEFINE_GUID(CLSID_TestEffect, 0xb9ee12e9,0x32d9,0xe659,0xac,0x61,0x2d,0x7c,0xea,0x69,0x28,0x78);
+
+static const WCHAR *effect_xml_a =
+L"<?xml version='1.0'?>                                                       \
+    <Effect>                                                                  \
+        <Property name='DisplayName' type='string' value='TestEffect'/>       \
+        <Property name='Author'      type='string' value='The Wine Project'/> \
+        <Property name='Category'    type='string' value='Test'/>             \
+        <Property name='Description' type='string' value='Test effect.'/>     \
+        <Inputs>                                                              \
+            <Input name='Source'/>                                            \
+        </Inputs>                                                             \
+        <Property name='Integer' type='uint32'>                               \
+            <Property name='DisplayName' type='string' value='Integer'/>      \
+            <Property name='Min'         type='uint32' value='0'/>            \
+            <Property name='Max'         type='uint32' value='100'/>          \
+            <Property name='Default'     type='uint32' value='10'/>           \
+        </Property>                                                           \
+    </Effect>                                                                 \
+";
+
+static const WCHAR *effect_xml_b =
+L"<?xml version='1.0'?>                                                       \
+    <Effect>                                                                  \
+        <Property name='DisplayName' type='string' value='TestEffect'/>       \
+        <Property name='Author'      type='string' value='The Wine Project'/> \
+        <Property name='Category'    type='string' value='Test'/>             \
+        <Property name='Description' type='string' value='Test effect.'/>     \
+        <Inputs>                                                              \
+            <Input name='Source'/>                                            \
+        </Inputs>                                                             \
+        <Property name='Context' type='iunknown'>                             \
+            <Property name='DisplayName' type='string' value='Context'/>      \
+        </Property>                                                           \
+    </Effect>                                                                 \
+";
+
+static const WCHAR *effect_xml_c =
+L"<?xml version='1.0'?>                                                       \
+    <Effect>                                                                  \
+        <Property name='DisplayName' type='string' value='TestEffect'/>       \
+        <Property name='Author'      type='string' value='The Wine Project'/> \
+        <Property name='Category'    type='string' value='Test'/>             \
+        <Property name='Description' type='string' value='Test effect.'/>     \
+        <Inputs>                                                              \
+            <Input name='Source'/>                                            \
+        </Inputs>                                                             \
+        <Property name='Context' type='iunknown'>                             \
+            <Property name='DisplayName' type='string' value='Context'/>      \
+        </Property>                                                           \
+        <Property name='Integer' type='uint32'>                               \
+            <Property name='DisplayName' type='string' value='Integer'/>      \
+        </Property>                                                           \
+    </Effect>                                                                 \
+";
 
 static HRESULT (WINAPI *pD2D1CreateDevice)(IDXGIDevice *dxgi_device,
         const D2D1_CREATION_PROPERTIES *properties, ID2D1Device **device);
@@ -116,6 +173,14 @@ struct expected_geometry_figure
     D2D1_POINT_2F start_point;
     unsigned int segment_count;
     const struct geometry_segment *segments;
+};
+
+struct effect_impl
+{
+    ID2D1EffectImpl ID2D1EffectImpl_iface;
+    LONG refcount;
+    UINT integer;
+    ID2D1EffectContext *effect_context;
 };
 
 static void queue_d3d1x_test(void (*test)(BOOL d3d11), BOOL d3d11)
@@ -10296,6 +10361,241 @@ static void test_effect(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static inline struct effect_impl *impl_from_ID2D1EffectImpl(ID2D1EffectImpl *iface)
+{
+    return CONTAINING_RECORD(iface, struct effect_impl, ID2D1EffectImpl_iface);
+}
+
+static HRESULT STDMETHODCALLTYPE effect_impl_QueryInterface(ID2D1EffectImpl *iface, REFIID iid, void **out)
+{
+    if (IsEqualGUID(iid, &IID_ID2D1EffectImpl)
+            || IsEqualGUID(iid, &IID_IUnknown))
+    {
+        ID2D1EffectImpl_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG STDMETHODCALLTYPE effect_impl_AddRef(ID2D1EffectImpl *iface)
+{
+    struct effect_impl *effect_impl = impl_from_ID2D1EffectImpl(iface);
+    ULONG refcount = InterlockedIncrement(&effect_impl->refcount);
+    return refcount;
+}
+
+static ULONG STDMETHODCALLTYPE effect_impl_Release(ID2D1EffectImpl *iface)
+{
+    struct effect_impl *effect_impl = impl_from_ID2D1EffectImpl(iface);
+    ULONG refcount = InterlockedDecrement(&effect_impl->refcount);
+
+    if (!refcount)
+    {
+        if (effect_impl->effect_context)
+            ID2D1EffectContext_Release(effect_impl->effect_context);
+        heap_free(effect_impl);
+    }
+
+    return refcount;
+}
+
+static HRESULT STDMETHODCALLTYPE effect_impl_Initialize(ID2D1EffectImpl *iface,
+        ID2D1EffectContext *context,ID2D1TransformGraph *graph)
+{
+    struct effect_impl *effect_impl = impl_from_ID2D1EffectImpl(iface);
+    ID2D1EffectContext_AddRef(effect_impl->effect_context = context);
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE effect_impl_PrepareForRender(ID2D1EffectImpl *iface, D2D1_CHANGE_TYPE type)
+{
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE effect_impl_SetGraph(ID2D1EffectImpl *iface, ID2D1TransformGraph *graph)
+{
+    return E_NOTIMPL;
+}
+
+static const ID2D1EffectImplVtbl effect_impl_vtbl =
+{
+    effect_impl_QueryInterface,
+    effect_impl_AddRef,
+    effect_impl_Release,
+    effect_impl_Initialize,
+    effect_impl_PrepareForRender,
+    effect_impl_SetGraph,
+};
+
+static HRESULT STDMETHODCALLTYPE effect_impl_create(IUnknown **effect_impl)
+{
+    struct effect_impl *object;
+
+    if (!(object = heap_alloc(sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->ID2D1EffectImpl_iface.lpVtbl = &effect_impl_vtbl;
+    object->refcount = 1;
+    object->integer = 0;
+    object->effect_context = NULL;
+
+    *effect_impl = (IUnknown *)&object->ID2D1EffectImpl_iface;
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE effect_impl_set_integer(IUnknown *iface, const BYTE *data, UINT32 data_size)
+{
+    struct effect_impl *effect_impl = impl_from_ID2D1EffectImpl((ID2D1EffectImpl *)iface);
+
+    if (!data || data_size != sizeof(effect_impl->integer))
+        return E_INVALIDARG;
+
+    effect_impl->integer = *((UINT *)data);
+
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE effect_impl_get_integer(const IUnknown *iface,
+        BYTE *data, UINT32 data_size, UINT32 *actual_size)
+{
+    struct effect_impl *effect_impl = impl_from_ID2D1EffectImpl((ID2D1EffectImpl *)iface);
+
+    if (!data || data_size != sizeof(effect_impl->integer))
+        return E_INVALIDARG;
+
+    *((UINT *)data) = effect_impl->integer;
+    if (actual_size)
+        *actual_size = sizeof(effect_impl->integer);
+
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE effect_impl_get_context(const IUnknown *iface,
+        BYTE *data, UINT32 data_size, UINT32 *actual_size)
+{
+    struct effect_impl *effect_impl = impl_from_ID2D1EffectImpl((ID2D1EffectImpl *)iface);
+
+    if (!data || data_size != sizeof(effect_impl->effect_context))
+        return E_INVALIDARG;
+
+    *((ID2D1EffectContext **)data) = effect_impl->effect_context;
+    if (actual_size)
+        *actual_size = sizeof(effect_impl->effect_context);
+
+    return S_OK;
+}
+
+static void test_effect_register(BOOL d3d11)
+{
+    struct d2d1_test_context ctx;
+    ID2D1Factory1 *factory;
+    unsigned int i;
+    HRESULT hr;
+
+    const D2D1_PROPERTY_BINDING binding[] =
+    {
+        {L"Integer",  effect_impl_set_integer, effect_impl_get_integer},
+        {L"Context",  NULL,                    effect_impl_get_context},
+        {L"Integer",  NULL,                    effect_impl_get_integer},
+        {L"Integer",  effect_impl_set_integer, NULL},
+        {L"Integer",  NULL,                    NULL},
+        {L"DeadBeef", effect_impl_set_integer, effect_impl_get_integer},
+    };
+
+    const struct binding_test
+    {
+        const D2D1_PROPERTY_BINDING *binding;
+        UINT32 binding_count;
+        const WCHAR *effect_xml;
+        HRESULT hr;
+    }
+    binding_tests[] =
+    {
+        {NULL,        0, effect_xml_a, S_OK},
+        {NULL,        0, effect_xml_b, S_OK},
+        {binding,     1, effect_xml_a, S_OK},
+        {binding,     1, effect_xml_b, D2DERR_INVALID_PROPERTY},
+        {binding + 1, 1, effect_xml_b, S_OK},
+        {binding + 2, 1, effect_xml_a, S_OK},
+        {binding + 3, 1, effect_xml_a, S_OK},
+        {binding + 4, 1, effect_xml_a, S_OK},
+        {binding + 5, 1, effect_xml_a, D2DERR_INVALID_PROPERTY},
+        {binding,     2, effect_xml_a, D2DERR_INVALID_PROPERTY},
+        {binding,     2, effect_xml_b, D2DERR_INVALID_PROPERTY},
+        {binding,     2, effect_xml_c, S_OK},
+    };
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    if (!(factory = create_factory(&IID_ID2D1Factory1, NULL)))
+    {
+        win_skip("ID2D1Factory1 is not supported.\n");
+        release_test_context(&ctx);
+        return;
+    }
+
+    /* Register effect once */
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
+            effect_xml_a, NULL, 0, effect_impl_create);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+    todo_wine ok(hr == D2DERR_EFFECT_IS_NOT_REGISTERED, "Got unexpected hr %#lx.\n", hr);
+
+    /* Register effect multiple times */
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
+            effect_xml_a, NULL, 0, effect_impl_create);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
+            effect_xml_a, NULL, 0, effect_impl_create);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+    todo_wine ok(hr == D2DERR_EFFECT_IS_NOT_REGISTERED, "Got unexpected hr %#lx.\n", hr);
+
+    /* Register effect multiple times with different xml */
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
+            effect_xml_a, NULL, 0, effect_impl_create);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
+            effect_xml_b, NULL, 0, effect_impl_create);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Register effect with property binding */
+    for (i = 0; i < ARRAY_SIZE(binding_tests); ++i)
+    {
+        const struct binding_test *test = &binding_tests[i];
+        winetest_push_context("Test %u", i);
+
+        hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
+                test->effect_xml, test->binding, test->binding_count, effect_impl_create);
+        todo_wine_if(test->hr != S_OK)
+        ok(hr == test->hr, "Got unexpected hr %#lx, expected %#lx.\n", hr, test->hr);
+        ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+
+        winetest_pop_context();
+    }
+
+    /* Unregister builtin effect */
+    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_D2D1Composite);
+    todo_wine ok(hr == D2DERR_EFFECT_IS_NOT_REGISTERED, "Got unexpected hr %#lx.\n", hr);
+
+    ID2D1Factory1_Release(factory);
+    release_test_context(&ctx);
+}
+
 static void test_effect_2d_affine(BOOL d3d11)
 {
     D2D1_MATRIX_3X2_F rotate, scale, skew;
@@ -11088,6 +11388,7 @@ START_TEST(d2d1)
     queue_d3d10_test(test_colour_space);
     queue_test(test_geometry_group);
     queue_test(test_mt_factory);
+    queue_test(test_effect_register);
     queue_test(test_effect);
     queue_test(test_effect_2d_affine);
     queue_test(test_effect_crop);
