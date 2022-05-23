@@ -565,6 +565,29 @@ static void *import_html(CFDataRef data, size_t *ret_size)
 }
 
 
+/* based on wine_get_dos_file_name */
+static WCHAR *get_dos_file_name(const char *path)
+{
+    ULONG len = strlen(path) + 9; /* \??\unix prefix */
+    WCHAR *ret;
+
+    if (!(ret = malloc(len * sizeof(WCHAR)))) return NULL;
+    if (wine_unix_to_nt_file_name(path, ret, &len))
+    {
+        free(ret);
+        return NULL;
+    }
+
+    if (ret[5] == ':')
+    {
+        /* get rid of the \??\ prefix */
+        memmove(ret, ret + 4, (len - 4) * sizeof(WCHAR));
+    }
+    else ret[1] = '\\';
+    return ret;
+}
+
+
 /**************************************************************************
  *              import_nsfilenames_to_hdrop
  *
@@ -632,7 +655,7 @@ static void *import_nsfilenames_to_hdrop(CFDataRef data, size_t *ret_size)
             WARN("failed to get file-system representation for %s\n", debugstr_cf(name));
             goto done;
         }
-        paths[i] = wine_get_dos_file_name(buffer);
+        paths[i] = get_dos_file_name(buffer);
         if (!paths[i])
         {
             WARN("failed to get DOS path for %s\n", debugstr_a(buffer));
@@ -668,8 +691,7 @@ static void *import_nsfilenames_to_hdrop(CFDataRef data, size_t *ret_size)
 done:
     if (paths)
     {
-        for (i = 0; i < count; i++)
-            HeapFree(GetProcessHeap(), 0, paths[i]);
+        for (i = 0; i < count; i++) free(paths[i]);
         HeapFree(GetProcessHeap(), 0, paths);
     }
     HeapFree(GetProcessHeap(), 0, buffer);
