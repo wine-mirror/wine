@@ -448,6 +448,7 @@ NTSTATUS wg_transform_read_data(void *args)
     else if (!(transform->input = gst_buffer_list_new()))
     {
         GST_ERROR("Failed to allocate new input queue");
+        gst_buffer_list_unref(input);
         return STATUS_NO_MEMORY;
     }
     else if ((ret = gst_pad_push_list(transform->my_src, input)))
