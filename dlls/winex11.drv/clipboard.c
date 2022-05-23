@@ -1337,11 +1337,10 @@ static BOOL render_format( UINT id )
 
     for (i = 0; i < nb_current_x11_formats; i++)
     {
-        struct set_clipboard_params params;
+        struct set_clipboard_params params = { 0 };
         if (current_x11_formats[i]->id != id) continue;
         if (!(params.data = import_selection( display, import_window, current_selection,
                                               current_x11_formats[i], &params.size ))) continue;
-        params.seqno = 0;
         NtUserSetClipboardData( id, 0, &params );
         if (params.size) free( params.data );
         return TRUE;
