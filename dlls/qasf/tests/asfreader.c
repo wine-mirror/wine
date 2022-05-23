@@ -231,13 +231,11 @@ static void check_pin(IPin *pin, IBaseFilter *expect_filter, PIN_DIRECTION expec
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
     ok(info.pFilter == expect_filter, "Got filter %p.\n", info.pFilter);
     ok(info.dir == expect_dir, "Got dir %#x.\n", info.dir);
-    todo_wine
     ok(!wcscmp(info.achName, expect_name), "Got name %s.\n", debugstr_w(info.achName));
     IBaseFilter_Release(info.pFilter);
 
     hr = IPin_QueryId(pin, &id);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
-    todo_wine
     ok(!wcscmp(id, expect_id), "Got id %s.\n", debugstr_w(id));
     CoTaskMemFree(id);
 
@@ -253,7 +251,7 @@ static void check_pin(IPin *pin, IBaseFilter *expect_filter, PIN_DIRECTION expec
         FreeMediaType(mt);
         CoTaskMemFree(mt);
     }
-    todo_wine
+    todo_wine_if(IsEqualGUID(&expect_mt[0].majortype, &MEDIATYPE_Video))
     ok(i == expect_mt_count, "Got %u types.\n", i);
     ok(hr == S_FALSE, "Got hr %#lx.\n", hr);
     IEnumMediaTypes_Release(enum_mt);
