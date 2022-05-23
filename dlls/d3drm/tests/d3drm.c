@@ -1657,80 +1657,84 @@ static void test_object(void)
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
+        winetest_push_context("Test %u", i);
+
         unknown = (IUnknown *)0xdeadbeef;
         hr = IDirect3DRM_CreateObject(d3drm1, NULL, NULL, tests[i].iid, (void **)&unknown);
-        ok(hr == D3DRMERR_BADVALUE, "Test %u: expected hr == D3DRMERR_BADVALUE, got %#lx.\n", i, hr);
+        ok(hr == D3DRMERR_BADVALUE, "Unexpected hr %#lx.\n", hr);
         ok(!unknown, "Expected object returned == NULL, got %p.\n", unknown);
         unknown = (IUnknown *)0xdeadbeef;
         hr = IDirect3DRM_CreateObject(d3drm1, tests[i].clsid, NULL, NULL, (void **)&unknown);
-        ok(hr == D3DRMERR_BADVALUE, "Test %u: expected hr == D3DRMERR_BADVALUE, got %#lx.\n", i, hr);
+        ok(hr == D3DRMERR_BADVALUE, "Unexpected hr %#lx.\n", hr);
         ok(!unknown, "Expected object returned == NULL, got %p.\n", unknown);
         hr = IDirect3DRM_CreateObject(d3drm1, tests[i].clsid, NULL, NULL, NULL);
-        ok(hr == D3DRMERR_BADVALUE, "Test %u: expected hr == D3DRMERR_BADVALUE, got %#lx.\n", i, hr);
+        ok(hr == D3DRMERR_BADVALUE, "Unexpected hr %#lx.\n", hr);
 
         hr = IDirect3DRM_CreateObject(d3drm1, tests[i].clsid, NULL, tests[i].iid, (void **)&unknown);
-        ok(SUCCEEDED(hr), "Test %u: expected hr == D3DRM_OK, got %#lx.\n", i, hr);
+        ok(SUCCEEDED(hr), "Unexpected hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
         {
             ref2 = get_refcount((IUnknown *)d3drm1);
             if (tests[i].takes_d3drm_ref)
-                ok(ref2 > ref1, "Test %u: expected ref2 > ref1, got ref1 = %lu, ref2 = %lu.\n", i, ref1, ref2);
+                ok(ref2 > ref1, "Unexpected ref2 > ref1, got ref1 = %lu, ref2 = %lu.\n", ref1, ref2);
             else
-                ok(ref2 == ref1, "Test %u: expected ref2 == ref1, got ref1 = %lu, ref2 = %lu.\n", i, ref1, ref2);
+                ok(ref2 == ref1, "Unexpected ref2 == ref1, got ref1 = %lu, ref2 = %lu.\n", ref1, ref2);
 
             ref3 = get_refcount((IUnknown *)d3drm2);
-            ok(ref3 == ref1, "Test %u: expected ref3 == ref1, got ref1 = %lu, ref3 = %lu.\n", i, ref1, ref3);
+            ok(ref3 == ref1, "Unexpected ref3 == ref1, got ref1 = %lu, ref3 = %lu.\n", ref1, ref3);
             ref4 = get_refcount((IUnknown *)d3drm3);
-            ok(ref4 == ref1, "Test %u: expected ref4 == ref1, got ref1 = %lu, ref4 = %lu.\n", i, ref1, ref4);
+            ok(ref4 == ref1, "Unexpected ref4 == ref1, got ref1 = %lu, ref4 = %lu.\n", ref1, ref4);
             IUnknown_Release(unknown);
             ref2 = get_refcount((IUnknown *)d3drm1);
-            ok(ref2 == ref1, "Test %u: expected ref2 == ref1, got ref1 = %lu, ref2 = %lu.\n", i, ref1, ref2);
+            ok(ref2 == ref1, "Unexpected ref2 == ref1, got ref1 = %lu, ref2 = %lu.\n", ref1, ref2);
             ref3 = get_refcount((IUnknown *)d3drm2);
-            ok(ref3 == ref1, "Test %u: expected ref3 == ref1, got ref1 = %lu, ref3 = %lu.\n", i, ref1, ref3);
+            ok(ref3 == ref1, "Unexpected ref3 == ref1, got ref1 = %lu, ref3 = %lu.\n", ref1, ref3);
             ref4 = get_refcount((IUnknown *)d3drm3);
-            ok(ref4 == ref1, "Test %u: expected ref4 == ref1, got ref1 = %lu, ref4 = %lu.\n", i, ref1, ref4);
+            ok(ref4 == ref1, "Unexpected ref4 == ref1, got ref1 = %lu, ref4 = %lu.\n", ref1, ref4);
 
             /* test Add/Destroy callbacks */
             test_destroy_callback(i, tests[i].clsid, tests[i].iid);
 
             hr = IDirect3DRM2_CreateObject(d3drm2, tests[i].clsid, NULL, tests[i].iid, (void **)&unknown);
-            ok(SUCCEEDED(hr), "Test %u: expected hr == D3DRM_OK, got %#lx.\n", i, hr);
+            ok(SUCCEEDED(hr), "Unexpected hr %#lx.\n", hr);
             ref2 = get_refcount((IUnknown *)d3drm1);
             if (tests[i].takes_d3drm_ref)
-                ok(ref2 > ref1, "Test %u: expected ref2 > ref1, got ref1 = %lu, ref2 = %lu.\n", i, ref1, ref2);
+                ok(ref2 > ref1, "Unexpected ref2 > ref1, got ref1 = %lu, ref2 = %lu.\n", ref1, ref2);
             else
-                ok(ref2 == ref1, "Test %u: expected ref2 == ref1, got ref1 = %lu, ref2 = %lu.\n", i, ref1, ref2);
+                ok(ref2 == ref1, "Unexpected ref2 == ref1, got ref1 = %lu, ref2 = %lu.\n", ref1, ref2);
             ref3 = get_refcount((IUnknown *)d3drm2);
-            ok(ref3 == ref1, "Test %u: expected ref3 == ref1, got ref1 = %lu, ref3 = %lu.\n", i, ref1, ref3);
+            ok(ref3 == ref1, "Unexpected ref3 == ref1, got ref1 = %lu, ref3 = %lu.\n", ref1, ref3);
             ref4 = get_refcount((IUnknown *)d3drm3);
-            ok(ref4 == ref1, "Test %u: expected ref4 == ref1, got ref1 = %lu, ref4 = %lu.\n", i, ref1, ref4);
+            ok(ref4 == ref1, "Unexpected ref4 == ref1, got ref1 = %lu, ref4 = %lu.\n", ref1, ref4);
             IUnknown_Release(unknown);
             ref2 = get_refcount((IUnknown *)d3drm1);
-            ok(ref2 == ref1, "Test %u: expected ref2 == ref1, got ref1 = %lu, ref2 = %lu.\n", i, ref1, ref2);
+            ok(ref2 == ref1, "Unexpected ref2 == ref1, got ref1 = %lu, ref2 = %lu.\n", ref1, ref2);
             ref3 = get_refcount((IUnknown *)d3drm2);
-            ok(ref3 == ref1, "Test %u: expected ref3 == ref1, got ref1 = %lu, ref3 = %lu.\n", i, ref1, ref3);
+            ok(ref3 == ref1, "Unexpected ref3 == ref1, got ref1 = %lu, ref3 = %lu.\n", ref1, ref3);
             ref4 = get_refcount((IUnknown *)d3drm3);
-            ok(ref4 == ref1, "Test %u: expected ref4 == ref1, got ref1 = %lu, ref4 = %lu.\n", i, ref1, ref4);
+            ok(ref4 == ref1, "Unexpected ref4 == ref1, got ref1 = %lu, ref4 = %lu.\n", ref1, ref4);
 
             hr = IDirect3DRM3_CreateObject(d3drm3, tests[i].clsid, NULL, tests[i].iid, (void **)&unknown);
-            ok(SUCCEEDED(hr), "Test %u: expected hr == D3DRM_OK, got %#lx.\n", i, hr);
+            ok(SUCCEEDED(hr), "Unexpected hr %#lx.\n", hr);
             ref2 = get_refcount((IUnknown *)d3drm1);
             if (tests[i].takes_d3drm_ref)
-                ok(ref2 > ref1, "Test %u: expected ref2 > ref1, got ref1 = %lu, ref2 = %lu.\n", i, ref1, ref2);
+                ok(ref2 > ref1, "Unexpected ref2 > ref1, got ref1 = %lu, ref2 = %lu.\n", ref1, ref2);
             else
-                ok(ref2 == ref1, "Test %u: expected ref2 == ref1, got ref1 = %lu, ref2 = %lu.\n", i, ref1, ref2);
+                ok(ref2 == ref1, "Unexpected ref2 == ref1, got ref1 = %lu, ref2 = %lu.\n", ref1, ref2);
             ref3 = get_refcount((IUnknown *)d3drm2);
-            ok(ref3 == ref1, "Test %u: expected ref3 == ref1, got ref1 = %lu, ref3 = %lu.\n", i, ref1, ref3);
+            ok(ref3 == ref1, "Unexpected ref3 == ref1, got ref1 = %lu, ref3 = %lu.\n", ref1, ref3);
             ref4 = get_refcount((IUnknown *)d3drm3);
-            ok(ref4 == ref1, "Test %u: expected ref4 == ref1, got ref1 = %lu, ref4 = %lu.\n", i, ref1, ref4);
+            ok(ref4 == ref1, "Unexpected ref4 == ref1, got ref1 = %lu, ref4 = %lu.\n", ref1, ref4);
             IUnknown_Release(unknown);
             ref2 = get_refcount((IUnknown *)d3drm1);
-            ok(ref2 == ref1, "Test %u: expected ref2 == ref1, got ref1 = %lu, ref2 = %lu.\n", i, ref1, ref2);
+            ok(ref2 == ref1, "Unexpected ref2 == ref1, got ref1 = %lu, ref2 = %lu.\n", ref1, ref2);
             ref3 = get_refcount((IUnknown *)d3drm2);
-            ok(ref3 == ref1, "Test %u: expected ref3 == ref1, got ref1 = %lu, ref3 = %lu.\n", i, ref1, ref3);
+            ok(ref3 == ref1, "Unexpected ref3 == ref1, got ref1 = %lu, ref3 = %lu.\n", ref1, ref3);
             ref4 = get_refcount((IUnknown *)d3drm3);
-            ok(ref4 == ref1, "Test %u: expected ref4 == ref1, got ref1 = %lu, ref4 = %lu.\n", i, ref1, ref4);
+            ok(ref4 == ref1, "Unexpected ref4 == ref1, got ref1 = %lu, ref4 = %lu.\n", ref1, ref4);
         }
+
+        winetest_pop_context();
     }
 
     IDirect3DRM_Release(d3drm1);
@@ -3501,7 +3505,7 @@ static void test_frame_mesh_materials(void)
     ULONG size;
     IDirect3DRMMaterial *material;
     IDirect3DRMTexture *texture;
-    int i;
+    unsigned int i;
 
     hr = Direct3DRMCreate(&d3drm);
     ok(hr == D3DRM_OK, "Unexpected hr %#lx.\n", hr);
@@ -3524,40 +3528,44 @@ static void test_frame_mesh_materials(void)
         unsigned vertex_count, face_count, vertex_per_face;
         DWORD face_data_size;
 
+        winetest_push_context("Group %u", i);
+
         hr = IDirect3DRMMesh_GetGroup(mesh, i, &vertex_count, &face_count, &vertex_per_face, &face_data_size, NULL);
-        ok(hr == D3DRM_OK, "Group %d: unexpected hr %#lx.\n", i, hr);
-        ok(vertex_count == groups[i].vertex_count, "Group %d: Wrong vertex count %d, expected %d\n", i, vertex_count, groups[i].vertex_count);
-        ok(face_count == groups[i].face_count, "Group %d: Wrong face count %d; expected %d\n", i, face_count, groups[i].face_count);
-        ok(vertex_per_face == groups[i].vertex_per_face, "Group %d: Wrong vertex per face %d, expected %d\n", i, vertex_per_face, groups[i].vertex_per_face);
-        ok(face_data_size == groups[i].face_data_size, "Group %d: Wrong face data size %ld, expected %d\n", i, face_data_size, groups[i].face_data_size);
+        ok(hr == D3DRM_OK, "Unexpected hr %#lx.\n", hr);
+        ok(vertex_count == groups[i].vertex_count, "Wrong vertex count %d, expected %d\n", vertex_count, groups[i].vertex_count);
+        ok(face_count == groups[i].face_count, "Wrong face count %d; expected %d\n", face_count, groups[i].face_count);
+        ok(vertex_per_face == groups[i].vertex_per_face, "Wrong vertex per face %d, expected %d\n", vertex_per_face, groups[i].vertex_per_face);
+        ok(face_data_size == groups[i].face_data_size, "Wrong face data size %ld, expected %d\n", face_data_size, groups[i].face_data_size);
 
         color = IDirect3DRMMesh_GetGroupColor(mesh, i);
-        ok(color == groups[i].color, "Group %d: Wrong color %lx, expected %lx.\n", i, color, groups[i].color);
+        ok(color == groups[i].color, "Wrong color %lx, expected %lx.\n", color, groups[i].color);
 
         hr = IDirect3DRMMesh_GetGroupMaterial(mesh, i, &material);
-        ok(hr == D3DRM_OK, "Group %d: unexpected hr %#lx.\n", i, hr);
-        ok(material != NULL, "Group %d: No material\n", i);
+        ok(hr == D3DRM_OK, "Unexpected hr %#lx.\n", hr);
+        ok(material != NULL, "No material.\n");
         power = IDirect3DRMMaterial_GetPower(material);
-        ok(power == groups[i].power, "Group %d: Wrong power %f, expected %f\n", i, power,  groups[i].power);
+        ok(power == groups[i].power, "Wrong power %f, expected %f\n", power, groups[i].power);
         hr = IDirect3DRMMaterial_GetSpecular(material, &red, &green, &blue);
-        ok(hr == D3DRM_OK, "Group %d: unexpected hr %#lx.\n", i, hr);
-        ok(red == groups[i].specular[0], "Group %d: Wrong specular red %f, expected %f\n", i, red, groups[i].specular[0]);
-        ok(green == groups[i].specular[1], "Group %d: Wrong specular green %f, pD3DRMexpected %f\n", i, green, groups[i].specular[1]);
-        ok(blue == groups[i].specular[2], "Group %d: Wrong specular blue %f, expected %f\n", i, blue, groups[i].specular[2]);
+        ok(hr == D3DRM_OK, "Unexpected hr %#lx.\n", hr);
+        ok(red == groups[i].specular[0], "Wrong specular red %f, expected %f\n", red, groups[i].specular[0]);
+        ok(green == groups[i].specular[1], "Wrong specular green %f, pD3DRMexpected %f\n", green, groups[i].specular[1]);
+        ok(blue == groups[i].specular[2], "Wrong specular blue %f, expected %f\n", blue, groups[i].specular[2]);
         hr = IDirect3DRMMaterial_GetEmissive(material, &red, &green, &blue);
-        ok(hr == D3DRM_OK, "Group %d: unexpected hr %#lx.\n", i, hr);
-        ok(red == groups[i].emissive[0], "Group %d: Wrong emissive red %f, expected %f\n", i, red, groups[i].emissive[0]);
-        ok(green == groups[i].emissive[1], "Group %d: Wrong emissive green %f, expected %f\n", i, green, groups[i].emissive[1]);
-        ok(blue == groups[i].emissive[2], "Group %d: Wrong emissive blue %f, expected %f\n", i, blue, groups[i].emissive[2]);
+        ok(hr == D3DRM_OK, "Unexpected hr %#lx.\n", hr);
+        ok(red == groups[i].emissive[0], "Wrong emissive red %f, expected %f\n", red, groups[i].emissive[0]);
+        ok(green == groups[i].emissive[1], "Wrong emissive green %f, expected %f\n", green, groups[i].emissive[1]);
+        ok(blue == groups[i].emissive[2], "Wrong emissive blue %f, expected %f\n", blue, groups[i].emissive[2]);
 
         hr = IDirect3DRMMesh_GetGroupTexture(mesh, i, &texture);
-        ok(hr == D3DRM_OK, "Group %d: unexpected hr %#lx.\n", i, hr);
-        ok(!texture, "Group %d: Unexpected texture\n", i);
+        ok(hr == D3DRM_OK, "Unexpected hr %#lx.\n", hr);
+        ok(!texture, "Unexpected texture\n");
 
         if (material)
             IDirect3DRMMaterial_Release(material);
         if (texture)
             IDirect3DRMTexture_Release(texture);
+
+        winetest_pop_context();
     }
 
     IDirect3DRMMesh_Release(mesh);
@@ -6371,105 +6379,109 @@ static void test_load_texture(void)
 
     for (i = 0; i < ARRAY_SIZE(tests); ++i)
     {
+        winetest_push_context("Test %u", i);
+
         filename = create_bitmap(tests[i].w, tests[i].h, tests[i].palettized);
 
         hr = IDirect3DRM_LoadTexture(d3drm1, filename, &texture1);
-        ok(SUCCEEDED(hr), "Test %u: Failed to load texture, hr %#lx.\n", i, hr);
+        ok(SUCCEEDED(hr), "Failed to load texture, hr %#lx.\n", hr);
         ref2 = get_refcount((IUnknown *)d3drm1);
-        ok(ref2 > ref1, "Test %u: expected ref2 > ref1, got ref1 %lu, ref2 %lu.\n", i, ref1, ref2);
+        ok(ref2 > ref1, "Expected ref2 > ref1, got ref1 %lu, ref2 %lu.\n", ref1, ref2);
 
         hr = IDirect3DRMTexture_InitFromFile(texture1, filename);
-        ok(hr == D3DRMERR_BADOBJECT, "Test %u: Got unexpected hr %#lx.\n", i, hr);
+        ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#lx.\n", hr);
         /* InitFromFile() seems to AddRef() IDirect3DRM even if it fails. */
         IDirect3DRM_Release(d3drm1);
         d3drm_img = IDirect3DRMTexture_GetImage(texture1);
-        ok(!!d3drm_img, "Test %u: Failed to get image.\n", i);
+        ok(!!d3drm_img, "Failed to get image.\n");
         test_bitmap_data(i * 7, d3drm_img, FALSE, tests[i].w, tests[i].h, tests[i].palettized);
         IDirect3DRMTexture_Release(texture1);
         ref2 = get_refcount((IUnknown *)d3drm1);
-        ok(ref1 == ref2, "Test %u: expected ref1 == ref2, got ref1 = %lu, ref2 = %lu.\n", i, ref1, ref2);
+        ok(ref1 == ref2, "Expected ref1 == ref2, got ref1 = %lu, ref2 = %lu.\n", ref1, ref2);
         hr = IDirect3DRM_CreateObject(d3drm1, &CLSID_CDirect3DRMTexture,
                 NULL, &IID_IDirect3DRMTexture, (void **)&texture1);
-        ok(SUCCEEDED(hr), "Test %u: Failed to create texture, hr %#lx.\n", i, hr);
+        ok(SUCCEEDED(hr), "Failed to create texture, hr %#lx.\n", hr);
         hr = IDirect3DRMTexture_InitFromFile(texture1, NULL);
-        ok(hr == D3DRMERR_BADOBJECT, "Test %u: Got unexpected hr %#lx.\n", i, hr);
+        ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#lx.\n", hr);
         hr = IDirect3DRMTexture_InitFromFile(texture1, "");
-        ok(hr == D3DRMERR_BADOBJECT, "Test %u: Got unexpected hr %#lx.\n", i, hr);
+        ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#lx.\n", hr);
         hr = IDirect3DRMTexture_InitFromFile(texture1, filename);
-        ok(SUCCEEDED(hr), "Test %u: Failed to initialise texture from file, hr %#lx.\n", i, hr);
+        ok(SUCCEEDED(hr), "Failed to initialise texture from file, hr %#lx.\n", hr);
         d3drm_img = IDirect3DRMTexture_GetImage(texture1);
-        ok(!!d3drm_img, "Test %u: Failed to get image.\n", i);
+        ok(!!d3drm_img, "Failed to get image.\n");
         test_bitmap_data(i * 7 + 1, d3drm_img, FALSE, tests[i].w, tests[i].h, tests[i].palettized);
         IDirect3DRMTexture_Release(texture1);
 
         hr = IDirect3DRM2_LoadTexture(d3drm2, filename, &texture2);
-        ok(SUCCEEDED(hr), "Test %u: Failed to load texture, hr %#lx.\n", i, hr);
+        ok(SUCCEEDED(hr), "Failed to load texture, hr %#lx.\n", hr);
         ref2 = get_refcount((IUnknown *)d3drm1);
-        ok(ref2 > ref1, "Test %u: expected ref2 > ref1, got ref1 %lu, ref2 %lu.\n", i, ref1, ref2);
+        ok(ref2 > ref1, "Expected ref2 > ref1, got ref1 %lu, ref2 %lu.\n", ref1, ref2);
 
         hr = IDirect3DRMTexture2_InitFromFile(texture2, filename);
-        ok(hr == D3DRMERR_BADOBJECT, "Test %u: Got unexpected hr %#lx.\n", i, hr);
+        ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#lx.\n", hr);
         IDirect3DRM_Release(d3drm1);
         d3drm_img = IDirect3DRMTexture2_GetImage(texture2);
-        ok(!!d3drm_img, "Test %u: Failed to get image.\n", i);
+        ok(!!d3drm_img, "Failed to get image.\n");
         test_bitmap_data(i * 7 + 2, d3drm_img, TRUE, tests[i].w, tests[i].h, tests[i].palettized);
         IDirect3DRMTexture2_Release(texture2);
         ref2 = get_refcount((IUnknown *)d3drm1);
-        ok(ref1 == ref2, "Test %u: expected ref1 == ref2, got ref1 = %lu, ref2 = %lu.\n", i, ref1, ref2);
+        ok(ref1 == ref2, "Expected ref1 == ref2, got ref1 = %lu, ref2 = %lu.\n", ref1, ref2);
         hr = IDirect3DRM2_CreateObject(d3drm2, &CLSID_CDirect3DRMTexture,
                 NULL, &IID_IDirect3DRMTexture2, (void **)&texture2);
-        ok(SUCCEEDED(hr), "Test %u: Failed to create texture, hr %#lx.\n", i, hr);
+        ok(SUCCEEDED(hr), "Failed to create texture, hr %#lx.\n", hr);
         hr = IDirect3DRMTexture2_InitFromFile(texture2, NULL);
-        ok(hr == D3DRMERR_BADOBJECT, "Test %u: Got unexpected hr %#lx.\n", i, hr);
+        ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#lx.\n", hr);
         hr = IDirect3DRMTexture2_InitFromFile(texture2, "");
-        ok(hr == D3DRMERR_BADOBJECT, "Test %u: Got unexpected hr %#lx.\n", i, hr);
+        ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#lx.\n", hr);
         hr = IDirect3DRMTexture2_InitFromFile(texture2, filename);
-        ok(SUCCEEDED(hr), "Test %u: Failed to initialise texture from file, hr %#lx.\n", i, hr);
+        ok(SUCCEEDED(hr), "Failed to initialise texture from file, hr %#lx.\n", hr);
         d3drm_img = IDirect3DRMTexture2_GetImage(texture2);
-        ok(!!d3drm_img, "Test %u: Failed to get image.\n", i);
+        ok(!!d3drm_img, "Failed to get image.\n");
         test_bitmap_data(i * 7 + 3, d3drm_img, TRUE, tests[i].w, tests[i].h, tests[i].palettized);
         IDirect3DRMTexture2_Release(texture2);
 
         hr = IDirect3DRM3_LoadTexture(d3drm3, filename, &texture3);
-        ok(SUCCEEDED(hr), "Test %u: Failed to load texture, hr %#lx.\n", i, hr);
+        ok(SUCCEEDED(hr), "Failed to load texture, hr %#lx.\n", hr);
         ref2 = get_refcount((IUnknown *)d3drm1);
-        ok(ref2 > ref1, "Test %u: expected ref2 > ref1, got ref1 %lu, ref2 %lu.\n", i, ref1, ref2);
+        ok(ref2 > ref1, "Expected ref2 > ref1, got ref1 %lu, ref2 %lu.\n", ref1, ref2);
 
         hr = IDirect3DRMTexture3_InitFromFile(texture3, filename);
-        ok(hr == D3DRMERR_BADOBJECT, "Test %u: Got unexpected hr %#lx.\n", i, hr);
+        ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#lx.\n", hr);
         IDirect3DRM_Release(d3drm1);
         d3drm_img = IDirect3DRMTexture3_GetImage(texture3);
-        ok(!!d3drm_img, "Test %u: Failed to get image.\n", i);
+        ok(!!d3drm_img, "Failed to get image.\n");
         test_bitmap_data(i * 7 + 4, d3drm_img, TRUE, tests[i].w, tests[i].h, tests[i].palettized);
         /* Test whether querying a version 1 texture from version 3 causes a
          * change in the loading behavior. */
         hr = IDirect3DRMTexture3_QueryInterface(texture3, &IID_IDirect3DRMTexture, (void **)&texture1);
         ok(SUCCEEDED(hr), "Failed to get IDirect3DRMTexture interface, hr %#lx.\n", hr);
         d3drm_img = IDirect3DRMTexture_GetImage(texture1);
-        ok(!!d3drm_img, "Test %u: Failed to get image.\n", i);
+        ok(!!d3drm_img, "Failed to get image.\n");
         test_bitmap_data(i * 7 + 5, d3drm_img, TRUE, tests[i].w, tests[i].h, tests[i].palettized);
         IDirect3DRMTexture_Release(texture1);
         IDirect3DRMTexture3_Release(texture3);
         ref2 = get_refcount((IUnknown *)d3drm1);
-        ok(ref1 == ref2, "Test %u: expected ref1 == ref2, got ref1 = %lu, ref2 = %lu.\n", i, ref1, ref2);
+        ok(ref1 == ref2, "Expected ref1 == ref2, got ref1 = %lu, ref2 = %lu.\n", ref1, ref2);
 
         hr = IDirect3DRM3_CreateObject(d3drm3, &CLSID_CDirect3DRMTexture,
                 NULL, &IID_IDirect3DRMTexture3, (void **)&texture3);
-        ok(SUCCEEDED(hr), "Test %u: Failed to create texture, hr %#lx.\n", i, hr);
+        ok(SUCCEEDED(hr), "Failed to create texture, hr %#lx.\n", hr);
         hr = IDirect3DRMTexture3_InitFromFile(texture3, NULL);
-        ok(hr == D3DRMERR_BADOBJECT, "Test %u: Got unexpected hr %#lx.\n", i, hr);
+        ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#lx.\n", hr);
         hr = IDirect3DRMTexture3_InitFromFile(texture3, "");
-        ok(hr == D3DRMERR_BADOBJECT, "Test %u: Got unexpected hr %#lx.\n", i, hr);
+        ok(hr == D3DRMERR_BADOBJECT, "Got unexpected hr %#lx.\n", hr);
         hr = IDirect3DRMTexture3_InitFromFile(texture3, filename);
-        ok(SUCCEEDED(hr), "Test %u: Failed to initialize texture from file, hr %#lx.\n", i, hr);
+        ok(SUCCEEDED(hr), "Failed to initialize texture from file, hr %#lx.\n", hr);
         d3drm_img = IDirect3DRMTexture3_GetImage(texture3);
-        ok(!!d3drm_img, "Test %u: Failed to get image.\n", i);
+        ok(!!d3drm_img, "Failed to get image.\n");
         test_bitmap_data(i * 7 + 6, d3drm_img, TRUE, tests[i].w, tests[i].h, tests[i].palettized);
         IDirect3DRMTexture3_Release(texture3);
 
         ret = DeleteFileA(filename);
-        ok(ret, "Test %u: Failed to delete bitmap \"%s\".\n", i, filename);
+        ok(ret, "Failed to delete bitmap \"%s\".\n", filename);
         HeapFree(GetProcessHeap(), 0, filename);
+
+        winetest_pop_context();
     }
 
     IDirect3DRM3_Release(d3drm3);
@@ -7773,25 +7785,29 @@ static void test_animation(void)
 
     for (i = 0; i < count; i++)
     {
-        ok(keys[i].dwSize == sizeof(*keys), "%lu: unexpected dwSize value %lu.\n", i, keys[i].dwSize);
+        winetest_push_context("%lu", i);
+
+        ok(keys[i].dwSize == sizeof(*keys), "Unexpected dwSize value %lu.\n", keys[i].dwSize);
 
     todo_wine
     {
         switch (keys[i].dwKeyType)
         {
         case D3DRMANIMATION_ROTATEKEY:
-            ok((keys[i].dwID & 0xf0000000) == 0x40000000, "%lu: unexpected id mask %#lx.\n", i, keys[i].dwID);
+            ok((keys[i].dwID & 0xf0000000) == 0x40000000, "Unexpected id mask %#lx.\n", keys[i].dwID);
             break;
         case D3DRMANIMATION_POSITIONKEY:
-            ok((keys[i].dwID & 0xf0000000) == 0x80000000, "%lu: unexpected id mask %#lx.\n", i, keys[i].dwID);
+            ok((keys[i].dwID & 0xf0000000) == 0x80000000, "Unexpected id mask %#lx.\n", keys[i].dwID);
             break;
         case D3DRMANIMATION_SCALEKEY:
-            ok((keys[i].dwID & 0xf0000000) == 0xc0000000, "%lu: unexpected id mask %#lx.\n", i, keys[i].dwID);
+            ok((keys[i].dwID & 0xf0000000) == 0xc0000000, "Unexpected id mask %#lx.\n", keys[i].dwID);
             break;
         default:
-            ok(0, "%lu: unknown key type %ld.\n", i, keys[i].dwKeyType);
+            ok(0, "Unknown key type %ld.\n", keys[i].dwKeyType);
         }
     }
+
+        winetest_pop_context();
     }
 
     /* No keys in this range. */
