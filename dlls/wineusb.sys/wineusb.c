@@ -113,6 +113,7 @@ static pthread_mutex_t event_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 enum usb_event_type
 {
+    USB_EVENT_ADD_DEVICE,
     USB_EVENT_REMOVE_DEVICE,
     USB_EVENT_SHUTDOWN,
 };
@@ -123,6 +124,7 @@ struct usb_event
 
     union
     {
+        struct unix_device *added_device;
         struct unix_device *removed_device;
     } u;
 };
@@ -304,6 +306,7 @@ static void add_usb_device(libusb_device *libusb_device)
 {
     struct libusb_device_descriptor device_desc;
     struct unix_device *unix_device;
+    struct usb_event usb_event;
     int ret;
 
     libusb_get_device_descriptor(libusb_device, &device_desc);
@@ -324,7 +327,9 @@ static void add_usb_device(libusb_device *libusb_device)
     list_add_tail(&unix_device_list, &unix_device->entry);
     pthread_mutex_unlock(&unix_device_mutex);
 
-    add_unix_device(unix_device);
+    usb_event.type = USB_EVENT_ADD_DEVICE;
+    usb_event.u.added_device = unix_device;
+    queue_event(&usb_event);
 }
 
 static void remove_unix_device(struct unix_device *unix_device)
@@ -414,8 +419,11 @@ static DWORD CALLBACK event_thread_proc(void *arg)
 
         switch (event.type)
         {
+            case USB_EVENT_ADD_DEVICE:
+                add_unix_device(event.u.added_device);
+                break;
+
             case USB_EVENT_REMOVE_DEVICE:
-                TRACE("Got remove event for device %p.\n", event.u.removed_device);
                 remove_unix_device(event.u.removed_device);
                 break;
 
