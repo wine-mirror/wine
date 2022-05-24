@@ -3773,7 +3773,7 @@ static void test_process_info(HANDLE hproc)
         return;
     }
 
-    for (i = 0; i < MaxProcessInfoClass; i++)
+    for (i = 0; i < ARRAY_SIZE(info_size); i++)
     {
         ret_len = 0;
         status = pNtQueryInformationProcess(hproc, i, buf, info_size[i], &ret_len);
