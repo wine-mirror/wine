@@ -3472,22 +3472,6 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_NV:
-        {
-            const VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV *in = (const VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV *)in_header;
-            VkPhysicalDeviceFragmentShaderBarycentricFeaturesNV *out;
-
-            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
-
-            out->sType = in->sType;
-            out->pNext = NULL;
-            out->fragmentShaderBarycentric = in->fragmentShaderBarycentric;
-
-            out_header->pNext = (VkBaseOutStructure *)out;
-            out_header = out_header->pNext;
-            break;
-        }
-
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_IMAGE_FOOTPRINT_FEATURES_NV:
         {
             const VkPhysicalDeviceShaderImageFootprintFeaturesNV *in = (const VkPhysicalDeviceShaderImageFootprintFeaturesNV *)in_header;
@@ -4743,6 +4727,22 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_SHADER_BARYCENTRIC_FEATURES_KHR:
+        {
+            const VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR *in = (const VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR *)in_header;
+            VkPhysicalDeviceFragmentShaderBarycentricFeaturesKHR *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->fragmentShaderBarycentric = in->fragmentShaderBarycentric;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_RAY_TRACING_MOTION_BLUR_FEATURES_NV:
         {
             const VkPhysicalDeviceRayTracingMotionBlurFeaturesNV *in = (const VkPhysicalDeviceRayTracingMotionBlurFeaturesNV *)in_header;
@@ -4938,10 +4938,10 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
-        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_EARLY_AND_LATE_FRAGMENT_TESTS_FEATURES_EXT:
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_EARLY_AND_LATE_FRAGMENT_TESTS_FEATURES_AMD:
         {
-            const VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT *in = (const VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT *)in_header;
-            VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesEXT *out;
+            const VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD *in = (const VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD *)in_header;
+            VkPhysicalDeviceShaderEarlyAndLateFragmentTestsFeaturesAMD *out;
 
             if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
 
@@ -9954,6 +9954,7 @@ static const char * const vk_device_extensions[] =
     "VK_KHR_external_memory",
     "VK_KHR_external_semaphore",
     "VK_KHR_format_feature_flags2",
+    "VK_KHR_fragment_shader_barycentric",
     "VK_KHR_fragment_shading_rate",
     "VK_KHR_get_memory_requirements2",
     "VK_KHR_global_priority",
