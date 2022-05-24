@@ -2321,6 +2321,8 @@ void EMFDC_DeleteDC( DC_ATTR *dc_attr )
         if (emf->handles[index])
             GDI_hdc_not_using_object( emf->handles[index], emf->dc_attr->hdc );
     HeapFree( GetProcessHeap(), 0, emf->handles );
+    HeapFree( GetProcessHeap(), 0, emf );
+    dc_attr->emf = NULL;
 }
 
 /*******************************************************************
