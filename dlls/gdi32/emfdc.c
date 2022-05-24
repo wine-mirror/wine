@@ -2426,7 +2426,6 @@ HDC WINAPI CreateEnhMetaFileW( HDC hdc, const WCHAR *filename, const RECT *rect,
         DeleteDC( ret );
         return 0;
     }
-    emf->dc_attr = dc_attr;
 
     emf->handles = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                               HANDLE_LIST_INC * sizeof(emf->handles[0]) );
