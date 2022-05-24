@@ -125,6 +125,7 @@ typedef struct
 
 C_ASSERT( sizeof(ARENA_LARGE) % LARGE_ALIGNMENT == 0 );
 
+#define ROUND_ADDR(addr, mask) ((void *)((UINT_PTR)(addr) & ~(UINT_PTR)(mask)))
 #define ROUND_SIZE(size)       ((((size) + ALIGNMENT - 1) & ~(ALIGNMENT-1)) + ARENA_OFFSET)
 
 /* minimum data size (without arenas) of an allocated block */
@@ -612,56 +613,54 @@ static SUBHEAP *find_subheap( const HEAP *heap, const struct block *block, BOOL 
 }
 
 
-/***********************************************************************
- *           HEAP_Commit
- *
- * Make sure the heap storage is committed for a given size in the specified arena.
- */
-static inline BOOL HEAP_Commit( SUBHEAP *subheap, ARENA_INUSE *pArena, SIZE_T data_size )
+static inline BOOL subheap_commit( SUBHEAP *subheap, const struct block *block, SIZE_T data_size )
 {
-    void *ptr = (char *)(pArena + 1) + data_size + sizeof(ARENA_FREE);
-    SIZE_T size = (char *)ptr - (char *)subheap->base;
-    size = (size + COMMIT_MASK) & ~COMMIT_MASK;
-    if (size > subheap->size) size = subheap->size;
-    if (size <= subheap->commitSize) return TRUE;
-    size -= subheap->commitSize;
-    ptr = (char *)subheap->base + subheap->commitSize;
-    if (NtAllocateVirtualMemory( NtCurrentProcess(), &ptr, 0,
-                                 &size, MEM_COMMIT, get_protection_type( subheap->heap->flags ) ))
+    const char *end = (char *)subheap_base( subheap ) + subheap_size( subheap ), *commit_end;
+    HEAP *heap = subheap->heap;
+    ULONG flags = heap->flags;
+    SIZE_T size;
+    void *addr;
+
+    commit_end = (char *)(block + 1) + data_size + sizeof(ARENA_FREE);
+    commit_end = ROUND_ADDR((char *)commit_end + COMMIT_MASK, COMMIT_MASK);
+
+    if (commit_end > end) commit_end = end;
+    if (commit_end <= (char *)subheap_commit_end( subheap )) return TRUE;
+
+    addr = (void *)subheap_commit_end( subheap );
+    size = commit_end - (char *)addr;
+
+    if (NtAllocateVirtualMemory( NtCurrentProcess(), &addr, 0, &size, MEM_COMMIT,
+                                 get_protection_type( flags ) ))
     {
-        WARN("Could not commit %08lx bytes at %p for heap %p\n",
-                 size, ptr, subheap->heap );
+        WARN( "Could not commit %#Ix bytes at %p for heap %p\n", size, addr, heap );
         return FALSE;
     }
-    subheap->commitSize += size;
+
+    subheap->commitSize = (char *)commit_end - (char *)subheap_base( subheap );
     return TRUE;
 }
 
-
-/***********************************************************************
- *           HEAP_Decommit
- *
- * If possible, decommit the heap storage from (including) 'ptr'.
- */
-static inline BOOL HEAP_Decommit( SUBHEAP *subheap, void *ptr )
+static inline BOOL subheap_decommit( SUBHEAP *subheap, const void *commit_end )
 {
+    HEAP *heap = subheap->heap;
+    SIZE_T size;
     void *addr;
-    SIZE_T decommit_size;
-    SIZE_T size = (char *)ptr - (char *)subheap->base;
 
-    size = ((size + COMMIT_MASK) & ~COMMIT_MASK);
-    size = max( size, subheap->min_commit );
-    if (size >= subheap->commitSize) return TRUE;
-    decommit_size = subheap->commitSize - size;
-    addr = (char *)subheap->base + size;
+    commit_end = ROUND_ADDR((char *)commit_end + COMMIT_MASK, COMMIT_MASK);
+    commit_end = max( (char *)commit_end, (char *)subheap_base( subheap ) + subheap->min_commit );
+    if (commit_end >= subheap_commit_end( subheap )) return TRUE;
 
-    if (NtFreeVirtualMemory( NtCurrentProcess(), &addr, &decommit_size, MEM_DECOMMIT ))
+    size = (char *)subheap_commit_end( subheap ) - (char *)commit_end;
+    addr = (void *)commit_end;
+
+    if (NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_DECOMMIT ))
     {
-        WARN("Could not decommit %08lx bytes at %p for heap %p\n",
-             decommit_size, (char *)subheap->base + size, subheap->heap );
+        WARN( "Could not decommit %#Ix bytes at %p for heap %p\n", size, addr, heap );
         return FALSE;
     }
-    subheap->commitSize -= decommit_size;
+
+    subheap->commitSize = (char *)commit_end - (char *)subheap_base( subheap );
     return TRUE;
 }
 
@@ -750,7 +749,7 @@ static void free_used_block( SUBHEAP *subheap, struct block *block )
     else if (!heap->shared)
     {
         /* keep room for a full commited block as hysteresis */
-        HEAP_Decommit( subheap, (char *)(entry + 1) + (COMMIT_MASK + 1) );
+        subheap_decommit( subheap, (char *)(entry + 1) + (COMMIT_MASK + 1) );
     }
 }
 
@@ -1032,7 +1031,7 @@ static struct block *find_free_block( HEAP *heap, SIZE_T data_size, SUBHEAP **su
         if (block_get_size( block ) - sizeof(*block) >= data_size)
         {
             *subheap = find_subheap( heap, block, FALSE );
-            if (!HEAP_Commit( *subheap, block, data_size )) return NULL;
+            if (!subheap_commit( *subheap, block, data_size )) return NULL;
             list_remove( &entry->entry );
             return block;
         }
@@ -1609,7 +1608,7 @@ static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size
             struct entry *entry = (struct entry *)next;
             list_remove( &entry->entry );
             old_data_size += block_get_size( next );
-            if (!HEAP_Commit( subheap, block, data_size )) return STATUS_NO_MEMORY;
+            if (!subheap_commit( subheap, block, data_size )) return STATUS_NO_MEMORY;
             notify_realloc( block + 1, old_size, size );
             shrink_used_block( subheap, block, block_get_flags( block ), old_data_size, data_size, size );
         }
