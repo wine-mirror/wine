@@ -113,12 +113,18 @@ static pthread_mutex_t event_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 enum usb_event_type
 {
+    USB_EVENT_REMOVE_DEVICE,
     USB_EVENT_SHUTDOWN,
 };
 
 struct usb_event
 {
     enum usb_event_type type;
+
+    union
+    {
+        struct unix_device *removed_device;
+    } u;
 };
 
 static struct usb_event *usb_events;
@@ -348,13 +354,18 @@ static void remove_unix_device(struct unix_device *unix_device)
 static void remove_usb_device(libusb_device *libusb_device)
 {
     struct unix_device *unix_device;
+    struct usb_event usb_event;
 
     TRACE("Removing device %p.\n", libusb_device);
 
     LIST_FOR_EACH_ENTRY(unix_device, &unix_device_list, struct unix_device, entry)
     {
         if (libusb_get_device(unix_device->handle) == libusb_device)
-            remove_unix_device(unix_device);
+        {
+            usb_event.type = USB_EVENT_REMOVE_DEVICE;
+            usb_event.u.removed_device = unix_device;
+            queue_event(&usb_event);
+        }
     }
 }
 
@@ -403,6 +414,11 @@ static DWORD CALLBACK event_thread_proc(void *arg)
 
         switch (event.type)
         {
+            case USB_EVENT_REMOVE_DEVICE:
+                TRACE("Got remove event for device %p.\n", event.u.removed_device);
+                remove_unix_device(event.u.removed_device);
+                break;
+
             case USB_EVENT_SHUTDOWN:
                 TRACE("Shutting down client event thread.\n");
                 return 0;
