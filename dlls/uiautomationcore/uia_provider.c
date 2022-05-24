@@ -205,6 +205,21 @@ exit:
     return matched;
 }
 
+static HRESULT msaa_acc_get_parent(IAccessible *acc, IAccessible **parent)
+{
+    IDispatch *disp = NULL;
+    HRESULT hr;
+
+    *parent = NULL;
+    hr = IAccessible_get_accParent(acc, &disp);
+    if (FAILED(hr) || !disp)
+        return hr;
+
+    hr = IDispatch_QueryInterface(disp, &IID_IAccessible, (void**)parent);
+    IDispatch_Release(disp);
+    return hr;
+}
+
 static LONG msaa_role_to_uia_control_type(LONG role)
 {
     switch (role)
@@ -515,9 +530,54 @@ static ULONG WINAPI msaa_fragment_Release(IRawElementProviderFragment *iface)
 static HRESULT WINAPI msaa_fragment_Navigate(IRawElementProviderFragment *iface,
         enum NavigateDirection direction, IRawElementProviderFragment **ret_val)
 {
-    FIXME("%p, %d, %p: stub!\n", iface, direction, ret_val);
+    struct msaa_provider *msaa_prov = impl_from_msaa_fragment(iface);
+    IRawElementProviderSimple *elprov;
+    IAccessible *acc;
+    HRESULT hr;
+
+    TRACE("%p, %d, %p\n", iface, direction, ret_val);
+
     *ret_val = NULL;
-    return E_NOTIMPL;
+    switch (direction)
+    {
+    case NavigateDirection_Parent:
+        if (msaa_check_root_acc(msaa_prov))
+            break;
+
+        if (V_I4(&msaa_prov->cid) == CHILDID_SELF)
+        {
+            hr = msaa_acc_get_parent(msaa_prov->acc, &acc);
+            if (FAILED(hr) || !acc)
+                break;
+        }
+        else
+            acc = msaa_prov->acc;
+
+        hr = UiaProviderFromIAccessible(acc, CHILDID_SELF, 0, &elprov);
+        if (SUCCEEDED(hr))
+        {
+            struct msaa_provider *prov = impl_from_msaa_provider(elprov);
+            *ret_val = &prov->IRawElementProviderFragment_iface;
+        }
+
+        if (acc != msaa_prov->acc)
+            IAccessible_Release(acc);
+
+        break;
+
+    case NavigateDirection_FirstChild:
+    case NavigateDirection_LastChild:
+    case NavigateDirection_NextSibling:
+    case NavigateDirection_PreviousSibling:
+        FIXME("Unimplemented NavigateDirection %d\n", direction);
+        return E_NOTIMPL;
+
+    default:
+        FIXME("Invalid NavigateDirection %d\n", direction);
+        return E_INVALIDARG;
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI msaa_fragment_GetRuntimeId(IRawElementProviderFragment *iface,

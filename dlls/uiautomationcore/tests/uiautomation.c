@@ -1078,38 +1078,35 @@ static void test_uia_prov_from_acc_navigation(void)
     elfrag2 = (void *)0xdeadbeef;
     hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_Parent, &elfrag2);
     ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!elfrag2, "elfrag2 != NULL\n");
-    todo_wine CHECK_CALLED(winproc_GETOBJECT_CLIENT);
-    todo_wine CHECK_CALLED(Accessible_get_accRole);
-    todo_wine CHECK_CALLED(Accessible_get_accState);
-    todo_wine CHECK_CALLED(Accessible_get_accChildCount);
-    todo_wine CHECK_CALLED(Accessible_accLocation);
-    todo_wine CHECK_CALLED(Accessible_get_accName);
-    todo_wine CHECK_CALLED(Accessible2_get_accRole);
-    todo_wine CHECK_CALLED(Accessible2_get_accState);
-    todo_wine CHECK_CALLED(Accessible2_get_accChildCount);
-    todo_wine CHECK_CALLED(Accessible2_accLocation);
-    todo_wine CHECK_CALLED(Accessible2_get_accName);
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    CHECK_CALLED(Accessible_get_accRole);
+    CHECK_CALLED(Accessible_get_accState);
+    CHECK_CALLED(Accessible_get_accChildCount);
+    CHECK_CALLED(Accessible_accLocation);
+    CHECK_CALLED(Accessible_get_accName);
+    CHECK_CALLED(Accessible2_get_accRole);
+    CHECK_CALLED(Accessible2_get_accState);
+    CHECK_CALLED(Accessible2_get_accChildCount);
+    CHECK_CALLED(Accessible2_accLocation);
+    CHECK_CALLED(Accessible2_get_accName);
     todo_wine CHECK_CALLED(Accessible2_QI_IAccIdentity);
     todo_wine CHECK_CALLED(Accessible2_get_accParent);
     acc_client = NULL;
 
-    if (SUCCEEDED(hr))
-    {
-        /* No check against root IAccessible, since it was done previously. */
-        elprov2 = (void *)0xdeadbeef;
-        hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
-        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        ok(!!elprov2, "elprov == NULL, elprov %p\n", elprov2);
-        IRawElementProviderSimple_Release(elprov2);
-    }
+    /* No check against root IAccessible, since it was done previously. */
+    elprov2 = (void *)0xdeadbeef;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elprov2, "elprov == NULL, elprov %p\n", elprov2);
+    IRawElementProviderSimple_Release(elprov2);
 
     /* Do nothing. */
     elfrag2 = (void *)0xdeadbeef;
     hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_Parent, &elfrag2);
     ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!elfrag2, "elfrag2 != NULL\n");
 
     elfrag2 = (void *)0xdeadbeef;
@@ -1284,36 +1281,30 @@ static void test_uia_prov_from_acc_navigation(void)
     SET_EXPECT(Accessible2_QI_IAccIdentity);
     SET_EXPECT(Accessible2_get_accParent);
     hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_Parent, &elfrag2);
-    todo_wine ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!!elfrag2, "elfrag2 == NULL\n");
-    todo_wine CHECK_CALLED(Accessible_child_get_accParent);
-    todo_wine CHECK_CALLED(Accessible_child_get_accRole);
-    todo_wine CHECK_CALLED(Accessible2_get_accRole);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag2, "elfrag2 == NULL\n");
+    CHECK_CALLED(Accessible_child_get_accParent);
+    CHECK_CALLED(Accessible_child_get_accRole);
+    CHECK_CALLED(Accessible2_get_accRole);
     todo_wine CHECK_CALLED(Accessible2_QI_IAccIdentity);
     todo_wine CHECK_CALLED(Accessible2_get_accParent);
-    todo_wine CHECK_CALLED(winproc_GETOBJECT_CLIENT);
-    if (elfrag2)
-    {
-        check_fragment_acc(elfrag2, &Accessible.IAccessible_iface, CHILDID_SELF);
-        IRawElementProviderFragment_Release(elfrag2);
-        ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
-    }
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    check_fragment_acc(elfrag2, &Accessible.IAccessible_iface, CHILDID_SELF);
+    IRawElementProviderFragment_Release(elfrag2);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
     acc_client = NULL;
 
     /* Second call only does get_accParent, no root check. */
     SET_EXPECT(Accessible_child_get_accParent);
     hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_Parent, &elfrag2);
-    todo_wine ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!!elfrag2, "elfrag2 == NULL\n");
-    todo_wine CHECK_CALLED(Accessible_child_get_accParent);
-    if (elfrag2)
-    {
-        check_fragment_acc(elfrag2, &Accessible.IAccessible_iface, CHILDID_SELF);
-        IRawElementProviderFragment_Release(elfrag2);
-        ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
-    }
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag2, "elfrag2 == NULL\n");
+    CHECK_CALLED(Accessible_child_get_accParent);
+    check_fragment_acc(elfrag2, &Accessible.IAccessible_iface, CHILDID_SELF);
+    IRawElementProviderFragment_Release(elfrag2);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
 
     /* ChildCount of 0, do nothing for First/Last child.*/
     SET_EXPECT(Accessible_child_get_accChildCount);
@@ -1434,15 +1425,12 @@ static void test_uia_prov_from_acc_navigation(void)
      * can't be the root IAccessible.
      */
     hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_Parent, &elfrag2);
-    todo_wine ok(Accessible.ref == 3, "Unexpected refcnt %ld\n", Accessible.ref);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!!elfrag2, "elfrag2 == NULL\n");
-    if (elfrag2)
-    {
-        check_fragment_acc(elfrag2, &Accessible.IAccessible_iface, CHILDID_SELF);
-        IRawElementProviderFragment_Release(elfrag2);
-        ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
-    }
+    ok(Accessible.ref == 3, "Unexpected refcnt %ld\n", Accessible.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag2, "elfrag2 == NULL\n");
+    check_fragment_acc(elfrag2, &Accessible.IAccessible_iface, CHILDID_SELF);
+    IRawElementProviderFragment_Release(elfrag2);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
 
     /*
      * Test NavigateDirection_First/LastChild on simple child element. Does
