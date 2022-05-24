@@ -4033,7 +4033,31 @@ INT WINAPI DECLSPEC_HOTPATCH CompareStringA( LCID lcid, DWORD flags, const char 
 INT WINAPI DECLSPEC_HOTPATCH CompareStringW( LCID lcid, DWORD flags, const WCHAR *str1, int len1,
                                              const WCHAR *str2, int len2 )
 {
-    return CompareStringEx( NULL, flags, str1, len1, str2, len2, NULL, NULL, 0 );
+    const WCHAR *locale = LOCALE_NAME_USER_DEFAULT;
+    const NLS_LOCALE_LCID_INDEX *entry;
+
+    switch (lcid)
+    {
+    case LOCALE_NEUTRAL:
+    case LOCALE_USER_DEFAULT:
+    case LOCALE_SYSTEM_DEFAULT:
+    case LOCALE_CUSTOM_DEFAULT:
+    case LOCALE_CUSTOM_UNSPECIFIED:
+    case LOCALE_CUSTOM_UI_DEFAULT:
+        break;
+    default:
+        if (lcid == user_lcid || lcid == system_lcid) break;
+        if (!(entry = find_lcid_entry( lcid )))
+        {
+            WARN( "unknown locale %04lx\n", lcid );
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+        locale = locale_strings + entry->name + 1;
+        break;
+    }
+
+    return CompareStringEx( locale, flags, str1, len1, str2, len2, NULL, NULL, 0 );
 }
 
 
