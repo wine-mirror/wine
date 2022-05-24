@@ -1919,15 +1919,15 @@ static void test_CompareStringA(void)
     ok (GetLastError() == 0xdeadbeef && ret == CSTR_EQUAL,
         "ret %d, error %ld, expected value %d\n", ret, GetLastError(), CSTR_EQUAL);
 
-    ret = CompareStringA(CP_ACP, 0, ABC_EE, 3, ABC_FF, 3);
+    ret = CompareStringA(LOCALE_USER_DEFAULT, 0, ABC_EE, 3, ABC_FF, 3);
     ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
-    ret = CompareStringA(CP_ACP, 0, ABC_EE, 5, ABC_FF, 3);
+    ret = CompareStringA(LOCALE_USER_DEFAULT, 0, ABC_EE, 5, ABC_FF, 3);
     ok(ret == CSTR_GREATER_THAN, "expected CSTR_GREATER_THAN, got %d\n", ret);
-    ret = CompareStringA(CP_ACP, 0, ABC_EE, 3, ABC_FF, 5);
+    ret = CompareStringA(LOCALE_USER_DEFAULT, 0, ABC_EE, 3, ABC_FF, 5);
     ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
-    ret = CompareStringA(CP_ACP, 0, ABC_EE, 5, ABC_FF, 5);
+    ret = CompareStringA(LOCALE_USER_DEFAULT, 0, ABC_EE, 5, ABC_FF, 5);
     ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
-    ret = CompareStringA(CP_ACP, 0, ABC_FF, 5, ABC_EE, 5);
+    ret = CompareStringA(LOCALE_USER_DEFAULT, 0, ABC_FF, 5, ABC_EE, 5);
     ok(ret == CSTR_GREATER_THAN, "expected CSTR_GREATER_THAN, got %d\n", ret);
 }
 
@@ -1959,55 +1959,55 @@ static void test_CompareStringW(void)
     *str2 = 'B';
 
     /* CompareStringW should abort on the first non-matching character */
-    ret = CompareStringW(CP_ACP, 0, str1, 100, str2, 100);
+    ret = CompareStringW(LOCALE_USER_DEFAULT, 0, str1, 100, str2, 100);
     ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
 
     success = VirtualFree(buf, 0, MEM_RELEASE);
     ok(success, "VirtualFree failed with %lu\n", GetLastError());
 
     SetLastError(0xdeadbeef);
-    ret = CompareStringW(CP_ACP, SORT_DIGITSASNUMBERS, L"NULL", -1, L"NULL", -1);
+    ret = CompareStringW(LOCALE_USER_DEFAULT, SORT_DIGITSASNUMBERS, L"NULL", -1, L"NULL", -1);
     ok(ret == CSTR_EQUAL || broken(!ret && GetLastError() == ERROR_INVALID_FLAGS) /* <Win7 */,
         "expected CSTR_EQUAL, got %d, last error %ld\n", ret, GetLastError());
 
-    ret = CompareStringW(CP_ACP, 0, ABC_EE, 3, ABC_FF, 3);
+    ret = CompareStringW(LOCALE_USER_DEFAULT, 0, ABC_EE, 3, ABC_FF, 3);
     ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
-    ret = CompareStringW(CP_ACP, 0, ABC_EE, 5, ABC_FF, 3);
+    ret = CompareStringW(LOCALE_USER_DEFAULT, 0, ABC_EE, 5, ABC_FF, 3);
     ok(ret == CSTR_GREATER_THAN, "expected CSTR_GREATER_THAN, got %d\n", ret);
-    ret = CompareStringW(CP_ACP, 0, ABC_EE, 3, ABC_FF, 5);
+    ret = CompareStringW(LOCALE_USER_DEFAULT, 0, ABC_EE, 3, ABC_FF, 5);
     ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
-    ret = CompareStringW(CP_ACP, 0, ABC_EE, 5, ABC_FF, 5);
+    ret = CompareStringW(LOCALE_USER_DEFAULT, 0, ABC_EE, 5, ABC_FF, 5);
     ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
-    ret = CompareStringW(CP_ACP, 0, ABC_FF, 5, ABC_EE, 5);
+    ret = CompareStringW(LOCALE_USER_DEFAULT, 0, ABC_FF, 5, ABC_EE, 5);
     ok(ret == CSTR_GREATER_THAN, "expected CSTR_GREATER_THAN, got %d\n", ret);
 
-    ret = CompareStringW(CP_ACP, 0, ABC_EE, 4, A_ACUTE_BC, 4);
+    ret = CompareStringW(LOCALE_USER_DEFAULT, 0, ABC_EE, 4, A_ACUTE_BC, 4);
     ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
-    ret = CompareStringW(CP_ACP, 0, ABC_EE, 4, A_ACUTE_BC_DECOMP, 5);
+    ret = CompareStringW(LOCALE_USER_DEFAULT, 0, ABC_EE, 4, A_ACUTE_BC_DECOMP, 5);
     ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
-    ret = CompareStringW(CP_ACP, 0, A_ACUTE_BC, 4, A_ACUTE_BC_DECOMP, 5);
+    ret = CompareStringW(LOCALE_USER_DEFAULT, 0, A_ACUTE_BC, 4, A_ACUTE_BC_DECOMP, 5);
     ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
 
-    ret = CompareStringW(CP_ACP, NORM_IGNORENONSPACE, ABC_EE, 3, A_ACUTE_BC, 4);
+    ret = CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORENONSPACE, ABC_EE, 3, A_ACUTE_BC, 4);
     todo_wine ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
-    ret = CompareStringW(CP_ACP, NORM_IGNORENONSPACE, ABC_EE, 4, A_ACUTE_BC_DECOMP, 5);
+    ret = CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORENONSPACE, ABC_EE, 4, A_ACUTE_BC_DECOMP, 5);
     todo_wine ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
-    ret = CompareStringW(CP_ACP, NORM_IGNORENONSPACE, A_ACUTE_BC, 4, A_ACUTE_BC_DECOMP, 5);
+    ret = CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORENONSPACE, A_ACUTE_BC, 4, A_ACUTE_BC_DECOMP, 5);
     ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
 
-    ret = CompareStringW(CP_ACP, 0, ABC_EE, 4, A_NULL_BC, 4);
+    ret = CompareStringW(LOCALE_USER_DEFAULT, 0, ABC_EE, 4, A_NULL_BC, 4);
     ok(ret == CSTR_EQUAL, "expected CSTR_LESS_THAN, got %d\n", ret);
-    ret = CompareStringW(CP_ACP, NORM_IGNORENONSPACE, ABC_EE, 4, A_NULL_BC, 4);
+    ret = CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORENONSPACE, ABC_EE, 4, A_NULL_BC, 4);
     ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
 
-    ret = CompareStringW(CP_ACP, 0, A_NULL_BC, 4, A_ACUTE_BC, 4);
+    ret = CompareStringW(LOCALE_USER_DEFAULT, 0, A_NULL_BC, 4, A_ACUTE_BC, 4);
     ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
-    ret = CompareStringW(CP_ACP, NORM_IGNORENONSPACE, A_NULL_BC, 4, A_ACUTE_BC, 4);
+    ret = CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORENONSPACE, A_NULL_BC, 4, A_ACUTE_BC, 4);
     todo_wine ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
 
-    ret = CompareStringW(CP_ACP, 0, A_NULL_BC, 4, A_ACUTE_BC_DECOMP, 5);
+    ret = CompareStringW(LOCALE_USER_DEFAULT, 0, A_NULL_BC, 4, A_ACUTE_BC_DECOMP, 5);
     ok(ret == CSTR_LESS_THAN, "expected CSTR_LESS_THAN, got %d\n", ret);
-    ret = CompareStringW(CP_ACP, NORM_IGNORENONSPACE, A_NULL_BC, 4, A_ACUTE_BC_DECOMP, 5);
+    ret = CompareStringW(LOCALE_USER_DEFAULT, NORM_IGNORENONSPACE, A_NULL_BC, 4, A_ACUTE_BC_DECOMP, 5);
     todo_wine ok(ret == CSTR_EQUAL, "expected CSTR_EQUAL, got %d\n", ret);
 }
 
