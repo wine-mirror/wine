@@ -2139,17 +2139,13 @@ static DWORD verify_cert_revocation(const CERT_CONTEXT *cert, FILETIME *pTime,
     if (find_cached_revocation_status(&cert->pCertInfo->SerialNumber, pTime, pRevStatus))
         return pRevStatus->dwError;
 
-    if ((ext = CertFindExtension(szOID_CRL_DIST_POINTS,
-     cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
+    if ((ext = CertFindExtension(szOID_AUTHORITY_INFO_ACCESS, cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
     {
-        error = verify_cert_revocation_from_dist_points_ext(&ext->Value, cert,
-                pTime, dwFlags, pRevPara, pRevStatus);
+        error = verify_cert_revocation_from_aia_ext(&ext->Value, cert, pTime, dwFlags, pRevPara, pRevStatus);
     }
-    else if ((ext = CertFindExtension(szOID_AUTHORITY_INFO_ACCESS,
-     cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
+    else if ((ext = CertFindExtension(szOID_CRL_DIST_POINTS, cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
     {
-        error = verify_cert_revocation_from_aia_ext(&ext->Value, cert, pTime,
-                dwFlags, pRevPara, pRevStatus);
+        error = verify_cert_revocation_from_dist_points_ext(&ext->Value, cert, pTime, dwFlags, pRevPara, pRevStatus);
     }
     else
     {
