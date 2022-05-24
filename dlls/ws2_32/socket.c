@@ -551,6 +551,14 @@ static HANDLE get_sync_event(void)
     return data->sync_event;
 }
 
+static DWORD wait_event_alertable( HANDLE event )
+{
+    DWORD ret;
+
+    while ((ret = WaitForSingleObjectEx( event, INFINITE, TRUE )) == WAIT_IO_COMPLETION)
+        ;
+    return ret;
+}
 
 BOOL WINAPI DllMain( HINSTANCE instance, DWORD reason, void *reserved )
 {
@@ -2769,7 +2777,7 @@ int WINAPI select( int count, fd_set *read_ptr, fd_set *write_ptr,
                                     IOCTL_AFD_POLL, params, params_size, params, params_size );
     if (status == STATUS_PENDING)
     {
-        if (WaitForSingleObject( sync_event, INFINITE ) == WAIT_FAILED)
+        if (wait_event_alertable( sync_event ) == WAIT_FAILED)
         {
             free( read_input );
             free( params );

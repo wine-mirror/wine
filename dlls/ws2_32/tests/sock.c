@@ -202,6 +202,11 @@ static void tcp_socketpair(SOCKET *src, SOCKET *dst)
     tcp_socketpair_flags(src, dst, WSA_FLAG_OVERLAPPED);
 }
 
+static void WINAPI apc_func(ULONG_PTR apc_count)
+{
+    ++*(unsigned int *)apc_count;
+}
+
 /* Set the linger timeout to zero and close the socket. This will trigger an
  * RST on the connection on Windows as well as on Unix systems. */
 static void close_with_rst(SOCKET s)
@@ -3613,6 +3618,7 @@ static void test_select(void)
     select_thread_params thread_params;
     HANDLE thread_handle;
     DWORD ticks, id, old_protect;
+    unsigned int apc_count;
     unsigned int maxfd, i;
     char *page_pair;
 
@@ -3716,14 +3722,24 @@ static void test_select(void)
 
     FD_ZERO(&readfds);
     FD_SET(fdRead, &readfds);
+    apc_count = 0;
+    ret = QueueUserAPC(apc_func, GetCurrentThread(), (ULONG_PTR)&apc_count);
+    ok(ret, "QueueUserAPC returned %d\n", ret);
     ret = select(fdRead+1, &readfds, NULL, NULL, &select_timeout);
     ok(!ret, "select returned %d\n", ret);
+    ok(apc_count == 1, "got apc_count %d.\n", apc_count);
 
     FD_ZERO(&writefds);
     FD_SET(fdWrite, &writefds);
+    apc_count = 0;
+    ret = QueueUserAPC(apc_func, GetCurrentThread(), (ULONG_PTR)&apc_count);
+    ok(ret, "QueueUserAPC returned %d\n", ret);
     ret = select(fdWrite+1, NULL, &writefds, NULL, &select_timeout);
     ok(ret == 1, "select returned %d\n", ret);
     ok(FD_ISSET(fdWrite, &writefds), "fdWrite socket is not in the set\n");
+    ok(!apc_count, "APC was called\n");
+    SleepEx(0, TRUE);
+    ok(apc_count == 1, "got apc_count %d.\n", apc_count);
 
     /* select the same socket twice */
     writefds.fd_count = 2;
