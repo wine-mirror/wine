@@ -8824,9 +8824,8 @@ static void test_decodeOCSPBasicResponseInfo(DWORD dwEncoding)
     size = 0;
     ret = CryptDecodeObjectEx(dwEncoding, OCSP_BASIC_RESPONSE, ocsp_basic_response_revoked,
                               sizeof(ocsp_basic_response_revoked), CRYPT_DECODE_ALLOC_FLAG, NULL, &info, &size);
-    todo_wine ok(ret, "got %08lx\n", GetLastError());
+    ok(ret, "got %08lx\n", GetLastError());
 
-    if (ret) {
     ok(!info->dwVersion, "got %lu\n", info->dwVersion);
     ok(info->dwResponderIdChoice == 2, "got %lu\n", info->dwResponderIdChoice);
     ok(info->ByKeyResponderId.cbData == sizeof(resp_id), "got %lu\n", info->ByKeyResponderId.cbData);
@@ -8864,7 +8863,6 @@ static void test_decodeOCSPBasicResponseInfo(DWORD dwEncoding)
 
     ok(!info->cExtension, "got %lu\n", info->cExtension);
     ok(info->rgExtension == NULL, "got %p\n", info->rgExtension);
-    }
     LocalFree(info);
 }
 

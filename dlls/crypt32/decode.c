@@ -6351,6 +6351,112 @@ static BOOL CRYPT_AsnDecodeOCSPNextUpdate(const BYTE *pbEncoded,
     return ret;
 }
 
+static BOOL CRYPT_AsnDecodeCertStatus(const BYTE *pbEncoded,
+ DWORD cbEncoded, DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo,
+ DWORD *pcbDecoded)
+{
+    BOOL ret = TRUE;
+    BYTE tag = pbEncoded[0] & ~3, status = pbEncoded[0] & 3;
+    DWORD bytesNeeded = FIELD_OFFSET(OCSP_BASIC_RESPONSE_ENTRY, ThisUpdate) -
+                        FIELD_OFFSET(OCSP_BASIC_RESPONSE_ENTRY, dwCertStatus);
+
+    if (!cbEncoded)
+    {
+        SetLastError(CRYPT_E_ASN1_EOD);
+        return FALSE;
+    }
+
+    switch (status)
+    {
+    case 0:
+        if (tag != ASN_CONTEXT)
+        {
+            WARN("Unexpected tag %02x\n", tag);
+            SetLastError(CRYPT_E_ASN1_BADTAG);
+            return FALSE;
+        }
+        if (cbEncoded < 2 || pbEncoded[1])
+        {
+            SetLastError(CRYPT_E_ASN1_CORRUPT);
+            return FALSE;
+        }
+        if (!pvStructInfo)
+            *pcbStructInfo = bytesNeeded;
+        else if (*pcbStructInfo < bytesNeeded)
+        {
+            *pcbStructInfo = bytesNeeded;
+            SetLastError(ERROR_MORE_DATA);
+            return FALSE;
+        }
+        if (pvStructInfo)
+        {
+            *(DWORD *)pvStructInfo = 0;
+            *(OCSP_BASIC_REVOKED_INFO **)((char *)pvStructInfo
+                + FIELD_OFFSET(OCSP_BASIC_RESPONSE_ENTRY, u.pRevokedInfo)
+                - FIELD_OFFSET(OCSP_BASIC_RESPONSE_ENTRY, dwCertStatus)) = NULL;
+        }
+        *pcbStructInfo = bytesNeeded;
+        *pcbDecoded = 2;
+        break;
+
+    case 1:
+    {
+        DWORD dataLen;
+
+        if (tag != (ASN_CONTEXT | ASN_CONSTRUCTOR))
+        {
+            WARN("Unexpected tag %02x\n", tag);
+            SetLastError(CRYPT_E_ASN1_BADTAG);
+            return FALSE;
+        }
+        if ((ret = CRYPT_GetLen(pbEncoded, cbEncoded, &dataLen)))
+        {
+            BYTE lenBytes = GET_LEN_BYTES(pbEncoded[1]);
+            DWORD bytesDecoded, size;
+            FILETIME date;
+
+            if (dataLen)
+            {
+                size = sizeof(date);
+                ret = CRYPT_AsnDecodeGeneralizedTime(pbEncoded + 1 + lenBytes, cbEncoded - 1 - lenBytes,
+                 dwFlags, &date, &size, &bytesDecoded);
+                if (ret)
+                {
+                    OCSP_BASIC_REVOKED_INFO *info;
+
+                    bytesNeeded += sizeof(*info);
+                    if (!pvStructInfo)
+                        *pcbStructInfo = bytesNeeded;
+                    else if (*pcbStructInfo < bytesNeeded)
+                    {
+                        *pcbStructInfo = bytesNeeded;
+                        SetLastError(ERROR_MORE_DATA);
+                        return FALSE;
+                    }
+                    if (pvStructInfo)
+                    {
+                        *(DWORD *)pvStructInfo = 1;
+                        info = *(OCSP_BASIC_REVOKED_INFO **)((char *)pvStructInfo
+                            + FIELD_OFFSET(OCSP_BASIC_RESPONSE_ENTRY, u.pRevokedInfo)
+                            - FIELD_OFFSET(OCSP_BASIC_RESPONSE_ENTRY, dwCertStatus));
+                        info->RevocationDate = date;
+                    }
+                    *pcbStructInfo = bytesNeeded;
+                    *pcbDecoded = 1 + lenBytes + bytesDecoded;
+                }
+            }
+        }
+        break;
+    }
+    default:
+        FIXME("Unhandled status %u\n", status);
+        SetLastError(CRYPT_E_ASN1_BADTAG);
+        return FALSE;
+    }
+
+    return ret;
+}
+
 static BOOL CRYPT_AsnDecodeOCSPBasicResponseEntry(const BYTE *pbEncoded, DWORD cbEncoded,
  DWORD dwFlags, void *pvStructInfo, DWORD *pcbStructInfo, DWORD *pcbDecoded)
 {
@@ -6367,10 +6473,9 @@ static BOOL CRYPT_AsnDecodeOCSPBasicResponseEntry(const BYTE *pbEncoded, DWORD c
      { ASN_INTEGER, offsetof(OCSP_BASIC_RESPONSE_ENTRY, CertId.SerialNumber),
        CRYPT_AsnDecodeIntegerInternal, sizeof(CRYPT_INTEGER_BLOB), FALSE, TRUE,
        offsetof(OCSP_BASIC_RESPONSE_ENTRY, CertId.SerialNumber.pbData), 0 },
-     { ASN_CONTEXT, offsetof(OCSP_BASIC_RESPONSE_ENTRY, dwCertStatus),
-       CRYPT_AsnDecodeIntInternal, sizeof(DWORD), FALSE, FALSE,
-       0, 0 },
-      /* FIXME: pRevokedInfo */
+     { 0, offsetof(OCSP_BASIC_RESPONSE_ENTRY, dwCertStatus),
+       CRYPT_AsnDecodeCertStatus, sizeof(DWORD), FALSE, TRUE,
+       offsetof(OCSP_BASIC_RESPONSE_ENTRY, u.pRevokedInfo), 0 },
      { ASN_GENERALTIME, offsetof(OCSP_BASIC_RESPONSE_ENTRY, ThisUpdate),
        CRYPT_AsnDecodeGeneralizedTime, sizeof(FILETIME), FALSE, FALSE,
        0, 0 },
