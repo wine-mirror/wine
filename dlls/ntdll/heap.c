@@ -720,39 +720,35 @@ static void free_used_block( SUBHEAP *subheap, struct block *block )
         heap->pending_free[heap->pending_pos] = block;
         heap->pending_pos = (heap->pending_pos + 1) % MAX_FREE_PENDING;
         block_set_type( block, ARENA_PENDING_MAGIC );
-        mark_block_free( block + 1, block->size & ARENA_SIZE_MASK, heap->flags );
+        mark_block_free( block + 1, block_get_size( block ) - sizeof(*block), heap->flags );
         if (!(block = tmp) || !(subheap = find_subheap( heap, block, FALSE ))) return;
     }
 
-    block_size = (block->size & ARENA_SIZE_MASK) + sizeof(*block);
-    if (block->size & ARENA_FLAG_PREV_FREE)
+    block_size = block_get_size( block );
+    if (block_get_flags( block ) & ARENA_FLAG_PREV_FREE)
     {
         /* merge with previous block if it is free */
         block = *((struct block **)block - 1);
-        block_size += (block->size & ARENA_SIZE_MASK) + sizeof(*entry);
+        block_size += block_get_size( block );
         entry = (struct entry *)block;
         list_remove( &entry->entry );
     }
     else entry = (struct entry *)block;
 
     create_free_block( subheap, block, block_size );
-    block_size = (block->size & ARENA_SIZE_MASK) + sizeof(*entry);
-    if ((char *)block + block_size < (char *)subheap->base + subheap->size) return;  /* not the last block */
+    if (next_block( subheap, block )) return;  /* not the last block */
 
-    if (((char *)block == (char *)subheap->base + subheap->headerSize) &&
-        (subheap != &subheap->heap->subheap))
+    if (block == first_block( subheap ) && subheap != &heap->subheap)
     {
         /* free the subheap if it's empty and not the main one */
-        void *addr = subheap->base;
+        void *addr = subheap_base( subheap );
         SIZE_T size = 0;
 
         list_remove( &entry->entry );
         list_remove( &subheap->entry );
         NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
-        return;
     }
-
-    if (!heap->shared) HEAP_Decommit( subheap, entry + 1 );
+    else if (!heap->shared) HEAP_Decommit( subheap, entry + 1 );
 }
 
 
