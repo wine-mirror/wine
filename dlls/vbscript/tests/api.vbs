@@ -2148,4 +2148,21 @@ call testWeekday(DateSerial(2000, 1, 1), vbFriday, 2)
 call testWeekday(DateSerial(2000, 1, 1), vbSaturday, 1)
 call testWeekdayError()
 
+sub testMonthNameError()
+    on error resume next
+    call Err.clear()
+    call MonthName(null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call Err.clear()
+    call MonthName(1, null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call Err.clear()
+    call MonthName(null, null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+    call Err.clear()
+    call MonthName("a", null)
+    call ok(Err.number = 94, "Err.number = " & Err.number)
+end sub
+call testMonthNameError()
+
 Call reportSuccess()

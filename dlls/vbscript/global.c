@@ -2897,6 +2897,9 @@ static HRESULT Global_MonthName(BuiltinDisp *This, VARIANT *args, unsigned args_
 
     assert(args_cnt == 1 || args_cnt == 2);
 
+    if(V_VT(args) == VT_NULL || (args_cnt == 2 && V_VT(args+1) == VT_NULL))
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
     hres = to_int(args, &month);
     if(FAILED(hres))
         return hres;
