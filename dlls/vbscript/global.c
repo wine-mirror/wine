@@ -2144,10 +2144,41 @@ static HRESULT Global_DateSerial(BuiltinDisp *This, VARIANT *args, unsigned args
     return hres;
 }
 
-static HRESULT Global_TimeSerial(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
+static HRESULT Global_TimeSerial(BuiltinDisp *This, VARIANT *args, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    int hour, minute, second;
+    UDATE ud = {{ 0 }};
+    HRESULT hres;
+    double date;
+
+    TRACE("\n");
+
+    assert(args_cnt == 3);
+
+    if (V_VT(args) == VT_NULL || V_VT(args + 1) == VT_NULL || V_VT(args + 2) == VT_NULL)
+        return MAKE_VBSERROR(VBSE_ILLEGAL_NULL_USE);
+
+    hres = to_int(args, &hour);
+    if (SUCCEEDED(hres))
+        hres = to_int(args + 1, &minute);
+    if (SUCCEEDED(hres))
+        hres = to_int(args + 2, &second);
+
+    if (SUCCEEDED(hres))
+    {
+        ud.st.wYear = 1899;
+        ud.st.wMonth = 12;
+        ud.st.wDay = 30;
+        ud.st.wHour = hour;
+        ud.st.wMinute = minute;
+        ud.st.wSecond = second;
+        hres = VarDateFromUdateEx(&ud, 0, 0, &date);
+    }
+
+    if (SUCCEEDED(hres))
+        hres = return_date(res, date);
+
+    return hres;
 }
 
 static HRESULT Global_InputBox(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
