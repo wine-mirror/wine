@@ -21,6 +21,7 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include <libusb.h>
 
 #include "ntstatus.h"
@@ -68,7 +69,17 @@ DECLARE_CRITICAL_SECTION(wineusb_cs);
 
 static unixlib_handle_t unix_handle;
 
+static pthread_mutex_t unix_device_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+static struct list unix_device_list = LIST_INIT(unix_device_list);
 static struct list device_list = LIST_INIT(device_list);
+
+struct unix_device
+{
+    struct list entry;
+
+    libusb_device_handle *handle;
+};
 
 struct usb_device
 {
@@ -86,7 +97,7 @@ struct usb_device
 
     uint16_t vendor, product, revision;
 
-    libusb_device_handle *handle;
+    struct unix_device *unix_device;
 
     LIST_ENTRY irp_list;
 };
@@ -95,6 +106,15 @@ static DRIVER_OBJECT *driver_obj;
 static DEVICE_OBJECT *bus_fdo, *bus_pdo;
 
 static libusb_hotplug_callback_handle hotplug_cb_handle;
+
+static void destroy_unix_device(struct unix_device *unix_device)
+{
+    pthread_mutex_lock(&unix_device_mutex);
+    libusb_close(unix_device->handle);
+    list_remove(&unix_device->entry);
+    pthread_mutex_unlock(&unix_device_mutex);
+    free(unix_device);
+}
 
 static void add_usb_interface(struct usb_device *parent, const struct libusb_interface_descriptor *desc)
 {
@@ -112,7 +132,7 @@ static void add_usb_interface(struct usb_device *parent, const struct libusb_int
     device = device_obj->DeviceExtension;
     device->device_obj = device_obj;
     device->parent = parent;
-    device->handle = parent->handle;
+    device->unix_device = parent->unix_device;
     device->interface_index = desc->bInterfaceNumber;
     device->class = desc->bInterfaceClass;
     device->subclass = desc->bInterfaceSubClass;
@@ -127,13 +147,13 @@ static void add_usb_interface(struct usb_device *parent, const struct libusb_int
     LeaveCriticalSection(&wineusb_cs);
 }
 
-static void add_usb_device(libusb_device *libusb_device)
+static void add_unix_device(struct unix_device *unix_device)
 {
     static const WCHAR formatW[] = {'\\','D','e','v','i','c','e','\\','U','S','B','P','D','O','-','%','u',0};
+    libusb_device *libusb_device = libusb_get_device(unix_device->handle);
     struct libusb_config_descriptor *config_desc;
     struct libusb_device_descriptor device_desc;
     static unsigned int name_index;
-    libusb_device_handle *handle;
     struct usb_device *device;
     DEVICE_OBJECT *device_obj;
     UNICODE_STRING string;
@@ -143,14 +163,8 @@ static void add_usb_device(libusb_device *libusb_device)
 
     libusb_get_device_descriptor(libusb_device, &device_desc);
 
-    TRACE("Adding new device %p, vendor %04x, product %04x.\n", libusb_device,
+    TRACE("Adding new device %p, vendor %04x, product %04x.\n", unix_device,
             device_desc.idVendor, device_desc.idProduct);
-
-    if ((ret = libusb_open(libusb_device, &handle)))
-    {
-        WARN("Failed to open device: %s\n", libusb_strerror(ret));
-        return;
-    }
 
     sprintfW(name, formatW, name_index++);
     RtlInitUnicodeString(&string, name);
@@ -158,13 +172,12 @@ static void add_usb_device(libusb_device *libusb_device)
             FILE_DEVICE_USB, 0, FALSE, &device_obj)))
     {
         ERR("Failed to create device, status %#x.\n", status);
-        libusb_close(handle);
         return;
     }
 
     device = device_obj->DeviceExtension;
     device->device_obj = device_obj;
-    device->handle = handle;
+    device->unix_device = unix_device;
     InitializeListHead(&device->irp_list);
 
     EnterCriticalSection(&wineusb_cs);
@@ -215,16 +228,43 @@ static void add_usb_device(libusb_device *libusb_device)
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
 }
 
-static void remove_usb_device(libusb_device *libusb_device)
+static void add_usb_device(libusb_device *libusb_device)
+{
+    struct libusb_device_descriptor device_desc;
+    struct unix_device *unix_device;
+    int ret;
+
+    libusb_get_device_descriptor(libusb_device, &device_desc);
+
+    TRACE("Adding new device %p, vendor %04x, product %04x.\n", libusb_device,
+            device_desc.idVendor, device_desc.idProduct);
+
+    if (!(unix_device = calloc(1, sizeof(*unix_device))))
+        return;
+
+    if ((ret = libusb_open(libusb_device, &unix_device->handle)))
+    {
+        WARN("Failed to open device: %s\n", libusb_strerror(ret));
+        free(unix_device);
+        return;
+    }
+    pthread_mutex_lock(&unix_device_mutex);
+    list_add_tail(&unix_device_list, &unix_device->entry);
+    pthread_mutex_unlock(&unix_device_mutex);
+
+    add_unix_device(unix_device);
+}
+
+static void remove_unix_device(struct unix_device *unix_device)
 {
     struct usb_device *device;
 
-    TRACE("Removing device %p.\n", libusb_device);
+    TRACE("Removing device %p.\n", unix_device);
 
     EnterCriticalSection(&wineusb_cs);
     LIST_FOR_EACH_ENTRY(device, &device_list, struct usb_device, entry)
     {
-        if (libusb_get_device(device->handle) == libusb_device)
+        if (device->unix_device == unix_device)
         {
             if (!device->removed)
             {
@@ -237,6 +277,19 @@ static void remove_usb_device(libusb_device *libusb_device)
     LeaveCriticalSection(&wineusb_cs);
 
     IoInvalidateDeviceRelations(bus_pdo, BusRelations);
+}
+
+static void remove_usb_device(libusb_device *libusb_device)
+{
+    struct unix_device *unix_device;
+
+    TRACE("Removing device %p.\n", libusb_device);
+
+    LIST_FOR_EACH_ENTRY(unix_device, &unix_device_list, struct unix_device, entry)
+    {
+        if (libusb_get_device(unix_device->handle) == libusb_device)
+            remove_unix_device(unix_device);
+    }
 }
 
 static BOOL thread_shutdown;
@@ -361,7 +414,7 @@ static NTSTATUS fdo_pnp(IRP *irp)
             {
                 assert(!device->removed);
                 if (!device->parent)
-                    libusb_close(device->handle);
+                    destroy_unix_device(device->unix_device);
                 list_remove(&device->entry);
                 IoDeleteDevice(device->device_obj);
             }
@@ -558,7 +611,7 @@ static NTSTATUS pdo_pnp(DEVICE_OBJECT *device_obj, IRP *irp)
             remove_pending_irps(device);
 
             if (!device->parent)
-                libusb_close(device->handle);
+                destroy_unix_device(device->unix_device);
 
             IoDeleteDevice(device->device_obj);
             ret = STATUS_SUCCESS;
@@ -691,6 +744,7 @@ static struct pipe get_pipe(HANDLE handle)
 static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
 {
     URB *urb = IoGetCurrentIrpStackLocation(irp)->Parameters.Others.Argument1;
+    libusb_device_handle *handle = device->unix_device->handle;
     struct libusb_transfer *transfer;
     int ret;
 
@@ -727,7 +781,7 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
             struct _URB_PIPE_REQUEST *req = &urb->UrbPipeRequest;
             struct pipe pipe = get_pipe(req->PipeHandle);
 
-            if ((ret = libusb_clear_halt(device->handle, pipe.endpoint)) < 0)
+            if ((ret = libusb_clear_halt(handle, pipe.endpoint)) < 0)
                 ERR("Failed to clear halt: %s\n", libusb_strerror(ret));
 
             return STATUS_SUCCESS;
@@ -746,12 +800,12 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
 
             if (pipe.type == UsbdPipeTypeBulk)
             {
-                libusb_fill_bulk_transfer(transfer, device->handle, pipe.endpoint,
+                libusb_fill_bulk_transfer(transfer, handle, pipe.endpoint,
                         req->TransferBuffer, req->TransferBufferLength, transfer_cb, irp, 0);
             }
             else if (pipe.type == UsbdPipeTypeInterrupt)
             {
-                libusb_fill_interrupt_transfer(transfer, device->handle, pipe.endpoint,
+                libusb_fill_interrupt_transfer(transfer, handle, pipe.endpoint,
                         req->TransferBuffer, req->TransferBufferLength, transfer_cb, irp, 0);
             }
             else
@@ -792,7 +846,7 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
                     LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_STANDARD | LIBUSB_RECIPIENT_DEVICE,
                     LIBUSB_REQUEST_GET_DESCRIPTOR, (req->DescriptorType << 8) | req->Index,
                     req->LanguageId, req->TransferBufferLength);
-            libusb_fill_control_transfer(transfer, device->handle, buffer, transfer_cb, irp, 0);
+            libusb_fill_control_transfer(transfer, handle, buffer, transfer_cb, irp, 0);
             transfer->flags = LIBUSB_TRANSFER_FREE_BUFFER | LIBUSB_TRANSFER_FREE_TRANSFER;
             ret = libusb_submit_transfer(transfer);
             if (ret < 0)
@@ -849,7 +903,7 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
                     req->Value, req->Index, req->TransferBufferLength);
             if (!(req->TransferFlags & USBD_TRANSFER_DIRECTION_IN))
                 memcpy(buffer + LIBUSB_CONTROL_SETUP_SIZE, req->TransferBuffer, req->TransferBufferLength);
-            libusb_fill_control_transfer(transfer, device->handle, buffer, transfer_cb, irp, 0);
+            libusb_fill_control_transfer(transfer, handle, buffer, transfer_cb, irp, 0);
             transfer->flags = LIBUSB_TRANSFER_FREE_BUFFER | LIBUSB_TRANSFER_FREE_TRANSFER;
             ret = libusb_submit_transfer(transfer);
             if (ret < 0)
