@@ -649,8 +649,7 @@ static inline BOOL HEAP_Decommit( SUBHEAP *subheap, void *ptr )
     SIZE_T decommit_size;
     SIZE_T size = (char *)ptr - (char *)subheap->base;
 
-    /* round to next block and add one full block */
-    size = ((size + COMMIT_MASK) & ~COMMIT_MASK) + COMMIT_MASK + 1;
+    size = ((size + COMMIT_MASK) & ~COMMIT_MASK);
     size = max( size, subheap->min_commit );
     if (size >= subheap->commitSize) return TRUE;
     decommit_size = subheap->commitSize - size;
@@ -748,7 +747,11 @@ static void free_used_block( SUBHEAP *subheap, struct block *block )
         list_remove( &subheap->entry );
         NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
     }
-    else if (!heap->shared) HEAP_Decommit( subheap, entry + 1 );
+    else if (!heap->shared)
+    {
+        /* keep room for a full commited block as hysteresis */
+        HEAP_Decommit( subheap, (char *)(entry + 1) + (COMMIT_MASK + 1) );
+    }
 }
 
 
