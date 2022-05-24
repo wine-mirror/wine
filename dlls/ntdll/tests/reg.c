@@ -138,7 +138,6 @@ static NTSTATUS (WINAPI * pNtQueryObject)(HANDLE, OBJECT_INFORMATION_CLASS, void
 static NTSTATUS (WINAPI * pNtQueryValueKey)(HANDLE,const UNICODE_STRING *,KEY_VALUE_INFORMATION_CLASS,void *,DWORD,DWORD *);
 static NTSTATUS (WINAPI * pNtSetValueKey)(HANDLE, const PUNICODE_STRING, ULONG,
                                ULONG, const void*, ULONG  );
-static NTSTATUS (WINAPI * pNtQueryInformationProcess)(HANDLE,PROCESSINFOCLASS,PVOID,ULONG,PULONG);
 static NTSTATUS (WINAPI * pRtlFormatCurrentUserKeyPath)(PUNICODE_STRING);
 static LONG     (WINAPI * pRtlCompareUnicodeString)(const PUNICODE_STRING,const PUNICODE_STRING,BOOLEAN);
 static BOOLEAN  (WINAPI * pRtlCreateUnicodeString)(PUNICODE_STRING, LPCWSTR);
@@ -191,7 +190,6 @@ static BOOL InitFunctionPtrs(void)
     NTDLL_GET_PROC(NtQueryKey)
     NTDLL_GET_PROC(NtQueryObject)
     NTDLL_GET_PROC(NtQueryValueKey)
-    NTDLL_GET_PROC(NtQueryInformationProcess)
     NTDLL_GET_PROC(NtSetValueKey)
     NTDLL_GET_PROC(NtOpenKey)
     NTDLL_GET_PROC(NtNotifyChangeKey)
@@ -1488,7 +1486,7 @@ static void test_redirection(void)
     if (ptr_size != 64)
     {
         ULONG is_wow64, len;
-        if (pNtQueryInformationProcess( GetCurrentProcess(), ProcessWow64Information,
+        if (NtQueryInformationProcess( GetCurrentProcess(), ProcessWow64Information,
                                         &is_wow64, sizeof(is_wow64), &len ) ||
             !is_wow64)
         {
