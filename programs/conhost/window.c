@@ -675,6 +675,7 @@ static BOOL set_console_font( struct console *console, const LOGFONTW *logfont )
     struct font_info *font_info = &console->active->font;
     HFONT font, old_font;
     TEXTMETRICW tm;
+    WCHAR face_name[LF_FACESIZE];
     CPINFO cpinfo;
     HDC dc;
 
@@ -700,6 +701,7 @@ static BOOL set_console_font( struct console *console, const LOGFONTW *logfont )
 
     old_font = SelectObject( dc, font );
     GetTextMetricsW( dc, &tm );
+    font_info->face_len = GetTextFaceW( dc, ARRAY_SIZE(face_name), face_name ) - 1;
     SelectObject( dc, old_font );
     ReleaseDC( console->win, dc );
 
@@ -708,9 +710,8 @@ static BOOL set_console_font( struct console *console, const LOGFONTW *logfont )
     font_info->weight = tm.tmWeight;
 
     free( font_info->face_name );
-    font_info->face_len = wcslen( logfont->lfFaceName );
     font_info->face_name = malloc( font_info->face_len * sizeof(WCHAR) );
-    memcpy( font_info->face_name, logfont->lfFaceName, font_info->face_len * sizeof(WCHAR) );
+    memcpy( font_info->face_name, face_name, font_info->face_len * sizeof(WCHAR) );
 
     /* FIXME: use maximum width for DBCS codepages since some chars take two cells */
     if (GetCPInfo( console->output_cp, &cpinfo ) && cpinfo.MaxCharSize == 2)
