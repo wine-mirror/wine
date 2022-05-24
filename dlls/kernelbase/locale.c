@@ -5945,7 +5945,7 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringA( LCID lcid, DWORD flags, const char *s
             SetLastError( ERROR_INVALID_FLAGS );
             goto done;
         }
-        ret = LCMapStringEx( NULL, flags, srcW, srclenW, (WCHAR *)dst, dstlen, NULL, NULL, 0 );
+        ret = LCMapStringW( lcid, flags, srcW, srclenW, (WCHAR *)dst, dstlen );
         goto done;
     }
 
@@ -5955,7 +5955,7 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringA( LCID lcid, DWORD flags, const char *s
         goto done;
     }
 
-    dstlenW = LCMapStringEx( NULL, flags, srcW, srclenW, NULL, 0, NULL, NULL, 0 );
+    dstlenW = LCMapStringW( lcid, flags, srcW, srclenW, NULL, 0 );
     if (!dstlenW) goto done;
 
     dstW = HeapAlloc( GetProcessHeap(), 0, dstlenW * sizeof(WCHAR) );
@@ -5964,7 +5964,7 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringA( LCID lcid, DWORD flags, const char *s
         SetLastError( ERROR_NOT_ENOUGH_MEMORY );
         goto done;
     }
-    LCMapStringEx( NULL, flags, srcW, srclenW, dstW, dstlenW, NULL, NULL, 0 );
+    LCMapStringW( lcid, flags, srcW, srclenW, dstW, dstlenW );
     ret = WideCharToMultiByte( locale_cp, 0, dstW, dstlenW, dst, dstlen, NULL, NULL );
     HeapFree( GetProcessHeap(), 0, dstW );
 
@@ -5980,7 +5980,35 @@ done:
 INT WINAPI DECLSPEC_HOTPATCH LCMapStringW( LCID lcid, DWORD flags, const WCHAR *src, int srclen,
                                            WCHAR *dst, int dstlen )
 {
-    return LCMapStringEx( NULL, flags, src, srclen, dst, dstlen, NULL, NULL, 0 );
+    const WCHAR *locale = LOCALE_NAME_USER_DEFAULT;
+
+    if (flags & (LCMAP_LINGUISTIC_CASING | LCMAP_SORTKEY))
+    {
+        const NLS_LOCALE_LCID_INDEX *entry;
+
+        switch (lcid)
+        {
+        case LOCALE_NEUTRAL:
+        case LOCALE_USER_DEFAULT:
+        case LOCALE_SYSTEM_DEFAULT:
+        case LOCALE_CUSTOM_DEFAULT:
+        case LOCALE_CUSTOM_UNSPECIFIED:
+        case LOCALE_CUSTOM_UI_DEFAULT:
+            break;
+        default:
+            if (lcid == user_lcid || lcid == system_lcid) break;
+            if (!(entry = find_lcid_entry( lcid )))
+            {
+                WARN( "unknown locale %04lx\n", lcid );
+                SetLastError( ERROR_INVALID_PARAMETER );
+                return 0;
+            }
+            locale = locale_strings + entry->name + 1;
+            break;
+        }
+    }
+
+    return LCMapStringEx( locale, flags, src, srclen, dst, dstlen, NULL, NULL, 0 );
 }
 
 
