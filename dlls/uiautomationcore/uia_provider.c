@@ -289,6 +289,7 @@ static LONG msaa_role_to_uia_control_type(LONG role)
  */
 struct msaa_provider {
     IRawElementProviderSimple IRawElementProviderSimple_iface;
+    IRawElementProviderFragment IRawElementProviderFragment_iface;
     ILegacyIAccessibleProvider ILegacyIAccessibleProvider_iface;
     LONG refcount;
 
@@ -336,6 +337,8 @@ HRESULT WINAPI msaa_provider_QueryInterface(IRawElementProviderSimple *iface, RE
     *ppv = NULL;
     if (IsEqualIID(riid, &IID_IRawElementProviderSimple) || IsEqualIID(riid, &IID_IUnknown))
         *ppv = iface;
+    else if (IsEqualIID(riid, &IID_IRawElementProviderFragment))
+        *ppv = &msaa_prov->IRawElementProviderFragment_iface;
     else if (IsEqualIID(riid, &IID_ILegacyIAccessibleProvider))
         *ppv = &msaa_prov->ILegacyIAccessibleProvider_iface;
     else
@@ -479,6 +482,91 @@ static const IRawElementProviderSimpleVtbl msaa_provider_vtbl = {
     msaa_provider_GetPatternProvider,
     msaa_provider_GetPropertyValue,
     msaa_provider_get_HostRawElementProvider,
+};
+
+/*
+ * IRawElementProviderFragment interface for UiaProviderFromIAccessible
+ * providers.
+ */
+static inline struct msaa_provider *impl_from_msaa_fragment(IRawElementProviderFragment *iface)
+{
+    return CONTAINING_RECORD(iface, struct msaa_provider, IRawElementProviderFragment_iface);
+}
+
+static HRESULT WINAPI msaa_fragment_QueryInterface(IRawElementProviderFragment *iface, REFIID riid,
+        void **ppv)
+{
+    struct msaa_provider *msaa_prov = impl_from_msaa_fragment(iface);
+    return IRawElementProviderSimple_QueryInterface(&msaa_prov->IRawElementProviderSimple_iface, riid, ppv);
+}
+
+static ULONG WINAPI msaa_fragment_AddRef(IRawElementProviderFragment *iface)
+{
+    struct msaa_provider *msaa_prov = impl_from_msaa_fragment(iface);
+    return IRawElementProviderSimple_AddRef(&msaa_prov->IRawElementProviderSimple_iface);
+}
+
+static ULONG WINAPI msaa_fragment_Release(IRawElementProviderFragment *iface)
+{
+    struct msaa_provider *msaa_prov = impl_from_msaa_fragment(iface);
+    return IRawElementProviderSimple_Release(&msaa_prov->IRawElementProviderSimple_iface);
+}
+
+static HRESULT WINAPI msaa_fragment_Navigate(IRawElementProviderFragment *iface,
+        enum NavigateDirection direction, IRawElementProviderFragment **ret_val)
+{
+    FIXME("%p, %d, %p: stub!\n", iface, direction, ret_val);
+    *ret_val = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msaa_fragment_GetRuntimeId(IRawElementProviderFragment *iface,
+        SAFEARRAY **ret_val)
+{
+    FIXME("%p, %p: stub!\n", iface, ret_val);
+    *ret_val = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msaa_fragment_get_BoundingRectangle(IRawElementProviderFragment *iface,
+        struct UiaRect *ret_val)
+{
+    FIXME("%p, %p: stub!\n", iface, ret_val);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msaa_fragment_GetEmbeddedFragmentRoots(IRawElementProviderFragment *iface,
+        SAFEARRAY **ret_val)
+{
+    FIXME("%p, %p: stub!\n", iface, ret_val);
+    *ret_val = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msaa_fragment_SetFocus(IRawElementProviderFragment *iface)
+{
+    FIXME("%p: stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI msaa_fragment_get_FragmentRoot(IRawElementProviderFragment *iface,
+        IRawElementProviderFragmentRoot **ret_val)
+{
+    FIXME("%p, %p: stub!\n", iface, ret_val);
+    *ret_val = NULL;
+    return E_NOTIMPL;
+}
+
+static const IRawElementProviderFragmentVtbl msaa_fragment_vtbl = {
+    msaa_fragment_QueryInterface,
+    msaa_fragment_AddRef,
+    msaa_fragment_Release,
+    msaa_fragment_Navigate,
+    msaa_fragment_GetRuntimeId,
+    msaa_fragment_get_BoundingRectangle,
+    msaa_fragment_GetEmbeddedFragmentRoots,
+    msaa_fragment_SetFocus,
+    msaa_fragment_get_FragmentRoot,
 };
 
 /*
@@ -682,6 +770,7 @@ HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, long child_id, DWORD
         return E_OUTOFMEMORY;
 
     msaa_prov->IRawElementProviderSimple_iface.lpVtbl = &msaa_provider_vtbl;
+    msaa_prov->IRawElementProviderFragment_iface.lpVtbl = &msaa_fragment_vtbl;
     msaa_prov->ILegacyIAccessibleProvider_iface.lpVtbl = &msaa_acc_provider_vtbl;
     msaa_prov->refcount = 1;
     msaa_prov->hwnd = hwnd;
