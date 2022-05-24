@@ -30,27 +30,36 @@
 static HRESULT (WINAPI *pUiaProviderFromIAccessible)(IAccessible *, long, DWORD, IRawElementProviderSimple **);
 
 #define DEFINE_EXPECT(func) \
-    static BOOL expect_ ## func = FALSE, called_ ## func = FALSE
+    static int expect_ ## func = 0, called_ ## func = 0
 
 #define SET_EXPECT(func) \
-    do { called_ ## func = FALSE; expect_ ## func = TRUE; } while(0)
+    do { called_ ## func = 0; expect_ ## func = 1; } while(0)
+
+#define SET_EXPECT_MULTI(func, num) \
+    do { called_ ## func = 0; expect_ ## func = num; } while(0)
 
 #define CHECK_EXPECT2(func) \
     do { \
         ok(expect_ ##func, "unexpected call " #func "\n"); \
-        called_ ## func = TRUE; \
+        called_ ## func++; \
     }while(0)
 
 #define CHECK_EXPECT(func) \
     do { \
         CHECK_EXPECT2(func); \
-        expect_ ## func = FALSE; \
+        expect_ ## func--; \
     }while(0)
 
 #define CHECK_CALLED(func) \
     do { \
         ok(called_ ## func, "expected " #func "\n"); \
-        expect_ ## func = called_ ## func = FALSE; \
+        expect_ ## func = called_ ## func = 0; \
+    }while(0)
+
+#define CHECK_CALLED_MULTI(func, num) \
+    do { \
+        ok(called_ ## func == num, "expected " #func " %d times (got %d)\n", num, called_ ## func); \
+        expect_ ## func = called_ ## func = 0; \
     }while(0)
 
 #define NAVDIR_INTERNAL_HWND 10
@@ -63,6 +72,7 @@ DEFINE_EXPECT(Accessible_get_accName);
 DEFINE_EXPECT(Accessible_get_accRole);
 DEFINE_EXPECT(Accessible_get_accState);
 DEFINE_EXPECT(Accessible_accLocation);
+DEFINE_EXPECT(Accessible_get_accChild);
 DEFINE_EXPECT(Accessible2_get_accParent);
 DEFINE_EXPECT(Accessible2_get_accChildCount);
 DEFINE_EXPECT(Accessible2_get_accName);
@@ -72,6 +82,18 @@ DEFINE_EXPECT(Accessible2_accLocation);
 DEFINE_EXPECT(Accessible2_QI_IAccIdentity);
 DEFINE_EXPECT(Accessible_child_accNavigate);
 DEFINE_EXPECT(Accessible_child_get_accParent);
+DEFINE_EXPECT(Accessible_child_get_accChildCount);
+DEFINE_EXPECT(Accessible_child_get_accName);
+DEFINE_EXPECT(Accessible_child_get_accRole);
+DEFINE_EXPECT(Accessible_child_get_accState);
+DEFINE_EXPECT(Accessible_child_accLocation);
+DEFINE_EXPECT(Accessible_child2_accNavigate);
+DEFINE_EXPECT(Accessible_child2_get_accParent);
+DEFINE_EXPECT(Accessible_child2_get_accChildCount);
+DEFINE_EXPECT(Accessible_child2_get_accName);
+DEFINE_EXPECT(Accessible_child2_get_accRole);
+DEFINE_EXPECT(Accessible_child2_get_accState);
+DEFINE_EXPECT(Accessible_child2_accLocation);
 
 static BOOL check_variant_i4(VARIANT *v, int val)
 {
@@ -117,7 +139,7 @@ static struct Accessible
     LONG child_count;
     LPCWSTR name;
     LONG left, top, width, height;
-} Accessible, Accessible2, Accessible_child;
+} Accessible, Accessible2, Accessible_child, Accessible_child2;
 
 static inline struct Accessible* impl_from_Accessible(IAccessible *iface)
 {
@@ -195,6 +217,8 @@ static HRESULT WINAPI Accessible_get_accParent(IAccessible *iface, IDispatch **o
 
     if (This == &Accessible_child)
         CHECK_EXPECT(Accessible_child_get_accParent);
+    else if (This == &Accessible_child2)
+        CHECK_EXPECT(Accessible_child2_get_accParent);
     else if (This == &Accessible2)
         CHECK_EXPECT(Accessible2_get_accParent);
     else
@@ -211,7 +235,11 @@ static HRESULT WINAPI Accessible_get_accChildCount(IAccessible *iface, LONG *out
 {
     struct Accessible *This = impl_from_Accessible(iface);
 
-    if (This == &Accessible2)
+    if (This == &Accessible_child)
+        CHECK_EXPECT(Accessible_child_get_accChildCount);
+    else if (This == &Accessible_child2)
+        CHECK_EXPECT(Accessible_child2_get_accChildCount);
+    else if (This == &Accessible2)
         CHECK_EXPECT(Accessible2_get_accChildCount);
     else
         CHECK_EXPECT(Accessible_get_accChildCount);
@@ -228,7 +256,38 @@ static HRESULT WINAPI Accessible_get_accChildCount(IAccessible *iface, LONG *out
 static HRESULT WINAPI Accessible_get_accChild(IAccessible *iface, VARIANT child_id,
         IDispatch **out_child)
 {
-    ok(0, "unexpected call\n");
+    struct Accessible *This = impl_from_Accessible(iface);
+
+    CHECK_EXPECT(Accessible_get_accChild);
+    ok(This == &Accessible, "unexpected call\n");
+
+    *out_child = NULL;
+    if (V_VT(&child_id) != VT_I4)
+        return E_INVALIDARG;
+
+    if (This == &Accessible)
+    {
+        switch (V_I4(&child_id))
+        {
+        case CHILDID_SELF:
+            return IAccessible_QueryInterface(&This->IAccessible_iface, &IID_IDispatch, (void **)out_child);
+
+        /* Simple element children. */
+        case 1:
+        case 3:
+            return S_FALSE;
+
+        case 2:
+            return IAccessible_QueryInterface(&Accessible_child.IAccessible_iface, &IID_IDispatch, (void **)out_child);
+
+        case 4:
+            return IAccessible_QueryInterface(&Accessible_child2.IAccessible_iface, &IID_IDispatch, (void **)out_child);
+
+        default:
+            break;
+
+        }
+    }
     return E_NOTIMPL;
 }
 
@@ -238,7 +297,11 @@ static HRESULT WINAPI Accessible_get_accName(IAccessible *iface, VARIANT child_i
     struct Accessible *This = impl_from_Accessible(iface);
 
     *out_name = NULL;
-    if (This == &Accessible2)
+    if (This == &Accessible_child)
+        CHECK_EXPECT(Accessible_child_get_accName);
+    else if (This == &Accessible_child2)
+        CHECK_EXPECT(Accessible_child2_get_accName);
+    else if (This == &Accessible2)
         CHECK_EXPECT(Accessible2_get_accName);
     else
         CHECK_EXPECT(Accessible_get_accName);
@@ -271,7 +334,11 @@ static HRESULT WINAPI Accessible_get_accRole(IAccessible *iface, VARIANT child_i
 {
     struct Accessible *This = impl_from_Accessible(iface);
 
-    if (This == &Accessible2)
+    if (This == &Accessible_child)
+        CHECK_EXPECT(Accessible_child_get_accRole);
+    else if (This == &Accessible_child2)
+        CHECK_EXPECT(Accessible_child2_get_accRole);
+    else if (This == &Accessible2)
         CHECK_EXPECT(Accessible2_get_accRole);
     else
         CHECK_EXPECT(Accessible_get_accRole);
@@ -291,10 +358,38 @@ static HRESULT WINAPI Accessible_get_accState(IAccessible *iface, VARIANT child_
 {
     struct Accessible *This = impl_from_Accessible(iface);
 
-    if (This == &Accessible2)
+    if (This == &Accessible_child)
+        CHECK_EXPECT(Accessible_child_get_accState);
+    else if (This == &Accessible_child2)
+        CHECK_EXPECT(Accessible_child2_get_accState);
+    else if (This == &Accessible2)
         CHECK_EXPECT(Accessible2_get_accState);
     else
         CHECK_EXPECT(Accessible_get_accState);
+
+    if (V_VT(&child_id) != VT_I4)
+        return E_INVALIDARG;
+
+    if (This == &Accessible && V_I4(&child_id) != CHILDID_SELF)
+    {
+        switch (V_I4(&child_id))
+        {
+        case 1:
+            V_VT(out_state) = VT_I4;
+            V_I4(out_state) = STATE_SYSTEM_INVISIBLE;
+            break;
+
+        case 3:
+            V_VT(out_state) = VT_I4;
+            V_I4(out_state) = STATE_SYSTEM_FOCUSABLE;
+            break;
+
+        default:
+            return E_INVALIDARG;
+        }
+
+        return S_OK;
+    }
 
     if (This->state)
     {
@@ -358,7 +453,11 @@ static HRESULT WINAPI Accessible_accLocation(IAccessible *iface, LONG *out_left,
 {
     struct Accessible *This = impl_from_Accessible(iface);
 
-    if (This == &Accessible2)
+    if (This == &Accessible_child)
+        CHECK_EXPECT(Accessible_child_accLocation);
+    else if (This == &Accessible_child2)
+        CHECK_EXPECT(Accessible_child2_accLocation);
+    else if (This == &Accessible2)
         CHECK_EXPECT(Accessible2_accLocation);
     else
         CHECK_EXPECT(Accessible_accLocation);
@@ -382,6 +481,8 @@ static HRESULT WINAPI Accessible_accNavigate(IAccessible *iface, LONG nav_direct
 
     if (This == &Accessible_child)
         CHECK_EXPECT(Accessible_child_accNavigate);
+    else if (This == &Accessible_child2)
+        CHECK_EXPECT(Accessible_child2_accNavigate);
     else
         CHECK_EXPECT(Accessible_accNavigate);
     VariantInit(out_var);
@@ -525,6 +626,17 @@ static struct Accessible Accessible2 =
 };
 
 static struct Accessible Accessible_child =
+{
+    { &AccessibleVtbl },
+    { &OleWindowVtbl },
+    1,
+    &Accessible.IAccessible_iface,
+    0, 0,
+    0, 0, 0, NULL,
+    0, 0, 0, 0,
+};
+
+static struct Accessible Accessible_child2 =
 {
     { &AccessibleVtbl },
     { &OleWindowVtbl },
@@ -888,6 +1000,499 @@ static void set_accessible_props(struct Accessible *acc, INT role, INT state,
     acc->top = top;
     acc->width = width;
     acc->height = height;
+}
+
+#define check_fragment_acc( fragment, acc, cid) \
+        check_fragment_acc_( (fragment), (acc), (cid), __LINE__)
+static void check_fragment_acc_(IRawElementProviderFragment *elfrag, IAccessible *acc,
+        INT cid, int line)
+{
+    ILegacyIAccessibleProvider *accprov;
+    IAccessible *accessible;
+    INT child_id;
+    HRESULT hr;
+
+    hr = IRawElementProviderFragment_QueryInterface(elfrag, &IID_ILegacyIAccessibleProvider, (void **)&accprov);
+    ok_(__FILE__, line) (hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok_(__FILE__, line) (!!accprov, "accprov == NULL\n");
+
+    hr = ILegacyIAccessibleProvider_GetIAccessible(accprov, &accessible);
+    ok_(__FILE__, line) (hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok_(__FILE__, line) (accessible == acc, "accessible != acc\n");
+    IAccessible_Release(accessible);
+
+    hr = ILegacyIAccessibleProvider_get_ChildId(accprov, &child_id);
+    ok_(__FILE__, line) (hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok_(__FILE__, line) (child_id == cid, "child_id != cid\n");
+
+    ILegacyIAccessibleProvider_Release(accprov);
+}
+
+static void test_uia_prov_from_acc_navigation(void)
+{
+    IRawElementProviderFragment *elfrag, *elfrag2, *elfrag3;
+    IRawElementProviderSimple *elprov, *elprov2;
+    HRESULT hr;
+
+    /*
+     * Full IAccessible parent, with 4 children:
+     * childid 1 is a simple element, with STATE_SYSTEM_INVISIBLE.
+     * childid 2 is Accessible_child.
+     * childid 3 is a simple element with STATE_SYSTEM_NORMAL.
+     * childid 4 is Accessible_child2.
+     */
+    hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    hr = IRawElementProviderSimple_QueryInterface(elprov, &IID_IRawElementProviderFragment, (void **)&elfrag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag, "elfrag == NULL\n");
+
+    /*
+     * First time doing NavigateDirection_Parent will result in the same root
+     * accessible check as get_HostRawElementProvider. If this IAccessible is
+     * the root for its associated HWND, NavigateDirection_Parent and
+     * NavigateDirection_Next/PreviousSibling will do nothing, as UI Automation
+     * provides non-client area providers for the root IAccessible's parent
+     * and siblings.
+     */
+    set_accessible_props(&Accessible, ROLE_SYSTEM_DOCUMENT, STATE_SYSTEM_FOCUSABLE, 4,
+            L"acc_name", 0, 0, 50, 50);
+    set_accessible_props(&Accessible2, ROLE_SYSTEM_DOCUMENT, STATE_SYSTEM_FOCUSABLE, 4,
+            L"acc_name", 0, 0, 50, 50);
+    acc_client = &Accessible2.IAccessible_iface;
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    SET_EXPECT(Accessible_get_accRole);
+    SET_EXPECT(Accessible_get_accState);
+    SET_EXPECT(Accessible_get_accChildCount);
+    SET_EXPECT(Accessible_accLocation);
+    SET_EXPECT(Accessible_get_accName);
+    SET_EXPECT(Accessible2_get_accRole);
+    SET_EXPECT(Accessible2_get_accState);
+    SET_EXPECT(Accessible2_get_accChildCount);
+    SET_EXPECT(Accessible2_accLocation);
+    SET_EXPECT(Accessible2_get_accName);
+    SET_EXPECT(Accessible2_QI_IAccIdentity);
+    SET_EXPECT(Accessible2_get_accParent);
+    elfrag2 = (void *)0xdeadbeef;
+    hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_Parent, &elfrag2);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elfrag2, "elfrag2 != NULL\n");
+    todo_wine CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    todo_wine CHECK_CALLED(Accessible_get_accRole);
+    todo_wine CHECK_CALLED(Accessible_get_accState);
+    todo_wine CHECK_CALLED(Accessible_get_accChildCount);
+    todo_wine CHECK_CALLED(Accessible_accLocation);
+    todo_wine CHECK_CALLED(Accessible_get_accName);
+    todo_wine CHECK_CALLED(Accessible2_get_accRole);
+    todo_wine CHECK_CALLED(Accessible2_get_accState);
+    todo_wine CHECK_CALLED(Accessible2_get_accChildCount);
+    todo_wine CHECK_CALLED(Accessible2_accLocation);
+    todo_wine CHECK_CALLED(Accessible2_get_accName);
+    todo_wine CHECK_CALLED(Accessible2_QI_IAccIdentity);
+    todo_wine CHECK_CALLED(Accessible2_get_accParent);
+    acc_client = NULL;
+
+    if (SUCCEEDED(hr))
+    {
+        /* No check against root IAccessible, since it was done previously. */
+        elprov2 = (void *)0xdeadbeef;
+        hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(!!elprov2, "elprov == NULL, elprov %p\n", elprov2);
+        IRawElementProviderSimple_Release(elprov2);
+    }
+
+    /* Do nothing. */
+    elfrag2 = (void *)0xdeadbeef;
+    hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_Parent, &elfrag2);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elfrag2, "elfrag2 != NULL\n");
+
+    elfrag2 = (void *)0xdeadbeef;
+    hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_NextSibling, &elfrag2);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elfrag2, "elfrag2 != NULL\n");
+
+    elfrag2 = (void *)0xdeadbeef;
+    hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_PreviousSibling, &elfrag2);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elfrag2, "elfrag2 != NULL\n");
+
+    /*
+     * Retrieve childid 2 (Accessible_child) as first child. childid 1 is skipped due to
+     * having a state of STATE_SYSTEM_INVISIBLE.
+     */
+    set_accessible_props(&Accessible_child, 0, STATE_SYSTEM_FOCUSABLE, 0, NULL, 0, 0, 0, 0);
+    set_accessible_props(&Accessible_child2, 0, STATE_SYSTEM_FOCUSABLE, 0, NULL, 0, 0, 0, 0);
+    SET_EXPECT_MULTI(Accessible_get_accChildCount, 3);
+    SET_EXPECT_MULTI(Accessible_get_accChild, 2);
+    SET_EXPECT(Accessible_get_accState);
+    SET_EXPECT(Accessible_child_get_accState);
+    SET_EXPECT(Accessible_child_accNavigate);
+    SET_EXPECT(Accessible_child_get_accParent);
+    hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_FirstChild, &elfrag2);
+    todo_wine ok(Accessible_child.ref == 2, "Unexpected refcnt %ld\n", Accessible_child.ref);
+    todo_wine ok(Accessible.ref == 3, "Unexpected refcnt %ld\n", Accessible.ref);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!elfrag2, "elfrag2 == NULL\n");
+    todo_wine CHECK_CALLED_MULTI(Accessible_get_accChildCount, 3);
+    todo_wine CHECK_CALLED_MULTI(Accessible_get_accChild, 2);
+    todo_wine CHECK_CALLED(Accessible_child_get_accState);
+    todo_wine CHECK_CALLED(Accessible_child_accNavigate);
+    todo_wine CHECK_CALLED(Accessible_child_get_accParent);
+    if (elfrag2)
+    {
+        check_fragment_acc(elfrag2, &Accessible_child.IAccessible_iface, CHILDID_SELF);
+
+        SET_EXPECT(Accessible_get_accChildCount);
+        SET_EXPECT(Accessible_get_accChild);
+        SET_EXPECT(Accessible_get_accState);
+        hr = IRawElementProviderFragment_Navigate(elfrag2, NavigateDirection_NextSibling, &elfrag3);
+        ok(Accessible.ref == 5, "Unexpected refcnt %ld\n", Accessible.ref);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(!!elfrag3, "elfrag2 == NULL\n");
+        CHECK_CALLED(Accessible_get_accChildCount);
+        CHECK_CALLED(Accessible_get_accChild);
+        CHECK_CALLED(Accessible_get_accState);
+        check_fragment_acc(elfrag3, &Accessible.IAccessible_iface, 3);
+
+        IRawElementProviderFragment_Release(elfrag3);
+        ok(Accessible.ref == 3, "Unexpected refcnt %ld\n", Accessible.ref);
+        IRawElementProviderFragment_Release(elfrag2);
+        ok(Accessible_child.ref == 1, "Unexpected refcnt %ld\n", Accessible_child.ref);
+        ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+    }
+
+    /* Retrieve childid 3 as first child now that Accessible_child is invisible. */
+    set_accessible_props(&Accessible_child, 0, STATE_SYSTEM_INVISIBLE, 0, NULL, 0, 0, 0, 0);
+    SET_EXPECT_MULTI(Accessible_get_accChildCount, 4);
+    SET_EXPECT_MULTI(Accessible_get_accChild, 3);
+    SET_EXPECT_MULTI(Accessible_get_accState, 2);
+    SET_EXPECT(Accessible_child_get_accState);
+    hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_FirstChild, &elfrag2);
+    todo_wine ok(Accessible.ref == 4, "Unexpected refcnt %ld\n", Accessible.ref);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!elfrag2, "elfrag2 == NULL\n");
+    todo_wine CHECK_CALLED_MULTI(Accessible_get_accChildCount, 4);
+    todo_wine CHECK_CALLED_MULTI(Accessible_get_accChild, 3);
+    todo_wine CHECK_CALLED_MULTI(Accessible_get_accState, 2);
+    todo_wine CHECK_CALLED(Accessible_child_get_accState);
+    if (elfrag2)
+    {
+        check_fragment_acc(elfrag2, &Accessible.IAccessible_iface, 3);
+        IRawElementProviderFragment_Release(elfrag2);
+        ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+    }
+
+    /* Retrieve childid 4 (Accessible_child2) as last child. */
+    set_accessible_props(&Accessible_child2, 0, STATE_SYSTEM_FOCUSABLE, 0, NULL, 0, 0, 0, 0);
+    SET_EXPECT_MULTI(Accessible_get_accChildCount, 2);
+    SET_EXPECT(Accessible_get_accChild);
+    SET_EXPECT(Accessible_child2_get_accState);
+    SET_EXPECT(Accessible_child2_accNavigate);
+    SET_EXPECT(Accessible_child2_get_accParent);
+    hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_LastChild, &elfrag2);
+    todo_wine ok(Accessible_child2.ref == 2, "Unexpected refcnt %ld\n", Accessible_child2.ref);
+    todo_wine ok(Accessible.ref == 3, "Unexpected refcnt %ld\n", Accessible.ref);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!elfrag2, "elfrag2 == NULL\n");
+    todo_wine CHECK_CALLED_MULTI(Accessible_get_accChildCount, 2);
+    todo_wine CHECK_CALLED(Accessible_get_accChild);
+    todo_wine CHECK_CALLED(Accessible_child2_get_accState);
+    todo_wine CHECK_CALLED(Accessible_child2_accNavigate);
+    todo_wine CHECK_CALLED(Accessible_child2_get_accParent);
+    if (elfrag2)
+    {
+        check_fragment_acc(elfrag2, &Accessible_child2.IAccessible_iface, CHILDID_SELF);
+
+        SET_EXPECT(Accessible_get_accChildCount);
+        SET_EXPECT(Accessible_get_accChild);
+        SET_EXPECT(Accessible_get_accState);
+        hr = IRawElementProviderFragment_Navigate(elfrag2, NavigateDirection_PreviousSibling, &elfrag3);
+        ok(Accessible.ref == 5, "Unexpected refcnt %ld\n", Accessible.ref);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(!!elfrag3, "elfrag2 == NULL\n");
+        CHECK_CALLED(Accessible_get_accChildCount);
+        CHECK_CALLED(Accessible_get_accChild);
+        CHECK_CALLED(Accessible_get_accState);
+        check_fragment_acc(elfrag3, &Accessible.IAccessible_iface, 3);
+
+        IRawElementProviderFragment_Release(elfrag3);
+        ok(Accessible.ref == 3, "Unexpected refcnt %ld\n", Accessible.ref);
+        IRawElementProviderFragment_Release(elfrag2);
+        ok(Accessible_child2.ref == 1, "Unexpected refcnt %ld\n", Accessible_child2.ref);
+        ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+    }
+
+    /* Retrieve childid 3 as last child, now that Accessible_child2 is STATE_SYSTEM_INVISIBLE. */
+    set_accessible_props(&Accessible_child2, 0, STATE_SYSTEM_INVISIBLE, 0, NULL, 0, 0, 0, 0);
+    SET_EXPECT_MULTI(Accessible_get_accChildCount, 3);
+    SET_EXPECT_MULTI(Accessible_get_accChild, 2);
+    SET_EXPECT(Accessible_get_accState);
+    SET_EXPECT(Accessible_child2_get_accState);
+    hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_LastChild, &elfrag2);
+    todo_wine ok(Accessible.ref == 4, "Unexpected refcnt %ld\n", Accessible.ref);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!elfrag2, "elfrag2 == NULL\n");
+    todo_wine CHECK_CALLED_MULTI(Accessible_get_accChildCount, 3);
+    todo_wine CHECK_CALLED_MULTI(Accessible_get_accChild, 2);
+    todo_wine CHECK_CALLED(Accessible_get_accState);
+    todo_wine CHECK_CALLED(Accessible_child2_get_accState);
+    if (elfrag2)
+    {
+        check_fragment_acc(elfrag2, &Accessible.IAccessible_iface, 3);
+        IRawElementProviderFragment_Release(elfrag2);
+        ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+    }
+
+    IRawElementProviderFragment_Release(elfrag);
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    /*
+     * Full IAccessible child tests.
+     */
+    SET_EXPECT(Accessible_child_accNavigate);
+    SET_EXPECT(Accessible_child_get_accParent);
+    hr = pUiaProviderFromIAccessible(&Accessible_child.IAccessible_iface, 0, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    CHECK_CALLED(Accessible_child_accNavigate);
+    CHECK_CALLED(Accessible_child_get_accParent);
+    ok(Accessible_child.ref == 2, "Unexpected refcnt %ld\n", Accessible_child.ref);
+
+    hr = IRawElementProviderSimple_QueryInterface(elprov, &IID_IRawElementProviderFragment, (void **)&elfrag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag, "elfrag == NULL\n");
+
+    /*
+     * After determining this isn't the root IAccessible, get_accParent will
+     * be used to get the parent.
+     */
+    set_accessible_props(&Accessible2, ROLE_SYSTEM_DOCUMENT, STATE_SYSTEM_FOCUSABLE, 0, NULL, 0, 0, 0, 0);
+    set_accessible_props(&Accessible_child, ROLE_SYSTEM_CLIENT, STATE_SYSTEM_FOCUSABLE, 0, NULL, 0, 0, 0, 0);
+    acc_client = &Accessible2.IAccessible_iface;
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    SET_EXPECT(Accessible_child_get_accRole);
+    SET_EXPECT(Accessible_child_get_accParent);
+    SET_EXPECT(Accessible2_get_accRole);
+    SET_EXPECT(Accessible2_QI_IAccIdentity);
+    SET_EXPECT(Accessible2_get_accParent);
+    hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_Parent, &elfrag2);
+    todo_wine ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!elfrag2, "elfrag2 == NULL\n");
+    todo_wine CHECK_CALLED(Accessible_child_get_accParent);
+    todo_wine CHECK_CALLED(Accessible_child_get_accRole);
+    todo_wine CHECK_CALLED(Accessible2_get_accRole);
+    todo_wine CHECK_CALLED(Accessible2_QI_IAccIdentity);
+    todo_wine CHECK_CALLED(Accessible2_get_accParent);
+    todo_wine CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    if (elfrag2)
+    {
+        check_fragment_acc(elfrag2, &Accessible.IAccessible_iface, CHILDID_SELF);
+        IRawElementProviderFragment_Release(elfrag2);
+        ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+    }
+    acc_client = NULL;
+
+    /* Second call only does get_accParent, no root check. */
+    SET_EXPECT(Accessible_child_get_accParent);
+    hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_Parent, &elfrag2);
+    todo_wine ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!elfrag2, "elfrag2 == NULL\n");
+    todo_wine CHECK_CALLED(Accessible_child_get_accParent);
+    if (elfrag2)
+    {
+        check_fragment_acc(elfrag2, &Accessible.IAccessible_iface, CHILDID_SELF);
+        IRawElementProviderFragment_Release(elfrag2);
+        ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+    }
+
+    /* ChildCount of 0, do nothing for First/Last child.*/
+    SET_EXPECT(Accessible_child_get_accChildCount);
+    hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_FirstChild, &elfrag2);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elfrag2, "elfrag2 != NULL\n");
+    todo_wine CHECK_CALLED(Accessible_child_get_accChildCount);
+
+    SET_EXPECT(Accessible_child_get_accChildCount);
+    hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_LastChild, &elfrag2);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elfrag2, "elfrag2 != NULL\n");
+    todo_wine CHECK_CALLED(Accessible_child_get_accChildCount);
+
+    /*
+     * In the case of sibling navigation on an IAccessible that wasn't
+     * received through previous navigation from a parent (i.e, from
+     * NavigateDirection_First/LastChild), we have to figure out which
+     * IAccessible child we represent by comparing against all children of our
+     * IAccessible parent. If we find more than one IAccessible that matches,
+     * or none at all that do, navigation will fail.
+     */
+    set_accessible_props(&Accessible_child, ROLE_SYSTEM_CLIENT, STATE_SYSTEM_FOCUSABLE, 1,
+            L"acc_child", 0, 0, 50, 50);
+    set_accessible_props(&Accessible_child2, ROLE_SYSTEM_CLIENT, STATE_SYSTEM_FOCUSABLE, 1,
+            L"acc_child", 0, 0, 50, 50);
+    SET_EXPECT_MULTI(Accessible_get_accChildCount, 5);
+    SET_EXPECT_MULTI(Accessible_get_accChild, 4);
+    SET_EXPECT(Accessible_child_get_accParent);
+    SET_EXPECT(Accessible_child_get_accRole);
+    SET_EXPECT(Accessible_child_get_accState);
+    SET_EXPECT(Accessible_child_get_accChildCount);
+    SET_EXPECT(Accessible_child_accLocation);
+    SET_EXPECT(Accessible_child_get_accName);
+    SET_EXPECT(Accessible_child2_get_accRole);
+    SET_EXPECT(Accessible_child2_get_accState);
+    SET_EXPECT(Accessible_child2_get_accChildCount);
+    SET_EXPECT(Accessible_child2_accLocation);
+    SET_EXPECT(Accessible_child2_get_accName);
+    hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_NextSibling, &elfrag2);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elfrag2, "elfrag2 != NULL\n");
+    todo_wine CHECK_CALLED_MULTI(Accessible_get_accChildCount, 5);
+    todo_wine CHECK_CALLED_MULTI(Accessible_get_accChild, 4);
+    todo_wine CHECK_CALLED(Accessible_child_get_accParent);
+    todo_wine CHECK_CALLED(Accessible_child_get_accRole);
+    todo_wine CHECK_CALLED(Accessible_child_get_accState);
+    todo_wine CHECK_CALLED(Accessible_child_get_accChildCount);
+    todo_wine CHECK_CALLED(Accessible_child_accLocation);
+    todo_wine CHECK_CALLED(Accessible_child_get_accName);
+    todo_wine CHECK_CALLED(Accessible_child2_get_accRole);
+    todo_wine CHECK_CALLED(Accessible_child2_get_accState);
+    todo_wine CHECK_CALLED(Accessible_child2_get_accChildCount);
+    todo_wine CHECK_CALLED(Accessible_child2_accLocation);
+    todo_wine CHECK_CALLED(Accessible_child2_get_accName);
+
+    /* Now they have a role mismatch, we can determine our position. */
+    set_accessible_props(&Accessible_child2, ROLE_SYSTEM_DOCUMENT, STATE_SYSTEM_FOCUSABLE, 1,
+            L"acc_child", 0, 0, 50, 50);
+    SET_EXPECT_MULTI(Accessible_get_accChildCount, 6);
+    SET_EXPECT_MULTI(Accessible_get_accChild, 5);
+    /* Check ChildID 1 for STATE_SYSTEM_INVISIBLE. */
+    SET_EXPECT(Accessible_get_accState);
+    SET_EXPECT(Accessible_child_get_accParent);
+    SET_EXPECT(Accessible_child_get_accRole);
+    SET_EXPECT(Accessible_child2_get_accRole);
+    hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_PreviousSibling, &elfrag2);
+    /*
+     * Even though we didn't get a new fragment, now that we know our
+     * position, a reference is added to the parent IAccessible.
+     */
+    todo_wine ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elfrag2, "elfrag2 != NULL\n");
+    todo_wine CHECK_CALLED_MULTI(Accessible_get_accChildCount, 6);
+    todo_wine CHECK_CALLED_MULTI(Accessible_get_accChild, 5);
+    todo_wine CHECK_CALLED(Accessible_get_accState);
+    todo_wine CHECK_CALLED(Accessible_child_get_accParent);
+    todo_wine CHECK_CALLED(Accessible_child_get_accRole);
+    todo_wine CHECK_CALLED(Accessible_child2_get_accRole);
+
+    /* Now that we know our position, no extra nav work. */
+    SET_EXPECT(Accessible_get_accChildCount);
+    SET_EXPECT(Accessible_get_accChild);
+    SET_EXPECT(Accessible_get_accState);
+    hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_NextSibling, &elfrag2);
+    todo_wine ok(Accessible.ref == 4, "Unexpected refcnt %ld\n", Accessible.ref);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!elfrag2, "elfrag2 == NULL\n");
+    todo_wine CHECK_CALLED(Accessible_get_accChildCount);
+    todo_wine CHECK_CALLED(Accessible_get_accChild);
+    todo_wine CHECK_CALLED(Accessible_get_accState);
+    if (elfrag2)
+    {
+        check_fragment_acc(elfrag2, &Accessible.IAccessible_iface, 3);
+        IRawElementProviderFragment_Release(elfrag2);
+        ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+    }
+
+    IRawElementProviderFragment_Release(elfrag);
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible_child.ref == 1, "Unexpected refcnt %ld\n", Accessible_child.ref);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    /*
+     * Simple element child tests.
+     */
+    hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, 1, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    hr = IRawElementProviderSimple_QueryInterface(elprov, &IID_IRawElementProviderFragment, (void **)&elfrag);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag, "elfrag == NULL\n");
+
+    /*
+     * Simple child elements don't check the root IAccessible, because they
+     * can't be the root IAccessible.
+     */
+    hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_Parent, &elfrag2);
+    todo_wine ok(Accessible.ref == 3, "Unexpected refcnt %ld\n", Accessible.ref);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!elfrag2, "elfrag2 == NULL\n");
+    if (elfrag2)
+    {
+        check_fragment_acc(elfrag2, &Accessible.IAccessible_iface, CHILDID_SELF);
+        IRawElementProviderFragment_Release(elfrag2);
+        ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+    }
+
+    /*
+     * Test NavigateDirection_First/LastChild on simple child element. Does
+     * nothing, as simple children cannot have children.
+     */
+    hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_FirstChild, &elfrag2);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elfrag2, "elfrag2 != NULL\n");
+
+    hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_LastChild, &elfrag2);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elfrag2, "elfrag2 != NULL\n");
+
+    /*
+     * NavigateDirection_Next/PreviousSibling behaves normally, no IAccessible
+     * comparisons.
+     */
+    SET_EXPECT(Accessible_get_accChildCount);
+    SET_EXPECT(Accessible_get_accChild);
+    SET_EXPECT(Accessible_child_get_accState);
+    SET_EXPECT(Accessible_child_accNavigate);
+    SET_EXPECT(Accessible_child_get_accParent);
+    hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_NextSibling, &elfrag2);
+    todo_wine ok(Accessible_child.ref == 2, "Unexpected refcnt %ld\n", Accessible_child.ref);
+    todo_wine ok(Accessible.ref == 4, "Unexpected refcnt %ld\n", Accessible.ref);
+    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    todo_wine ok(!!elfrag2, "elfrag2 == NULL\n");
+    todo_wine CHECK_CALLED(Accessible_get_accChildCount);
+    todo_wine CHECK_CALLED(Accessible_get_accChild);
+    todo_wine CHECK_CALLED(Accessible_child_get_accState);
+    todo_wine CHECK_CALLED(Accessible_child_accNavigate);
+    todo_wine CHECK_CALLED(Accessible_child_get_accParent);
+    if (elfrag2)
+    {
+        check_fragment_acc(elfrag2, &Accessible_child.IAccessible_iface, CHILDID_SELF);
+        IRawElementProviderFragment_Release(elfrag2);
+        ok(Accessible_child.ref == 1, "Unexpected refcnt %ld\n", Accessible_child.ref);
+        ok(Accessible.ref == 3, "Unexpected refcnt %ld\n", Accessible.ref);
+    }
+
+    IRawElementProviderFragment_Release(elfrag);
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    set_accessible_props(&Accessible, 0, 0, 0, NULL, 0, 0, 0, 0);
+    set_accessible_props(&Accessible2, 0, 0, 0, NULL, 0, 0, 0, 0);
+    set_accessible_props(&Accessible_child, 0, 0, 0, NULL, 0, 0, 0, 0);
+    set_accessible_props(&Accessible_child2, 0, 0, 0, NULL, 0, 0, 0, 0);
 }
 
 static void test_uia_prov_from_acc_properties(void)
@@ -1510,6 +2115,7 @@ static void test_UiaProviderFromIAccessible(void)
     ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
 
     test_uia_prov_from_acc_properties();
+    test_uia_prov_from_acc_navigation();
 
     CoUninitialize();
     DestroyWindow(hwnd);
