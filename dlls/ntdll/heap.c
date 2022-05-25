@@ -161,17 +161,19 @@ typedef union
 
 struct tagHEAP;
 
-typedef struct tagSUBHEAP
+typedef struct DECLSPEC_ALIGN(ALIGNMENT) tagSUBHEAP
 {
+    SIZE_T __pad[sizeof(SIZE_T) / sizeof(DWORD)];
     SIZE_T              size;       /* Size of the whole sub-heap */
     SIZE_T              commitSize; /* Committed size of the sub-heap */
     struct list         entry;      /* Entry in sub-heap list */
     struct tagHEAP     *heap;       /* Main heap structure */
-    DWORD               headerSize; /* Size of the heap header */
-    DWORD               magic;      /* Magic number */
+    struct block block;
 } SUBHEAP;
 
-#define SUBHEAP_MAGIC    ((DWORD)('S' | ('U'<<8) | ('B'<<16) | ('H'<<24)))
+/* block must be last and aligned */
+C_ASSERT( sizeof(SUBHEAP) == offsetof(SUBHEAP, block) + sizeof(struct block) );
+C_ASSERT( sizeof(SUBHEAP) == 4 * ALIGNMENT );
 
 typedef struct tagHEAP
 {                                  /* win32/win64 */
@@ -199,6 +201,9 @@ typedef struct tagHEAP
     SUBHEAP          subheap;
 } HEAP;
 
+/* subheap must be last and aligned */
+C_ASSERT( sizeof(HEAP) == offsetof(HEAP, subheap) + sizeof(SUBHEAP) );
+C_ASSERT( sizeof(HEAP) % ALIGNMENT == 0 );
 C_ASSERT( offsetof(HEAP, subheap) <= COMMIT_MASK );
 
 #define HEAP_MAGIC       ((DWORD)('H' | ('E'<<8) | ('A'<<16) | ('P'<<24)))
@@ -274,7 +279,7 @@ static inline SIZE_T subheap_size( const SUBHEAP *subheap )
 
 static inline SIZE_T subheap_overhead( const SUBHEAP *subheap )
 {
-    return subheap->headerSize;
+    return (char *)&subheap->block - (char *)subheap_base( subheap );
 }
 
 static inline const void *subheap_commit_end( const SUBHEAP *subheap )
@@ -284,7 +289,7 @@ static inline const void *subheap_commit_end( const SUBHEAP *subheap )
 
 static inline void *first_block( const SUBHEAP *subheap )
 {
-    return (char *)subheap_base( subheap ) + subheap->headerSize;
+    return (void *)&subheap->block;
 }
 
 static inline const void *last_block( const SUBHEAP *subheap )
@@ -303,7 +308,7 @@ static inline struct block *next_block( const SUBHEAP *subheap, const struct blo
 static inline BOOL check_subheap( const SUBHEAP *subheap )
 {
     const char *base = ROUND_ADDR( subheap, COMMIT_MASK );
-    return contains( base, subheap->size, base + subheap->headerSize, subheap->commitSize - subheap->headerSize );
+    return contains( base, subheap->size, &subheap->block, base + subheap->commitSize - (char *)&subheap->block );
 }
 
 static BOOL heap_validate( const HEAP *heap );
@@ -941,8 +946,6 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         subheap->heap       = heap;
         subheap->size       = totalSize;
         subheap->commitSize = commitSize;
-        subheap->magic      = SUBHEAP_MAGIC;
-        subheap->headerSize = ROUND_SIZE( sizeof(SUBHEAP) );
         list_add_head( &heap->subheap_list, &subheap->entry );
     }
     else
@@ -964,8 +967,6 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         subheap->heap       = heap;
         subheap->size       = totalSize;
         subheap->commitSize = commitSize;
-        subheap->magic      = SUBHEAP_MAGIC;
-        subheap->headerSize = ROUND_SIZE( sizeof(HEAP) );
         list_add_head( &heap->subheap_list, &subheap->entry );
 
         /* Build the free lists */
@@ -1048,12 +1049,9 @@ static struct block *find_free_block( HEAP *heap, SIZE_T data_size, SUBHEAP **su
         WARN("Not enough space in heap %p for %08lx bytes\n", heap, data_size );
         return NULL;
     }
-    /* make sure that we have a big enough size *committed* to fit another
-     * last free arena in !
-     * So just one heap struct, one first free arena which will eventually
-     * get used, and a second free arena that might get assigned all remaining
-     * free space in shrink_used_block() */
-    total_size = data_size + ROUND_SIZE(sizeof(SUBHEAP)) + sizeof(ARENA_INUSE) + sizeof(ARENA_FREE);
+
+    /* SUBHEAP includes the first block header, and we want to fit a free entry at the end */
+    total_size = sizeof(SUBHEAP) + data_size + sizeof(ARENA_FREE);
     if (total_size < data_size) return NULL;  /* overflow */
 
     if ((*subheap = HEAP_CreateSubHeap( heap, NULL, heap->flags, total_size,
