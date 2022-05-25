@@ -556,10 +556,12 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
         return hr;
 
     if (wg_sample->max_size < info.cbSize)
-        hr = MF_E_BUFFERTOOSMALL;
-    else
-        hr = wg_transform_read_data(decoder->wg_transform, wg_sample);
+    {
+        mf_destroy_wg_sample(wg_sample);
+        return MF_E_BUFFERTOOSMALL;
+    }
 
+    hr = wg_transform_read_data(decoder->wg_transform, wg_sample);
     mf_destroy_wg_sample(wg_sample);
     return hr;
 }
