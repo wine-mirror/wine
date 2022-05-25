@@ -31,6 +31,8 @@
 #include "wine/heap.h"
 
 DEFINE_GUID(CLSID_TestEffect, 0xb9ee12e9,0x32d9,0xe659,0xac,0x61,0x2d,0x7c,0xea,0x69,0x28,0x78);
+DEFINE_GUID(GUID_TestVertexShader, 0x5bcdcfae,0x1e92,0x4dc1,0x94,0xfa,0x3b,0x01,0xca,0x54,0x59,0x20);
+DEFINE_GUID(GUID_TestPixelShader,  0x53015748,0xfc13,0x4168,0xbd,0x13,0x0f,0xcf,0x15,0x29,0x7f,0x01);
 
 static const WCHAR *effect_xml_a =
 L"<?xml version='1.0'?>                                                       \
@@ -85,6 +87,39 @@ L"<?xml version='1.0'?>                                                       \
         </Property>                                                           \
     </Effect>                                                                 \
 ";
+
+static const DWORD test_vs[] =
+{
+#if 0
+    void main(float4 pos : Position, out float4 output : SV_Position)
+    {
+        output = pos;
+    }
+#endif
+    0x43425844, 0xa84b398b, 0xc4047d32, 0xc19c67bb, 0x4644285e, 0x00000001, 0x000000d8, 0x00000003,
+    0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+    0x00000000, 0x00000000, 0x00000003, 0x00000000, 0x00000f0f, 0x69736f50, 0x6e6f6974, 0xababab00,
+    0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000001, 0x00000003,
+    0x00000000, 0x0000000f, 0x505f5653, 0x7469736f, 0x006e6f69, 0x52444853, 0x0000003c, 0x00010040,
+    0x0000000f, 0x0300005f, 0x001010f2, 0x00000000, 0x04000067, 0x001020f2, 0x00000000, 0x00000001,
+    0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
+};
+
+static const DWORD test_ps[] =
+{
+#if 0
+    float4 main() : SV_Target
+    {
+        return float4(0.1, 0.2, 0.3, 0.4);
+    }
+#endif
+    0x43425844, 0xf34300ae, 0x22fc6d56, 0x5cca66fa, 0x86ae3266, 0x00000001, 0x000000b0, 0x00000003,
+    0x0000002c, 0x0000003c, 0x00000070, 0x4e475349, 0x00000008, 0x00000000, 0x00000008, 0x4e47534f,
+    0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003, 0x00000000,
+    0x0000000f, 0x545f5653, 0x65677261, 0xabab0074, 0x52444853, 0x00000038, 0x00000040, 0x0000000e,
+    0x03000065, 0x001020f2, 0x00000000, 0x08000036, 0x001020f2, 0x00000000, 0x00004002, 0x3dcccccd,
+    0x3e4ccccd, 0x3e99999a, 0x3ecccccd, 0x0100003e,
+};
 
 static HRESULT (WINAPI *pD2D1CreateDevice)(IDXGIDevice *dxgi_device,
         const D2D1_CREATION_PROPERTIES *properties, ID2D1Device **device);
@@ -10559,6 +10594,84 @@ static void test_effect_register(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_effect_context(BOOL d3d11)
+{
+    ID2D1EffectContext *effect_context;
+    D2D1_PROPERTY_BINDING binding;
+    struct d2d1_test_context ctx;
+    ID2D1Effect *effect = NULL;
+    ID2D1Factory1 *factory;
+    BOOL loaded;
+    HRESULT hr;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    factory = ctx.factory1;
+    if (!factory)
+    {
+        win_skip("ID2D1Factory1 is not supported.\n");
+        release_test_context(&ctx);
+        return;
+    }
+
+    binding.propertyName = L"Context";
+    binding.setFunction = NULL;
+    binding.getFunction = effect_impl_get_context;
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
+            effect_xml_b, &binding, 1, effect_impl_create);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1DeviceContext_CreateEffect(ctx.context, &CLSID_TestEffect, &effect);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr != S_OK)
+        goto done;
+    hr = ID2D1Effect_GetValueByName(effect, L"Context",
+            D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr != S_OK)
+        goto done;
+
+    /* Test shader loading */
+    loaded = ID2D1EffectContext_IsShaderLoaded(effect_context, &GUID_TestVertexShader);
+    ok(!loaded, "Shader is loaded.\n");
+    loaded = ID2D1EffectContext_IsShaderLoaded(effect_context, &GUID_TestPixelShader);
+    ok(!loaded, "Shader is loaded.\n");
+
+    hr = ID2D1EffectContext_LoadVertexShader(effect_context,
+            &GUID_TestVertexShader, (const BYTE *)test_ps, sizeof(test_ps));
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1EffectContext_LoadVertexShader(effect_context,
+            &GUID_TestVertexShader, (const BYTE *)test_vs, sizeof(test_vs));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    loaded = ID2D1EffectContext_IsShaderLoaded(effect_context, &GUID_TestVertexShader);
+    ok(loaded, "Shader is not loaded.\n");
+
+    hr = ID2D1EffectContext_LoadVertexShader(effect_context,
+            &GUID_TestVertexShader, (const BYTE *)test_ps, sizeof(test_ps));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1EffectContext_LoadVertexShader(effect_context,
+            &GUID_TestVertexShader, (const BYTE *)test_vs, sizeof(test_vs));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1EffectContext_LoadPixelShader(effect_context,
+            &GUID_TestPixelShader, (const BYTE *)test_vs, sizeof(test_vs));
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1EffectContext_LoadPixelShader(effect_context,
+            &GUID_TestPixelShader, (const BYTE *)test_ps, sizeof(test_ps));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    loaded = ID2D1EffectContext_IsShaderLoaded(effect_context, &GUID_TestPixelShader);
+    ok(loaded, "Shader is not loaded.\n");
+
+done:
+    if (effect)
+        ID2D1Effect_Release(effect);
+    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    release_test_context(&ctx);
+}
+
 static void test_effect_2d_affine(BOOL d3d11)
 {
     D2D1_MATRIX_3X2_F rotate, scale, skew;
@@ -11344,6 +11457,7 @@ START_TEST(d2d1)
     queue_test(test_geometry_group);
     queue_test(test_mt_factory);
     queue_test(test_effect_register);
+    queue_test(test_effect_context);
     queue_test(test_effect);
     queue_test(test_effect_2d_affine);
     queue_test(test_effect_crop);
