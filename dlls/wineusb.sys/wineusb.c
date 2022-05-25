@@ -829,15 +829,6 @@ static void LIBUSB_CALL transfer_cb(struct libusb_transfer *transfer)
     queue_event(&event);
 }
 
-static void queue_irp(struct usb_device *device, IRP *irp, struct libusb_transfer *transfer)
-{
-    IoMarkIrpPending(irp);
-    irp->Tail.Overlay.DriverContext[0] = transfer;
-    EnterCriticalSection(&wineusb_cs);
-    InsertTailList(&device->irp_list, &irp->Tail.Overlay.ListEntry);
-    LeaveCriticalSection(&wineusb_cs);
-}
-
 struct pipe
 {
     unsigned char endpoint;
@@ -869,10 +860,10 @@ static struct pipe get_pipe(HANDLE handle)
     return u.pipe;
 }
 
-static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
+static NTSTATUS unix_submit_urb(struct unix_device *device, IRP *irp)
 {
     URB *urb = IoGetCurrentIrpStackLocation(irp)->Parameters.Others.Argument1;
-    libusb_device_handle *handle = device->unix_device->handle;
+    libusb_device_handle *handle = device->handle;
     struct libusb_transfer *transfer;
     int ret;
 
@@ -880,30 +871,6 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
 
     switch (urb->UrbHeader.Function)
     {
-        case URB_FUNCTION_ABORT_PIPE:
-        {
-            LIST_ENTRY *entry, *mark;
-
-            /* The documentation states that URB_FUNCTION_ABORT_PIPE may
-             * complete before outstanding requests complete, so we don't need
-             * to wait for them. */
-            EnterCriticalSection(&wineusb_cs);
-            mark = &device->irp_list;
-            for (entry = mark->Flink; entry != mark; entry = entry->Flink)
-            {
-                IRP *queued_irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.ListEntry);
-                struct usb_cancel_transfer_params params =
-                {
-                    .transfer = queued_irp->Tail.Overlay.DriverContext[0],
-                };
-
-                __wine_unix_call(unix_handle, unix_usb_cancel_transfer, &params);
-            }
-            LeaveCriticalSection(&wineusb_cs);
-
-            return STATUS_SUCCESS;
-        }
-
         case URB_FUNCTION_SYNC_RESET_PIPE_AND_CLEAR_STALL:
         {
             struct _URB_PIPE_REQUEST *req = &urb->UrbPipeRequest;
@@ -925,6 +892,7 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
 
             if (!(transfer = libusb_alloc_transfer(0)))
                 return STATUS_NO_MEMORY;
+            irp->Tail.Overlay.DriverContext[0] = transfer;
 
             if (pipe.type == UsbdPipeTypeBulk)
             {
@@ -943,7 +911,6 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
                 return USBD_STATUS_INVALID_PIPE_HANDLE;
             }
 
-            queue_irp(device, irp, transfer);
             transfer->flags = LIBUSB_TRANSFER_FREE_TRANSFER;
             ret = libusb_submit_transfer(transfer);
             if (ret < 0)
@@ -962,6 +929,7 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
 
             if (!(transfer = libusb_alloc_transfer(0)))
                 return STATUS_NO_MEMORY;
+            irp->Tail.Overlay.DriverContext[0] = transfer;
 
             if (!(buffer = malloc(sizeof(struct libusb_control_setup) + req->TransferBufferLength)))
             {
@@ -969,7 +937,6 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
                 return STATUS_NO_MEMORY;
             }
 
-            queue_irp(device, irp, transfer);
             libusb_fill_control_setup(buffer,
                     LIBUSB_ENDPOINT_IN | LIBUSB_REQUEST_TYPE_STANDARD | LIBUSB_RECIPIENT_DEVICE,
                     LIBUSB_REQUEST_GET_DESCRIPTOR, (req->DescriptorType << 8) | req->Index,
@@ -1019,6 +986,7 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
 
             if (!(transfer = libusb_alloc_transfer(0)))
                 return STATUS_NO_MEMORY;
+            irp->Tail.Overlay.DriverContext[0] = transfer;
 
             if (!(buffer = malloc(sizeof(struct libusb_control_setup) + req->TransferBufferLength)))
             {
@@ -1026,7 +994,6 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
                 return STATUS_NO_MEMORY;
             }
 
-            queue_irp(device, irp, transfer);
             libusb_fill_control_setup(buffer, req_type, req->Request,
                     req->Value, req->Index, req->TransferBufferLength);
             if (!(req->TransferFlags & USBD_TRANSFER_DIRECTION_IN))
@@ -1038,6 +1005,68 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
                 ERR("Failed to submit vendor-specific interface transfer: %s\n", libusb_strerror(ret));
 
             return STATUS_PENDING;
+        }
+
+        default:
+            FIXME("Unhandled function %#x.\n", urb->UrbHeader.Function);
+    }
+
+    return STATUS_NOT_IMPLEMENTED;
+}
+
+static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
+{
+    URB *urb = IoGetCurrentIrpStackLocation(irp)->Parameters.Others.Argument1;
+    NTSTATUS status;
+
+    TRACE("type %#x.\n", urb->UrbHeader.Function);
+
+    switch (urb->UrbHeader.Function)
+    {
+        case URB_FUNCTION_ABORT_PIPE:
+        {
+            LIST_ENTRY *entry, *mark;
+
+            /* The documentation states that URB_FUNCTION_ABORT_PIPE may
+             * complete before outstanding requests complete, so we don't need
+             * to wait for them. */
+            EnterCriticalSection(&wineusb_cs);
+            mark = &device->irp_list;
+            for (entry = mark->Flink; entry != mark; entry = entry->Flink)
+            {
+                IRP *queued_irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.ListEntry);
+                struct usb_cancel_transfer_params params =
+                {
+                    .transfer = queued_irp->Tail.Overlay.DriverContext[0],
+                };
+
+                __wine_unix_call(unix_handle, unix_usb_cancel_transfer, &params);
+            }
+            LeaveCriticalSection(&wineusb_cs);
+
+            return STATUS_SUCCESS;
+        }
+
+        case URB_FUNCTION_SYNC_RESET_PIPE_AND_CLEAR_STALL:
+        case URB_FUNCTION_BULK_OR_INTERRUPT_TRANSFER:
+        case URB_FUNCTION_GET_DESCRIPTOR_FROM_DEVICE:
+        case URB_FUNCTION_SELECT_CONFIGURATION:
+        case URB_FUNCTION_VENDOR_INTERFACE:
+        {
+            /* Hold the wineusb lock while submitting and queuing, and
+             * similarly hold it in complete_irp(). That way, if libusb reports
+             * completion between submitting and queuing, we won't try to
+             * dequeue the IRP until it's actually been queued. */
+            EnterCriticalSection(&wineusb_cs);
+            status = unix_submit_urb(device->unix_device, irp);
+            if (status == STATUS_PENDING)
+            {
+                IoMarkIrpPending(irp);
+                InsertTailList(&device->irp_list, &irp->Tail.Overlay.ListEntry);
+            }
+            LeaveCriticalSection(&wineusb_cs);
+
+            return status;
         }
 
         default:
