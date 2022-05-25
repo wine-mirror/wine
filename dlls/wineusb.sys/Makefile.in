@@ -5,7 +5,7 @@ IMPORTS   = ntoskrnl
 UNIX_LIBS    = $(USB_LIBS) $(PTHREAD_LIBS)
 UNIX_CFLAGS  = $(USB_CFLAGS)
 
-EXTRADLLFLAGS = -Wl,--subsystem,native -mcygwin
+EXTRADLLFLAGS = -Wl,--subsystem,native
 
 C_SRCS = \
 	unixlib.c \

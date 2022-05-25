@@ -21,9 +21,8 @@
 #include <assert.h>
 #include <stdarg.h>
 #include <stdbool.h>
+#include <stdint.h>
 #include <stdlib.h>
-#include <pthread.h>
-#include <libusb.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -36,7 +35,6 @@
 #include "wine/asm.h"
 #include "wine/debug.h"
 #include "wine/list.h"
-#include "wine/unicode.h"
 
 #include "unixlib.h"
 
@@ -106,7 +104,6 @@ static void destroy_unix_device(struct unix_device *unix_device)
 
 static void add_unix_device(const struct usb_add_device_event *event)
 {
-    static const WCHAR formatW[] = {'\\','D','e','v','i','c','e','\\','U','S','B','P','D','O','-','%','u',0};
     static unsigned int name_index;
     struct usb_device *device;
     DEVICE_OBJECT *device_obj;
@@ -117,7 +114,7 @@ static void add_unix_device(const struct usb_add_device_event *event)
     TRACE("Adding new device %p, vendor %04x, product %04x.\n", event->device,
             event->vendor, event->product);
 
-    sprintfW(name, formatW, name_index++);
+    swprintf(name, ARRAY_SIZE(name), L"\\Device\\USBPDO-%u", name_index++);
     RtlInitUnicodeString(&string, name);
     if ((status = IoCreateDevice(driver_obj, sizeof(*device), &string,
             FILE_DEVICE_USB, 0, FALSE, &device_obj)))
@@ -366,54 +363,39 @@ static void WINAPIV append_id(struct string_buffer *buffer, const WCHAR *format,
     __ms_va_end(args);
 }
 
-static const WCHAR emptyW[] = {0};
-
 static void get_device_id(const struct usb_device *device, struct string_buffer *buffer)
 {
-    static const WCHAR interface_formatW[] = {'U','S','B','\\','V','I','D','_','%','0','4','X',
-            '&','P','I','D','_','%','0','4','X','&','M','I','_','%','0','2','X',0};
-    static const WCHAR formatW[] = {'U','S','B','\\','V','I','D','_','%','0','4','X',
-            '&','P','I','D','_','%','0','4','X',0};
-
     if (device->interface)
-        append_id(buffer, interface_formatW, device->vendor, device->product, device->interface_index);
+        append_id(buffer, L"USB\\VID_%04X&PID_%04X&MI_%02X",
+                device->vendor, device->product, device->interface_index);
     else
-        append_id(buffer, formatW, device->vendor, device->product);
+        append_id(buffer, L"USB\\VID_%04X&PID_%04X", device->vendor, device->product);
 }
 
 static void get_hardware_ids(const struct usb_device *device, struct string_buffer *buffer)
 {
-    static const WCHAR interface_formatW[] = {'U','S','B','\\','V','I','D','_','%','0','4','X',
-                '&','P','I','D','_','%','0','4','X','&','R','E','V','_','%','0','4','X','&','M','I','_','%','0','2','X',0};
-    static const WCHAR formatW[] = {'U','S','B','\\','V','I','D','_','%','0','4','X',
-                '&','P','I','D','_','%','0','4','X','&','R','E','V','_','%','0','4','X',0};
-
     if (device->interface)
-        append_id(buffer, interface_formatW, device->vendor, device->product, device->revision, device->interface_index);
+        append_id(buffer, L"USB\\VID_%04X&PID_%04X&REV_%04X&MI_%02X",
+                device->vendor, device->product, device->revision, device->interface_index);
     else
-        append_id(buffer, formatW, device->vendor, device->product, device->revision);
+        append_id(buffer, L"USB\\VID_%04X&PID_%04X&REV_%04X",
+                device->vendor, device->product, device->revision);
+
     get_device_id(device, buffer);
-    append_id(buffer, emptyW);
+    append_id(buffer, L"");
 }
 
 static void get_compatible_ids(const struct usb_device *device, struct string_buffer *buffer)
 {
-    static const WCHAR prot_format[] = {'U','S','B','\\','C','l','a','s','s','_','%','0','2','x',
-            '&','S','u','b','C','l','a','s','s','_','%','0','2','x',
-            '&','P','r','o','t','_','%','0','2','x',0};
-    static const WCHAR subclass_format[] = {'U','S','B','\\','C','l','a','s','s','_','%','0','2','x',
-            '&','S','u','b','C','l','a','s','s','_','%','0','2','x',0};
-    static const WCHAR class_format[] = {'U','S','B','\\','C','l','a','s','s','_','%','0','2','x',0};
-
-    append_id(buffer, prot_format, device->class, device->subclass, device->protocol);
-    append_id(buffer, subclass_format, device->class, device->subclass);
-    append_id(buffer, class_format, device->class);
-    append_id(buffer, emptyW);
+    append_id(buffer, L"USB\\Class_%02x&SubClass_%02x&Prot_%02x",
+            device->class, device->subclass, device->protocol);
+    append_id(buffer, L"USB\\Class_%02x&SubClass_%02x", device->class, device->subclass);
+    append_id(buffer, L"USB\\Class_%02x", device->class);
+    append_id(buffer, L"");
 }
 
 static NTSTATUS query_id(struct usb_device *device, IRP *irp, BUS_QUERY_ID_TYPE type)
 {
-    static const WCHAR instance_idW[] = {'0',0};
     struct string_buffer buffer = {0};
 
     TRACE("type %#x.\n", type);
@@ -425,7 +407,7 @@ static NTSTATUS query_id(struct usb_device *device, IRP *irp, BUS_QUERY_ID_TYPE 
             break;
 
         case BusQueryInstanceID:
-            append_id(&buffer, instance_idW);
+            append_id(&buffer, L"0");
             break;
 
         case BusQueryHardwareIDs:
