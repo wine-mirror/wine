@@ -567,6 +567,21 @@ static void *import_html(CFDataRef data, size_t *ret_size)
 }
 
 
+static CPTABLEINFO *get_ansi_cp(void)
+{
+    USHORT utf8_hdr[2] = { 0, CP_UTF8 };
+    static CPTABLEINFO cp;
+    if (!cp.CodePage)
+    {
+        if (NtCurrentTeb()->Peb->AnsiCodePageData)
+            RtlInitCodePageTable(NtCurrentTeb()->Peb->AnsiCodePageData, &cp);
+        else
+            RtlInitCodePageTable(utf8_hdr, &cp);
+    }
+    return &cp;
+}
+
+
 /* based on wine_get_dos_file_name */
 static WCHAR *get_dos_file_name(const char *path)
 {
@@ -942,21 +957,22 @@ static CFDataRef export_hdrop_to_filenames(void *data, size_t size)
             unixname = get_unix_file_name(p);
         else
         {
-            int len = MultiByteToWideChar(CP_ACP, 0, p, -1, NULL, 0);
-            if (len)
-            {
-                if (len > buffer_len)
-                {
-                    free(buffer);
-                    buffer_len = len * 2;
-                    buffer = malloc(buffer_len * sizeof(*buffer));
-                }
+            CPTABLEINFO *cp = get_ansi_cp();
+            DWORD len = strlen(p) + 1;
 
-                MultiByteToWideChar(CP_ACP, 0, p, -1, buffer, buffer_len);
-                unixname = get_unix_file_name(buffer);
+            if (len * 3 > buffer_len)
+            {
+                free(buffer);
+                buffer_len = len * 3;
+                buffer = malloc(buffer_len * sizeof(*buffer));
             }
+
+            if (cp->CodePage == CP_UTF8)
+                RtlUTF8ToUnicodeN(buffer, buffer_len * sizeof(WCHAR), &len, p, len);
             else
-                unixname = NULL;
+                RtlCustomCPToUnicodeN(cp, buffer, buffer_len * sizeof(WCHAR), &len, p, len);
+
+            unixname = get_unix_file_name(buffer);
         }
         if (!unixname)
         {
