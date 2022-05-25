@@ -31,6 +31,7 @@
 #include "winnls.h"
 #include "lmcons.h"
 #include "sspi.h"
+#define SCHANNEL_USE_BLACKLISTS
 #include "schannel.h"
 
 #include "wine/unixlib.h"
@@ -333,52 +334,102 @@ static SECURITY_STATUS SEC_ENTRY schan_QueryCredentialsAttributesW(
     return ret;
 }
 
-static SECURITY_STATUS get_cert(const SCHANNEL_CRED *cred, CERT_CONTEXT const **cert)
+static SECURITY_STATUS get_cert(const void *credentials, CERT_CONTEXT const **cert)
 {
     SECURITY_STATUS status;
-    DWORD i;
-
-    TRACE("dwVersion = %lu\n", cred->dwVersion);
-    TRACE("cCreds = %lu\n", cred->cCreds);
-    TRACE("paCred = %p\n", cred->paCred);
-    TRACE("hRootStore = %p\n", cred->hRootStore);
-    TRACE("cMappers = %lu\n", cred->cMappers);
-    TRACE("cSupportedAlgs = %lu:\n", cred->cSupportedAlgs);
-    for (i = 0; i < cred->cSupportedAlgs; i++) TRACE("%08x\n", cred->palgSupportedAlgs[i]);
-    TRACE("grbitEnabledProtocols = %08lx\n", cred->grbitEnabledProtocols);
-    TRACE("dwMinimumCipherStrength = %lu\n", cred->dwMinimumCipherStrength);
-    TRACE("dwMaximumCipherStrength = %lu\n", cred->dwMaximumCipherStrength);
-    TRACE("dwSessionLifespan = %lu\n", cred->dwSessionLifespan);
-    TRACE("dwFlags = %08lx\n", cred->dwFlags);
-    TRACE("dwCredFormat = %lu\n", cred->dwCredFormat);
+    const SCHANNEL_CRED *cred_old;
+    const SCH_CREDENTIALS *cred = credentials;
+    PCCERT_CONTEXT *cert_list;
+    DWORD i, cert_count;
 
     switch (cred->dwVersion)
     {
     case SCH_CRED_V3:
     case SCHANNEL_CRED_VERSION:
+        cred_old = credentials;
+        TRACE("dwVersion = %lu\n", cred_old->dwVersion);
+        TRACE("cCreds = %lu\n", cred_old->cCreds);
+        TRACE("paCred = %p\n", cred_old->paCred);
+        TRACE("hRootStore = %p\n", cred_old->hRootStore);
+        TRACE("cMappers = %lu\n", cred_old->cMappers);
+        TRACE("cSupportedAlgs = %lu:\n", cred_old->cSupportedAlgs);
+        for (i = 0; i < cred_old->cSupportedAlgs; i++) TRACE("%08x\n", cred_old->palgSupportedAlgs[i]);
+        TRACE("grbitEnabledProtocols = %08lx\n", cred_old->grbitEnabledProtocols);
+        TRACE("dwMinimumCipherStrength = %lu\n", cred_old->dwMinimumCipherStrength);
+        TRACE("dwMaximumCipherStrength = %lu\n", cred_old->dwMaximumCipherStrength);
+        TRACE("dwSessionLifespan = %lu\n", cred_old->dwSessionLifespan);
+        TRACE("dwFlags = %08lx\n", cred_old->dwFlags);
+        TRACE("dwCredFormat = %lu\n", cred_old->dwCredFormat);
+        cert_list = cred_old->paCred;
+        cert_count = cred_old->cCreds;
         break;
+
+    case SCH_CREDENTIALS_VERSION:
+        TRACE("dwVersion = %lu\n", cred->dwVersion);
+        TRACE("dwCredFormat = %lu\n", cred->dwCredFormat);
+        TRACE("cCreds = %lu\n", cred->cCreds);
+        TRACE("paCred = %p\n", cred->paCred);
+        TRACE("hRootStore = %p\n", cred->hRootStore);
+        TRACE("cMappers = %lu\n", cred->cMappers);
+        TRACE("dwSessionLifespan = %lu\n", cred->dwSessionLifespan);
+        TRACE("dwFlags = %08lx\n", cred->dwFlags);
+        TRACE("cTlsParameters = %lu:\n", cred->cTlsParameters);
+        for (i = 0; i < cred->cTlsParameters; i++)
+        {
+            TRACE(" cAlpnIds %lu\n", cred->pTlsParameters[i].cAlpnIds);
+            TRACE(" grbitDisabledProtocols %08lx\n", cred->pTlsParameters[i].grbitDisabledProtocols);
+            TRACE(" cDisabledCrypto %lu\n", cred->pTlsParameters[i].cDisabledCrypto);
+            TRACE(" dwFlags %08lx\n", cred->pTlsParameters[i].dwFlags);
+        }
+        cert_list = cred->paCred;
+        cert_count = cred->cCreds;
+        break;
+
     default:
+        FIXME("unhandled version %lu\n", cred->dwVersion);
         return SEC_E_INTERNAL_ERROR;
     }
 
-    if (!cred->cCreds) status = SEC_E_NO_CREDENTIALS;
-    else if (cred->cCreds > 1) status = SEC_E_UNKNOWN_CREDENTIALS;
+    if (!cert_count) status = SEC_E_NO_CREDENTIALS;
+    else if (cert_count > 1) status = SEC_E_UNKNOWN_CREDENTIALS;
     else
     {
         DWORD spec;
         HCRYPTPROV prov;
         BOOL free;
 
-        if (CryptAcquireCertificatePrivateKey(cred->paCred[0], CRYPT_ACQUIRE_CACHE_FLAG, NULL, &prov, &spec, &free))
+        if (CryptAcquireCertificatePrivateKey(cert_list[0], CRYPT_ACQUIRE_CACHE_FLAG, NULL, &prov, &spec, &free))
         {
             if (free) CryptReleaseContext(prov, 0);
-            *cert = cred->paCred[0];
+            *cert = cert_list[0];
             status = SEC_E_OK;
         }
         else status = SEC_E_UNKNOWN_CREDENTIALS;
     }
 
     return status;
+}
+
+static DWORD get_enabled_protocols(const void *credentials)
+{
+    const SCHANNEL_CRED *cred_old;
+    const SCH_CREDENTIALS *cred = credentials;
+
+    switch (cred->dwVersion)
+    {
+    case SCH_CRED_V3:
+    case SCHANNEL_CRED_VERSION:
+        cred_old = credentials;
+        return cred_old->grbitEnabledProtocols;
+
+    case SCH_CREDENTIALS_VERSION:
+        if (cred->cTlsParameters) FIXME("handle TLS parameters\n");
+        return 0;
+
+    default:
+        FIXME("unhandled version %lu\n", cred->dwVersion);
+        return 0;
+    }
 }
 
 static WCHAR *get_key_container_path(const CERT_CONTEXT *ctx)
@@ -486,11 +537,11 @@ static BYTE *get_key_blob(const CERT_CONTEXT *ctx, DWORD *size)
     return ret;
 }
 
-static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schanCred,
+static SECURITY_STATUS schan_AcquireClientCredentials(const void *schanCred,
  PCredHandle phCredential, PTimeStamp ptsExpiry)
 {
     struct schan_credentials *creds;
-    unsigned enabled_protocols;
+    DWORD enabled_protocols, cred_enabled_protocols;
     ULONG_PTR handle;
     SECURITY_STATUS status = SEC_E_OK;
     const CERT_CONTEXT *cert = NULL;
@@ -509,15 +560,16 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const SCHANNEL_CRED *schan
         if (status != SEC_E_OK && status != SEC_E_NO_CREDENTIALS)
             return status;
 
-        if ((schanCred->grbitEnabledProtocols & tls_protocols) &&
-            (schanCred->grbitEnabledProtocols & dtls_protocols)) return SEC_E_ALGORITHM_MISMATCH;
+        cred_enabled_protocols = get_enabled_protocols(schanCred);
+        if ((cred_enabled_protocols & tls_protocols) &&
+            (cred_enabled_protocols & dtls_protocols)) return SEC_E_ALGORITHM_MISMATCH;
 
         status = SEC_E_OK;
     }
 
     read_config();
-    if(schanCred && schanCred->grbitEnabledProtocols)
-        enabled_protocols = schanCred->grbitEnabledProtocols & config_enabled_protocols;
+    if(schanCred && cred_enabled_protocols)
+        enabled_protocols = cred_enabled_protocols & config_enabled_protocols;
     else
         enabled_protocols = config_enabled_protocols & ~config_default_disabled_protocols;
     if(!enabled_protocols) {
