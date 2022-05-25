@@ -3758,6 +3758,9 @@ static HRESULT WINAPI filesys_MoveFile(IFileSystem3 *iface, BSTR source, BSTR de
 {
     TRACE("%p %s %s\n", iface, debugstr_w(source), debugstr_w(destination));
 
+    if(!source || !destination)
+        return E_INVALIDARG;
+
     return MoveFileW(source, destination) ? S_OK : create_error(GetLastError());
 }
 

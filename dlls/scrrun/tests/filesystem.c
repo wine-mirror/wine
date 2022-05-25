@@ -2591,6 +2591,13 @@ static void test_MoveFile(void)
     hr = IFileSystem3_DeleteFile(fs3, str, VARIANT_TRUE);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     SysFreeString(str);
+
+    str = SysAllocString(L"null.txt");
+    hr = IFileSystem3_MoveFile(fs3, str, NULL);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    hr = IFileSystem3_MoveFile(fs3, NULL, str);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#lx.\n", hr);
+    SysFreeString(str);
 }
 
 static void test_DoOpenPipeStream(void)
