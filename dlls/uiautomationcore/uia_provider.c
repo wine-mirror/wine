@@ -223,7 +223,7 @@ static HRESULT msaa_acc_get_parent(IAccessible *acc, IAccessible **parent)
 #define DIR_FORWARD 0
 #define DIR_REVERSE 1
 static HRESULT msaa_acc_get_next_child(IAccessible *acc, LONG start_pos, LONG direction,
-        IAccessible **child, LONG *child_id, LONG *child_pos)
+        IAccessible **child, LONG *child_id, LONG *child_pos, BOOL check_visible)
 {
     LONG child_count, cur_pos;
     IDispatch *disp;
@@ -246,7 +246,7 @@ static HRESULT msaa_acc_get_next_child(IAccessible *acc, LONG start_pos, LONG di
 
         if (hr == S_FALSE)
         {
-            if (!msaa_check_acc_state(acc, cid, STATE_SYSTEM_INVISIBLE))
+            if (!check_visible || !msaa_check_acc_state(acc, cid, STATE_SYSTEM_INVISIBLE))
             {
                 *child = acc;
                 *child_id = *child_pos = cur_pos;
@@ -264,7 +264,7 @@ static HRESULT msaa_acc_get_next_child(IAccessible *acc, LONG start_pos, LONG di
                 break;
 
             variant_init_i4(&cid, CHILDID_SELF);
-            if (!msaa_check_acc_state(acc_child, cid, STATE_SYSTEM_INVISIBLE))
+            if (!check_visible || !msaa_check_acc_state(acc_child, cid, STATE_SYSTEM_INVISIBLE))
             {
                 *child = acc_child;
                 *child_id = CHILDID_SELF;
@@ -283,6 +283,86 @@ static HRESULT msaa_acc_get_next_child(IAccessible *acc, LONG start_pos, LONG di
         if ((cur_pos > child_count) || (cur_pos <= 0))
             break;
     }
+
+    return hr;
+}
+
+static HRESULT msaa_acc_get_child_pos(IAccessible *acc, IAccessible **out_parent,
+        LONG *out_child_pos)
+{
+    LONG child_count, child_id, child_pos, match_pos;
+    IAccessible *child, *parent, *match, **children;
+    HRESULT hr;
+    int i;
+
+    *out_parent = NULL;
+    *out_child_pos = 0;
+    hr = msaa_acc_get_parent(acc, &parent);
+    if (FAILED(hr) || !parent)
+        return hr;
+
+    hr = IAccessible_get_accChildCount(parent, &child_count);
+    if (FAILED(hr) || !child_count)
+    {
+        IAccessible_Release(parent);
+        return hr;
+    }
+
+    children = heap_alloc_zero(sizeof(*children) * child_count);
+    if (!children)
+        return E_OUTOFMEMORY;
+
+    match = NULL;
+    for (i = 0; i < child_count; i++)
+    {
+        hr = msaa_acc_get_next_child(parent, i + 1, DIR_FORWARD, &child, &child_id, &child_pos, FALSE);
+        if (FAILED(hr) || !child)
+            goto exit;
+
+        if (child != parent)
+            children[i] = child;
+        else
+            IAccessible_Release(child);
+    }
+
+    for (i = 0; i < child_count; i++)
+    {
+        if (!children[i])
+            continue;
+
+        if (msaa_acc_compare(acc, children[i]))
+        {
+            if (!match)
+            {
+                match = children[i];
+                match_pos = i + 1;
+            }
+            /* Can't have more than one IAccessible match. */
+            else
+            {
+                match = NULL;
+                match_pos = 0;
+                break;
+            }
+        }
+    }
+
+exit:
+    if (match)
+    {
+        *out_parent = parent;
+        *out_child_pos = match_pos;
+    }
+    else
+        IAccessible_Release(parent);
+
+    for (i = 0; i < child_count; i++)
+    {
+        if (children[i])
+            IAccessible_Release(children[i]);
+    }
+
+    heap_free(children);
 
     return hr;
 }
@@ -649,10 +729,10 @@ static HRESULT WINAPI msaa_fragment_Navigate(IRawElementProviderFragment *iface,
 
         if (direction == NavigateDirection_FirstChild)
             hr = msaa_acc_get_next_child(msaa_prov->acc, 1, DIR_FORWARD, &acc, &child_id,
-                    &child_pos);
+                    &child_pos, TRUE);
         else
             hr = msaa_acc_get_next_child(msaa_prov->acc, child_count, DIR_REVERSE, &acc, &child_id,
-                    &child_pos);
+                    &child_pos, TRUE);
 
         if (FAILED(hr) || !acc)
             break;
@@ -676,8 +756,53 @@ static HRESULT WINAPI msaa_fragment_Navigate(IRawElementProviderFragment *iface,
 
     case NavigateDirection_NextSibling:
     case NavigateDirection_PreviousSibling:
-        FIXME("Unimplemented NavigateDirection %d\n", direction);
-        return E_NOTIMPL;
+        if (msaa_check_root_acc(msaa_prov))
+            break;
+
+        if (!msaa_prov->parent)
+        {
+            if (V_I4(&msaa_prov->cid) != CHILDID_SELF)
+            {
+                msaa_prov->parent = msaa_prov->acc;
+                IAccessible_AddRef(msaa_prov->acc);
+                msaa_prov->child_pos = V_I4(&msaa_prov->cid);
+            }
+            else
+            {
+                hr = msaa_acc_get_child_pos(msaa_prov->acc, &acc, &child_pos);
+                if (FAILED(hr) || !acc)
+                    break;
+                msaa_prov->parent = acc;
+                msaa_prov->child_pos = child_pos;
+            }
+        }
+
+        if (direction == NavigateDirection_NextSibling)
+            hr = msaa_acc_get_next_child(msaa_prov->parent, msaa_prov->child_pos + 1, DIR_FORWARD,
+                    &acc, &child_id, &child_pos, TRUE);
+        else
+            hr = msaa_acc_get_next_child(msaa_prov->parent, msaa_prov->child_pos - 1, DIR_REVERSE,
+                    &acc, &child_id, &child_pos, TRUE);
+
+        if (FAILED(hr) || !acc)
+            break;
+
+        hr = UiaProviderFromIAccessible(acc, child_id, 0, &elprov);
+        if (SUCCEEDED(hr))
+        {
+            struct msaa_provider *prov = impl_from_msaa_provider(elprov);
+
+            *ret_val = &prov->IRawElementProviderFragment_iface;
+            prov->parent = msaa_prov->parent;
+            IAccessible_AddRef(msaa_prov->parent);
+            if (acc != msaa_prov->acc)
+                prov->child_pos = child_pos;
+            else
+                prov->child_pos = child_id;
+        }
+        IAccessible_Release(acc);
+
+        break;
 
     default:
         FIXME("Invalid NavigateDirection %d\n", direction);

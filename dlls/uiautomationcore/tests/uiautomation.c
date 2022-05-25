@@ -1112,13 +1112,13 @@ static void test_uia_prov_from_acc_navigation(void)
     elfrag2 = (void *)0xdeadbeef;
     hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_NextSibling, &elfrag2);
     ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!elfrag2, "elfrag2 != NULL\n");
 
     elfrag2 = (void *)0xdeadbeef;
     hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_PreviousSibling, &elfrag2);
     ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!elfrag2, "elfrag2 != NULL\n");
 
     /*
@@ -1149,18 +1149,16 @@ static void test_uia_prov_from_acc_navigation(void)
     SET_EXPECT(Accessible_get_accChild);
     SET_EXPECT(Accessible_get_accState);
     hr = IRawElementProviderFragment_Navigate(elfrag2, NavigateDirection_NextSibling, &elfrag3);
-    todo_wine ok(Accessible.ref == 5, "Unexpected refcnt %ld\n", Accessible.ref);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!!elfrag3, "elfrag2 == NULL\n");
-    todo_wine CHECK_CALLED(Accessible_get_accChildCount);
-    todo_wine CHECK_CALLED(Accessible_get_accChild);
-    todo_wine CHECK_CALLED(Accessible_get_accState);
-    if (elfrag3)
-    {
-        check_fragment_acc(elfrag3, &Accessible.IAccessible_iface, 3);
-        IRawElementProviderFragment_Release(elfrag3);
-        ok(Accessible.ref == 3, "Unexpected refcnt %ld\n", Accessible.ref);
-    }
+    ok(Accessible.ref == 5, "Unexpected refcnt %ld\n", Accessible.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag3, "elfrag2 == NULL\n");
+    CHECK_CALLED(Accessible_get_accChildCount);
+    CHECK_CALLED(Accessible_get_accChild);
+    CHECK_CALLED(Accessible_get_accState);
+    check_fragment_acc(elfrag3, &Accessible.IAccessible_iface, 3);
+
+    IRawElementProviderFragment_Release(elfrag3);
+    ok(Accessible.ref == 3, "Unexpected refcnt %ld\n", Accessible.ref);
     IRawElementProviderFragment_Release(elfrag2);
     ok(Accessible_child.ref == 1, "Unexpected refcnt %ld\n", Accessible_child.ref);
     ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
@@ -1206,19 +1204,16 @@ static void test_uia_prov_from_acc_navigation(void)
     SET_EXPECT(Accessible_get_accChild);
     SET_EXPECT(Accessible_get_accState);
     hr = IRawElementProviderFragment_Navigate(elfrag2, NavigateDirection_PreviousSibling, &elfrag3);
-    todo_wine ok(Accessible.ref == 5, "Unexpected refcnt %ld\n", Accessible.ref);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!!elfrag3, "elfrag2 == NULL\n");
-    todo_wine CHECK_CALLED(Accessible_get_accChildCount);
-    todo_wine CHECK_CALLED(Accessible_get_accChild);
-    todo_wine CHECK_CALLED(Accessible_get_accState);
-    if (elfrag3)
-    {
-        check_fragment_acc(elfrag3, &Accessible.IAccessible_iface, 3);
-        IRawElementProviderFragment_Release(elfrag3);
-        ok(Accessible.ref == 3, "Unexpected refcnt %ld\n", Accessible.ref);
-    }
+    ok(Accessible.ref == 5, "Unexpected refcnt %ld\n", Accessible.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag3, "elfrag2 == NULL\n");
+    CHECK_CALLED(Accessible_get_accChildCount);
+    CHECK_CALLED(Accessible_get_accChild);
+    CHECK_CALLED(Accessible_get_accState);
+    check_fragment_acc(elfrag3, &Accessible.IAccessible_iface, 3);
 
+    IRawElementProviderFragment_Release(elfrag3);
+    ok(Accessible.ref == 3, "Unexpected refcnt %ld\n", Accessible.ref);
     IRawElementProviderFragment_Release(elfrag2);
     ok(Accessible_child2.ref == 1, "Unexpected refcnt %ld\n", Accessible_child2.ref);
     ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
@@ -1338,21 +1333,21 @@ static void test_uia_prov_from_acc_navigation(void)
     SET_EXPECT(Accessible_child2_accLocation);
     SET_EXPECT(Accessible_child2_get_accName);
     hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_NextSibling, &elfrag2);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!elfrag2, "elfrag2 != NULL\n");
-    todo_wine CHECK_CALLED_MULTI(Accessible_get_accChildCount, 5);
-    todo_wine CHECK_CALLED_MULTI(Accessible_get_accChild, 4);
-    todo_wine CHECK_CALLED(Accessible_child_get_accParent);
-    todo_wine CHECK_CALLED(Accessible_child_get_accRole);
-    todo_wine CHECK_CALLED(Accessible_child_get_accState);
-    todo_wine CHECK_CALLED(Accessible_child_get_accChildCount);
-    todo_wine CHECK_CALLED(Accessible_child_accLocation);
-    todo_wine CHECK_CALLED(Accessible_child_get_accName);
-    todo_wine CHECK_CALLED(Accessible_child2_get_accRole);
-    todo_wine CHECK_CALLED(Accessible_child2_get_accState);
-    todo_wine CHECK_CALLED(Accessible_child2_get_accChildCount);
-    todo_wine CHECK_CALLED(Accessible_child2_accLocation);
-    todo_wine CHECK_CALLED(Accessible_child2_get_accName);
+    CHECK_CALLED_MULTI(Accessible_get_accChildCount, 5);
+    CHECK_CALLED_MULTI(Accessible_get_accChild, 4);
+    CHECK_CALLED(Accessible_child_get_accParent);
+    CHECK_CALLED(Accessible_child_get_accRole);
+    CHECK_CALLED(Accessible_child_get_accState);
+    CHECK_CALLED(Accessible_child_get_accChildCount);
+    CHECK_CALLED(Accessible_child_accLocation);
+    CHECK_CALLED(Accessible_child_get_accName);
+    CHECK_CALLED(Accessible_child2_get_accRole);
+    CHECK_CALLED(Accessible_child2_get_accState);
+    CHECK_CALLED(Accessible_child2_get_accChildCount);
+    CHECK_CALLED(Accessible_child2_accLocation);
+    CHECK_CALLED(Accessible_child2_get_accName);
 
     /* Now they have a role mismatch, we can determine our position. */
     set_accessible_props(&Accessible_child2, ROLE_SYSTEM_DOCUMENT, STATE_SYSTEM_FOCUSABLE, 1,
@@ -1369,27 +1364,27 @@ static void test_uia_prov_from_acc_navigation(void)
      * Even though we didn't get a new fragment, now that we know our
      * position, a reference is added to the parent IAccessible.
      */
-    todo_wine ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Accessible.ref == 2, "Unexpected refcnt %ld\n", Accessible.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!elfrag2, "elfrag2 != NULL\n");
-    todo_wine CHECK_CALLED_MULTI(Accessible_get_accChildCount, 6);
-    todo_wine CHECK_CALLED_MULTI(Accessible_get_accChild, 5);
-    todo_wine CHECK_CALLED(Accessible_get_accState);
-    todo_wine CHECK_CALLED(Accessible_child_get_accParent);
-    todo_wine CHECK_CALLED(Accessible_child_get_accRole);
-    todo_wine CHECK_CALLED(Accessible_child2_get_accRole);
+    CHECK_CALLED_MULTI(Accessible_get_accChildCount, 6);
+    CHECK_CALLED_MULTI(Accessible_get_accChild, 5);
+    CHECK_CALLED(Accessible_get_accState);
+    CHECK_CALLED(Accessible_child_get_accParent);
+    CHECK_CALLED(Accessible_child_get_accRole);
+    CHECK_CALLED(Accessible_child2_get_accRole);
 
     /* Now that we know our position, no extra nav work. */
     SET_EXPECT(Accessible_get_accChildCount);
     SET_EXPECT(Accessible_get_accChild);
     SET_EXPECT(Accessible_get_accState);
     hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_NextSibling, &elfrag2);
-    todo_wine ok(Accessible.ref == 4, "Unexpected refcnt %ld\n", Accessible.ref);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!!elfrag2, "elfrag2 == NULL\n");
-    todo_wine CHECK_CALLED(Accessible_get_accChildCount);
-    todo_wine CHECK_CALLED(Accessible_get_accChild);
-    todo_wine CHECK_CALLED(Accessible_get_accState);
+    ok(Accessible.ref == 4, "Unexpected refcnt %ld\n", Accessible.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag2, "elfrag2 == NULL\n");
+    CHECK_CALLED(Accessible_get_accChildCount);
+    CHECK_CALLED(Accessible_get_accChild);
+    CHECK_CALLED(Accessible_get_accState);
     if (elfrag2)
     {
         check_fragment_acc(elfrag2, &Accessible.IAccessible_iface, 3);
@@ -1449,23 +1444,20 @@ static void test_uia_prov_from_acc_navigation(void)
     SET_EXPECT(Accessible_child_accNavigate);
     SET_EXPECT(Accessible_child_get_accParent);
     hr = IRawElementProviderFragment_Navigate(elfrag, NavigateDirection_NextSibling, &elfrag2);
-    todo_wine ok(Accessible_child.ref == 2, "Unexpected refcnt %ld\n", Accessible_child.ref);
-    todo_wine ok(Accessible.ref == 4, "Unexpected refcnt %ld\n", Accessible.ref);
-    todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine ok(!!elfrag2, "elfrag2 == NULL\n");
-    todo_wine CHECK_CALLED(Accessible_get_accChildCount);
-    todo_wine CHECK_CALLED(Accessible_get_accChild);
-    todo_wine CHECK_CALLED(Accessible_child_get_accState);
-    todo_wine CHECK_CALLED(Accessible_child_accNavigate);
-    todo_wine CHECK_CALLED(Accessible_child_get_accParent);
-    if (elfrag2)
-    {
-        check_fragment_acc(elfrag2, &Accessible_child.IAccessible_iface, CHILDID_SELF);
-        IRawElementProviderFragment_Release(elfrag2);
-        ok(Accessible_child.ref == 1, "Unexpected refcnt %ld\n", Accessible_child.ref);
-        ok(Accessible.ref == 3, "Unexpected refcnt %ld\n", Accessible.ref);
-    }
+    ok(Accessible_child.ref == 2, "Unexpected refcnt %ld\n", Accessible_child.ref);
+    ok(Accessible.ref == 4, "Unexpected refcnt %ld\n", Accessible.ref);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elfrag2, "elfrag2 == NULL\n");
+    CHECK_CALLED(Accessible_get_accChildCount);
+    CHECK_CALLED(Accessible_get_accChild);
+    CHECK_CALLED(Accessible_child_get_accState);
+    CHECK_CALLED(Accessible_child_accNavigate);
+    CHECK_CALLED(Accessible_child_get_accParent);
+    check_fragment_acc(elfrag2, &Accessible_child.IAccessible_iface, CHILDID_SELF);
 
+    IRawElementProviderFragment_Release(elfrag2);
+    ok(Accessible_child.ref == 1, "Unexpected refcnt %ld\n", Accessible_child.ref);
+    ok(Accessible.ref == 3, "Unexpected refcnt %ld\n", Accessible.ref);
     IRawElementProviderFragment_Release(elfrag);
     IRawElementProviderSimple_Release(elprov);
     ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
