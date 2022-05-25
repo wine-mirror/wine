@@ -301,7 +301,7 @@ HRESULT WINAPI D3DX10GetImageInfoFromFileA(const char *src_file, ID3DX10ThreadPu
 
     TRACE("src_file %s, pump %p, info %p, result %p.\n", debugstr_a(src_file), pump, info, result);
 
-    if (!src_file || !info)
+    if (!src_file)
         return E_FAIL;
 
     str_len = MultiByteToWideChar(CP_ACP, 0, src_file, -1, NULL, 0);
@@ -329,11 +329,15 @@ HRESULT WINAPI D3DX10GetImageInfoFromFileW(const WCHAR *src_file, ID3DX10ThreadP
 
     TRACE("src_file %s, pump %p, info %p, result %p.\n", debugstr_w(src_file), pump, info, result);
 
-    if (!src_file || !info)
+    if (!src_file)
         return E_FAIL;
 
     if (FAILED((hr = load_file(src_file, &buffer, &size))))
+    {
+        if (result)
+            *result = hr;
         return hr;
+    }
 
     hr = D3DX10GetImageInfoFromMemory(buffer, size, pump, info, result);
 
@@ -352,11 +356,7 @@ HRESULT WINAPI D3DX10GetImageInfoFromResourceA(HMODULE module, const char *resou
     TRACE("module %p, resource %s, pump %p, info %p, result %p.\n",
             module, debugstr_a(resource), pump, info, result);
 
-    if (!resource || !info)
-        return D3DX10_ERR_INVALID_DATA;
-
-    hr = load_resourceA(module, resource, &buffer, &size);
-    if (FAILED(hr))
+    if (FAILED((hr = load_resourceA(module, resource, &buffer, &size))))
         return hr;
 
     return D3DX10GetImageInfoFromMemory(buffer, size, pump, info, result);
@@ -372,11 +372,7 @@ HRESULT WINAPI D3DX10GetImageInfoFromResourceW(HMODULE module, const WCHAR *reso
     TRACE("module %p, resource %s, pump %p, info %p, result %p.\n",
             module, debugstr_w(resource), pump, info, result);
 
-    if (!resource || !info)
-        return D3DX10_ERR_INVALID_DATA;
-
-    hr = load_resourceW(module, resource, &buffer, &size);
-    if (FAILED(hr))
+    if (FAILED((hr = load_resourceW(module, resource, &buffer, &size))))
         return hr;
 
     return D3DX10GetImageInfoFromMemory(buffer, size, pump, info, result);
@@ -480,6 +476,8 @@ end:
 HRESULT WINAPI D3DX10GetImageInfoFromMemory(const void *src_data, SIZE_T src_data_size, ID3DX10ThreadPump *pump,
         D3DX10_IMAGE_INFO *img_info, HRESULT *result)
 {
+    HRESULT hr;
+
     TRACE("src_data %p, src_data_size %Iu, pump %p, img_info %p, hresult %p.\n",
             src_data, src_data_size, pump, img_info, result);
 
@@ -488,7 +486,10 @@ HRESULT WINAPI D3DX10GetImageInfoFromMemory(const void *src_data, SIZE_T src_dat
     if (pump)
         FIXME("Thread pump is not supported yet.\n");
 
-    return get_image_info(src_data, src_data_size, img_info);
+    hr = get_image_info(src_data, src_data_size, img_info);
+    if (result)
+        *result = hr;
+    return hr;
 }
 
 HRESULT WINAPI D3DX10CreateTextureFromFileA(ID3D10Device *device, const char *src_file,
