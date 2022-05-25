@@ -195,6 +195,9 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_LoadVertexShader(ID2D1Effect
     TRACE("iface %p, shader_id %s, buffer %p, buffer_size %u.\n",
             iface, debugstr_guid(shader_id), buffer, buffer_size);
 
+    if (ID2D1EffectContext_IsShaderLoaded(iface, shader_id))
+        return S_OK;
+
     if (FAILED(hr = ID3D11Device1_CreateVertexShader(effect_context->device_context->d3d_device,
             buffer, buffer_size, NULL, &vertex_shader)))
     {
@@ -231,7 +234,16 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_LoadComputeShader(ID2D1Effec
 
 static BOOL STDMETHODCALLTYPE d2d_effect_context_IsShaderLoaded(ID2D1EffectContext *iface, REFGUID shader_id)
 {
-    FIXME("iface %p, shader_id %s stub!\n", iface, debugstr_guid(shader_id));
+    struct d2d_effect_context *effect_context = impl_from_ID2D1EffectContext(iface);
+    size_t i;
+
+    TRACE("iface %p, shader_id %s.\n", iface, debugstr_guid(shader_id));
+
+    for (i = 0; i < effect_context->shader_count; ++i)
+    {
+        if (IsEqualGUID(shader_id, &effect_context->shaders[i].id))
+            return TRUE;
+    }
 
     return FALSE;
 }
