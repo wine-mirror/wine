@@ -397,6 +397,8 @@ sync_test("xhr_props", function() {
     test_exposed("addEventListener", v >= 9);
     test_exposed("removeEventListener", v >= 9);
     test_exposed("dispatchEvent", v >= 9);
+    test_exposed("ontimeout", true);
+    test_exposed("timeout", true);
 });
 
 sync_test("stylesheet_props", function() {

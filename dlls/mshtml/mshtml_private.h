@@ -265,6 +265,7 @@ typedef struct EventTarget EventTarget;
     XIID(IHTMLWindow6) \
     XIID(IHTMLWindow7) \
     XIID(IHTMLXMLHttpRequest) \
+    XIID(IHTMLXMLHttpRequest2) \
     XIID(IHTMLXMLHttpRequestFactory) \
     XIID(IOmHistory) \
     XIID(IOmNavigator) \

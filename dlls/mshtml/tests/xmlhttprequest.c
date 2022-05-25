@@ -1007,6 +1007,41 @@ static void test_xhr_post(IHTMLDocument2 *doc)
     xhr = NULL;
 }
 
+static void test_timeout(IHTMLDocument2 *doc)
+{
+    IHTMLXMLHttpRequest2 *xhr2;
+    LONG timeout;
+    HRESULT hres;
+
+    create_xmlhttprequest(doc);
+    if(!xhr)
+        return;
+
+    hres = IHTMLXMLHttpRequest_QueryInterface(xhr, &IID_IHTMLXMLHttpRequest2, (void**)&xhr2);
+    ok(hres == S_OK, "QueryInterface(IHTMLXMLHttpRequest2) failed: %08lx\n", hres);
+
+    hres = IHTMLXMLHttpRequest2_get_timeout(xhr2, NULL);
+    ok(hres == E_POINTER, "get_timeout returned %08lx\n", hres);
+    hres = IHTMLXMLHttpRequest2_get_timeout(xhr2, &timeout);
+    ok(hres == S_OK, "get_timeout returned %08lx\n", hres);
+    ok(timeout == 0, "timeout = %ld\n", timeout);
+
+    /* Some Windows versions only allow setting timeout after open() */
+    xhr_open(L"http://test.winehq.org/tests/post.php", L"POST", TRUE);
+    IHTMLXMLHttpRequest_Release(xhr);
+    xhr = NULL;
+
+    hres = IHTMLXMLHttpRequest2_put_timeout(xhr2, -1);
+    ok(hres == E_INVALIDARG || broken(hres == E_FAIL), "put_timeout returned %08lx\n", hres);
+    hres = IHTMLXMLHttpRequest2_put_timeout(xhr2, 1337);
+    ok(hres == S_OK, "put_timeout returned %08lx\n", hres);
+    hres = IHTMLXMLHttpRequest2_get_timeout(xhr2, &timeout);
+    ok(hres == S_OK, "get_timeout returned %08lx\n", hres);
+    ok(timeout == 1337, "timeout = %ld\n", timeout);
+
+    IHTMLXMLHttpRequest2_Release(xhr2);
+}
+
 static IHTMLDocument2 *create_doc_from_url(const WCHAR *start_url)
 {
     BSTR url;
@@ -1071,6 +1106,7 @@ START_TEST(xmlhttprequest)
         test_async_xhr(doc, large_page_url, NULL);
         test_async_xhr_abort(doc, large_page_url);
         test_xhr_post(doc);
+        test_timeout(doc);
         IHTMLDocument2_Release(doc);
     }
     SysFreeString(content_type);
