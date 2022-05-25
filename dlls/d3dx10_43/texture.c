@@ -23,6 +23,7 @@
 #include "d3d10_1.h"
 #include "d3dx10.h"
 #include "wincodec.h"
+#include "dxhelpers.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
@@ -291,57 +292,6 @@ static DXGI_FORMAT get_d3dx10_dds_format(DXGI_FORMAT format)
     return format;
 }
 
-static HRESULT load_file(const WCHAR *filename, void **buffer, DWORD *size)
-{
-    HRESULT hr = S_OK;
-    DWORD bytes_read;
-    HANDLE file;
-    BOOL ret;
-
-    file = CreateFileW(filename, GENERIC_READ, FILE_SHARE_READ, 0, OPEN_EXISTING, 0, 0);
-    if (file == INVALID_HANDLE_VALUE)
-    {
-        hr = HRESULT_FROM_WIN32(GetLastError());
-        goto done;
-    }
-
-    *size = GetFileSize(file, NULL);
-    if (*size == INVALID_FILE_SIZE)
-    {
-        hr = HRESULT_FROM_WIN32(GetLastError());
-        goto done;
-    }
-
-    *buffer = malloc(*size);
-    if (!*buffer)
-    {
-        hr = E_OUTOFMEMORY;
-        goto done;
-    }
-
-    ret = ReadFile(file, *buffer, *size, &bytes_read, NULL);
-    if (!ret)
-    {
-        hr = HRESULT_FROM_WIN32(GetLastError());
-        goto done;
-    }
-    if (bytes_read != *size)
-    {
-        hr = E_FAIL;
-        goto done;
-    }
-
-done:
-    if (FAILED(hr))
-    {
-        free(*buffer);
-        *buffer = NULL;
-    }
-    if (file != INVALID_HANDLE_VALUE)
-        CloseHandle(file);
-    return hr;
-}
-
 static HRESULT load_resource(HMODULE module, HRSRC res_info, void **buffer, DWORD *size)
 {
     HGLOBAL resource;
@@ -398,8 +348,8 @@ HRESULT WINAPI D3DX10GetImageInfoFromFileW(const WCHAR *src_file, ID3DX10ThreadP
     if (!src_file || !info)
         return E_FAIL;
 
-    if (FAILED(load_file(src_file, &buffer, &size)))
-        return D3D10_ERROR_FILE_NOT_FOUND;
+    if (FAILED((hr = load_file(src_file, &buffer, &size))))
+        return hr;
 
     hr = D3DX10GetImageInfoFromMemory(buffer, size, pump, info, result);
 
@@ -612,8 +562,8 @@ HRESULT WINAPI D3DX10CreateTextureFromFileW(ID3D10Device *device, const WCHAR *s
     if (!src_file || !texture)
         return E_FAIL;
 
-    if (FAILED(load_file(src_file, &buffer, &size)))
-        return D3D10_ERROR_FILE_NOT_FOUND;
+    if (FAILED((hr = load_file(src_file, &buffer, &size))))
+        return hr;
 
     hr = D3DX10CreateTextureFromMemory(device, buffer, size, load_info, pump, texture, hresult);
 
