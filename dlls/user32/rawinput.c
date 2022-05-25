@@ -94,15 +94,21 @@ static BOOL array_reserve(void **elements, unsigned int *capacity, unsigned int 
     return TRUE;
 }
 
-static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
+static struct device *add_device( HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface, DWORD type )
 {
+    static const RID_DEVICE_INFO_KEYBOARD keyboard_info = {0, 0, 1, 12, 3, 101};
+    static const RID_DEVICE_INFO_MOUSE mouse_info = {1, 5, 0, FALSE};
     SP_DEVINFO_DATA device_data = {sizeof(device_data)};
+    PHIDP_PREPARSED_DATA preparsed_data = NULL;
     SP_DEVICE_INTERFACE_DETAIL_DATA_W *detail;
     struct device *device = NULL;
+    RID_DEVICE_INFO info;
+    HIDD_ATTRIBUTES attr;
+    HIDP_CAPS caps;
     UINT32 handle;
+    DWORD i, size;
     HANDLE file;
     WCHAR *pos;
-    DWORD i, size, type;
 
     SetupDiGetDeviceInterfaceDetailW(set, iface, NULL, 0, &size, &device_data);
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
@@ -138,6 +144,40 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
         return NULL;
     }
 
+    memset( &info, 0, sizeof(info) );
+    info.cbSize = sizeof(info);
+    info.dwType = type;
+
+    switch (type)
+    {
+    case RIM_TYPEHID:
+        attr.Size = sizeof(HIDD_ATTRIBUTES);
+        if (!HidD_GetAttributes( device->file, &attr ))
+            WARN("Failed to get attributes.\n");
+
+        info.hid.dwVendorId = attr.VendorID;
+        info.hid.dwProductId = attr.ProductID;
+        info.hid.dwVersionNumber = attr.VersionNumber;
+
+        if (!HidD_GetPreparsedData( file, &preparsed_data ))
+            WARN("Failed to get preparsed data.\n");
+
+        if (!HidP_GetCaps( preparsed_data, &caps ))
+            WARN("Failed to get caps.\n");
+
+        info.hid.usUsagePage = caps.UsagePage;
+        info.hid.usUsage = caps.Usage;
+        break;
+
+    case RIM_TYPEMOUSE:
+        info.mouse = mouse_info;
+        break;
+
+    case RIM_TYPEKEYBOARD:
+        info.keyboard = keyboard_info;
+        break;
+    }
+
     for (i = 0; i < rawinput_devices_count && !device; ++i)
         if (rawinput_devices[i].handle == UlongToHandle(handle))
             device = rawinput_devices + i;
@@ -166,8 +206,8 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
     device->detail = detail;
     device->file = file;
     device->handle = ULongToHandle(handle);
-    device->info.cbSize = sizeof(RID_DEVICE_INFO);
-    device->data = NULL;
+    device->info = info;
+    device->data = preparsed_data;
 
     return device;
 }
@@ -176,8 +216,6 @@ void rawinput_update_device_list(void)
 {
     SP_DEVICE_INTERFACE_DATA iface = { sizeof(iface) };
     struct device *device;
-    HIDD_ATTRIBUTES attr;
-    HIDP_CAPS caps;
     GUID hid_guid;
     HDEVINFO set;
     DWORD idx;
@@ -201,26 +239,8 @@ void rawinput_update_device_list(void)
 
     for (idx = 0; SetupDiEnumDeviceInterfaces(set, NULL, &hid_guid, idx, &iface); ++idx)
     {
-        if (!(device = add_device(set, &iface)))
+        if (!(device = add_device( set, &iface, RIM_TYPEHID )))
             continue;
-
-        attr.Size = sizeof(HIDD_ATTRIBUTES);
-        if (!HidD_GetAttributes(device->file, &attr))
-            WARN("Failed to get attributes.\n");
-
-        device->info.dwType = RIM_TYPEHID;
-        device->info.hid.dwVendorId = attr.VendorID;
-        device->info.hid.dwProductId = attr.ProductID;
-        device->info.hid.dwVersionNumber = attr.VersionNumber;
-
-        if (!HidD_GetPreparsedData(device->file, &device->data))
-            WARN("Failed to get preparsed data.\n");
-
-        if (!HidP_GetCaps(device->data, &caps))
-            WARN("Failed to get caps.\n");
-
-        device->info.hid.usUsagePage = caps.UsagePage;
-        device->info.hid.usUsage = caps.Usage;
     }
 
     SetupDiDestroyDeviceInfoList(set);
@@ -229,13 +249,8 @@ void rawinput_update_device_list(void)
 
     for (idx = 0; SetupDiEnumDeviceInterfaces(set, NULL, &GUID_DEVINTERFACE_MOUSE, idx, &iface); ++idx)
     {
-        static const RID_DEVICE_INFO_MOUSE mouse_info = {1, 5, 0, FALSE};
-
-        if (!(device = add_device(set, &iface)))
+        if (!(device = add_device( set, &iface, RIM_TYPEMOUSE )))
             continue;
-
-        device->info.dwType = RIM_TYPEMOUSE;
-        device->info.mouse = mouse_info;
     }
 
     SetupDiDestroyDeviceInfoList(set);
@@ -244,13 +259,8 @@ void rawinput_update_device_list(void)
 
     for (idx = 0; SetupDiEnumDeviceInterfaces(set, NULL, &GUID_DEVINTERFACE_KEYBOARD, idx, &iface); ++idx)
     {
-        static const RID_DEVICE_INFO_KEYBOARD keyboard_info = {0, 0, 1, 12, 3, 101};
-
-        if (!(device = add_device(set, &iface)))
+        if (!(device = add_device( set, &iface, RIM_TYPEHID )))
             continue;
-
-        device->info.dwType = RIM_TYPEKEYBOARD;
-        device->info.keyboard = keyboard_info;
     }
 
     SetupDiDestroyDeviceInfoList(set);
