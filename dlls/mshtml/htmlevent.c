@@ -105,7 +105,10 @@ typedef struct {
 #define EVENT_MOUSE_TO_RELATED   0x0100
 #define EVENT_MOUSE_FROM_RELATED 0x0200
 
+/* Keep these sorted case sensitively */
 static const event_info_t event_info[] = {
+    {L"DOMContentLoaded",  EVENT_TYPE_EVENT,     0,
+        EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE},
     {L"abort",             EVENT_TYPE_EVENT,     DISPID_EVMETH_ONABORT,
         EVENT_BIND_TO_TARGET},
     {L"animationend",      EVENT_TYPE_EVENT,     DISPID_EVPROP_ONANIMATIONEND,
@@ -127,8 +130,6 @@ static const event_info_t event_info[] = {
     {L"dataavailable",     EVENT_TYPE_EVENT,     DISPID_EVMETH_ONDATAAVAILABLE,
         EVENT_FIXME | EVENT_BUBBLES},
     {L"dblclick",          EVENT_TYPE_MOUSE,     DISPID_EVMETH_ONDBLCLICK,
-        EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE},
-    {L"DOMContentLoaded",  EVENT_TYPE_EVENT,     0,
         EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE},
     {L"drag",              EVENT_TYPE_DRAG,      DISPID_EVMETH_ONDRAG,
         EVENT_FIXME | EVENT_BUBBLES | EVENT_CANCELABLE},
@@ -192,11 +193,15 @@ C_ASSERT(ARRAY_SIZE(event_info) == EVENTID_LAST);
 
 static eventid_t str_to_eid(const WCHAR *str)
 {
-    int i;
+    unsigned i, a = 0, b = ARRAY_SIZE(event_info);
+    int c;
 
-    for(i=0; i < ARRAY_SIZE(event_info); i++) {
-        if(!wcscmp(event_info[i].name, str))
+    while(a < b) {
+        i = (a + b) / 2;
+        if(!(c = wcscmp(event_info[i].name, str)))
             return i;
+        if(c > 0) b = i;
+        else      a = i + 1;
     }
 
     return EVENTID_LAST;
@@ -204,14 +209,18 @@ static eventid_t str_to_eid(const WCHAR *str)
 
 static eventid_t attr_to_eid(const WCHAR *str)
 {
-    int i;
+    unsigned i, a = 0, b = ARRAY_SIZE(event_info);
+    int c;
 
     if((str[0] != 'o' && str[0] != 'O') || (str[1] != 'n' && str[1] != 'N'))
         return EVENTID_LAST;
 
-    for(i=0; i < ARRAY_SIZE(event_info); i++) {
-        if(!wcscmp(event_info[i].name, str+2) && event_info[i].dispid)
-            return i;
+    while(a < b) {
+        i = (a + b) / 2;
+        if(!(c = wcscmp(event_info[i].name, str+2)))
+            return event_info[i].dispid ? i : EVENTID_LAST;
+        if(c > 0) b = i;
+        else      a = i + 1;
     }
 
     return EVENTID_LAST;
