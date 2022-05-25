@@ -808,7 +808,11 @@ static void *import_utf8_to_unicodetext(CFDataRef data, size_t *ret_size)
         dst[j++] = 0;
 
         if ((ret = malloc(j * sizeof(WCHAR))))
-            *ret_size = MultiByteToWideChar(CP_UTF8, 0, dst, j, ret, j) * sizeof(WCHAR);
+        {
+            DWORD dst_size;
+            RtlUTF8ToUnicodeN(ret, j * sizeof(WCHAR), &dst_size, dst, j);
+            *ret_size = dst_size;
+        }
 
         free(dst);
     }
@@ -1031,10 +1035,12 @@ static CFDataRef export_html(void *data, size_t size)
 static CFDataRef export_unicodetext_to_utf8(void *data, size_t size)
 {
     CFMutableDataRef ret;
-    INT dst_len;
+    WCHAR *src = data;
+    DWORD dst_len = 0;
 
-    dst_len = WideCharToMultiByte(CP_UTF8, 0, data, -1, NULL, 0, NULL, NULL);
-    if (dst_len) dst_len--; /* Leave off null terminator. */
+    /* Leave off null terminator. */
+    if (size >= sizeof(WCHAR) && !src[size / sizeof(WCHAR) - 1]) size -= sizeof(WCHAR);
+    RtlUnicodeToUTF8N(NULL, 0, &dst_len, src, size);
     ret = CFDataCreateMutable(NULL, dst_len);
     if (ret)
     {
@@ -1043,7 +1049,7 @@ static CFDataRef export_unicodetext_to_utf8(void *data, size_t size)
 
         CFDataSetLength(ret, dst_len);
         dst = (LPSTR)CFDataGetMutableBytePtr(ret);
-        WideCharToMultiByte(CP_UTF8, 0, data, -1, dst, dst_len, NULL, NULL);
+        RtlUnicodeToUTF8N(dst, dst_len, &dst_len, src, size);
 
         /* Remove carriage returns */
         for (i = 0, j = 0; i < dst_len; i++)
