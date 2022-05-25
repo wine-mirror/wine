@@ -17,3 +17,7 @@
  */
 
 extern HRESULT load_file(const WCHAR *path, void **data, DWORD *size) DECLSPEC_HIDDEN;
+extern HRESULT load_resourceA(HMODULE module, const char *resource,
+        void **data, DWORD *size) DECLSPEC_HIDDEN;
+extern HRESULT load_resourceW(HMODULE module, const WCHAR *resource,
+        void **data, DWORD *size) DECLSPEC_HIDDEN;
