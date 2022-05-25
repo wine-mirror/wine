@@ -111,6 +111,7 @@ struct d2d1_test_context
     IDXGISwapChain *swapchain;
     IDXGISurface *surface;
     ID2D1RenderTarget *rt;
+    ID2D1DeviceContext *context;
 };
 
 struct resource_readback
@@ -1029,6 +1030,7 @@ static void release_test_context_(unsigned int line, struct d2d1_test_context *c
     ID2D1Factory *factory;
     ULONG ref;
 
+    ID2D1DeviceContext_Release(ctx->context);
     ID2D1RenderTarget_GetFactory(ctx->rt, &factory);
     ID2D1RenderTarget_Release(ctx->rt);
     ref = ID2D1Factory_Release(factory);
@@ -1074,6 +1076,9 @@ static BOOL init_test_context_(unsigned int line, struct d2d1_test_context *ctx,
         return FALSE;
     }
     ok_(__FILE__, line)(!!ctx->rt, "Failed to create render target.\n");
+
+    hr = ID2D1RenderTarget_QueryInterface(ctx->rt, &IID_ID2D1DeviceContext, (void **)&ctx->context);
+    ok_(__FILE__, line)(hr == S_OK, "Failed to get device context, hr %#lx.\n", hr);
 
     return TRUE;
 }
@@ -2036,12 +2041,9 @@ static void test_bitmap_brush(BOOL d3d11)
     ok(hr == S_OK || broken(hr == E_NOINTERFACE) /* Vista */, "Got unexpected hr %#lx.\n", hr);
     if (hr == S_OK)
     {
-        ID2D1DeviceContext *context;
+        ID2D1DeviceContext *context = ctx.context;
         D2D1_POINT_2F offset;
         D2D1_RECT_F src_rect;
-
-        hr = ID2D1RenderTarget_QueryInterface(rt, &IID_ID2D1DeviceContext, (void **)&context);
-        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         ID2D1RenderTarget_BeginDraw(rt);
         set_color(&color, 0.0f, 0.0f, 1.0f, 1.0f);
@@ -2111,7 +2113,6 @@ static void test_bitmap_brush(BOOL d3d11)
         ok(match, "Surface does not match.\n");
 
         ID2D1RenderTarget_SetTransform(rt, &tmp_matrix);
-        ID2D1DeviceContext_Release(context);
         ID2D1Image_Release(image);
     }
 
@@ -2393,8 +2394,7 @@ static void test_image_brush(BOOL d3d11)
     if (!init_test_context(&ctx, d3d11))
         return;
 
-    hr = ID2D1RenderTarget_QueryInterface(ctx.rt, &IID_ID2D1DeviceContext, (void **)&device_context);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    device_context = ctx.context;
 
     set_size_u(&size, 4, 4);
     bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
@@ -2466,7 +2466,6 @@ static void test_image_brush(BOOL d3d11)
     refcount = ID2D1Bitmap_Release(bitmap);
     ok(!refcount, "Bitmap has %lu references left.\n", refcount);
 
-    ID2D1DeviceContext_Release(device_context);
     release_test_context(&ctx);
 }
 
@@ -9768,13 +9767,11 @@ static void test_unit_mode(BOOL d3d11)
     struct d2d1_test_context ctx;
     ID2D1DeviceContext *context;
     D2D1_UNIT_MODE unit_mode;
-    HRESULT hr;
 
     if (!init_test_context(&ctx, d3d11))
         return;
 
-    hr = ID2D1RenderTarget_QueryInterface(ctx.rt, &IID_ID2D1DeviceContext, (void **)&context);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    context = ctx.context;
 
     unit_mode = ID2D1DeviceContext_GetUnitMode(context);
     ok(unit_mode == D2D1_UNIT_MODE_DIPS, "Got unexpected unit mode %#x.\n", unit_mode);
@@ -9791,7 +9788,6 @@ static void test_unit_mode(BOOL d3d11)
     unit_mode = ID2D1DeviceContext_GetUnitMode(context);
     ok(unit_mode == D2D1_UNIT_MODE_PIXELS, "Got unexpected unit mode %#x.\n", unit_mode);
 
-    ID2D1DeviceContext_Release(context);
     release_test_context(&ctx);
 }
 
@@ -10211,8 +10207,7 @@ static void test_effect(BOOL d3d11)
     if (factory_version < 3)
         win_skip("ID2D1Factory%u is not supported.\n", factory_version + 1);
 
-    hr = ID2D1RenderTarget_QueryInterface(ctx.rt, &IID_ID2D1DeviceContext, (void **)&context);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    context = ctx.context;
 
     for (i = 0; i < ARRAY_SIZE(effect_tests); ++i)
     {
@@ -10356,7 +10351,6 @@ static void test_effect(BOOL d3d11)
         winetest_pop_context();
     }
 
-    ID2D1DeviceContext_Release(context);
     ID2D1Factory1_Release(factory);
     release_test_context(&ctx);
 }
@@ -10674,8 +10668,7 @@ static void test_effect_2d_affine(BOOL d3d11)
         return;
     }
 
-    hr = ID2D1RenderTarget_QueryInterface(ctx.rt, &IID_ID2D1DeviceContext, (void **)&context);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    context = ctx.context;
 
     hr = ID2D1DeviceContext_CreateEffect(context, &CLSID_D2D12DAffineTransform, &effect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -10739,7 +10732,6 @@ static void test_effect_2d_affine(BOOL d3d11)
     }
 
     ID2D1Effect_Release(effect);
-    ID2D1DeviceContext_Release(context);
     ID2D1Factory1_Release(factory);
     release_test_context(&ctx);
 }
@@ -10786,8 +10778,7 @@ static void test_effect_crop(BOOL d3d11)
         return;
     }
 
-    hr = ID2D1RenderTarget_QueryInterface(ctx.rt, &IID_ID2D1DeviceContext, (void **)&context);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    context = ctx.context;
 
     hr = ID2D1DeviceContext_CreateEffect(context, &CLSID_D2D1Crop, &effect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -10828,7 +10819,6 @@ static void test_effect_crop(BOOL d3d11)
     }
 
     ID2D1Effect_Release(effect);
-    ID2D1DeviceContext_Release(context);
     ID2D1Factory1_Release(factory);
     release_test_context(&ctx);
 }
@@ -10860,8 +10850,7 @@ static void test_effect_grayscale(BOOL d3d11)
         return;
     }
 
-    hr = ID2D1RenderTarget_QueryInterface(ctx.rt, &IID_ID2D1DeviceContext, (void **)&context);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    context = ctx.context;
 
     hr = ID2D1DeviceContext_CreateEffect(context, &CLSID_D2D1Grayscale, &effect);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -10906,7 +10895,6 @@ static void test_effect_grayscale(BOOL d3d11)
     }
 
     ID2D1Effect_Release(effect);
-    ID2D1DeviceContext_Release(context);
     ID2D1Factory3_Release(factory);
     release_test_context(&ctx);
 }
@@ -11269,8 +11257,7 @@ static void test_image_bounds(BOOL d3d11)
         return;
     }
 
-    hr = ID2D1RenderTarget_QueryInterface(ctx.rt, &IID_ID2D1DeviceContext, (void **)&context);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    context = ctx.context;
 
     for (i = 0; i < ARRAY_SIZE(bitmap_bounds_tests); ++i)
     {
@@ -11315,7 +11302,6 @@ static void test_image_bounds(BOOL d3d11)
         winetest_pop_context();
     }
 
-    ID2D1DeviceContext_Release(context);
     ID2D1Factory1_Release(factory);
     release_test_context(&ctx);
 }
