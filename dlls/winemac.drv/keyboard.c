@@ -1257,8 +1257,9 @@ INT macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
             {
                 if (vkey_names[i].vkey == vkey)
                 {
-                    len = MultiByteToWideChar(CP_UTF8, 0, vkey_names[i].name, -1, buffer, size);
-                    if (len) len--;
+                    len = min(strlen(vkey_names[i].name) + 1, size);
+                    ascii_to_unicode(buffer, vkey_names[i].name, len);
+                    if (len) buffer[--len] = 0;
                     break;
                 }
             }
