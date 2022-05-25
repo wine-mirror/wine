@@ -112,6 +112,10 @@ struct d2d1_test_context
     IDXGISurface *surface;
     ID2D1RenderTarget *rt;
     ID2D1DeviceContext *context;
+    ID2D1Factory *factory;
+    ID2D1Factory1 *factory1;
+    ID2D1Factory2 *factory2;
+    ID2D1Factory3 *factory3;
 };
 
 struct resource_readback
@@ -1027,13 +1031,17 @@ static ID2D1RenderTarget *create_render_target(IDXGISurface *surface, BOOL d3d11
 #define release_test_context(ctx) release_test_context_(__LINE__, ctx)
 static void release_test_context_(unsigned int line, struct d2d1_test_context *ctx)
 {
-    ID2D1Factory *factory;
     ULONG ref;
 
+    if (ctx->factory3)
+        ID2D1Factory3_Release(ctx->factory3);
+    if (ctx->factory2)
+        ID2D1Factory2_Release(ctx->factory2);
+    if (ctx->factory1)
+        ID2D1Factory1_Release(ctx->factory1);
     ID2D1DeviceContext_Release(ctx->context);
-    ID2D1RenderTarget_GetFactory(ctx->rt, &factory);
     ID2D1RenderTarget_Release(ctx->rt);
-    ref = ID2D1Factory_Release(factory);
+    ref = ID2D1Factory_Release(ctx->factory);
     ok_(__FILE__, line)(!ref, "Factory has %lu references left.\n", ref);
 
     IDXGISurface_Release(ctx->surface);
@@ -1079,6 +1087,11 @@ static BOOL init_test_context_(unsigned int line, struct d2d1_test_context *ctx,
 
     hr = ID2D1RenderTarget_QueryInterface(ctx->rt, &IID_ID2D1DeviceContext, (void **)&ctx->context);
     ok_(__FILE__, line)(hr == S_OK, "Failed to get device context, hr %#lx.\n", hr);
+
+    ID2D1RenderTarget_GetFactory(ctx->rt, &ctx->factory);
+    ID2D1Factory_QueryInterface(ctx->factory, &IID_ID2D1Factory1, (void **)&ctx->factory1);
+    ID2D1Factory_QueryInterface(ctx->factory, &IID_ID2D1Factory2, (void **)&ctx->factory2);
+    ID2D1Factory_QueryInterface(ctx->factory, &IID_ID2D1Factory3, (void **)&ctx->factory3);
 
     return TRUE;
 }
@@ -1658,7 +1671,8 @@ static void test_state_block(BOOL d3d11)
         return;
 
     rt = ctx.rt;
-    ID2D1RenderTarget_GetFactory(rt, &factory);
+    factory = ctx.factory;
+    factory1 = ctx.factory1;
     hr = DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, &IID_IDWriteFactory, (IUnknown **)&dwrite_factory);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = IDWriteFactory_CreateRenderingParams(dwrite_factory, &text_rendering_params1);
@@ -1807,7 +1821,7 @@ static void test_state_block(BOOL d3d11)
             text_rendering_params2, text_rendering_params1);
     IDWriteRenderingParams_Release(text_rendering_params2);
 
-    if (SUCCEEDED(ID2D1Factory_QueryInterface(factory, &IID_ID2D1Factory1, (void **)&factory1)))
+    if (factory1)
     {
         D2D1_DRAWING_STATE_DESCRIPTION1 drawing_state1;
         ID2D1DrawingStateBlock1 *state_block1;
@@ -1871,15 +1885,12 @@ static void test_state_block(BOOL d3d11)
         ID2D1DrawingStateBlock1_GetTextRenderingParams(state_block1, &text_rendering_params2);
         ok(!text_rendering_params2, "Got unexpected text rendering params %p.\n", text_rendering_params2);
         ID2D1DrawingStateBlock1_Release(state_block1);
-
-        ID2D1Factory1_Release(factory1);
     }
 
     ID2D1DrawingStateBlock_Release(state_block);
 
     refcount = IDWriteRenderingParams_Release(text_rendering_params1);
     ok(!refcount, "Rendering params %lu references left.\n", refcount);
-    ID2D1Factory_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -2279,7 +2290,7 @@ static void test_bitmap_brush(BOOL d3d11)
     set_rect(&dst_rect, 0.0f, 0.0f, 80.0f, 240.0f);
     ID2D1RenderTarget_FillRectangle(rt, &dst_rect, (ID2D1Brush *)brush);
 
-    ID2D1RenderTarget_GetFactory(rt, &factory);
+    factory = ctx.factory;
 
     set_rect(&dst_rect, -1.0f, -1.0f, 1.0f, 1.0f);
     hr = ID2D1Factory_CreateRectangleGeometry(factory, &dst_rect, &rectangle_geometry);
@@ -2300,8 +2311,6 @@ static void test_bitmap_brush(BOOL d3d11)
     ID2D1BitmapBrush_SetTransform(brush, &matrix);
     ID2D1RenderTarget_FillGeometry(rt, (ID2D1Geometry *)transformed_geometry, (ID2D1Brush *)brush, NULL);
     ID2D1TransformedGeometry_Release(transformed_geometry);
-
-    ID2D1Factory_Release(factory);
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -2613,7 +2622,7 @@ static void test_linear_brush(BOOL d3d11)
     set_rect(&r, -80.0f, -60.0f, 80.0f, 60.0f);
     ID2D1RenderTarget_FillRectangle(rt, &r, (ID2D1Brush *)brush);
 
-    ID2D1RenderTarget_GetFactory(rt, &factory);
+    factory = ctx.factory;
 
     set_rect(&r, -1.0f, -1.0f, 1.0f, 1.0f);
     hr = ID2D1Factory_CreateRectangleGeometry(factory, &r, &rectangle_geometry);
@@ -2636,8 +2645,6 @@ static void test_linear_brush(BOOL d3d11)
     ID2D1LinearGradientBrush_SetEndPoint(brush, p);
     ID2D1RenderTarget_FillGeometry(rt, (ID2D1Geometry *)transformed_geometry, (ID2D1Brush *)brush, NULL);
     ID2D1TransformedGeometry_Release(transformed_geometry);
-
-    ID2D1Factory_Release(factory);
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -2810,7 +2817,7 @@ static void test_radial_brush(BOOL d3d11)
     set_rect(&r, -80.0f, -60.0f, 80.0f, 60.0f);
     ID2D1RenderTarget_FillRectangle(rt, &r, (ID2D1Brush *)brush);
 
-    ID2D1RenderTarget_GetFactory(rt, &factory);
+    factory = ctx.factory;
 
     set_rect(&r, -1.0f, -1.0f, 1.0f, 1.0f);
     hr = ID2D1Factory_CreateRectangleGeometry(factory, &r, &rectangle_geometry);
@@ -2835,8 +2842,6 @@ static void test_radial_brush(BOOL d3d11)
     ID2D1RadialGradientBrush_SetGradientOriginOffset(brush, p);
     ID2D1RenderTarget_FillGeometry(rt, (ID2D1Geometry *)transformed_geometry, (ID2D1Brush *)brush, NULL);
     ID2D1TransformedGeometry_Release(transformed_geometry);
-
-    ID2D1Factory_Release(factory);
 
     hr = ID2D1RenderTarget_EndDraw(rt, NULL, NULL);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
@@ -3333,7 +3338,7 @@ static void test_path_geometry(BOOL d3d11)
         return;
 
     rt = ctx.rt;
-    ID2D1RenderTarget_GetFactory(rt, &factory);
+    factory = ctx.factory;
 
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
     ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
@@ -4122,7 +4127,6 @@ static void test_path_geometry(BOOL d3d11)
     ID2D1PathGeometry_Release(geometry);
 
     ID2D1SolidColorBrush_Release(brush);
-    ID2D1Factory_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -5175,7 +5179,7 @@ static void test_opacity_brush(BOOL d3d11)
         return;
 
     rt = ctx.rt;
-    ID2D1RenderTarget_GetFactory(rt, &factory);
+    factory = ctx.factory;
 
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
     ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
@@ -5307,7 +5311,6 @@ static void test_opacity_brush(BOOL d3d11)
     ID2D1BitmapBrush_Release(bitmap_brush);
     ID2D1BitmapBrush_Release(opacity_brush);
     ID2D1SolidColorBrush_Release(color_brush);
-    ID2D1Factory_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -6364,7 +6367,7 @@ static void test_draw_geometry(BOOL d3d11)
         return;
 
     rt = ctx.rt;
-    ID2D1RenderTarget_GetFactory(rt, &factory);
+    factory = ctx.factory;
 
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
     ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
@@ -7287,7 +7290,6 @@ static void test_draw_geometry(BOOL d3d11)
     ok(match, "Figure does not match.\n");
 
     ID2D1SolidColorBrush_Release(brush);
-    ID2D1Factory_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -7314,7 +7316,7 @@ static void test_fill_geometry(BOOL d3d11)
         return;
 
     rt = ctx.rt;
-    ID2D1RenderTarget_GetFactory(rt, &factory);
+    factory = ctx.factory;
 
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
     ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
@@ -8085,7 +8087,6 @@ static void test_fill_geometry(BOOL d3d11)
     ok(match, "Figure does not match.\n");
 
     ID2D1SolidColorBrush_Release(brush);
-    ID2D1Factory_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -8231,7 +8232,7 @@ static void test_layer(BOOL d3d11)
         return;
 
     rt = ctx.rt;
-    ID2D1RenderTarget_GetFactory(rt, &factory);
+    factory = ctx.factory;
 
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
     ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
@@ -8254,7 +8255,6 @@ static void test_layer(BOOL d3d11)
     ok(size.height == 600.0f, "Got unexpected height %.8e.\n", size.height);
     ID2D1Layer_Release(layer);
 
-    ID2D1Factory_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -8275,7 +8275,7 @@ static void test_bezier_intersect(BOOL d3d11)
         return;
 
     rt = ctx.rt;
-    ID2D1RenderTarget_GetFactory(rt, &factory);
+    factory = ctx.factory;
 
     ID2D1RenderTarget_SetDpi(rt, 192.0f, 48.0f);
     ID2D1RenderTarget_SetAntialiasMode(rt, D2D1_ANTIALIAS_MODE_ALIASED);
@@ -8388,7 +8388,6 @@ static void test_bezier_intersect(BOOL d3d11)
     ok(match, "Figure does not match.\n");
 
     ID2D1SolidColorBrush_Release(brush);
-    ID2D1Factory_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -10130,39 +10129,9 @@ static void test_mt_factory(BOOL d3d11)
     ID2D1Factory_Release(factory);
 }
 
-static void *create_factory(const GUID *iid, UINT32 *factory_version)
-{
-    IUnknown *factory, *tmp;
-    unsigned int i;
-
-    static const GUID *const factory_iid[] =
-    {
-        &IID_ID2D1Factory,
-        &IID_ID2D1Factory1,
-        &IID_ID2D1Factory2,
-        &IID_ID2D1Factory3,
-    };
-
-    if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, iid, NULL, (void **)&factory)))
-        return NULL;
-
-    if (factory_version)
-    {
-        for (i = 0; i < ARRAY_SIZE(factory_iid); ++i)
-        {
-            if (FAILED(IUnknown_QueryInterface(factory, factory_iid[i], (void **)&tmp)))
-                break;
-            IUnknown_Release(tmp);
-        }
-        *factory_version = i - 1;
-    }
-
-    return factory;
-}
-
 static void test_effect(BOOL d3d11)
 {
-    unsigned int i, j, min_inputs, max_inputs, str_size, input_count, factory_version;
+    unsigned int i, j, min_inputs, max_inputs, str_size, input_count;
     D2D1_BITMAP_PROPERTIES bitmap_desc;
     D2D1_BUFFER_PRECISION precision;
     ID2D1Image *image_a, *image_b;
@@ -10198,14 +10167,15 @@ static void test_effect(BOOL d3d11)
     if (!init_test_context(&ctx, d3d11))
         return;
 
-    if (!(factory = create_factory(&IID_ID2D1Factory1, &factory_version)))
+    factory = ctx.factory1;
+    if (!factory)
     {
         win_skip("ID2D1Factory1 is not supported.\n");
         release_test_context(&ctx);
         return;
     }
-    if (factory_version < 3)
-        win_skip("ID2D1Factory%u is not supported.\n", factory_version + 1);
+    if (!ctx.factory3)
+        win_skip("ID2D1Factory3 is not supported.\n");
 
     context = ctx.context;
 
@@ -10213,7 +10183,7 @@ static void test_effect(BOOL d3d11)
     {
         const struct effect_test *test = effect_tests + i;
 
-        if (factory_version < test->factory_version)
+        if (test->factory_version == 3 && !ctx.factory3)
             continue;
 
         winetest_push_context("Test %u", i);
@@ -10351,7 +10321,6 @@ static void test_effect(BOOL d3d11)
         winetest_pop_context();
     }
 
-    ID2D1Factory1_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -10525,7 +10494,8 @@ static void test_effect_register(BOOL d3d11)
     if (!init_test_context(&ctx, d3d11))
         return;
 
-    if (!(factory = create_factory(&IID_ID2D1Factory1, NULL)))
+    factory = ctx.factory1;
+    if (!factory)
     {
         win_skip("ID2D1Factory1 is not supported.\n");
         release_test_context(&ctx);
@@ -10586,7 +10556,6 @@ static void test_effect_register(BOOL d3d11)
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_D2D1Composite);
     todo_wine ok(hr == D2DERR_EFFECT_IS_NOT_REGISTERED, "Got unexpected hr %#lx.\n", hr);
 
-    ID2D1Factory1_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -10661,7 +10630,8 @@ static void test_effect_2d_affine(BOOL d3d11)
     if (!init_test_context(&ctx, d3d11))
         return;
 
-    if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
+    factory = ctx.factory1;
+    if (!factory)
     {
         win_skip("ID2D1Factory1 is not supported.\n");
         release_test_context(&ctx);
@@ -10732,7 +10702,6 @@ static void test_effect_2d_affine(BOOL d3d11)
     }
 
     ID2D1Effect_Release(effect);
-    ID2D1Factory1_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -10771,7 +10740,8 @@ static void test_effect_crop(BOOL d3d11)
     if (!init_test_context(&ctx, d3d11))
         return;
 
-    if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
+    factory = ctx.factory1;
+    if (!factory)
     {
         win_skip("ID2D1Factory1 is not supported.\n");
         release_test_context(&ctx);
@@ -10819,7 +10789,6 @@ static void test_effect_crop(BOOL d3d11)
     }
 
     ID2D1Effect_Release(effect);
-    ID2D1Factory1_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -10843,7 +10812,8 @@ static void test_effect_grayscale(BOOL d3d11)
     if (!init_test_context(&ctx, d3d11))
         return;
 
-    if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory3, NULL, (void **)&factory)))
+    factory = ctx.factory3;
+    if (!factory)
     {
         win_skip("ID2D1Factory3 is not supported.\n");
         release_test_context(&ctx);
@@ -10895,7 +10865,6 @@ static void test_effect_grayscale(BOOL d3d11)
     }
 
     ID2D1Effect_Release(effect);
-    ID2D1Factory3_Release(factory);
     release_test_context(&ctx);
 }
 
@@ -11250,7 +11219,8 @@ static void test_image_bounds(BOOL d3d11)
     if (!init_test_context(&ctx, d3d11))
         return;
 
-    if (FAILED(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &IID_ID2D1Factory1, NULL, (void **)&factory)))
+    factory = ctx.factory1;
+    if (!factory)
     {
         win_skip("ID2D1Factory1 is not supported.\n");
         release_test_context(&ctx);
@@ -11302,7 +11272,6 @@ static void test_image_bounds(BOOL d3d11)
         winetest_pop_context();
     }
 
-    ID2D1Factory1_Release(factory);
     release_test_context(&ctx);
 }
 
