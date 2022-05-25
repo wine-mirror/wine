@@ -507,7 +507,7 @@ static void set_queue_display_fd(int fd)
     if (wine_server_fd_to_handle(fd, GENERIC_READ | SYNCHRONIZE, 0, &handle))
     {
         MESSAGE("macdrv: Can't allocate handle for event queue fd\n");
-        ExitProcess(1);
+        NtTerminateProcess(0, 1);
     }
     SERVER_START_REQ(set_queue_fd)
     {
@@ -518,9 +518,9 @@ static void set_queue_display_fd(int fd)
     if (ret)
     {
         MESSAGE("macdrv: Can't store handle for event queue fd\n");
-        ExitProcess(1);
+        NtTerminateProcess(0, 1);
     }
-    CloseHandle(handle);
+    NtClose(handle);
 }
 
 
@@ -537,13 +537,13 @@ struct macdrv_thread_data *macdrv_init_thread_data(void)
     if (!(data = calloc(1, sizeof(*data))))
     {
         ERR("could not create data\n");
-        ExitProcess(1);
+        NtTerminateProcess(0, 1);
     }
 
     if (!(data->queue = macdrv_create_event_queue(macdrv_handle_event)))
     {
         ERR("macdrv: Can't create event queue.\n");
-        ExitProcess(1);
+        NtTerminateProcess(0, 1);
     }
 
     macdrv_get_input_source_info(&data->keyboard_layout_uchr, &data->keyboard_type, &data->iso_keyboard, &input_source);

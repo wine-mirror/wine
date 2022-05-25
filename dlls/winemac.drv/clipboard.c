@@ -190,7 +190,7 @@ static DWORD clipboard_thread_id;
 static HWND clipboard_hwnd;
 static BOOL is_clipboard_owner;
 static macdrv_window clipboard_cocoa_window;
-static ULONG64 last_clipboard_update;
+static ULONG last_clipboard_update;
 static DWORD last_get_seqno;
 static WINE_CLIPFORMAT **current_mac_formats;
 static unsigned int nb_current_mac_formats;
@@ -1542,7 +1542,7 @@ static void grab_win32_clipboard(void)
     if (!NtUserOpenClipboard(clipboard_hwnd, 0)) return;
     NtUserEmptyClipboard();
     is_clipboard_owner = TRUE;
-    last_clipboard_update = GetTickCount64();
+    last_clipboard_update = NtGetTickCount();
     set_win32_clipboard_formats_from_mac_pasteboard(types);
     NtUserCloseClipboard();
     NtUserSetTimer(clipboard_hwnd, 1, CLIPBOARD_UPDATE_DELAY, NULL, TIMERV_DEFAULT_COALESCING);
@@ -1559,15 +1559,15 @@ static void update_clipboard(void)
 {
     static BOOL updating;
 
-    TRACE("is_clipboard_owner %d last_clipboard_update %llu now %llu\n",
-          is_clipboard_owner, (unsigned long long)last_clipboard_update, (unsigned long long)GetTickCount64());
+    TRACE("is_clipboard_owner %d last_clipboard_update %u now %u\n",
+          is_clipboard_owner, last_clipboard_update, NtGetTickCount());
 
     if (updating) return;
     updating = TRUE;
 
     if (is_clipboard_owner)
     {
-        if (GetTickCount64() - last_clipboard_update > CLIPBOARD_UPDATE_DELAY)
+        if (NtGetTickCount() - last_clipboard_update > CLIPBOARD_UPDATE_DELAY)
             grab_win32_clipboard();
     }
     else if (!macdrv_is_pasteboard_owner(clipboard_cocoa_window))

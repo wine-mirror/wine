@@ -853,7 +853,7 @@ void macdrv_mouse_button(HWND hwnd, const macdrv_event *event)
     TRACE("win %p button %d %s at (%d,%d) time %lu (%lu ticks ago)\n", hwnd, event->mouse_button.button,
           (event->mouse_button.pressed ? "pressed" : "released"),
           event->mouse_button.x, event->mouse_button.y,
-          event->mouse_button.time_ms, (GetTickCount() - event->mouse_button.time_ms));
+          event->mouse_button.time_ms, (NtGetTickCount() - event->mouse_button.time_ms));
 
     if (event->mouse_button.pressed)
     {
@@ -900,7 +900,7 @@ void macdrv_mouse_moved(HWND hwnd, const macdrv_event *event)
     TRACE("win %p/%p %s (%d,%d) drag %d time %lu (%lu ticks ago)\n", hwnd, event->window,
           (event->type == MOUSE_MOVED) ? "relative" : "absolute",
           event->mouse_moved.x, event->mouse_moved.y, event->mouse_moved.drag,
-          event->mouse_moved.time_ms, (GetTickCount() - event->mouse_moved.time_ms));
+          event->mouse_moved.time_ms, (NtGetTickCount() - event->mouse_moved.time_ms));
 
     if (event->type == MOUSE_MOVED_ABSOLUTE)
         flags |= MOUSEEVENTF_ABSOLUTE;
@@ -920,7 +920,7 @@ void macdrv_mouse_scroll(HWND hwnd, const macdrv_event *event)
     TRACE("win %p/%p scroll (%d,%d) at (%d,%d) time %lu (%lu ticks ago)\n", hwnd,
           event->window, event->mouse_scroll.x_scroll, event->mouse_scroll.y_scroll,
           event->mouse_scroll.x, event->mouse_scroll.y,
-          event->mouse_scroll.time_ms, (GetTickCount() - event->mouse_scroll.time_ms));
+          event->mouse_scroll.time_ms, (NtGetTickCount() - event->mouse_scroll.time_ms));
 
     if (event->mouse_scroll.y_scroll)
         send_mouse_input(hwnd, event->window, MOUSEEVENTF_WHEEL | MOUSEEVENTF_ABSOLUTE | MOUSEEVENTF_MOVE,

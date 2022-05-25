@@ -918,7 +918,7 @@ static void set_focus(HWND hwnd, BOOL raise)
 
     if (data->cocoa_window && data->on_screen)
     {
-        BOOL activate = activate_on_focus_time && (GetTickCount() - activate_on_focus_time < 2000);
+        BOOL activate = activate_on_focus_time && (NtGetTickCount() - activate_on_focus_time < 2000);
         /* Set Mac focus */
         macdrv_give_cocoa_window_focus(data->cocoa_window, activate);
         activate_on_focus_time = 0;
@@ -959,7 +959,7 @@ static void show_window(struct macdrv_win_data *data)
               data->hwnd, data->cocoa_window, prev, prev_window, next, next_window);
 
         if (!prev_window)
-            activate = activate_on_focus_time && (GetTickCount() - activate_on_focus_time < 2000);
+            activate = activate_on_focus_time && (NtGetTickCount() - activate_on_focus_time < 2000);
         macdrv_order_cocoa_window(data->cocoa_window, prev_window, next_window, activate);
         data->on_screen = TRUE;
 
@@ -1236,7 +1236,7 @@ static void move_window_bits(HWND hwnd, macdrv_window window, const RECT *old_re
  */
 void activate_on_following_focus(void)
 {
-    activate_on_focus_time = GetTickCount();
+    activate_on_focus_time = NtGetTickCount();
     if (!activate_on_focus_time) activate_on_focus_time = 1;
 }
 
@@ -1617,7 +1617,7 @@ void macdrv_DestroyWindow(HWND hwnd)
     if (!(data = get_win_data(hwnd))) return;
 
     if (hwnd == get_capture()) macdrv_SetCapture(0, 0);
-    if (data->drag_event) SetEvent(data->drag_event);
+    if (data->drag_event) NtSetEvent(data->drag_event, NULL);
 
     destroy_cocoa_window(data);
     destroy_cocoa_view(data);
@@ -2555,6 +2555,7 @@ void macdrv_window_drag_begin(HWND hwnd, const macdrv_event *event)
     DWORD style = NtUserGetWindowLongW(hwnd, GWL_STYLE);
     struct macdrv_win_data *data;
     HANDLE drag_event = NULL;
+    OBJECT_ATTRIBUTES attr;
     BOOL loop = TRUE;
     MSG msg;
 
@@ -2566,8 +2567,8 @@ void macdrv_window_drag_begin(HWND hwnd, const macdrv_event *event)
     if (!(data = get_win_data(hwnd))) return;
     if (data->drag_event) goto done;
 
-    drag_event = CreateEventW(NULL, TRUE, FALSE, NULL);
-    if (!drag_event) goto done;
+    InitializeObjectAttributes(&attr, NULL, OBJ_OPENIF, NULL, NULL);
+    if (NtCreateEvent(&drag_event, EVENT_ALL_ACCESS, &attr, NotificationEvent, FALSE)) goto done;
 
     data->drag_event = drag_event;
     release_win_data(data);
@@ -2624,7 +2625,7 @@ void macdrv_window_drag_begin(HWND hwnd, const macdrv_event *event)
 
 done:
     release_win_data(data);
-    if (drag_event) CloseHandle(drag_event);
+    if (drag_event) NtClose(drag_event);
 }
 
 
@@ -2641,7 +2642,7 @@ void macdrv_window_drag_end(HWND hwnd)
 
     if (!(data = get_win_data(hwnd))) return;
     if (data->drag_event)
-        SetEvent(data->drag_event);
+        NtSetEvent(data->drag_event, NULL);
     release_win_data(data);
 }
 
