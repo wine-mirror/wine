@@ -153,17 +153,26 @@ static struct device *add_device( HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface,
     case RIM_TYPEHID:
         attr.Size = sizeof(HIDD_ATTRIBUTES);
         if (!HidD_GetAttributes( device->file, &attr ))
-            WARN("Failed to get attributes.\n");
+        {
+            ERR( "Failed to get attributes.\n" );
+            goto fail;
+        }
 
         info.hid.dwVendorId = attr.VendorID;
         info.hid.dwProductId = attr.ProductID;
         info.hid.dwVersionNumber = attr.VersionNumber;
 
         if (!HidD_GetPreparsedData( file, &preparsed_data ))
-            WARN("Failed to get preparsed data.\n");
+        {
+            ERR( "Failed to get preparsed data.\n" );
+            goto fail;
+        }
 
         if (!HidP_GetCaps( preparsed_data, &caps ))
-            WARN("Failed to get caps.\n");
+        {
+            ERR( "Failed to get caps.\n" );
+            goto fail;
+        }
 
         info.hid.usUsagePage = caps.UsagePage;
         info.hid.usUsage = caps.Usage;
@@ -198,9 +207,7 @@ static struct device *add_device( HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface,
     else
     {
         ERR("Failed to allocate memory.\n");
-        CloseHandle(file);
-        free(detail);
-        return NULL;
+        goto fail;
     }
 
     device->detail = detail;
@@ -210,6 +217,12 @@ static struct device *add_device( HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface,
     device->data = preparsed_data;
 
     return device;
+
+fail:
+    free( preparsed_data );
+    CloseHandle( file );
+    free( detail );
+    return NULL;
 }
 
 void rawinput_update_device_list(void)
