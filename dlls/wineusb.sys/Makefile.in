@@ -1,5 +1,6 @@
 EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE    = wineusb.sys
+UNIXLIB   = wineusb.so
 IMPORTS   = ntoskrnl
 UNIX_LIBS    = $(USB_LIBS)
 UNIX_CFLAGS  = $(USB_CFLAGS)
@@ -7,6 +8,7 @@ UNIX_CFLAGS  = $(USB_CFLAGS)
 EXTRADLLFLAGS = -Wl,--subsystem,native -mcygwin
 
 C_SRCS = \
+	unixlib.c \
 	wineusb.c
 
 RC_SRCS = wineusb.rc

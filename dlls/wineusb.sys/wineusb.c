@@ -36,6 +36,8 @@
 #include "wine/list.h"
 #include "wine/unicode.h"
 
+#include "unixlib.h"
+
 WINE_DEFAULT_DEBUG_CHANNEL(wineusb);
 
 #ifdef __ASM_USE_FASTCALL_WRAPPER
@@ -63,6 +65,8 @@ __ASM_STDCALL_FUNC( wrap_fastcall_func1, 8,
     static CRITICAL_SECTION cs = { &cs##_debug, -1, 0, 0, 0, 0 };
 
 DECLARE_CRITICAL_SECTION(wineusb_cs);
+
+static unixlib_handle_t unix_handle;
 
 static struct list device_list = LIST_INIT(device_list);
 
@@ -712,9 +716,12 @@ static NTSTATUS usb_submit_urb(struct usb_device *device, IRP *irp)
             for (entry = mark->Flink; entry != mark; entry = entry->Flink)
             {
                 IRP *queued_irp = CONTAINING_RECORD(entry, IRP, Tail.Overlay.ListEntry);
+                struct usb_cancel_transfer_params params =
+                {
+                    .transfer = queued_irp->Tail.Overlay.DriverContext[0],
+                };
 
-                if ((ret = libusb_cancel_transfer(queued_irp->Tail.Overlay.DriverContext[0])) < 0)
-                    ERR("Failed to cancel transfer: %s\n", libusb_strerror(ret));
+                __wine_unix_call(unix_handle, unix_usb_cancel_transfer, &params);
             }
             LeaveCriticalSection(&wineusb_cs);
 
@@ -930,9 +937,19 @@ static void WINAPI driver_unload(DRIVER_OBJECT *driver)
 
 NTSTATUS WINAPI DriverEntry(DRIVER_OBJECT *driver, UNICODE_STRING *path)
 {
+    NTSTATUS status;
+    void *instance;
     int err;
 
     TRACE("driver %p, path %s.\n", driver, debugstr_w(path->Buffer));
+
+    RtlPcToFileHeader(DriverEntry, &instance);
+    if ((status = NtQueryVirtualMemory(GetCurrentProcess(), instance,
+            MemoryWineUnixFuncs, &unix_handle, sizeof(unix_handle), NULL)))
+    {
+        ERR("Failed to initialize Unix library, status %#x.\n", status);
+        return status;
+    }
 
     driver_obj = driver;
 
