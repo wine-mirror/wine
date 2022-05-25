@@ -115,6 +115,7 @@ enum usb_event_type
 {
     USB_EVENT_ADD_DEVICE,
     USB_EVENT_REMOVE_DEVICE,
+    USB_EVENT_TRANSFER_COMPLETE,
     USB_EVENT_SHUTDOWN,
 };
 
@@ -126,6 +127,7 @@ struct usb_event
     {
         struct unix_device *added_device;
         struct unix_device *removed_device;
+        IRP *completed_irp;
     } u;
 };
 
@@ -407,6 +409,16 @@ static DWORD CALLBACK libusb_event_thread_proc(void *arg)
     return 0;
 }
 
+static void complete_irp(IRP *irp)
+{
+    EnterCriticalSection(&wineusb_cs);
+    RemoveEntryList(&irp->Tail.Overlay.ListEntry);
+    LeaveCriticalSection(&wineusb_cs);
+
+    irp->IoStatus.Status = STATUS_SUCCESS;
+    IoCompleteRequest(irp, IO_NO_INCREMENT);
+}
+
 static DWORD CALLBACK event_thread_proc(void *arg)
 {
     struct usb_event event;
@@ -425,6 +437,10 @@ static DWORD CALLBACK event_thread_proc(void *arg)
 
             case USB_EVENT_REMOVE_DEVICE:
                 remove_unix_device(event.u.removed_device);
+                break;
+
+            case USB_EVENT_TRANSFER_COMPLETE:
+                complete_irp(event.u.completed_irp);
                 break;
 
             case USB_EVENT_SHUTDOWN:
@@ -772,6 +788,7 @@ static void LIBUSB_CALL transfer_cb(struct libusb_transfer *transfer)
 {
     IRP *irp = transfer->user_data;
     URB *urb = IoGetCurrentIrpStackLocation(irp)->Parameters.Others.Argument1;
+    struct usb_event event;
 
     TRACE("Completing IRP %p, status %#x.\n", irp, transfer->status);
 
@@ -807,12 +824,9 @@ static void LIBUSB_CALL transfer_cb(struct libusb_transfer *transfer)
         }
     }
 
-    EnterCriticalSection(&wineusb_cs);
-    RemoveEntryList(&irp->Tail.Overlay.ListEntry);
-    LeaveCriticalSection(&wineusb_cs);
-
-    irp->IoStatus.Status = STATUS_SUCCESS;
-    IoCompleteRequest(irp, IO_NO_INCREMENT);
+    event.type = USB_EVENT_TRANSFER_COMPLETE;
+    event.u.completed_irp = irp;
+    queue_event(&event);
 }
 
 static void queue_irp(struct usb_device *device, IRP *irp, struct libusb_transfer *transfer)
