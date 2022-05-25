@@ -822,6 +822,96 @@ static unsigned int get_bpp_from_format(DXGI_FORMAT format)
     }
 }
 
+static HRESULT WINAPI D3DX10ThreadPump_QueryInterface(ID3DX10ThreadPump *iface, REFIID riid, void **out)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static ULONG WINAPI D3DX10ThreadPump_AddRef(ID3DX10ThreadPump *iface)
+{
+    return 2;
+}
+
+static ULONG WINAPI D3DX10ThreadPump_Release(ID3DX10ThreadPump *iface)
+{
+    return 1;
+}
+
+static int add_work_item_count = 1;
+
+static HRESULT WINAPI D3DX10ThreadPump_AddWorkItem(ID3DX10ThreadPump *iface, ID3DX10DataLoader *loader,
+        ID3DX10DataProcessor *processor, HRESULT *result, void **object)
+{
+    SIZE_T size;
+    void *data;
+    HRESULT hr;
+
+    ok(!add_work_item_count++, "unexpected call\n");
+    ok(!object, "object = %p\n", object);
+
+    hr = ID3DX10DataLoader_Load(loader);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID3DX10DataLoader_Decompress(loader, &data, &size);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID3DX10DataProcessor_Process(processor, data, size);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID3DX10DataProcessor_CreateDeviceObject(processor, object);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID3DX10DataProcessor_Destroy(processor);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    hr = ID3DX10DataLoader_Destroy(loader);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    if (result) *result = S_OK;
+    return S_OK;
+}
+
+static UINT WINAPI D3DX10ThreadPump_GetWorkItemCount(ID3DX10ThreadPump *iface)
+{
+    ok(0, "unexpected call\n");
+    return 0;
+}
+
+static HRESULT WINAPI D3DX10ThreadPump_WaitForAllItems(ID3DX10ThreadPump *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI D3DX10ThreadPump_ProcessDeviceWorkItems(ID3DX10ThreadPump *iface, UINT count)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI D3DX10ThreadPump_PurgeAllItems(ID3DX10ThreadPump *iface)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI D3DX10ThreadPump_GetQueueStatus(ID3DX10ThreadPump *iface, UINT *queue,
+        UINT *processqueue, UINT *devicequeue)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static ID3DX10ThreadPumpVtbl D3DX10ThreadPumpVtbl =
+{
+    D3DX10ThreadPump_QueryInterface,
+    D3DX10ThreadPump_AddRef,
+    D3DX10ThreadPump_Release,
+    D3DX10ThreadPump_AddWorkItem,
+    D3DX10ThreadPump_GetWorkItemCount,
+    D3DX10ThreadPump_WaitForAllItems,
+    D3DX10ThreadPump_ProcessDeviceWorkItems,
+    D3DX10ThreadPump_PurgeAllItems,
+    D3DX10ThreadPump_GetQueueStatus
+};
+static ID3DX10ThreadPump thread_pump = { &D3DX10ThreadPumpVtbl };
+
 static ULONG get_refcount(void *iface)
 {
     IUnknown *unknown = iface;
@@ -1953,6 +2043,14 @@ static void test_get_image_info(void)
 
         winetest_pop_context();
     }
+
+    hr2 = 0xdeadbeef;
+    add_work_item_count = 0;
+    hr = D3DX10GetImageInfoFromMemory(test_image[0].data, test_image[0].size, &thread_pump, &image_info, &hr2);
+    ok(add_work_item_count == 1, "Got unexpected add_work_item_count %u.\n", add_work_item_count);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == hr2, "Got unexpected hr2 %#x.\n", hr2);
+    check_image_info(&image_info, test_image, __LINE__);
 
     hr2 = 0xdeadbeef;
     hr = D3DX10GetImageInfoFromFileW(NULL, NULL, &image_info, &hr2);
