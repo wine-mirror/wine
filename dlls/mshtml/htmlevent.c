@@ -67,6 +67,7 @@ typedef enum {
     EVENT_TYPE_FOCUS,
     EVENT_TYPE_DRAG,
     EVENT_TYPE_MESSAGE,
+    EVENT_TYPE_PROGRESS,
     EVENT_TYPE_CLIPBOARD
 } event_type_t;
 
@@ -78,6 +79,7 @@ static const WCHAR *event_types[] = {
     L"Event", /* FIXME */
     L"Event", /* FIXME */
     L"Event", /* FIXME */
+    L"ProgressEvent",
     L"Event"  /* FIXME */
 };
 
@@ -185,6 +187,8 @@ static const event_info_t event_info[] = {
         EVENT_FIXME | EVENT_BUBBLES | EVENT_CANCELABLE},
     {L"submit",            EVENT_TYPE_EVENT,     DISPID_EVMETH_ONSUBMIT,
         EVENT_DEFAULTLISTENER | EVENT_HASDEFAULTHANDLERS | EVENT_BUBBLES | EVENT_CANCELABLE},
+    {L"timeout",           EVENT_TYPE_PROGRESS,  DISPID_EVPROP_TIMEOUT,
+        EVENT_BIND_TO_TARGET},
     {L"unload",            EVENT_TYPE_UIEVENT,   DISPID_EVMETH_ONUNLOAD,
         EVENT_FIXME}
 };
@@ -2286,6 +2290,122 @@ static void DOMMessageEvent_destroy(DOMEvent *event)
     heap_free(message_event->data);
 }
 
+typedef struct {
+    DOMEvent event;
+    IDOMProgressEvent IDOMProgressEvent_iface;
+} DOMProgressEvent;
+
+static inline DOMProgressEvent *impl_from_IDOMProgressEvent(IDOMProgressEvent *iface)
+{
+    return CONTAINING_RECORD(iface, DOMProgressEvent, IDOMProgressEvent_iface);
+}
+
+static HRESULT WINAPI DOMProgressEvent_QueryInterface(IDOMProgressEvent *iface, REFIID riid, void **ppv)
+{
+    DOMProgressEvent *This = impl_from_IDOMProgressEvent(iface);
+    return IDOMEvent_QueryInterface(&This->event.IDOMEvent_iface, riid, ppv);
+}
+
+static ULONG WINAPI DOMProgressEvent_AddRef(IDOMProgressEvent *iface)
+{
+    DOMProgressEvent *This = impl_from_IDOMProgressEvent(iface);
+    return IDOMEvent_AddRef(&This->event.IDOMEvent_iface);
+}
+
+static ULONG WINAPI DOMProgressEvent_Release(IDOMProgressEvent *iface)
+{
+    DOMProgressEvent *This = impl_from_IDOMProgressEvent(iface);
+    return IDOMEvent_Release(&This->event.IDOMEvent_iface);
+}
+
+static HRESULT WINAPI DOMProgressEvent_GetTypeInfoCount(IDOMProgressEvent *iface, UINT *pctinfo)
+{
+    DOMProgressEvent *This = impl_from_IDOMProgressEvent(iface);
+    return IDispatchEx_GetTypeInfoCount(&This->event.dispex.IDispatchEx_iface, pctinfo);
+}
+
+static HRESULT WINAPI DOMProgressEvent_GetTypeInfo(IDOMProgressEvent *iface, UINT iTInfo,
+                                                   LCID lcid, ITypeInfo **ppTInfo)
+{
+    DOMProgressEvent *This = impl_from_IDOMProgressEvent(iface);
+    return IDispatchEx_GetTypeInfo(&This->event.dispex.IDispatchEx_iface, iTInfo, lcid, ppTInfo);
+}
+
+static HRESULT WINAPI DOMProgressEvent_GetIDsOfNames(IDOMProgressEvent *iface, REFIID riid,
+        LPOLESTR *rgszNames, UINT cNames, LCID lcid, DISPID *rgDispId)
+{
+    DOMProgressEvent *This = impl_from_IDOMProgressEvent(iface);
+    return IDispatchEx_GetIDsOfNames(&This->event.dispex.IDispatchEx_iface, riid, rgszNames, cNames,
+            lcid, rgDispId);
+}
+
+static HRESULT WINAPI DOMProgressEvent_Invoke(IDOMProgressEvent *iface, DISPID dispIdMember,
+        REFIID riid, LCID lcid, WORD wFlags, DISPPARAMS *pDispParams, VARIANT *pVarResult,
+        EXCEPINFO *pExcepInfo, UINT *puArgErr)
+{
+    DOMProgressEvent *This = impl_from_IDOMProgressEvent(iface);
+    return IDispatchEx_Invoke(&This->event.dispex.IDispatchEx_iface, dispIdMember, riid, lcid,
+            wFlags, pDispParams, pVarResult, pExcepInfo, puArgErr);
+}
+
+static HRESULT WINAPI DOMProgressEvent_get_lengthComputable(IDOMProgressEvent *iface, VARIANT_BOOL *p)
+{
+    DOMProgressEvent *This = impl_from_IDOMProgressEvent(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMProgressEvent_get_loaded(IDOMProgressEvent *iface, ULONGLONG *p)
+{
+    DOMProgressEvent *This = impl_from_IDOMProgressEvent(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMProgressEvent_get_total(IDOMProgressEvent *iface, ULONGLONG *p)
+{
+    DOMProgressEvent *This = impl_from_IDOMProgressEvent(iface);
+    FIXME("(%p)->(%p)\n", This, p);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI DOMProgressEvent_initProgressEvent(IDOMProgressEvent *iface, BSTR type, VARIANT_BOOL can_bubble,
+                                                         VARIANT_BOOL cancelable, VARIANT_BOOL lengthComputable,
+                                                         ULONGLONG loaded, ULONGLONG total)
+{
+    DOMProgressEvent *This = impl_from_IDOMProgressEvent(iface);
+    FIXME("(%p)->(%s %x %x %x %s %s)\n", This, debugstr_w(type), can_bubble, cancelable, lengthComputable,
+          wine_dbgstr_longlong(loaded), wine_dbgstr_longlong(total));
+    return E_NOTIMPL;
+}
+
+static const IDOMProgressEventVtbl DOMProgressEventVtbl = {
+    DOMProgressEvent_QueryInterface,
+    DOMProgressEvent_AddRef,
+    DOMProgressEvent_Release,
+    DOMProgressEvent_GetTypeInfoCount,
+    DOMProgressEvent_GetTypeInfo,
+    DOMProgressEvent_GetIDsOfNames,
+    DOMProgressEvent_Invoke,
+    DOMProgressEvent_get_lengthComputable,
+    DOMProgressEvent_get_loaded,
+    DOMProgressEvent_get_total,
+    DOMProgressEvent_initProgressEvent
+};
+
+static DOMProgressEvent *DOMProgressEvent_from_DOMEvent(DOMEvent *event)
+{
+    return CONTAINING_RECORD(event, DOMProgressEvent, event);
+}
+
+static void *DOMProgressEvent_query_interface(DOMEvent *event, REFIID riid)
+{
+    DOMProgressEvent *This = DOMProgressEvent_from_DOMEvent(event);
+    if(IsEqualGUID(&IID_IDOMProgressEvent, riid))
+        return &This->IDOMProgressEvent_iface;
+    return NULL;
+}
+
 static const tid_t DOMEvent_iface_tids[] = {
     IDOMEvent_tid,
     0
@@ -2365,6 +2485,19 @@ dispex_static_data_t DOMMessageEvent_dispex = {
     DOMMessageEvent_iface_tids
 };
 
+static const tid_t DOMProgressEvent_iface_tids[] = {
+    IDOMEvent_tid,
+    IDOMProgressEvent_tid,
+    0
+};
+
+dispex_static_data_t DOMProgressEvent_dispex = {
+    L"ProgressEvent",
+    NULL,
+    DispDOMProgressEvent_tid,
+    DOMProgressEvent_iface_tids
+};
+
 static BOOL check_event_iface(nsIDOMEvent *event, REFIID riid)
 {
     nsISupports *iface;
@@ -2404,6 +2537,15 @@ static DOMEvent *alloc_event(nsIDOMEvent *nsevent, compat_mode_t compat_mode, ev
         message_event->event.destroy = DOMMessageEvent_destroy;
         event = &message_event->event;
         dispex_data = &DOMMessageEvent_dispex;
+    }else if(event_info[event_id].type == EVENT_TYPE_PROGRESS && compat_mode >= COMPAT_MODE_IE10) {
+        DOMProgressEvent *progress_event = heap_alloc_zero(sizeof(*progress_event));
+        if(!progress_event)
+            return NULL;
+
+        progress_event->IDOMProgressEvent_iface.lpVtbl = &DOMProgressEventVtbl;
+        progress_event->event.query_interface = DOMProgressEvent_query_interface;
+        event = &progress_event->event;
+        dispex_data = &DOMProgressEvent_dispex;
     }else {
         event = heap_alloc_zero(sizeof(*event));
         if(!event)

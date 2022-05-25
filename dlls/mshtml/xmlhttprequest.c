@@ -97,6 +97,7 @@ static HRESULT return_nscstr(nsresult nsres, nsACString *nscstr, BSTR *p)
 static const eventid_t events[] = {
     EVENTID_READYSTATECHANGE,
     EVENTID_LOAD,
+    EVENTID_TIMEOUT,
 };
 
 typedef struct {
@@ -812,18 +813,18 @@ static HRESULT WINAPI HTMLXMLHttpRequest2_put_ontimeout(IHTMLXMLHttpRequest2 *if
 {
     HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest2(iface);
 
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return E_NOTIMPL;
+    return set_event_handler(&This->event_target, EVENTID_TIMEOUT, &v);
 }
 
 static HRESULT WINAPI HTMLXMLHttpRequest2_get_ontimeout(IHTMLXMLHttpRequest2 *iface, VARIANT *p)
 {
     HTMLXMLHttpRequest *This = impl_from_IHTMLXMLHttpRequest2(iface);
 
-    FIXME("(%p)->(%p)\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    return E_NOTIMPL;
+    return get_event_handler(&This->event_target, EVENTID_TIMEOUT, p);
 }
 
 static const IHTMLXMLHttpRequest2Vtbl HTMLXMLHttpRequest2Vtbl = {

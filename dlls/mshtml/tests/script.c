@@ -3046,10 +3046,22 @@ typedef struct {
     IStream *stream;
     char *data;
     ULONG size;
+    LONG delay;
     char *ptr;
 
     IUri *uri;
 } ProtocolHandler;
+
+static DWORD WINAPI delay_proc(void *arg)
+{
+    PROTOCOLDATA protocol_data = {PI_FORCE_ASYNC};
+    ProtocolHandler *protocol_handler = arg;
+
+    Sleep(protocol_handler->delay);
+    protocol_handler->delay = -1;
+    IInternetProtocolSink_Switch(protocol_handler->sink, &protocol_data);
+    return 0;
+}
 
 static void report_data(ProtocolHandler *This)
 {
@@ -3061,27 +3073,36 @@ static void report_data(ProtocolHandler *This)
 
     static const WCHAR emptyW[] = {0};
 
-    hres = IInternetProtocolSink_QueryInterface(This->sink, &IID_IServiceProvider, (void**)&service_provider);
-    ok(hres == S_OK, "Could not get IServiceProvider iface: %08lx\n", hres);
+    if(This->delay >= 0) {
+        hres = IInternetProtocolSink_QueryInterface(This->sink, &IID_IServiceProvider, (void**)&service_provider);
+        ok(hres == S_OK, "Could not get IServiceProvider iface: %08lx\n", hres);
 
-    hres = IServiceProvider_QueryService(service_provider, &IID_IHttpNegotiate, &IID_IHttpNegotiate, (void**)&http_negotiate);
-    IServiceProvider_Release(service_provider);
-    ok(hres == S_OK, "Could not get IHttpNegotiate interface: %08lx\n", hres);
+        hres = IServiceProvider_QueryService(service_provider, &IID_IHttpNegotiate, &IID_IHttpNegotiate, (void**)&http_negotiate);
+        IServiceProvider_Release(service_provider);
+        ok(hres == S_OK, "Could not get IHttpNegotiate interface: %08lx\n", hres);
 
-    hres = IUri_GetDisplayUri(This->uri, &url);
-    ok(hres == S_OK, "Failed to get display uri: %08lx\n", hres);
-    hres = IHttpNegotiate_BeginningTransaction(http_negotiate, url, emptyW, 0, &addl_headers);
-    ok(hres == S_OK, "BeginningTransaction failed: %08lx\n", hres);
-    SysFreeString(url);
+        hres = IUri_GetDisplayUri(This->uri, &url);
+        ok(hres == S_OK, "Failed to get display uri: %08lx\n", hres);
+        hres = IHttpNegotiate_BeginningTransaction(http_negotiate, url, emptyW, 0, &addl_headers);
+        ok(hres == S_OK, "BeginningTransaction failed: %08lx\n", hres);
+        SysFreeString(url);
 
-    CoTaskMemFree(addl_headers);
+        CoTaskMemFree(addl_headers);
 
-    headers = SysAllocString(L"HTTP/1.1 200 OK\r\n\r\n");
-    hres = IHttpNegotiate_OnResponse(http_negotiate, 200, headers, NULL, NULL);
-    ok(hres == S_OK, "OnResponse failed: %08lx\n", hres);
-    SysFreeString(headers);
+        headers = SysAllocString(L"HTTP/1.1 200 OK\r\n\r\n");
+        hres = IHttpNegotiate_OnResponse(http_negotiate, 200, headers, NULL, NULL);
+        ok(hres == S_OK, "OnResponse failed: %08lx\n", hres);
+        SysFreeString(headers);
 
-    IHttpNegotiate_Release(http_negotiate);
+        IHttpNegotiate_Release(http_negotiate);
+
+        if(This->delay) {
+            IInternetProtocolEx_AddRef(&This->IInternetProtocolEx_iface);
+            QueueUserWorkItem(delay_proc, This, 0);
+            return;
+        }
+    }
+    This->delay = 0;
 
     hres = IInternetProtocolSink_ReportData(This->sink, BSCF_FIRSTDATANOTIFICATION | BSCF_LASTDATANOTIFICATION,
                                             This->size, This->size);
@@ -3250,6 +3271,12 @@ static HRESULT WINAPI Protocol_Continue(IInternetProtocolEx *iface, PROTOCOLDATA
 
 static HRESULT WINAPI Protocol_Abort(IInternetProtocolEx *iface, HRESULT hrReason, DWORD dwOptions)
 {
+    ProtocolHandler *This = impl_from_IInternetProtocolEx(iface);
+    if(This->delay > 0) {
+        ok(hrReason == E_ABORT, "Abort hrReason = %08lx\n", hrReason);
+        ok(dwOptions == 0, "Abort dwOptions = %lx\n", dwOptions);
+        return S_OK;
+    }
     trace("Abort(%08lx %lx)\n", hrReason, dwOptions);
     return E_NOTIMPL;
 }
@@ -3322,8 +3349,8 @@ static HRESULT WINAPI ProtocolEx_StartEx(IInternetProtocolEx *iface, IUri *uri, 
 {
     ProtocolHandler *This = impl_from_IInternetProtocolEx(iface);
     BOOL block = FALSE;
+    BSTR path, query;
     DWORD bindf;
-    BSTR path;
     HRSRC src;
     HRESULT hres;
 
@@ -3390,6 +3417,13 @@ static HRESULT WINAPI ProtocolEx_StartEx(IInternetProtocolEx *iface, IUri *uri, 
     SysFreeString(path);
     if(FAILED(hres))
         return hres;
+
+    hres = IUri_GetQuery(uri, &query);
+    if(SUCCEEDED(hres)) {
+        if(!lstrcmpW(query, L"?delay"))
+            This->delay = 1000;
+        SysFreeString(query);
+    }
 
     IInternetProtocolSink_AddRef(This->sink = pOIProtSink);
     IUri_AddRef(This->uri = uri);
@@ -3723,6 +3757,7 @@ static void run_js_tests(void)
     init_protocol_handler();
 
     run_script_as_http_with_mode("xhr.js", NULL, "9");
+    run_script_as_http_with_mode("xhr.js", NULL, "10");
     run_script_as_http_with_mode("xhr.js", NULL, "11");
     run_script_as_http_with_mode("dom.js", NULL, "11");
     run_script_as_http_with_mode("es5.js", NULL, "11");
