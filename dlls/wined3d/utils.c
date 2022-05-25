@@ -6133,8 +6133,10 @@ void wined3d_format_convert_from_float(const struct wined3d_format *format,
         return;
     }
 
-    /* 32 bit float formats. We don't handle D32_FLOAT and D32_FLOAT_S8X24_UINT for now. */
-    if ((format->attrs & WINED3D_FORMAT_ATTR_FLOAT) && format->red_size == 32)
+    /* 32 bit float formats. We don't handle D32_FLOAT_S8X24_UINT for now. */
+    if ((format->attrs & WINED3D_FORMAT_ATTR_FLOAT)
+            && (format->red_size == 32 || format->depth_size == 32)
+            && !format->stencil_size)
     {
         float *ret_f = ret;
 
