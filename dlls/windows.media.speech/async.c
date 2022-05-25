@@ -93,6 +93,21 @@ ULONG WINAPI async_void_Release( IAsyncAction *iface )
     struct async_void *impl = impl_from_IAsyncAction(iface);
     ULONG ref = InterlockedDecrement(&impl->ref);
     TRACE("iface %p, ref %lu.\n", iface, ref);
+
+    if (!ref)
+    {
+        IAsyncInfo_Close(&impl->IAsyncInfo_iface);
+
+        if (impl->invoker)
+            IInspectable_Release(impl->invoker);
+        if (impl->handler && impl->handler != HANDLER_NOT_SET)
+            IAsyncActionCompletedHandler_Release(impl->handler);
+
+        impl->cs.DebugInfo->Spare[0] = 0;
+        DeleteCriticalSection(&impl->cs);
+        free(impl);
+    }
+
     return ref;
 }
 
@@ -127,7 +142,7 @@ HRESULT WINAPI async_void_put_Completed( IAsyncAction *iface, IAsyncActionComple
     else if (impl->handler != HANDLER_NOT_SET)
         hr = E_ILLEGAL_DELEGATE_ASSIGNMENT;
     /*
-        impl->handler can only be set once with async_operation_put_Completed,
+        impl->handler can only be set once with async_void_put_Completed,
         so by default we set a non HANDLER_NOT_SET value, in this case handler.
     */
     else if ((impl->handler = handler))
@@ -445,6 +460,7 @@ static ULONG WINAPI async_inspectable_Release( IAsyncOperation_IInspectable *ifa
         if (impl->result)
             IInspectable_Release(impl->result);
 
+        impl->cs.DebugInfo->Spare[0] = 0;
         DeleteCriticalSection(&impl->cs);
         free(impl);
     }
