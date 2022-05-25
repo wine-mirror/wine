@@ -564,18 +564,6 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
                 continue;
             }
         }
-        if (ppfd->cDepthBits && !(ppfd->dwFlags & PFD_DEPTH_DONTCARE))
-        {
-            if (((ppfd->cDepthBits > best.cDepthBits) && (format.cDepthBits > best.cDepthBits)) ||
-                ((format.cDepthBits >= ppfd->cDepthBits) && (format.cDepthBits < best.cDepthBits)))
-                goto found;
-
-            if (best.cDepthBits != format.cDepthBits)
-            {
-                TRACE( "depth mismatch for iPixelFormat=%d\n", i );
-                continue;
-            }
-        }
         if (ppfd->cStencilBits)
         {
             if (((ppfd->cStencilBits > best.cStencilBits) && (format.cStencilBits > best.cStencilBits)) ||
@@ -585,6 +573,18 @@ INT WINAPI wglChoosePixelFormat(HDC hdc, const PIXELFORMATDESCRIPTOR* ppfd)
             if (best.cStencilBits != format.cStencilBits)
             {
                 TRACE( "stencil mismatch for iPixelFormat=%d\n", i );
+                continue;
+            }
+        }
+        if (ppfd->cDepthBits && !(ppfd->dwFlags & PFD_DEPTH_DONTCARE))
+        {
+            if (((ppfd->cDepthBits > best.cDepthBits) && (format.cDepthBits > best.cDepthBits)) ||
+                ((format.cDepthBits >= ppfd->cDepthBits) && (format.cDepthBits < best.cDepthBits)))
+                goto found;
+
+            if (best.cDepthBits != format.cDepthBits)
+            {
+                TRACE( "depth mismatch for iPixelFormat=%d\n", i );
                 continue;
             }
         }
