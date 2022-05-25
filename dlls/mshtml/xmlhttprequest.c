@@ -94,12 +94,16 @@ static HRESULT return_nscstr(nsresult nsres, nsACString *nscstr, BSTR *p)
     return S_OK;
 }
 
+static const eventid_t events[] = {
+    EVENTID_READYSTATECHANGE,
+    EVENTID_LOAD,
+};
+
 typedef struct {
     nsIDOMEventListener nsIDOMEventListener_iface;
     LONG ref;
     HTMLXMLHttpRequest *xhr;
-    BOOL readystatechange_event;
-    BOOL load_event;
+    DWORD events_mask;
 } XMLHttpReqEventListener;
 
 struct HTMLXMLHttpRequest {
@@ -115,21 +119,17 @@ struct HTMLXMLHttpRequest {
 static void detach_xhr_event_listener(XMLHttpReqEventListener *event_listener)
 {
     nsIDOMEventTarget *event_target;
+    DWORD events_mask, i;
     nsAString str;
     nsresult nsres;
 
     nsres = nsIXMLHttpRequest_QueryInterface(event_listener->xhr->nsxhr, &IID_nsIDOMEventTarget, (void**)&event_target);
     assert(nsres == NS_OK);
 
-    if(event_listener->readystatechange_event) {
-        nsAString_InitDepend(&str, L"onreadystatechange");
-        nsres = nsIDOMEventTarget_RemoveEventListener(event_target, &str, &event_listener->nsIDOMEventListener_iface, FALSE);
-        nsAString_Finish(&str);
-        assert(nsres == NS_OK);
-    }
-
-    if(event_listener->load_event) {
-        nsAString_InitDepend(&str, L"load");
+    for(events_mask = event_listener->events_mask, i = 0; events_mask; events_mask >>= 1, i++) {
+        if(!(events_mask & 1))
+            continue;
+        nsAString_InitDepend(&str, get_event_name(events[i]));
         nsres = nsIDOMEventTarget_RemoveEventListener(event_target, &str, &event_listener->nsIDOMEventListener_iface, FALSE);
         nsAString_Finish(&str);
         assert(nsres == NS_OK);
@@ -941,22 +941,18 @@ static void HTMLXMLHttpRequest_bind_event(DispatchEx *dispex, eventid_t eid)
 {
     HTMLXMLHttpRequest *This = impl_from_DispatchEx(dispex);
     nsIDOMEventTarget *nstarget;
-    const WCHAR *type_name;
     nsAString type_str;
+    const WCHAR *name;
     nsresult nsres;
+    unsigned i;
 
     TRACE("(%p)\n", This);
 
-    switch(eid) {
-    case EVENTID_READYSTATECHANGE:
-        type_name = L"readystatechange";
-        break;
-    case EVENTID_LOAD:
-        type_name = L"load";
-        break;
-    default:
+    for(i = 0; i < ARRAY_SIZE(events); i++)
+        if(eid == events[i])
+            break;
+    if(i >= ARRAY_SIZE(events))
         return;
-    }
 
     if(!This->event_listener) {
         This->event_listener = heap_alloc(sizeof(*This->event_listener));
@@ -966,25 +962,22 @@ static void HTMLXMLHttpRequest_bind_event(DispatchEx *dispex, eventid_t eid)
         This->event_listener->nsIDOMEventListener_iface.lpVtbl = &XMLHttpReqEventListenerVtbl;
         This->event_listener->ref = 1;
         This->event_listener->xhr = This;
-        This->event_listener->readystatechange_event = FALSE;
-        This->event_listener->load_event = FALSE;
+        This->event_listener->events_mask = 0;
     }
 
     nsres = nsIXMLHttpRequest_QueryInterface(This->nsxhr, &IID_nsIDOMEventTarget, (void**)&nstarget);
     assert(nsres == NS_OK);
 
-    nsAString_InitDepend(&type_str, type_name);
+    name = get_event_name(events[i]);
+    nsAString_InitDepend(&type_str, name);
     nsres = nsIDOMEventTarget_AddEventListener(nstarget, &type_str, &This->event_listener->nsIDOMEventListener_iface, FALSE, TRUE, 2);
     nsAString_Finish(&type_str);
     if(NS_FAILED(nsres))
-        ERR("AddEventListener(%s) failed: %08lx\n", debugstr_w(type_name), nsres);
+        ERR("AddEventListener(%s) failed: %08lx\n", debugstr_w(name), nsres);
 
     nsIDOMEventTarget_Release(nstarget);
 
-    if(eid == EVENTID_READYSTATECHANGE)
-        This->event_listener->readystatechange_event = TRUE;
-    else
-        This->event_listener->load_event = TRUE;
+    This->event_listener->events_mask |= 1 << i;
 }
 
 static void HTMLXMLHttpRequest_init_dispex_info(dispex_data_t *info, compat_mode_t compat_mode)

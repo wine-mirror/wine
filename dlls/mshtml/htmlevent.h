@@ -93,6 +93,7 @@ typedef struct DOMEvent {
     BOOL no_event_obj;
 } DOMEvent;
 
+const WCHAR *get_event_name(eventid_t) DECLSPEC_HIDDEN;
 void check_event_attr(HTMLDocumentNode*,nsIDOMElement*) DECLSPEC_HIDDEN;
 void release_event_target(EventTarget*) DECLSPEC_HIDDEN;
 HRESULT set_event_handler(EventTarget*,eventid_t,VARIANT*) DECLSPEC_HIDDEN;

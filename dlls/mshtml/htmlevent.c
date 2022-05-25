@@ -226,6 +226,11 @@ static eventid_t attr_to_eid(const WCHAR *str)
     return EVENTID_LAST;
 }
 
+const WCHAR *get_event_name(eventid_t eid)
+{
+    return event_info[eid].name;
+}
+
 static listener_container_t *get_listener_container(EventTarget *event_target, const WCHAR *type, BOOL alloc)
 {
     const event_target_vtbl_t *vtbl;
