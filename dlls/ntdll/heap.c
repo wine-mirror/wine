@@ -122,6 +122,7 @@ typedef struct
 #define ALIGNMENT              (2*sizeof(void*))
 #define LARGE_ALIGNMENT        16  /* large blocks have stricter alignment */
 #define ARENA_OFFSET           (ALIGNMENT - sizeof(ARENA_INUSE))
+#define COMMIT_MASK            0xffff  /* bitmask for commit/decommit granularity */
 
 C_ASSERT( sizeof(ARENA_LARGE) % LARGE_ALIGNMENT == 0 );
 
@@ -162,7 +163,6 @@ struct tagHEAP;
 
 typedef struct tagSUBHEAP
 {
-    void               *base;       /* Base address of the sub-heap memory block */
     SIZE_T              size;       /* Size of the whole sub-heap */
     SIZE_T              min_commit; /* Minimum committed size */
     SIZE_T              commitSize; /* Committed size of the sub-heap */
@@ -199,10 +199,11 @@ typedef struct tagHEAP
     SUBHEAP          subheap;
 } HEAP;
 
+C_ASSERT( offsetof(HEAP, subheap) <= COMMIT_MASK );
+
 #define HEAP_MAGIC       ((DWORD)('H' | ('E'<<8) | ('A'<<16) | ('P'<<24)))
 
 #define HEAP_DEF_SIZE        0x110000   /* Default heap size = 1Mb + 64Kb */
-#define COMMIT_MASK          0xffff  /* bitmask for commit/decommit granularity */
 #define MAX_FREE_PENDING     1024    /* max number of free requests to delay */
 
 /* some undocumented flags (names are made up) */
@@ -263,7 +264,7 @@ static inline void block_set_size( struct block *block, UINT flags, UINT block_s
 
 static inline void *subheap_base( const SUBHEAP *subheap )
 {
-    return subheap->base;
+    return ROUND_ADDR( subheap, COMMIT_MASK );
 }
 
 static inline SIZE_T subheap_size( const SUBHEAP *subheap )
@@ -301,7 +302,7 @@ static inline struct block *next_block( const SUBHEAP *subheap, const struct blo
 
 static inline BOOL check_subheap( const SUBHEAP *subheap )
 {
-    const char *base = subheap->base;
+    const char *base = ROUND_ADDR( subheap, COMMIT_MASK );
     return contains( base, subheap->size, base + subheap->headerSize, subheap->commitSize - subheap->headerSize );
 }
 
@@ -936,7 +937,6 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         /* If this is a secondary subheap, insert it into list */
 
         subheap = address;
-        subheap->base       = address;
         subheap->heap       = heap;
         subheap->size       = totalSize;
         subheap->min_commit = 0x10000;
@@ -960,7 +960,6 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         list_init( &heap->large_list );
 
         subheap = &heap->subheap;
-        subheap->base       = address;
         subheap->heap       = heap;
         subheap->size       = totalSize;
         subheap->min_commit = commitSize;
@@ -1476,13 +1475,13 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
         notify_free_all( subheap );
         list_remove( &subheap->entry );
         size = 0;
-        addr = subheap->base;
+        addr = ROUND_ADDR( subheap, COMMIT_MASK );
         NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
     }
     notify_free_all( &heapPtr->subheap );
     RtlFreeHeap( GetProcessHeap(), 0, heapPtr->pending_free );
     size = 0;
-    addr = heapPtr->subheap.base;
+    addr = heap;
     NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
     return 0;
 }
