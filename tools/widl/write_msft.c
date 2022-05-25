@@ -1056,7 +1056,7 @@ static int encode_var(
          var, type, type->name ? type->name : "NULL");
 
     if (is_array(type) && !type_array_is_decl_as_ptr(type)) {
-        int num_dims, elements = 1, arrayoffset;
+        int num_dims, arrayoffset;
         type_t *atype;
         int *arraydata;
 
@@ -1083,7 +1083,6 @@ static int encode_var(
             arraydata[0] = type_array_get_dim(atype);
             arraydata[1] = 0;
             arraydata += 2;
-            elements *= type_array_get_dim(atype);
         }
 
         typeoffset = ctl2_alloc_segment(typelib, MSFT_SEG_TYPEDESC, 8, 0);
