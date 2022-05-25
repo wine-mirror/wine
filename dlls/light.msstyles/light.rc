@@ -402,6 +402,135 @@ BLUE_INI TEXTFILE
 "[Menu]\r\n"
 "BgType = None\r\n"
 
+"[Menu.BarBackground]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 0\r\n"
+"FillType = Solid\r\n"
+"FillColor = 255 255 255\r\n"
+
+"[Menu.BarItem]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 0\r\n"
+"FillType = Solid\r\n"
+"FillColor = 255 255 255\r\n"
+"TextColor = 0 0 0\r\n"
+
+"[Menu.BarItem(Hot)]\r\n"
+"FillColor = 48 150 250\r\n"
+"TextColor = 255 255 255\r\n"
+
+"[Menu.BarItem(Pushed)]\r\n"
+"FillColor = 48 150 250\r\n"
+"TextColor = 255 255 255\r\n"
+
+"[Menu.BarItem(Disabled)]\r\n"
+"FillColor = 255 255 255\r\n"
+"TextColor = 166 166 166\r\n"
+
+"[Menu.BarItem(DisabledHot)]\r\n"
+"FillColor = 255 255 255\r\n"
+"TextColor = 166 166 166\r\n"
+
+"[Menu.BarItem(DisabledPushed)]\r\n"
+"FillColor = 255 255 255\r\n"
+"TextColor = 166 166 166\r\n"
+
+"[Menu.PopupBackground]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 0\r\n"
+"FillType = Solid\r\n"
+"FillColor = 255 255 255\r\n"
+
+"[Menu.PopupBorders]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 1\r\n"
+"FillColor = 255 255 255\r\n"
+"BorderColor = 174 174 174\r\n"
+
+"[Menu.PopupCheck]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile1 = blue_menu_popup_check_16px.bmp\r\n"
+"ImageFile2 = blue_menu_popup_check_18px.bmp\r\n"
+"ContentMargins = 3, 3, 3, 3\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 4\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+
+"[Menu.PopupCheckBackground]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 0\r\n"
+"FillType = Solid\r\n"
+"FillColor = 255 255 255\r\n"
+
+"[Menu.PopupGutter]\r\n"
+"BgType = None\r\n"
+
+"[Menu.PopupItem]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 0\r\n"
+"FillType = Solid\r\n"
+"FillColor = 255 255 255\r\n"
+"TextColor = 0 0 0\r\n"
+
+"[Menu.PopupItem(Hot)]\r\n"
+"FillColor = 48 150 250\r\n"
+"TextColor = 255 255 255\r\n"
+
+"[Menu.PopupItem(Disabled)]\r\n"
+"FillColor = 255 255 255\r\n"
+"TextColor = 166 166 166\r\n"
+
+"[Menu.PopupItem(DisabledHot)]\r\n"
+"FillColor = 255 255 255\r\n"
+"TextColor = 166 166 166\r\n"
+
+"[Menu.PopupSeparator]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_menu_popup_separator.bmp\r\n"
+"MinSize = 1, 4\r\n"
+"SizingMargins = 0, 0, 3, 1\r\n"
+"SizingType = Stretch\r\n"
+
+"[Menu.PopupSubmenu]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_menu_popup_submenu.bmp\r\n"
+"ImageCount = 2\r\n"
+"SizingMargins = 2, 7, 3, 3\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+
+"[Menu.SystemClose]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_menu_system_close.bmp\r\n"
+"ImageCount = 2\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+
+"[Menu.SystemMaximize]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_menu_system_maximize.bmp\r\n"
+"ImageCount = 2\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+
+"[Menu.SystemMinimize]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_menu_system_minimize.bmp\r\n"
+"ImageCount = 2\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+
+"[Menu.SystemRestore]\r\n"
+"BgType = ImageFile\r\n"
+"ImageFile = blue_menu_system_restore.bmp\r\n"
+"ImageCount = 2\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+
 "\r\n; Progress\r\n"
 "[Progress]\r\n"
 "ProgressChunkSize = 1\r\n"
@@ -1278,6 +1407,31 @@ BLUE_HEADER_BMP BITMAP "blue_header.bmp"
 
 /* @makedep: blue_header_item.bmp */
 BLUE_HEADER_ITEM_BMP BITMAP "blue_header_item.bmp"
+
+/* Menu */
+/* @makedep: blue_menu_popup_check_16px.bmp */
+BLUE_MENU_POPUP_CHECK_16PX_BMP BITMAP "blue_menu_popup_check_16px.bmp"
+
+/* @makedep: blue_menu_popup_check_18px.bmp */
+BLUE_MENU_POPUP_CHECK_18PX_BMP BITMAP "blue_menu_popup_check_18px.bmp"
+
+/* @makedep: blue_menu_popup_separator.bmp */
+BLUE_MENU_POPUP_SEPARATOR_BMP BITMAP "blue_menu_popup_separator.bmp"
+
+/* @makedep: blue_menu_popup_submenu.bmp */
+BLUE_MENU_POPUP_SUBMENU_BMP BITMAP "blue_menu_popup_submenu.bmp"
+
+/* @makedep: blue_menu_system_close.bmp */
+BLUE_MENU_SYSTEM_CLOSE_BMP BITMAP "blue_menu_system_close.bmp"
+
+/* @makedep: blue_menu_system_maximize.bmp */
+BLUE_MENU_SYSTEM_MAXIMIZE_BMP BITMAP "blue_menu_system_maximize.bmp"
+
+/* @makedep: blue_menu_system_minimize.bmp */
+BLUE_MENU_SYSTEM_MINIMIZE_BMP BITMAP "blue_menu_system_minimize.bmp"
+
+/* @makedep: blue_menu_system_restore.bmp */
+BLUE_MENU_SYSTEM_RESTORE_BMP BITMAP "blue_menu_system_restore.bmp"
 
 /* Progress */
 /* @makedep: blue_progress_chunk_horizontal.bmp */
