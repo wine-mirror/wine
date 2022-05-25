@@ -1164,7 +1164,7 @@ static BOOL init_pixel_formats(void)
     range = CFRangeMake(0, CFArrayGetCount(pixel_format_array));
     if (range.length)
     {
-        pixel_formats = HeapAlloc(GetProcessHeap(), 0, range.length * sizeof(*pixel_formats));
+        pixel_formats = malloc(range.length * sizeof(*pixel_formats));
         if (pixel_formats)
         {
             CFArraySortValues(pixel_format_array, range, pixel_format_comparator, NULL);
@@ -1273,7 +1273,7 @@ static BOOL init_gl_info(void)
     length = strlen(str) + sizeof(legacy_extensions);
     if (allow_vsync)
         length += strlen(legacy_ext_swap_control);
-    gl_info.glExtensions = HeapAlloc(GetProcessHeap(), 0, length);
+    gl_info.glExtensions = malloc(length);
     strcpy(gl_info.glExtensions, str);
     strcat(gl_info.glExtensions, legacy_extensions);
     if (allow_vsync)
@@ -1924,7 +1924,7 @@ static void get_fallback_renderer_version(GLuint *value)
             if (version && CFGetTypeID(version) == CFStringGetTypeID())
             {
                 size_t len = CFStringGetMaximumSizeForEncoding(CFStringGetLength(version), kCFStringEncodingUTF8);
-                char* buf = HeapAlloc(GetProcessHeap(), 0, len);
+                char* buf = malloc(len);
                 if (buf && CFStringGetCString(version, buf, len, kCFStringEncodingUTF8))
                 {
                     unsigned int major, minor, bugfix;
@@ -1940,7 +1940,7 @@ static void get_fallback_renderer_version(GLuint *value)
                         got_it = TRUE;
                     }
                 }
-                HeapFree(GetProcessHeap(), 0, buf);
+                free(buf);
             }
             CFRelease(bundle);
         }
@@ -2859,13 +2859,13 @@ static struct wgl_context *macdrv_wglCreateContextAttribsARB(HDC hdc,
         return NULL;
     }
 
-    if (!(context = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*context)))) return NULL;
+    if (!(context = calloc(1, sizeof(*context)))) return NULL;
 
     context->format = format;
     context->renderer_id = renderer_id;
     if (!create_context(context, share_context ? share_context->cglcontext : NULL, major))
     {
-        HeapFree(GetProcessHeap(), 0, context);
+        free(context);
         return NULL;
     }
 
@@ -2900,7 +2900,7 @@ static struct wgl_pbuffer *macdrv_wglCreatePbufferARB(HDC hdc, int iPixelFormat,
         return NULL;
     }
 
-    pbuffer = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*pbuffer));
+    pbuffer = calloc(1, sizeof(*pbuffer));
     pbuffer->format = iPixelFormat;
 
     for ( ; piAttribList && *piAttribList; piAttribList += 2)
@@ -3011,7 +3011,7 @@ static struct wgl_pbuffer *macdrv_wglCreatePbufferARB(HDC hdc, int iPixelFormat,
 done:
     if (!pbuffer->pbuffer)
     {
-        HeapFree(GetProcessHeap(), 0, pbuffer);
+        free(pbuffer);
         return NULL;
     }
 
@@ -3030,7 +3030,7 @@ static BOOL macdrv_wglDestroyPbufferARB(struct wgl_pbuffer *pbuffer)
     TRACE("pbuffer %p\n", pbuffer);
     if (pbuffer && pbuffer->pbuffer)
         CGLReleasePBuffer(pbuffer->pbuffer);
-    HeapFree(GetProcessHeap(), 0, pbuffer);
+    free(pbuffer);
     return GL_TRUE;
 }
 
@@ -3079,7 +3079,7 @@ static HDC macdrv_wglGetPbufferDCARB(struct wgl_pbuffer *pbuffer)
     if (prev)
     {
         CGLReleasePBuffer(prev->pbuffer);
-        HeapFree(GetProcessHeap(), 0, prev);
+        free(prev);
     }
     CFDictionarySetValue(dc_pbuffers, hdc, pbuffer);
     pthread_mutex_unlock(&dc_pbuffers_mutex);
@@ -3399,7 +3399,7 @@ static BOOL macdrv_wglGetPixelFormatAttribfvARB(HDC hdc, int iPixelFormat, int i
           hdc, iPixelFormat, iLayerPlane, nAttributes, piAttributes, pfValues);
 
     /* Allocate a temporary array to store integer values */
-    attr = HeapAlloc(GetProcessHeap(), 0, nAttributes * sizeof(int));
+    attr = malloc(nAttributes * sizeof(int));
     if (!attr)
     {
         ERR("couldn't allocate %d array\n", nAttributes);
@@ -3418,7 +3418,7 @@ static BOOL macdrv_wglGetPixelFormatAttribfvARB(HDC hdc, int iPixelFormat, int i
             pfValues[i] = attr[i];
     }
 
-    HeapFree(GetProcessHeap(), 0, attr);
+    free(attr);
     return ret;
 }
 
@@ -3925,7 +3925,7 @@ static int macdrv_wglReleasePbufferDCARB(struct wgl_pbuffer *pbuffer, HDC hdc)
         if (prev != pbuffer)
             FIXME("hdc %p isn't associated with pbuffer %p\n", hdc, pbuffer);
         CGLReleasePBuffer(prev->pbuffer);
-        HeapFree(GetProcessHeap(), 0, prev);
+        free(prev);
         CFDictionaryRemoveValue(dc_pbuffers, hdc);
     }
     else hdc = 0;
@@ -4403,7 +4403,8 @@ static BOOL WINAPI macdrv_wglDeleteContext(struct wgl_context *context)
     pthread_mutex_unlock(&context_mutex);
 
     macdrv_dispose_opengl_context(context->context);
-    return HeapFree(GetProcessHeap(), 0, context);
+    free(context);
+    return TRUE;
 }
 
 /***********************************************************************

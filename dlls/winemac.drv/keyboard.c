@@ -530,7 +530,7 @@ static void update_layout_list(void)
             CFStringRef type = CFDictionaryGetValue(dict, macdrv_input_source_type_key);
             CFStringRef lang = CFDictionaryGetValue(dict, macdrv_input_source_lang_key);
 
-            layout = HeapAlloc(GetProcessHeap(), 0, sizeof(*layout));
+            layout = malloc(sizeof(*layout));
             layout->input_source = (TISInputSourceRef)CFRetain(input);
             layout->hkl = get_hkl(lang, type);
 

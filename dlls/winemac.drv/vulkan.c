@@ -29,7 +29,6 @@
 
 #include "macdrv.h"
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 #define VK_NO_PROTOTYPES
 #define WINE_VK_HOST
@@ -157,7 +156,7 @@ static VkResult wine_vk_instance_convert_create_info(const VkInstanceCreateInfo 
 
     if (src->enabledExtensionCount > 0)
     {
-        enabled_extensions = heap_calloc(src->enabledExtensionCount, sizeof(*src->ppEnabledExtensionNames));
+        enabled_extensions = calloc(src->enabledExtensionCount, sizeof(*src->ppEnabledExtensionNames));
         if (!enabled_extensions)
         {
             ERR("Failed to allocate memory for enabled extensions\n");
@@ -199,7 +198,7 @@ static void wine_vk_surface_destroy(VkInstance instance, struct wine_vk_surface 
     if (surface->device)
         macdrv_release_metal_device(surface->device);
 
-    heap_free(surface);
+    free(surface);
 }
 
 static VkResult macdrv_vkCreateInstance(const VkInstanceCreateInfo *create_info,
@@ -225,7 +224,7 @@ static VkResult macdrv_vkCreateInstance(const VkInstanceCreateInfo *create_info,
 
     res = pvkCreateInstance(&create_info_host, NULL /* allocator */, instance);
 
-    heap_free((void *)create_info_host.ppEnabledExtensionNames);
+    free((void *)create_info_host.ppEnabledExtensionNames);
     return res;
 }
 
@@ -265,7 +264,7 @@ static VkResult macdrv_vkCreateWin32SurfaceKHR(VkInstance instance,
         return VK_ERROR_INCOMPATIBLE_DRIVER;
     }
 
-    mac_surface = heap_alloc_zero(sizeof(*mac_surface));
+    mac_surface = calloc(1, sizeof(*mac_surface));
     if (!mac_surface)
     {
         release_win_data(data);
