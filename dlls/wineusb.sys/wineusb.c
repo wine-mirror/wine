@@ -137,12 +137,11 @@ static void add_usb_interface(struct usb_device *parent, const struct libusb_int
     LeaveCriticalSection(&wineusb_cs);
 }
 
-static void add_unix_device(struct unix_device *unix_device)
+static void add_unix_device(const struct usb_add_device_event *event)
 {
     static const WCHAR formatW[] = {'\\','D','e','v','i','c','e','\\','U','S','B','P','D','O','-','%','u',0};
-    libusb_device *libusb_device = libusb_get_device(unix_device->handle);
+    libusb_device *libusb_device = libusb_get_device(event->device->handle);
     struct libusb_config_descriptor *config_desc;
-    struct libusb_device_descriptor device_desc;
     static unsigned int name_index;
     struct usb_device *device;
     DEVICE_OBJECT *device_obj;
@@ -151,10 +150,8 @@ static void add_unix_device(struct unix_device *unix_device)
     WCHAR name[26];
     int ret;
 
-    libusb_get_device_descriptor(libusb_device, &device_desc);
-
-    TRACE("Adding new device %p, vendor %04x, product %04x.\n", unix_device,
-            device_desc.idVendor, device_desc.idProduct);
+    TRACE("Adding new device %p, vendor %04x, product %04x.\n", event->device,
+            event->vendor, event->product);
 
     sprintfW(name, formatW, name_index++);
     RtlInitUnicodeString(&string, name);
@@ -167,16 +164,16 @@ static void add_unix_device(struct unix_device *unix_device)
 
     device = device_obj->DeviceExtension;
     device->device_obj = device_obj;
-    device->unix_device = unix_device;
+    device->unix_device = event->device;
     InitializeListHead(&device->irp_list);
     device->removed = FALSE;
 
-    device->class = device_desc.bDeviceClass;
-    device->subclass = device_desc.bDeviceSubClass;
-    device->protocol = device_desc.bDeviceProtocol;
-    device->vendor = device_desc.idVendor;
-    device->product = device_desc.idProduct;
-    device->revision = device_desc.bcdDevice;
+    device->class = event->class;
+    device->subclass = event->subclass;
+    device->protocol = event->protocol;
+    device->vendor = event->vendor;
+    device->product = event->product;
+    device->revision = event->revision;
 
     EnterCriticalSection(&wineusb_cs);
     list_add_tail(&device_list, &device->entry);
@@ -279,7 +276,7 @@ static DWORD CALLBACK event_thread_proc(void *arg)
         switch (event.type)
         {
             case USB_EVENT_ADD_DEVICE:
-                add_unix_device(event.u.added_device);
+                add_unix_device(&event.u.added_device);
                 break;
 
             case USB_EVENT_REMOVE_DEVICE:

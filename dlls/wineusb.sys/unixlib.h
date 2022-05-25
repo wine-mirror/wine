@@ -47,7 +47,12 @@ struct usb_event
 
     union
     {
-        struct unix_device *added_device;
+        struct usb_add_device_event
+        {
+            struct unix_device *device;
+            UINT16 vendor, product, revision;
+            UINT8 class, subclass, protocol;
+        } added_device;
         struct unix_device *removed_device;
         IRP *completed_irp;
     } u;

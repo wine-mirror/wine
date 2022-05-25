@@ -133,7 +133,13 @@ static void add_usb_device(libusb_device *libusb_device)
     pthread_mutex_unlock(&device_mutex);
 
     usb_event.type = USB_EVENT_ADD_DEVICE;
-    usb_event.u.added_device = unix_device;
+    usb_event.u.added_device.device = unix_device;
+    usb_event.u.added_device.vendor = device_desc.idVendor;
+    usb_event.u.added_device.product = device_desc.idProduct;
+    usb_event.u.added_device.revision = device_desc.bcdDevice;
+    usb_event.u.added_device.class = device_desc.bDeviceClass;
+    usb_event.u.added_device.subclass = device_desc.bDeviceSubClass;
+    usb_event.u.added_device.protocol = device_desc.bDeviceProtocol;
     queue_event(&usb_event);
 }
 
