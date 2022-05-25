@@ -214,7 +214,7 @@ static HRESULT STDMETHODCALLTYPE d2d_effect_context_LoadVertexShader(ID2D1Effect
 
     effect_context->shader_count++;
     shader = &effect_context->shaders[effect_context->shader_count - 1];
-    shader->id = shader_id;
+    shader->id = *shader_id;
     shader->shader = (IUnknown *)vertex_shader;
 
     return S_OK;

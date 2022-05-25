@@ -582,7 +582,7 @@ void d2d_device_init(struct d2d_device *device, ID2D1Factory1 *factory, IDXGIDev
 
 struct d2d_shader
 {
-    const GUID *id;
+    GUID id;
     IUnknown *shader;
 };
 
