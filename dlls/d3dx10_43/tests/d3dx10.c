@@ -1871,6 +1871,48 @@ static void test_D3DX10CreateAsyncResourceLoader(void)
     ok(hr == D3DX10_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
 }
 
+static void test_D3DX10CreateAsyncTextureInfoProcessor(void)
+{
+    ID3DX10DataProcessor *dp;
+    D3DX10_IMAGE_INFO info;
+    HRESULT hr;
+    int i;
+
+    CoInitialize(NULL);
+
+    hr = D3DX10CreateAsyncTextureInfoProcessor(NULL, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    hr = D3DX10CreateAsyncTextureInfoProcessor(&info, &dp);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10DataProcessor_Process(dp, (void *)test_image[0].data, 0);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    hr = ID3DX10DataProcessor_Process(dp, NULL, test_image[0].size);
+    ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(test_image); ++i)
+    {
+        winetest_push_context("Test %u", i);
+
+        hr = ID3DX10DataProcessor_Process(dp, (void *)test_image[i].data, test_image[i].size);
+        ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
+                "Got unexpected hr %#x.\n", hr);
+        if (hr == S_OK)
+            check_image_info(&info, test_image + i, __LINE__);
+
+        winetest_pop_context();
+    }
+
+    hr = ID3DX10DataProcessor_CreateDeviceObject(dp, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    hr = ID3DX10DataProcessor_Destroy(dp);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    CoUninitialize();
+}
+
 static void test_get_image_info(void)
 {
     static const WCHAR test_resource_name[] = L"resource.data";
@@ -3273,6 +3315,7 @@ START_TEST(d3dx10)
     test_D3DX10CreateAsyncMemoryLoader();
     test_D3DX10CreateAsyncFileLoader();
     test_D3DX10CreateAsyncResourceLoader();
+    test_D3DX10CreateAsyncTextureInfoProcessor();
     test_get_image_info();
     test_create_texture();
     test_font();
