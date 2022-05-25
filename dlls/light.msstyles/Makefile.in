@@ -24,6 +24,14 @@ SVG_SRCS = \
 	blue_groupbox.svg \
 	blue_header.svg \
 	blue_header_item.svg \
+	blue_menu_popup_check_16px.svg \
+	blue_menu_popup_check_18px.svg \
+	blue_menu_popup_separator.svg \
+	blue_menu_popup_submenu.svg \
+	blue_menu_system_close.svg \
+	blue_menu_system_maximize.svg \
+	blue_menu_system_minimize.svg \
+	blue_menu_system_restore.svg \
 	blue_progress_chunk_horizontal.svg \
 	blue_progress_chunk_vertical.svg \
 	blue_progress_track_horizontal.svg \
