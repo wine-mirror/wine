@@ -101,6 +101,7 @@ typedef	struct tagMIDIMAPDATA
     struct tagMIDIMAPDATA*	self;
     MIDIOUTPORT*	ChannelMap[16];
     MIDIOPENDESC	midiDesc;
+    BYTE		runningStatus;
     WORD		wCbFlags;
 } MIDIMAPDATA;
 
@@ -301,6 +302,7 @@ static DWORD modOpen(DWORD_PTR *lpdwUser, LPMIDIOPENDESC lpDesc, DWORD dwFlags)
 	mom->self = mom;
 	mom->wCbFlags = HIWORD(dwFlags & CALLBACK_TYPEMASK);
 	mom->midiDesc = *lpDesc;
+	mom->runningStatus = 0;
 
 	for (chn = 0; chn < 16; chn++)
 	{
@@ -380,6 +382,7 @@ static DWORD modLongData(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD_PTR dwPara
 	    if (ret != MMSYSERR_NOERROR) break;
 	}
     }
+    mom->runningStatus = 0;
     lpMidiHdr->dwFlags &= ~MHDR_INQUEUE;
     lpMidiHdr->dwFlags |= MHDR_DONE;
     MIDIMAP_NotifyClient(mom, MOM_DONE, (DWORD_PTR)lpMidiHdr, 0L);
@@ -388,16 +391,31 @@ static DWORD modLongData(MIDIMAPDATA* mom, LPMIDIHDR lpMidiHdr, DWORD_PTR dwPara
 
 static DWORD modData(MIDIMAPDATA* mom, DWORD_PTR dwParam)
 {
-    BYTE	lb = LOBYTE(LOWORD(dwParam));
-    WORD	chn = lb & 0x0F;
+    BYTE	status = LOBYTE(LOWORD(dwParam));
+    WORD	chn;
     DWORD	ret = MMSYSERR_NOERROR;
 
     if (MIDIMAP_IsBadData(mom))
 	return MMSYSERR_ERROR;
 
+    if (status < 0x80)
+    {
+        if (mom->runningStatus)
+        {
+            status = mom->runningStatus;
+            dwParam = ((LOWORD(dwParam) << 8) | status);
+        }
+        else
+        {
+            FIXME("ooch %Ix\n", dwParam);
+            return MMSYSERR_NOERROR;
+        }
+    }
+    chn = status & 0x0F;
+
     if (!mom->ChannelMap[chn]) return MMSYSERR_NOERROR;
 
-    switch (lb & 0xF0)
+    switch (status & 0xF0)
     {
     case 0x80:
     case 0x90:
@@ -423,6 +441,7 @@ static DWORD modData(MIDIMAPDATA* mom, DWORD_PTR dwParam)
 	    }
 	    ret = midiOutShortMsg(mom->ChannelMap[chn]->hMidi, dwParam);
 	}
+	mom->runningStatus = status;
 	break;
     case 0xF0:
 	for (chn = 0; chn < 16; chn++)
@@ -430,6 +449,9 @@ static DWORD modData(MIDIMAPDATA* mom, DWORD_PTR dwParam)
 	    if (mom->ChannelMap[chn]->loaded > 0)
 		ret = midiOutShortMsg(mom->ChannelMap[chn]->hMidi, dwParam);
 	}
+	/* system common message */
+	if (status <= 0xF7)
+	    mom->runningStatus = 0;
 	break;
     default:
 	FIXME("ooch %Ix\n", dwParam);
@@ -511,6 +533,8 @@ static	DWORD	modReset(MIDIMAPDATA* mom)
 	    if (ret != MMSYSERR_NOERROR) break;
 	}
     }
+    mom->runningStatus = 0;
+
     return ret;
 }
 
