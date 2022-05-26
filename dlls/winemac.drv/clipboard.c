@@ -210,7 +210,7 @@ static unsigned int nb_current_mac_formats;
 /**************************************************************************
  *              debugstr_format
  */
-const char *debugstr_format(UINT id)
+static const char *debugstr_format(UINT id)
 {
     WCHAR buffer[256];
 
