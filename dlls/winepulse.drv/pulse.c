@@ -426,6 +426,81 @@ static UINT pulse_channel_map_to_channel_mask(const pa_channel_map *map)
     return mask;
 }
 
+#define MAX_DEVICE_NAME_LEN 62
+
+static WCHAR *get_device_name(const char *desc, pa_proplist *proplist)
+{
+    /*
+       Some broken apps (e.g. Split/Second with fmodex) can't handle names that
+       are too long and crash even on native. If the device desc is too long,
+       we'll attempt to incrementally build it to try to stay under the limit.
+       ( + 1 is to check against truncated buffer after ntdll_umbstowcs )
+    */
+    WCHAR buf[MAX_DEVICE_NAME_LEN + 1];
+
+    /* For monitors of sinks; this does not seem to be localized in PA either */
+    static const WCHAR monitor_of[] = {'M','o','n','i','t','o','r',' ','o','f',' '};
+
+    size_t len = strlen(desc);
+    WCHAR *name, *tmp;
+
+    if (!(name = malloc((len + 1) * sizeof(WCHAR))))
+        return NULL;
+    if (!(len = ntdll_umbstowcs(desc, len, name, len))) {
+        free(name);
+        return NULL;
+    }
+
+    if (len > MAX_DEVICE_NAME_LEN && proplist) {
+        const char *prop = pa_proplist_gets(proplist, PA_PROP_DEVICE_CLASS);
+        unsigned prop_len, rem = ARRAY_SIZE(buf);
+        BOOL monitor = FALSE;
+
+        if (prop && !strcmp(prop, "monitor")) {
+            rem -= ARRAY_SIZE(monitor_of);
+            monitor = TRUE;
+        }
+
+        prop = pa_proplist_gets(proplist, PA_PROP_DEVICE_PRODUCT_NAME);
+        if (!prop || !prop[0] ||
+            !(prop_len = ntdll_umbstowcs(prop, strlen(prop), buf, rem)) || prop_len == rem) {
+            prop = pa_proplist_gets(proplist, "alsa.card_name");
+            if (!prop || !prop[0] ||
+                !(prop_len = ntdll_umbstowcs(prop, strlen(prop), buf, rem)) || prop_len == rem)
+                prop = NULL;
+        }
+
+        if (prop) {
+            /* We know we have a name that fits within the limit now */
+            WCHAR *p = name;
+
+            if (monitor) {
+                memcpy(p, monitor_of, sizeof(monitor_of));
+                p += ARRAY_SIZE(monitor_of);
+            }
+            len = ntdll_umbstowcs(prop, strlen(prop), p, rem);
+            rem -= len;
+            p += len;
+
+            if (rem > 2) {
+                rem--;  /* space */
+
+                prop = pa_proplist_gets(proplist, PA_PROP_DEVICE_PROFILE_DESCRIPTION);
+                if (prop && prop[0] && (len = ntdll_umbstowcs(prop, strlen(prop), p + 1, rem)) && len != rem) {
+                    *p++ = ' ';
+                    p += len;
+                }
+            }
+            len = p - name;
+        }
+    }
+    name[len] = '\0';
+
+    if ((tmp = realloc(name, (len + 1) * sizeof(WCHAR))))
+        name = tmp;
+    return name;
+}
+
 static void fill_device_info(PhysDevice *dev, pa_proplist *p)
 {
     const char *buffer;
@@ -452,27 +527,18 @@ static void fill_device_info(PhysDevice *dev, pa_proplist *p)
 }
 
 static void pulse_add_device(struct list *list, pa_proplist *proplist, int index, EndpointFormFactor form,
-                             UINT channel_mask, const char *pulse_name, const char *name)
+                             UINT channel_mask, const char *pulse_name, const char *desc)
 {
-    size_t len = strlen(pulse_name), name_len = strlen(name);
+    size_t len = strlen(pulse_name);
     PhysDevice *dev = malloc(FIELD_OFFSET(PhysDevice, pulse_name[len + 1]));
-    WCHAR *wname;
 
     if (!dev)
         return;
 
-    if (!(wname = malloc((name_len + 1) * sizeof(WCHAR)))) {
+    if (!(dev->name = get_device_name(desc, proplist))) {
         free(dev);
         return;
     }
-
-    if (!(name_len = ntdll_umbstowcs(name, name_len, wname, name_len)) ||
-        !(dev->name = realloc(wname, (name_len + 1) * sizeof(WCHAR)))) {
-        free(wname);
-        free(dev);
-        return;
-    }
-    dev->name[name_len] = 0;
     dev->form = form;
     dev->index = index;
     dev->channel_mask = channel_mask;
@@ -480,6 +546,8 @@ static void pulse_add_device(struct list *list, pa_proplist *proplist, int index
     memcpy(dev->pulse_name, pulse_name, len + 1);
 
     list_add_tail(list, &dev->entry);
+
+    TRACE("%s\n", debugstr_w(dev->name));
 }
 
 static void pulse_phys_speakers_cb(pa_context *c, const pa_sink_info *i, int eol, void *userdata)
