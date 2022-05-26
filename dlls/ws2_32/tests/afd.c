@@ -2355,6 +2355,217 @@ static void test_getsockname(void)
     CloseHandle(event);
 }
 
+struct ioctl_params
+{
+    HANDLE handle, event;
+    PIO_APC_ROUTINE apc;
+    void *apc_context;
+    IO_STATUS_BLOCK *io;
+    ULONG code;
+    void *in_buffer;
+    ULONG in_size;
+    void *out_buffer;
+    ULONG out_size;
+    NTSTATUS ret;
+    HANDLE complete_event;
+    BOOL kill_thread;
+};
+
+static DWORD WINAPI async_ioctl_thread(void *params)
+{
+    struct ioctl_params *io = params;
+
+    io->ret = NtDeviceIoControlFile(io->handle, io->event, io->apc, io->apc_context, io->io,
+            io->code, io->in_buffer, io->in_size, io->out_buffer, io->out_size);
+    SetEvent(io->complete_event);
+    if (io->kill_thread)
+        Sleep(3000);
+    return io->ret;
+}
+
+static NTSTATUS WINAPI thread_NtDeviceIoControlFile(BOOL kill_thread, HANDLE handle, HANDLE event,
+        PIO_APC_ROUTINE apc, void *apc_context, IO_STATUS_BLOCK *io, ULONG code, void *in_buffer, ULONG in_size,
+        void *out_buffer, ULONG out_size)
+{
+    struct ioctl_params p;
+    HANDLE thread;
+    DWORD ret;
+
+    p.handle = handle;
+    p.event = event;
+    p.apc = apc;
+    p.apc_context = apc_context;
+    p.io = io;
+    p.code = code;
+    p.in_buffer = in_buffer;
+    p.in_size = in_size;
+    p.out_buffer = out_buffer;
+    p.out_size = out_size;
+    p.complete_event = CreateEventW(NULL, FALSE, FALSE, NULL);
+    p.kill_thread = kill_thread;
+
+    thread = CreateThread(NULL, 0, async_ioctl_thread, &p, 0, NULL);
+    ok(!!thread, "got NULL.\n");
+    ret = WaitForSingleObject(p.complete_event, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "got ret %#lx.\n", ret);
+    if (kill_thread)
+        TerminateThread(thread, -1);
+    CloseHandle(p.complete_event);
+    ret = WaitForSingleObject(thread, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "got ret %#lx.\n", ret);
+    CloseHandle(thread);
+    SleepEx(0, TRUE);
+    return p.ret;
+}
+
+static unsigned int test_async_thread_termination_apc_count;
+
+static void WINAPI test_async_thread_termination_apc( void *arg, IO_STATUS_BLOCK *iosb, ULONG reserved )
+{
+    ++test_async_thread_termination_apc_count;
+}
+
+static void test_async_thread_termination(void)
+{
+    static const struct
+    {
+        BOOL kill_thread;
+        BOOL event;
+        PIO_APC_ROUTINE apc;
+        void *apc_context;
+    }
+    tests[] =
+    {
+        {FALSE, TRUE, NULL, NULL},
+        {TRUE,  TRUE, NULL, NULL},
+        {FALSE, FALSE, NULL, NULL},
+        {TRUE,  FALSE, NULL, NULL},
+        {FALSE, TRUE, test_async_thread_termination_apc, NULL},
+        {TRUE,  TRUE, test_async_thread_termination_apc, NULL},
+        {FALSE, FALSE, test_async_thread_termination_apc, NULL},
+        {TRUE,  FALSE, test_async_thread_termination_apc, NULL},
+        {FALSE, TRUE, NULL, (void *)0xdeadbeef},
+        {TRUE,  TRUE, NULL, (void *)0xdeadbeef},
+        {FALSE, FALSE, NULL, (void *)0xdeadbeef},
+        {TRUE,  FALSE, NULL, (void *)0xdeadbeef},
+        {FALSE, TRUE, test_async_thread_termination_apc, (void *)0xdeadbeef},
+        {TRUE,  TRUE, test_async_thread_termination_apc, (void *)0xdeadbeef},
+        {FALSE, FALSE, test_async_thread_termination_apc, (void *)0xdeadbeef},
+        {TRUE,  FALSE, test_async_thread_termination_apc, (void *)0xdeadbeef},
+    };
+
+    const struct sockaddr_in bind_addr = {.sin_family = AF_INET, .sin_addr.s_addr = htonl(INADDR_LOOPBACK)};
+    char in_buffer[offsetof(struct afd_poll_params, sockets[3])];
+    char out_buffer[offsetof(struct afd_poll_params, sockets[3])];
+    struct afd_poll_params *in_params = (struct afd_poll_params *)in_buffer;
+    struct afd_poll_params *out_params = (struct afd_poll_params *)out_buffer;
+    LARGE_INTEGER zero = {{0}};
+    ULONG_PTR key, value;
+    IO_STATUS_BLOCK io;
+    HANDLE event, port;
+    ULONG params_size;
+    SOCKET listener;
+    unsigned int i;
+    int ret;
+
+    event = CreateEventW(NULL, FALSE, FALSE, NULL);
+
+    listener = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ret = bind(listener, (const struct sockaddr *)&bind_addr, sizeof(bind_addr));
+    ok(!ret, "got error %u\n", WSAGetLastError());
+    ret = listen(listener, 1);
+    ok(!ret, "got error %u\n", WSAGetLastError());
+
+    in_params->count = 1;
+    in_params->exclusive = FALSE;
+    in_params->sockets[0].socket = listener;
+    in_params->sockets[0].flags = ~0;
+    in_params->sockets[0].status = 0xdeadbeef;
+    params_size = offsetof(struct afd_poll_params, sockets[1]);
+    in_params->timeout = -10 * 1000 * 1000 * 5;
+
+    /* asyncs without completion port are always cancelled on thread exit. */
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context("test %u", i);
+        memset(&io, 0xcc, sizeof(io));
+        ResetEvent(event);
+        ret = thread_NtDeviceIoControlFile(tests[i].kill_thread, (HANDLE)listener, tests[i].event ? event : NULL,
+                tests[i].apc, tests[i].apc_context, &io, IOCTL_AFD_POLL, in_params, params_size,
+                out_params, params_size);
+        ok(ret == STATUS_PENDING, "got %#x\n", ret);
+        ok(io.Status == STATUS_CANCELLED, "got %#lx\n", io.Status);
+        if (tests[i].event)
+        {
+            ret = WaitForSingleObject(event, 1000);
+            ok(!ret, "got %#x\n", ret);
+        }
+        winetest_pop_context();
+    }
+
+    SleepEx(0, TRUE);
+    ok(!test_async_thread_termination_apc_count, "got APC.\n");
+
+    port = CreateIoCompletionPort((HANDLE)listener, NULL, 0, 0);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        winetest_push_context("test %u", i);
+        memset(&io, 0xcc, sizeof(io));
+        ResetEvent(event);
+        ret = thread_NtDeviceIoControlFile(tests[i].kill_thread, (HANDLE)listener, tests[i].event ? event : NULL,
+                tests[i].apc, tests[i].apc_context, &io, IOCTL_AFD_POLL, in_params, params_size,
+                out_params, params_size);
+        if (tests[i].apc)
+        {
+            ok(ret == STATUS_INVALID_PARAMETER, "got %#x\n", ret);
+            winetest_pop_context();
+            continue;
+        }
+        ok(ret == STATUS_PENDING, "got %#x\n", ret);
+        if (!tests[i].apc_context || tests[i].event)
+        {
+            ok(io.Status == STATUS_CANCELLED, "got %#lx\n", io.Status);
+            memset(&io, 0xcc, sizeof(io));
+            key = 0xcc;
+            value = 0;
+            ret = NtRemoveIoCompletion(port, &key, &value, &io, &zero);
+            if (tests[i].apc_context)
+            {
+                ok(!ret, "got %#x\n", ret);
+                ok(!key, "got key %#Ix\n", key);
+                ok(value == 0xdeadbeef, "got value %#Ix\n", value);
+                ok(io.Status == STATUS_CANCELLED, "got %#lx\n", io.Status);
+            }
+            else
+            {
+                ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+            }
+            winetest_pop_context();
+            continue;
+        }
+
+        /* async is not cancelled if there is a completion port, completion key and no event. */
+        ok(io.Status == 0xcccccccc, "got %#lx\n", io.Status);
+        memset(&io, 0xcc, sizeof(io));
+        key = 0xcc;
+        value = 0;
+        ret = NtRemoveIoCompletion(port, &key, &value, &io, &zero);
+        ok(ret == WAIT_TIMEOUT, "got %#x\n", ret);
+        CancelIoEx((HANDLE)listener, NULL);
+        ret = NtRemoveIoCompletion(port, &key, &value, &io, &zero);
+        ok(!ret, "got %#x\n", ret);
+        ok(!key, "got key %#Ix\n", key);
+        ok(value == 0xdeadbeef, "got value %#Ix\n", value);
+        ok(io.Status == STATUS_CANCELLED, "got %#lx\n", io.Status);
+        winetest_pop_context();
+    }
+
+    CloseHandle(port);
+    CloseHandle(event);
+    closesocket(listener);
+}
+
 START_TEST(afd)
 {
     WSADATA data;
@@ -2372,6 +2583,7 @@ START_TEST(afd)
     test_get_events_reset();
     test_bind();
     test_getsockname();
+    test_async_thread_termination();
 
     WSACleanup();
 }
