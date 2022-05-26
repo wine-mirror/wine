@@ -411,10 +411,32 @@ HRESULT WINAPI D3DX10GetImageInfoFromResourceW(HMODULE module, const WCHAR *reso
     TRACE("module %p, resource %s, pump %p, info %p, result %p.\n",
             module, debugstr_w(resource), pump, info, result);
 
+    if (pump)
+    {
+        ID3DX10DataProcessor *processor;
+        ID3DX10DataLoader *loader;
+
+        if (FAILED((hr = D3DX10CreateAsyncResourceLoaderW(module, resource, &loader))))
+            return hr;
+        if (FAILED((hr = D3DX10CreateAsyncTextureInfoProcessor(info, &processor))))
+        {
+            ID3DX10DataLoader_Destroy(loader);
+            return hr;
+        }
+        if (FAILED((hr = ID3DX10ThreadPump_AddWorkItem(pump, loader, processor, result, NULL))))
+        {
+            ID3DX10DataLoader_Destroy(loader);
+            ID3DX10DataProcessor_Destroy(processor);
+        }
+        return hr;
+    }
+
     if (FAILED((hr = load_resourceW(module, resource, &buffer, &size))))
         return hr;
-
-    return D3DX10GetImageInfoFromMemory(buffer, size, pump, info, result);
+    hr = get_image_info(buffer, size, info);
+    if (result)
+        *result = hr;
+    return hr;
 }
 
 HRESULT get_image_info(const void *data, SIZE_T size, D3DX10_IMAGE_INFO *img_info)
