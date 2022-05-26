@@ -1690,8 +1690,9 @@ static HRESULT process_response_status_text(const WCHAR *header, const WCHAR *he
         return E_FAIL;
     header = wcschr(header + 1, ' ');
     if(!header || header >= header_end)
-        return E_FAIL;
-    ++header;
+        header = header_end;
+    else
+        ++header;
 
     *status_text = heap_strndupWtoU(header, header_end - header);
 
