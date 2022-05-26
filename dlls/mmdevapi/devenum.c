@@ -1378,6 +1378,7 @@ static HRESULT WINAPI MMDevPropStore_GetAt(IPropertyStore *iface, DWORD prop, PR
 static HRESULT WINAPI MMDevPropStore_GetValue(IPropertyStore *iface, REFPROPERTYKEY key, PROPVARIANT *pv)
 {
     MMDevPropStore *This = impl_from_IPropertyStore(iface);
+    HRESULT hres;
     TRACE("(%p)->(\"%s,%lu\", %p)\n", This, key ? debugstr_guid(&key->fmtid) : NULL, key ? key->pid : 0, pv);
 
     if (!key || !pv)
@@ -1397,7 +1398,19 @@ static HRESULT WINAPI MMDevPropStore_GetValue(IPropertyStore *iface, REFPROPERTY
         return S_OK;
     }
 
-    return MMDevice_GetPropValue(&This->parent->devguid, This->parent->flow, key, pv);
+    hres = MMDevice_GetPropValue(&This->parent->devguid, This->parent->flow, key, pv);
+    if (FAILED(hres))
+        return hres;
+
+    if (WARN_ON(mmdevapi))
+    {
+        if ((IsEqualPropertyKey(*key, DEVPKEY_Device_FriendlyName) ||
+             IsEqualPropertyKey(*key, DEVPKEY_DeviceInterface_FriendlyName) ||
+             IsEqualPropertyKey(*key, DEVPKEY_Device_DeviceDesc)) &&
+            pv->vt == VT_LPWSTR && wcslen(pv->pwszVal) > 62)
+            WARN("Returned name exceeds length limit of some broken apps/libs, might crash: %s\n", debugstr_w(pv->pwszVal));
+    }
+    return hres;
 }
 
 static HRESULT WINAPI MMDevPropStore_SetValue(IPropertyStore *iface, REFPROPERTYKEY key, REFPROPVARIANT pv)
