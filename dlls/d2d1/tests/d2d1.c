@@ -37,7 +37,7 @@ DEFINE_GUID(GUID_TestPixelShader,  0x53015748,0xfc13,0x4168,0xbd,0x13,0x0f,0xcf,
 static const WCHAR *effect_xml_a =
 L"<?xml version='1.0'?>                                                       \
     <Effect>                                                                  \
-        <Property name='DisplayName' type='string' value='TestEffect'/>       \
+        <Property name='DisplayName' type='string' value='TestEffectA'/>      \
         <Property name='Author'      type='string' value='The Wine Project'/> \
         <Property name='Category'    type='string' value='Test'/>             \
         <Property name='Description' type='string' value='Test effect.'/>     \
@@ -56,7 +56,7 @@ L"<?xml version='1.0'?>                                                       \
 static const WCHAR *effect_xml_b =
 L"<?xml version='1.0'?>                                                       \
     <Effect>                                                                  \
-        <Property name='DisplayName' type='string' value='TestEffect'/>       \
+        <Property name='DisplayName' type='string' value='TestEffectB'/>      \
         <Property name='Author'      type='string' value='The Wine Project'/> \
         <Property name='Category'    type='string' value='Test'/>             \
         <Property name='Description' type='string' value='Test effect.'/>     \
@@ -72,7 +72,7 @@ L"<?xml version='1.0'?>                                                       \
 static const WCHAR *effect_xml_c =
 L"<?xml version='1.0'?>                                                       \
     <Effect>                                                                  \
-        <Property name='DisplayName' type='string' value='TestEffect'/>       \
+        <Property name='DisplayName' type='string' value='TestEffectC'/>      \
         <Property name='Author'      type='string' value='The Wine Project'/> \
         <Property name='Category'    type='string' value='Test'/>             \
         <Property name='Description' type='string' value='Test effect.'/>     \
@@ -10488,8 +10488,11 @@ static HRESULT STDMETHODCALLTYPE effect_impl_get_context(const IUnknown *iface,
 
 static void test_effect_register(BOOL d3d11)
 {
+    ID2D1DeviceContext *device_context;
     struct d2d1_test_context ctx;
     ID2D1Factory1 *factory;
+    WCHAR display_name[64];
+    ID2D1Effect *effect;
     unsigned int i;
     HRESULT hr;
 
@@ -10529,6 +10532,7 @@ static void test_effect_register(BOOL d3d11)
     if (!init_test_context(&ctx, d3d11))
         return;
 
+    device_context = ctx.context;
     factory = ctx.factory1;
     if (!factory)
     {
@@ -10564,9 +10568,31 @@ static void test_effect_register(BOOL d3d11)
     hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
             effect_xml_a, NULL, 0, effect_impl_create);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1DeviceContext_CreateEffect(device_context, &CLSID_TestEffect, &effect);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_DISPLAYNAME,
+                D2D1_PROPERTY_TYPE_STRING, (BYTE *)display_name, sizeof(display_name));
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(!wcscmp(display_name, L"TestEffectA"), "Got unexpected display name %s.\n", debugstr_w(display_name));
+        ID2D1Effect_Release(effect);
+    }
+
     hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
             effect_xml_b, NULL, 0, effect_impl_create);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1DeviceContext_CreateEffect(device_context, &CLSID_TestEffect, &effect);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_DISPLAYNAME,
+                D2D1_PROPERTY_TYPE_STRING, (BYTE *)display_name, sizeof(display_name));
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(!wcscmp(display_name, L"TestEffectA"), "Got unexpected display name %s.\n", debugstr_w(display_name));
+        ID2D1Effect_Release(effect);
+    }
+
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
     todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
