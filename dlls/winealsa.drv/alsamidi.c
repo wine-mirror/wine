@@ -922,13 +922,10 @@ static UINT midi_out_reset(WORD dev_id)
     if (!dests[dev_id].bEnabled) return MIDIERR_NODEVICE;
 
     /* stop all notes */
-    /* FIXME: check if 0x78B0 is channel dependent or not. I coded it so that
-     * it's channel dependent...
-     */
     for (chn = 0; chn < 16; chn++)
     {
         /* turn off every note */
-        midi_out_data(dev_id, 0x7800 | MIDI_CMD_CONTROL | chn);
+        midi_out_data(dev_id, (MIDI_CTL_ALL_SOUNDS_OFF << 8) | MIDI_CMD_CONTROL | chn);
         /* remove sustain on all channels */
         midi_out_data(dev_id, (MIDI_CTL_SUSTAIN << 8) | MIDI_CMD_CONTROL | chn);
     }
