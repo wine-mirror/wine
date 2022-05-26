@@ -102,7 +102,6 @@ struct schan_buffers
 
 struct schan_transport
 {
-    struct schan_context *ctx;
     schan_session session;
     struct schan_buffers in;
     struct schan_buffers out;

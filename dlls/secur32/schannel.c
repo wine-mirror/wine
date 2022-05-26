@@ -826,8 +826,6 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
         else
             ctx->header_size = HEADER_SIZE_TLS;
 
-        ctx->transport.ctx = ctx;
-
         if (pszTargetName && *pszTargetName)
         {
             UINT len = WideCharToMultiByte( CP_UNIXCP, 0, pszTargetName, -1, NULL, 0, NULL, NULL );
