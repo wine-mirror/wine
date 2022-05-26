@@ -610,6 +610,9 @@ static nsresult NSAPI nsChannel_Cancel(nsIHttpChannel *iface, nsresult aStatus)
 
     TRACE("(%p)->(%08lx)\n", This, aStatus);
 
+    if(NS_FAILED(aStatus))
+        This->status = aStatus;
+
     if(This->binding && This->binding->bsc.binding)
         IBinding_Abort(This->binding->bsc.binding);
     else

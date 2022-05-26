@@ -51,6 +51,7 @@ typedef struct {
     nsIURI *referrer;
     char *content_type;
     char *charset;
+    nsresult status;
     UINT32 response_status;
     char *response_status_text;
     REQUEST_METHOD request_method;

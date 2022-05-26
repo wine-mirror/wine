@@ -981,6 +981,10 @@ static HRESULT on_start_nsrequest(nsChannelBSC *This)
 {
     nsresult nsres;
 
+    /* Async request can be cancelled before we got to it */
+    if(NS_FAILED(This->nschannel->status))
+        return E_ABORT; /* FIXME: map status to HRESULT */
+
     This->nschannel->binding = This;
 
     /* FIXME: it's needed for http connections from BindToObject. */
