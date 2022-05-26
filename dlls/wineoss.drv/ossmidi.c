@@ -1035,6 +1035,7 @@ static UINT midi_out_port_data(WORD dev_id, UINT data)
         case 0x03: /* Song Select. */
             SEQ_MIDIOUT(dev, evt);
             SEQ_MIDIOUT(dev, d1);
+            break;
         case 0x02: /* Song Position Pointer. */
             SEQ_MIDIOUT(dev, evt);
             SEQ_MIDIOUT(dev, d1);
