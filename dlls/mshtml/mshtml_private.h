@@ -1392,11 +1392,11 @@ static inline char *heap_strndupWtoU(LPCWSTR str, unsigned len)
     char *ret = NULL;
     DWORD size;
 
-    if(str && len) {
-        size = WideCharToMultiByte(CP_UTF8, 0, str, len, NULL, 0, NULL, NULL);
+    if(str) {
+        size = len ? WideCharToMultiByte(CP_UTF8, 0, str, len, NULL, 0, NULL, NULL) : 0;
         ret = heap_alloc(size + 1);
         if(ret) {
-            WideCharToMultiByte(CP_UTF8, 0, str, len, ret, size, NULL, NULL);
+            if(len) WideCharToMultiByte(CP_UTF8, 0, str, len, ret, size, NULL, NULL);
             ret[size] = '\0';
         }
     }

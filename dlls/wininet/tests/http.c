@@ -4527,6 +4527,13 @@ static const http_status_test_t http_status_tests[] = {
         ""
     },
     {
+        "HTTP/1.1 200 \r\n"
+        "Content-Length: 1\r\n"
+        "\r\nx",
+        200,
+        ""
+    },
+    {
         "HTTP/1.1 410 \r\n"
         "Content-Length: 1\r\n"
         "\r\nx",
