@@ -332,17 +332,34 @@ HRESULT WINAPI D3DX10GetImageInfoFromFileW(const WCHAR *src_file, ID3DX10ThreadP
     if (!src_file)
         return E_FAIL;
 
-    if (FAILED((hr = load_file(src_file, &buffer, &size))))
+    if (pump)
     {
-        if (result)
-            *result = hr;
+        ID3DX10DataProcessor *processor;
+        ID3DX10DataLoader *loader;
+
+        if (FAILED((hr = D3DX10CreateAsyncFileLoaderW(src_file, &loader))))
+            return hr;
+        if (FAILED((hr = D3DX10CreateAsyncTextureInfoProcessor(info, &processor))))
+        {
+            ID3DX10DataLoader_Destroy(loader);
+            return hr;
+        }
+        hr = ID3DX10ThreadPump_AddWorkItem(pump, loader, processor, result, NULL);
+        if (FAILED(hr))
+        {
+            ID3DX10DataLoader_Destroy(loader);
+            ID3DX10DataProcessor_Destroy(processor);
+        }
         return hr;
     }
 
-    hr = D3DX10GetImageInfoFromMemory(buffer, size, pump, info, result);
-
-    free(buffer);
-
+    if (SUCCEEDED((hr = load_file(src_file, &buffer, &size))))
+    {
+        hr = get_image_info(buffer, size, info);
+        free(buffer);
+    }
+    if (result)
+        *result = hr;
     return hr;
 }
 
