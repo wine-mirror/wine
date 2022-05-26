@@ -150,7 +150,7 @@ static HRESULT MMDevice_GetPropValue(const GUID *devguid, DWORD flow, REFPROPERT
     {
         WARN("Reading %s returned %ld\n", debugstr_w(buffer), ret);
         RegCloseKey(regkey);
-        PropVariantClear(pv);
+        pv->vt = VT_EMPTY;
         return S_OK;
     }
 
