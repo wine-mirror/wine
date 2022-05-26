@@ -146,17 +146,17 @@ static inline SECURITY_DESCRIPTOR *secdesc_32to64( SECURITY_DESCRIPTOR *out, con
     out->Control  = sd->Control & ~SE_SELF_RELATIVE;
     if (sd->Control & SE_SELF_RELATIVE)
     {
-        if (sd->Owner) out->Owner = (PSID)((BYTE *)sd + sd->Owner);
-        if (sd->Group) out->Group = (PSID)((BYTE *)sd + sd->Group);
-        if ((sd->Control & SE_SACL_PRESENT) && sd->Sacl) out->Sacl = (PSID)((BYTE *)sd + sd->Sacl);
-        if ((sd->Control & SE_DACL_PRESENT) && sd->Dacl) out->Dacl = (PSID)((BYTE *)sd + sd->Dacl);
+        out->Owner = sd->Owner ? (PSID)((BYTE *)sd + sd->Owner) : NULL;
+        out->Group = sd->Group ? (PSID)((BYTE *)sd + sd->Group) : NULL;
+        out->Sacl = ((sd->Control & SE_SACL_PRESENT) && sd->Sacl) ? (PSID)((BYTE *)sd + sd->Sacl) : NULL;
+        out->Dacl = ((sd->Control & SE_DACL_PRESENT) && sd->Dacl) ? (PSID)((BYTE *)sd + sd->Dacl) : NULL;
     }
     else
     {
         out->Owner = ULongToPtr( sd->Owner );
         out->Group = ULongToPtr( sd->Group );
-        if (sd->Control & SE_SACL_PRESENT) out->Sacl = ULongToPtr( sd->Sacl );
-        if (sd->Control & SE_DACL_PRESENT) out->Dacl = ULongToPtr( sd->Dacl );
+        out->Sacl = (sd->Control & SE_SACL_PRESENT) ? ULongToPtr( sd->Sacl ) : NULL;
+        out->Dacl = (sd->Control & SE_DACL_PRESENT) ? ULongToPtr( sd->Dacl ) : NULL;
     }
     return out;
 }
