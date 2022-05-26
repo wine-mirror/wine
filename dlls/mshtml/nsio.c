@@ -599,9 +599,9 @@ static nsresult NSAPI nsChannel_GetStatus(nsIHttpChannel *iface, nsresult *aStat
 {
     nsChannel *This = impl_from_nsIHttpChannel(iface);
 
-    WARN("(%p)->(%p) returning NS_OK\n", This, aStatus);
+    TRACE("(%p)->(%p) returning %#lx\n", This, aStatus, This->status);
 
-    return *aStatus = NS_OK;
+    return *aStatus = This->status;
 }
 
 static nsresult NSAPI nsChannel_Cancel(nsIHttpChannel *iface, nsresult aStatus)
