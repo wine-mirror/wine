@@ -6747,21 +6747,58 @@ static void test_WSASendTo(void)
     ok(ret_addr.sin_port, "expected nonzero port\n");
 }
 
+struct recv_thread_apc_param
+{
+    SOCKET sock;
+    unsigned int apc_count;
+};
+
+static void WINAPI recv_thread_apc_func(ULONG_PTR param)
+{
+    struct recv_thread_apc_param *p = (struct recv_thread_apc_param *)param;
+    int ret;
+
+    ++p->apc_count;
+
+    ret = send(p->sock, "test", 4, 0);
+    ok(ret == 4, "got %d.\n", ret);
+}
+
+struct recv_thread_param
+{
+    SOCKET sock;
+    BOOL overlapped;
+};
+
 static DWORD WINAPI recv_thread(LPVOID arg)
 {
-    SOCKET sock = *(SOCKET *)arg;
+    struct recv_thread_param *p = arg;
+    SOCKET sock = p->sock;
     char buffer[32];
     WSABUF wsa;
     WSAOVERLAPPED ov;
     DWORD flags = 0;
+    DWORD len;
+    int ret;
 
     wsa.buf = buffer;
     wsa.len = sizeof(buffer);
-    ov.hEvent = WSACreateEvent();
-    WSARecv(sock, &wsa, 1, NULL, &flags, &ov, NULL);
+    if (p->overlapped)
+    {
+        ov.hEvent = WSACreateEvent();
+        WSARecv(sock, &wsa, 1, NULL, &flags, &ov, NULL);
 
-    WaitForSingleObject(ov.hEvent, 1000);
-    WSACloseEvent(ov.hEvent);
+        WaitForSingleObject(ov.hEvent, 1000);
+        WSACloseEvent(ov.hEvent);
+    }
+    else
+    {
+        SetLastError(0xdeadbeef);
+        ret = WSARecv(sock, &wsa, 1, &len, &flags, NULL, NULL);
+        ok(!ret, "got ret %d.\n", ret);
+        ok(WSAGetLastError() == 0, "got error %d.\n", WSAGetLastError());
+        ok(len == 4, "got len %lu.\n", len);
+    }
     return 0;
 }
 
@@ -6775,11 +6812,14 @@ static void WINAPI io_completion(DWORD error, DWORD transferred, WSAOVERLAPPED *
 static void test_WSARecv(void)
 {
     SOCKET src, dest, server = INVALID_SOCKET;
+    struct recv_thread_apc_param apc_param;
+    struct recv_thread_param recv_param;
     char buf[20];
     WSABUF bufs[2];
     WSAOVERLAPPED ov;
     DWORD bytesReturned, flags, id;
     struct sockaddr_in addr;
+    unsigned int apc_count;
     int iret, len;
     DWORD dwret;
     BOOL bret;
@@ -6799,10 +6839,20 @@ static void test_WSARecv(void)
     ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %ld\n", GetLastError());
     SetLastError(0xdeadbeef);
     bytesReturned = 0xdeadbeef;
+
+    apc_count = 0;
+    dwret = QueueUserAPC(apc_func, GetCurrentThread(), (ULONG_PTR)&apc_count);
+    ok(dwret, "QueueUserAPC returned %lu\n", dwret);
+
     iret = WSARecv(dest, bufs, 1, &bytesReturned, &flags, NULL, NULL);
     ok(!iret, "Expected 0, got %d\n", iret);
     ok(bytesReturned == 2, "Expected 2, got %ld\n", bytesReturned);
     ok(GetLastError() == ERROR_SUCCESS, "Expected 0, got %ld\n", GetLastError());
+
+    ok(!apc_count, "got apc_count %u.\n", apc_count);
+    SleepEx(0, TRUE);
+    ok(apc_count == 1, "got apc_count %u.\n", apc_count);
+
     SetLastError(0xdeadbeef);
     bytesReturned = 0xdeadbeef;
     iret = WSARecv(dest, bufs, 1, &bytesReturned, &flags, NULL, NULL);
@@ -6895,8 +6945,21 @@ static void test_WSARecv(void)
     if (dest == INVALID_SOCKET) goto end;
 
     send(src, "test message", sizeof("test message"), 0);
-    thread = CreateThread(NULL, 0, recv_thread, &dest, 0, &id);
+    recv_param.sock = dest;
+    recv_param.overlapped = TRUE;
+    thread = CreateThread(NULL, 0, recv_thread, &recv_param, 0, &id);
     WaitForSingleObject(thread, 3000);
+    CloseHandle(thread);
+
+    recv_param.overlapped = FALSE;
+    thread = CreateThread(NULL, 0, recv_thread, &recv_param, 0, &id);
+    apc_param.apc_count = 0;
+    apc_param.sock = src;
+    dwret = QueueUserAPC(recv_thread_apc_func, thread, (ULONG_PTR)&apc_param);
+    ok(dwret, "QueueUserAPC returned %lu\n", dwret);
+    WaitForSingleObject(thread, 3000);
+    ok(apc_param.apc_count == 1, "got apc_count %u.\n", apc_param.apc_count);
+
     CloseHandle(thread);
 
     memset(&ov, 0, sizeof(ov));

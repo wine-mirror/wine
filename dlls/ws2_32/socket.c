@@ -959,7 +959,7 @@ static int WS2_recv_base( SOCKET s, WSABUF *buffers, DWORD buffer_count, DWORD *
                                     IOCTL_AFD_WINE_RECVMSG, &params, sizeof(params), NULL, 0 );
     if (status == STATUS_PENDING && !overlapped)
     {
-        if (WaitForSingleObject( event, INFINITE ) == WAIT_FAILED)
+        if (wait_event_alertable( event ) == WAIT_FAILED)
             return -1;
         status = piosb->u.Status;
     }
