@@ -1462,6 +1462,7 @@ DECL_HANDLER(terminate_thread)
         thread->exit_code = req->exit_code;
         if (thread != current) kill_thread( thread, 1 );
         else reply->self = 1;
+        cancel_terminating_thread_asyncs( thread );
         release_object( thread );
     }
 }

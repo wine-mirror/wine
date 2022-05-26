@@ -593,6 +593,22 @@ void cancel_process_asyncs( struct process *process )
     cancel_async( process, NULL, NULL, 0 );
 }
 
+void cancel_terminating_thread_asyncs( struct thread *thread )
+{
+    struct async *async;
+
+restart:
+    LIST_FOR_EACH_ENTRY( async, &thread->process->asyncs, struct async, process_entry )
+    {
+        if (async->thread != thread || async->terminated || async->canceled) continue;
+        if (async->completion && async->data.apc_context && !async->event) continue;
+
+        async->canceled = 1;
+        fd_cancel_async( async->fd, async );
+        goto restart;
+    }
+}
+
 /* wake up async operations on the queue */
 void async_wake_up( struct async_queue *queue, unsigned int status )
 {

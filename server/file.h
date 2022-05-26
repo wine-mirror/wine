@@ -245,6 +245,7 @@ extern struct iosb *async_get_iosb( struct async *async );
 extern struct thread *async_get_thread( struct async *async );
 extern struct async *find_pending_async( struct async_queue *queue );
 extern void cancel_process_asyncs( struct process *process );
+extern void cancel_terminating_thread_asyncs( struct thread *thread );
 
 static inline void init_async_queue( struct async_queue *queue )
 {
