@@ -55,6 +55,7 @@ struct midi_dest
 {
     BOOL                bEnabled;
     MIDIOPENDESC        midiDesc;
+    BYTE                runningStatus;
     WORD                wFlags;
     MIDIOUTCAPSW        caps;
     snd_seq_t          *seq;
@@ -539,6 +540,7 @@ static UINT midi_out_open(WORD dev_id, MIDIOPENDESC *midi_desc, UINT flags, stru
         return MMSYSERR_NOTENABLED;
     }
 
+    dest->runningStatus = 0;
     dest->wFlags = HIWORD(flags & CALLBACK_TYPEMASK);
     dest->midiDesc = *midi_desc;
     dest->seq = midi_seq;
@@ -639,9 +641,7 @@ static UINT midi_out_close(WORD dev_id, struct notify_context *notify)
 
 static UINT midi_out_data(WORD dev_id, UINT data)
 {
-    BYTE evt = LOBYTE(LOWORD(data));
-    BYTE d1  = HIBYTE(LOWORD(data));
-    BYTE d2  = LOBYTE(HIWORD(data));
+    BYTE evt = LOBYTE(LOWORD(data)), d1, d2;
     struct midi_dest *dest;
 
     TRACE("(%04X, %08X);\n", dev_id, data);
@@ -656,6 +656,28 @@ static UINT midi_out_data(WORD dev_id, UINT data)
         WARN("can't play !\n");
         return MIDIERR_NODEVICE;
     }
+
+    if (evt & 0x80)
+    {
+        d1 = HIBYTE(LOWORD(data));
+        d2 = LOBYTE(HIWORD(data));
+        if (evt < 0xF0)
+            dest->runningStatus = evt;
+        else if (evt <= 0xF7)
+            dest->runningStatus = 0;
+    }
+    else if (dest->runningStatus)
+    {
+        evt = dest->runningStatus;
+        d1 = LOBYTE(LOWORD(data));
+        d2 = HIBYTE(LOWORD(data));
+    }
+    else
+    {
+        FIXME("ooch %x\n", data);
+        return MMSYSERR_NOERROR;
+    }
+
     switch (dest->caps.wTechnology)
     {
     case MOD_SYNTH:
@@ -724,6 +746,7 @@ static UINT midi_out_data(WORD dev_id, UINT data)
             {
                 BYTE reset_sysex_seq[] = {MIDI_CMD_COMMON_SYSEX, 0x7e, 0x7f, 0x09, 0x01, 0xf7};
                 snd_seq_ev_set_sysex(&event, sizeof(reset_sysex_seq), reset_sysex_seq);
+                dest->runningStatus = 0;
                 break;
             }
             case 0x01:	/* MTC Quarter frame */
@@ -855,6 +878,7 @@ static UINT midi_out_long_data(WORD dev_id, MIDIHDR *hdr, UINT hdr_size, struct 
         return MMSYSERR_NOTENABLED;
     }
 
+    dest->runningStatus = 0;
     hdr->dwFlags &= ~MHDR_INQUEUE;
     hdr->dwFlags |= MHDR_DONE;
     set_out_notify(notify, dest, dev_id, MOM_DONE, (DWORD_PTR)hdr, 0);
@@ -929,6 +953,7 @@ static UINT midi_out_reset(WORD dev_id)
         /* remove sustain on all channels */
         midi_out_data(dev_id, (MIDI_CTL_SUSTAIN << 8) | MIDI_CMD_CONTROL | chn);
     }
+    dests[dev_id].runningStatus = 0;
     /* FIXME: the LongData buffers must also be returned to the app */
     return MMSYSERR_NOERROR;
 }
