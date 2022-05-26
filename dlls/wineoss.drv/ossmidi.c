@@ -57,6 +57,7 @@ struct midi_dest
 {
     BOOL                bEnabled;
     MIDIOPENDESC        midiDesc;
+    BYTE                runningStatus;
     WORD                wFlags;
     MIDIHDR            *lpQueueHdr;
     void               *lpExtra; /* according to port type (MIDI, FM...), extra data when needed */
@@ -725,6 +726,7 @@ static UINT midi_out_open(WORD dev_id, MIDIOPENDESC *midi_desc, UINT flags, stru
         return MMSYSERR_NOTENABLED;
     }
 
+    dest->runningStatus = 0;
     dest->wFlags = HIWORD(flags & CALLBACK_TYPEMASK);
 
     dest->lpQueueHdr= NULL;
@@ -787,13 +789,30 @@ static UINT midi_out_close(WORD dev_id, struct notify_context *notify)
 static UINT midi_out_fm_data(WORD dev_id, UINT data)
 {
     struct midi_dest *dest = dests + dev_id;
-    WORD evt = LOBYTE(LOWORD(data));
-    WORD d1  = HIBYTE(LOWORD(data));
-    WORD d2  = LOBYTE(HIWORD(data));
+    BYTE evt = LOBYTE(LOWORD(data)), d1, d2;
     sFMextra *extra = dest->lpExtra;
     sVoice *voice = extra->voice;
     sChannel *channel = extra->channel;
     int chn = (evt & 0x0F), i, nv;
+
+    if (evt & 0x80)
+    {
+        d1 = HIBYTE(LOWORD(data));
+        d2 = LOBYTE(HIWORD(data));
+        if (evt < 0xF0)
+            dest->runningStatus = evt;
+    }
+    else if (dest->runningStatus)
+    {
+        evt = dest->runningStatus;
+        d1 = LOBYTE(LOWORD(data));
+        d2 = HIBYTE(LOWORD(data));
+    }
+    else
+    {
+        FIXME("ooch %x\n", data);
+        return MMSYSERR_NOERROR;
+    }
 
     /* FIXME: chorus depth controller is not used */
 
@@ -962,10 +981,13 @@ static UINT midi_out_fm_data(WORD dev_id, UINT data)
         {
         case 0x0F: /* Reset */
             midi_out_fm_reset(dev_id);
+            dest->runningStatus = 0;
             break;
         default:
             WARN("Unsupported (yet) system event %02x\n", evt & 0x0F);
         }
+        if (evt <= 0xF7)
+            dest->runningStatus = 0;
         break;
     default:
         WARN("Internal error, shouldn't happen (event=%08x)\n", evt & 0xF0);
@@ -978,15 +1000,31 @@ static UINT midi_out_fm_data(WORD dev_id, UINT data)
 
 static UINT midi_out_port_data(WORD dev_id, UINT data)
 {
-    WORD evt = LOBYTE(LOWORD(data));
-    WORD d1  = HIBYTE(LOWORD(data));
-    WORD d2  = LOBYTE(HIWORD(data));
+    struct midi_dest *dest = dests + dev_id;
+    BYTE evt = LOBYTE(LOWORD(data)), d1, d2;
     int dev = dev_id - num_synths;
 
     if (dev < 0)
     {
         WARN("Internal error on devID (%u) !\n", dev_id);
         return MIDIERR_NODEVICE;
+    }
+
+    if (evt & 0x80)
+    {
+        d1 = HIBYTE(LOWORD(data));
+        d2 = LOBYTE(HIWORD(data));
+    }
+    else if (dest->runningStatus)
+    {
+        evt = dest->runningStatus;
+        d1 = LOBYTE(LOWORD(data));
+        d2 = HIBYTE(LOWORD(data));
+    }
+    else
+    {
+        FIXME("ooch %x\n", data);
+        return MMSYSERR_NOERROR;
     }
 
     switch (evt & 0xF0)
@@ -996,13 +1034,21 @@ static UINT midi_out_port_data(WORD dev_id, UINT data)
     case MIDI_KEY_PRESSURE:
     case MIDI_CTL_CHANGE:
     case MIDI_PITCH_BEND:
-        SEQ_MIDIOUT(dev, evt);
+        if (LOBYTE(LOWORD(data)) >= 0x80)
+        {
+            SEQ_MIDIOUT(dev, evt);
+            dest->runningStatus = evt;
+        }
         SEQ_MIDIOUT(dev, d1);
         SEQ_MIDIOUT(dev, d2);
         break;
     case MIDI_PGM_CHANGE:
     case MIDI_CHN_PRESSURE:
-        SEQ_MIDIOUT(dev, evt);
+        if (LOBYTE(LOWORD(data)) >= 0x80)
+        {
+            SEQ_MIDIOUT(dev, evt);
+            dest->runningStatus = evt;
+        }
         SEQ_MIDIOUT(dev, d1);
         break;
     case MIDI_SYSTEM_PREFIX:
@@ -1030,6 +1076,7 @@ static UINT midi_out_port_data(WORD dev_id, UINT data)
             SEQ_MIDIOUT(dev, 0x09);
             SEQ_MIDIOUT(dev, 0x01);
             SEQ_MIDIOUT(dev, 0xf7);
+            dest->runningStatus = 0;
             break;
         case 0x01: /* MTC Quarter frame */
         case 0x03: /* Song Select. */
@@ -1041,6 +1088,8 @@ static UINT midi_out_port_data(WORD dev_id, UINT data)
             SEQ_MIDIOUT(dev, d1);
             SEQ_MIDIOUT(dev, d2);
         }
+        if (evt <= 0xF7) /* System Exclusive, System Common Message */
+            dest->runningStatus = 0;
         break;
     }
 
@@ -1149,6 +1198,7 @@ static UINT midi_out_long_data(WORD dev_id, MIDIHDR *hdr, UINT hdr_size, struct 
         return MMSYSERR_NOTENABLED;
     }
 
+    dest->runningStatus = 0;
     hdr->dwFlags &= ~MHDR_INQUEUE;
     hdr->dwFlags |= MHDR_DONE;
     set_out_notify(notify, dest, dev_id, MOM_DONE, (UINT_PTR)hdr, 0);
@@ -1218,9 +1268,6 @@ static UINT midi_out_reset(WORD dev_id)
     if (!dest->bEnabled) return MIDIERR_NODEVICE;
 
     /* stop all notes */
-    /* FIXME: check if 0x78B0 is channel dependent or not. I coded it so that
-     * it's channel dependent...
-     */
     for (chn = 0; chn < 16; chn++)
     {
         /* turn off every note */
@@ -1228,6 +1275,7 @@ static UINT midi_out_reset(WORD dev_id)
         /* remove sustain on all channels */
         midi_out_data(dev_id, (CTL_SUSTAIN << 8) | MIDI_CTL_CHANGE | chn);
     }
+    dest->runningStatus = 0;
     /* FIXME: the LongData buffers must also be returned to the app */
     return MMSYSERR_NOERROR;
 }
