@@ -382,8 +382,7 @@ HRESULT WINAPI D3DX10GetImageInfoFromResourceW(HMODULE module, const WCHAR *reso
     return D3DX10GetImageInfoFromMemory(buffer, size, pump, info, result);
 }
 
-HRESULT WINAPI D3DX10GetImageInfoFromMemory(const void *src_data, SIZE_T src_data_size, ID3DX10ThreadPump *pump,
-        D3DX10_IMAGE_INFO *img_info, HRESULT *hresult)
+HRESULT get_image_info(const void *data, SIZE_T size, D3DX10_IMAGE_INFO *img_info)
 {
     IWICBitmapFrameDecode *frame = NULL;
     IWICImagingFactory *factory = NULL;
@@ -395,17 +394,9 @@ HRESULT WINAPI D3DX10GetImageInfoFromMemory(const void *src_data, SIZE_T src_dat
     GUID container_format;
     HRESULT hr;
 
-    TRACE("src_data %p, src_data_size %Iu, pump %p, img_info %p, hresult %p.\n",
-            src_data, src_data_size, pump, img_info, hresult);
-
-    if (!src_data || !src_data_size || !img_info)
-        return E_FAIL;
-    if (pump)
-        FIXME("Thread pump is not supported yet.\n");
-
     WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &factory);
     IWICImagingFactory_CreateStream(factory, &stream);
-    hr = IWICStream_InitializeFromMemory(stream, (BYTE *)src_data, src_data_size);
+    hr = IWICStream_InitializeFromMemory(stream, (BYTE *)data, size);
     if (FAILED(hr))
     {
         WARN("Failed to initialize stream.\n");
@@ -484,6 +475,20 @@ end:
         return E_FAIL;
     }
     return S_OK;
+}
+
+HRESULT WINAPI D3DX10GetImageInfoFromMemory(const void *src_data, SIZE_T src_data_size, ID3DX10ThreadPump *pump,
+        D3DX10_IMAGE_INFO *img_info, HRESULT *result)
+{
+    TRACE("src_data %p, src_data_size %Iu, pump %p, img_info %p, hresult %p.\n",
+            src_data, src_data_size, pump, img_info, result);
+
+    if (!src_data)
+        return E_FAIL;
+    if (pump)
+        FIXME("Thread pump is not supported yet.\n");
+
+    return get_image_info(src_data, src_data_size, img_info);
 }
 
 HRESULT WINAPI D3DX10CreateTextureFromFileA(ID3D10Device *device, const char *src_file,

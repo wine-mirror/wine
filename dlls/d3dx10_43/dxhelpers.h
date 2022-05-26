@@ -21,3 +21,5 @@ extern HRESULT load_resourceA(HMODULE module, const char *resource,
         void **data, DWORD *size) DECLSPEC_HIDDEN;
 extern HRESULT load_resourceW(HMODULE module, const WCHAR *resource,
         void **data, DWORD *size) DECLSPEC_HIDDEN;
+
+extern HRESULT get_image_info(const void *data, SIZE_T size, D3DX10_IMAGE_INFO *img_info) DECLSPEC_HIDDEN;
