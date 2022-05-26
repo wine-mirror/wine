@@ -10437,7 +10437,7 @@ static HRESULT STDMETHODCALLTYPE effect_impl_create(IUnknown **effect_impl)
 
     object->ID2D1EffectImpl_iface.lpVtbl = &effect_impl_vtbl;
     object->refcount = 1;
-    object->integer = 0;
+    object->integer = 10;
     object->effect_context = NULL;
 
     *effect_impl = (IUnknown *)&object->ID2D1EffectImpl_iface;
@@ -10489,11 +10489,12 @@ static HRESULT STDMETHODCALLTYPE effect_impl_get_context(const IUnknown *iface,
 static void test_effect_register(BOOL d3d11)
 {
     ID2D1DeviceContext *device_context;
+    ID2D1EffectContext *effect_context;
     struct d2d1_test_context ctx;
+    unsigned int i, integer;
     ID2D1Factory1 *factory;
     WCHAR display_name[64];
     ID2D1Effect *effect;
-    unsigned int i;
     HRESULT hr;
 
     const D2D1_PROPERTY_BINDING binding[] =
@@ -10612,6 +10613,52 @@ static void test_effect_register(BOOL d3d11)
 
         winetest_pop_context();
     }
+
+    /* Register effect multiple times with different binding */
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
+            effect_xml_c, binding, 1, effect_impl_create);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1DeviceContext_CreateEffect(device_context, &CLSID_TestEffect, &effect);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        integer = 0xdeadbeef;
+        effect_context = (ID2D1EffectContext *)0xdeadbeef;
+        hr = ID2D1Effect_GetValueByName(effect, L"Integer",
+                D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer));
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Effect_GetValueByName(effect, L"Context",
+                D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(integer == 10, "Got unexpected integer %u.\n", integer);
+        ok(effect_context == NULL, "Got unexpected effect context %p.\n", effect_context);
+        ID2D1Effect_Release(effect);
+    }
+
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
+            effect_xml_c, binding + 1, 1, effect_impl_create);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1DeviceContext_CreateEffect(device_context, &CLSID_TestEffect, &effect);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr == S_OK)
+    {
+        integer = 0xdeadbeef;
+        effect_context = (ID2D1EffectContext *)0xdeadbeef;
+        hr = ID2D1Effect_GetValueByName(effect, L"Integer",
+                D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer));
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Effect_GetValueByName(effect, L"Context",
+                D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(integer == 10, "Got unexpected integer %u.\n", integer);
+        ok(effect_context == NULL, "Got unexpected effect context %p.\n", effect_context);
+        ID2D1Effect_Release(effect);
+    }
+
+    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     /* Unregister builtin effect */
     hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_D2D1Composite);
