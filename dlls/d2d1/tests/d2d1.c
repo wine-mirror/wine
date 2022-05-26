@@ -88,6 +88,88 @@ L"<?xml version='1.0'?>                                                       \
     </Effect>                                                                 \
 ";
 
+static const WCHAR *effect_xml_minimum =
+L"<?xml version='1.0'?>                                                       \
+    <Effect>                                                                  \
+        <Property name='DisplayName' type='string'/>                          \
+        <Property name='Author'      type='string'/>                          \
+        <Property name='Category'    type='string'/>                          \
+        <Property name='Description' type='string'/>                          \
+        <Inputs/>                                                             \
+    </Effect>                                                                 \
+";
+
+static const WCHAR *effect_xml_without_version =
+L"<Effect>                                                                    \
+        <Property name='DisplayName' type='string'/>                          \
+        <Property name='Author'      type='string'/>                          \
+        <Property name='Category'    type='string'/>                          \
+        <Property name='Description' type='string'/>                          \
+        <Inputs/>                                                             \
+    </Effect>                                                                 \
+";
+
+static const WCHAR *effect_xml_without_inputs =
+L"<?xml version='1.0'?>                                                       \
+    <Effect>                                                                  \
+        <Property name='DisplayName' type='string'/>                          \
+        <Property name='Author'      type='string'/>                          \
+        <Property name='Category'    type='string'/>                          \
+        <Property name='Description' type='string'/>                          \
+    </Effect>                                                                 \
+";
+
+static const WCHAR *effect_xml_without_name =
+L"<?xml version='1.0'?>                                                       \
+    <Effect>                                                                  \
+        <Property name='Author'      type='string'/>                          \
+        <Property name='Category'    type='string'/>                          \
+        <Property name='Description' type='string'/>                          \
+        <Inputs/>                                                             \
+    </Effect>                                                                 \
+";
+
+static const WCHAR *effect_xml_without_author =
+L"<?xml version='1.0'?>                                                       \
+    <Effect>                                                                  \
+        <Property name='DisplayName' type='string'/>                          \
+        <Property name='Category'    type='string'/>                          \
+        <Property name='Description' type='string'/>                          \
+        <Inputs/>                                                             \
+    </Effect>                                                                 \
+";
+
+static const WCHAR *effect_xml_without_category =
+L"<?xml version='1.0'?>                                                       \
+    <Effect>                                                                  \
+        <Property name='DisplayName' type='string'/>                          \
+        <Property name='Author'      type='string'/>                          \
+        <Property name='Description' type='string'/>                          \
+        <Inputs/>                                                             \
+    </Effect>                                                                 \
+";
+
+static const WCHAR *effect_xml_without_description =
+L"<?xml version='1.0'?>                                                       \
+    <Effect>                                                                  \
+        <Property name='DisplayName' type='string'/>                          \
+        <Property name='Author'      type='string'/>                          \
+        <Property name='Category'    type='string'/>                          \
+        <Inputs/>                                                             \
+    </Effect>                                                                 \
+";
+
+static const WCHAR *effect_xml_without_type =
+L"<?xml version='1.0'?>                                                       \
+    <Effect>                                                                  \
+        <Property name='DisplayName' type='string'/>                          \
+        <Property name='Author'      type='string'/>                          \
+        <Property name='Category'    type='string'/>                          \
+        <Property name='Description'/>                                        \
+        <Inputs/>                                                             \
+    </Effect>                                                                 \
+";
+
 static const DWORD test_vs[] =
 {
 #if 0
@@ -10497,6 +10579,26 @@ static void test_effect_register(BOOL d3d11)
     ID2D1Effect *effect;
     HRESULT hr;
 
+    const struct xml_test
+    {
+        const WCHAR *xml;
+        HRESULT hr;
+    }
+    xml_tests[] =
+    {
+        {effect_xml_a,       S_OK},
+        {effect_xml_b,       S_OK},
+        {effect_xml_c,       S_OK},
+        {effect_xml_minimum, S_OK},
+        {effect_xml_without_version,     HRESULT_FROM_WIN32(ERROR_NOT_FOUND)},
+        {effect_xml_without_inputs,      E_INVALIDARG},
+        {effect_xml_without_name,        E_INVALIDARG},
+        {effect_xml_without_author,      E_INVALIDARG},
+        {effect_xml_without_category,    E_INVALIDARG},
+        {effect_xml_without_description, E_INVALIDARG},
+        {effect_xml_without_type,        E_INVALIDARG},
+    };
+
     const D2D1_PROPERTY_BINDING binding[] =
     {
         {L"Integer",  effect_impl_set_integer, effect_impl_get_integer},
@@ -10543,27 +10645,48 @@ static void test_effect_register(BOOL d3d11)
     }
 
     /* Register effect once */
-    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
-            effect_xml_a, NULL, 0, effect_impl_create);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
-    todo_wine ok(hr == D2DERR_EFFECT_IS_NOT_REGISTERED, "Got unexpected hr %#lx.\n", hr);
+    for (i = 0; i < ARRAY_SIZE(xml_tests); ++i)
+    {
+        const struct xml_test *test = &xml_tests[i];
+        winetest_push_context("Test %u", i);
+
+        hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect, test->xml, NULL, 0, effect_impl_create);
+        todo_wine_if(test->hr != S_OK)
+        ok(hr == test->hr, "Got unexpected hr %#lx, expected %#lx.\n", hr, test->hr);
+        if (hr == S_OK)
+        {
+            hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+            todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+            todo_wine ok(hr == D2DERR_EFFECT_IS_NOT_REGISTERED, "Got unexpected hr %#lx.\n", hr);
+        }
+
+        winetest_pop_context();
+    }
 
     /* Register effect multiple times */
-    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
-            effect_xml_a, NULL, 0, effect_impl_create);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
-            effect_xml_a, NULL, 0, effect_impl_create);
-    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
-    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
-    todo_wine ok(hr == D2DERR_EFFECT_IS_NOT_REGISTERED, "Got unexpected hr %#lx.\n", hr);
+    for (i = 0; i < ARRAY_SIZE(xml_tests); ++i)
+    {
+        const struct xml_test *test = &xml_tests[i];
+
+        if (test->hr != S_OK)
+            continue;
+
+        winetest_push_context("Test %u", i);
+
+        hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect, test->xml, NULL, 0, effect_impl_create);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect, test->xml, NULL, 0, effect_impl_create);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+        todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+        todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+        todo_wine ok(hr == D2DERR_EFFECT_IS_NOT_REGISTERED, "Got unexpected hr %#lx.\n", hr);
+
+        winetest_pop_context();
+    }
 
     /* Register effect multiple times with different xml */
     hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
