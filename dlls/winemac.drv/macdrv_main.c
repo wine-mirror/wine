@@ -63,7 +63,6 @@ int cursor_clipping_locks_windows = TRUE;
 int use_precise_scrolling = TRUE;
 int gl_surface_mode = GL_SURFACE_IN_FRONT_OPAQUE;
 int retina_enabled = FALSE;
-HMODULE macdrv_module = 0;
 int enable_app_nap = FALSE;
 
 CFDictionaryRef localized_strings;
@@ -396,25 +395,9 @@ static void setup_options(void)
 /***********************************************************************
  *              load_strings
  */
-static void load_strings(HINSTANCE instance)
+static void load_strings(struct localized_string *str)
 {
-    static const unsigned int ids[] = {
-        STRING_MENU_WINE,
-        STRING_MENU_ITEM_HIDE_APPNAME,
-        STRING_MENU_ITEM_HIDE,
-        STRING_MENU_ITEM_HIDE_OTHERS,
-        STRING_MENU_ITEM_SHOW_ALL,
-        STRING_MENU_ITEM_QUIT_APPNAME,
-        STRING_MENU_ITEM_QUIT,
-
-        STRING_MENU_WINDOW,
-        STRING_MENU_ITEM_MINIMIZE,
-        STRING_MENU_ITEM_ZOOM,
-        STRING_MENU_ITEM_ENTER_FULL_SCREEN,
-        STRING_MENU_ITEM_BRING_ALL_TO_FRONT,
-    };
     CFMutableDictionaryRef dict;
-    int i;
 
     dict = CFDictionaryCreateMutable(NULL, 0, &kCFTypeDictionaryKeyCallBacks,
                                      &kCFTypeDictionaryValueCallBacks);
@@ -424,21 +407,20 @@ static void load_strings(HINSTANCE instance)
         return;
     }
 
-    for (i = 0; i < ARRAY_SIZE(ids); i++)
+    while (str->id)
     {
-        LPCWSTR str;
-        int len = LoadStringW(instance, ids[i], (LPWSTR)&str, 0);
-        if (str && len)
+        if (str->str && str->len)
         {
-            CFNumberRef key = CFNumberCreate(NULL, kCFNumberIntType, &ids[i]);
-            CFStringRef value = CFStringCreateWithCharacters(NULL, (UniChar*)str, len);
+            CFNumberRef key = CFNumberCreate(NULL, kCFNumberIntType, &str->id);
+            CFStringRef value = CFStringCreateWithCharacters(NULL, (UniChar*)str->str, str->len);
             if (key && value)
                 CFDictionarySetValue(dict, key, value);
             else
-                ERR("Failed to add string ID 0x%04x %s\n", ids[i], debugstr_wn(str, len));
+                ERR("Failed to add string ID 0x%04x %s\n", str->id, debugstr_wn(str->str, str->len));
         }
         else
-            ERR("Failed to load string ID 0x%04x\n", ids[i]);
+            ERR("Failed to load string ID 0x%04x\n", str->id);
+        str++;
     }
 
     localized_strings = dict;
@@ -446,32 +428,33 @@ static void load_strings(HINSTANCE instance)
 
 
 /***********************************************************************
- *              process_attach
+ *              macdrv_init
  */
-static BOOL process_attach(void)
+NTSTATUS macdrv_init(void *arg)
 {
+    struct init_params *params = arg;
     SessionAttributeBits attributes;
     OSStatus status;
 
     status = SessionGetInfo(callerSecuritySession, NULL, &attributes);
     if (status != noErr || !(attributes & sessionHasGraphicAccess))
-        return FALSE;
+        return STATUS_UNSUCCESSFUL;
 
     init_win_context();
     setup_options();
-    load_strings(macdrv_module);
+    load_strings(params->strings);
 
     macdrv_err_on = ERR_ON(macdrv);
-    if (macdrv_start_cocoa_app(GetTickCount64()))
+    if (macdrv_start_cocoa_app(NtGetTickCount()))
     {
         ERR("Failed to start Cocoa app main loop\n");
-        return FALSE;
+        return STATUS_UNSUCCESSFUL;
     }
 
     init_user_driver();
     macdrv_init_display_devices(FALSE);
 
-    return TRUE;
+    return STATUS_SUCCESS;
 }
 
 
@@ -560,24 +543,6 @@ struct macdrv_thread_data *macdrv_init_thread_data(void)
 
 
 /***********************************************************************
- *              DllMain
- */
-BOOL WINAPI DllMain(HINSTANCE hinst, DWORD reason, LPVOID reserved)
-{
-    BOOL ret = TRUE;
-
-    switch(reason)
-    {
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls( hinst );
-        macdrv_module = hinst;
-        ret = process_attach();
-        break;
-    }
-    return ret;
-}
-
-/***********************************************************************
  *              SystemParametersInfo (MACDRV.@)
  */
 BOOL macdrv_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, UINT flags )
@@ -639,4 +604,19 @@ BOOL macdrv_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, 
         break;
     }
     return FALSE;
+}
+
+
+const unixlib_entry_t __wine_unix_call_funcs[] =
+{
+    macdrv_init,
+};
+
+C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
+
+
+/* FIXME: Use __wine_unix_call instead */
+NTSTATUS unix_call(enum macdrv_funcs code, void *params)
+{
+    return __wine_unix_call_funcs[code]( params );
 }

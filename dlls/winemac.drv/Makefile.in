@@ -9,6 +9,7 @@ EXTRADLLFLAGS = -mcygwin
 C_SRCS = \
 	clipboard.c \
 	display.c \
+	dllmain.c \
 	dragdrop.c \
 	event.c \
 	gdi.c \
