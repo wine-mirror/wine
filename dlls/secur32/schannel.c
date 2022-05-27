@@ -806,9 +806,8 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             return SEC_E_INVALID_HANDLE;
         }
 
-        if (!(ctx = malloc(sizeof(*ctx)))) return SEC_E_INSUFFICIENT_MEMORY;
+        if (!(ctx = calloc(1, sizeof(*ctx)))) return SEC_E_INSUFFICIENT_MEMORY;
 
-        ctx->cert = NULL;
         handle = schan_alloc_handle(ctx, SCHAN_HANDLE_CTX);
         if (handle == SCHAN_INVALID_HANDLE)
         {
