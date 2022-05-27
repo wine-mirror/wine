@@ -11584,6 +11584,211 @@ static void test_image_bounds(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_bitmap_map(BOOL d3d11)
+{
+    static const struct
+    {
+        unsigned int options;
+    } invalid_map_options[] =
+    {
+        { D2D1_BITMAP_OPTIONS_NONE },
+        { D2D1_BITMAP_OPTIONS_TARGET },
+        { D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_TARGET },
+        { D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE },
+    };
+    static const struct
+    {
+        unsigned int options;
+    } valid_map_options[] =
+    {
+        { D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_CPU_READ },
+    };
+    D2D1_BITMAP_PROPERTIES1 bitmap_desc;
+    D3D11_TEXTURE2D_DESC texture_desc;
+    struct d2d1_test_context ctx;
+    D2D1_MAPPED_RECT mapped_rect;
+    ID3D11Device *d3d_device;
+    ID3D11Texture2D *texture;
+    IDXGISurface *surface;
+    ID2D1Bitmap1 *bitmap;
+    D2D1_SIZE_U size;
+    unsigned int i;
+    HRESULT hr;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    for (i = 0; i < ARRAY_SIZE(invalid_map_options); ++i)
+    {
+        winetest_push_context("Test %u", i);
+
+        set_size_u(&size, 4, 4);
+        bitmap_desc.dpiX = 96.0f;
+        bitmap_desc.dpiY = 96.0f;
+        bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+        bitmap_desc.bitmapOptions = invalid_map_options[i].options;
+        bitmap_desc.colorContext = NULL;
+        hr = ID2D1DeviceContext_CreateBitmap(ctx.context, size, NULL, 0, &bitmap_desc, &bitmap);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_NONE, &mapped_rect);
+        todo_wine
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_READ, &mapped_rect);
+        todo_wine
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_WRITE, &mapped_rect);
+        todo_wine
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ID2D1Bitmap1_GetSurface(bitmap, &surface);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = IDXGISurface_QueryInterface(surface, &IID_ID3D11Texture2D, (void **)&texture);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ID3D11Texture2D_GetDesc(texture, &texture_desc);
+        ok(!texture_desc.CPUAccessFlags, "Unexpected CPU access flags %#x.\n", texture_desc.CPUAccessFlags);
+        ID3D11Texture2D_Release(texture);
+        IDXGISurface_Release(surface);
+
+        ID2D1Bitmap1_Release(bitmap);
+
+        winetest_pop_context();
+    }
+
+    for (i = 0; i < ARRAY_SIZE(valid_map_options); ++i)
+    {
+        winetest_push_context("Test %u", i);
+
+        set_size_u(&size, 4, 4);
+        bitmap_desc.dpiX = 96.0f;
+        bitmap_desc.dpiY = 96.0f;
+        bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+        bitmap_desc.bitmapOptions = valid_map_options[i].options;
+        bitmap_desc.colorContext = NULL;
+        hr = ID2D1DeviceContext_CreateBitmap(ctx.context, size, NULL, 0, &bitmap_desc, &bitmap);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_NONE, &mapped_rect);
+        todo_wine
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_READ, &mapped_rect);
+        todo_wine
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_READ, &mapped_rect);
+        todo_wine
+        ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_WRITE, &mapped_rect);
+        todo_wine
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ID2D1Bitmap1_Unmap(bitmap);
+        todo_wine
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Bitmap1_Unmap(bitmap);
+        todo_wine
+        ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_WRITE, &mapped_rect);
+        todo_wine
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_READ | D2D1_MAP_OPTIONS_DISCARD, &mapped_rect);
+        todo_wine
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_WRITE | D2D1_MAP_OPTIONS_DISCARD, &mapped_rect);
+        todo_wine
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_READ | D2D1_MAP_OPTIONS_WRITE, &mapped_rect);
+        todo_wine
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+        hr = ID2D1Bitmap1_GetSurface(bitmap, &surface);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = IDXGISurface_QueryInterface(surface, &IID_ID3D11Texture2D, (void **)&texture);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ID3D11Texture2D_GetDesc(texture, &texture_desc);
+        todo_wine
+        ok(texture_desc.Usage == D3D11_USAGE_STAGING, "Unexpected usage %u.\n", texture_desc.Usage);
+        ok(!texture_desc.BindFlags, "Unexpected bind flags %#x.\n", texture_desc.BindFlags);
+        todo_wine
+        ok(texture_desc.CPUAccessFlags == D3D11_CPU_ACCESS_READ, "Unexpected CPU access flags %#x.\n",
+                texture_desc.CPUAccessFlags);
+        ok(!texture_desc.MiscFlags, "Unexpected misc flags %#x.\n", texture_desc.MiscFlags);
+        ID3D11Texture2D_Release(texture);
+        IDXGISurface_Release(surface);
+
+        ID2D1Bitmap1_Release(bitmap);
+
+        winetest_pop_context();
+    }
+
+    hr = IDXGIDevice_QueryInterface(ctx.device, &IID_ID3D11Device, (void **)&d3d_device);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    texture_desc.Width = 4;
+    texture_desc.Height = 4;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_STAGING;
+    texture_desc.BindFlags = 0;
+    texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_READ | D3D11_CPU_ACCESS_WRITE;
+    texture_desc.MiscFlags = 0;
+
+    hr = ID3D11Device_CreateTexture2D(d3d_device, &texture_desc, NULL, &texture);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID3D11Texture2D_QueryInterface(texture, &IID_IDXGISurface, (void **)&surface);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_CPU_READ;
+    hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(ctx.context, surface, &bitmap_desc, &bitmap);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_READ | D2D1_MAP_OPTIONS_DISCARD, &mapped_rect);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_READ, &mapped_rect);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Bitmap1_Unmap(bitmap);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_WRITE, &mapped_rect);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Bitmap1_Unmap(bitmap);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_WRITE | D2D1_MAP_OPTIONS_READ, &mapped_rect);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Bitmap1_Unmap(bitmap);
+    todo_wine
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_WRITE | D2D1_MAP_OPTIONS_DISCARD, &mapped_rect);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_WRITE | D2D1_MAP_OPTIONS_READ | D2D1_MAP_OPTIONS_DISCARD, &mapped_rect);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+    ID2D1Bitmap1_Release(bitmap);
+
+    ID3D11Texture2D_Release(texture);
+    IDXGISurface_Release(surface);
+
+    ID3D11Device_Release(d3d_device);
+
+    release_test_context(&ctx);
+}
+
 START_TEST(d2d1)
 {
     HMODULE d2d1_dll = GetModuleHandleA("d2d1.dll");
@@ -11660,6 +11865,7 @@ START_TEST(d2d1)
     queue_test(test_effect_grayscale);
     queue_d3d10_test(test_stroke_contains_point);
     queue_test(test_image_bounds);
+    queue_test(test_bitmap_map);
 
     run_queued_tests();
 }
