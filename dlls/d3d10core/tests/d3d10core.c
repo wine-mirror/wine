@@ -3890,14 +3890,20 @@ void main(point float4 vin[1] : POSITION, inout TriangleStream<gs_out> vout)
     refcount = ID3D10VertexShader_Release(vs);
     ok(!refcount, "Vertex shader has %u references left.\n", refcount);
 
+    vs = (void *)0xdeadbeef;
     hr = ID3D10Device_CreateVertexShader(device, vs_2_0, sizeof(vs_2_0), &vs);
     ok(hr == E_INVALIDARG, "Created a SM2 vertex shader, hr %#x\n", hr);
+    ok(!vs, "Unexpected pointer %p.\n", vs);
 
+    vs = (void *)0xdeadbeef;
     hr = ID3D10Device_CreateVertexShader(device, vs_3_0, sizeof(vs_3_0), &vs);
     ok(hr == E_INVALIDARG, "Created a SM3 vertex shader, hr %#x\n", hr);
+    ok(!vs, "Unexpected pointer %p.\n", vs);
 
+    vs = (void *)0xdeadbeef;
     hr = ID3D10Device_CreateVertexShader(device, ps_4_0, sizeof(ps_4_0), &vs);
     ok(hr == E_INVALIDARG, "Created a SM4 vertex shader from a pixel shader source, hr %#x\n", hr);
+    ok(!vs, "Unexpected pointer %p.\n", vs);
 
     /* pixel shader */
     expected_refcount = get_refcount(device) + 1;
