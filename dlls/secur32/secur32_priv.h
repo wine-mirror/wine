@@ -79,7 +79,7 @@ void load_auth_packages(void) DECLSPEC_HIDDEN;
 void SECUR32_deinitSchannelSP(void) DECLSPEC_HIDDEN;
 
 /* schannel internal interface */
-typedef struct schan_session_opaque *schan_session;
+typedef UINT64 schan_session;
 
 typedef struct schan_credentials
 {
