@@ -1473,8 +1473,9 @@ static void set_win32_clipboard_formats_from_mac_pasteboard(CFArrayRef types)
 
     for (i = 0; i < count; i++)
     {
+        struct set_clipboard_params params = { 0 };
         TRACE("adding format %s\n", debugstr_format(formats[i]->format_id));
-        SetClipboardData(formats[i]->format_id, 0);
+        NtUserSetClipboardData(formats[i]->format_id, 0, &params);
     }
 
     free(current_mac_formats);
