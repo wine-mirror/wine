@@ -4823,6 +4823,7 @@ static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
     struct device_desc device_desc;
     ID3D11Device *device, *tmp;
     ID3D11GeometryShader *gs;
+    ID3D11ComputeShader *cs;
     ID3D11VertexShader *vs;
     ID3D11DomainShader *ds;
     ID3D11PixelShader *ps;
@@ -5013,6 +5014,12 @@ static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
     hr = ID3D11Device_CreateDomainShader(device, gs_4_0, sizeof(gs_4_0), NULL, &ds);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     ok(!ds, "Unexpected pointer %p.\n", ds);
+
+    /* Compute shader */
+    ds = (void *)0xdeadbeef;
+    hr = ID3D11Device_CreateComputeShader(device, gs_4_0, sizeof(gs_4_0), NULL, &cs);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(!cs, "Unexpected pointer %p.\n", cs);
 
     refcount = ID3D11Device_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
