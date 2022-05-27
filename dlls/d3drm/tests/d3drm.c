@@ -2713,6 +2713,7 @@ static void test_Texture(void)
     LONG decalx, decaly;
     DWORD colors, shades;
     BOOL transparency;
+    D3DVALUE width, height;
 
     D3DRMIMAGE initimg =
     {
@@ -2918,6 +2919,22 @@ static void test_Texture(void)
     ok(shades == 11, "got %ld.\n", shades);
 
     hr = IDirect3DRMTexture_SetShades(texture1, 8);
+    ok(hr == S_OK, "got %#lx.\n", hr);
+
+    hr = IDirect3DRMTexture_GetDecalSize(texture1, &width, &height);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(width == 1.0f, "Got %.8e.\n", width);
+    ok(height == 1.0f, "Got %.8e.\n", height);
+
+    hr = IDirect3DRMTexture_SetDecalSize(texture1, 8.0f, 7.0f);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DRMTexture_GetDecalSize(texture1, &width, &height);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(width == 8.0f, "Got %.8e.\n", width);
+    ok(height == 7.0f, "Got %.8e.\n", height);
+
+    hr = IDirect3DRMTexture_SetDecalSize(texture1, 1.0f, 1.0f);
     ok(hr == S_OK, "got %#lx.\n", hr);
 
     transparency = IDirect3DRMTexture_GetDecalTransparency(texture1);
