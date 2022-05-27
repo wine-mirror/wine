@@ -3520,13 +3520,14 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateGeometryShaderWithStreamOutp
             iface, byte_code, byte_code_length, so_entries, entry_count, buffer_strides, strides_count,
             rasterizer_stream, class_linkage, shader);
 
+    *shader = NULL;
+
     if (class_linkage)
         FIXME("Class linkage is not implemented yet.\n");
 
     if (FAILED(hr = d3d_geometry_shader_create(device, byte_code, byte_code_length,
             so_entries, entry_count, buffer_strides, strides_count, rasterizer_stream, &object)))
     {
-        *shader = NULL;
         return hr;
     }
 
@@ -6226,10 +6227,11 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShaderWithStreamOutp
             iface, byte_code, byte_code_length, output_stream_decls,
             output_stream_decl_count, output_stream_stride, shader);
 
+    *shader = NULL;
+
     if (!output_stream_decl_count && output_stream_stride)
     {
         WARN("Stride must be 0 when declaration entry count is 0.\n");
-        *shader = NULL;
         return E_INVALIDARG;
     }
 
@@ -6237,7 +6239,6 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShaderWithStreamOutp
             && !(so_entries = heap_calloc(output_stream_decl_count, sizeof(*so_entries))))
     {
         ERR("Failed to allocate D3D11 SO declaration array memory.\n");
-        *shader = NULL;
         return E_OUTOFMEMORY;
     }
 
@@ -6257,7 +6258,6 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShaderWithStreamOutp
             {
                 WARN("Stride must be 0 when multiple output slots are used.\n");
                 heap_free(so_entries);
-                *shader = NULL;
                 return E_INVALIDARG;
             }
         }
@@ -6267,10 +6267,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreateGeometryShaderWithStreamOutp
             so_entries, output_stream_decl_count, &output_stream_stride, stride_count, 0, &object);
     heap_free(so_entries);
     if (FAILED(hr))
-    {
-        *shader = NULL;
         return hr;
-    }
 
     *shader = &object->ID3D10GeometryShader_iface;
 
