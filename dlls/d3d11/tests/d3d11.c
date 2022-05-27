@@ -25526,6 +25526,12 @@ float4 main(struct ps_data ps_input) : SV_Target
     device = test_context.device;
     context = test_context.immediate_context;
 
+    /* Failing case */
+    gs = (void *)0xdeadbeef;
+    hr = ID3D11Device_CreateGeometryShader(device, vs_code, sizeof(vs_code), NULL, &gs);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(!gs, "Unexpected pointer %p.\n", gs);
+
     hr = ID3D11Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &input_layout);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);

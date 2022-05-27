@@ -15121,6 +15121,12 @@ float4 main(struct ps_data ps_input) : SV_Target
 
     device = test_context.device;
 
+    /* Failing case */
+    gs = (void *)0xdeadbeef;
+    hr = ID3D10Device_CreateGeometryShader(device, vs_code, sizeof(vs_code), &gs);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(!gs, "Unexpected pointer %p.\n", gs);
+
     hr = ID3D10Device_CreateInputLayout(device, layout_desc, ARRAY_SIZE(layout_desc),
             vs_code, sizeof(vs_code), &input_layout);
     ok(SUCCEEDED(hr), "Failed to create input layout, hr %#x.\n", hr);
