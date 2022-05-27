@@ -491,9 +491,9 @@ static inline gss_ctx_id_t ctxhandle_sspi_to_gss( LSA_SEC_HANDLE handle )
     return (gss_ctx_id_t)handle;
 }
 
-static inline gss_cred_id_t credhandle_sspi_to_gss( LSA_SEC_HANDLE handle )
+static inline gss_cred_id_t credhandle_sspi_to_gss( UINT64 handle )
 {
-    return (gss_cred_id_t)handle;
+    return (gss_cred_id_t)(ULONG_PTR)handle;
 }
 
 static inline void ctxhandle_gss_to_sspi( gss_ctx_id_t handle, LSA_SEC_HANDLE *ctx )
@@ -501,9 +501,9 @@ static inline void ctxhandle_gss_to_sspi( gss_ctx_id_t handle, LSA_SEC_HANDLE *c
     *ctx = (LSA_SEC_HANDLE)handle;
 }
 
-static inline void credhandle_gss_to_sspi( gss_cred_id_t handle, LSA_SEC_HANDLE *cred )
+static inline void credhandle_gss_to_sspi( gss_cred_id_t handle, UINT64 *cred )
 {
-    *cred = (LSA_SEC_HANDLE)handle;
+    *cred = (ULONG_PTR)handle;
 }
 
 static ULONG flags_gss_to_asc_ret( ULONG flags )
@@ -665,8 +665,9 @@ static NTSTATUS delete_context( void *args )
 
 static NTSTATUS free_credentials_handle( void *args )
 {
+    const struct free_credentials_handle_params *params = args;
     OM_uint32 ret, minor_status;
-    gss_cred_id_t cred = credhandle_sspi_to_gss( (LSA_SEC_HANDLE)args );
+    gss_cred_id_t cred = credhandle_sspi_to_gss( params->credential );
 
     ret = pgss_release_cred( &minor_status, &cred );
     TRACE( "gss_release_cred returned %#x minor status %#x\n", ret, minor_status );

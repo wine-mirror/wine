@@ -25,7 +25,7 @@
 
 struct accept_context_params
 {
-    LSA_SEC_HANDLE credential;
+    UINT64 credential;
     LSA_SEC_HANDLE context;
     SecBufferDesc *input;
     LSA_SEC_HANDLE *new_context;
@@ -40,13 +40,18 @@ struct acquire_credentials_handle_params
     ULONG credential_use;
     const char *username;
     const char *password;
-    LSA_SEC_HANDLE *credential;
+    UINT64 *credential;
     ULONG *expiry;
+};
+
+struct free_credentials_handle_params
+{
+    UINT64 credential;
 };
 
 struct initialize_context_params
 {
-    LSA_SEC_HANDLE credential;
+    UINT64 credential;
     LSA_SEC_HANDLE context;
     const char *target_name;
     ULONG context_req;

@@ -77,6 +77,11 @@ static const SecPkgInfoW infoW =
 static ULONG kerberos_package_id;
 static LSA_DISPATCH_TABLE lsa_dispatch;
 
+struct cred_handle
+{
+    UINT64 handle;
+};
+
 static const char *debugstr_us( const UNICODE_STRING *us )
 {
     if (!us) return "<null>";
@@ -285,6 +290,7 @@ static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
     char *principal = NULL, *username = NULL,  *password = NULL;
     SEC_WINNT_AUTH_IDENTITY_W *id = auth_data;
     NTSTATUS status = SEC_E_INSUFFICIENT_MEMORY;
+    struct cred_handle *cred_handle;
     ULONG exptime;
 
     TRACE( "%s, %#lx, %p, %p, %p, %p, %p, %p\n", debugstr_us(principal_us), credential_use,
@@ -303,10 +309,19 @@ static NTSTATUS NTAPI kerberos_SpAcquireCredentialsHandle(
         if (!(password = get_password_unixcp( id->Password, id->PasswordLength ))) goto done;
     }
 
+    if (!(cred_handle = calloc( 1, sizeof(*cred_handle) )))
+    {
+        status = SEC_E_INSUFFICIENT_MEMORY;
+        goto done;
+    }
+
     {
         struct acquire_credentials_handle_params params = { principal, credential_use, username, password,
-                                                            credential, &exptime };
-        status = KRB5_CALL( acquire_credentials_handle, &params );
+                                                            &cred_handle->handle, &exptime };
+        if (!(status = KRB5_CALL( acquire_credentials_handle, &params )))
+            *credential = (LSA_SEC_HANDLE)cred_handle;
+        else
+            free( cred_handle );
         expiry_to_timestamp( exptime, expiry );
     }
 
@@ -319,9 +334,18 @@ done:
 
 static NTSTATUS NTAPI kerberos_SpFreeCredentialsHandle( LSA_SEC_HANDLE credential )
 {
+    struct cred_handle *cred_handle = (void *)credential;
+    struct free_credentials_handle_params params;
+    NTSTATUS status;
+
     TRACE( "%Ix\n", credential );
-    if (!credential) return SEC_E_INVALID_HANDLE;
-    return KRB5_CALL( free_credentials_handle, (void *)credential );
+
+    if (!cred_handle) return SEC_E_INVALID_HANDLE;
+
+    params.credential = cred_handle->handle;
+    status = KRB5_CALL( free_credentials_handle, &params );
+    free(cred_handle);
+    return status;
 }
 
 static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, LSA_SEC_HANDLE context,
@@ -345,8 +369,19 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
     if (target_name && !(target = get_str_unixcp( target_name ))) return SEC_E_INSUFFICIENT_MEMORY;
     else
     {
-        struct initialize_context_params params = { credential, context, target, context_req, input,
-                                                    new_context, output, context_attr, &exptime };
+        struct cred_handle *cred_handle = (struct cred_handle *)credential;
+        struct initialize_context_params params;
+
+        params.credential = cred_handle ? cred_handle->handle : 0;
+        params.context = context;
+        params.target_name = target;
+        params.context_req = context_req;
+        params.input = input;
+        params.new_context = new_context;
+        params.output = output;
+        params.context_attr = context_attr;
+        params.expiry = &exptime;
+
         status = KRB5_CALL( initialize_context, &params );
         if (!status)
         {
@@ -372,7 +407,17 @@ static NTSTATUS NTAPI kerberos_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential
 
     if (context || input || credential)
     {
-        struct accept_context_params params = { credential, context, input, new_context, output, context_attr, &exptime };
+        struct cred_handle *cred_handle = (struct cred_handle *)credential;
+        struct accept_context_params params;
+
+        params.credential = cred_handle ? cred_handle->handle : 0;
+        params.context = context;
+        params.input = input;
+        params.new_context = new_context;
+        params.output = output;
+        params.context_attr = context_attr;
+        params.expiry = &exptime;
+
         status = KRB5_CALL( accept_context, &params );
         if (!status)
         {
