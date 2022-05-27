@@ -821,6 +821,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
 
         create_params.transport = &ctx->transport;
         create_params.cred = cred;
+        create_params.session = &ctx->transport.session;
         if (GNUTLS_CALL( create_session, &create_params ))
         {
             schan_free_handle(handle, SCHAN_HANDLE_CTX);

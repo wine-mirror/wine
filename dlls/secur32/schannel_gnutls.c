@@ -480,18 +480,20 @@ static NTSTATUS schan_create_session( void *args )
 {
     const struct create_session_params *params = args;
     schan_credentials *cred = params->cred;
-    gnutls_session_t *s = (gnutls_session_t*)&params->transport->session;
     char priority[128] = "NORMAL:%LATEST_RECORD_VERSION", *p;
     BOOL using_vers_all = FALSE, disabled;
     unsigned int i, flags = (cred->credential_use == SECPKG_CRED_INBOUND) ? GNUTLS_SERVER : GNUTLS_CLIENT;
+    gnutls_session_t s;
     int err;
+
+    *params->session = 0;
 
     if (cred->enabled_protocols & (SP_PROT_DTLS1_0_CLIENT | SP_PROT_DTLS1_2_CLIENT))
     {
         flags |= GNUTLS_DATAGRAM | GNUTLS_NONBLOCK;
     }
 
-    err = pgnutls_init(s, flags);
+    err = pgnutls_init(&s, flags);
     if (err != GNUTLS_E_SUCCESS)
     {
         pgnutls_perror(err);
@@ -524,27 +526,28 @@ static NTSTATUS schan_create_session( void *args )
     }
 
     TRACE("Using %s priority\n", debugstr_a(priority));
-    err = pgnutls_priority_set_direct(*s, priority, NULL);
+    err = pgnutls_priority_set_direct(s, priority, NULL);
     if (err != GNUTLS_E_SUCCESS)
     {
         pgnutls_perror(err);
-        pgnutls_deinit(*s);
+        pgnutls_deinit(s);
         return STATUS_INTERNAL_ERROR;
     }
 
-    err = pgnutls_credentials_set(*s, GNUTLS_CRD_CERTIFICATE,
+    err = pgnutls_credentials_set(s, GNUTLS_CRD_CERTIFICATE,
                                   (gnutls_certificate_credentials_t)cred->credentials);
     if (err != GNUTLS_E_SUCCESS)
     {
         pgnutls_perror(err);
-        pgnutls_deinit(*s);
+        pgnutls_deinit(s);
         return STATUS_INTERNAL_ERROR;
     }
 
-    pgnutls_transport_set_pull_function(*s, pull_adapter);
-    if (flags & GNUTLS_DATAGRAM) pgnutls_transport_set_pull_timeout_function(*s, pull_timeout);
-    pgnutls_transport_set_push_function(*s, push_adapter);
-    pgnutls_transport_set_ptr(*s, (gnutls_transport_ptr_t)params->transport);
+    pgnutls_transport_set_pull_function(s, pull_adapter);
+    if (flags & GNUTLS_DATAGRAM) pgnutls_transport_set_pull_timeout_function(s, pull_timeout);
+    pgnutls_transport_set_push_function(s, push_adapter);
+    pgnutls_transport_set_ptr(s, (gnutls_transport_ptr_t)params->transport);
+    *params->session = (ULONG_PTR)s;
 
     return STATUS_SUCCESS;
 }

@@ -126,6 +126,7 @@ struct create_session_params
 {
     struct schan_transport *transport;
     schan_credentials *cred;
+    schan_session *session;
 };
 
 struct free_certificate_credentials_params
