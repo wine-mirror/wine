@@ -87,6 +87,7 @@ C_ASSERT( sizeof(struct block) == 8 );
 
 #define BLOCK_FLAG_FREE        0x00000001
 #define BLOCK_FLAG_PREV_FREE   0x00000002
+#define BLOCK_FLAG_FREE_LINK   0x00000003
 
 
 /* entry to link free blocks in free lists */
@@ -971,7 +972,7 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         list_init( &heap->freeList[0].arena.entry );
         for (i = 0, pEntry = heap->freeList; i < HEAP_NB_FREE_LISTS; i++, pEntry++)
         {
-            pEntry->arena.size = 0 | BLOCK_FLAG_FREE;
+            pEntry->arena.size = BLOCK_FLAG_FREE_LINK;
             pEntry->arena.magic = ARENA_FREE_MAGIC;
             if (i) list_add_after( &pEntry[-1].arena.entry, &pEntry->arena.entry );
         }
@@ -1028,8 +1029,8 @@ static struct block *find_free_block( HEAP *heap, SIZE_T block_size, SUBHEAP **s
     while ((ptr = list_next( &heap->freeList[0].arena.entry, ptr )))
     {
         entry = LIST_ENTRY( ptr, struct entry, entry );
-        if (entry->size == (0 | BLOCK_FLAG_FREE)) continue;
         block = (struct block *)entry;
+        if (block_get_flags( block ) == BLOCK_FLAG_FREE_LINK) continue;
         if (block_get_size( block ) >= block_size)
         {
             *subheap = find_subheap( heap, block, FALSE );
@@ -1078,6 +1079,7 @@ static BOOL is_valid_free_block( const HEAP *heap, const struct block *block )
     unsigned int i;
 
     if ((subheap = find_subheap( heap, block, FALSE ))) return TRUE;
+    if (block_get_flags( block ) != BLOCK_FLAG_FREE_LINK) return FALSE;
     for (i = 0; i < HEAP_NB_FREE_LISTS; i++) if (block == (struct block *)&heap->freeList[i].arena) return TRUE;
     return FALSE;
 }
