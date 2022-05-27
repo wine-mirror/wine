@@ -6029,6 +6029,8 @@ void wined3d_context_gl_draw_textured_quad(struct wined3d_context_gl *context_gl
     gl_info->gl_ops.gl.p_glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
     checkGLcall("glTexEnvi");
 
+    wined3d_context_gl_pause_transform_feedback(context_gl, FALSE);
+
     /* Draw a quad. */
     gl_info->gl_ops.gl.p_glBegin(GL_TRIANGLE_STRIP);
     gl_info->gl_ops.gl.p_glTexCoord3fv(&info.texcoords[0].x);
