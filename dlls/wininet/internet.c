@@ -1213,8 +1213,8 @@ BOOL WINAPI InternetGetConnectedStateExW(LPDWORD lpdwStatus, LPWSTR lpszConnecti
         return FALSE;
 
     if (lpdwStatus) {
-        WARN("always returning LAN connection.\n");
-        *lpdwStatus = INTERNET_CONNECTION_LAN;
+        WARN("always returning LAN connection and RAS installed.\n");
+        *lpdwStatus = INTERNET_CONNECTION_LAN | INTERNET_RAS_INSTALLED;
     }
 
     /* When the buffer size is zero LoadStringW fills the buffer with a pointer to
