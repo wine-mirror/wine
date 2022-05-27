@@ -109,22 +109,22 @@ msgstr "Informoj pri Helpo"
 #: dlls/shlwapi/shlwapi.rc:44 dlls/twain_32/twain.rc:32
 #: dlls/user32/user32.rc:83 dlls/user32/user32.rc:98 dlls/wininet/wininet.rc:62
 #: dlls/wininet/wininet.rc:82 dlls/winspool.drv/winspool.rc:42
-#: programs/conhost/conhost.rc:126 programs/net/net.rc:47
-#: programs/notepad/notepad.rc:117 programs/oleview/oleview.rc:161
-#: programs/oleview/oleview.rc:174 programs/progman/progman.rc:106
-#: programs/progman/progman.rc:124 programs/progman/progman.rc:142
-#: programs/progman/progman.rc:158 programs/progman/progman.rc:180
-#: programs/progman/progman.rc:199 programs/progman/progman.rc:216
-#: programs/regedit/regedit.rc:296 programs/regedit/regedit.rc:307
-#: programs/regedit/regedit.rc:320 programs/regedit/regedit.rc:336
-#: programs/regedit/regedit.rc:349 programs/regedit/regedit.rc:362
-#: programs/taskmgr/taskmgr.rc:442 programs/taskmgr/taskmgr.rc:517
-#: programs/winecfg/winecfg.rc:213 programs/winecfg/winecfg.rc:223
-#: programs/winefile/winefile.rc:127 programs/winefile/winefile.rc:150
-#: programs/winefile/winefile.rc:180 programs/winemine/winemine.rc:73
-#: programs/winemine/winemine.rc:84 programs/winemine/winemine.rc:98
-#: programs/wordpad/wordpad.rc:215 programs/wordpad/wordpad.rc:226
-#: programs/wordpad/wordpad.rc:244 programs/wordpad/wordpad.rc:257
+#: programs/net/net.rc:47 programs/notepad/notepad.rc:117
+#: programs/oleview/oleview.rc:161 programs/oleview/oleview.rc:174
+#: programs/progman/progman.rc:106 programs/progman/progman.rc:124
+#: programs/progman/progman.rc:142 programs/progman/progman.rc:158
+#: programs/progman/progman.rc:180 programs/progman/progman.rc:199
+#: programs/progman/progman.rc:216 programs/regedit/regedit.rc:296
+#: programs/regedit/regedit.rc:307 programs/regedit/regedit.rc:320
+#: programs/regedit/regedit.rc:336 programs/regedit/regedit.rc:349
+#: programs/regedit/regedit.rc:362 programs/taskmgr/taskmgr.rc:442
+#: programs/taskmgr/taskmgr.rc:517 programs/winecfg/winecfg.rc:213
+#: programs/winecfg/winecfg.rc:223 programs/winefile/winefile.rc:127
+#: programs/winefile/winefile.rc:150 programs/winefile/winefile.rc:180
+#: programs/winemine/winemine.rc:73 programs/winemine/winemine.rc:84
+#: programs/winemine/winemine.rc:98 programs/wordpad/wordpad.rc:215
+#: programs/wordpad/wordpad.rc:226 programs/wordpad/wordpad.rc:244
+#: programs/wordpad/wordpad.rc:257
 msgid "OK"
 msgstr "Bone"
 
@@ -207,22 +207,21 @@ msgstr "&Instali"
 #: dlls/shell32/shell32.rc:340 dlls/shlwapi/shlwapi.rc:45
 #: dlls/twain_32/twain.rc:33 dlls/user32/user32.rc:84 dlls/user32/user32.rc:99
 #: dlls/wininet/wininet.rc:63 dlls/wininet/wininet.rc:83
-#: dlls/winspool.drv/winspool.rc:43 programs/conhost/conhost.rc:127
-#: programs/notepad/notepad.rc:118 programs/oleview/oleview.rc:162
-#: programs/oleview/oleview.rc:175 programs/progman/progman.rc:107
-#: programs/progman/progman.rc:125 programs/progman/progman.rc:143
-#: programs/progman/progman.rc:159 programs/progman/progman.rc:181
-#: programs/progman/progman.rc:200 programs/progman/progman.rc:217
-#: programs/regedit/regedit.rc:297 programs/regedit/regedit.rc:308
-#: programs/regedit/regedit.rc:321 programs/regedit/regedit.rc:337
-#: programs/regedit/regedit.rc:350 programs/regedit/regedit.rc:363
-#: programs/taskmgr/taskmgr.rc:443 programs/taskmgr/taskmgr.rc:518
-#: programs/wineboot/wineboot.rc:34 programs/winecfg/winecfg.rc:214
-#: programs/winecfg/winecfg.rc:224 programs/winefile/winefile.rc:128
-#: programs/winefile/winefile.rc:151 programs/winefile/winefile.rc:181
-#: programs/winemine/winemine.rc:99 programs/wordpad/wordpad.rc:216
-#: programs/wordpad/wordpad.rc:227 programs/wordpad/wordpad.rc:245
-#: programs/wordpad/wordpad.rc:258
+#: dlls/winspool.drv/winspool.rc:43 programs/notepad/notepad.rc:118
+#: programs/oleview/oleview.rc:162 programs/oleview/oleview.rc:175
+#: programs/progman/progman.rc:107 programs/progman/progman.rc:125
+#: programs/progman/progman.rc:143 programs/progman/progman.rc:159
+#: programs/progman/progman.rc:181 programs/progman/progman.rc:200
+#: programs/progman/progman.rc:217 programs/regedit/regedit.rc:297
+#: programs/regedit/regedit.rc:308 programs/regedit/regedit.rc:321
+#: programs/regedit/regedit.rc:337 programs/regedit/regedit.rc:350
+#: programs/regedit/regedit.rc:363 programs/taskmgr/taskmgr.rc:443
+#: programs/taskmgr/taskmgr.rc:518 programs/wineboot/wineboot.rc:34
+#: programs/winecfg/winecfg.rc:214 programs/winecfg/winecfg.rc:224
+#: programs/winefile/winefile.rc:128 programs/winefile/winefile.rc:151
+#: programs/winefile/winefile.rc:181 programs/winemine/winemine.rc:99
+#: programs/wordpad/wordpad.rc:216 programs/wordpad/wordpad.rc:227
+#: programs/wordpad/wordpad.rc:245 programs/wordpad/wordpad.rc:258
 msgid "Cancel"
 msgstr "Rezigni"
 
@@ -14931,18 +14930,6 @@ msgstr "&Fermi terminalon"
 #: programs/conhost/conhost.rc:114
 msgid "Edition"
 msgstr "Redaktado"
-
-#: programs/conhost/conhost.rc:120
-msgid "Console parameters"
-msgstr "Terminala parametoj"
-
-#: programs/conhost/conhost.rc:123
-msgid "Retain these settings for later sessions"
-msgstr "Konserrvi ĉi tiujn agordadojn"
-
-#: programs/conhost/conhost.rc:124
-msgid "Modify only current session"
-msgstr "Modifi nur nunan sesion"
 
 #: programs/conhost/conhost.rc:32 programs/notepad/notepad.rc:41
 #: programs/regedit/regedit.rc:43 programs/winhlp32/winhlp32.rc:39

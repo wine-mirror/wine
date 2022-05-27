@@ -1756,34 +1756,6 @@ static INT_PTR WINAPI config_dialog_proc( HWND dialog, UINT msg, WPARAM wparam, 
     return TRUE;
 }
 
-/* dialog proc for choosing how to handle modification to the console settings */
-static INT_PTR WINAPI save_dialog_proc( HWND dialog, UINT msg, WPARAM wparam, LPARAM lparam )
-{
-    switch (msg)
-    {
-    case WM_INITDIALOG:
-        SendMessageW( dialog, WM_NEXTDLGCTL, (WPARAM)GetDlgItem( dialog, IDC_SAV_SESSION ), TRUE );
-        SendDlgItemMessageW( dialog, IDC_SAV_SESSION, BM_SETCHECK, BST_CHECKED, 0 );
-        return FALSE;
-
-    case WM_COMMAND:
-        switch (LOWORD(wparam))
-        {
-        case IDOK:
-            EndDialog( dialog,
-                       (IsDlgButtonChecked(dialog, IDC_SAV_SAVE) == BST_CHECKED) ?
-                       IDC_SAV_SAVE : IDC_SAV_SESSION );
-            break;
-        case IDCANCEL:
-            EndDialog( dialog, IDCANCEL ); break;
-        }
-        break;
-    default:
-        return FALSE;
-    }
-    return TRUE;
-}
-
 static void apply_config( struct console *console, const struct console_config *config )
 {
     if (console->active->width != config->sb_width || console->active->height != config->sb_height)
@@ -1901,19 +1873,17 @@ static BOOL config_dialog( struct console *console, BOOL current )
     PROPSHEETPAGEW psp;
     WNDCLASSW wndclass;
     WCHAR buff[256];
-    BOOL modify_session = FALSE;
-    BOOL save = FALSE;
 
     InitCommonControls();
 
     memset( &di, 0, sizeof(di) );
     di.console = console;
-    if (!current)
-    {
+
+    if (current)
+        current_config( console, &di.config );
+    else
         load_config( NULL, &di.config );
-        save = TRUE;
-    }
-    else current_config( console, &di.config );
+
     prev_config = di.config;
 
     wndclass.style         = 0;
@@ -1979,35 +1949,14 @@ static BOOL config_dialog( struct console *console, BOOL current )
 
     TRACE( "%s\n", debugstr_config(&di.config) );
 
-    if (!save)
-    {
-        switch (DialogBoxW( GetModuleHandleW( NULL ), MAKEINTRESOURCEW(IDD_SAVE_SETTINGS),
-                            console->win, save_dialog_proc ))
-        {
-        case IDC_SAV_SAVE:
-            save = TRUE;
-            modify_session = TRUE;
-            break;
-        case IDC_SAV_SESSION:
-            modify_session = TRUE;
-            break;
-        default:
-            ERR( "dialog failed\n" );
-            /* fall through */
-        case IDCANCEL:
-            modify_session = FALSE;
-            save = FALSE;
-            break;
-        }
-    }
-
-    if (modify_session)
+    if (current)
     {
         apply_config( console, &di.config );
         update_window( di.console );
     }
-    if (save)
-        save_config( current ? console->window->config_key : NULL, &di.config );
+
+    save_config( current ? console->window->config_key : NULL, &di.config );
+
     return TRUE;
 }
 

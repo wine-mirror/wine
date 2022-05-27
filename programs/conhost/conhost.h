@@ -186,7 +186,6 @@ static inline unsigned int get_bounded_cursor_x( struct screen_buffer *screen_bu
 #define IDD_OPTION              0x0100
 #define IDD_FONT                0x0200
 #define IDD_CONFIG              0x0300
-#define IDD_SAVE_SETTINGS       0x0400
 
 /* dialog boxes controls */
 #define IDC_OPT_CURSOR_SMALL    0x0101
@@ -217,6 +216,3 @@ static inline unsigned int get_bounded_cursor_x( struct screen_buffer *screen_bu
 #define IDC_CNF_WIN_HEIGHT_UD   0x0308
 #define IDC_CNF_CLOSE_EXIT      0x0309
 #define IDC_CNF_EDITION_MODE    0x030a
-
-#define IDC_SAV_SAVE            0x0401
-#define IDC_SAV_SESSION         0x0402
