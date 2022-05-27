@@ -4305,45 +4305,42 @@ static void testAcquireCertPrivateKey(void)
         CERT_KEY_CONTEXT keyContext;
 
         /* Don't cache provider */
+        SetLastError(0xdeadbeef);
         ret = CryptAcquireCertificatePrivateKey(cert, 0, NULL, &certCSP,
          &keySpec, &callerFree);
-        ok(ret, "CryptAcquireCertificatePrivateKey failed: %08lx\n",
-         GetLastError());
-        if (ret)
-        {
-            ok(callerFree, "Expected callerFree to be TRUE\n");
-            CryptReleaseContext(certCSP, 0);
-        }
+        ok(ret, "CryptAcquireCertificatePrivateKey failed: %08lx\n", GetLastError());
+        ok(GetLastError() == ERROR_SUCCESS, "got %08lx\n", GetLastError());
+        ok(callerFree, "Expected callerFree to be TRUE\n");
+        CryptReleaseContext(certCSP, 0);
 
+        SetLastError(0xdeadbeef);
         ret = CryptAcquireCertificatePrivateKey(cert, 0, NULL, &certCSP,
          NULL, NULL);
-        ok(ret, "CryptAcquireCertificatePrivateKey failed: %08lx\n",
-         GetLastError());
+        ok(ret, "CryptAcquireCertificatePrivateKey failed: %08lx\n", GetLastError());
+        ok(GetLastError() == ERROR_SUCCESS, "got %08lx\n", GetLastError());
         CryptReleaseContext(certCSP, 0);
 
         /* Use the key prov info's caching (there shouldn't be any) */
+        SetLastError(0xdeadbeef);
         ret = CryptAcquireCertificatePrivateKey(cert,
          CRYPT_ACQUIRE_USE_PROV_INFO_FLAG, NULL, &certCSP, &keySpec,
          &callerFree);
-        ok(ret, "CryptAcquireCertificatePrivateKey failed: %08lx\n",
-         GetLastError());
-        if (ret)
-        {
-            ok(callerFree, "Expected callerFree to be TRUE\n");
-            CryptReleaseContext(certCSP, 0);
-        }
+        ok(ret, "CryptAcquireCertificatePrivateKey failed: %08lx\n", GetLastError());
+        ok(GetLastError() == ERROR_SUCCESS, "got %08lx\n", GetLastError());
+        ok(callerFree, "Expected callerFree to be TRUE\n");
+        CryptReleaseContext(certCSP, 0);
 
         /* Cache it (and check that it's cached) */
+        SetLastError(0xdeadbeef);
         ret = CryptAcquireCertificatePrivateKey(cert,
          CRYPT_ACQUIRE_CACHE_FLAG, NULL, &certCSP, &keySpec, &callerFree);
-        ok(ret, "CryptAcquireCertificatePrivateKey failed: %08lx\n",
-         GetLastError());
+        ok(ret, "CryptAcquireCertificatePrivateKey failed: %08lx\n", GetLastError());
+        ok(GetLastError() == ERROR_SUCCESS, "got %08lx\n", GetLastError());
         ok(!callerFree, "Expected callerFree to be FALSE\n");
         size = sizeof(keyContext);
         ret = CertGetCertificateContextProperty(cert, CERT_KEY_CONTEXT_PROP_ID,
          &keyContext, &size);
-        ok(ret, "CertGetCertificateContextProperty failed: %08lx\n",
-         GetLastError());
+        ok(ret, "CertGetCertificateContextProperty failed: %08lx\n", GetLastError());
 
         /* Remove the cached provider */
         CryptReleaseContext(keyContext.hCryptProv, 0);
@@ -4354,17 +4351,17 @@ static void testAcquireCertPrivateKey(void)
         CertSetCertificateContextProperty(cert, CERT_KEY_PROV_INFO_PROP_ID, 0,
          &keyProvInfo);
         /* Now use the key prov info's caching */
+        SetLastError(0xdeadbeef);
         ret = CryptAcquireCertificatePrivateKey(cert,
          CRYPT_ACQUIRE_USE_PROV_INFO_FLAG, NULL, &certCSP, &keySpec,
          &callerFree);
-        ok(ret, "CryptAcquireCertificatePrivateKey failed: %08lx\n",
-         GetLastError());
+        ok(ret, "CryptAcquireCertificatePrivateKey failed: %08lx\n", GetLastError());
+        ok(GetLastError() == ERROR_SUCCESS, "got %08lx\n", GetLastError());
         ok(!callerFree, "Expected callerFree to be FALSE\n");
         size = sizeof(keyContext);
         ret = CertGetCertificateContextProperty(cert, CERT_KEY_CONTEXT_PROP_ID,
          &keyContext, &size);
-        ok(ret, "CertGetCertificateContextProperty failed: %08lx\n",
-         GetLastError());
+        ok(ret, "CertGetCertificateContextProperty failed: %08lx\n", GetLastError());
         CryptReleaseContext(certCSP, 0);
 
         CryptDestroyKey(key);

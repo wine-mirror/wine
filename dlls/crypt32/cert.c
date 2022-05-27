@@ -1006,6 +1006,7 @@ BOOL WINAPI CryptAcquireCertificatePrivateKey(PCCERT_CONTEXT pCert,
     CryptMemFree(info);
     if (cert_in_store)
         CertFreeCertificateContext(cert_in_store);
+    if (ret) SetLastError(0);
     return ret;
 }
 
