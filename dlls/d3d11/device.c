@@ -3569,6 +3569,8 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreateHullShader(ID3D11Device2 *if
     TRACE("iface %p, byte_code %p, byte_code_length %Iu, class_linkage %p, shader %p.\n",
             iface, byte_code, byte_code_length, class_linkage, shader);
 
+    *shader = NULL;
+
     if (class_linkage)
         FIXME("Class linkage is not implemented yet.\n");
 

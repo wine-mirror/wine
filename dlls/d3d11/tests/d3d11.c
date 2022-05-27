@@ -4825,6 +4825,7 @@ static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
     ID3D11GeometryShader *gs;
     ID3D11VertexShader *vs;
     ID3D11PixelShader *ps;
+    ID3D11HullShader *hs;
     HRESULT hr;
 
     device_desc.feature_level = &feature_level;
@@ -4999,6 +5000,12 @@ static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
         if (SUCCEEDED(hr))
             ID3D11GeometryShader_Release(gs);
     }
+
+    /* Hull shader */
+    hs = (void *)0xdeadbeef;
+    hr = ID3D11Device_CreateHullShader(device, gs_4_0, sizeof(gs_4_0), NULL, &hs);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(!hs, "Unexpected pointer %p.\n", hs);
 
     refcount = ID3D11Device_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
