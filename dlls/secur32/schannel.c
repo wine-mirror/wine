@@ -444,40 +444,38 @@ static WCHAR *get_key_container_path(const CERT_CONTEXT *ctx)
     {
         char *str;
         if (!CryptGetProvParam(keyctx.hCryptProv, PP_CONTAINER, NULL, &size, 0)) return NULL;
-        if (!(str = RtlAllocateHeap(GetProcessHeap(), 0, size))) return NULL;
+        if (!(str = malloc(size))) return NULL;
         if (!CryptGetProvParam(keyctx.hCryptProv, PP_CONTAINER, (BYTE *)str, &size, 0)) return NULL;
 
         len = MultiByteToWideChar(CP_ACP, 0, str, -1, NULL, 0);
-        if (!(ret = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(L"Software\\Wine\\Crypto\\RSA\\") + len * sizeof(WCHAR))))
+        if (!(ret = malloc(sizeof(L"Software\\Wine\\Crypto\\RSA\\") + len * sizeof(WCHAR))))
         {
-            RtlFreeHeap(GetProcessHeap(), 0, str);
+            free(str);
             return NULL;
         }
         wcscpy(ret, L"Software\\Wine\\Crypto\\RSA\\");
         MultiByteToWideChar(CP_ACP, 0, str, -1, ret + wcslen(ret), len);
-        RtlFreeHeap(GetProcessHeap(), 0, str);
+        free(str);
     }
     else if (CertGetCertificateContextProperty(ctx, CERT_KEY_PROV_INFO_PROP_ID, NULL, &prov_size))
     {
-        if (!(prov = RtlAllocateHeap(GetProcessHeap(), 0, prov_size))) return NULL;
+        if (!(prov = malloc(prov_size))) return NULL;
         if (!CertGetCertificateContextProperty(ctx, CERT_KEY_PROV_INFO_PROP_ID, prov, &prov_size))
         {
-            RtlFreeHeap(GetProcessHeap(), 0, prov);
+            free(prov);
             return NULL;
         }
-        if (!(ret = RtlAllocateHeap(GetProcessHeap(), 0,
-                                    sizeof(L"Software\\Wine\\Crypto\\RSA\\") + wcslen(prov->pwszContainerName) * sizeof(WCHAR))))
+        if (!(ret = malloc(sizeof(L"Software\\Wine\\Crypto\\RSA\\") + wcslen(prov->pwszContainerName) * sizeof(WCHAR))))
         {
-            RtlFreeHeap(GetProcessHeap(), 0, prov);
+            free(prov);
             return NULL;
         }
         wcscpy(ret, L"Software\\Wine\\Crypto\\RSA\\");
         wcscat(ret, prov->pwszContainerName);
-        RtlFreeHeap(GetProcessHeap(), 0, prov);
+        free(prov);
     }
 
-    if (!ret && GetUserNameW(username, &len) &&
-        (ret = RtlAllocateHeap(GetProcessHeap(), 0, sizeof(L"Software\\Wine\\Crypto\\RSA\\") + len * sizeof(WCHAR))))
+    if (!ret && GetUserNameW(username, &len) && (ret = malloc(sizeof(L"Software\\Wine\\Crypto\\RSA\\") + len * sizeof(WCHAR))))
     {
         wcscpy(ret, L"Software\\Wine\\Crypto\\RSA\\");
         wcscat(ret, username);
@@ -492,16 +490,15 @@ static BYTE *get_key_blob(const CERT_CONTEXT *ctx, DWORD *size)
     BYTE *buf, *ret = NULL;
     DATA_BLOB blob_in, blob_out;
     DWORD spec = 0, type, len;
+    LSTATUS retval;
     WCHAR *path;
     HKEY hkey;
 
     if (!(path = get_key_container_path(ctx))) return NULL;
-    if (RegOpenKeyExW(HKEY_CURRENT_USER, path, 0, KEY_READ, &hkey))
-    {
-        RtlFreeHeap(GetProcessHeap(), 0, path);
+    retval = RegOpenKeyExW(HKEY_CURRENT_USER, path, 0, KEY_READ, &hkey);
+    free(path);
+    if (retval)
         return NULL;
-    }
-    RtlFreeHeap(GetProcessHeap(), 0, path);
 
     if (!RegQueryValueExW(hkey, L"KeyExchangeKeyPair", 0, &type, NULL, &len)) spec = AT_KEYEXCHANGE;
     else if (!RegQueryValueExW(hkey, L"SignatureKeyPair", 0, &type, NULL, &len)) spec = AT_SIGNATURE;
@@ -511,7 +508,7 @@ static BYTE *get_key_blob(const CERT_CONTEXT *ctx, DWORD *size)
         return NULL;
     }
 
-    if (!(buf = RtlAllocateHeap(GetProcessHeap(), 0, len + MAX_LEAD_BYTES)))
+    if (!(buf = malloc(len + MAX_LEAD_BYTES)))
     {
         RegCloseKey(hkey);
         return NULL;
@@ -531,7 +528,7 @@ static BYTE *get_key_blob(const CERT_CONTEXT *ctx, DWORD *size)
             ret = buf;
         }
     }
-    else RtlFreeHeap(GetProcessHeap(), 0, buf);
+    else free(buf);
 
     RegCloseKey(hkey);
     return ret;
@@ -593,7 +590,7 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const void *schanCred,
     params.key_size = key_size;
     params.key_blob = key_blob;
     if (GNUTLS_CALL( allocate_certificate_credentials, &params )) goto fail;
-    RtlFreeHeap(GetProcessHeap(), 0, key_blob);
+    free(key_blob);
 
     handle = schan_alloc_handle(creds, SCHAN_HANDLE_CRED);
     if (handle == SCHAN_INVALID_HANDLE) goto fail;
@@ -612,7 +609,7 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const void *schanCred,
 
 fail:
     free(creds);
-    RtlFreeHeap(GetProcessHeap(), 0, key_blob);
+    free(key_blob);
     return SEC_E_INTERNAL_ERROR;
 }
 
