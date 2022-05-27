@@ -4848,6 +4848,11 @@ static void test_create_shader(const D3D_FEATURE_LEVEL feature_level)
     ok(hr == S_OK, "Feature level %#x: Got unexpected hr %#lx.\n", feature_level, hr);
     ID3D11PixelShader_Release(ps);
 
+    ps = (void *)0xdeadbeef;
+    hr = ID3D11Device_CreatePixelShader(device, vs_2_0, sizeof(vs_2_0), NULL, &ps);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(!ps, "Unexpected pointer %p.\n", ps);
+
     /* vertex shader */
     vs = (void *)0xdeadbeef;
     hr = ID3D11Device_CreateVertexShader(device, vs_2_0, sizeof(vs_2_0), NULL, &vs);

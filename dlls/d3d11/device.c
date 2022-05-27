@@ -3546,6 +3546,8 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_CreatePixelShader(ID3D11Device2 *i
     TRACE("iface %p, byte_code %p, byte_code_length %Iu, class_linkage %p, shader %p.\n",
             iface, byte_code, byte_code_length, class_linkage, shader);
 
+    *shader = NULL;
+
     if (class_linkage)
         FIXME("Class linkage is not implemented yet.\n");
 
@@ -6283,6 +6285,8 @@ static HRESULT STDMETHODCALLTYPE d3d10_device_CreatePixelShader(ID3D10Device1 *i
 
     TRACE("iface %p, byte_code %p, byte_code_length %Iu, shader %p.\n",
             iface, byte_code, byte_code_length, shader);
+
+    *shader = NULL;
 
     if (FAILED(hr = d3d_pixel_shader_create(device, byte_code, byte_code_length, &object)))
         return hr;

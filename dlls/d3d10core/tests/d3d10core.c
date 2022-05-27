@@ -3906,6 +3906,11 @@ void main(point float4 vin[1] : POSITION, inout TriangleStream<gs_out> vout)
     ok(!vs, "Unexpected pointer %p.\n", vs);
 
     /* pixel shader */
+    ps = (void *)0xdeadbeef;
+    hr = ID3D10Device_CreatePixelShader(device, vs_2_0, sizeof(vs_2_0), &ps);
+    ok(hr == E_INVALIDARG, "Unexpected hr %#x.\n", hr);
+    ok(!ps, "Unexpected pointer %p.\n", ps);
+
     expected_refcount = get_refcount(device) + 1;
     hr = ID3D10Device_CreatePixelShader(device, ps_4_0, sizeof(ps_4_0), &ps);
     ok(SUCCEEDED(hr), "Failed to create SM4 pixel shader, hr %#x.\n", hr);
