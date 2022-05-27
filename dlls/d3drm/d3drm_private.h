@@ -68,6 +68,7 @@ struct d3drm_texture
     LONG decal_y;
     DWORD max_colors;
     DWORD max_shades;
+    BOOL transparency;
 };
 
 struct d3drm_frame

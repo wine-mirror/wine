@@ -2712,6 +2712,7 @@ static void test_Texture(void)
     IDirectDrawSurface *surface;
     LONG decalx, decaly;
     DWORD colors, shades;
+    BOOL transparency;
 
     D3DRMIMAGE initimg =
     {
@@ -2918,6 +2919,18 @@ static void test_Texture(void)
 
     hr = IDirect3DRMTexture_SetShades(texture1, 8);
     ok(hr == S_OK, "got %#lx.\n", hr);
+
+    transparency = IDirect3DRMTexture_GetDecalTransparency(texture1);
+    ok(transparency == FALSE, "Got %d.\n", transparency);
+
+    hr = IDirect3DRMTexture_SetDecalTransparency(texture1, TRUE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+    transparency = IDirect3DRMTexture_GetDecalTransparency(texture1);
+    ok(transparency == TRUE, "Got %d.\n", transparency);
+
+    hr = IDirect3DRMTexture_SetDecalTransparency(texture1, FALSE);
+    ok(hr == S_OK, "Got hr %#lx.\n", hr);
 
     d3drm_img = IDirect3DRMTexture_GetImage(texture1);
     ok(!!d3drm_img, "Failed to get image.\n");
