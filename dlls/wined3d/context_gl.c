@@ -5944,6 +5944,8 @@ void wined3d_context_gl_draw_shaded_quad(struct wined3d_context_gl *context_gl, 
     apply_texture_blit_state(gl_info, &texture_gl->texture_rgb, info.bind_target, level, filter);
     gl_info->gl_ops.gl.p_glTexParameteri(info.bind_target, GL_TEXTURE_MAX_LEVEL, level);
 
+    wined3d_context_gl_pause_transform_feedback(context_gl, FALSE);
+
     wined3d_context_gl_get_rt_size(context_gl, &dst_size);
     w = dst_size.cx;
     h = dst_size.cy;
