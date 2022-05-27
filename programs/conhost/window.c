@@ -850,7 +850,7 @@ static void set_first_font( struct console *console, struct console_config *conf
     if (fc.pass > 5)
         ERR("Unable to find a valid console font\n");
 
-    /* Save font configuration to the registry */
+    /* Update active configuration */
     config->cell_width  = console->active->font.width;
     config->cell_height = console->active->font.height;
     config->font_pitch_family = console->active->font.pitch_family;
@@ -858,7 +858,8 @@ static void set_first_font( struct console *console, struct console_config *conf
             console->active->font.face_len * sizeof(WCHAR) );
     config->face_name[console->active->font.face_len] = 0;
 
-    save_config( console->window->config_key, config );
+    /* Save default console configuration to the registry */
+    save_config( NULL, config );
 }
 
 /* Sets the font specified in the LOGFONT as the new console font */
