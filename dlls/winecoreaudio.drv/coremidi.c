@@ -103,6 +103,7 @@ struct midi_dest
 
     MIDIOUTCAPSW caps;
     MIDIOPENDESC midiDesc;
+    BYTE runningStatus;
     WORD wFlags;
 };
 
@@ -598,6 +599,7 @@ static UINT midi_out_open(WORD dev_id, MIDIOPENDESC *midi_desc, UINT flags, stru
             return MMSYSERR_ERROR;
         }
     }
+    dest->runningStatus = 0;
     dest->wFlags = HIWORD(flags & CALLBACK_TYPEMASK);
     dest->midiDesc = *midi_desc;
 
@@ -655,12 +657,30 @@ static UINT midi_out_data(WORD dev_id, UINT data)
         WARN("bad device ID : %d\n", dev_id);
         return MMSYSERR_BADDEVICEID;
     }
+    dest = dests + dev_id;
 
     bytes[0] = data & 0xff;
-    bytes[1] = (data >> 8) & 0xff;
-    bytes[2] = (data >> 16) & 0xff;
+    if (bytes[0] & 0x80)
+    {
+        bytes[1] = (data >> 8) & 0xff;
+        bytes[2] = (data >> 16) & 0xff;
+        if (bytes[0] < 0xF0)
+            dest->runningStatus = bytes[0];
+        else if (bytes[0] <= 0xF7)
+            dest->runningStatus = 0;
+    }
+    else if (dest->runningStatus)
+    {
+        bytes[0] = dest->runningStatus;
+        bytes[1] = data & 0xff;
+        bytes[2] = (data >> 8) & 0xff;
+    }
+    else
+    {
+        FIXME("ooch %x\n", data);
+        return MMSYSERR_NOERROR;
+    }
 
-    dest = dests + dev_id;
     if (dest->caps.wTechnology == MOD_SYNTH)
     {
         sc = MusicDeviceMIDIEvent(dest->synth, bytes[0], bytes[1], bytes[2], 0);
@@ -726,6 +746,7 @@ static UINT midi_out_long_data(WORD dev_id, MIDIHDR *hdr, UINT hdr_size, struct 
     else if (dest->caps.wTechnology == MOD_MIDIPORT)
         midi_send(midi_out_port, dest->dest, (UInt8 *)hdr->lpData, hdr->dwBufferLength);
 
+    dest->runningStatus = 0;
     hdr->dwFlags &= ~MHDR_INQUEUE;
     hdr->dwFlags |= MHDR_DONE;
 
@@ -865,6 +886,8 @@ static UINT midi_out_reset(WORD dev_id)
         }
     }
     else FIXME("MOD_MIDIPORT\n");
+
+    dests[dev_id].runningStatus = 0;
 
     /* FIXME: the LongData buffers must also be returned to the app */
     return MMSYSERR_NOERROR;
