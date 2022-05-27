@@ -22,8 +22,12 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define VKD3D_NO_VULKAN_H
+#define VKD3D_NO_WIN32_TYPES
 #include "initguid.h"
 #include "wined3d_private.h"
+#include "d3d12.h"
+#include <vkd3d.h>
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3d);
 WINE_DECLARE_DEBUG_CHANNEL(winediag);
@@ -247,6 +251,14 @@ BOOL wined3d_get_app_name(char *app_name, unsigned int app_name_size)
     return TRUE;
 }
 
+static void vkd3d_log_callback(const char *fmt, va_list args)
+{
+    char buffer[1024];
+
+    vsnprintf(buffer, sizeof(buffer), fmt, args);
+    __wine_dbg_output(buffer);
+}
+
 static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
 {
     DWORD wined3d_context_tls_idx;
@@ -458,6 +470,8 @@ static BOOL wined3d_dll_init(HINSTANCE hInstDLL)
 
     if (appkey) RegCloseKey( appkey );
     if (hkey) RegCloseKey( hkey );
+
+    vkd3d_set_log_callback(vkd3d_log_callback);
 
     return TRUE;
 }
