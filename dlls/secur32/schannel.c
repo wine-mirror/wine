@@ -545,8 +545,9 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const void *schanCred,
     ULONG_PTR handle;
     SECURITY_STATUS status = SEC_E_OK;
     const CERT_CONTEXT *cert = NULL;
-    DATA_BLOB key_blob = {0};
-    struct allocate_certificate_credentials_params params;
+    struct allocate_certificate_credentials_params params = { 0 };
+    BYTE *key_blob = NULL;
+    ULONG key_size = 0;
 
     TRACE("schanCred %p, phCredential %p, ptsExpiry %p\n", schanCred, phCredential, ptsExpiry);
 
@@ -581,12 +582,18 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const void *schanCred,
     creds->credential_use = SECPKG_CRED_OUTBOUND;
     creds->enabled_protocols = enabled_protocols;
 
-    if (cert && !(key_blob.pbData = get_key_blob(cert, &key_blob.cbData))) goto fail;
+    if (cert && !(key_blob = get_key_blob(cert, &key_size))) goto fail;
     params.c = creds;
-    params.ctx = cert;
-    params.key_blob = &key_blob;
+    if (cert)
+    {
+        params.cert_encoding = cert->dwCertEncodingType;
+        params.cert_size = cert->cbCertEncoded;
+        params.cert_blob = cert->pbCertEncoded;
+    }
+    params.key_size = key_size;
+    params.key_blob = key_blob;
     if (GNUTLS_CALL( allocate_certificate_credentials, &params )) goto fail;
-    RtlFreeHeap(GetProcessHeap(), 0, key_blob.pbData);
+    RtlFreeHeap(GetProcessHeap(), 0, key_blob);
 
     handle = schan_alloc_handle(creds, SCHAN_HANDLE_CRED);
     if (handle == SCHAN_INVALID_HANDLE) goto fail;
@@ -605,7 +612,7 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const void *schanCred,
 
 fail:
     free(creds);
-    RtlFreeHeap(GetProcessHeap(), 0, key_blob.pbData);
+    RtlFreeHeap(GetProcessHeap(), 0, key_blob);
     return SEC_E_INTERNAL_ERROR;
 }
 

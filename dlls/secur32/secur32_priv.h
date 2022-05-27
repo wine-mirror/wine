@@ -115,8 +115,11 @@ struct session_params
 struct allocate_certificate_credentials_params
 {
     schan_credentials *c;
-    const CERT_CONTEXT *ctx;
-    const DATA_BLOB *key_blob;
+    ULONG cert_encoding;
+    ULONG cert_size;
+    BYTE *cert_blob;
+    ULONG key_size;
+    BYTE *key_blob;
 };
 
 struct create_session_params

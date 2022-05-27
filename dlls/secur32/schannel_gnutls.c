@@ -1038,19 +1038,19 @@ static ULONG set_component(gnutls_datum_t *comp, BYTE *data, ULONG len, ULONG *b
     return comp->size;
 }
 
-static gnutls_x509_privkey_t get_x509_key(const DATA_BLOB *key_blob)
+static gnutls_x509_privkey_t get_x509_key(ULONG key_size, const BYTE *key_blob)
 {
     gnutls_privkey_t key = NULL;
     gnutls_x509_privkey_t x509key = NULL;
     gnutls_datum_t m, e, d, p, q, u, e1, e2;
     BYTE *ptr;
     RSAPUBKEY *rsakey;
-    DWORD size = key_blob->cbData;
+    DWORD size = key_size;
     int ret;
 
     if (size < sizeof(BLOBHEADER)) return NULL;
 
-    rsakey = (RSAPUBKEY *)(key_blob->pbData + sizeof(BLOBHEADER));
+    rsakey = (RSAPUBKEY *)(key_blob + sizeof(BLOBHEADER));
     TRACE("RSA key bitlen %u pubexp %u\n", (unsigned)rsakey->bitlen, (unsigned)rsakey->pubexp);
 
     size -= sizeof(BLOBHEADER) + FIELD_OFFSET(RSAPUBKEY, pubexp);
@@ -1082,16 +1082,15 @@ static gnutls_x509_privkey_t get_x509_key(const DATA_BLOB *key_blob)
     return x509key;
 }
 
-static gnutls_x509_crt_t get_x509_crt(const CERT_CONTEXT *ctx)
+static gnutls_x509_crt_t get_x509_crt(const struct allocate_certificate_credentials_params *params)
 {
     gnutls_datum_t data;
     gnutls_x509_crt_t crt;
     int ret;
 
-    if (!ctx) return FALSE;
-    if (ctx->dwCertEncodingType != X509_ASN_ENCODING)
+    if (params->cert_encoding != X509_ASN_ENCODING)
     {
-        FIXME("encoding type %u not supported\n", (unsigned)ctx->dwCertEncodingType);
+        FIXME("encoding type %u not supported\n", (unsigned)params->cert_encoding);
         return NULL;
     }
 
@@ -1101,8 +1100,8 @@ static gnutls_x509_crt_t get_x509_crt(const CERT_CONTEXT *ctx)
         return NULL;
     }
 
-    data.data = ctx->pbCertEncoded;
-    data.size = ctx->cbCertEncoded;
+    data.data = params->cert_blob;
+    data.size = params->cert_size;
     if ((ret = pgnutls_x509_crt_import(crt, &data, GNUTLS_X509_FMT_DER)) < 0)
     {
         pgnutls_perror(ret);
@@ -1128,19 +1127,19 @@ static NTSTATUS schan_allocate_certificate_credentials( void *args )
         return STATUS_INTERNAL_ERROR;
     }
 
-    if (!params->ctx)
+    if (!params->cert_blob)
     {
         params->c->credentials = creds;
         return STATUS_SUCCESS;
     }
 
-    if (!(crt = get_x509_crt(params->ctx)))
+    if (!(crt = get_x509_crt(params)))
     {
         pgnutls_certificate_free_credentials(creds);
         return STATUS_INTERNAL_ERROR;
     }
 
-    if (!(key = get_x509_key(params->key_blob)))
+    if (!(key = get_x509_key(params->key_size, params->key_blob)))
     {
         pgnutls_x509_crt_deinit(crt);
         pgnutls_certificate_free_credentials(creds);
