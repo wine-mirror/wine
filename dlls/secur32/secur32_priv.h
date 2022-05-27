@@ -145,7 +145,7 @@ struct get_connection_info_params
 struct get_session_peer_certificate_params
 {
     schan_session session;
-    CERT_BLOB *certs;
+    BYTE *buffer;          /* Starts with array of ULONG sizes, followed by contiguous data blob. */
     ULONG *bufsize;
     ULONG *retcount;
 };

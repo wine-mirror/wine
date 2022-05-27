@@ -1026,7 +1026,6 @@ static SECURITY_STATUS ensure_remote_cert(struct schan_context *ctx)
     HCERTSTORE store;
     PCCERT_CONTEXT cert = NULL;
     SECURITY_STATUS status;
-    CERT_BLOB *certs;
     ULONG count, size = 0;
     struct get_session_peer_certificate_params params = { ctx->transport.session, NULL, &size, &count };
 
@@ -1036,28 +1035,33 @@ static SECURITY_STATUS ensure_remote_cert(struct schan_context *ctx)
 
     status = GNUTLS_CALL( get_session_peer_certificate, &params );
     if (status != SEC_E_BUFFER_TOO_SMALL) goto done;
-    if (!(certs = malloc( size )))
+    if (!(params.buffer = malloc( size )))
     {
         status = SEC_E_INSUFFICIENT_MEMORY;
         goto done;
     }
-    params.certs = certs;
     status = GNUTLS_CALL( get_session_peer_certificate, &params );
     if (status == SEC_E_OK)
     {
         unsigned int i;
+        ULONG *sizes;
+        BYTE *blob;
+
+        sizes = (ULONG *)params.buffer;
+        blob = params.buffer + count * sizeof(*sizes);
+
         for (i = 0; i < count; i++)
         {
-            if (!CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING, certs[i].pbData,
-                                                  certs[i].cbData, CERT_STORE_ADD_REPLACE_EXISTING,
-                                                  i ? NULL : &cert))
+            if (!CertAddEncodedCertificateToStore(store, X509_ASN_ENCODING, blob, sizes[i],
+                    CERT_STORE_ADD_REPLACE_EXISTING, i ? NULL : &cert))
             {
                 if (i) CertFreeCertificateContext(cert);
                 return GetLastError();
             }
+            blob += sizes[i];
         }
     }
-    free(certs);
+    free(params.buffer);
 done:
     ctx->cert = cert;
     CertCloseStore(store, 0);

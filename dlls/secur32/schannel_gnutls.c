@@ -792,28 +792,28 @@ static NTSTATUS schan_get_session_peer_certificate( void *args )
 {
     const struct get_session_peer_certificate_params *params = args;
     gnutls_session_t s = (gnutls_session_t)params->session;
-    CERT_BLOB *certs = params->certs;
     const gnutls_datum_t *datum;
     unsigned int i, size;
     BYTE *ptr;
     unsigned int count;
+    ULONG *sizes;
 
     if (!(datum = pgnutls_certificate_get_peers(s, &count))) return SEC_E_INTERNAL_ERROR;
 
-    size = count * sizeof(certs[0]);
+    size = count * sizeof(*sizes);
     for (i = 0; i < count; i++) size += datum[i].size;
 
-    if (!certs || *params->bufsize < size)
+    if (!params->buffer || *params->bufsize < size)
     {
         *params->bufsize = size;
         return SEC_E_BUFFER_TOO_SMALL;
     }
-    ptr = (BYTE *)&certs[count];
+    sizes = (ULONG *)params->buffer;
+    ptr = params->buffer + count * sizeof(*sizes);
     for (i = 0; i < count; i++)
     {
-        certs[i].cbData = datum[i].size;
-        certs[i].pbData = ptr;
-        memcpy(certs[i].pbData, datum[i].data, datum[i].size);
+        sizes[i] = datum[i].size;
+        memcpy(ptr, datum[i].data, datum[i].size);
         ptr += datum[i].size;
     }
 
