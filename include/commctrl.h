@@ -1380,7 +1380,7 @@ typedef struct _NMTBCUSTOMDRAW
 #define TBCDRF_NOETCHEDEFFECT 0x00100000  /* No etched effect for          */
                                           /* disabled items                */
 #define TBCDRF_BLENDICON      0x00200000  /* ILD_BLEND50 on the icon image */
-#define TBCDRF_NOBACKGROUND   0x00400000  /* ILD_BLEND50 on the icon image */
+#define TBCDRF_NOBACKGROUND   0x00400000  /* Don't draw button background  */
 #define TBCDRF_USECDCOLORS    0x00800000
 
 
