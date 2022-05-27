@@ -5319,8 +5319,6 @@ void draw_primitive(struct wined3d_device *device, const struct wined3d_state *s
         checkGLcall("glMemoryBarrier");
     }
 
-    wined3d_context_gl_pause_transform_feedback(context_gl, FALSE);
-
     if (rasterizer_discard)
     {
         glDisable(GL_RASTERIZER_DISCARD);
