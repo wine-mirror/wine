@@ -27,6 +27,27 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(quartz);
 
+static inline const char *debugstr_time(REFERENCE_TIME time)
+{
+    ULONGLONG abstime = time >= 0 ? time : -time;
+    unsigned int i = 0, j = 0;
+    char buffer[23], rev[23];
+
+    while (abstime || i <= 8)
+    {
+        buffer[i++] = '0' + (abstime % 10);
+        abstime /= 10;
+        if (i == 7) buffer[i++] = '.';
+    }
+    if (time < 0) buffer[i++] = '-';
+
+    while (i--) rev[j++] = buffer[i];
+    while (rev[j-1] == '0' && rev[j-2] != '.') --j;
+    rev[j] = 0;
+
+    return wine_dbg_sprintf("%s", rev);
+}
+
 struct buffer
 {
     INSSBuffer INSSBuffer_iface;
@@ -159,6 +180,7 @@ static struct buffer *unsafe_impl_from_INSSBuffer(INSSBuffer *iface)
 struct asf_stream
 {
     struct strmbase_source source;
+    struct SourceSeeking seek;
     DWORD index;
 };
 
@@ -265,6 +287,93 @@ static HRESULT asf_stream_get_media_type(struct strmbase_pin *iface, unsigned in
     IWMOutputMediaProps_Release(props);
     return hr;
 }
+
+static HRESULT asf_stream_query_interface(struct strmbase_pin *iface, REFIID iid, void **out)
+{
+    struct asf_stream *stream = impl_from_strmbase_pin(iface);
+
+    if (IsEqualGUID(iid, &IID_IMediaSeeking))
+        *out = &stream->seek.IMediaSeeking_iface;
+    else
+        return E_NOINTERFACE;
+
+    IUnknown_AddRef((IUnknown *)*out);
+    return S_OK;
+}
+
+static inline struct asf_stream *impl_from_IMediaSeeking(IMediaSeeking *iface)
+{
+    return CONTAINING_RECORD(iface, struct asf_stream, seek.IMediaSeeking_iface);
+}
+
+static HRESULT WINAPI media_seeking_ChangeCurrent(IMediaSeeking *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+    return S_OK;
+}
+
+static HRESULT WINAPI media_seeking_ChangeStop(IMediaSeeking *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+    return S_OK;
+}
+
+static HRESULT WINAPI media_seeking_ChangeRate(IMediaSeeking *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+    return S_OK;
+}
+
+static HRESULT WINAPI media_seeking_QueryInterface(IMediaSeeking *iface, REFIID riid, void **ppv)
+{
+    struct asf_stream *impl = impl_from_IMediaSeeking(iface);
+    return IUnknown_QueryInterface(&impl->source.pin.IPin_iface, riid, ppv);
+}
+
+static ULONG WINAPI media_seeking_AddRef(IMediaSeeking *iface)
+{
+    struct asf_stream *impl = impl_from_IMediaSeeking(iface);
+    return IUnknown_AddRef(&impl->source.pin.IPin_iface);
+}
+
+static ULONG WINAPI media_seeking_Release(IMediaSeeking *iface)
+{
+    struct asf_stream *impl = impl_from_IMediaSeeking(iface);
+    return IUnknown_Release(&impl->source.pin.IPin_iface);
+}
+
+static HRESULT WINAPI media_seeking_SetPositions(IMediaSeeking *iface,
+        LONGLONG *current, DWORD current_flags, LONGLONG *stop, DWORD stop_flags)
+{
+    FIXME("iface %p, current %s, current_flags %#lx, stop %s, stop_flags %#lx stub!\n",
+            iface, current ? debugstr_time(*current) : "<null>", current_flags,
+            stop ? debugstr_time(*stop) : "<null>", stop_flags);
+    return SourceSeekingImpl_SetPositions(iface, current, current_flags, stop, stop_flags);
+}
+
+static const IMediaSeekingVtbl media_seeking_vtbl =
+{
+    media_seeking_QueryInterface,
+    media_seeking_AddRef,
+    media_seeking_Release,
+    SourceSeekingImpl_GetCapabilities,
+    SourceSeekingImpl_CheckCapabilities,
+    SourceSeekingImpl_IsFormatSupported,
+    SourceSeekingImpl_QueryPreferredFormat,
+    SourceSeekingImpl_GetTimeFormat,
+    SourceSeekingImpl_IsUsingTimeFormat,
+    SourceSeekingImpl_SetTimeFormat,
+    SourceSeekingImpl_GetDuration,
+    SourceSeekingImpl_GetStopPosition,
+    SourceSeekingImpl_GetCurrentPosition,
+    SourceSeekingImpl_ConvertTimeFormat,
+    media_seeking_SetPositions,
+    SourceSeekingImpl_GetPositions,
+    SourceSeekingImpl_GetAvailable,
+    SourceSeekingImpl_SetRate,
+    SourceSeekingImpl_GetRate,
+    SourceSeekingImpl_GetPreroll,
+};
 
 static inline struct asf_reader *impl_from_strmbase_filter(struct strmbase_filter *iface)
 {
@@ -492,6 +601,7 @@ static const struct strmbase_source_ops source_ops =
 {
     .base.pin_query_accept = asf_stream_query_accept,
     .base.pin_get_media_type = asf_stream_get_media_type,
+    .base.pin_query_interface = asf_stream_query_interface,
     .pfnDecideAllocator = BaseOutputPinImpl_DecideAllocator,
     .pfnAttemptConnection = BaseOutputPinImpl_AttemptConnection,
     .pfnDecideBufferSize = asf_reader_DecideBufferSize,
@@ -668,8 +778,10 @@ static HRESULT WINAPI reader_callback_OnStatus(IWMReaderCallback *iface, WMT_STA
 {
     struct asf_reader *filter = impl_from_IWMReaderCallback(iface)->filter;
     AM_MEDIA_TYPE stream_media_type = {{0}};
+    IWMHeaderInfo *header_info;
     DWORD i, stream_count;
     WCHAR name[MAX_PATH];
+    QWORD duration;
     HRESULT hr;
 
     TRACE("iface %p, status %d, result %#lx, type %d, value %p, context %p.\n",
@@ -689,6 +801,20 @@ static HRESULT WINAPI reader_callback_OnStatus(IWMReaderCallback *iface, WMT_STA
                 stream_count = ARRAY_SIZE(filter->streams);
             }
 
+            if (FAILED(hr = IWMReader_QueryInterface(filter->reader, &IID_IWMHeaderInfo,
+                    (void **)&header_info)))
+                duration = 0;
+            else
+            {
+                WMT_ATTR_DATATYPE type = WMT_TYPE_QWORD;
+                WORD index = 0, size = sizeof(duration);
+
+                if (FAILED(IWMHeaderInfo_GetAttributeByName(header_info, &index, L"Duration",
+                        &type, (BYTE *)&duration, &size )))
+                    duration = 0;
+                IWMHeaderInfo_Release(header_info);
+            }
+
             for (i = 0; i < stream_count; ++i)
             {
                 struct asf_stream *stream = filter->streams + i;
@@ -702,6 +828,11 @@ static HRESULT WINAPI reader_callback_OnStatus(IWMReaderCallback *iface, WMT_STA
                 FreeMediaType(&stream_media_type);
 
                 strmbase_source_init(&stream->source, &filter->filter, name, &source_ops);
+                strmbase_seeking_init(&stream->seek, &media_seeking_vtbl, media_seeking_ChangeStop,
+                        media_seeking_ChangeCurrent, media_seeking_ChangeRate);
+                stream->seek.llCurrent = 0;
+                stream->seek.llDuration = duration;
+                stream->seek.llStop = duration;
             }
             filter->stream_count = stream_count;
             BaseFilterImpl_IncrementPinVersion(&filter->filter);
