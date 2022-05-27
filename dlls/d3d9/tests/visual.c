@@ -17788,7 +17788,7 @@ static void test_multisample_get_front_buffer_data(void)
     hr = IDirect3DDevice9_GetFrontBufferData(device, 0, readback);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     color = getPixelColorFromSurface(readback, 320, 240);
-    ok(color == 0x00f0ff0f, "Got unexpected color 0x%08x.\n", color);
+    ok((color & 0x00ffffff) == 0x00f0ff0f, "Got unexpected color 0x%08x.\n", color);
     IDirect3DSurface9_Release(readback);
 
     hr = IDirect3DDevice9_CreateTexture(device, 640, 480, 1,
@@ -17800,7 +17800,7 @@ static void test_multisample_get_front_buffer_data(void)
     hr = IDirect3DDevice9_GetFrontBufferData(device, 0, readback);
     ok(hr == D3D_OK, "Got unexpected hr %#lx.\n", hr);
     color = getPixelColorFromSurface(readback, 320, 240);
-    ok(color == 0x00f0ff0f, "Got unexpected color 0x%08x.\n", color);
+    ok((color & 0x00ffffff) == 0x00f0ff0f, "Got unexpected color 0x%08x.\n", color);
     IDirect3DSurface9_Release(readback);
     IDirect3DTexture9_Release(texture);
 
