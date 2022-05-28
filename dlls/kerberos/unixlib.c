@@ -303,16 +303,13 @@ static NTSTATUS copy_tickets_to_client( struct ticket_list *list, KERB_QUERY_TKT
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS query_ticket_cache( void *args )
+static NTSTATUS kerberos_fill_ticket_list( struct ticket_list *list )
 {
-    struct query_ticket_cache_params *params = args;
     NTSTATUS status;
     krb5_error_code err;
     krb5_context ctx;
     krb5_cccol_cursor cursor = NULL;
     krb5_ccache cache;
-    ULONG i;
-    struct ticket_list list = { 0 };
 
     if ((err = p_krb5_init_context( &ctx ))) return krb5_error_to_status( err );
     if ((err = p_krb5_cccol_cursor_new( ctx, &cursor )))
@@ -330,7 +327,7 @@ static NTSTATUS query_ticket_cache( void *args )
         }
         if (!cache) break;
 
-        status = copy_tickets_from_cache( ctx, cache, &list );
+        status = copy_tickets_from_cache( ctx, cache, list );
         p_krb5_cc_close( ctx, cache );
         if (status != STATUS_SUCCESS) goto done;
     }
@@ -338,6 +335,18 @@ static NTSTATUS query_ticket_cache( void *args )
 done:
     if (cursor) p_krb5_cccol_cursor_free( ctx, &cursor );
     if (ctx) p_krb5_free_context( ctx );
+
+    return status;
+}
+
+static NTSTATUS query_ticket_cache( void *args )
+{
+    struct query_ticket_cache_params *params = args;
+    struct ticket_list list = { 0 };
+    NTSTATUS status;
+    ULONG i;
+
+    status = kerberos_fill_ticket_list( &list );
 
     if (status == STATUS_SUCCESS) status = copy_tickets_to_client( &list, params->resp, params->out_size );
 
