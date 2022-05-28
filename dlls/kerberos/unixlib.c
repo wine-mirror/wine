@@ -753,18 +753,12 @@ static NTSTATUS initialize_context( void *args )
 static NTSTATUS make_signature( void *args )
 {
     struct make_signature_params *params = args;
-    SecBufferDesc *msg = params->msg;
     OM_uint32 ret, minor_status;
     gss_buffer_desc data_buffer, token_buffer;
     gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( params->context );
-    int data_idx, token_idx;
 
-    /* FIXME: multiple data buffers, read-only buffers */
-    if ((data_idx = get_buffer_index( msg, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
-    data_buffer.length = msg->pBuffers[data_idx].cbBuffer;
-    data_buffer.value  = msg->pBuffers[data_idx].pvBuffer;
-
-    if ((token_idx = get_buffer_index( msg, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+    data_buffer.length  = params->data_length;
+    data_buffer.value   = params->data;
     token_buffer.length = 0;
     token_buffer.value  = NULL;
 
@@ -773,8 +767,8 @@ static NTSTATUS make_signature( void *args )
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE)
     {
-        memcpy( msg->pBuffers[token_idx].pvBuffer, token_buffer.value, token_buffer.length );
-        msg->pBuffers[token_idx].cbBuffer = token_buffer.length;
+        memcpy( params->token, token_buffer.value, token_buffer.length );
+        *params->token_length = token_buffer.length;
         pgss_release_buffer( &minor_status, &token_buffer );
     }
 

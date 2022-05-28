@@ -72,7 +72,10 @@ struct initialize_context_params
 struct make_signature_params
 {
     UINT64 context;
-    SecBufferDesc *msg;
+    BYTE *data;
+    ULONG data_length;
+    BYTE *token;
+    ULONG *token_length;
 };
 
 struct query_context_attributes_params
