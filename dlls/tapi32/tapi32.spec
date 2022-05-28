@@ -56,6 +56,7 @@
 @ stdcall lineGetIDW(long long long long ptr wstr)
 @ stdcall lineGetIcon(long str ptr) lineGetIconA
 @ stdcall lineGetIconA(long str ptr)
+@ stdcall lineGetIconW(long wstr ptr)
 @ stdcall lineGetLineDevStatus(long ptr) lineGetLineDevStatusA
 @ stdcall lineGetLineDevStatusA(long ptr)
 @ stdcall lineGetMessage(long ptr long)

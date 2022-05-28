@@ -698,6 +698,15 @@ DWORD WINAPI lineGetIconA(DWORD dwDeviceID, LPCSTR lpszDeviceClass, HICON *lphIc
 }
 
 /***********************************************************************
+ *		lineGetIconW (TAPI32.@)
+ */
+DWORD WINAPI lineGetIconW(DWORD dwDeviceID, LPCWSTR lpszDeviceClass, HICON *lphIcon)
+{
+    FIXME("(%08lx, %s, %p): stub.\n", dwDeviceID, debugstr_w(lpszDeviceClass), lphIcon);
+    return 0;
+}
+
+/***********************************************************************
  *		lineGetLineDevStatus (TAPI32.@)
  */
 DWORD WINAPI lineGetLineDevStatusA(HLINE hLine, LPLINEDEVSTATUS lpLineDevStatus)
