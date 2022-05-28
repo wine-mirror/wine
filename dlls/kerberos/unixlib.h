@@ -104,7 +104,10 @@ struct seal_message_params
 struct unseal_message_params
 {
     UINT64 context;
-    SecBufferDesc *msg;
+    BYTE *data;
+    ULONG data_length;
+    BYTE *token;
+    ULONG token_length;
     ULONG *qop;
 };
 

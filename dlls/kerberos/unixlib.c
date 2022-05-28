@@ -909,58 +909,52 @@ static NTSTATUS seal_message( void *args )
     return seal_message_no_vector( ctx, params );
 }
 
-static NTSTATUS unseal_message_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, ULONG *qop )
+static NTSTATUS unseal_message_vector( gss_ctx_id_t ctx, const struct unseal_message_params *params )
 {
     gss_iov_buffer_desc iov[4];
     OM_uint32 ret, minor_status;
-    int token_idx, data_idx, conf_state;
-
-    if ((data_idx = get_buffer_index( msg, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
-    if ((token_idx = get_buffer_index( msg, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+    int conf_state;
 
     iov[0].type          = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
     iov[0].buffer.length = 0;
     iov[0].buffer.value  = NULL;
 
     iov[1].type          = GSS_IOV_BUFFER_TYPE_DATA;
-    iov[1].buffer.length = msg->pBuffers[data_idx].cbBuffer;
-    iov[1].buffer.value  = msg->pBuffers[data_idx].pvBuffer;
+    iov[1].buffer.length = params->data_length;
+    iov[1].buffer.value  = params->data;
 
     iov[2].type          = GSS_IOV_BUFFER_TYPE_SIGN_ONLY;
     iov[2].buffer.length = 0;
     iov[2].buffer.value  = NULL;
 
     iov[3].type          = GSS_IOV_BUFFER_TYPE_HEADER;
-    iov[3].buffer.length = msg->pBuffers[token_idx].cbBuffer;
-    iov[3].buffer.value  = msg->pBuffers[token_idx].pvBuffer;
+    iov[3].buffer.length = params->token_length;
+    iov[3].buffer.value  = params->token;
 
     ret = pgss_unwrap_iov( &minor_status, ctx, &conf_state, NULL, iov, 4 );
     TRACE( "gss_unwrap_iov returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
-    if (ret == GSS_S_COMPLETE && qop)
+    if (ret == GSS_S_COMPLETE && params->qop)
     {
-        *qop = (conf_state ? 0 : SECQOP_WRAP_NO_ENCRYPT);
+        *params->qop = (conf_state ? 0 : SECQOP_WRAP_NO_ENCRYPT);
     }
     return status_gss_to_sspi( ret );
 }
 
-static NTSTATUS unseal_message_no_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, ULONG *qop )
+static NTSTATUS unseal_message_no_vector( gss_ctx_id_t ctx, const struct unseal_message_params *params )
 {
     gss_buffer_desc input, output;
     OM_uint32 ret, minor_status;
-    int token_idx, data_idx, conf_state;
     DWORD len_data, len_token;
+    int conf_state;
 
-    if ((data_idx = get_buffer_index( msg, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
-    if ((token_idx = get_buffer_index( msg, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
-
-    len_data = msg->pBuffers[data_idx].cbBuffer;
-    len_token = msg->pBuffers[token_idx].cbBuffer;
+    len_data = params->data_length;
+    len_token = params->token_length;
 
     input.length = len_data + len_token;
     if (!(input.value = malloc( input.length ))) return SEC_E_INSUFFICIENT_MEMORY;
-    memcpy( input.value, msg->pBuffers[data_idx].pvBuffer, len_data );
-    memcpy( (char *)input.value + len_data, msg->pBuffers[token_idx].pvBuffer, len_token );
+    memcpy( input.value, params->data, len_data );
+    memcpy( (char *)input.value + len_data, params->token, len_token );
 
     ret = pgss_unwrap( &minor_status, ctx, &input, &output, &conf_state, NULL );
     free( input.value );
@@ -968,8 +962,8 @@ static NTSTATUS unseal_message_no_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, 
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE)
     {
-        if (qop) *qop = (conf_state ? 0 : SECQOP_WRAP_NO_ENCRYPT);
-        memcpy( msg->pBuffers[data_idx].pvBuffer, output.value, len_data );
+        if (params->qop) *params->qop = (conf_state ? 0 : SECQOP_WRAP_NO_ENCRYPT);
+        memcpy( params->data, output.value, len_data );
         pgss_release_buffer( &minor_status, &output );
     }
 
@@ -981,8 +975,8 @@ static NTSTATUS unseal_message( void *args )
     struct unseal_message_params *params = args;
     gss_ctx_id_t ctx = ctxhandle_sspi_to_gss( params->context );
 
-    if (is_dce_style_context( ctx )) return unseal_message_vector( ctx, params->msg, params->qop );
-    return unseal_message_no_vector( ctx, params->msg, params->qop );
+    if (is_dce_style_context( ctx )) return unseal_message_vector( ctx, params );
+    return unseal_message_no_vector( ctx, params );
 }
 
 static NTSTATUS verify_signature( void *args )

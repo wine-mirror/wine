@@ -723,7 +723,19 @@ static NTSTATUS NTAPI kerberos_SpUnsealMessage( LSA_SEC_HANDLE context, SecBuffe
     if (context)
     {
         struct context_handle *context_handle = (void *)context;
-        struct unseal_message_params params = { context_handle->handle, message, quality_of_protection };
+        struct unseal_message_params params;
+        int data_idx, token_idx;
+
+        if ((data_idx = get_buffer_index( message, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
+        if ((token_idx = get_buffer_index( message, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+
+        params.context = context_handle->handle;
+        params.data_length = message->pBuffers[data_idx].cbBuffer;
+        params.data = message->pBuffers[data_idx].pvBuffer;
+        params.token_length = message->pBuffers[token_idx].cbBuffer;
+        params.token = message->pBuffers[token_idx].pvBuffer;
+        params.qop = quality_of_protection;
+
         return KRB5_CALL( unseal_message, &params );
     }
     else return SEC_E_INVALID_HANDLE;
