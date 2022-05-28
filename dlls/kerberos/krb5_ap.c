@@ -400,18 +400,28 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
     {
         struct cred_handle *cred_handle = (struct cred_handle *)credential;
         struct context_handle *context_handle = (struct context_handle *)context;
-        struct initialize_context_params params;
+        struct initialize_context_params params = { 0 };
         UINT64 new_context_handle = 0;
+        int idx;
 
         params.credential = cred_handle ? cred_handle->handle : 0;
         params.context = context_handle ? context_handle->handle : 0;
         params.target_name = target;
         params.context_req = context_req;
-        params.input = input;
         params.new_context = &new_context_handle;
-        params.output = output;
         params.context_attr = context_attr;
         params.expiry = &exptime;
+
+        idx = get_buffer_index( input, SECBUFFER_TOKEN );
+        if (idx != -1)
+        {
+            params.input_token = input->pBuffers[idx].pvBuffer;
+            params.input_token_length = input->pBuffers[idx].cbBuffer;
+        }
+
+        if ((idx = get_buffer_index( output, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+        params.output_token = output->pBuffers[idx].pvBuffer;
+        params.output_token_length = &output->pBuffers[idx].cbBuffer;
 
         status = KRB5_CALL( initialize_context, &params );
         if (!status)

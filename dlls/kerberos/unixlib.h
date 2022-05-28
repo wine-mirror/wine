@@ -62,9 +62,11 @@ struct initialize_context_params
     UINT64 context;
     const char *target_name;
     ULONG context_req;
-    SecBufferDesc *input;
+    BYTE *input_token;
+    ULONG input_token_length;
+    BYTE *output_token;
+    ULONG *output_token_length;
     UINT64 *new_context;
-    SecBufferDesc *output;
     ULONG *context_attr;
     ULONG *expiry;
 };

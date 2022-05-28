@@ -419,17 +419,6 @@ static BOOL is_dce_style_context( gss_ctx_id_t ctx )
     return (ret == GSS_S_COMPLETE && (flags & GSS_C_DCE_STYLE));
 }
 
-static int get_buffer_index( SecBufferDesc *desc, DWORD type )
-{
-    UINT i;
-    if (!desc) return -1;
-    for (i = 0; i < desc->cBuffers; i++)
-    {
-        if (desc->pBuffers[i].BufferType == type) return i;
-    }
-    return -1;
-}
-
 static NTSTATUS status_gss_to_sspi( OM_uint32 status )
 {
     switch (status)
@@ -707,16 +696,9 @@ static NTSTATUS initialize_context( void *args )
     gss_buffer_desc input_token, output_token;
     gss_name_t target = GSS_C_NO_NAME;
     NTSTATUS status;
-    int idx;
 
-    if ((idx = get_buffer_index( params->input, SECBUFFER_TOKEN )) == -1) input_token.length = 0;
-    else
-    {
-        input_token.length = params->input->pBuffers[idx].cbBuffer;
-        input_token.value  = params->input->pBuffers[idx].pvBuffer;
-    }
-
-    if ((idx = get_buffer_index( params->output, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+    input_token.length = params->input_token_length;
+    input_token.value  = params->input_token;
     output_token.length = 0;
     output_token.value  = NULL;
 
@@ -729,16 +711,15 @@ static NTSTATUS initialize_context( void *args )
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE || ret == GSS_S_CONTINUE_NEEDED)
     {
-        if (output_token.length > params->output->pBuffers[idx].cbBuffer) /* FIXME: check if larger buffer exists */
+        if (output_token.length > *params->output_token_length) /* FIXME: check if larger buffer exists */
         {
-            TRACE( "buffer too small %lu > %u\n",
-                   (SIZE_T)output_token.length, (unsigned int)params->output->pBuffers[idx].cbBuffer );
+            TRACE( "buffer too small %lu > %u\n", (SIZE_T)output_token.length, (unsigned int)*params->output_token_length);
             pgss_release_buffer( &minor_status, &output_token );
             pgss_delete_sec_context( &minor_status, &ctx_handle, GSS_C_NO_BUFFER );
             return SEC_E_INCOMPLETE_MESSAGE;
         }
-        params->output->pBuffers[idx].cbBuffer = output_token.length;
-        memcpy( params->output->pBuffers[idx].pvBuffer, output_token.value, output_token.length );
+        *params->output_token_length = output_token.length;
+        memcpy( params->output_token, output_token.value, output_token.length );
         pgss_release_buffer( &minor_status, &output_token );
 
         ctxhandle_gss_to_sspi( ctx_handle, params->new_context );
