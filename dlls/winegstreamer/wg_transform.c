@@ -42,6 +42,8 @@
 GST_DEBUG_CATEGORY_EXTERN(wine);
 #define GST_CAT_DEFAULT wine
 
+#define GST_SAMPLE_FLAG_WG_CAPS_CHANGED (GST_MINI_OBJECT_FLAG_LAST << 0)
+
 struct wg_transform
 {
     GstElement *container;
@@ -59,25 +61,20 @@ struct wg_transform
 static GstFlowReturn transform_sink_chain_cb(GstPad *pad, GstObject *parent, GstBuffer *buffer)
 {
     struct wg_transform *transform = gst_pad_get_element_private(pad);
-    GstStructure *info = NULL;
     GstSample *sample;
 
     GST_LOG("transform %p, buffer %p.", transform, buffer);
 
-    if (transform->output_caps_changed && !(info = gst_structure_new_empty("format-changed")))
-    {
-        GST_ERROR("Failed to allocate transform %p output sample info.", transform);
-        gst_buffer_unref(buffer);
-        return GST_FLOW_ERROR;
-    }
-    transform->output_caps_changed = false;
-
-    if (!(sample = gst_sample_new(buffer, transform->output_caps, NULL, info)))
+    if (!(sample = gst_sample_new(buffer, transform->output_caps, NULL, NULL)))
     {
         GST_ERROR("Failed to allocate transform %p output sample.", transform);
         gst_buffer_unref(buffer);
         return GST_FLOW_ERROR;
     }
+
+    if (transform->output_caps_changed)
+        GST_MINI_OBJECT_FLAG_SET(sample, GST_SAMPLE_FLAG_WG_CAPS_CHANGED);
+    transform->output_caps_changed = false;
 
     gst_atomic_queue_push(transform->output_queue, sample);
     gst_buffer_unref(buffer);
@@ -521,9 +518,9 @@ NTSTATUS wg_transform_read_data(void *args)
     output_buffer = gst_sample_get_buffer(transform->output_sample);
     output_caps = gst_sample_get_caps(transform->output_sample);
 
-    if (gst_sample_get_info(transform->output_sample))
+    if (GST_MINI_OBJECT_FLAG_IS_SET(transform->output_sample, GST_SAMPLE_FLAG_WG_CAPS_CHANGED))
     {
-        gst_sample_set_info(transform->output_sample, NULL);
+        GST_MINI_OBJECT_FLAG_UNSET(transform->output_sample, GST_SAMPLE_FLAG_WG_CAPS_CHANGED);
 
         if (format)
             wg_format_from_caps(format, output_caps);
