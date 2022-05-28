@@ -1012,4 +1012,329 @@ unixlib_entry_t __wine_unix_call_funcs[] =
     verify_signature,
 };
 
+#ifdef _WIN64
+
+typedef ULONG PTR32;
+
+static NTSTATUS wow64_accept_context( void *args )
+{
+    struct
+    {
+        UINT64 credential;
+        UINT64 context;
+        PTR32 input_token;
+        ULONG input_token_length;
+        PTR32 new_context;
+        PTR32 output_token;
+        PTR32 output_token_length;
+        PTR32 context_attr;
+        PTR32 expiry;
+    } const *params32 = args;
+    struct accept_context_params params =
+    {
+        params32->credential,
+        params32->context,
+        ULongToPtr(params32->input_token),
+        params32->input_token_length,
+        ULongToPtr(params32->new_context),
+        ULongToPtr(params32->output_token),
+        ULongToPtr(params32->output_token_length),
+        ULongToPtr(params32->context_attr),
+        ULongToPtr(params32->expiry),
+    };
+    return accept_context( &params );
+}
+
+static NTSTATUS wow64_acquire_credentials_handle( void *args )
+{
+    struct
+    {
+        PTR32 principal;
+        ULONG credential_use;
+        PTR32 username;
+        PTR32 password;
+        PTR32 credential;
+        PTR32 expiry;
+    } const *params32 = args;
+    struct acquire_credentials_handle_params params =
+    {
+        ULongToPtr(params32->principal),
+        params32->credential_use,
+        ULongToPtr(params32->username),
+        ULongToPtr(params32->password),
+        ULongToPtr(params32->credential),
+        ULongToPtr(params32->expiry),
+    };
+    return acquire_credentials_handle( &params );
+}
+
+static NTSTATUS wow64_delete_context( void *args )
+{
+    struct
+    {
+        UINT64 context;
+    } const *params32 = args;
+    struct delete_context_params params =
+    {
+        params32->context,
+    };
+    return delete_context( &params );
+}
+
+static NTSTATUS wow64_free_credentials_handle( void *args )
+{
+    struct
+    {
+        UINT64 credential;
+    } const *params32 = args;
+    struct free_credentials_handle_params params =
+    {
+        params32->credential,
+    };
+    return free_credentials_handle( &params );
+}
+
+static NTSTATUS wow64_initialize_context( void *args )
+{
+    struct
+    {
+        UINT64 credential;
+        UINT64 context;
+        PTR32 target_name;
+        ULONG context_req;
+        PTR32 input_token;
+        ULONG input_token_length;
+        PTR32 output_token;
+        PTR32 output_token_length;
+        PTR32 new_context;
+        PTR32 context_attr;
+        PTR32 expiry;
+    } const *params32 = args;
+    struct initialize_context_params params =
+    {
+        params32->credential,
+        params32->context,
+        ULongToPtr(params32->target_name),
+        params32->context_req,
+        ULongToPtr(params32->input_token),
+        params32->input_token_length,
+        ULongToPtr(params32->output_token),
+        ULongToPtr(params32->output_token_length),
+        ULongToPtr(params32->new_context),
+        ULongToPtr(params32->context_attr),
+        ULongToPtr(params32->expiry),
+    };
+    return initialize_context( &params );
+}
+
+static NTSTATUS wow64_make_signature( void *args )
+{
+    struct
+    {
+        UINT64 context;
+        PTR32 data;
+        ULONG data_length;
+        PTR32 token;
+        PTR32 token_length;
+    } const *params32 = args;
+    struct make_signature_params params =
+    {
+        params32->context,
+        ULongToPtr(params32->data),
+        params32->data_length,
+        ULongToPtr(params32->token),
+        ULongToPtr(params32->token_length),
+    };
+    return make_signature( &params );
+}
+
+static NTSTATUS wow64_query_context_attributes( void *args )
+{
+    struct
+    {
+        UINT64 context;
+        ULONG attr;
+        PTR32 buf;
+    } const *params32 = args;
+    struct query_context_attributes_params params =
+    {
+        params32->context,
+        params32->attr,
+        ULongToPtr(params32->buf),
+    };
+    return query_context_attributes( &params );
+}
+
+struct KERB_TICKET_CACHE_INFO32
+{
+    UNICODE_STRING32 ServerName;
+    UNICODE_STRING32 RealmName;
+    LARGE_INTEGER StartTime;
+    LARGE_INTEGER EndTime;
+    LARGE_INTEGER RenewTime;
+    LONG EncryptionType;
+    ULONG TicketFlags;
+};
+
+struct KERB_QUERY_TKT_CACHE_RESPONSE32
+{
+    KERB_PROTOCOL_MESSAGE_TYPE MessageType;
+    ULONG CountOfTickets;
+    struct KERB_TICKET_CACHE_INFO32 Tickets[ANYSIZE_ARRAY];
+};
+
+static void copy_ticket_ustr_64to32( const UNICODE_STRING *str, UNICODE_STRING32 *str32, ULONG *client_str )
+{
+    str32->Length = str->Length;
+    str32->MaximumLength = str->MaximumLength;
+    str32->Buffer = *client_str;
+    memcpy( ULongToPtr(str32->Buffer), str->Buffer, str->MaximumLength );
+    *client_str += str->MaximumLength;
+}
+
+static NTSTATUS copy_tickets_to_client32( struct ticket_list *list, struct KERB_QUERY_TKT_CACHE_RESPONSE32 *resp,
+        ULONG *out_size )
+{
+    ULONG i, size, size_fixed;
+    ULONG client_str;
+
+    size = size_fixed = offsetof( struct KERB_QUERY_TKT_CACHE_RESPONSE32, Tickets[list->count] );
+    for (i = 0; i < list->count; i++)
+    {
+        size += list->tickets[i].RealmName.MaximumLength;
+        size += list->tickets[i].ServerName.MaximumLength;
+    }
+    if (!resp || size > *out_size)
+    {
+        *out_size = size;
+        return STATUS_BUFFER_TOO_SMALL;
+    }
+    *out_size = size;
+
+    resp->MessageType = KerbQueryTicketCacheMessage;
+    resp->CountOfTickets = list->count;
+    client_str = PtrToUlong(resp) + size_fixed;
+
+    for (i = 0; i < list->count; i++)
+    {
+        copy_ticket_ustr_64to32( &list->tickets[i].ServerName, &resp->Tickets[i].ServerName, &client_str );
+        copy_ticket_ustr_64to32( &list->tickets[i].RealmName, &resp->Tickets[i].RealmName, &client_str );
+        resp->Tickets[i].StartTime = list->tickets[i].StartTime;
+        resp->Tickets[i].EndTime = list->tickets[i].EndTime;
+        resp->Tickets[i].RenewTime = list->tickets[i].RenewTime;
+        resp->Tickets[i].EncryptionType = list->tickets[i].EncryptionType;
+        resp->Tickets[i].TicketFlags = list->tickets[i].TicketFlags;
+    }
+    return STATUS_SUCCESS;
+}
+
+static NTSTATUS wow64_query_ticket_cache( void *args )
+{
+    struct
+    {
+        PTR32 resp;
+        PTR32 out_size;
+    } const *params32 = args;
+    struct ticket_list list = { 0 };
+    NTSTATUS status;
+    ULONG i;
+
+    status = kerberos_fill_ticket_list( &list );
+    if (status == STATUS_SUCCESS)
+        status = copy_tickets_to_client32( &list, ULongToPtr(params32->resp), ULongToPtr(params32->out_size) );
+
+    for (i = 0; i < list.count; i++)
+    {
+        free( list.tickets[i].RealmName.Buffer );
+        free( list.tickets[i].ServerName.Buffer );
+    }
+    return status;
+
+}
+
+static NTSTATUS wow64_seal_message( void *args )
+{
+    struct
+    {
+        UINT64 context;
+        PTR32 data;
+        ULONG data_length;
+        PTR32 token;
+        PTR32 token_length;
+    } const *params32 = args;
+    struct seal_message_params params =
+    {
+        params32->context,
+        ULongToPtr(params32->data),
+        params32->data_length,
+        ULongToPtr(params32->token),
+        ULongToPtr(params32->token_length),
+    };
+    return seal_message( &params );
+}
+
+static NTSTATUS wow64_unseal_message( void *args )
+{
+    struct
+    {
+        UINT64 context;
+        PTR32 data;
+        ULONG data_length;
+        PTR32 token;
+        ULONG token_length;
+        PTR32 qop;
+    } const *params32 = args;
+    struct unseal_message_params params =
+    {
+        params32->context,
+        ULongToPtr(params32->data),
+        params32->data_length,
+        ULongToPtr(params32->token),
+        params32->token_length,
+        ULongToPtr(params32->qop),
+    };
+    return unseal_message( &params );
+}
+
+static NTSTATUS wow64_verify_signature( void *args )
+{
+    struct
+    {
+        UINT64 context;
+        PTR32 data;
+        ULONG data_length;
+        PTR32 token;
+        ULONG token_length;
+        PTR32 qop;
+    } const *params32 = args;
+    struct verify_signature_params params =
+    {
+        params32->context,
+        ULongToPtr(params32->data),
+        params32->data_length,
+        ULongToPtr(params32->token),
+        params32->token_length,
+        ULongToPtr(params32->qop),
+    };
+    return verify_signature( &params );
+}
+
+unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    process_attach,
+    wow64_accept_context,
+    wow64_acquire_credentials_handle,
+    wow64_delete_context,
+    wow64_free_credentials_handle,
+    wow64_initialize_context,
+    wow64_make_signature,
+    wow64_query_context_attributes,
+    wow64_query_ticket_cache,
+    wow64_seal_message,
+    wow64_unseal_message,
+    wow64_verify_signature,
+};
+
+#endif /* _WIN64 */
+
 #endif /* defined(SONAME_LIBKRB5) && defined(SONAME_LIBGSSAPI_KRB5) */
