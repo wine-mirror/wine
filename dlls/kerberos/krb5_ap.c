@@ -82,6 +82,24 @@ struct cred_handle
     UINT64 handle;
 };
 
+struct context_handle
+{
+    UINT64 handle;
+};
+
+static LSA_SEC_HANDLE create_context_handle( struct context_handle *ctx, UINT64 new_context )
+{
+    UINT64 context = ctx ? ctx->handle : 0;
+    if (new_context && new_context != context)
+    {
+        struct context_handle *new_ctx = malloc(sizeof(*new_ctx));
+        new_ctx->handle = new_context;
+        return (LSA_SEC_HANDLE)new_ctx;
+    }
+    else
+        return (LSA_SEC_HANDLE)ctx;
+}
+
 static const char *debugstr_us( const UNICODE_STRING *us )
 {
     if (!us) return "<null>";
@@ -370,14 +388,16 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
     else
     {
         struct cred_handle *cred_handle = (struct cred_handle *)credential;
+        struct context_handle *context_handle = (struct context_handle *)context;
         struct initialize_context_params params;
+        UINT64 new_context_handle = 0;
 
         params.credential = cred_handle ? cred_handle->handle : 0;
-        params.context = context;
+        params.context = context_handle ? context_handle->handle : 0;
         params.target_name = target;
         params.context_req = context_req;
         params.input = input;
-        params.new_context = new_context;
+        params.new_context = &new_context_handle;
         params.output = output;
         params.context_attr = context_attr;
         params.expiry = &exptime;
@@ -385,6 +405,7 @@ static NTSTATUS NTAPI kerberos_SpInitLsaModeContext( LSA_SEC_HANDLE credential, 
         status = KRB5_CALL( initialize_context, &params );
         if (!status)
         {
+            *new_context = create_context_handle( context_handle, new_context_handle );
             *mapped_context = TRUE;
             expiry_to_timestamp( exptime, expiry );
         }
@@ -408,12 +429,14 @@ static NTSTATUS NTAPI kerberos_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential
     if (context || input || credential)
     {
         struct cred_handle *cred_handle = (struct cred_handle *)credential;
+        struct context_handle *context_handle = (struct context_handle *)context;
         struct accept_context_params params;
+        UINT64 new_context_handle = 0;
 
         params.credential = cred_handle ? cred_handle->handle : 0;
-        params.context = context;
+        params.context = context_handle ? context_handle->handle : 0;
         params.input = input;
-        params.new_context = new_context;
+        params.new_context = &new_context_handle;
         params.output = output;
         params.context_attr = context_attr;
         params.expiry = &exptime;
@@ -421,6 +444,7 @@ static NTSTATUS NTAPI kerberos_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential
         status = KRB5_CALL( accept_context, &params );
         if (!status)
         {
+            *new_context = create_context_handle( context_handle, new_context_handle );
             *mapped_context = TRUE;
             expiry_to_timestamp( exptime, expiry );
         }
@@ -431,9 +455,18 @@ static NTSTATUS NTAPI kerberos_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential
 
 static NTSTATUS NTAPI kerberos_SpDeleteContext( LSA_SEC_HANDLE context )
 {
+    struct context_handle *context_handle = (void *)context;
+    struct delete_context_params params;
+    NTSTATUS status;
+
     TRACE( "%Ix\n", context );
+
     if (!context) return SEC_E_INVALID_HANDLE;
-    return KRB5_CALL( delete_context, (void *)context );
+
+    params.context = context_handle->handle;
+    status = KRB5_CALL( delete_context, &params );
+    free( context_handle );
+    return status;
 }
 
 static SecPkgInfoW *build_package_info( const SecPkgInfoW *info )
@@ -456,6 +489,8 @@ static SecPkgInfoW *build_package_info( const SecPkgInfoW *info )
 
 static NTSTATUS NTAPI kerberos_SpQueryContextAttributes( LSA_SEC_HANDLE context, ULONG attribute, void *buffer )
 {
+    struct context_handle *context_handle = (void *)context;
+
     TRACE( "%Ix, %lu, %p\n", context, attribute, buffer );
 
     if (!context) return SEC_E_INVALID_HANDLE;
@@ -477,7 +512,7 @@ static NTSTATUS NTAPI kerberos_SpQueryContextAttributes( LSA_SEC_HANDLE context,
     X(SECPKG_ATTR_TARGET_INFORMATION);
     case SECPKG_ATTR_SIZES:
     {
-        struct query_context_attributes_params params = { context, attribute, buffer };
+        struct query_context_attributes_params params = { context_handle->handle, attribute, buffer };
         return KRB5_CALL( query_context_attributes, &params );
     }
     case SECPKG_ATTR_NEGOTIATION_INFO:
@@ -584,7 +619,8 @@ static NTSTATUS SEC_ENTRY kerberos_SpMakeSignature( LSA_SEC_HANDLE context, ULON
 
     if (context)
     {
-        struct make_signature_params params = { context, message };
+        struct context_handle *context_handle = (void *)context;
+        struct make_signature_params params = { context_handle->handle, message };
         return KRB5_CALL( make_signature, &params );
     }
     else return SEC_E_INVALID_HANDLE;
@@ -598,7 +634,8 @@ static NTSTATUS NTAPI kerberos_SpVerifySignature( LSA_SEC_HANDLE context, SecBuf
 
     if (context)
     {
-        struct verify_signature_params params = { context, message, quality_of_protection };
+        struct context_handle *context_handle = (void *)context;
+        struct verify_signature_params params = { context_handle->handle, message, quality_of_protection };
         return KRB5_CALL( verify_signature, &params );
     }
     else return SEC_E_INVALID_HANDLE;
@@ -612,7 +649,8 @@ static NTSTATUS NTAPI kerberos_SpSealMessage( LSA_SEC_HANDLE context, ULONG qual
 
     if (context)
     {
-        struct seal_message_params params = { context, message, quality_of_protection };
+        struct context_handle *context_handle = (void *)context;
+        struct seal_message_params params = { context_handle->handle, message, quality_of_protection };
         return KRB5_CALL( seal_message, &params );
     }
     else return SEC_E_INVALID_HANDLE;
@@ -626,7 +664,8 @@ static NTSTATUS NTAPI kerberos_SpUnsealMessage( LSA_SEC_HANDLE context, SecBuffe
 
     if (context)
     {
-        struct unseal_message_params params = { context, message, quality_of_protection };
+        struct context_handle *context_handle = (void *)context;
+        struct unseal_message_params params = { context_handle->handle, message, quality_of_protection };
         return KRB5_CALL( unseal_message, &params );
     }
     else return SEC_E_INVALID_HANDLE;

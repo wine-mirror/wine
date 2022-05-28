@@ -26,9 +26,9 @@
 struct accept_context_params
 {
     UINT64 credential;
-    LSA_SEC_HANDLE context;
+    UINT64 context;
     SecBufferDesc *input;
-    LSA_SEC_HANDLE *new_context;
+    UINT64 *new_context;
     SecBufferDesc *output;
     ULONG *context_attr;
     ULONG *expiry;
@@ -44,6 +44,11 @@ struct acquire_credentials_handle_params
     ULONG *expiry;
 };
 
+struct delete_context_params
+{
+    UINT64 context;
+};
+
 struct free_credentials_handle_params
 {
     UINT64 credential;
@@ -52,11 +57,11 @@ struct free_credentials_handle_params
 struct initialize_context_params
 {
     UINT64 credential;
-    LSA_SEC_HANDLE context;
+    UINT64 context;
     const char *target_name;
     ULONG context_req;
     SecBufferDesc *input;
-    LSA_SEC_HANDLE *new_context;
+    UINT64 *new_context;
     SecBufferDesc *output;
     ULONG *context_attr;
     ULONG *expiry;
@@ -64,13 +69,13 @@ struct initialize_context_params
 
 struct make_signature_params
 {
-    LSA_SEC_HANDLE context;
+    UINT64 context;
     SecBufferDesc *msg;
 };
 
 struct query_context_attributes_params
 {
-    LSA_SEC_HANDLE context;
+    UINT64 context;
     unsigned attr;
     void *buf;
 };
@@ -83,21 +88,21 @@ struct query_ticket_cache_params
 
 struct seal_message_params
 {
-    LSA_SEC_HANDLE context;
+    UINT64 context;
     SecBufferDesc *msg;
     unsigned qop;
 };
 
 struct unseal_message_params
 {
-    LSA_SEC_HANDLE context;
+    UINT64 context;
     SecBufferDesc *msg;
     ULONG *qop;
 };
 
 struct verify_signature_params
 {
-    LSA_SEC_HANDLE context;
+    UINT64 context;
     SecBufferDesc *msg;
     ULONG *qop;
 };

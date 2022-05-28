@@ -486,9 +486,9 @@ static void trace_gss_status( OM_uint32 major_status, OM_uint32 minor_status )
     }
 }
 
-static inline gss_ctx_id_t ctxhandle_sspi_to_gss( LSA_SEC_HANDLE handle )
+static inline gss_ctx_id_t ctxhandle_sspi_to_gss( UINT64 handle )
 {
-    return (gss_ctx_id_t)handle;
+    return (gss_ctx_id_t)(ULONG_PTR)handle;
 }
 
 static inline gss_cred_id_t credhandle_sspi_to_gss( UINT64 handle )
@@ -496,9 +496,9 @@ static inline gss_cred_id_t credhandle_sspi_to_gss( UINT64 handle )
     return (gss_cred_id_t)(ULONG_PTR)handle;
 }
 
-static inline void ctxhandle_gss_to_sspi( gss_ctx_id_t handle, LSA_SEC_HANDLE *ctx )
+static inline void ctxhandle_gss_to_sspi( gss_ctx_id_t handle, UINT64 *ctx )
 {
-    *ctx = (LSA_SEC_HANDLE)handle;
+    *ctx = (ULONG_PTR)handle;
 }
 
 static inline void credhandle_gss_to_sspi( gss_cred_id_t handle, UINT64 *cred )
@@ -654,8 +654,9 @@ static NTSTATUS acquire_credentials_handle( void *args )
 
 static NTSTATUS delete_context( void *args )
 {
+    const struct delete_context_params *params = args;
     OM_uint32 ret, minor_status;
-    gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( (LSA_SEC_HANDLE)args );
+    gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( params->context );
 
     ret = pgss_delete_sec_context( &minor_status, &ctx_handle, GSS_C_NO_BUFFER );
     TRACE( "gss_delete_sec_context returned %#x minor status %#x\n", ret, minor_status );
