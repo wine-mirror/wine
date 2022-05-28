@@ -558,7 +558,7 @@ static VkResult macdrv_vkQueuePresentKHR(VkQueue queue, const VkPresentInfoKHR *
         static long prev_time, start_time;
         DWORD time;
 
-        time = GetTickCount();
+        time = NtGetTickCount();
         frames++;
         frames_total++;
         if (time - prev_time > 1500)
