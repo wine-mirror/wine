@@ -27,9 +27,11 @@ struct accept_context_params
 {
     UINT64 credential;
     UINT64 context;
-    SecBufferDesc *input;
+    BYTE *input_token;
+    ULONG input_token_length;
     UINT64 *new_context;
-    SecBufferDesc *output;
+    BYTE *output_token;
+    ULONG *output_token_length;
     ULONG *context_attr;
     ULONG *expiry;
 };

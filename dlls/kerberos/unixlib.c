@@ -528,17 +528,9 @@ static NTSTATUS accept_context( void *args )
     gss_cred_id_t cred_handle = credhandle_sspi_to_gss( params->credential );
     gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( params->context );
     gss_buffer_desc input_token, output_token;
-    int idx;
 
-    if (!params->input) input_token.length = 0;
-    else
-    {
-        if ((idx = get_buffer_index( params->input, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
-        input_token.length = params->input->pBuffers[idx].cbBuffer;
-        input_token.value  = params->input->pBuffers[idx].pvBuffer;
-    }
-
-    if ((idx = get_buffer_index( params->output, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+    input_token.length  = params->input_token_length;
+    input_token.value   = params->input_token;
     output_token.length = 0;
     output_token.value  = NULL;
 
@@ -548,16 +540,16 @@ static NTSTATUS accept_context( void *args )
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE || ret == GSS_S_CONTINUE_NEEDED)
     {
-        if (output_token.length > params->output->pBuffers[idx].cbBuffer) /* FIXME: check if larger buffer exists */
+        if (output_token.length > *params->output_token_length) /* FIXME: check if larger buffer exists */
         {
             TRACE( "buffer too small %lu > %u\n",
-                   (SIZE_T)output_token.length, (unsigned int)params->output->pBuffers[idx].cbBuffer );
+                   (SIZE_T)output_token.length, (unsigned int)*params->output_token_length );
             pgss_release_buffer( &minor_status, &output_token );
             pgss_delete_sec_context( &minor_status, &ctx_handle, GSS_C_NO_BUFFER );
             return SEC_E_BUFFER_TOO_SMALL;
         }
-        params->output->pBuffers[idx].cbBuffer = output_token.length;
-        memcpy( params->output->pBuffers[idx].pvBuffer, output_token.value, output_token.length );
+        *params->output_token_length = output_token.length;
+        memcpy( params->output_token, output_token.value, output_token.length );
         pgss_release_buffer( &minor_status, &output_token );
 
         ctxhandle_gss_to_sspi( ctx_handle, params->new_context );

@@ -100,6 +100,17 @@ static LSA_SEC_HANDLE create_context_handle( struct context_handle *ctx, UINT64 
         return (LSA_SEC_HANDLE)ctx;
 }
 
+static int get_buffer_index( const SecBufferDesc *desc, DWORD type )
+{
+    UINT i;
+    if (!desc) return -1;
+    for (i = 0; i < desc->cBuffers; i++)
+    {
+        if (desc->pBuffers[i].BufferType == type) return i;
+    }
+    return -1;
+}
+
 static const char *debugstr_us( const UNICODE_STRING *us )
 {
     if (!us) return "<null>";
@@ -421,6 +432,7 @@ static NTSTATUS NTAPI kerberos_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential
 {
     NTSTATUS status = SEC_E_INVALID_HANDLE;
     ULONG exptime;
+    int idx;
 
     TRACE( "%Ix, %Ix, %#lx, %lu, %p, %p, %p, %p, %p, %p, %p\n", credential, context, context_req, target_data_rep,
            input, new_context, output, context_attr, expiry, mapped_context, context_data );
@@ -430,17 +442,26 @@ static NTSTATUS NTAPI kerberos_SpAcceptLsaModeContext( LSA_SEC_HANDLE credential
     {
         struct cred_handle *cred_handle = (struct cred_handle *)credential;
         struct context_handle *context_handle = (struct context_handle *)context;
-        struct accept_context_params params;
+        struct accept_context_params params = { 0 };
         UINT64 new_context_handle = 0;
 
         params.credential = cred_handle ? cred_handle->handle : 0;
         params.context = context_handle ? context_handle->handle : 0;
-        params.input = input;
         params.new_context = &new_context_handle;
-        params.output = output;
         params.context_attr = context_attr;
         params.expiry = &exptime;
 
+        if (input)
+        {
+            if ((idx = get_buffer_index( input, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+            params.input_token  = input->pBuffers[idx].pvBuffer;
+            params.input_token_length = input->pBuffers[idx].cbBuffer;
+        }
+        if ((idx = get_buffer_index( output, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
+        params.output_token = output->pBuffers[idx].pvBuffer;
+        params.output_token_length = &output->pBuffers[idx].cbBuffer;
+
+        /* FIXME: check if larger output buffer exists */
         status = KRB5_CALL( accept_context, &params );
         if (!status)
         {
