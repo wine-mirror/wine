@@ -110,6 +110,7 @@
 @ stdcall lineSetCurrentLocation(long long)
 @ stdcall lineSetDevConfig(long ptr long str) lineSetDevConfigA
 @ stdcall lineSetDevConfigA(long ptr long str)
+@ stdcall lineSetDevConfigW(long ptr long wstr)
 @ stdcall lineSetMediaControl(long long long long ptr long ptr long ptr long ptr long)
 @ stdcall lineSetMediaMode(long long)
 @ stdcall lineSetNumRings(long long long)

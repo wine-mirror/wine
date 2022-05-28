@@ -1469,6 +1469,15 @@ DWORD WINAPI lineSetDevConfigA(DWORD dwDeviceID, LPVOID lpDeviceConfig, DWORD dw
 }
 
 /***********************************************************************
+ *		lineSetDevConfigW (TAPI32.@)
+ */
+DWORD WINAPI lineSetDevConfigW(DWORD dwDeviceID, LPVOID lpDeviceConfig, DWORD dwSize, LPCWSTR lpszDeviceClass)
+{
+    FIXME("(%08lx, %p, %08lx, %s): stub.\n", dwDeviceID, lpDeviceConfig, dwSize, debugstr_w(lpszDeviceClass));
+    return 0;
+}
+
+/***********************************************************************
  *		lineSetMediaControl (TAPI32.@)
  */
 DWORD WINAPI lineSetMediaControl(
