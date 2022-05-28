@@ -657,6 +657,15 @@ DWORD WINAPI lineGetDevConfigA(DWORD dwDeviceID, LPVARSTRING lpDeviceConfig, LPC
 }
 
 /***********************************************************************
+ *		lineGetDevConfigW (TAPI32.@)
+ */
+DWORD WINAPI lineGetDevConfigW(DWORD dwDeviceID, LPVARSTRING lpDeviceConfig, LPCWSTR lpszDeviceClass)
+{
+    FIXME("(%08lx, %p, %s): stub.\n", dwDeviceID, lpDeviceConfig, debugstr_w(lpszDeviceClass));
+    return 0;
+}
+
+/***********************************************************************
  *		lineGetIDW (TAPI32.@)
  */
 DWORD WINAPI lineGetIDW(HLINE hLine, DWORD dwAddressID, HCALL hCall, DWORD dwSelect,

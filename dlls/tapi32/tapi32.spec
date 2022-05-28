@@ -50,6 +50,7 @@
 @ stdcall lineGetDevCapsW(long long long long ptr)
 @ stdcall lineGetDevConfig(long ptr str) lineGetDevConfigA
 @ stdcall lineGetDevConfigA(long ptr str)
+@ stdcall lineGetDevConfigW(long ptr wstr)
 @ stdcall lineGetID(long long long long ptr str) lineGetIDA
 @ stdcall lineGetIDA(long long long long ptr str)
 @ stdcall lineGetIDW(long long long long ptr wstr)
