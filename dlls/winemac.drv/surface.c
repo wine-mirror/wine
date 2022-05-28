@@ -86,7 +86,7 @@ static void update_blit_data(struct macdrv_window_surface *surface)
 
         if (NtGdiCombineRgn(blit, surface->drawn, 0, RGN_COPY) > NULLREGION &&
             (!surface->region || NtGdiCombineRgn(blit, blit, surface->region, RGN_AND) > NULLREGION) &&
-            OffsetRgn(blit, surface->header.rect.left, surface->header.rect.top) > NULLREGION)
+            NtGdiOffsetRgn(blit, surface->header.rect.left, surface->header.rect.top) > NULLREGION)
             surface->blit_data = get_region_data(blit, 0);
 
         NtGdiDeleteObjectApp(blit);
@@ -285,7 +285,7 @@ struct window_surface *create_surface(macdrv_window window, const RECT *rect,
     if (old_mac_surface && old_mac_surface->drawn)
     {
         surface->drawn = NtGdiCreateRectRgn(rect->left, rect->top, rect->right, rect->bottom);
-        OffsetRgn(surface->drawn, -rect->left, -rect->top);
+        NtGdiOffsetRgn(surface->drawn, -rect->left, -rect->top);
         if (NtGdiCombineRgn(surface->drawn, surface->drawn, old_mac_surface->drawn, RGN_AND) <= NULLREGION)
         {
             NtGdiDeleteObjectApp(surface->drawn);

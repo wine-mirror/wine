@@ -396,8 +396,8 @@ static void sync_window_region(struct macdrv_win_data *data, HRGN win_region)
         NtUserMirrorRgn(data->hwnd, hrgn);
     if (hrgn)
     {
-        OffsetRgn(hrgn, data->window_rect.left - data->whole_rect.left,
-                  data->window_rect.top - data->whole_rect.top);
+        NtGdiOffsetRgn(hrgn, data->window_rect.left - data->whole_rect.left,
+                       data->window_rect.top - data->whole_rect.top);
     }
     region_data = get_region_data(hrgn, 0);
     if (region_data)
@@ -540,7 +540,8 @@ static void sync_window_min_max_info(HWND hwnd)
     primary_monitor_rect.left = primary_monitor_rect.top = 0;
     primary_monitor_rect.right = NtUserGetSystemMetrics(SM_CXSCREEN);
     primary_monitor_rect.bottom = NtUserGetSystemMetrics(SM_CYSCREEN);
-    AdjustWindowRectEx(&primary_monitor_rect, adjustedStyle, ((style & WS_POPUP) && GetMenu(hwnd)), exstyle);
+    AdjustWindowRectEx(&primary_monitor_rect, adjustedStyle,
+                       ((style & WS_POPUP) && NtUserGetWindowLongPtrW(hwnd, GWLP_ID)), exstyle);
 
     xinc = -primary_monitor_rect.left;
     yinc = -primary_monitor_rect.top;
@@ -1848,7 +1849,8 @@ LRESULT macdrv_SysCommand(HWND hwnd, WPARAM wparam, LPARAM lparam)
 
     /* prevent a simple ALT press+release from activating the system menu,
        as that can get confusing */
-    if (command == SC_KEYMENU && !(WCHAR)lparam && !GetMenu(hwnd) &&
+    if (command == SC_KEYMENU && !(WCHAR)lparam &&
+        !NtUserGetWindowLongPtrW(hwnd, GWLP_ID) &&
         (NtUserGetWindowLongW(hwnd, GWL_STYLE) & WS_SYSMENU))
     {
         TRACE("ignoring SC_KEYMENU wp %lx lp %lx\n", wparam, lparam);
