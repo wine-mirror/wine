@@ -297,6 +297,15 @@ DWORD WINAPI lineGetCallInfoA(HCALL hCall, LPLINECALLINFO lpCallInfo)
 }
 
 /***********************************************************************
+ *		lineGetCallInfoW (TAPI32.@)
+ */
+DWORD WINAPI lineGetCallInfoW(HCALL hCall, LPLINECALLINFO lpCallInfo)
+{
+    FIXME("(%p, %p): stub.\n", hCall, lpCallInfo);
+    return 0;
+}
+
+/***********************************************************************
  *		lineGetCallStatus (TAPI32.@)
  */
 DWORD WINAPI lineGetCallStatus(HCALL hCall, LPLINECALLSTATUS lpCallStatus)

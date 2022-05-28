@@ -39,6 +39,7 @@
 @ stdcall lineGetAppPriorityA(str long ptr long ptr ptr)
 @ stdcall lineGetCallInfo(long ptr) lineGetCallInfoA
 @ stdcall lineGetCallInfoA(long ptr)
+@ stdcall lineGetCallInfoW(long ptr)
 @ stdcall lineGetCallStatus(long ptr)
 @ stdcall lineGetConfRelatedCalls(long ptr)
 @ stdcall lineGetCountry(long long ptr) lineGetCountryA
