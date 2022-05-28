@@ -996,19 +996,14 @@ static NTSTATUS unseal_message( void *args )
 static NTSTATUS verify_signature( void *args )
 {
     struct verify_signature_params *params = args;
-    SecBufferDesc *msg = params->msg;
     OM_uint32 ret, minor_status;
     gss_buffer_desc data_buffer, token_buffer;
     gss_ctx_id_t ctx_handle = ctxhandle_sspi_to_gss( params->context );
-    int data_idx, token_idx;
 
-    if ((data_idx = get_buffer_index( msg, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
-    data_buffer.length = msg->pBuffers[data_idx].cbBuffer;
-    data_buffer.value  = msg->pBuffers[data_idx].pvBuffer;
-
-    if ((token_idx = get_buffer_index( msg, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
-    token_buffer.length = msg->pBuffers[token_idx].cbBuffer;
-    token_buffer.value  = msg->pBuffers[token_idx].pvBuffer;
+    data_buffer.length  = params->data_length;
+    data_buffer.value   = params->data;
+    token_buffer.length = params->token_length;
+    token_buffer.value  = params->token;
 
     ret = pgss_verify_mic( &minor_status, ctx_handle, &data_buffer, &token_buffer, NULL );
     TRACE( "gss_verify_mic returned %#x minor status %#x\n", ret, minor_status );

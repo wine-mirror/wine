@@ -108,7 +108,10 @@ struct unseal_message_params
 struct verify_signature_params
 {
     UINT64 context;
-    SecBufferDesc *msg;
+    BYTE *data;
+    ULONG data_length;
+    BYTE *token;
+    ULONG token_length;
     ULONG *qop;
 };
 
