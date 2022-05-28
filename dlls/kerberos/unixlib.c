@@ -815,33 +815,29 @@ static NTSTATUS query_context_attributes( void *args )
     return SEC_E_UNSUPPORTED_FUNCTION;
 }
 
-static NTSTATUS seal_message_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, unsigned qop )
+static NTSTATUS seal_message_vector( gss_ctx_id_t ctx, const struct seal_message_params *params )
 {
     gss_iov_buffer_desc iov[4];
     OM_uint32 ret, minor_status;
-    int token_idx, data_idx, conf_flag, conf_state;
+    int conf_flag, conf_state;
 
-    if (!qop)
+    if (!params->qop)
         conf_flag = 1; /* confidentiality + integrity */
-    else if (qop == SECQOP_WRAP_NO_ENCRYPT)
+    else if (params->qop == SECQOP_WRAP_NO_ENCRYPT)
         conf_flag = 0; /* only integrity */
     else
     {
-        FIXME( "QOP %#x not supported\n", qop );
+        FIXME( "QOP %#x not supported\n", params->qop );
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
-
-    /* FIXME: multiple data buffers, read-only buffers */
-    if ((data_idx = get_buffer_index( msg, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
-    if ((token_idx = get_buffer_index( msg, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
 
     iov[0].type          = GSS_IOV_BUFFER_TYPE_SIGN_ONLY | GSS_IOV_BUFFER_FLAG_ALLOCATE;
     iov[0].buffer.length = 0;
     iov[0].buffer.value  = NULL;
 
     iov[1].type          = GSS_IOV_BUFFER_TYPE_DATA;
-    iov[1].buffer.length = msg->pBuffers[data_idx].cbBuffer;
-    iov[1].buffer.value  = msg->pBuffers[data_idx].pvBuffer;
+    iov[1].buffer.length = params->data_length;
+    iov[1].buffer.value  = params->data;
 
     iov[2].type          = GSS_IOV_BUFFER_TYPE_SIGN_ONLY | GSS_IOV_BUFFER_FLAG_ALLOCATE;
     iov[2].buffer.length = 0;
@@ -856,52 +852,48 @@ static NTSTATUS seal_message_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, unsig
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE)
     {
-        memcpy( msg->pBuffers[token_idx].pvBuffer, iov[3].buffer.value, iov[3].buffer.length );
-        msg->pBuffers[token_idx].cbBuffer = iov[3].buffer.length;
+        memcpy( params->token, iov[3].buffer.value, iov[3].buffer.length );
+        *params->token_length = iov[3].buffer.length;
         pgss_release_iov_buffer( &minor_status, iov, 4 );
     }
 
     return status_gss_to_sspi( ret );
 }
 
-static NTSTATUS seal_message_no_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, unsigned qop )
+static NTSTATUS seal_message_no_vector( gss_ctx_id_t ctx, const struct seal_message_params *params )
 {
     gss_buffer_desc input, output;
     OM_uint32 ret, minor_status;
-    int token_idx, data_idx, conf_flag, conf_state;
+    int conf_flag, conf_state;
 
-    if (!qop)
+    if (!params->qop)
         conf_flag = 1; /* confidentiality + integrity */
-    else if (qop == SECQOP_WRAP_NO_ENCRYPT)
+    else if (params->qop == SECQOP_WRAP_NO_ENCRYPT)
         conf_flag = 0; /* only integrity */
     else
     {
-        FIXME( "QOP %#x not supported\n", qop );
+        FIXME( "QOP %#x not supported\n", params->qop );
         return SEC_E_UNSUPPORTED_FUNCTION;
     }
 
-    /* FIXME: multiple data buffers, read-only buffers */
-    if ((data_idx = get_buffer_index( msg, SECBUFFER_DATA )) == -1) return SEC_E_INVALID_TOKEN;
-    if ((token_idx = get_buffer_index( msg, SECBUFFER_TOKEN )) == -1) return SEC_E_INVALID_TOKEN;
-
-    input.length = msg->pBuffers[data_idx].cbBuffer;
-    input.value  = msg->pBuffers[data_idx].pvBuffer;
+    input.length = params->data_length;
+    input.value  = params->data;
 
     ret = pgss_wrap( &minor_status, ctx, conf_flag, GSS_C_QOP_DEFAULT, &input, &conf_state, &output );
     TRACE( "gss_wrap returned %#x minor status %#x\n", ret, minor_status );
     if (GSS_ERROR( ret )) trace_gss_status( ret, minor_status );
     if (ret == GSS_S_COMPLETE)
     {
-        unsigned len_data = msg->pBuffers[data_idx].cbBuffer, len_token = msg->pBuffers[token_idx].cbBuffer;
+        unsigned len_data = params->data_length, len_token = *params->token_length;
         if (len_token < output.length - len_data)
         {
             TRACE( "buffer too small %lu > %u\n", (SIZE_T)output.length - len_data, len_token );
             pgss_release_buffer( &minor_status, &output );
             return SEC_E_BUFFER_TOO_SMALL;
         }
-        memcpy( msg->pBuffers[data_idx].pvBuffer, output.value, len_data );
-        memcpy( msg->pBuffers[token_idx].pvBuffer, (char *)output.value + len_data, output.length - len_data );
-        msg->pBuffers[token_idx].cbBuffer = output.length - len_data;
+        memcpy( params->data, output.value, len_data );
+        memcpy( params->token, (char *)output.value + len_data, output.length - len_data );
+        *params->token_length = output.length - len_data;
         pgss_release_buffer( &minor_status, &output );
     }
 
@@ -913,8 +905,8 @@ static NTSTATUS seal_message( void *args )
     struct seal_message_params *params = args;
     gss_ctx_id_t ctx = ctxhandle_sspi_to_gss( params->context );
 
-    if (is_dce_style_context( ctx )) return seal_message_vector( ctx, params->msg, params->qop );
-    return seal_message_no_vector( ctx, params->msg, params->qop );
+    if (is_dce_style_context( ctx )) return seal_message_vector( ctx, params );
+    return seal_message_no_vector( ctx, params );
 }
 
 static NTSTATUS unseal_message_vector( gss_ctx_id_t ctx, SecBufferDesc *msg, ULONG *qop )

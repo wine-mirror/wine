@@ -94,7 +94,10 @@ struct query_ticket_cache_params
 struct seal_message_params
 {
     UINT64 context;
-    SecBufferDesc *msg;
+    BYTE *data;
+    ULONG data_length;
+    BYTE *token;
+    ULONG *token_length;
     unsigned qop;
 };
 
