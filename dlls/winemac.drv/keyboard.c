@@ -441,16 +441,94 @@ static pthread_mutex_t layout_list_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 int macdrv_layout_list_needs_update = TRUE;
 
+static const NLS_LOCALE_HEADER *locale_table;
+
+static int compare_locale_names(const WCHAR *n1, const WCHAR *n2)
+{
+    for (;;)
+    {
+        WCHAR ch1 = *n1++;
+        WCHAR ch2 = *n2++;
+        if (ch1 >= 'a' && ch1 <= 'z') ch1 -= 'a' - 'A';
+        else if (ch1 == '_') ch1 = '-';
+        if (ch2 >= 'a' && ch2 <= 'z') ch2 -= 'a' - 'A';
+        else if (ch2 == '_') ch2 = '-';
+        if (!ch1 || ch1 != ch2) return ch1 - ch2;
+    }
+}
+
+
+static const NLS_LOCALE_LCNAME_INDEX *find_lcname_entry(const WCHAR *name)
+{
+    const NLS_LOCALE_LCNAME_INDEX *lcnames_index;
+    const WCHAR *locale_strings;
+    int min = 0, max = locale_table->nb_lcnames - 1;
+
+    locale_strings = (const WCHAR *)((char *)locale_table + locale_table->strings_offset);
+    lcnames_index = (const NLS_LOCALE_LCNAME_INDEX *)((char *)locale_table + locale_table->lcnames_offset);
+
+    while (min <= max)
+    {
+        int res, pos = (min + max) / 2;
+        const WCHAR *str = locale_strings + lcnames_index[pos].name;
+        res = compare_locale_names(name, str + 1);
+        if (res < 0) max = pos - 1;
+        else if (res > 0) min = pos + 1;
+        else return &lcnames_index[pos];
+    }
+    return NULL;
+}
+
+
 static DWORD get_lcid(CFStringRef lang)
 {
+    const NLS_LOCALE_LCNAME_INDEX *entry;
+    const NLS_LOCALE_DATA *locale;
     CFRange range;
     WCHAR str[10];
+    ULONG offset;
+
+    if (!locale_table)
+    {
+        struct
+        {
+            UINT ctypes;
+            UINT unknown1;
+            UINT unknown2;
+            UINT unknown3;
+            UINT locales;
+            UINT charmaps;
+            UINT geoids;
+            UINT scripts;
+        } *header;
+        LCID system_lcid;
+        LARGE_INTEGER size;
+
+        if (NtInitializeNlsFiles((void **)&header, &system_lcid, &size))
+        {
+            ERR("NtInitializeNlsFiles failed\n");
+            return 0;
+        }
+
+        if (InterlockedCompareExchangePointer((void **)&locale_table,
+                                              (char *)header + header->locales, NULL))
+            NtUnmapViewOfSection(GetCurrentProcess(), header);
+    }
 
     range.location = 0;
     range.length = min(CFStringGetLength(lang), ARRAY_SIZE(str) - 1);
     CFStringGetCharacters(lang, range, str);
     str[range.length] = 0;
-    return LocaleNameToLCID(str, 0);
+
+    if (!(entry = find_lcname_entry(str)))
+    {
+        ERR("%s not found\n", debugstr_w(str));
+        return 0;
+    }
+
+    offset = locale_table->locales_offset + entry->idx * locale_table->locale_size;
+    locale = (const NLS_LOCALE_DATA *)((const char *)locale_table + offset);
+    return locale->inotneutral ? entry->id : locale->idefaultlanguage;
 }
 
 static HKL get_hkl(CFStringRef lang, CFStringRef type)
