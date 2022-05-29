@@ -2032,7 +2032,7 @@ static void test_data_handles(void)
     memset( &bmi, 0, sizeof(bmi) );
     bmi.bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     result = GetDIBits( hdc, h, 0, 0, NULL, &bmi, 0 );
-    todo_wine ok( !!result, "GetDIBits failed: %#lx.\n", GetLastError() );
+    ok( !!result, "GetDIBits failed: %#lx.\n", GetLastError() );
 
     bitmap = CreateBitmap( 10, 10, 1, 1, NULL );
     h = SetClipboardData( CF_DSPBITMAP, bitmap );
@@ -2050,8 +2050,8 @@ static void test_data_handles(void)
     ok( !!DeleteObject( palette ), "DeleteObject failed.\n" );
     h = GetClipboardData( CF_PALETTE );
     ok( h == palette, "Expected palette %p, got %p.\n", palette, h );
-    todo_wine ok( !!GetPaletteEntries( h, 0, 1, &entry ), "GetPaletteEntries %p failed.\n", h );
-    todo_wine ok( entry.peRed == 0x12 && entry.peGreen == 0x34 && entry.peBlue == 0x56,
+    ok( !!GetPaletteEntries( h, 0, 1, &entry ), "GetPaletteEntries %p failed.\n", h );
+    ok( entry.peRed == 0x12 && entry.peGreen == 0x34 && entry.peBlue == 0x56,
             "Got wrong color (%02x, %02x, %02x).\n", entry.peRed, entry.peGreen, entry.peBlue );
 
     emf = create_emf();

@@ -31,6 +31,7 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "win32u_private.h"
+#include "ntgdi_private.h"
 #include "ntuser_private.h"
 #include "wine/server.h"
 #include "wine/debug.h"
@@ -112,8 +113,9 @@ static void free_cached_data( struct cached_format *cache )
     switch (cache->format)
     {
     case CF_BITMAP:
-    case CF_DSPBITMAP:
     case CF_PALETTE:
+        make_gdi_object_system( cache->handle, FALSE );
+    case CF_DSPBITMAP:
         NtGdiDeleteObjectApp( cache->handle );
         break;
 
@@ -594,6 +596,11 @@ NTSTATUS WINAPI NtUserSetClipboardData( UINT format, HANDLE data, struct set_cli
             if (!(cache = malloc( sizeof(*cache) ))) goto done;
             cache->format = format;
             cache->handle = data;
+        }
+
+        if (format == CF_BITMAP || format == CF_PALETTE)
+        {
+            make_gdi_object_system( cache->handle, TRUE );
         }
     }
 
