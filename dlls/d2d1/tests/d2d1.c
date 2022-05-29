@@ -11709,10 +11709,8 @@ static void test_bitmap_map(BOOL d3d11)
         hr = IDXGISurface_QueryInterface(surface, &IID_ID3D11Texture2D, (void **)&texture);
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         ID3D11Texture2D_GetDesc(texture, &texture_desc);
-        todo_wine
         ok(texture_desc.Usage == D3D11_USAGE_STAGING, "Unexpected usage %u.\n", texture_desc.Usage);
         ok(!texture_desc.BindFlags, "Unexpected bind flags %#x.\n", texture_desc.BindFlags);
-        todo_wine
         ok(texture_desc.CPUAccessFlags == D3D11_CPU_ACCESS_READ, "Unexpected CPU access flags %#x.\n",
                 texture_desc.CPUAccessFlags);
         ok(!texture_desc.MiscFlags, "Unexpected misc flags %#x.\n", texture_desc.MiscFlags);
@@ -11822,7 +11820,7 @@ static void test_bitmap_create(BOOL d3d11)
         bitmap_desc.bitmapOptions = invalid_options[i].options;
         bitmap_desc.colorContext = NULL;
         hr = ID2D1DeviceContext_CreateBitmap(ctx.context, size, NULL, 0, &bitmap_desc, &bitmap);
-        todo_wine
+        todo_wine_if(i != 1)
         ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
         if (SUCCEEDED(hr))
             ID2D1Bitmap1_Release(bitmap);
