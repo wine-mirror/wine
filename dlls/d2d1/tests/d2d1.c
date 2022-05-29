@@ -11609,10 +11609,11 @@ static void test_bitmap_map(BOOL d3d11)
     D2D1_MAPPED_RECT mapped_rect;
     ID3D11Device *d3d_device;
     ID3D11Texture2D *texture;
+    unsigned int i, options;
     IDXGISurface *surface;
     ID2D1Bitmap1 *bitmap;
+    ID2D1Bitmap *bitmap2;
     D2D1_SIZE_U size;
-    unsigned int i;
     HRESULT hr;
 
     if (!init_test_context(&ctx, d3d11))
@@ -11778,6 +11779,49 @@ static void test_bitmap_map(BOOL d3d11)
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     ID2D1Bitmap1_Release(bitmap);
+
+    /* Options are derived from the surface properties. */
+    bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+    bitmap_desc.dpiX = bitmap_desc.dpiY = 0.0f;
+    hr = ID2D1DeviceContext_CreateSharedBitmap(ctx.context, &IID_IDXGISurface, surface,
+            (const D2D1_BITMAP_PROPERTIES *)&bitmap_desc, &bitmap2);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    hr = ID2D1Bitmap_QueryInterface(bitmap2, &IID_ID2D1Bitmap1, (void **)&bitmap);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    options = ID2D1Bitmap1_GetOptions(bitmap);
+    todo_wine
+    ok(options == (D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_CPU_READ),
+            "Unexpected options %#x.\n", options);
+
+    ID2D1Bitmap1_Release(bitmap);
+    ID2D1Bitmap_Release(bitmap2);
+
+    hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(ctx.context, surface, NULL, &bitmap);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    options = ID2D1Bitmap1_GetOptions(bitmap);
+    todo_wine
+    ok(options == (D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_CPU_READ),
+            "Unexpected options %#x.\n", options);
+    ID2D1Bitmap1_Release(bitmap);
+
+    /* Options incompatible with the surface. */
+    bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET;
+    hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(ctx.context, surface, &bitmap_desc, &bitmap);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr)) ID2D1Bitmap1_Release(bitmap);
+    bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_NONE;
+    hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(ctx.context, surface, &bitmap_desc, &bitmap);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr)) ID2D1Bitmap1_Release(bitmap);
+    bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
+    hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(ctx.context, surface, &bitmap_desc, &bitmap);
+    todo_wine
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr)) ID2D1Bitmap1_Release(bitmap);
 
     ID3D11Texture2D_Release(texture);
     IDXGISurface_Release(surface);
