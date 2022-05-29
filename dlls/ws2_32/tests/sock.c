@@ -13049,6 +13049,91 @@ static void test_connect_time(void)
     closesocket(client);
 }
 
+static void test_connect_udp(void)
+{
+    const struct sockaddr_in bind_addr = {.sin_family = AF_INET, .sin_addr.s_addr = htonl(INADDR_LOOPBACK)};
+    struct sockaddr_in addr, ret_addr;
+    SOCKET client, server;
+    char buffer[5];
+    int ret, len;
+
+    client = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    server = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    set_blocking(client, FALSE);
+    set_blocking(server, FALSE);
+
+    SetLastError(0xdeadbeef);
+    ret = send(client, "data", 4, 0);
+    ok(ret == -1, "got %d\n", ret);
+    todo_wine ok(GetLastError() == WSAENOTCONN, "got error %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = recv(server, buffer, sizeof(buffer), 0);
+    ok(ret == -1, "got %d\n", ret);
+    todo_wine ok(GetLastError() == WSAEINVAL, "got error %lu\n", GetLastError());
+
+    ret = bind(server, (const struct sockaddr *)&bind_addr, sizeof(bind_addr));
+    ok(!ret, "got error %lu\n", GetLastError());
+    len = sizeof(addr);
+    ret = getsockname(server, (struct sockaddr *)&addr, &len);
+    ok(!ret, "got error %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = recv(server, buffer, sizeof(buffer), 0);
+    ok(ret == -1, "got %d\n", ret);
+    ok(GetLastError() == WSAEWOULDBLOCK, "got error %lu\n", GetLastError());
+
+    ret = connect(client, (struct sockaddr *)&addr, sizeof(addr));
+    ok(!ret, "got error %lu\n", GetLastError());
+    ret = getpeername(client, (struct sockaddr *)&ret_addr, &len);
+    ok(!ret, "got error %lu\n", GetLastError());
+    ok(!memcmp(&ret_addr, &addr, sizeof(addr)), "addresses didn't match\n");
+
+    ret = getsockname(client, (struct sockaddr *)&ret_addr, &len);
+    ok(!ret, "got error %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = getpeername(server, (struct sockaddr *)&ret_addr, &len);
+    ok(ret == -1, "got %d\n", ret);
+    ok(GetLastError() == WSAENOTCONN, "got error %lu\n", GetLastError());
+
+    ret = send(client, "data", 4, 0);
+    ok(ret == 4, "got %d\n", ret);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    ret = recv(server, buffer, sizeof(buffer), 0);
+    ok(ret == 4, "got %d\n", ret);
+    ok(!memcmp(buffer, "data", 4), "got %s\n", debugstr_an(buffer, ret));
+
+    SetLastError(0xdeadbeef);
+    ret = recv(server, buffer, sizeof(buffer), 0);
+    ok(ret == -1, "got %d\n", ret);
+    ok(GetLastError() == WSAEWOULDBLOCK, "got error %lu\n", GetLastError());
+
+    SetLastError(0xdeadbeef);
+    ret = send(server, "data", 4, 0);
+    ok(ret == -1, "got %d\n", ret);
+    todo_wine ok(GetLastError() == WSAENOTCONN, "got error %lu\n", GetLastError());
+
+    ret = connect(client, (struct sockaddr *)&addr, sizeof(addr));
+    todo_wine ok(!ret, "got error %lu\n", GetLastError());
+    ++addr.sin_port;
+    ret = connect(client, (struct sockaddr *)&addr, sizeof(addr));
+    todo_wine ok(!ret, "got error %lu\n", GetLastError());
+
+    memset(&addr, 0, sizeof(addr));
+    addr.sin_family = AF_UNSPEC;
+    ret = connect(client, (struct sockaddr *)&addr, sizeof(addr));
+    todo_wine ok(!ret, "got error %lu\n", GetLastError());
+
+    ret = getpeername(client, (struct sockaddr *)&ret_addr, &len);
+    todo_wine ok(ret == -1, "got %d\n", ret);
+    todo_wine ok(GetLastError() == WSAENOTCONN, "got error %lu\n", GetLastError());
+
+    closesocket(server);
+    closesocket(client);
+}
+
 START_TEST( sock )
 {
     int i;
@@ -13127,6 +13212,7 @@ START_TEST( sock )
     test_timeout();
     test_tcp_reset();
     test_icmp();
+    test_connect_udp();
 
     /* this is an io heavy test, do it at the end so the kernel doesn't start dropping packets */
     test_send();
