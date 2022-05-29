@@ -2359,6 +2359,7 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
         if (!ret)
         {
             sock->state = SOCK_CONNECTED;
+            sock->connect_time = current_time;
 
             if (!send_len) return;
         }
