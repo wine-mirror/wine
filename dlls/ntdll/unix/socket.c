@@ -895,49 +895,13 @@ static BOOL async_send_proc( void *user, ULONG_PTR *info, NTSTATUS *status )
 }
 
 static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
-                           IO_STATUS_BLOCK *io, int fd, const void *buffers_ptr, unsigned int count,
-                           const struct WS_sockaddr *addr, unsigned int addr_len, int unix_flags, int force_async )
+                           IO_STATUS_BLOCK *io, int fd, struct async_send_ioctl *async, int force_async )
 {
-    struct async_send_ioctl *async;
+    BOOL nonblocking, alerted;
     ULONG_PTR information;
     HANDLE wait_handle;
-    DWORD async_size;
     NTSTATUS status;
-    unsigned int i;
     ULONG options;
-    BOOL nonblocking, alerted;
-
-    async_size = offsetof( struct async_send_ioctl, iov[count] );
-
-    if (!(async = (struct async_send_ioctl *)alloc_fileio( async_size, async_send_proc, handle )))
-        return STATUS_NO_MEMORY;
-
-    async->count = count;
-    if (in_wow64_call())
-    {
-        const struct afd_wsabuf_32 *buffers = buffers_ptr;
-
-        for (i = 0; i < count; ++i)
-        {
-            async->iov[i].iov_base = ULongToPtr( buffers[i].buf );
-            async->iov[i].iov_len = buffers[i].len;
-        }
-    }
-    else
-    {
-        const WSABUF *buffers = buffers_ptr;
-
-        for (i = 0; i < count; ++i)
-        {
-            async->iov[i].iov_base = buffers[i].buf;
-            async->iov[i].iov_len = buffers[i].len;
-        }
-    }
-    async->unix_flags = unix_flags;
-    async->addr = addr;
-    async->addr_len = addr_len;
-    async->iov_cursor = 0;
-    async->sent_len = 0;
 
     SERVER_START_REQ( send_socket )
     {
@@ -981,6 +945,72 @@ static NTSTATUS sock_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, voi
     if (wait_handle) status = wait_async( wait_handle, options & FILE_SYNCHRONOUS_IO_ALERT );
     return status;
 }
+
+static NTSTATUS sock_ioctl_send( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc_user,
+                                 IO_STATUS_BLOCK *io, int fd, const void *buffers_ptr, unsigned int count,
+                                 const struct WS_sockaddr *addr, unsigned int addr_len, int unix_flags, int force_async )
+{
+    struct async_send_ioctl *async;
+    DWORD async_size;
+    unsigned int i;
+
+    async_size = offsetof( struct async_send_ioctl, iov[count] );
+
+    if (!(async = (struct async_send_ioctl *)alloc_fileio( async_size, async_send_proc, handle )))
+        return STATUS_NO_MEMORY;
+
+    async->count = count;
+    if (in_wow64_call())
+    {
+        const struct afd_wsabuf_32 *buffers = buffers_ptr;
+
+        for (i = 0; i < count; ++i)
+        {
+            async->iov[i].iov_base = ULongToPtr( buffers[i].buf );
+            async->iov[i].iov_len = buffers[i].len;
+        }
+    }
+    else
+    {
+        const WSABUF *buffers = buffers_ptr;
+
+        for (i = 0; i < count; ++i)
+        {
+            async->iov[i].iov_base = buffers[i].buf;
+            async->iov[i].iov_len = buffers[i].len;
+        }
+    }
+    async->unix_flags = unix_flags;
+    async->addr = addr;
+    async->addr_len = addr_len;
+    async->iov_cursor = 0;
+    async->sent_len = 0;
+
+    return sock_send( handle, event, apc, apc_user, io, fd, async, force_async );
+}
+
+
+NTSTATUS sock_write( HANDLE handle, int fd, HANDLE event, PIO_APC_ROUTINE apc,
+                     void *apc_user, IO_STATUS_BLOCK *io, const void *buffer, ULONG length )
+{
+    static const DWORD async_size = offsetof( struct async_send_ioctl, iov[1] );
+    struct async_send_ioctl *async;
+
+    if (!(async = (struct async_send_ioctl *)alloc_fileio( async_size, async_recv_proc, handle )))
+        return STATUS_NO_MEMORY;
+
+    async->count = 1;
+    async->iov[0].iov_base = (void *)buffer;
+    async->iov[0].iov_len = length;
+    async->unix_flags = 0;
+    async->addr = NULL;
+    async->addr_len = 0;
+    async->iov_cursor = 0;
+    async->sent_len = 0;
+
+    return sock_send( handle, event, apc, apc_user, io, fd, async, 1 );
+}
+
 
 static ssize_t do_send( int fd, const void *buffer, size_t len, int flags )
 {
@@ -1420,8 +1450,9 @@ NTSTATUS sock_ioctl( HANDLE handle, HANDLE event, PIO_APC_ROUTINE apc, void *apc
                 WARN( "ignoring MSG_PARTIAL\n" );
             if (params->ws_flags & ~(WS_MSG_OOB | WS_MSG_PARTIAL))
                 FIXME( "unknown flags %#x\n", params->ws_flags );
-            status = sock_send( handle, event, apc, apc_user, io, fd, u64_to_user_ptr( params->buffers_ptr ), params->count,
-                                u64_to_user_ptr( params->addr_ptr ), params->addr_len, unix_flags, params->force_async );
+            status = sock_ioctl_send( handle, event, apc, apc_user, io, fd, u64_to_user_ptr( params->buffers_ptr ),
+                                      params->count, u64_to_user_ptr( params->addr_ptr ), params->addr_len,
+                                      unix_flags, params->force_async );
             if (needs_close) close( fd );
             return status;
         }
