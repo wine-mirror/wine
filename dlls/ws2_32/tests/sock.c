@@ -13035,7 +13035,7 @@ static void test_connect_time(void)
     ok(!ret, "got %d\n", ret);
     ok(!GetLastError(), "got error %lu\n", GetLastError());
     ok(len == sizeof(time), "got len %d\n", len);
-    todo_wine ok(time == ~0u, "got time %u\n", time);
+    ok(time == ~0u, "got time %u\n", time);
 
     len = sizeof(time);
     SetLastError(0xdeadbeef);
@@ -13116,19 +13116,19 @@ static void test_connect_udp(void)
     todo_wine ok(GetLastError() == WSAENOTCONN, "got error %lu\n", GetLastError());
 
     ret = connect(client, (struct sockaddr *)&addr, sizeof(addr));
-    todo_wine ok(!ret, "got error %lu\n", GetLastError());
+    ok(!ret, "got error %lu\n", GetLastError());
     ++addr.sin_port;
     ret = connect(client, (struct sockaddr *)&addr, sizeof(addr));
-    todo_wine ok(!ret, "got error %lu\n", GetLastError());
+    ok(!ret, "got error %lu\n", GetLastError());
 
     memset(&addr, 0, sizeof(addr));
     addr.sin_family = AF_UNSPEC;
     ret = connect(client, (struct sockaddr *)&addr, sizeof(addr));
-    todo_wine ok(!ret, "got error %lu\n", GetLastError());
+    ok(!ret, "got error %lu\n", GetLastError());
 
     ret = getpeername(client, (struct sockaddr *)&ret_addr, &len);
-    todo_wine ok(ret == -1, "got %d\n", ret);
-    todo_wine ok(GetLastError() == WSAENOTCONN, "got error %lu\n", GetLastError());
+    ok(ret == -1, "got %d\n", ret);
+    ok(GetLastError() == WSAENOTCONN, "got error %lu\n", GetLastError());
 
     closesocket(server);
     closesocket(client);
