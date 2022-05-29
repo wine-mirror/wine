@@ -336,6 +336,23 @@ static void d2d_bitmap_init(struct d2d_bitmap *bitmap, struct d2d_device_context
     }
 }
 
+static BOOL check_bitmap_options(unsigned int options)
+{
+    switch (options)
+    {
+        case D2D1_BITMAP_OPTIONS_NONE:
+        case D2D1_BITMAP_OPTIONS_TARGET:
+        case D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW:
+        case D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE:
+        case D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE:
+        case D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_CPU_READ:
+            return TRUE;
+        default:
+            WARN("Invalid bitmap options %#x.\n", options);
+            return FALSE;
+    }
+}
+
 HRESULT d2d_bitmap_create(struct d2d_device_context *context, D2D1_SIZE_U size, const void *src_data,
         UINT32 pitch, const D2D1_BITMAP_PROPERTIES1 *desc, struct d2d_bitmap **bitmap)
 {
@@ -363,6 +380,9 @@ HRESULT d2d_bitmap_create(struct d2d_device_context *context, D2D1_SIZE_U size, 
     {
         return E_INVALIDARG;
     }
+
+    if (!check_bitmap_options(desc->bitmapOptions))
+        return E_INVALIDARG;
 
     texture_desc.Width = size.width;
     texture_desc.Height = size.height;
