@@ -175,7 +175,7 @@
 @ stdcall ExIsResourceAcquiredExclusiveLite(ptr)
 @ stdcall ExIsResourceAcquiredSharedLite(ptr)
 @ stdcall ExLocalTimeToSystemTime(ptr ptr) RtlLocalTimeToSystemTime
-@ stub ExNotifyCallback
+@ stdcall ExNotifyCallback(ptr ptr ptr)
 @ stub ExQueryPoolBlockSize
 @ stub ExQueueWorkItem
 @ stub ExRaiseAccessViolation
