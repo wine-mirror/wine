@@ -33,16 +33,16 @@
 
 #define TIMEOUT_INFINITE _I64_MAX
 
-static void tcp_socketpair(SOCKET *src, SOCKET *dst)
+static void tcp_socketpair_flags(SOCKET *src, SOCKET *dst, DWORD flags)
 {
     SOCKET server = INVALID_SOCKET;
     struct sockaddr_in addr;
     int len, ret;
 
-    *src = WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
+    *src = WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, flags);
     ok(*src != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
 
-    server = WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, WSA_FLAG_OVERLAPPED);
+    server = WSASocketW(AF_INET, SOCK_STREAM, IPPROTO_TCP, NULL, 0, flags);
     ok(server != INVALID_SOCKET, "failed to create socket, error %u\n", WSAGetLastError());
 
     memset(&addr, 0, sizeof(addr));
@@ -66,6 +66,11 @@ static void tcp_socketpair(SOCKET *src, SOCKET *dst)
     ok(*dst != INVALID_SOCKET, "failed to accept socket, error %u\n", WSAGetLastError());
 
     closesocket(server);
+}
+
+static void tcp_socketpair(SOCKET *src, SOCKET *dst)
+{
+    tcp_socketpair_flags(src, dst, WSA_FLAG_OVERLAPPED);
 }
 
 static void set_blocking(SOCKET s, ULONG blocking)
@@ -2575,6 +2580,148 @@ static void test_async_thread_termination(void)
     closesocket(listener);
 }
 
+static DWORD WINAPI sync_read_file_thread(void *arg)
+{
+    HANDLE server = arg;
+    IO_STATUS_BLOCK io;
+    char buffer[5];
+    NTSTATUS ret;
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    memset(&io, 0xcc, sizeof(io));
+    ret = NtReadFile(server, NULL, NULL, NULL, &io, buffer, sizeof(buffer), NULL, NULL);
+    ok(!ret, "got status %#lx\n", ret);
+    ok(!io.Status, "got status %#lx\n", io.Status);
+    ok(io.Information == 4, "got size %Iu\n", io.Information);
+    ok(!memcmp(buffer, "data", 4), "got data %s\n", debugstr_an(buffer, io.Information));
+
+    return 0;
+}
+
+static void test_read_write(void)
+{
+    WSANETWORKEVENTS events;
+    IO_STATUS_BLOCK io, io2;
+    SOCKET client, server;
+    LARGE_INTEGER offset;
+    HANDLE event, thread;
+    char buffer[5];
+    NTSTATUS ret;
+
+    event = CreateEventA(NULL, TRUE, FALSE, NULL);
+
+    tcp_socketpair_flags(&client, &server, 0);
+    set_blocking(server, FALSE);
+
+    memset(&io, 0xcc, sizeof(io));
+    ret = NtWriteFile((HANDLE)client, NULL, NULL, NULL, &io, "data", 4, NULL, NULL);
+    ok(!ret, "got status %#lx\n", ret);
+    ok(!io.Status, "got status %#lx\n", io.Status);
+    ok(io.Information == 4, "got size %Iu\n", io.Information);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    memset(&io, 0xcc, sizeof(io));
+    ret = NtReadFile((HANDLE)server, NULL, NULL, NULL, &io, buffer, sizeof(buffer), NULL, NULL);
+    ok(!ret, "got status %#lx\n", ret);
+    ok(!io.Status, "got status %#lx\n", io.Status);
+    ok(io.Information == 4, "got size %Iu\n", io.Information);
+    ok(!memcmp(buffer, "data", 4), "got data %s\n", debugstr_an(buffer, io.Information));
+
+    ret = send(server, "data", 4, 0);
+    ok(ret == 4, "got %ld\n", ret);
+
+    ret = WSAEventSelect(client, event, FD_READ);
+    ok(!ret, "got error %lu\n", GetLastError());
+
+    ret = WSAEnumNetworkEvents(client, event, &events);
+    ok(!ret, "got error %lu\n", GetLastError());
+    ok(events.lNetworkEvents == FD_READ, "got events %#lx\n", events.lNetworkEvents);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    ret = NtReadFile((HANDLE)client, NULL, NULL, NULL, &io, buffer, 1, NULL, NULL);
+    ok(!ret, "got status %#lx\n", ret);
+    ok(io.Information == 1, "got size %Iu\n", io.Information);
+    ok(buffer[0] == 'd', "got data %s\n", debugstr_an(buffer, io.Information));
+
+    ret = WSAEnumNetworkEvents(client, event, &events);
+    ok(!ret, "got error %lu\n", GetLastError());
+    todo_wine ok(events.lNetworkEvents == FD_READ, "got events %#lx\n", events.lNetworkEvents);
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    ret = NtReadFile((HANDLE)client, NULL, NULL, NULL, &io, buffer, sizeof(buffer), NULL, NULL);
+    ok(!ret, "got status %#lx\n", ret);
+    ok(io.Information == 3, "got size %Iu\n", io.Information);
+    ok(!memcmp(buffer, "ata", 3), "got data %s\n", debugstr_an(buffer, io.Information));
+
+    /* NtReadFile always blocks, even when the socket is non-overlapped and nonblocking */
+
+    thread = CreateThread(NULL, 0, sync_read_file_thread, (void *)server, 0, NULL);
+    ret = WaitForSingleObject(thread, 100);
+    ok(ret == WAIT_TIMEOUT, "got %ld\n", ret);
+
+    ret = NtWriteFile((HANDLE)client, NULL, NULL, NULL, &io, "data", 4, NULL, NULL);
+    ok(!ret, "got status %#lx\n", ret);
+
+    ret = WaitForSingleObject(thread, 1000);
+    ok(!ret, "got %ld\n", ret);
+    CloseHandle(thread);
+
+    closesocket(server);
+    closesocket(client);
+
+    tcp_socketpair(&client, &server);
+
+    ret = NtReadFile((HANDLE)server, event, NULL, NULL, &io, buffer, sizeof(buffer), NULL, NULL);
+    todo_wine ok(ret == STATUS_INVALID_PARAMETER, "got status %#lx\n", ret);
+    if (ret == STATUS_PENDING)
+    {
+        CancelIo((HANDLE)server);
+        ret = WaitForSingleObject(event, 100);
+        ok(!ret, "wait timed out\n");
+    }
+
+    offset.QuadPart = -1;
+    ret = NtReadFile((HANDLE)server, event, NULL, NULL, &io, buffer, sizeof(buffer), &offset, NULL);
+    todo_wine ok(ret == STATUS_INVALID_PARAMETER, "got status %#lx\n", ret);
+    if (ret == STATUS_PENDING)
+    {
+        CancelIo((HANDLE)server);
+        ret = WaitForSingleObject(event, 100);
+        ok(!ret, "wait timed out\n");
+    }
+
+    memset(buffer, 0xcc, sizeof(buffer));
+    memset(&io, 0xcc, sizeof(io));
+    offset.QuadPart = 1;
+    ret = NtReadFile((HANDLE)server, event, NULL, NULL, &io, buffer, sizeof(buffer), &offset, NULL);
+    ok(ret == STATUS_PENDING, "got status %#lx\n", ret);
+
+    ret = NtWriteFile((HANDLE)client, NULL, NULL, NULL, &io2, "data", 4, NULL, NULL);
+    todo_wine ok(ret == STATUS_INVALID_PARAMETER, "got status %#lx\n", ret);
+
+    offset.QuadPart = -3;
+    ret = NtWriteFile((HANDLE)client, NULL, NULL, NULL, &io2, "data", 4, &offset, NULL);
+    todo_wine ok(ret == STATUS_INVALID_PARAMETER, "got status %#lx\n", ret);
+
+    memset(&io2, 0xcc, sizeof(io2));
+    offset.QuadPart = 2;
+    ret = NtWriteFile((HANDLE)client, NULL, NULL, NULL, &io2, "data", 4, &offset, NULL);
+    ok(!ret, "got status %#lx\n", ret);
+    ok(!io2.Status, "got status %#lx\n", io2.Status);
+    ok(io2.Information == 4, "got size %Iu\n", io2.Information);
+
+    ret = WaitForSingleObject(event, 1000);
+    ok(!ret, "wait timed out\n");
+    ok(!io.Status, "got status %#lx\n", io.Status);
+    ok(io.Information == 4, "got size %Iu\n", io.Information);
+    ok(!memcmp(buffer, "data", 4), "got data %s\n", debugstr_an(buffer, io.Information));
+
+    closesocket(server);
+    closesocket(client);
+
+    CloseHandle(event);
+}
+
 START_TEST(afd)
 {
     WSADATA data;
@@ -2593,6 +2740,7 @@ START_TEST(afd)
     test_bind();
     test_getsockname();
     test_async_thread_termination();
+    test_read_write();
 
     WSACleanup();
 }
