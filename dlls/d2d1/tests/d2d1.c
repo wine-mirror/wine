@@ -11789,6 +11789,50 @@ static void test_bitmap_map(BOOL d3d11)
     release_test_context(&ctx);
 }
 
+static void test_bitmap_create(BOOL d3d11)
+{
+    static const struct
+    {
+        unsigned int options;
+    } invalid_options[] =
+    {
+        { D2D1_BITMAP_OPTIONS_CANNOT_DRAW },
+        { D2D1_BITMAP_OPTIONS_CPU_READ },
+        { D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE },
+    };
+    D2D1_BITMAP_PROPERTIES1 bitmap_desc;
+    struct d2d1_test_context ctx;
+    ID2D1Bitmap1 *bitmap;
+    D2D1_SIZE_U size;
+    unsigned int i;
+    HRESULT hr;
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    for (i = 0; i < ARRAY_SIZE(invalid_options); ++i)
+    {
+        winetest_push_context("Test %u", i);
+
+        set_size_u(&size, 4, 4);
+        bitmap_desc.dpiX = 96.0f;
+        bitmap_desc.dpiY = 96.0f;
+        bitmap_desc.pixelFormat.format = DXGI_FORMAT_B8G8R8A8_UNORM;
+        bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_IGNORE;
+        bitmap_desc.bitmapOptions = invalid_options[i].options;
+        bitmap_desc.colorContext = NULL;
+        hr = ID2D1DeviceContext_CreateBitmap(ctx.context, size, NULL, 0, &bitmap_desc, &bitmap);
+        todo_wine
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+        if (SUCCEEDED(hr))
+            ID2D1Bitmap1_Release(bitmap);
+
+        winetest_pop_context();
+    }
+
+    release_test_context(&ctx);
+}
+
 START_TEST(d2d1)
 {
     HMODULE d2d1_dll = GetModuleHandleA("d2d1.dll");
@@ -11866,6 +11910,7 @@ START_TEST(d2d1)
     queue_d3d10_test(test_stroke_contains_point);
     queue_test(test_image_bounds);
     queue_test(test_bitmap_map);
+    queue_test(test_bitmap_create);
 
     run_queued_tests();
 }
