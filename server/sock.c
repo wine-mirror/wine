@@ -806,8 +806,6 @@ static void complete_async_connect( struct sock *sock )
 
     if (debug_level) fprintf( stderr, "completing connect request for socket %p\n", sock );
 
-    sock->state = SOCK_CONNECTED;
-
     if (!req->send_len)
     {
         async_terminate( req->async, STATUS_SUCCESS );
