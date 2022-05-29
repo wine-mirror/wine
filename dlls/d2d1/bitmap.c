@@ -26,6 +26,25 @@ static inline struct d2d_bitmap *impl_from_ID2D1Bitmap1(ID2D1Bitmap1 *iface)
     return CONTAINING_RECORD(iface, struct d2d_bitmap, ID2D1Bitmap1_iface);
 }
 
+static HRESULT d2d_bitmap_unmap(struct d2d_bitmap *bitmap)
+{
+    ID3D11DeviceContext *context;
+    ID3D11Device *device;
+
+    if (!bitmap->mapped_resource.pData)
+        return D2DERR_WRONG_STATE;
+
+    ID3D11Resource_GetDevice(bitmap->resource, &device);
+    ID3D11Device_GetImmediateContext(device, &context);
+    ID3D11DeviceContext_Unmap(context, bitmap->resource, 0);
+    ID3D11DeviceContext_Release(context);
+    ID3D11Device_Release(device);
+
+    memset(&bitmap->mapped_resource, 0, sizeof(bitmap->mapped_resource));
+
+    return S_OK;
+}
+
 static HRESULT STDMETHODCALLTYPE d2d_bitmap_QueryInterface(ID2D1Bitmap1 *iface, REFIID iid, void **out)
 {
     TRACE("iface %p, iid %s, out %p.\n", iface, debugstr_guid(iid), out);
@@ -229,16 +248,61 @@ static HRESULT STDMETHODCALLTYPE d2d_bitmap_GetSurface(ID2D1Bitmap1 *iface, IDXG
 static HRESULT STDMETHODCALLTYPE d2d_bitmap_Map(ID2D1Bitmap1 *iface, D2D1_MAP_OPTIONS options,
         D2D1_MAPPED_RECT *mapped_rect)
 {
-    FIXME("iface %p, options %#x, mapped_rect %p stub!\n", iface, options, mapped_rect);
+    struct d2d_bitmap *bitmap = impl_from_ID2D1Bitmap1(iface);
+    D3D11_MAPPED_SUBRESOURCE mapped_resource;
+    ID3D11DeviceContext *context;
+    ID3D11Device *device;
+    D3D11_MAP map_type;
+    HRESULT hr;
 
-    return E_NOTIMPL;
+    TRACE("iface %p, options %#x, mapped_rect %p.\n", iface, options, mapped_rect);
+
+    if (bitmap->mapped_resource.pData)
+        return D2DERR_WRONG_STATE;
+
+    if (options == D2D1_MAP_OPTIONS_READ)
+        map_type = D3D11_MAP_READ;
+    else if (options == D2D1_MAP_OPTIONS_WRITE)
+        map_type = D3D11_MAP_WRITE;
+    else if (options == (D2D1_MAP_OPTIONS_READ | D2D1_MAP_OPTIONS_WRITE))
+        map_type = D3D11_MAP_READ_WRITE;
+    else if (options == (D2D1_MAP_OPTIONS_WRITE | D2D1_MAP_OPTIONS_DISCARD))
+        map_type = D3D11_MAP_WRITE_DISCARD;
+    else
+    {
+        WARN("Invalid mapping options %#x.\n", options);
+        return E_INVALIDARG;
+    }
+
+    ID3D11Resource_GetDevice(bitmap->resource, &device);
+    ID3D11Device_GetImmediateContext(device, &context);
+    if (SUCCEEDED(hr = ID3D11DeviceContext_Map(context, bitmap->resource, 0, map_type,
+            0, &mapped_resource)))
+    {
+        bitmap->mapped_resource = mapped_resource;
+    }
+    ID3D11DeviceContext_Release(context);
+    ID3D11Device_Release(device);
+
+    if (FAILED(hr))
+    {
+        WARN("Failed to map resource, hr %#lx.\n", hr);
+        return E_INVALIDARG;
+    }
+
+    mapped_rect->pitch = bitmap->mapped_resource.RowPitch;
+    mapped_rect->bits  = bitmap->mapped_resource.pData;
+
+    return S_OK;
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_bitmap_Unmap(ID2D1Bitmap1 *iface)
 {
-    FIXME("iface %p stub!\n", iface);
+    struct d2d_bitmap *bitmap = impl_from_ID2D1Bitmap1(iface);
 
-    return E_NOTIMPL;
+    TRACE("iface %p.\n", iface);
+
+    return d2d_bitmap_unmap(bitmap);
 }
 
 static const struct ID2D1Bitmap1Vtbl d2d_bitmap_vtbl =

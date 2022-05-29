@@ -11634,13 +11634,10 @@ static void test_bitmap_map(BOOL d3d11)
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_NONE, &mapped_rect);
-        todo_wine
         ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
         hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_READ, &mapped_rect);
-        todo_wine
         ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
         hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_WRITE, &mapped_rect);
-        todo_wine
         ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
         hr = ID2D1Bitmap1_GetSurface(bitmap, &surface);
@@ -11672,37 +11669,28 @@ static void test_bitmap_map(BOOL d3d11)
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
         hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_NONE, &mapped_rect);
-        todo_wine
         ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
         hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_READ, &mapped_rect);
-        todo_wine
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_READ, &mapped_rect);
-        todo_wine
         ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
         hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_WRITE, &mapped_rect);
         todo_wine
         ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
         hr = ID2D1Bitmap1_Unmap(bitmap);
-        todo_wine
         ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
         hr = ID2D1Bitmap1_Unmap(bitmap);
-        todo_wine
         ok(hr == D2DERR_WRONG_STATE, "Got unexpected hr %#lx.\n", hr);
 
         hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_WRITE, &mapped_rect);
-        todo_wine
         ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
         hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_READ | D2D1_MAP_OPTIONS_DISCARD, &mapped_rect);
-        todo_wine
         ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
         hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_WRITE | D2D1_MAP_OPTIONS_DISCARD, &mapped_rect);
-        todo_wine
         ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
         hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_READ | D2D1_MAP_OPTIONS_WRITE, &mapped_rect);
-        todo_wine
         ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
         hr = ID2D1Bitmap1_GetSurface(bitmap, &surface);
@@ -11748,34 +11736,27 @@ static void test_bitmap_map(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_READ | D2D1_MAP_OPTIONS_DISCARD, &mapped_rect);
-    todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_READ, &mapped_rect);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1Bitmap1_Unmap(bitmap);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_WRITE, &mapped_rect);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1Bitmap1_Unmap(bitmap);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_WRITE | D2D1_MAP_OPTIONS_READ, &mapped_rect);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1Bitmap1_Unmap(bitmap);
-    todo_wine
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
     hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_WRITE | D2D1_MAP_OPTIONS_DISCARD, &mapped_rect);
     todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    if (SUCCEEDED(hr)) ID2D1Bitmap1_Unmap(bitmap);
     hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_WRITE | D2D1_MAP_OPTIONS_READ | D2D1_MAP_OPTIONS_DISCARD, &mapped_rect);
-    todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
 
     ID2D1Bitmap1_Release(bitmap);
