@@ -91,6 +91,7 @@ C_ASSERT( sizeof(struct block) == 8 );
 #define BLOCK_FLAG_FREE        0x00000001
 #define BLOCK_FLAG_PREV_FREE   0x00000002
 #define BLOCK_FLAG_FREE_LINK   0x00000003
+#define BLOCK_FLAG_LARGE       0x00000004
 
 
 /* entry to link free blocks in free lists */
@@ -110,12 +111,15 @@ typedef struct
     SIZE_T                data_size;  /* size of user data */
     SIZE_T                block_size; /* total size of virtual memory block */
     void                 *user_value;
-    DWORD                 size;       /* fields for compatibility with normal arenas */
-    DWORD                 magic;      /* these must remain at the end of the structure */
+    struct block block;
 } ARENA_LARGE;
 
+/* block must be last and aligned */
+C_ASSERT( sizeof(ARENA_LARGE) == offsetof(ARENA_LARGE, block) + sizeof(struct block) );
+C_ASSERT( sizeof(ARENA_LARGE) == 4 * ALIGNMENT );
+
+
 #define ARENA_SIZE_MASK        (~3)
-#define ARENA_LARGE_SIZE       0xfedcba90  /* magic value for 'size' field in large blocks */
 
 /* Value for arena 'magic' field */
 #define ARENA_INUSE_MAGIC      0x455355
@@ -128,10 +132,7 @@ typedef struct
 #define ARENA_FREE_FILLER      0xfeeefeee
 
 /* everything is aligned on 8 byte boundaries (16 for Win64) */
-#define LARGE_ALIGNMENT        16  /* large blocks have stricter alignment */
 #define COMMIT_MASK            0xffff  /* bitmask for commit/decommit granularity */
-
-C_ASSERT( sizeof(ARENA_LARGE) % LARGE_ALIGNMENT == 0 );
 
 #define ROUND_ADDR(addr, mask) ((void *)((UINT_PTR)(addr) & ~(UINT_PTR)(mask)))
 #define ROUND_SIZE(size, mask) ((((SIZE_T)(size) + (mask)) & ~(SIZE_T)(mask)))
@@ -549,10 +550,9 @@ static void heap_dump( const struct heap *heap )
     TRACE( "  large blocks: %p\n", &heap->large_list );
     LIST_FOR_EACH_ENTRY( large, &heap->large_list, ARENA_LARGE, entry )
     {
-        block = (struct block *)(large + 1) - 1;
         TRACE( "    %p: (large) type %#10x, size %#8x, flags %#4x, total_size %#10Ix, alloc_size %#10Ix, prev %p, next %p\n",
-               large, block_get_type( block ), block_get_size( block ), block_get_flags( block ), large->block_size, large->data_size,
-               LIST_ENTRY( large->entry.prev, ARENA_LARGE, entry ), LIST_ENTRY( large->entry.next, ARENA_LARGE, entry ) );
+               large, block_get_type( &large->block ), block_get_size( &large->block ), block_get_flags( &large->block ), large->block_size,
+               large->data_size, LIST_ENTRY( large->entry.prev, ARENA_LARGE, entry ), LIST_ENTRY( large->entry.next, ARENA_LARGE, entry ) );
     }
 
     if (heap->pending_free)
@@ -783,38 +783,43 @@ static inline void shrink_used_block( struct heap *heap, SUBHEAP *subheap, struc
 /***********************************************************************
  *           allocate_large_block
  */
-static void *allocate_large_block( struct heap *heap, DWORD flags, SIZE_T size )
+static struct block *allocate_large_block( struct heap *heap, DWORD flags, SIZE_T size )
 {
     ARENA_LARGE *arena;
-    SIZE_T block_size = ROUND_SIZE( sizeof(*arena) + size, COMMIT_MASK );
+    SIZE_T total_size = ROUND_SIZE( sizeof(*arena) + size, COMMIT_MASK );
     LPVOID address = NULL;
+    struct block *block;
 
     if (!(flags & HEAP_GROWABLE)) return NULL;
-    if (block_size < size) return NULL;  /* overflow */
-    if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &block_size,
+    if (total_size < size) return NULL;  /* overflow */
+    if (NtAllocateVirtualMemory( NtCurrentProcess(), &address, 0, &total_size,
                                  MEM_COMMIT, get_protection_type( flags )))
     {
         WARN("Could not allocate block for %08lx bytes\n", size );
         return NULL;
     }
+
     arena = address;
+    block = &arena->block;
     arena->data_size = size;
-    arena->block_size = block_size;
-    arena->size = ARENA_LARGE_SIZE;
-    arena->magic = ARENA_LARGE_MAGIC;
+    arena->block_size = (char *)address + total_size - (char *)block;
+
+    block_set_type( block, ARENA_LARGE_MAGIC );
+    block_set_size( block, BLOCK_FLAG_LARGE, 0 );
     list_add_tail( &heap->large_list, &arena->entry );
-    valgrind_make_noaccess( (char *)arena + sizeof(*arena) + arena->data_size,
-                            arena->block_size - sizeof(*arena) - arena->data_size );
-    return arena + 1;
+    valgrind_make_noaccess( (char *)block + sizeof(*block) + arena->data_size,
+                            arena->block_size - sizeof(*block) - arena->data_size );
+
+    return block;
 }
 
 
 /***********************************************************************
  *           free_large_block
  */
-static void free_large_block( struct heap *heap, void *ptr )
+static void free_large_block( struct heap *heap, struct block *block )
 {
-    ARENA_LARGE *arena = (ARENA_LARGE *)ptr - 1;
+    ARENA_LARGE *arena = CONTAINING_RECORD( block, ARENA_LARGE, block );
     LPVOID address = arena;
     SIZE_T size = 0;
 
@@ -826,33 +831,38 @@ static void free_large_block( struct heap *heap, void *ptr )
 /***********************************************************************
  *           realloc_large_block
  */
-static void *realloc_large_block( struct heap *heap, DWORD flags, void *ptr, SIZE_T size )
+static struct block *realloc_large_block( struct heap *heap, DWORD flags, struct block *block, SIZE_T size )
 {
-    ARENA_LARGE *arena = (ARENA_LARGE *)ptr - 1;
+    ARENA_LARGE *arena = CONTAINING_RECORD( block, ARENA_LARGE, block );
     SIZE_T old_size = arena->data_size;
-    void *new_ptr;
+    char *data = (char *)(block + 1);
 
-    if (arena->block_size - sizeof(*arena) >= size)
+    if (arena->block_size - sizeof(*block) >= size)
     {
         /* FIXME: we could remap zero-pages instead */
-        valgrind_notify_resize( arena + 1, old_size, size );
-        if (size > old_size) initialize_block( (char *)ptr + old_size, size - old_size, flags );
+        valgrind_notify_resize( data, old_size, size );
+        if (size > old_size) initialize_block( data + old_size, size - old_size, flags );
+
         arena->data_size = size;
-        valgrind_make_noaccess( (char *)arena + sizeof(*arena) + arena->data_size,
-                                arena->block_size - sizeof(*arena) - arena->data_size );
-        return ptr;
+        valgrind_make_noaccess( (char *)block + sizeof(*block) + arena->data_size,
+                                arena->block_size - sizeof(*block) - arena->data_size );
+
+        return block;
     }
+
     if (flags & HEAP_REALLOC_IN_PLACE_ONLY) return NULL;
-    if (!(new_ptr = allocate_large_block( heap, flags, size )))
+    if (!(block = allocate_large_block( heap, flags, size )))
     {
         WARN("Could not allocate block for %08lx bytes\n", size );
         return NULL;
     }
-    valgrind_notify_alloc( new_ptr, size, 0 );
-    memcpy( new_ptr, ptr, old_size );
-    valgrind_notify_free( ptr );
-    free_large_block( heap, ptr );
-    return new_ptr;
+
+    valgrind_notify_alloc( block + 1, size, 0 );
+    memcpy( block + 1, data, old_size );
+    valgrind_notify_free( data );
+    free_large_block( heap, &arena->block );
+
+    return block;
 }
 
 
@@ -871,18 +881,23 @@ static ARENA_LARGE *find_large_block( const struct heap *heap, const void *ptr )
 
 static BOOL validate_large_arena( const struct heap *heap, const ARENA_LARGE *arena )
 {
+    const struct block *block = &arena->block;
     const char *err = NULL;
 
     if ((ULONG_PTR)arena & COMMIT_MASK)
         err = "invalid block alignment";
-    else if (arena->size != ARENA_LARGE_SIZE || arena->magic != ARENA_LARGE_MAGIC)
-        err = "invalid block header";
-    else if (!contains( arena, arena->block_size, arena + 1, arena->data_size ))
+    else if (block_get_size( block ))
+        err = "invalid block size";
+    else if (block_get_flags( block ) != BLOCK_FLAG_LARGE)
+        err = "invalid block flags";
+    else if (block_get_type( block ) != ARENA_LARGE_MAGIC)
+        err = "invalid block type";
+    else if (!contains( block, arena->block_size, block + 1, arena->data_size ))
         err = "invalid block size";
 
     if (err)
     {
-        ERR( "heap %p, block %p: %s\n", heap, arena, err );
+        ERR( "heap %p, block %p: %s\n", heap, block, err );
         if (TRACE_ON(heap)) heap_dump( heap );
     }
 
@@ -1499,7 +1514,9 @@ static NTSTATUS heap_allocate( struct heap *heap, ULONG flags, SIZE_T size, void
 
     if (block_size >= HEAP_MIN_LARGE_BLOCK_SIZE)
     {
-        if (!(*ret = allocate_large_block( heap, flags, size ))) return STATUS_NO_MEMORY;
+        if (!(block = allocate_large_block( heap, flags, size ))) return STATUS_NO_MEMORY;
+
+        *ret = block + 1;
         return STATUS_SUCCESS;
     }
 
@@ -1550,7 +1567,7 @@ static NTSTATUS heap_free( struct heap *heap, void *ptr )
     SUBHEAP *subheap;
 
     if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap ))) return STATUS_INVALID_PARAMETER;
-    if (!subheap) free_large_block( heap, ptr );
+    if (!subheap) free_large_block( heap, block );
     else free_used_block( heap, subheap, block );
 
     return STATUS_SUCCESS;
@@ -1597,7 +1614,9 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, void *ptr, SIZE
     if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap ))) return STATUS_INVALID_PARAMETER;
     if (!subheap)
     {
-        if (!(*ret = realloc_large_block( heap, flags, ptr, size ))) return STATUS_NO_MEMORY;
+        if (!(block = realloc_large_block( heap, flags, block, size ))) return STATUS_NO_MEMORY;
+
+        *ret = block + 1;
         return STATUS_SUCCESS;
     }
 
@@ -1634,8 +1653,6 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, void *ptr, SIZE
 
     if (size > old_size) initialize_block( (char *)(block + 1) + old_size, size - old_size, flags );
     mark_block_tail( block, flags );
-
-    /* Return the new arena */
 
     *ret = block + 1;
     return STATUS_SUCCESS;
@@ -1740,7 +1757,7 @@ static NTSTATUS heap_size( const struct heap *heap, const void *ptr, SIZE_T *siz
     if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap ))) return STATUS_INVALID_PARAMETER;
     if (!subheap)
     {
-        const ARENA_LARGE *large_arena = (const ARENA_LARGE *)ptr - 1;
+        const ARENA_LARGE *large_arena = CONTAINING_RECORD( block, ARENA_LARGE, block );
         *size = large_arena->data_size;
     }
     else *size = block_get_size( block ) - block_get_overhead( block );
@@ -1987,7 +2004,6 @@ NTSTATUS WINAPI RtlSetHeapInformation( HANDLE handle, HEAP_INFORMATION_CLASS inf
  */
 BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE handle, ULONG flags, void *ptr, void **user_value, ULONG *user_flags )
 {
-    ARENA_LARGE *large = (ARENA_LARGE *)ptr - 1;
     struct block *block;
     struct heap *heap;
     SUBHEAP *subheap;
@@ -2003,7 +2019,10 @@ BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE handle, ULONG flags, void *ptr, void *
 
     heap_lock( heap, flags );
     if ((block = unsafe_block_from_ptr( heap, ptr, &subheap )) && !subheap)
+    {
+        const ARENA_LARGE *large = CONTAINING_RECORD( block, ARENA_LARGE, block );
         *user_value = large->user_value;
+    }
     else if (block)
     {
         tmp = (char *)block + block_get_size( block ) - block->tail_size + sizeof(void *);
@@ -2020,7 +2039,6 @@ BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE handle, ULONG flags, void *ptr, void *
  */
 BOOLEAN WINAPI RtlSetUserValueHeap( HANDLE handle, ULONG flags, void *ptr, void *user_value )
 {
-    ARENA_LARGE *large = (ARENA_LARGE *)ptr - 1;
     struct block *block;
     BOOLEAN ret = TRUE;
     struct heap *heap;
@@ -2033,7 +2051,11 @@ BOOLEAN WINAPI RtlSetUserValueHeap( HANDLE handle, ULONG flags, void *ptr, void 
 
     heap_lock( heap, flags );
     if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap ))) ret = FALSE;
-    else if (!subheap) large->user_value = user_value;
+    else if (!subheap)
+    {
+        ARENA_LARGE *large = CONTAINING_RECORD( block, ARENA_LARGE, block );
+        large->user_value = user_value;
+    }
     else
     {
         tmp = (char *)block + block_get_size( block ) - block->tail_size + sizeof(void *);

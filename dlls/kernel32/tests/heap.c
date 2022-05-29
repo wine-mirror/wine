@@ -2213,7 +2213,6 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
         ok( !!ptr2, "HeapAlloc failed, error %lu\n", GetLastError() );
 
         align = (UINT_PTR)ptr0 | (UINT_PTR)ptr1 | (UINT_PTR)ptr2;
-        todo_wine_if( alloc_size == 0x7efe9 )
         ok( !(align & (8 * sizeof(void *) - 1)), "wrong align\n" );
 
         expect_size = max( alloc_size, 2 * sizeof(void *) );
