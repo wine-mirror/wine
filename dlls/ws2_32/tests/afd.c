@@ -829,6 +829,37 @@ static void test_poll(void)
     ok(out_params->sockets[0].flags == AFD_POLL_READ, "got flags %#x\n", out_params->sockets[0].flags);
     ok(!out_params->sockets[0].status, "got status %#x\n", out_params->sockets[0].status);
 
+    in_params->timeout = -1000 * 10000;
+    in_params->count = 1;
+    in_params->sockets[0].socket = server;
+    in_params->sockets[0].flags = AFD_POLL_CONNECT;
+    params_size = offsetof(struct afd_poll_params, sockets[1]);
+
+    ret = NtDeviceIoControlFile((HANDLE)server, event, NULL, NULL, &io,
+            IOCTL_AFD_POLL, in_params, params_size, out_params, params_size);
+    ok(ret == STATUS_PENDING, "got %#x\n", ret);
+
+    ret = connect(server, (struct sockaddr *)&addr, sizeof(addr));
+    ok(!ret, "got error %lu\n", GetLastError());
+
+    ret = WaitForSingleObject(event, 100);
+    todo_wine ok(!ret, "got %#x\n", ret);
+    if (!ret)
+    {
+        ok(!io.Status, "got %#lx\n", io.Status);
+        ok(io.Information == offsetof(struct afd_poll_params, sockets[1]), "got %#Ix\n", io.Information);
+        ok(out_params->count == 1, "got count %u\n", out_params->count);
+        ok(out_params->sockets[0].socket == server, "got socket %#Ix\n", out_params->sockets[0].socket);
+        ok(out_params->sockets[0].flags == AFD_POLL_CONNECT, "got flags %#x\n", out_params->sockets[0].flags);
+        ok(!out_params->sockets[0].status, "got status %#x\n", out_params->sockets[0].status);
+    }
+    else
+    {
+        CancelIo((HANDLE)server);
+        ret = WaitForSingleObject(event, 100);
+        ok(!ret, "wait timed out\n");
+    }
+
     closesocket(client);
     closesocket(server);
 
