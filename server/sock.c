@@ -237,7 +237,6 @@ static void sock_poll_event( struct fd *fd, int event );
 static enum server_fd_type sock_get_fd_type( struct fd *fd );
 static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async );
 static void sock_cancel_async( struct fd *fd, struct async *async );
-static void sock_queue_async( struct fd *fd, struct async *async, int type, int count );
 static void sock_reselect_async( struct fd *fd, struct async_queue *queue );
 
 static int accept_into_socket( struct sock *sock, struct sock *acceptsock );
@@ -283,7 +282,7 @@ static const struct fd_ops sock_fd_ops =
     no_fd_get_volume_info,        /* get_volume_info */
     sock_ioctl,                   /* ioctl */
     sock_cancel_async,            /* cancel_async */
-    sock_queue_async,             /* queue_async */
+    no_fd_queue_async,            /* queue_async */
     sock_reselect_async           /* reselect_async */
 };
 
@@ -1374,50 +1373,6 @@ static void sock_cancel_async( struct fd *fd, struct async *async )
     }
 
     async_terminate( async, STATUS_CANCELLED );
-}
-
-static void sock_queue_async( struct fd *fd, struct async *async, int type, int count )
-{
-    struct sock *sock = get_fd_user( fd );
-    struct async_queue *queue;
-
-    assert( sock->obj.ops == &sock_ops );
-
-    switch (type)
-    {
-    case ASYNC_TYPE_READ:
-        if (sock->rd_shutdown)
-        {
-            set_error( STATUS_PIPE_DISCONNECTED );
-            return;
-        }
-        queue = &sock->read_q;
-        break;
-
-    case ASYNC_TYPE_WRITE:
-        if (sock->wr_shutdown)
-        {
-            set_error( STATUS_PIPE_DISCONNECTED );
-            return;
-        }
-        queue = &sock->write_q;
-        break;
-
-    default:
-        set_error( STATUS_INVALID_PARAMETER );
-        return;
-    }
-
-    if (sock->state != SOCK_CONNECTED)
-    {
-        set_error( STATUS_PIPE_DISCONNECTED );
-        return;
-    }
-
-    queue_async( queue, async );
-    sock_reselect( sock );
-
-    set_error( STATUS_PENDING );
 }
 
 static void sock_reselect_async( struct fd *fd, struct async_queue *queue )
