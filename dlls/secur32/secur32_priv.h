@@ -88,8 +88,6 @@ typedef struct schan_credentials
     DWORD enabled_protocols;
 } schan_credentials;
 
-struct schan_transport;
-
 struct schan_buffers
 {
     SIZE_T offset;
@@ -97,7 +95,7 @@ struct schan_buffers
     const SecBufferDesc *desc;
     SecBuffer *alloc_buffer;
     int current_buffer_idx;
-    int (*get_next_buffer)(const struct schan_transport *, struct schan_buffers *);
+    int (*get_next_buffer)(struct schan_buffers *);
 };
 
 struct schan_transport

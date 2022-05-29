@@ -211,7 +211,7 @@ static void compat_gnutls_dtls_set_timeouts(gnutls_session_t session, unsigned i
 }
 
 static void init_schan_buffers(struct schan_buffers *s, const PSecBufferDesc desc,
-        int (*get_next_buffer)(const struct schan_transport *, struct schan_buffers *))
+        int (*get_next_buffer)(struct schan_buffers *))
 {
     s->offset = 0;
     s->limit = ~0UL;
@@ -236,14 +236,14 @@ static int schan_find_sec_buffer_idx(const SecBufferDesc *desc, unsigned int sta
     return -1;
 }
 
-static int handshake_get_next_buffer(const struct schan_transport *t, struct schan_buffers *s)
+static int handshake_get_next_buffer(struct schan_buffers *s)
 {
     if (s->current_buffer_idx != -1)
         return -1;
     return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_TOKEN);
 }
 
-static int handshake_get_next_buffer_alloc(const struct schan_transport *t, struct schan_buffers *s)
+static int handshake_get_next_buffer_alloc(struct schan_buffers *s)
 {
     if (s->current_buffer_idx == -1)
     {
@@ -262,7 +262,7 @@ static int handshake_get_next_buffer_alloc(const struct schan_transport *t, stru
     return -1;
 }
 
-static int send_message_get_next_buffer(const struct schan_transport *t, struct schan_buffers *s)
+static int send_message_get_next_buffer(struct schan_buffers *s)
 {
     SecBuffer *b;
 
@@ -280,7 +280,7 @@ static int send_message_get_next_buffer(const struct schan_transport *t, struct 
     return -1;
 }
 
-static int send_message_get_next_buffer_token(const struct schan_transport *t, struct schan_buffers *s)
+static int send_message_get_next_buffer_token(struct schan_buffers *s)
 {
     SecBuffer *b;
 
@@ -307,14 +307,14 @@ static int send_message_get_next_buffer_token(const struct schan_transport *t, s
     return -1;
 }
 
-static int recv_message_get_next_buffer(const struct schan_transport *t, struct schan_buffers *s)
+static int recv_message_get_next_buffer(struct schan_buffers *s)
 {
     if (s->current_buffer_idx != -1)
         return -1;
     return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_DATA);
 }
 
-static char *get_buffer(const struct schan_transport *t, struct schan_buffers *s, SIZE_T *count)
+static char *get_buffer(struct schan_buffers *s, SIZE_T *count)
 {
     SIZE_T max_count;
     PSecBuffer buffer;
@@ -328,7 +328,7 @@ static char *get_buffer(const struct schan_transport *t, struct schan_buffers *s
     if (s->current_buffer_idx == -1)
     {
         /* Initial buffer */
-        int buffer_idx = s->get_next_buffer(t, s);
+        int buffer_idx = s->get_next_buffer(s);
         if (buffer_idx == -1)
         {
             TRACE("No next buffer\n");
@@ -349,7 +349,7 @@ static char *get_buffer(const struct schan_transport *t, struct schan_buffers *s
     {
         int buffer_idx;
 
-        buffer_idx = s->get_next_buffer(t, s);
+        buffer_idx = s->get_next_buffer(s);
         if (buffer_idx == -1)
         {
             TRACE("No next buffer\n");
@@ -380,7 +380,7 @@ static ssize_t pull_adapter(gnutls_transport_ptr_t transport, void *buff, size_t
 
     TRACE("Pull %lu bytes\n", len);
 
-    b = get_buffer(t, &t->in, &len);
+    b = get_buffer(&t->in, &len);
     if (!b)
     {
         pgnutls_transport_set_errno(s, EAGAIN);
@@ -401,7 +401,7 @@ static ssize_t push_adapter(gnutls_transport_ptr_t transport, const void *buff, 
 
     TRACE("Push %lu bytes\n", len);
 
-    b = get_buffer(t, &t->out, &len);
+    b = get_buffer(&t->out, &len);
     if (!b)
     {
         pgnutls_transport_set_errno(s, EAGAIN);
@@ -471,7 +471,7 @@ static int pull_timeout(gnutls_transport_ptr_t transport, unsigned int timeout)
 
     TRACE("\n");
 
-    if (get_buffer(t, &t->in, &count)) return 1;
+    if (get_buffer(&t->in, &count)) return 1;
 
     return 0;
 }
@@ -856,7 +856,7 @@ static NTSTATUS schan_send( void *args )
         {
             SIZE_T count = 0;
 
-            if (get_buffer(t, &t->out, &count)) continue;
+            if (get_buffer(&t->out, &count)) continue;
             return SEC_I_CONTINUE_NEEDED;
         }
         else
@@ -893,7 +893,7 @@ static NTSTATUS schan_recv( void *args )
         {
             SIZE_T count = 0;
 
-            if (!get_buffer(t, &t->in, &count)) break;
+            if (!get_buffer(&t->in, &count)) break;
         }
         else if (ret == GNUTLS_E_REHANDSHAKE)
         {
