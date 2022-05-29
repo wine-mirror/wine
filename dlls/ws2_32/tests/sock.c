@@ -5878,12 +5878,39 @@ static void test_connect_events(struct event_test_ctx *ctx)
 
     check_events(ctx, FD_WRITE, 0, 200);
 
-    select_events(ctx, client, FD_ACCEPT | FD_CLOSE | FD_CONNECT | FD_OOB | FD_READ | FD_WRITE);
+    select_events(ctx, client, FD_ACCEPT | FD_CONNECT | FD_OOB | FD_READ | FD_WRITE);
 
     if (ctx->is_message)
         check_events(ctx, FD_WRITE, 0, 200);
     else
         check_events(ctx, FD_CONNECT, 0, 200);
+
+    closesocket(client);
+    closesocket(server);
+
+    /* Test with UDP sockets. */
+
+    client = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    server = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+    select_events(ctx, client, FD_ACCEPT | FD_CONNECT | FD_OOB | FD_READ | FD_WRITE);
+    if (ctx->is_message)
+        check_events(ctx, FD_WRITE, 0, 200);
+    check_events_todo_event(ctx, 0, 0, 0);
+
+    ret = bind(server, (const struct sockaddr *)&addr, sizeof(addr));
+    ok(!ret, "failed to bind, error %u\n", WSAGetLastError());
+    len = sizeof(destaddr);
+    ret = getsockname(server, (struct sockaddr *)&destaddr, &len);
+    ok(!ret, "failed to get address, error %u\n", WSAGetLastError());
+    ret = connect(client, (struct sockaddr *)&addr, sizeof(addr));
+    ok(!ret, "got error %lu\n", GetLastError());
+
+    if (ctx->is_message)
+        check_events_todo(ctx, FD_WRITE, 0, 200);
+    else
+        check_events_todo(ctx, FD_CONNECT, FD_WRITE, 200);
+    check_events(ctx, 0, 0, 0);
 
     closesocket(client);
     closesocket(server);
