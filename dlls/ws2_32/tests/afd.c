@@ -2645,7 +2645,7 @@ static void test_read_write(void)
 
     ret = WSAEnumNetworkEvents(client, event, &events);
     ok(!ret, "got error %lu\n", GetLastError());
-    todo_wine ok(events.lNetworkEvents == FD_READ, "got events %#lx\n", events.lNetworkEvents);
+    ok(events.lNetworkEvents == FD_READ, "got events %#lx\n", events.lNetworkEvents);
 
     memset(buffer, 0xcc, sizeof(buffer));
     ret = NtReadFile((HANDLE)client, NULL, NULL, NULL, &io, buffer, sizeof(buffer), NULL, NULL);
