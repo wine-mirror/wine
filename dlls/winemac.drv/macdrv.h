@@ -367,6 +367,7 @@ static inline UINT asciiz_to_unicode(WCHAR *dst, const char *src)
 }
 
 /* FIXME: remove once we use unixlib */
+#define wcsicmp strcmpiW
 #define wcsnicmp strncmpiW
 #define wcsrchr strrchrW
 #define wcstol strtolW

@@ -170,7 +170,7 @@ CFStringRef copy_system_cursor_name(ICONINFOEXW *info)
     const struct system_cursors *cursors;
     unsigned int i;
     CFStringRef cursor_name = NULL;
-    HMODULE module;
+    const WCHAR *module;
     HKEY key;
     WCHAR *p, name[MAX_PATH * 2];
 
@@ -223,10 +223,11 @@ CFStringRef copy_system_cursor_name(ICONINFOEXW *info)
     }
 
     if (info->szResName[0]) goto done;  /* only integer resources are supported here */
-    if (!(module = GetModuleHandleW(info->szModName))) goto done;
 
-    for (i = 0; i < ARRAY_SIZE(module_cursors); i++)
-        if (GetModuleHandleW(module_cursors[i].name) == module) break;
+    if ((module = wcsrchr(info->szModName, '\\'))) module++;
+    else module = info->szModName;
+    for (i = 0; i < ARRAY_SIZE( module_cursors ); i++)
+        if (!wcsicmp(module, module_cursors[i].name)) break;
     if (i == ARRAY_SIZE(module_cursors)) goto done;
 
     cursors = module_cursors[i].cursors;
