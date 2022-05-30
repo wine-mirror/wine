@@ -3318,6 +3318,56 @@ static int get_compression_weights( UINT compression, const WCHAR *compr_tables[
     return 0;
 }
 
+/* get the zero digit for the digit character range that contains 'ch' */
+static WCHAR get_digit_zero_char( WCHAR ch )
+{
+    static const WCHAR zeroes[] =
+    {
+        0x0030, 0x0660, 0x06f0, 0x0966, 0x09e6, 0x0a66, 0x0ae6, 0x0b66, 0x0be6, 0x0c66,
+        0x0ce6, 0x0d66, 0x0e50, 0x0ed0, 0x0f20, 0x1040, 0x1090, 0x17e0, 0x1810, 0x1946,
+        0x1bb0, 0x1c40, 0x1c50, 0xa620, 0xa8d0, 0xa900, 0xaa50, 0xff10
+    };
+    int min = 0, max = ARRAY_SIZE( zeroes ) - 1;
+
+    while (min <= max)
+    {
+        int pos = (min + max) / 2;
+        if (zeroes[pos] <= ch && zeroes[pos] + 9 >= ch) return zeroes[pos];
+        if (zeroes[pos] < ch) min = pos + 1;
+        else max = pos - 1;
+    }
+    return 0;
+}
+
+/* append weights for digits when using SORT_DIGITSASNUMBERS */
+/* return the number of extra chars to skip */
+static int append_digit_weights( struct sortkey *key, const WCHAR *src, UINT srclen )
+{
+    UINT i, zero, len, lzero;
+    BYTE val, values[19];
+
+    if (!(zero = get_digit_zero_char( *src ))) return -1;
+
+    values[0] = *src - zero;
+    for (len = 1; len < ARRAY_SIZE(values) && len < srclen; len++)
+    {
+        if (src[len] < zero || src[len] > zero + 9) break;
+        values[len] = src[len] - zero;
+    }
+    for (lzero = 0; lzero < len; lzero++) if (values[lzero]) break;
+
+    append_sortkey( key, SCRIPT_DIGIT );
+    append_sortkey( key, 2 );
+    append_sortkey( key, 2 + len - lzero );
+    for (i = lzero, val = 2; i < len; i++)
+    {
+        if ((len - i) % 2) append_sortkey( key, (val << 4) + values[i] + 2 );
+        else val = values[i] + 2;
+    }
+    append_sortkey( key, 0xfe - lzero );
+    return len - 1;
+}
+
 /* append the extra weights for kana prolonged sound / repeat marks */
 static int append_extra_kana_weights( struct sortkey keys[4], const WCHAR *src, int pos, UINT except,
                                       BYTE case_mask, union char_weights *weights )
@@ -3614,6 +3664,19 @@ static int append_weights( const struct sortguid *sortid, DWORD flags,
         append_sortkey( &s->key_case, weights._case );
         break;
 
+    case SCRIPT_DIGIT:
+        if (flags & SORT_DIGITSASNUMBERS)
+        {
+            int len = append_digit_weights( &s->key_primary, src + pos, srclen - pos );
+            if (len >= 0)
+            {
+                ret += len;
+                append_sortkey( &s->key_diacritic, weights.diacritic );
+                append_sortkey( &s->key_case, weights._case );
+                break;
+            }
+        }
+        /* fall through */
     default:
         append_normal_weights( sortid, &s->key_primary, &s->key_diacritic, &s->key_case, weights, flags );
         break;
