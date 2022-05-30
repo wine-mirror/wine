@@ -337,6 +337,11 @@ struct sortguid
 #define FLAG_DOUBLECOMPRESSION  0x20
 #define FLAG_INVERSECASING      0x40
 
+struct sort_expansion
+{
+    WCHAR exp[2];
+};
+
 union char_weights
 {
     UINT val;
@@ -388,11 +393,13 @@ static struct
 {
     UINT                           version;         /* NLS version */
     UINT                           guid_count;      /* number of sort GUIDs */
+    UINT                           exp_count;       /* number of character expansions */
     const UINT                    *keys;            /* sortkey table, indexed by char */
     const USHORT                  *casemap;         /* casemap table, in l_intl.nls format */
     const WORD                    *ctypes;          /* CT_CTYPE1,2,3 values */
     const BYTE                    *ctype_idx;       /* index to map char to ctypes array entry */
     const struct sortguid         *guids;           /* table of sort GUIDs */
+    const struct sort_expansion   *expansions;      /* character expansions */
 } sort;
 
 static CRITICAL_SECTION locale_section;
@@ -474,6 +481,10 @@ static void load_sortdefault_nls(void)
     sort.version = table[0];
     sort.guid_count = table[1];
     sort.guids = (struct sortguid *)(table + 2);
+
+    table = (UINT *)(sort.guids + sort.guid_count);
+    sort.exp_count = table[0];
+    sort.expansions = (struct sort_expansion *)(table + 1);
 
     locale_sorts = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
                                     locale_table->nb_lcnames * sizeof(*locale_sorts) );
@@ -3207,6 +3218,23 @@ static void append_nonspace_weights( struct sortkey *key, union char_weights wei
     else append_sortkey( key, weights.diacritic );
 }
 
+static void append_expansion_weights( const struct sortguid *sortid, struct sortkey *key_primary,
+                                      struct sortkey *key_diacritic, struct sortkey *key_case,
+                                      union char_weights weights, DWORD flags, BOOL is_compare )
+{
+    /* sortkey and comparison behave differently here */
+    if (is_compare)
+    {
+        if (weights.script == SCRIPT_UNSORTABLE) return;
+        if (weights.script == SCRIPT_NONSPACE_MARK)
+        {
+            append_nonspace_weights( key_diacritic, weights, flags );
+            return;
+        }
+    }
+    append_normal_weights( sortid, key_primary, key_diacritic, key_case, weights, flags );
+}
+
 /* put one of the elements of a sortkey into the dst buffer */
 static int put_sortkey( BYTE *dst, int dstlen, int pos, const struct sortkey *key, BYTE terminator )
 {
@@ -3290,6 +3318,7 @@ static int append_weights( const struct sortguid *sortid, DWORD flags,
                            const WCHAR *compr_tables[8], struct sortkey_state *s, BOOL is_compare )
 {
     union char_weights weights = get_char_weights( src[pos], except );
+    WCHAR idx = (weights.val >> 16) & ~(CASE_COMPR_6 << 8);  /* expansion index */
     int ret = 1;
 
     weights._case &= case_mask;
@@ -3301,6 +3330,21 @@ static int append_weights( const struct sortguid *sortid, DWORD flags,
 
     case SCRIPT_NONSPACE_MARK:
         append_nonspace_weights( &s->key_diacritic, weights, flags );
+        break;
+
+    case SCRIPT_EXPANSION:
+        while (weights.script == SCRIPT_EXPANSION)
+        {
+            weights = get_char_weights( sort.expansions[idx].exp[0], except );
+            weights._case &= case_mask;
+            append_expansion_weights( sortid, &s->key_primary, &s->key_diacritic,
+                                      &s->key_case, weights, flags, is_compare );
+            weights = get_char_weights( sort.expansions[idx].exp[1], except );
+            idx = weights.val >> 16;
+            weights._case &= case_mask;
+        }
+        append_expansion_weights( sortid, &s->key_primary, &s->key_diacritic,
+                                  &s->key_case, weights, flags, is_compare );
         break;
 
     case SCRIPT_EXTENSION_A:
