@@ -360,7 +360,7 @@ static inline void mark_block_tail( void *ptr, SIZE_T size, DWORD flags )
 }
 
 /* initialize contents of a newly created block of memory */
-static inline void initialize_block( void *ptr, SIZE_T size, SIZE_T unused, DWORD flags )
+static inline void initialize_block( void *ptr, SIZE_T size, DWORD flags )
 {
     if (flags & HEAP_ZERO_MEMORY)
     {
@@ -372,8 +372,6 @@ static inline void initialize_block( void *ptr, SIZE_T size, SIZE_T unused, DWOR
         valgrind_make_writable( ptr, size );
         memset( ptr, ARENA_INUSE_FILLER, size );
     }
-
-    mark_block_tail( (char *)ptr + size, unused, flags );
 }
 
 /* notify that a new block of memory has been allocated for debugging purposes */
@@ -833,7 +831,7 @@ static void *realloc_large_block( HEAP *heap, DWORD flags, void *ptr, SIZE_T siz
     {
         /* FIXME: we could remap zero-pages instead */
         valgrind_notify_resize( arena + 1, old_size, size );
-        if (size > old_size) initialize_block( (char *)ptr + old_size, size - old_size, 0, flags );
+        if (size > old_size) initialize_block( (char *)ptr + old_size, size - old_size, flags );
         arena->data_size = size;
         valgrind_make_noaccess( (char *)arena + sizeof(*arena) + arena->data_size,
                                 arena->block_size - sizeof(*arena) - arena->data_size );
@@ -1494,7 +1492,8 @@ static NTSTATUS heap_allocate( HEAP *heap, ULONG flags, SIZE_T size, void **ret 
 
     block_set_type( block, ARENA_INUSE_MAGIC );
     shrink_used_block( subheap, block, 0, old_block_size, block_size, size );
-    initialize_block( block + 1, size, block->unused_bytes, flags );
+    initialize_block( block + 1, size, flags );
+    mark_block_tail( (char *)(block + 1) + size, block->unused_bytes, flags );
 
     *ret = block + 1;
     return STATUS_SUCCESS;
@@ -1614,8 +1613,8 @@ static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size
     valgrind_notify_resize( block + 1, old_size, size );
     shrink_used_block( subheap, block, block_get_flags( block ), old_block_size, block_size, size );
 
-    if (size <= old_size) mark_block_tail( (char *)(block + 1) + size, block->unused_bytes, flags );
-    else initialize_block( (char *)(block + 1) + old_size, size - old_size, block->unused_bytes, flags );
+    if (size > old_size) initialize_block( (char *)(block + 1) + old_size, size - old_size, flags );
+    mark_block_tail( (char *)(block + 1) + size, block->unused_bytes, flags );
 
     /* Return the new arena */
 
