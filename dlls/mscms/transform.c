@@ -39,12 +39,12 @@ static DWORD from_bmformat( BMFORMAT format )
 
     switch (format)
     {
-    case BM_RGBTRIPLETS: ret = TYPE_RGB_8; break;
-    case BM_BGRTRIPLETS: ret = TYPE_BGR_8; break;
+    case BM_RGBTRIPLETS: ret = TYPE_BGR_8; break;
+    case BM_BGRTRIPLETS: ret = TYPE_RGB_8; break;
     case BM_GRAY:        ret = TYPE_GRAY_8; break;
-    case BM_xRGBQUADS:   ret = TYPE_ARGB_8; break;
-    case BM_xBGRQUADS:   ret = TYPE_ABGR_8; break;
-    case BM_KYMCQUADS:   ret = TYPE_KYMC_8; break;
+    case BM_xRGBQUADS:   ret = TYPE_BGRA_8; break;
+    case BM_xBGRQUADS:   ret = TYPE_RGBA_8; break;
+    case BM_KYMCQUADS:   ret = TYPE_CMYK_8; break;
     default:
         if (!quietfixme)
         {

@@ -1396,22 +1396,22 @@ static void test_TranslateBitmapBits( char *standardprofile, char *testprofile )
     memset( destbits, 0, sizeof(destbits) );
     ret = pTranslateBitmapBits( transform, srcbits, BM_RGBTRIPLETS, 1, 1, 3, destbits, BM_xBGRQUADS, 4, NULL, 0 );
     ok( ret, "got %lu\n", GetLastError() );
-    todo_wine ok( !memcmp(expect_destbits, destbits, sizeof(expect_destbits)), "unexpected destbits\n" );
+    ok( !memcmp(expect_destbits, destbits, sizeof(expect_destbits)), "unexpected destbits\n" );
 
     memset( destbits, 0, sizeof(destbits) );
     ret = pTranslateBitmapBits( transform, srcbits, BM_RGBTRIPLETS, 1, 1, 3, destbits, BM_xRGBQUADS, 4, NULL, 0 );
     ok( ret, "got %lu\n", GetLastError() );
-    todo_wine ok( !memcmp(expect_destbits2, destbits, sizeof(expect_destbits2)), "unexpected destbits\n" );
+    ok( !memcmp(expect_destbits2, destbits, sizeof(expect_destbits2)), "unexpected destbits\n" );
 
     memset( destbits, 0, sizeof(destbits) );
     ret = pTranslateBitmapBits( transform, srcbits2, BM_xRGBQUADS, 1, 1, 4, destbits, BM_RGBTRIPLETS, 3, NULL, 0 );
     ok( ret, "got %lu\n", GetLastError() );
-    todo_wine ok( !memcmp(expect_destbits3, destbits, sizeof(expect_destbits3)), "unexpected destbits\n" );
+    ok( !memcmp(expect_destbits3, destbits, sizeof(expect_destbits3)), "unexpected destbits\n" );
 
     memset( destbits, 0, sizeof(destbits) );
     ret = pTranslateBitmapBits( transform, srcbits2, BM_xRGBQUADS, 1, 1, 4, destbits, BM_BGRTRIPLETS, 3, NULL, 0 );
     ok( ret, "got %lu\n", GetLastError() );
-    todo_wine ok( !memcmp(expect_destbits4, destbits, sizeof(expect_destbits4)), "unexpected destbits\n" );
+    ok( !memcmp(expect_destbits4, destbits, sizeof(expect_destbits4)), "unexpected destbits\n" );
 
     pDeleteColorTransform( transform );
     pCloseColorProfile( handle[0] );
