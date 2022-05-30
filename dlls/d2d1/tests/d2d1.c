@@ -11804,6 +11804,14 @@ static void test_bitmap_map(BOOL d3d11)
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
     if (SUCCEEDED(hr)) ID2D1Bitmap1_Release(bitmap);
 
+    /* Create without D2D1_BITMAP_OPTIONS_CPU_READ, surface supports CPU reads. */
+    bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
+    hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(ctx.context, surface, &bitmap_desc, &bitmap);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_READ, &mapped_rect);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ID2D1Bitmap1_Release(bitmap);
+
     ID3D11Texture2D_Release(texture);
     IDXGISurface_Release(surface);
 

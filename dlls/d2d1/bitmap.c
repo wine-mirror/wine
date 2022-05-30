@@ -257,6 +257,9 @@ static HRESULT STDMETHODCALLTYPE d2d_bitmap_Map(ID2D1Bitmap1 *iface, D2D1_MAP_OP
 
     TRACE("iface %p, options %#x, mapped_rect %p.\n", iface, options, mapped_rect);
 
+    if (!(bitmap->options & D2D1_BITMAP_OPTIONS_CPU_READ))
+        return E_INVALIDARG;
+
     if (bitmap->mapped_resource.pData)
         return D2DERR_WRONG_STATE;
 
