@@ -3318,6 +3318,48 @@ static int get_compression_weights( UINT compression, const WCHAR *compr_tables[
     return 0;
 }
 
+/* append the extra weights for kana prolonged sound / repeat marks */
+static int append_extra_kana_weights( struct sortkey keys[4], const WCHAR *src, int pos, UINT except,
+                                      BYTE case_mask, union char_weights *weights )
+{
+    BYTE extra1 = 3, case_weight = weights->_case;
+
+    if (weights->primary <= 1)
+    {
+        while (pos > 0)
+        {
+            union char_weights prev = get_char_weights( src[--pos], except );
+            if (prev.script == SCRIPT_UNSORTABLE || prev.script == SCRIPT_NONSPACE_MARK) continue;
+            if (prev.script == SCRIPT_EXPANSION) return 0;
+            if (prev.script != SCRIPT_EASTASIA_SPECIAL)
+            {
+                *weights = prev;
+                return 1;
+            }
+            if (prev.primary <= 1) continue;
+
+            case_weight = prev._case & case_mask;
+            if (weights->primary == 1)  /* prolonged sound mark */
+            {
+                prev.primary &= 0x87;
+                case_weight &= ~CASE_FULLWIDTH;
+                case_weight |= weights->_case & CASE_FULLWIDTH;
+            }
+            extra1 = 4 + weights->primary;
+            weights->primary = prev.primary;
+            goto done;
+        }
+        return 0;
+    }
+done:
+    append_sortkey( &keys[0], 0xc4 | (case_weight & CASE_FULLSIZE) );
+    append_sortkey( &keys[1], extra1 );
+    append_sortkey( &keys[2], 0xc4 | (case_weight & CASE_KATAKANA) );
+    append_sortkey( &keys[3], 0xc4 | (case_weight & CASE_FULLWIDTH) );
+    weights->script = SCRIPT_KANA;
+    return 1;
+}
+
 
 #define HANGUL_SBASE  0xac00
 #define HANGUL_LCOUNT 19
@@ -3405,6 +3447,7 @@ struct sortkey_state
     struct sortkey         key_diacritic;
     struct sortkey         key_case;
     struct sortkey         key_special;
+    struct sortkey         key_extra[4];
     UINT                   primary_pos;
     BYTE                   buffer[3 * 128];
 };
@@ -3438,15 +3481,18 @@ static void init_sortkey_state( struct sortkey_state *s, DWORD flags, UINT srcle
     s->key_primary.max = srclen * 8;
     s->key_case.max = srclen * 3;
     s->key_special.max = srclen * 4;
+    s->key_extra[2].max = s->key_extra[3].max = srclen;
     if (!(flags & NORM_IGNORENONSPACE))
     {
         s->key_diacritic.max = srclen * 3;
+        s->key_extra[0].max = s->key_extra[1].max = srclen;
     }
 }
 
-static void remove_unneeded_weights( const struct sortguid *sortid, struct sortkey_state *s )
+static BOOL remove_unneeded_weights( const struct sortguid *sortid, struct sortkey_state *s )
 {
-    int i;
+    const BYTE ignore[4] = { 0xc4 | CASE_FULLSIZE, 0x03, 0xc4 | CASE_KATAKANA, 0xc4 | CASE_FULLWIDTH };
+    int i, j;
 
     if (sortid->flags & FLAG_REVERSEDIACRITICS) reverse_sortkey( &s->key_diacritic );
 
@@ -3455,6 +3501,15 @@ static void remove_unneeded_weights( const struct sortguid *sortid, struct sortk
 
     for (i = s->key_case.len; i > 0; i--) if (s->key_case.buf[i - 1] > 2) break;
     s->key_case.len = i;
+
+    if (!s->key_extra[2].len) return FALSE;
+
+    for (i = 0; i < 4; i++)
+    {
+        for (j = s->key_extra[i].len; j > 0; j--) if (s->key_extra[i].buf[j - 1] != ignore[i]) break;
+        s->key_extra[i].len = j;
+    }
+    return TRUE;
 }
 
 static void free_sortkey_state( struct sortkey_state *s )
@@ -3463,6 +3518,10 @@ static void free_sortkey_state( struct sortkey_state *s )
     RtlFreeHeap( GetProcessHeap(), 0, s->key_diacritic.new_buf );
     RtlFreeHeap( GetProcessHeap(), 0, s->key_case.new_buf );
     RtlFreeHeap( GetProcessHeap(), 0, s->key_special.new_buf );
+    RtlFreeHeap( GetProcessHeap(), 0, s->key_extra[0].new_buf );
+    RtlFreeHeap( GetProcessHeap(), 0, s->key_extra[1].new_buf );
+    RtlFreeHeap( GetProcessHeap(), 0, s->key_extra[2].new_buf );
+    RtlFreeHeap( GetProcessHeap(), 0, s->key_extra[3].new_buf );
 }
 
 static int append_weights( const struct sortguid *sortid, DWORD flags,
@@ -3500,6 +3559,17 @@ static int append_weights( const struct sortguid *sortid, DWORD flags,
         }
         append_expansion_weights( sortid, &s->key_primary, &s->key_diacritic,
                                   &s->key_case, weights, flags, is_compare );
+        break;
+
+    case SCRIPT_EASTASIA_SPECIAL:
+        if (!append_extra_kana_weights( s->key_extra, src, pos, except, case_mask, &weights ))
+        {
+            append_sortkey( &s->key_primary, 0xff );
+            append_sortkey( &s->key_primary, 0xff );
+            break;
+        }
+        weights._case = 2;
+        append_normal_weights( sortid, &s->key_primary, &s->key_diacritic, &s->key_case, weights, flags );
         break;
 
     case SCRIPT_JAMO_SPECIAL:
@@ -3559,6 +3629,7 @@ static int get_sortkey( const struct sortguid *sortid, DWORD flags,
     struct sortkey_state s;
     BYTE primary_buf[256];
     int ret = 0, pos = 0;
+    BOOL have_extra;
     BYTE case_mask = 0x3f;
     UINT except = sortid->except;
     const WCHAR *compr_tables[8];
@@ -3574,12 +3645,19 @@ static int get_sortkey( const struct sortguid *sortid, DWORD flags,
     while (pos < srclen)
         pos += append_weights( sortid, flags, src, srclen, pos, case_mask, except, compr_tables, &s, FALSE );
 
-    remove_unneeded_weights( sortid, &s );
+    have_extra = remove_unneeded_weights( sortid, &s );
 
     ret = put_sortkey( dst, dstlen, ret, &s.key_primary, 0x01 );
     ret = put_sortkey( dst, dstlen, ret, &s.key_diacritic, 0x01 );
     ret = put_sortkey( dst, dstlen, ret, &s.key_case, 0x01 );
 
+    if (have_extra)
+    {
+        ret = put_sortkey( dst, dstlen, ret, &s.key_extra[0], 0xff );
+        ret = put_sortkey( dst, dstlen, ret, &s.key_extra[1], 0x02 );
+        ret = put_sortkey( dst, dstlen, ret, &s.key_extra[2], 0xff );
+        ret = put_sortkey( dst, dstlen, ret, &s.key_extra[3], 0xff );
+    }
     if (dstlen > ret) dst[ret] = 0x01;
     ret++;
 
