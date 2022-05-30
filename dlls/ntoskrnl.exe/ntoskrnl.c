@@ -4462,6 +4462,11 @@ void WINAPI KfRaiseIrql(KIRQL new, KIRQL *old)
     FIXME("new %u old %p: stub.\n", new, old);
 }
 
+void WINAPI KeLowerIrql(KIRQL new)
+{
+    FIXME("new %u: stub.\n", new);
+}
+
 #endif
 
 /*****************************************************
