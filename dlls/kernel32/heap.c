@@ -313,56 +313,10 @@ HGLOBAL WINAPI GlobalReAlloc( HGLOBAL handle, SIZE_T size, UINT flags )
 
 /***********************************************************************
  *           GlobalSize   (KERNEL32.@)
- *
- * Get the size of a global memory object.
- *
- * PARAMS
- *  handle [I] Handle of the global memory object
- *
- * RETURNS
- *  Failure: 0
- *  Success: Size in Bytes of the global memory object
- *
- * NOTES
- *   When the handle is invalid, last error is set to ERROR_INVALID_HANDLE
- *
  */
 SIZE_T WINAPI GlobalSize( HGLOBAL handle )
 {
-    struct mem_entry *mem;
-    SIZE_T retval;
-    void *ptr;
-
-    TRACE_(globalmem)( "handle %p\n", handle );
-
-    if (!((ULONG_PTR)handle >> 16))
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        return 0;
-    }
-
-    if ((ptr = unsafe_ptr_from_HLOCAL( handle )))
-        retval = HeapSize( GetProcessHeap(), 0, ptr );
-    else
-    {
-        RtlLockHeap( GetProcessHeap() );
-        if ((mem = unsafe_mem_from_HLOCAL( handle )))
-        {
-            if (!mem->ptr) /* handle case of GlobalAlloc( ??,0) */
-                retval = 0;
-            else
-                retval = HeapSize( GetProcessHeap(), 0, mem->ptr );
-        }
-        else
-        {
-            WARN_(globalmem)( "invalid handle %p\n", handle );
-            SetLastError( ERROR_INVALID_HANDLE );
-            retval = 0;
-        }
-        RtlUnlockHeap( GetProcessHeap() );
-    }
-    if (retval == ~(SIZE_T)0) retval = 0;
-    return retval;
+    return LocalSize( handle );
 }
 
 
@@ -513,21 +467,33 @@ SIZE_T WINAPI LocalShrink( HGLOBAL handle, UINT newsize )
 
 /***********************************************************************
  *           LocalSize   (KERNEL32.@)
- *
- * Get the size of a local memory object.
- *
- * RETURNS
- *	Size: Success
- *	0: Failure
- *
- * NOTES
- *  Windows memory management does not provide a separate local heap
- *  and global heap.
  */
-SIZE_T WINAPI LocalSize(
-              HLOCAL handle /* [in] Handle of memory object */
-) {
-    return GlobalSize( handle );
+SIZE_T WINAPI LocalSize( HLOCAL handle )
+{
+    HANDLE heap = GetProcessHeap();
+    struct mem_entry *mem;
+    SIZE_T ret = 0;
+    void *ptr;
+
+    TRACE_(globalmem)( "handle %p\n", handle );
+
+    RtlLockHeap( heap );
+    if ((ptr = unsafe_ptr_from_HLOCAL( handle )))
+        ret = HeapSize( heap, HEAP_NO_SERIALIZE, ptr );
+    else if ((mem = unsafe_mem_from_HLOCAL( handle )))
+    {
+        if (!mem->ptr) ret = 0;
+        else ret = HeapSize( heap, HEAP_NO_SERIALIZE, mem->ptr );
+    }
+    else
+    {
+        WARN_(globalmem)( "invalid handle %p\n", handle );
+        SetLastError( ERROR_INVALID_HANDLE );
+    }
+    RtlUnlockHeap( heap );
+
+    if (ret == ~(SIZE_T)0) return 0;
+    return ret;
 }
 
 
