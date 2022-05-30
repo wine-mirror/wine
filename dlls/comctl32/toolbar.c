@@ -1042,7 +1042,7 @@ TOOLBAR_DrawButton (const TOOLBAR_INFO *infoPtr, TBUTTON_INFO *btnPtr, HDC hdc, 
         (btnPtr->fsState & (TBSTATE_PRESSED | TBSTATE_CHECKED)))
         OffsetRect(&rcText, 1, 1);
 
-    if (!(tbcd.nmcd.uItemState & CDIS_HOT) && 
+    if (!theme && !(tbcd.nmcd.uItemState & CDIS_HOT) &&
         ((tbcd.nmcd.uItemState & CDIS_CHECKED) || (tbcd.nmcd.uItemState & CDIS_INDETERMINATE)))
         TOOLBAR_DrawPattern (&rc, &tbcd);
 

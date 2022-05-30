@@ -2666,7 +2666,6 @@ static void test_visual(void)
     toolbar_dc = GetDC(toolbar);
     color = GetPixel(toolbar_dc, 5, 5);
     if (is_theme_active)
-        todo_wine
         ok(color != RGB(0xff, 0, 0), "Unexpected color %#lx.\n", color);
     else
         ok(color == RGB(0xff, 0, 0), "Unexpected color %#lx.\n", color);
