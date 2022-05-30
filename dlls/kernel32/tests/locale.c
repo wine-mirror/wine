@@ -8116,9 +8116,77 @@ static void test_EnumCalendarInfoExW(void)
     }
 }
 
+/* Generate sort keys for a list of Unicode code points.
+ * Possible source files:
+ *   The Unicode collation test suite:  https://www.unicode.org/Public/UCA/latest/CollationTest.zip
+ *   The list of supported char compressions:  winedump nls/sortdefault.nls | grep \\-\>
+ */
+static void dump_sortkeys( char *argv[] )
+{
+    WCHAR data[128];
+    WCHAR locale[LOCALE_NAME_MAX_LENGTH];
+    BYTE key[256];
+    unsigned int i, val, pos, res, flags = 0;
+    char *p, *end, buffer[1024];
+    FILE *f = fopen( argv[1], "r" );
+
+    locale[0] = 0;
+    if (argv[2])
+    {
+        MultiByteToWideChar( CP_ACP, 0, argv[2], -1, locale, LOCALE_NAME_MAX_LENGTH );
+        if (argv[3]) flags = strtoul( argv[3], NULL, 0 );
+    }
+
+    if (!f)
+    {
+        fprintf( stderr, "cannot open %s\n", argv[1] );
+        return;
+    }
+    while (fgets( buffer, sizeof(buffer), f ))
+    {
+        if (buffer[0] && buffer[strlen(buffer)-1] == '\n') buffer[strlen(buffer)-1] = 0;
+        p = buffer;
+        while (*p == ' ' || *p == '\t') p++;
+        if (*p == '#') continue;
+        pos = 0;
+        while (*p && *p != ';' && *p != '-')
+        {
+            val = strtoul( p, &end, 16 );
+            if (end == p) break;
+            if (val >= 0x10000)
+            {
+                data[pos++] = 0xd800 | (val >> 10);
+                data[pos++] = 0xdc00 | (val & 0x3ff);
+            }
+            else data[pos++] = val;
+            p = end;
+            while (*p == ' ' || *p == '\t') p++;
+        }
+        *p = 0;
+        res = LCMapStringEx( locale, flags | LCMAP_SORTKEY, data, pos,
+                             (WCHAR *)key, sizeof(key), NULL, NULL, 0 );
+        printf( "%s:", buffer );
+        for (i = 0; i < res; i++) printf( " %02x", key[i] );
+        printf( "\n" );
+    }
+    fclose( f );
+}
+
 START_TEST(locale)
 {
+  char **argv;
+  int argc = winetest_get_mainargs( &argv );
+
   InitFunctionPointers();
+
+  if (argc >= 4)
+  {
+      if (!strcmp( argv[2], "sortkeys" ))
+      {
+          dump_sortkeys( argv + 2 );
+          return;
+      }
+  }
 
   test_EnumTimeFormatsA();
   test_EnumTimeFormatsW();
