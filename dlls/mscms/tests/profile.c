@@ -58,6 +58,7 @@ static BOOL     (WINAPI *pSetColorProfileElement)(HPROFILE,TAGTYPE,DWORD,PDWORD,
 static BOOL     (WINAPI *pSetColorProfileHeader)(HPROFILE,PPROFILEHEADER);
 static BOOL     (WINAPI *pSetStandardColorSpaceProfileA)(PCSTR,DWORD,PSTR);
 static BOOL     (WINAPI *pSetStandardColorSpaceProfileW)(PCWSTR,DWORD,PWSTR);
+static BOOL     (WINAPI *pTranslateBitmapBits)(HTRANSFORM,PVOID,BMFORMAT,DWORD,DWORD,DWORD,PVOID,BMFORMAT,DWORD,PBMCALLBACKFN,ULONG);
 static BOOL     (WINAPI *pUninstallColorProfileA)(PCSTR,PCSTR,BOOL);
 static BOOL     (WINAPI *pUninstallColorProfileW)(PCWSTR,PCWSTR,BOOL);
 
@@ -95,6 +96,7 @@ static BOOL init_function_ptrs( void )
     GETFUNCPTR( SetStandardColorSpaceProfileW )
     GETFUNCPTR( UninstallColorProfileA )
     GETFUNCPTR( UninstallColorProfileW )
+    GETFUNCPTR( TranslateBitmapBits )
 
     pEnumDisplayDevicesA = (void *)GetProcAddress( huser32, "EnumDisplayDevicesA" );
 
@@ -1359,6 +1361,63 @@ static void test_CreateMultiProfileTransform( char *standardprofile, char *testp
     }
 }
 
+static void test_TranslateBitmapBits( char *standardprofile, char *testprofile )
+{
+    PROFILE profile;
+    HPROFILE handle[2];
+    HTRANSFORM transform;
+    DWORD intent = INTENT_PERCEPTUAL;
+    BYTE srcbits[] = {0x00, 0x00, 0xff}, srcbits2[] = {0xcc, 0x00, 0x00, 0xff}, destbits[4];
+    const BYTE expect_destbits[] = {0xff, 0x00, 0x00, 0x00};
+    const BYTE expect_destbits2[] = {0x00, 0x00, 0xff, 0x00};
+    const BYTE expect_destbits3[] = {0xcc, 0x00, 0x00};
+    const BYTE expect_destbits4[] = {0x00, 0x00, 0xcc};
+    BOOL ret;
+
+    if (!standardprofile) return;
+
+    profile.dwType       = PROFILE_FILENAME;
+    profile.pProfileData = standardprofile;
+    profile.cbDataSize   = strlen(standardprofile);
+
+    handle[0] = pOpenColorProfileA( &profile, PROFILE_READ, 1, OPEN_EXISTING );
+    ok( handle[0] != NULL, "got %lu\n", GetLastError() );
+
+    profile.dwType       = PROFILE_FILENAME;
+    profile.pProfileData = testprofile;
+    profile.cbDataSize   = strlen(testprofile);
+
+    handle[1] = pOpenColorProfileA( &profile, PROFILE_READ, 1, OPEN_EXISTING );
+    ok( handle[1] != NULL, "got %lu\n", GetLastError() );
+
+    transform = pCreateMultiProfileTransform( handle, 2, &intent, 1, 0, 0 );
+    ok( transform != NULL, "got %lu\n", GetLastError() );
+
+    memset( destbits, 0, sizeof(destbits) );
+    ret = pTranslateBitmapBits( transform, srcbits, BM_RGBTRIPLETS, 1, 1, 3, destbits, BM_xBGRQUADS, 4, NULL, 0 );
+    ok( ret, "got %lu\n", GetLastError() );
+    todo_wine ok( !memcmp(expect_destbits, destbits, sizeof(expect_destbits)), "unexpected destbits\n" );
+
+    memset( destbits, 0, sizeof(destbits) );
+    ret = pTranslateBitmapBits( transform, srcbits, BM_RGBTRIPLETS, 1, 1, 3, destbits, BM_xRGBQUADS, 4, NULL, 0 );
+    ok( ret, "got %lu\n", GetLastError() );
+    todo_wine ok( !memcmp(expect_destbits2, destbits, sizeof(expect_destbits2)), "unexpected destbits\n" );
+
+    memset( destbits, 0, sizeof(destbits) );
+    ret = pTranslateBitmapBits( transform, srcbits2, BM_xRGBQUADS, 1, 1, 4, destbits, BM_RGBTRIPLETS, 3, NULL, 0 );
+    ok( ret, "got %lu\n", GetLastError() );
+    todo_wine ok( !memcmp(expect_destbits3, destbits, sizeof(expect_destbits3)), "unexpected destbits\n" );
+
+    memset( destbits, 0, sizeof(destbits) );
+    ret = pTranslateBitmapBits( transform, srcbits2, BM_xRGBQUADS, 1, 1, 4, destbits, BM_BGRTRIPLETS, 3, NULL, 0 );
+    ok( ret, "got %lu\n", GetLastError() );
+    todo_wine ok( !memcmp(expect_destbits4, destbits, sizeof(expect_destbits4)), "unexpected destbits\n" );
+
+    pDeleteColorTransform( transform );
+    pCloseColorProfile( handle[0] );
+    pCloseColorProfile( handle[1] );
+}
+
 START_TEST(profile)
 {
     UINT len;
@@ -1469,6 +1528,7 @@ START_TEST(profile)
 
     test_AssociateColorProfileWithDeviceA( testprofile );
     test_CreateMultiProfileTransform( standardprofile, testprofile );
+    test_TranslateBitmapBits( standardprofile, testprofile );
 
     if (testprofile) DeleteFileA( testprofile );
     FreeLibrary( huser32 );
