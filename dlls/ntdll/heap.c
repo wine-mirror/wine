@@ -1609,8 +1609,6 @@ static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size
             list_remove( &entry->entry );
             old_block_size += block_get_size( next );
             if (!subheap_commit( subheap, block, block_size )) return STATUS_NO_MEMORY;
-            valgrind_notify_resize( block + 1, old_size, size );
-            shrink_used_block( subheap, block, block_get_flags( block ), old_block_size, block_size, size );
         }
         else
         {
@@ -1624,13 +1622,9 @@ static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size
             return STATUS_SUCCESS;
         }
     }
-    else
-    {
-        valgrind_notify_resize( block + 1, old_size, size );
-        shrink_used_block( subheap, block, block_get_flags( block ), old_block_size, block_size, size );
-    }
 
-    /* Clear the extra bytes if needed */
+    valgrind_notify_resize( block + 1, old_size, size );
+    shrink_used_block( subheap, block, block_get_flags( block ), old_block_size, block_size, size );
 
     if (size <= old_size) mark_block_tail( (char *)(block + 1) + size, block->unused_bytes, flags );
     else initialize_block( (char *)(block + 1) + old_size, size - old_size, block->unused_bytes, flags );
