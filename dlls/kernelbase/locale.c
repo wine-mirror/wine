@@ -342,6 +342,15 @@ struct sort_expansion
     WCHAR exp[2];
 };
 
+struct sort_compression
+{
+    UINT  offset;
+    WCHAR minchar, maxchar;
+    WORD  len[8];
+};
+
+static inline int compression_size( int len ) { return 2 + len + (len & 1); }
+
 union char_weights
 {
     UINT val;
@@ -394,12 +403,15 @@ static struct
     UINT                           version;         /* NLS version */
     UINT                           guid_count;      /* number of sort GUIDs */
     UINT                           exp_count;       /* number of character expansions */
+    UINT                           compr_count;     /* number of compression tables */
     const UINT                    *keys;            /* sortkey table, indexed by char */
     const USHORT                  *casemap;         /* casemap table, in l_intl.nls format */
     const WORD                    *ctypes;          /* CT_CTYPE1,2,3 values */
     const BYTE                    *ctype_idx;       /* index to map char to ctypes array entry */
     const struct sortguid         *guids;           /* table of sort GUIDs */
     const struct sort_expansion   *expansions;      /* character expansions */
+    const struct sort_compression *compressions;    /* character compression tables */
+    const WCHAR                   *compr_data;      /* data for individual compressions */
 } sort;
 
 static CRITICAL_SECTION locale_section;
@@ -485,6 +497,11 @@ static void load_sortdefault_nls(void)
     table = (UINT *)(sort.guids + sort.guid_count);
     sort.exp_count = table[0];
     sort.expansions = (struct sort_expansion *)(table + 1);
+
+    table = (UINT *)(sort.expansions + sort.exp_count);
+    sort.compr_count = table[0];
+    sort.compressions = (struct sort_compression *)(table + 1);
+    sort.compr_data = (WCHAR *)(sort.compressions + sort.compr_count);
 
     locale_sorts = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
                                     locale_table->nb_lcnames * sizeof(*locale_sorts) );
@@ -3235,6 +3252,53 @@ static void append_expansion_weights( const struct sortguid *sortid, struct sort
     append_normal_weights( sortid, key_primary, key_diacritic, key_case, weights, flags );
 }
 
+static const UINT *find_compression( const WCHAR *src, const WCHAR *table, int count, int len )
+{
+    int elem_size = compression_size( len ), min = 0, max = count - 1;
+
+    while (min <= max)
+    {
+        int pos = (min + max) / 2;
+        int res = wcsncmp( src, table + pos * elem_size, len );
+        if (!res) return (UINT *)(table + (pos + 1) * elem_size) - 1;
+        if (res > 0) min = pos + 1;
+        else max = pos - 1;
+    }
+    return NULL;
+}
+
+/* find a compression for a char sequence */
+/* return the number of extra chars to skip */
+static int get_compression_weights( UINT compression, const WCHAR *compr_tables[8],
+                                    const WCHAR *src, int srclen, union char_weights *weights )
+{
+    const struct sort_compression *compr = sort.compressions + compression;
+    const UINT *ret;
+    BYTE size = weights->_case & CASE_COMPR_6;
+    int i, maxlen = 1;
+
+    if (compression >= sort.compr_count) return 0;
+    if (size == CASE_COMPR_6) maxlen = 8;
+    else if (size == CASE_COMPR_4) maxlen = 5;
+    else if (size == CASE_COMPR_2) maxlen = 3;
+    maxlen = min( maxlen, srclen );
+    for (i = 0; i < maxlen; i++) if (src[i] < compr->minchar || src[i] > compr->maxchar) break;
+    maxlen = i;
+    if (!compr_tables[0])
+    {
+        compr_tables[0] = sort.compr_data + compr->offset;
+        for (i = 1; i <= maxlen - 2; i++)
+            compr_tables[i] = compr_tables[i - 1] + compr->len[i - 1] * compression_size( i + 1 );
+    }
+    for (i = maxlen - 2; i >= 0; i--)
+    {
+        if (!(ret = find_compression( src, compr_tables[i], compr->len[i], i + 2 ))) continue;
+        weights->val = *ret;
+        return i + 1;
+    }
+    return 0;
+}
+
 /* put one of the elements of a sortkey into the dst buffer */
 static int put_sortkey( BYTE *dst, int dstlen, int pos, const struct sortkey *key, BYTE terminator )
 {
@@ -3320,6 +3384,9 @@ static int append_weights( const struct sortguid *sortid, DWORD flags,
     union char_weights weights = get_char_weights( src[pos], except );
     WCHAR idx = (weights.val >> 16) & ~(CASE_COMPR_6 << 8);  /* expansion index */
     int ret = 1;
+
+    if (weights._case & CASE_COMPR_6)
+        ret += get_compression_weights( sortid->compr, compr_tables, src + pos, srclen - pos, &weights );
 
     weights._case &= case_mask;
 
