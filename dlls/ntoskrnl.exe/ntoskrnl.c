@@ -4455,6 +4455,15 @@ NTSTATUS WINAPI KdEnableDebugger(void)
     return STATUS_DEBUGGER_INACTIVE;
 }
 
+#ifdef __x86_64__
+
+void WINAPI KfRaiseIrql(KIRQL new, KIRQL *old)
+{
+    FIXME("new %u old %p: stub.\n", new, old);
+}
+
+#endif
+
 /*****************************************************
  *           DllMain
  */
