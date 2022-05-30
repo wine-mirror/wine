@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -32,22 +33,20 @@
 
 #include "mscms_priv.h"
 
-static void basename( LPCWSTR path, LPWSTR name )
+static void basename( const WCHAR *path, WCHAR *name )
 {
-    INT i = lstrlenW( path );
-
+    int i = lstrlenW( path );
     while (i > 0 && path[i - 1] != '\\' && path[i - 1] != '/') i--;
     lstrcpyW( name, &path[i] );
 }
 
-static inline LPWSTR strdupW( LPCSTR str )
+static inline WCHAR *strdupW( const char *str )
 {
-    LPWSTR ret = NULL;
+    WCHAR *ret = NULL;
     if (str)
     {
-        DWORD len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
-        if ((ret = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
-            MultiByteToWideChar( CP_ACP, 0, str, -1, ret, len );
+        int len = MultiByteToWideChar( CP_ACP, 0, str, -1, NULL, 0 );
+        if ((ret = malloc( len * sizeof(WCHAR) ))) MultiByteToWideChar( CP_ACP, 0, str, -1, ret, len );
     }
     return ret;
 }
@@ -83,19 +82,19 @@ BOOL WINAPI AssociateColorProfileWithDeviceA( PCSTR machine, PCSTR profile, PCST
     }
 
     len = MultiByteToWideChar( CP_ACP, 0, profile, -1, NULL, 0 );
-    if (!(profileW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return FALSE;
+    if (!(profileW = malloc( len * sizeof(WCHAR) ))) return FALSE;
 
     MultiByteToWideChar( CP_ACP, 0, profile, -1, profileW, len );
 
     len = MultiByteToWideChar( CP_ACP, 0, device, -1, NULL, 0 );
-    if ((deviceW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+    if ((deviceW = malloc( len * sizeof(WCHAR) )))
     {
         MultiByteToWideChar( CP_ACP, 0, device, -1, deviceW, len );
         ret = AssociateColorProfileWithDeviceW( NULL, profileW, deviceW );
     }
 
-    HeapFree( GetProcessHeap(), 0, profileW );
-    HeapFree( GetProcessHeap(), 0, deviceW );
+    free( profileW );
+    free( deviceW );
     return ret;
 }
 
@@ -187,19 +186,19 @@ BOOL WINAPI DisassociateColorProfileFromDeviceA( PCSTR machine, PCSTR profile, P
     }
 
     len = MultiByteToWideChar( CP_ACP, 0, profile, -1, NULL, 0 );
-    if (!(profileW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return FALSE;
+    if (!(profileW = malloc( len * sizeof(WCHAR) ))) return FALSE;
 
     MultiByteToWideChar( CP_ACP, 0, profile, -1, profileW, len );
 
     len = MultiByteToWideChar( CP_ACP, 0, device, -1, NULL, 0 );
-    if ((deviceW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) )))
+    if ((deviceW = malloc( len * sizeof(WCHAR) )))
     {
         MultiByteToWideChar( CP_ACP, 0, device, -1, deviceW, len );
         ret = DisassociateColorProfileFromDeviceW( NULL, profileW, deviceW );
     }
 
-    HeapFree( GetProcessHeap(), 0, profileW );
-    HeapFree( GetProcessHeap(), 0, deviceW );
+    free( profileW );
+    free( deviceW );
     return ret;
 }
 
@@ -249,8 +248,7 @@ BOOL WINAPI GetColorDirectoryA( PCSTR machine, PSTR buffer, PDWORD size )
 
     sizeW = *size * sizeof(WCHAR);
 
-    bufferW = HeapAlloc( GetProcessHeap(), 0, sizeW );
-    if (bufferW)
+    if ((bufferW = malloc( sizeW )))
     {
         if ((ret = GetColorDirectoryW( NULL, bufferW, &sizeW )))
         {
@@ -259,8 +257,7 @@ BOOL WINAPI GetColorDirectoryA( PCSTR machine, PSTR buffer, PDWORD size )
             if (!len) ret = FALSE;
         }
         else *size = sizeW / sizeof(WCHAR);
-
-        HeapFree( GetProcessHeap(), 0, bufferW );
+        free( bufferW );
     }
     return ret;
 }
@@ -530,8 +527,7 @@ BOOL WINAPI GetStandardColorSpaceProfileA( PCSTR machine, DWORD id, PSTR profile
         return ret;
     }
 
-    profileW = HeapAlloc( GetProcessHeap(), 0, sizeW );
-    if (profileW)
+    if ((profileW = malloc( sizeW )))
     {
         if ((ret = GetStandardColorSpaceProfileW( NULL, id, profileW, &sizeW )))
         {
@@ -540,8 +536,7 @@ BOOL WINAPI GetStandardColorSpaceProfileA( PCSTR machine, DWORD id, PSTR profile
             if (!len) ret = FALSE;
         }
         else *size = sizeW / sizeof(WCHAR);
-
-        HeapFree( GetProcessHeap(), 0, profileW );
+        free( profileW );
     }
     return ret;
 }
@@ -780,8 +775,7 @@ BOOL WINAPI EnumColorProfilesA( PCSTR machine, PENUMTYPEA record, PBYTE buffer,
     find = FindFirstFileA( glob, &data );
     if (find == INVALID_HANDLE_VALUE) return FALSE;
 
-    profiles = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(char *) + 1 );
-    if (!profiles) goto exit;
+    if (!(profiles = calloc( 1, sizeof(char *) + 1 ))) goto exit;
 
     memcpy( &recordW, record, sizeof(ENUMTYPEA) );
     if (record->pDeviceName)
@@ -790,19 +784,14 @@ BOOL WINAPI EnumColorProfilesA( PCSTR machine, PENUMTYPEA record, PBYTE buffer,
         if (!(recordW.pDeviceName = deviceW)) goto exit;
     }
 
-    fileW = strdupW( data.cFileName );
-    if (!fileW) goto exit;
+    if (!(fileW = strdupW( data.cFileName ))) goto exit;
 
-    ret = header_from_file( fileW, &header );
-    if (ret)
+    if ((ret = header_from_file( fileW, &header )))
     {
-        match = match_profile( &recordW, &header );
-        if (match)
+        if ((match = match_profile( &recordW, &header )))
         {
             len = sizeof(char) * (lstrlenA( data.cFileName ) + 1);
-            profiles[count] = HeapAlloc( GetProcessHeap(), 0, len );
-
-            if (!profiles[count]) goto exit;
+            if (!(profiles[count] = malloc( len ))) goto exit;
             else
             {
                 TRACE( "matching profile: %s\n", debugstr_a(data.cFileName) );
@@ -812,33 +801,26 @@ BOOL WINAPI EnumColorProfilesA( PCSTR machine, PENUMTYPEA record, PBYTE buffer,
             }
         }
     }
-    HeapFree( GetProcessHeap(), 0, fileW );
+    free( fileW );
     fileW = NULL;
 
     while (FindNextFileA( find, &data ))
     {
-        fileW = strdupW( data.cFileName );
-        if (!fileW) goto exit;
-
-        ret = header_from_file( fileW, &header );
-        if (!ret)
+        if (!(fileW = strdupW( data.cFileName ))) goto exit;
+        if (!(ret = header_from_file( fileW, &header )))
         {
-            HeapFree( GetProcessHeap(), 0, fileW );
+            free( fileW );
             continue;
         }
 
-        match = match_profile( &recordW, &header );
-        if (match)
+        if ((match = match_profile( &recordW, &header )))
         {
-            char **tmp = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                      profiles, sizeof(char *) * (count + 1) );
+            char **tmp = realloc( profiles, sizeof(char *) * (count + 1) );
             if (!tmp) goto exit;
             else profiles = tmp;
 
             len = sizeof(char) * (lstrlenA( data.cFileName ) + 1);
-            profiles[count] = HeapAlloc( GetProcessHeap(), 0, len );
-
-            if (!profiles[count]) goto exit;
+            if (!(profiles[count] = malloc( len ))) goto exit;
             else
             {
                 TRACE( "matching profile: %s\n", debugstr_a(data.cFileName) );
@@ -847,7 +829,7 @@ BOOL WINAPI EnumColorProfilesA( PCSTR machine, PENUMTYPEA record, PBYTE buffer,
                 count++;
             }
         }
-        HeapFree( GetProcessHeap(), 0, fileW );
+        free( fileW );
         fileW = NULL;
     }
 
@@ -874,11 +856,10 @@ BOOL WINAPI EnumColorProfilesA( PCSTR machine, PENUMTYPEA record, PBYTE buffer,
     if (number) *number = count;
 
 exit:
-    for (i = 0; i < count; i++)
-        HeapFree( GetProcessHeap(), 0, profiles[i] );
-    HeapFree( GetProcessHeap(), 0, profiles );
-    HeapFree( GetProcessHeap(), 0, deviceW );
-    HeapFree( GetProcessHeap(), 0, fileW );
+    for (i = 0; i < count; i++) free( profiles[i] );
+    free( profiles );
+    free( deviceW );
+    free( fileW );
     FindClose( find );
 
     return ret;
@@ -930,19 +911,14 @@ BOOL WINAPI EnumColorProfilesW( PCWSTR machine, PENUMTYPEW record, PBYTE buffer,
     find = FindFirstFileW( glob, &data );
     if (find == INVALID_HANDLE_VALUE) return FALSE;
 
-    profiles = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(WCHAR *) + 1 );
-    if (!profiles) goto exit;
+    if (!(profiles = calloc( 1, sizeof(WCHAR *) + 1 ))) goto exit;
 
-    ret = header_from_file( data.cFileName, &header );
-    if (ret)
+    if ((ret = header_from_file( data.cFileName, &header )))
     {
-        match = match_profile( record, &header );
-        if (match)
+        if ((match = match_profile( record, &header )))
         {
             len = sizeof(WCHAR) * (lstrlenW( data.cFileName ) + 1);
-            profiles[count] = HeapAlloc( GetProcessHeap(), 0, len );
-
-            if (!profiles[count]) goto exit;
+            if (!(profiles[count] = malloc( len ))) goto exit;
             else
             {
                 TRACE( "matching profile: %s\n", debugstr_w(data.cFileName) );
@@ -955,21 +931,16 @@ BOOL WINAPI EnumColorProfilesW( PCWSTR machine, PENUMTYPEW record, PBYTE buffer,
 
     while (FindNextFileW( find, &data ))
     {
-        ret = header_from_file( data.cFileName, &header );
-        if (!ret) continue;
+        if (!(ret = header_from_file( data.cFileName, &header ))) continue;
 
-        match = match_profile( record, &header );
-        if (match)
+        if ((match = match_profile( record, &header )))
         {
-            WCHAR **tmp = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                                       profiles, sizeof(WCHAR *) * (count + 1) );
+            WCHAR **tmp = realloc( profiles, sizeof(WCHAR *) * (count + 1) );
             if (!tmp) goto exit;
             else profiles = tmp;
 
             len = sizeof(WCHAR) * (lstrlenW( data.cFileName ) + 1);
-            profiles[count] = HeapAlloc( GetProcessHeap(), 0, len );
-
-            if (!profiles[count]) goto exit;
+            if (!(profiles[count] = malloc( len ))) goto exit;
             else
             {
                 TRACE( "matching profile: %s\n", debugstr_w(data.cFileName) );
@@ -1003,9 +974,8 @@ BOOL WINAPI EnumColorProfilesW( PCWSTR machine, PENUMTYPEW record, PBYTE buffer,
     if (number) *number = count;
 
 exit:
-    for (i = 0; i < count; i++)
-        HeapFree( GetProcessHeap(), 0, profiles[i] );
-    HeapFree( GetProcessHeap(), 0, profiles );
+    for (i = 0; i < count; i++) free( profiles[i] );
+    free( profiles );
     FindClose( find );
 
     return ret;
@@ -1027,14 +997,11 @@ BOOL WINAPI InstallColorProfileA( PCSTR machine, PCSTR profile )
     if (machine || !profile) return FALSE;
 
     len = MultiByteToWideChar( CP_ACP, 0, profile, -1, NULL, 0 );
-    profileW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-
-    if (profileW)
+    if ((profileW = malloc( len * sizeof(WCHAR) )))
     {
         MultiByteToWideChar( CP_ACP, 0, profile, -1, profileW, len );
-
         ret = InstallColorProfileW( NULL, profileW );
-        HeapFree( GetProcessHeap(), 0, profileW );
+        free( profileW );
     }
     return ret;
 }
@@ -1065,7 +1032,6 @@ BOOL WINAPI InstallColorProfileW( PCWSTR machine, PCWSTR profile )
     if (!GetColorDirectoryW( machine, dest, &size )) return FALSE;
 
     basename( profile, base );
-
     lstrcatW( dest, L"\\" );
     lstrcatW( dest, base );
 
@@ -1225,15 +1191,11 @@ BOOL WINAPI UninstallColorProfileA( PCSTR machine, PCSTR profile, BOOL delete )
     if (machine || !profile) return FALSE;
 
     len = MultiByteToWideChar( CP_ACP, 0, profile, -1, NULL, 0 );
-    profileW = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) );
-
-    if (profileW)
+    if ((profileW = malloc( len * sizeof(WCHAR) )))
     {
         MultiByteToWideChar( CP_ACP, 0, profile, -1, profileW, len );
-
         ret = UninstallColorProfileW( NULL, profileW , delete );
-
-        HeapFree( GetProcessHeap(), 0, profileW );
+        free( profileW );
     }
     return ret;
 }
@@ -1260,7 +1222,6 @@ BOOL WINAPI UninstallColorProfileW( PCWSTR machine, PCWSTR profile, BOOL delete 
     if (machine || !profile) return FALSE;
 
     if (delete) return DeleteFileW( profile );
-
     return TRUE;
 }
 
@@ -1269,7 +1230,7 @@ static BOOL profile_AtoW( const PROFILE *in, PROFILE *out )
     int len;
     if (!in->pProfileData) return FALSE;
     len = MultiByteToWideChar( CP_ACP, 0, in->pProfileData, -1, NULL, 0 );
-    if (!(out->pProfileData = HeapAlloc( GetProcessHeap(), 0, len * sizeof(WCHAR) ))) return FALSE;
+    if (!(out->pProfileData = malloc( len * sizeof(WCHAR) ))) return FALSE;
     out->cbDataSize = len * sizeof(WCHAR);
     MultiByteToWideChar( CP_ACP, 0, in->pProfileData, -1, out->pProfileData, len );
     out->dwType = in->dwType;
@@ -1296,7 +1257,7 @@ HPROFILE WINAPI OpenColorProfileA( PPROFILE profile, DWORD access, DWORD sharing
 
     if (!profile_AtoW( profile, &profileW )) return FALSE;
     handle = OpenColorProfileW( &profileW, access, sharing, creation );
-    HeapFree( GetProcessHeap(), 0, profileW.pProfileData );
+    free( profileW.pProfileData );
     return handle;
 }
 
@@ -1339,12 +1300,12 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
     {
         /* FIXME: access flags not implemented for memory based profiles */
 
-        if (!(data = HeapAlloc( GetProcessHeap(), 0, profile->cbDataSize ))) return NULL;
+        if (!(data = malloc( profile->cbDataSize ))) return NULL;
         memcpy( data, profile->pProfileData, profile->cbDataSize );
 
         if (!(cmsprofile = cmsOpenProfileFromMem( data, profile->cbDataSize )))
         {
-            HeapFree( GetProcessHeap(), 0, data );
+            free( data );
             return FALSE;
         }
         size = profile->cbDataSize;
@@ -1370,14 +1331,14 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
             if (!GetColorDirectoryW( NULL, NULL, &size ) && GetLastError() == ERROR_MORE_DATA)
             {
                 size += (lstrlenW( profile->pProfileData ) + 2) * sizeof(WCHAR);
-                if (!(path = HeapAlloc( GetProcessHeap(), 0, size ))) return NULL;
+                if (!(path = malloc( size ))) return NULL;
                 GetColorDirectoryW( NULL, path, &size );
                 PathAddBackslashW( path );
                 lstrcatW( path, profile->pProfileData );
             }
             else return NULL;
             handle = CreateFileW( path, flags, sharing, NULL, creation, 0, NULL );
-            HeapFree( GetProcessHeap(), 0, path );
+            free( path );
         }
         if (handle == INVALID_HANDLE_VALUE)
         {
@@ -1390,7 +1351,7 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
             CloseHandle( handle );
             return NULL;
         }
-        if (!(data = HeapAlloc( GetProcessHeap(), 0, size )))
+        if (!(data = malloc( size )))
         {
             ERR( "Unable to allocate memory for color profile\n" );
             CloseHandle( handle );
@@ -1399,15 +1360,14 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
         if (!ReadFile( handle, data, size, &read, NULL ) || read != size)
         {
             ERR( "Unable to read color profile\n" );
-
             CloseHandle( handle );
-            HeapFree( GetProcessHeap(), 0, data );
+            free( data );
             return NULL;
         }
         if (!(cmsprofile = cmsOpenProfileFromMem( data, size )))
         {
             CloseHandle( handle );
-            HeapFree( GetProcessHeap(), 0, data );
+            free( data );
             return NULL;
         }
     }
@@ -1426,7 +1386,7 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
     if ((hprof = create_profile( &prof ))) return hprof;
 
     cmsCloseProfile( cmsprofile );
-    HeapFree( GetProcessHeap(), 0, data );
+    free( data );
     CloseHandle( handle );
     return NULL;
 }
@@ -1509,9 +1469,9 @@ HPROFILE WINAPI WcsOpenColorProfileA( PROFILE *cdm, PROFILE *camp, PROFILE *gmmp
     ret = WcsOpenColorProfileW( &cdmW, &campW, &gmmpW, access, sharing, creation, flags );
 
 done:
-    HeapFree( GetProcessHeap(), 0, cdmW.pProfileData );
-    HeapFree( GetProcessHeap(), 0, campW.pProfileData );
-    HeapFree( GetProcessHeap(), 0, gmmpW.pProfileData );
+    free( cdmW.pProfileData );
+    free( campW.pProfileData );
+    free( gmmpW.pProfileData );
     return ret;
 }
 

@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -49,11 +50,11 @@ WINE_DEFAULT_DEBUG_CHANNEL(mscms);
 
 void free_handle_tables( void )
 {
-    HeapFree( GetProcessHeap(), 0, profiletable );
+    free( profiletable );
     profiletable = NULL;
     num_profile_handles = 0;
 
-    HeapFree( GetProcessHeap(), 0, transformtable );
+    free( transformtable );
     transformtable = NULL;
     num_transform_handles = 0;
 
@@ -112,12 +113,13 @@ static HPROFILE alloc_profile_handle( void )
     }
     if (!profiletable)
     {
-        p = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, count * sizeof(struct profile) );
+        p = calloc( count, sizeof(*p) );
     }
     else
     {
         count = num_profile_handles * 2;
-        p = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, profiletable, count * sizeof(struct profile) );
+        p = realloc( profiletable, count * sizeof(*p) );
+        if (p) memset( p + num_profile_handles, 0, num_profile_handles * sizeof(*p) );
     }
     if (!p) return NULL;
 
@@ -173,7 +175,7 @@ BOOL close_profile( HPROFILE handle )
         CloseHandle( profile->file );
     }
     if (profile->cmsprofile) cmsCloseProfile( profile->cmsprofile );
-    HeapFree( GetProcessHeap(), 0, profile->data );
+    free( profile->data );
 
     memset( profile, 0, sizeof(struct profile) );
 
@@ -193,12 +195,13 @@ static HTRANSFORM alloc_transform_handle( void )
     }
     if (!transformtable)
     {
-        p = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, count * sizeof(*p) );
+        p = calloc( count, sizeof(*p) );
     }
     else
     {
         count = num_transform_handles * 2;
-        p = HeapReAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, transformtable, count * sizeof(*p) );
+        p = realloc( transformtable, count * sizeof(*p) );
+        if (p) memset( p + num_transform_handles, 0, num_transform_handles * sizeof(*p) );
     }
     if (!p) return NULL;
 
