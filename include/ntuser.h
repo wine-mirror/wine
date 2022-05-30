@@ -189,8 +189,9 @@ enum
     NtUserSendNotifyMessage   = 0x02b7,
     NtUserSendMessageCallback = 0x02b8,
     /* Wine-specific exports */
-    NtUserSpyEnter            = 0x0300,
-    NtUserSpyExit             = 0x0301,
+    NtUserClipboardWindowProc = 0x0300,
+    NtUserSpyEnter            = 0x0301,
+    NtUserSpyExit             = 0x0302,
 };
 
 /* NtUserThunkedMenuItemInfo codes */
