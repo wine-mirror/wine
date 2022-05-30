@@ -1337,8 +1337,9 @@ static void heap_set_debug_flags( HANDLE handle )
                 if (block_get_flags( block ) & BLOCK_FLAG_FREE)
                 {
                     char *data = (char *)block + block_get_overhead( block ), *end = (char *)block + block_get_size( block );
-                    if (end >= commit_end) mark_block_free( data, commit_end - data, flags );
-                    else mark_block_free( data, end - sizeof(struct block *) - data, flags );
+                    if (next_block( subheap, block )) end -= sizeof(struct block *);
+                    if (end > commit_end) mark_block_free( data, commit_end - data, flags );
+                    else mark_block_free( data, end - data, flags );
                 }
                 else
                 {
