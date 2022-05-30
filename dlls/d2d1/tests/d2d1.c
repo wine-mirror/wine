@@ -11772,7 +11772,6 @@ static void test_bitmap_map(BOOL d3d11)
     hr = ID2D1Bitmap_QueryInterface(bitmap2, &IID_ID2D1Bitmap1, (void **)&bitmap);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     options = ID2D1Bitmap1_GetOptions(bitmap);
-    todo_wine
     ok(options == (D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_CPU_READ),
             "Unexpected options %#x.\n", options);
 

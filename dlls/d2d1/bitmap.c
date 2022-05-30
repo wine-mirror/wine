@@ -616,6 +616,7 @@ HRESULT d2d_bitmap_create_shared(struct d2d_device_context *context, REFIID iid,
         {
             memset(&d, 0, sizeof(d));
             d.pixelFormat.format = surface_desc.Format;
+            d.bitmapOptions = d2d_get_bitmap_options_for_surface(surface);
         }
         else
         {
