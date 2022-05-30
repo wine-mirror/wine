@@ -307,6 +307,36 @@ static inline BOOL check_subheap( const SUBHEAP *subheap )
 
 static BOOL heap_validate( const HEAP *heap );
 
+/* mark a block of memory as innacessible for debugging purposes */
+static inline void valgrind_make_noaccess( void const *ptr, SIZE_T size )
+{
+#if defined(VALGRIND_MAKE_MEM_NOACCESS)
+    VALGRIND_DISCARD( VALGRIND_MAKE_MEM_NOACCESS( ptr, size ) );
+#elif defined(VALGRIND_MAKE_NOACCESS)
+    VALGRIND_DISCARD( VALGRIND_MAKE_NOACCESS( ptr, size ) );
+#endif
+}
+
+/* mark a block of memory as initialized for debugging purposes */
+static inline void valgrind_make_readable( void const *ptr, SIZE_T size )
+{
+#if defined(VALGRIND_MAKE_MEM_DEFINED)
+    VALGRIND_DISCARD( VALGRIND_MAKE_MEM_DEFINED( ptr, size ) );
+#elif defined(VALGRIND_MAKE_READABLE)
+    VALGRIND_DISCARD( VALGRIND_MAKE_READABLE( ptr, size ) );
+#endif
+}
+
+/* mark a block of memory as uninitialized for debugging purposes */
+static inline void valgrind_make_writable( void const *ptr, SIZE_T size )
+{
+#if defined(VALGRIND_MAKE_MEM_UNDEFINED)
+    VALGRIND_DISCARD( VALGRIND_MAKE_MEM_UNDEFINED( ptr, size ) );
+#elif defined(VALGRIND_MAKE_WRITABLE)
+    VALGRIND_DISCARD( VALGRIND_MAKE_WRITABLE( ptr, size ) );
+#endif
+}
+
 /* mark a block of memory as free for debugging purposes */
 static inline void mark_block_free( void *ptr, SIZE_T size, DWORD flags )
 {
@@ -315,31 +345,7 @@ static inline void mark_block_free( void *ptr, SIZE_T size, DWORD flags )
         SIZE_T i;
         for (i = 0; i < size / sizeof(DWORD); i++) ((DWORD *)ptr)[i] = ARENA_FREE_FILLER;
     }
-#if defined(VALGRIND_MAKE_MEM_NOACCESS)
-    VALGRIND_DISCARD( VALGRIND_MAKE_MEM_NOACCESS( ptr, size ));
-#elif defined( VALGRIND_MAKE_NOACCESS)
-    VALGRIND_DISCARD( VALGRIND_MAKE_NOACCESS( ptr, size ));
-#endif
-}
-
-/* mark a block of memory as initialized for debugging purposes */
-static inline void mark_block_initialized( void *ptr, SIZE_T size )
-{
-#if defined(VALGRIND_MAKE_MEM_DEFINED)
-    VALGRIND_DISCARD( VALGRIND_MAKE_MEM_DEFINED( ptr, size ));
-#elif defined(VALGRIND_MAKE_READABLE)
-    VALGRIND_DISCARD( VALGRIND_MAKE_READABLE( ptr, size ));
-#endif
-}
-
-/* mark a block of memory as uninitialized for debugging purposes */
-static inline void mark_block_uninitialized( void *ptr, SIZE_T size )
-{
-#if defined(VALGRIND_MAKE_MEM_UNDEFINED)
-    VALGRIND_DISCARD( VALGRIND_MAKE_MEM_UNDEFINED( ptr, size ));
-#elif defined(VALGRIND_MAKE_WRITABLE)
-    VALGRIND_DISCARD( VALGRIND_MAKE_WRITABLE( ptr, size ));
-#endif
+    valgrind_make_noaccess( ptr, size );
 }
 
 /* mark a block of memory as a tail block */
@@ -347,14 +353,10 @@ static inline void mark_block_tail( void *ptr, SIZE_T size, DWORD flags )
 {
     if (flags & HEAP_TAIL_CHECKING_ENABLED)
     {
-        mark_block_uninitialized( ptr, size );
+        valgrind_make_writable( ptr, size );
         memset( ptr, ARENA_TAIL_FILLER, size );
     }
-#if defined(VALGRIND_MAKE_MEM_NOACCESS)
-    VALGRIND_DISCARD( VALGRIND_MAKE_MEM_NOACCESS( ptr, size ));
-#elif defined( VALGRIND_MAKE_NOACCESS)
-    VALGRIND_DISCARD( VALGRIND_MAKE_NOACCESS( ptr, size ));
-#endif
+    valgrind_make_noaccess( ptr, size );
 }
 
 /* initialize contents of a newly created block of memory */
@@ -362,17 +364,13 @@ static inline void initialize_block( void *ptr, SIZE_T size, SIZE_T unused, DWOR
 {
     if (flags & HEAP_ZERO_MEMORY)
     {
-        mark_block_initialized( ptr, size );
+        valgrind_make_writable( ptr, size );
         memset( ptr, 0, size );
     }
-    else
+    else if (flags & HEAP_FREE_CHECKING_ENABLED)
     {
-        mark_block_uninitialized( ptr, size );
-        if (flags & HEAP_FREE_CHECKING_ENABLED)
-        {
-            memset( ptr, ARENA_INUSE_FILLER, size );
-            mark_block_uninitialized( ptr, size );
-        }
+        valgrind_make_writable( ptr, size );
+        memset( ptr, ARENA_INUSE_FILLER, size );
     }
 
     mark_block_tail( (char *)ptr + size, unused, flags );
@@ -679,7 +677,7 @@ static void create_free_block( SUBHEAP *subheap, struct block *block, SIZE_T blo
     DWORD flags = heap->flags;
     struct block *next;
 
-    mark_block_uninitialized( block, sizeof(*entry) );
+    valgrind_make_writable( block, sizeof(*entry) );
     block_set_type( block, ARENA_FREE_MAGIC );
     block_set_size( block, BLOCK_FLAG_FREE, block_size );
 
@@ -702,7 +700,7 @@ static void create_free_block( SUBHEAP *subheap, struct block *block, SIZE_T blo
     {
         /* set the next block PREV_FREE flag and back pointer */
         block_set_size( next, BLOCK_FLAG_PREV_FREE, block_get_size( next ) );
-        mark_block_initialized( (struct block **)next - 1, sizeof(struct block *) );
+        valgrind_make_writable( (struct block **)next - 1, sizeof(struct block *) );
         *((struct block **)next - 1) = block;
     }
 
