@@ -6574,43 +6574,30 @@ static void test_GetUserPreferredUILanguages(void)
 static void test_FindNLSStringEx(void)
 {
     INT res;
-    static WCHAR en_simpsimpW[] = {'S','i','m','p','l','e','S','i','m','p','l','e',0};
-    static WCHAR en_simpW[] = {'S','i','m','p','l','e',0};
-    static WCHAR comb_s_accent1W[] = {0x1e69, 'o','u','r','c','e',0};
-    static WCHAR comb_s_accent2W[] = {0x0073,0x323,0x307,'o','u','r','c','e',0};
-    static WCHAR comb_q_accent1W[] = {0x0071,0x0307,0x323,'u','o','t','e',0};
-    static WCHAR comb_q_accent2W[] = {0x0071,0x0323,0x307,'u','o','t','e',0};
+    static const WCHAR comb_s_accent1W[] = {0x1e69, 'o','u','r','c','e',0};
+    static const WCHAR comb_s_accent2W[] = {0x0073,0x323,0x307,'o','u','r','c','e',0};
+    static const WCHAR comb_q_accent1W[] = {'a','b',0x0071,0x0307,0x323,'u','o','t','e','\n',0};
+    static const WCHAR comb_q_accent2W[] = {0x0071,0x0323,0x307,'u','o','t','e',0};
     struct test_data {
         const WCHAR *locale;
         DWORD flags;
-        WCHAR *src;
-        INT src_size;
-        WCHAR *value;
-        INT val_size;
-        INT found;
+        const WCHAR *src;
+        const WCHAR *value;
         INT expected_ret;
         INT expected_found;
-        int todo;
-        BOOL broken_vista_servers;
     };
 
-    static struct test_data test_arr[] =
+    static struct test_data tests[] =
     {
-        { localeW, FIND_FROMSTART, en_simpsimpW, ARRAY_SIZE(en_simpsimpW)-1,
-          en_simpW, ARRAY_SIZE(en_simpW)-1, 0, 0, 6, 0, FALSE},
-        { localeW, FIND_FROMEND, en_simpsimpW, ARRAY_SIZE(en_simpsimpW)-1,
-          en_simpW, ARRAY_SIZE(en_simpW)-1, 0, 6, 6, 0, FALSE},
-        { localeW, FIND_STARTSWITH, en_simpsimpW, ARRAY_SIZE(en_simpsimpW)-1,
-          en_simpW, ARRAY_SIZE(en_simpW)-1, 0, 0, 6, 0, FALSE},
-        { localeW, FIND_ENDSWITH, en_simpsimpW, ARRAY_SIZE(en_simpsimpW)-1,
-          en_simpW, ARRAY_SIZE(en_simpW)-1, 0, 6, 6, 0, FALSE},
-        { localeW, FIND_FROMSTART, comb_s_accent1W, ARRAY_SIZE(comb_s_accent1W)-1,
-          comb_s_accent2W, ARRAY_SIZE(comb_s_accent2W)-1, 0, 0, 6, 1, TRUE },
-        { localeW, FIND_FROMSTART, comb_q_accent1W, ARRAY_SIZE(comb_q_accent1W)-1,
-          comb_q_accent2W, ARRAY_SIZE(comb_q_accent2W)-1, 0, 0, 7, 0, FALSE },
-        { 0 }
+        { localeW, FIND_FROMSTART, L"SimpleSimple", L"Simple", 0, 6},
+        { localeW, FIND_FROMEND, L"SimpleSimple", L"Simp", 6, 4},
+        { localeW, FIND_STARTSWITH, L"SimpleSimple", L"Simp", 0, 4},
+        { localeW, FIND_ENDSWITH, L"SimpleSimple", L"Simple", 6, 6},
+        { localeW, FIND_ENDSWITH, L"SimpleSimple", L"Simp", -1, 0xdeadbeef},
+        { localeW, FIND_FROMSTART, comb_s_accent1W, comb_s_accent2W, 0, 6 },
+        { localeW, FIND_FROMSTART, comb_q_accent1W, comb_q_accent2W, 2, 7 },
     };
-    struct test_data *ptest;
+    unsigned int i;
 
     if (!pFindNLSStringEx)
     {
@@ -6653,33 +6640,17 @@ static void test_FindNLSStringEx(void)
     ok(ERROR_INVALID_PARAMETER == GetLastError(),
        "Expected ERROR_INVALID_PARAMETER as last error; got %ld\n", GetLastError());
 
-    for (ptest = test_arr; ptest->src != NULL; ptest++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
-        todo_wine_if(ptest->todo)
-        {
-            res = pFindNLSStringEx(ptest->locale, ptest->flags, ptest->src, ptest->src_size,
-                                   ptest->value, ptest->val_size, &ptest->found, NULL, NULL, 0);
-            if (ptest->broken_vista_servers)
-            {
-                ok(res == ptest->expected_ret || /* Win 7 onwards */
-                   broken(res == -1), /* Win Vista, Server 2003 and 2008 */
-                   "Expected FindNLSStringEx to return %d. Returned value was %d\n",
-                   ptest->expected_ret, res);
-                ok(ptest->found == ptest->expected_found || /* Win 7 onwards */
-                   broken(ptest->found == 0), /* Win Vista, Server 2003 and 2008 */
-                   "Expected FindNLSStringEx to output %d. Value was %d\n",
-                   ptest->expected_found, ptest->found);
-            }
-            else
-            {
-                ok(res == ptest->expected_ret,
-                   "Expected FindNLSStringEx to return %d. Returned value was %d\n",
-                   ptest->expected_ret, res);
-                ok(ptest->found == ptest->expected_found,
-                   "Expected FindNLSStringEx to output %d. Value was %d\n",
-                   ptest->expected_found, ptest->found);
-            }
-        }
+        int found = 0xdeadbeef;
+        res = pFindNLSStringEx(tests[i].locale, tests[i].flags, tests[i].src, -1,
+                               tests[i].value, -1, &found, NULL, NULL, 0);
+        ok(res == tests[i].expected_ret,
+           "%u: Expected FindNLSStringEx to return %d. Returned value was %d\n", i,
+           tests[i].expected_ret, res);
+        ok(found == tests[i].expected_found,
+           "%u: Expected FindNLSStringEx to output %d. Value was %d\n", i,
+           tests[i].expected_found, found);
     }
 }
 

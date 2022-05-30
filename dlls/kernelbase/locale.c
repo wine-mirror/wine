@@ -3809,6 +3809,87 @@ done:
 }
 
 
+/* implementation of FindNLSStringEx */
+static int find_substring( const struct sortguid *sortid, DWORD flags, const WCHAR *src, int srclen,
+                           const WCHAR *value, int valuelen, int *reslen )
+{
+    struct sortkey_state s;
+    struct sortkey_state val;
+    BYTE primary[32];
+    BYTE primary_val[256];
+    int i, start, found = -1, foundlen, pos = 0;
+    BOOL have_extra, have_extra_val;
+    BYTE case_mask = 0x3f;
+    UINT except = sortid->except;
+    const WCHAR *compr_tables[8];
+
+    compr_tables[0] = NULL;
+    if (flags & NORM_IGNORECASE) case_mask &= ~(CASE_UPPER | CASE_SUBSCRIPT);
+    if (flags & NORM_IGNOREWIDTH) case_mask &= ~CASE_FULLWIDTH;
+    if (flags & NORM_IGNOREKANATYPE) case_mask &= ~CASE_KATAKANA;
+    if ((flags & NORM_LINGUISTIC_CASING) && except && sortid->ling_except) except = sortid->ling_except;
+
+    init_sortkey_state( &s, flags, srclen, primary, sizeof(primary) );
+
+    /* build the value sortkey just once */
+    init_sortkey_state( &val, flags, valuelen, primary_val, sizeof(primary_val) );
+    while (pos < valuelen)
+        pos += append_weights( sortid, flags, value, valuelen, pos,
+                               case_mask, except, compr_tables, &val, TRUE );
+    have_extra_val = remove_unneeded_weights( sortid, &val );
+
+    for (start = 0; start < srclen; start++)
+    {
+        pos = start;
+        while (pos < srclen && s.primary_pos < val.key_primary.len)
+        {
+            while (pos < srclen && !s.key_primary.len)
+                pos += append_weights( sortid, flags, src, srclen, pos,
+                                       case_mask, except, compr_tables, &s, TRUE );
+
+            if (s.primary_pos + s.key_primary.len > val.key_primary.len) goto next;
+            if (memcmp( primary, val.key_primary.buf + s.primary_pos, s.key_primary.len )) goto next;
+            s.primary_pos += s.key_primary.len;
+            s.key_primary.len = 0;
+        }
+        if (s.primary_pos < val.key_primary.len) goto next;
+
+        have_extra = remove_unneeded_weights( sortid, &s );
+        if (compare_sortkeys( &s.key_diacritic, &val.key_diacritic, FALSE )) goto next;
+        if (compare_sortkeys( &s.key_case, &val.key_case, FALSE )) goto next;
+
+        if (have_extra && have_extra_val)
+        {
+            for (i = 0; i < 4; i++)
+                if (compare_sortkeys( &s.key_extra[i], &val.key_extra[i], i != 1 )) goto next;
+        }
+        else if (have_extra || have_extra_val) goto next;
+
+        if (compare_sortkeys( &s.key_special, &val.key_special, FALSE )) goto next;
+
+        found = start;
+        foundlen = pos - start;
+        if (flags & FIND_FROMSTART) break;
+
+    next:
+        if (flags & FIND_STARTSWITH) break;
+        /* reset state */
+        s.key_primary.len = s.key_diacritic.len = s.key_case.len = s.key_special.len = 0;
+        s.key_extra[0].len = s.key_extra[1].len = s.key_extra[2].len = s.key_extra[3].len = 0;
+        s.primary_pos = 0;
+    }
+
+    if (found != -1)
+    {
+        if ((flags & FIND_ENDSWITH) && found + foundlen != srclen) found = -1;
+        else if (*reslen) *reslen = foundlen;
+    }
+    free_sortkey_state( &s );
+    free_sortkey_state( &val );
+    return found;
+}
+
+
 /* compose a full-width katakana. return consumed source characters. */
 static int map_to_fullwidth( const WCHAR *src, int srclen, WCHAR *dst )
 {
@@ -4838,9 +4919,30 @@ BOOL WINAPI DECLSPEC_HOTPATCH EnumTimeFormatsEx( TIMEFMT_ENUMPROCEX proc, const 
 INT WINAPI DECLSPEC_HOTPATCH FindNLSString( LCID lcid, DWORD flags, const WCHAR *src,
                                             int srclen, const WCHAR *value, int valuelen, int *found )
 {
-    WCHAR locale[LOCALE_NAME_MAX_LENGTH];
+    const WCHAR *locale = LOCALE_NAME_USER_DEFAULT;
+    const NLS_LOCALE_LCID_INDEX *entry;
 
-    LCIDToLocaleName( lcid, locale, ARRAY_SIZE(locale), 0 );
+    switch (lcid)
+    {
+    case LOCALE_NEUTRAL:
+    case LOCALE_USER_DEFAULT:
+    case LOCALE_SYSTEM_DEFAULT:
+    case LOCALE_CUSTOM_DEFAULT:
+    case LOCALE_CUSTOM_UNSPECIFIED:
+    case LOCALE_CUSTOM_UI_DEFAULT:
+        break;
+    default:
+        if (lcid == user_lcid || lcid == system_lcid) break;
+        if (!(entry = find_lcid_entry( lcid )))
+        {
+            WARN( "unknown locale %04lx\n", lcid );
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
+        }
+        locale = locale_strings + entry->name + 1;
+        break;
+    }
+
     return FindNLSStringEx( locale, flags, src, srclen, value, valuelen, found, NULL, NULL, 0 );
 }
 
@@ -4852,41 +4954,32 @@ INT WINAPI DECLSPEC_HOTPATCH FindNLSStringEx( const WCHAR *locale, DWORD flags, 
                                               int srclen, const WCHAR *value, int valuelen, int *found,
                                               NLSVERSIONINFO *version, void *reserved, LPARAM handle )
 {
-    /* FIXME: this function should normalize strings before calling CompareStringEx() */
-    DWORD mask = flags;
-    int offset, inc, count;
+    const struct sortguid *sortid;
 
     TRACE( "%s %lx %s %d %s %d %p %p %p %Id\n", wine_dbgstr_w(locale), flags,
            wine_dbgstr_w(src), srclen, wine_dbgstr_w(value), valuelen, found,
            version, reserved, handle );
 
-    if (version || reserved || handle || !IsValidLocaleName(locale) ||
-        !src || !srclen || srclen < -1 || !value || !valuelen || valuelen < -1)
+    if (version) FIXME( "unexpected version parameter\n" );
+    if (reserved) FIXME( "unexpected reserved value\n" );
+    if (handle) FIXME( "unexpected handle\n" );
+
+    if (!src || !srclen || srclen < -1 || !value || !valuelen || valuelen < -1)
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return -1;
     }
+    if (!(sortid = get_language_sort( locale )))
+    {
+        WARN( "unknown locale %s\n", debugstr_w(locale) );
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return -1;
+    }
+
     if (srclen == -1) srclen = lstrlenW(src);
     if (valuelen == -1) valuelen = lstrlenW(value);
 
-    srclen -= valuelen;
-    if (srclen < 0) return -1;
-
-    mask = flags & ~(FIND_FROMSTART | FIND_FROMEND | FIND_STARTSWITH | FIND_ENDSWITH);
-    count = flags & (FIND_FROMSTART | FIND_FROMEND) ? srclen + 1 : 1;
-    offset = flags & (FIND_FROMSTART | FIND_STARTSWITH) ? 0 : srclen;
-    inc = flags & (FIND_FROMSTART | FIND_STARTSWITH) ? 1 : -1;
-    while (count--)
-    {
-        if (CompareStringEx( locale, mask, src + offset, valuelen,
-                             value, valuelen, NULL, NULL, 0 ) == CSTR_EQUAL)
-        {
-            if (found) *found = valuelen;
-            return offset;
-        }
-        offset += inc;
-    }
-    return -1;
+    return find_substring( sortid, flags, src, srclen, value, valuelen, found );
 }
 
 
