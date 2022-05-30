@@ -342,6 +342,16 @@ struct sort_expansion
     WCHAR exp[2];
 };
 
+struct jamo_sort
+{
+    BYTE is_old;
+    BYTE leading;
+    BYTE vowel;
+    BYTE trailing;
+    BYTE weight;
+    BYTE pad[3];
+};
+
 struct sort_compression
 {
     UINT  offset;
@@ -412,6 +422,7 @@ static struct
     const struct sort_expansion   *expansions;      /* character expansions */
     const struct sort_compression *compressions;    /* character compression tables */
     const WCHAR                   *compr_data;      /* data for individual compressions */
+    const struct jamo_sort        *jamo;            /* table for Jamo compositions */
 } sort;
 
 static CRITICAL_SECTION locale_section;
@@ -478,7 +489,9 @@ static void load_sortdefault_nls(void)
 
     const WORD *ctype;
     const UINT *table;
+    UINT i;
     SIZE_T size;
+    const struct sort_compression *last_compr;
 
     NtGetNlsSectionPtr( 9, 0, NULL, (void **)&header, &size );
 
@@ -502,6 +515,12 @@ static void load_sortdefault_nls(void)
     sort.compr_count = table[0];
     sort.compressions = (struct sort_compression *)(table + 1);
     sort.compr_data = (WCHAR *)(sort.compressions + sort.compr_count);
+
+    last_compr = sort.compressions + sort.compr_count - 1;
+    table = (UINT *)(sort.compr_data + last_compr->offset);
+    for (i = 0; i < 7; i++) table += last_compr->len[i] * ((i + 5) / 2);
+    table += 1 + table[0] / 2;  /* skip multiple weights */
+    sort.jamo = (struct jamo_sort *)(table + 1);
 
     locale_sorts = RtlAllocateHeap( GetProcessHeap(), HEAP_ZERO_MEMORY,
                                     locale_table->nb_lcnames * sizeof(*locale_sorts) );
@@ -3299,6 +3318,75 @@ static int get_compression_weights( UINT compression, const WCHAR *compr_tables[
     return 0;
 }
 
+
+#define HANGUL_SBASE  0xac00
+#define HANGUL_LCOUNT 19
+#define HANGUL_VCOUNT 21
+#define HANGUL_TCOUNT 28
+
+static int append_hangul_weights( struct sortkey *key, const WCHAR *src, int srclen, UINT except )
+{
+    int leading_idx = 0x115f - 0x1100;  /* leading filler */
+    int vowel_idx = 0x1160 - 0x1100;  /* vowel filler */
+    int trailing_idx = -1;
+    BYTE leading_off, vowel_off, trailing_off;
+    union char_weights weights;
+    WCHAR composed;
+    BYTE filler_mask = 0;
+    int pos = 0;
+
+    /* leading */
+    if (src[pos] >= 0x1100 && src[pos] <= 0x115f) leading_idx = src[pos++] - 0x1100;
+    else if (src[pos] >= 0xa960 && src[pos] <= 0xa97c) leading_idx = src[pos++] - (0xa960 - 0x100);
+
+    /* vowel */
+    if (srclen > pos)
+    {
+        if (src[pos] >= 0x1160 && src[pos] <= 0x11a7) vowel_idx = src[pos++] - 0x1100;
+        else if (src[pos] >= 0xd7b0 && src[pos] <= 0xd7c6) vowel_idx = src[pos++] - (0xd7b0 - 0x11d);
+    }
+
+    /* trailing */
+    if (srclen > pos)
+    {
+        if (src[pos] >= 0x11a8 && src[pos] <= 0x11ff) trailing_idx = src[pos++] - 0x1100;
+        else if (src[pos] >= 0xd7cb && src[pos] <= 0xd7fb) trailing_idx = src[pos++] - (0xd7cb - 0x134);
+    }
+
+    if (!sort.jamo[leading_idx].is_old && !sort.jamo[vowel_idx].is_old &&
+        (trailing_idx == -1 || !sort.jamo[trailing_idx].is_old))
+    {
+        /* not old Hangul, only use leading char; vowel and trailing will be handled in the next pass */
+        pos = 1;
+        vowel_idx = 0x1160 - 0x1100;
+        trailing_idx = -1;
+    }
+
+    leading_off = max( sort.jamo[leading_idx].leading, sort.jamo[vowel_idx].leading );
+    vowel_off = max( sort.jamo[leading_idx].vowel, sort.jamo[vowel_idx].vowel );
+    trailing_off = max( sort.jamo[leading_idx].trailing, sort.jamo[vowel_idx].trailing );
+    if (trailing_idx != -1) trailing_off = max( trailing_off, sort.jamo[trailing_idx].trailing );
+    composed = HANGUL_SBASE + (leading_off * HANGUL_VCOUNT + vowel_off) * HANGUL_TCOUNT + trailing_off;
+
+    if (leading_idx == 0x115f - 0x1100 || vowel_idx == 0x1160 - 0x1100)
+    {
+        filler_mask = 0x80;
+        composed--;
+    }
+    if (composed < HANGUL_SBASE) composed = 0x3260;
+
+    weights = get_char_weights( composed, except );
+    append_sortkey( key, weights.script );
+    append_sortkey( key, weights.primary );
+    append_sortkey( key, 0xff );
+    append_sortkey( key, sort.jamo[leading_idx].weight | filler_mask );
+    append_sortkey( key, 0xff );
+    append_sortkey( key, sort.jamo[vowel_idx].weight );
+    append_sortkey( key, 0xff );
+    append_sortkey( key, trailing_idx != -1 ? sort.jamo[trailing_idx].weight : 2 );
+    return pos - 1;
+}
+
 /* put one of the elements of a sortkey into the dst buffer */
 static int put_sortkey( BYTE *dst, int dstlen, int pos, const struct sortkey *key, BYTE terminator )
 {
@@ -3412,6 +3500,12 @@ static int append_weights( const struct sortguid *sortid, DWORD flags,
         }
         append_expansion_weights( sortid, &s->key_primary, &s->key_diacritic,
                                   &s->key_case, weights, flags, is_compare );
+        break;
+
+    case SCRIPT_JAMO_SPECIAL:
+        ret += append_hangul_weights( &s->key_primary, src + pos, srclen - pos, except );
+        append_sortkey( &s->key_diacritic, 2 );
+        append_sortkey( &s->key_case, 2 );
         break;
 
     case SCRIPT_EXTENSION_A:
