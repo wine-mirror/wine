@@ -128,13 +128,13 @@ extern LONG macdrv_ChangeDisplaySettingsEx(LPCWSTR devname, LPDEVMODEW devmode,
                                            HWND hwnd, DWORD flags, LPVOID lpvoid) DECLSPEC_HIDDEN;
 extern BOOL macdrv_EnumDisplaySettingsEx(LPCWSTR devname, DWORD mode,
                                          LPDEVMODEW devmode, DWORD flags) DECLSPEC_HIDDEN;
+extern LRESULT macdrv_ClipboardWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp) DECLSPEC_HIDDEN;
 extern void macdrv_UpdateDisplayDevices( const struct gdi_device_manager *device_manager,
                                          BOOL force, void *param ) DECLSPEC_HIDDEN;
 extern BOOL macdrv_GetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp) DECLSPEC_HIDDEN;
 extern BOOL macdrv_SetDeviceGammaRamp(PHYSDEV dev, LPVOID ramp) DECLSPEC_HIDDEN;
 extern BOOL macdrv_ClipCursor(LPCRECT clip) DECLSPEC_HIDDEN;
 extern BOOL macdrv_CreateDesktopWindow(HWND hwnd) DECLSPEC_HIDDEN;
-extern BOOL macdrv_CreateWindow(HWND hwnd) DECLSPEC_HIDDEN;
 extern LRESULT macdrv_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam) DECLSPEC_HIDDEN;
 extern void macdrv_DestroyWindow(HWND hwnd) DECLSPEC_HIDDEN;
 extern void macdrv_SetFocus(HWND hwnd) DECLSPEC_HIDDEN;
@@ -252,7 +252,6 @@ extern HKL macdrv_get_hkl_from_source(TISInputSourceRef input_source) DECLSPEC_H
 extern void macdrv_displays_changed(const macdrv_event *event) DECLSPEC_HIDDEN;
 
 extern void macdrv_UpdateClipboard(void) DECLSPEC_HIDDEN;
-extern void macdrv_init_clipboard(void) DECLSPEC_HIDDEN;
 extern BOOL query_pasteboard_data(HWND hwnd, CFStringRef type) DECLSPEC_HIDDEN;
 extern void macdrv_lost_pasteboard_ownership(HWND hwnd) DECLSPEC_HIDDEN;
 extern const char *debugstr_format(UINT id) DECLSPEC_HIDDEN;

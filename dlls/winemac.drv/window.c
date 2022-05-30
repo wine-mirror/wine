@@ -1593,19 +1593,6 @@ LRESULT macdrv_DesktopWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
     return NtUserMessageCall(hwnd, msg, wp, lp, 0, NtUserDefWindowProc, FALSE);
 }
 
-/**********************************************************************
- *              CreateWindow   (MACDRV.@)
- */
-BOOL macdrv_CreateWindow(HWND hwnd)
-{
-    if (hwnd == NtUserGetDesktopWindow())
-    {
-        macdrv_init_clipboard();
-    }
-    return TRUE;
-}
-
-
 /***********************************************************************
  *              DestroyWindow   (MACDRV.@)
  */

@@ -1425,7 +1425,7 @@ static UINT *get_clipboard_formats(UINT *size)
     for (;;)
     {
         if (!(ids = malloc(*size * sizeof(*ids)))) return NULL;
-        if (GetUpdatedClipboardFormats(ids, *size, size)) break;
+        if (NtUserGetUpdatedClipboardFormats(ids, *size, size)) break;
         free(ids);
         if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) return NULL;
     }
@@ -1579,20 +1579,44 @@ static void update_clipboard(void)
 }
 
 
+static BOOL init_clipboard(HWND hwnd)
+{
+    struct macdrv_window_features wf;
+
+    memset(&wf, 0, sizeof(wf));
+    clipboard_cocoa_window = macdrv_create_cocoa_window(&wf, CGRectMake(100, 100, 100, 100), hwnd,
+                                                        macdrv_init_thread_data()->queue);
+    if (!clipboard_cocoa_window)
+    {
+        ERR("failed to create clipboard Cocoa window\n");
+        return FALSE;
+    }
+
+    clipboard_hwnd = hwnd;
+    clipboard_thread_id = GetCurrentThreadId();
+    NtUserAddClipboardFormatListener(clipboard_hwnd);
+    register_builtin_formats();
+    grab_win32_clipboard();
+
+    TRACE("clipboard thread %04x running\n", GetCurrentThreadId());
+    return TRUE;
+}
+
+
 /**************************************************************************
- *              clipboard_wndproc
+ *              macdrv_ClipboardWindowProc
  *
  * Window procedure for the clipboard manager.
  */
-static LRESULT CALLBACK clipboard_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
+LRESULT macdrv_ClipboardWindowProc(HWND hwnd, UINT msg, WPARAM wp, LPARAM lp)
 {
     switch (msg)
     {
         case WM_NCCREATE:
-            return TRUE;
+            return init_clipboard(hwnd);
         case WM_CLIPBOARDUPDATE:
             if (is_clipboard_owner) break;  /* ignore our own changes */
-            if ((LONG)(GetClipboardSequenceNumber() - last_get_seqno) <= 0) break;
+            if ((LONG)(NtUserGetClipboardSequenceNumber() - last_get_seqno) <= 0) break;
             set_mac_pasteboard_types_from_win32_clipboard();
             break;
         case WM_RENDERFORMAT:
@@ -1605,95 +1629,13 @@ static LRESULT CALLBACK clipboard_wndproc(HWND hwnd, UINT msg, WPARAM wp, LPARAM
         case WM_DESTROYCLIPBOARD:
             TRACE("WM_DESTROYCLIPBOARD: lost ownership\n");
             is_clipboard_owner = FALSE;
-            KillTimer(hwnd, 1);
+            NtUserKillTimer(hwnd, 1);
             break;
         case WM_USER:
             update_clipboard();
             break;
     }
-    return DefWindowProcW(hwnd, msg, wp, lp);
-}
-
-
-/**************************************************************************
- *              wait_clipboard_mutex
- *
- * Make sure that there's only one clipboard thread per window station.
- */
-static BOOL wait_clipboard_mutex(void)
-{
-    static const WCHAR prefix[] = {'_','_','w','i','n','e','_','c','l','i','p','b','o','a','r','d','_'};
-    WCHAR buffer[MAX_PATH + ARRAY_SIZE(prefix)];
-    HANDLE mutex;
-
-    memcpy(buffer, prefix, sizeof(prefix));
-    if (!GetUserObjectInformationW(GetProcessWindowStation(), UOI_NAME,
-                                   buffer + ARRAY_SIZE(prefix),
-                                   sizeof(buffer) - sizeof(prefix), NULL))
-    {
-        ERR("failed to get winstation name\n");
-        return FALSE;
-    }
-    mutex = CreateMutexW(NULL, TRUE, buffer);
-    if (GetLastError() == ERROR_ALREADY_EXISTS)
-    {
-        TRACE("waiting for mutex %s\n", debugstr_w(buffer));
-        WaitForSingleObject(mutex, INFINITE);
-    }
-    return TRUE;
-}
-
-
-/**************************************************************************
- *              clipboard_thread
- *
- * Thread running inside the desktop process to manage the clipboard
- */
-static DWORD WINAPI clipboard_thread(void *arg)
-{
-    WNDCLASSW class;
-    struct macdrv_window_features wf;
-    MSG msg;
-
-    if (!wait_clipboard_mutex()) return 0;
-
-    memset(&class, 0, sizeof(class));
-    class.lpfnWndProc   = clipboard_wndproc;
-    class.lpszClassName = clipboard_classname;
-
-    if (!RegisterClassW(&class) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
-    {
-        ERR("could not register clipboard window class err %u\n", GetLastError());
-        return 0;
-    }
-    if (!(clipboard_hwnd = CreateWindowW(clipboard_classname, NULL, 0, 0, 0, 0, 0,
-                                         HWND_MESSAGE, 0, 0, NULL)))
-    {
-        ERR("failed to create clipboard window err %u\n", GetLastError());
-        return 0;
-    }
-
-    memset(&wf, 0, sizeof(wf));
-    clipboard_cocoa_window = macdrv_create_cocoa_window(&wf, CGRectMake(100, 100, 100, 100), clipboard_hwnd,
-                                                        macdrv_init_thread_data()->queue);
-    if (!clipboard_cocoa_window)
-    {
-        ERR("failed to create clipboard Cocoa window\n");
-        goto done;
-    }
-
-    clipboard_thread_id = GetCurrentThreadId();
-    NtUserAddClipboardFormatListener(clipboard_hwnd);
-    register_builtin_formats();
-    grab_win32_clipboard();
-
-    TRACE("clipboard thread %04x running\n", GetCurrentThreadId());
-    while (GetMessageW(&msg, 0, 0, 0)) DispatchMessageW(&msg);
-
-done:
-    macdrv_destroy_cocoa_window(clipboard_cocoa_window);
-    DestroyWindow(clipboard_hwnd);
-    return 0;
+    return NtUserMessageCall(hwnd, msg, wp, lp, NULL, NtUserDefWindowProc, FALSE);
 }
 
 
@@ -1803,17 +1745,4 @@ void macdrv_lost_pasteboard_ownership(HWND hwnd)
     TRACE("win %p\n", hwnd);
     if (!macdrv_is_pasteboard_owner(clipboard_cocoa_window))
         grab_win32_clipboard();
-}
-
-
-/**************************************************************************
- *              macdrv_init_clipboard
- */
-void macdrv_init_clipboard(void)
-{
-    DWORD id;
-    HANDLE handle = CreateThread(NULL, 0, clipboard_thread, NULL, 0, &id);
-
-    if (handle) CloseHandle(handle);
-    else ERR("failed to create clipboard thread\n");
 }
