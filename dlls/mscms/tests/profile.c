@@ -30,79 +30,6 @@
 
 #include "wine/test.h"
 
-static HMODULE hmscms;
-static HMODULE huser32;
-
-static BOOL     (WINAPI *pAssociateColorProfileWithDeviceA)(PCSTR,PCSTR,PCSTR);
-static BOOL     (WINAPI *pCloseColorProfile)(HPROFILE);
-static HTRANSFORM (WINAPI *pCreateMultiProfileTransform)(PHPROFILE,DWORD,PDWORD,DWORD,DWORD,DWORD);
-static BOOL     (WINAPI *pDeleteColorTransform)(HTRANSFORM);
-static BOOL     (WINAPI *pDisassociateColorProfileFromDeviceA)(PCSTR,PCSTR,PCSTR);
-static BOOL     (WINAPI *pGetColorDirectoryA)(PCHAR,PCHAR,PDWORD);
-static BOOL     (WINAPI *pGetColorDirectoryW)(PWCHAR,PWCHAR,PDWORD);
-static BOOL     (WINAPI *pGetColorProfileElement)(HPROFILE,TAGTYPE,DWORD,PDWORD,PVOID,PBOOL);
-static BOOL     (WINAPI *pGetColorProfileElementTag)(HPROFILE,DWORD,PTAGTYPE);
-static BOOL     (WINAPI *pGetColorProfileFromHandle)(HPROFILE,PBYTE,PDWORD);
-static BOOL     (WINAPI *pGetColorProfileHeader)(HPROFILE,PPROFILEHEADER);
-static BOOL     (WINAPI *pGetCountColorProfileElements)(HPROFILE,PDWORD);
-static BOOL     (WINAPI *pGetStandardColorSpaceProfileA)(PCSTR,DWORD,PSTR,PDWORD);
-static BOOL     (WINAPI *pGetStandardColorSpaceProfileW)(PCWSTR,DWORD,PWSTR,PDWORD);
-static BOOL     (WINAPI *pEnumColorProfilesA)(PCSTR,PENUMTYPEA,PBYTE,PDWORD,PDWORD);
-static BOOL     (WINAPI *pEnumColorProfilesW)(PCWSTR,PENUMTYPEW,PBYTE,PDWORD,PDWORD);
-static BOOL     (WINAPI *pInstallColorProfileA)(PCSTR,PCSTR);
-static BOOL     (WINAPI *pInstallColorProfileW)(PCWSTR,PCWSTR);
-static BOOL     (WINAPI *pIsColorProfileTagPresent)(HPROFILE,TAGTYPE,PBOOL);
-static HPROFILE (WINAPI *pOpenColorProfileA)(PPROFILE,DWORD,DWORD,DWORD);
-static HPROFILE (WINAPI *pOpenColorProfileW)(PPROFILE,DWORD,DWORD,DWORD);
-static BOOL     (WINAPI *pSetColorProfileElement)(HPROFILE,TAGTYPE,DWORD,PDWORD,PVOID);
-static BOOL     (WINAPI *pSetColorProfileHeader)(HPROFILE,PPROFILEHEADER);
-static BOOL     (WINAPI *pSetStandardColorSpaceProfileA)(PCSTR,DWORD,PSTR);
-static BOOL     (WINAPI *pSetStandardColorSpaceProfileW)(PCWSTR,DWORD,PWSTR);
-static BOOL     (WINAPI *pTranslateBitmapBits)(HTRANSFORM,PVOID,BMFORMAT,DWORD,DWORD,DWORD,PVOID,BMFORMAT,DWORD,PBMCALLBACKFN,ULONG);
-static BOOL     (WINAPI *pUninstallColorProfileA)(PCSTR,PCSTR,BOOL);
-static BOOL     (WINAPI *pUninstallColorProfileW)(PCWSTR,PCWSTR,BOOL);
-
-static BOOL     (WINAPI *pEnumDisplayDevicesA)(LPCSTR,DWORD,PDISPLAY_DEVICEA,DWORD);
-
-#define GETFUNCPTR(func) p##func = (void *)GetProcAddress( hmscms, #func ); \
-    if (!p##func) return FALSE;
-
-static BOOL init_function_ptrs( void )
-{
-    GETFUNCPTR( AssociateColorProfileWithDeviceA )
-    GETFUNCPTR( CloseColorProfile )
-    GETFUNCPTR( CreateMultiProfileTransform )
-    GETFUNCPTR( DeleteColorTransform )
-    GETFUNCPTR( DisassociateColorProfileFromDeviceA )
-    GETFUNCPTR( GetColorDirectoryA )
-    GETFUNCPTR( GetColorDirectoryW )
-    GETFUNCPTR( GetColorProfileElement )
-    GETFUNCPTR( GetColorProfileElementTag )
-    GETFUNCPTR( GetColorProfileFromHandle )
-    GETFUNCPTR( GetColorProfileHeader )
-    GETFUNCPTR( GetCountColorProfileElements )
-    GETFUNCPTR( GetStandardColorSpaceProfileA )
-    GETFUNCPTR( GetStandardColorSpaceProfileW )
-    GETFUNCPTR( EnumColorProfilesA )
-    GETFUNCPTR( EnumColorProfilesW )
-    GETFUNCPTR( InstallColorProfileA )
-    GETFUNCPTR( InstallColorProfileW )
-    GETFUNCPTR( IsColorProfileTagPresent )
-    GETFUNCPTR( OpenColorProfileA )
-    GETFUNCPTR( OpenColorProfileW )
-    GETFUNCPTR( SetColorProfileElement )
-    GETFUNCPTR( SetColorProfileHeader )
-    GETFUNCPTR( SetStandardColorSpaceProfileA )
-    GETFUNCPTR( SetStandardColorSpaceProfileW )
-    GETFUNCPTR( UninstallColorProfileA )
-    GETFUNCPTR( UninstallColorProfileW )
-    GETFUNCPTR( TranslateBitmapBits )
-
-    pEnumDisplayDevicesA = (void *)GetProcAddress( huser32, "EnumDisplayDevicesA" );
-
-    return TRUE;
-}
-
 static const char machine[] = "dummy";
 static const WCHAR machineW[] = L"dummy";
 
@@ -161,26 +88,24 @@ static void test_GetColorDirectoryA(void)
     char buffer[MAX_PATH];
 
     /* Parameter checks */
-
-    ret = pGetColorDirectoryA( NULL, NULL, NULL );
+    ret = GetColorDirectoryA( NULL, NULL, NULL );
     ok( !ret, "GetColorDirectoryA() succeeded (%lu)\n", GetLastError() );
 
     size = 0;
-    ret = pGetColorDirectoryA( NULL, NULL, &size );
+    ret = GetColorDirectoryA( NULL, NULL, &size );
     ok( !ret && size > 0, "GetColorDirectoryA() succeeded (%lu)\n", GetLastError() );
 
     size = 0;
-    ret = pGetColorDirectoryA( NULL, buffer, &size );
+    ret = GetColorDirectoryA( NULL, buffer, &size );
     ok( !ret && size > 0, "GetColorDirectoryA() succeeded (%lu)\n", GetLastError() );
 
     size = 1;
-    ret = pGetColorDirectoryA( NULL, buffer, &size );
+    ret = GetColorDirectoryA( NULL, buffer, &size );
     ok( !ret && size > 0, "GetColorDirectoryA() succeeded (%lu)\n", GetLastError() );
 
     /* Functional checks */
-
     size = sizeof(buffer);
-    ret = pGetColorDirectoryA( NULL, buffer, &size );
+    ret = GetColorDirectoryA( NULL, buffer, &size );
     ok( ret && size > 0, "GetColorDirectoryA() failed (%lu)\n", GetLastError() );
 }
 
@@ -191,28 +116,24 @@ static void test_GetColorDirectoryW(void)
     WCHAR buffer[MAX_PATH];
 
     /* Parameter checks */
-
-    /* This one crashes win2k
-    ret = pGetColorDirectoryW( NULL, NULL, NULL );
+    ret = GetColorDirectoryW( NULL, NULL, NULL );
     ok( !ret, "GetColorDirectoryW() succeeded (%lu)\n", GetLastError() );
-     */
 
     size = 0;
-    ret = pGetColorDirectoryW( NULL, NULL, &size );
+    ret = GetColorDirectoryW( NULL, NULL, &size );
     ok( !ret && size > 0, "GetColorDirectoryW() succeeded (%lu)\n", GetLastError() );
 
     size = 0;
-    ret = pGetColorDirectoryW( NULL, buffer, &size );
+    ret = GetColorDirectoryW( NULL, buffer, &size );
     ok( !ret && size > 0, "GetColorDirectoryW() succeeded (%lu)\n", GetLastError() );
 
     size = 1;
-    ret = pGetColorDirectoryW( NULL, buffer, &size );
+    ret = GetColorDirectoryW( NULL, buffer, &size );
     ok( !ret && size > 0, "GetColorDirectoryW() succeeded (%lu)\n", GetLastError() );
 
     /* Functional checks */
-
     size = sizeof(buffer);
-    ret = pGetColorDirectoryW( NULL, buffer, &size );
+    ret = GetColorDirectoryW( NULL, buffer, &size );
     ok( ret && size > 0, "GetColorDirectoryW() failed (%lu)\n", GetLastError() );
 }
 
@@ -232,31 +153,29 @@ static void test_GetColorProfileElement( char *standardprofile )
         profile.pProfileData = standardprofile;
         profile.cbDataSize = strlen(standardprofile);
 
-        handle = pOpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
+        handle = OpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
         ok( handle != NULL, "OpenColorProfileA() failed (%lu)\n", GetLastError() );
 
         /* Parameter checks */
-
-        ret = pGetColorProfileElement( handle, tag, 0, NULL, NULL, &ref );
+        ret = GetColorProfileElement( handle, tag, 0, NULL, NULL, &ref );
         ok( !ret, "GetColorProfileElement() succeeded (%lu)\n", GetLastError() );
 
-        ret = pGetColorProfileElement( handle, tag, 0, &size, NULL, NULL );
+        ret = GetColorProfileElement( handle, tag, 0, &size, NULL, NULL );
         ok( !ret, "GetColorProfileElement() succeeded (%lu)\n", GetLastError() );
 
         size = 0;
-        ret = pGetColorProfileElement( handle, tag, 0, &size, NULL, &ref );
+        ret = GetColorProfileElement( handle, tag, 0, &size, NULL, &ref );
         ok( !ret, "GetColorProfileElement() succeeded\n" );
         ok( size > 0, "wrong size\n" );
 
         /* Functional checks */
-
         size = sizeof(buffer);
-        ret = pGetColorProfileElement( handle, tag, 0, &size, buffer, &ref );
+        ret = GetColorProfileElement( handle, tag, 0, &size, buffer, &ref );
         ok( ret, "GetColorProfileElement() failed %lu\n", GetLastError() );
         ok( size > 0, "wrong size\n" );
         ok( !memcmp( buffer, expect, sizeof(expect)-1 ), "Unexpected tag data\n" );
 
-        pCloseColorProfile( handle );
+        CloseColorProfile( handle );
     }
 }
 
@@ -274,29 +193,27 @@ static void test_GetColorProfileElementTag( char *standardprofile )
         profile.pProfileData = standardprofile;
         profile.cbDataSize = strlen(standardprofile);
 
-        handle = pOpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
+        handle = OpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
         ok( handle != NULL, "OpenColorProfileA() failed (%lu)\n", GetLastError() );
 
         /* Parameter checks */
-
-        ret = pGetColorProfileElementTag( NULL, index, &tag );
+        ret = GetColorProfileElementTag( NULL, index, &tag );
         ok( !ret, "GetColorProfileElementTag() succeeded (%lu)\n", GetLastError() );
 
-        ret = pGetColorProfileElementTag( handle, 0, &tag );
+        ret = GetColorProfileElementTag( handle, 0, &tag );
         ok( !ret, "GetColorProfileElementTag() succeeded (%lu)\n", GetLastError() );
 
-        ret = pGetColorProfileElementTag( handle, index, NULL );
+        ret = GetColorProfileElementTag( handle, index, NULL );
         ok( !ret, "GetColorProfileElementTag() succeeded (%lu)\n", GetLastError() );
 
-        ret = pGetColorProfileElementTag( handle, 18, NULL );
+        ret = GetColorProfileElementTag( handle, 18, NULL );
         ok( !ret, "GetColorProfileElementTag() succeeded (%lu)\n", GetLastError() );
 
         /* Functional checks */
-
-        while ((ret = pGetColorProfileElementTag( handle, index, &tag )) && tag != expect) index++;
+        while ((ret = GetColorProfileElementTag( handle, index, &tag )) && tag != expect) index++;
         ok( ret && tag == expect, "GetColorProfileElementTag() failed (%lu)\n", GetLastError() );
 
-        pCloseColorProfile( handle );
+        CloseColorProfile( handle );
     }
 }
 
@@ -315,29 +232,25 @@ static void test_GetColorProfileFromHandle( char *testprofile )
         profile.pProfileData = testprofile;
         profile.cbDataSize = strlen(testprofile);
 
-        handle = pOpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
+        handle = OpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
         ok( handle != NULL, "OpenColorProfileA() failed (%lu)\n", GetLastError() );
 
         /* Parameter checks */
-
         size = 0;
-
-        ret = pGetColorProfileFromHandle( handle, NULL, &size );
+        ret = GetColorProfileFromHandle( handle, NULL, &size );
         ok( !ret && size > 0, "GetColorProfileFromHandle() failed (%lu)\n", GetLastError() );
 
         buffer = HeapAlloc( GetProcessHeap(), 0, size );
-
         if (buffer)
         {
-            ret = pGetColorProfileFromHandle( NULL, buffer, &size );
+            ret = GetColorProfileFromHandle( NULL, buffer, &size );
             ok( !ret, "GetColorProfileFromHandle() succeeded (%lu)\n", GetLastError() );
 
-            ret = pGetColorProfileFromHandle( handle, buffer, NULL );
+            ret = GetColorProfileFromHandle( handle, buffer, NULL );
             ok( !ret, "GetColorProfileFromHandle() succeeded (%lu)\n", GetLastError() );
 
             /* Functional checks */
-
-            ret = pGetColorProfileFromHandle( handle, buffer, &size );
+            ret = GetColorProfileFromHandle( handle, buffer, &size );
             ok( ret && size > 0, "GetColorProfileFromHandle() failed (%lu)\n", GetLastError() );
 
             header = (PROFILEHEADER *)buffer;
@@ -350,11 +263,10 @@ static void test_GetColorProfileFromHandle( char *testprofile )
             ok( header->phIlluminant.ciexyzX == 0xd6f60000, "wrong phIlluminant.ciexyzX %lx\n", header->phIlluminant.ciexyzX );
             ok( header->phIlluminant.ciexyzY == 0x00000100, "wrong phIlluminant.ciexyzY %lx\n", header->phIlluminant.ciexyzY );
             ok( header->phIlluminant.ciexyzZ == 0x2dd30000, "wrong phIlluminant.ciexyzZ %lx\n", header->phIlluminant.ciexyzZ );
-
             HeapFree( GetProcessHeap(), 0, buffer );
         }
 
-        pCloseColorProfile( handle );
+        CloseColorProfile( handle );
     }
 }
 
@@ -371,26 +283,24 @@ static void test_GetColorProfileHeader( char *testprofile )
         profile.pProfileData = testprofile;
         profile.cbDataSize = strlen(testprofile);
 
-        handle = pOpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
+        handle = OpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
         ok( handle != NULL, "OpenColorProfileA() failed (%lu)\n", GetLastError() );
 
         /* Parameter checks */
-
-        ret = pGetColorProfileHeader( NULL, NULL );
+        ret = GetColorProfileHeader( NULL, NULL );
         ok( !ret, "GetColorProfileHeader() succeeded (%lu)\n", GetLastError() );
 
-        ret = pGetColorProfileHeader( NULL, &header );
+        ret = GetColorProfileHeader( NULL, &header );
         ok( !ret, "GetColorProfileHeader() succeeded (%lu)\n", GetLastError() );
 
         if (0) /* Crashes on Vista */
         {
-            ret = pGetColorProfileHeader( handle, NULL );
-            ok( !ret, "GetColorProfileHeader() succeeded (%lu)\n", GetLastError() );
+        ret = GetColorProfileHeader( handle, NULL );
+        ok( !ret, "GetColorProfileHeader() succeeded (%lu)\n", GetLastError() );
         }
 
         /* Functional checks */
-
-        ret = pGetColorProfileHeader( handle, &header );
+        ret = GetColorProfileHeader( handle, &header );
         ok( ret, "GetColorProfileHeader() failed (%lu)\n", GetLastError() );
 
         ok( header.phClass == 0x6d6e7472, "wrong phClass %#lx\n", header.phClass );
@@ -403,7 +313,7 @@ static void test_GetColorProfileHeader( char *testprofile )
         ok( header.phIlluminant.ciexyzY == 0x00010000, "wrong phIlluminant.ciexyzY %#lx\n", header.phIlluminant.ciexyzY );
         ok( header.phIlluminant.ciexyzZ == 0x0000d32d, "wrong phIlluminant.ciexyzZ %#lx\n", header.phIlluminant.ciexyzZ );
 
-        pCloseColorProfile( handle );
+        CloseColorProfile( handle );
     }
 }
 
@@ -420,24 +330,22 @@ static void test_GetCountColorProfileElements( char *standardprofile )
         profile.pProfileData = standardprofile;
         profile.cbDataSize = strlen(standardprofile);
 
-        handle = pOpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
+        handle = OpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
         ok( handle != NULL, "OpenColorProfileA() failed (%lu)\n", GetLastError() );
 
         /* Parameter checks */
-
-        ret = pGetCountColorProfileElements( NULL, &count );
+        ret = GetCountColorProfileElements( NULL, &count );
         ok( !ret, "GetCountColorProfileElements() succeeded (%lu)\n", GetLastError() );
 
-        ret = pGetCountColorProfileElements( handle, NULL );
+        ret = GetCountColorProfileElements( handle, NULL );
         ok( !ret, "GetCountColorProfileElements() succeeded (%lu)\n", GetLastError() );
 
         /* Functional checks */
-
-        ret = pGetCountColorProfileElements( handle, &count );
+        ret = GetCountColorProfileElements( handle, &count );
         ok( ret && count > 15 && count < 20,
             "GetCountColorProfileElements() failed (%lu) %lu\n", GetLastError(), count );
 
-        pCloseColorProfile( handle );
+        CloseColorProfile( handle );
     }
 }
 
@@ -448,75 +356,70 @@ static void test_GetStandardColorSpaceProfileA( char *standardprofile )
     CHAR oldprofile[MAX_PATH];
     CHAR newprofile[MAX_PATH];
 
-    /* Parameter checks */
-
     /* Single invalid parameter checks: */
-
     size = sizeof(newprofile);
     SetLastError(0xfaceabee); /* 1st param, */
-    ret = pGetStandardColorSpaceProfileA(machine, LCS_sRGB, newprofile, &size);
+    ret = GetStandardColorSpaceProfileA(machine, LCS_sRGB, newprofile, &size);
     ok( !ret && GetLastError() == ERROR_NOT_SUPPORTED, "GetStandardColorSpaceProfileA() returns %d (GLE=%lu)\n",
         ret, GetLastError() );
 
     size = sizeof(newprofile);
     SetLastError(0xfaceabee); /* 2nd param, */
-    ret = pGetStandardColorSpaceProfileA(NULL, (DWORD)-1, newprofile, &size);
+    ret = GetStandardColorSpaceProfileA(NULL, (DWORD)-1, newprofile, &size);
     ok( !ret && GetLastError() == ERROR_FILE_NOT_FOUND, "GetStandardColorSpaceProfileA() returns %d (GLE=%lu)\n",
         ret, GetLastError() );
 
     size = sizeof(newprofile);
     SetLastError(0xfaceabee); /* 4th param, */
-    ret = pGetStandardColorSpaceProfileA(NULL, LCS_sRGB, newprofile, NULL);
+    ret = GetStandardColorSpaceProfileA(NULL, LCS_sRGB, newprofile, NULL);
     ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER, "GetStandardColorSpaceProfileA() returns %d (GLE=%lu)\n",
         ret, GetLastError() );
 
     size = sizeof(newprofile);
     SetLastError(0xfaceabee); /* 3rd param, */
-    ret = pGetStandardColorSpaceProfileA(NULL, LCS_sRGB, NULL, &size);
+    ret = GetStandardColorSpaceProfileA(NULL, LCS_sRGB, NULL, &size);
     ok( !ret && GetLastError() == ERROR_INSUFFICIENT_BUFFER, "GetStandardColorSpaceProfileA() returns %d (GLE=%lu)\n",
         ret, GetLastError() );
 
     size = 0;
     SetLastError(0xfaceabee); /* dereferenced 4th param, */
-    ret = pGetStandardColorSpaceProfileA(NULL, LCS_sRGB, newprofile, &size);
+    ret = GetStandardColorSpaceProfileA(NULL, LCS_sRGB, newprofile, &size);
     ok( !ret && (GetLastError() == ERROR_MORE_DATA || GetLastError() == ERROR_INSUFFICIENT_BUFFER),
         "GetStandardColorSpaceProfileA() returns %d (GLE=%lu)\n", ret, GetLastError() );
 
     /* Several invalid parameter checks: */
-
     size = 0;
     SetLastError(0xfaceabee); /* 1st, maybe 2nd and then dereferenced 4th param, */
-    ret = pGetStandardColorSpaceProfileA(machine, 0, newprofile, &size);
+    ret = GetStandardColorSpaceProfileA(machine, 0, newprofile, &size);
     ok( !ret && (GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_NOT_SUPPORTED),
         "GetStandardColorSpaceProfileA() returns %d (GLE=%lu)\n", ret, GetLastError() );
 
     SetLastError(0xfaceabee); /* maybe 2nd and then 4th param, */
-    ret = pGetStandardColorSpaceProfileA(NULL, 0, newprofile, NULL);
+    ret = GetStandardColorSpaceProfileA(NULL, 0, newprofile, NULL);
     ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER, "GetStandardColorSpaceProfileA() returns %d (GLE=%lu)\n",
         ret, GetLastError() );
 
     size = 0;
     SetLastError(0xfaceabee); /* maybe 2nd, then 3rd and dereferenced 4th param, */
-    ret = pGetStandardColorSpaceProfileA(NULL, 0, NULL, &size);
+    ret = GetStandardColorSpaceProfileA(NULL, 0, NULL, &size);
     ok( !ret && (GetLastError() == ERROR_INSUFFICIENT_BUFFER || GetLastError() == ERROR_FILE_NOT_FOUND),
         "GetStandardColorSpaceProfileA() returns %d (GLE=%lu)\n", ret, GetLastError() );
 
     size = sizeof(newprofile);
     SetLastError(0xfaceabee); /* maybe 2nd param. */
-    ret = pGetStandardColorSpaceProfileA(NULL, 0, newprofile, &size);
+    ret = GetStandardColorSpaceProfileA(NULL, 0, newprofile, &size);
     if (!ret) ok( GetLastError() == ERROR_FILE_NOT_FOUND, "GetStandardColorSpaceProfileA() returns %d (GLE=%lu)\n",
         ret, GetLastError() );
     else ok( !lstrcmpiA( newprofile, "" ) && GetLastError() == 0xfaceabee,
              "GetStandardColorSpaceProfileA() returns %d (GLE=%lu)\n", ret, GetLastError() );
 
     /* Functional checks */
-
     size = sizeof(oldprofile);
-    ret = pGetStandardColorSpaceProfileA( NULL, LCS_sRGB, oldprofile, &size );
+    ret = GetStandardColorSpaceProfileA( NULL, LCS_sRGB, oldprofile, &size );
     ok( ret, "GetStandardColorSpaceProfileA() failed (%lu)\n", GetLastError() );
 
     SetLastError(0xdeadbeef);
-    ret = pSetStandardColorSpaceProfileA( NULL, LCS_sRGB, standardprofile );
+    ret = SetStandardColorSpaceProfileA( NULL, LCS_sRGB, standardprofile );
     if (!ret && (GetLastError() == ERROR_ACCESS_DENIED))
     {
         skip("Not enough rights for SetStandardColorSpaceProfileA\n");
@@ -525,10 +428,10 @@ static void test_GetStandardColorSpaceProfileA( char *standardprofile )
     ok( ret, "SetStandardColorSpaceProfileA() failed (%lu)\n", GetLastError() );
 
     size = sizeof(newprofile);
-    ret = pGetStandardColorSpaceProfileA( NULL, LCS_sRGB, newprofile, &size );
+    ret = GetStandardColorSpaceProfileA( NULL, LCS_sRGB, newprofile, &size );
     ok( ret, "GetStandardColorSpaceProfileA() failed (%lu)\n", GetLastError() );
 
-    ret = pSetStandardColorSpaceProfileA( NULL, LCS_sRGB, oldprofile );
+    ret = SetStandardColorSpaceProfileA( NULL, LCS_sRGB, oldprofile );
     ok( ret, "SetStandardColorSpaceProfileA() failed (%lu)\n", GetLastError() );
 }
 
@@ -540,77 +443,69 @@ static void test_GetStandardColorSpaceProfileW( WCHAR *standardprofileW )
     WCHAR newprofile[MAX_PATH];
     CHAR newprofileA[MAX_PATH];
 
-    /* Parameter checks */
-
     /* Single invalid parameter checks: */
-
     size = sizeof(newprofile);
     SetLastError(0xfaceabee); /* 1st param, */
-    ret = pGetStandardColorSpaceProfileW(machineW, LCS_sRGB, newprofile, &size);
+    ret = GetStandardColorSpaceProfileW(machineW, LCS_sRGB, newprofile, &size);
     ok( !ret && GetLastError() == ERROR_NOT_SUPPORTED, "GetStandardColorSpaceProfileW() returns %d (GLE=%lu)\n",
         ret, GetLastError() );
 
     size = sizeof(newprofile);
     SetLastError(0xfaceabee); /* 2nd param, */
-    ret = pGetStandardColorSpaceProfileW(NULL, (DWORD)-1, newprofile, &size);
+    ret = GetStandardColorSpaceProfileW(NULL, (DWORD)-1, newprofile, &size);
     ok( !ret && GetLastError() == ERROR_FILE_NOT_FOUND, "GetStandardColorSpaceProfileW() returns %d (GLE=%lu)\n",
         ret, GetLastError() );
 
     size = sizeof(newprofile);
     SetLastError(0xfaceabee); /* 2nd param, */
-    ret = pGetStandardColorSpaceProfileW(NULL, 0, newprofile, &size);
-    ok( (!ret && GetLastError() == ERROR_FILE_NOT_FOUND) ||
-        broken(ret), /* Win98 and WinME */
+    ret = GetStandardColorSpaceProfileW(NULL, 0, newprofile, &size);
+    ok( !ret && GetLastError() == ERROR_FILE_NOT_FOUND,
         "GetStandardColorSpaceProfileW() returns %d (GLE=%lu)\n", ret, GetLastError() );
 
     size = sizeof(newprofile);
     SetLastError(0xfaceabee); /* 3rd param, */
-    ret = pGetStandardColorSpaceProfileW(NULL, LCS_sRGB, NULL, &size);
-    ok( !ret || broken(ret) /* win98 */, "GetStandardColorSpaceProfileW succeeded\n" );
-    ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER ||
-        broken(GetLastError() == 0xfaceabee) /* win98 */,
+    ret = GetStandardColorSpaceProfileW(NULL, LCS_sRGB, NULL, &size);
+    ok( !ret, "GetStandardColorSpaceProfileW succeeded\n" );
+    ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER,
         "GetStandardColorSpaceProfileW() returns GLE=%lu\n", GetLastError() );
 
     size = sizeof(newprofile);
     SetLastError(0xfaceabee); /* 4th param, */
-    ret = pGetStandardColorSpaceProfileW(NULL, LCS_sRGB, newprofile, NULL);
+    ret = GetStandardColorSpaceProfileW(NULL, LCS_sRGB, newprofile, NULL);
     ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER, "GetStandardColorSpaceProfileW() returns %d (GLE=%lu)\n",
         ret, GetLastError() );
 
     size = 0;
     SetLastError(0xfaceabee); /* dereferenced 4th param. */
-    ret = pGetStandardColorSpaceProfileW(NULL, LCS_sRGB, newprofile, &size);
-    ok( !ret || broken(ret) /* win98 */, "GetStandardColorSpaceProfileW succeeded\n" );
+    ret = GetStandardColorSpaceProfileW(NULL, LCS_sRGB, newprofile, &size);
+    ok( !ret, "GetStandardColorSpaceProfileW succeeded\n" );
     ok( GetLastError() == ERROR_MORE_DATA ||
-        GetLastError() == ERROR_INSUFFICIENT_BUFFER ||
-        broken(GetLastError() == 0xfaceabee) /* win98 */,
+        GetLastError() == ERROR_INSUFFICIENT_BUFFER,
         "GetStandardColorSpaceProfileW() returns GLE=%lu\n", GetLastError() );
 
     /* Several invalid parameter checks: */
-
     size = 0;
     SetLastError(0xfaceabee); /* 1st, maybe 2nd and then dereferenced 4th param, */
-    ret = pGetStandardColorSpaceProfileW(machineW, 0, newprofile, &size);
+    ret = GetStandardColorSpaceProfileW(machineW, 0, newprofile, &size);
     ok( !ret && (GetLastError() == ERROR_INVALID_PARAMETER || GetLastError() == ERROR_NOT_SUPPORTED),
         "GetStandardColorSpaceProfileW() returns %d (GLE=%lu)\n", ret, GetLastError() );
 
     SetLastError(0xfaceabee); /* maybe 2nd and then 4th param, */
-    ret = pGetStandardColorSpaceProfileW(NULL, 0, newprofile, NULL);
+    ret = GetStandardColorSpaceProfileW(NULL, 0, newprofile, NULL);
     ok( !ret && GetLastError() == ERROR_INVALID_PARAMETER, "GetStandardColorSpaceProfileW() returns %d (GLE=%lu)\n",
         ret, GetLastError() );
 
     size = 0;
     SetLastError(0xfaceabee); /* maybe 2nd, then 3rd and dereferenced 4th param, */
-    ret = pGetStandardColorSpaceProfileW(NULL, 0, NULL, &size);
-    ok( !ret || broken(ret) /* win98 */, "GetStandardColorSpaceProfileW succeeded\n" );
+    ret = GetStandardColorSpaceProfileW(NULL, 0, NULL, &size);
+    ok( !ret, "GetStandardColorSpaceProfileW succeeded\n" );
     ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER ||
-        GetLastError() == ERROR_FILE_NOT_FOUND ||
-        broken(GetLastError() == 0xfaceabee) /* win98 */,
+        GetLastError() == ERROR_FILE_NOT_FOUND,
         "GetStandardColorSpaceProfileW() returns GLE=%lu\n", GetLastError() );
 
     size = sizeof(newprofile);
     SetLastError(0xfaceabee); /* maybe 2nd param. */
-    ret = pGetStandardColorSpaceProfileW(NULL, 0, newprofile, &size);
+    ret = GetStandardColorSpaceProfileW(NULL, 0, newprofile, &size);
     if (!ret) ok( GetLastError() == ERROR_FILE_NOT_FOUND, "GetStandardColorSpaceProfileW() returns %d (GLE=%lu)\n",
                   ret, GetLastError() );
     else
@@ -621,13 +516,12 @@ static void test_GetStandardColorSpaceProfileW( WCHAR *standardprofileW )
     }
 
     /* Functional checks */
-
     size = sizeof(oldprofile);
-    ret = pGetStandardColorSpaceProfileW( NULL, LCS_sRGB, oldprofile, &size );
+    ret = GetStandardColorSpaceProfileW( NULL, LCS_sRGB, oldprofile, &size );
     ok( ret, "GetStandardColorSpaceProfileW() failed (%lu)\n", GetLastError() );
 
     SetLastError(0xdeadbeef);
-    ret = pSetStandardColorSpaceProfileW( NULL, LCS_sRGB, standardprofileW );
+    ret = SetStandardColorSpaceProfileW( NULL, LCS_sRGB, standardprofileW );
     if (!ret && (GetLastError() == ERROR_ACCESS_DENIED))
     {
         skip("Not enough rights for SetStandardColorSpaceProfileW\n");
@@ -636,10 +530,10 @@ static void test_GetStandardColorSpaceProfileW( WCHAR *standardprofileW )
     ok( ret, "SetStandardColorSpaceProfileW() failed (%lu)\n", GetLastError() );
 
     size = sizeof(newprofile);
-    ret = pGetStandardColorSpaceProfileW( NULL, LCS_sRGB, newprofile, &size );
+    ret = GetStandardColorSpaceProfileW( NULL, LCS_sRGB, newprofile, &size );
     ok( ret, "GetStandardColorSpaceProfileW() failed (%lu)\n", GetLastError() );
 
-    ret = pSetStandardColorSpaceProfileW( NULL, LCS_sRGB, oldprofile );
+    ret = SetStandardColorSpaceProfileW( NULL, LCS_sRGB, oldprofile );
     ok( ret, "SetStandardColorSpaceProfileW() failed (%lu)\n", GetLastError() );
 }
 
@@ -651,9 +545,7 @@ static void test_EnumColorProfilesA( char *standardprofile )
     BYTE *buffer;
 
     /* Parameter checks */
-
     memset( &record, 0, sizeof(ENUMTYPEA) );
-
     record.dwSize = sizeof(ENUMTYPEA);
     record.dwVersion = ENUM_TYPE_VERSION;
     record.dwFields |= ET_DATACOLORSPACE;
@@ -661,33 +553,32 @@ static void test_EnumColorProfilesA( char *standardprofile )
 
     total = 0;
     SetLastError( 0xdeadbeef );
-    ret = pEnumColorProfilesA( NULL, &record, NULL, &total, &number );
+    ret = EnumColorProfilesA( NULL, &record, NULL, &total, &number );
     ok( !ret, "EnumColorProfilesA succeeded\n" );
     if (have_color_profile) ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %lu\n", GetLastError() );
     buffer = HeapAlloc( GetProcessHeap(), 0, total );
 
     size = total;
-    ret = pEnumColorProfilesA( machine, &record, buffer, &size, &number );
+    ret = EnumColorProfilesA( machine, &record, buffer, &size, &number );
     ok( !ret, "EnumColorProfilesA succeeded\n" );
 
-    ret = pEnumColorProfilesA( NULL, NULL, buffer, &size, &number );
+    ret = EnumColorProfilesA( NULL, NULL, buffer, &size, &number );
     ok( !ret, "EnumColorProfilesA succeeded\n" );
 
-    ret = pEnumColorProfilesA( NULL, &record, buffer, NULL, &number );
+    ret = EnumColorProfilesA( NULL, &record, buffer, NULL, &number );
     ok( !ret, "EnumColorProfilesA succeeded\n" );
 
-    ret = pEnumColorProfilesA( NULL, &record, buffer, &size, &number );
+    ret = EnumColorProfilesA( NULL, &record, buffer, &size, &number );
     todo_wine_if (!have_color_profile)
         ok( ret, "EnumColorProfilesA failed %lu\n", GetLastError() );
 
     size = 0;
-    ret = pEnumColorProfilesA( NULL, &record, buffer, &size, &number );
+    ret = EnumColorProfilesA( NULL, &record, buffer, &size, &number );
     ok( !ret, "EnumColorProfilesA succeeded\n" );
 
     /* Functional checks */
-
     size = total;
-    ret = pEnumColorProfilesA( NULL, &record, buffer, &size, &number );
+    ret = EnumColorProfilesA( NULL, &record, buffer, &size, &number );
     todo_wine_if (!have_color_profile)
         ok( ret, "EnumColorProfilesA failed %lu\n", GetLastError() );
 
@@ -702,9 +593,7 @@ static void test_EnumColorProfilesW( WCHAR *standardprofileW )
     BYTE *buffer;
 
     /* Parameter checks */
-
     memset( &record, 0, sizeof(ENUMTYPEW) );
-
     record.dwSize = sizeof(ENUMTYPEW);
     record.dwVersion = ENUM_TYPE_VERSION;
     record.dwFields |= ET_DATACOLORSPACE;
@@ -712,33 +601,32 @@ static void test_EnumColorProfilesW( WCHAR *standardprofileW )
 
     total = 0;
     SetLastError( 0xdeadbeef );
-    ret = pEnumColorProfilesW( NULL, &record, NULL, &total, &number );
+    ret = EnumColorProfilesW( NULL, &record, NULL, &total, &number );
     ok( !ret, "EnumColorProfilesW succeeded\n" );
     if (have_color_profile) ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "got %lu\n", GetLastError() );
     buffer = HeapAlloc( GetProcessHeap(), 0, total * sizeof(WCHAR) );
 
     size = total;
-    ret = pEnumColorProfilesW( machineW, &record, buffer, &size, &number );
+    ret = EnumColorProfilesW( machineW, &record, buffer, &size, &number );
     ok( !ret, "EnumColorProfilesW succeeded\n" );
 
-    ret = pEnumColorProfilesW( NULL, NULL, buffer, &size, &number );
+    ret = EnumColorProfilesW( NULL, NULL, buffer, &size, &number );
     ok( !ret, "EnumColorProfilesW succeeded\n" );
 
-    ret = pEnumColorProfilesW( NULL, &record, buffer, NULL, &number );
+    ret = EnumColorProfilesW( NULL, &record, buffer, NULL, &number );
     ok( !ret, "EnumColorProfilesW succeeded\n" );
 
-    ret = pEnumColorProfilesW( NULL, &record, buffer, &size, &number );
+    ret = EnumColorProfilesW( NULL, &record, buffer, &size, &number );
     todo_wine_if (!have_color_profile)
         ok( ret, "EnumColorProfilesW failed %lu\n", GetLastError() );
 
     size = 0;
-    ret = pEnumColorProfilesW( NULL, &record, buffer, &size, &number );
+    ret = EnumColorProfilesW( NULL, &record, buffer, &size, &number );
     ok( !ret, "EnumColorProfilesW succeeded\n" );
 
     /* Functional checks */
-
     size = total;
-    ret = pEnumColorProfilesW( NULL, &record, buffer, &size, &number );
+    ret = EnumColorProfilesW( NULL, &record, buffer, &size, &number );
     todo_wine_if (!have_color_profile)
         ok( ret, "EnumColorProfilesW failed %lu\n", GetLastError() );
 
@@ -750,24 +638,22 @@ static void test_InstallColorProfileA( char *standardprofile, char *testprofile 
     BOOL ret;
 
     /* Parameter checks */
-
-    ret = pInstallColorProfileA( NULL, NULL );
+    ret = InstallColorProfileA( NULL, NULL );
     ok( !ret, "InstallColorProfileA() succeeded (%lu)\n", GetLastError() );
 
-    ret = pInstallColorProfileA( machine, NULL );
+    ret = InstallColorProfileA( machine, NULL );
     ok( !ret, "InstallColorProfileA() succeeded (%lu)\n", GetLastError() );
 
-    ret = pInstallColorProfileA( NULL, machine );
+    ret = InstallColorProfileA( NULL, machine );
     ok( !ret, "InstallColorProfileA() succeeded (%lu)\n", GetLastError() );
 
     if (standardprofile)
     {
-        ret = pInstallColorProfileA( NULL, standardprofile );
+        ret = InstallColorProfileA( NULL, standardprofile );
         ok( ret, "InstallColorProfileA() failed (%lu)\n", GetLastError() );
     }
 
     /* Functional checks */
-
     if (testprofile)
     {
         CHAR dest[MAX_PATH], base[MAX_PATH];
@@ -775,7 +661,7 @@ static void test_InstallColorProfileA( char *standardprofile, char *testprofile 
         HANDLE handle;
 
         SetLastError(0xdeadbeef);
-        ret = pInstallColorProfileA( NULL, testprofile );
+        ret = InstallColorProfileA( NULL, testprofile );
         if (!ret && (GetLastError() == ERROR_ACCESS_DENIED))
         {
             skip("Not enough rights for InstallColorProfileA\n");
@@ -783,7 +669,7 @@ static void test_InstallColorProfileA( char *standardprofile, char *testprofile 
         }
         ok( ret, "InstallColorProfileA() failed (%lu)\n", GetLastError() );
 
-        ret = pGetColorDirectoryA( NULL, dest, &size );
+        ret = GetColorDirectoryA( NULL, dest, &size );
         ok( ret, "GetColorDirectoryA() failed (%lu)\n", GetLastError() );
 
         MSCMS_basenameA( testprofile, base );
@@ -795,8 +681,8 @@ static void test_InstallColorProfileA( char *standardprofile, char *testprofile 
         handle = CreateFileA( dest, 0 , 0, NULL, OPEN_EXISTING, 0, NULL );
         ok( handle != INVALID_HANDLE_VALUE, "Couldn't find the profile (%lu)\n", GetLastError() );
         CloseHandle( handle );
-        
-        ret = pUninstallColorProfileA( NULL, dest, TRUE );
+
+        ret = UninstallColorProfileA( NULL, dest, TRUE );
         ok( ret, "UninstallColorProfileA() failed (%lu)\n", GetLastError() );
     }
 }
@@ -806,24 +692,22 @@ static void test_InstallColorProfileW( WCHAR *standardprofileW, WCHAR *testprofi
     BOOL ret;
 
     /* Parameter checks */
-
-    ret = pInstallColorProfileW( NULL, NULL );
+    ret = InstallColorProfileW( NULL, NULL );
     ok( !ret, "InstallColorProfileW() succeeded (%lu)\n", GetLastError() );
 
-    ret = pInstallColorProfileW( machineW, NULL );
+    ret = InstallColorProfileW( machineW, NULL );
     ok( !ret, "InstallColorProfileW() succeeded (%lu)\n", GetLastError() );
 
-    ret = pInstallColorProfileW( NULL, machineW );
+    ret = InstallColorProfileW( NULL, machineW );
     ok( !ret, "InstallColorProfileW() failed (%lu)\n", GetLastError() );
 
     if (standardprofileW)
     {
-        ret = pInstallColorProfileW( NULL, standardprofileW );
+        ret = InstallColorProfileW( NULL, standardprofileW );
         ok( ret, "InstallColorProfileW() failed (%lu)\n", GetLastError() );
     }
 
     /* Functional checks */
-
     if (testprofileW)
     {
         WCHAR dest[MAX_PATH], base[MAX_PATH];
@@ -831,7 +715,7 @@ static void test_InstallColorProfileW( WCHAR *standardprofileW, WCHAR *testprofi
         HANDLE handle;
 
         SetLastError(0xdeadbeef);
-        ret = pInstallColorProfileW( NULL, testprofileW );
+        ret = InstallColorProfileW( NULL, testprofileW );
         if (!ret && (GetLastError() == ERROR_ACCESS_DENIED))
         {
             skip("Not enough rights for InstallColorProfileW\n");
@@ -839,11 +723,10 @@ static void test_InstallColorProfileW( WCHAR *standardprofileW, WCHAR *testprofi
         }
         ok( ret, "InstallColorProfileW() failed (%lu)\n", GetLastError() );
 
-        ret = pGetColorDirectoryW( NULL, dest, &size );
+        ret = GetColorDirectoryW( NULL, dest, &size );
         ok( ret, "GetColorDirectoryW() failed (%lu)\n", GetLastError() );
 
         MSCMS_basenameW( testprofileW, base );
-
         lstrcatW( dest, L"\\" );
         lstrcatW( dest, base );
 
@@ -852,7 +735,7 @@ static void test_InstallColorProfileW( WCHAR *standardprofileW, WCHAR *testprofi
         ok( handle != INVALID_HANDLE_VALUE, "Couldn't find the profile (%lu)\n", GetLastError() );
         CloseHandle( handle );
 
-        ret = pUninstallColorProfileW( NULL, dest, TRUE );
+        ret = UninstallColorProfileW( NULL, dest, TRUE );
         ok( ret, "UninstallColorProfileW() failed (%lu)\n", GetLastError() );
     }
 }
@@ -870,30 +753,26 @@ static void test_IsColorProfileTagPresent( char *standardprofile )
         profile.pProfileData = standardprofile;
         profile.cbDataSize = strlen(standardprofile);
 
-        handle = pOpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
+        handle = OpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
         ok( handle != NULL, "OpenColorProfileA() failed (%lu)\n", GetLastError() );
 
         /* Parameter checks */
-
         tag = 0;
-
-        ret = pIsColorProfileTagPresent( handle, tag, &present );
+        ret = IsColorProfileTagPresent( handle, tag, &present );
         ok( !(ret && present), "IsColorProfileTagPresent() succeeded (%lu)\n", GetLastError() );
 
         tag = 0x63707274;  /* 'cprt' */
-
-        ret = pIsColorProfileTagPresent( NULL, tag, &present );
+        ret = IsColorProfileTagPresent( NULL, tag, &present );
         ok( !ret, "IsColorProfileTagPresent() succeeded (%lu)\n", GetLastError() );
 
-        ret = pIsColorProfileTagPresent( handle, tag, NULL );
+        ret = IsColorProfileTagPresent( handle, tag, NULL );
         ok( !ret, "IsColorProfileTagPresent() succeeded (%lu)\n", GetLastError() );
 
         /* Functional checks */
-
-        ret = pIsColorProfileTagPresent( handle, tag, &present );
+        ret = IsColorProfileTagPresent( handle, tag, &present );
         ok( ret && present, "IsColorProfileTagPresent() failed (%lu)\n", GetLastError() );
 
-        pCloseColorProfile( handle );
+        CloseColorProfile( handle );
     }
 }
 
@@ -908,51 +787,49 @@ static void test_OpenColorProfileA( char *standardprofile )
     profile.cbDataSize = 0;
 
     /* Parameter checks */
-
-    handle = pOpenColorProfileA( NULL, 0, 0, 0 );
+    handle = OpenColorProfileA( NULL, 0, 0, 0 );
     ok( handle == NULL, "OpenColorProfileA() failed (%lu)\n", GetLastError() );
 
-    handle = pOpenColorProfileA( &profile, 0, 0, 0 );
+    handle = OpenColorProfileA( &profile, 0, 0, 0 );
     ok( handle == NULL, "OpenColorProfileA() failed (%lu)\n", GetLastError() );
 
-    handle = pOpenColorProfileA( &profile, PROFILE_READ, 0, 0 );
+    handle = OpenColorProfileA( &profile, PROFILE_READ, 0, 0 );
     ok( handle == NULL, "OpenColorProfileA() failed (%lu)\n", GetLastError() );
 
-    handle = pOpenColorProfileA( &profile, PROFILE_READWRITE, 0, 0 );
+    handle = OpenColorProfileA( &profile, PROFILE_READWRITE, 0, 0 );
     ok( handle == NULL, "OpenColorProfileA() failed (%lu)\n", GetLastError() );
 
-    ok ( !pCloseColorProfile( NULL ), "CloseColorProfile() succeeded\n" );
+    ok( !CloseColorProfile( NULL ), "CloseColorProfile() succeeded\n" );
 
     if (standardprofile)
     {
         profile.pProfileData = standardprofile;
         profile.cbDataSize = strlen(standardprofile);
 
-        handle = pOpenColorProfileA( &profile, 0, 0, 0 );
+        handle = OpenColorProfileA( &profile, 0, 0, 0 );
         ok( handle == NULL, "OpenColorProfileA() failed (%lu)\n", GetLastError() );
 
-        handle = pOpenColorProfileA( &profile, PROFILE_READ, 0, 0 );
+        handle = OpenColorProfileA( &profile, PROFILE_READ, 0, 0 );
         ok( handle == NULL, "OpenColorProfileA() failed (%lu)\n", GetLastError() );
 
-        handle = pOpenColorProfileA( &profile, PROFILE_READ|PROFILE_READWRITE, 0, 0 );
+        handle = OpenColorProfileA( &profile, PROFILE_READ|PROFILE_READWRITE, 0, 0 );
         ok( handle == NULL, "OpenColorProfileA() failed (%lu)\n", GetLastError() );
 
         /* Functional checks */
-
-        handle = pOpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
+        handle = OpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
         ok( handle != NULL, "OpenColorProfileA() failed (%lu)\n", GetLastError() );
 
-        ret = pCloseColorProfile( handle );
+        ret = CloseColorProfile( handle );
         ok( ret, "CloseColorProfile() failed (%lu)\n", GetLastError() );
 
         profile.dwType = PROFILE_FILENAME;
         profile.pProfileData = (void *)"sRGB Color Space Profile.icm";
         profile.cbDataSize = sizeof("sRGB Color Space Profile.icm");
 
-        handle = pOpenColorProfileA( &profile, PROFILE_READ, FILE_SHARE_READ, OPEN_EXISTING );
+        handle = OpenColorProfileA( &profile, PROFILE_READ, FILE_SHARE_READ, OPEN_EXISTING );
         ok( handle != NULL, "OpenColorProfileA() failed (%lu)\n", GetLastError() );
 
-        ret = pCloseColorProfile( handle );
+        ret = CloseColorProfile( handle );
         ok( ret, "CloseColorProfile() failed (%lu)\n", GetLastError() );
     }
 }
@@ -968,41 +845,39 @@ static void test_OpenColorProfileW( WCHAR *standardprofileW )
     profile.cbDataSize = 0;
 
     /* Parameter checks */
-
-    handle = pOpenColorProfileW( NULL, 0, 0, 0 );
+    handle = OpenColorProfileW( NULL, 0, 0, 0 );
     ok( handle == NULL, "OpenColorProfileW() failed (%lu)\n", GetLastError() );
 
-    handle = pOpenColorProfileW( &profile, 0, 0, 0 );
+    handle = OpenColorProfileW( &profile, 0, 0, 0 );
     ok( handle == NULL, "OpenColorProfileW() failed (%lu)\n", GetLastError() );
 
-    handle = pOpenColorProfileW( &profile, PROFILE_READ, 0, 0 );
+    handle = OpenColorProfileW( &profile, PROFILE_READ, 0, 0 );
     ok( handle == NULL, "OpenColorProfileW() failed (%lu)\n", GetLastError() );
 
-    handle = pOpenColorProfileW( &profile, PROFILE_READWRITE, 0, 0 );
+    handle = OpenColorProfileW( &profile, PROFILE_READWRITE, 0, 0 );
     ok( handle == NULL, "OpenColorProfileW() failed (%lu)\n", GetLastError() );
 
-    ok ( !pCloseColorProfile( NULL ), "CloseColorProfile() succeeded\n" );
+    ok( !CloseColorProfile( NULL ), "CloseColorProfile() succeeded\n" );
 
     if (standardprofileW)
     {
         profile.pProfileData = standardprofileW;
         profile.cbDataSize = lstrlenW(standardprofileW) * sizeof(WCHAR);
 
-        handle = pOpenColorProfileW( &profile, 0, 0, 0 );
+        handle = OpenColorProfileW( &profile, 0, 0, 0 );
         ok( handle == NULL, "OpenColorProfileW() failed (%lu)\n", GetLastError() );
 
-        handle = pOpenColorProfileW( &profile, PROFILE_READ, 0, 0 );
+        handle = OpenColorProfileW( &profile, PROFILE_READ, 0, 0 );
         ok( handle == NULL, "OpenColorProfileW() failed (%lu)\n", GetLastError() );
 
-        handle = pOpenColorProfileW( &profile, PROFILE_READ|PROFILE_READWRITE, 0, 0 );
+        handle = OpenColorProfileW( &profile, PROFILE_READ|PROFILE_READWRITE, 0, 0 );
         ok( handle == NULL, "OpenColorProfileW() failed (%lu)\n", GetLastError() );
 
         /* Functional checks */
-
-        handle = pOpenColorProfileW( &profile, PROFILE_READ, 0, OPEN_EXISTING );
+        handle = OpenColorProfileW( &profile, PROFILE_READ, 0, OPEN_EXISTING );
         ok( handle != NULL, "OpenColorProfileW() failed (%lu)\n", GetLastError() );
 
-        ret = pCloseColorProfile( handle );
+        ret = CloseColorProfile( handle );
         ok( ret, "CloseColorProfile() failed (%lu)\n", GetLastError() );
     }
 }
@@ -1025,45 +900,42 @@ static void test_SetColorProfileElement( char *testprofile )
         profile.cbDataSize = strlen(testprofile);
 
         /* Parameter checks */
-
-        handle = pOpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
+        handle = OpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
         ok( handle != NULL, "OpenColorProfileA() failed (%lu)\n", GetLastError() );
 
-        ret = pSetColorProfileElement( handle, tag, 0, &size, data );
+        ret = SetColorProfileElement( handle, tag, 0, &size, data );
         ok( !ret, "SetColorProfileElement() succeeded (%lu)\n", GetLastError() );
+        CloseColorProfile( handle );
 
-        pCloseColorProfile( handle );
-
-        handle = pOpenColorProfileA( &profile, PROFILE_READWRITE, 0, OPEN_EXISTING );
+        handle = OpenColorProfileA( &profile, PROFILE_READWRITE, 0, OPEN_EXISTING );
         ok( handle != NULL, "OpenColorProfileA() failed (%lu)\n", GetLastError() );
 
-        ret = pSetColorProfileElement( NULL, 0, 0, NULL, NULL );
+        ret = SetColorProfileElement( NULL, 0, 0, NULL, NULL );
         ok( !ret, "SetColorProfileElement() succeeded (%lu)\n", GetLastError() );
 
-        ret = pSetColorProfileElement( handle, 0, 0, NULL, NULL );
+        ret = SetColorProfileElement( handle, 0, 0, NULL, NULL );
         ok( !ret, "SetColorProfileElement() succeeded (%lu)\n", GetLastError() );
 
-        ret = pSetColorProfileElement( handle, tag, 0, NULL, NULL );
+        ret = SetColorProfileElement( handle, tag, 0, NULL, NULL );
         ok( !ret, "SetColorProfileElement() succeeded (%lu)\n", GetLastError() );
 
-        ret = pSetColorProfileElement( handle, tag, 0, &size, NULL );
+        ret = SetColorProfileElement( handle, tag, 0, &size, NULL );
         ok( !ret, "SetColorProfileElement() succeeded (%lu)\n", GetLastError() );
 
         /* Functional checks */
-
         size = sizeof(data);
-        ret = pSetColorProfileElement( handle, tag, 0, &size, data );
+        ret = SetColorProfileElement( handle, tag, 0, &size, data );
         ok( ret, "SetColorProfileElement() failed %lu\n", GetLastError() );
 
         size = sizeof(buffer);
-        ret = pGetColorProfileElement( handle, tag, 0, &size, buffer, &ref );
+        ret = GetColorProfileElement( handle, tag, 0, &size, buffer, &ref );
         ok( ret, "GetColorProfileElement() failed %lu\n", GetLastError() );
         ok( size > 0, "wrong size\n" );
 
         ok( !memcmp( data, buffer, sizeof(data) ),
             "Unexpected tag data, expected %s, got %s (%lu)\n", data, buffer, GetLastError() );
 
-        pCloseColorProfile( handle );
+        CloseColorProfile( handle );
     }
 }
 
@@ -1103,38 +975,33 @@ static void test_SetColorProfileHeader( char *testprofile )
         header.phCreator = 0x48502020;
 
         /* Parameter checks */
-
-        handle = pOpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
+        handle = OpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
         ok( handle != NULL, "OpenColorProfileA() failed (%lu)\n", GetLastError() );
 
-        ret = pSetColorProfileHeader( handle, &header );
+        ret = SetColorProfileHeader( handle, &header );
         ok( !ret, "SetColorProfileHeader() succeeded (%lu)\n", GetLastError() );
+        CloseColorProfile( handle );
 
-        pCloseColorProfile( handle );
-
-        handle = pOpenColorProfileA( &profile, PROFILE_READWRITE, 0, OPEN_EXISTING );
+        handle = OpenColorProfileA( &profile, PROFILE_READWRITE, 0, OPEN_EXISTING );
         ok( handle != NULL, "OpenColorProfileA() failed (%lu)\n", GetLastError() );
 
-        ret = pSetColorProfileHeader( NULL, NULL );
+        ret = SetColorProfileHeader( NULL, NULL );
         ok( !ret, "SetColorProfileHeader() succeeded (%lu)\n", GetLastError() );
 
-        ret = pSetColorProfileHeader( handle, NULL );
+        ret = SetColorProfileHeader( handle, NULL );
         ok( !ret, "SetColorProfileHeader() succeeded (%lu)\n", GetLastError() );
 
-        ret = pSetColorProfileHeader( NULL, &header );
+        ret = SetColorProfileHeader( NULL, &header );
         ok( !ret, "SetColorProfileHeader() succeeded (%lu)\n", GetLastError() );
 
         /* Functional checks */
-
-        ret = pSetColorProfileHeader( handle, &header );
+        ret = SetColorProfileHeader( handle, &header );
         ok( ret, "SetColorProfileHeader() failed (%lu)\n", GetLastError() );
 
-        ret = pGetColorProfileHeader( handle, &header );
+        ret = GetColorProfileHeader( handle, &header );
         ok( ret, "GetColorProfileHeader() failed (%lu)\n", GetLastError() );
-
         ok( !memcmp( &header, rgbheader, sizeof(rgbheader) ), "Unexpected header data\n" );
-
-        pCloseColorProfile( handle );
+        CloseColorProfile( handle );
     }
 }
 
@@ -1143,15 +1010,13 @@ static void test_UninstallColorProfileA( char *testprofile )
     BOOL ret;
 
     /* Parameter checks */
-
-    ret = pUninstallColorProfileA( NULL, NULL, FALSE );
+    ret = UninstallColorProfileA( NULL, NULL, FALSE );
     ok( !ret, "UninstallColorProfileA() succeeded (%lu)\n", GetLastError() );
 
-    ret = pUninstallColorProfileA( machine, NULL, FALSE );
+    ret = UninstallColorProfileA( machine, NULL, FALSE );
     ok( !ret, "UninstallColorProfileA() succeeded (%lu)\n", GetLastError() );
 
     /* Functional checks */
-
     if (testprofile)
     {
         CHAR dest[MAX_PATH], base[MAX_PATH];
@@ -1159,7 +1024,7 @@ static void test_UninstallColorProfileA( char *testprofile )
         HANDLE handle;
 
         SetLastError(0xdeadbeef);
-        ret = pInstallColorProfileA( NULL, testprofile );
+        ret = InstallColorProfileA( NULL, testprofile );
         if (!ret && (GetLastError() == ERROR_ACCESS_DENIED))
         {
             skip("Not enough rights for InstallColorProfileA\n");
@@ -1167,15 +1032,14 @@ static void test_UninstallColorProfileA( char *testprofile )
         }
         ok( ret, "InstallColorProfileA() failed (%lu)\n", GetLastError() );
 
-        ret = pGetColorDirectoryA( NULL, dest, &size );
+        ret = GetColorDirectoryA( NULL, dest, &size );
         ok( ret, "GetColorDirectoryA() failed (%lu)\n", GetLastError() );
 
         MSCMS_basenameA( testprofile, base );
-
         lstrcatA( dest, "\\" );
         lstrcatA( dest, base );
 
-        ret = pUninstallColorProfileA( NULL, dest, TRUE );
+        ret = UninstallColorProfileA( NULL, dest, TRUE );
         ok( ret, "UninstallColorProfileA() failed (%lu)\n", GetLastError() );
 
         /* Check if the profile is really gone */
@@ -1190,15 +1054,13 @@ static void test_UninstallColorProfileW( WCHAR *testprofileW )
     BOOL ret;
 
     /* Parameter checks */
-
-    ret = pUninstallColorProfileW( NULL, NULL, FALSE );
+    ret = UninstallColorProfileW( NULL, NULL, FALSE );
     ok( !ret, "UninstallColorProfileW() succeeded (%lu)\n", GetLastError() );
 
-    ret = pUninstallColorProfileW( machineW, NULL, FALSE );
+    ret = UninstallColorProfileW( machineW, NULL, FALSE );
     ok( !ret, "UninstallColorProfileW() succeeded (%lu)\n", GetLastError() );
 
     /* Functional checks */
-
     if (testprofileW)
     {
         WCHAR dest[MAX_PATH], base[MAX_PATH];
@@ -1208,7 +1070,7 @@ static void test_UninstallColorProfileW( WCHAR *testprofileW )
         int bytes_copied;
 
         SetLastError(0xdeadbeef);
-        ret = pInstallColorProfileW( NULL, testprofileW );
+        ret = InstallColorProfileW( NULL, testprofileW );
         if (!ret && (GetLastError() == ERROR_ACCESS_DENIED))
         {
             skip("Not enough rights for InstallColorProfileW\n");
@@ -1216,15 +1078,14 @@ static void test_UninstallColorProfileW( WCHAR *testprofileW )
         }
         ok( ret, "InstallColorProfileW() failed (%lu)\n", GetLastError() );
 
-        ret = pGetColorDirectoryW( NULL, dest, &size );
+        ret = GetColorDirectoryW( NULL, dest, &size );
         ok( ret, "GetColorDirectoryW() failed (%lu)\n", GetLastError() );
 
         MSCMS_basenameW( testprofileW, base );
-
         lstrcatW( dest, L"\\" );
         lstrcatW( dest, base );
 
-        ret = pUninstallColorProfileW( NULL, dest, TRUE );
+        ret = UninstallColorProfileW( NULL, dest, TRUE );
         ok( ret, "UninstallColorProfileW() failed (%lu)\n", GetLastError() );
 
         bytes_copied = WideCharToMultiByte(CP_ACP, 0, dest, -1, destA, MAX_PATH, NULL, NULL);
@@ -1244,69 +1105,69 @@ static void test_AssociateColorProfileWithDeviceA( char *testprofile )
     DISPLAY_DEVICEA display, monitor;
     BOOL res;
 
-    if (testprofile && pEnumDisplayDevicesA)
+    if (testprofile)
     {
         display.cb = sizeof( DISPLAY_DEVICEA );
-        res = pEnumDisplayDevicesA( NULL, 0, &display, 0 );
+        res = EnumDisplayDevicesA( NULL, 0, &display, 0 );
         ok( res, "Can't get display info\n" );
 
         monitor.cb = sizeof( DISPLAY_DEVICEA );
-        res = pEnumDisplayDevicesA( display.DeviceName, 0, &monitor, 0 );
+        res = EnumDisplayDevicesA( display.DeviceName, 0, &monitor, 0 );
         if (res)
         {
             SetLastError(0xdeadbeef);
-            ret = pAssociateColorProfileWithDeviceA( "machine", testprofile, NULL );
+            ret = AssociateColorProfileWithDeviceA( "machine", testprofile, NULL );
             error = GetLastError();
             ok( !ret, "AssociateColorProfileWithDevice() succeeded\n" );
             ok( error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", error );
 
             SetLastError(0xdeadbeef);
-            ret = pAssociateColorProfileWithDeviceA( "machine", NULL, monitor.DeviceID );
+            ret = AssociateColorProfileWithDeviceA( "machine", NULL, monitor.DeviceID );
             error = GetLastError();
             ok( !ret, "AssociateColorProfileWithDevice() succeeded\n" );
             ok( error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", error );
 
             SetLastError(0xdeadbeef);
-            ret = pAssociateColorProfileWithDeviceA( "machine", testprofile, monitor.DeviceID );
+            ret = AssociateColorProfileWithDeviceA( "machine", testprofile, monitor.DeviceID );
             error = GetLastError();
             ok( !ret, "AssociateColorProfileWithDevice() succeeded\n" );
             ok( error == ERROR_NOT_SUPPORTED, "expected ERROR_NOT_SUPPORTED, got %lu\n", error );
 
-            ret = pInstallColorProfileA( NULL, testprofile );
+            ret = InstallColorProfileA( NULL, testprofile );
             ok( ret, "InstallColorProfileA() failed (%lu)\n", GetLastError() );
 
-            ret = pGetColorDirectoryA( NULL, profile, &size );
+            ret = GetColorDirectoryA( NULL, profile, &size );
             ok( ret, "GetColorDirectoryA() failed (%lu)\n", GetLastError() );
 
             MSCMS_basenameA( testprofile, basename );
             lstrcatA( profile, "\\" );
             lstrcatA( profile, basename );
 
-            ret = pAssociateColorProfileWithDeviceA( NULL, profile, monitor.DeviceID );
+            ret = AssociateColorProfileWithDeviceA( NULL, profile, monitor.DeviceID );
             ok( ret, "AssociateColorProfileWithDevice() failed (%lu)\n", GetLastError() );
 
             SetLastError(0xdeadbeef);
-            ret = pDisassociateColorProfileFromDeviceA( "machine", profile, NULL );
+            ret = DisassociateColorProfileFromDeviceA( "machine", profile, NULL );
             error = GetLastError();
             ok( !ret, "DisassociateColorProfileFromDeviceA() succeeded\n" );
             ok( error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", error );
 
             SetLastError(0xdeadbeef);
-            ret = pDisassociateColorProfileFromDeviceA( "machine", NULL, monitor.DeviceID );
+            ret = DisassociateColorProfileFromDeviceA( "machine", NULL, monitor.DeviceID );
             error = GetLastError();
             ok( !ret, "DisassociateColorProfileFromDeviceA() succeeded\n" );
             ok( error == ERROR_INVALID_PARAMETER, "expected ERROR_INVALID_PARAMETER, got %lu\n", error );
 
             SetLastError(0xdeadbeef);
-            ret = pDisassociateColorProfileFromDeviceA( "machine", profile, monitor.DeviceID );
+            ret = DisassociateColorProfileFromDeviceA( "machine", profile, monitor.DeviceID );
             error = GetLastError();
             ok( !ret, "DisassociateColorProfileFromDeviceA() succeeded\n" );
             ok( error == ERROR_NOT_SUPPORTED, "expected ERROR_NOT_SUPPORTED, got %lu\n", error );
 
-            ret = pDisassociateColorProfileFromDeviceA( NULL, profile, monitor.DeviceID );
+            ret = DisassociateColorProfileFromDeviceA( NULL, profile, monitor.DeviceID );
             ok( ret, "DisassociateColorProfileFromDeviceA() failed (%lu)\n", GetLastError() );
 
-            ret = pUninstallColorProfileA( NULL, profile, TRUE );
+            ret = UninstallColorProfileA( NULL, profile, TRUE );
             ok( ret, "UninstallColorProfileA() failed (%lu)\n", GetLastError() );
         }
         else
@@ -1321,7 +1182,7 @@ static BOOL have_profile(void)
     HANDLE handle;
     WIN32_FIND_DATAA data;
 
-    if (!pGetColorDirectoryA( NULL, glob, &size )) return FALSE;
+    if (!GetColorDirectoryA( NULL, glob, &size )) return FALSE;
     lstrcatA( glob, "\\*.icm" );
     handle = FindFirstFileA( glob, &data );
     if (handle == INVALID_HANDLE_VALUE) return FALSE;
@@ -1342,22 +1203,22 @@ static void test_CreateMultiProfileTransform( char *standardprofile, char *testp
         profile.pProfileData = standardprofile;
         profile.cbDataSize   = strlen(standardprofile);
 
-        handle[0] = pOpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
+        handle[0] = OpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
         ok( handle[0] != NULL, "got %lu\n", GetLastError() );
 
         profile.dwType       = PROFILE_FILENAME;
         profile.pProfileData = testprofile;
         profile.cbDataSize   = strlen(testprofile);
 
-        handle[1] = pOpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
+        handle[1] = OpenColorProfileA( &profile, PROFILE_READ, 0, OPEN_EXISTING );
         ok( handle[1] != NULL, "got %lu\n", GetLastError() );
 
-        transform = pCreateMultiProfileTransform( handle, 2, intents, 2, 0, 0 );
+        transform = CreateMultiProfileTransform( handle, 2, intents, 2, 0, 0 );
         ok( transform != NULL, "got %lu\n", GetLastError() );
 
-        pDeleteColorTransform( transform );
-        pCloseColorProfile( handle[0] );
-        pCloseColorProfile( handle[1] );
+        DeleteColorTransform( transform );
+        CloseColorProfile( handle[0] );
+        CloseColorProfile( handle[1] );
     }
 }
 
@@ -1380,42 +1241,42 @@ static void test_TranslateBitmapBits( char *standardprofile, char *testprofile )
     profile.pProfileData = standardprofile;
     profile.cbDataSize   = strlen(standardprofile);
 
-    handle[0] = pOpenColorProfileA( &profile, PROFILE_READ, 1, OPEN_EXISTING );
+    handle[0] = OpenColorProfileA( &profile, PROFILE_READ, 1, OPEN_EXISTING );
     ok( handle[0] != NULL, "got %lu\n", GetLastError() );
 
     profile.dwType       = PROFILE_FILENAME;
     profile.pProfileData = testprofile;
     profile.cbDataSize   = strlen(testprofile);
 
-    handle[1] = pOpenColorProfileA( &profile, PROFILE_READ, 1, OPEN_EXISTING );
+    handle[1] = OpenColorProfileA( &profile, PROFILE_READ, 1, OPEN_EXISTING );
     ok( handle[1] != NULL, "got %lu\n", GetLastError() );
 
-    transform = pCreateMultiProfileTransform( handle, 2, &intent, 1, 0, 0 );
+    transform = CreateMultiProfileTransform( handle, 2, &intent, 1, 0, 0 );
     ok( transform != NULL, "got %lu\n", GetLastError() );
 
     memset( destbits, 0, sizeof(destbits) );
-    ret = pTranslateBitmapBits( transform, srcbits, BM_RGBTRIPLETS, 1, 1, 3, destbits, BM_xBGRQUADS, 4, NULL, 0 );
+    ret = TranslateBitmapBits( transform, srcbits, BM_RGBTRIPLETS, 1, 1, 3, destbits, BM_xBGRQUADS, 4, NULL, 0 );
     ok( ret, "got %lu\n", GetLastError() );
     ok( !memcmp(expect_destbits, destbits, sizeof(expect_destbits)), "unexpected destbits\n" );
 
     memset( destbits, 0, sizeof(destbits) );
-    ret = pTranslateBitmapBits( transform, srcbits, BM_RGBTRIPLETS, 1, 1, 3, destbits, BM_xRGBQUADS, 4, NULL, 0 );
+    ret = TranslateBitmapBits( transform, srcbits, BM_RGBTRIPLETS, 1, 1, 3, destbits, BM_xRGBQUADS, 4, NULL, 0 );
     ok( ret, "got %lu\n", GetLastError() );
     ok( !memcmp(expect_destbits2, destbits, sizeof(expect_destbits2)), "unexpected destbits\n" );
 
     memset( destbits, 0, sizeof(destbits) );
-    ret = pTranslateBitmapBits( transform, srcbits2, BM_xRGBQUADS, 1, 1, 4, destbits, BM_RGBTRIPLETS, 3, NULL, 0 );
+    ret = TranslateBitmapBits( transform, srcbits2, BM_xRGBQUADS, 1, 1, 4, destbits, BM_RGBTRIPLETS, 3, NULL, 0 );
     ok( ret, "got %lu\n", GetLastError() );
     ok( !memcmp(expect_destbits3, destbits, sizeof(expect_destbits3)), "unexpected destbits\n" );
 
     memset( destbits, 0, sizeof(destbits) );
-    ret = pTranslateBitmapBits( transform, srcbits2, BM_xRGBQUADS, 1, 1, 4, destbits, BM_BGRTRIPLETS, 3, NULL, 0 );
+    ret = TranslateBitmapBits( transform, srcbits2, BM_xRGBQUADS, 1, 1, 4, destbits, BM_BGRTRIPLETS, 3, NULL, 0 );
     ok( ret, "got %lu\n", GetLastError() );
     ok( !memcmp(expect_destbits4, destbits, sizeof(expect_destbits4)), "unexpected destbits\n" );
 
-    pDeleteColorTransform( transform );
-    pCloseColorProfile( handle[0] );
-    pCloseColorProfile( handle[1] );
+    DeleteColorTransform( transform );
+    CloseColorProfile( handle[0] );
+    CloseColorProfile( handle[1] );
 }
 
 START_TEST(profile)
@@ -1427,23 +1288,6 @@ START_TEST(profile)
     char *standardprofile = NULL, *testprofile = NULL;
     WCHAR *standardprofileW = NULL, *testprofileW = NULL;
     UINT ret;
-
-    hmscms = LoadLibraryA( "mscms.dll" );
-    if (!hmscms) return;
-
-    huser32 = LoadLibraryA( "user32.dll" );
-    if (!huser32)
-    {
-        FreeLibrary( hmscms );
-        return;
-    }
-
-    if (!init_function_ptrs())
-    {
-        FreeLibrary( huser32 );
-        FreeLibrary( hmscms );
-        return;
-    }
 
     /* See if we can find the standard color profile */
     ret = GetSystemDirectoryA( profilefile1, sizeof(profilefile1) );
@@ -1531,6 +1375,4 @@ START_TEST(profile)
     test_TranslateBitmapBits( standardprofile, testprofile );
 
     if (testprofile) DeleteFileA( testprofile );
-    FreeLibrary( huser32 );
-    FreeLibrary( hmscms );
 }
