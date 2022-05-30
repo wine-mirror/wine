@@ -47,6 +47,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(globalmem);
 
 static HANDLE systemHeap;   /* globally shared heap */
 
+BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE handle, ULONG flags, void *ptr, void **user_value, ULONG *user_flags );
 
 /***********************************************************************
  *           HEAP_CreateSystemHeap
@@ -171,7 +172,6 @@ C_ASSERT(sizeof(struct mem_entry) == 2 * sizeof(void *));
 
 struct kernelbase_global_data *kernelbase_global_data;
 
-#define POINTER_TO_HANDLE( p ) (*(((const HGLOBAL *)( p )) - 2))
 /* align the storage needed for the HLOCAL on an 8-byte boundary thus
  * LocalAlloc/LocalReAlloc'ing with LMEM_MOVEABLE of memory with
  * size = 8*k, where k=1,2,3,... allocs exactly the given size.
@@ -255,6 +255,7 @@ HGLOBAL WINAPI GlobalHandle( const void *ptr )
     struct mem_entry *mem;
     HGLOBAL handle;
     LPCVOID test;
+    ULONG flags;
 
     TRACE_(globalmem)( "ptr %p\n", ptr );
 
@@ -279,7 +280,12 @@ HGLOBAL WINAPI GlobalHandle( const void *ptr )
                 handle = (HGLOBAL)ptr; /* valid fixed block */
                 break;
             }
-            handle = POINTER_TO_HANDLE( ptr );
+            if (!RtlGetUserInfoHeap( GetProcessHeap(), HEAP_NO_SERIALIZE, (char *)ptr - HLOCAL_STORAGE, &handle, &flags ))
+            {
+                SetLastError( ERROR_INVALID_HANDLE );
+                handle = 0;
+            }
+            break;
         }
         else handle = (HGLOBAL)ptr;
 

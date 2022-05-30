@@ -1494,6 +1494,8 @@ static void test_GlobalAlloc(void)
     ptr = GlobalLock( mem );
     ok( !!ptr, "GlobalLock failed, error %lu\n", GetLastError() );
     ok( ptr != mem, "got unexpected ptr %p\n", ptr );
+    tmp_mem = GlobalHandle( ptr );
+    ok( tmp_mem == mem, "GlobalHandle returned unexpected handle\n" );
     flags = GlobalFlags( mem );
     ok( flags == 1, "GlobalFlags returned %#x, error %lu\n", flags, GetLastError() );
     tmp_ptr = GlobalLock( mem );
@@ -1698,6 +1700,8 @@ static void test_GlobalAlloc(void)
     ok( !!mem, "GlobalAlloc failed, error %lu\n", GetLastError() );
     ret = GlobalUnlock( mem );
     ok( ret, "GlobalUnlock failed, error %lu\n", GetLastError() );
+    tmp_mem = GlobalHandle( mem );
+    ok( tmp_mem == mem, "GlobalHandle returned unexpected handle\n" );
     mem = GlobalFree( mem );
     ok( !mem, "GlobalFree failed, error %lu\n", GetLastError() );
 
@@ -1867,6 +1871,8 @@ static void test_LocalAlloc(void)
     ptr = LocalLock( mem );
     ok( !!ptr, "LocalLock failed, error %lu\n", GetLastError() );
     ok( ptr != mem, "got unexpected ptr %p\n", ptr );
+    tmp_mem = LocalHandle( ptr );
+    ok( tmp_mem == mem, "LocalHandle returned unexpected handle\n" );
     flags = LocalFlags( mem );
     ok( flags == 1, "LocalFlags returned %#x, error %lu\n", flags, GetLastError() );
     tmp_ptr = LocalLock( mem );
@@ -2030,6 +2036,8 @@ static void test_LocalAlloc(void)
     ret = LocalUnlock( mem );
     ok( !ret, "LocalUnlock succeeded\n" );
     ok( GetLastError() == ERROR_NOT_LOCKED, "got error %lu\n", GetLastError() );
+    tmp_mem = LocalHandle( mem );
+    ok( tmp_mem == mem, "LocalHandle returned unexpected handle\n" );
     mem = LocalFree( mem );
     ok( !mem, "LocalFree failed, error %lu\n", GetLastError() );
 
