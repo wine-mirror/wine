@@ -2242,7 +2242,6 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
         ok( diff > expect_size, "got diff %#Ix\n", diff );
 
         tail = ptr0[alloc_size] | ptr1[alloc_size] | ptr2[alloc_size];
-        todo_wine_if( heap_flags & HEAP_TAIL_CHECKING_ENABLED )
         ok( !tail, "got tail\n" );
 
         ret = HeapFree( heap, 0, ptr2 );
@@ -2492,29 +2491,9 @@ static void test_heap_checks( DWORD flags )
     if (flags & HEAP_TAIL_CHECKING_ENABLED)
     {
         /* Windows doesn't do tail checking on large blocks */
-        ok( p[large_size] == 0xab || broken(p[large_size] == 0), "wrong data %x\n", p[large_size] );
-        ok( p[large_size+1] == 0xab || broken(p[large_size+1] == 0), "wrong data %x\n", p[large_size+1] );
-        ok( p[large_size+2] == 0xab || broken(p[large_size+2] == 0), "wrong data %x\n", p[large_size+2] );
-        if (p[large_size] == 0xab)
-        {
-            p[large_size] = 0xcc;
-            ret = HeapValidate( GetProcessHeap(), 0, p );
-            ok( !ret, "HeapValidate succeeded\n" );
-
-            /* other calls only check when HEAP_VALIDATE is set */
-            if (flags & HEAP_VALIDATE)
-            {
-                size = HeapSize( GetProcessHeap(), 0, p );
-                ok( size == ~(SIZE_T)0, "Wrong size %Iu\n", size );
-
-                p2 = HeapReAlloc( GetProcessHeap(), 0, p, large_size - 3 );
-                ok( p2 == NULL, "HeapReAlloc succeeded\n" );
-
-                ret = HeapFree( GetProcessHeap(), 0, p );
-                ok( !ret, "HeapFree succeeded\n" );
-            }
-            p[large_size] = 0xab;
-        }
+        ok( p[large_size] == 0, "wrong data %x\n", p[large_size] );
+        ok( p[large_size + 1] == 0, "wrong data %x\n", p[large_size + 1] );
+        ok( p[large_size + 2] == 0, "wrong data %x\n", p[large_size + 2] );
     }
 
     ret = HeapFree( GetProcessHeap(), 0, p );

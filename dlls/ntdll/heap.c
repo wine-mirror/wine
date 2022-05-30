@@ -783,7 +783,7 @@ static inline void shrink_used_block( SUBHEAP *subheap, struct block *block, UIN
 static void *allocate_large_block( HEAP *heap, DWORD flags, SIZE_T size )
 {
     ARENA_LARGE *arena;
-    SIZE_T block_size = sizeof(*arena) + ROUND_SIZE(size) + HEAP_TAIL_EXTRA_SIZE(flags);
+    SIZE_T block_size = sizeof(*arena) + ROUND_SIZE( size );
     LPVOID address = NULL;
 
     if (!(flags & HEAP_GROWABLE)) return NULL;
@@ -799,8 +799,9 @@ static void *allocate_large_block( HEAP *heap, DWORD flags, SIZE_T size )
     arena->block_size = block_size;
     arena->size = ARENA_LARGE_SIZE;
     arena->magic = ARENA_LARGE_MAGIC;
-    mark_block_tail( (char *)(arena + 1) + size, block_size - sizeof(*arena) - size, flags );
     list_add_tail( &heap->large_list, &arena->entry );
+    valgrind_make_noaccess( (char *)arena + sizeof(*arena) + arena->data_size,
+                            arena->block_size - sizeof(*arena) - arena->data_size );
     return arena + 1;
 }
 
@@ -825,19 +826,17 @@ static void free_large_block( HEAP *heap, void *ptr )
 static void *realloc_large_block( HEAP *heap, DWORD flags, void *ptr, SIZE_T size )
 {
     ARENA_LARGE *arena = (ARENA_LARGE *)ptr - 1;
+    SIZE_T old_size = arena->data_size;
     void *new_ptr;
 
     if (arena->block_size - sizeof(*arena) >= size)
     {
-        SIZE_T unused = arena->block_size - sizeof(*arena) - size;
-
         /* FIXME: we could remap zero-pages instead */
-        valgrind_notify_resize( arena + 1, arena->data_size, size );
-        if (size > arena->data_size)
-            initialize_block( (char *)ptr + arena->data_size, size - arena->data_size, unused, flags );
-        else
-            mark_block_tail( (char *)ptr + size, unused, flags );
+        valgrind_notify_resize( arena + 1, old_size, size );
+        if (size > old_size) initialize_block( (char *)ptr + old_size, size - old_size, 0, flags );
         arena->data_size = size;
+        valgrind_make_noaccess( (char *)arena + sizeof(*arena) + arena->data_size,
+                                arena->block_size - sizeof(*arena) - arena->data_size );
         return ptr;
     }
     if (flags & HEAP_REALLOC_IN_PLACE_ONLY) return NULL;
@@ -847,7 +846,7 @@ static void *realloc_large_block( HEAP *heap, DWORD flags, void *ptr, SIZE_T siz
         return NULL;
     }
     valgrind_notify_alloc( new_ptr, size, 0 );
-    memcpy( new_ptr, ptr, arena->data_size );
+    memcpy( new_ptr, ptr, old_size );
     valgrind_notify_free( ptr );
     free_large_block( heap, ptr );
     return new_ptr;
@@ -877,12 +876,6 @@ static BOOL validate_large_arena( const HEAP *heap, const ARENA_LARGE *arena )
         err = "invalid block header";
     else if (!contains( arena, arena->block_size, arena + 1, arena->data_size ))
         err = "invalid block size";
-    else if (heap->flags & HEAP_TAIL_CHECKING_ENABLED)
-    {
-        SIZE_T i, unused = arena->block_size - sizeof(*arena) - arena->data_size;
-        const unsigned char *data = (const unsigned char *)(arena + 1) + arena->data_size;
-        for (i = 0; i < unused && !err; i++) if (data[i] != ARENA_TAIL_FILLER) err = "invalid block tail";
-    }
 
     if (err)
     {
@@ -1317,7 +1310,6 @@ static void heap_set_debug_flags( HANDLE handle )
     if (flags & (HEAP_FREE_CHECKING_ENABLED | HEAP_TAIL_CHECKING_ENABLED))  /* fix existing blocks */
     {
         struct block *block;
-        ARENA_LARGE *large;
         SUBHEAP *subheap;
 
         LIST_FOR_EACH_ENTRY( subheap, &heap->subheap_list, SUBHEAP, entry )
@@ -1342,10 +1334,6 @@ static void heap_set_debug_flags( HANDLE handle )
                 }
             }
         }
-
-        LIST_FOR_EACH_ENTRY( large, &heap->large_list, ARENA_LARGE, entry )
-            mark_block_tail( (char *)(large + 1) + large->data_size,
-                             large->block_size - sizeof(*large) - large->data_size, flags );
     }
 
     if ((heap->flags & HEAP_GROWABLE) && !heap->pending_free &&
