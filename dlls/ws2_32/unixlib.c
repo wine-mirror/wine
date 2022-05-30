@@ -122,7 +122,9 @@ static const int addrinfo_flag_map[][2] =
 #ifdef AI_V4MAPPED
     MAP( AI_V4MAPPED ),
 #endif
+#ifdef AI_ALL
     MAP( AI_ALL ),
+#endif
     MAP( AI_ADDRCONFIG ),
 };
 
