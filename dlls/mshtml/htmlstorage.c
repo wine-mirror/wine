@@ -24,6 +24,7 @@
 #include "winbase.h"
 #include "winuser.h"
 #include "ole2.h"
+#include "shlobj.h"
 
 #include "wine/debug.h"
 
@@ -35,6 +36,8 @@ typedef struct {
     DispatchEx dispex;
     IHTMLStorage IHTMLStorage_iface;
     LONG ref;
+    WCHAR *filename;
+    HANDLE mutex;
 } HTMLStorage;
 
 static inline HTMLStorage *impl_from_IHTMLStorage(IHTMLStorage *iface)
@@ -83,6 +86,8 @@ static ULONG WINAPI HTMLStorage_Release(IHTMLStorage *iface)
 
     if(!ref) {
         release_dispex(&This->dispex);
+        heap_free(This->filename);
+        CloseHandle(This->mutex);
         heap_free(This);
     }
 
@@ -121,6 +126,103 @@ static HRESULT WINAPI HTMLStorage_Invoke(IHTMLStorage *iface, DISPID dispIdMembe
             pDispParams, pVarResult, pExcepInfo, puArgErr);
 }
 
+static BOOL create_path(const WCHAR *path)
+{
+    BOOL ret = TRUE;
+    WCHAR *new_path;
+    int len;
+
+    new_path = heap_alloc((wcslen(path) + 1) * sizeof(WCHAR));
+    if(!new_path)
+        return FALSE;
+    wcscpy(new_path, path);
+
+    while((len = wcslen(new_path)) && new_path[len - 1] == '\\')
+    new_path[len - 1] = 0;
+
+    while(!CreateDirectoryW(new_path, NULL)) {
+        WCHAR *slash;
+        DWORD error = GetLastError();
+        if(error == ERROR_ALREADY_EXISTS) break;
+        if(error != ERROR_PATH_NOT_FOUND) {
+            ret = FALSE;
+            break;
+        }
+        slash = wcsrchr(new_path, '\\');
+        if(!slash) {
+            ret = FALSE;
+            break;
+        }
+        len = slash - new_path;
+        new_path[len] = 0;
+        if(!create_path(new_path)) {
+            ret = FALSE;
+            break;
+        }
+        new_path[len] = '\\';
+    }
+    heap_free(new_path);
+    return ret;
+}
+
+static HRESULT open_document(const WCHAR *filename, IXMLDOMDocument **ret)
+{
+    IXMLDOMDocument *doc = NULL;
+    HRESULT hres = E_OUTOFMEMORY;
+    WCHAR *ptr, *path;
+    VARIANT var;
+    VARIANT_BOOL success;
+
+    path = heap_strdupW(filename);
+    if(!path)
+        return E_OUTOFMEMORY;
+
+    *(ptr = wcsrchr(path, '\\')) = 0;
+    if(!create_path(path))
+        goto done;
+
+    if(GetFileAttributesW(filename) == INVALID_FILE_ATTRIBUTES) {
+        DWORD count;
+        HANDLE file = CreateFileW(filename, GENERIC_WRITE, 0, NULL, CREATE_NEW, 0, NULL);
+        if(file == INVALID_HANDLE_VALUE) {
+            hres = HRESULT_FROM_WIN32(GetLastError());
+            goto done;
+        }
+        if(!WriteFile(file, "<root/>", sizeof("<root/>") - 1, &count, NULL)) {
+            CloseHandle(file);
+            hres = HRESULT_FROM_WIN32(GetLastError());
+            goto done;
+        }
+        CloseHandle(file);
+    }
+
+    hres = CoCreateInstance(&CLSID_DOMDocument, NULL, CLSCTX_INPROC_SERVER, &IID_IXMLDOMDocument, (void**)&doc);
+    if(hres != S_OK)
+        goto done;
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(filename);
+    if(!V_BSTR(&var)) {
+        hres = E_OUTOFMEMORY;
+        goto done;
+    }
+
+    hres = IXMLDOMDocument_load(doc, var, &success);
+    if(hres == S_FALSE || success == VARIANT_FALSE)
+        hres = E_FAIL;
+
+    SysFreeString(V_BSTR(&var));
+
+done:
+    heap_free(path);
+    if(hres == S_OK)
+        *ret = doc;
+    else if(doc)
+        IXMLDOMDocument_Release(doc);
+
+    return hres;
+}
+
 static HRESULT WINAPI HTMLStorage_get_length(IHTMLStorage *iface, LONG *p)
 {
     HTMLStorage *This = impl_from_IHTMLStorage(iface);
@@ -142,14 +244,98 @@ static HRESULT WINAPI HTMLStorage_key(IHTMLStorage *iface, LONG lIndex, BSTR *p)
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI HTMLStorage_getItem(IHTMLStorage *iface, BSTR bstrKey, VARIANT *p)
+static BSTR build_query(const WCHAR *key)
+{
+    static const WCHAR fmt[] = L"item[@name='%s']";
+    const WCHAR *str = key ? key : L"";
+    UINT len = ARRAY_SIZE(fmt) + wcslen(str);
+    BSTR ret = SysAllocStringLen(NULL, len);
+
+    if(ret) swprintf(ret, len, fmt, str);
+    return ret;
+}
+
+static HRESULT get_root_node(IXMLDOMDocument *doc, IXMLDOMNode **root)
+{
+    HRESULT hres;
+    BSTR str;
+
+    str = SysAllocString(L"root");
+    if(!str)
+        return E_OUTOFMEMORY;
+
+    hres = IXMLDOMDocument_selectSingleNode(doc, str, root);
+    SysFreeString(str);
+    return hres;
+}
+
+static HRESULT get_item(const WCHAR *filename, BSTR key, VARIANT *value)
+{
+    IXMLDOMDocument *doc;
+    BSTR query = NULL;
+    IXMLDOMNode *root = NULL, *node = NULL;
+    IXMLDOMElement *elem = NULL;
+    HRESULT hres;
+
+    hres = open_document(filename, &doc);
+    if(hres != S_OK)
+        return hres;
+
+    hres = get_root_node(doc, &root);
+    if(hres != S_OK)
+        goto done;
+
+    query = build_query(key);
+    if(!query) {
+        hres = E_OUTOFMEMORY;
+        goto done;
+    }
+
+    hres = IXMLDOMNode_selectSingleNode(root, query, &node);
+    if(hres == S_OK) {
+        hres = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMElement, (void**)&elem);
+        if(hres != S_OK)
+            goto done;
+
+        hres = IXMLDOMElement_getAttribute(elem, (BSTR)L"value", value);
+    }else {
+        V_VT(value) = VT_NULL;
+        hres = S_OK;
+    }
+
+done:
+    SysFreeString(query);
+    if(root)
+        IXMLDOMNode_Release(root);
+    if(node)
+        IXMLDOMNode_Release(node);
+    if(elem)
+        IXMLDOMElement_Release(elem);
+    IXMLDOMDocument_Release(doc);
+    return hres;
+}
+
+static HRESULT WINAPI HTMLStorage_getItem(IHTMLStorage *iface, BSTR bstrKey, VARIANT *value)
 {
     HTMLStorage *This = impl_from_IHTMLStorage(iface);
+    HRESULT hres;
 
-    FIXME("(%p)->(%s %p)\n", This, debugstr_w(bstrKey), p);
+    TRACE("(%p)->(%s %p)\n", This, debugstr_w(bstrKey), value);
 
-    V_VT(p) = VT_NULL;
-    return S_OK;
+    if(!value)
+        return E_POINTER;
+
+    if(!This->filename) {
+        FIXME("session storage not supported\n");
+        V_VT(value) = VT_NULL;
+        return S_OK;
+    }
+
+    WaitForSingleObject(This->mutex, INFINITE);
+    hres = get_item(This->filename, bstrKey, value);
+    ReleaseMutex(This->mutex);
+
+    return hres;
 }
 
 static HRESULT WINAPI HTMLStorage_setItem(IHTMLStorage *iface, BSTR bstrKey, BSTR bstrValue)
@@ -201,13 +387,86 @@ static dispex_static_data_t HTMLStorage_dispex = {
     HTMLStorage_iface_tids
 };
 
-HRESULT create_html_storage(compat_mode_t compat_mode, IHTMLStorage **p)
+static WCHAR *build_filename(IUri *uri)
+{
+    static const WCHAR store[] = L"\\Microsoft\\Internet Explorer\\DOMStore\\";
+    WCHAR path[MAX_PATH], *ret;
+    BSTR hostname;
+    HRESULT hres;
+    int len;
+
+    hres = IUri_GetHost(uri, &hostname);
+    if(hres != S_OK)
+        return NULL;
+
+    if(!SHGetSpecialFolderPathW(NULL, path, CSIDL_LOCAL_APPDATA, TRUE)) {
+        ERR("Can't get folder path %lu\n", GetLastError());
+        SysFreeString(hostname);
+        return NULL;
+    }
+
+    len = wcslen(path);
+    if(len + ARRAY_SIZE(store) > ARRAY_SIZE(path)) {
+        ERR("Path too long\n");
+        SysFreeString(hostname);
+        return NULL;
+    }
+    memcpy(path + len, store, sizeof(store));
+
+    len += ARRAY_SIZE(store);
+    ret = heap_alloc((len + wcslen(hostname) + ARRAY_SIZE(L".xml")) * sizeof(WCHAR));
+    if(!ret) {
+        SysFreeString(hostname);
+        return NULL;
+    }
+
+    wcscpy(ret, path);
+    wcscat(ret, hostname);
+    wcscat(ret, L".xml");
+
+    SysFreeString(hostname);
+    return ret;
+}
+
+static WCHAR *build_mutexname(const WCHAR *filename)
+{
+    WCHAR *ret, *ptr;
+    ret = heap_strdupW(filename);
+    if(!ret)
+        return NULL;
+    for(ptr = ret; *ptr; ptr++)
+        if(*ptr == '\\') *ptr = '_';
+    return ret;
+}
+
+HRESULT create_html_storage(compat_mode_t compat_mode, IUri *uri, IHTMLStorage **p)
 {
     HTMLStorage *storage;
 
     storage = heap_alloc_zero(sizeof(*storage));
     if(!storage)
         return E_OUTOFMEMORY;
+
+    if(uri) {
+        WCHAR *mutexname;
+        if(!(storage->filename = build_filename(uri))) {
+            heap_free(storage);
+            return E_OUTOFMEMORY;
+        }
+        mutexname = build_mutexname(storage->filename);
+        if(!mutexname) {
+            heap_free(storage->filename);
+            heap_free(storage);
+            return E_OUTOFMEMORY;
+        }
+        storage->mutex = CreateMutexW(NULL, FALSE, mutexname);
+        heap_free(mutexname);
+        if(!storage->mutex) {
+            heap_free(storage->filename);
+            heap_free(storage);
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
+    }
 
     storage->IHTMLStorage_iface.lpVtbl = &HTMLStorageVtbl;
     storage->ref = 1;
