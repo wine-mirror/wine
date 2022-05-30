@@ -30,7 +30,6 @@ my $UNIHAN   = "https://www.unicode.org/Public/$UNIVERSION/ucd/Unihan.zip";
 my $IDNADATA = "https://www.unicode.org/Public/idna/$UNIVERSION";
 my $JISDATA  = "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/JIS";
 my $KSCDATA  = "https://www.unicode.org/Public/MAPPINGS/OBSOLETE/EASTASIA/KSC";
-my $REPORTS = "http://www.unicode.org/reports";
 my $MSDATA = "https://download.microsoft.com/download/C/F/7/CF713A5E-9FBC-4FD6-9246-275F65C0E498";
 my $MSCODEPAGES = "$MSDATA/Windows Supported Code Page Data Files.zip";
 
@@ -40,9 +39,6 @@ my $CLDR33DATA = "https://www.unicode.org/Public/cldr/33/cldr-common-33.0.zip";
 
 my $ISO639VERSION = "20220120";
 my $ISO639 =  "https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3_Code_Tables_$ISO639VERSION.zip";
-
-# Sort keys file
-my $SORTKEYS = "tr10/allkeys.txt";
 
 # Default char for undefined mappings
 my $DEF_CHAR = ord '?';
@@ -2436,106 +2432,6 @@ sub dump_krwansung_codepage(@)
     }
 
     output_codepage_file( 20949 );
-}
-
-################################################################
-# build the sort keys table
-sub dump_sortkeys($)
-{
-    my $filename = shift;
-    my @sortkeys = ();
-
-    my $INPUT = open_data_file( $REPORTS, $SORTKEYS );
-    while (<$INPUT>)
-    {
-        next if /^\#/;  # skip comments
-        next if /^$/;  # skip empty lines
-        next if /\x1a/;  # skip ^Z
-        next if /^\@version/;  # skip @version header
-        if (/^([0-9a-fA-F]+)\s+;\s+\[([*.])([0-9a-fA-F]{4})\.([0-9a-fA-F]{4})\.([0-9a-fA-F]{4})\.([0-9a-fA-F]+)\]/)
-        {
-            my ($uni,$variable) = (hex $1, $2);
-            next if $uni > 65535;
-            $sortkeys[$uni] = [ $uni, hex $3, hex $4, hex $5, hex $6 ];
-            next;
-        }
-        if (/^([0-9a-fA-F]+\s+)+;\s+\[[*.]([0-9a-fA-F]{4})\.([0-9a-fA-F]{4})\.([0-9a-fA-F]{4})\.([0-9a-fA-F]+)\]/)
-        {
-            # multiple character sequence, ignored for now
-            next;
-        }
-        die "$SORTKEYS: Unrecognized line $_\n";
-    }
-    close $INPUT;
-
-    # compress the keys to 32 bit:
-    # key 1 to 16 bits, key 2 to 8 bits, key 3 to 4 bits, key 4 to 1 bit
-
-    @sortkeys = sort { ${$a}[1] <=> ${$b}[1] or 
-                       ${$a}[2] <=> ${$b}[2] or
-                       ${$a}[3] <=> ${$b}[3] or
-                       ${$a}[4] <=> ${$b}[4] or
-                       $a cmp $b; } @sortkeys;
-
-    my ($n2, $n3) = (1, 1);
-    my @keys = (-1, -1, -1, -1, -1 );
-    my @flatkeys = ();
-
-    for (my $i = 0; $i < @sortkeys; $i++)
-    {
-        next unless defined $sortkeys[$i];
-        my @current = @{$sortkeys[$i]};
-        if ($current[1] == $keys[1])
-        {
-            if ($current[2] == $keys[2])
-            {
-                if ($current[3] == $keys[3])
-                {
-                    # nothing
-                }
-                else
-                {
-                    $keys[3] = $current[3];
-                    $n3++;
-                    die if ($n3 >= 16);
-                }
-            }
-            else
-            {
-                $keys[2] = $current[2];
-                $keys[3] = $current[3];
-                $n2++;
-                $n3 = 1;
-                die if ($n2 >= 256);
-            }
-        }
-        else
-        {
-            $keys[1] = $current[1];
-            $keys[2] = $current[2];
-            $keys[3] = $current[3];
-            $n2 = 1;
-            $n3 = 1;
-        }
-
-        if ($current[2]) { $current[2] = $n2; }
-        if ($current[3]) { $current[3] = $n3; }
-        if ($current[4]) { $current[4] = 1; }
-
-        $flatkeys[$current[0]] = ($current[1] << 16) | ($current[2] << 8) | ($current[3] << 4) | $current[4];
-    }
-
-    open OUTPUT,">$filename.new" or die "Cannot create $filename";
-    printf "Building $filename\n";
-    printf OUTPUT "/* Unicode collation element table */\n";
-    printf OUTPUT "/* generated from %s */\n", "$REPORTS/$SORTKEYS";
-    printf OUTPUT "/* DO NOT EDIT!! */\n\n";
-    print OUTPUT "#include \"windef.h\"\n\n";
-
-    dump_two_level_mapping( "collation_table", 0xffffffff, 32, @flatkeys );
-
-    close OUTPUT;
-    save_file($filename);
 }
 
 
@@ -5372,7 +5268,6 @@ sub save_file($)
 
 chdir ".." if -f "./make_unicode";
 load_data();
-dump_sortkeys( "dlls/kernelbase/collation.c" );
 dump_bidi_dir_table( "dlls/gdi32/uniscribe/direction.c" );
 dump_bidi_dir_table( "dlls/dwrite/direction.c" );
 dump_mirroring( "dlls/gdi32/uniscribe/mirror.c" );

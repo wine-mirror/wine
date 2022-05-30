@@ -6,7 +6,6 @@ IMPORTS   = uuid ntdll winecrt0
 EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--image-base,0x7b000000
 
 C_SRCS = \
-	collation.c \
 	console.c \
 	debug.c \
 	file.c \
