@@ -1431,6 +1431,7 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
     HEAP *heapPtr = HEAP_GetPtr( heap );
     SUBHEAP *subheap, *next;
     ARENA_LARGE *arena, *arena_next;
+    struct block **pending, **tmp;
     SIZE_T size;
     void *addr;
 
@@ -1442,6 +1443,15 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
         DbgBreakPoint();
     }
     if (!heapPtr) return heap;
+
+    if ((pending = heapPtr->pending_free))
+    {
+        heapPtr->pending_free = NULL;
+        for (tmp = pending; *tmp && tmp != pending + MAX_FREE_PENDING; ++tmp)
+            if ((subheap = find_subheap( heap, *tmp, FALSE )))
+                free_used_block( subheap, *tmp );
+        RtlFreeHeap( heap, 0, pending );
+    }
 
     if (heap == processHeap) return heap; /* cannot delete the main process heap */
 
@@ -1470,7 +1480,6 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
         NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
     }
     notify_free_all( &heapPtr->subheap );
-    RtlFreeHeap( GetProcessHeap(), 0, heapPtr->pending_free );
     size = 0;
     addr = heap;
     NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
