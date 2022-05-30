@@ -2320,7 +2320,6 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
         tmp_flags = 0;
         ret = pRtlGetUserInfoHeap( heap, 0, ptr0, (void **)&tmp_ptr, &tmp_flags );
         ok( ret, "RtlGetUserInfoHeap failed, error %lu\n", GetLastError() );
-        todo_wine
         ok( tmp_ptr == (void *)0xdeadbeef, "got ptr %p\n", tmp_ptr );
         todo_wine
         ok( tmp_flags == 0xa00 || broken(tmp_flags == 0xc00) /* w1064v1507 */,
@@ -2335,7 +2334,6 @@ static void test_block_layout( HANDLE heap, DWORD global_flags, DWORD heap_flags
         tmp_flags = 0;
         ret = pRtlGetUserInfoHeap( heap, 0, ptr0, (void **)&tmp_ptr, &tmp_flags );
         ok( ret, "RtlGetUserInfoHeap failed, error %lu\n", GetLastError() );
-        todo_wine
         ok( tmp_ptr == (void *)0xdeadbee0, "got ptr %p\n", tmp_ptr );
         todo_wine
         ok( tmp_flags == 0xa00 || broken(tmp_flags == 0xc00) /* w1064v1507 */,

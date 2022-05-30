@@ -1996,12 +1996,33 @@ NTSTATUS WINAPI RtlSetHeapInformation( HANDLE heap, HEAP_INFORMATION_CLASS info_
 /***********************************************************************
  *           RtlGetUserInfoHeap    (NTDLL.@)
  */
-BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE heap, ULONG flags, void *ptr, void **user_value, ULONG *user_flags )
+BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE handle, ULONG flags, void *ptr, void **user_value, ULONG *user_flags )
 {
-    FIXME( "heap %p, flags %#x, ptr %p, user_value %p, user_flags %p semi-stub!\n",
-           heap, flags, ptr, user_value, user_flags );
-    *user_value = NULL;
+    ARENA_LARGE *large = (ARENA_LARGE *)ptr - 1;
+    struct block *block;
+    SUBHEAP *subheap;
+    HEAP *heap;
+    char *tmp;
+
+    TRACE( "handle %p, flags %#x, ptr %p, user_value %p, user_flags %p semi-stub!\n",
+           handle, flags, ptr, user_value, user_flags );
+
+    *user_value = 0;
     *user_flags = 0;
+
+    if (!(heap = HEAP_GetPtr( handle ))) return TRUE;
+
+    heap_lock( heap, flags );
+    if ((block = unsafe_block_from_ptr( heap, ptr, &subheap )) && !subheap)
+        *user_value = large->user_value;
+    else if (block)
+    {
+        tmp = (char *)block + block_get_size( block ) - block->tail_size + sizeof(void *);
+        if ((heap_get_flags( heap, flags ) & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND) tmp += ALIGNMENT;
+        *user_value = *(void **)tmp;
+    }
+    heap_unlock( heap, flags );
+
     return TRUE;
 }
 
