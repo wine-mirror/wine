@@ -1395,9 +1395,9 @@ interface IPersistFolder3 : IPersistFolder2
     } PERSIST_FOLDER_TARGET_INFO;
 
     HRESULT InitializeEx(
-        [in] IBindCtx *pbc,
+        [in, unique] IBindCtx *pbc,
         [in] LPCITEMIDLIST pidlRoot,
-        [in] const PERSIST_FOLDER_TARGET_INFO *ppfti);
+        [in, unique] const PERSIST_FOLDER_TARGET_INFO *ppfti);
 
     HRESULT GetFolderTargetInfo( [out] PERSIST_FOLDER_TARGET_INFO *ppfti );
 }
