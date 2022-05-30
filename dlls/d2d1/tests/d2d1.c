@@ -1213,6 +1213,24 @@ static BOOL init_test_context_(unsigned int line, struct d2d1_test_context *ctx,
     return TRUE;
 }
 
+#define check_bitmap_options(b, o) check_bitmap_options_(__LINE__, b, o)
+static void check_bitmap_options_(unsigned int line, ID2D1Bitmap *bitmap, DWORD expected_options)
+{
+    D2D1_BITMAP_OPTIONS options;
+    ID2D1Bitmap1 *bitmap1;
+    HRESULT hr;
+
+    hr = ID2D1Bitmap_QueryInterface(bitmap, &IID_ID2D1Bitmap1, (void **)&bitmap1);
+    if (FAILED(hr))
+        return;
+
+    options = ID2D1Bitmap1_GetOptions(bitmap1);
+    ok_(__FILE__, line)(options == expected_options, "Got unexpected bitmap options %#x, expected %#lx.\n",
+            options, expected_options);
+
+    ID2D1Bitmap1_Release(bitmap1);
+}
+
 #define check_bitmap_surface(b, s, o) check_bitmap_surface_(__LINE__, b, s, o)
 static void check_bitmap_surface_(unsigned int line, ID2D1Bitmap *bitmap, BOOL has_surface, DWORD expected_options)
 {
@@ -11605,6 +11623,7 @@ static void test_bitmap_map(BOOL d3d11)
     };
     D2D1_BITMAP_PROPERTIES1 bitmap_desc;
     D3D11_TEXTURE2D_DESC texture_desc;
+    ID2D1Bitmap *bitmap2, *bitmap3;
     struct d2d1_test_context ctx;
     D2D1_MAPPED_RECT mapped_rect;
     ID3D11Device *d3d_device;
@@ -11612,7 +11631,6 @@ static void test_bitmap_map(BOOL d3d11)
     unsigned int i, options;
     IDXGISurface *surface;
     ID2D1Bitmap1 *bitmap;
-    ID2D1Bitmap *bitmap2;
     D2D1_SIZE_U size;
     HRESULT hr;
 
@@ -11768,14 +11786,13 @@ static void test_bitmap_map(BOOL d3d11)
     hr = ID2D1DeviceContext_CreateSharedBitmap(ctx.context, &IID_IDXGISurface, surface,
             (const D2D1_BITMAP_PROPERTIES *)&bitmap_desc, &bitmap2);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    check_bitmap_options(bitmap2, D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_CPU_READ);
 
-    hr = ID2D1Bitmap_QueryInterface(bitmap2, &IID_ID2D1Bitmap1, (void **)&bitmap);
+    hr = ID2D1DeviceContext_CreateSharedBitmap(ctx.context, &IID_ID2D1Bitmap, bitmap2, NULL, &bitmap3);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    options = ID2D1Bitmap1_GetOptions(bitmap);
-    ok(options == (D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_CPU_READ),
-            "Unexpected options %#x.\n", options);
+    check_bitmap_options(bitmap3, D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_CPU_READ);
+    ID2D1Bitmap_Release(bitmap3);
 
-    ID2D1Bitmap1_Release(bitmap);
     ID2D1Bitmap_Release(bitmap2);
 
     hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(ctx.context, surface, NULL, &bitmap);
@@ -11788,9 +11805,7 @@ static void test_bitmap_map(BOOL d3d11)
     /* Options incompatible with the surface. */
     bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET;
     hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(ctx.context, surface, &bitmap_desc, &bitmap);
-    todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr)) ID2D1Bitmap1_Release(bitmap);
     bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_NONE;
     hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(ctx.context, surface, &bitmap_desc, &bitmap);
     todo_wine
@@ -11798,9 +11813,7 @@ static void test_bitmap_map(BOOL d3d11)
     if (SUCCEEDED(hr)) ID2D1Bitmap1_Release(bitmap);
     bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
     hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(ctx.context, surface, &bitmap_desc, &bitmap);
-    todo_wine
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
-    if (SUCCEEDED(hr)) ID2D1Bitmap1_Release(bitmap);
 
     /* Create without D2D1_BITMAP_OPTIONS_CPU_READ, surface supports CPU reads. */
     bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
@@ -11808,6 +11821,38 @@ static void test_bitmap_map(BOOL d3d11)
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     hr = ID2D1Bitmap1_Map(bitmap, D2D1_MAP_OPTIONS_READ, &mapped_rect);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ID2D1Bitmap1_Release(bitmap);
+
+    ID3D11Texture2D_Release(texture);
+    IDXGISurface_Release(surface);
+
+    /* Surface D2D1_BITMAP_OPTIONS_TARGET */
+    texture_desc.Width = 4;
+    texture_desc.Height = 4;
+    texture_desc.MipLevels = 1;
+    texture_desc.ArraySize = 1;
+    texture_desc.Format = DXGI_FORMAT_B8G8R8A8_UNORM;
+    texture_desc.SampleDesc.Count = 1;
+    texture_desc.SampleDesc.Quality = 0;
+    texture_desc.Usage = D3D11_USAGE_DEFAULT;
+    texture_desc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+    texture_desc.CPUAccessFlags = 0;
+    texture_desc.MiscFlags = 0;
+
+    hr = ID3D11Device_CreateTexture2D(d3d_device, &texture_desc, NULL, &texture);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID3D11Texture2D_QueryInterface(texture, &IID_IDXGISurface, (void **)&surface);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    bitmap_desc.bitmapOptions = D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_TARGET;
+    hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(ctx.context, surface, &bitmap_desc, &bitmap);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID2D1Bitmap1_Release(bitmap);
+
+    bitmap_desc.bitmapOptions = 0;
+    hr = ID2D1DeviceContext_CreateBitmapFromDxgiSurface(ctx.context, surface, &bitmap_desc, &bitmap);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    check_bitmap_options((ID2D1Bitmap *)bitmap, 0);
     ID2D1Bitmap1_Release(bitmap);
 
     ID3D11Texture2D_Release(texture);

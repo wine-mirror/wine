@@ -1856,17 +1856,69 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateColorContextFromWicCol
     return E_NOTIMPL;
 }
 
+static BOOL d2d_bitmap_check_options_with_surface(unsigned int options, unsigned int surface_options)
+{
+    switch (options)
+    {
+        case D2D1_BITMAP_OPTIONS_NONE:
+        case D2D1_BITMAP_OPTIONS_TARGET:
+        case D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW:
+        case D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE:
+        case D2D1_BITMAP_OPTIONS_TARGET | D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE:
+        case D2D1_BITMAP_OPTIONS_CANNOT_DRAW | D2D1_BITMAP_OPTIONS_CPU_READ:
+        case D2D1_BITMAP_OPTIONS_CANNOT_DRAW:
+            break;
+        default:
+            WARN("Invalid bitmap options %#x.\n", options);
+            return FALSE;
+    }
+
+    if (options && (options & D2D1_BITMAP_OPTIONS_TARGET) != (surface_options & D2D1_BITMAP_OPTIONS_TARGET))
+        return FALSE;
+    if (options & D2D1_BITMAP_OPTIONS_TARGET)
+    {
+        if (!(options & D2D1_BITMAP_OPTIONS_CANNOT_DRAW) && (surface_options & D2D1_BITMAP_OPTIONS_CANNOT_DRAW))
+            return FALSE;
+        if (options & D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE && !(surface_options & D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE))
+            return FALSE;
+        return TRUE;
+    }
+
+    if (options & D2D1_BITMAP_OPTIONS_CANNOT_DRAW)
+    {
+        if (!(surface_options & D2D1_BITMAP_OPTIONS_CANNOT_DRAW))
+            return FALSE;
+
+        if (options & D2D1_BITMAP_OPTIONS_CPU_READ && !(surface_options & D2D1_BITMAP_OPTIONS_CPU_READ))
+            return FALSE;
+    }
+
+    return TRUE;
+}
+
 static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmapFromDxgiSurface(ID2D1DeviceContext *iface,
         IDXGISurface *surface, const D2D1_BITMAP_PROPERTIES1 *desc, ID2D1Bitmap1 **bitmap)
 {
     struct d2d_device_context *context = impl_from_ID2D1DeviceContext(iface);
     D2D1_BITMAP_PROPERTIES1 bitmap_desc;
+    unsigned int surface_options;
     struct d2d_bitmap *object;
     HRESULT hr;
 
     TRACE("iface %p, surface %p, desc %p, bitmap %p.\n", iface, surface, desc, bitmap);
 
-    if (!desc)
+    surface_options = d2d_get_bitmap_options_for_surface(surface);
+
+    if (desc)
+    {
+        if (!d2d_bitmap_check_options_with_surface(desc->bitmapOptions, surface_options))
+        {
+            WARN("Incompatible bitmap options %#x, surface options %#x.\n",
+                    desc->bitmapOptions, surface_options);
+            return E_INVALIDARG;
+        }
+    }
+    else
     {
         DXGI_SURFACE_DESC surface_desc;
 
@@ -1879,7 +1931,7 @@ static HRESULT STDMETHODCALLTYPE d2d_device_context_CreateBitmapFromDxgiSurface(
         memset(&bitmap_desc, 0, sizeof(bitmap_desc));
         bitmap_desc.pixelFormat.format = surface_desc.Format;
         bitmap_desc.pixelFormat.alphaMode = D2D1_ALPHA_MODE_PREMULTIPLIED;
-        bitmap_desc.bitmapOptions = d2d_get_bitmap_options_for_surface(surface);
+        bitmap_desc.bitmapOptions = surface_options;
         desc = &bitmap_desc;
     }
 
