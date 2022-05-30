@@ -141,6 +141,23 @@ static inline gnutls_session_t session_from_handle(UINT64 handle)
    return (gnutls_session_t)(ULONG_PTR)handle;
 }
 
+struct schan_buffers
+{
+    SIZE_T offset;
+    SIZE_T limit;
+    const SecBufferDesc *desc;
+    SecBuffer *alloc_buffer;
+    int current_buffer_idx;
+    int (*get_next_buffer)(struct schan_buffers *);
+};
+
+struct schan_transport
+{
+    gnutls_session_t session;
+    struct schan_buffers in;
+    struct schan_buffers out;
+};
+
 static int compat_cipher_get_block_size(gnutls_cipher_algorithm_t cipher)
 {
     switch(cipher) {
@@ -374,7 +391,6 @@ static char *get_buffer(struct schan_buffers *s, SIZE_T *count)
 static ssize_t pull_adapter(gnutls_transport_ptr_t transport, void *buff, size_t buff_len)
 {
     struct schan_transport *t = (struct schan_transport*)transport;
-    gnutls_session_t s = session_from_handle(t->session);
     SIZE_T len = buff_len;
     char *b;
 
@@ -383,7 +399,7 @@ static ssize_t pull_adapter(gnutls_transport_ptr_t transport, void *buff, size_t
     b = get_buffer(&t->in, &len);
     if (!b)
     {
-        pgnutls_transport_set_errno(s, EAGAIN);
+        pgnutls_transport_set_errno(t->session, EAGAIN);
         return -1;
     }
     memcpy(buff, b, len);
@@ -395,7 +411,6 @@ static ssize_t pull_adapter(gnutls_transport_ptr_t transport, void *buff, size_t
 static ssize_t push_adapter(gnutls_transport_ptr_t transport, const void *buff, size_t buff_len)
 {
     struct schan_transport *t = (struct schan_transport*)transport;
-    gnutls_session_t s = session_from_handle(t->session);
     SIZE_T len = buff_len;
     char *b;
 
@@ -404,7 +419,7 @@ static ssize_t push_adapter(gnutls_transport_ptr_t transport, const void *buff, 
     b = get_buffer(&t->out, &len);
     if (!b)
     {
-        pgnutls_transport_set_errno(s, EAGAIN);
+        pgnutls_transport_set_errno(t->session, EAGAIN);
         return -1;
     }
     memcpy(b, buff, len);
@@ -483,6 +498,7 @@ static NTSTATUS schan_create_session( void *args )
     char priority[128] = "NORMAL:%LATEST_RECORD_VERSION", *p;
     BOOL using_vers_all = FALSE, disabled;
     unsigned int i, flags = (cred->credential_use == SECPKG_CRED_INBOUND) ? GNUTLS_SERVER : GNUTLS_CLIENT;
+    struct schan_transport *transport;
     gnutls_session_t s;
     int err;
 
@@ -499,6 +515,13 @@ static NTSTATUS schan_create_session( void *args )
         pgnutls_perror(err);
         return STATUS_INTERNAL_ERROR;
     }
+
+    if (!(transport = calloc(1, sizeof(*transport))))
+    {
+        pgnutls_deinit(s);
+        return STATUS_INTERNAL_ERROR;
+    }
+    transport->session = s;
 
     p = priority + strlen(priority);
 
@@ -531,6 +554,7 @@ static NTSTATUS schan_create_session( void *args )
     {
         pgnutls_perror(err);
         pgnutls_deinit(s);
+        free(transport);
         return STATUS_INTERNAL_ERROR;
     }
 
@@ -540,13 +564,14 @@ static NTSTATUS schan_create_session( void *args )
     {
         pgnutls_perror(err);
         pgnutls_deinit(s);
+        free(transport);
         return STATUS_INTERNAL_ERROR;
     }
 
     pgnutls_transport_set_pull_function(s, pull_adapter);
     if (flags & GNUTLS_DATAGRAM) pgnutls_transport_set_pull_timeout_function(s, pull_timeout);
     pgnutls_transport_set_push_function(s, push_adapter);
-    pgnutls_transport_set_ptr(s, (gnutls_transport_ptr_t)params->transport);
+    pgnutls_transport_set_ptr(s, (gnutls_transport_ptr_t)transport);
     *params->session = (ULONG_PTR)s;
 
     return STATUS_SUCCESS;
@@ -556,7 +581,10 @@ static NTSTATUS schan_dispose_session( void *args )
 {
     const struct session_params *params = args;
     gnutls_session_t s = session_from_handle(params->session);
+    struct schan_transport *t = (struct schan_transport *)pgnutls_transport_get_ptr(s);
+    pgnutls_transport_set_ptr(s, NULL);
     pgnutls_deinit(s);
+    free(t);
     return STATUS_SUCCESS;
 }
 
@@ -573,6 +601,7 @@ static NTSTATUS schan_handshake( void *args )
     const struct handshake_params *params = args;
     gnutls_session_t s = session_from_handle(params->session);
     struct schan_transport *t = (struct schan_transport *)pgnutls_transport_get_ptr(s);
+    NTSTATUS status;
     int err;
 
     init_schan_buffers(&t->in, params->input, handshake_get_next_buffer);
@@ -580,47 +609,52 @@ static NTSTATUS schan_handshake( void *args )
     init_schan_buffers(&t->out, params->output, handshake_get_next_buffer_alloc );
     t->out.alloc_buffer = params->alloc_buffer;
 
-    while(1) {
+    while (1)
+    {
         err = pgnutls_handshake(s);
-        switch(err) {
-        case GNUTLS_E_SUCCESS:
+        if (err == GNUTLS_E_SUCCESS)
+        {
             TRACE("Handshake completed\n");
-            return SEC_E_OK;
-
-        case GNUTLS_E_AGAIN:
+            status = SEC_E_OK;
+        }
+        else if (err == GNUTLS_E_AGAIN)
+        {
             TRACE("Continue...\n");
-            return SEC_I_CONTINUE_NEEDED;
-
-        case GNUTLS_E_WARNING_ALERT_RECEIVED:
+            status = SEC_I_CONTINUE_NEEDED;
+        }
+        else if (err == GNUTLS_E_WARNING_ALERT_RECEIVED)
         {
             gnutls_alert_description_t alert = pgnutls_alert_get(s);
 
             WARN("WARNING ALERT: %d %s\n", alert, pgnutls_alert_get_name(alert));
 
-            switch(alert) {
-            case GNUTLS_A_UNRECOGNIZED_NAME:
+            if (alert == GNUTLS_A_UNRECOGNIZED_NAME)
+            {
                 TRACE("Ignoring\n");
                 continue;
-            default:
-                return SEC_E_INTERNAL_ERROR;
             }
+            else
+                status = SEC_E_INTERNAL_ERROR;
         }
-
-        case GNUTLS_E_FATAL_ALERT_RECEIVED:
+        else if (err == GNUTLS_E_FATAL_ALERT_RECEIVED)
         {
             gnutls_alert_description_t alert = pgnutls_alert_get(s);
             WARN("FATAL ALERT: %d %s\n", alert, pgnutls_alert_get_name(alert));
-            return SEC_E_INTERNAL_ERROR;
+            status = SEC_E_INTERNAL_ERROR;
         }
-
-        default:
+        else
+        {
             pgnutls_perror(err);
-            return SEC_E_INTERNAL_ERROR;
+            status = SEC_E_INTERNAL_ERROR;
         }
+        break;
     }
 
-    /* Never reached */
-    return SEC_E_OK;
+    *params->input_offset = t->in.offset;
+    *params->output_buffer_idx = t->out.current_buffer_idx;
+    *params->output_offset = t->out.offset;
+
+    return status;
 }
 
 static DWORD get_protocol(gnutls_protocol_t proto)

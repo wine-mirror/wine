@@ -88,23 +88,6 @@ typedef struct schan_credentials
     DWORD enabled_protocols;
 } schan_credentials;
 
-struct schan_buffers
-{
-    SIZE_T offset;
-    SIZE_T limit;
-    const SecBufferDesc *desc;
-    SecBuffer *alloc_buffer;
-    int current_buffer_idx;
-    int (*get_next_buffer)(struct schan_buffers *);
-};
-
-struct schan_transport
-{
-    schan_session session;
-    struct schan_buffers in;
-    struct schan_buffers out;
-};
-
 struct session_params
 {
     schan_session session;
@@ -122,7 +105,6 @@ struct allocate_certificate_credentials_params
 
 struct create_session_params
 {
-    struct schan_transport *transport;
     schan_credentials *cred;
     schan_session *session;
 };
@@ -166,6 +148,9 @@ struct handshake_params
     SIZE_T input_size;
     SecBufferDesc *output;
     SecBuffer *alloc_buffer;
+    ULONG *input_offset;
+    int *output_buffer_idx;
+    ULONG *output_offset;
 };
 
 struct recv_params
