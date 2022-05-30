@@ -381,7 +381,7 @@ interface IShellItem : IUnknown
     typedef DWORD SICHINTF;
 
     HRESULT BindToHandler(
-        [in] IBindCtx *pbc,
+        [in, unique] IBindCtx *pbc,
         [in] REFGUID rbhid,
         [in] REFIID riid,
         [out, iid_is(riid)] void **ppvOut);
