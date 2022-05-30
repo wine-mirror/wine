@@ -892,6 +892,7 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
                                     SIZE_T commitSize, SIZE_T totalSize )
 {
     struct entry *pEntry;
+    SIZE_T block_size;
     SUBHEAP *subheap;
     unsigned int i;
 
@@ -991,9 +992,9 @@ static SUBHEAP *HEAP_CreateSubHeap( HEAP *heap, LPVOID address, DWORD flags,
         }
     }
 
-    /* Create the first free block */
-
-    create_free_block( subheap, first_block( subheap ), subheap_size( subheap ) - subheap_overhead( subheap ) );
+    block_size = subheap_size( subheap ) - subheap_overhead( subheap );
+    block_size &= ~(ALIGNMENT - 1);
+    create_free_block( subheap, first_block( subheap ), block_size );
 
     return subheap;
 }
