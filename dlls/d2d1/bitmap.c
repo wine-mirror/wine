@@ -495,6 +495,30 @@ HRESULT d2d_bitmap_create(struct d2d_device_context *context, D2D1_SIZE_U size, 
     return *bitmap ? S_OK : E_OUTOFMEMORY;
 }
 
+unsigned int d2d_get_bitmap_options_for_surface(IDXGISurface *surface)
+{
+    D3D11_TEXTURE2D_DESC desc;
+    unsigned int options = 0;
+    ID3D11Texture2D *texture;
+
+    if (FAILED(IDXGISurface_QueryInterface(surface, &IID_ID3D11Texture2D, (void **)&texture)))
+        return 0;
+
+    ID3D11Texture2D_GetDesc(texture, &desc);
+    ID3D11Texture2D_Release(texture);
+
+    if (desc.BindFlags & D3D11_BIND_RENDER_TARGET)
+        options |= D2D1_BITMAP_OPTIONS_TARGET;
+    if (!(desc.BindFlags & D3D11_BIND_SHADER_RESOURCE))
+        options |= D2D1_BITMAP_OPTIONS_CANNOT_DRAW;
+    if (desc.MiscFlags & D3D11_RESOURCE_MISC_GDI_COMPATIBLE)
+        options |= D2D1_BITMAP_OPTIONS_GDI_COMPATIBLE;
+    if (desc.Usage == D3D11_USAGE_STAGING && desc.CPUAccessFlags & D3D11_CPU_ACCESS_READ)
+        options |= D2D1_BITMAP_OPTIONS_CPU_READ;
+
+    return options;
+}
+
 HRESULT d2d_bitmap_create_shared(struct d2d_device_context *context, REFIID iid, void *data,
         const D2D1_BITMAP_PROPERTIES1 *desc, struct d2d_bitmap **bitmap)
 {
