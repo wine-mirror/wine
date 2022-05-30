@@ -42,8 +42,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(nls);
 
 #define CALINFO_MAX_YEAR 2029
 
-extern const unsigned int collation_table[] DECLSPEC_HIDDEN;
-
 static HMODULE kernelbase_handle;
 
 struct registry_entry
@@ -3223,6 +3221,13 @@ static void reverse_sortkey( struct sortkey *key )
     }
 }
 
+static int compare_sortkeys( const struct sortkey *key1, const struct sortkey *key2, BOOL shorter_wins )
+{
+    int ret = memcmp( key1->buf, key2->buf, min( key1->len, key2->len ));
+    if (!ret) ret = shorter_wins ? key2->len - key1->len : key1->len - key2->len;
+    return ret;
+}
+
 static void append_normal_weights( const struct sortguid *sortid, struct sortkey *key_primary,
                                    struct sortkey *key_diacritic, struct sortkey *key_case,
                                    union char_weights weights, DWORD flags )
@@ -3737,6 +3742,73 @@ static int get_sortkey( const struct sortguid *sortid, DWORD flags,
 }
 
 
+/* implementation of CompareStringEx */
+static int compare_string( const struct sortguid *sortid, DWORD flags,
+                           const WCHAR *src1, int srclen1, const WCHAR *src2, int srclen2 )
+{
+    struct sortkey_state s1;
+    struct sortkey_state s2;
+    BYTE primary1[32];
+    BYTE primary2[32];
+    int i, ret, len, pos1 = 0, pos2 = 0;
+    BOOL have_extra1, have_extra2;
+    BYTE case_mask = 0x3f;
+    UINT except = sortid->except;
+    const WCHAR *compr_tables[8];
+
+    compr_tables[0] = NULL;
+    if (flags & NORM_IGNORECASE) case_mask &= ~(CASE_UPPER | CASE_SUBSCRIPT);
+    if (flags & NORM_IGNOREWIDTH) case_mask &= ~CASE_FULLWIDTH;
+    if (flags & NORM_IGNOREKANATYPE) case_mask &= ~CASE_KATAKANA;
+    if ((flags & NORM_LINGUISTIC_CASING) && except && sortid->ling_except) except = sortid->ling_except;
+
+    init_sortkey_state( &s1, flags, srclen1, primary1, sizeof(primary1) );
+    init_sortkey_state( &s2, flags, srclen2, primary2, sizeof(primary2) );
+
+    while (pos1 < srclen1 || pos2 < srclen2)
+    {
+        while (pos1 < srclen1 && !s1.key_primary.len)
+            pos1 += append_weights( sortid, flags, src1, srclen1, pos1,
+                                    case_mask, except, compr_tables, &s1, TRUE );
+
+        while (pos2 < srclen2 && !s2.key_primary.len)
+            pos2 += append_weights( sortid, flags, src2, srclen2, pos2,
+                                    case_mask, except, compr_tables, &s2, TRUE );
+
+        if (!(len = min( s1.key_primary.len, s2.key_primary.len ))) break;
+        if ((ret = memcmp( primary1, primary2, len ))) goto done;
+        memmove( primary1, primary1 + len, s1.key_primary.len - len );
+        memmove( primary2, primary2 + len, s2.key_primary.len - len );
+        s1.key_primary.len -= len;
+        s2.key_primary.len -= len;
+        s1.primary_pos += len;
+        s2.primary_pos += len;
+    }
+
+    if ((ret = s1.key_primary.len - s2.key_primary.len)) goto done;
+
+    have_extra1 = remove_unneeded_weights( sortid, &s1 );
+    have_extra2 = remove_unneeded_weights( sortid, &s2 );
+
+    if ((ret = compare_sortkeys( &s1.key_diacritic, &s2.key_diacritic, FALSE ))) goto done;
+    if ((ret = compare_sortkeys( &s1.key_case, &s2.key_case, FALSE ))) goto done;
+
+    if (have_extra1 && have_extra2)
+    {
+        for (i = 0; i < 4; i++)
+            if ((ret = compare_sortkeys( &s1.key_extra[i], &s2.key_extra[i], i != 1 ))) goto done;
+    }
+    else if ((ret = have_extra1 - have_extra2)) goto done;
+
+    ret = compare_sortkeys( &s1.key_special, &s2.key_special, FALSE );
+
+done:
+    free_sortkey_state( &s1 );
+    free_sortkey_state( &s2 );
+    return ret;
+}
+
+
 /* compose a full-width katakana. return consumed source characters. */
 static int map_to_fullwidth( const WCHAR *src, int srclen, WCHAR *dst )
 {
@@ -3804,126 +3876,6 @@ static int map_to_halfwidth( WCHAR c, WCHAR *dst, int dstlen )
     }
     if (dstlen >= 1) dst[0] = casemap( charmaps[CHARMAP_HALFWIDTH], c );
     return 1;
-}
-
-
-/* 32-bit collation element table format:
- * unicode weight - high 16 bit, diacritic weight - high 8 bit of low 16 bit,
- * case weight - high 4 bit of low 8 bit.
- */
-
-enum weight { UNICODE_WEIGHT, DIACRITIC_WEIGHT, CASE_WEIGHT };
-
-static unsigned int get_weight( WCHAR ch, enum weight type )
-{
-    unsigned int ret;
-
-    ret = collation_table[collation_table[collation_table[ch >> 8] + ((ch >> 4) & 0x0f)] + (ch & 0xf)];
-    if (ret == ~0u) return ch;
-
-    switch (type)
-    {
-    case UNICODE_WEIGHT:   return ret >> 16;
-    case DIACRITIC_WEIGHT: return (ret >> 8) & 0xff;
-    case CASE_WEIGHT:      return (ret >> 4) & 0x0f;
-    default:               return 0;
-    }
-}
-
-
-static void inc_str_pos( const WCHAR **str, int *len, unsigned int *dpos, unsigned int *dlen )
-{
-    (*dpos)++;
-    if (*dpos == *dlen)
-    {
-        *dpos = *dlen = 0;
-        (*str)++;
-        (*len)--;
-    }
-}
-
-
-static int compare_weights(int flags, const WCHAR *str1, int len1,
-                           const WCHAR *str2, int len2, enum weight type )
-{
-    unsigned int ce1, ce2, dpos1 = 0, dpos2 = 0, dlen1 = 0, dlen2 = 0;
-    const WCHAR *dstr1 = NULL, *dstr2 = NULL;
-
-    while (len1 > 0 && len2 > 0)
-    {
-        if (!dlen1 && !(dstr1 = get_decomposition( *str1, &dlen1 ))) dstr1 = str1;
-        if (!dlen2 && !(dstr2 = get_decomposition( *str2, &dlen2 ))) dstr2 = str2;
-
-        if (flags & NORM_IGNORESYMBOLS)
-        {
-            int skip = 0;
-            /* FIXME: not tested */
-            if (get_char_type( CT_CTYPE1, dstr1[dpos1] ) & (C1_PUNCT | C1_SPACE))
-            {
-                inc_str_pos( &str1, &len1, &dpos1, &dlen1 );
-                skip = 1;
-            }
-            if (get_char_type( CT_CTYPE1, dstr2[dpos2] ) & (C1_PUNCT | C1_SPACE))
-            {
-                inc_str_pos( &str2, &len2, &dpos2, &dlen2 );
-                skip = 1;
-            }
-            if (skip) continue;
-        }
-
-       /* hyphen and apostrophe are treated differently depending on
-        * whether SORT_STRINGSORT specified or not
-        */
-        if (type == UNICODE_WEIGHT && !(flags & SORT_STRINGSORT))
-        {
-            if (dstr1[dpos1] == '-' || dstr1[dpos1] == '\'')
-            {
-                if (dstr2[dpos2] != '-' && dstr2[dpos2] != '\'')
-                {
-                    inc_str_pos( &str1, &len1, &dpos1, &dlen1 );
-                    continue;
-                }
-            }
-            else if (dstr2[dpos2] == '-' || dstr2[dpos2] == '\'')
-            {
-                inc_str_pos( &str2, &len2, &dpos2, &dlen2 );
-                continue;
-            }
-        }
-
-        ce1 = get_weight( dstr1[dpos1], type );
-        if (!ce1)
-        {
-            inc_str_pos( &str1, &len1, &dpos1, &dlen1 );
-            continue;
-        }
-        ce2 = get_weight( dstr2[dpos2], type );
-        if (!ce2)
-        {
-            inc_str_pos( &str2, &len2, &dpos2, &dlen2 );
-            continue;
-        }
-
-        if (ce1 - ce2) return ce1 - ce2;
-
-        inc_str_pos( &str1, &len1, &dpos1, &dlen1 );
-        inc_str_pos( &str2, &len2, &dpos2, &dlen2 );
-    }
-    while (len1)
-    {
-        if (!dlen1 && !(dstr1 = get_decomposition( *str1, &dlen1 ))) dstr1 = str1;
-        ce1 = get_weight( dstr1[dpos1], type );
-        if (ce1) break;
-        inc_str_pos( &str1, &len1, &dpos1, &dlen1 );
-    }
-    while (len2)
-    {
-        if (!dlen2 && !(dstr2 = get_decomposition( *str2, &dlen2 ))) dstr2 = str2;
-        ce2 = get_weight( dstr2[dpos2], type );
-        if (ce2) break;
-        inc_str_pos( &str2, &len2, &dpos2, &dlen2 );
-    }
-    return len1 - len2;
 }
 
 
@@ -4430,17 +4382,31 @@ INT WINAPI CompareStringEx( const WCHAR *locale, DWORD flags, const WCHAR *str1,
                             const WCHAR *str2, int len2, NLSVERSIONINFO *version,
                             void *reserved, LPARAM handle )
 {
-    DWORD supported_flags = NORM_IGNORECASE | NORM_IGNORENONSPACE | NORM_IGNORESYMBOLS | SORT_STRINGSORT |
-                            NORM_IGNOREKANATYPE | NORM_IGNOREWIDTH | LOCALE_USE_CP_ACP;
-    DWORD semistub_flags = NORM_LINGUISTIC_CASING | LINGUISTIC_IGNORECASE | LINGUISTIC_IGNOREDIACRITIC |
-                           SORT_DIGITSASNUMBERS | 0x10000000;
+    const struct sortguid *sortid;
+    const DWORD supported_flags = NORM_IGNORECASE | NORM_IGNORENONSPACE | NORM_IGNORESYMBOLS |
+                                  SORT_STRINGSORT | NORM_IGNOREKANATYPE | NORM_IGNOREWIDTH |
+                                  NORM_LINGUISTIC_CASING | LINGUISTIC_IGNORECASE |
+                                  LINGUISTIC_IGNOREDIACRITIC | SORT_DIGITSASNUMBERS |
+                                  0x10000000 | LOCALE_USE_CP_ACP;
     /* 0x10000000 is related to diacritics in Arabic, Japanese, and Hebrew */
-    INT ret;
-    static int once;
+    int ret;
 
     if (version) FIXME( "unexpected version parameter\n" );
     if (reserved) FIXME( "unexpected reserved value\n" );
     if (handle) FIXME( "unexpected handle\n" );
+
+    if (flags & ~supported_flags)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+
+    if (!(sortid = get_language_sort( locale )))
+    {
+        FIXME( "unknown locale %s\n", debugstr_w(locale) );
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
 
     if (!str1 || !str2)
     {
@@ -4448,30 +4414,13 @@ INT WINAPI CompareStringEx( const WCHAR *locale, DWORD flags, const WCHAR *str1,
         return 0;
     }
 
-    if (flags & ~(supported_flags | semistub_flags))
-    {
-        SetLastError( ERROR_INVALID_FLAGS );
-        return 0;
-    }
-
-    if (flags & semistub_flags)
-    {
-        if (!once++) FIXME( "semi-stub behavior for flag(s) 0x%lx\n", flags & semistub_flags );
-    }
-
     if (len1 < 0) len1 = lstrlenW(str1);
     if (len2 < 0) len2 = lstrlenW(str2);
 
-    ret = compare_weights( flags, str1, len1, str2, len2, UNICODE_WEIGHT );
-    if (!ret)
-    {
-        if (!(flags & NORM_IGNORENONSPACE))
-            ret = compare_weights( flags, str1, len1, str2, len2, DIACRITIC_WEIGHT );
-        if (!ret && !(flags & NORM_IGNORECASE))
-            ret = compare_weights( flags, str1, len1, str2, len2, CASE_WEIGHT );
-    }
-    if (!ret) return CSTR_EQUAL;
-    return (ret < 0) ? CSTR_LESS_THAN : CSTR_GREATER_THAN;
+    ret = compare_string( sortid, flags, str1, len1, str2, len2 );
+    if (ret < 0) return CSTR_LESS_THAN;
+    if (ret > 0) return CSTR_GREATER_THAN;
+    return CSTR_EQUAL;
 }
 
 
