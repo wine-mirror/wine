@@ -767,6 +767,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
     int output_buffer_idx = -1;
     int idx, i;
     ULONG input_offset = 0, output_offset = 0;
+    SecBufferDesc input_desc, output_desc;
 
     TRACE("%p %p %s 0x%08lx %ld %ld %p %ld %p %p %p %p\n", phCredential, phContext,
      debugstr_w(pszTargetName), fContextReq, Reserved1, TargetDataRep, pInput,
@@ -917,11 +918,30 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
         alloc_buffer.BufferType = SECBUFFER_TOKEN;
         alloc_buffer.pvBuffer = RtlAllocateHeap( GetProcessHeap(), 0, extra_size );
     }
+
+    memset(&input_desc, 0, sizeof(input_desc));
+    if (pInput && (idx = schan_find_sec_buffer_idx(pInput, 0, SECBUFFER_TOKEN)) != -1)
+    {
+        input_desc.cBuffers = 1;
+        input_desc.pBuffers = &pInput->pBuffers[idx];
+    }
+
+    memset(&output_desc, 0, sizeof(output_desc));
+    idx = schan_find_sec_buffer_idx(pOutput, 0, SECBUFFER_TOKEN);
+    if (idx == -1)
+        idx = schan_find_sec_buffer_idx(pOutput, 0, SECBUFFER_EMPTY);
+    if (idx != -1)
+    {
+        output_desc.cBuffers = 1;
+        output_desc.pBuffers = &pOutput->pBuffers[idx];
+        if (!output_desc.pBuffers->pvBuffer)
+            output_desc.pBuffers = &alloc_buffer;
+    }
+
     params.session = ctx->session;
-    params.input = pInput;
+    params.input = pInput ? &input_desc : NULL;
     params.input_size = expected_size;
-    params.output = pOutput;
-    params.alloc_buffer = &alloc_buffer;
+    params.output = &output_desc;
     params.input_offset = &input_offset;
     params.output_buffer_idx = &output_buffer_idx;
     params.output_offset = &output_offset;
@@ -929,12 +949,15 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
 
     if (output_buffer_idx != -1)
     {
-        SecBuffer *buffer = &pOutput->pBuffers[output_buffer_idx];
+        SecBuffer *buffer = &pOutput->pBuffers[idx];
+        buffer->BufferType = SECBUFFER_TOKEN;
         buffer->cbBuffer = output_offset;
-        if (buffer->pvBuffer == alloc_buffer.pvBuffer)
+        if (output_desc.pBuffers == &alloc_buffer)
         {
             RtlReAllocateHeap( GetProcessHeap(), HEAP_REALLOC_IN_PLACE_ONLY,
-                               buffer->pvBuffer, buffer->cbBuffer );
+                               alloc_buffer.pvBuffer, buffer->cbBuffer );
+
+            buffer->pvBuffer = alloc_buffer.pvBuffer;
             alloc_buffer.pvBuffer = NULL;
         }
     }

@@ -147,7 +147,6 @@ struct handshake_params
     SecBufferDesc *input;
     SIZE_T input_size;
     SecBufferDesc *output;
-    SecBuffer *alloc_buffer;
     ULONG *input_offset;
     int *output_buffer_idx;
     ULONG *output_offset;

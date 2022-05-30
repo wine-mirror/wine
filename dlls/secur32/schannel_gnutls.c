@@ -146,7 +146,6 @@ struct schan_buffers
     SIZE_T offset;
     SIZE_T limit;
     const SecBufferDesc *desc;
-    SecBuffer *alloc_buffer;
     int current_buffer_idx;
     int (*get_next_buffer)(struct schan_buffers *);
 };
@@ -234,7 +233,6 @@ static void init_schan_buffers(struct schan_buffers *s, const PSecBufferDesc des
     s->limit = ~0UL;
     s->desc = desc;
     s->current_buffer_idx = -1;
-    s->alloc_buffer = NULL;
     s->get_next_buffer = get_next_buffer;
 }
 
@@ -257,26 +255,7 @@ static int handshake_get_next_buffer(struct schan_buffers *s)
 {
     if (s->current_buffer_idx != -1)
         return -1;
-    return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_TOKEN);
-}
-
-static int handshake_get_next_buffer_alloc(struct schan_buffers *s)
-{
-    if (s->current_buffer_idx == -1)
-    {
-        int idx = schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_TOKEN);
-        if (idx == -1)
-        {
-            idx = schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_EMPTY);
-            if (idx != -1) s->desc->pBuffers[idx].BufferType = SECBUFFER_TOKEN;
-        }
-        if (idx != -1 && !s->desc->pBuffers[idx].pvBuffer && s->alloc_buffer)
-        {
-            s->desc->pBuffers[idx] = *s->alloc_buffer;
-        }
-        return idx;
-    }
-    return -1;
+    return s->desc->cBuffers ? 0 : -1;
 }
 
 static int send_message_get_next_buffer(struct schan_buffers *s)
@@ -606,8 +585,7 @@ static NTSTATUS schan_handshake( void *args )
 
     init_schan_buffers(&t->in, params->input, handshake_get_next_buffer);
     t->in.limit = params->input_size;
-    init_schan_buffers(&t->out, params->output, handshake_get_next_buffer_alloc );
-    t->out.alloc_buffer = params->alloc_buffer;
+    init_schan_buffers(&t->out, params->output, handshake_get_next_buffer);
 
     while (1)
     {
