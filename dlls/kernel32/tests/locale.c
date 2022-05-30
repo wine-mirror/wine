@@ -2587,6 +2587,25 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
     ok(ret == ret2, "%s lengths of sort keys must be equal\n", func_name);
     ok(!memcmp(p_buf, p_buf2, ret), "%s sort keys must be equal\n", func_name);
 
+    /* test contents with short buffer */
+    memset( buf, 0xcc, sizeof(buf) );
+    ret = func_ptr(LCMAP_SORTKEY, upper_case, -1, buf, ret - 1);
+    ok( !ret, "%s succeeded with %u\n", func_name, ret );
+    ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "%s wrong error %lu\n", func_name, GetLastError() );
+    ret = (char *)memchr( p_buf, 0xcc, sizeof(buf) ) - p_buf;
+    ok( ret, "%s buffer not filled\n", func_name );
+    ok( p_buf[ret - 1] == 0x01, "%s buffer filled up to %02x\n", func_name, (BYTE)p_buf[ret - 1] );
+    ok( !memcmp( p_buf, p_buf2, ret - 1 ), "%s buffers differ\n", func_name );
+
+    memset( buf, 0xcc, sizeof(buf) );
+    ret = func_ptr(LCMAP_SORTKEY, upper_case, -1, buf, ret2 - 20);
+    ok( !ret, "%s succeeded with %u\n", func_name, ret );
+    ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "%s wrong error %lu\n", func_name, GetLastError() );
+    ret = (char *)memchr( p_buf, 0xcc, sizeof(buf) ) - p_buf;
+    ok( ret, "%s buffer not filled\n", func_name );
+    ok( p_buf[ret - 1] == 0x01, "%s buffer filled up to %02x\n", func_name, (BYTE)p_buf[ret - 1] );
+    ok( !memcmp( p_buf, p_buf2, ret - 1 ), "%s buffers differ\n", func_name );
+
     /* test LCMAP_SORTKEY | NORM_IGNORECASE */
     ret = func_ptr(LCMAP_SORTKEY | NORM_IGNORECASE,
                        upper_case, -1, buf, sizeof(buf));
@@ -3522,6 +3541,8 @@ static const struct sorting_test_entry unicode_sorting_tests[] =
     { L"en-US", -1, CSTR_LESS_THAN,    NORM_IGNORECASE, L"\xffb7", L"\x3147" },
     { L"en-US", -1, CSTR_LESS_THAN,    NORM_IGNORECASE, L"\xffb6", L"\x3146" },
     { L"en-US",  1, CSTR_GREATER_THAN, NORM_IGNORECASE, L"\x3145", L"\xffb5" },
+    { L"en-US",  1, CSTR_GREATER_THAN, 0, L"\x3075\x30fc", L"\x30d5\x30fc" },
+    { L"en-US", -1, CSTR_LESS_THAN,    0, L"\x30a1\x30fc", L"\x30a2\x30fc" },
      /* Coptic < Japanese */
     { L"en-US", -1, CSTR_LESS_THAN,    NORM_IGNORECASE, L"\x2cff", L"\x30ba" },
     { L"en-US", -1, CSTR_LESS_THAN,    NORM_IGNORECASE, L"\x2cdb", L"\x32de" },
@@ -3537,6 +3558,7 @@ static const struct sorting_test_entry unicode_sorting_tests[] =
     { L"en-US", -1, CSTR_EQUAL,        0, L"\x0f75", L"\x0f71\x0f74" },
     { L"en-US", -1, CSTR_EQUAL,        0, L"\xfc5e", L"\x064c\x0651" },
     { L"en-US", -1, CSTR_EQUAL,        0, L"\xfb2b", L"\x05e9\x05c2" },
+    { L"en-US", -1, CSTR_EQUAL,        0, L"\xfe71", L"\x0640\x064b" },
      /* Japanese locale */
     { L"ja-JP", -1, CSTR_LESS_THAN,    0, L"\x6df8", L"\x654b\x29e9" },
     { L"ja-JP", -1, CSTR_LESS_THAN,    0, L"\x685d\x1239\x1b61", L"\x59b6\x6542\x2a62\x04a7" },
@@ -3593,6 +3615,16 @@ static const struct sorting_test_entry unicode_sorting_tests[] =
     { L"en-US",  1, CSTR_GREATER_THAN, 0, L"\xa042\x09bc", L"\xa042" },
     { L"en-US",  1, CSTR_GREATER_THAN, 0, L"\xa063\x302b", L"\xa063" },
     { L"en-US",  1, CSTR_GREATER_THAN, 0, L"\xa07e\x0c56", L"\xa07e" },
+    /* Reversed diacritics */
+    { L"en-US", -1, CSTR_LESS_THAN,    0, L"\x00e9\x00e8", L"\x00e8\x00e9" },
+    { L"fr-FR",  1, CSTR_GREATER_THAN, 0, L"\x00e9\x00e8", L"\x00e8\x00e9" },
+    /* Digit sort */
+    { L"en-US", -1, CSTR_LESS_THAN,    0, L"1230", L"321" },
+    { L"en-US",  1, CSTR_GREATER_THAN, SORT_DIGITSASNUMBERS, L"1230", L"321" },
+    { L"en-US",  1, CSTR_GREATER_THAN, SORT_DIGITSASNUMBERS, L"\xc6f\xc6c\xc6a", L"\xc6f\xc6e" },
+    /* Compressions */
+    { L"en-US", -1, CSTR_LESS_THAN,    0, L"E\x0300", L"F" },
+    { L"rm-CH",  1, CSTR_GREATER_THAN, 0, L"E\x0300", L"F" },
 };
 
 static void test_unicode_sorting(void)
