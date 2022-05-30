@@ -338,11 +338,120 @@ static HRESULT WINAPI HTMLStorage_getItem(IHTMLStorage *iface, BSTR bstrKey, VAR
     return hres;
 }
 
+static HRESULT set_attribute(IXMLDOMElement *elem, const WCHAR *name, BSTR value)
+{
+    BSTR str;
+    VARIANT var;
+    HRESULT hres;
+
+    str = SysAllocString(name);
+    if(!str)
+        return E_OUTOFMEMORY;
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = value;
+
+    hres = IXMLDOMElement_setAttribute(elem, str, var);
+    SysFreeString(str);
+    return hres;
+}
+
+static HRESULT save_document(IXMLDOMDocument *doc, const WCHAR *filename)
+{
+    VARIANT var;
+    HRESULT hres;
+
+    V_VT(&var) = VT_BSTR;
+    V_BSTR(&var) = SysAllocString(filename);
+    if(!V_BSTR(&var))
+        return E_OUTOFMEMORY;
+
+    hres = IXMLDOMDocument_save(doc, var);
+    SysFreeString(V_BSTR(&var));
+    return hres;
+}
+
+static HRESULT set_item(const WCHAR *filename, BSTR key, BSTR value)
+{
+    IXMLDOMDocument *doc;
+    IXMLDOMNode *root = NULL, *node = NULL;
+    IXMLDOMElement *elem = NULL;
+    BSTR query = NULL;
+    HRESULT hres;
+
+    hres = open_document(filename, &doc);
+    if(hres != S_OK)
+        return hres;
+
+    hres = get_root_node(doc, &root);
+    if(hres != S_OK)
+        goto done;
+
+    query = build_query(key);
+    if(!query) {
+        hres = E_OUTOFMEMORY;
+        goto done;
+    }
+
+    hres = IXMLDOMNode_selectSingleNode(root, query, &node);
+    if(hres == S_OK) {
+        hres = IXMLDOMNode_QueryInterface(node, &IID_IXMLDOMElement, (void**)&elem);
+        if(hres != S_OK)
+            goto done;
+
+        hres = set_attribute(elem, L"value", value);
+        if(hres != S_OK)
+            goto done;
+    }else {
+        BSTR str = SysAllocString(L"item");
+        hres = IXMLDOMDocument_createElement(doc, str, &elem);
+        SysFreeString(str);
+        if(hres != S_OK)
+            goto done;
+
+        hres = set_attribute(elem, L"name", key);
+        if(hres != S_OK)
+            goto done;
+
+        hres = set_attribute(elem, L"value", value);
+        if(hres != S_OK)
+            goto done;
+
+        hres = IXMLDOMNode_appendChild(root, (IXMLDOMNode*)elem, NULL);
+        if(hres != S_OK)
+            goto done;
+    }
+
+    hres = save_document(doc, filename);
+
+done:
+    SysFreeString(query);
+    if(root)
+        IXMLDOMNode_Release(root);
+    if(node)
+        IXMLDOMNode_Release(node);
+    if(elem)
+        IXMLDOMElement_Release(elem);
+    IXMLDOMDocument_Release(doc);
+    return hres;
+}
+
 static HRESULT WINAPI HTMLStorage_setItem(IHTMLStorage *iface, BSTR bstrKey, BSTR bstrValue)
 {
     HTMLStorage *This = impl_from_IHTMLStorage(iface);
-    FIXME("(%p)->(%s %s)\n", This, debugstr_w(bstrKey), debugstr_w(bstrValue));
-    return E_NOTIMPL;
+    HRESULT hres;
+
+    TRACE("(%p)->(%s %s)\n", This, debugstr_w(bstrKey), debugstr_w(bstrValue));
+
+    if(!This->filename) {
+        FIXME("session storage not supported\n");
+        return E_NOTIMPL;
+    }
+
+    WaitForSingleObject(This->mutex, INFINITE);
+    hres = set_item(This->filename, bstrKey, bstrValue);
+    ReleaseMutex(This->mutex);
+
+    return hres;
 }
 
 static HRESULT WINAPI HTMLStorage_removeItem(IHTMLStorage *iface, BSTR bstrKey)
