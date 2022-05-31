@@ -300,7 +300,8 @@ struct norm_table
     /* WORD[]       composition character sequences */
 };
 
-static NLSTABLEINFO nls_info;
+static CPTABLEINFO ansi_cpinfo;
+static CPTABLEINFO oem_cpinfo;
 static UINT unix_cp = CP_UTF8;
 static LCID system_lcid;
 static LCID user_lcid;
@@ -1933,7 +1934,8 @@ void init_locale( HMODULE module )
 
     ansi_ptr = NtCurrentTeb()->Peb->AnsiCodePageData ? NtCurrentTeb()->Peb->AnsiCodePageData : utf8;
     oem_ptr = NtCurrentTeb()->Peb->OemCodePageData ? NtCurrentTeb()->Peb->OemCodePageData : utf8;
-    RtlInitNlsTables( ansi_ptr, oem_ptr, (USHORT *)sort.casemap, &nls_info );
+    RtlInitCodePageTable( ansi_ptr, &ansi_cpinfo );
+    RtlInitCodePageTable( oem_ptr, &oem_cpinfo );
 
     RegCreateKeyExW( HKEY_LOCAL_MACHINE, L"System\\CurrentControlSet\\Control\\Nls",
                      0, NULL, REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL, &nls_key, NULL );
@@ -2092,14 +2094,14 @@ static WCHAR compose_chars( WCHAR ch1, WCHAR ch2 )
 static UINT get_locale_codepage( const NLS_LOCALE_DATA *locale, ULONG flags )
 {
     UINT ret = locale->idefaultansicodepage;
-    if ((flags & LOCALE_USE_CP_ACP) || ret == CP_UTF8) ret = nls_info.AnsiTableInfo.CodePage;
+    if ((flags & LOCALE_USE_CP_ACP) || ret == CP_UTF8) ret = ansi_cpinfo.CodePage;
     return ret;
 }
 
 
 static UINT get_lcid_codepage( LCID lcid, ULONG flags )
 {
-    UINT ret = nls_info.AnsiTableInfo.CodePage;
+    UINT ret = ansi_cpinfo.CodePage;
 
     if (!(flags & LOCALE_USE_CP_ACP) && lcid != system_lcid)
     {
@@ -2121,9 +2123,9 @@ static const CPTABLEINFO *get_codepage_table( UINT codepage )
     switch (codepage)
     {
     case CP_ACP:
-        return &nls_info.AnsiTableInfo;
+        return &ansi_cpinfo;
     case CP_OEMCP:
-        return &nls_info.OemTableInfo;
+        return &oem_cpinfo;
     case CP_MACCP:
         codepage = system_locale->idefaultmaccodepage;
         break;
@@ -2131,8 +2133,8 @@ static const CPTABLEINFO *get_codepage_table( UINT codepage )
         codepage = get_lcid_codepage( NtCurrentTeb()->CurrentLocale, 0 );
         break;
     }
-    if (codepage == nls_info.AnsiTableInfo.CodePage) return &nls_info.AnsiTableInfo;
-    if (codepage == nls_info.OemTableInfo.CodePage) return &nls_info.OemTableInfo;
+    if (codepage == ansi_cpinfo.CodePage) return &ansi_cpinfo;
+    if (codepage == oem_cpinfo.CodePage) return &oem_cpinfo;
     if (codepage == CP_UTF8) return &utf8_cpinfo;
     if (codepage == CP_UTF7) return &utf7_cpinfo;
 
@@ -5271,7 +5273,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH FormatMessageW( DWORD flags, const void *source, 
  */
 UINT WINAPI GetACP(void)
 {
-    return nls_info.AnsiTableInfo.CodePage;
+    return ansi_cpinfo.CodePage;
 }
 
 
@@ -5653,7 +5655,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetNLSVersionEx( NLS_FUNCTION func, const WCHAR *l
  */
 UINT WINAPI GetOEMCP(void)
 {
-    return nls_info.OemTableInfo.CodePage;
+    return oem_cpinfo.CodePage;
 }
 
 
@@ -6149,7 +6151,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsCharXDigitW( WCHAR wc )
  */
 BOOL WINAPI DECLSPEC_HOTPATCH IsDBCSLeadByte( BYTE testchar )
 {
-    return nls_info.AnsiTableInfo.DBCSCodePage && nls_info.AnsiTableInfo.DBCSOffsets[testchar];
+    return ansi_cpinfo.DBCSCodePage && ansi_cpinfo.DBCSOffsets[testchar];
 }
 
 
