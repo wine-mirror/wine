@@ -377,7 +377,7 @@ static inline void initialize_block( void *ptr, SIZE_T size, SIZE_T unused, DWOR
 }
 
 /* notify that a new block of memory has been allocated for debugging purposes */
-static inline void notify_alloc( void *ptr, SIZE_T size, BOOL init )
+static inline void valgrind_notify_alloc( void const *ptr, SIZE_T size, BOOL init )
 {
 #ifdef VALGRIND_MALLOCLIKE_BLOCK
     VALGRIND_MALLOCLIKE_BLOCK( ptr, size, 0, init );
@@ -385,14 +385,14 @@ static inline void notify_alloc( void *ptr, SIZE_T size, BOOL init )
 }
 
 /* notify that a block of memory has been freed for debugging purposes */
-static inline void notify_free( void const *ptr )
+static inline void valgrind_notify_free( void const *ptr )
 {
 #ifdef VALGRIND_FREELIKE_BLOCK
     VALGRIND_FREELIKE_BLOCK( ptr, 0 );
 #endif
 }
 
-static inline void notify_realloc( void const *ptr, SIZE_T size_old, SIZE_T size_new )
+static inline void valgrind_notify_resize( void const *ptr, SIZE_T size_old, SIZE_T size_new )
 {
 #ifdef VALGRIND_RESIZEINPLACE_BLOCK
     /* zero is not a valid size */
@@ -400,7 +400,7 @@ static inline void notify_realloc( void const *ptr, SIZE_T size_old, SIZE_T size
 #endif
 }
 
-static void notify_free_all( SUBHEAP *subheap )
+static void valgrind_notify_free_all( SUBHEAP *subheap )
 {
 #ifdef VALGRIND_FREELIKE_BLOCK
     struct block *block;
@@ -411,7 +411,7 @@ static void notify_free_all( SUBHEAP *subheap )
     for (block = first_block( subheap ); block; block = next_block( subheap, block ))
     {
         if (block_get_flags( block ) & BLOCK_FLAG_FREE) continue;
-        if (block_get_type( block ) == ARENA_INUSE_MAGIC) notify_free( block + 1 );
+        if (block_get_type( block ) == ARENA_INUSE_MAGIC) valgrind_notify_free( block + 1 );
     }
 #endif
 }
@@ -801,7 +801,6 @@ static void *allocate_large_block( HEAP *heap, DWORD flags, SIZE_T size )
     arena->magic = ARENA_LARGE_MAGIC;
     mark_block_tail( (char *)(arena + 1) + size, block_size - sizeof(*arena) - size, flags );
     list_add_tail( &heap->large_list, &arena->entry );
-    notify_alloc( arena + 1, size, flags & HEAP_ZERO_MEMORY );
     return arena + 1;
 }
 
@@ -833,11 +832,7 @@ static void *realloc_large_block( HEAP *heap, DWORD flags, void *ptr, SIZE_T siz
         SIZE_T unused = arena->block_size - sizeof(*arena) - size;
 
         /* FIXME: we could remap zero-pages instead */
-#ifdef VALGRIND_RESIZEINPLACE_BLOCK
-        if (RUNNING_ON_VALGRIND)
-            notify_realloc( arena + 1, arena->data_size, size );
-        else
-#endif
+        valgrind_notify_resize( arena + 1, arena->data_size, size );
         if (size > arena->data_size)
             initialize_block( (char *)ptr + arena->data_size, size - arena->data_size, unused, flags );
         else
@@ -851,9 +846,10 @@ static void *realloc_large_block( HEAP *heap, DWORD flags, void *ptr, SIZE_T siz
         WARN("Could not allocate block for %08lx bytes\n", size );
         return NULL;
     }
+    valgrind_notify_alloc( new_ptr, size, 0 );
     memcpy( new_ptr, ptr, arena->data_size );
+    valgrind_notify_free( ptr );
     free_large_block( heap, ptr );
-    notify_free( ptr );
     return new_ptr;
 }
 
@@ -1473,13 +1469,13 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE heap )
     LIST_FOR_EACH_ENTRY_SAFE( subheap, next, &heapPtr->subheap_list, SUBHEAP, entry )
     {
         if (subheap == &heapPtr->subheap) continue;  /* do this one last */
-        notify_free_all( subheap );
+        valgrind_notify_free_all( subheap );
         list_remove( &subheap->entry );
         size = 0;
         addr = ROUND_ADDR( subheap, COMMIT_MASK );
         NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
     }
-    notify_free_all( &heapPtr->subheap );
+    valgrind_notify_free_all( &heapPtr->subheap );
     size = 0;
     addr = heap;
     NtFreeVirtualMemory( NtCurrentProcess(), &addr, &size, MEM_RELEASE );
@@ -1510,8 +1506,6 @@ static NTSTATUS heap_allocate( HEAP *heap, ULONG flags, SIZE_T size, void **ret 
 
     block_set_type( block, ARENA_INUSE_MAGIC );
     shrink_used_block( subheap, block, 0, old_block_size, block_size, size );
-
-    notify_alloc( block + 1, size, flags & HEAP_ZERO_MEMORY );
     initialize_block( block + 1, size, block->unused_bytes, flags );
 
     *ret = block + 1;
@@ -1536,6 +1530,8 @@ void *WINAPI DECLSPEC_HOTPATCH RtlAllocateHeap( HANDLE heap, ULONG flags, SIZE_T
         heap_unlock( heapPtr, flags );
     }
 
+    if (!status) valgrind_notify_alloc( ptr, size, flags & HEAP_ZERO_MEMORY );
+
     TRACE( "heap %p, flags %#x, size %#Ix, return %p, status %#x.\n", heap, flags, size, ptr, status );
     heap_set_status( heapPtr, flags, status );
     return ptr;
@@ -1546,9 +1542,6 @@ static NTSTATUS heap_free( HEAP *heap, void *ptr )
 {
     ARENA_INUSE *block;
     SUBHEAP *subheap;
-
-    /* Inform valgrind we are trying to free memory, so it can throw up an error message */
-    notify_free( ptr );
 
     if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap ))) return STATUS_INVALID_PARAMETER;
     if (!subheap) free_large_block( heap, ptr );
@@ -1566,6 +1559,8 @@ BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE heap, ULONG flags, void *pt
     HEAP *heapPtr;
 
     if (!ptr) return TRUE;
+
+    valgrind_notify_free( ptr );
 
     if (!(heapPtr = HEAP_GetPtr( heap )))
         status = STATUS_INVALID_PARAMETER;
@@ -1614,23 +1609,24 @@ static NTSTATUS heap_reallocate( HEAP *heap, ULONG flags, void *ptr, SIZE_T size
             list_remove( &entry->entry );
             old_block_size += block_get_size( next );
             if (!subheap_commit( subheap, block, block_size )) return STATUS_NO_MEMORY;
-            notify_realloc( block + 1, old_size, size );
+            valgrind_notify_resize( block + 1, old_size, size );
             shrink_used_block( subheap, block, block_get_flags( block ), old_block_size, block_size, size );
         }
         else
         {
             if (flags & HEAP_REALLOC_IN_PLACE_ONLY) return STATUS_NO_MEMORY;
             if ((status = heap_allocate( heap, flags & ~HEAP_ZERO_MEMORY, size, ret ))) return status;
+            valgrind_notify_alloc( *ret, size, 0 );
             memcpy( *ret, block + 1, old_size );
             if (flags & HEAP_ZERO_MEMORY) memset( (char *)*ret + old_size, 0, size - old_size );
-            notify_free( ptr );
+            valgrind_notify_free( ptr );
             free_used_block( subheap, block );
             return STATUS_SUCCESS;
         }
     }
     else
     {
-        notify_realloc( block + 1, old_size, size );
+        valgrind_notify_resize( block + 1, old_size, size );
         shrink_used_block( subheap, block, block_get_flags( block ), old_block_size, block_size, size );
     }
 
