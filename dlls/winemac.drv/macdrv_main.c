@@ -615,6 +615,13 @@ NTSTATUS macdrv_client_func(enum macdrv_client_funcs id, const void *params, ULO
 }
 
 
+static NTSTATUS macdrv_ime_clear(void *arg)
+{
+    macdrv_clear_ime_text();
+    return 0;
+}
+
+
 static NTSTATUS macdrv_ime_using_input_method(void *arg)
 {
     return macdrv_using_input_method();
@@ -623,6 +630,7 @@ static NTSTATUS macdrv_ime_using_input_method(void *arg)
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
+    macdrv_ime_clear,
     macdrv_ime_process_text_input,
     macdrv_ime_using_input_method,
     macdrv_init,

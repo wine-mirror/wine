@@ -287,13 +287,12 @@ extern NTSTATUS macdrv_init(void *arg) DECLSPEC_HIDDEN;
  * Mac IME driver
  */
 
-extern NTSTATUS macdrv_ime_process_text_input(void *arg) DECLSPEC_HIDDEN;
-
 extern NTSTATUS WINAPI macdrv_ime_set_text(void *params, ULONG size) DECLSPEC_HIDDEN;
 extern NTSTATUS WINAPI macdrv_ime_query_char_rect(void *params, ULONG size) DECLSPEC_HIDDEN;
 
 /* unixlib interface */
 
+extern NTSTATUS macdrv_ime_process_text_input(void *arg) DECLSPEC_HIDDEN;
 extern NTSTATUS macdrv_notify_icon(void *arg) DECLSPEC_HIDDEN;
 
 extern NTSTATUS macdrv_client_func(enum macdrv_client_funcs func, const void *params,

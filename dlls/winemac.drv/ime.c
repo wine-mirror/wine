@@ -853,7 +853,7 @@ BOOL WINAPI NotifyIME(HIMC hIMC, DWORD dwAction, DWORD dwIndex, DWORD dwValue)
 
                     TRACE("NI_COMPOSITIONSTR: CPS_CANCEL\n");
 
-                    macdrv_clear_ime_text();
+                    MACDRV_CALL(ime_clear, NULL);
                     if (lpIMC->hCompStr)
                         ImmDestroyIMCC(lpIMC->hCompStr);
 
