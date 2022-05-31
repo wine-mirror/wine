@@ -29,6 +29,7 @@
 #include <rpc.h>
 #include <shlobj.h>
 #include <shellapi.h>
+#include <ntuser.h>
 #include "exdisp.h"
 
 #include "wine/debug.h"
@@ -618,6 +619,91 @@ static void initialize_launchers( HWND hwnd )
     }
 }
 
+/**************************************************************************
+ *		wait_clipboard_mutex
+ *
+ * Make sure that there's only one clipboard thread per window station.
+ */
+static BOOL wait_clipboard_mutex(void)
+{
+    static const WCHAR prefix[] = L"__wine_clipboard_";
+    WCHAR buffer[MAX_PATH + ARRAY_SIZE( prefix )];
+    HANDLE mutex;
+
+    memcpy( buffer, prefix, sizeof(prefix) );
+    if (!GetUserObjectInformationW( GetProcessWindowStation(), UOI_NAME,
+                                    buffer + ARRAY_SIZE( prefix ) - 1,
+                                    sizeof(buffer) - sizeof(prefix), NULL ))
+    {
+        ERR( "failed to get winstation name\n" );
+        return FALSE;
+    }
+    mutex = CreateMutexW( NULL, TRUE, buffer );
+    if (GetLastError() == ERROR_ALREADY_EXISTS)
+    {
+        TRACE( "waiting for mutex %s\n", debugstr_w( buffer ));
+        WaitForSingleObject( mutex, INFINITE );
+    }
+    return TRUE;
+}
+
+
+/**************************************************************************
+ *		clipboard_wndproc
+ *
+ * Window procedure for the clipboard manager.
+ */
+static LRESULT CALLBACK clipboard_wndproc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
+{
+    switch (msg)
+    {
+    case WM_NCCREATE:
+    case WM_CLIPBOARDUPDATE:
+    case WM_RENDERFORMAT:
+    case WM_TIMER:
+    case WM_DESTROYCLIPBOARD:
+    case WM_USER:
+        return NtUserMessageCall( hwnd, msg, wp, lp, 0, NtUserClipboardWindowProc, FALSE );
+    }
+
+    return DefWindowProcW( hwnd, msg, wp, lp );
+}
+
+
+/**************************************************************************
+ *		clipboard_thread
+ *
+ * Thread running inside the desktop process to manage the clipboard
+ */
+static DWORD WINAPI clipboard_thread( void *arg )
+{
+    static const WCHAR clipboard_classname[] = L"__wine_clipboard_manager";
+    WNDCLASSW class;
+    ATOM atom;
+    MSG msg;
+
+    if (!wait_clipboard_mutex()) return 0;
+
+    memset( &class, 0, sizeof(class) );
+    class.lpfnWndProc   = clipboard_wndproc;
+    class.lpszClassName = clipboard_classname;
+
+    if (!(atom = RegisterClassW( &class )) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
+    {
+        ERR( "could not register clipboard window class err %lu\n", GetLastError() );
+        return 0;
+    }
+    if (!CreateWindowW( clipboard_classname, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, 0, NULL ))
+    {
+        TRACE( "failed to create clipboard window err %lu\n", GetLastError() );
+        UnregisterClassW( MAKEINTRESOURCEW(atom), NULL );
+        return 0;
+    }
+
+    while (GetMessageW( &msg, 0, 0, 0 )) DispatchMessageW( &msg );
+    return 0;
+}
+
 static WNDPROC desktop_orig_wndproc;
 
 /* window procedure for the desktop window */
@@ -961,6 +1047,8 @@ void manage_desktop( WCHAR *arg )
     BOOL enable_shell = FALSE;
     void (WINAPI *pShellDDEInit)( BOOL ) = NULL;
     HMODULE shell32;
+    HANDLE thread;
+    DWORD id;
 
     /* get the rest of the command line (if any) */
     while (*p && !is_whitespace(*p)) p++;
@@ -1025,6 +1113,8 @@ void manage_desktop( WCHAR *arg )
         SetWindowPos( hwnd, 0, GetSystemMetrics(SM_XVIRTUALSCREEN), GetSystemMetrics(SM_YVIRTUALSCREEN),
                       GetSystemMetrics(SM_CXVIRTUALSCREEN), GetSystemMetrics(SM_CYVIRTUALSCREEN),
                       SWP_SHOWWINDOW );
+        thread = CreateThread( NULL, 0, clipboard_thread, NULL, 0, &id );
+        if (thread) CloseHandle( thread );
         SystemParametersInfoW( SPI_SETDESKWALLPAPER, 0, NULL, FALSE );
         ClipCursor( NULL );
         initialize_display_settings();
