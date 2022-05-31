@@ -610,6 +610,7 @@ BOOL macdrv_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     macdrv_init,
+    macdrv_notify_icon,
 };
 
 C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );

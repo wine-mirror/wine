@@ -245,12 +245,14 @@ static BOOL delete_icon(struct tray_icon *icon)
  *
  * Driver-side implementation of Shell_NotifyIcon.
  */
-int CDECL wine_notify_icon(DWORD msg, NOTIFYICONDATAW *data)
+NTSTATUS macdrv_notify_icon(void *arg)
 {
+    struct notify_icon_params *params = arg;
+    NOTIFYICONDATAW *data = params->data;
     BOOL ret = FALSE;
     struct tray_icon *icon;
 
-    switch (msg)
+    switch (params->msg)
     {
     case NIM_ADD:
         ret = add_icon(data);
@@ -272,7 +274,7 @@ int CDECL wine_notify_icon(DWORD msg, NOTIFYICONDATAW *data)
         }
         break;
     default:
-        FIXME("unhandled tray message: %u\n", msg);
+        FIXME("unhandled tray message: %u\n", params->msg);
         break;
     }
     return ret;
