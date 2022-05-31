@@ -482,14 +482,15 @@ BOOL query_drag_drop(macdrv_query* query)
 
 
 /**************************************************************************
- *              query_drag_exited
+ *              macdrv_dnd_query_exited
  */
-BOOL query_drag_exited(macdrv_query* query)
+NTSTATUS WINAPI macdrv_dnd_query_exited(void *arg, ULONG size)
 {
-    HWND hwnd = macdrv_get_window_hwnd(query->window);
+    struct dnd_query_exited_params *params = arg;
+    HWND hwnd = params->hwnd;
     IDropTarget *droptarget;
 
-    TRACE("win %p/%p\n", hwnd, query->window);
+    TRACE("win %p\n", hwnd);
 
     droptarget = get_droptarget_pointer(last_droptarget_hwnd);
     if (droptarget)

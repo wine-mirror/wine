@@ -67,9 +67,16 @@ struct notify_icon_params
 /* driver client callbacks exposed with KernelCallbackTable interface */
 enum macdrv_client_funcs
 {
-    client_func_ime_query_char_rect = NtUserDriverCallbackFirst,
+    client_func_dnd_query_exited = NtUserDriverCallbackFirst,
+    client_func_ime_query_char_rect,
     client_func_ime_set_text,
     client_func_last
+};
+
+/* macdrv_dnd_query_exited params */
+struct dnd_query_exited_params
+{
+    HWND hwnd;
 };
 
 /* macdrv_ime_query_char_rect result */

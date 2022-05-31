@@ -180,6 +180,17 @@ static void macdrv_sent_text_input(const macdrv_event *event)
 
 
 /**************************************************************************
+ *              query_drag_exited
+ */
+static BOOL query_drag_exited(macdrv_query *query)
+{
+    struct dnd_query_exited_params params;
+    params.hwnd = macdrv_get_window_hwnd(query->window);
+    return macdrv_client_func(client_func_dnd_query_exited, &params, sizeof(params));
+}
+
+
+/**************************************************************************
  *              query_ime_char_rect
  */
 BOOL query_ime_char_rect(macdrv_query* query)

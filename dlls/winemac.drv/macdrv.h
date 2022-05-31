@@ -261,7 +261,6 @@ extern BOOL macdrv_pasteboard_has_format(CFTypeRef pasteboard, UINT desired_form
 extern UINT* macdrv_get_pasteboard_formats(CFTypeRef pasteboard, UINT* num_formats) DECLSPEC_HIDDEN;
 
 extern BOOL query_drag_operation(macdrv_query* query) DECLSPEC_HIDDEN;
-extern BOOL query_drag_exited(macdrv_query* query) DECLSPEC_HIDDEN;
 extern BOOL query_drag_drop(macdrv_query* query) DECLSPEC_HIDDEN;
 
 extern struct opengl_funcs *macdrv_wine_get_wgl_driver(UINT version) DECLSPEC_HIDDEN;
@@ -297,6 +296,8 @@ extern NTSTATUS macdrv_notify_icon(void *arg) DECLSPEC_HIDDEN;
 
 extern NTSTATUS macdrv_client_func(enum macdrv_client_funcs func, const void *params,
                                    ULONG size) DECLSPEC_HIDDEN;
+
+extern NTSTATUS WINAPI macdrv_dnd_query_exited(void *arg, ULONG size) DECLSPEC_HIDDEN;
 
 /* user helpers */
 
