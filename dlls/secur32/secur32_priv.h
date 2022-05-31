@@ -166,7 +166,7 @@ struct send_params
     schan_session session;
     SecBufferDesc *output;
     const void *buffer;
-    SIZE_T *length;
+    ULONG length;
     int *output_buffer_idx;
     ULONG *output_offset;
 };

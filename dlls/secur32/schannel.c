@@ -1297,7 +1297,6 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
     SECURITY_STATUS status;
     SecBuffer *buffer;
     SIZE_T data_size;
-    SIZE_T length;
     char *data;
     int output_buffer_idx = -1;
     ULONG output_offset = 0;
@@ -1353,22 +1352,16 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
     buffer_index[1] = data_idx;
     buffer_index[2] = trailer_idx;
 
-    length = data_size;
     params.session = ctx->session;
     params.output = &output_desc;
     params.buffer = data;
-    params.length = &length;
+    params.length = data_size;
     params.output_buffer_idx = &output_buffer_idx;
     params.output_offset = &output_offset;
     status = GNUTLS_CALL( send, &params );
 
     if (!status)
         message->pBuffers[buffer_index[output_buffer_idx]].cbBuffer = output_offset;
-
-    TRACE("Sent %Id bytes.\n", length);
-
-    if (length != data_size)
-        status = SEC_E_INTERNAL_ERROR;
 
     free(data);
 

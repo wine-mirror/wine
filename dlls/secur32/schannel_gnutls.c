@@ -786,12 +786,12 @@ static NTSTATUS schan_send( void *args )
 
     for (;;)
     {
-        ret = pgnutls_record_send(s, (const char *)params->buffer + total, *params->length - total);
+        ret = pgnutls_record_send(s, (const char *)params->buffer + total, params->length - total);
         if (ret >= 0)
         {
             total += ret;
-            TRACE( "sent %ld now %ld/%ld\n", ret, total, *params->length );
-            if (total == *params->length) break;
+            TRACE( "sent %ld now %ld/%u\n", ret, total, (unsigned)params->length );
+            if (total == params->length) break;
         }
         else if (ret == GNUTLS_E_AGAIN)
         {
