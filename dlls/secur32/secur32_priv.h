@@ -145,7 +145,7 @@ struct handshake_params
 {
     schan_session session;
     SecBufferDesc *input;
-    SIZE_T input_size;
+    ULONG input_size;
     SecBufferDesc *output;
     ULONG *input_offset;
     int *output_buffer_idx;
@@ -156,9 +156,9 @@ struct recv_params
 {
     schan_session session;
     SecBufferDesc *input;
-    SIZE_T input_size;
+    ULONG input_size;
     void *buffer;
-    SIZE_T *length;
+    ULONG *length;
 };
 
 struct send_params

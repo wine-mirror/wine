@@ -1436,7 +1436,7 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
     SIZE_T data_size;
     char *data;
     unsigned expected_size;
-    SIZE_T received = 0;
+    ULONG received = 0;
     int idx;
     unsigned char *buf_ptr;
     SecBufferDesc input_desc = { 0 };
@@ -1494,7 +1494,7 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
         return status;
     }
 
-    TRACE("Received %Id bytes\n", received);
+    TRACE("Received %lu bytes\n", received);
 
     memcpy(buf_ptr + ctx->header_size, data, received);
     free(data);
