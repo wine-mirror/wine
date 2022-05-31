@@ -4750,6 +4750,7 @@ static void test_occlusion_query(void)
 
 static void test_pipeline_statistics_query(void)
 {
+    static const D3D10_QUERY_DATA_PIPELINE_STATISTICS zero_data;
     static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
 
     struct d3d10core_test_context test_context;
@@ -4810,15 +4811,26 @@ static void test_pipeline_statistics_query(void)
 
     ID3D10Asynchronous_End(query);
     get_query_data(query, &data, sizeof(data));
-    ok(data.IAVertices == 4, "Got unexpected IAVertices count: %u.\n", (unsigned int)data.IAVertices);
-    ok(data.IAPrimitives == 2, "Got unexpected IAPrimitives count: %u.\n", (unsigned int)data.IAPrimitives);
-    ok(data.VSInvocations == 4, "Got unexpected VSInvocations count: %u.\n", (unsigned int)data.VSInvocations);
-    ok(!data.GSInvocations, "Got unexpected GSInvocations count: %u.\n", (unsigned int)data.GSInvocations);
-    ok(!data.GSPrimitives, "Got unexpected GSPrimitives count: %u.\n", (unsigned int)data.GSPrimitives);
-    ok(data.CInvocations == 2, "Got unexpected CInvocations count: %u.\n", (unsigned int)data.CInvocations);
-    ok(data.CPrimitives == 2, "Got unexpected CPrimitives count: %u.\n", (unsigned int)data.CPrimitives);
-    todo_wine
-    ok(!data.PSInvocations, "Got unexpected PSInvocations count: %u.\n", (unsigned int)data.PSInvocations);
+
+    /* WARP devices randomly return all-zeroed structures as if the draw did not happen. Flushing and
+     * sleeping a second before ending the query reduces the likelyhood of hitting the bug a lot, but
+     * does not eliminate it entirely. To make things work reliably ignore such broken results. */
+    if (is_warp_device(device) && !memcmp(&data, &zero_data, sizeof(data)))
+    {
+        win_skip("WARP device randomly returns zeroed query results.\n");
+    }
+    else
+    {
+        ok(data.IAVertices == 4, "Got unexpected IAVertices count: %u.\n", (unsigned int)data.IAVertices);
+        ok(data.IAPrimitives == 2, "Got unexpected IAPrimitives count: %u.\n", (unsigned int)data.IAPrimitives);
+        ok(data.VSInvocations == 4, "Got unexpected VSInvocations count: %u.\n", (unsigned int)data.VSInvocations);
+        ok(!data.GSInvocations, "Got unexpected GSInvocations count: %u.\n", (unsigned int)data.GSInvocations);
+        ok(!data.GSPrimitives, "Got unexpected GSPrimitives count: %u.\n", (unsigned int)data.GSPrimitives);
+        ok(data.CInvocations == 2, "Got unexpected CInvocations count: %u.\n", (unsigned int)data.CInvocations);
+        ok(data.CPrimitives == 2, "Got unexpected CPrimitives count: %u.\n", (unsigned int)data.CPrimitives);
+        todo_wine
+        ok(!data.PSInvocations, "Got unexpected PSInvocations count: %u.\n", (unsigned int)data.PSInvocations);
+    }
 
     hr = ID3D10Device_CreatePixelShader(device, ps_code, sizeof(ps_code), &ps);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
