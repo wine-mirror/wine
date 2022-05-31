@@ -1409,6 +1409,7 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
     SIZE_T received = 0;
     int idx;
     unsigned char *buf_ptr;
+    SecBufferDesc input_desc = { 0 };
 
     TRACE("context_handle %p, message %p, message_seq_no %ld, quality %p\n",
             context_handle, message, message_seq_no, quality);
@@ -1446,8 +1447,11 @@ static SECURITY_STATUS SEC_ENTRY schan_DecryptMessage(PCtxtHandle context_handle
 
     received = data_size;
 
+    input_desc.cBuffers = 1;
+    input_desc.pBuffers = &message->pBuffers[idx];
+
     params.session = ctx->session;
-    params.input = message;
+    params.input = &input_desc;
     params.input_size = expected_size;
     params.buffer = data;
     params.length = &received;

@@ -307,7 +307,7 @@ static int recv_message_get_next_buffer(struct schan_buffers *s)
 {
     if (s->current_buffer_idx != -1)
         return -1;
-    return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_DATA);
+    return s->desc->cBuffers ? 0 : -1;
 }
 
 static char *get_buffer(struct schan_buffers *s, SIZE_T *count)
