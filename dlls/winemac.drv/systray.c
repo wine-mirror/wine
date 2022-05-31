@@ -135,8 +135,8 @@ static BOOL modify_icon(struct tray_icon *icon, NOTIFYICONDATAW *nid)
 
     if (nid->uFlags & NIF_ICON)
     {
-        if (icon->image) DestroyIcon(icon->image);
-        icon->image = CopyIcon(nid->hIcon);
+        if (icon->image) NtUserDestroyCursor(icon->image, 0);
+        icon->image = CopyImage(nid->hIcon, IMAGE_ICON, 0, 0, 0);
         if (icon->status_item)
             update_image = TRUE;
     }
@@ -195,7 +195,7 @@ static BOOL add_icon(NOTIFYICONDATAW *nid)
         return FALSE;
     }
 
-    if (!(icon = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*icon))))
+    if (!(icon = calloc(1, sizeof(*icon))))
     {
         ERR("out of memory\n");
         return FALSE;
@@ -234,8 +234,8 @@ static BOOL delete_icon(struct tray_icon *icon)
         macdrv_destroy_status_item(icon->status_item);
     }
     list_remove(&icon->entry);
-    DestroyIcon(icon->image);
-    HeapFree(GetProcessHeap(), 0, icon);
+    NtUserDestroyCursor(icon->image, 0);
+    free(icon);
     return TRUE;
 }
 
@@ -290,7 +290,8 @@ static BOOL notify_owner(struct tray_icon *icon, UINT msg, int x, int y)
     }
 
     TRACE("posting msg 0x%04x to hwnd %p id 0x%x\n", msg, icon->owner, icon->id);
-    if (!SendNotifyMessageW(icon->owner, icon->callback_message, wp, lp) &&
+    if (!NtUserMessageCall(icon->owner, icon->callback_message, wp, lp,
+                           0, NtUserSendNotifyMessage, FALSE) &&
         (GetLastError() == ERROR_INVALID_WINDOW_HANDLE))
     {
         WARN("window %p was destroyed, removing icon 0x%x\n", icon->owner, icon->id);
@@ -335,7 +336,7 @@ void macdrv_status_item_mouse_button(const macdrv_event *event)
             else if (event->status_item_mouse_button.count % 2 == 0)
                 msg += WM_LBUTTONDBLCLK - WM_LBUTTONDOWN;
 
-            if (!SendMessageW(icon->owner, WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS, 0, 0) &&
+            if (!send_message(icon->owner, WM_MACDRV_ACTIVATE_ON_FOLLOWING_FOCUS, 0, 0) &&
                 GetLastError() == ERROR_INVALID_WINDOW_HANDLE)
             {
                 WARN("window %p was destroyed, removing icon 0x%x\n", icon->owner, icon->id);
