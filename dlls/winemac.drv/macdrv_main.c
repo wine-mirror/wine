@@ -607,6 +607,14 @@ BOOL macdrv_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, 
 }
 
 
+NTSTATUS macdrv_client_func(enum macdrv_client_funcs id, const void *params, ULONG size)
+{
+    /* FIXME: use KeUserModeCallback instead */
+    NTSTATUS (WINAPI *func)(const void *, ULONG) = ((void **)NtCurrentTeb()->Peb->KernelCallbackTable)[id];
+    return func(params, size);
+}
+
+
 static NTSTATUS macdrv_ime_using_input_method(void *arg)
 {
     return macdrv_using_input_method();

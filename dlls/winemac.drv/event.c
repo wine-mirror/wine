@@ -142,6 +142,34 @@ static macdrv_event_mask get_event_mask(DWORD mask)
 
 
 /***********************************************************************
+ *              macdrv_im_set_text
+ */
+static void macdrv_im_set_text(const macdrv_event *event)
+{
+    HWND hwnd = macdrv_get_window_hwnd(event->window);
+    struct ime_set_text_params *params;
+    CFIndex length = 0, size;
+
+    TRACE_(imm)("win %p/%p himc %p text %s complete %u\n", hwnd, event->window, event->im_set_text.data,
+                debugstr_cf(event->im_set_text.text), event->im_set_text.complete);
+
+    if (event->im_set_text.text)
+        length = CFStringGetLength(event->im_set_text.text);
+
+    size = offsetof(struct ime_set_text_params, text[length]);
+    if (!(params = malloc(size))) return;
+    params->hwnd = hwnd;
+    params->data = event->im_set_text.data;
+    params->cursor_pos = event->im_set_text.cursor_pos;
+    params->complete = event->im_set_text.complete;
+
+    if (length)
+        CFStringGetCharacters(event->im_set_text.text, CFRangeMake(0, length), params->text);
+
+    macdrv_client_func(client_func_ime_set_text, params, size);
+}
+
+/***********************************************************************
  *              macdrv_sent_text_input
  */
 static void macdrv_sent_text_input(const macdrv_event *event)

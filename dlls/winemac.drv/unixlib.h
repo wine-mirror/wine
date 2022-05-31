@@ -62,3 +62,22 @@ struct notify_icon_params
     DWORD msg;
     struct _NOTIFYICONDATAW *data;
 };
+
+/* driver client callbacks exposed with KernelCallbackTable interface */
+enum macdrv_client_funcs
+{
+    client_func_ime_set_text = NtUserDriverCallbackFirst,
+    client_func_last
+};
+
+/* macdrv_ime_set_text params */
+struct ime_set_text_params
+{
+    HWND hwnd;
+    void *data;
+    UINT32 cursor_pos;
+    UINT32 complete;
+    WCHAR text[1];
+};
+
+C_ASSERT(client_func_last <= NtUserDriverCallbackLast + 1);

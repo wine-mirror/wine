@@ -1395,38 +1395,25 @@ BOOL WINAPI ImeInquire(LPIMEINFO lpIMEInfo, LPWSTR lpszUIClass, LPCWSTR lpszOpti
 /* Interfaces to other parts of the Mac driver */
 
 /***********************************************************************
- *              macdrv_im_set_text
+ *              macdrv_ime_set_text
  */
-void macdrv_im_set_text(const macdrv_event *event)
+NTSTATUS WINAPI macdrv_ime_set_text(void *arg, ULONG size)
 {
-    HWND hwnd = macdrv_get_window_hwnd(event->window);
-    void *himc = event->im_set_text.data;
-
-    TRACE("win %p/%p himc %p text %s complete %u\n", hwnd, event->window, himc,
-          debugstr_cf(event->im_set_text.text), event->im_set_text.complete);
+    struct ime_set_text_params *params = arg;
+    ULONG length = (size - offsetof(struct ime_set_text_params, text)) / sizeof(WCHAR);
+    void *himc = params->data;
 
     if (!himc) himc = RealIMC(FROM_MACDRV);
 
-    if (event->im_set_text.text)
+    if (length)
     {
-        CFIndex length = CFStringGetLength(event->im_set_text.text);
-        const UniChar *chars = CFStringGetCharactersPtr(event->im_set_text.text);
-        UniChar *buffer = NULL;
-
-        if (!chars)
-        {
-            buffer = HeapAlloc(GetProcessHeap(), 0, length * sizeof(*buffer));
-            CFStringGetCharacters(event->im_set_text.text, CFRangeMake(0, length), buffer);
-            chars = buffer;
-        }
-
         if (himc)
-            IME_SetCompositionString(himc, SCS_SETSTR, chars, length * sizeof(*chars),
-                event->im_set_text.cursor_pos, !event->im_set_text.complete);
+            IME_SetCompositionString(himc, SCS_SETSTR, params->text, length * sizeof(WCHAR),
+                                     params->cursor_pos, !params->complete);
         else
         {
             INPUT input;
-            CFIndex i;
+            unsigned int i;
 
             input.type              = INPUT_KEYBOARD;
             input.ki.wVk            = 0;
@@ -1435,20 +1422,19 @@ void macdrv_im_set_text(const macdrv_event *event)
 
             for (i = 0; i < length; i++)
             {
-                input.ki.wScan      = chars[i];
+                input.ki.wScan      = params->text[i];
                 input.ki.dwFlags    = KEYEVENTF_UNICODE;
-                __wine_send_input(hwnd, &input, NULL);
+                __wine_send_input(params->hwnd, &input, NULL);
 
                 input.ki.dwFlags    = KEYEVENTF_UNICODE | KEYEVENTF_KEYUP;
-                __wine_send_input(hwnd, &input, NULL);
+                __wine_send_input(params->hwnd, &input, NULL);
             }
         }
-
-        HeapFree(GetProcessHeap(), 0, buffer);
     }
 
-    if (event->im_set_text.complete)
+    if (params->complete)
         IME_NotifyComplete(himc);
+    return 0;
 }
 
 /**************************************************************************
