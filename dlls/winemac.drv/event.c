@@ -23,7 +23,7 @@
 #include "config.h"
 
 #include "macdrv.h"
-#include "winuser.h"
+#include "oleidl.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(event);
 WINE_DECLARE_DEBUG_CHANNEL(imm);
@@ -178,6 +178,46 @@ static void macdrv_sent_text_input(const macdrv_event *event)
     *event->sent_text_input.done = event->sent_text_input.handled ? 1 : -1;
 }
 
+
+/**************************************************************************
+ *              drag_operations_to_dropeffects
+ */
+static DWORD drag_operations_to_dropeffects(uint32_t ops)
+{
+    DWORD effects = 0;
+    if (ops & (DRAG_OP_COPY | DRAG_OP_GENERIC))
+        effects |= DROPEFFECT_COPY;
+    if (ops & DRAG_OP_MOVE)
+        effects |= DROPEFFECT_MOVE;
+    if (ops & (DRAG_OP_LINK | DRAG_OP_GENERIC))
+        effects |= DROPEFFECT_LINK;
+    return effects;
+}
+
+
+/**************************************************************************
+ *              query_drag_drop
+ */
+static BOOL query_drag_drop(macdrv_query *query)
+{
+    HWND hwnd = macdrv_get_window_hwnd(query->window);
+    struct macdrv_win_data *data = get_win_data(hwnd);
+    struct dnd_query_drop_params params;
+
+    if (!data)
+    {
+        WARN("no win_data for win %p/%p\n", hwnd, query->window);
+        return FALSE;
+    }
+
+    params.hwnd = hwnd;
+    params.effect = drag_operations_to_dropeffects(query->drag_drop.op);
+    params.x = query->drag_drop.x + data->whole_rect.left;
+    params.y = query->drag_drop.y + data->whole_rect.top;
+    params.handle = (UINT_PTR)query->drag_drop.pasteboard;
+    release_win_data(data);
+    return macdrv_client_func(client_func_dnd_query_drop, &params, sizeof(params));
+}
 
 /**************************************************************************
  *              query_drag_exited

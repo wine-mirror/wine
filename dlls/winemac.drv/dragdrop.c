@@ -427,40 +427,32 @@ static IDropTarget* get_droptarget_pointer(HWND hwnd)
 
 
 /**************************************************************************
- *              query_drag_drop
+ *              macdrv_dnd_query_drop
  */
-BOOL query_drag_drop(macdrv_query* query)
+NTSTATUS WINAPI macdrv_dnd_query_drop(void *arg, ULONG size)
 {
-    BOOL ret = FALSE;
-    HWND hwnd = macdrv_get_window_hwnd(query->window);
-    struct macdrv_win_data *data = get_win_data(hwnd);
-    POINT pt;
+    struct dnd_query_drop_params *params = arg;
     IDropTarget *droptarget;
+    BOOL ret = FALSE;
+    POINT pt;
 
-    TRACE("win %p/%p x,y %d,%d op 0x%08x pasteboard %p\n", hwnd, query->window,
-          query->drag_drop.x, query->drag_drop.y, query->drag_drop.op, query->drag_drop.pasteboard);
+    TRACE("win %p x,y %d,%d effect %x pasteboard %s\n", params->hwnd, params->x, params->y,
+          params->effect, wine_dbgstr_longlong(params->handle));
 
-    if (!data)
-    {
-        WARN("no win_data for win %p/%p\n", hwnd, query->window);
-        return FALSE;
-    }
-
-    pt.x = query->drag_drop.x + data->whole_rect.left;
-    pt.y = query->drag_drop.y + data->whole_rect.top;
-    release_win_data(data);
+    pt.x = params->x;
+    pt.y = params->y;
 
     droptarget = get_droptarget_pointer(last_droptarget_hwnd);
     if (droptarget)
     {
         HRESULT hr;
         POINTL pointl;
-        DWORD effect = drag_operations_to_dropeffects(query->drag_drop.op);
+        DWORD effect = params->effect;
 
         if (!active_data_object)
         {
             WARN("shouldn't happen: no active IDataObject\n");
-            active_data_object = create_data_object_for_pasteboard(query->drag_drop.pasteboard);
+            active_data_object = create_data_object_for_pasteboard((void *)(UINT_PTR)params->handle);
         }
 
         pointl.x = pt.x;
@@ -484,12 +476,12 @@ BOOL query_drag_drop(macdrv_query* query)
     }
     else
     {
-        hwnd = WindowFromPoint(pt);
+        HWND hwnd = WindowFromPoint(pt);
         while (hwnd && !(GetWindowLongW(hwnd, GWL_EXSTYLE) & WS_EX_ACCEPTFILES))
             hwnd = GetParent(hwnd);
         if (hwnd)
         {
-            HDROP hdrop = macdrv_get_pasteboard_data(query->drag_drop.pasteboard, CF_HDROP);
+            HDROP hdrop = macdrv_get_pasteboard_data((void *)(UINT_PTR)params->handle, CF_HDROP);
             DROPFILES *dropfiles = GlobalLock(hdrop);
             if (dropfiles)
             {
