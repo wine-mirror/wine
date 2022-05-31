@@ -360,6 +360,8 @@
 @ stdcall GetPhysicalCursorPos(ptr)
 @ stdcall GetPointerDevices(ptr ptr)
 @ stdcall GetPointerType(long ptr)
+@ stdcall GetPointerTouchInfo(long ptr)
+@ stdcall GetPointerTouchInfoHistory(long ptr ptr)
 @ stdcall GetPriorityClipboardFormat(ptr long) NtUserGetPriorityClipboardFormat
 @ stdcall GetProcessDefaultLayout(ptr)
 @ stdcall GetProcessDpiAwarenessInternal(long ptr)
