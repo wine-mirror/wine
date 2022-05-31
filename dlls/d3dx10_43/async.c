@@ -514,6 +514,13 @@ HRESULT WINAPI D3DX10CreateAsyncTextureInfoProcessor(D3DX10_IMAGE_INFO *info, ID
     return S_OK;
 }
 
+HRESULT WINAPI D3DX10CreateAsyncTextureProcessor(ID3D10Device *device,
+        D3DX10_IMAGE_LOAD_INFO *load_info, ID3DX10DataProcessor **processor)
+{
+    FIXME("device %p, load_info %p, processor %p stub!\n", device, load_info, processor);
+    return E_NOTIMPL;
+}
+
 HRESULT WINAPI D3DX10PreprocessShaderFromMemory(const char *data, SIZE_T data_size, const char *filename,
         const D3D10_SHADER_MACRO *defines, ID3DInclude *include, ID3DX10ThreadPump *pump, ID3D10Blob **shader_text,
         ID3D10Blob **errors, HRESULT *hresult)
