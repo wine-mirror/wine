@@ -147,7 +147,6 @@ struct schan_buffers
     SIZE_T limit;
     const SecBufferDesc *desc;
     int current_buffer_idx;
-    int (*get_next_buffer)(struct schan_buffers *);
 };
 
 struct schan_transport
@@ -226,17 +225,15 @@ static void compat_gnutls_dtls_set_timeouts(gnutls_session_t session, unsigned i
     FIXME("\n");
 }
 
-static void init_schan_buffers(struct schan_buffers *s, const PSecBufferDesc desc,
-        int (*get_next_buffer)(struct schan_buffers *))
+static void init_schan_buffers(struct schan_buffers *s, const PSecBufferDesc desc)
 {
     s->offset = 0;
     s->limit = ~0UL;
     s->desc = desc;
     s->current_buffer_idx = -1;
-    s->get_next_buffer = get_next_buffer;
 }
 
-static int common_get_next_buffer(struct schan_buffers *s)
+static int get_next_buffer(struct schan_buffers *s)
 {
     if (s->current_buffer_idx == -1)
         return s->desc->cBuffers ? 0 : -1;
@@ -259,7 +256,7 @@ static char *get_buffer(struct schan_buffers *s, SIZE_T *count)
     if (s->current_buffer_idx == -1)
     {
         /* Initial buffer */
-        int buffer_idx = s->get_next_buffer(s);
+        int buffer_idx = get_next_buffer(s);
         if (buffer_idx == -1)
         {
             TRACE("No next buffer\n");
@@ -280,7 +277,7 @@ static char *get_buffer(struct schan_buffers *s, SIZE_T *count)
     {
         int buffer_idx;
 
-        buffer_idx = s->get_next_buffer(s);
+        buffer_idx = get_next_buffer(s);
         if (buffer_idx == -1)
         {
             TRACE("No next buffer\n");
@@ -518,9 +515,9 @@ static NTSTATUS schan_handshake( void *args )
     NTSTATUS status;
     int err;
 
-    init_schan_buffers(&t->in, params->input, common_get_next_buffer);
+    init_schan_buffers(&t->in, params->input);
     t->in.limit = params->input_size;
-    init_schan_buffers(&t->out, params->output, common_get_next_buffer);
+    init_schan_buffers(&t->out, params->output);
 
     while (1)
     {
@@ -785,7 +782,7 @@ static NTSTATUS schan_send( void *args )
     struct schan_transport *t = (struct schan_transport *)pgnutls_transport_get_ptr(s);
     SSIZE_T ret, total = 0;
 
-    init_schan_buffers(&t->out, params->output, common_get_next_buffer);
+    init_schan_buffers(&t->out, params->output);
 
     for (;;)
     {
@@ -825,7 +822,7 @@ static NTSTATUS schan_recv( void *args )
     ssize_t ret;
     SECURITY_STATUS status = SEC_E_OK;
 
-    init_schan_buffers(&t->in, params->input, common_get_next_buffer);
+    init_schan_buffers(&t->in, params->input);
     t->in.limit = params->input_size;
 
     while (received < data_size)
