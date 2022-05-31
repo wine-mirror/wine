@@ -25,6 +25,7 @@
 
 #include "config.h"
 
+#include <assert.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -1285,5 +1286,318 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     schan_set_session_target,
     schan_set_dtls_timeouts,
 };
+
+#ifdef _WIN64
+
+typedef ULONG PTR32;
+
+typedef struct SecBufferDesc32
+{
+    ULONG ulVersion;
+    ULONG cBuffers;
+    PTR32 pBuffers;
+} SecBufferDesc32;
+
+typedef struct SecBuffer32
+{
+    ULONG cbBuffer;
+    ULONG BufferType;
+    PTR32 pvBuffer;
+} SecBuffer32;
+
+static NTSTATUS wow64_schan_allocate_certificate_credentials( void *args )
+{
+    struct
+    {
+        PTR32 c;
+        ULONG cert_encoding;
+        ULONG cert_size;
+        PTR32 cert_blob;
+        ULONG key_size;
+        PTR32 key_blob;
+    } const *params32 = args;
+    struct allocate_certificate_credentials_params params =
+    {
+        ULongToPtr(params32->c),
+        params32->cert_encoding,
+        params32->cert_size,
+        ULongToPtr(params32->cert_blob),
+        params32->key_size,
+        ULongToPtr(params32->key_blob),
+    };
+    return schan_allocate_certificate_credentials(&params);
+}
+
+static NTSTATUS wow64_schan_create_session( void *args )
+{
+    struct
+    {
+        PTR32 cred;
+        PTR32 session;
+    } const *params32 = args;
+    struct create_session_params params =
+    {
+        ULongToPtr(params32->cred),
+        ULongToPtr(params32->session),
+    };
+    return schan_create_session(&params);
+}
+
+static NTSTATUS wow64_schan_free_certificate_credentials( void *args )
+{
+    struct
+    {
+        PTR32 c;
+    } const *params32 = args;
+    struct free_certificate_credentials_params params =
+    {
+        ULongToPtr(params32->c),
+    };
+    return schan_free_certificate_credentials(&params);
+}
+
+static NTSTATUS wow64_schan_get_application_protocol( void *args )
+{
+    struct
+    {
+        schan_session session;
+        PTR32 protocol;
+    } const *params32 = args;
+    struct get_application_protocol_params params =
+    {
+        params32->session,
+        ULongToPtr(params32->protocol),
+    };
+    return schan_get_application_protocol(&params);
+}
+
+static NTSTATUS wow64_schan_get_connection_info( void *args )
+{
+    struct
+    {
+        schan_session session;
+        PTR32 info;
+    } const *params32 = args;
+    struct get_connection_info_params params =
+    {
+        params32->session,
+        ULongToPtr(params32->info),
+    };
+    return schan_get_connection_info(&params);
+}
+
+static NTSTATUS wow64_schan_get_session_peer_certificate( void *args )
+{
+    struct
+    {
+        schan_session session;
+        PTR32 buffer;
+        PTR32 bufsize;
+        PTR32 retcount;
+    } const *params32 = args;
+    struct get_session_peer_certificate_params params =
+    {
+        params32->session,
+        ULongToPtr(params32->buffer),
+        ULongToPtr(params32->bufsize),
+        ULongToPtr(params32->retcount),
+    };
+    return schan_get_session_peer_certificate(&params);
+}
+
+static NTSTATUS wow64_schan_get_unique_channel_binding( void *args )
+{
+    struct
+    {
+        schan_session session;
+        PTR32 buffer;
+        PTR32 bufsize;
+    } const *params32 = args;
+    struct get_unique_channel_binding_params params =
+    {
+        params32->session,
+        ULongToPtr(params32->buffer),
+        ULongToPtr(params32->bufsize),
+    };
+    return schan_get_unique_channel_binding(&params);
+}
+
+static void secbufferdesc_32to64(const SecBufferDesc32 *desc32, SecBufferDesc *desc)
+{
+    unsigned int i;
+
+    desc->ulVersion = desc32->ulVersion;
+    desc->cBuffers = desc32->cBuffers;
+    for (i = 0; i < desc->cBuffers; ++i)
+    {
+        SecBuffer32 *buffer32 = ULongToPtr(desc32->pBuffers + i * sizeof(*buffer32));
+        desc->pBuffers[i].cbBuffer = buffer32->cbBuffer;
+        desc->pBuffers[i].BufferType = buffer32->BufferType;
+        desc->pBuffers[i].pvBuffer = ULongToPtr(buffer32->pvBuffer);
+    }
+}
+
+static NTSTATUS wow64_schan_handshake( void *args )
+{
+    SecBuffer input_buffers[3];
+    SecBufferDesc input = { 0, 0, input_buffers };
+    SecBuffer output_buffers[3];
+    SecBufferDesc output = { 0, 0, output_buffers };
+
+    struct
+    {
+        schan_session session;
+        PTR32 input;
+        ULONG input_size;
+        PTR32 output;
+        PTR32 input_offset;
+        PTR32 output_buffer_idx;
+        PTR32 output_offset;
+    } const *params32 = args;
+    struct handshake_params params =
+    {
+        params32->session,
+        params32->input ? &input : NULL,
+        params32->input_size,
+        params32->output ? &output : NULL,
+        ULongToPtr(params32->input_offset),
+        ULongToPtr(params32->output_buffer_idx),
+        ULongToPtr(params32->output_offset),
+    };
+    if (params32->input)
+    {
+        SecBufferDesc32 *desc32 = ULongToPtr(params32->input);
+        assert(desc32->cBuffers <= ARRAY_SIZE(input_buffers));
+        secbufferdesc_32to64(desc32, &input);
+    }
+    if (params32->output)
+    {
+        SecBufferDesc32 *desc32 = ULongToPtr(params32->output);
+        assert(desc32->cBuffers <= ARRAY_SIZE(output_buffers));
+        secbufferdesc_32to64(desc32, &output);
+    }
+    return schan_handshake(&params);
+}
+
+static NTSTATUS wow64_schan_recv( void *args )
+{
+    SecBuffer buffers[3];
+    SecBufferDesc input = { 0, 0, buffers };
+
+    struct
+    {
+        schan_session session;
+        PTR32 input;
+        ULONG input_size;
+        PTR32 buffer;
+        PTR32 length;
+    } const *params32 = args;
+    struct recv_params params =
+    {
+        params32->session,
+        params32->input ? &input : NULL,
+        params32->input_size,
+        ULongToPtr(params32->buffer),
+        ULongToPtr(params32->length),
+    };
+    if (params32->input)
+    {
+        SecBufferDesc32 *desc32 = ULongToPtr(params32->input);
+        assert(desc32->cBuffers <= ARRAY_SIZE(buffers));
+        secbufferdesc_32to64(desc32, &input);
+    }
+    return schan_recv(&params);
+}
+
+static NTSTATUS wow64_schan_send( void *args )
+{
+    SecBuffer buffers[3];
+    SecBufferDesc output = { 0, 0, buffers };
+
+    struct
+    {
+        schan_session session;
+        PTR32 output;
+        PTR32 buffer;
+        ULONG length;
+        PTR32 output_buffer_idx;
+        PTR32 output_offset;
+    } const *params32 = args;
+    struct send_params params =
+    {
+        params32->session,
+        params32->output ? &output : NULL,
+        ULongToPtr(params32->buffer),
+        params32->length,
+        ULongToPtr(params32->output_buffer_idx),
+        ULongToPtr(params32->output_offset),
+    };
+    if (params32->output)
+    {
+        SecBufferDesc32 *desc32 = ULongToPtr(params32->output);
+        assert(desc32->cBuffers <= ARRAY_SIZE(buffers));
+        secbufferdesc_32to64(desc32, &output);
+    }
+    return schan_send(&params);
+}
+
+static NTSTATUS wow64_schan_set_application_protocols( void *args )
+{
+    struct
+    {
+        schan_session session;
+        PTR32 buffer;
+        unsigned int buflen;
+    } const *params32 = args;
+    struct set_application_protocols_params params =
+    {
+        params32->session,
+        ULongToPtr(params32->buffer),
+        params32->buflen,
+    };
+    return schan_set_application_protocols(&params);
+}
+
+static NTSTATUS wow64_schan_set_session_target( void *args )
+{
+    struct
+    {
+        schan_session session;
+        PTR32 target;
+    } const *params32 = args;
+    struct set_session_target_params params =
+    {
+        params32->session,
+        ULongToPtr(params32->target),
+    };
+    return schan_set_session_target(&params);
+}
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    process_attach,
+    process_detach,
+    wow64_schan_allocate_certificate_credentials,
+    wow64_schan_create_session,
+    schan_dispose_session,
+    wow64_schan_free_certificate_credentials,
+    wow64_schan_get_application_protocol,
+    wow64_schan_get_connection_info,
+    schan_get_enabled_protocols,
+    schan_get_key_signature_algorithm,
+    schan_get_max_message_size,
+    schan_get_session_cipher_block_size,
+    wow64_schan_get_session_peer_certificate,
+    wow64_schan_get_unique_channel_binding,
+    wow64_schan_handshake,
+    wow64_schan_recv,
+    wow64_schan_send,
+    wow64_schan_set_application_protocols,
+    schan_set_dtls_mtu,
+    wow64_schan_set_session_target,
+    schan_set_dtls_timeouts,
+};
+
+#endif /* _WIN64 */
 
 #endif /* SONAME_LIBGNUTLS */
