@@ -2173,6 +2173,11 @@ static void test_create_texture(void)
     /* D3DX10CreateTextureFromMemory tests */
 
     resource = (ID3D10Resource *)0xdeadbeef;
+    hr = D3DX10CreateTextureFromMemory(NULL, test_bmp_1bpp, sizeof(test_bmp_1bpp), NULL, NULL, &resource, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+    ok(resource == (ID3D10Resource *)0xdeadbeef, "Got unexpected resource %p.\n", resource);
+
+    resource = (ID3D10Resource *)0xdeadbeef;
     hr = D3DX10CreateTextureFromMemory(device, NULL, 0, NULL, NULL, &resource, NULL);
     ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
     ok(resource == (ID3D10Resource *)0xdeadbeef, "Got unexpected resource %p.\n", resource);

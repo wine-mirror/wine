@@ -581,7 +581,9 @@ HRESULT WINAPI D3DX10CreateTextureFromFileA(ID3D10Device *device, const char *sr
     TRACE("device %p, src_file %s, load_info %p, pump %p, texture %p, hresult %p.\n",
             device, debugstr_a(src_file), load_info, pump, texture, hresult);
 
-    if (!src_file || !texture)
+    if (!device)
+        return E_INVALIDARG;
+    if (!src_file)
         return E_FAIL;
 
     if (!(str_len = MultiByteToWideChar(CP_ACP, 0, src_file, -1, NULL, 0)))
@@ -608,11 +610,17 @@ HRESULT WINAPI D3DX10CreateTextureFromFileW(ID3D10Device *device, const WCHAR *s
     TRACE("device %p, src_file %s, load_info %p, pump %p, texture %p, hresult %p.\n",
             device, debugstr_w(src_file), load_info, pump, texture, hresult);
 
-    if (!src_file || !texture)
+    if (!device)
+        return E_INVALIDARG;
+    if (!src_file)
         return E_FAIL;
 
     if (FAILED((hr = load_file(src_file, &buffer, &size))))
+    {
+        if (hresult)
+            *hresult = hr;
         return hr;
+    }
 
     hr = D3DX10CreateTextureFromMemory(device, buffer, size, load_info, pump, texture, hresult);
 
@@ -631,8 +639,8 @@ HRESULT WINAPI D3DX10CreateTextureFromResourceA(ID3D10Device *device, HMODULE mo
     TRACE("device %p, module %p, resource %s, load_info %p, pump %p, texture %p, hresult %p.\n",
             device, module, debugstr_a(resource), load_info, pump, texture, hresult);
 
-    if (!resource || !texture)
-        return D3DX10_ERR_INVALID_DATA;
+    if (!device)
+        return E_INVALIDARG;
 
     hr = load_resourceA(module, resource, &buffer, &size);
     if (FAILED(hr))
@@ -651,8 +659,8 @@ HRESULT WINAPI D3DX10CreateTextureFromResourceW(ID3D10Device *device, HMODULE mo
     TRACE("device %p, module %p, resource %s, load_info %p, pump %p, texture %p, hresult %p.\n",
             device, module, debugstr_w(resource), load_info, pump, texture, hresult);
 
-    if (!resource || !texture)
-        return D3DX10_ERR_INVALID_DATA;
+    if (!device)
+        return E_INVALIDARG;
 
     hr = load_resourceW(module, resource, &buffer, &size);
     if (FAILED(hr))
@@ -684,7 +692,9 @@ HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *s
     TRACE("device %p, src_data %p, src_data_size %Iu, load_info %p, pump %p, texture %p, hresult %p.\n",
             device, src_data, src_data_size, load_info, pump, texture, hresult);
 
-    if (!src_data || !src_data_size || !texture)
+    if (!device)
+        return E_INVALIDARG;
+    if (!src_data)
         return E_FAIL;
     if (load_info)
         FIXME("load_info is ignored.\n");
@@ -692,10 +702,16 @@ HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *s
         FIXME("Thread pump is not supported yet.\n");
 
     if (FAILED(D3DX10GetImageInfoFromMemory(src_data, src_data_size, NULL, &img_info, NULL)))
+    {
+        if (hresult)
+            *hresult = E_FAIL;
         return E_FAIL;
+    }
     if (img_info.MiscFlags & D3D10_RESOURCE_MISC_TEXTURECUBE)
     {
         FIXME("Cube map is not supported.\n");
+        if (hresult)
+            *hresult = E_FAIL;
         return E_FAIL;
     }
 
@@ -807,5 +823,7 @@ end:
     if (factory)
         IWICImagingFactory_Release(factory);
 
+    if (hresult)
+        *hresult = hr;
     return hr;
 }
