@@ -117,6 +117,18 @@ struct hid_preparsed_data
 #define HID_FEATURE_VALUE_CAPS(d) ((d)->value_caps + (d)->feature_caps_start)
 #define HID_COLLECTION_NODES(d) (struct hid_collection_node *)((char *)(d)->value_caps + (d)->caps_size)
 
+
+/* Wine-specific Digitizer page usages, not declared in hidusage.h */
+/* From HID Usage Tables */
+/* https://usb.org/sites/default/files/hut1_22.pdf */
+#define HID_USAGE_DIGITIZER_WIDTH                ((USAGE) 0x48)
+#define HID_USAGE_DIGITIZER_HEIGHT               ((USAGE) 0x49)
+#define HID_USAGE_DIGITIZER_CONTACT_ID           ((USAGE) 0x51)
+#define HID_USAGE_DIGITIZER_CONTACT_COUNT        ((USAGE) 0x54)
+#define HID_USAGE_DIGITIZER_CONTACT_COUNT_MAX    ((USAGE) 0x55)
+#define HID_USAGE_DIGITIZER_SCAN_TIME            ((USAGE) 0x56)
+
+
 /* Wine-specific Physical Interface Device usages */
 /* From USB Device Class Definition for Physical Interface Devices */
 /* https://www.usb.org/sites/default/files/documents/pid1_01.pdf */

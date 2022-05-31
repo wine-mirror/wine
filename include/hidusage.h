@@ -31,6 +31,7 @@ typedef USHORT USAGE, *PUSAGE;
 #define HID_USAGE_DIGITIZER_PEN                  ((USAGE) 0x02)
 #define HID_USAGE_DIGITIZER_TOUCH_SCREEN         ((USAGE) 0x04)
 #define HID_USAGE_DIGITIZER_TOUCH_PAD            ((USAGE) 0x05)
+#define HID_USAGE_DIGITIZER_FINGER               ((USAGE) 0x22)
 #define HID_USAGE_DIGITIZER_TIP_PRESSURE         ((USAGE) 0x30)
 #define HID_USAGE_DIGITIZER_IN_RANGE             ((USAGE) 0x32)
 #define HID_USAGE_DIGITIZER_X_TILT               ((USAGE) 0x3D)
@@ -38,6 +39,7 @@ typedef USHORT USAGE, *PUSAGE;
 #define HID_USAGE_DIGITIZER_AZIMUTH              ((USAGE) 0x3F)
 #define HID_USAGE_DIGITIZER_TIP_SWITCH           ((USAGE) 0x42)
 #define HID_USAGE_DIGITIZER_BARREL_SWITCH        ((USAGE) 0x44)
+#define HID_USAGE_DIGITIZER_CONFIDENCE           ((USAGE) 0x47)
 
 #define HID_USAGE_GENERIC_POINTER             ((USAGE) 0x01)
 #define HID_USAGE_GENERIC_MOUSE               ((USAGE) 0x02)
