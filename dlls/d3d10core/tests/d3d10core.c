@@ -4750,7 +4750,6 @@ static void test_occlusion_query(void)
 
 static void test_pipeline_statistics_query(void)
 {
-    static const struct vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
     static const float white[] = {1.0f, 1.0f, 1.0f, 1.0f};
 
     struct d3d10core_test_context test_context;
@@ -4758,8 +4757,26 @@ static void test_pipeline_statistics_query(void)
     D3D10_QUERY_DESC query_desc;
     ID3D10Asynchronous *query;
     unsigned int data_size;
+    ID3D10PixelShader *ps;
     ID3D10Device *device;
     HRESULT hr;
+
+    static const DWORD ps_code[] =
+    {
+#if 0
+        float4 main(float4 pos : sv_position) : sv_target
+        {
+            return pos;
+        }
+#endif
+        0x43425844, 0xac408178, 0x2ca4213f, 0x4f2551e1, 0x1626b422, 0x00000001, 0x000000d8, 0x00000003,
+        0x0000002c, 0x00000060, 0x00000094, 0x4e475349, 0x0000002c, 0x00000001, 0x00000008, 0x00000020,
+        0x00000000, 0x00000001, 0x00000003, 0x00000000, 0x00000f0f, 0x705f7673, 0x7469736f, 0x006e6f69,
+        0x4e47534f, 0x0000002c, 0x00000001, 0x00000008, 0x00000020, 0x00000000, 0x00000000, 0x00000003,
+        0x00000000, 0x0000000f, 0x745f7673, 0x65677261, 0xabab0074, 0x52444853, 0x0000003c, 0x00000040,
+        0x0000000f, 0x04002064, 0x001010f2, 0x00000000, 0x00000001, 0x03000065, 0x001020f2, 0x00000000,
+        0x05000036, 0x001020f2, 0x00000000, 0x00101e46, 0x00000000, 0x0100003e,
+    };
 
     if (!init_test_context(&test_context))
         return;
@@ -4803,8 +4820,12 @@ static void test_pipeline_statistics_query(void)
     todo_wine
     ok(!data.PSInvocations, "Got unexpected PSInvocations count: %u.\n", (unsigned int)data.PSInvocations);
 
+    hr = ID3D10Device_CreatePixelShader(device, ps_code, sizeof(ps_code), &ps);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ID3D10Device_PSSetShader(device, ps);
+
     ID3D10Asynchronous_Begin(query);
-    draw_color_quad(&test_context, &red);
+    draw_quad(&test_context);
     ID3D10Asynchronous_End(query);
     get_query_data(query, &data, sizeof(data));
     ok(data.IAVertices == 4, "Got unexpected IAVertices count: %u.\n", (unsigned int)data.IAVertices);
@@ -4816,6 +4837,7 @@ static void test_pipeline_statistics_query(void)
     ok(data.CPrimitives == 2, "Got unexpected CPrimitives count: %u.\n", (unsigned int)data.CPrimitives);
     ok(data.PSInvocations >= 640 * 480, "Got unexpected PSInvocations count: %u.\n", (unsigned int)data.PSInvocations);
 
+    ID3D10PixelShader_Release(ps);
     ID3D10Asynchronous_Release(query);
     release_test_context(&test_context);
 }
