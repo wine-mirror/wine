@@ -26,6 +26,7 @@
 #include "winuser.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(event);
+WINE_DECLARE_DEBUG_CHANNEL(imm);
 
 
 /* return the name of an Mac event */
@@ -137,6 +138,16 @@ static macdrv_event_mask get_event_mask(DWORD mask)
     }
 
     return event_mask;
+}
+
+
+/***********************************************************************
+ *              macdrv_sent_text_input
+ */
+static void macdrv_sent_text_input(const macdrv_event *event)
+{
+    TRACE_(imm)("handled: %s\n", event->sent_text_input.handled ? "TRUE" : "FALSE");
+    *event->sent_text_input.done = event->sent_text_input.handled ? 1 : -1;
 }
 
 

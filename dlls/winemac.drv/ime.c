@@ -1451,16 +1451,6 @@ void macdrv_im_set_text(const macdrv_event *event)
         IME_NotifyComplete(himc);
 }
 
-/***********************************************************************
- *              macdrv_sent_text_input
- */
-void macdrv_sent_text_input(const macdrv_event *event)
-{
-    TRACE("handled: %s\n", event->sent_text_input.handled ? "TRUE" : "FALSE");
-    *event->sent_text_input.done = event->sent_text_input.handled ? 1 : -1;
-}
-
-
 /**************************************************************************
  *              query_ime_char_rect
  */
