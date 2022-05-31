@@ -2268,7 +2268,6 @@ static void test_DrawThemeBackgroundEx(void)
     void *proc;
 
     proc = GetProcAddress(GetModuleHandleA("uxtheme.dll"), MAKEINTRESOURCEA(47));
-    todo_wine
     ok(proc == (void *)pDrawThemeBackgroundEx, "Expected DrawThemeBackgroundEx() at ordinal 47.\n");
 }
 
