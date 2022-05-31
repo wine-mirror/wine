@@ -141,6 +141,11 @@ static inline gnutls_session_t session_from_handle(UINT64 handle)
    return (gnutls_session_t)(ULONG_PTR)handle;
 }
 
+static inline gnutls_certificate_credentials_t certificate_creds_from_handle(UINT64 handle)
+{
+    return (gnutls_certificate_credentials_t)(ULONG_PTR)handle;
+}
+
 struct schan_buffers
 {
     SIZE_T offset;
@@ -469,8 +474,7 @@ static NTSTATUS schan_create_session( void *args )
         return STATUS_INTERNAL_ERROR;
     }
 
-    err = pgnutls_credentials_set(s, GNUTLS_CRD_CERTIFICATE,
-                                  (gnutls_certificate_credentials_t)cred->credentials);
+    err = pgnutls_credentials_set(s, GNUTLS_CRD_CERTIFICATE, certificate_creds_from_handle(cred->credentials));
     if (err != GNUTLS_E_SUCCESS)
     {
         pgnutls_perror(err);
@@ -1074,7 +1078,7 @@ static NTSTATUS schan_allocate_certificate_credentials( void *args )
 
     if (!params->cert_blob)
     {
-        params->c->credentials = creds;
+        params->c->credentials = (ULONG_PTR)creds;
         return STATUS_SUCCESS;
     }
 
@@ -1101,14 +1105,14 @@ static NTSTATUS schan_allocate_certificate_credentials( void *args )
         return STATUS_INTERNAL_ERROR;
     }
 
-    params->c->credentials = creds;
+    params->c->credentials = (ULONG_PTR)creds;
     return STATUS_SUCCESS;
 }
 
 static NTSTATUS schan_free_certificate_credentials( void *args )
 {
     const struct free_certificate_credentials_params *params = args;
-    pgnutls_certificate_free_credentials(params->c->credentials);
+    pgnutls_certificate_free_credentials(certificate_creds_from_handle(params->c->credentials));
     return STATUS_SUCCESS;
 }
 
