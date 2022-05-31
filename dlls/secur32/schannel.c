@@ -961,7 +961,7 @@ static SECURITY_STATUS SEC_ENTRY schan_InitializeSecurityContextW(
             alloc_buffer.pvBuffer = NULL;
         }
     }
-    else if (pOutput && pOutput->cBuffers)
+    else
     {
         pOutput->pBuffers[0].cbBuffer = 0;
     }
