@@ -1299,7 +1299,8 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
     SIZE_T data_size;
     SIZE_T length;
     char *data;
-    int idx;
+    int idx, output_buffer_idx = -1;
+    ULONG output_offset = 0;
 
     TRACE("context_handle %p, quality %ld, message %p, message_seq_no %ld\n",
             context_handle, quality, message, message_seq_no);
@@ -1326,7 +1327,12 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
     params.output = message;
     params.buffer = data;
     params.length = &length;
+    params.output_buffer_idx = &output_buffer_idx;
+    params.output_offset = &output_offset;
     status = GNUTLS_CALL( send, &params );
+
+    if (!status && output_buffer_idx != -1)
+        message->pBuffers[output_buffer_idx].cbBuffer = output_offset;
 
     TRACE("Sent %Id bytes.\n", length);
 

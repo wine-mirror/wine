@@ -167,6 +167,8 @@ struct send_params
     SecBufferDesc *output;
     const void *buffer;
     SIZE_T *length;
+    int *output_buffer_idx;
+    ULONG *output_offset;
 };
 
 struct set_application_protocols_params

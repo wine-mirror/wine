@@ -878,7 +878,8 @@ static NTSTATUS schan_send( void *args )
         }
     }
 
-    t->out.desc->pBuffers[t->out.current_buffer_idx].cbBuffer = t->out.offset;
+    *params->output_buffer_idx = t->out.current_buffer_idx;
+    *params->output_offset = t->out.offset;
     return SEC_E_OK;
 }
 
