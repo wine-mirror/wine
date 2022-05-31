@@ -41,7 +41,6 @@ extern BOOL allow_vsync DECLSPEC_HIDDEN;
 extern BOOL allow_set_gamma DECLSPEC_HIDDEN;
 extern BOOL allow_software_rendering DECLSPEC_HIDDEN;
 extern BOOL disable_window_decorations DECLSPEC_HIDDEN;
-extern HMODULE macdrv_module DECLSPEC_HIDDEN;
 
 extern NTSTATUS (WINAPI *pNtWaitForMultipleObjects)(ULONG,const HANDLE*,BOOLEAN,
                                                     BOOLEAN,const LARGE_INTEGER*) DECLSPEC_HIDDEN;
@@ -276,13 +275,6 @@ extern void check_retina_status(void) DECLSPEC_HIDDEN;
 extern void macdrv_init_display_devices(BOOL force) DECLSPEC_HIDDEN;
 extern void init_user_driver(void) DECLSPEC_HIDDEN;
 
-/**************************************************************************
- * Mac IME driver
- */
-
-extern NTSTATUS WINAPI macdrv_ime_set_text(void *params, ULONG size) DECLSPEC_HIDDEN;
-extern NTSTATUS WINAPI macdrv_ime_query_char_rect(void *params, ULONG size) DECLSPEC_HIDDEN;
-
 /* unixlib interface */
 
 extern NTSTATUS macdrv_dnd_get_data(void *arg) DECLSPEC_HIDDEN;
@@ -295,10 +287,6 @@ extern NTSTATUS macdrv_notify_icon(void *arg) DECLSPEC_HIDDEN;
 
 extern NTSTATUS macdrv_client_func(enum macdrv_client_funcs func, const void *params,
                                    ULONG size) DECLSPEC_HIDDEN;
-
-extern NTSTATUS WINAPI macdrv_dnd_query_drag(void *arg, ULONG size) DECLSPEC_HIDDEN;
-extern NTSTATUS WINAPI macdrv_dnd_query_drop(void *arg, ULONG size) DECLSPEC_HIDDEN;
-extern NTSTATUS WINAPI macdrv_dnd_query_exited(void *arg, ULONG size) DECLSPEC_HIDDEN;
 
 /* user helpers */
 

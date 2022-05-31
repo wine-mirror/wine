@@ -5,8 +5,6 @@ IMPORTS   = uuid rpcrt4 user32 gdi32 win32u
 DELAYIMPORTS = ole32 shell32 imm32
 EXTRALIBS = -lwin32u -framework AppKit -framework Carbon -framework Security -framework OpenGL -framework IOKit -framework CoreVideo -framework QuartzCore $(METAL_LIBS)
 
-EXTRADLLFLAGS = -mcygwin
-
 C_SRCS = \
 	clipboard.c \
 	display.c \

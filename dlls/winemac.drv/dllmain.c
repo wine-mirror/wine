@@ -18,9 +18,8 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-#include <stdarg.h>
-#include "macdrv.h"
+#include "macdrv_dll.h"
+#include "macdrv_res.h"
 #include "shellapi.h"
 #include "wine/debug.h"
 

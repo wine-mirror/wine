@@ -20,18 +20,17 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#include "config.h"
-
 #define NONAMELESSUNION
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
-#include "macdrv.h"
+#include "macdrv_dll.h"
 
 #define COBJMACROS
 #include "objidl.h"
 #include "shellapi.h"
 #include "shlobj.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(dragdrop);
 

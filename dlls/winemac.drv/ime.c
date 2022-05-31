@@ -34,14 +34,10 @@
  *    here the IMM level deals with if the application is IME aware or not.
  */
 
-#include "config.h"
-
-#include <stdarg.h>
-
-#include "macdrv.h"
-#include "winuser.h"
+#include "macdrv_dll.h"
 #include "imm.h"
 #include "ddk/imm.h"
+#include "wine/debug.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(imm);
 
