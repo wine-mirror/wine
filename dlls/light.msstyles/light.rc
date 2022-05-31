@@ -1552,6 +1552,97 @@ BLUE_INI TEXTFILE
 "MinDpi5 = 192\r\n"
 "MinDpi6 = 216\r\n"
 "MinDpi7 = 240\r\n"
+
+"\r\n; Explorer::TreeView\r\n"
+"[Explorer::TreeView]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 1\r\n"
+"FillColor = 255 255 255\r\n"
+"BorderColor = 174 174 174\r\n"
+
+"[Explorer::TreeView.TreeItem(Hot)]\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 1\r\n"
+"SizingType = Stretch\r\n"
+"TextColor = 0 0 0\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_explorer_treeview_item_hot.bmp\r\n"
+
+"[Explorer::TreeView.TreeItem(Selected)]\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 1\r\n"
+"SizingType = Stretch\r\n"
+"TextColor = 0 0 0\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_explorer_treeview_item_selected.bmp\r\n"
+
+"[Explorer::TreeView.TreeItem(Disabled)]\r\n"
+"BgType = None\r\n"
+"TextColor = 166 166 166\r\n"
+
+"[Explorer::TreeView.TreeItem(SelectedNotFocus)]\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 1\r\n"
+"SizingType = Stretch\r\n"
+"TextColor = 0 0 0\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_explorer_treeview_item_selected_not_focus.bmp\r\n"
+
+"[Explorer::TreeView.TreeItem(HotSelected)]\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 1\r\n"
+"SizingType = Stretch\r\n"
+"TextColor = 0 0 0\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_explorer_treeview_item_hot_selected.bmp\r\n"
+
+"[Explorer::TreeView.Glyph]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageCount = 2\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageFile1 = blue_explorer_treeview_glyph_16px.bmp\r\n"
+"ImageFile2 = blue_explorer_treeview_glyph_20px.bmp\r\n"
+"ImageFile3 = blue_explorer_treeview_glyph_24px.bmp\r\n"
+"ImageFile4 = blue_explorer_treeview_glyph_32px.bmp\r\n"
+"ImageFile5 = blue_explorer_treeview_glyph_40px.bmp\r\n"
+"ImageFile4 = blue_explorer_treeview_glyph_48px.bmp\r\n"
+"ImageFile5 = blue_explorer_treeview_glyph_64px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Explorer::TreeView.HotGlyph]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageCount = 2\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageFile1 = blue_explorer_treeview_hot_glyph_16px.bmp\r\n"
+"ImageFile2 = blue_explorer_treeview_hot_glyph_20px.bmp\r\n"
+"ImageFile3 = blue_explorer_treeview_hot_glyph_24px.bmp\r\n"
+"ImageFile4 = blue_explorer_treeview_hot_glyph_32px.bmp\r\n"
+"ImageFile5 = blue_explorer_treeview_hot_glyph_40px.bmp\r\n"
+"ImageFile6 = blue_explorer_treeview_hot_glyph_48px.bmp\r\n"
+"ImageFile7 = blue_explorer_treeview_hot_glyph_64px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
 }
 
 /* Button */
@@ -1994,6 +2085,61 @@ BLUE_TREEVIEW_EXPAND_COLLAPSE_20PX_BMP BITMAP "blue_treeview_expand_collapse_20p
 
 /* @makedep: blue_treeview_expand_collapse_23px.bmp */
 BLUE_TREEVIEW_EXPAND_COLLAPSE_23PX_BMP BITMAP "blue_treeview_expand_collapse_23px.bmp"
+
+/* Explorer::TreeView */
+/* @makedep: blue_explorer_treeview_glyph_16px.bmp */
+BLUE_EXPLORER_TREEVIEW_GLYPH_16PX_BMP BITMAP "blue_explorer_treeview_glyph_16px.bmp"
+
+/* @makedep: blue_explorer_treeview_glyph_20px.bmp */
+BLUE_EXPLORER_TREEVIEW_GLYPH_20PX_BMP BITMAP "blue_explorer_treeview_glyph_20px.bmp"
+
+/* @makedep: blue_explorer_treeview_glyph_24px.bmp */
+BLUE_EXPLORER_TREEVIEW_GLYPH_24PX_BMP BITMAP "blue_explorer_treeview_glyph_24px.bmp"
+
+/* @makedep: blue_explorer_treeview_glyph_32px.bmp */
+BLUE_EXPLORER_TREEVIEW_GLYPH_32PX_BMP BITMAP "blue_explorer_treeview_glyph_32px.bmp"
+
+/* @makedep: blue_explorer_treeview_glyph_40px.bmp */
+BLUE_EXPLORER_TREEVIEW_GLYPH_40PX_BMP BITMAP "blue_explorer_treeview_glyph_40px.bmp"
+
+/* @makedep: blue_explorer_treeview_glyph_48px.bmp */
+BLUE_EXPLORER_TREEVIEW_GLYPH_48PX_BMP BITMAP "blue_explorer_treeview_glyph_48px.bmp"
+
+/* @makedep: blue_explorer_treeview_glyph_64px.bmp */
+BLUE_EXPLORER_TREEVIEW_GLYPH_64PX_BMP BITMAP "blue_explorer_treeview_glyph_64px.bmp"
+
+/* @makedep: blue_explorer_treeview_hot_glyph_16px.bmp */
+BLUE_EXPLORER_TREEVIEW_HOT_GLYPH_16PX_BMP BITMAP "blue_explorer_treeview_hot_glyph_16px.bmp"
+
+/* @makedep: blue_explorer_treeview_hot_glyph_20px.bmp */
+BLUE_EXPLORER_TREEVIEW_HOT_GLYPH_20PX_BMP BITMAP "blue_explorer_treeview_hot_glyph_20px.bmp"
+
+/* @makedep: blue_explorer_treeview_hot_glyph_24px.bmp */
+BLUE_EXPLORER_TREEVIEW_HOT_GLYPH_24PX_BMP BITMAP "blue_explorer_treeview_hot_glyph_24px.bmp"
+
+/* @makedep: blue_explorer_treeview_hot_glyph_32px.bmp */
+BLUE_EXPLORER_TREEVIEW_HOT_GLYPH_32PX_BMP BITMAP "blue_explorer_treeview_hot_glyph_32px.bmp"
+
+/* @makedep: blue_explorer_treeview_hot_glyph_40px.bmp */
+BLUE_EXPLORER_TREEVIEW_HOT_GLYPH_40PX_BMP BITMAP "blue_explorer_treeview_hot_glyph_40px.bmp"
+
+/* @makedep: blue_explorer_treeview_hot_glyph_48px.bmp */
+BLUE_EXPLORER_TREEVIEW_HOT_GLYPH_48PX_BMP BITMAP "blue_explorer_treeview_hot_glyph_48px.bmp"
+
+/* @makedep: blue_explorer_treeview_hot_glyph_64px.bmp */
+BLUE_EXPLORER_TREEVIEW_HOT_GLYPH_64PX_BMP BITMAP "blue_explorer_treeview_hot_glyph_64px.bmp"
+
+/* @makedep: blue_explorer_treeview_item_hot.bmp */
+BLUE_EXPLORER_TREEVIEW_ITEM_HOT_BMP BITMAP "blue_explorer_treeview_item_hot.bmp"
+
+/* @makedep: blue_explorer_treeview_item_hot_selected.bmp */
+BLUE_EXPLORER_TREEVIEW_ITEM_HOT_SELECTED_BMP BITMAP "blue_explorer_treeview_item_hot_selected.bmp"
+
+/* @makedep: blue_explorer_treeview_item_selected.bmp */
+BLUE_EXPLORER_TREEVIEW_ITEM_SELECTED_BMP BITMAP "blue_explorer_treeview_item_selected.bmp"
+
+/* @makedep: blue_explorer_treeview_item_selected_not_focus.bmp */
+BLUE_EXPLORER_TREEVIEW_ITEM_SELECTED_NOT_FOCUS_BMP BITMAP "blue_explorer_treeview_item_selected_not_focus.bmp"
 
 /* File version */
 #define WINE_FILEDESCRIPTION_STR "Light Theme"
