@@ -290,7 +290,7 @@ extern NTSTATUS macdrv_init(void *arg) DECLSPEC_HIDDEN;
 extern NTSTATUS macdrv_ime_process_text_input(void *arg) DECLSPEC_HIDDEN;
 
 extern NTSTATUS WINAPI macdrv_ime_set_text(void *params, ULONG size) DECLSPEC_HIDDEN;
-extern BOOL query_ime_char_rect(macdrv_query* query) DECLSPEC_HIDDEN;
+extern NTSTATUS WINAPI macdrv_ime_query_char_rect(void *params, ULONG size) DECLSPEC_HIDDEN;
 
 /* unixlib interface */
 

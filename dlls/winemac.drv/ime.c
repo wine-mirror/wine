@@ -1438,43 +1438,42 @@ NTSTATUS WINAPI macdrv_ime_set_text(void *arg, ULONG size)
 }
 
 /**************************************************************************
- *              query_ime_char_rect
+ *              macdrv_ime_query_char_rect
  */
-BOOL query_ime_char_rect(macdrv_query* query)
+NTSTATUS WINAPI macdrv_ime_query_char_rect(void *arg, ULONG size)
 {
-    HWND hwnd = macdrv_get_window_hwnd(query->window);
-    void *himc = query->ime_char_rect.data;
-    CFRange* range = &query->ime_char_rect.range;
-    CGRect* rect = &query->ime_char_rect.rect;
+    struct ime_query_char_rect_params *params = arg;
+    struct ime_query_char_rect_result *result = params->result;
+    void *himc = params->data;
     IMECHARPOSITION charpos;
     BOOL ret = FALSE;
 
-    TRACE("win %p/%p himc %p range %ld-%ld\n", hwnd, query->window, himc, range->location,
-          range->length);
+    result->location = params->location;
+    result->length = params->length;
 
     if (!himc) himc = RealIMC(FROM_MACDRV);
 
     charpos.dwSize = sizeof(charpos);
-    charpos.dwCharPos = range->location;
+    charpos.dwCharPos = params->location;
     if (ImmRequestMessageW(himc, IMR_QUERYCHARPOSITION, (ULONG_PTR)&charpos))
     {
         int i;
 
-        *rect = CGRectMake(charpos.pt.x, charpos.pt.y, 0, charpos.cLineHeight);
+        SetRect(&result->rect, charpos.pt.x, charpos.pt.y, 0, charpos.pt.y + charpos.cLineHeight);
 
         /* iterate over rest of length to extend rect */
-        for (i = 1; i < range->length; i++)
+        for (i = 1; i < params->length; i++)
         {
             charpos.dwSize = sizeof(charpos);
-            charpos.dwCharPos = range->location + i;
+            charpos.dwCharPos = params->location + i;
             if (!ImmRequestMessageW(himc, IMR_QUERYCHARPOSITION, (ULONG_PTR)&charpos) ||
-                charpos.pt.y != rect->origin.y)
+                charpos.pt.y != result->rect.top)
             {
-                range->length = i;
+                result->length = i;
                 break;
             }
 
-            rect->size.width = charpos.pt.x - rect->origin.x;
+            result->rect.right = charpos.pt.x;
         }
 
         ret = TRUE;
@@ -1501,15 +1500,15 @@ BOOL query_ime_char_rect(macdrv_query* query)
                 if (private->textfont)
                     oldfont = SelectObject(dc, private->textfont);
 
-                if (range->location > compstr->dwCompStrLen)
-                    range->location = compstr->dwCompStrLen;
-                if (range->location + range->length > compstr->dwCompStrLen)
-                    range->length = compstr->dwCompStrLen - range->location;
+                if (result->location > compstr->dwCompStrLen)
+                    result->location = compstr->dwCompStrLen;
+                if (result->location + result->length > compstr->dwCompStrLen)
+                    result->length = compstr->dwCompStrLen - result->location;
 
-                GetTextExtentPoint32W(dc, str, range->location, &size);
+                GetTextExtentPoint32W(dc, str, result->location, &size);
                 charpos.rcDocument.left = size.cx;
                 charpos.rcDocument.top = 0;
-                GetTextExtentPoint32W(dc, str, range->location + range->length, &size);
+                GetTextExtentPoint32W(dc, str, result->location + result->length, &size);
                 charpos.rcDocument.right = size.cx;
                 charpos.rcDocument.bottom = size.cy;
 
@@ -1518,7 +1517,7 @@ BOOL query_ime_char_rect(macdrv_query* query)
 
                 LPtoDP(dc, (POINT*)&charpos.rcDocument, 2);
                 MapWindowPoints(private->hwndDefault, 0, (POINT*)&charpos.rcDocument, 2);
-                *rect = cgrect_from_rect(charpos.rcDocument);
+                result->rect = charpos.rcDocument;
                 ret = TRUE;
 
                 if (oldfont)
@@ -1540,16 +1539,13 @@ BOOL query_ime_char_rect(macdrv_query* query)
         if (GetGUIThreadInfo(0, &gti))
         {
             MapWindowPoints(gti.hwndCaret, 0, (POINT*)&gti.rcCaret, 2);
-            *rect = cgrect_from_rect(gti.rcCaret);
+            result->rect = gti.rcCaret;
             ret = TRUE;
         }
     }
 
-    if (ret && range->length && !rect->size.width)
-        rect->size.width = 1;
-
-    TRACE(" -> %s range %ld-%ld rect %s\n", ret ? "TRUE" : "FALSE", range->location,
-          range->length, wine_dbgstr_cgrect(*rect));
+    if (ret && result->length && result->rect.left == result->rect.right)
+        result->rect.right++;
 
     return ret;
 }

@@ -66,8 +66,27 @@ struct notify_icon_params
 /* driver client callbacks exposed with KernelCallbackTable interface */
 enum macdrv_client_funcs
 {
-    client_func_ime_set_text = NtUserDriverCallbackFirst,
+    client_func_ime_query_char_rect = NtUserDriverCallbackFirst,
+    client_func_ime_set_text,
     client_func_last
+};
+
+/* macdrv_ime_query_char_rect result */
+struct ime_query_char_rect_result
+{
+    RECT rect;
+    UINT32 location;
+    UINT32 length;
+};
+
+/* macdrv_ime_query_char_rect params */
+struct ime_query_char_rect_params
+{
+    HWND hwnd;
+    void *data;
+    UINT32 location;
+    UINT32 length;
+    struct ime_query_char_rect_result *result; /* FIXME: Use NtCallbackReturn instead */
 };
 
 /* macdrv_ime_set_text params */

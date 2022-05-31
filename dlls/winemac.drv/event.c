@@ -179,6 +179,38 @@ static void macdrv_sent_text_input(const macdrv_event *event)
 }
 
 
+/**************************************************************************
+ *              query_ime_char_rect
+ */
+BOOL query_ime_char_rect(macdrv_query* query)
+{
+    HWND hwnd = macdrv_get_window_hwnd(query->window);
+    void *himc = query->ime_char_rect.data;
+    CFRange *range = &query->ime_char_rect.range;
+    CGRect *rect = &query->ime_char_rect.rect;
+    struct ime_query_char_rect_result result = {0};
+    struct ime_query_char_rect_params params;
+    BOOL ret;
+
+    TRACE_(imm)("win %p/%p himc %p range %ld-%ld\n", hwnd, query->window, himc, range->location,
+                range->length);
+
+    params.hwnd = hwnd;
+    params.data = himc;
+    params.result = &result;
+    params.location = range->location;
+    params.length = range->length;
+    ret = macdrv_client_func(client_func_ime_query_char_rect, &params, sizeof(params));
+    *range = CFRangeMake(result.location, result.length);
+    *rect = cgrect_from_rect(result.rect);
+
+    TRACE_(imm)(" -> %s range %ld-%ld rect %s\n", ret ? "TRUE" : "FALSE", range->location,
+                range->length, wine_dbgstr_cgrect(*rect));
+
+    return ret;
+}
+
+
 /***********************************************************************
  *              macdrv_query_event
  *
