@@ -243,6 +243,7 @@ struct wined3d_d3d_info
     uint32_t pbo : 1;
     uint32_t subpixel_viewport : 1;
     uint32_t fences : 1;
+    uint32_t persistent_map : 1;
     enum wined3d_feature_level feature_level;
 
     DWORD multisample_draw_location;

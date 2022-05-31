@@ -1008,11 +1008,13 @@ static HRESULT buffer_resource_sub_resource_map(struct wined3d_resource *resourc
             addr.buffer_object = buffer->buffer_object;
             addr.addr = 0;
             buffer->map_ptr = wined3d_context_map_bo_address(context, &addr, resource->size, flags);
+
             /* We are accessing buffer->resource.client from the CS thread,
              * but it's safe because the client thread will wait for the
              * map to return, thus completely serializing this call with
              * other client code. */
-            buffer->resource.client.addr = addr;
+            if (context->d3d_info->persistent_map)
+                buffer->resource.client.addr = addr;
 
             if (((DWORD_PTR)buffer->map_ptr) & (RESOURCE_ALIGNMENT - 1))
             {
