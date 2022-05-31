@@ -848,7 +848,6 @@ static HRESULT WINAPI D3DX10ThreadPump_AddWorkItem(ID3DX10ThreadPump *iface, ID3
     HRESULT hr;
 
     ok(!add_work_item_count++, "unexpected call\n");
-    ok(!object, "object = %p\n", object);
 
     hr = ID3DX10DataLoader_Load(loader);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
@@ -2289,6 +2288,17 @@ static void test_create_texture(void)
 
         winetest_pop_context();
     }
+
+    hr2 = 0xdeadbeef;
+    add_work_item_count = 0;
+    hr = D3DX10CreateTextureFromMemory(device, test_image[0].data, test_image[0].size,
+            NULL, &thread_pump, &resource, &hr2);
+    ok(add_work_item_count == 1, "Got unexpected add_work_item_count %u.\n", add_work_item_count);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    ok(hr == hr2, "Got unexpected hr2 %#x.\n", hr2);
+    check_resource_info(resource, test_image, __LINE__);
+    check_resource_data(resource, test_image, __LINE__);
+    ID3D10Resource_Release(resource);
 
     /* D3DX10CreateTextureFromFile tests */
 
