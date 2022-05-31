@@ -238,6 +238,7 @@ extern void X11DRV_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style ) D
 extern void X11DRV_SetWindowText( HWND hwnd, LPCWSTR text ) DECLSPEC_HIDDEN;
 extern UINT X11DRV_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp ) DECLSPEC_HIDDEN;
 extern LRESULT X11DRV_SysCommand( HWND hwnd, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;
+extern LRESULT X11DRV_ClipboardWindowProc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp ) DECLSPEC_HIDDEN;
 extern void X11DRV_UpdateClipboard(void) DECLSPEC_HIDDEN;
 extern BOOL X11DRV_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info,
                                         const RECT *window_rect ) DECLSPEC_HIDDEN;
@@ -833,7 +834,6 @@ static inline BOOL is_window_rect_mapped( const RECT *rect )
 
 /* unixlib interface */
 
-extern NTSTATUS x11drv_clipboard_message( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_create_desktop( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_systray_clear( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS x11drv_systray_dock( void *arg ) DECLSPEC_HIDDEN;

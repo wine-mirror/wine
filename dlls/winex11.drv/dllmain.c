@@ -21,111 +21,10 @@
 #include "x11drv_dll.h"
 #include "wine/debug.h"
 
-WINE_DEFAULT_DEBUG_CHANNEL(x11drv);
-
 
 HMODULE x11drv_module = 0;
 static unixlib_handle_t x11drv_handle;
 NTSTATUS (CDECL *x11drv_unix_call)( enum x11drv_funcs code, void *params );
-
-/**************************************************************************
- *		wait_clipboard_mutex
- *
- * Make sure that there's only one clipboard thread per window station.
- */
-static BOOL wait_clipboard_mutex(void)
-{
-    static const WCHAR prefix[] = {'_','_','w','i','n','e','_','c','l','i','p','b','o','a','r','d','_'};
-    WCHAR buffer[MAX_PATH + ARRAY_SIZE( prefix )];
-    HANDLE mutex;
-
-    memcpy( buffer, prefix, sizeof(prefix) );
-    if (!GetUserObjectInformationW( GetProcessWindowStation(), UOI_NAME,
-                                    buffer + ARRAY_SIZE( prefix ),
-                                    sizeof(buffer) - sizeof(prefix), NULL ))
-    {
-        ERR( "failed to get winstation name\n" );
-        return FALSE;
-    }
-    mutex = CreateMutexW( NULL, TRUE, buffer );
-    if (GetLastError() == ERROR_ALREADY_EXISTS)
-    {
-        TRACE( "waiting for mutex %s\n", debugstr_w( buffer ));
-        WaitForSingleObject( mutex, INFINITE );
-    }
-    return TRUE;
-}
-
-
-/**************************************************************************
- *		clipboard_wndproc
- *
- * Window procedure for the clipboard manager.
- */
-static LRESULT CALLBACK clipboard_wndproc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
-{
-    struct clipboard_message_params params;
-
-    switch (msg)
-    {
-    case WM_NCCREATE:
-    case WM_CLIPBOARDUPDATE:
-    case WM_RENDERFORMAT:
-    case WM_TIMER:
-    case WM_DESTROYCLIPBOARD:
-        params.hwnd   = hwnd;
-        params.msg    = msg;
-        params.wparam = wp;
-        params.lparam = lp;
-        return X11DRV_CALL( clipboard_message, &params );
-    }
-
-    return DefWindowProcW( hwnd, msg, wp, lp );
-}
-
-
-/**************************************************************************
- *		clipboard_thread
- *
- * Thread running inside the desktop process to manage the clipboard
- */
-static DWORD WINAPI clipboard_thread( void *arg )
-{
-    static const WCHAR clipboard_classname[] = {'_','_','w','i','n','e','_','c','l','i','p','b','o','a','r','d','_','m','a','n','a','g','e','r',0};
-    WNDCLASSW class;
-    MSG msg;
-
-    if (!wait_clipboard_mutex()) return 0;
-
-    memset( &class, 0, sizeof(class) );
-    class.lpfnWndProc   = clipboard_wndproc;
-    class.lpszClassName = clipboard_classname;
-
-    if (!RegisterClassW( &class ) && GetLastError() != ERROR_CLASS_ALREADY_EXISTS)
-    {
-        ERR( "could not register clipboard window class err %u\n", GetLastError() );
-        return 0;
-    }
-    if (!CreateWindowW( clipboard_classname, NULL, 0, 0, 0, 0, 0, HWND_MESSAGE, 0, 0, NULL ))
-    {
-        ERR( "failed to create clipboard window err %u\n", GetLastError() );
-        return 0;
-    }
-
-    while (GetMessageW( &msg, 0, 0, 0 )) DispatchMessageW( &msg );
-    return 0;
-}
-
-
-static NTSTATUS x11drv_clipboard_init( UINT arg )
-{
-    DWORD id;
-    HANDLE thread = CreateThread( NULL, 0, clipboard_thread, NULL, 0, &id );
-
-    if (thread) CloseHandle( thread );
-    else ERR( "failed to create clipboard thread\n" );
-    return 0;
-}
 
 
 static NTSTATUS x11drv_load_icon( UINT id )
@@ -137,7 +36,6 @@ static NTSTATUS x11drv_load_icon( UINT id )
 typedef NTSTATUS (*callback_func)( UINT arg );
 static const callback_func callback_funcs[] =
 {
-    x11drv_clipboard_init,
     x11drv_dnd_drop_event,
     x11drv_dnd_leave_event,
     x11drv_ime_get_cursor_pos,

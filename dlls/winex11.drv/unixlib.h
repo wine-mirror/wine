@@ -21,7 +21,6 @@
 
 enum x11drv_funcs
 {
-    unix_clipboard_message,
     unix_create_desktop,
     unix_init,
     unix_systray_clear,
@@ -40,15 +39,6 @@ enum x11drv_funcs
 /* FIXME: Use __wine_unix_call when the rest of the stack is ready */
 extern NTSTATUS (CDECL *x11drv_unix_call)( enum x11drv_funcs code, void *params ) DECLSPEC_HIDDEN;
 #define X11DRV_CALL(func, params) x11drv_unix_call( unix_ ## func, params )
-
-/* x11drv_clipboard_message params */
-struct clipboard_message_params
-{
-    HWND hwnd;
-    UINT msg;
-    WPARAM wparam;
-    LPARAM lparam;
-};
 
 /* x11drv_create_desktop params */
 struct create_desktop_params
@@ -108,7 +98,6 @@ C_ASSERT( client_func_last <= NtUserDriverCallbackLast + 1 );
 /* simplified interface for client callbacks requiring only a single UINT parameter */
 enum client_callback
 {
-    client_clipboard_init,
     client_dnd_drop_event,
     client_dnd_leave_event,
     client_ime_get_cursor_pos,
