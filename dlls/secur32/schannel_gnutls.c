@@ -236,78 +236,13 @@ static void init_schan_buffers(struct schan_buffers *s, const PSecBufferDesc des
     s->get_next_buffer = get_next_buffer;
 }
 
-static int schan_find_sec_buffer_idx(const SecBufferDesc *desc, unsigned int start_idx, ULONG buffer_type)
+static int common_get_next_buffer(struct schan_buffers *s)
 {
-    unsigned int i;
-    PSecBuffer buffer;
-
-    for (i = start_idx; i < desc->cBuffers; ++i)
-    {
-        buffer = &desc->pBuffers[i];
-        if ((buffer->BufferType | SECBUFFER_ATTRMASK) == (buffer_type | SECBUFFER_ATTRMASK))
-            return i;
-    }
-
-    return -1;
-}
-
-static int handshake_get_next_buffer(struct schan_buffers *s)
-{
-    if (s->current_buffer_idx != -1)
-        return -1;
-    return s->desc->cBuffers ? 0 : -1;
-}
-
-static int send_message_get_next_buffer(struct schan_buffers *s)
-{
-    SecBuffer *b;
-
     if (s->current_buffer_idx == -1)
-        return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_STREAM_HEADER);
-
-    b = &s->desc->pBuffers[s->current_buffer_idx];
-
-    if (b->BufferType == SECBUFFER_STREAM_HEADER)
-        return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_DATA);
-
-    if (b->BufferType == SECBUFFER_DATA)
-        return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_STREAM_TRAILER);
-
-    return -1;
-}
-
-static int send_message_get_next_buffer_token(struct schan_buffers *s)
-{
-    SecBuffer *b;
-
-    if (s->current_buffer_idx == -1)
-        return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_TOKEN);
-
-    b = &s->desc->pBuffers[s->current_buffer_idx];
-
-    if (b->BufferType == SECBUFFER_TOKEN)
-    {
-        int idx = schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_TOKEN);
-        if (idx != s->current_buffer_idx) return -1;
-        return schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_DATA);
-    }
-
-    if (b->BufferType == SECBUFFER_DATA)
-    {
-        int idx = schan_find_sec_buffer_idx(s->desc, 0, SECBUFFER_TOKEN);
-        if (idx != -1)
-            idx = schan_find_sec_buffer_idx(s->desc, idx + 1, SECBUFFER_TOKEN);
-        return idx;
-    }
-
-    return -1;
-}
-
-static int recv_message_get_next_buffer(struct schan_buffers *s)
-{
-    if (s->current_buffer_idx != -1)
+        return s->desc->cBuffers ? 0 : -1;
+    if (s->current_buffer_idx == s->desc->cBuffers - 1)
         return -1;
-    return s->desc->cBuffers ? 0 : -1;
+    return s->current_buffer_idx + 1;
 }
 
 static char *get_buffer(struct schan_buffers *s, SIZE_T *count)
@@ -583,9 +518,9 @@ static NTSTATUS schan_handshake( void *args )
     NTSTATUS status;
     int err;
 
-    init_schan_buffers(&t->in, params->input, handshake_get_next_buffer);
+    init_schan_buffers(&t->in, params->input, common_get_next_buffer);
     t->in.limit = params->input_size;
-    init_schan_buffers(&t->out, params->output, handshake_get_next_buffer);
+    init_schan_buffers(&t->out, params->output, common_get_next_buffer);
 
     while (1)
     {
@@ -850,10 +785,7 @@ static NTSTATUS schan_send( void *args )
     struct schan_transport *t = (struct schan_transport *)pgnutls_transport_get_ptr(s);
     SSIZE_T ret, total = 0;
 
-    if (schan_find_sec_buffer_idx(params->output, 0, SECBUFFER_STREAM_HEADER) != -1)
-        init_schan_buffers(&t->out, params->output, send_message_get_next_buffer);
-    else
-        init_schan_buffers(&t->out, params->output, send_message_get_next_buffer_token);
+    init_schan_buffers(&t->out, params->output, common_get_next_buffer);
 
     for (;;)
     {
@@ -893,7 +825,7 @@ static NTSTATUS schan_recv( void *args )
     ssize_t ret;
     SECURITY_STATUS status = SEC_E_OK;
 
-    init_schan_buffers(&t->in, params->input, recv_message_get_next_buffer);
+    init_schan_buffers(&t->in, params->input, common_get_next_buffer);
     t->in.limit = params->input_size;
 
     while (received < data_size)

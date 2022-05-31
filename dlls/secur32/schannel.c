@@ -1299,8 +1299,12 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
     SIZE_T data_size;
     SIZE_T length;
     char *data;
-    int idx, output_buffer_idx = -1;
+    int output_buffer_idx = -1;
     ULONG output_offset = 0;
+    SecBufferDesc output_desc = { 0 };
+    SecBuffer output_buffers[3];
+    int header_idx, data_idx, trailer_idx = -1;
+    int buffer_index[3];
 
     TRACE("context_handle %p, quality %ld, message %p, message_seq_no %ld\n",
             context_handle, quality, message, message_seq_no);
@@ -1310,29 +1314,56 @@ static SECURITY_STATUS SEC_ENTRY schan_EncryptMessage(PCtxtHandle context_handle
 
     dump_buffer_desc(message);
 
-    idx = schan_find_sec_buffer_idx(message, 0, SECBUFFER_DATA);
-    if (idx == -1)
+    data_idx = schan_find_sec_buffer_idx(message, 0, SECBUFFER_DATA);
+    if (data_idx == -1)
     {
         WARN("No data buffer passed\n");
         return SEC_E_INTERNAL_ERROR;
     }
-    buffer = &message->pBuffers[idx];
+    buffer = &message->pBuffers[data_idx];
 
     data_size = buffer->cbBuffer;
     data = malloc(data_size);
     memcpy(data, buffer->pvBuffer, data_size);
 
+    /* Use { STREAM_HEADER, DATA, STREAM_TRAILER } or { TOKEN, DATA, TOKEN } buffers. */
+
+    output_desc.pBuffers = output_buffers;
+    if ((header_idx = schan_find_sec_buffer_idx(message, 0, SECBUFFER_STREAM_HEADER)) == -1)
+    {
+        if ((header_idx = schan_find_sec_buffer_idx(message, 0, SECBUFFER_TOKEN)) != -1)
+        {
+            output_buffers[output_desc.cBuffers++] = message->pBuffers[header_idx];
+            output_buffers[output_desc.cBuffers++] = message->pBuffers[data_idx];
+            trailer_idx = schan_find_sec_buffer_idx(message, header_idx + 1, SECBUFFER_TOKEN);
+            if (trailer_idx != -1)
+                output_buffers[output_desc.cBuffers++] = message->pBuffers[trailer_idx];
+        }
+    }
+    else
+    {
+        output_buffers[output_desc.cBuffers++] = message->pBuffers[header_idx];
+        output_buffers[output_desc.cBuffers++] = message->pBuffers[data_idx];
+        trailer_idx = schan_find_sec_buffer_idx(message, 0, SECBUFFER_STREAM_TRAILER);
+        if (trailer_idx != -1)
+            output_buffers[output_desc.cBuffers++] = message->pBuffers[trailer_idx];
+    }
+
+    buffer_index[0] = header_idx;
+    buffer_index[1] = data_idx;
+    buffer_index[2] = trailer_idx;
+
     length = data_size;
     params.session = ctx->session;
-    params.output = message;
+    params.output = &output_desc;
     params.buffer = data;
     params.length = &length;
     params.output_buffer_idx = &output_buffer_idx;
     params.output_offset = &output_offset;
     status = GNUTLS_CALL( send, &params );
 
-    if (!status && output_buffer_idx != -1)
-        message->pBuffers[output_buffer_idx].cbBuffer = output_offset;
+    if (!status)
+        message->pBuffers[buffer_index[output_buffer_idx]].cbBuffer = output_offset;
 
     TRACE("Sent %Id bytes.\n", length);
 
