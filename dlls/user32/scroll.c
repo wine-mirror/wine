@@ -752,7 +752,7 @@ static void SCROLL_RefreshScrollBar( HWND hwnd, INT nBar,
  */
 static void SCROLL_HandleKbdEvent(HWND hwnd, WPARAM wParam, LPARAM lParam)
 {
-    TRACE("hwnd=%p wParam=%ld lParam=%ld\n", hwnd, wParam, lParam);
+    TRACE("hwnd=%p wParam=%Id lParam=%Id\n", hwnd, wParam, lParam);
 
     /* hide caret on first KEYDOWN to prevent flicker */
     if ((lParam & PFD_DOUBLEBUFFER_DONTCARE) == 0)
@@ -923,7 +923,7 @@ void SCROLL_HandleScrollEvent( HWND hwnd, INT nBar, UINT msg, POINT pt )
           return;  /* Should never happen */
     }
 
-    TRACE("Event: hwnd=%p bar=%d msg=%s pt=%d,%d hit=%d\n",
+    TRACE("Event: hwnd=%p bar=%d msg=%s pt=%ld,%ld hit=%d\n",
           hwnd, nBar, SPY_GetMsgName(msg,hwnd), pt.x, pt.y, hittest );
 
     switch (g_tracking_info.hit_test)
@@ -1574,13 +1574,13 @@ LRESULT WINAPI USER_ScrollBarProc( HWND hwnd, UINT message, WPARAM wParam, LPARA
     case 0x00ed:
     case 0x00ee:
     case 0x00ef:
-        ERR("unknown Win32 msg %04x wp=%08lx lp=%08lx\n",
+        ERR("unknown Win32 msg %04x wp=%08Ix lp=%08Ix\n",
 		    message, wParam, lParam );
         break;
 
     default:
         if (message >= WM_USER)
-            WARN("unknown msg %04x wp=%04lx lp=%08lx\n",
+            WARN("unknown msg %04x wp=%04Ix lp=%08Ix\n",
 			 message, wParam, lParam );
         if (unicode)
             return DefWindowProcW( hwnd, message, wParam, lParam );
@@ -1825,7 +1825,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetScrollInfo(HWND hwnd, INT nBar, LPSCROLLINFO in
  */
 BOOL WINAPI GetScrollBarInfo(HWND hwnd, LONG idObject, LPSCROLLBARINFO info)
 {
-    TRACE("hwnd=%p idObject=%d info=%p\n", hwnd, idObject, info);
+    TRACE("hwnd=%p idObject=%ld info=%p\n", hwnd, idObject, info);
 
     /* Refer OBJID_CLIENT requests to the window */
     if (idObject == OBJID_CLIENT)

@@ -1459,7 +1459,7 @@ static void COMBO_Size( HEADCOMBO *lphc )
      */
     if( curComboHeight > newComboHeight )
     {
-      TRACE("oldComboHeight=%d, newComboHeight=%d, oldDropBottom=%d, oldDropTop=%d\n",
+      TRACE("oldComboHeight=%d, newComboHeight=%d, oldDropBottom=%ld, oldDropTop=%ld\n",
             curComboHeight, newComboHeight, lphc->droppedRect.bottom,
             lphc->droppedRect.top);
       lphc->droppedRect.bottom = lphc->droppedRect.top + curComboHeight - newComboHeight;
@@ -1720,7 +1720,7 @@ LRESULT ComboWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 {
       LPHEADCOMBO lphc = (LPHEADCOMBO)GetWindowLongPtrW( hwnd, 0 );
 
-      TRACE("[%p]: msg %s wp %08lx lp %08lx\n",
+      TRACE("[%p]: msg %s wp %08Ix lp %08Ix\n",
             hwnd, SPY_GetMsgName(message, hwnd), wParam, lParam );
 
       if (!IsWindow(hwnd)) return 0;
@@ -2107,7 +2107,7 @@ LRESULT ComboWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 		return  TRUE;
 	default:
 		if (message >= WM_USER)
-		    WARN("unknown msg WM_USER+%04x wp=%04lx lp=%08lx\n",
+		    WARN("unknown msg WM_USER+%04x wp=%04Ix lp=%08Ix\n",
 			message - WM_USER, wParam, lParam );
 		break;
       }

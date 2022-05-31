@@ -137,12 +137,12 @@ static LRESULT call_window_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, LRES
 {
     WNDPROC proc = arg;
 
-    TRACE_(relay)( "\1Call window proc %p (hwnd=%p,msg=%s,wp=%08lx,lp=%08lx)\n",
+    TRACE_(relay)( "\1Call window proc %p (hwnd=%p,msg=%s,wp=%08Ix,lp=%08Ix)\n",
                    proc, hwnd, SPY_GetMsgName(msg, hwnd), wp, lp );
 
     *result = WINPROC_wrapper( proc, hwnd, msg, wp, lp );
 
-    TRACE_(relay)( "\1Ret  window proc %p (hwnd=%p,msg=%s,wp=%08lx,lp=%08lx) retval=%08lx\n",
+    TRACE_(relay)( "\1Ret  window proc %p (hwnd=%p,msg=%s,wp=%08Ix,lp=%08Ix) retval=%08Ix\n",
                    proc, hwnd, SPY_GetMsgName(msg, hwnd), wp, lp, *result );
     return *result;
 }
@@ -157,7 +157,7 @@ static LRESULT call_dialog_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, LRES
     USER_CheckNotLock();
 
     hwnd = WIN_GetFullHandle( hwnd );
-    TRACE_(relay)( "\1Call dialog proc %p (hwnd=%p,msg=%s,wp=%08lx,lp=%08lx)\n",
+    TRACE_(relay)( "\1Call dialog proc %p (hwnd=%p,msg=%s,wp=%08Ix,lp=%08Ix)\n",
                    proc, hwnd, SPY_GetMsgName(msg, hwnd), wp, lp );
 
     context = SetThreadDpiAwarenessContext( GetWindowDpiAwarenessContext( hwnd ));
@@ -165,7 +165,7 @@ static LRESULT call_dialog_proc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp, LRES
     *result = GetWindowLongPtrW( hwnd, DWLP_MSGRESULT );
     SetThreadDpiAwarenessContext( context );
 
-    TRACE_(relay)( "\1Ret  dialog proc %p (hwnd=%p,msg=%s,wp=%08lx,lp=%08lx) retval=%08lx result=%08lx\n",
+    TRACE_(relay)( "\1Ret  dialog proc %p (hwnd=%p,msg=%s,wp=%08Ix,lp=%08Ix) retval=%08Ix result=%08Ix\n",
                    proc, hwnd, SPY_GetMsgName(msg, hwnd), wp, lp, ret, *result );
     return ret;
 }
@@ -212,7 +212,7 @@ LRESULT WINPROC_CallProcAtoW( winproc_callback_t callback, HWND hwnd, UINT msg, 
 {
     LRESULT ret = 0;
 
-    TRACE_(msg)("(hwnd=%p,msg=%s,wp=%08lx,lp=%08lx)\n",
+    TRACE_(msg)("(hwnd=%p,msg=%s,wp=%08Ix,lp=%08Ix)\n",
                 hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 
     switch(msg)
@@ -473,7 +473,7 @@ static LRESULT WINPROC_CallProcWtoA( winproc_callback_t callback, HWND hwnd, UIN
 {
     LRESULT ret = 0;
 
-    TRACE_(msg)("(hwnd=%p,msg=%s,wp=%08lx,lp=%08lx)\n",
+    TRACE_(msg)("(hwnd=%p,msg=%s,wp=%08Ix,lp=%08Ix)\n",
                 hwnd, SPY_GetMsgName(msg, hwnd), wParam, lParam);
 
     switch(msg)

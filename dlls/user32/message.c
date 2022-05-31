@@ -393,13 +393,13 @@ BOOL post_dde_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DWORD 
                 ptr = &hpack;
                 size = sizeof(hpack);
                 lp = uiLo;
-                TRACE( "send dde-ack %lx %08lx => %p\n", uiLo, uiHi, h );
+                TRACE( "send dde-ack %Ix %08Ix => %p\n", uiLo, uiHi, h );
             }
         }
         else
         {
             /* uiHi should contain either an atom or 0 */
-            TRACE( "send dde-ack %lx atom=%lx\n", uiLo, uiHi );
+            TRACE( "send dde-ack %Ix atom=%Ix\n", uiLo, uiHi );
             lp = MAKELONG( uiLo, uiHi );
         }
         break;
@@ -428,7 +428,7 @@ BOOL post_dde_message( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DWORD 
                 hunlock = (HGLOBAL)uiLo;
             }
         }
-        TRACE( "send ddepack %u %lx\n", size, uiHi );
+        TRACE( "send ddepack %u %Ix\n", size, uiHi );
         break;
     case WM_DDE_EXECUTE:
         if (lparam)
@@ -496,13 +496,13 @@ BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam
             memcpy( &hpack, *buffer, size );
             hMem = unpack_ptr( hpack );
             uiHi = (UINT_PTR)hMem;
-            TRACE("recv dde-ack %lx mem=%lx[%lx]\n", uiLo, uiHi, GlobalSize( hMem ));
+            TRACE("recv dde-ack %Ix mem=%Ix[%Ix]\n", uiLo, uiHi, GlobalSize( hMem ));
         }
         else
         {
             uiLo = LOWORD( *lparam );
             uiHi = HIWORD( *lparam );
-            TRACE("recv dde-ack %lx atom=%lx\n", uiLo, uiHi);
+            TRACE("recv dde-ack %Ix atom=%Ix\n", uiLo, uiHi);
         }
 	*lparam = PackDDElParam( WM_DDE_ACK, uiLo, uiHi );
 	break;
@@ -539,7 +539,7 @@ BOOL unpack_dde_message( HWND hwnd, UINT message, WPARAM *wparam, LPARAM *lparam
 	    {
 		memcpy( ptr, *buffer, size );
 		GlobalUnlock( hMem );
-                TRACE( "exec: pairing c=%08lx s=%p\n", *lparam, hMem );
+                TRACE( "exec: pairing c=%08Ix s=%p\n", *lparam, hMem );
                 if (!dde_add_pair( (HGLOBAL)*lparam, hMem ))
                 {
                     GlobalFree( hMem );
@@ -1153,7 +1153,7 @@ static BOOL CALLBACK bcast_winsta( LPWSTR winsta, LPARAM lp )
 {
     BOOL ret;
     HWINSTA hwinsta = OpenWindowStationW( winsta, FALSE, WINSTA_ENUMDESKTOPS );
-    TRACE("hwinsta: %p/%s/%08x\n", hwinsta, debugstr_w( winsta ), GetLastError());
+    TRACE("hwinsta: %p/%s/%08lx\n", hwinsta, debugstr_w( winsta ), GetLastError());
     if (!hwinsta)
         return TRUE;
     ((BroadcastParm *)lp)->winsta = hwinsta;
@@ -1203,7 +1203,7 @@ LONG WINAPI BroadcastSystemMessageExW( DWORD flags, LPDWORD recipients, UINT msg
                                    | BSF_POSTMESSAGE | BSF_FORCEIFHUNG | BSF_NOTIMEOUTIFNOTHUNG
                                    | BSF_ALLOWSFW | BSF_SENDNOTIFYMESSAGE | BSF_RETURNHDESK | BSF_LUID );
 
-    TRACE("Flags: %08x, recipients: %p(0x%x), msg: %04x, wparam: %08lx, lparam: %08lx\n", flags, recipients,
+    TRACE("Flags: %08lx, recipients: %p(0x%lx), msg: %04x, wparam: %08Ix, lparam: %08Ix\n", flags, recipients,
          (recipients ? *recipients : recips), msg, wp, lp);
 
     if (flags & ~all_flags)
@@ -1233,7 +1233,7 @@ LONG WINAPI BroadcastSystemMessageExW( DWORD flags, LPDWORD recipients, UINT msg
         ret = parm.success;
     }
     else
-        FIXME("Recipients %08x not supported!\n", *recipients);
+        FIXME("Recipients %08lx not supported!\n", *recipients);
 
     return ret;
 }
@@ -1318,7 +1318,7 @@ BOOL WINAPI IsHungAppWindow( HWND hWnd )
  */
 BOOL WINAPI ChangeWindowMessageFilter( UINT message, DWORD flag )
 {
-    FIXME( "%x %08x\n", message, flag );
+    FIXME( "%x %08lx\n", message, flag );
     return TRUE;
 }
 
@@ -1327,6 +1327,6 @@ BOOL WINAPI ChangeWindowMessageFilter( UINT message, DWORD flag )
  */
 BOOL WINAPI ChangeWindowMessageFilterEx( HWND hwnd, UINT message, DWORD action, CHANGEFILTERSTRUCT *changefilter )
 {
-    FIXME( "%p %x %d %p\n", hwnd, message, action, changefilter );
+    FIXME( "%p %x %ld %p\n", hwnd, message, action, changefilter );
     return TRUE;
 }

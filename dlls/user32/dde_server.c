@@ -67,7 +67,7 @@ BOOL WINAPI DdePostAdvise(DWORD idInst, HSZ hszTopic, HSZ hszItem)
     ATOM		atom;
     UINT		count;
 
-    TRACE("(%d,%p,%p)\n", idInst, hszTopic, hszItem);
+    TRACE("(%ld,%p,%p)\n", idInst, hszTopic, hszItem);
 
     pInstance = WDML_GetInstance(idInst);
 
@@ -169,7 +169,7 @@ HDDEDATA WINAPI DdeNameService(DWORD idInst, HSZ hsz1, HSZ hsz2, UINT afCmd)
     HWND 		hwndServer;
     WNDCLASSEXW  	wndclass;
 
-    TRACE("(%d,%p,%p,%x)\n", idInst, hsz1, hsz2, afCmd);
+    TRACE("(%ld,%p,%p,%x)\n", idInst, hsz1, hsz2, afCmd);
 
     /*  First check instance
      */
@@ -237,7 +237,7 @@ HDDEDATA WINAPI DdeNameService(DWORD idInst, HSZ hsz1, HSZ hsz2, UINT afCmd)
 	hwndServer = CreateWindowW(L"WineDdeServerName", NULL, WS_POPUP, 0, 0, 0, 0, 0, 0, 0, 0);
 	SetWindowLongPtrW(hwndServer, GWL_WDML_INSTANCE, (ULONG_PTR)pInstance);
 	SetWindowLongPtrW(hwndServer, GWL_WDML_SERVER, (ULONG_PTR)pServer);
-	TRACE("Created nameServer=%p for instance=%08x\n", hwndServer, idInst);
+	TRACE("Created nameServer=%p for instance=%08lx\n", hwndServer, idInst);
 
 	pServer->hwndServer = hwndServer;
 	break;
@@ -338,7 +338,7 @@ static WDML_CONV* WDML_CreateServerConv(WDML_INSTANCE* pInstance, HWND hwndClien
                                       hwndServerName, 0, 0, 0);
     }
 
-    TRACE("Created convServer=%p (nameServer=%p) for instance=%08x unicode=%d\n",
+    TRACE("Created convServer=%p (nameServer=%p) for instance=%08lx unicode=%d\n",
 	  hwndServerConv, hwndServerName, pInstance->instanceID, pInstance->unicode);
 
     pConv = WDML_AddConv(pInstance, WDML_SERVER_SIDE, hszApp, hszTopic,
@@ -391,7 +391,7 @@ static LRESULT CALLBACK WDML_ServerNameProc(HWND hwndServer, UINT iMsg, WPARAM w
 
 	pInstance = WDML_GetInstanceFromWnd(hwndServer);
 	if (!pInstance) return 0;
-	TRACE("idInst=%d, threadID=0x%x\n", pInstance->instanceID, GetCurrentThreadId());
+	TRACE("idInst=%ld, threadID=0x%lx\n", pInstance->instanceID, GetCurrentThreadId());
 
 	/* don't free DDEParams, since this is a broadcast */
 	UnpackDDElParam(WM_DDE_INITIATE, lParam, &uiLo, &uiHi);
@@ -1027,7 +1027,7 @@ static LRESULT CALLBACK WDML_ServerConvProc(HWND hwndServer, UINT iMsg, WPARAM w
     WDML_CONV*		pConv;
     WDML_XACT*		pXAct = NULL;
 
-    TRACE("%p %04x %08lx %08lx\n", hwndServer, iMsg, wParam, lParam);
+    TRACE("%p %04x %08Ix %08Ix\n", hwndServer, iMsg, wParam, lParam);
 
     if (iMsg == WM_DESTROY)
     {

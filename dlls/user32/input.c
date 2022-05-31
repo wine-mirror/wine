@@ -578,7 +578,7 @@ HDEVNOTIFY WINAPI RegisterDeviceNotificationW( HANDLE handle, void *filter, DWOR
     struct device_notification_details details;
     DEV_BROADCAST_HDR *header = filter;
 
-    TRACE("handle %p, filter %p, flags %#x\n", handle, filter, flags);
+    TRACE("handle %p, filter %p, flags %#lx\n", handle, filter, flags);
 
     if (flags & ~(DEVICE_NOTIFY_SERVICE_HANDLE | DEVICE_NOTIFY_ALL_INTERFACE_CLASSES))
     {

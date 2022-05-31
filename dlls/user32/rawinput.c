@@ -107,14 +107,14 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
     SetupDiGetDeviceInterfaceDetailW(set, iface, NULL, 0, &size, &device_data);
     if (GetLastError() != ERROR_INSUFFICIENT_BUFFER)
     {
-        ERR("Failed to get device path, error %#x.\n", GetLastError());
+        ERR("Failed to get device path, error %#lx.\n", GetLastError());
         return FALSE;
     }
 
     if (!SetupDiGetDevicePropertyW(set, &device_data, &DEVPROPKEY_HID_HANDLE, &type, (BYTE *)&handle, sizeof(handle), NULL, 0) ||
         type != DEVPROP_TYPE_UINT32)
     {
-        ERR("Failed to get device handle, error %#x.\n", GetLastError());
+        ERR("Failed to get device handle, error %#lx.\n", GetLastError());
         return NULL;
     }
 
@@ -133,7 +133,7 @@ static struct device *add_device(HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface)
             FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0);
     if (file == INVALID_HANDLE_VALUE)
     {
-        ERR("Failed to open device file %s, error %u.\n", debugstr_w(detail->DevicePath), GetLastError());
+        ERR("Failed to open device file %s, error %lu.\n", debugstr_w(detail->DevicePath), GetLastError());
         free(detail);
         return NULL;
     }
@@ -506,11 +506,11 @@ BOOL WINAPI DECLSPEC_HOTPATCH RegisterRawInputDevices(const RAWINPUTDEVICE *devi
 
     for (i = 0; i < device_count; ++i)
     {
-        TRACE("device %u: page %#x, usage %#x, flags %#x, target %p.\n",
+        TRACE("device %u: page %#x, usage %#x, flags %#lx, target %p.\n",
                 i, devices[i].usUsagePage, devices[i].usUsage,
                 devices[i].dwFlags, devices[i].hwndTarget);
         if (devices[i].dwFlags & ~(RIDEV_REMOVE|RIDEV_NOLEGACY|RIDEV_INPUTSINK|RIDEV_DEVNOTIFY))
-            FIXME("Unhandled flags %#x for device %u.\n", devices[i].dwFlags, i);
+            FIXME("Unhandled flags %#lx for device %u.\n", devices[i].dwFlags, i);
 
         d[i].usage_page = devices[i].usUsagePage;
         d[i].usage = devices[i].usUsage;

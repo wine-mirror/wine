@@ -2688,7 +2688,7 @@ LRESULT ListBoxWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
     }
     if (descr->style & LBS_COMBOBOX) lphc = descr->lphc;
 
-    TRACE("[%p]: msg %s wp %08lx lp %08lx\n",
+    TRACE("[%p]: msg %s wp %08Ix lp %08Ix\n",
           descr->self, SPY_GetMsgName(msg, descr->self), wParam, lParam );
 
     switch(msg)
@@ -3257,7 +3257,7 @@ LRESULT ListBoxWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
     default:
         if ((msg >= WM_USER) && (msg < 0xc000))
-            WARN("[%p]: unknown msg %04x wp %08lx lp %08lx\n",
+            WARN("[%p]: unknown msg %04x wp %08Ix lp %08Ix\n",
                  hwnd, msg, wParam, lParam );
     }
 

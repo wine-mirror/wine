@@ -404,7 +404,7 @@ BOOL WINAPI SetUserObjectInformationA( HANDLE handle, INT index, LPVOID info, DW
 BOOL WINAPI GetUserObjectSecurity( HANDLE handle, PSECURITY_INFORMATION info,
                                    PSECURITY_DESCRIPTOR sid, DWORD len, LPDWORD needed )
 {
-    FIXME( "(%p %p %p len=%d %p),stub!\n", handle, info, sid, len, needed );
+    FIXME( "(%p %p %p len=%ld %p),stub!\n", handle, info, sid, len, needed );
     if (needed)
         *needed = sizeof(SECURITY_DESCRIPTOR);
     if (len < sizeof(SECURITY_DESCRIPTOR))

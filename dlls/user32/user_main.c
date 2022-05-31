@@ -93,7 +93,7 @@ static void dpiaware_init(void)
     if (!LdrQueryImageFileExecutionOptions( &NtCurrentTeb()->Peb->ProcessParameters->ImagePathName,
                                             L"dpiAwareness", REG_DWORD, &option, sizeof(option), NULL ))
     {
-        TRACE( "got option %x\n", option );
+        TRACE( "got option %lx\n", option );
         if (option <= 2)
         {
             SetProcessDpiAwarenessContext( (DPI_AWARENESS_CONTEXT)~(ULONG_PTR)option );
@@ -348,7 +348,7 @@ BOOL WINAPI LockWorkStation(void)
  */
 int WINAPI RegisterServicesProcess(DWORD ServicesProcessId)
 {
-    FIXME("(0x%x): stub\n", ServicesProcessId);
+    FIXME("(0x%lx): stub\n", ServicesProcessId);
     return 0;
 }
 

@@ -313,7 +313,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH AdjustWindowRectEx( LPRECT rect, DWORD style, BOOL
 {
     NONCLIENTMETRICSW ncm;
 
-    TRACE("(%s) %08x %d %08x\n", wine_dbgstr_rect(rect), style, menu, exStyle );
+    TRACE("(%s) %08lx %d %08lx\n", wine_dbgstr_rect(rect), style, menu, exStyle );
 
     ncm.cbSize = sizeof(ncm);
     SystemParametersInfoW( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0 );
@@ -331,7 +331,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH AdjustWindowRectExForDpi( LPRECT rect, DWORD style
 {
     NONCLIENTMETRICSW ncm;
 
-    TRACE("(%s) %08x %d %08x %u\n", wine_dbgstr_rect(rect), style, menu, exStyle, dpi );
+    TRACE("(%s) %08lx %d %08lx %u\n", wine_dbgstr_rect(rect), style, menu, exStyle, dpi );
 
     ncm.cbSize = sizeof(ncm);
     SystemParametersInfoForDpi( SPI_GETNONCLIENTMETRICS, 0, &ncm, 0, dpi );
@@ -366,7 +366,7 @@ void NC_HandleNCCalcSize( HWND hwnd, WPARAM wparam, RECT *winRect )
 
         if (((style & (WS_CHILD | WS_POPUP)) != WS_CHILD) && GetMenu(hwnd))
         {
-            TRACE("Calling GetMenuBarHeight with hwnd %p, width %d, at (%d, %d).\n",
+            TRACE("Calling GetMenuBarHeight with hwnd %p, width %ld, at (%ld, %ld).\n",
                   hwnd, winRect->right - winRect->left, -tmpRect.left, -tmpRect.top );
 
             winRect->top +=
@@ -458,7 +458,7 @@ LRESULT NC_HandleNCHitTest( HWND hwnd, POINT pt )
     RECT rect, rcClient;
     DWORD style, ex_style;
 
-    TRACE("hwnd=%p pt=%d,%d\n", hwnd, pt.x, pt.y );
+    TRACE("hwnd=%p pt=%ld,%ld\n", hwnd, pt.x, pt.y );
 
     WIN_GetRectangles( hwnd, COORDS_SCREEN, &rect, &rcClient );
     if (!PtInRect( &rect, pt )) return HTNOWHERE;
@@ -634,7 +634,7 @@ LRESULT NC_HandleNCMouseMove(HWND hwnd, WPARAM wParam, LPARAM lParam)
     RECT rect;
     POINT pt;
 
-    TRACE("hwnd=%p wparam=%#lx lparam=%#lx\n", hwnd, wParam, lParam);
+    TRACE("hwnd=%p wparam=%#Ix lparam=%#Ix\n", hwnd, wParam, lParam);
 
     if (wParam != HTHSCROLL && wParam != HTVSCROLL)
         return 0;
@@ -1538,7 +1538,7 @@ LRESULT NC_HandleNCLButtonDblClk( HWND hwnd, WPARAM wParam, LPARAM lParam )
  */
 LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
-    TRACE("hwnd %p WM_SYSCOMMAND %lx %lx\n", hwnd, wParam, lParam );
+    TRACE("hwnd %p WM_SYSCOMMAND %Ix %Ix\n", hwnd, wParam, lParam );
 
     if (!NtUserMessageCall( hwnd, WM_SYSCOMMAND, wParam, lParam, 0, NtUserDefWindowProc, FALSE ))
         return 0;
@@ -1602,7 +1602,7 @@ LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
     case SC_ARRANGE:
     case SC_NEXTWINDOW:
     case SC_PREVWINDOW:
-        FIXME("unimplemented WM_SYSCOMMAND %04lx!\n", wParam);
+        FIXME("unimplemented WM_SYSCOMMAND %04Ix!\n", wParam);
         break;
     }
     return 0;
@@ -1624,7 +1624,7 @@ BOOL WINAPI GetTitleBarInfo(HWND hwnd, PTITLEBARINFO tbi) {
     }
 
     if(tbi->cbSize != sizeof(TITLEBARINFO)) {
-        TRACE("Invalid TITLEBARINFO size: %d\n", tbi->cbSize);
+        TRACE("Invalid TITLEBARINFO size: %ld\n", tbi->cbSize);
         SetLastError(ERROR_INVALID_PARAMETER);
         return FALSE;
     }

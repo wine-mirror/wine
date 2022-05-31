@@ -231,7 +231,7 @@ static int DIB_GetBitmapInfo( const BITMAPINFOHEADER *header, LONG *width,
         *compr  = header->biCompression;
         return 1;
     }
-    WARN("unknown/wrong size (%u) for header\n", header->biSize);
+    WARN("unknown/wrong size (%lu) for header\n", header->biSize);
     return -1;
 }
 
@@ -805,12 +805,12 @@ static BOOL create_icon_frame( const BITMAPINFO *bmi, DWORD maxsize, POINT hotsp
 
     if (maxsize < sizeof(BITMAPCOREHEADER))
     {
-        WARN( "invalid size %u\n", maxsize );
+        WARN( "invalid size %lu\n", maxsize );
         return FALSE;
     }
     if (maxsize < bmi->bmiHeader.biSize)
     {
-        WARN( "invalid header size %u\n", bmi->bmiHeader.biSize );
+        WARN( "invalid header size %lu\n", bmi->bmiHeader.biSize );
         return FALSE;
     }
     if ( (bmi->bmiHeader.biSize != sizeof(BITMAPCOREHEADER)) &&
@@ -818,7 +818,7 @@ static BOOL create_icon_frame( const BITMAPINFO *bmi, DWORD maxsize, POINT hotsp
          (bmi->bmiHeader.biCompression != BI_RGB &&
           bmi->bmiHeader.biCompression != BI_BITFIELDS)) )
     {
-        WARN( "invalid bitmap header %u\n", bmi->bmiHeader.biSize );
+        WARN( "invalid bitmap header %lu\n", bmi->bmiHeader.biSize );
         return FALSE;
     }
 
@@ -829,7 +829,7 @@ static BOOL create_icon_frame( const BITMAPINFO *bmi, DWORD maxsize, POINT hotsp
     mask_size = get_dib_image_size( bmi_width, bmi_height / 2, 1 );
     if (size > maxsize || color_size > maxsize - size)
     {
-        WARN( "truncated file %u < %u+%u+%u\n", maxsize, size, color_size, mask_size );
+        WARN( "truncated file %lu < %lu+%lu+%lu\n", maxsize, size, color_size, mask_size );
         return 0;
     }
     if (mask_size > maxsize - size - color_size) mask_size = 0;  /* no mask */
@@ -1043,15 +1043,15 @@ typedef struct {
 
 static void dump_ani_header( const ani_header *header )
 {
-    TRACE("     header size: %d\n", header->header_size);
-    TRACE("          frames: %d\n", header->num_frames);
-    TRACE("           steps: %d\n", header->num_steps);
-    TRACE("           width: %d\n", header->width);
-    TRACE("          height: %d\n", header->height);
-    TRACE("             bpp: %d\n", header->bpp);
-    TRACE("          planes: %d\n", header->num_planes);
-    TRACE("    display rate: %d\n", header->display_rate);
-    TRACE("           flags: 0x%08x\n", header->flags);
+    TRACE("     header size: %ld\n", header->header_size);
+    TRACE("          frames: %ld\n", header->num_frames);
+    TRACE("           steps: %ld\n", header->num_steps);
+    TRACE("           width: %ld\n", header->width);
+    TRACE("          height: %ld\n", header->height);
+    TRACE("             bpp: %ld\n", header->bpp);
+    TRACE("          planes: %ld\n", header->num_planes);
+    TRACE("    display rate: %ld\n", header->display_rate);
+    TRACE("           flags: 0x%08lx\n", header->flags);
 }
 
 
@@ -1133,7 +1133,7 @@ static HCURSOR CURSORICON_CreateIconFromANI( const BYTE *bits, DWORD bits_size, 
     const unsigned char *icon_chunk;
     const unsigned char *icon_data;
 
-    TRACE("bits %p, bits_size %d\n", bits, bits_size);
+    TRACE("bits %p, bits_size %ld\n", bits, bits_size);
 
     riff_find_chunk( ANI_ACON_ID, ANI_RIFF_ID, &root_chunk, &ACON_chunk );
     if (!ACON_chunk.data)
@@ -1266,7 +1266,7 @@ HICON WINAPI CreateIconFromResourceEx( LPBYTE bits, UINT cbSize,
     POINT hotspot;
     const BITMAPINFO *bmi;
 
-    TRACE_(cursor)("%p (%u bytes), ver %08x, %ix%i %s %s\n",
+    TRACE_(cursor)("%p (%u bytes), ver %08lx, %ix%i %s %s\n",
                    bits, cbSize, dwVersion, width, height,
                    bIcon ? "icon" : "cursor", (cFlag & LR_MONOCHROME) ? "mono" : "" );
 
@@ -1619,7 +1619,7 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetClipCursor( RECT *rect )
  */
 BOOL WINAPI SetSystemCursor(HCURSOR hcur, DWORD id)
 {
-    FIXME("(%p,%08x),stub!\n",  hcur, id);
+    FIXME("(%p,%08lx),stub!\n", hcur, id);
     return TRUE;
 }
 
@@ -1857,7 +1857,7 @@ HICON WINAPI CreateIconIndirect(PICONINFO iconinfo)
     HICON ret;
     HDC hdc;
 
-    TRACE("color %p, mask %p, hotspot %ux%u, fIcon %d\n",
+    TRACE("color %p, mask %p, hotspot %lux%lu, fIcon %d\n",
            iconinfo->hbmColor, iconinfo->hbmMask,
            iconinfo->xHotspot, iconinfo->yHotspot, iconinfo->fIcon);
 

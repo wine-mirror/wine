@@ -146,7 +146,7 @@ static UINT WM_MSIME_DOCUMENTFEED;
 WORD WINAPI UserSignalProc( UINT uCode, DWORD dwThreadOrProcessID,
                             DWORD dwFlags, HMODULE16 hModule )
 {
-    FIXME("(%04x, %08x, %04x, %04x)\n",
+    FIXME("(%04x, %08lx, %04lx, %04x)\n",
           uCode, dwThreadOrProcessID, dwFlags, hModule );
     /* FIXME: Should chain to GdiSignalProc now. */
     return 0;
@@ -165,7 +165,7 @@ void WINAPI SetLastErrorEx(
     DWORD error, /* [in] Per-thread error code */
     DWORD type)  /* [in] Error type */
 {
-    TRACE("(0x%08x, 0x%08x)\n", error,type);
+    TRACE("(0x%08lx, 0x%08lx)\n", error,type);
     switch(type) {
         case 0:
             break;
@@ -174,7 +174,7 @@ void WINAPI SetLastErrorEx(
         case SLE_WARNING:
             /* Fall through for now */
         default:
-            FIXME("(error=%08x, type=%08x): Unhandled type\n", error,type);
+            FIXME("(error=%08lx, type=%08lx): Unhandled type\n", error,type);
             break;
     }
     SetLastError( error );
@@ -210,7 +210,7 @@ BOOL WINAPI GetAltTabInfoW(HWND hwnd, int iItem, PALTTABINFO pati, LPWSTR pszIte
  */
 VOID WINAPI SetDebugErrorLevel( DWORD dwLevel )
 {
-    FIXME("(%d): stub\n", dwLevel);
+    FIXME("(%ld): stub\n", dwLevel);
 }
 
 
@@ -219,7 +219,7 @@ VOID WINAPI SetDebugErrorLevel( DWORD dwLevel )
  */
 DWORD WINAPI SetWindowStationUser(DWORD x1,DWORD x2)
 {
-    FIXME("(0x%08x,0x%08x),stub!\n",x1,x2);
+    FIXME("(0x%08lx,0x%08lx),stub!\n",x1,x2);
     return 1;
 }
 
@@ -246,7 +246,7 @@ DWORD WINAPI SetLogonNotifyWindow(HWINSTA hwinsta,HWND hwnd)
  */
 void WINAPI RegisterSystemThread(DWORD flags, DWORD reserved)
 {
-    FIXME("(%08x, %08x)\n", flags, reserved);
+    FIXME("(%08lx, %08lx)\n", flags, reserved);
 }
 
 /***********************************************************************
@@ -274,7 +274,7 @@ BOOL WINAPI DeregisterShellHookWindow(HWND hWnd)
  */
 DWORD WINAPI RegisterTasklist (DWORD x)
 {
-    FIXME("0x%08x\n",x);
+    FIXME("0x%08lx\n",x);
     return TRUE;
 }
 
@@ -302,7 +302,7 @@ DWORD WINAPI GetAppCompatFlags2( HTASK hTask )
  */
 BOOL WINAPI AlignRects(LPRECT rect, DWORD b, DWORD c, DWORD d)
 {
-    FIXME("(%p, %d, %d, %d): stub\n", rect, b, c, d);
+    FIXME("(%p, %ld, %ld, %ld): stub\n", rect, b, c, d);
     if (rect)
         FIXME("rect: %s\n", wine_dbgstr_rect(rect));
     /* Calls OffsetRect */
@@ -327,7 +327,7 @@ BOOL WINAPI User32InitializeImmEntryTable(DWORD magic)
 {
     HMODULE imm32 = GetModuleHandleW(L"imm32.dll");
 
-    TRACE("(%x)\n", magic);
+    TRACE("(%lx)\n", magic);
 
     if (!imm32 || magic != IMM_INIT_MAGIC)
         return FALSE;
@@ -388,7 +388,7 @@ BOOL WINAPI WINNLSGetEnableStatus(HWND hwnd)
  */
 LRESULT WINAPI SendIMEMessageExA(HWND hwnd, LPARAM lparam)
 {
-  FIXME("(%p,%lx): stub\n", hwnd, lparam);
+  FIXME("(%p,%Ix): stub\n", hwnd, lparam);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return 0;
 }
@@ -399,7 +399,7 @@ LRESULT WINAPI SendIMEMessageExA(HWND hwnd, LPARAM lparam)
  */
 LRESULT WINAPI SendIMEMessageExW(HWND hwnd, LPARAM lparam)
 {
-  FIXME("(%p,%lx): stub\n", hwnd, lparam);
+  FIXME("(%p,%Ix): stub\n", hwnd, lparam);
   SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
   return 0;
 }
@@ -430,7 +430,7 @@ BOOL WINAPI UserHandleGrantAccess(HANDLE handle, HANDLE job, BOOL grant)
  */
 HPOWERNOTIFY WINAPI RegisterPowerSettingNotification(HANDLE recipient, const GUID *guid, DWORD flags)
 {
-    FIXME("(%p,%s,%x): stub\n", recipient, debugstr_guid(guid), flags);
+    FIXME("(%p,%s,%lx): stub\n", recipient, debugstr_guid(guid), flags);
     return (HPOWERNOTIFY)0xdeadbeef;
 }
 
@@ -448,7 +448,7 @@ BOOL WINAPI UnregisterPowerSettingNotification(HPOWERNOTIFY handle)
  */
 HPOWERNOTIFY WINAPI RegisterSuspendResumeNotification(HANDLE recipient, DWORD flags)
 {
-    FIXME("%p, %#x: stub.\n", recipient, flags);
+    FIXME("%p, %#lx: stub.\n", recipient, flags);
     return (HPOWERNOTIFY)0xdeadbeef;
 }
 
@@ -466,7 +466,7 @@ BOOL WINAPI UnregisterSuspendResumeNotification(HPOWERNOTIFY handle)
  */
 BOOL WINAPI GetGestureConfig( HWND hwnd, DWORD reserved, DWORD flags, UINT *count, GESTURECONFIG *config, UINT size )
 {
-    FIXME("(%p %08x %08x %p %p %u): stub\n", hwnd, reserved, flags, count, config, size);
+    FIXME("(%p %08lx %08lx %p %p %u): stub\n", hwnd, reserved, flags, count, config, size);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -476,7 +476,7 @@ BOOL WINAPI GetGestureConfig( HWND hwnd, DWORD reserved, DWORD flags, UINT *coun
  */
 BOOL WINAPI SetGestureConfig( HWND hwnd, DWORD reserved, UINT id, PGESTURECONFIG config, UINT size )
 {
-    FIXME("(%p %08x %u %p %u): stub\n", hwnd, reserved, id, config, size);
+    FIXME("(%p %08lx %u %p %u): stub\n", hwnd, reserved, id, config, size);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -530,7 +530,7 @@ BOOL WINAPI GetPointerDevices(UINT32 *device_count, POINTER_DEVICE_INFO *devices
  */
 BOOL WINAPI RegisterTouchHitTestingWindow(HWND hwnd, ULONG value)
 {
-    FIXME("(%p %d): stub\n", hwnd, value);
+    FIXME("(%p %ld): stub\n", hwnd, value);
     return TRUE;
 }
 
@@ -605,7 +605,7 @@ static LRESULT ime_internal_msg( WPARAM wParam, LPARAM lParam)
         ImmReleaseContext(hwnd, himc);
         break;
     default:
-        FIXME("wParam = %lx\n", wParam);
+        FIXME("wParam = %Ix\n", wParam);
         break;
     }
 

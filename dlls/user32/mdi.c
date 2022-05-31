@@ -717,7 +717,7 @@ static LONG MDICascade( HWND client, MDICLIENTINFO *ci )
             LONG posOptions = SWP_DRAWFRAME | SWP_NOACTIVATE | SWP_NOZORDER;
 
             MDI_CalcDefaultChildPos(client, n++, pos, delta, NULL);
-            TRACE("move %p to (%d,%d) size [%d,%d]\n",
+            TRACE("move %p to (%ld,%ld) size [%ld,%ld]\n",
                   win_array[i], pos[0].x, pos[0].y, pos[1].x, pos[1].y);
             style = GetWindowLongW(win_array[i], GWL_STYLE);
 
@@ -1032,7 +1032,7 @@ LRESULT MDIClientWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 {
     MDICLIENTINFO *ci;
 
-    TRACE("%p %04x (%s) %08lx %08lx\n", hwnd, message, SPY_GetMsgName(message, hwnd), wParam, lParam);
+    TRACE("%p %04x (%s) %08Ix %08Ix\n", hwnd, message, SPY_GetMsgName(message, hwnd), wParam, lParam);
 
     if (!(ci = get_client_info( hwnd )))
     {
@@ -1209,7 +1209,7 @@ LRESULT MDIClientWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
             pt.y = (short)HIWORD(lParam);
             child = ChildWindowFromPoint(hwnd, pt);
 
-            TRACE("notification from %p (%i,%i)\n",child,pt.x,pt.y);
+            TRACE("notification from %p (%li,%li)\n",child,pt.x,pt.y);
 
             if (child && child != hwnd && child != ci->hwndActiveChild)
                 NtUserSetWindowPos( child, 0,0,0,0,0, SWP_NOSIZE | SWP_NOMOVE );
@@ -1290,7 +1290,7 @@ LRESULT WINAPI DefFrameProcW( HWND hwnd, HWND hwndMDIClient,
 {
     MDICLIENTINFO *ci = get_client_info( hwndMDIClient );
 
-    TRACE("%p %p %04x (%s) %08lx %08lx\n", hwnd, hwndMDIClient, message, SPY_GetMsgName(message, hwnd), wParam, lParam);
+    TRACE("%p %p %04x (%s) %08Ix %08Ix\n", hwnd, hwndMDIClient, message, SPY_GetMsgName(message, hwnd), wParam, lParam);
 
     if (ci)
     {
@@ -1388,7 +1388,7 @@ LRESULT WINAPI DefMDIChildProcA( HWND hwnd, UINT message,
     HWND client = GetParent(hwnd);
     MDICLIENTINFO *ci = get_client_info( client );
 
-    TRACE("%p %04x (%s) %08lx %08lx\n", hwnd, message, SPY_GetMsgName(message, hwnd), wParam, lParam);
+    TRACE("%p %04x (%s) %08Ix %08Ix\n", hwnd, message, SPY_GetMsgName(message, hwnd), wParam, lParam);
 
     hwnd = WIN_GetFullHandle( hwnd );
     if (!ci) return DefWindowProcA( hwnd, message, wParam, lParam );
@@ -1428,7 +1428,7 @@ LRESULT WINAPI DefMDIChildProcW( HWND hwnd, UINT message,
     HWND client = GetParent(hwnd);
     MDICLIENTINFO *ci = get_client_info( client );
 
-    TRACE("%p %04x (%s) %08lx %08lx\n", hwnd, message, SPY_GetMsgName(message, hwnd), wParam, lParam);
+    TRACE("%p %04x (%s) %08Ix %08Ix\n", hwnd, message, SPY_GetMsgName(message, hwnd), wParam, lParam);
 
     hwnd = WIN_GetFullHandle( hwnd );
     if (!ci) return DefWindowProcW( hwnd, message, wParam, lParam );
@@ -1598,7 +1598,7 @@ HWND WINAPI CreateMDIWindowA(
     HINSTANCE hInstance, /* [in] Handle to application instance */
     LPARAM lParam)         /* [in] Application-defined value */
 {
-    TRACE("(%s,%s,%08x,%d,%d,%d,%d,%p,%p,%08lx)\n",
+    TRACE("(%s,%s,%08lx,%d,%d,%d,%d,%p,%p,%08Ix)\n",
           debugstr_a(lpClassName),debugstr_a(lpWindowName),dwStyle,X,Y,
           nWidth,nHeight,hWndParent,hInstance,lParam);
 
@@ -1626,7 +1626,7 @@ HWND WINAPI CreateMDIWindowW(
     HINSTANCE hInstance, /* [in] Handle to application instance */
     LPARAM lParam)         /* [in] Application-defined value */
 {
-    TRACE("(%s,%s,%08x,%d,%d,%d,%d,%p,%p,%08lx)\n",
+    TRACE("(%s,%s,%08lx,%d,%d,%d,%d,%p,%p,%08Ix)\n",
           debugstr_w(lpClassName), debugstr_w(lpWindowName), dwStyle, X, Y,
           nWidth, nHeight, hWndParent, hInstance, lParam);
 
@@ -1668,7 +1668,7 @@ BOOL WINAPI TranslateMDISysAccel( HWND hwndClient, LPMSG msg )
             default:
                 return FALSE;
             }
-            TRACE("wParam = %04lx\n", wParam);
+            TRACE("wParam = %04Ix\n", wParam);
             SendMessageW(ci->hwndActiveChild, WM_SYSCOMMAND, wParam, msg->wParam);
             return TRUE;
         }

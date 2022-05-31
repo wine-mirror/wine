@@ -289,14 +289,14 @@ static LRESULT call_hook_proc( HOOKPROC proc, INT id, INT code, WPARAM wparam, L
 {
     LRESULT ret;
 
-    TRACE_(relay)( "\1Call hook proc %p (id=%s,code=%x,wp=%08lx,lp=%08lx)\n",
+    TRACE_(relay)( "\1Call hook proc %p (id=%s,code=%x,wp=%08Ix,lp=%08Ix)\n",
                    proc, hook_names[id-WH_MINHOOK], code, wparam, lparam );
 
     if (!prev_unicode == !next_unicode) ret = proc( code, wparam, lparam );
     else if (prev_unicode) ret = call_hook_WtoA( proc, id, code, wparam, lparam );
     else ret = call_hook_AtoW( proc, id, code, wparam, lparam );
 
-    TRACE_(relay)( "\1Ret  hook proc %p (id=%s,code=%x,wp=%08lx,lp=%08lx) retval=%08lx\n",
+    TRACE_(relay)( "\1Ret  hook proc %p (id=%s,code=%x,wp=%08Ix,lp=%08Ix) retval=%08Ix\n",
                    proc, hook_names[id-WH_MINHOOK], code, wparam, lparam, ret );
 
     return ret;
@@ -409,7 +409,7 @@ HWINEVENTHOOK WINAPI SetWinEventHook(DWORD event_min, DWORD event_max,
     UNICODE_STRING str;
     DWORD len = 0;
 
-    TRACE("%d,%d,%p,%p,%08x,%04x,%08x\n", event_min, event_max, inst,
+    TRACE("%ld,%ld,%p,%p,%08lx,%04lx,%08lx\n", event_min, event_max, inst,
           proc, pid, tid, flags);
 
     if (inst && (!(len = GetModuleFileNameW( inst, module, MAX_PATH )) || len >= MAX_PATH))
@@ -429,14 +429,14 @@ BOOL WINAPI User32CallWinEventHook( const struct win_event_hook_params *params, 
 
     if (params->module[0] && !(proc = get_hook_proc( proc, params->module, &free_module ))) return FALSE;
 
-    TRACE_(relay)( "\1Call winevent hook proc %p (hhook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%x,tid=%04x,time=%x)\n",
+    TRACE_(relay)( "\1Call winevent hook proc %p (hhook=%p,event=%lx,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04lx,time=%lx)\n",
                    proc, params->handle, params->event, params->hwnd, params->object_id,
                    params->child_id, params->tid, params->time );
 
     proc( params->handle, params->event, params->hwnd, params->object_id, params->child_id,
           params->tid, params->time );
 
-    TRACE_(relay)( "\1Ret  winevent hook proc %p (hhook=%p,event=%x,hwnd=%p,object_id=%x,child_id=%x,tid=%04x,time=%x)\n",
+    TRACE_(relay)( "\1Ret  winevent hook proc %p (hhook=%p,event=%lx,hwnd=%p,object_id=%lx,child_id=%lx,tid=%04lx,time=%lx)\n",
                    proc, params->handle, params->event, params->hwnd, params->object_id,
                    params->child_id, params->tid, params->time );
 
@@ -477,7 +477,7 @@ BOOL WINAPI User32CallWindowsHook( const struct win_hook_params *params, ULONG s
 BOOL WINAPI IsWinEventHookInstalled(DWORD dwEvent)
 {
     /* FIXME: Needed by Office 2007 installer */
-    WARN("(%d)-stub!\n", dwEvent);
+    WARN("(%ld)-stub!\n", dwEvent);
     return TRUE;
 }
 

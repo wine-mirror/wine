@@ -447,7 +447,7 @@ INT WINAPI MessageBoxExW( HWND hWnd, LPCWSTR text, LPCWSTR title,
 INT WINAPI MessageBoxTimeoutA( HWND hWnd, LPCSTR text, LPCSTR title,
                                UINT type, WORD langid, DWORD timeout )
 {
-    FIXME("timeout not supported (%u)\n", timeout);
+    FIXME("timeout not supported (%lu)\n", timeout);
     return MessageBoxExA( hWnd, text, title, type, langid );
 }
 
@@ -457,7 +457,7 @@ INT WINAPI MessageBoxTimeoutA( HWND hWnd, LPCSTR text, LPCSTR title,
 INT WINAPI MessageBoxTimeoutW( HWND hWnd, LPCWSTR text, LPCWSTR title,
                                UINT type, WORD langid, DWORD timeout )
 {
-    FIXME("timeout not supported (%u)\n", timeout);
+    FIXME("timeout not supported (%lu)\n", timeout);
     return MessageBoxExW( hWnd, text, title, type, langid );
 }
 

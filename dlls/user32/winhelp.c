@@ -149,7 +149,7 @@ BOOL WINAPI WinHelpA( HWND hWnd, LPCSTR lpHelpFile, UINT wCommand, ULONG_PTR dwD
         lpwh->ofsData = sizeof(WINHELP) + nlen;
     } else
         lpwh->ofsData = 0;
-    TRACE("Sending[%u]: cmd=%u data=%08x fn=%s\n",
+    TRACE("Sending[%u]: cmd=%u data=%08lx fn=%s\n",
           lpwh->size, lpwh->command, lpwh->data,
           lpwh->ofsFilename ? (LPSTR)lpwh + lpwh->ofsFilename : "");
 

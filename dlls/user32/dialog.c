@@ -177,7 +177,7 @@ static const WORD *DIALOG_GetControl32( const WORD *p, DLG_CONTROL_INFO *info,
         p += lstrlenW( info->windowName ) + 1;
     }
 
-    TRACE("    %s %s %ld, %d, %d, %d, %d, %08x, %08x, %08x\n",
+    TRACE("    %s %s %Id, %d, %d, %d, %d, %08lx, %08lx, %08lx\n",
           debugstr_w( info->className ), debugstr_w( info->windowName ),
           info->id, info->x, info->y, info->cx, info->cy,
           info->style, info->exStyle, info->helpId );
@@ -335,11 +335,11 @@ static LPCSTR DIALOG_ParseTemplate32( LPCSTR template, DLG_TEMPLATE * result )
     result->y       = GET_WORD(p); p++;
     result->cx      = GET_WORD(p); p++;
     result->cy      = GET_WORD(p); p++;
-    TRACE("DIALOG%s %d, %d, %d, %d, %d\n",
+    TRACE("DIALOG%s %d, %d, %d, %d, %ld\n",
            result->dialogEx ? "EX" : "", result->x, result->y,
            result->cx, result->cy, result->helpId );
-    TRACE(" STYLE 0x%08x\n", result->style );
-    TRACE(" EXSTYLE 0x%08x\n", result->exStyle );
+    TRACE(" STYLE 0x%08lx\n", result->style );
+    TRACE(" EXSTYLE 0x%08lx\n", result->exStyle );
 
     /* Get the menu name */
 
@@ -909,7 +909,7 @@ BOOL WINAPI EndDialog( HWND hwnd, INT_PTR retval )
     DIALOGINFO * dlgInfo;
     HWND owner;
 
-    TRACE("%p %ld\n", hwnd, retval );
+    TRACE("%p %Id\n", hwnd, retval );
 
     if (!(dlgInfo = DIALOG_get_info( hwnd, FALSE )))
     {
@@ -1530,7 +1530,7 @@ DWORD WINAPI GetDialogBaseUnits(void)
             cx = GdiGetCharDimensions( hdc, NULL, &cy );
             NtUserReleaseDC( 0, hdc );
         }
-        TRACE( "base units = %d,%d\n", cx, cy );
+        TRACE( "base units = %ld,%ld\n", cx, cy );
     }
 
     return MAKELONG( MulDiv( cx, GetDpiForSystem(), USER_DEFAULT_SCREEN_DPI ),

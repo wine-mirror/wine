@@ -237,7 +237,7 @@ DWORD WINAPI GetGuiResources( HANDLE hProcess, DWORD uiFlags )
     static BOOL warn = TRUE;
 
     if (warn) {
-        FIXME("(%p,%x): stub\n",hProcess,uiFlags);
+        FIXME("(%p,%lx): stub\n",hProcess,uiFlags);
        warn = FALSE;
     }
 

@@ -297,13 +297,13 @@ static UINT ICO_ExtractIconExW(
 	CloseHandle(hFile);
 	if (!fmapping)
 	{
-          WARN("CreateFileMapping error %d\n", GetLastError() );
+          WARN("CreateFileMapping error %ld\n", GetLastError() );
 	  return 0xFFFFFFFF;
 	}
 
 	if (!(peimage = MapViewOfFile(fmapping, FILE_MAP_READ, 0, 0, 0)))
 	{
-          WARN("MapViewOfFile error %d\n", GetLastError() );
+          WARN("MapViewOfFile error %ld\n", GetLastError() );
 	  CloseHandle(fmapping);
 	  return 0xFFFFFFFF;
 	}
@@ -332,7 +332,7 @@ static UINT ICO_ExtractIconExW(
 	  LPicoICONDIR	lpiID = NULL;
 	  ULONG		uSize = 0;
 
-          TRACE("-- OS2/icon Signature (0x%08x)\n", sig);
+          TRACE("-- OS2/icon Signature (0x%08lx)\n", sig);
 
 	  if (pData == (BYTE*)-1)
 	  {
@@ -340,7 +340,7 @@ static UINT ICO_ExtractIconExW(
 	    if (pCIDir)
 	    {
 	      iconDirCount = 1; iconCount = lpiID->idCount;
-              TRACE("-- icon found %p 0x%08x 0x%08x 0x%08x\n", pCIDir, uSize, iconDirCount, iconCount);
+              TRACE("-- icon found %p 0x%08lx 0x%08x 0x%08x\n", pCIDir, uSize, iconDirCount, iconCount);
 	    }
 	  }
 	  else while (pTInfo->type_id && !(pIconStorage && pIconDir))

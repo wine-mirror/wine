@@ -516,7 +516,7 @@ void WINPOS_SysCommandSizeMove( HWND hwnd, WPARAM wParam )
     capturePoint = pt;
     NtUserClipCursor( NULL );
 
-    TRACE("hwnd %p command %04lx, hittest %d, pos %d,%d\n",
+    TRACE("hwnd %p command %04Ix, hittest %ld, pos %ld,%ld\n",
           hwnd, syscommand, hittest, pt.x, pt.y);
 
     if (syscommand == SC_MOVE)

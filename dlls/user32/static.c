@@ -344,7 +344,7 @@ LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
     case WM_CREATE:
         if (style < 0L || style > SS_TYPEMASK)
         {
-            ERR("Unknown style 0x%02x\n", style );
+            ERR("Unknown style 0x%02lx\n", style );
             return -1;
         }
         STATIC_InitColours();
@@ -527,7 +527,7 @@ LRESULT StaticWndProc_common( HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam
 	    lResult = (LRESULT)STATIC_SetIcon( hwnd, (HICON)lParam, full_style );
 	    break;
 	default:
-	    FIXME("STM_SETIMAGE: Unhandled type %lx\n", wParam);
+	    FIXME("STM_SETIMAGE: Unhandled type %Ix\n", wParam);
 	    break;
 	}
         STATIC_TryPaintFcn( hwnd, full_style );

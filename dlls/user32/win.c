@@ -458,7 +458,7 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
      WS_MINIMIZEBOX | \
      WS_MAXIMIZEBOX))
 
-    if(style & ~DUMPED_STYLES) TRACE(" %08x", style & ~DUMPED_STYLES);
+    if(style & ~DUMPED_STYLES) TRACE(" %08lx", style & ~DUMPED_STYLES);
     TRACE("\n");
 #undef DUMPED_STYLES
 
@@ -510,7 +510,7 @@ static void dump_window_styles( DWORD style, DWORD exstyle )
      WS_EX_COMPOSITED |\
      WS_EX_NOACTIVATE))
 
-    if(exstyle & ~DUMPED_EX_STYLES) TRACE(" %08x", exstyle & ~DUMPED_EX_STYLES);
+    if(exstyle & ~DUMPED_EX_STYLES) TRACE(" %08lx", exstyle & ~DUMPED_EX_STYLES);
     TRACE("\n");
 #undef DUMPED_EX_STYLES
 }
@@ -536,7 +536,7 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
 
     if (!get_class_info( module, className, &info, &class, FALSE )) return FALSE;
 
-    TRACE("%s %s%s%s ex=%08x style=%08x %d,%d %dx%d parent=%p menu=%p inst=%p params=%p\n",
+    TRACE("%s %s%s%s ex=%08lx style=%08lx %d,%d %dx%d parent=%p menu=%p inst=%p params=%p\n",
           unicode ? debugstr_w(cs->lpszName) : debugstr_a((LPCSTR)cs->lpszName),
           debugstr_w(className), class.Buffer != className ? "->" : "",
           class.Buffer != className ? debugstr_wn(class.Buffer, class.Length / sizeof(WCHAR)) : "",
@@ -1753,7 +1753,7 @@ LONG_PTR WINAPI SetWindowLongPtrA( HWND hwnd, INT offset, LONG_PTR newval )
  */
 BOOL WINAPI RegisterTouchWindow(HWND hwnd, ULONG flags)
 {
-    FIXME("(%p %08x): stub\n", hwnd, flags);
+    FIXME("(%p %08lx): stub\n", hwnd, flags);
     SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
     return FALSE;
 }
@@ -1820,7 +1820,7 @@ BOOL WINAPI GetWindowDisplayAffinity(HWND hwnd, DWORD *affinity)
  */
 BOOL WINAPI SetWindowDisplayAffinity(HWND hwnd, DWORD affinity)
 {
-    FIXME("(%p, %u): stub\n", hwnd, affinity);
+    FIXME("(%p, %lu): stub\n", hwnd, affinity);
 
     if (!hwnd)
     {

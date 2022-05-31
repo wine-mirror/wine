@@ -59,7 +59,7 @@ const WCHAR WDML_szClientConvClassW[] = L"WineDdeClientW";
 HCONVLIST WINAPI DdeConnectList(DWORD idInst, HSZ hszService, HSZ hszTopic,
 				HCONVLIST hConvList, PCONVCONTEXT pCC)
 {
-    FIXME("(%d,%p,%p,%p,%p): stub\n", idInst, hszService, hszTopic, hConvList, pCC);
+    FIXME("(%ld,%p,%p,%p,%p): stub\n", idInst, hszService, hszTopic, hConvList, pCC);
     return (HCONVLIST)1;
 }
 
@@ -100,7 +100,7 @@ HCONV WINAPI DdeConnect(DWORD idInst, HSZ hszService, HSZ hszTopic,
     WDML_CONV*		pConv;
     ATOM		aSrv = 0, aTpc = 0;
 
-    TRACE("(0x%x,%p,%p,%p)\n", idInst, hszService, hszTopic, pCC);
+    TRACE("(0x%lx,%p,%p,%p)\n", idInst, hszService, hszTopic, pCC);
 
     pInstance = WDML_GetInstance(idInst);
     if (!pInstance)
@@ -520,7 +520,7 @@ static WDML_QUEUE_STATE WDML_HandleRequestReply(WDML_CONV* pConv, MSG* msg, WDML
 
     case WM_DDE_DATA:
         UnpackDDElParam(WM_DDE_DATA, msg->lParam, &uiLo, &uiHi);
-	TRACE("Got the result (%08lx)\n", uiLo);
+	TRACE("Got the result (%08Ix)\n", uiLo);
 
 	hsz = WDML_MakeHszFromAtom(pConv->instance, uiHi);
 
@@ -1021,7 +1021,7 @@ static HDDEDATA WDML_SyncWaitTransactionReply(HCONV hConv, DWORD dwTimeout, cons
     DWORD	err;
     WDML_CONV*	pConv;
 
-    TRACE("Starting wait for a timeout of %d ms\n", dwTimeout);
+    TRACE("Starting wait for a timeout of %ld ms\n", dwTimeout);
 
     start = GetTickCount();
     while ((elapsed = GetTickCount() - start) < dwTimeout)
@@ -1104,7 +1104,7 @@ HDDEDATA WDML_ClientHandle(WDML_CONV *pConv, WDML_XACT *pXAct, DWORD dwTimeout, 
 
     if (!PostMessageW(pConv->hwndServer, pXAct->ddeMsg, (WPARAM)pConv->hwndClient, pXAct->lParam))
     {
-        WARN("Failed posting message %x to %p (error=0x%x)\n",
+        WARN("Failed posting message %x to %p (error=0x%lx)\n",
               pXAct->ddeMsg, pConv->hwndServer, GetLastError());
         pConv->wStatus &= ~ST_CONNECTED;
         pConv->instance->lastError = DMLERR_POSTMSG_FAILED;
@@ -1137,7 +1137,7 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
     WDML_XACT*		pXAct;
     HDDEDATA		hDdeData;
 
-    TRACE("(%p,%d,%p,%p,%x,%x,%d,%p)\n",
+    TRACE("(%p,%ld,%p,%p,%x,%x,%ld,%p)\n",
 	  pData, cbData, hConv, hszItem, wFmt, wType, dwTimeout, pdwResult);
 
     if (hConv == 0)
@@ -1211,7 +1211,7 @@ HDDEDATA WINAPI DdeClientTransaction(LPBYTE pData, DWORD cbData, HCONV hConv, HS
 
     WDML_QueueTransaction(pConv, pXAct);
 
-    TRACE("pConv->wStatus %04x\n", pConv->wStatus);
+    TRACE("pConv->wStatus %04lx\n", pConv->wStatus);
 
     if (pConv->wStatus & ST_BLOCKED)
     {
@@ -1293,7 +1293,7 @@ static LRESULT CALLBACK WDML_ClientProc(HWND hwnd, UINT iMsg, WPARAM wParam, LPA
     WDML_CONV*	pConv = NULL;
     HSZ		hszSrv, hszTpc;
 
-    TRACE("%p %04x %08lx %08lx\n", hwnd, iMsg, wParam , lParam);
+    TRACE("%p %04x %08Ix %08Ix\n", hwnd, iMsg, wParam, lParam);
 
     if (iMsg == WM_DDE_ACK &&
 	/* in the initial WM_INITIATE sendmessage */
