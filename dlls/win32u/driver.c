@@ -813,8 +813,11 @@ static NTSTATUS nulldrv_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *
 {
     if (!count && timeout && !timeout->QuadPart) return WAIT_TIMEOUT;
 
-    return NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
-                                     !!(flags & MWMO_ALERTABLE), timeout );
+    if (!user_callbacks)
+        return NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
+                                         !!(flags & MWMO_ALERTABLE), timeout );
+    return user_callbacks->pNtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
+                                                      !!(flags & MWMO_ALERTABLE), timeout );
 }
 
 static void nulldrv_ReleaseDC( HWND hwnd, HDC hdc )
