@@ -1462,8 +1462,10 @@ end:
 static HRESULT WINAPI d3drm_mesh_builder3_Load(IDirect3DRMMeshBuilder3 *iface, void *filename,
         void *name, D3DRMLOADOPTIONS loadflags, D3DRMLOADTEXTURE3CALLBACK cb, void *arg)
 {
+    static const DWORD supported_flags = D3DRMLOAD_FROMFILE | D3DRMLOAD_FROMRESOURCE
+            | D3DRMLOAD_FROMMEMORY | D3DRMLOAD_FROMSTREAM | D3DRMLOAD_FROMURL;
     struct d3drm_mesh_builder *mesh_builder = impl_from_IDirect3DRMMeshBuilder3(iface);
-    DXFILELOADOPTIONS load_options;
+    DXFILELOADOPTIONS load_options = loadflags & supported_flags;
     IDirectXFile *dxfile = NULL;
     IDirectXFileEnumObject *enum_object = NULL;
     IDirectXFileData *data = NULL;
@@ -1476,22 +1478,10 @@ static HRESULT WINAPI d3drm_mesh_builder3_Load(IDirect3DRMMeshBuilder3 *iface, v
     TRACE("iface %p, filename %p, name %p, loadflags %#lx, cb %p, arg %p.\n",
             iface, filename, name, loadflags, cb, arg);
 
-    clean_mesh_builder_data(mesh_builder);
+    if (loadflags & ~supported_flags)
+        FIXME("Ignoring flags %#lx.\n", loadflags & ~supported_flags);
 
-    if (loadflags == D3DRMLOAD_FROMMEMORY)
-    {
-        load_options = DXFILELOAD_FROMMEMORY;
-    }
-    else if (loadflags == D3DRMLOAD_FROMFILE)
-    {
-        load_options = DXFILELOAD_FROMFILE;
-        TRACE("Loading from file %s\n", debugstr_a(filename));
-    }
-    else
-    {
-        FIXME("Load options %ld not supported yet\n", loadflags);
-        return E_NOTIMPL;
-    }
+    clean_mesh_builder_data(mesh_builder);
 
     hr = DirectXFileCreate(&dxfile);
     if (hr != DXFILE_OK)
@@ -1503,7 +1493,10 @@ static HRESULT WINAPI d3drm_mesh_builder3_Load(IDirect3DRMMeshBuilder3 *iface, v
 
     hr = IDirectXFile_CreateEnumObject(dxfile, filename, load_options, &enum_object);
     if (hr != DXFILE_OK)
+    {
+        WARN("Failed to create object, load flags %#lx.\n", loadflags);
         goto end;
+    }
 
     hr = IDirectXFileEnumObject_GetNextDataObject(enum_object, &data);
     if (hr != DXFILE_OK)
