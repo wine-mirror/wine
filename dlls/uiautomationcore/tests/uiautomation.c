@@ -2703,12 +2703,218 @@ static void test_UiaProviderFromIAccessible(void)
     Accessible.ow_hwnd = NULL;
 }
 
+struct uia_lookup_id {
+    const GUID *guid;
+    int id;
+};
+
+static const struct uia_lookup_id uia_property_lookup_ids[] = {
+    { &RuntimeId_Property_GUID,                           UIA_RuntimeIdPropertyId },
+    { &BoundingRectangle_Property_GUID,                   UIA_BoundingRectanglePropertyId },
+    { &ProcessId_Property_GUID,                           UIA_ProcessIdPropertyId },
+    { &ControlType_Property_GUID,                         UIA_ControlTypePropertyId },
+    { &LocalizedControlType_Property_GUID,                UIA_LocalizedControlTypePropertyId },
+    { &Name_Property_GUID,                                UIA_NamePropertyId },
+    { &AcceleratorKey_Property_GUID,                      UIA_AcceleratorKeyPropertyId },
+    { &AccessKey_Property_GUID,                           UIA_AccessKeyPropertyId },
+    { &HasKeyboardFocus_Property_GUID,                    UIA_HasKeyboardFocusPropertyId },
+    { &IsKeyboardFocusable_Property_GUID,                 UIA_IsKeyboardFocusablePropertyId },
+    { &IsEnabled_Property_GUID,                           UIA_IsEnabledPropertyId },
+    { &AutomationId_Property_GUID,                        UIA_AutomationIdPropertyId },
+    { &ClassName_Property_GUID,                           UIA_ClassNamePropertyId },
+    { &HelpText_Property_GUID,                            UIA_HelpTextPropertyId },
+    { &ClickablePoint_Property_GUID,                      UIA_ClickablePointPropertyId },
+    { &Culture_Property_GUID,                             UIA_CulturePropertyId },
+    { &IsControlElement_Property_GUID,                    UIA_IsControlElementPropertyId },
+    { &IsContentElement_Property_GUID,                    UIA_IsContentElementPropertyId },
+    { &LabeledBy_Property_GUID,                           UIA_LabeledByPropertyId },
+    { &IsPassword_Property_GUID,                          UIA_IsPasswordPropertyId },
+    { &NewNativeWindowHandle_Property_GUID,               UIA_NativeWindowHandlePropertyId },
+    { &ItemType_Property_GUID,                            UIA_ItemTypePropertyId },
+    { &IsOffscreen_Property_GUID,                         UIA_IsOffscreenPropertyId },
+    { &Orientation_Property_GUID,                         UIA_OrientationPropertyId },
+    { &FrameworkId_Property_GUID,                         UIA_FrameworkIdPropertyId },
+    { &IsRequiredForForm_Property_GUID,                   UIA_IsRequiredForFormPropertyId },
+    { &ItemStatus_Property_GUID,                          UIA_ItemStatusPropertyId },
+    { &IsDockPatternAvailable_Property_GUID,              UIA_IsDockPatternAvailablePropertyId },
+    { &IsExpandCollapsePatternAvailable_Property_GUID,    UIA_IsExpandCollapsePatternAvailablePropertyId },
+    { &IsGridItemPatternAvailable_Property_GUID,          UIA_IsGridItemPatternAvailablePropertyId },
+    { &IsGridPatternAvailable_Property_GUID,              UIA_IsGridPatternAvailablePropertyId },
+    { &IsInvokePatternAvailable_Property_GUID,            UIA_IsInvokePatternAvailablePropertyId },
+    { &IsMultipleViewPatternAvailable_Property_GUID,      UIA_IsMultipleViewPatternAvailablePropertyId },
+    { &IsRangeValuePatternAvailable_Property_GUID,        UIA_IsRangeValuePatternAvailablePropertyId },
+    { &IsScrollPatternAvailable_Property_GUID,            UIA_IsScrollPatternAvailablePropertyId },
+    { &IsScrollItemPatternAvailable_Property_GUID,        UIA_IsScrollItemPatternAvailablePropertyId },
+    { &IsSelectionItemPatternAvailable_Property_GUID,     UIA_IsSelectionItemPatternAvailablePropertyId },
+    { &IsSelectionPatternAvailable_Property_GUID,         UIA_IsSelectionPatternAvailablePropertyId },
+    { &IsTablePatternAvailable_Property_GUID,             UIA_IsTablePatternAvailablePropertyId },
+    { &IsTableItemPatternAvailable_Property_GUID,         UIA_IsTableItemPatternAvailablePropertyId },
+    { &IsTextPatternAvailable_Property_GUID,              UIA_IsTextPatternAvailablePropertyId },
+    { &IsTogglePatternAvailable_Property_GUID,            UIA_IsTogglePatternAvailablePropertyId },
+    { &IsTransformPatternAvailable_Property_GUID,         UIA_IsTransformPatternAvailablePropertyId },
+    { &IsValuePatternAvailable_Property_GUID,             UIA_IsValuePatternAvailablePropertyId },
+    { &IsWindowPatternAvailable_Property_GUID,            UIA_IsWindowPatternAvailablePropertyId },
+    { &Value_Value_Property_GUID,                         UIA_ValueValuePropertyId },
+    { &Value_IsReadOnly_Property_GUID,                    UIA_ValueIsReadOnlyPropertyId },
+    { &RangeValue_Value_Property_GUID,                    UIA_RangeValueValuePropertyId },
+    { &RangeValue_IsReadOnly_Property_GUID,               UIA_RangeValueIsReadOnlyPropertyId },
+    { &RangeValue_Minimum_Property_GUID,                  UIA_RangeValueMinimumPropertyId },
+    { &RangeValue_Maximum_Property_GUID,                  UIA_RangeValueMaximumPropertyId },
+    { &RangeValue_LargeChange_Property_GUID,              UIA_RangeValueLargeChangePropertyId },
+    { &RangeValue_SmallChange_Property_GUID,              UIA_RangeValueSmallChangePropertyId },
+    { &Scroll_HorizontalScrollPercent_Property_GUID,      UIA_ScrollHorizontalScrollPercentPropertyId },
+    { &Scroll_HorizontalViewSize_Property_GUID,           UIA_ScrollHorizontalViewSizePropertyId },
+    { &Scroll_VerticalScrollPercent_Property_GUID,        UIA_ScrollVerticalScrollPercentPropertyId },
+    { &Scroll_VerticalViewSize_Property_GUID,             UIA_ScrollVerticalViewSizePropertyId },
+    { &Scroll_HorizontallyScrollable_Property_GUID,       UIA_ScrollHorizontallyScrollablePropertyId },
+    { &Scroll_VerticallyScrollable_Property_GUID,         UIA_ScrollVerticallyScrollablePropertyId },
+    { &Selection_Selection_Property_GUID,                 UIA_SelectionSelectionPropertyId },
+    { &Selection_CanSelectMultiple_Property_GUID,         UIA_SelectionCanSelectMultiplePropertyId },
+    { &Selection_IsSelectionRequired_Property_GUID,       UIA_SelectionIsSelectionRequiredPropertyId },
+    { &Grid_RowCount_Property_GUID,                       UIA_GridRowCountPropertyId },
+    { &Grid_ColumnCount_Property_GUID,                    UIA_GridColumnCountPropertyId },
+    { &GridItem_Row_Property_GUID,                        UIA_GridItemRowPropertyId },
+    { &GridItem_Column_Property_GUID,                     UIA_GridItemColumnPropertyId },
+    { &GridItem_RowSpan_Property_GUID,                    UIA_GridItemRowSpanPropertyId },
+    { &GridItem_ColumnSpan_Property_GUID,                 UIA_GridItemColumnSpanPropertyId },
+    { &GridItem_Parent_Property_GUID,                     UIA_GridItemContainingGridPropertyId },
+    { &Dock_DockPosition_Property_GUID,                   UIA_DockDockPositionPropertyId },
+    { &ExpandCollapse_ExpandCollapseState_Property_GUID,  UIA_ExpandCollapseExpandCollapseStatePropertyId },
+    { &MultipleView_CurrentView_Property_GUID,            UIA_MultipleViewCurrentViewPropertyId },
+    { &MultipleView_SupportedViews_Property_GUID,         UIA_MultipleViewSupportedViewsPropertyId },
+    { &Window_CanMaximize_Property_GUID,                  UIA_WindowCanMaximizePropertyId },
+    { &Window_CanMinimize_Property_GUID,                  UIA_WindowCanMinimizePropertyId },
+    { &Window_WindowVisualState_Property_GUID,            UIA_WindowWindowVisualStatePropertyId },
+    { &Window_WindowInteractionState_Property_GUID,       UIA_WindowWindowInteractionStatePropertyId },
+    { &Window_IsModal_Property_GUID,                      UIA_WindowIsModalPropertyId },
+    { &Window_IsTopmost_Property_GUID,                    UIA_WindowIsTopmostPropertyId },
+    { &SelectionItem_IsSelected_Property_GUID,            UIA_SelectionItemIsSelectedPropertyId },
+    { &SelectionItem_SelectionContainer_Property_GUID,    UIA_SelectionItemSelectionContainerPropertyId },
+    { &Table_RowHeaders_Property_GUID,                    UIA_TableRowHeadersPropertyId },
+    { &Table_ColumnHeaders_Property_GUID,                 UIA_TableColumnHeadersPropertyId },
+    { &Table_RowOrColumnMajor_Property_GUID,              UIA_TableRowOrColumnMajorPropertyId },
+    { &TableItem_RowHeaderItems_Property_GUID,            UIA_TableItemRowHeaderItemsPropertyId },
+    { &TableItem_ColumnHeaderItems_Property_GUID,         UIA_TableItemColumnHeaderItemsPropertyId },
+    { &Toggle_ToggleState_Property_GUID,                  UIA_ToggleToggleStatePropertyId },
+    { &Transform_CanMove_Property_GUID,                   UIA_TransformCanMovePropertyId },
+    { &Transform_CanResize_Property_GUID,                 UIA_TransformCanResizePropertyId },
+    { &Transform_CanRotate_Property_GUID,                 UIA_TransformCanRotatePropertyId },
+    { &IsLegacyIAccessiblePatternAvailable_Property_GUID, UIA_IsLegacyIAccessiblePatternAvailablePropertyId },
+    { &LegacyIAccessible_ChildId_Property_GUID,           UIA_LegacyIAccessibleChildIdPropertyId },
+    { &LegacyIAccessible_Name_Property_GUID,              UIA_LegacyIAccessibleNamePropertyId },
+    { &LegacyIAccessible_Value_Property_GUID,             UIA_LegacyIAccessibleValuePropertyId },
+    { &LegacyIAccessible_Description_Property_GUID,       UIA_LegacyIAccessibleDescriptionPropertyId },
+    { &LegacyIAccessible_Role_Property_GUID,              UIA_LegacyIAccessibleRolePropertyId },
+    { &LegacyIAccessible_State_Property_GUID,             UIA_LegacyIAccessibleStatePropertyId },
+    { &LegacyIAccessible_Help_Property_GUID,              UIA_LegacyIAccessibleHelpPropertyId },
+    { &LegacyIAccessible_KeyboardShortcut_Property_GUID,  UIA_LegacyIAccessibleKeyboardShortcutPropertyId },
+    { &LegacyIAccessible_Selection_Property_GUID,         UIA_LegacyIAccessibleSelectionPropertyId },
+    { &LegacyIAccessible_DefaultAction_Property_GUID,     UIA_LegacyIAccessibleDefaultActionPropertyId },
+    { &AriaRole_Property_GUID,                            UIA_AriaRolePropertyId },
+    { &AriaProperties_Property_GUID,                      UIA_AriaPropertiesPropertyId },
+    { &IsDataValidForForm_Property_GUID,                  UIA_IsDataValidForFormPropertyId },
+    { &ControllerFor_Property_GUID,                       UIA_ControllerForPropertyId },
+    { &DescribedBy_Property_GUID,                         UIA_DescribedByPropertyId },
+    { &FlowsTo_Property_GUID,                             UIA_FlowsToPropertyId },
+    { &ProviderDescription_Property_GUID,                 UIA_ProviderDescriptionPropertyId },
+    { &IsItemContainerPatternAvailable_Property_GUID,     UIA_IsItemContainerPatternAvailablePropertyId },
+    { &IsVirtualizedItemPatternAvailable_Property_GUID,   UIA_IsVirtualizedItemPatternAvailablePropertyId },
+    { &IsSynchronizedInputPatternAvailable_Property_GUID, UIA_IsSynchronizedInputPatternAvailablePropertyId },
+    /* Implemented on Win8+ */
+    { &OptimizeForVisualContent_Property_GUID,            UIA_OptimizeForVisualContentPropertyId },
+    { &IsObjectModelPatternAvailable_Property_GUID,       UIA_IsObjectModelPatternAvailablePropertyId },
+    { &Annotation_AnnotationTypeId_Property_GUID,         UIA_AnnotationAnnotationTypeIdPropertyId },
+    { &Annotation_AnnotationTypeName_Property_GUID,       UIA_AnnotationAnnotationTypeNamePropertyId },
+    { &Annotation_Author_Property_GUID,                   UIA_AnnotationAuthorPropertyId },
+    { &Annotation_DateTime_Property_GUID,                 UIA_AnnotationDateTimePropertyId },
+    { &Annotation_Target_Property_GUID,                   UIA_AnnotationTargetPropertyId },
+    { &IsAnnotationPatternAvailable_Property_GUID,        UIA_IsAnnotationPatternAvailablePropertyId },
+    { &IsTextPattern2Available_Property_GUID,             UIA_IsTextPattern2AvailablePropertyId },
+    { &Styles_StyleId_Property_GUID,                      UIA_StylesStyleIdPropertyId },
+    { &Styles_StyleName_Property_GUID,                    UIA_StylesStyleNamePropertyId },
+    { &Styles_FillColor_Property_GUID,                    UIA_StylesFillColorPropertyId },
+    { &Styles_FillPatternStyle_Property_GUID,             UIA_StylesFillPatternStylePropertyId },
+    { &Styles_Shape_Property_GUID,                        UIA_StylesShapePropertyId },
+    { &Styles_FillPatternColor_Property_GUID,             UIA_StylesFillPatternColorPropertyId },
+    { &Styles_ExtendedProperties_Property_GUID,           UIA_StylesExtendedPropertiesPropertyId },
+    { &IsStylesPatternAvailable_Property_GUID,            UIA_IsStylesPatternAvailablePropertyId },
+    { &IsSpreadsheetPatternAvailable_Property_GUID,       UIA_IsSpreadsheetPatternAvailablePropertyId },
+    { &SpreadsheetItem_Formula_Property_GUID,             UIA_SpreadsheetItemFormulaPropertyId },
+    { &SpreadsheetItem_AnnotationObjects_Property_GUID,   UIA_SpreadsheetItemAnnotationObjectsPropertyId },
+    { &SpreadsheetItem_AnnotationTypes_Property_GUID,     UIA_SpreadsheetItemAnnotationTypesPropertyId },
+    { &IsSpreadsheetItemPatternAvailable_Property_GUID,   UIA_IsSpreadsheetItemPatternAvailablePropertyId },
+    { &Transform2_CanZoom_Property_GUID,                  UIA_Transform2CanZoomPropertyId },
+    { &IsTransformPattern2Available_Property_GUID,        UIA_IsTransformPattern2AvailablePropertyId },
+    { &LiveSetting_Property_GUID,                         UIA_LiveSettingPropertyId },
+    { &IsTextChildPatternAvailable_Property_GUID,         UIA_IsTextChildPatternAvailablePropertyId },
+    { &IsDragPatternAvailable_Property_GUID,              UIA_IsDragPatternAvailablePropertyId },
+    { &Drag_IsGrabbed_Property_GUID,                      UIA_DragIsGrabbedPropertyId },
+    { &Drag_DropEffect_Property_GUID,                     UIA_DragDropEffectPropertyId },
+    { &Drag_DropEffects_Property_GUID,                    UIA_DragDropEffectsPropertyId },
+    { &IsDropTargetPatternAvailable_Property_GUID,        UIA_IsDropTargetPatternAvailablePropertyId },
+    { &DropTarget_DropTargetEffect_Property_GUID,         UIA_DropTargetDropTargetEffectPropertyId },
+    { &DropTarget_DropTargetEffects_Property_GUID,        UIA_DropTargetDropTargetEffectsPropertyId },
+    { &Drag_GrabbedItems_Property_GUID,                   UIA_DragGrabbedItemsPropertyId },
+    { &Transform2_ZoomLevel_Property_GUID,                UIA_Transform2ZoomLevelPropertyId },
+    { &Transform2_ZoomMinimum_Property_GUID,              UIA_Transform2ZoomMinimumPropertyId },
+    { &Transform2_ZoomMaximum_Property_GUID,              UIA_Transform2ZoomMaximumPropertyId },
+    { &FlowsFrom_Property_GUID,                           UIA_FlowsFromPropertyId },
+    { &IsTextEditPatternAvailable_Property_GUID,          UIA_IsTextEditPatternAvailablePropertyId },
+    { &IsPeripheral_Property_GUID,                        UIA_IsPeripheralPropertyId },
+    /* Implemented on Win10v1507+. */
+    { &IsCustomNavigationPatternAvailable_Property_GUID,  UIA_IsCustomNavigationPatternAvailablePropertyId },
+    { &PositionInSet_Property_GUID,                       UIA_PositionInSetPropertyId },
+    { &SizeOfSet_Property_GUID,                           UIA_SizeOfSetPropertyId },
+    { &Level_Property_GUID,                               UIA_LevelPropertyId },
+    { &AnnotationTypes_Property_GUID,                     UIA_AnnotationTypesPropertyId },
+    { &AnnotationObjects_Property_GUID,                   UIA_AnnotationObjectsPropertyId },
+    /* Implemented on Win10v1809+. */
+    { &LandmarkType_Property_GUID,                        UIA_LandmarkTypePropertyId },
+    { &LocalizedLandmarkType_Property_GUID,               UIA_LocalizedLandmarkTypePropertyId },
+    { &FullDescription_Property_GUID,                     UIA_FullDescriptionPropertyId },
+    { &FillColor_Property_GUID,                           UIA_FillColorPropertyId },
+    { &OutlineColor_Property_GUID,                        UIA_OutlineColorPropertyId },
+    { &FillType_Property_GUID,                            UIA_FillTypePropertyId },
+    { &VisualEffects_Property_GUID,                       UIA_VisualEffectsPropertyId },
+    { &OutlineThickness_Property_GUID,                    UIA_OutlineThicknessPropertyId },
+    { &CenterPoint_Property_GUID,                         UIA_CenterPointPropertyId },
+    { &Rotation_Property_GUID,                            UIA_RotationPropertyId },
+    { &Size_Property_GUID,                                UIA_SizePropertyId },
+    { &IsSelectionPattern2Available_Property_GUID,        UIA_IsSelectionPattern2AvailablePropertyId },
+    { &Selection2_FirstSelectedItem_Property_GUID,        UIA_Selection2FirstSelectedItemPropertyId },
+    { &Selection2_LastSelectedItem_Property_GUID,         UIA_Selection2LastSelectedItemPropertyId },
+    { &Selection2_CurrentSelectedItem_Property_GUID,      UIA_Selection2CurrentSelectedItemPropertyId },
+    { &Selection2_ItemCount_Property_GUID,                UIA_Selection2ItemCountPropertyId },
+    { &HeadingLevel_Property_GUID,                        UIA_HeadingLevelPropertyId },
+    { &IsDialog_Property_GUID,                            UIA_IsDialogPropertyId },
+};
+
+static void test_UiaLookupId(void)
+{
+    unsigned int i;
+
+    for (i = 0; i < ARRAY_SIZE(uia_property_lookup_ids); i++)
+    {
+        int prop_id = UiaLookupId(AutomationIdentifierType_Property, uia_property_lookup_ids[i].guid);
+
+        if (!prop_id)
+        {
+            win_skip("No propertyId for GUID %s, skipping further tests.\n", debugstr_guid(uia_property_lookup_ids[i].guid));
+            break;
+        }
+
+        ok(prop_id == uia_property_lookup_ids[i].id, "Unexpected Property id, expected %d, got %d\n",
+                uia_property_lookup_ids[i].id, prop_id);
+    }
+}
+
 START_TEST(uiautomation)
 {
     HMODULE uia_dll = LoadLibraryA("uiautomationcore.dll");
 
     test_UiaHostProviderFromHwnd();
     test_uia_reserved_value_ifaces();
+    test_UiaLookupId();
     if (uia_dll)
     {
         pUiaProviderFromIAccessible = (void *)GetProcAddress(uia_dll, "UiaProviderFromIAccessible");
