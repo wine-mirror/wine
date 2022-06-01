@@ -2425,7 +2425,6 @@ static void test_GetThemeBackgroundRegion(void)
     SetRect(&rect, 0, 0, 10, 10);
     region = (HRGN)0xdeadbeef;
     hr = GetThemeBackgroundRegion(htheme, NULL, RP_BAND, 0, &rect, &region);
-    todo_wine
     ok(hr == E_UNEXPECTED || broken(hr == S_OK) /* < Win10 */, "Got unexpected hr %#lx.\n", hr);
     ok(region == (HRGN)0xdeadbeef, "Got unexpected region.\n");
 
