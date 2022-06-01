@@ -92,14 +92,21 @@ void fill_context_( const char *file, int line, char *buffer, SIZE_T size );
 BOOL sync_ioctl_( const char *file, int line, HANDLE device, DWORD code, void *in_buf, DWORD in_len,
                   void *out_buf, DWORD *ret_len, DWORD timeout );
 
-#define set_hid_expect( a, b, c ) set_hid_expect_( __FILE__, __LINE__, a, b, c )
-void set_hid_expect_( const char *file, int line, HANDLE device, struct hid_expect *expect, DWORD expect_size );
+#define set_hid_expect( a, b, c ) set_hid_expect_( __FILE__, __LINE__, a, NULL, b, c )
+#define bus_set_hid_expect( a, b, c, d ) set_hid_expect_( __FILE__, __LINE__, a, b, c, d )
+void set_hid_expect_( const char *file, int line, HANDLE device, struct hid_device_desc *desc,
+                      struct hid_expect *expect, DWORD expect_size );
 
-#define wait_hid_expect( a, b ) wait_hid_expect_( __FILE__, __LINE__, a, b, FALSE, FALSE )
-#define wait_hid_pending( a, b ) wait_hid_expect_( __FILE__, __LINE__, a, b, TRUE, FALSE )
-void wait_hid_expect_( const char *file, int line, HANDLE device, DWORD timeout, BOOL wait_pending, BOOL todo );
+#define wait_hid_expect( a, b ) wait_hid_expect_( __FILE__, __LINE__, a, NULL, b, FALSE, FALSE )
+#define wait_hid_pending( a, b ) wait_hid_expect_( __FILE__, __LINE__, a, NULL, b, TRUE, FALSE )
+#define bus_wait_hid_expect( a, b, c ) wait_hid_expect_( __FILE__, __LINE__, a, b, c, FALSE, FALSE )
+#define bus_wait_hid_pending( a, b, c ) wait_hid_expect_( __FILE__, __LINE__, a, b, c, TRUE, FALSE )
+void wait_hid_expect_( const char *file, int line, HANDLE device, struct hid_device_desc *desc,
+                       DWORD timeout, BOOL wait_pending, BOOL todo );
 
-#define send_hid_input( a, b, c ) send_hid_input_( __FILE__, __LINE__, a, b, c )
-void send_hid_input_( const char *file, int line, HANDLE device, struct hid_expect *expect, DWORD expect_size );
+#define send_hid_input( a, b, c ) send_hid_input_( __FILE__, __LINE__, a, NULL, b, c )
+#define bus_send_hid_input( a, b, c, d ) send_hid_input_( __FILE__, __LINE__, a, b, c, d )
+void send_hid_input_( const char *file, int line, HANDLE device, struct hid_device_desc *desc,
+                      struct hid_expect *expect, DWORD expect_size );
 
 #endif /* __WINE_DINPUT_TEST_H */

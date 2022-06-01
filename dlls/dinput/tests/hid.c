@@ -909,39 +909,70 @@ void fill_context_( const char *file, int line, char *buffer, SIZE_T size )
     snprintf( buffer, size, "%s:%d", source_file, line );
 }
 
-void set_hid_expect_( const char *file, int line, HANDLE device, struct hid_expect *expect, DWORD expect_size )
+void set_hid_expect_( const char *file, int line, HANDLE device, struct hid_device_desc *desc,
+                      struct hid_expect *expect, DWORD expect_size )
 {
-    char context[64];
+    char buffer[sizeof(*desc) + EXPECT_QUEUE_BUFFER_SIZE];
+    SIZE_T size;
     BOOL ret;
 
-    fill_context_( file, line, context, ARRAY_SIZE(context) );
-    ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_CONTEXT, context, ARRAY_SIZE(context), NULL, 0, INFINITE );
+    if (desc) memcpy( buffer, desc, sizeof(*desc) );
+    else memset( buffer, 0, sizeof(*desc) );
+
+    fill_context_( file, line, buffer + sizeof(*desc), ARRAY_SIZE(buffer) - sizeof(*desc) );
+    size = sizeof(*desc) + strlen( buffer + sizeof(*desc) ) + 1;
+    ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_CONTEXT, buffer, size, NULL, 0, INFINITE );
     ok_(file, line)( ret, "IOCTL_WINETEST_HID_SET_CONTEXT failed, last error %lu\n", GetLastError() );
-    ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_EXPECT, expect, expect_size, NULL, 0, INFINITE );
+
+    if (expect) memcpy( buffer + sizeof(*desc), expect, expect_size );
+    else memset( buffer + sizeof(*desc), 0, expect_size );
+
+    size = sizeof(*desc) + expect_size;
+    ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_EXPECT, buffer, size, NULL, 0, INFINITE );
     ok_(file, line)( ret, "IOCTL_WINETEST_HID_SET_EXPECT failed, last error %lu\n", GetLastError() );
 }
 
-void wait_hid_expect_( const char *file, int line, HANDLE device, DWORD timeout, BOOL wait_pending, BOOL todo )
+void wait_hid_expect_( const char *file, int line, HANDLE device, struct hid_device_desc *desc,
+                       DWORD timeout, BOOL wait_pending, BOOL todo )
 {
     struct wait_expect_params params = {.wait_pending = wait_pending};
+    char buffer[sizeof(*desc) + sizeof(params)];
+    SIZE_T size;
+
+    if (desc) memcpy( buffer, desc, sizeof(*desc) );
+    else memset( buffer, 0, sizeof(*desc) );
+
+    memcpy( buffer + sizeof(*desc), &params, sizeof(params) );
+    size = sizeof(*desc) + sizeof(params);
 
     todo_wine_if(todo) {
-    BOOL ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_WAIT_EXPECT, &params, sizeof(params), NULL, 0, timeout );
+    BOOL ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_WAIT_EXPECT, buffer, size, NULL, 0, timeout );
     ok_(file, line)( ret, "IOCTL_WINETEST_HID_WAIT_EXPECT failed, last error %lu\n", GetLastError() );
     }
 
-    set_hid_expect_( file, line, device, NULL, 0 );
+    set_hid_expect_( file, line, device, desc, NULL, 0 );
 }
 
-void send_hid_input_( const char *file, int line, HANDLE device, struct hid_expect *expect, DWORD expect_size )
+void send_hid_input_( const char *file, int line, HANDLE device, struct hid_device_desc *desc,
+                      struct hid_expect *expect, DWORD expect_size )
 {
-    char context[64];
+    char buffer[sizeof(*desc) + EXPECT_QUEUE_BUFFER_SIZE];
+    SIZE_T size;
     BOOL ret;
 
-    fill_context_( file, line, context, ARRAY_SIZE(context) );
-    ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_CONTEXT, context, ARRAY_SIZE(context), NULL, 0, INFINITE );
+    if (desc) memcpy( buffer, desc, sizeof(*desc) );
+    else memset( buffer, 0, sizeof(*desc) );
+
+    fill_context_( file, line, buffer + sizeof(*desc), ARRAY_SIZE(buffer) - sizeof(*desc) );
+    size = sizeof(*desc) + strlen( buffer + sizeof(*desc) ) + 1;
+    ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_CONTEXT, buffer, size, NULL, 0, INFINITE );
     ok_(file, line)( ret, "IOCTL_WINETEST_HID_SET_CONTEXT failed, last error %lu\n", GetLastError() );
-    ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SEND_INPUT, expect, expect_size, NULL, 0, INFINITE );
+
+    if (expect) memcpy( buffer + sizeof(*desc), expect, expect_size );
+    else memset( buffer + sizeof(*desc), 0, expect_size );
+
+    size = sizeof(*desc) + expect_size;
+    ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SEND_INPUT, buffer, size, NULL, 0, INFINITE );
     ok_(file, line)( ret, "IOCTL_WINETEST_HID_SEND_INPUT failed, last error %lu\n", GetLastError() );
 }
 

@@ -61,6 +61,8 @@ struct hid_expect
     BYTE report_buf[128];
 };
 
+#define EXPECT_QUEUE_BUFFER_SIZE (64 * sizeof(struct hid_expect))
+
 struct wait_expect_params
 {
     BOOL wait_pending;
