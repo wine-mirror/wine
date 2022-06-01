@@ -3884,7 +3884,7 @@ static int find_substring( const struct sortguid *sortid, DWORD flags, const WCH
     if (found != -1)
     {
         if ((flags & FIND_ENDSWITH) && found + foundlen != srclen) found = -1;
-        else if (*reslen) *reslen = foundlen;
+        else if (reslen) *reslen = foundlen;
     }
     free_sortkey_state( &s );
     free_sortkey_state( &val );
