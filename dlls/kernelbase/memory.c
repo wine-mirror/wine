@@ -640,8 +640,23 @@ struct rtl_heap_entry
  */
 BOOL WINAPI DECLSPEC_HOTPATCH HeapWalk( HANDLE heap, PROCESS_HEAP_ENTRY *entry )
 {
-    struct rtl_heap_entry rtl_entry = {.lpData = entry->lpData};
+    struct rtl_heap_entry rtl_entry = {0};
     NTSTATUS status;
+
+    if (!entry) return set_ntstatus( STATUS_INVALID_PARAMETER );
+
+    rtl_entry.lpData = entry->lpData;
+    rtl_entry.cbData = entry->cbData;
+    rtl_entry.cbOverhead = entry->cbOverhead;
+    rtl_entry.iRegionIndex = entry->iRegionIndex;
+
+    if (entry->wFlags & PROCESS_HEAP_ENTRY_BUSY)
+        rtl_entry.wFlags |= RTL_HEAP_ENTRY_BUSY;
+    if (entry->wFlags & PROCESS_HEAP_REGION)
+        rtl_entry.wFlags |= RTL_HEAP_ENTRY_REGION;
+    if (entry->wFlags & PROCESS_HEAP_UNCOMMITTED_RANGE)
+        rtl_entry.wFlags |= RTL_HEAP_ENTRY_UNCOMMITTED;
+    memcpy( &rtl_entry.Region, &entry->u.Region, sizeof(entry->u.Region) );
 
     if (!(status = RtlWalkHeap( heap, &rtl_entry )))
     {
