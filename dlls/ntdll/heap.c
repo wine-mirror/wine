@@ -1782,11 +1782,15 @@ static NTSTATUS heap_walk_blocks( const HEAP *heap, const SUBHEAP *subheap, stru
 {
     const char *base = subheap_base( subheap ), *commit_end = subheap_commit_end( subheap ), *end = base + subheap_size( subheap );
     const struct block *block, *blocks = first_block( subheap );
+    char *data = entry->lpData;
 
     if (entry->lpData == commit_end) return STATUS_NO_MORE_ENTRIES;
 
+    if (entry->wFlags & RTL_HEAP_ENTRY_BUSY) block = (struct block *)data - 1;
+    else block = (struct block *)(data - sizeof(struct list)) - 1;
+
     if (entry->lpData == base) block = blocks;
-    else if (!(block = next_block( subheap, (struct block *)entry->lpData - 1 )))
+    else if (!(block = next_block( subheap, block )))
     {
         entry->lpData = (void *)commit_end;
         entry->cbData = end - commit_end;
@@ -1802,8 +1806,8 @@ static NTSTATUS heap_walk_blocks( const HEAP *heap, const SUBHEAP *subheap, stru
         entry->cbData = block_get_size( block ) - block_get_overhead( block );
         /* FIXME: last free block should not include uncommitted range, which also has its own overhead */
         if (!contains( blocks, commit_end - (char *)blocks, block, block_get_size( block ) ))
-            entry->cbData = commit_end - (char *)entry->lpData - 8 * sizeof(void *);
-        entry->cbOverhead = 4 * sizeof(void *);
+            entry->cbData = commit_end - (char *)entry->lpData - 4 * ALIGNMENT;
+        entry->cbOverhead = 2 * ALIGNMENT;
         entry->iRegionIndex = 0;
         entry->wFlags = 0;
     }
