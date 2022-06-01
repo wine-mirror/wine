@@ -198,7 +198,7 @@ static void set_hat_value(struct unix_device *iface, int index, int value)
     hid_device_set_hatswitch_y(iface, index, y);
 }
 
-static BOOL descriptor_add_haptic(struct sdl_device *impl)
+static BOOL descriptor_add_haptic(struct sdl_device *impl, BOOL force)
 {
     USHORT i, count = 0;
     USAGE usages[16];
@@ -227,16 +227,16 @@ static BOOL descriptor_add_haptic(struct sdl_device *impl)
     if ((impl->effect_support & EFFECT_SUPPORT_PHYSICAL))
     {
         /* SDL_HAPTIC_SQUARE doesn't exist */
-        if (impl->effect_support & SDL_HAPTIC_SINE) usages[count++] = PID_USAGE_ET_SINE;
-        if (impl->effect_support & SDL_HAPTIC_TRIANGLE) usages[count++] = PID_USAGE_ET_TRIANGLE;
-        if (impl->effect_support & SDL_HAPTIC_SAWTOOTHUP) usages[count++] = PID_USAGE_ET_SAWTOOTH_UP;
-        if (impl->effect_support & SDL_HAPTIC_SAWTOOTHDOWN) usages[count++] = PID_USAGE_ET_SAWTOOTH_DOWN;
-        if (impl->effect_support & SDL_HAPTIC_SPRING) usages[count++] = PID_USAGE_ET_SPRING;
-        if (impl->effect_support & SDL_HAPTIC_DAMPER) usages[count++] = PID_USAGE_ET_DAMPER;
-        if (impl->effect_support & SDL_HAPTIC_INERTIA) usages[count++] = PID_USAGE_ET_INERTIA;
-        if (impl->effect_support & SDL_HAPTIC_FRICTION) usages[count++] = PID_USAGE_ET_FRICTION;
-        if (impl->effect_support & SDL_HAPTIC_CONSTANT) usages[count++] = PID_USAGE_ET_CONSTANT_FORCE;
-        if (impl->effect_support & SDL_HAPTIC_RAMP) usages[count++] = PID_USAGE_ET_RAMP;
+        if (force || (impl->effect_support & SDL_HAPTIC_SINE)) usages[count++] = PID_USAGE_ET_SINE;
+        if (force || (impl->effect_support & SDL_HAPTIC_TRIANGLE)) usages[count++] = PID_USAGE_ET_TRIANGLE;
+        if (force || (impl->effect_support & SDL_HAPTIC_SAWTOOTHUP)) usages[count++] = PID_USAGE_ET_SAWTOOTH_UP;
+        if (force || (impl->effect_support & SDL_HAPTIC_SAWTOOTHDOWN)) usages[count++] = PID_USAGE_ET_SAWTOOTH_DOWN;
+        if (force || (impl->effect_support & SDL_HAPTIC_SPRING)) usages[count++] = PID_USAGE_ET_SPRING;
+        if (force || (impl->effect_support & SDL_HAPTIC_DAMPER)) usages[count++] = PID_USAGE_ET_DAMPER;
+        if (force || (impl->effect_support & SDL_HAPTIC_INERTIA)) usages[count++] = PID_USAGE_ET_INERTIA;
+        if (force || (impl->effect_support & SDL_HAPTIC_FRICTION)) usages[count++] = PID_USAGE_ET_FRICTION;
+        if (force || (impl->effect_support & SDL_HAPTIC_CONSTANT)) usages[count++] = PID_USAGE_ET_CONSTANT_FORCE;
+        if (force || (impl->effect_support & SDL_HAPTIC_RAMP)) usages[count++] = PID_USAGE_ET_RAMP;
 
         if (!hid_device_add_physical(&impl->unix_device, usages, count))
             return FALSE;
@@ -360,7 +360,7 @@ static NTSTATUS build_joystick_report_descriptor(struct unix_device *iface)
     if (!hid_device_end_input_report(iface))
         return STATUS_NO_MEMORY;
 
-    if (!descriptor_add_haptic(impl))
+    if (!descriptor_add_haptic(impl, physical_usage.Usage == HID_USAGE_SIMULATION_AUTOMOBILE_SIMULATION_DEVICE))
         return STATUS_NO_MEMORY;
 
     if (!hid_device_end_report_descriptor(iface))
@@ -414,7 +414,7 @@ static NTSTATUS build_controller_report_descriptor(struct unix_device *iface)
     if (!hid_device_end_input_report(iface))
         return STATUS_NO_MEMORY;
 
-    if (!descriptor_add_haptic(impl))
+    if (!descriptor_add_haptic(impl, FALSE))
         return STATUS_NO_MEMORY;
 
     if (!hid_device_end_report_descriptor(iface))
