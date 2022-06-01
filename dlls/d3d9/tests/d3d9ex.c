@@ -4925,11 +4925,23 @@ static void test_pinned_buffers(void)
 
 static void test_desktop_window(void)
 {
+    IDirect3DVertexShader9 *shader;
     IDirect3DDevice9Ex *device;
     D3DCOLOR color;
     ULONG refcount;
     HWND window;
     HRESULT hr;
+
+    static const DWORD simple_vs[] =
+    {
+        0xfffe0101,                                     /* vs_1_1             */
+        0x0000001f, 0x80000000, 0x900f0000,             /* dcl_position0 v0   */
+        0x00000009, 0xc0010000, 0x90e40000, 0xa0e40000, /* dp4 oPos.x, v0, c0 */
+        0x00000009, 0xc0020000, 0x90e40000, 0xa0e40001, /* dp4 oPos.y, v0, c1 */
+        0x00000009, 0xc0040000, 0x90e40000, 0xa0e40002, /* dp4 oPos.z, v0, c2 */
+        0x00000009, 0xc0080000, 0x90e40000, 0xa0e40003, /* dp4 oPos.w, v0, c3 */
+        0x0000ffff,                                     /* end                */
+    };
 
     window = create_window();
     if (!(device = create_device(window, NULL)))
@@ -4954,6 +4966,16 @@ static void test_desktop_window(void)
 
     refcount = IDirect3DDevice9Ex_Release(device);
     ok(!refcount, "Device has %u references left.\n", refcount);
+
+    /* test device with NULL HWND */
+    device = create_device(NULL, NULL);
+    ok(!!device, "Failed to create a D3D device\n");
+
+    hr = IDirect3DDevice9Ex_CreateVertexShader(device, simple_vs, &shader);
+    ok(SUCCEEDED(hr), "Failed to create vertex shader, hr %#x.\n", hr);
+    IDirect3DVertexShader9_Release(shader);
+
+    IDirect3DDevice9Ex_Release(device);
 }
 
 START_TEST(d3d9ex)
