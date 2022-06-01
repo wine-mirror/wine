@@ -18,7 +18,6 @@
  */
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 #define COBJMACROS
 
@@ -113,13 +112,13 @@ HRESULT WINAPI D3DX10CreateEffectFromFileA(const char *filename, const D3D10_SHA
         return E_INVALIDARG;
 
     len = MultiByteToWideChar(CP_ACP, 0, filename, -1, NULL, 0);
-    if (!(filenameW = heap_alloc(len * sizeof(*filenameW))))
+    if (!(filenameW = malloc(len * sizeof(*filenameW))))
         return E_OUTOFMEMORY;
     MultiByteToWideChar(CP_ACP, 0, filename, -1, filenameW, len);
 
     hr = D3DX10CreateEffectFromFileW(filenameW, defines, include, profile, shader_flags,
             effect_flags, device, effect_pool, pump, effect, errors, hresult);
-    heap_free(filenameW);
+    free(filenameW);
 
     return hr;
 }
@@ -198,13 +197,13 @@ HRESULT WINAPI D3DX10CreateEffectFromResourceW(HMODULE module, const WCHAR *reso
     if (filenameW)
     {
         len = WideCharToMultiByte(CP_ACP, 0, filenameW, -1, NULL, 0, NULL, NULL);
-        if (!(filename = heap_alloc(len)))
+        if (!(filename = malloc(len)))
             return E_OUTOFMEMORY;
         WideCharToMultiByte(CP_ACP, 0, filenameW, -1, filename, len, NULL, NULL);
     }
 
     hr = D3DX10CreateEffectFromMemory(data, size, filename, defines, include, profile,
             shader_flags, effect_flags, device, effect_pool, pump, effect, errors, hresult);
-    heap_free(filename);
+    free(filename);
     return hr;
 }

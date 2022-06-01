@@ -73,7 +73,7 @@ static HRESULT WINAPI memorydataloader_Destroy(ID3DX10DataLoader *iface)
 
     TRACE("iface %p.\n", iface);
 
-    HeapFree(GetProcessHeap(), 0, loader);
+    free(loader);
     return S_OK;
 }
 
@@ -101,7 +101,7 @@ static HRESULT WINAPI filedataloader_Load(ID3DX10DataLoader *iface)
         return D3D10_ERROR_FILE_NOT_FOUND;
 
     size = GetFileSize(file, NULL);
-    data = HeapAlloc(GetProcessHeap(), 0, size);
+    data = malloc(size);
     if (!data)
     {
         CloseHandle(file);
@@ -113,11 +113,11 @@ static HRESULT WINAPI filedataloader_Load(ID3DX10DataLoader *iface)
     if (!ret)
     {
         WARN("Failed to read file contents.\n");
-        HeapFree(GetProcessHeap(), 0, data);
+        free(data);
         return E_FAIL;
     }
 
-    HeapFree(GetProcessHeap(), 0, loader->data);
+    free(loader->data);
     loader->data = data;
     loader->size = size;
 
@@ -145,9 +145,9 @@ static HRESULT WINAPI filedataloader_Destroy(ID3DX10DataLoader *iface)
 
     TRACE("iface %p.\n", iface);
 
-    HeapFree(GetProcessHeap(), 0, loader->u.file.path);
-    HeapFree(GetProcessHeap(), 0, loader->data);
-    HeapFree(GetProcessHeap(), 0, loader);
+    free(loader->u.file.path);
+    free(loader->data);
+    free(loader);
 
     return S_OK;
 }
@@ -203,7 +203,7 @@ static HRESULT WINAPI resourcedataloader_Destroy(ID3DX10DataLoader *iface)
 
     TRACE("iface %p.\n", iface);
 
-    HeapFree(GetProcessHeap(), 0, loader);
+    free(loader);
 
     return S_OK;
 }
@@ -266,7 +266,7 @@ HRESULT WINAPI D3DX10CreateAsyncMemoryLoader(const void *data, SIZE_T data_size,
     if (!data || !loader)
         return E_FAIL;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    object = calloc(1, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
@@ -291,12 +291,12 @@ HRESULT WINAPI D3DX10CreateAsyncFileLoaderA(const char *filename, ID3DX10DataLoa
         return E_FAIL;
 
     len = MultiByteToWideChar(CP_ACP, 0, filename, -1, NULL, 0);
-    filename_w = HeapAlloc(GetProcessHeap(), 0, len * sizeof(*filename_w));
+    filename_w = malloc(len * sizeof(*filename_w));
     MultiByteToWideChar(CP_ACP, 0, filename, -1, filename_w, len);
 
     hr = D3DX10CreateAsyncFileLoaderW(filename_w, loader);
 
-    HeapFree(GetProcessHeap(), 0, filename_w);
+    free(filename_w);
 
     return hr;
 }
@@ -310,15 +310,15 @@ HRESULT WINAPI D3DX10CreateAsyncFileLoaderW(const WCHAR *filename, ID3DX10DataLo
     if (!filename || !loader)
         return E_FAIL;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    object = calloc(1, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
     object->ID3DX10DataLoader_iface.lpVtbl = &filedataloadervtbl;
-    object->u.file.path = HeapAlloc(GetProcessHeap(), 0, (lstrlenW(filename) + 1) * sizeof(WCHAR));
+    object->u.file.path = malloc((lstrlenW(filename) + 1) * sizeof(WCHAR));
     if (!object->u.file.path)
     {
-        HeapFree(GetProcessHeap(), 0, object);
+        free(object);
         return E_OUTOFMEMORY;
     }
     lstrcpyW(object->u.file.path, filename);
@@ -340,7 +340,7 @@ HRESULT WINAPI D3DX10CreateAsyncResourceLoaderA(HMODULE module, const char *reso
     if (!loader)
         return E_FAIL;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    object = calloc(1, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
@@ -349,7 +349,7 @@ HRESULT WINAPI D3DX10CreateAsyncResourceLoaderA(HMODULE module, const char *reso
     if (!rsrc)
     {
         WARN("Failed to find resource.\n");
-        HeapFree(GetProcessHeap(), 0, object);
+        free(object);
         return D3DX10_ERR_INVALID_DATA;
     }
 
@@ -374,7 +374,7 @@ HRESULT WINAPI D3DX10CreateAsyncResourceLoaderW(HMODULE module, const WCHAR *res
     if (!loader)
         return E_FAIL;
 
-    object = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*object));
+    object = calloc(1, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
 
@@ -383,7 +383,7 @@ HRESULT WINAPI D3DX10CreateAsyncResourceLoaderW(HMODULE module, const WCHAR *res
     if (!rsrc)
     {
         WARN("Failed to find resource.\n");
-        HeapFree(GetProcessHeap(), 0, object);
+        free(object);
         return D3DX10_ERR_INVALID_DATA;
     }
 

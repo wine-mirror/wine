@@ -17,7 +17,6 @@
  */
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 #define COBJMACROS
 
@@ -313,7 +312,7 @@ static HRESULT load_file(const WCHAR *filename, void **buffer, DWORD *size)
         goto done;
     }
 
-    *buffer = heap_alloc(*size);
+    *buffer = malloc(*size);
     if (!*buffer)
     {
         hr = E_OUTOFMEMORY;
@@ -335,7 +334,7 @@ static HRESULT load_file(const WCHAR *filename, void **buffer, DWORD *size)
 done:
     if (FAILED(hr))
     {
-        heap_free(*buffer);
+        free(*buffer);
         *buffer = NULL;
     }
     if (file != INVALID_HANDLE_VALUE)
@@ -375,14 +374,14 @@ HRESULT WINAPI D3DX10GetImageInfoFromFileA(const char *src_file, ID3DX10ThreadPu
     if (!str_len)
         return HRESULT_FROM_WIN32(GetLastError());
 
-    buffer = heap_alloc(str_len * sizeof(*buffer));
+    buffer = malloc(str_len * sizeof(*buffer));
     if (!buffer)
         return E_OUTOFMEMORY;
 
     MultiByteToWideChar(CP_ACP, 0, src_file, -1, buffer, str_len);
     hr = D3DX10GetImageInfoFromFileW(buffer, pump, info, result);
 
-    heap_free(buffer);
+    free(buffer);
 
     return hr;
 }
@@ -404,7 +403,7 @@ HRESULT WINAPI D3DX10GetImageInfoFromFileW(const WCHAR *src_file, ID3DX10ThreadP
 
     hr = D3DX10GetImageInfoFromMemory(buffer, size, pump, info, result);
 
-    heap_free(buffer);
+    free(buffer);
 
     return hr;
 }
@@ -589,13 +588,13 @@ HRESULT WINAPI D3DX10CreateTextureFromFileA(ID3D10Device *device, const char *sr
     if (!(str_len = MultiByteToWideChar(CP_ACP, 0, src_file, -1, NULL, 0)))
         return HRESULT_FROM_WIN32(GetLastError());
 
-    if (!(buffer = heap_alloc(str_len * sizeof(*buffer))))
+    if (!(buffer = malloc(str_len * sizeof(*buffer))))
         return E_OUTOFMEMORY;
 
     MultiByteToWideChar(CP_ACP, 0, src_file, -1, buffer, str_len);
     hr = D3DX10CreateTextureFromFileW(device, buffer, load_info, pump, texture, hresult);
 
-    heap_free(buffer);
+    free(buffer);
 
     return hr;
 }
@@ -618,7 +617,7 @@ HRESULT WINAPI D3DX10CreateTextureFromFileW(ID3D10Device *device, const WCHAR *s
 
     hr = D3DX10CreateTextureFromMemory(device, buffer, size, load_info, pump, texture, hresult);
 
-    heap_free(buffer);
+    free(buffer);
 
     return hr;
 }
@@ -740,7 +739,7 @@ HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *s
     stride = (width * get_bpp_from_format(img_info.Format) + 7) / 8;
     frame_size = stride * height;
 
-    if (!(buffer = heap_alloc(frame_size)))
+    if (!(buffer = malloc(frame_size)))
     {
         hr = E_FAIL;
         goto end;
@@ -813,7 +812,7 @@ end:
         IWICFormatConverter_Release(converter);
     if (dds_frame)
         IWICDdsFrameDecode_Release(dds_frame);
-    heap_free(buffer);
+    free(buffer);
     if (frame)
         IWICBitmapFrameDecode_Release(frame);
     if (decoder)

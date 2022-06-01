@@ -21,7 +21,6 @@
 #include "d3dx10.h"
 
 #include "wine/debug.h"
-#include "wine/heap.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(d3dx);
 
@@ -72,7 +71,7 @@ static ULONG STDMETHODCALLTYPE d3dx10_mesh_Release(ID3DX10Mesh *iface)
     TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
 
     if (!refcount)
-        heap_free(mesh);
+        free(mesh);
 
     return refcount;
 }
@@ -366,7 +365,7 @@ HRESULT WINAPI D3DX10CreateMesh(ID3D10Device *device, const D3D10_INPUT_ELEMENT_
 
     *mesh = NULL;
 
-    if (!(object = heap_alloc_zero(sizeof(*object))))
+    if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
     object->ID3DX10Mesh_iface.lpVtbl = &d3dx10_mesh_vtbl;
