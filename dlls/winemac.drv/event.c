@@ -196,6 +196,21 @@ static DWORD drag_operations_to_dropeffects(uint32_t ops)
 
 
 /**************************************************************************
+ *              dropeffect_to_drag_operation
+ */
+static uint32_t dropeffect_to_drag_operation(DWORD effect, uint32_t ops)
+{
+    if (effect & DROPEFFECT_LINK && ops & DRAG_OP_LINK) return DRAG_OP_LINK;
+    if (effect & DROPEFFECT_COPY && ops & DRAG_OP_COPY) return DRAG_OP_COPY;
+    if (effect & DROPEFFECT_MOVE && ops & DRAG_OP_MOVE) return DRAG_OP_MOVE;
+    if (effect & DROPEFFECT_LINK && ops & DRAG_OP_GENERIC) return DRAG_OP_GENERIC;
+    if (effect & DROPEFFECT_COPY && ops & DRAG_OP_GENERIC) return DRAG_OP_GENERIC;
+
+    return DRAG_OP_NONE;
+}
+
+
+/**************************************************************************
  *              query_drag_drop
  */
 static BOOL query_drag_drop(macdrv_query *query)
@@ -227,6 +242,38 @@ static BOOL query_drag_exited(macdrv_query *query)
     struct dnd_query_exited_params params;
     params.hwnd = macdrv_get_window_hwnd(query->window);
     return macdrv_client_func(client_func_dnd_query_exited, &params, sizeof(params));
+}
+
+
+/**************************************************************************
+ *              query_drag_operation
+ */
+static BOOL query_drag_operation(macdrv_query *query)
+{
+    struct dnd_query_drag_params params;
+    HWND hwnd = macdrv_get_window_hwnd(query->window);
+    struct macdrv_win_data *data = get_win_data(hwnd);
+    DWORD effect;
+
+    if (!data)
+    {
+        WARN("no win_data for win %p/%p\n", hwnd, query->window);
+        return FALSE;
+    }
+
+    params.hwnd = hwnd;
+    params.effect = drag_operations_to_dropeffects(query->drag_operation.offered_ops);
+    params.x = query->drag_operation.x + data->whole_rect.left;
+    params.y = query->drag_operation.y + data->whole_rect.top;
+    params.handle = (UINT_PTR)query->drag_operation.pasteboard;
+    release_win_data(data);
+
+    effect = macdrv_client_func(client_func_dnd_query_drag, &params, sizeof(params));
+    if (!effect) return FALSE;
+
+    query->drag_operation.accepted_op = dropeffect_to_drag_operation(effect,
+                                                                     query->drag_operation.offered_ops);
+    return TRUE;
 }
 
 

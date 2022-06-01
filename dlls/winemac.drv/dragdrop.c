@@ -325,37 +325,6 @@ static IDataObject *create_data_object_for_pasteboard(CFTypeRef pasteboard)
 }
 
 
-/**************************************************************************
- *              drag_operations_to_dropeffects
- */
-static DWORD drag_operations_to_dropeffects(uint32_t ops)
-{
-    DWORD effects = DROPEFFECT_NONE;
-    if (ops & (DRAG_OP_COPY | DRAG_OP_GENERIC))
-        effects |= DROPEFFECT_COPY;
-    if (ops & DRAG_OP_MOVE)
-        effects |= DROPEFFECT_MOVE;
-    if (ops & (DRAG_OP_LINK | DRAG_OP_GENERIC))
-        effects |= DROPEFFECT_LINK;
-    return effects;
-}
-
-
-/**************************************************************************
- *              dropeffect_to_drag_operation
- */
-static uint32_t dropeffect_to_drag_operation(DWORD effect, uint32_t ops)
-{
-    if (effect & DROPEFFECT_LINK && ops & DRAG_OP_LINK) return DRAG_OP_LINK;
-    if (effect & DROPEFFECT_COPY && ops & DRAG_OP_COPY) return DRAG_OP_COPY;
-    if (effect & DROPEFFECT_MOVE && ops & DRAG_OP_MOVE) return DRAG_OP_MOVE;
-    if (effect & DROPEFFECT_LINK && ops & DRAG_OP_GENERIC) return DRAG_OP_GENERIC;
-    if (effect & DROPEFFECT_COPY && ops & DRAG_OP_GENERIC) return DRAG_OP_GENERIC;
-
-    return DRAG_OP_NONE;
-}
-
-
 /* Based on functions in dlls/ole32/ole2.c */
 static HANDLE get_droptarget_local_handle(HWND hwnd)
 {
@@ -547,31 +516,22 @@ NTSTATUS WINAPI macdrv_dnd_query_exited(void *arg, ULONG size)
 /**************************************************************************
  *              query_drag_operation
  */
-BOOL query_drag_operation(macdrv_query* query)
+NTSTATUS WINAPI macdrv_dnd_query_drag(void *arg, ULONG size)
 {
+    struct dnd_query_drag_params *params = arg;
+    HWND hwnd = params->hwnd;
     BOOL ret = FALSE;
-    HWND hwnd = macdrv_get_window_hwnd(query->window);
-    struct macdrv_win_data *data = get_win_data(hwnd);
     POINT pt;
     DWORD effect;
     IDropTarget *droptarget;
     HRESULT hr;
 
-    TRACE("win %p/%p x,y %d,%d offered_ops 0x%x pasteboard %p\n", hwnd, query->window,
-          query->drag_operation.x, query->drag_operation.y, query->drag_operation.offered_ops,
-          query->drag_operation.pasteboard);
+    TRACE("win %p x,y %d,%d effect %x pasteboard %s\n", hwnd, params->x, params->y,
+          params->effect, wine_dbgstr_longlong(params->handle));
 
-    if (!data)
-    {
-        WARN("no win_data for win %p/%p\n", hwnd, query->window);
-        return FALSE;
-    }
-
-    pt.x = query->drag_operation.x + data->whole_rect.left;
-    pt.y = query->drag_operation.y + data->whole_rect.top;
-    release_win_data(data);
-
-    effect = drag_operations_to_dropeffects(query->drag_operation.offered_ops);
+    pt.x = params->x;
+    pt.y = params->y;
+    effect = params->effect;
 
     /* Instead of the top-level window we got in the query, start with the deepest
        child under the cursor.  Travel up the hierarchy looking for a window that
@@ -604,16 +564,14 @@ BOOL query_drag_operation(macdrv_query* query)
             POINTL pointl = { pt.x, pt.y };
 
             if (!active_data_object)
-                active_data_object = create_data_object_for_pasteboard(query->drag_operation.pasteboard);
+                active_data_object = create_data_object_for_pasteboard((void *)(UINT_PTR)params->handle);
 
             TRACE("DragEnter hwnd %p droptarget %p\n", hwnd, droptarget);
             hr = IDropTarget_DragEnter(droptarget, active_data_object, MK_LBUTTON,
                                        pointl, &effect);
             if (SUCCEEDED(hr))
             {
-                query->drag_operation.accepted_op = dropeffect_to_drag_operation(effect,
-                                                        query->drag_operation.offered_ops);
-                TRACE("    effect %d accepted op %d\n", effect, query->drag_operation.accepted_op);
+                TRACE("    effect %d\n", effect);
                 ret = TRUE;
             }
             else
@@ -629,9 +587,7 @@ BOOL query_drag_operation(macdrv_query* query)
         hr = IDropTarget_DragOver(droptarget, MK_LBUTTON, pointl, &effect);
         if (SUCCEEDED(hr))
         {
-            query->drag_operation.accepted_op = dropeffect_to_drag_operation(effect,
-                                                    query->drag_operation.offered_ops);
-            TRACE("    effect %d accepted op %d\n", effect, query->drag_operation.accepted_op);
+            TRACE("    effect %d\n", effect);
             ret = TRUE;
         }
         else
@@ -649,7 +605,7 @@ BOOL query_drag_operation(macdrv_query* query)
             FORMATETC formatEtc;
 
             if (!active_data_object)
-                active_data_object = create_data_object_for_pasteboard(query->drag_operation.pasteboard);
+                active_data_object = create_data_object_for_pasteboard((void *)(UINT_PTR)params->handle);
 
             formatEtc.cfFormat = CF_HDROP;
             formatEtc.ptd = NULL;
@@ -659,12 +615,12 @@ BOOL query_drag_operation(macdrv_query* query)
             if (SUCCEEDED(IDataObject_QueryGetData(active_data_object, &formatEtc)))
             {
                 TRACE("WS_EX_ACCEPTFILES hwnd %p\n", hwnd);
-                query->drag_operation.accepted_op = DRAG_OP_GENERIC;
+                effect = DROPEFFECT_COPY | DROPEFFECT_LINK;
                 ret = TRUE;
             }
         }
     }
 
     TRACE(" -> %s\n", ret ? "TRUE" : "FALSE");
-    return ret;
+    return ret ? effect : 0;
 }

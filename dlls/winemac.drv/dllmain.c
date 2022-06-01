@@ -29,6 +29,7 @@ HMODULE macdrv_module = 0;
 typedef NTSTATUS (WINAPI *kernel_callback)(void *params, ULONG size);
 static const kernel_callback kernel_callbacks[] =
 {
+    macdrv_dnd_query_drag,
     macdrv_dnd_query_drop,
     macdrv_dnd_query_exited,
     macdrv_ime_query_char_rect,
