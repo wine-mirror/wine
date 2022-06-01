@@ -1067,10 +1067,6 @@ static void test_xapo_creation_modern(const char *module)
 
     /* CLSIDs are the same across all versions */
     static const GUID *const_clsids[] = {
-        &CLSID_FXEQ27,
-        &CLSID_FXMasteringLimiter27,
-        &CLSID_FXReverb27,
-        &CLSID_FXEcho27,
         &CLSID_FXEQ,
         &CLSID_FXMasteringLimiter,
         &CLSID_FXReverb,
@@ -1109,19 +1105,6 @@ static void test_xapo_creation_modern(const char *module)
         ok(hr == REGDB_E_CLASSNOTREG, "CoCreateInstance should have failed: %08lx\n", hr);
         if(SUCCEEDED(hr))
             IUnknown_Release(fx_unk);
-    }
-
-    /* test legacy CLSID */
-    hr = pCreateFX(&CLSID_AudioVolumeMeter27, &fx_unk, NULL, 0);
-    ok(hr == S_OK, "%s: CreateFX(CLSID_AudioVolumeMeter) failed: %08lx\n", module, hr);
-    if(SUCCEEDED(hr)){
-        IXAPO *xapo;
-        hr = IUnknown_QueryInterface(fx_unk, &IID_IXAPO, (void**)&xapo);
-        ok(hr == S_OK, "Couldn't get IXAPO interface: %08lx\n", hr);
-        if(SUCCEEDED(hr))
-            IXAPO_Release(xapo);
-        rc = IUnknown_Release(fx_unk);
-        ok(rc == 0, "XAPO via legacy CreateFX should have been released, got refcount: %lu\n", rc);
     }
 
     pCAVM = (void*)GetProcAddress(xaudio2dll, "CreateAudioVolumeMeter");
