@@ -6522,6 +6522,61 @@ static FORCEINLINE void MemoryBarrier(void)
 
 #endif /* __i386__ */
 
+/* Since Visual Studio 2012, volatile accesses do not always imply acquire and
+ * release semantics.  We explicitly use ISO volatile semantics, manually
+ * placing barriers as appropriate.
+ */
+#if _MSC_VER >= 1700
+#pragma intrinsic(__iso_volatile_load32)
+#pragma intrinsic(__iso_volatile_store32)
+#define __WINE_LOAD32_NO_FENCE(src) (__iso_volatile_load32(src))
+#define __WINE_STORE32_NO_FENCE(dest, value) (__iso_volatile_store32(dest, value))
+#else  /* _MSC_VER >= 1700 */
+#define __WINE_LOAD32_NO_FENCE(src) (*(src))
+#define __WINE_STORE32_NO_FENCE(dest, value) ((void)(*(dest) = (value)))
+#endif  /* _MSC_VER >= 1700 */
+
+#if defined(__i386__) || defined(__x86_64__)
+#pragma intrinsic(_ReadWriteBarrier)
+void _ReadWriteBarrier(void);
+#endif  /* defined(__i386__) || defined(__x86_64__) */
+
+static void __wine_memory_barrier_acq_rel(void)
+{
+#if defined(__i386__) || defined(__x86_64__)
+#pragma warning(suppress:4996)
+    _ReadWriteBarrier();
+#elif defined(__arm__)
+    __dmb(_ARM_BARRIER_ISH);
+#elif defined(__aarch64__)
+    __dmb(_ARM64_BARRIER_ISH);
+#endif  /* defined(__i386__) || defined(__x86_64__) */
+}
+
+static FORCEINLINE LONG ReadAcquire( LONG const volatile *src )
+{
+    LONG value = __WINE_LOAD32_NO_FENCE( (int const volatile *)src );
+    __wine_memory_barrier_acq_rel();
+    return value;
+}
+
+static FORCEINLINE LONG ReadNoFence( LONG const volatile *src )
+{
+    LONG value = __WINE_LOAD32_NO_FENCE( (int const volatile *)src );
+    return value;
+}
+
+static FORCEINLINE void WriteRelease( LONG volatile *dest, LONG value )
+{
+    __wine_memory_barrier_acq_rel();
+    __WINE_STORE32_NO_FENCE( (int volatile *)dest, value );
+}
+
+static FORCEINLINE void WriteNoFence( LONG volatile *dest, LONG value )
+{
+    __WINE_STORE32_NO_FENCE( (int volatile *)dest, value );
+}
+
 #elif defined(__GNUC__)
 
 static FORCEINLINE BOOLEAN WINAPI BitScanForward(DWORD *index, DWORD mask)
@@ -6663,6 +6718,43 @@ static FORCEINLINE LONGLONG WINAPI InterlockedXor64( LONGLONG volatile *dest, LO
 static FORCEINLINE void MemoryBarrier(void)
 {
     __sync_synchronize();
+}
+
+#if defined(__x86_64__) || defined(__i386__)
+/* On x86, Support old GCC with either no or buggy (GCC BZ#81316) __atomic_* support */
+#define __WINE_ATOMIC_LOAD_ACQUIRE(ptr, ret) do { *(ret) = *(ptr); __asm__ __volatile__( "" ::: "memory" ); } while (0)
+#define __WINE_ATOMIC_LOAD_RELAXED(ptr, ret) do { *(ret) = *(ptr); } while (0)
+#define __WINE_ATOMIC_STORE_RELEASE(ptr, val) do { __asm__ __volatile__( "" ::: "memory" ); *(ptr) = *(val); } while (0)
+#define __WINE_ATOMIC_STORE_RELAXED(ptr, val) do { *(ptr) = *(val); } while (0)
+#else
+#define __WINE_ATOMIC_LOAD_ACQUIRE(ptr, ret) __atomic_load(ptr, ret, __ATOMIC_ACQUIRE)
+#define __WINE_ATOMIC_LOAD_RELAXED(ptr, ret) __atomic_load(ptr, ret, __ATOMIC_RELAXED)
+#define __WINE_ATOMIC_STORE_RELEASE(ptr, val) __atomic_store(ptr, val, __ATOMIC_RELEASE)
+#define __WINE_ATOMIC_STORE_RELAXED(ptr, val) __atomic_store(ptr, val, __ATOMIC_RELAXED)
+#endif  /* defined(__x86_64__) || defined(__i386__) */
+
+static FORCEINLINE LONG ReadAcquire( LONG const volatile *src )
+{
+    LONG value;
+    __WINE_ATOMIC_LOAD_ACQUIRE( src, &value );
+    return value;
+}
+
+static FORCEINLINE LONG ReadNoFence( LONG const volatile *src )
+{
+    LONG value;
+    __WINE_ATOMIC_LOAD_RELAXED( src, &value );
+    return value;
+}
+
+static FORCEINLINE void WriteRelease( LONG volatile *dest, LONG value )
+{
+    __WINE_ATOMIC_STORE_RELEASE( dest, &value );
+}
+
+static FORCEINLINE void WriteNoFence( LONG volatile *dest, LONG value )
+{
+    __WINE_ATOMIC_STORE_RELAXED( dest, &value );
 }
 
 static FORCEINLINE DECLSPEC_NORETURN void __fastfail(unsigned int code)
