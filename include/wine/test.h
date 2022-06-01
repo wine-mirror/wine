@@ -44,6 +44,9 @@ extern int winetest_time;
 /* running in interactive mode? */
 extern int winetest_interactive;
 
+/* always count flaky tests as successful (BOOL) */
+extern int winetest_allow_flaky;
+
 /* report successful tests (BOOL) */
 extern int winetest_report_success;
 
@@ -59,6 +62,9 @@ extern void winetest_ignore_exceptions( BOOL ignore );
 extern void winetest_start_todo( int is_todo );
 extern int winetest_loop_todo(void);
 extern void winetest_end_todo(void);
+extern void winetest_start_flaky( int is_flaky );
+extern int winetest_loop_flaky(void);
+extern void winetest_end_flaky(void);
 extern int winetest_get_mainargs( char*** pargv );
 extern LONG winetest_get_failures(void);
 extern void winetest_add_failures( LONG new_failures );
@@ -110,6 +116,13 @@ extern void winetest_pop_context(void);
 #define win_skip win_skip_(__FILE__, __LINE__)
 #define trace    trace_(__FILE__, __LINE__)
 #define wait_child_process wait_child_process_(__FILE__, __LINE__)
+
+#define flaky_if(is_flaky) for (winetest_start_flaky(is_flaky); \
+                                winetest_loop_flaky(); \
+                                winetest_end_flaky())
+#define flaky                   flaky_if(TRUE)
+#define flaky_wine              flaky_if(!strcmp(winetest_platform, "wine"))
+#define flaky_wine_if(is_flaky) flaky_if((is_flaky) && !strcmp(winetest_platform, "wine"))
 
 #define todo_if(is_todo) for (winetest_start_todo(is_todo); \
                               winetest_loop_todo(); \
@@ -194,6 +207,9 @@ int winetest_interactive = 0;
 /* current platform */
 const char *winetest_platform = "windows";
 
+/* always count flaky tests as successful (BOOL) */
+int winetest_allow_flaky;
+
 /* report successful tests (BOOL) */
 int winetest_report_success = 0;
 
@@ -211,6 +227,7 @@ static const struct test *current_test; /* test currently being run */
 
 static LONG successes;       /* number of successful tests */
 static LONG failures;        /* number of failures */
+static LONG flaky_failures;  /* number of failures inside flaky block */
 static LONG skipped;         /* number of skipped test chunks */
 static LONG todo_successes;  /* number of successful tests inside todo block */
 static LONG todo_failures;   /* number of failures inside todo block */
@@ -226,6 +243,8 @@ struct tls_data
 {
     const char* current_file;        /* file of current check */
     int current_line;                /* line of current check */
+    unsigned int flaky_level;        /* current flaky nesting level */
+    int flaky_do_loop;
     unsigned int todo_level;         /* current todo nesting level */
     int todo_do_loop;
     char *str_pos;                   /* position in debug buffer */
@@ -283,10 +302,12 @@ const char *winetest_elapsed(void)
 
 static const char color_reset[] = "\e[0m";
 static const char color_dark_red[] = "\e[31m";
+static const char color_dark_purple[] = "\e[35m";
 static const char color_green[] = "\e[32m";
 static const char color_yellow[] = "\e[33m";
 static const char color_blue[] = "\e[34m";
 static const char color_bright_red[] = "\e[1;91m";
+static const char color_bright_purple[] = "\e[1;95m";
 
 static void winetest_printf( const char *msg, ... ) __WINE_PRINTF_ATTR(1,2);
 static void winetest_printf( const char *msg, ... )
@@ -359,11 +380,21 @@ int winetest_vok( int condition, const char *msg, va_list args )
     {
         if (condition)
         {
-            if (winetest_color) printf( color_dark_red );
-            winetest_print_context( "Test succeeded inside todo block: " );
-            vprintf(msg, args);
+            if (data->flaky_level)
+            {
+                if (winetest_color) printf( color_dark_purple );
+                winetest_print_context( "Test succeeded inside flaky todo block: " );
+                vprintf(msg, args);
+                InterlockedIncrement(&flaky_failures);
+            }
+            else
+            {
+                if (winetest_color) printf( color_dark_red );
+                winetest_print_context( "Test succeeded inside todo block: " );
+                vprintf(msg, args);
+                InterlockedIncrement(&todo_failures);
+            }
             if (winetest_color) printf( color_reset );
-            InterlockedIncrement(&todo_failures);
             return 0;
         }
         else
@@ -389,11 +420,21 @@ int winetest_vok( int condition, const char *msg, va_list args )
     {
         if (!condition)
         {
-            if (winetest_color) printf( color_bright_red );
-            winetest_print_context( "Test failed: " );
-            vprintf(msg, args);
+            if (data->flaky_level)
+            {
+                if (winetest_color) printf( color_bright_purple );
+                winetest_print_context( "Test marked flaky: " );
+                vprintf(msg, args);
+                InterlockedIncrement(&flaky_failures);
+            }
+            else
+            {
+                if (winetest_color) printf( color_bright_red );
+                winetest_print_context( "Test failed: " );
+                vprintf(msg, args);
+                InterlockedIncrement(&failures);
+            }
             if (winetest_color) printf( color_reset );
-            InterlockedIncrement(&failures);
             return 0;
         }
         else
@@ -468,6 +509,27 @@ void winetest_win_skip( const char *msg, ... )
     else
         winetest_vok(0, msg, valist);
     va_end(valist);
+}
+
+void winetest_start_flaky( int is_flaky )
+{
+    struct tls_data *data = get_tls_data();
+    data->flaky_level = (data->flaky_level << 1) | (is_flaky != 0);
+    data->flaky_do_loop = 1;
+}
+
+int winetest_loop_flaky(void)
+{
+    struct tls_data *data = get_tls_data();
+    int do_flaky = data->flaky_do_loop;
+    data->flaky_do_loop = 0;
+    return do_flaky;
+}
+
+void winetest_end_flaky(void)
+{
+    struct tls_data *data = get_tls_data();
+    data->flaky_level >>= 1;
 }
 
 void winetest_start_todo( int is_todo )
@@ -615,14 +677,16 @@ static int run_test( const char *name )
             printf( "%04x:%s:%s Silenced %d todos, %d skips and %d traces.\n",
                     (UINT)GetCurrentProcessId(), test->name, winetest_elapsed(),
                     (UINT)muted_todo_successes, (UINT)muted_skipped, (UINT)muted_traces);
-        printf( "%04x:%s:%s %d tests executed (%d marked as todo, %d %s), %d skipped.\n",
+        printf( "%04x:%s:%s %d tests executed (%d marked as todo, %d as flaky, %d %s), %d skipped.\n",
                 (UINT)GetCurrentProcessId(), test->name, winetest_elapsed(),
-                (UINT)(successes + failures + todo_successes + todo_failures),
-                (UINT)todo_successes, (UINT)(failures + todo_failures),
+                (UINT)(successes + failures + flaky_failures + todo_successes + todo_failures),
+                (UINT)todo_successes, (UINT)flaky_failures, (UINT)(failures + todo_failures),
                 (failures + todo_failures != 1) ? "failures" : "failure",
                 (UINT)skipped );
     }
-    status = (failures + todo_failures < 255) ? failures + todo_failures : 255;
+    status = failures + todo_failures;
+    if (!winetest_allow_flaky) status += flaky_failures;
+    if (status > 255) status = 255;
     return status;
 }
 
@@ -694,6 +758,7 @@ int main( int argc, char **argv )
     }
     if (GetEnvironmentVariableA( "WINETEST_DEBUG", p, sizeof(p) )) winetest_debug = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_INTERACTIVE", p, sizeof(p) )) winetest_interactive = atoi(p);
+    if (GetEnvironmentVariableA( "WINETEST_ALLOW_FLAKY", p, sizeof(p) )) winetest_allow_flaky = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_REPORT_SUCCESS", p, sizeof(p) )) winetest_report_success = atoi(p);
     if (GetEnvironmentVariableA( "WINETEST_TIME", p, sizeof(p) )) winetest_time = atoi(p);
     winetest_last_time = winetest_start_time = GetTickCount();
