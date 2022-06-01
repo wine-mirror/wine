@@ -31,6 +31,7 @@ enum macdrv_funcs
     unix_ime_using_input_method,
     unix_init,
     unix_notify_icon,
+    unix_quit_result,
     unix_funcs_count
 };
 
@@ -92,15 +93,28 @@ struct notify_icon_params
     struct _NOTIFYICONDATAW *data;
 };
 
+/* macdrv_quit_result params */
+struct quit_result_params
+{
+    int result;
+};
+
 /* driver client callbacks exposed with KernelCallbackTable interface */
 enum macdrv_client_funcs
 {
-    client_func_dnd_query_drag = NtUserDriverCallbackFirst,
+    client_func_app_quit_request = NtUserDriverCallbackFirst,
+    client_func_dnd_query_drag,
     client_func_dnd_query_drop,
     client_func_dnd_query_exited,
     client_func_ime_query_char_rect,
     client_func_ime_set_text,
     client_func_last
+};
+
+/* macdrv_app_quit_request params */
+struct app_quit_request_params
+{
+    UINT flags;
 };
 
 /* macdrv_dnd_query_drag params */

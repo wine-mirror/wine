@@ -628,6 +628,14 @@ static NTSTATUS macdrv_ime_using_input_method(void *arg)
 }
 
 
+static NTSTATUS macdrv_quit_result(void *arg)
+{
+    struct quit_result_params *params = arg;
+    macdrv_quit_reply(params->result);
+    return 0;
+}
+
+
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
     macdrv_dnd_get_data,
@@ -640,6 +648,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     macdrv_ime_using_input_method,
     macdrv_init,
     macdrv_notify_icon,
+    macdrv_quit_result,
 };
 
 C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
