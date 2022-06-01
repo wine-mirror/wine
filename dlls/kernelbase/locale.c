@@ -672,7 +672,12 @@ static const struct sortguid *get_language_sort( const WCHAR *name )
         name = locale_strings + user_locale->sname + 1;
     }
 
-    if (!(entry = find_lcname_entry( name ))) return NULL;
+    if (!(entry = find_lcname_entry( name )))
+    {
+        WARN( "unknown locale %s\n", debugstr_w(name) );
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
     if ((ret = locale_sorts[entry - lcnames_index])) return ret;
 
     lcid = entry->id;
@@ -686,22 +691,17 @@ static const struct sortguid *get_language_sort( const WCHAR *name )
             if (!RegQueryValueExW( key, name, NULL, &type, (BYTE *)guidstr, &size ) && type == REG_SZ)
             {
                 RtlInitUnicodeString( &str, guidstr );
-                if (!RtlGUIDFromString( &str, &guid ))
-                {
-                    ret = find_sortguid( &guid );
-                    goto done;
-                }
+                if (!RtlGUIDFromString( &str, &guid )) ret = find_sortguid( &guid );
                 break;
             }
             if (!name[0]) break;
             name = locale_strings + (SORTIDFROMLCID( lcid ) ? locale->sname : locale->sparent) + 1;
             if (!(locale = get_locale_by_name( name, &lcid ))) break;
         }
+        RegCloseKey( key );
     }
-    ret = &sort.guids[0];
-done:
-    RegCloseKey( key );
-    if (ret) locale_sorts[entry - lcnames_index] = ret;
+    if (!ret) ret = &sort.guids[0];
+    locale_sorts[entry - lcnames_index] = ret;
     return ret;
 }
 
@@ -4484,12 +4484,7 @@ INT WINAPI CompareStringEx( const WCHAR *locale, DWORD flags, const WCHAR *str1,
         return 0;
     }
 
-    if (!(sortid = get_language_sort( locale )))
-    {
-        FIXME( "unknown locale %s\n", debugstr_w(locale) );
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
+    if (!(sortid = get_language_sort( locale ))) return 0;
 
     if (!str1 || !str2)
     {
@@ -4971,12 +4966,7 @@ INT WINAPI DECLSPEC_HOTPATCH FindNLSStringEx( const WCHAR *locale, DWORD flags, 
         SetLastError( ERROR_INVALID_PARAMETER );
         return -1;
     }
-    if (!(sortid = get_language_sort( locale )))
-    {
-        WARN( "unknown locale %s\n", debugstr_w(locale) );
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return -1;
-    }
+    if (!(sortid = get_language_sort( locale ))) return -1;
 
     if (srclen == -1) srclen = lstrlenW(src);
     if (valuelen == -1) valuelen = lstrlenW(value);
@@ -5634,11 +5624,8 @@ BOOL WINAPI DECLSPEC_HOTPATCH GetNLSVersionEx( NLS_FUNCTION func, const WCHAR *l
         SetLastError( ERROR_INSUFFICIENT_BUFFER );
         return FALSE;
     }
-    if (!(sortid = get_language_sort( locale )))
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
+
+    if (!(sortid = get_language_sort( locale ))) return FALSE;
 
     info->dwNLSVersion = info->dwDefinedVersion = sort.version;
     if (info->dwNLSVersionInfoSize >= sizeof(*info))
@@ -6329,13 +6316,10 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringEx( const WCHAR *locale, DWORD flags, co
 
     if (!dstlen) dst = NULL;
 
-    if (flags & (LCMAP_LINGUISTIC_CASING | LCMAP_SORTKEY) && !(sortid = get_language_sort( locale )))
+    if (flags & (LCMAP_LOWERCASE | LCMAP_UPPERCASE | LCMAP_SORTKEY))
     {
-        FIXME( "unknown locale %s\n", debugstr_w(locale) );
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
+        if (!(sortid = get_language_sort( locale ))) return 0;
     }
-
     if (flags & LCMAP_SORTKEY)
     {
         if (src == dst)
@@ -6574,31 +6558,27 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringW( LCID lcid, DWORD flags, const WCHAR *
                                            WCHAR *dst, int dstlen )
 {
     const WCHAR *locale = LOCALE_NAME_USER_DEFAULT;
+    const NLS_LOCALE_LCID_INDEX *entry;
 
-    if (flags & (LCMAP_LINGUISTIC_CASING | LCMAP_SORTKEY))
+    switch (lcid)
     {
-        const NLS_LOCALE_LCID_INDEX *entry;
-
-        switch (lcid)
+    case LOCALE_NEUTRAL:
+    case LOCALE_USER_DEFAULT:
+    case LOCALE_SYSTEM_DEFAULT:
+    case LOCALE_CUSTOM_DEFAULT:
+    case LOCALE_CUSTOM_UNSPECIFIED:
+    case LOCALE_CUSTOM_UI_DEFAULT:
+        break;
+    default:
+        if (lcid == user_lcid || lcid == system_lcid) break;
+        if (!(entry = find_lcid_entry( lcid )))
         {
-        case LOCALE_NEUTRAL:
-        case LOCALE_USER_DEFAULT:
-        case LOCALE_SYSTEM_DEFAULT:
-        case LOCALE_CUSTOM_DEFAULT:
-        case LOCALE_CUSTOM_UNSPECIFIED:
-        case LOCALE_CUSTOM_UI_DEFAULT:
-            break;
-        default:
-            if (lcid == user_lcid || lcid == system_lcid) break;
-            if (!(entry = find_lcid_entry( lcid )))
-            {
-                WARN( "unknown locale %04lx\n", lcid );
-                SetLastError( ERROR_INVALID_PARAMETER );
-                return 0;
-            }
-            locale = locale_strings + entry->name + 1;
-            break;
+            WARN( "unknown locale %04lx\n", lcid );
+            SetLastError( ERROR_INVALID_PARAMETER );
+            return 0;
         }
+        locale = locale_strings + entry->name + 1;
+        break;
     }
 
     return LCMapStringEx( locale, flags, src, srclen, dst, dstlen, NULL, NULL, 0 );

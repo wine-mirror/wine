@@ -2669,10 +2669,13 @@ static void test_LCMapStringW(void)
 
     SetLastError(0xdeadbeef);
     ret = LCMapStringW((LCID)-1, LCMAP_LOWERCASE, upper_case, -1, buf, ARRAY_SIZE(buf));
-    todo_wine {
     ok(!ret, "LCMapStringW should fail with bad lcid\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "unexpected error code %ld\n", GetLastError());
-    }
+
+    SetLastError(0xdeadbeef);
+    ret = LCMapStringW((LCID)0xdead, LCMAP_HIRAGANA, upper_case, -1, buf, ARRAY_SIZE(buf));
+    ok(!ret, "LCMapStringW should fail with bad lcid\n");
+    ok(GetLastError() == ERROR_INVALID_PARAMETER, "unexpected error code %ld\n", GetLastError());
 
     test_lcmapstring_unicode(LCMapStringW_wrapper, "LCMapStringW:");
 }
@@ -2698,10 +2701,13 @@ static void test_LCMapStringEx(void)
     SetLastError(0xdeadbeef);
     ret = pLCMapStringEx(invalidW, LCMAP_LOWERCASE,
                          upper_case, -1, buf, ARRAY_SIZE(buf), NULL, NULL, 0);
-    todo_wine {
     ok(!ret, "LCMapStringEx should fail with bad locale name\n");
     ok(GetLastError() == ERROR_INVALID_PARAMETER, "unexpected error code %ld\n", GetLastError());
-    }
+
+    SetLastError(0xdeadbeef);
+    ret = pLCMapStringEx(invalidW, LCMAP_HIRAGANA,
+                         upper_case, -1, buf, ARRAY_SIZE(buf), NULL, NULL, 0);
+    ok(ret, "LCMapStringEx should not fail with bad locale name\n");
 
     /* test reserved parameters */
     ret = pLCMapStringEx(LOCALE_NAME_USER_DEFAULT, LCMAP_LOWERCASE,
