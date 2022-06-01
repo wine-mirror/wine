@@ -1251,18 +1251,22 @@ static NTSTATUS pdo_handle_ioctl( struct phys_device *impl, IRP *irp, ULONG code
     switch (code)
     {
     case IOCTL_WINETEST_HID_SET_EXPECT:
+        if (in_size > EXPECT_QUEUE_BUFFER_SIZE) return STATUS_BUFFER_OVERFLOW;
         expect_queue_reset( &impl->expect_queue, in_buffer, in_size );
         return STATUS_SUCCESS;
     case IOCTL_WINETEST_HID_WAIT_EXPECT:
     {
-        struct wait_expect_params wait_params = *(struct wait_expect_params *)in_buffer;
-        if (!wait_params.wait_pending) return expect_queue_wait( &impl->expect_queue, irp );
+        struct wait_expect_params *wait_params = (struct wait_expect_params *)in_buffer;
+        if (in_size < sizeof(*wait_params)) return STATUS_BUFFER_TOO_SMALL;
+        if (!wait_params->wait_pending) return expect_queue_wait( &impl->expect_queue, irp );
         else return expect_queue_wait_pending( &impl->expect_queue, irp );
     }
     case IOCTL_WINETEST_HID_SEND_INPUT:
+        if (in_size > EXPECT_QUEUE_BUFFER_SIZE) return STATUS_BUFFER_OVERFLOW;
         input_queue_reset( &impl->input_queue, in_buffer, in_size );
         return STATUS_SUCCESS;
     case IOCTL_WINETEST_HID_SET_CONTEXT:
+        if (in_size > sizeof(impl->expect_queue.context)) return STATUS_BUFFER_OVERFLOW;
         KeAcquireSpinLock( &impl->expect_queue.lock, &irql );
         memcpy( impl->expect_queue.context, in_buffer, in_size );
         KeReleaseSpinLock( &impl->expect_queue.lock, irql );
