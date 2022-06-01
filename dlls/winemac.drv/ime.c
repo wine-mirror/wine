@@ -577,7 +577,7 @@ BOOL WINAPI ImeProcessKey(HIMC hIMC, UINT vKey, LPARAM lKeyData, const LPBYTE lp
         return FALSE;
     }
 
-    inIME = macdrv_using_input_method();
+    inIME = MACDRV_CALL(ime_using_input_method, NULL);
     lpIMC = LockRealIMC(hIMC);
     if (lpIMC)
     {
@@ -658,6 +658,7 @@ BOOL WINAPI ImeSetActiveContext(HIMC hIMC, BOOL fFlag)
 UINT WINAPI ImeToAsciiEx(UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
                          LPDWORD lpdwTransKey, UINT fuState, HIMC hIMC)
 {
+    struct process_text_input_params params;
     UINT vkey;
     LPINPUTCONTEXT lpIMC;
     LPIMEPRIVATE myPrivate;
@@ -690,7 +691,13 @@ UINT WINAPI ImeToAsciiEx(UINT uVKey, UINT uScanCode, const LPBYTE lpbKeyState,
     UnlockRealIMC(hIMC);
 
     TRACE("Processing Mac 0x%04x\n", vkey);
-    macdrv_process_text_input(uVKey, uScanCode, repeat, lpbKeyState, hIMC, &done);
+    params.vkey = uVKey;
+    params.scan = uScanCode;
+    params.repeat = repeat;
+    params.key_state = lpbKeyState;
+    params.himc = hIMC;
+    params.done = &done;
+    MACDRV_CALL(ime_process_text_input, &params);
 
     while (!done)
         MsgWaitForMultipleObjectsEx(0, NULL, INFINITE, QS_POSTMESSAGE | QS_SENDMESSAGE, 0);

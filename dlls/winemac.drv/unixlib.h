@@ -21,6 +21,8 @@
 
 enum macdrv_funcs
 {
+    unix_ime_process_text_input,
+    unix_ime_using_input_method,
     unix_init,
     unix_notify_icon,
     unix_funcs_count
@@ -29,6 +31,17 @@ enum macdrv_funcs
 /* FIXME: Use __wine_unix_call when the rest of the stack is ready */
 extern NTSTATUS unix_call(enum macdrv_funcs code, void *params) DECLSPEC_HIDDEN;
 #define MACDRV_CALL(func, params) unix_call( unix_ ## func, params )
+
+/* macdrv_ime_process_text_input params */
+struct process_text_input_params
+{
+    UINT vkey;
+    UINT scan;
+    UINT repeat;
+    const BYTE *key_state;
+    void *himc;
+    int *done;
+};
 
 /* macdrv_init params */
 struct localized_string

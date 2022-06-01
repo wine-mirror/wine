@@ -607,8 +607,16 @@ BOOL macdrv_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, 
 }
 
 
+static NTSTATUS macdrv_ime_using_input_method(void *arg)
+{
+    return macdrv_using_input_method();
+}
+
+
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
+    macdrv_ime_process_text_input,
+    macdrv_ime_using_input_method,
     macdrv_init,
     macdrv_notify_icon,
 };

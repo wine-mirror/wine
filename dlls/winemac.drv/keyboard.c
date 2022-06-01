@@ -1187,13 +1187,16 @@ void macdrv_hotkey_press(const macdrv_event *event)
 /***********************************************************************
  *              macdrv_process_text_input
  */
-void macdrv_process_text_input(UINT vkey, UINT scan, UINT repeat, const BYTE *key_state, void *himc, int* done)
+NTSTATUS macdrv_ime_process_text_input(void *arg)
 {
+    struct process_text_input_params *params = arg;
     struct macdrv_thread_data *thread_data = macdrv_thread_data();
+    const BYTE *key_state = params->key_state;
     unsigned int flags;
     int keyc;
 
-    TRACE("vkey 0x%04x scan 0x%04x repeat %u himc %p\n", vkey, scan, repeat, himc);
+    TRACE("vkey 0x%04x scan 0x%04x repeat %u himc %p\n", params->vkey, params->scan,
+          params->repeat, params->himc);
 
     flags = thread_data->last_modifiers;
     if (key_state[VK_SHIFT] & 0x80)
@@ -1215,17 +1218,19 @@ void macdrv_process_text_input(UINT vkey, UINT scan, UINT repeat, const BYTE *ke
 
     /* Find the Mac keycode corresponding to the scan code */
     for (keyc = 0; keyc < ARRAY_SIZE(thread_data->keyc2vkey); keyc++)
-        if (thread_data->keyc2vkey[keyc] == vkey) break;
+        if (thread_data->keyc2vkey[keyc] == params->vkey) break;
 
     if (keyc >= ARRAY_SIZE(thread_data->keyc2vkey))
     {
-        *done = -1;
-        return;
+        *params->done = -1;
+        return 0;
     }
 
     TRACE("flags 0x%08x keyc 0x%04x\n", flags, keyc);
 
-    macdrv_send_text_input_event(((scan & 0x8000) == 0), flags, repeat, keyc, himc, done);
+    macdrv_send_text_input_event(((params->scan & 0x8000) == 0), flags, params->repeat, keyc,
+                                 params->himc, params->done);
+    return 0;
 }
 
 
