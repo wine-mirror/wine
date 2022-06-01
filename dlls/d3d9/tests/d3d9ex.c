@@ -4923,6 +4923,39 @@ static void test_pinned_buffers(void)
     DestroyWindow(window);
 }
 
+static void test_desktop_window(void)
+{
+    IDirect3DDevice9Ex *device;
+    D3DCOLOR color;
+    ULONG refcount;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    if (!(device = create_device(window, NULL)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        DestroyWindow(window);
+        return;
+    }
+    IDirect3DDevice9Ex_Release(device);
+    DestroyWindow(window);
+
+    device = create_device(GetDesktopWindow(), NULL);
+    ok(!!device, "Failed to create a D3D device.\n");
+
+    hr = IDirect3DDevice9Ex_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffff0000, 1.0f, 0);
+    ok(SUCCEEDED(hr), "Failed to clear, hr %#x.\n", hr);
+    color = get_pixel_color(device, 1, 1);
+    ok(color == 0x00ff0000, "Got unexpected color 0x%08x.\n", color);
+
+    hr = IDirect3DDevice9Ex_Present(device, NULL, NULL, NULL, NULL);
+    ok(SUCCEEDED(hr), "Failed to present, hr %#x.\n", hr);
+
+    refcount = IDirect3DDevice9Ex_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+}
+
 START_TEST(d3d9ex)
 {
     DEVMODEW current_mode;
@@ -4982,6 +5015,7 @@ START_TEST(d3d9ex)
     test_resource_access();
     test_sysmem_draw();
     test_pinned_buffers();
+    test_desktop_window();
 
     UnregisterClassA("d3d9_test_wc", GetModuleHandleA(NULL));
 }
