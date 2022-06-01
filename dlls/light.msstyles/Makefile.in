@@ -232,20 +232,40 @@ SVG_SRCS = \
 	blue_rebar_gripper_vertical.svg \
 	blue_rebar_splitter.svg \
 	blue_rebar_splitter_vertical.svg \
-	blue_scrollbar_arrow_glyphs_7px.svg \
-	blue_scrollbar_arrow_glyphs_9px.svg \
+	blue_scrollbar_arrow_glyphs_13px.svg \
+	blue_scrollbar_arrow_glyphs_16px.svg \
+	blue_scrollbar_arrow_glyphs_20px.svg \
+	blue_scrollbar_arrow_glyphs_26px.svg \
+	blue_scrollbar_arrow_glyphs_32px.svg \
+	blue_scrollbar_arrow_glyphs_39px.svg \
+	blue_scrollbar_arrow_glyphs_52px.svg \
 	blue_scrollbar_arrows.svg \
+	blue_scrollbar_gripper_horizontal_10px.svg \
+	blue_scrollbar_gripper_horizontal_12px.svg \
+	blue_scrollbar_gripper_horizontal_16px.svg \
+	blue_scrollbar_gripper_horizontal_20px.svg \
+	blue_scrollbar_gripper_horizontal_25px.svg \
+	blue_scrollbar_gripper_horizontal_30px.svg \
+	blue_scrollbar_gripper_horizontal_40px.svg \
+	blue_scrollbar_gripper_vertical_11px.svg \
+	blue_scrollbar_gripper_vertical_14px.svg \
+	blue_scrollbar_gripper_vertical_22px.svg \
+	blue_scrollbar_gripper_vertical_27px.svg \
+	blue_scrollbar_gripper_vertical_36px.svg \
+	blue_scrollbar_gripper_vertical_9px.svg \
+	blue_scrollbar_lower_track_horizontal.svg \
+	blue_scrollbar_lower_track_vertical.svg \
 	blue_scrollbar_resizebox_grip_16px.svg \
 	blue_scrollbar_resizebox_grip_20px.svg \
 	blue_scrollbar_resizebox_grip_24px.svg \
-	blue_scrollbar_resizebox_grip_28px.svg \
 	blue_scrollbar_resizebox_grip_32px.svg \
-	blue_scrollbar_resizebox_grip_36px.svg \
 	blue_scrollbar_resizebox_grip_40px.svg \
-	blue_scrollbar_shaft_horizontal.svg \
-	blue_scrollbar_shaft_vertical.svg \
+	blue_scrollbar_resizebox_grip_48px.svg \
+	blue_scrollbar_resizebox_grip_64px.svg \
 	blue_scrollbar_thumb_horizontal.svg \
 	blue_scrollbar_thumb_vertical.svg \
+	blue_scrollbar_upper_track_horizontal.svg \
+	blue_scrollbar_upper_track_vertical.svg \
 	blue_spin_background.svg \
 	blue_spin_background_down.svg \
 	blue_spin_background_left.svg \

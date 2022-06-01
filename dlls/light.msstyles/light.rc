@@ -1381,93 +1381,145 @@ BLUE_INI TEXTFILE
 
 "[ScrollBar.ArrowBtn]\r\n"
 "BgType = ImageFile\r\n"
-"SizingMargins = 5, 5, 5, 5\r\n"
-"ContentMargins = 0, 0, 3, 3\r\n"
+"SizingMargins = 8, 8, 8, 8\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
 "SizingType = Stretch\r\n"
 "ImageFile = blue_scrollbar_arrows.bmp\r\n"
-"ImageCount = 16\r\n"
+"ImageCount = 20\r\n"
 "ImageLayout = Vertical\r\n"
 "GlyphType = ImageGlyph\r\n"
+"Transparent = True\r\n"
 "GlyphTransparent = True\r\n"
 "ImageSelectType = Size\r\n"
-"UniformSizing = True\r\n"
-"ImageFile1 = blue_scrollbar_arrow_glyphs_7px.bmp\r\n"
-"ImageFile2 = blue_scrollbar_arrow_glyphs_9px.bmp\r\n"
-"MinSize1 = 7, 7\r\n"
-"MinSize2 = 9, 9\r\n"
+"UniformSizing = False\r\n"
+"SourceShrink = True\r\n"
+"ImageFile1 = blue_scrollbar_arrow_glyphs_13px.bmp\r\n"
+"ImageFile2 = blue_scrollbar_arrow_glyphs_16px.bmp\r\n"
+"ImageFile3 = blue_scrollbar_arrow_glyphs_20px.bmp\r\n"
+"ImageFile4 = blue_scrollbar_arrow_glyphs_26px.bmp\r\n"
+"ImageFile5 = blue_scrollbar_arrow_glyphs_32px.bmp\r\n"
+"ImageFile6 = blue_scrollbar_arrow_glyphs_39px.bmp\r\n"
+"ImageFile7 = blue_scrollbar_arrow_glyphs_52px.bmp\r\n"
+"MinSize1 = 17, 17\r\n"
+"MinSize2 = 21, 21\r\n"
+"MinSize3 = 26, 26\r\n"
+"MinSize4 = 34, 34\r\n"
+"MinSize5 = 43, 43\r\n"
+"MinSize6 = 51, 51\r\n"
+"MinSize7 = 68, 68\r\n"
 
 "[ScrollBar.ThumbBtnHorz]\r\n"
 "BgType = ImageFile\r\n"
-"SizingMargins = 5, 5, 5, 5\r\n"
-"ContentMargins = 4, 4, 0, 0\r\n"
+"SizingType = Stretch\r\n"
+"SizingMargins = 11, 8, 8, 8\r\n"
+"ContentMargins = 4, 4, 1, 1\r\n"
 "ImageFile = blue_scrollbar_thumb_horizontal.bmp\r\n"
-"ImageCount = 4\r\n"
+"ImageCount = 5\r\n"
 "ImageLayout = Vertical\r\n"
 
 "[ScrollBar.ThumbBtnVert]\r\n"
 "BgType = ImageFile\r\n"
-"SizingMargins = 5, 5, 5, 5\r\n"
+"SizingMargins = 8, 8, 5, 5\r\n"
 "ContentMargins = 0, 0, 4, 4\r\n"
 "ImageFile = blue_scrollbar_thumb_vertical.bmp\r\n"
-"ImageCount = 4\r\n"
+"ImageCount = 5\r\n"
 "ImageLayout = Vertical\r\n"
 
 "[ScrollBar.GripperHorz]\r\n"
-"BgType = None\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 5\r\n"
+"Transparent = True\r\n"
+"ImageFile1 = blue_scrollbar_gripper_horizontal_10px.bmp\r\n"
+"ImageFile2 = blue_scrollbar_gripper_horizontal_12px.bmp\r\n"
+"ImageFile3 = blue_scrollbar_gripper_horizontal_16px.bmp\r\n"
+"ImageFile4 = blue_scrollbar_gripper_horizontal_20px.bmp\r\n"
+"ImageFile5 = blue_scrollbar_gripper_horizontal_25px.bmp\r\n"
+"ImageFile6 = blue_scrollbar_gripper_horizontal_30px.bmp\r\n"
+"ImageFile7 = blue_scrollbar_gripper_horizontal_40px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
 
 "[ScrollBar.GripperVert]\r\n"
-"BgType = None\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 5\r\n"
+"Transparent = True\r\n"
+"ImageFile1 = blue_scrollbar_gripper_vertical_9px.bmp\r\n"
+"ImageFile2 = blue_scrollbar_gripper_vertical_11px.bmp\r\n"
+"ImageFile3 = blue_scrollbar_gripper_vertical_14px.bmp\r\n"
+"ImageFile4 = blue_scrollbar_gripper_vertical_22px.bmp\r\n"
+"ImageFile5 = blue_scrollbar_gripper_vertical_27px.bmp\r\n"
+"ImageFile6 = blue_scrollbar_gripper_vertical_36px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 240\r\n"
+"MinDpi5 = 288\r\n"
+"MinDpi6 = 384\r\n"
 
 "[ScrollBar.LowerTrackHorz]\r\n"
 "BgType = ImageFile\r\n"
-"ImageFile = blue_scrollbar_shaft_horizontal.bmp\r\n"
-"SizingMargins = 0, 0, 1, 1\r\n"
-"ImageCount = 4\r\n"
+"ImageFile = blue_scrollbar_lower_track_horizontal.bmp\r\n"
+"SizingMargins = 0, 0, 4, 3\r\n"
+"ImageCount = 5\r\n"
 "ImageLayout = Vertical\r\n"
 
 "[ScrollBar.LowerTrackVert]\r\n"
 "BgType = ImageFile\r\n"
-"ImageFile = blue_scrollbar_shaft_vertical.bmp\r\n"
-"SizingMargins = 1, 1, 0, 0\r\n"
-"ImageCount = 4\r\n"
+"ImageFile = blue_scrollbar_lower_track_vertical.bmp\r\n"
+"SizingMargins = 10, 3, 0, 0\r\n"
+"ImageCount = 5\r\n"
 "ImageLayout = Vertical\r\n"
 
 "[ScrollBar.UpperTrackHorz]\r\n"
 "BgType = ImageFile\r\n"
-"ImageFile = blue_scrollbar_shaft_horizontal.bmp\r\n"
-"SizingMargins = 0, 0, 1, 1\r\n"
-"ImageCount = 4\r\n"
+"ImageFile = blue_scrollbar_upper_track_horizontal.bmp\r\n"
+"SizingMargins = 0, 0, 4, 3\r\n"
+"ImageCount = 5\r\n"
 "ImageLayout = Vertical\r\n"
 
 "[ScrollBar.UpperTrackVert]\r\n"
 "BgType = ImageFile\r\n"
-"ImageFile = blue_scrollbar_shaft_vertical.bmp\r\n"
-"SizingMargins = 1, 1, 0, 0\r\n"
-"ImageCount = 4\r\n"
+"ImageFile = blue_scrollbar_upper_track_vertical.bmp\r\n"
+"SizingMargins = 10, 3, 0, 0\r\n"
+"ImageCount = 5\r\n"
 "ImageLayout = Vertical\r\n"
 
 "[ScrollBar.SizeBox]\r\n"
 "BgType = ImageFile\r\n"
 "ImageSelectType = Dpi\r\n"
-"TrueSizeScalingType = Dpi\r\n"
-"ImageCount = 2\r\n"
+"ImageCount = 8\r\n"
 "SizingType = TrueSize\r\n"
 "Transparent = True\r\n"
 "VAlign = Bottom\r\n"
+"ImageLayout = Vertical\r\n"
 "ImageFile1 = blue_scrollbar_resizebox_grip_16px.bmp\r\n"
 "ImageFile2 = blue_scrollbar_resizebox_grip_20px.bmp\r\n"
 "ImageFile3 = blue_scrollbar_resizebox_grip_24px.bmp\r\n"
-"ImageFile4 = blue_scrollbar_resizebox_grip_28px.bmp\r\n"
-"ImageFile5 = blue_scrollbar_resizebox_grip_32px.bmp\r\n"
-"ImageFile6 = blue_scrollbar_resizebox_grip_36px.bmp\r\n"
-"ImageFile7 = blue_scrollbar_resizebox_grip_40px.bmp\r\n"
+"ImageFile4 = blue_scrollbar_resizebox_grip_32px.bmp\r\n"
+"ImageFile5 = blue_scrollbar_resizebox_grip_40px.bmp\r\n"
+"ImageFile6 = blue_scrollbar_resizebox_grip_48px.bmp\r\n"
+"ImageFile7 = blue_scrollbar_resizebox_grip_64px.bmp\r\n"
 "MinDpi1 = 96\r\n"
 "MinDpi2 = 120\r\n"
 "MinDpi3 = 144\r\n"
-"MinDpi4 = 168\r\n"
-"MinDpi5 = 192\r\n"
-"MinDpi6 = 216\r\n"
-"MinDpi7 = 240\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[ScrollBar.SizeBoxBkgnd]\r\n"
+"FillColor = 245 245 245\r\n"
 
 "\r\n; Spin\r\n"
 "[Spin]\r\n"
@@ -1568,26 +1620,26 @@ BLUE_INI TEXTFILE
 "ContentMargins = 0, 0, 0, 0\r\n"
 "BgType = ImageFile\r\n"
 "ImageSelectType = Dpi\r\n"
-"TrueSizeScalingType = Dpi\r\n"
-"ImageCount = 2\r\n"
+"ImageCount = 8\r\n"
 "SizingType = TrueSize\r\n"
 "Transparent = True\r\n"
 "VAlign = Bottom\r\n"
+"ImageLayout = Vertical\r\n"
 "; Same as scrollbar resize box gripper \r\n"
 "ImageFile1 = blue_scrollbar_resizebox_grip_16px.bmp\r\n"
 "ImageFile2 = blue_scrollbar_resizebox_grip_20px.bmp\r\n"
 "ImageFile3 = blue_scrollbar_resizebox_grip_24px.bmp\r\n"
-"ImageFile4 = blue_scrollbar_resizebox_grip_28px.bmp\r\n"
-"ImageFile5 = blue_scrollbar_resizebox_grip_32px.bmp\r\n"
-"ImageFile6 = blue_scrollbar_resizebox_grip_36px.bmp\r\n"
-"ImageFile7 = blue_scrollbar_resizebox_grip_40px.bmp\r\n"
+"ImageFile4 = blue_scrollbar_resizebox_grip_32px.bmp\r\n"
+"ImageFile5 = blue_scrollbar_resizebox_grip_40px.bmp\r\n"
+"ImageFile6 = blue_scrollbar_resizebox_grip_48px.bmp\r\n"
+"ImageFile7 = blue_scrollbar_resizebox_grip_64px.bmp\r\n"
 "MinDpi1 = 96\r\n"
 "MinDpi2 = 120\r\n"
 "MinDpi3 = 144\r\n"
-"MinDpi4 = 168\r\n"
-"MinDpi5 = 192\r\n"
-"MinDpi6 = 216\r\n"
-"MinDpi7 = 240\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
 
 "\r\n; Tab\r\n"
 "[Tab]\r\n"
@@ -2748,11 +2800,71 @@ BLUE_REBAR_SPLITTER_VERTICAL_BMP BITMAP "blue_rebar_splitter_vertical.bmp"
 /* @makedep: blue_scrollbar_arrows.bmp */
 BLUE_SCROLLBAR_ARROWS_BMP BITMAP "blue_scrollbar_arrows.bmp"
 
-/* @makedep: blue_scrollbar_arrow_glyphs_7px.bmp */
-BLUE_SCROLLBAR_ARROW_GLYPHS_7PX_BMP BITMAP "blue_scrollbar_arrow_glyphs_7px.bmp"
+/* @makedep: blue_scrollbar_arrow_glyphs_13px.bmp */
+BLUE_SCROLLBAR_ARROW_GLYPHS_13PX_BMP BITMAP "blue_scrollbar_arrow_glyphs_13px.bmp"
 
-/* @makedep: blue_scrollbar_arrow_glyphs_9px.bmp */
-BLUE_SCROLLBAR_ARROW_GLYPHS_9PX_BMP BITMAP "blue_scrollbar_arrow_glyphs_9px.bmp"
+/* @makedep: blue_scrollbar_arrow_glyphs_16px.bmp */
+BLUE_SCROLLBAR_ARROW_GLYPHS_16PX_BMP BITMAP "blue_scrollbar_arrow_glyphs_16px.bmp"
+
+/* @makedep: blue_scrollbar_arrow_glyphs_20px.bmp */
+BLUE_SCROLLBAR_ARROW_GLYPHS_20PX_BMP BITMAP "blue_scrollbar_arrow_glyphs_20px.bmp"
+
+/* @makedep: blue_scrollbar_arrow_glyphs_26px.bmp */
+BLUE_SCROLLBAR_ARROW_GLYPHS_26PX_BMP BITMAP "blue_scrollbar_arrow_glyphs_26px.bmp"
+
+/* @makedep: blue_scrollbar_arrow_glyphs_32px.bmp */
+BLUE_SCROLLBAR_ARROW_GLYPHS_32PX_BMP BITMAP "blue_scrollbar_arrow_glyphs_32px.bmp"
+
+/* @makedep: blue_scrollbar_arrow_glyphs_39px.bmp */
+BLUE_SCROLLBAR_ARROW_GLYPHS_39PX_BMP BITMAP "blue_scrollbar_arrow_glyphs_39px.bmp"
+
+/* @makedep: blue_scrollbar_arrow_glyphs_52px.bmp */
+BLUE_SCROLLBAR_ARROW_GLYPHS_52PX_BMP BITMAP "blue_scrollbar_arrow_glyphs_52px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_horizontal_10px.bmp */
+BLUE_SCROLLBAR_GRIPPER_HORIZONTAL_10PX_BMP BITMAP "blue_scrollbar_gripper_horizontal_10px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_horizontal_12px.bmp */
+BLUE_SCROLLBAR_GRIPPER_HORIZONTAL_12PX_BMP BITMAP "blue_scrollbar_gripper_horizontal_12px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_horizontal_16px.bmp */
+BLUE_SCROLLBAR_GRIPPER_HORIZONTAL_16PX_BMP BITMAP "blue_scrollbar_gripper_horizontal_16px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_horizontal_20px.bmp */
+BLUE_SCROLLBAR_GRIPPER_HORIZONTAL_20PX_BMP BITMAP "blue_scrollbar_gripper_horizontal_20px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_horizontal_25px.bmp */
+BLUE_SCROLLBAR_GRIPPER_HORIZONTAL_25PX_BMP BITMAP "blue_scrollbar_gripper_horizontal_25px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_horizontal_30px.bmp */
+BLUE_SCROLLBAR_GRIPPER_HORIZONTAL_30PX_BMP BITMAP "blue_scrollbar_gripper_horizontal_30px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_horizontal_40px.bmp */
+BLUE_SCROLLBAR_GRIPPER_HORIZONTAL_40PX_BMP BITMAP "blue_scrollbar_gripper_horizontal_40px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_vertical_9px.bmp */
+BLUE_SCROLLBAR_GRIPPER_VERTICAL_9PX_BMP BITMAP "blue_scrollbar_gripper_vertical_9px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_vertical_11px.bmp */
+BLUE_SCROLLBAR_GRIPPER_VERTICAL_11PX_BMP BITMAP "blue_scrollbar_gripper_vertical_11px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_vertical_14px.bmp */
+BLUE_SCROLLBAR_GRIPPER_VERTICAL_14PX_BMP BITMAP "blue_scrollbar_gripper_vertical_14px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_vertical_22px.bmp */
+BLUE_SCROLLBAR_GRIPPER_VERTICAL_22PX_BMP BITMAP "blue_scrollbar_gripper_vertical_22px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_vertical_27px.bmp */
+BLUE_SCROLLBAR_GRIPPER_VERTICAL_27PX_BMP BITMAP "blue_scrollbar_gripper_vertical_27px.bmp"
+
+/* @makedep: blue_scrollbar_gripper_vertical_36px.bmp */
+BLUE_SCROLLBAR_GRIPPER_VERTICAL_36PX_BMP BITMAP "blue_scrollbar_gripper_vertical_36px.bmp"
+
+/* @makedep: blue_scrollbar_lower_track_horizontal.bmp */
+BLUE_SCROLLBAR_LOWER_TRACK_HORIZONTAL_BMP BITMAP "blue_scrollbar_lower_track_horizontal.bmp"
+
+/* @makedep: blue_scrollbar_lower_track_vertical.bmp */
+BLUE_SCROLLBAR_LOWER_TRACK_VERTICAL_BMP BITMAP "blue_scrollbar_lower_track_vertical.bmp"
 
 /* @makedep: blue_scrollbar_resizebox_grip_16px.bmp */
 BLUE_SCROLLBAR_RESIZEBOX_GRIP_16PX_BMP BITMAP "blue_scrollbar_resizebox_grip_16px.bmp"
@@ -2763,29 +2875,29 @@ BLUE_SCROLLBAR_RESIZEBOX_GRIP_20PX_BMP BITMAP "blue_scrollbar_resizebox_grip_20p
 /* @makedep: blue_scrollbar_resizebox_grip_24px.bmp */
 BLUE_SCROLLBAR_RESIZEBOX_GRIP_24PX_BMP BITMAP "blue_scrollbar_resizebox_grip_24px.bmp"
 
-/* @makedep: blue_scrollbar_resizebox_grip_28px.bmp */
-BLUE_SCROLLBAR_RESIZEBOX_GRIP_28PX_BMP BITMAP "blue_scrollbar_resizebox_grip_28px.bmp"
-
 /* @makedep: blue_scrollbar_resizebox_grip_32px.bmp */
 BLUE_SCROLLBAR_RESIZEBOX_GRIP_32PX_BMP BITMAP "blue_scrollbar_resizebox_grip_32px.bmp"
-
-/* @makedep: blue_scrollbar_resizebox_grip_36px.bmp */
-BLUE_SCROLLBAR_RESIZEBOX_GRIP_36PX_BMP BITMAP "blue_scrollbar_resizebox_grip_36px.bmp"
 
 /* @makedep: blue_scrollbar_resizebox_grip_40px.bmp */
 BLUE_SCROLLBAR_RESIZEBOX_GRIP_40PX_BMP BITMAP "blue_scrollbar_resizebox_grip_40px.bmp"
 
-/* @makedep: blue_scrollbar_shaft_horizontal.bmp */
-BLUE_SCROLLBAR_SHAFT_HORIZONTAL_BMP BITMAP "blue_scrollbar_shaft_horizontal.bmp"
+/* @makedep: blue_scrollbar_resizebox_grip_48px.bmp */
+BLUE_SCROLLBAR_RESIZEBOX_GRIP_48PX_BMP BITMAP "blue_scrollbar_resizebox_grip_48px.bmp"
 
-/* @makedep: blue_scrollbar_shaft_vertical.bmp */
-BLUE_SCROLLBAR_SHAFT_VERTICAL_BMP BITMAP "blue_scrollbar_shaft_vertical.bmp"
+/* @makedep: blue_scrollbar_resizebox_grip_64px.bmp */
+BLUE_SCROLLBAR_RESIZEBOX_GRIP_64PX_BMP BITMAP "blue_scrollbar_resizebox_grip_64px.bmp"
 
 /* @makedep: blue_scrollbar_thumb_horizontal.bmp */
 BLUE_SCROLLBAR_THUMB_HORIZONTAL_BMP BITMAP "blue_scrollbar_thumb_horizontal.bmp"
 
 /* @makedep: blue_scrollbar_thumb_vertical.bmp */
 BLUE_SCROLLBAR_THUMB_VERTICAL_BMP BITMAP "blue_scrollbar_thumb_vertical.bmp"
+
+/* @makedep: blue_scrollbar_upper_track_horizontal.bmp */
+BLUE_SCROLLBAR_UPPER_TRACK_HORIZONTAL_BMP BITMAP "blue_scrollbar_upper_track_horizontal.bmp"
+
+/* @makedep: blue_scrollbar_upper_track_vertical.bmp */
+BLUE_SCROLLBAR_UPPER_TRACK_VERTICAL_BMP BITMAP "blue_scrollbar_upper_track_vertical.bmp"
 
 /* Spin */
 /* @makedep: blue_spin_background.bmp */
