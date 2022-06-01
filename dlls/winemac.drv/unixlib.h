@@ -21,6 +21,7 @@
 
 enum macdrv_funcs
 {
+    unix_dnd_get_data,
     unix_dnd_get_formats,
     unix_dnd_have_format,
     unix_dnd_release,
@@ -36,6 +37,15 @@ enum macdrv_funcs
 /* FIXME: Use __wine_unix_call when the rest of the stack is ready */
 extern NTSTATUS unix_call(enum macdrv_funcs code, void *params) DECLSPEC_HIDDEN;
 #define MACDRV_CALL(func, params) unix_call( unix_ ## func, params )
+
+/* macdrv_dnd_get_data params */
+struct dnd_get_data_params
+{
+    UINT64 handle;
+    UINT format;
+    size_t size;
+    void *data;
+};
 
 /* macdrv_dnd_get_formats params */
 struct dnd_get_formats_params

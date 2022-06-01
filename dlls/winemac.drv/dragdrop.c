@@ -24,6 +24,8 @@
 
 #define NONAMELESSUNION
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "macdrv.h"
 
 #define COBJMACROS
@@ -92,6 +94,24 @@ static inline DragDropDataObject *impl_from_IDataObject(IDataObject *iface)
 }
 
 
+static HANDLE get_pasteboard_data(UINT64 pasteboard, UINT desired_format)
+{
+    struct dnd_get_data_params params = { .handle = pasteboard, .format = desired_format, .size = 2048 };
+    HANDLE handle;
+    NTSTATUS status;
+
+    for (;;)
+    {
+        if (!(handle = GlobalAlloc(GMEM_FIXED, params.size))) return 0;
+        params.data = GlobalLock(handle);
+        status = MACDRV_CALL(dnd_get_data, &params);
+        GlobalUnlock(handle);
+        if (!status) return GlobalReAlloc(handle, params.size, 0);
+        GlobalFree(handle);
+        if (status != STATUS_BUFFER_OVERFLOW) return 0;
+    }
+}
+
 static HRESULT WINAPI dddo_QueryInterface(IDataObject* iface, REFIID riid, LPVOID *ppvObj)
 {
     DragDropDataObject *This = impl_from_IDataObject(iface);
@@ -148,7 +168,7 @@ static HRESULT WINAPI dddo_GetData(IDataObject* iface, FORMATETC* formatEtc, STG
     if (SUCCEEDED(hr))
     {
         medium->tymed = TYMED_HGLOBAL;
-        medium->u.hGlobal = macdrv_get_pasteboard_data((void *)(UINT_PTR)This->pasteboard, formatEtc->cfFormat);
+        medium->u.hGlobal = get_pasteboard_data(This->pasteboard, formatEtc->cfFormat);
         medium->pUnkForRelease = NULL;
         hr = medium->u.hGlobal ? S_OK : E_OUTOFMEMORY;
     }
@@ -454,7 +474,7 @@ NTSTATUS WINAPI macdrv_dnd_query_drop(void *arg, ULONG size)
             hwnd = GetParent(hwnd);
         if (hwnd)
         {
-            HDROP hdrop = macdrv_get_pasteboard_data((void *)(UINT_PTR)params->handle, CF_HDROP);
+            HDROP hdrop = get_pasteboard_data(params->handle, CF_HDROP);
             DROPFILES *dropfiles = GlobalLock(hdrop);
             if (dropfiles)
             {

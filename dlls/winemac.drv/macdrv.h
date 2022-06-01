@@ -255,7 +255,6 @@ extern void macdrv_displays_changed(const macdrv_event *event) DECLSPEC_HIDDEN;
 extern void macdrv_UpdateClipboard(void) DECLSPEC_HIDDEN;
 extern BOOL query_pasteboard_data(HWND hwnd, CFStringRef type) DECLSPEC_HIDDEN;
 extern void macdrv_lost_pasteboard_ownership(HWND hwnd) DECLSPEC_HIDDEN;
-extern HANDLE macdrv_get_pasteboard_data(CFTypeRef pasteboard, UINT desired_format) DECLSPEC_HIDDEN;
 
 extern struct opengl_funcs *macdrv_wine_get_wgl_driver(UINT version) DECLSPEC_HIDDEN;
 extern const struct vulkan_funcs *macdrv_wine_get_vulkan_driver(UINT version) DECLSPEC_HIDDEN;
@@ -285,6 +284,7 @@ extern NTSTATUS WINAPI macdrv_ime_query_char_rect(void *params, ULONG size) DECL
 
 /* unixlib interface */
 
+extern NTSTATUS macdrv_dnd_get_data(void *arg) DECLSPEC_HIDDEN;
 extern NTSTATUS macdrv_dnd_get_formats(void *arg) DECLSPEC_HIDDEN;
 extern NTSTATUS macdrv_dnd_have_format(void *arg) DECLSPEC_HIDDEN;
 extern NTSTATUS macdrv_dnd_release(void *arg) DECLSPEC_HIDDEN;

@@ -1128,24 +1128,26 @@ static CFDataRef export_unicodetext_to_utf16(void *data, size_t size)
 
 
 /**************************************************************************
- *              macdrv_get_pasteboard_data
+ *              macdrv_dnd_get_data
  */
-HANDLE macdrv_get_pasteboard_data(CFTypeRef pasteboard, UINT desired_format)
+NTSTATUS macdrv_dnd_get_data(void *arg)
 {
+    struct dnd_get_data_params *params = arg;
+    CFTypeRef pasteboard = pasteboard_from_handle(params->handle);
     CFArrayRef types;
     CFIndex count;
     CFIndex i;
     CFStringRef type, best_type;
     WINE_CLIPFORMAT* best_format = NULL;
-    HANDLE data = NULL;
+    NTSTATUS status = STATUS_SUCCESS;
 
-    TRACE("pasteboard %p, desired_format %s\n", pasteboard, debugstr_format(desired_format));
+    TRACE("pasteboard %p, desired_format %s\n", pasteboard, debugstr_format(params->format));
 
     types = macdrv_copy_pasteboard_types(pasteboard);
     if (!types)
     {
         WARN("Failed to copy pasteboard types\n");
-        return NULL;
+        return STATUS_NO_MEMORY;
     }
 
     count = CFArrayGetCount(types);
@@ -1161,7 +1163,7 @@ HANDLE macdrv_get_pasteboard_data(CFTypeRef pasteboard, UINT desired_format)
         {
             TRACE("for type %s got format %p/%s\n", debugstr_cf(type), format, debugstr_format(format->format_id));
 
-            if (format->format_id == desired_format)
+            if (format->format_id == params->format)
             {
                 /* The best format is the matching one which is not synthesized.  Failing that,
                    the best format is the first matching synthesized format. */
@@ -1183,15 +1185,12 @@ HANDLE macdrv_get_pasteboard_data(CFTypeRef pasteboard, UINT desired_format)
         if (pasteboard_data)
         {
             size_t size;
-            void *import = best_format->import_func(pasteboard_data, &size), *ptr;
+            void *import = best_format->import_func(pasteboard_data, &size);
             if (import)
             {
-                data = GlobalAlloc(GMEM_FIXED, size);
-                if (data && (ptr = GlobalLock(data)))
-                {
-                    memcpy(ptr, import, size);
-                    GlobalUnlock(data);
-                }
+                if (size > params->size) status = STATUS_BUFFER_OVERFLOW;
+                else memcpy(params->data, import, size);
+                params->size = size;
                 free(import);
             }
             CFRelease(pasteboard_data);
@@ -1199,8 +1198,8 @@ HANDLE macdrv_get_pasteboard_data(CFTypeRef pasteboard, UINT desired_format)
     }
 
     CFRelease(types);
-    TRACE(" -> %p\n", data);
-    return data;
+    TRACE(" -> %#x\n", status);
+    return status;
 }
 
 
