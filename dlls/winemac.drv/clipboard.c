@@ -248,6 +248,12 @@ static const char *debugstr_format(UINT id)
 }
 
 
+static CFTypeRef pasteboard_from_handle(UINT64 handle)
+{
+    return (CFTypeRef)(UINT_PTR)handle;
+}
+
+
 /**************************************************************************
  *              insert_clipboard_format
  */
@@ -1201,14 +1207,16 @@ HANDLE macdrv_get_pasteboard_data(CFTypeRef pasteboard, UINT desired_format)
 /**************************************************************************
  *              macdrv_pasteboard_has_format
  */
-BOOL macdrv_pasteboard_has_format(CFTypeRef pasteboard, UINT desired_format)
+NTSTATUS macdrv_dnd_have_format(void *arg)
 {
+    struct dnd_have_format_params *params = arg;
+    CFTypeRef pasteboard = pasteboard_from_handle(params->handle);
     CFArrayRef types;
     int count;
     UINT i;
     BOOL found = FALSE;
 
-    TRACE("pasteboard %p, desired_format %s\n", pasteboard, debugstr_format(desired_format));
+    TRACE("pasteboard %p, desired_format %s\n", pasteboard, debugstr_format(params->format));
 
     types = macdrv_copy_pasteboard_types(pasteboard);
     if (!types)
@@ -1229,7 +1237,7 @@ BOOL macdrv_pasteboard_has_format(CFTypeRef pasteboard, UINT desired_format)
         {
             TRACE("for type %s got format %s\n", debugstr_cf(type), debugstr_format(format->format_id));
 
-            if (format->format_id == desired_format)
+            if (format->format_id == params->format)
             {
                 found = TRUE;
                 break;
@@ -1365,33 +1373,24 @@ static WINE_CLIPFORMAT** get_formats_for_pasteboard(CFTypeRef pasteboard, UINT *
 
 
 /**************************************************************************
- *              macdrv_get_pasteboard_formats
+ *              macdrv_dnd_get_formats
  */
-UINT* macdrv_get_pasteboard_formats(CFTypeRef pasteboard, UINT* num_formats)
+NTSTATUS macdrv_dnd_get_formats(void *arg)
 {
+    struct dnd_get_formats_params *params = arg;
+    CFTypeRef pasteboard = pasteboard_from_handle(params->handle);
     WINE_CLIPFORMAT** formats;
     UINT count, i;
-    UINT* format_ids;
 
     formats = get_formats_for_pasteboard(pasteboard, &count);
     if (!formats)
-        return NULL;
-
-    format_ids = malloc(count);
-    if (!format_ids)
-    {
-        WARN("Failed to allocate formats IDs array\n");
-        free(formats);
-        return NULL;
-    }
+        return 0;
+    count = min(count, ARRAYSIZE(params->formats));
 
     for (i = 0; i < count; i++)
-        format_ids[i] = formats[i]->format_id;
+        params->formats[i] = formats[i]->format_id;
 
-    free(formats);
-
-    *num_formats = count;
-    return format_ids;
+    return count;
 }
 
 
@@ -1745,4 +1744,26 @@ void macdrv_lost_pasteboard_ownership(HWND hwnd)
     TRACE("win %p\n", hwnd);
     if (!macdrv_is_pasteboard_owner(clipboard_cocoa_window))
         grab_win32_clipboard();
+}
+
+
+/**************************************************************************
+ *              macdrv_dnd_release
+ */
+NTSTATUS macdrv_dnd_release(void *arg)
+{
+    UINT64 handle = *(UINT64 *)arg;
+    CFRelease(pasteboard_from_handle(handle));
+    return 0;
+}
+
+
+/**************************************************************************
+ *              macdrv_dnd_retain
+ */
+NTSTATUS macdrv_dnd_retain(void *arg)
+{
+    UINT64 handle = *(UINT64 *)arg;
+    CFRetain(pasteboard_from_handle(handle));
+    return 0;
 }

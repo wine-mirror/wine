@@ -21,6 +21,10 @@
 
 enum macdrv_funcs
 {
+    unix_dnd_get_formats,
+    unix_dnd_have_format,
+    unix_dnd_release,
+    unix_dnd_retain,
     unix_ime_clear,
     unix_ime_process_text_input,
     unix_ime_using_input_method,
@@ -32,6 +36,20 @@ enum macdrv_funcs
 /* FIXME: Use __wine_unix_call when the rest of the stack is ready */
 extern NTSTATUS unix_call(enum macdrv_funcs code, void *params) DECLSPEC_HIDDEN;
 #define MACDRV_CALL(func, params) unix_call( unix_ ## func, params )
+
+/* macdrv_dnd_get_formats params */
+struct dnd_get_formats_params
+{
+    UINT64 handle;
+    UINT formats[64];
+};
+
+/* macdrv_dnd_have_format params */
+struct dnd_have_format_params
+{
+    UINT64 handle;
+    UINT format;
+};
 
 /* macdrv_ime_process_text_input params */
 struct process_text_input_params

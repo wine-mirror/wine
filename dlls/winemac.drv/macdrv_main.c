@@ -630,6 +630,10 @@ static NTSTATUS macdrv_ime_using_input_method(void *arg)
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
+    macdrv_dnd_get_formats,
+    macdrv_dnd_have_format,
+    macdrv_dnd_release,
+    macdrv_dnd_retain,
     macdrv_ime_clear,
     macdrv_ime_process_text_input,
     macdrv_ime_using_input_method,

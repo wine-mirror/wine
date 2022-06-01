@@ -42,7 +42,7 @@ typedef struct
 {
     IDataObject IDataObject_iface;
     LONG        ref;
-    CFTypeRef   pasteboard;
+    UINT64      pasteboard;
 } DragDropDataObject;
 
 
@@ -131,7 +131,7 @@ static ULONG WINAPI dddo_Release(IDataObject* iface)
         return refCount;
 
     TRACE("-- destroying DragDropDataObject (%p)\n", This);
-    CFRelease(This->pasteboard);
+    MACDRV_CALL(dnd_release, &This->pasteboard);
     HeapFree(GetProcessHeap(), 0, This);
     return 0;
 }
@@ -148,7 +148,7 @@ static HRESULT WINAPI dddo_GetData(IDataObject* iface, FORMATETC* formatEtc, STG
     if (SUCCEEDED(hr))
     {
         medium->tymed = TYMED_HGLOBAL;
-        medium->u.hGlobal = macdrv_get_pasteboard_data(This->pasteboard, formatEtc->cfFormat);
+        medium->u.hGlobal = macdrv_get_pasteboard_data((void *)(UINT_PTR)This->pasteboard, formatEtc->cfFormat);
         medium->pUnkForRelease = NULL;
         hr = medium->u.hGlobal ? S_OK : E_OUTOFMEMORY;
     }
@@ -168,6 +168,7 @@ static HRESULT WINAPI dddo_GetDataHere(IDataObject* iface, FORMATETC* formatEtc,
 static HRESULT WINAPI dddo_QueryGetData(IDataObject* iface, FORMATETC* formatEtc)
 {
     DragDropDataObject *This = impl_from_IDataObject(iface);
+    struct dnd_have_format_params params;
     HRESULT hr = DV_E_FORMATETC;
 
     TRACE("This %p formatEtc %p={.tymed=0x%x, .dwAspect=%d, .cfFormat=%s}\n",
@@ -185,7 +186,9 @@ static HRESULT WINAPI dddo_QueryGetData(IDataObject* iface, FORMATETC* formatEtc
         return E_NOTIMPL;
     }
 
-    if (macdrv_pasteboard_has_format(This->pasteboard, formatEtc->cfFormat))
+    params.handle = This->pasteboard;
+    params.format = formatEtc->cfFormat;
+    if (MACDRV_CALL(dnd_have_format, &params))
         hr = S_OK;
 
     TRACE(" -> 0x%x\n", hr);
@@ -225,7 +228,8 @@ static HRESULT WINAPI dddo_EnumFormatEtc(IDataObject* iface, DWORD direction,
                                          IEnumFORMATETC** enumFormatEtc)
 {
     DragDropDataObject *This = impl_from_IDataObject(iface);
-    UINT *formats, count;
+    struct dnd_get_formats_params params;
+    UINT count;
     HRESULT hr;
 
     TRACE("This %p direction %u enumFormatEtc %p\n", This, direction, enumFormatEtc);
@@ -236,8 +240,9 @@ static HRESULT WINAPI dddo_EnumFormatEtc(IDataObject* iface, DWORD direction,
         return E_NOTIMPL;
     }
 
-    formats = macdrv_get_pasteboard_formats(This->pasteboard, &count);
-    if (formats)
+    params.handle = This->pasteboard;
+    count = MACDRV_CALL(dnd_get_formats, &params);
+    if (count)
     {
         FORMATETC *formatEtcs = HeapAlloc(GetProcessHeap(), 0, count * sizeof(FORMATETC));
         if (formatEtcs)
@@ -246,7 +251,7 @@ static HRESULT WINAPI dddo_EnumFormatEtc(IDataObject* iface, DWORD direction,
 
             for (i = 0; i < count; i++)
             {
-                formatEtcs[i].cfFormat = formats[i];
+                formatEtcs[i].cfFormat = params.formats[i];
                 formatEtcs[i].ptd = NULL;
                 formatEtcs[i].dwAspect = DVASPECT_CONTENT;
                 formatEtcs[i].lindex = -1;
@@ -258,8 +263,6 @@ static HRESULT WINAPI dddo_EnumFormatEtc(IDataObject* iface, DWORD direction,
         }
         else
             hr = E_OUTOFMEMORY;
-
-        HeapFree(GetProcessHeap(), 0, formats);
     }
     else
         hr = SHCreateStdEnumFmtEtc(0, NULL, enumFormatEtc);
@@ -309,7 +312,7 @@ static const IDataObjectVtbl dovt =
 };
 
 
-static IDataObject *create_data_object_for_pasteboard(CFTypeRef pasteboard)
+static IDataObject *create_data_object_for_pasteboard(UINT64 pasteboard)
 {
     DragDropDataObject *dddo;
 
@@ -319,7 +322,8 @@ static IDataObject *create_data_object_for_pasteboard(CFTypeRef pasteboard)
 
     dddo->ref = 1;
     dddo->IDataObject_iface.lpVtbl = &dovt;
-    dddo->pasteboard = CFRetain(pasteboard);
+    dddo->pasteboard = pasteboard;
+    MACDRV_CALL(dnd_retain, &dddo->pasteboard);
 
     return &dddo->IDataObject_iface;
 }
@@ -421,7 +425,7 @@ NTSTATUS WINAPI macdrv_dnd_query_drop(void *arg, ULONG size)
         if (!active_data_object)
         {
             WARN("shouldn't happen: no active IDataObject\n");
-            active_data_object = create_data_object_for_pasteboard((void *)(UINT_PTR)params->handle);
+            active_data_object = create_data_object_for_pasteboard(params->handle);
         }
 
         pointl.x = pt.x;
@@ -564,7 +568,7 @@ NTSTATUS WINAPI macdrv_dnd_query_drag(void *arg, ULONG size)
             POINTL pointl = { pt.x, pt.y };
 
             if (!active_data_object)
-                active_data_object = create_data_object_for_pasteboard((void *)(UINT_PTR)params->handle);
+                active_data_object = create_data_object_for_pasteboard(params->handle);
 
             TRACE("DragEnter hwnd %p droptarget %p\n", hwnd, droptarget);
             hr = IDropTarget_DragEnter(droptarget, active_data_object, MK_LBUTTON,
@@ -605,7 +609,7 @@ NTSTATUS WINAPI macdrv_dnd_query_drag(void *arg, ULONG size)
             FORMATETC formatEtc;
 
             if (!active_data_object)
-                active_data_object = create_data_object_for_pasteboard((void *)(UINT_PTR)params->handle);
+                active_data_object = create_data_object_for_pasteboard(params->handle);
 
             formatEtc.cfFormat = CF_HDROP;
             formatEtc.ptd = NULL;
