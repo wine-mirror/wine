@@ -1842,6 +1842,220 @@ BLUE_INI TEXTFILE
 "BorderSize = 0\r\n"
 "FillColor = 255 255 255\r\n"
 
+"\r\n; TaskDialog\r\n"
+"[TaskDialog.PrimaryPanel]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 255 255 255\r\n"
+"ContentMargins = 10, 10, 10, 10\r\n"
+
+"[TaskDialog.MainInstructionPane]\r\n"
+"TextColor = 41 121 255\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"Font = Tahoma, -16\r\n"
+
+"[TaskDialog.MainIcon]\r\n"
+"ContentMargins = 0, 10, 0, 0\r\n"
+
+"[TaskDialog.ContentPane]\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 0, 0, 10, 0\r\n"
+"Font = Tahoma, -12\r\n"
+
+"[TaskDialog.ContentPane(Standalone)]\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+
+"[TaskDialog.ExpandedContent]\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 0, 0, 10, 0\r\n"
+"Font = Tahoma, -12\r\n"
+
+"[TaskDialog.CommandLinkPane]\r\n"
+"ContentMargins = 0, 0, 10, 0\r\n"
+
+"[TaskDialog.SecondaryPanel]\r\n"
+"BgType = ImageFile\r\n"
+"ImageCount = 1\r\n"
+"SizingMargins = 0, 0, 1, 0\r\n"
+"ContentMargins = 0, 0, 9, 9\r\n"
+"ImageFile = blue_taskdialog_secondary_panel.bmp\r\n"
+
+"[TaskDialog.ControlPane]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 245 245 245\r\n"
+"ContentMargins = 10, 10, 0, 0\r\n"
+
+"[TaskDialog.ButtonSection]\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 22, 0, 0, 0\r\n"
+"Font = Tahoma, -12\r\n"
+
+"[TaskDialog.ButtonWrapper]\r\n"
+"Width = 200\r\n"
+"ContentMargins = 6, 0, 0, 0\r\n"
+
+"[TaskDialog.ExpandoText]\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 0, 0, 2, 0\r\n"
+"Font = Tahoma, -12\r\n"
+
+"[TaskDialog.ExpandoButton]\r\n"
+"Width = 19\r\n"
+"Height = 21\r\n"
+
+"[TaskDialog.ExpandoButton(Normal)]\r\n"
+"BgType = ImageFile\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageFile1 = blue_taskdialog_expando_button_normal_19px.bmp\r\n"
+"ImageFile2 = blue_taskdialog_expando_button_normal_24px.bmp\r\n"
+"ImageFile3 = blue_taskdialog_expando_button_normal_29px.bmp\r\n"
+"ImageFile4 = blue_taskdialog_expando_button_normal_33px.bmp\r\n"
+"ImageFile5 = blue_taskdialog_expando_button_normal_38px.bmp\r\n"
+"ImageFile6 = blue_taskdialog_expando_button_normal_43px.bmp\r\n"
+"ImageFile7 = blue_taskdialog_expando_button_normal_48px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 168\r\n"
+"MinDpi5 = 192\r\n"
+"MinDpi6 = 216\r\n"
+"MinDpi7 = 240\r\n"
+
+"[TaskDialog.ExpandoButton(Hover)]\r\n"
+"BgType = ImageFile\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageFile1 = blue_taskdialog_expando_button_hover_19px.bmp\r\n"
+"ImageFile2 = blue_taskdialog_expando_button_hover_24px.bmp\r\n"
+"ImageFile3 = blue_taskdialog_expando_button_hover_29px.bmp\r\n"
+"ImageFile4 = blue_taskdialog_expando_button_hover_33px.bmp\r\n"
+"ImageFile5 = blue_taskdialog_expando_button_hover_38px.bmp\r\n"
+"ImageFile6 = blue_taskdialog_expando_button_hover_43px.bmp\r\n"
+"ImageFile7 = blue_taskdialog_expando_button_hover_48px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 168\r\n"
+"MinDpi5 = 192\r\n"
+"MinDpi6 = 216\r\n"
+"MinDpi7 = 240\r\n"
+
+"[TaskDialog.ExpandoButton(Pressed)]\r\n"
+"BgType = ImageFile\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageFile1 = blue_taskdialog_expando_button_pressed_19px.bmp\r\n"
+"ImageFile2 = blue_taskdialog_expando_button_pressed_24px.bmp\r\n"
+"ImageFile3 = blue_taskdialog_expando_button_pressed_29px.bmp\r\n"
+"ImageFile4 = blue_taskdialog_expando_button_pressed_33px.bmp\r\n"
+"ImageFile5 = blue_taskdialog_expando_button_pressed_38px.bmp\r\n"
+"ImageFile6 = blue_taskdialog_expando_button_pressed_43px.bmp\r\n"
+"ImageFile7 = blue_taskdialog_expando_button_pressed_48px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 168\r\n"
+"MinDpi5 = 192\r\n"
+"MinDpi6 = 216\r\n"
+"MinDpi7 = 240\r\n"
+
+"[TaskDialog.ExpandoButton(ExpandedNormal)]\r\n"
+"BgType = ImageFile\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageFile1 = blue_taskdialog_expando_button_expanded_normal_19px.bmp\r\n"
+"ImageFile2 = blue_taskdialog_expando_button_expanded_normal_24px.bmp\r\n"
+"ImageFile3 = blue_taskdialog_expando_button_expanded_normal_29px.bmp\r\n"
+"ImageFile4 = blue_taskdialog_expando_button_expanded_normal_33px.bmp\r\n"
+"ImageFile5 = blue_taskdialog_expando_button_expanded_normal_38px.bmp\r\n"
+"ImageFile6 = blue_taskdialog_expando_button_expanded_normal_43px.bmp\r\n"
+"ImageFile7 = blue_taskdialog_expando_button_expanded_normal_48px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 168\r\n"
+"MinDpi5 = 192\r\n"
+"MinDpi6 = 216\r\n"
+"MinDpi7 = 240\r\n"
+
+"[TaskDialog.ExpandoButton(ExpandedHover)]\r\n"
+"BgType = ImageFile\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageFile1 = blue_taskdialog_expando_button_expanded_hover_19px.bmp\r\n"
+"ImageFile2 = blue_taskdialog_expando_button_expanded_hover_24px.bmp\r\n"
+"ImageFile3 = blue_taskdialog_expando_button_expanded_hover_29px.bmp\r\n"
+"ImageFile4 = blue_taskdialog_expando_button_expanded_hover_33px.bmp\r\n"
+"ImageFile5 = blue_taskdialog_expando_button_expanded_hover_38px.bmp\r\n"
+"ImageFile6 = blue_taskdialog_expando_button_expanded_hover_43px.bmp\r\n"
+"ImageFile7 = blue_taskdialog_expando_button_expanded_hover_48px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 168\r\n"
+"MinDpi5 = 192\r\n"
+"MinDpi6 = 216\r\n"
+"MinDpi7 = 240\r\n"
+
+"[TaskDialog.ExpandoButton(ExpandedPressed)]\r\n"
+"BgType = ImageFile\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageFile1 = blue_taskdialog_expando_button_expanded_pressed_19px.bmp\r\n"
+"ImageFile2 = blue_taskdialog_expando_button_expanded_pressed_24px.bmp\r\n"
+"ImageFile3 = blue_taskdialog_expando_button_expanded_pressed_29px.bmp\r\n"
+"ImageFile4 = blue_taskdialog_expando_button_expanded_pressed_33px.bmp\r\n"
+"ImageFile5 = blue_taskdialog_expando_button_expanded_pressed_38px.bmp\r\n"
+"ImageFile6 = blue_taskdialog_expando_button_expanded_pressed_43px.bmp\r\n"
+"ImageFile7 = blue_taskdialog_expando_button_expanded_pressed_48px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 168\r\n"
+"MinDpi5 = 192\r\n"
+"MinDpi6 = 216\r\n"
+"MinDpi7 = 240\r\n"
+
+"[TaskDialog.VerificationText]\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 10, 0, 0, 0\r\n"
+"Font = Tahoma, -12\r\n"
+
+"[TaskDialog.FootnotePane]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 245 245 245\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 10, 10, 0, 0\r\n"
+"Font = Tahoma, -12\r\n"
+
+"[TaskDialog.FootnoteSeparator]\r\n"
+"BgType = ImageFile\r\n"
+"Height = 2\r\n"
+"SizingMargins = 0, 0, 0, 0\r\n"
+"ContentMargins = 0, 0, 9, 9\r\n"
+"ImageFile = blue_taskdialog_footnote_separator.bmp\r\n"
+
+"[TaskDialog.ExpandedFootArea]\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 10, 10, 0, 0\r\n"
+"Font = Tahoma, -12\r\n"
+
+"[TaskDialog.ProgressBar]\r\n"
+"Height = 15\r\n"
+"ContentMargins = 0, 0, 10, 0\r\n"
+
+"[TaskDialog.ImageAlignment]\r\n"
+"Width = 20\r\n"
+"ContentMargins = 0, 5, 0, 0\r\n"
+
+"[TaskDialog.RadioButtonPane]\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 10, 10, 10, 0\r\n"
+"Font = Tahoma, -12\r\n"
+
 "\r\n; Toolbar\r\n"
 "[Toolbar]\r\n"
 "BgType = BorderFill\r\n"
@@ -3083,6 +3297,139 @@ BLUE_TAB_ITEM_RIGHT_BMP BITMAP "blue_tab_item_right.bmp"
 
 /* @makedep: blue_tab_pane_edge.bmp */
 BLUE_TAB_PANE_EDGE_BMP BITMAP "blue_tab_pane_edge.bmp"
+
+/* TaskDialog */
+/* @makedep: blue_taskdialog_expando_button_expanded_hover_19px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_HOVER_19PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_hover_19px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_hover_24px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_HOVER_24PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_hover_24px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_hover_29px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_HOVER_29PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_hover_29px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_hover_33px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_HOVER_33PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_hover_33px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_hover_38px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_HOVER_38PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_hover_38px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_hover_43px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_HOVER_43PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_hover_43px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_hover_48px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_HOVER_48PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_hover_48px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_normal_19px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_NORMAL_19PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_normal_19px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_normal_24px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_NORMAL_24PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_normal_24px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_normal_29px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_NORMAL_29PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_normal_29px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_normal_33px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_NORMAL_33PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_normal_33px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_normal_38px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_NORMAL_38PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_normal_38px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_normal_43px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_NORMAL_43PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_normal_43px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_normal_48px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_NORMAL_48PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_normal_48px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_pressed_19px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_PRESSED_19PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_pressed_19px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_pressed_24px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_PRESSED_24PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_pressed_24px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_pressed_29px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_PRESSED_29PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_pressed_29px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_pressed_33px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_PRESSED_33PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_pressed_33px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_pressed_38px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_PRESSED_38PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_pressed_38px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_pressed_43px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_PRESSED_43PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_pressed_43px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_expanded_pressed_48px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_EXPANDED_PRESSED_48PX_BMP BITMAP "blue_taskdialog_expando_button_expanded_pressed_48px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_hover_19px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_HOVER_19PX_BMP BITMAP "blue_taskdialog_expando_button_hover_19px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_hover_24px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_HOVER_24PX_BMP BITMAP "blue_taskdialog_expando_button_hover_24px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_hover_29px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_HOVER_29PX_BMP BITMAP "blue_taskdialog_expando_button_hover_29px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_hover_33px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_HOVER_33PX_BMP BITMAP "blue_taskdialog_expando_button_hover_33px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_hover_38px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_HOVER_38PX_BMP BITMAP "blue_taskdialog_expando_button_hover_38px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_hover_43px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_HOVER_43PX_BMP BITMAP "blue_taskdialog_expando_button_hover_43px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_hover_48px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_HOVER_48PX_BMP BITMAP "blue_taskdialog_expando_button_hover_48px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_normal_19px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_NORMAL_19PX_BMP BITMAP "blue_taskdialog_expando_button_normal_19px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_normal_24px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_NORMAL_24PX_BMP BITMAP "blue_taskdialog_expando_button_normal_24px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_normal_29px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_NORMAL_29PX_BMP BITMAP "blue_taskdialog_expando_button_normal_29px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_normal_33px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_NORMAL_33PX_BMP BITMAP "blue_taskdialog_expando_button_normal_33px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_normal_38px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_NORMAL_38PX_BMP BITMAP "blue_taskdialog_expando_button_normal_38px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_normal_43px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_NORMAL_43PX_BMP BITMAP "blue_taskdialog_expando_button_normal_43px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_normal_48px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_NORMAL_48PX_BMP BITMAP "blue_taskdialog_expando_button_normal_48px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_pressed_19px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_PRESSED_19PX_BMP BITMAP "blue_taskdialog_expando_button_pressed_19px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_pressed_24px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_PRESSED_24PX_BMP BITMAP "blue_taskdialog_expando_button_pressed_24px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_pressed_29px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_PRESSED_29PX_BMP BITMAP "blue_taskdialog_expando_button_pressed_29px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_pressed_33px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_PRESSED_33PX_BMP BITMAP "blue_taskdialog_expando_button_pressed_33px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_pressed_38px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_PRESSED_38PX_BMP BITMAP "blue_taskdialog_expando_button_pressed_38px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_pressed_43px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_PRESSED_43PX_BMP BITMAP "blue_taskdialog_expando_button_pressed_43px.bmp"
+
+/* @makedep: blue_taskdialog_expando_button_pressed_48px.bmp */
+BLUE_TASKDIALOG_EXPANDO_BUTTON_PRESSED_48PX_BMP BITMAP "blue_taskdialog_expando_button_pressed_48px.bmp"
+
+/* @makedep: blue_taskdialog_footnote_separator.bmp */
+BLUE_TASKDIALOG_FOOTNOTE_SEPARATOR_BMP BITMAP "blue_taskdialog_footnote_separator.bmp"
+
+/* @makedep: blue_taskdialog_secondary_panel.bmp */
+BLUE_TASKDIALOG_SECONDARY_PANEL_BMP BITMAP "blue_taskdialog_secondary_panel.bmp"
 
 /* ToolBar */
 /* @makedep: blue_toolbar_buttons.bmp */

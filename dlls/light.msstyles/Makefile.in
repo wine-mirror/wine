@@ -305,6 +305,50 @@ SVG_SRCS = \
 	blue_tab_item_left.svg \
 	blue_tab_item_right.svg \
 	blue_tab_pane_edge.svg \
+	blue_taskdialog_expando_button_expanded_hover_19px.svg \
+	blue_taskdialog_expando_button_expanded_hover_24px.svg \
+	blue_taskdialog_expando_button_expanded_hover_29px.svg \
+	blue_taskdialog_expando_button_expanded_hover_33px.svg \
+	blue_taskdialog_expando_button_expanded_hover_38px.svg \
+	blue_taskdialog_expando_button_expanded_hover_43px.svg \
+	blue_taskdialog_expando_button_expanded_hover_48px.svg \
+	blue_taskdialog_expando_button_expanded_normal_19px.svg \
+	blue_taskdialog_expando_button_expanded_normal_24px.svg \
+	blue_taskdialog_expando_button_expanded_normal_29px.svg \
+	blue_taskdialog_expando_button_expanded_normal_33px.svg \
+	blue_taskdialog_expando_button_expanded_normal_38px.svg \
+	blue_taskdialog_expando_button_expanded_normal_43px.svg \
+	blue_taskdialog_expando_button_expanded_normal_48px.svg \
+	blue_taskdialog_expando_button_expanded_pressed_19px.svg \
+	blue_taskdialog_expando_button_expanded_pressed_24px.svg \
+	blue_taskdialog_expando_button_expanded_pressed_29px.svg \
+	blue_taskdialog_expando_button_expanded_pressed_33px.svg \
+	blue_taskdialog_expando_button_expanded_pressed_38px.svg \
+	blue_taskdialog_expando_button_expanded_pressed_43px.svg \
+	blue_taskdialog_expando_button_expanded_pressed_48px.svg \
+	blue_taskdialog_expando_button_hover_19px.svg \
+	blue_taskdialog_expando_button_hover_24px.svg \
+	blue_taskdialog_expando_button_hover_29px.svg \
+	blue_taskdialog_expando_button_hover_33px.svg \
+	blue_taskdialog_expando_button_hover_38px.svg \
+	blue_taskdialog_expando_button_hover_43px.svg \
+	blue_taskdialog_expando_button_hover_48px.svg \
+	blue_taskdialog_expando_button_normal_19px.svg \
+	blue_taskdialog_expando_button_normal_24px.svg \
+	blue_taskdialog_expando_button_normal_29px.svg \
+	blue_taskdialog_expando_button_normal_33px.svg \
+	blue_taskdialog_expando_button_normal_38px.svg \
+	blue_taskdialog_expando_button_normal_43px.svg \
+	blue_taskdialog_expando_button_normal_48px.svg \
+	blue_taskdialog_expando_button_pressed_19px.svg \
+	blue_taskdialog_expando_button_pressed_24px.svg \
+	blue_taskdialog_expando_button_pressed_29px.svg \
+	blue_taskdialog_expando_button_pressed_33px.svg \
+	blue_taskdialog_expando_button_pressed_38px.svg \
+	blue_taskdialog_expando_button_pressed_43px.svg \
+	blue_taskdialog_expando_button_pressed_48px.svg \
+	blue_taskdialog_footnote_separator.svg \
+	blue_taskdialog_secondary_panel.svg \
 	blue_toolbar_buttons.svg \
 	blue_toolbar_buttons_split.svg \
 	blue_toolbar_buttons_split_dropdown.svg \
