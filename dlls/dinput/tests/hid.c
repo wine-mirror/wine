@@ -899,12 +899,22 @@ BOOL sync_ioctl_( const char *file, int line, HANDLE device, DWORD code, void *i
     return ret;
 }
 
+void fill_context_( const char *file, int line, char *buffer, SIZE_T size )
+{
+    const char *source_file;
+    source_file = strrchr( file, '/' );
+    if (!source_file) source_file = strrchr( file, '\\' );
+    if (!source_file) source_file = file;
+    else source_file++;
+    snprintf( buffer, size, "%s:%d", source_file, line );
+}
+
 void set_hid_expect_( const char *file, int line, HANDLE device, struct hid_expect *expect, DWORD expect_size )
 {
     char context[64];
     BOOL ret;
 
-    fill_context( line, context, ARRAY_SIZE(context) );
+    fill_context_( file, line, context, ARRAY_SIZE(context) );
     ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_CONTEXT, context, ARRAY_SIZE(context), NULL, 0, INFINITE );
     ok_(file, line)( ret, "IOCTL_WINETEST_HID_SET_CONTEXT failed, last error %lu\n", GetLastError() );
     ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_EXPECT, expect, expect_size, NULL, 0, INFINITE );
@@ -928,7 +938,7 @@ void send_hid_input_( const char *file, int line, HANDLE device, struct hid_expe
     char context[64];
     BOOL ret;
 
-    fill_context( line, context, ARRAY_SIZE(context) );
+    fill_context_( file, line, context, ARRAY_SIZE(context) );
     ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SET_CONTEXT, context, ARRAY_SIZE(context), NULL, 0, INFINITE );
     ok_(file, line)( ret, "IOCTL_WINETEST_HID_SET_CONTEXT failed, last error %lu\n", GetLastError() );
     ret = sync_ioctl_( file, line, device, IOCTL_WINETEST_HID_SEND_INPUT, expect, expect_size, NULL, 0, INFINITE );
@@ -2894,7 +2904,7 @@ static void test_hid_driver( DWORD report_id, DWORD polled )
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
     desc.input_size = polled ? sizeof(expect_in) : 0;
     memcpy( desc.input, &expect_in, sizeof(expect_in) );
-    fill_context( __LINE__, desc.context, ARRAY_SIZE(desc.context) );
+    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     if (hid_device_start( &desc )) test_hid_device( report_id, polled, &caps, desc.attributes.VendorID, desc.attributes.ProductID );
     hid_device_stop( &desc );
@@ -3208,7 +3218,7 @@ static void test_hidp_kdr(void)
 
     desc.report_descriptor_len = sizeof(report_desc);
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
-    fill_context( __LINE__, desc.context, ARRAY_SIZE(desc.context) );
+    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     if (!hid_device_start( &desc )) goto done;
 
@@ -3597,7 +3607,7 @@ DWORD WINAPI dinput_test_device_thread( void *stop_event )
 
     desc.report_descriptor_len = sizeof(gamepad_desc);
     memcpy( desc.report_descriptor_buf, gamepad_desc, sizeof(gamepad_desc) );
-    fill_context( __LINE__, desc.context, ARRAY_SIZE(desc.context) );
+    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     hid_device_start( &desc );
     WaitForSingleObject( stop_event, INFINITE );

@@ -68,16 +68,8 @@ void dinput_test_exit(void);
 HRESULT dinput_test_create_device( DWORD version, DIDEVICEINSTANCEW *devinst, IDirectInputDevice8W **device );
 DWORD WINAPI dinput_test_device_thread( void *stop_event );
 
-#define fill_context( line, a, b )                                                                 \
-    do                                                                                             \
-    {                                                                                              \
-        const char *source_file;                                                                   \
-        source_file = strrchr( __FILE__, '/' );                                                    \
-        if (!source_file) source_file = strrchr( __FILE__, '\\' );                                 \
-        if (!source_file) source_file = __FILE__;                                                  \
-        else source_file++;                                                                        \
-        snprintf( a, b, "%s:%d", source_file, line );                                              \
-    } while (0)
+#define fill_context( a, b ) fill_context_( __FILE__, __LINE__, a, b )
+void fill_context_( const char *file, int line, char *buffer, SIZE_T size );
 
 #define check_member_( file, line, val, exp, fmt, member )                                         \
     ok_(file, line)( (val).member == (exp).member, "got " #member " " fmt "\n", (val).member )

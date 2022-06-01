@@ -2838,7 +2838,7 @@ static BOOL test_force_feedback_joystick( DWORD version )
 
     desc.report_descriptor_len = sizeof(report_descriptor);
     memcpy( desc.report_descriptor_buf, report_descriptor, sizeof(report_descriptor) );
-    fill_context( __LINE__, desc.context, ARRAY_SIZE(desc.context) );
+    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     if (!hid_device_start( &desc )) goto done;
     if (FAILED(hr = dinput_test_create_device( version, &devinst, &device ))) goto done;
@@ -3959,7 +3959,7 @@ static void test_device_managed_effect(void)
     memcpy( desc.report_descriptor_buf, report_descriptor, sizeof(report_descriptor) );
     desc.expect_size = sizeof(expect_pool);
     memcpy( desc.expect, expect_pool, sizeof(expect_pool) );
-    fill_context( __LINE__, desc.context, ARRAY_SIZE(desc.context) );
+    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     if (!hid_device_start( &desc )) goto done;
     if (FAILED(hr = dinput_test_create_device( DIRECTINPUT_VERSION, &devinst, &device ))) goto done;
@@ -5706,7 +5706,7 @@ static void test_windows_gaming_input(void)
     memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
     desc.expect_size = sizeof(expect_init);
     memcpy( desc.expect, expect_init, sizeof(expect_init) );
-    fill_context( __LINE__, desc.context, ARRAY_SIZE(desc.context) );
+    fill_context( desc.context, ARRAY_SIZE(desc.context) );
 
     if (!hid_device_start( &desc )) goto done;
     WaitForSingleObject( controller_added.event, INFINITE );
