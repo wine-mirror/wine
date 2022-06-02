@@ -525,99 +525,6 @@ static inline WCHAR win32u_towupper( WCHAR ch )
     return RtlUpcaseUnicodeChar( ch );
 }
 
-static inline LONG win32u_wcstol( LPCWSTR s, LPWSTR *end, INT base )
-{
-    BOOL negative = FALSE, empty = TRUE;
-    LONG ret = 0;
-
-    if (base < 0 || base == 1 || base > 36) return 0;
-    if (end) *end = (WCHAR *)s;
-    while (*s == ' ' || *s == '\t') s++;
-
-    if (*s == '-')
-    {
-        negative = TRUE;
-        s++;
-    }
-    else if (*s == '+') s++;
-
-    if ((base == 0 || base == 16) && s[0] == '0' && (s[1] == 'x' || s[1] == 'X'))
-    {
-        base = 16;
-        s += 2;
-    }
-    if (base == 0) base = s[0] != '0' ? 10 : 8;
-
-    while (*s)
-    {
-        int v;
-
-        if ('0' <= *s && *s <= '9') v = *s - '0';
-        else if ('A' <= *s && *s <= 'Z') v = *s - 'A' + 10;
-        else if ('a' <= *s && *s <= 'z') v = *s - 'a' + 10;
-        else break;
-        if (v >= base) break;
-        if (negative) v = -v;
-        s++;
-        empty = FALSE;
-
-        if (!negative && (ret > MAXLONG / base || ret * base > MAXLONG - v))
-            ret = MAXLONG;
-        else if (negative && (ret < (LONG)MINLONG / base || ret * base < (LONG)(MINLONG - v)))
-            ret = MINLONG;
-        else
-            ret = ret * base + v;
-    }
-
-    if (end && !empty) *end = (WCHAR *)s;
-    return ret;
-}
-
-static inline ULONG win32u_wcstoul( const WCHAR *s, WCHAR **end, int base )
-{
-    BOOL negative = FALSE, empty = TRUE;
-    ULONG ret = 0;
-
-    if (base < 0 || base == 1 || base > 36) return 0;
-    if (end) *end = (WCHAR *)s;
-    while (*s == ' ' || *s == '\t') s++;
-
-    if (*s == '-')
-    {
-        negative = TRUE;
-        s++;
-    }
-    else if (*s == '+') s++;
-
-    if ((base == 0 || base == 16) && s[0] == '0' && (s[1] == 'x' || s[1] == 'X'))
-    {
-        base = 16;
-        s += 2;
-    }
-    if (base == 0) base = s[0] != '0' ? 10 : 8;
-
-    while (*s)
-    {
-        int v;
-
-        if ('0' <= *s && *s <= '9') v = *s - '0';
-        else if ('A' <= *s && *s <= 'Z') v = *s - 'A' + 10;
-        else if ('a' <= *s && *s <= 'z') v = *s - 'a' + 10;
-        else break;
-        if (v >= base) break;
-        s++;
-        empty = FALSE;
-
-        if (ret > MAXDWORD / base || ret * base > MAXDWORD - v)
-            ret = MAXDWORD;
-        else
-            ret = ret * base + v;
-    }
-
-    if (end && !empty) *end = (WCHAR *)s;
-    return negative ? -ret : ret;
-}
-
 extern CPTABLEINFO ansi_cp DECLSPEC_HIDDEN;
 
 DWORD win32u_mbtowc( CPTABLEINFO *info, WCHAR *dst, DWORD dstlen, const char *src,
@@ -643,8 +550,6 @@ static inline WCHAR *towstr( const char *str )
 
 #define towupper(c)     win32u_towupper(c)
 #define wcsdup(s)       win32u_wcsdup(s)
-#define wcstol(s,e,b)   win32u_wcstol(s,e,b)
-#define wcstoul(s,e,b)  win32u_wcstoul(s,e,b)
 
 static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
 {
