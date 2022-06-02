@@ -43,6 +43,8 @@ extern BOOL allow_software_rendering DECLSPEC_HIDDEN;
 extern BOOL disable_window_decorations DECLSPEC_HIDDEN;
 extern HMODULE macdrv_module DECLSPEC_HIDDEN;
 
+extern NTSTATUS (WINAPI *pNtWaitForMultipleObjects)(ULONG,const HANDLE*,BOOLEAN,
+                                                    BOOLEAN,const LARGE_INTEGER*) DECLSPEC_HIDDEN;
 
 extern const char* debugstr_cf(CFTypeRef t) DECLSPEC_HIDDEN;
 
@@ -273,7 +275,6 @@ extern void macdrv_status_item_mouse_move(const macdrv_event *event) DECLSPEC_HI
 extern void check_retina_status(void) DECLSPEC_HIDDEN;
 extern void macdrv_init_display_devices(BOOL force) DECLSPEC_HIDDEN;
 extern void init_user_driver(void) DECLSPEC_HIDDEN;
-extern NTSTATUS macdrv_init(void *arg) DECLSPEC_HIDDEN;
 
 /**************************************************************************
  * Mac IME driver
@@ -371,11 +372,5 @@ static inline UINT asciiz_to_unicode(WCHAR *dst, const char *src)
     while ((*p++ = *src++));
     return (p - dst) * sizeof(WCHAR);
 }
-
-/* FIXME: remove once we use unixlib */
-#define wcsicmp strcmpiW
-#define wcsnicmp strncmpiW
-#define wcsrchr strrchrW
-#define wcstol strtolW
 
 #endif  /* __WINE_MACDRV_H */

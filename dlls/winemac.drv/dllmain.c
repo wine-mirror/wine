@@ -28,6 +28,8 @@ WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
 
 
 HMODULE macdrv_module = 0;
+static unixlib_handle_t macdrv_handle;
+NTSTATUS (CDECL *macdrv_unix_call)(enum macdrv_funcs code, void *params);
 
 struct quit_info {
     HWND               *wins;
@@ -405,15 +407,21 @@ static BOOL process_attach(void)
         { .id = 0 }
     };
 
+    if (NtQueryVirtualMemory(GetCurrentProcess(), macdrv_module, MemoryWineUnixFuncs,
+                             &macdrv_handle, sizeof(macdrv_handle), NULL))
+        return FALSE;
+
     for (str = strings; str->id; str++)
         str->len = LoadStringW(macdrv_module, str->id, (WCHAR *)&str->str, 0);
     params.strings = strings;
 
-    if (MACDRV_CALL(init, &params)) return FALSE;
+    params.pNtWaitForMultipleObjects = NtWaitForMultipleObjects;
+    if (__wine_unix_call(macdrv_handle, unix_init, &params)) return FALSE;
 
     callback_table = NtCurrentTeb()->Peb->KernelCallbackTable;
     memcpy( callback_table + NtUserDriverCallbackFirst, kernel_callbacks, sizeof(kernel_callbacks) );
 
+    macdrv_unix_call = params.unix_call;
     return TRUE;
 }
 

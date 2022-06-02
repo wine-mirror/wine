@@ -36,8 +36,8 @@ enum macdrv_funcs
 };
 
 /* FIXME: Use __wine_unix_call when the rest of the stack is ready */
-extern NTSTATUS unix_call(enum macdrv_funcs code, void *params) DECLSPEC_HIDDEN;
-#define MACDRV_CALL(func, params) unix_call( unix_ ## func, params )
+extern NTSTATUS (CDECL *macdrv_unix_call)(enum macdrv_funcs code, void *params) DECLSPEC_HIDDEN;
+#define MACDRV_CALL(func, params) macdrv_unix_call(unix_ ## func, params)
 
 /* macdrv_dnd_get_data params */
 struct dnd_get_data_params
@@ -83,7 +83,9 @@ struct localized_string
 
 struct init_params
 {
+    NTSTATUS (WINAPI *pNtWaitForMultipleObjects)(ULONG,const HANDLE*,BOOLEAN,BOOLEAN,const LARGE_INTEGER*);
     struct localized_string *strings;
+    NTSTATUS (CDECL *unix_call)(enum macdrv_funcs code, void *params);
 };
 
 /* macdrv_notify_icon params */

@@ -19,6 +19,11 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
+
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
 
 #include <Security/AuthSession.h>
@@ -67,6 +72,8 @@ int enable_app_nap = FALSE;
 
 CFDictionaryRef localized_strings;
 
+NTSTATUS (WINAPI *pNtWaitForMultipleObjects)(ULONG,const HANDLE*,BOOLEAN,
+                                             BOOLEAN,const LARGE_INTEGER*);
 
 /**************************************************************************
  *              debugstr_cf
@@ -313,9 +320,9 @@ static void setup_options(void)
     {
         static const WCHAR noneW[] = {'n','o','n','e',0};
         static const WCHAR allW[] = {'a','l','l',0};
-        if (!lstrcmpW(buffer, noneW))
+        if (!wcscmp(buffer, noneW))
             topmost_float_inactive = TOPMOST_FLOAT_INACTIVE_NONE;
-        else if (!lstrcmpW(buffer, allW))
+        else if (!wcscmp(buffer, allW))
             topmost_float_inactive = TOPMOST_FLOAT_INACTIVE_ALL;
         else
             topmost_float_inactive = TOPMOST_FLOAT_INACTIVE_NONFULLSCREEN;
@@ -371,9 +378,9 @@ static void setup_options(void)
     {
         static const WCHAR transparentW[] = {'t','r','a','n','s','p','a','r','e','n','t',0};
         static const WCHAR behindW[] = {'b','e','h','i','n','d',0};
-        if (!lstrcmpW(buffer, transparentW))
+        if (!wcscmp(buffer, transparentW))
             gl_surface_mode = GL_SURFACE_IN_FRONT_TRANSPARENT;
-        else if (!lstrcmpW(buffer, behindW))
+        else if (!wcscmp(buffer, behindW))
             gl_surface_mode = GL_SURFACE_BEHIND;
         else
             gl_surface_mode = GL_SURFACE_IN_FRONT_OPAQUE;
@@ -427,10 +434,13 @@ static void load_strings(struct localized_string *str)
 }
 
 
+static NTSTATUS CDECL unix_call( enum macdrv_funcs code, void *params );
+
+
 /***********************************************************************
  *              macdrv_init
  */
-NTSTATUS macdrv_init(void *arg)
+static NTSTATUS macdrv_init(void *arg)
 {
     struct init_params *params = arg;
     SessionAttributeBits attributes;
@@ -454,6 +464,8 @@ NTSTATUS macdrv_init(void *arg)
     init_user_driver();
     macdrv_init_display_devices(FALSE);
 
+    pNtWaitForMultipleObjects = params->pNtWaitForMultipleObjects;
+    params->unix_call = unix_call;
     return STATUS_SUCCESS;
 }
 
@@ -609,9 +621,9 @@ BOOL macdrv_SystemParametersInfo( UINT action, UINT int_param, void *ptr_param, 
 
 NTSTATUS macdrv_client_func(enum macdrv_client_funcs id, const void *params, ULONG size)
 {
-    /* FIXME: use KeUserModeCallback instead */
-    NTSTATUS (WINAPI *func)(const void *, ULONG) = ((void **)NtCurrentTeb()->Peb->KernelCallbackTable)[id];
-    return func(params, size);
+    void *ret_ptr;
+    ULONG ret_len;
+    return KeUserModeCallback(id, params, size, &ret_ptr, &ret_len);
 }
 
 
@@ -655,7 +667,7 @@ C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
 
 
 /* FIXME: Use __wine_unix_call instead */
-NTSTATUS unix_call(enum macdrv_funcs code, void *params)
+static NTSTATUS CDECL unix_call(enum macdrv_funcs code, void *params)
 {
     return __wine_unix_call_funcs[code]( params );
 }
