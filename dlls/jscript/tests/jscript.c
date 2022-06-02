@@ -863,6 +863,12 @@ static void test_jscript_uninitializing(void)
     hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_UNINITIALIZED);
     ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_UNINITIALIZED) failed: %08lx\n", hres);
 
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_STARTED);
+    ok(hres == E_UNEXPECTED, "SetScriptState(SCRIPTSTATE_STARTED) returned: %08lx\n", hres);
+
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_CONNECTED);
+    ok(hres == E_UNEXPECTED, "SetScriptState(SCRIPTSTATE_CONNECTED) returned: %08lx\n", hres);
+
     SET_EXPECT(GetLCID);
     SET_EXPECT(OnStateChange_INITIALIZED);
     hres = IActiveScript_SetScriptSite(script, &ActiveScriptSite);

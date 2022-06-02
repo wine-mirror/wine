@@ -824,7 +824,7 @@ static HRESULT WINAPI JScript_SetScriptState(IActiveScript *iface, SCRIPTSTATE s
     switch(ss) {
     case SCRIPTSTATE_STARTED:
     case SCRIPTSTATE_CONNECTED: /* FIXME */
-        if(This->ctx->state == SCRIPTSTATE_CLOSED)
+        if(This->ctx->state == SCRIPTSTATE_UNINITIALIZED || This->ctx->state == SCRIPTSTATE_CLOSED)
             return E_UNEXPECTED;
 
         exec_queued_code(This);
