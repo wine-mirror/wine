@@ -10886,6 +10886,256 @@ done:
     release_test_context(&ctx);
 }
 
+static void test_effect_properties(BOOL d3d11)
+{
+    UINT32 i, min_inputs, max_inputs, integer, index;
+    ID2D1EffectContext *effect_context;
+    D2D1_BUFFER_PRECISION precision;
+    struct d2d1_test_context ctx;
+    ID2D1Factory1 *factory;
+    ID2D1Effect *effect;
+    WCHAR buffer[128];
+    CLSID clsid;
+    BOOL cached;
+    HRESULT hr;
+
+    static const WCHAR *effect_author = L"The Wine Project";
+    static const WCHAR *effect_category = L"Test";
+    static const WCHAR *effect_description = L"Test effect.";
+
+    const D2D1_PROPERTY_BINDING binding[] =
+    {
+        {L"Integer",  effect_impl_set_integer, effect_impl_get_integer},
+        {L"Context",  NULL,                    effect_impl_get_context},
+    };
+
+    const struct system_property_test
+    {
+        const WCHAR *xml;
+        const WCHAR *display_name;
+        const WCHAR *author;
+        const WCHAR *category;
+        const WCHAR *description;
+        UINT32 min_inputs;
+        UINT32 max_inputs;
+    }
+    system_property_tests[] =
+    {
+        {effect_xml_a,       L"TestEffectA", effect_author, effect_category, effect_description, 1, 1},
+        {effect_xml_b,       L"TestEffectB", effect_author, effect_category, effect_description, 1, 1},
+        {effect_xml_c,       L"TestEffectC", effect_author, effect_category, effect_description, 1, 1},
+        {effect_xml_minimum, L"", L"" ,L"", L"", 0, 0},
+    };
+
+    if (!init_test_context(&ctx, d3d11))
+        return;
+
+    factory = ctx.factory1;
+    if (!factory)
+    {
+        win_skip("ID2D1Factory1 is not supported.\n");
+        release_test_context(&ctx);
+        return;
+    }
+
+    /* Test system properties */
+
+    for (i = 0; i < ARRAY_SIZE(system_property_tests); ++i)
+    {
+        const struct system_property_test *test = &system_property_tests[i];
+        winetest_push_context("Test %u", i);
+
+        hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect, test->xml, NULL, 0, effect_impl_create);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+        effect = NULL;
+        hr = ID2D1DeviceContext_CreateEffect(ctx.context, &CLSID_TestEffect, &effect);
+        todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        if (hr != S_OK)
+            goto next;
+
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_CLSID,
+                D2D1_PROPERTY_TYPE_CLSID, (BYTE *)&clsid, sizeof(clsid));
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(IsEqualGUID(&clsid, &CLSID_TestEffect), "Got unexpected clsid %s, expected %s.\n",
+                debugstr_guid(&clsid), debugstr_guid(&CLSID_TestEffect));
+
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_DISPLAYNAME,
+                D2D1_PROPERTY_TYPE_STRING, (BYTE *)buffer, sizeof(buffer));
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(!wcscmp(buffer, test->display_name), "Got unexpected display name %s, expected %s.\n",
+                debugstr_w(buffer), debugstr_w(test->display_name));
+
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_AUTHOR,
+                D2D1_PROPERTY_TYPE_STRING, (BYTE *)buffer, sizeof(buffer));
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(!wcscmp(buffer, test->author), "Got unexpected author %s, expected %s.\n",
+                debugstr_w(buffer), debugstr_w(test->author));
+
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_CATEGORY,
+                D2D1_PROPERTY_TYPE_STRING, (BYTE *)buffer, sizeof(buffer));
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(!wcscmp(buffer, test->category), "Got unexpected category %s, expected %s.\n",
+                debugstr_w(buffer), debugstr_w(test->category));
+
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_DESCRIPTION,
+                D2D1_PROPERTY_TYPE_STRING, (BYTE *)buffer, sizeof(buffer));
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(!wcscmp(buffer, test->description), "Got unexpected description %s, expected %s.\n",
+                debugstr_w(buffer), debugstr_w(test->description));
+
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_CACHED,
+                D2D1_PROPERTY_TYPE_BOOL, (BYTE *)&cached, sizeof(cached));
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(cached == FALSE, "Got unexpected cached %d.\n", cached);
+
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_PRECISION,
+                D2D1_PROPERTY_TYPE_ENUM, (BYTE *)&precision, sizeof(precision));
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(precision == D2D1_BUFFER_PRECISION_UNKNOWN, "Got unexpected precision %#x.\n", precision);
+
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_MIN_INPUTS,
+                D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&min_inputs, sizeof(min_inputs));
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(min_inputs == test->min_inputs, "Got unexpected min inputs %u, expected %u.\n",
+                min_inputs, test->min_inputs);
+
+        hr = ID2D1Effect_GetValue(effect, D2D1_PROPERTY_MAX_INPUTS,
+                D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&max_inputs, sizeof(max_inputs));
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(max_inputs == test->max_inputs, "Got unexpected max inputs %u, expected %u.\n",
+                max_inputs, test->max_inputs);
+
+        hr = ID2D1Effect_SetValue(effect, D2D1_PROPERTY_CLSID,
+                D2D1_PROPERTY_TYPE_CLSID, (BYTE *)&clsid, sizeof(clsid));
+        ok(hr == E_INVALIDARG || broken(hr == S_OK) /* win8 */, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Effect_SetValue(effect, D2D1_PROPERTY_DISPLAYNAME,
+                D2D1_PROPERTY_TYPE_STRING, (BYTE *)buffer, sizeof(buffer));
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Effect_SetValue(effect, D2D1_PROPERTY_AUTHOR,
+                D2D1_PROPERTY_TYPE_STRING, (BYTE *)buffer, sizeof(buffer));
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Effect_SetValue(effect, D2D1_PROPERTY_CATEGORY,
+                D2D1_PROPERTY_TYPE_STRING, (BYTE *)buffer, sizeof(buffer));
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Effect_SetValue(effect, D2D1_PROPERTY_DISPLAYNAME,
+                D2D1_PROPERTY_TYPE_STRING, (BYTE *)buffer, sizeof(buffer));
+        ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Effect_SetValue(effect, D2D1_PROPERTY_CACHED,
+                D2D1_PROPERTY_TYPE_BOOL, (BYTE *)&cached, sizeof(cached));
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Effect_SetValue(effect, D2D1_PROPERTY_PRECISION,
+                D2D1_PROPERTY_TYPE_ENUM, (BYTE *)&precision, sizeof(precision));
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Effect_SetValue(effect, D2D1_PROPERTY_MIN_INPUTS,
+                D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&min_inputs, sizeof(min_inputs));
+        ok(hr == E_INVALIDARG || broken(hr == S_OK) /* win8 */, "Got unexpected hr %#lx.\n", hr);
+        hr = ID2D1Effect_SetValue(effect, D2D1_PROPERTY_MAX_INPUTS,
+                D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&max_inputs, sizeof(max_inputs));
+        ok(hr == E_INVALIDARG || broken(hr == S_OK) /* win8 */, "Got unexpected hr %#lx.\n", hr);
+
+    next:
+        if (effect)
+            ID2D1Effect_Release(effect);
+        hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+        todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        winetest_pop_context();
+    }
+
+    /* Test custom properties */
+
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect,
+            effect_xml_c, binding, 2, effect_impl_create);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    effect = NULL;
+    hr = ID2D1DeviceContext_CreateEffect(ctx.context, &CLSID_TestEffect, &effect);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    if (hr != S_OK)
+        goto done;
+
+    index = ID2D1Effect_GetPropertyIndex(effect, L"Context");
+    ok(index == 0, "Got unexpected index %u.\n", index);
+    index = ID2D1Effect_GetPropertyIndex(effect, L"Integer");
+    ok(index == 1, "Got unexpected index %u.\n", index);
+
+    effect_context = (ID2D1EffectContext *)0xdeadbeef;
+    hr = ID2D1Effect_GetValueByName(effect,
+            L"Context", D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(effect_context != NULL && effect_context != (ID2D1EffectContext *)0xdeadbeef,
+       "Got unexpected effect context %p.\n", effect_context);
+
+    effect_context = (ID2D1EffectContext *)0xdeadbeef;
+    hr = ID2D1Effect_GetValue(effect, 0, D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(effect_context != NULL && effect_context != (ID2D1EffectContext *)0xdeadbeef,
+       "Got unexpected effect context %p.\n", effect_context);
+
+    hr = ID2D1Effect_SetValue(effect, 0, D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+
+    integer = 0xdeadbeef;
+    hr = ID2D1Effect_GetValueByName(effect, L"Integer", D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(integer == 10, "Got unexpected integer %u.", integer);
+
+    integer = 0xdeadbeef;
+    hr = ID2D1Effect_GetValue(effect, 1, D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(integer == 10, "Got unexpected integer %u.", integer);
+
+    integer = 20;
+    hr = ID2D1Effect_SetValue(effect, 1, D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    integer = 0xdeadbeef;
+    hr = ID2D1Effect_GetValue(effect, 1, D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(integer == 20, "Got unexpected integer %u.", integer);
+
+    ID2D1Effect_Release(effect);
+    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    /* Test custom properties without binding */
+
+    hr = ID2D1Factory1_RegisterEffectFromString(factory, &CLSID_TestEffect, effect_xml_c, NULL, 0, effect_impl_create);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1DeviceContext_CreateEffect(ctx.context, &CLSID_TestEffect, &effect);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    index = ID2D1Effect_GetPropertyIndex(effect, L"Context");
+    ok(index == 0, "Got unexpected index %u.\n", index);
+    index = ID2D1Effect_GetPropertyIndex(effect, L"Integer");
+    ok(index == 1, "Got unexpected index %u.\n", index);
+
+    hr = ID2D1Effect_GetValueByName(effect, L"DeadBeef", D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer));
+    ok(hr == D2DERR_INVALID_PROPERTY, "Got unexpected hr %#lx.\n", hr);
+
+    effect_context = (ID2D1EffectContext *)0xdeadbeef;
+    hr = ID2D1Effect_GetValue(effect, 0, D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(effect_context == NULL, "Got unexpected effect context %p.\n", effect_context);
+
+    integer = 0xdeadbeef;
+    hr = ID2D1Effect_GetValue(effect, 1, D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer));
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(integer == 0, "Got unexpected integer %u.", integer);
+
+    hr = ID2D1Effect_SetValue(effect, 0, D2D1_PROPERTY_TYPE_IUNKNOWN, (BYTE *)&effect_context, sizeof(effect_context));
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    hr = ID2D1Effect_SetValue(effect, 1, D2D1_PROPERTY_TYPE_UINT32, (BYTE *)&integer, sizeof(integer));
+    ok(hr == E_INVALIDARG || broken(hr == S_OK) /* win8 */, "Got unexpected hr %#lx.\n", hr);
+
+done:
+    if (effect)
+        ID2D1Effect_Release(effect);
+    hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
+    todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    release_test_context(&ctx);
+}
+
 static void test_effect_2d_affine(BOOL d3d11)
 {
     D2D1_MATRIX_3X2_F rotate, scale, skew;
@@ -12004,6 +12254,7 @@ START_TEST(d2d1)
     queue_test(test_mt_factory);
     queue_test(test_effect_register);
     queue_test(test_effect_context);
+    queue_test(test_effect_properties);
     queue_test(test_effect);
     queue_test(test_effect_2d_affine);
     queue_test(test_effect_crop);
