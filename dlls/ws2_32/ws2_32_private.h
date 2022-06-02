@@ -61,6 +61,18 @@
       0, 0, { (DWORD_PTR)(__FILE__ ": " # cs) }}; \
     static CRITICAL_SECTION cs = { &cs##_debug, -1, 0, 0, 0, 0 }
 
+static inline char *strdupWtoA( const WCHAR *str )
+{
+    char *ret = NULL;
+    if (str)
+    {
+        DWORD len = WideCharToMultiByte( CP_ACP, 0, str, -1, NULL, 0, NULL, NULL );
+        if ((ret = malloc( len )))
+            WideCharToMultiByte( CP_ACP, 0, str, -1, ret, len, NULL, NULL );
+    }
+    return ret;
+}
+
 static const char magic_loopback_addr[] = {127, 12, 34, 56};
 
 const char *debugstr_sockaddr( const struct sockaddr *addr ) DECLSPEC_HIDDEN;

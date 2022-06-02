@@ -3197,6 +3197,156 @@ static void test_WSADuplicateSocket(void)
     closesocket(source);
 }
 
+static void test_WSAConnectByName(void)
+{
+    SOCKET s;
+    SOCKADDR_IN local_addr = {0}, remote_addr = {0},
+                sock_addr = {0}, peer_addr = {0};
+    DWORD local_len, remote_len, conn_ctx;
+    int ret, err, sock_len, peer_len;
+    WSAOVERLAPPED overlap;
+    struct addrinfo *first_addrinfo, first_hints;
+
+    conn_ctx = TRUE;
+
+    /* First call of getaddrinfo fails on w8adm */
+    first_addrinfo = NULL;
+    memset(&first_hints, 0, sizeof(struct addrinfo));
+    first_hints.ai_socktype = SOCK_STREAM;
+    first_hints.ai_family = AF_INET;
+    first_hints.ai_protocol = IPPROTO_TCP;
+    getaddrinfo("winehq.org", "http", &first_hints, &first_addrinfo);
+    if (first_addrinfo)
+        freeaddrinfo(first_addrinfo);
+    SetLastError(0xdeadbeef);
+
+    /* Fill all fields */
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    local_len = remote_len = sizeof(SOCKADDR_IN);
+    ret = WSAConnectByNameA(s, "winehq.org", "http", &local_len, (struct sockaddr *)&local_addr,
+                             &remote_len, (struct sockaddr *)&remote_addr, NULL, NULL);
+    ok(ret, "WSAConnectByNameA should have succeeded, error %u\n", WSAGetLastError());
+    setsockopt(s, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, (char *)&conn_ctx, sizeof(DWORD));
+    sock_len = peer_len = sizeof(SOCKADDR_IN);
+    ret = getsockname(s, (struct sockaddr *)&sock_addr, &sock_len);
+    ok(!ret, "getsockname should have succeeded, error %u\n", WSAGetLastError());
+    ret = getpeername(s, (struct sockaddr *)&peer_addr, &peer_len);
+    ok(!ret, "getpeername should have succeeded, error %u\n", WSAGetLastError());
+    ok(sock_len == sizeof(SOCKADDR_IN), "got sockname size of %d\n", sock_len);
+    ok(peer_len == sizeof(SOCKADDR_IN), "got peername size of %d\n", peer_len);
+    ok(local_len == sizeof(SOCKADDR_IN), "got local size of %lu\n", local_len);
+    ok(remote_len == sizeof(SOCKADDR_IN), "got remote size of %lu\n", remote_len);
+    ok(!local_addr.sin_port, "local_addr has non-zero sin_port: %hu.\n", local_addr.sin_port);
+    ok(!memcmp(&sock_addr.sin_addr, &local_addr.sin_addr, sizeof(struct in_addr)),
+       "local_addr did not receive data.\n");
+    ok(!memcmp(&peer_addr, &remote_addr, sizeof(SOCKADDR_IN)), "remote_addr did not receive data.\n");
+    closesocket(s);
+
+    /* Passing NULL length but a pointer to a sockaddr */
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    local_len = remote_len = sizeof(SOCKADDR_IN);
+    memset(&local_addr, 0, sizeof(SOCKADDR_IN));
+    memset(&remote_addr, 0, sizeof(SOCKADDR_IN));
+    memset(&sock_addr, 0, sizeof(SOCKADDR_IN));
+    memset(&peer_addr, 0, sizeof(SOCKADDR_IN));
+    ret = WSAConnectByNameA(s, "winehq.org", "http", NULL, (struct sockaddr *)&local_addr,
+                             NULL, (struct sockaddr *)&remote_addr, NULL, NULL);
+    ok(ret, "WSAConnectByNameA should have succeeded, error %u\n", WSAGetLastError());
+    setsockopt(s, SOL_SOCKET, SO_UPDATE_CONNECT_CONTEXT, (char *)&conn_ctx, sizeof(DWORD));
+    sock_len = peer_len = sizeof(SOCKADDR_IN);
+    ret = getsockname(s, (struct sockaddr *)&sock_addr, &sock_len);
+    ok(!ret, "getsockname should have succeeded, error %u\n", WSAGetLastError());
+    ret = getpeername(s, (struct sockaddr *)&peer_addr, &peer_len);
+    ok(!ret, "getpeername should have succeeded, error %u\n", WSAGetLastError());
+    ok(sock_len == sizeof(SOCKADDR_IN), "got sockname size of %d\n", sock_len);
+    ok(peer_len == sizeof(SOCKADDR_IN), "got peername size of %d\n", peer_len);
+    ok(!local_addr.sin_family, "local_addr received data.\n");
+    ok(!remote_addr.sin_family, "remote_addr received data.\n");
+    closesocket(s);
+
+    /* Passing NULLs for node or service */
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ret = WSAConnectByNameA(s, NULL, "http", NULL, NULL, NULL, NULL, NULL, NULL);
+    err = WSAGetLastError();
+    ok(!ret, "WSAConnectByNameA should have failed\n");
+    ok(err == WSAEINVAL, "expected error %u (WSAEINVAL), got %u\n", WSAEINVAL, err);
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    closesocket(s);
+    ret = WSAConnectByNameA(s, "winehq.org", NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    err = WSAGetLastError();
+    ok(!ret, "WSAConnectByNameA should have failed\n");
+    ok(err == WSAEINVAL, "expected error %u (WSAEINVAL), got %u\n", WSAEINVAL, err);
+    closesocket(s);
+
+    /* Passing NULL for the addresses and address lengths */
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ret = WSAConnectByNameA(s, "winehq.org", "http", NULL, NULL, NULL, NULL, NULL, NULL);
+    ok(ret, "WSAConnectByNameA should have succeeded, error %u\n", WSAGetLastError());
+    closesocket(s);
+
+    /* Passing NULL for the addresses and passing correct lengths */
+    local_len = remote_len = sizeof(SOCKADDR_IN);
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ret = WSAConnectByNameA(s, "winehq.org", "http", &local_len, NULL,
+                            &remote_len, NULL, NULL, NULL);
+    ok(ret, "WSAConnectByNameA should have succeeded, error %u\n", WSAGetLastError());
+    ok(local_len == sizeof(SOCKADDR_IN), "local_len should have been %Iu, got %ld\n", sizeof(SOCKADDR_IN),
+       local_len);
+    ok(remote_len == sizeof(SOCKADDR_IN), "remote_len should have been %Iu, got %ld\n", sizeof(SOCKADDR_IN),
+       remote_len);
+    closesocket(s);
+
+    /* Passing addresses and passing short lengths */
+    local_len = remote_len = 3;
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ret = WSAConnectByNameA(s, "winehq.org", "http", &local_len, (struct sockaddr *)&local_addr,
+                            &remote_len, (struct sockaddr *)&remote_addr, NULL, NULL);
+    err = WSAGetLastError();
+    ok(!ret, "WSAConnectByNameA should have failed\n");
+    ok(err == WSAEFAULT, "expected error %u (WSAEFAULT), got %u\n", WSAEFAULT, err);
+    ok(local_len == 3, "local_len should have been 3, got %ld\n", local_len);
+    ok(remote_len == 3, "remote_len should have been 3, got %ld\n", remote_len);
+    closesocket(s);
+
+    /* Passing addresses and passing long lengths */
+    local_len = remote_len = 50;
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ret = WSAConnectByNameA(s, "winehq.org", "http", &local_len, (struct sockaddr *)&local_addr,
+                            &remote_len, (struct sockaddr *)&remote_addr, NULL, NULL);
+    ok(ret, "WSAConnectByNameA should have succeeded, error %u\n", WSAGetLastError());
+    ok(local_len == sizeof(SOCKADDR_IN), "local_len should have been %Iu, got %ld\n", sizeof(SOCKADDR_IN),
+       local_len);
+    ok(remote_len == sizeof(SOCKADDR_IN), "remote_len should have been %Iu, got %ld\n", sizeof(SOCKADDR_IN),
+       remote_len);
+    closesocket(s);
+
+    /* Unknown service */
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ret = WSAConnectByNameA(s, "winehq.org", "nonexistentservice", NULL, NULL, NULL, NULL, NULL, NULL);
+    err = WSAGetLastError();
+    ok(!ret, "WSAConnectByNameA should have failed\n");
+    ok(err == WSATYPE_NOT_FOUND, "expected error %u (WSATYPE_NOT_FOUND), got %u\n",
+       WSATYPE_NOT_FOUND, err);
+    closesocket(s);
+
+    /* Connecting with a UDP socket */
+    s = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+    ret = WSAConnectByNameA(s, "winehq.org", "https", NULL, NULL, NULL, NULL, NULL, NULL);
+    err = WSAGetLastError();
+    ok(!ret, "WSAConnectByNameA should have failed\n");
+    ok(err == WSAEINVAL || err == WSAEFAULT, "expected error %u (WSAEINVAL) or %u (WSAEFAULT), got %u\n",
+       WSAEINVAL, WSAEFAULT, err); /* WSAEFAULT win10 >= 1809 */
+    closesocket(s);
+
+    /* Passing non-null as the reserved parameter */
+    s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    ret = WSAConnectByNameA(s, "winehq.org", "http", NULL, NULL, NULL, NULL, NULL, &overlap);
+    err = WSAGetLastError();
+    ok(!ret, "WSAConnectByNameA should have failed\n");
+    ok(err == WSAEINVAL, "expected error %u (WSAEINVAL), got %u\n", WSAEINVAL, err);
+    closesocket(s);
+}
+
 static void test_WSAEnumNetworkEvents(void)
 {
     SOCKET s, s2;
@@ -12573,6 +12723,7 @@ START_TEST( sock )
 
     test_WSASocket();
     test_WSADuplicateSocket();
+    test_WSAConnectByName();
     test_WSAEnumNetworkEvents();
 
     test_errors();

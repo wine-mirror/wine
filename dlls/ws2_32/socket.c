@@ -1284,6 +1284,174 @@ static BOOL WINAPI WS2_ConnectEx( SOCKET s, const struct sockaddr *name, int nam
 }
 
 
+/***********************************************************************
+ *          WSAConnectByNameA      (WS2_32.@)
+ */
+BOOL WINAPI WSAConnectByNameA(SOCKET s, const char *node_name, const char *service_name,
+                              DWORD *local_addr_len, struct sockaddr *local_addr,
+                              DWORD *remote_addr_len, struct sockaddr *remote_addr,
+                              const struct timeval *timeout, WSAOVERLAPPED *reserved)
+{
+    WSAPROTOCOL_INFOA proto_info;
+    WSAPOLLFD pollout;
+    struct addrinfo *service, hints;
+    int ret, proto_len, sockaddr_size, sockname_size, sock_err, int_len;
+
+    TRACE("socket %#Ix, node_name %s, service_name %s, local_addr_len %p, local_addr %p, \
+          remote_addr_len %p, remote_addr %p, timeout %p, reserved %p\n",
+          s, debugstr_a(node_name), debugstr_a(service_name), local_addr_len, local_addr,
+          remote_addr_len, remote_addr, timeout, reserved );
+
+    if (!node_name || !service_name || reserved)
+    {
+        SetLastError(WSAEINVAL);
+        return FALSE;
+    }
+
+    if (!s)
+    {
+        SetLastError(WSAENOTSOCK);
+        return FALSE;
+    }
+
+    if (timeout)
+        FIXME("WSAConnectByName timeout stub\n");
+
+    proto_len = sizeof(WSAPROTOCOL_INFOA);
+    ret = getsockopt(s, SOL_SOCKET, SO_PROTOCOL_INFOA, (char *)&proto_info, &proto_len);
+    if (ret)
+        return FALSE;
+
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_socktype = proto_info.iSocketType;
+    hints.ai_family = proto_info.iAddressFamily;
+    hints.ai_protocol = proto_info.iProtocol;
+    ret = getaddrinfo(node_name, service_name, &hints, &service);
+    if (ret)
+        return FALSE;
+
+    if (proto_info.iSocketType != SOCK_STREAM)
+    {
+        freeaddrinfo(service);
+        SetLastError(WSAEFAULT);
+        return FALSE;
+    }
+
+    switch (proto_info.iAddressFamily)
+    {
+    case AF_INET:
+        sockaddr_size = sizeof(SOCKADDR_IN);
+        break;
+    case AF_INET6:
+        sockaddr_size = sizeof(SOCKADDR_IN6);
+        break;
+    default:
+        freeaddrinfo(service);
+        SetLastError(WSAENOTSOCK);
+        return FALSE;
+    }
+
+    ret = connect(s, service->ai_addr, sockaddr_size);
+    if (ret)
+    {
+        freeaddrinfo(service);
+        return FALSE;
+    }
+
+    pollout.fd = s;
+    pollout.events = POLLWRNORM;
+    ret = WSAPoll(&pollout, 1, -1);
+    if (ret == SOCKET_ERROR)
+    {
+        freeaddrinfo(service);
+        return FALSE;
+    }
+    if (pollout.revents & (POLLERR | POLLHUP | POLLNVAL))
+    {
+        freeaddrinfo(service);
+        int_len = sizeof(int);
+        ret = getsockopt(s, SOL_SOCKET, SO_ERROR, (char *)&sock_err, &int_len);
+        if (ret == SOCKET_ERROR)
+            return FALSE;
+        SetLastError(sock_err);
+        return FALSE;
+    }
+
+    if (remote_addr_len && remote_addr)
+    {
+        if (*remote_addr_len >= sockaddr_size)
+        {
+            memcpy(remote_addr, service->ai_addr, sockaddr_size);
+            *remote_addr_len = sockaddr_size;
+        }
+        else
+        {
+            freeaddrinfo(service);
+            SetLastError(WSAEFAULT);
+            return FALSE;
+        }
+    }
+
+    freeaddrinfo(service);
+
+    if (local_addr_len && local_addr)
+    {
+        if (*local_addr_len >= sockaddr_size)
+        {
+            sockname_size = sockaddr_size;
+            ret = getsockname(s, local_addr, &sockname_size);
+            if (ret)
+                return FALSE;
+            if (proto_info.iAddressFamily == AF_INET6)
+                ((SOCKADDR_IN6 *)local_addr)->sin6_port = 0;
+            else
+                ((SOCKADDR_IN *)local_addr)->sin_port = 0;
+            *local_addr_len = sockaddr_size;
+        }
+        else
+        {
+            SetLastError(WSAEFAULT);
+            return FALSE;
+        }
+    }
+
+    return TRUE;
+}
+
+
+/***********************************************************************
+ *          WSAConnectByNameW      (WS2_32.@)
+ */
+BOOL WINAPI WSAConnectByNameW(SOCKET s, const WCHAR *node_name, const WCHAR *service_name,
+                              DWORD *local_addr_len, struct sockaddr *local_addr,
+                              DWORD *remote_addr_len, struct sockaddr *remote_addr,
+                              const struct timeval *timeout, WSAOVERLAPPED *reserved)
+{
+    char *node_nameA, *service_nameA;
+    BOOL ret;
+
+    if (!node_name || !service_name)
+    {
+        SetLastError(WSAEINVAL);
+        return FALSE;
+    }
+
+    node_nameA = strdupWtoA(node_name);
+    service_nameA = strdupWtoA(service_name);
+    if (!node_nameA || !service_nameA)
+    {
+        SetLastError(WSAENOBUFS);
+        return FALSE;
+    }
+
+    ret = WSAConnectByNameA(s, node_nameA, service_nameA, local_addr_len, local_addr,
+                             remote_addr_len, remote_addr, timeout, reserved);
+    free(node_nameA);
+    free(service_nameA);
+    return ret;
+}
+
+
 static BOOL WINAPI WS2_DisconnectEx( SOCKET s, OVERLAPPED *overlapped, DWORD flags, DWORD reserved )
 {
     IO_STATUS_BLOCK iosb, *piosb = &iosb;

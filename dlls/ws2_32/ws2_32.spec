@@ -68,6 +68,8 @@
 @ stdcall WSAAddressToStringW(ptr long ptr ptr ptr)
 @ stdcall WSACloseEvent(long)
 @ stdcall WSAConnect(long ptr long ptr ptr ptr ptr)
+@ stdcall WSAConnectByNameA(long str str ptr ptr ptr ptr ptr ptr)
+@ stdcall WSAConnectByNameW(long str str ptr ptr ptr ptr ptr ptr)
 @ stdcall WSACreateEvent ()
 @ stdcall WSADuplicateSocketA(long long ptr)
 @ stdcall WSADuplicateSocketW(long long ptr)

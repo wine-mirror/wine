@@ -1157,6 +1157,9 @@ int WINAPI WSACancelBlockingCall(void);
 int WINAPI WSACleanup(void);
 BOOL WINAPI WSACloseEvent(WSAEVENT);
 int WINAPI WSAConnect(SOCKET,const struct WS(sockaddr)*,int,LPWSABUF,LPWSABUF,LPQOS,LPQOS);
+BOOL WINAPI WSAConnectByNameA(SOCKET,const char *,const char *,DWORD *,struct WS(sockaddr) *,DWORD *,struct WS(sockaddr) *,const struct WS(timeval) *,WSAOVERLAPPED *);
+BOOL WINAPI WSAConnectByNameW(SOCKET,const WCHAR *,const WCHAR *,DWORD *,struct WS(sockaddr) *,DWORD *,struct WS(sockaddr) *,const struct WS(timeval) *,WSAOVERLAPPED *);
+#define WSAConnectByName           WINELIB_NAME_AW(WSAConnectByName)
 WSAEVENT WINAPI WSACreateEvent(void);
 INT WINAPI WSADuplicateSocketA(SOCKET,DWORD,LPWSAPROTOCOL_INFOA);
 INT WINAPI WSADuplicateSocketW(SOCKET,DWORD,LPWSAPROTOCOL_INFOW);
