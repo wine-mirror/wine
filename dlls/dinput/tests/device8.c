@@ -21,6 +21,7 @@
 
 #include <stdarg.h>
 #include <stddef.h>
+#include <limits.h>
 
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
@@ -33,13 +34,20 @@
 
 #include "dinput_test.h"
 
-struct enum_data {
-    IDirectInput8A *pDI;
+struct enum_data
+{
+    DWORD version;
+    union
+    {
+        IDirectInput8A *dinput8;
+        IDirectInputA *dinput;
+    };
     DIACTIONFORMATA *lpdiaf;
     IDirectInputDevice8A *keyboard;
     IDirectInputDevice8A *mouse;
-    const char* username;
+    const char *username;
     int ndevices;
+    HWND hwnd;
 };
 
 /* Dummy GUID */
@@ -74,17 +82,341 @@ static DIACTIONA actionMapping[]=
 
 static void flush_events(void)
 {
-    int diff = 200;
-    int min_timeout = 100;
+    int min_timeout = 100, diff = 200;
     DWORD time = GetTickCount() + diff;
+    MSG msg;
 
     while (diff > 0)
     {
-        if (MsgWaitForMultipleObjects(0, NULL, FALSE, min_timeout, QS_ALLINPUT) == WAIT_TIMEOUT)
-            break;
+        if (MsgWaitForMultipleObjects( 0, NULL, FALSE, min_timeout, QS_ALLINPUT ) == WAIT_TIMEOUT) break;
+        while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE ))
+        {
+            TranslateMessage( &msg );
+            DispatchMessageA( &msg );
+        }
         diff = time - GetTickCount();
-        min_timeout = 50;
     }
+}
+
+static HRESULT direct_input_create( DWORD version, IDirectInputA **out )
+{
+    HRESULT hr;
+    if (version < 0x800) hr = DirectInputCreateA( instance, version, out, NULL );
+    else hr = DirectInput8Create( instance, version, &IID_IDirectInput8A, (void **)out, NULL );
+    if (FAILED(hr)) win_skip( "Failed to instantiate a IDirectInput instance, hr %#lx\n", hr );
+    return hr;
+}
+
+#define check_interface( a, b, c ) check_interface_( __LINE__, a, b, c )
+static void check_interface_( unsigned int line, void *iface_ptr, REFIID iid, BOOL supported )
+{
+    IUnknown *iface = iface_ptr;
+    HRESULT hr, expected;
+    IUnknown *unk;
+
+    expected = supported ? S_OK : E_NOINTERFACE;
+    hr = IUnknown_QueryInterface( iface, iid, (void **)&unk );
+    ok_(__FILE__, line)( hr == expected, "got hr %#lx, expected %#lx.\n", hr, expected );
+    if (SUCCEEDED(hr)) IUnknown_Release( unk );
+}
+
+static BOOL CALLBACK check_device_query_interface( const DIDEVICEINSTANCEA *instance, void *context )
+{
+    struct enum_data *data = context;
+    IUnknown *device;
+    HRESULT hr;
+    LONG ref;
+
+    if (data->version < 0x800)
+    {
+        hr = IDirectInput_GetDeviceStatus( data->dinput, &instance->guidInstance );
+        ok( hr == DI_OK, "GetDeviceStatus returned %#lx\n", hr );
+        hr = IDirectInput_GetDeviceStatus( data->dinput, &instance->guidProduct );
+        ok( hr == DI_OK, "GetDeviceStatus returned %#lx\n", hr );
+
+        hr = IDirectInput_CreateDevice( data->dinput, &instance->guidProduct, (IDirectInputDeviceA **)&device, NULL );
+        ok( hr == DI_OK, "CreateDevice returned %#lx\n", hr );
+        ref = IUnknown_Release( device );
+        ok( ref == 0, "Release returned %ld\n", ref );
+
+        hr = IDirectInput_CreateDevice( data->dinput, &instance->guidInstance, (IDirectInputDeviceA **)&device, NULL );
+        ok( hr == DI_OK, "CreateDevice returned %#lx\n", hr );
+    }
+    else
+    {
+        hr = IDirectInput8_GetDeviceStatus( data->dinput8, &instance->guidInstance );
+        ok( hr == DI_OK, "GetDeviceStatus returned %#lx\n", hr );
+        hr = IDirectInput8_GetDeviceStatus( data->dinput8, &instance->guidProduct );
+        ok( hr == DI_OK, "GetDeviceStatus returned %#lx\n", hr );
+
+        hr = IDirectInput8_CreateDevice( data->dinput8, &instance->guidProduct, (IDirectInputDevice8A **)&device, NULL );
+        ok( hr == DI_OK, "CreateDevice returned %#lx\n", hr );
+        ref = IUnknown_Release( device );
+        ok( ref == 0, "Release returned %ld\n", ref );
+
+        hr = IDirectInput8_CreateDevice( data->dinput8, &instance->guidInstance, (IDirectInputDevice8A **)&device, NULL );
+        ok( hr == DI_OK, "CreateDevice returned %#lx\n", hr );
+    }
+
+    todo_wine_if( data->version >= 0x800 )
+    check_interface( device, &IID_IDirectInputDeviceA, data->version < 0x800 );
+    todo_wine_if( data->version >= 0x800 )
+    check_interface( device, &IID_IDirectInputDevice2A, data->version < 0x800 );
+    todo_wine_if( data->version >= 0x800 )
+    check_interface( device, &IID_IDirectInputDevice7A, data->version < 0x800 );
+    todo_wine_if( data->version < 0x800 )
+    check_interface( device, &IID_IDirectInputDevice8A, data->version >= 0x800 );
+
+    todo_wine_if( data->version >= 0x800 )
+    check_interface( device, &IID_IDirectInputDeviceW, data->version < 0x800 );
+    todo_wine_if( data->version >= 0x800 )
+    check_interface( device, &IID_IDirectInputDevice2W, data->version < 0x800 );
+    todo_wine_if( data->version >= 0x800 )
+    check_interface( device, &IID_IDirectInputDevice7W, data->version < 0x800 );
+    todo_wine_if( data->version < 0x800 )
+    check_interface( device, &IID_IDirectInputDevice8W, data->version >= 0x800 );
+
+    ref = IUnknown_Release( device );
+    ok( ref == 0, "Release returned %ld\n", ref );
+
+    return DIENUM_CONTINUE;
+}
+
+static void test_QueryInterface( DWORD version )
+{
+    struct enum_data data = {.version = version};
+    HRESULT hr;
+    ULONG ref;
+
+    if (FAILED(hr = direct_input_create( version, &data.dinput ))) return;
+
+    winetest_push_context( "%#lx", version );
+
+    if (version < 0x800)
+    {
+        hr = IDirectInput_EnumDevices( data.dinput, 0, check_device_query_interface, &data, DIEDFL_ALLDEVICES );
+        ok( hr == DI_OK, "EnumDevices returned %#lx\n", hr );
+    }
+    else
+    {
+        hr = IDirectInput8_EnumDevices( data.dinput8, 0, check_device_query_interface, &data, DIEDFL_ALLDEVICES );
+        ok( hr == DI_OK, "EnumDevices returned %#lx\n", hr );
+    }
+
+    ref = IDirectInput_Release( data.dinput );
+    ok( ref == 0, "Release returned %lu\n", ref );
+
+    winetest_pop_context();
+}
+
+struct overlapped_state
+{
+    BYTE keys[4];
+    DWORD extra_element;
+};
+
+static DIOBJECTDATAFORMAT obj_overlapped_slider_format[] =
+{
+    {&GUID_Key, 0, DIDFT_OPTIONAL | DIDFT_BUTTON | DIDFT_MAKEINSTANCE( DIK_A ), 0},
+    {&GUID_Key, 1, DIDFT_OPTIONAL | DIDFT_BUTTON | DIDFT_MAKEINSTANCE( DIK_S ), 0},
+    {&GUID_Key, 2, DIDFT_OPTIONAL | DIDFT_BUTTON | DIDFT_MAKEINSTANCE( DIK_D ), 0},
+    {&GUID_Key, 3, DIDFT_OPTIONAL | DIDFT_BUTTON | DIDFT_MAKEINSTANCE( DIK_F ), 0},
+    {&GUID_Slider, 0, DIDFT_OPTIONAL | DIDFT_AXIS | DIDFT_ANYINSTANCE, DIDOI_ASPECTPOSITION},
+};
+
+static const DIDATAFORMAT overlapped_slider_format =
+{
+    sizeof(DIDATAFORMAT),
+    sizeof(DIOBJECTDATAFORMAT),
+    DIDF_ABSAXIS,
+    sizeof(struct overlapped_state),
+    ARRAY_SIZE(obj_overlapped_slider_format),
+    obj_overlapped_slider_format,
+};
+
+static DIOBJECTDATAFORMAT obj_overlapped_pov_format[] =
+{
+    {&GUID_Key, 0, DIDFT_OPTIONAL | DIDFT_BUTTON | DIDFT_MAKEINSTANCE( DIK_A ), 0},
+    {&GUID_Key, 1, DIDFT_OPTIONAL | DIDFT_BUTTON | DIDFT_MAKEINSTANCE( DIK_S ), 0},
+    {&GUID_Key, 2, DIDFT_OPTIONAL | DIDFT_BUTTON | DIDFT_MAKEINSTANCE( DIK_D ), 0},
+    {&GUID_Key, 3, DIDFT_OPTIONAL | DIDFT_BUTTON | DIDFT_MAKEINSTANCE( DIK_F ), 0},
+    {&GUID_POV, 0, DIDFT_OPTIONAL | DIDFT_POV | DIDFT_ANYINSTANCE, 0},
+};
+
+static const DIDATAFORMAT overlapped_pov_format =
+{
+    sizeof(DIDATAFORMAT),
+    sizeof(DIOBJECTDATAFORMAT),
+    DIDF_ABSAXIS,
+    sizeof(struct overlapped_state),
+    ARRAY_SIZE(obj_overlapped_pov_format),
+    obj_overlapped_pov_format,
+};
+
+void test_overlapped_format( DWORD version )
+{
+    static const DIPROPDWORD buffer_size =
+    {
+        .diph =
+        {
+            .dwSize = sizeof(DIPROPDWORD),
+            .dwHeaderSize = sizeof(DIPROPHEADER),
+            .dwHow = DIPH_DEVICE,
+        },
+        .dwData = 10,
+    };
+    SIZE_T data_size = version < 0x800 ? sizeof(DIDEVICEOBJECTDATA_DX3) : sizeof(DIDEVICEOBJECTDATA);
+    struct overlapped_state state;
+    IDirectInputDeviceA *keyboard;
+    IDirectInputA *dinput;
+    DWORD res, count;
+    HANDLE event;
+    HRESULT hr;
+    HWND hwnd;
+
+    if (FAILED(hr = direct_input_create( version, &dinput ))) return;
+
+    winetest_push_context( "%#lx", version );
+
+    event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( !!event, "CreateEventW failed, error %lu\n", GetLastError() );
+    hwnd = CreateWindowW( L"static", L"Title", WS_POPUP | WS_VISIBLE, 10, 10, 200, 200, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+
+    hr = IDirectInput_CreateDevice( dinput, &GUID_SysKeyboard, &keyboard, NULL );
+    ok( hr == DI_OK, "CreateDevice returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( keyboard, hwnd, DISCL_FOREGROUND|DISCL_EXCLUSIVE );
+    ok( hr == DI_OK, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetEventNotification( keyboard, event );
+    ok( hr == DI_OK, "SetEventNotification returned %#lx\n", hr );
+
+    /* test overlapped slider - default value 0 */
+    hr = IDirectInputDevice_SetDataFormat( keyboard, &overlapped_slider_format );
+    ok( hr == DI_OK, "SetDataFormat returned %#lx\n", hr );
+    hr = IDirectInputDevice_SetProperty( keyboard, DIPROP_BUFFERSIZE, &buffer_size.diph );
+    ok( hr == DI_OK, "SetProperty returned %#lx\n", hr );
+
+
+    hr = IDirectInputDevice_Acquire( keyboard );
+    ok( hr == DI_OK, "Acquire returned %#lx\n", hr );
+
+    keybd_event( 0, DIK_F, KEYEVENTF_SCANCODE, 0 );
+    res = WaitForSingleObject( event, 100 );
+    if (res == WAIT_TIMEOUT) /* Acquire is asynchronous */
+    {
+        keybd_event( 0, DIK_F, KEYEVENTF_SCANCODE, 0 );
+        res = WaitForSingleObject( event, 100 );
+    }
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
+
+    keybd_event( 0, DIK_F, KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP, 0 );
+    res = WaitForSingleObject( event, 100 );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
+
+    count = 10;
+    hr = IDirectInputDevice_GetDeviceData( keyboard, data_size, NULL, &count, 0 );
+    ok( hr == DI_OK, "GetDeviceData returned %#lx\n", hr );
+    ok( count > 0, "got count %lu\n", count );
+
+
+    /* press D */
+    keybd_event( 0, DIK_D, KEYEVENTF_SCANCODE, 0 );
+    res = WaitForSingleObject( event, 100 );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
+
+    count = 10;
+    hr = IDirectInputDevice_GetDeviceData( keyboard, data_size, NULL, &count, 0 );
+    ok( hr == DI_OK, "GetDeviceData returned %#lx\n", hr );
+    ok( count == 1, "got count %lu\n", count );
+
+    memset( &state, 0xFF, sizeof(state) );
+    hr = IDirectInputDevice_GetDeviceState( keyboard, sizeof(state), &state );
+    ok( hr == DI_OK, "GetDeviceState returned %#lx\n", hr );
+
+    ok( state.keys[0] == 0x00, "key A should be still up\n" );
+    ok( state.keys[1] == 0x00, "key S should be still up\n" );
+    ok( state.keys[2] == 0x80, "keydown for D did not register\n" );
+    ok( state.keys[3] == 0x00, "key F should be still up\n" );
+    ok( state.extra_element == 0, "State struct was not memset to zero\n" );
+
+    /* release D */
+    keybd_event( 0, DIK_D, KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP, 0 );
+    res = WaitForSingleObject( event, 100 );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
+
+    count = 10;
+    hr = IDirectInputDevice_GetDeviceData( keyboard, data_size, NULL, &count, 0 );
+    ok( hr == DI_OK, "GetDeviceData returned %#lx\n", hr );
+    ok( count == 1, "got count %lu\n", count );
+
+
+    hr = IDirectInputDevice_Unacquire( keyboard );
+    ok( hr == DI_OK, "Unacquire returned %#lx\n", hr );
+
+    /* test overlapped pov - default value - 0xFFFFFFFF */
+    hr = IDirectInputDevice_SetDataFormat( keyboard, &overlapped_pov_format );
+    ok( hr == DI_OK, "SetDataFormat returned %#lx\n", hr );
+
+
+    hr = IDirectInputDevice_Acquire( keyboard );
+    ok( hr == DI_OK, "Acquire returned %#lx\n", hr );
+
+    keybd_event( 0, DIK_F, KEYEVENTF_SCANCODE, 0 );
+    res = WaitForSingleObject( event, 100 );
+    if (res == WAIT_TIMEOUT) /* Acquire is asynchronous */
+    {
+        keybd_event( 0, DIK_F, KEYEVENTF_SCANCODE, 0 );
+        res = WaitForSingleObject( event, 100 );
+    }
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
+
+    keybd_event( 0, DIK_F, KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP, 0 );
+    res = WaitForSingleObject( event, 100 );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
+
+    count = 10;
+    hr = IDirectInputDevice_GetDeviceData( keyboard, data_size, NULL, &count, 0 );
+    ok( hr == DI_OK, "GetDeviceData returned %#lx\n", hr );
+    ok( count > 0, "got count %lu\n", count );
+
+
+    /* press D */
+    keybd_event( 0, DIK_D, KEYEVENTF_SCANCODE, 0 );
+    res = WaitForSingleObject( event, 100 );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
+
+    count = 10;
+    hr = IDirectInputDevice_GetDeviceData( keyboard, data_size, NULL, &count, 0 );
+    ok( hr == DI_OK, "GetDeviceData returned %#lx\n", hr );
+    ok( count == 1, "got count %lu\n", count );
+
+    memset( &state, 0xFF, sizeof(state) );
+    hr = IDirectInputDevice_GetDeviceState( keyboard, sizeof(state), &state );
+    ok( hr == DI_OK, "GetDeviceState returned %#lx\n", hr );
+
+    ok( state.keys[0] == 0xFF, "key state should have been overwritten by the overlapped POV\n" );
+    ok( state.keys[1] == 0xFF, "key state should have been overwritten by the overlapped POV\n" );
+    ok( state.keys[2] == 0xFF, "key state should have been overwritten by the overlapped POV\n" );
+    ok( state.keys[3] == 0xFF, "key state should have been overwritten by the overlapped POV\n" );
+    ok( state.extra_element == 0, "State struct was not memset to zero\n" );
+
+    /* release D */
+    keybd_event( 0, DIK_D, KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP, 0 );
+    res = WaitForSingleObject( event, 100 );
+    ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
+
+    count = 10;
+    hr = IDirectInputDevice_GetDeviceData( keyboard, data_size, NULL, &count, 0 );
+    ok( hr == DI_OK, "GetDeviceData returned %#lx\n", hr );
+    ok( count == 1, "got count %lu\n", count );
+
+
+    IUnknown_Release( keyboard );
+
+    DestroyWindow( hwnd );
+    CloseHandle( event );
+
+    winetest_pop_context();
 }
 
 static void test_device_input( IDirectInputDevice8A *device, DWORD type, DWORD code, UINT_PTR expected )
@@ -110,6 +442,11 @@ static void test_device_input( IDirectInputDevice8A *device, DWORD type, DWORD c
     {
         keybd_event( 0, code, KEYEVENTF_SCANCODE, 0 );
         res = WaitForSingleObject( event, 100 );
+        if (res == WAIT_TIMEOUT) /* Acquire is asynchronous */
+        {
+            keybd_event( 0, code, KEYEVENTF_SCANCODE, 0 );
+            res = WaitForSingleObject( event, 100 );
+        }
         ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
 
         keybd_event( 0, code, KEYEVENTF_SCANCODE | KEYEVENTF_KEYUP, 0 );
@@ -120,6 +457,11 @@ static void test_device_input( IDirectInputDevice8A *device, DWORD type, DWORD c
     {
         mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
         res = WaitForSingleObject( event, 100 );
+        if (res == WAIT_TIMEOUT) /* Acquire is asynchronous */
+        {
+            mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
+            res = WaitForSingleObject( event, 100 );
+        }
         ok( res == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx\n", res );
 
         mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
@@ -255,7 +597,7 @@ static BOOL CALLBACK enumeration_callback(const DIDEVICEINSTANCEA *lpddi, IDirec
     }
 
     /* Creating second device object to check if it has the same username */
-    hr = IDirectInput_CreateDevice(data->pDI, &lpddi->guidInstance, &lpdid2, NULL);
+    hr = IDirectInput_CreateDevice(data->dinput8, &lpddi->guidInstance, &lpdid2, NULL);
     ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %#lx\n", hr);
 
     /* Building and setting an action map */
@@ -382,7 +724,7 @@ static void test_action_mapping(void)
     IDirectInput8A *pDI = NULL;
     DIACTIONFORMATA af;
     DIPROPSTRING dps;
-    struct enum_data data =  {pDI, &af, NULL, NULL, NULL, 0};
+    struct enum_data data =  {.version = 0x800, .lpdiaf = &af};
     HWND hwnd;
 
     hr = CoCreateInstance(&CLSID_DirectInput8, 0, CLSCTX_INPROC_SERVER, &IID_IDirectInput8A, (LPVOID*)&pDI);
@@ -416,7 +758,7 @@ static void test_action_mapping(void)
     af.dwBufferSize = 32;
 
     /* This enumeration builds and sets the action map for all devices */
-    data.pDI = pDI;
+    data.dinput8 = pDI;
     hr = IDirectInput8_EnumDevicesBySemantics(pDI, 0, &af, enumeration_callback, &data, DIEDBSFL_ATTACHEDONLY);
     ok (SUCCEEDED(hr), "EnumDevicesBySemantics failed: hr=%#lx\n", hr);
 
@@ -1815,6 +2157,14 @@ static void test_keyboard_info(void)
 START_TEST(device8)
 {
     dinput_test_init();
+
+    test_QueryInterface( 0x300 );
+    test_QueryInterface( 0x500 );
+    test_QueryInterface( 0x700 );
+    test_QueryInterface( 0x800 );
+
+    test_overlapped_format( 0x700 );
+    test_overlapped_format( 0x800 );
 
     test_mouse_info();
     test_keyboard_info();

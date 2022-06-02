@@ -9,7 +9,6 @@ driver_hid_poll_IMPORTS = winecrt0 ntoskrnl hal hidclass
 driver_hid_poll_EXTRADLLFLAGS = -nodefaultlibs -nostartfiles -Wl,--subsystem,native
 
 SOURCES = \
-	device.c \
 	device8.c \
 	dinput.c \
 	driver_bus.c \
