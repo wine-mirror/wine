@@ -102,13 +102,36 @@ struct quit_result_params
 /* driver client callbacks exposed with KernelCallbackTable interface */
 enum macdrv_client_funcs
 {
-    client_func_app_quit_request = NtUserDriverCallbackFirst,
+    client_func_app_icon = NtUserDriverCallbackFirst,
+    client_func_app_quit_request,
     client_func_dnd_query_drag,
     client_func_dnd_query_drop,
     client_func_dnd_query_exited,
     client_func_ime_query_char_rect,
     client_func_ime_set_text,
     client_func_last
+};
+
+/* macdrv_app_icon result */
+struct app_icon_entry
+{
+    UINT32 width;
+    UINT32 height;
+    UINT32 size;
+    void *png;
+    HICON icon;
+};
+
+struct app_icon_result
+{
+    UINT32 count;
+    struct app_icon_entry entries[64];
+};
+
+/* macdrv_app_icon params */
+struct app_icon_params
+{
+    struct app_icon_result *result; /* FIXME: Use NtCallbackReturn instead */
 };
 
 /* macdrv_app_quit_request params */

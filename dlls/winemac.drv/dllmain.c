@@ -63,6 +63,30 @@ static BOOL CALLBACK get_process_windows(HWND hwnd, LPARAM lp)
     return TRUE;
 }
 
+#include "pshpack1.h"
+
+typedef struct
+{
+    BYTE bWidth;
+    BYTE bHeight;
+    BYTE bColorCount;
+    BYTE bReserved;
+    WORD wPlanes;
+    WORD wBitCount;
+    DWORD dwBytesInRes;
+    WORD nID;
+} GRPICONDIRENTRY;
+
+typedef struct
+{
+    WORD idReserved;
+    WORD idType;
+    WORD idCount;
+    GRPICONDIRENTRY idEntries[1];
+} GRPICONDIR;
+
+#include "poppack.h"
+
 static void quit_reply(int reply)
 {
     struct quit_result_params params = { .result = reply };
@@ -199,9 +223,153 @@ fail:
     return 0;
 }
 
+/***********************************************************************
+ *              get_first_resource
+ *
+ * Helper for create_app_icon_images().  Enum proc for EnumResourceNamesW()
+ * which just gets the handle for the first resource and stops further
+ * enumeration.
+ */
+static BOOL CALLBACK get_first_resource(HMODULE module, LPCWSTR type, LPWSTR name, LONG_PTR lparam)
+{
+    HRSRC *res_info = (HRSRC*)lparam;
+
+    *res_info = FindResourceW(module, name, (LPCWSTR)RT_GROUP_ICON);
+    return FALSE;
+}
+
+
+/***********************************************************************
+ *              macdrv_app_icon
+ */
+static NTSTATUS WINAPI macdrv_app_icon(void *arg, ULONG size)
+{
+    struct app_icon_params *params = arg;
+    struct app_icon_result *result = params->result;
+    HRSRC res_info;
+    HGLOBAL res_data;
+    GRPICONDIR *icon_dir;
+    int i;
+
+    TRACE("()\n");
+
+    result->count = 0;
+
+    res_info = NULL;
+    EnumResourceNamesW(NULL, (LPCWSTR)RT_GROUP_ICON, get_first_resource, (LONG_PTR)&res_info);
+    if (!res_info)
+    {
+        WARN("found no RT_GROUP_ICON resource\n");
+        return 0;
+    }
+
+    if (!(res_data = LoadResource(NULL, res_info)))
+    {
+        WARN("failed to load RT_GROUP_ICON resource\n");
+        return 0;
+    }
+
+    if (!(icon_dir = LockResource(res_data)))
+    {
+        WARN("failed to lock RT_GROUP_ICON resource\n");
+        goto cleanup;
+    }
+
+    for (i = 0; i < icon_dir->idCount && result->count < ARRAYSIZE(result->entries); i++)
+    {
+        struct app_icon_entry *entry = &result->entries[result->count];
+        int width = icon_dir->idEntries[i].bWidth;
+        int height = icon_dir->idEntries[i].bHeight;
+        BOOL found_better_bpp = FALSE;
+        int j;
+        LPCWSTR name;
+        HGLOBAL icon_res_data;
+        BYTE *icon_bits;
+
+        if (!width) width = 256;
+        if (!height) height = 256;
+
+        /* If there's another icon at the same size but with better
+           color depth, skip this one.  We end up making CGImages that
+           are all 32 bits per pixel, so Cocoa doesn't get the original
+           color depth info to pick the best representation itself. */
+        for (j = 0; j < icon_dir->idCount; j++)
+        {
+            int jwidth = icon_dir->idEntries[j].bWidth;
+            int jheight = icon_dir->idEntries[j].bHeight;
+
+            if (!jwidth) jwidth = 256;
+            if (!jheight) jheight = 256;
+
+            if (j != i && jwidth == width && jheight == height &&
+                icon_dir->idEntries[j].wBitCount > icon_dir->idEntries[i].wBitCount)
+            {
+                found_better_bpp = TRUE;
+                break;
+            }
+        }
+
+        if (found_better_bpp) continue;
+
+        name = MAKEINTRESOURCEW(icon_dir->idEntries[i].nID);
+        res_info = FindResourceW(NULL, name, (LPCWSTR)RT_ICON);
+        if (!res_info)
+        {
+            WARN("failed to find RT_ICON resource %d with ID %hd\n", i, icon_dir->idEntries[i].nID);
+            continue;
+        }
+
+        icon_res_data = LoadResource(NULL, res_info);
+        if (!icon_res_data)
+        {
+            WARN("failed to load icon %d with ID %hd\n", i, icon_dir->idEntries[i].nID);
+            continue;
+        }
+
+        icon_bits = LockResource(icon_res_data);
+        if (icon_bits)
+        {
+            static const BYTE png_magic[] = { 0x89, 0x50, 0x4e, 0x47 };
+
+            entry->width = width;
+            entry->height = height;
+            entry->size = icon_dir->idEntries[i].dwBytesInRes;
+
+            if (!memcmp(icon_bits, png_magic, sizeof(png_magic)))
+            {
+                entry->png = icon_bits;
+                entry->icon = 0;
+                result->count++;
+            }
+            else
+            {
+                entry->icon = CreateIconFromResourceEx(icon_bits, icon_dir->idEntries[i].dwBytesInRes,
+                                                       TRUE, 0x00030000, width, height, 0);
+                if (entry->icon)
+                {
+                    entry->png = NULL;
+                    result->count++;
+                }
+                else
+                    WARN("failed to create icon %d from resource with ID %hd\n", i, icon_dir->idEntries[i].nID);
+            }
+        }
+        else
+            WARN("failed to lock RT_ICON resource %d with ID %hd\n", i, icon_dir->idEntries[i].nID);
+
+        FreeResource(icon_res_data);
+    }
+
+cleanup:
+    FreeResource(res_data);
+
+    return 0;
+}
+
 typedef NTSTATUS (WINAPI *kernel_callback)(void *params, ULONG size);
 static const kernel_callback kernel_callbacks[] =
 {
+    macdrv_app_icon,
     macdrv_app_quit_request,
     macdrv_dnd_query_drag,
     macdrv_dnd_query_drop,

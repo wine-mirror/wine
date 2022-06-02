@@ -25,30 +25,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(image);
 
-#include "pshpack1.h"
-
-typedef struct
-{
-    BYTE bWidth;
-    BYTE bHeight;
-    BYTE bColorCount;
-    BYTE bReserved;
-    WORD wPlanes;
-    WORD wBitCount;
-    DWORD dwBytesInRes;
-    WORD nID;
-} GRPICONDIRENTRY;
-
-typedef struct
-{
-    WORD idReserved;
-    WORD idType;
-    WORD idCount;
-    GRPICONDIRENTRY idEntries[1];
-} GRPICONDIR;
-
-#include "poppack.h"
-
 
 /***********************************************************************
  *              create_cgimage_from_icon_bitmaps
@@ -265,166 +241,66 @@ cleanup:
 
 
 /***********************************************************************
- *              get_first_resource
- *
- * Helper for create_app_icon_images().  Enum proc for EnumResourceNamesW()
- * which just gets the handle for the first resource and stops further
- * enumeration.
- */
-static BOOL CALLBACK get_first_resource(HMODULE module, LPCWSTR type, LPWSTR name, LONG_PTR lparam)
-{
-    HRSRC *res_info = (HRSRC*)lparam;
-
-    *res_info = FindResourceW(module, name, (LPCWSTR)RT_GROUP_ICON);
-    return FALSE;
-}
-
-
-/***********************************************************************
  *              create_app_icon_images
  */
 CFArrayRef create_app_icon_images(void)
 {
-    HRSRC res_info;
-    HGLOBAL res_data;
-    GRPICONDIR *icon_dir;
+    struct app_icon_result icons;
+    struct app_icon_params params = { .result = &icons };
     CFMutableArrayRef images = NULL;
     int i;
 
     TRACE("()\n");
 
-    res_info = NULL;
-    EnumResourceNamesW(NULL, (LPCWSTR)RT_GROUP_ICON, get_first_resource, (LONG_PTR)&res_info);
-    if (!res_info)
-    {
-        WARN("found no RT_GROUP_ICON resource\n");
-        return NULL;
-    }
+    macdrv_client_func(client_func_app_icon, &params, sizeof(params));
 
-    if (!(res_data = LoadResource(NULL, res_info)))
-    {
-        WARN("failed to load RT_GROUP_ICON resource\n");
-        return NULL;
-    }
+    if (!icons.count) return NULL;
 
-    if (!(icon_dir = LockResource(res_data)))
-    {
-        WARN("failed to lock RT_GROUP_ICON resource\n");
-        goto cleanup;
-    }
-
-    images = CFArrayCreateMutable(NULL, icon_dir->idCount, &kCFTypeArrayCallBacks);
+    images = CFArrayCreateMutable(NULL, icons.count, &kCFTypeArrayCallBacks);
     if (!images)
     {
         WARN("failed to create images array\n");
-        goto cleanup;
+        return NULL;
     }
 
-    for (i = 0; i < icon_dir->idCount; i++)
+    for (i = 0; i < icons.count; i++)
     {
-        int width = icon_dir->idEntries[i].bWidth;
-        int height = icon_dir->idEntries[i].bHeight;
-        BOOL found_better_bpp = FALSE;
-        int j;
-        LPCWSTR name;
-        HGLOBAL icon_res_data;
-        BYTE *icon_bits;
+        struct app_icon_entry *icon = &icons.entries[i];
+        CGImageRef cgimage = NULL;
 
-        if (!width) width = 256;
-        if (!height) height = 256;
-
-        /* If there's another icon at the same size but with better
-           color depth, skip this one.  We end up making CGImages that
-           are all 32 bits per pixel, so Cocoa doesn't get the original
-           color depth info to pick the best representation itself. */
-        for (j = 0; j < icon_dir->idCount; j++)
+        if (icon->png)
         {
-            int jwidth = icon_dir->idEntries[j].bWidth;
-            int jheight = icon_dir->idEntries[j].bHeight;
-
-            if (!jwidth) jwidth = 256;
-            if (!jheight) jheight = 256;
-
-            if (j != i && jwidth == width && jheight == height &&
-                icon_dir->idEntries[j].wBitCount > icon_dir->idEntries[i].wBitCount)
+            CFDataRef data = CFDataCreate(NULL, icon->png, icon->size);
+            if (data)
             {
-                found_better_bpp = TRUE;
-                break;
-            }
-        }
-
-        if (found_better_bpp) continue;
-
-        name = MAKEINTRESOURCEW(icon_dir->idEntries[i].nID);
-        res_info = FindResourceW(NULL, name, (LPCWSTR)RT_ICON);
-        if (!res_info)
-        {
-            WARN("failed to find RT_ICON resource %d with ID %hd\n", i, icon_dir->idEntries[i].nID);
-            continue;
-        }
-
-        icon_res_data = LoadResource(NULL, res_info);
-        if (!icon_res_data)
-        {
-            WARN("failed to load icon %d with ID %hd\n", i, icon_dir->idEntries[i].nID);
-            continue;
-        }
-
-        icon_bits = LockResource(icon_res_data);
-        if (icon_bits)
-        {
-            static const BYTE png_magic[] = { 0x89, 0x50, 0x4e, 0x47 };
-            CGImageRef cgimage = NULL;
-
-            if (!memcmp(icon_bits, png_magic, sizeof(png_magic)))
-            {
-                CFDataRef data = CFDataCreate(NULL, (UInt8*)icon_bits, icon_dir->idEntries[i].dwBytesInRes);
-                if (data)
+                CGDataProviderRef provider = CGDataProviderCreateWithCFData(data);
+                CFRelease(data);
+                if (provider)
                 {
-                    CGDataProviderRef provider = CGDataProviderCreateWithCFData(data);
-                    CFRelease(data);
-                    if (provider)
-                    {
-                        cgimage = CGImageCreateWithPNGDataProvider(provider, NULL, FALSE,
-                                                                   kCGRenderingIntentDefault);
-                        CGDataProviderRelease(provider);
-                    }
+                    cgimage = CGImageCreateWithPNGDataProvider(provider, NULL, FALSE,
+                                                               kCGRenderingIntentDefault);
+                    CGDataProviderRelease(provider);
                 }
-            }
-
-            if (!cgimage)
-            {
-                HICON icon;
-                icon = CreateIconFromResourceEx(icon_bits, icon_dir->idEntries[i].dwBytesInRes,
-                                                TRUE, 0x00030000, width, height, 0);
-                if (icon)
-                {
-                    cgimage = create_cgimage_from_icon(icon, width, height);
-                    DestroyIcon(icon);
-                }
-                else
-                    WARN("failed to create icon %d from resource with ID %hd\n", i, icon_dir->idEntries[i].nID);
-            }
-
-            if (cgimage)
-            {
-                CFArrayAppendValue(images, cgimage);
-                CGImageRelease(cgimage);
             }
         }
         else
-            WARN("failed to lock RT_ICON resource %d with ID %hd\n", i, icon_dir->idEntries[i].nID);
+        {
+            cgimage = create_cgimage_from_icon(icon->icon, icon->width, icon->height);
+            NtUserDestroyCursor(icon->icon, 0);
+        }
 
-        FreeResource(icon_res_data);
+        if (cgimage)
+        {
+            CFArrayAppendValue(images, cgimage);
+            CGImageRelease(cgimage);
+        }
     }
 
-cleanup:
     if (images && !CFArrayGetCount(images))
     {
         CFRelease(images);
         images = NULL;
     }
-    FreeResource(res_data);
 
     return images;
 }
