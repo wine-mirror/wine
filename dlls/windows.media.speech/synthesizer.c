@@ -152,11 +152,6 @@ static inline struct speech_synthesizer *impl_from_ISpeechSynthesizer( ISpeechSy
     return CONTAINING_RECORD(iface, struct speech_synthesizer, ISpeechSynthesizer_iface);
 }
 
-static inline struct speech_synthesizer *impl_from_IClosable( IClosable *iface )
-{
-    return CONTAINING_RECORD(iface, struct speech_synthesizer, IClosable_iface);
-}
-
 static HRESULT WINAPI speech_synthesizer_QueryInterface( ISpeechSynthesizer *iface, REFIID iid, void **out )
 {
     struct speech_synthesizer *impl = impl_from_ISpeechSynthesizer(iface);
@@ -305,61 +300,11 @@ static const struct ISpeechSynthesizer2Vtbl speech_synthesizer2_vtbl =
     speech_synthesizer2_get_Options,
 };
 
-static HRESULT WINAPI closable_QueryInterface( IClosable *iface, REFIID iid, void **out )
-{
-    struct speech_synthesizer *impl = impl_from_IClosable(iface);
-
-    return ISpeechSynthesizer_QueryInterface(&impl->ISpeechSynthesizer_iface, iid, out);
-}
-
-static ULONG WINAPI closable_AddRef( IClosable *iface )
-{
-    struct speech_synthesizer *impl = impl_from_IClosable(iface);
-    ULONG ref = InterlockedIncrement(&impl->ref);
-
-    TRACE("iface %p, ref %lu.\n", iface, ref);
-
-    return ref;
-}
-
-static ULONG WINAPI closable_Release( IClosable *iface )
-{
-    struct speech_synthesizer *impl = impl_from_IClosable(iface);
-    ULONG ref = InterlockedDecrement(&impl->ref);
-
-    TRACE("iface %p, ref %lu.\n", iface, ref);
-
-    if (!ref)
-        free(impl);
-
-    return ref;
-}
-
-static HRESULT WINAPI closable_GetIids( IClosable *iface, ULONG *iid_count, IID **iids )
-{
-    FIXME("iface %p, iid_count %p, iids %p stub.\n", iface, iid_count, iids);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI closable_GetRuntimeClassName( IClosable *iface, HSTRING *class_name )
-{
-    FIXME("iface %p, class_name %p stub.\n", iface, class_name);
-
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI closable_GetTrustLevel( IClosable *iface, TrustLevel *trust_level )
-{
-    FIXME("iface %p, trust_level %p stub.\n", iface, trust_level);
-
-    return E_NOTIMPL;
-}
+DEFINE_IINSPECTABLE(closable, IClosable, struct speech_synthesizer, ISpeechSynthesizer_iface)
 
 static HRESULT WINAPI closable_Close( IClosable *iface )
 {
     FIXME("iface %p stub.\n", iface);
-
     return E_NOTIMPL;
 }
 
