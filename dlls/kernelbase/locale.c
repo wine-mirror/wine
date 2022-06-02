@@ -3902,7 +3902,7 @@ static int find_substring( const struct sortguid *sortid, DWORD flags, const WCH
 
 
 /* map buffer to full-width katakana */
-static int map_to_fullwidth( const WCHAR *src, int srclen, WCHAR *dst, int dstlen )
+static int map_to_fullwidth( const USHORT *table, const WCHAR *src, int srclen, WCHAR *dst, int dstlen )
 {
     int pos;
 
@@ -3945,13 +3945,13 @@ static int map_to_fullwidth( const WCHAR *src, int srclen, WCHAR *dst, int dstle
                 break;
             }
         }
-        if (pos < dstlen) dst[pos] = wch;
+        if (pos < dstlen) dst[pos] = table ? casemap( table, wch ) : wch;
     }
     return pos;
 }
 
-/* map single full-width character to single or double half-width characters. */
-static int map_to_halfwidth( WCHAR c, WCHAR *dst, int dstlen )
+/* map full-width characters to single or double half-width characters. */
+static int map_to_halfwidth( const USHORT *table, const WCHAR *src, int srclen, WCHAR *dst, int dstlen )
 {
     static const BYTE katakana_map[] =
     {
@@ -3967,20 +3967,30 @@ static int map_to_halfwidth( WCHAR c, WCHAR *dst, int dstlen )
         0x00, 0x00, 0x00, 0x00, 0x4e, 0x00, 0x00, 0x08, /* U+30f0- */
         0x08, 0x08, 0x08, 0x00, 0x00, 0x00, 0x01        /* U+30f8- */
     };
-    USHORT shift = c - 0x30ac;
-    BYTE k;
+    int pos;
 
-    if (shift < ARRAY_SIZE(katakana_map) && (k = katakana_map[shift]))
+    for (pos = 0; srclen; src++, srclen--)
     {
-        if (dstlen >= 2)
+        WCHAR ch = table ? casemap( table, *src ) : *src;
+        USHORT shift = ch - 0x30ac;
+        BYTE k;
+
+        if (shift < ARRAY_SIZE(katakana_map) && (k = katakana_map[shift]))
         {
-            dst[0] = casemap( charmaps[CHARMAP_HALFWIDTH], c - k );
-            dst[1] = (k == 2) ? 0xff9f : 0xff9e;
+            if (pos < dstlen - 1)
+            {
+                dst[pos] = casemap( charmaps[CHARMAP_HALFWIDTH], ch - k );
+                dst[pos + 1] = (k == 2) ? 0xff9f : 0xff9e;
+            }
+            pos += 2;
         }
-        return 2;
+        else
+        {
+            if (pos < dstlen) dst[pos] = casemap( charmaps[CHARMAP_HALFWIDTH], ch );
+            pos++;
+        }
     }
-    if (dstlen >= 1) dst[0] = casemap( charmaps[CHARMAP_HALFWIDTH], c );
-    return 1;
+    return pos;
 }
 
 
@@ -6386,17 +6396,12 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringEx( const WCHAR *locale, DWORD flags, co
         }
         else if (flags & LCMAP_FULLWIDTH)
         {
-            len = map_to_fullwidth( src, srclen, NULL, 0 );
+            len = map_to_fullwidth( NULL, src, srclen, NULL, 0 );
         }
         else if (flags & LCMAP_HALFWIDTH)
         {
-            for (len = 0; srclen; src++, srclen--, len++)
-            {
-                WCHAR wch = *src;
-                /* map Hiragana to Katakana before decomposition if needed */
-                if (flags & LCMAP_KATAKANA) wch = casemap( charmaps[CHARMAP_KATAKANA], wch );
-                if (map_to_halfwidth( wch, NULL, 0 ) == 2) len++;
-            }
+            len = map_to_halfwidth( (flags & LCMAP_KATAKANA) ? charmaps[CHARMAP_KATAKANA] : NULL,
+                                    src, srclen, NULL, 0 );
         }
         else len = srclen;
         return len;
@@ -6434,58 +6439,33 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringEx( const WCHAR *locale, DWORD flags, co
 
     if (flags & (LCMAP_FULLWIDTH | LCMAP_HALFWIDTH | LCMAP_HIRAGANA | LCMAP_KATAKANA))
     {
+        const USHORT *table = NULL;
+
+        if (flags & LCMAP_KATAKANA) table = charmaps[CHARMAP_KATAKANA];
+        else if (flags & LCMAP_HIRAGANA) table = charmaps[CHARMAP_HIRAGANA];
+
         if (flags & LCMAP_FULLWIDTH)
-        {
-            len = map_to_fullwidth( src, srclen, dst, dstlen );
-            if (dstlen && dstlen < len)
-            {
-                SetLastError( ERROR_INSUFFICIENT_BUFFER );
-                return 0;
-            }
-            srclen = len;
-            src = dst;
-        }
-        for (len = dstlen, dst_ptr = dst; len && srclen; src++, srclen--, len--, dst_ptr++)
-        {
-            WCHAR wch = *src;
+            len = map_to_fullwidth( table, src, srclen, dst, dstlen );
+        else if (flags & LCMAP_HALFWIDTH)
+            len = map_to_halfwidth( table, src, srclen, dst, dstlen );
+        else
+            len = casemap_string( table, src, srclen, dst, dstlen );
 
-            if (flags & LCMAP_KATAKANA) wch = casemap( charmaps[CHARMAP_KATAKANA], wch );
-            else if (flags & LCMAP_HIRAGANA) wch = casemap( charmaps[CHARMAP_HIRAGANA], wch );
-
-            if (flags & LCMAP_HALFWIDTH)
-            {
-                /* map full-width character to half-width one,
-                   e.g. U+30A2 -> U+FF71, U+30D7 -> U+FF8C U+FF9F. */
-                if (map_to_halfwidth(wch, dst_ptr, len) == 2)
-                {
-                    len--;
-                    dst_ptr++;
-                    if (!len) break;
-                }
-            }
-            else *dst_ptr = wch;
-        }
-        if (srclen)
+        if (dstlen && dstlen < len)
         {
             SetLastError( ERROR_INSUFFICIENT_BUFFER );
             return 0;
         }
-        len = dst_ptr - dst;
-        if (!(flags & (LCMAP_UPPERCASE | LCMAP_LOWERCASE)) || srclen) goto done;
-        srclen = dst_ptr - dst;
         src = dst;
+        srclen = len;
     }
+    else len = 0;
 
     if (flags & (LCMAP_UPPERCASE | LCMAP_LOWERCASE))
     {
         const USHORT *table = sort.casemap + (flags & LCMAP_LINGUISTIC_CASING ? sortid->casemap : 0);
         table = table + 2 + (flags & LCMAP_LOWERCASE ? table[1] : 0);
         len = casemap_string( table, src, srclen, dst, dstlen );
-    }
-    else
-    {
-        len = srclen;
-        memcpy( dst, src, min( srclen, dstlen ) * sizeof(WCHAR) );
     }
 
 done:

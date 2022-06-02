@@ -2515,6 +2515,12 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
     ret2 = func_ptr(LCMAP_HALFWIDTH | LCMAP_KATAKANA, japanese_text, -1, NULL, 0);
     ok(ret == ret2, "%s ret %d, expected value %d\n", func_name, ret, ret2);
 
+    /* LCMAP_HALFWIDTH | LCMAP_HIRAGANA maps to Hiragana first */
+    ret = func_ptr(LCMAP_HALFWIDTH | LCMAP_HIRAGANA, japanese_text, -1, buf, ARRAY_SIZE(buf));
+    ret2 = func_ptr(LCMAP_HALFWIDTH, hiragana_text, -1, buf2, ARRAY_SIZE(buf2));
+    ok(ret == ret2, "%s ret %d, expected value %d\n", func_name, ret, ret2);
+    ok(!lstrcmpW(buf, buf2), "%s string compare mismatch %s vs %s\n", func_name, debugstr_w(buf), debugstr_w(buf2));
+
     /* test buffer overflow */
     SetLastError(0xdeadbeef);
     ret = func_ptr(LCMAP_UPPERCASE,
