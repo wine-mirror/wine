@@ -36,7 +36,6 @@
 #include "shlobj.h"
 #include "wine/list.h"
 #include "wine/server.h"
-#include "wine/unicode.h"
 
 
 WINE_DEFAULT_DEBUG_CHANNEL(clipboard);
@@ -766,7 +765,7 @@ static void *import_nsfilenames_to_hdrop(CFDataRef data, size_t *ret_size)
 
     len = 1; /* for the terminating null */
     for (i = 0; i < count; i++)
-        len += strlenW(paths[i]) + 1;
+        len += wcslen(paths[i]) + 1;
 
     *ret_size = sizeof(*dropfiles) + len * sizeof(WCHAR);
     if (!(dropfiles = malloc(*ret_size)))
@@ -784,8 +783,8 @@ static void *import_nsfilenames_to_hdrop(CFDataRef data, size_t *ret_size)
     p = (WCHAR*)(dropfiles + 1);
     for (i = 0; i < count; i++)
     {
-        strcpyW(p, paths[i]);
-        p += strlenW(p) + 1;
+        wcscpy(p, paths[i]);
+        p += wcslen(p) + 1;
     }
     *p = 0;
 
@@ -994,7 +993,7 @@ static CFDataRef export_hdrop_to_filenames(void *data, size_t size)
         }
 
         if (dropfiles->fWide)
-            p = (WCHAR*)p + strlenW(p) + 1;
+            p = (WCHAR*)p + wcslen(p) + 1;
         else
             p = (char*)p + strlen(p) + 1;
 

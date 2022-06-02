@@ -31,7 +31,6 @@
 #include "ddrawi.h"
 #define WIN32_NO_STATUS
 #include "winternl.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(display);
 

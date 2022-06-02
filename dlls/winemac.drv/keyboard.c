@@ -32,7 +32,6 @@
 
 #include "macdrv.h"
 #include "winuser.h"
-#include "wine/unicode.h"
 #include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(keyboard);
@@ -403,7 +402,7 @@ static BOOL char_matches_string(WCHAR wchar, UniChar *string, BOOL ignore_diacri
 {
     BOOL ret;
     CFStringRef s1 = CFStringCreateWithCharactersNoCopy(NULL, (UniChar*)&wchar, 1, kCFAllocatorNull);
-    CFStringRef s2 = CFStringCreateWithCharactersNoCopy(NULL, string, strlenW(string), kCFAllocatorNull);
+    CFStringRef s2 = CFStringCreateWithCharactersNoCopy(NULL, string, wcslen(string), kCFAllocatorNull);
     CFStringCompareFlags flags = kCFCompareCaseInsensitive | kCFCompareNonliteral | kCFCompareWidthInsensitive;
     if (ignore_diacritics)
         flags |= kCFCompareDiacriticInsensitive;
@@ -1366,7 +1365,7 @@ INT macdrv_GetKeyNameText(LONG lparam, LPWSTR buffer, INT size)
             if (status == noErr && deadKeyState)
             {
                 lstrcpynW(buffer + len, dead, size - len);
-                len = strlenW(buffer);
+                len = wcslen(buffer);
             }
 
             TRACE("lparam 0x%08x -> %s\n", lparam, debugstr_w(buffer));
@@ -1526,7 +1525,7 @@ UINT macdrv_MapVirtualKeyEx(UINT wCode, UINT wMapType, HKL hkl)
             }
 
             if (status == noErr && len)
-                ret = toupperW(s[0]) | (deadKey ? 0x80000000 : 0);
+                ret = RtlUpcaseUnicodeChar(s[0]) | (deadKey ? 0x80000000 : 0);
 
             break;
         }

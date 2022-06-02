@@ -35,8 +35,6 @@
 #undef LoadResource
 
 #include "macdrv.h"
-#include "winuser.h"
-#include "wine/unicode.h"
 #include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
@@ -715,7 +713,7 @@ static void create_cocoa_window(struct macdrv_win_data *data)
 
     /* set the window text */
     if (!NtUserInternalGetWindowText(data->hwnd, text, ARRAY_SIZE(text))) text[0] = 0;
-    macdrv_set_cocoa_window_title(data->cocoa_window, text, strlenW(text));
+    macdrv_set_cocoa_window_title(data->cocoa_window, text, wcslen(text));
 
     /* set the window region */
     if (win_rgn || IsRectEmpty(&data->window_rect)) sync_window_region(data, win_rgn);
@@ -1773,7 +1771,7 @@ void macdrv_SetWindowText(HWND hwnd, LPCWSTR text)
     TRACE("%p, %s\n", hwnd, debugstr_w(text));
 
     if ((win = macdrv_get_cocoa_window(hwnd, FALSE)))
-        macdrv_set_cocoa_window_title(win, text, strlenW(text));
+        macdrv_set_cocoa_window_title(win, text, wcslen(text));
 }
 
 

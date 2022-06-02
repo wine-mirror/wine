@@ -28,10 +28,7 @@
 
 #define OEMRESOURCE
 #include "macdrv.h"
-#include "winuser.h"
-#include "winreg.h"
 #include "wine/server.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(cursor);
 
@@ -182,11 +179,11 @@ CFStringRef copy_system_cursor_name(ICONINFOEXW *info)
 
     if (!info->szModName[0]) return NULL;
 
-    p = strrchrW(info->szModName, '\\');
-    strcpyW(name, p ? p + 1 : info->szModName);
-    p = name + strlenW(name);
+    p = wcsrchr(info->szModName, '\\');
+    wcscpy(name, p ? p + 1 : info->szModName);
+    p = name + wcslen(name);
     *p++ = ',';
-    if (info->szResName[0]) strcpyW(p, info->szResName);
+    if (info->szResName[0]) wcscpy(p, info->szResName);
     else
     {
         char buf[16];
@@ -212,7 +209,7 @@ CFStringRef copy_system_cursor_name(ICONINFOEXW *info)
                 return NULL; /* force standard cursor */
             }
 
-            cursor_name = CFStringCreateWithCharacters(NULL, value, strlenW(value));
+            cursor_name = CFStringCreateWithCharacters(NULL, value, wcslen(value));
             if (!cursor_name)
             {
                 WARN("CFStringCreateWithCharacters failed for %s\n", debugstr_w(value));

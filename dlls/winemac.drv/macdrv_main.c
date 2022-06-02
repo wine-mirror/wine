@@ -32,10 +32,7 @@
 #include "ntstatus.h"
 #define WIN32_NO_STATUS
 #include "macdrv.h"
-#include "winuser.h"
-#include "winreg.h"
 #include "wine/server.h"
-#include "wine/unicode.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(macdrv);
 
