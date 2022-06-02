@@ -22,5 +22,4 @@ SOURCES = \
 	hotplug.c \
 	joystick.c \
 	joystick8.c \
-	keyboard.c \
-	mouse.c
+	keyboard.c

@@ -1604,13 +1604,19 @@ static void test_sys_mouse( DWORD version )
         },
     };
     DIDEVICEOBJECTINSTANCEW objinst = {0};
+    DIDEVICEOBJECTDATA objdata = {0};
     DIDEVICEINSTANCEW devinst = {0};
     BOOL old_localized = localized;
     IDirectInputDevice8W *device;
+    HWND hwnd, tmp_hwnd, child;
     DIDEVCAPS caps = {0};
+    DIMOUSESTATE state;
     ULONG res, ref;
+    HANDLE event;
+    DWORD count;
     HRESULT hr;
     GUID guid;
+    int i;
 
     if (FAILED(create_dinput_device( version, &GUID_SysMouse, &device ))) return;
 
@@ -1857,6 +1863,182 @@ static void test_sys_mouse( DWORD version )
     check_member( objinst, expect_objects[3], "%#lx", dwDimension );
     check_member( objinst, expect_objects[3], "%#04x", wExponent );
     check_member( objinst, expect_objects[3], "%u", wReportId );
+
+
+    SetCursorPos( 60, 60 );
+
+    hwnd = CreateWindowW( L"static", L"static", WS_POPUP | WS_VISIBLE,
+                          50, 50, 200, 200, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+    flush_events();
+
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_FOREGROUND );
+    ok( hr == DIERR_INVALIDPARAM, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_FOREGROUND|DISCL_EXCLUSIVE );
+    ok( hr == E_HANDLE, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_FOREGROUND|DISCL_NONEXCLUSIVE );
+    ok( hr == E_HANDLE, "SetCooperativeLevel returned %#lx\n", hr );
+
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_BACKGROUND );
+    ok( hr == DIERR_INVALIDPARAM, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_BACKGROUND|DISCL_EXCLUSIVE );
+    ok( hr == E_HANDLE, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_BACKGROUND|DISCL_NONEXCLUSIVE );
+    ok( hr == DI_OK, "SetCooperativeLevel returned %#lx\n", hr );
+
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_FOREGROUND );
+    ok( hr == DIERR_INVALIDPARAM, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_FOREGROUND|DISCL_EXCLUSIVE );
+    ok( hr == DI_OK, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_FOREGROUND|DISCL_NONEXCLUSIVE );
+    ok( hr == DI_OK, "SetCooperativeLevel returned %#lx\n", hr );
+
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_BACKGROUND );
+    ok( hr == DIERR_INVALIDPARAM, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_BACKGROUND|DISCL_EXCLUSIVE );
+    ok( hr == DIERR_UNSUPPORTED, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_BACKGROUND|DISCL_NONEXCLUSIVE );
+    ok( hr == DI_OK, "SetCooperativeLevel returned %#lx\n", hr );
+
+    child = CreateWindowW( L"static", L"static", WS_CHILD | WS_VISIBLE,
+                           10, 10, 50, 50, hwnd, NULL, NULL, NULL );
+    ok( !!child, "CreateWindowW failed, error %lu\n", GetLastError() );
+    flush_events();
+
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, child, DISCL_FOREGROUND );
+    ok( hr == DIERR_INVALIDPARAM, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, child, DISCL_FOREGROUND|DISCL_EXCLUSIVE );
+    ok( hr == E_HANDLE, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, child, DISCL_FOREGROUND|DISCL_NONEXCLUSIVE );
+    ok( hr == E_HANDLE, "SetCooperativeLevel returned %#lx\n", hr );
+
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, child, DISCL_BACKGROUND );
+    ok( hr == DIERR_INVALIDPARAM, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, child, DISCL_BACKGROUND|DISCL_EXCLUSIVE );
+    ok( hr == E_HANDLE, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, child, DISCL_BACKGROUND|DISCL_NONEXCLUSIVE );
+    ok( hr == E_HANDLE, "SetCooperativeLevel returned %#lx\n", hr );
+
+    DestroyWindow( child );
+
+
+    event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( !!event, "CreateEventW failed, error %lu\n", GetLastError() );
+    hr = IDirectInputDevice8_SetEventNotification( device, event );
+    ok( hr == DI_OK, "SetEventNotification returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_NONEXCLUSIVE | DISCL_FOREGROUND );
+    ok( hr == DI_OK, "SetCooperativeLevel returned %#lx\n", hr );
+
+    prop_dword.dwData = 5;
+    prop_dword.diph.dwHow = DIPH_DEVICE;
+    prop_dword.diph.dwObj = 0;
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_BUFFERSIZE, (LPCDIPROPHEADER)&prop_dword );
+    ok( hr == DI_OK, "SetProperty returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIMouse );
+    ok( hr == DI_OK, "SetDataFormat returned %#lx\n", hr );
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_NOEFFECT, "Unacquire returned %#lx\n", hr );
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_OK, "Acquire returned %#lx\n", hr );
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_NOEFFECT, "Acquire returned %#lx\n", hr );
+
+
+    tmp_hwnd = CreateWindowW( L"static", L"static", WS_POPUP | WS_VISIBLE,
+                              50, 250, 200, 200, NULL, NULL, NULL, NULL );
+    ok( !!tmp_hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+    flush_events();
+
+    hr = IDirectInputDevice8_GetDeviceState( device, sizeof(state), &state );
+    ok( hr == DIERR_NOTACQUIRED, "GetDeviceState  returned %#lx\n", hr );
+
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DIERR_OTHERAPPHASPRIO, "Acquire returned %#lx\n", hr );
+
+    SetActiveWindow( hwnd );
+    flush_events();
+
+    hr = IDirectInputDevice8_SetProperty( device, DIPROP_BUFFERSIZE, (LPCDIPROPHEADER)&prop_dword );
+    ok( hr == DI_OK, "SetProperty returned %#lx\n", hr );
+
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_OK, "Acquire returned %#lx\n", hr );
+
+    mouse_event( MOUSEEVENTF_MOVE, 10, 10, 0, 0 );
+    res = WaitForSingleObject( event, 100 );
+    if (res == WAIT_TIMEOUT) /* Acquire is asynchronous */
+    {
+        mouse_event( MOUSEEVENTF_MOVE, 10, 10, 0, 0 );
+        res = WaitForSingleObject( event, 100 );
+    }
+    ok( !res, "WaitForSingleObject returned %#lx\n", res );
+
+    count = 1;
+    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(objdata), &objdata, &count, 0 );
+    ok( hr == DI_OK, "GetDeviceData returned %#lx\n", hr );
+    ok( count == 1, "got count %lu\n", count );
+
+    mouse_event( MOUSEEVENTF_MOVE, 10, 10, 0, 0 );
+    res = WaitForSingleObject( event, 100 );
+    ok( !res, "WaitForSingleObject returned %#lx\n", res );
+
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_OK, "Unacquire returned %#lx\n", hr );
+    count = 1;
+    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(objdata), &objdata, &count, 0 );
+    ok( hr == (version < 0x800 ? DI_OK : DIERR_NOTACQUIRED), "GetDeviceData returned %#lx\n", hr );
+    ok( count == 1, "got count %lu\n", count );
+
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_OK, "Acquire returned %#lx\n", hr );
+
+    mouse_event( MOUSEEVENTF_MOVE, 10, 10, 0, 0 );
+    res = WaitForSingleObject( event, 100 );
+    if (res == WAIT_TIMEOUT) /* Acquire is asynchronous */
+    {
+        mouse_event( MOUSEEVENTF_MOVE, 10, 10, 0, 0 );
+        res = WaitForSingleObject( event, 100 );
+    }
+    ok( !res, "WaitForSingleObject returned %#lx\n", res );
+
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_OK, "Unacquire returned %#lx\n", hr );
+
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_OK, "Acquire returned %#lx\n", hr );
+    count = 1;
+    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(objdata), &objdata, &count, 0 );
+    ok( hr == (version < 0x800 ? DI_OK : DI_BUFFEROVERFLOW), "GetDeviceData returned %#lx\n", hr );
+    ok( count == 1, "got count %lu\n", count );
+
+    mouse_event( MOUSEEVENTF_MOVE, 10, 10, 0, 0 );
+    res = WaitForSingleObject( event, 100 );
+    if (res == WAIT_TIMEOUT) /* Acquire is asynchronous */
+    {
+        mouse_event( MOUSEEVENTF_MOVE, 10, 10, 0, 0 );
+        res = WaitForSingleObject( event, 100 );
+    }
+    ok( !res, "WaitForSingleObject returned %#lx\n", res );
+
+    for (i = 0; i < 2; i++)
+    {
+        mouse_event( MOUSEEVENTF_MOVE, 10 + i, 10 + i, 0, 0 );
+        res = WaitForSingleObject( event, 100 );
+        ok( !res, "WaitForSingleObject returned %#lx\n", res );
+    }
+
+    count = 1;
+    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(objdata), &objdata, &count, 0 );
+    ok( hr == (version < 0x800 ? DI_OK : DI_BUFFEROVERFLOW), "GetDeviceData returned %#lx\n", hr );
+    count = 1;
+    hr = IDirectInputDevice8_GetDeviceData( device, sizeof(objdata), &objdata, &count, 0 );
+    ok( hr == DI_OK, "GetDeviceData returned %#lx\n", hr );
+    ok( count == 1, "got count %lu\n", count );
+
+    DestroyWindow( tmp_hwnd );
+
+    CloseHandle( event );
+    DestroyWindow( hwnd );
 
     ref = IDirectInputDevice8_Release( device );
     ok( ref == 0, "Release returned %ld\n", ref );
