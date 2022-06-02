@@ -34,7 +34,7 @@ static inline struct voice_information_vector *impl_from_IVectorView_VoiceInform
     return CONTAINING_RECORD(iface, struct voice_information_vector, IVectorView_VoiceInformation_iface);
 }
 
-static HRESULT STDMETHODCALLTYPE vector_view_voice_information_QueryInterface(
+static HRESULT WINAPI vector_view_voice_information_QueryInterface(
         IVectorView_VoiceInformation *iface, REFIID iid, void **out)
 {
     TRACE("iface %p, iid %s, out %p stub!\n", iface, debugstr_guid(iid), out);
@@ -53,7 +53,7 @@ static HRESULT STDMETHODCALLTYPE vector_view_voice_information_QueryInterface(
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE vector_view_voice_information_AddRef(
+static ULONG WINAPI vector_view_voice_information_AddRef(
         IVectorView_VoiceInformation *iface)
 {
     struct voice_information_vector *impl = impl_from_IVectorView_VoiceInformation(iface);
@@ -62,7 +62,7 @@ static ULONG STDMETHODCALLTYPE vector_view_voice_information_AddRef(
     return ref;
 }
 
-static ULONG STDMETHODCALLTYPE vector_view_voice_information_Release(
+static ULONG WINAPI vector_view_voice_information_Release(
         IVectorView_VoiceInformation *iface)
 {
     struct voice_information_vector *impl = impl_from_IVectorView_VoiceInformation(iface);
@@ -71,28 +71,28 @@ static ULONG STDMETHODCALLTYPE vector_view_voice_information_Release(
     return ref;
 }
 
-static HRESULT STDMETHODCALLTYPE vector_view_voice_information_GetIids(
+static HRESULT WINAPI vector_view_voice_information_GetIids(
         IVectorView_VoiceInformation *iface, ULONG *iid_count, IID **iids)
 {
     FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE vector_view_voice_information_GetRuntimeClassName(
+static HRESULT WINAPI vector_view_voice_information_GetRuntimeClassName(
         IVectorView_VoiceInformation *iface, HSTRING *class_name)
 {
     FIXME("iface %p, class_name %p stub!\n", iface, class_name);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE vector_view_voice_information_GetTrustLevel(
+static HRESULT WINAPI vector_view_voice_information_GetTrustLevel(
         IVectorView_VoiceInformation *iface, TrustLevel *trust_level)
 {
     FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE vector_view_voice_information_GetAt(
+static HRESULT WINAPI vector_view_voice_information_GetAt(
         IVectorView_VoiceInformation *iface, UINT32 index, IVoiceInformation **value)
 {
     FIXME("iface %p, index %#x, value %p stub!\n", iface, index, value);
@@ -100,7 +100,7 @@ static HRESULT STDMETHODCALLTYPE vector_view_voice_information_GetAt(
     return E_BOUNDS;
 }
 
-static HRESULT STDMETHODCALLTYPE vector_view_voice_information_get_Size(
+static HRESULT WINAPI vector_view_voice_information_get_Size(
         IVectorView_VoiceInformation *iface, UINT32 *value)
 {
     FIXME("iface %p, value %p stub!\n", iface, value);
@@ -108,7 +108,7 @@ static HRESULT STDMETHODCALLTYPE vector_view_voice_information_get_Size(
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE vector_view_voice_information_IndexOf(
+static HRESULT WINAPI vector_view_voice_information_IndexOf(
         IVectorView_VoiceInformation *iface, IVoiceInformation *element, UINT32 *index, BOOLEAN *found)
 {
     FIXME("iface %p, element %p, index %p, found %p stub!\n", iface, element, index, found);
@@ -117,7 +117,7 @@ static HRESULT STDMETHODCALLTYPE vector_view_voice_information_IndexOf(
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE vector_view_voice_information_GetMany(
+static HRESULT WINAPI vector_view_voice_information_GetMany(
         IVectorView_VoiceInformation *iface, UINT32 start_index,
         UINT32 items_size, IVoiceInformation **items, UINT *value)
 {
@@ -166,7 +166,7 @@ static inline struct speech_synthesizer *impl_from_IClosable(IClosable *iface)
     return CONTAINING_RECORD(iface, struct speech_synthesizer, IClosable_iface);
 }
 
-static HRESULT STDMETHODCALLTYPE speech_synthesizer_QueryInterface(
+static HRESULT WINAPI speech_synthesizer_QueryInterface(
         ISpeechSynthesizer *iface, REFIID iid, void **out)
 {
     struct speech_synthesizer *impl = impl_from_ISpeechSynthesizer(iface);
@@ -201,7 +201,7 @@ static HRESULT STDMETHODCALLTYPE speech_synthesizer_QueryInterface(
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE speech_synthesizer_AddRef(
+static ULONG WINAPI speech_synthesizer_AddRef(
         ISpeechSynthesizer *iface)
 {
     struct speech_synthesizer *impl = impl_from_ISpeechSynthesizer(iface);
@@ -212,7 +212,7 @@ static ULONG STDMETHODCALLTYPE speech_synthesizer_AddRef(
     return ref;
 }
 
-static ULONG STDMETHODCALLTYPE speech_synthesizer_Release(
+static ULONG WINAPI speech_synthesizer_Release(
         ISpeechSynthesizer *iface)
 {
     struct speech_synthesizer *impl = impl_from_ISpeechSynthesizer(iface);
@@ -226,7 +226,7 @@ static ULONG STDMETHODCALLTYPE speech_synthesizer_Release(
     return ref;
 }
 
-static HRESULT STDMETHODCALLTYPE speech_synthesizer_GetIids(
+static HRESULT WINAPI speech_synthesizer_GetIids(
         ISpeechSynthesizer *iface, ULONG *iid_count, IID **iids)
 {
     FIXME("iface %p, iid_count %p, iids %p stub.\n", iface, iid_count, iids);
@@ -234,7 +234,7 @@ static HRESULT STDMETHODCALLTYPE speech_synthesizer_GetIids(
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE speech_synthesizer_GetRuntimeClassName(
+static HRESULT WINAPI speech_synthesizer_GetRuntimeClassName(
         ISpeechSynthesizer *iface, HSTRING *class_name)
 {
     FIXME("iface %p, class_name %p stub.\n", iface, class_name);
@@ -242,7 +242,7 @@ static HRESULT STDMETHODCALLTYPE speech_synthesizer_GetRuntimeClassName(
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE speech_synthesizer_GetTrustLevel(
+static HRESULT WINAPI speech_synthesizer_GetTrustLevel(
         ISpeechSynthesizer *iface, TrustLevel *trust_level)
 {
     FIXME("iface %p, trust_level %p stub.\n", iface, trust_level);
@@ -250,7 +250,7 @@ static HRESULT STDMETHODCALLTYPE speech_synthesizer_GetTrustLevel(
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE speech_synthesizer_SynthesizeTextToStreamAsync(ISpeechSynthesizer *iface,
+static HRESULT WINAPI speech_synthesizer_SynthesizeTextToStreamAsync(ISpeechSynthesizer *iface,
         HSTRING text, IAsyncOperation_SpeechSynthesisStream **operation)
 {
     FIXME("iface %p, text %p, operation %p stub.\n", iface, text, operation);
@@ -258,7 +258,7 @@ static HRESULT STDMETHODCALLTYPE speech_synthesizer_SynthesizeTextToStreamAsync(
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE speech_synthesizer_SynthesizeSsmlToStreamAsync(ISpeechSynthesizer *iface,
+static HRESULT WINAPI speech_synthesizer_SynthesizeSsmlToStreamAsync(ISpeechSynthesizer *iface,
         HSTRING ssml, IAsyncOperation_SpeechSynthesisStream **operation)
 {
     FIXME("iface %p, text %p, operation %p stub.\n", iface, ssml, operation);
@@ -266,14 +266,14 @@ static HRESULT STDMETHODCALLTYPE speech_synthesizer_SynthesizeSsmlToStreamAsync(
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE speech_synthesizer_put_Voice(ISpeechSynthesizer *iface, IVoiceInformation *value)
+static HRESULT WINAPI speech_synthesizer_put_Voice(ISpeechSynthesizer *iface, IVoiceInformation *value)
 {
     FIXME("iface %p, value %p stub.\n", iface, value);
 
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE speech_synthesizer_get_Voice(ISpeechSynthesizer *iface, IVoiceInformation **value)
+static HRESULT WINAPI speech_synthesizer_get_Voice(ISpeechSynthesizer *iface, IVoiceInformation **value)
 {
     FIXME("iface %p, value %p stub.\n", iface, value);
 
@@ -297,10 +297,9 @@ static const struct ISpeechSynthesizerVtbl speech_synthesizer_vtbl =
     speech_synthesizer_get_Voice,
 };
 
-
 DEFINE_IINSPECTABLE(speech_synthesizer2, ISpeechSynthesizer2, struct speech_synthesizer, ISpeechSynthesizer_iface)
 
-static HRESULT STDMETHODCALLTYPE speech_synthesizer2_get_Options(ISpeechSynthesizer2 *iface, ISpeechSynthesizerOptions **value)
+static HRESULT WINAPI speech_synthesizer2_get_Options(ISpeechSynthesizer2 *iface, ISpeechSynthesizerOptions **value)
 {
     FIXME("iface %p, value %p stub.\n", iface, value);
 
@@ -321,7 +320,7 @@ static const struct ISpeechSynthesizer2Vtbl speech_synthesizer2_vtbl =
     speech_synthesizer2_get_Options,
 };
 
-static HRESULT STDMETHODCALLTYPE closable_QueryInterface(
+static HRESULT WINAPI closable_QueryInterface(
         IClosable *iface, REFIID iid, void **out)
 {
     struct speech_synthesizer *impl = impl_from_IClosable(iface);
@@ -329,7 +328,7 @@ static HRESULT STDMETHODCALLTYPE closable_QueryInterface(
     return ISpeechSynthesizer_QueryInterface(&impl->ISpeechSynthesizer_iface, iid, out);
 }
 
-static ULONG STDMETHODCALLTYPE closable_AddRef(
+static ULONG WINAPI closable_AddRef(
         IClosable *iface)
 {
     struct speech_synthesizer *impl = impl_from_IClosable(iface);
@@ -340,7 +339,7 @@ static ULONG STDMETHODCALLTYPE closable_AddRef(
     return ref;
 }
 
-static ULONG STDMETHODCALLTYPE closable_Release(
+static ULONG WINAPI closable_Release(
         IClosable *iface)
 {
     struct speech_synthesizer *impl = impl_from_IClosable(iface);
@@ -354,7 +353,7 @@ static ULONG STDMETHODCALLTYPE closable_Release(
     return ref;
 }
 
-static HRESULT STDMETHODCALLTYPE closable_GetIids(
+static HRESULT WINAPI closable_GetIids(
         IClosable *iface, ULONG *iid_count, IID **iids)
 {
     FIXME("iface %p, iid_count %p, iids %p stub.\n", iface, iid_count, iids);
@@ -362,7 +361,7 @@ static HRESULT STDMETHODCALLTYPE closable_GetIids(
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE closable_GetRuntimeClassName(
+static HRESULT WINAPI closable_GetRuntimeClassName(
         IClosable *iface, HSTRING *class_name)
 {
     FIXME("iface %p, class_name %p stub.\n", iface, class_name);
@@ -370,7 +369,7 @@ static HRESULT STDMETHODCALLTYPE closable_GetRuntimeClassName(
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE closable_GetTrustLevel(
+static HRESULT WINAPI closable_GetTrustLevel(
         IClosable *iface, TrustLevel *trust_level)
 {
     FIXME("iface %p, trust_level %p stub.\n", iface, trust_level);
@@ -378,7 +377,7 @@ static HRESULT STDMETHODCALLTYPE closable_GetTrustLevel(
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE closable_Close(
+static HRESULT WINAPI closable_Close(
         IClosable *iface)
 {
     FIXME("iface %p stub.\n", iface);
@@ -417,7 +416,7 @@ static inline struct synthesizer_statics *impl_from_IInstalledVoicesStatic(IInst
     return CONTAINING_RECORD(iface, struct synthesizer_statics, IInstalledVoicesStatic_iface);
 }
 
-static HRESULT STDMETHODCALLTYPE factory_QueryInterface(
+static HRESULT WINAPI factory_QueryInterface(
         IActivationFactory *iface, REFIID iid, void **out)
 {
     struct synthesizer_statics *impl = impl_from_IActivationFactory(iface);
@@ -446,7 +445,7 @@ static HRESULT STDMETHODCALLTYPE factory_QueryInterface(
     return E_NOINTERFACE;
 }
 
-static ULONG STDMETHODCALLTYPE factory_AddRef(
+static ULONG WINAPI factory_AddRef(
         IActivationFactory *iface)
 {
     struct synthesizer_statics *impl = impl_from_IActivationFactory(iface);
@@ -455,7 +454,7 @@ static ULONG STDMETHODCALLTYPE factory_AddRef(
     return ref;
 }
 
-static ULONG STDMETHODCALLTYPE factory_Release(
+static ULONG WINAPI factory_Release(
         IActivationFactory *iface)
 {
     struct synthesizer_statics *impl = impl_from_IActivationFactory(iface);
@@ -464,28 +463,28 @@ static ULONG STDMETHODCALLTYPE factory_Release(
     return ref;
 }
 
-static HRESULT STDMETHODCALLTYPE factory_GetIids(
+static HRESULT WINAPI factory_GetIids(
         IActivationFactory *iface, ULONG *iid_count, IID **iids)
 {
     FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE factory_GetRuntimeClassName(
+static HRESULT WINAPI factory_GetRuntimeClassName(
         IActivationFactory *iface, HSTRING *class_name)
 {
     FIXME("iface %p, class_name %p stub!\n", iface, class_name);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE factory_GetTrustLevel(
+static HRESULT WINAPI factory_GetTrustLevel(
         IActivationFactory *iface, TrustLevel *trust_level)
 {
     FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE factory_ActivateInstance(
+static HRESULT WINAPI factory_ActivateInstance(
         IActivationFactory *iface, IInspectable **instance)
 {
     struct speech_synthesizer *obj;
@@ -519,49 +518,49 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
-static HRESULT STDMETHODCALLTYPE installed_voices_static_QueryInterface(
+static HRESULT WINAPI installed_voices_static_QueryInterface(
         IInstalledVoicesStatic *iface, REFIID iid, void **out)
 {
     struct synthesizer_statics *impl = impl_from_IInstalledVoicesStatic(iface);
     return IActivationFactory_QueryInterface(&impl->IActivationFactory_iface, iid, out);
 }
 
-static ULONG STDMETHODCALLTYPE installed_voices_static_AddRef(
+static ULONG WINAPI installed_voices_static_AddRef(
         IInstalledVoicesStatic *iface)
 {
     struct synthesizer_statics *impl = impl_from_IInstalledVoicesStatic(iface);
     return IActivationFactory_AddRef(&impl->IActivationFactory_iface);
 }
 
-static ULONG STDMETHODCALLTYPE installed_voices_static_Release(
+static ULONG WINAPI installed_voices_static_Release(
         IInstalledVoicesStatic *iface)
 {
     struct synthesizer_statics *impl = impl_from_IInstalledVoicesStatic(iface);
     return IActivationFactory_Release(&impl->IActivationFactory_iface);
 }
 
-static HRESULT STDMETHODCALLTYPE installed_voices_static_GetIids(
+static HRESULT WINAPI installed_voices_static_GetIids(
         IInstalledVoicesStatic *iface, ULONG *iid_count, IID **iids)
 {
     FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE installed_voices_static_GetRuntimeClassName(
+static HRESULT WINAPI installed_voices_static_GetRuntimeClassName(
         IInstalledVoicesStatic *iface, HSTRING *class_name)
 {
     FIXME("iface %p, class_name %p stub!\n", iface, class_name);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE installed_voices_static_GetTrustLevel(
+static HRESULT WINAPI installed_voices_static_GetTrustLevel(
         IInstalledVoicesStatic *iface, TrustLevel *trust_level)
 {
     FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
     return E_NOTIMPL;
 }
 
-static HRESULT STDMETHODCALLTYPE installed_voices_static_get_AllVoices(
+static HRESULT WINAPI installed_voices_static_get_AllVoices(
     IInstalledVoicesStatic *iface, IVectorView_VoiceInformation **value)
 {
     TRACE("iface %p, value %p.\n", iface, value);
@@ -570,7 +569,7 @@ static HRESULT STDMETHODCALLTYPE installed_voices_static_get_AllVoices(
     return S_OK;
 }
 
-static HRESULT STDMETHODCALLTYPE installed_voices_static_get_DefaultVoice(
+static HRESULT WINAPI installed_voices_static_get_DefaultVoice(
     IInstalledVoicesStatic *iface, IVoiceInformation **value)
 {
     FIXME("iface %p, value %p stub!\n", iface, value);
