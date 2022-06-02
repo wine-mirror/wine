@@ -799,18 +799,21 @@ static HRESULT STDMETHODCALLTYPE d3d11_device_context_Map(ID3D11DeviceContext1 *
     if (map_flags)
         FIXME("Ignoring map_flags %#x.\n", map_flags);
 
+    mapped_subresource->pData = NULL;
+
     if (context->type != D3D11_DEVICE_CONTEXT_IMMEDIATE
             && map_type != D3D11_MAP_WRITE_DISCARD && map_type != D3D11_MAP_WRITE_NO_OVERWRITE)
         return E_INVALIDARG;
 
     wined3d_resource = wined3d_resource_from_d3d11_resource(resource);
 
-    hr = wined3d_device_context_map(context->wined3d_context, wined3d_resource, subresource_idx,
-            &map_desc, NULL, wined3d_map_flags_from_d3d11_map_type(map_type));
-
-    mapped_subresource->pData = map_desc.data;
-    mapped_subresource->RowPitch = map_desc.row_pitch;
-    mapped_subresource->DepthPitch = map_desc.slice_pitch;
+    if (SUCCEEDED(hr = wined3d_device_context_map(context->wined3d_context, wined3d_resource, subresource_idx,
+            &map_desc, NULL, wined3d_map_flags_from_d3d11_map_type(map_type))))
+    {
+        mapped_subresource->pData = map_desc.data;
+        mapped_subresource->RowPitch = map_desc.row_pitch;
+        mapped_subresource->DepthPitch = map_desc.slice_pitch;
+    }
 
     return hr;
 }

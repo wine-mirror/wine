@@ -14934,8 +14934,14 @@ static void test_resource_map(void)
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, NULL, &buffer);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
+    mapped_subresource.pData = (void *)0xdeadbeef;
+    mapped_subresource.RowPitch = 0xabab;
+    mapped_subresource.DepthPitch = 0xcdcd;
     hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)buffer, 1, D3D11_MAP_READ, 0, &mapped_subresource);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(!mapped_subresource.pData, "Unexpected pointer %p.\n", mapped_subresource.pData);
+    ok(mapped_subresource.RowPitch == 0xabab, "Unexpected row pitch value %u.\n", mapped_subresource.RowPitch);
+    ok(mapped_subresource.DepthPitch == 0xcdcd, "Unexpected depth pitch value %u.\n", mapped_subresource.DepthPitch);
 
     memset(&mapped_subresource, 0, sizeof(mapped_subresource));
     hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)buffer, 0, D3D11_MAP_WRITE, 0, &mapped_subresource);
@@ -14972,8 +14978,14 @@ static void test_resource_map(void)
     hr = ID3D11Device_CreateTexture2D(device, &texture2d_desc, NULL, &texture2d);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
+    mapped_subresource.pData = (void *)0xdeadbeef;
+    mapped_subresource.RowPitch = 0xabab;
+    mapped_subresource.DepthPitch = 0xcdcd;
     hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)texture2d, 1, D3D11_MAP_READ, 0, &mapped_subresource);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(!mapped_subresource.pData, "Unexpected pointer %p.\n", mapped_subresource.pData);
+    ok(mapped_subresource.RowPitch == 0xabab, "Unexpected row pitch value %u.\n", mapped_subresource.RowPitch);
+    ok(mapped_subresource.DepthPitch == 0xcdcd, "Unexpected depth pitch value %u.\n", mapped_subresource.DepthPitch);
 
     memset(&mapped_subresource, 0, sizeof(mapped_subresource));
     hr = ID3D11DeviceContext_Map(context, (ID3D11Resource *)texture2d, 0, D3D11_MAP_WRITE, 0, &mapped_subresource);
@@ -33285,8 +33297,14 @@ static void test_deferred_context_map(void)
     hr = ID3D11Device_CreateBuffer(device, &buffer_desc, &resource_data, &buffer2);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
+    map_desc.pData = (void *)0xdeadbeef;
+    map_desc.RowPitch = 0xabab;
+    map_desc.DepthPitch = 0xcdcd;
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_READ, 0, &map_desc);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
+    ok(!map_desc.pData, "Unexpected pointer %p.\n", map_desc.pData);
+    ok(map_desc.RowPitch == 0xabab, "Unexpected row pitch value %u.\n", map_desc.RowPitch);
+    ok(map_desc.DepthPitch == 0xcdcd, "Unexpected depth pitch value %u.\n", map_desc.DepthPitch);
 
     hr = ID3D11DeviceContext_Map(deferred, (ID3D11Resource *)buffer, 0, D3D11_MAP_READ_WRITE, 0, &map_desc);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#lx.\n", hr);
