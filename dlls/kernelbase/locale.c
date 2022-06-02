@@ -2000,6 +2000,12 @@ static inline WORD get_char_type( DWORD type, WCHAR ch )
 }
 
 
+static inline void map_byterev( const WCHAR *src, int len, WCHAR *dst )
+{
+    while (len--) *dst++ = RtlUshortByteSwap( *src++ );
+}
+
+
 static int casemap_string( const USHORT *table, const WCHAR *src, int srclen, WCHAR *dst, int dstlen )
 {
     int pos, ret = srclen;
@@ -3749,6 +3755,8 @@ static int get_sortkey( const struct sortguid *sortid, DWORD flags,
         SetLastError( ERROR_INSUFFICIENT_BUFFER );
         return 0;
     }
+    if (flags & LCMAP_BYTEREV)
+        map_byterev( (WCHAR *)dst, min( ret, dstlen ) / sizeof(WCHAR), (WCHAR *)dst );
     return ret;
 }
 
@@ -3991,6 +3999,102 @@ static int map_to_halfwidth( const USHORT *table, const WCHAR *src, int srclen, 
         }
     }
     return pos;
+}
+
+
+static int lcmap_string( const struct sortguid *sortid, DWORD flags,
+                         const WCHAR *src, int srclen, WCHAR *dst, int dstlen )
+{
+    const USHORT *case_table = NULL;
+    int ret;
+
+    if (flags & (LCMAP_LOWERCASE | LCMAP_UPPERCASE))
+    {
+        if ((flags & LCMAP_TITLECASE) == LCMAP_TITLECASE)  /* FIXME */
+        {
+            SetLastError( ERROR_INVALID_FLAGS );
+            return 0;
+        }
+        case_table = sort.casemap + (flags & LCMAP_LINGUISTIC_CASING ? sortid->casemap : 0);
+        case_table = case_table + 2 + (flags & LCMAP_LOWERCASE ? case_table[1] : 0);
+    }
+
+    switch (flags & ~(LCMAP_BYTEREV | LCMAP_LOWERCASE | LCMAP_UPPERCASE | LCMAP_LINGUISTIC_CASING))
+    {
+    case LCMAP_HIRAGANA:
+        ret = casemap_string( charmaps[CHARMAP_HIRAGANA], src, srclen, dst, dstlen );
+        break;
+    case LCMAP_KATAKANA:
+        ret = casemap_string( charmaps[CHARMAP_KATAKANA], src, srclen, dst, dstlen );
+        break;
+    case LCMAP_HALFWIDTH:
+        ret = map_to_halfwidth( NULL, src, srclen, dst, dstlen );
+        break;
+    case LCMAP_HIRAGANA | LCMAP_HALFWIDTH:
+        ret = map_to_halfwidth( charmaps[CHARMAP_HIRAGANA], src, srclen, dst, dstlen );
+        break;
+    case LCMAP_KATAKANA | LCMAP_HALFWIDTH:
+        ret = map_to_halfwidth( charmaps[CHARMAP_KATAKANA], src, srclen, dst, dstlen );
+        break;
+    case LCMAP_FULLWIDTH:
+        ret = map_to_fullwidth( NULL, src, srclen, dst, dstlen );
+        break;
+    case LCMAP_HIRAGANA | LCMAP_FULLWIDTH:
+        ret = map_to_fullwidth( charmaps[CHARMAP_HIRAGANA], src, srclen, dst, dstlen );
+        break;
+    case LCMAP_KATAKANA | LCMAP_FULLWIDTH:
+        ret = map_to_fullwidth( charmaps[CHARMAP_KATAKANA], src, srclen, dst, dstlen );
+        break;
+    case LCMAP_SIMPLIFIED_CHINESE:
+        ret = casemap_string( charmaps[CHARMAP_SIMPLIFIED], src, srclen, dst, dstlen );
+        break;
+    case LCMAP_TRADITIONAL_CHINESE:
+        ret = casemap_string( charmaps[CHARMAP_TRADITIONAL], src, srclen, dst, dstlen );
+        break;
+    case NORM_IGNORENONSPACE:
+    case NORM_IGNORESYMBOLS:
+    case NORM_IGNORENONSPACE | NORM_IGNORESYMBOLS:
+        if (flags & ~(NORM_IGNORENONSPACE | NORM_IGNORESYMBOLS | LCMAP_BYTEREV))
+        {
+            SetLastError( ERROR_INVALID_FLAGS );
+            return 0;
+        }
+        for (ret = 0; srclen; src++, srclen--)
+        {
+            if ((flags & NORM_IGNORESYMBOLS) && (get_char_type( CT_CTYPE1, *src ) & (C1_PUNCT | C1_SPACE)))
+                continue;
+            if (ret < dstlen) dst[ret] = *src;
+            ret++;
+        }
+        break;
+    case 0:
+        if (case_table)
+        {
+            ret = casemap_string( case_table, src, srclen, dst, dstlen );
+            case_table = NULL;
+            break;
+        }
+        if (flags & LCMAP_BYTEREV)
+        {
+            ret = min( srclen, dstlen );
+            memcpy( dst, src, ret * sizeof(WCHAR) );
+            break;
+        }
+        /* fall through */
+    default:
+        SetLastError( ERROR_INVALID_FLAGS );
+        return 0;
+    }
+
+    if (dstlen && case_table) ret = casemap_string( case_table, dst, ret, dst, dstlen );
+    if (flags & LCMAP_BYTEREV) map_byterev( dst, min( dstlen, ret ), dst );
+
+    if (dstlen && dstlen < ret)
+    {
+        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        return 0;
+    }
+    return ret;
 }
 
 
@@ -6318,8 +6422,6 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringEx( const WCHAR *locale, DWORD flags, co
                                             void *reserved, LPARAM handle )
 {
     const struct sortguid *sortid = NULL;
-    LPWSTR dst_ptr;
-    INT len;
 
     if (version) FIXME( "unsupported version structure %p\n", version );
     if (reserved) FIXME( "unsupported reserved pointer %p\n", reserved );
@@ -6335,146 +6437,35 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringEx( const WCHAR *locale, DWORD flags, co
         return 0;
     }
 
-    /* mutually exclusive flags */
-    if ((flags & (LCMAP_LOWERCASE | LCMAP_UPPERCASE)) == (LCMAP_LOWERCASE | LCMAP_UPPERCASE) ||
-        (flags & (LCMAP_HIRAGANA | LCMAP_KATAKANA)) == (LCMAP_HIRAGANA | LCMAP_KATAKANA) ||
-        (flags & (LCMAP_HALFWIDTH | LCMAP_FULLWIDTH)) == (LCMAP_HALFWIDTH | LCMAP_FULLWIDTH) ||
-        (flags & (LCMAP_TRADITIONAL_CHINESE | LCMAP_SIMPLIFIED_CHINESE)) == (LCMAP_TRADITIONAL_CHINESE | LCMAP_SIMPLIFIED_CHINESE) ||
-        !flags)
-    {
-        SetLastError( ERROR_INVALID_FLAGS );
-        return 0;
-    }
-
-    if (!dstlen) dst = NULL;
-
-    if (flags & (LCMAP_LOWERCASE | LCMAP_UPPERCASE | LCMAP_SORTKEY))
-    {
-        if (!(sortid = get_language_sort( locale ))) return 0;
-    }
-    if (flags & LCMAP_SORTKEY)
-    {
-        if (src == dst)
-        {
-            SetLastError( ERROR_INVALID_FLAGS );
-            return 0;
-        }
-        if (srclen < 0) srclen = lstrlenW(src);
-
-        TRACE( "(%s,0x%08lx,%s,%d,%p,%d)\n",
-               debugstr_w(locale), flags, debugstr_wn(src, srclen), srclen, dst, dstlen );
-
-        return get_sortkey( sortid, flags, src, srclen, (BYTE *)dst, dstlen );
-    }
-
-    /* SORT_STRINGSORT must be used exclusively with LCMAP_SORTKEY */
-    if (flags & SORT_STRINGSORT)
-    {
-        SetLastError( ERROR_INVALID_FLAGS );
-        return 0;
-    }
-    if (((flags & (NORM_IGNORENONSPACE | NORM_IGNORESYMBOLS)) &&
-         (flags & ~(NORM_IGNORENONSPACE | NORM_IGNORESYMBOLS))) ||
-        ((flags & (LCMAP_HIRAGANA | LCMAP_KATAKANA | LCMAP_HALFWIDTH | LCMAP_FULLWIDTH)) &&
-         (flags & (LCMAP_SIMPLIFIED_CHINESE | LCMAP_TRADITIONAL_CHINESE))))
-    {
-        SetLastError( ERROR_INVALID_FLAGS );
-        return 0;
-    }
-
     if (srclen < 0) srclen = lstrlenW(src) + 1;
 
     TRACE( "(%s,0x%08lx,%s,%d,%p,%d)\n",
            debugstr_w(locale), flags, debugstr_wn(src, srclen), srclen, dst, dstlen );
 
-    if (!dst) /* return required string length */
-    {
-        if (flags & NORM_IGNORESYMBOLS)
-        {
-            for (len = 0; srclen; src++, srclen--)
-                if (!(get_char_type( CT_CTYPE1, *src ) & (C1_PUNCT | C1_SPACE))) len++;
-        }
-        else if (flags & LCMAP_FULLWIDTH)
-        {
-            len = map_to_fullwidth( NULL, src, srclen, NULL, 0 );
-        }
-        else if (flags & LCMAP_HALFWIDTH)
-        {
-            len = map_to_halfwidth( (flags & LCMAP_KATAKANA) ? charmaps[CHARMAP_KATAKANA] : NULL,
-                                    src, srclen, NULL, 0 );
-        }
-        else len = srclen;
-        return len;
-    }
+    flags &= ~LOCALE_USE_CP_ACP;
 
     if (src == dst && (flags & ~(LCMAP_LOWERCASE | LCMAP_UPPERCASE)))
     {
         SetLastError( ERROR_INVALID_FLAGS );
         return 0;
     }
-
-    if (flags & (NORM_IGNORENONSPACE | NORM_IGNORESYMBOLS))
+    if (flags & (LCMAP_LOWERCASE | LCMAP_UPPERCASE | LCMAP_SORTKEY))
     {
-        for (len = dstlen, dst_ptr = dst; srclen && len; src++, srclen--)
-        {
-            if ((flags & NORM_IGNORESYMBOLS) && (get_char_type( CT_CTYPE1, *src ) & (C1_PUNCT | C1_SPACE)))
-                continue;
-            *dst_ptr++ = *src;
-            len--;
-        }
-        len = dst_ptr - dst;
-        goto done;
+        if (!(sortid = get_language_sort( locale ))) return 0;
     }
-
-    if (flags & LCMAP_TRADITIONAL_CHINESE)
+    if (flags & LCMAP_HASH)
     {
-        len = casemap_string( charmaps[CHARMAP_TRADITIONAL], src, srclen, dst, dstlen );
-        goto done;
-    }
-    if (flags & LCMAP_SIMPLIFIED_CHINESE)
-    {
-        len = casemap_string( charmaps[CHARMAP_SIMPLIFIED], src, srclen, dst, dstlen );
-        goto done;
-    }
-
-    if (flags & (LCMAP_FULLWIDTH | LCMAP_HALFWIDTH | LCMAP_HIRAGANA | LCMAP_KATAKANA))
-    {
-        const USHORT *table = NULL;
-
-        if (flags & LCMAP_KATAKANA) table = charmaps[CHARMAP_KATAKANA];
-        else if (flags & LCMAP_HIRAGANA) table = charmaps[CHARMAP_HIRAGANA];
-
-        if (flags & LCMAP_FULLWIDTH)
-            len = map_to_fullwidth( table, src, srclen, dst, dstlen );
-        else if (flags & LCMAP_HALFWIDTH)
-            len = map_to_halfwidth( table, src, srclen, dst, dstlen );
-        else
-            len = casemap_string( table, src, srclen, dst, dstlen );
-
-        if (dstlen && dstlen < len)
-        {
-            SetLastError( ERROR_INSUFFICIENT_BUFFER );
-            return 0;
-        }
-        src = dst;
-        srclen = len;
-    }
-    else len = 0;
-
-    if (flags & (LCMAP_UPPERCASE | LCMAP_LOWERCASE))
-    {
-        const USHORT *table = sort.casemap + (flags & LCMAP_LINGUISTIC_CASING ? sortid->casemap : 0);
-        table = table + 2 + (flags & LCMAP_LOWERCASE ? table[1] : 0);
-        len = casemap_string( table, src, srclen, dst, dstlen );
-    }
-
-done:
-    if (dstlen && dstlen < len)
-    {
-        SetLastError( ERROR_INSUFFICIENT_BUFFER );
+        FIXME( "LCMAP_HASH %s not supported\n", debugstr_wn( src, srclen ));
         return 0;
     }
-    return len;
+    if (flags & LCMAP_SORTHANDLE)
+    {
+        FIXME( "LCMAP_SORTHANDLE not supported\n" );
+        return 0;
+    }
+    if (flags & LCMAP_SORTKEY) return get_sortkey( sortid, flags, src, srclen, (BYTE *)dst, dstlen );
+
+    return lcmap_string( sortid, flags, src, srclen, dst, dstlen );
 }
 
 
