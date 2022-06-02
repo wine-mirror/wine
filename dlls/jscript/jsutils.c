@@ -422,6 +422,9 @@ HRESULT to_primitive(script_ctx_t *ctx, jsval_t val, jsval_t *ret, hint_t hint)
             }else {
                 IDispatch_Release(get_object(prim));
             }
+        }else if(hres != DISP_E_UNKNOWNNAME) {
+            jsdisp_release(jsdisp);
+            return hres;
         }
 
         hres = jsdisp_get_id(jsdisp, hint == HINT_STRING ? L"valueOf" : L"toString", 0, &id);
@@ -438,6 +441,9 @@ HRESULT to_primitive(script_ctx_t *ctx, jsval_t val, jsval_t *ret, hint_t hint)
             }else {
                 IDispatch_Release(get_object(prim));
             }
+        }else if(hres != DISP_E_UNKNOWNNAME) {
+            jsdisp_release(jsdisp);
+            return hres;
         }
 
         jsdisp_release(jsdisp);
