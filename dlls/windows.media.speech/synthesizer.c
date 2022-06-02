@@ -36,14 +36,15 @@ static inline struct voice_information_vector *impl_from_IVectorView_VoiceInform
 
 static HRESULT WINAPI vector_view_voice_information_QueryInterface( IVectorView_VoiceInformation *iface, REFIID iid, void **out )
 {
+    struct voice_information_vector *impl = impl_from_IVectorView_VoiceInformation(iface);
+
     TRACE("iface %p, iid %s, out %p stub!\n", iface, debugstr_guid(iid), out);
 
     if (IsEqualGUID(iid, &IID_IUnknown) ||
         IsEqualGUID(iid, &IID_IInspectable) ||
         IsEqualGUID(iid, &IID_IVectorView_VoiceInformation))
     {
-        IUnknown_AddRef(iface);
-        *out = iface;
+        IInspectable_AddRef((*out = &impl->IVectorView_VoiceInformation_iface));
         return S_OK;
     }
 
@@ -162,22 +163,19 @@ static HRESULT WINAPI synthesizer_QueryInterface( ISpeechSynthesizer *iface, REF
         IsEqualGUID(iid, &IID_IInspectable) ||
         IsEqualGUID(iid, &IID_ISpeechSynthesizer))
     {
-        IUnknown_AddRef(iface);
-        *out = iface;
+        IInspectable_AddRef((*out = &impl->ISpeechSynthesizer_iface));
         return S_OK;
     }
 
     if (IsEqualGUID(iid, &IID_ISpeechSynthesizer2))
     {
-        IUnknown_AddRef(iface);
-        *out = &impl->ISpeechSynthesizer2_iface;
+        IInspectable_AddRef((*out = &impl->ISpeechSynthesizer2_iface));
         return S_OK;
     }
 
     if (IsEqualGUID(iid, &IID_IClosable))
     {
-        IUnknown_AddRef(iface);
-        *out = &impl->IClosable_iface;
+        IInspectable_AddRef((*out = &impl->IClosable_iface));
         return S_OK;
     }
 
@@ -345,15 +343,13 @@ static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID 
         IsEqualGUID(iid, &IID_IAgileObject) ||
         IsEqualGUID(iid, &IID_IActivationFactory))
     {
-        IUnknown_AddRef(iface);
-        *out = iface;
+        IInspectable_AddRef((*out = &impl->IActivationFactory_iface));
         return S_OK;
     }
 
     if (IsEqualGUID(iid, &IID_IInstalledVoicesStatic))
     {
-        IUnknown_AddRef(iface);
-        *out = &impl->IInstalledVoicesStatic_iface;
+        IInspectable_AddRef((*out = &impl->IInstalledVoicesStatic_iface));
         return S_OK;
     }
 
