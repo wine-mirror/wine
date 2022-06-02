@@ -139,7 +139,7 @@ static struct voice_information_vector all_voices =
     0
 };
 
-struct speech_synthesizer
+struct synthesizer
 {
     ISpeechSynthesizer ISpeechSynthesizer_iface;
     ISpeechSynthesizer2 ISpeechSynthesizer2_iface;
@@ -147,14 +147,14 @@ struct speech_synthesizer
     LONG ref;
 };
 
-static inline struct speech_synthesizer *impl_from_ISpeechSynthesizer( ISpeechSynthesizer *iface )
+static inline struct synthesizer *impl_from_ISpeechSynthesizer( ISpeechSynthesizer *iface )
 {
-    return CONTAINING_RECORD(iface, struct speech_synthesizer, ISpeechSynthesizer_iface);
+    return CONTAINING_RECORD(iface, struct synthesizer, ISpeechSynthesizer_iface);
 }
 
-static HRESULT WINAPI speech_synthesizer_QueryInterface( ISpeechSynthesizer *iface, REFIID iid, void **out )
+static HRESULT WINAPI synthesizer_QueryInterface( ISpeechSynthesizer *iface, REFIID iid, void **out )
 {
-    struct speech_synthesizer *impl = impl_from_ISpeechSynthesizer(iface);
+    struct synthesizer *impl = impl_from_ISpeechSynthesizer(iface);
 
     TRACE("iface %p, iid %s, out %p stub!\n", iface, debugstr_guid(iid), out);
 
@@ -186,9 +186,9 @@ static HRESULT WINAPI speech_synthesizer_QueryInterface( ISpeechSynthesizer *ifa
     return E_NOINTERFACE;
 }
 
-static ULONG WINAPI speech_synthesizer_AddRef( ISpeechSynthesizer *iface )
+static ULONG WINAPI synthesizer_AddRef( ISpeechSynthesizer *iface )
 {
-    struct speech_synthesizer *impl = impl_from_ISpeechSynthesizer(iface);
+    struct synthesizer *impl = impl_from_ISpeechSynthesizer(iface);
     ULONG ref = InterlockedIncrement(&impl->ref);
 
     TRACE("iface %p, ref %lu.\n", iface, ref);
@@ -196,9 +196,9 @@ static ULONG WINAPI speech_synthesizer_AddRef( ISpeechSynthesizer *iface )
     return ref;
 }
 
-static ULONG WINAPI speech_synthesizer_Release( ISpeechSynthesizer *iface )
+static ULONG WINAPI synthesizer_Release( ISpeechSynthesizer *iface )
 {
-    struct speech_synthesizer *impl = impl_from_ISpeechSynthesizer(iface);
+    struct synthesizer *impl = impl_from_ISpeechSynthesizer(iface);
     ULONG ref = InterlockedDecrement(&impl->ref);
 
     TRACE("iface %p, ref %lu.\n", iface, ref);
@@ -209,98 +209,98 @@ static ULONG WINAPI speech_synthesizer_Release( ISpeechSynthesizer *iface )
     return ref;
 }
 
-static HRESULT WINAPI speech_synthesizer_GetIids( ISpeechSynthesizer *iface, ULONG *iid_count, IID **iids )
+static HRESULT WINAPI synthesizer_GetIids( ISpeechSynthesizer *iface, ULONG *iid_count, IID **iids )
 {
     FIXME("iface %p, iid_count %p, iids %p stub.\n", iface, iid_count, iids);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI speech_synthesizer_GetRuntimeClassName( ISpeechSynthesizer *iface, HSTRING *class_name )
+static HRESULT WINAPI synthesizer_GetRuntimeClassName( ISpeechSynthesizer *iface, HSTRING *class_name )
 {
     FIXME("iface %p, class_name %p stub.\n", iface, class_name);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI speech_synthesizer_GetTrustLevel( ISpeechSynthesizer *iface, TrustLevel *trust_level )
+static HRESULT WINAPI synthesizer_GetTrustLevel( ISpeechSynthesizer *iface, TrustLevel *trust_level )
 {
     FIXME("iface %p, trust_level %p stub.\n", iface, trust_level);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI speech_synthesizer_SynthesizeTextToStreamAsync( ISpeechSynthesizer *iface, HSTRING text,
-                                                                      IAsyncOperation_SpeechSynthesisStream **operation )
+static HRESULT WINAPI synthesizer_SynthesizeTextToStreamAsync( ISpeechSynthesizer *iface, HSTRING text,
+                                                               IAsyncOperation_SpeechSynthesisStream **operation )
 {
     FIXME("iface %p, text %p, operation %p stub.\n", iface, text, operation);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI speech_synthesizer_SynthesizeSsmlToStreamAsync( ISpeechSynthesizer *iface, HSTRING ssml,
-                                                                      IAsyncOperation_SpeechSynthesisStream **operation )
+static HRESULT WINAPI synthesizer_SynthesizeSsmlToStreamAsync( ISpeechSynthesizer *iface, HSTRING ssml,
+                                                               IAsyncOperation_SpeechSynthesisStream **operation )
 {
     FIXME("iface %p, text %p, operation %p stub.\n", iface, ssml, operation);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI speech_synthesizer_put_Voice( ISpeechSynthesizer *iface, IVoiceInformation *value )
+static HRESULT WINAPI synthesizer_put_Voice( ISpeechSynthesizer *iface, IVoiceInformation *value )
 {
     FIXME("iface %p, value %p stub.\n", iface, value);
 
     return E_NOTIMPL;
 }
 
-static HRESULT WINAPI speech_synthesizer_get_Voice( ISpeechSynthesizer *iface, IVoiceInformation **value )
+static HRESULT WINAPI synthesizer_get_Voice( ISpeechSynthesizer *iface, IVoiceInformation **value )
 {
     FIXME("iface %p, value %p stub.\n", iface, value);
 
     return E_NOTIMPL;
 }
 
-static const struct ISpeechSynthesizerVtbl speech_synthesizer_vtbl =
+static const struct ISpeechSynthesizerVtbl synthesizer_vtbl =
 {
     /* IUnknown methods */
-    speech_synthesizer_QueryInterface,
-    speech_synthesizer_AddRef,
-    speech_synthesizer_Release,
+    synthesizer_QueryInterface,
+    synthesizer_AddRef,
+    synthesizer_Release,
     /* IInspectable methods */
-    speech_synthesizer_GetIids,
-    speech_synthesizer_GetRuntimeClassName,
-    speech_synthesizer_GetTrustLevel,
+    synthesizer_GetIids,
+    synthesizer_GetRuntimeClassName,
+    synthesizer_GetTrustLevel,
     /* ISpeechSynthesizer methods */
-    speech_synthesizer_SynthesizeTextToStreamAsync,
-    speech_synthesizer_SynthesizeSsmlToStreamAsync,
-    speech_synthesizer_put_Voice,
-    speech_synthesizer_get_Voice,
+    synthesizer_SynthesizeTextToStreamAsync,
+    synthesizer_SynthesizeSsmlToStreamAsync,
+    synthesizer_put_Voice,
+    synthesizer_get_Voice,
 };
 
-DEFINE_IINSPECTABLE(speech_synthesizer2, ISpeechSynthesizer2, struct speech_synthesizer, ISpeechSynthesizer_iface)
+DEFINE_IINSPECTABLE(synthesizer2, ISpeechSynthesizer2, struct synthesizer, ISpeechSynthesizer_iface)
 
-static HRESULT WINAPI speech_synthesizer2_get_Options( ISpeechSynthesizer2 *iface, ISpeechSynthesizerOptions **value )
+static HRESULT WINAPI synthesizer2_get_Options( ISpeechSynthesizer2 *iface, ISpeechSynthesizerOptions **value )
 {
     FIXME("iface %p, value %p stub.\n", iface, value);
 
     return E_NOTIMPL;
 }
 
-static const struct ISpeechSynthesizer2Vtbl speech_synthesizer2_vtbl =
+static const struct ISpeechSynthesizer2Vtbl synthesizer2_vtbl =
 {
     /* IUnknown methods */
-    speech_synthesizer2_QueryInterface,
-    speech_synthesizer2_AddRef,
-    speech_synthesizer2_Release,
+    synthesizer2_QueryInterface,
+    synthesizer2_AddRef,
+    synthesizer2_Release,
     /* IInspectable methods */
-    speech_synthesizer2_GetIids,
-    speech_synthesizer2_GetRuntimeClassName,
-    speech_synthesizer2_GetTrustLevel,
+    synthesizer2_GetIids,
+    synthesizer2_GetRuntimeClassName,
+    synthesizer2_GetTrustLevel,
     /* ISpeechSynthesizer2 methods */
-    speech_synthesizer2_get_Options,
+    synthesizer2_get_Options,
 };
 
-DEFINE_IINSPECTABLE(closable, IClosable, struct speech_synthesizer, ISpeechSynthesizer_iface)
+DEFINE_IINSPECTABLE(closable, IClosable, struct synthesizer, ISpeechSynthesizer_iface)
 
 static HRESULT WINAPI closable_Close( IClosable *iface )
 {
@@ -403,7 +403,7 @@ static HRESULT WINAPI factory_GetTrustLevel( IActivationFactory *iface, TrustLev
 
 static HRESULT WINAPI factory_ActivateInstance( IActivationFactory *iface, IInspectable **instance )
 {
-    struct speech_synthesizer *obj;
+    struct synthesizer *obj;
 
     TRACE("iface %p, instance %p.\n", iface, instance);
 
@@ -413,8 +413,8 @@ static HRESULT WINAPI factory_ActivateInstance( IActivationFactory *iface, IInsp
         return E_OUTOFMEMORY;
     }
 
-    obj->ISpeechSynthesizer_iface.lpVtbl = &speech_synthesizer_vtbl;
-    obj->ISpeechSynthesizer2_iface.lpVtbl = &speech_synthesizer2_vtbl;
+    obj->ISpeechSynthesizer_iface.lpVtbl = &synthesizer_vtbl;
+    obj->ISpeechSynthesizer2_iface.lpVtbl = &synthesizer2_vtbl;
     obj->IClosable_iface.lpVtbl = &closable_vtbl;
     obj->ref = 1;
     *instance = (IInspectable *)&obj->ISpeechSynthesizer_iface;
