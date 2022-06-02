@@ -1922,53 +1922,73 @@ static void test_get_image_info(void)
     WCHAR path[MAX_PATH];
     unsigned int i;
     DWORD dword;
-    HRESULT hr;
+    HRESULT hr, hr2;
 
     CoInitialize(NULL);
 
-    hr = D3DX10GetImageInfoFromMemory(test_image[0].data, 0, NULL, &image_info, NULL);
+    hr2 = 0xdeadbeef;
+    hr = D3DX10GetImageInfoFromMemory(test_image[0].data, 0, NULL, &image_info, &hr2);
     ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
-    hr = D3DX10GetImageInfoFromMemory(NULL, test_image[0].size, NULL, &image_info, NULL);
+    ok(hr == hr2, "Got unexpected hr2 %#x.\n", hr2);
+    hr2 = 0xdeadbeef;
+    hr = D3DX10GetImageInfoFromMemory(NULL, test_image[0].size, NULL, &image_info, &hr2);
     ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
-    hr = D3DX10GetImageInfoFromMemory(&dword, sizeof(dword), NULL, &image_info, NULL);
+    ok(hr2 == 0xdeadbeef, "Got unexpected hr2 %#x.\n", hr2);
+    hr2 = 0xdeadbeef;
+    hr = D3DX10GetImageInfoFromMemory(&dword, sizeof(dword), NULL, &image_info, &hr2);
     ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
+    ok(hr == hr2, "Got unexpected hr2 %#x.\n", hr2);
 
     for (i = 0; i < ARRAY_SIZE(test_image); ++i)
     {
         winetest_push_context("Test %u", i);
 
-        hr = D3DX10GetImageInfoFromMemory(test_image[i].data, test_image[i].size, NULL, &image_info, NULL);
+        hr2 = 0xdeadbeef;
+        hr = D3DX10GetImageInfoFromMemory(test_image[i].data, test_image[i].size, NULL, &image_info, &hr2);
         ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
                 "Got unexpected hr %#x.\n", hr);
+        ok(hr == hr2, "Got unexpected hr2 %#x.\n", hr2);
         if (hr == S_OK)
             check_image_info(&image_info, test_image + i, __LINE__);
 
         winetest_pop_context();
     }
 
-    hr = D3DX10GetImageInfoFromFileW(NULL, NULL, &image_info, NULL);
+    hr2 = 0xdeadbeef;
+    hr = D3DX10GetImageInfoFromFileW(NULL, NULL, &image_info, &hr2);
     ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
-    hr = D3DX10GetImageInfoFromFileW(L"deadbeaf", NULL, &image_info, NULL);
+    ok(hr2 == 0xdeadbeef, "Got unexpected hr2 %#x.\n", hr2);
+    hr2 = 0xdeadbeef;
+    hr = D3DX10GetImageInfoFromFileW(L"deadbeaf", NULL, &image_info, &hr2);
     ok(hr == D3D10_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#x.\n", hr);
-    hr = D3DX10GetImageInfoFromFileA(NULL, NULL, &image_info, NULL);
+    ok(hr == hr2, "Got unexpected hr2 %#x.\n", hr2);
+    hr2 = 0xdeadbeef;
+    hr = D3DX10GetImageInfoFromFileA(NULL, NULL, &image_info, &hr2);
     ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
-    hr = D3DX10GetImageInfoFromFileA("deadbeaf", NULL, &image_info, NULL);
+    ok(hr2 == 0xdeadbeef, "Got unexpected hr2 %#x.\n", hr2);
+    hr2 = 0xdeadbeef;
+    hr = D3DX10GetImageInfoFromFileA("deadbeaf", NULL, &image_info, &hr2);
     ok(hr == D3D10_ERROR_FILE_NOT_FOUND, "Got unexpected hr %#x.\n", hr);
+    ok(hr == hr2, "Got unexpected hr2 %#x.\n", hr2);
 
     for (i = 0; i < ARRAY_SIZE(test_image); ++i)
     {
         winetest_push_context("Test %u", i);
         create_file(test_filename, test_image[i].data, test_image[i].size, path);
 
-        hr = D3DX10GetImageInfoFromFileW(path, NULL, &image_info, NULL);
+        hr2 = 0xdeadbeef;
+        hr = D3DX10GetImageInfoFromFileW(path, NULL, &image_info, &hr2);
         ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
                 "Got unexpected hr %#x.\n", hr);
+        ok(hr == hr2, "Got unexpected hr2 %#x.\n", hr2);
         if (hr == S_OK)
             check_image_info(&image_info, test_image + i, __LINE__);
 
-        hr = D3DX10GetImageInfoFromFileA(get_str_a(path), NULL, &image_info, NULL);
+        hr2 = 0xdeadbeef;
+        hr = D3DX10GetImageInfoFromFileA(get_str_a(path), NULL, &image_info, &hr2);
         ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
                 "Got unexpected hr %#x.\n", hr);
+        ok(hr == hr2, "Got unexpected hr2 %#x.\n", hr2);
         if (hr == S_OK)
             check_image_info(&image_info, test_image + i, __LINE__);
 
@@ -1979,31 +1999,43 @@ static void test_get_image_info(void)
 
     /* D3DX10GetImageInfoFromResource tests */
 
-    hr = D3DX10GetImageInfoFromResourceW(NULL, NULL, NULL, &image_info, NULL);
+    hr2 = 0xdeadbeef;
+    hr = D3DX10GetImageInfoFromResourceW(NULL, NULL, NULL, &image_info, &hr2);
     ok(hr == D3DX10_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
-    hr = D3DX10GetImageInfoFromResourceW(NULL, L"deadbeaf", NULL, &image_info, NULL);
+    ok(hr2 == 0xdeadbeef, "Got unexpected hr2 %#x.\n", hr2);
+    hr2 = 0xdeadbeef;
+    hr = D3DX10GetImageInfoFromResourceW(NULL, L"deadbeaf", NULL, &image_info, &hr2);
     ok(hr == D3DX10_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
-    hr = D3DX10GetImageInfoFromResourceA(NULL, NULL, NULL, &image_info, NULL);
+    ok(hr2 == 0xdeadbeef, "Got unexpected hr2 %#x.\n", hr2);
+    hr2 = 0xdeadbeef;
+    hr = D3DX10GetImageInfoFromResourceA(NULL, NULL, NULL, &image_info, &hr2);
     ok(hr == D3DX10_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
-    hr = D3DX10GetImageInfoFromResourceA(NULL, "deadbeaf", NULL, &image_info, NULL);
+    ok(hr2 == 0xdeadbeef, "Got unexpected hr2 %#x.\n", hr2);
+    hr2 = 0xdeadbeef;
+    hr = D3DX10GetImageInfoFromResourceA(NULL, "deadbeaf", NULL, &image_info, &hr2);
     ok(hr == D3DX10_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
+    ok(hr2 == 0xdeadbeef, "Got unexpected hr2 %#x.\n", hr2);
 
     for (i = 0; i < ARRAY_SIZE(test_image); ++i)
     {
         winetest_push_context("Test %u", i);
         resource_module = create_resource_module(test_resource_name, test_image[i].data, test_image[i].size);
 
-        hr = D3DX10GetImageInfoFromResourceW(resource_module, test_resource_name, NULL, &image_info, NULL);
+        hr2 = 0xdeadbeef;
+        hr = D3DX10GetImageInfoFromResourceW(resource_module, test_resource_name, NULL, &image_info, &hr2);
         ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP)
                 || broken(hr == D3DX10_ERR_INVALID_DATA) /* Vista */,
                 "Got unexpected hr %#x.\n", hr);
+        ok(hr == hr2, "Got unexpected hr2 %#x.\n", hr2);
         if (hr == S_OK)
             check_image_info(&image_info, test_image + i, __LINE__);
 
-        hr = D3DX10GetImageInfoFromResourceA(resource_module, get_str_a(test_resource_name), NULL, &image_info, NULL);
+        hr2 = 0xdeadbeef;
+        hr = D3DX10GetImageInfoFromResourceA(resource_module, get_str_a(test_resource_name), NULL, &image_info, &hr2);
         ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP)
                 || broken(hr == D3DX10_ERR_INVALID_DATA) /* Vista */,
                 "Got unexpected hr %#x.\n", hr);
+        ok(hr == hr2, "Got unexpected hr2 %#x.\n", hr2);
         if (hr == S_OK)
             check_image_info(&image_info, test_image + i, __LINE__);
 
