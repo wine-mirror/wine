@@ -10673,10 +10673,15 @@ static void test_effect_register(BOOL d3d11)
         ok(hr == test->hr, "Got unexpected hr %#lx, expected %#lx.\n", hr, test->hr);
         if (hr == S_OK)
         {
+            effect = NULL;
+            hr = ID2D1DeviceContext_CreateEffect(device_context, &CLSID_TestEffect, &effect);
+            todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
             hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
             todo_wine ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
             hr = ID2D1Factory1_UnregisterEffect(factory, &CLSID_TestEffect);
             todo_wine ok(hr == D2DERR_EFFECT_IS_NOT_REGISTERED, "Got unexpected hr %#lx.\n", hr);
+            if (effect)
+                ID2D1Effect_Release(effect);
         }
 
         winetest_pop_context();
