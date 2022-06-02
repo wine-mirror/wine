@@ -384,21 +384,22 @@ static HRESULT WINAPI factory_GetTrustLevel( IActivationFactory *iface, TrustLev
 
 static HRESULT WINAPI factory_ActivateInstance( IActivationFactory *iface, IInspectable **instance )
 {
-    struct synthesizer *obj;
+    struct synthesizer *impl;
 
     TRACE("iface %p, instance %p.\n", iface, instance);
 
-    if (!(obj = calloc(1, sizeof(*obj))))
+    if (!(impl = calloc(1, sizeof(*impl))))
     {
         *instance = NULL;
         return E_OUTOFMEMORY;
     }
 
-    obj->ISpeechSynthesizer_iface.lpVtbl = &synthesizer_vtbl;
-    obj->ISpeechSynthesizer2_iface.lpVtbl = &synthesizer2_vtbl;
-    obj->IClosable_iface.lpVtbl = &closable_vtbl;
-    obj->ref = 1;
-    *instance = (IInspectable *)&obj->ISpeechSynthesizer_iface;
+    impl->ISpeechSynthesizer_iface.lpVtbl = &synthesizer_vtbl;
+    impl->ISpeechSynthesizer2_iface.lpVtbl = &synthesizer2_vtbl;
+    impl->IClosable_iface.lpVtbl = &closable_vtbl;
+    impl->ref = 1;
+
+    *instance = (IInspectable *)&impl->ISpeechSynthesizer_iface;
     return S_OK;
 }
 
