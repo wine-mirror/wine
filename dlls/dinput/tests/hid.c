@@ -44,7 +44,6 @@
 #include "objbase.h"
 
 #define COBJMACROS
-#include "dinput.h"
 
 #include "initguid.h"
 #include "ddk/wdm.h"
@@ -52,13 +51,16 @@
 #include "ddk/hidsdi.h"
 #include "ddk/hidpi.h"
 #include "ddk/hidport.h"
-#include "hidusage.h"
 #include "devguid.h"
+#include "dinput.h"
+#include "dinputd.h"
+#include "hidusage.h"
 
 #include "wine/mssign.h"
 
 #include "dinput_test.h"
 
+typeof(DirectInputCreateEx) *pDirectInputCreateEx;
 HINSTANCE instance;
 BOOL localized; /* object names get translated */
 
@@ -475,6 +477,8 @@ void bus_device_stop(void)
     DWORD size;
     BOOL ret;
 
+    if (!test_data) return;
+
     set = SetupDiCreateDeviceInfoList( NULL, NULL );
     ok( set != INVALID_HANDLE_VALUE, "failed to create device list, error %lu\n", GetLastError() );
 
@@ -599,6 +603,8 @@ BOOL bus_device_start(void)
     HANDLE catalog;
     HDEVINFO set;
     FILE *f;
+
+    if (!test_data) return FALSE;
 
     old_mute_threshold = winetest_mute_threshold;
     winetest_mute_threshold = 1;
@@ -3459,52 +3465,56 @@ DWORD WINAPI monitor_thread_proc( void *stop_event )
     return 0;
 }
 
-BOOL dinput_test_init_( const char *file, int line )
+void dinput_test_init_( const char *file, int line )
 {
     BOOL is_wow64;
 
     monitor_stop = CreateEventW( NULL, FALSE, FALSE, NULL );
-    ok( !!monitor_stop, "CreateEventW failed, error %lu\n", GetLastError() );
+    ok_(file, line)( !!monitor_stop, "CreateEventW failed, error %lu\n", GetLastError() );
     device_added = CreateEventW( NULL, FALSE, FALSE, NULL );
-    ok( !!device_added, "CreateEventW failed, error %lu\n", GetLastError() );
+    ok_(file, line)( !!device_added, "CreateEventW failed, error %lu\n", GetLastError() );
     device_removed = CreateEventW( NULL, FALSE, FALSE, NULL );
-    ok( !!device_removed, "CreateEventW failed, error %lu\n", GetLastError() );
+    ok_(file, line)( !!device_removed, "CreateEventW failed, error %lu\n", GetLastError() );
     monitor_thread = CreateThread( NULL, 0, monitor_thread_proc, monitor_stop, 0, NULL );
-    ok( !!monitor_thread, "CreateThread failed, error %lu\n", GetLastError() );
+    ok_(file, line)( !!monitor_thread, "CreateThread failed, error %lu\n", GetLastError() );
 
-    subtest_(file, line)( "hid" );
+    CoInitialize( NULL );
+
     instance = GetModuleHandleW( NULL );
     localized = GetUserDefaultLCID() != MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT);
     pSignerSign = (void *)GetProcAddress( LoadLibraryW( L"mssign32" ), "SignerSign" );
+    pDirectInputCreateEx = (void *)GetProcAddress( LoadLibraryW(L"dinput.dll"), "DirectInputCreateEx" );
 
     if (IsWow64Process( GetCurrentProcess(), &is_wow64 ) && is_wow64)
     {
-        skip( "Running in WoW64.\n" );
-        return FALSE;
+        skip_(file, line)( "Skipping driver tests: running in wow64.\n" );
+        return;
     }
 
     test_data_mapping = CreateFileMappingW( INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0,
                                             sizeof(*test_data), L"Global\\winetest_dinput_section" );
     if (!test_data_mapping && GetLastError() == ERROR_ACCESS_DENIED)
     {
-        win_skip( "Failed to create test data mapping.\n" );
-        return FALSE;
+        win_skip_(file, line)( "Skipping driver tests: failed to create mapping.\n" );
+        return;
     }
-    ok( !!test_data_mapping, "got error %lu\n", GetLastError() );
+    ok_(file, line)( !!test_data_mapping, "got error %lu\n", GetLastError() );
+
     test_data = MapViewOfFile( test_data_mapping, FILE_MAP_READ | FILE_MAP_WRITE, 0, 0, 1024 );
+    ok_(file, line)( !!test_data, "MapViewOfFile failed, error %lu\n", GetLastError() );
     test_data->running_under_wine = !strcmp( winetest_platform, "wine" );
     test_data->winetest_report_success = winetest_report_success;
     test_data->winetest_debug = winetest_debug;
 
     okfile = CreateFileW( L"C:\\windows\\winetest_dinput_okfile", GENERIC_READ | GENERIC_WRITE,
                           FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, CREATE_ALWAYS, 0, NULL );
-    ok( okfile != INVALID_HANDLE_VALUE, "failed to create file, error %lu\n", GetLastError() );
+    ok_(file, line)( okfile != INVALID_HANDLE_VALUE, "failed to create file, error %lu\n", GetLastError() );
 
-    subtest( "driver" );
-    subtest( "driver_bus" );
-    subtest( "driver_hid" );
-    subtest( "driver_hid_poll" );
-    return TRUE;
+    subtest_(file, line)( "hid" );
+    subtest_(file, line)( "driver" );
+    subtest_(file, line)( "driver_bus" );
+    subtest_(file, line)( "driver_hid" );
+    subtest_(file, line)( "driver_hid_poll" );
 }
 
 void dinput_test_exit(void)
@@ -3520,6 +3530,8 @@ void dinput_test_exit(void)
     CloseHandle( monitor_stop );
     CloseHandle( device_removed );
     CloseHandle( device_added );
+
+    CoUninitialize();
 }
 
 BOOL CALLBACK find_test_device( const DIDEVICEINSTANCEW *devinst, void *context )
@@ -3931,7 +3943,7 @@ done:
 
 START_TEST( hid )
 {
-    if (!dinput_test_init()) return;
+    dinput_test_init();
 
     test_bus_driver();
 

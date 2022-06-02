@@ -18,17 +18,18 @@
 
 #define DIRECTINPUT_VERSION 0x0700
 
-#define COBJMACROS
-#include <windows.h>
+#include <stdarg.h>
+#include <stddef.h>
 
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "wine/test.h"
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
-#include "wingdi.h"
+#include "winbase.h"
+
+#define COBJMACROS
 #include "dinput.h"
+
+#include "dinput_test.h"
 
 typedef struct tagUserData {
     IDirectInputA *pDI;
@@ -317,7 +318,6 @@ static BOOL CALLBACK EnumJoysticks(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
     LPDIRECTINPUTEFFECT effect = NULL;
     LONG cnt1, cnt2;
     HWND real_hWnd;
-    HINSTANCE hInstance = GetModuleHandleW(NULL);
     DIPROPDWORD dip_gain_set, dip_gain_get;
     struct effect_enum effect_data;
 
@@ -549,7 +549,7 @@ static BOOL CALLBACK EnumJoysticks(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
      * - a visible window
      */
     real_hWnd = CreateWindowExA(0, "EDIT", "Test text", 0, 10, 10, 300, 300, NULL, NULL,
-                                hInstance, NULL);
+                                instance, NULL);
     ok(real_hWnd!=0,"CreateWindowExA failed: %p\n", real_hWnd);
     ShowWindow(real_hWnd, SW_SHOW);
     hr = IDirectInputDevice_Unacquire(pJoystick);
@@ -598,7 +598,7 @@ static BOOL CALLBACK EnumJoysticks(const DIDEVICEINSTANCEA *lpddi, void *pvRef)
             GUID guid = {0};
             DIEFFECT effect_empty;
 
-            hr = IDirectInputEffect_Initialize(effect, hInstance, data->version,
+            hr = IDirectInputEffect_Initialize(effect, instance, data->version,
                                                &effect_data.guid);
             ok(hr==DI_OK,"IDirectInputEffect_Initialize failed: %#lx\n", hr);
 
@@ -915,10 +915,9 @@ static void joystick_tests(DWORD version)
     HRESULT hr;
     IDirectInputA *pDI;
     ULONG ref;
-    HINSTANCE hInstance = GetModuleHandleW(NULL);
 
     trace("-- Testing Direct Input Version %#lx --\n", version);
-    hr = DirectInputCreateA(hInstance, version, &pDI, NULL);
+    hr = DirectInputCreateA(instance, version, &pDI, NULL);
     ok(hr==DI_OK||hr==DIERR_OLDDIRECTINPUTVERSION, "DirectInputCreateA() failed: %#lx\n", hr);
     if (hr==DI_OK && pDI!=0) {
         UserData data;
@@ -938,9 +937,8 @@ static void test_enum_feedback(void)
     HRESULT hr;
     IDirectInputA *pDI;
     ULONG ref;
-    HINSTANCE hInstance = GetModuleHandleW(NULL);
 
-    hr = DirectInputCreateA(hInstance, 0x0700, &pDI, NULL);
+    hr = DirectInputCreateA(instance, 0x0700, &pDI, NULL);
     ok(hr==DI_OK||hr==DIERR_OLDDIRECTINPUTVERSION, "DirectInputCreateA() failed: %#lx\n", hr);
     if (hr==DI_OK && pDI!=0) {
         hr = IDirectInput_EnumDevices(pDI, 0, EnumAllFeedback, NULL, DIEDFL_ATTACHEDONLY | DIEDFL_FORCEFEEDBACK);
@@ -953,7 +951,7 @@ static void test_enum_feedback(void)
 
 START_TEST(joystick)
 {
-    CoInitialize(NULL);
+    dinput_test_init();
 
     joystick_tests(0x0700);
     joystick_tests(0x0500);
@@ -961,5 +959,5 @@ START_TEST(joystick)
 
     test_enum_feedback();
 
-    CoUninitialize();
+    dinput_test_exit();
 }

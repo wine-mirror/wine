@@ -6405,10 +6405,9 @@ done:
 
 START_TEST( force_feedback )
 {
-    if (!dinput_test_init()) return;
+    dinput_test_init();
     if (!bus_device_start()) goto done;
 
-    CoInitialize( NULL );
     if (test_force_feedback_joystick( 0x800 ))
     {
         test_force_feedback_joystick( 0x500 );
@@ -6416,7 +6415,6 @@ START_TEST( force_feedback )
         test_device_managed_effect();
         test_windows_gaming_input();
     }
-    CoUninitialize();
 
 done:
     bus_device_stop();

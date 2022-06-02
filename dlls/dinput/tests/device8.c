@@ -31,10 +31,7 @@
 #include "dinput.h"
 #include "hidusage.h"
 
-#include "wine/test.h"
-
-static HINSTANCE instance;
-static BOOL localized; /* object names get translated */
+#include "dinput_test.h"
 
 struct enum_data {
     IDirectInput8A *pDI;
@@ -382,7 +379,6 @@ static void test_appdata_property_vs_map(struct enum_data *data)
 static void test_action_mapping(void)
 {
     HRESULT hr;
-    HINSTANCE hinst = GetModuleHandleA(NULL);
     IDirectInput8A *pDI = NULL;
     DIACTIONFORMATA af;
     DIPROPSTRING dps;
@@ -400,7 +396,7 @@ static void test_action_mapping(void)
     ok(SUCCEEDED(hr), "DirectInput8 Create failed: hr=%#lx\n", hr);
     if (FAILED(hr)) return;
 
-    hr = IDirectInput8_Initialize(pDI,hinst, DIRECTINPUT_VERSION);
+    hr = IDirectInput8_Initialize(pDI, instance, DIRECTINPUT_VERSION);
     if (hr == DIERR_OLDDIRECTINPUTVERSION || hr == DIERR_BETADIRECTINPUTVERSION)
     {
         win_skip("ActionMapping requires dinput8\n");
@@ -520,7 +516,6 @@ static void test_action_mapping(void)
 static void test_save_settings(void)
 {
     HRESULT hr;
-    HINSTANCE hinst = GetModuleHandleA(NULL);
     IDirectInput8A *pDI = NULL;
     DIACTIONFORMATA af;
     IDirectInputDevice8A *pKey;
@@ -552,7 +547,7 @@ static void test_save_settings(void)
     ok (SUCCEEDED(hr), "DirectInput8 Create failed: hr=%#lx\n", hr);
     if (FAILED(hr)) return;
 
-    hr = IDirectInput8_Initialize(pDI,hinst, DIRECTINPUT_VERSION);
+    hr = IDirectInput8_Initialize(pDI, instance, DIRECTINPUT_VERSION);
     if (hr == DIERR_OLDDIRECTINPUTVERSION || hr == DIERR_BETADIRECTINPUTVERSION)
     {
         win_skip("ActionMapping requires dinput8\n");
@@ -955,7 +950,6 @@ static void test_keyboard_events(void)
 static void test_appdata_property(void)
 {
     HRESULT hr;
-    HINSTANCE hinst = GetModuleHandleA(NULL);
     IDirectInputDevice8A *di_keyboard;
     IDirectInput8A *pDI = NULL;
     HWND hwnd;
@@ -973,7 +967,7 @@ static void test_appdata_property(void)
     ok(SUCCEEDED(hr), "DirectInput8 Create failed: hr=%#lx\n", hr);
     if (FAILED(hr)) return;
 
-    hr = IDirectInput8_Initialize(pDI,hinst, DIRECTINPUT_VERSION);
+    hr = IDirectInput8_Initialize(pDI, instance, DIRECTINPUT_VERSION);
     if (hr == DIERR_OLDDIRECTINPUTVERSION || hr == DIERR_BETADIRECTINPUTVERSION)
     {
         win_skip("DIPROP_APPDATA requires dinput8\n");
@@ -1053,24 +1047,6 @@ static void test_appdata_property(void)
     IDirectInputDevice_Release(di_keyboard);
     IDirectInput_Release(pDI);
 }
-
-#define check_member_( file, line, val, exp, fmt, member )                                         \
-    ok_( file, line )((val).member == (exp).member, "got " #member " " fmt ", expected " fmt "\n", \
-                      (val).member, (exp).member)
-#define check_member( val, exp, fmt, member )                                                      \
-    check_member_( __FILE__, __LINE__, val, exp, fmt, member )
-
-#define check_member_guid_( file, line, val, exp, member )                                              \
-    ok_( file, line )(IsEqualGUID( &(val).member, &(exp).member ), "got " #member " %s, expected %s\n", \
-                      debugstr_guid( &(val).member ), debugstr_guid( &(exp).member ))
-#define check_member_guid( val, exp, member )                                                      \
-    check_member_guid_( __FILE__, __LINE__, val, exp, member )
-
-#define check_member_wstr_( file, line, val, exp, member )                                         \
-    ok_( file, line )(!wcscmp( (val).member, (exp).member ), "got " #member " %s, expected %s\n",  \
-                      debugstr_w((val).member), debugstr_w((exp).member))
-#define check_member_wstr( val, exp, member )                                                      \
-    check_member_wstr_( __FILE__, __LINE__, val, exp, member )
 
 struct check_objects_todos
 {
@@ -1838,9 +1814,7 @@ static void test_keyboard_info(void)
 
 START_TEST(device8)
 {
-    instance = GetModuleHandleW( NULL );
-
-    CoInitialize(NULL);
+    dinput_test_init();
 
     test_mouse_info();
     test_keyboard_info();
@@ -1850,5 +1824,5 @@ START_TEST(device8)
     test_keyboard_events();
     test_appdata_property();
 
-    CoUninitialize();
+    dinput_test_exit();
 }

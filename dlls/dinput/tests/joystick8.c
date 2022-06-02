@@ -4163,10 +4163,9 @@ done:
 
 START_TEST( joystick8 )
 {
-    if (!dinput_test_init()) return;
+    dinput_test_init();
     if (!bus_device_start()) goto done;
 
-    CoInitialize( NULL );
     if (test_device_types( 0x800 ))
     {
         /* This needs to be done before doing anything involving dinput.dll
@@ -4184,7 +4183,6 @@ START_TEST( joystick8 )
         test_driving_wheel_axes();
         test_windows_gaming_input();
     }
-    CoUninitialize();
 
 done:
     bus_device_stop();

@@ -1218,10 +1218,9 @@ next:
 
 START_TEST( hotplug )
 {
-    if (!dinput_test_init()) return;
+    dinput_test_init();
     if (!bus_device_start()) goto done;
 
-    CoInitialize( NULL );
     if (test_input_lost( 0x500 ))
     {
         test_input_lost( 0x700 );
@@ -1230,7 +1229,6 @@ START_TEST( hotplug )
         test_RegisterDeviceNotification();
         test_windows_gaming_input();
     }
-    CoUninitialize();
 
 done:
     bus_device_stop();

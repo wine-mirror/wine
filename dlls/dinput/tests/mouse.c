@@ -19,16 +19,18 @@
 
 #define DIRECTINPUT_VERSION 0x0700
 
-#define COBJMACROS
-#include <windows.h>
+#include <stdarg.h>
+#include <stddef.h>
 
-#include <math.h>
-#include <stdlib.h>
-
-#include "wine/test.h"
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
-#include "wingdi.h"
+#include "winbase.h"
+
+#define COBJMACROS
 #include "dinput.h"
+
+#include "dinput_test.h"
 
 static const HRESULT SetCoop_null_window[16] =  {
     E_INVALIDARG, E_INVALIDARG, E_INVALIDARG, E_INVALIDARG,
@@ -290,11 +292,10 @@ static void mouse_tests(void)
 {
     HRESULT hr;
     IDirectInputA *pDI = NULL;
-    HINSTANCE hInstance = GetModuleHandleW(NULL);
     HWND hwnd;
     ULONG ref = 0;
 
-    hr = DirectInputCreateA(hInstance, DIRECTINPUT_VERSION, &pDI, NULL);
+    hr = DirectInputCreateA(instance, DIRECTINPUT_VERSION, &pDI, NULL);
     if (hr == DIERR_OLDDIRECTINPUTVERSION)
     {
         skip("Tests require a newer dinput version\n");
@@ -323,9 +324,9 @@ static void mouse_tests(void)
 
 START_TEST(mouse)
 {
-    CoInitialize(NULL);
+    dinput_test_init();
 
     mouse_tests();
 
-    CoUninitialize();
+    dinput_test_exit();
 }

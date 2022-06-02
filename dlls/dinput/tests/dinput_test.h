@@ -50,6 +50,7 @@ extern const GUID expect_guid_product;
 extern const WCHAR expect_path[];
 extern const WCHAR expect_path_end[];
 
+extern typeof(DirectInputCreateEx) *pDirectInputCreateEx;
 extern HANDLE device_added, device_removed;
 extern HINSTANCE instance;
 extern BOOL localized; /* object names get translated */
@@ -62,7 +63,7 @@ void bus_device_stop(void);
 void cleanup_registry_keys(void);
 
 #define dinput_test_init() dinput_test_init_( __FILE__, __LINE__ )
-BOOL dinput_test_init_( const char *file, int line );
+void dinput_test_init_( const char *file, int line );
 void dinput_test_exit(void);
 
 HRESULT dinput_test_create_device( DWORD version, DIDEVICEINSTANCEW *devinst, IDirectInputDevice8W **device );

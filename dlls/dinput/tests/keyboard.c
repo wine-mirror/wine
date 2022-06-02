@@ -18,20 +18,18 @@
 
 #define DIRECTINPUT_VERSION 0x0700
 
-#define COBJMACROS
-#include <windows.h>
+#include <stdarg.h>
+#include <stddef.h>
 
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
-
-#include "wine/test.h"
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
-#include "wingdi.h"
+#include "winbase.h"
+
+#define COBJMACROS
 #include "dinput.h"
 
-/* to make things easier with PSDK without a dinput.lib */
-static HRESULT (WINAPI *pDirectInputCreateA)(HINSTANCE,DWORD,IDirectInputA **,IUnknown *);
+#include "dinput_test.h"
 
 static void pump_messages(void)
 {
@@ -513,11 +511,10 @@ static void keyboard_tests(DWORD version)
 {
     HRESULT hr;
     IDirectInputA *pDI = NULL;
-    HINSTANCE hInstance = GetModuleHandleW(NULL);
     HWND hwnd;
     ULONG ref = 0;
 
-    hr = pDirectInputCreateA(hInstance, version, &pDI, NULL);
+    hr = DirectInputCreateA(instance, version, &pDI, NULL);
     if (hr == DIERR_OLDDIRECTINPUTVERSION)
     {
         skip("Tests require a newer dinput version\n");
@@ -554,11 +551,9 @@ static void keyboard_tests(DWORD version)
 
 START_TEST(keyboard)
 {
-    pDirectInputCreateA = (void *)GetProcAddress(GetModuleHandleA("dinput.dll"), "DirectInputCreateA");
-
-    CoInitialize(NULL);
+    dinput_test_init();
 
     keyboard_tests(0x0700);
 
-    CoUninitialize();
+    dinput_test_exit();
 }

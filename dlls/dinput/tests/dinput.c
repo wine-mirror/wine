@@ -18,19 +18,21 @@
 
 #define DIRECTINPUT_VERSION 0x0700
 
+#include <stdarg.h>
+#include <stddef.h>
+
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
+#include "windef.h"
+#include "winbase.h"
+
 #define COBJMACROS
-#include <windows.h>
-#include "objbase.h"
+#include "dinput.h"
+#include "dinputd.h"
 
-#include <initguid.h>
-#include <dinput.h>
-#include <dinputd.h>
+#include "dinput_test.h"
 
-#include "wine/test.h"
-
-HINSTANCE hInstance;
-
-static HRESULT (WINAPI *pDirectInputCreateEx)(HINSTANCE, DWORD, REFIID, LPVOID *, LPUNKNOWN);
+#include "initguid.h"
 
 static const DWORD dinput_versions[] =
 {
@@ -64,8 +66,8 @@ static REFIID dinput8_interfaces[] =
 static HRESULT direct_input_create( DWORD version, IDirectInputA **out )
 {
     HRESULT hr;
-    if (version < 0x800) hr = DirectInputCreateA( hInstance, version, out, NULL );
-    else hr = DirectInput8Create( hInstance, version, &IID_IDirectInput8A, (void **)out, NULL );
+    if (version < 0x800) hr = DirectInputCreateA( instance, version, out, NULL );
+    else hr = DirectInput8Create( instance, version, &IID_IDirectInput8A, (void **)out, NULL );
     if (FAILED(hr)) win_skip( "Failed to instantiate a IDirectInput instance, hr %#lx\n", hr );
     return hr;
 }
@@ -236,19 +238,19 @@ static void test_DirectInputCreate( DWORD version )
         {NULL,       version - 1, NULL, &unknown, NULL,               DIERR_INVALIDPARAM},
         {NULL,       version + 1, NULL, NULL,     (void *)0xdeadbeef, E_POINTER},
         {NULL,       version + 1, NULL, &unknown, NULL,               DIERR_INVALIDPARAM},
-        {hInstance,  0,           NULL, NULL,     (void *)0xdeadbeef, E_POINTER},
-        {hInstance,  0,           NULL, &unknown, NULL,               DIERR_NOTINITIALIZED},
-        {hInstance,  version,     NULL, NULL,     (void *)0xdeadbeef, E_POINTER},
-        {hInstance,  version - 1, NULL, NULL,     (void *)0xdeadbeef, E_POINTER},
-        {hInstance,  version - 1, NULL, &unknown, NULL,               version <= 0x700 ? DIERR_BETADIRECTINPUTVERSION : DIERR_OLDDIRECTINPUTVERSION},
-        {hInstance,  version + 1, NULL, NULL,     (void *)0xdeadbeef, E_POINTER},
-        {hInstance,  version + 1, NULL, &unknown, NULL,               version < 0x700 ? DIERR_BETADIRECTINPUTVERSION : DIERR_OLDDIRECTINPUTVERSION},
+        {instance,   0,           NULL, NULL,     (void *)0xdeadbeef, E_POINTER},
+        {instance,   0,           NULL, &unknown, NULL,               DIERR_NOTINITIALIZED},
+        {instance,   version,     NULL, NULL,     (void *)0xdeadbeef, E_POINTER},
+        {instance,   version - 1, NULL, NULL,     (void *)0xdeadbeef, E_POINTER},
+        {instance,   version - 1, NULL, &unknown, NULL,               version <= 0x700 ? DIERR_BETADIRECTINPUTVERSION : DIERR_OLDDIRECTINPUTVERSION},
+        {instance,   version + 1, NULL, NULL,     (void *)0xdeadbeef, E_POINTER},
+        {instance,   version + 1, NULL, &unknown, NULL,               version < 0x700 ? DIERR_BETADIRECTINPUTVERSION : DIERR_OLDDIRECTINPUTVERSION},
     };
     HRESULT hr;
     int i;
 
     unknown = (void *)0xdeadbeef;
-    hr = DirectInputCreateW( hInstance, version, (IDirectInputW **)&unknown, &outer );
+    hr = DirectInputCreateW( instance, version, (IDirectInputW **)&unknown, &outer );
     ok( hr == DI_OK, "DirectInputCreateW returned %#lx\n", hr );
     ok( unknown == NULL, "got IUnknown %p\n", unknown );
 
@@ -294,21 +296,21 @@ static void test_DirectInputCreateEx( DWORD version )
         {NULL,       version + 1, &IID_IUnknown,      &unknown, (void *)0xdeadbeef, DIERR_NOINTERFACE},
         {NULL,       version + 1, &IID_IDirectInputA, NULL,     (void *)0xdeadbeef, E_POINTER},
         {NULL,       version + 1, &IID_IDirectInputA, &unknown, NULL,               DIERR_INVALIDPARAM},
-        {hInstance,  0,           &IID_IUnknown,      NULL,     (void *)0xdeadbeef, DIERR_NOINTERFACE},
-        {hInstance,  0,           &IID_IUnknown,      &unknown, (void *)0xdeadbeef, DIERR_NOINTERFACE},
-        {hInstance,  0,           &IID_IDirectInputA, NULL,     (void *)0xdeadbeef, E_POINTER},
-        {hInstance,  0,           &IID_IDirectInputA, &unknown, NULL,               DIERR_NOTINITIALIZED},
-        {hInstance,  version,     &IID_IUnknown,      NULL,     (void *)0xdeadbeef, DIERR_NOINTERFACE},
-        {hInstance,  version,     &IID_IUnknown,      &unknown, (void *)0xdeadbeef, DIERR_NOINTERFACE},
-        {hInstance,  version,     &IID_IDirectInputA, NULL,     (void *)0xdeadbeef, E_POINTER},
-        {hInstance,  version - 1, &IID_IUnknown,      NULL,     (void *)0xdeadbeef, DIERR_NOINTERFACE},
-        {hInstance,  version - 1, &IID_IUnknown,      &unknown, (void *)0xdeadbeef, DIERR_NOINTERFACE},
-        {hInstance,  version - 1, &IID_IDirectInputA, NULL,     (void *)0xdeadbeef, E_POINTER},
-        {hInstance,  version - 1, &IID_IDirectInputA, &unknown, NULL,               version <= 0x700 ? DIERR_BETADIRECTINPUTVERSION : DIERR_OLDDIRECTINPUTVERSION},
-        {hInstance,  version + 1, &IID_IUnknown,      NULL,     (void *)0xdeadbeef, DIERR_NOINTERFACE},
-        {hInstance,  version + 1, &IID_IUnknown,      &unknown, (void *)0xdeadbeef, DIERR_NOINTERFACE},
-        {hInstance,  version + 1, &IID_IDirectInputA, NULL,     (void *)0xdeadbeef, E_POINTER},
-        {hInstance,  version + 1, &IID_IDirectInputA, &unknown, NULL,               version < 0x700 ? DIERR_BETADIRECTINPUTVERSION : DIERR_OLDDIRECTINPUTVERSION},
+        {instance,   0,           &IID_IUnknown,      NULL,     (void *)0xdeadbeef, DIERR_NOINTERFACE},
+        {instance,   0,           &IID_IUnknown,      &unknown, (void *)0xdeadbeef, DIERR_NOINTERFACE},
+        {instance,   0,           &IID_IDirectInputA, NULL,     (void *)0xdeadbeef, E_POINTER},
+        {instance,   0,           &IID_IDirectInputA, &unknown, NULL,               DIERR_NOTINITIALIZED},
+        {instance,   version,     &IID_IUnknown,      NULL,     (void *)0xdeadbeef, DIERR_NOINTERFACE},
+        {instance,   version,     &IID_IUnknown,      &unknown, (void *)0xdeadbeef, DIERR_NOINTERFACE},
+        {instance,   version,     &IID_IDirectInputA, NULL,     (void *)0xdeadbeef, E_POINTER},
+        {instance,   version - 1, &IID_IUnknown,      NULL,     (void *)0xdeadbeef, DIERR_NOINTERFACE},
+        {instance,   version - 1, &IID_IUnknown,      &unknown, (void *)0xdeadbeef, DIERR_NOINTERFACE},
+        {instance,   version - 1, &IID_IDirectInputA, NULL,     (void *)0xdeadbeef, E_POINTER},
+        {instance,   version - 1, &IID_IDirectInputA, &unknown, NULL,               version <= 0x700 ? DIERR_BETADIRECTINPUTVERSION : DIERR_OLDDIRECTINPUTVERSION},
+        {instance,   version + 1, &IID_IUnknown,      NULL,     (void *)0xdeadbeef, DIERR_NOINTERFACE},
+        {instance,   version + 1, &IID_IUnknown,      &unknown, (void *)0xdeadbeef, DIERR_NOINTERFACE},
+        {instance,   version + 1, &IID_IDirectInputA, NULL,     (void *)0xdeadbeef, E_POINTER},
+        {instance,   version + 1, &IID_IDirectInputA, &unknown, NULL,               version < 0x700 ? DIERR_BETADIRECTINPUTVERSION : DIERR_OLDDIRECTINPUTVERSION},
     };
     HRESULT hr;
     int i;
@@ -320,7 +322,7 @@ static void test_DirectInputCreateEx( DWORD version )
     }
 
     unknown = (void *)0xdeadbeef;
-    hr = pDirectInputCreateEx( hInstance, version, &IID_IDirectInputW, (void **)&unknown, &outer );
+    hr = pDirectInputCreateEx( instance, version, &IID_IDirectInputW, (void **)&unknown, &outer );
     ok( hr == DI_OK, "DirectInputCreateW returned %#lx\n", hr );
     ok( unknown == NULL, "got IUnknown %p\n", unknown );
 
@@ -341,7 +343,7 @@ static void test_DirectInputCreateEx( DWORD version )
     {
         winetest_push_context( "%u", i );
         unknown = (void *)0xdeadbeef;
-        hr = pDirectInputCreateEx( hInstance, version, dinput8_interfaces[i], (void **)&unknown, NULL );
+        hr = pDirectInputCreateEx( instance, version, dinput8_interfaces[i], (void **)&unknown, NULL );
         ok( hr == DIERR_NOINTERFACE, "DirectInputCreateEx returned %#lx\n", hr );
         ok( unknown == (void *)0xdeadbeef, "got IUnknown %p\n", unknown );
         winetest_pop_context();
@@ -351,7 +353,7 @@ static void test_DirectInputCreateEx( DWORD version )
     {
         winetest_push_context( "%u", i );
         unknown = NULL;
-        hr = pDirectInputCreateEx( hInstance, version, dinput7_interfaces[i], (void **)&unknown, NULL );
+        hr = pDirectInputCreateEx( instance, version, dinput7_interfaces[i], (void **)&unknown, NULL );
         if (version < 0x800) ok( hr == DI_OK, "DirectInputCreateEx returned %#lx\n", hr );
         else ok( hr == DIERR_OLDDIRECTINPUTVERSION, "DirectInputCreateEx returned %#lx\n", hr );
         if (version < 0x800) ok( unknown != NULL, "got IUnknown NULL\n" );
@@ -390,27 +392,27 @@ static void test_DirectInput8Create( DWORD version )
         {NULL,       version + 1, &IID_IDirectInputA,  &unknown, NULL,               DIERR_NOINTERFACE},
         {NULL,       version + 1, &IID_IDirectInput8A, NULL,     (void *)0xdeadbeef, E_POINTER},
         {NULL,       version + 1, &IID_IDirectInput8A, &unknown, NULL,               DIERR_INVALIDPARAM},
-        {hInstance,  0,           &IID_IDirectInputA,  NULL,     (void *)0xdeadbeef, E_POINTER},
-        {hInstance,  0,           &IID_IDirectInputA,  &unknown, NULL,               DIERR_NOINTERFACE},
-        {hInstance,  0,           &IID_IDirectInput8A, NULL,     (void *)0xdeadbeef, E_POINTER},
-        {hInstance,  0,           &IID_IDirectInput8A, &unknown, NULL,               DIERR_NOTINITIALIZED},
-        {hInstance,  version,     &IID_IDirectInputA,  NULL,     (void *)0xdeadbeef, E_POINTER},
-        {hInstance,  version,     &IID_IDirectInputA,  &unknown, NULL,               DIERR_NOINTERFACE},
-        {hInstance,  version,     &IID_IDirectInput8A, NULL,     (void *)0xdeadbeef, E_POINTER},
-        {hInstance,  version - 1, &IID_IDirectInputA,  NULL,     (void *)0xdeadbeef, E_POINTER},
-        {hInstance,  version - 1, &IID_IDirectInputA,  &unknown, NULL,               DIERR_NOINTERFACE},
-        {hInstance,  version - 1, &IID_IDirectInput8A, NULL,     (void *)0xdeadbeef, E_POINTER},
-        {hInstance,  version - 1, &IID_IDirectInput8A, &unknown, NULL,               DIERR_BETADIRECTINPUTVERSION},
-        {hInstance,  version + 1, &IID_IDirectInputA,  NULL,     (void *)0xdeadbeef, E_POINTER},
-        {hInstance,  version + 1, &IID_IDirectInputA,  &unknown, NULL,               DIERR_NOINTERFACE},
-        {hInstance,  version + 1, &IID_IDirectInput8A, NULL,     (void *)0xdeadbeef, E_POINTER},
-        {hInstance,  version + 1, &IID_IDirectInput8A, &unknown, NULL,               version <= 0x700 ? DIERR_BETADIRECTINPUTVERSION : DIERR_OLDDIRECTINPUTVERSION},
+        {instance,   0,           &IID_IDirectInputA,  NULL,     (void *)0xdeadbeef, E_POINTER},
+        {instance,   0,           &IID_IDirectInputA,  &unknown, NULL,               DIERR_NOINTERFACE},
+        {instance,   0,           &IID_IDirectInput8A, NULL,     (void *)0xdeadbeef, E_POINTER},
+        {instance,   0,           &IID_IDirectInput8A, &unknown, NULL,               DIERR_NOTINITIALIZED},
+        {instance,   version,     &IID_IDirectInputA,  NULL,     (void *)0xdeadbeef, E_POINTER},
+        {instance,   version,     &IID_IDirectInputA,  &unknown, NULL,               DIERR_NOINTERFACE},
+        {instance,   version,     &IID_IDirectInput8A, NULL,     (void *)0xdeadbeef, E_POINTER},
+        {instance,   version - 1, &IID_IDirectInputA,  NULL,     (void *)0xdeadbeef, E_POINTER},
+        {instance,   version - 1, &IID_IDirectInputA,  &unknown, NULL,               DIERR_NOINTERFACE},
+        {instance,   version - 1, &IID_IDirectInput8A, NULL,     (void *)0xdeadbeef, E_POINTER},
+        {instance,   version - 1, &IID_IDirectInput8A, &unknown, NULL,               DIERR_BETADIRECTINPUTVERSION},
+        {instance,   version + 1, &IID_IDirectInputA,  NULL,     (void *)0xdeadbeef, E_POINTER},
+        {instance,   version + 1, &IID_IDirectInputA,  &unknown, NULL,               DIERR_NOINTERFACE},
+        {instance,   version + 1, &IID_IDirectInput8A, NULL,     (void *)0xdeadbeef, E_POINTER},
+        {instance,   version + 1, &IID_IDirectInput8A, &unknown, NULL,               version <= 0x700 ? DIERR_BETADIRECTINPUTVERSION : DIERR_OLDDIRECTINPUTVERSION},
     };
     HRESULT hr;
     int i;
 
     unknown = (void *)0xdeadbeef;
-    hr = DirectInput8Create( hInstance, version, &IID_IDirectInput8W, (void **)&unknown, &outer );
+    hr = DirectInput8Create( instance, version, &IID_IDirectInput8W, (void **)&unknown, &outer );
     ok( hr == DI_OK, "DirectInputCreateW returned %#lx\n", hr );
     ok( unknown == NULL, "got IUnknown %p\n", unknown );
 
@@ -430,7 +432,7 @@ static void test_DirectInput8Create( DWORD version )
     {
         winetest_push_context( "%u", i );
         unknown = (void *)0xdeadbeef;
-        hr = DirectInput8Create( hInstance, version, dinput7_interfaces[i], (void **)&unknown, NULL );
+        hr = DirectInput8Create( instance, version, dinput7_interfaces[i], (void **)&unknown, NULL );
         ok( hr == DIERR_NOINTERFACE, "DirectInput8Create returned %#lx\n", hr );
         ok( unknown == NULL, "got IUnknown %p\n", unknown );
         winetest_pop_context();
@@ -440,7 +442,7 @@ static void test_DirectInput8Create( DWORD version )
     {
         winetest_push_context( "%u", i );
         unknown = NULL;
-        hr = DirectInput8Create( hInstance, version, dinput8_interfaces[i], (void **)&unknown, NULL );
+        hr = DirectInput8Create( instance, version, dinput8_interfaces[i], (void **)&unknown, NULL );
         if (i == 2) ok( hr == DIERR_NOINTERFACE, "DirectInput8Create returned %#lx\n", hr );
         else if (version == 0x800) ok( hr == DI_OK, "DirectInput8Create returned %#lx\n", hr );
         else ok( hr == DIERR_BETADIRECTINPUTVERSION, "DirectInput8Create returned %#lx\n", hr );
@@ -762,18 +764,18 @@ static void test_Initialize( DWORD version )
     if (version == 0x300) todo_wine ok( hr == S_OK, "Initialize returned %#lx\n", hr );
     else ok( hr == DIERR_INVALIDPARAM, "Initialize returned %#lx\n", hr );
 
-    hr = IDirectInput_Initialize( dinput, hInstance, 0 );
+    hr = IDirectInput_Initialize( dinput, instance, 0 );
     ok( hr == DIERR_NOTINITIALIZED, "Initialize returned %#lx\n", hr );
 
-    hr = IDirectInput_Initialize( dinput, hInstance, version - 1 );
+    hr = IDirectInput_Initialize( dinput, instance, version - 1 );
     ok( hr == DIERR_BETADIRECTINPUTVERSION, "Initialize returned %#lx\n", hr );
 
-    hr = IDirectInput_Initialize( dinput, hInstance, version + 1 );
+    hr = IDirectInput_Initialize( dinput, instance, version + 1 );
     if (version >= 0x700) ok( hr == DIERR_OLDDIRECTINPUTVERSION, "Initialize returned %#lx\n", hr );
     else ok( hr == DIERR_BETADIRECTINPUTVERSION, "Initialize returned %#lx\n", hr );
 
     /* Parameters are still validated after successful initialization. */
-    hr = IDirectInput_Initialize( dinput, hInstance, 0 );
+    hr = IDirectInput_Initialize( dinput, instance, 0 );
     ok( hr == DIERR_NOTINITIALIZED, "Initialize returned %#lx\n", hr );
 
     ref = IDirectInput_Release( dinput );
@@ -819,7 +821,7 @@ static void test_DirectInputJoyConfig8(void)
     HRESULT hr;
     int i;
 
-    hr = DirectInputCreateA(hInstance, DIRECTINPUT_VERSION, &pDI, NULL);
+    hr = DirectInputCreateA(instance, DIRECTINPUT_VERSION, &pDI, NULL);
     if (FAILED(hr))
     {
         win_skip("Failed to instantiate a IDirectInputA instance: 0x%#lx\n", hr);
@@ -933,7 +935,7 @@ static void test_EnumDevicesBySemantics(void)
     int device_total = 0;
     HRESULT hr;
 
-    hr = DirectInput8Create( hInstance, 0x800, &IID_IDirectInput8A, (void **)&dinput, NULL );
+    hr = DirectInput8Create( instance, 0x800, &IID_IDirectInput8A, (void **)&dinput, NULL );
     if (FAILED(hr))
     {
         win_skip( "Failed to instantiate a IDirectInputA instance: 0x%#lx\n", hr );
@@ -1051,17 +1053,12 @@ static void test_EnumDevicesBySemantics(void)
 
 START_TEST(dinput)
 {
-    HMODULE dinput_mod = GetModuleHandleA("dinput.dll");
     DWORD i;
 
-    hInstance = GetModuleHandleA(NULL);
+    dinput_test_init();
 
-    pDirectInputCreateEx = (void *)GetProcAddress(dinput_mod, "DirectInputCreateEx");
-
-    CoInitialize( NULL );
     test_CoCreateInstance( 0x700 );
     test_CoCreateInstance( 0x800 );
-    CoUninitialize();
 
     for (i = 0; i < ARRAY_SIZE(dinput_versions); i++)
     {
@@ -1080,4 +1077,6 @@ START_TEST(dinput)
 
     test_DirectInputJoyConfig8();
     test_EnumDevicesBySemantics();
+
+    dinput_test_exit();
 }

@@ -18,14 +18,19 @@
 
 #define DIRECTINPUT_VERSION 0x0700
 
-#define COBJMACROS
-#include <windows.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <limits.h>
 
-#include "wine/test.h"
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
+#include "winbase.h"
+
+#define COBJMACROS
 #include "dinput.h"
 
-#include <limits.h>
+#include "dinput_test.h"
 
 static const DIOBJECTDATAFORMAT obj_data_format[] = {
   { &GUID_YAxis, 16, DIDFT_OPTIONAL|DIDFT_AXIS  |DIDFT_MAKEINSTANCE(1), 0},
@@ -465,7 +470,6 @@ static void device_tests(void)
 {
     HRESULT hr;
     IDirectInputA *pDI = NULL, *obj = NULL;
-    HINSTANCE hInstance = GetModuleHandleW(NULL);
     HWND hwnd;
     struct enum_data data;
 
@@ -478,7 +482,7 @@ static void device_tests(void)
     ok(SUCCEEDED(hr), "DirectInputCreateA() failed: %#lx\n", hr);
     if (FAILED(hr)) return;
 
-    hr = IDirectInput_Initialize(pDI, hInstance, DIRECTINPUT_VERSION);
+    hr = IDirectInput_Initialize(pDI, instance, DIRECTINPUT_VERSION);
     ok(SUCCEEDED(hr), "Initialize() failed: %#lx\n", hr);
     if (FAILED(hr)) return;
 
@@ -521,9 +525,9 @@ static void device_tests(void)
 
 START_TEST(device)
 {
-    CoInitialize(NULL);
+    dinput_test_init();
 
     device_tests();
 
-    CoUninitialize();
+    dinput_test_exit();
 }
