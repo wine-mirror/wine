@@ -188,9 +188,7 @@ static ULONG WINAPI synthesizer_AddRef( ISpeechSynthesizer *iface )
 {
     struct synthesizer *impl = impl_from_ISpeechSynthesizer(iface);
     ULONG ref = InterlockedIncrement(&impl->ref);
-
     TRACE("iface %p, ref %lu.\n", iface, ref);
-
     return ref;
 }
 
@@ -210,21 +208,18 @@ static ULONG WINAPI synthesizer_Release( ISpeechSynthesizer *iface )
 static HRESULT WINAPI synthesizer_GetIids( ISpeechSynthesizer *iface, ULONG *iid_count, IID **iids )
 {
     FIXME("iface %p, iid_count %p, iids %p stub.\n", iface, iid_count, iids);
-
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI synthesizer_GetRuntimeClassName( ISpeechSynthesizer *iface, HSTRING *class_name )
 {
     FIXME("iface %p, class_name %p stub.\n", iface, class_name);
-
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI synthesizer_GetTrustLevel( ISpeechSynthesizer *iface, TrustLevel *trust_level )
 {
     FIXME("iface %p, trust_level %p stub.\n", iface, trust_level);
-
     return E_NOTIMPL;
 }
 
@@ -232,7 +227,6 @@ static HRESULT WINAPI synthesizer_SynthesizeTextToStreamAsync( ISpeechSynthesize
                                                                IAsyncOperation_SpeechSynthesisStream **operation )
 {
     FIXME("iface %p, text %p, operation %p stub.\n", iface, text, operation);
-
     return E_NOTIMPL;
 }
 
@@ -240,21 +234,18 @@ static HRESULT WINAPI synthesizer_SynthesizeSsmlToStreamAsync( ISpeechSynthesize
                                                                IAsyncOperation_SpeechSynthesisStream **operation )
 {
     FIXME("iface %p, text %p, operation %p stub.\n", iface, ssml, operation);
-
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI synthesizer_put_Voice( ISpeechSynthesizer *iface, IVoiceInformation *value )
 {
     FIXME("iface %p, value %p stub.\n", iface, value);
-
     return E_NOTIMPL;
 }
 
 static HRESULT WINAPI synthesizer_get_Voice( ISpeechSynthesizer *iface, IVoiceInformation **value )
 {
     FIXME("iface %p, value %p stub.\n", iface, value);
-
     return E_NOTIMPL;
 }
 
@@ -280,7 +271,6 @@ DEFINE_IINSPECTABLE(synthesizer2, ISpeechSynthesizer2, struct synthesizer, ISpee
 static HRESULT WINAPI synthesizer2_get_Options( ISpeechSynthesizer2 *iface, ISpeechSynthesizerOptions **value )
 {
     FIXME("iface %p, value %p stub.\n", iface, value);
-
     return E_NOTIMPL;
 }
 
