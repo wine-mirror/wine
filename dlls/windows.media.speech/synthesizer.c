@@ -334,11 +334,6 @@ static inline struct synthesizer_statics *impl_from_IActivationFactory( IActivat
     return CONTAINING_RECORD(iface, struct synthesizer_statics, IActivationFactory_iface);
 }
 
-static inline struct synthesizer_statics *impl_from_IInstalledVoicesStatic( IInstalledVoicesStatic *iface )
-{
-    return CONTAINING_RECORD(iface, struct synthesizer_statics, IInstalledVoicesStatic_iface);
-}
-
 static HRESULT WINAPI factory_QueryInterface( IActivationFactory *iface, REFIID iid, void **out )
 {
     struct synthesizer_statics *impl = impl_from_IActivationFactory(iface);
@@ -434,41 +429,7 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     factory_ActivateInstance,
 };
 
-static HRESULT WINAPI installed_voices_static_QueryInterface( IInstalledVoicesStatic *iface, REFIID iid, void **out )
-{
-    struct synthesizer_statics *impl = impl_from_IInstalledVoicesStatic(iface);
-    return IActivationFactory_QueryInterface(&impl->IActivationFactory_iface, iid, out);
-}
-
-static ULONG WINAPI installed_voices_static_AddRef( IInstalledVoicesStatic *iface )
-{
-    struct synthesizer_statics *impl = impl_from_IInstalledVoicesStatic(iface);
-    return IActivationFactory_AddRef(&impl->IActivationFactory_iface);
-}
-
-static ULONG WINAPI installed_voices_static_Release( IInstalledVoicesStatic *iface )
-{
-    struct synthesizer_statics *impl = impl_from_IInstalledVoicesStatic(iface);
-    return IActivationFactory_Release(&impl->IActivationFactory_iface);
-}
-
-static HRESULT WINAPI installed_voices_static_GetIids( IInstalledVoicesStatic *iface, ULONG *iid_count, IID **iids )
-{
-    FIXME("iface %p, iid_count %p, iids %p stub!\n", iface, iid_count, iids);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI installed_voices_static_GetRuntimeClassName( IInstalledVoicesStatic *iface, HSTRING *class_name )
-{
-    FIXME("iface %p, class_name %p stub!\n", iface, class_name);
-    return E_NOTIMPL;
-}
-
-static HRESULT WINAPI installed_voices_static_GetTrustLevel( IInstalledVoicesStatic *iface, TrustLevel *trust_level )
-{
-    FIXME("iface %p, trust_level %p stub!\n", iface, trust_level);
-    return E_NOTIMPL;
-}
+DEFINE_IINSPECTABLE(installed_voices_static, IInstalledVoicesStatic, struct synthesizer_statics, IActivationFactory_iface)
 
 static HRESULT WINAPI installed_voices_static_get_AllVoices( IInstalledVoicesStatic *iface, IVectorView_VoiceInformation **value )
 {
