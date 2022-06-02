@@ -23,6 +23,12 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(speech);
 
+/*
+ *
+ * IVectorView_VoiceInformation
+ *
+ */
+
 struct voice_information_vector
 {
     IVectorView_VoiceInformation IVectorView_VoiceInformation_iface;
@@ -140,6 +146,12 @@ static struct voice_information_vector all_voices =
     0
 };
 
+/*
+ *
+ * SpeechSynthesizer runtimeclass
+ *
+ */
+
 struct synthesizer
 {
     ISpeechSynthesizer ISpeechSynthesizer_iface;
@@ -147,6 +159,12 @@ struct synthesizer
     IClosable IClosable_iface;
     LONG ref;
 };
+
+/*
+ *
+ * ISpeechSynthesizer for SpeechSynthesizer runtimeclass
+ *
+ */
 
 static inline struct synthesizer *impl_from_ISpeechSynthesizer( ISpeechSynthesizer *iface )
 {
@@ -266,6 +284,12 @@ static const struct ISpeechSynthesizerVtbl synthesizer_vtbl =
     synthesizer_get_Voice,
 };
 
+/*
+ *
+ * ISpeechSynthesizer2 for SpeechSynthesizer runtimeclass
+ *
+ */
+
 DEFINE_IINSPECTABLE(synthesizer2, ISpeechSynthesizer2, struct synthesizer, ISpeechSynthesizer_iface)
 
 static HRESULT WINAPI synthesizer2_get_Options( ISpeechSynthesizer2 *iface, ISpeechSynthesizerOptions **value )
@@ -287,6 +311,12 @@ static const struct ISpeechSynthesizer2Vtbl synthesizer2_vtbl =
     /* ISpeechSynthesizer2 methods */
     synthesizer2_get_Options,
 };
+
+/*
+ *
+ * IClosable for SpeechSynthesizer runtimeclass
+ *
+ */
 
 DEFINE_IINSPECTABLE(closable, IClosable, struct synthesizer, ISpeechSynthesizer_iface)
 
@@ -310,12 +340,24 @@ static const struct IClosableVtbl closable_vtbl =
     closable_Close,
 };
 
+/*
+ *
+ * Static interfaces for SpeechSynthesizer runtimeclass
+ *
+ */
+
 struct synthesizer_statics
 {
     IActivationFactory IActivationFactory_iface;
     IInstalledVoicesStatic IInstalledVoicesStatic_iface;
     LONG ref;
 };
+
+/*
+ *
+ * IActivationFactory for SpeechSynthesizer runtimeclass
+ *
+ */
 
 static inline struct synthesizer_statics *impl_from_IActivationFactory( IActivationFactory *iface )
 {
@@ -415,6 +457,12 @@ static const struct IActivationFactoryVtbl factory_vtbl =
     /* IActivationFactory methods */
     factory_ActivateInstance,
 };
+
+/*
+ *
+ * IInstalledVoicesStatic for SpeechSynthesizer runtimeclass
+ *
+ */
 
 DEFINE_IINSPECTABLE(installed_voices_static, IInstalledVoicesStatic, struct synthesizer_statics, IActivationFactory_iface)
 
