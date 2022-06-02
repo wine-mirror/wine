@@ -664,6 +664,9 @@ HRESULT create_builtin_function(script_ctx_t *ctx, builtin_invoke_t value_proc, 
     NativeFunction *function;
     HRESULT hres;
 
+    if(!ctx->function_constr)
+        return E_UNEXPECTED;
+
     hres = create_function(ctx, builtin_info, &NativeFunctionVtbl, sizeof(NativeFunction), flags, FALSE, NULL, (void**)&function);
     if(FAILED(hres))
         return hres;

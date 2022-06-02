@@ -242,6 +242,7 @@ static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, 
     const builtin_prop_t *builtin;
     unsigned bucket, pos, prev = ~0;
     dispex_prop_t *prop;
+    HRESULT hres;
 
     bucket = get_props_idx(This, hash);
     pos = This->props[bucket].bucket_head;
@@ -264,9 +265,24 @@ static HRESULT find_prop_name(jsdisp_t *This, unsigned hash, const WCHAR *name, 
     builtin = find_builtin_prop(This, name);
     if(builtin) {
         unsigned flags = builtin->flags;
-        if(flags & PROPF_METHOD)
-            flags |= PROPF_WRITABLE | PROPF_CONFIGURABLE;
-        else if(builtin->setter)
+        if(flags & PROPF_METHOD) {
+            jsdisp_t *obj;
+
+            hres = create_builtin_function(This->ctx, builtin->invoke, builtin->name, NULL, flags, NULL, &obj);
+            if(FAILED(hres))
+                return hres;
+
+            prop = alloc_prop(This, name, PROP_JSVAL, (flags & PROPF_ALL) | PROPF_WRITABLE | PROPF_CONFIGURABLE);
+            if(!prop) {
+                jsdisp_release(obj);
+                return E_OUTOFMEMORY;
+            }
+
+            prop->type = PROP_JSVAL;
+            prop->u.val = jsval_obj(obj);
+            *ret = prop;
+            return S_OK;
+        }else if(builtin->setter)
             flags |= PROPF_WRITABLE;
         flags &= PROPF_ENUMERABLE | PROPF_WRITABLE | PROPF_CONFIGURABLE;
         prop = alloc_prop(This, name, PROP_BUILTIN, flags);
@@ -431,23 +447,7 @@ static HRESULT prop_get(jsdisp_t *This, dispex_prop_t *prop,  jsval_t *r)
 
     switch(prop->type) {
     case PROP_BUILTIN:
-        if(prop->u.p->getter) {
-            hres = prop->u.p->getter(This->ctx, This, r);
-        }else {
-            jsdisp_t *obj;
-
-            assert(prop->u.p->invoke != NULL);
-            hres = create_builtin_function(This->ctx, prop->u.p->invoke, prop->u.p->name, NULL,
-                    prop->u.p->flags, NULL, &obj);
-            if(FAILED(hres))
-                break;
-
-            prop->type = PROP_JSVAL;
-            prop->u.val = jsval_obj(obj);
-
-            jsdisp_addref(obj);
-            *r = jsval_obj(obj);
-        }
+        hres = prop->u.p->getter(This->ctx, This, r);
         break;
     case PROP_JSVAL:
         hres = jsval_copy(prop->u.val, r);
@@ -497,12 +497,6 @@ static HRESULT prop_put(jsdisp_t *This, dispex_prop_t *prop, jsval_t val)
 
     switch(prop->type) {
     case PROP_BUILTIN:
-        if(prop->u.p->invoke) {
-            prop->type = PROP_JSVAL;
-            prop->flags = PROPF_CONFIGURABLE | PROPF_WRITABLE;
-            prop->u.val = jsval_undefined();
-            break;
-        }
         if(!prop->u.p->setter) {
             TRACE("getter with no setter\n");
             return S_OK;
@@ -557,25 +551,8 @@ static HRESULT invoke_prop_func(jsdisp_t *This, IDispatch *jsthis, dispex_prop_t
     HRESULT hres;
 
     switch(prop->type) {
-    case PROP_BUILTIN: {
-        jsval_t vthis;
-
-        if(!prop->u.p->invoke)
-            return JS_E_FUNCTION_EXPECTED;
-
-        if(flags == DISPATCH_CONSTRUCT && (prop->flags & PROPF_METHOD)) {
-            WARN("%s is not a constructor\n", debugstr_w(prop->name));
-            return E_INVALIDARG;
-        }
-
-        if(This->builtin_info->class != JSCLASS_FUNCTION && prop->u.p->invoke != JSGlobal_eval)
-            flags &= ~DISPATCH_JSCRIPT_INTERNAL_MASK;
-        if(jsthis)
-            vthis = jsval_disp(jsthis);
-        else
-            vthis = jsval_obj(This);
-        return prop->u.p->invoke(This->ctx, vthis, flags, argc, argv, r);
-    }
+    case PROP_BUILTIN:
+        return JS_E_FUNCTION_EXPECTED;
     case PROP_PROTREF:
         return invoke_prop_func(This->prototype, jsthis ? jsthis : (IDispatch *)&This->IDispatchEx_iface,
                                 This->prototype->props+prop->u.ref, flags, argc, argv, r, caller);
