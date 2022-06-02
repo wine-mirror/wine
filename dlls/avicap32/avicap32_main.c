@@ -125,7 +125,7 @@ BOOL VFWAPI capGetDriverDescriptionW(WORD index, WCHAR *name, int name_len, WCHA
     struct get_device_desc_params params;
 
     params.index = index;
-    if (__wine_unix_call(unix_handle, unix_get_device_desc, &params))
+    if (!unix_handle || __wine_unix_call(unix_handle, unix_get_device_desc, &params))
         return FALSE;
 
     TRACE("Found device name %s, version %s.\n", debugstr_w(params.name), debugstr_w(params.version));
