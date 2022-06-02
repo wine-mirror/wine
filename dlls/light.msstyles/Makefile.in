@@ -76,7 +76,36 @@ SVG_SRCS = \
 	blue_explorer_treeview_item_selected_not_focus.svg \
 	blue_groupbox.svg \
 	blue_header.svg \
+	blue_header_dropdown.svg \
+	blue_header_dropdown_filter.svg \
+	blue_header_dropdown_filter_glyph_10px.svg \
+	blue_header_dropdown_filter_glyph_12px.svg \
+	blue_header_dropdown_filter_glyph_15px.svg \
+	blue_header_dropdown_filter_glyph_19px.svg \
+	blue_header_dropdown_filter_glyph_23px.svg \
+	blue_header_dropdown_glyph_10px.svg \
+	blue_header_dropdown_glyph_13px.svg \
+	blue_header_dropdown_glyph_17px.svg \
+	blue_header_dropdown_glyph_21px.svg \
+	blue_header_dropdown_glyph_29px.svg \
+	blue_header_dropdown_glyph_7px.svg \
+	blue_header_dropdown_glyph_9px.svg \
 	blue_header_item.svg \
+	blue_header_overflow.svg \
+	blue_header_overflow_glyph_10px.svg \
+	blue_header_overflow_glyph_12px.svg \
+	blue_header_overflow_glyph_16px.svg \
+	blue_header_overflow_glyph_20px.svg \
+	blue_header_overflow_glyph_24px.svg \
+	blue_header_overflow_glyph_32px.svg \
+	blue_header_overflow_glyph_8px.svg \
+	blue_header_sort_arrow_13px.svg \
+	blue_header_sort_arrow_16px.svg \
+	blue_header_sort_arrow_17px.svg \
+	blue_header_sort_arrow_20px.svg \
+	blue_header_sort_arrow_26px.svg \
+	blue_header_sort_arrow_39px.svg \
+	blue_header_sort_arrow_52px.svg \
 	blue_menu_popup_check_16px.svg \
 	blue_menu_popup_check_18px.svg \
 	blue_menu_popup_separator.svg \

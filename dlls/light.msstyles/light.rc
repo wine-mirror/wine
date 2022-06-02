@@ -603,19 +603,123 @@ BLUE_INI TEXTFILE
 "\r\n; Header\r\n"
 "[Header]\r\n"
 "BgType = ImageFile\r\n"
-"SizingMargins = 2, 2, 2, 4\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 2\r\n"
+"SizingMargins = 2, 0, 9, 14\r\n"
 "ImageFile = blue_header.bmp\r\n"
-"SizingType = Tile\r\n"
 
 "[Header.HeaderItem]\r\n"
 "BgType = ImageFile\r\n"
-"SizingMargins = 2, 2, 2, 4\r\n"
-"ContentMargins = 3, 0, 0, 0\r\n"
-"ImageFile = blue_header_item.bmp\r\n"
-"ImageCount = 5\r\n"
+"SizingType = Stretch\r\n"
 "ImageLayout = Vertical\r\n"
-"SizingType = Tile\r\n"
+"ImageCount = 12\r\n"
 "Transparent = True\r\n"
+"SizingMargins = 2, 3, 9, 14\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_header_item.bmp\r\n"
+
+"[Header.HeaderSortArrow]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 2\r\n"
+"Transparent = True\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile1 = blue_header_sort_arrow_13px.bmp\r\n"
+"ImageFile2 = blue_header_sort_arrow_16px.bmp\r\n"
+"ImageFile3 = blue_header_sort_arrow_20px.bmp\r\n"
+"ImageFile4 = blue_header_sort_arrow_26px.bmp\r\n"
+"; 17x32px \r\n"
+"ImageFile5 = blue_header_sort_arrow_17px.bmp\r\n"
+"ImageFile6 = blue_header_sort_arrow_39px.bmp\r\n"
+"ImageFile7 = blue_header_sort_arrow_52px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Header.HeaderDropDown]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 3\r\n"
+"Transparent = True\r\n"
+"GlyphTransparent = True\r\n"
+"SizingMargins = 2, 0, 9, 14\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_header_dropdown.bmp\r\n"
+"ImageFile1 = blue_header_dropdown_glyph_7px.bmp\r\n"
+"ImageFile2 = blue_header_dropdown_glyph_9px.bmp\r\n"
+"ImageFile3 = blue_header_dropdown_glyph_10px.bmp\r\n"
+"ImageFile4 = blue_header_dropdown_glyph_13px.bmp\r\n"
+"ImageFile5 = blue_header_dropdown_glyph_17px.bmp\r\n"
+"ImageFile6 = blue_header_dropdown_glyph_21px.bmp\r\n"
+"ImageFile7 = blue_header_dropdown_glyph_29px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Header.HeaderDropDownFilter]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 3\r\n"
+"Transparent = True\r\n"
+"GlyphTransparent = True\r\n"
+"MirrorImage = False\r\n"
+"SizingMargins = 2, 0, 9, 14\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_header_dropdown_filter.bmp\r\n"
+"ImageFile1 = blue_header_dropdown_filter_glyph_10px.bmp\r\n"
+"ImageFile2 = blue_header_dropdown_filter_glyph_12px.bmp\r\n"
+"ImageFile3 = blue_header_dropdown_filter_glyph_15px.bmp\r\n"
+"ImageFile4 = blue_header_dropdown_filter_glyph_19px.bmp\r\n"
+"ImageFile5 = blue_header_dropdown_filter_glyph_23px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+
+"[Header.HeaderOverflow]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 2\r\n"
+"Transparent = True\r\n"
+"GlyphTransparent = True\r\n"
+"SizingMargins = 3, 4, 9, 11\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_header_overflow.bmp\r\n"
+"ImageFile1 = blue_header_overflow_glyph_8px.bmp\r\n"
+"ImageFile2 = blue_header_overflow_glyph_10px.bmp\r\n"
+"ImageFile3 = blue_header_overflow_glyph_12px.bmp\r\n"
+"ImageFile4 = blue_header_overflow_glyph_16px.bmp\r\n"
+"ImageFile5 = blue_header_overflow_glyph_20px.bmp\r\n"
+"ImageFile6 = blue_header_overflow_glyph_24px.bmp\r\n"
+"ImageFile7 = blue_header_overflow_glyph_32px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
 
 "\r\n; ListBox\r\n"
 "[ListBox]\r\n"
@@ -1829,8 +1933,95 @@ BLUE_EDIT_BORDER_HVSCROLL_BMP BITMAP "blue_edit_border_hvscroll.bmp"
 /* @makedep: blue_header.bmp */
 BLUE_HEADER_BMP BITMAP "blue_header.bmp"
 
+/* @makedep: blue_header_dropdown.bmp */
+BLUE_HEADER_DROPDOWN_BMP BITMAP "blue_header_dropdown.bmp"
+
+/* @makedep: blue_header_dropdown_glyph_7px.bmp */
+BLUE_HEADER_DROPDOWN_GLYPH_7PX_BMP BITMAP "blue_header_dropdown_glyph_7px.bmp"
+
+/* @makedep: blue_header_dropdown_glyph_9px.bmp */
+BLUE_HEADER_DROPDOWN_GLYPH_9PX_BMP BITMAP "blue_header_dropdown_glyph_9px.bmp"
+
+/* @makedep: blue_header_dropdown_glyph_10px.bmp */
+BLUE_HEADER_DROPDOWN_GLYPH_10PX_BMP BITMAP "blue_header_dropdown_glyph_10px.bmp"
+
+/* @makedep: blue_header_dropdown_glyph_13px.bmp */
+BLUE_HEADER_DROPDOWN_GLYPH_13PX_BMP BITMAP "blue_header_dropdown_glyph_13px.bmp"
+
+/* @makedep: blue_header_dropdown_glyph_17px.bmp */
+BLUE_HEADER_DROPDOWN_GLYPH_17PX_BMP BITMAP "blue_header_dropdown_glyph_17px.bmp"
+
+/* @makedep: blue_header_dropdown_glyph_21px.bmp */
+BLUE_HEADER_DROPDOWN_GLYPH_21PX_BMP BITMAP "blue_header_dropdown_glyph_21px.bmp"
+
+/* @makedep: blue_header_dropdown_glyph_29px.bmp */
+BLUE_HEADER_DROPDOWN_GLYPH_29PX_BMP BITMAP "blue_header_dropdown_glyph_29px.bmp"
+
+/* @makedep: blue_header_dropdown_filter.bmp */
+BLUE_HEADER_DROPDOWN_FILTER_BMP BITMAP "blue_header_dropdown_filter.bmp"
+
+/* @makedep: blue_header_dropdown_filter_glyph_10px.bmp */
+BLUE_HEADER_DROPDOWN_FILTER_GLYPH_10PX_BMP BITMAP "blue_header_dropdown_filter_glyph_10px.bmp"
+
+/* @makedep: blue_header_dropdown_filter_glyph_12px.bmp */
+BLUE_HEADER_DROPDOWN_FILTER_GLYPH_12PX_BMP BITMAP "blue_header_dropdown_filter_glyph_12px.bmp"
+
+/* @makedep: blue_header_dropdown_filter_glyph_15px.bmp */
+BLUE_HEADER_DROPDOWN_FILTER_GLYPH_15PX_BMP BITMAP "blue_header_dropdown_filter_glyph_15px.bmp"
+
+/* @makedep: blue_header_dropdown_filter_glyph_19px.bmp */
+BLUE_HEADER_DROPDOWN_FILTER_GLYPH_19PX_BMP BITMAP "blue_header_dropdown_filter_glyph_19px.bmp"
+
+/* @makedep: blue_header_dropdown_filter_glyph_23px.bmp */
+BLUE_HEADER_DROPDOWN_FILTER_GLYPH_23PX_BMP BITMAP "blue_header_dropdown_filter_glyph_23px.bmp"
+
 /* @makedep: blue_header_item.bmp */
 BLUE_HEADER_ITEM_BMP BITMAP "blue_header_item.bmp"
+
+/* @makedep: blue_header_overflow.bmp */
+BLUE_HEADER_OVERFLOW_BMP BITMAP "blue_header_overflow.bmp"
+
+/* @makedep: blue_header_overflow_glyph_8px.bmp */
+BLUE_HEADER_OVERFLOW_GLYPH_8PX_BMP BITMAP "blue_header_overflow_glyph_8px.bmp"
+
+/* @makedep: blue_header_overflow_glyph_10px.bmp */
+BLUE_HEADER_OVERFLOW_GLYPH_10PX_BMP BITMAP "blue_header_overflow_glyph_10px.bmp"
+
+/* @makedep: blue_header_overflow_glyph_12px.bmp */
+BLUE_HEADER_OVERFLOW_GLYPH_12PX_BMP BITMAP "blue_header_overflow_glyph_12px.bmp"
+
+/* @makedep: blue_header_overflow_glyph_16px.bmp */
+BLUE_HEADER_OVERFLOW_GLYPH_16PX_BMP BITMAP "blue_header_overflow_glyph_16px.bmp"
+
+/* @makedep: blue_header_overflow_glyph_20px.bmp */
+BLUE_HEADER_OVERFLOW_GLYPH_20PX_BMP BITMAP "blue_header_overflow_glyph_20px.bmp"
+
+/* @makedep: blue_header_overflow_glyph_24px.bmp */
+BLUE_HEADER_OVERFLOW_GLYPH_24PX_BMP BITMAP "blue_header_overflow_glyph_24px.bmp"
+
+/* @makedep: blue_header_overflow_glyph_32px.bmp */
+BLUE_HEADER_OVERFLOW_GLYPH_32PX_BMP BITMAP "blue_header_overflow_glyph_32px.bmp"
+
+/* @makedep: blue_header_sort_arrow_13px.bmp */
+BLUE_HEADER_SORT_ARROW_13PX_BMP BITMAP "blue_header_sort_arrow_13px.bmp"
+
+/* @makedep: blue_header_sort_arrow_16px.bmp */
+BLUE_HEADER_SORT_ARROW_16PX_BMP BITMAP "blue_header_sort_arrow_16px.bmp"
+
+/* @makedep: blue_header_sort_arrow_17px.bmp */
+BLUE_HEADER_SORT_ARROW_17PX_BMP BITMAP "blue_header_sort_arrow_17px.bmp"
+
+/* @makedep: blue_header_sort_arrow_20px.bmp */
+BLUE_HEADER_SORT_ARROW_20PX_BMP BITMAP "blue_header_sort_arrow_20px.bmp"
+
+/* @makedep: blue_header_sort_arrow_26px.bmp */
+BLUE_HEADER_SORT_ARROW_26PX_BMP BITMAP "blue_header_sort_arrow_26px.bmp"
+
+/* @makedep: blue_header_sort_arrow_39px.bmp */
+BLUE_HEADER_SORT_ARROW_39PX_BMP BITMAP "blue_header_sort_arrow_39px.bmp"
+
+/* @makedep: blue_header_sort_arrow_52px.bmp */
+BLUE_HEADER_SORT_ARROW_52PX_BMP BITMAP "blue_header_sort_arrow_52px.bmp"
 
 /* Menu */
 /* @makedep: blue_menu_popup_check_16px.bmp */
