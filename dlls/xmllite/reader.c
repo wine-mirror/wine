@@ -2931,6 +2931,8 @@ static HRESULT WINAPI xmlreader_GetNodeType(IXmlReader* iface, XmlNodeType *node
 
 static void reader_set_current_attribute(xmlreader *reader, struct attribute *attr)
 {
+    if (!reader->attr)
+        reader_inc_depth(reader);
     reader->attr = attr;
     reader->chunk_read_off = 0;
     reader_set_strvalue(reader, StringValue_Prefix, &attr->prefix);
@@ -2942,9 +2944,6 @@ static HRESULT reader_move_to_first_attribute(xmlreader *reader)
 {
     if (!reader->attr_count)
         return S_FALSE;
-
-    if (!reader->attr)
-        reader_inc_depth(reader);
 
     reader_set_current_attribute(reader, LIST_ENTRY(list_head(&reader->attrs), struct attribute, entry));
 

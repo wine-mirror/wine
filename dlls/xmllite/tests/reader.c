@@ -2592,17 +2592,17 @@ static void test_attribute_by_name(void)
 
     hr = IXmlReader_MoveToAttributeByName(reader, L"xmlns", xmlns_uriW);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine TEST_DEPTH(reader, 2);
+    TEST_DEPTH(reader, 2);
     reader_value(reader, L"myns");
 
     hr = IXmlReader_MoveToAttributeByName(reader, L"a", NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine TEST_DEPTH(reader, 2);
+    TEST_DEPTH(reader, 2);
     reader_value(reader, L"value a");
 
     hr = IXmlReader_MoveToAttributeByName(reader, L"b", NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine TEST_DEPTH(reader, 2);
+    TEST_DEPTH(reader, 2);
     reader_value(reader, L"value b");
 
     hr = IXmlReader_MoveToAttributeByName(reader, L"a", L"myns");
@@ -2613,22 +2613,22 @@ static void test_attribute_by_name(void)
 
     hr = IXmlReader_MoveToAttributeByName(reader, L"ns", xmlns_uriW);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine TEST_DEPTH(reader, 2);
+    TEST_DEPTH(reader, 2);
     reader_value(reader, L"ns uri");
 
     hr = IXmlReader_MoveToAttributeByName(reader, L"b", L"");
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine TEST_DEPTH(reader, 2);
+    TEST_DEPTH(reader, 2);
     reader_value(reader, L"value b");
 
     hr = IXmlReader_MoveToAttributeByName(reader, L"c", NULL);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine TEST_DEPTH(reader, 2);
+    TEST_DEPTH(reader, 2);
     reader_value(reader, L"value c2");
 
     hr = IXmlReader_MoveToAttributeByName(reader, L"c", L"ns uri");
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    todo_wine TEST_DEPTH(reader, 2);
+    TEST_DEPTH(reader, 2);
     reader_value(reader, L"value c");
 
     IXmlReader_Release(reader);
