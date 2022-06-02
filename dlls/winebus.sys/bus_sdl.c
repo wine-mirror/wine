@@ -28,6 +28,7 @@
 #include <fcntl.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
 #include <dlfcn.h>
@@ -143,6 +144,7 @@ struct sdl_device
     int effect_ids[256];
     int effect_state[256];
     LONG effect_flags;
+    int axis_offset;
 };
 
 static inline struct sdl_device *impl_from_unix_device(struct unix_device *iface)
@@ -155,7 +157,21 @@ static struct sdl_device *find_device_from_id(SDL_JoystickID id)
     struct sdl_device *impl;
 
     LIST_FOR_EACH_ENTRY(impl, &device_list, struct sdl_device, unix_device.entry)
-        if (impl->id == id) return impl;
+        if (impl->id == id && impl->axis_offset == 0) return impl;
+
+    return NULL;
+}
+
+static struct sdl_device *find_device_from_id_and_axis(SDL_JoystickID id, int axis)
+{
+    struct sdl_device *impl;
+
+    LIST_FOR_EACH_ENTRY(impl, &device_list, struct sdl_device, unix_device.entry)
+    {
+        USHORT count = impl->unix_device.hid_device_state.abs_axis_count;
+        if (impl->id == id && impl->axis_offset <= axis && impl->axis_offset + count > axis)
+            return impl;
+    }
 
     return NULL;
 }
@@ -184,7 +200,7 @@ static BOOL descriptor_add_haptic(struct sdl_device *impl)
     USHORT i, count = 0;
     USAGE usages[16];
 
-    if (!pSDL_JoystickIsHaptic(impl->sdl_joystick) ||
+    if (impl->axis_offset > 0 || !pSDL_JoystickIsHaptic(impl->sdl_joystick) ||
         !(impl->sdl_haptic = pSDL_HapticOpenFromJoystick(impl->sdl_joystick)))
         impl->effect_support = 0;
     else
@@ -196,7 +212,7 @@ static BOOL descriptor_add_haptic(struct sdl_device *impl)
             impl->effect_support |= WINE_SDL_HAPTIC_RUMBLE;
     }
 
-    if (pSDL_JoystickRumble && !pSDL_JoystickRumble(impl->sdl_joystick, 0, 0, 0))
+    if (impl->axis_offset == 0 && pSDL_JoystickRumble && !pSDL_JoystickRumble(impl->sdl_joystick, 0, 0, 0))
         impl->effect_support |= WINE_SDL_JOYSTICK_RUMBLE;
 
     if (impl->effect_support & EFFECT_SUPPORT_HAPTICS)
@@ -262,6 +278,7 @@ static NTSTATUS build_joystick_report_descriptor(struct unix_device *iface)
     USAGE_AND_PAGE physical_usage;
 
     axis_count = pSDL_JoystickNumAxes(impl->sdl_joystick);
+    if (options.split_controllers) axis_count = min(6, axis_count - impl->axis_offset);
     if (axis_count > ARRAY_SIZE(absolute_usages))
     {
         FIXME("More than %zu absolute axes found, ignoring.\n", ARRAY_SIZE(absolute_usages));
@@ -275,8 +292,16 @@ static NTSTATUS build_joystick_report_descriptor(struct unix_device *iface)
         ball_count = ARRAY_SIZE(relative_usages) / 2;
     }
 
-    hat_count = pSDL_JoystickNumHats(impl->sdl_joystick);
-    button_count = pSDL_JoystickNumButtons(impl->sdl_joystick);
+    if (impl->axis_offset == 0)
+    {
+        hat_count = pSDL_JoystickNumHats(impl->sdl_joystick);
+        button_count = pSDL_JoystickNumButtons(impl->sdl_joystick);
+    }
+    else
+    {
+        hat_count = 0;
+        button_count = 0;
+    }
 
     if (!pSDL_JoystickGetType) physical_usage = device_usage;
     else switch (pSDL_JoystickGetType(impl->sdl_joystick))
@@ -902,8 +927,9 @@ static void sdl_add_device(unsigned int index)
     SDL_JoystickID id;
     SDL_JoystickGUID guid;
     SDL_GameController *controller = NULL;
-    const char *str;
-    char guid_str[33];
+    const char *product;
+    char guid_str[33], buffer[ARRAY_SIZE(desc.product)];
+    int axis_count, axis_offset;
 
     if ((joystick = pSDL_JoystickOpen(index)) == NULL)
     {
@@ -914,9 +940,9 @@ static void sdl_add_device(unsigned int index)
     if (options.map_controllers && pSDL_IsGameController(index))
         controller = pSDL_GameControllerOpen(index);
 
-    if (controller) str = pSDL_GameControllerName(controller);
-    else str = pSDL_JoystickName(joystick);
-    if (str) ntdll_umbstowcs(str, strlen(str) + 1, desc.product, ARRAY_SIZE(desc.product));
+    if (controller) product = pSDL_GameControllerName(controller);
+    else product = pSDL_JoystickName(joystick);
+    if (!product) product = "Joystick";
 
     id = pSDL_JoystickInstanceID(joystick);
 
@@ -936,25 +962,35 @@ static void sdl_add_device(unsigned int index)
     pSDL_JoystickGetGUIDString(guid, guid_str, sizeof(guid_str));
     ntdll_umbstowcs(guid_str, strlen(guid_str) + 1, desc.serialnumber, ARRAY_SIZE(desc.serialnumber));
 
-    if (controller) desc.is_gamepad = TRUE;
+    if (controller)
+    {
+        desc.is_gamepad = TRUE;
+        axis_count = 6;
+    }
     else
     {
-        int button_count, axis_count;
-
+        int button_count = pSDL_JoystickNumButtons(joystick);
         axis_count = pSDL_JoystickNumAxes(joystick);
-        button_count = pSDL_JoystickNumButtons(joystick);
         desc.is_gamepad = (axis_count == 6  && button_count >= 14);
     }
 
-    TRACE("%s id %d, desc %s.\n", controller ? "controller" : "joystick", id, debugstr_device_desc(&desc));
+    for (axis_offset = 0; axis_offset < axis_count; axis_offset += (options.split_controllers ? 6 : axis_count))
+    {
+        if (!axis_offset) strcpy(buffer, product);
+        else snprintf(buffer, ARRAY_SIZE(buffer), "%s %d", product, axis_offset / 6);
+        ntdll_umbstowcs(buffer, strlen(buffer) + 1, desc.product, ARRAY_SIZE(desc.product));
 
-    if (!(impl = hid_device_create(&sdl_device_vtbl, sizeof(struct sdl_device)))) return;
-    list_add_tail(&device_list, &impl->unix_device.entry);
-    impl->sdl_joystick = joystick;
-    impl->sdl_controller = controller;
-    impl->id = id;
+        TRACE("%s id %d, axis_offset %u, desc %s.\n", controller ? "controller" : "joystick", id, axis_offset, debugstr_device_desc(&desc));
 
-    bus_event_queue_device_created(&event_queue, &impl->unix_device, &desc);
+        if (!(impl = hid_device_create(&sdl_device_vtbl, sizeof(struct sdl_device)))) return;
+        list_add_tail(&device_list, &impl->unix_device.entry);
+        impl->sdl_joystick = joystick;
+        impl->sdl_controller = controller;
+        impl->id = id;
+        impl->axis_offset = axis_offset;
+
+        bus_event_queue_device_created(&event_queue, &impl->unix_device, &desc);
+    }
 }
 
 static void process_device_event(SDL_Event *event)
@@ -974,6 +1010,17 @@ static void process_device_event(SDL_Event *event)
         impl = find_device_from_id(id);
         if (impl) bus_event_queue_device_removed(&event_queue, &impl->unix_device);
         else WARN("failed to find device with id %d\n", id);
+    }
+    else if (event->type == SDL_JOYAXISMOTION && options.split_controllers)
+    {
+        id = event->jaxis.which;
+        impl = find_device_from_id_and_axis(id, event->jaxis.axis);
+        if (!impl) WARN("failed to find device with id %d for axis %d\n", id, event->jaxis.axis);
+        else
+        {
+            event->jaxis.axis -= impl->axis_offset;
+            set_report_from_joystick_event(impl, event);
+        }
     }
     else if (event->type >= SDL_JOYAXISMOTION && event->type <= SDL_JOYBUTTONUP)
     {

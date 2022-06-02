@@ -46,6 +46,7 @@ struct device_desc
 
 struct sdl_bus_options
 {
+    BOOL split_controllers;
     BOOL map_controllers;
     /* freed after bus_init */
     UINT mappings_count;

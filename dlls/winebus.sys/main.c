@@ -720,6 +720,8 @@ static NTSTATUS sdl_driver_init(void)
     };
     NTSTATUS status;
 
+    bus_options.split_controllers = check_bus_option(L"Split Controllers", 0);
+    if (bus_options.split_controllers) TRACE("SDL controller splitting enabled\n");
     bus_options.map_controllers = check_bus_option(L"Map Controllers", 1);
     if (!bus_options.map_controllers) TRACE("SDL controller to XInput HID gamepad mapping disabled\n");
     sdl_bus_load_mappings(&bus_options);
