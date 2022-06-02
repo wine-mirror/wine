@@ -1971,6 +1971,9 @@ HRESULT jsdisp_call_value(jsdisp_t *jsfunc, IDispatch *jsthis, WORD flags, unsig
             return JS_E_FUNCTION_EXPECTED;
         }
 
+        if(jsfunc->ctx->state == SCRIPTSTATE_UNINITIALIZED || jsfunc->ctx->state == SCRIPTSTATE_CLOSED)
+            return E_UNEXPECTED;
+
         flags &= ~DISPATCH_JSCRIPT_INTERNAL_MASK;
         hres = jsfunc->builtin_info->call(jsfunc->ctx, jsthis ? jsval_disp(jsthis) : jsval_null(), flags, argc, argv, r);
     }

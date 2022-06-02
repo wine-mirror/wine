@@ -2914,13 +2914,20 @@ static void test_default_value(void)
 
     V_VT(&v) = VT_EMPTY;
     hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
-    ok(hres == S_OK || broken(hres == 0x8000ffff), "Invoke failed: %08lx\n", hres);
-    if(hres == S_OK)
-    {
-        ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
-    }
+    ok(hres == E_UNEXPECTED, "Invoke failed: %08lx\n", hres);
+
+    hres = parse_script_expr(L"new Date()", &v, &script);
+    ok(hres == S_OK, "parse_script_expr failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    disp = V_DISPATCH(&v);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatch_Invoke(disp, DISPID_VALUE, &IID_NULL, 0, DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    ok(hres == S_OK, "Invoke failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_BSTR, "V_VT(v) = %d\n", V_VT(&v));
     VariantClear(&v);
     IDispatch_Release(disp);
+    close_script(script);
 
     hres = parse_script_expr(L"var arr = [5]; arr.toString = function() {return \"foo\";}; arr.valueOf = function() {return 42;}; arr", &v, &script);
     ok(hres == S_OK, "parse_script_expr failed: %08lx\n", hres);
@@ -3149,15 +3156,15 @@ static void test_script_exprs(void)
 
 static void test_invokeex(void)
 {
-    DISPID func_id, prop_id;
-    DISPPARAMS dp = {NULL};
+    DISPPARAMS dp = {NULL}, dp_max = {NULL};
+    DISPID func_id, max_id, prop_id;
     IActiveScript *script;
     IDispatchEx *dispex;
     VARIANT v, arg;
     BSTR str;
     HRESULT hres;
 
-    hres = parse_script_expr(L"var o = {func: function() {return 3;}, prop: 6}; o", &v, &script);
+    hres = parse_script_expr(L"var o = {func: function() {return 3;}, max: Math.max, prop: 6}; o", &v, &script);
     ok(hres == S_OK, "parse_script_expr failed: %08lx\n", hres);
     ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
 
@@ -3170,15 +3177,30 @@ static void test_invokeex(void)
     SysFreeString(str);
     ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
 
+    str = SysAllocString(L"max");
+    hres = IDispatchEx_GetDispID(dispex, str, 0, &max_id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+
     str = SysAllocString(L"prop");
     hres = IDispatchEx_GetDispID(dispex, str, 0, &prop_id);
     SysFreeString(str);
     ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
 
+    dp_max.rgvarg = &arg;
+    dp_max.cArgs = 1;
+    V_VT(&arg) = VT_I4;
+    V_I4(&arg) = 42;
+
     hres = IDispatchEx_InvokeEx(dispex, func_id, 0, DISPATCH_METHOD, &dp, &v, NULL, NULL);
     ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
     ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
     ok(V_I4(&v) == 3, "V_I4(v) = %ld\n", V_I4(&v));
+
+    hres = IDispatchEx_InvokeEx(dispex, max_id, 0, DISPATCH_METHOD, &dp_max, &v, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == 42, "V_I4(v) = %ld\n", V_I4(&v));
 
     hres = IDispatchEx_InvokeEx(dispex, prop_id, 0, DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
     ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
@@ -3193,13 +3215,86 @@ static void test_invokeex(void)
     SysFreeString(str);
     ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
 
+    V_VT(&v) = VT_EMPTY;
     hres = IDispatchEx_InvokeEx(dispex, func_id, 0, DISPATCH_METHOD, &dp, &v, NULL, NULL);
     ok(hres == E_UNEXPECTED || broken(hres == 0x800a1393), "InvokeEx failed: %08lx\n", hres);
 
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatchEx_InvokeEx(dispex, max_id, 0, DISPATCH_METHOD, &dp_max, &v, NULL, NULL);
+    ok(hres == E_UNEXPECTED || broken(hres == 0x800a1393), "InvokeEx failed: %08lx\n", hres);
+
+    V_VT(&v) = VT_EMPTY;
     hres = IDispatchEx_InvokeEx(dispex, prop_id, 0, DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
     ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
     ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
     ok(V_I4(&v) == 6, "V_I4(v) = %ld\n", V_I4(&v));
+
+    IActiveScript_Close(script);
+
+    V_VT(&v) = VT_EMPTY;
+    hres = IDispatchEx_InvokeEx(dispex, prop_id, 0, DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == 6, "V_I4(v) = %ld\n", V_I4(&v));
+
+    IDispatchEx_Release(dispex);
+    IActiveScript_Release(script);
+
+    hres = parse_script_expr(L"Math.max", &v, &script);
+    ok(hres == S_OK, "parse_script_expr failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+
+    hres = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08lx\n", hres);
+    VariantClear(&v);
+
+    str = SysAllocString(L"call");
+    hres = IDispatchEx_GetDispID(dispex, str, 0, &func_id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_UNINITIALIZED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08lx\n", hres);
+
+    str = SysAllocString(L"call");
+    hres = IDispatchEx_GetDispID(dispex, str, 0, &func_id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+
+    str = SysAllocString(L"length");
+    hres = IDispatchEx_GetDispID(dispex, str, 0, &prop_id);
+    SysFreeString(str);
+    ok(hres == S_OK, "GetDispID failed: %08lx\n", hres);
+
+    hres = IDispatchEx_InvokeEx(dispex, func_id, 0, DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+    VariantClear(&v);
+
+    hres = IDispatchEx_InvokeEx(dispex, prop_id, 0, DISPATCH_PROPERTYGET, &dp, &v, NULL, NULL);
+    ok(hres == S_OK, "InvokeEx failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_I4, "V_VT(v) = %d\n", V_VT(&v));
+    ok(V_I4(&v) == 2, "V_I4(v) = %ld\n", V_I4(&v));
+
+    IDispatchEx_Release(dispex);
+    IActiveScript_Release(script);
+
+    hres = parse_script_expr(L"Math.max", &v, &script);
+    ok(hres == S_OK, "parse_script_expr failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_DISPATCH, "V_VT(v) = %d\n", V_VT(&v));
+
+    hres = IDispatch_QueryInterface(V_DISPATCH(&v), &IID_IDispatchEx, (void**)&dispex);
+    ok(hres == S_OK, "Could not get IDispatchEx iface: %08lx\n", hres);
+    VariantClear(&v);
+
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_UNINITIALIZED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_STARTED) failed: %08lx\n", hres);
+
+    str = SysAllocString(L"call");
+    hres = IDispatchEx_GetDispID(dispex, str, 0, &func_id);
+    SysFreeString(str);
+    todo_wine
+    ok(hres == E_UNEXPECTED, "GetDispID failed: %08lx\n", hres);
 
     IDispatchEx_Release(dispex);
     IActiveScript_Release(script);
