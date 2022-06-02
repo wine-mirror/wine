@@ -2622,6 +2622,7 @@ testException(function() {"test" in nullDisp;}, "E_OBJECT_EXPECTED");
 testException(function() {new 3;}, "E_UNSUPPORTED_ACTION");
 testException(function() {new null;}, "E_OBJECT_EXPECTED");
 testException(function() {new nullDisp;}, "E_NO_PROPERTY");
+testException(function() {new Math.max(5);}, "E_UNSUPPORTED_ACTION");
 testException(function() {new VBArray();}, "E_NOT_VBARRAY");
 testException(function() {new VBArray(new VBArray(createArray()));}, "E_NOT_VBARRAY");
 testException(function() {VBArray.prototype.lbound.call(new Object());}, "E_NOT_VBARRAY");

@@ -619,6 +619,8 @@ static HRESULT NativeFunction_call(script_ctx_t *ctx, FunctionInstance *func, js
 {
     NativeFunction *function = (NativeFunction*)func;
 
+    if((flags & DISPATCH_CONSTRUCT) && !(function->function.flags & PROPF_CONSTR))
+        return JS_E_INVALID_ACTION;
     return function->proc(ctx, vthis, flags & ~DISPATCH_JSCRIPT_INTERNAL_MASK, argc, argv, r);
 }
 
