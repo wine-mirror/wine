@@ -166,7 +166,6 @@ static void send_mouse_input(HWND hwnd, macdrv_window cocoa_window, UINT flags, 
  */
 CFStringRef copy_system_cursor_name(ICONINFOEXW *info)
 {
-    static const WCHAR idW[] = {'%','h','u',0};
     const struct system_cursors *cursors;
     unsigned int i;
     CFStringRef cursor_name = NULL;
@@ -184,7 +183,12 @@ CFStringRef copy_system_cursor_name(ICONINFOEXW *info)
     p = name + strlenW(name);
     *p++ = ',';
     if (info->szResName[0]) strcpyW(p, info->szResName);
-    else sprintfW(p, idW, info->wResID);
+    else
+    {
+        char buf[16];
+        sprintf(buf, "%hu", info->wResID);
+        asciiz_to_unicode(p, buf);
+    }
 
     /* @@ Wine registry key: HKCU\Software\Wine\Mac Driver\Cursors */
     if (!(key = open_hkcu_key("Software\\Wine\\Mac Driver\\Cursors")))
