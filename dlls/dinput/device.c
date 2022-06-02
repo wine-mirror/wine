@@ -1394,9 +1394,9 @@ static HRESULT WINAPI dinput_device_set_property( IDirectInputDevice8W *iface, c
     case (DWORD_PTR)DIPROP_FFGAIN:
     {
         const DIPROPDWORD *value = (const DIPROPDWORD *)header;
-        if (!impl->vtbl->send_device_gain) return DIERR_UNSUPPORTED;
         impl->device_gain = value->dwData;
         if (!is_exclusively_acquired( impl )) return DI_OK;
+        if (!impl->vtbl->send_device_gain) return DI_OK;
         return impl->vtbl->send_device_gain( iface, impl->device_gain );
     }
     case (DWORD_PTR)DIPROP_AXISMODE:

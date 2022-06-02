@@ -1745,14 +1745,14 @@ static void test_mouse_info(void)
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_KEYNAME, &prop_string.diph );
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_KEYNAME returned %#lx\n", hr );
 
-    prop_range.diph.dwHow = DIPH_DEVICE;
-    prop_range.diph.dwObj = 0;
+    prop_dword.diph.dwHow = DIPH_DEVICE;
+    prop_dword.diph.dwObj = 0;
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
-    ok( hr == DIERR_UNSUPPORTED, "SetProperty DIPROP_FFGAIN returned %#lx\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "SetProperty DIPROP_FFGAIN returned %#lx\n", hr );
     prop_dword.dwData = 1000;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
-    ok( hr == DIERR_UNSUPPORTED, "SetProperty DIPROP_FFGAIN returned %#lx\n", hr );
+    ok( hr == DI_OK, "SetProperty DIPROP_FFGAIN returned %#lx\n", hr );
 
     res = 0;
     hr = IDirectInputDevice8_EnumObjects( device, check_object_count, &res, DIDFT_AXIS | DIDFT_PSHBUTTON );
@@ -2080,14 +2080,14 @@ static void test_keyboard_info(void)
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_RANGE, &prop_range.diph );
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_RANGE returned %#lx\n", hr );
 
-    prop_range.diph.dwHow = DIPH_DEVICE;
-    prop_range.diph.dwObj = 0;
+    prop_dword.diph.dwHow = DIPH_DEVICE;
+    prop_dword.diph.dwObj = 0;
     prop_dword.dwData = 0xdeadbeef;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
-    ok( hr == DIERR_UNSUPPORTED, "SetProperty DIPROP_FFGAIN returned %#lx\n", hr );
+    ok( hr == DIERR_INVALIDPARAM, "SetProperty DIPROP_FFGAIN returned %#lx\n", hr );
     prop_dword.dwData = 1000;
     hr = IDirectInputDevice8_SetProperty( device, DIPROP_FFGAIN, &prop_dword.diph );
-    ok( hr == DIERR_UNSUPPORTED, "SetProperty DIPROP_FFGAIN returned %#lx\n", hr );
+    ok( hr == DI_OK, "SetProperty DIPROP_FFGAIN returned %#lx\n", hr );
 
     res = 0;
     hr = IDirectInputDevice8_EnumObjects( device, check_object_count, &res, DIDFT_AXIS | DIDFT_PSHBUTTON );
