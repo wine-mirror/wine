@@ -3901,40 +3901,53 @@ static int find_substring( const struct sortguid *sortid, DWORD flags, const WCH
 }
 
 
-/* compose a full-width katakana. return consumed source characters. */
-static int map_to_fullwidth( const WCHAR *src, int srclen, WCHAR *dst )
+/* map buffer to full-width katakana */
+static int map_to_fullwidth( const WCHAR *src, int srclen, WCHAR *dst, int dstlen )
 {
-    *dst = casemap( charmaps[CHARMAP_FULLWIDTH], *src );
-    if (srclen <= 1) return 1;
+    int pos;
 
-    switch (src[1])
+    for (pos = 0; srclen; pos++, src++, srclen--)
     {
-    case 0xff9e:  /* datakuten (voiced sound) */
-        if ((*src >= 0xff76 && *src <= 0xff84) || (*src >= 0xff8a && *src <= 0xff8e) || *src == 0x30fd)
-            *dst += 1;
-        else if (*src == 0xff73)
-            *dst = 0x30f4; /* KATAKANA LETTER VU */
-        else if (*src == 0xff9c)
-            *dst = 0x30f7; /* KATAKANA LETTER VA */
-        else if (*src == 0x30f0)
-            *dst = 0x30f8; /* KATAKANA LETTER VI */
-        else if (*src == 0x30f1)
-            *dst = 0x30f9; /* KATAKANA LETTER VE */
-        else if (*src == 0xff66)
-            *dst = 0x30fa; /* KATAKANA LETTER VO */
-        else
-            return 1;
-        break;
-    case 0xff9f:  /* handakuten (semi-voiced sound) */
-        if (*src >= 0xff8a && *src <= 0xff8e)
-            *dst += 2;
-        else
-            return 1;
-        break;
-    default:
-        return 1;
+        WCHAR wch = casemap( charmaps[CHARMAP_FULLWIDTH], *src );
+        if (srclen > 1)
+        {
+            switch (src[1])
+            {
+            case 0xff9e:  /* dakuten (voiced sound) */
+                if ((*src >= 0xff76 && *src <= 0xff84) ||
+                    (*src >= 0xff8a && *src <= 0xff8e) ||
+                    *src == 0x30fd)
+                    wch++;
+                else if (*src == 0xff73)
+                    wch = 0x30f4; /* KATAKANA LETTER VU */
+                else if (*src == 0xff9c)
+                    wch = 0x30f7; /* KATAKANA LETTER VA */
+                else if (*src == 0x30f0)
+                    wch = 0x30f8; /* KATAKANA LETTER VI */
+                else if (*src == 0x30f1)
+                    wch = 0x30f9; /* KATAKANA LETTER VE */
+                else if (*src == 0xff66)
+                    wch = 0x30fa; /* KATAKANA LETTER VO */
+                else
+                    break;
+                src++;
+                srclen--;
+                break;
+            case 0xff9f:  /* handakuten (semi-voiced sound) */
+                if (*src >= 0xff8a && *src <= 0xff8e)
+                {
+                    wch += 2;
+                    src++;
+                    srclen--;
+                }
+                break;
+            default:
+                break;
+            }
+        }
+        if (pos < dstlen) dst[pos] = wch;
     }
-    return 2;
+    return pos;
 }
 
 /* map single full-width character to single or double half-width characters. */
@@ -6373,15 +6386,7 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringEx( const WCHAR *locale, DWORD flags, co
         }
         else if (flags & LCMAP_FULLWIDTH)
         {
-            WCHAR wch;
-            for (len = 0; srclen; src++, srclen--, len++)
-            {
-                if (map_to_fullwidth( src, srclen, &wch ) == 2)
-                {
-                    src++;
-                    srclen--;
-                }
-            }
+            len = map_to_fullwidth( src, srclen, NULL, 0 );
         }
         else if (flags & LCMAP_HALFWIDTH)
         {
@@ -6429,20 +6434,20 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringEx( const WCHAR *locale, DWORD flags, co
 
     if (flags & (LCMAP_FULLWIDTH | LCMAP_HALFWIDTH | LCMAP_HIRAGANA | LCMAP_KATAKANA))
     {
+        if (flags & LCMAP_FULLWIDTH)
+        {
+            len = map_to_fullwidth( src, srclen, dst, dstlen );
+            if (dstlen && dstlen < len)
+            {
+                SetLastError( ERROR_INSUFFICIENT_BUFFER );
+                return 0;
+            }
+            srclen = len;
+            src = dst;
+        }
         for (len = dstlen, dst_ptr = dst; len && srclen; src++, srclen--, len--, dst_ptr++)
         {
-            WCHAR wch;
-            if (flags & LCMAP_FULLWIDTH)
-            {
-                /* map half-width character to full-width one,
-                   e.g. U+FF71 -> U+30A2, U+FF8C U+FF9F -> U+30D7. */
-                if (map_to_fullwidth( src, srclen, &wch ) == 2)
-                {
-                    src++;
-                    srclen--;
-                }
-            }
-            else wch = *src;
+            WCHAR wch = *src;
 
             if (flags & LCMAP_KATAKANA) wch = casemap( charmaps[CHARMAP_KATAKANA], wch );
             else if (flags & LCMAP_HIRAGANA) wch = casemap( charmaps[CHARMAP_HIRAGANA], wch );
