@@ -91,6 +91,17 @@ void script_release(script_ctx_t *ctx)
     heap_free(ctx);
 }
 
+static void script_globals_release(script_ctx_t *ctx)
+{
+    unsigned i;
+    for(i = 0; i < ARRAY_SIZE(ctx->global_objects); i++) {
+        if(ctx->global_objects[i]) {
+            jsdisp_release(ctx->global_objects[i]);
+            ctx->global_objects[i] = NULL;
+        }
+    }
+}
+
 static void change_state(JScript *This, SCRIPTSTATE state)
 {
     if(This->ctx->state == state)
@@ -483,25 +494,7 @@ static void decrease_state(JScript *This, SCRIPTSTATE state)
                 This->ctx->site = NULL;
             }
 
-            if(This->ctx->map_prototype) {
-                jsdisp_release(This->ctx->map_prototype);
-                This->ctx->map_prototype = NULL;
-            }
-
-            if(This->ctx->set_prototype) {
-                jsdisp_release(This->ctx->set_prototype);
-                This->ctx->set_prototype = NULL;
-            }
-
-            if(This->ctx->object_prototype) {
-                jsdisp_release(This->ctx->object_prototype);
-                This->ctx->object_prototype = NULL;
-            }
-
-            if(This->ctx->global) {
-                jsdisp_release(This->ctx->global);
-                This->ctx->global = NULL;
-            }
+            script_globals_release(This->ctx);
             /* FALLTHROUGH */
         case SCRIPTSTATE_UNINITIALIZED:
             change_state(This, state);

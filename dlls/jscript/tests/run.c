@@ -3293,7 +3293,6 @@ static void test_invokeex(void)
     str = SysAllocString(L"call");
     hres = IDispatchEx_GetDispID(dispex, str, 0, &func_id);
     SysFreeString(str);
-    todo_wine
     ok(hres == E_UNEXPECTED, "GetDispID failed: %08lx\n", hres);
 
     IDispatchEx_Release(dispex);
