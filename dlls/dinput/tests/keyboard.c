@@ -251,75 +251,6 @@ static void test_set_coop(IDirectInputA *pDI, HWND hwnd)
     if (pKeyboard) IUnknown_Release(pKeyboard);
 }
 
-static void test_get_prop(IDirectInputA *pDI, HWND hwnd)
-{
-    HRESULT hr;
-    IDirectInputDeviceA *pKeyboard = NULL;
-    DIPROPRANGE diprg;
-    DIPROPDWORD vidpid;
-
-    hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &pKeyboard, NULL);
-    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %#lx\n", hr);
-    if (FAILED(hr)) return;
-
-    memset(&diprg, 0, sizeof(diprg));
-    diprg.diph.dwSize       = sizeof(DIPROPRANGE);
-    diprg.diph.dwHeaderSize = sizeof(DIPROPHEADER);
-    diprg.diph.dwHow        = DIPH_DEVICE;
-    diprg.diph.dwObj        = 0;
-
-    hr = IDirectInputDevice_GetProperty(pKeyboard, DIPROP_RANGE, &diprg.diph);
-    ok(hr == DIERR_UNSUPPORTED, "IDirectInputDevice_GetProperty() did not return DIPROP_RANGE but: %#lx\n", hr);
-
-    memset(&vidpid, 0, sizeof(vidpid));
-    vidpid.diph.dwSize       = sizeof(DIPROPDWORD);
-    vidpid.diph.dwHeaderSize = sizeof(DIPROPHEADER);
-    vidpid.diph.dwHow        = DIPH_DEVICE;
-    vidpid.diph.dwObj        = 0;
-
-    hr = IDirectInputDevice_GetProperty(pKeyboard, DIPROP_VIDPID, &vidpid.diph);
-    ok(hr == DIERR_UNSUPPORTED, "got %#lx\n", hr);
-
-    IUnknown_Release(pKeyboard);
-}
-
-static void test_capabilities(IDirectInputA *pDI, HWND hwnd)
-{
-    HRESULT hr;
-    IDirectInputDeviceA *pKeyboard = NULL;
-    DIDEVCAPS caps;
-    int kbd_type, kbd_subtype, dev_subtype;
-
-    hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &pKeyboard, NULL);
-    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %#lx\n", hr);
-    if (FAILED(hr)) return;
-
-    caps.dwSize = sizeof(caps);
-    hr = IDirectInputDevice_GetCapabilities(pKeyboard, &caps);
-
-    ok (SUCCEEDED(hr), "GetCapabilities failed: 0x%#lx\n", hr);
-    ok (caps.dwFlags & DIDC_ATTACHED, "GetCapabilities dwFlags: 0x%#lx\n", caps.dwFlags);
-    ok (GET_DIDEVICE_TYPE(caps.dwDevType) == DIDEVTYPE_KEYBOARD,
-        "GetCapabilities invalid device type for dwDevType: 0x%#lx\n", caps.dwDevType);
-    kbd_type = GetKeyboardType(0);
-    kbd_subtype = GetKeyboardType(1);
-    dev_subtype = GET_DIDEVICE_SUBTYPE(caps.dwDevType);
-    if (kbd_type == 4 || (kbd_type == 7 && kbd_subtype == 0))
-        ok (dev_subtype == DIDEVTYPEKEYBOARD_PCENH,
-            "GetCapabilities invalid device subtype for dwDevType: 0x%#lx (%04x:%04x)\n",
-            caps.dwDevType, kbd_type, kbd_subtype);
-    else if (kbd_type == 7 && kbd_subtype == 2)
-        ok (dev_subtype == DIDEVTYPEKEYBOARD_JAPAN106,
-            "GetCapabilities invalid device subtype for dwDevType: 0x%#lx (%04x:%04x)\n",
-            caps.dwDevType, kbd_type, kbd_subtype);
-    else
-        ok (dev_subtype != DIDEVTYPEKEYBOARD_UNKNOWN,
-            "GetCapabilities invalid device subtype for dwDevType: 0x%#lx (%04x:%04x)\n",
-            caps.dwDevType, kbd_type, kbd_subtype);
-
-    IUnknown_Release(pKeyboard);
-}
-
 static void test_dik_codes(IDirectInputA *dI, HWND hwnd, LANGID langid)
 {
     static const struct key2dik
@@ -478,35 +409,6 @@ fail:
     IUnknown_Release(device);
 }
 
-static void test_GetDeviceInfo(IDirectInputA *pDI)
-{
-    HRESULT hr;
-    IDirectInputDeviceA *pKey = NULL;
-    DIDEVICEINSTANCEA instA;
-    DIDEVICEINSTANCE_DX3A inst3A;
-
-    hr = IDirectInput_CreateDevice(pDI, &GUID_SysKeyboard, &pKey, NULL);
-    ok(SUCCEEDED(hr), "IDirectInput_CreateDevice() failed: %#lx\n", hr);
-    if (FAILED(hr)) return;
-
-    instA.dwSize = sizeof(instA);
-    hr = IDirectInputDevice_GetDeviceInfo(pKey, &instA);
-    ok(SUCCEEDED(hr), "got %#lx\n", hr);
-
-    inst3A.dwSize = sizeof(inst3A);
-    hr = IDirectInputDevice_GetDeviceInfo(pKey, (DIDEVICEINSTANCEA *)&inst3A);
-    ok(SUCCEEDED(hr), "got %#lx\n", hr);
-
-    ok(instA.dwSize != inst3A.dwSize, "got %ld, %ld\n", instA.dwSize, inst3A.dwSize);
-    ok(IsEqualGUID(&instA.guidInstance, &inst3A.guidInstance), "got %s, %s\n",
-            wine_dbgstr_guid(&instA.guidInstance), wine_dbgstr_guid(&inst3A.guidInstance) );
-    ok(IsEqualGUID(&instA.guidProduct, &inst3A.guidProduct), "got %s, %s\n",
-            wine_dbgstr_guid(&instA.guidProduct), wine_dbgstr_guid(&inst3A.guidProduct) );
-    ok(instA.dwDevType == inst3A.dwDevType, "got %ld, %ld\n", instA.dwDevType, inst3A.dwDevType);
-
-    IUnknown_Release(pKey);
-}
-
 static void keyboard_tests(DWORD version)
 {
     HRESULT hr;
@@ -534,9 +436,6 @@ static void keyboard_tests(DWORD version)
 
         acquire_tests(pDI, hwnd);
         test_set_coop(pDI, hwnd);
-        test_get_prop(pDI, hwnd);
-        test_capabilities(pDI, hwnd);
-        test_GetDeviceInfo(pDI);
 
         test_dik_codes(pDI, hwnd, MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT));
         test_dik_codes(pDI, hwnd, MAKELANGID(LANG_FRENCH, SUBLANG_FRENCH));

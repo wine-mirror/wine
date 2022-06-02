@@ -2047,13 +2047,14 @@ static void test_sys_mouse( DWORD version )
     localized = old_localized;
 }
 
-static void test_keyboard_info(void)
+static void test_sys_keyboard( DWORD version )
 {
-    static const DIDEVCAPS expect_caps =
+    const DIDEVCAPS expect_caps =
     {
         .dwSize = sizeof(DIDEVCAPS),
         .dwFlags = DIDC_ATTACHED | DIDC_EMULATED,
-        .dwDevType = (DI8DEVTYPEKEYBOARD_PCENH << 8) | DI8DEVTYPE_KEYBOARD,
+        .dwDevType = version < 0x800 ? (DIDEVTYPEKEYBOARD_PCENH << 8) | DIDEVTYPE_KEYBOARD
+                                     : (DI8DEVTYPEKEYBOARD_PCENH << 8) | DI8DEVTYPE_KEYBOARD,
         .dwButtons = 128,
     };
     const DIDEVICEINSTANCEW expect_devinst =
@@ -2061,7 +2062,8 @@ static void test_keyboard_info(void)
         .dwSize = sizeof(DIDEVICEINSTANCEW),
         .guidInstance = GUID_SysKeyboard,
         .guidProduct = GUID_SysKeyboard,
-        .dwDevType = (DI8DEVTYPEKEYBOARD_PCENH << 8) | DI8DEVTYPE_KEYBOARD,
+        .dwDevType = version < 0x800 ? (DIDEVTYPEKEYBOARD_PCENH << 8) | DIDEVTYPE_KEYBOARD
+                                     : (DI8DEVTYPEKEYBOARD_PCENH << 8) | DI8DEVTYPE_KEYBOARD,
         .tszInstanceName = L"Keyboard",
         .tszProductName = L"Keyboard",
         .guidFFDriver = GUID_NULL,
@@ -2151,21 +2153,19 @@ static void test_keyboard_info(void)
     };
     DIDEVICEOBJECTINSTANCEW objinst = {0};
     DIDEVICEINSTANCEW devinst = {0};
+    BOOL old_localized = localized;
     IDirectInputDevice8W *device;
     DIDEVCAPS caps = {0};
-    IDirectInput8W *di;
     ULONG res, ref;
     HRESULT hr;
     GUID guid;
 
+    if (FAILED(create_dinput_device( version, &GUID_SysKeyboard, &device ))) return;
+
     localized = TRUE; /* Skip name tests, Wine sometimes succeeds depending on the host key names */
+    winetest_push_context( "%#lx", version );
 
-    hr = DirectInput8Create( instance, DIRECTINPUT_VERSION, &IID_IDirectInput8W, (void **)&di, NULL );
-    ok( hr == DI_OK, "DirectInput8Create returned %#lx\n", hr );
-    hr = IDirectInput8_CreateDevice( di, &GUID_SysKeyboard, &device, NULL );
-    ok( hr == DI_OK, "CreateDevice returned %#lx\n", hr );
-
-    hr = IDirectInputDevice8_Initialize( device, instance, DIRECTINPUT_VERSION, &GUID_SysKeyboardEm );
+    hr = IDirectInputDevice8_Initialize( device, instance, version, &GUID_SysKeyboardEm );
     ok( hr == DI_OK, "Initialize returned %#lx\n", hr );
     guid = GUID_SysKeyboardEm;
     memset( &devinst, 0, sizeof(devinst) );
@@ -2175,7 +2175,7 @@ static void test_keyboard_info(void)
     ok( IsEqualGUID( &guid, &GUID_SysKeyboardEm ), "got %s expected %s\n", debugstr_guid( &guid ),
         debugstr_guid( &GUID_SysKeyboardEm ) );
 
-    hr = IDirectInputDevice8_Initialize( device, instance, DIRECTINPUT_VERSION, &GUID_SysKeyboard );
+    hr = IDirectInputDevice8_Initialize( device, instance, version, &GUID_SysKeyboard );
     ok( hr == DI_OK, "Initialize returned %#lx\n", hr );
 
     memset( &devinst, 0, sizeof(devinst) );
@@ -2191,6 +2191,15 @@ static void test_keyboard_info(void)
     check_member_guid( devinst, expect_devinst, guidFFDriver );
     check_member( devinst, expect_devinst, "%04x", wUsagePage );
     check_member( devinst, expect_devinst, "%04x", wUsage );
+
+    devinst.dwSize = sizeof(DIDEVICEINSTANCE_DX3W);
+    hr = IDirectInputDevice8_GetDeviceInfo( device, &devinst );
+    ok( hr == DI_OK, "GetDeviceInfo returned %#lx\n", hr );
+    check_member_guid( devinst, expect_devinst, guidInstance );
+    check_member_guid( devinst, expect_devinst, guidProduct );
+    check_member( devinst, expect_devinst, "%#lx", dwDevType );
+    if (!localized) check_member_wstr( devinst, expect_devinst, tszInstanceName );
+    if (!localized) todo_wine check_member_wstr( devinst, expect_devinst, tszProductName );
 
     caps.dwSize = sizeof(DIDEVCAPS);
     hr = IDirectInputDevice8_GetCapabilities( device, &caps );
@@ -2270,8 +2279,13 @@ static void test_keyboard_info(void)
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_TYPENAME, &prop_string.diph );
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_TYPENAME returned %#lx\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_USERNAME, &prop_string.diph );
-    ok( hr == S_FALSE, "GetProperty DIPROP_USERNAME returned %#lx\n", hr );
-    ok( !wcscmp( prop_string.wsz, L"" ), "got user %s\n", debugstr_w(prop_string.wsz) );
+    if (version < 0x0800)
+        ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_USERNAME returned %#lx\n", hr );
+    else
+    {
+        ok( hr == DI_NOEFFECT, "GetProperty DIPROP_USERNAME returned %#lx\n", hr );
+        ok( !wcscmp( prop_string.wsz, L"" ), "got user %s\n", debugstr_w(prop_string.wsz) );
+    }
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_JOYSTICKID, &prop_dword.diph );
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_VIDPID returned %#lx\n", hr );
@@ -2377,8 +2391,8 @@ static void test_keyboard_info(void)
     ref = IDirectInputDevice8_Release( device );
     ok( ref == 0, "Release returned %ld\n", ref );
 
-    ref = IDirectInput8_Release( di );
-    ok( ref == 0, "Release returned %ld\n", ref );
+    winetest_pop_context();
+    localized = old_localized;
 }
 
 START_TEST(device8)
@@ -2397,7 +2411,10 @@ START_TEST(device8)
     test_sys_mouse( 0x700 );
     test_sys_mouse( 0x800 );
 
-    test_keyboard_info();
+    test_sys_keyboard( 0x500 );
+    test_sys_keyboard( 0x700 );
+    test_sys_keyboard( 0x800 );
+
     test_action_mapping();
     test_save_settings();
     test_mouse_keyboard();
