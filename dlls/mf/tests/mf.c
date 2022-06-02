@@ -7284,9 +7284,7 @@ static void test_h264_decoder(void)
     ok(hr == S_OK, "ConvertToContiguousBuffer returned %#lx\n", hr);
     hr = IMFMediaBuffer_Lock(media_buffer, &data, NULL, &length);
     ok(hr == S_OK, "Lock returned %#lx\n", hr);
-    todo_wine
     ok(length == nv12_frame_len, "got length %lu\n", length);
-    if (length != nv12_frame_len) goto skip_nv12_tests;
 
     for (i = 0; i < actual_aperture.Area.cy; ++i)
     {
@@ -7302,7 +7300,6 @@ static void test_h264_decoder(void)
 
     check_sample(output.pSample, nv12_frame_data, output_file);
 
-skip_nv12_tests:
     ret = IMFSample_Release(output.pSample);
     ok(ret == 0, "Release returned %lu\n", ret);
 
