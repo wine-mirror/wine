@@ -98,6 +98,30 @@ static void flush_events(void)
     }
 }
 
+static HRESULT create_dinput_device( DWORD version, const GUID *guid, IDirectInputDevice8W **device )
+{
+    IDirectInputW *dinput;
+    HRESULT hr;
+    ULONG ref;
+
+    if (version < 0x800) hr = DirectInputCreateW( instance, version, &dinput, NULL );
+    else hr = DirectInput8Create( instance, version, &IID_IDirectInput8W, (void **)&dinput, NULL );
+    if (FAILED(hr))
+    {
+        win_skip( "Failed to instantiate a IDirectInput instance, hr %#lx\n", hr );
+        return hr;
+    }
+
+    hr = IDirectInput_CreateDevice( dinput, guid, (IDirectInputDeviceW **)device, NULL );
+    ok( hr == DI_OK, "CreateDevice returned %#lx\n", hr );
+
+    ref = IDirectInput_Release( dinput );
+    todo_wine
+    ok( ref == 0, "Release returned %ld\n", ref );
+
+    return DI_OK;
+}
+
 static HRESULT direct_input_create( DWORD version, IDirectInputA **out )
 {
     HRESULT hr;
@@ -1451,13 +1475,14 @@ static BOOL CALLBACK check_object_count( const DIDEVICEOBJECTINSTANCEW *obj, voi
     return DIENUM_CONTINUE;
 }
 
-static void test_mouse_info(void)
+static void test_sys_mouse( DWORD version )
 {
-    static const DIDEVCAPS expect_caps =
+    const DIDEVCAPS expect_caps =
     {
         .dwSize = sizeof(DIDEVCAPS),
         .dwFlags = DIDC_ATTACHED | DIDC_EMULATED,
-        .dwDevType = (DI8DEVTYPEMOUSE_UNKNOWN << 8) | DI8DEVTYPE_MOUSE,
+        .dwDevType = version < 0x800 ? (DIDEVTYPEMOUSE_UNKNOWN << 8) | DIDEVTYPE_MOUSE
+                                     : (DI8DEVTYPEMOUSE_UNKNOWN << 8) | DI8DEVTYPE_MOUSE,
         .dwAxes = 3,
         .dwButtons = 5,
     };
@@ -1466,7 +1491,8 @@ static void test_mouse_info(void)
         .dwSize = sizeof(DIDEVICEINSTANCEW),
         .guidInstance = GUID_SysMouse,
         .guidProduct = GUID_SysMouse,
-        .dwDevType = (DI8DEVTYPEMOUSE_UNKNOWN << 8) | DI8DEVTYPE_MOUSE,
+        .dwDevType = version < 0x800 ? (DIDEVTYPEMOUSE_UNKNOWN << 8) | DIDEVTYPE_MOUSE
+                                     : (DI8DEVTYPEMOUSE_UNKNOWN << 8) | DI8DEVTYPE_MOUSE,
         .tszInstanceName = L"Mouse",
         .tszProductName = L"Mouse",
         .guidFFDriver = GUID_NULL,
@@ -1579,21 +1605,19 @@ static void test_mouse_info(void)
     };
     DIDEVICEOBJECTINSTANCEW objinst = {0};
     DIDEVICEINSTANCEW devinst = {0};
+    BOOL old_localized = localized;
     IDirectInputDevice8W *device;
     DIDEVCAPS caps = {0};
-    IDirectInput8W *di;
     ULONG res, ref;
     HRESULT hr;
     GUID guid;
 
+    if (FAILED(create_dinput_device( version, &GUID_SysMouse, &device ))) return;
+
     localized = LOWORD( GetKeyboardLayout( 0 ) ) != 0x0409;
+    winetest_push_context( "%#lx", version );
 
-    hr = DirectInput8Create( instance, DIRECTINPUT_VERSION, &IID_IDirectInput8W, (void **)&di, NULL );
-    ok( hr == DI_OK, "DirectInput8Create returned %#lx\n", hr );
-    hr = IDirectInput8_CreateDevice( di, &GUID_SysMouse, &device, NULL );
-    ok( hr == DI_OK, "CreateDevice returned %#lx\n", hr );
-
-    hr = IDirectInputDevice8_Initialize( device, instance, DIRECTINPUT_VERSION, &GUID_SysMouseEm );
+    hr = IDirectInputDevice8_Initialize( device, instance, version, &GUID_SysMouseEm );
     ok( hr == DI_OK, "Initialize returned %#lx\n", hr );
     guid = GUID_SysMouseEm;
     memset( &devinst, 0, sizeof(devinst) );
@@ -1603,7 +1627,7 @@ static void test_mouse_info(void)
     ok( IsEqualGUID( &guid, &GUID_SysMouseEm ), "got %s expected %s\n", debugstr_guid( &guid ),
         debugstr_guid( &GUID_SysMouseEm ) );
 
-    hr = IDirectInputDevice8_Initialize( device, instance, DIRECTINPUT_VERSION, &GUID_SysMouse );
+    hr = IDirectInputDevice8_Initialize( device, instance, version, &GUID_SysMouse );
     ok( hr == DI_OK, "Initialize returned %#lx\n", hr );
 
     memset( &devinst, 0, sizeof(devinst) );
@@ -1620,6 +1644,16 @@ static void test_mouse_info(void)
     check_member_guid( devinst, expect_devinst, guidFFDriver );
     check_member( devinst, expect_devinst, "%04x", wUsagePage );
     check_member( devinst, expect_devinst, "%04x", wUsage );
+
+    devinst.dwSize = sizeof(DIDEVICEINSTANCE_DX3W);
+    hr = IDirectInputDevice8_GetDeviceInfo( device, &devinst );
+    ok( hr == DI_OK, "GetDeviceInfo returned %#lx\n", hr );
+    check_member_guid( devinst, expect_devinst, guidInstance );
+    check_member_guid( devinst, expect_devinst, guidProduct );
+    todo_wine
+    check_member( devinst, expect_devinst, "%#lx", dwDevType );
+    if (!localized) check_member_wstr( devinst, expect_devinst, tszInstanceName );
+    if (!localized) todo_wine check_member_wstr( devinst, expect_devinst, tszProductName );
 
     caps.dwSize = sizeof(DIDEVCAPS);
     hr = IDirectInputDevice8_GetCapabilities( device, &caps );
@@ -1695,8 +1729,13 @@ static void test_mouse_info(void)
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_TYPENAME, &prop_string.diph );
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_TYPENAME returned %#lx\n", hr );
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_USERNAME, &prop_string.diph );
-    ok( hr == S_FALSE, "GetProperty DIPROP_USERNAME returned %#lx\n", hr );
-    ok( !wcscmp( prop_string.wsz, L"" ), "got user %s\n", debugstr_w(prop_string.wsz) );
+    if (version < 0x0800)
+        ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_USERNAME returned %#lx\n", hr );
+    else
+    {
+        ok( hr == DI_NOEFFECT, "GetProperty DIPROP_USERNAME returned %#lx\n", hr );
+        ok( !wcscmp( prop_string.wsz, L"" ), "got user %s\n", debugstr_w(prop_string.wsz) );
+    }
 
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_JOYSTICKID, &prop_dword.diph );
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_VIDPID returned %#lx\n", hr );
@@ -1717,6 +1756,12 @@ static void test_mouse_info(void)
     hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
     ok( hr == DIERR_UNSUPPORTED, "GetProperty DIPROP_GRANULARITY returned %#lx\n", hr );
 
+    prop_dword.diph.dwHow = DIPH_BYID;
+    prop_dword.diph.dwObj = DIDFT_MAKEINSTANCE(1) | DIDFT_RELAXIS;
+    prop_dword.dwData = 0xdeadbeef;
+    hr = IDirectInputDevice8_GetProperty( device, DIPROP_GRANULARITY, &prop_dword.diph );
+    ok( hr == DI_OK, "GetProperty DIPROP_GRANULARITY returned %#lx\n", hr );
+    ok( prop_dword.dwData == 1, "got %ld expected 1\n", prop_dword.dwData );
     prop_dword.diph.dwHow = DIPH_BYOFFSET;
     prop_dword.diph.dwObj = DIMOFS_X;
     prop_dword.dwData = 0xdeadbeef;
@@ -1816,8 +1861,8 @@ static void test_mouse_info(void)
     ref = IDirectInputDevice8_Release( device );
     ok( ref == 0, "Release returned %ld\n", ref );
 
-    ref = IDirectInput8_Release( di );
-    ok( ref == 0, "Release returned %ld\n", ref );
+    winetest_pop_context();
+    localized = old_localized;
 }
 
 static void test_keyboard_info(void)
@@ -2166,7 +2211,10 @@ START_TEST(device8)
     test_overlapped_format( 0x700 );
     test_overlapped_format( 0x800 );
 
-    test_mouse_info();
+    test_sys_mouse( 0x500 );
+    test_sys_mouse( 0x700 );
+    test_sys_mouse( 0x800 );
+
     test_keyboard_info();
     test_action_mapping();
     test_save_settings();
