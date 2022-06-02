@@ -40,11 +40,11 @@ FONT 8, "Ms Shell Dlg"
     PUSHBUTTON      "&Reset", IDC_BUTTONRESET, 200, 40, 60, 15
     PUSHBUTTON      "&Enable", IDC_BUTTONENABLE, 200, 190, 60, 15
     PUSHBUTTON      "&Override", IDC_BUTTONOVERRIDE, 200, 100, 60, 15
-    LTEXT           "Connected", IDC_STATIC, 10, 10, 100, 10
+    LTEXT           "Connected", IDC_STATIC, 10, 10, 180, 10
     LISTBOX         IDC_JOYSTICKLIST, 10, 20, 180, 70, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY
-    LTEXT           "Connected (xinput device)", IDC_STATIC, 10, 90, 100, 10
+    LTEXT           "Connected (xinput device)", IDC_STATIC, 10, 90, 180, 10
     LISTBOX         IDC_XINPUTLIST, 10, 100, 180, 70, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY
-    LTEXT           "Disabled", IDC_STATIC, 10, 180, 100, 10
+    LTEXT           "Disabled", IDC_STATIC, 10, 180, 180, 10
     LISTBOX         IDC_DISABLEDLIST, 10, 190, 180, 70, WS_TABSTOP | WS_VSCROLL | LBS_NOTIFY
     LTEXT           "After disabling or enabling a device, the connected joysticks won't be updated here until you restart this applet.", IDC_STATIC, 10, 270, 200, 25
 }
