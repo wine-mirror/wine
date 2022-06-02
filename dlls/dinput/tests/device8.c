@@ -1618,6 +1618,149 @@ cleanup:
     localized = old_localized;
 }
 
+static UINT mouse_move_count;
+
+static LRESULT CALLBACK mouse_wndproc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam )
+{
+    if (msg == WM_MOUSEMOVE)
+    {
+        ok( wparam == 0, "got wparam %#Ix\n", wparam );
+        ok( LOWORD(lparam) - 107 <= 2, "got LOWORD(lparam) %u\n", LOWORD(lparam) );
+        ok( HIWORD(lparam) - 107 <= 2, "got HIWORD(lparam) %u\n", HIWORD(lparam) );
+        mouse_move_count++;
+    }
+    return DefWindowProcA( hwnd, msg, wparam, lparam );
+}
+
+static void test_hid_mouse(void)
+{
+#include "psh_hid_macros.h"
+    const unsigned char report_desc[] =
+    {
+        USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+        USAGE(1, HID_USAGE_GENERIC_MOUSE),
+        COLLECTION(1, Application),
+            USAGE(1, HID_USAGE_GENERIC_POINTER),
+            COLLECTION(1, Physical),
+                REPORT_ID(1, 1),
+
+                USAGE_PAGE(1, HID_USAGE_PAGE_BUTTON),
+                USAGE_MINIMUM(1, 1),
+                USAGE_MAXIMUM(1, 2),
+                LOGICAL_MINIMUM(1, 0),
+                LOGICAL_MAXIMUM(1, 1),
+                REPORT_SIZE(1, 1),
+                REPORT_COUNT(1, 8),
+                INPUT(1, Data|Var|Abs),
+
+                USAGE_PAGE(1, HID_USAGE_PAGE_GENERIC),
+                USAGE(1, HID_USAGE_GENERIC_X),
+                USAGE(1, HID_USAGE_GENERIC_Y),
+                REPORT_SIZE(1, 16),
+                REPORT_COUNT(1, 2),
+                LOGICAL_MINIMUM(2, -10),
+                LOGICAL_MAXIMUM(2, +10),
+                INPUT(1, Data|Var|Rel),
+            END_COLLECTION,
+        END_COLLECTION,
+    };
+    C_ASSERT(sizeof(report_desc) < MAX_HID_DESCRIPTOR_LEN);
+#include "pop_hid_macros.h"
+
+    const HID_DEVICE_ATTRIBUTES attributes =
+    {
+        .Size = sizeof(HID_DEVICE_ATTRIBUTES),
+        .VendorID = LOWORD(EXPECT_VIDPID),
+        .ProductID = 0x0002,
+        .VersionNumber = 0x0100,
+    };
+    struct hid_device_desc desc =
+    {
+        .caps = { .InputReportByteLength = 6 },
+        .attributes = attributes,
+        .use_report_id = 1,
+    };
+    struct hid_expect single_move[] =
+    {
+        {
+            .code = IOCTL_HID_READ_REPORT,
+            .report_buf = {1,0x00,0x08,0x00,0x08,0x00},
+        },
+    };
+
+    WCHAR device_path[MAX_PATH];
+    HANDLE file;
+    POINT pos;
+    DWORD res;
+    HWND hwnd;
+    BOOL ret;
+
+    winetest_push_context( "mouse ");
+
+    desc.report_descriptor_len = sizeof(report_desc);
+    memcpy( desc.report_descriptor_buf, report_desc, sizeof(report_desc) );
+    fill_context( desc.context, ARRAY_SIZE(desc.context) );
+
+    if (!hid_device_start_( &desc, 1, 5000 /* needs a long timeout on Win7 */ )) goto done;
+
+    swprintf( device_path, MAX_PATH, L"\\\\?\\hid#vid_%04x&pid_%04x", desc.attributes.VendorID,
+              desc.attributes.ProductID );
+    ret = find_hid_device_path( device_path );
+    ok( ret, "Failed to find HID device matching %s\n", debugstr_w( device_path ) );
+
+
+    /* windows doesn't let us open HID mouse devices */
+
+    file = CreateFileW( device_path, FILE_READ_ACCESS | FILE_WRITE_ACCESS,
+                        FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, NULL );
+    todo_wine
+    ok( file == INVALID_HANDLE_VALUE, "CreateFileW succeeded\n" );
+    todo_wine
+    ok( GetLastError() == ERROR_ACCESS_DENIED, "got error %lu\n", GetLastError() );
+    CloseHandle( file );
+
+    file = CreateFileW( L"\\\\?\\root#winetest#0#{deadbeef-29ef-4538-a5fd-b69573a362c0}", 0, 0,
+                        NULL, OPEN_EXISTING, 0, NULL );
+    ok( file != INVALID_HANDLE_VALUE, "CreateFile failed, error %lu\n", GetLastError() );
+
+
+    /* check basic mouse input injection to window message */
+
+    SetCursorPos( 100, 100 );
+    hwnd = create_foreground_window( TRUE );
+    SetWindowLongPtrW( hwnd, GWLP_WNDPROC, (LONG_PTR)mouse_wndproc );
+
+    GetCursorPos( &pos );
+    ok( pos.x == 100, "got x %lu\n", pos.x );
+    ok( pos.y == 100, "got y %lu\n", pos.y );
+
+    mouse_move_count = 0;
+    bus_send_hid_input( file, &desc, single_move, sizeof(single_move) );
+
+    res = MsgWaitForMultipleObjects( 0, NULL, FALSE, 500, QS_MOUSEMOVE );
+    todo_wine
+    ok( !res, "MsgWaitForMultipleObjects returned %#lx\n", res );
+    msg_wait_for_events( 0, NULL, 5 ); /* process pending messages */
+    todo_wine
+    ok( mouse_move_count == 1, "got mouse_move_count %u\n", mouse_move_count );
+
+    GetCursorPos( &pos );
+    todo_wine
+    ok( (ULONG)pos.x - 107 <= 2, "got x %lu\n", pos.x );
+    todo_wine
+    ok( (ULONG)pos.y - 107 <= 2, "got y %lu\n", pos.y );
+
+    DestroyWindow( hwnd );
+
+
+    CloseHandle( file );
+
+done:
+    hid_device_stop( &desc, 1 );
+
+    winetest_pop_context();
+}
+
 static void test_dik_codes( IDirectInputDevice8W *device, HANDLE event, HWND hwnd, DWORD version )
 {
     static const struct key2dik
@@ -2371,5 +2514,11 @@ START_TEST(device8)
     test_keyboard_events();
     test_appdata_property();
 
+    if (!bus_device_start()) goto done;
+
+    test_hid_mouse();
+
+done:
+    bus_device_stop();
     dinput_test_exit();
 }

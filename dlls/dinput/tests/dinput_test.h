@@ -51,11 +51,13 @@ extern const WCHAR expect_path_end[];
 extern HINSTANCE instance;
 extern BOOL localized; /* object names get translated */
 
-BOOL hid_device_start( struct hid_device_desc *desc, UINT count );
+#define hid_device_start( a, b ) hid_device_start_( a, b, 1000 )
+BOOL hid_device_start_( struct hid_device_desc *desc, UINT count, DWORD timeout );
 void hid_device_stop( struct hid_device_desc *desc, UINT count );
 BOOL bus_device_start(void);
 void bus_device_stop(void);
 
+BOOL find_hid_device_path( WCHAR *device_path );
 void cleanup_registry_keys(void);
 
 #define dinput_test_init() dinput_test_init_( __FILE__, __LINE__ )
