@@ -2000,6 +2000,16 @@ static inline WORD get_char_type( DWORD type, WCHAR ch )
 }
 
 
+static int casemap_string( const USHORT *table, const WCHAR *src, int srclen, WCHAR *dst, int dstlen )
+{
+    int pos, ret = srclen;
+
+    for (pos = 0; pos < dstlen && srclen; pos++, src++, srclen--)
+        dst[pos] = casemap( table, *src );
+    return ret;
+}
+
+
 static union char_weights get_char_weights( WCHAR c, UINT except )
 {
     union char_weights ret;
@@ -2205,13 +2215,12 @@ static NTSTATUS expand_ligatures( const WCHAR *src, int srclen, WCHAR *dst, int 
 
 static NTSTATUS fold_digits( const WCHAR *src, int srclen, WCHAR *dst, int *dstlen )
 {
-    int i, len = *dstlen;
+    NTSTATUS ret = STATUS_SUCCESS;
+    int len = casemap_string( charmaps[CHARMAP_FOLDDIGITS], src, srclen, dst, *dstlen );
 
-    *dstlen = srclen;
-    if (!len) return STATUS_SUCCESS;
-    if (srclen > len) return STATUS_BUFFER_TOO_SMALL;
-    for (i = 0; i < srclen; i++) dst[i] = casemap( charmaps[CHARMAP_FOLDDIGITS], src[i] );
-    return STATUS_SUCCESS;
+    if (*dstlen && *dstlen < len) ret = STATUS_BUFFER_TOO_SMALL;
+    *dstlen = len;
+    return ret;
 }
 
 
@@ -6403,18 +6412,19 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringEx( const WCHAR *locale, DWORD flags, co
             *dst_ptr++ = *src;
             len--;
         }
+        len = dst_ptr - dst;
         goto done;
     }
 
     if (flags & LCMAP_TRADITIONAL_CHINESE)
     {
-        for (len = dstlen, dst_ptr = dst; srclen && len; srclen--, len--)
-            *dst_ptr++ = casemap( charmaps[CHARMAP_TRADITIONAL], *src++ );
+        len = casemap_string( charmaps[CHARMAP_TRADITIONAL], src, srclen, dst, dstlen );
+        goto done;
     }
     if (flags & LCMAP_SIMPLIFIED_CHINESE)
     {
-        for (len = dstlen, dst_ptr = dst; srclen && len; srclen--, len--)
-            *dst_ptr++ = casemap( charmaps[CHARMAP_SIMPLIFIED], *src++ );
+        len = casemap_string( charmaps[CHARMAP_SIMPLIFIED], src, srclen, dst, dstlen );
+        goto done;
     }
 
     if (flags & (LCMAP_FULLWIDTH | LCMAP_HALFWIDTH | LCMAP_HIRAGANA | LCMAP_KATAKANA))
@@ -6450,8 +6460,13 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringEx( const WCHAR *locale, DWORD flags, co
             }
             else *dst_ptr = wch;
         }
+        if (srclen)
+        {
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            return 0;
+        }
+        len = dst_ptr - dst;
         if (!(flags & (LCMAP_UPPERCASE | LCMAP_LOWERCASE)) || srclen) goto done;
-
         srclen = dst_ptr - dst;
         src = dst;
     }
@@ -6460,25 +6475,21 @@ INT WINAPI DECLSPEC_HOTPATCH LCMapStringEx( const WCHAR *locale, DWORD flags, co
     {
         const USHORT *table = sort.casemap + (flags & LCMAP_LINGUISTIC_CASING ? sortid->casemap : 0);
         table = table + 2 + (flags & LCMAP_LOWERCASE ? table[1] : 0);
-        for (len = dstlen, dst_ptr = dst; srclen && len; src++, srclen--, len--)
-            *dst_ptr++ = casemap( table, *src );
+        len = casemap_string( table, src, srclen, dst, dstlen );
     }
     else
     {
-        len = min( srclen, dstlen );
-        memcpy( dst, src, len * sizeof(WCHAR) );
-        dst_ptr = dst + len;
-        srclen -= len;
+        len = srclen;
+        memcpy( dst, src, min( srclen, dstlen ) * sizeof(WCHAR) );
     }
 
 done:
-    if (srclen)
+    if (dstlen && dstlen < len)
     {
         SetLastError( ERROR_INSUFFICIENT_BUFFER );
         return 0;
     }
-
-    return dst_ptr - dst;
+    return len;
 }
 
 
