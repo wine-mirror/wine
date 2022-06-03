@@ -34,6 +34,7 @@ static BOOL (WINAPI *pCompareObjectHandles)(HANDLE, HANDLE);
 static LPVOID (WINAPI *pMapViewOfFile3)(HANDLE, HANDLE, PVOID, ULONG64 offset, SIZE_T size,
         ULONG, ULONG, MEM_EXTENDED_PARAMETER *, ULONG);
 static LPVOID (WINAPI *pVirtualAlloc2)(HANDLE, void *, SIZE_T, DWORD, DWORD, MEM_EXTENDED_PARAMETER *, ULONG);
+static PVOID (WINAPI *pVirtualAllocFromApp)(PVOID, SIZE_T, DWORD, DWORD);
 
 static void test_CompareObjectHandles(void)
 {
@@ -194,20 +195,55 @@ static void test_VirtualAlloc2(void)
     VirtualFree(placeholder2, 0, MEM_RELEASE);
 }
 
+static void test_VirtualAllocFromApp(void)
+{
+    BOOL ret;
+    void *p;
+
+    if (!pVirtualAllocFromApp)
+    {
+        win_skip("VirtualAllocFromApp is not available.\n");
+        return;
+    }
+
+    SetLastError(0xdeadbeef);
+    p = pVirtualAllocFromApp(NULL, 0x1000, MEM_RESERVE, PAGE_READWRITE);
+    ok(p && GetLastError() == 0xdeadbeef, "Got unexpected mem %p, GetLastError() %lu.\n", p, GetLastError());
+    ret = VirtualFree(p, 0, MEM_RELEASE);
+    ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
+
+    SetLastError(0xdeadbeef);
+    p = pVirtualAllocFromApp(NULL, 0x1000, MEM_RESERVE, PAGE_EXECUTE);
+    ok(!p && GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected mem %p, GetLastError() %lu.\n",
+            p, GetLastError());
+    SetLastError(0xdeadbeef);
+    p = pVirtualAllocFromApp(NULL, 0x1000, MEM_RESERVE, PAGE_EXECUTE_READ);
+    ok(!p && GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected mem %p, GetLastError() %lu.\n",
+            p, GetLastError());
+    SetLastError(0xdeadbeef);
+    p = pVirtualAllocFromApp(NULL, 0x1000, MEM_RESERVE, PAGE_EXECUTE_READWRITE);
+    ok(!p && GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected mem %p, GetLastError() %lu.\n",
+            p, GetLastError());
+}
+
+static void init_funcs(void)
+{
+    HMODULE hmod = GetModuleHandleA("kernelbase.dll");
+
+#define X(f) { p##f = (void*)GetProcAddress(hmod, #f); }
+    X(CompareObjectHandles);
+    X(MapViewOfFile3);
+    X(VirtualAlloc2);
+    X(VirtualAllocFromApp);
+#undef X
+}
+
 START_TEST(process)
 {
-    HMODULE hmod;
-
-    hmod = GetModuleHandleA("kernel32.dll");
-    pCompareObjectHandles = (void *)GetProcAddress(hmod, "CompareObjectHandles");
-    ok(!pCompareObjectHandles, "expected CompareObjectHandles only in kernelbase.dll\n");
-
-    hmod = GetModuleHandleA("kernelbase.dll");
-    pCompareObjectHandles = (void *)GetProcAddress(hmod, "CompareObjectHandles");
-    pMapViewOfFile3 = (void *)GetProcAddress(hmod, "MapViewOfFile3");
-    pVirtualAlloc2 = (void *)GetProcAddress(hmod, "VirtualAlloc2");
+    init_funcs();
 
     test_CompareObjectHandles();
     test_MapViewOfFile3();
     test_VirtualAlloc2();
+    test_VirtualAllocFromApp();
 }
