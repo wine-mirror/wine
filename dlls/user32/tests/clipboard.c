@@ -29,6 +29,7 @@
 static BOOL (WINAPI *pAddClipboardFormatListener)(HWND hwnd);
 static BOOL (WINAPI *pRemoveClipboardFormatListener)(HWND hwnd);
 static BOOL (WINAPI *pGetUpdatedClipboardFormats)( UINT *formats, UINT count, UINT *out_count );
+static HGLOBAL (WINAPI *pGlobalFree)(HGLOBAL);
 
 static int thread_from_line;
 static char *argv0;
@@ -2073,7 +2074,7 @@ static void test_data_handles(void)
     metafile = create_metafile();
     h = SetClipboardData( CF_METAFILEPICT, metafile );
     ok( h == metafile, "Expected metafilepict %p, got %p.\n", metafile, h );
-    ok( !GlobalFree( metafile ), "GlobalFree failed.\n" );
+    ok( !pGlobalFree( metafile ), "GlobalFree failed.\n" );
     h = GetClipboardData( CF_METAFILEPICT );
     ok( h == metafile, "Expected metafile %p, got %p.\n", metafile, h );
     ok( is_freed( h ), "Expected freed mem %p.\n", h );
@@ -2081,7 +2082,7 @@ static void test_data_handles(void)
     metafile = create_metafile();
     h = SetClipboardData( CF_DSPMETAFILEPICT, metafile );
     ok( h == metafile, "Expected metafilepict %p, got %p.\n", metafile, h );
-    ok( !GlobalFree( metafile ), "GlobalFree failed.\n" );
+    ok( !pGlobalFree( metafile ), "GlobalFree failed.\n" );
     h = GetClipboardData( CF_DSPMETAFILEPICT );
     ok( h == metafile, "Expected metafile %p, got %p.\n", metafile, h );
     ok( is_freed( h ), "Expected freed mem %p.\n", h );
@@ -2343,6 +2344,7 @@ START_TEST(clipboard)
     pAddClipboardFormatListener = (void *)GetProcAddress( mod, "AddClipboardFormatListener" );
     pRemoveClipboardFormatListener = (void *)GetProcAddress( mod, "RemoveClipboardFormatListener" );
     pGetUpdatedClipboardFormats = (void *)GetProcAddress( mod, "GetUpdatedClipboardFormats" );
+    pGlobalFree = (void *)GetProcAddress( GetModuleHandleA( "kernel32" ), "GlobalFree" );
 
     if (argc == 4 && !strcmp( argv[2], "set_clipboard_data" ))
     {
