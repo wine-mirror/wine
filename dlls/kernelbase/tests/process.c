@@ -34,6 +34,7 @@ static BOOL (WINAPI *pCompareObjectHandles)(HANDLE, HANDLE);
 static LPVOID (WINAPI *pMapViewOfFile3)(HANDLE, HANDLE, PVOID, ULONG64 offset, SIZE_T size,
         ULONG, ULONG, MEM_EXTENDED_PARAMETER *, ULONG);
 static LPVOID (WINAPI *pVirtualAlloc2)(HANDLE, void *, SIZE_T, DWORD, DWORD, MEM_EXTENDED_PARAMETER *, ULONG);
+static LPVOID (WINAPI *pVirtualAlloc2FromApp)(HANDLE, void *, SIZE_T, DWORD, DWORD, MEM_EXTENDED_PARAMETER *, ULONG);
 static PVOID (WINAPI *pVirtualAllocFromApp)(PVOID, SIZE_T, DWORD, DWORD);
 
 static void test_CompareObjectHandles(void)
@@ -197,6 +198,14 @@ static void test_VirtualAlloc2(void)
 
 static void test_VirtualAllocFromApp(void)
 {
+    static const DWORD prot[] =
+    {
+        PAGE_EXECUTE,
+        PAGE_EXECUTE_READ,
+        PAGE_EXECUTE_READWRITE,
+        PAGE_EXECUTE_WRITECOPY,
+    };
+    unsigned int i;
     BOOL ret;
     void *p;
 
@@ -212,18 +221,46 @@ static void test_VirtualAllocFromApp(void)
     ret = VirtualFree(p, 0, MEM_RELEASE);
     ok(ret, "Got unexpected ret %#x, GetLastError() %lu.\n", ret, GetLastError());
 
-    SetLastError(0xdeadbeef);
-    p = pVirtualAllocFromApp(NULL, 0x1000, MEM_RESERVE, PAGE_EXECUTE);
-    ok(!p && GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected mem %p, GetLastError() %lu.\n",
-            p, GetLastError());
-    SetLastError(0xdeadbeef);
-    p = pVirtualAllocFromApp(NULL, 0x1000, MEM_RESERVE, PAGE_EXECUTE_READ);
-    ok(!p && GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected mem %p, GetLastError() %lu.\n",
-            p, GetLastError());
-    SetLastError(0xdeadbeef);
-    p = pVirtualAllocFromApp(NULL, 0x1000, MEM_RESERVE, PAGE_EXECUTE_READWRITE);
-    ok(!p && GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected mem %p, GetLastError() %lu.\n",
-            p, GetLastError());
+    for (i = 0; i < ARRAY_SIZE(prot); ++i)
+    {
+        SetLastError(0xdeadbeef);
+        p = pVirtualAllocFromApp(NULL, 0x1000, MEM_RESERVE, prot[i]);
+        ok(!p && GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected mem %p, GetLastError() %lu.\n",
+                p, GetLastError());
+    }
+}
+
+static void test_VirtualAlloc2FromApp(void)
+{
+    static const DWORD prot[] =
+    {
+        PAGE_EXECUTE,
+        PAGE_EXECUTE_READ,
+        PAGE_EXECUTE_READWRITE,
+        PAGE_EXECUTE_WRITECOPY,
+    };
+    unsigned int i;
+    void *addr;
+    BOOL ret;
+
+    if (!pVirtualAlloc2FromApp)
+    {
+        win_skip("VirtualAlloc2FromApp is not available.\n");
+        return;
+    }
+
+    addr = pVirtualAlloc2FromApp(NULL, NULL, 0x1000, MEM_COMMIT, PAGE_READWRITE, NULL, 0);
+    ok(!!addr, "Failed to allocate, error %lu.\n", GetLastError());
+    ret = VirtualFree(addr, 0, MEM_RELEASE);
+    ok(ret, "Unexpected return value %d, error %lu.\n", ret, GetLastError());
+
+    for (i = 0; i < ARRAY_SIZE(prot); ++i)
+    {
+        SetLastError(0xdeadbeef);
+        addr = pVirtualAlloc2FromApp(NULL, NULL, 0x1000, MEM_COMMIT, prot[i], NULL, 0);
+        ok(!addr && GetLastError() == ERROR_INVALID_PARAMETER, "Got unexpected mem %p, GetLastError() %lu.\n",
+                addr, GetLastError());
+    }
 }
 
 static void init_funcs(void)
@@ -234,6 +271,7 @@ static void init_funcs(void)
     X(CompareObjectHandles);
     X(MapViewOfFile3);
     X(VirtualAlloc2);
+    X(VirtualAlloc2FromApp);
     X(VirtualAllocFromApp);
 #undef X
 }
@@ -246,4 +284,5 @@ START_TEST(process)
     test_MapViewOfFile3();
     test_VirtualAlloc2();
     test_VirtualAllocFromApp();
+    test_VirtualAlloc2FromApp();
 }

@@ -358,6 +358,35 @@ LPVOID WINAPI DECLSPEC_HOTPATCH VirtualAlloc2( HANDLE process, void *addr, SIZE_
     return ret;
 }
 
+static BOOL is_exec_prot( DWORD protect )
+{
+    return protect == PAGE_EXECUTE || protect == PAGE_EXECUTE_READ || protect == PAGE_EXECUTE_READWRITE
+            || protect == PAGE_EXECUTE_WRITECOPY;
+}
+
+/***********************************************************************
+ *             VirtualAlloc2FromApp   (kernelbase.@)
+ */
+LPVOID WINAPI DECLSPEC_HOTPATCH VirtualAlloc2FromApp( HANDLE process, void *addr, SIZE_T size,
+        DWORD type, DWORD protect, MEM_EXTENDED_PARAMETER *parameters, ULONG count )
+{
+    LPVOID ret = addr;
+
+    TRACE_(virtual)( "addr %p, size %p, type %#lx, protect %#lx, params %p, count %lu.\n", addr, (void *)size, type, protect,
+            parameters, count );
+
+    if (is_exec_prot( protect ))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return NULL;
+    }
+
+    if (!process) process = GetCurrentProcess();
+    if (!set_ntstatus( NtAllocateVirtualMemoryEx( process, &ret, &size, type, protect, parameters, count )))
+        return NULL;
+    return ret;
+}
+
 
 /***********************************************************************
  *             VirtualAllocFromApp   (kernelbase.@)
@@ -369,8 +398,7 @@ LPVOID WINAPI DECLSPEC_HOTPATCH VirtualAllocFromApp( void *addr, SIZE_T size,
 
     TRACE_(virtual)( "addr %p, size %p, type %#lx, protect %#lx.\n", addr, (void *)size, type, protect );
 
-    if (protect == PAGE_EXECUTE || protect == PAGE_EXECUTE_READ || protect == PAGE_EXECUTE_READWRITE
-            || protect == PAGE_EXECUTE_WRITECOPY)
+    if (is_exec_prot( protect ))
     {
         SetLastError( ERROR_INVALID_PARAMETER );
         return NULL;
