@@ -358,6 +358,7 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
 {
     const BOOL is_builtin = fnid, ansi = flags;
     HINSTANCE instance;
+    HICON sm_icon = 0;
     CLASS *class;
     ATOM atom;
     BOOL ret;
@@ -427,6 +428,11 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
     }
 
     /* Other non-null values must be set by caller */
+    if (wc->hIcon && !wc->hIconSm)
+        sm_icon = CopyImage( wc->hIcon, IMAGE_ICON,
+                             get_system_metrics( SM_CXSMICON ),
+                             get_system_metrics( SM_CYSMICON ),
+                             LR_COPYFROMRESOURCE );
 
     user_lock();
     if (class->local) list_add_head( &class_list, &class->entry );
@@ -440,15 +446,11 @@ ATOM WINAPI NtUserRegisterClassExWOW( const WNDCLASSEXW *wc, UNICODE_STRING *nam
 
     class->hIcon         = wc->hIcon;
     class->hIconSm       = wc->hIconSm;
+    class->hIconSmIntern = sm_icon;
     class->hCursor       = wc->hCursor;
     class->hbrBackground = wc->hbrBackground;
     class->winproc       = alloc_winproc( wc->lpfnWndProc, ansi );
     if (client_menu_name) class->menu_name = *client_menu_name;
-    if (wc->hIcon && !wc->hIconSm)
-        class->hIconSmIntern = CopyImage( wc->hIcon, IMAGE_ICON,
-                                          get_system_metrics( SM_CXSMICON ),
-                                          get_system_metrics( SM_CYSMICON ),
-                                          LR_COPYFROMRESOURCE );
     release_class_ptr( class );
     return atom;
 }
