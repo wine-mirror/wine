@@ -659,8 +659,11 @@ static void update_window( struct console *console )
         if (console->win == GetFocus())
         {
             if (console->window->cursor_visible)
+            {
                 CreateCaret( console->win, console->window->cursor_bitmap,
                              console->active->font.width, console->active->font.height );
+                update_window_cursor( console );
+            }
             else
                 DestroyCaret();
         }
