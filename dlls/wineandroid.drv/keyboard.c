@@ -755,9 +755,10 @@ jboolean keyboard_event( JNIEnv *env, jobject obj, jint win, jint action, jint k
  */
 INT ANDROID_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
 {
-    int scancode, vkey, len;
+    int scancode, vkey;
     const char *name;
     char key[2];
+    DWORD len;
 
     scancode = (lparam >> 16) & 0x1FF;
     vkey = scancode_to_vkey( scancode );
@@ -795,7 +796,8 @@ INT ANDROID_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
         name = vkey_to_name( vkey );
     }
 
-    len = MultiByteToWideChar( CP_UTF8, 0, name, -1, buffer, size );
+    RtlUTF8ToUnicodeN( buffer, size * sizeof(WCHAR), &len, name, strlen( name ) + 1 );
+    len /= sizeof(WCHAR);
     if (len) len--;
 
     if (!len)
