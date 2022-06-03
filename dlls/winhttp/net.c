@@ -269,7 +269,8 @@ void netconn_close( struct netconn *conn )
         free(conn->extra_buf);
         DeleteSecurityContext(&conn->ssl_ctx);
     }
-    closesocket( conn->socket );
+    if (conn->socket != -1)
+        closesocket( conn->socket );
     release_host( conn->host );
     free(conn);
 }
@@ -627,6 +628,13 @@ DWORD netconn_recv( struct netconn *conn, void *buf, size_t len, int flags, int 
 
     if ((*recvd = sock_recv( conn->socket, buf, len, flags )) < 0) return WSAGetLastError();
     return ERROR_SUCCESS;
+}
+
+void netconn_cancel_io( struct netconn *conn )
+{
+    SOCKET socket = InterlockedExchange( (LONG *)&conn->socket, -1 );
+
+    closesocket( socket );
 }
 
 ULONG netconn_query_data_available( struct netconn *conn )

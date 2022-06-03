@@ -242,6 +242,7 @@ static BOOL session_set_option( struct object_header *hdr, DWORD option, void *b
 
 static const struct object_vtbl session_vtbl =
 {
+    NULL,
     session_destroy,
     session_query_option,
     session_set_option
@@ -382,6 +383,7 @@ static BOOL connect_query_option( struct object_header *hdr, DWORD option, void 
 
 static const struct object_vtbl connect_vtbl =
 {
+    NULL,
     connect_destroy,
     connect_query_option,
     NULL
@@ -1085,6 +1087,7 @@ static BOOL request_set_option( struct object_header *hdr, DWORD option, void *b
 
 static const struct object_vtbl request_vtbl =
 {
+    NULL,
     request_destroy,
     request_query_option,
     request_set_option

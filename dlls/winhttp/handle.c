@@ -142,7 +142,12 @@ BOOL free_handle( HINTERNET hinternet )
 
     LeaveCriticalSection( &handle_cs );
 
-    if (hdr) release_object( hdr );
+    if (hdr)
+    {
+        if (hdr->vtbl->handle_closing)
+            hdr->vtbl->handle_closing( hdr );
+        release_object( hdr );
+    }
 
     EnterCriticalSection( &handle_cs );
     if (next_handle > handle && !handles[handle]) next_handle = handle;
