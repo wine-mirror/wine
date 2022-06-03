@@ -1188,7 +1188,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
             [eventQueuesLock lock];
             for (queue in eventQueues)
             {
-                [queue discardEventsMatchingMask:event_mask_for_type(MOUSE_MOVED) |
+                [queue discardEventsMatchingMask:event_mask_for_type(MOUSE_MOVED_RELATIVE) |
                                                  event_mask_for_type(MOUSE_MOVED_ABSOLUTE)
                                        forWindow:nil];
                 [queue resetMouseEventPositions:pos];
@@ -1444,7 +1444,7 @@ static NSString* WineLocalizedString(unsigned int stringID)
                 mouseMoveDeltaX += [anEvent deltaX];
                 mouseMoveDeltaY += [anEvent deltaY];
 
-                event = macdrv_create_event(MOUSE_MOVED, targetWindow);
+                event = macdrv_create_event(MOUSE_MOVED_RELATIVE, targetWindow);
                 event->mouse_moved.x = mouseMoveDeltaX * scale;
                 event->mouse_moved.y = mouseMoveDeltaY * scale;
 

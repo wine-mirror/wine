@@ -892,14 +892,14 @@ void macdrv_mouse_button(HWND hwnd, const macdrv_event *event)
 /***********************************************************************
  *              macdrv_mouse_moved
  *
- * Handler for MOUSE_MOVED and MOUSE_MOVED_ABSOLUTE events.
+ * Handler for MOUSE_MOVED_RELATIVE and MOUSE_MOVED_ABSOLUTE events.
  */
 void macdrv_mouse_moved(HWND hwnd, const macdrv_event *event)
 {
     UINT flags = MOUSEEVENTF_MOVE;
 
     TRACE("win %p/%p %s (%d,%d) drag %d time %lu (%lu ticks ago)\n", hwnd, event->window,
-          (event->type == MOUSE_MOVED) ? "relative" : "absolute",
+          (event->type == MOUSE_MOVED_RELATIVE) ? "relative" : "absolute",
           event->mouse_moved.x, event->mouse_moved.y, event->mouse_moved.drag,
           event->mouse_moved.time_ms, (NtGetTickCount() - event->mouse_moved.time_ms));
 

@@ -44,7 +44,7 @@ static const char *dbgstr_event(int type)
         "KEYBOARD_CHANGED",
         "LOST_PASTEBOARD_OWNERSHIP",
         "MOUSE_BUTTON",
-        "MOUSE_MOVED",
+        "MOUSE_MOVED_RELATIVE",
         "MOUSE_MOVED_ABSOLUTE",
         "MOUSE_SCROLL",
         "QUERY_EVENT",
@@ -100,7 +100,7 @@ static macdrv_event_mask get_event_mask(DWORD mask)
 
     if (mask & QS_MOUSEMOVE)
     {
-        event_mask |= event_mask_for_type(MOUSE_MOVED);
+        event_mask |= event_mask_for_type(MOUSE_MOVED_RELATIVE);
         event_mask |= event_mask_for_type(MOUSE_MOVED_ABSOLUTE);
     }
 
@@ -325,7 +325,7 @@ void macdrv_handle_event(const macdrv_event *event)
     case MOUSE_BUTTON:
         macdrv_mouse_button(hwnd, event);
         break;
-    case MOUSE_MOVED:
+    case MOUSE_MOVED_RELATIVE:
     case MOUSE_MOVED_ABSOLUTE:
         macdrv_mouse_moved(hwnd, event);
         break;

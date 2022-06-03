@@ -204,17 +204,17 @@ static const OSType WineHotKeySignature = 'Wine';
         }];
         [events removeObjectsAtIndexes:indexes];
 
-        if ((event->event->type == MOUSE_MOVED ||
+        if ((event->event->type == MOUSE_MOVED_RELATIVE ||
              event->event->type == MOUSE_MOVED_ABSOLUTE) &&
             event->event->deliver == INT_MAX &&
             (lastEvent = [events lastObject]) &&
-            (lastEvent->event->type == MOUSE_MOVED ||
+            (lastEvent->event->type == MOUSE_MOVED_RELATIVE ||
              lastEvent->event->type == MOUSE_MOVED_ABSOLUTE) &&
             lastEvent->event->deliver == INT_MAX &&
             lastEvent->event->window == event->event->window &&
             lastEvent->event->mouse_moved.drag == event->event->mouse_moved.drag)
         {
-            if (event->event->type == MOUSE_MOVED)
+            if (event->event->type == MOUSE_MOVED_RELATIVE)
             {
                 lastEvent->event->mouse_moved.x += event->event->mouse_moved.x;
                 lastEvent->event->mouse_moved.y += event->event->mouse_moved.y;
