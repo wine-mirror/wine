@@ -155,7 +155,7 @@ static bool stencil_op_writes_ds(const struct wined3d_stencil_op_desc *desc)
 
 static bool depth_stencil_state_desc_writes_ds(const struct wined3d_depth_stencil_state_desc *desc)
 {
-    if (desc->depth_write)
+    if (desc->depth && desc->depth_write)
         return true;
 
     if (desc->stencil && desc->stencil_write_mask)
