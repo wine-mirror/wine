@@ -92,7 +92,7 @@ HRESULT WINAPI DwmFlush(void)
 
     if (!once++) FIXME("() stub\n");
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 /**********************************************************************
