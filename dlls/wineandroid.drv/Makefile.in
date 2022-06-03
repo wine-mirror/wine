@@ -1,6 +1,6 @@
 EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE  = wineandroid.drv
-IMPORTS = user32 gdi32 ntoskrnl win32u
+IMPORTS = user32 ntoskrnl win32u
 
 EXTRADLLFLAGS = -mcygwin
 

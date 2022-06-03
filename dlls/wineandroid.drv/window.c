@@ -702,13 +702,13 @@ static void android_surface_set_region( struct window_surface *window_surface, H
     window_surface->funcs->lock( window_surface );
     if (!region)
     {
-        if (surface->region) DeleteObject( surface->region );
+        if (surface->region) NtGdiDeleteObjectApp( surface->region );
         surface->region = 0;
     }
     else
     {
-        if (!surface->region) surface->region = CreateRectRgn( 0, 0, 0, 0 );
-        CombineRgn( surface->region, region, 0, RGN_COPY );
+        if (!surface->region) surface->region = NtGdiCreateRectRgn( 0, 0, 0, 0 );
+        NtGdiCombineRgn( surface->region, region, 0, RGN_COPY );
     }
     window_surface->funcs->unlock( window_surface );
     set_surface_region( &surface->header, (HRGN)1 );
@@ -809,7 +809,7 @@ static void android_surface_destroy( struct window_surface *window_surface )
     surface->crit.DebugInfo->Spare[0] = 0;
     DeleteCriticalSection( &surface->crit );
     HeapFree( GetProcessHeap(), 0, surface->region_data );
-    if (surface->region) DeleteObject( surface->region );
+    if (surface->region) NtGdiDeleteObjectApp( surface->region );
     release_ioctl_window( surface->window );
     HeapFree( GetProcessHeap(), 0, surface->bits );
     HeapFree( GetProcessHeap(), 0, surface );
@@ -872,18 +872,18 @@ static void set_surface_region( struct window_surface *window_surface, HRGN win_
 
     if (win_region == (HRGN)1)  /* hack: win_region == 1 means retrieve region from server */
     {
-        region = CreateRectRgn( 0, 0, win_data->window_rect.right - win_data->window_rect.left,
-                                win_data->window_rect.bottom - win_data->window_rect.top );
+        region = NtGdiCreateRectRgn( 0, 0, win_data->window_rect.right - win_data->window_rect.left,
+                                     win_data->window_rect.bottom - win_data->window_rect.top );
         if (GetWindowRgn( surface->hwnd, region ) == ERROR && !surface->region) goto done;
     }
 
-    OffsetRgn( region, offset_x, offset_y );
-    if (surface->region) CombineRgn( region, region, surface->region, RGN_AND );
+    NtGdiOffsetRgn( region, offset_x, offset_y );
+    if (surface->region) NtGdiCombineRgn( region, region, surface->region, RGN_AND );
 
-    if (!(size = GetRegionData( region, 0, NULL ))) goto done;
+    if (!(size = NtGdiGetRegionData( region, 0, NULL ))) goto done;
     if (!(data = HeapAlloc( GetProcessHeap(), 0, size ))) goto done;
 
-    if (!GetRegionData( region, size, data ))
+    if (!NtGdiGetRegionData( region, size, data ))
     {
         HeapFree( GetProcessHeap(), 0, data );
         data = NULL;
@@ -895,7 +895,7 @@ done:
     surface->region_data = data;
     *window_surface->funcs->get_bounds( window_surface ) = surface->header.rect;
     window_surface->funcs->unlock( window_surface );
-    if (region != win_region) DeleteObject( region );
+    if (region != win_region) NtGdiDeleteObjectApp( region );
 }
 
 /***********************************************************************
@@ -974,11 +974,11 @@ static unsigned int *get_mono_icon_argb( HDC hdc, HBITMAP bmp, unsigned int *wid
     char *mask;
     unsigned int i, j, stride, mask_size, bits_size, *bits = NULL, *ptr;
 
-    if (!GetObjectW( bmp, sizeof(bm), &bm )) return NULL;
+    if (!NtGdiExtGetObjectW( bmp, sizeof(bm), &bm )) return NULL;
     stride = ((bm.bmWidth + 15) >> 3) & ~1;
     mask_size = stride * bm.bmHeight;
     if (!(mask = HeapAlloc( GetProcessHeap(), 0, mask_size ))) return NULL;
-    if (!GetBitmapBits( bmp, mask_size, mask )) goto done;
+    if (!NtGdiGetBitmapBits( bmp, mask_size, mask )) goto done;
 
     bm.bmHeight /= 2;
     bits_size = bm.bmWidth * bm.bmHeight * sizeof(*bits);
@@ -1025,7 +1025,7 @@ static unsigned int *get_bitmap_argb( HDC hdc, HBITMAP color, HBITMAP mask, unsi
 
     if (!color) return get_mono_icon_argb( hdc, mask, width, height );
 
-    if (!GetObjectW( color, sizeof(bm), &bm )) return NULL;
+    if (!NtGdiExtGetObjectW( color, sizeof(bm), &bm )) return NULL;
     info->bmiHeader.biSize = sizeof(BITMAPINFOHEADER);
     info->bmiHeader.biWidth = bm.bmWidth;
     info->bmiHeader.biHeight = -bm.bmHeight;
@@ -1039,7 +1039,8 @@ static unsigned int *get_bitmap_argb( HDC hdc, HBITMAP color, HBITMAP mask, unsi
     info->bmiHeader.biClrImportant = 0;
     if (!(bits = HeapAlloc( GetProcessHeap(), 0, bm.bmWidth * bm.bmHeight * sizeof(unsigned int) )))
         goto failed;
-    if (!GetDIBits( hdc, color, 0, bm.bmHeight, bits, info, DIB_RGB_COLORS )) goto failed;
+    if (!NtGdiGetDIBitsInternal( hdc, color, 0, bm.bmHeight, bits, info, DIB_RGB_COLORS, 0, 0 ))
+        goto failed;
 
     *width = bm.bmWidth;
     *height = bm.bmHeight;
@@ -1054,7 +1055,8 @@ static unsigned int *get_bitmap_argb( HDC hdc, HBITMAP color, HBITMAP mask, unsi
         info->bmiHeader.biBitCount = 1;
         info->bmiHeader.biSizeImage = width_bytes * bm.bmHeight;
         if (!(mask_bits = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage ))) goto failed;
-        if (!GetDIBits( hdc, mask, 0, bm.bmHeight, mask_bits, info, DIB_RGB_COLORS )) goto failed;
+        if (!NtGdiGetDIBitsInternal( hdc, mask, 0, bm.bmHeight, mask_bits, info, DIB_RGB_COLORS, 0, 0 ))
+            goto failed;
         ptr = bits;
         for (i = 0; i < bm.bmHeight; i++)
             for (j = 0; j < bm.bmWidth; j++, ptr++)
@@ -1446,9 +1448,9 @@ void ANDROID_SetCursor( HCURSOR handle )
 
             if (!(id = get_cursor_system_id( &info )))
             {
-                HDC hdc = CreateCompatibleDC( 0 );
+                HDC hdc = NtGdiCreateCompatibleDC( 0 );
                 bits = get_bitmap_argb( hdc, info.hbmColor, info.hbmMask, &width, &height );
-                DeleteDC( hdc );
+                NtGdiDeleteObjectApp( hdc );
 
                 /* make sure hotspot is valid */
                 if (info.xHotspot >= width || info.yHotspot >= height)
@@ -1459,8 +1461,8 @@ void ANDROID_SetCursor( HCURSOR handle )
             }
             ioctl_set_cursor( id, width, height, info.xHotspot, info.yHotspot, bits );
             HeapFree( GetProcessHeap(), 0, bits );
-            DeleteObject( info.hbmColor );
-            DeleteObject( info.hbmMask );
+            NtGdiDeleteObjectApp( info.hbmColor );
+            NtGdiDeleteObjectApp( info.hbmMask );
         }
         else ioctl_set_cursor( 0, 0, 0, 0, 0, NULL );
     }
@@ -1575,10 +1577,11 @@ BOOL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info
 
     dst_bits = surface->funcs->get_info( surface, bmi );
 
-    if (!(dib = CreateDIBSection( info->hdcDst, bmi, DIB_RGB_COLORS, &src_bits, NULL, 0 ))) goto done;
-    if (!(hdc = CreateCompatibleDC( 0 ))) goto done;
+    if (!(dib = NtGdiCreateDIBSection( info->hdcDst, NULL, 0, bmi, DIB_RGB_COLORS, 0, 0, 0, &src_bits )))
+        goto done;
+    if (!(hdc = NtGdiCreateCompatibleDC( 0 ))) goto done;
 
-    SelectObject( hdc, dib );
+    NtGdiSelectBitmap( hdc, dib );
 
     surface->funcs->lock( surface );
 
@@ -1586,16 +1589,16 @@ BOOL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info
     {
         IntersectRect( &rect, &rect, info->prcDirty );
         memcpy( src_bits, dst_bits, bmi->bmiHeader.biSizeImage );
-        PatBlt( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, BLACKNESS );
+        NtGdiPatBlt( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, BLACKNESS );
     }
     src_rect = rect;
     if (info->pptSrc) OffsetRect( &src_rect, info->pptSrc->x, info->pptSrc->y );
-    DPtoLP( info->hdcSrc, (POINT *)&src_rect, 2 );
+    NtGdiTransformPoints( info->hdcSrc, (POINT *)&src_rect, (POINT *)&src_rect, 2, NtGdiDPtoLP );
 
-    ret = GdiAlphaBlend( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
-                         info->hdcSrc, src_rect.left, src_rect.top,
-                         src_rect.right - src_rect.left, src_rect.bottom - src_rect.top,
-                         (info->dwFlags & ULW_ALPHA) ? *info->pblend : blend );
+    ret = NtGdiAlphaBlend( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top,
+                           info->hdcSrc, src_rect.left, src_rect.top,
+                           src_rect.right - src_rect.left, src_rect.bottom - src_rect.top,
+                           (info->dwFlags & ULW_ALPHA) ? *info->pblend : blend, 0 );
     if (ret)
     {
         memcpy( dst_bits, src_bits, bmi->bmiHeader.biSizeImage );
@@ -1607,8 +1610,8 @@ BOOL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info
 
 done:
     window_surface_release( surface );
-    if (hdc) DeleteDC( hdc );
-    if (dib) DeleteObject( dib );
+    if (hdc) NtGdiDeleteObjectApp( hdc );
+    if (dib) NtGdiDeleteObjectApp( dib );
     return ret;
 }
 
