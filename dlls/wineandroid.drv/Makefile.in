@@ -1,6 +1,6 @@
 EXTRADEFS = -DWINE_NO_LONG_TYPES
 MODULE  = wineandroid.drv
-IMPORTS = uuid ole32 user32 gdi32 advapi32 ntoskrnl win32u
+IMPORTS = user32 gdi32 advapi32 ntoskrnl win32u
 
 EXTRADLLFLAGS = -mcygwin
 
@@ -8,7 +8,6 @@ C_SRCS = \
 	device.c \
 	init.c \
 	keyboard.c \
-	mmdevdrv.c \
 	opengl.c \
 	window.c
 
