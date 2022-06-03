@@ -3328,7 +3328,7 @@ static int get_compression_weights( UINT compression, const WCHAR *compr_tables[
     if (!compr_tables[0])
     {
         compr_tables[0] = sort.compr_data + compr->offset;
-        for (i = 1; i <= maxlen - 2; i++)
+        for (i = 1; i < 8; i++)
             compr_tables[i] = compr_tables[i - 1] + compr->len[i - 1] * compression_size( i + 1 );
     }
     for (i = maxlen - 2; i >= 0; i--)
