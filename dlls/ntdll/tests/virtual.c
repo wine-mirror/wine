@@ -272,11 +272,26 @@ static void test_NtAllocateVirtualMemory(void)
     ok(!!status, "Unexpected status %08lx.\n", status);
 }
 
-static void test_NtAllocateVirtualMemoryEx(void)
+#define check_region_size(p, s) check_region_size_(p, s, __LINE__)
+static void check_region_size_(void *p, SIZE_T s, unsigned int line)
 {
-    void *addr1, *addr2;
+    MEMORY_BASIC_INFORMATION mbi;
     NTSTATUS status;
     SIZE_T size;
+
+    memset(&mbi, 0, sizeof(mbi));
+    status = NtQueryVirtualMemory( NtCurrentProcess(), p, MemoryBasicInformation, &mbi, sizeof(mbi), &size );
+    ok_(__FILE__,line)( !status, "Unexpected return value %08lx\n", status );
+    ok_(__FILE__,line)( size == sizeof(mbi), "Unexpected return value.\n");
+    ok_(__FILE__,line)( mbi.RegionSize == s, "Unexpected size %Iu, expected %Iu.\n", mbi.RegionSize, s);
+}
+
+static void test_NtAllocateVirtualMemoryEx(void)
+{
+    SIZE_T size, size2;
+    char *p, *p1, *p2;
+    NTSTATUS status;
+    void *addr1;
 
     if (!pNtAllocateVirtualMemoryEx)
     {
@@ -291,7 +306,7 @@ static void test_NtAllocateVirtualMemoryEx(void)
     ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
 
     size = 0;
-    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr2, &size, MEM_RELEASE);
+    status = NtFreeVirtualMemory(NtCurrentProcess(), &addr1, &size, MEM_RELEASE);
     ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
 
     /* specifying a count of >0 with NULL parameters should fail */
@@ -320,6 +335,87 @@ static void test_NtAllocateVirtualMemoryEx(void)
     {
         size = 0;
         status = NtFreeVirtualMemory(NtCurrentProcess(), &addr1, &size, MEM_RELEASE);
+        ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    }
+
+    /* Placeholder region splitting. */
+
+    /* Split in three regions. */
+    addr1 = NULL;
+    size = 0x10000;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr1, &size, MEM_RESERVE | MEM_RESERVE_PLACEHOLDER,
+            PAGE_NOACCESS, NULL, 0);
+    todo_wine
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+
+    if (status == STATUS_SUCCESS)
+    {
+        p = addr1;
+        p1 = p + size / 2;
+        p2 = p1 + size / 4;
+        size2 = size / 4;
+        status = NtFreeVirtualMemory(NtCurrentProcess(), (void **)&p1, &size2, MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER);
+        ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+
+        check_region_size(p, size / 2);
+        check_region_size(p1, size / 4);
+        check_region_size(p2, size - size / 2 - size / 4);
+
+        status = NtFreeVirtualMemory(NtCurrentProcess(), (void **)&p, &size2, MEM_RELEASE);
+        ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+        status = NtFreeVirtualMemory(NtCurrentProcess(), (void **)&p1, &size2, MEM_RELEASE);
+        ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+        status = NtFreeVirtualMemory(NtCurrentProcess(), (void **)&p2, &size2, MEM_RELEASE);
+        ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    }
+
+    /* Split in two regions, specifying lower part. */
+    addr1 = NULL;
+    size = 0x10000;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr1, &size, MEM_RESERVE | MEM_RESERVE_PLACEHOLDER,
+            PAGE_NOACCESS, NULL, 0);
+    todo_wine
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+
+    if (status == STATUS_SUCCESS)
+    {
+        p1 = addr1;
+        p2 = p1 + size / 4;
+        size2 = size / 4;
+        status = NtFreeVirtualMemory(NtCurrentProcess(), (void **)&p1, &size2, MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER);
+        ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+        ok(p1 == addr1, "Unexpected address.\n");
+
+        check_region_size(p1, size / 4);
+        check_region_size(p2, size - size / 4);
+        status = NtFreeVirtualMemory(NtCurrentProcess(), (void **)&p1, &size2, MEM_RELEASE);
+        ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+        status = NtFreeVirtualMemory(NtCurrentProcess(), (void **)&p2, &size2, MEM_RELEASE);
+        ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+    }
+
+    /* Split in two regions, specifying second half. */
+    addr1 = NULL;
+    size = 0x10000;
+    status = pNtAllocateVirtualMemoryEx(NtCurrentProcess(), &addr1, &size, MEM_RESERVE | MEM_RESERVE_PLACEHOLDER,
+            PAGE_NOACCESS, NULL, 0);
+    todo_wine
+    ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+
+    if (status == STATUS_SUCCESS)
+    {
+        p1 = addr1;
+        p2 = p1 + size / 2;
+
+        size2 = size / 2;
+        status = NtFreeVirtualMemory(NtCurrentProcess(), (void **)&p2, &size2, MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER);
+        ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+        ok(p2 == p1 + size / 2, "Unexpected address.\n");
+        check_region_size(p1, size / 2);
+        check_region_size(p2, size / 2);
+        status = NtFreeVirtualMemory(NtCurrentProcess(), (void **)&p1, &size2, MEM_RELEASE);
+        ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
+        status = NtFreeVirtualMemory(NtCurrentProcess(), (void **)&p2, &size2, MEM_RELEASE);
         ok(status == STATUS_SUCCESS, "Unexpected status %08lx.\n", status);
     }
 }
