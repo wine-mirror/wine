@@ -114,6 +114,7 @@ DEFINE_EXPECT(testobj_newenum);
 DEFINE_EXPECT(testobj_getidfail_d);
 DEFINE_EXPECT(testobj_tolocalestr_d);
 DEFINE_EXPECT(testobj_tolocalestr_i);
+DEFINE_EXPECT(testdestrobj);
 DEFINE_EXPECT(enumvariant_next_0);
 DEFINE_EXPECT(enumvariant_next_1);
 DEFINE_EXPECT(enumvariant_reset);
@@ -172,6 +173,7 @@ DEFINE_EXPECT(BindHandler);
 #define DISPID_GLOBAL_VDATE         0x1023
 #define DISPID_GLOBAL_VCY           0x1024
 #define DISPID_GLOBAL_TODOWINE      0x1025
+#define DISPID_GLOBAL_TESTDESTROBJ  0x1026
 
 #define DISPID_GLOBAL_TESTPROPDELETE      0x2000
 #define DISPID_GLOBAL_TESTNOPROPDELETE    0x2001
@@ -342,6 +344,7 @@ static HRESULT WINAPI DispatchEx_QueryInterface(IDispatchEx *iface, REFIID riid,
     else
         return E_NOINTERFACE;
 
+    IUnknown_AddRef((IUnknown *)*ppv);
     return S_OK;
 }
 
@@ -625,6 +628,40 @@ static IDispatchExVtbl testObjVtbl = {
 };
 
 static IDispatchEx testObj = { &testObjVtbl };
+
+static LONG test_destr_ref;
+
+static ULONG WINAPI testDestrObj_AddRef(IDispatchEx *iface)
+{
+    return ++test_destr_ref;
+}
+
+static ULONG WINAPI testDestrObj_Release(IDispatchEx *iface)
+{
+    if (!--test_destr_ref)
+        CHECK_EXPECT(testdestrobj);
+    return test_destr_ref;
+}
+
+static IDispatchExVtbl testDestrObjVtbl = {
+    DispatchEx_QueryInterface,
+    testDestrObj_AddRef,
+    testDestrObj_Release,
+    DispatchEx_GetTypeInfoCount,
+    DispatchEx_GetTypeInfo,
+    DispatchEx_GetIDsOfNames,
+    DispatchEx_Invoke,
+    DispatchEx_GetDispID,
+    DispatchEx_InvokeEx,
+    DispatchEx_DeleteMemberByName,
+    DispatchEx_DeleteMemberByDispID,
+    DispatchEx_GetMemberProperties,
+    DispatchEx_GetMemberName,
+    DispatchEx_GetNextDispID,
+    DispatchEx_GetNameSpaceParent
+};
+
+static IDispatchEx testDestrObj = { &testDestrObjVtbl };
 
 static HRESULT WINAPI dispexFunc_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, WORD wFlags, DISPPARAMS *pdp,
         VARIANT *res, EXCEPINFO *pei, IServiceProvider *pspCaller)
@@ -1065,6 +1102,11 @@ static HRESULT WINAPI Global_GetDispID(IDispatchEx *iface, BSTR bstrName, DWORD 
         return S_OK;
     }
 
+    if(!lstrcmpW(bstrName, L"testDestrObj")) {
+        *pid = DISPID_GLOBAL_TESTDESTROBJ;
+        return S_OK;
+    }
+
     if(strict_dispid_check && lstrcmpW(bstrName, L"t"))
         ok(0, "unexpected call %s\n", wine_dbgstr_w(bstrName));
     return DISP_E_UNKNOWNNAME;
@@ -1266,6 +1308,22 @@ static HRESULT WINAPI Global_InvokeEx(IDispatchEx *iface, DISPID id, LCID lcid, 
 
         V_VT(pvarRes) = VT_DISPATCH;
         V_DISPATCH(pvarRes) = (IDispatch*)&testObj;
+        return S_OK;
+
+    case DISPID_GLOBAL_TESTDESTROBJ:
+        ok(wFlags == INVOKE_PROPERTYGET, "wFlags = %x\n", wFlags);
+        ok(pdp != NULL, "pdp == NULL\n");
+        ok(!pdp->rgvarg, "rgvarg != NULL\n");
+        ok(!pdp->rgdispidNamedArgs, "rgdispidNamedArgs != NULL\n");
+        ok(!pdp->cArgs, "cArgs = %d\n", pdp->cArgs);
+        ok(!pdp->cNamedArgs, "cNamedArgs = %d\n", pdp->cNamedArgs);
+        ok(pvarRes != NULL, "pvarRes == NULL\n");
+        ok(V_VT(pvarRes) ==  VT_EMPTY, "V_VT(pvarRes) = %d\n", V_VT(pvarRes));
+        ok(pei != NULL, "pei == NULL\n");
+
+        V_VT(pvarRes) = VT_DISPATCH;
+        V_DISPATCH(pvarRes) = (IDispatch*)&testDestrObj;
+        IDispatch_AddRef(V_DISPATCH(pvarRes));
         return S_OK;
 
     case DISPID_GLOBAL_PUREDISP:
@@ -3386,6 +3444,25 @@ static void test_invokeex(void)
     IActiveScript_Release(script);
 }
 
+static void test_destructors(void)
+{
+    IActiveScript *script;
+    VARIANT v;
+    HRESULT hres;
+
+    V_VT(&v) = VT_EMPTY;
+    hres = parse_script_expr(L"Math.ref = testDestrObj, isNaN.ref = testDestrObj, true", &v, &script);
+    ok(hres == S_OK, "parse_script_expr failed: %08lx\n", hres);
+    ok(V_VT(&v) == VT_BOOL, "V_VT(v) = %d\n", V_VT(&v));
+
+    SET_EXPECT(testdestrobj);
+    hres = IActiveScript_SetScriptState(script, SCRIPTSTATE_UNINITIALIZED);
+    ok(hres == S_OK, "SetScriptState(SCRIPTSTATE_UNINITIALIZED) failed: %08lx\n", hres);
+    CHECK_CALLED(testdestrobj);
+
+    IActiveScript_Release(script);
+}
+
 static void test_eval(void)
 {
     IActiveScriptParse *parser;
@@ -3914,6 +3991,7 @@ static BOOL run_tests(void)
 
     test_script_exprs();
     test_invokeex();
+    test_destructors();
     test_eval();
     test_error_reports();
 
