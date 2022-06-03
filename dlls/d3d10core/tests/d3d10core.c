@@ -19346,6 +19346,71 @@ static void test_rtv_depth_slice(void)
     release_test_context(&test_context);
 }
 
+/* This is a regression test for a rather specific code path, triggered by
+ * SnowRunner.
+ *
+ * When a DSV is written to with a depth/stencil state that only writes stencil,
+ * we need to ensure that locations other than the draw binding are invalidated.
+ * In particular, if the texture was previously in CLEARED, that must be
+ * invalidated.
+ */
+static void test_stencil_only_write_after_clear(void)
+{
+    static const struct vec4 green = {0.0f, 1.0f, 0.0f, 1.0f};
+    static const struct vec4 red = {1.0f, 0.0f, 0.0f, 1.0f};
+    struct d3d10core_test_context test_context;
+    ID3D10DepthStencilState *ds_state;
+    D3D10_TEXTURE2D_DESC texture_desc;
+    ID3D10DepthStencilView *dsv;
+    ID3D10Texture2D *ds_texture;
+    ID3D10Device *device;
+    HRESULT hr;
+
+    static const struct D3D10_DEPTH_STENCIL_DESC ds_desc =
+    {
+        .DepthEnable = FALSE,
+        .StencilEnable = TRUE,
+        .StencilReadMask = 0xff,
+        .StencilWriteMask = 0xff,
+        .FrontFace.StencilFunc = D3D10_COMPARISON_NOT_EQUAL,
+        .FrontFace.StencilPassOp = D3D10_STENCIL_OP_REPLACE,
+        .FrontFace.StencilFailOp = D3D10_STENCIL_OP_REPLACE,
+        .FrontFace.StencilDepthFailOp = D3D10_STENCIL_OP_REPLACE,
+        .BackFace.StencilFunc = D3D10_COMPARISON_NOT_EQUAL,
+        .BackFace.StencilPassOp = D3D10_STENCIL_OP_REPLACE,
+        .BackFace.StencilFailOp = D3D10_STENCIL_OP_REPLACE,
+        .BackFace.StencilDepthFailOp = D3D10_STENCIL_OP_REPLACE,
+    };
+
+    if (!init_test_context(&test_context))
+        return;
+    device = test_context.device;
+
+    ID3D10Texture2D_GetDesc(test_context.backbuffer, &texture_desc);
+    texture_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+    texture_desc.BindFlags = D3D10_BIND_DEPTH_STENCIL;
+    hr = ID3D10Device_CreateTexture2D(device, &texture_desc, NULL, &ds_texture);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+    hr = ID3D10Device_CreateDepthStencilView(device, (ID3D10Resource *)ds_texture, NULL, &dsv);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    hr = ID3D10Device_CreateDepthStencilState(device, &ds_desc, &ds_state);
+    ok(hr == S_OK, "Got hr %#x.\n", hr);
+
+    ID3D10Device_OMSetDepthStencilState(device, ds_state, 0xff);
+    ID3D10Device_OMSetRenderTargets(device, 1, &test_context.backbuffer_rtv, dsv);
+
+    ID3D10Device_ClearDepthStencilView(device, dsv, D3D10_CLEAR_DEPTH | D3D10_CLEAR_STENCIL, 1.0f, 0);
+    draw_color_quad(&test_context, &green);
+    draw_color_quad(&test_context, &red);
+    check_texture_color(test_context.backbuffer, 0xff00ff00, 0);
+
+    ID3D10Texture2D_Release(ds_texture);
+    ID3D10DepthStencilView_Release(dsv);
+    ID3D10DepthStencilState_Release(ds_state);
+    release_test_context(&test_context);
+}
+
 START_TEST(d3d10core)
 {
     unsigned int argc, i;
@@ -19477,6 +19542,7 @@ START_TEST(d3d10core)
     queue_test(test_texture_compressed_3d);
     queue_test(test_dynamic_map_synchronization);
     queue_test(test_rtv_depth_slice);
+    queue_test(test_stencil_only_write_after_clear);
 
     run_queued_tests();
 
