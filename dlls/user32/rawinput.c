@@ -153,7 +153,7 @@ static struct device *add_device( HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface,
     switch (type)
     {
     case RIM_TYPEHID:
-        status = NtDeviceIoControlFile( device->file, NULL, NULL, NULL, &io,
+        status = NtDeviceIoControlFile( file, NULL, NULL, NULL, &io,
                                         IOCTL_HID_GET_COLLECTION_INFORMATION,
                                         NULL, 0, &hid_info, sizeof(hid_info) );
         if (status)
@@ -172,7 +172,7 @@ static struct device *add_device( HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface,
             goto fail;
         }
 
-        status = NtDeviceIoControlFile( device->file, NULL, NULL, NULL, &io,
+        status = NtDeviceIoControlFile( file, NULL, NULL, NULL, &io,
                                         IOCTL_HID_GET_COLLECTION_DESCRIPTOR,
                                         NULL, 0, preparsed, hid_info.DescriptorSize );
         if (status)
