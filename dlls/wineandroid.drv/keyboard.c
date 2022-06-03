@@ -32,7 +32,6 @@
 #include "config.h"
 
 #include "android.h"
-#include "wine/unicode.h"
 #include "wine/server.h"
 #include "wine/debug.h"
 
@@ -802,9 +801,11 @@ INT ANDROID_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size )
 
     if (!len)
     {
-        static const WCHAR format[] = {'K','e','y',' ','0','x','%','0','2','x',0};
-        snprintfW( buffer, size, format, vkey );
-        len = strlenW( buffer );
+        char name[16];
+        len = sprintf( name, "Key 0x%02x", vkey );
+        len = min( len + 1, size );
+        ascii_to_unicode( buffer, name, len );
+        if (len) buffer[--len] = 0;
     }
 
     TRACE( "lparam 0x%08x -> %s\n", lparam, debugstr_w( buffer ));

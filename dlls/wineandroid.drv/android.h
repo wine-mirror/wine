@@ -187,4 +187,11 @@ extern JavaVM **p_java_vm;
 extern jobject *p_java_object;
 extern unsigned short *p_java_gdt_sel;
 
+/* string helpers */
+
+static inline void ascii_to_unicode( WCHAR *dst, const char *src, size_t len )
+{
+    while (len--) *dst++ = (unsigned char)*src++;
+}
+
 #endif  /* __WINE_ANDROID_H */
