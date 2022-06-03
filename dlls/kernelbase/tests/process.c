@@ -128,10 +128,23 @@ static void test_MapViewOfFile3(void)
     ok(ret, "Failed to delete a test file.\n");
 }
 
+#define check_region_size(p, s) check_region_size_(p, s, __LINE__)
+static void check_region_size_(void *p, SIZE_T s, unsigned int line)
+{
+    MEMORY_BASIC_INFORMATION info;
+    SIZE_T ret;
+
+    memset(&info, 0, sizeof(info));
+    ret = VirtualQuery(p, &info, sizeof(info));
+    ok_(__FILE__,line)(ret == sizeof(info), "Unexpected return value.\n");
+    ok_(__FILE__,line)(info.RegionSize == s, "Unexpected size %Iu, expected %Iu.\n", info.RegionSize, s);
+}
+
 static void test_VirtualAlloc2(void)
 {
     void *placeholder1, *placeholder2, *view1, *view2, *addr;
     MEMORY_BASIC_INFORMATION info;
+    char *p, *p1, *p2;
     HANDLE section;
     SIZE_T size;
     BOOL ret;
@@ -194,6 +207,54 @@ static void test_VirtualAlloc2(void)
 
     VirtualFree(placeholder1, 0, MEM_RELEASE);
     VirtualFree(placeholder2, 0, MEM_RELEASE);
+
+    /* Split in three regions. */
+    p = pVirtualAlloc2(NULL, NULL, 2 * size, MEM_RESERVE_PLACEHOLDER | MEM_RESERVE, PAGE_NOACCESS, NULL, 0);
+    ok(!!p, "Failed to create a placeholder range.\n");
+
+    p1 = p + size / 2;
+    p2 = p1 + size / 4;
+    ret = VirtualFree(p1, size / 4, MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER);
+    ok(ret, "Failed to split a placeholder.\n");
+    check_region_size(p, size / 2);
+    check_region_size(p1, size / 4);
+    check_region_size(p2, 2 * size - size / 2 - size / 4);
+    ret = VirtualFree(p, 0, MEM_RELEASE);
+    ok(ret, "Failed to release a region.\n");
+    ret = VirtualFree(p1, 0, MEM_RELEASE);
+    ok(ret, "Failed to release a region.\n");
+    ret = VirtualFree(p2, 0, MEM_RELEASE);
+    ok(ret, "Failed to release a region.\n");
+
+    /* Split in two regions, specifying lower part. */
+    p = pVirtualAlloc2(NULL, NULL, 2 * size, MEM_RESERVE_PLACEHOLDER | MEM_RESERVE, PAGE_NOACCESS, NULL, 0);
+    ok(!!p, "Failed to create a placeholder range.\n");
+
+    p1 = p;
+    p2 = p + size / 2;
+    ret = VirtualFree(p1, size / 2, MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER);
+    ok(ret, "Failed to split a placeholder.\n");
+    check_region_size(p1, size / 2);
+    check_region_size(p2, 2 * size - size / 2);
+    ret = VirtualFree(p1, 0, MEM_RELEASE);
+    ok(ret, "Failed to release a region.\n");
+    ret = VirtualFree(p2, 0, MEM_RELEASE);
+    ok(ret, "Failed to release a region.\n");
+
+    /* Split in two regions, specifying second half. */
+    p = pVirtualAlloc2(NULL, NULL, 2 * size, MEM_RESERVE_PLACEHOLDER | MEM_RESERVE, PAGE_NOACCESS, NULL, 0);
+    ok(!!p, "Failed to create a placeholder range.\n");
+
+    p1 = p;
+    p2 = p + size;
+    ret = VirtualFree(p2, size, MEM_RELEASE | MEM_PRESERVE_PLACEHOLDER);
+    ok(ret, "Failed to split a placeholder.\n");
+    check_region_size(p1, size);
+    check_region_size(p2, size);
+    ret = VirtualFree(p1, 0, MEM_RELEASE);
+    ok(ret, "Failed to release a region.\n");
+    ret = VirtualFree(p2, 0, MEM_RELEASE);
+    ok(ret, "Failed to release a region.\n");
 }
 
 static void test_VirtualAllocFromApp(void)
