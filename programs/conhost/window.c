@@ -239,7 +239,7 @@ static void load_config( const WCHAR *key_name, struct console_config *config )
 
     HKEY key, app_key;
 
-    TRACE("loading %s registry settings.\n", wine_dbgstr_w( key_name ));
+    TRACE( "Loading default console settings\n" );
 
     memcpy( config->color_map, color_map, sizeof(color_map) );
     memset( config->face_name, 0, sizeof(config->face_name) );
@@ -265,13 +265,15 @@ static void load_config( const WCHAR *key_name, struct console_config *config )
     config->win_pos.Y    = 0;
     config->edition_mode = 0;
 
-    /* read global settings */
+    /* Load default console settings */
     if (!RegOpenKeyW( HKEY_CURRENT_USER, L"Console", &key ))
     {
         load_registry_key( key, config );
-        /* if requested, load part related to console title */
+
+        /* Load app-specific console settings (if any) */
         if (key_name && !RegOpenKeyW( key, key_name, &app_key ))
         {
+            TRACE( "Loading %s console settings\n", wine_dbgstr_w(key_name) );
             load_registry_key( app_key, config );
             RegCloseKey( app_key );
         }
@@ -408,7 +410,7 @@ static void save_config( const WCHAR *key_name, const struct console_config *con
 {
     HKEY key, app_key;
 
-    TRACE( "%s %s\n", debugstr_w( key_name ), debugstr_config( config ));
+    TRACE( "Saving %s console settings\n", key_name ? debugstr_w( key_name ) : "default" );
 
     if (RegCreateKeyW( HKEY_CURRENT_USER, L"Console", &key ))
     {
