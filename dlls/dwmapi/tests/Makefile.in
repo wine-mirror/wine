@@ -1,5 +1,5 @@
 TESTDLL = dwmapi.dll
-IMPORTS = dwmapi
+IMPORTS = dwmapi user32
 
 C_SRCS = \
 	dwmapi.c

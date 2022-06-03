@@ -35,7 +35,11 @@ static void test_DwmIsCompositionEnabled(void)
 
 static void test_DwmGetCompositionTimingInfo(void)
 {
+    LARGE_INTEGER performance_frequency;
+    int result, display_frequency;
     DWM_TIMING_INFO timing_info;
+    QPC_TIME refresh_period;
+    DEVMODEA mode;
     BOOL enabled;
     HRESULT hr;
 
@@ -56,9 +60,27 @@ static void test_DwmGetCompositionTimingInfo(void)
     hr = DwmGetCompositionTimingInfo(NULL, &timing_info);
     ok(hr == MILERR_MISMATCHED_SIZE, "Got hr %#lx.\n", hr);
 
+    memset(&mode, 0, sizeof(mode));
+    mode.dmSize = sizeof(mode);
+    result = EnumDisplaySettingsA(NULL, ENUM_CURRENT_SETTINGS, &mode);
+    ok(!!result, "Failed to get display mode %#lx.\n", GetLastError());
+    display_frequency = mode.dmDisplayFrequency;
+    ok(!!QueryPerformanceFrequency(&performance_frequency), "Failed to get performance counter frequency.\n");
+    refresh_period = performance_frequency.QuadPart / display_frequency;
+
     timing_info.cbSize = sizeof(timing_info);
     hr = DwmGetCompositionTimingInfo(NULL, &timing_info);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
+    ok(timing_info.cbSize == sizeof(timing_info), "Got wrong struct size %d.\n", timing_info.cbSize);
+    ok(timing_info.rateRefresh.uiDenominator == 1 && timing_info.rateRefresh.uiNumerator == display_frequency,
+            "Got wrong monitor refresh rate %d/%d.\n", timing_info.rateRefresh.uiDenominator,
+            timing_info.rateRefresh.uiNumerator);
+    ok(timing_info.rateCompose.uiDenominator == 1 && timing_info.rateCompose.uiNumerator == display_frequency,
+            "Got wrong composition rate %d/%d.\n", timing_info.rateCompose.uiDenominator,
+            timing_info.rateCompose.uiNumerator);
+    ok(timing_info.qpcRefreshPeriod == refresh_period
+            || broken(timing_info.qpcRefreshPeriod == display_frequency), /* win10 v1507 */
+            "Got wrong monitor refresh period %s.\n", wine_dbgstr_longlong(timing_info.qpcRefreshPeriod));
 }
 
 START_TEST(dwmapi)
