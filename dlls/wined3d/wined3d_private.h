@@ -3778,6 +3778,8 @@ struct wined3d_depth_stencil_state
     LONG refcount;
     struct wined3d_depth_stencil_state_desc desc;
 
+    bool writes_ds;
+
     void *parent;
     const struct wined3d_parent_ops *parent_ops;
 

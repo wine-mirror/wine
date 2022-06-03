@@ -3455,7 +3455,7 @@ VkCommandBuffer wined3d_context_vk_apply_draw_state(struct wined3d_context_vk *c
             wined3d_rendertarget_view_prepare_location(dsv, &context_vk->c, dsv->resource->draw_binding);
         }
 
-        if (!state->depth_stencil_state || state->depth_stencil_state->desc.depth_write)
+        if (!state->depth_stencil_state || state->depth_stencil_state->writes_ds)
             invalidate_ds = true;
 
         sample_count = max(1, wined3d_resource_get_sample_count(dsv->resource));
