@@ -368,32 +368,130 @@ BLUE_INI TEXTFILE
 "BorderSize = 1\r\n"
 "FillColor = 255 255 255\r\n"
 "BorderColor = 174 174 174\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
 "TransitionDurations = 4, "
 "0, 100, 100, 100, "
 "100, 0, 100, 100, "
 "100, 100, 0, 100, "
 "100, 100, 100, 0\r\n"
-
-"[ComboBox(Disabled)]\r\n"
-"BorderColor = 228 228 228\r\n"
-"FillColor = 231 231 231\r\n"
 
 "[ComboBox.DropDownButton]\r\n"
 "BgType = ImageFile\r\n"
 "ImageLayout = Vertical\r\n"
 "SizingType = Stretch\r\n"
-"ImageFile = blue_combobutton.bmp\r\n"
-"SizingMargins = 3, 3, 3, 3\r\n"
+"SizingMargins = 3, 3, 7, 8\r\n"
 "ContentMargins = 0, 0, 0, 0\r\n"
 "ImageCount = 4\r\n"
 "GlyphType = ImageGlyph\r\n"
-"GlyphImageFile = blue_combobutton_glyph.bmp\r\n"
-"GlyphTransparent = True\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageFile = blue_combobox_dropdownbutton.bmp\r\n"
+"; 10x76px \r\n"
+"ImageFile1 = blue_combobox_dropdownbutton_glyph_10px.bmp\r\n"
+"ImageFile2 = blue_combobox_dropdownbutton_glyph_9px.bmp\r\n"
+"ImageFile3 = blue_combobox_dropdownbutton_glyph_11px.bmp\r\n"
+"ImageFile4 = blue_combobox_dropdownbutton_glyph_14px.bmp\r\n"
+"ImageFile5 = blue_combobox_dropdownbutton_glyph_17px.bmp\r\n"
+"ImageFile6 = blue_combobox_dropdownbutton_glyph_21px.bmp\r\n"
+"ImageFile7 = blue_combobox_dropdownbutton_glyph_27px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
 "TransitionDurations = 4, "
 "0, 100, 100, 100, "
 "100, 0, 100, 100, "
 "100, 100, 0, 100, "
 "100, 100, 100, 0\r\n"
+
+"[ComboBox.Border]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 4\r\n"
+"BorderSize = 0\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 2, 2, 2, 2\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_combobox_border.bmp\r\n"
+
+"[ComboBox.ReadOnly]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 4\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 4, 4\r\n"
+"ContentMargins = 3, 3, 3, 3\r\n"
+"ImageFile = blue_combobox_readonly.bmp\r\n"
+
+"[ComboBox.ReadOnly(Disabled)]\r\n"
+"TextColor = 166 166 166\r\n"
+
+"[ComboBox.DropDownButtonRight]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 4\r\n"
+"SizingMargins = 2, 2, 7, 8\r\n"
+"ContentMargins = 0, 0, 1, 0\r\n"
+"ImageFile = blue_combobox_dropdownbutton_right.bmp\r\n"
+"; 10x76px \r\n"
+"ImageFile1 = blue_combobox_dropdownbutton_right_glyph_10px.bmp\r\n"
+"ImageFile2 = blue_combobox_dropdownbutton_right_glyph_9px.bmp\r\n"
+"ImageFile3 = blue_combobox_dropdownbutton_right_glyph_11px.bmp\r\n"
+"ImageFile4 = blue_combobox_dropdownbutton_right_glyph_14px.bmp\r\n"
+"ImageFile5 = blue_combobox_dropdownbutton_right_glyph_17px.bmp\r\n"
+"ImageFile6 = blue_combobox_dropdownbutton_right_glyph_21px.bmp\r\n"
+"ImageFile7 = blue_combobox_dropdownbutton_right_glyph_27px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[ComboBox.DropDownButtonLeft]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 4\r\n"
+"SizingMargins = 3, 2, 7, 8\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_combobox_dropdownbutton_left.bmp\r\n"
+"; 10x76px \r\n"
+"ImageFile1 = blue_combobox_dropdownbutton_left_glyph_10px.bmp\r\n"
+"ImageFile2 = blue_combobox_dropdownbutton_left_glyph_9px.bmp\r\n"
+"ImageFile3 = blue_combobox_dropdownbutton_left_glyph_11px.bmp\r\n"
+"ImageFile4 = blue_combobox_dropdownbutton_left_glyph_14px.bmp\r\n"
+"ImageFile5 = blue_combobox_dropdownbutton_left_glyph_17px.bmp\r\n"
+"ImageFile6 = blue_combobox_dropdownbutton_left_glyph_21px.bmp\r\n"
+"ImageFile7 = blue_combobox_dropdownbutton_left_glyph_27px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[ComboBox.CueBanner]\r\n"
+"TextColor = 174 174 174\r\n"
+
+"[ComboBox.DropDownItem(Normal)]\r\n"
+"FillColor = 255 255 255\r\n"
+"TextColor = 0 0 0\r\n"
+
+"[ComboBox.DropDownItem(HighLighted)]\r\n"
+"FillColor = 48 150 250\r\n"
+"TextColor = 255 255 255\r\n"
 
 "\r\n; Edit\r\n"
 "[Edit]\r\n"
@@ -1438,11 +1536,83 @@ BLUE_COMMANDLINK_GLYPH_67PX_BMP BITMAP "blue_commandlink_glyph_67px.bmp"
 BLUE_COMMANDLINK_GLYPH_75PX_BMP BITMAP "blue_commandlink_glyph_75px.bmp"
 
 /* ComboBox */
-/* @makedep: blue_combobutton.bmp */
-BLUE_COMBOBUTTON_BMP BITMAP "blue_combobutton.bmp"
+/* @makedep: blue_combobox_border.bmp */
+BLUE_COMBOBOX_BORDER_BMP BITMAP "blue_combobox_border.bmp"
 
-/* @makedep: blue_combobutton_glyph.bmp */
-BLUE_COMBOBUTTON_GLYPH_BMP BITMAP "blue_combobutton_glyph.bmp"
+/* @makedep: blue_combobox_dropdownbutton.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_BMP BITMAP "blue_combobox_dropdownbutton.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_glyph_9px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_GLYPH_9PX_BMP BITMAP "blue_combobox_dropdownbutton_glyph_9px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_glyph_10px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_GLYPH_10PX_BMP BITMAP "blue_combobox_dropdownbutton_glyph_10px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_glyph_11px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_GLYPH_11PX_BMP BITMAP "blue_combobox_dropdownbutton_glyph_11px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_glyph_14px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_GLYPH_14PX_BMP BITMAP "blue_combobox_dropdownbutton_glyph_14px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_glyph_17px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_GLYPH_17PX_BMP BITMAP "blue_combobox_dropdownbutton_glyph_17px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_glyph_21px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_GLYPH_21PX_BMP BITMAP "blue_combobox_dropdownbutton_glyph_21px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_glyph_27px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_GLYPH_27PX_BMP BITMAP "blue_combobox_dropdownbutton_glyph_27px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_left.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_LEFT_BMP BITMAP "blue_combobox_dropdownbutton_left.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_left_glyph_9px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_LEFT_GLYPH_9PX_BMP BITMAP "blue_combobox_dropdownbutton_left_glyph_9px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_left_glyph_10px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_LEFT_GLYPH_10PX_BMP BITMAP "blue_combobox_dropdownbutton_left_glyph_10px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_left_glyph_11px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_LEFT_GLYPH_11PX_BMP BITMAP "blue_combobox_dropdownbutton_left_glyph_11px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_left_glyph_14px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_LEFT_GLYPH_14PX_BMP BITMAP "blue_combobox_dropdownbutton_left_glyph_14px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_left_glyph_17px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_LEFT_GLYPH_17PX_BMP BITMAP "blue_combobox_dropdownbutton_left_glyph_17px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_left_glyph_21px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_LEFT_GLYPH_21PX_BMP BITMAP "blue_combobox_dropdownbutton_left_glyph_21px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_left_glyph_27px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_LEFT_GLYPH_27PX_BMP BITMAP "blue_combobox_dropdownbutton_left_glyph_27px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_right.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_RIGHT_BMP BITMAP "blue_combobox_dropdownbutton_right.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_right_glyph_9px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_RIGHT_GLYPH_9PX_BMP BITMAP "blue_combobox_dropdownbutton_right_glyph_9px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_right_glyph_10px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_RIGHT_GLYPH_10PX_BMP BITMAP "blue_combobox_dropdownbutton_right_glyph_10px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_right_glyph_11px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_RIGHT_GLYPH_11PX_BMP BITMAP "blue_combobox_dropdownbutton_right_glyph_11px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_right_glyph_14px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_RIGHT_GLYPH_14PX_BMP BITMAP "blue_combobox_dropdownbutton_right_glyph_14px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_right_glyph_17px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_RIGHT_GLYPH_17PX_BMP BITMAP "blue_combobox_dropdownbutton_right_glyph_17px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_right_glyph_21px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_RIGHT_GLYPH_21PX_BMP BITMAP "blue_combobox_dropdownbutton_right_glyph_21px.bmp"
+
+/* @makedep: blue_combobox_dropdownbutton_right_glyph_27px.bmp */
+BLUE_COMBOBOX_DROPDOWNBUTTON_RIGHT_GLYPH_27PX_BMP BITMAP "blue_combobox_dropdownbutton_right_glyph_27px.bmp"
+
+/* @makedep: blue_combobox_readonly.bmp */
+BLUE_COMBOBOX_READONLY_BMP BITMAP "blue_combobox_readonly.bmp"
 
 /* Header */
 /* @makedep: blue_header.bmp */

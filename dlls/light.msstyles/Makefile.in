@@ -13,8 +13,32 @@ SVG_SRCS = \
 	blue_checkbox_32px.svg \
 	blue_checkbox_40px.svg \
 	blue_checkbox_52px.svg \
-	blue_combobutton.svg \
-	blue_combobutton_glyph.svg \
+	blue_combobox_border.svg \
+	blue_combobox_dropdownbutton.svg \
+	blue_combobox_dropdownbutton_glyph_10px.svg \
+	blue_combobox_dropdownbutton_glyph_11px.svg \
+	blue_combobox_dropdownbutton_glyph_14px.svg \
+	blue_combobox_dropdownbutton_glyph_17px.svg \
+	blue_combobox_dropdownbutton_glyph_21px.svg \
+	blue_combobox_dropdownbutton_glyph_27px.svg \
+	blue_combobox_dropdownbutton_glyph_9px.svg \
+	blue_combobox_dropdownbutton_left.svg \
+	blue_combobox_dropdownbutton_left_glyph_10px.svg \
+	blue_combobox_dropdownbutton_left_glyph_11px.svg \
+	blue_combobox_dropdownbutton_left_glyph_14px.svg \
+	blue_combobox_dropdownbutton_left_glyph_17px.svg \
+	blue_combobox_dropdownbutton_left_glyph_21px.svg \
+	blue_combobox_dropdownbutton_left_glyph_27px.svg \
+	blue_combobox_dropdownbutton_left_glyph_9px.svg \
+	blue_combobox_dropdownbutton_right.svg \
+	blue_combobox_dropdownbutton_right_glyph_10px.svg \
+	blue_combobox_dropdownbutton_right_glyph_11px.svg \
+	blue_combobox_dropdownbutton_right_glyph_14px.svg \
+	blue_combobox_dropdownbutton_right_glyph_17px.svg \
+	blue_combobox_dropdownbutton_right_glyph_21px.svg \
+	blue_combobox_dropdownbutton_right_glyph_27px.svg \
+	blue_combobox_dropdownbutton_right_glyph_9px.svg \
+	blue_combobox_readonly.svg \
 	blue_commandlink.svg \
 	blue_commandlink_glyph_30px.svg \
 	blue_commandlink_glyph_37px.svg \

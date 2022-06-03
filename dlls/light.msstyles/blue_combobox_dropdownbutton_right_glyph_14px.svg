@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="bitmap:14-32" width="14" height="40" version="1.1" viewBox="0 0 3.7041 10.583" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g stroke-width=".26458">
+  <path d="m0-1.8521h6.35v6.35h-6.35z" fill="none"/>
+  <path d="m0 3.7042h6.35v6.35h-6.35z" fill="none"/>
+  <path d="m0.26458 0.77485 1.711 1.6064 0.24442-0.22948-1.711-1.6064z" stroke-width=".26458"/>
+  <path d="m3.4597 0.52915-1.711 1.6064 0.24442 0.22948 1.711-1.6064z" stroke-width=".26458"/>
+ </g>
+ <g transform="matrix(1.8572 0 0 1 .17855 1.5687)">
+  <g transform="translate(.086725 .018767)" stroke-width=".1575">
+   <path d="m-0.0404 1.8333 0.92136 1.6063 0.13162-0.22946-0.92136-1.6063z" fill="#3096fa"/>
+   <path d="m1.68 1.5875-0.92136 1.6063 0.13162 0.22946 0.92136-1.6063z" fill="#3096fa"/>
+   <path d="m-0.0404 4.4784 0.92136 1.607 0.13162-0.22958-0.92136-1.607z" fill="#fff"/>
+   <path d="m1.68 4.2333-0.92136 1.607 0.13162 0.22958 0.92136-1.607z" fill="#fff"/>
+  </g>
+  <path d="m0.046325 7.1431 0.92136 1.6069 0.13162-0.22956-0.92136-1.6069z" fill="#aeaeae" stroke-width=".68639"/>
+  <path d="m1.7667 6.8979-0.92136 1.6069 0.13162 0.22956 0.92136-1.6069z" fill="#aeaeae" stroke-width=".68639"/>
+ </g>
+</svg>
