@@ -27,6 +27,8 @@
 #include <dlfcn.h>
 #include <link.h>
 
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
 #include "winreg.h"
@@ -84,19 +86,78 @@ void init_monitors( int width, int height )
 }
 
 
+/* wrapper for NtCreateKey that creates the key recursively if necessary */
+static HKEY reg_create_key( const WCHAR *name, ULONG name_len )
+{
+    UNICODE_STRING nameW = { name_len, name_len, (WCHAR *)name };
+    OBJECT_ATTRIBUTES attr;
+    NTSTATUS status;
+    HANDLE ret;
+
+    attr.Length = sizeof(attr);
+    attr.RootDirectory = 0;
+    attr.ObjectName = &nameW;
+    attr.Attributes = 0;
+    attr.SecurityDescriptor = NULL;
+    attr.SecurityQualityOfService = NULL;
+
+    status = NtCreateKey( &ret, MAXIMUM_ALLOWED, &attr, 0, NULL, 0, NULL );
+    if (status == STATUS_OBJECT_NAME_NOT_FOUND)
+    {
+        static const WCHAR registry_rootW[] = { '\\','R','e','g','i','s','t','r','y','\\' };
+        DWORD pos = 0, i = 0, len = name_len / sizeof(WCHAR);
+
+        /* don't try to create registry root */
+        if (len > ARRAY_SIZE(registry_rootW) &&
+            !memcmp( name, registry_rootW, sizeof(registry_rootW) ))
+            i += ARRAY_SIZE(registry_rootW);
+
+        while (i < len && name[i] != '\\') i++;
+        if (i == len) return 0;
+        for (;;)
+        {
+            nameW.Buffer = (WCHAR *)name + pos;
+            nameW.Length = (i - pos) * sizeof(WCHAR);
+            status = NtCreateKey( &ret, MAXIMUM_ALLOWED, &attr, 0, NULL, 0, NULL );
+
+            if (attr.RootDirectory) NtClose( attr.RootDirectory );
+            if (status) return 0;
+            if (i == len) break;
+            attr.RootDirectory = ret;
+            while (i < len && name[i] == '\\') i++;
+            pos = i;
+            while (i < len && name[i] != '\\') i++;
+        }
+    }
+    return ret;
+}
+
+
 /******************************************************************************
  *           set_screen_dpi
  */
 void set_screen_dpi( DWORD dpi )
 {
-    static const WCHAR dpi_key_name[] = {'S','o','f','t','w','a','r','e','\\','F','o','n','t','s',0};
     static const WCHAR dpi_value_name[] = {'L','o','g','P','i','x','e','l','s',0};
+    static const WCHAR dpi_key_name[] =
+    {
+        '\\','R','e','g','i','s','t','r','y',
+        '\\','M','a','c','h','i','n','e',
+        '\\','S','y','s','t','e','m',
+        '\\','C','u','r','r','e','n','t','C','o','n','t','r','o','l','S','e','t',
+        '\\','H','a','r','d','w','a','r','e',' ','P','r','o','f','i','l','e','s',
+        '\\','C','u','r','r','e','n','t',
+        '\\','S','o','f','t','w','a','r','e',
+        '\\','F','o','n','t','s'
+    };
     HKEY hkey;
 
-    if (!RegCreateKeyW( HKEY_CURRENT_CONFIG, dpi_key_name, &hkey ))
+    if ((hkey = reg_create_key( dpi_key_name, sizeof(dpi_key_name ))))
     {
-        RegSetValueExW( hkey, dpi_value_name, 0, REG_DWORD, (void *)&dpi, sizeof(DWORD) );
-        RegCloseKey( hkey );
+        UNICODE_STRING name;
+        RtlInitUnicodeString( &name, dpi_value_name );
+        NtSetValueKey( hkey, &name, 0, REG_DWORD, &dpi, sizeof(dpi) );
+        NtClose( hkey );
     }
 }
 
