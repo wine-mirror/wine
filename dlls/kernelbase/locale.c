@@ -3835,6 +3835,7 @@ DWORD WINAPI DECLSPEC_HOTPATCH FormatMessageW( DWORD flags, const void *source, 
     if (flags & FORMAT_MESSAGE_ALLOCATE_BUFFER)
     {
         WCHAR *result;
+        va_list args_copy;
         ULONG alloc = max( size * sizeof(WCHAR), 65536 );
 
         for (;;)
@@ -3844,9 +3845,17 @@ DWORD WINAPI DECLSPEC_HOTPATCH FormatMessageW( DWORD flags, const void *source, 
                 status = STATUS_NO_MEMORY;
                 break;
             }
-            status = RtlFormatMessage( src, width, !!(flags & FORMAT_MESSAGE_IGNORE_INSERTS),
-                                       FALSE, !!(flags & FORMAT_MESSAGE_ARGUMENT_ARRAY), args,
-                                       result, alloc, &retsize );
+            if (args && !(flags & FORMAT_MESSAGE_ARGUMENT_ARRAY))
+            {
+                va_copy( args_copy, *args );
+                status = RtlFormatMessage( src, width, !!(flags & FORMAT_MESSAGE_IGNORE_INSERTS),
+                                           FALSE, FALSE, &args_copy, result, alloc, &retsize );
+                va_end( args_copy );
+            }
+            else
+                status = RtlFormatMessage( src, width, !!(flags & FORMAT_MESSAGE_IGNORE_INSERTS),
+                                           FALSE, TRUE, args, result, alloc, &retsize );
+
             if (!status)
             {
                 if (retsize <= sizeof(WCHAR)) HeapFree( GetProcessHeap(), 0, result );
