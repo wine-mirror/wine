@@ -115,7 +115,7 @@ static inline BOOL is_onscreen_pixel_format( int format )
 static struct gl_drawable *create_gl_drawable( HWND hwnd, HDC hdc, int format )
 {
     static const int attribs[] = { EGL_WIDTH, 1, EGL_HEIGHT, 1, EGL_NONE };
-    struct gl_drawable *gl = HeapAlloc( GetProcessHeap(), 0, sizeof(*gl) );
+    struct gl_drawable *gl = malloc( sizeof(*gl) );
 
     gl->hwnd   = hwnd;
     gl->hdc    = hdc;
@@ -159,7 +159,7 @@ void destroy_gl_drawable( HWND hwnd )
         if (gl->surface) p_eglDestroySurface( display, gl->surface );
         if (gl->pbuffer) p_eglDestroySurface( display, gl->pbuffer );
         release_ioctl_window( gl->window );
-        HeapFree( GetProcessHeap(), 0, gl );
+        free( gl );
         break;
     }
     pthread_mutex_unlock( &drawable_mutex );
@@ -250,7 +250,7 @@ static struct wgl_context *create_context( HDC hdc, struct wgl_context *share, c
 
     if (!(gl = get_gl_drawable( NtUserWindowFromDC( hdc ), hdc ))) return NULL;
 
-    ctx = HeapAlloc( GetProcessHeap(), 0, sizeof(*ctx) );
+    ctx = malloc( sizeof(*ctx) );
 
     ctx->config  = pixel_formats[gl->format - 1].config;
     ctx->surface = 0;
@@ -436,7 +436,8 @@ static BOOL WINAPI android_wglDeleteContext( struct wgl_context *ctx )
     list_remove( &ctx->entry );
     pthread_mutex_unlock( &drawable_mutex );
     p_eglDestroyContext( display, ctx->context );
-    return HeapFree( GetProcessHeap(), 0, ctx );
+    free( ctx );
+    return TRUE;
 }
 
 /***********************************************************************
@@ -980,13 +981,13 @@ static BOOL egl_init(void)
     TRACE( "display %p version %u.%u\n", display, major, minor );
 
     p_eglGetConfigs( display, NULL, 0, &count );
-    configs = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*configs) );
-    pixel_formats = HeapAlloc( GetProcessHeap(), 0, count * sizeof(*pixel_formats) );
+    configs = malloc( count * sizeof(*configs) );
+    pixel_formats = malloc( count * sizeof(*pixel_formats) );
     p_eglGetConfigs( display, configs, count, &count );
     if (!count || !configs || !pixel_formats)
     {
-        HeapFree( GetProcessHeap(), 0, configs );
-        HeapFree( GetProcessHeap(), 0, pixel_formats );
+        free( configs );
+        free( pixel_formats );
         ERR( "eglGetConfigs returned no configs\n" );
         return 0;
     }

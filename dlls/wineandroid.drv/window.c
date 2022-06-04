@@ -118,7 +118,7 @@ static struct android_win_data *alloc_win_data( HWND hwnd )
 {
     struct android_win_data *data;
 
-    if ((data = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*data))))
+    if ((data = calloc( 1, sizeof(*data) )))
     {
         data->hwnd = hwnd;
         data->window = create_ioctl_window( hwnd, FALSE,
@@ -138,7 +138,7 @@ static void free_win_data( struct android_win_data *data )
     win_data_context[context_idx( data->hwnd )] = NULL;
     pthread_mutex_unlock( &win_data_mutex );
     if (data->window) release_ioctl_window( data->window );
-    HeapFree( GetProcessHeap(), 0, data );
+    free( data );
 }
 
 
@@ -402,13 +402,13 @@ static void pull_events(void)
 
     for (;;)
     {
-        if (!(event = HeapAlloc( GetProcessHeap(), 0, sizeof(*event) ))) break;
+        if (!(event = malloc( sizeof(*event) ))) break;
 
         res = read( event_pipe[0], &event->data, sizeof(event->data) );
         if (res != sizeof(event->data)) break;
         list_add_tail( &event_queue, &event->entry );
     }
-    HeapFree( GetProcessHeap(), 0, event );
+    free( event );
 }
 
 
@@ -533,7 +533,7 @@ static int process_events( DWORD mask )
         default:
             FIXME( "got event %u\n", event->data.type );
         }
-        HeapFree( GetProcessHeap(), 0, event );
+        free( event );
         count++;
         /* next may have been removed by a recursive call, so reset it to the beginning of the list */
         next = LIST_ENTRY( event_queue.next, struct java_event, entry );
@@ -802,11 +802,11 @@ static void android_surface_destroy( struct window_surface *window_surface )
 
     TRACE( "freeing %p bits %p\n", surface, surface->bits );
 
-    HeapFree( GetProcessHeap(), 0, surface->region_data );
+    free( surface->region_data );
     if (surface->region) NtGdiDeleteObjectApp( surface->region );
     release_ioctl_window( surface->window );
-    HeapFree( GetProcessHeap(), 0, surface->bits );
-    HeapFree( GetProcessHeap(), 0, surface );
+    free( surface->bits );
+    free( surface );
 }
 
 static const struct window_surface_funcs android_surface_funcs =
@@ -875,17 +875,17 @@ static void set_surface_region( struct window_surface *window_surface, HRGN win_
     if (surface->region) NtGdiCombineRgn( region, region, surface->region, RGN_AND );
 
     if (!(size = NtGdiGetRegionData( region, 0, NULL ))) goto done;
-    if (!(data = HeapAlloc( GetProcessHeap(), 0, size ))) goto done;
+    if (!(data = malloc( size ))) goto done;
 
     if (!NtGdiGetRegionData( region, size, data ))
     {
-        HeapFree( GetProcessHeap(), 0, data );
+        free( data );
         data = NULL;
     }
 
 done:
     window_surface->funcs->lock( window_surface );
-    HeapFree( GetProcessHeap(), 0, surface->region_data );
+    free( surface->region_data );
     surface->region_data = data;
     *window_surface->funcs->get_bounds( window_surface ) = surface->header.rect;
     window_surface->funcs->unlock( window_surface );
@@ -902,8 +902,7 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
     pthread_mutexattr_t attr;
 
-    surface = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
-                         FIELD_OFFSET( struct android_window_surface, info.bmiColors[3] ));
+    surface = calloc( 1, FIELD_OFFSET( struct android_window_surface, info.bmiColors[3] ));
     if (!surface) return NULL;
     set_color_info( &surface->info, src_alpha );
     surface->info.bmiHeader.biWidth       = width;
@@ -926,7 +925,7 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
     set_surface_region( &surface->header, (HRGN)1 );
     reset_bounds( &surface->bounds );
 
-    if (!(surface->bits = HeapAlloc( GetProcessHeap(), 0, surface->info.bmiHeader.biSizeImage )))
+    if (!(surface->bits = malloc( surface->info.bmiHeader.biSizeImage )))
         goto failed;
 
     TRACE( "created %p hwnd %p %s bits %p-%p\n", surface, hwnd, wine_dbgstr_rect(rect),
@@ -974,12 +973,12 @@ static unsigned int *get_mono_icon_argb( HDC hdc, HBITMAP bmp, unsigned int *wid
     if (!NtGdiExtGetObjectW( bmp, sizeof(bm), &bm )) return NULL;
     stride = ((bm.bmWidth + 15) >> 3) & ~1;
     mask_size = stride * bm.bmHeight;
-    if (!(mask = HeapAlloc( GetProcessHeap(), 0, mask_size ))) return NULL;
+    if (!(mask = malloc( mask_size ))) return NULL;
     if (!NtGdiGetBitmapBits( bmp, mask_size, mask )) goto done;
 
     bm.bmHeight /= 2;
     bits_size = bm.bmWidth * bm.bmHeight * sizeof(*bits);
-    if (!(bits = HeapAlloc( GetProcessHeap(), 0, bits_size ))) goto done;
+    if (!(bits = malloc( bits_size ))) goto done;
 
     ptr = bits;
     for (i = 0; i < bm.bmHeight; i++)
@@ -1000,7 +999,7 @@ static unsigned int *get_mono_icon_argb( HDC hdc, HBITMAP bmp, unsigned int *wid
     *height = bm.bmHeight;
 
 done:
-    HeapFree( GetProcessHeap(), 0, mask );
+    free( mask );
     return bits;
 }
 
@@ -1034,7 +1033,7 @@ static unsigned int *get_bitmap_argb( HDC hdc, HBITMAP color, HBITMAP mask, unsi
     info->bmiHeader.biYPelsPerMeter = 0;
     info->bmiHeader.biClrUsed = 0;
     info->bmiHeader.biClrImportant = 0;
-    if (!(bits = HeapAlloc( GetProcessHeap(), 0, bm.bmWidth * bm.bmHeight * sizeof(unsigned int) )))
+    if (!(bits = malloc( bm.bmWidth * bm.bmHeight * sizeof(unsigned int) )))
         goto failed;
     if (!NtGdiGetDIBitsInternal( hdc, color, 0, bm.bmHeight, bits, info, DIB_RGB_COLORS, 0, 0 ))
         goto failed;
@@ -1051,21 +1050,21 @@ static unsigned int *get_bitmap_argb( HDC hdc, HBITMAP color, HBITMAP mask, unsi
         /* generate alpha channel from the mask */
         info->bmiHeader.biBitCount = 1;
         info->bmiHeader.biSizeImage = width_bytes * bm.bmHeight;
-        if (!(mask_bits = HeapAlloc( GetProcessHeap(), 0, info->bmiHeader.biSizeImage ))) goto failed;
+        if (!(mask_bits = malloc( info->bmiHeader.biSizeImage ))) goto failed;
         if (!NtGdiGetDIBitsInternal( hdc, mask, 0, bm.bmHeight, mask_bits, info, DIB_RGB_COLORS, 0, 0 ))
             goto failed;
         ptr = bits;
         for (i = 0; i < bm.bmHeight; i++)
             for (j = 0; j < bm.bmWidth; j++, ptr++)
                 if (!((mask_bits[i * width_bytes + j / 8] << (j % 8)) & 0x80)) *ptr |= 0xff000000;
-        HeapFree( GetProcessHeap(), 0, mask_bits );
+        free( mask_bits );
     }
 
     return bits;
 
 failed:
-    HeapFree( GetProcessHeap(), 0, bits );
-    HeapFree( GetProcessHeap(), 0, mask_bits );
+    free( bits );
+    free( mask_bits );
     *width = *height = 0;
     return NULL;
 }
@@ -1477,7 +1476,7 @@ void ANDROID_SetCursor( HCURSOR handle )
                 }
             }
             ioctl_set_cursor( id, width, height, info.xHotspot, info.yHotspot, bits );
-            HeapFree( GetProcessHeap(), 0, bits );
+            free( bits );
             NtGdiDeleteObjectApp( info.hbmColor );
             NtGdiDeleteObjectApp( info.hbmMask );
         }

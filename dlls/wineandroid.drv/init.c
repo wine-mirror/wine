@@ -210,7 +210,7 @@ static ANDROID_PDEVICE *create_android_physdev(void)
 
     if (!device_init_done) device_init();
 
-    if (!(physdev = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(*physdev) ))) return NULL;
+    if (!(physdev = calloc( 1, sizeof(*physdev) ))) return NULL;
     return physdev;
 }
 
@@ -248,7 +248,7 @@ static BOOL CDECL ANDROID_CreateCompatibleDC( PHYSDEV orig, PHYSDEV *pdev )
  */
 static BOOL CDECL ANDROID_DeleteDC( PHYSDEV dev )
 {
-    HeapFree( GetProcessHeap(), 0, dev );
+    free( dev );
     return TRUE;
 }
 
