@@ -81,6 +81,7 @@ extern int ioctl_set_cursor( int id, int width, int height,
  * USER driver
  */
 
+extern pthread_mutex_t win_data_mutex DECLSPEC_HIDDEN;
 extern INT ANDROID_GetKeyNameText( LONG lparam, LPWSTR buffer, INT size ) DECLSPEC_HIDDEN;
 extern UINT ANDROID_MapVirtualKeyEx( UINT code, UINT maptype, HKL hkl ) DECLSPEC_HIDDEN;
 extern SHORT ANDROID_VkKeyScanEx( WCHAR ch, HKL hkl ) DECLSPEC_HIDDEN;

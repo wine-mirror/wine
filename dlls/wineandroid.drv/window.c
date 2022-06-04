@@ -60,14 +60,7 @@ struct android_win_data
 
 #define SWP_AGG_NOPOSCHANGE (SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE | SWP_NOZORDER)
 
-static CRITICAL_SECTION win_data_section;
-static CRITICAL_SECTION_DEBUG critsect_debug =
-{
-    0, 0, &win_data_section,
-    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
-      0, 0, { (DWORD_PTR)(__FILE__ ": win_data_section") }
-};
-static CRITICAL_SECTION win_data_section = { &critsect_debug, -1, 0, 0, 0, 0 };
+pthread_mutex_t win_data_mutex;
 
 static struct android_win_data *win_data_context[32768];
 
@@ -130,7 +123,7 @@ static struct android_win_data *alloc_win_data( HWND hwnd )
         data->hwnd = hwnd;
         data->window = create_ioctl_window( hwnd, FALSE,
                                             (float)get_win_monitor_dpi( hwnd ) / NtUserGetDpiForWindow( hwnd ));
-        EnterCriticalSection( &win_data_section );
+        pthread_mutex_lock( &win_data_mutex );
         win_data_context[context_idx(hwnd)] = data;
     }
     return data;
@@ -143,7 +136,7 @@ static struct android_win_data *alloc_win_data( HWND hwnd )
 static void free_win_data( struct android_win_data *data )
 {
     win_data_context[context_idx( data->hwnd )] = NULL;
-    LeaveCriticalSection( &win_data_section );
+    pthread_mutex_unlock( &win_data_mutex );
     if (data->window) release_ioctl_window( data->window );
     HeapFree( GetProcessHeap(), 0, data );
 }
@@ -159,9 +152,9 @@ static struct android_win_data *get_win_data( HWND hwnd )
     struct android_win_data *data;
 
     if (!hwnd) return NULL;
-    EnterCriticalSection( &win_data_section );
+    pthread_mutex_lock( &win_data_mutex );
     if ((data = win_data_context[context_idx(hwnd)]) && data->hwnd == hwnd) return data;
-    LeaveCriticalSection( &win_data_section );
+    pthread_mutex_unlock( &win_data_mutex );
     return NULL;
 }
 
@@ -173,7 +166,7 @@ static struct android_win_data *get_win_data( HWND hwnd )
  */
 static void release_win_data( struct android_win_data *data )
 {
-    if (data) LeaveCriticalSection( &win_data_section );
+    if (data) pthread_mutex_unlock( &win_data_mutex );
 }
 
 

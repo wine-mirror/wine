@@ -578,6 +578,7 @@ static BOOL process_attach(void)
     pthread_mutexattr_init( &attr );
     pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
     pthread_mutex_init( &drawable_mutex, &attr );
+    pthread_mutex_init( &win_data_mutex, &attr );
     pthread_mutexattr_destroy( &attr );
 
     if ((java_vm = *p_java_vm))  /* running under Java */
