@@ -96,6 +96,7 @@ LRESULT WINAPI DesktopWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lP
     {
     case WM_NCCREATE:
     case WM_NCCALCSIZE:
+    case WM_PARENTNOTIFY:
         return NtUserMessageCall( hwnd, message, wParam, lParam, 0, NtUserDesktopWindowProc, FALSE );
 
     default:

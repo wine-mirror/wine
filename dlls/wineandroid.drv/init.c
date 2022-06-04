@@ -343,6 +343,7 @@ static const struct user_driver_funcs android_drv_funcs =
     .pEnumDisplaySettingsEx = ANDROID_EnumDisplaySettingsEx,
     .pUpdateDisplayDevices = ANDROID_UpdateDisplayDevices,
     .pCreateWindow = ANDROID_CreateWindow,
+    .pDesktopWindowProc = ANDROID_DesktopWindowProc,
     .pDestroyWindow = ANDROID_DestroyWindow,
     .pMsgWaitForMultipleObjectsEx = ANDROID_MsgWaitForMultipleObjectsEx,
     .pSetCapture = ANDROID_SetCapture,

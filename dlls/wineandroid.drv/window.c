@@ -1186,9 +1186,7 @@ static int get_cursor_system_id( const ICONINFOEXW *info )
 }
 
 
-static WNDPROC desktop_orig_wndproc;
-
-static LRESULT CALLBACK desktop_wndproc_wrapper( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
+LRESULT ANDROID_DesktopWindowProc( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 {
     switch (msg)
     {
@@ -1196,7 +1194,7 @@ static LRESULT CALLBACK desktop_wndproc_wrapper( HWND hwnd, UINT msg, WPARAM wp,
         if (LOWORD(wp) == WM_DESTROY) destroy_ioctl_window( (HWND)lp, FALSE );
         break;
     }
-    return desktop_orig_wndproc( hwnd, msg, wp, lp );
+    return NtUserMessageCall( hwnd, msg, wp, lp, 0, NtUserDefWindowProc, FALSE );
 }
 
 
@@ -1655,9 +1653,6 @@ LRESULT ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
  */
 BOOL CDECL ANDROID_create_desktop( UINT width, UINT height )
 {
-    desktop_orig_wndproc = (WNDPROC)SetWindowLongPtrW( GetDesktopWindow(), GWLP_WNDPROC,
-                                                       (LONG_PTR)desktop_wndproc_wrapper );
-
     /* wait until we receive the surface changed event */
     while (!screen_width)
     {
