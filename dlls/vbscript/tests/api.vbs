@@ -181,6 +181,20 @@ Call ok(not isObject(4), "isObject(4) is true?")
 Call ok(not isObject("x"), "isObject(""x"") is true?")
 Call ok(not isObject(Null), "isObject(Null) is true?")
 
+Call ok(not isDate(new EmptyClass), "isDate(new EmptyClass) is true?")
+Set x = new EmptyClass
+Call ok(not isDate(x), "isDate(x) is true?")
+x = CDate(1)
+Call ok(isDate(x), "isDate(x) is not true?")
+Call ok(isDate(#1/1/2000#), "isDate(#1/1/2000#) is not true?")
+Call ok(not isDate(empty), "isDate(empty) is true?")
+Call ok(not isDate(Nothing), "isDate(Nothing) is true?")
+Call ok(not isDate(true), "isDate(true) is true?")
+Call ok(not isDate(4), "isDate(4) is true?")
+Call ok(not isDate("4"), "isDate(""4"") is true?")
+Call ok(not isDate("x"), "isDate(""x"") is true?")
+Call ok(not isDate(Null), "isDate(Null) is true?")
+
 Call ok(not isEmpty(new EmptyClass), "isEmpty(new EmptyClass) is true?")
 Set x = new EmptyClass
 Call ok(not isEmpty(x), "isEmpty(x) is true?")

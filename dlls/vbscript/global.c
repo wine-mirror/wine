@@ -935,8 +935,13 @@ static HRESULT Global_VarType(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt
 
 static HRESULT Global_IsDate(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
 {
-    FIXME("\n");
-    return E_NOTIMPL;
+    TRACE("%s\n", debugstr_variant(arg));
+
+    if(res) {
+        V_VT(res) = VT_BOOL;
+        V_BOOL(res) = V_VT(arg) == VT_DATE ? VARIANT_TRUE : VARIANT_FALSE;
+    }
+    return S_OK;
 }
 
 static HRESULT Global_IsEmpty(BuiltinDisp *This, VARIANT *arg, unsigned args_cnt, VARIANT *res)
