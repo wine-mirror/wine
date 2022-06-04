@@ -2660,6 +2660,25 @@ static void WINAPIV testfmt( const WCHAR *src, const WCHAR *expect, ULONG width,
     ok( size == (lstrlenW(expect) + 1) * sizeof(WCHAR), "%s: wrong size %lu\n", debugstr_w(src), size );
 }
 
+static void testfmt_arg_eaten( const WCHAR *src, ... )
+{
+    va_list args;
+    NTSTATUS status;
+    WCHAR *arg, buffer[1];
+    ULONG size = 0xdeadbeef;
+
+    buffer[0] = 0xcccc;
+    va_start( args, src );
+    status = pRtlFormatMessage( src, 0, FALSE, FALSE, FALSE, &args, buffer, ARRAY_SIZE(buffer), &size );
+    ok( status == STATUS_BUFFER_OVERFLOW, "%s: failed %lx\n", debugstr_w(src), status );
+    todo_wine
+    ok( buffer[0] == 0xcccc, "%s: got %x\n", debugstr_w(src), buffer[0] );
+    ok( size == 0xdeadbeef, "%s: wrong size %lu\n", debugstr_w(src), size );
+    arg = va_arg( args, WCHAR * );
+    ok( !wcscmp( L"unused", arg ), "%s: wrong arg %s\n", debugstr_w(src), debugstr_w(arg) );
+    va_end( args );
+}
+
 static void test_RtlFormatMessage(void)
 {
     WCHAR buffer[128];
@@ -2907,6 +2926,8 @@ static void test_RtlFormatMessage(void)
     ok( !lstrcmpW( buffer, L"abcxxxxxxx" ), "got %s\n", wine_dbgstr_w(buffer) );
     ok( size == 0xdeadbeef, "wrong size %lu\n", size );
 
+    /* va_arg is eaten even in case of buffer overflow */
+    testfmt_arg_eaten( L"%1!s! %2!s!", L"eaten", L"unused" );
 }
 
 START_TEST(rtlstr)
