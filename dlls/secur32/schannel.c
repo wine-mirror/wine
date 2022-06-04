@@ -589,8 +589,9 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const void *schanCred,
     }
     params.key_size = key_size;
     params.key_blob = key_blob;
-    if (GNUTLS_CALL( allocate_certificate_credentials, &params )) goto fail;
+    status = GNUTLS_CALL( allocate_certificate_credentials, &params );
     free(key_blob);
+    if (status) goto fail;
 
     handle = schan_alloc_handle(creds, SCHAN_HANDLE_CRED);
     if (handle == SCHAN_INVALID_HANDLE) goto fail;
@@ -609,7 +610,6 @@ static SECURITY_STATUS schan_AcquireClientCredentials(const void *schanCred,
 
 fail:
     free(creds);
-    free(key_blob);
     return SEC_E_INTERNAL_ERROR;
 }
 
