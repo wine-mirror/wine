@@ -367,12 +367,12 @@ static void init_event_queue(void)
     if (pipe2( event_pipe, O_CLOEXEC | O_NONBLOCK ) == -1)
     {
         ERR( "could not create data\n" );
-        ExitProcess(1);
+        NtTerminateProcess( 0, 1 );
     }
     if (wine_server_fd_to_handle( event_pipe[0], GENERIC_READ | SYNCHRONIZE, 0, &handle ))
     {
         ERR( "Can't allocate handle for event fd\n" );
-        ExitProcess(1);
+        NtTerminateProcess( 0, 1 );
     }
     SERVER_START_REQ( set_queue_fd )
     {
@@ -383,9 +383,9 @@ static void init_event_queue(void)
     if (ret)
     {
         ERR( "Can't store handle for event fd %x\n", ret );
-        ExitProcess(1);
+        NtTerminateProcess( 0, 1 );
     }
-    CloseHandle( handle );
+    NtClose( handle );
     desktop_tid = GetCurrentThreadId();
 }
 
@@ -1450,9 +1450,9 @@ void ANDROID_SetCursor( HCURSOR handle )
     static DWORD last_cursor_change;
 
     if (InterlockedExchangePointer( (void **)&last_cursor, handle ) != handle ||
-        GetTickCount() - last_cursor_change > 100)
+        NtGetTickCount() - last_cursor_change > 100)
     {
-        last_cursor_change = GetTickCount();
+        last_cursor_change = NtGetTickCount();
 
         if (handle)
         {

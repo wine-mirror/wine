@@ -331,8 +331,8 @@ static int duplicate_fd( HANDLE client, int fd )
     HANDLE handle, ret = 0;
 
     if (!wine_server_fd_to_handle( dup(fd), GENERIC_READ | SYNCHRONIZE, 0, &handle ))
-        DuplicateHandle( GetCurrentProcess(), handle, client, &ret,
-                         0, FALSE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE );
+        NtDuplicateObject( GetCurrentProcess(), handle, client, &ret,
+                           0, 0, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE );
 
     if (!ret) return -1;
     return HandleToLong( ret );
@@ -347,8 +347,8 @@ static int map_native_handle( union native_handle_buffer *dest, const native_han
     if (mapping)  /* only duplicate the mapping handle */
     {
         HANDLE ret = 0;
-        if (!DuplicateHandle( GetCurrentProcess(), mapping, client, &ret,
-                              0, FALSE, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE ))
+        if (!NtDuplicateObject( GetCurrentProcess(), mapping, client, &ret,
+                                0, 0, DUPLICATE_SAME_ACCESS | DUPLICATE_CLOSE_SOURCE ))
             return -ENOSPC;
         dest->handle.numFds = 0;
         dest->handle.numInts = 1;
@@ -434,7 +434,7 @@ static int register_buffer( struct native_win_data *win, struct ANativeWindowBuf
         TRACE( "%p %p evicting buffer %p id %d from cache\n",
                win->hwnd, win->parent, win->buffers[i], i );
         win->buffers[i]->common.decRef( &win->buffers[i]->common );
-        if (win->mappings[i]) UnmapViewOfFile( win->mappings[i] );
+        if (win->mappings[i]) NtUnmapViewOfSection( GetCurrentProcess(), win->mappings[i] );
     }
 
     win->buffers[i] = buffer;
@@ -442,9 +442,16 @@ static int register_buffer( struct native_win_data *win, struct ANativeWindowBuf
 
     if (mapping)
     {
-        *mapping = CreateFileMappingW( INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0,
-                                       buffer->stride * buffer->height * 4, NULL );
-        win->mappings[i] = MapViewOfFile( *mapping, FILE_MAP_READ, 0, 0, 0 );
+        OBJECT_ATTRIBUTES attr;
+        LARGE_INTEGER size;
+        SIZE_T count = 0;
+        size.QuadPart = buffer->stride * buffer->height * 4;
+        InitializeObjectAttributes( &attr, NULL, OBJ_OPENIF, NULL, NULL );
+        NtCreateSection( mapping,
+                         STANDARD_RIGHTS_REQUIRED | SECTION_QUERY | SECTION_MAP_READ | SECTION_MAP_WRITE,
+                         &attr, &size, PAGE_READWRITE, 0, INVALID_HANDLE_VALUE );
+        NtMapViewOfSection( *mapping, GetCurrentProcess(), &win->mappings[i], 0, 0,
+                            NULL, &count, ViewShare, 0, PAGE_READONLY );
     }
     buffer->common.incRef( &buffer->common );
     *is_new = 1;
@@ -473,7 +480,7 @@ static void release_native_window( struct native_win_data *data )
     for (i = 0; i < NB_CACHED_BUFFERS; i++)
     {
         if (data->buffers[i]) data->buffers[i]->common.decRef( &data->buffers[i]->common );
-        if (data->mappings[i]) UnmapViewOfFile( data->mappings[i] );
+        if (data->mappings[i]) NtUnmapViewOfSection( GetCurrentProcess(), data->mappings[i] );
         data->buffer_lru[i] = -1;
     }
     memset( data->buffers, 0, sizeof(data->buffers) );
@@ -823,9 +830,12 @@ static NTSTATUS dequeueBuffer_ioctl( void *data, DWORD in_size, DWORD out_size, 
         res->generation = win_data->generation;
         if (is_new)
         {
-            HANDLE process = OpenProcess( PROCESS_DUP_HANDLE, FALSE, current_client_id() );
+            OBJECT_ATTRIBUTES attr = { .Length = sizeof(attr) };
+            CLIENT_ID cid = { .UniqueProcess = UlongToHandle( current_client_id() ) };
+            HANDLE process;
+            NtOpenProcess( &process, PROCESS_DUP_HANDLE, &attr, &cid );
             map_native_handle( &res->native_handle, buffer->handle, mapping, process );
-            CloseHandle( process );
+            NtClose( process );
             *ret_size = sizeof( *res );
         }
         wait_fence_and_close( fence );
@@ -1212,10 +1222,19 @@ static int android_ioctl( enum android_ioctl code, void *in, DWORD in_size, void
 
     if (!device)
     {
-        HANDLE file = CreateFileW( deviceW, GENERIC_READ,
-                                   FILE_SHARE_READ | FILE_SHARE_WRITE, NULL, OPEN_EXISTING, 0, 0 );
-        if (file == INVALID_HANDLE_VALUE) return -ENOENT;
-        if (InterlockedCompareExchangePointer( &device, file, NULL )) CloseHandle( file );
+        OBJECT_ATTRIBUTES attr;
+        UNICODE_STRING name;
+        IO_STATUS_BLOCK io;
+        NTSTATUS status;
+        HANDLE file;
+
+        RtlInitUnicodeString( &name, deviceW );
+        InitializeObjectAttributes( &attr, &name, OBJ_CASE_INSENSITIVE, NULL, NULL );
+        status = NtCreateFile( &file, GENERIC_READ | SYNCHRONIZE, &attr, &io, NULL, 0,
+                               FILE_SHARE_READ | FILE_SHARE_WRITE, FILE_OPEN,
+                               FILE_NON_DIRECTORY_FILE, NULL, 0 );
+        if (status) return -ENOENT;
+        if (InterlockedCompareExchangePointer( &device, file, NULL )) NtClose( file );
     }
 
     status = NtDeviceIoControlFile( device, NULL, NULL, NULL, &iosb, ANDROID_IOCTL(code),
@@ -1223,7 +1242,7 @@ static int android_ioctl( enum android_ioctl code, void *in, DWORD in_size, void
     if (status == STATUS_FILE_DELETED)
     {
         WARN( "parent process is gone\n" );
-        ExitProcess( 1 );
+        NtTerminateProcess( 0, 1 );
     }
     if (out_size) *out_size = iosb.Information;
     return status_to_android_error( status );
@@ -1254,7 +1273,7 @@ static void buffer_decRef( struct android_native_base_t *base )
     if (!InterlockedDecrement( &buffer->ref ))
     {
         if (!is_in_desktop_process()) gralloc_release_buffer( &buffer->buffer );
-        if (buffer->bits) UnmapViewOfFile( buffer->bits );
+        if (buffer->bits) NtUnmapViewOfSection( GetCurrentProcess(), buffer->bits );
         free( buffer );
     }
 }
@@ -1299,9 +1318,12 @@ static int dequeueBuffer( struct ANativeWindow *window, struct ANativeWindowBuff
 
         if (use_win32)
         {
+            LARGE_INTEGER zero = { .QuadPart = 0 };
+            SIZE_T count = 0;
             HANDLE mapping = LongToHandle( res.native_handle.handle.data[0] );
-            buf->bits = MapViewOfFile( mapping, FILE_MAP_WRITE, 0, 0, 0 );
-            CloseHandle( mapping );
+            NtMapViewOfSection( mapping, GetCurrentProcess(), &buf->bits, 0, 0, &zero, &count,
+                                ViewShare, 0, PAGE_READWRITE );
+            NtClose( mapping );
         }
         else if (!is_in_desktop_process())
         {
