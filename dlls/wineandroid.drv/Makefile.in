@@ -7,6 +7,7 @@ EXTRADLLFLAGS = -mcygwin
 
 C_SRCS = \
 	device.c \
+	dllmain.c \
 	init.c \
 	keyboard.c \
 	opengl.c \

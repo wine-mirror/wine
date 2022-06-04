@@ -34,6 +34,7 @@
 #include "winbase.h"
 #include "ntgdi.h"
 #include "wine/gdi_driver.h"
+#include "unixlib.h"
 #include "android_native.h"
 
 

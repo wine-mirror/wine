@@ -556,7 +556,7 @@ JavaVM **p_java_vm = NULL;
 jobject *p_java_object = NULL;
 unsigned short *p_java_gdt_sel = NULL;
 
-static BOOL process_attach(void)
+static HRESULT android_init( void *arg )
 {
     pthread_mutexattr_t attr;
     jclass class;
@@ -565,7 +565,7 @@ static BOOL process_attach(void)
     JavaVM *java_vm;
     void *ntdll;
 
-    if (!(ntdll = dlopen( "ntdll.so", RTLD_NOW ))) return FALSE;
+    if (!(ntdll = dlopen( "ntdll.so", RTLD_NOW ))) return STATUS_UNSUCCESSFUL;
 
     p_java_vm = dlsym( ntdll, "java_vm" );
     p_java_object = dlsym( ntdll, "java_object" );
@@ -598,19 +598,20 @@ static BOOL process_attach(void)
 #endif
     }
     __wine_set_user_driver( &android_drv_funcs, WINE_GDI_DRIVER_VERSION );
-    return TRUE;
+    return STATUS_SUCCESS;
 }
 
-/***********************************************************************
- *       dll initialisation routine
- */
-BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
+const unixlib_entry_t __wine_unix_call_funcs[] =
 {
-    switch (reason)
-    {
-    case DLL_PROCESS_ATTACH:
-        DisableThreadLibraryCalls( inst );
-        return process_attach();
-    }
-    return TRUE;
+    android_init,
+};
+
+
+C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
+
+
+/* FIXME: Use __wine_unix_call instead */
+NTSTATUS unix_call( enum android_funcs code, void *params )
+{
+    return __wine_unix_call_funcs[code]( params );
 }
