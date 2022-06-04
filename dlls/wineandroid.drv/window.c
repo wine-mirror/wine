@@ -1668,9 +1668,9 @@ LRESULT ANDROID_WindowMessage( HWND hwnd, UINT msg, WPARAM wp, LPARAM lp )
 
 
 /***********************************************************************
- *           ANDROID_create_desktop
+ *           android_create_desktop
  */
-BOOL CDECL ANDROID_create_desktop( UINT width, UINT height )
+NTSTATUS android_create_desktop( void *arg )
 {
     /* wait until we receive the surface changed event */
     while (!screen_width)
@@ -1682,5 +1682,5 @@ BOOL CDECL ANDROID_create_desktop( UINT width, UINT height )
         }
         process_events( QS_ALLINPUT );
     }
-    return TRUE;
+    return 0;
 }

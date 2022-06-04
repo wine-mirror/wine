@@ -34,3 +34,12 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     DisableThreadLibraryCalls( inst );
     return !ANDROID_CALL(init, NULL);
 }
+
+
+/***********************************************************************
+ *           wine_create_desktop (wineandroid.@)
+ */
+BOOL CDECL wine_create_desktop( UINT width, UINT height )
+{
+    return ANDROID_CALL( create_desktop, NULL );
+}

@@ -603,6 +603,7 @@ static HRESULT android_init( void *arg )
 
 const unixlib_entry_t __wine_unix_call_funcs[] =
 {
+    android_create_desktop,
     android_init,
 };
 

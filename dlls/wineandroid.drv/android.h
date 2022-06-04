@@ -112,6 +112,10 @@ extern void ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_fla
                                       const RECT *visible_rect, const RECT *valid_rects,
                                       struct window_surface *surface ) DECLSPEC_HIDDEN;
 
+/* unixlib interface */
+
+extern NTSTATUS android_create_desktop( void *arg ) DECLSPEC_HIDDEN;
+
 extern unsigned int screen_width DECLSPEC_HIDDEN;
 extern unsigned int screen_height DECLSPEC_HIDDEN;
 extern RECT virtual_screen_rect DECLSPEC_HIDDEN;

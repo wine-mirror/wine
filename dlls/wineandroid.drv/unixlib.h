@@ -21,6 +21,7 @@
 
 enum android_funcs
 {
+    unix_create_desktop,
     unix_init,
     unix_funcs_count
 };
