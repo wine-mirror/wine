@@ -579,7 +579,7 @@ struct android_window_surface
     BYTE                  alpha;
     COLORREF              color_key;
     void                 *bits;
-    CRITICAL_SECTION      crit;
+    pthread_mutex_t       mutex;
     BITMAPINFO            info;   /* variable size, must be last */
 };
 
@@ -652,7 +652,7 @@ static void android_surface_lock( struct window_surface *window_surface )
 {
     struct android_window_surface *surface = get_android_surface( window_surface );
 
-    EnterCriticalSection( &surface->crit );
+    pthread_mutex_lock( &surface->mutex );
 }
 
 /***********************************************************************
@@ -662,7 +662,7 @@ static void android_surface_unlock( struct window_surface *window_surface )
 {
     struct android_window_surface *surface = get_android_surface( window_surface );
 
-    LeaveCriticalSection( &surface->crit );
+    pthread_mutex_unlock( &surface->mutex );
 }
 
 /***********************************************************************
@@ -802,8 +802,6 @@ static void android_surface_destroy( struct window_surface *window_surface )
 
     TRACE( "freeing %p bits %p\n", surface, surface->bits );
 
-    surface->crit.DebugInfo->Spare[0] = 0;
-    DeleteCriticalSection( &surface->crit );
     HeapFree( GetProcessHeap(), 0, surface->region_data );
     if (surface->region) NtGdiDeleteObjectApp( surface->region );
     release_ioctl_window( surface->window );
@@ -902,6 +900,7 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
 {
     struct android_window_surface *surface;
     int width = rect->right - rect->left, height = rect->bottom - rect->top;
+    pthread_mutexattr_t attr;
 
     surface = HeapAlloc( GetProcessHeap(), HEAP_ZERO_MEMORY,
                          FIELD_OFFSET( struct android_window_surface, info.bmiColors[3] ));
@@ -912,8 +911,10 @@ static struct window_surface *create_surface( HWND hwnd, const RECT *rect,
     surface->info.bmiHeader.biPlanes      = 1;
     surface->info.bmiHeader.biSizeImage   = get_dib_image_size( &surface->info );
 
-    InitializeCriticalSection( &surface->crit );
-    surface->crit.DebugInfo->Spare[0] = (DWORD_PTR)(__FILE__ ": surface");
+    pthread_mutexattr_init( &attr );
+    pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
+    pthread_mutex_init( &surface->mutex, &attr );
+    pthread_mutexattr_destroy( &attr );
 
     surface->header.funcs = &android_surface_funcs;
     surface->header.rect  = *rect;
