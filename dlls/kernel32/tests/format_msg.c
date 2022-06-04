@@ -1005,6 +1005,25 @@ static void test_message_wrap(void)
     ok(!strcmp("short\r\nlong?line", out),"failed out=[%s]\n",out);
 }
 
+static void test_message_arg_eaten( const WCHAR *src, ... )
+{
+    DWORD ret;
+    va_list list;
+    WCHAR *arg, out[1];
+
+    out[0] = 0xcccc;
+    va_start(list, src);
+    SetLastError(0xdeadbeef);
+    ret = FormatMessageW(FORMAT_MESSAGE_FROM_STRING, src, 0, 0, out, ARRAY_SIZE(out), &list);
+    ok(GetLastError() == ERROR_INSUFFICIENT_BUFFER,
+       "Expected GetLastError() to return ERROR_INSUFFICIENT_BUFFER, got %lu\n", GetLastError());
+    ok(ret == 0, "Expected FormatMessageW to return 0, got %lu\n", ret);
+    ok(out[0] == 0, "Expected null, got %ls\n", out);
+    arg = va_arg( list, WCHAR * );
+    ok(!wcscmp( L"unused", arg ), "Expected 'unused', got %s\n", wine_dbgstr_w(arg));
+    va_end(list);
+}
+
 static void test_message_insufficient_buffer(void)
 {
     static const char init_buf[] = {'x', 'x', 'x', 'x', 'x'};
@@ -1153,6 +1172,9 @@ static void test_message_insufficient_buffer_wide(void)
         HeapFree( GetProcessHeap(), 0, tmp );
         HeapFree( GetProcessHeap(), 0, buf );
     }
+
+    /* va_arg is eaten even in case of insufficient buffer */
+    test_message_arg_eaten( L"%1!s! %2!s!", L"eaten", L"unused" );
 }
 
 static void test_message_null_buffer(void)
