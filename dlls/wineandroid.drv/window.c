@@ -99,19 +99,22 @@ static inline int get_dib_image_size( const BITMAPINFO *info )
         * abs( info->bmiHeader.biHeight );
 }
 
+static BOOL intersect_rect( RECT *dst, const RECT *src1, const RECT *src2 )
+{
+    dst->left   = max(src1->left, src2->left);
+    dst->top    = max(src1->top, src2->top);
+    dst->right  = min(src1->right, src2->right);
+    dst->bottom = min(src1->bottom, src2->bottom);
+    return !IsRectEmpty( dst );
+}
+
 
 /**********************************************************************
  *	     get_win_monitor_dpi
  */
 static UINT get_win_monitor_dpi( HWND hwnd )
 {
-    DPI_AWARENESS_CONTEXT context;
-    UINT ret;
-
-    context = SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE );
-    ret = GetDpiForSystem();  /* FIXME: get monitor dpi */
-    SetThreadDpiAwarenessContext( context );
-    return ret;
+    return NtUserGetSystemDpiForProcess( NULL );  /* FIXME: get monitor dpi */
 }
 
 
@@ -126,7 +129,7 @@ static struct android_win_data *alloc_win_data( HWND hwnd )
     {
         data->hwnd = hwnd;
         data->window = create_ioctl_window( hwnd, FALSE,
-                                            (float)get_win_monitor_dpi( hwnd ) / GetDpiForWindow( hwnd ));
+                                            (float)get_win_monitor_dpi( hwnd ) / NtUserGetDpiForWindow( hwnd ));
         EnterCriticalSection( &win_data_section );
         win_data_context[context_idx(hwnd)] = data;
     }
@@ -466,8 +469,8 @@ static int process_events( DWORD mask )
             screen_width = event->data.desktop.width;
             screen_height = event->data.desktop.height;
             init_monitors( screen_width, screen_height );
-            SetWindowPos( GetDesktopWindow(), 0, 0, 0, screen_width, screen_height,
-                          SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW );
+            NtUserSetWindowPos( NtUserGetDesktopWindow(), 0, 0, 0, screen_width, screen_height,
+                                SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW );
             SetThreadDpiAwarenessContext( context );
             break;
 
@@ -728,7 +731,7 @@ static void android_surface_flush( struct window_surface *window_surface )
     window_surface->funcs->lock( window_surface );
     SetRect( &rect, 0, 0, surface->header.rect.right - surface->header.rect.left,
              surface->header.rect.bottom - surface->header.rect.top );
-    needs_flush = IntersectRect( &rect, &rect, &surface->bounds );
+    needs_flush = intersect_rect( &rect, &rect, &surface->bounds );
     reset_bounds( &surface->bounds );
     window_surface->funcs->unlock( window_surface );
     if (!needs_flush) return;
@@ -753,7 +756,7 @@ static void android_surface_flush( struct window_surface *window_surface )
         rect.top    = rc.top;
         rect.right  = rc.right;
         rect.bottom = rc.bottom;
-        IntersectRect( &rect, &rect, &surface->header.rect );
+        intersect_rect( &rect, &rect, &surface->header.rect );
 
         if (surface->region_data)
         {
@@ -874,7 +877,7 @@ static void set_surface_region( struct window_surface *window_surface, HRGN win_
     {
         region = NtGdiCreateRectRgn( 0, 0, win_data->window_rect.right - win_data->window_rect.left,
                                      win_data->window_rect.bottom - win_data->window_rect.top );
-        if (GetWindowRgn( surface->hwnd, region ) == ERROR && !surface->region) goto done;
+        if (NtUserGetWindowRgnEx( surface->hwnd, region, 0 ) == ERROR && !surface->region) goto done;
     }
 
     NtGdiOffsetRgn( region, offset_x, offset_y );
@@ -1222,7 +1225,7 @@ BOOL ANDROID_CreateWindow( HWND hwnd )
 {
     TRACE( "%p\n", hwnd );
 
-    if (hwnd == GetDesktopWindow())
+    if (hwnd == NtUserGetDesktopWindow())
     {
         struct android_win_data *data;
 
@@ -1262,11 +1265,11 @@ static struct android_win_data *create_win_data( HWND hwnd, const RECT *window_r
     struct android_win_data *data;
     HWND parent;
 
-    if (!(parent = GetAncestor( hwnd, GA_PARENT ))) return NULL;  /* desktop or HWND_MESSAGE */
+    if (!(parent = NtUserGetAncestor( hwnd, GA_PARENT ))) return NULL;  /* desktop or HWND_MESSAGE */
 
     if (!(data = alloc_win_data( hwnd ))) return NULL;
 
-    data->parent = (parent == GetDesktopWindow()) ? 0 : parent;
+    data->parent = (parent == NtUserGetDesktopWindow()) ? 0 : parent;
     data->whole_rect = data->window_rect = *window_rect;
     data->client_rect = *client_rect;
     return data;
@@ -1275,7 +1278,7 @@ static struct android_win_data *create_win_data( HWND hwnd, const RECT *window_r
 
 static inline BOOL get_surface_rect( const RECT *visible_rect, RECT *surface_rect )
 {
-    if (!IntersectRect( surface_rect, visible_rect, &virtual_screen_rect )) return FALSE;
+    if (!intersect_rect( surface_rect, visible_rect, &virtual_screen_rect )) return FALSE;
     OffsetRect( surface_rect, -visible_rect->left, -visible_rect->top );
     surface_rect->left &= ~31;
     surface_rect->top  &= ~31;
@@ -1297,11 +1300,11 @@ BOOL ANDROID_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
     DWORD flags;
     COLORREF key;
     BYTE alpha;
-    BOOL layered = GetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED;
+    BOOL layered = NtUserGetWindowLongW( hwnd, GWL_EXSTYLE ) & WS_EX_LAYERED;
 
     TRACE( "win %p window %s client %s style %08x flags %08x\n",
            hwnd, wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
-           GetWindowLongW( hwnd, GWL_STYLE ), swp_flags );
+           NtUserGetWindowLongW( hwnd, GWL_STYLE ), swp_flags );
 
     if (!data && !(data = create_win_data( hwnd, window_rect, client_rect ))) return TRUE;
 
@@ -1325,9 +1328,10 @@ BOOL ANDROID_WindowPosChanging( HWND hwnd, HWND insert_after, UINT swp_flags,
             goto done;
         }
     }
-    if (!(swp_flags & SWP_SHOWWINDOW) && !(GetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE)) goto done;
+    if (!(swp_flags & SWP_SHOWWINDOW) && !(NtUserGetWindowLongW( hwnd, GWL_STYLE ) & WS_VISIBLE))
+        goto done;
 
-    if (!layered || !GetLayeredWindowAttributes( hwnd, &key, &alpha, &flags )) flags = 0;
+    if (!layered || !NtUserGetLayeredWindowAttributes( hwnd, &key, &alpha, &flags )) flags = 0;
     if (!(flags & LWA_ALPHA)) alpha = 255;
     if (!(flags & LWA_COLORKEY)) key = CLR_INVALID;
 
@@ -1349,7 +1353,7 @@ void ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
                                struct window_surface *surface )
 {
     struct android_win_data *data;
-    DWORD new_style = GetWindowLongW( hwnd, GWL_STYLE );
+    DWORD new_style = NtUserGetWindowLongW( hwnd, GWL_STYLE );
     HWND owner = 0;
 
     if (!(data = get_win_data( hwnd ))) return;
@@ -1364,10 +1368,10 @@ void ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
         if (data->surface) window_surface_release( data->surface );
         data->surface = surface;
     }
-    if (!data->parent) owner = GetWindow( hwnd, GW_OWNER );
+    if (!data->parent) owner = NtUserGetWindowRelative( hwnd, GW_OWNER );
     release_win_data( data );
 
-    if (!(swp_flags & SWP_NOZORDER)) insert_after = GetWindow( hwnd, GW_HWNDPREV );
+    if (!(swp_flags & SWP_NOZORDER)) insert_after = NtUserGetWindowRelative( hwnd, GW_HWNDPREV );
 
     TRACE( "win %p window %s client %s style %08x owner %p after %p flags %08x\n", hwnd,
            wine_dbgstr_rect(window_rect), wine_dbgstr_rect(client_rect),
@@ -1383,7 +1387,7 @@ void ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_flags,
  */
 UINT ANDROID_ShowWindow( HWND hwnd, INT cmd, RECT *rect, UINT swp )
 {
-    if (!IsIconic( hwnd )) return swp;
+    if (!(NtUserGetWindowLongW( hwnd, GWL_STYLE ) & WS_MINIMIZE)) return swp;
     /* always hide icons off-screen */
     if (rect->left != -32000 || rect->top != -32000)
     {
@@ -1406,8 +1410,8 @@ void ANDROID_SetParent( HWND hwnd, HWND parent, HWND old_parent )
 
     TRACE( "win %p parent %p -> %p\n", hwnd, old_parent, parent );
 
-    data->parent = (parent == GetDesktopWindow()) ? 0 : parent;
-    ioctl_set_window_parent( hwnd, parent, (float)get_win_monitor_dpi( hwnd ) / GetDpiForWindow( hwnd ));
+    data->parent = (parent == NtUserGetDesktopWindow()) ? 0 : parent;
+    ioctl_set_window_parent( hwnd, parent, (float)get_win_monitor_dpi( hwnd ) / NtUserGetDpiForWindow( hwnd ));
     release_win_data( data );
 }
 
@@ -1419,6 +1423,28 @@ void ANDROID_SetCapture( HWND hwnd, UINT flags )
 {
     if (!(flags & (GUI_INMOVESIZE | GUI_INMENUMODE))) return;
     ioctl_set_capture( hwnd );
+}
+
+
+static BOOL get_icon_info( HICON handle, ICONINFOEXW *ret )
+{
+    UNICODE_STRING module, res_name;
+    ICONINFO info;
+
+    module.Buffer = ret->szModName;
+    module.MaximumLength = sizeof(ret->szModName) - sizeof(WCHAR);
+    res_name.Buffer = ret->szResName;
+    res_name.MaximumLength = sizeof(ret->szResName) - sizeof(WCHAR);
+    if (!NtUserGetIconInfo( handle, &info, &module, &res_name, NULL, 0 )) return FALSE;
+    ret->fIcon    = info.fIcon;
+    ret->xHotspot = info.xHotspot;
+    ret->yHotspot = info.yHotspot;
+    ret->hbmColor = info.hbmColor;
+    ret->hbmMask  = info.hbmMask;
+    ret->wResID   = res_name.Length ? 0 : LOWORD(res_name.Buffer);
+    ret->szModName[module.Length] = 0;
+    ret->szResName[res_name.Length] = 0;
+    return TRUE;
 }
 
 
@@ -1441,8 +1467,7 @@ void ANDROID_SetCursor( HCURSOR handle )
             ICONINFOEXW info;
             int id;
 
-            info.cbSize = sizeof(info);
-            if (!GetIconInfoExW( handle, &info )) return;
+            if (!get_icon_info( handle, &info )) return;
 
             if (!(id = get_cursor_system_id( &info )))
             {
@@ -1475,7 +1500,7 @@ void ANDROID_SetWindowStyle( HWND hwnd, INT offset, STYLESTRUCT *style )
     struct android_win_data *data;
     DWORD changed = style->styleNew ^ style->styleOld;
 
-    if (hwnd == GetDesktopWindow()) return;
+    if (hwnd == NtUserGetDesktopWindow()) return;
     if (!(data = get_win_data( hwnd ))) return;
 
     if (offset == GWL_EXSTYLE && (changed & WS_EX_LAYERED)) /* changing WS_EX_LAYERED resets attributes */
@@ -1585,7 +1610,7 @@ BOOL ANDROID_UpdateLayeredWindow( HWND hwnd, const UPDATELAYEREDWINDOWINFO *info
 
     if (info->prcDirty)
     {
-        IntersectRect( &rect, &rect, info->prcDirty );
+        intersect_rect( &rect, &rect, info->prcDirty );
         memcpy( src_bits, dst_bits, bmi->bmiHeader.biSizeImage );
         NtGdiPatBlt( hdc, rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top, BLACKNESS );
     }

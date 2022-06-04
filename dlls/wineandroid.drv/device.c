@@ -312,7 +312,7 @@ static struct native_win_data *get_ioctl_native_win_data( const struct ioctl_hea
 
 static int get_ioctl_win_parent( HWND parent )
 {
-    if (parent != GetDesktopWindow() && !GetAncestor( parent, GA_PARENT ))
+    if (parent != NtUserGetDesktopWindow() && !NtUserGetAncestor( parent, GA_PARENT ))
         return HandleToLong( HWND_MESSAGE );
     return HandleToLong( parent );
 }
@@ -522,7 +522,7 @@ static void CALLBACK register_native_window_callback( ULONG_PTR arg1, ULONG_PTR 
     if (!data || data->parent == win)
     {
         pANativeWindow_release( win );
-        if (data) PostMessageW( hwnd, WM_ANDROID_REFRESH, opengl, 0 );
+        if (data) NtUserPostMessage( hwnd, WM_ANDROID_REFRESH, opengl, 0 );
         TRACE( "%p -> %p win %p (unchanged)\n", hwnd, data, win );
         return;
     }
@@ -535,7 +535,7 @@ static void CALLBACK register_native_window_callback( ULONG_PTR arg1, ULONG_PTR 
     win->perform( win, NATIVE_WINDOW_SET_BUFFERS_FORMAT, data->buffer_format );
     win->setSwapInterval( win, data->swap_interval );
     unwrap_java_call();
-    PostMessageW( hwnd, WM_ANDROID_REFRESH, opengl, 0 );
+    NtUserPostMessage( hwnd, WM_ANDROID_REFRESH, opengl, 0 );
     TRACE( "%p -> %p win %p\n", hwnd, data, win );
 }
 
@@ -1169,7 +1169,7 @@ static DWORD CALLBACK device_thread( void *arg )
 
     init_java_thread( java_vm );
 
-    create_desktop_window( GetDesktopWindow() );
+    create_desktop_window( NtUserGetDesktopWindow() );
 
     RtlInitUnicodeString( &nameW, driver_nameW );
     if ((status = IoCreateDriver( &nameW, init_android_driver )))
@@ -1559,7 +1559,7 @@ struct ANativeWindow *create_ioctl_window( HWND hwnd, BOOL opengl, float scale )
 
     req.hdr.hwnd = HandleToLong( win->hwnd );
     req.hdr.opengl = win->opengl;
-    req.parent = get_ioctl_win_parent( GetAncestor( hwnd, GA_PARENT ));
+    req.parent = get_ioctl_win_parent( NtUserGetAncestor( hwnd, GA_PARENT ));
     req.scale = scale;
     android_ioctl( IOCTL_CREATE_WINDOW, &req, sizeof(req), NULL, NULL );
 

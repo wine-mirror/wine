@@ -62,15 +62,19 @@ static const struct user_driver_funcs android_drv_funcs;
 void init_monitors( int width, int height )
 {
     static const WCHAR trayW[] = {'S','h','e','l','l','_','T','r','a','y','W','n','d',0};
+    UNICODE_STRING name;
     RECT rect;
-    HWND hwnd = FindWindowW( trayW, NULL );
+    HWND hwnd;
+
+    RtlInitUnicodeString( &name, trayW );
+    hwnd = NtUserFindWindowEx( 0, 0, &name, NULL, 0 );
 
     virtual_screen_rect.right = width;
     virtual_screen_rect.bottom = height;
     monitor_rc_work = virtual_screen_rect;
 
-    if (!hwnd || !IsWindowVisible( hwnd )) return;
-    if (!GetWindowRect( hwnd, &rect )) return;
+    if (!hwnd || !NtUserIsWindowVisible( hwnd )) return;
+    if (!NtUserGetWindowRect( hwnd, &rect )) return;
     if (rect.top) monitor_rc_work.bottom = rect.top;
     else monitor_rc_work.top = rect.bottom;
     TRACE( "found tray %p %s work area %s\n", hwnd,
@@ -170,7 +174,7 @@ static void fetch_display_metrics(void)
 
     SERVER_START_REQ( get_window_rectangles )
     {
-        req->handle = wine_server_user_handle( GetDesktopWindow() );
+        req->handle = wine_server_user_handle( NtUserGetDesktopWindow() );
         req->relative = COORDS_CLIENT;
         if (!wine_server_call( req ))
         {

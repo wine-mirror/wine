@@ -180,7 +180,7 @@ static BOOL refresh_context( struct wgl_context *ctx )
     {
         TRACE( "refreshing hwnd %p context %p surface %p\n", ctx->hwnd, ctx->context, ctx->surface );
         p_eglMakeCurrent( display, ctx->surface, ctx->surface, ctx->context );
-        RedrawWindow( ctx->hwnd, NULL, 0, RDW_INVALIDATE | RDW_ERASE );
+        NtUserRedrawWindow( ctx->hwnd, NULL, 0, RDW_INVALIDATE | RDW_ERASE );
     }
     return ret;
 }
@@ -207,17 +207,17 @@ void update_gl_drawable( HWND hwnd )
             }
         }
         release_gl_drawable( gl );
-        RedrawWindow( hwnd, NULL, 0, RDW_INVALIDATE | RDW_ERASE );
+        NtUserRedrawWindow( hwnd, NULL, 0, RDW_INVALIDATE | RDW_ERASE );
     }
 }
 
 static BOOL set_pixel_format( HDC hdc, int format, BOOL allow_change )
 {
     struct gl_drawable *gl;
-    HWND hwnd = WindowFromDC( hdc );
+    HWND hwnd = NtUserWindowFromDC( hdc );
     int prev = 0;
 
-    if (!hwnd || hwnd == GetDesktopWindow())
+    if (!hwnd || hwnd == NtUserGetDesktopWindow())
     {
         WARN( "not a proper window DC %p/%p\n", hdc, hwnd );
         return FALSE;
@@ -255,7 +255,7 @@ static struct wgl_context *create_context( HDC hdc, struct wgl_context *share, c
     struct gl_drawable *gl;
     struct wgl_context *ctx;
 
-    if (!(gl = get_gl_drawable( WindowFromDC( hdc ), hdc ))) return NULL;
+    if (!(gl = get_gl_drawable( NtUserWindowFromDC( hdc ), hdc ))) return NULL;
 
     ctx = HeapAlloc( GetProcessHeap(), 0, sizeof(*ctx) );
 
@@ -348,10 +348,10 @@ static BOOL android_wglMakeContextCurrentARB( HDC draw_hdc, HDC read_hdc, struct
         return TRUE;
     }
 
-    draw_hwnd = WindowFromDC( draw_hdc );
+    draw_hwnd = NtUserWindowFromDC( draw_hdc );
     if ((draw_gl = get_gl_drawable( draw_hwnd, draw_hdc )))
     {
-        read_gl = get_gl_drawable( WindowFromDC( read_hdc ), read_hdc );
+        read_gl = get_gl_drawable( NtUserWindowFromDC( read_hdc ), read_hdc );
         draw_surface = draw_gl->surface ? draw_gl->surface : draw_gl->pbuffer;
         read_surface = read_gl->surface ? read_gl->surface : read_gl->pbuffer;
         TRACE( "%p/%p context %p surface %p/%p\n",
@@ -500,7 +500,7 @@ static int WINAPI android_wglGetPixelFormat( HDC hdc )
     struct gl_drawable *gl;
     int ret = 0;
 
-    if ((gl = get_gl_drawable( WindowFromDC( hdc ), hdc )))
+    if ((gl = get_gl_drawable( NtUserWindowFromDC( hdc ), hdc )))
     {
         ret = gl->format;
         /* offscreen formats can't be used with traditional WGL calls */
@@ -540,7 +540,7 @@ static BOOL WINAPI android_wglMakeCurrent( HDC hdc, struct wgl_context *ctx )
         return TRUE;
     }
 
-    hwnd = WindowFromDC( hdc );
+    hwnd = NtUserWindowFromDC( hdc );
     if ((gl = get_gl_drawable( hwnd, hdc )))
     {
         EGLSurface surface = gl->surface ? gl->surface : gl->pbuffer;
