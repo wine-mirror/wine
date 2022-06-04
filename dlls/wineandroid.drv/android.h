@@ -24,6 +24,7 @@
 #include <limits.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <pthread.h>
 #include <jni.h>
 #include <android/log.h>
 #include <android/input.h>
@@ -51,6 +52,7 @@ DECL_FUNCPTR( ANativeWindow_release );
  * OpenGL driver
  */
 
+extern pthread_mutex_t drawable_mutex DECLSPEC_HIDDEN;
 extern void update_gl_drawable( HWND hwnd ) DECLSPEC_HIDDEN;
 extern void destroy_gl_drawable( HWND hwnd ) DECLSPEC_HIDDEN;
 extern struct opengl_funcs *get_wgl_driver( UINT version ) DECLSPEC_HIDDEN;

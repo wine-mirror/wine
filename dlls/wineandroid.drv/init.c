@@ -558,6 +558,7 @@ unsigned short *p_java_gdt_sel = NULL;
 
 static BOOL process_attach(void)
 {
+    pthread_mutexattr_t attr;
     jclass class;
     jobject object;
     JNIEnv *jni_env;
@@ -573,6 +574,11 @@ static BOOL process_attach(void)
     object = *p_java_object;
 
     load_hardware_libs();
+
+    pthread_mutexattr_init( &attr );
+    pthread_mutexattr_settype( &attr, PTHREAD_MUTEX_RECURSIVE );
+    pthread_mutex_init( &drawable_mutex, &attr );
+    pthread_mutexattr_destroy( &attr );
 
     if ((java_vm = *p_java_vm))  /* running under Java */
     {
