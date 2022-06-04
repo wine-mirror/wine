@@ -4011,8 +4011,8 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
 
     buffer_desc.ByteWidth = sizeof(struct d2d_vs_cb);
     buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-    buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
-    buffer_desc.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
+    buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     buffer_desc.MiscFlags = 0;
 
     if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d_device, &buffer_desc, NULL,
@@ -4031,8 +4031,8 @@ static HRESULT d2d_device_context_init(struct d2d_device_context *render_target,
 
     buffer_desc.ByteWidth = sizeof(struct d2d_ps_cb);
     buffer_desc.Usage = D3D11_USAGE_DYNAMIC;
-    buffer_desc.BindFlags = D3D10_BIND_CONSTANT_BUFFER;
-    buffer_desc.CPUAccessFlags = D3D10_CPU_ACCESS_WRITE;
+    buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+    buffer_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
     buffer_desc.MiscFlags = 0;
 
     if (FAILED(hr = ID3D11Device1_CreateBuffer(render_target->d3d_device, &buffer_desc, NULL,
