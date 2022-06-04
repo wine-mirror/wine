@@ -22,10 +22,26 @@
 enum android_funcs
 {
     unix_create_desktop,
+    unix_dispatch_ioctl,
     unix_init,
+    unix_java_init,
+    unix_java_uninit,
     unix_funcs_count
 };
 
 /* FIXME: Use __wine_unix_call when the rest of the stack is ready */
 extern NTSTATUS unix_call( enum android_funcs func, void *arg ) DECLSPEC_HIDDEN;
 #define ANDROID_CALL(func, params) unix_call( unix_ ## func, params )
+
+/* android_ioctl params */
+struct ioctl_params
+{
+    struct _IRP *irp;
+    DWORD client_id;
+};
+
+
+enum
+{
+    client_start_device = NtUserDriverCallbackFirst,
+};

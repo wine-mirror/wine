@@ -115,6 +115,9 @@ extern void ANDROID_WindowPosChanged( HWND hwnd, HWND insert_after, UINT swp_fla
 /* unixlib interface */
 
 extern NTSTATUS android_create_desktop( void *arg ) DECLSPEC_HIDDEN;
+extern NTSTATUS android_dispatch_ioctl( void *arg ) DECLSPEC_HIDDEN;
+extern NTSTATUS android_java_init( void *arg ) DECLSPEC_HIDDEN;
+extern NTSTATUS android_java_uninit( void *arg ) DECLSPEC_HIDDEN;
 
 extern unsigned int screen_width DECLSPEC_HIDDEN;
 extern unsigned int screen_height DECLSPEC_HIDDEN;

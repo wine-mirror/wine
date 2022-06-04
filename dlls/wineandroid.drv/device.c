@@ -47,8 +47,6 @@ WINE_DEFAULT_DEBUG_CHANNEL(android);
 #define SYNC_IOC_WAIT _IOW('>', 0, __s32)
 #endif
 
-extern NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event );
-static HANDLE stop_event;
 static HANDLE thread;
 static JNIEnv *jni_env;
 static HWND capture_window;
@@ -243,7 +241,8 @@ static inline BOOL is_in_desktop_process(void)
 
 static inline DWORD current_client_id(void)
 {
-    return HandleToUlong( PsGetCurrentProcessId() );
+    DWORD client_id = PtrToUlong( NtUserGetThreadInfo()->driver_data );
+    return client_id ? client_id : GetCurrentProcessId();
 }
 
 static inline BOOL is_client_in_process(void)
@@ -1116,8 +1115,10 @@ static const ioctl_func ioctl_funcs[] =
     setCursor_ioctl,            /* IOCTL_SET_CURSOR */
 };
 
-static NTSTATUS WINAPI ioctl_callback( DEVICE_OBJECT *device, IRP *irp )
+NTSTATUS android_dispatch_ioctl( void *arg )
 {
+    struct ioctl_params *params = arg;
+    IRP *irp = params->irp;
     IO_STACK_LOCATION *irpsp = IoGetCurrentIrpStackLocation( irp );
     DWORD code = (irpsp->Parameters.DeviceIoControl.IoControlCode - ANDROID_IOCTL(0)) >> 2;
 
@@ -1130,9 +1131,11 @@ static NTSTATUS WINAPI ioctl_callback( DEVICE_OBJECT *device, IRP *irp )
         if (in_size >= sizeof(*header))
         {
             irp->IoStatus.Information = 0;
+            NtUserGetThreadInfo()->driver_data = UlongToHandle( params->client_id );
             irp->IoStatus.u.Status = func( irp->AssociatedIrp.SystemBuffer, in_size,
                                            irpsp->Parameters.DeviceIoControl.OutputBufferLength,
                                            &irp->IoStatus.Information );
+            NtUserGetThreadInfo()->driver_data = 0;
         }
         else irp->IoStatus.u.Status = STATUS_INVALID_PARAMETER;
     }
@@ -1141,72 +1144,38 @@ static NTSTATUS WINAPI ioctl_callback( DEVICE_OBJECT *device, IRP *irp )
         FIXME( "ioctl %x not supported\n", irpsp->Parameters.DeviceIoControl.IoControlCode );
         irp->IoStatus.u.Status = STATUS_NOT_SUPPORTED;
     }
-    IoCompleteRequest( irp, IO_NO_INCREMENT );
     return STATUS_SUCCESS;
 }
 
-static NTSTATUS CALLBACK init_android_driver( DRIVER_OBJECT *driver, UNICODE_STRING *name )
+NTSTATUS android_java_init( void *arg )
 {
-    static const WCHAR device_nameW[] = {'\\','D','e','v','i','c','e','\\','W','i','n','e','A','n','d','r','o','i','d',0 };
-    static const WCHAR device_linkW[] = {'\\','?','?','\\','W','i','n','e','A','n','d','r','o','i','d',0 };
-
-    UNICODE_STRING nameW, linkW;
-    DEVICE_OBJECT *device;
-    NTSTATUS status;
-
-    driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = ioctl_callback;
-
-    RtlInitUnicodeString( &nameW, device_nameW );
-    RtlInitUnicodeString( &linkW, device_linkW );
-
-    if ((status = IoCreateDevice( driver, 0, &nameW, 0, 0, FALSE, &device ))) return status;
-    return IoCreateSymbolicLink( &linkW, &nameW );
-}
-
-static DWORD CALLBACK device_thread( void *arg )
-{
-    static const WCHAR driver_nameW[] = {'\\','D','r','i','v','e','r','\\','W','i','n','e','A','n','d','r','o','i','d',0 };
-
-    HANDLE start_event = arg;
-    UNICODE_STRING nameW;
-    NTSTATUS status;
     JavaVM *java_vm;
-    DWORD ret;
 
-    TRACE( "starting process %x\n", GetCurrentProcessId() );
-
-    if (!(java_vm = *p_java_vm)) return 0;  /* not running under Java */
+    if (!(java_vm = *p_java_vm)) return STATUS_UNSUCCESSFUL;  /* not running under Java */
 
     init_java_thread( java_vm );
-
     create_desktop_window( NtUserGetDesktopWindow() );
+    return STATUS_SUCCESS;
+}
 
-    RtlInitUnicodeString( &nameW, driver_nameW );
-    if ((status = IoCreateDriver( &nameW, init_android_driver )))
-    {
-        FIXME( "failed to create driver error %x\n", status );
-        return status;
-    }
+NTSTATUS android_java_uninit( void *arg )
+{
+    JavaVM *java_vm;
 
-    stop_event = CreateEventW( NULL, TRUE, FALSE, NULL );
-    SetEvent( start_event );
-
-    ret = wine_ntoskrnl_main_loop( stop_event );
+    if (!(java_vm = *p_java_vm)) return STATUS_UNSUCCESSFUL;  /* not running under Java */
 
     wrap_java_call();
     (*java_vm)->DetachCurrentThread( java_vm );
     unwrap_java_call();
-    return ret;
+    return STATUS_SUCCESS;
 }
 
 void start_android_device(void)
 {
-    HANDLE handles[2];
-
-    handles[0] = CreateEventW( NULL, TRUE, FALSE, NULL );
-    handles[1] = thread = CreateThread( NULL, 0, device_thread, handles[0], 0, NULL );
-    WaitForMultipleObjects( 2, handles, FALSE, INFINITE );
-    CloseHandle( handles[0] );
+    /* FIXME: use KeUserModeCallback instead */
+    NTSTATUS (WINAPI *func)(void *, ULONG) =
+        ((void **)NtCurrentTeb()->Peb->KernelCallbackTable)[client_start_device];
+    func( NULL, 0 );
 }
 
 

@@ -19,9 +19,89 @@
  */
 
 #include <stdarg.h>
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 #include "windef.h"
 #include "winbase.h"
+#include "winternl.h"
+#include "winioctl.h"
+#include "ddk/wdm.h"
 #include "unixlib.h"
+#include "wine/debug.h"
+
+WINE_DEFAULT_DEBUG_CHANNEL(android);
+
+
+extern NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event );
+static HANDLE stop_event;
+static HANDLE thread;
+
+
+static NTSTATUS WINAPI ioctl_callback( DEVICE_OBJECT *device, IRP *irp )
+{
+    struct ioctl_params params = { .irp = irp, .client_id = HandleToUlong(PsGetCurrentProcessId()) };
+    NTSTATUS status = ANDROID_CALL( dispatch_ioctl, &params );
+    IoCompleteRequest( irp, IO_NO_INCREMENT );
+    return status;
+}
+
+static NTSTATUS CALLBACK init_android_driver( DRIVER_OBJECT *driver, UNICODE_STRING *name )
+{
+    static const WCHAR device_nameW[] = {'\\','D','e','v','i','c','e','\\','W','i','n','e','A','n','d','r','o','i','d',0 };
+    static const WCHAR device_linkW[] = {'\\','?','?','\\','W','i','n','e','A','n','d','r','o','i','d',0 };
+
+    UNICODE_STRING nameW, linkW;
+    DEVICE_OBJECT *device;
+    NTSTATUS status;
+
+    driver->MajorFunction[IRP_MJ_DEVICE_CONTROL] = ioctl_callback;
+
+    RtlInitUnicodeString( &nameW, device_nameW );
+    RtlInitUnicodeString( &linkW, device_linkW );
+
+    if ((status = IoCreateDevice( driver, 0, &nameW, 0, 0, FALSE, &device ))) return status;
+    return IoCreateSymbolicLink( &linkW, &nameW );
+}
+
+static DWORD CALLBACK device_thread( void *arg )
+{
+    static const WCHAR driver_nameW[] = {'\\','D','r','i','v','e','r','\\','W','i','n','e','A','n','d','r','o','i','d',0 };
+
+    HANDLE start_event = arg;
+    UNICODE_STRING nameW;
+    NTSTATUS status;
+    DWORD ret;
+
+    TRACE( "starting process %x\n", GetCurrentProcessId() );
+
+    if (ANDROID_CALL( java_init, NULL )) return 0;  /* not running under Java */
+
+    RtlInitUnicodeString( &nameW, driver_nameW );
+    if ((status = IoCreateDriver( &nameW, init_android_driver )))
+    {
+        FIXME( "failed to create driver error %x\n", status );
+        return status;
+    }
+
+    stop_event = CreateEventW( NULL, TRUE, FALSE, NULL );
+    SetEvent( start_event );
+
+    ret = wine_ntoskrnl_main_loop( stop_event );
+
+    ANDROID_CALL( java_uninit, NULL );
+    return ret;
+}
+
+static NTSTATUS WINAPI android_start_device(void *param, ULONG size)
+{
+    HANDLE handles[2];
+
+    handles[0] = CreateEventW( NULL, TRUE, FALSE, NULL );
+    handles[1] = thread = CreateThread( NULL, 0, device_thread, handles[0], 0, NULL );
+    WaitForMultipleObjects( 2, handles, FALSE, INFINITE );
+    CloseHandle( handles[0] );
+    return HandleToULong( thread );
+}
 
 
 /***********************************************************************
@@ -29,10 +109,17 @@
  */
 BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
 {
+    void **callback_table;
+
     if (reason == DLL_PROCESS_ATTACH) return TRUE;
 
     DisableThreadLibraryCalls( inst );
-    return !ANDROID_CALL(init, NULL);
+    if (ANDROID_CALL( init, NULL )) return FALSE;
+
+    callback_table = NtCurrentTeb()->Peb->KernelCallbackTable;
+    callback_table[client_start_device] = android_start_device;
+
+    return TRUE;
 }
 
 
