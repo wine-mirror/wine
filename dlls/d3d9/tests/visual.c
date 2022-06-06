@@ -19815,6 +19815,93 @@ static void add_dirty_rect_test(void)
     DestroyWindow(window);
 }
 
+static void test_buffer_no_dirty_update(void)
+{
+    unsigned int refcount, colour;
+    IDirect3DVertexBuffer9 *vb;
+    IDirect3DDevice9 *device;
+    IDirect3D9 *d3d;
+    HWND window;
+    HRESULT hr;
+    void *data;
+
+    static const struct
+    {
+        struct vec3 position;
+        DWORD diffuse;
+    }
+    green_quad[] =
+    {
+        {{-1.0f, -1.0f, 0.1f}, 0xff00ff00},
+        {{-1.0f,  1.0f, 0.1f}, 0xff00ff00},
+        {{ 1.0f, -1.0f, 0.1f}, 0xff00ff00},
+
+        {{ 1.0f, -1.0f, 0.1f}, 0xff00ff00},
+        {{-1.0f,  1.0f, 0.1f}, 0xff00ff00},
+        {{ 1.0f,  1.0f, 0.1f}, 0xff00ff00},
+    },
+    red_quad[] =
+    {
+        {{-1.0f, -1.0f, 0.1f}, 0xffff0000},
+        {{-1.0f,  1.0f, 0.1f}, 0xffff0000},
+        {{ 1.0f, -1.0f, 0.1f}, 0xffff0000},
+
+        {{ 1.0f, -1.0f, 0.1f}, 0xffff0000},
+        {{-1.0f,  1.0f, 0.1f}, 0xffff0000},
+        {{ 1.0f,  1.0f, 0.1f}, 0xffff0000},
+    };
+
+    window = create_window();
+    d3d = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d, window, window, TRUE)))
+    {
+        skip("Failed to create a D3D device.\n");
+        goto done;
+    }
+
+    hr = IDirect3DDevice9_CreateVertexBuffer(device, sizeof(green_quad), 0, 0, D3DPOOL_MANAGED, &vb, NULL);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DVertexBuffer9_Lock(vb, 0, 0, &data, 0);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+    memcpy(data, red_quad, sizeof(red_quad));
+    hr = IDirect3DVertexBuffer9_Unlock(vb);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DVertexBuffer9_Lock(vb, 0, 0, &data, D3DLOCK_NO_DIRTY_UPDATE);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+    memcpy(data, green_quad, sizeof(green_quad));
+    hr = IDirect3DVertexBuffer9_Unlock(vb);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+
+    hr = IDirect3DDevice9_BeginScene(device);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_LIGHTING, FALSE);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetRenderState(device, D3DRS_ZENABLE, FALSE);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_Clear(device, 0, NULL, D3DCLEAR_TARGET, 0xffffffff, 0.0f, 0);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetFVF(device, D3DFVF_XYZ | D3DFVF_DIFFUSE);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_SetStreamSource(device, 0, vb, 0, sizeof(*green_quad));
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_DrawPrimitive(device, D3DPT_TRIANGLELIST, 0, 2);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+    hr = IDirect3DDevice9_EndScene(device);
+    ok(hr == D3D_OK, "Got hr %#lx.\n", hr);
+    colour = getPixelColor(device, 320, 240);
+    ok(color_match(colour, 0x0000ff00, 1), "Got unexpected colour 0x%09x.\n", colour);
+
+    IDirect3DVertexBuffer9_Release(vb);
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %u references left.\n", refcount);
+done:
+    IDirect3D9_Release(d3d);
+    DestroyWindow(window);
+}
+
 static void test_per_stage_constant(void)
 {
     IDirect3DDevice9 *device;
@@ -27744,6 +27831,7 @@ START_TEST(visual)
     volume_srgb_test();
     volume_dxtn_test();
     add_dirty_rect_test();
+    test_buffer_no_dirty_update();
     multisampled_depth_buffer_test();
     resz_test();
     stencil_cull_test();
