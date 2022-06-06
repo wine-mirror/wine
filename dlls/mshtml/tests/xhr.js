@@ -25,7 +25,7 @@ function test_xhr() {
             return;
 
         ok(xhr.responseText === "Testing...", "unexpected responseText " + xhr.responseText);
-        if(complete_cnt++)
+        if(complete_cnt++ && !("onloadend" in xhr))
             next_test();
     }
     xhr.ontimeout = function() { ok(false, "ontimeout called"); }
@@ -33,7 +33,7 @@ function test_xhr() {
         ok(xhr.statusText === "OK", "statusText = " + xhr.statusText);
         if("onloadstart" in xhr)
             ok(loadstart, "onloadstart not fired");
-        if(complete_cnt++)
+        if(complete_cnt++ && !("onloadend" in xhr))
             next_test();
     };
     ok(xhr.onload === onload_func, "xhr.onload != onload_func");
@@ -44,6 +44,14 @@ function test_xhr() {
             for(var i = 0; i < props.length; i++)
                 ok(props[i] in e, props[i] + " not available in loadstart");
             loadstart = true;
+        };
+        xhr.onloadend = function(e) {
+            ok(complete_cnt == 2, "onloadend not fired after onload and onreadystatechange");
+            ok(loadstart, "onloadstart not fired before onloadend");
+            var props = [ "initProgressEvent", "lengthComputable", "loaded", "total" ];
+            for(var i = 0; i < props.length; i++)
+                ok(props[i] in e, props[i] + " not available in loadstart");
+            next_test();
         };
     }
 
