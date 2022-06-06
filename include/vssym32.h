@@ -522,6 +522,8 @@ enum CLOCKPARTS {
 
 enum CLOCKSTATES {
     CLS_NORMAL = 1,
+    CLS_HOT = 2,
+    CLS_PRESSED = 3,
 };
 
 /* TRAYNOTIFY class */

@@ -431,6 +431,8 @@ static const MSSTYLES_CLASS_MAP classButton[] = {
 static const MSSTYLES_CLASS_MAP classClock[] = {
     {CLP_TIME, 0, L"TIME"},
     {CLP_TIME, CLS_NORMAL, L"NORMAL"},
+    {CLP_TIME, CLS_HOT, L"HOT"},
+    {CLP_TIME, CLS_PRESSED, L"PRESSED"},
     {0, 0, L""}
 };
 
