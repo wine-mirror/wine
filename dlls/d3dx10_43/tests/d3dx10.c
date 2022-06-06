@@ -1972,6 +1972,22 @@ static void test_D3DX10CreateAsyncTextureInfoProcessor(void)
     hr = D3DX10CreateAsyncTextureInfoProcessor(NULL, NULL);
     ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
 
+    hr = D3DX10CreateAsyncTextureInfoProcessor(&info, NULL);
+    ok(hr == E_INVALIDARG, "Got unexpected hr %#x.\n", hr);
+
+    hr = D3DX10CreateAsyncTextureInfoProcessor(NULL, &dp);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
+    if (0)
+    {
+        /* Crashes on native. */
+        hr = ID3DX10DataProcessor_Process(dp, (void *)test_image[0].data, test_image[0].size);
+        ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+    }
+
+    hr = ID3DX10DataProcessor_Destroy(dp);
+    ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
+
     hr = D3DX10CreateAsyncTextureInfoProcessor(&info, &dp);
     ok(hr == S_OK, "Got unexpected hr %#x.\n", hr);
 
