@@ -10187,6 +10187,150 @@ out:
     DestroyWindow(window);
 }
 
+static void test_update_texture_pool(void)
+{
+    static const struct
+    {
+        D3DPOOL pool;
+        DWORD usage;
+    }
+    tests[] =
+    {
+        {D3DPOOL_DEFAULT, D3DUSAGE_DYNAMIC},
+        {D3DPOOL_MANAGED, 0},
+        {D3DPOOL_SYSTEMMEM, 0},
+        {D3DPOOL_SCRATCH, 0},
+    };
+
+    unsigned int expect_colour, colour, i, j;
+    IDirect3DVolumeTexture9 *src_3d, *dst_3d;
+    IDirect3DTexture9 *src_2d, *dst_2d;
+    D3DLOCKED_RECT locked_rect;
+    IDirect3DDevice9 *device;
+    D3DLOCKED_BOX locked_box;
+    IDirect3D9 *d3d9;
+    ULONG refcount;
+    D3DCAPS9 caps;
+    HWND window;
+    HRESULT hr;
+
+    window = create_window();
+    d3d9 = Direct3DCreate9(D3D_SDK_VERSION);
+    ok(!!d3d9, "Failed to create a D3D object.\n");
+    if (!(device = create_device(d3d9, window, NULL)))
+    {
+        skip("Failed to create a D3D device, skipping tests.\n");
+        IDirect3D9_Release(d3d9);
+        DestroyWindow(window);
+        return;
+    }
+
+    hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
+    ok(hr == S_OK, "Failed to get caps, hr %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        for (j = 0; j < ARRAY_SIZE(tests); ++j)
+        {
+            winetest_push_context("Source test %u, destination test %u", i, j);
+
+            hr = IDirect3DDevice9_CreateTexture(device, 1, 1, 1,
+                    tests[i].usage, D3DFMT_A8R8G8B8, tests[i].pool, &src_2d, NULL);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IDirect3DDevice9_CreateTexture(device, 1, 1, 1,
+                    tests[j].usage, D3DFMT_A8R8G8B8, tests[j].pool, &dst_2d, NULL);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            hr = IDirect3DTexture9_LockRect(src_2d, 0, &locked_rect, NULL, 0);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            *((DWORD *)locked_rect.pBits) = 0x11223344;
+            hr = IDirect3DTexture9_UnlockRect(src_2d, 0);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            hr = IDirect3DTexture9_LockRect(dst_2d, 0, &locked_rect, NULL, 0);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            *((DWORD *)locked_rect.pBits) = 0x44332211;
+            hr = IDirect3DTexture9_UnlockRect(dst_2d, 0);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            hr = IDirect3DDevice9_UpdateTexture(device, (IDirect3DBaseTexture9 *)src_2d,
+                    (IDirect3DBaseTexture9 *)dst_2d);
+            if (tests[i].pool == D3DPOOL_SYSTEMMEM && tests[j].pool == D3DPOOL_DEFAULT)
+            {
+                expect_colour = 0x11223344;
+                ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            }
+            else
+            {
+                expect_colour = 0x44332211;
+                ok(hr == D3DERR_INVALIDCALL, "Got hr %#lx.\n", hr);
+            }
+
+            hr = IDirect3DTexture9_LockRect(dst_2d, 0, &locked_rect, NULL, 0);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            colour = *((DWORD *)locked_rect.pBits);
+            ok(colour == expect_colour, "Expected colour %08x, got %08x.\n", expect_colour, colour);
+            hr = IDirect3DTexture9_UnlockRect(dst_2d, 0);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            IDirect3DTexture9_Release(src_2d);
+            IDirect3DTexture9_Release(dst_2d);
+
+            if (!(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP))
+                continue;
+
+            hr = IDirect3DDevice9_CreateVolumeTexture(device, 1, 1, 1, 1,
+                    tests[i].usage, D3DFMT_A8R8G8B8, tests[i].pool, &src_3d, NULL);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            hr = IDirect3DDevice9_CreateVolumeTexture(device, 1, 1, 1, 1,
+                    tests[j].usage, D3DFMT_A8R8G8B8, tests[j].pool, &dst_3d, NULL);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            hr = IDirect3DVolumeTexture9_LockBox(src_3d, 0, &locked_box, NULL, 0);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            *((DWORD *)locked_box.pBits) = 0x11223344;
+            hr = IDirect3DVolumeTexture9_UnlockBox(src_3d, 0);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            hr = IDirect3DVolumeTexture9_LockBox(dst_3d, 0, &locked_box, NULL, 0);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            *((DWORD *)locked_box.pBits) = 0x44332211;
+            hr = IDirect3DVolumeTexture9_UnlockBox(dst_3d, 0);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            hr = IDirect3DDevice9_UpdateTexture(device, (IDirect3DBaseTexture9 *)src_3d,
+                    (IDirect3DBaseTexture9 *)dst_3d);
+            if (tests[i].pool == D3DPOOL_SYSTEMMEM && tests[j].pool == D3DPOOL_DEFAULT)
+            {
+                expect_colour = 0x11223344;
+                ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            }
+            else
+            {
+                expect_colour = 0x44332211;
+                ok(hr == D3DERR_INVALIDCALL, "Got hr %#lx.\n", hr);
+            }
+
+            hr = IDirect3DVolumeTexture9_LockBox(dst_3d, 0, &locked_box, NULL, 0);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+            colour = *((DWORD *)locked_box.pBits);
+            ok(colour == expect_colour, "Expected colour %08x, got %08x.\n", expect_colour, colour);
+            hr = IDirect3DVolumeTexture9_UnlockBox(dst_3d, 0);
+            ok(hr == S_OK, "Got hr %#lx.\n", hr);
+
+            IDirect3DVolumeTexture9_Release(src_3d);
+            IDirect3DVolumeTexture9_Release(dst_3d);
+
+            winetest_pop_context();
+        }
+    }
+
+    refcount = IDirect3DDevice9_Release(device);
+    ok(!refcount, "Device has %lu references left.\n", refcount);
+    IDirect3D9_Release(d3d9);
+    DestroyWindow(window);
+}
+
 static void test_update_volumetexture(void)
 {
     D3DADAPTER_IDENTIFIER9 identifier;
@@ -10196,44 +10340,17 @@ static void test_update_volumetexture(void)
     HRESULT hr;
     IDirect3DVolumeTexture9 *src, *dst;
     unsigned int i;
-    D3DLOCKED_BOX locked_box;
     ULONG refcount;
     D3DCAPS9 caps;
     BOOL is_warp;
-    static const struct
-    {
-        D3DPOOL src_pool, dst_pool;
-        HRESULT hr;
-    }
-    tests[] =
-    {
-        { D3DPOOL_DEFAULT,      D3DPOOL_DEFAULT,    D3DERR_INVALIDCALL  },
-        { D3DPOOL_MANAGED,      D3DPOOL_DEFAULT,    D3DERR_INVALIDCALL  },
-        { D3DPOOL_SYSTEMMEM,    D3DPOOL_DEFAULT,    D3D_OK              },
-        { D3DPOOL_SCRATCH,      D3DPOOL_DEFAULT,    D3DERR_INVALIDCALL  },
 
-        { D3DPOOL_DEFAULT,      D3DPOOL_MANAGED,    D3DERR_INVALIDCALL  },
-        { D3DPOOL_MANAGED,      D3DPOOL_MANAGED,    D3DERR_INVALIDCALL  },
-        { D3DPOOL_SYSTEMMEM,    D3DPOOL_MANAGED,    D3DERR_INVALIDCALL  },
-        { D3DPOOL_SCRATCH,      D3DPOOL_MANAGED,    D3DERR_INVALIDCALL  },
-
-        { D3DPOOL_DEFAULT,      D3DPOOL_SYSTEMMEM,  D3DERR_INVALIDCALL  },
-        { D3DPOOL_MANAGED,      D3DPOOL_SYSTEMMEM,  D3DERR_INVALIDCALL  },
-        { D3DPOOL_SYSTEMMEM,    D3DPOOL_SYSTEMMEM,  D3DERR_INVALIDCALL  },
-        { D3DPOOL_SCRATCH,      D3DPOOL_SYSTEMMEM,  D3DERR_INVALIDCALL  },
-
-        { D3DPOOL_DEFAULT,      D3DPOOL_SCRATCH,    D3DERR_INVALIDCALL  },
-        { D3DPOOL_MANAGED,      D3DPOOL_SCRATCH,    D3DERR_INVALIDCALL  },
-        { D3DPOOL_SYSTEMMEM,    D3DPOOL_SCRATCH,    D3DERR_INVALIDCALL  },
-        { D3DPOOL_SCRATCH,      D3DPOOL_SCRATCH,    D3DERR_INVALIDCALL  },
-    };
     static const struct
     {
         UINT src_size, dst_size;
         UINT src_lvl, dst_lvl;
         D3DFORMAT src_fmt, dst_fmt;
     }
-    tests2[] =
+    tests[] =
     {
         { 8, 8, 0, 0, D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8 },
         { 8, 8, 4, 4, D3DFMT_A8R8G8B8, D3DFMT_A8R8G8B8 },
@@ -10261,62 +10378,21 @@ static void test_update_volumetexture(void)
 
     hr = IDirect3DDevice9_GetDeviceCaps(device, &caps);
     ok(SUCCEEDED(hr), "Failed to get caps, hr %#lx.\n", hr);
-    if (!(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP))
-    {
-        skip("Volume textures not supported, skipping test.\n");
-        goto out;
-    }
-
-    for (i = 0; i < ARRAY_SIZE(tests); i++)
-    {
-        DWORD src_usage = tests[i].src_pool == D3DPOOL_DEFAULT ? D3DUSAGE_DYNAMIC : 0;
-        DWORD dst_usage = tests[i].dst_pool == D3DPOOL_DEFAULT ? D3DUSAGE_DYNAMIC : 0;
-
-        hr = IDirect3DDevice9_CreateVolumeTexture(device, 1, 1, 1, 1, src_usage,
-                D3DFMT_A8R8G8B8, tests[i].src_pool, &src, NULL);
-        ok(SUCCEEDED(hr), "Failed to create volume texture, hr %#lx.\n", hr);
-        hr = IDirect3DDevice9_CreateVolumeTexture(device, 1, 1, 1, 1, dst_usage,
-                D3DFMT_A8R8G8B8, tests[i].dst_pool, &dst, NULL);
-        ok(SUCCEEDED(hr), "Failed to create volume texture, hr %#lx.\n", hr);
-
-        hr = IDirect3DVolumeTexture9_LockBox(src, 0, &locked_box, NULL, 0);
-        ok(SUCCEEDED(hr), "Failed to lock volume texture, hr %#lx.\n", hr);
-        *((DWORD *)locked_box.pBits) = 0x11223344;
-        hr = IDirect3DVolumeTexture9_UnlockBox(src, 0);
-        ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#lx.\n", hr);
-
-        hr = IDirect3DDevice9_UpdateTexture(device, (IDirect3DBaseTexture9 *)src, (IDirect3DBaseTexture9 *)dst);
-        ok(hr == tests[i].hr, "UpdateTexture returned %#lx, expected %#lx, src pool %x, dst pool %u.\n",
-                hr, tests[i].hr, tests[i].src_pool, tests[i].dst_pool);
-
-        if (SUCCEEDED(hr))
-        {
-            unsigned int content = *((unsigned int *)locked_box.pBits);
-            hr = IDirect3DVolumeTexture9_LockBox(dst, 0, &locked_box, NULL, 0);
-            ok(SUCCEEDED(hr), "Failed to lock volume texture, hr %#lx.\n", hr);
-            ok(content == 0x11223344, "Dest texture contained %#x, expected 0x11223344.\n", content);
-            hr = IDirect3DVolumeTexture9_UnlockBox(dst, 0);
-            ok(SUCCEEDED(hr), "Failed to unlock volume texture, hr %#lx.\n", hr);
-        }
-        IDirect3DVolumeTexture9_Release(src);
-        IDirect3DVolumeTexture9_Release(dst);
-    }
-
-    if (!(caps.TextureCaps & D3DPTEXTURECAPS_MIPVOLUMEMAP))
+    if (!(caps.TextureCaps & D3DPTEXTURECAPS_VOLUMEMAP)|| !(caps.TextureCaps & D3DPTEXTURECAPS_MIPVOLUMEMAP))
     {
         skip("Mipmapped volume maps not supported.\n");
         goto out;
     }
 
-    for (i = 0; i < ARRAY_SIZE(tests2); i++)
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
     {
         hr = IDirect3DDevice9_CreateVolumeTexture(device,
-                tests2[i].src_size, tests2[i].src_size, tests2[i].src_size,
-                tests2[i].src_lvl, 0, tests2[i].src_fmt, D3DPOOL_SYSTEMMEM, &src, NULL);
+                tests[i].src_size, tests[i].src_size, tests[i].src_size,
+                tests[i].src_lvl, 0, tests[i].src_fmt, D3DPOOL_SYSTEMMEM, &src, NULL);
         ok(SUCCEEDED(hr), "Failed to create volume texture, hr %#lx, case %u.\n", hr, i);
         hr = IDirect3DDevice9_CreateVolumeTexture(device,
-                tests2[i].dst_size, tests2[i].dst_size, tests2[i].dst_size,
-                tests2[i].dst_lvl, 0, tests2[i].dst_fmt, D3DPOOL_DEFAULT, &dst, NULL);
+                tests[i].dst_size, tests[i].dst_size, tests[i].dst_size,
+                tests[i].dst_lvl, 0, tests[i].dst_fmt, D3DPOOL_DEFAULT, &dst, NULL);
         ok(SUCCEEDED(hr), "Failed to create volume texture, hr %#lx, case %u.\n", hr, i);
 
         hr = IDirect3DDevice9_UpdateTexture(device, (IDirect3DBaseTexture9 *)src, (IDirect3DBaseTexture9 *)dst);
@@ -14813,6 +14889,7 @@ START_TEST(device)
     test_npot_textures();
     test_vidmem_accounting();
     test_volume_locking();
+    test_update_texture_pool();
     test_update_volumetexture();
     test_create_rt_ds_fail();
     test_volume_blocks();
