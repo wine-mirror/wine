@@ -1992,6 +1992,36 @@ static inline WCHAR casemap( const USHORT *table, WCHAR ch )
 }
 
 
+static inline unsigned int casemap_high( const USHORT *table, WCHAR high, WCHAR low )
+{
+    unsigned int off = table[table[256 + (high - 0xd800)] + ((low >> 5) & 0x1f)] + 2 * (low & 0x1f);
+    return 0x10000 + ((high - 0xd800) << 10) + (low - 0xdc00) + MAKELONG( table[off], table[off+1] );
+}
+
+
+static inline BOOL table_has_high_planes( const USHORT *table )
+{
+    return table[0] >= 0x500;
+}
+
+
+static inline int put_utf16( WCHAR *dst, int pos, int dstlen, unsigned int ch )
+{
+    if (ch >= 0x10000)
+    {
+        if (pos < dstlen - 1)
+        {
+            ch -= 0x10000;
+            dst[pos] = 0xd800 | (ch >> 10);
+            dst[pos + 1] = 0xdc00 | (ch & 0x3ff);
+        }
+        return 2;
+    }
+    if (pos < dstlen) dst[pos] = ch;
+    return 1;
+}
+
+
 static inline WORD get_char_type( DWORD type, WCHAR ch )
 {
     const BYTE *ptr = sort.ctype_idx + ((const WORD *)sort.ctype_idx)[ch >> 8];
@@ -2008,11 +2038,37 @@ static inline void map_byterev( const WCHAR *src, int len, WCHAR *dst )
 
 static int casemap_string( const USHORT *table, const WCHAR *src, int srclen, WCHAR *dst, int dstlen )
 {
-    int pos, ret = srclen;
+    if (table_has_high_planes( table ))
+    {
+        unsigned int ch;
+        int pos = 0;
 
-    for (pos = 0; pos < dstlen && srclen; pos++, src++, srclen--)
-        dst[pos] = casemap( table, *src );
-    return ret;
+        while (srclen)
+        {
+            if (srclen > 1 && IS_SURROGATE_PAIR( src[0], src[1] ))
+            {
+                ch = casemap_high( table, src[0], src[1] );
+                src += 2;
+                srclen -= 2;
+            }
+            else
+            {
+                ch = casemap( table, *src );
+                src++;
+                srclen--;
+            }
+            pos += put_utf16( dst, pos, dstlen, ch );
+        }
+        return pos;
+    }
+    else
+    {
+        int pos, ret = srclen;
+
+        for (pos = 0; pos < dstlen && srclen; pos++, src++, srclen--)
+            dst[pos] = casemap( table, *src );
+        return ret;
+    }
 }
 
 
@@ -3912,16 +3968,29 @@ static int find_substring( const struct sortguid *sortid, DWORD flags, const WCH
 /* map buffer to full-width katakana */
 static int map_to_fullwidth( const USHORT *table, const WCHAR *src, int srclen, WCHAR *dst, int dstlen )
 {
-    int pos;
+    int pos, len;
 
-    for (pos = 0; srclen; pos++, src++, srclen--)
+    for (pos = 0; srclen; pos++, src += len, srclen -= len)
     {
-        WCHAR wch = casemap( charmaps[CHARMAP_FULLWIDTH], *src );
+        unsigned int wch = casemap( charmaps[CHARMAP_FULLWIDTH], *src );
+
+        len = 1;
         if (srclen > 1)
         {
-            switch (src[1])
+            if (table_has_high_planes( charmaps[CHARMAP_FULLWIDTH] ) && IS_SURROGATE_PAIR( src[0], src[1] ))
             {
-            case 0xff9e:  /* dakuten (voiced sound) */
+                len = 2;
+                wch = casemap_high( charmaps[CHARMAP_FULLWIDTH], src[0], src[1] );
+                if (wch >= 0x10000)
+                {
+                    put_utf16( dst, pos, dstlen, wch );
+                    pos++;
+                    continue;
+                }
+            }
+            else if (src[1] == 0xff9e)  /* dakuten (voiced sound) */
+            {
+                len = 2;
                 if ((*src >= 0xff76 && *src <= 0xff84) ||
                     (*src >= 0xff8a && *src <= 0xff8e) ||
                     *src == 0x30fd)
@@ -3937,22 +4006,18 @@ static int map_to_fullwidth( const USHORT *table, const WCHAR *src, int srclen, 
                 else if (*src == 0xff66)
                     wch = 0x30fa; /* KATAKANA LETTER VO */
                 else
-                    break;
-                src++;
-                srclen--;
-                break;
-            case 0xff9f:  /* handakuten (semi-voiced sound) */
+                    len = 1;
+            }
+            else if (src[1] == 0xff9f)  /* handakuten (semi-voiced sound) */
+            {
                 if (*src >= 0xff8a && *src <= 0xff8e)
                 {
                     wch += 2;
-                    src++;
-                    srclen--;
+                    len = 2;
                 }
-                break;
-            default:
-                break;
             }
         }
+
         if (pos < dstlen) dst[pos] = table ? casemap( table, wch ) : wch;
     }
     return pos;
