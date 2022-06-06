@@ -54,6 +54,7 @@ struct wg_transform
     GstBufferList *input;
     guint input_max_length;
     guint output_plane_align;
+    struct wg_sample *output_wg_sample;
     GstAtomicQueue *output_queue;
     GstSample *output_sample;
     bool output_caps_changed;
@@ -306,6 +307,20 @@ static bool transform_append_element(struct wg_transform *transform, GstElement 
     return success;
 }
 
+static struct wg_sample *transform_request_sample(gsize size, void *context)
+{
+    struct wg_transform *transform = context;
+    struct wg_sample *sample;
+
+    GST_LOG("size %#zx, context %p", size, transform);
+
+    sample = InterlockedExchangePointer((void **)&transform->output_wg_sample, NULL);
+    if (!sample || sample->max_size < size)
+        return NULL;
+
+    return sample;
+}
+
 NTSTATUS wg_transform_create(void *args)
 {
     struct wg_transform_create_params *params = args;
@@ -330,7 +345,7 @@ NTSTATUS wg_transform_create(void *args)
         goto out;
     if (!(transform->output_queue = gst_atomic_queue_new(8)))
         goto out;
-    if (!(transform->allocator = wg_allocator_create()))
+    if (!(transform->allocator = wg_allocator_create(transform_request_sample, transform)))
         goto out;
     transform->input_max_length = 1;
     transform->output_plane_align = 0;
@@ -620,10 +635,22 @@ static bool copy_buffer(GstBuffer *buffer, GstCaps *caps, struct wg_sample *samp
 static NTSTATUS read_transform_output_data(GstBuffer *buffer, GstCaps *caps, gsize plane_align,
         struct wg_sample *sample)
 {
+    bool ret, needs_copy;
     gsize total_size;
-    bool ret;
+    GstMapInfo info;
 
-    if (is_caps_video(caps))
+    if (!gst_buffer_map(buffer, &info, GST_MAP_READ))
+    {
+        GST_ERROR("Failed to map buffer %p", buffer);
+        sample->size = 0;
+        return STATUS_UNSUCCESSFUL;
+    }
+    needs_copy = info.data != sample->data;
+    gst_buffer_unmap(buffer, &info);
+
+    if ((ret = !needs_copy))
+        total_size = sample->size = info.size;
+    else if (is_caps_video(caps))
         ret = copy_video_buffer(buffer, caps, plane_align, sample, &total_size);
     else
         ret = copy_buffer(buffer, caps, sample, &total_size);
@@ -655,7 +682,18 @@ static NTSTATUS read_transform_output_data(GstBuffer *buffer, GstCaps *caps, gsi
     if (!GST_BUFFER_FLAG_IS_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT))
         sample->flags |= WG_SAMPLE_FLAG_SYNC_POINT;
 
-    GST_INFO("Copied %u bytes, sample %p, flags %#x", sample->size, sample, sample->flags);
+    if (needs_copy)
+    {
+        if (is_caps_video(caps))
+            GST_WARNING("Copied %u bytes, sample %p, flags %#x", sample->size, sample, sample->flags);
+        else
+            GST_INFO("Copied %u bytes, sample %p, flags %#x", sample->size, sample, sample->flags);
+    }
+    else if (sample->flags & WG_SAMPLE_FLAG_INCOMPLETE)
+        GST_ERROR("Partial read %u bytes, sample %p, flags %#x", sample->size, sample, sample->flags);
+    else
+        GST_INFO("Read %u bytes, sample %p, flags %#x", sample->size, sample, sample->flags);
+
     return STATUS_SUCCESS;
 }
 
@@ -665,23 +703,38 @@ NTSTATUS wg_transform_read_data(void *args)
     struct wg_transform *transform = params->transform;
     struct wg_sample *sample = params->sample;
     struct wg_format *format = params->format;
-    GstBufferList *input = transform->input;
+    GstFlowReturn ret = GST_FLOW_OK;
     GstBuffer *output_buffer;
+    GstBufferList *input;
     GstCaps *output_caps;
-    GstFlowReturn ret;
+    bool discard_data;
     NTSTATUS status;
+
+    /* Provide the sample for transform_request_sample to pick it up */
+    InterlockedIncrement(&sample->refcount);
+    InterlockedExchangePointer((void **)&transform->output_wg_sample, sample);
 
     if (!gst_buffer_list_length(transform->input))
         GST_DEBUG("Not input buffer queued");
-    else if (!(transform->input = gst_buffer_list_new()))
+    else if ((input = gst_buffer_list_new()))
+    {
+        ret = gst_pad_push_list(transform->my_src, transform->input);
+        transform->input = input;
+    }
+    else
     {
         GST_ERROR("Failed to allocate new input queue");
-        gst_buffer_list_unref(input);
-        return STATUS_NO_MEMORY;
+        ret = GST_FLOW_ERROR;
     }
-    else if ((ret = gst_pad_push_list(transform->my_src, input)))
+
+    /* Remove the sample so transform_request_sample cannot use it */
+    if (InterlockedExchangePointer((void **)&transform->output_wg_sample, NULL))
+        InterlockedDecrement(&sample->refcount);
+
+    if (ret)
     {
         GST_ERROR("Failed to push transform input, error %d", ret);
+        wg_allocator_release_sample(transform->allocator, sample, false);
         return STATUS_UNSUCCESSFUL;
     }
 
@@ -690,6 +743,7 @@ NTSTATUS wg_transform_read_data(void *args)
         sample->size = 0;
         params->result = MF_E_TRANSFORM_NEED_MORE_INPUT;
         GST_INFO("Cannot read %u bytes, no output available", sample->max_size);
+        wg_allocator_release_sample(transform->allocator, sample, false);
         return STATUS_SUCCESS;
     }
 
@@ -729,19 +783,41 @@ NTSTATUS wg_transform_read_data(void *args)
 
         params->result = MF_E_TRANSFORM_STREAM_CHANGE;
         GST_INFO("Format changed detected, returning no output");
+        wg_allocator_release_sample(transform->allocator, sample, false);
         return STATUS_SUCCESS;
     }
 
     if ((status = read_transform_output_data(output_buffer, output_caps,
                 transform->output_plane_align, sample)))
-        return status;
-
-    if (!(sample->flags & WG_SAMPLE_FLAG_INCOMPLETE))
     {
+        wg_allocator_release_sample(transform->allocator, sample, false);
+        return status;
+    }
+
+    if (sample->flags & WG_SAMPLE_FLAG_INCOMPLETE)
+        discard_data = false;
+    else
+    {
+        /* Taint the buffer memory to make sure it cannot be reused by the buffer pool,
+         * for the pool to always requests new memory from the allocator, and so we can
+         * then always provide output sample memory to achieve zero-copy.
+         *
+         * However, some decoder keep a reference on the buffer they passed downstream,
+         * to re-use it later. In this case, it will not be possible to do zero-copy,
+         * and we should copy the data back to the buffer and leave it unchanged.
+         *
+         * Some other plugins make assumptions that the returned buffer will always have
+         * at least one memory attached, we cannot just remove it and need to replace the
+         * memory instead.
+         */
+        if ((discard_data = gst_buffer_is_writable(output_buffer)))
+            gst_buffer_replace_all_memory(output_buffer, gst_allocator_alloc(NULL, 0, NULL));
+
         gst_sample_unref(transform->output_sample);
         transform->output_sample = NULL;
     }
 
     params->result = S_OK;
+    wg_allocator_release_sample(transform->allocator, sample, discard_data);
     return STATUS_SUCCESS;
 }

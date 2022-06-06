@@ -999,6 +999,12 @@ void wg_sample_release(struct wg_sample *wg_sample)
 {
     struct mf_sample *mf_sample = CONTAINING_RECORD(wg_sample, struct mf_sample, wg_sample);
 
+    if (InterlockedOr(&wg_sample->refcount, 0))
+    {
+        ERR("Sample %p is still in use, trouble ahead!\n", wg_sample);
+        return;
+    }
+
     IMFMediaBuffer_Unlock(mf_sample->media_buffer);
     IMFMediaBuffer_Release(mf_sample->media_buffer);
     IMFSample_Release(mf_sample->sample);
