@@ -1846,6 +1846,7 @@ static int accept_into_socket( struct sock *sock, struct sock *acceptsock )
     }
 
     acceptsock->state = SOCK_CONNECTED;
+    acceptsock->bound = 1;
     acceptsock->pending_events = 0;
     acceptsock->reported_events = 0;
     acceptsock->proto   = sock->proto;
