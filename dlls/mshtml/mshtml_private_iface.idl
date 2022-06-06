@@ -139,4 +139,50 @@ interface IWineDOMTokenList : IDispatch
     HRESULT toString([retval, out] BSTR *String);
 }
 
+const long DISPID_IWINEXMLHTTPREQUESTPRIVATE_OVERRIDEMIMETYPE = 5;
+[
+    odl,
+    oleautomation,
+    dual,
+    hidden,
+    uuid(08ef0edd-5fb8-4178-a2f0-9f686e00441c)
+]
+interface IWineXMLHttpRequestPrivate : IDispatch
+{
+    [propget, id(1)]
+    HRESULT response([retval, out] VARIANT *p);
+    [propput, id(2)]
+    HRESULT responseType([in] BSTR v);
+    [propget, id(2)]
+    HRESULT responseType([retval, out] BSTR *p);
+    [propget, id(3)]
+    HRESULT upload([retval, out] IDispatch **p);
+    [propput, id(4)]
+    HRESULT withCredentials([in] VARIANT_BOOL v);
+    [propget, id(4)]
+    HRESULT withCredentials([retval, out] VARIANT_BOOL *p);
+    [id(DISPID_IWINEXMLHTTPREQUESTPRIVATE_OVERRIDEMIMETYPE)]
+    HRESULT overrideMimeType([in] BSTR mimeType);
+    [propput, id(DISPID_EVPROP_ONERROR)]
+    HRESULT onerror([in] VARIANT v);
+    [propget, id(DISPID_EVPROP_ONERROR)]
+    HRESULT onerror([retval, out] VARIANT *p);
+    [propput, id(DISPID_EVPROP_ONABORT)]
+    HRESULT onabort([in] VARIANT v);
+    [propget, id(DISPID_EVPROP_ONABORT)]
+    HRESULT onabort([retval, out] VARIANT *p);
+    [propput, id(DISPID_EVPROP_PROGRESS)]
+    HRESULT onprogress([in] VARIANT v);
+    [propget, id(DISPID_EVPROP_PROGRESS)]
+    HRESULT onprogress([retval, out] VARIANT *p);
+    [propput, id(DISPID_EVPROP_LOADSTART)]
+    HRESULT onloadstart([in] VARIANT v);
+    [propget, id(DISPID_EVPROP_LOADSTART)]
+    HRESULT onloadstart([retval, out] VARIANT *p);
+    [propput, id(DISPID_EVPROP_LOADEND)]
+    HRESULT onloadend([in] VARIANT v);
+    [propget, id(DISPID_EVPROP_LOADEND)]
+    HRESULT onloadend([retval, out] VARIANT *p);
+}
+
 } /* library MSHTML_private */

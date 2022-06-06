@@ -397,8 +397,18 @@ sync_test("xhr_props", function() {
     test_exposed("addEventListener", v >= 9);
     test_exposed("removeEventListener", v >= 9);
     test_exposed("dispatchEvent", v >= 9);
+    test_exposed("onabort", v >= 10);
+    test_exposed("onerror", v >= 10);
+    test_exposed("onloadend", v >= 10);
+    test_exposed("onloadstart", v >= 10);
+    test_exposed("onprogress", v >= 10);
     test_exposed("ontimeout", true);
+    test_exposed("overrideMimeType", v >= 11);
+    test_exposed("response", v >= 10);
+    test_exposed("responseType", v >= 10);
     test_exposed("timeout", true);
+    test_exposed("upload", v >= 10);
+    test_exposed("withCredentials", v >= 10);
 });
 
 sync_test("stylesheet_props", function() {

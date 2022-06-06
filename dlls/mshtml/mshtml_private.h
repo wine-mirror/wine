@@ -282,6 +282,7 @@ typedef struct EventTarget EventTarget;
     XIID(IWineHTMLElementPrivate) \
     XIID(IWineHTMLWindowPrivate) \
     XIID(IWineHTMLWindowCompatPrivate) \
+    XIID(IWineXMLHttpRequestPrivate) \
     XIID(IWineMSHTMLConsole)
 
 typedef enum {
