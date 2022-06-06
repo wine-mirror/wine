@@ -5428,6 +5428,7 @@ static void add_dirty_rect_test(void)
         *tex_managed, *tex_dynamic;
     IDirect3DSurface8 *surface_dst2, *surface_src_green, *surface_src_red,
         *surface_managed0, *surface_managed1, *surface_dynamic;
+    struct surface_readback rb;
     D3DLOCKED_RECT locked_rect;
     IDirect3DDevice8 *device;
     unsigned int color, i;
@@ -5704,6 +5705,29 @@ static void add_dirty_rect_test(void)
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
 
+    fill_surface(surface_src_green, 0x000000ff, D3DLOCK_NO_DIRTY_UPDATE);
+
+    /* So does drawing directly from the sysmem texture. */
+    hr = IDirect3DDevice8_SetTexture(device, 0, (IDirect3DBaseTexture8 *)tex_src_green);
+    ok(hr == S_OK, "Failed to set texture, hr %#lx.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+
+    /* Blitting to the sysmem texture adds a dirty rect. */
+    fill_surface(surface_src_red, 0x00000000, D3DLOCK_NO_DIRTY_UPDATE);
+    fill_surface(surface_src_green, 0x00ff00ff, D3DLOCK_NO_DIRTY_UPDATE);
+    hr = IDirect3DDevice8_SetTexture(device, 0, (IDirect3DBaseTexture8 *)tex_dst1);
+    ok(hr == S_OK, "Failed to set texture, hr %#lx.\n", hr);
+    hr = IDirect3DDevice8_CopyRects(device, surface_src_green, NULL, 0, surface_src_red, NULL);
+    ok(hr == S_OK, "Failed to update surface, hr %#lx.\n", hr);
+    hr = IDirect3DDevice8_UpdateTexture(device, (IDirect3DBaseTexture8 *)tex_src_red,
+            (IDirect3DBaseTexture8 *)tex_dst1);
+    ok(hr == S_OK, "Failed to update texture, hr %#lx.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    todo_wine ok(color_match(color, 0x00ff00ff, 1), "Got unexpected color 0x%08x.\n", color);
+
     /* Tests with managed textures. */
     fill_surface(surface_managed0, 0x00ff0000, 0);
     fill_surface(surface_managed1, 0x00ff0000, 0);
@@ -5800,6 +5824,24 @@ static void add_dirty_rect_test(void)
     ok(color_match(color, 0x0000ff00, 1), "Got unexpected colour 0x%08x.\n", color);
     hr = IDirect3DDevice8_Present(device, NULL, NULL, NULL, NULL);
     ok(hr == D3D_OK, "Failed to present, hr %#lx.\n", hr);
+
+    /* Test blitting to a managed texture. */
+    fill_surface(surface_managed0, 0x000000ff, 0);
+    /* Draw so that both the CPU and GPU copies are blue. */
+    hr = IDirect3DDevice8_SetTexture(device, 0, (IDirect3DBaseTexture8 *)tex_managed);
+    ok(SUCCEEDED(hr), "Failed to set texture, hr %#lx.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x000000ff, 0), "Got unexpected colour 0x%08x.\n", color);
+    hr = IDirect3DDevice8_CopyRects(device, surface_dst2, NULL, 0, surface_managed0, NULL);
+    ok(hr == D3D_OK, "Failed to update surface, hr %#lx.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x0000ff00, 0), "Got unexpected colour 0x%08x.\n", color);
+    get_surface_readback(surface_managed0, &rb);
+    color = get_readback_color(&rb, 320, 240) & 0x00ffffff;
+    ok(color_match(color, 0x0000ff00, 0), "Got unexpected colour 0x%08x.\n", color);
+    release_surface_readback(&rb);
 
     /* Tests with dynamic textures */
     fill_surface(surface_dynamic, 0x0000ffff, 0);
