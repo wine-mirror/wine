@@ -5080,6 +5080,7 @@ static const SHADER_HANDLER shader_arb_instruction_handler_table[WINED3DSIH_TABL
     /* WINED3DSIH_ENDREP                           */ shader_hw_endrep,
     /* WINED3DSIH_ENDSWITCH                        */ NULL,
     /* WINED3DSIH_EQ                               */ NULL,
+    /* WINED3DSIH_EVAL_CENTROID                    */ NULL,
     /* WINED3DSIH_EVAL_SAMPLE_INDEX                */ NULL,
     /* WINED3DSIH_EXP                              */ shader_hw_scalar_op,
     /* WINED3DSIH_EXPP                             */ shader_hw_scalar_op,

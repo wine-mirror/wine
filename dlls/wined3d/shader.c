@@ -133,6 +133,7 @@ static const char * const shader_opcode_names[] =
     /* WINED3DSIH_ENDREP                           */ "endrep",
     /* WINED3DSIH_ENDSWITCH                        */ "endswitch",
     /* WINED3DSIH_EQ                               */ "eq",
+    /* WINED3DSIH_EVAL_CENTROID                    */ "eval_centroid",
     /* WINED3DSIH_EVAL_SAMPLE_INDEX                */ "eval_sample_index",
     /* WINED3DSIH_EXP                              */ "exp",
     /* WINED3DSIH_EXPP                             */ "expp",
