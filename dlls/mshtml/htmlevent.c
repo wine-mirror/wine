@@ -175,6 +175,8 @@ static const event_info_t event_info[] = {
         EVENT_FIXME},
     {L"paste",             EVENT_TYPE_CLIPBOARD, DISPID_EVMETH_ONPASTE,
         EVENT_FIXME | EVENT_BUBBLES | EVENT_CANCELABLE},
+    {L"progress",          EVENT_TYPE_PROGRESS,  DISPID_EVPROP_PROGRESS,
+        EVENT_BIND_TO_TARGET},
     {L"readystatechange",  EVENT_TYPE_EVENT,     DISPID_EVMETH_ONREADYSTATECHANGE,
         0},
     {L"resize",            EVENT_TYPE_UIEVENT,   DISPID_EVMETH_ONRESIZE,
