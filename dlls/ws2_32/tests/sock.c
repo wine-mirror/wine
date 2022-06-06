@@ -7507,6 +7507,15 @@ todo_wine
     ok(bret, "GetOverlappedResult failed, error %d\n", GetLastError());
     ok(bytesReturned == 0, "bytesReturned isn't supposed to be %d\n", bytesReturned);
 
+    /* Try to call getsockname on the acceptor socket.
+     *
+     * On Windows, this requires setting SO_UPDATE_ACCEPT_CONTEXT. */
+    iret = setsockopt(acceptor, SOL_SOCKET, SO_UPDATE_ACCEPT_CONTEXT, (char *)&listener, sizeof(SOCKET));
+    ok(!iret, "Failed to set accept context %d\n", GetLastError());
+    iret = getsockname(acceptor, (struct sockaddr *)&peerAddress, &remoteSize);
+    ok(!iret, "getsockname failed.\n");
+    ok(remoteSize == sizeof(struct sockaddr_in), "got remote size %u\n", remoteSize);
+
     closesocket(connector);
     connector = INVALID_SOCKET;
     closesocket(acceptor);
