@@ -57,6 +57,12 @@ function test_xhr() {
 
     xhr.open("POST", "echo.php", true);
     xhr.setRequestHeader("X-Test", "True");
+    if("withCredentials" in xhr) {
+        ok(xhr.withCredentials === false, "default withCredentials = " + xhr.withCredentials);
+        xhr.withCredentials = true;
+        ok(xhr.withCredentials === true, "withCredentials = " + xhr.withCredentials);
+        xhr.withCredentials = false;
+    }
     xhr.send("Testing...");
 }
 

@@ -941,18 +941,24 @@ static HRESULT WINAPI HTMLXMLHttpRequest_private_put_withCredentials(IWineXMLHtt
 {
     HTMLXMLHttpRequest *This = impl_from_IWineXMLHttpRequestPrivate(iface);
 
-    FIXME("(%p)->(%x)\n", This, v);
+    TRACE("(%p)->(%x)\n", This, v);
 
-    return E_NOTIMPL;
+    return map_nsresult(nsIXMLHttpRequest_SetWithCredentials(This->nsxhr, !!v));
 }
 
 static HRESULT WINAPI HTMLXMLHttpRequest_private_get_withCredentials(IWineXMLHttpRequestPrivate *iface, VARIANT_BOOL *p)
 {
     HTMLXMLHttpRequest *This = impl_from_IWineXMLHttpRequestPrivate(iface);
+    nsresult nsres;
+    cpp_bool b;
 
-    FIXME("(%p)->(%p)\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    return E_NOTIMPL;
+    nsres = nsIXMLHttpRequest_GetWithCredentials(This->nsxhr, &b);
+    if(NS_FAILED(nsres))
+        return map_nsresult(nsres);
+    *p = b ? VARIANT_TRUE : VARIANT_FALSE;
+    return S_OK;
 }
 
 static HRESULT WINAPI HTMLXMLHttpRequest_private_overrideMimeType(IWineXMLHttpRequestPrivate *iface, BSTR mimeType)
