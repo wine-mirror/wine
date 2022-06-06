@@ -608,7 +608,7 @@ static void test_RtlUpcaseUnicodeChar(void)
 
 static void test_RtlUpcaseUnicodeString(void)
 {
-    int i;
+    int i, j;
     WCHAR ch;
     WCHAR upper_ch;
     WCHAR ascii_buf[257];
@@ -653,6 +653,25 @@ static void test_RtlUpcaseUnicodeString(void)
 	   ascii_str.Buffer[i], ascii_str.Buffer[i],
 	   result_str.Buffer[i], result_str.Buffer[i],
 	   upper_str.Buffer[i], upper_str.Buffer[i]);
+    }
+
+    /* test surrogates */
+    for (i = 0x100; i < 0x1100; i++)
+    {
+        WCHAR src[512], dst[512];
+        for (j = 0; j < 256; j++)
+        {
+            unsigned int ch = ((i << 8) + j) - 0x10000;
+            src[2 * j] = 0xd800 | (ch >> 10);
+            src[2 * j + 1] = 0xdc00 | (ch & 0x3ff);
+        }
+        upper_str.Length = upper_str.MaximumLength = 512 * sizeof(WCHAR);
+        upper_str.Buffer = src;
+        result_str.Length = result_str.MaximumLength = 512 * sizeof(WCHAR);
+        result_str.Buffer = dst;
+        pRtlUpcaseUnicodeString(&result_str, &upper_str, 0);
+        ok( !memcmp(src, dst, sizeof(dst)),
+            "string compare mismatch in %04x-%04x\n", i << 8, (i << 8) + 255 );
     }
 }
 

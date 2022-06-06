@@ -342,7 +342,7 @@ static void test_RtlQueryRegistryValues(void)
 
 static void test_NtOpenKey(void)
 {
-    HANDLE key;
+    HANDLE key, subkey;
     NTSTATUS status;
     OBJECT_ATTRIBUTES attr;
     ACCESS_MASK am = KEY_READ;
@@ -455,6 +455,27 @@ static void test_NtOpenKey(void)
     todo_wine
     ok( status == STATUS_OBJECT_TYPE_MISMATCH, "NtOpenKey failed: 0x%08lx\n", status );
     pRtlFreeUnicodeString( &str );
+
+    InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
+    status = pNtOpenKey(&key, KEY_WRITE|KEY_READ, &attr);
+    ok(status == STATUS_SUCCESS, "NtOpenKey failed: 0x%08lx\n", status);
+
+    /* keys are case insensitive even without OBJ_CASE_INSENSITIVE */
+    InitializeObjectAttributes( &attr, &str, 0, key, 0 );
+    pRtlInitUnicodeString( &str, L"\xf6\xf3\x14d\x371\xd801\xdc00" );
+    status = pNtCreateKey( &subkey, KEY_ALL_ACCESS, &attr, 0, 0, 0, 0);
+    ok(status == STATUS_SUCCESS, "NtCreateKey failed: 0x%08lx\n", status);
+    pNtClose( subkey );
+    pRtlInitUnicodeString( &str, L"\xd6\xd3\x14c\x370\xd801\xdc28" );  /* surrogates not supported */
+    status = pNtOpenKeyEx(&subkey, KEY_ALL_ACCESS, &attr, 0);
+    ok(status == STATUS_OBJECT_NAME_NOT_FOUND, "NtOpenKeyEx failed: 0x%08lx\n", status);
+    pRtlInitUnicodeString( &str, L"\xd6\xd3\x14c\x370\xd801\xdc00" );
+    status = pNtOpenKeyEx(&subkey, KEY_ALL_ACCESS, &attr, 0);
+    ok(status == STATUS_SUCCESS, "NtOpenKeyEx failed: 0x%08lx\n", status);
+
+    pNtDeleteKey( subkey );
+    pNtClose( subkey );
+    pNtClose( key );
 
     if (!pNtOpenKeyEx)
     {
