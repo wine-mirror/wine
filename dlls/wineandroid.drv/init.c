@@ -18,6 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #define NONAMELESSSTRUCT
 #define NONAMELESSUNION
 #include "config.h"
@@ -558,6 +562,10 @@ JavaVM **p_java_vm = NULL;
 jobject *p_java_object = NULL;
 unsigned short *p_java_gdt_sel = NULL;
 
+static NTSTATUS CDECL unix_call( enum android_funcs code, void *params );
+NTSTATUS (WINAPI *pNtWaitForMultipleObjects)( ULONG,const HANDLE*,BOOLEAN,
+                                              BOOLEAN,const LARGE_INTEGER* );
+
 static HRESULT android_init( void *arg )
 {
     struct init_params *params = arg;
@@ -603,6 +611,8 @@ static HRESULT android_init( void *arg )
 #endif
     }
     __wine_set_user_driver( &android_drv_funcs, WINE_GDI_DRIVER_VERSION );
+    pNtWaitForMultipleObjects = params->pNtWaitForMultipleObjects;
+    params->unix_call = unix_call;
     return STATUS_SUCCESS;
 }
 
@@ -621,7 +631,7 @@ C_ASSERT( ARRAYSIZE(__wine_unix_call_funcs) == unix_funcs_count );
 
 
 /* FIXME: Use __wine_unix_call instead */
-NTSTATUS unix_call( enum android_funcs code, void *params )
+static NTSTATUS CDECL unix_call( enum android_funcs code, void *params )
 {
     return __wine_unix_call_funcs[code]( params );
 }

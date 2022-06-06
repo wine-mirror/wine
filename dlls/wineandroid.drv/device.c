@@ -18,6 +18,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #include "config.h"
 
 #include <assert.h>
@@ -1174,10 +1178,9 @@ NTSTATUS android_java_uninit( void *arg )
 
 void start_android_device(void)
 {
-    /* FIXME: use KeUserModeCallback instead */
-    NTSTATUS (WINAPI *func)(void *, ULONG) =
-        ((void **)NtCurrentTeb()->Peb->KernelCallbackTable)[client_start_device];
-    func( NULL, 0 );
+    void *ret_ptr;
+    ULONG ret_len;
+    thread = ULongToHandle( KeUserModeCallback( client_start_device, NULL, 0, &ret_ptr, &ret_len ));
 }
 
 

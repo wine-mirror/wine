@@ -32,6 +32,9 @@
 WINE_DEFAULT_DEBUG_CHANNEL(android);
 
 
+static unixlib_handle_t unix_handle;
+static NTSTATUS (CDECL *unix_call)( enum android_funcs code, void *params );
+
 extern NTSTATUS CDECL wine_ntoskrnl_main_loop( HANDLE stop_event );
 static HANDLE stop_event;
 static HANDLE thread;
@@ -122,13 +125,18 @@ BOOL WINAPI DllMain( HINSTANCE inst, DWORD reason, LPVOID reserved )
     if (reason == DLL_PROCESS_ATTACH) return TRUE;
 
     DisableThreadLibraryCalls( inst );
+    if (NtQueryVirtualMemory( GetCurrentProcess(), inst, MemoryWineUnixFuncs,
+                              &unix_handle, sizeof(unix_handle), NULL ))
+        return FALSE;
 
     params.register_window_callback = register_window_callback;
-    if (ANDROID_CALL( init, &params )) return FALSE;
+    params.pNtWaitForMultipleObjects = NtWaitForMultipleObjects;
+    if (__wine_unix_call( unix_handle, unix_init, &params )) return FALSE;
 
     callback_table = NtCurrentTeb()->Peb->KernelCallbackTable;
     callback_table[client_start_device] = android_start_device;
 
+    unix_call = params.unix_call;
     return TRUE;
 }
 

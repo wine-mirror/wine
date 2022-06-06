@@ -31,13 +31,14 @@ enum android_funcs
 };
 
 /* FIXME: Use __wine_unix_call when the rest of the stack is ready */
-extern NTSTATUS unix_call( enum android_funcs func, void *arg ) DECLSPEC_HIDDEN;
 #define ANDROID_CALL(func, params) unix_call( unix_ ## func, params )
 
 /* android_init params */
 struct init_params
 {
     PNTAPCFUNC register_window_callback;
+    NTSTATUS (WINAPI *pNtWaitForMultipleObjects)( ULONG,const HANDLE*,BOOLEAN,BOOLEAN,const LARGE_INTEGER* );
+    NTSTATUS (CDECL *unix_call)( enum android_funcs code, void *params );
 };
 
 

@@ -20,6 +20,10 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#if 0
+#pragma makedep unix
+#endif
+
 #define NONAMELESSUNION
 #define NONAMELESSSTRUCT
 
@@ -1164,14 +1168,15 @@ static const struct
 static int get_cursor_system_id( const ICONINFOEXW *info )
 {
     const struct system_cursors *cursors;
+    const WCHAR *module;
     unsigned int i;
-    HMODULE module;
 
     if (info->szResName[0]) return 0;  /* only integer resources are supported here */
-    if (!(module = GetModuleHandleW( info->szModName ))) return 0;
 
+    if ((module = wcsrchr( info->szModName, '\\' ))) module++;
+    else module = info->szModName;
     for (i = 0; i < ARRAY_SIZE( module_cursors ); i++)
-        if (GetModuleHandleW( module_cursors[i].name ) == module) break;
+        if (!wcsicmp( module, module_cursors[i].name )) break;
     if (i == ARRAY_SIZE( module_cursors )) return 0;
 
     cursors = module_cursors[i].cursors;
@@ -1207,8 +1212,8 @@ NTSTATUS ANDROID_MsgWaitForMultipleObjectsEx( DWORD count, const HANDLE *handles
         if (current_event) mask = 0;
         if (process_events( mask )) return count - 1;
     }
-    return NtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
-                                     !!(flags & MWMO_ALERTABLE), timeout );
+    return pNtWaitForMultipleObjects( count, handles, !(flags & MWMO_WAITALL),
+                                      !!(flags & MWMO_ALERTABLE), timeout );
 }
 
 /**********************************************************************
