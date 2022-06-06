@@ -1459,8 +1459,10 @@ static DPI_AWARENESS get_awareness_from_dpi_awareness_context( DPI_AWARENESS_CON
     }
 }
 
-/* see SetThreadDpiAwarenessContext */
-DPI_AWARENESS_CONTEXT set_thread_dpi_awareness_context( DPI_AWARENESS_CONTEXT context )
+/**********************************************************************
+ *           SetThreadDpiAwarenessContext   (win32u.so)
+ */
+DPI_AWARENESS_CONTEXT WINAPI SetThreadDpiAwarenessContext( DPI_AWARENESS_CONTEXT context )
 {
     struct user_thread_info *info = get_user_thread_info();
     DPI_AWARENESS prev, val = get_awareness_from_dpi_awareness_context( context );

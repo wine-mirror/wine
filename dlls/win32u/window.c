@@ -461,7 +461,7 @@ HWND WINAPI NtUserSetParent( HWND hwnd, HWND parent )
     if (!ret) return 0;
 
     get_window_rects( hwnd, COORDS_SCREEN, &new_screen_rect, NULL, 0 );
-    context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( hwnd ));
+    context = SetThreadDpiAwarenessContext( get_window_dpi_awareness_context( hwnd ));
 
     user_driver->pSetParent( full_handle, parent, old_parent );
 
@@ -478,7 +478,7 @@ HWND WINAPI NtUserSetParent( HWND hwnd, HWND parent )
 
     if (was_visible) NtUserShowWindow( hwnd, SW_SHOW );
 
-    set_thread_dpi_awareness_context( context );
+    SetThreadDpiAwarenessContext( context );
     return old_parent;
 }
 
@@ -3405,7 +3405,7 @@ BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
         else if (winpos->cy > 32767) winpos->cy = 32767;
     }
 
-    context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( winpos->hwnd ));
+    context = SetThreadDpiAwarenessContext( get_window_dpi_awareness_context( winpos->hwnd ));
 
     if (!calc_winpos( winpos, &old_window_rect, &old_client_rect,
                       &new_window_rect, &new_client_rect )) goto done;
@@ -3480,7 +3480,7 @@ BOOL set_window_pos( WINDOWPOS *winpos, int parent_x, int parent_y )
     }
     ret = TRUE;
 done:
-    set_thread_dpi_awareness_context( context );
+    SetThreadDpiAwarenessContext( context );
     return ret;
 }
 
@@ -3816,7 +3816,7 @@ MINMAXINFO get_min_max_info( HWND hwnd )
     RECT rc;
     WND *win;
 
-    context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( hwnd ));
+    context = SetThreadDpiAwarenessContext( get_window_dpi_awareness_context( hwnd ));
 
     /* Compute default values */
 
@@ -3887,7 +3887,7 @@ MINMAXINFO get_min_max_info( HWND hwnd )
     minmax.ptMaxTrackSize.x = max( minmax.ptMaxTrackSize.x, minmax.ptMinTrackSize.x );
     minmax.ptMaxTrackSize.y = max( minmax.ptMaxTrackSize.y, minmax.ptMinTrackSize.y );
 
-    set_thread_dpi_awareness_context( context );
+    SetThreadDpiAwarenessContext( context );
     return minmax;
 }
 
@@ -4198,13 +4198,13 @@ void update_window_state( HWND hwnd )
         return;
     }
 
-    context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( hwnd ));
+    context = SetThreadDpiAwarenessContext( get_window_dpi_awareness_context( hwnd ));
     get_window_rects( hwnd, COORDS_PARENT, &window_rect, &client_rect, get_thread_dpi() );
     valid_rects[0] = valid_rects[1] = client_rect;
     apply_window_pos( hwnd, 0, SWP_NOSIZE | SWP_NOMOVE | SWP_NOCLIENTSIZE | SWP_NOCLIENTMOVE |
                       SWP_NOZORDER | SWP_NOACTIVATE | SWP_NOREDRAW,
                       &window_rect, &client_rect, valid_rects );
-    set_thread_dpi_awareness_context( context );
+    SetThreadDpiAwarenessContext( context );
 }
 
 /***********************************************************************
@@ -4225,7 +4225,7 @@ static BOOL show_window( HWND hwnd, INT cmd )
 
     TRACE( "hwnd=%p, cmd=%d, was_visible %d\n", hwnd, cmd, was_visible );
 
-    context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( hwnd ));
+    context = SetThreadDpiAwarenessContext( get_window_dpi_awareness_context( hwnd ));
 
     switch(cmd)
     {
@@ -4377,7 +4377,7 @@ static BOOL show_window( HWND hwnd, INT cmd )
     }
 
 done:
-    set_thread_dpi_awareness_context( context );
+    SetThreadDpiAwarenessContext( context );
     return was_visible;
 }
 
@@ -5163,7 +5163,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
 
     if (parent) map_dpi_create_struct( &cs, thread_dpi, win_dpi );
 
-    context = set_thread_dpi_awareness_context( get_window_dpi_awareness_context( hwnd ));
+    context = SetThreadDpiAwarenessContext( get_window_dpi_awareness_context( hwnd ));
 
     /* send the WM_GETMINMAXINFO message and fix the size if needed */
 
@@ -5261,7 +5261,7 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
     send_parent_notify( hwnd, WM_CREATE );
     if (!is_window( hwnd ))
     {
-        set_thread_dpi_awareness_context( context );
+        SetThreadDpiAwarenessContext( context );
         return 0;
     }
 
@@ -5290,12 +5290,12 @@ HWND WINAPI NtUserCreateWindowEx( DWORD ex_style, UNICODE_STRING *class_name,
         call_hooks( WH_SHELL, HSHELL_WINDOWCREATED, (WPARAM)hwnd, 0, TRUE );
 
     TRACE( "created window %p\n", hwnd );
-    set_thread_dpi_awareness_context( context );
+    SetThreadDpiAwarenessContext( context );
     return hwnd;
 
 failed:
     destroy_window( hwnd );
-    set_thread_dpi_awareness_context( context );
+    SetThreadDpiAwarenessContext( context );
     return 0;
 }
 
