@@ -118,6 +118,8 @@ extern NTSTATUS android_create_desktop( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS android_dispatch_ioctl( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS android_java_init( void *arg ) DECLSPEC_HIDDEN;
 extern NTSTATUS android_java_uninit( void *arg ) DECLSPEC_HIDDEN;
+extern NTSTATUS android_register_window( void *arg ) DECLSPEC_HIDDEN;
+extern PNTAPCFUNC register_window_callback;
 
 extern unsigned int screen_width DECLSPEC_HIDDEN;
 extern unsigned int screen_height DECLSPEC_HIDDEN;

@@ -516,21 +516,22 @@ static struct native_win_data *create_native_win_data( HWND hwnd, BOOL opengl )
     return data;
 }
 
-static void CALLBACK register_native_window_callback( ULONG_PTR arg1, ULONG_PTR arg2, ULONG_PTR arg3 )
+NTSTATUS android_register_window( void *arg )
 {
-    HWND hwnd = (HWND)arg1;
-    struct ANativeWindow *win = (struct ANativeWindow *)arg2;
-    BOOL opengl = arg3;
+    struct register_window_params *params = arg;
+    HWND hwnd = (HWND)params->arg1;
+    struct ANativeWindow *win = (struct ANativeWindow *)params->arg2;
+    BOOL opengl = params->arg3;
     struct native_win_data *data = get_native_win_data( hwnd, opengl );
 
-    if (!win) return;  /* do nothing and hold on to the window until we get a new surface */
+    if (!win) return 0;  /* do nothing and hold on to the window until we get a new surface */
 
     if (!data || data->parent == win)
     {
         pANativeWindow_release( win );
         if (data) NtUserPostMessage( hwnd, WM_ANDROID_REFRESH, opengl, 0 );
         TRACE( "%p -> %p win %p (unchanged)\n", hwnd, data, win );
-        return;
+        return 0;
     }
 
     release_native_window( data );
@@ -543,12 +544,13 @@ static void CALLBACK register_native_window_callback( ULONG_PTR arg1, ULONG_PTR 
     unwrap_java_call();
     NtUserPostMessage( hwnd, WM_ANDROID_REFRESH, opengl, 0 );
     TRACE( "%p -> %p win %p\n", hwnd, data, win );
+    return 0;
 }
 
 /* register a native window received from the Java side for use in ioctls */
 void register_native_window( HWND hwnd, struct ANativeWindow *win, BOOL opengl )
 {
-    NtQueueApcThread( thread, register_native_window_callback, (ULONG_PTR)hwnd, (ULONG_PTR)win, opengl );
+    NtQueueApcThread( thread, register_window_callback, (ULONG_PTR)hwnd, (ULONG_PTR)win, opengl );
 }
 
 void init_gralloc( const struct hw_module_t *module )

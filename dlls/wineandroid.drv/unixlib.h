@@ -26,6 +26,7 @@ enum android_funcs
     unix_init,
     unix_java_init,
     unix_java_uninit,
+    unix_register_window,
     unix_funcs_count
 };
 
@@ -33,11 +34,27 @@ enum android_funcs
 extern NTSTATUS unix_call( enum android_funcs func, void *arg ) DECLSPEC_HIDDEN;
 #define ANDROID_CALL(func, params) unix_call( unix_ ## func, params )
 
+/* android_init params */
+struct init_params
+{
+    PNTAPCFUNC register_window_callback;
+};
+
+
 /* android_ioctl params */
 struct ioctl_params
 {
     struct _IRP *irp;
     DWORD client_id;
+};
+
+
+/* android_register_window params */
+struct register_window_params
+{
+    UINT_PTR arg1;
+    UINT_PTR arg2;
+    UINT_PTR arg3;
 };
 
 

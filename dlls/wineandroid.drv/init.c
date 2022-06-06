@@ -48,6 +48,8 @@ static RECT monitor_rc_work;
 static int device_init_done;
 static BOOL force_display_devices_refresh;
 
+PNTAPCFUNC register_window_callback;
+
 typedef struct
 {
     struct gdi_physdev dev;
@@ -558,6 +560,7 @@ unsigned short *p_java_gdt_sel = NULL;
 
 static HRESULT android_init( void *arg )
 {
+    struct init_params *params = arg;
     pthread_mutexattr_t attr;
     jclass class;
     jobject object;
@@ -580,6 +583,8 @@ static HRESULT android_init( void *arg )
     pthread_mutex_init( &drawable_mutex, &attr );
     pthread_mutex_init( &win_data_mutex, &attr );
     pthread_mutexattr_destroy( &attr );
+
+    register_window_callback = params->register_window_callback;
 
     if ((java_vm = *p_java_vm))  /* running under Java */
     {
@@ -608,6 +613,7 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
     android_init,
     android_java_init,
     android_java_uninit,
+    android_register_window,
 };
 
 
