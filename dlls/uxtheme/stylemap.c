@@ -2,6 +2,7 @@
  * msstyle data maps
  *
  * Copyright (C) 2004 Kevin Koltzau
+ * Copyright 2021-2022 Zhiyi Zhang for CodeWeavers
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -1397,6 +1398,10 @@ static const MSSTYLES_CLASS_MAP classWindow[] = {
     {WP_SMALLFRAMERIGHTSIZINGTEMPLATE, 0, L"SMALLFRAMERIGHTSIZINGTEMPLATE"},
     {WP_FRAMEBOTTOMSIZINGTEMPLATE, 0, L"FRAMEBOTTOMSIZINGTEMPLATE"},
     {WP_SMALLFRAMEBOTTOMSIZINGTEMPLATE, 0, L"SMALLFRAMEBOTTOMSIZINGTEMPLATE"},
+    {WP_FRAME, 0, L"FRAME"},
+    {WP_FRAME, FS_ACTIVE, L"ACTIVE"},
+    {WP_FRAME, FS_INACTIVE, L"INACTIVE"},
+    {WP_BORDER, 0, L"BORDER"},
     {0, 0, L""}
 };
 
