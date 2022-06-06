@@ -3079,6 +3079,8 @@ static void report_data(ProtocolHandler *This)
 
         hres = IServiceProvider_QueryService(service_provider, &IID_IHttpNegotiate, &IID_IHttpNegotiate, (void**)&http_negotiate);
         IServiceProvider_Release(service_provider);
+        if(This->delay && hres == E_FAIL)  /* aborted too quickly */
+            return;
         ok(hres == S_OK, "Could not get IHttpNegotiate interface: %08lx\n", hres);
 
         hres = IUri_GetDisplayUri(This->uri, &url);

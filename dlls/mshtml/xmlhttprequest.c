@@ -97,6 +97,7 @@ static HRESULT return_nscstr(nsresult nsres, nsACString *nscstr, BSTR *p)
 static const eventid_t events[] = {
     EVENTID_READYSTATECHANGE,
     EVENTID_LOAD,
+    EVENTID_ABORT,
     EVENTID_ERROR,
     EVENTID_TIMEOUT,
 };
@@ -982,18 +983,18 @@ static HRESULT WINAPI HTMLXMLHttpRequest_private_put_onabort(IWineXMLHttpRequest
 {
     HTMLXMLHttpRequest *This = impl_from_IWineXMLHttpRequestPrivate(iface);
 
-    FIXME("(%p)->(%s)\n", This, debugstr_variant(&v));
+    TRACE("(%p)->(%s)\n", This, debugstr_variant(&v));
 
-    return E_NOTIMPL;
+    return set_event_handler(&This->event_target, EVENTID_ABORT, &v);
 }
 
 static HRESULT WINAPI HTMLXMLHttpRequest_private_get_onabort(IWineXMLHttpRequestPrivate *iface, VARIANT *p)
 {
     HTMLXMLHttpRequest *This = impl_from_IWineXMLHttpRequestPrivate(iface);
 
-    FIXME("(%p)->(%p)\n", This, p);
+    TRACE("(%p)->(%p)\n", This, p);
 
-    return E_NOTIMPL;
+    return get_event_handler(&This->event_target, EVENTID_ABORT, p);
 }
 
 static HRESULT WINAPI HTMLXMLHttpRequest_private_put_onprogress(IWineXMLHttpRequestPrivate *iface, VARIANT v)

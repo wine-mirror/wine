@@ -41,6 +41,25 @@ function test_xhr() {
     xhr.send("Testing...");
 }
 
+function test_abort() {
+    var xhr = new XMLHttpRequest();
+    if(!("onabort" in xhr)) { next_test(); return; }
+
+    xhr.onreadystatechange = function() {
+        if(xhr.readyState != 4)
+            return;
+        todo_wine_if(v < 10).
+        ok(v >= 10, "onreadystatechange called");
+    }
+    xhr.onload = function() { ok(false, "onload called"); }
+    xhr.onabort = function(e) { next_test(); }
+
+    xhr.open("POST", "echo.php?delay", true);
+    xhr.setRequestHeader("X-Test", "True");
+    xhr.send("Abort Test");
+    xhr.abort();
+}
+
 function test_timeout() {
     var xhr = new XMLHttpRequest();
     var v = document.documentMode;
@@ -74,5 +93,6 @@ function test_timeout() {
 
 var tests = [
     test_xhr,
+    test_abort,
     test_timeout
 ];
