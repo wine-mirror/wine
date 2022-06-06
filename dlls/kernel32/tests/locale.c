@@ -220,6 +220,33 @@ static void expect_werr_(int line, int ret, const WCHAR *str, DWORD err, const c
       ok_(__FILE__, line)(wcscmp(str, L"pristine") == 0, "Expected a pristine buffer, got %s\n", wine_dbgstr_w(str));
 }
 
+static int get_utf16( const WCHAR *src, unsigned int srclen, unsigned int *ch )
+{
+    if (IS_HIGH_SURROGATE( src[0] ))
+    {
+        if (srclen <= 1) return 0;
+        if (!IS_LOW_SURROGATE( src[1] )) return 0;
+        *ch = 0x10000 + ((src[0] & 0x3ff) << 10) + (src[1] & 0x3ff);
+        return 2;
+    }
+    if (IS_LOW_SURROGATE( src[0] )) return 0;
+    *ch = src[0];
+    return 1;
+}
+
+static int put_utf16( WCHAR *str, unsigned int c )
+{
+    if (c < 0x10000)
+    {
+        *str = c;
+        return 1;
+    }
+    c -= 0x10000;
+    str[0] = 0xd800 | (c >> 10);
+    str[1] = 0xdc00 | (c & 0x3ff);
+    return 2;
+}
+
 #define NUO LOCALE_NOUSEROVERRIDE
 
 static void test_GetLocaleInfoA(void)
@@ -2414,6 +2441,25 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
         0xff70, 0xff73, 0xff9e, 0xff6b, 0xff89, 0x91ce, 0x539f, 0xff8a,
         0x5e83, 0xff72, 0xff9d, 0xff80, 0xff9e, 0xff96, 0xff61, 0
     };
+    const static WCHAR math_text[] = {
+        0xd835, 0xdc00, 0xd835, 0xdc01, 0xd835, 0xdc02, 0xd835, 0xdc03,
+        0xd835, 0xdd52, 0xd835, 0xdd53, 0xd835, 0xdd54, 0xd835, 0xdd55, 0
+    };
+    const static WCHAR math_result[] = L"ABCDabcd";
+    const static WCHAR math_arabic_text[] = {
+        0xd83b, 0xde00, 0xd83b, 0xde01, 0xd83b, 0xde02, 0xd83b, 0xde03,
+        0xd83b, 0xde10, 0xd83b, 0xde11, 0xd83b, 0xde12, 0xd83b, 0xde13, 0
+    };
+    const static WCHAR math_arabic_result[] = {
+        0x0627, 0x0628, 0x062c, 0x062f, 0x0641, 0x0635, 0x0642, 0x0631, 0
+    };
+    const static WCHAR cjk_compat_text[] = {
+        0xd87e, 0xdc20, 0xd87e, 0xdc21, 0xd87e, 0xdc22, 0xd87e, 0xdc23,
+        0xd87e, 0xdc24, 0xd87e, 0xdc25, 0xd87e, 0xdc26, 0xd87e, 0xdc27, 0
+    };
+    const static WCHAR cjk_compat_result[] = {
+        0x523b, 0x5246, 0x5272, 0x5277, 0x3515, 0x52c7, 0x52c9, 0x52e4, 0
+    };
     int ret, ret2, i;
     WCHAR buf[256], buf2[256];
     char *p_buf = (char *)buf, *p_buf2 = (char *)buf2;
@@ -2479,6 +2525,23 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
 
     ret2 = func_ptr(LCMAP_FULLWIDTH, halfwidth_text, -1, NULL, 0);
     ok(ret == ret2, "%s ret %d, expected value %d\n", func_name, ret2, ret);
+
+    ret = func_ptr(LCMAP_FULLWIDTH, math_text, -1, buf, ARRAY_SIZE(buf));
+    ok(ret == lstrlenW(buf) + 1, "%s ret %d, error %ld, expected value %d\n", func_name,
+       ret, GetLastError(), lstrlenW(buf) + 1);
+    ok(!lstrcmpW(buf, math_result), "%s string compare mismatch %s\n", func_name, debugstr_w(buf));
+
+    ret = func_ptr(LCMAP_FULLWIDTH, math_arabic_text, -1, buf, ARRAY_SIZE(buf));
+    ok(ret == lstrlenW(buf) + 1, "%s ret %d, error %ld, expected value %d\n", func_name,
+       ret, GetLastError(), lstrlenW(buf) + 1);
+    ok(!lstrcmpW(buf, math_arabic_result) ||
+       broken(!lstrcmpW( buf, math_arabic_text )), /* win7 */
+       "%s string compare mismatch %s\n", func_name, debugstr_w(buf));
+
+    ret = func_ptr(LCMAP_FULLWIDTH, cjk_compat_text, -1, buf, ARRAY_SIZE(buf));
+    ok(ret == lstrlenW(buf) + 1, "%s ret %d, error %ld, expected value %d\n", func_name,
+       ret, GetLastError(), lstrlenW(buf) + 1);
+    ok(!lstrcmpW(buf, cjk_compat_result), "%s string compare mismatch %s\n", func_name, debugstr_w(buf));
 
     /* test LCMAP_FULLWIDTH | LCMAP_HIRAGANA
        (half-width katakana is converted into full-width hiragana) */
@@ -3882,8 +3945,9 @@ static void test_FoldStringW(void)
 {
   int ret;
   WORD type;
-  unsigned int i, j;
-  WCHAR src[256], dst[256], ch, prev_ch = 1;
+  unsigned int i, j, len;
+  WCHAR src[256], dst[256];
+  UINT ch, prev_ch = 1;
   static const DWORD badFlags[] =
   {
     0,
@@ -3892,93 +3956,104 @@ static void test_FoldStringW(void)
     MAP_COMPOSITE|MAP_EXPAND_LIGATURES
   };
   /* Ranges of digits 0-9 : Must be sorted! */
-  static const WCHAR digitRanges[] =
+  static const struct { UINT ch, first, last; int broken; } digitRanges[] =
   {
-    0x0030, /* '0'-'9' */
-    0x0660, /* Eastern Arabic */
-    0x06F0, /* Arabic - Hindu */
-    0x07C0, /* Nko */
-    0x0966, /* Devengari */
-    0x09E6, /* Bengalii */
-    0x0A66, /* Gurmukhi */
-    0x0AE6, /* Gujarati */
-    0x0B66, /* Oriya */
-    0x0BE6, /* Tamil - No 0 */
-    0x0C66, /* Telugu */
-    0x0CE6, /* Kannada */
-    0x0D66, /* Maylayalam */
-    0x0DE6, /* Sinhala Lith */
-    0x0E50, /* Thai */
-    0x0ED0, /* Laos */
-    0x0F20, /* Tibet */
-    0x0F29, /* Tibet half - 0 is out of sequence */
-    0x1040, /* Myanmar */
-    0x1090, /* Myanmar Shan */
-    0x1368, /* Ethiopic - no 0 */
-    0x17E0, /* Khmer */
-    0x1810, /* Mongolian */
-    0x1946, /* Limbu */
-    0x19D0, /* New Tai Lue */
-    0x1A80, /* Tai Tham Hora */
-    0x1A90, /* Tai Tham Tham */
-    0x1B50, /* Balinese */
-    0x1BB0, /* Sundanese */
-    0x1C40, /* Lepcha */
-    0x1C50, /* Ol Chiki */
-    0x2070, /* Superscript - 1, 2, 3 are out of sequence */
-    0x2080, /* Subscript */
-    0x245F, /* Circled - 0 is out of sequence */
-    0x2473, /* Bracketed */
-    0x2487, /* Full stop */
-    0x24F4, /* Double Circled */
-    0x2775, /* Inverted circled - No 0 */
-    0x277F, /* Patterned circled - No 0 */
-    0x2789, /* Inverted Patterned circled - No 0 */
-    0x3020, /* Hangzhou */
-    0xA620, /* Vai */
-    0xA8D0, /* Saurashtra */
-    0xA900, /* Kayah Li */
-    0xA9D0, /* Javanese */
-    0xA9F0, /* Myanmar Tai Laing */
-    0xAA50, /* Cham */
-    0xABF0, /* Meetei Mayek */
-    0xff10, /* Pliene chasse (?) */
-    0xffff  /* Terminator */
-  };
-  /* Digits which are represented, but out of sequence */
-  static const WCHAR outOfSequenceDigits[] =
-  {
-      0xB9,   /* Superscript 1 */
-      0xB2,   /* Superscript 2 */
-      0xB3,   /* Superscript 3 */
-      0x0C78, /* Telugu Fraction 0 */
-      0x0C79, /* Telugu Fraction 1 */
-      0x0C7A, /* Telugu Fraction 2 */
-      0x0C7B, /* Telugu Fraction 3 */
-      0x0C7C, /* Telugu Fraction 1 */
-      0x0C7D, /* Telugu Fraction 2 */
-      0x0C7E, /* Telugu Fraction 3 */
-      0x0F33, /* Tibetan half zero */
-      0x19DA, /* New Tai Lue Tham 1 */
-      0x24EA, /* Circled 0 */
-      0x24FF, /* Negative Circled 0 */
-      0x3007, /* Ideographic number zero */
-      '\0'    /* Terminator */
-  };
-  /* Digits in digitRanges for which no representation is available */
-  static const WCHAR noDigitAvailable[] =
-  {
-      0x0BE6, /* No Tamil 0 */
-      0x0F29, /* No Tibetan half zero (out of sequence) */
-      0x1368, /* No Ethiopic 0 */
-      0x2473, /* No Bracketed 0 */
-      0x2487, /* No 0 Full stop */
-      0x24F4, /* No double circled 0 */
-      0x2775, /* No inverted circled 0 */
-      0x277F, /* No patterned circled */
-      0x2789, /* No inverted Patterned circled */
-      0x3020, /* No Hangzhou 0 */
-      '\0'    /* Terminator */
+      { 0x0030, 0, 9 },                   /* '0'-'9' */
+      { 0x00b2, 2, 3 },                   /* Superscript 2, 3 */
+      { 0x00b9, 1, 1 },                   /* Superscript 1 */
+      { 0x0660, 0, 9 },                   /* Eastern Arabic */
+      { 0x06f0, 0, 9 },                   /* Arabic - Hindu */
+      { 0x07c0, 0, 9 },                   /* Nko */
+      { 0x0966, 0, 9 },                   /* Devengari */
+      { 0x09e6, 0, 9 },                   /* Bengalii */
+      { 0x0a66, 0, 9 },                   /* Gurmukhi */
+      { 0x0ae6, 0, 9 },                   /* Gujarati */
+      { 0x0b66, 0, 9 },                   /* Oriya */
+      { 0x0be6, 0, 9 },                   /* Tamil */
+      { 0x0c66, 0, 9 },                   /* Telugu */
+      { 0x0c78, 0, 3, TRUE /*win7*/ },    /* Telugu Fraction */
+      { 0x0c7c, 1, 3, TRUE /*win7*/ },    /* Telugu Fraction */
+      { 0x0ce6, 0, 9 },                   /* Kannada */
+      { 0x0d66, 0, 9 },                   /* Maylayalam */
+      { 0x0de6, 0, 9, TRUE /*win10*/ },   /* Sinhala Lith */
+      { 0x0e50, 0, 9 },                   /* Thai */
+      { 0x0ed0, 0, 9 },                   /* Laos */
+      { 0x0f20, 0, 9 },                   /* Tibet */
+      { 0x1040, 0, 9 },                   /* Myanmar */
+      { 0x1090, 0, 9 },                   /* Myanmar Shan */
+      { 0x1369, 1, 9 },                   /* Ethiopic */
+      { 0x17e0, 0, 9 },                   /* Khmer */
+      { 0x1810, 0, 9 },                   /* Mongolian */
+      { 0x1946, 0, 9 },                   /* Limbu */
+      { 0x19d0, 0, 9 },                   /* New Tai Lue */
+      { 0x19da, 1, 1, TRUE /*win7*/ },    /* New Tai Lue Tham 1 */
+      { 0x1a80, 0, 9, TRUE /*win7*/ },    /* Tai Tham Hora */
+      { 0x1a90, 0, 9, TRUE /*win7*/ },    /* Tai Tham Tham */
+      { 0x1b50, 0, 9 },                   /* Balinese */
+      { 0x1bb0, 0, 9 },                   /* Sundanese */
+      { 0x1c40, 0, 9 },                   /* Lepcha */
+      { 0x1c50, 0, 9 },                   /* Ol Chiki */
+      { 0x2070, 0, 0 },                   /* Superscript 0 */
+      { 0x2074, 4, 9 },                   /* Superscript 4-9 */
+      { 0x2080, 0, 9 },                   /* Subscript */
+      { 0x2460, 1, 9 },                   /* Circled */
+      { 0x2474, 1, 9 },                   /* Bracketed */
+      { 0x2488, 1, 9 },                   /* Full stop */
+      { 0x24ea, 0, 0 },                   /* Circled 0 */
+      { 0x24f5, 1, 9 },                   /* Double Circled */
+      { 0x24ff, 0, 0 },                   /* Negative Circled 0 */
+      { 0x2776, 1, 9 },                   /* Inverted Circled */
+      { 0x2780, 1, 9 },                   /* Patterned Circled */
+      { 0x278a, 1, 9 },                   /* Inverted Patterned Circled */
+      { 0x3007, 0, 0 },                   /* Ideographic Number 0 */
+      { 0x3021, 1, 9 },                   /* Hangzhou */
+      { 0xa620, 0, 9 },                   /* Vai */
+      { 0xa8d0, 0, 9 },                   /* Saurashtra */
+      { 0xa8e0, 0, 9, TRUE /*win7*/ },    /* Combining Devanagari */
+      { 0xa900, 0, 9 },                   /* Kayah Li */
+      { 0xa9d0, 0, 9, TRUE /*win7*/ },    /* Javanese */
+      { 0xa9f0, 0, 9, TRUE /*win10*/ },   /* Myanmar Tai Laing */
+      { 0xaa50, 0, 9 },                   /* Cham */
+      { 0xabf0, 0, 9, TRUE /*win7*/ },    /* Meetei Mayek */
+      { 0xff10, 0, 9 },                   /* Full Width */
+      { 0x10107, 1, 9 },                  /* Aegean */
+      { 0x10320, 1, 1 },                  /* Old Italic Numeral 1 */
+      { 0x10321, 5, 5 },                  /* Old Italic Numeral 5 */
+      { 0x104a0, 0, 9 },                  /* Osmanya */
+      { 0x10a40, 1, 4, TRUE /*win10*/ },  /* Kharoshthi */
+      { 0x10d30, 0, 9, TRUE /*win10*/ },  /* Hanifi Rohingya */
+      { 0x10e60, 1, 9, TRUE /*win10*/ },  /* Rumi */
+      { 0x11052, 1, 9, TRUE /*win10*/ },  /* Brahmi Number */
+      { 0x11066, 0, 9, TRUE /*win10*/ },  /* Brahmi Digit */
+      { 0x110f0, 0, 9, TRUE /*win10*/ },  /* Sora Sompeng */
+      { 0x11136, 0, 9, TRUE /*win10*/ },  /* Chakma */
+      { 0x111d0, 0, 9, TRUE /*win10*/ },  /* Sharada */
+      { 0x112f0, 0, 9, TRUE /*win10*/ },  /* Khudawadi */
+      { 0x11450, 0, 9, TRUE /*win10*/ },  /* Newa */
+      { 0x114d0, 0, 9, TRUE /*win10*/ },  /* Tirhuta */
+      { 0x11650, 0, 9, TRUE /*win10*/ },  /* Modi */
+      { 0x116c0, 0, 9, TRUE /*win10*/ },  /* Takri */
+      { 0x11730, 0, 9, TRUE /*win10*/ },  /* Ahom */
+      { 0x118e0, 0, 9, TRUE /*win10*/ },  /* Warang */
+      { 0x11950, 0, 9, TRUE /*win10*/ },  /* Dives Akuru */
+      { 0x11c50, 0, 9, TRUE /*win10*/ },  /* Bhaiksuki */
+      { 0x11d50, 0, 9, TRUE /*win10*/ },  /* Masaram Gondi */
+      { 0x11da0, 0, 9, TRUE /*win10*/ },  /* Gunjala Gondi */
+      { 0x16a60, 0, 9, TRUE /*win10*/ },  /* Mro */
+      { 0x16ac0, 0, 9, TRUE /*win10*/ },  /* Tangsa */
+      { 0x16b50, 0, 9, TRUE /*win10*/ },  /* Pahawh Hmong */
+      { 0x1d7ce, 0, 9 },                  /* Mathematical Bold */
+      { 0x1d7d8, 0, 9 },                  /* Mathematical Double Struck */
+      { 0x1d7e2, 0, 9 },                  /* Mathematical Sans Serif */
+      { 0x1d7ec, 0, 9 },                  /* Mathematical Sans Serif Bold */
+      { 0x1d7f6, 0, 9 },                  /* Mathematical Monospace */
+      { 0x1e140, 0, 9, TRUE /*win10*/ },  /* Nyiakeng Puachue Hmong */
+      { 0x1e2f0, 0, 9, TRUE /*win10*/ },  /* Wancho */
+      { 0x1e950, 0, 9, TRUE /*win10*/ },  /* Adlam */
+      { 0x1f100, 0, 0, TRUE /*win10*/ },  /* Full Stop */
+      { 0x1f101, 0, 9, TRUE /*win10*/ },  /* Comma */
+      { 0x1fbf0, 0, 9, TRUE /*win10*/ },  /* Segmented */
+      { 0x10ffff } /* Terminator */
   };
   static const WCHAR foldczone_src[] =
   {
@@ -4073,49 +4148,41 @@ static void test_FoldStringW(void)
   for (j = 0; j < ARRAY_SIZE(digitRanges); j++)
   {
     /* Check everything before this range */
-    for (ch = prev_ch; ch < digitRanges[j]; ch++)
+    for (ch = prev_ch; ch < digitRanges[j].ch; ch++)
     {
-      SetLastError(0xdeadbeef);
-      src[0] = ch;
-      src[1] = dst[0] = '\0';
-      ret = FoldStringW(MAP_FOLDDIGITS, src, -1, dst, 256);
-      ok(ret == 2, "Expected ret == 2, got %d, error %ld\n", ret, GetLastError());
-
-      ok(dst[0] == ch || wcschr(outOfSequenceDigits, ch) ||
-         (ch >= 0xa8e0 && ch <= 0xa8e9),  /* combining Devanagari on Win8 */
-         "MAP_FOLDDIGITS: ch 0x%04x Expected unchanged got %04x\n", ch, dst[0]);
-      GetStringTypeW( CT_CTYPE1, &ch, 1, &type );
-      ok(!(type & C1_DIGIT) || wcschr(outOfSequenceDigits, ch) ||
-         broken( ch >= 0xbf0 && ch <= 0xbf2 ), /* win2k */
-         "char %04x should not be a digit\n", ch );
+        len = put_utf16( src, ch );
+        src[len] = 0;
+        SetLastError(0xdeadbeef);
+        ret = FoldStringW(MAP_FOLDDIGITS, src, -1, dst, 256);
+        if (ret == 3)
+        {
+            ok( !wcscmp( src, dst ), "%s changed to %s\n", debugstr_w(src), debugstr_w(dst) );
+            continue;
+        }
+        ok(ret == 2, "Expected ret == 2, got %d, error %ld\n", ret, GetLastError());
+        ok(dst[0] == ch, "MAP_FOLDDIGITS: ch 0x%04x Expected unchanged got %04x\n", ch, dst[0]);
+        if (ch < 0x10000)
+        {
+            WCHAR wch = ch;
+            GetStringTypeW( CT_CTYPE1, &wch, 1, &type );
+            ok(!(type & C1_DIGIT), "char %04x should not be a digit\n", wch );
+        }
     }
-
-    if (digitRanges[j] == 0xffff)
+    if (digitRanges[j].ch == 0x10ffff)
       break; /* Finished the whole code point space */
 
-    for (ch = digitRanges[j]; ch < digitRanges[j] + 10; ch++)
+    for (ch = digitRanges[j].ch; ch <= digitRanges[j].ch + digitRanges[j].last - digitRanges[j].first; ch++)
     {
-      WCHAR c;
+        UINT exp = '0' + digitRanges[j].first + ch - digitRanges[j].ch;
 
-      /* Map out of sequence characters */
-      if      (ch == 0x2071) c = 0x00B9; /* Superscript 1 */
-      else if (ch == 0x2072) c = 0x00B2; /* Superscript 2 */
-      else if (ch == 0x2073) c = 0x00B3; /* Superscript 3 */
-      else if (ch == 0x245F) c = 0x24EA; /* Circled 0     */
-      else                   c = ch;
-      SetLastError(0xdeadbeef);
-      src[0] = c;
-      src[1] = dst[0] = '\0';
-      ret = FoldStringW(MAP_FOLDDIGITS, src, -1, dst, 256);
-      ok(ret == 2, "Expected ret == 2, got %d, error %ld\n", ret, GetLastError());
-
-      ok((dst[0] == '0' + ch - digitRanges[j] && dst[1] == '\0') ||
-         broken( dst[0] == ch ) ||  /* old Windows versions don't have all mappings */
-         (digitRanges[j] == 0x3020 && dst[0] == ch) || /* Hangzhou not present in all Windows versions */
-         (digitRanges[j] == 0x0F29 && dst[0] == ch) || /* Tibetan not present in all Windows versions */
-         wcschr(noDigitAvailable, c),
-         "MAP_FOLDDIGITS: ch %04x Expected %04x got %04x\n",
-         ch, '0' + digitRanges[j] - ch, dst[0]);
+        SetLastError(0xdeadbeef);
+        len = put_utf16( src, ch );
+        src[len] = 0;
+        ret = FoldStringW(MAP_FOLDDIGITS, src, -1, dst, 256);
+        ok(ret == 2 || broken( digitRanges[j].broken && ch >= 0x10000 ),
+           "%04x: Expected ret == 2, got %d, error %ld\n", ch, ret, GetLastError());
+        ok((dst[0] == exp && dst[1] == '\0') || broken( digitRanges[j].broken ),
+           "MAP_FOLDDIGITS: ch %04x Expected %04x got %04x\n", ch, exp, dst[0]);
     }
     prev_ch = ch;
   }
@@ -6761,19 +6828,6 @@ static void test_SetThreadUILanguage(void)
     "expected %d got %d\n", MAKELANGID(LANG_DUTCH, SUBLANG_DUTCH_BELGIAN), res);
 }
 
-static int put_utf16( WCHAR *str, unsigned int c )
-{
-    if (c < 0x10000)
-    {
-        *str = c;
-        return 1;
-    }
-    c -= 0x10000;
-    str[0] = 0xd800 | (c >> 10);
-    str[1] = 0xdc00 | (c & 0x3ff);
-    return 2;
-}
-
 /* read a Unicode string from NormalizationTest.txt format; helper for test_NormalizeString */
 static int read_str( char *str, WCHAR res[32] )
 {
@@ -7300,154 +7354,150 @@ static void test_NormalizeString(void)
 
 static void test_SpecialCasing(void)
 {
-    int ret, i;
-    WCHAR exp, buffer[8];
-    static const WCHAR azCyrlazW[] = {'a','z','-','C','y','r','l','-','a','z',0};
-    static const WCHAR azLatnazW[] = {'a','z','-','L','a','t','n','-','a','z',0};
-    static const WCHAR deDEW[] = {'d','e','-','D','E',0};
-    static const WCHAR elGRW[] = {'e','l','-','G','R',0};
-    static const WCHAR enUSW[] = {'e','n','-','U','S',0};
-    static const WCHAR hyAMW[] = {'h','y','-','A','M',0};
-    static const WCHAR ltLTW[] = {'l','t','-','L','T',0};
-    static const WCHAR trTRW[] = {'t','r','-','T','R',0};
-    static const WCHAR TRTRW[] = {'T','R','-','T','R',0};
+    int ret, i, len;
+    UINT val = 0, exp;
+    WCHAR src[8], buffer[8];
     static const struct test {
         const WCHAR *lang;
         DWORD flags;
-        WCHAR ch;
-        WCHAR exp;      /* 0 if self */
-        WCHAR exp_ling; /* 0 if exp */
+        UINT ch;
+        UINT exp;      /* 0 if self */
+        UINT exp_ling; /* 0 if exp */
+        BOOL broken;
     } tests[] = {
-        {deDEW, LCMAP_UPPERCASE, 0x00DF},   /* LATIN SMALL LETTER SHARP S */
+        {L"de-DE", LCMAP_UPPERCASE, 0x00DF},   /* LATIN SMALL LETTER SHARP S */
 
-        {enUSW, LCMAP_UPPERCASE, 0xFB00},   /* LATIN SMALL LIGATURE FF */
-        {enUSW, LCMAP_UPPERCASE, 0xFB01},   /* LATIN SMALL LIGATURE FI */
-        {enUSW, LCMAP_UPPERCASE, 0xFB02},   /* LATIN SMALL LIGATURE FL */
-        {enUSW, LCMAP_UPPERCASE, 0xFB03},   /* LATIN SMALL LIGATURE FFI */
-        {enUSW, LCMAP_UPPERCASE, 0xFB04},   /* LATIN SMALL LIGATURE FFL */
-        {enUSW, LCMAP_UPPERCASE, 0xFB05},   /* LATIN SMALL LIGATURE LONG S T */
-        {enUSW, LCMAP_UPPERCASE, 0xFB06},   /* LATIN SMALL LIGATURE ST */
+        {L"en-US", LCMAP_UPPERCASE, 0xFB00},   /* LATIN SMALL LIGATURE FF */
+        {L"en-US", LCMAP_UPPERCASE, 0xFB01},   /* LATIN SMALL LIGATURE FI */
+        {L"en-US", LCMAP_UPPERCASE, 0xFB02},   /* LATIN SMALL LIGATURE FL */
+        {L"en-US", LCMAP_UPPERCASE, 0xFB03},   /* LATIN SMALL LIGATURE FFI */
+        {L"en-US", LCMAP_UPPERCASE, 0xFB04},   /* LATIN SMALL LIGATURE FFL */
+        {L"en-US", LCMAP_UPPERCASE, 0xFB05},   /* LATIN SMALL LIGATURE LONG S T */
+        {L"en-US", LCMAP_UPPERCASE, 0xFB06},   /* LATIN SMALL LIGATURE ST */
 
-        {hyAMW, LCMAP_UPPERCASE, 0x0587},   /* ARMENIAN SMALL LIGATURE ECH YIWN */
-        {hyAMW, LCMAP_UPPERCASE, 0xFB13},   /* ARMENIAN SMALL LIGATURE MEN NOW */
-        {hyAMW, LCMAP_UPPERCASE, 0xFB14},   /* ARMENIAN SMALL LIGATURE MEN ECH */
-        {hyAMW, LCMAP_UPPERCASE, 0xFB15},   /* ARMENIAN SMALL LIGATURE MEN INI */
-        {hyAMW, LCMAP_UPPERCASE, 0xFB16},   /* ARMENIAN SMALL LIGATURE VEW NOW */
-        {hyAMW, LCMAP_UPPERCASE, 0xFB17},   /* ARMENIAN SMALL LIGATURE MEN XEH */
+        {L"hy-AM", LCMAP_UPPERCASE, 0x0587},   /* ARMENIAN SMALL LIGATURE ECH YIWN */
+        {L"hy-AM", LCMAP_UPPERCASE, 0xFB13},   /* ARMENIAN SMALL LIGATURE MEN NOW */
+        {L"hy-AM", LCMAP_UPPERCASE, 0xFB14},   /* ARMENIAN SMALL LIGATURE MEN ECH */
+        {L"hy-AM", LCMAP_UPPERCASE, 0xFB15},   /* ARMENIAN SMALL LIGATURE MEN INI */
+        {L"hy-AM", LCMAP_UPPERCASE, 0xFB16},   /* ARMENIAN SMALL LIGATURE VEW NOW */
+        {L"hy-AM", LCMAP_UPPERCASE, 0xFB17},   /* ARMENIAN SMALL LIGATURE MEN XEH */
 
-        {enUSW, LCMAP_UPPERCASE, 0x0149},   /* LATIN SMALL LETTER N PRECEDED BY APOSTROPHE */
-        {elGRW, LCMAP_UPPERCASE, 0x0390},   /* GREEK SMALL LETTER IOTA WITH DIALYTIKA AND TONOS */
-        {elGRW, LCMAP_UPPERCASE, 0x03B0},   /* GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND TONOS */
-        {enUSW, LCMAP_UPPERCASE, 0x01F0},   /* LATIN SMALL LETTER J WITH CARON */
-        {enUSW, LCMAP_UPPERCASE, 0x1E96},   /* LATIN SMALL LETTER H WITH LINE BELOW */
-        {enUSW, LCMAP_UPPERCASE, 0x1E97},   /* LATIN SMALL LETTER T WITH DIAERESIS */
-        {enUSW, LCMAP_UPPERCASE, 0x1E98},   /* LATIN SMALL LETTER W WITH RING ABOVE */
-        {enUSW, LCMAP_UPPERCASE, 0x1E99},   /* LATIN SMALL LETTER Y WITH RING ABOVE */
-        {enUSW, LCMAP_UPPERCASE, 0x1E9A},   /* LATIN SMALL LETTER A WITH RIGHT HALF RING */
-        {elGRW, LCMAP_UPPERCASE, 0x1F50},   /* GREEK SMALL LETTER UPSILON WITH PSILI */
-        {elGRW, LCMAP_UPPERCASE, 0x1F52},   /* GREEK SMALL LETTER UPSILON WITH PSILI AND VARIA */
-        {elGRW, LCMAP_UPPERCASE, 0x1F54},   /* GREEK SMALL LETTER UPSILON WITH PSILI AND OXIA */
-        {elGRW, LCMAP_UPPERCASE, 0x1F56},   /* GREEK SMALL LETTER UPSILON WITH PSILI AND PERISPOMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1FB6},   /* GREEK SMALL LETTER ALPHA WITH PERISPOMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1FC6},   /* GREEK SMALL LETTER ETA WITH PERISPOMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1FD2},   /* GREEK SMALL LETTER IOTA WITH DIALYTIKA AND VARIA */
-        {elGRW, LCMAP_UPPERCASE, 0x1FD3},   /* GREEK SMALL LETTER IOTA WITH DIALYTIKA AND OXIA */
-        {elGRW, LCMAP_UPPERCASE, 0x1FD6},   /* GREEK SMALL LETTER IOTA WITH PERISPOMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1FD7},   /* GREEK SMALL LETTER IOTA WITH DIALYTIKA AND PERISPOMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1FE2},   /* GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND VARIA */
-        {elGRW, LCMAP_UPPERCASE, 0x1FE3},   /* GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND OXIA */
-        {elGRW, LCMAP_UPPERCASE, 0x1FE4},   /* GREEK SMALL LETTER RHO WITH PSILI */
-        {elGRW, LCMAP_UPPERCASE, 0x1FE6},   /* GREEK SMALL LETTER UPSILON WITH PERISPOMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1FE7},   /* GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND PERISPOMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1FF6},   /* GREEK SMALL LETTER OMEGA WITH PERISPOMENI */
+        {L"en-US", LCMAP_UPPERCASE, 0x0149},   /* LATIN SMALL LETTER N PRECEDED BY APOSTROPHE */
+        {L"el-GR", LCMAP_UPPERCASE, 0x0390,0,0,TRUE /*win7*/ }, /* GREEK SMALL LETTER IOTA WITH DIALYTIKA AND TONOS */
+        {L"el-GR", LCMAP_UPPERCASE, 0x03B0,0,0,TRUE /*win7*/ }, /* GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND TONOS */
+        {L"en-US", LCMAP_UPPERCASE, 0x01F0},   /* LATIN SMALL LETTER J WITH CARON */
+        {L"en-US", LCMAP_UPPERCASE, 0x1E96},   /* LATIN SMALL LETTER H WITH LINE BELOW */
+        {L"en-US", LCMAP_UPPERCASE, 0x1E97},   /* LATIN SMALL LETTER T WITH DIAERESIS */
+        {L"en-US", LCMAP_UPPERCASE, 0x1E98},   /* LATIN SMALL LETTER W WITH RING ABOVE */
+        {L"en-US", LCMAP_UPPERCASE, 0x1E99},   /* LATIN SMALL LETTER Y WITH RING ABOVE */
+        {L"en-US", LCMAP_UPPERCASE, 0x1E9A},   /* LATIN SMALL LETTER A WITH RIGHT HALF RING */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1F50},   /* GREEK SMALL LETTER UPSILON WITH PSILI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1F52},   /* GREEK SMALL LETTER UPSILON WITH PSILI AND VARIA */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1F54},   /* GREEK SMALL LETTER UPSILON WITH PSILI AND OXIA */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1F56},   /* GREEK SMALL LETTER UPSILON WITH PSILI AND PERISPOMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FB6},   /* GREEK SMALL LETTER ALPHA WITH PERISPOMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FC6},   /* GREEK SMALL LETTER ETA WITH PERISPOMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FD2},   /* GREEK SMALL LETTER IOTA WITH DIALYTIKA AND VARIA */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FD3},   /* GREEK SMALL LETTER IOTA WITH DIALYTIKA AND OXIA */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FD6},   /* GREEK SMALL LETTER IOTA WITH PERISPOMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FD7},   /* GREEK SMALL LETTER IOTA WITH DIALYTIKA AND PERISPOMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FE2},   /* GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND VARIA */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FE3},   /* GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND OXIA */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FE4},   /* GREEK SMALL LETTER RHO WITH PSILI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FE6},   /* GREEK SMALL LETTER UPSILON WITH PERISPOMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FE7},   /* GREEK SMALL LETTER UPSILON WITH DIALYTIKA AND PERISPOMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FF6},   /* GREEK SMALL LETTER OMEGA WITH PERISPOMENI */
 
-        {elGRW, LCMAP_UPPERCASE, 0x1F80,0x1F88}, /* GREEK SMALL LETTER ALPHA WITH PSILI AND YPOGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1F81,0x1F89}, /* GREEK SMALL LETTER ALPHA WITH DASIA AND YPOGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1F82,0x1F8A}, /* GREEK SMALL LETTER ALPHA WITH PSILI AND VARIA AND YPOGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1F83,0x1F8B}, /* GREEK SMALL LETTER ALPHA WITH DASIA AND VARIA AND YPOGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1F84,0x1F8C}, /* GREEK SMALL LETTER ALPHA WITH PSILI AND OXIA AND YPOGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1F85,0x1F8D}, /* GREEK SMALL LETTER ALPHA WITH DASIA AND OXIA AND YPOGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1F86,0x1F8E}, /* GREEK SMALL LETTER ALPHA WITH PSILI AND PERISPOMENI AND YPOGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1F87,0x1F8F}, /* GREEK SMALL LETTER ALPHA WITH DASIA AND PERISPOMENI AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1F80,0x1F88}, /* GREEK SMALL LETTER ALPHA WITH PSILI AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1F81,0x1F89}, /* GREEK SMALL LETTER ALPHA WITH DASIA AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1F82,0x1F8A}, /* GREEK SMALL LETTER ALPHA WITH PSILI AND VARIA AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1F83,0x1F8B}, /* GREEK SMALL LETTER ALPHA WITH DASIA AND VARIA AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1F84,0x1F8C}, /* GREEK SMALL LETTER ALPHA WITH PSILI AND OXIA AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1F85,0x1F8D}, /* GREEK SMALL LETTER ALPHA WITH DASIA AND OXIA AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1F86,0x1F8E}, /* GREEK SMALL LETTER ALPHA WITH PSILI AND PERISPOMENI AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1F87,0x1F8F}, /* GREEK SMALL LETTER ALPHA WITH DASIA AND PERISPOMENI AND YPOGEGRAMMENI */
 
-        {elGRW, LCMAP_LOWERCASE, 0x1F88,0x1F80}, /* GREEK CAPITAL LETTER ALPHA WITH PSILI AND PROSGEGRAMMENI */
-        {elGRW, LCMAP_LOWERCASE, 0x1F89,0x1F81}, /* GREEK CAPITAL LETTER ALPHA WITH DASIA AND PROSGEGRAMMENI */
-        {elGRW, LCMAP_LOWERCASE, 0x1F8A,0x1F82}, /* GREEK CAPITAL LETTER ALPHA WITH PSILI AND VARIA AND PROSGEGRAMMENI */
-        {elGRW, LCMAP_LOWERCASE, 0x1F8B,0x1F83}, /* GREEK CAPITAL LETTER ALPHA WITH DASIA AND VARIA AND PROSGEGRAMMENI */
-        {elGRW, LCMAP_LOWERCASE, 0x1F8C,0x1F84}, /* GREEK CAPITAL LETTER ALPHA WITH PSILI AND OXIA AND PROSGEGRAMMENI */
-        {elGRW, LCMAP_LOWERCASE, 0x1F8D,0x1F85}, /* GREEK CAPITAL LETTER ALPHA WITH DASIA AND OXIA AND PROSGEGRAMMENI */
-        {elGRW, LCMAP_LOWERCASE, 0x1F8E,0x1F86}, /* GREEK CAPITAL LETTER ALPHA WITH PSILI AND PERISPOMENI AND PROSGEGRAMMENI */
-        {elGRW, LCMAP_LOWERCASE, 0x1F8F,0x1F87}, /* GREEK CAPITAL LETTER ALPHA WITH DASIA AND PERISPOMENI AND PROSGEGRAMMENI */
+        {L"el-GR", LCMAP_LOWERCASE, 0x1F88,0x1F80}, /* GREEK CAPITAL LETTER ALPHA WITH PSILI AND PROSGEGRAMMENI */
+        {L"el-GR", LCMAP_LOWERCASE, 0x1F89,0x1F81}, /* GREEK CAPITAL LETTER ALPHA WITH DASIA AND PROSGEGRAMMENI */
+        {L"el-GR", LCMAP_LOWERCASE, 0x1F8A,0x1F82}, /* GREEK CAPITAL LETTER ALPHA WITH PSILI AND VARIA AND PROSGEGRAMMENI */
+        {L"el-GR", LCMAP_LOWERCASE, 0x1F8B,0x1F83}, /* GREEK CAPITAL LETTER ALPHA WITH DASIA AND VARIA AND PROSGEGRAMMENI */
+        {L"el-GR", LCMAP_LOWERCASE, 0x1F8C,0x1F84}, /* GREEK CAPITAL LETTER ALPHA WITH PSILI AND OXIA AND PROSGEGRAMMENI */
+        {L"el-GR", LCMAP_LOWERCASE, 0x1F8D,0x1F85}, /* GREEK CAPITAL LETTER ALPHA WITH DASIA AND OXIA AND PROSGEGRAMMENI */
+        {L"el-GR", LCMAP_LOWERCASE, 0x1F8E,0x1F86}, /* GREEK CAPITAL LETTER ALPHA WITH PSILI AND PERISPOMENI AND PROSGEGRAMMENI */
+        {L"el-GR", LCMAP_LOWERCASE, 0x1F8F,0x1F87}, /* GREEK CAPITAL LETTER ALPHA WITH DASIA AND PERISPOMENI AND PROSGEGRAMMENI */
 
-        {elGRW, LCMAP_UPPERCASE, 0x1F90,0x1F98}, /* GREEK SMALL LETTER ETA WITH PSILI AND YPOGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1F91,0x1F99}, /* GREEK SMALL LETTER ETA WITH DASIA AND YPOGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1F92,0x1F9A}, /* GREEK SMALL LETTER ETA WITH PSILI AND VARIA AND YPOGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1F93,0x1F9B}, /* GREEK SMALL LETTER ETA WITH DASIA AND VARIA AND YPOGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1F94,0x1F9C}, /* GREEK SMALL LETTER ETA WITH PSILI AND OXIA AND YPOGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1F95,0x1F9D}, /* GREEK SMALL LETTER ETA WITH DASIA AND OXIA AND YPOGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1F96,0x1F9E}, /* GREEK SMALL LETTER ETA WITH PSILI AND PERISPOMENI AND YPOGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1F97,0x1F9F}, /* GREEK SMALL LETTER ETA WITH DASIA AND PERISPOMENI AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1F90,0x1F98}, /* GREEK SMALL LETTER ETA WITH PSILI AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1F91,0x1F99}, /* GREEK SMALL LETTER ETA WITH DASIA AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1F92,0x1F9A}, /* GREEK SMALL LETTER ETA WITH PSILI AND VARIA AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1F93,0x1F9B}, /* GREEK SMALL LETTER ETA WITH DASIA AND VARIA AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1F94,0x1F9C}, /* GREEK SMALL LETTER ETA WITH PSILI AND OXIA AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1F95,0x1F9D}, /* GREEK SMALL LETTER ETA WITH DASIA AND OXIA AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1F96,0x1F9E}, /* GREEK SMALL LETTER ETA WITH PSILI AND PERISPOMENI AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1F97,0x1F9F}, /* GREEK SMALL LETTER ETA WITH DASIA AND PERISPOMENI AND YPOGEGRAMMENI */
 
-        {elGRW, LCMAP_LOWERCASE, 0x1FA8,0x1FA0}, /* GREEK CAPITAL LETTER OMEGA WITH PSILI AND PROSGEGRAMMENI */
-        {elGRW, LCMAP_LOWERCASE, 0x1FA9,0x1FA1}, /* GREEK CAPITAL LETTER OMEGA WITH DASIA AND PROSGEGRAMMENI */
-        {elGRW, LCMAP_LOWERCASE, 0x1FAA,0x1FA2}, /* GREEK CAPITAL LETTER OMEGA WITH PSILI AND VARIA AND PROSGEGRAMMENI */
-        {elGRW, LCMAP_LOWERCASE, 0x1FAB,0x1FA3}, /* GREEK CAPITAL LETTER OMEGA WITH DASIA AND VARIA AND PROSGEGRAMMENI */
-        {elGRW, LCMAP_LOWERCASE, 0x1FAC,0x1FA4}, /* GREEK CAPITAL LETTER OMEGA WITH PSILI AND OXIA AND PROSGEGRAMMENI */
-        {elGRW, LCMAP_LOWERCASE, 0x1FAD,0x1FA5}, /* GREEK CAPITAL LETTER OMEGA WITH DASIA AND OXIA AND PROSGEGRAMMENI */
-        {elGRW, LCMAP_LOWERCASE, 0x1FAE,0x1FA6}, /* GREEK CAPITAL LETTER OMEGA WITH PSILI AND PERISPOMENI AND PROSGEGRAMMENI */
-        {elGRW, LCMAP_LOWERCASE, 0x1FAF,0x1FA7}, /* GREEK CAPITAL LETTER OMEGA WITH DASIA AND PERISPOMENI AND PROSGEGRAMMENI */
+        {L"el-GR", LCMAP_LOWERCASE, 0x1FA8,0x1FA0}, /* GREEK CAPITAL LETTER OMEGA WITH PSILI AND PROSGEGRAMMENI */
+        {L"el-GR", LCMAP_LOWERCASE, 0x1FA9,0x1FA1}, /* GREEK CAPITAL LETTER OMEGA WITH DASIA AND PROSGEGRAMMENI */
+        {L"el-GR", LCMAP_LOWERCASE, 0x1FAA,0x1FA2}, /* GREEK CAPITAL LETTER OMEGA WITH PSILI AND VARIA AND PROSGEGRAMMENI */
+        {L"el-GR", LCMAP_LOWERCASE, 0x1FAB,0x1FA3}, /* GREEK CAPITAL LETTER OMEGA WITH DASIA AND VARIA AND PROSGEGRAMMENI */
+        {L"el-GR", LCMAP_LOWERCASE, 0x1FAC,0x1FA4}, /* GREEK CAPITAL LETTER OMEGA WITH PSILI AND OXIA AND PROSGEGRAMMENI */
+        {L"el-GR", LCMAP_LOWERCASE, 0x1FAD,0x1FA5}, /* GREEK CAPITAL LETTER OMEGA WITH DASIA AND OXIA AND PROSGEGRAMMENI */
+        {L"el-GR", LCMAP_LOWERCASE, 0x1FAE,0x1FA6}, /* GREEK CAPITAL LETTER OMEGA WITH PSILI AND PERISPOMENI AND PROSGEGRAMMENI */
+        {L"el-GR", LCMAP_LOWERCASE, 0x1FAF,0x1FA7}, /* GREEK CAPITAL LETTER OMEGA WITH DASIA AND PERISPOMENI AND PROSGEGRAMMENI */
 
-        {elGRW, LCMAP_UPPERCASE, 0x1FB3,0x1FBC}, /* GREEK SMALL LETTER ALPHA WITH YPOGEGRAMMENI */
-        {elGRW, LCMAP_LOWERCASE, 0x1FBC,0x1FB3}, /* GREEK CAPITAL LETTER ALPHA WITH PROSGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1FC3,0x1FCC}, /* GREEK SMALL LETTER ETA WITH YPOGEGRAMMENI */
-        {elGRW, LCMAP_LOWERCASE, 0x1FCC,0x1FC3}, /* GREEK CAPITAL LETTER ETA WITH PROSGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1FF3,0x1FFC}, /* GREEK SMALL LETTER OMEGA WITH YPOGEGRAMMENI */
-        {elGRW, LCMAP_LOWERCASE, 0x1FFC,0x1FF3}, /* GREEK CAPITAL LETTER OMEGA WITH PROSGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FB3,0x1FBC}, /* GREEK SMALL LETTER ALPHA WITH YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_LOWERCASE, 0x1FBC,0x1FB3}, /* GREEK CAPITAL LETTER ALPHA WITH PROSGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FC3,0x1FCC}, /* GREEK SMALL LETTER ETA WITH YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_LOWERCASE, 0x1FCC,0x1FC3}, /* GREEK CAPITAL LETTER ETA WITH PROSGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FF3,0x1FFC}, /* GREEK SMALL LETTER OMEGA WITH YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_LOWERCASE, 0x1FFC,0x1FF3}, /* GREEK CAPITAL LETTER OMEGA WITH PROSGEGRAMMENI */
 
-        {elGRW, LCMAP_UPPERCASE, 0x1FB2}, /* GREEK SMALL LETTER ALPHA WITH VARIA AND YPOGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1FB4}, /* GREEK SMALL LETTER ALPHA WITH OXIA AND YPOGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1FC2}, /* GREEK SMALL LETTER ETA WITH VARIA AND YPOGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1FC4}, /* GREEK SMALL LETTER ETA WITH OXIA AND YPOGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1FF2}, /* GREEK SMALL LETTER OMEGA WITH VARIA AND YPOGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1FF4}, /* GREEK SMALL LETTER OMEGA WITH OXIA AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FB2}, /* GREEK SMALL LETTER ALPHA WITH VARIA AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FB4}, /* GREEK SMALL LETTER ALPHA WITH OXIA AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FC2}, /* GREEK SMALL LETTER ETA WITH VARIA AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FC4}, /* GREEK SMALL LETTER ETA WITH OXIA AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FF2}, /* GREEK SMALL LETTER OMEGA WITH VARIA AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FF4}, /* GREEK SMALL LETTER OMEGA WITH OXIA AND YPOGEGRAMMENI */
 
-        {elGRW, LCMAP_UPPERCASE, 0x1FB7}, /* GREEK SMALL LETTER ALPHA WITH PERISPOMENI AND YPOGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1FC7}, /* GREEK SMALL LETTER ETA WITH PERISPOMENI AND YPOGEGRAMMENI */
-        {elGRW, LCMAP_UPPERCASE, 0x1FF7}, /* GREEK SMALL LETTER OMEGA WITH PERISPOMENI AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FB7}, /* GREEK SMALL LETTER ALPHA WITH PERISPOMENI AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FC7}, /* GREEK SMALL LETTER ETA WITH PERISPOMENI AND YPOGEGRAMMENI */
+        {L"el-GR", LCMAP_UPPERCASE, 0x1FF7}, /* GREEK SMALL LETTER OMEGA WITH PERISPOMENI AND YPOGEGRAMMENI */
 
-        {elGRW, LCMAP_LOWERCASE, 0x03A3,0x03C3}, /* GREEK CAPITAL LETTER SIGMA */
+        {L"el-GR", LCMAP_LOWERCASE, 0x03A3,0x03C3}, /* GREEK CAPITAL LETTER SIGMA */
 
-        {ltLTW, LCMAP_LOWERCASE, 'J','j'},        /* LATIN CAPITAL LETTER J */
-        {ltLTW, LCMAP_LOWERCASE, 0x012E,0x012F},  /* LATIN CAPITAL LETTER I WITH OGONEK */
-        {ltLTW, LCMAP_LOWERCASE, 0x00CC,0x00EC},  /* LATIN CAPITAL LETTER I WITH GRAVE */
-        {ltLTW, LCMAP_LOWERCASE, 0x00CD,0x00ED},  /* LATIN CAPITAL LETTER I WITH ACUTE */
-        {ltLTW, LCMAP_LOWERCASE, 0x0128,0x0129},  /* LATIN CAPITAL LETTER I WITH TILDE */
+        {L"lt-LT", LCMAP_LOWERCASE, 'J','j'},        /* LATIN CAPITAL LETTER J */
+        {L"lt-LT", LCMAP_LOWERCASE, 0x012E,0x012F},  /* LATIN CAPITAL LETTER I WITH OGONEK */
+        {L"lt-LT", LCMAP_LOWERCASE, 0x00CC,0x00EC},  /* LATIN CAPITAL LETTER I WITH GRAVE */
+        {L"lt-LT", LCMAP_LOWERCASE, 0x00CD,0x00ED},  /* LATIN CAPITAL LETTER I WITH ACUTE */
+        {L"lt-LT", LCMAP_LOWERCASE, 0x0128,0x0129},  /* LATIN CAPITAL LETTER I WITH TILDE */
 
-        {enUSW, LCMAP_UPPERCASE, 'i', 'I'}, /* LATIN SMALL LETTER I */
-        {ltLTW, LCMAP_UPPERCASE, 'i', 'I'}, /* LATIN SMALL LETTER I */
-        {trTRW, LCMAP_UPPERCASE, 'i', 'I', 0x0130}, /* LATIN SMALL LETTER I */
-        {TRTRW, LCMAP_UPPERCASE, 'i', 'I', 0x0130}, /* LATIN SMALL LETTER I */
-        {azCyrlazW, LCMAP_UPPERCASE, 'i', 'I', 0x0130}, /* LATIN SMALL LETTER I */
-        {azLatnazW, LCMAP_UPPERCASE, 'i', 'I', 0x0130}, /* LATIN SMALL LETTER I */
+        {L"en-US", LCMAP_UPPERCASE, 'i', 'I'}, /* LATIN SMALL LETTER I */
+        {L"lt-LT", LCMAP_UPPERCASE, 'i', 'I'}, /* LATIN SMALL LETTER I */
+        {L"tr-TR", LCMAP_UPPERCASE, 'i', 'I', 0x0130}, /* LATIN SMALL LETTER I */
+        {L"TR-TR", LCMAP_UPPERCASE, 'i', 'I', 0x0130}, /* LATIN SMALL LETTER I */
+        {L"az-Cyrl-az", LCMAP_UPPERCASE, 'i', 'I', 0x0130, TRUE /*win7*/}, /* LATIN SMALL LETTER I */
+        {L"az-Latn-az", LCMAP_UPPERCASE, 'i', 'I', 0x0130}, /* LATIN SMALL LETTER I */
 
-        {enUSW, LCMAP_LOWERCASE, 'I', 'i'}, /* LATIN CAPITAL LETTER I */
-        {ltLTW, LCMAP_LOWERCASE, 'I', 'i'}, /* LATIN CAPITAL LETTER I */
-        {trTRW, LCMAP_LOWERCASE, 'I', 'i', 0x0131}, /* LATIN CAPITAL LETTER I */
-        {TRTRW, LCMAP_LOWERCASE, 'I', 'i', 0x0131}, /* LATIN CAPITAL LETTER I */
-        {azCyrlazW, LCMAP_LOWERCASE, 'I', 'i', 0x0131}, /* LATIN CAPITAL LETTER I */
-        {azLatnazW, LCMAP_LOWERCASE, 'I', 'i', 0x0131}, /* LATIN CAPITAL LETTER I */
+        {L"en-US", LCMAP_LOWERCASE, 'I', 'i'}, /* LATIN CAPITAL LETTER I */
+        {L"lt-LT", LCMAP_LOWERCASE, 'I', 'i'}, /* LATIN CAPITAL LETTER I */
+        {L"tr-TR", LCMAP_LOWERCASE, 'I', 'i', 0x0131}, /* LATIN CAPITAL LETTER I */
+        {L"TR-TR", LCMAP_LOWERCASE, 'I', 'i', 0x0131}, /* LATIN CAPITAL LETTER I */
+        {L"az-Cyrl-az", LCMAP_LOWERCASE, 'I', 'i', 0x0131, TRUE /*win7*/}, /* LATIN CAPITAL LETTER I */
+        {L"az-Latn-az", LCMAP_LOWERCASE, 'I', 'i', 0x0131}, /* LATIN CAPITAL LETTER I */
 
-        {enUSW, LCMAP_LOWERCASE, 0x0130,0,'i'}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
-        {trTRW, LCMAP_LOWERCASE, 0x0130,0,'i'}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
-        {TRTRW, LCMAP_LOWERCASE, 0x0130,0,'i'}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
-        {azCyrlazW, LCMAP_LOWERCASE, 0x0130,0,'i'}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
-        {azLatnazW, LCMAP_LOWERCASE, 0x0130,0,'i'}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
+        {L"en-US", LCMAP_LOWERCASE, 0x0130,0,'i'}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
+        {L"tr-TR", LCMAP_LOWERCASE, 0x0130,0,'i'}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
+        {L"TR-TR", LCMAP_LOWERCASE, 0x0130,0,'i'}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
+        {L"az-Cyrl-az", LCMAP_LOWERCASE, 0x0130,0,'i'}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
+        {L"az-Latn-az", LCMAP_LOWERCASE, 0x0130,0,'i'}, /* LATIN CAPITAL LETTER I WITH DOT ABOVE */
 
-        {enUSW, LCMAP_UPPERCASE, 0x0131,0,'I'}, /* LATIN SMALL LETTER DOTLESS I */
-        {trTRW, LCMAP_UPPERCASE, 0x0131,0,'I'}, /* LATIN SMALL LETTER DOTLESS I */
-        {TRTRW, LCMAP_UPPERCASE, 0x0131,0,'I'}, /* LATIN SMALL LETTER DOTLESS I */
-        {azCyrlazW, LCMAP_UPPERCASE, 0x0131,0,'I'}, /* LATIN SMALL LETTER DOTLESS I */
-        {azLatnazW, LCMAP_UPPERCASE, 0x0131,0,'I'}, /* LATIN SMALL LETTER DOTLESS I */
+        {L"en-US", LCMAP_UPPERCASE, 0x0131,0,'I'}, /* LATIN SMALL LETTER DOTLESS I */
+        {L"tr-TR", LCMAP_UPPERCASE, 0x0131,0,'I'}, /* LATIN SMALL LETTER DOTLESS I */
+        {L"TR-TR", LCMAP_UPPERCASE, 0x0131,0,'I'}, /* LATIN SMALL LETTER DOTLESS I */
+        {L"az-Cyrl-az", LCMAP_UPPERCASE, 0x0131,0,'I'}, /* LATIN SMALL LETTER DOTLESS I */
+        {L"az-Latn-az", LCMAP_UPPERCASE, 0x0131,0,'I'}, /* LATIN SMALL LETTER DOTLESS I */
+
+        {L"en-US", LCMAP_LOWERCASE, 0x10418,0x10440,0,TRUE /*win7*/}, /* DESERET CAPITAL LETTER GAY */
+        {L"en-US", LCMAP_UPPERCASE, 0x10431,0x10409,0,TRUE /*win7*/}, /* DESERET SMALL LETTER SHORT AH */
     };
 
     if (!pLCMapStringEx)
@@ -7456,26 +7506,29 @@ static void test_SpecialCasing(void)
         return;
     }
 
-    for (i = 0; i < ARRAY_SIZE(tests); i++) {
+    for (i = 0; i < ARRAY_SIZE(tests); i++)
+    {
         memset(buffer, 0, sizeof(buffer));
+        len = put_utf16( src, tests[i].ch );
         ret = pLCMapStringEx(tests[i].lang, tests[i].flags,
-            &tests[i].ch, 1, buffer, ARRAY_SIZE(buffer), NULL, NULL, 0);
-        ok(ret == 1, "expected 1, got %d for %04x for %s\n", ret, tests[i].ch,
-            wine_dbgstr_w(tests[i].lang));
+                             src, len, buffer, ARRAY_SIZE(buffer), NULL, NULL, 0);
+        len = get_utf16( buffer, ret, &val );
+        ok(ret == len, "got %d for %04x for %s\n", ret, tests[i].ch, wine_dbgstr_w(tests[i].lang));
         exp = tests[i].exp ? tests[i].exp : tests[i].ch;
-        ok(buffer[0] == exp || broken(buffer[0] != exp),
+        ok(val == exp || broken(tests[i].broken),
             "expected %04x, got %04x for %04x for %s\n",
-            exp, buffer[0], tests[i].ch, wine_dbgstr_w(tests[i].lang));
+            exp, val, tests[i].ch, wine_dbgstr_w(tests[i].lang));
 
         memset(buffer, 0, sizeof(buffer));
+        len = put_utf16( src, tests[i].ch );
         ret = pLCMapStringEx(tests[i].lang, tests[i].flags|LCMAP_LINGUISTIC_CASING,
-            &tests[i].ch, 1, buffer, ARRAY_SIZE(buffer), NULL, NULL, 0);
-        ok(ret == 1, "expected 1, got %d for %04x for %s\n", ret, tests[i].ch,
-            wine_dbgstr_w(tests[i].lang));
+                             src, len, buffer, ARRAY_SIZE(buffer), NULL, NULL, 0);
+        len = get_utf16( buffer, ret, &val );
+        ok(ret == len, "got %d for %04x for %s\n", ret, tests[i].ch, wine_dbgstr_w(tests[i].lang));
         exp = tests[i].exp_ling ? tests[i].exp_ling : exp;
-        ok(buffer[0] == exp || broken(buffer[0] != exp),
+        ok(val == exp || broken(tests[i].broken),
             "expected %04x, got %04x for %04x for %s\n",
-            exp, buffer[0], tests[i].ch, wine_dbgstr_w(tests[i].lang));
+            exp, val, tests[i].ch, wine_dbgstr_w(tests[i].lang));
     }
 }
 
