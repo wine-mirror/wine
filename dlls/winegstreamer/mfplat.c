@@ -969,8 +969,6 @@ HRESULT mf_create_wg_sample(IMFSample *sample, struct wg_sample **out)
 {
     DWORD current_length, max_length;
     struct mf_sample *mf_sample;
-    LONGLONG time, duration;
-    UINT32 value;
     BYTE *buffer;
     HRESULT hr;
 
@@ -980,19 +978,6 @@ HRESULT mf_create_wg_sample(IMFSample *sample, struct wg_sample **out)
         goto out;
     if (FAILED(hr = IMFMediaBuffer_Lock(mf_sample->media_buffer, &buffer, &max_length, &current_length)))
         goto out;
-
-    if (SUCCEEDED(IMFSample_GetSampleTime(sample, &time)))
-    {
-        mf_sample->wg_sample.flags |= WG_SAMPLE_FLAG_HAS_PTS;
-        mf_sample->wg_sample.pts = time;
-    }
-    if (SUCCEEDED(IMFSample_GetSampleDuration(sample, &duration)))
-    {
-        mf_sample->wg_sample.flags |= WG_SAMPLE_FLAG_HAS_DURATION;
-        mf_sample->wg_sample.duration = duration;
-    }
-    if (SUCCEEDED(IMFSample_GetUINT32(sample, &MFSampleExtension_CleanPoint, &value)) && value)
-        mf_sample->wg_sample.flags |= WG_SAMPLE_FLAG_SYNC_POINT;
 
     IMFSample_AddRef((mf_sample->sample = sample));
     mf_sample->wg_sample.data = buffer;
@@ -1015,8 +1000,43 @@ void mf_destroy_wg_sample(struct wg_sample *wg_sample)
     struct mf_sample *mf_sample = CONTAINING_RECORD(wg_sample, struct mf_sample, wg_sample);
 
     IMFMediaBuffer_Unlock(mf_sample->media_buffer);
-    IMFMediaBuffer_SetCurrentLength(mf_sample->media_buffer, wg_sample->size);
     IMFMediaBuffer_Release(mf_sample->media_buffer);
+    IMFSample_Release(mf_sample->sample);
+    free(mf_sample);
+}
+
+HRESULT wg_transform_push_mf(struct wg_transform *transform, struct wg_sample *sample)
+{
+    struct mf_sample *mf_sample = CONTAINING_RECORD(sample, struct mf_sample, wg_sample);
+    LONGLONG time, duration;
+    UINT32 value;
+
+    if (SUCCEEDED(IMFSample_GetSampleTime(mf_sample->sample, &time)))
+    {
+        mf_sample->wg_sample.flags |= WG_SAMPLE_FLAG_HAS_PTS;
+        mf_sample->wg_sample.pts = time;
+    }
+    if (SUCCEEDED(IMFSample_GetSampleDuration(mf_sample->sample, &duration)))
+    {
+        mf_sample->wg_sample.flags |= WG_SAMPLE_FLAG_HAS_DURATION;
+        mf_sample->wg_sample.duration = duration;
+    }
+    if (SUCCEEDED(IMFSample_GetUINT32(mf_sample->sample, &MFSampleExtension_CleanPoint, &value)) && value)
+        mf_sample->wg_sample.flags |= WG_SAMPLE_FLAG_SYNC_POINT;
+
+    return wg_transform_push_data(transform, sample);
+}
+
+HRESULT wg_transform_read_mf(struct wg_transform *transform, struct wg_sample *wg_sample,
+        struct wg_format *format)
+{
+    struct mf_sample *mf_sample = CONTAINING_RECORD(wg_sample, struct mf_sample, wg_sample);
+    HRESULT hr;
+
+    if (FAILED(hr = wg_transform_read_data(transform, wg_sample, format)))
+        return hr;
+
+    IMFMediaBuffer_SetCurrentLength(mf_sample->media_buffer, wg_sample->size);
 
     if (wg_sample->flags & WG_SAMPLE_FLAG_HAS_PTS)
         IMFSample_SetSampleTime(mf_sample->sample, wg_sample->pts);
@@ -1025,6 +1045,5 @@ void mf_destroy_wg_sample(struct wg_sample *wg_sample)
     if (wg_sample->flags & WG_SAMPLE_FLAG_SYNC_POINT)
         IMFSample_SetUINT32(mf_sample->sample, &MFSampleExtension_CleanPoint, 1);
 
-    IMFSample_Release(mf_sample->sample);
-    free(mf_sample);
+    return S_OK;
 }

@@ -544,7 +544,7 @@ static HRESULT WINAPI transform_ProcessInput(IMFTransform *iface, DWORD id, IMFS
         return S_OK;
     }
 
-    hr = wg_transform_push_data(decoder->wg_transform, wg_sample);
+    hr = wg_transform_push_mf(decoder->wg_transform, wg_sample);
     mf_destroy_wg_sample(wg_sample);
     return hr;
 }
@@ -586,7 +586,7 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
         return MF_E_BUFFERTOOSMALL;
     }
 
-    if (SUCCEEDED(hr = wg_transform_read_data(decoder->wg_transform, wg_sample, NULL)))
+    if (SUCCEEDED(hr = wg_transform_read_mf(decoder->wg_transform, wg_sample, NULL)))
     {
         if (wg_sample->flags & WG_SAMPLE_FLAG_INCOMPLETE)
             samples[0].dwStatus |= MFT_OUTPUT_DATA_BUFFER_INCOMPLETE;
