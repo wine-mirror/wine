@@ -40,6 +40,7 @@ struct transform
     IQualityControl *qc_sink;
 
     struct wg_transform *transform;
+    struct wg_sample_queue *sample_queue;
 
     const struct transform_ops *ops;
 };
@@ -76,6 +77,7 @@ static void transform_destroy(struct strmbase_filter *iface)
     strmbase_sink_cleanup(&filter->sink);
     strmbase_filter_cleanup(&filter->filter);
 
+    wg_sample_queue_destroy(filter->sample_queue);
     free(filter);
 }
 
@@ -572,10 +574,17 @@ static const IQualityControlVtbl source_quality_control_vtbl =
 static HRESULT transform_create(IUnknown *outer, const CLSID *clsid, const struct transform_ops *ops, struct transform **out)
 {
     struct transform *object;
+    HRESULT hr;
 
     object = calloc(1, sizeof(*object));
     if (!object)
         return E_OUTOFMEMORY;
+
+    if (FAILED(hr = wg_sample_queue_create(&object->sample_queue)))
+    {
+        free(object);
+        return hr;
+    }
 
     strmbase_filter_init(&object->filter, outer, clsid, &filter_ops);
     strmbase_sink_init(&object->sink, &object->filter, L"In", &sink_ops, NULL);

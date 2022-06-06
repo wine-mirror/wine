@@ -6423,7 +6423,6 @@ static void test_wma_decoder(void)
     hr = IMFTransform_ProcessInput(transform, 0, sample, 0);
     ok(hr == MF_E_NOTACCEPTING, "ProcessInput returned %#lx\n", hr);
     ret = IMFSample_Release(sample);
-    todo_wine
     ok(ret == 1, "Release returned %lu\n", ret);
 
     /* As output_info.dwFlags doesn't have MFT_OUTPUT_STREAM_CAN_PROVIDE_SAMPLES

@@ -519,6 +519,13 @@ out:
     return status;
 }
 
+static void wg_sample_free_notify(void *arg)
+{
+    struct wg_sample *sample = arg;
+    GST_DEBUG("Releasing wg_sample %p", sample);
+    InterlockedDecrement(&sample->refcount);
+}
+
 NTSTATUS wg_transform_push_data(void *args)
 {
     struct wg_transform_push_data_params *params = args;
@@ -535,12 +542,28 @@ NTSTATUS wg_transform_push_data(void *args)
         return STATUS_SUCCESS;
     }
 
-    if (!(buffer = gst_buffer_new_and_alloc(sample->size)))
+    if (!(sample->flags & WG_SAMPLE_FLAG_HAS_REFCOUNT))
+    {
+        if (!(buffer = gst_buffer_new_and_alloc(sample->size)))
+        {
+            GST_ERROR("Failed to allocate input buffer");
+            return STATUS_NO_MEMORY;
+        }
+        gst_buffer_fill(buffer, 0, sample->data, sample->size);
+        GST_INFO("Copied %u bytes from sample %p to buffer %p", sample->size, sample, buffer);
+    }
+    else if (!(buffer = gst_buffer_new_wrapped_full(GST_MEMORY_FLAG_READONLY, sample->data, sample->max_size,
+            0, sample->size, sample, wg_sample_free_notify)))
     {
         GST_ERROR("Failed to allocate input buffer");
         return STATUS_NO_MEMORY;
     }
-    gst_buffer_fill(buffer, 0, sample->data, sample->size);
+    else
+    {
+        InterlockedIncrement(&sample->refcount);
+        GST_INFO("Wrapped %u/%u bytes from sample %p to buffer %p", sample->size, sample->max_size, sample, buffer);
+    }
+
     if (sample->flags & WG_SAMPLE_FLAG_HAS_PTS)
         GST_BUFFER_PTS(buffer) = sample->pts * 100;
     if (sample->flags & WG_SAMPLE_FLAG_HAS_DURATION)
@@ -549,7 +572,6 @@ NTSTATUS wg_transform_push_data(void *args)
         GST_BUFFER_FLAG_SET(buffer, GST_BUFFER_FLAG_DELTA_UNIT);
     gst_buffer_list_insert(transform->input, -1, buffer);
 
-    GST_INFO("Copied %u bytes from sample %p to input buffer list", sample->size, sample);
     params->result = S_OK;
     return STATUS_SUCCESS;
 }
