@@ -18,7 +18,7 @@
 
 function test_xhr() {
     var xhr = new XMLHttpRequest();
-    var complete_cnt = 0;
+    var complete_cnt = 0, loadstart = false;
 
     xhr.onreadystatechange = function() {
         if(xhr.readyState != 4)
@@ -31,10 +31,21 @@ function test_xhr() {
     xhr.ontimeout = function() { ok(false, "ontimeout called"); }
     var onload_func = xhr.onload = function() {
         ok(xhr.statusText === "OK", "statusText = " + xhr.statusText);
+        if("onloadstart" in xhr)
+            ok(loadstart, "onloadstart not fired");
         if(complete_cnt++)
             next_test();
     };
     ok(xhr.onload === onload_func, "xhr.onload != onload_func");
+    if("onloadstart" in xhr) {
+        xhr.onloadstart = function(e) {
+            ok(complete_cnt == 0, "onloadstart fired after onload");
+            var props = [ "initProgressEvent", "lengthComputable", "loaded", "total" ];
+            for(var i = 0; i < props.length; i++)
+                ok(props[i] in e, props[i] + " not available in loadstart");
+            loadstart = true;
+        };
+    }
 
     xhr.open("POST", "echo.php", true);
     xhr.setRequestHeader("X-Test", "True");

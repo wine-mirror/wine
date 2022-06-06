@@ -157,6 +157,8 @@ static const event_info_t event_info[] = {
         EVENT_DEFAULTLISTENER | EVENT_BUBBLES | EVENT_CANCELABLE},
     {L"load",              EVENT_TYPE_UIEVENT,   DISPID_EVMETH_ONLOAD,
         EVENT_BIND_TO_TARGET},
+    {L"loadstart",         EVENT_TYPE_PROGRESS,  DISPID_EVPROP_LOADSTART,
+        EVENT_BIND_TO_TARGET},
     {L"message",           EVENT_TYPE_MESSAGE,   DISPID_EVMETH_ONMESSAGE,
         0},
     {L"mousedown",         EVENT_TYPE_MOUSE,     DISPID_EVMETH_ONMOUSEDOWN,
