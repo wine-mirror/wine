@@ -45,6 +45,17 @@ static unsigned short mapchar( const unsigned short *table, unsigned int len, un
     return ch + table[off];
 }
 
+static unsigned int mapchar_high( const unsigned short *table, unsigned int len, unsigned int ch )
+{
+    unsigned short ch1 = 0xd800 | ((ch - 0x10000) >> 10);
+    unsigned short ch2 = 0xdc00 | (ch & 0x3ff);
+    unsigned int off = table[256 + (ch1 - 0xd800)] + ((ch2 >> 5) & 0x1f);
+    if (off >= len) return 0;
+    off = table[off] + 2 * (ch2 & 0x1f);
+    if (off >= len) return 0;
+    return ch + *(UINT *)&table[off];
+}
+
 static void dump_offset_table( const unsigned short *table, unsigned int len )
 {
     int i, j, empty, ch;
@@ -65,6 +76,27 @@ static void dump_offset_table( const unsigned short *table, unsigned int len )
             ch = mapchar( table, len, i + j );
             if (ch == i + j) printf( " ...." );
             else printf( " %04x", ch );
+        }
+    }
+    if (table[0] >= 0x500)
+    {
+        for (i = 0x10000; i < 0x110000; i += 16)
+        {
+            for (j = 0; j < 16; j++) if (mapchar_high( table, len, i + j ) != i + j) break;
+            if (j == 16)
+            {
+                empty++;
+                continue;
+            }
+            if (empty) printf( "\n[...]" );
+            empty = 0;
+            printf( "\n%06x:", i );
+            for (j = 0; j < 16; j++)
+            {
+                ch = mapchar_high( table, len, i + j );
+                if (ch == i + j) printf( " ......" );
+                else printf( " %06x", ch );
+            }
         }
     }
     if (empty) printf( "\n[...]" );

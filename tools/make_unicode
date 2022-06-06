@@ -2108,23 +2108,28 @@ sub load_data()
             $decomp_compat_table[$src] = \@seq;
         }
 
-        if ($decomp =~ /^<narrow>\s+([0-9a-fA-F]+)$/)
-        {
-            $halfwidth_table[hex $1] = $src;
-            $fullwidth_table[$src] = hex $1;
-        }
-        elsif ($decomp =~ /^<wide>\s+([0-9a-fA-F]+)$/)
-        {
-            next if hex $1 == 0x5c; # don't remap backslash
-            $fullwidth_table[hex $1] = $src;
-            $halfwidth_table[$src] = hex $1;
-        }
-        elsif ($decomp =~ /^<([a-zA-Z]+)>\s+([0-9a-fA-F]+)$/)
+        if ($decomp =~ /^<([a-zA-Z]+)>\s+([0-9a-fA-F]+)$/)
         {
             # decomposition of the form "<foo> 1234" -> use char if type is known
-            if ($1 eq "isolated" || $1 eq "final" || $1 eq "initial" || $1 eq "medial")
+            my $dst = hex $2;
+            if ($1 eq "narrow")
             {
-                ${joining_forms{$1}}[hex $2] = $src;
+                $halfwidth_table[$dst] = $src;
+                $fullwidth_table[$src] = $dst;
+            }
+            elsif ($1 eq "wide")
+            {
+                next if $dst == 0x5c; # don't remap backslash
+                $fullwidth_table[$dst] = $src;
+                $halfwidth_table[$src] = $dst;
+            }
+            elsif ($1 eq "font" || $1 eq "square" || $1 eq "circle")
+            {
+                $fullwidth_table[$src] = $dst if $src >= 0x10000;
+            }
+            elsif ($1 eq "isolated" || $1 eq "final" || $1 eq "initial" || $1 eq "medial")
+            {
+                ${joining_forms{$1}}[$dst] = $src;
             }
         }
         elsif ($decomp =~ /^<compat>\s+0020\s+([0-9a-fA-F]+)/)
@@ -2143,7 +2148,11 @@ sub load_data()
                 my $dst = hex $1;
                 # Single char decomposition
                 $decomp_table[$src] = $decomp_compat_table[$src] = [ $dst ];
-                $cjk_compat_table[$src] = $dst if $name =~ /^CJK COMPATIBILITY IDEOGRAPH/;
+                if ($name =~ /^CJK COMPATIBILITY IDEOGRAPH/)
+                {
+                    $cjk_compat_table[$src] = $dst;
+                    $fullwidth_table[$src] = $dst if $src >= 0x10000;
+                }
             }
         }
     }
@@ -2236,16 +2245,24 @@ sub load_data()
     {
         s/\#.*//;  # remove comments
         next if /^\s*$/;
-        if (/^U\+([0-9a-fA-F]+)\s+kTraditionalVariant\s+U\+([0-9a-fA-F]+)/)
+        if (/^U\+([0-9a-fA-F]{4})\s+kTraditionalVariant\s+U\+([0-9a-fA-F]{4})$/)
         {
+            next if hex $1 < 0x4dc0;  # skip extension A
             $chinese_traditional_table[hex $1] = hex $2;
         }
-        elsif (/^U\+([0-9a-fA-F]+)\s+kSimplifiedVariant\s+U\+([0-9a-fA-F]+)/)
+        elsif (/^U\+([0-9a-fA-F]{4})\s+kSimplifiedVariant\s+U\+([0-9a-fA-F]{4})$/)
         {
+            next if hex $1 < 0x4dc0;  # skip extension A
             $chinese_simplified_table[hex $1] = hex $2;
         }
     }
     close $UNIHAN;
+    foreach my $i (0xf900..0xfaff)
+    {
+        next unless defined $cjk_compat_table[$i];
+        next if defined $chinese_simplified_table[$cjk_compat_table[$i]];
+        $chinese_simplified_table[$i] = $cjk_compat_table[$i];
+    }
 }
 
 
@@ -3188,21 +3205,22 @@ sub compress_array($$@)
 
 ################################################################
 # dump a char -> 16-bit value mapping table using two-level tables
-sub dump_two_level_mapping($$@)
+sub dump_two_level_mapping($$$@)
 {
     my $name = shift;
     my $def = shift;
     my $size = shift;
     my $type = $size == 16 ? "unsigned short" : "unsigned int";
-    my @row_array = compress_array( 4096, $def, @_[0..65535] );
-    my @array = compress_array( 256, 0, @row_array[0..4095] );
+    my (@array, @row_array, @data, @row_data);
+    (@row_array[0..4095], @data) = compress_array( 4096, $def, @_[0..65535] );
+    (@array[0..255], @row_data) = compress_array( 256, 0, @row_array );
 
-    for (my $i = 256; $i < @array; $i++) { $array[$i] += @array - 4096; }
+    for (my $i = 0; $i < @row_data; $i++) { $row_data[$i] += @row_data + 256 - 4096; }
 
-    printf OUTPUT "const %s DECLSPEC_HIDDEN %s[%d] =\n{\n", $type, $name, @array + @row_array - 4096;
-    printf OUTPUT "    /* level 1 offsets */\n%s,\n", dump_array( $size, 0, @array[0..255] );
-    printf OUTPUT "    /* level 2 offsets */\n%s,\n", dump_array( $size, 0, @array[256..$#array] );
-    printf OUTPUT "    /* values */\n%s\n};\n", dump_array( $size, 0, @row_array[4096..$#row_array] );
+    printf OUTPUT "const %s DECLSPEC_HIDDEN %s[%d] =\n{\n", $type, $name, @array + @row_data + @data;
+    printf OUTPUT "    /* level 1 offsets */\n%s,\n", dump_array( $size, 0, @array );
+    printf OUTPUT "    /* level 2 offsets */\n%s,\n", dump_array( $size, 0, @row_data );
+    printf OUTPUT "    /* values */\n%s\n};\n", dump_array( $size, 0, @data );
 }
 
 ################################################################
@@ -3235,22 +3253,39 @@ sub dump_three_level_mapping($$@)
 sub dump_binary_case_table(@)
 {
     my (@table) = @_;
-    my $max_char = 0x10000;
-    my $level1 = $max_char / 16;
-    my $level2 = $level1 / 16;
-
     my @difftable;
+    my @res;
+
     for (my $i = 0; $i < @table; $i++)
     {
         next unless defined $table[$i];
-        $difftable[$i] = ($table[$i] - $i) & 0xffff;
+        $difftable[$i] = ($table[$i] - $i) & 0xffffffff;
     }
 
-    my @row_array = compress_array( $level1, 0, @difftable[0..$max_char-1] );
-    my @array = compress_array( $level2, 0, @row_array[0..$level1-1] );
-    my $offset = @array - $level1;
-    for (my $i = $level2; $i < @array; $i++) { $array[$i] += $offset; }
-    return pack "S<*", 1 + $offset + @row_array, @array, @row_array[$level1..$#row_array];
+    my (@low_array1, @low_array2, @low_data, @low_row_data);
+    (@low_array2[0..4095], @low_data) = compress_array( 4096, 0, @difftable[0..65535] );
+    (@low_array1[0..255], @low_row_data) = compress_array( 256, 0, @low_array2 );
+
+    if (scalar @table > 0x10000)
+    {
+        my (@high_array1, @high_array2, @high_data, @high_row_data);
+        (@high_array2[0..32767], @high_data) = compress_array( 32768, 0, @difftable[65536..$MAX_CHAR] );
+        (@high_array1[0..1023], @high_row_data) = compress_array( 1024, 0, @high_array2 );
+
+        push @res, map { $_ + 1024; } @low_array1;
+        push @res, map { $_ + @res + @low_row_data + @low_data; } @high_array1;
+        push @res, map { $_ + @res + @low_row_data - 4096; } @low_row_data;
+        push @res, @low_data;
+        push @res, map { 2 * ($_ - 32768) + @res + @high_row_data; } @high_row_data;
+        return pack( "S<*", 1 + scalar @res  + 2 * scalar @high_data, @res ) . pack( "L<*", @high_data );
+    }
+    else
+    {
+        push @res, @low_array1;
+        push @res, map { $_ + @res + @low_row_data - 4096; } @low_row_data;
+        push @res, @low_data;
+        return pack "S<*", 1 + scalar @res, @res;
+    }
 }
 
 ################################################################
@@ -3261,8 +3296,8 @@ sub dump_intl_nls($)
     my @lower_table = @tolower_table;
     remove_linguistic_mappings( \@upper_table, \@lower_table );
 
-    my $upper = dump_binary_case_table( @upper_table );
-    my $lower = dump_binary_case_table( @lower_table );
+    my $upper = dump_binary_case_table( @upper_table[0..65535] );
+    my $lower = dump_binary_case_table( @lower_table[0..65535] );
 
     my $filename = shift;
     open OUTPUT,">$filename.new" or die "Cannot create $filename";
@@ -4000,12 +4035,13 @@ sub dump_sortkey_table($$)
         $table[$i] = $typestr{$str};
     }
 
-    my @rows = compress_array( 4096, 0, @table[0..65535] );
-    my @array = compress_array( 256, 0, @rows[0..4095] );
+    my (@rows, @array, @data, @row_data);
+    (@rows[0..4095], @data) = compress_array( 4096, 0, @table[0..65535] );
+    (@array[0..255], @row_data) = compress_array( 256, 0, @rows );
     for (my $i = 0; $i < 256; $i++) { $array[$i] *= 2; }  # we need byte offsets
-    for (my $i = 256; $i < @array; $i++) { $array[$i] += 2 * @array - 4096; }
+    for (my $i = 0; $i < @row_data; $i++) { $row_data[$i] += 2 * @row_data + 512 - 4096; }
 
-    my $arraystr = pack("S<*", @array) . pack("C*", @rows[4096..$#rows]);
+    my $arraystr = pack("S<*", @array, @row_data) . pack("C*", @data);
     my $chartypes = pack "S<2", 4 + length($types) + length($arraystr), 2 + length($types);
     $chartypes = align_string( 8, $chartypes . $types . $arraystr );
 
@@ -5101,6 +5137,15 @@ sub build_charmaps_data()
     my $data = "";
 
     # MAP_FOLDDIGITS
+    my @digits = (ord('0') .. ord('9'));
+    $digitmap_table[0x3007] = $digits[0];               # Ideographic Zero
+    @digitmap_table[0x0c78..0x0c7b] = @digits[0..3];    # Telugu Fraction Digits
+    @digitmap_table[0x0c7c..0x0c7e] = @digits[1..3];    # Telugu Fraction Digits
+    @digitmap_table[0x3021..0x3029] = @digits[1..9];    # Hangzhou Numerals
+    @digitmap_table[0xa8e0..0xa8e9] = @digits;          # Combining Devanagari Digits
+    @digitmap_table[0x10107..0x1010f] = @digits[1..9];  # Aegean Numbers
+    $digitmap_table[0x10320] = $digits[1];              # Old Italic Numerals
+    $digitmap_table[0x10321] = $digits[5];              # Old Italic Numerals
     $data .= dump_binary_case_table( @digitmap_table );
 
     # CJK compatibility map
