@@ -19624,6 +19624,15 @@ static void add_dirty_rect_test(void)
     hr = IDirect3DDevice9_Present(device, NULL, NULL, NULL, NULL);
     ok(SUCCEEDED(hr), "Failed to present, hr %#lx.\n", hr);
 
+    fill_surface(surface_src_green, 0x000000ff, D3DLOCK_NO_DIRTY_UPDATE);
+
+    /* So does drawing directly from the sysmem texture. */
+    hr = IDirect3DDevice9_SetTexture(device, 0, (IDirect3DBaseTexture9 *)tex_src_green);
+    ok(hr == S_OK, "Failed to set texture, hr %#lx.\n", hr);
+    add_dirty_rect_test_draw(device);
+    color = getPixelColor(device, 320, 240);
+    ok(color_match(color, 0x000000ff, 1), "Got unexpected color 0x%08x.\n", color);
+
     /* Tests with managed textures. */
     fill_surface(surface_managed0, 0x00ff0000, 0);
     fill_surface(surface_managed1, 0x00ff0000, 0);
