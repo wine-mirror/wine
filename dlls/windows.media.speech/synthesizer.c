@@ -254,11 +254,17 @@ static HRESULT WINAPI synthesizer_SynthesizeTextToStreamAsync( ISpeechSynthesize
                                               text_to_stream_operation, (IAsyncOperation_IInspectable **)operation);
 }
 
+static HRESULT CALLBACK ssml_to_stream_operation( IInspectable *invoker, IInspectable **result )
+{
+    return S_OK;
+}
+
 static HRESULT WINAPI synthesizer_SynthesizeSsmlToStreamAsync( ISpeechSynthesizer *iface, HSTRING ssml,
                                                                IAsyncOperation_SpeechSynthesisStream **operation )
 {
     FIXME("iface %p, text %p, operation %p stub.\n", iface, ssml, operation);
-    return E_NOTIMPL;
+    return async_operation_inspectable_create(&IID_IAsyncOperation_SpeechSynthesisStream, NULL,
+                                              ssml_to_stream_operation, (IAsyncOperation_IInspectable **)operation);
 }
 
 static HRESULT WINAPI synthesizer_put_Voice( ISpeechSynthesizer *iface, IVoiceInformation *value )

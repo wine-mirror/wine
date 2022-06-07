@@ -971,8 +971,7 @@ static void test_SpeechSynthesizer(void)
     ok(hr == S_OK, "WindowsCreateString failed, hr %#lx\n", hr);
 
     hr = ISpeechSynthesizer_SynthesizeSsmlToStreamAsync(synthesizer, str2, &operation_ss_stream);
-    todo_wine ok(hr == S_OK, "ISpeechSynthesizer_SynthesizeSsmlToStreamAsync failed, hr %#lx\n", hr);
-    if(FAILED(hr)) goto skip_ss_stream;
+    ok(hr == S_OK, "ISpeechSynthesizer_SynthesizeSsmlToStreamAsync failed, hr %#lx\n", hr);
 
     await_async_inspectable((IAsyncOperation_IInspectable *)operation_ss_stream,
                              &async_inspectable_handler,
@@ -998,28 +997,27 @@ static void test_SpeechSynthesizer(void)
     operation_ss_stream = (void *)0xdeadbeef;
     hr = ISpeechSynthesizer_SynthesizeSsmlToStreamAsync(synthesizer, NULL, &operation_ss_stream);
     /* Broken on Win 8 + 8.1 */
-    todo_wine ok(hr == S_OK || broken(hr == E_INVALIDARG), "ISpeechSynthesizer_SynthesizeSsmlToStreamAsync failed, hr %#lx\n", hr);
+    ok(hr == S_OK || broken(hr == E_INVALIDARG), "ISpeechSynthesizer_SynthesizeSsmlToStreamAsync failed, hr %#lx\n", hr);
 
     if (hr == S_OK)
     {
-        todo_wine ok(!!operation_ss_stream, "operation_ss_stream had value %p.\n", operation_ss_stream);
+        ok(!!operation_ss_stream, "operation_ss_stream had value %p.\n", operation_ss_stream);
         IAsyncOperation_SpeechSynthesisStream_Release(operation_ss_stream);
     }
-    else todo_wine ok(operation_ss_stream == NULL, "operation_ss_stream had value %p.\n", operation_ss_stream);
+    else ok(operation_ss_stream == NULL, "operation_ss_stream had value %p.\n", operation_ss_stream);
 
     operation_ss_stream = (void *)0xdeadbeef;
     hr = ISpeechSynthesizer_SynthesizeSsmlToStreamAsync(synthesizer, str, &operation_ss_stream);
     /* Broken on Win 8 + 8.1 */
-    todo_wine ok(hr == S_OK || broken(hr == SPERR_WINRT_INCORRECT_FORMAT), "ISpeechSynthesizer_SynthesizeSsmlToStreamAsync failed, hr %#lx\n", hr);
+    ok(hr == S_OK || broken(hr == SPERR_WINRT_INCORRECT_FORMAT), "ISpeechSynthesizer_SynthesizeSsmlToStreamAsync failed, hr %#lx\n", hr);
 
     if (hr == S_OK)
     {
-        todo_wine ok(!!operation_ss_stream, "operation_ss_stream had value %p.\n", operation_ss_stream);
+        ok(!!operation_ss_stream, "operation_ss_stream had value %p.\n", operation_ss_stream);
         IAsyncOperation_SpeechSynthesisStream_Release(operation_ss_stream);
     }
-    else todo_wine ok(operation_ss_stream == NULL, "operation_ss_stream had value %p.\n", operation_ss_stream);
+    else ok(operation_ss_stream == NULL, "operation_ss_stream had value %p.\n", operation_ss_stream);
 
-skip_ss_stream:
     WindowsDeleteString(str2);
     WindowsDeleteString(str);
 
