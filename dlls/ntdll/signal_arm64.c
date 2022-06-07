@@ -165,6 +165,7 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
 {
     LDR_DATA_TABLE_ENTRY *module;
     NTSTATUS status;
+    DWORD64 pc;
 
     dispatch->ImageBase        = 0;
     dispatch->ScopeIndex       = 0;
@@ -175,14 +176,14 @@ static NTSTATUS virtual_unwind( ULONG type, DISPATCHER_CONTEXT *dispatch, CONTEX
      * signal frame.
      */
     dispatch->ControlPcIsUnwound = (context->ContextFlags & CONTEXT_UNWOUND_TO_CALL) != 0;
+    pc = context->Pc - (dispatch->ControlPcIsUnwound ? 4 : 0);
 
     /* first look for PE exception information */
 
-    if ((dispatch->FunctionEntry = lookup_function_info(
-             context->Pc - (dispatch->ControlPcIsUnwound ? 4 : 0),
+    if ((dispatch->FunctionEntry = lookup_function_info(pc,
              &dispatch->ImageBase, &module )))
     {
-        dispatch->LanguageHandler = RtlVirtualUnwind( type, dispatch->ImageBase, context->Pc,
+        dispatch->LanguageHandler = RtlVirtualUnwind( type, dispatch->ImageBase, pc,
                                                       dispatch->FunctionEntry, context,
                                                       &dispatch->HandlerData, &dispatch->EstablisherFrame,
                                                       NULL );
