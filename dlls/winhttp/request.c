@@ -135,20 +135,41 @@ void stop_queue( struct queue *queue )
     TRACE("stopped %p\n", queue);
 }
 
+static void addref_task( struct task_header *task )
+{
+    InterlockedIncrement( &task->refs );
+}
+
+static void release_task( struct task_header *task )
+{
+    if (!InterlockedDecrement( &task->refs ))
+        free( task );
+}
+
 static struct task_header *get_next_task( struct queue *queue, struct task_header *prev_task )
 {
+    struct task_header *task;
     struct list *entry;
 
     AcquireSRWLockExclusive( &queue->lock );
     assert( queue->callback_running );
     if (prev_task)
+    {
         list_remove( &prev_task->entry );
-
-    if (!(entry = list_head( &queue->queued_tasks )))
+        release_task( prev_task );
+    }
+    if ((entry = list_head( &queue->queued_tasks )))
+    {
+        task = LIST_ENTRY( entry, struct task_header, entry );
+        addref_task( task );
+    }
+    else
+    {
+        task = NULL;
         queue->callback_running = FALSE;
+    }
     ReleaseSRWLockExclusive( &queue->lock );
-    if (!entry) return NULL;
-    return LIST_ENTRY( entry, struct task_header, entry );
+    return task;
 }
 
 static void CALLBACK task_callback( TP_CALLBACK_INSTANCE *instance, void *ctx )
@@ -165,7 +186,7 @@ static void CALLBACK task_callback( TP_CALLBACK_INSTANCE *instance, void *ctx )
         /* Queue object may be freed by release_object() unless there is another task referencing it. */
         next_task = get_next_task( queue, task );
         release_object( task->obj );
-        free( task );
+        release_task( task );
         task = next_task;
     }
     TRACE( "instance %p exiting.\n", instance );
@@ -178,6 +199,7 @@ static DWORD queue_task( struct queue *queue, TASK_CALLBACK task, struct task_he
 
     TRACE("queueing %p in %p\n", task_hdr, queue);
     task_hdr->callback = task;
+    task_hdr->refs = 1;
     task_hdr->obj = obj;
     addref_object( obj );
 

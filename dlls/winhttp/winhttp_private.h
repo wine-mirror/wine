@@ -281,6 +281,7 @@ struct task_header
     struct list entry;
     TASK_CALLBACK callback;
     struct object_header *obj;
+    volatile LONG refs;
 };
 
 struct send_request
