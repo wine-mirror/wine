@@ -70,7 +70,7 @@ static bool is_caps_video(GstCaps *caps)
     return g_str_has_prefix(media_type, "video/");
 }
 
-static bool align_video_info_planes(gsize plane_align, GstVideoInfo *info, GstVideoAlignment *align)
+static void align_video_info_planes(gsize plane_align, GstVideoInfo *info, GstVideoAlignment *align)
 {
     gst_video_alignment_reset(align);
 
@@ -81,7 +81,7 @@ static bool align_video_info_planes(gsize plane_align, GstVideoInfo *info, GstVi
     align->stride_align[2] = plane_align;
     align->stride_align[3] = plane_align;
 
-    return gst_video_info_align(info, align);
+    gst_video_info_align(info, align);
 }
 
 static GstFlowReturn transform_sink_chain_cb(GstPad *pad, GstObject *parent, GstBuffer *buffer)
@@ -130,9 +130,10 @@ static gboolean transform_sink_query_cb(GstPad *pad, GstObject *parent, GstQuery
                 break;
 
             if (!gst_video_info_from_caps(&info, caps)
-                    || !align_video_info_planes(plane_align, &info, &align)
                     || !(pool = gst_video_buffer_pool_new()))
                 break;
+
+            align_video_info_planes(plane_align, &info, &align);
 
             if ((params = gst_structure_new("video-meta",
                     "padding-top", G_TYPE_UINT, align.padding_top,
@@ -546,11 +547,8 @@ static bool copy_video_buffer(GstBuffer *buffer, GstCaps *caps, gsize plane_alig
     }
 
     dst_info = src_info;
-    if (!align_video_info_planes(plane_align, &dst_info, &align))
-    {
-        GST_ERROR("Failed to align video info.");
-        return false;
-    }
+    align_video_info_planes(plane_align, &dst_info, &align);
+
     if (sample->max_size < dst_info.size)
     {
         GST_ERROR("Output buffer is too small.");
@@ -703,9 +701,10 @@ NTSTATUS wg_transform_read_data(void *args)
             wg_format_from_caps(format, output_caps);
 
             if (format->major_type == WG_MAJOR_TYPE_VIDEO
-                    && gst_video_info_from_caps(&info, output_caps)
-                    && align_video_info_planes(plane_align, &info, &align))
+                    && gst_video_info_from_caps(&info, output_caps))
             {
+                align_video_info_planes(plane_align, &info, &align);
+
                 GST_INFO("Returning video alignment left %u, top %u, right %u, bottom %u.", align.padding_left,
                         align.padding_top, align.padding_right, align.padding_bottom);
 
