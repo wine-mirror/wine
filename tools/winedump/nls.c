@@ -110,7 +110,7 @@ struct ctype
 static const char *get_ctype( const struct ctype *ctype )
 {
     static char buffer[100];
-    static const char *c1[] = { "up ", "lo ", "dg ", "sp ", "pt ", "cl ", "bl ", "xd ", "al " };
+    static const char *c1[] = { "up ", "lo ", "dg ", "sp ", "pt ", "cl ", "bl ", "xd ", "al " , "df "};
     static const char *c2[] = { "  ", "L ", "R ", "EN", "ES", "ET",
                                 "AN", "CS", "B ", "S ", "WS", "ON" };
     static const char *c3[] = { "ns ", "di ", "vo ", "sy ", "ka ", "hi ", "hw ", "fw ",

@@ -6431,6 +6431,47 @@ BOOL WINAPI DECLSPEC_HOTPATCH IsValidLocaleName( const WCHAR *locale )
 
 
 /******************************************************************************
+ *	IsNLSDefinedString   (kernelbase.@)
+ */
+BOOL WINAPI DECLSPEC_HOTPATCH IsNLSDefinedString( NLS_FUNCTION func, DWORD flags, NLSVERSIONINFO *info,
+                                                  const WCHAR *str, int len )
+{
+    int i;
+
+    if (func != COMPARE_STRING)
+    {
+        SetLastError( ERROR_INVALID_FLAGS );
+        return FALSE;
+    }
+    if (info)
+    {
+        if (info->dwNLSVersionInfoSize != sizeof(*info) &&
+            (info->dwNLSVersionInfoSize != offsetof( NLSVERSIONINFO, dwEffectiveId )))
+        {
+            SetLastError( ERROR_INSUFFICIENT_BUFFER );
+            return FALSE;
+        }
+    }
+
+    if (len < 0) len = lstrlenW( str ) + 1;
+
+    for (i = 0; i < len; i++)
+    {
+        if (is_private_use_area_char( str[i] )) return FALSE;
+        if (IS_LOW_SURROGATE( str[i] )) return FALSE;
+        if (IS_HIGH_SURROGATE( str[i] ))
+        {
+            if (++i == len) return FALSE;
+            if (!IS_LOW_SURROGATE( str[i] )) return FALSE;
+            continue;
+        }
+        if (!(get_char_type( CT_CTYPE1, str[i] ) & C1_DEFINED)) return FALSE;
+    }
+    return TRUE;
+}
+
+
+/******************************************************************************
  *	IsValidNLSVersion   (kernelbase.@)
  */
 DWORD WINAPI DECLSPEC_HOTPATCH IsValidNLSVersion( NLS_FUNCTION func, const WCHAR *locale,

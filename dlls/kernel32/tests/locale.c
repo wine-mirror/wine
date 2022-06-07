@@ -95,6 +95,7 @@ static INT (WINAPI *pFindStringOrdinal)(DWORD, LPCWSTR lpStringSource, INT, LPCW
 static BOOL (WINAPI *pGetNLSVersion)(NLS_FUNCTION,LCID,NLSVERSIONINFO*);
 static BOOL (WINAPI *pGetNLSVersionEx)(NLS_FUNCTION,LPCWSTR,NLSVERSIONINFOEX*);
 static DWORD (WINAPI *pIsValidNLSVersion)(NLS_FUNCTION,LPCWSTR,NLSVERSIONINFOEX*);
+static BOOL (WINAPI *pIsNLSDefinedString)(NLS_FUNCTION,DWORD,NLSVERSIONINFO*,const WCHAR *,int);
 static NTSTATUS (WINAPI *pRtlNormalizeString)(ULONG, LPCWSTR, INT, LPWSTR, INT*);
 static NTSTATUS (WINAPI *pRtlIsNormalizedString)(ULONG, LPCWSTR, INT, BOOLEAN*);
 static NTSTATUS (WINAPI *pNtGetNlsSectionPtr)(ULONG,ULONG,void*,void**,SIZE_T*);
@@ -146,6 +147,7 @@ static void InitFunctionPointers(void)
   X(GetNLSVersion);
   X(GetNLSVersionEx);
   X(IsValidNLSVersion);
+  X(IsNLSDefinedString);
 
   mod = GetModuleHandleA("kernelbase");
   X(NlsValidateLocale);
@@ -7750,6 +7752,56 @@ static void test_NLSVersion(void)
         ok( GetLastError() == 0xdeadbeef, "wrong error %lu\n", GetLastError() );
     }
     else win_skip( "IsValidNLSVersion not available\n" );
+
+    if (pIsNLSDefinedString)
+    {
+        SetLastError( 0xdeadbeef );
+        info.dwNLSVersionInfoSize = sizeof(info);
+        ret = pIsNLSDefinedString( COMPARE_STRING, 0, (NLSVERSIONINFO *)&info, L"A", 1 );
+        if (ret)
+            ok( GetLastError() == 0xdeadbeef, "wrong error %lu\n", GetLastError() );
+        else
+            ok( broken( GetLastError() == ERROR_INSUFFICIENT_BUFFER ), /* win7 */
+                "wrong error %lu\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        info.dwNLSVersionInfoSize = sizeof(info) + 1;
+        ret = pIsNLSDefinedString( COMPARE_STRING, 0, (NLSVERSIONINFO *)&info, L"A", 1 );
+        ok( !ret, "IsNLSDefinedString succeeded\n" );
+        ok( GetLastError() == ERROR_INSUFFICIENT_BUFFER, "wrong error %lu\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        info.dwNLSVersionInfoSize = offsetof( NLSVERSIONINFO, dwEffectiveId );
+        ret = pIsNLSDefinedString( COMPARE_STRING, 0, (NLSVERSIONINFO *)&info, L"A", 1 );
+        ok( ret, "IsNLSDefinedString failed err %lu\n", GetLastError() );
+        ok( GetLastError() == 0xdeadbeef, "wrong error %lu\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        ret = pIsNLSDefinedString( 2, 0, (NLSVERSIONINFO *)&info, L"A", 1 );
+        ok( !ret, "IsNLSDefinedString succeeded\n" );
+        ok( GetLastError() == ERROR_INVALID_FLAGS, "wrong error %lu\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        ret = pIsNLSDefinedString( COMPARE_STRING, 0, (NLSVERSIONINFO *)&info, L"ABC", -10 );
+        ok( ret, "IsNLSDefinedString failed err %lu\n", GetLastError() );
+        ok( GetLastError() == 0xdeadbeef, "wrong error %lu\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        ret = pIsNLSDefinedString( COMPARE_STRING, 0, (NLSVERSIONINFO *)&info, L"ABC", -1 );
+        ok( ret, "IsNLSDefinedString failed err %lu\n", GetLastError() );
+        ok( GetLastError() == 0xdeadbeef, "wrong error %lu\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        ret = pIsNLSDefinedString( COMPARE_STRING, 0, (NLSVERSIONINFO *)&info, L"\xd800", 1 );
+        ok( !ret, "IsNLSDefinedString failed err %lu\n", GetLastError() );
+        ok( GetLastError() == 0xdeadbeef, "wrong error %lu\n", GetLastError() );
+
+        SetLastError( 0xdeadbeef );
+        ret = pIsNLSDefinedString( COMPARE_STRING, 0, (NLSVERSIONINFO *)&info, L"\xd800", -20 );
+        ok( !ret, "IsNLSDefinedString failed err %lu\n", GetLastError() );
+        ok( GetLastError() == 0xdeadbeef, "wrong error %lu\n", GetLastError() );
+    }
+    else win_skip( "IsNLSDefinedString not available\n" );
 }
 
 static void test_locale_nls(void)
