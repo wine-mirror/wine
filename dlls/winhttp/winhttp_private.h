@@ -274,7 +274,7 @@ struct socket
     BOOL last_receive_final;
 };
 
-typedef void (*TASK_CALLBACK)( void *ctx );
+typedef void (*TASK_CALLBACK)( void *ctx, BOOL abort );
 
 struct task_header
 {
@@ -282,6 +282,7 @@ struct task_header
     TASK_CALLBACK callback;
     struct object_header *obj;
     volatile LONG refs;
+    volatile LONG completion_sent;
 };
 
 struct send_request
