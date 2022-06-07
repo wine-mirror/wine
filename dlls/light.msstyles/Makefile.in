@@ -8,11 +8,11 @@ SVG_SRCS = \
 	blue_button.svg \
 	blue_checkbox_13px.svg \
 	blue_checkbox_16px.svg \
-	blue_checkbox_19px.svg \
-	blue_checkbox_22px.svg \
-	blue_checkbox_25px.svg \
-	blue_checkbox_28px.svg \
-	blue_checkbox_31px.svg \
+	blue_checkbox_20px.svg \
+	blue_checkbox_26px.svg \
+	blue_checkbox_32px.svg \
+	blue_checkbox_40px.svg \
+	blue_checkbox_52px.svg \
 	blue_combobutton.svg \
 	blue_combobutton_glyph.svg \
 	blue_commandlink.svg \

@@ -162,7 +162,7 @@ BLUE_INI TEXTFILE
 "SizingType = TrueSize\r\n"
 "SizingMargins = 0, 0, 0, 0\r\n"
 "ContentMargins = 0, 0, 0, 0\r\n"
-"ImageCount = 12\r\n"
+"ImageCount = 20\r\n"
 "MirrorImage = False\r\n"
 "ImageSelectType = Dpi\r\n"
 "TrueSizeScalingType = Dpi\r\n"
@@ -170,18 +170,18 @@ BLUE_INI TEXTFILE
 "Transparent = True\r\n"
 "ImageFile1 = blue_checkbox_13px.bmp\r\n"
 "ImageFile2 = blue_checkbox_16px.bmp\r\n"
-"ImageFile3 = blue_checkbox_19px.bmp\r\n"
-"ImageFile4 = blue_checkbox_22px.bmp\r\n"
-"ImageFile5 = blue_checkbox_25px.bmp\r\n"
-"ImageFile6 = blue_checkbox_28px.bmp\r\n"
-"ImageFile7 = blue_checkbox_31px.bmp\r\n"
+"ImageFile3 = blue_checkbox_20px.bmp\r\n"
+"ImageFile4 = blue_checkbox_26px.bmp\r\n"
+"ImageFile5 = blue_checkbox_32px.bmp\r\n"
+"ImageFile6 = blue_checkbox_40px.bmp\r\n"
+"ImageFile7 = blue_checkbox_52px.bmp\r\n"
 "MinDpi1 = 96\r\n"
 "MinDpi2 = 120\r\n"
 "MinDpi3 = 144\r\n"
-"MinDpi4 = 168\r\n"
-"MinDpi5 = 192\r\n"
-"MinDpi6 = 216\r\n"
-"MinDpi7 = 240\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
 "TransitionDurations = 20, "
 "0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, "
 "100, 0, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, "
@@ -211,6 +211,12 @@ BLUE_INI TEXTFILE
 "TextColor = 189 189 189\r\n"
 
 "[Button.Checkbox(Mixeddisabled)]\r\n"
+"TextColor = 189 189 189\r\n"
+
+"[Button.Checkbox(ImplicitDisabled)]\r\n"
+"TextColor = 189 189 189\r\n"
+
+"[Button.Checkbox(ExcludedDisabled)]\r\n"
 "TextColor = 189 189 189\r\n"
 
 "[Button.Radiobutton]\r\n"
@@ -318,6 +324,43 @@ BLUE_INI TEXTFILE
 "MinDpi5 = 192\r\n"
 "MinDpi6 = 216\r\n"
 "MinDpi7 = 240\r\n"
+
+"; These *HCDisabled parts don't have images \r\n"
+"[Button.RadioButton_HCDisabled]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 8\r\n"
+"Transparent = True\r\n"
+"UniformSizing = True\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+
+"[Button.CheckBox_HCDisabled]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 20\r\n"
+"Transparent = True\r\n"
+"MirrorImage = False\r\n"
+"UniformSizing = True\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+
+"[Button.GroupBox_HCDisabled]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Tile\r\n"
+"Transparent = True\r\n"
+"BorderOnly = True\r\n"
+"SizingMargins = 5, 5, 5, 5\r\n"
+
+"[Button.PushButtonDropDown(Normal)]\r\n"
+"TextColor = 0 0 0\r\n"
+
+"[Button.PushButtonDropDown(Disabled)]\r\n"
+"TextColor = 255 255 255\r\n"
 
 "\r\n; ComboBox\r\n"
 "[ComboBox]\r\n"
@@ -1331,20 +1374,20 @@ BLUE_CHECKBOX_13PX_BMP BITMAP "blue_checkbox_13px.bmp"
 /* @makedep: blue_checkbox_16px.bmp */
 BLUE_CHECKBOX_16PX_BMP BITMAP "blue_checkbox_16px.bmp"
 
-/* @makedep: blue_checkbox_19px.bmp */
-BLUE_CHECKBOX_19PX_BMP BITMAP "blue_checkbox_19px.bmp"
+/* @makedep: blue_checkbox_20px.bmp */
+BLUE_CHECKBOX_20PX_BMP BITMAP "blue_checkbox_20px.bmp"
 
-/* @makedep: blue_checkbox_22px.bmp */
-BLUE_CHECKBOX_22PX_BMP BITMAP "blue_checkbox_22px.bmp"
+/* @makedep: blue_checkbox_26px.bmp */
+BLUE_CHECKBOX_26PX_BMP BITMAP "blue_checkbox_26px.bmp"
 
-/* @makedep: blue_checkbox_25px.bmp */
-BLUE_CHECKBOX_25PX_BMP BITMAP "blue_checkbox_25px.bmp"
+/* @makedep: blue_checkbox_32px.bmp */
+BLUE_CHECKBOX_32PX_BMP BITMAP "blue_checkbox_32px.bmp"
 
-/* @makedep: blue_checkbox_28px.bmp */
-BLUE_CHECKBOX_28PX_BMP BITMAP "blue_checkbox_28px.bmp"
+/* @makedep: blue_checkbox_40px.bmp */
+BLUE_CHECKBOX_40PX_BMP BITMAP "blue_checkbox_40px.bmp"
 
-/* @makedep: blue_checkbox_31px.bmp */
-BLUE_CHECKBOX_31PX_BMP BITMAP "blue_checkbox_31px.bmp"
+/* @makedep: blue_checkbox_52px.bmp */
+BLUE_CHECKBOX_52PX_BMP BITMAP "blue_checkbox_52px.bmp"
 
 /* @makedep: blue_radiobutton_13px.bmp */
 BLUE_RADIOBUTTON_13PX_BMP BITMAP "blue_radiobutton_13px.bmp"
