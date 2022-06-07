@@ -647,6 +647,7 @@ static BOOL set_server_info( HWND hwnd, INT offset, LONG_PTR newval, UINT size )
 static ULONG_PTR set_class_long( HWND hwnd, INT offset, LONG_PTR newval, UINT size, BOOL ansi )
 {
     ULONG_PTR retval = 0;
+    HICON small_icon = 0;
     CLASS *class;
 
     if (!(class = get_class_ptr( hwnd, TRUE ))) return 0;
@@ -696,31 +697,62 @@ static ULONG_PTR set_class_long( HWND hwnd, INT offset, LONG_PTR newval, UINT si
         break;
     case GCLP_HICON:
         retval = (ULONG_PTR)class->hIcon;
-        if (class->hIconSmIntern)
-        {
-            NtUserDestroyCursor( class->hIconSmIntern, 0 );
-            class->hIconSmIntern = NULL;
-        }
+        if (retval == newval) break;
         if (newval && !class->hIconSm)
-            class->hIconSmIntern = CopyImage( (HICON)newval, IMAGE_ICON,
-                                              get_system_metrics( SM_CXSMICON ),
-                                              get_system_metrics( SM_CYSMICON ),
-                                              LR_COPYFROMRESOURCE );
+        {
+            release_class_ptr( class );
+
+            small_icon = CopyImage( (HICON)newval, IMAGE_ICON,
+                                    get_system_metrics( SM_CXSMICON ),
+                                    get_system_metrics( SM_CYSMICON ),
+                                    LR_COPYFROMRESOURCE );
+
+            if (!(class = get_class_ptr( hwnd, TRUE )))
+            {
+                NtUserDestroyCursor( small_icon, 0 );
+                return 0;
+            }
+            if (retval != HandleToUlong( class->hIcon ) || class->hIconSm)
+            {
+                /* someone beat us, restart */
+                release_class_ptr( class );
+                NtUserDestroyCursor( small_icon, 0 );
+                return set_class_long( hwnd, offset, newval, size, ansi );
+            }
+        }
+        if (class->hIconSmIntern) NtUserDestroyCursor( class->hIconSmIntern, 0 );
         class->hIcon = (HICON)newval;
+        class->hIconSmIntern = small_icon;
         break;
     case GCLP_HICONSM:
         retval = (ULONG_PTR)class->hIconSm;
+        if (retval == newval) break;
         if (retval && !newval && class->hIcon)
-            class->hIconSmIntern = CopyImage( class->hIcon, IMAGE_ICON,
-                                              get_system_metrics( SM_CXSMICON ),
-                                              get_system_metrics( SM_CYSMICON ),
-                                              LR_COPYFROMRESOURCE );
-        else if (newval && class->hIconSmIntern)
         {
-            NtUserDestroyCursor( class->hIconSmIntern, 0 );
-            class->hIconSmIntern = NULL;
+            HICON icon = class->hIcon;
+            release_class_ptr( class );
+
+            small_icon = CopyImage( icon, IMAGE_ICON,
+                                    get_system_metrics( SM_CXSMICON ),
+                                    get_system_metrics( SM_CYSMICON ),
+                                    LR_COPYFROMRESOURCE );
+
+            if (!(class = get_class_ptr( hwnd, TRUE )))
+            {
+                NtUserDestroyCursor( small_icon, 0 );
+                return 0;
+            }
+            if (class->hIcon != icon || !class->hIconSm)
+            {
+                /* someone beat us, restart */
+                release_class_ptr( class );
+                NtUserDestroyCursor( small_icon, 0 );
+                return set_class_long( hwnd, offset, newval, size, ansi );
+            }
         }
+        if (class->hIconSmIntern) NtUserDestroyCursor( class->hIconSmIntern, 0 );
         class->hIconSm = (HICON)newval;
+        class->hIconSmIntern = small_icon;
         break;
     case GCL_STYLE:
         if (!set_server_info( hwnd, offset, newval, size )) break;
