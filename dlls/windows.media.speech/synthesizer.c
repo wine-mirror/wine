@@ -148,6 +148,140 @@ static struct voice_information_vector all_voices =
 
 /*
  *
+ * ISpeechSynthesisStream
+ *
+ */
+
+struct synthesis_stream
+{
+    ISpeechSynthesisStream ISpeechSynthesisStream_iface;
+    LONG ref;
+
+    IVector_IMediaMarker *markers;
+};
+
+static inline struct synthesis_stream *impl_from_ISpeechSynthesisStream( ISpeechSynthesisStream *iface )
+{
+    return CONTAINING_RECORD(iface, struct synthesis_stream, ISpeechSynthesisStream_iface);
+}
+
+HRESULT WINAPI synthesis_stream_QueryInterface( ISpeechSynthesisStream *iface, REFIID iid, void **out )
+{
+    struct synthesis_stream *impl = impl_from_ISpeechSynthesisStream(iface);
+
+    TRACE("iface %p, iid %s, out %p stub!\n", iface, debugstr_guid(iid), out);
+
+    if (IsEqualGUID(iid, &IID_IUnknown)  ||
+        IsEqualGUID(iid, &IID_IInspectable) ||
+        IsEqualGUID(iid, &IID_IAgileObject) ||
+        IsEqualGUID(iid, &IID_ISpeechSynthesisStream))
+    {
+        IInspectable_AddRef((*out = &impl->ISpeechSynthesisStream_iface));
+        return S_OK;
+    }
+
+    FIXME("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(iid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+ULONG WINAPI synthesis_stream_AddRef( ISpeechSynthesisStream *iface )
+{
+    struct synthesis_stream *impl = impl_from_ISpeechSynthesisStream(iface);
+    ULONG ref = InterlockedIncrement(&impl->ref);
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+    return ref;
+}
+
+ULONG WINAPI synthesis_stream_Release( ISpeechSynthesisStream *iface )
+{
+    struct synthesis_stream *impl = impl_from_ISpeechSynthesisStream(iface);
+    ULONG ref = InterlockedDecrement(&impl->ref);
+
+    TRACE("iface %p, ref %lu.\n", iface, ref);
+
+    if (!ref)
+        free(impl);
+
+    return ref;
+}
+
+HRESULT WINAPI synthesis_stream_GetIids( ISpeechSynthesisStream *iface, ULONG *iid_count, IID **iids )
+{
+    FIXME("iface %p, iid_count %p, iids %p stub.\n", iface, iid_count, iids);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI synthesis_stream_GetRuntimeClassName( ISpeechSynthesisStream *iface, HSTRING *class_name )
+{
+    FIXME("iface %p, class_name %p stub.\n", iface, class_name);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI synthesis_stream_GetTrustLevel( ISpeechSynthesisStream *iface, TrustLevel *trust_level )
+{
+    FIXME("iface %p, trust_level %p stub.\n", iface, trust_level);
+    return E_NOTIMPL;
+}
+
+HRESULT WINAPI synthesis_stream_get_Markers( ISpeechSynthesisStream *iface, IVectorView_IMediaMarker **value )
+{
+    struct synthesis_stream *impl = impl_from_ISpeechSynthesisStream(iface);
+    FIXME("iface %p, value %p stub!\n", iface, value);
+    return IVector_IMediaMarker_GetView(impl->markers, value);
+}
+
+static const struct ISpeechSynthesisStreamVtbl synthesis_stream_vtbl =
+{
+    /* IUnknown methods */
+    synthesis_stream_QueryInterface,
+    synthesis_stream_AddRef,
+    synthesis_stream_Release,
+    /* IInspectable methods */
+    synthesis_stream_GetIids,
+    synthesis_stream_GetRuntimeClassName,
+    synthesis_stream_GetTrustLevel,
+    /* ISpeechSynthesisStream methods */
+    synthesis_stream_get_Markers
+};
+
+
+static HRESULT synthesis_stream_create( ISpeechSynthesisStream **out )
+{
+    struct synthesis_stream *impl;
+    struct vector_iids markers_iids =
+    {
+        .iterable = &IID_IIterable_IMediaMarker,
+        .iterator = &IID_IIterator_IMediaMarker,
+        .vector = &IID_IVector_IMediaMarker,
+        .view = &IID_IVectorView_IMediaMarker,
+    };
+    HRESULT hr;
+
+    TRACE("out %p.\n", out);
+
+    if (!(impl = calloc(1, sizeof(*impl))))
+    {
+        *out = NULL;
+        return E_OUTOFMEMORY;
+    }
+
+    impl->ISpeechSynthesisStream_iface.lpVtbl = &synthesis_stream_vtbl;
+    impl->ref = 1;
+    if (FAILED(hr = vector_inspectable_create(&markers_iids, (IVector_IInspectable**)&impl->markers)))
+        goto error;
+
+    TRACE("created ISpeechSynthesisStream %p.\n", impl);
+    *out = &impl->ISpeechSynthesisStream_iface;
+    return S_OK;
+
+error:
+    free(impl);
+    return hr;
+}
+
+/*
+ *
  * SpeechSynthesizer runtimeclass
  *
  */
@@ -243,26 +377,26 @@ static HRESULT WINAPI synthesizer_GetTrustLevel( ISpeechSynthesizer *iface, Trus
 
 static HRESULT CALLBACK text_to_stream_operation( IInspectable *invoker, IInspectable **result )
 {
-    return S_OK;
+    return synthesis_stream_create((ISpeechSynthesisStream **)result);
 }
 
 static HRESULT WINAPI synthesizer_SynthesizeTextToStreamAsync( ISpeechSynthesizer *iface, HSTRING text,
                                                                IAsyncOperation_SpeechSynthesisStream **operation )
 {
-    FIXME("iface %p, text %p, operation %p stub.\n", iface, text, operation);
+    TRACE("iface %p, text %p, operation %p.\n", iface, text, operation);
     return async_operation_inspectable_create(&IID_IAsyncOperation_SpeechSynthesisStream, NULL,
                                               text_to_stream_operation, (IAsyncOperation_IInspectable **)operation);
 }
 
 static HRESULT CALLBACK ssml_to_stream_operation( IInspectable *invoker, IInspectable **result )
 {
-    return S_OK;
+    return synthesis_stream_create((ISpeechSynthesisStream **)result);
 }
 
 static HRESULT WINAPI synthesizer_SynthesizeSsmlToStreamAsync( ISpeechSynthesizer *iface, HSTRING ssml,
                                                                IAsyncOperation_SpeechSynthesisStream **operation )
 {
-    FIXME("iface %p, text %p, operation %p stub.\n", iface, ssml, operation);
+    TRACE("iface %p, ssml %p, operation %p.\n", iface, ssml, operation);
     return async_operation_inspectable_create(&IID_IAsyncOperation_SpeechSynthesisStream, NULL,
                                               ssml_to_stream_operation, (IAsyncOperation_IInspectable **)operation);
 }

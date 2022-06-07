@@ -947,22 +947,19 @@ static void test_SpeechSynthesizer(void)
     check_interface(operation_ss_stream, &IID_IAgileObject, TRUE);
 
     hr = IAsyncOperation_SpeechSynthesisStream_GetResults(operation_ss_stream, &ss_stream);
-    todo_wine ok(hr == S_OK, "IAsyncOperation_SpeechSynthesisStream_GetResults failed, hr %#lx\n", hr);
+    ok(hr == S_OK, "IAsyncOperation_SpeechSynthesisStream_GetResults failed, hr %#lx\n", hr);
 
-    if (hr == S_OK)
-    {
-        hr = ISpeechSynthesisStream_get_Markers(ss_stream, &media_markers);
-        todo_wine ok(hr == S_OK, "ISpeechSynthesisStream_get_Markers failed, hr %#lx\n", hr);
-        check_interface(media_markers, &IID_IVectorView_IMediaMarker, TRUE);
-        check_interface(media_markers, &IID_IIterable_IMediaMarker, TRUE);
-        check_interface(media_markers, &IID_IAgileObject, TRUE);
+    hr = ISpeechSynthesisStream_get_Markers(ss_stream, &media_markers);
+    ok(hr == S_OK, "ISpeechSynthesisStream_get_Markers failed, hr %#lx\n", hr);
+    check_interface(media_markers, &IID_IVectorView_IMediaMarker, TRUE);
+    check_interface(media_markers, &IID_IIterable_IMediaMarker, TRUE);
+    check_interface(media_markers, &IID_IAgileObject, TRUE);
 
-        ref = IVectorView_IMediaMarker_Release(media_markers);
-        todo_wine ok(ref == 0, "Got unexpected ref %lu.\n", ref);
+    ref = IVectorView_IMediaMarker_Release(media_markers);
+    ok(ref == 0, "Got unexpected ref %lu.\n", ref);
 
-        ref = ISpeechSynthesisStream_Release(ss_stream);
-        todo_wine ok(ref == 0, "Got unexpected ref %lu.\n", ref);
-    }
+    ref = ISpeechSynthesisStream_Release(ss_stream);
+    ok(ref == 0, "Got unexpected ref %lu.\n", ref);
 
     IAsyncOperation_SpeechSynthesisStream_Release(operation_ss_stream);
 
@@ -981,16 +978,12 @@ static void test_SpeechSynthesizer(void)
     check_interface(operation_ss_stream, &IID_IAgileObject, TRUE);
 
     hr = IAsyncOperation_SpeechSynthesisStream_GetResults(operation_ss_stream, &ss_stream);
-    todo_wine ok(hr == S_OK, "IAsyncOperation_SpeechSynthesisStream_GetResults failed, hr %#lx\n", hr);
+    ok(hr == S_OK, "IAsyncOperation_SpeechSynthesisStream_GetResults failed, hr %#lx\n", hr);
+    check_interface(ss_stream, &IID_ISpeechSynthesisStream, TRUE);
+    check_interface(ss_stream, &IID_IAgileObject, TRUE);
 
-    if (hr == S_OK)
-    {
-        check_interface(ss_stream, &IID_ISpeechSynthesisStream, TRUE);
-        check_interface(ss_stream, &IID_IAgileObject, TRUE);
-
-        ref = ISpeechSynthesisStream_Release(ss_stream);
-        ok(ref == 0, "Got unexpected ref %lu.\n", ref);
-    }
+    ref = ISpeechSynthesisStream_Release(ss_stream);
+    ok(ref == 0, "Got unexpected ref %lu.\n", ref);
 
     IAsyncOperation_SpeechSynthesisStream_Release(operation_ss_stream);
 
