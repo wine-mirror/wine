@@ -42,7 +42,9 @@ static const char textA[] =
 "{ \n"
 "    ForceRemove eebf73c4-50fd-478f-bbcf-db212221227a \n"
 "    { \n"
-"        val 'string' = s 'string' \n"
+"        val 'str1' = s 'string' \n"
+"        val 'str2' = s 'str\\\"ing' \n"
+"        val 'str3' = s 'str''ing' \n"
 "        val 'dword_quoted_dec' = d '1' \n"
 "        val 'dword_unquoted_dec' = d 1 \n"
 "        val 'dword_quoted_hex' = d '0xA' \n"
@@ -81,6 +83,7 @@ static void test_registrar(void)
         LONG lret;
         HKEY key;
         BYTE bytes[4];
+        char buffer[16];
 
         MultiByteToWideChar(CP_ACP, 0, textA, -1, textW, count);
         hr = IRegistrar_StringRegister(registrar, textW);
@@ -93,6 +96,21 @@ static void test_registrar(void)
 
         lret = RegOpenKeyA(HKEY_CURRENT_USER, "eebf73c4-50fd-478f-bbcf-db212221227a", &key);
         ok(lret == ERROR_SUCCESS, "error %ld opening registry key\n", lret);
+
+        size = sizeof(buffer);
+        lret = RegQueryValueExA(key, "str1", NULL, NULL, (BYTE*)buffer, &size);
+        ok(lret == ERROR_SUCCESS, "RegQueryValueExA failed, error %ld\n", lret);
+        ok(!strcmp( buffer, "string"), "wrong data %s\n", debugstr_a(buffer));
+
+        size = sizeof(buffer);
+        lret = RegQueryValueExA(key, "str2", NULL, NULL, (BYTE*)buffer, &size);
+        ok(lret == ERROR_SUCCESS, "RegQueryValueExA failed, error %ld\n", lret);
+        ok(!strcmp( buffer, "str\\\"ing"), "wrong data %s\n", debugstr_a(buffer));
+
+        size = sizeof(buffer);
+        lret = RegQueryValueExA(key, "str3", NULL, NULL, (BYTE*)buffer, &size);
+        ok(lret == ERROR_SUCCESS, "RegQueryValueExA failed, error %ld\n", lret);
+        ok(!strcmp( buffer, "str'ing"), "wrong data %s\n", debugstr_a(buffer));
 
         size = sizeof(dword);
         lret = RegQueryValueExA(key, "dword_unquoted_hex", NULL, NULL, (BYTE*)&dword, &size);
