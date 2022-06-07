@@ -11848,6 +11848,7 @@ static void test_WSAGetOverlappedResult(void)
     NTSTATUS status;
     unsigned int i;
     SOCKET s;
+    HANDLE h;
     BOOL ret;
 
     static const NTSTATUS ranges[][2] =
@@ -11862,7 +11863,19 @@ static void test_WSAGetOverlappedResult(void)
         {0xd0070000, 0xd0080000},
     };
 
+    WSASetLastError(0xdeadbeef);
+    ret = WSAGetOverlappedResult(0xdeadbeef, &overlapped, &size, FALSE, &flags);
+    ok(!ret, "got %d.\n", ret);
+    ok(WSAGetLastError() == WSAENOTSOCK, "got %u.\n", WSAGetLastError());
+
     s = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+
+    ret = DuplicateHandle(GetCurrentProcess(), (HANDLE)s, GetCurrentProcess(), &h, 0, FALSE, DUPLICATE_SAME_ACCESS);
+    ok(ret, "got %d.\n", ret);
+    ret = WSAGetOverlappedResult((SOCKET)h, &overlapped, &size, FALSE, &flags);
+    ok(!ret, "got %d.\n", ret);
+    ok(WSAGetLastError() == WSAENOTSOCK, "got %u.\n", WSAGetLastError());
+    CloseHandle(h);
 
     for (i = 0; i < ARRAY_SIZE(ranges); ++i)
     {
