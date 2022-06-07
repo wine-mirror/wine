@@ -2509,11 +2509,13 @@ static void test_image_brush(BOOL d3d11)
     D2D1_BITMAP_PROPERTIES bitmap_desc;
     D2D1_BRUSH_PROPERTIES brush_desc;
     ID2D1Image *image, *tmp_image;
+    D2D1_RECT_F dst_rect;
     struct d2d1_test_context ctx;
     D2D1_EXTEND_MODE extend_mode;
     D2D1_MATRIX_3X2_F matrix;
     ID2D1ImageBrush *brush;
     ID2D1Bitmap *bitmap;
+    D2D1_COLOR_F color;
     D2D1_SIZE_U size;
     D2D1_RECT_F rect;
     ULONG refcount;
@@ -2582,6 +2584,50 @@ static void test_image_brush(BOOL d3d11)
     ok(extend_mode == D2D1_EXTEND_MODE_MIRROR, "Unexpected extend mode %u.\n", extend_mode);
     interp_mode = ID2D1ImageBrush_GetInterpolationMode(brush);
     ok(interp_mode == D2D1_INTERPOLATION_MODE_LINEAR, "Unexpected interpolation mode %u.\n", interp_mode);
+
+    ID2D1ImageBrush_Release(brush);
+
+    /* FillRectangle */
+    set_rect(&image_brush_desc.sourceRectangle, 0.0f, 0.0f, 4.0f, 4.0f);
+    hr = ID2D1DeviceContext_CreateImageBrush(device_context, image, &image_brush_desc, NULL, &brush);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID2D1ImageBrush_SetInterpolationMode(brush, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
+
+    ID2D1RenderTarget_BeginDraw(ctx.rt);
+
+    set_color(&color, 0.0f, 0.0f, 1.0f, 1.0f);
+    ID2D1RenderTarget_Clear(ctx.rt, &color);
+
+    set_rect(&dst_rect, 40.0f, 120.0f, 120.0f, 360.0f);
+    ID2D1RenderTarget_FillRectangle(ctx.rt, &dst_rect, (ID2D1Brush *)brush);
+
+    hr = ID2D1RenderTarget_EndDraw(ctx.rt, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    match = compare_surface(&ctx, "89917481db82e6d683a75f068d3984fe2703cce5");
+    ok(match, "Surface does not match.\n");
+
+    ID2D1ImageBrush_Release(brush);
+
+    set_rect(&image_brush_desc.sourceRectangle, 0.0f, 0.0f, 1.0f, 1.0f);
+    hr = ID2D1DeviceContext_CreateImageBrush(device_context, image, &image_brush_desc, NULL, &brush);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    ID2D1ImageBrush_SetInterpolationMode(brush, D2D1_INTERPOLATION_MODE_NEAREST_NEIGHBOR);
+
+    ID2D1RenderTarget_BeginDraw(ctx.rt);
+
+    set_color(&color, 0.0f, 0.0f, 1.0f, 1.0f);
+    ID2D1RenderTarget_Clear(ctx.rt, &color);
+
+    set_rect(&dst_rect, 40.0f, 120.0f, 120.0f, 360.0f);
+    ID2D1RenderTarget_FillRectangle(ctx.rt, &dst_rect, (ID2D1Brush *)brush);
+
+    hr = ID2D1RenderTarget_EndDraw(ctx.rt, NULL, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    match = compare_surface(&ctx, "23544adf9695a51428c194a1cffd531be3416e65");
+    todo_wine
+    ok(match, "Surface does not match.\n");
 
     ID2D1ImageBrush_Release(brush);
 
