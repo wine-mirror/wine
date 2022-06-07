@@ -156,6 +156,8 @@ struct session
     ISpeechContinuousRecognitionSession ISpeechContinuousRecognitionSession_iface;
     LONG ref;
 
+    IVector_ISpeechRecognitionConstraint *constraints;
+
     struct list completed_handlers;
     struct list result_handlers;
 };
@@ -208,6 +210,7 @@ static ULONG WINAPI session_Release( ISpeechContinuousRecognitionSession *iface 
     {
         typed_event_handlers_clear(&impl->completed_handlers);
         typed_event_handlers_clear(&impl->result_handlers);
+        IVector_ISpeechRecognitionConstraint_Release(impl->constraints);
         free(impl);
     }
 
@@ -360,7 +363,6 @@ struct recognizer
     LONG ref;
 
     ISpeechContinuousRecognitionSession *session;
-    IVector_ISpeechRecognitionConstraint *constraints;
 };
 
 /*
@@ -424,7 +426,6 @@ static ULONG WINAPI recognizer_Release( ISpeechRecognizer *iface )
     if (!ref)
     {
         ISpeechContinuousRecognitionSession_Release(impl->session);
-        IVector_ISpeechRecognitionConstraint_Release(impl->constraints);
         free(impl);
     }
 
@@ -452,8 +453,11 @@ static HRESULT WINAPI recognizer_GetTrustLevel( ISpeechRecognizer *iface, TrustL
 static HRESULT WINAPI recognizer_get_Constraints( ISpeechRecognizer *iface, IVector_ISpeechRecognitionConstraint **vector )
 {
     struct recognizer *impl = impl_from_ISpeechRecognizer(iface);
+    struct session *session = impl_from_ISpeechContinuousRecognitionSession(impl->session);
+
     TRACE("iface %p, operation %p.\n", iface, vector);
-    IVector_ISpeechRecognitionConstraint_AddRef((*vector = impl->constraints));
+
+    IVector_ISpeechRecognitionConstraint_AddRef((*vector = session->constraints));
     return S_OK;
 }
 
@@ -797,18 +801,22 @@ static HRESULT WINAPI recognizer_factory_Create( ISpeechRecognizerFactory *iface
     if (language)
         FIXME("language parameter unused. Stub!\n");
 
+    /* Init ISpeechContinuousRecognitionSession */
     session->ISpeechContinuousRecognitionSession_iface.lpVtbl = &session_vtbl;
     session->ref = 1;
+
     list_init(&session->completed_handlers);
     list_init(&session->result_handlers);
 
+    if (FAILED(hr = vector_inspectable_create(&constraints_iids, (IVector_IInspectable**)&session->constraints)))
+        goto error;
+
+    /* Init ISpeechRecognizer */
     impl->ISpeechRecognizer_iface.lpVtbl = &speech_recognizer_vtbl;
     impl->IClosable_iface.lpVtbl = &closable_vtbl;
     impl->ISpeechRecognizer2_iface.lpVtbl = &speech_recognizer2_vtbl;
     impl->session = &session->ISpeechContinuousRecognitionSession_iface;
     impl->ref = 1;
-    if (FAILED(hr = vector_inspectable_create(&constraints_iids, (IVector_IInspectable**)&impl->constraints)))
-        goto error;
 
     TRACE("created SpeechRecognizer %p.\n", impl);
 
@@ -816,6 +824,7 @@ static HRESULT WINAPI recognizer_factory_Create( ISpeechRecognizerFactory *iface
     return S_OK;
 
 error:
+    if (session->constraints) IVector_ISpeechRecognitionConstraint_Release(session->constraints);
     free(session);
     free(impl);
 
