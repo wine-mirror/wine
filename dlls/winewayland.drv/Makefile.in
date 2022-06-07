@@ -1,6 +1,8 @@
 MODULE = winewayland.drv
+UNIXLIB = winewayland.so
 
 C_SRCS = \
-	dllmain.c
+	dllmain.c \
+	waylanddrv_main.c
 
 RC_SRCS = version.rc

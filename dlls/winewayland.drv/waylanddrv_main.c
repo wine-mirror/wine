@@ -1,7 +1,7 @@
 /*
- * Wayland driver DLL definitions
+ * WAYLANDDRV initialization code
  *
- * Copyright 2022 Alexandros Frantzis for Collabora Ltd
+ * Copyright 2020 Alexandre Frantzis for Collabora Ltd
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -18,15 +18,36 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
-#ifndef __WINE_WAYLANDDRV_DLL_H
-#define __WINE_WAYLANDDRV_DLL_H
+#if 0
+#pragma makedep unix
+#endif
 
-#include <stdarg.h>
-#include "windef.h"
-#include "winbase.h"
+#include "config.h"
 
-#include "unixlib.h"
+#include "ntstatus.h"
+#define WIN32_NO_STATUS
 
-#define WAYLANDDRV_UNIX_CALL(func, params) WINE_UNIX_CALL(waylanddrv_unix_func_ ## func, params)
+#include "waylanddrv.h"
 
-#endif /* __WINE_WAYLANDDRV_DLL_H */
+static NTSTATUS waylanddrv_unix_init(void *arg)
+{
+    return 0;
+}
+
+const unixlib_entry_t __wine_unix_call_funcs[] =
+{
+    waylanddrv_unix_init,
+};
+
+C_ASSERT(ARRAYSIZE(__wine_unix_call_funcs) == waylanddrv_unix_func_count);
+
+#ifdef _WIN64
+
+const unixlib_entry_t __wine_unix_call_wow64_funcs[] =
+{
+    waylanddrv_unix_init,
+};
+
+C_ASSERT(ARRAYSIZE(__wine_unix_call_wow64_funcs) == waylanddrv_unix_func_count);
+
+#endif /* _WIN64 */
