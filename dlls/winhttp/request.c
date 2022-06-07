@@ -4145,13 +4145,18 @@ static void task_socket_close( void *ctx, BOOL abort )
     struct socket *socket = (struct socket *)s->task_hdr.obj;
     DWORD ret;
 
-    if (abort) return;
+    if (abort)
+    {
+        socket_close_complete( socket, ERROR_WINHTTP_OPERATION_CANCELLED );
+        return;
+    }
 
     TRACE("running %p\n", ctx);
 
     ret = socket_close( socket );
     receive_io_complete( socket );
-    socket_close_complete( socket, ret );
+    if (task_needs_completion( &s->task_hdr ))
+        socket_close_complete( socket, ret );
 }
 
 DWORD WINAPI WinHttpWebSocketClose( HINTERNET hsocket, USHORT status, void *reason, DWORD len )
