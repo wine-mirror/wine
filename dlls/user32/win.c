@@ -54,7 +54,7 @@ void *get_user_handle_ptr( HANDLE handle, unsigned int type )
 void release_user_handle_ptr( void *ptr )
 {
     assert( ptr && ptr != OBJ_OTHER_PROCESS );
-    USER_Unlock();
+    NtUserCallOneParam( 1, NtUserLock );
 }
 
 

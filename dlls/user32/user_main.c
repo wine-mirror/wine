@@ -43,24 +43,6 @@ static DWORD exiting_thread_id;
 extern void WDML_NotifyThreadDetach(void);
 
 /***********************************************************************
- *           USER_Lock
- */
-void USER_Lock(void)
-{
-    NtUserCallOneParam( 0, NtUserLock );
-}
-
-
-/***********************************************************************
- *           USER_Unlock
- */
-void USER_Unlock(void)
-{
-    NtUserCallOneParam( 1, NtUserLock );
-}
-
-
-/***********************************************************************
  *           USER_CheckNotLock
  *
  * Make sure that we don't hold the user lock.
