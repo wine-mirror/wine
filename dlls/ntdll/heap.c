@@ -105,10 +105,11 @@ C_ASSERT( sizeof(struct entry) == 2 * ALIGNMENT );
 
 typedef struct
 {
+    SIZE_T __pad[sizeof(SIZE_T) / sizeof(DWORD)];
     struct list           entry;      /* entry in heap large blocks list */
     SIZE_T                data_size;  /* size of user data */
     SIZE_T                block_size; /* total size of virtual memory block */
-    DWORD                 pad[2];     /* padding to ensure 16-byte alignment of data */
+    void                 *user_value;
     DWORD                 size;       /* fields for compatibility with normal arenas */
     DWORD                 magic;      /* these must remain at the end of the structure */
 } ARENA_LARGE;
@@ -362,6 +363,12 @@ static inline void mark_block_tail( struct block *block, DWORD flags )
         memset( tail, ARENA_TAIL_FILLER, ALIGNMENT );
     }
     valgrind_make_noaccess( tail, ALIGNMENT );
+    if (flags & HEAP_ADD_USER_INFO)
+    {
+        if (flags & HEAP_TAIL_CHECKING_ENABLED || RUNNING_ON_VALGRIND) tail += ALIGNMENT;
+        valgrind_make_writable( tail + sizeof(void *), sizeof(void *) );
+        memset( tail + sizeof(void *), 0, sizeof(void *) );
+    }
 }
 
 /* initialize contents of a newly created block of memory */
@@ -2001,10 +2008,31 @@ BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE heap, ULONG flags, void *ptr, void **u
 /***********************************************************************
  *           RtlSetUserValueHeap    (NTDLL.@)
  */
-BOOLEAN WINAPI RtlSetUserValueHeap( HANDLE heap, ULONG flags, void *ptr, void *user_value )
+BOOLEAN WINAPI RtlSetUserValueHeap( HANDLE handle, ULONG flags, void *ptr, void *user_value )
 {
-    FIXME( "heap %p, flags %#x, ptr %p, user_value %p stub!\n", heap, flags, ptr, user_value );
-    return FALSE;
+    ARENA_LARGE *large = (ARENA_LARGE *)ptr - 1;
+    struct block *block;
+    BOOLEAN ret = TRUE;
+    SUBHEAP *subheap;
+    HEAP *heap;
+    char *tmp;
+
+    TRACE( "handle %p, flags %#x, ptr %p, user_value %p.\n", handle, flags, ptr, user_value );
+
+    if (!(heap = HEAP_GetPtr( handle ))) return TRUE;
+
+    heap_lock( heap, flags );
+    if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap ))) ret = FALSE;
+    else if (!subheap) large->user_value = user_value;
+    else
+    {
+        tmp = (char *)block + block_get_size( block ) - block->tail_size + sizeof(void *);
+        if ((heap_get_flags( heap, flags ) & HEAP_TAIL_CHECKING_ENABLED) || RUNNING_ON_VALGRIND) tmp += ALIGNMENT;
+        *(void **)tmp = user_value;
+    }
+    heap_unlock( heap, flags );
+
+    return ret;
 }
 
 /***********************************************************************
