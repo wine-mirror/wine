@@ -100,6 +100,16 @@ struct hook_info
     WCHAR module[MAX_PATH];
 };
 
+static CRITICAL_SECTION api_hook_cs;
+static CRITICAL_SECTION_DEBUG critsect_debug =
+{
+    0, 0, &api_hook_cs,
+    { &critsect_debug.ProcessLocksList, &critsect_debug.ProcessLocksList },
+    0, 0, { (DWORD_PTR)(__FILE__ ": api_hook_cs") }
+};
+static CRITICAL_SECTION api_hook_cs = { &critsect_debug, -1, 0, 0, 0, 0 };
+
+
 #define WH_WINEVENT (WH_MAXHOOK+1)
 
 static const char * const hook_names[WH_WINEVENT - WH_MINHOOK + 1] =
@@ -487,12 +497,12 @@ BOOL WINAPI RegisterUserApiHook(const struct user_api_hook *new_hook, struct use
     if (!new_hook)
         return FALSE;
 
-    USER_Lock();
+    EnterCriticalSection( &api_hook_cs );
     hooked_user_api = *new_hook;
     user_api = &hooked_user_api;
     if (old_hook)
         *old_hook = original_user_api;
-    USER_Unlock();
+    LeaveCriticalSection( &api_hook_cs );
     return TRUE;
 }
 
