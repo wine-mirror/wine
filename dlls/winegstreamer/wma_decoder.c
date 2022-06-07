@@ -534,18 +534,18 @@ static HRESULT WINAPI transform_ProcessInput(IMFTransform *iface, DWORD id, IMFS
     if (FAILED(hr = IMFTransform_GetInputStreamInfo(iface, 0, &info)))
         return hr;
 
-    if (FAILED(hr = mf_create_wg_sample(sample, &wg_sample)))
+    if (FAILED(hr = wg_sample_create_mf(sample, &wg_sample)))
         return hr;
 
     /* WMA transform uses fixed size input samples and ignores samples with invalid sizes */
     if (wg_sample->size % info.cbSize)
     {
-        mf_destroy_wg_sample(wg_sample);
+        wg_sample_release(wg_sample);
         return S_OK;
     }
 
     hr = wg_transform_push_mf(decoder->wg_transform, wg_sample);
-    mf_destroy_wg_sample(wg_sample);
+    wg_sample_release(wg_sample);
     return hr;
 }
 
@@ -576,13 +576,13 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
         return MF_E_TRANSFORM_NEED_MORE_INPUT;
     }
 
-    if (FAILED(hr = mf_create_wg_sample(samples[0].pSample, &wg_sample)))
+    if (FAILED(hr = wg_sample_create_mf(samples[0].pSample, &wg_sample)))
         return hr;
 
     wg_sample->size = 0;
     if (wg_sample->max_size < info.cbSize)
     {
-        mf_destroy_wg_sample(wg_sample);
+        wg_sample_release(wg_sample);
         return MF_E_BUFFERTOOSMALL;
     }
 
@@ -592,7 +592,7 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
             samples[0].dwStatus |= MFT_OUTPUT_DATA_BUFFER_INCOMPLETE;
     }
 
-    mf_destroy_wg_sample(wg_sample);
+    wg_sample_release(wg_sample);
 
     if (hr == MF_E_TRANSFORM_STREAM_CHANGE)
     {

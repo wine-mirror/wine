@@ -540,11 +540,11 @@ static HRESULT WINAPI transform_ProcessInput(IMFTransform *iface, DWORD id, IMFS
     if (!decoder->wg_transform)
         return MF_E_TRANSFORM_TYPE_NOT_SET;
 
-    if (FAILED(hr = mf_create_wg_sample(sample, &wg_sample)))
+    if (FAILED(hr = wg_sample_create_mf(sample, &wg_sample)))
         return hr;
 
     hr = wg_transform_push_mf(decoder->wg_transform, wg_sample);
-    mf_destroy_wg_sample(wg_sample);
+    wg_sample_release(wg_sample);
     return hr;
 }
 
@@ -573,17 +573,17 @@ static HRESULT WINAPI transform_ProcessOutput(IMFTransform *iface, DWORD flags, 
     samples[0].dwStatus = 0;
     if (!samples[0].pSample) return E_INVALIDARG;
 
-    if (FAILED(hr = mf_create_wg_sample(samples[0].pSample, &wg_sample)))
+    if (FAILED(hr = wg_sample_create_mf(samples[0].pSample, &wg_sample)))
         return hr;
 
     if (wg_sample->max_size < info.cbSize)
     {
-        mf_destroy_wg_sample(wg_sample);
+        wg_sample_release(wg_sample);
         return MF_E_BUFFERTOOSMALL;
     }
 
     hr = wg_transform_read_mf(decoder->wg_transform, wg_sample, &wg_format);
-    mf_destroy_wg_sample(wg_sample);
+    wg_sample_release(wg_sample);
 
     if (hr == MF_E_TRANSFORM_STREAM_CHANGE)
     {

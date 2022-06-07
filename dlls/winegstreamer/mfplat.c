@@ -965,7 +965,7 @@ struct mf_sample
     struct wg_sample wg_sample;
 };
 
-HRESULT mf_create_wg_sample(IMFSample *sample, struct wg_sample **out)
+HRESULT wg_sample_create_mf(IMFSample *sample, struct wg_sample **out)
 {
     DWORD current_length, max_length;
     struct mf_sample *mf_sample;
@@ -995,7 +995,7 @@ out:
     return hr;
 }
 
-void mf_destroy_wg_sample(struct wg_sample *wg_sample)
+void wg_sample_release(struct wg_sample *wg_sample)
 {
     struct mf_sample *mf_sample = CONTAINING_RECORD(wg_sample, struct mf_sample, wg_sample);
 

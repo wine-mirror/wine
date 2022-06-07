@@ -120,8 +120,8 @@ extern HRESULT mfplat_DllRegisterServer(void);
 IMFMediaType *mf_media_type_from_wg_format(const struct wg_format *format);
 void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format);
 
-HRESULT mf_create_wg_sample(IMFSample *sample, struct wg_sample **out);
-void mf_destroy_wg_sample(struct wg_sample *wg_sample);
+HRESULT wg_sample_create_mf(IMFSample *sample, struct wg_sample **out);
+void wg_sample_release(struct wg_sample *wg_sample);
 
 HRESULT wg_transform_push_mf(struct wg_transform *transform, struct wg_sample *sample);
 HRESULT wg_transform_read_mf(struct wg_transform *transform, struct wg_sample *sample,
