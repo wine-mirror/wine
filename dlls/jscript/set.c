@@ -183,7 +183,7 @@ static HRESULT set_map_entry(MapInstance *map, jsval_t key, jsval_t value, jsval
 
 static HRESULT iterate_map(MapInstance *map, script_ctx_t *ctx, unsigned argc, jsval_t *argv, jsval_t *r)
 {
-    struct jsval_map_entry *entry;
+    struct list *iter = list_head(&map->entries);
     IDispatch *context_obj = NULL;
     HRESULT hres;
 
@@ -200,16 +200,22 @@ static HRESULT iterate_map(MapInstance *map, script_ctx_t *ctx, unsigned argc, j
         context_obj = get_object(argv[1]);
     }
 
-    LIST_FOR_EACH_ENTRY(entry, &map->entries, struct jsval_map_entry, list_entry) {
+    while(iter) {
+        struct jsval_map_entry *entry = LIST_ENTRY(iter, struct jsval_map_entry, list_entry);
         jsval_t args[3], v;
-        if(entry->deleted)
+
+        if(entry->deleted) {
+            iter = list_next(&map->entries, iter);
             continue;
+        }
+
         args[0] = entry->value;
         args[1] = entry->key;
         args[2] = jsval_obj(&map->dispex);
         grab_map_entry(entry);
         hres = disp_call_value(ctx, get_object(argv[0]), context_obj,
                                DISPATCH_METHOD, ARRAY_SIZE(args), args, &v);
+        iter = list_next(&map->entries, iter);
         release_map_entry(entry);
         if(FAILED(hres))
             return hres;
