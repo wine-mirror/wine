@@ -1338,6 +1338,8 @@ static void sock_poll_event( struct fd *fd, int event )
     int error = 0;
 
     assert( sock->obj.ops == &sock_ops );
+    grab_object( sock );
+
     if (debug_level)
         fprintf(stderr, "socket %p select event: %x\n", sock, event);
 
@@ -1426,6 +1428,7 @@ static void sock_poll_event( struct fd *fd, int event )
     complete_async_polls( sock, event, error );
 
     sock_reselect( sock );
+    release_object( sock );
 }
 
 static void sock_dump( struct object *obj, int verbose )
