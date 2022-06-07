@@ -294,10 +294,9 @@ static void test_streamonhglobal(void)
 
     /* test OOM condition */
     ull.u.HighPart = -1;
-    ull.u.LowPart = -1;
+    ull.u.LowPart = 0;
     hr = IStream_SetSize(pStream, ull);
-    ok(hr == E_OUTOFMEMORY || broken(hr == S_OK), /* win9x */
-       "IStream_SetSize with large size should have returned E_OUTOFMEMORY instead of 0x%08lx\n", hr);
+    ok(hr == S_OK, "IStream_SetSize with large size should have returned S_OK instead of 0x%08lx\n", hr);
 
     IStream_Release(pStream);
 }
