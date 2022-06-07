@@ -1065,7 +1065,7 @@
 @ stub NtUserLoadKeyboardLayoutEx
 @ stub NtUserLockCursor
 @ stub NtUserLockWindowStation
-@ stub NtUserLockWindowUpdate
+@ stdcall -syscall NtUserLockWindowUpdate(long)
 @ stub NtUserLockWorkStation
 @ stub NtUserLogicalToPerMonitorDPIPhysicalPoint
 @ stub NtUserLogicalToPhysicalDpiPointForWindow

@@ -828,3 +828,10 @@ NTSTATUS WINAPI wow64_NtUserRemoveMenu( UINT *args )
 
     return NtUserRemoveMenu( handle, id, flags );
 }
+
+NTSTATUS WINAPI wow64_NtUserLockWindowUpdate( UINT *args )
+{
+    HWND hwnd = get_handle( &args );
+
+    return NtUserLockWindowUpdate( hwnd );
+}

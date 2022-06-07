@@ -510,7 +510,7 @@
 @ stdcall LoadStringW(long long ptr long)
 @ stdcall LockSetForegroundWindow (long)
 @ stub LockWindowStation
-@ stdcall LockWindowUpdate(long)
+@ stdcall LockWindowUpdate(long) NtUserLockWindowUpdate
 @ stdcall LockWorkStation()
 @ stdcall LogicalToPhysicalPoint(long ptr)
 @ stdcall LogicalToPhysicalPointForPerMonitorDPI(long ptr)

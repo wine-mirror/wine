@@ -1574,3 +1574,20 @@ INT WINAPI NtUserExcludeUpdateRgn( HDC hdc, HWND hwnd )
     NtGdiDeleteObjectApp( update_rgn );
     return ret;
 }
+
+/***********************************************************************
+ *           NtUserLockWindowUpdate (win32u.@)
+ */
+BOOL WINAPI NtUserLockWindowUpdate( HWND hwnd )
+{
+    static HWND locked_hwnd;
+
+    FIXME( "(%p), partial stub!\n", hwnd );
+
+    if (!hwnd)
+    {
+        locked_hwnd = NULL;
+        return TRUE;
+    }
+    return !InterlockedCompareExchangePointer( (void **)&locked_hwnd, hwnd, 0 );
+}

@@ -113,49 +113,6 @@ HDC WINAPI GetWindowDC( HWND hwnd )
 
 
 /***********************************************************************
- *		LockWindowUpdate (USER32.@)
- *
- * Enables or disables painting in the chosen window.
- *
- * PARAMS
- *  hwnd [I] handle to a window.
- *
- * RETURNS
- *  If successful, returns nonzero value. Otherwise,
- *  returns 0.
- *
- * NOTES
- *  You can lock only one window at a time.
- */
-BOOL WINAPI LockWindowUpdate( HWND hwnd )
-{
-    static HWND lockedWnd;
-
-    FIXME("(%p), partial stub!\n",hwnd);
-
-    USER_Lock();
-    if (lockedWnd)
-    {
-        if (!hwnd)
-        {
-            /* Unlock lockedWnd */
-            /* FIXME: Do something */
-        }
-        else
-        {
-            /* Attempted to lock a second window */
-            /* Return FALSE and do nothing */
-            USER_Unlock();
-            return FALSE;
-        }
-    }
-    lockedWnd = hwnd;
-    USER_Unlock();
-    return TRUE;
-}
-
-
-/***********************************************************************
  *		UpdateWindow (USER32.@)
  */
 BOOL WINAPI UpdateWindow( HWND hwnd )
