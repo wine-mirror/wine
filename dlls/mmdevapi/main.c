@@ -102,7 +102,7 @@ static BOOL load_driver(const WCHAR *name, DriverFuncs *driver)
 
 static BOOL WINAPI init_driver(INIT_ONCE *once, void *param, void **context)
 {
-    static WCHAR default_list[] = L"pulse,alsa,oss,coreaudio,android";
+    static WCHAR default_list[] = L"pulse,alsa,oss,coreaudio";
     DriverFuncs driver;
     HKEY key;
     WCHAR reg_list[256], *p, *next, *driver_list = default_list;
