@@ -933,13 +933,11 @@ static void test_SpeechSynthesizer(void)
     ok(hr == S_OK, "WindowsCreateString failed, hr %#lx\n", hr);
 
     hr = ISpeechSynthesizer_SynthesizeTextToStreamAsync(synthesizer, NULL, &operation_ss_stream);
-    todo_wine ok(hr == S_OK, "ISpeechSynthesizer_SynthesizeTextToStreamAsync failed, hr %#lx\n", hr);
-    if(FAILED(hr)) goto skip_ss_stream;
-
+    ok(hr == S_OK, "ISpeechSynthesizer_SynthesizeTextToStreamAsync failed, hr %#lx\n", hr);
     IAsyncOperation_SpeechSynthesisStream_Release(operation_ss_stream);
 
     hr = ISpeechSynthesizer_SynthesizeTextToStreamAsync(synthesizer, str, &operation_ss_stream);
-    todo_wine ok(hr == S_OK, "ISpeechSynthesizer_SynthesizeTextToStreamAsync failed, hr %#lx\n", hr);
+    ok(hr == S_OK, "ISpeechSynthesizer_SynthesizeTextToStreamAsync failed, hr %#lx\n", hr);
 
     await_async_inspectable((IAsyncOperation_IInspectable *)operation_ss_stream,
                              &async_inspectable_handler,
@@ -974,6 +972,8 @@ static void test_SpeechSynthesizer(void)
 
     hr = ISpeechSynthesizer_SynthesizeSsmlToStreamAsync(synthesizer, str2, &operation_ss_stream);
     todo_wine ok(hr == S_OK, "ISpeechSynthesizer_SynthesizeSsmlToStreamAsync failed, hr %#lx\n", hr);
+    if(FAILED(hr)) goto skip_ss_stream;
+
     await_async_inspectable((IAsyncOperation_IInspectable *)operation_ss_stream,
                              &async_inspectable_handler,
                              &IID_IAsyncOperationCompletedHandler_SpeechSynthesisStream);
@@ -1019,9 +1019,8 @@ static void test_SpeechSynthesizer(void)
     }
     else todo_wine ok(operation_ss_stream == NULL, "operation_ss_stream had value %p.\n", operation_ss_stream);
 
-    WindowsDeleteString(str2);
-
 skip_ss_stream:
+    WindowsDeleteString(str2);
     WindowsDeleteString(str);
 
     hr = IInspectable_QueryInterface(inspectable, &IID_IClosable, (void **)&closable);
