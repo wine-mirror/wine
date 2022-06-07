@@ -135,15 +135,16 @@ void stop_queue( struct queue *queue )
     TRACE("stopped %p\n", queue);
 }
 
-static struct task_header *get_next_task( struct queue *queue )
+static struct task_header *get_next_task( struct queue *queue, struct task_header *prev_task )
 {
     struct list *entry;
 
     AcquireSRWLockExclusive( &queue->lock );
     assert( queue->callback_running );
-    if ((entry = list_head( &queue->queued_tasks )))
-        list_remove( entry );
-    else
+    if (prev_task)
+        list_remove( &prev_task->entry );
+
+    if (!(entry = list_head( &queue->queued_tasks )))
         queue->callback_running = FALSE;
     ReleaseSRWLockExclusive( &queue->lock );
     if (!entry) return NULL;
@@ -157,12 +158,12 @@ static void CALLBACK task_callback( TP_CALLBACK_INSTANCE *instance, void *ctx )
 
     TRACE( "instance %p.\n", instance );
 
-    task = get_next_task( queue );
+    task = get_next_task( queue, NULL );
     while (task)
     {
         task->callback( task );
         /* Queue object may be freed by release_object() unless there is another task referencing it. */
-        next_task = get_next_task( queue );
+        next_task = get_next_task( queue, task );
         release_object( task->obj );
         free( task );
         task = next_task;
