@@ -1,6 +1,6 @@
 /* FAudio - XAudio Reimplementation for FNA
  *
- * Copyright (c) 2011-2021 Ethan Lee, Luigi Auriemma, and the MonoGame Team
+ * Copyright (c) 2011-2022 Ethan Lee, Luigi Auriemma, and the MonoGame Team
  *
  * This software is provided 'as-is', without any express or implied warranty.
  * In no event will the authors be held liable for any damages arising from
@@ -1862,7 +1862,7 @@ void FAudio_INTERNAL_DecodeMonoMSADPCM(
 	int32_t midOffset;
 
 	/* PCM block cache */
-	int16_t blockCache[1012]; /* Max block size */
+	int16_t *blockCache;
 
 	/* Block size */
 	uint32_t bsize = ((FAudioADPCMWaveFormat*) voice->src.format)->wSamplesPerBlock;
@@ -1879,6 +1879,7 @@ void FAudio_INTERNAL_DecodeMonoMSADPCM(
 	midOffset = (voice->src.curBufferOffset % bsize);
 
 	/* Read in each block directly to the decode cache */
+	blockCache = (int16_t*) FAudio_alloca(bsize * sizeof(int16_t));
 	while (done < samples)
 	{
 		copy = FAudio_min(samples - done, bsize - midOffset);
@@ -1896,6 +1897,7 @@ void FAudio_INTERNAL_DecodeMonoMSADPCM(
 		done += copy;
 		midOffset = 0;
 	}
+	FAudio_dealloca(blockCache);
 	LOG_FUNC_EXIT(voice->audio)
 }
 
@@ -1913,7 +1915,7 @@ void FAudio_INTERNAL_DecodeStereoMSADPCM(
 	int32_t midOffset;
 
 	/* PCM block cache */
-	int16_t blockCache[2024]; /* Max block size */
+	int16_t *blockCache;
 
 	/* Align, block size */
 	uint32_t bsize = ((FAudioADPCMWaveFormat*) voice->src.format)->wSamplesPerBlock;
@@ -1930,6 +1932,7 @@ void FAudio_INTERNAL_DecodeStereoMSADPCM(
 	midOffset = (voice->src.curBufferOffset % bsize);
 
 	/* Read in each block directly to the decode cache */
+	blockCache = (int16_t*) FAudio_alloca(bsize * 2 * sizeof(int16_t));
 	while (done < samples)
 	{
 		copy = FAudio_min(samples - done, bsize - midOffset);
@@ -1947,6 +1950,7 @@ void FAudio_INTERNAL_DecodeStereoMSADPCM(
 		done += copy;
 		midOffset = 0;
 	}
+	FAudio_dealloca(blockCache);
 	LOG_FUNC_EXIT(voice->audio)
 }
 

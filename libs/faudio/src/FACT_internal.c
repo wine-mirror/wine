@@ -1,6 +1,6 @@
 /* FAudio - XAudio Reimplementation for FNA
  *
- * Copyright (c) 2011-2021 Ethan Lee, Luigi Auriemma, and the MonoGame Team
+ * Copyright (c) 2011-2022 Ethan Lee, Luigi Auriemma, and the MonoGame Team
  *
  * This software is provided 'as-is', without any express or implied warranty.
  * In no event will the authors be held liable for any damages arising from
@@ -462,6 +462,14 @@ void FACT_INTERNAL_GetNextWave(
 		trackInst->upcomingWave.baseFrequency = FACT_INTERNAL_CalculateFilterFrequency(
 			track->frequency,
 			cue->parentBank->parentEngine->audio->master->master.inputSampleRate
+		);
+
+		/* FIXME: For some reason the 0.67 Q Factor causes problems, but it's also
+		 * the only possible value until ~1 so just clamp it for now.
+		 */
+		trackInst->upcomingWave.baseQFactor = FAudio_min(
+			trackInst->upcomingWave.baseQFactor,
+			1.0f
 		);
 	}
 
