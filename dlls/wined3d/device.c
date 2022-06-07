@@ -1482,7 +1482,7 @@ UINT CDECL wined3d_device_get_available_texture_mem(const struct wined3d_device 
             wine_dbgstr_longlong(device->adapter->vram_bytes_used),
             wine_dbgstr_longlong(driver_info->vram_bytes - device->adapter->vram_bytes_used));
 
-    return min(UINT_MAX, driver_info->vram_bytes - device->adapter->vram_bytes_used);
+    return min(UINT_MAX, driver_info->vram_bytes) - device->adapter->vram_bytes_used;
 }
 
 struct wined3d_buffer * CDECL wined3d_device_context_get_stream_output(struct wined3d_device_context *context,
