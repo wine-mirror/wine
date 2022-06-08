@@ -51,6 +51,13 @@ static int sock_send(int fd, const void *msg, size_t len, WSAOVERLAPPED *ovr)
     return -1;
 }
 
+BOOL netconn_wait_overlapped_result( struct netconn *conn, WSAOVERLAPPED *ovr, DWORD *len )
+{
+    DWORD retflags;
+
+    return WSAGetOverlappedResult( conn->socket, ovr, len, TRUE, &retflags );
+}
+
 static int sock_recv(int fd, void *msg, size_t len, int flags)
 {
     int ret;

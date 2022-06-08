@@ -3336,9 +3336,9 @@ static DWORD send_frame( struct socket *socket, enum socket_opcode opcode, USHOR
 
 static DWORD complete_send_frame( struct socket *socket, WSAOVERLAPPED *ovr, const char *buf )
 {
-    DWORD ret, retflags, len, i;
+    DWORD ret, len, i;
 
-    if (!WSAGetOverlappedResult( socket->request->netconn->socket, ovr, &len, TRUE, &retflags ))
+    if (!netconn_wait_overlapped_result( socket->request->netconn, ovr, &len ))
         return WSAGetLastError();
 
     if (socket->bytes_in_send_frame_buffer)
