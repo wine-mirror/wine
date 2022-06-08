@@ -1252,7 +1252,6 @@ static void test_simple_joystick( DWORD version )
 
     hwnd = CreateWindowW( L"static", L"dinput", WS_OVERLAPPEDWINDOW | WS_VISIBLE, 10, 10, 200, 200,
                           NULL, NULL, NULL, NULL );
-    SetForegroundWindow( hwnd );
 
     hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_FOREGROUND | DISCL_NONEXCLUSIVE );
     ok( hr == DI_OK, "SetCooperativeLevel returned: %#lx\n", hr );
@@ -1261,6 +1260,8 @@ static void test_simple_joystick( DWORD version )
     hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_FOREGROUND | DISCL_EXCLUSIVE );
     ok( hr == DI_OK, "SetCooperativeLevel returned: %#lx\n", hr );
 
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_BACKGROUND | DISCL_NONEXCLUSIVE );
+    ok( hr == DI_OK, "SetCooperativeLevel returned: %#lx\n", hr );
     hr = IDirectInputDevice8_Unacquire( device );
     ok( hr == DI_NOEFFECT, "Unacquire returned: %#lx\n", hr );
     hr = IDirectInputDevice8_Acquire( device );
