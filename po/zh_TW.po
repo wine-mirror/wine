@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Wine\n"
 "Report-Msgid-Bugs-To: https://bugs.winehq.org\n"
 "POT-Creation-Date: N/A\n"
-"PO-Revision-Date: 2021-12-23 14:09+0800\n"
+"PO-Revision-Date: 2022-06-09 03:15+0800\n"
 "Last-Translator: Chilung Chan <eason066@gmail.com>\n"
 "Language-Team: Chinese (Taiwan)\n"
 "Language: zh_TW\n"
@@ -3924,13 +3924,11 @@ msgstr "無法在這個物件更改屬性描述符中的 'writable' 屬性為 't
 
 #: dlls/jscript/jscript.rc:74
 msgid "Cyclic __proto__ value"
-msgstr ""
+msgstr "循環的 __proto__ 值"
 
 #: dlls/jscript/jscript.rc:75
-#, fuzzy
-#| msgid "Cannot define property '|': object is not extensible"
 msgid "Cannot create property for a non-extensible object"
-msgstr "無法定義屬性 '|': 物件不能擴展"
+msgstr "無法為不可擴展的物件建立屬性"
 
 #: dlls/jscript/jscript.rc:76
 msgid "Cannot define property '|': object is not extensible"
@@ -3945,10 +3943,8 @@ msgid "Cannot modify non-writable property '|'"
 msgstr "無法修改不可寫入的屬性 '|'"
 
 #: dlls/jscript/jscript.rc:79
-#, fuzzy
-#| msgid "'this' is not a Map object"
 msgid "'this' is not a | object"
-msgstr "'this' 不是 Map 物件"
+msgstr "'this' 不是一個 | 物件"
 
 #: dlls/jscript/jscript.rc:80
 msgid "Property cannot have both accessors and a value"
@@ -3965,45 +3961,39 @@ msgstr "Wine"
 
 #: dlls/kernelbase/kernelbase.rc:29
 msgid "Western Europe and United States"
-msgstr ""
+msgstr "西歐和美國"
 
 #: dlls/kernelbase/kernelbase.rc:30
-#, fuzzy
-#| msgid "Central European"
 msgid "Central Europe"
 msgstr "中歐語言"
 
 #: dlls/kernelbase/kernelbase.rc:34
-#, fuzzy
-#| msgid "Turkish"
 msgid "Turkic"
-msgstr "土耳其語"
+msgstr "突厥語"
 
 #: dlls/kernelbase/kernelbase.rc:36
 msgid "Korean"
-msgstr ""
+msgstr "韓語"
 
 #: dlls/kernelbase/kernelbase.rc:37
-#, fuzzy
-#| msgid "Operation Ceased"
 msgid "Traditional Chinese"
-msgstr "作業已停止"
+msgstr "繁體中文"
 
 #: dlls/kernelbase/kernelbase.rc:38
 msgid "Simplified Chinese"
-msgstr ""
+msgstr "簡體中文"
 
 #: dlls/kernelbase/kernelbase.rc:43
 msgid "Indic"
-msgstr ""
+msgstr "印度語"
 
 #: dlls/kernelbase/kernelbase.rc:44
 msgid "Georgian"
-msgstr ""
+msgstr "喬治亞語"
 
 #: dlls/kernelbase/kernelbase.rc:45
 msgid "Armenian"
-msgstr ""
+msgstr "亞美尼亞語"
 
 #: dlls/kernelbase/winerror.mc:28
 msgid "Success.\n"
@@ -6962,54 +6952,40 @@ msgid "This network connection does not exist.\n"
 msgstr "這個網路連線不存在。\n"
 
 #: dlls/kernelbase/winerror.mc:3748
-#, fuzzy
-#| msgid "Invalid at interrupt time.\n"
 msgid "Call interrupted.\n"
-msgstr "於插斷時間無效。\n"
+msgstr "呼叫已中斷。\n"
 
 #: dlls/kernelbase/winerror.mc:3753
-#, fuzzy
-#| msgid "Invalid handle.\n"
 msgid "Invalid file handle.\n"
-msgstr "無效的控制代碼。\n"
+msgstr "無效的檔案控制代碼。\n"
 
 #: dlls/kernelbase/winerror.mc:3763
-#, fuzzy
-#| msgid "Invalid network address.\n"
 msgid "Invalid pointer address.\n"
-msgstr "無效的網路位址。\n"
+msgstr "無效的指標位址。\n"
 
 #: dlls/kernelbase/winerror.mc:3768
-#, fuzzy
-#| msgid "Invalid name.\n"
 msgid "Invalid argument.\n"
-msgstr "無效的名稱。\n"
+msgstr "無效的引數。\n"
 
 #: dlls/kernelbase/winerror.mc:3778
 msgid "Connection reset by peer.\n"
 msgstr "連線被同儕節點重設。\n"
 
 #: dlls/kernelbase/winerror.mc:3788
-#, fuzzy
-#| msgid "Point not found.\n"
 msgid "Host not found.\n"
-msgstr "找不到點。\n"
+msgstr "找不到主機。\n"
 
 #: dlls/kernelbase/winerror.mc:3793
-#, fuzzy
-#| msgid "Attribute is not found.\n"
 msgid "Nonauthoritative host not found.\n"
-msgstr "找不到屬性。\n"
+msgstr "找不到未授權的主機。\n"
 
 #: dlls/kernelbase/winerror.mc:3798
-#, fuzzy
-#| msgid "Unrecoverable error occurred.\n"
 msgid "Nonrecoverable error.\n"
-msgstr "發生致命錯誤。\n"
+msgstr "無法復原的錯誤。\n"
 
 #: dlls/kernelbase/winerror.mc:3803
 msgid "Name valid, no data record.\n"
-msgstr ""
+msgstr "名稱有效，無資料記錄。\n"
 
 #: dlls/kernelbase/winerror.mc:3817
 msgid "Not implemented.\n"
@@ -7695,7 +7671,7 @@ msgstr "不支援的狀態轉換。\n"
 
 #: dlls/mferror/mferror.mc:291
 msgid "Unrecoverable error occurred.\n"
-msgstr "發生致命錯誤。\n"
+msgstr "發生無法復原的錯誤。\n"
 
 #: dlls/mferror/mferror.mc:298
 msgid "Sample has too many buffers.\n"
