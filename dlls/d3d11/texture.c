@@ -115,60 +115,54 @@ static HRESULT STDMETHODCALLTYPE d3d11_texture1d_GetPrivateData(ID3D11Texture1D 
         REFGUID guid, UINT *data_size, void *data)
 {
     struct d3d_texture1d *texture = impl_from_ID3D11Texture1D(iface);
-    IDXGISurface *dxgi_surface;
+    IDXGIResource *dxgi_resource;
     HRESULT hr;
 
     TRACE("iface %p, guid %s, data_size %p, data %p.\n", iface, debugstr_guid(guid), data_size, data);
 
-    if (texture->dxgi_resource
-            && SUCCEEDED(IUnknown_QueryInterface(texture->dxgi_resource, &IID_IDXGISurface, (void **)&dxgi_surface)))
+    if (SUCCEEDED(hr = IUnknown_QueryInterface(texture->dxgi_resource, &IID_IDXGIResource, (void **)&dxgi_resource)))
     {
-        hr = IDXGISurface_GetPrivateData(dxgi_surface, guid, data_size, data);
-        IDXGISurface_Release(dxgi_surface);
-        return hr;
+        hr = IDXGIResource_GetPrivateData(dxgi_resource, guid, data_size, data);
+        IDXGIResource_Release(dxgi_resource);
     }
 
-    return d3d_get_private_data(&texture->private_store, guid, data_size, data);
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_texture1d_SetPrivateData(ID3D11Texture1D *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
     struct d3d_texture1d *texture = impl_from_ID3D11Texture1D(iface);
-    IDXGISurface *dxgi_surface;
+    IDXGIResource *dxgi_resource;
     HRESULT hr;
 
     TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
 
-    if (texture->dxgi_resource
-            && SUCCEEDED(IUnknown_QueryInterface(texture->dxgi_resource, &IID_IDXGISurface, (void **)&dxgi_surface)))
+    if (SUCCEEDED(hr = IUnknown_QueryInterface(texture->dxgi_resource, &IID_IDXGIResource, (void **)&dxgi_resource)))
     {
-        hr = IDXGISurface_SetPrivateData(dxgi_surface, guid, data_size, data);
-        IDXGISurface_Release(dxgi_surface);
-        return hr;
+        hr = IDXGIResource_SetPrivateData(dxgi_resource, guid, data_size, data);
+        IDXGIResource_Release(dxgi_resource);
     }
 
-    return d3d_set_private_data(&texture->private_store, guid, data_size, data);
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_texture1d_SetPrivateDataInterface(ID3D11Texture1D *iface,
         REFGUID guid, const IUnknown *data)
 {
     struct d3d_texture1d *texture = impl_from_ID3D11Texture1D(iface);
-    IDXGISurface *dxgi_surface;
+    IDXGIResource *dxgi_resource;
     HRESULT hr;
 
     TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
 
-    if (texture->dxgi_resource
-            && SUCCEEDED(IUnknown_QueryInterface(texture->dxgi_resource, &IID_IDXGISurface, (void **)&dxgi_surface)))
+    if (SUCCEEDED(hr = IUnknown_QueryInterface(texture->dxgi_resource, &IID_IDXGIResource, (void **)&dxgi_resource)))
     {
-        hr = IDXGISurface_SetPrivateDataInterface(dxgi_surface, guid, data);
-        IDXGISurface_Release(dxgi_surface);
-        return hr;
+        hr = IDXGIResource_SetPrivateDataInterface(dxgi_resource, guid, data);
+        IDXGIResource_Release(dxgi_resource);
     }
 
-    return d3d_set_private_data_interface(&texture->private_store, guid, data);
+    return hr;
 }
 
 static void STDMETHODCALLTYPE d3d11_texture1d_GetType(ID3D11Texture1D *iface,
@@ -258,7 +252,6 @@ static void STDMETHODCALLTYPE d3d_texture1d_wined3d_object_released(void *parent
 
     if (texture->dxgi_resource)
         IUnknown_Release(texture->dxgi_resource);
-    wined3d_private_store_cleanup(&texture->private_store);
     heap_free(texture);
 }
 
@@ -460,7 +453,6 @@ HRESULT d3d_texture1d_create(struct d3d_device *device, const D3D11_TEXTURE1D_DE
     texture->ID3D11Texture1D_iface.lpVtbl = &d3d11_texture1d_vtbl;
     texture->ID3D10Texture1D_iface.lpVtbl = &d3d10_texture1d_vtbl;
     texture->refcount = 1;
-    wined3d_private_store_init(&texture->private_store);
     texture->desc = *desc;
     levels = desc->MipLevels ? desc->MipLevels : wined3d_log2i(desc->Width) + 1;
     texture->desc.MipLevels = levels;
@@ -489,7 +481,6 @@ HRESULT d3d_texture1d_create(struct d3d_device *device, const D3D11_TEXTURE1D_DE
             texture, &d3d_texture1d_wined3d_parent_ops, &texture->wined3d_texture)))
     {
         WARN("Failed to create wined3d texture, hr %#lx.\n", hr);
-        wined3d_private_store_cleanup(&texture->private_store);
         heap_free(texture);
         wined3d_mutex_unlock();
         if (hr == WINED3DERR_NOTAVAILABLE || hr == WINED3DERR_INVALIDCALL)
@@ -605,60 +596,54 @@ static HRESULT STDMETHODCALLTYPE d3d11_texture2d_GetPrivateData(ID3D11Texture2D 
         REFGUID guid, UINT *data_size, void *data)
 {
     struct d3d_texture2d *texture = impl_from_ID3D11Texture2D(iface);
-    IDXGISurface *dxgi_surface;
+    IDXGIResource *dxgi_resource;
     HRESULT hr;
 
     TRACE("iface %p, guid %s, data_size %p, data %p.\n", iface, debugstr_guid(guid), data_size, data);
 
-    if (texture->dxgi_resource
-            && SUCCEEDED(IUnknown_QueryInterface(texture->dxgi_resource, &IID_IDXGISurface, (void **)&dxgi_surface)))
+    if (SUCCEEDED(hr = IUnknown_QueryInterface(texture->dxgi_resource, &IID_IDXGIResource, (void **)&dxgi_resource)))
     {
-        hr = IDXGISurface_GetPrivateData(dxgi_surface, guid, data_size, data);
-        IDXGISurface_Release(dxgi_surface);
-        return hr;
+        hr = IDXGIResource_GetPrivateData(dxgi_resource, guid, data_size, data);
+        IDXGIResource_Release(dxgi_resource);
     }
 
-    return d3d_get_private_data(&texture->private_store, guid, data_size, data);
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_texture2d_SetPrivateData(ID3D11Texture2D *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
     struct d3d_texture2d *texture = impl_from_ID3D11Texture2D(iface);
-    IDXGISurface *dxgi_surface;
+    IDXGIResource *dxgi_resource;
     HRESULT hr;
 
     TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
 
-    if (texture->dxgi_resource
-            && SUCCEEDED(IUnknown_QueryInterface(texture->dxgi_resource, &IID_IDXGISurface, (void **)&dxgi_surface)))
+    if (SUCCEEDED(hr = IUnknown_QueryInterface(texture->dxgi_resource, &IID_IDXGIResource, (void **)&dxgi_resource)))
     {
-        hr = IDXGISurface_SetPrivateData(dxgi_surface, guid, data_size, data);
-        IDXGISurface_Release(dxgi_surface);
-        return hr;
+        hr = IDXGIResource_SetPrivateData(dxgi_resource, guid, data_size, data);
+        IDXGIResource_Release(dxgi_resource);
     }
 
-    return d3d_set_private_data(&texture->private_store, guid, data_size, data);
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_texture2d_SetPrivateDataInterface(ID3D11Texture2D *iface,
         REFGUID guid, const IUnknown *data)
 {
     struct d3d_texture2d *texture = impl_from_ID3D11Texture2D(iface);
-    IDXGISurface *dxgi_surface;
+    IDXGIResource *dxgi_resource;
     HRESULT hr;
 
     TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
 
-    if (texture->dxgi_resource
-            && SUCCEEDED(IUnknown_QueryInterface(texture->dxgi_resource, &IID_IDXGISurface, (void **)&dxgi_surface)))
+    if (SUCCEEDED(hr = IUnknown_QueryInterface(texture->dxgi_resource, &IID_IDXGIResource, (void **)&dxgi_resource)))
     {
-        hr = IDXGISurface_SetPrivateDataInterface(dxgi_surface, guid, data);
-        IDXGISurface_Release(dxgi_surface);
-        return hr;
+        hr = IDXGIResource_SetPrivateDataInterface(dxgi_resource, guid, data);
+        IDXGIResource_Release(dxgi_resource);
     }
 
-    return d3d_set_private_data_interface(&texture->private_store, guid, data);
+    return hr;
 }
 
 static void STDMETHODCALLTYPE d3d11_texture2d_GetType(ID3D11Texture2D *iface,
@@ -762,7 +747,6 @@ static void STDMETHODCALLTYPE d3d_texture2d_wined3d_object_released(void *parent
     struct d3d_texture2d *texture = parent;
 
     if (texture->dxgi_resource) IUnknown_Release(texture->dxgi_resource);
-    wined3d_private_store_cleanup(&texture->private_store);
     heap_free(texture);
 }
 
@@ -994,7 +978,6 @@ HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DE
     texture->ID3D10Texture2D_iface.lpVtbl = &d3d10_texture2d_vtbl;
     texture->refcount = 1;
     wined3d_mutex_lock();
-    wined3d_private_store_init(&texture->private_store);
     texture->desc = *desc;
 
     wined3d_desc.resource_type = WINED3D_RTYPE_TEXTURE_2D;
@@ -1022,7 +1005,6 @@ HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DE
             texture, &d3d_texture2d_wined3d_parent_ops, &texture->wined3d_texture)))
     {
         WARN("Failed to create wined3d texture, hr %#lx.\n", hr);
-        wined3d_private_store_cleanup(&texture->private_store);
         heap_free(texture);
         wined3d_mutex_unlock();
         if (hr == WINED3DERR_NOTAVAILABLE || hr == WINED3DERR_INVALIDCALL)

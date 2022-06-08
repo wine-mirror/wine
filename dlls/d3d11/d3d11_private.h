@@ -129,7 +129,6 @@ struct d3d_texture1d
     ID3D10Texture1D ID3D10Texture1D_iface;
     LONG refcount;
 
-    struct wined3d_private_store private_store;
     IUnknown *dxgi_resource;
     struct wined3d_texture *wined3d_texture;
     D3D11_TEXTURE1D_DESC desc;
@@ -148,7 +147,6 @@ struct d3d_texture2d
     ID3D10Texture2D ID3D10Texture2D_iface;
     LONG refcount;
 
-    struct wined3d_private_store private_store;
     IUnknown *dxgi_resource;
     struct wined3d_texture *wined3d_texture;
     D3D11_TEXTURE2D_DESC desc;
