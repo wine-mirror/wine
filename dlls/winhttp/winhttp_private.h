@@ -117,6 +117,7 @@ struct netconn
     char *peek_msg;
     char *peek_msg_mem;
     size_t peek_len;
+    HANDLE port;
 };
 
 struct header

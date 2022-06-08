@@ -53,9 +53,20 @@ static int sock_send(int fd, const void *msg, size_t len, WSAOVERLAPPED *ovr)
 
 BOOL netconn_wait_overlapped_result( struct netconn *conn, WSAOVERLAPPED *ovr, DWORD *len )
 {
-    DWORD retflags;
+    OVERLAPPED *completion_ovr;
+    ULONG_PTR key;
 
-    return WSAGetOverlappedResult( conn->socket, ovr, len, TRUE, &retflags );
+    if (!GetQueuedCompletionStatus( conn->port, len, &key, &completion_ovr, INFINITE ))
+    {
+        WARN( "GetQueuedCompletionStatus failed, err %lu.\n", GetLastError() );
+        return FALSE;
+    }
+    if ((key != conn->socket && conn->socket != -1) || completion_ovr != (OVERLAPPED *)ovr)
+    {
+        ERR( "Unexpected completion key %Ix, overlapped %p.\n", key, completion_ovr );
+        return FALSE;
+    }
+    return TRUE;
 }
 
 static int sock_recv(int fd, void *msg, size_t len, int flags)
@@ -279,6 +290,8 @@ void netconn_close( struct netconn *conn )
     if (conn->socket != -1)
         closesocket( conn->socket );
     release_host( conn->host );
+    if (conn->port)
+        CloseHandle( conn->port );
     free(conn);
 }
 
@@ -451,6 +464,12 @@ static DWORD send_ssl_chunk( struct netconn *conn, const void *msg, size_t size,
 DWORD netconn_send( struct netconn *conn, const void *msg, size_t len, int *sent, WSAOVERLAPPED *ovr )
 {
     DWORD err;
+
+    if (ovr && !conn->port)
+    {
+        if (!(conn->port = CreateIoCompletionPort( (HANDLE)(SOCKET)conn->socket, NULL, (ULONG_PTR)conn->socket, 0 )))
+            ERR( "Failed to create port.\n" );
+    }
 
     if (conn->secure)
     {
