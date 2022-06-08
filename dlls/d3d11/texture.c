@@ -420,12 +420,35 @@ static const struct wined3d_parent_ops d3d_texture1d_wined3d_parent_ops =
     d3d_texture1d_wined3d_object_released,
 };
 
+static HRESULT d3d_device_create_dxgi_resource(IUnknown *device, struct wined3d_resource *wined3d_resource,
+        IUnknown *outer, BOOL needs_surface, IUnknown **dxgi_resource)
+{
+    IWineDXGIDevice *wine_device;
+    HRESULT hr;
+
+    if (FAILED(hr = IUnknown_QueryInterface(device, &IID_IWineDXGIDevice, (void **)&wine_device)))
+    {
+        ERR("Device should implement IWineDXGIDevice.\n");
+        return E_FAIL;
+    }
+
+    hr = IWineDXGIDevice_create_resource(wine_device, wined3d_resource, 0, NULL, outer,
+            needs_surface, (void **)dxgi_resource);
+    IWineDXGIDevice_Release(wine_device);
+    if (FAILED(hr))
+    {
+        ERR("Failed to create DXGI resource, returning %#.lx\n", hr);
+        *dxgi_resource = NULL;
+    }
+
+    return hr;
+}
+
 HRESULT d3d_texture1d_create(struct d3d_device *device, const D3D11_TEXTURE1D_DESC *desc,
         const D3D11_SUBRESOURCE_DATA *data, struct d3d_texture1d **out)
 {
     struct wined3d_resource_desc wined3d_desc;
     struct d3d_texture1d *texture;
-    IWineDXGIDevice *wine_device;
     unsigned int levels;
     BOOL needs_surface;
     DWORD flags = 0;
@@ -474,23 +497,13 @@ HRESULT d3d_texture1d_create(struct d3d_device *device, const D3D11_TEXTURE1D_DE
         return hr;
     }
 
-    if (FAILED(hr = ID3D10Device1_QueryInterface(&device->ID3D10Device1_iface, &IID_IWineDXGIDevice,
-            (void **)&wine_device)))
-    {
-        ERR("Device should implement IWineDXGIDevice.\n");
-        wined3d_texture_decref(texture->wined3d_texture);
-        wined3d_mutex_unlock();
-        return E_FAIL;
-    }
-
     needs_surface = desc->MipLevels == 1 && desc->ArraySize == 1;
-    hr = IWineDXGIDevice_create_resource(wine_device, wined3d_texture_get_resource(texture->wined3d_texture),
-            0, NULL, (IUnknown *)&texture->ID3D10Texture1D_iface, needs_surface, (void **)&texture->dxgi_resource);
-    IWineDXGIDevice_Release(wine_device);
+    hr = d3d_device_create_dxgi_resource((IUnknown *)&device->ID3D10Device1_iface,
+            wined3d_texture_get_resource(texture->wined3d_texture), (IUnknown *)&texture->ID3D10Texture1D_iface,
+            needs_surface, &texture->dxgi_resource);
     if (FAILED(hr))
     {
         ERR("Failed to create DXGI resource, returning %#.lx\n", hr);
-        texture->dxgi_resource = NULL;
         wined3d_texture_decref(texture->wined3d_texture);
         wined3d_mutex_unlock();
         return hr;
@@ -963,7 +976,6 @@ HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DE
 {
     struct wined3d_resource_desc wined3d_desc;
     struct d3d_texture2d *texture;
-    IWineDXGIDevice *wine_device;
     unsigned int levels;
     BOOL needs_surface;
     DWORD flags = 0;
@@ -1019,23 +1031,13 @@ HRESULT d3d_texture2d_create(struct d3d_device *device, const D3D11_TEXTURE2D_DE
     }
     texture->desc.MipLevels = levels;
 
-    if (FAILED(hr = ID3D10Device1_QueryInterface(&device->ID3D10Device1_iface, &IID_IWineDXGIDevice,
-            (void **)&wine_device)))
-    {
-        ERR("Device should implement IWineDXGIDevice.\n");
-        wined3d_texture_decref(texture->wined3d_texture);
-        wined3d_mutex_unlock();
-        return E_FAIL;
-    }
-
     needs_surface = desc->MipLevels == 1 && desc->ArraySize == 1;
-    hr = IWineDXGIDevice_create_resource(wine_device, wined3d_texture_get_resource(texture->wined3d_texture),
-            0, NULL, (IUnknown *)&texture->ID3D10Texture2D_iface, needs_surface, (void **)&texture->dxgi_resource);
-    IWineDXGIDevice_Release(wine_device);
+    hr = d3d_device_create_dxgi_resource((IUnknown *)&device->ID3D10Device1_iface,
+            wined3d_texture_get_resource(texture->wined3d_texture), (IUnknown *)&texture->ID3D10Texture2D_iface,
+            needs_surface, &texture->dxgi_resource);
     if (FAILED(hr))
     {
         ERR("Failed to create DXGI resource, returning %#.lx\n", hr);
-        texture->dxgi_resource = NULL;
         wined3d_texture_decref(texture->wined3d_texture);
         wined3d_mutex_unlock();
         return hr;
