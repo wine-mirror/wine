@@ -1265,6 +1265,8 @@ static void test_create_surface(void)
     hr = IDXGIDevice_CreateSurface(device, &desc, 1, DXGI_USAGE_RENDER_TARGET_OUTPUT, NULL, &surface);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
+    if (strcmp(winetest_platform, "wine"))
+        check_interface(surface, &IID_IDXGIResource, TRUE, FALSE);
     check_interface(surface, &IID_ID3D10Texture2D, TRUE, FALSE);
     /* Not available on all Windows versions. */
     check_interface(surface, &IID_ID3D11Texture2D, TRUE, TRUE);
