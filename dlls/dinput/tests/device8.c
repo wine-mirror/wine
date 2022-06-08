@@ -122,6 +122,29 @@ static HRESULT create_dinput_device( DWORD version, const GUID *guid, IDirectInp
     return DI_OK;
 }
 
+static HKL activate_keyboard_layout( LANGID langid, HKL *old_hkl )
+{
+    WCHAR hkl_name[64];
+    HKL hkl;
+
+    swprintf( hkl_name, ARRAY_SIZE(hkl_name), L"%08x", langid );
+    hkl = LoadKeyboardLayoutW( hkl_name, 0 );
+    if (!hkl)
+    {
+        win_skip( "Unable to load keyboard layout %#x\n", langid );
+        *old_hkl = GetKeyboardLayout( 0 );
+        return 0;
+    }
+
+    *old_hkl = ActivateKeyboardLayout( hkl, 0 );
+    ok( !!*old_hkl, "ActivateKeyboardLayout failed, error %lu\n", GetLastError() );
+
+    hkl = GetKeyboardLayout( 0 );
+    todo_wine_if( LOWORD(*old_hkl) != langid )
+    ok( LOWORD(hkl) == langid, "GetKeyboardLayout returned %p\n", hkl );
+    return hkl;
+}
+
 static HRESULT direct_input_create( DWORD version, IDirectInputA **out )
 {
     HRESULT hr;
@@ -2047,6 +2070,126 @@ static void test_sys_mouse( DWORD version )
     localized = old_localized;
 }
 
+static void test_dik_codes( IDirectInputDevice8W *device, HANDLE event, HWND hwnd )
+{
+    static const struct key2dik
+    {
+        BYTE key, dik, todo;
+    }
+    key2dik_en[] =
+    {
+        {'Q',DIK_Q}, {'W',DIK_W}, {'E',DIK_E}, {'R',DIK_R}, {'T',DIK_T}, {'Y',DIK_Y},
+        {'[',DIK_LBRACKET}, {']',DIK_RBRACKET}, {'.',DIK_PERIOD}
+    },
+    key2dik_fr[] =
+    {
+        {'A',DIK_Q}, {'Z',DIK_W}, {'E',DIK_E}, {'R',DIK_R}, {'T',DIK_T}, {'Y',DIK_Y},
+        {'^',DIK_LBRACKET}, {'$',DIK_RBRACKET}, {':',DIK_PERIOD}
+    },
+    key2dik_de[] =
+    {
+        {'Q',DIK_Q}, {'W',DIK_W}, {'E',DIK_E}, {'R',DIK_R}, {'T',DIK_T}, {'Z',DIK_Y},
+        {'\xfc',DIK_LBRACKET,1}, {'+',DIK_RBRACKET}, {'.',DIK_PERIOD}
+    },
+    key2dik_ja[] =
+    {
+        {'Q',DIK_Q}, {'W',DIK_W}, {'E',DIK_E}, {'R',DIK_R}, {'T',DIK_T}, {'Y',DIK_Y},
+        {'@',DIK_AT}, {']',DIK_RBRACKET}, {'.',DIK_PERIOD}
+    };
+    static const struct
+    {
+        LANGID langid;
+        const struct key2dik *map;
+        DWORD type;
+    } tests[] =
+    {
+        { MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT), key2dik_en, DIDEVTYPEKEYBOARD_PCENH },
+        { MAKELANGID(LANG_FRENCH, SUBLANG_FRENCH), key2dik_fr, DIDEVTYPEKEYBOARD_PCENH },
+        { MAKELANGID(LANG_GERMAN, SUBLANG_GERMAN), key2dik_de, DIDEVTYPEKEYBOARD_PCENH },
+        { MAKELANGID(LANG_JAPANESE, SUBLANG_JAPANESE_JAPAN), key2dik_ja, DIDEVTYPEKEYBOARD_JAPAN106 }
+    };
+    DIDEVCAPS caps = {.dwSize = sizeof(DIDEVCAPS)};
+    const struct key2dik *map;
+    BYTE key_state[256];
+    HKL hkl, old_hkl;
+    WORD vkey, scan;
+    HRESULT hr;
+    ULONG res;
+    UINT i, j;
+
+    hr = IDirectInputDevice_SetDataFormat( device, &c_dfDIKeyboard );
+    ok( hr == DI_OK, "SetDataFormat returned %#lx\n", hr );
+    hr = IDirectInputDevice_Acquire( device );
+    ok( hr == DI_OK, "Acquire returned %#lx\n", hr );
+    hr = IDirectInputDevice_GetCapabilities( device, &caps );
+    ok( hr == DI_OK, "GetDeviceInstance returned %#lx\n", hr );
+
+    for (i = 0; i < ARRAY_SIZE(tests); ++i)
+    {
+        if (tests[i].type != GET_DIDEVICE_SUBTYPE( caps.dwDevType ))
+        {
+            skip( "keyboard type %#x doesn't match for lang %#x\n",
+                  GET_DIDEVICE_SUBTYPE( caps.dwDevType ), tests[i].langid );
+            continue;
+        }
+
+        winetest_push_context( "lang %#x", tests[i].langid );
+
+        hkl = activate_keyboard_layout( tests[i].langid, &old_hkl );
+        if (LOWORD(old_hkl) != MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT) ||
+            LOWORD(hkl) != tests[i].langid) goto skip_key_tests;
+
+        map = tests[i].map;
+        for (j = 0; j < ARRAY_SIZE(key2dik_en); j++)
+        {
+            winetest_push_context( "key %#x, dik %#x", map[j].key, map[j].dik );
+
+            vkey = VkKeyScanExW( map[j].key, hkl );
+            todo_wine_if( map[j].todo )
+            ok( vkey != 0xffff, "VkKeyScanExW failed\n" );
+
+            vkey = LOBYTE(vkey);
+            res = MapVirtualKeyExA( vkey, MAPVK_VK_TO_CHAR, hkl ) & 0xff;
+            todo_wine_if( map[j].todo )
+            ok( res == map[j].key, "MapVirtualKeyExA failed\n" );
+
+            scan = MapVirtualKeyExA( vkey, MAPVK_VK_TO_VSC, hkl );
+            todo_wine_if( map[j].todo )
+            ok( scan, "MapVirtualKeyExA failed\n" );
+
+            keybd_event( vkey, scan, 0, 0 );
+            res = WaitForSingleObject( event, 100 );
+            if (i == 0 && j == 0 && res == WAIT_TIMEOUT) /* Acquire is asynchronous */
+            {
+                keybd_event( vkey, scan, 0, 0 );
+                res = WaitForSingleObject( event, 100 );
+            }
+            ok( !res, "WaitForSingleObject returned %#lx\n", res );
+
+            hr = IDirectInputDevice_GetDeviceState( device, sizeof(key_state), key_state );
+            ok( hr == DI_OK, "GetDeviceState returned %#lx\n", hr );
+
+            todo_wine_if( map[j].todo )
+            ok( key_state[map[j].dik] == 0x80, "got state %#x\n", key_state[map[j].dik] );
+
+            keybd_event( vkey, scan, KEYEVENTF_KEYUP, 0 );
+            res = WaitForSingleObject( event, 100 );
+            ok( !res, "WaitForSingleObject returned %#lx\n", res );
+
+            winetest_pop_context();
+        }
+
+    skip_key_tests:
+        ActivateKeyboardLayout( old_hkl, 0 );
+        UnloadKeyboardLayout( hkl );
+
+        winetest_pop_context();
+    }
+
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_OK, "Unacquire returned %#lx\n", hr );
+}
+
 static void test_sys_keyboard( DWORD version )
 {
     const DIDEVCAPS expect_caps =
@@ -2151,12 +2294,31 @@ static void test_sys_keyboard( DWORD version )
             .dwHow = DIPH_DEVICE,
         },
     };
+
+    LONG key_state[6], zero_state[6] = {0};
+    DIOBJECTDATAFORMAT obj_data_format[] =
+    {
+        {&GUID_Key, sizeof(LONG) * 0, DIDFT_MAKEINSTANCE( DIK_Q ) | DIDFT_BUTTON, 0},
+        {&GUID_Key, sizeof(LONG) * 1, DIDFT_MAKEINSTANCE( DIK_W ) | DIDFT_BUTTON, 0},
+        {&GUID_Key, sizeof(LONG) * 2, DIDFT_MAKEINSTANCE( DIK_E ) | DIDFT_BUTTON, 0},
+        {&GUID_Key, sizeof(LONG) * 4, DIDFT_MAKEINSTANCE( DIK_R ) | DIDFT_BUTTON, 0},
+    };
+    DIDATAFORMAT data_format =
+    {
+        sizeof(DIDATAFORMAT), sizeof(DIOBJECTDATAFORMAT),  DIDF_RELAXIS,
+        sizeof(key_state), ARRAY_SIZE(obj_data_format), obj_data_format,
+    };
+
     DIDEVICEOBJECTINSTANCEW objinst = {0};
     DIDEVICEINSTANCEW devinst = {0};
     BOOL old_localized = localized;
     IDirectInputDevice8W *device;
     DIDEVCAPS caps = {0};
+    BYTE full_state[256];
+    HKL hkl, old_hkl;
+    HWND hwnd, child;
     ULONG res, ref;
+    HANDLE event;
     HRESULT hr;
     GUID guid;
 
@@ -2387,6 +2549,142 @@ static void test_sys_keyboard( DWORD version )
     check_member( objinst, expect_objects[2], "%#lx", dwDimension );
     check_member( objinst, expect_objects[2], "%#04x", wExponent );
     check_member( objinst, expect_objects[2], "%u", wReportId );
+
+
+    hwnd = CreateWindowW( L"static", L"static", WS_POPUP | WS_VISIBLE,
+                          50, 50, 200, 200, NULL, NULL, NULL, NULL );
+    ok( !!hwnd, "CreateWindowW failed, error %lu\n", GetLastError() );
+    flush_events();
+
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_FOREGROUND );
+    ok( hr == DIERR_INVALIDPARAM, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_FOREGROUND|DISCL_EXCLUSIVE );
+    ok( hr == E_HANDLE, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_FOREGROUND|DISCL_NONEXCLUSIVE );
+    ok( hr == E_HANDLE, "SetCooperativeLevel returned %#lx\n", hr );
+
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_BACKGROUND );
+    ok( hr == DIERR_INVALIDPARAM, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_BACKGROUND|DISCL_EXCLUSIVE );
+    ok( hr == E_HANDLE, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_BACKGROUND|DISCL_NONEXCLUSIVE );
+    ok( hr == DI_OK, "SetCooperativeLevel returned %#lx\n", hr );
+
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_FOREGROUND );
+    ok( hr == DIERR_INVALIDPARAM, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_FOREGROUND|DISCL_EXCLUSIVE );
+    todo_wine_if( version == 0x500 )
+    ok( hr == (version == 0x500 ? DIERR_INVALIDPARAM : DI_OK), "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_FOREGROUND|DISCL_NONEXCLUSIVE );
+    ok( hr == DI_OK, "SetCooperativeLevel returned %#lx\n", hr );
+
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_BACKGROUND );
+    ok( hr == DIERR_INVALIDPARAM, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_BACKGROUND|DISCL_EXCLUSIVE );
+    todo_wine_if( version == 0x500 )
+    ok( hr == (version == 0x500 ? DIERR_INVALIDPARAM : DIERR_UNSUPPORTED), "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, hwnd, DISCL_BACKGROUND|DISCL_NONEXCLUSIVE );
+    ok( hr == DI_OK, "SetCooperativeLevel returned %#lx\n", hr );
+
+    child = CreateWindowW( L"static", L"static", WS_CHILD | WS_VISIBLE,
+                           10, 10, 50, 50, hwnd, NULL, NULL, NULL );
+    ok( !!child, "CreateWindowW failed, error %lu\n", GetLastError() );
+    flush_events();
+
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, child, DISCL_FOREGROUND );
+    ok( hr == DIERR_INVALIDPARAM, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, child, DISCL_FOREGROUND|DISCL_EXCLUSIVE );
+    ok( hr == E_HANDLE, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, child, DISCL_FOREGROUND|DISCL_NONEXCLUSIVE );
+    ok( hr == E_HANDLE, "SetCooperativeLevel returned %#lx\n", hr );
+
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, child, DISCL_BACKGROUND );
+    ok( hr == DIERR_INVALIDPARAM, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, child, DISCL_BACKGROUND|DISCL_EXCLUSIVE );
+    ok( hr == E_HANDLE, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, child, DISCL_BACKGROUND|DISCL_NONEXCLUSIVE );
+    ok( hr == E_HANDLE, "SetCooperativeLevel returned %#lx\n", hr );
+
+    DestroyWindow( child );
+
+    event = CreateEventW( NULL, FALSE, FALSE, NULL );
+    ok( !!event, "CreateEventW failed, error %lu\n", GetLastError() );
+
+    hkl = activate_keyboard_layout( MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT), &old_hkl );
+    if (LOWORD(hkl) != MAKELANGID(LANG_ENGLISH, SUBLANG_DEFAULT)) goto skip_key_tests;
+
+    hr = IDirectInputDevice8_SetEventNotification( device, event );
+    ok( hr == DI_OK, "SetEventNotification returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetDataFormat( device, &c_dfDIKeyboard );
+    ok( hr == DI_OK, "SetDataFormat returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetCooperativeLevel( device, NULL, DISCL_NONEXCLUSIVE | DISCL_BACKGROUND );
+    ok( hr == DI_OK, "SetCooperativeLevel returned %#lx\n", hr );
+    hr = IDirectInputDevice8_GetDeviceState( device, 10, full_state );
+    ok( hr == DIERR_NOTACQUIRED, "GetDeviceState returned %#lx\n", hr );
+    hr = IDirectInputDevice8_GetDeviceState( device, sizeof(full_state), full_state );
+    ok( hr == DIERR_NOTACQUIRED, "GetDeviceState returned %#lx\n", hr );
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_NOEFFECT, "Unacquire returned %#lx\n", hr );
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_OK, "Acquire returned %#lx\n", hr );
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_NOEFFECT, "Acquire returned %#lx\n", hr );
+    hr = IDirectInputDevice8_GetDeviceState( device, 10, full_state );
+    ok( hr == DIERR_INVALIDPARAM, "GetDeviceState returned %#lx\n", hr );
+    hr = IDirectInputDevice8_GetDeviceState( device, sizeof(full_state), full_state );
+    ok( hr == DI_OK, "GetDeviceState returned %#lx\n", hr );
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_OK, "Uncquire returned %#lx\n", hr );
+    hr = IDirectInputDevice8_SetDataFormat( device, &data_format );
+    ok( hr == DI_OK, "SetDataFormat returned %#lx\n", hr );
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_OK, "Acquire returned %#lx\n", hr );
+    hr = IDirectInputDevice8_GetDeviceState( device, sizeof(key_state), key_state );
+    ok( hr == DI_OK, "GetDeviceState returned %#lx\n", hr );
+    hr = IDirectInputDevice8_GetDeviceState( device, sizeof(full_state), full_state );
+    ok( hr == DIERR_INVALIDPARAM, "GetDeviceState returned %#lx\n", hr );
+
+    memset( key_state, 0x56, sizeof(key_state) );
+    hr = IDirectInputDevice8_GetDeviceState( device, sizeof(key_state), key_state );
+    ok( hr == DI_OK, "GetDeviceState returned %#lx\n", hr );
+    ok( !memcmp( key_state, zero_state, sizeof(key_state) ), "got non zero state\n" );
+
+    keybd_event( 'Q', 0, 0, 0 );
+    res = WaitForSingleObject( event, 100 );
+    if (res == WAIT_TIMEOUT) /* Acquire is asynchronous */
+    {
+        keybd_event( 'Q', 0, 0, 0 );
+        res = WaitForSingleObject( event, 100 );
+    }
+    ok( !res, "WaitForSingleObject returned %#lx\n", res );
+
+    memset( key_state, 0xcd, sizeof(key_state) );
+    hr = IDirectInputDevice8_GetDeviceState( device, sizeof(key_state), key_state );
+    ok( hr == DI_OK, "GetDeviceState returned %#lx\n", hr );
+    ok( key_state[0] == (version < 0x800 ? 0x80 : 0), "got key_state[0] %lu\n", key_state[0] );
+
+    /* unacquiring should reset the device state */
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_OK, "Unacquire returned %#lx\n", hr );
+    hr = IDirectInputDevice8_Acquire( device );
+    ok( hr == DI_OK, "Acquire returned %#lx\n", hr );
+    hr = IDirectInputDevice8_GetDeviceState( device, sizeof(key_state), key_state );
+    ok( hr == DI_OK, "GetDeviceState returned %#lx\n", hr );
+    ok( !memcmp( key_state, zero_state, sizeof(key_state) ), "got non zero state\n" );
+
+    keybd_event( 'Q', 0, KEYEVENTF_KEYUP, 0 );
+
+    hr = IDirectInputDevice8_Unacquire( device );
+    ok( hr == DI_OK, "Unacquire returned %#lx\n", hr );
+
+skip_key_tests:
+    ActivateKeyboardLayout( old_hkl, 0 );
+    UnloadKeyboardLayout( hkl );
+
+    test_dik_codes( device, event, hwnd );
+
+    CloseHandle( event );
+    DestroyWindow( hwnd );
 
     ref = IDirectInputDevice8_Release( device );
     ok( ref == 0, "Release returned %ld\n", ref );
