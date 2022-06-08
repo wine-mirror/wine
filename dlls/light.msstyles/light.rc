@@ -508,6 +508,98 @@ BLUE_INI TEXTFILE
 "FillColor = 245 245 245\r\n"
 "TextColor = 0 0 0\r\n"
 
+"[Edit.EditText(CueBanner)]\r\n"
+"TextColor = 0 0 0\r\n"
+
+"; No ImageSelectType \r\n"
+"[Edit.Background]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 6\r\n"
+"SizingMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_edit_background_1x6px.bmp\r\n"
+"ImageFile1 = blue_edit_background_1x12px.bmp\r\n"
+"ImageFile2 = blue_edit_background_1x15px.bmp\r\n"
+"ImageFile3 = blue_edit_background_1x18px.bmp\r\n"
+"ImageFile4 = blue_edit_background_1x24px.bmp\r\n"
+"MinDpi1 = 192\r\n"
+"MinDpi2 = 240\r\n"
+"MinDpi3 = 288\r\n"
+"MinDpi4 = 384\r\n"
+"TransitionDurations = 6, "
+"0, 100, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, 100, "
+"100, 100, 0, 100, 100, 100, "
+"100, 100, 100, 0, 100, 100, "
+"100, 100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 100, 0\r\n"
+
+"[Edit.Password]\r\n"
+"GlyphType = FontGlyph\r\n"
+"GlyphIndex = 9679\r\n"
+"GlyphFont = Tahoma, 9\r\n"
+
+"[Edit.EditBorder_NoScroll]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 4\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 2, 2, 2, 2\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_edit_border_noscroll.bmp\r\n"
+"TransitionDurations = 4, "
+"0, 100, 100, 100, "
+"100, 0, 100, 100, "
+"100, 100, 0, 100, "
+"100, 100, 100, 0\r\n"
+
+"[Edit.EditBorder_HScroll]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 4\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 2, 2, 2, 2\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_edit_border_hscroll.bmp\r\n"
+"TransitionDurations = 4, "
+"0, 100, 100, 100, "
+"100, 0, 100, 100, "
+"100, 100, 0, 100, "
+"100, 100, 100, 0\r\n"
+
+"[Edit.EditBorder_VScroll]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 4\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 2, 2, 2, 2\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_edit_border_vscroll.bmp\r\n"
+"TransitionDurations = 4, "
+"0, 100, 100, 100, "
+"100, 0, 100, 100, "
+"100, 100, 0, 100, "
+"100, 100, 100, 0\r\n"
+
+"[Edit.EditBorder_HVScroll]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 4\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 2, 2, 2, 2\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_edit_border_hvscroll.bmp\r\n"
+"TransitionDurations = 4, "
+"0, 100, 100, 100, "
+"100, 0, 100, 100, "
+"100, 100, 0, 100, "
+"100, 100, 100, 0\r\n"
+
 "\r\n; Header\r\n"
 "[Header]\r\n"
 "BgType = ImageFile\r\n"
@@ -1613,6 +1705,34 @@ BLUE_COMBOBOX_DROPDOWNBUTTON_RIGHT_GLYPH_27PX_BMP BITMAP "blue_combobox_dropdown
 
 /* @makedep: blue_combobox_readonly.bmp */
 BLUE_COMBOBOX_READONLY_BMP BITMAP "blue_combobox_readonly.bmp"
+
+/* Edit */
+/* @makedep: blue_edit_background_1x6px.bmp */
+BLUE_EDIT_BACKGROUND_1X6PX_BMP BITMAP "blue_edit_background_1x6px.bmp"
+
+/* @makedep: blue_edit_background_1x12px.bmp */
+BLUE_EDIT_BACKGROUND_1X12PX_BMP BITMAP "blue_edit_background_1x12px.bmp"
+
+/* @makedep: blue_edit_background_1x15px.bmp */
+BLUE_EDIT_BACKGROUND_1X15PX_BMP BITMAP "blue_edit_background_1x15px.bmp"
+
+/* @makedep: blue_edit_background_1x18px.bmp */
+BLUE_EDIT_BACKGROUND_1X18PX_BMP BITMAP "blue_edit_background_1x18px.bmp"
+
+/* @makedep: blue_edit_background_1x24px.bmp */
+BLUE_EDIT_BACKGROUND_1X24PX_BMP BITMAP "blue_edit_background_1x24px.bmp"
+
+/* @makedep: blue_edit_border_noscroll.bmp */
+BLUE_EDIT_BORDER_NOSCROLL_BMP BITMAP "blue_edit_border_noscroll.bmp"
+
+/* @makedep: blue_edit_border_hscroll.bmp */
+BLUE_EDIT_BORDER_HSCROLL_BMP BITMAP "blue_edit_border_hscroll.bmp"
+
+/* @makedep: blue_edit_border_vscroll.bmp */
+BLUE_EDIT_BORDER_VSCROLL_BMP BITMAP "blue_edit_border_vscroll.bmp"
+
+/* @makedep: blue_edit_border_hvscroll.bmp */
+BLUE_EDIT_BORDER_HVSCROLL_BMP BITMAP "blue_edit_border_hvscroll.bmp"
 
 /* Header */
 /* @makedep: blue_header.bmp */

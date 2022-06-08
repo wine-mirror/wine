@@ -47,6 +47,15 @@ SVG_SRCS = \
 	blue_commandlink_glyph_60px.svg \
 	blue_commandlink_glyph_67px.svg \
 	blue_commandlink_glyph_75px.svg \
+	blue_edit_background_1x12px.svg \
+	blue_edit_background_1x15px.svg \
+	blue_edit_background_1x18px.svg \
+	blue_edit_background_1x24px.svg \
+	blue_edit_background_1x6px.svg \
+	blue_edit_border_hscroll.svg \
+	blue_edit_border_hvscroll.svg \
+	blue_edit_border_noscroll.svg \
+	blue_edit_border_vscroll.svg \
 	blue_groupbox.svg \
 	blue_header.svg \
 	blue_header_item.svg \
