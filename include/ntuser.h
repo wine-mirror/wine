@@ -1018,7 +1018,6 @@ enum
     NtUserCallHwndParam_GetClassLongPtrW,
     NtUserCallHwndParam_GetClassWord,
     NtUserCallHwndParam_GetClientRect,
-    NtUserCallHwndParam_GetMinMaxInfo,
     NtUserCallHwndParam_GetWindowInfo,
     NtUserCallHwndParam_GetWindowLongA,
     NtUserCallHwndParam_GetWindowLongW,
@@ -1083,13 +1082,6 @@ static inline WORD NtUserGetClassWord( HWND hwnd, INT offset )
 static inline BOOL NtUserGetClientRect( HWND hwnd, RECT *rect )
 {
     return NtUserCallHwndParam( hwnd, (UINT_PTR)rect, NtUserCallHwndParam_GetClientRect );
-}
-
-static inline MINMAXINFO NtUserGetMinMaxInfo( HWND hwnd )
-{
-    MINMAXINFO info;
-    NtUserCallHwndParam( hwnd, (UINT_PTR)&info, NtUserCallHwndParam_GetMinMaxInfo );
-    return info;
 }
 
 static inline BOOL NtUserGetWindowInfo( HWND hwnd, WINDOWINFO *info )

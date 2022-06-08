@@ -932,6 +932,11 @@ BOOL WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *pre
         set_bk_color( dc, value );
         break;
 
+    case NtGdiSetBkMode:
+        prev = dc->attr->background_mode;
+        dc->attr->background_mode = value;
+        break;
+
     case NtGdiSetTextColor:
         prev = dc->attr->text_color;
         set_text_color( dc, value );
@@ -954,6 +959,11 @@ BOOL WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *pre
     case NtGdiSetGraphicsMode:
         prev = dc->attr->graphics_mode;
         ret = set_graphics_mode( dc, value );
+        break;
+
+    case NtGdiSetROP2:
+        prev = dc->attr->rop_mode;
+        dc->attr->rop_mode = value;
         break;
 
     default:

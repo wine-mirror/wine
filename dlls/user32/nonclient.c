@@ -1545,11 +1545,6 @@ LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
 
     switch (wParam & 0xfff0)
     {
-    case SC_SIZE:
-    case SC_MOVE:
-        WINPOS_SysCommandSizeMove( hwnd, wParam );
-        break;
-
     case SC_CLOSE:
         return SendMessageW( hwnd, WM_CLOSE, 0, 0 );
 

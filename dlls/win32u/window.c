@@ -737,7 +737,7 @@ BOOL is_child( HWND parent, HWND child )
 }
 
 /* see IsWindowVisible */
-static BOOL is_window_visible( HWND hwnd )
+BOOL is_window_visible( HWND hwnd )
 {
     HWND *list;
     BOOL retval = TRUE;
@@ -965,7 +965,7 @@ BOOL is_iconic( HWND hwnd )
     return (get_window_long( hwnd, GWL_STYLE ) & WS_MINIMIZE) != 0;
 }
 
-static BOOL is_zoomed( HWND hwnd )
+BOOL is_zoomed( HWND hwnd )
 {
     return (get_window_long( hwnd, GWL_STYLE ) & WS_MAXIMIZE) != 0;
 }
@@ -5438,10 +5438,6 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
 
     case NtUserCallHwndParam_GetClientRect:
         return get_client_rect( hwnd, (RECT *)param );
-
-    case NtUserCallHwndParam_GetMinMaxInfo:
-        *(MINMAXINFO *)param = get_min_max_info( hwnd );
-        return 0;
 
     case NtUserCallHwndParam_GetWindowInfo:
         return get_window_info( hwnd, (WINDOWINFO *)param );

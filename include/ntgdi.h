@@ -109,10 +109,12 @@ enum
     NtGdiSetMapMode = 8,
     /* not compatible with Windows */
     NtGdiSetBkColor = 100,
+    NtGdiSetBkMode,
     NtGdiSetTextColor,
     NtGdiSetDCBrushColor,
     NtGdiSetDCPenColor,
     NtGdiSetGraphicsMode,
+    NtGdiSetROP2,
 };
 
 /* NtGdiGetDCDword parameter, not compatible with Windows */

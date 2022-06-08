@@ -42,6 +42,30 @@ void fill_rect( HDC dc, const RECT *rect, HBRUSH hbrush )
     if (prev_brush) NtGdiSelectBrush( dc, prev_brush );
 }
 
+/* see DrawFocusRect */
+static BOOL draw_focus_rect( HDC hdc, const RECT *rc )
+{
+    DWORD prev_draw_mode, prev_bk_mode;
+    HPEN prev_pen, pen;
+    HBRUSH prev_brush;
+
+    prev_brush = NtGdiSelectBrush(hdc, GetStockObject(NULL_BRUSH));
+    pen = NtGdiExtCreatePen( PS_COSMETIC|PS_ALTERNATE, 1, BS_SOLID,
+                             0, 0, 0, 0, NULL, 0, FALSE, NULL );
+    prev_pen = NtGdiSelectPen(hdc, pen);
+    NtGdiGetAndSetDCDword( hdc, NtGdiSetROP2, R2_NOT, &prev_draw_mode );
+    NtGdiGetAndSetDCDword( hdc, NtGdiSetBkMode, TRANSPARENT, &prev_bk_mode );
+
+    NtGdiRectangle( hdc, rc->left, rc->top, rc->right, rc->bottom );
+
+    NtGdiGetAndSetDCDword( hdc, NtGdiSetBkMode, prev_bk_mode, NULL );
+    NtGdiGetAndSetDCDword( hdc, NtGdiSetROP2, prev_draw_mode, NULL );
+    NtGdiSelectPen( hdc, prev_pen );
+    NtGdiDeleteObjectApp( pen );
+    NtGdiSelectBrush( hdc, prev_brush );
+    return TRUE;
+}
+
 /***********************************************************************
  *           AdjustWindowRectEx (win32u.so)
  */
@@ -216,6 +240,414 @@ static LONG handle_window_pos_changing( HWND hwnd, WINDOWPOS *winpos )
     return 0;
 }
 
+/***********************************************************************
+ *           draw_moving_frame
+ *
+ * Draw the frame used when moving or resizing window.
+ */
+static void draw_moving_frame( HWND parent, HDC hdc, RECT *screen_rect, BOOL thickframe )
+{
+    RECT rect = *screen_rect;
+
+    if (parent) map_window_points( 0, parent, (POINT *)&rect, 2, get_thread_dpi() );
+    if (thickframe)
+    {
+        const int width = get_system_metrics( SM_CXFRAME );
+        const int height = get_system_metrics( SM_CYFRAME );
+
+        HBRUSH hbrush = NtGdiSelectBrush( hdc, GetStockObject( GRAY_BRUSH ));
+        NtGdiPatBlt( hdc, rect.left, rect.top,
+                     rect.right - rect.left - width, height, PATINVERT );
+        NtGdiPatBlt( hdc, rect.left, rect.top + height, width,
+                     rect.bottom - rect.top - height, PATINVERT );
+        NtGdiPatBlt( hdc, rect.left + width, rect.bottom - 1,
+                     rect.right - rect.left - width, -height, PATINVERT );
+        NtGdiPatBlt( hdc, rect.right - 1, rect.top, -width,
+                     rect.bottom - rect.top - height, PATINVERT );
+        NtGdiSelectBrush( hdc, hbrush );
+    }
+    else draw_focus_rect( hdc, &rect );
+}
+
+/***********************************************************************
+ *           start_size_move
+ *
+ * Initialization of a move or resize, when initiated from a menu choice.
+ * Return hit test code for caption or sizing border.
+ */
+static LONG start_size_move( HWND hwnd, WPARAM wparam, POINT *capture_point, LONG style )
+{
+    RECT window_rect;
+    LONG hittest = 0;
+    POINT pt;
+    MSG msg;
+
+    get_window_rect( hwnd, &window_rect, get_thread_dpi() );
+
+    if ((wparam & 0xfff0) == SC_MOVE)
+    {
+        /* Move pointer at the center of the caption */
+        RECT rect = window_rect;
+        /* Note: to be exactly centered we should take the different types
+         * of border into account, but it shouldn't make more than a few pixels
+         * of difference so let's not bother with that */
+        rect.top += get_system_metrics( SM_CYBORDER );
+        if (style & WS_SYSMENU)     rect.left  += get_system_metrics( SM_CXSIZE ) + 1;
+        if (style & WS_MINIMIZEBOX) rect.right -= get_system_metrics( SM_CXSIZE ) + 1;
+        if (style & WS_MAXIMIZEBOX) rect.right -= get_system_metrics( SM_CXSIZE ) + 1;
+        pt.x = (rect.right + rect.left) / 2;
+        pt.y = rect.top + get_system_metrics( SM_CYSIZE ) / 2;
+        hittest = HTCAPTION;
+        *capture_point = pt;
+    }
+    else  /* SC_SIZE */
+    {
+        HCURSOR cursor;
+        cursor = LoadImageW( 0, (WCHAR *)IDC_SIZEALL, IMAGE_CURSOR, 0, 0, LR_SHARED | LR_DEFAULTSIZE );
+        NtUserSetCursor( cursor );
+        pt.x = pt.y = 0;
+        while (!hittest)
+        {
+            if (!NtUserGetMessage( &msg, 0, 0, 0 )) return 0;
+            if (NtUserCallMsgFilter( &msg, MSGF_SIZE )) continue;
+
+            switch (msg.message)
+            {
+            case WM_MOUSEMOVE:
+                pt.x = min( max( msg.pt.x, window_rect.left ), window_rect.right - 1 );
+                pt.y = min( max( msg.pt.y, window_rect.top ), window_rect.bottom - 1 );
+                hittest = send_message( hwnd, WM_NCHITTEST, 0, MAKELONG( pt.x, pt.y ));
+                if (hittest < HTLEFT || hittest > HTBOTTOMRIGHT) hittest = 0;
+                break;
+
+            case WM_LBUTTONUP:
+                return 0;
+
+            case WM_KEYDOWN:
+                switch (msg.wParam)
+                {
+                case VK_UP:
+                    hittest = HTTOP;
+                    pt.x = (window_rect.left + window_rect.right) / 2;
+                    pt.y = window_rect.top + get_system_metrics( SM_CYFRAME ) / 2;
+                    break;
+                case VK_DOWN:
+                    hittest = HTBOTTOM;
+                    pt.x = (window_rect.left + window_rect.right) / 2;
+                    pt.y = window_rect.bottom - get_system_metrics( SM_CYFRAME ) / 2;
+                    break;
+                case VK_LEFT:
+                    hittest = HTLEFT;
+                    pt.x = window_rect.left + get_system_metrics( SM_CXFRAME ) / 2;
+                    pt.y = (window_rect.top + window_rect.bottom) / 2;
+                    break;
+                case VK_RIGHT:
+                    hittest = HTRIGHT;
+                    pt.x = window_rect.right - get_system_metrics( SM_CXFRAME ) / 2;
+                    pt.y = (window_rect.top + window_rect.bottom) / 2;
+                    break;
+                case VK_RETURN:
+                case VK_ESCAPE:
+                    return 0;
+                }
+                break;
+            default:
+                NtUserTranslateMessage( &msg, 0 );
+                NtUserDispatchMessage( &msg );
+                break;
+            }
+        }
+        *capture_point = pt;
+    }
+    NtUserSetCursorPos( pt.x, pt.y );
+    send_message( hwnd, WM_SETCURSOR, (WPARAM)hwnd, MAKELONG( hittest, WM_MOUSEMOVE ));
+    return hittest;
+}
+
+static BOOL on_left_border( int hit )
+{
+    return hit == HTLEFT || hit == HTTOPLEFT || hit == HTBOTTOMLEFT;
+}
+
+static BOOL on_right_border( int hit )
+{
+    return hit == HTRIGHT || hit == HTTOPRIGHT || hit == HTBOTTOMRIGHT;
+}
+
+static BOOL on_top_border( int hit )
+{
+    return hit == HTTOP || hit == HTTOPLEFT || hit == HTTOPRIGHT;
+}
+
+static BOOL on_bottom_border( int hit )
+{
+    return hit == HTBOTTOM || hit == HTBOTTOMLEFT || hit == HTBOTTOMRIGHT;
+}
+
+/***********************************************************************
+ *           sys_command_size_move
+ *
+ * Perform SC_MOVE and SC_SIZE commands.
+ */
+static void sys_command_size_move( HWND hwnd, WPARAM wparam )
+{
+    DWORD msg_pos = NtUserGetThreadInfo()->message_pos;
+    BOOL thickframe, drag_full_windows = TRUE, moved = FALSE;
+    RECT sizing_rect, mouse_rect, orig_rect;
+    LONG hittest = wparam & 0x0f;
+    WPARAM syscommand = wparam & 0xfff0;
+    LONG style = get_window_long( hwnd, GWL_STYLE );
+    POINT capture_point, pt;
+    MINMAXINFO minmax;
+    HMONITOR mon = 0;
+    HWND parent;
+    UINT dpi;
+    HDC hdc;
+    MSG msg;
+
+    if (is_zoomed( hwnd ) || !is_window_visible( hwnd )) return;
+
+    thickframe = (style & WS_THICKFRAME) && !((style & (WS_DLGFRAME | WS_BORDER)) == WS_DLGFRAME);
+
+    pt.x = (short)LOWORD(msg_pos);
+    pt.y = (short)HIWORD(msg_pos);
+    capture_point = pt;
+    NtUserClipCursor( NULL );
+
+    TRACE( "hwnd %p command %04lx, hittest %d, pos %d,%d\n",
+           hwnd, syscommand, hittest, pt.x, pt.y );
+
+    if (syscommand == SC_MOVE)
+    {
+        if (!hittest) hittest = start_size_move( hwnd, wparam, &capture_point, style );
+        if (!hittest) return;
+    }
+    else  /* SC_SIZE */
+    {
+        if (hittest && syscommand != SC_MOUSEMENU)
+            hittest += (HTLEFT - WMSZ_LEFT);
+        else
+        {
+            set_capture_window( hwnd, GUI_INMOVESIZE, NULL );
+            hittest = start_size_move( hwnd, wparam, &capture_point, style );
+            if (!hittest)
+            {
+                set_capture_window( 0, GUI_INMOVESIZE, NULL );
+                return;
+            }
+        }
+    }
+
+    minmax = get_min_max_info( hwnd );
+    dpi = get_thread_dpi();
+    get_window_rects( hwnd, COORDS_PARENT, &sizing_rect, NULL, dpi );
+    orig_rect = sizing_rect;
+    if (style & WS_CHILD)
+    {
+        parent = get_parent( hwnd );
+        get_client_rect( parent, &mouse_rect );
+        map_window_points( parent, 0, (POINT *)&mouse_rect, 2, dpi );
+        map_window_points( parent, 0, (POINT *)&sizing_rect, 2, dpi );
+    }
+    else
+    {
+        parent = 0;
+        mouse_rect = get_virtual_screen_rect( get_thread_dpi() );
+        mon = monitor_from_point( pt, MONITOR_DEFAULTTONEAREST, dpi );
+    }
+
+    if (on_left_border( hittest ))
+    {
+        mouse_rect.left = max( mouse_rect.left,
+                sizing_rect.right - minmax.ptMaxTrackSize.x + capture_point.x - sizing_rect.left );
+        mouse_rect.right = min( mouse_rect.right,
+                sizing_rect.right - minmax.ptMinTrackSize.x + capture_point.x - sizing_rect.left );
+    }
+    else if (on_right_border( hittest ))
+    {
+        mouse_rect.left  = max( mouse_rect.left,
+                sizing_rect.left + minmax.ptMinTrackSize.x + capture_point.x - sizing_rect.right );
+        mouse_rect.right = min( mouse_rect.right,
+                sizing_rect.left + minmax.ptMaxTrackSize.x + capture_point.x - sizing_rect.right );
+    }
+
+    if (on_top_border( hittest ))
+    {
+        mouse_rect.top = max( mouse_rect.top,
+                sizing_rect.bottom - minmax.ptMaxTrackSize.y + capture_point.y - sizing_rect.top );
+        mouse_rect.bottom = min( mouse_rect.bottom,
+                sizing_rect.bottom - minmax.ptMinTrackSize.y + capture_point.y - sizing_rect.top );
+    }
+    else if (on_bottom_border( hittest ))
+    {
+        mouse_rect.top = max( mouse_rect.top,
+                sizing_rect.top + minmax.ptMinTrackSize.y + capture_point.y - sizing_rect.bottom );
+        mouse_rect.bottom = min( mouse_rect.bottom,
+                sizing_rect.top + minmax.ptMaxTrackSize.y + capture_point.y - sizing_rect.bottom );
+    }
+
+    /* Retrieve a default cache DC (without using the window style) */
+    hdc = NtUserGetDCEx( parent, 0, DCX_CACHE );
+
+    /* we only allow disabling the full window drag for child windows */
+    if (parent) NtUserSystemParametersInfo( SPI_GETDRAGFULLWINDOWS, 0, &drag_full_windows, 0 );
+
+    /* repaint the window before moving it around */
+    NtUserRedrawWindow( hwnd, NULL, 0, RDW_UPDATENOW | RDW_ALLCHILDREN );
+
+    send_message( hwnd, WM_ENTERSIZEMOVE, 0, 0 );
+    set_capture_window( hwnd, GUI_INMOVESIZE, NULL );
+
+    for (;;)
+    {
+        int dx = 0, dy = 0;
+
+        if (!NtUserGetMessage( &msg, 0, 0, 0 )) break;
+        if (NtUserCallMsgFilter( &msg, MSGF_SIZE )) continue;
+
+        /* Exit on button-up, Return, or Esc */
+        if (msg.message == WM_LBUTTONUP ||
+            (msg.message == WM_KEYDOWN && (msg.wParam == VK_RETURN || msg.wParam == VK_ESCAPE)))
+            break;
+
+        if (msg.message != WM_KEYDOWN && msg.message != WM_MOUSEMOVE)
+        {
+            NtUserTranslateMessage( &msg, 0 );
+            NtUserDispatchMessage( &msg );
+            continue;  /* We are not interested in other messages */
+        }
+
+        pt = msg.pt;
+
+        if (msg.message == WM_KEYDOWN)
+        {
+            switch (msg.wParam)
+            {
+            case VK_UP:    pt.y -= 8; break;
+            case VK_DOWN:  pt.y += 8; break;
+            case VK_LEFT:  pt.x -= 8; break;
+            case VK_RIGHT: pt.x += 8; break;
+            }
+        }
+
+        pt.x = max( pt.x, mouse_rect.left );
+        pt.x = min( pt.x, mouse_rect.right - 1 );
+        pt.y = max( pt.y, mouse_rect.top );
+        pt.y = min( pt.y, mouse_rect.bottom - 1 );
+
+        if (!parent)
+        {
+            HMONITOR newmon;
+            MONITORINFO info;
+
+            if ((newmon = monitor_from_point( pt, MONITOR_DEFAULTTONULL, get_thread_dpi() )))
+                mon = newmon;
+
+            info.cbSize = sizeof(info);
+            if (mon && get_monitor_info( mon, &info ))
+            {
+                pt.x = max( pt.x, info.rcWork.left );
+                pt.x = min( pt.x, info.rcWork.right - 1 );
+                pt.y = max( pt.y, info.rcWork.top );
+                pt.y = min( pt.y, info.rcWork.bottom - 1 );
+            }
+        }
+
+        dx = pt.x - capture_point.x;
+        dy = pt.y - capture_point.y;
+
+        if (dx || dy)
+        {
+            if (!moved)
+            {
+                moved = TRUE;
+                if (!drag_full_windows)
+                    draw_moving_frame( parent, hdc, &sizing_rect, thickframe );
+            }
+
+            if (msg.message == WM_KEYDOWN) NtUserSetCursorPos( pt.x, pt.y );
+            else
+            {
+                if (!drag_full_windows) draw_moving_frame( parent, hdc, &sizing_rect, thickframe );
+                if (hittest == HTCAPTION || hittest == HTBORDER) OffsetRect( &sizing_rect, dx, dy );
+                if (on_left_border( hittest )) sizing_rect.left += dx;
+                else if (on_right_border( hittest )) sizing_rect.right += dx;
+                if (on_top_border( hittest )) sizing_rect.top += dy;
+                else if (on_bottom_border( hittest )) sizing_rect.bottom += dy;
+                capture_point = pt;
+
+                /* determine the hit location */
+                if (syscommand == SC_SIZE && hittest != HTBORDER)
+                {
+                    WPARAM sizing_hit = 0;
+
+                    if (hittest >= HTLEFT && hittest <= HTBOTTOMRIGHT)
+                        sizing_hit = WMSZ_LEFT + (hittest - HTLEFT);
+                    send_message( hwnd, WM_SIZING, sizing_hit, (LPARAM)&sizing_rect );
+                }
+                else
+                    send_message( hwnd, WM_MOVING, 0, (LPARAM)&sizing_rect );
+
+                if (!drag_full_windows)
+                    draw_moving_frame( parent, hdc, &sizing_rect, thickframe );
+                else
+                {
+                    RECT rect = sizing_rect;
+                    map_window_points( 0, parent, (POINT *)&rect, 2, get_thread_dpi() );
+                    NtUserSetWindowPos( hwnd, 0, rect.left, rect.top,
+                                        rect.right - rect.left, rect.bottom - rect.top,
+                                        hittest == HTCAPTION ? SWP_NOSIZE : 0 );
+                }
+            }
+        }
+    }
+
+    if (moved && !drag_full_windows)
+        draw_moving_frame( parent, hdc, &sizing_rect, thickframe );
+
+    set_capture_window( 0, GUI_INMOVESIZE, NULL );
+    NtUserReleaseDC( parent, hdc );
+    if (parent) map_window_points( 0, parent, (POINT *)&sizing_rect, 2, get_thread_dpi() );
+
+    if (call_hooks( WH_CBT, HCBT_MOVESIZE, (WPARAM)hwnd, (LPARAM)&sizing_rect, TRUE ))
+        moved = FALSE;
+
+    send_message( hwnd, WM_EXITSIZEMOVE, 0, 0 );
+    send_message( hwnd, WM_SETVISIBLE, !is_iconic(hwnd), 0 );
+
+    /* window moved or resized */
+    if (moved)
+    {
+        /* if the moving/resizing isn't canceled call SetWindowPos
+         * with the new position or the new size of the window
+         */
+        if (!(msg.message == WM_KEYDOWN && msg.wParam == VK_ESCAPE) )
+        {
+            /* NOTE: SWP_NOACTIVATE prevents document window activation in Word 6 */
+            if (!drag_full_windows)
+                NtUserSetWindowPos( hwnd, 0, sizing_rect.left, sizing_rect.top,
+                                    sizing_rect.right - sizing_rect.left,
+                                    sizing_rect.bottom - sizing_rect.top,
+                                    hittest == HTCAPTION ? SWP_NOSIZE : 0 );
+        }
+        else
+        {
+            /* restore previous size/position */
+            if (drag_full_windows)
+                NtUserSetWindowPos( hwnd, 0, orig_rect.left, orig_rect.top,
+                                    orig_rect.right - orig_rect.left,
+                                    orig_rect.bottom - orig_rect.top,
+                                    hittest == HTCAPTION ? SWP_NOSIZE : 0 );
+        }
+    }
+
+    if (is_iconic(hwnd) && !moved && (style & WS_SYSMENU))
+    {
+        /* Single click brings up the system menu when iconized */
+        send_message( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU + HTSYSMENU, MAKELONG(pt.x, pt.y) );
+    }
+}
+
 static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
     if (!is_window_enabled( hwnd )) return 0;
@@ -228,6 +660,11 @@ static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
 
     switch (wparam & 0xfff0)
     {
+    case SC_SIZE:
+    case SC_MOVE:
+        sys_command_size_move( hwnd, wparam );
+        break;
+
     case SC_MINIMIZE:
         show_owned_popups( hwnd, FALSE );
         NtUserShowWindow( hwnd, SW_MINIMIZE );
