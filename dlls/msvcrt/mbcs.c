@@ -333,8 +333,8 @@ threadmbcinfo* create_mbcinfo(int cp, LCID lcid, threadmbcinfo *old_mbcinfo)
   }
 
   GetStringTypeW(CT_CTYPE1, bufW, charcount, chartypes);
-  LCMapStringW(lcid, LCMAP_LOWERCASE, bufW, charcount, lowW, charcount);
-  LCMapStringW(lcid, LCMAP_UPPERCASE, bufW, charcount, upW, charcount);
+  LCMapStringW(mbcinfo->mblcid, LCMAP_LOWERCASE, bufW, charcount, lowW, charcount);
+  LCMapStringW(mbcinfo->mblcid, LCMAP_UPPERCASE, bufW, charcount, upW, charcount);
 
   charcount = 0;
   for (i = 0; i < maxchar; i++)
