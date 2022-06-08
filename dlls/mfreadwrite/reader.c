@@ -92,6 +92,7 @@ struct media_stream
     unsigned int flags;
     unsigned int requests;
     unsigned int responses;
+    LONGLONG last_sample_ts;
     struct source_reader *reader;
 };
 
@@ -160,7 +161,6 @@ struct source_reader
     IUnknown *device_manager;
     unsigned int first_audio_stream_index;
     unsigned int first_video_stream_index;
-    unsigned int last_read_index;
     DWORD stream_count;
     unsigned int flags;
     DWORD queue;
@@ -458,6 +458,8 @@ static HRESULT source_reader_queue_response(struct source_reader *reader, struct
     stream->responses++;
 
     source_reader_response_ready(reader, response);
+
+    stream->last_sample_ts = timestamp;
 
     return S_OK;
 }
@@ -1101,10 +1103,11 @@ static BOOL source_reader_get_read_result(struct source_reader *reader, struct m
 
 static HRESULT source_reader_get_next_selected_stream(struct source_reader *reader, DWORD *stream_index)
 {
-    unsigned int i, first_selected = ~0u, requests = ~0u;
+    unsigned int i, first_selected = ~0u;
     BOOL selected, stream_drained;
+    LONGLONG min_ts = MAXLONGLONG;
 
-    for (i = (reader->last_read_index + 1) % reader->stream_count; ; i = (i + 1) % reader->stream_count)
+    for (i = 0; i < reader->stream_count; ++i)
     {
         stream_drained = reader->streams[i].state == STREAM_STATE_EOS && !reader->streams[i].responses;
         selected = SUCCEEDED(source_reader_get_stream_selection(reader, i, &selected)) && selected;
@@ -1114,24 +1117,20 @@ static HRESULT source_reader_get_next_selected_stream(struct source_reader *read
             if (first_selected == ~0u)
                 first_selected = i;
 
-            /* Try to balance pending reads. */
-            if (!stream_drained && reader->streams[i].requests < requests)
+            /* Pick the stream whose last sample had the lowest timestamp. */
+            if (!stream_drained && reader->streams[i].last_sample_ts < min_ts)
             {
-                requests = reader->streams[i].requests;
+                min_ts = reader->streams[i].last_sample_ts;
                 *stream_index = i;
             }
         }
-
-        if (i == reader->last_read_index)
-            break;
     }
 
     /* If all selected streams reached EOS, use first selected. */
     if (first_selected != ~0u)
     {
-        if (requests == ~0u)
+        if (min_ts == MAXLONGLONG)
             *stream_index = first_selected;
-        reader->last_read_index = *stream_index;
     }
 
     return first_selected == ~0u ? MF_E_MEDIA_SOURCE_NO_STREAMS_SELECTED : S_OK;
@@ -1499,7 +1498,12 @@ static HRESULT WINAPI src_reader_SetStreamSelection(IMFSourceReader *iface, DWOR
     }
 
     if (selection_changed)
-        reader->last_read_index = reader->stream_count - 1;
+    {
+        for (i = 0; i < reader->stream_count; ++i)
+        {
+            reader->streams[i].last_sample_ts = 0;
+        }
+    }
 
     LeaveCriticalSection(&reader->cs);
 
@@ -1911,6 +1915,11 @@ static HRESULT WINAPI src_reader_SetCurrentPosition(IMFSourceReader *iface, REFG
 
     if (SUCCEEDED(hr))
     {
+        for (i = 0; i < reader->stream_count; ++i)
+        {
+            reader->streams[i].last_sample_ts = 0;
+        }
+
         if (reader->async_callback)
         {
             if (SUCCEEDED(hr = source_reader_create_async_op(SOURCE_READER_ASYNC_SEEK, &command)))
@@ -2357,7 +2366,6 @@ static HRESULT create_source_reader_from_source(IMFMediaSource *source, IMFAttri
     /* At least one major type has to be set. */
     object->first_audio_stream_index = reader_get_first_stream_index(object->descriptor, &MFMediaType_Audio);
     object->first_video_stream_index = reader_get_first_stream_index(object->descriptor, &MFMediaType_Video);
-    object->last_read_index = object->stream_count - 1;
 
     if (object->first_audio_stream_index == MF_SOURCE_READER_INVALID_STREAM_INDEX &&
             object->first_video_stream_index == MF_SOURCE_READER_INVALID_STREAM_INDEX)

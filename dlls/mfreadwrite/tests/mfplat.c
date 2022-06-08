@@ -994,7 +994,7 @@ static void test_source_reader_from_media_source(void)
 
     /* Once the last read sample of all streams has the same timestamp value, the reader will
        continue reading from the first stream until its timestamp increases. */
-    todo_wine ok(!actual_index, "%d: Unexpected stream index %lu.\n", TEST_SOURCE_NUM_STREAMS + 1, actual_index);
+    ok(!actual_index, "%d: Unexpected stream index %lu.\n", TEST_SOURCE_NUM_STREAMS + 1, actual_index);
 
     IMFSample_Release(sample);
 
@@ -1231,8 +1231,7 @@ static void test_source_reader_from_media_source(void)
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
         ok(!stream_flags, "Unexpected stream flags %#lx.\n", stream_flags);
         ok(!!sample, "Expected sample object.\n");
-        todo_wine_if (actual_index != expected_sample_order[i])
-            ok (actual_index == expected_sample_order[i], "Got sample %u from unexpected stream %lu, expected %lu.\n",
+        ok (actual_index == expected_sample_order[i], "Got sample %u from unexpected stream %lu, expected %lu.\n",
                 i, actual_index, expected_sample_order[i]);
         IMFSample_Release(sample);
     }
