@@ -3603,7 +3603,6 @@ static void test_create_buffer(void)
             continue;
         }
 
-        todo_wine
         check_interface(buffer, &IID_IDXGIResource, TRUE, FALSE);
 
         if (!(desc.MiscFlags & D3D11_RESOURCE_MISC_BUFFER_STRUCTURED))

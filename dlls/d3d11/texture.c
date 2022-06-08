@@ -413,7 +413,7 @@ static const struct wined3d_parent_ops d3d_texture1d_wined3d_parent_ops =
     d3d_texture1d_wined3d_object_released,
 };
 
-static HRESULT d3d_device_create_dxgi_resource(IUnknown *device, struct wined3d_resource *wined3d_resource,
+HRESULT d3d_device_create_dxgi_resource(IUnknown *device, struct wined3d_resource *wined3d_resource,
         IUnknown *outer, BOOL needs_surface, IUnknown **dxgi_resource)
 {
     IWineDXGIDevice *wine_device;

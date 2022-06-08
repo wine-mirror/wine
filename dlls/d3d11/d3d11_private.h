@@ -72,6 +72,8 @@ DWORD wined3d_map_flags_from_d3d11_map_type(D3D11_MAP map_type) DECLSPEC_HIDDEN;
 DWORD wined3d_map_flags_from_d3d10_map_type(D3D10_MAP map_type) DECLSPEC_HIDDEN;
 DWORD wined3d_clear_flags_from_d3d11_clear_flags(UINT clear_flags) DECLSPEC_HIDDEN;
 unsigned int wined3d_access_from_d3d11(D3D11_USAGE usage, UINT cpu_access) DECLSPEC_HIDDEN;
+HRESULT d3d_device_create_dxgi_resource(IUnknown *device, struct wined3d_resource *wined3d_resource,
+        IUnknown *outer, BOOL needs_surface, IUnknown **dxgi_resource) DECLSPEC_HIDDEN;
 
 enum D3D11_USAGE d3d11_usage_from_d3d10_usage(enum D3D10_USAGE usage) DECLSPEC_HIDDEN;
 enum D3D10_USAGE d3d10_usage_from_d3d11_usage(enum D3D11_USAGE usage) DECLSPEC_HIDDEN;
@@ -188,7 +190,7 @@ struct d3d_buffer
     ID3D10Buffer ID3D10Buffer_iface;
     LONG refcount;
 
-    struct wined3d_private_store private_store;
+    IUnknown *dxgi_resource;
     struct wined3d_buffer *wined3d_buffer;
     D3D11_BUFFER_DESC desc;
     ID3D11Device2 *device;

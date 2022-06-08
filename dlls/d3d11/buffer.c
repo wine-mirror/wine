@@ -31,6 +31,7 @@ static inline struct d3d_buffer *impl_from_ID3D11Buffer(ID3D11Buffer *iface)
 static HRESULT STDMETHODCALLTYPE d3d11_buffer_QueryInterface(ID3D11Buffer *iface, REFIID riid, void **out)
 {
     struct d3d_buffer *buffer = impl_from_ID3D11Buffer(iface);
+    HRESULT hr;
 
     TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
 
@@ -53,10 +54,13 @@ static HRESULT STDMETHODCALLTYPE d3d11_buffer_QueryInterface(ID3D11Buffer *iface
         return S_OK;
     }
 
-    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+    if (FAILED(hr = IUnknown_QueryInterface(buffer->dxgi_resource, riid, out)))
+    {
+        WARN("%s not implemented, returning %#lx.\n", debugstr_guid(riid), hr);
+        *out = NULL;
+    }
 
-    *out = NULL;
-    return E_NOINTERFACE;
+    return hr;
 }
 
 static ULONG STDMETHODCALLTYPE d3d11_buffer_AddRef(ID3D11Buffer *iface)
@@ -109,30 +113,54 @@ static HRESULT STDMETHODCALLTYPE d3d11_buffer_GetPrivateData(ID3D11Buffer *iface
         REFGUID guid, UINT *data_size, void *data)
 {
     struct d3d_buffer *buffer = impl_from_ID3D11Buffer(iface);
+    IDXGIResource *dxgi_resource;
+    HRESULT hr;
 
     TRACE("iface %p, guid %s, data_size %p, data %p.\n", iface, debugstr_guid(guid), data_size, data);
 
-    return d3d_get_private_data(&buffer->private_store, guid, data_size, data);
+    if (SUCCEEDED(hr = IUnknown_QueryInterface(buffer->dxgi_resource, &IID_IDXGIResource, (void **)&dxgi_resource)))
+    {
+        hr = IDXGIResource_GetPrivateData(dxgi_resource, guid, data_size, data);
+        IDXGIResource_Release(dxgi_resource);
+    }
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_buffer_SetPrivateData(ID3D11Buffer *iface,
         REFGUID guid, UINT data_size, const void *data)
 {
     struct d3d_buffer *buffer = impl_from_ID3D11Buffer(iface);
+    IDXGIResource *dxgi_resource;
+    HRESULT hr;
 
     TRACE("iface %p, guid %s, data_size %u, data %p.\n", iface, debugstr_guid(guid), data_size, data);
 
-    return d3d_set_private_data(&buffer->private_store, guid, data_size, data);
+    if (SUCCEEDED(hr = IUnknown_QueryInterface(buffer->dxgi_resource, &IID_IDXGIResource, (void **)&dxgi_resource)))
+    {
+        hr = IDXGIResource_SetPrivateData(dxgi_resource, guid, data_size, data);
+        IDXGIResource_Release(dxgi_resource);
+    }
+
+    return hr;
 }
 
 static HRESULT STDMETHODCALLTYPE d3d11_buffer_SetPrivateDataInterface(ID3D11Buffer *iface,
         REFGUID guid, const IUnknown *data)
 {
     struct d3d_buffer *buffer = impl_from_ID3D11Buffer(iface);
+    IDXGIResource *dxgi_resource;
+    HRESULT hr;
 
     TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
 
-    return d3d_set_private_data_interface(&buffer->private_store, guid, data);
+    if (SUCCEEDED(hr = IUnknown_QueryInterface(buffer->dxgi_resource, &IID_IDXGIResource, (void **)&dxgi_resource)))
+    {
+        hr = IDXGIResource_SetPrivateDataInterface(dxgi_resource, guid, data);
+        IDXGIResource_Release(dxgi_resource);
+    }
+
+    return hr;
 }
 
 static void STDMETHODCALLTYPE d3d11_buffer_GetType(ID3D11Buffer *iface,
@@ -246,7 +274,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_buffer_GetPrivateData(ID3D10Buffer *iface
     TRACE("iface %p, guid %s, data_size %p, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return d3d_get_private_data(&buffer->private_store, guid, data_size, data);
+    return d3d11_buffer_GetPrivateData(&buffer->ID3D11Buffer_iface, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_buffer_SetPrivateData(ID3D10Buffer *iface,
@@ -257,7 +285,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_buffer_SetPrivateData(ID3D10Buffer *iface
     TRACE("iface %p, guid %s, data_size %u, data %p.\n",
             iface, debugstr_guid(guid), data_size, data);
 
-    return d3d_set_private_data(&buffer->private_store, guid, data_size, data);
+    return d3d11_buffer_SetPrivateData(&buffer->ID3D11Buffer_iface, guid, data_size, data);
 }
 
 static HRESULT STDMETHODCALLTYPE d3d10_buffer_SetPrivateDataInterface(ID3D10Buffer *iface,
@@ -267,7 +295,7 @@ static HRESULT STDMETHODCALLTYPE d3d10_buffer_SetPrivateDataInterface(ID3D10Buff
 
     TRACE("iface %p, guid %s, data %p.\n", iface, debugstr_guid(guid), data);
 
-    return d3d_set_private_data_interface(&buffer->private_store, guid, data);
+    return d3d11_buffer_SetPrivateDataInterface(&buffer->ID3D11Buffer_iface, guid, data);
 }
 
 /* ID3D10Resource methods */
@@ -367,7 +395,7 @@ static void STDMETHODCALLTYPE d3d_buffer_wined3d_object_released(void *parent)
 {
     struct d3d_buffer *buffer = parent;
 
-    wined3d_private_store_cleanup(&buffer->private_store);
+    if (buffer->dxgi_resource) IUnknown_Release(buffer->dxgi_resource);
     heap_free(parent);
 }
 
@@ -446,14 +474,23 @@ static HRESULT d3d_buffer_init(struct d3d_buffer *buffer, struct d3d_device *dev
     wined3d_desc.structure_byte_stride = buffer->desc.StructureByteStride;
 
     wined3d_mutex_lock();
-    wined3d_private_store_init(&buffer->private_store);
 
     if (FAILED(hr = wined3d_buffer_create(device->wined3d_device, &wined3d_desc,
             (const struct wined3d_sub_resource_data *)data, buffer,
             &d3d_buffer_wined3d_parent_ops, &buffer->wined3d_buffer)))
     {
         WARN("Failed to create wined3d buffer, hr %#lx.\n", hr);
-        wined3d_private_store_cleanup(&buffer->private_store);
+        wined3d_mutex_unlock();
+        return hr;
+    }
+
+    hr = d3d_device_create_dxgi_resource((IUnknown *)&device->ID3D10Device1_iface,
+            wined3d_buffer_get_resource(buffer->wined3d_buffer), (IUnknown *)&buffer->ID3D10Buffer_iface,
+            FALSE, &buffer->dxgi_resource);
+    if (FAILED(hr))
+    {
+        ERR("Failed to create DXGI resource, returning %#.lx\n", hr);
+        wined3d_buffer_decref(buffer->wined3d_buffer);
         wined3d_mutex_unlock();
         return hr;
     }
