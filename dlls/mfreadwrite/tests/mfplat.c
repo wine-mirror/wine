@@ -105,6 +105,7 @@ struct test_media_stream
     IMFStreamDescriptor *sd;
     IMFMediaEventQueue *event_queue;
     BOOL is_new;
+    LONGLONG sample_duration, sample_time;
 };
 
 static struct test_media_stream *impl_from_IMFMediaStream(IMFMediaStream *iface)
@@ -211,8 +212,25 @@ static HRESULT WINAPI test_media_stream_RequestSample(IMFMediaStream *iface, IUn
 
     hr = MFCreateSample(&sample);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-    hr = IMFSample_SetSampleTime(sample, 123);
-    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (stream->sample_duration)
+    {
+        hr = IMFSample_SetSampleDuration(sample, stream->sample_duration);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IMFSample_SetSampleTime(sample, stream->sample_time);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        stream->sample_time += stream->sample_duration;
+    }
+    else
+    {
+        hr = IMFSample_SetSampleTime(sample, 123);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+        hr = IMFSample_SetSampleDuration(sample, 1);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    }
+
     if (token)
         IMFSample_SetUnknown(sample, &MFSampleExtension_Token, token);
 
@@ -888,9 +906,12 @@ skip_read_sample:
 
 static void test_source_reader_from_media_source(void)
 {
+    static const DWORD expected_sample_order[10] = {0, 0, 1, 1, 0, 0, 0, 0, 1, 0};
+
     struct async_callback *callback;
     IMFSourceReader *reader;
     IMFMediaSource *source;
+    struct test_source *test_source;
     IMFMediaType *media_type;
     HRESULT hr;
     DWORD actual_index, stream_flags;
@@ -963,6 +984,19 @@ static void test_source_reader_from_media_source(void)
         ok(!!sample, "Expected sample object.\n");
         IMFSample_Release(sample);
     }
+
+    hr = IMFSourceReader_ReadSample(reader, MF_SOURCE_READER_ANY_STREAM, 0, &actual_index, &stream_flags,
+            &timestamp, &sample);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!stream_flags, "Unexpected stream flags %#lx.\n", stream_flags);
+    ok(timestamp == 123, "Unexpected timestamp.\n");
+    ok(!!sample, "Expected sample object.\n");
+
+    /* Once the last read sample of all streams has the same timestamp value, the reader will
+       continue reading from the first stream until its timestamp increases. */
+    todo_wine ok(!actual_index, "%d: Unexpected stream index %lu.\n", TEST_SOURCE_NUM_STREAMS + 1, actual_index);
+
+    IMFSample_Release(sample);
 
     IMFSourceReader_Release(reader);
     IMFMediaSource_Release(source);
@@ -1172,6 +1206,39 @@ static void test_source_reader_from_media_source(void)
     IMFMediaSource_Release(source);
 
     fail_request_sample = FALSE;
+
+    /* MF_SOURCE_READER_ANY_STREAM with streams of different sample sizes */
+    source = create_test_source(2);
+    ok(!!source, "Failed to create test source.\n");
+
+    test_source = impl_from_IMFMediaSource(source);
+    test_source->streams[0]->sample_duration = 100000;
+    test_source->streams[1]->sample_duration = 400000;
+
+    hr = MFCreateSourceReaderFromMediaSource(source, NULL, &reader);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFSourceReader_SetStreamSelection(reader, 0, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    hr = IMFSourceReader_SetStreamSelection(reader, 1, TRUE);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* The source reader picks the stream whose last sample had the lower timestamp */
+    for (i = 0; i < ARRAY_SIZE(expected_sample_order); i++)
+    {
+        hr = IMFSourceReader_ReadSample(reader, MF_SOURCE_READER_ANY_STREAM, 0, &actual_index, &stream_flags, &timestamp, &sample);
+        ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        ok(!stream_flags, "Unexpected stream flags %#lx.\n", stream_flags);
+        ok(!!sample, "Expected sample object.\n");
+        todo_wine_if (actual_index != expected_sample_order[i])
+            ok (actual_index == expected_sample_order[i], "Got sample %u from unexpected stream %lu, expected %lu.\n",
+                i, actual_index, expected_sample_order[i]);
+        IMFSample_Release(sample);
+    }
+
+    IMFSourceReader_Release(reader);
+    IMFMediaSource_Release(source);
 }
 
 static void test_reader_d3d9(void)
