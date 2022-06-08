@@ -1482,47 +1482,9 @@ BOOL WINAPI SetWindowContextHelpId( HWND hwnd, DWORD id )
 /*******************************************************************
  *		DragDetect (USER32.@)
  */
-BOOL WINAPI DragDetect( HWND hWnd, POINT pt )
+BOOL WINAPI DragDetect( HWND hwnd, POINT pt )
 {
-    MSG msg;
-    RECT rect;
-    WORD wDragWidth, wDragHeight;
-
-    TRACE( "%p,%s\n", hWnd, wine_dbgstr_point( &pt ) );
-
-    if (!(NtUserGetKeyState( VK_LBUTTON ) & 0x8000))
-        return FALSE;
-
-    wDragWidth = GetSystemMetrics(SM_CXDRAG);
-    wDragHeight= GetSystemMetrics(SM_CYDRAG);
-    SetRect(&rect, pt.x - wDragWidth, pt.y - wDragHeight, pt.x + wDragWidth, pt.y + wDragHeight);
-
-    NtUserSetCapture( hWnd );
-
-    while(1)
-    {
-        while (PeekMessageW( &msg, 0, WM_MOUSEFIRST, WM_MOUSELAST, PM_REMOVE ))
-        {
-            if( msg.message == WM_LBUTTONUP )
-            {
-                ReleaseCapture();
-                return FALSE;
-            }
-            if( msg.message == WM_MOUSEMOVE )
-            {
-                POINT tmp;
-                tmp.x = (short)LOWORD(msg.lParam);
-                tmp.y = (short)HIWORD(msg.lParam);
-                if( !PtInRect( &rect, tmp ))
-                {
-                    ReleaseCapture();
-                    return TRUE;
-                }
-            }
-        }
-        WaitMessage();
-    }
-    return FALSE;
+    return NtUserDragDetect( hwnd, pt.x, pt.y );
 }
 
 /******************************************************************************

@@ -845,7 +845,7 @@
 @ stub NtUserDoSoundConnect
 @ stub NtUserDoSoundDisconnect
 @ stub NtUserDownlevelTouchpad
-@ stub NtUserDragDetect
+@ stdcall NtUserDragDetect(long long long)
 @ stub NtUserDragObject
 @ stub NtUserDrawAnimatedRects
 @ stub NtUserDrawCaption

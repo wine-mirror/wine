@@ -513,6 +513,7 @@ BOOL    WINAPI NtUserDestroyCursor( HCURSOR cursor, ULONG arg );
 BOOL    WINAPI NtUserDestroyMenu( HMENU menu );
 BOOL    WINAPI NtUserDestroyWindow( HWND hwnd );
 LRESULT WINAPI NtUserDispatchMessage( const MSG *msg );
+BOOL    WINAPI NtUserDragDetect( HWND hwnd, int x, int y );
 BOOL    WINAPI NtUserDrawIconEx( HDC hdc, INT x0, INT y0, HICON icon, INT width,
                                  INT height, UINT istep, HBRUSH hbr, UINT flags );
 BOOL    WINAPI NtUserEmptyClipboard(void);

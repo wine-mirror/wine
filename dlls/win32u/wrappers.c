@@ -855,6 +855,12 @@ LRESULT WINAPI NtUserDispatchMessage( const MSG *msg )
     return unix_funcs->pNtUserDispatchMessage( msg );
 }
 
+BOOL WINAPI NtUserDragDetect( HWND hwnd, int x, int y )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserDragDetect( hwnd, x, y );
+}
+
 BOOL WINAPI NtUserDrawIconEx( HDC hdc, INT x0, INT y0, HICON icon, INT width,
                               INT height, UINT istep, HBRUSH hbr, UINT flags )
 {
