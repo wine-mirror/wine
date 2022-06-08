@@ -2462,6 +2462,11 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
     const static WCHAR cjk_compat_result[] = {
         0x523b, 0x5246, 0x5272, 0x5277, 0x3515, 0x52c7, 0x52c9, 0x52e4, 0
     };
+    const static WCHAR accents_text[] = {
+        0x00e0, 0x00e7, ' ', 0x00e9, ',', 0x00ee, 0x00f1, '/', 0x00f6, 0x00fb, 0x00fd, '!', 0
+    };
+    const static WCHAR accents_result[] = L"ac e,in/ouy!";
+    const static WCHAR accents_result2[] = L"aceinouy";
     int ret, ret2, i;
     WCHAR buf[256], buf2[256];
     char *p_buf = (char *)buf, *p_buf2 = (char *)buf2;
@@ -2703,6 +2708,12 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
     lstrlenW(lower_case) + 1, ret);
     ok(!lstrcmpW(buf, lower_case), "%s string comparison mismatch\n", func_name);
 
+    lstrcpyW(buf, fooW);
+    ret = func_ptr(NORM_IGNORENONSPACE, accents_text, -1, buf, ARRAY_SIZE(buf));
+    ok(ret == lstrlenW(buf) + 1, "%s func_ptr should return %d, ret = %d\n", func_name,
+       lstrlenW(buf) + 1, ret);
+    ok(!lstrcmpW(buf, accents_result), "%s string comparison mismatch %s\n", func_name, debugstr_w(buf));
+
     /* test NORM_IGNORESYMBOLS */
     lstrcpyW(buf, fooW);
     ret = func_ptr(NORM_IGNORESYMBOLS, lower_case, -1, buf, ARRAY_SIZE(buf));
@@ -2716,6 +2727,12 @@ static void test_lcmapstring_unicode(lcmapstring_wrapper func_ptr, const char *f
     ok(ret == lstrlenW(symbols_stripped) + 1, "%s func_ptr should return %d, ret = %d\n", func_name,
     lstrlenW(symbols_stripped) + 1, ret);
     ok(!lstrcmpW(buf, symbols_stripped), "%s string comparison mismatch\n", func_name);
+
+    lstrcpyW(buf, fooW);
+    ret = func_ptr(NORM_IGNORESYMBOLS | NORM_IGNORENONSPACE, accents_text, -1, buf, ARRAY_SIZE(buf));
+    ok(ret == lstrlenW(buf) + 1, "%s func_ptr should return %d, ret = %d\n", func_name,
+       lstrlenW(buf) + 1, ret);
+    ok(!lstrcmpW(buf, accents_result2), "%s string comparison mismatch %s\n", func_name, debugstr_w(buf));
 
     /* test small buffer */
     lstrcpyW(buf, fooW);

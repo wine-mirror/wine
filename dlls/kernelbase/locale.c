@@ -4023,6 +4023,52 @@ static int map_to_fullwidth( const USHORT *table, const WCHAR *src, int srclen, 
     return pos;
 }
 
+
+static inline int nonspace_ignored( WCHAR ch )
+{
+    if (get_char_type( CT_CTYPE2, ch ) != C2_OTHERNEUTRAL) return FALSE;
+    return (get_char_type( CT_CTYPE3, ch ) & (C3_NONSPACING | C3_DIACRITIC));
+}
+
+/* remove ignored chars for NORM_IGNORENONSPACE/NORM_IGNORESYMBOLS */
+static int map_remove_ignored( DWORD flags, const WCHAR *src, int srclen, WCHAR *dst, int dstlen )
+{
+    int pos;
+
+    for (pos = 0; srclen; src++, srclen--)
+    {
+        if (flags & NORM_IGNORESYMBOLS)
+        {
+            if (get_char_type( CT_CTYPE1, *src ) & C1_PUNCT) continue;
+            if (get_char_type( CT_CTYPE3, *src ) & C3_SYMBOL) continue;
+        }
+        if (flags & NORM_IGNORENONSPACE)
+        {
+            WCHAR buffer[8];
+            const WCHAR *decomp;
+            unsigned int i, j, len;
+
+            if ((decomp = get_decomposition( *src, &len )) && len > 1)
+            {
+                for (i = j = 0; i < len; i++)
+                    if (!nonspace_ignored( decomp[i] )) buffer[j++] = decomp[i];
+
+                if (i > j)  /* something was removed */
+                {
+                    if (pos + j <= dstlen) memcpy( dst + pos, buffer, j * sizeof(WCHAR) );
+                    pos += j;
+                    continue;
+                }
+            }
+            else if (nonspace_ignored( *src )) continue;
+        }
+        if (pos < dstlen) dst[pos] = *src;
+        pos++;
+    }
+    return pos;
+}
+
+
 /* map full-width characters to single or double half-width characters. */
 static int map_to_halfwidth( const USHORT *table, const WCHAR *src, int srclen, WCHAR *dst, int dstlen )
 {
@@ -4124,13 +4170,7 @@ static int lcmap_string( const struct sortguid *sortid, DWORD flags,
             SetLastError( ERROR_INVALID_FLAGS );
             return 0;
         }
-        for (ret = 0; srclen; src++, srclen--)
-        {
-            if ((flags & NORM_IGNORESYMBOLS) && (get_char_type( CT_CTYPE1, *src ) & (C1_PUNCT | C1_SPACE)))
-                continue;
-            if (ret < dstlen) dst[ret] = *src;
-            ret++;
-        }
+        ret = map_remove_ignored( flags, src, srclen, dst, dstlen );
         break;
     case 0:
         if (case_table)
