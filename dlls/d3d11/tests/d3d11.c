@@ -3286,9 +3286,7 @@ static void test_texture3d_interfaces(void)
     hr = ID3D11Device_CreateTexture3D(device, &desc, NULL, &texture);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     check_interface(texture, &IID_IDXGISurface, FALSE, FALSE);
-    todo_wine
     check_interface(texture, &IID_IDXGIResource, TRUE, FALSE);
-    todo_wine
     test_dxgi_resource(texture);
     hr = check_interface(texture, &IID_ID3D10Texture3D, TRUE, TRUE); /* Not available on all Windows versions. */
     ID3D11Texture3D_Release(texture);
