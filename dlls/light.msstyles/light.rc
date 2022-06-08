@@ -735,6 +735,166 @@ BLUE_INI TEXTFILE
 "FillColor = 255 255 255\r\n"
 "BorderColor = 174 174 174\r\n"
 
+"[ListView.GroupHeader]\r\n"
+"BgType = None\r\n"
+"Heading1TextColor = 0 0 0\r\n"
+"Heading2TextColor = 0 0 0\r\n"
+"BodyTextColor = 0 0 0\r\n"
+"ContentMargins = 10, 10, 2, 3\r\n"
+"Font = Tahoma, 9\r\n"
+"Heading1Font = Tahoma, 9\r\n"
+"Heading2Font = Tahoma, 9\r\n"
+"BodyFont = Tahoma, 9\r\n"
+
+"[ListView.GroupHeader(OpenHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_open_hot.bmp\r\n"
+
+"[ListView.GroupHeader(OpenSelectedHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_open_selected_hot.bmp\r\n"
+
+"[ListView.GroupHeader(OpenSelectedNotFocusedHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_open_selected_not_focused_hot.bmp\r\n"
+
+"[ListView.GroupHeader(OpenMixedSelectionHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_open_mixed_selection_hot.bmp\r\n"
+
+"[ListView.GroupHeader(CloseHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_close_hot.bmp\r\n"
+
+"[ListView.GroupHeader(CloseSelected)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_close_selected.bmp\r\n"
+
+"[ListView.GroupHeader(CloseSelectedHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_close_selected_hot.bmp\r\n"
+
+"[ListView.GroupHeader(CloseSelectedNotFocused)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_close_selected_not_focused.bmp\r\n"
+
+"[ListView.GroupHeader(CloseSelectedNotFocusedHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_close_selected_not_focused_hot.bmp\r\n"
+
+"[ListView.GroupHeader(CloseMixedSelection)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_close_mixed_selection.bmp\r\n"
+
+"[ListView.GroupHeader(CloseMixedSelectionHot)]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 3, 3, 3, 3\r\n"
+"ContentMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_listview_group_header_close_mixed_selection_hot.bmp\r\n"
+
+"[ListView.GroupHeaderLine]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 16\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_listview_group_header_line.bmp\r\n"
+
+"[ListView.ExpandButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 3\r\n"
+"ImageFile1 = blue_listview_expand_button_15px.bmp\r\n"
+"ImageFile2 = blue_listview_expand_button_19px.bmp\r\n"
+"ImageFile3 = blue_listview_expand_button_23px.bmp\r\n"
+"ImageFile4 = blue_listview_expand_button_30px.bmp\r\n"
+"ImageFile5 = blue_listview_expand_button_37px.bmp\r\n"
+"ImageFile6 = blue_listview_expand_button_46px.bmp\r\n"
+"ImageFile7 = blue_listview_expand_button_60px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[ListView.CollapseButton]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 3\r\n"
+"ImageFile1 = blue_listview_collapse_button_15px.bmp\r\n"
+"ImageFile2 = blue_listview_collapse_button_19px.bmp\r\n"
+"ImageFile3 = blue_listview_collapse_button_23px.bmp\r\n"
+"ImageFile4 = blue_listview_collapse_button_30px.bmp\r\n"
+"ImageFile5 = blue_listview_collapse_button_37px.bmp\r\n"
+"ImageFile6 = blue_listview_collapse_button_46px.bmp\r\n"
+"ImageFile7 = blue_listview_collapse_button_60px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[ListView.ColumnDetail]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 1\r\n"
+"SizingMargins = 0, 0, 0, 0\r\n"
+"ImageFile = blue_listview_column_detail.bmp\r\n"
+
 "\r\n; Menu\r\n"
 "[Menu]\r\n"
 "BgType = None\r\n"
@@ -2022,6 +2182,88 @@ BLUE_HEADER_SORT_ARROW_39PX_BMP BITMAP "blue_header_sort_arrow_39px.bmp"
 
 /* @makedep: blue_header_sort_arrow_52px.bmp */
 BLUE_HEADER_SORT_ARROW_52PX_BMP BITMAP "blue_header_sort_arrow_52px.bmp"
+
+/* ListView */
+/* @makedep: blue_listview_collapse_button_15px.bmp */
+BLUE_LISTVIEW_COLLAPSE_BUTTON_15PX_BMP BITMAP "blue_listview_collapse_button_15px.bmp"
+
+/* @makedep: blue_listview_collapse_button_19px.bmp */
+BLUE_LISTVIEW_COLLAPSE_BUTTON_19PX_BMP BITMAP "blue_listview_collapse_button_19px.bmp"
+
+/* @makedep: blue_listview_collapse_button_23px.bmp */
+BLUE_LISTVIEW_COLLAPSE_BUTTON_23PX_BMP BITMAP "blue_listview_collapse_button_23px.bmp"
+
+/* @makedep: blue_listview_collapse_button_30px.bmp */
+BLUE_LISTVIEW_COLLAPSE_BUTTON_30PX_BMP BITMAP "blue_listview_collapse_button_30px.bmp"
+
+/* @makedep: blue_listview_collapse_button_37px.bmp */
+BLUE_LISTVIEW_COLLAPSE_BUTTON_37PX_BMP BITMAP "blue_listview_collapse_button_37px.bmp"
+
+/* @makedep: blue_listview_collapse_button_45px.bmp */
+BLUE_LISTVIEW_COLLAPSE_BUTTON_45PX_BMP BITMAP "blue_listview_collapse_button_45px.bmp"
+
+/* @makedep: blue_listview_collapse_button_60px.bmp */
+BLUE_LISTVIEW_COLLAPSE_BUTTON_60PX_BMP BITMAP "blue_listview_collapse_button_60px.bmp"
+
+/* @makedep: blue_listview_column_detail.bmp */
+BLUE_LISTVIEW_COLUMN_DETAIL_BMP BITMAP "blue_listview_column_detail.bmp"
+
+/* @makedep: blue_listview_expand_button_15px.bmp */
+BLUE_LISTVIEW_EXPAND_BUTTON_15PX_BMP BITMAP "blue_listview_expand_button_15px.bmp"
+
+/* @makedep: blue_listview_expand_button_19px.bmp */
+BLUE_LISTVIEW_EXPAND_BUTTON_19PX_BMP BITMAP "blue_listview_expand_button_19px.bmp"
+
+/* @makedep: blue_listview_expand_button_23px.bmp */
+BLUE_LISTVIEW_EXPAND_BUTTON_23PX_BMP BITMAP "blue_listview_expand_button_23px.bmp"
+
+/* @makedep: blue_listview_expand_button_30px.bmp */
+BLUE_LISTVIEW_EXPAND_BUTTON_30PX_BMP BITMAP "blue_listview_expand_button_30px.bmp"
+
+/* @makedep: blue_listview_expand_button_37px.bmp */
+BLUE_LISTVIEW_EXPAND_BUTTON_37PX_BMP BITMAP "blue_listview_expand_button_37px.bmp"
+
+/* @makedep: blue_listview_expand_button_45px.bmp */
+BLUE_LISTVIEW_EXPAND_BUTTON_45PX_BMP BITMAP "blue_listview_expand_button_45px.bmp"
+
+/* @makedep: blue_listview_expand_button_60px.bmp */
+BLUE_LISTVIEW_EXPAND_BUTTON_60PX_BMP BITMAP "blue_listview_expand_button_60px.bmp"
+
+/* @makedep: blue_listview_group_header_close_hot.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_CLOSE_HOT_BMP BITMAP "blue_listview_group_header_close_hot.bmp"
+
+/* @makedep: blue_listview_group_header_close_mixed_selection.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_CLOSE_MIXED_SELECTION_BMP BITMAP "blue_listview_group_header_close_mixed_selection.bmp"
+
+/* @makedep: blue_listview_group_header_close_mixed_selection_hot.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_CLOSE_MIXED_SELECTION_HOT_BMP BITMAP "blue_listview_group_header_close_mixed_selection_hot.bmp"
+
+/* @makedep: blue_listview_group_header_close_selected.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_CLOSE_SELECTED_BMP BITMAP "blue_listview_group_header_close_selected.bmp"
+
+/* @makedep: blue_listview_group_header_close_selected_hot.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_CLOSE_SELECTED_HOT_BMP BITMAP "blue_listview_group_header_close_selected_hot.bmp"
+
+/* @makedep: blue_listview_group_header_close_selected_not_focused.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_CLOSE_SELECTED_NOT_FOCUSED_BMP BITMAP "blue_listview_group_header_close_selected_not_focused.bmp"
+
+/* @makedep: blue_listview_group_header_close_selected_not_focused_hot.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_CLOSE_SELECTED_NOT_FOCUSED_HOT_BMP BITMAP "blue_listview_group_header_close_selected_not_focused_hot.bmp"
+
+/* @makedep: blue_listview_group_header_line.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_LINE_BMP BITMAP "blue_listview_group_header_line.bmp"
+
+/* @makedep: blue_listview_group_header_open_hot.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_OPEN_HOT_BMP BITMAP "blue_listview_group_header_open_hot.bmp"
+
+/* @makedep: blue_listview_group_header_open_mixed_selection_hot.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_OPEN_MIXED_SELECTION_HOT_BMP BITMAP "blue_listview_group_header_open_mixed_selection_hot.bmp"
+
+/* @makedep: blue_listview_group_header_open_selected_hot.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_OPEN_SELECTED_HOT_BMP BITMAP "blue_listview_group_header_open_selected_hot.bmp"
+
+/* @makedep: blue_listview_group_header_open_selected_not_focused_hot.bmp */
+BLUE_LISTVIEW_GROUP_HEADER_OPEN_SELECTED_NOT_FOCUSED_HOT_BMP BITMAP "blue_listview_group_header_open_selected_not_focused_hot.bmp"
 
 /* Menu */
 /* @makedep: blue_menu_popup_check_16px.bmp */

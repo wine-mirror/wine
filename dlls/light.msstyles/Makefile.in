@@ -106,6 +106,33 @@ SVG_SRCS = \
 	blue_header_sort_arrow_26px.svg \
 	blue_header_sort_arrow_39px.svg \
 	blue_header_sort_arrow_52px.svg \
+	blue_listview_collapse_button_15px.svg \
+	blue_listview_collapse_button_19px.svg \
+	blue_listview_collapse_button_23px.svg \
+	blue_listview_collapse_button_30px.svg \
+	blue_listview_collapse_button_37px.svg \
+	blue_listview_collapse_button_45px.svg \
+	blue_listview_collapse_button_60px.svg \
+	blue_listview_column_detail.svg \
+	blue_listview_expand_button_15px.svg \
+	blue_listview_expand_button_19px.svg \
+	blue_listview_expand_button_23px.svg \
+	blue_listview_expand_button_30px.svg \
+	blue_listview_expand_button_37px.svg \
+	blue_listview_expand_button_45px.svg \
+	blue_listview_expand_button_60px.svg \
+	blue_listview_group_header_close_hot.svg \
+	blue_listview_group_header_close_mixed_selection.svg \
+	blue_listview_group_header_close_mixed_selection_hot.svg \
+	blue_listview_group_header_close_selected.svg \
+	blue_listview_group_header_close_selected_hot.svg \
+	blue_listview_group_header_close_selected_not_focused.svg \
+	blue_listview_group_header_close_selected_not_focused_hot.svg \
+	blue_listview_group_header_line.svg \
+	blue_listview_group_header_open_hot.svg \
+	blue_listview_group_header_open_mixed_selection_hot.svg \
+	blue_listview_group_header_open_selected_hot.svg \
+	blue_listview_group_header_open_selected_not_focused_hot.svg \
 	blue_menu_popup_check_16px.svg \
 	blue_menu_popup_check_18px.svg \
 	blue_menu_popup_separator.svg \
