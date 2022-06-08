@@ -1475,16 +1475,7 @@ DWORD WINAPI GetWindowContextHelpId( HWND hwnd )
  */
 BOOL WINAPI SetWindowContextHelpId( HWND hwnd, DWORD id )
 {
-    WND *wnd = WIN_GetPtr( hwnd );
-    if (!wnd || wnd == WND_DESKTOP) return FALSE;
-    if (wnd == WND_OTHER_PROCESS)
-    {
-        if (IsWindow( hwnd )) FIXME( "not supported on other process window %p\n", hwnd );
-        return FALSE;
-    }
-    wnd->helpContext = id;
-    WIN_ReleasePtr( wnd );
-    return TRUE;
+    return NtUserSetWindowContextHelpId( hwnd, id );
 }
 
 

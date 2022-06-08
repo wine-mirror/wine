@@ -4539,6 +4539,21 @@ static DWORD get_window_context_help_id( HWND hwnd )
     return retval;
 }
 
+/* see SetWindowContextHelpId */
+static BOOL set_window_context_help_id( HWND hwnd, DWORD id )
+{
+    WND *win = get_win_ptr( hwnd );
+    if (!win || win == WND_DESKTOP) return FALSE;
+    if (win == WND_OTHER_PROCESS)
+    {
+        if (is_window( hwnd )) FIXME( "not supported on other process window %p\n", hwnd );
+        return FALSE;
+    }
+    win->helpContext = id;
+    release_win_ptr( win );
+    return TRUE;
+}
+
 /***********************************************************************
  *           send_destroy_message
  */
@@ -5431,6 +5446,9 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
 
     case NtUserCallHwndParam_SetForegroundWindow:
         return set_foreground_window( hwnd, param );
+
+    case NtUserCallHwndParam_SetWindowContextHelpId:
+        return set_window_context_help_id( hwnd, param );
 
     case NtUserCallHwndParam_SetWindowPixelFormat:
         return set_window_pixel_format( hwnd, param );

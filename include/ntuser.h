@@ -1021,6 +1021,7 @@ enum
     NtUserCallHwndParam_MonitorFromWindow,
     NtUserCallHwndParam_ScreenToClient,
     NtUserCallHwndParam_SetForegroundWindow,
+    NtUserCallHwndParam_SetWindowContextHelpId,
     NtUserCallHwndParam_SetWindowPixelFormat,
     NtUserCallHwndParam_ShowOwnedPopups,
     /* temporary exports */
@@ -1169,6 +1170,11 @@ static inline BOOL NtUserScreenToClient( HWND hwnd, POINT *pt )
 static inline BOOL NtUserSetForegroundWindow( HWND hwnd, BOOL mouse )
 {
     return NtUserCallHwndParam( hwnd, mouse, NtUserCallHwndParam_SetForegroundWindow );
+}
+
+static inline BOOL NtUserSetWindowContextHelpId( HWND hwnd, DWORD id )
+{
+    return NtUserCallHwndParam( hwnd, id, NtUserCallHwndParam_SetWindowContextHelpId );
 }
 
 static inline BOOL NtUserSetWindowPixelFormat( HWND hwnd, int format )
