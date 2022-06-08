@@ -1682,8 +1682,8 @@ static void test_simple_joystick( DWORD version )
 
     hr = IDirectInputDevice8_GetDeviceState( device, sizeof(DIJOYSTATE2), &state );
     ok( hr == DI_OK, "GetDeviceState returned: %#lx\n", hr );
-    check_member( state, expect_state_abs[1], "%ld", lX );
-    check_member( state, expect_state_abs[1], "%ld", lY );
+    ok( state.lX == expect_state_abs[1].lX || broken( state.lX == 16853 ) /* w8 */, "got lX %ld", state.lX );
+    ok( state.lY == expect_state_abs[1].lY || broken( state.lY == 16853 ) /* w8 */, "got lY %ld", state.lY );
     check_member( state, expect_state_abs[1], "%ld", lZ );
     check_member( state, expect_state_abs[1], "%ld", lRx );
     check_member( state, expect_state_abs[1], "%ld", rgdwPOV[0] );
