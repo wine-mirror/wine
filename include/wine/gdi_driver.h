@@ -168,7 +168,7 @@ struct gdi_dc_funcs
 };
 
 /* increment this when you change the DC function table */
-#define WINE_GDI_DRIVER_VERSION 79
+#define WINE_GDI_DRIVER_VERSION 80
 
 #define GDI_PRIORITY_NULL_DRV        0  /* null driver */
 #define GDI_PRIORITY_FONT_DRV      100  /* any font driver */
@@ -196,9 +196,9 @@ static inline void push_dc_driver( PHYSDEV *dev, PHYSDEV physdev, const struct g
 
 /* support for window surfaces */
 
-struct window_surface;
+#ifdef WINE_UNIX_LIB
 
-#ifndef __WINE_USE_MSVCRT
+struct window_surface;
 
 struct window_surface_funcs
 {
@@ -333,10 +333,10 @@ struct user_driver_funcs
     void    (*pThreadDetach)(void);
 };
 
-#endif /* __WINE_USE_MSVCRT */
+extern void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version );
 
-struct user_driver_funcs;
-extern void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version );
+#endif /* WINE_UNIX_LIB */
+
 extern struct opengl_funcs * CDECL __wine_get_wgl_driver( HDC hdc, UINT version );
 extern const struct vulkan_funcs * CDECL __wine_get_vulkan_driver( UINT version );
 

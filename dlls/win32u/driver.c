@@ -1223,9 +1223,9 @@ static const struct user_driver_funcs lazy_load_driver =
 const struct user_driver_funcs *user_driver = &lazy_load_driver;
 
 /******************************************************************************
- *	     __wine_set_user_driver   (win32u.@)
+ *	     __wine_set_user_driver   (win32u.so)
  */
-void CDECL __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version )
+void __wine_set_user_driver( const struct user_driver_funcs *funcs, UINT version )
 {
     struct user_driver_funcs *driver, *prev;
 

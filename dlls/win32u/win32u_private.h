@@ -328,7 +328,6 @@ struct unix_funcs
     const struct vulkan_funcs * (CDECL *get_vulkan_driver)( UINT version );
     struct opengl_funcs * (CDECL *get_wgl_driver)( HDC hdc, UINT version );
     BOOL (CDECL *wine_send_input)( HWND hwnd, const INPUT *input, const RAWINPUT *rawinput );
-    void (CDECL *set_user_driver)( const struct user_driver_funcs *funcs, UINT version );
 };
 
 /* clipboard.c */
