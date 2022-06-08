@@ -61,6 +61,7 @@ struct gamepad
     IGameControllerImpl IGameControllerImpl_iface;
     IGameControllerInputSink IGameControllerInputSink_iface;
     IGamepad IGamepad_iface;
+    IGamepad2 IGamepad2_iface;
     IGameController *IGameController_outer;
     LONG ref;
 
@@ -96,6 +97,12 @@ static HRESULT WINAPI controller_QueryInterface( IGameControllerImpl *iface, REF
     if (IsEqualGUID( iid, &IID_IGamepad ))
     {
         IInspectable_AddRef( (*out = &impl->IGamepad_iface) );
+        return S_OK;
+    }
+
+    if (IsEqualGUID( iid, &IID_IGamepad2 ))
+    {
+        IInspectable_AddRef( (*out = &impl->IGamepad2_iface) );
         return S_OK;
     }
 
@@ -330,6 +337,28 @@ static const struct IGamepadVtbl gamepad_vtbl =
     gamepad_GetCurrentReading,
 };
 
+DEFINE_IINSPECTABLE_OUTER( gamepad2, IGamepad2, struct gamepad, IGameController_outer )
+
+static HRESULT WINAPI gamepad2_GetButtonLabel( IGamepad2 *iface, GamepadButtons button, GameControllerButtonLabel *value )
+{
+    FIXME( "iface %p, button %#x, value %p stub!\n", iface, button, value );
+    *value = GameControllerButtonLabel_None;
+    return S_OK;
+}
+
+static const struct IGamepad2Vtbl gamepad2_vtbl =
+{
+    gamepad2_QueryInterface,
+    gamepad2_AddRef,
+    gamepad2_Release,
+    /* IInspectable methods */
+    gamepad2_GetIids,
+    gamepad2_GetRuntimeClassName,
+    gamepad2_GetTrustLevel,
+    /* IGamepad2 methods */
+    gamepad2_GetButtonLabel,
+};
+
 struct gamepad_statics
 {
     IActivationFactory IActivationFactory_iface;
@@ -542,6 +571,7 @@ static HRESULT WINAPI controller_factory_CreateGameController( ICustomGameContro
     impl->IGameControllerImpl_iface.lpVtbl = &controller_vtbl;
     impl->IGameControllerInputSink_iface.lpVtbl = &input_sink_vtbl;
     impl->IGamepad_iface.lpVtbl = &gamepad_vtbl;
+    impl->IGamepad2_iface.lpVtbl = &gamepad2_vtbl;
     impl->ref = 1;
 
     TRACE( "created Gamepad %p\n", impl );
