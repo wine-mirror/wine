@@ -268,6 +268,9 @@ struct unix_funcs
     INT      (WINAPI *pNtUserReleaseDC)( HWND hwnd, HDC hdc );
     BOOL     (WINAPI *pNtUserScrollDC)( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
                                         HRGN ret_update_rgn, RECT *update_rect );
+    INT      (WINAPI *pNtUserScrollWindowEx)( HWND hwnd, INT dx, INT dy, const RECT *rect,
+                                              const RECT *clip_rect, HRGN update_rgn,
+                                              RECT *update_rect, UINT flags );
     HPALETTE (WINAPI *pNtUserSelectPalette)( HDC hdc, HPALETTE hpal, WORD bkg );
     UINT     (WINAPI *pNtUserSendInput)( UINT count, INPUT *inputs, int size );
     HWND     (WINAPI *pNtUserSetActiveWindow)( HWND hwnd );
@@ -449,6 +452,7 @@ extern HWND is_current_process_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND is_current_thread_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL is_desktop_window( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL is_iconic( HWND hwnd ) DECLSPEC_HIDDEN;
+extern BOOL is_window_drawable( HWND hwnd, BOOL icon ) DECLSPEC_HIDDEN;
 extern BOOL is_window_enabled( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL is_window_unicode( HWND hwnd ) DECLSPEC_HIDDEN;
 extern DWORD get_window_long( HWND hwnd, INT offset ) DECLSPEC_HIDDEN;

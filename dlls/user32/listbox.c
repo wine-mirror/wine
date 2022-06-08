@@ -439,8 +439,8 @@ static LRESULT LISTBOX_SetTopItem( LB_DESCR *descr, INT index, BOOL scroll )
         else
             dy = (descr->top_item - index) * descr->item_height;
 
-        ScrollWindowEx( descr->self, dx, dy, NULL, NULL, 0, NULL,
-                        SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN );
+        NtUserScrollWindowEx( descr->self, dx, dy, NULL, NULL, 0, NULL,
+                              SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN );
     }
     else
         InvalidateRect( descr->self, NULL, TRUE );
@@ -1340,8 +1340,8 @@ static void LISTBOX_SetHorizontalPos( LB_DESCR *descr, INT pos )
         /* Invalidate the focused item so it will be repainted correctly */
         if (LISTBOX_GetItemRect( descr, descr->focus_item, &rect ) == 1)
             InvalidateRect( descr->self, &rect, TRUE );
-        ScrollWindowEx( descr->self, diff, 0, NULL, NULL, 0, NULL,
-                          SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN );
+        NtUserScrollWindowEx( descr->self, diff, 0, NULL, NULL, 0, NULL,
+                              SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN );
     }
     else
         InvalidateRect( descr->self, NULL, TRUE );

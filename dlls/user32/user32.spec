@@ -630,7 +630,7 @@
 @ stdcall ScrollChildren(long long long long)
 @ stdcall ScrollDC(long long long ptr ptr long ptr) NtUserScrollDC
 @ stdcall ScrollWindow(long long long ptr ptr)
-@ stdcall ScrollWindowEx(long long long ptr ptr long ptr long)
+@ stdcall ScrollWindowEx(long long long ptr ptr long ptr long) NtUserScrollWindowEx
 @ stdcall SendDlgItemMessageA(long long long long long)
 @ stdcall SendDlgItemMessageW(long long long long long)
 @ stdcall SendIMEMessageExA(long long)

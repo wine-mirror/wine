@@ -1708,8 +1708,8 @@ static BOOL EDIT_EM_LineScroll_internal(EDITSTATE *es, INT dx, INT dy)
 
 		GetClientRect(es->hwndSelf, &rc1);
 		IntersectRect(&rc, &rc1, &es->format_rect);
-		ScrollWindowEx(es->hwndSelf, -dx, dy,
-				NULL, &rc, NULL, NULL, SW_INVALIDATE);
+                NtUserScrollWindowEx(es->hwndSelf, -dx, dy,
+                                     NULL, &rc, NULL, NULL, SW_INVALIDATE);
 		/* force scroll info update */
 		EDIT_UpdateScrollInfo(es);
 	}

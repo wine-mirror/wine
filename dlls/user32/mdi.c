@@ -1822,11 +1822,11 @@ void WINAPI ScrollChildren(HWND hWnd, UINT uMsg, WPARAM wParam,
     SetScrollPos(hWnd, (uMsg == WM_VSCROLL)?SB_VERT:SB_HORZ , newPos, TRUE);
 
     if( uMsg == WM_VSCROLL )
-	ScrollWindowEx(hWnd ,0 ,curPos - newPos, NULL, NULL, 0, NULL,
-			SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN );
+	NtUserScrollWindowEx( hWnd ,0 ,curPos - newPos, NULL, NULL, 0, NULL,
+                              SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN );
     else
-	ScrollWindowEx(hWnd ,curPos - newPos, 0, NULL, NULL, 0, NULL,
-			SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN );
+	NtUserScrollWindowEx( hWnd ,curPos - newPos, 0, NULL, NULL, 0, NULL,
+                              SW_INVALIDATE | SW_ERASE | SW_SCROLLCHILDREN );
 done:
     SetThreadDpiAwarenessContext( context );
 }

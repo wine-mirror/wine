@@ -1112,6 +1112,15 @@ BOOL WINAPI NtUserScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const R
     return unix_funcs->pNtUserScrollDC( hdc, dx, dy, scroll, clip, ret_update_rgn, update_rect );
 }
 
+INT WINAPI NtUserScrollWindowEx( HWND hwnd, INT dx, INT dy, const RECT *rect,
+                                 const RECT *clip_rect, HRGN update_rgn,
+                                 RECT *update_rect, UINT flags )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserScrollWindowEx( hwnd, dx, dy, rect, clip_rect,
+                                              update_rgn, update_rect, flags );
+}
+
 HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE hpal, WORD bkg )
 {
     if (!unix_funcs) return 0;

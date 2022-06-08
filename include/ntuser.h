@@ -227,6 +227,9 @@ struct send_message_callback_params
 #define NTUSER_OBJ_ACCEL    0x08
 #define NTUSER_OBJ_HOOK     0x0f
 
+/* NtUserScrollWindowEx flag */
+#define SW_NODCCACHE  0x8000
+
 /* NtUserInitializeClientPfnArrays parameter, not compatible with Windows */
 struct user_client_procs
 {
@@ -615,6 +618,9 @@ BOOL    WINAPI NtUserRemoveMenu( HMENU menu, UINT id, UINT flags );
 HANDLE  WINAPI NtUserRemoveProp( HWND hwnd, const WCHAR *str );
 BOOL    WINAPI NtUserScrollDC( HDC hdc, INT dx, INT dy, const RECT *scroll, const RECT *clip,
                                HRGN ret_update_rgn, RECT *update_rect );
+INT     WINAPI NtUserScrollWindowEx( HWND hwnd, INT dx, INT dy, const RECT *rect,
+                                     const RECT *clip_rect, HRGN update_rgn,
+                                     RECT *update_rect, UINT flags ) DECLSPEC_HIDDEN;
 HPALETTE WINAPI NtUserSelectPalette( HDC hdc, HPALETTE palette, WORD force_background );
 UINT     WINAPI NtUserSendInput( UINT count, INPUT *inputs, int size );
 HWND     WINAPI NtUserSetActiveWindow( HWND hwnd );

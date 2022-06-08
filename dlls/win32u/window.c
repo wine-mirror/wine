@@ -762,7 +762,7 @@ static BOOL is_window_visible( HWND hwnd )
  * minimized, and it is itself not minimized unless we are
  * trying to draw its default class icon.
  */
-static BOOL is_window_drawable( HWND hwnd, BOOL icon )
+BOOL is_window_drawable( HWND hwnd, BOOL icon )
 {
     HWND *list;
     BOOL retval = TRUE;

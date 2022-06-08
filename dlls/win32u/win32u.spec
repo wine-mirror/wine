@@ -1156,7 +1156,7 @@
 @ stub NtUserRestoreWindowDpiChanges
 @ stub NtUserSBGetParms
 @ stdcall NtUserScrollDC(long long long ptr ptr long ptr)
-@ stub NtUserScrollWindowEx
+@ stdcall NtUserScrollWindowEx(long long long ptr ptr long ptr long)
 @ stdcall NtUserSelectPalette(long long long)
 @ stub NtUserSendEventMessage
 @ stdcall NtUserSendInput(long ptr long)
