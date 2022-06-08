@@ -32,12 +32,51 @@ struct wg_sample_queue
     struct list samples;
 };
 
+struct wg_sample_ops
+{
+    void (*destroy)(struct wg_sample *sample);
+};
+
 struct sample
 {
-    IMFSample *sample;
-    IMFMediaBuffer *media_buffer;
     struct wg_sample wg_sample;
+
+    const struct wg_sample_ops *ops;
     struct list entry;
+
+    union
+    {
+        struct
+        {
+            IMFSample *sample;
+            IMFMediaBuffer *buffer;
+        } mf;
+    } u;
+};
+
+static const struct wg_sample_ops mf_sample_ops;
+
+static inline struct sample *unsafe_mf_from_wg_sample(struct wg_sample *wg_sample)
+{
+    struct sample *sample = CONTAINING_RECORD(wg_sample, struct sample, wg_sample);
+    if (sample->ops != &mf_sample_ops) return NULL;
+    return sample;
+}
+
+static void mf_sample_destroy(struct wg_sample *wg_sample)
+{
+    struct sample *sample = unsafe_mf_from_wg_sample(wg_sample);
+
+    TRACE_(mfplat)("wg_sample %p.\n", wg_sample);
+
+    IMFMediaBuffer_Unlock(sample->u.mf.buffer);
+    IMFMediaBuffer_Release(sample->u.mf.buffer);
+    IMFSample_Release(sample->u.mf.sample);
+}
+
+static const struct wg_sample_ops mf_sample_ops =
+{
+    mf_sample_destroy,
 };
 
 HRESULT wg_sample_create_mf(IMFSample *mf_sample, struct wg_sample **out)
@@ -49,23 +88,24 @@ HRESULT wg_sample_create_mf(IMFSample *mf_sample, struct wg_sample **out)
 
     if (!(sample = calloc(1, sizeof(*sample))))
         return E_OUTOFMEMORY;
-    if (FAILED(hr = IMFSample_ConvertToContiguousBuffer(mf_sample, &sample->media_buffer)))
+    if (FAILED(hr = IMFSample_ConvertToContiguousBuffer(mf_sample, &sample->u.mf.buffer)))
         goto fail;
-    if (FAILED(hr = IMFMediaBuffer_Lock(sample->media_buffer, &buffer, &max_length, &current_length)))
+    if (FAILED(hr = IMFMediaBuffer_Lock(sample->u.mf.buffer, &buffer, &max_length, &current_length)))
         goto fail;
 
-    IMFSample_AddRef((sample->sample = mf_sample));
+    IMFSample_AddRef((sample->u.mf.sample = mf_sample));
     sample->wg_sample.data = buffer;
     sample->wg_sample.size = current_length;
     sample->wg_sample.max_size = max_length;
+    sample->ops = &mf_sample_ops;
 
     *out = &sample->wg_sample;
     TRACE_(mfplat)("Created wg_sample %p for IMFSample %p.\n", *out, mf_sample);
     return S_OK;
 
 fail:
-    if (sample->media_buffer)
-        IMFMediaBuffer_Release(sample->media_buffer);
+    if (sample->u.mf.buffer)
+        IMFMediaBuffer_Release(sample->u.mf.buffer);
     free(sample);
     return hr;
 }
@@ -80,9 +120,7 @@ void wg_sample_release(struct wg_sample *wg_sample)
         return;
     }
 
-    IMFMediaBuffer_Unlock(sample->media_buffer);
-    IMFMediaBuffer_Release(sample->media_buffer);
-    IMFSample_Release(sample->sample);
+    sample->ops->destroy(wg_sample);
 
     free(sample);
 }
@@ -156,22 +194,24 @@ void wg_sample_queue_destroy(struct wg_sample_queue *queue)
 HRESULT wg_transform_push_mf(struct wg_transform *transform, struct wg_sample *wg_sample,
         struct wg_sample_queue *queue)
 {
-    struct sample *sample = CONTAINING_RECORD(wg_sample, struct sample, wg_sample);
+    struct sample *sample = unsafe_mf_from_wg_sample(wg_sample);
     LONGLONG time, duration;
     UINT32 value;
     HRESULT hr;
 
-    if (SUCCEEDED(IMFSample_GetSampleTime(sample->sample, &time)))
+    TRACE_(mfplat)("transform %p, wg_sample %p, queue %p.\n", transform, wg_sample, queue);
+
+    if (SUCCEEDED(IMFSample_GetSampleTime(sample->u.mf.sample, &time)))
     {
         sample->wg_sample.flags |= WG_SAMPLE_FLAG_HAS_PTS;
         sample->wg_sample.pts = time;
     }
-    if (SUCCEEDED(IMFSample_GetSampleDuration(sample->sample, &duration)))
+    if (SUCCEEDED(IMFSample_GetSampleDuration(sample->u.mf.sample, &duration)))
     {
         sample->wg_sample.flags |= WG_SAMPLE_FLAG_HAS_DURATION;
         sample->wg_sample.duration = duration;
     }
-    if (SUCCEEDED(IMFSample_GetUINT32(sample->sample, &MFSampleExtension_CleanPoint, &value)) && value)
+    if (SUCCEEDED(IMFSample_GetUINT32(sample->u.mf.sample, &MFSampleExtension_CleanPoint, &value)) && value)
         sample->wg_sample.flags |= WG_SAMPLE_FLAG_SYNC_POINT;
 
     wg_sample_queue_begin_append(queue, wg_sample);
@@ -184,20 +224,23 @@ HRESULT wg_transform_push_mf(struct wg_transform *transform, struct wg_sample *w
 HRESULT wg_transform_read_mf(struct wg_transform *transform, struct wg_sample *wg_sample,
         struct wg_format *format)
 {
-    struct sample *sample = CONTAINING_RECORD(wg_sample, struct sample, wg_sample);
+    struct sample *sample = unsafe_mf_from_wg_sample(wg_sample);
     HRESULT hr;
+
+    TRACE_(mfplat)("transform %p, wg_sample %p, format %p.\n", transform, wg_sample, format);
 
     if (FAILED(hr = wg_transform_read_data(transform, wg_sample, format)))
         return hr;
 
-    IMFMediaBuffer_SetCurrentLength(sample->media_buffer, wg_sample->size);
+    if (FAILED(hr = IMFMediaBuffer_SetCurrentLength(sample->u.mf.buffer, wg_sample->size)))
+        return hr;
 
     if (wg_sample->flags & WG_SAMPLE_FLAG_HAS_PTS)
-        IMFSample_SetSampleTime(sample->sample, wg_sample->pts);
+        IMFSample_SetSampleTime(sample->u.mf.sample, wg_sample->pts);
     if (wg_sample->flags & WG_SAMPLE_FLAG_HAS_DURATION)
-        IMFSample_SetSampleDuration(sample->sample, wg_sample->duration);
+        IMFSample_SetSampleDuration(sample->u.mf.sample, wg_sample->duration);
     if (wg_sample->flags & WG_SAMPLE_FLAG_SYNC_POINT)
-        IMFSample_SetUINT32(sample->sample, &MFSampleExtension_CleanPoint, 1);
+        IMFSample_SetUINT32(sample->u.mf.sample, &MFSampleExtension_CleanPoint, 1);
 
     return S_OK;
 }
