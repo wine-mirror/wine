@@ -655,6 +655,18 @@ NTSTATUS WINAPI pdo_ioctl(DEVICE_OBJECT *device, IRP *irp)
         case IOCTL_HID_SET_OUTPUT_REPORT:
             status = hid_device_xfer_report( ext, code, irp );
             break;
+
+        case IOCTL_HID_GET_WINE_RAWINPUT_HANDLE:
+            if (irpsp->Parameters.DeviceIoControl.OutputBufferLength < sizeof(ULONG))
+                status = STATUS_BUFFER_OVERFLOW;
+            else
+            {
+                *(ULONG *)irp->AssociatedIrp.SystemBuffer = ext->u.pdo.rawinput_handle;
+                irp->IoStatus.Information = sizeof(ULONG);
+                status = STATUS_SUCCESS;
+            }
+            break;
+
         default:
         {
             ULONG code = irpsp->Parameters.DeviceIoControl.IoControlCode;
