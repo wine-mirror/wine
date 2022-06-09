@@ -511,13 +511,15 @@
 #define VK_KHR_MAINTENANCE_4_EXTENSION_NAME "VK_KHR_maintenance4"
 #define VK_VALVE_DESCRIPTOR_SET_HOST_MAPPING_SPEC_VERSION 1
 #define VK_VALVE_DESCRIPTOR_SET_HOST_MAPPING_EXTENSION_NAME "VK_VALVE_descriptor_set_host_mapping"
+#define VK_EXT_NON_SEAMLESS_CUBE_MAP_SPEC_VERSION 1
+#define VK_EXT_NON_SEAMLESS_CUBE_MAP_EXTENSION_NAME "VK_EXT_non_seamless_cube_map"
 #define VK_QCOM_FRAGMENT_DENSITY_MAP_OFFSET_SPEC_VERSION 1
 #define VK_QCOM_FRAGMENT_DENSITY_MAP_OFFSET_EXTENSION_NAME "VK_QCOM_fragment_density_map_offset"
 #define VK_NV_LINEAR_COLOR_ATTACHMENT_SPEC_VERSION 1
 #define VK_NV_LINEAR_COLOR_ATTACHMENT_EXTENSION_NAME "VK_NV_linear_color_attachment"
 #define VK_EXT_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_SPEC_VERSION 1
 #define VK_EXT_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_EXTENSION_NAME "VK_EXT_image_compression_control_swapchain"
-#define VK_EXT_SUBPASS_MERGE_FEEDBACK_SPEC_VERSION 1
+#define VK_EXT_SUBPASS_MERGE_FEEDBACK_SPEC_VERSION 2
 #define VK_EXT_SUBPASS_MERGE_FEEDBACK_EXTENSION_NAME "VK_EXT_subpass_merge_feedback"
 #define VK_KHR_ACCELERATION_STRUCTURE_SPEC_VERSION 13
 #define VK_KHR_ACCELERATION_STRUCTURE_EXTENSION_NAME "VK_KHR_acceleration_structure"
@@ -541,7 +543,7 @@
 #define VK_API_VERSION_1_1 VK_MAKE_API_VERSION(0, 1, 1, 0)
 #define VK_API_VERSION_1_2 VK_MAKE_API_VERSION(0, 1, 2, 0)
 #define VK_API_VERSION_1_3 VK_MAKE_API_VERSION(0, 1, 3, 0)
-#define VK_HEADER_VERSION 215
+#define VK_HEADER_VERSION 217
 #define VK_HEADER_VERSION_COMPLETE VK_MAKE_API_VERSION(0, 1, 3, VK_HEADER_VERSION)
 #define VK_DEFINE_HANDLE(object) typedef struct object##_T* object;
 #define VK_USE_64_BIT_PTR_DEFINES 0
@@ -615,6 +617,12 @@ VK_DEFINE_NON_DISPATCHABLE_HANDLE(VkValidationCacheEXT)
 struct AHardwareBuffer;
 struct ANativeWindow;
 struct CAMetalLayer;
+struct IOSurfaceRef;
+struct MTLBuffer_id;
+struct MTLCommandQueue_id;
+struct MTLDevice_id;
+struct MTLSharedEvent_id;
+struct MTLTexture_id;
 typedef uint32_t VkBool32;
 typedef uint64_t VkDeviceAddress;
 typedef uint64_t VkDeviceSize;
@@ -670,6 +678,7 @@ typedef VkFlags VkDisplayModeCreateFlagsKHR;
 typedef VkFlags VkDisplayPlaneAlphaFlagsKHR;
 typedef VkFlags VkDisplaySurfaceCreateFlagsKHR;
 typedef VkFlags VkEventCreateFlags;
+typedef VkFlags VkExportMetalObjectTypeFlagsEXT;
 typedef VkFlags VkExternalFenceFeatureFlags;
 typedef VkExternalFenceFeatureFlags VkExternalFenceFeatureFlagsKHR;
 typedef VkFlags VkExternalFenceHandleTypeFlags;
@@ -3154,6 +3163,7 @@ typedef enum VkSamplerCreateFlagBits
 {
     VK_SAMPLER_CREATE_SUBSAMPLED_BIT_EXT = 0x00000001,
     VK_SAMPLER_CREATE_SUBSAMPLED_COARSE_RECONSTRUCTION_BIT_EXT = 0x00000002,
+    VK_SAMPLER_CREATE_NON_SEAMLESS_CUBE_MAP_BIT_EXT = 0x00000004,
     VK_SAMPLER_CREATE_FLAG_BITS_MAX_ENUM = 0x7fffffff,
 } VkSamplerCreateFlagBits;
 
@@ -3850,6 +3860,7 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_SET_HOST_MAPPING_FEATURES_VALVE = 1000420000,
     VK_STRUCTURE_TYPE_DESCRIPTOR_SET_BINDING_REFERENCE_VALVE = 1000420001,
     VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_HOST_MAPPING_INFO_VALVE = 1000420002,
+    VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_NON_SEAMLESS_CUBE_MAP_FEATURES_EXT = 1000422000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_FEATURES_QCOM = 1000425000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FRAGMENT_DENSITY_MAP_OFFSET_PROPERTIES_QCOM = 1000425001,
     VK_STRUCTURE_TYPE_SUBPASS_FRAGMENT_DENSITY_MAP_OFFSET_END_INFO_QCOM = 1000425002,
@@ -3857,8 +3868,8 @@ typedef enum VkStructureType
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_IMAGE_COMPRESSION_CONTROL_SWAPCHAIN_FEATURES_EXT = 1000437000,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SUBPASS_MERGE_FEEDBACK_FEATURES_EXT = 1000458000,
     VK_STRUCTURE_TYPE_RENDER_PASS_CREATION_CONTROL_EXT = 1000458001,
-    VK_STRUCTURE_TYPE_RENDER_PASS_CREATION_FEEDBACK_INFO_EXT = 1000458002,
-    VK_STRUCTURE_TYPE_RENDER_PASS_SUBPASS_FEEDBACK_INFO_EXT = 1000458003,
+    VK_STRUCTURE_TYPE_RENDER_PASS_CREATION_FEEDBACK_CREATE_INFO_EXT = 1000458002,
+    VK_STRUCTURE_TYPE_RENDER_PASS_SUBPASS_FEEDBACK_CREATE_INFO_EXT = 1000458003,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VARIABLE_POINTERS_FEATURES,
     VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETER_FEATURES = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SHADER_DRAW_PARAMETERS_FEATURES,
     VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT = VK_STRUCTURE_TYPE_DEBUG_REPORT_CALLBACK_CREATE_INFO_EXT,
@@ -7059,6 +7070,13 @@ typedef struct VkPhysicalDeviceMutableDescriptorTypeFeaturesVALVE
     VkBool32 mutableDescriptorType;
 } VkPhysicalDeviceMutableDescriptorTypeFeaturesVALVE;
 
+typedef struct VkPhysicalDeviceNonSeamlessCubeMapFeaturesEXT
+{
+    VkStructureType sType;
+    void *pNext;
+    VkBool32 nonSeamlessCubeMap;
+} VkPhysicalDeviceNonSeamlessCubeMapFeaturesEXT;
+
 typedef struct VkPhysicalDevicePCIBusInfoPropertiesEXT
 {
     VkStructureType sType;
@@ -8577,8 +8595,6 @@ typedef struct VkRenderPassCreationControlEXT
 
 typedef struct VkRenderPassCreationFeedbackInfoEXT
 {
-    VkStructureType sType;
-    const void *pNext;
     uint32_t postMergeSubpassCount;
 } VkRenderPassCreationFeedbackInfoEXT;
 
@@ -8613,8 +8629,6 @@ typedef VkRenderPassMultiviewCreateInfo VkRenderPassMultiviewCreateInfoKHR;
 
 typedef struct VkRenderPassSubpassFeedbackInfoEXT
 {
-    VkStructureType sType;
-    const void *pNext;
     VkSubpassMergeStatusEXT subpassMergeStatus;
     char description[VK_MAX_DESCRIPTION_SIZE];
     uint32_t postMergeIndex;
@@ -9953,6 +9967,13 @@ typedef struct VkRenderPassCreateInfo2
 } VkRenderPassCreateInfo2;
 typedef VkRenderPassCreateInfo2 VkRenderPassCreateInfo2KHR;
 
+typedef struct VkRenderPassCreationFeedbackCreateInfoEXT
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkRenderPassCreationFeedbackInfoEXT *pRenderPassFeedback;
+} VkRenderPassCreationFeedbackCreateInfoEXT;
+
 typedef struct VkRenderPassSampleLocationsBeginInfoEXT
 {
     VkStructureType sType;
@@ -9962,6 +9983,13 @@ typedef struct VkRenderPassSampleLocationsBeginInfoEXT
     uint32_t postSubpassSampleLocationsCount;
     const VkSubpassSampleLocationsEXT *pPostSubpassSampleLocations;
 } VkRenderPassSampleLocationsBeginInfoEXT;
+
+typedef struct VkRenderPassSubpassFeedbackCreateInfoEXT
+{
+    VkStructureType sType;
+    const void *pNext;
+    VkRenderPassSubpassFeedbackInfoEXT *pSubpassFeedback;
+} VkRenderPassSubpassFeedbackCreateInfoEXT;
 
 typedef struct VkResolveImageInfo2
 {

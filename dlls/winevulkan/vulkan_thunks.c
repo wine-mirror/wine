@@ -4954,6 +4954,22 @@ VkResult convert_VkDeviceCreateInfo_struct_chain(const void *pNext, VkDeviceCrea
             break;
         }
 
+        case VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_NON_SEAMLESS_CUBE_MAP_FEATURES_EXT:
+        {
+            const VkPhysicalDeviceNonSeamlessCubeMapFeaturesEXT *in = (const VkPhysicalDeviceNonSeamlessCubeMapFeaturesEXT *)in_header;
+            VkPhysicalDeviceNonSeamlessCubeMapFeaturesEXT *out;
+
+            if (!(out = malloc(sizeof(*out)))) goto out_of_memory;
+
+            out->sType = in->sType;
+            out->pNext = NULL;
+            out->nonSeamlessCubeMap = in->nonSeamlessCubeMap;
+
+            out_header->pNext = (VkBaseOutStructure *)out;
+            out_header = out_header->pNext;
+            break;
+        }
+
         default:
             FIXME("Application requested a linked structure of type %u.\n", in_header->sType);
         }
@@ -9890,6 +9906,7 @@ static const char * const vk_device_extensions[] =
     "VK_EXT_memory_budget",
     "VK_EXT_memory_priority",
     "VK_EXT_multi_draw",
+    "VK_EXT_non_seamless_cube_map",
     "VK_EXT_pageable_device_local_memory",
     "VK_EXT_pci_bus_info",
     "VK_EXT_pipeline_creation_cache_control",
