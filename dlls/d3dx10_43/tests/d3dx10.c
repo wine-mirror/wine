@@ -2025,6 +2025,7 @@ static void test_get_image_info(void)
     ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
     ok(hr2 == 0xdeadbeef, "Got unexpected hr2 %#x.\n", hr2);
     hr2 = 0xdeadbeef;
+    dword = 0xdeadbeef;
     hr = D3DX10GetImageInfoFromMemory(&dword, sizeof(dword), NULL, &image_info, &hr2);
     ok(hr == E_FAIL, "Got unexpected hr %#x.\n", hr);
     ok(hr == hr2, "Got unexpected hr2 %#x.\n", hr2);
