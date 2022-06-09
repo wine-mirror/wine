@@ -566,7 +566,7 @@ BOOL WINAPI LookupPrivilegeDisplayNameA( LPCSTR lpSystemName, LPCSTR lpName, LPS
                                          LPDWORD cchDisplayName, LPDWORD lpLanguageId )
 {
     FIXME("%s %s %s %p %p - stub\n", debugstr_a(lpSystemName), debugstr_a(lpName),
-          debugstr_a(lpDisplayName), cchDisplayName, lpLanguageId);
+          lpDisplayName, cchDisplayName, lpLanguageId);
 
     return FALSE;
 }
@@ -574,8 +574,8 @@ BOOL WINAPI LookupPrivilegeDisplayNameA( LPCSTR lpSystemName, LPCSTR lpName, LPS
 BOOL WINAPI LookupPrivilegeDisplayNameW( LPCWSTR lpSystemName, LPCWSTR lpName, LPWSTR lpDisplayName,
                                          LPDWORD cchDisplayName, LPDWORD lpLanguageId )
 {
-    FIXME("%s %s %s %p %p - stub\n", debugstr_w(lpSystemName), debugstr_w(lpName),
-          debugstr_w(lpDisplayName), cchDisplayName, lpLanguageId);
+    FIXME("%s %s %p %p %p - stub\n", debugstr_w(lpSystemName), debugstr_w(lpName),
+          lpDisplayName, cchDisplayName, lpLanguageId);
 
     return FALSE;
 }
