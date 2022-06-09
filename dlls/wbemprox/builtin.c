@@ -367,7 +367,10 @@ static const struct column col_qualifier[] =
 static const struct column col_quickfixengineering[] =
 {
     { L"Caption",  CIM_STRING },
+    { L"Description",  CIM_STRING },
     { L"HotFixID", CIM_STRING|COL_FLAG_KEY },
+    { L"InstalledBy",  CIM_STRING },
+    { L"InstalledOn",  CIM_STRING },
 };
 static const struct column col_rawsmbiostables[] =
 {
@@ -805,7 +808,10 @@ struct record_qualifier
 struct record_quickfixengineering
 {
     const WCHAR *caption;
+    const WCHAR *description;
     const WCHAR *hotfixid;
+    const WCHAR *installedby;
+    const WCHAR *installedon;
 };
 struct record_rawsmbiostables
 {
@@ -1011,7 +1017,7 @@ static const struct record_qualifier data_qualifier[] =
 
 static const struct record_quickfixengineering data_quickfixengineering[] =
 {
-    { L"http://winehq.org", L"KB1234567" },
+    { L"http://winehq.org", L"Update", L"KB1234567", L"", L"22/2/2022" },
 };
 
 static const struct record_softwarelicensingproduct data_softwarelicensingproduct[] =

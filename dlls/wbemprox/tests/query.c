@@ -1998,7 +1998,11 @@ static void test_Win32_QuickFixEngineering( IWbemServices *services )
             "unexpected variant type %#x\n", V_VT( &caption ) );
         ok( type == CIM_STRING, "unexpected type %#lx\n", type );
 
+        check_property( obj, L"Description", VT_BSTR, CIM_STRING );
         check_property( obj, L"HotFixID", VT_BSTR, CIM_STRING );
+        check_property( obj, L"InstalledBy", VT_BSTR, CIM_STRING );
+        check_property( obj, L"InstalledOn", VT_BSTR, CIM_STRING );
+
         IWbemClassObject_Release( obj );
         if (total++ >= 10) break;
     }
