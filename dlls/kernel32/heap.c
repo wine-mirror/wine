@@ -236,64 +236,10 @@ BOOL WINAPI GlobalUnlock( HGLOBAL handle )
 
 /***********************************************************************
  *           GlobalHandle   (KERNEL32.@)
- *
- * Get the handle associated with the pointer to a global memory block.
- *
- * RETURNS
- *      Handle: Success
- *      NULL: Failure
  */
 HGLOBAL WINAPI GlobalHandle( const void *ptr )
 {
-    struct mem_entry *mem;
-    HGLOBAL handle;
-    ULONG flags;
-
-    TRACE_(globalmem)( "ptr %p\n", ptr );
-
-    if (!ptr)
-    {
-        SetLastError( ERROR_INVALID_PARAMETER );
-        return 0;
-    }
-
-    RtlLockHeap( GetProcessHeap() );
-    __TRY
-    {
-        handle = 0;
-
-        /* note that if ptr is a pointer to a block allocated by           */
-        /* GlobalAlloc with GMEM_MOVEABLE then magic test in HeapValidate  */
-        /* will fail.                                                      */
-        if ((ptr = unsafe_ptr_from_HLOCAL( (HLOCAL)ptr )))
-        {
-            if (!RtlGetUserInfoHeap( GetProcessHeap(), HEAP_NO_SERIALIZE, (void *)ptr, &handle, &flags ))
-            {
-                SetLastError( ERROR_INVALID_HANDLE );
-                handle = 0;
-            }
-            break;
-        }
-        else handle = (HGLOBAL)ptr;
-
-        /* Now test handle either passed in or retrieved from pointer */
-        if ((mem = unsafe_mem_from_HLOCAL( handle )))
-        {
-            if (HeapValidate( GetProcessHeap(), HEAP_NO_SERIALIZE, mem->ptr )) /* obj(-handle) valid arena? */
-                break; /* valid moveable block */
-        }
-        handle = 0;
-        SetLastError( ERROR_INVALID_HANDLE );
-    }
-    __EXCEPT_PAGE_FAULT
-    {
-        SetLastError( ERROR_INVALID_HANDLE );
-        handle = 0;
-    }
-    __ENDTRY
-    RtlUnlockHeap( GetProcessHeap() );
-
-    return handle;
+    return LocalHandle( ptr );
 }
 
 /***********************************************************************
@@ -438,23 +384,28 @@ UINT WINAPI LocalFlags( HLOCAL handle )
 
 /***********************************************************************
  *           LocalHandle   (KERNEL32.@)
- *
- * Get the handle associated with the pointer to a local memory block.
- *
- * RETURNS
- *	Handle: Success
- *	NULL: Failure
- *
- * NOTES
- *  Windows memory management does not provide a separate local heap
- *  and global heap.
  */
-HLOCAL WINAPI LocalHandle(
-                LPCVOID ptr /* [in] Address of local memory block */
-) {
-    return GlobalHandle( ptr );
-}
+HLOCAL WINAPI LocalHandle( const void *ptr )
+{
+    HLOCAL handle;
+    ULONG flags;
 
+    TRACE_(globalmem)( "ptr %p\n", ptr );
+
+    if (!ptr)
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+
+    if (!RtlGetUserInfoHeap( GetProcessHeap(), 0, (void *)ptr, &handle, &flags ))
+    {
+        SetLastError( ERROR_INVALID_HANDLE );
+        return 0;
+    }
+
+    return handle;
+}
 
 /***********************************************************************
  *           LocalShrink   (KERNEL32.@)
