@@ -48,6 +48,7 @@ WINE_DEFAULT_DEBUG_CHANNEL(globalmem);
 static HANDLE systemHeap;   /* globally shared heap */
 
 BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE handle, ULONG flags, void *ptr, void **user_value, ULONG *user_flags );
+BOOLEAN WINAPI RtlSetUserValueHeap( HANDLE handle, ULONG flags, void *ptr, void *user_value );
 
 /***********************************************************************
  *           HEAP_CreateSystemHeap
@@ -174,7 +175,7 @@ struct kernelbase_global_data *kernelbase_global_data;
 
 static inline struct mem_entry *unsafe_mem_from_HLOCAL( HLOCAL handle )
 {
-    struct mem_entry *mem = CONTAINING_RECORD( handle, struct mem_entry, ptr );
+    struct mem_entry *mem = CONTAINING_RECORD( *(volatile HANDLE *)&handle, struct mem_entry, ptr );
     struct kernelbase_global_data *data = kernelbase_global_data;
     if (((UINT_PTR)handle & ((sizeof(void *) << 1) - 1)) != sizeof(void *)) return NULL;
     if (mem < data->mem_entries || mem >= data->mem_entries_end) return NULL;
@@ -253,7 +254,24 @@ HGLOBAL WINAPI GlobalHandle( const void *ptr )
  */
 HGLOBAL WINAPI GlobalReAlloc( HGLOBAL handle, SIZE_T size, UINT flags )
 {
-    return LocalReAlloc( handle, size, flags );
+    struct mem_entry *mem;
+    void *ptr;
+
+    if ((mem = unsafe_mem_from_HLOCAL( handle )) && mem->lock) return 0;
+    if (!(handle = LocalReAlloc( handle, size, flags ))) return 0;
+
+    /* GlobalReAlloc allows changing GMEM_FIXED to GMEM_MOVEABLE with GMEM_MODIFY */
+    if ((flags & (GMEM_MOVEABLE | GMEM_MODIFY)) == (GMEM_MOVEABLE | GMEM_MODIFY) &&
+        (ptr = unsafe_ptr_from_HLOCAL( handle )))
+    {
+        if (!(handle = LocalAlloc( flags, 0 ))) return 0;
+        RtlSetUserValueHeap( GetProcessHeap(), 0, ptr, handle );
+        mem = unsafe_mem_from_HLOCAL( handle );
+        mem->flags &= ~MEM_FLAG_DISCARDED;
+        mem->ptr = ptr;
+    }
+
+    return handle;
 }
 
 

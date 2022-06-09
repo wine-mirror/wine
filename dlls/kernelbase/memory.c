@@ -964,7 +964,8 @@ LPVOID WINAPI DECLSPEC_HOTPATCH LocalLock( HLOCAL handle )
  */
 HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT flags )
 {
-    DWORD heap_flags = HEAP_ADD_USER_INFO;
+    DWORD heap_flags = HEAP_ADD_USER_INFO | HEAP_NO_SERIALIZE;
+    HANDLE heap = GetProcessHeap();
     struct mem_entry *mem;
     HLOCAL ret = 0;
     void *ptr;
@@ -973,92 +974,55 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT f
 
     if (flags & LMEM_ZEROINIT) heap_flags |= HEAP_ZERO_MEMORY;
 
-    RtlLockHeap( GetProcessHeap() );
-    if (flags & LMEM_MODIFY) /* modify flags */
+    RtlLockHeap( heap );
+    if ((ptr = unsafe_ptr_from_HLOCAL( handle )))
     {
-        if (unsafe_ptr_from_HLOCAL( handle ) && (flags & LMEM_MOVEABLE))
+        if (flags & LMEM_MODIFY) ret = handle;
+        else
         {
-            /* make a fixed block moveable
-             * actually only NT is able to do this. But it's soo simple
-             */
-            if (handle == 0)
+            if (!(flags & LMEM_MOVEABLE)) heap_flags |= HEAP_REALLOC_IN_PLACE_ONLY;
+            ret = HeapReAlloc( heap, heap_flags, ptr, size );
+            if (ret) RtlSetUserValueHeap( heap, heap_flags, ret, ret );
+            else SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+        }
+    }
+    else if ((mem = unsafe_mem_from_HLOCAL( handle )))
+    {
+        if (!(flags & LMEM_MODIFY))
+        {
+            if (size)
             {
-                WARN_(globalmem)( "null handle\n" );
-                SetLastError( ERROR_NOACCESS );
+                if (!mem->ptr) ptr = HeapAlloc( heap, heap_flags, size );
+                else ptr = HeapReAlloc( heap, heap_flags, mem->ptr, size );
+
+                if (!ptr) SetLastError( ERROR_NOT_ENOUGH_MEMORY );
+                else
+                {
+                    RtlSetUserValueHeap( heap, heap_flags, ptr, handle );
+                    mem->flags &= ~MEM_FLAG_DISCARDED;
+                    mem->ptr = ptr;
+                    ret = handle;
+                }
             }
             else
             {
-                size = RtlSizeHeap( GetProcessHeap(), 0, handle );
-                ret = LocalAlloc( flags, size );
-                ptr = LocalLock( ret );
-                memcpy( ptr, handle, size );
-                LocalUnlock( ret );
-                LocalFree( handle );
+                HeapFree( heap, heap_flags, mem->ptr );
+                mem->flags |= MEM_FLAG_DISCARDED;
+                mem->lock = 0;
+                mem->ptr = NULL;
+                ret = handle;
             }
         }
-        else if ((mem = unsafe_mem_from_HLOCAL( handle )) && (flags & LMEM_DISCARDABLE))
+        else if (flags & LMEM_DISCARDABLE)
         {
-            /* change the flags to make our block "discardable" */
-            mem->flags |= LMEM_DISCARDABLE >> 8;
+            mem->flags |= MEM_FLAG_DISCARDABLE;
             ret = handle;
         }
         else SetLastError( ERROR_INVALID_PARAMETER );
     }
-    else
-    {
-        if ((ptr = unsafe_ptr_from_HLOCAL( handle )))
-        {
-            /* reallocate fixed memory */
-            if (!(flags & LMEM_MOVEABLE)) heap_flags |= HEAP_REALLOC_IN_PLACE_ONLY;
-            ret = HeapReAlloc( GetProcessHeap(), heap_flags, ptr, size );
-            if (ret) RtlSetUserValueHeap( GetProcessHeap(), heap_flags, ret, ret );
-        }
-        else if ((mem = unsafe_mem_from_HLOCAL( handle )))
-        {
-            /* reallocate a moveable block */
-            if (size != 0)
-            {
-                if (size <= INT_MAX)
-                {
-                    if (mem->ptr)
-                    {
-                        if ((ptr = HeapReAlloc( GetProcessHeap(), heap_flags, mem->ptr, size )))
-                        {
-                            RtlSetUserValueHeap( GetProcessHeap(), heap_flags, ptr, handle );
-                            mem->ptr = ptr;
-                            ret = handle;
-                        }
-                    }
-                    else
-                    {
-                        if ((ptr = HeapAlloc( GetProcessHeap(), heap_flags, size )))
-                        {
-                            RtlSetUserValueHeap( GetProcessHeap(), heap_flags, ptr, handle );
-                            *(HLOCAL *)ptr = handle;
-                            mem->ptr = ptr;
-                            ret = handle;
-                        }
-                    }
-                }
-                else SetLastError( ERROR_OUTOFMEMORY );
-            }
-            else
-            {
-                if (mem->lock == 0)
-                {
-                    if (mem->ptr)
-                    {
-                        HeapFree( GetProcessHeap(), 0, mem->ptr );
-                        mem->ptr = NULL;
-                    }
-                    ret = handle;
-                }
-                else WARN_(globalmem)( "not freeing memory associated with locked handle\n" );
-            }
-        }
-        else SetLastError( ERROR_INVALID_HANDLE );
-    }
-    RtlUnlockHeap( GetProcessHeap() );
+    else SetLastError( ERROR_INVALID_HANDLE );
+    RtlUnlockHeap( heap );
+
     return ret;
 }
 
