@@ -2115,6 +2115,74 @@ static void test_RtlCreateRegistryKey(void)
     pRtlFreeUnicodeString(&str);
 }
 
+static void test_NtRenameKey(void)
+{
+    KEY_NAME_INFORMATION *info = NULL;
+    UNICODE_STRING str, str2;
+    OBJECT_ATTRIBUTES attr;
+    HANDLE key, subkey;
+    char buffer[200];
+    NTSTATUS status;
+    DWORD size;
+
+    status = NtRenameKey(NULL, NULL);
+    todo_wine
+    ok(status == STATUS_ACCESS_VIOLATION, "Unexpected status %#lx.\n", status);
+
+    InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
+    status = pNtCreateKey(&key, KEY_READ|DELETE, &attr, 0, 0, 0, 0);
+    ok(!status, "Unexpected status %#lx.\n", status);
+
+    attr.RootDirectory = key;
+    attr.ObjectName = &str;
+
+    pRtlCreateUnicodeStringFromAsciiz(&str, "rename_subkey");
+    status = pNtCreateKey(&subkey, KEY_READ|DELETE, &attr, 0, 0, 0, 0);
+    ok(!status, "Unexpected status %#lx.\n", status);
+
+    pRtlCreateUnicodeStringFromAsciiz(&str2, "renamed_subkey");
+
+    status = NtRenameKey(subkey, NULL);
+    todo_wine
+    ok(status == STATUS_ACCESS_VIOLATION, "Unexpected status %#lx.\n", status);
+    status = NtRenameKey(NULL, &str);
+    todo_wine
+    ok(status == STATUS_INVALID_HANDLE, "Unexpected status %#lx.\n", status);
+
+    status = NtRenameKey(subkey, &str2);
+    todo_wine
+    ok(status == STATUS_ACCESS_DENIED, "Unexpected status %#lx.\n", status);
+    pNtClose(subkey);
+
+    status = pNtCreateKey(&subkey, KEY_WRITE|DELETE, &attr, 0, 0, 0, 0);
+    ok(!status, "Unexpected status %#lx.\n", status);
+    /* Rename to itself. */
+    status = NtRenameKey(subkey, &str);
+    todo_wine
+    ok(status == STATUS_CANNOT_DELETE, "Unexpected status %#lx.\n", status);
+    status = NtRenameKey(subkey, &str2);
+    todo_wine
+    ok(!status, "Unexpected status %#lx.\n", status);
+
+    pRtlFreeUnicodeString(&str2);
+    pRtlFreeUnicodeString(&str);
+
+    info = (KEY_NAME_INFORMATION *)buffer;
+    status = pNtQueryKey(subkey, KeyNameInformation, info, sizeof(buffer), &size);
+    todo_wine
+    ok(!status, "Unexpected status %#lx.\n", status);
+    if (status == STATUS_SUCCESS)
+    {
+        info->Name[info->NameLength/sizeof(WCHAR)] = 0;
+        ok(!!wcsstr(info->Name, L"renamed_subkey"), "Unexpected subkey name %s.\n", wine_dbgstr_w(info->Name));
+    }
+
+    pNtDeleteKey(subkey);
+    pNtDeleteKey(key);
+    pNtClose(subkey);
+    pNtClose(key);
+}
+
 START_TEST(reg)
 {
     static const WCHAR winetest[] = {'\\','W','i','n','e','T','e','s','t',0};
@@ -2144,6 +2212,7 @@ START_TEST(reg)
     test_NtDeleteKey();
     test_symlinks();
     test_redirection();
+    test_NtRenameKey();
 
     pRtlFreeUnicodeString(&winetestpath);
 
