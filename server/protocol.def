@@ -1837,6 +1837,13 @@ struct process_info
 @END
 
 
+/* Rename a registry key */
+@REQ(rename_key)
+    obj_handle_t hkey;         /* handle to the key to be renamed */
+    VARARG(name,unicode_str);  /* new name */
+@END
+
+
 /* Create a waitable timer */
 @REQ(create_timer)
     unsigned int access;        /* wanted access rights */

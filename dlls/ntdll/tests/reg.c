@@ -2126,7 +2126,6 @@ static void test_NtRenameKey(void)
     DWORD size;
 
     status = NtRenameKey(NULL, NULL);
-    todo_wine
     ok(status == STATUS_ACCESS_VIOLATION, "Unexpected status %#lx.\n", status);
 
     InitializeObjectAttributes(&attr, &winetestpath, 0, 0, 0);
@@ -2140,17 +2139,18 @@ static void test_NtRenameKey(void)
     status = pNtCreateKey(&subkey, KEY_READ|DELETE, &attr, 0, 0, 0, 0);
     ok(!status, "Unexpected status %#lx.\n", status);
 
+    memset(&str2, 0, sizeof(str2));
+    status = NtRenameKey(subkey, &str2);
+    ok(status == STATUS_INVALID_PARAMETER, "Unexpected status %#lx.\n", status);
+
     pRtlCreateUnicodeStringFromAsciiz(&str2, "renamed_subkey");
 
     status = NtRenameKey(subkey, NULL);
-    todo_wine
     ok(status == STATUS_ACCESS_VIOLATION, "Unexpected status %#lx.\n", status);
     status = NtRenameKey(NULL, &str);
-    todo_wine
     ok(status == STATUS_INVALID_HANDLE, "Unexpected status %#lx.\n", status);
 
     status = NtRenameKey(subkey, &str2);
-    todo_wine
     ok(status == STATUS_ACCESS_DENIED, "Unexpected status %#lx.\n", status);
     pNtClose(subkey);
 
@@ -2158,10 +2158,8 @@ static void test_NtRenameKey(void)
     ok(!status, "Unexpected status %#lx.\n", status);
     /* Rename to itself. */
     status = NtRenameKey(subkey, &str);
-    todo_wine
     ok(status == STATUS_CANNOT_DELETE, "Unexpected status %#lx.\n", status);
     status = NtRenameKey(subkey, &str2);
-    todo_wine
     ok(!status, "Unexpected status %#lx.\n", status);
 
     pRtlFreeUnicodeString(&str2);

@@ -2384,6 +2384,19 @@ struct set_registry_notification_reply
 
 
 
+struct rename_key_request
+{
+    struct request_header __header;
+    obj_handle_t hkey;
+    /* VARARG(name,unicode_str); */
+};
+struct rename_key_reply
+{
+    struct reply_header __header;
+};
+
+
+
 struct create_timer_request
 {
     struct request_header __header;
@@ -5538,6 +5551,7 @@ enum request
     REQ_unload_registry,
     REQ_save_registry,
     REQ_set_registry_notification,
+    REQ_rename_key,
     REQ_create_timer,
     REQ_open_timer,
     REQ_set_timer,
@@ -5820,6 +5834,7 @@ union generic_request
     struct unload_registry_request unload_registry_request;
     struct save_registry_request save_registry_request;
     struct set_registry_notification_request set_registry_notification_request;
+    struct rename_key_request rename_key_request;
     struct create_timer_request create_timer_request;
     struct open_timer_request open_timer_request;
     struct set_timer_request set_timer_request;
@@ -6100,6 +6115,7 @@ union generic_reply
     struct unload_registry_reply unload_registry_reply;
     struct save_registry_reply save_registry_reply;
     struct set_registry_notification_reply set_registry_notification_reply;
+    struct rename_key_reply rename_key_reply;
     struct create_timer_reply create_timer_reply;
     struct open_timer_reply open_timer_reply;
     struct set_timer_reply set_timer_reply;
@@ -6288,7 +6304,7 @@ union generic_reply
 
 /* ### protocol_version begin ### */
 
-#define SERVER_PROTOCOL_VERSION 751
+#define SERVER_PROTOCOL_VERSION 752
 
 /* ### protocol_version end ### */
 

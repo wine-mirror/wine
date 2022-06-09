@@ -1007,6 +1007,64 @@ static void enum_key( struct key *key, int index, int info_class, struct enum_ke
     if (debug_level > 1) dump_operation( key, NULL, "Enum" );
 }
 
+/* rename a key and its values */
+static int rename_key( struct key *key, const struct unicode_str *new_name )
+{
+    struct unicode_str token, name;
+    struct key *subkey;
+    int i, index, cur_index;
+    WCHAR *ptr;
+
+    token.str = NULL;
+    if (is_wow6432node( key->name, key->namelen ))
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return -1;
+    }
+
+    /* changing to a path is not allowed */
+    if (!new_name->len || !get_path_token( new_name, &token ) || token.len != new_name->len)
+    {
+        set_error( STATUS_INVALID_PARAMETER );
+        return -1;
+    }
+
+    /* check for existing subkey with the same name */
+    if (!key->parent || (subkey = find_subkey( key->parent, new_name, &index )))
+    {
+        set_error( STATUS_CANNOT_DELETE );
+        return -1;
+    }
+
+    if (!(ptr = memdup( new_name->str, new_name->len ))) return -1;
+
+    name.str = key->name;
+    name.len = key->namelen;
+    find_subkey( key->parent, &name, &cur_index );
+
+    if (cur_index < index && (index - cur_index) > 1)
+    {
+        --index;
+        for (i = cur_index; i < index; ++i)
+            key->parent->subkeys[i] = key->parent->subkeys[i+1];
+    }
+    else if (cur_index > index)
+    {
+        for (i = cur_index; i > index; --i)
+            key->parent->subkeys[i] = key->parent->subkeys[i-1];
+    }
+    key->parent->subkeys[index] = key;
+
+    free( key->name );
+    key->name = ptr;
+    key->namelen = new_name->len;
+
+    if (debug_level > 1) dump_operation( key, NULL, "Rename" );
+    make_dirty( key );
+    touch_key( key, REG_NOTIFY_CHANGE_NAME );
+    return 0;
+}
+
 /* delete a key and its values */
 static int delete_key( struct key *key, int recurse )
 {
@@ -2410,6 +2468,22 @@ DECL_HANDLER(set_registry_notification)
             }
             release_object( event );
         }
+        release_object( key );
+    }
+}
+
+/* rename a registry key */
+DECL_HANDLER(rename_key)
+{
+    struct unicode_str name;
+    struct key *key;
+
+    key = get_hkey_obj( req->hkey, KEY_WRITE );
+    if (key)
+    {
+        name.str = get_req_data();
+        name.len = (get_req_data_size() / sizeof(WCHAR)) * sizeof(WCHAR);
+        rename_key( key, &name );
         release_object( key );
     }
 }

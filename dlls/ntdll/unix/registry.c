@@ -199,10 +199,23 @@ NTSTATUS WINAPI NtDeleteKey( HANDLE key )
 /******************************************************************************
  *              NtRenameKey  (NTDLL.@)
  */
-NTSTATUS WINAPI NtRenameKey( HANDLE handle, UNICODE_STRING *name )
+NTSTATUS WINAPI NtRenameKey( HANDLE key, UNICODE_STRING *name )
 {
-    FIXME( "(%p %s)\n", handle, debugstr_us(name) );
-    return STATUS_NOT_IMPLEMENTED;
+    NTSTATUS ret;
+
+    TRACE( "(%p %s)\n", key, debugstr_us(name) );
+
+    if (!name) return STATUS_ACCESS_VIOLATION;
+    if (!name->Buffer || !name->Length) return STATUS_INVALID_PARAMETER;
+
+    SERVER_START_REQ( rename_key )
+    {
+        req->hkey = wine_server_obj_handle( key );
+        wine_server_add_data( req, name->Buffer, name->Length );
+        ret = wine_server_call( req );
+    }
+    SERVER_END_REQ;
+    return ret;
 }
 
 
