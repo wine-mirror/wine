@@ -761,43 +761,16 @@ static BOOL unix_to_win_locale( const char *unix_name, char *win_name )
 }
 
 
-static LCID init_system_lcid( void *locale_ptr )
+static LCID init_system_lcid( const struct locale_nls_header *header )
 {
-    struct
-    {
-        UINT ctypes;
-        UINT unknown1;
-        UINT unknown2;
-        UINT unknown3;
-        UINT locales;
-        UINT charmaps;
-        UINT geoids;
-        UINT scripts;
-    } *header = locale_ptr;
     WCHAR name[LOCALE_NAME_MAX_LENGTH];
-    const NLS_LOCALE_LCNAME_INDEX *lcnames;
-    const NLS_LOCALE_HEADER *locale_table;
-    const WCHAR *locale_strings;
-    int min, max;
+    const NLS_LOCALE_HEADER *locale_table = (const NLS_LOCALE_HEADER *)((char *)header + header->locales);
+    const NLS_LOCALE_LCNAME_INDEX *entry;
 
     ascii_to_unicode( name, system_locale, strlen(system_locale) + 1 );
-    locale_table = (const NLS_LOCALE_HEADER *)((char *)header + header->locales);
-    locale_strings = (const WCHAR *)((char *)locale_table + locale_table->strings_offset);
-    lcnames = (const NLS_LOCALE_LCNAME_INDEX *)((char *)locale_table + locale_table->lcnames_offset);
-    min = 0;
-    max = locale_table->nb_lcnames - 1;
-    while (min <= max)
-    {
-        int pos = (min + max) / 2;
-        int res = wcsicmp( name, locale_strings + lcnames[pos].name + 1 );
-        if (res < 0) max = pos - 1;
-        else if (res > 0) min = pos + 1;
-        else
-        {
-            ULONG offset = locale_table->locales_offset + lcnames[pos].idx * locale_table->locale_size;
-            return ((const NLS_LOCALE_DATA *)((const char *)locale_table + offset))->idefaultlanguage;
-        }
-    }
+    if ((entry = find_lcname_entry( locale_table, name )))
+        return get_locale_data( locale_table, entry->idx )->idefaultlanguage;
+
     return MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
 }
 

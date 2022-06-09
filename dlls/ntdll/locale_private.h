@@ -88,6 +88,27 @@ struct norm_table
 };
 
 
+/* locale.nls file */
+struct locale_nls_header
+{
+    UINT ctypes;
+    UINT unknown1;
+    UINT unknown2;
+    UINT unknown3;
+    UINT locales;
+    UINT charmaps;
+    UINT geoids;
+    UINT scripts;
+};
+
+
+static inline WCHAR casemap_ascii( WCHAR ch )
+{
+    if (ch >= 'a' && ch <= 'z') ch -= 'a' - 'A';
+    return ch;
+}
+
+
 static inline int get_utf16( const WCHAR *src, unsigned int srclen, unsigned int *ch )
 {
     if (IS_HIGH_SURROGATE( src[0] ))
@@ -195,6 +216,63 @@ static inline void init_codepage_table( USHORT *ptr, CPTABLEINFO *info )
         info->DBCSCodePage = 0;
         info->DBCSOffsets  = NULL;
     }
+}
+
+
+static inline int compare_locale_names( const WCHAR *n1, const WCHAR *n2 )
+{
+    for (;;)
+    {
+        WCHAR ch1 = casemap_ascii( *n1++ );
+        WCHAR ch2 = casemap_ascii( *n2++ );
+        if (ch1 == '_') ch1 = '-';
+        if (ch2 == '_') ch2 = '-';
+        if (!ch1 || ch1 != ch2) return ch1 - ch2;
+    }
+}
+
+
+static inline const NLS_LOCALE_LCNAME_INDEX *find_lcname_entry( const NLS_LOCALE_HEADER *header,
+                                                                const WCHAR *name )
+{
+    const WCHAR *strings = (const WCHAR *)((char *)header + header->strings_offset);
+    const NLS_LOCALE_LCNAME_INDEX *index = (const NLS_LOCALE_LCNAME_INDEX *)((char *)header + header->lcnames_offset);
+    int min = 0, max = header->nb_lcnames - 1;
+
+    if (!name) return NULL;
+    while (min <= max)
+    {
+        int res, pos = (min + max) / 2;
+        const WCHAR *str = strings + index[pos].name;
+        res = compare_locale_names( name, str + 1 );
+        if (res < 0) max = pos - 1;
+        else if (res > 0) min = pos + 1;
+        else return &index[pos];
+    }
+    return NULL;
+}
+
+
+static inline const NLS_LOCALE_LCID_INDEX *find_lcid_entry( const NLS_LOCALE_HEADER *header, LCID lcid )
+{
+    const NLS_LOCALE_LCID_INDEX *index = (const NLS_LOCALE_LCID_INDEX *)((char *)header + header->lcids_offset);
+    int min = 0, max = header->nb_lcids - 1;
+
+    while (min <= max)
+    {
+        int pos = (min + max) / 2;
+        if (lcid < index[pos].id) max = pos - 1;
+        else if (lcid > index[pos].id) min = pos + 1;
+        else return &index[pos];
+    }
+    return NULL;
+}
+
+
+static inline const NLS_LOCALE_DATA *get_locale_data( const NLS_LOCALE_HEADER *header, UINT idx )
+{
+    ULONG offset = header->locales_offset + idx * header->locale_size;
+    return (const NLS_LOCALE_DATA *)((const char *)header + offset);
 }
 
 
