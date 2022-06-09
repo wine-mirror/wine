@@ -44,6 +44,9 @@ WINE_DECLARE_DEBUG_CHANNEL(virtual);
 WINE_DECLARE_DEBUG_CHANNEL(globalmem);
 
 
+BOOLEAN WINAPI RtlSetUserValueHeap( HANDLE handle, ULONG flags, void *ptr, void *user_value );
+
+
 /***********************************************************************
  * Virtual memory functions
  ***********************************************************************/
@@ -842,6 +845,7 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalAlloc( UINT flags, SIZE_T size )
     if (!(flags & LMEM_MOVEABLE)) /* pointer */
     {
         ptr = HeapAlloc( heap, heap_flags, size );
+        if (ptr) RtlSetUserValueHeap( heap, heap_flags, ptr, ptr );
         TRACE_(globalmem)( "return %p\n", ptr );
         return ptr;
     }
@@ -869,6 +873,7 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalAlloc( UINT flags, SIZE_T size )
     else
     {
         if (!(ptr = HeapAlloc( heap, heap_flags, size + HLOCAL_STORAGE ))) goto failed;
+        RtlSetUserValueHeap( heap, heap_flags, ptr, handle );
         *(HLOCAL *)ptr = handle;
         mem->ptr = (char *)ptr + HLOCAL_STORAGE;
     }
@@ -1014,6 +1019,7 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT f
             /* reallocate fixed memory */
             if (!(flags & LMEM_MOVEABLE)) heap_flags |= HEAP_REALLOC_IN_PLACE_ONLY;
             ret = HeapReAlloc( GetProcessHeap(), heap_flags, ptr, size );
+            if (ret) RtlSetUserValueHeap( GetProcessHeap(), heap_flags, ret, ret );
         }
         else if ((mem = unsafe_mem_from_HLOCAL( handle )))
         {
@@ -1027,6 +1033,7 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT f
                         if ((ptr = HeapReAlloc( GetProcessHeap(), heap_flags, (char *)mem->ptr - HLOCAL_STORAGE,
                                                 size + HLOCAL_STORAGE )))
                         {
+                            RtlSetUserValueHeap( GetProcessHeap(), heap_flags, ptr, handle );
                             mem->ptr = (char *)ptr + HLOCAL_STORAGE;
                             ret = handle;
                         }
@@ -1035,6 +1042,7 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT f
                     {
                         if ((ptr = HeapAlloc( GetProcessHeap(), heap_flags, size + HLOCAL_STORAGE )))
                         {
+                            RtlSetUserValueHeap( GetProcessHeap(), heap_flags, ptr, handle );
                             *(HLOCAL *)ptr = handle;
                             mem->ptr = (char *)ptr + HLOCAL_STORAGE;
                             ret = handle;
