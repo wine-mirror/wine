@@ -1122,25 +1122,32 @@ static void test_SpeechRecognizer(void)
 
         compilation_result = (void*)0xdeadbeef;
         hr = IAsyncOperation_SpeechRecognitionCompilationResult_GetResults(operation, &compilation_result);
-        ok(hr == E_ILLEGAL_METHOD_CALL, "Got unexpected hr %#lx.\n", hr);
-        ok(compilation_result == (void*)0xdeadbeef, "Compilation result had value %p.\n", compilation_result);
+        ok(hr == E_ILLEGAL_METHOD_CALL || hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
-        await_async_inspectable((IAsyncOperation_IInspectable *)operation,
-                                 &compilation_handler,
-                                 &IID_IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResult);
-        check_async_info((IInspectable *)operation, 1, Completed, S_OK);
+        if (hr == E_ILLEGAL_METHOD_CALL) /* Sometimes the operation could have already finished here, */
+                                         /* if so skip waiting and getting the results a second time. */
+        {
+            ok(compilation_result == (void*)0xdeadbeef, "Compilation result had value %p.\n", compilation_result);
 
-        hr = IAsyncOperation_SpeechRecognitionCompilationResult_put_Completed(operation, NULL);
-        ok(hr == E_ILLEGAL_DELEGATE_ASSIGNMENT, "Got unexpected hr %#lx.\n", hr);
+            await_async_inspectable((IAsyncOperation_IInspectable *)operation,
+                                     &compilation_handler,
+                                     &IID_IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResult);
 
-        hr = IAsyncOperation_SpeechRecognitionCompilationResult_get_Completed(operation, &handler);
-        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            hr = IAsyncOperation_SpeechRecognitionCompilationResult_put_Completed(operation, NULL);
+            ok(hr == E_ILLEGAL_DELEGATE_ASSIGNMENT, "Got unexpected hr %#lx.\n", hr);
 
-        compilation_result = (void*)0xdeadbeef;
-        hr = IAsyncOperation_SpeechRecognitionCompilationResult_GetResults(operation, &compilation_result);
-        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+            hr = IAsyncOperation_SpeechRecognitionCompilationResult_get_Completed(operation, &handler);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
 
+            compilation_result = (void*)0xdeadbeef;
+            hr = IAsyncOperation_SpeechRecognitionCompilationResult_GetResults(operation, &compilation_result);
+            ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        }
+
+        ok(compilation_result != (void*)0xdeadbeef, "Compilation result had value %p.\n", compilation_result);
         check_interface(compilation_result, &IID_IAgileObject, TRUE);
+
+        check_async_info((IInspectable *)operation, 1, Completed, S_OK);
 
         hr = ISpeechRecognitionCompilationResult_get_Status(compilation_result, &result_status);
         ok(hr == S_OK, "ISpeechRecognitionCompilationResult_get_Status failed, hr %#lx.\n", hr);
