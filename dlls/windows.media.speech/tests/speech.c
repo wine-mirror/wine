@@ -331,7 +331,6 @@ struct async_inspectable_handler
 
     HANDLE event_block;
     HANDLE event_finished;
-    DWORD thread_id;
 };
 
 static inline struct async_inspectable_handler *impl_from_IAsyncOperationCompletedHandler_IInspectable( IAsyncOperationCompletedHandler_IInspectable *iface )
@@ -378,9 +377,8 @@ HRESULT WINAPI async_inspectable_handler_Invoke( IAsyncOperationCompletedHandler
                                                  AsyncStatus status )
 {
     struct async_inspectable_handler *impl = impl_from_IAsyncOperationCompletedHandler_IInspectable(iface);
-    DWORD id = GetCurrentThreadId();
+
     trace("Iface %p, sender %p, status %d.\n", iface, sender, status);
-    trace("Caller thread id %lu callback thread id %lu.\n", impl->thread_id, id);
 
     /* Signal finishing of the handler. */
     if (impl->event_finished) SetEvent(impl->event_finished);
@@ -1217,7 +1215,6 @@ static void test_SpeechRecognizer(void)
         async_inspectable_handler_create_static(&compilation_handler, &IID_IAsyncOperationCompletedHandler_SpeechRecognitionCompilationResult);
         compilation_handler.event_block = CreateEventW(NULL, FALSE, FALSE, NULL);
         compilation_handler.event_finished = CreateEventW(NULL, FALSE, FALSE, NULL);
-        compilation_handler.thread_id = GetCurrentThreadId();
 
         ok(!!compilation_handler.event_block, "event_block wasn't created.\n");
         ok(!!compilation_handler.event_finished, "event_finished wasn't created.\n");
