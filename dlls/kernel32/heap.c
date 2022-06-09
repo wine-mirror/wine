@@ -172,13 +172,6 @@ C_ASSERT(sizeof(struct mem_entry) == 2 * sizeof(void *));
 
 struct kernelbase_global_data *kernelbase_global_data;
 
-/* align the storage needed for the HLOCAL on an 8-byte boundary thus
- * LocalAlloc/LocalReAlloc'ing with LMEM_MOVEABLE of memory with
- * size = 8*k, where k=1,2,3,... allocs exactly the given size.
- * The Minolta DiMAGE Image Viewer heavily relies on this, corrupting
- * the output jpeg's > 1 MB if not */
-#define HLOCAL_STORAGE      (sizeof(HLOCAL) * 2)
-
 static inline struct mem_entry *unsafe_mem_from_HLOCAL( HLOCAL handle )
 {
     struct mem_entry *mem = CONTAINING_RECORD( handle, struct mem_entry, ptr );
@@ -254,7 +247,6 @@ HGLOBAL WINAPI GlobalHandle( const void *ptr )
 {
     struct mem_entry *mem;
     HGLOBAL handle;
-    LPCVOID test;
     ULONG flags;
 
     TRACE_(globalmem)( "ptr %p\n", ptr );
@@ -275,12 +267,7 @@ HGLOBAL WINAPI GlobalHandle( const void *ptr )
         /* will fail.                                                      */
         if ((ptr = unsafe_ptr_from_HLOCAL( (HLOCAL)ptr )))
         {
-            if (HeapValidate( GetProcessHeap(), HEAP_NO_SERIALIZE, ptr ))
-            {
-                handle = (HGLOBAL)ptr; /* valid fixed block */
-                break;
-            }
-            if (!RtlGetUserInfoHeap( GetProcessHeap(), HEAP_NO_SERIALIZE, (char *)ptr - HLOCAL_STORAGE, &handle, &flags ))
+            if (!RtlGetUserInfoHeap( GetProcessHeap(), HEAP_NO_SERIALIZE, (void *)ptr, &handle, &flags ))
             {
                 SetLastError( ERROR_INVALID_HANDLE );
                 handle = 0;
@@ -292,8 +279,7 @@ HGLOBAL WINAPI GlobalHandle( const void *ptr )
         /* Now test handle either passed in or retrieved from pointer */
         if ((mem = unsafe_mem_from_HLOCAL( handle )))
         {
-            test = mem->ptr;
-            if (HeapValidate( GetProcessHeap(), HEAP_NO_SERIALIZE, (const char *)test - HLOCAL_STORAGE )) /* obj(-handle) valid arena? */
+            if (HeapValidate( GetProcessHeap(), HEAP_NO_SERIALIZE, mem->ptr )) /* obj(-handle) valid arena? */
                 break; /* valid moveable block */
         }
         handle = 0;
@@ -356,14 +342,7 @@ SIZE_T WINAPI GlobalSize( HGLOBAL handle )
     }
 
     if ((ptr = unsafe_ptr_from_HLOCAL( handle )))
-    {
         retval = HeapSize( GetProcessHeap(), 0, ptr );
-        if (retval == ~(SIZE_T)0) /* It might be a GMEM_MOVEABLE data pointer */
-        {
-            retval = HeapSize( GetProcessHeap(), 0, (char *)ptr - HLOCAL_STORAGE );
-            if (retval != ~(SIZE_T)0) retval -= HLOCAL_STORAGE;
-        }
-    }
     else
     {
         RtlLockHeap( GetProcessHeap() );
@@ -372,10 +351,7 @@ SIZE_T WINAPI GlobalSize( HGLOBAL handle )
             if (!mem->ptr) /* handle case of GlobalAlloc( ??,0) */
                 retval = 0;
             else
-            {
-                retval = HeapSize( GetProcessHeap(), 0, (char *)mem->ptr - HLOCAL_STORAGE );
-                if (retval != ~(SIZE_T)0) retval -= HLOCAL_STORAGE;
-            }
+                retval = HeapSize( GetProcessHeap(), 0, mem->ptr );
         }
         else
         {

@@ -752,13 +752,6 @@ C_ASSERT(sizeof(struct mem_entry) == 2 * sizeof(void *));
 static struct mem_entry *next_free_mem;
 static struct kernelbase_global_data global_data = {0};
 
-/* align the storage needed for the HLOCAL on an 8-byte boundary thus
- * LocalAlloc/LocalReAlloc'ing with LMEM_MOVEABLE of memory with
- * size = 8*k, where k=1,2,3,... allocs exactly the given size.
- * The Minolta DiMAGE Image Viewer heavily relies on this, corrupting
- * the output jpeg's > 1 MB if not */
-#define HLOCAL_STORAGE      (sizeof(HLOCAL) * 2)
-
 static inline struct mem_entry *unsafe_mem_from_HLOCAL( HLOCAL handle )
 {
     struct mem_entry *mem = CONTAINING_RECORD( *(volatile HANDLE *)&handle, struct mem_entry, ptr );
@@ -872,10 +865,9 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalAlloc( UINT flags, SIZE_T size )
     if (!size) mem->flags |= MEM_FLAG_DISCARDED;
     else
     {
-        if (!(ptr = HeapAlloc( heap, heap_flags, size + HLOCAL_STORAGE ))) goto failed;
+        if (!(ptr = HeapAlloc( heap, heap_flags, size ))) goto failed;
         RtlSetUserValueHeap( heap, heap_flags, ptr, handle );
-        *(HLOCAL *)ptr = handle;
-        mem->ptr = (char *)ptr + HLOCAL_STORAGE;
+        mem->ptr = ptr;
     }
 
     TRACE_(globalmem)( "return handle %p, ptr %p\n", handle, mem->ptr );
@@ -907,7 +899,7 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalFree( HLOCAL handle )
     }
     else if ((mem = unsafe_mem_from_HLOCAL( handle )))
     {
-        if (!mem->ptr || HeapFree( heap, HEAP_NO_SERIALIZE, (char *)mem->ptr - HLOCAL_STORAGE )) ret = 0;
+        if (HeapFree( heap, HEAP_NO_SERIALIZE, mem->ptr )) ret = 0;
         mem->ptr = NULL;
         mem->next_free = next_free_mem;
         next_free_mem = mem;
@@ -1026,25 +1018,24 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT f
             /* reallocate a moveable block */
             if (size != 0)
             {
-                if (size <= INT_MAX - HLOCAL_STORAGE)
+                if (size <= INT_MAX)
                 {
                     if (mem->ptr)
                     {
-                        if ((ptr = HeapReAlloc( GetProcessHeap(), heap_flags, (char *)mem->ptr - HLOCAL_STORAGE,
-                                                size + HLOCAL_STORAGE )))
+                        if ((ptr = HeapReAlloc( GetProcessHeap(), heap_flags, mem->ptr, size )))
                         {
                             RtlSetUserValueHeap( GetProcessHeap(), heap_flags, ptr, handle );
-                            mem->ptr = (char *)ptr + HLOCAL_STORAGE;
+                            mem->ptr = ptr;
                             ret = handle;
                         }
                     }
                     else
                     {
-                        if ((ptr = HeapAlloc( GetProcessHeap(), heap_flags, size + HLOCAL_STORAGE )))
+                        if ((ptr = HeapAlloc( GetProcessHeap(), heap_flags, size )))
                         {
                             RtlSetUserValueHeap( GetProcessHeap(), heap_flags, ptr, handle );
                             *(HLOCAL *)ptr = handle;
-                            mem->ptr = (char *)ptr + HLOCAL_STORAGE;
+                            mem->ptr = ptr;
                             ret = handle;
                         }
                     }
@@ -1057,7 +1048,7 @@ HLOCAL WINAPI DECLSPEC_HOTPATCH LocalReAlloc( HLOCAL handle, SIZE_T size, UINT f
                 {
                     if (mem->ptr)
                     {
-                        HeapFree( GetProcessHeap(), 0, (char *)mem->ptr - HLOCAL_STORAGE );
+                        HeapFree( GetProcessHeap(), 0, mem->ptr );
                         mem->ptr = NULL;
                     }
                     ret = handle;

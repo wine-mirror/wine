@@ -1400,29 +1400,23 @@ static void test_GlobalAlloc(void)
         ret = HeapValidate( GetProcessHeap(), 0, entry );
         ok( !ret, "HeapValidate succeeded\n" );
         ret = HeapValidate( GetProcessHeap(), 0, entry->ptr );
-        todo_wine
         ok( ret, "HeapValidate failed, error %lu\n", GetLastError() );
         size = HeapSize( GetProcessHeap(), 0, entry->ptr );
-        todo_wine
         ok( size == alloc_size, "HeapSize returned %Iu\n", size );
 
         tmp_mem = invalid_mem;
         tmp_flags = 0xdeadbeef;
         ret = pRtlGetUserInfoHeap( GetProcessHeap(), 0, entry->ptr, (void **)&tmp_mem, &tmp_flags );
         ok( ret, "RtlGetUserInfoHeap failed, error %lu\n", GetLastError() );
-        todo_wine
         ok( tmp_mem == mem, "got user ptr %p\n", tmp_mem );
         todo_wine
         ok( tmp_flags == 0x200, "got user flags %#lx\n", tmp_flags );
 
         ret = pRtlSetUserValueHeap( GetProcessHeap(), 0, entry->ptr, invalid_mem );
-        todo_wine
         ok( ret, "RtlSetUserValueHeap failed, error %lu\n", GetLastError() );
         tmp_mem = GlobalHandle( entry->ptr );
-        todo_wine
         ok( tmp_mem == invalid_mem, "GlobalHandle returned unexpected handle\n" );
         ret = pRtlSetUserValueHeap( GetProcessHeap(), 0, entry->ptr, mem );
-        todo_wine
         ok( ret, "RtlSetUserValueHeap failed, error %lu\n", GetLastError() );
 
         ptr = GlobalLock( mem );
