@@ -24,7 +24,6 @@
 #include "initguid.h"
 #include "hid.h"
 #include "devguid.h"
-#include "devpkey.h"
 #include "ntddmou.h"
 #include "ntddkbd.h"
 #include "ddk/hidtypes.h"
@@ -37,7 +36,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(hid);
 
-DEFINE_DEVPROPKEY(DEVPROPKEY_HID_HANDLE, 0xbc62e415, 0xf4fe, 0x405c, 0x8e, 0xda, 0x63, 0x6f, 0xb5, 0x9f, 0x08, 0x98, 2);
 DEFINE_GUID(GUID_DEVINTERFACE_WINEXINPUT, 0x6c53d5fd, 0x6480, 0x440f, 0xb6, 0x18, 0x47, 0x67, 0x50, 0xc5, 0xe1, 0xa6);
 
 #ifdef __ASM_USE_FASTCALL_WRAPPER
@@ -285,15 +283,6 @@ static void create_child(minidriver *minidriver, DEVICE_OBJECT *fdo)
         pdo_ext->u.pdo.rawinput_handle = alloc_rawinput_handle();
 
     IoInvalidateDeviceRelations(fdo_ext->u.fdo.hid_ext.PhysicalDeviceObject, BusRelations);
-
-    if ((status = IoSetDevicePropertyData(child_pdo, &DEVPROPKEY_HID_HANDLE, LOCALE_NEUTRAL,
-                                          PLUGPLAY_PROPERTY_PERSISTENT, DEVPROP_TYPE_UINT32,
-                                          sizeof(pdo_ext->u.pdo.rawinput_handle), &pdo_ext->u.pdo.rawinput_handle)))
-    {
-        ERR( "Failed to set device handle property, status %#lx\n", status );
-        IoDeleteDevice(child_pdo);
-        return;
-    }
 
     pdo_ext->u.pdo.poll_interval = DEFAULT_POLL_INTERVAL;
 
