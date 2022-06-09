@@ -2121,6 +2121,11 @@ static void test_get_image_info(void)
         resource_module = create_resource_module(test_resource_name, test_image[i].data, test_image[i].size);
 
         hr2 = 0xdeadbeef;
+        hr = D3DX10GetImageInfoFromResourceW(resource_module, L"deadbeef", NULL, &image_info, &hr2);
+        ok(hr == D3DX10_ERR_INVALID_DATA, "Got unexpected hr %#x.\n", hr);
+        ok(hr2 == 0xdeadbeef, "Got unexpected hr2 %#x.\n", hr2);
+
+        hr2 = 0xdeadbeef;
         hr = D3DX10GetImageInfoFromResourceW(resource_module, test_resource_name, NULL, &image_info, &hr2);
         ok(hr == S_OK || broken(hr == E_FAIL && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP)
                 || broken(hr == D3DX10_ERR_INVALID_DATA) /* Vista */,
