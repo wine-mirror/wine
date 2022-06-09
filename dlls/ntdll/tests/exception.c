@@ -2123,7 +2123,7 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
         ok( handler == expected_handler || broken( test->broken_results && handler == broken_handler ),
                 "%u/%u: wrong handler %p/%p\n", testnum, i, handler, expected_handler );
         if (handler)
-            ok( *(DWORD *)data == 0x08070605, "%u/%u: wrong handler data %p\n", testnum, i, data );
+            ok( *(DWORD *)data == 0x08070605, "%u/%u: wrong handler data %lx\n", testnum, i, *(DWORD *)data );
         else
             ok( data == (void *)0xdeadbeef, "%u/%u: handler data set to %p\n", testnum, i, data );
 
@@ -5144,7 +5144,7 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
             ok( (char *)handler == (char *)code_mem + 0x200,
                 "%u/%u: wrong handler %p/%p\n", testnum, i, handler, (char *)code_mem + 0x200 );
             if (handler) ok( *(DWORD *)data == 0x08070605,
-                             "%u/%u: wrong handler data %p\n", testnum, i, data );
+                             "%u/%u: wrong handler data %lx\n", testnum, i, *(DWORD *)data );
         }
         else
         {
@@ -6822,7 +6822,7 @@ static void call_virtual_unwind( int testnum, const struct unwind_test *test )
             ok( (char *)handler == (char *)code_mem + 0x200,
                 "%u/%u: wrong handler %p/%p\n", testnum, i, handler, (char *)code_mem + 0x200 );
             if (handler) ok( *(DWORD *)data == 0x08070605,
-                             "%u/%u: wrong handler data %p\n", testnum, i, data );
+                             "%u/%u: wrong handler data %lx\n", testnum, i, *(DWORD *)data );
         }
         else
         {
