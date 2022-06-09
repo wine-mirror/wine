@@ -4481,22 +4481,17 @@ static void test_RegRenameKey(void)
     LSTATUS ret;
 
     ret = RegRenameKey(NULL, NULL, NULL);
-    todo_wine
     ok(ret == ERROR_INVALID_PARAMETER, "Unexpected return value %ld.\n", ret);
     ret = RegRenameKey(NULL, NULL, L"newname");
-    todo_wine
     ok(ret == ERROR_INVALID_HANDLE, "Unexpected return value %ld.\n", ret);
     ret = RegRenameKey(NULL, L"oldname", NULL);
-    todo_wine
     ok(ret == ERROR_INVALID_HANDLE, "Unexpected return value %ld.\n", ret);
     ret = RegRenameKey(NULL, L"oldname", L"newname");
-    todo_wine
     ok(ret == ERROR_INVALID_HANDLE, "Unexpected return value %ld.\n", ret);
 
     ret = RegCreateKeyExA(hkey_main, "TestRenameKey", 0, NULL, 0, KEY_READ, NULL, &key, NULL);
     ok(!ret, "Unexpected return value %ld.\n", ret);
     ret = RegRenameKey(key, NULL, L"TestNewRenameKey");
-    todo_wine
     ok(ret == ERROR_ACCESS_DENIED, "Unexpected return value %ld.\n", ret);
     RegCloseKey(key);
 
@@ -4504,28 +4499,22 @@ static void test_RegRenameKey(void)
     ret = RegCreateKeyExA(hkey_main, "TestRenameKey", 0, NULL, 0, KEY_WRITE, NULL, &key, NULL);
     ok(!ret, "Unexpected return value %ld.\n", ret);
     ret = RegRenameKey(key, NULL, NULL);
-    todo_wine
     ok(ret == ERROR_INVALID_PARAMETER, "Unexpected return value %ld.\n", ret);
     ret = RegRenameKey(key, NULL, L"TestNewRenameKey");
-    todo_wine
     ok(!ret, "Unexpected return value %ld.\n", ret);
     RegCloseKey(key);
 
     ret = RegDeleteKeyA(hkey_main, "TestNewRenameKey");
-    todo_wine
     ok(!ret, "Unexpected return value %ld.\n", ret);
     ret = RegDeleteKeyA(hkey_main, "TestRenameKey");
-    todo_wine
     ok(ret, "Unexpected return value %ld.\n", ret);
 
     /* Subkey does not exist. */
     ret = RegCreateKeyExA(hkey_main, "TestRenameKey", 0, NULL, 0, KEY_WRITE, NULL, &key, NULL);
     ok(!ret, "Unexpected return value %ld.\n", ret);
     ret = RegRenameKey(key, L"unknown_subkey", NULL);
-    todo_wine
     ok(ret == ERROR_FILE_NOT_FOUND, "Unexpected return value %ld.\n", ret);
     ret = RegRenameKey(key, L"unknown_subkey", L"known_subkey");
-    todo_wine
     ok(ret == ERROR_FILE_NOT_FOUND, "Unexpected return value %ld.\n", ret);
 
     /* Rename existing subkey. */
@@ -4534,14 +4523,11 @@ static void test_RegRenameKey(void)
     RegCloseKey(key2);
 
     ret = RegRenameKey(key, L"known_subkey", L"renamed_subkey");
-    todo_wine
     ok(!ret, "Unexpected return value %ld.\n", ret);
 
     ret = RegDeleteKeyA(key, "renamed_subkey");
-    todo_wine
     ok(!ret, "Unexpected return value %ld.\n", ret);
     ret = RegDeleteKeyA(key, "known_subkey");
-    todo_wine
     ok(ret, "Unexpected return value %ld.\n", ret);
 
     RegCloseKey(key);
