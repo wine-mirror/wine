@@ -1309,32 +1309,66 @@ BLUE_INI TEXTFILE
 "[Rebar.Chevron]\r\n"
 "SizingMargins = 4, 4, 4, 4\r\n"
 "ContentMargins = 0, 0, 0, 0\r\n"
-"; Same as toolbar buttons \r\n"
-"ImageFile = blue_toolbar_buttons.bmp\r\n"
 "Bgtype = ImageFile\r\n"
 "Imagelayout = Vertical\r\n"
-"ImageCount = 6\r\n"
+"ImageCount = 3\r\n"
 "SizingType = Stretch\r\n"
 "Transparent = True\r\n"
 "GlyphType = ImageGlyph\r\n"
-"GlyphImageFile = blue_rebar_chevron.bmp\r\n"
-"GlyphTransparent = True\r\n"
+"ImageSelectType = Dpi\r\n"
 "VAlign = Top\r\n"
+"ImageFile = blue_rebar_chevron_background.bmp\r\n"
+"ImageFile1 = blue_rebar_chevron_glyph_10px.bmp\r\n"
+"ImageFile2 = blue_rebar_chevron_glyph_13px.bmp\r\n"
+"ImageFile3 = blue_rebar_chevron_glyph_15px.bmp\r\n"
+"ImageFile4 = blue_rebar_chevron_glyph_20px.bmp\r\n"
+"ImageFile5 = blue_rebar_chevron_glyph_25px.bmp\r\n"
+"ImageFile6 = blue_rebar_chevron_glyph_30px.bmp\r\n"
+"ImageFile7 = blue_rebar_chevron_glyph_40px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
 
 "[Rebar.ChevronVert]\r\n"
 "SizingMargins = 4, 4, 4, 4\r\n"
 "ContentMargins = 0, 0, 0, 0\r\n"
-"; Same as toolbar buttons \r\n"
-"ImageFile = blue_toolbar_buttons.bmp\r\n"
 "Bgtype = ImageFile\r\n"
 "Imagelayout = Vertical\r\n"
-"ImageCount = 6\r\n"
+"ImageCount = 3\r\n"
 "SizingType = Stretch\r\n"
 "Transparent = True\r\n"
 "GlyphType = ImageGlyph\r\n"
-"GlyphImageFile = blue_rebar_chevron.bmp\r\n"
-"GlyphTransparent = True\r\n"
+"ImageSelectType = Dpi\r\n"
 "VAlign = Top\r\n"
+"ImageFile = blue_rebar_chevron_vertical_background.bmp\r\n"
+"ImageFile1 = blue_rebar_chevron_vertical_glyph_10px.bmp\r\n"
+"ImageFile2 = blue_rebar_chevron_vertical_glyph_13px.bmp\r\n"
+"ImageFile3 = blue_rebar_chevron_vertical_glyph_15px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+
+"[Rebar.Splitter]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 3\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_rebar_splitter.bmp\r\n"
+
+"[Rebar.SplitterVert]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 3\r\n"
+"Transparent = True\r\n"
+"SizingMargins = 1, 1, 1, 1\r\n"
+"ImageFile = blue_rebar_splitter_vertical.bmp\r\n"
 
 "\r\n; Scroll Bar\r\n"
 "[ScrollBar]\r\n"
@@ -2662,14 +2696,53 @@ BLUE_PROGRESS_TRACK_VERTICAL_BMP BITMAP "blue_progress_track_vertical.bmp"
 /* @makedep: blue_rebar_background.bmp */
 BLUE_REBAR_BACKGROUND_BMP BITMAP "blue_rebar_background.bmp"
 
+/* @makedep: blue_rebar_chevron_background.bmp */
+BLUE_REBAR_CHEVRON_BACKGROUND_BMP BITMAP "blue_rebar_chevron_background.bmp"
+
+/* @makedep: blue_rebar_chevron_glyph_10px.bmp */
+BLUE_REBAR_CHEVRON_GLYPH_10PX_BMP BITMAP "blue_rebar_chevron_glyph_10px.bmp"
+
+/* @makedep: blue_rebar_chevron_glyph_13px.bmp */
+BLUE_REBAR_CHEVRON_GLYPH_13PX_BMP BITMAP "blue_rebar_chevron_glyph_13px.bmp"
+
+/* @makedep: blue_rebar_chevron_glyph_15px.bmp */
+BLUE_REBAR_CHEVRON_GLYPH_15PX_BMP BITMAP "blue_rebar_chevron_glyph_15px.bmp"
+
+/* @makedep: blue_rebar_chevron_glyph_20px.bmp */
+BLUE_REBAR_CHEVRON_GLYPH_20PX_BMP BITMAP "blue_rebar_chevron_glyph_20px.bmp"
+
+/* @makedep: blue_rebar_chevron_glyph_25px.bmp */
+BLUE_REBAR_CHEVRON_GLYPH_25PX_BMP BITMAP "blue_rebar_chevron_glyph_25px.bmp"
+
+/* @makedep: blue_rebar_chevron_glyph_30px.bmp */
+BLUE_REBAR_CHEVRON_GLYPH_30PX_BMP BITMAP "blue_rebar_chevron_glyph_30px.bmp"
+
+/* @makedep: blue_rebar_chevron_glyph_40px.bmp */
+BLUE_REBAR_CHEVRON_GLYPH_40PX_BMP BITMAP "blue_rebar_chevron_glyph_40px.bmp"
+
+/* @makedep: blue_rebar_chevron_vertical_background.bmp */
+BLUE_REBAR_CHEVRON_VERTICAL_BACKGROUND_BMP BITMAP "blue_rebar_chevron_vertical_background.bmp"
+
+/* @makedep: blue_rebar_chevron_vertical_glyph_10px.bmp */
+BLUE_REBAR_CHEVRON_VERTICAL_GLYPH_10PX_BMP BITMAP "blue_rebar_chevron_vertical_glyph_10px.bmp"
+
+/* @makedep: blue_rebar_chevron_vertical_glyph_13px.bmp */
+BLUE_REBAR_CHEVRON_VERTICAL_GLYPH_13PX_BMP BITMAP "blue_rebar_chevron_vertical_glyph_13px.bmp"
+
+/* @makedep: blue_rebar_chevron_vertical_glyph_15px.bmp */
+BLUE_REBAR_CHEVRON_VERTICAL_GLYPH_15PX_BMP BITMAP "blue_rebar_chevron_vertical_glyph_15px.bmp"
+
 /* @makedep: blue_rebar_gripper_horizontal.bmp */
 BLUE_REBAR_GRIPPER_HORIZONTAL_BMP BITMAP "blue_rebar_gripper_horizontal.bmp"
 
 /* @makedep: blue_rebar_gripper_vertical.bmp */
 BLUE_REBAR_GRIPPER_VERTICAL_BMP BITMAP "blue_rebar_gripper_vertical.bmp"
 
-/* @makedep: blue_rebar_chevron.bmp */
-BLUE_REBAR_CHEVRON_BMP BITMAP "blue_rebar_chevron.bmp"
+/* @makedep: blue_rebar_splitter.bmp */
+BLUE_REBAR_SPLITTER_BMP BITMAP "blue_rebar_splitter.bmp"
+
+/* @makedep: blue_rebar_splitter_vertical.bmp */
+BLUE_REBAR_SPLITTER_VERTICAL_BMP BITMAP "blue_rebar_splitter_vertical.bmp"
 
 /* Scroll Bar */
 /* @makedep: blue_scrollbar_arrows.bmp */

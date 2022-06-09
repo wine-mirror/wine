@@ -216,9 +216,22 @@ SVG_SRCS = \
 	blue_radiobutton_28px.svg \
 	blue_radiobutton_31px.svg \
 	blue_rebar_background.svg \
-	blue_rebar_chevron.svg \
+	blue_rebar_chevron_background.svg \
+	blue_rebar_chevron_glyph_10px.svg \
+	blue_rebar_chevron_glyph_13px.svg \
+	blue_rebar_chevron_glyph_15px.svg \
+	blue_rebar_chevron_glyph_20px.svg \
+	blue_rebar_chevron_glyph_25px.svg \
+	blue_rebar_chevron_glyph_30px.svg \
+	blue_rebar_chevron_glyph_40px.svg \
+	blue_rebar_chevron_vertical_background.svg \
+	blue_rebar_chevron_vertical_glyph_10px.svg \
+	blue_rebar_chevron_vertical_glyph_13px.svg \
+	blue_rebar_chevron_vertical_glyph_15px.svg \
 	blue_rebar_gripper_horizontal.svg \
 	blue_rebar_gripper_vertical.svg \
+	blue_rebar_splitter.svg \
+	blue_rebar_splitter_vertical.svg \
 	blue_scrollbar_arrow_glyphs_7px.svg \
 	blue_scrollbar_arrow_glyphs_9px.svg \
 	blue_scrollbar_arrows.svg \
