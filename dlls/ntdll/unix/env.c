@@ -113,12 +113,16 @@ static char *get_nls_file_path( ULONG type, ULONG id )
     return path;
 }
 
-static void *read_nls_file( ULONG type, ULONG id )
+static void *read_nls_file( const char *name )
 {
-    char *path = get_nls_file_path( type, id );
+    const char *dir = build_dir ? build_dir : data_dir;
+    char *path;
     struct stat st;
     void *data, *ret = NULL;
     int fd;
+
+    if (!(path = malloc( strlen(dir) + strlen(name) + 10 ))) return NULL;
+    sprintf( path, "%s/nls/%s", dir, name );
 
     if ((fd = open( path, O_RDONLY )) != -1)
     {
@@ -135,7 +139,7 @@ static void *read_nls_file( ULONG type, ULONG id )
         }
         close( fd );
     }
-    else ERR( "failed to load %u/%u\n", type, id );
+    else ERR( "failed to load %s\n", path );
     free( path );
     return ret;
 }
@@ -201,7 +205,7 @@ static struct norm_table *nfc_table;
 
 static void init_unix_codepage(void)
 {
-    nfc_table = read_nls_file( NLS_SECTION_NORMALIZE, NormalizationC );
+    nfc_table = read_nls_file( "normnfc.nls" );
 }
 
 #elif defined(__ANDROID__)  /* Android always uses UTF-8 */
@@ -297,8 +301,11 @@ static void init_unix_codepage(void)
         {
             if (charset_names[pos].cp != CP_UTF8)
             {
-                void *data = read_nls_file( NLS_SECTION_CODEPAGE, charset_names[pos].cp );
-                if (data) init_codepage_table( data, &unix_cp );
+                char buffer[16];
+                void *data;
+
+                sprintf( buffer, "c_%03u.nls", charset_names[pos].cp );
+                if ((data = read_nls_file( buffer ))) init_codepage_table( data, &unix_cp );
             }
             return;
         }
@@ -761,17 +768,14 @@ static BOOL unix_to_win_locale( const char *unix_name, char *win_name )
 }
 
 
-static LCID init_system_lcid( const struct locale_nls_header *header )
+static const NLS_LOCALE_DATA *get_win_locale( const NLS_LOCALE_HEADER *header, const char *win_name )
 {
     WCHAR name[LOCALE_NAME_MAX_LENGTH];
-    const NLS_LOCALE_HEADER *locale_table = (const NLS_LOCALE_HEADER *)((char *)header + header->locales);
     const NLS_LOCALE_LCNAME_INDEX *entry;
 
-    ascii_to_unicode( name, system_locale, strlen(system_locale) + 1 );
-    if ((entry = find_lcname_entry( locale_table, name )))
-        return get_locale_data( locale_table, entry->idx )->idefaultlanguage;
-
-    return MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
+    ascii_to_unicode( name, win_name, strlen(win_name) + 1 );
+    if (!(entry = find_lcname_entry( header, name ))) return NULL;
+    return get_locale_data( header, entry->idx );
 }
 
 
@@ -780,6 +784,10 @@ static LCID init_system_lcid( const struct locale_nls_header *header )
  */
 static void init_locale(void)
 {
+    struct locale_nls_header *header;
+    const NLS_LOCALE_HEADER *locale_table;
+    const NLS_LOCALE_DATA *locale;
+
     setlocale( LC_ALL, "" );
     if (!unix_to_win_locale( setlocale( LC_CTYPE, NULL ), system_locale )) system_locale[0] = 0;
     if (!unix_to_win_locale( setlocale( LC_MESSAGES, NULL ), user_locale )) user_locale[0] = 0;
@@ -834,6 +842,20 @@ static void init_locale(void)
         if (preferred_langs) CFRelease( preferred_langs );
     }
 #endif
+
+    if ((header = read_nls_file( "locale.nls" )))
+    {
+        locale_table = (const NLS_LOCALE_HEADER *)((char *)header + header->locales);
+        if ((locale =  get_win_locale( locale_table, system_locale )))
+            system_lcid = locale->idefaultlanguage;
+        if ((locale =  get_win_locale( locale_table, user_locale )))
+            user_lcid = locale->idefaultlanguage;
+        free( header );
+    }
+    if (!system_lcid) system_lcid = MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
+    if (!user_lcid) user_lcid = system_lcid;
+    user_ui_language = user_lcid;
+
     setlocale( LC_NUMERIC, "C" );  /* FIXME: oleaut32 depends on this */
 }
 
@@ -848,7 +870,7 @@ void init_environment( int argc, char *argv[], char *envp[] )
     init_unix_codepage();
     init_locale();
 
-    if ((case_table = read_nls_file( NLS_SECTION_CASEMAP, 0 )))
+    if ((case_table = read_nls_file( "l_intl.nls" )))
     {
         uctable = case_table + 2;
         lctable = case_table + case_table[1] + 2;
@@ -2190,7 +2212,6 @@ NTSTATUS WINAPI NtInitializeNlsFiles( void **ptr, LCID *lcid, LARGE_INTEGER *siz
         status = map_section( handle, ptr, &mapsize, PAGE_READONLY );
         NtClose( handle );
     }
-    if (!status && !system_lcid) system_lcid = init_system_lcid( *ptr );
     *lcid = system_lcid;
     return status;
 }

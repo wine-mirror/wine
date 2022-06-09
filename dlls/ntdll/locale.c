@@ -92,10 +92,9 @@ void locale_init(void)
 {
     USHORT utf8[2] = { 0, CP_UTF8 };
     WCHAR locale[LOCALE_NAME_MAX_LENGTH];
-    UNICODE_STRING name, value;
     LARGE_INTEGER unused;
     SIZE_T size;
-    LCID system_lcid, user_lcid = 0;
+    LCID system_lcid;
     UINT ansi_cp = 1252, oem_cp = 437;
     void *ansi_ptr = utf8, *oem_ptr = utf8, *case_ptr;
     NTSTATUS status;
@@ -109,21 +108,8 @@ void locale_init(void)
     }
     locale_table = (const NLS_LOCALE_HEADER *)((char *)header + header->locales);
 
-    value.Buffer = locale;
-    value.MaximumLength = sizeof(locale);
-    RtlInitUnicodeString( &name, L"WINEUSERLOCALE" );
-    if (!RtlQueryEnvironmentVariable_U( NULL, &name, &value ))
-    {
-        const NLS_LOCALE_LCNAME_INDEX *entry = find_lcname_entry( locale_table, locale );
-        if (entry) user_lcid = get_locale_data( locale_table, entry->idx )->idefaultlanguage;
-    }
-    if (!user_lcid) user_lcid = system_lcid;
-    NtSetDefaultUILanguage( user_lcid );
-    NtSetDefaultLocale( TRUE, user_lcid );
-
     if (system_lcid == LOCALE_CUSTOM_UNSPECIFIED)
     {
-        system_lcid = MAKELANGID( LANG_ENGLISH, SUBLANG_DEFAULT );
         ansi_cp = oem_cp = CP_UTF8;
     }
     else
