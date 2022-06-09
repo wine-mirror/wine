@@ -39,13 +39,10 @@
 
 #include "initguid.h"
 #include "ddk/hidclass.h"
-#include "devpkey.h"
 #include "ntddmou.h"
 #include "ntddkbd.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(rawinput);
-
-DEFINE_DEVPROPKEY(DEVPROPKEY_HID_HANDLE, 0xbc62e415, 0xf4fe, 0x405c, 0x8e, 0xda, 0x63, 0x6f, 0xb5, 0x9f, 0x08, 0x98, 2);
 
 struct device
 {
@@ -119,13 +116,6 @@ static struct device *add_device( HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface,
         return FALSE;
     }
 
-    if (!SetupDiGetDevicePropertyW(set, &device_data, &DEVPROPKEY_HID_HANDLE, &type, (BYTE *)&handle, sizeof(handle), NULL, 0) ||
-        type != DEVPROP_TYPE_UINT32)
-    {
-        ERR("Failed to get device handle, error %#lx.\n", GetLastError());
-        return NULL;
-    }
-
     if (!(detail = malloc(size)))
     {
         ERR("Failed to allocate memory.\n");
@@ -144,6 +134,15 @@ static struct device *add_device( HDEVINFO set, SP_DEVICE_INTERFACE_DATA *iface,
         ERR("Failed to open device file %s, error %lu.\n", debugstr_w(detail->DevicePath), GetLastError());
         free(detail);
         return NULL;
+    }
+
+    status = NtDeviceIoControlFile( file, NULL, NULL, NULL, &io,
+                                    IOCTL_HID_GET_WINE_RAWINPUT_HANDLE,
+                                    NULL, 0, &handle, sizeof(handle) );
+    if (status)
+    {
+        ERR( "Failed to get raw input handle, status %#lx.\n", status );
+        goto fail;
     }
 
     memset( &info, 0, sizeof(info) );
