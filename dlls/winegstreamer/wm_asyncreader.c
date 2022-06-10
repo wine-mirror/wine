@@ -725,6 +725,13 @@ static HRESULT WINAPI WMReaderAdvanced2_OpenStream(IWMReaderAdvanced6 *iface,
 
     EnterCriticalSection(&reader->reader.cs);
 
+    if (reader->reader.wg_parser)
+    {
+        LeaveCriticalSection(&reader->reader.cs);
+        WARN("Stream is already open; returning E_UNEXPECTED.\n");
+        return E_UNEXPECTED;
+    }
+
     if (SUCCEEDED(hr = wm_reader_open_stream(&reader->reader, stream)))
         open_stream(reader, callback, context);
 

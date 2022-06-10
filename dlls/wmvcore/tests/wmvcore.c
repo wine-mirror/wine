@@ -2181,6 +2181,9 @@ static void test_async_reader_streaming(void)
     ret = WaitForSingleObject(callback.got_opened, 1000);
     ok(!ret, "Wait timed out.\n");
 
+    hr = IWMReaderAdvanced2_OpenStream(advanced, &stream.IStream_iface, &callback.IWMReaderCallback_iface, (void **)0xdeadbee0);
+    ok(hr == E_UNEXPECTED, "Got hr %#lx.\n", hr);
+
     count = 0xdeadbeef;
     hr = IWMReader_GetOutputCount(reader, &count);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
