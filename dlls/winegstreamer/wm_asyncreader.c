@@ -102,15 +102,10 @@ static DWORD WINAPI stream_thread(void *arg)
                 IWMReaderCallbackAdvanced_OnTime(reader->reader.callback_advanced, user_time, reader->context);
             while (pts > reader->user_time && reader->running)
                 SleepConditionVariableCS(&reader->stream_cv, &reader->stream_cs, INFINITE);
-            if (!reader->running)
-            {
-                INSSBuffer_Release(sample);
-                goto out;
-            }
         }
         else
         {
-            for (;;)
+            while (reader->running)
             {
                 REFERENCE_TIME current_time = get_current_time(reader);
 
@@ -119,22 +114,20 @@ static DWORD WINAPI stream_thread(void *arg)
 
                 SleepConditionVariableCS(&reader->stream_cv, &reader->stream_cs,
                         (pts - (current_time - start_time)) / 10000);
-
-                if (!reader->running)
-                {
-                    INSSBuffer_Release(sample);
-                    goto out;
-                }
             }
         }
 
-        if (stream->read_compressed)
-            hr = IWMReaderCallbackAdvanced_OnStreamSample(reader->reader.callback_advanced,
-                    stream_number, pts, duration, flags, sample, reader->context);
-        else
-            hr = IWMReaderCallback_OnSample(callback, stream_number - 1, pts, duration,
-                    flags, sample, reader->context);
-        TRACE("Callback returned %#lx.\n", hr);
+        if (reader->running)
+        {
+            if (stream->read_compressed)
+                hr = IWMReaderCallbackAdvanced_OnStreamSample(reader->reader.callback_advanced,
+                        stream_number, pts, duration, flags, sample, reader->context);
+            else
+                hr = IWMReaderCallback_OnSample(callback, stream_number - 1, pts, duration,
+                        flags, sample, reader->context);
+            TRACE("Callback returned %#lx.\n", hr);
+        }
+
         INSSBuffer_Release(sample);
     }
 
@@ -161,7 +154,6 @@ static DWORD WINAPI stream_thread(void *arg)
         ERR("Failed to get sample, hr %#lx.\n", hr);
     }
 
-out:
     LeaveCriticalSection(&reader->stream_cs);
 
     TRACE("Reader is stopping; exiting.\n");
