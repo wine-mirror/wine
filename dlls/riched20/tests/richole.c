@@ -212,6 +212,396 @@ static void olecb_check_QueryInsertObject(struct reolecb_obj *This, int line)
     olecb_expect_QueryInsertObject(This, 0, 0, NULL, NULL, 0, S_OK);
 }
 
+DEFINE_GUID(CLSID_testoleobj, 0x4484082e, 0x6d18, 0x4932, 0xa0, 0x86, 0x5b, 0x4d, 0xcf, 0x36, 0xb3, 0xde);
+
+struct testoleobj {
+    IOleObject IOleObject_iface;
+    LONG ref;
+    int line;
+    int draw_count;
+
+    IOleClientSite *clientsite;
+    IOleAdviseHolder *advise_holder;
+    SIZEL extent;
+
+    IViewObject IViewObject_iface;
+};
+
+static struct testoleobj *impl_from_IOleObject( IOleObject *iface )
+{
+    return CONTAINING_RECORD( iface, struct testoleobj, IOleObject_iface );
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_QueryInterface( IOleObject *iface, REFIID riid, void **obj )
+{
+    struct testoleobj *This = impl_from_IOleObject( iface );
+
+    if (IsEqualGUID( riid, &IID_IUnknown ) || IsEqualGUID( riid, &IID_IOleObject ))
+    {
+        *obj = iface;
+    }
+    else if (IsEqualGUID( riid, &IID_IViewObject ))
+    {
+        *obj = &This->IViewObject_iface;
+    }
+    else
+    {
+        if (!IsEqualGUID( riid, &IID_IOleLink ) &&
+            !IsEqualGUID( riid, &IID_IRunnableObject ) &&
+            !IsEqualGUID( riid, &IID_IMarshal ))
+        {
+            trace( "Unsupported interface: %s\n", debugstr_guid( riid ));
+        }
+        *obj = NULL;
+        return E_NOINTERFACE;
+    }
+
+    IUnknown_AddRef( (IUnknown *)*obj );
+    return S_OK;
+}
+
+static ULONG STDMETHODCALLTYPE testoleobj_AddRef( IOleObject *iface )
+{
+    struct testoleobj *This = impl_from_IOleObject( iface );
+    ULONG ref = InterlockedIncrement( &This->ref );
+    return ref;
+}
+
+static ULONG STDMETHODCALLTYPE testoleobj_Release( IOleObject *iface )
+{
+    struct testoleobj *This = impl_from_IOleObject( iface );
+    ULONG ref = InterlockedDecrement( &This->ref );
+    if (!ref)
+    {
+        if (This->advise_holder)
+        {
+            IOleAdviseHolder_Release( This->advise_holder );
+            This->advise_holder = NULL;
+        }
+        if (This->clientsite)
+        {
+            IOleClientSite_Release( This->clientsite );
+            This->clientsite = NULL;
+        }
+        free( This );
+    }
+    return ref;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IOleObject_SetClientSite( IOleObject *iface, IOleClientSite *clientsite )
+{
+    struct testoleobj *This = impl_from_IOleObject( iface );
+
+    if (This->clientsite != clientsite)
+    {
+        if (This->clientsite) IOleClientSite_Release( This->clientsite );
+        This->clientsite = clientsite;
+        if (This->clientsite) IOleClientSite_AddRef( This->clientsite );
+    }
+
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IOleObject_GetClientSite( IOleObject *iface, IOleClientSite **clientsite )
+{
+    struct testoleobj *This = impl_from_IOleObject( iface );
+
+    if (This->clientsite) IOleClientSite_AddRef( This->clientsite );
+    *clientsite = This->clientsite;
+
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IOleObject_SetHostNames( IOleObject *iface,
+                                                                     LPCOLESTR container_app,
+                                                                     LPCOLESTR container_obj )
+{
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IOleObject_Close( IOleObject *iface, DWORD save_option )
+{
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IOleObject_SetMoniker( IOleObject *iface,
+                                                                   DWORD which_moniker, IMoniker *mk )
+{
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IOleObject_GetMoniker( IOleObject *iface, DWORD assign,
+                                                                   DWORD which_moniker, IMoniker **mk )
+{
+    struct testoleobj *This = impl_from_IOleObject( iface );
+
+    *mk = NULL;
+
+    if (!This->clientsite) return E_UNEXPECTED;
+
+    return IOleClientSite_GetMoniker( This->clientsite, assign, which_moniker, mk );
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IOleObject_InitFromData( IOleObject *iface, IDataObject *dataobj,
+                                                                     BOOL creation, DWORD reserved )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IOleObject_GetClipboardData( IOleObject *iface, DWORD reserved,
+                                                                         IDataObject **dataobj )
+{
+    *dataobj = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IOleObject_DoVerb( IOleObject *iface, LONG verb, MSG *msg,
+                                                               IOleClientSite *activesite, LONG index,
+                                                               HWND parentwnd, LPCRECT posrect )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IOleObject_EnumVerbs( IOleObject *iface, IEnumOLEVERB **enumoleverb )
+{
+    *enumoleverb = NULL;
+    return OLEOBJ_E_NOVERBS;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IOleObject_Update( IOleObject *iface )
+{
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IOleObject_IsUpToDate( IOleObject *iface )
+{
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IOleObject_GetUserClassID( IOleObject *iface, CLSID *clsid )
+{
+    *clsid = CLSID_testoleobj;
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IOleObject_GetUserType( IOleObject *iface, DWORD form_of_type, LPOLESTR *user_type )
+{
+    static const OLECHAR typename[] = L"richole testoleobj";
+
+    *user_type = CoTaskMemAlloc( sizeof(typename) );
+    if (!*user_type) return E_OUTOFMEMORY;
+
+    memcpy( *user_type, typename, sizeof(typename) );
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IOleObject_SetExtent( IOleObject *iface, DWORD draw_aspect, SIZEL *sizel )
+{
+    struct testoleobj *This = impl_from_IOleObject( iface );
+
+    if (draw_aspect != DVASPECT_CONTENT) return E_FAIL;
+
+    This->extent = *sizel;
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IOleObject_GetExtent( IOleObject *iface, DWORD draw_aspect, SIZEL *sizel )
+{
+    struct testoleobj *This = impl_from_IOleObject( iface );
+
+    if (draw_aspect != DVASPECT_CONTENT) return E_FAIL;
+
+    *sizel = This->extent;
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IOleObject_Advise( IOleObject *iface, IAdviseSink *adv_sink, DWORD *connection )
+{
+    struct testoleobj *This = impl_from_IOleObject( iface );
+    HRESULT hr = S_OK;
+
+    if (!This->advise_holder) hr = CreateOleAdviseHolder( &This->advise_holder );
+    if (SUCCEEDED( hr )) hr = IOleAdviseHolder_Advise( This->advise_holder, adv_sink, connection );
+    return hr;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IOleObject_Unadvise( IOleObject *iface, DWORD connection )
+{
+    struct testoleobj *This = impl_from_IOleObject( iface );
+
+    if (!This->advise_holder) return OLE_E_NOCONNECTION;
+    return IOleAdviseHolder_Unadvise( This->advise_holder, connection );
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IOleObject_EnumAdvise( IOleObject *iface, IEnumSTATDATA **enum_advise )
+{
+    struct testoleobj *This = impl_from_IOleObject( iface );
+
+    if (!This->advise_holder)
+    {
+        *enum_advise = NULL;
+        return S_OK;
+    }
+    return IOleAdviseHolder_EnumAdvise( This->advise_holder, enum_advise );
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IOleObject_GetMiscStatus( IOleObject *iface, DWORD aspect, DWORD *status )
+{
+    *status = 0;
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IOleObject_SetColorScheme( IOleObject *iface, LOGPALETTE *palette )
+{
+    return E_NOTIMPL;
+}
+
+static const struct IOleObjectVtbl testoleobj_IOleObject_Vtbl = {
+    testoleobj_QueryInterface,
+    testoleobj_AddRef,
+    testoleobj_Release,
+    testoleobj_IOleObject_SetClientSite,
+    testoleobj_IOleObject_GetClientSite,
+    testoleobj_IOleObject_SetHostNames,
+    testoleobj_IOleObject_Close,
+    testoleobj_IOleObject_SetMoniker,
+    testoleobj_IOleObject_GetMoniker,
+    testoleobj_IOleObject_InitFromData,
+    testoleobj_IOleObject_GetClipboardData,
+    testoleobj_IOleObject_DoVerb,
+    testoleobj_IOleObject_EnumVerbs,
+    testoleobj_IOleObject_Update,
+    testoleobj_IOleObject_IsUpToDate,
+    testoleobj_IOleObject_GetUserClassID,
+    testoleobj_IOleObject_GetUserType,
+    testoleobj_IOleObject_SetExtent,
+    testoleobj_IOleObject_GetExtent,
+    testoleobj_IOleObject_Advise,
+    testoleobj_IOleObject_Unadvise,
+    testoleobj_IOleObject_EnumAdvise,
+    testoleobj_IOleObject_GetMiscStatus,
+    testoleobj_IOleObject_SetColorScheme
+};
+
+static struct testoleobj *impl_from_IViewObject( IViewObject *iface )
+{
+    return CONTAINING_RECORD( iface, struct testoleobj, IViewObject_iface );
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IViewObject_QueryInterface( IViewObject *iface, REFIID riid, void **obj )
+{
+    struct testoleobj *This = impl_from_IViewObject( iface );
+    return IOleObject_QueryInterface( &This->IOleObject_iface, riid, obj );
+}
+
+static ULONG STDMETHODCALLTYPE testoleobj_IViewObject_AddRef( IViewObject *iface )
+{
+    struct testoleobj *This = impl_from_IViewObject( iface );
+    return IOleObject_AddRef( &This->IOleObject_iface );
+}
+
+static ULONG STDMETHODCALLTYPE testoleobj_IViewObject_Release( IViewObject *iface )
+{
+    struct testoleobj *This = impl_from_IViewObject( iface );
+    return IOleObject_Release( &This->IOleObject_iface );
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IViewObject_Draw( IViewObject *iface, DWORD draw_aspect,
+                                                              LONG index, void *aspect, DVTARGETDEVICE *td,
+                                                              HDC hdc_target_dev, HDC hdc_draw,
+                                                              LPCRECTL bounds, LPCRECTL wbounds,
+                                                              BOOL (CALLBACK *fn_continue)(ULONG_PTR),
+                                                              ULONG_PTR arg_continue )
+{
+    struct testoleobj *This = impl_from_IViewObject( iface );
+    SIZEL dpi;
+
+    if (draw_aspect != DVASPECT_CONTENT || index != -1) return E_NOTIMPL;
+
+    ok_(__FILE__,This->line)( td == NULL, "expected td to be NULL, got %p\n", td );
+    ok_(__FILE__,This->line)( hdc_target_dev == NULL, "expected hdc_target_dev to be NULL, got %p\n", hdc_target_dev );
+    ok_(__FILE__,This->line)( wbounds == NULL, "expected wbounds to be NULL, got %p\n", wbounds );
+
+    dpi.cx = GetDeviceCaps(hdc_draw, LOGPIXELSX);
+    dpi.cy = GetDeviceCaps(hdc_draw, LOGPIXELSY);
+
+    ok_(__FILE__,This->line)( bounds->right - bounds->left == MulDiv( This->extent.cx, dpi.cx, 2540 ),
+                              "bounds->right (= %ld) - bounds->left (= %ld) != "
+                              "MulDiv( This->extent.cx (= %ld), dpi.cx (= %ld), 2540 )\n",
+                              bounds->right, bounds->left, This->extent.cx, dpi.cx );
+    ok_(__FILE__,This->line)( bounds->bottom - bounds->top == MulDiv( This->extent.cy, dpi.cy, 2540 ),
+                              "bounds->bottom (= %ld) - bounds->top (= %ld) != "
+                              "MulDiv( This->extent.cy (= %ld), dpi.cy (= %ld), 2540 )\n",
+                              bounds->bottom, bounds->top, This->extent.cy, dpi.cy );
+
+    FillRect( hdc_draw, (const RECT *)bounds, GetStockObject( DKGRAY_BRUSH ));
+    This->draw_count++;
+
+    return S_OK;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IViewObject_GetColorSet( IViewObject *iface, DWORD draw_aspect,
+                                                                     LONG index, void *aspect, DVTARGETDEVICE *td,
+                                                                     HDC hdc_target_dev, LOGPALETTE **color_set )
+{
+    *color_set = NULL;
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IViewObject_Freeze( IViewObject *iface, DWORD draw_aspect,
+                                                                LONG index, void *aspect, DWORD *freeze )
+{
+    *freeze = 0;
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IViewObject_Unfreeze( IViewObject *iface, DWORD freeze )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IViewObject_SetAdvise( IViewObject *iface, DWORD aspects,
+                                                                   DWORD advf, IAdviseSink *adv_sink )
+{
+    return E_NOTIMPL;
+}
+
+static HRESULT STDMETHODCALLTYPE testoleobj_IViewObject_GetAdvise( IViewObject *iface, DWORD *aspects,
+                                                                   DWORD *advf, IAdviseSink **adv_sink )
+{
+    *aspects = 0;
+    *advf = 0;
+    *adv_sink = NULL;
+    return E_NOTIMPL;
+}
+
+static const struct IViewObjectVtbl testoleobj_IViewObject_Vtbl = {
+    testoleobj_IViewObject_QueryInterface,
+    testoleobj_IViewObject_AddRef,
+    testoleobj_IViewObject_Release,
+    testoleobj_IViewObject_Draw,
+    testoleobj_IViewObject_GetColorSet,
+    testoleobj_IViewObject_Freeze,
+    testoleobj_IViewObject_Unfreeze,
+    testoleobj_IViewObject_SetAdvise,
+    testoleobj_IViewObject_GetAdvise,
+};
+
+static HRESULT testoleobj_Create( struct testoleobj **objptr )
+{
+    struct testoleobj *obj;
+
+    obj = calloc( sizeof(struct testoleobj), 1 );
+    *objptr = obj;
+    if (!obj) return E_OUTOFMEMORY;
+
+    obj->IOleObject_iface.lpVtbl = &testoleobj_IOleObject_Vtbl;
+    obj->ref = 1;
+    obj->IViewObject_iface.lpVtbl = &testoleobj_IViewObject_Vtbl;
+
+    return S_OK;
+}
+
 static HMODULE hmoduleRichEdit;
 
 DEFINE_GUID(GUID_NULL, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
@@ -3431,6 +3821,16 @@ static void _insert_reobject(struct reolecb_obj *callback, IRichEditOle *reole,
   olecb_check_QueryInsertObject(callback, line);
 }
 
+static void flush_dispatch_messages(void)
+{
+    MSG msg;
+    while (PeekMessageW( &msg, NULL, 0, 0, PM_REMOVE ))
+    {
+        TranslateMessage( &msg );
+        DispatchMessageW( &msg );
+    }
+}
+
 static void subtest_InsertObject(struct reolecb_obj *callback)
 {
   static CHAR test_text1[] = "abcdefg";
@@ -3453,6 +3853,9 @@ static void subtest_InsertObject(struct reolecb_obj *callback)
   LONG count, result;
   ITextRange *range;
   BSTR bstr;
+  struct testoleobj *testobj;
+  IOleClientSite *clientsite;
+  REOBJECT reobj;
 
   create_interfaces(&hwnd, &reole, &doc, &selection);
   if (callback)
@@ -3486,9 +3889,6 @@ static void subtest_InsertObject(struct reolecb_obj *callback)
 
   if (callback)
   {
-    IOleClientSite *clientsite;
-    REOBJECT reobj;
-
     /* (fail to) insert object1 in (3, 4)*/
     SendMessageA(hwnd, EM_SETSEL, 3, 4);
 
@@ -3764,6 +4164,74 @@ static void subtest_InsertObject(struct reolecb_obj *callback)
   hr = ITextSelection_GetChar(selection, &result);
   ok(hr == S_OK, "Got hr %#lx.\n", hr);
   todo_wine ok(result == 0xfffc, "Got char: %lc\n", (WCHAR)result);
+
+  hr = testoleobj_Create(&testobj);
+  ok(hr == S_OK, "testoleobj_Create got hr %#lx.\n", hr);
+  testobj->extent.cx = 800;
+  testobj->extent.cy = 400;
+
+  SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"");
+  testobj->draw_count = 0;
+  testobj->line = __LINE__;
+
+  hr = IRichEditOle_GetClientSite(reole, &clientsite);
+  ok(hr == S_OK, "IRichEditOle_GetClientSite got hr %#lx.\n", hr);
+  hr = IOleObject_SetClientSite(&testobj->IOleObject_iface, clientsite);
+  ok(hr == S_OK, "IOleObject_SetClientSite got hr %#lx.\n", hr);
+
+  olecb_expect_QueryInsertObject(callback, __LINE__, 1,
+                                 &CLSID_testoleobj, NULL, REO_CP_SELECTION, S_OK);
+  fill_reobject_struct(&reobj, REO_CP_SELECTION, &testobj->IOleObject_iface, NULL, clientsite, 800, 400, DVASPECT_CONTENT, 0, 0);
+  reobj.clsid = CLSID_testoleobj;
+  hr = IRichEditOle_InsertObject(reole, &reobj);
+  ok(hr == S_OK, "IRichEditOle_InsertObject got hr %#lx.\n", hr);
+  olecb_check_QueryInsertObject(callback, __LINE__);
+
+  IOleClientSite_Release(clientsite);
+
+  testobj->line = __LINE__;
+  UpdateWindow(hwnd);
+  testobj->line = __LINE__;
+  flush_dispatch_messages();
+  todo_wine
+  ok(testobj->draw_count != 0, "expected draw_count to be nonzero, got %d\n", testobj->draw_count);
+
+  SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"");
+  testobj->draw_count = 0;
+  testobj->line = __LINE__;
+
+  hr = IRichEditOle_GetClientSite(reole, &clientsite);
+  ok(hr == S_OK, "IRichEditOle_GetClientSite got hr %#lx.\n", hr);
+  hr = IOleObject_SetClientSite(&testobj->IOleObject_iface, clientsite);
+  ok(hr == S_OK, "IOleObject_SetClientSite got hr %#lx.\n", hr);
+
+  olecb_expect_QueryInsertObject(callback, __LINE__, 1,
+                                 &CLSID_testoleobj, NULL, REO_CP_SELECTION, S_OK);
+  fill_reobject_struct(&reobj, REO_CP_SELECTION, &testobj->IOleObject_iface, NULL, clientsite, 0, 0, DVASPECT_CONTENT, 0, 0);
+  reobj.clsid = CLSID_testoleobj;
+  hr = IRichEditOle_InsertObject(reole, &reobj);
+  ok(hr == S_OK, "IRichEditOle_InsertObject got hr %#lx.\n", hr);
+  olecb_check_QueryInsertObject(callback, __LINE__);
+
+  memset(&reobj, 0xcc, sizeof(reobj));
+  reobj.cbStruct = sizeof(reobj);
+  hr = IRichEditOle_GetObject(reole, 0, &reobj, REO_GETOBJ_NO_INTERFACES);
+  ok(hr == S_OK, "IRichEditOle_GetObject got hr %#lx.\n", hr);
+  todo_wine
+  ok(reobj.sizel.cx == 800, "expected reobj.sizel.cx to be %ld, got %ld\n", 800L, reobj.sizel.cx);
+  todo_wine
+  ok(reobj.sizel.cy == 400, "expected reobj.sizel.cy to be %ld, got %ld\n", 400L, reobj.sizel.cy);
+  IOleClientSite_Release(clientsite);
+
+  testobj->line = __LINE__;
+  UpdateWindow(hwnd);
+  testobj->line = __LINE__;
+  flush_dispatch_messages();
+  todo_wine
+  ok(testobj->draw_count != 0, "expected draw_count to be nonzero, got %d\n", testobj->draw_count);
+
+  SendMessageA(hwnd, WM_SETTEXT, 0, (LPARAM)"");
+  IOleObject_Release(&testobj->IOleObject_iface);
 
   if (callback)
   {
