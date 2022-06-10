@@ -26,6 +26,15 @@ import "windows.foundation.idl";
 namespace Windows.Media
 {
     interface IMediaControl;
+    interface IMediaMarker;
+
+    declare
+    {
+        interface Windows.Foundation.Collections.IIterable<Windows.Media.IMediaMarker*>;
+        interface Windows.Foundation.Collections.IIterator<Windows.Media.IMediaMarker*>;
+        interface Windows.Foundation.Collections.IVectorView<Windows.Media.IMediaMarker*>;
+        interface Windows.Foundation.Collections.IVector<Windows.Media.IMediaMarker*>;
+    }
 
     [
         contract(Windows.Foundation.UniversalApiContract, 1.0),

@@ -56,18 +56,11 @@ namespace Windows {
 
 namespace Windows {
     namespace Media {
-        interface IMediaMarker;
-    }
-}
-
-namespace Windows {
-    namespace Media {
         namespace SpeechSynthesis {
             declare {
                 interface Windows.Foundation.Collections.IIterator<Windows.Media.SpeechSynthesis.VoiceInformation*>;
                 interface Windows.Foundation.Collections.IIterable<Windows.Media.SpeechSynthesis.VoiceInformation*>;
                 interface Windows.Foundation.Collections.IVectorView<Windows.Media.SpeechSynthesis.VoiceInformation*>;
-                interface Windows.Foundation.Collections.IVectorView<Windows.Media.IMediaMarker*>;
                 interface Windows.Foundation.IAsyncOperation<Windows.Media.SpeechSynthesis.SpeechSynthesisStream*>;
                 interface Windows.Foundation.AsyncOperationCompletedHandler<Windows.Media.SpeechSynthesis.SpeechSynthesisStream*>;
             }
