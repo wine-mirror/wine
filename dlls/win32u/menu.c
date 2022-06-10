@@ -824,7 +824,7 @@ static BOOL set_menu_item_info( MENUITEM *menu, const MENUITEMINFOW *info )
 }
 
 /* see GetMenuState */
-static UINT get_menu_state( HMENU handle, UINT item_id, UINT flags )
+UINT get_menu_state( HMENU handle, UINT item_id, UINT flags )
 {
     POPUPMENU *menu;
     UINT state, pos;

@@ -966,6 +966,11 @@ BOOL WINAPI NtGdiGetAndSetDCDword( HDC hdc, UINT method, DWORD value, DWORD *pre
         dc->attr->rop_mode = value;
         break;
 
+    case NtGdiSetTextAlign:
+        prev = dc->attr->text_align;
+        dc->attr->text_align = value;
+        break;
+
     default:
         WARN( "unknown method %u\n", method );
         ret = FALSE;

@@ -4499,7 +4499,7 @@ static int get_system_metrics_for_dpi( int index, unsigned int dpi )
     }
 }
 
-static COLORREF get_sys_color( int index )
+COLORREF get_sys_color( int index )
 {
     COLORREF ret = 0;
 
@@ -4508,7 +4508,7 @@ static COLORREF get_sys_color( int index )
     return ret;
 }
 
-static HBRUSH get_55aa_brush(void)
+HBRUSH get_55aa_brush(void)
 {
     static const WORD pattern[] = { 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa, 0x5555, 0xaaaa };
     static HBRUSH brush_55aa;
@@ -4546,7 +4546,7 @@ HBRUSH get_sys_color_brush( unsigned int index )
     return system_colors[index].brush;
 }
 
-static HPEN get_sys_color_pen( unsigned int index )
+HPEN get_sys_color_pen( unsigned int index )
 {
     if (index >= ARRAY_SIZE( system_colors )) return 0;
 

@@ -24,12 +24,42 @@
 #pragma makedep unix
 #endif
 
-#include "win32u_private.h"
+#include "ntgdi_private.h"
 #include "ntuser_private.h"
 #include "wine/server.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
+
+static BOOL has_dialog_frame( UINT style, UINT ex_style )
+{
+    return (ex_style & WS_EX_DLGMODALFRAME) || ((style & WS_DLGFRAME) && !(style & WS_THICKFRAME));
+}
+
+static BOOL has_thick_frame( UINT style, UINT ex_style )
+{
+    return (style & WS_THICKFRAME) && (style & (WS_DLGFRAME|WS_BORDER)) != WS_DLGFRAME;
+}
+
+static BOOL has_thin_frame( UINT style )
+{
+    return (style & WS_BORDER) || !(style & (WS_CHILD | WS_POPUP));
+}
+
+static BOOL has_big_frame( UINT style, UINT ex_style )
+{
+    return (style & (WS_THICKFRAME | WS_DLGFRAME)) || (ex_style & WS_EX_DLGMODALFRAME);
+}
+
+static BOOL has_static_outer_frame( UINT ex_style )
+{
+    return (ex_style & (WS_EX_STATICEDGE|WS_EX_DLGMODALFRAME)) == WS_EX_STATICEDGE;
+}
+
+static BOOL has_menu( HWND hwnd, UINT style )
+{
+    return (style & (WS_CHILD | WS_POPUP)) != WS_CHILD && get_menu( hwnd );
+}
 
 void fill_rect( HDC dc, const RECT *rect, HBRUSH hbrush )
 {
@@ -64,6 +94,151 @@ static BOOL draw_focus_rect( HDC hdc, const RECT *rc )
     NtGdiDeleteObjectApp( pen );
     NtGdiSelectBrush( hdc, prev_brush );
     return TRUE;
+}
+
+static const signed char lt_inner_normal[] = {
+    -1,           -1,                 -1,                 -1,
+    -1,           COLOR_BTNHIGHLIGHT, COLOR_BTNHIGHLIGHT, -1,
+    -1,           COLOR_3DDKSHADOW,   COLOR_3DDKSHADOW,   -1,
+    -1,           -1,                 -1,                 -1
+};
+
+static const signed char lt_outer_normal[] = {
+    -1,                 COLOR_3DLIGHT,     COLOR_BTNSHADOW, -1,
+    COLOR_BTNHIGHLIGHT, COLOR_3DLIGHT,     COLOR_BTNSHADOW, -1,
+    COLOR_3DDKSHADOW,   COLOR_3DLIGHT,     COLOR_BTNSHADOW, -1,
+    -1,                 COLOR_3DLIGHT,     COLOR_BTNSHADOW, -1
+};
+
+static const signed char rb_inner_normal[] = {
+    -1,           -1,                -1,              -1,
+    -1,           COLOR_BTNSHADOW,   COLOR_BTNSHADOW, -1,
+    -1,           COLOR_3DLIGHT,     COLOR_3DLIGHT,   -1,
+    -1,           -1,                -1,              -1
+};
+
+static const signed char rb_outer_normal[] = {
+    -1,              COLOR_3DDKSHADOW,  COLOR_BTNHIGHLIGHT, -1,
+    COLOR_BTNSHADOW, COLOR_3DDKSHADOW,  COLOR_BTNHIGHLIGHT, -1,
+    COLOR_3DLIGHT,   COLOR_3DDKSHADOW,  COLOR_BTNHIGHLIGHT, -1,
+    -1,              COLOR_3DDKSHADOW,  COLOR_BTNHIGHLIGHT, -1
+};
+
+static const signed char ltrb_outer_mono[] = {
+    -1,           COLOR_WINDOWFRAME, COLOR_WINDOWFRAME, COLOR_WINDOWFRAME,
+    COLOR_WINDOW, COLOR_WINDOWFRAME, COLOR_WINDOWFRAME, COLOR_WINDOWFRAME,
+    COLOR_WINDOW, COLOR_WINDOWFRAME, COLOR_WINDOWFRAME, COLOR_WINDOWFRAME,
+    COLOR_WINDOW, COLOR_WINDOWFRAME, COLOR_WINDOWFRAME, COLOR_WINDOWFRAME,
+};
+
+static const signed char ltrb_inner_mono[] = {
+    -1, -1,           -1,           -1,
+    -1, COLOR_WINDOW, COLOR_WINDOW, COLOR_WINDOW,
+    -1, COLOR_WINDOW, COLOR_WINDOW, COLOR_WINDOW,
+    -1, COLOR_WINDOW, COLOR_WINDOW, COLOR_WINDOW,
+};
+
+static BOOL draw_rect_edge( HDC hdc, RECT *rc, UINT type, UINT flags, UINT width )
+{
+    int lbi_offset = 0, lti_offset = 0, rti_offset = 0, rbi_offset = 0;
+    signed char lt_inner, lt_outer, rb_inner, rb_outer;
+    HBRUSH lti_brush, lto_brush, rbi_brush, rbo_brush;
+    RECT inner_rect = *rc, rect;
+    BOOL retval;
+
+    retval = !((type & BDR_INNER) == BDR_INNER || (type & BDR_OUTER) == BDR_OUTER) &&
+        !(flags & (BF_FLAT|BF_MONO));
+
+    lti_brush = lto_brush = rbi_brush = rbo_brush = GetStockObject( NULL_BRUSH );
+
+    /* Determine the colors of the edges */
+    lt_inner = lt_inner_normal[type & (BDR_INNER|BDR_OUTER)];
+    lt_outer = lt_outer_normal[type & (BDR_INNER|BDR_OUTER)];
+    rb_inner = rb_inner_normal[type & (BDR_INNER|BDR_OUTER)];
+    rb_outer = rb_outer_normal[type & (BDR_INNER|BDR_OUTER)];
+
+    if ((flags & BF_BOTTOMLEFT) == BF_BOTTOMLEFT)   lbi_offset = width;
+    if ((flags & BF_TOPRIGHT) == BF_TOPRIGHT)       rti_offset = width;
+    if ((flags & BF_BOTTOMRIGHT) == BF_BOTTOMRIGHT) rbi_offset = width;
+    if ((flags & BF_TOPLEFT) == BF_TOPLEFT)         lti_offset = width;
+
+    if (lt_inner != -1) lti_brush = get_sys_color_brush( lt_inner );
+    if (lt_outer != -1) lto_brush = get_sys_color_brush( lt_outer );
+    if (rb_inner != -1) rbi_brush = get_sys_color_brush( rb_inner );
+    if (rb_outer != -1) rbo_brush = get_sys_color_brush( rb_outer );
+
+    /* Draw the outer edge */
+    if (flags & BF_TOP)
+    {
+        rect = inner_rect;
+        rect.bottom = rect.top + width;
+        fill_rect( hdc, &rect, lto_brush );
+    }
+    if (flags & BF_LEFT)
+    {
+        rect = inner_rect;
+        rect.right = rect.left + width;
+        fill_rect( hdc, &rect, lto_brush );
+    }
+    if (flags & BF_BOTTOM)
+    {
+        rect = inner_rect;
+        rect.top = rect.bottom - width;
+        fill_rect( hdc, &rect, rbo_brush );
+    }
+    if (flags & BF_RIGHT)
+    {
+        rect = inner_rect;
+        rect.left = rect.right - width;
+        fill_rect( hdc, &rect, rbo_brush );
+    }
+
+    /* Draw the inner edge */
+    if (flags & BF_TOP)
+    {
+        SetRect( &rect, inner_rect.left + lti_offset, inner_rect.top + width,
+                 inner_rect.right - rti_offset, inner_rect.top + 2 * width );
+        fill_rect( hdc, &rect, lti_brush );
+    }
+    if (flags & BF_LEFT)
+    {
+        SetRect( &rect, inner_rect.left + width, inner_rect.top + lti_offset,
+                 inner_rect.left + 2 * width, inner_rect.bottom - lbi_offset );
+        fill_rect( hdc, &rect, lti_brush );
+    }
+    if (flags & BF_BOTTOM)
+    {
+        SetRect( &rect, inner_rect.left + lbi_offset, inner_rect.bottom - 2 * width,
+                 inner_rect.right - rbi_offset, inner_rect.bottom - width );
+        fill_rect( hdc, &rect, rbi_brush );
+    }
+    if (flags & BF_RIGHT)
+    {
+        SetRect( &rect, inner_rect.right - 2 * width, inner_rect.top + rti_offset,
+                 inner_rect.right - width, inner_rect.bottom - rbi_offset );
+        fill_rect( hdc, &rect, rbi_brush );
+    }
+
+    if (((flags & BF_MIDDLE) && retval) || (flags & BF_ADJUST))
+    {
+        int add = (ltrb_inner_mono[type & (BDR_INNER|BDR_OUTER)] != -1 ? width : 0)
+                + (ltrb_outer_mono[type & (BDR_INNER|BDR_OUTER)] != -1 ? width : 0);
+
+        if (flags & BF_LEFT)   inner_rect.left   += add;
+        if (flags & BF_RIGHT)  inner_rect.right  -= add;
+        if (flags & BF_TOP)    inner_rect.top    += add;
+        if (flags & BF_BOTTOM) inner_rect.bottom -= add;
+
+        if ((flags & BF_MIDDLE) && retval)
+        {
+            fill_rect( hdc, &inner_rect, get_sys_color_brush( flags & BF_MONO ?
+                                                              COLOR_WINDOW : COLOR_BTNFACE ));
+        }
+
+        if (flags & BF_ADJUST) *rc = inner_rect;
+    }
+
+    return retval;
 }
 
 /***********************************************************************
@@ -686,6 +861,608 @@ static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
     return 0;
 }
 
+/* Get the 'inside' rectangle of a window, i.e. the whole window rectangle
+ * but without the borders (if any). */
+static void get_inside_rect( HWND hwnd, enum coords_relative relative, RECT *rect,
+                             DWORD style, DWORD ex_style )
+{
+    get_window_rects( hwnd, relative, rect, NULL, get_thread_dpi() );
+
+    /* Remove frame from rectangle */
+    if (has_thick_frame( style, ex_style ))
+    {
+        InflateRect( rect, -get_system_metrics( SM_CXFRAME ), -get_system_metrics( SM_CYFRAME ));
+    }
+    else if (has_dialog_frame( style, ex_style ))
+    {
+        InflateRect( rect, -get_system_metrics( SM_CXDLGFRAME ), -get_system_metrics( SM_CYDLGFRAME ));
+    }
+    else if (has_thin_frame( style ))
+    {
+        InflateRect( rect, -get_system_metrics( SM_CXBORDER ), -get_system_metrics( SM_CYBORDER ));
+    }
+
+    /* We have additional border information if the window
+     * is a child (but not an MDI child) */
+    if ((style & WS_CHILD) && !(ex_style & WS_EX_MDICHILD))
+    {
+        if (ex_style & WS_EX_CLIENTEDGE)
+            InflateRect( rect, -get_system_metrics( SM_CXEDGE ), -get_system_metrics( SM_CYEDGE ));
+        if (ex_style & WS_EX_STATICEDGE)
+            InflateRect( rect, -get_system_metrics( SM_CXBORDER ), -get_system_metrics( SM_CYBORDER ));
+    }
+}
+
+/* Draw a window frame inside the given rectangle, and update the rectangle. */
+static void draw_nc_frame( HDC  hdc, RECT  *rect, BOOL  active, DWORD style, DWORD ex_style )
+{
+    INT width, height;
+
+    if (style & WS_THICKFRAME)
+    {
+        width  = get_system_metrics( SM_CXFRAME ) - get_system_metrics( SM_CXDLGFRAME );
+        height = get_system_metrics( SM_CYFRAME ) - get_system_metrics( SM_CYDLGFRAME );
+
+        NtGdiSelectBrush( hdc, get_sys_color_brush( active ? COLOR_ACTIVEBORDER :
+                                                    COLOR_INACTIVEBORDER ));
+        /* Draw frame */
+        NtGdiPatBlt( hdc, rect->left, rect->top, rect->right - rect->left, height, PATCOPY );
+        NtGdiPatBlt( hdc, rect->left, rect->top, width, rect->bottom - rect->top, PATCOPY );
+        NtGdiPatBlt( hdc, rect->left, rect->bottom - 1, rect->right - rect->left, -height, PATCOPY );
+        NtGdiPatBlt( hdc, rect->right - 1, rect->top, -width, rect->bottom - rect->top, PATCOPY );
+
+        InflateRect( rect, -width, -height );
+    }
+
+    /* Now the other bit of the frame */
+    if ((style & (WS_BORDER|WS_DLGFRAME)) || (ex_style & WS_EX_DLGMODALFRAME))
+    {
+        DWORD color;
+
+        width  = get_system_metrics( SM_CXDLGFRAME ) - get_system_metrics( SM_CXEDGE );
+        height = get_system_metrics( SM_CYDLGFRAME ) - get_system_metrics( SM_CYEDGE );
+        /* This should give a value of 1 that should also work for a border */
+
+        if (ex_style & (WS_EX_DLGMODALFRAME | WS_EX_CLIENTEDGE)) color = COLOR_3DFACE;
+        else if (ex_style & WS_EX_STATICEDGE) color = COLOR_WINDOWFRAME;
+        else if (style & (WS_DLGFRAME|WS_THICKFRAME)) color = COLOR_3DFACE;
+        else color = COLOR_WINDOWFRAME;
+        NtGdiSelectBrush( hdc, get_sys_color_brush( color ));
+
+        /* Draw frame */
+        NtGdiPatBlt( hdc, rect->left, rect->top,
+                     rect->right - rect->left, height, PATCOPY );
+        NtGdiPatBlt( hdc, rect->left, rect->top,
+                     width, rect->bottom - rect->top, PATCOPY );
+        NtGdiPatBlt( hdc, rect->left, rect->bottom - 1,
+                     rect->right - rect->left, -height, PATCOPY );
+        NtGdiPatBlt( hdc, rect->right - 1, rect->top,
+                     -width, rect->bottom - rect->top, PATCOPY );
+
+        InflateRect( rect, -width, -height );
+    }
+}
+
+static HICON get_nc_icon_for_window( HWND hwnd )
+{
+    HICON icon = 0;
+    WND *win = get_win_ptr( hwnd );
+
+    if (win && win != WND_OTHER_PROCESS && win != WND_DESKTOP)
+    {
+        icon = win->hIconSmall;
+        if (!icon) icon = win->hIcon;
+        release_win_ptr( win );
+    }
+    if (!icon) icon = (HICON) get_class_long_ptr( hwnd, GCLP_HICONSM, FALSE );
+    if (!icon) icon = (HICON) get_class_long_ptr( hwnd, GCLP_HICON, FALSE );
+
+    /* If there is no icon specified and this is not a modal dialog, get the default one. */
+    if (!icon && !(get_window_long( hwnd, GWL_EXSTYLE ) & WS_EX_DLGMODALFRAME))
+        icon = LoadImageW( 0, (LPCWSTR)IDI_WINLOGO, IMAGE_ICON, get_system_metrics( SM_CXSMICON ),
+                           get_system_metrics( SM_CYSMICON ), LR_DEFAULTCOLOR | LR_SHARED );
+    return icon;
+}
+
+/* Draws the bar part (ie the big rectangle) of the caption */
+static void draw_caption_bar( HDC hdc, const RECT *rect, DWORD style, BOOL active, BOOL gradient )
+{
+    if (gradient)
+    {
+        TRIVERTEX vertices[4];
+        DWORD left, right;
+        int buttons_size = get_system_metrics( SM_CYCAPTION ) - 1;
+
+        static GRADIENT_RECT mesh[] = {{0, 1}, {1, 2}, {2, 3}};
+
+        left  = get_sys_color( active ? COLOR_ACTIVECAPTION : COLOR_INACTIVECAPTION );
+        right = get_sys_color( active ? COLOR_GRADIENTACTIVECAPTION : COLOR_GRADIENTINACTIVECAPTION );
+        vertices[0].Red   = vertices[1].Red   = GetRValue( left ) << 8;
+        vertices[0].Green = vertices[1].Green = GetGValue( left ) << 8;
+        vertices[0].Blue  = vertices[1].Blue  = GetBValue( left ) << 8;
+        vertices[0].Alpha = vertices[1].Alpha = 0xff00;
+        vertices[2].Red   = vertices[3].Red   = GetRValue( right ) << 8;
+        vertices[2].Green = vertices[3].Green = GetGValue( right ) << 8;
+        vertices[2].Blue  = vertices[3].Blue  = GetBValue( right ) << 8;
+        vertices[2].Alpha = vertices[3].Alpha = 0xff00;
+
+        if ((style & WS_SYSMENU) && ((style & WS_MAXIMIZEBOX) || (style & WS_MINIMIZEBOX)))
+            buttons_size += 2 * (get_system_metrics( SM_CXSIZE ) + 1);
+
+        /* area behind icon; solid filled with left color */
+        vertices[0].x = rect->left;
+        vertices[0].y = rect->top;
+        if (style & WS_SYSMENU)
+            vertices[1].x = min( rect->left + get_system_metrics( SM_CXSMICON ), rect->right );
+        else
+            vertices[1].x = vertices[0].x;
+        vertices[1].y = rect->bottom;
+
+        /* area behind text; gradient */
+        vertices[2].x = max( vertices[1].x, rect->right - buttons_size );
+        vertices[2].y = rect->top;
+
+        /* area behind buttons; solid filled with right color */
+        vertices[3].x = rect->right;
+        vertices[3].y = rect->bottom;
+
+        NtGdiGradientFill( hdc, vertices, 4, mesh, 3, GRADIENT_FILL_RECT_H );
+    }
+    else
+    {
+        DWORD color = active ? COLOR_ACTIVECAPTION : COLOR_INACTIVECAPTION;
+        fill_rect( hdc, rect, get_sys_color_brush( color ));
+    }
+}
+
+/* Draw the system icon */
+static BOOL draw_nc_sys_button( HWND hwnd, HDC hdc, BOOL down )
+{
+    HICON icon = get_nc_icon_for_window( hwnd );
+
+    if (icon)
+    {
+        RECT rect;
+        POINT pt;
+        DWORD style = get_window_long( hwnd, GWL_STYLE );
+        DWORD ex_style = get_window_long( hwnd, GWL_EXSTYLE );
+
+        get_inside_rect( hwnd, COORDS_WINDOW, &rect, style, ex_style );
+        pt.x = rect.left + 2;
+        pt.y = rect.top + (get_system_metrics( SM_CYCAPTION ) - get_system_metrics( SM_CYSMICON )) / 2;
+        NtUserDrawIconEx( hdc, pt.x, pt.y, icon,
+                          get_system_metrics( SM_CXSMICON ),
+                          get_system_metrics( SM_CYSMICON ), 0, 0, DI_NORMAL );
+    }
+
+    return icon != 0;
+}
+
+/* Create a square rectangle and return its width */
+static int make_square_rect( RECT *src, RECT *dst )
+{
+    int width  = src->right - src->left;
+    int height = src->bottom - src->top;
+    int small_diam = width > height ? height : width;
+
+    *dst = *src;
+
+    /* Make it a square box */
+    if (width < height)
+    {
+        dst->top += (height - width) / 2;
+        dst->bottom = dst->top + small_diam;
+    }
+    else if (width > height)
+    {
+        dst->left += (width - height) / 2;
+        dst->right = dst->left + small_diam;
+    }
+
+   return small_diam;
+}
+
+static void draw_checked_rect( HDC dc, RECT *rect )
+{
+    if (get_sys_color( COLOR_BTNHIGHLIGHT ) == RGB( 255, 255, 255 ))
+    {
+      HBRUSH prev_brush;
+      DWORD prev_bg;
+
+      fill_rect( dc, rect, get_sys_color_brush( COLOR_BTNFACE ));
+      NtGdiGetAndSetDCDword( dc, NtGdiSetBkColor, RGB(255, 255, 255), &prev_bg );
+      prev_brush = NtGdiSelectBrush( dc, get_55aa_brush() );
+      NtGdiPatBlt( dc, rect->left, rect->top, rect->right-rect->left,
+                   rect->bottom-rect->top, 0x00fa0089 );
+      NtGdiSelectBrush( dc, prev_brush );
+      NtGdiGetAndSetDCDword( dc, NtGdiSetBkColor, prev_bg, NULL );
+    }
+    else
+    {
+        fill_rect( dc, rect, get_sys_color_brush( COLOR_BTNHIGHLIGHT ));
+    }
+}
+
+static BOOL draw_push_button( HDC dc, RECT *r, UINT flags )
+{
+    RECT rect = *r;
+    UINT edge;
+
+    if (flags & (DFCS_PUSHED | DFCS_CHECKED | DFCS_FLAT))
+        edge = EDGE_SUNKEN;
+    else
+        edge = EDGE_RAISED;
+
+    if (flags & DFCS_CHECKED)
+    {
+        if (flags & DFCS_MONO)
+            draw_rect_edge( dc, &rect, edge, BF_MONO|BF_RECT|BF_ADJUST, 1 );
+        else
+            draw_rect_edge( dc, &rect, edge, (flags & DFCS_FLAT)|BF_RECT|BF_SOFT|BF_ADJUST, 1 );
+        if (!(flags & DFCS_TRANSPARENT)) draw_checked_rect( dc, &rect );
+    }
+    else
+    {
+        if (flags & DFCS_MONO)
+        {
+            draw_rect_edge( dc, &rect, edge, BF_MONO|BF_RECT|BF_ADJUST, 1 );
+            if (!(flags & DFCS_TRANSPARENT))
+                fill_rect( dc, &rect, get_sys_color_brush( COLOR_BTNFACE ));
+        }
+        else
+        {
+            UINT edge_flags = BF_RECT | BF_SOFT | (flags & DFCS_FLAT);
+            if (!(flags & DFCS_TRANSPARENT)) edge_flags |= BF_MIDDLE;
+            draw_rect_edge( dc, r, edge, edge_flags, 1 );
+        }
+    }
+
+    /* Adjust rectangle if asked */
+    if (flags & DFCS_ADJUSTRECT) InflateRect( r, -2, -2 );
+    return TRUE;
+}
+
+static BOOL draw_frame_caption( HDC dc, RECT *r, UINT flags )
+{
+    RECT rect;
+    int small_diam = make_square_rect( r, &rect ) - 2;
+    HFONT prev_font, font;
+    int color_idx = flags & DFCS_INACTIVE ? COLOR_BTNSHADOW : COLOR_BTNTEXT;
+    int xc = (rect.left + rect.right) / 2;
+    int yc = (rect.top + rect.bottom) / 2;
+    LOGFONTW lf = { 0 };
+    WCHAR str[] = {0, 0};
+    DWORD prev_align, prev_bk;
+    COLORREF prev_color;
+    SIZE size;
+
+    static const WCHAR marlettW[] = {'M','a','r','l','e','t','t',0};
+
+    draw_push_button( dc, r, flags & 0xff00 );
+
+    switch (flags & 0xf)
+    {
+    case DFCS_CAPTIONCLOSE:    str[0] = 0x72; break;
+    case DFCS_CAPTIONHELP:     str[0] = 0x73; break;
+    case DFCS_CAPTIONMIN:      str[0] = 0x30; break;
+    case DFCS_CAPTIONMAX:      str[0] = 0x31; break;
+    case DFCS_CAPTIONRESTORE:  str[0] = 0x32; break;
+    default:
+        WARN( "Invalid caption; flags=0x%04x\n", flags );
+        return FALSE;
+    }
+
+    lf.lfHeight = -small_diam;
+    lf.lfWeight = FW_NORMAL;
+    lf.lfCharSet = SYMBOL_CHARSET;
+    lf.lfPitchAndFamily = FIXED_PITCH | FF_DONTCARE;
+    memcpy( lf.lfFaceName, marlettW, sizeof(marlettW) );
+    font = NtGdiHfontCreate( &lf, sizeof(lf), 0, 0, NULL );
+    NtGdiGetAndSetDCDword( dc, NtGdiSetTextAlign, TA_TOP | TA_LEFT, &prev_align );
+    NtGdiGetAndSetDCDword( dc, NtGdiSetBkMode, TRANSPARENT, &prev_bk );
+    NtGdiGetDCDword( dc, NtGdiGetTextColor, &prev_color );
+    prev_font = NtGdiSelectFont( dc, font );
+    NtGdiGetTextExtentExW( dc, str, 1, 0, NULL, NULL, &size, 0 );
+
+    if (flags & DFCS_INACTIVE)
+    {
+        NtGdiGetAndSetDCDword( dc, NtGdiSetTextColor, get_sys_color(COLOR_BTNHIGHLIGHT), NULL );
+        NtGdiExtTextOutW( dc, xc-size.cx/2+1, yc-size.cy/2+1, 0, NULL, str, 1, NULL, 0 );
+    }
+    NtGdiGetAndSetDCDword( dc, NtGdiSetTextColor, get_sys_color( color_idx ), NULL );
+    NtGdiExtTextOutW( dc, xc-size.cx/2, yc-size.cy/2, 0, NULL, str, 1, NULL, 0 );
+
+    NtGdiSelectFont(dc, prev_font);
+    NtGdiGetAndSetDCDword( dc, NtGdiSetTextColor, prev_color, NULL );
+    NtGdiGetAndSetDCDword( dc, NtGdiSetTextAlign, prev_align, NULL );
+    NtGdiGetAndSetDCDword( dc, NtGdiSetBkMode, prev_bk, NULL );
+    NtGdiDeleteObjectApp( font );
+
+    return TRUE;
+}
+
+static void draw_close_button( HWND hwnd, HDC hdc, BOOL down, BOOL grayed )
+{
+    RECT rect;
+    DWORD style = get_window_long( hwnd, GWL_STYLE );
+    DWORD ex_style = get_window_long( hwnd, GWL_EXSTYLE );
+    UINT flags = DFCS_CAPTIONCLOSE;
+
+    get_inside_rect( hwnd, COORDS_WINDOW, &rect, style, ex_style );
+
+    /* A tool window has a smaller Close button */
+    if (ex_style & WS_EX_TOOLWINDOW)
+    {
+        /* Windows does not use SM_CXSMSIZE and SM_CYSMSIZE
+         * it uses 11x11 for  the close button in tool window */
+        const int bmp_height = 11;
+        const int bmp_width = 11;
+        int caption_height = get_system_metrics( SM_CYSMCAPTION );
+
+        rect.top = rect.top + (caption_height - 1 - bmp_height) / 2;
+        rect.left = rect.right - (caption_height + 1 + bmp_width) / 2;
+        rect.bottom = rect.top + bmp_height;
+        rect.right = rect.left + bmp_width;
+    }
+    else
+    {
+        rect.left = rect.right - get_system_metrics( SM_CXSIZE );
+        rect.bottom = rect.top + get_system_metrics( SM_CYSIZE ) - 2;
+        rect.top += 2;
+        rect.right -= 2;
+    }
+
+    if (down) flags |= DFCS_PUSHED;
+    if (grayed) flags |= DFCS_INACTIVE;
+    draw_frame_caption( hdc, &rect, flags );
+}
+
+static void draw_max_button( HWND hwnd, HDC hdc, BOOL down, BOOL grayed )
+{
+    RECT rect;
+    UINT flags;
+    DWORD style = get_window_long( hwnd, GWL_STYLE );
+    DWORD ex_style = get_window_long( hwnd, GWL_EXSTYLE );
+
+    /* never draw maximize box when window has WS_EX_TOOLWINDOW style */
+    if (ex_style & WS_EX_TOOLWINDOW) return;
+
+    flags = (style & WS_MAXIMIZE) ? DFCS_CAPTIONRESTORE : DFCS_CAPTIONMAX;
+
+    get_inside_rect( hwnd, COORDS_WINDOW, &rect, style, ex_style );
+    if (style & WS_SYSMENU) rect.right -= get_system_metrics( SM_CXSIZE );
+    rect.left = rect.right - get_system_metrics( SM_CXSIZE );
+    rect.bottom = rect.top + get_system_metrics( SM_CYSIZE ) - 2;
+    rect.top += 2;
+    rect.right -= 2;
+    if (down) flags |= DFCS_PUSHED;
+    if (grayed) flags |= DFCS_INACTIVE;
+    draw_frame_caption( hdc, &rect, flags );
+}
+
+static void draw_min_button( HWND hwnd, HDC hdc, BOOL down, BOOL grayed )
+{
+    RECT rect;
+    UINT flags;
+    DWORD style = get_window_long( hwnd, GWL_STYLE );
+    DWORD ex_style = get_window_long( hwnd, GWL_EXSTYLE );
+
+    /* never draw minimize box when window has WS_EX_TOOLWINDOW style */
+    if (ex_style & WS_EX_TOOLWINDOW) return;
+
+    flags = (style & WS_MINIMIZE) ? DFCS_CAPTIONRESTORE : DFCS_CAPTIONMIN;
+
+    get_inside_rect( hwnd, COORDS_WINDOW, &rect, style, ex_style );
+    if (style & WS_SYSMENU)
+        rect.right -= get_system_metrics( SM_CXSIZE );
+    if (style & (WS_MAXIMIZEBOX|WS_MINIMIZEBOX))
+        rect.right -= get_system_metrics( SM_CXSIZE ) - 2;
+    rect.left = rect.right - get_system_metrics( SM_CXSIZE );
+    rect.bottom = rect.top + get_system_metrics( SM_CYSIZE ) - 2;
+    rect.top += 2;
+    rect.right -= 2;
+    if (down) flags |= DFCS_PUSHED;
+    if (grayed) flags |= DFCS_INACTIVE;
+    draw_frame_caption( hdc, &rect, flags );
+}
+
+static void draw_nc_caption( HDC hdc, RECT *rect, HWND hwnd, DWORD  style,
+                             DWORD  ex_style, BOOL active )
+{
+    RECT  r = *rect;
+    WCHAR buffer[256];
+    HPEN prev_pen;
+    HMENU sys_menu;
+    BOOL gradient = FALSE;
+    UINT pen_color = COLOR_3DFACE;
+    int len;
+
+    if ((ex_style & (WS_EX_STATICEDGE|WS_EX_CLIENTEDGE|WS_EX_DLGMODALFRAME)) == WS_EX_STATICEDGE)
+        pen_color = COLOR_WINDOWFRAME;
+    prev_pen = NtGdiSelectPen( hdc, get_sys_color_pen( pen_color ));
+    NtGdiMoveTo( hdc, r.left, r.bottom - 1, NULL );
+    NtGdiLineTo( hdc, r.right, r.bottom - 1 );
+    NtGdiSelectPen( hdc, prev_pen );
+    r.bottom--;
+
+    NtUserSystemParametersInfo( SPI_GETGRADIENTCAPTIONS, 0, &gradient, 0 );
+    draw_caption_bar( hdc, &r, style, active, gradient );
+
+    if ((style & WS_SYSMENU) && !(ex_style & WS_EX_TOOLWINDOW))
+    {
+        if (draw_nc_sys_button( hwnd, hdc, FALSE ))
+            r.left += get_system_metrics( SM_CXSMICON ) + 2;
+    }
+
+    if (style & WS_SYSMENU)
+    {
+        UINT state;
+
+        /* Go get the sysmenu */
+        sys_menu = NtUserGetSystemMenu( hwnd, FALSE );
+        state = get_menu_state( sys_menu, SC_CLOSE, MF_BYCOMMAND );
+
+        /* Draw a grayed close button if disabled or if SC_CLOSE is not there */
+        draw_close_button( hwnd, hdc, FALSE,
+                           (state & (MF_DISABLED | MF_GRAYED)) || (state == 0xFFFFFFFF) );
+        r.right -= get_system_metrics( SM_CYCAPTION ) - 1;
+
+        if ((style & WS_MAXIMIZEBOX) || (style & WS_MINIMIZEBOX))
+        {
+            draw_max_button( hwnd, hdc, FALSE, !(style & WS_MAXIMIZEBOX) );
+            r.right -= get_system_metrics( SM_CXSIZE ) + 1;
+
+            draw_min_button( hwnd, hdc, FALSE, !(style & WS_MINIMIZEBOX) );
+            r.right -= get_system_metrics( SM_CXSIZE ) + 1;
+        }
+    }
+
+    /* FIXME: use packed send message */
+    len = send_message( hwnd, WM_GETTEXT, ARRAY_SIZE( buffer ), (LPARAM)buffer );
+    if (len)
+    {
+        NONCLIENTMETRICSW nclm;
+        HFONT hFont, hOldFont;
+        nclm.cbSize = sizeof(nclm);
+        NtUserSystemParametersInfo( SPI_GETNONCLIENTMETRICS, 0, &nclm, 0 );
+        if (ex_style & WS_EX_TOOLWINDOW)
+            hFont = NtGdiHfontCreate( &nclm.lfSmCaptionFont, sizeof(nclm.lfSmCaptionFont), 0, 0, NULL );
+        else
+            hFont = NtGdiHfontCreate( &nclm.lfCaptionFont, sizeof(nclm.lfCaptionFont), 0, 0, NULL );
+        hOldFont = NtGdiSelectFont( hdc, hFont );
+        if (active)
+            NtGdiGetAndSetDCDword( hdc, NtGdiSetTextColor, get_sys_color( COLOR_CAPTIONTEXT ), NULL );
+        else
+            NtGdiGetAndSetDCDword( hdc, NtGdiSetTextColor, get_sys_color( COLOR_INACTIVECAPTIONTEXT ), NULL );
+        NtGdiGetAndSetDCDword( hdc, NtGdiSetBkMode, TRANSPARENT, NULL );
+        r.left += 2;
+        DrawTextW( hdc, buffer, -1, &r,
+                     DT_SINGLELINE | DT_VCENTER | DT_NOPREFIX | DT_LEFT );
+        NtGdiDeleteObjectApp( NtGdiSelectFont( hdc, hOldFont ));
+    }
+}
+
+/* Paint the non-client area for windows */
+static void nc_paint( HWND hwnd, HRGN clip )
+{
+    HDC hdc;
+    RECT rfuzz, rect, clip_rect;
+    BOOL active;
+    WND *win;
+    DWORD style, ex_style;
+    WORD flags;
+    HRGN hrgn;
+    RECT rectClient;
+
+    if (!(win = get_win_ptr( hwnd )) || win == WND_OTHER_PROCESS) return;
+    style = win->dwStyle;
+    ex_style = win->dwExStyle;
+    flags = win->flags;
+    release_win_ptr( win );
+
+    active = flags & WIN_NCACTIVATED;
+
+    TRACE( "%p %d\n", hwnd, active );
+
+    get_window_rects( hwnd, COORDS_SCREEN, NULL, &rectClient, get_thread_dpi() );
+    hrgn = NtGdiCreateRectRgn( rectClient.left, rectClient.top,
+                               rectClient.right, rectClient.bottom );
+
+    if (clip > (HRGN)1)
+    {
+        NtGdiCombineRgn( hrgn, clip, hrgn, RGN_DIFF );
+        hdc = NtUserGetDCEx( hwnd, hrgn, DCX_USESTYLE | DCX_WINDOW | DCX_INTERSECTRGN );
+    }
+    else
+    {
+        hdc = NtUserGetDCEx( hwnd, hrgn, DCX_USESTYLE | DCX_WINDOW | DCX_EXCLUDERGN );
+    }
+
+    if (!hdc)
+    {
+        NtGdiDeleteObjectApp( hrgn );
+        return;
+    }
+
+    get_window_rects( hwnd, COORDS_WINDOW, &rect, NULL, get_thread_dpi() );
+    NtGdiGetAppClipBox( hdc, &clip_rect );
+
+    NtGdiSelectPen( hdc, get_sys_color_pen( COLOR_WINDOWFRAME ));
+
+    if (has_static_outer_frame( ex_style ))
+        draw_rect_edge( hdc, &rect, BDR_SUNKENOUTER, BF_RECT | BF_ADJUST, 1 );
+    else if (has_big_frame( style, ex_style ))
+        draw_rect_edge( hdc, &rect, EDGE_RAISED, BF_RECT | BF_ADJUST, 1 );
+
+    draw_nc_frame( hdc, &rect, active, style, ex_style );
+
+    if ((style & WS_CAPTION) == WS_CAPTION)
+    {
+        RECT r = rect;
+        if (ex_style & WS_EX_TOOLWINDOW)
+        {
+            r.bottom = rect.top + get_system_metrics( SM_CYSMCAPTION );
+            rect.top += get_system_metrics( SM_CYSMCAPTION );
+        }
+        else {
+            r.bottom = rect.top + get_system_metrics( SM_CYCAPTION );
+            rect.top += get_system_metrics( SM_CYCAPTION );
+        }
+
+        if (intersect_rect( &rfuzz, &r, &clip_rect ))
+            draw_nc_caption( hdc, &r, hwnd, style, ex_style, active );
+    }
+
+    if (has_menu( hwnd, style ))
+    {
+        RECT r = rect;
+        r.bottom = rect.top + get_system_metrics( SM_CYMENU );
+
+        TRACE( "drawing menu with rect %s\n", wine_dbgstr_rect( &r ));
+
+        if (user_callbacks)
+            rect.top += user_callbacks->draw_menu( hdc, &r, hwnd ) + 1;
+    }
+
+    TRACE( "rect after menu %s\n", wine_dbgstr_rect( &rect ));
+
+    if (ex_style & WS_EX_CLIENTEDGE)
+        draw_rect_edge( hdc, &rect, EDGE_SUNKEN, BF_RECT | BF_ADJUST, 1 );
+
+    /* Draw the scroll-bars */
+    if (user_callbacks)
+        user_callbacks->draw_nc_scrollbar( hwnd, hdc, style & WS_HSCROLL, style & WS_VSCROLL );
+
+    /* Draw the "size-box" */
+    if ((style & WS_VSCROLL) && (style & WS_HSCROLL))
+    {
+        RECT r = rect;
+        if ((ex_style & WS_EX_LEFTSCROLLBAR) != 0)
+            r.right = r.left + get_system_metrics( SM_CXVSCROLL ) + 1;
+        else
+            r.left = r.right - get_system_metrics( SM_CXVSCROLL ) + 1;
+        r.top  = r.bottom - get_system_metrics( SM_CYHSCROLL ) + 1;
+        fill_rect( hdc, &r, get_sys_color_brush( COLOR_BTNFACE ) );
+    }
+
+    NtUserReleaseDC( hwnd, hdc );
+}
+
+static LRESULT handle_nc_paint( HWND hwnd , HRGN clip )
+{
+    HWND parent = NtUserGetAncestor( hwnd, GA_PARENT );
+    DWORD style = get_window_long( hwnd, GWL_STYLE );
+
+    if (style & WS_VISIBLE)
+    {
+        nc_paint( hwnd, clip );
+
+        if (parent == get_desktop_window())
+            NtUserPostMessage( parent, WM_PARENTNOTIFY, WM_NCPAINT, (LPARAM)hwnd );
+    }
+    return 0;
+}
+
 LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
     LRESULT result = 0;
@@ -712,6 +1489,9 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
             release_win_ptr( win );
             break;
         }
+
+    case WM_NCPAINT:
+        return handle_nc_paint( hwnd, (HRGN)wparam );
 
     case WM_WINDOWPOSCHANGING:
         return handle_window_pos_changing( hwnd, (WINDOWPOS *)lparam );
@@ -804,10 +1584,14 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
 
     case WM_SETTEXT:
         result = set_window_text( hwnd, (void *)lparam, ansi );
+        if (result && (get_window_long( hwnd, GWL_STYLE ) & WS_CAPTION) == WS_CAPTION)
+            handle_nc_paint( hwnd , (HRGN)1 );  /* repaint caption */
         break;
 
     case WM_SETICON:
         result = (LRESULT)set_window_icon( hwnd, wparam, (HICON)lparam );
+        if ((get_window_long( hwnd, GWL_STYLE ) & WS_CAPTION) == WS_CAPTION)
+            handle_nc_paint( hwnd , (HRGN)1 );  /* repaint caption */
         break;
 
     case WM_GETICON:

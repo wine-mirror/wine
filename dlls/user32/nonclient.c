@@ -1074,29 +1074,6 @@ static void  NC_DoNCPaint( HWND  hwnd, HRGN  clip )
 }
 
 
-
-
-/***********************************************************************
- *           NC_HandleNCPaint
- *
- * Handle a WM_NCPAINT message. Called from DefWindowProc().
- */
-LRESULT NC_HandleNCPaint( HWND hwnd , HRGN clip)
-{
-    HWND parent = NtUserGetAncestor( hwnd, GA_PARENT );
-    DWORD dwStyle = GetWindowLongW( hwnd, GWL_STYLE );
-
-    if( dwStyle & WS_VISIBLE )
-    {
-        NC_DoNCPaint( hwnd, clip );
-
-        if (parent == GetDesktopWindow())
-            PostMessageW( parent, WM_PARENTNOTIFY, WM_NCPAINT, (LPARAM)hwnd );
-    }
-    return 0;
-}
-
-
 /***********************************************************************
  *           NC_HandleNCActivate
  *

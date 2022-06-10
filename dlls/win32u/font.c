@@ -6573,3 +6573,25 @@ BOOL WINAPI NtGdiGetCharWidthInfo( HDC hdc, struct char_width_info *info )
     release_dc_ptr(dc);
     return ret;
 }
+
+/***********************************************************************
+ *           DrawTextW    (win32u.so)
+ */
+INT WINAPI DrawTextW( HDC hdc, const WCHAR *str, INT count, RECT *rect, UINT flags )
+{
+    struct draw_text_params *params;
+    ULONG ret_len, size;
+    void *ret_ptr;
+    int ret;
+
+    if (count == -1) count = wcslen( str );
+    size = FIELD_OFFSET( struct draw_text_params, str[count] );
+    if (!(params = malloc( size ))) return 0;
+    params->hdc = hdc;
+    params->rect = rect;
+    params->flags = flags;
+    if (count) memcpy( params->str, str, count * sizeof(WCHAR) );
+    ret = KeUserModeCallback( NtUserDrawText, params, size, &ret_ptr, &ret_len );
+    free( params );
+    return ret;
+}

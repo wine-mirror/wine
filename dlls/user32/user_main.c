@@ -145,6 +145,8 @@ static const struct user_callbacks user_funcs =
     ImmProcessKey,
     ImmTranslateMessage,
     NtWaitForMultipleObjects,
+    MENU_DrawMenuBar,
+    SCROLL_DrawNCScrollBar,
     free_win_ptr,
     MENU_GetSysMenu,
     MENU_IsMenuActive,
@@ -162,6 +164,12 @@ static NTSTATUS WINAPI User32CopyImage( const struct copy_image_params *params, 
 {
     HANDLE ret = CopyImage( params->hwnd, params->type, params->dx, params->dy, params->flags );
     return HandleToUlong( ret );
+}
+
+static NTSTATUS WINAPI User32DrawText( const struct draw_text_params *params, ULONG size )
+{
+    size -= FIELD_OFFSET( struct draw_text_params, str );
+    return DrawTextW( params->hdc, params->str, size / sizeof(WCHAR), params->rect, params->flags );
 }
 
 static NTSTATUS WINAPI User32LoadImage( const struct load_image_params *params, ULONG size )
@@ -198,6 +206,7 @@ static const void *kernel_callback_table[NtUserCallCount] =
     User32CallWindowProc,
     User32CallWindowsHook,
     User32CopyImage,
+    User32DrawText,
     User32FreeCachedClipboardData,
     User32LoadDriver,
     User32LoadImage,

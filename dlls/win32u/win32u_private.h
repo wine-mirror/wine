@@ -394,6 +394,7 @@ extern BOOL draw_menu_bar( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HMENU get_menu( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL get_menu_info( HMENU handle, MENUINFO *info ) DECLSPEC_HIDDEN;
 extern INT get_menu_item_count( HMENU handle ) DECLSPEC_HIDDEN;
+extern UINT get_menu_state( HMENU handle, UINT item_id, UINT flags ) DECLSPEC_HIDDEN;
 extern BOOL set_window_menu( HWND hwnd, HMENU handle ) DECLSPEC_HIDDEN;
 
 /* message.c */
@@ -411,12 +412,15 @@ extern LRESULT send_message_timeout( HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
 
 /* sysparams.c */
 extern BOOL enable_thunk_lock DECLSPEC_HIDDEN;
+extern HBRUSH get_55aa_brush(void) DECLSPEC_HIDDEN;
 extern RECT get_display_rect( const WCHAR *display ) DECLSPEC_HIDDEN;
 extern UINT get_monitor_dpi( HMONITOR monitor ) DECLSPEC_HIDDEN;
 extern BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info ) DECLSPEC_HIDDEN;
 extern UINT get_win_monitor_dpi( HWND hwnd ) DECLSPEC_HIDDEN;
 extern RECT get_primary_monitor_rect( UINT dpi ) DECLSPEC_HIDDEN;
+extern COLORREF get_sys_color( int index ) DECLSPEC_HIDDEN;
 extern HBRUSH get_sys_color_brush( unsigned int index ) DECLSPEC_HIDDEN;
+extern HPEN get_sys_color_pen( unsigned int index ) DECLSPEC_HIDDEN;
 extern UINT get_system_dpi(void) DECLSPEC_HIDDEN;
 extern int get_system_metrics( int index ) DECLSPEC_HIDDEN;
 extern UINT get_thread_dpi(void) DECLSPEC_HIDDEN;

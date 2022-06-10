@@ -115,6 +115,7 @@ enum
     NtGdiSetDCPenColor,
     NtGdiSetGraphicsMode,
     NtGdiSetROP2,
+    NtGdiSetTextAlign,
 };
 
 /* NtGdiGetDCDword parameter, not compatible with Windows */

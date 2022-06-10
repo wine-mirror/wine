@@ -33,6 +33,7 @@ enum
     NtUserCallWinProc,
     NtUserCallWindowsHook,
     NtUserCopyImage,
+    NtUserDrawText,
     NtUserFreeCachedClipboardData,
     NtUserLoadDriver,
     NtUserLoadImage,
@@ -156,6 +157,16 @@ struct copy_image_params
     INT dx;
     INT dy;
     UINT flags;
+};
+
+/* NtUserDrawText params */
+struct draw_text_params
+{
+    HDC hdc;
+    int count;
+    RECT *rect; /* FIXME: Use NtCallbackReturn instead */
+    UINT flags;
+    WCHAR str[1];
 };
 
 /* NtUserFreeCachedClipboardData params */

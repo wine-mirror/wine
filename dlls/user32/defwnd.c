@@ -159,9 +159,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 {
     switch(msg)
     {
-    case WM_NCPAINT:
-        return NC_HandleNCPaint( hwnd, (HRGN)wParam );
-
     case WM_NCMOUSEMOVE:
         return NC_HandleNCMouseMove( hwnd, wParam, lParam );
 
@@ -422,15 +419,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     case WM_QUERYENDSESSION:
         return 1;
 
-    case WM_SETICON:
-        {
-            LRESULT res =  NtUserMessageCall( hwnd, msg, wParam, lParam,
-                                              0, NtUserDefWindowProc, FALSE );
-            if( (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CAPTION) == WS_CAPTION )
-                NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
-            return res;
-        }
-
     case WM_HELP:
         SendMessageW( GetParent(hwnd), msg, wParam, lParam );
         break;
@@ -590,8 +578,6 @@ LRESULT WINAPI DefWindowProcA( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam
 
     case WM_SETTEXT:
         result = NtUserMessageCall( hwnd, msg, wParam, lParam, 0, NtUserDefWindowProc, TRUE );
-        if (result && (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CAPTION) == WS_CAPTION)
-            NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
         break;
 
     case WM_IME_CHAR:
@@ -765,12 +751,6 @@ LRESULT WINAPI DefWindowProcW(
             result = DEFWND_GetTextW( wndPtr, dest, wParam );
             WIN_ReleasePtr( wndPtr );
         }
-        break;
-
-    case WM_SETTEXT:
-        result = NtUserMessageCall( hwnd, msg, wParam, lParam, 0, NtUserDefWindowProc, FALSE );
-        if (result && (GetWindowLongW( hwnd, GWL_STYLE ) & WS_CAPTION) == WS_CAPTION)
-            NC_HandleNCPaint( hwnd , (HRGN)1 );  /* Repaint caption */
         break;
 
     case WM_IME_CHAR:
