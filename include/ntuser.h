@@ -718,6 +718,7 @@ enum
 {
     NtUserCallNoParam_DestroyCaret,
     NtUserCallNoParam_GetDesktopWindow,
+    NtUserCallNoParam_GetDialogBaseUnits,
     NtUserCallNoParam_GetInputState,
     NtUserCallNoParam_ReleaseCapture,
     /* temporary exports */
@@ -734,6 +735,11 @@ static inline HWND NtUserGetDesktopWindow(void)
 {
     return UlongToHandle( NtUserCallNoParam( NtUserCallNoParam_GetDesktopWindow ));
 }
+
+static inline DWORD NtUserGetDialogBaseUnits(void)
+{
+    return NtUserCallNoParam( NtUserCallNoParam_GetDialogBaseUnits );
+};
 
 static inline BOOL NtUserGetInputState(void)
 {

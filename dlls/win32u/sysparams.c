@@ -2724,36 +2724,64 @@ static void get_real_fontname( LOGFONTW *lf, WCHAR fullname[LF_FACESIZE] )
         lstrcpyW( fullname, lf->lfFaceName );
 }
 
+static LONG get_char_dimensions( HDC hdc, TEXTMETRICW *metric, LONG *height )
+{
+    SIZE sz;
+    static const WCHAR abcdW[] =
+        {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q',
+         'r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H',
+         'I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
+
+    if (metric && !NtGdiGetTextMetricsW( hdc, metric, 0 )) return 0;
+
+    if (!NtGdiGetTextExtentExW( hdc, abcdW, ARRAYSIZE(abcdW), 0, NULL, NULL, &sz, 0 ))
+        return 0;
+
+    if (height) *height = sz.cy;
+    return (sz.cx / 26 + 1) / 2;
+}
+
 /* get text metrics and/or "average" char width of the specified logfont
  * for the specified dc */
-static void get_text_metr_size( HDC hdc, LOGFONTW *plf, TEXTMETRICW * ptm, UINT *psz)
+static void get_text_metr_size( HDC hdc, LOGFONTW *plf, TEXTMETRICW *metric, UINT *psz)
 {
     ENUMLOGFONTEXDVW exdv = { .elfEnumLogfontEx.elfLogFont = *plf };
     HFONT hfont, hfontsav;
     TEXTMETRICW tm;
-    if (!ptm) ptm = &tm;
+    UINT ret;
+    if (!metric) metric = &tm;
     hfont = NtGdiHfontCreate( &exdv, sizeof(exdv), 0, 0, NULL );
     if (!hfont || !(hfontsav = NtGdiSelectFont( hdc, hfont )))
     {
-        ptm->tmHeight = -1;
+        metric->tmHeight = -1;
         if (psz) *psz = 10;
         if (hfont) NtGdiDeleteObjectApp( hfont );
         return;
     }
-    NtGdiGetTextMetricsW( hdc, ptm, 0 );
-    if (psz)
-    {
-        SIZE sz;
-        static const WCHAR abcdW[] =
-            {'a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q',
-             'r','s','t','u','v','w','x','y','z','A','B','C','D','E','F','G','H',
-             'I','J','K','L','M','N','O','P','Q','R','S','T','U','V','W','X','Y','Z'};
-        if (NtGdiGetTextExtentExW( hdc, abcdW, ARRAYSIZE(abcdW), 0, NULL, NULL, &sz, 0 ))
-            *psz = (sz.cx / 26 + 1) / 2;
-        else *psz = 10;
-    }
+    ret = get_char_dimensions( hdc, metric, NULL );
+    if (psz) *psz = ret ? ret : 10;
     NtGdiSelectFont( hdc, hfontsav );
     NtGdiDeleteObjectApp( hfont );
+}
+
+static DWORD get_dialog_base_units(void)
+{
+    static LONG cx, cy;
+
+    if (!cx)
+    {
+        HDC hdc;
+
+        if ((hdc = NtUserGetDCEx( 0, 0, DCX_CACHE | DCX_WINDOW )))
+        {
+            cx = get_char_dimensions( hdc, NULL, &cy );
+            NtUserReleaseDC( 0, hdc );
+        }
+        TRACE( "base units = %d,%d\n", cx, cy );
+    }
+
+    return MAKELONG( muldiv( cx, get_system_dpi(), USER_DEFAULT_SCREEN_DPI ),
+                     muldiv( cy, get_system_dpi(), USER_DEFAULT_SCREEN_DPI ));
 }
 
 /* adjust some of the raw values found in the registry */
@@ -4680,6 +4708,9 @@ ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
 
     case NtUserCallNoParam_GetDesktopWindow:
         return HandleToUlong( get_desktop_window() );
+
+    case NtUserCallNoParam_GetDialogBaseUnits:
+        return get_dialog_base_units();
 
     case NtUserCallNoParam_GetInputState:
         return get_input_state();
