@@ -1487,12 +1487,15 @@ static void nc_paint( HWND hwnd, HRGN clip )
     if (has_menu( hwnd, style ))
     {
         RECT r = rect;
+        HMENU menu;
+
         r.bottom = rect.top + get_system_metrics( SM_CYMENU );
 
         TRACE( "drawing menu with rect %s\n", wine_dbgstr_rect( &r ));
 
-        if (user_callbacks)
-            rect.top += user_callbacks->draw_menu( hdc, &r, hwnd ) + 1;
+        menu = get_menu( hwnd );
+        if (!is_menu( menu )) rect.top += get_system_metrics( SM_CYMENU );
+        else rect.top += NtUserDrawMenuBarTemp( hwnd, hdc, &r, menu, NULL );
     }
 
     TRACE( "rect after menu %s\n", wine_dbgstr_rect( &rect ));

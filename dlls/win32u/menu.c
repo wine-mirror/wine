@@ -241,7 +241,7 @@ static POPUPMENU *unsafe_menu_ptr( HMENU handle )
 }
 
 /* see IsMenu */
-static BOOL is_menu( HMENU handle )
+BOOL is_menu( HMENU handle )
 {
     POPUPMENU *menu;
     BOOL is_menu;

@@ -1693,26 +1693,6 @@ static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
     }
 }
 
-/***********************************************************************
- *           MENU_DrawMenuBar
- *
- * Paint a menu bar. Returns the height of the menu bar.
- * called from [windows/nonclient.c]
- */
-UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect, HWND hwnd )
-{
-    LPPOPUPMENU lppop;
-    HMENU hMenu = GetMenu(hwnd);
-
-    lppop = MENU_GetMenu( hMenu );
-    if (lppop == NULL || lprect == NULL)
-    {
-        return GetSystemMetrics(SM_CYMENU);
-    }
-
-    return NtUserDrawMenuBarTemp( hwnd, hDC, lprect, hMenu, NULL );
-}
-
 
 /***********************************************************************
  *           MENU_InitPopup

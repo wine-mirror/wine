@@ -145,7 +145,6 @@ static const struct user_callbacks user_funcs =
     ImmProcessKey,
     ImmTranslateMessage,
     NtWaitForMultipleObjects,
-    MENU_DrawMenuBar,
     SCROLL_DrawNCScrollBar,
     free_win_ptr,
     MENU_GetSysMenu,
