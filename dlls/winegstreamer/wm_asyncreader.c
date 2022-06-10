@@ -99,7 +99,12 @@ static DWORD WINAPI stream_thread(void *arg)
             QWORD user_time = reader->user_time;
 
             if (pts > user_time && reader->reader.callback_advanced)
+            {
+                LeaveCriticalSection(&reader->stream_cs);
                 IWMReaderCallbackAdvanced_OnTime(reader->reader.callback_advanced, user_time, reader->context);
+                EnterCriticalSection(&reader->stream_cs);
+            }
+
             while (pts > reader->user_time && reader->running)
                 SleepConditionVariableCS(&reader->stream_cv, &reader->stream_cs, INFINITE);
         }
@@ -119,17 +124,22 @@ static DWORD WINAPI stream_thread(void *arg)
 
         if (reader->running)
         {
+            LeaveCriticalSection(&reader->stream_cs);
             if (stream->read_compressed)
                 hr = IWMReaderCallbackAdvanced_OnStreamSample(reader->reader.callback_advanced,
                         stream_number, pts, duration, flags, sample, reader->context);
             else
                 hr = IWMReaderCallback_OnSample(callback, stream_number - 1, pts, duration,
                         flags, sample, reader->context);
+            EnterCriticalSection(&reader->stream_cs);
+
             TRACE("Callback returned %#lx.\n", hr);
         }
 
         INSSBuffer_Release(sample);
     }
+
+    LeaveCriticalSection(&reader->stream_cs);
 
     if (hr == NS_E_NO_MORE_SAMPLES)
     {
@@ -153,8 +163,6 @@ static DWORD WINAPI stream_thread(void *arg)
     {
         ERR("Failed to get sample, hr %#lx.\n", hr);
     }
-
-    LeaveCriticalSection(&reader->stream_cs);
 
     TRACE("Reader is stopping; exiting.\n");
     return 0;
