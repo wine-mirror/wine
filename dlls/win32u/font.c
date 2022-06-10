@@ -4478,26 +4478,35 @@ UINT WINAPI NtGdiGetTextCharsetInfo( HDC hdc, FONTSIGNATURE *fs, DWORD flags )
 /***********************************************************************
  *           NtGdiHfontCreate   (win32u.@)
  */
-HFONT WINAPI NtGdiHfontCreate( const ENUMLOGFONTEXDVW *penumex, ULONG size, ULONG type,
+HFONT WINAPI NtGdiHfontCreate( const void *logfont, ULONG size, ULONG type,
                                ULONG flags, void *data )
 {
     HFONT hFont;
     FONTOBJ *fontPtr;
     const LOGFONTW *plf;
 
-    if (!penumex) return 0;
+    if (!logfont) return 0;
 
-    if (penumex->elfEnumLogfontEx.elfFullName[0] ||
-        penumex->elfEnumLogfontEx.elfStyle[0] ||
-        penumex->elfEnumLogfontEx.elfScript[0])
+    if (size == sizeof(ENUMLOGFONTEXDVW) || size == sizeof(ENUMLOGFONTEXW))
     {
-        FIXME("some fields ignored. fullname=%s, style=%s, script=%s\n",
-            debugstr_w(penumex->elfEnumLogfontEx.elfFullName),
-            debugstr_w(penumex->elfEnumLogfontEx.elfStyle),
-            debugstr_w(penumex->elfEnumLogfontEx.elfScript));
-    }
+        const ENUMLOGFONTEXW *lfex = logfont;
 
-    plf = &penumex->elfEnumLogfontEx.elfLogFont;
+        if (lfex->elfFullName[0] || lfex->elfStyle[0] || lfex->elfScript[0])
+        {
+            FIXME( "some fields ignored. fullname=%s, style=%s, script=%s\n",
+                   debugstr_w( lfex->elfFullName ), debugstr_w( lfex->elfStyle ),
+                   debugstr_w( lfex->elfScript ));
+        }
+
+        plf = &lfex->elfLogFont;
+    }
+    else if (size != sizeof(LOGFONTW))
+    {
+        SetLastError( ERROR_INVALID_PARAMETER );
+        return 0;
+    }
+    else plf = logfont;
+
     if (!(fontPtr = malloc( sizeof(*fontPtr) ))) return 0;
 
     fontPtr->logfont = *plf;

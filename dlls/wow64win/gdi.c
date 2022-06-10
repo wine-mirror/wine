@@ -403,13 +403,13 @@ NTSTATUS WINAPI wow64_NtGdiSetTextJustification( UINT *args )
 
 NTSTATUS WINAPI wow64_NtGdiHfontCreate( UINT *args )
 {
-    const ENUMLOGFONTEXDVW *enumex = get_ptr( &args );
+    const void *logfont = get_ptr( &args );
     ULONG unk2 = get_ulong( &args );
     ULONG unk3 = get_ulong( &args );
     ULONG unk4 = get_ulong( &args );
     void *data = get_ptr( &args );
 
-    return HandleToUlong( NtGdiHfontCreate( enumex, unk2, unk3, unk4, data ));
+    return HandleToUlong( NtGdiHfontCreate( logfont, unk2, unk3, unk4, data ));
 }
 
 NTSTATUS WINAPI wow64_NtGdiGetFontFileData( UINT *args )
