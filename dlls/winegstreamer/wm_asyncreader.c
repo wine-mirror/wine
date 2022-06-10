@@ -318,6 +318,13 @@ static HRESULT WINAPI WMReader_Start(IWMReader *iface,
 
     EnterCriticalSection(&reader->reader.cs);
 
+    if (!reader->reader.wg_parser)
+    {
+        LeaveCriticalSection(&reader->reader.cs);
+        WARN("No stream is open; returning NS_E_INVALID_REQUEST.\n");
+        return NS_E_INVALID_REQUEST;
+    }
+
     stop_streaming(reader);
 
     IWMReaderCallback_OnStatus(reader->callback, WMT_STARTED, S_OK, WMT_TYPE_DWORD, (BYTE *)&zero, context);

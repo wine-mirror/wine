@@ -2171,6 +2171,8 @@ static void test_async_reader_streaming(void)
 
     hr = IWMReader_Stop(reader);
     ok(hr == E_UNEXPECTED, "Got hr %#lx.\n", hr);
+    hr = IWMReader_Start(reader, 0, 0, 1.0, NULL);
+    ok(hr == NS_E_INVALID_REQUEST, "Got hr %#lx.\n", hr);
 
     hr = IWMReaderAdvanced2_OpenStream(advanced, &stream.IStream_iface, &callback.IWMReaderCallback_iface, (void **)0xdeadbeef);
     ok(hr == S_OK, "Got hr %#lx.\n", hr);
