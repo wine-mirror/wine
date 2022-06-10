@@ -23,21 +23,19 @@
 import "inspectable.idl";
 import "windows.foundation.idl";
 
-namespace Windows {
-    namespace Media {
-        interface IMediaControl;
-    }
-}
+namespace Windows.Media
+{
+    interface IMediaControl;
 
-namespace Windows {
-    namespace Media {
-        [contract(Windows.Foundation.UniversalApiContract, 1.0)]
-        [uuid(1803def8-dca5-4b6f-9c20-e3d3c0643625)]
-        interface IMediaMarker : IInspectable
-        {
-            [propget] HRESULT Time([out] [retval] Windows.Foundation.TimeSpan* value);
-            [propget] HRESULT MediaMarkerType([out] [retval] HSTRING* value);
-            [propget] HRESULT Text([out] [retval] HSTRING* value);
-        }
+    [
+        contract(Windows.Foundation.UniversalApiContract, 1.0),
+        uuid(1803def8-dca5-4b6f-9c20-e3d3c0643625)
+    ]
+    interface IMediaMarker : IInspectable
+    {
+        [propget] HRESULT Time([out, retval] Windows.Foundation.TimeSpan *value);
+        [propget] HRESULT MediaMarkerType([out, retval] HSTRING *value);
+        [propget] HRESULT Text([out, retval] HSTRING *value);
     }
+
 }
