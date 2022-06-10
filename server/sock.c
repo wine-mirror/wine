@@ -631,13 +631,27 @@ static void sock_wake_up( struct sock *sock )
     }
 }
 
-static inline int sock_error( struct fd *fd )
+static inline int sock_error( struct sock *sock )
 {
-    unsigned int optval = 0;
-    socklen_t optlen = sizeof(optval);
+    int error = 0;
+    socklen_t len = sizeof(error);
 
-    getsockopt( get_unix_fd(fd), SOL_SOCKET, SO_ERROR, (void *) &optval, &optlen);
-    return optval;
+    getsockopt( get_unix_fd(sock->fd), SOL_SOCKET, SO_ERROR, (void *)&error, &len);
+    if (sock->state == SOCK_CONNECTING)
+    {
+        if (error)
+            sock->errors[AFD_POLL_BIT_CONNECT_ERR] = error;
+        else
+            error = sock->errors[AFD_POLL_BIT_CONNECT_ERR];
+    }
+    else if (sock->state == SOCK_LISTENING)
+    {
+        if (error)
+            sock->errors[AFD_POLL_BIT_ACCEPT] = error;
+        else
+            error = sock->errors[AFD_POLL_BIT_ACCEPT];
+    }
+    return error;
 }
 
 static void free_accept_req( void *private )
@@ -1120,9 +1134,9 @@ static void sock_poll_event( struct fd *fd, int event )
     case SOCK_CONNECTING:
         if (event & (POLLERR|POLLHUP))
         {
+            error = sock_error( sock );
             sock->state = SOCK_UNCONNECTED;
             event &= ~POLLOUT;
-            error = sock_error( fd );
         }
         else if (event & POLLOUT)
         {
@@ -1133,7 +1147,7 @@ static void sock_poll_event( struct fd *fd, int event )
 
     case SOCK_LISTENING:
         if (event & (POLLERR|POLLHUP))
-            error = sock_error( fd );
+            error = sock_error( sock );
         break;
 
     case SOCK_CONNECTED:
@@ -3125,7 +3139,7 @@ static void poll_socket( struct sock *poll_sock, struct async *async, int exclus
         {
             signaled = TRUE;
             req->sockets[i].flags = flags;
-            req->sockets[i].status = sock_get_ntstatus( sock_error( sock->fd ) );
+            req->sockets[i].status = sock_get_ntstatus( sock_error( sock ) );
         }
 
         /* FIXME: do other error conditions deserve a similar treatment? */
