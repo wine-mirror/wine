@@ -2797,7 +2797,6 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
     case IOCTL_AFD_WINE_GET_SO_ERROR:
     {
         int error;
-        socklen_t len = sizeof(error);
         unsigned int i;
 
         if (get_reply_max_size() < sizeof(error))
@@ -2806,12 +2805,7 @@ static void sock_ioctl( struct fd *fd, ioctl_code_t code, struct async *async )
             return;
         }
 
-        if (getsockopt( unix_fd, SOL_SOCKET, SO_ERROR, (char *)&error, &len ) < 0)
-        {
-            set_error( sock_get_ntstatus( errno ) );
-            return;
-        }
-
+        error = sock_error( sock );
         if (!error)
         {
             for (i = 0; i < ARRAY_SIZE( sock->errors ); ++i)
