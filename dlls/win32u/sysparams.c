@@ -2743,14 +2743,13 @@ static LONG get_char_dimensions( HDC hdc, TEXTMETRICW *metric, LONG *height )
 
 /* get text metrics and/or "average" char width of the specified logfont
  * for the specified dc */
-static void get_text_metr_size( HDC hdc, LOGFONTW *plf, TEXTMETRICW *metric, UINT *psz)
+static void get_text_metr_size( HDC hdc, LOGFONTW *lf, TEXTMETRICW *metric, UINT *psz )
 {
-    ENUMLOGFONTEXDVW exdv = { .elfEnumLogfontEx.elfLogFont = *plf };
     HFONT hfont, hfontsav;
     TEXTMETRICW tm;
     UINT ret;
     if (!metric) metric = &tm;
-    hfont = NtGdiHfontCreate( &exdv, sizeof(exdv), 0, 0, NULL );
+    hfont = NtGdiHfontCreate( lf, sizeof(*lf), 0, 0, NULL );
     if (!hfont || !(hfontsav = NtGdiSelectFont( hdc, hfont )))
     {
         metric->tmHeight = -1;
