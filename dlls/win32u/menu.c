@@ -24,7 +24,7 @@
 #endif
 
 #define OEMRESOURCE
-#include "win32u_private.h"
+#include "ntgdi_private.h"
 #include "ntuser_private.h"
 #include "wine/server.h"
 #include "wine/debug.h"
@@ -47,6 +47,9 @@ struct accelerator
 
 /* (other menu->FocusedItem values give the position of the focused item) */
 #define NO_SELECTED_ITEM  0xffff
+
+/* Space between 2 columns */
+#define MENU_COL_SPACE 4
 
 /* macro to test that flags do not indicate bitmap, ownerdraw or separator */
 #define IS_STRING_ITEM(flags) (MENU_ITEM_TYPE ((flags)) == MF_STRING)
@@ -1671,4 +1674,555 @@ UINT get_menu_bar_height( HWND hwnd, UINT width, INT org_x, INT org_y )
     calc_menu_bar_size( hdc, &rect_bar, menu, hwnd );
     NtUserReleaseDC( hwnd, hdc );
     return menu->Height;
+}
+
+static void draw_popup_arrow( HDC hdc, RECT rect, UINT arrow_width, UINT arrow_height )
+{
+    HDC mem_hdc = NtGdiCreateCompatibleDC( hdc );
+    HBITMAP prev_bitmap;
+
+    prev_bitmap = NtGdiSelectBitmap( mem_hdc, get_arrow_bitmap() );
+    NtGdiBitBlt( hdc, rect.right - arrow_width - 1,
+                 (rect.top + rect.bottom - arrow_height) / 2,
+                 arrow_width, arrow_height, mem_hdc, 0, 0, SRCCOPY, 0, 0 );
+    NtGdiSelectBitmap( mem_hdc, prev_bitmap );
+    NtGdiDeleteObjectApp( mem_hdc );
+}
+
+static void draw_bitmap_item( HDC hdc, MENUITEM *item, const RECT *rect,
+                              POPUPMENU *menu, HWND owner, UINT odaction )
+{
+    int w = rect->right - rect->left;
+    int h = rect->bottom - rect->top;
+    int bmp_xoffset = 0, left, top;
+    HBITMAP bmp_to_draw = item->hbmpItem;
+    HBITMAP bmp = bmp_to_draw;
+    BITMAP bm;
+    DWORD rop;
+    HDC mem_hdc;
+
+    /* Check if there is a magic menu item associated with this item */
+    if (IS_MAGIC_BITMAP( bmp_to_draw ))
+    {
+        UINT flags = 0;
+        WCHAR bmchr = 0;
+        RECT r;
+
+        switch ((INT_PTR)bmp_to_draw)
+        {
+        case (INT_PTR)HBMMENU_SYSTEM:
+            if (item->dwItemData)
+            {
+                bmp = (HBITMAP)item->dwItemData;
+                if (!NtGdiExtGetObjectW( bmp, sizeof(bm), &bm )) return;
+            }
+            else
+            {
+                static HBITMAP sys_menu_bmp;
+
+                if (!sys_menu_bmp)
+                    sys_menu_bmp = LoadImageW( 0, MAKEINTRESOURCEW(OBM_CLOSE), IMAGE_BITMAP, 0, 0, 0 );
+                bmp = sys_menu_bmp;
+                if (!NtGdiExtGetObjectW( bmp, sizeof(bm), &bm )) return;
+                /* only use right half of the bitmap */
+                bmp_xoffset = bm.bmWidth / 2;
+                bm.bmWidth -= bmp_xoffset;
+            }
+            goto got_bitmap;
+        case (INT_PTR)HBMMENU_MBAR_RESTORE:
+            flags = DFCS_CAPTIONRESTORE;
+            break;
+        case (INT_PTR)HBMMENU_MBAR_MINIMIZE:
+            flags = DFCS_CAPTIONMIN;
+            break;
+        case (INT_PTR)HBMMENU_MBAR_MINIMIZE_D:
+            flags = DFCS_CAPTIONMIN | DFCS_INACTIVE;
+            break;
+        case (INT_PTR)HBMMENU_MBAR_CLOSE:
+            flags = DFCS_CAPTIONCLOSE;
+            break;
+        case (INT_PTR)HBMMENU_MBAR_CLOSE_D:
+            flags = DFCS_CAPTIONCLOSE | DFCS_INACTIVE;
+            break;
+        case (INT_PTR)HBMMENU_CALLBACK:
+            {
+                DRAWITEMSTRUCT drawItem;
+                drawItem.CtlType = ODT_MENU;
+                drawItem.CtlID = 0;
+                drawItem.itemID = item->wID;
+                drawItem.itemAction = odaction;
+                drawItem.itemState = 0;
+                if (item->fState & MF_CHECKED)  drawItem.itemState |= ODS_CHECKED;
+                if (item->fState & MF_DEFAULT)  drawItem.itemState |= ODS_DEFAULT;
+                if (item->fState & MF_DISABLED) drawItem.itemState |= ODS_DISABLED;
+                if (item->fState & MF_GRAYED)   drawItem.itemState |= ODS_GRAYED|ODS_DISABLED;
+                if (item->fState & MF_HILITE)   drawItem.itemState |= ODS_SELECTED;
+                drawItem.hwndItem = (HWND)menu->obj.handle;
+                drawItem.hDC = hdc;
+                drawItem.itemData = item->dwItemData;
+                drawItem.rcItem = *rect;
+                send_message( owner, WM_DRAWITEM, 0, (LPARAM)&drawItem );
+                return;
+            }
+            break;
+        case (INT_PTR)HBMMENU_POPUP_CLOSE:
+            bmchr = 0x72;
+            break;
+        case (INT_PTR)HBMMENU_POPUP_RESTORE:
+            bmchr = 0x32;
+            break;
+        case (INT_PTR)HBMMENU_POPUP_MAXIMIZE:
+            bmchr = 0x31;
+            break;
+        case (INT_PTR)HBMMENU_POPUP_MINIMIZE:
+            bmchr = 0x30;
+            break;
+        default:
+            FIXME( "Magic %p not implemented\n", bmp_to_draw );
+            return;
+        }
+
+        if (bmchr)
+        {
+            /* draw the magic bitmaps using marlett font characters */
+            /* FIXME: fontsize and the position (x,y) could probably be better */
+            HFONT hfont, prev_font;
+            LOGFONTW logfont = { 0, 0, 0, 0, FW_NORMAL, 0, 0, 0, SYMBOL_CHARSET, 0, 0, 0, 0,
+                                 {'M','a','r','l','e','t','t'}};
+            logfont.lfHeight =  min( h, w) - 5 ;
+            TRACE( " height %d rect %s\n", logfont.lfHeight, wine_dbgstr_rect( rect ));
+            hfont = NtGdiHfontCreate( &logfont, sizeof(logfont), 0, 0, NULL );
+            prev_font = NtGdiSelectFont( hdc, hfont );
+            NtGdiExtTextOutW( hdc, rect->left, rect->top + 2, 0, NULL, &bmchr, 1, NULL, 0 );
+            NtGdiSelectFont( hdc, prev_font );
+            NtGdiDeleteObjectApp( hfont );
+        }
+        else
+        {
+            r = *rect;
+            InflateRect( &r, -1, -1 );
+            if (item->fState & MF_HILITE) flags |= DFCS_PUSHED;
+            draw_frame_caption( hdc, &r, flags );
+        }
+        return;
+    }
+
+    if (!bmp || !NtGdiExtGetObjectW( bmp, sizeof(bm), &bm )) return;
+
+got_bitmap:
+    mem_hdc = NtGdiCreateCompatibleDC( hdc );
+    NtGdiSelectBitmap( mem_hdc, bmp );
+
+    /* handle fontsize > bitmap_height */
+    top = (h>bm.bmHeight) ? rect->top + (h - bm.bmHeight) / 2 : rect->top;
+    left=rect->left;
+    rop= ((item->fState & MF_HILITE) && !IS_MAGIC_BITMAP(bmp_to_draw)) ? NOTSRCCOPY : SRCCOPY;
+    if ((item->fState & MF_HILITE) && item->hbmpItem)
+        NtGdiGetAndSetDCDword( hdc, NtGdiSetBkColor, get_sys_color( COLOR_HIGHLIGHT ), NULL );
+    NtGdiBitBlt( hdc, left, top, w, h, mem_hdc, bmp_xoffset, 0, rop, 0, 0 );
+    NtGdiDeleteObjectApp( mem_hdc );
+}
+
+/* Adjust menu item rectangle according to scrolling state */
+static void adjust_menu_item_rect( const POPUPMENU *menu, RECT *rect )
+{
+    INT scroll_offset = menu->bScrolling ? menu->nScrollPos : 0;
+    OffsetRect( rect, menu->items_rect.left, menu->items_rect.top - scroll_offset );
+}
+
+/* Draw a single menu item */
+static void draw_menu_item( HWND hwnd, POPUPMENU *menu, HWND owner, HDC hdc,
+                            MENUITEM *item, BOOL menu_bar, UINT odaction )
+{
+    UINT arrow_width = 0, arrow_height = 0;
+    HRGN old_clip = NULL, clip;
+    BOOL flat_menu = FALSE;
+    RECT rect, bmprc;
+    int bkgnd;
+
+    TRACE( "%s\n", debugstr_menuitem( item ));
+
+    if (!menu_bar)
+    {
+        BITMAP bmp;
+        NtGdiExtGetObjectW( get_arrow_bitmap(), sizeof(bmp), &bmp );
+        arrow_width = bmp.bmWidth;
+        arrow_height = bmp.bmHeight;
+    }
+
+    if (item->fType & MF_SYSMENU)
+    {
+        if (!is_iconic( hwnd ))
+            draw_nc_sys_button( hwnd, hdc, item->fState & (MF_HILITE | MF_MOUSESELECT) );
+        return;
+    }
+
+    TRACE( "rect=%s\n", wine_dbgstr_rect( &item->rect ));
+    rect = item->rect;
+    adjust_menu_item_rect( menu, &rect );
+    if (!intersect_rect( &bmprc, &rect, &menu->items_rect )) /* bmprc is used as a dummy */
+        return;
+
+    NtUserSystemParametersInfo( SPI_GETFLATMENU, 0, &flat_menu, 0 );
+    bkgnd = (menu_bar && flat_menu) ? COLOR_MENUBAR : COLOR_MENU;
+
+    /* Setup colors */
+    if (item->fState & MF_HILITE)
+    {
+        if (menu_bar && !flat_menu)
+        {
+            NtGdiGetAndSetDCDword( hdc, NtGdiSetTextColor, get_sys_color(COLOR_MENUTEXT), NULL );
+            NtGdiGetAndSetDCDword( hdc, NtGdiSetBkColor, get_sys_color(COLOR_MENU), NULL );
+        }
+        else
+        {
+            if (item->fState & MF_GRAYED)
+                NtGdiGetAndSetDCDword( hdc, NtGdiSetTextColor, get_sys_color( COLOR_GRAYTEXT ), NULL );
+            else
+                NtGdiGetAndSetDCDword( hdc, NtGdiSetTextColor, get_sys_color( COLOR_HIGHLIGHTTEXT ), NULL );
+            NtGdiGetAndSetDCDword( hdc, NtGdiSetBkColor, get_sys_color( COLOR_HIGHLIGHT ), NULL );
+        }
+    }
+    else
+    {
+        if (item->fState & MF_GRAYED)
+            NtGdiGetAndSetDCDword( hdc, NtGdiSetTextColor, get_sys_color( COLOR_GRAYTEXT ), NULL );
+        else
+            NtGdiGetAndSetDCDword( hdc, NtGdiSetTextColor, get_sys_color( COLOR_MENUTEXT ), NULL );
+        NtGdiGetAndSetDCDword( hdc, NtGdiSetBkColor, get_sys_color( bkgnd ), NULL );
+    }
+
+    old_clip = NtGdiCreateRectRgn( 0, 0, 0, 0 );
+    if (NtGdiGetRandomRgn( hdc, old_clip, NTGDI_RGN_MIRROR_RTL | 1 ) <= 0)
+    {
+        NtGdiDeleteObjectApp( old_clip );
+        old_clip = NULL;
+    }
+    clip = NtGdiCreateRectRgn( menu->items_rect.left, menu->items_rect.top,
+                               menu->items_rect.right, menu->items_rect.bottom );
+    NtGdiExtSelectClipRgn( hdc, clip, RGN_AND );
+    NtGdiDeleteObjectApp( clip );
+
+    if (item->fType & MF_OWNERDRAW)
+    {
+        /*
+         * Experimentation under Windows reveals that an owner-drawn
+         * menu is given the rectangle which includes the space it requested
+         * in its response to WM_MEASUREITEM _plus_ width for a checkmark
+         * and a popup-menu arrow.  This is the value of item->rect.
+         * Windows will leave all drawing to the application except for
+         * the popup-menu arrow.  Windows always draws that itself, after
+         * the menu owner has finished drawing.
+         */
+        DRAWITEMSTRUCT dis;
+        DWORD old_bk, old_text;
+
+        dis.CtlType   = ODT_MENU;
+        dis.CtlID     = 0;
+        dis.itemID    = item->wID;
+        dis.itemData  = item->dwItemData;
+        dis.itemState = 0;
+        if (item->fState & MF_CHECKED) dis.itemState |= ODS_CHECKED;
+        if (item->fState & MF_GRAYED)  dis.itemState |= ODS_GRAYED|ODS_DISABLED;
+        if (item->fState & MF_HILITE)  dis.itemState |= ODS_SELECTED;
+        dis.itemAction = odaction; /* ODA_DRAWENTIRE | ODA_SELECT | ODA_FOCUS; */
+        dis.hwndItem   = (HWND)menu->obj.handle;
+        dis.hDC        = hdc;
+        dis.rcItem     = rect;
+        TRACE( "Ownerdraw: owner=%p itemID=%d, itemState=%d, itemAction=%d, "
+               "hwndItem=%p, hdc=%p, rcItem=%s\n", owner,
+               dis.itemID, dis.itemState, dis.itemAction, dis.hwndItem,
+               dis.hDC, wine_dbgstr_rect( &dis.rcItem ));
+        NtGdiGetDCDword( hdc, NtGdiGetBkColor, &old_bk );
+        NtGdiGetDCDword( hdc, NtGdiGetTextColor, &old_text );
+        send_message( owner, WM_DRAWITEM, 0, (LPARAM)&dis );
+        /* Draw the popup-menu arrow */
+        NtGdiGetAndSetDCDword( hdc, NtGdiGetBkColor, old_bk, NULL );
+        NtGdiGetAndSetDCDword( hdc, NtGdiGetTextColor, old_text, NULL );
+        if (item->fType & MF_POPUP)
+            draw_popup_arrow( hdc, rect, arrow_width, arrow_height );
+        goto done;
+    }
+
+    if (menu_bar && (item->fType & MF_SEPARATOR)) goto done;
+
+    if (item->fState & MF_HILITE)
+    {
+        if (flat_menu)
+        {
+            InflateRect (&rect, -1, -1);
+            fill_rect( hdc, &rect, get_sys_color_brush( COLOR_MENUHILIGHT ));
+            InflateRect (&rect, 1, 1);
+            fill_rect( hdc, &rect, get_sys_color_brush( COLOR_HIGHLIGHT ));
+        }
+        else
+        {
+            if (menu_bar)
+                draw_rect_edge( hdc, &rect, BDR_SUNKENOUTER, BF_RECT, 1 );
+            else
+                fill_rect( hdc, &rect, get_sys_color_brush( COLOR_HIGHLIGHT ));
+        }
+    }
+    else
+        fill_rect( hdc, &rect, get_sys_color_brush(bkgnd) );
+
+    NtGdiGetAndSetDCDword( hdc, NtGdiSetBkMode, TRANSPARENT, NULL );
+
+    /* vertical separator */
+    if (!menu_bar && (item->fType & MF_MENUBARBREAK))
+    {
+        HPEN oldPen;
+        RECT rc = rect;
+
+        rc.left -= MENU_COL_SPACE / 2 + 1;
+        rc.top = 3;
+        rc.bottom = menu->Height - 3;
+        if (flat_menu)
+        {
+            oldPen = NtGdiSelectPen( hdc, get_sys_color_pen( COLOR_BTNSHADOW ));
+            NtGdiMoveTo( hdc, rc.left, rc.top, NULL );
+            NtGdiLineTo( hdc, rc.left, rc.bottom );
+            NtGdiSelectPen( hdc, oldPen );
+        }
+        else
+            draw_rect_edge( hdc, &rc, EDGE_ETCHED, BF_LEFT, 1 );
+    }
+
+    /* horizontal separator */
+    if (item->fType & MF_SEPARATOR)
+    {
+        HPEN oldPen;
+        RECT rc = rect;
+
+        InflateRect( &rc, -1, 0 );
+        rc.top = ( rc.top + rc.bottom) / 2;
+        if (flat_menu)
+        {
+            oldPen = NtGdiSelectPen( hdc, get_sys_color_pen( COLOR_BTNSHADOW ));
+            NtGdiMoveTo( hdc, rc.left, rc.top, NULL );
+            NtGdiLineTo( hdc, rc.right, rc.top );
+            NtGdiSelectPen( hdc, oldPen );
+        }
+        else
+            draw_rect_edge( hdc, &rc, EDGE_ETCHED, BF_TOP, 1 );
+        goto done;
+    }
+
+    if (item->hbmpItem)
+    {
+        /* calculate the bitmap rectangle in coordinates relative
+         * to the item rectangle */
+        if (menu_bar)
+        {
+            if (item->hbmpItem == HBMMENU_CALLBACK)
+                bmprc.left = 3;
+            else
+                bmprc.left = item->text ? menucharsize.cx : 0;
+        }
+        else if (menu->dwStyle & MNS_NOCHECK)
+            bmprc.left = 4;
+        else if (menu->dwStyle & MNS_CHECKORBMP)
+            bmprc.left = 2;
+        else
+            bmprc.left = 4 + get_system_metrics( SM_CXMENUCHECK );
+        bmprc.right =  bmprc.left + item->bmpsize.cx;
+        if (menu_bar && !(item->hbmpItem == HBMMENU_CALLBACK))
+            bmprc.top = 0;
+        else
+            bmprc.top = (rect.bottom - rect.top - item->bmpsize.cy) / 2;
+        bmprc.bottom = bmprc.top + item->bmpsize.cy;
+    }
+
+    if (!menu_bar)
+    {
+        HBITMAP bm;
+        INT y = rect.top + rect.bottom;
+        BOOL checked = FALSE;
+        UINT check_bitmap_width = get_system_metrics( SM_CXMENUCHECK );
+        UINT check_bitmap_height = get_system_metrics( SM_CYMENUCHECK );
+
+        /* Draw the check mark */
+        if (!(menu->dwStyle & MNS_NOCHECK))
+        {
+            bm = (item->fState & MF_CHECKED) ? item->hCheckBit :
+                item->hUnCheckBit;
+            if (bm)  /* we have a custom bitmap */
+            {
+                HDC mem_hdc = NtGdiCreateCompatibleDC( hdc );
+
+                NtGdiSelectBitmap( mem_hdc, bm );
+                NtGdiBitBlt( hdc, rect.left, (y - check_bitmap_height) / 2,
+                             check_bitmap_width, check_bitmap_height,
+                             mem_hdc, 0, 0, SRCCOPY, 0, 0 );
+                NtGdiDeleteObjectApp( mem_hdc );
+                checked = TRUE;
+            }
+            else if (item->fState & MF_CHECKED) /* standard bitmaps */
+            {
+                RECT r;
+                HBITMAP bm = NtGdiCreateBitmap( check_bitmap_width,
+                        check_bitmap_height, 1, 1, NULL );
+                HDC mem_hdc = NtGdiCreateCompatibleDC( hdc );
+
+                NtGdiSelectBitmap( mem_hdc, bm );
+                SetRect( &r, 0, 0, check_bitmap_width, check_bitmap_height);
+                draw_frame_menu( mem_hdc, &r,
+                                 (item->fType & MFT_RADIOCHECK) ? DFCS_MENUBULLET : DFCS_MENUCHECK );
+                NtGdiBitBlt( hdc, rect.left, (y - r.bottom) / 2, r.right, r.bottom,
+                             mem_hdc, 0, 0, SRCCOPY, 0, 0 );
+                NtGdiDeleteObjectApp( mem_hdc );
+                NtGdiDeleteObjectApp( bm );
+                checked = TRUE;
+            }
+        }
+        if (item->hbmpItem && !(checked && (menu->dwStyle & MNS_CHECKORBMP)))
+        {
+            POINT origorg;
+            /* some applications make this assumption on the DC's origin */
+            set_viewport_org( hdc, rect.left, rect.top, &origorg );
+            draw_bitmap_item( hdc, item, &bmprc, menu, owner, odaction );
+            set_viewport_org( hdc, origorg.x, origorg.y, NULL );
+        }
+        /* Draw the popup-menu arrow */
+        if (item->fType & MF_POPUP)
+            draw_popup_arrow( hdc, rect, arrow_width, arrow_height);
+        rect.left += 4;
+        if (!(menu->dwStyle & MNS_NOCHECK))
+            rect.left += check_bitmap_width;
+        rect.right -= arrow_width;
+    }
+    else if (item->hbmpItem)
+    {   /* Draw the bitmap */
+        POINT origorg;
+
+        set_viewport_org( hdc, rect.left, rect.top, &origorg);
+        draw_bitmap_item( hdc, item, &bmprc, menu, owner, odaction );
+        set_viewport_org( hdc, origorg.x, origorg.y, NULL);
+    }
+    /* process text if present */
+    if (item->text)
+    {
+        int i;
+        HFONT prev_font = 0;
+        UINT format = menu_bar ?
+            DT_CENTER | DT_VCENTER | DT_SINGLELINE :
+            DT_LEFT | DT_VCENTER | DT_SINGLELINE;
+
+        if (!(menu->dwStyle & MNS_CHECKORBMP))
+            rect.left += menu->textOffset;
+
+        if (item->fState & MFS_DEFAULT)
+        {
+             prev_font = NtGdiSelectFont(hdc, get_menu_font( TRUE ));
+        }
+
+        if (menu_bar)
+        {
+            if (item->hbmpItem)
+                rect.left += item->bmpsize.cx;
+            if (item->hbmpItem != HBMMENU_CALLBACK)
+                rect.left += menucharsize.cx;
+            rect.right -= menucharsize.cx;
+        }
+
+        for (i = 0; item->text[i]; i++)
+            if ((item->text[i] == '\t') || (item->text[i] == '\b'))
+                break;
+
+        if (item->fState & MF_GRAYED)
+        {
+            if (!(item->fState & MF_HILITE) )
+            {
+                ++rect.left; ++rect.top; ++rect.right; ++rect.bottom;
+                NtGdiGetAndSetDCDword( hdc, NtGdiSetTextColor, RGB(0xff, 0xff, 0xff), NULL );
+                DrawTextW( hdc, item->text, i, &rect, format );
+                --rect.left; --rect.top; --rect.right; --rect.bottom;
+            }
+            NtGdiGetAndSetDCDword( hdc, NtGdiSetTextColor, RGB(0x80, 0x80, 0x80), NULL );
+        }
+
+        DrawTextW( hdc, item->text, i, &rect, format );
+
+        /* paint the shortcut text */
+        if (!menu_bar && item->text[i])  /* There's a tab or flush-right char */
+        {
+            if (item->text[i] == '\t')
+            {
+                rect.left = item->xTab;
+                format = DT_LEFT | DT_VCENTER | DT_SINGLELINE;
+            }
+            else
+            {
+                rect.right = item->xTab;
+                format = DT_RIGHT | DT_VCENTER | DT_SINGLELINE;
+            }
+
+            if (item->fState & MF_GRAYED)
+            {
+                if (!(item->fState & MF_HILITE) )
+                {
+                    ++rect.left; ++rect.top; ++rect.right; ++rect.bottom;
+                    NtGdiGetAndSetDCDword( hdc, NtGdiSetTextColor, RGB(0xff, 0xff, 0xff), NULL );
+                    DrawTextW( hdc, item->text + i + 1, -1, &rect, format );
+                    --rect.left; --rect.top; --rect.right; --rect.bottom;
+                }
+                NtGdiGetAndSetDCDword( hdc, NtGdiSetTextColor, RGB(0x80, 0x80, 0x80), NULL );
+            }
+            DrawTextW( hdc, item->text + i + 1, -1, &rect, format );
+        }
+
+        if (prev_font) NtGdiSelectFont( hdc, prev_font );
+    }
+
+done:
+    NtGdiExtSelectClipRgn( hdc, old_clip, RGN_COPY );
+    if (old_clip) NtGdiDeleteObjectApp( old_clip );
+}
+
+/***********************************************************************
+ *           NtUserDrawMenuBarTemp   (win32u.@)
+ */
+DWORD WINAPI NtUserDrawMenuBarTemp( HWND hwnd, HDC hdc, RECT *rect, HMENU handle, HFONT font )
+{
+    BOOL flat_menu = FALSE;
+    HFONT prev_font = 0;
+    POPUPMENU *menu;
+    UINT i, retvalue;
+
+    NtUserSystemParametersInfo( SPI_GETFLATMENU, 0, &flat_menu, 0 );
+
+    if (!handle) handle = get_menu( hwnd );
+    if (!font) font = get_menu_font(FALSE);
+
+    menu = unsafe_menu_ptr( handle );
+    if (!menu || !rect) return get_system_metrics( SM_CYMENU );
+
+    TRACE( "(%p, %p, %p, %p, %p)\n", hwnd, hdc, rect, handle, font );
+
+    prev_font = NtGdiSelectFont( hdc, font );
+
+    if (!menu->Height) calc_menu_bar_size( hdc, rect, menu, hwnd );
+
+    rect->bottom = rect->top + menu->Height;
+
+    fill_rect( hdc, rect, get_sys_color_brush( flat_menu ? COLOR_MENUBAR : COLOR_MENU ));
+
+    NtGdiSelectPen( hdc, get_sys_color_pen( COLOR_3DFACE ));
+    NtGdiMoveTo( hdc, rect->left, rect->bottom, NULL );
+    NtGdiLineTo( hdc, rect->right, rect->bottom );
+
+    if (menu->nItems)
+    {
+        for (i = 0; i < menu->nItems; i++)
+            draw_menu_item( hwnd, menu, hwnd, hdc, &menu->items[i], TRUE, ODA_DRAWENTIRE );
+
+        retvalue = menu->Height;
+    }
+    else
+    {
+        retvalue = get_system_metrics( SM_CYMENU );
+    }
+
+    if (prev_font) NtGdiSelectFont( hdc, prev_font );
+    return retvalue;
 }

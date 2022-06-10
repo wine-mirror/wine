@@ -119,8 +119,6 @@ static HMENU top_popup_hmenu;
   /* Flag set by EndMenu() to force an exit from menu tracking */
 static BOOL fEndMenu = FALSE;
 
-DWORD WINAPI DrawMenuBarTemp(HWND hwnd, HDC hDC, LPRECT lprect, HMENU hMenu, HFONT hFont);
-
 static BOOL is_win_menu_disallowed(HWND hwnd)
 {
     return (GetWindowLongW(hwnd, GWL_STYLE) & (WS_CHILD | WS_POPUP)) == WS_CHILD;
@@ -1198,81 +1196,6 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, UINT max_height )
 }
 
 
-/***********************************************************************
- *           MENU_MenuBarCalcSize
- *
- * FIXME: Word 6 implements its own MDI and its own 'close window' bitmap
- * height is off by 1 pixel which causes lengthy window relocations when
- * active document window is maximized/restored.
- *
- * Calculate the size of the menu bar.
- */
-static void MENU_MenuBarCalcSize( HDC hdc, LPRECT lprect,
-                                  LPPOPUPMENU lppop, HWND hwndOwner )
-{
-    MENUITEM *lpitem;
-    UINT start, i, helpPos;
-    int orgX, orgY;
-
-    if ((lprect == NULL) || (lppop == NULL)) return;
-    if (lppop->nItems == 0) return;
-    TRACE("lprect %p %s\n", lprect, wine_dbgstr_rect( lprect));
-    /* Start with a 1 pixel top border.
-       This corresponds to the difference between SM_CYMENU and SM_CYMENUSIZE. */
-    SetRect(&lppop->items_rect, 0, 0, lprect->right - lprect->left, 1);
-    start = 0;
-    helpPos = ~0U;
-    lppop->textOffset = 0;
-    while (start < lppop->nItems)
-    {
-	lpitem = &lppop->items[start];
-	orgX = lppop->items_rect.left;
-	orgY = lppop->items_rect.bottom;
-
-	  /* Parse items until line break or end of menu */
-	for (i = start; i < lppop->nItems; i++, lpitem++)
-	{
-	    if ((helpPos == ~0U) && (lpitem->fType & MF_RIGHTJUSTIFY)) helpPos = i;
-	    if ((i != start) &&
-		(lpitem->fType & (MF_MENUBREAK | MF_MENUBARBREAK))) break;
-
-	    TRACE("calling MENU_CalcItemSize org=(%d, %d)\n", orgX, orgY );
-	    debug_print_menuitem ("  item: ", lpitem, "");
-	    MENU_CalcItemSize( hdc, lpitem, hwndOwner, orgX, orgY, TRUE, lppop );
-
-	    if (lpitem->rect.right > lppop->items_rect.right)
-	    {
-		if (i != start) break;
-		else lpitem->rect.right = lppop->items_rect.right;
-	    }
-	    lppop->items_rect.bottom = max( lppop->items_rect.bottom, lpitem->rect.bottom );
-	    orgX = lpitem->rect.right;
-	}
-
-	  /* Finish the line (set all items to the largest height found) */
-	while (start < i) lppop->items[start++].rect.bottom = lppop->items_rect.bottom;
-    }
-
-    OffsetRect(&lppop->items_rect, lprect->left, lprect->top);
-    lppop->Width = lppop->items_rect.right - lppop->items_rect.left;
-    lppop->Height = lppop->items_rect.bottom - lppop->items_rect.top;
-    lprect->bottom = lppop->items_rect.bottom;
-
-    /* Flush right all items between the MF_RIGHTJUSTIFY and */
-    /* the last item (if several lines, only move the last line) */
-    if (helpPos == ~0U) return;
-    lpitem = &lppop->items[lppop->nItems-1];
-    orgY = lpitem->rect.top;
-    orgX = lprect->right - lprect->left;
-    for (i = lppop->nItems - 1; i >= helpPos; i--, lpitem--) {
-        if (lpitem->rect.top != orgY) break;	/* Other line */
-        if (lpitem->rect.right >= orgX) break;	/* Too far right already */
-        lpitem->rect.left += orgX - lpitem->rect.right;
-        lpitem->rect.right = orgX;
-        orgX = lpitem->rect.left;
-    }
-}
-
 static void draw_scroll_arrow(HDC hdc, int x, int top, int height, BOOL up, BOOL enabled)
 {
     RECT rect, light_rect;
@@ -1787,7 +1710,7 @@ UINT MENU_DrawMenuBar( HDC hDC, LPRECT lprect, HWND hwnd )
         return GetSystemMetrics(SM_CYMENU);
     }
 
-    return DrawMenuBarTemp(hwnd, hDC, lprect, hMenu, NULL);
+    return NtUserDrawMenuBarTemp( hwnd, hDC, lprect, hMenu, NULL );
 }
 
 
@@ -4028,67 +3951,6 @@ BOOL WINAPI DrawMenuBar( HWND hwnd )
     return NtUserDrawMenuBar( hwnd );
 }
 
-/***********************************************************************
- *           DrawMenuBarTemp   (USER32.@)
- *
- * UNDOCUMENTED !!
- *
- * called by W98SE desk.cpl Control Panel Applet
- *
- * Not 100% sure about the param names, but close.
- */
-DWORD WINAPI DrawMenuBarTemp(HWND hwnd, HDC hDC, LPRECT lprect, HMENU hMenu, HFONT hFont)
-{
-    LPPOPUPMENU lppop;
-    UINT i,retvalue;
-    HFONT hfontOld = 0;
-    BOOL flat_menu = FALSE;
-
-    SystemParametersInfoW (SPI_GETFLATMENU, 0, &flat_menu, 0);
-
-    if (!hMenu)
-        hMenu = GetMenu(hwnd);
-
-    if (!hFont)
-        hFont = get_menu_font(FALSE);
-
-    lppop = MENU_GetMenu( hMenu );
-    if (lppop == NULL || lprect == NULL)
-    {
-        retvalue = GetSystemMetrics(SM_CYMENU);
-        goto END;
-    }
-
-    TRACE("(%p, %p, %p, %p, %p)\n", hwnd, hDC, lprect, hMenu, hFont);
-
-    hfontOld = SelectObject( hDC, hFont);
-
-    if (lppop->Height == 0)
-        MENU_MenuBarCalcSize(hDC, lprect, lppop, hwnd);
-
-    lprect->bottom = lprect->top + lppop->Height;
-
-    FillRect(hDC, lprect, GetSysColorBrush(flat_menu ? COLOR_MENUBAR : COLOR_MENU) );
-
-    SelectObject( hDC, SYSCOLOR_GetPen(COLOR_3DFACE));
-    MoveToEx( hDC, lprect->left, lprect->bottom, NULL );
-    LineTo( hDC, lprect->right, lprect->bottom );
-
-    if (lppop->nItems == 0)
-    {
-        retvalue = GetSystemMetrics(SM_CYMENU);
-        goto END;
-    }
-
-    for (i = 0; i < lppop->nItems; i++)
-        MENU_DrawMenuItem( hwnd, lppop, hwnd, hDC, &lppop->items[i], TRUE, ODA_DRAWENTIRE );
-
-    retvalue = lppop->Height;
-
-END:
-    if (hfontOld) SelectObject (hDC, hfontOld);
-    return retvalue;
-}
 
 /***********************************************************************
  *           EndMenu   (USER.187)

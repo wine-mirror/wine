@@ -138,7 +138,7 @@ static const signed char ltrb_inner_mono[] = {
     -1, COLOR_WINDOW, COLOR_WINDOW, COLOR_WINDOW,
 };
 
-static BOOL draw_rect_edge( HDC hdc, RECT *rc, UINT type, UINT flags, UINT width )
+BOOL draw_rect_edge( HDC hdc, RECT *rc, UINT type, UINT flags, UINT width )
 {
     int lbi_offset = 0, lti_offset = 0, rti_offset = 0, rbi_offset = 0;
     signed char lt_inner, lt_outer, rb_inner, rb_outer;
@@ -1016,7 +1016,7 @@ static void draw_caption_bar( HDC hdc, const RECT *rect, DWORD style, BOOL activ
 }
 
 /* Draw the system icon */
-static BOOL draw_nc_sys_button( HWND hwnd, HDC hdc, BOOL down )
+BOOL draw_nc_sys_button( HWND hwnd, HDC hdc, BOOL down )
 {
     HICON icon = get_nc_icon_for_window( hwnd );
 
@@ -1122,7 +1122,7 @@ static BOOL draw_push_button( HDC dc, RECT *r, UINT flags )
     return TRUE;
 }
 
-static BOOL draw_frame_caption( HDC dc, RECT *r, UINT flags )
+BOOL draw_frame_caption( HDC dc, RECT *r, UINT flags )
 {
     RECT rect;
     int small_diam = make_square_rect( r, &rect ) - 2;
@@ -1179,6 +1179,77 @@ static BOOL draw_frame_caption( HDC dc, RECT *r, UINT flags )
     NtGdiDeleteObjectApp( font );
 
     return TRUE;
+}
+
+BOOL draw_frame_menu( HDC dc, RECT *r, UINT flags )
+{
+    RECT rect;
+    int dmall_diam = make_square_rect( r, &rect );
+    HBRUSH prev_brush;
+    HPEN prev_pen;
+    POINT points[6];
+    int xe, ye;
+    int xc, yc;
+    BOOL retval = TRUE;
+    ULONG count;
+    int i;
+
+    fill_rect( dc, r, GetStockObject( WHITE_BRUSH ));
+
+    prev_brush = NtGdiSelectBrush( dc, GetStockObject( BLACK_BRUSH ));
+    prev_pen = NtGdiSelectPen( dc, GetStockObject( BLACK_PEN ));
+
+    switch (flags & 0xff)
+    {
+    case DFCS_MENUARROW:
+        i = 187 * dmall_diam / 750;
+        points[2].x = rect.left + 468 * dmall_diam/ 750;
+        points[2].y = rect.top  + 352 * dmall_diam/ 750 + 1;
+        points[0].y = points[2].y - i;
+        points[1].y = points[2].y + i;
+        points[0].x = points[1].x = points[2].x - i;
+        count = 3;
+        NtGdiPolyPolyDraw( dc, points, &count, 1, NtGdiPolyPolygon );
+        break;
+
+    case DFCS_MENUBULLET:
+        xe = rect.left;
+        ye = rect.top  + dmall_diam - dmall_diam / 2;
+        xc = rect.left + dmall_diam - dmall_diam / 2;
+        yc = rect.top  + dmall_diam - dmall_diam / 2;
+        i = 234 * dmall_diam / 750;
+        i = i < 1 ? 1 : i;
+        SetRect( &rect, xc - i + i / 2, yc - i + i / 2, xc + i / 2, yc + i / 2 );
+        NtGdiArcInternal( NtGdiPie, dc, rect.left, rect.top, rect.right, rect.bottom,
+                          xe, ye, xe, ye );
+        break;
+
+    case DFCS_MENUCHECK:
+        points[0].x = rect.left + 253 * dmall_diam / 1000;
+        points[0].y = rect.top  + 445 * dmall_diam / 1000;
+        points[1].x = rect.left + 409 * dmall_diam / 1000;
+        points[1].y = points[0].y + (points[1].x - points[0].x);
+        points[2].x = rect.left + 690 * dmall_diam / 1000;
+        points[2].y = points[1].y - (points[2].x - points[1].x);
+        points[3].x = points[2].x;
+        points[3].y = points[2].y + 3 * dmall_diam / 16;
+        points[4].x = points[1].x;
+        points[4].y = points[1].y + 3 * dmall_diam / 16;
+        points[5].x = points[0].x;
+        points[5].y = points[0].y + 3 * dmall_diam / 16;
+        count = 6;
+        NtGdiPolyPolyDraw( dc, points, &count, 1, NtGdiPolyPolygon );
+        break;
+
+    default:
+        WARN( "Invalid menu; flags=0x%04x\n", flags );
+        retval = FALSE;
+        break;
+    }
+
+    NtGdiSelectPen( dc, prev_pen );
+    NtGdiSelectBrush( dc, prev_brush );
+    return retval;
 }
 
 static void draw_close_button( HWND hwnd, HDC hdc, BOOL down, BOOL grayed )

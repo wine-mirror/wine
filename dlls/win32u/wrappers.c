@@ -868,6 +868,12 @@ BOOL WINAPI NtUserDrawIconEx( HDC hdc, INT x0, INT y0, HICON icon, INT width,
     return unix_funcs->pNtUserDrawIconEx( hdc, x0, y0, icon, width, height, istep, hbr, flags );
 }
 
+DWORD WINAPI NtUserDrawMenuBarTemp( HWND hwnd, HDC hdc, RECT *rect, HMENU handle, HFONT font )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserDrawMenuBarTemp( hwnd, hdc, rect, handle, font );
+}
+
 BOOL WINAPI NtUserEnableMenuItem( HMENU handle, UINT id, UINT flags )
 {
     if (!unix_funcs) return FALSE;

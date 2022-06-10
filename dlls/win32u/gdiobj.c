@@ -1160,6 +1160,7 @@ static struct unix_funcs unix_funcs =
     NtUserDispatchMessage,
     NtUserDragDetect,
     NtUserDrawIconEx,
+    NtUserDrawMenuBarTemp,
     NtUserEmptyClipboard,
     NtUserEnableMenuItem,
     NtUserEndDeferWindowPosEx,

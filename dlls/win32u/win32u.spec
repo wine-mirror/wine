@@ -851,7 +851,7 @@
 @ stub NtUserDrawCaption
 @ stub NtUserDrawCaptionTemp
 @ stdcall NtUserDrawIconEx(long long long long long long long long long)
-@ stub NtUserDrawMenuBarTemp
+@ stdcall NtUserDrawMenuBarTemp(long long ptr long long)
 @ stub NtUserDwmGetRemoteSessionOcclusionEvent
 @ stub NtUserDwmGetRemoteSessionOcclusionState
 @ stub NtUserDwmKernelShutdown
