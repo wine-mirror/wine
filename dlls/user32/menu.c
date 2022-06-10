@@ -3506,31 +3506,6 @@ LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
 }
 
 
-/***********************************************************************
- *           MENU_GetMenuBarHeight
- *
- * Compute the size of the menu bar height. Used by NC_HandleNCCalcSize().
- */
-UINT MENU_GetMenuBarHeight( HWND hwnd, UINT menubarWidth,
-                              INT orgX, INT orgY )
-{
-    HDC hdc;
-    RECT rectBar;
-    LPPOPUPMENU lppop;
-
-    TRACE("HWND %p, width %d, at (%d, %d).\n", hwnd, menubarWidth, orgX, orgY );
-
-    if (!(lppop = MENU_GetMenu( GetMenu(hwnd) ))) return 0;
-
-    hdc = NtUserGetDCEx( hwnd, 0, DCX_CACHE | DCX_WINDOW );
-    SelectObject( hdc, get_menu_font(FALSE));
-    SetRect(&rectBar, orgX, orgY, orgX+menubarWidth, orgY+GetSystemMetrics(SM_CYMENU));
-    MENU_MenuBarCalcSize( hdc, &rectBar, lppop, hwnd );
-    NtUserReleaseDC( hwnd, hdc );
-    return lppop->Height;
-}
-
-
 /*******************************************************************
  *         ChangeMenuA    (USER32.@)
  */

@@ -392,6 +392,7 @@ extern void update_mouse_tracking_info( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HMENU create_menu( BOOL is_popup ) DECLSPEC_HIDDEN;
 extern BOOL draw_menu_bar( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HMENU get_menu( HWND hwnd ) DECLSPEC_HIDDEN;
+extern UINT get_menu_bar_height( HWND hwnd, UINT width, INT org_x, INT org_y ) DECLSPEC_HIDDEN;
 extern BOOL get_menu_info( HMENU handle, MENUINFO *info ) DECLSPEC_HIDDEN;
 extern INT get_menu_item_count( HMENU handle ) DECLSPEC_HIDDEN;
 extern UINT get_menu_state( HMENU handle, UINT item_id, UINT flags ) DECLSPEC_HIDDEN;
@@ -413,6 +414,8 @@ extern LRESULT send_message_timeout( HWND hwnd, UINT msg, WPARAM wparam, LPARAM 
 /* sysparams.c */
 extern BOOL enable_thunk_lock DECLSPEC_HIDDEN;
 extern HBRUSH get_55aa_brush(void) DECLSPEC_HIDDEN;
+extern DWORD get_dialog_base_units(void) DECLSPEC_HIDDEN;
+extern LONG get_char_dimensions( HDC hdc, TEXTMETRICW *metric, LONG *height ) DECLSPEC_HIDDEN;
 extern RECT get_display_rect( const WCHAR *display ) DECLSPEC_HIDDEN;
 extern UINT get_monitor_dpi( HMONITOR monitor ) DECLSPEC_HIDDEN;
 extern BOOL get_monitor_info( HMONITOR handle, MONITORINFO *info ) DECLSPEC_HIDDEN;

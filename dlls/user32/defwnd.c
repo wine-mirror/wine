@@ -173,10 +173,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
             return NC_HandleNCHitTest( hwnd, pt );
         }
 
-    case WM_NCCALCSIZE:
-        NC_HandleNCCalcSize( hwnd, wParam, (RECT *)lParam );
-        break;
-
     case WM_WINDOWPOSCHANGED:
         DEFWND_HandleWindowPosChanged( hwnd, (const WINDOWPOS *)lParam );
         break;

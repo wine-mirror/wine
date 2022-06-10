@@ -2724,7 +2724,7 @@ static void get_real_fontname( LOGFONTW *lf, WCHAR fullname[LF_FACESIZE] )
         lstrcpyW( fullname, lf->lfFaceName );
 }
 
-static LONG get_char_dimensions( HDC hdc, TEXTMETRICW *metric, LONG *height )
+LONG get_char_dimensions( HDC hdc, TEXTMETRICW *metric, LONG *height )
 {
     SIZE sz;
     static const WCHAR abcdW[] =
@@ -2763,7 +2763,7 @@ static void get_text_metr_size( HDC hdc, LOGFONTW *lf, TEXTMETRICW *metric, UINT
     NtGdiDeleteObjectApp( hfont );
 }
 
-static DWORD get_dialog_base_units(void)
+DWORD get_dialog_base_units(void)
 {
     static LONG cx, cy;
 

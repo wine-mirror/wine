@@ -1487,6 +1487,66 @@ static LRESULT handle_nc_activate( HWND hwnd, WPARAM wparam, LPARAM lparam )
     return TRUE;
 }
 
+static void handle_nc_calc_size( HWND hwnd, WPARAM wparam, RECT *win_rect )
+{
+    RECT rect = { 0, 0, 0, 0 };
+    LONG style = get_window_long( hwnd, GWL_STYLE );
+    LONG ex_style = get_window_long( hwnd, GWL_EXSTYLE );
+
+    if (!win_rect) return;
+
+    if (!(style & WS_MINIMIZE))
+    {
+        AdjustWindowRectEx( &rect, style, FALSE, ex_style & ~WS_EX_CLIENTEDGE );
+
+        win_rect->left   -= rect.left;
+        win_rect->top    -= rect.top;
+        win_rect->right  -= rect.right;
+        win_rect->bottom -= rect.bottom;
+
+        if (((style & (WS_CHILD | WS_POPUP)) != WS_CHILD) && get_menu( hwnd ))
+        {
+            TRACE( "getting menu bar height with hwnd %p, width %d, at (%d, %d)\n",
+                   hwnd, win_rect->right - win_rect->left, -rect.left, -rect.top );
+
+            win_rect->top += get_menu_bar_height( hwnd, win_rect->right - win_rect->left,
+                                                  -rect.left, -rect.top );
+        }
+
+        if (ex_style & WS_EX_CLIENTEDGE)
+            if (win_rect->right - win_rect->left > 2 * get_system_metrics( SM_CXEDGE ) &&
+                   win_rect->bottom - win_rect->top > 2 * get_system_metrics( SM_CYEDGE ))
+                InflateRect( win_rect, -get_system_metrics( SM_CXEDGE ),
+                             -get_system_metrics( SM_CYEDGE ));
+
+        if ((style & WS_VSCROLL) &&
+            win_rect->right - win_rect->left >= get_system_metrics( SM_CXVSCROLL ))
+        {
+            /* rectangle is in screen coords when wparam is false */
+            if (!wparam && (ex_style & WS_EX_LAYOUTRTL)) ex_style ^= WS_EX_LEFTSCROLLBAR;
+
+            if (ex_style & WS_EX_LEFTSCROLLBAR)
+                win_rect->left  += get_system_metrics( SM_CXVSCROLL );
+            else
+                win_rect->right -= get_system_metrics( SM_CXVSCROLL );
+        }
+
+        if ((style & WS_HSCROLL) &&
+            win_rect->bottom - win_rect->top > get_system_metrics( SM_CYHSCROLL ))
+        {
+            win_rect->bottom -= get_system_metrics( SM_CYHSCROLL );
+        }
+
+        if (win_rect->top > win_rect->bottom) win_rect->bottom = win_rect->top;
+        if (win_rect->left > win_rect->right) win_rect->right = win_rect->left;
+    }
+    else
+    {
+        win_rect->right = win_rect->left;
+        win_rect->bottom = win_rect->top;
+    }
+}
+
 LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
     LRESULT result = 0;
@@ -1513,6 +1573,10 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
             release_win_ptr( win );
             break;
         }
+
+    case WM_NCCALCSIZE:
+        handle_nc_calc_size( hwnd, wparam, (RECT *)lparam );
+        break;
 
     case WM_NCPAINT:
         return handle_nc_paint( hwnd, (HRGN)wparam );

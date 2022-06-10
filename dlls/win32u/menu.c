@@ -23,6 +23,7 @@
 #pragma makedep unix
 #endif
 
+#define OEMRESOURCE
 #include "win32u_private.h"
 #include "ntuser_private.h"
 #include "wine/server.h"
@@ -58,6 +59,10 @@ struct accelerator
 #define TYPE_MASK  (MENUITEMINFO_TYPE_MASK | MF_POPUP | MF_SYSMENU)
 #define STATE_MASK (~TYPE_MASK)
 #define MENUITEMINFO_STATE_MASK (STATE_MASK & ~(MF_BYPOSITION | MF_MOUSESELECT))
+
+
+static SIZE menucharsize;
+static UINT od_item_hight; /* default owner drawn item height */
 
 /**********************************************************************
  *           NtUserCopyAcceleratorTable   (win32u.@)
@@ -219,6 +224,17 @@ static void release_menu_ptr( POPUPMENU *menu )
         menu->refcount--;
         release_user_handle_ptr( menu );
     }
+}
+
+/*
+ * Validate the given menu handle and returns the menu structure pointer.
+ * FIXME: this is unsafe, we should use a better mechanism instead.
+ */
+static POPUPMENU *unsafe_menu_ptr( HMENU handle )
+{
+    POPUPMENU *menu = grab_menu_ptr( handle );
+    if (menu) release_menu_ptr( menu );
+    return menu;
 }
 
 /* see IsMenu */
@@ -1326,4 +1342,333 @@ INT WINAPI NtUserTranslateAccelerator( HWND hwnd, HACCEL accel, MSG *msg )
     }
     if (ptr != data) free( ptr );
     return (i < count);
+}
+
+static HFONT get_menu_font( BOOL bold )
+{
+    static HFONT menu_font, menu_font_bold;
+
+    HFONT ret = bold ? menu_font_bold : menu_font;
+
+    if (!ret)
+    {
+        NONCLIENTMETRICSW ncm;
+        HFONT prev;
+
+        ncm.cbSize = sizeof(NONCLIENTMETRICSW);
+        NtUserSystemParametersInfo( SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICSW), &ncm, 0 );
+
+        if (bold)
+        {
+            ncm.lfMenuFont.lfWeight += 300;
+            if (ncm.lfMenuFont.lfWeight > 1000) ncm.lfMenuFont.lfWeight = 1000;
+        }
+        if (!(ret = NtGdiHfontCreate( &ncm.lfMenuFont, sizeof(ncm.lfMenuFont), 0, 0, NULL )))
+            return 0;
+        prev = InterlockedCompareExchangePointer( (void **)(bold ? &menu_font_bold : &menu_font),
+                                                  ret, NULL );
+        if (prev)
+        {
+            /* another thread beat us to it */
+            NtGdiDeleteObjectApp( ret );
+            ret = prev;
+        }
+    }
+    return ret;
+}
+
+static HBITMAP get_arrow_bitmap(void)
+{
+    static HBITMAP arrow_bitmap;
+
+    if (!arrow_bitmap)
+        arrow_bitmap = LoadImageW( 0, MAKEINTRESOURCEW(OBM_MNARROW), IMAGE_BITMAP, 0, 0, 0 );
+    return arrow_bitmap;
+}
+
+/* Get the size of a bitmap item */
+static void get_bitmap_item_size( MENUITEM *item, SIZE *size, HWND owner )
+{
+    HBITMAP bmp = item->hbmpItem;
+    BITMAP bm;
+
+    size->cx = size->cy = 0;
+
+    /* check if there is a magic menu item associated with this item */
+    switch ((INT_PTR)bmp)
+    {
+    case (INT_PTR)HBMMENU_CALLBACK:
+        {
+            MEASUREITEMSTRUCT meas_item;
+            meas_item.CtlType = ODT_MENU;
+            meas_item.CtlID = 0;
+            meas_item.itemID = item->wID;
+            meas_item.itemWidth = item->rect.right - item->rect.left;
+            meas_item.itemHeight = item->rect.bottom - item->rect.top;
+            meas_item.itemData = item->dwItemData;
+            send_message( owner, WM_MEASUREITEM, 0, (LPARAM)&meas_item );
+            size->cx = meas_item.itemWidth;
+            size->cy = meas_item.itemHeight;
+            return;
+        }
+        break;
+    case (INT_PTR)HBMMENU_SYSTEM:
+        if (item->dwItemData)
+        {
+            bmp = (HBITMAP)item->dwItemData;
+            break;
+        }
+        /* fall through */
+    case (INT_PTR)HBMMENU_MBAR_RESTORE:
+    case (INT_PTR)HBMMENU_MBAR_MINIMIZE:
+    case (INT_PTR)HBMMENU_MBAR_MINIMIZE_D:
+    case (INT_PTR)HBMMENU_MBAR_CLOSE:
+    case (INT_PTR)HBMMENU_MBAR_CLOSE_D:
+        size->cx = get_system_metrics( SM_CYMENU ) - 4;
+        size->cy = size->cx;
+        return;
+    case (INT_PTR)HBMMENU_POPUP_CLOSE:
+    case (INT_PTR)HBMMENU_POPUP_RESTORE:
+    case (INT_PTR)HBMMENU_POPUP_MAXIMIZE:
+    case (INT_PTR)HBMMENU_POPUP_MINIMIZE:
+        size->cx = get_system_metrics( SM_CXMENUSIZE );
+        size->cy = get_system_metrics( SM_CYMENUSIZE );
+        return;
+    }
+    if (NtGdiExtGetObjectW( bmp, sizeof(bm), &bm ))
+    {
+        size->cx = bm.bmWidth;
+        size->cy = bm.bmHeight;
+    }
+}
+
+/* Calculate the size of the menu item and store it in item->rect */
+static void calc_menu_item_size( HDC hdc, MENUITEM *item, HWND owner, INT org_x, INT org_y,
+                                 BOOL menu_bar, POPUPMENU *menu )
+{
+    UINT check_bitmap_width = get_system_metrics( SM_CXMENUCHECK );
+    UINT arrow_bitmap_width;
+    INT item_height;
+    BITMAP bm;
+    WCHAR *p;
+
+    TRACE( "dc=%p owner=%p (%d,%d) item %s\n", hdc, owner, org_x, org_y, debugstr_menuitem( item ));
+
+    NtGdiExtGetObjectW( get_arrow_bitmap(), sizeof(bm), &bm );
+    arrow_bitmap_width = bm.bmWidth;
+
+    if (!menucharsize.cx)
+    {
+        menucharsize.cx = get_char_dimensions( hdc, NULL, &menucharsize.cy );
+        /* Win95/98/ME will use menucharsize.cy here. Testing is possible
+         * but it is unlikely an application will depend on that */
+        od_item_hight = HIWORD( get_dialog_base_units() );
+    }
+
+    SetRect( &item->rect, org_x, org_y, org_x, org_y );
+
+    if (item->fType & MF_OWNERDRAW)
+    {
+        MEASUREITEMSTRUCT mis;
+        mis.CtlType    = ODT_MENU;
+        mis.CtlID      = 0;
+        mis.itemID     = item->wID;
+        mis.itemData   = item->dwItemData;
+        mis.itemHeight = od_item_hight;
+        mis.itemWidth  = 0;
+        send_message( owner, WM_MEASUREITEM, 0, (LPARAM)&mis );
+        /* Tests reveal that Windows ( Win95 through WinXP) adds twice the average
+         * width of a menufont character to the width of an owner-drawn menu. */
+        item->rect.right += mis.itemWidth + 2 * menucharsize.cx;
+        if (menu_bar)
+        {
+            /* Under at least win95 you seem to be given a standard
+             * height for the menu and the height value is ignored. */
+            item->rect.bottom += get_system_metrics( SM_CYMENUSIZE );
+        }
+        else
+            item->rect.bottom += mis.itemHeight;
+
+        TRACE( "id=%04lx size=%dx%d\n", item->wID, item->rect.right-item->rect.left,
+               item->rect.bottom-item->rect.top );
+        return;
+    }
+
+    if (item->fType & MF_SEPARATOR)
+    {
+        item->rect.bottom += get_system_metrics( SM_CYMENUSIZE ) / 2;
+        if (!menu_bar) item->rect.right += arrow_bitmap_width + menucharsize.cx;
+        return;
+    }
+
+    item_height = 0;
+    item->xTab = 0;
+
+    if (!menu_bar)
+    {
+        if (item->hbmpItem)
+        {
+            SIZE size;
+
+            get_bitmap_item_size( item, &size, owner );
+            /* Keep the size of the bitmap in callback mode to be able
+             * to draw it correctly */
+            item->bmpsize = size;
+            menu->textOffset = max( menu->textOffset, size.cx );
+            item->rect.right += size.cx + 2;
+            item_height = size.cy + 2;
+        }
+        if (!(menu->dwStyle & MNS_NOCHECK)) item->rect.right += check_bitmap_width;
+        item->rect.right += 4 + menucharsize.cx;
+        item->xTab = item->rect.right;
+        item->rect.right += arrow_bitmap_width;
+    }
+    else if (item->hbmpItem) /* menu_bar */
+    {
+        SIZE size;
+
+        get_bitmap_item_size( item, &size, owner );
+        item->bmpsize = size;
+        item->rect.right  += size.cx;
+        if (item->text) item->rect.right += 2;
+        item_height = size.cy;
+    }
+
+    /* it must be a text item - unless it's the system menu */
+    if (!(item->fType & MF_SYSMENU) && item->text)
+    {
+        LONG txt_height, txt_width;
+        HFONT prev_font = NULL;
+        RECT rc = item->rect;
+
+        if (item->fState & MFS_DEFAULT)
+             prev_font = NtGdiSelectFont( hdc, get_menu_font(TRUE) );
+
+        if (menu_bar)
+        {
+            txt_height = DrawTextW( hdc, item->text, -1, &rc, DT_SINGLELINE | DT_CALCRECT );
+            item->rect.right  += rc.right - rc.left;
+            item_height = max( max( item_height, txt_height ),
+                               get_system_metrics( SM_CYMENU ) - 1 );
+            item->rect.right +=  2 * menucharsize.cx;
+        }
+        else
+        {
+            if ((p = wcschr( item->text, '\t' )))
+            {
+                RECT r = rc;
+                int h, n = (int)(p - item->text);
+
+                /* Item contains a tab (only meaningful in popup menus) */
+                /* get text size before the tab */
+                txt_height = DrawTextW( hdc, item->text, n, &rc, DT_SINGLELINE | DT_CALCRECT );
+                txt_width = rc.right - rc.left;
+                p += 1; /* advance past the Tab */
+                /* get text size after the tab */
+                h = DrawTextW( hdc, p, -1, &r, DT_SINGLELINE | DT_CALCRECT );
+                item->xTab += txt_width;
+                txt_height = max( txt_height, h );
+                /* space for the tab and the short cut */
+                txt_width += menucharsize.cx + r.right - r.left;
+            }
+            else
+            {
+                txt_height = DrawTextW( hdc, item->text, -1, &rc, DT_SINGLELINE | DT_CALCRECT );
+                txt_width = rc.right - rc.left;
+                item->xTab += txt_width;
+            }
+            item->rect.right += 2 + txt_width;
+            item_height = max( item_height, max( txt_height + 2, menucharsize.cy + 4 ));
+        }
+        if (prev_font) NtGdiSelectFont( hdc, prev_font );
+    }
+    else if (menu_bar)
+    {
+        item_height = max( item_height, get_system_metrics( SM_CYMENU ) - 1 );
+    }
+    item->rect.bottom += item_height;
+    TRACE( "%s\n", wine_dbgstr_rect( &item->rect ));
+}
+
+/* Calculate the size of the menu bar */
+static void calc_menu_bar_size( HDC hdc, RECT *rect, POPUPMENU *menu, HWND owner )
+{
+    UINT start, i, help_pos;
+    int org_x, org_y;
+    MENUITEM *item;
+
+    if (!rect || !menu || !menu->nItems) return;
+
+    TRACE( "rect %p %s\n", rect, wine_dbgstr_rect( rect ));
+    /* Start with a 1 pixel top border.
+       This corresponds to the difference between SM_CYMENU and SM_CYMENUSIZE. */
+    SetRect( &menu->items_rect, 0, 0, rect->right - rect->left, 1 );
+    start = 0;
+    help_pos = ~0u;
+    menu->textOffset = 0;
+    while (start < menu->nItems)
+    {
+        item = &menu->items[start];
+        org_x = menu->items_rect.left;
+        org_y = menu->items_rect.bottom;
+
+        /* Parse items until line break or end of menu */
+        for (i = start; i < menu->nItems; i++, item++)
+        {
+            if (help_pos == ~0u && (item->fType & MF_RIGHTJUSTIFY)) help_pos = i;
+            if (i != start && (item->fType & (MF_MENUBREAK | MF_MENUBARBREAK))) break;
+
+            TRACE("item org=(%d, %d) %s\n", org_x, org_y, debugstr_menuitem( item ));
+            calc_menu_item_size( hdc, item, owner, org_x, org_y, TRUE, menu );
+
+            if (item->rect.right > menu->items_rect.right)
+            {
+                if (i != start) break;
+                else item->rect.right = menu->items_rect.right;
+            }
+            menu->items_rect.bottom = max( menu->items_rect.bottom, item->rect.bottom );
+            org_x = item->rect.right;
+        }
+
+        /* Finish the line (set all items to the largest height found) */
+        while (start < i) menu->items[start++].rect.bottom = menu->items_rect.bottom;
+    }
+
+    OffsetRect( &menu->items_rect, rect->left, rect->top );
+    menu->Width = menu->items_rect.right - menu->items_rect.left;
+    menu->Height = menu->items_rect.bottom - menu->items_rect.top;
+    rect->bottom = menu->items_rect.bottom;
+
+    /* Flush right all items between the MF_RIGHTJUSTIFY and */
+    /* the last item (if several lines, only move the last line) */
+    if (help_pos == ~0u) return;
+    item = &menu->items[menu->nItems-1];
+    org_y = item->rect.top;
+    org_x = rect->right - rect->left;
+    for (i = menu->nItems - 1; i >= help_pos; i--, item--)
+    {
+        if (item->rect.top != org_y) break;    /* other line */
+        if (item->rect.right >= org_x) break;  /* too far right already */
+        item->rect.left += org_x - item->rect.right;
+        item->rect.right = org_x;
+        org_x = item->rect.left;
+    }
+}
+
+UINT get_menu_bar_height( HWND hwnd, UINT width, INT org_x, INT org_y )
+{
+    POPUPMENU *menu;
+    RECT rect_bar;
+    HDC hdc;
+
+    TRACE( "hwnd %p, width %d, at (%d, %d).\n", hwnd, width, org_x, org_y );
+
+    if (!(menu = unsafe_menu_ptr( get_menu( hwnd )))) return 0;
+
+    hdc = NtUserGetDCEx( hwnd, 0, DCX_CACHE | DCX_WINDOW );
+    NtGdiSelectFont( hdc, get_menu_font(FALSE));
+    SetRect( &rect_bar, org_x, org_y, org_x + width, org_y + get_system_metrics( SM_CYMENU ));
+    calc_menu_bar_size( hdc, &rect_bar, menu, hwnd );
+    NtUserReleaseDC( hwnd, hdc );
+    return menu->Height;
 }
