@@ -567,7 +567,7 @@ BOOL WINAPI NtUserEnableMenuItem( HMENU handle, UINT id, UINT flags )
 
     /* Get the Popupmenu to access the owner menu */
     if (!(menu = find_menu_item( handle, id, flags, &pos )))
-	return ~0u;
+        return ~0u;
 
     item = &menu->items[pos];
     oldflags = item->fState & (MF_GRAYED | MF_DISABLED);
@@ -2225,4 +2225,183 @@ DWORD WINAPI NtUserDrawMenuBarTemp( HWND hwnd, HDC hdc, RECT *rect, HMENU handle
 
     if (prev_font) NtGdiSelectFont( hdc, prev_font );
     return retvalue;
+}
+
+static UINT get_scroll_arrow_height( const POPUPMENU *menu )
+{
+    return menucharsize.cy + 4;
+}
+
+static void draw_scroll_arrow( HDC hdc, int x, int top, int height, BOOL up, BOOL enabled )
+{
+    RECT rect, light_rect;
+    HBRUSH brush = get_sys_color_brush( enabled ? COLOR_BTNTEXT : COLOR_BTNSHADOW );
+    HBRUSH light = get_sys_color_brush( COLOR_3DLIGHT );
+
+    if (!up)
+    {
+        top = top + height;
+        if (!enabled)
+        {
+            SetRect( &rect, x + 1, top, x + 2, top + 1);
+            fill_rect( hdc, &rect, light );
+        }
+        top--;
+    }
+
+    SetRect( &rect, x, top, x + 1, top + 1);
+    while (height--)
+    {
+        fill_rect( hdc, &rect, brush );
+        if (!enabled && !up && height)
+        {
+            SetRect( &light_rect, rect.right, rect.top, rect.right + 2, rect.bottom );
+            fill_rect( hdc, &light_rect, light );
+        }
+        InflateRect( &rect, 1, 0 );
+        OffsetRect( &rect, 0, up ? 1 : -1 );
+    }
+
+    if (!enabled && up)
+    {
+        rect.left += 2;
+        fill_rect( hdc, &rect, light );
+    }
+}
+
+static void draw_scroll_arrows( const POPUPMENU *menu, HDC hdc )
+{
+    UINT full_height = get_scroll_arrow_height( menu );
+    UINT arrow_height = full_height / 3;
+    BOOL at_end = menu->nScrollPos + menu->items_rect.bottom - menu->items_rect.top == menu->nTotalHeight;
+
+    draw_scroll_arrow( hdc, menu->Width / 3, arrow_height, arrow_height,
+                       TRUE, menu->nScrollPos != 0);
+    draw_scroll_arrow( hdc, menu->Width / 3, menu->Height - 2 * arrow_height, arrow_height,
+                       FALSE, !at_end );
+}
+
+static int frame_rect( HDC hdc, const RECT *rect, HBRUSH hbrush )
+{
+    HBRUSH prev_brush;
+    RECT r = *rect;
+
+    if (IsRectEmpty(&r)) return 0;
+    if (!(prev_brush = NtGdiSelectBrush( hdc, hbrush ))) return 0;
+
+    NtGdiPatBlt( hdc, r.left, r.top, 1, r.bottom - r.top, PATCOPY );
+    NtGdiPatBlt( hdc, r.right - 1, r.top, 1, r.bottom - r.top, PATCOPY );
+    NtGdiPatBlt( hdc, r.left, r.top, r.right - r.left, 1, PATCOPY );
+    NtGdiPatBlt( hdc, r.left, r.bottom - 1, r.right - r.left, 1, PATCOPY );
+
+    NtGdiSelectBrush( hdc, prev_brush );
+    return TRUE;
+}
+
+static void draw_popup_menu( HWND hwnd, HDC hdc, HMENU hmenu )
+{
+    HBRUSH prev_hrush, brush = get_sys_color_brush( COLOR_MENU );
+    POPUPMENU *menu = unsafe_menu_ptr( hmenu );
+    RECT rect;
+
+    TRACE( "wnd=%p dc=%p menu=%p\n", hwnd, hdc, hmenu );
+
+    get_client_rect( hwnd, &rect );
+
+    if (menu && menu->hbrBack) brush = menu->hbrBack;
+    if ((prev_hrush = NtGdiSelectBrush( hdc, brush ))
+        && NtGdiSelectFont( hdc, get_menu_font( FALSE )))
+    {
+        HPEN prev_pen;
+
+        NtGdiRectangle( hdc, rect.left, rect.top, rect.right, rect.bottom );
+
+        prev_pen = NtGdiSelectPen( hdc, GetStockObject( NULL_PEN ));
+        if (prev_pen)
+        {
+            BOOL flat_menu = FALSE;
+
+            NtUserSystemParametersInfo( SPI_GETFLATMENU, 0, &flat_menu, 0 );
+            if (flat_menu)
+                frame_rect( hdc, &rect, get_sys_color_brush( COLOR_BTNSHADOW ));
+            else
+                draw_rect_edge( hdc, &rect, EDGE_RAISED, BF_RECT, 1 );
+
+            if (menu)
+            {
+                TRACE( "hmenu %p Style %08x\n", hmenu, menu->dwStyle );
+                /* draw menu items */
+                if (menu->nItems)
+                {
+                    MENUITEM *item;
+                    UINT u;
+
+                    item = menu->items;
+                    for (u = menu->nItems; u > 0; u--, item++)
+                        draw_menu_item( hwnd, menu, menu->hwndOwner, hdc,
+                                        item, FALSE, ODA_DRAWENTIRE );
+                }
+                if (menu->bScrolling) draw_scroll_arrows( menu, hdc );
+            }
+        }
+        else
+        {
+            NtGdiSelectBrush( hdc, prev_hrush );
+        }
+    }
+}
+
+LRESULT popup_menu_window_proc( HWND hwnd, UINT message, WPARAM wparam, LPARAM lparam )
+{
+    TRACE( "hwnd=%p msg=0x%04x wp=0x%04lx lp=0x%08lx\n", hwnd, message, wparam, lparam );
+
+    switch(message)
+    {
+    case WM_CREATE:
+        {
+            CREATESTRUCTW *cs = (CREATESTRUCTW *)lparam;
+            NtUserSetWindowLongPtr( hwnd, 0, (LONG_PTR)cs->lpCreateParams, FALSE );
+            return 0;
+        }
+
+    case WM_MOUSEACTIVATE:  /* We don't want to be activated */
+        return MA_NOACTIVATE;
+
+    case WM_PAINT:
+        {
+            PAINTSTRUCT ps;
+            NtUserBeginPaint( hwnd, &ps );
+            draw_popup_menu( hwnd, ps.hdc, (HMENU)get_window_long_ptr( hwnd, 0, FALSE ));
+            NtUserEndPaint( hwnd, &ps );
+            return 0;
+        }
+
+    case WM_PRINTCLIENT:
+        {
+            draw_popup_menu( hwnd, (HDC)wparam, (HMENU)get_window_long_ptr( hwnd, 0, FALSE ));
+            return 0;
+        }
+
+    case WM_ERASEBKGND:
+        return 1;
+
+    case WM_DESTROY:
+        break;
+
+    case WM_SHOWWINDOW:
+        if (wparam)
+        {
+            if (!get_window_long_ptr( hwnd, 0, FALSE )) ERR( "no menu to display\n" );
+        }
+        else
+            NtUserSetWindowLongPtr( hwnd, 0, 0, FALSE );
+        break;
+
+    case MN_GETHMENU:
+        return get_window_long_ptr( hwnd, 0, FALSE );
+
+    default:
+        return default_window_proc( hwnd, message, wparam, lparam, FALSE );
+    }
+    return 0;
 }

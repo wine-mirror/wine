@@ -204,6 +204,7 @@ struct render_synthesized_format_params
 /* NtUserMessageCall codes */
 enum
 {
+    NtUserPopupMenuWndProc    = 0x029c,
     NtUserDesktopWindowProc   = 0x029d,
     NtUserDefWindowProc       = 0x029e,
     NtUserCallWindowProc      = 0x02ab,

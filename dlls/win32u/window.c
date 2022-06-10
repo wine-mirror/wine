@@ -1097,7 +1097,7 @@ DWORD get_window_long( HWND hwnd, INT offset )
 }
 
 /* see GetWindowLongPtr */
-static ULONG_PTR get_window_long_ptr( HWND hwnd, INT offset, BOOL ansi )
+ULONG_PTR get_window_long_ptr( HWND hwnd, INT offset, BOOL ansi )
 {
     return get_window_long_size( hwnd, offset, sizeof(LONG_PTR), ansi );
 }

@@ -2890,6 +2890,8 @@ LRESULT WINAPI NtUserMessageCall( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lpa
 {
     switch (type)
     {
+    case NtUserPopupMenuWndProc:
+        return popup_menu_window_proc( hwnd, msg, wparam, lparam );
     case NtUserDesktopWindowProc:
         return desktop_window_proc( hwnd, msg, wparam, lparam );
     case NtUserDefWindowProc:

@@ -1196,62 +1196,6 @@ static void MENU_PopupMenuCalcSize( LPPOPUPMENU lppop, UINT max_height )
 }
 
 
-static void draw_scroll_arrow(HDC hdc, int x, int top, int height, BOOL up, BOOL enabled)
-{
-    RECT rect, light_rect;
-    HBRUSH brush = GetSysColorBrush( enabled ? COLOR_BTNTEXT : COLOR_BTNSHADOW );
-    HBRUSH light = GetSysColorBrush( COLOR_3DLIGHT );
-
-    if (!up)
-    {
-        top = top + height;
-        if (!enabled)
-        {
-            SetRect( &rect, x + 1, top, x + 2, top + 1);
-            FillRect( hdc, &rect, light );
-        }
-        top--;
-    }
-
-    SetRect( &rect, x, top, x + 1, top + 1);
-    while (height--)
-    {
-        FillRect( hdc, &rect, brush );
-        if (!enabled && !up && height)
-        {
-            SetRect( &light_rect, rect.right, rect.top, rect.right + 2, rect.bottom );
-            FillRect( hdc, &light_rect, light );
-        }
-        InflateRect( &rect, 1, 0 );
-        OffsetRect( &rect, 0, up ? 1 : -1 );
-    }
-
-    if (!enabled && up)
-    {
-        rect.left += 2;
-        FillRect( hdc, &rect, light );
-    }
-}
-
-/***********************************************************************
- *           MENU_DrawScrollArrows
- *
- * Draw scroll arrows.
- */
-static void
-MENU_DrawScrollArrows(const POPUPMENU *menu, HDC hdc)
-{
-    UINT full_height = get_scroll_arrow_height( menu );
-    UINT arrow_height = full_height / 3;
-    BOOL at_end = menu->nScrollPos + menu->items_rect.bottom - menu->items_rect.top == menu->nTotalHeight;
-
-    draw_scroll_arrow( hdc, menu->Width / 3, arrow_height, arrow_height,
-                       TRUE, menu->nScrollPos != 0);
-    draw_scroll_arrow( hdc, menu->Width / 3, menu->Height - 2 * arrow_height, arrow_height,
-                       FALSE, !at_end );
-}
-
-
 /***********************************************************************
  *           draw_popup_arrow
  *
@@ -1631,66 +1575,6 @@ static void MENU_DrawMenuItem( HWND hwnd, POPUPMENU *menu, HWND hwndOwner, HDC h
 done:
     ExtSelectClipRgn( hdc, old_clip, RGN_COPY );
     if (old_clip) DeleteObject( old_clip );
-}
-
-
-/***********************************************************************
- *           MENU_DrawPopupMenu
- *
- * Paint a popup menu.
- */
-static void MENU_DrawPopupMenu( HWND hwnd, HDC hdc, HMENU hmenu )
-{
-    HBRUSH hPrevBrush, brush = GetSysColorBrush( COLOR_MENU );
-    RECT rect;
-    POPUPMENU *menu = MENU_GetMenu( hmenu );
-
-    TRACE("wnd=%p dc=%p menu=%p\n", hwnd, hdc, hmenu);
-
-    GetClientRect( hwnd, &rect );
-
-    if (menu && menu->hbrBack) brush = menu->hbrBack;
-    if ((hPrevBrush = SelectObject( hdc, brush ))
-        && SelectObject( hdc, get_menu_font(FALSE) ))
-    {
-	HPEN hPrevPen;
-
-	Rectangle( hdc, rect.left, rect.top, rect.right, rect.bottom );
-
-	hPrevPen = SelectObject( hdc, GetStockObject( NULL_PEN ) );
-	if( hPrevPen )
-	{
-	    BOOL flat_menu = FALSE;
-
-	    SystemParametersInfoW (SPI_GETFLATMENU, 0, &flat_menu, 0);
-	    if (flat_menu)
-		FrameRect(hdc, &rect, GetSysColorBrush(COLOR_BTNSHADOW));
-	    else
-		DrawEdge (hdc, &rect, EDGE_RAISED, BF_RECT);
-
-            if (menu)
-            {
-                TRACE("hmenu %p Style %08lx\n", hmenu, menu->dwStyle);
-                /* draw menu items */
-                if (menu->nItems)
-                {
-                    MENUITEM *item;
-                    UINT u;
-
-                    item = menu->items;
-                    for (u = menu->nItems; u > 0; u--, item++)
-                        MENU_DrawMenuItem( hwnd, menu, menu->hwndOwner, hdc,
-                                           item, FALSE, ODA_DRAWENTIRE );
-                }
-                /* draw scroll arrows */
-                if (menu->bScrolling)
-                    MENU_DrawScrollArrows(menu, hdc);
-            }
- 	} else
-	{
-	    SelectObject( hdc, hPrevBrush );
-	}
-    }
 }
 
 
@@ -3347,40 +3231,8 @@ BOOL WINAPI TrackPopupMenu( HMENU hMenu, UINT wFlags, INT x, INT y,
  */
 LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam )
 {
-    TRACE("hwnd=%p msg=0x%04x wp=0x%04Ix lp=0x%08Ix\n", hwnd, message, wParam, lParam);
-
     switch(message)
     {
-    case WM_CREATE:
-	{
-	    CREATESTRUCTW *cs = (CREATESTRUCTW*)lParam;
-	    SetWindowLongPtrW( hwnd, 0, (LONG_PTR)cs->lpCreateParams );
-            return 0;
-	}
-
-    case WM_MOUSEACTIVATE:  /* We don't want to be activated */
-        return MA_NOACTIVATE;
-
-    case WM_PAINT:
-	{
-	    PAINTSTRUCT ps;
-	    NtUserBeginPaint( hwnd, &ps );
-	    MENU_DrawPopupMenu( hwnd, ps.hdc,
-                                (HMENU)GetWindowLongPtrW( hwnd, 0 ) );
-            NtUserEndPaint( hwnd, &ps );
-            return 0;
-	}
-
-    case WM_PRINTCLIENT:
-	{
-	    MENU_DrawPopupMenu( hwnd, (HDC)wParam,
-                                (HMENU)GetWindowLongPtrW( hwnd, 0 ) );
-            return 0;
-        }
-
-    case WM_ERASEBKGND:
-        return 1;
-
     case WM_DESTROY:
         /* zero out global pointer in case resident popup window was destroyed. */
         if (hwnd == top_popup) {
@@ -3389,18 +3241,15 @@ LRESULT WINAPI PopupMenuWndProc( HWND hwnd, UINT message, WPARAM wParam, LPARAM 
         }
         break;
 
+    case WM_CREATE:
+    case WM_MOUSEACTIVATE:
+    case WM_PAINT:
+    case WM_PRINTCLIENT:
+    case WM_ERASEBKGND:
     case WM_SHOWWINDOW:
-
-	if( wParam )
-	{
-            if (!GetWindowLongPtrW( hwnd, 0 )) ERR("no menu to display\n");
-	}
-	else
-            SetWindowLongPtrW( hwnd, 0, 0 );
-	break;
-
     case MN_GETHMENU:
-        return GetWindowLongPtrW( hwnd, 0 );
+        return NtUserMessageCall( hwnd, message, wParam, lParam,
+                                  NULL, NtUserPopupMenuWndProc, FALSE );
 
     default:
         return DefWindowProcW( hwnd, message, wParam, lParam );

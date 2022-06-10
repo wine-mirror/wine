@@ -402,6 +402,8 @@ extern BOOL get_menu_info( HMENU handle, MENUINFO *info ) DECLSPEC_HIDDEN;
 extern INT get_menu_item_count( HMENU handle ) DECLSPEC_HIDDEN;
 extern UINT get_menu_state( HMENU handle, UINT item_id, UINT flags ) DECLSPEC_HIDDEN;
 extern BOOL is_menu( HMENU handle ) DECLSPEC_HIDDEN;
+extern LRESULT popup_menu_window_proc( HWND hwnd, UINT message, WPARAM wparam,
+                                       LPARAM lparam ) DECLSPEC_HIDDEN;
 extern BOOL set_window_menu( HWND hwnd, HMENU handle ) DECLSPEC_HIDDEN;
 
 /* message.c */
@@ -473,6 +475,7 @@ extern BOOL is_window_unicode( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL is_window_visible( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL is_zoomed( HWND hwnd ) DECLSPEC_HIDDEN;
 extern DWORD get_window_long( HWND hwnd, INT offset ) DECLSPEC_HIDDEN;
+extern ULONG_PTR get_window_long_ptr( HWND hwnd, INT offset, BOOL ansi ) DECLSPEC_HIDDEN;
 extern BOOL get_window_rect( HWND hwnd, RECT *rect, UINT dpi ) DECLSPEC_HIDDEN;
 enum coords_relative;
 extern BOOL get_window_rects( HWND hwnd, enum coords_relative relative, RECT *window_rect,
