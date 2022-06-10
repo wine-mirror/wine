@@ -253,9 +253,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
                         (short)LOWORD(lParam), (short)HIWORD(lParam), 0, hwnd, NULL );
         return 0;
 
-    case WM_NCACTIVATE:
-        return NC_HandleNCActivate( hwnd, wParam, lParam );
-
     case WM_PRINT:
         DEFWND_Print(hwnd, (HDC)wParam, lParam);
         return 0;

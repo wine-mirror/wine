@@ -1463,6 +1463,30 @@ static LRESULT handle_nc_paint( HWND hwnd , HRGN clip )
     return 0;
 }
 
+static LRESULT handle_nc_activate( HWND hwnd, WPARAM wparam, LPARAM lparam )
+{
+    /* Lotus Notes draws menu descriptions in the caption of its main
+     * window. When it wants to restore original "system" view, it just
+     * sends WM_NCACTIVATE message to itself. Any optimizations here in
+     * attempt to minimize redrawings lead to a not restored caption.
+     */
+    if (wparam) win_set_flags( hwnd, WIN_NCACTIVATED, 0 );
+    else win_set_flags( hwnd, 0, WIN_NCACTIVATED );
+
+    /* This isn't documented but is reproducible in at least XP SP2 and
+     * Outlook 2007 depends on it
+     */
+    if (lparam != -1)
+    {
+        nc_paint( hwnd, (HRGN)1 );
+
+        if (NtUserGetAncestor( hwnd, GA_PARENT ) == get_desktop_window())
+            NtUserPostMessage( get_desktop_window(), WM_PARENTNOTIFY, WM_NCACTIVATE, (LPARAM)hwnd );
+    }
+
+    return TRUE;
+}
+
 LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
     LRESULT result = 0;
@@ -1492,6 +1516,9 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
 
     case WM_NCPAINT:
         return handle_nc_paint( hwnd, (HRGN)wparam );
+
+    case WM_NCACTIVATE:
+        return handle_nc_activate( hwnd, wparam, lparam );
 
     case WM_WINDOWPOSCHANGING:
         return handle_window_pos_changing( hwnd, (WINDOWPOS *)lparam );
