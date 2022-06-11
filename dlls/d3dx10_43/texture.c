@@ -966,8 +966,26 @@ HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *s
         return E_INVALIDARG;
     if (!src_data)
         return E_FAIL;
+
     if (pump)
-        FIXME("Thread pump is not supported yet.\n");
+    {
+        ID3DX10DataProcessor *processor;
+        ID3DX10DataLoader *loader;
+
+        if (FAILED((hr = D3DX10CreateAsyncMemoryLoader(src_data, src_data_size, &loader))))
+            return hr;
+        if (FAILED((hr = D3DX10CreateAsyncTextureProcessor(device, load_info, &processor))))
+        {
+            ID3DX10DataLoader_Destroy(loader);
+            return hr;
+        }
+        if (FAILED((hr = ID3DX10ThreadPump_AddWorkItem(pump, loader, processor, hresult, (void **)texture))))
+        {
+            ID3DX10DataLoader_Destroy(loader);
+            ID3DX10DataProcessor_Destroy(processor);
+        }
+        return hr;
+    }
 
     hr = create_texture(device, src_data, src_data_size, load_info, texture);
     if (hresult)
