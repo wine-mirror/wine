@@ -4309,20 +4309,13 @@ BOOL WINAPI GetMenuInfo( HMENU menu, MENUINFO *info )
 /**********************************************************************
  *         GetMenuContextHelpId    (USER32.@)
  */
-DWORD WINAPI GetMenuContextHelpId( HMENU hMenu )
+DWORD WINAPI GetMenuContextHelpId( HMENU menu )
 {
-    DWORD help_id = 0;
-    POPUPMENU *menu;
-
-    TRACE("(%p)\n", hMenu);
-
-    if ((menu = grab_menu_ptr(hMenu)))
-    {
-        help_id = menu->dwContextHelpID;
-        release_menu_ptr(menu);
-    }
-
-    return help_id;
+    MENUINFO info;
+    TRACE( "(%p)\n", menu );
+    info.cbSize = sizeof(info);
+    info.fMask = MIM_HELPID;
+    return GetMenuInfo( menu, &info ) ? info.dwContextHelpID : 0;
 }
 
 /**********************************************************************
