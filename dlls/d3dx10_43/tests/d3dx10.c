@@ -2082,6 +2082,378 @@ static void test_D3DX10CreateAsyncTextureProcessor(void)
     ok(!ID3D10Device_Release(device), "Unexpected refcount.\n");
 }
 
+static DWORD main_tid;
+static DWORD io_tid;
+
+struct data_object
+{
+    ID3DX10DataLoader ID3DX10DataLoader_iface;
+    ID3DX10DataProcessor ID3DX10DataProcessor_iface;
+
+    HANDLE load_started;
+    HANDLE load_done;
+    HANDLE decompress_done;
+    HRESULT load_ret;
+
+    DWORD process_tid;
+};
+
+static struct data_object *data_object_from_ID3DX10DataLoader(ID3DX10DataLoader *iface)
+{
+    return CONTAINING_RECORD(iface, struct data_object, ID3DX10DataLoader_iface);
+}
+
+static LONG data_loader_load_count;
+static WINAPI HRESULT data_loader_Load(ID3DX10DataLoader *iface)
+{
+    struct data_object *data_object = data_object_from_ID3DX10DataLoader(iface);
+    DWORD ret;
+
+    ok(InterlockedDecrement(&data_loader_load_count) >= 0, "Got unexpected call.\n");
+
+    if (!io_tid)
+        io_tid = GetCurrentThreadId();
+    ok(io_tid != main_tid, "Load called in main thread.\n");
+    ok(io_tid == GetCurrentThreadId(), "Load called in wrong thread.\n");
+
+    SetEvent(data_object->load_started);
+    ret = WaitForSingleObject(data_object->load_done, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx.\n", ret);
+    return data_object->load_ret;
+}
+
+static LONG data_loader_decompress_count;
+static WINAPI HRESULT data_loader_Decompress(ID3DX10DataLoader *iface, void **data, SIZE_T *bytes)
+{
+    struct data_object *data_object = data_object_from_ID3DX10DataLoader(iface);
+    DWORD ret;
+
+    ok(InterlockedDecrement(&data_loader_decompress_count) >= 0, "Got unexpected call.\n");
+    ok(!!data, "Got unexpected data %p.\n", data);
+    ok(!!bytes, "Got unexpected bytes %p.\n", bytes);
+
+    data_object->process_tid = GetCurrentThreadId();
+    ok(data_object->process_tid != main_tid, "Decompress called in main thread.\n");
+    ok(data_object->process_tid != io_tid, "Decompress called in IO thread.\n");
+
+    *data = (void *)0xdeadbeef;
+    *bytes = 0xdead;
+    ret = WaitForSingleObject(data_object->decompress_done, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx.\n", ret);
+    return S_OK;
+}
+
+static LONG data_loader_destroy_count;
+static WINAPI HRESULT data_loader_Destroy(ID3DX10DataLoader *iface)
+{
+    ok(InterlockedDecrement(&data_loader_destroy_count) >= 0, "Got unexpected call.\n");
+    return S_OK;
+}
+
+static ID3DX10DataLoaderVtbl D3DX10DataLoaderVtbl =
+{
+    data_loader_Load,
+    data_loader_Decompress,
+    data_loader_Destroy
+};
+
+static struct data_object* data_object_from_ID3DX10DataProcessor(ID3DX10DataProcessor *iface)
+{
+    return CONTAINING_RECORD(iface, struct data_object, ID3DX10DataProcessor_iface);
+}
+
+static LONG data_processor_process_count;
+static HRESULT WINAPI data_processor_Process(ID3DX10DataProcessor *iface, void *data, SIZE_T bytes)
+{
+    struct data_object *data_object = data_object_from_ID3DX10DataProcessor(iface);
+
+    ok(InterlockedDecrement(&data_processor_process_count) >= 0, "Got unexpected call.\n");
+    ok(data_object->process_tid == GetCurrentThreadId(), "Process called in unexpected thread.\n");
+
+    ok(data == (void *)0xdeadbeef, "Got unexpected data %p.\n", data);
+    ok(bytes == 0xdead, "Got unexpected bytes %Iu.\n", bytes);
+    return S_OK;
+}
+
+static LONG data_processor_create_count;
+static HRESULT WINAPI data_processor_CreateDeviceObject(ID3DX10DataProcessor *iface, void **object)
+{
+    ok(InterlockedDecrement(&data_processor_create_count) >= 0, "Got unexpected call.\n");
+    ok(main_tid == GetCurrentThreadId(), "CreateDeviceObject not called in main thread.\n");
+
+    *object = (void *)0xdeadf00d;
+    return S_OK;
+}
+
+static LONG data_processor_destroy_count;
+static HRESULT WINAPI data_processor_Destroy(ID3DX10DataProcessor *iface)
+{
+    struct data_object *data_object = data_object_from_ID3DX10DataProcessor(iface);
+
+    ok(InterlockedDecrement(&data_processor_destroy_count) >= 0, "Got unexpected call.\n");
+
+    CloseHandle(data_object->load_started);
+    CloseHandle(data_object->load_done);
+    CloseHandle(data_object->decompress_done);
+    free(data_object);
+    return S_OK;
+}
+
+static ID3DX10DataProcessorVtbl D3DX10DataProcessorVtbl =
+{
+    data_processor_Process,
+    data_processor_CreateDeviceObject,
+    data_processor_Destroy
+};
+
+static struct data_object *create_data_object(HRESULT load_ret)
+{
+    struct data_object *data_object = malloc(sizeof(*data_object));
+
+    data_object->ID3DX10DataLoader_iface.lpVtbl = &D3DX10DataLoaderVtbl;
+    data_object->ID3DX10DataProcessor_iface.lpVtbl = &D3DX10DataProcessorVtbl;
+
+    data_object->load_started = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(!!data_object->load_started, "CreateEvent failed, error %lu.\n", GetLastError());
+    data_object->load_done = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(!!data_object->load_done, "CreateEvent failed, error %lu.\n", GetLastError());
+    data_object->decompress_done = CreateEventW(NULL, FALSE, FALSE, NULL);
+    ok(!!data_object->decompress_done, "CreateEvent failed, error %lu.\n", GetLastError());
+    data_object->load_ret = load_ret;
+
+    return data_object;
+}
+
+static void test_D3DX10CreateThreadPump(void)
+{
+    UINT io_count, process_count, device_count, count;
+    struct data_object *data_object[2];
+    ID3DX10DataProcessor *processor;
+    D3DX10_IMAGE_INFO image_info;
+    ID3DX10DataLoader *loader;
+    HRESULT hr, work_item_hr;
+    ID3D10Resource *resource;
+    ID3DX10ThreadPump *pump;
+    ID3D10Device *device;
+    SYSTEM_INFO info;
+    void *object;
+    DWORD ret;
+    int i;
+
+    main_tid = GetCurrentThreadId();
+
+    hr = D3DX10CreateThreadPump(1024, 0, &pump);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
+    hr = D3DX10CreateThreadPump(0, 1024, &pump);
+    ok(hr == E_FAIL, "Got unexpected hr %#lx.\n", hr);
+
+    GetSystemInfo(&info);
+    if (info.dwNumberOfProcessors > 1)
+        hr = D3DX10CreateThreadPump(0, 0, &pump);
+    else
+        hr = D3DX10CreateThreadPump(0, 2, &pump);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+
+    count = ID3DX10ThreadPump_GetWorkItemCount(pump);
+    ok(!count, "GetWorkItemCount returned %u.\n", count);
+    hr = ID3DX10ThreadPump_GetQueueStatus(pump, &io_count, &process_count, &device_count);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!io_count, "Got unexpected io_count %u.\n", io_count);
+    ok(!process_count, "Got unexpected process_count %u.\n", process_count);
+    ok(!device_count, "Got unexpected device_count %u.\n", device_count);
+
+    data_object[0] = create_data_object(E_NOTIMPL);
+    data_object[1] = create_data_object(S_OK);
+
+    data_loader_load_count = 1;
+    hr = ID3DX10ThreadPump_AddWorkItem(pump, &data_object[0]->ID3DX10DataLoader_iface,
+            &data_object[0]->ID3DX10DataProcessor_iface, &work_item_hr, NULL);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ret = WaitForSingleObject(data_object[0]->load_started, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx.\n", ret);
+    ok(!data_loader_load_count, "Got unexpected data_loader_load_count %ld.\n",
+            data_loader_load_count);
+    count = ID3DX10ThreadPump_GetWorkItemCount(pump);
+    ok(count == 1, "GetWorkItemCount returned %u.\n", count);
+    hr = ID3DX10ThreadPump_GetQueueStatus(pump, &io_count, &process_count, &device_count);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!io_count, "Got unexpected io_count %u.\n", io_count);
+    ok(!process_count, "Got unexpected process_count %u.\n", process_count);
+    ok(!device_count, "Got unexpected device_count %u.\n", device_count);
+
+    hr = ID3DX10ThreadPump_AddWorkItem(pump, &data_object[1]->ID3DX10DataLoader_iface,
+            &data_object[1]->ID3DX10DataProcessor_iface, NULL, &object);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ret = WaitForSingleObject(data_object[0]->load_started, 50);
+    ok(ret == WAIT_TIMEOUT, "WaitForSingleObject returned %#lx.\n", ret);
+    count = ID3DX10ThreadPump_GetWorkItemCount(pump);
+    ok(count == 2, "GetWorkItemCount returned %u.\n", count);
+    hr = ID3DX10ThreadPump_GetQueueStatus(pump, &io_count, &process_count, &device_count);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(io_count == 1, "Got unexpected io_count %u.\n", io_count);
+    ok(!process_count, "Got unexpected process_count %u.\n", process_count);
+    ok(!device_count, "Got unexpected device_count %u.\n", device_count);
+
+    data_loader_load_count = 1;
+    data_loader_destroy_count = 1;
+    data_processor_destroy_count = 1;
+    SetEvent(data_object[0]->load_done);
+    ret = WaitForSingleObject(data_object[1]->load_started, INFINITE);
+    ok(ret == WAIT_OBJECT_0, "WaitForSingleObject returned %#lx.\n", ret);
+    ok(work_item_hr == E_NOTIMPL, "Got unexpected work_item_hr %#lx.\n", work_item_hr);
+    ok(!data_loader_destroy_count, "Got unexpected data_loader_destroy_count %ld.\n",
+            data_loader_destroy_count);
+    ok(!data_processor_destroy_count, "Got unexpected data_processor_destroy_count %ld.\n",
+            data_processor_destroy_count);
+    ok(!data_loader_load_count, "Got unexpected data_loader_load_count %ld.\n",
+            data_loader_load_count);
+
+    data_loader_decompress_count = 1;
+    data_processor_process_count = 1;
+    SetEvent(data_object[1]->load_done);
+    SetEvent(data_object[1]->decompress_done);
+
+    data_processor_create_count = 1;
+    data_loader_destroy_count = 1;
+    data_processor_destroy_count = 1;
+    hr = ID3DX10ThreadPump_WaitForAllItems(pump);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(object == (void *)0xdeadf00d, "Got unexpected object %p.\n", object);
+    ok(!data_loader_decompress_count, "Got unexpected data_loader_decompress_count %ld.\n",
+            data_loader_decompress_count);
+    ok(!data_processor_process_count, "Got unexpected data_processor_process_count %ld.\n",
+            data_processor_process_count);
+    ok(!data_processor_create_count, "Got unexpected data_processor_create_count %ld.\n",
+            data_processor_create_count);
+    ok(!data_loader_destroy_count, "Got unexpected data_loader_destroy_count %ld.\n",
+            data_loader_destroy_count);
+    ok(!data_processor_destroy_count, "Got unexpected data_processor_destroy_count %ld.\n",
+            data_processor_destroy_count);
+
+    data_object[0] = create_data_object(S_OK);
+    data_object[1] = create_data_object(S_OK);
+    SetEvent(data_object[0]->load_done);
+    SetEvent(data_object[1]->load_done);
+    SetEvent(data_object[1]->decompress_done);
+
+    data_loader_load_count = 2;
+    data_loader_decompress_count = 2;
+    data_processor_process_count = 1;
+    hr = ID3DX10ThreadPump_AddWorkItem(pump, &data_object[0]->ID3DX10DataLoader_iface,
+            &data_object[0]->ID3DX10DataProcessor_iface, NULL, &object);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID3DX10ThreadPump_AddWorkItem(pump, &data_object[1]->ID3DX10DataLoader_iface,
+            &data_object[1]->ID3DX10DataProcessor_iface, NULL, &object);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    for (;;)
+    {
+        hr = ID3DX10ThreadPump_GetQueueStatus(pump, &io_count, &process_count, &device_count);
+        if (hr != S_OK || device_count)
+            break;
+        Sleep(1);
+    }
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!io_count, "Got unexpected io_count %u.\n", io_count);
+    ok(!process_count, "Got unexpected process_count %u.\n", process_count);
+    ok(device_count == 1, "Got unexpected device_count %u.\n", device_count);
+    ok(!data_loader_load_count, "Got unexpected data_loader_load_count %ld.\n",
+            data_loader_load_count);
+    ok(!data_loader_decompress_count, "Got unexpected data_loader_decompress_count %ld.\n",
+            data_loader_decompress_count);
+    ok(!data_processor_process_count, "Got unexpected data_processor_process_count %ld.\n",
+            data_processor_process_count);
+
+    hr = ID3DX10ThreadPump_ProcessDeviceWorkItems(pump, 0);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID3DX10ThreadPump_GetQueueStatus(pump, &io_count, &process_count, &device_count);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!io_count, "Got unexpected io_count %u.\n", io_count);
+    ok(!process_count, "Got unexpected process_count %u.\n", process_count);
+    ok(device_count == 1, "Got unexpected device_count %u.\n", device_count);
+
+    data_processor_create_count = 1;
+    data_loader_destroy_count = 1;
+    data_processor_destroy_count = 1;
+    hr = ID3DX10ThreadPump_ProcessDeviceWorkItems(pump, 1);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    hr = ID3DX10ThreadPump_GetQueueStatus(pump, &io_count, &process_count, &device_count);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    ok(!io_count, "Got unexpected io_count %u.\n", io_count);
+    ok(!process_count, "Got unexpected process_count %u.\n", process_count);
+    ok(!device_count, "Got unexpected device_count %u.\n", device_count);
+    ok(!data_processor_create_count, "Got unexpected data_processor_create_count %ld.\n",
+            data_processor_create_count);
+    ok(!data_loader_destroy_count, "Got unexpected data_loader_destroy_count %ld.\n",
+            data_loader_destroy_count);
+    ok(!data_processor_destroy_count, "Got unexpected data_processor_destroy_count %ld.\n",
+            data_processor_destroy_count);
+
+    data_processor_process_count = 1;
+    data_loader_destroy_count = 1;
+    data_processor_destroy_count = 1;
+    SetEvent(data_object[0]->decompress_done);
+    hr = ID3DX10ThreadPump_PurgeAllItems(pump);
+    ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+    data_processor_process_count = 0;
+    ok(!data_loader_destroy_count, "Got unexpected data_loader_destroy_count %ld.\n",
+            data_loader_destroy_count);
+    ok(!data_processor_destroy_count, "Got unexpected data_processor_destroy_count %ld.\n",
+            data_processor_destroy_count);
+
+    device = create_device();
+    if (!device)
+    {
+        skip("Failed to create device, skipping tests.\n");
+        ID3DX10ThreadPump_Release(pump);
+        return;
+    }
+
+    for (i = 0; i < ARRAY_SIZE(test_image); ++i)
+    {
+        winetest_push_context("Test %u", i);
+
+        hr = D3DX10CreateAsyncMemoryLoader(test_image[i].data, test_image[i].size, &loader);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = D3DX10CreateAsyncTextureInfoProcessor(&image_info, &processor);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = ID3DX10ThreadPump_AddWorkItem(pump, loader, processor, &work_item_hr, NULL);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = ID3DX10ThreadPump_WaitForAllItems(pump);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        ok(work_item_hr == S_OK || (work_item_hr == E_FAIL
+                    && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
+                "Got unexpected hr %#lx.\n", work_item_hr);
+        if (work_item_hr == S_OK)
+            check_image_info(&image_info, test_image + i, __LINE__);
+
+        hr = D3DX10CreateAsyncMemoryLoader(test_image[i].data, test_image[i].size, &loader);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = D3DX10CreateAsyncTextureProcessor(device, NULL, &processor);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = ID3DX10ThreadPump_AddWorkItem(pump, loader, processor, &work_item_hr, (void **)&resource);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        hr = ID3DX10ThreadPump_WaitForAllItems(pump);
+        ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
+        todo_wine_if(test_image[i].expected_info.MiscFlags & D3D10_RESOURCE_MISC_TEXTURECUBE)
+        ok(work_item_hr == S_OK || (work_item_hr == E_FAIL
+                    && test_image[i].expected_info.ImageFileFormat == D3DX10_IFF_WMP),
+                "Got unexpected hr %#lx.\n", work_item_hr);
+        if (work_item_hr == S_OK)
+        {
+            check_resource_info(resource, test_image + i, __LINE__);
+            check_resource_data(resource, test_image + i, __LINE__);
+            ID3D10Resource_Release(resource);
+        }
+
+        winetest_pop_context();
+    }
+
+    ok(!ID3D10Device_Release(device), "Got unexpected refcount.\n");
+
+    ret = ID3DX10ThreadPump_Release(pump);
+    ok(!ret, "Got unexpected refcount %lu.\n", ret);
+}
+
 static void test_get_image_info(void)
 {
     static const WCHAR test_resource_name[] = L"resource.data";
@@ -3589,6 +3961,7 @@ START_TEST(d3dx10)
     test_D3DX10CreateAsyncResourceLoader();
     test_D3DX10CreateAsyncTextureInfoProcessor();
     test_D3DX10CreateAsyncTextureProcessor();
+    test_D3DX10CreateThreadPump();
     test_get_image_info();
     test_create_texture();
     test_font();
