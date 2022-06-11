@@ -631,17 +631,33 @@ HRESULT WINAPI D3DX10CreateTextureFromFileW(ID3D10Device *device, const WCHAR *s
     if (!src_file)
         return E_FAIL;
 
-    if (FAILED((hr = load_file(src_file, &buffer, &size))))
+    if (pump)
     {
-        if (hresult)
-            *hresult = hr;
+        ID3DX10DataProcessor *processor;
+        ID3DX10DataLoader *loader;
+
+        if (FAILED((hr = D3DX10CreateAsyncFileLoaderW(src_file, &loader))))
+            return hr;
+        if (FAILED((hr = D3DX10CreateAsyncTextureProcessor(device, load_info, &processor))))
+        {
+            ID3DX10DataLoader_Destroy(loader);
+            return hr;
+        }
+        if (FAILED((hr = ID3DX10ThreadPump_AddWorkItem(pump, loader, processor, hresult, (void **)texture))))
+        {
+            ID3DX10DataLoader_Destroy(loader);
+            ID3DX10DataProcessor_Destroy(processor);
+        }
         return hr;
     }
 
-    hr = D3DX10CreateTextureFromMemory(device, buffer, size, load_info, pump, texture, hresult);
-
-    free(buffer);
-
+    if (SUCCEEDED((hr = load_file(src_file, &buffer, &size))))
+    {
+        hr = create_texture(device, buffer, size, load_info, texture);
+        free(buffer);
+    }
+    if (hresult)
+        *hresult = hr;
     return hr;
 }
 
