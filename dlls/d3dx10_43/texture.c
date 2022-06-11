@@ -674,11 +674,32 @@ HRESULT WINAPI D3DX10CreateTextureFromResourceA(ID3D10Device *device, HMODULE mo
     if (!device)
         return E_INVALIDARG;
 
-    hr = load_resourceA(module, resource, &buffer, &size);
-    if (FAILED(hr))
-        return hr;
+    if (pump)
+    {
+        ID3DX10DataProcessor *processor;
+        ID3DX10DataLoader *loader;
 
-    return D3DX10CreateTextureFromMemory(device, buffer, size, load_info, pump, texture, hresult);
+        if (FAILED((hr = D3DX10CreateAsyncResourceLoaderA(module, resource, &loader))))
+            return hr;
+        if (FAILED((hr = D3DX10CreateAsyncTextureProcessor(device, load_info, &processor))))
+        {
+            ID3DX10DataLoader_Destroy(loader);
+            return hr;
+        }
+        if (FAILED((hr = ID3DX10ThreadPump_AddWorkItem(pump, loader, processor, hresult, (void **)texture))))
+        {
+            ID3DX10DataLoader_Destroy(loader);
+            ID3DX10DataProcessor_Destroy(processor);
+        }
+        return hr;
+    }
+
+    if (FAILED((hr = load_resourceA(module, resource, &buffer, &size))))
+        return hr;
+    hr = create_texture(device, buffer, size, load_info, texture);
+    if (hresult)
+        *hresult = hr;
+    return hr;
 }
 
 HRESULT WINAPI D3DX10CreateTextureFromResourceW(ID3D10Device *device, HMODULE module, const WCHAR *resource,
