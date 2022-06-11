@@ -1766,6 +1766,33 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
     case WM_SYSCOMMAND:
         result = handle_sys_command( hwnd, wparam, lparam );
         break;
+
+    case WM_KEYF1:
+        {
+            HELPINFO hi;
+
+            hi.cbSize = sizeof(HELPINFO);
+            get_cursor_pos( &hi.MousePos );
+            if (is_menu_active())
+            {
+                MENUINFO info = { .cbSize = sizeof(info), .fMask = MIM_HELPID };
+                hi.iContextType = HELPINFO_MENUITEM;
+                hi.hItemHandle = is_menu_active();
+                hi.iCtrlId = NtUserMenuItemFromPoint( hwnd, hi.hItemHandle,
+                                                      hi.MousePos.x, hi.MousePos.y );
+                get_menu_info( hi.hItemHandle, &info );
+                hi.dwContextId = info.dwContextHelpID;
+            }
+            else
+            {
+                hi.iContextType = HELPINFO_WINDOW;
+                hi.hItemHandle = hwnd;
+                hi.iCtrlId = get_window_long_ptr( hwnd, GWLP_ID, FALSE );
+                hi.dwContextId = get_window_context_help_id( hwnd );
+            }
+            send_message( hwnd, WM_HELP, 0, (LPARAM)&hi );
+            break;
+        }
     }
 
     return result;

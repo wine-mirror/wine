@@ -4524,7 +4524,7 @@ BOOL WINAPI NtUserFlashWindowEx( FLASHWINFO *info )
 }
 
 /* see GetWindowContextHelpId */
-static DWORD get_window_context_help_id( HWND hwnd )
+DWORD get_window_context_help_id( HWND hwnd )
 {
     DWORD retval;
     WND *win = get_win_ptr( hwnd );
@@ -4759,7 +4759,7 @@ BOOL WINAPI NtUserDestroyWindow( HWND hwnd )
 
     if (call_hooks( WH_CBT, HCBT_DESTROYWND, (WPARAM)hwnd, 0, TRUE )) return FALSE;
 
-    if (user_callbacks && user_callbacks->is_menu_active() == hwnd)
+    if (user_callbacks && is_menu_active() == hwnd)
         user_callbacks->pEndMenu();
 
     is_child = (get_window_long( hwnd, GWL_STYLE ) & WS_CHILD) != 0;

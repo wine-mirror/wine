@@ -2492,3 +2492,9 @@ LRESULT popup_menu_window_proc( HWND hwnd, UINT message, WPARAM wparam, LPARAM l
     }
     return 0;
 }
+
+HWND is_menu_active(void)
+{
+    if (!user_callbacks) return 0;
+    return user_callbacks->is_menu_active();
+}

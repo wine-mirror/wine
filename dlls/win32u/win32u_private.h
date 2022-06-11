@@ -402,6 +402,7 @@ extern BOOL get_menu_info( HMENU handle, MENUINFO *info ) DECLSPEC_HIDDEN;
 extern INT get_menu_item_count( HMENU handle ) DECLSPEC_HIDDEN;
 extern UINT get_menu_state( HMENU handle, UINT item_id, UINT flags ) DECLSPEC_HIDDEN;
 extern BOOL is_menu( HMENU handle ) DECLSPEC_HIDDEN;
+extern HWND is_menu_active(void) DECLSPEC_HIDDEN;
 extern LRESULT popup_menu_window_proc( HWND hwnd, UINT message, WPARAM wparam,
                                        LPARAM lparam ) DECLSPEC_HIDDEN;
 extern BOOL set_window_menu( HWND hwnd, HMENU handle ) DECLSPEC_HIDDEN;
@@ -463,6 +464,7 @@ extern HWND get_parent( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND get_hwnd_message_parent(void) DECLSPEC_HIDDEN;
 extern DPI_AWARENESS_CONTEXT get_window_dpi_awareness_context( HWND hwnd ) DECLSPEC_HIDDEN;
 extern MINMAXINFO get_min_max_info( HWND hwnd ) DECLSPEC_HIDDEN;
+extern DWORD get_window_context_help_id( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HWND get_window_relative( HWND hwnd, UINT rel ) DECLSPEC_HIDDEN;
 extern DWORD get_window_thread( HWND hwnd, DWORD *process ) DECLSPEC_HIDDEN;
 extern HWND is_current_process_window( HWND hwnd ) DECLSPEC_HIDDEN;
