@@ -609,3 +609,126 @@ HRESULT WINAPI D3DX10PreprocessShaderFromMemory(const char *data, SIZE_T data_si
 
     return E_NOTIMPL;
 }
+
+struct thread_pump
+{
+    ID3DX10ThreadPump ID3DX10ThreadPump_iface;
+    LONG refcount;
+};
+
+static inline struct thread_pump *impl_from_ID3DX10ThreadPump(ID3DX10ThreadPump *iface)
+{
+    return CONTAINING_RECORD(iface, struct thread_pump, ID3DX10ThreadPump_iface);
+}
+
+static HRESULT WINAPI thread_pump_QueryInterface(ID3DX10ThreadPump *iface, REFIID riid, void **out)
+{
+    TRACE("iface %p, riid %s, out %p.\n", iface, debugstr_guid(riid), out);
+
+    if (IsEqualGUID(riid, &IID_ID3DX10ThreadPump)
+            || IsEqualGUID(riid, &IID_IUnknown))
+    {
+        ID3DX10ThreadPump_AddRef(iface);
+        *out = iface;
+        return S_OK;
+    }
+
+    WARN("%s not implemented, returning E_NOINTERFACE.\n", debugstr_guid(riid));
+    *out = NULL;
+    return E_NOINTERFACE;
+}
+
+static ULONG WINAPI thread_pump_AddRef(ID3DX10ThreadPump *iface)
+{
+    struct thread_pump *thread_pump = impl_from_ID3DX10ThreadPump(iface);
+    ULONG refcount = InterlockedIncrement(&thread_pump->refcount);
+
+    TRACE("%p increasing refcount to %lu.\n", iface, refcount);
+
+    return refcount;
+}
+
+static ULONG WINAPI thread_pump_Release(ID3DX10ThreadPump *iface)
+{
+    struct thread_pump *thread_pump = impl_from_ID3DX10ThreadPump(iface);
+    ULONG refcount = InterlockedDecrement(&thread_pump->refcount);
+
+    TRACE("%p decreasing refcount to %lu.\n", iface, refcount);
+
+    if (!refcount)
+        free(thread_pump);
+
+    return refcount;
+}
+
+static HRESULT WINAPI thread_pump_AddWorkItem(ID3DX10ThreadPump *iface, ID3DX10DataLoader *loader,
+        ID3DX10DataProcessor *processor, HRESULT *result, void **object)
+{
+    FIXME("iface %p, loader %p, processor %p, result %p, object %p stub!\n",
+            iface, loader, processor, result, object);
+    return E_NOTIMPL;
+}
+
+static UINT WINAPI thread_pump_GetWorkItemCount(ID3DX10ThreadPump *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+    return 0;
+}
+
+static HRESULT WINAPI thread_pump_WaitForAllItems(ID3DX10ThreadPump *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI thread_pump_ProcessDeviceWorkItems(ID3DX10ThreadPump *iface, UINT count)
+{
+    FIXME("iface %p, count %u stub!\n", iface, count);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI thread_pump_PurgeAllItems(ID3DX10ThreadPump *iface)
+{
+    FIXME("iface %p stub!\n", iface);
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI thread_pump_GetQueueStatus(ID3DX10ThreadPump *iface,
+        UINT *io_queue, UINT *process_queue, UINT *device_queue)
+{
+    FIXME("iface %p, io_queue %p, process_queue %p, device_queue %p stub!\n",
+            iface, io_queue, process_queue, device_queue);
+    return E_NOTIMPL;
+}
+
+static const ID3DX10ThreadPumpVtbl thread_pump_vtbl =
+{
+    thread_pump_QueryInterface,
+    thread_pump_AddRef,
+    thread_pump_Release,
+    thread_pump_AddWorkItem,
+    thread_pump_GetWorkItemCount,
+    thread_pump_WaitForAllItems,
+    thread_pump_ProcessDeviceWorkItems,
+    thread_pump_PurgeAllItems,
+    thread_pump_GetQueueStatus
+};
+
+HRESULT WINAPI D3DX10CreateThreadPump(UINT io_threads, UINT proc_threads, ID3DX10ThreadPump **pump)
+{
+    struct thread_pump *object;
+
+    TRACE("io_threads %u, proc_threads %u, pump %p.\n", io_threads, proc_threads, pump);
+
+    if (io_threads >= 1024 || proc_threads >= 1024)
+        return E_FAIL;
+
+    if (!(object = calloc(1, sizeof(*object))))
+        return E_OUTOFMEMORY;
+
+    object->ID3DX10ThreadPump_iface.lpVtbl = &thread_pump_vtbl;
+    object->refcount = 1;
+
+    *pump = &object->ID3DX10ThreadPump_iface;
+    return S_OK;
+}

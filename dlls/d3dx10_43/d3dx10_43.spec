@@ -1,4 +1,4 @@
-@ stub D3DX10CreateThreadPump(long long ptr)
+@ stdcall D3DX10CreateThreadPump(long long ptr)
 @ stdcall D3DX10CheckVersion(long long)
 @ stub D3DX10CompileFromFileA(str ptr ptr str str long long ptr ptr ptr ptr)
 @ stub D3DX10CompileFromFileW(wstr ptr ptr str str long long ptr ptr ptr ptr)
