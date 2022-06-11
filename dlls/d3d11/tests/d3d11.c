@@ -2615,17 +2615,14 @@ static void test_texture1d_interfaces(void)
 
     hr = ID3D11Device_CreateTexture1D(device, &desc, NULL, &texture);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     test_dxgi_resource(texture);
     ID3D11Texture1D_Release(texture);
 
     desc.MipLevels = 0;
     hr = ID3D11Device_CreateTexture1D(device, &desc, NULL, &texture);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
-    todo_wine
     test_dxgi_resource(texture);
     check_interface(texture, &IID_IDXGISurface, FALSE, FALSE);
-    todo_wine
     check_interface(texture, &IID_IDXGIResource, TRUE, FALSE);
     hr = check_interface(texture, &IID_ID3D10Texture1D, TRUE, TRUE); /* Not available on all Windows versions. */
     ID3D11Texture1D_Release(texture);
@@ -3015,9 +3012,7 @@ static void test_texture2d_interfaces(void)
     hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     check_interface(texture, &IID_IDXGISurface, TRUE, FALSE);
-    todo_wine
     check_interface(texture, &IID_IDXGIResource, TRUE, FALSE);
-    todo_wine
     test_dxgi_resource(texture);
     ID3D11Texture2D_Release(texture);
 
@@ -3025,9 +3020,7 @@ static void test_texture2d_interfaces(void)
     hr = ID3D11Device_CreateTexture2D(device, &desc, NULL, &texture);
     ok(hr == S_OK, "Got unexpected hr %#lx.\n", hr);
     check_interface(texture, &IID_IDXGISurface, FALSE, FALSE);
-    todo_wine
     check_interface(texture, &IID_IDXGIResource, TRUE, FALSE);
-    todo_wine
     test_dxgi_resource(texture);
     hr = check_interface(texture, &IID_ID3D10Texture2D, TRUE, TRUE); /* Not available on all Windows versions. */
     ID3D11Texture2D_Release(texture);

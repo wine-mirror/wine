@@ -9,7 +9,7 @@ C_SRCS = \
 	dxgi_main.c \
 	factory.c \
 	output.c \
-	surface.c \
+	resource.c \
 	swapchain.c \
 	utils.c
 
