@@ -40,6 +40,15 @@ struct accelerator
     ACCEL              table[1];
 };
 
+enum hittest
+{
+    ht_nowhere,     /* outside the menu */
+    ht_border,      /* anywhere that's not an item or a scroll arrow */
+    ht_item,        /* a menu item */
+    ht_scroll_up,   /* scroll up arrow */
+    ht_scroll_down  /* scroll down arrow */
+};
+
 /* maximum allowed depth of any branch in the menu tree.
  * This value is slightly larger than in windows (25) to
  * stay on the safe side. */
@@ -422,6 +431,76 @@ static UINT find_submenu( HMENU *handle_ptr, HMENU target )
 
     release_menu_ptr( menu );
     return NO_SELECTED_ITEM;
+}
+
+/* Adjust menu item rectangle according to scrolling state */
+static void adjust_menu_item_rect( const POPUPMENU *menu, RECT *rect )
+{
+    INT scroll_offset = menu->bScrolling ? menu->nScrollPos : 0;
+    OffsetRect( rect, menu->items_rect.left, menu->items_rect.top - scroll_offset );
+}
+
+/***********************************************************************
+ *           find_item_by_coords
+ *
+ * Find the item at the specified coordinates (screen coords). Does
+ * not work for child windows and therefore should not be called for
+ * an arbitrary system menu.
+ *
+ * Returns a hittest code.  *pos will contain the position of the
+ * item or NO_SELECTED_ITEM.  If the hittest code is ht_scroll_up
+ * or ht_scroll_down then *pos will contain the position of the
+ * item that's just outside the items_rect - ie, the one that would
+ * be scrolled completely into view.
+ */
+static enum hittest find_item_by_coords( const POPUPMENU *menu, POINT pt, UINT *pos )
+{
+    enum hittest ht = ht_border;
+    MENUITEM *item;
+    RECT rect;
+    UINT i;
+
+    *pos = NO_SELECTED_ITEM;
+
+    if (!get_window_rect( menu->hWnd, &rect, get_thread_dpi() ) || !PtInRect( &rect, pt ))
+        return ht_nowhere;
+
+    if (get_window_long( menu->hWnd, GWL_EXSTYLE ) & WS_EX_LAYOUTRTL) pt.x = rect.right - 1 - pt.x;
+    else pt.x -= rect.left;
+    pt.y -= rect.top;
+
+    if (!PtInRect( &menu->items_rect, pt ))
+    {
+        if (!menu->bScrolling || pt.x < menu->items_rect.left || pt.x >= menu->items_rect.right)
+            return ht_border;
+
+        /* On a scroll arrow. Update pt so that it points to the item just outside items_rect */
+        if (pt.y < menu->items_rect.top)
+        {
+            ht = ht_scroll_up;
+            pt.y = menu->items_rect.top - 1;
+        }
+        else
+        {
+            ht = ht_scroll_down;
+            pt.y = menu->items_rect.bottom;
+        }
+    }
+
+    item = menu->items;
+    for (i = 0; i < menu->nItems; i++, item++)
+    {
+        rect = item->rect;
+        adjust_menu_item_rect( menu, &rect );
+        if (PtInRect( &rect, pt ))
+        {
+            *pos = i;
+            if (ht != ht_scroll_up && ht != ht_scroll_down) ht = ht_item;
+            break;
+        }
+    }
+
+    return ht;
 }
 
 /* see GetMenu */
@@ -1038,6 +1117,21 @@ static HMENU get_sub_menu( HMENU handle, INT pos )
 
     release_menu_ptr(menu);
     return submenu;
+}
+
+/**********************************************************************
+ *           NtUserMenuItemFromPoint    (win32u.@)
+ */
+INT WINAPI NtUserMenuItemFromPoint( HWND hwnd, HMENU handle, int x, int y )
+{
+    POINT pt = { .x = x, .y = y };
+    POPUPMENU *menu;
+    UINT pos;
+
+    if (!(menu = grab_menu_ptr(handle))) return -1;
+    if (find_item_by_coords( menu, pt, &pos ) != ht_item) pos = -1;
+    release_menu_ptr(menu);
+    return pos;
 }
 
 /**********************************************************************
@@ -1821,13 +1915,6 @@ got_bitmap:
         NtGdiGetAndSetDCDword( hdc, NtGdiSetBkColor, get_sys_color( COLOR_HIGHLIGHT ), NULL );
     NtGdiBitBlt( hdc, left, top, w, h, mem_hdc, bmp_xoffset, 0, rop, 0, 0 );
     NtGdiDeleteObjectApp( mem_hdc );
-}
-
-/* Adjust menu item rectangle according to scrolling state */
-static void adjust_menu_item_rect( const POPUPMENU *menu, RECT *rect )
-{
-    INT scroll_offset = menu->bScrolling ? menu->nScrollPos : 0;
-    OffsetRect( rect, menu->items_rect.left, menu->items_rect.top - scroll_offset );
 }
 
 /* Draw a single menu item */

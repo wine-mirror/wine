@@ -4321,19 +4321,9 @@ DWORD WINAPI GetMenuContextHelpId( HMENU menu )
 /**********************************************************************
  *         MenuItemFromPoint    (USER32.@)
  */
-INT WINAPI MenuItemFromPoint(HWND hWnd, HMENU hMenu, POINT ptScreen)
+INT WINAPI MenuItemFromPoint( HWND hwnd, HMENU menu, POINT pt )
 {
-    POPUPMENU *menu = grab_menu_ptr(hMenu);
-    UINT pos;
-
-    /*FIXME: Do we have to handle hWnd here? */
-    if (!menu) return -1;
-
-    if (MENU_FindItemByCoords( menu, ptScreen, &pos ) != ht_item)
-        pos = -1;
-
-    release_menu_ptr(menu);
-    return pos;
+    return NtUserMenuItemFromPoint( hwnd, menu, pt.x, pt.y );
 }
 
 

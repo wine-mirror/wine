@@ -1078,7 +1078,7 @@
 @ stub NtUserMapPointsByVisualIdentifier
 @ stdcall NtUserMapVirtualKeyEx(long long long)
 @ stub NtUserMarkWindowForRawMouse
-@ stub NtUserMenuItemFromPoint
+@ stdcall -syscall NtUserMenuItemFromPoint(long long long long)
 @ stdcall NtUserMessageCall(long long long long long long long)
 @ stub NtUserMinInitialize
 @ stub NtUserMinMaximize
