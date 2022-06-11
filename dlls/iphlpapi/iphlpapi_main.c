@@ -2326,6 +2326,13 @@ DWORD WINAPI GetIpNetTable( MIB_IPNETTABLE *table, ULONG *size, BOOL sort )
     }
 
     table->dwNumEntries = count;
+
+    if (!count)
+    {
+        err = ERROR_NO_DATA;
+        goto err;
+    }
+
     for (i = 0; i < count; i++)
     {
         MIB_IPNETROW *row = table->table + i;

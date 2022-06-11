@@ -388,11 +388,11 @@ static void testGetIpNetTable(void)
     else if (apiReturn == ERROR_INSUFFICIENT_BUFFER) {
         PMIB_IPNETTABLE buf = HeapAlloc(GetProcessHeap(), 0, dwSize);
 
+        memset(buf, 0xcc, dwSize);
         apiReturn = GetIpNetTable(buf, &dwSize, FALSE);
-        ok(apiReturn == NO_ERROR ||
-           apiReturn == ERROR_NO_DATA, /* empty ARP table's okay */
-           "GetIpNetTable(buf, &dwSize, FALSE) returned %ld, expected NO_ERROR\n",
-           apiReturn);
+        ok((apiReturn == NO_ERROR && buf->dwNumEntries) || (apiReturn == ERROR_NO_DATA && !buf->dwNumEntries),
+            "got apiReturn %lu, dwSize %lu, buf->dwNumEntries %lu.\n",
+            apiReturn, dwSize, buf->dwNumEntries);
 
         if (apiReturn == NO_ERROR && winetest_debug > 1)
         {
