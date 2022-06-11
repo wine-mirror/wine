@@ -23,3 +23,11 @@ extern HRESULT load_resourceW(HMODULE module, const WCHAR *resource,
         void **data, DWORD *size) DECLSPEC_HIDDEN;
 
 extern HRESULT get_image_info(const void *data, SIZE_T size, D3DX10_IMAGE_INFO *img_info) DECLSPEC_HIDDEN;
+
+extern void init_load_info(const D3DX10_IMAGE_LOAD_INFO *load_info,
+        D3DX10_IMAGE_LOAD_INFO *out) DECLSPEC_HIDDEN;
+/* Returns array of D3D10_SUBRESOURCE_DATA structures followed by textures data. */
+extern HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO *load_info,
+        D3D10_SUBRESOURCE_DATA **resource_data) DECLSPEC_HIDDEN;
+extern HRESULT create_d3d_texture(ID3D10Device *device, D3DX10_IMAGE_LOAD_INFO *load_info,
+        D3D10_SUBRESOURCE_DATA *resource_data, ID3D10Resource **texture) DECLSPEC_HIDDEN;

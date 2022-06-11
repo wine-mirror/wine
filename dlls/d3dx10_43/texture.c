@@ -571,6 +571,22 @@ HRESULT WINAPI D3DX10GetImageInfoFromMemory(const void *src_data, SIZE_T src_dat
     return hr;
 }
 
+static HRESULT create_texture(ID3D10Device *device, const void *data, SIZE_T size,
+        D3DX10_IMAGE_LOAD_INFO *load_info, ID3D10Resource **texture)
+{
+    D3D10_SUBRESOURCE_DATA *resource_data;
+    D3DX10_IMAGE_LOAD_INFO load_info_copy;
+    HRESULT hr;
+
+    init_load_info(load_info, &load_info_copy);
+
+    if (FAILED((hr = load_texture_data(data, size, &load_info_copy, &resource_data))))
+        return hr;
+    hr = create_d3d_texture(device, &load_info_copy, resource_data, texture);
+    free(resource_data);
+    return hr;
+}
+
 HRESULT WINAPI D3DX10CreateTextureFromFileA(ID3D10Device *device, const char *src_file,
         D3DX10_IMAGE_LOAD_INFO *load_info, ID3DX10ThreadPump *pump, ID3D10Resource **texture, HRESULT *hresult)
 {
@@ -669,56 +685,83 @@ HRESULT WINAPI D3DX10CreateTextureFromResourceW(ID3D10Device *device, HMODULE mo
     return D3DX10CreateTextureFromMemory(device, buffer, size, load_info, pump, texture, hresult);
 }
 
-HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *src_data, SIZE_T src_data_size,
-        D3DX10_IMAGE_LOAD_INFO *load_info, ID3DX10ThreadPump *pump, ID3D10Resource **texture, HRESULT *hresult)
+void init_load_info(const D3DX10_IMAGE_LOAD_INFO *load_info, D3DX10_IMAGE_LOAD_INFO *out)
+{
+    if (load_info)
+    {
+        *out = *load_info;
+        return;
+    }
+
+    out->Width = D3DX10_DEFAULT;
+    out->Height = D3DX10_DEFAULT;
+    out->Depth = D3DX10_DEFAULT;
+    out->FirstMipLevel = D3DX10_DEFAULT;
+    out->MipLevels = D3DX10_DEFAULT;
+    out->Usage = D3DX10_DEFAULT;
+    out->BindFlags = D3DX10_DEFAULT;
+    out->CpuAccessFlags = D3DX10_DEFAULT;
+    out->MiscFlags = D3DX10_DEFAULT;
+    out->Format = D3DX10_DEFAULT;
+    out->Filter = D3DX10_DEFAULT;
+    out->MipFilter = D3DX10_DEFAULT;
+    out->pSrcInfo = NULL;
+}
+
+HRESULT load_texture_data(const void *data, SIZE_T size, D3DX10_IMAGE_LOAD_INFO *load_info,
+        D3D10_SUBRESOURCE_DATA **resource_data)
 {
     unsigned int frame_count, width, height, stride, frame_size;
     IWICFormatConverter *converter = NULL;
     IWICDdsFrameDecode *dds_frame = NULL;
-    D3D10_TEXTURE2D_DESC texture_2d_desc;
-    D3D10_SUBRESOURCE_DATA resource_data;
     IWICBitmapFrameDecode *frame = NULL;
     IWICImagingFactory *factory = NULL;
     IWICBitmapDecoder *decoder = NULL;
-    ID3D10Texture2D *texture_2d;
+    BYTE *res_data = NULL, *buffer;
     D3DX10_IMAGE_INFO img_info;
     IWICStream *stream = NULL;
     const GUID *dst_format;
-    BYTE *buffer = NULL;
     BOOL can_convert;
     GUID src_format;
     HRESULT hr;
 
-    TRACE("device %p, src_data %p, src_data_size %Iu, load_info %p, pump %p, texture %p, hresult %p.\n",
-            device, src_data, src_data_size, load_info, pump, texture, hresult);
+    if (load_info->Width != D3DX10_DEFAULT)
+        FIXME("load_info->Width is ignored.\n");
+    if (load_info->Height != D3DX10_DEFAULT)
+        FIXME("load_info->Height is ignored.\n");
+    if (load_info->Depth != D3DX10_DEFAULT)
+        FIXME("load_info->Depth is ignored.\n");
+    if (load_info->FirstMipLevel != D3DX10_DEFAULT)
+        FIXME("load_info->FirstMipLevel is ignored.\n");
+    if (load_info->MipLevels != D3DX10_DEFAULT)
+        FIXME("load_info->MipLevels is ignored.\n");
+    if (load_info->Usage != D3DX10_DEFAULT)
+        FIXME("load_info->Usage is ignored.\n");
+    if (load_info->BindFlags != D3DX10_DEFAULT)
+        FIXME("load_info->BindFlags is ignored.\n");
+    if (load_info->CpuAccessFlags != D3DX10_DEFAULT)
+        FIXME("load_info->CpuAccessFlags is ignored.\n");
+    if (load_info->MiscFlags != D3DX10_DEFAULT)
+        FIXME("load_info->MiscFlags is ignored.\n");
+    if (load_info->Format != D3DX10_DEFAULT)
+        FIXME("load_info->Format is ignored.\n");
+    if (load_info->Filter != D3DX10_DEFAULT)
+        FIXME("load_info->Filter is ignored.\n");
+    if (load_info->MipFilter != D3DX10_DEFAULT)
+        FIXME("load_info->MipFilter is ignored.\n");
+    if (load_info->pSrcInfo)
+        FIXME("load_info->pSrcInfo is ignored.\n");
 
-    if (!device)
-        return E_INVALIDARG;
-    if (!src_data)
+    if (FAILED(D3DX10GetImageInfoFromMemory(data, size, NULL, &img_info, NULL)))
         return E_FAIL;
-    if (load_info)
-        FIXME("load_info is ignored.\n");
-    if (pump)
-        FIXME("Thread pump is not supported yet.\n");
-
-    if (FAILED(D3DX10GetImageInfoFromMemory(src_data, src_data_size, NULL, &img_info, NULL)))
-    {
-        if (hresult)
-            *hresult = E_FAIL;
-        return E_FAIL;
-    }
     if (img_info.MiscFlags & D3D10_RESOURCE_MISC_TEXTURECUBE)
     {
         FIXME("Cube map is not supported.\n");
-        if (hresult)
-            *hresult = E_FAIL;
         return E_FAIL;
     }
     if (img_info.ArraySize != 1)
     {
         FIXME("img_info.ArraySize = %u not supported.\n", img_info.ArraySize);
-        if (hresult)
-            *hresult = E_NOTIMPL;
         return E_NOTIMPL;
     }
 
@@ -726,7 +769,7 @@ HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *s
         goto end;
     if (FAILED(hr = IWICImagingFactory_CreateStream(factory, &stream)))
         goto end;
-    if (FAILED(hr = IWICStream_InitializeFromMemory(stream, (BYTE *)src_data, src_data_size)))
+    if (FAILED(hr = IWICStream_InitializeFromMemory(stream, (BYTE *)data, size)))
         goto end;
     if (FAILED(hr = IWICImagingFactory_CreateDecoderFromStream(factory, (IStream *)stream, NULL, 0, &decoder)))
         goto end;
@@ -747,11 +790,12 @@ HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *s
     stride = (width * get_bpp_from_format(img_info.Format) + 7) / 8;
     frame_size = stride * height;
 
-    if (!(buffer = malloc(frame_size)))
+    if (!(res_data = malloc(sizeof(**resource_data) + frame_size)))
     {
         hr = E_FAIL;
         goto end;
     }
+    buffer = res_data + sizeof(**resource_data);
 
     if (is_block_compressed(img_info.Format))
     {
@@ -794,25 +838,20 @@ HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *s
         }
     }
 
-    memset(&texture_2d_desc, 0, sizeof(texture_2d_desc));
-    texture_2d_desc.Width = width;
-    texture_2d_desc.Height = height;
-    texture_2d_desc.MipLevels = 1;
-    texture_2d_desc.ArraySize = img_info.ArraySize;
-    texture_2d_desc.Format = img_info.Format;
-    texture_2d_desc.SampleDesc.Count = 1;
-    texture_2d_desc.Usage = D3D10_USAGE_DEFAULT;
-    texture_2d_desc.BindFlags = D3D10_BIND_SHADER_RESOURCE;
-    texture_2d_desc.MiscFlags = img_info.MiscFlags;
+    load_info->Width = width;
+    load_info->Height = height;
+    load_info->MipLevels = 1;
+    load_info->Format = img_info.Format;
+    load_info->Usage = D3D10_USAGE_DEFAULT;
+    load_info->BindFlags = D3D10_BIND_SHADER_RESOURCE;
+    load_info->MiscFlags = img_info.MiscFlags;
 
-    resource_data.pSysMem = buffer;
-    resource_data.SysMemPitch = stride;
-    resource_data.SysMemSlicePitch = frame_size;
+    *resource_data = (D3D10_SUBRESOURCE_DATA *)res_data;
+    res_data = NULL;
+    (*resource_data)->pSysMem = buffer;
+    (*resource_data)->SysMemPitch = stride;
+    (*resource_data)->SysMemSlicePitch = frame_size;
 
-    if (FAILED(hr = ID3D10Device_CreateTexture2D(device, &texture_2d_desc, &resource_data, &texture_2d)))
-        goto end;
-
-    *texture = (ID3D10Resource *)texture_2d;
     hr = S_OK;
 
 end:
@@ -820,7 +859,7 @@ end:
         IWICFormatConverter_Release(converter);
     if (dds_frame)
         IWICDdsFrameDecode_Release(dds_frame);
-    free(buffer);
+    free(res_data);
     if (frame)
         IWICBitmapFrameDecode_Release(frame);
     if (decoder)
@@ -829,7 +868,50 @@ end:
         IWICStream_Release(stream);
     if (factory)
         IWICImagingFactory_Release(factory);
+    return hr;
+}
 
+HRESULT create_d3d_texture(ID3D10Device *device, D3DX10_IMAGE_LOAD_INFO *load_info,
+        D3D10_SUBRESOURCE_DATA *resource_data, ID3D10Resource **texture)
+{
+    D3D10_TEXTURE2D_DESC texture_2d_desc;
+    ID3D10Texture2D *texture_2d;
+    HRESULT hr;
+
+    memset(&texture_2d_desc, 0, sizeof(texture_2d_desc));
+    texture_2d_desc.Width = load_info->Width;
+    texture_2d_desc.Height = load_info->Height;
+    texture_2d_desc.MipLevels = load_info->MipLevels;
+    texture_2d_desc.ArraySize = 1;
+    texture_2d_desc.Format = load_info->Format;
+    texture_2d_desc.SampleDesc.Count = 1;
+    texture_2d_desc.Usage = load_info->Usage;
+    texture_2d_desc.BindFlags = load_info->BindFlags;
+    texture_2d_desc.MiscFlags = load_info->MiscFlags;
+
+    if (FAILED(hr = ID3D10Device_CreateTexture2D(device, &texture_2d_desc, resource_data, &texture_2d)))
+        return hr;
+
+    *texture = (ID3D10Resource *)texture_2d;
+    return S_OK;
+}
+
+HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *src_data, SIZE_T src_data_size,
+        D3DX10_IMAGE_LOAD_INFO *load_info, ID3DX10ThreadPump *pump, ID3D10Resource **texture, HRESULT *hresult)
+{
+    HRESULT hr;
+
+    TRACE("device %p, src_data %p, src_data_size %Iu, load_info %p, pump %p, texture %p, hresult %p.\n",
+            device, src_data, src_data_size, load_info, pump, texture, hresult);
+
+    if (!device)
+        return E_INVALIDARG;
+    if (!src_data)
+        return E_FAIL;
+    if (pump)
+        FIXME("Thread pump is not supported yet.\n");
+
+    hr = create_texture(device, src_data, src_data_size, load_info, texture);
     if (hresult)
         *hresult = hr;
     return hr;

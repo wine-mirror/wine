@@ -16,6 +16,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301, USA
  */
 
+#define COBJMACROS
 #include "d3d10_1.h"
 #include "d3dx10.h"
 #include "d3dcompiler.h"
@@ -315,6 +316,66 @@ static ID3DX10DataProcessorVtbl texture_info_processor_vtbl =
     texture_info_processor_Destroy
 };
 
+struct texture_processor
+{
+    ID3DX10DataProcessor ID3DX10DataProcessor_iface;
+    ID3D10Device *device;
+    D3DX10_IMAGE_LOAD_INFO load_info;
+    D3D10_SUBRESOURCE_DATA *resource_data;
+};
+
+static inline struct texture_processor *texture_processor_from_ID3DX10DataProcessor(ID3DX10DataProcessor *iface)
+{
+    return CONTAINING_RECORD(iface, struct texture_processor, ID3DX10DataProcessor_iface);
+}
+
+static HRESULT WINAPI texture_processor_Process(ID3DX10DataProcessor *iface, void *data, SIZE_T size)
+{
+    struct texture_processor *processor = texture_processor_from_ID3DX10DataProcessor(iface);
+
+    TRACE("iface %p, data %p, size %Iu.\n", iface, data, size);
+
+    if (processor->resource_data)
+    {
+        WARN("Called multiple times.\n");
+        free(processor->resource_data);
+        processor->resource_data = NULL;
+    }
+    return load_texture_data(data, size, &processor->load_info, &processor->resource_data);
+}
+
+static HRESULT WINAPI texture_processor_CreateDeviceObject(ID3DX10DataProcessor *iface, void **object)
+{
+    struct texture_processor *processor = texture_processor_from_ID3DX10DataProcessor(iface);
+
+    TRACE("iface %p, object %p.\n", iface, object);
+
+    if (!processor->resource_data)
+        return E_FAIL;
+
+    return create_d3d_texture(processor->device, &processor->load_info,
+            processor->resource_data, (ID3D10Resource **)object);
+}
+
+static HRESULT WINAPI texture_processor_Destroy(ID3DX10DataProcessor *iface)
+{
+    struct texture_processor *processor = texture_processor_from_ID3DX10DataProcessor(iface);
+
+    TRACE("iface %p.\n", iface);
+
+    ID3D10Device_Release(processor->device);
+    free(processor->resource_data);
+    free(processor);
+    return S_OK;
+}
+
+static ID3DX10DataProcessorVtbl texture_processor_vtbl =
+{
+    texture_processor_Process,
+    texture_processor_CreateDeviceObject,
+    texture_processor_Destroy
+};
+
 HRESULT WINAPI D3DX10CompileFromMemory(const char *data, SIZE_T data_size, const char *filename,
         const D3D10_SHADER_MACRO *defines, ID3D10Include *include, const char *entry_point,
         const char *target, UINT sflags, UINT eflags, ID3DX10ThreadPump *pump, ID3D10Blob **shader,
@@ -517,8 +578,24 @@ HRESULT WINAPI D3DX10CreateAsyncTextureInfoProcessor(D3DX10_IMAGE_INFO *info, ID
 HRESULT WINAPI D3DX10CreateAsyncTextureProcessor(ID3D10Device *device,
         D3DX10_IMAGE_LOAD_INFO *load_info, ID3DX10DataProcessor **processor)
 {
-    FIXME("device %p, load_info %p, processor %p stub!\n", device, load_info, processor);
-    return E_NOTIMPL;
+    struct texture_processor *object;
+
+    TRACE("device %p, load_info %p, processor %p.\n", device, load_info, processor);
+
+    if (!device || !processor)
+        return E_INVALIDARG;
+
+    object = calloc(1, sizeof(*object));
+    if (!object)
+        return E_OUTOFMEMORY;
+
+    object->ID3DX10DataProcessor_iface.lpVtbl = &texture_processor_vtbl;
+    object->device = device;
+    ID3D10Device_AddRef(device);
+    init_load_info(load_info, &object->load_info);
+
+    *processor = &object->ID3DX10DataProcessor_iface;
+    return S_OK;
 }
 
 HRESULT WINAPI D3DX10PreprocessShaderFromMemory(const char *data, SIZE_T data_size, const char *filename,
