@@ -4217,9 +4217,7 @@ static void subtest_InsertObject(struct reolecb_obj *callback)
   reobj.cbStruct = sizeof(reobj);
   hr = IRichEditOle_GetObject(reole, 0, &reobj, REO_GETOBJ_NO_INTERFACES);
   ok(hr == S_OK, "IRichEditOle_GetObject got hr %#lx.\n", hr);
-  todo_wine
   ok(reobj.sizel.cx == 800, "expected reobj.sizel.cx to be %ld, got %ld\n", 800L, reobj.sizel.cx);
-  todo_wine
   ok(reobj.sizel.cy == 400, "expected reobj.sizel.cy to be %ld, got %ld\n", 400L, reobj.sizel.cy);
   IOleClientSite_Release(clientsite);
 

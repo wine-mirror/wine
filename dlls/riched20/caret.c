@@ -464,12 +464,24 @@ HRESULT editor_insert_oleobj(ME_TextEditor *editor, const REOBJECT *reo)
   ME_Cursor *cursor, cursor_from_ofs;
   ME_Style *style;
   HRESULT hr;
+  SIZEL extent;
 
   if (editor->lpOleCallback)
   {
     hr = IRichEditOleCallback_QueryInsertObject(editor->lpOleCallback, (LPCLSID)&reo->clsid, reo->pstg, REO_CP_SELECTION);
     if (hr != S_OK)
       return hr;
+  }
+
+  extent = reo->sizel;
+  if (!extent.cx && !extent.cy && reo->poleobj)
+  {
+    hr = IOleObject_GetExtent( reo->poleobj, DVASPECT_CONTENT, &extent );
+    if (FAILED(hr))
+    {
+      extent.cx = 0;
+      extent.cy = 0;
+    }
   }
 
   if (reo->cp == REO_CP_SELECTION)
@@ -487,6 +499,7 @@ HRESULT editor_insert_oleobj(ME_TextEditor *editor, const REOBJECT *reo)
   run = run_insert( editor, cursor, style, &space, 1, MERF_GRAPHICS );
 
   run->reobj = create_re_object( reo, run );
+  run->reobj->obj.sizel = extent;
 
   prev = run;
   while ((prev = run_prev_all_paras( prev )))
