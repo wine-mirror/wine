@@ -714,6 +714,13 @@ HRESULT WINAPI D3DX10CreateTextureFromMemory(ID3D10Device *device, const void *s
             *hresult = E_FAIL;
         return E_FAIL;
     }
+    if (img_info.ArraySize != 1)
+    {
+        FIXME("img_info.ArraySize = %u not supported.\n", img_info.ArraySize);
+        if (hresult)
+            *hresult = E_NOTIMPL;
+        return E_NOTIMPL;
+    }
 
     if (FAILED(hr = WICCreateImagingFactory_Proxy(WINCODEC_SDK_VERSION, &factory)))
         goto end;
