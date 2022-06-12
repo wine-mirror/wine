@@ -43,7 +43,7 @@ static void d2d_effect_context_cleanup(struct d2d_effect_context *effect_context
         IUnknown_Release(effect_context->shaders[i].shader);
     heap_free(effect_context->shaders);
 
-    ID2D1DeviceContext_Release(&effect_context->device_context->ID2D1DeviceContext_iface);
+    ID2D1DeviceContext1_Release(&effect_context->device_context->ID2D1DeviceContext1_iface);
 }
 
 static HRESULT d2d_effect_context_add_shader(struct d2d_effect_context *effect_context,
@@ -116,7 +116,7 @@ static void STDMETHODCALLTYPE d2d_effect_context_GetDpi(ID2D1EffectContext *ifac
 
     TRACE("iface %p, dpi_x %p, dpi_y %p.\n", iface, dpi_x, dpi_y);
 
-    ID2D1DeviceContext_GetDpi(&effect_context->device_context->ID2D1DeviceContext_iface, dpi_x, dpi_y);
+    ID2D1DeviceContext1_GetDpi(&effect_context->device_context->ID2D1DeviceContext1_iface, dpi_x, dpi_y);
 }
 
 static HRESULT STDMETHODCALLTYPE d2d_effect_context_CreateEffect(ID2D1EffectContext *iface,
@@ -362,7 +362,7 @@ void d2d_effect_context_init(struct d2d_effect_context *effect_context, struct d
     effect_context->ID2D1EffectContext_iface.lpVtbl = &d2d_effect_context_vtbl;
     effect_context->refcount = 1;
     effect_context->device_context = device_context;
-    ID2D1DeviceContext_AddRef(&device_context->ID2D1DeviceContext_iface);
+    ID2D1DeviceContext1_AddRef(&device_context->ID2D1DeviceContext1_iface);
 }
 
 static inline struct d2d_effect *impl_from_ID2D1Effect(ID2D1Effect *iface)

@@ -154,7 +154,7 @@ enum d2d_device_context_sampler_limits
 
 struct d2d_device_context
 {
-    ID2D1DeviceContext ID2D1DeviceContext_iface;
+    ID2D1DeviceContext1 ID2D1DeviceContext1_iface;
     ID2D1GdiInteropRenderTarget ID2D1GdiInteropRenderTarget_iface;
     IDWriteTextRenderer IDWriteTextRenderer_iface;
     IUnknown IUnknown_iface;
