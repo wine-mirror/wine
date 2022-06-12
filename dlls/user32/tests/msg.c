@@ -9044,6 +9044,382 @@ static void test_paint_messages(void)
     DeleteObject( hrgn2 );
 }
 
+static void visualize_region_differences( HWND hwnd, HWND hother, HRGN hrgn_expect, HRGN hrgn_actual )
+{
+    HBRUSH b_expectonly, b_actualonly, b_intersect;
+    HRGN hrgn_intersect;
+    HWND hstatic, hshow, hhide;
+    HDC hdc, hdctmp;
+    HBITMAP hbitmap;
+    MSG msg;
+    RECT rect;
+    DWORD start_time, elapsed, timeout = 60 * 1000;
+    BOOL toggle = TRUE, stop = FALSE;
+
+    start_time = GetTickCount();
+
+    b_expectonly = CreateSolidBrush( RGB( 64, 64, 255 ));
+    b_actualonly = CreateSolidBrush( RGB( 255, 64, 64 ));
+    b_intersect = CreateSolidBrush( RGB( 159, 64, 159 ));
+
+    hrgn_intersect = CreateRectRgn( 0, 0, 0, 0 );
+    CombineRgn( hrgn_intersect, hrgn_expect, hrgn_actual, RGN_AND );
+
+    GetClientRect( hwnd, &rect );
+    hdc = GetDC( hwnd );
+    hbitmap = CreateCompatibleBitmap( hdc, rect.right, rect.bottom );
+    hdctmp = CreateCompatibleDC( hdc );
+    ReleaseDC( hwnd, hdc );
+
+    SelectObject( hdctmp, hbitmap );
+    FillRgn( hdctmp, hrgn_expect, b_expectonly );
+    FillRgn( hdctmp, hrgn_actual, b_actualonly );
+    FillRgn( hdctmp, hrgn_intersect, b_intersect );
+
+    DeleteObject( hdctmp );
+    DeleteObject( hrgn_intersect );
+    DeleteObject( b_intersect );
+    DeleteObject( b_actualonly );
+    DeleteObject( b_expectonly );
+
+    hstatic = CreateWindowExA( 0, WC_STATICA, "", WS_CHILD | SS_BITMAP,
+                              0, 0, rect.right, rect.bottom, hwnd, 0, 0, NULL );
+    SendMessageA( hstatic, STM_SETIMAGE, IMAGE_BITMAP, (LPARAM)hbitmap );
+
+    hshow = hstatic;
+    hhide = hother;
+
+    for (;;)
+    {
+        if (stop) toggle = hshow == hother;
+        if (toggle)
+        {
+            HWND htmp;
+            HDWP hdwp;
+
+            hdwp = BeginDeferWindowPos( !!hhide + !!hshow );
+            if (hhide)
+            {
+                DeferWindowPos( hdwp, hhide, NULL, 0, 0, 0, 0,
+                                SWP_HIDEWINDOW | SWP_NOSIZE | SWP_NOMOVE | SWP_NOZORDER );
+            }
+            if (hshow)
+            {
+                DeferWindowPos( hdwp, hshow, HWND_TOP, 0, 0, 0, 0,
+                                SWP_SHOWWINDOW | SWP_NOSIZE | SWP_NOMOVE );
+            }
+            EndDeferWindowPos( hdwp );
+
+            htmp = hshow;
+            hshow = hhide;
+            hhide = htmp;
+            toggle = FALSE;
+        }
+        if (stop) break;
+        if ((elapsed = GetTickCount() - start_time) >= timeout)
+        {
+            stop = TRUE;
+            continue;
+        }
+        MsgWaitForMultipleObjects( 0, NULL, FALSE, timeout - elapsed, QS_ALLINPUT );
+        while (PeekMessageA( &msg, 0, 0, 0, PM_REMOVE ))
+        {
+            TranslateMessage( &msg );
+            DispatchMessageA( &msg );
+            if (msg.message == WM_MOUSEMOVE)
+            {
+                start_time = GetTickCount();
+            }
+            else if (msg.message == WM_LBUTTONUP || (msg.message == WM_CHAR && msg.wParam == VK_SPACE))
+            {
+                toggle = !toggle;
+            }
+            else if (msg.message == WM_RBUTTONUP || (msg.message == WM_CHAR && msg.wParam == VK_RETURN))
+            {
+                stop = TRUE;
+            }
+        }
+    }
+
+    DestroyWindow( hstatic );
+    DeleteObject( hbitmap );
+}
+
+#define subtest_swp_paint_regions(w,p,c) subtest_swp_paint_regions_(__LINE__,w,p,c)
+
+static void subtest_swp_paint_regions_( int line, int wrap_toplevel, LPCSTR parent_class, LPCSTR child_class )
+{
+    static const struct exposure_test {
+        int ex_style, style;
+        BOOL shuffle_zorder;
+    } exposure_tests[] = {
+        {                0, WS_CLIPCHILDREN, FALSE },
+        {                0,               0, FALSE },
+        { WS_EX_COMPOSITED, WS_CLIPCHILDREN, TRUE  },
+        { WS_EX_COMPOSITED,               0, FALSE },
+        { WS_EX_COMPOSITED,               0, TRUE  },
+    };
+    size_t i;
+    HWND htoplevel = NULL, hparent, hchild, hauxchild;
+    const RECT rect_old = { 10, 10, 100, 100 };
+    HRGN hrgn_old_vis = CreateRectRgn( 0, 0, 0, 0 );
+    HRGN hrgn_new_vis = CreateRectRgn( 0, 0, 0, 0 );
+    HRGN hrgn_expect = CreateRectRgn( 0, 0, 0, 0 );
+    HRGN hrgn_actual = CreateRectRgn( 0, 0, 0, 0 );
+    HRGN hrgn_old_vis_child = CreateRectRgn( 0, 0, 0, 0 );
+    HRGN hrgn_new_vis_child = CreateRectRgn( 0, 0, 0, 0 );
+    HRGN hrgn_expect_child = CreateRectRgn( 0, 0, 0, 0 );
+    HRGN hrgn_actual_child = CreateRectRgn( 0, 0, 0, 0 );
+    int base_style;
+    BOOL is_composition_possible, has_parentdc_anomaly;
+    WNDCLASSA parent_wc;
+
+    if (wrap_toplevel)
+    {
+        htoplevel = CreateWindowExA( 0, "SimpleWindowClass", "Test toplevel", WS_OVERLAPPEDWINDOW | WS_VISIBLE,
+                                     100, 100, 400, 400, 0, 0, 0, NULL );
+        ok( htoplevel != 0, "Failed to create top-level window: %lu\n", GetLastError() );
+        base_style = WS_CHILD | WS_VISIBLE;
+    }
+    else
+    {
+        base_style = WS_OVERLAPPEDWINDOW | WS_VISIBLE;
+    }
+
+    ok( GetClassInfoA( GetModuleHandleA( NULL ), parent_class, &parent_wc ),
+        "GetClassInfoA failed\n" );
+
+    is_composition_possible = (base_style & (WS_POPUP|WS_CHILD)) != WS_CHILD ||
+                              (parent_wc.style & CS_PARENTDC) == 0;
+
+    has_parentdc_anomaly = (base_style & (WS_POPUP|WS_CHILD)) != WS_CHILD &&
+                           (parent_wc.style & CS_PARENTDC) != 0;
+
+    hparent = CreateWindowExA( 0, parent_class, "Test parent", base_style,
+                               80, 80, 200, 200, htoplevel, 0, 0, NULL );
+    ok( hparent != 0, "Creating parent window (%s) returned error %lu\n",
+        debugstr_a( parent_class ), GetLastError() );
+
+    hchild = CreateWindowExA( 0, child_class, "Test child", WS_CHILD | WS_VISIBLE | WS_BORDER,
+                              rect_old.left, rect_old.top,
+                              rect_old.right - rect_old.left, rect_old.bottom - rect_old.top,
+                              hparent, 0, 0, NULL );
+    ok( hchild != 0, "Creating child window (%s) returned error %lu\n",
+        debugstr_a( child_class ), GetLastError() );
+
+    hauxchild = CreateWindowExA( 0, child_class, "Auxiliary child for z order test", WS_CHILD | WS_VISIBLE,
+                                 110, 0, 0, 0, hparent, 0, 0, NULL );
+    ok( hauxchild != 0, "Creating child window (%s) returned error %lu\n",
+        debugstr_a( child_class ), GetLastError() );
+
+    for (i = 0; i < ARRAY_SIZE(exposure_tests); i++)
+    {
+        const struct exposure_test *extest = &exposure_tests[i];
+        BOOL has_ws_ex_composited = (extest->ex_style & WS_EX_COMPOSITED) != 0;
+        BOOL is_composited = is_composition_possible && has_ws_ex_composited;
+        BOOL is_zorder_redraw = is_composited && extest->shuffle_zorder;
+        int delta;
+
+        winetest_push_context( "%d: SetWindowPos redraw #%Id (ex_style = %#x, style = %#x, shuffle_zorder = %d)",
+                               line, i, extest->ex_style, extest->style, extest->shuffle_zorder );
+
+        SetWindowLongA( hparent, GWL_EXSTYLE, extest->ex_style );
+        SetWindowLongA( hparent, GWL_STYLE, base_style | extest->style );
+        RedrawWindow( hparent, NULL, NULL, RDW_INVALIDATE|RDW_ERASE|RDW_FRAME );
+
+        for (delta = -20; delta <= 0; delta += 20)
+        {
+            RECT rect_old_vis, rect_new, rect_new_vis;
+            RECT rect_parent_clip, rect_child_clip;
+            RECT rect_old_vis_child, rect_new_vis_child;
+            BOOL rgn_ok;
+
+            winetest_push_context( "delta = %+d", delta );
+
+            SetWindowPos( hchild, HWND_TOP,
+                          rect_old.left,
+                          rect_old.top,
+                          rect_old.right - rect_old.left,
+                          rect_old.bottom - rect_old.top,
+                          SWP_NOACTIVATE );
+
+            rect_new = rect_old;
+            OffsetRect( &rect_new, delta, delta );
+
+            rect_old_vis_child = rect_old;
+            MapWindowPoints( hparent, hchild, (POINT *)&rect_old_vis_child, 2 );
+
+            SetRectRgn( hrgn_actual, 0, 0, 0, 0 );
+            SetRectRgn( hrgn_actual_child, 0, 0, 0, 0 );
+
+            UpdateWindow( hparent );
+            flush_events();
+
+            if (extest->shuffle_zorder)
+            {
+                /* bring sibling to top/bottom first so we can trigger z-order change */
+                SetWindowPos( hauxchild, HWND_TOP, 0, 0, 0, 0,
+                              SWP_NOSIZE | SWP_NOMOVE | SWP_NOACTIVATE );
+            }
+
+            SetWindowPos( hchild, HWND_TOP,
+                          rect_new.left,
+                          rect_new.top,
+                          rect_new.right - rect_new.left,
+                          rect_new.bottom - rect_new.top,
+                          SWP_NOACTIVATE |
+                          (extest->shuffle_zorder ? 0 : SWP_NOZORDER) );
+
+            ok( GetUpdateRgn( hparent, hrgn_actual, FALSE ) != ERROR,
+                "GetUpdateRgn on parentshall succeed\n" );
+            ok( GetUpdateRgn( hchild, hrgn_actual_child, FALSE ) != ERROR,
+                "GetUpdateRgn on child shall succeed\n" );
+
+            /* Compute parent window expose region */
+            GetClientRect( hparent, &rect_parent_clip );
+            IntersectRect( &rect_old_vis, &rect_old, &rect_parent_clip );
+            SetRectRgn( hrgn_old_vis, rect_old_vis.left, rect_old_vis.top, rect_old_vis.right, rect_old_vis.bottom );
+            IntersectRect( &rect_new_vis, &rect_new, &rect_parent_clip );
+            SetRectRgn( hrgn_new_vis, rect_new_vis.left, rect_new_vis.top, rect_new_vis.right, rect_new_vis.bottom );
+
+            if (!EqualRect( &rect_old, &rect_new ) || is_zorder_redraw)
+            {
+                CombineRgn( hrgn_expect, hrgn_old_vis, hrgn_new_vis, is_composited ? RGN_OR : RGN_DIFF );
+            }
+            else
+            {
+                SetRectRgn( hrgn_expect, 0, 0, 0, 0 );
+            }
+
+            rgn_ok = EqualRgn( hrgn_expect, hrgn_actual );
+            if (!rgn_ok && broken( has_parentdc_anomaly && is_composited /* Win7 */ ))
+            {
+                if (winetest_debug > 1)
+                {
+                    trace( "Forcing non-composited update region (broken)\n" );
+                }
+                rgn_ok = 1;
+            }
+            else
+            {
+                todo_wine_if( EqualRect( &rect_old, &rect_new ) ? is_zorder_redraw :
+                              ((extest->style & WS_CLIPCHILDREN) == 0 || is_composited) )
+                ok( !!rgn_ok, "Parent update region shall match expected region\n" );
+            }
+
+            if (!rgn_ok && winetest_debug > 1)
+            {
+                trace( "Expected parent update region: " );
+                dump_region( hrgn_expect );
+                trace( "Actual parent update region: " );
+                dump_region( hrgn_actual );
+                trace( "Old child window visible area: %s\n", wine_dbgstr_rect( &rect_old_vis ) );
+                trace( "New child window visible area: %s\n", wine_dbgstr_rect( &rect_new_vis ) );
+            }
+
+            if (winetest_interactive)
+            {
+                if (!rgn_ok)
+                {
+                    visualize_region_differences( hparent, hchild, hrgn_expect, hrgn_actual );
+                }
+
+                /* Let the position change be visible to the user */
+                flush_events();
+            }
+
+            rect_new_vis_child = rect_new;
+            MapWindowPoints( hparent, hchild, (POINT *)&rect_new_vis_child, 2 );
+
+            /* Compute child window expose region */
+            GetClientRect( hchild, &rect_child_clip );
+            if (is_composited)
+            {
+                RECT rect_outer_clip;
+                GetClientRect( hparent, &rect_outer_clip );
+                MapWindowPoints( hparent, hchild, (POINT *)&rect_outer_clip, 2 );
+                IntersectRect( &rect_child_clip, &rect_child_clip, &rect_outer_clip );
+            }
+            IntersectRect( &rect_old_vis_child, &rect_old_vis_child, &rect_child_clip );
+            SetRectRgn( hrgn_old_vis_child, rect_old_vis_child.left, rect_old_vis_child.top, rect_old_vis_child.right, rect_old_vis_child.bottom );
+            IntersectRect( &rect_new_vis_child, &rect_new_vis_child, &rect_child_clip );
+            SetRectRgn( hrgn_new_vis_child, rect_new_vis_child.left, rect_new_vis_child.top, rect_new_vis_child.right, rect_new_vis_child.bottom );
+
+            if (!EqualRect( &rect_old, &rect_new ) || is_zorder_redraw)
+            {
+                CombineRgn( hrgn_expect_child, hrgn_new_vis_child, hrgn_old_vis_child, is_composited ? RGN_OR : RGN_DIFF );
+            }
+            else
+            {
+                SetRectRgn( hrgn_expect_child, 0, 0, 0, 0 );
+            }
+
+            rgn_ok = EqualRgn( hrgn_expect_child, hrgn_actual_child );
+            if (!rgn_ok && broken( has_parentdc_anomaly && is_composited /* Win7 */ ))
+            {
+                if (winetest_debug > 1)
+                {
+                    trace( "Forcing non-composited update region (broken)\n" );
+                }
+                rgn_ok = 1;
+            }
+            else
+            {
+                todo_wine_if( EqualRect( &rect_old, &rect_new ) ? is_zorder_redraw :
+                              ((extest->style & WS_CLIPCHILDREN) == 0 || is_composited) )
+                ok( !!rgn_ok, "Child update region shall match expected region\n" );
+            }
+
+            if (!rgn_ok && winetest_debug > 1)
+            {
+                trace( "Expected child update region: " );
+                dump_region( hrgn_expect_child );
+                trace( "Actual child update region: " );
+                dump_region( hrgn_actual_child );
+                trace( "Old child window client visible area: %s\n", wine_dbgstr_rect( &rect_old_vis_child ) );
+                trace( "New child window client visible area: %s\n", wine_dbgstr_rect( &rect_new_vis_child ) );
+            }
+
+            if (winetest_interactive)
+            {
+                if (!rgn_ok)
+                {
+                    visualize_region_differences( hchild, NULL, hrgn_expect_child, hrgn_actual_child );
+                }
+
+                /* Let the position change be visible to the user */
+                flush_events();
+            }
+
+            winetest_pop_context();
+        }
+
+        winetest_pop_context();
+    }
+
+    DestroyWindow( hauxchild );
+    DestroyWindow( hchild );
+    DestroyWindow( hparent );
+    if (htoplevel) DestroyWindow( htoplevel );
+
+    DeleteObject( hrgn_actual_child );
+    DeleteObject( hrgn_expect_child );
+    DeleteObject( hrgn_new_vis_child );
+    DeleteObject( hrgn_old_vis_child );
+    DeleteObject( hrgn_actual );
+    DeleteObject( hrgn_expect );
+    DeleteObject( hrgn_new_vis );
+    DeleteObject( hrgn_old_vis );
+}
+
+static void test_swp_paint_regions(void)
+{
+    subtest_swp_paint_regions( 1, "SimpleWindowClass", "SimpleWindowClass" );
+    subtest_swp_paint_regions( 0, "SimpleWindowClass", "SimpleWindowClass" );
+    subtest_swp_paint_regions( 0, "SimpleWindowClass", "SimpleWindowClassWithParentDC" );
+    subtest_swp_paint_regions( 0, "SimpleWindowClassWithParentDC", "SimpleWindowClass" );
+}
+
 struct wnd_event
 {
     HWND hwnd;
@@ -10387,6 +10763,11 @@ static BOOL RegisterWindowClasses(void)
     cls.hbrBackground = 0;
     cls.lpfnWndProc = TestDlgProcA;
     cls.lpszClassName = "TestDialogClass";
+    if(!RegisterClassA(&cls)) return FALSE;
+
+    cls.lpfnWndProc = DefWindowProcA;
+    cls.style = CS_PARENTDC;
+    cls.lpszClassName = "SimpleWindowClassWithParentDC";
     if(!RegisterClassA(&cls)) return FALSE;
 
     clsW.style = 0;
@@ -19111,6 +19492,7 @@ START_TEST(msg)
     test_combobox_messages();
     test_wmime_keydown_message();
     test_paint_messages();
+    test_swp_paint_regions();
     test_interthread_messages();
     test_message_conversion();
     test_accelerators();
