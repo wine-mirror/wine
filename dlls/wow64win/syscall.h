@@ -101,6 +101,7 @@
     SYSCALL_ENTRY( NtUserCreateWindowStation ) \
     SYSCALL_ENTRY( NtUserDeleteMenu ) \
     SYSCALL_ENTRY( NtUserDestroyAcceleratorTable ) \
+    SYSCALL_ENTRY( NtUserEndMenu ) \
     SYSCALL_ENTRY( NtUserFindExistingCursorIcon ) \
     SYSCALL_ENTRY( NtUserFindWindowEx ) \
     SYSCALL_ENTRY( NtUserGetAncestor ) \

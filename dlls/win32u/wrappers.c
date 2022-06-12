@@ -981,6 +981,12 @@ INT WINAPI NtUserGetKeyNameText( LONG lparam, WCHAR *buffer, INT size )
     return unix_funcs->pNtUserGetKeyNameText( lparam, buffer, size );
 }
 
+BOOL WINAPI NtUserGetMenuBarInfo( HWND hwnd, LONG id, LONG item, MENUBARINFO *info )
+{
+    if (!unix_funcs) return 0;
+    return unix_funcs->pNtUserGetMenuBarInfo( hwnd, id, item, info );
+}
+
 BOOL WINAPI NtUserGetMessage( MSG *msg, HWND hwnd, UINT first, UINT last )
 {
     if (!unix_funcs) return FALSE;
@@ -1009,6 +1015,12 @@ BOOL WINAPI NtUserHideCaret( HWND hwnd )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserHideCaret( hwnd );
+}
+
+BOOL WINAPI NtUserHiliteMenuItem( HWND hwnd, HMENU handle, UINT item, UINT hilite )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserHiliteMenuItem( hwnd, handle, item, hilite );
 }
 
 BOOL WINAPI NtUserMoveWindow( HWND hwnd, INT x, INT y, INT cx, INT cy, BOOL repaint )
@@ -1350,6 +1362,13 @@ BOOL WINAPI NtUserTrackMouseEvent( TRACKMOUSEEVENT *info )
 {
     if (!unix_funcs) return FALSE;
     return unix_funcs->pNtUserTrackMouseEvent( info );
+}
+
+BOOL WINAPI NtUserTrackPopupMenuEx( HMENU handle, UINT flags, INT x, INT y, HWND hwnd,
+                                    TPMPARAMS *params )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserTrackPopupMenuEx( handle, flags, x, y, hwnd, params );
 }
 
 INT WINAPI NtUserTranslateAccelerator( HWND hwnd, HACCEL accel, MSG *msg )

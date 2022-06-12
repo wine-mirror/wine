@@ -32,6 +32,7 @@
 #include "user_private.h"
 #include "win.h"
 #include "wine/debug.h"
+#include "wine/exception.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(graphics);
 WINE_DECLARE_DEBUG_CHANNEL(message);
@@ -139,16 +140,26 @@ static void CDECL free_win_ptr( WND *win )
     HeapFree( GetProcessHeap(), 0, win->pScroll );
 }
 
+static NTSTATUS try_finally( NTSTATUS (CDECL *func)( void *), void *arg,
+                             void (CALLBACK *finally_func)( BOOL ))
+{
+    NTSTATUS status;
+    __TRY
+    {
+        status = func( arg );
+    }
+    __FINALLY( finally_func );
+    return status;
+}
+
 static const struct user_callbacks user_funcs =
 {
-    EndMenu,
     ImmProcessKey,
     ImmTranslateMessage,
     NtWaitForMultipleObjects,
     SCROLL_DrawNCScrollBar,
     free_win_ptr,
     MENU_GetSysMenu,
-    MENU_IsMenuActive,
     notify_ime,
     post_dde_message,
     process_rawinput_message,
@@ -157,6 +168,7 @@ static const struct user_callbacks user_funcs =
     unpack_dde_message,
     register_imm,
     unregister_imm,
+    try_finally,
 };
 
 static NTSTATUS WINAPI User32CopyImage( const struct copy_image_params *params, ULONG size )

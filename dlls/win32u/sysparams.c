@@ -4663,7 +4663,7 @@ ULONG WINAPI NtUserGetProcessDpiAwarenessContext( HANDLE process )
     return dpi_awareness;
 }
 
-static BOOL message_beep( UINT i )
+BOOL message_beep( UINT i )
 {
     BOOL active = TRUE;
     NtUserSystemParametersInfo( SPI_GETBEEP, 0, &active, FALSE );

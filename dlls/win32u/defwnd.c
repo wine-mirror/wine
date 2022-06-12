@@ -850,6 +850,14 @@ static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
         NtUserShowWindow( hwnd, SW_MAXIMIZE );
         break;
 
+    case SC_MOUSEMENU:
+        track_mouse_menu_bar( hwnd, wparam & 0x000F, (short)LOWORD(lparam), (short)HIWORD(lparam) );
+        break;
+
+    case SC_KEYMENU:
+        track_keyboard_menu_bar( hwnd, wparam, lparam );
+        break;
+
     case SC_RESTORE:
         if (is_iconic( hwnd )) show_owned_popups( hwnd, TRUE );
         NtUserShowWindow( hwnd, SW_RESTORE );
@@ -890,6 +898,21 @@ static void get_inside_rect( HWND hwnd, enum coords_relative relative, RECT *rec
             InflateRect( rect, -get_system_metrics( SM_CXEDGE ), -get_system_metrics( SM_CYEDGE ));
         if (ex_style & WS_EX_STATICEDGE)
             InflateRect( rect, -get_system_metrics( SM_CXBORDER ), -get_system_metrics( SM_CYBORDER ));
+    }
+}
+
+void get_sys_popup_pos( HWND hwnd, RECT *rect )
+{
+    if (is_iconic(hwnd)) get_window_rect( hwnd, rect, get_thread_dpi() );
+    else
+    {
+        DWORD style = get_window_long( hwnd, GWL_STYLE );
+        DWORD ex_style = get_window_long( hwnd, GWL_EXSTYLE );
+
+        get_inside_rect( hwnd, COORDS_CLIENT, rect, style, ex_style );
+        rect->right = rect->left + get_system_metrics( SM_CYCAPTION ) - 1;
+        rect->bottom = rect->top + get_system_metrics( SM_CYCAPTION ) - 1;
+        map_window_points( hwnd, 0, (POINT *)rect, 2, get_thread_dpi() );
     }
 }
 
@@ -1621,7 +1644,7 @@ static void handle_nc_calc_size( HWND hwnd, WPARAM wparam, RECT *win_rect )
     }
 }
 
-static LRESULT handle_nc_hit_test( HWND hwnd, POINT pt )
+LRESULT handle_nc_hit_test( HWND hwnd, POINT pt )
 {
     RECT rect, client_rect;
     DWORD style, ex_style;
@@ -2127,6 +2150,11 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
         }
 
     case WM_GETDLGCODE:
+        break;
+
+    case WM_CANCELMODE:
+        end_menu( hwnd );
+        if (get_capture() == hwnd) release_capture();
         break;
 
     case WM_SETTEXT:

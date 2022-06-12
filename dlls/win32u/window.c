@@ -4759,8 +4759,7 @@ BOOL WINAPI NtUserDestroyWindow( HWND hwnd )
 
     if (call_hooks( WH_CBT, HCBT_DESTROYWND, (WPARAM)hwnd, 0, TRUE )) return FALSE;
 
-    if (user_callbacks && is_menu_active() == hwnd)
-        user_callbacks->pEndMenu();
+    if (is_menu_active() == hwnd) NtUserEndMenu();
 
     is_child = (get_window_long( hwnd, GWL_STYLE ) & WS_CHILD) != 0;
 
@@ -5504,9 +5503,6 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
     /* temporary exports */
     case NtUserIsWindowDrawable:
         return is_window_drawable( hwnd, param );
-
-    case NtUserSetCaptureWindow:
-        return set_capture_window( hwnd, param, NULL );
 
     case NtUserSetWindowStyle:
         {

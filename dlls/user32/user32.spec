@@ -210,7 +210,7 @@
 @ stdcall EnableWindow(long long)
 @ stdcall EndDeferWindowPos(long)
 @ stdcall EndDialog(long long)
-@ stdcall EndMenu()
+@ stdcall EndMenu() NtUserEndMenu
 @ stdcall EndPaint(long ptr) NtUserEndPaint
 @ stub EndTask
 # @ stub EnterReaderModeHelper
@@ -328,7 +328,7 @@
 @ stdcall GetLayeredWindowAttributes(long ptr ptr ptr) NtUserGetLayeredWindowAttributes
 @ stdcall GetListBoxInfo(long)
 @ stdcall GetMenu(long)
-@ stdcall GetMenuBarInfo(long long long ptr)
+@ stdcall GetMenuBarInfo(long long long ptr) NtUserGetMenuBarInfo
 @ stdcall GetMenuCheckMarkDimensions()
 @ stdcall GetMenuContextHelpId(long)
 @ stdcall GetMenuDefaultItem(long long long)
@@ -426,7 +426,7 @@
 @ stdcall GrayStringW(long long ptr long long long long long long)
 # @ stub HasSystemSleepStarted
 @ stdcall HideCaret(long) NtUserHideCaret
-@ stdcall HiliteMenuItem(long long long long)
+@ stdcall HiliteMenuItem(long long long long) NtUserHiliteMenuItem
 # @ stub IMPGetIMEA
 # @ stub IMPGetIMEW
 # @ stub IMPQueryIMEA
@@ -764,7 +764,7 @@
 @ stdcall ToUnicodeEx(long long ptr ptr long long long) NtUserToUnicodeEx
 @ stdcall TrackMouseEvent(ptr) NtUserTrackMouseEvent
 @ stdcall TrackPopupMenu(long long long long long long ptr)
-@ stdcall TrackPopupMenuEx(long long long long long ptr)
+@ stdcall TrackPopupMenuEx(long long long long long ptr) NtUserTrackPopupMenuEx
 @ stdcall TranslateAccelerator(long long ptr) TranslateAcceleratorA
 @ stdcall TranslateAcceleratorA(long long ptr)
 @ stdcall TranslateAcceleratorW(long long ptr) NtUserTranslateAccelerator

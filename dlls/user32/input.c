@@ -86,16 +86,6 @@ static HKL get_locale_kbd_layout(void)
 }
 
 
-/**********************************************************************
- *		set_capture_window
- */
-BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret )
-{
-    /* FIXME: move callers to win32u or use NtUserSetCapture */
-    return NtUserCallHwndParam( hwnd, gui_flags, NtUserSetCaptureWindow );
-}
-
-
 /***********************************************************************
  *		keybd_event (USER32.@)
  */

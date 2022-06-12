@@ -595,35 +595,6 @@ LRESULT NC_HandleNCMouseLeave(HWND hwnd)
     return 0;
 }
 
-/******************************************************************************
- *
- *   NC_DrawSysButton
- *
- *   Draws the system icon.
- *
- *****************************************************************************/
-BOOL NC_DrawSysButton (HWND hwnd, HDC hdc, BOOL down)
-{
-    HICON hIcon = NC_IconForWindow( hwnd );
-
-    if (hIcon)
-    {
-        RECT rect;
-        POINT pt;
-        DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
-        DWORD ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
-
-        NC_GetInsideRect( hwnd, COORDS_WINDOW, &rect, style, ex_style );
-        pt.x = rect.left + 2;
-        pt.y = rect.top + (GetSystemMetrics(SM_CYCAPTION) - GetSystemMetrics(SM_CYSMICON)) / 2;
-        NtUserDrawIconEx( hdc, pt.x, pt.y, hIcon,
-                          GetSystemMetrics(SM_CXSMICON),
-                          GetSystemMetrics(SM_CYSMICON), 0, 0, DI_NORMAL );
-    }
-    return (hIcon != 0);
-}
-
-
 /***********************************************************************
  *           NC_HandleSetCursor
  *
@@ -675,23 +646,6 @@ LRESULT NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
     return (LRESULT)NtUserSetCursor( LoadCursorA( 0, (LPSTR)IDC_ARROW ) );
 }
 
-/***********************************************************************
- *           NC_GetSysPopupPos
- */
-void NC_GetSysPopupPos( HWND hwnd, RECT* rect )
-{
-    if (IsIconic(hwnd)) GetWindowRect( hwnd, rect );
-    else
-    {
-        DWORD style = GetWindowLongW( hwnd, GWL_STYLE );
-        DWORD ex_style = GetWindowLongW( hwnd, GWL_EXSTYLE );
-
-        NC_GetInsideRect( hwnd, COORDS_CLIENT, rect, style, ex_style );
-        rect->right = rect->left + GetSystemMetrics(SM_CYCAPTION) - 1;
-        rect->bottom = rect->top + GetSystemMetrics(SM_CYCAPTION) - 1;
-        MapWindowPoints( hwnd, 0, (POINT *)rect, 2 );
-    }
-}
 
 
 /***********************************************************************
@@ -793,19 +747,6 @@ LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
             pt.y = (short)HIWORD(lParam);
             NC_TrackScrollBar( hwnd, wParam, pt );
         }
-        break;
-
-    case SC_MOUSEMENU:
-        {
-            POINT pt;
-            pt.x = (short)LOWORD(lParam);
-            pt.y = (short)HIWORD(lParam);
-            MENU_TrackMouseMenuBar( hwnd, wParam & 0x000F, pt );
-        }
-        break;
-
-    case SC_KEYMENU:
-        MENU_TrackKbdMenuBar( hwnd, wParam, (WCHAR)lParam );
         break;
 
     case SC_TASKLIST:

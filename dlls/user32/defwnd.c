@@ -359,8 +359,7 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
 
     case WM_CANCELMODE:
         iMenuSysKey = 0;
-        MENU_EndMenu( hwnd );
-        if (GetCapture() == hwnd) ReleaseCapture();
+        NtUserMessageCall( hwnd, msg, wParam, lParam, 0, NtUserDefWindowProc, FALSE );
         break;
 
     case WM_VKEYTOITEM:

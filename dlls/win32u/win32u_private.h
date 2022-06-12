@@ -241,6 +241,7 @@ struct unix_funcs
                                            UNICODE_STRING *res_name, DWORD *bpp, LONG unk );
     INT      (WINAPI *pNtUserGetKeyNameText)( LONG lparam, WCHAR *buffer, INT size );
     UINT     (WINAPI *pNtUserGetKeyboardLayoutList)( INT size, HKL *layouts );
+    BOOL     (WINAPI *pNtUserGetMenuBarInfo)( HWND hwnd, LONG id, LONG item, MENUBARINFO *info );
     BOOL     (WINAPI *pNtUserGetMessage)( MSG *msg, HWND hwnd, UINT first, UINT last );
     INT      (WINAPI *pNtUserGetPriorityClipboardFormat)( UINT *list, INT count );
     DWORD    (WINAPI *pNtUserGetQueueStatus)( UINT flags );
@@ -250,6 +251,7 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserGetUpdatedClipboardFormats)( UINT *formats, UINT size, UINT *out_size );
     BOOL     (WINAPI *pNtUserGetWindowPlacement)( HWND hwnd, WINDOWPLACEMENT *placement );
     BOOL     (WINAPI *pNtUserHideCaret)( HWND hwnd );
+    BOOL     (WINAPI *pNtUserHiliteMenuItem)( HWND hwnd, HMENU handle, UINT item, UINT hilite );
     HICON    (WINAPI *pNtUserInternalGetWindowIcon)( HWND hwnd, UINT type );
     BOOL     (WINAPI *pNtUserInvalidateRect)( HWND hwnd, const RECT *rect, BOOL erase );
     BOOL     (WINAPI *pNtUserInvalidateRgn)( HWND hwnd, HRGN hrgn, BOOL erase );
@@ -313,6 +315,8 @@ struct unix_funcs
     INT      (WINAPI *pNtUserToUnicodeEx)( UINT virt, UINT scan, const BYTE *state,
                                            WCHAR *str, int size, UINT flags, HKL layout );
     BOOL     (WINAPI *pNtUserTrackMouseEvent)( TRACKMOUSEEVENT *info );
+    BOOL     (WINAPI *pNtUserTrackPopupMenuEx)( HMENU handle, UINT flags, INT x, INT y, HWND hwnd,
+                                                TPMPARAMS *params );
     INT      (WINAPI *pNtUserTranslateAccelerator)( HWND hwnd, HACCEL accel, MSG *msg );
     BOOL     (WINAPI *pNtUserTranslateMessage)( const MSG *msg, UINT flags );
     BOOL     (WINAPI *pNtUserUnregisterClass)( UNICODE_STRING *name, HINSTANCE instance,
@@ -373,6 +377,8 @@ extern BOOL draw_frame_menu( HDC dc, RECT *r, UINT flags ) DECLSPEC_HIDDEN;
 extern BOOL draw_nc_sys_button( HWND hwnd, HDC hdc, BOOL down ) DECLSPEC_HIDDEN;
 extern BOOL draw_rect_edge( HDC hdc, RECT *rc, UINT uType, UINT uFlags, UINT width ) DECLSPEC_HIDDEN;
 extern void fill_rect( HDC dc, const RECT *rect, HBRUSH hbrush ) DECLSPEC_HIDDEN;
+extern void get_sys_popup_pos( HWND hwnd, RECT *rect ) DECLSPEC_HIDDEN;
+extern LRESULT handle_nc_hit_test( HWND hwnd, POINT pt ) DECLSPEC_HIDDEN;
 
 /* hook.c */
 extern LRESULT call_current_hook( HHOOK hhook, INT code, WPARAM wparam, LPARAM lparam ) DECLSPEC_HIDDEN;
@@ -398,6 +404,8 @@ extern void update_mouse_tracking_info( HWND hwnd ) DECLSPEC_HIDDEN;
 /* menu.c */
 extern HMENU create_menu( BOOL is_popup ) DECLSPEC_HIDDEN;
 extern BOOL draw_menu_bar( HWND hwnd ) DECLSPEC_HIDDEN;
+extern UINT draw_nc_menu_bar( HDC hdc, RECT *rect, HWND hwnd ) DECLSPEC_HIDDEN;
+extern void end_menu( HWND hwnd ) DECLSPEC_HIDDEN;
 extern HMENU get_menu( HWND hwnd ) DECLSPEC_HIDDEN;
 extern UINT get_menu_bar_height( HWND hwnd, UINT width, INT org_x, INT org_y ) DECLSPEC_HIDDEN;
 extern BOOL get_menu_info( HMENU handle, MENUINFO *info ) DECLSPEC_HIDDEN;
@@ -408,6 +416,8 @@ extern HWND is_menu_active(void) DECLSPEC_HIDDEN;
 extern LRESULT popup_menu_window_proc( HWND hwnd, UINT message, WPARAM wparam,
                                        LPARAM lparam ) DECLSPEC_HIDDEN;
 extern BOOL set_window_menu( HWND hwnd, HMENU handle ) DECLSPEC_HIDDEN;
+extern void track_keyboard_menu_bar( HWND hwnd, UINT wparam, WCHAR ch ) DECLSPEC_HIDDEN;
+extern void track_mouse_menu_bar( HWND hwnd, INT ht, int x, int y ) DECLSPEC_HIDDEN;
 
 /* message.c */
 extern LRESULT dispatch_message( const MSG *msg, BOOL ansi ) DECLSPEC_HIDDEN;
@@ -444,6 +454,7 @@ extern RECT get_virtual_screen_rect( UINT dpi ) DECLSPEC_HIDDEN;
 extern BOOL is_exiting_thread( DWORD tid ) DECLSPEC_HIDDEN;
 extern POINT map_dpi_point( POINT pt, UINT dpi_from, UINT dpi_to ) DECLSPEC_HIDDEN;
 extern RECT map_dpi_rect( RECT rect, UINT dpi_from, UINT dpi_to ) DECLSPEC_HIDDEN;
+extern BOOL message_beep( UINT i ) DECLSPEC_HIDDEN;
 extern POINT point_phys_to_win_dpi( HWND hwnd, POINT pt ) DECLSPEC_HIDDEN;
 extern POINT point_thread_to_win_dpi( HWND hwnd, POINT pt ) DECLSPEC_HIDDEN;
 extern RECT rect_thread_to_win_dpi( HWND hwnd, RECT rect ) DECLSPEC_HIDDEN;

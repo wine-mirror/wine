@@ -32,14 +32,12 @@ struct hardware_msg_data;
 
 struct user_callbacks
 {
-    BOOL (WINAPI *pEndMenu)(void);
     BOOL (WINAPI *pImmProcessKey)(HWND, HKL, UINT, LPARAM, DWORD);
     BOOL (WINAPI *pImmTranslateMessage)(HWND, UINT, WPARAM, LPARAM);
     NTSTATUS (WINAPI *pNtWaitForMultipleObjects)(ULONG,const HANDLE*,BOOLEAN,BOOLEAN,const LARGE_INTEGER*);
     void (CDECL *draw_nc_scrollbar)( HWND hwnd, HDC hdc, BOOL draw_horizontal, BOOL draw_vertical );
     void (CDECL *free_win_ptr)( struct tagWND *win );
     HMENU (CDECL *get_sys_menu)( HWND hwnd, HMENU popup );
-    HWND (CDECL *is_menu_active)(void);
     void (CDECL *notify_ime)( HWND hwnd, UINT param );
     BOOL (CDECL *post_dde_message)( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, DWORD dest_tid,
                                     DWORD type );
@@ -50,6 +48,8 @@ struct user_callbacks
                                       void **buffer, size_t size );
     BOOL (WINAPI *register_imm)( HWND hwnd );
     void (WINAPI *unregister_imm)( HWND hwnd );
+    NTSTATUS (CDECL *try_finally)( NTSTATUS (CDECL *func)( void *), void *arg,
+                                   void (CALLBACK *finally_func)( BOOL ));
 };
 
 #define WM_SYSTIMER         0x0118
