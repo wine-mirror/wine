@@ -251,6 +251,8 @@ struct unix_funcs
     BOOL     (WINAPI *pNtUserGetWindowPlacement)( HWND hwnd, WINDOWPLACEMENT *placement );
     BOOL     (WINAPI *pNtUserHideCaret)( HWND hwnd );
     HICON    (WINAPI *pNtUserInternalGetWindowIcon)( HWND hwnd, UINT type );
+    BOOL     (WINAPI *pNtUserInvalidateRect)( HWND hwnd, const RECT *rect, BOOL erase );
+    BOOL     (WINAPI *pNtUserInvalidateRgn)( HWND hwnd, HRGN hrgn, BOOL erase );
     BOOL     (WINAPI *pNtUserIsClipboardFormatAvailable)( UINT format );
     UINT     (WINAPI *pNtUserMapVirtualKeyEx)( UINT code, UINT type, HKL layout );
     LRESULT  (WINAPI *pNtUserMessageCall)( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam,

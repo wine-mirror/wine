@@ -1189,6 +1189,8 @@ static struct unix_funcs unix_funcs =
     NtUserGetWindowPlacement,
     NtUserHideCaret,
     NtUserInternalGetWindowIcon,
+    NtUserInvalidateRect,
+    NtUserInvalidateRgn,
     NtUserIsClipboardFormatAvailable,
     NtUserMapVirtualKeyEx,
     NtUserMessageCall,

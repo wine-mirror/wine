@@ -1047,8 +1047,8 @@
 @ stdcall NtUserInternalGetWindowIcon(ptr long)
 @ stdcall -syscall NtUserInternalGetWindowText(long ptr long)
 @ stub NtUserInternalToUnicode
-@ stub NtUserInvalidateRect
-@ stub NtUserInvalidateRgn
+@ stdcall NtUserInvalidateRect(long ptr long)
+@ stdcall NtUserInvalidateRgn(long long long)
 @ stub NtUserIsChildWindowDpiMessageEnabled
 @ stdcall NtUserIsClipboardFormatAvailable(long)
 @ stub NtUserIsMouseInPointerEnabled

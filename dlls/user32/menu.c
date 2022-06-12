@@ -1728,14 +1728,14 @@ MENU_EnsureMenuItemVisible(LPPOPUPMENU lppop, UINT wIndex, HDC hdc)
             {
                 arrow_rect.top = 0;
                 arrow_rect.bottom = lppop->items_rect.top;
-                InvalidateRect(lppop->hWnd, &arrow_rect, FALSE);
+                NtUserInvalidateRect(lppop->hWnd, &arrow_rect, FALSE);
             }
             if (nOldPos + scroll_height == lppop->nTotalHeight ||
                 lppop->nScrollPos + scroll_height == lppop->nTotalHeight)
             {
                 arrow_rect.top = lppop->items_rect.bottom;
                 arrow_rect.bottom = lppop->Height;
-                InvalidateRect(lppop->hWnd, &arrow_rect, FALSE);
+                NtUserInvalidateRect(lppop->hWnd, &arrow_rect, FALSE);
             }
         }
     }

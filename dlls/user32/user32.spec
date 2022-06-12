@@ -448,8 +448,8 @@
 @ stdcall InternalGetWindowIcon(ptr long) NtUserInternalGetWindowIcon
 @ stdcall InternalGetWindowText(long ptr long) NtUserInternalGetWindowText
 @ stdcall IntersectRect(ptr ptr ptr)
-@ stdcall InvalidateRect(long ptr long)
-@ stdcall InvalidateRgn(long long long)
+@ stdcall InvalidateRect(long ptr long) NtUserInvalidateRect
+@ stdcall InvalidateRgn(long long long) NtUserInvalidateRgn
 @ stdcall InvertRect(long ptr)
 @ stdcall -import IsCharAlphaA(long)
 @ stdcall -import IsCharAlphaNumericA(long)

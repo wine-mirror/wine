@@ -63,41 +63,6 @@ BOOL WINAPI UpdateWindow( HWND hwnd )
 
 
 /***********************************************************************
- *		InvalidateRgn (USER32.@)
- */
-BOOL WINAPI InvalidateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
-{
-    if (!hwnd)
-    {
-        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
-        return FALSE;
-    }
-
-    return NtUserRedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
-}
-
-
-/***********************************************************************
- *		InvalidateRect (USER32.@)
- *
- * MSDN: if hwnd parameter is NULL, InvalidateRect invalidates and redraws
- * all windows and sends WM_ERASEBKGND and WM_NCPAINT.
- */
-BOOL WINAPI InvalidateRect( HWND hwnd, const RECT *rect, BOOL erase )
-{
-    UINT flags = RDW_INVALIDATE | (erase ? RDW_ERASE : 0);
-
-    if (!hwnd)
-    {
-        flags = RDW_ALLCHILDREN | RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ERASENOW;
-        rect = NULL;
-    }
-
-    return NtUserRedrawWindow( hwnd, rect, 0, flags );
-}
-
-
-/***********************************************************************
  *		ValidateRgn (USER32.@)
  */
 BOOL WINAPI ValidateRgn( HWND hwnd, HRGN hrgn )

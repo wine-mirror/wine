@@ -617,6 +617,8 @@ NTSTATUS WINAPI NtUserInitializeClientPfnArrays( const struct user_client_procs 
 HICON   WINAPI NtUserInternalGetWindowIcon( HWND hwnd, UINT type );
 INT     WINAPI NtUserInternalGetWindowText( HWND hwnd, WCHAR *text, INT count );
 BOOL    WINAPI NtUserIsClipboardFormatAvailable( UINT format );
+BOOL    WINAPI NtUserInvalidateRect( HWND hwnd, const RECT *rect, BOOL erase );
+BOOL    WINAPI NtUserInvalidateRgn( HWND hwnd, HRGN hrgn, BOOL erase );
 BOOL    WINAPI NtUserKillTimer( HWND hwnd, UINT_PTR id );
 BOOL    WINAPI NtUserLockWindowUpdate( HWND hwnd );
 UINT    WINAPI NtUserMapVirtualKeyEx( UINT code, UINT type, HKL layout );

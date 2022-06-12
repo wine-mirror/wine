@@ -1048,6 +1048,18 @@ HICON WINAPI NtUserInternalGetWindowIcon( HWND hwnd, UINT type )
     return unix_funcs->pNtUserInternalGetWindowIcon( hwnd, type );
 }
 
+BOOL WINAPI NtUserInvalidateRect( HWND hwnd, const RECT *rect, BOOL erase )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserInvalidateRect( hwnd, rect, erase );
+}
+
+BOOL WINAPI NtUserInvalidateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
+{
+    if (!unix_funcs) return FALSE;
+    return unix_funcs->pNtUserInvalidateRgn( hwnd, hrgn, erase );
+}
+
 BOOL WINAPI NtUserIsClipboardFormatAvailable( UINT format )
 {
     if (!unix_funcs) return FALSE;

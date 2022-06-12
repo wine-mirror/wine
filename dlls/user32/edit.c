@@ -1421,7 +1421,7 @@ static void EDIT_UpdateTextRegion(EDITSTATE *es, HRGN hrgn, BOOL bErase)
         es->flags &= ~EF_UPDATE;
         EDIT_NOTIFY_PARENT(es, EN_UPDATE);
     }
-    InvalidateRgn(es->hwndSelf, hrgn, bErase);
+    NtUserInvalidateRgn(es->hwndSelf, hrgn, bErase);
 }
 
 
@@ -1436,7 +1436,7 @@ static void EDIT_UpdateText(EDITSTATE *es, const RECT *rc, BOOL bErase)
         es->flags &= ~EF_UPDATE;
         EDIT_NOTIFY_PARENT(es, EN_UPDATE);
     }
-    InvalidateRect(es->hwndSelf, rc, bErase);
+    NtUserInvalidateRect(es->hwndSelf, rc, bErase);
 }
 
 /*********************************************************************
@@ -4873,7 +4873,7 @@ LRESULT EditWndProc_common( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam, B
 		}
 
 		if (old_style ^ es->style)
-		    InvalidateRect(es->hwndSelf, NULL, TRUE);
+		    NtUserInvalidateRect(es->hwndSelf, NULL, TRUE);
 
 		result = 1;
 		break;

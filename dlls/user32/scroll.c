@@ -1507,7 +1507,7 @@ LRESULT WINAPI USER_ScrollBarProc( HWND hwnd, UINT message, WPARAM wParam, LPARA
                 rect.bottom=rect.top+thumbSize;
             }
             NtUserHideCaret( hwnd );
-            InvalidateRect(hwnd,&rect,0);
+            NtUserInvalidateRect( hwnd, &rect, 0 );
             DestroyCaret();
         }
         break;

@@ -1084,9 +1084,9 @@ BOOL COMBO_FlipListbox( LPHEADCOMBO lphc, BOOL ok, BOOL bRedrawButton )
  *           CBRepaintButton
  */
 static void CBRepaintButton( LPHEADCOMBO lphc )
-   {
-  InvalidateRect(lphc->self, &lphc->buttonRect, TRUE);
-  UpdateWindow(lphc->self);
+{
+    NtUserInvalidateRect(lphc->self, &lphc->buttonRect, TRUE);
+    UpdateWindow(lphc->self);
 }
 
 /***********************************************************************
@@ -1104,7 +1104,7 @@ static void COMBO_SetFocus( LPHEADCOMBO lphc )
        /* lphc->wState |= CBF_FOCUSED;  */
 
        if( !(lphc->wState & CBF_EDIT) )
-	 InvalidateRect(lphc->self, &lphc->textRect, TRUE);
+           NtUserInvalidateRect(lphc->self, &lphc->textRect, TRUE);
 
        CB_NOTIFY( lphc, CBN_SETFOCUS );
        lphc->wState |= CBF_FOCUSED;
@@ -1130,7 +1130,7 @@ static void COMBO_KillFocus( LPHEADCOMBO lphc )
 
            /* redraw text */
 	   if( !(lphc->wState & CBF_EDIT) )
-	     InvalidateRect(lphc->self, &lphc->textRect, TRUE);
+               NtUserInvalidateRect(lphc->self, &lphc->textRect, TRUE);
 
            CB_NOTIFY( lphc, CBN_KILLFOCUS );
        }
@@ -1561,7 +1561,7 @@ static LRESULT COMBO_SelectString( LPHEADCOMBO lphc, INT start, LPARAM pText, BO
        CBUpdateEdit( lphc, index );
      else
      {
-       InvalidateRect(lphc->self, &lphc->textRect, TRUE);
+       NtUserInvalidateRect(lphc->self, &lphc->textRect, TRUE);
      }
    }
    return (LRESULT)index;
@@ -1854,7 +1854,7 @@ LRESULT ComboWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 		EnableWindow( lphc->hWndLBox, (BOOL)wParam );
 
 		/* Force the control to repaint when the enabled state changes. */
-		InvalidateRect(lphc->self, NULL, TRUE);
+		NtUserInvalidateRect(lphc->self, NULL, TRUE);
 		return  TRUE;
 	case WM_SETREDRAW:
 		if( wParam )
@@ -2003,7 +2003,7 @@ LRESULT ComboWndProc_common( HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 if( (lphc->wState & CBF_EDIT) && CB_HASSTRINGS(lphc) )
                     SendMessageW(lphc->hWndEdit, WM_SETTEXT, 0, (LPARAM)L"");
                 else
-                    InvalidateRect(lphc->self, NULL, TRUE);
+                    NtUserInvalidateRect(lphc->self, NULL, TRUE);
 		return  TRUE;
 	case CB_INITSTORAGE:
 		return SendMessageW(lphc->hWndLBox, LB_INITSTORAGE, wParam, lParam);

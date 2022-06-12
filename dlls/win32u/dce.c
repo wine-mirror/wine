@@ -1576,6 +1576,36 @@ INT WINAPI NtUserExcludeUpdateRgn( HDC hdc, HWND hwnd )
 }
 
 /***********************************************************************
+ *           NtUserInvalidateRgn (win32u.@)
+ */
+BOOL WINAPI NtUserInvalidateRgn( HWND hwnd, HRGN hrgn, BOOL erase )
+{
+    if (!hwnd)
+    {
+        SetLastError( ERROR_INVALID_WINDOW_HANDLE );
+        return FALSE;
+    }
+
+    return NtUserRedrawWindow( hwnd, NULL, hrgn, RDW_INVALIDATE | (erase ? RDW_ERASE : 0) );
+}
+
+/***********************************************************************
+ *           NtUserInvalidateRect (win32u.@)
+ */
+BOOL WINAPI NtUserInvalidateRect( HWND hwnd, const RECT *rect, BOOL erase )
+{
+    UINT flags = RDW_INVALIDATE | (erase ? RDW_ERASE : 0);
+
+    if (!hwnd)
+    {
+        flags = RDW_ALLCHILDREN | RDW_INVALIDATE | RDW_FRAME | RDW_ERASE | RDW_ERASENOW;
+        rect = NULL;
+    }
+
+    return NtUserRedrawWindow( hwnd, rect, 0, flags );
+}
+
+/***********************************************************************
  *           NtUserLockWindowUpdate (win32u.@)
  */
 BOOL WINAPI NtUserLockWindowUpdate( HWND hwnd )
