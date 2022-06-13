@@ -2092,12 +2092,14 @@ static void test_UiaProviderFromIAccessible(void)
     CHECK_CALLED(Accessible2_get_accName);
     todo_wine CHECK_CALLED(Accessible2_QI_IAccIdentity);
     todo_wine CHECK_CALLED(Accessible2_get_accParent);
+    IRawElementProviderSimple_Release(elprov2);
 
     elprov2 = (void *)0xdeadbeef;
     acc_client = NULL;
     hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
     ok(!!elprov2, "elprov == NULL, elprov %p\n", elprov2);
+    IRawElementProviderSimple_Release(elprov2);
 
     IRawElementProviderSimple_Release(elprov);
     ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
