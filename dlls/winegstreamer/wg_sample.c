@@ -298,3 +298,34 @@ HRESULT wg_transform_read_mf(struct wg_transform *transform, struct wg_sample *w
 
     return S_OK;
 }
+
+HRESULT wg_transform_push_quartz(struct wg_transform *transform, struct wg_sample *wg_sample,
+        struct wg_sample_queue *queue)
+{
+    struct sample *sample = unsafe_quartz_from_wg_sample(wg_sample);
+    REFERENCE_TIME start_time, end_time;
+    HRESULT hr;
+
+    TRACE_(quartz)("transform %p, wg_sample %p, queue %p.\n", transform, wg_sample, queue);
+
+    hr = IMediaSample_GetTime(sample->u.quartz.sample, &start_time, &end_time);
+    if (SUCCEEDED(hr))
+    {
+        wg_sample->pts = start_time;
+        wg_sample->flags |= WG_SAMPLE_FLAG_HAS_PTS;
+    }
+    if (hr == S_OK)
+    {
+        wg_sample->duration = end_time - start_time;
+        wg_sample->flags |= WG_SAMPLE_FLAG_HAS_DURATION;
+    }
+
+    if (IMediaSample_IsSyncPoint(sample->u.quartz.sample) == S_OK)
+        wg_sample->flags |= WG_SAMPLE_FLAG_SYNC_POINT;
+
+    wg_sample_queue_begin_append(queue, wg_sample);
+    hr = wg_transform_push_data(transform, wg_sample);
+    wg_sample_queue_end_append(queue, wg_sample);
+
+    return hr;
+}

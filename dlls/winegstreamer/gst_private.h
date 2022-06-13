@@ -132,6 +132,8 @@ void wg_sample_release(struct wg_sample *wg_sample);
 
 HRESULT wg_transform_push_mf(struct wg_transform *transform, struct wg_sample *sample,
         struct wg_sample_queue *queue);
+HRESULT wg_transform_push_quartz(struct wg_transform *transform, struct wg_sample *sample,
+        struct wg_sample_queue *queue);
 HRESULT wg_transform_read_mf(struct wg_transform *transform, struct wg_sample *sample,
         struct wg_format *format);
 

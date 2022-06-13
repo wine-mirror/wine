@@ -315,21 +315,7 @@ static HRESULT WINAPI transform_sink_receive(struct strmbase_sink *pin, IMediaSa
     if (FAILED(hr))
         return hr;
 
-    hr = IMediaSample_GetTime(sample, &start_time, &end_time);
-    if (SUCCEEDED(hr))
-    {
-        wg_sample->pts = start_time;
-        wg_sample->flags |= WG_SAMPLE_FLAG_HAS_PTS;
-    }
-    if (hr == S_OK)
-    {
-        wg_sample->duration = end_time - start_time;
-        wg_sample->flags |= WG_SAMPLE_FLAG_HAS_DURATION;
-    }
-
-    hr = wg_transform_push_data(filter->transform, wg_sample);
-    wg_sample_release(wg_sample);
-
+    hr = wg_transform_push_quartz(filter->transform, wg_sample, filter->sample_queue);
     if (FAILED(hr))
         return hr;
 
@@ -363,6 +349,8 @@ static HRESULT WINAPI transform_sink_receive(struct strmbase_sink *pin, IMediaSa
             IMediaSample_Release(output_sample);
             return hr;
         }
+
+        wg_sample_queue_flush(filter->sample_queue, false);
 
         hr = IMediaSample_SetActualDataLength(output_sample, wg_sample->size);
         if (FAILED(hr))
