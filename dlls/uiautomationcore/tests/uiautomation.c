@@ -24,6 +24,7 @@
 #include "initguid.h"
 #include "uiautomation.h"
 #include "ocidl.h"
+#include "wine/iaccessible2.h"
 
 #include "wine/test.h"
 
@@ -73,6 +74,7 @@ DEFINE_EXPECT(Accessible_get_accRole);
 DEFINE_EXPECT(Accessible_get_accState);
 DEFINE_EXPECT(Accessible_accLocation);
 DEFINE_EXPECT(Accessible_get_accChild);
+DEFINE_EXPECT(Accessible_get_uniqueID);
 DEFINE_EXPECT(Accessible2_get_accParent);
 DEFINE_EXPECT(Accessible2_get_accChildCount);
 DEFINE_EXPECT(Accessible2_get_accName);
@@ -80,6 +82,7 @@ DEFINE_EXPECT(Accessible2_get_accRole);
 DEFINE_EXPECT(Accessible2_get_accState);
 DEFINE_EXPECT(Accessible2_accLocation);
 DEFINE_EXPECT(Accessible2_QI_IAccIdentity);
+DEFINE_EXPECT(Accessible2_get_uniqueID);
 DEFINE_EXPECT(Accessible_child_accNavigate);
 DEFINE_EXPECT(Accessible_child_get_accParent);
 DEFINE_EXPECT(Accessible_child_get_accChildCount);
@@ -128,7 +131,9 @@ static BOOL iface_cmp(IUnknown *iface1, IUnknown *iface2)
 static struct Accessible
 {
     IAccessible IAccessible_iface;
+    IAccessible2 IAccessible2_iface;
     IOleWindow IOleWindow_iface;
+    IServiceProvider IServiceProvider_iface;
     LONG ref;
 
     IAccessible *parent;
@@ -139,6 +144,8 @@ static struct Accessible
     LONG child_count;
     LPCWSTR name;
     LONG left, top, width, height;
+    BOOL enable_ia2;
+    LONG unique_id;
 } Accessible, Accessible2, Accessible_child, Accessible_child2;
 
 static inline struct Accessible* impl_from_Accessible(IAccessible *iface)
@@ -164,6 +171,10 @@ static HRESULT WINAPI Accessible_QueryInterface(IAccessible *iface, REFIID riid,
         *obj = iface;
     else if (IsEqualIID(riid, &IID_IOleWindow))
         *obj = &This->IOleWindow_iface;
+    else if (IsEqualIID(riid, &IID_IServiceProvider))
+        *obj = &This->IServiceProvider_iface;
+    else if (IsEqualIID(riid, &IID_IAccessible2) && This->enable_ia2)
+        *obj = &This->IAccessible2_iface;
     else
         return E_NOINTERFACE;
 
@@ -559,6 +570,383 @@ static IAccessibleVtbl AccessibleVtbl = {
     Accessible_put_accValue
 };
 
+static inline struct Accessible* impl_from_Accessible2(IAccessible2 *iface)
+{
+    return CONTAINING_RECORD(iface, struct Accessible, IAccessible2_iface);
+}
+
+static HRESULT WINAPI Accessible2_QueryInterface(IAccessible2 *iface, REFIID riid, void **obj)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_QueryInterface(&This->IAccessible_iface, riid, obj);
+}
+
+static ULONG WINAPI Accessible2_AddRef(IAccessible2 *iface)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_AddRef(&This->IAccessible_iface);
+}
+
+static ULONG WINAPI Accessible2_Release(IAccessible2 *iface)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_Release(&This->IAccessible_iface);
+}
+
+static HRESULT WINAPI Accessible2_GetTypeInfoCount(IAccessible2 *iface, UINT *pctinfo)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_GetTypeInfoCount(&This->IAccessible_iface, pctinfo);
+}
+
+static HRESULT WINAPI Accessible2_GetTypeInfo(IAccessible2 *iface, UINT iTInfo,
+        LCID lcid, ITypeInfo **out_tinfo)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_GetTypeInfo(&This->IAccessible_iface, iTInfo, lcid, out_tinfo);
+}
+
+static HRESULT WINAPI Accessible2_GetIDsOfNames(IAccessible2 *iface, REFIID riid,
+        LPOLESTR *rg_names, UINT name_count, LCID lcid, DISPID *rg_disp_id)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_GetIDsOfNames(&This->IAccessible_iface, riid, rg_names, name_count,
+            lcid, rg_disp_id);
+}
+
+static HRESULT WINAPI Accessible2_Invoke(IAccessible2 *iface, DISPID disp_id_member,
+        REFIID riid, LCID lcid, WORD flags, DISPPARAMS *disp_params,
+        VARIANT *var_result, EXCEPINFO *excep_info, UINT *arg_err)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_Invoke(&This->IAccessible_iface, disp_id_member, riid, lcid, flags,
+            disp_params, var_result, excep_info, arg_err);
+}
+
+static HRESULT WINAPI Accessible2_get_accParent(IAccessible2 *iface, IDispatch **out_parent)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_get_accParent(&This->IAccessible_iface, out_parent);
+}
+
+static HRESULT WINAPI Accessible2_get_accChildCount(IAccessible2 *iface, LONG *out_count)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_get_accChildCount(&This->IAccessible_iface, out_count);
+}
+
+static HRESULT WINAPI Accessible2_get_accChild(IAccessible2 *iface, VARIANT child_id,
+        IDispatch **out_child)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_get_accChild(&This->IAccessible_iface, child_id, out_child);
+}
+
+static HRESULT WINAPI Accessible2_get_accName(IAccessible2 *iface, VARIANT child_id,
+        BSTR *out_name)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_get_accName(&This->IAccessible_iface, child_id, out_name);
+}
+
+static HRESULT WINAPI Accessible2_get_accValue(IAccessible2 *iface, VARIANT child_id,
+        BSTR *out_value)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_get_accValue(&This->IAccessible_iface, child_id, out_value);
+}
+
+static HRESULT WINAPI Accessible2_get_accDescription(IAccessible2 *iface, VARIANT child_id,
+        BSTR *out_description)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_get_accDescription(&This->IAccessible_iface, child_id, out_description);
+}
+
+static HRESULT WINAPI Accessible2_get_accRole(IAccessible2 *iface, VARIANT child_id,
+        VARIANT *out_role)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_get_accRole(&This->IAccessible_iface, child_id, out_role);
+}
+
+static HRESULT WINAPI Accessible2_get_accState(IAccessible2 *iface, VARIANT child_id,
+        VARIANT *out_state)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_get_accState(&This->IAccessible_iface, child_id, out_state);
+}
+
+static HRESULT WINAPI Accessible2_get_accHelp(IAccessible2 *iface, VARIANT child_id,
+        BSTR *out_help)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_get_accHelp(&This->IAccessible_iface, child_id, out_help);
+}
+
+static HRESULT WINAPI Accessible2_get_accHelpTopic(IAccessible2 *iface,
+        BSTR *out_help_file, VARIANT child_id, LONG *out_topic_id)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_get_accHelpTopic(&This->IAccessible_iface, out_help_file, child_id,
+            out_topic_id);
+}
+
+static HRESULT WINAPI Accessible2_get_accKeyboardShortcut(IAccessible2 *iface, VARIANT child_id,
+        BSTR *out_kbd_shortcut)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_get_accKeyboardShortcut(&This->IAccessible_iface, child_id,
+            out_kbd_shortcut);
+}
+
+static HRESULT WINAPI Accessible2_get_accFocus(IAccessible2 *iface, VARIANT *pchild_id)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_get_accFocus(&This->IAccessible_iface, pchild_id);
+}
+
+static HRESULT WINAPI Accessible2_get_accSelection(IAccessible2 *iface, VARIANT *out_selection)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_get_accSelection(&This->IAccessible_iface, out_selection);
+}
+
+static HRESULT WINAPI Accessible2_get_accDefaultAction(IAccessible2 *iface, VARIANT child_id,
+        BSTR *out_default_action)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_get_accDefaultAction(&This->IAccessible_iface, child_id,
+            out_default_action);
+}
+
+static HRESULT WINAPI Accessible2_accSelect(IAccessible2 *iface, LONG select_flags,
+        VARIANT child_id)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_accSelect(&This->IAccessible_iface, select_flags, child_id);
+}
+
+static HRESULT WINAPI Accessible2_accLocation(IAccessible2 *iface, LONG *out_left,
+        LONG *out_top, LONG *out_width, LONG *out_height, VARIANT child_id)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_accLocation(&This->IAccessible_iface, out_left, out_top, out_width,
+            out_height, child_id);
+}
+
+static HRESULT WINAPI Accessible2_accNavigate(IAccessible2 *iface, LONG nav_direction,
+        VARIANT child_id_start, VARIANT *out_var)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_accNavigate(&This->IAccessible_iface, nav_direction, child_id_start,
+            out_var);
+}
+
+static HRESULT WINAPI Accessible2_accHitTest(IAccessible2 *iface, LONG left, LONG top,
+        VARIANT *out_child_id)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_accHitTest(&This->IAccessible_iface, left, top, out_child_id);
+}
+
+static HRESULT WINAPI Accessible2_accDoDefaultAction(IAccessible2 *iface, VARIANT child_id)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_accDoDefaultAction(&This->IAccessible_iface, child_id);
+}
+
+static HRESULT WINAPI Accessible2_put_accName(IAccessible2 *iface, VARIANT child_id,
+        BSTR name)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_put_accName(&This->IAccessible_iface, child_id, name);
+}
+
+static HRESULT WINAPI Accessible2_put_accValue(IAccessible2 *iface, VARIANT child_id,
+        BSTR value)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+    return IAccessible_put_accValue(&This->IAccessible_iface, child_id, value);
+}
+
+static HRESULT WINAPI Accessible2_get_nRelations(IAccessible2 *iface, LONG *out_nRelations)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible2_get_relation(IAccessible2 *iface, LONG relation_idx,
+        IAccessibleRelation **out_relation)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible2_get_relations(IAccessible2 *iface, LONG count,
+        IAccessibleRelation **out_relations, LONG *out_relation_count)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible2_role(IAccessible2 *iface, LONG *out_role)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible2_scrollTo(IAccessible2 *iface, enum IA2ScrollType scroll_type)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible2_scrollToPoint(IAccessible2 *iface,
+        enum IA2CoordinateType coordinate_type, LONG x, LONG y)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible2_get_groupPosition(IAccessible2 *iface, LONG *out_group_level,
+        LONG *out_similar_items_in_group, LONG *out_position_in_group)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible2_get_states(IAccessible2 *iface, AccessibleStates *out_states)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible2_get_extendedRole(IAccessible2 *iface, BSTR *out_extended_role)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible2_get_localizedExtendedRole(IAccessible2 *iface,
+        BSTR *out_localized_extended_role)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible2_get_nExtendedStates(IAccessible2 *iface, LONG *out_nExtendedStates)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible2_get_extendedStates(IAccessible2 *iface, LONG count,
+        BSTR **out_extended_states, LONG *out_extended_states_count)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible2_get_localizedExtendedStates(IAccessible2 *iface, LONG count,
+        BSTR **out_localized_extended_states, LONG *out_localized_extended_states_count)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible2_get_uniqueID(IAccessible2 *iface, LONG *out_unique_id)
+{
+    struct Accessible *This = impl_from_Accessible2(iface);
+
+    if (This == &Accessible2)
+        CHECK_EXPECT(Accessible2_get_uniqueID);
+    else
+        CHECK_EXPECT(Accessible_get_uniqueID);
+
+    *out_unique_id = 0;
+    if (This->unique_id)
+    {
+        *out_unique_id = This->unique_id;
+        return S_OK;
+    }
+
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible2_get_windowHandle(IAccessible2 *iface, HWND *out_hwnd)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible2_get_indexInParent(IAccessible2 *iface, LONG *out_idx_in_parent)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible2_get_locale(IAccessible2 *iface, IA2Locale *out_locale)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static HRESULT WINAPI Accessible2_get_attributes(IAccessible2 *iface, BSTR *out_attributes)
+{
+    ok(0, "unexpected call\n");
+    return E_NOTIMPL;
+}
+
+static const IAccessible2Vtbl Accessible2Vtbl = {
+    Accessible2_QueryInterface,
+    Accessible2_AddRef,
+    Accessible2_Release,
+    Accessible2_GetTypeInfoCount,
+    Accessible2_GetTypeInfo,
+    Accessible2_GetIDsOfNames,
+    Accessible2_Invoke,
+    Accessible2_get_accParent,
+    Accessible2_get_accChildCount,
+    Accessible2_get_accChild,
+    Accessible2_get_accName,
+    Accessible2_get_accValue,
+    Accessible2_get_accDescription,
+    Accessible2_get_accRole,
+    Accessible2_get_accState,
+    Accessible2_get_accHelp,
+    Accessible2_get_accHelpTopic,
+    Accessible2_get_accKeyboardShortcut,
+    Accessible2_get_accFocus,
+    Accessible2_get_accSelection,
+    Accessible2_get_accDefaultAction,
+    Accessible2_accSelect,
+    Accessible2_accLocation,
+    Accessible2_accNavigate,
+    Accessible2_accHitTest,
+    Accessible2_accDoDefaultAction,
+    Accessible2_put_accName,
+    Accessible2_put_accValue,
+    Accessible2_get_nRelations,
+    Accessible2_get_relation,
+    Accessible2_get_relations,
+    Accessible2_role,
+    Accessible2_scrollTo,
+    Accessible2_scrollToPoint,
+    Accessible2_get_groupPosition,
+    Accessible2_get_states,
+    Accessible2_get_extendedRole,
+    Accessible2_get_localizedExtendedRole,
+    Accessible2_get_nExtendedStates,
+    Accessible2_get_extendedStates,
+    Accessible2_get_localizedExtendedStates,
+    Accessible2_get_uniqueID,
+    Accessible2_get_windowHandle,
+    Accessible2_get_indexInParent,
+    Accessible2_get_locale,
+    Accessible2_get_attributes,
+};
+
 static inline struct Accessible* impl_from_OleWindow(IOleWindow *iface)
 {
     return CONTAINING_RECORD(iface, struct Accessible, IOleWindow_iface);
@@ -603,48 +991,102 @@ static const IOleWindowVtbl OleWindowVtbl = {
     OleWindow_ContextSensitiveHelp
 };
 
+static inline struct Accessible* impl_from_ServiceProvider(IServiceProvider *iface)
+{
+    return CONTAINING_RECORD(iface, struct Accessible, IServiceProvider_iface);
+}
+
+static HRESULT WINAPI ServiceProvider_QueryInterface(IServiceProvider *iface, REFIID riid, void **obj)
+{
+    struct Accessible *This = impl_from_ServiceProvider(iface);
+    return IAccessible_QueryInterface(&This->IAccessible_iface, riid, obj);
+}
+
+static ULONG WINAPI ServiceProvider_AddRef(IServiceProvider *iface)
+{
+    struct Accessible *This = impl_from_ServiceProvider(iface);
+    return IAccessible_AddRef(&This->IAccessible_iface);
+}
+
+static ULONG WINAPI ServiceProvider_Release(IServiceProvider *iface)
+{
+    struct Accessible *This = impl_from_ServiceProvider(iface);
+    return IAccessible_Release(&This->IAccessible_iface);
+}
+
+static HRESULT WINAPI ServiceProvider_QueryService(IServiceProvider *iface, REFGUID service_guid,
+        REFIID riid, void **obj)
+{
+    struct Accessible *This = impl_from_ServiceProvider(iface);
+
+    if (IsEqualIID(riid, &IID_IAccessible2) && IsEqualIID(service_guid, &IID_IAccessible2) &&
+            This->enable_ia2)
+        return IAccessible_QueryInterface(&This->IAccessible_iface, riid, obj);
+
+    return E_NOTIMPL;
+}
+
+static const IServiceProviderVtbl ServiceProviderVtbl = {
+    ServiceProvider_QueryInterface,
+    ServiceProvider_AddRef,
+    ServiceProvider_Release,
+    ServiceProvider_QueryService,
+};
+
 static struct Accessible Accessible =
 {
     { &AccessibleVtbl },
+    { &Accessible2Vtbl },
     { &OleWindowVtbl },
+    { &ServiceProviderVtbl },
     1,
     NULL,
     0, 0,
     0, 0, 0, NULL,
     0, 0, 0, 0,
+    FALSE, 0,
 };
 
 static struct Accessible Accessible2 =
 {
     { &AccessibleVtbl },
+    { &Accessible2Vtbl },
     { &OleWindowVtbl },
+    { &ServiceProviderVtbl },
     1,
     NULL,
     0, 0,
     0, 0, 0, NULL,
     0, 0, 0, 0,
+    FALSE, 0,
 };
 
 static struct Accessible Accessible_child =
 {
     { &AccessibleVtbl },
+    { &Accessible2Vtbl },
     { &OleWindowVtbl },
+    { &ServiceProviderVtbl },
     1,
     &Accessible.IAccessible_iface,
     0, 0,
     0, 0, 0, NULL,
     0, 0, 0, 0,
+    FALSE, 0,
 };
 
 static struct Accessible Accessible_child2 =
 {
     { &AccessibleVtbl },
+    { &Accessible2Vtbl },
     { &OleWindowVtbl },
+    { &ServiceProviderVtbl },
     1,
     &Accessible.IAccessible_iface,
     0, 0,
     0, 0, 0, NULL,
     0, 0, 0, 0,
+    FALSE, 0,
 };
 
 static IAccessible *acc_client;
@@ -1000,6 +1442,166 @@ static void set_accessible_props(struct Accessible *acc, INT role, INT state,
     acc->top = top;
     acc->width = width;
     acc->height = height;
+}
+
+static void set_accessible_ia2_props(struct Accessible *acc, BOOL enable_ia2, LONG unique_id)
+{
+    acc->enable_ia2 = enable_ia2;
+    acc->unique_id = unique_id;
+}
+
+static void test_uia_prov_from_acc_ia2(void)
+{
+    IRawElementProviderSimple *elprov, *elprov2;
+    HRESULT hr;
+
+    /* Only one exposes an IA2 interface, no match. */
+    set_accessible_props(&Accessible, 0, 0, 0, L"acc_name", 0, 0, 0, 0);
+    set_accessible_ia2_props(&Accessible, TRUE, 0);
+    set_accessible_props(&Accessible2, 0, 0, 0, L"acc_name", 0, 0, 0, 0);
+    set_accessible_ia2_props(&Accessible2, FALSE, 0);
+
+    hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    if (Accessible.ref != 3)
+    {
+        IRawElementProviderSimple_Release(elprov);
+        win_skip("UiaProviderFromIAccessible has no IAccessible2 support, skipping tests.\n");
+        return;
+    }
+
+    acc_client = &Accessible2.IAccessible_iface;
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    elprov2 = (void *)0xdeadbeef;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elprov2, "elprov != NULL, elprov %p\n", elprov2);
+    ok(Accessible2.ref == 1, "Unexpected refcnt %ld\n", Accessible2.ref);
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+
+    elprov2 = (void *)0xdeadbeef;
+    acc_client = NULL;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elprov2, "elprov != NULL, elprov %p\n", elprov2);
+
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    /*
+     * If &Accessible returns a failure code on get_uniqueID, &Accessible2's
+     * uniqueID is not checked.
+     */
+    set_accessible_ia2_props(&Accessible, TRUE, 0);
+    set_accessible_ia2_props(&Accessible2, TRUE, 0);
+    hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Accessible.ref == 3, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    acc_client = &Accessible2.IAccessible_iface;
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    SET_EXPECT(Accessible_get_accRole);
+    SET_EXPECT(Accessible_get_accState);
+    SET_EXPECT(Accessible_get_accChildCount);
+    SET_EXPECT(Accessible_accLocation);
+    SET_EXPECT(Accessible_get_accName);
+    SET_EXPECT(Accessible_get_uniqueID);
+    SET_EXPECT(Accessible2_get_accChildCount);
+    SET_EXPECT(Accessible2_get_accName);
+    SET_EXPECT(Accessible2_QI_IAccIdentity);
+    SET_EXPECT(Accessible2_get_accParent);
+    elprov2 = (void *)0xdeadbeef;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elprov2, "elprov == NULL, elprov %p\n", elprov2);
+    ok(Accessible2.ref == 1, "Unexpected refcnt %ld\n", Accessible2.ref);
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    CHECK_CALLED(Accessible_get_accRole);
+    CHECK_CALLED(Accessible_get_accState);
+    CHECK_CALLED(Accessible_get_accChildCount);
+    CHECK_CALLED(Accessible_accLocation);
+    CHECK_CALLED(Accessible_get_accName);
+    CHECK_CALLED(Accessible_get_uniqueID);
+    CHECK_CALLED(Accessible2_get_accChildCount);
+    CHECK_CALLED(Accessible2_get_accName);
+    todo_wine CHECK_CALLED(Accessible2_QI_IAccIdentity);
+    todo_wine CHECK_CALLED(Accessible2_get_accParent);
+    IRawElementProviderSimple_Release(elprov2);
+
+    elprov2 = (void *)0xdeadbeef;
+    acc_client = NULL;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elprov2, "elprov == NULL, elprov %p\n", elprov2);
+    IRawElementProviderSimple_Release(elprov2);
+
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    /* Unique ID matches. */
+    set_accessible_ia2_props(&Accessible, TRUE, 1);
+    set_accessible_ia2_props(&Accessible2, TRUE, 1);
+    hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Accessible.ref == 3, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    acc_client = &Accessible2.IAccessible_iface;
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    SET_EXPECT(Accessible_get_uniqueID);
+    SET_EXPECT(Accessible2_get_uniqueID);
+    elprov2 = (void *)0xdeadbeef;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elprov2, "elprov == NULL, elprov %p\n", elprov2);
+    ok(Accessible2.ref == 1, "Unexpected refcnt %ld\n", Accessible2.ref);
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    CHECK_CALLED(Accessible_get_uniqueID);
+    CHECK_CALLED(Accessible2_get_uniqueID);
+    IRawElementProviderSimple_Release(elprov2);
+
+    elprov2 = (void *)0xdeadbeef;
+    acc_client = NULL;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!!elprov2, "elprov == NULL, elprov %p\n", elprov2);
+    IRawElementProviderSimple_Release(elprov2);
+
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    /* Unique ID mismatch. */
+    set_accessible_ia2_props(&Accessible, TRUE, 1);
+    set_accessible_ia2_props(&Accessible2, TRUE, 2);
+    hr = pUiaProviderFromIAccessible(&Accessible.IAccessible_iface, CHILDID_SELF, UIA_PFIA_DEFAULT, &elprov);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Accessible.ref == 3, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    acc_client = &Accessible2.IAccessible_iface;
+    SET_EXPECT(winproc_GETOBJECT_CLIENT);
+    SET_EXPECT(Accessible_get_uniqueID);
+    SET_EXPECT(Accessible2_get_uniqueID);
+    elprov2 = (void *)0xdeadbeef;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elprov2, "elprov != NULL, elprov %p\n", elprov2);
+    ok(Accessible2.ref == 1, "Unexpected refcnt %ld\n", Accessible2.ref);
+    CHECK_CALLED(winproc_GETOBJECT_CLIENT);
+    CHECK_CALLED(Accessible_get_uniqueID);
+    CHECK_CALLED(Accessible2_get_uniqueID);
+
+    elprov2 = (void *)0xdeadbeef;
+    acc_client = NULL;
+    hr = IRawElementProviderSimple_get_HostRawElementProvider(elprov, &elprov2);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(!elprov2, "elprov != NULL, elprov %p\n", elprov2);
+
+    IRawElementProviderSimple_Release(elprov);
+    ok(Accessible.ref == 1, "Unexpected refcnt %ld\n", Accessible.ref);
+
+    set_accessible_props(&Accessible, 0, 0, 0, NULL, 0, 0, 0, 0);
+    set_accessible_ia2_props(&Accessible, FALSE, 0);
+    set_accessible_props(&Accessible2, 0, 0, 0, NULL, 0, 0, 0, 0);
+    set_accessible_ia2_props(&Accessible2, FALSE, 0);
 }
 
 #define check_fragment_acc( fragment, acc, cid) \
@@ -2091,6 +2693,7 @@ static void test_UiaProviderFromIAccessible(void)
 
     test_uia_prov_from_acc_properties();
     test_uia_prov_from_acc_navigation();
+    test_uia_prov_from_acc_ia2();
 
     CoUninitialize();
     DestroyWindow(hwnd);

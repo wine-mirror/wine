@@ -24,6 +24,7 @@
 #include "wine/debug.h"
 #include "wine/heap.h"
 #include "initguid.h"
+#include "wine/iaccessible2.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(uiautomation);
 
@@ -52,6 +53,28 @@ static BOOL msaa_check_acc_state(IAccessible *acc, VARIANT cid, ULONG flag)
         return TRUE;
 
     return FALSE;
+}
+
+static IAccessible2 *msaa_acc_get_ia2(IAccessible *acc)
+{
+    IServiceProvider *serv_prov;
+    IAccessible2 *ia2 = NULL;
+    HRESULT hr;
+
+    hr = IAccessible_QueryInterface(acc, &IID_IServiceProvider, (void **)&serv_prov);
+    if (SUCCEEDED(hr))
+    {
+        hr = IServiceProvider_QueryService(serv_prov, &IID_IAccessible2, &IID_IAccessible2, (void **)&ia2);
+        IServiceProvider_Release(serv_prov);
+        if (SUCCEEDED(hr) && ia2)
+            return ia2;
+    }
+
+    hr = IAccessible_QueryInterface(acc, &IID_IAccessible2, (void **)&ia2);
+    if (SUCCEEDED(hr) && ia2)
+        return ia2;
+
+    return NULL;
 }
 
 static IAccessible *msaa_acc_da_unwrap(IAccessible *acc)
@@ -149,8 +172,10 @@ static HRESULT msaa_acc_prop_match(IAccessible *acc, IAccessible *acc2)
 
 static BOOL msaa_acc_compare(IAccessible *acc, IAccessible *acc2)
 {
+    IAccessible2 *ia2[2] = { NULL, NULL };
     IUnknown *unk, *unk2;
     BOOL matched = FALSE;
+    LONG unique_id[2];
     BSTR name[2];
     VARIANT cid;
     HRESULT hr;
@@ -163,6 +188,26 @@ static BOOL msaa_acc_compare(IAccessible *acc, IAccessible *acc2)
     {
         matched = TRUE;
         goto exit;
+    }
+
+    ia2[0] = msaa_acc_get_ia2(acc);
+    ia2[1] = msaa_acc_get_ia2(acc2);
+    if (!ia2[0] != !ia2[1])
+        goto exit;
+    if (ia2[0])
+    {
+        hr = IAccessible2_get_uniqueID(ia2[0], &unique_id[0]);
+        if (SUCCEEDED(hr))
+        {
+            hr = IAccessible2_get_uniqueID(ia2[1], &unique_id[1]);
+            if (SUCCEEDED(hr))
+            {
+                if (unique_id[0] == unique_id[1])
+                    matched = TRUE;
+
+                goto exit;
+            }
+        }
     }
 
     hr = msaa_acc_prop_match(acc, acc2);
@@ -201,6 +246,10 @@ exit:
     IUnknown_Release(unk2);
     IAccessible_Release(acc);
     IAccessible_Release(acc2);
+    if (ia2[0])
+        IAccessible2_Release(ia2[0]);
+    if (ia2[1])
+        IAccessible2_Release(ia2[1]);
 
     return matched;
 }
@@ -456,6 +505,7 @@ struct msaa_provider {
     LONG refcount;
 
     IAccessible *acc;
+    IAccessible2 *ia2;
     VARIANT cid;
     HWND hwnd;
     LONG control_type;
@@ -535,6 +585,8 @@ ULONG WINAPI msaa_provider_Release(IRawElementProviderSimple *iface)
         IAccessible_Release(msaa_prov->acc);
         if (msaa_prov->parent)
             IAccessible_Release(msaa_prov->parent);
+        if (msaa_prov->ia2)
+            IAccessible2_Release(msaa_prov->ia2);
         heap_free(msaa_prov);
     }
 
@@ -1069,6 +1121,7 @@ HRESULT WINAPI UiaProviderFromIAccessible(IAccessible *acc, long child_id, DWORD
     variant_init_i4(&msaa_prov->cid, child_id);
     msaa_prov->acc = acc;
     IAccessible_AddRef(acc);
+    msaa_prov->ia2 = msaa_acc_get_ia2(acc);
     *elprov = &msaa_prov->IRawElementProviderSimple_iface;
 
     return S_OK;
