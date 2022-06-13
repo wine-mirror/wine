@@ -812,6 +812,7 @@ SOURCES = \
 	wine/debug.h \
 	wine/exception.h \
 	wine/fil_data.idl \
+	wine/iaccessible2.idl \
 	wine/itss.idl \
 	wine/orpc.idl \
 	wine/svcctl.idl \

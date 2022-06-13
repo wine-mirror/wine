@@ -41,6 +41,7 @@ my %modules16 =
 my %exported_wine_headers = (
     "wine/debug.h" => 1,
     "wine/exception.h" => 1,
+    "wine/iaccessible2.idl" => 1,
     "wine/itss.idl" => 1,
     "wine/svcctl.idl" => 1,
 );
