@@ -646,12 +646,20 @@ UINT WINAPI GetRawInputData(HRAWINPUT rawinput, UINT command, void *data, UINT *
 }
 
 #ifdef _WIN64
+typedef RAWINPUTHEADER RAWINPUTHEADER64;
 typedef RAWINPUT RAWINPUT64;
 #else
 typedef struct
 {
-    RAWINPUTHEADER header;
-    char pad[8];
+    DWORD dwType;
+    DWORD dwSize;
+    ULONGLONG hDevice;
+    ULONGLONG wParam;
+} RAWINPUTHEADER64;
+
+typedef struct
+{
+    RAWINPUTHEADER64 header;
     union {
         RAWMOUSE    mouse;
         RAWKEYBOARD keyboard;
