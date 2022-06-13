@@ -127,6 +127,7 @@ IMFMediaType *mf_media_type_from_wg_format(const struct wg_format *format);
 void mf_media_type_to_wg_format(IMFMediaType *type, struct wg_format *format);
 
 HRESULT wg_sample_create_mf(IMFSample *sample, struct wg_sample **out);
+HRESULT wg_sample_create_quartz(IMediaSample *sample, struct wg_sample **out);
 void wg_sample_release(struct wg_sample *wg_sample);
 
 HRESULT wg_transform_push_mf(struct wg_transform *transform, struct wg_sample *sample,

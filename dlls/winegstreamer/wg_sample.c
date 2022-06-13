@@ -25,6 +25,7 @@
 #include "wine/list.h"
 
 WINE_DEFAULT_DEBUG_CHANNEL(mfplat);
+WINE_DECLARE_DEBUG_CHANNEL(quartz);
 
 struct wg_sample_queue
 {
@@ -51,6 +52,10 @@ struct sample
             IMFSample *sample;
             IMFMediaBuffer *buffer;
         } mf;
+        struct
+        {
+            IMediaSample *sample;
+        } quartz;
     } u;
 };
 
@@ -108,6 +113,55 @@ fail:
         IMFMediaBuffer_Release(sample->u.mf.buffer);
     free(sample);
     return hr;
+}
+
+static const struct wg_sample_ops quartz_sample_ops;
+
+static inline struct sample *unsafe_quartz_from_wg_sample(struct wg_sample *wg_sample)
+{
+    struct sample *sample = CONTAINING_RECORD(wg_sample, struct sample, wg_sample);
+    if (sample->ops != &quartz_sample_ops) return NULL;
+    return sample;
+}
+
+static void quartz_sample_destroy(struct wg_sample *wg_sample)
+{
+    struct sample *sample = unsafe_quartz_from_wg_sample(wg_sample);
+
+    TRACE_(quartz)("wg_sample %p.\n", wg_sample);
+
+    IMediaSample_Release(sample->u.quartz.sample);
+}
+
+static const struct wg_sample_ops quartz_sample_ops =
+{
+    quartz_sample_destroy,
+};
+
+HRESULT wg_sample_create_quartz(IMediaSample *media_sample, struct wg_sample **out)
+{
+    DWORD current_length, max_length;
+    struct sample *sample;
+    BYTE *buffer;
+    HRESULT hr;
+
+    if (FAILED(hr = IMediaSample_GetPointer(media_sample, &buffer)))
+        return hr;
+    current_length = IMediaSample_GetActualDataLength(media_sample);
+    max_length = IMediaSample_GetSize(media_sample);
+
+    if (!(sample = calloc(1, sizeof(*sample))))
+        return E_OUTOFMEMORY;
+
+    IMediaSample_AddRef((sample->u.quartz.sample = media_sample));
+    sample->wg_sample.data = buffer;
+    sample->wg_sample.size = current_length;
+    sample->wg_sample.max_size = max_length;
+    sample->ops = &quartz_sample_ops;
+
+    TRACE_(quartz)("Created wg_sample %p for IMediaSample %p.\n", &sample->wg_sample, media_sample);
+    *out = &sample->wg_sample;
+    return S_OK;
 }
 
 void wg_sample_release(struct wg_sample *wg_sample)
