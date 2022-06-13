@@ -162,10 +162,10 @@ static const SIZE_T free_list_sizes[] =
 typedef struct DECLSPEC_ALIGN(ALIGNMENT) tagSUBHEAP
 {
     SIZE_T __pad[sizeof(SIZE_T) / sizeof(DWORD)];
-    SIZE_T              size;       /* Size of the whole sub-heap */
-    SIZE_T              commitSize; /* Committed size of the sub-heap */
-    struct list         entry;      /* Entry in sub-heap list */
-    struct heap        *heap;       /* Main heap structure */
+    SIZE_T block_size;
+    SIZE_T data_size;
+    struct list entry;
+    struct heap *heap;
     struct block block;
 } SUBHEAP;
 
@@ -269,19 +269,25 @@ static inline void *subheap_base( const SUBHEAP *subheap )
     return ROUND_ADDR( subheap, COMMIT_MASK );
 }
 
-static inline SIZE_T subheap_size( const SUBHEAP *subheap )
-{
-    return subheap->size;
-}
-
 static inline SIZE_T subheap_overhead( const SUBHEAP *subheap )
 {
     return (char *)&subheap->block - (char *)subheap_base( subheap );
 }
 
+static inline SIZE_T subheap_size( const SUBHEAP *subheap )
+{
+    return subheap->block_size + subheap_overhead( subheap );
+}
+
 static inline const void *subheap_commit_end( const SUBHEAP *subheap )
 {
-    return (char *)subheap_base( subheap ) + subheap->commitSize;
+    return (char *)(subheap + 1) + subheap->data_size;
+}
+
+static void subheap_set_bounds( SUBHEAP *subheap, char *commit_end, char *end )
+{
+    subheap->block_size = end - (char *)&subheap->block;
+    subheap->data_size = commit_end - (char *)(subheap + 1);
 }
 
 static inline void *first_block( const SUBHEAP *subheap )
@@ -304,8 +310,7 @@ static inline struct block *next_block( const SUBHEAP *subheap, const struct blo
 
 static inline BOOL check_subheap( const SUBHEAP *subheap )
 {
-    const char *base = ROUND_ADDR( subheap, COMMIT_MASK );
-    return contains( base, subheap->size, &subheap->block, base + subheap->commitSize - (char *)&subheap->block );
+    return contains( &subheap->block, subheap->block_size, subheap + 1, subheap->data_size );
 }
 
 static BOOL heap_validate( const struct heap *heap );
@@ -642,7 +647,7 @@ static inline BOOL subheap_commit( SUBHEAP *subheap, const struct block *block, 
         return FALSE;
     }
 
-    subheap->commitSize = (char *)commit_end - (char *)subheap_base( subheap );
+    subheap->data_size = (char *)commit_end - (char *)(subheap + 1);
     return TRUE;
 }
 
@@ -666,7 +671,7 @@ static inline BOOL subheap_decommit( SUBHEAP *subheap, const void *commit_end )
         return FALSE;
     }
 
-    subheap->commitSize = (char *)commit_end - (char *)subheap_base( subheap );
+    subheap->data_size = (char *)commit_end - (char *)(subheap + 1);
     return TRUE;
 }
 
@@ -928,8 +933,7 @@ static SUBHEAP *HEAP_CreateSubHeap( struct heap *heap, LPVOID address, DWORD fla
 
         subheap = address;
         subheap->heap       = heap;
-        subheap->size       = totalSize;
-        subheap->commitSize = commitSize;
+        subheap_set_bounds( subheap, (char *)address + commitSize, (char *)address + totalSize );
         list_add_head( &heap->subheap_list, &subheap->entry );
     }
     else
@@ -949,8 +953,7 @@ static SUBHEAP *HEAP_CreateSubHeap( struct heap *heap, LPVOID address, DWORD fla
 
         subheap = &heap->subheap;
         subheap->heap       = heap;
-        subheap->size       = totalSize;
-        subheap->commitSize = commitSize;
+        subheap_set_bounds( subheap, (char *)address + commitSize, (char *)address + totalSize );
         list_add_head( &heap->subheap_list, &subheap->entry );
 
         /* Build the free lists */
