@@ -406,6 +406,7 @@ NTSTATUS wg_transform_create(void *args)
             break;
 
         case WG_MAJOR_TYPE_AUDIO:
+            break;
         case WG_MAJOR_TYPE_VIDEO:
         case WG_MAJOR_TYPE_UNKNOWN:
             GST_FIXME("Format %u not implemented!", input_format.major_type);
