@@ -266,15 +266,38 @@ SVG_SRCS = \
 	blue_scrollbar_thumb_vertical.svg \
 	blue_scrollbar_upper_track_horizontal.svg \
 	blue_scrollbar_upper_track_vertical.svg \
-	blue_spin_background.svg \
 	blue_spin_background_down.svg \
 	blue_spin_background_left.svg \
 	blue_spin_background_right.svg \
 	blue_spin_background_up.svg \
-	blue_spin_glyph_down.svg \
-	blue_spin_glyph_left.svg \
-	blue_spin_glyph_right.svg \
-	blue_spin_glyph_up.svg \
+	blue_spin_glyph_down_11px.svg \
+	blue_spin_glyph_down_14px.svg \
+	blue_spin_glyph_down_18px.svg \
+	blue_spin_glyph_down_21px.svg \
+	blue_spin_glyph_down_28px.svg \
+	blue_spin_glyph_down_7x16px.svg \
+	blue_spin_glyph_down_7x24px.svg \
+	blue_spin_glyph_left_12px.svg \
+	blue_spin_glyph_left_15px.svg \
+	blue_spin_glyph_left_18px.svg \
+	blue_spin_glyph_left_24px.svg \
+	blue_spin_glyph_left_4px.svg \
+	blue_spin_glyph_left_6px.svg \
+	blue_spin_glyph_left_9px.svg \
+	blue_spin_glyph_right_12px.svg \
+	blue_spin_glyph_right_15px.svg \
+	blue_spin_glyph_right_18px.svg \
+	blue_spin_glyph_right_24px.svg \
+	blue_spin_glyph_right_4px.svg \
+	blue_spin_glyph_right_6px.svg \
+	blue_spin_glyph_right_9px.svg \
+	blue_spin_glyph_up_11px.svg \
+	blue_spin_glyph_up_14px.svg \
+	blue_spin_glyph_up_18px.svg \
+	blue_spin_glyph_up_21px.svg \
+	blue_spin_glyph_up_28px.svg \
+	blue_spin_glyph_up_7x20px.svg \
+	blue_spin_glyph_up_7x24px.svg \
 	blue_status_background.svg \
 	blue_status_pane.svg \
 	blue_tab_background.svg \

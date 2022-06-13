@@ -1523,23 +1523,38 @@ BLUE_INI TEXTFILE
 
 "\r\n; Spin\r\n"
 "[Spin]\r\n"
-"BgType = ImageFile\r\n"
-"SizingType = Tile\r\n"
-"ImageFile = blue_spin_background.bmp\r\n"
-"SizingMargins = 2, 2, 2, 2\r\n"
-"ImageCount = 1\r\n"
+"BgType = BorderFill\r\n"
+"FillType = Solid\r\n"
+"BorderSize = 1\r\n"
+"BorderColor = 174 174 174\r\n"
+"FillColor = 227 227 227\r\n"
 
 "[Spin.Up]\r\n"
 "BgType = ImageFile\r\n"
 "SizingType = Stretch\r\n"
 "ImageFile = blue_spin_background_up.bmp\r\n"
-"SizingMargins = 4, 3, 4, 2\r\n"
+"SizingMargins = 4, 3, 9, 3\r\n"
 "ContentMargins = 0, 0, 0, 0\r\n"
 "ImageCount = 4\r\n"
 "ImageLayout = Vertical\r\n"
 "GlyphType = ImageGlyph\r\n"
-"GlyphImageFile = blue_spin_glyph_up.bmp\r\n"
+"ImageSelectType = Dpi\r\n"
 "GlyphTransparent = True\r\n"
+"; The glyphs are actually smaller in blue_spin_glyph_up_7x24px.bmp \r\n"
+"ImageFile1 = blue_spin_glyph_up_7x24px.bmp\r\n"
+"ImageFile2 = blue_spin_glyph_up_7x20px.bmp\r\n"
+"ImageFile3 = blue_spin_glyph_up_11px.bmp\r\n"
+"ImageFile4 = blue_spin_glyph_up_14px.bmp\r\n"
+"ImageFile5 = blue_spin_glyph_up_18px.bmp\r\n"
+"ImageFile6 = blue_spin_glyph_up_21px.bmp\r\n"
+"ImageFile7 = blue_spin_glyph_up_28px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
 "TransitionDurations = 4, "
 "0, 100, 100, 100, "
 "100, 0, 100, 100, "
@@ -1548,15 +1563,30 @@ BLUE_INI TEXTFILE
 
 "[Spin.Down]\r\n"
 "BgType = ImageFile\r\n"
-"SizingType = Tile\r\n"
+"SizingType = Stretch\r\n"
 "ImageFile = blue_spin_background_down.bmp\r\n"
-"SizingMargins = 4, 3, 3, 3\r\n"
+"SizingMargins = 4, 3, 8, 3\r\n"
 "ContentMargins = 0, 0, 0, 0\r\n"
 "ImageCount = 4\r\n"
 "ImageLayout = Vertical\r\n"
 "GlyphType = ImageGlyph\r\n"
-"GlyphImageFile = blue_spin_glyph_down.bmp\r\n"
+"ImageSelectType = Dpi\r\n"
 "GlyphTransparent = True\r\n"
+"; The glyphs are actually smaller in blue_spin_glyph_down_7x24px.bmp \r\n"
+"ImageFile1 = blue_spin_glyph_down_7x24px.bmp\r\n"
+"ImageFile2 = blue_spin_glyph_down_7x16px.bmp\r\n"
+"ImageFile3 = blue_spin_glyph_down_11px.bmp\r\n"
+"ImageFile4 = blue_spin_glyph_down_14px.bmp\r\n"
+"ImageFile5 = blue_spin_glyph_down_18px.bmp\r\n"
+"ImageFile6 = blue_spin_glyph_down_21px.bmp\r\n"
+"ImageFile7 = blue_spin_glyph_down_28px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
 "TransitionDurations = 4, "
 "0, 100, 100, 100, "
 "100, 0, 100, 100, "
@@ -1567,13 +1597,28 @@ BLUE_INI TEXTFILE
 "BgType = ImageFile\r\n"
 "SizingType = Stretch\r\n"
 "ImageFile = blue_spin_background_right.bmp\r\n"
-"SizingMargins = 3, 3, 4, 2\r\n"
+"SizingMargins = 3, 3, 9, 3\r\n"
 "ContentMargins = 0, 0, 0, 0\r\n"
 "ImageCount = 4\r\n"
 "ImageLayout = Vertical\r\n"
 "GlyphType = ImageGlyph\r\n"
-"GlyphImageFile = blue_spin_glyph_right.bmp\r\n"
+"ImageSelectType = Dpi\r\n"
 "GlyphTransparent = True\r\n"
+"; The glyphs are actually smaller in blue_spin_glyph_right_6px.bmp \r\n"
+"ImageFile1 = blue_spin_glyph_right_6px.bmp\r\n"
+"ImageFile2 = blue_spin_glyph_right_4px.bmp\r\n"
+"ImageFile3 = blue_spin_glyph_right_9px.bmp\r\n"
+"ImageFile4 = blue_spin_glyph_right_12px.bmp\r\n"
+"ImageFile5 = blue_spin_glyph_right_15px.bmp\r\n"
+"ImageFile6 = blue_spin_glyph_right_18px.bmp\r\n"
+"ImageFile7 = blue_spin_glyph_right_24px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
 "TransitionDurations = 4, "
 "0, 100, 100, 100, "
 "100, 0, 100, 100, "
@@ -1584,13 +1629,28 @@ BLUE_INI TEXTFILE
 "BgType = ImageFile\r\n"
 "SizingType = Stretch\r\n"
 "ImageFile = blue_spin_background_left.bmp\r\n"
-"SizingMargins = 4, 2, 4, 2\r\n"
+"SizingMargins = 4, 2, 9, 3\r\n"
 "ContentMargins = 0, 0, 0, 0\r\n"
 "ImageCount = 4\r\n"
 "ImageLayout = Vertical\r\n"
 "GlyphType = ImageGlyph\r\n"
-"GlyphImageFile = blue_spin_glyph_left.bmp\r\n"
+"ImageSelectType = Dpi\r\n"
 "GlyphTransparent = True\r\n"
+"; The glyphs are actually smaller in blue_spin_glyph_left_6px.bmp \r\n"
+"ImageFile1 = blue_spin_glyph_left_6px.bmp\r\n"
+"ImageFile2 = blue_spin_glyph_left_4px.bmp\r\n"
+"ImageFile3 = blue_spin_glyph_left_9px.bmp\r\n"
+"ImageFile4 = blue_spin_glyph_left_12px.bmp\r\n"
+"ImageFile5 = blue_spin_glyph_left_15px.bmp\r\n"
+"ImageFile6 = blue_spin_glyph_left_18px.bmp\r\n"
+"ImageFile7 = blue_spin_glyph_left_24px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
 "TransitionDurations = 4, "
 "0, 100, 100, 100, "
 "100, 0, 100, 100, "
@@ -2900,9 +2960,6 @@ BLUE_SCROLLBAR_UPPER_TRACK_HORIZONTAL_BMP BITMAP "blue_scrollbar_upper_track_hor
 BLUE_SCROLLBAR_UPPER_TRACK_VERTICAL_BMP BITMAP "blue_scrollbar_upper_track_vertical.bmp"
 
 /* Spin */
-/* @makedep: blue_spin_background.bmp */
-BLUE_SPIN_BACKGROUND_BMP BITMAP "blue_spin_background.bmp"
-
 /* @makedep: blue_spin_background_down.bmp */
 BLUE_SPIN_BACKGROUND_DOWN_BMP BITMAP "blue_spin_background_down.bmp"
 
@@ -2915,17 +2972,89 @@ BLUE_SPIN_BACKGROUND_LEFT_BMP BITMAP "blue_spin_background_left.bmp"
 /* @makedep: blue_spin_background_up.bmp */
 BLUE_SPIN_BACKGROUND_UP_BMP BITMAP "blue_spin_background_up.bmp"
 
-/* @makedep: blue_spin_glyph_down.bmp */
-BLUE_SPIN_GLYPH_DOWN_BMP BITMAP "blue_spin_glyph_down.bmp"
+/* @makedep: blue_spin_glyph_down_7x16px.bmp */
+BLUE_SPIN_GLYPH_DOWN_7X16PX_BMP BITMAP "blue_spin_glyph_down_7x16px.bmp"
 
-/* @makedep: blue_spin_glyph_left.bmp */
-BLUE_SPIN_GLYPH_LEFT_BMP BITMAP "blue_spin_glyph_left.bmp"
+/* @makedep: blue_spin_glyph_down_7x24px.bmp */
+BLUE_SPIN_GLYPH_DOWN_7X24PX_BMP BITMAP "blue_spin_glyph_down_7x24px.bmp"
 
-/* @makedep: blue_spin_glyph_right.bmp */
-BLUE_SPIN_GLYPH_RIGHT_BMP BITMAP "blue_spin_glyph_right.bmp"
+/* @makedep: blue_spin_glyph_down_11px.bmp */
+BLUE_SPIN_GLYPH_DOWN_11PX_BMP BITMAP "blue_spin_glyph_down_11px.bmp"
 
-/* @makedep: blue_spin_glyph_up.bmp */
-BLUE_SPIN_GLYPH_UP_BMP BITMAP "blue_spin_glyph_up.bmp"
+/* @makedep: blue_spin_glyph_down_14px.bmp */
+BLUE_SPIN_GLYPH_DOWN_14PX_BMP BITMAP "blue_spin_glyph_down_14px.bmp"
+
+/* @makedep: blue_spin_glyph_down_18px.bmp */
+BLUE_SPIN_GLYPH_DOWN_18PX_BMP BITMAP "blue_spin_glyph_down_18px.bmp"
+
+/* @makedep: blue_spin_glyph_down_21px.bmp */
+BLUE_SPIN_GLYPH_DOWN_21PX_BMP BITMAP "blue_spin_glyph_down_21px.bmp"
+
+/* @makedep: blue_spin_glyph_down_28px.bmp */
+BLUE_SPIN_GLYPH_DOWN_28PX_BMP BITMAP "blue_spin_glyph_down_28px.bmp"
+
+/* @makedep: blue_spin_glyph_left_4px.bmp */
+BLUE_SPIN_GLYPH_LEFT_4PX_BMP BITMAP "blue_spin_glyph_left_4px.bmp"
+
+/* @makedep: blue_spin_glyph_left_6px.bmp */
+BLUE_SPIN_GLYPH_LEFT_6PX_BMP BITMAP "blue_spin_glyph_left_6px.bmp"
+
+/* @makedep: blue_spin_glyph_left_9px.bmp */
+BLUE_SPIN_GLYPH_LEFT_9PX_BMP BITMAP "blue_spin_glyph_left_9px.bmp"
+
+/* @makedep: blue_spin_glyph_left_12px.bmp */
+BLUE_SPIN_GLYPH_LEFT_12PX_BMP BITMAP "blue_spin_glyph_left_12px.bmp"
+
+/* @makedep: blue_spin_glyph_left_15px.bmp */
+BLUE_SPIN_GLYPH_LEFT_15PX_BMP BITMAP "blue_spin_glyph_left_15px.bmp"
+
+/* @makedep: blue_spin_glyph_left_18px.bmp */
+BLUE_SPIN_GLYPH_LEFT_18PX_BMP BITMAP "blue_spin_glyph_left_18px.bmp"
+
+/* @makedep: blue_spin_glyph_left_24px.bmp */
+BLUE_SPIN_GLYPH_LEFT_24PX_BMP BITMAP "blue_spin_glyph_left_24px.bmp"
+
+/* @makedep: blue_spin_glyph_right_4px.bmp */
+BLUE_SPIN_GLYPH_RIGHT_4PX_BMP BITMAP "blue_spin_glyph_right_4px.bmp"
+
+/* @makedep: blue_spin_glyph_right_6px.bmp */
+BLUE_SPIN_GLYPH_RIGHT_6PX_BMP BITMAP "blue_spin_glyph_right_6px.bmp"
+
+/* @makedep: blue_spin_glyph_right_9px.bmp */
+BLUE_SPIN_GLYPH_RIGHT_9PX_BMP BITMAP "blue_spin_glyph_right_9px.bmp"
+
+/* @makedep: blue_spin_glyph_right_12px.bmp */
+BLUE_SPIN_GLYPH_RIGHT_12PX_BMP BITMAP "blue_spin_glyph_right_12px.bmp"
+
+/* @makedep: blue_spin_glyph_right_15px.bmp */
+BLUE_SPIN_GLYPH_RIGHT_15PX_BMP BITMAP "blue_spin_glyph_right_15px.bmp"
+
+/* @makedep: blue_spin_glyph_right_18px.bmp */
+BLUE_SPIN_GLYPH_RIGHT_18PX_BMP BITMAP "blue_spin_glyph_right_18px.bmp"
+
+/* @makedep: blue_spin_glyph_right_24px.bmp */
+BLUE_SPIN_GLYPH_RIGHT_24PX_BMP BITMAP "blue_spin_glyph_right_24px.bmp"
+
+/* @makedep: blue_spin_glyph_up_7x20px.bmp */
+BLUE_SPIN_GLYPH_UP_7X20PX_BMP BITMAP "blue_spin_glyph_up_7x20px.bmp"
+
+/* @makedep: blue_spin_glyph_up_7x24px.bmp */
+BLUE_SPIN_GLYPH_UP_7X24PX_BMP BITMAP "blue_spin_glyph_up_7x24px.bmp"
+
+/* @makedep: blue_spin_glyph_up_11px.bmp */
+BLUE_SPIN_GLYPH_UP_11PX_BMP BITMAP "blue_spin_glyph_up_11px.bmp"
+
+/* @makedep: blue_spin_glyph_up_14px.bmp */
+BLUE_SPIN_GLYPH_UP_14PX_BMP BITMAP "blue_spin_glyph_up_14px.bmp"
+
+/* @makedep: blue_spin_glyph_up_18px.bmp */
+BLUE_SPIN_GLYPH_UP_18PX_BMP BITMAP "blue_spin_glyph_up_18px.bmp"
+
+/* @makedep: blue_spin_glyph_up_21px.bmp */
+BLUE_SPIN_GLYPH_UP_21PX_BMP BITMAP "blue_spin_glyph_up_21px.bmp"
+
+/* @makedep: blue_spin_glyph_up_28px.bmp */
+BLUE_SPIN_GLYPH_UP_28PX_BMP BITMAP "blue_spin_glyph_up_28px.bmp"
 
 /* Status */
 /* @makedep: blue_status_background.bmp */
