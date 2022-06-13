@@ -79,7 +79,7 @@
 @ stub UiaNodeFromFocus
 @ stub UiaNodeFromHandle
 @ stub UiaNodeFromPoint
-@ stub UiaNodeFromProvider
+@ stdcall UiaNodeFromProvider(ptr ptr)
 @ stub UiaNodeRelease
 @ stub UiaPatternRelease
 #@ stub UiaProviderForNonClient
