@@ -329,3 +329,38 @@ HRESULT wg_transform_push_quartz(struct wg_transform *transform, struct wg_sampl
 
     return hr;
 }
+
+HRESULT wg_transform_read_quartz(struct wg_transform *transform, struct wg_sample *wg_sample)
+{
+    struct sample *sample = unsafe_quartz_from_wg_sample(wg_sample);
+    REFERENCE_TIME start_time, end_time;
+    HRESULT hr;
+    BOOL value;
+
+    TRACE_(mfplat)("transform %p, wg_sample %p.\n", transform, wg_sample);
+
+    if (FAILED(hr = wg_transform_read_data(transform, wg_sample, NULL)))
+        return hr;
+
+    if (FAILED(hr = IMediaSample_SetActualDataLength(sample->u.quartz.sample, wg_sample->size)))
+        return hr;
+
+    if (wg_sample->flags & WG_SAMPLE_FLAG_HAS_PTS)
+    {
+        start_time = wg_sample->pts;
+        if (wg_sample->flags & WG_SAMPLE_FLAG_HAS_DURATION)
+        {
+            end_time = start_time + wg_sample->duration;
+            IMediaSample_SetTime(sample->u.quartz.sample, &start_time, &end_time);
+        }
+        else
+        {
+            IMediaSample_SetTime(sample->u.quartz.sample, &start_time, NULL);
+        }
+    }
+
+    value = !!(wg_sample->flags & WG_SAMPLE_FLAG_SYNC_POINT);
+    IMediaSample_SetSyncPoint(sample->u.quartz.sample, value);
+
+    return S_OK;
+}

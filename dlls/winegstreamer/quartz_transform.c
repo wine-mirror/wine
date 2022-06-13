@@ -291,8 +291,6 @@ static HRESULT WINAPI transform_sink_receive(struct strmbase_sink *pin, IMediaSa
 {
     struct transform *filter = impl_from_strmbase_filter(pin->pin.filter);
     struct wg_sample *wg_sample;
-    REFERENCE_TIME start_time;
-    REFERENCE_TIME end_time;
     HRESULT hr;
 
     /* We do not expect pin connection state to change while the filter is
@@ -334,10 +332,11 @@ static HRESULT WINAPI transform_sink_receive(struct strmbase_sink *pin, IMediaSa
             return hr;
         }
 
-        hr = wg_transform_read_data(filter->transform, wg_sample, NULL);
+        hr = wg_transform_read_quartz(filter->transform, wg_sample);
+        wg_sample_release(wg_sample);
+
         if (hr == MF_E_TRANSFORM_NEED_MORE_INPUT)
         {
-            wg_sample_release(wg_sample);
             IMediaSample_Release(output_sample);
             break;
         }
@@ -345,35 +344,11 @@ static HRESULT WINAPI transform_sink_receive(struct strmbase_sink *pin, IMediaSa
         {
             if (hr == MF_E_TRANSFORM_STREAM_CHANGE)
                 FIXME("Unexpected stream format change!\n");
-            wg_sample_release(wg_sample);
             IMediaSample_Release(output_sample);
             return hr;
         }
 
         wg_sample_queue_flush(filter->sample_queue, false);
-
-        hr = IMediaSample_SetActualDataLength(output_sample, wg_sample->size);
-        if (FAILED(hr))
-        {
-            wg_sample_release(wg_sample);
-            IMediaSample_Release(output_sample);
-            return hr;
-        }
-
-        if (wg_sample->flags & WG_SAMPLE_FLAG_HAS_PTS)
-        {
-            start_time = wg_sample->pts;
-            if (wg_sample->flags & WG_SAMPLE_FLAG_HAS_DURATION)
-            {
-                end_time = start_time + wg_sample->duration;
-                IMediaSample_SetTime(output_sample, &start_time, &end_time);
-            }
-            else
-            {
-                IMediaSample_SetTime(output_sample, &start_time, NULL);
-            }
-        }
-        wg_sample_release(wg_sample);
 
         hr = IMemInputPin_Receive(filter->source.pMemInputPin, output_sample);
         if (FAILED(hr))
