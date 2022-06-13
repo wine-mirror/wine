@@ -510,7 +510,7 @@ NTSTATUS WINAPI dispatch_exception( EXCEPTION_RECORD *rec, CONTEXT *context )
                  rec->ExceptionCode, rec->ExceptionFlags, rec->ExceptionAddress,
                  (void *)context->Rip, GetCurrentThreadId() );
     for (c = 0; c < min( EXCEPTION_MAXIMUM_PARAMETERS, rec->NumberParameters ); c++)
-        TRACE( " info[%d]=%016I64x\n", c, rec->ExceptionInformation[c] );
+        TRACE_(seh)( " info[%d]=%016I64x\n", c, rec->ExceptionInformation[c] );
 
     if (rec->ExceptionCode == EXCEPTION_WINE_STUB)
     {
