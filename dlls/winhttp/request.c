@@ -2308,7 +2308,12 @@ BOOL WINAPI WinHttpSendRequest( HINTERNET hrequest, const WCHAR *headers, DWORD 
     {
         struct send_request *s;
 
-        if (!(s = malloc( sizeof(*s) ))) return FALSE;
+        if (!(s = malloc( sizeof(*s) )))
+        {
+            release_object( &request->hdr );
+            SetLastError( ERROR_OUTOFMEMORY );
+            return FALSE;
+        }
         s->headers      = strdupW( headers );
         s->headers_len  = headers_len;
         s->optional     = optional;
@@ -2886,8 +2891,12 @@ BOOL WINAPI WinHttpReceiveResponse( HINTERNET hrequest, LPVOID reserved )
     {
         struct receive_response *r;
 
-        if (!(r = malloc( sizeof(*r) ))) return FALSE;
-
+        if (!(r = malloc( sizeof(*r) )))
+        {
+            release_object( &request->hdr );
+            SetLastError( ERROR_OUTOFMEMORY );
+            return FALSE;
+        }
         if ((ret = queue_task( &request->queue, task_receive_response, &r->task_hdr, &request->hdr )))
             free( r );
     }
@@ -2981,7 +2990,13 @@ BOOL WINAPI WinHttpQueryDataAvailable( HINTERNET hrequest, LPDWORD available )
     {
         struct query_data *q;
 
-        if (!(q = malloc( sizeof(*q) ))) return FALSE;
+        if (!(q = malloc( sizeof(*q) )))
+        {
+            release_object( &request->hdr );
+            SetLastError( ERROR_OUTOFMEMORY );
+            return FALSE;
+        }
+
         q->available = available;
 
         if ((ret = queue_task( &request->queue, task_query_data_available, &q->task_hdr, &request->hdr )))
@@ -3034,7 +3049,12 @@ BOOL WINAPI WinHttpReadData( HINTERNET hrequest, void *buffer, DWORD to_read, DW
     {
         struct read_data *r;
 
-        if (!(r = malloc( sizeof(*r) ))) return FALSE;
+        if (!(r = malloc( sizeof(*r) )))
+        {
+            release_object( &request->hdr );
+            SetLastError( ERROR_OUTOFMEMORY );
+            return FALSE;
+        }
         r->buffer  = buffer;
         r->to_read = to_read;
         r->read    = read;
@@ -3110,7 +3130,12 @@ BOOL WINAPI WinHttpWriteData( HINTERNET hrequest, const void *buffer, DWORD to_w
     {
         struct write_data *w;
 
-        if (!(w = malloc( sizeof(*w) ))) return FALSE;
+        if (!(w = malloc( sizeof(*w) )))
+        {
+            release_object( &request->hdr );
+            SetLastError( ERROR_OUTOFMEMORY );
+            return FALSE;
+        }
         w->buffer   = buffer;
         w->to_write = to_write;
         w->written  = written;
@@ -3973,10 +3998,11 @@ DWORD WINAPI WinHttpWebSocketReceive( HINTERNET hsocket, void *buf, DWORD len, D
         if (!(r = malloc( sizeof(*r) )))
         {
             InterlockedDecrement( &socket->hdr.pending_receives );
+            release_object( &socket->hdr );
             return ERROR_OUTOFMEMORY;
         }
-        r->buf    = buf;
-        r->len    = len;
+        r->buf = buf;
+        r->len = len;
 
         if ((ret = queue_task( &socket->recv_q, task_socket_receive, &r->task_hdr, &socket->hdr )))
         {
@@ -4191,8 +4217,8 @@ DWORD WINAPI WinHttpWebSocketClose( HINTERNET hsocket, USHORT status, void *reas
         cancel_queue( &socket->recv_q );
     }
 
-    if (prev_state < SOCKET_STATE_SHUTDOWN
-        && (ret = send_socket_shutdown( socket, status, reason, len, FALSE ))) goto done;
+    if (prev_state < SOCKET_STATE_SHUTDOWN && (ret = send_socket_shutdown( socket, status, reason, len, FALSE )))
+        goto done;
 
     if (pending_receives == 1 && socket->close_frame_received)
     {
@@ -4205,7 +4231,11 @@ DWORD WINAPI WinHttpWebSocketClose( HINTERNET hsocket, USHORT status, void *reas
     {
         struct socket_shutdown *s;
 
-        if (!(s = calloc( 1, sizeof(*s) ))) return FALSE;
+        if (!(s = calloc( 1, sizeof(*s) )))
+        {
+            ret = ERROR_OUTOFMEMORY;
+            goto done;
+        }
         if ((ret = queue_task( &socket->recv_q, task_socket_close, &s->task_hdr, &socket->hdr )))
         {
             InterlockedDecrement( &socket->hdr.pending_receives );
