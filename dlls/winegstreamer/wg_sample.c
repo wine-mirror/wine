@@ -185,7 +185,6 @@ static void wg_sample_queue_begin_append(struct wg_sample_queue *queue, struct w
 
     /* make sure a concurrent wg_sample_queue_flush call won't release the sample until we're done */
     InterlockedIncrement(&wg_sample->refcount);
-    sample->wg_sample.flags |= WG_SAMPLE_FLAG_HAS_REFCOUNT;
 
     EnterCriticalSection(&queue->cs);
     list_add_tail(&queue->samples, &sample->entry);
@@ -244,6 +243,13 @@ void wg_sample_queue_destroy(struct wg_sample_queue *queue)
 
     free(queue);
 }
+
+/* These unixlib entry points should not be used directly, they assume samples
+ * to be queued and zero-copy support, use the helpers below instead.
+ */
+HRESULT wg_transform_push_data(struct wg_transform *transform, struct wg_sample *sample);
+HRESULT wg_transform_read_data(struct wg_transform *transform, struct wg_sample *sample,
+        struct wg_format *format);
 
 HRESULT wg_transform_push_mf(struct wg_transform *transform, struct wg_sample *wg_sample,
         struct wg_sample_queue *queue)

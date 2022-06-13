@@ -542,17 +542,7 @@ NTSTATUS wg_transform_push_data(void *args)
         return STATUS_SUCCESS;
     }
 
-    if (!(sample->flags & WG_SAMPLE_FLAG_HAS_REFCOUNT))
-    {
-        if (!(buffer = gst_buffer_new_and_alloc(sample->size)))
-        {
-            GST_ERROR("Failed to allocate input buffer");
-            return STATUS_NO_MEMORY;
-        }
-        gst_buffer_fill(buffer, 0, sample->data, sample->size);
-        GST_INFO("Copied %u bytes from sample %p to buffer %p", sample->size, sample, buffer);
-    }
-    else if (!(buffer = gst_buffer_new_wrapped_full(GST_MEMORY_FLAG_READONLY, sample->data, sample->max_size,
+    if (!(buffer = gst_buffer_new_wrapped_full(GST_MEMORY_FLAG_READONLY, sample->data, sample->max_size,
             0, sample->size, sample, wg_sample_free_notify)))
     {
         GST_ERROR("Failed to allocate input buffer");

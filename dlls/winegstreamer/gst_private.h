@@ -102,9 +102,6 @@ void wg_parser_stream_seek(struct wg_parser_stream *stream, double rate,
 struct wg_transform *wg_transform_create(const struct wg_format *input_format,
         const struct wg_format *output_format);
 void wg_transform_destroy(struct wg_transform *transform);
-HRESULT wg_transform_push_data(struct wg_transform *transform, struct wg_sample *sample);
-HRESULT wg_transform_read_data(struct wg_transform *transform, struct wg_sample *sample,
-        struct wg_format *format);
 
 unsigned int wg_format_get_max_size(const struct wg_format *format);
 
