@@ -574,13 +574,7 @@ static const char *debugstr_heap_entry( struct rtl_heap_entry *entry )
                              entry->Region.dwUnCommittedSize, entry->Region.lpFirstBlock, entry->Region.lpLastBlock );
 }
 
-/***********************************************************************
- *           HEAP_GetPtr
- * RETURNS
- *	Pointer to the heap
- *	NULL: Failure
- */
-static struct heap *HEAP_GetPtr( HANDLE handle )
+static struct heap *unsafe_heap_from_handle( HANDLE handle )
 {
     struct heap *heap = handle;
     BOOL valid = TRUE;
@@ -1298,7 +1292,7 @@ static DWORD heap_flags_from_global_flag( DWORD flag )
  */
 static void heap_set_debug_flags( HANDLE handle )
 {
-    struct heap *heap = HEAP_GetPtr( handle );
+    struct heap *heap = unsafe_heap_from_handle( handle );
     ULONG global_flags = RtlGetNtGlobalFlags();
     DWORD flags, force_flags;
 
@@ -1421,16 +1415,17 @@ HANDLE WINAPI RtlCreateHeap( ULONG flags, PVOID addr, SIZE_T totalSize, SIZE_T c
  */
 HANDLE WINAPI RtlDestroyHeap( HANDLE handle )
 {
-    struct heap *heap = HEAP_GetPtr( handle );
     SUBHEAP *subheap, *next;
     ARENA_LARGE *arena, *arena_next;
     struct block **pending, **tmp;
+    struct heap *heap;
     SIZE_T size;
     void *addr;
 
     TRACE( "handle %p\n", handle );
 
-    if (!heap && handle && (((struct heap *)handle)->flags & HEAP_VALIDATE_PARAMS) &&
+    if (!(heap = unsafe_heap_from_handle( handle )) && handle &&
+        (((struct heap *)handle)->flags & HEAP_VALIDATE_PARAMS) &&
         NtCurrentTeb()->Peb->BeingDebugged)
     {
         DbgPrint( "Attempt to destroy an invalid heap\n" );
@@ -1447,7 +1442,7 @@ HANDLE WINAPI RtlDestroyHeap( HANDLE handle )
         RtlFreeHeap( handle, 0, pending );
     }
 
-    if (heap == process_heap) return heap; /* cannot delete the main process heap */
+    if (heap == process_heap) return handle; /* cannot delete the main process heap */
 
     /* remove it from the per-process list */
     RtlEnterCriticalSection( &process_heap->cs );
@@ -1536,7 +1531,7 @@ void *WINAPI DECLSPEC_HOTPATCH RtlAllocateHeap( HANDLE handle, ULONG flags, SIZE
     void *ptr = NULL;
     NTSTATUS status;
 
-    if (!(heap = HEAP_GetPtr( handle )))
+    if (!(heap = unsafe_heap_from_handle( handle )))
         status = STATUS_INVALID_HANDLE;
     else
     {
@@ -1577,7 +1572,7 @@ BOOLEAN WINAPI DECLSPEC_HOTPATCH RtlFreeHeap( HANDLE handle, ULONG flags, void *
 
     valgrind_notify_free( ptr );
 
-    if (!(heap = HEAP_GetPtr( handle )))
+    if (!(heap = unsafe_heap_from_handle( handle )))
         status = STATUS_INVALID_PARAMETER;
     else
     {
@@ -1661,7 +1656,7 @@ void *WINAPI RtlReAllocateHeap( HANDLE handle, ULONG flags, void *ptr, SIZE_T si
 
     if (!ptr) return NULL;
 
-    if (!(heap = HEAP_GetPtr( handle )))
+    if (!(heap = unsafe_heap_from_handle( handle )))
         status = STATUS_INVALID_HANDLE;
     else
     {
@@ -1713,7 +1708,7 @@ ULONG WINAPI RtlCompactHeap( HANDLE handle, ULONG flags )
  */
 BOOLEAN WINAPI RtlLockHeap( HANDLE handle )
 {
-    struct heap *heap = HEAP_GetPtr( handle );
+    struct heap *heap = unsafe_heap_from_handle( handle );
     if (!heap) return FALSE;
     heap_lock( heap, 0 );
     return TRUE;
@@ -1734,7 +1729,7 @@ BOOLEAN WINAPI RtlLockHeap( HANDLE handle )
  */
 BOOLEAN WINAPI RtlUnlockHeap( HANDLE handle )
 {
-    struct heap *heap = HEAP_GetPtr( handle );
+    struct heap *heap = unsafe_heap_from_handle( handle );
     if (!heap) return FALSE;
     heap_unlock( heap, 0 );
     return TRUE;
@@ -1766,7 +1761,7 @@ SIZE_T WINAPI RtlSizeHeap( HANDLE handle, ULONG flags, const void *ptr )
     struct heap *heap;
     NTSTATUS status;
 
-    if (!(heap = HEAP_GetPtr( handle )))
+    if (!(heap = unsafe_heap_from_handle( handle )))
         status = STATUS_INVALID_PARAMETER;
     else
     {
@@ -1790,7 +1785,7 @@ BOOLEAN WINAPI RtlValidateHeap( HANDLE handle, ULONG flags, const void *ptr )
     SUBHEAP *subheap;
     BOOLEAN ret;
 
-    if (!(heap = HEAP_GetPtr( handle )))
+    if (!(heap = unsafe_heap_from_handle( handle )))
         ret = FALSE;
     else
     {
@@ -1914,7 +1909,7 @@ NTSTATUS WINAPI RtlWalkHeap( HANDLE handle, void *entry_ptr )
 
     if (!entry) return STATUS_INVALID_PARAMETER;
 
-    if (!(heap = HEAP_GetPtr( handle )))
+    if (!(heap = unsafe_heap_from_handle( handle )))
         status = STATUS_INVALID_HANDLE;
     else
     {
@@ -2008,7 +2003,7 @@ BOOLEAN WINAPI RtlGetUserInfoHeap( HANDLE handle, ULONG flags, void *ptr, void *
     *user_value = 0;
     *user_flags = 0;
 
-    if (!(heap = HEAP_GetPtr( handle ))) return TRUE;
+    if (!(heap = unsafe_heap_from_handle( handle ))) return TRUE;
 
     heap_lock( heap, flags );
     if ((block = unsafe_block_from_ptr( heap, ptr, &subheap )) && !subheap)
@@ -2038,7 +2033,7 @@ BOOLEAN WINAPI RtlSetUserValueHeap( HANDLE handle, ULONG flags, void *ptr, void 
 
     TRACE( "handle %p, flags %#x, ptr %p, user_value %p.\n", handle, flags, ptr, user_value );
 
-    if (!(heap = HEAP_GetPtr( handle ))) return TRUE;
+    if (!(heap = unsafe_heap_from_handle( handle ))) return TRUE;
 
     heap_lock( heap, flags );
     if (!(block = unsafe_block_from_ptr( heap, ptr, &subheap ))) ret = FALSE;
