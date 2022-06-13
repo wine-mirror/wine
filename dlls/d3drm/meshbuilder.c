@@ -2134,7 +2134,7 @@ static HRESULT WINAPI d3drm_mesh_builder3_Optimize(IDirect3DRMMeshBuilder3 *ifac
 {
     FIXME("iface %p, flags %#lx stub!\n", iface, flags);
 
-    return E_NOTIMPL;
+    return S_OK;
 }
 
 static HRESULT WINAPI d3drm_mesh_builder3_AddFacesIndexed(IDirect3DRMMeshBuilder3 *iface,
