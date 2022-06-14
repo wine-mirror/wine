@@ -636,6 +636,8 @@ struct thread_pump
     ID3DX10ThreadPump ID3DX10ThreadPump_iface;
     LONG refcount;
 
+    LONG processing_count;
+
     SRWLOCK io_lock;
     CONDITION_VARIABLE io_cv;
     unsigned int io_count;
@@ -758,6 +760,7 @@ static HRESULT WINAPI thread_pump_AddWorkItem(ID3DX10ThreadPump *iface, ID3DX10D
     if (object)
         *object = NULL;
 
+    InterlockedIncrement(&thread_pump->processing_count);
     AcquireSRWLockExclusive(&thread_pump->io_lock);
     ++thread_pump->io_count;
     list_add_tail(&thread_pump->io_queue, &work_item->entry);
@@ -768,8 +771,15 @@ static HRESULT WINAPI thread_pump_AddWorkItem(ID3DX10ThreadPump *iface, ID3DX10D
 
 static UINT WINAPI thread_pump_GetWorkItemCount(ID3DX10ThreadPump *iface)
 {
-    FIXME("iface %p stub!\n", iface);
-    return 0;
+    struct thread_pump *thread_pump = impl_from_ID3DX10ThreadPump(iface);
+    UINT ret;
+
+    TRACE("iface %p.\n", iface);
+
+    AcquireSRWLockExclusive(&thread_pump->device_lock);
+    ret = thread_pump->processing_count + thread_pump->device_count;
+    ReleaseSRWLockExclusive(&thread_pump->device_lock);
+    return ret;
 }
 
 static HRESULT WINAPI thread_pump_WaitForAllItems(ID3DX10ThreadPump *iface)
@@ -842,6 +852,7 @@ static DWORD WINAPI io_thread(void *arg)
             if (work_item->result)
                 *work_item->result = hr;
             work_item_free(work_item, FALSE);
+            InterlockedDecrement(&thread_pump->processing_count);
             continue;
         }
 
@@ -894,6 +905,7 @@ static DWORD WINAPI proc_thread(void *arg)
             if (work_item->result)
                 *work_item->result = hr;
             work_item_free(work_item, FALSE);
+            InterlockedDecrement(&thread_pump->processing_count);
             continue;
         }
 
@@ -908,6 +920,7 @@ static DWORD WINAPI proc_thread(void *arg)
             if (work_item->result)
                 *work_item->result = hr;
             work_item_free(work_item, FALSE);
+            InterlockedDecrement(&thread_pump->processing_count);
             continue;
         }
 
@@ -921,6 +934,7 @@ static DWORD WINAPI proc_thread(void *arg)
 
         list_add_tail(&thread_pump->device_queue, &work_item->entry);
         ++thread_pump->device_count;
+        InterlockedDecrement(&thread_pump->processing_count);
         ReleaseSRWLockExclusive(&thread_pump->device_lock);
     }
     return 0;
