@@ -378,17 +378,21 @@ static inline void mark_block_tail( struct block *block, DWORD flags )
 }
 
 /* initialize contents of a newly created block of memory */
-static inline void initialize_block( void *ptr, SIZE_T size, DWORD flags )
+static inline void initialize_block( struct block *block, SIZE_T old_size, SIZE_T size, DWORD flags )
 {
+    char *data = (char *)(block + 1);
+
+    if (size <= old_size) return;
+
     if (flags & HEAP_ZERO_MEMORY)
     {
-        valgrind_make_writable( ptr, size );
-        memset( ptr, 0, size );
+        valgrind_make_writable( data + old_size, size - old_size );
+        memset( data + old_size, 0, size - old_size );
     }
     else if (flags & HEAP_FREE_CHECKING_ENABLED)
     {
-        valgrind_make_writable( ptr, size );
-        memset( ptr, BLOCK_FILL_USED, size );
+        valgrind_make_writable( data + old_size, size - old_size );
+        memset( data + old_size, BLOCK_FILL_USED, size - old_size );
     }
 }
 
@@ -845,7 +849,7 @@ static struct block *realloc_large_block( struct heap *heap, DWORD flags, struct
     {
         /* FIXME: we could remap zero-pages instead */
         valgrind_notify_resize( data, old_size, size );
-        if (size > old_size) initialize_block( data + old_size, size - old_size, flags );
+        initialize_block( block, old_size, size, flags );
 
         arena->data_size = size;
         valgrind_make_noaccess( (char *)block + sizeof(*block) + arena->data_size,
@@ -1520,7 +1524,7 @@ static NTSTATUS heap_allocate( struct heap *heap, ULONG flags, SIZE_T block_size
     block_set_type( block, BLOCK_TYPE_USED );
     block_set_flags( block, ~0, BLOCK_USER_FLAGS( flags ) );
     shrink_used_block( heap, flags, subheap, block, old_block_size, block_size, size );
-    initialize_block( block + 1, size, flags );
+    initialize_block( block, 0, size, flags );
     mark_block_tail( block, flags );
 
     *ret = block + 1;
@@ -1646,7 +1650,7 @@ static NTSTATUS heap_reallocate( struct heap *heap, ULONG flags, void *ptr,
     block_set_flags( block, BLOCK_FLAG_USER_MASK, BLOCK_USER_FLAGS( flags ) );
     shrink_used_block( heap, flags, subheap, block, old_block_size, block_size, size );
 
-    if (size > old_size) initialize_block( (char *)(block + 1) + old_size, size - old_size, flags );
+    initialize_block( block, old_size, size, flags );
     mark_block_tail( block, flags );
 
     *ret = block + 1;
