@@ -209,26 +209,6 @@ struct wgl_context
     struct list entry;
 };
 
-struct wgl_pbuffer
-{
-    Drawable   drawable;
-    const struct wgl_pixel_format* fmt;
-    int        width;
-    int        height;
-    int*       attribList;
-    int        use_render_texture; /* This is also the internal texture format */
-    int        texture_bind_target;
-    int        texture_bpp;
-    GLint      texture_format;
-    GLuint     texture_target;
-    GLenum     texture_type;
-    GLuint     texture;
-    int        texture_level;
-    GLXContext tmp_context;
-    GLXContext prev_context;
-    struct list entry;
-};
-
 enum dc_gl_type
 {
     DC_GL_NONE,       /* no GL support (pixel format not set yet) */
@@ -250,6 +230,26 @@ struct gl_drawable
     int                            swap_interval;
     BOOL                           refresh_swap_interval;
     BOOL                           mutable_pf;
+};
+
+struct wgl_pbuffer
+{
+    struct gl_drawable *gl;
+    const struct wgl_pixel_format* fmt;
+    int        width;
+    int        height;
+    int*       attribList;
+    int        use_render_texture; /* This is also the internal texture format */
+    int        texture_bind_target;
+    int        texture_bpp;
+    GLint      texture_format;
+    GLuint     texture_target;
+    GLenum     texture_type;
+    GLuint     texture;
+    int        texture_level;
+    GLXContext tmp_context;
+    GLXContext prev_context;
+    struct list entry;
 };
 
 enum glx_swap_control_method
@@ -2276,9 +2276,19 @@ static struct wgl_pbuffer *X11DRV_wglCreatePbufferARB( HDC hdc, int iPixelFormat
     }
 
     PUSH1(attribs, None);
-    object->drawable = pglXCreatePbuffer(gdi_display, fmt->fbconfig, attribs);
-    TRACE("new Pbuffer drawable as %lx\n", object->drawable);
-    if (!object->drawable) {
+    if (!(object->gl = calloc( 1, sizeof(*object->gl) )))
+    {
+        SetLastError(ERROR_NO_SYSTEM_RESOURCES);
+        goto create_failed;
+    }
+    object->gl->type = DC_GL_PBUFFER;
+    object->gl->format = object->fmt;
+    object->gl->ref = 1;
+
+    object->gl->drawable = pglXCreatePbuffer(gdi_display, fmt->fbconfig, attribs);
+    TRACE("new Pbuffer drawable as %p (%lx)\n", object->gl, object->gl->drawable);
+    if (!object->gl->drawable) {
+        free( object->gl );
         SetLastError(ERROR_NO_SYSTEM_RESOURCES);
         goto create_failed; /* unexpected error */
     }
@@ -2306,7 +2316,8 @@ static BOOL X11DRV_wglDestroyPbufferARB( struct wgl_pbuffer *object )
     pthread_mutex_lock( &context_mutex );
     list_remove( &object->entry );
     pthread_mutex_unlock( &context_mutex );
-    pglXDestroyPbuffer(gdi_display, object->drawable);
+    pglXDestroyPbuffer(gdi_display, object->gl->drawable);
+    release_gl_drawable( object->gl );
     if (object->tmp_context)
         pglXDestroyContext(gdi_display, object->tmp_context);
     free( object );
@@ -2321,30 +2332,21 @@ static BOOL X11DRV_wglDestroyPbufferARB( struct wgl_pbuffer *object )
 static HDC X11DRV_wglGetPbufferDCARB( struct wgl_pbuffer *object )
 {
     struct x11drv_escape_set_drawable escape;
-    struct gl_drawable *gl, *prev;
+    struct gl_drawable *prev;
     HDC hdc;
 
     hdc = NtGdiOpenDCW( NULL, NULL, NULL, 0, TRUE, NULL, NULL, NULL );
     if (!hdc) return 0;
 
-    if (!(gl = calloc( 1, sizeof(*gl) )))
-    {
-        NtGdiDeleteObjectApp( hdc );
-        return 0;
-    }
-    gl->type = DC_GL_PBUFFER;
-    gl->drawable = object->drawable;
-    gl->format = object->fmt;
-    gl->ref = 1;
-
     pthread_mutex_lock( &context_mutex );
     if (!XFindContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char **)&prev ))
         release_gl_drawable( prev );
-    XSaveContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char *)gl );
+    grab_gl_drawable( object->gl );
+    XSaveContext( gdi_display, (XID)hdc, gl_pbuffer_context, (char *)object->gl );
     pthread_mutex_unlock( &context_mutex );
 
     escape.code = X11DRV_SET_DRAWABLE;
-    escape.drawable = object->drawable;
+    escape.drawable = object->gl->drawable;
     escape.mode = IncludeInferiors;
     SetRect( &escape.dc_rect, 0, 0, object->width, object->height );
     NtGdiExtEscape( hdc, NULL, 0, X11DRV_ESCAPE, sizeof(escape), (LPSTR)&escape, 0, NULL );
@@ -2364,10 +2366,10 @@ static BOOL X11DRV_wglQueryPbufferARB( struct wgl_pbuffer *object, int iAttribut
 
     switch (iAttribute) {
         case WGL_PBUFFER_WIDTH_ARB:
-            pglXQueryDrawable(gdi_display, object->drawable, GLX_WIDTH, (unsigned int*) piValue);
+            pglXQueryDrawable(gdi_display, object->gl->drawable, GLX_WIDTH, (unsigned int*) piValue);
             break;
         case WGL_PBUFFER_HEIGHT_ARB:
-            pglXQueryDrawable(gdi_display, object->drawable, GLX_HEIGHT, (unsigned int*) piValue);
+            pglXQueryDrawable(gdi_display, object->gl->drawable, GLX_HEIGHT, (unsigned int*) piValue);
             break;
 
         case WGL_PBUFFER_LOST_ARB:
@@ -2981,7 +2983,7 @@ static BOOL X11DRV_wglBindTexImageARB( struct wgl_pbuffer *object, int iBuffer )
             FIXME("partial stub!\n");
         }
 
-        TRACE("drawable=%lx, context=%p\n", object->drawable, prev_context);
+        TRACE("drawable=%p (%lx), context=%p\n", object->gl, object->gl->drawable, prev_context);
         if (!object->tmp_context || object->prev_context != prev_context) {
             if (object->tmp_context)
                 pglXDestroyContext(gdi_display, object->tmp_context);
@@ -2992,7 +2994,7 @@ static BOOL X11DRV_wglBindTexImageARB( struct wgl_pbuffer *object, int iBuffer )
         opengl_funcs.gl.p_glGetIntegerv(object->texture_bind_target, &prev_binded_texture);
 
         /* Switch to our pbuffer */
-        pglXMakeCurrent(gdi_display, object->drawable, object->tmp_context);
+        pglXMakeCurrent(gdi_display, object->gl->drawable, object->tmp_context);
 
         /* Make sure that the prev_binded_texture is set as the current texture state isn't shared between contexts.
          * After that copy the pbuffer texture data. */
