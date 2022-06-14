@@ -1165,6 +1165,10 @@ static void release_gl_drawable( struct gl_drawable *gl )
         pglXDestroyPixmap( gdi_display, gl->drawable );
         XFreePixmap( gdi_display, gl->pixmap );
         break;
+    case DC_GL_PBUFFER:
+        TRACE( "destroying pbuffer drawable %lx\n", gl->drawable );
+        pglXDestroyPbuffer( gdi_display, gl->drawable );
+        break;
     default:
         break;
     }
@@ -2316,7 +2320,6 @@ static BOOL X11DRV_wglDestroyPbufferARB( struct wgl_pbuffer *object )
     pthread_mutex_lock( &context_mutex );
     list_remove( &object->entry );
     pthread_mutex_unlock( &context_mutex );
-    pglXDestroyPbuffer(gdi_display, object->gl->drawable);
     release_gl_drawable( object->gl );
     if (object->tmp_context)
         pglXDestroyContext(gdi_display, object->tmp_context);
