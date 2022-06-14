@@ -6526,8 +6526,22 @@ static void test_MFCreateDXSurfaceBuffer(void)
     hr = IMF2DBuffer_GetScanline0AndPitch(_2dbuffer, &data, &pitch);
     ok(hr == HRESULT_FROM_WIN32(ERROR_WAS_UNLOCKED), "Unexpected hr %#lx.\n", hr);
 
+    hr = IDirect3DSurface9_LockRect(backbuffer, &locked_rect, NULL, 0);
+    ok(hr == S_OK, "Failed to lock back buffer, hr %#lx.\n", hr);
+
+    /* Cannot lock the buffer while the surface is locked. */
+    hr = IMF2DBuffer_Lock2D(_2dbuffer, &data, &pitch);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
+
+    hr = IDirect3DSurface9_UnlockRect(backbuffer);
+    ok(hr == S_OK, "Failed to unlock back buffer, hr %#lx.\n", hr);
+
     hr = IMF2DBuffer_Lock2D(_2dbuffer, &data, &pitch);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    /* Cannot lock the surface once the buffer is locked. */
+    hr = IDirect3DSurface9_LockRect(backbuffer, &locked_rect, NULL, 0);
+    ok(hr == D3DERR_INVALIDCALL, "Unexpected hr %#lx.\n", hr);
 
     hr = IMF2DBuffer_GetScanline0AndPitch(_2dbuffer, &data, &pitch);
     ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
