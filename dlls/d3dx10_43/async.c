@@ -21,6 +21,7 @@
 #include "d3dx10.h"
 #include "d3dcompiler.h"
 #include "dxhelpers.h"
+#include "winternl.h"
 
 #include "wine/debug.h"
 #include "wine/list.h"
@@ -784,8 +785,32 @@ static UINT WINAPI thread_pump_GetWorkItemCount(ID3DX10ThreadPump *iface)
 
 static HRESULT WINAPI thread_pump_WaitForAllItems(ID3DX10ThreadPump *iface)
 {
-    FIXME("iface %p stub!\n", iface);
-    return E_NOTIMPL;
+    struct thread_pump *thread_pump = impl_from_ID3DX10ThreadPump(iface);
+    HRESULT hr;
+    LONG v;
+
+    TRACE("iface %p.\n", iface);
+
+    for (;;)
+    {
+        if (FAILED((hr = ID3DX10ThreadPump_ProcessDeviceWorkItems(iface, UINT_MAX))))
+            return hr;
+
+        AcquireSRWLockExclusive(&thread_pump->device_lock);
+        if (thread_pump->device_count)
+        {
+            ReleaseSRWLockExclusive(&thread_pump->device_lock);
+            continue;
+        }
+        v = thread_pump->processing_count;
+        ReleaseSRWLockExclusive(&thread_pump->device_lock);
+        if (!v)
+            break;
+
+        RtlWaitOnAddress(&thread_pump->processing_count, &v, sizeof(v), NULL);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI thread_pump_ProcessDeviceWorkItems(ID3DX10ThreadPump *iface, UINT count)
@@ -878,7 +903,8 @@ static DWORD WINAPI io_thread(void *arg)
             if (work_item->result)
                 *work_item->result = hr;
             work_item_free(work_item, FALSE);
-            InterlockedDecrement(&thread_pump->processing_count);
+            if (!InterlockedDecrement(&thread_pump->processing_count))
+                RtlWakeAddressAll(&thread_pump->processing_count);
             continue;
         }
 
@@ -931,7 +957,8 @@ static DWORD WINAPI proc_thread(void *arg)
             if (work_item->result)
                 *work_item->result = hr;
             work_item_free(work_item, FALSE);
-            InterlockedDecrement(&thread_pump->processing_count);
+            if (!InterlockedDecrement(&thread_pump->processing_count))
+                RtlWakeAddressAll(&thread_pump->processing_count);
             continue;
         }
 
@@ -946,7 +973,8 @@ static DWORD WINAPI proc_thread(void *arg)
             if (work_item->result)
                 *work_item->result = hr;
             work_item_free(work_item, FALSE);
-            InterlockedDecrement(&thread_pump->processing_count);
+            if (!InterlockedDecrement(&thread_pump->processing_count))
+                RtlWakeAddressAll(&thread_pump->processing_count);
             continue;
         }
 
@@ -961,6 +989,7 @@ static DWORD WINAPI proc_thread(void *arg)
         list_add_tail(&thread_pump->device_queue, &work_item->entry);
         ++thread_pump->device_count;
         InterlockedDecrement(&thread_pump->processing_count);
+        RtlWakeAddressAll(&thread_pump->processing_count);
         ReleaseSRWLockExclusive(&thread_pump->device_lock);
     }
     return 0;
