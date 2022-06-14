@@ -4522,6 +4522,42 @@ image_size_tests[] =
     { &MFVideoFormat_NV11, 3,   2,   12,     9,  384,    8,      128 },
     { &MFVideoFormat_NV11, 4,   2,   12,     0,  384,    12,     128 },
     { &MFVideoFormat_NV11, 320, 240, 115200, 0,  138240, 115200, 384 },
+
+    { &MFVideoFormat_YV12, 1, 1, 3, 1, 192, 1, 128 },
+    { &MFVideoFormat_YV12, 1, 2, 6, 3, 384, 2, 128 },
+    { &MFVideoFormat_YV12, 1, 3, 9, 4, 576, 3, 128 },
+    { &MFVideoFormat_YV12, 2, 1, 3, 0, 192, 3, 128 },
+    { &MFVideoFormat_YV12, 2, 2, 6, 6, 384, 6, 128 },
+    { &MFVideoFormat_YV12, 2, 4, 12, 0, 768, 12, 128 },
+    { &MFVideoFormat_YV12, 3, 2, 12, 9, 384, 8, 128 },
+    { &MFVideoFormat_YV12, 3, 5, 30, 22, 960, 20, 128 },
+    { &MFVideoFormat_YV12, 4, 2, 12, 0, 384, 12, 128 },
+    { &MFVideoFormat_YV12, 4, 3, 18, 0, 576, 18, 128 },
+    { &MFVideoFormat_YV12, 320, 240, 115200, 0, 138240, 115200, 384 },
+
+    { &MFVideoFormat_I420, 1, 1, 3, 1, 192, 1, 128 },
+    { &MFVideoFormat_I420, 1, 2, 6, 3, 384, 2, 128 },
+    { &MFVideoFormat_I420, 1, 3, 9, 4, 576, 3, 128 },
+    { &MFVideoFormat_I420, 2, 1, 3, 0, 192, 3, 128 },
+    { &MFVideoFormat_I420, 2, 2, 6, 6, 384, 6, 128 },
+    { &MFVideoFormat_I420, 2, 4, 12, 0, 768, 12, 128 },
+    { &MFVideoFormat_I420, 3, 2, 12, 9, 384, 8, 128 },
+    { &MFVideoFormat_I420, 3, 5, 30, 22, 960, 20, 128 },
+    { &MFVideoFormat_I420, 4, 2, 12, 0, 384, 12, 128 },
+    { &MFVideoFormat_I420, 4, 3, 18, 0, 576, 18, 128 },
+    { &MFVideoFormat_I420, 320, 240, 115200, 0, 138240, 115200, 384 },
+
+    { &MFVideoFormat_IYUV, 1, 1, 3, 1, 192, 1, 128 },
+    { &MFVideoFormat_IYUV, 1, 2, 6, 3, 384, 2, 128 },
+    { &MFVideoFormat_IYUV, 1, 3, 9, 4, 576, 3, 128 },
+    { &MFVideoFormat_IYUV, 2, 1, 3, 0, 192, 3, 128 },
+    { &MFVideoFormat_IYUV, 2, 2, 6, 6, 384, 6, 128 },
+    { &MFVideoFormat_IYUV, 2, 4, 12, 0, 768, 12, 128 },
+    { &MFVideoFormat_IYUV, 3, 2, 12, 9, 384, 8, 128 },
+    { &MFVideoFormat_IYUV, 3, 5, 30, 22, 960, 20, 128 },
+    { &MFVideoFormat_IYUV, 4, 2, 12, 0, 384, 12, 128 },
+    { &MFVideoFormat_IYUV, 4, 3, 18, 0, 576, 18, 128 },
+    { &MFVideoFormat_IYUV, 320, 240, 115200, 0, 138240, 115200, 384 },
 };
 
 static void test_MFCalculateImageSize(void)
@@ -6172,6 +6208,9 @@ static void test_MFCreate2DMediaBuffer(void)
             case MAKEFOURCC('I','M','C','2'):
             case MAKEFOURCC('I','M','C','4'):
             case MAKEFOURCC('N','V','1','1'):
+            case MAKEFOURCC('Y','V','1','2'):
+            case MAKEFOURCC('I','4','2','0'):
+            case MAKEFOURCC('I','Y','U','V'):
                 ok(stride * 3 / 2 * ptr->height <= length2, "Insufficient buffer space: expected at least %lu bytes, got only %lu\n",
                         stride * 3 / 2 * ptr->height, length2);
                 for (j = 0; j < ptr->height; j++)
@@ -6223,6 +6262,9 @@ static void test_MFCreate2DMediaBuffer(void)
             case MAKEFOURCC('I','M','C','2'):
             case MAKEFOURCC('I','M','C','4'):
             case MAKEFOURCC('N','V','1','1'):
+            case MAKEFOURCC('Y','V','1','2'):
+            case MAKEFOURCC('I','4','2','0'):
+            case MAKEFOURCC('I','Y','U','V'):
                 for (j = 0; j < ptr->height; j++)
                     for (k = 0; k < stride / 2; k++)
                         ok(data[j * (pitch / 2) + k] == (((j + ptr->height) % 16) << 4) + (k % 16),
