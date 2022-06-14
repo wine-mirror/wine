@@ -790,8 +790,34 @@ static HRESULT WINAPI thread_pump_WaitForAllItems(ID3DX10ThreadPump *iface)
 
 static HRESULT WINAPI thread_pump_ProcessDeviceWorkItems(ID3DX10ThreadPump *iface, UINT count)
 {
-    FIXME("iface %p, count %u stub!\n", iface, count);
-    return E_NOTIMPL;
+    struct thread_pump *thread_pump = impl_from_ID3DX10ThreadPump(iface);
+    struct work_item *work_item;
+    HRESULT hr;
+    UINT i;
+
+    TRACE("iface %p, count %u.\n", iface, count);
+
+    for (i = 0; i < count; ++i)
+    {
+        AcquireSRWLockExclusive(&thread_pump->device_lock);
+        if (!thread_pump->device_count)
+        {
+            ReleaseSRWLockExclusive(&thread_pump->device_lock);
+            break;
+        }
+
+        --thread_pump->device_count;
+        work_item = LIST_ENTRY(list_head(&thread_pump->device_queue), struct work_item, entry);
+        list_remove(&work_item->entry);
+        ReleaseSRWLockExclusive(&thread_pump->device_lock);
+
+        hr = ID3DX10DataProcessor_CreateDeviceObject(work_item->processor, work_item->object);
+        if (work_item->result)
+            *work_item->result = hr;
+        work_item_free(work_item, FALSE);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI thread_pump_PurgeAllItems(ID3DX10ThreadPump *iface)
