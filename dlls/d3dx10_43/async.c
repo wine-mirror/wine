@@ -845,10 +845,52 @@ static HRESULT WINAPI thread_pump_ProcessDeviceWorkItems(ID3DX10ThreadPump *ifac
     return S_OK;
 }
 
+static void purge_list(struct list *list, LONG *count)
+{
+    struct work_item *work_item;
+
+    while (!list_empty(list))
+    {
+        work_item = LIST_ENTRY(list_head(list), struct work_item, entry);
+        list_remove(&work_item->entry);
+        work_item_free(work_item, TRUE);
+
+        if (count && !InterlockedDecrement(count))
+            RtlWakeAddressAll(count);
+    }
+}
+
 static HRESULT WINAPI thread_pump_PurgeAllItems(ID3DX10ThreadPump *iface)
 {
-    FIXME("iface %p stub!\n", iface);
-    return E_NOTIMPL;
+    struct thread_pump *thread_pump = impl_from_ID3DX10ThreadPump(iface);
+    LONG v;
+
+    TRACE("iface %p.\n", iface);
+
+    for (;;)
+    {
+        AcquireSRWLockExclusive(&thread_pump->io_lock);
+        purge_list(&thread_pump->io_queue, &thread_pump->processing_count);
+        thread_pump->io_count = 0;
+        ReleaseSRWLockExclusive(&thread_pump->io_lock);
+
+        AcquireSRWLockExclusive(&thread_pump->proc_lock);
+        purge_list(&thread_pump->proc_queue, &thread_pump->processing_count);
+        thread_pump->proc_count = 0;
+        ReleaseSRWLockExclusive(&thread_pump->proc_lock);
+
+        AcquireSRWLockExclusive(&thread_pump->device_lock);
+        purge_list(&thread_pump->device_queue, NULL);
+        thread_pump->device_count = 0;
+        v = thread_pump->processing_count;
+        ReleaseSRWLockExclusive(&thread_pump->device_lock);
+        if (!v)
+            break;
+
+        RtlWaitOnAddress(&thread_pump->processing_count, &v, sizeof(v), NULL);
+    }
+
+    return S_OK;
 }
 
 static HRESULT WINAPI thread_pump_GetQueueStatus(ID3DX10ThreadPump *iface,
