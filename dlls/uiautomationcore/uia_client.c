@@ -84,6 +84,14 @@ static const IWineUiaNodeVtbl uia_node_vtbl = {
     uia_node_Release,
 };
 
+static struct uia_node *unsafe_impl_from_IWineUiaNode(IWineUiaNode *iface)
+{
+    if (!iface || (iface->lpVtbl != &uia_node_vtbl))
+        return NULL;
+
+    return CONTAINING_RECORD(iface, struct uia_node, IWineUiaNode_iface);
+}
+
 /***********************************************************************
  *          UiaNodeFromProvider (uiautomationcore.@)
  */
@@ -123,4 +131,20 @@ HRESULT WINAPI UiaNodeFromProvider(IRawElementProviderSimple *elprov, HUIANODE *
     *huianode = (void *)&node->IWineUiaNode_iface;
 
     return hr;
+}
+
+/***********************************************************************
+ *          UiaNodeRelease (uiautomationcore.@)
+ */
+BOOL WINAPI UiaNodeRelease(HUIANODE huianode)
+{
+    struct uia_node *node = unsafe_impl_from_IWineUiaNode((IWineUiaNode *)huianode);
+
+    TRACE("(%p)\n", huianode);
+
+    if (!node)
+        return FALSE;
+
+    IWineUiaNode_Release(&node->IWineUiaNode_iface);
+    return TRUE;
 }

@@ -80,7 +80,7 @@
 @ stub UiaNodeFromHandle
 @ stub UiaNodeFromPoint
 @ stdcall UiaNodeFromProvider(ptr ptr)
-@ stub UiaNodeRelease
+@ stdcall UiaNodeRelease(ptr)
 @ stub UiaPatternRelease
 #@ stub UiaProviderForNonClient
 @ stdcall UiaProviderFromIAccessible(ptr long long ptr)

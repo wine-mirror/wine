@@ -3597,8 +3597,7 @@ static void test_UiaNodeFromProvider(void)
     ref = IUnknown_AddRef((IUnknown *)node);
     ok(ref == 3, "Unexpected refcnt %ld\n", ref);
 
-    ref = IUnknown_Release((IUnknown *)node);
-    ok(ref == 2, "Unexpected refcnt %ld\n", ref);
+    ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
 
     ref = IUnknown_Release((IUnknown *)node);
     ok(ref == 1, "Unexpected refcnt %ld\n", ref);
@@ -3626,7 +3625,7 @@ static void test_UiaNodeFromProvider(void)
     }
 
     ok_method_sequence(node_from_prov3, "node_from_prov3");
-    IUnknown_Release((IUnknown *)node);
+    ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
     ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
 
     /* HWND exposed, but Provider2 not returned from WM_GETOBJECT. */
@@ -3668,7 +3667,7 @@ static void test_UiaNodeFromProvider(void)
     ok_method_sequence(node_from_prov4, "node_from_prov4");
 
     ok(!!node, "node == NULL\n");
-    IUnknown_Release((IUnknown *)node);
+    ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
     ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
 
     /* Return Provider2 in response to WM_GETOBJECT. */
@@ -3713,7 +3712,7 @@ static void test_UiaNodeFromProvider(void)
 
     ok_method_sequence(node_from_prov5, "node_from_prov5");
 
-    IUnknown_Release((IUnknown *)node);
+    ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
     ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
     ok(Provider2.ref == 1, "Unexpected refcnt %ld\n", Provider2.ref);
 
@@ -3749,7 +3748,7 @@ static void test_UiaNodeFromProvider(void)
     ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
 
     ok(!!node, "node == NULL\n");
-    IUnknown_Release((IUnknown *)node);
+    ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
     ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
     ok(Provider2.ref == 1, "Unexpected refcnt %ld\n", Provider2.ref);
 
@@ -3783,7 +3782,7 @@ static void test_UiaNodeFromProvider(void)
     ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
 
     ok(!!node, "node == NULL\n");
-    IUnknown_Release((IUnknown *)node);
+    ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
     ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
     ok(Provider2.ref == 1, "Unexpected refcnt %ld\n", Provider2.ref);
 
