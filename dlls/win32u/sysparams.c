@@ -360,6 +360,7 @@ union sysparam_all_entry
 
 static UINT system_dpi;
 static RECT work_area;
+DWORD process_layout = ~0u;
 
 static HDC display_dc;
 static pthread_mutex_t display_dc_lock = PTHREAD_MUTEX_INITIALIZER;
@@ -4714,6 +4715,9 @@ ULONG_PTR WINAPI NtUserCallNoParam( ULONG code )
     case NtUserCallNoParam_GetInputState:
         return get_input_state();
 
+    case NtUserCallNoParam_GetProcessDefaultLayout:
+        return process_layout;
+
     case NtUserCallNoParam_ReleaseCapture:
         return release_capture();
 
@@ -4804,6 +4808,10 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
 
     case NtUserCallOneParam_SetCaretBlinkTime:
         return set_caret_blink_time( arg );
+
+    case NtUserCallOneParam_SetProcessDefaultLayout:
+        process_layout = arg;
+        return TRUE;
 
     /* temporary exports */
     case NtUserCallHooks:

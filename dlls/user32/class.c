@@ -309,6 +309,8 @@ static void load_uxtheme(void)
  */
 BOOL WINAPI User32RegisterBuiltinClasses( const struct win_hook_params *params, ULONG size )
 {
+    DWORD layout;
+
     register_builtin( &BUTTON_builtin_class );
     register_builtin( &COMBO_builtin_class );
     register_builtin( &COMBOLBOX_builtin_class );
@@ -321,6 +323,8 @@ BOOL WINAPI User32RegisterBuiltinClasses( const struct win_hook_params *params, 
     register_builtin( &SCROLL_builtin_class );
     register_builtin( &STATIC_builtin_class );
     register_builtin( &IME_builtin_class );
+
+    GetProcessDefaultLayout( &layout ); /* make sure that process layout is initialized */
 
     /* Load uxtheme.dll so that standard scrollbars and dialogs are hooked for theming support */
     load_uxtheme();

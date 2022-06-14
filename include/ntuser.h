@@ -725,6 +725,7 @@ enum
     NtUserCallNoParam_GetDesktopWindow,
     NtUserCallNoParam_GetDialogBaseUnits,
     NtUserCallNoParam_GetInputState,
+    NtUserCallNoParam_GetProcessDefaultLayout,
     NtUserCallNoParam_ReleaseCapture,
     /* temporary exports */
     NtUserExitingThread,
@@ -749,6 +750,11 @@ static inline DWORD NtUserGetDialogBaseUnits(void)
 static inline BOOL NtUserGetInputState(void)
 {
     return NtUserCallNoParam( NtUserCallNoParam_GetInputState );
+}
+
+static inline DWORD NtUserGetProcessDefaultLayout(void)
+{
+    return NtUserCallNoParam( NtUserCallNoParam_GetProcessDefaultLayout );
 }
 
 static inline BOOL NtUserReleaseCapture(void)
@@ -780,6 +786,7 @@ enum
     NtUserCallOneParam_MessageBeep,
     NtUserCallOneParam_RealizePalette,
     NtUserCallOneParam_SetCaretBlinkTime,
+    NtUserCallOneParam_SetProcessDefaultLayout,
     /* temporary exports */
     NtUserCallHooks,
     NtUserGetDeskPattern,
@@ -896,6 +903,11 @@ static inline BOOL NtUserMessageBeep( UINT i )
 static inline UINT NtUserRealizePalette( HDC hdc )
 {
     return NtUserCallOneParam( HandleToUlong(hdc), NtUserCallOneParam_RealizePalette );
+}
+
+static inline UINT NtUserSetProcessDefaultLayout( DWORD layout )
+{
+    return NtUserCallOneParam( layout, NtUserCallOneParam_SetProcessDefaultLayout );
 }
 
 /* NtUserCallTwoParam codes, not compatible with Windows */

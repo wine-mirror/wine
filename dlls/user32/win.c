@@ -36,8 +36,6 @@
 
 WINE_DEFAULT_DEBUG_CHANNEL(win);
 
-static DWORD process_layout = ~0u;
-
 
 /***********************************************************************
  *           get_user_handle_ptr
@@ -624,15 +622,6 @@ HWND WIN_CreateWindowEx( CREATESTRUCTW *cs, LPCWSTR className, HINSTANCE module,
             if (is_default_coord( cs->cx ) || !cs->cx) cs->cx = pos[1].x;
             if (is_default_coord( cs->cy ) || !cs->cy) cs->cy = pos[1].y;
         }
-    }
-
-    /* FIXME: move to win32u */
-    if (!cs->hwndParent && className != (const WCHAR *)DESKTOP_CLASS_ATOM &&
-        (IS_INTRESOURCE(className) || wcsicmp( className, L"Message" )))
-    {
-        DWORD layout;
-        GetProcessDefaultLayout( &layout );
-        if (layout & LAYOUT_RTL) cs->dwExStyle |= WS_EX_LAYOUTRTL;
     }
 
     menu = cs->hMenu;
@@ -1610,7 +1599,8 @@ BOOL WINAPI GetProcessDefaultLayout( DWORD *layout )
         SetLastError( ERROR_NOACCESS );
         return FALSE;
     }
-    if (process_layout == ~0u)
+    *layout = NtUserGetProcessDefaultLayout();
+    if (*layout == ~0u)
     {
         WCHAR *str, buffer[MAX_PATH];
         DWORD i, version_layout = 0;
@@ -1640,9 +1630,8 @@ BOOL WINAPI GetProcessDefaultLayout( DWORD *layout )
 
     done:
         HeapFree( GetProcessHeap(), 0, data );
-        process_layout = version_layout;
+        NtUserSetProcessDefaultLayout( *layout = version_layout );
     }
-    *layout = process_layout;
     return TRUE;
 }
 
@@ -1654,8 +1643,7 @@ BOOL WINAPI GetProcessDefaultLayout( DWORD *layout )
  */
 BOOL WINAPI SetProcessDefaultLayout( DWORD layout )
 {
-    process_layout = layout;
-    return TRUE;
+    return NtUserSetProcessDefaultLayout( layout );
 }
 
 #ifdef _WIN64
