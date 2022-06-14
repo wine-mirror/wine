@@ -2287,10 +2287,18 @@ BLUE_INI TEXTFILE
 "UniformSizing = true\r\n"
 "ImageFile1 = blue_trackbar_thumb_up_11px.bmp\r\n"
 "ImageFile2 = blue_trackbar_thumb_up_15px.bmp\r\n"
-"ImageFile3 = blue_trackbar_thumb_up_21px.bmp\r\n"
+"ImageFile3 = blue_trackbar_thumb_up_17px.bmp\r\n"
+"ImageFile4 = blue_trackbar_thumb_up_22px.bmp\r\n"
+"ImageFile5 = blue_trackbar_thumb_up_28px.bmp\r\n"
+"ImageFile6 = blue_trackbar_thumb_up_33px.bmp\r\n"
+"ImageFile7 = blue_trackbar_thumb_up_44px.bmp\r\n"
 "MinDpi1 = 96\r\n"
-"MinDpi2 = 118\r\n"
-"MinDpi3 = 185\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
 
 "[TrackBar.ThumbBottom]\r\n"
 "BgType = ImageFile\r\n"
@@ -2301,12 +2309,21 @@ BLUE_INI TEXTFILE
 "ImageSelectType = Dpi\r\n"
 "TrueSizeScalingType = Dpi\r\n"
 "UniformSizing = True\r\n"
+"SizingMargins = 4, 5, 8, 6\r\n"
 "ImageFile1 = blue_trackbar_thumb_down_11px.bmp\r\n"
 "ImageFile2 = blue_trackbar_thumb_down_15px.bmp\r\n"
-"ImageFile3 = blue_trackbar_thumb_down_21px.bmp\r\n"
+"ImageFile3 = blue_trackbar_thumb_down_17px.bmp\r\n"
+"ImageFile4 = blue_trackbar_thumb_down_22px.bmp\r\n"
+"ImageFile5 = blue_trackbar_thumb_down_28px.bmp\r\n"
+"ImageFile6 = blue_trackbar_thumb_down_33px.bmp\r\n"
+"ImageFile7 = blue_trackbar_thumb_down_44px.bmp\r\n"
 "MinDpi1 = 96\r\n"
-"MinDpi2 = 118\r\n"
-"MinDpi3 = 185\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
 
 "[TrackBar.ThumbLeft]\r\n"
 "BgType = ImageFile\r\n"
@@ -2319,10 +2336,18 @@ BLUE_INI TEXTFILE
 "UniformSizing = True\r\n"
 "ImageFile1 = blue_trackbar_thumb_left_19px.bmp\r\n"
 "ImageFile2 = blue_trackbar_thumb_left_25px.bmp\r\n"
-"ImageFile3 = blue_trackbar_thumb_left_44px.bmp\r\n"
+"ImageFile3 = blue_trackbar_thumb_left_29px.bmp\r\n"
+"ImageFile4 = blue_trackbar_thumb_left_38px.bmp\r\n"
+"ImageFile5 = blue_trackbar_thumb_left_48px.bmp\r\n"
+"ImageFile6 = blue_trackbar_thumb_left_57px.bmp\r\n"
+"ImageFile7 = blue_trackbar_thumb_left_76px.bmp\r\n"
 "MinDpi1 = 96\r\n"
-"MinDpi2 = 118\r\n"
-"MinDpi3 = 185\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
 
 "[TrackBar.ThumbRight]\r\n"
 "BgType = ImageFile\r\n"
@@ -2335,10 +2360,18 @@ BLUE_INI TEXTFILE
 "UniformSizing = True\r\n"
 "ImageFile1 = blue_trackbar_thumb_right_19px.bmp\r\n"
 "ImageFile2 = blue_trackbar_thumb_right_25px.bmp\r\n"
-"ImageFile3 = blue_trackbar_thumb_right_44px.bmp\r\n"
+"ImageFile3 = blue_trackbar_thumb_right_29px.bmp\r\n"
+"ImageFile4 = blue_trackbar_thumb_right_38px.bmp\r\n"
+"ImageFile5 = blue_trackbar_thumb_right_48px.bmp\r\n"
+"ImageFile6 = blue_trackbar_thumb_right_57px.bmp\r\n"
+"ImageFile7 = blue_trackbar_thumb_right_76px.bmp\r\n"
 "MinDpi1 = 96\r\n"
-"MinDpi2 = 118\r\n"
-"MinDpi3 = 185\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
 
 "[TrackBar.Track]\r\n"
 "BgType = ImageFile\r\n"
@@ -3714,8 +3747,20 @@ BLUE_TRACKBAR_THUMB_DOWN_11PX_BMP BITMAP "blue_trackbar_thumb_down_11px.bmp"
 /* @makedep: blue_trackbar_thumb_down_15px.bmp */
 BLUE_TRACKBAR_THUMB_DOWN_15PX_BMP BITMAP "blue_trackbar_thumb_down_15px.bmp"
 
-/* @makedep: blue_trackbar_thumb_down_21px.bmp */
-BLUE_TRACKBAR_THUMB_DOWN_21PX_BMP BITMAP "blue_trackbar_thumb_down_21px.bmp"
+/* @makedep: blue_trackbar_thumb_down_17px.bmp */
+BLUE_TRACKBAR_THUMB_DOWN_17PX_BMP BITMAP "blue_trackbar_thumb_down_17px.bmp"
+
+/* @makedep: blue_trackbar_thumb_down_22px.bmp */
+BLUE_TRACKBAR_THUMB_DOWN_22PX_BMP BITMAP "blue_trackbar_thumb_down_22px.bmp"
+
+/* @makedep: blue_trackbar_thumb_down_28px.bmp */
+BLUE_TRACKBAR_THUMB_DOWN_28PX_BMP BITMAP "blue_trackbar_thumb_down_28px.bmp"
+
+/* @makedep: blue_trackbar_thumb_down_33px.bmp */
+BLUE_TRACKBAR_THUMB_DOWN_33PX_BMP BITMAP "blue_trackbar_thumb_down_33px.bmp"
+
+/* @makedep: blue_trackbar_thumb_down_44px.bmp */
+BLUE_TRACKBAR_THUMB_DOWN_44PX_BMP BITMAP "blue_trackbar_thumb_down_44px.bmp"
 
 /* @makedep: blue_trackbar_thumb_left_19px.bmp */
 BLUE_TRACKBAR_THUMB_LEFT_19PX_BMP BITMAP "blue_trackbar_thumb_left_19px.bmp"
@@ -3723,8 +3768,20 @@ BLUE_TRACKBAR_THUMB_LEFT_19PX_BMP BITMAP "blue_trackbar_thumb_left_19px.bmp"
 /* @makedep: blue_trackbar_thumb_left_25px.bmp */
 BLUE_TRACKBAR_THUMB_LEFT_25PX_BMP BITMAP "blue_trackbar_thumb_left_25px.bmp"
 
-/* @makedep: blue_trackbar_thumb_left_44px.bmp */
-BLUE_TRACKBAR_THUMB_LEFT_44PX_BMP BITMAP "blue_trackbar_thumb_left_44px.bmp"
+/* @makedep: blue_trackbar_thumb_left_29px.bmp */
+BLUE_TRACKBAR_THUMB_LEFT_29PX_BMP BITMAP "blue_trackbar_thumb_left_29px.bmp"
+
+/* @makedep: blue_trackbar_thumb_left_38px.bmp */
+BLUE_TRACKBAR_THUMB_LEFT_38PX_BMP BITMAP "blue_trackbar_thumb_left_38px.bmp"
+
+/* @makedep: blue_trackbar_thumb_left_48px.bmp */
+BLUE_TRACKBAR_THUMB_LEFT_48PX_BMP BITMAP "blue_trackbar_thumb_left_48px.bmp"
+
+/* @makedep: blue_trackbar_thumb_left_57px.bmp */
+BLUE_TRACKBAR_THUMB_LEFT_57PX_BMP BITMAP "blue_trackbar_thumb_left_57px.bmp"
+
+/* @makedep: blue_trackbar_thumb_left_76px.bmp */
+BLUE_TRACKBAR_THUMB_LEFT_76PX_BMP BITMAP "blue_trackbar_thumb_left_76px.bmp"
 
 /* @makedep: blue_trackbar_thumb_right_19px.bmp */
 BLUE_TRACKBAR_THUMB_RIGHT_19PX_BMP BITMAP "blue_trackbar_thumb_right_19px.bmp"
@@ -3732,8 +3789,20 @@ BLUE_TRACKBAR_THUMB_RIGHT_19PX_BMP BITMAP "blue_trackbar_thumb_right_19px.bmp"
 /* @makedep: blue_trackbar_thumb_right_25px.bmp */
 BLUE_TRACKBAR_THUMB_RIGHT_25PX_BMP BITMAP "blue_trackbar_thumb_right_25px.bmp"
 
-/* @makedep: blue_trackbar_thumb_right_44px.bmp */
-BLUE_TRACKBAR_THUMB_RIGHT_44PX_BMP BITMAP "blue_trackbar_thumb_right_44px.bmp"
+/* @makedep: blue_trackbar_thumb_right_29px.bmp */
+BLUE_TRACKBAR_THUMB_RIGHT_29PX_BMP BITMAP "blue_trackbar_thumb_right_29px.bmp"
+
+/* @makedep: blue_trackbar_thumb_right_38px.bmp */
+BLUE_TRACKBAR_THUMB_RIGHT_38PX_BMP BITMAP "blue_trackbar_thumb_right_38px.bmp"
+
+/* @makedep: blue_trackbar_thumb_right_48px.bmp */
+BLUE_TRACKBAR_THUMB_RIGHT_48PX_BMP BITMAP "blue_trackbar_thumb_right_48px.bmp"
+
+/* @makedep: blue_trackbar_thumb_right_57px.bmp */
+BLUE_TRACKBAR_THUMB_RIGHT_57PX_BMP BITMAP "blue_trackbar_thumb_right_57px.bmp"
+
+/* @makedep: blue_trackbar_thumb_right_76px.bmp */
+BLUE_TRACKBAR_THUMB_RIGHT_76PX_BMP BITMAP "blue_trackbar_thumb_right_76px.bmp"
 
 /* @makedep: blue_trackbar_thumb_up_11px.bmp */
 BLUE_TRACKBAR_THUMB_UP_11PX_BMP BITMAP "blue_trackbar_thumb_up_11px.bmp"
@@ -3741,8 +3810,20 @@ BLUE_TRACKBAR_THUMB_UP_11PX_BMP BITMAP "blue_trackbar_thumb_up_11px.bmp"
 /* @makedep: blue_trackbar_thumb_up_15px.bmp */
 BLUE_TRACKBAR_THUMB_UP_15PX_BMP BITMAP "blue_trackbar_thumb_up_15px.bmp"
 
-/* @makedep: blue_trackbar_thumb_up_21px.bmp */
-BLUE_TRACKBAR_THUMB_UP_21PX_BMP BITMAP "blue_trackbar_thumb_up_21px.bmp"
+/* @makedep: blue_trackbar_thumb_up_17px.bmp */
+BLUE_TRACKBAR_THUMB_UP_17PX_BMP BITMAP "blue_trackbar_thumb_up_17px.bmp"
+
+/* @makedep: blue_trackbar_thumb_up_22px.bmp */
+BLUE_TRACKBAR_THUMB_UP_22PX_BMP BITMAP "blue_trackbar_thumb_up_22px.bmp"
+
+/* @makedep: blue_trackbar_thumb_up_28px.bmp */
+BLUE_TRACKBAR_THUMB_UP_28PX_BMP BITMAP "blue_trackbar_thumb_up_28px.bmp"
+
+/* @makedep: blue_trackbar_thumb_up_33px.bmp */
+BLUE_TRACKBAR_THUMB_UP_33PX_BMP BITMAP "blue_trackbar_thumb_up_33px.bmp"
+
+/* @makedep: blue_trackbar_thumb_up_44px.bmp */
+BLUE_TRACKBAR_THUMB_UP_44PX_BMP BITMAP "blue_trackbar_thumb_up_44px.bmp"
 
 /* TreeView */
 /* @makedep: blue_treeview_expand_collapse_9px.bmp */

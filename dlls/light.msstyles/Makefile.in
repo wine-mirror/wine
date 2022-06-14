@@ -392,17 +392,33 @@ SVG_SRCS = \
 	blue_trackbar_slider_track.svg \
 	blue_trackbar_thumb_down_11px.svg \
 	blue_trackbar_thumb_down_15px.svg \
-	blue_trackbar_thumb_down_21px.svg \
+	blue_trackbar_thumb_down_17px.svg \
+	blue_trackbar_thumb_down_22px.svg \
+	blue_trackbar_thumb_down_28px.svg \
+	blue_trackbar_thumb_down_33px.svg \
+	blue_trackbar_thumb_down_44px.svg \
 	blue_trackbar_thumb_horizontal.svg \
 	blue_trackbar_thumb_left_19px.svg \
 	blue_trackbar_thumb_left_25px.svg \
-	blue_trackbar_thumb_left_44px.svg \
+	blue_trackbar_thumb_left_29px.svg \
+	blue_trackbar_thumb_left_38px.svg \
+	blue_trackbar_thumb_left_48px.svg \
+	blue_trackbar_thumb_left_57px.svg \
+	blue_trackbar_thumb_left_76px.svg \
 	blue_trackbar_thumb_right_19px.svg \
 	blue_trackbar_thumb_right_25px.svg \
-	blue_trackbar_thumb_right_44px.svg \
+	blue_trackbar_thumb_right_29px.svg \
+	blue_trackbar_thumb_right_38px.svg \
+	blue_trackbar_thumb_right_48px.svg \
+	blue_trackbar_thumb_right_57px.svg \
+	blue_trackbar_thumb_right_76px.svg \
 	blue_trackbar_thumb_up_11px.svg \
 	blue_trackbar_thumb_up_15px.svg \
-	blue_trackbar_thumb_up_21px.svg \
+	blue_trackbar_thumb_up_17px.svg \
+	blue_trackbar_thumb_up_22px.svg \
+	blue_trackbar_thumb_up_28px.svg \
+	blue_trackbar_thumb_up_33px.svg \
+	blue_trackbar_thumb_up_44px.svg \
 	blue_trackbar_thumb_vertical.svg \
 	blue_treeview_expand_collapse_11px.svg \
 	blue_treeview_expand_collapse_13px.svg \

@@ -5,17 +5,14 @@
    <cc:Work rdf:about="">
     <dc:format>image/svg+xml</dc:format>
     <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
-    <dc:title/>
    </cc:Work>
   </rdf:RDF>
  </metadata>
- <g stroke-width=".26458">
-  <path d="m1.5481 2.5135 3.0863-0.00151v-2.1136l-3.0863-0.0015157-1.0933 1.0583z" fill="#fff" stroke="#aeaeae"/>
-  <path d="m1.4411 8.4667 3.3214-0.001731v-2.3778l-3.3214-0.0017307-1.1766 1.1906z" fill="#2979ff"/>
-  <g fill="#fff">
-   <path d="m1.5481 5.4239 3.0863-0.00151v-2.1136l-3.0863-0.0015111-1.0933 1.0583z" stroke="#3096fa"/>
-   <path d="m1.5481 14.155 3.0863-0.0015v-2.1136l-3.0863-0.0015-1.0933 1.0583z" stroke="#aeaeae"/>
-   <path d="m1.5481 11.245 3.0863-0.0015v-2.1136l-3.0863-0.00151-1.0933 1.0583z" stroke="#3096fa"/>
-  </g>
+ <path d="m1.4113 2.7781 3.474-0.00189v-2.642l-3.474-0.001895-1.2306 1.3229z" fill="#fff" stroke="#aeaeae" stroke-width=".26458"/>
+ <path d="m1.315 8.7312 3.7121-0.00211v-2.9062l-3.7121-0.0021144-1.315 1.4552z" fill="#2979ff" stroke-width=".26458"/>
+ <g transform="translate(-.27412)" fill="#fff" stroke-width=".26458">
+  <path d="m1.6854 5.6885 3.474-0.00189v-2.642l-3.474-0.0018875-1.2306 1.3229z" stroke="#3096fa"/>
+  <path d="m1.6854 14.42 3.474-0.0019v-2.642l-3.474-0.0019-1.2306 1.3229z" stroke="#aeaeae"/>
+  <path d="m1.6854 11.509 3.474-0.0019v-2.642l-3.474-0.0018875-1.2306 1.3229z" stroke="#3096fa"/>
  </g>
 </svg>
