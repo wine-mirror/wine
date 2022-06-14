@@ -4233,87 +4233,106 @@ static const struct image_size_test
     UINT32 height;
     UINT32 size;
     UINT32 plane_size; /* Matches image size when 0. */
+    UINT32 max_length;
+    UINT32 contiguous_length;
+    UINT32 pitch;
 }
 image_size_tests[] =
 {
-    { &MFVideoFormat_RGB8, 3, 5, 20 },
-    { &MFVideoFormat_RGB8, 1, 1, 4 },
-    { &MFVideoFormat_RGB555, 3, 5, 40 },
-    { &MFVideoFormat_RGB555, 1, 1, 4 },
-    { &MFVideoFormat_RGB565, 3, 5, 40 },
-    { &MFVideoFormat_RGB565, 1, 1, 4 },
-    { &MFVideoFormat_RGB24, 3, 5, 60 },
-    { &MFVideoFormat_RGB24, 1, 1, 4 },
-    { &MFVideoFormat_RGB32, 3, 5, 60 },
-    { &MFVideoFormat_RGB32, 1, 1, 4 },
-    { &MFVideoFormat_ARGB32, 3, 5, 60 },
-    { &MFVideoFormat_ARGB32, 1, 1, 4 },
-    { &MFVideoFormat_A2R10G10B10, 3, 5, 60 },
-    { &MFVideoFormat_A2R10G10B10, 1, 1, 4 },
-    { &MFVideoFormat_A16B16G16R16F, 3, 5, 120 },
-    { &MFVideoFormat_A16B16G16R16F, 1, 1, 8 },
+    /* RGB */
+    { &MFVideoFormat_RGB8, 3, 5, 20, 0, 320, 20, 64 },
+    { &MFVideoFormat_RGB8, 1, 1, 4, 0, 64, 4, 64 },
+    { &MFVideoFormat_RGB555, 3, 5, 40, 0, 320, 40, 64 },
+    { &MFVideoFormat_RGB555, 1, 1, 4, 0, 64, 4, 64 },
+    { &MFVideoFormat_RGB565, 3, 5, 40, 0, 320, 40, 64 },
+    { &MFVideoFormat_RGB565, 1, 1, 4, 0, 64, 4, 64 },
+    { &MFVideoFormat_RGB24, 3, 5, 60, 0, 320, 60, 64 },
+    { &MFVideoFormat_RGB24, 1, 1, 4, 0, 64, 4, 64 },
+    { &MFVideoFormat_RGB32, 3, 5, 60, 0, 320, 60, 64 },
+    { &MFVideoFormat_RGB32, 1, 1, 4, 0, 64, 4, 64 },
+    { &MFVideoFormat_ARGB32, 3, 5, 60, 0, 320, 60, 64 },
+    { &MFVideoFormat_ARGB32, 1, 1, 4, 0, 64, 4, 64 },
+    { &MFVideoFormat_A2R10G10B10, 3, 5, 60, 0, 320, 60, 64 },
+    { &MFVideoFormat_A2R10G10B10, 1, 1, 4, 0, 64, 4, 64 },
+    { &MFVideoFormat_A16B16G16R16F, 3, 5, 120, 0, 320, 120, 64 },
+    { &MFVideoFormat_A16B16G16R16F, 1, 1, 8, 0, 64, 8, 64 },
 
-    /* YUV */
-    { &MFVideoFormat_NV12, 1, 3, 9, 4 },
-    { &MFVideoFormat_NV12, 1, 2, 6, 3 },
-    { &MFVideoFormat_NV12, 2, 2, 6, 6 },
-    { &MFVideoFormat_NV12, 3, 2, 12, 9 },
-    { &MFVideoFormat_NV12, 4, 2, 12 },
-    { &MFVideoFormat_NV12, 320, 240, 115200 },
-    { &MFVideoFormat_AYUV, 1, 1, 4 },
-    { &MFVideoFormat_AYUV, 2, 1, 8 },
-    { &MFVideoFormat_AYUV, 1, 2, 8 },
-    { &MFVideoFormat_AYUV, 4, 3, 48 },
-    { &MFVideoFormat_AYUV, 320, 240, 307200 },
-    { &MFVideoFormat_IMC1, 1, 1, 4 },
-    { &MFVideoFormat_IMC1, 2, 1, 4 },
-    { &MFVideoFormat_IMC1, 1, 2, 8 },
-    { &MFVideoFormat_IMC1, 4, 3, 24 },
-    { &MFVideoFormat_IMC1, 320, 240, 153600 },
-    { &MFVideoFormat_IMC3, 1, 1, 4 },
-    { &MFVideoFormat_IMC3, 2, 1, 4 },
-    { &MFVideoFormat_IMC3, 1, 2, 8 },
-    { &MFVideoFormat_IMC3, 4, 3, 24 },
-    { &MFVideoFormat_IMC3, 320, 240, 153600 },
-    { &MFVideoFormat_IMC2, 1, 3, 9, 4 },
-    { &MFVideoFormat_IMC2, 1, 2, 6, 3 },
-    { &MFVideoFormat_IMC2, 2, 2, 6, 6 },
-    { &MFVideoFormat_IMC2, 3, 2, 12, 9 },
-    { &MFVideoFormat_IMC2, 4, 2, 12 },
-    { &MFVideoFormat_IMC2, 320, 240, 115200 },
-    { &MFVideoFormat_IMC4, 1, 3, 9, 4 },
-    { &MFVideoFormat_IMC4, 1, 2, 6, 3 },
-    { &MFVideoFormat_IMC4, 2, 2, 6, 6 },
-    { &MFVideoFormat_IMC4, 3, 2, 12, 9 },
-    { &MFVideoFormat_IMC4, 4, 2, 12 },
-    { &MFVideoFormat_IMC4, 320, 240, 115200 },
-    { &MFVideoFormat_YV12, 1, 1, 3, 1 },
-    { &MFVideoFormat_YV12, 2, 1, 3 },
-    { &MFVideoFormat_YV12, 1, 2, 6, 3 },
-    { &MFVideoFormat_YV12, 4, 3, 18 },
-    { &MFVideoFormat_YV12, 320, 240, 115200 },
+    /* YUV 4:4:4, 32 bpp, packed */
+    { &MFVideoFormat_AYUV, 1, 1, 4, 0, 64, 4, 64 },
+    { &MFVideoFormat_AYUV, 2, 1, 8, 0, 64, 8, 64 },
+    { &MFVideoFormat_AYUV, 1, 2, 8, 0, 128, 8, 64 },
+    { &MFVideoFormat_AYUV, 4, 3, 48, 0, 192, 48, 64 },
+    { &MFVideoFormat_AYUV, 320, 240, 307200, 0, 307200, 307200, 1280 },
 
-    { &MFVideoFormat_I420, 1, 1, 3, 1 },
-    { &MFVideoFormat_I420, 2, 1, 3 },
-    { &MFVideoFormat_I420, 1, 2, 6, 3 },
-    { &MFVideoFormat_I420, 4, 3, 18 },
-    { &MFVideoFormat_I420, 320, 240, 115200 },
+    /* YUV 4:2:2, 16 bpp, packed */
+    { &MFVideoFormat_YUY2, 2, 1, 4, 0, 64, 4, 64 },
+    { &MFVideoFormat_YUY2, 4, 3, 24, 0, 192, 24, 64 },
+    { &MFVideoFormat_YUY2, 128, 128, 32768, 0, 32768, 32768, 256 },
+    { &MFVideoFormat_YUY2, 320, 240, 153600, 0, 153600, 153600, 640 },
 
-    { &MFVideoFormat_IYUV, 1, 1, 3, 1 },
-    { &MFVideoFormat_IYUV, 2, 1, 3 },
-    { &MFVideoFormat_IYUV, 1, 2, 6, 3 },
-    { &MFVideoFormat_IYUV, 4, 3, 18 },
-    { &MFVideoFormat_IYUV, 320, 240, 115200 },
+    { &MFVideoFormat_UYVY, 2, 1, 4, 0, 64, 4, 64 },
+    { &MFVideoFormat_UYVY, 4, 3, 24, 0, 192, 24, 64 },
+    { &MFVideoFormat_UYVY, 128, 128, 32768, 0, 32768, 32768, 256 },
+    { &MFVideoFormat_UYVY, 320, 240, 153600, 0, 153600, 153600, 640 },
 
-    { &MFVideoFormat_YUY2, 2, 1, 4 },
-    { &MFVideoFormat_YUY2, 4, 3, 24 },
-    { &MFVideoFormat_YUY2, 128, 128, 32768 },
-    { &MFVideoFormat_YUY2, 320, 240, 153600 },
+    /* YUV 4:2:0, 16 bpp, planar (the secondary plane has the same
+     * height, half the width and the same stride as the primary
+     * one) */
+    { &MFVideoFormat_IMC1, 1, 1, 4, 0, 256, 8, 128 },
+    { &MFVideoFormat_IMC1, 2, 1, 4, 0, 256, 8, 128 },
+    { &MFVideoFormat_IMC1, 1, 2, 8, 0, 512, 16, 128 },
+    { &MFVideoFormat_IMC1, 2, 2, 8, 0, 512, 16, 128 },
+    { &MFVideoFormat_IMC1, 2, 4, 16, 0, 1024, 32, 128 },
+    { &MFVideoFormat_IMC1, 4, 2, 16, 0, 512, 32, 128 },
+    { &MFVideoFormat_IMC1, 4, 3, 24, 0, 768, 48, 128 },
+    { &MFVideoFormat_IMC1, 320, 240, 153600, 0, 307200, 307200, 640 },
 
-    { &MFVideoFormat_UYVY, 2, 1, 4 },
-    { &MFVideoFormat_UYVY, 4, 3, 24 },
-    { &MFVideoFormat_UYVY, 128, 128, 32768 },
-    { &MFVideoFormat_UYVY, 320, 240, 153600 },
+    { &MFVideoFormat_IMC3, 1, 1, 4, 0, 256, 8, 128 },
+    { &MFVideoFormat_IMC3, 2, 1, 4, 0, 256, 8, 128 },
+    { &MFVideoFormat_IMC3, 1, 2, 8, 0, 512, 16, 128 },
+    { &MFVideoFormat_IMC3, 2, 2, 8, 0, 512, 16, 128 },
+    { &MFVideoFormat_IMC3, 2, 4, 16, 0, 1024, 32, 128 },
+    { &MFVideoFormat_IMC3, 4, 2, 16, 0, 512, 32, 128 },
+    { &MFVideoFormat_IMC3, 4, 3, 24, 0, 768, 48, 128 },
+    { &MFVideoFormat_IMC3, 320, 240, 153600, 0, 307200, 307200, 640 },
+
+    /* YUV 4:2:0, 12 bpp, planar, full stride (the secondary plane has
+     * half the height, the same width and the same stride as the
+     * primary one) */
+    { &MFVideoFormat_NV12, 1, 3, 9, 4, 288, 4, 64 },
+    { &MFVideoFormat_NV12, 1, 2, 6, 3, 192, 3, 64 },
+    { &MFVideoFormat_NV12, 2, 2, 6, 6, 192, 6, 64 },
+    { &MFVideoFormat_NV12, 2, 4, 12, 0, 384, 12, 64 },
+    { &MFVideoFormat_NV12, 3, 2, 12, 9, 192, 9, 64 },
+    { &MFVideoFormat_NV12, 4, 2, 12, 0, 192, 12, 64 },
+    { &MFVideoFormat_NV12, 320, 240, 115200, 0, 115200, 115200, 320 },
+
+    /* YUV 4:2:0, 12 bpp, planar, half stride (the secondary plane has
+     * the same height, half the width and half the stride of the
+     * primary one) */
+    { &MFVideoFormat_IMC2, 1, 1, 3, 1, 192, 1, 128 },
+    { &MFVideoFormat_IMC2, 1, 2, 6, 3, 384, 2, 128 },
+    { &MFVideoFormat_IMC2, 1, 3, 9, 4, 576, 3, 128 },
+    { &MFVideoFormat_IMC2, 2, 1, 3, 0, 192, 3, 128 },
+    { &MFVideoFormat_IMC2, 2, 2, 6, 6, 384, 6, 128 },
+    { &MFVideoFormat_IMC2, 2, 4, 12, 0, 768, 12, 128 },
+    { &MFVideoFormat_IMC2, 3, 2, 12, 9, 384, 8, 128 },
+    { &MFVideoFormat_IMC2, 3, 5, 30, 22, 960, 20, 128 },
+    { &MFVideoFormat_IMC2, 4, 2, 12, 0, 384, 12, 128 },
+    { &MFVideoFormat_IMC2, 4, 3, 18, 0, 576, 18, 128 },
+    { &MFVideoFormat_IMC2, 320, 240, 115200, 0, 138240, 115200, 384 },
+
+    { &MFVideoFormat_IMC4, 1, 1, 3, 1, 192, 1, 128 },
+    { &MFVideoFormat_IMC4, 1, 2, 6, 3, 384, 2, 128 },
+    { &MFVideoFormat_IMC4, 1, 3, 9, 4, 576, 3, 128 },
+    { &MFVideoFormat_IMC4, 2, 1, 3, 0, 192, 3, 128 },
+    { &MFVideoFormat_IMC4, 2, 2, 6, 6, 384, 6, 128 },
+    { &MFVideoFormat_IMC4, 2, 4, 12, 0, 768, 12, 128 },
+    { &MFVideoFormat_IMC4, 3, 2, 12, 9, 384, 8, 128 },
+    { &MFVideoFormat_IMC4, 3, 5, 30, 22, 960, 20, 128 },
+    { &MFVideoFormat_IMC4, 4, 2, 12, 0, 384, 12, 128 },
+    { &MFVideoFormat_IMC4, 4, 3, 18, 0, 576, 18, 128 },
+    { &MFVideoFormat_IMC4, 320, 240, 115200, 0, 138240, 115200, 384 },
 };
 
 static void test_MFCalculateImageSize(void)
@@ -4366,7 +4385,8 @@ static void test_MFGetPlaneSize(void)
 
         hr = pMFGetPlaneSize(ptr->subtype->Data1, ptr->width, ptr->height, &size);
         ok(hr == S_OK, "%u: failed to get plane size, hr %#lx.\n", i, hr);
-        ok(size == plane_size, "%u: unexpected plane size %lu, expected %u.\n", i, size, plane_size);
+        ok(size == plane_size, "%u: unexpected plane size %lu, expected %u. Size %u x %u, format %s.\n", i, size, plane_size,
+                ptr->width, ptr->height, wine_dbgstr_an((char*)&ptr->subtype->Data1, 4));
     }
 }
 
@@ -5706,61 +5726,6 @@ static void test_MFGetStrideForBitmapInfoHeader(void)
 
 static void test_MFCreate2DMediaBuffer(void)
 {
-    static const struct _2d_buffer_test
-    {
-        unsigned int width;
-        unsigned int height;
-        unsigned int fourcc;
-        unsigned int contiguous_length;
-        int pitch;
-        unsigned int max_length;
-    } _2d_buffer_tests[] =
-    {
-        { 2,  2, MAKEFOURCC('N','V','1','2'), 6, 64, 192 },
-        { 4,  2, MAKEFOURCC('N','V','1','2'), 12, 64 },
-        { 2,  4, MAKEFOURCC('N','V','1','2'), 12, 64 },
-        { 1,  3, MAKEFOURCC('N','V','1','2'), 4, 64 },
-        { 4, 16, MAKEFOURCC('N','V','1','2'), 96, 64, 1536 },
-
-        { 2, 2, MAKEFOURCC('I','M','C','2'), 6, 128, 384 },
-        { 4, 2, MAKEFOURCC('I','M','C','2'), 12, 128 },
-        { 2, 4, MAKEFOURCC('I','M','C','2'), 12, 128 },
-        { 3, 5, MAKEFOURCC('I','M','C','2'), 20, 128 },
-        { 2, 2, MAKEFOURCC('I','M','C','4'), 6, 128 },
-        { 4, 2, MAKEFOURCC('I','M','C','4'), 12, 128 },
-        { 2, 4, MAKEFOURCC('I','M','C','4'), 12, 128 },
-        { 3, 5, MAKEFOURCC('I','M','C','4'), 20, 128 },
-
-        { 4,  2, MAKEFOURCC('I','M','C','1'),  32, 128 },
-        { 4,  4, MAKEFOURCC('I','M','C','1'),  64, 128 },
-        { 4, 16, MAKEFOURCC('I','M','C','1'), 256, 128, 4096 },
-        { 4, 20, MAKEFOURCC('I','M','C','1'), 320, 128 },
-
-        { 4,  2, MAKEFOURCC('I','M','C','3'),  32, 128 },
-        { 4,  4, MAKEFOURCC('I','M','C','3'),  64, 128 },
-        { 4, 16, MAKEFOURCC('I','M','C','3'), 256, 128, 4096 },
-        { 4, 20, MAKEFOURCC('I','M','C','3'), 320, 128 },
-
-        { 4,  2, MAKEFOURCC('Y','V','1','2'),  12, 128 },
-        { 4,  4, MAKEFOURCC('Y','V','1','2'),  24, 128 },
-        { 4, 16, MAKEFOURCC('Y','V','1','2'),  96, 128, 3072 },
-
-        { 4,  2, MAKEFOURCC('A','Y','U','V'),  32, 64 },
-        { 4,  4, MAKEFOURCC('A','Y','U','V'),  64, 64 },
-        { 4, 16, MAKEFOURCC('A','Y','U','V'), 256, 64, 1024 },
-
-        { 4,  2, MAKEFOURCC('Y','U','Y','2'),  16, 64 },
-        { 4,  4, MAKEFOURCC('Y','U','Y','2'),  32, 64 },
-        { 4, 16, MAKEFOURCC('Y','U','Y','2'), 128, 64, 1024 },
-
-        { 4,  2, MAKEFOURCC('U','Y','V','Y'),  16, 64 },
-        { 4,  4, MAKEFOURCC('U','Y','V','Y'),  32, 64 },
-        { 4, 16, MAKEFOURCC('U','Y','V','Y'), 128, 64, 1024 },
-
-        { 2, 4, D3DFMT_A8R8G8B8, 32, 64 },
-        { 1, 4, D3DFMT_A8R8G8B8, 16, 64 },
-        { 4, 1, D3DFMT_A8R8G8B8, 16, 64 },
-    };
     static const char two_aas[] = { 0xaa, 0xaa };
     static const char eight_bbs[] = { 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb, 0xbb };
     DWORD max_length, length, length2;
@@ -5958,18 +5923,17 @@ static void test_MFCreate2DMediaBuffer(void)
 
     IMFMediaBuffer_Release(buffer);
 
-    for (i = 0; i < ARRAY_SIZE(_2d_buffer_tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(image_size_tests); ++i)
     {
-        const struct _2d_buffer_test *ptr = &_2d_buffer_tests[i];
+        const struct image_size_test *ptr = &image_size_tests[i];
 
-        hr = pMFCreate2DMediaBuffer(ptr->width, ptr->height, ptr->fourcc, FALSE, &buffer);
+        hr = pMFCreate2DMediaBuffer(ptr->width, ptr->height, ptr->subtype->Data1, FALSE, &buffer);
         ok(hr == S_OK, "Failed to create a buffer, hr %#lx.\n", hr);
 
         hr = IMFMediaBuffer_GetMaxLength(buffer, &length);
         ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
-        if (ptr->max_length)
-            ok(length == ptr->max_length, "%u: unexpected maximum length %lu for %u x %u, format %s.\n",
-                    i, length, ptr->width, ptr->height, wine_dbgstr_an((char *)&ptr->fourcc, 4));
+        ok(length == ptr->max_length, "%u: unexpected maximum length %lu for %u x %u, format %s.\n",
+                i, length, ptr->width, ptr->height, wine_dbgstr_guid(ptr->subtype));
 
         hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&_2dbuffer);
         ok(hr == S_OK, "Failed to get interface, hr %#lx.\n", hr);
@@ -5977,14 +5941,14 @@ static void test_MFCreate2DMediaBuffer(void)
         hr = IMF2DBuffer_GetContiguousLength(_2dbuffer, &length);
         ok(hr == S_OK, "Failed to get length, hr %#lx.\n", hr);
         ok(length == ptr->contiguous_length, "%d: unexpected contiguous length %lu for %u x %u, format %s.\n",
-                i, length, ptr->width, ptr->height, wine_dbgstr_an((char *)&ptr->fourcc, 4));
+                i, length, ptr->width, ptr->height, wine_dbgstr_guid(ptr->subtype));
 
         hr = IMFMediaBuffer_Lock(buffer, &data, &length2, NULL);
         ok(hr == S_OK, "Failed to lock buffer, hr %#lx.\n", hr);
         ok(length2 == ptr->contiguous_length, "%d: unexpected linear buffer length %lu for %u x %u, format %s.\n",
-                i, length2, ptr->width, ptr->height, wine_dbgstr_an((char *)&ptr->fourcc, 4));
+                i, length2, ptr->width, ptr->height, wine_dbgstr_guid(ptr->subtype));
 
-        hr = pMFGetStrideForBitmapInfoHeader(ptr->fourcc, ptr->width, &stride);
+        hr = pMFGetStrideForBitmapInfoHeader(ptr->subtype->Data1, ptr->width, &stride);
         ok(hr == S_OK, "Failed to get stride, hr %#lx.\n", hr);
         stride = abs(stride);
 
@@ -5998,7 +5962,7 @@ static void test_MFCreate2DMediaBuffer(void)
         data += ptr->height * stride;
 
         /* secondary planes */
-        switch (ptr->fourcc)
+        switch (ptr->subtype->Data1)
         {
             case MAKEFOURCC('I','M','C','1'):
             case MAKEFOURCC('I','M','C','3'):
@@ -6048,7 +6012,7 @@ static void test_MFCreate2DMediaBuffer(void)
         data += ptr->height * pitch;
 
         /* secondary planes */
-        switch (ptr->fourcc)
+        switch (ptr->subtype->Data1)
         {
             case MAKEFOURCC('I','M','C','1'):
             case MAKEFOURCC('I','M','C','3'):
@@ -6084,7 +6048,7 @@ static void test_MFCreate2DMediaBuffer(void)
         ok(hr == S_OK, "Failed to unlock buffer, hr %#lx.\n", hr);
 
         ok(pitch == ptr->pitch, "%d: unexpected pitch %ld, expected %d, %u x %u, format %s.\n", i, pitch, ptr->pitch,
-                ptr->width, ptr->height, wine_dbgstr_an((char *)&ptr->fourcc, 4));
+                ptr->width, ptr->height, wine_dbgstr_guid(ptr->subtype));
 
         ret = TRUE;
         hr = IMF2DBuffer_IsContiguousFormat(_2dbuffer, &ret);
@@ -6097,11 +6061,11 @@ static void test_MFCreate2DMediaBuffer(void)
     }
 
     /* Alignment tests */
-    for (i = 0; i < ARRAY_SIZE(_2d_buffer_tests); ++i)
+    for (i = 0; i < ARRAY_SIZE(image_size_tests); ++i)
     {
-        const struct _2d_buffer_test *ptr = &_2d_buffer_tests[i];
+        const struct image_size_test *ptr = &image_size_tests[i];
 
-        hr = pMFCreate2DMediaBuffer(ptr->width, ptr->height, ptr->fourcc, FALSE, &buffer);
+        hr = pMFCreate2DMediaBuffer(ptr->width, ptr->height, ptr->subtype->Data1, FALSE, &buffer);
         ok(hr == S_OK, "Failed to create a buffer, hr %#lx.\n", hr);
 
         hr = IMFMediaBuffer_QueryInterface(buffer, &IID_IMF2DBuffer, (void **)&_2dbuffer);
