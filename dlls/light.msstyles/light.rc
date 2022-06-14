@@ -2076,14 +2076,17 @@ BLUE_INI TEXTFILE
 "TextColor = 0 0 0\r\n"
 
 "[Toolbar.Button]\r\n"
-"SizingMargins = 3, 3, 3, 3\r\n"
+"SizingMargins = 3, 3, 13, 4\r\n"
 "ContentMargins = 0, 0, 0, 0\r\n"
 "ImageFile = blue_toolbar_buttons.bmp\r\n"
 "BgType = ImageFile\r\n"
 "ImageLayout = Vertical\r\n"
-"ImageCount = 6\r\n"
+"ImageCount = 8\r\n"
+"BorderSize = 0\r\n"
 "SizingType = Stretch\r\n"
 "Transparent = True\r\n"
+"FillColor = 244 244 244\r\n"
+"TextColor = 0 0 0\r\n"
 "TransitionDurations = 8, "
 "0, 100, 100, 100, 100, 100, 100, 100, "
 "100, 0, 100, 100, 100, 100, 100, 100, "
@@ -2095,12 +2098,15 @@ BLUE_INI TEXTFILE
 "100, 100, 100, 100, 100, 100, 100, 0\r\n"
 
 "[Toolbar.Separator]\r\n"
-"SizingMargins = 5, 2, 2, 1\r\n"
+"SizingMargins = 4, 1, 2, 2\r\n"
 "ImageFile = blue_toolbar_separator_horizontal.bmp\r\n"
 "BgType = ImageFile\r\n"
 "ImageCount = 1\r\n"
-"SizingType = Tile\r\n"
+"SizingType = Stretch\r\n"
 "Transparent = True\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 244 244 244\r\n"
+"TextColor = 0 0 0\r\n"
 "TransitionDurations = 8, "
 "0, 100, 100, 100, 100, 100, 100, 100, "
 "100, 0, 100, 100, 100, 100, 100, 100, "
@@ -2112,12 +2118,15 @@ BLUE_INI TEXTFILE
 "100, 100, 100, 100, 100, 100, 100, 0\r\n"
 
 "[Toolbar.SeparatorVert]\r\n"
-"SizingMargins = 2, 1, 5, 1\r\n"
+"SizingMargins = 2, 2, 4, 1\r\n"
 "ImageFile = blue_toolbar_separator_vertical.bmp\r\n"
 "BgType = ImageFile\r\n"
 "ImageCount = 1\r\n"
 "SizingType = Tile\r\n"
 "Transparent = True\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 244 244 244\r\n"
+"TextColor = 0 0 0\r\n"
 "TransitionDurations = 8, "
 "0, 100, 100, 100, 100, 100, 100, 100, "
 "100, 0, 100, 100, 100, 100, 100, 100, "
@@ -2129,14 +2138,50 @@ BLUE_INI TEXTFILE
 "100, 100, 100, 100, 100, 100, 100, 0\r\n"
 
 "[Toolbar.DropdownButton]\r\n"
-"SizingMargins = 4, 4, 4, 4\r\n"
+"SizingMargins = 3, 3, 13, 4\r\n"
 "ContentMargins = 0, 0, 0, 0\r\n"
 "ImageFile = blue_toolbar_buttons.bmp\r\n"
 "BgType = ImageFile\r\n"
 "ImageLayout = Vertical\r\n"
-"ImageCount = 6\r\n"
+"ImageCount = 8\r\n"
+"BorderSize = 0\r\n"
 "SizingType = Stretch\r\n"
 "Transparent = True\r\n"
+"FillColor = 244 244 244\r\n"
+"TextColor = 0 0 0\r\n"
+"TransitionDurations = 8, "
+"0, 100, 100, 100, 100, 100, 100, 100, "
+"100, 0, 100, 100, 100, 100, 100, 100, "
+"100, 100, 0, 100, 100, 100, 100, 100, "
+"100, 100, 100, 0, 100, 100, 100, 100, "
+"100, 100, 100, 100, 0, 100, 100, 100, "
+"100, 100, 100, 100, 100, 0, 100, 100, "
+"100, 100, 100, 100, 100, 100, 0, 100, "
+"100, 100, 100, 100, 100, 100, 100, 0\r\n"
+
+"[Toolbar.DropDownButtonGlyph]\r\n"
+"BgType = ImageFile\r\n"
+"ImageLayout = Vertical\r\n"
+"GlyphType = ImageGlyph\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 8\r\n"
+"BorderSize = 0\r\n"
+"Transparent = True\r\n"
+"GlyphOnly = True\r\n"
+"FillColor = 244 244 244\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 0, 0, 1, 0\r\n"
+"ImageFile = blue_toolbar_dropdown_button_glyph_7px.bmp\r\n"
+"ImageFile1 = blue_toolbar_dropdown_button_glyph_7px.bmp\r\n"
+"ImageFile2 = blue_toolbar_dropdown_button_glyph_9px.bmp\r\n"
+"ImageFile3 = blue_toolbar_dropdown_button_glyph_11px.bmp\r\n"
+"ImageFile4 = blue_toolbar_dropdown_button_glyph_14px.bmp\r\n"
+"ImageFile5 = blue_toolbar_dropdown_button_glyph_17px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
 "TransitionDurations = 8, "
 "0, 100, 100, 100, 100, 100, 100, 100, "
 "100, 0, 100, 100, 100, 100, 100, 100, "
@@ -2148,13 +2193,17 @@ BLUE_INI TEXTFILE
 "100, 100, 100, 100, 100, 100, 100, 0\r\n"
 
 "[Toolbar.SplitButton]\r\n"
-"SizingMargins = 3, 2, 3, 3\r\n"
+"SizingMargins = 3, 2, 13, 4\r\n"
 "ImageFile = blue_toolbar_buttons_split.bmp\r\n"
 "BgType = ImageFile\r\n"
 "ImageLayout = Vertical\r\n"
-"ImageCount = 6\r\n"
+"ImageCount = 8\r\n"
+"BorderSize = 0\r\n"
 "SizingType = Stretch\r\n"
 "Transparent = True\r\n"
+"FillColor = 244 244 244\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 4, 2, 4, 4\r\n"
 "TransitionDurations = 8, "
 "0, 100, 100, 100, 100, 100, 100, 100, "
 "100, 0, 100, 100, 100, 100, 100, 100, "
@@ -2166,16 +2215,33 @@ BLUE_INI TEXTFILE
 "100, 100, 100, 100, 100, 100, 100, 0\r\n"
 
 "[Toolbar.SplitButtonDropdown]\r\n"
-"SizingMargins = 1, 3, 3, 3\r\n"
+"SizingMargins = 1, 3, 13, 4\r\n"
 "ImageFile = blue_toolbar_buttons_split_dropdown.bmp\r\n"
 "BgType = ImageFile\r\n"
 "ImageLayout = Vertical\r\n"
-"ImageCount = 6\r\n"
+"ImageCount = 8\r\n"
 "SizingType = Stretch\r\n"
 "Transparent = True\r\n"
 "GlyphType = ImageGlyph\r\n"
-"GlyphImageFile = blue_toolbar_buttons_split_dropdown_glyph.bmp\r\n"
-"GlyphTransparent = True\r\n"
+"ImageSelectType = Dpi\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 244 244 244\r\n"
+"TextColor = 0 0 0\r\n"
+"ContentMargins = 0, 0, 1, 0\r\n"
+"ImageFile1 = blue_toolbar_buttons_split_dropdown_glyph_7px.bmp\r\n"
+"ImageFile2 = blue_toolbar_buttons_split_dropdown_glyph_9px.bmp\r\n"
+"ImageFile3 = blue_toolbar_buttons_split_dropdown_glyph_11px.bmp\r\n"
+"ImageFile4 = blue_toolbar_buttons_split_dropdown_glyph_14px.bmp\r\n"
+"ImageFile5 = blue_toolbar_buttons_split_dropdown_glyph_17px.bmp\r\n"
+"ImageFile6 = blue_toolbar_buttons_split_dropdown_glyph_21px.bmp\r\n"
+"ImageFile7 = blue_toolbar_buttons_split_dropdown_glyph_28px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
 "TransitionDurations = 8, "
 "0, 100, 100, 100, 100, 100, 100, 100, "
 "100, 0, 100, 100, 100, 100, 100, 100, "
@@ -3447,8 +3513,41 @@ BLUE_TOOLBAR_SEPARATOR_VERTICAL_BMP BITMAP "blue_toolbar_separator_vertical.bmp"
 /* @makedep: blue_toolbar_buttons_split_dropdown.bmp */
 BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_BMP BITMAP "blue_toolbar_buttons_split_dropdown.bmp"
 
-/* @makedep: blue_toolbar_buttons_split_dropdown_glyph.bmp */
-BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_GLYPH_BMP BITMAP "blue_toolbar_buttons_split_dropdown_glyph.bmp"
+/* @makedep: blue_toolbar_buttons_split_dropdown_glyph_7px.bmp */
+BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_GLYPH_7PX_BMP BITMAP "blue_toolbar_buttons_split_dropdown_glyph_7px.bmp"
+
+/* @makedep: blue_toolbar_buttons_split_dropdown_glyph_9px.bmp */
+BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_GLYPH_9PX_BMP BITMAP "blue_toolbar_buttons_split_dropdown_glyph_9px.bmp"
+
+/* @makedep: blue_toolbar_buttons_split_dropdown_glyph_11px.bmp */
+BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_GLYPH_11PX_BMP BITMAP "blue_toolbar_buttons_split_dropdown_glyph_11px.bmp"
+
+/* @makedep: blue_toolbar_buttons_split_dropdown_glyph_14px.bmp */
+BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_GLYPH_14PX_BMP BITMAP "blue_toolbar_buttons_split_dropdown_glyph_14px.bmp"
+
+/* @makedep: blue_toolbar_buttons_split_dropdown_glyph_17px.bmp */
+BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_GLYPH_17PX_BMP BITMAP "blue_toolbar_buttons_split_dropdown_glyph_17px.bmp"
+
+/* @makedep: blue_toolbar_buttons_split_dropdown_glyph_21px.bmp */
+BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_GLYPH_21PX_BMP BITMAP "blue_toolbar_buttons_split_dropdown_glyph_21px.bmp"
+
+/* @makedep: blue_toolbar_buttons_split_dropdown_glyph_28px.bmp */
+BLUE_TOOLBAR_BUTTONS_SPLIT_DROPDOWN_GLYPH_28PX_BMP BITMAP "blue_toolbar_buttons_split_dropdown_glyph_28px.bmp"
+
+/* @makedep: blue_toolbar_dropdown_button_glyph_7px.bmp */
+BLUE_TOOLBAR_DROPDOWN_BUTTON_GLYPH_7PX_BMP BITMAP "blue_toolbar_dropdown_button_glyph_7px.bmp"
+
+/* @makedep: blue_toolbar_dropdown_button_glyph_9px.bmp */
+BLUE_TOOLBAR_DROPDOWN_BUTTON_GLYPH_9PX_BMP BITMAP "blue_toolbar_dropdown_button_glyph_9px.bmp"
+
+/* @makedep: blue_toolbar_dropdown_button_glyph_11px.bmp */
+BLUE_TOOLBAR_DROPDOWN_BUTTON_GLYPH_11PX_BMP BITMAP "blue_toolbar_dropdown_button_glyph_11px.bmp"
+
+/* @makedep: blue_toolbar_dropdown_button_glyph_14px.bmp */
+BLUE_TOOLBAR_DROPDOWN_BUTTON_GLYPH_14PX_BMP BITMAP "blue_toolbar_dropdown_button_glyph_14px.bmp"
+
+/* @makedep: blue_toolbar_dropdown_button_glyph_17px.bmp */
+BLUE_TOOLBAR_DROPDOWN_BUTTON_GLYPH_17PX_BMP BITMAP "blue_toolbar_dropdown_button_glyph_17px.bmp"
 
 /* Tooltip */
 /* @makedep: blue_tooltip_close_16px.bmp */

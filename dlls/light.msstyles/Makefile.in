@@ -352,7 +352,18 @@ SVG_SRCS = \
 	blue_toolbar_buttons.svg \
 	blue_toolbar_buttons_split.svg \
 	blue_toolbar_buttons_split_dropdown.svg \
-	blue_toolbar_buttons_split_dropdown_glyph.svg \
+	blue_toolbar_buttons_split_dropdown_glyph_11px.svg \
+	blue_toolbar_buttons_split_dropdown_glyph_14px.svg \
+	blue_toolbar_buttons_split_dropdown_glyph_17px.svg \
+	blue_toolbar_buttons_split_dropdown_glyph_21px.svg \
+	blue_toolbar_buttons_split_dropdown_glyph_28px.svg \
+	blue_toolbar_buttons_split_dropdown_glyph_7px.svg \
+	blue_toolbar_buttons_split_dropdown_glyph_9px.svg \
+	blue_toolbar_dropdown_button_glyph_11px.svg \
+	blue_toolbar_dropdown_button_glyph_14px.svg \
+	blue_toolbar_dropdown_button_glyph_17px.svg \
+	blue_toolbar_dropdown_button_glyph_7px.svg \
+	blue_toolbar_dropdown_button_glyph_9px.svg \
 	blue_toolbar_separator_horizontal.svg \
 	blue_toolbar_separator_vertical.svg \
 	blue_tooltip_close_16px.svg \

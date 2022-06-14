@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg id="bitmap:14-32" width="14" height="96" version="1.1" viewBox="0 0 3.7043 25.399" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g transform="matrix(1.6364 0 0 1 2.4382e-5 0)">
+  <path d="m2.2637 0.80987-1.1233 1.8359-0.16047-0.26227 1.1233-1.8359z" stroke-width=".20683"/>
+  <path d="m0.16046 0.52905 1.1233 1.8359-0.16047 0.26227-1.1233-1.8359z" stroke-width=".20683"/>
+  <g transform="matrix(1.2222 0 0 2 3.2537 -.072269)" fill="#3096fa" stroke-width=".13229">
+   <path d="m-0.80196 2.0285-0.91903 0.91794-0.13129-0.13113 0.91903-0.91793z"/>
+   <path d="m-2.5228 1.8881 0.91903 0.91794-0.13129 0.13113-0.91903-0.91793z"/>
+  </g>
+  <g transform="matrix(1.2222 0 0 2 4.621e-5 19.05)" fill="#3096fa" stroke-width=".13229">
+   <path d="m1.8521 1.9925-0.91903 0.91794-0.13129-0.13113 0.91903-0.91793z"/>
+   <path d="m0.13124 1.8521 0.91903 0.91794-0.13129 0.13113-0.91903-0.91793z"/>
+  </g>
+  <g transform="matrix(1.2222 0 0 2.0001 4.621e-5 -.00064156)" fill="#2979ff" stroke-width=".13229">
+   <path d="m1.8521 3.5801-0.91903 0.91793-0.13129-0.13113 0.91903-0.91793z"/>
+   <path d="m0.13124 3.4397 0.91903 0.91793-0.13129 0.13113-0.91903-0.91793z"/>
+  </g>
+  <path d="m2.2637 10.335-1.1233 1.8359-0.16048-0.26227 1.1233-1.8359z" fill="#aeaeae" stroke-width=".18241"/>
+  <path d="m0.16046 10.054 1.1233 1.8359-0.16048 0.26227-1.1233-1.8359z" fill="#aeaeae" stroke-width=".18241"/>
+  <g transform="matrix(1.2222 0 0 2.0001 4.621e-5 9.5242)" fill="#2979ff" stroke-width=".13229">
+   <path d="m1.8521 3.5801-0.91903 0.91793-0.13129-0.13113 0.91903-0.91793z"/>
+   <path d="m0.13124 3.4397 0.91903 0.91793-0.13129 0.13113-0.91903-0.91793z"/>
+  </g>
+  <g transform="matrix(1.2222 0 0 2.0001 4.621e-5 6.3493)" fill="#2979ff" stroke-width=".13229">
+   <path d="m1.8521 3.5801-0.91903 0.91793-0.13129-0.13113 0.91903-0.91793z"/>
+   <path d="m0.13124 3.4397 0.91903 0.91793-0.13129 0.13113-0.91903-0.91793z"/>
+  </g>
+ </g>
+</svg>
