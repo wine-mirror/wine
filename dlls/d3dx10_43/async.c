@@ -854,9 +854,15 @@ static HRESULT WINAPI thread_pump_PurgeAllItems(ID3DX10ThreadPump *iface)
 static HRESULT WINAPI thread_pump_GetQueueStatus(ID3DX10ThreadPump *iface,
         UINT *io_queue, UINT *process_queue, UINT *device_queue)
 {
-    FIXME("iface %p, io_queue %p, process_queue %p, device_queue %p stub!\n",
+    struct thread_pump *thread_pump = impl_from_ID3DX10ThreadPump(iface);
+
+    TRACE("iface %p, io_queue %p, process_queue %p, device_queue %p.\n",
             iface, io_queue, process_queue, device_queue);
-    return E_NOTIMPL;
+
+    *io_queue = thread_pump->io_count;
+    *process_queue = thread_pump->proc_count;
+    *device_queue = thread_pump->device_count;
+    return S_OK;
 }
 
 static const ID3DX10ThreadPumpVtbl thread_pump_vtbl =
