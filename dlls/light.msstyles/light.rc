@@ -1837,6 +1837,11 @@ BLUE_INI TEXTFILE
 "BgType = ImageFile\r\n"
 "ImageFile = blue_tab_background.bmp\r\n"
 
+"[Tab.AeroWizardBody]\r\n"
+"BgType = BorderFill\r\n"
+"BorderSize = 0\r\n"
+"FillColor = 255 255 255\r\n"
+
 "\r\n; Toolbar\r\n"
 "[Toolbar]\r\n"
 "BgType = BorderFill\r\n"
