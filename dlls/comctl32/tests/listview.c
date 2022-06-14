@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <windows.h>
 #include <commctrl.h>
+#include <objbase.h>
 
 #include "wine/test.h"
 #include "v6util.h"
@@ -6924,6 +6925,81 @@ static void test_LVM_GETNEXTITEMINDEX(void)
     DestroyWindow(hwnd);
 }
 
+static void test_LVM_SETBKIMAGE(BOOL is_v6)
+{
+    LVBKIMAGEA image;
+    HBITMAP hbmp;
+    BITMAP bm;
+    HWND hwnd;
+    int ret;
+
+    CoInitialize(NULL);
+
+    hbmp = CreateBitmap(32, 32, 1, 1, NULL);
+    hwnd = create_listview_control(LVS_REPORT);
+
+    image.ulFlags = LVBKIF_SOURCE_NONE;
+    image.hbm = 0;
+    image.pszImage = NULL;
+    image.cchImageMax = 0;
+    image.xOffsetPercent = 0;
+    image.yOffsetPercent = 0;
+    ret = SendMessageA(hwnd, LVM_SETBKIMAGEA, 0, (LPARAM)&image);
+    ok(!ret, "got %d\n", ret);
+
+    ret = GetObjectA(hbmp, sizeof(bm), &bm);
+    ok(ret == sizeof(bm), "got %d\n", ret);
+
+    image.ulFlags = LVBKIF_SOURCE_HBITMAP;
+    image.hbm = hbmp;
+    ret = SendMessageA(hwnd, LVM_SETBKIMAGEA, 0, (LPARAM)&image);
+    if (is_v6)
+        ok(ret, "got %d\n", ret);
+    else
+        todo_wine ok(!ret, "got %d\n", ret);
+
+    ret = GetObjectA(hbmp, sizeof(bm), &bm);
+    ok(ret == sizeof(bm), "got %d\n", ret);
+
+    image.ulFlags = LVBKIF_SOURCE_NONE;
+    image.hbm = 0;
+    ret = SendMessageA(hwnd, LVM_SETBKIMAGEA, 0, (LPARAM)&image);
+    ok(!ret, "got %d\n", ret);
+
+    ret = GetObjectA(hbmp, sizeof(bm), &bm);
+    ok(!ret, "got %d\n", ret);
+
+    hbmp = CreateBitmap(32, 32, 1, 1, NULL);
+
+    image.ulFlags = LVBKIF_SOURCE_HBITMAP;
+    image.hbm = hbmp;
+    ret = SendMessageA(hwnd, LVM_SETBKIMAGEA, 0, (LPARAM)&image);
+    if (is_v6)
+        ok(ret, "got %d\n", ret);
+    else
+        todo_wine ok(!ret, "got %d\n", ret);
+
+    ret = GetObjectA(hbmp, sizeof(bm), &bm);
+    ok(ret == sizeof(bm), "got %d\n", ret);
+
+    image.ulFlags = LVBKIF_SOURCE_HBITMAP;
+    image.hbm = hbmp;
+    ret = SendMessageA(hwnd, LVM_SETBKIMAGEA, 0, (LPARAM)&image);
+    ok(!ret, "got %d\n", ret);
+
+    ret = GetObjectA(hbmp, sizeof(bm), &bm);
+    ok(!ret, "got %d\n", ret);
+
+    image.ulFlags = LVBKIF_SOURCE_NONE;
+    image.hbm = 0;
+    ret = SendMessageA(hwnd, LVM_SETBKIMAGEA, 0, (LPARAM)&image);
+    ok(!ret, "got %d\n", ret);
+
+    DestroyWindow(hwnd);
+
+    CoUninitialize();
+}
+
 START_TEST(listview)
 {
     ULONG_PTR ctx_cookie;
@@ -6987,6 +7063,7 @@ START_TEST(listview)
     test_LVN_ENDLABELEDIT();
     test_LVM_GETCOUNTPERPAGE();
     test_item_state_change();
+    test_LVM_SETBKIMAGE(FALSE);
 
     if (!load_v6_module(&ctx_cookie, &hCtx))
     {
@@ -7034,6 +7111,7 @@ START_TEST(listview)
     test_item_state_change();
     test_selected_column();
     test_LVM_GETNEXTITEMINDEX();
+    test_LVM_SETBKIMAGE(TRUE);
 
     unload_v6_module(ctx_cookie, hCtx);
 

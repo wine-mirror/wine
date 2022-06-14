@@ -91,7 +91,7 @@
  *
  * Messages:
  *   -- LVM_ENABLEGROUPVIEW
- *   -- LVM_GETBKIMAGE, LVM_SETBKIMAGE
+ *   -- LVM_GETBKIMAGE
  *   -- LVM_GETGROUPINFO, LVM_SETGROUPINFO
  *   -- LVM_GETGROUPMETRICS, LVM_SETGROUPMETRICS
  *   -- LVM_GETINSERTMARK, LVM_SETINSERTMARK
@@ -297,6 +297,7 @@ typedef struct tagLISTVIEW_INFO
   COLORREF clrBk;
   COLORREF clrText;
   COLORREF clrTextBk;
+  HBITMAP hBkBitmap;
 
   /* font */
   HFONT hDefaultFont;
@@ -4551,6 +4552,21 @@ static INT LISTVIEW_GetTopIndex(const LISTVIEW_INFO *infoPtr)
     return nItem;
 }
 
+static void LISTVIEW_DrawBackgroundBitmap(const LISTVIEW_INFO *infoPtr, HDC hdc, const RECT *lprcBox)
+{
+    HDC mem_hdc;
+
+    if (!infoPtr->hBkBitmap)
+        return;
+
+    TRACE("(hdc=%p, lprcBox=%s, hBkBitmap=%p)\n", hdc, wine_dbgstr_rect(lprcBox), infoPtr->hBkBitmap);
+
+    mem_hdc = CreateCompatibleDC(hdc);
+    SelectObject(mem_hdc, infoPtr->hBkBitmap);
+    BitBlt(hdc, lprcBox->left, lprcBox->top, lprcBox->right - lprcBox->left,
+           lprcBox->bottom - lprcBox->top, mem_hdc, lprcBox->left, lprcBox->top, SRCCOPY);
+    DeleteDC(mem_hdc);
+}
 
 /***
  * DESCRIPTION:
@@ -4565,13 +4581,17 @@ static INT LISTVIEW_GetTopIndex(const LISTVIEW_INFO *infoPtr)
  *   Success: TRUE
  *   Failure: FALSE
  */
-static inline BOOL LISTVIEW_FillBkgnd(const LISTVIEW_INFO *infoPtr, HDC hdc, const RECT *lprcBox)
+static BOOL LISTVIEW_FillBkgnd(const LISTVIEW_INFO *infoPtr, HDC hdc, const RECT *lprcBox)
 {
-    if (!infoPtr->hBkBrush) return FALSE;
+    if (infoPtr->hBkBrush)
+    {
+        TRACE("(hdc=%p, lprcBox=%s, hBkBrush=%p)\n", hdc, wine_dbgstr_rect(lprcBox), infoPtr->hBkBrush);
 
-    TRACE("(hdc=%p, lprcBox=%s, hBkBrush=%p)\n", hdc, wine_dbgstr_rect(lprcBox), infoPtr->hBkBrush);
+        FillRect(hdc, lprcBox, infoPtr->hBkBrush);
+    }
 
-    return FillRect(hdc, lprcBox, infoPtr->hBkBrush);
+    LISTVIEW_DrawBackgroundBitmap(infoPtr, hdc, lprcBox);
+    return TRUE;
 }
 
 /* Draw main item or subitem */
@@ -8028,7 +8048,53 @@ static BOOL LISTVIEW_SetBkColor(LISTVIEW_INFO *infoPtr, COLORREF color)
     return TRUE;
 }
 
-/* LISTVIEW_SetBkImage */
+static BOOL LISTVIEW_SetBkImage(LISTVIEW_INFO *infoPtr, const LVBKIMAGEW *image, BOOL isW)
+{
+    TRACE("%08lx, %p, %p, %u, %d, %d\n", image->ulFlags, image->hbm, image->pszImage,
+          image->cchImageMax, image->xOffsetPercent, image->yOffsetPercent);
+
+    if (image->ulFlags & ~LVBKIF_SOURCE_MASK)
+        FIXME("unsupported flags %08lx\n", image->ulFlags & ~LVBKIF_SOURCE_MASK);
+
+    if (image->xOffsetPercent || image->yOffsetPercent)
+        FIXME("unsupported offset %d,%d\n", image->xOffsetPercent, image->yOffsetPercent);
+
+    switch (image->ulFlags & LVBKIF_SOURCE_MASK)
+    {
+    case LVBKIF_SOURCE_NONE:
+        if (infoPtr->hBkBitmap)
+        {
+            DeleteObject(infoPtr->hBkBitmap);
+            infoPtr->hBkBitmap = NULL;
+        }
+        InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
+        break;
+
+    case LVBKIF_SOURCE_HBITMAP:
+    {
+        BITMAP bm;
+
+        if (infoPtr->hBkBitmap)
+        {
+            DeleteObject(infoPtr->hBkBitmap);
+            infoPtr->hBkBitmap = NULL;
+        }
+        InvalidateRect(infoPtr->hwndSelf, NULL, TRUE);
+        if (GetObjectW(image->hbm, sizeof(bm), &bm) == sizeof(bm))
+        {
+            infoPtr->hBkBitmap = image->hbm;
+            return TRUE;
+        }
+        break;
+    }
+
+    case LVBKIF_SOURCE_URL:
+        FIXME("LVBKIF_SOURCE_URL: %s\n", isW ? debugstr_w(image->pszImage) : debugstr_a((LPCSTR)image->pszImage));
+        break;
+    }
+
+    return FALSE;
+}
 
 /*** Helper for {Insert,Set}ColumnT *only* */
 static void column_fill_hditem(const LISTVIEW_INFO *infoPtr, HDITEMW *lphdi, INT nColumn,
@@ -9641,10 +9707,11 @@ static inline BOOL LISTVIEW_EraseBkgnd(const LISTVIEW_INFO *infoPtr, HDC hdc)
     if (infoPtr->clrBk == CLR_NONE)
     {
         if (infoPtr->dwLvExStyle & LVS_EX_TRANSPARENTBKGND)
-            return SendMessageW(infoPtr->hwndNotify, WM_PRINTCLIENT,
-                                (WPARAM)hdc, PRF_ERASEBKGND);
+            SendMessageW(infoPtr->hwndNotify, WM_PRINTCLIENT, (WPARAM)hdc, PRF_ERASEBKGND);
         else
-            return SendMessageW(infoPtr->hwndNotify, WM_ERASEBKGND, (WPARAM)hdc, 0);
+            SendMessageW(infoPtr->hwndNotify, WM_ERASEBKGND, (WPARAM)hdc, 0);
+        LISTVIEW_DrawBackgroundBitmap(infoPtr, hdc, &rc);
+        return TRUE;
     }
 
     /* for double buffered controls we need to do this during refresh */
@@ -10406,6 +10473,7 @@ static LRESULT LISTVIEW_NCDestroy(LISTVIEW_INFO *infoPtr)
   infoPtr->hFont = 0;
   if (infoPtr->hDefaultFont) DeleteObject(infoPtr->hDefaultFont);
   if (infoPtr->clrBk != CLR_NONE) DeleteObject(infoPtr->hBkBrush);
+  if (infoPtr->hBkBitmap) DeleteObject(infoPtr->hBkBitmap);
 
   SetWindowLongPtrW(infoPtr->hwndSelf, 0, 0);
 
@@ -11554,7 +11622,9 @@ LISTVIEW_WindowProc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
   case LVM_SETBKCOLOR:
     return LISTVIEW_SetBkColor(infoPtr, (COLORREF)lParam);
 
-  /* case LVM_SETBKIMAGE: */
+  case LVM_SETBKIMAGEA:
+  case LVM_SETBKIMAGEW:
+    return LISTVIEW_SetBkImage(infoPtr, (LVBKIMAGEW *)lParam, uMsg == LVM_SETBKIMAGEW);
 
   case LVM_SETCALLBACKMASK:
     infoPtr->uCallbackMask = (UINT)wParam;
