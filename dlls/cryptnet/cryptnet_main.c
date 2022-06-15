@@ -1690,6 +1690,12 @@ static DWORD verify_cert_revocation_from_dist_points_ext(const CRYPT_DATA_BLOB *
     const CRL_CONTEXT *crl;
     DWORD timeout = 0;
 
+    if (!params || !params->pIssuerCert)
+    {
+        TRACE("no issuer certificate\n");
+        return CRYPT_E_REVOCATION_OFFLINE;
+    }
+
     if (!CRYPT_GetUrlFromCRLDistPointsExt(value, NULL, &url_array_size, NULL, NULL))
         return GetLastError();
 
