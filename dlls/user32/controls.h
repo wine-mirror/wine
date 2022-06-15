@@ -121,7 +121,6 @@ extern HMENU MENU_GetSysMenu( HWND hWnd, HMENU hPopupMenu ) DECLSPEC_HIDDEN;
 
 /* nonclient area */
 extern LRESULT NC_HandleNCHitTest( HWND hwnd, POINT pt ) DECLSPEC_HIDDEN;
-extern LRESULT NC_HandleNCLButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;
 extern LRESULT NC_HandleNCMouseMove( HWND hwnd, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;
 extern LRESULT NC_HandleNCMouseLeave( HWND hwnd ) DECLSPEC_HIDDEN;
 extern LRESULT NC_HandleNCRButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam ) DECLSPEC_HIDDEN;

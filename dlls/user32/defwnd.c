@@ -175,9 +175,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
         iF10Key = iMenuSysKey = 0;
         break;
 
-    case WM_NCLBUTTONDOWN:
-        return NC_HandleNCLButtonDown( hwnd, wParam, lParam );
-
     case WM_LBUTTONDBLCLK:
         return NC_HandleNCLButtonDblClk( hwnd, HTCLIENT, lParam );
 

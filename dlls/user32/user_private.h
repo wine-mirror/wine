@@ -86,7 +86,6 @@ extern void free_cached_data( UINT format, HANDLE handle ) DECLSPEC_HIDDEN;
 extern HANDLE render_synthesized_format( UINT format, UINT from ) DECLSPEC_HIDDEN;
 
 extern void CLIPBOARD_ReleaseOwner( HWND hwnd ) DECLSPEC_HIDDEN;
-extern BOOL FOCUS_MouseActivate( HWND hwnd ) DECLSPEC_HIDDEN;
 extern BOOL set_capture_window( HWND hwnd, UINT gui_flags, HWND *prev_ret ) DECLSPEC_HIDDEN;
 extern HDC get_display_dc(void) DECLSPEC_HIDDEN;
 extern void release_display_dc( HDC hdc ) DECLSPEC_HIDDEN;

@@ -1790,6 +1790,177 @@ static LRESULT handle_nc_hit_test( HWND hwnd, POINT pt )
     return HTNOWHERE;
 }
 
+static void track_min_max_box( HWND hwnd, WORD wparam )
+{
+    HDC hdc = NtUserGetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
+    DWORD style = get_window_long( hwnd, GWL_STYLE );
+    HMENU sys_menu = NtUserGetSystemMenu(hwnd, FALSE);
+    void (*paint_button)( HWND, HDC, BOOL, BOOL );
+    BOOL pressed = TRUE;
+    UINT state;
+    MSG msg;
+
+    if (wparam == HTMINBUTTON)
+    {
+        /* If the style is not present, do nothing */
+        if (!(style & WS_MINIMIZEBOX)) return;
+
+        /* Check if the sysmenu item for minimize is there  */
+        state = get_menu_state( sys_menu, SC_MINIMIZE, MF_BYCOMMAND );
+        paint_button = draw_min_button;
+    }
+    else
+    {
+        /* If the style is not present, do nothing */
+        if (!(style & WS_MAXIMIZEBOX)) return;
+
+        /* Check if the sysmenu item for maximize is there  */
+        state = get_menu_state( sys_menu, SC_MAXIMIZE, MF_BYCOMMAND );
+        paint_button = draw_max_button;
+    }
+
+    NtUserSetCapture( hwnd );
+    paint_button( hwnd, hdc, TRUE, FALSE);
+
+    for (;;)
+    {
+        BOOL oldstate = pressed;
+
+        if (!NtUserGetMessage( &msg, 0, WM_MOUSEFIRST, WM_MOUSELAST )) break;
+        if (NtUserCallMsgFilter( &msg, MSGF_MAX )) continue;
+        if(msg.message == WM_LBUTTONUP) break;
+        if(msg.message != WM_MOUSEMOVE) continue;
+
+        pressed = handle_nc_hit_test( hwnd, msg.pt ) == wparam;
+        if (pressed != oldstate) paint_button( hwnd, hdc, pressed, FALSE);
+    }
+
+    if (pressed) paint_button( hwnd, hdc, FALSE, FALSE );
+
+    release_capture();
+    NtUserReleaseDC( hwnd, hdc );
+
+    /* If the minimize or maximize items of the sysmenu are not there
+     * or if the style is not present, do nothing */
+    if (!pressed || state == 0xffffffff) return;
+
+    if (wparam == HTMINBUTTON)
+        send_message( hwnd, WM_SYSCOMMAND,
+                      is_iconic( hwnd ) ? SC_RESTORE : SC_MINIMIZE, MAKELONG( msg.pt.x, msg.pt.y ));
+    else
+        send_message( hwnd, WM_SYSCOMMAND,
+                      is_zoomed( hwnd ) ? SC_RESTORE : SC_MAXIMIZE, MAKELONG( msg.pt.x, msg.pt.y ));
+}
+
+static void track_close_button( HWND hwnd, WPARAM wparam, LPARAM lparam )
+{
+    HMENU sys_menu;
+    BOOL pressed = TRUE;
+    UINT state;
+    MSG msg;
+    HDC hdc;
+
+    if (!(sys_menu = NtUserGetSystemMenu( hwnd, FALSE ))) return;
+
+    state = get_menu_state( sys_menu, SC_CLOSE, MF_BYCOMMAND );
+
+    /* If the close item of the sysmenu is disabled or not present do nothing */
+    if((state & MF_DISABLED) || (state & MF_GRAYED) || state == 0xFFFFFFFF) return;
+    hdc = NtUserGetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
+    NtUserSetCapture( hwnd );
+    draw_close_button( hwnd, hdc, TRUE, FALSE );
+
+    for (;;)
+    {
+        BOOL oldstate = pressed;
+
+        if (!NtUserGetMessage( &msg, 0, WM_MOUSEFIRST, WM_MOUSELAST )) break;
+        if (NtUserCallMsgFilter( &msg, MSGF_MAX )) continue;
+        if (msg.message == WM_LBUTTONUP) break;
+        if (msg.message != WM_MOUSEMOVE) continue;
+
+        pressed = handle_nc_hit_test( hwnd, msg.pt ) == wparam;
+        if (pressed != oldstate) draw_close_button( hwnd, hdc, pressed, FALSE );
+    }
+
+    if (pressed) draw_close_button( hwnd, hdc, FALSE, FALSE );
+
+    release_capture();
+    NtUserReleaseDC( hwnd, hdc );
+    if (pressed) send_message( hwnd, WM_SYSCOMMAND, SC_CLOSE, lparam );
+}
+
+static LRESULT handle_nc_lbutton_down( HWND hwnd, WPARAM wparam, LPARAM lparam )
+{
+    LONG style = get_window_long( hwnd, GWL_STYLE );
+
+    switch (wparam)  /* Hit test */
+    {
+    case HTCAPTION:
+        {
+            HWND top = hwnd, parent;
+            for (;;)
+            {
+                if ((get_window_long( top, GWL_STYLE ) & (WS_POPUP | WS_CHILD)) != WS_CHILD)
+                    break;
+                parent = NtUserGetAncestor( top, GA_PARENT );
+                if (!parent || parent == get_desktop_window()) break;
+                top = parent;
+            }
+
+            if (set_foreground_window( top, TRUE ) || (get_active_window() == top))
+                send_message( hwnd, WM_SYSCOMMAND, SC_MOVE + HTCAPTION, lparam );
+            break;
+        }
+
+    case HTSYSMENU:
+        if (style & WS_SYSMENU)
+        {
+            HDC hdc = NtUserGetDCEx( hwnd, 0, DCX_USESTYLE | DCX_WINDOW );
+            draw_nc_sys_button( hwnd, hdc, TRUE );
+            NtUserReleaseDC( hwnd, hdc );
+            send_message( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU + HTSYSMENU, lparam );
+        }
+        break;
+
+    case HTMENU:
+        send_message( hwnd, WM_SYSCOMMAND, SC_MOUSEMENU, lparam );
+        break;
+
+    case HTHSCROLL:
+        send_message( hwnd, WM_SYSCOMMAND, SC_HSCROLL + HTHSCROLL, lparam );
+        break;
+
+    case HTVSCROLL:
+        send_message( hwnd, WM_SYSCOMMAND, SC_VSCROLL + HTVSCROLL, lparam );
+        break;
+
+    case HTMINBUTTON:
+    case HTMAXBUTTON:
+        track_min_max_box( hwnd, wparam );
+        break;
+
+    case HTCLOSE:
+        track_close_button( hwnd, wparam, lparam );
+        break;
+
+    case HTLEFT:
+    case HTRIGHT:
+    case HTTOP:
+    case HTTOPLEFT:
+    case HTTOPRIGHT:
+    case HTBOTTOM:
+    case HTBOTTOMLEFT:
+    case HTBOTTOMRIGHT:
+        send_message( hwnd, WM_SYSCOMMAND, SC_SIZE + wparam - (HTLEFT - WMSZ_LEFT), lparam );
+        break;
+
+    case HTBORDER:
+        break;
+    }
+    return 0;
+}
+
 LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
     LRESULT result = 0;
@@ -1834,6 +2005,9 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
 
     case WM_NCACTIVATE:
         return handle_nc_activate( hwnd, wparam, lparam );
+
+    case WM_NCLBUTTONDOWN:
+        return handle_nc_lbutton_down( hwnd, wparam, lparam );
 
     case WM_WINDOWPOSCHANGING:
         return handle_window_pos_changing( hwnd, (WINDOWPOS *)lparam );
@@ -1886,7 +2060,7 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
             if (result) break;
         }
 
-        /* Caption clicks are handled by NC_HandleNCLButtonDown() */
+        /* Caption clicks are handled by handle_nc_lbutton_down() */
         result = HIWORD(lparam) == WM_LBUTTONDOWN && LOWORD(lparam) == HTCAPTION ?
             MA_NOACTIVATE : MA_ACTIVATE;
         break;

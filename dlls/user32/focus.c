@@ -33,17 +33,6 @@
 
 
 /*******************************************************************
- *		FOCUS_MouseActivate
- *
- * Activate a window as a result of a mouse click
- */
-BOOL FOCUS_MouseActivate( HWND hwnd )
-{
-    return NtUserSetForegroundWindow( hwnd, TRUE );
-}
-
-
-/*******************************************************************
  *		SetForegroundWindow  (USER32.@)
  */
 BOOL WINAPI SetForegroundWindow( HWND hwnd )
