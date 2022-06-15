@@ -1974,6 +1974,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
             allowed_bind_flags = WINED3D_BIND_RENDER_TARGET
                     | WINED3D_BIND_DEPTH_STENCIL
                     | WINED3D_BIND_UNORDERED_ACCESS;
+            gl_type = gl_type_end = WINED3D_GL_RES_TYPE_TEX_2D;
             if (!(bind_flags & WINED3D_BIND_SHADER_RESOURCE))
             {
                 if (!wined3d_check_surface_format(format))
@@ -1981,8 +1982,6 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
                     TRACE("%s is not supported for plain surfaces.\n", debug_d3dformat(format->id));
                     return WINED3DERR_NOTAVAILABLE;
                 }
-
-                gl_type = gl_type_end = WINED3D_GL_RES_TYPE_RB;
                 break;
             }
             allowed_usage |= WINED3DUSAGE_DYNAMIC
@@ -1996,7 +1995,6 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
                     | WINED3DUSAGE_QUERY_VERTEXTEXTURE
                     | WINED3DUSAGE_QUERY_WRAPANDMIP;
             allowed_bind_flags |= WINED3D_BIND_SHADER_RESOURCE;
-            gl_type = gl_type_end = WINED3D_GL_RES_TYPE_TEX_2D;
             if (usage & WINED3DUSAGE_LEGACY_CUBEMAP)
             {
                 allowed_usage &= ~WINED3DUSAGE_QUERY_LEGACYBUMPMAP;
@@ -2095,10 +2093,15 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
 
     for (; gl_type <= gl_type_end; ++gl_type)
     {
-        if ((format->caps[gl_type] & format_caps) != format_caps)
+        unsigned int caps = format->caps[gl_type];
+
+        if (gl_type == WINED3D_GL_RES_TYPE_TEX_2D && !(bind_flags & WINED3D_BIND_SHADER_RESOURCE))
+            caps |= format->caps[WINED3D_GL_RES_TYPE_RB];
+
+        if ((caps & format_caps) != format_caps)
         {
             TRACE("Requested format caps %#x, but format %s only has %#x.\n",
-                    format_caps, debug_d3dformat(check_format_id), format->caps[gl_type]);
+                    format_caps, debug_d3dformat(check_format_id), caps);
             return WINED3DERR_NOTAVAILABLE;
         }
 
@@ -2129,7 +2132,7 @@ HRESULT CDECL wined3d_check_device_format(const struct wined3d *wined3d,
             return WINED3DERR_NOTAVAILABLE;
         }
 
-        if (!(format->caps[gl_type] & WINED3D_FORMAT_CAP_GEN_MIPMAP))
+        if (!(caps & WINED3D_FORMAT_CAP_GEN_MIPMAP))
             mipmap_gen_supported = FALSE;
     }
 
