@@ -1961,6 +1961,34 @@ static LRESULT handle_nc_lbutton_down( HWND hwnd, WPARAM wparam, LPARAM lparam )
     return 0;
 }
 
+static LRESULT handle_nc_rbutton_down( HWND hwnd, WPARAM wparam, LPARAM lparam )
+{
+    int hittest = wparam;
+    MSG msg;
+
+    switch (hittest)
+    {
+    case HTCAPTION:
+    case HTSYSMENU:
+        NtUserSetCapture( hwnd );
+        for (;;)
+        {
+            if (!NtUserGetMessage( &msg, 0, WM_MOUSEFIRST, WM_MOUSELAST )) break;
+            if (NtUserCallMsgFilter( &msg, MSGF_MAX )) continue;
+            if (msg.message == WM_RBUTTONUP)
+            {
+                hittest = handle_nc_hit_test( hwnd, msg.pt );
+                break;
+            }
+        }
+        release_capture();
+        if (hittest == HTCAPTION || hittest == HTSYSMENU)
+            send_message( hwnd, WM_CONTEXTMENU, (WPARAM)hwnd, MAKELPARAM( msg.pt.x, msg.pt.y ));
+        break;
+    }
+    return 0;
+}
+
 LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, BOOL ansi )
 {
     LRESULT result = 0;
@@ -2008,6 +2036,9 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
 
     case WM_NCLBUTTONDOWN:
         return handle_nc_lbutton_down( hwnd, wparam, lparam );
+
+    case WM_NCRBUTTONDOWN:
+        return handle_nc_rbutton_down( hwnd, wparam, lparam );
 
     case WM_WINDOWPOSCHANGING:
         return handle_window_pos_changing( hwnd, (WINDOWPOS *)lparam );

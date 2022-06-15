@@ -718,40 +718,6 @@ static void NC_TrackScrollBar( HWND hwnd, WPARAM wParam, POINT pt )
 
 
 /***********************************************************************
- *           NC_HandleNCRButtonDown
- *
- * Handle a WM_NCRBUTTONDOWN message. Called from DefWindowProc().
- */
-LRESULT NC_HandleNCRButtonDown( HWND hwnd, WPARAM wParam, LPARAM lParam )
-{
-    MSG msg;
-    INT hittest = wParam;
-
-    switch (hittest)
-    {
-    case HTCAPTION:
-    case HTSYSMENU:
-        NtUserSetCapture( hwnd );
-        for (;;)
-        {
-            if (!GetMessageW( &msg, 0, WM_MOUSEFIRST, WM_MOUSELAST )) break;
-            if (NtUserCallMsgFilter( &msg, MSGF_MAX )) continue;
-            if (msg.message == WM_RBUTTONUP)
-            {
-                hittest = NC_HandleNCHitTest( hwnd, msg.pt );
-                break;
-            }
-        }
-        ReleaseCapture();
-        if (hittest == HTCAPTION || hittest == HTSYSMENU)
-            SendMessageW( hwnd, WM_CONTEXTMENU, (WPARAM)hwnd, MAKELPARAM(msg.pt.x, msg.pt.y));
-        break;
-    }
-    return 0;
-}
-
-
-/***********************************************************************
  *           NC_HandleNCLButtonDblClk
  *
  * Handle a WM_NCLBUTTONDBLCLK message. Called from DefWindowProc().
