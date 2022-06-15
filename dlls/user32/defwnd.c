@@ -165,14 +165,6 @@ static LRESULT DEFWND_DefWinProc( HWND hwnd, UINT msg, WPARAM wParam, LPARAM lPa
     case WM_NCMOUSELEAVE:
         return NC_HandleNCMouseLeave( hwnd );
 
-    case WM_NCHITTEST:
-        {
-            POINT pt;
-            pt.x = (short)LOWORD(lParam);
-            pt.y = (short)HIWORD(lParam);
-            return NC_HandleNCHitTest( hwnd, pt );
-        }
-
     case WM_WINDOWPOSCHANGED:
         DEFWND_HandleWindowPosChanged( hwnd, (const WINDOWPOS *)lParam );
         break;
