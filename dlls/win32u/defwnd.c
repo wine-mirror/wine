@@ -2063,6 +2063,32 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
     case WM_NCRBUTTONDOWN:
         return handle_nc_rbutton_down( hwnd, wparam, lparam );
 
+    case WM_CONTEXTMENU:
+        if (get_window_long( hwnd, GWL_STYLE ) & WS_CHILD)
+            send_message( get_parent( hwnd ), msg, (WPARAM)hwnd, lparam );
+        else
+        {
+            LONG hitcode;
+            POINT pt;
+            pt.x = (short)LOWORD( lparam );
+            pt.y = (short)HIWORD( lparam );
+            hitcode = handle_nc_hit_test( hwnd, pt );
+
+            /* Track system popup if click was in the caption area. */
+            if (hitcode == HTCAPTION || hitcode == HTSYSMENU)
+                NtUserTrackPopupMenuEx( NtUserGetSystemMenu( hwnd, FALSE ),
+                                        TPM_LEFTBUTTON | TPM_RIGHTBUTTON,
+                                        pt.x, pt.y, hwnd, NULL );
+        }
+        break;
+
+    case WM_POPUPSYSTEMMENU:
+        /* This is an undocumented message used by the windows taskbar to
+         * display the system menu of windows that belong to other processes. */
+        NtUserTrackPopupMenuEx( NtUserGetSystemMenu( hwnd, FALSE ), TPM_LEFTBUTTON | TPM_RIGHTBUTTON,
+                                (short)LOWORD(lparam), (short)HIWORD(lparam), hwnd, NULL );
+        return 0;
+
     case WM_WINDOWPOSCHANGING:
         return handle_window_pos_changing( hwnd, (WINDOWPOS *)lparam );
 
