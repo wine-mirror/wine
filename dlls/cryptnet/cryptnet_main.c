@@ -2149,12 +2149,16 @@ static DWORD verify_cert_revocation(const CERT_CONTEXT *cert, FILETIME *pTime,
     if ((ext = CertFindExtension(szOID_AUTHORITY_INFO_ACCESS, cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
     {
         error = verify_cert_revocation_from_aia_ext(&ext->Value, cert, pTime, dwFlags, pRevPara, pRevStatus);
+        TRACE("verify_cert_revocation_from_aia_ext() returned %08lx\n", error);
+        if (error == ERROR_SUCCESS || error == CRYPT_E_REVOKED) return error;
     }
-    else if ((ext = CertFindExtension(szOID_CRL_DIST_POINTS, cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
+    if ((ext = CertFindExtension(szOID_CRL_DIST_POINTS, cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
     {
         error = verify_cert_revocation_from_dist_points_ext(&ext->Value, cert, pTime, dwFlags, pRevPara, pRevStatus);
+        TRACE("verify_cert_revocation_from_dist_points_ext() returned %08lx\n", error);
+        if (error == ERROR_SUCCESS || error == CRYPT_E_REVOKED) return error;
     }
-    else
+    if (!ext)
     {
         if (pRevPara && pRevPara->hCrlStore && pRevPara->pIssuerCert)
         {
