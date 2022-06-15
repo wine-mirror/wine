@@ -42,7 +42,6 @@ interface ICodecAPI : IUnknown
 
     HRESULT GetParameterRange ([in] const GUID *api, [out] VARIANT *min, [out] VARIANT *max, [out] VARIANT *delta);
     HRESULT GetParameterValues ([in] const GUID *api, [out, size_is(,*count)] VARIANT **values, [out] ULONG *count);
-    HRESULT GetParameterValues ([in] const GUID *api, [out, size_is(,*count)] VARIANT **values, [out] ULONG *count);
     HRESULT GetDefaultValue ([in] const GUID *api, [out] VARIANT *value);
 
     HRESULT GetValue ([in] const GUID *api, [out] VARIANT *value);
