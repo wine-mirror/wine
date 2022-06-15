@@ -1451,7 +1451,7 @@ static HRESULT parser_create(enum wg_parser_type type, struct parser **parser)
     if (!(object = calloc(1, sizeof(*object))))
         return E_OUTOFMEMORY;
 
-    if (!(object->wg_parser = wg_parser_create(type, false)))
+    if (!(object->wg_parser = wg_parser_create(type)))
     {
         free(object);
         return E_OUTOFMEMORY;

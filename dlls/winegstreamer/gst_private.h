@@ -69,7 +69,7 @@ HRESULT wg_sample_queue_create(struct wg_sample_queue **out);
 void wg_sample_queue_destroy(struct wg_sample_queue *queue);
 void wg_sample_queue_flush(struct wg_sample_queue *queue, bool all);
 
-wg_parser_t wg_parser_create(enum wg_parser_type type, bool unlimited_buffering);
+wg_parser_t wg_parser_create(enum wg_parser_type type);
 void wg_parser_destroy(wg_parser_t parser);
 
 HRESULT wg_parser_connect(wg_parser_t parser, uint64_t file_size);
