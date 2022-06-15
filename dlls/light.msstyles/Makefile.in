@@ -366,6 +366,14 @@ SVG_SRCS = \
 	blue_toolbar_dropdown_button_glyph_9px.svg \
 	blue_toolbar_separator_horizontal.svg \
 	blue_toolbar_separator_vertical.svg \
+	blue_tooltip_ballon.svg \
+	blue_tooltip_ballon_stem_21px.svg \
+	blue_tooltip_ballon_stem_26px.svg \
+	blue_tooltip_ballon_stem_32px.svg \
+	blue_tooltip_ballon_stem_42px.svg \
+	blue_tooltip_ballon_stem_53px.svg \
+	blue_tooltip_ballon_stem_63px.svg \
+	blue_tooltip_ballon_stem_84px.svg \
 	blue_tooltip_close_16px.svg \
 	blue_tooltip_close_20px.svg \
 	blue_tooltip_close_24px.svg \
@@ -373,6 +381,14 @@ SVG_SRCS = \
 	blue_tooltip_close_32px.svg \
 	blue_tooltip_close_36px.svg \
 	blue_tooltip_close_40px.svg \
+	blue_tooltip_standard.svg \
+	blue_tooltip_wrench_17px.svg \
+	blue_tooltip_wrench_21px.svg \
+	blue_tooltip_wrench_26px.svg \
+	blue_tooltip_wrench_34px.svg \
+	blue_tooltip_wrench_42px.svg \
+	blue_tooltip_wrench_51px.svg \
+	blue_tooltip_wrench_68px.svg \
 	blue_trackbar_slider_track.svg \
 	blue_trackbar_thumb_down_11px.svg \
 	blue_trackbar_thumb_down_15px.svg \

@@ -2361,6 +2361,40 @@ BLUE_INI TEXTFILE
 "Color = 174 174 174\r\n"
 
 "\r\n; Tooltip\r\n"
+"[Tooltip.Standard]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 1\r\n"
+"AlphaThreshold = 128\r\n"
+"Transparent = True\r\n"
+"TextColor = 166 166 166\r\n"
+"SizingMargins = 4, 4, 4, 4\r\n"
+"ContentMargins = 4, 4, 1, 1\r\n"
+"Font = Tahoma, -12\r\n"
+"ImageFile = blue_tooltip_standard.bmp\r\n"
+
+"[Tooltip.StandardTitle]\r\n"
+"TextColor = 166 166 166\r\n"
+"Font = Tahoma, -12, bold\r\n"
+
+"[Tooltip.Ballon]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = Stretch\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageCount = 1\r\n"
+"AlphaThreshold = 128\r\n"
+"Transparent = True\r\n"
+"TextColor = 0 0 0\r\n"
+"SizingMargins = 4, 4, 4, 4\r\n"
+"ContentMargins = 0, 0, 0, 0\r\n"
+"Font = Tahoma, -12\r\n"
+"ImageFile = blue_tooltip_ballon.bmp\r\n"
+
+"[Tooltip.BallonTitle]\r\n"
+"TextColor = 41 121 255\r\n"
+"Font = Tahoma, -16\r\n"
+
 "[Tooltip.Close]\r\n"
 "BgType = ImageFile\r\n"
 "ImageSelectType = Dpi\r\n"
@@ -2382,6 +2416,51 @@ BLUE_INI TEXTFILE
 "MinDpi5 = 192\r\n"
 "MinDpi6 = 216\r\n"
 "MinDpi7 = 240\r\n"
+
+"[Tooltip.BallonStem]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"ImageCount = 6\r\n"
+"AlphaThreshold = 128\r\n"
+"Transparent = True\r\n"
+"ImageFile1 = blue_tooltip_ballon_stem_21px.bmp\r\n"
+"ImageFile2 = blue_tooltip_ballon_stem_26px.bmp\r\n"
+"ImageFile3 = blue_tooltip_ballon_stem_32px.bmp\r\n"
+"ImageFile4 = blue_tooltip_ballon_stem_42px.bmp\r\n"
+"ImageFile5 = blue_tooltip_ballon_stem_53px.bmp\r\n"
+"ImageFile6 = blue_tooltip_ballon_stem_63px.bmp\r\n"
+"ImageFile7 = blue_tooltip_ballon_stem_84px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
+
+"[Tooltip.Wrench]\r\n"
+"BgType = ImageFile\r\n"
+"SizingType = TrueSize\r\n"
+"ImageLayout = Vertical\r\n"
+"ImageSelectType = Dpi\r\n"
+"TrueSizeScalingType = Dpi\r\n"
+"ImageCount = 3\r\n"
+"ImageFile1 = blue_tooltip_wrench_17px.bmp\r\n"
+"ImageFile2 = blue_tooltip_wrench_21px.bmp\r\n"
+"ImageFile3 = blue_tooltip_wrench_26px.bmp\r\n"
+"ImageFile4 = blue_tooltip_wrench_34px.bmp\r\n"
+"ImageFile5 = blue_tooltip_wrench_42px.bmp\r\n"
+"ImageFile6 = blue_tooltip_wrench_51px.bmp\r\n"
+"ImageFile7 = blue_tooltip_wrench_68px.bmp\r\n"
+"MinDpi1 = 96\r\n"
+"MinDpi2 = 120\r\n"
+"MinDpi3 = 144\r\n"
+"MinDpi4 = 192\r\n"
+"MinDpi5 = 240\r\n"
+"MinDpi6 = 288\r\n"
+"MinDpi7 = 384\r\n"
 
 "\r\n; TreeView\r\n"
 "[TreeView]\r\n"
@@ -3550,6 +3629,30 @@ BLUE_TOOLBAR_DROPDOWN_BUTTON_GLYPH_14PX_BMP BITMAP "blue_toolbar_dropdown_button
 BLUE_TOOLBAR_DROPDOWN_BUTTON_GLYPH_17PX_BMP BITMAP "blue_toolbar_dropdown_button_glyph_17px.bmp"
 
 /* Tooltip */
+/* @makedep: blue_tooltip_ballon.bmp */
+BLUE_TOOLTIP_BALLON_BMP BITMAP "blue_tooltip_ballon.bmp"
+
+/* @makedep: blue_tooltip_ballon_stem_21px.bmp */
+BLUE_TOOLTIP_BALLON_STEM_21PX_BMP BITMAP "blue_tooltip_ballon_stem_21px.bmp"
+
+/* @makedep: blue_tooltip_ballon_stem_26px.bmp */
+BLUE_TOOLTIP_BALLON_STEM_26PX_BMP BITMAP "blue_tooltip_ballon_stem_26px.bmp"
+
+/* @makedep: blue_tooltip_ballon_stem_32px.bmp */
+BLUE_TOOLTIP_BALLON_STEM_32PX_BMP BITMAP "blue_tooltip_ballon_stem_32px.bmp"
+
+/* @makedep: blue_tooltip_ballon_stem_42px.bmp */
+BLUE_TOOLTIP_BALLON_STEM_42PX_BMP BITMAP "blue_tooltip_ballon_stem_42px.bmp"
+
+/* @makedep: blue_tooltip_ballon_stem_53px.bmp */
+BLUE_TOOLTIP_BALLON_STEM_53PX_BMP BITMAP "blue_tooltip_ballon_stem_53px.bmp"
+
+/* @makedep: blue_tooltip_ballon_stem_63px.bmp */
+BLUE_TOOLTIP_BALLON_STEM_63PX_BMP BITMAP "blue_tooltip_ballon_stem_63px.bmp"
+
+/* @makedep: blue_tooltip_ballon_stem_84px.bmp */
+BLUE_TOOLTIP_BALLON_STEM_84PX_BMP BITMAP "blue_tooltip_ballon_stem_84px.bmp"
+
 /* @makedep: blue_tooltip_close_16px.bmp */
 BLUE_TOOLTIP_CLOSE_16PX_BMP BITMAP "blue_tooltip_close_16px.bmp"
 
@@ -3570,6 +3673,30 @@ BLUE_TOOLTIP_CLOSE_36PX_BMP BITMAP "blue_tooltip_close_36px.bmp"
 
 /* @makedep: blue_tooltip_close_40px.bmp */
 BLUE_TOOLTIP_CLOSE_40PX_BMP BITMAP "blue_tooltip_close_40px.bmp"
+
+/* @makedep: blue_tooltip_standard.bmp */
+BLUE_TOOLTIP_STANDARD_BMP BITMAP "blue_tooltip_standard.bmp"
+
+/* @makedep: blue_tooltip_wrench_17px.bmp */
+BLUE_TOOLTIP_WRENCH_17PX_BMP BITMAP "blue_tooltip_wrench_17px.bmp"
+
+/* @makedep: blue_tooltip_wrench_21px.bmp */
+BLUE_TOOLTIP_WRENCH_21PX_BMP BITMAP "blue_tooltip_wrench_21px.bmp"
+
+/* @makedep: blue_tooltip_wrench_26px.bmp */
+BLUE_TOOLTIP_WRENCH_26PX_BMP BITMAP "blue_tooltip_wrench_26px.bmp"
+
+/* @makedep: blue_tooltip_wrench_34px.bmp */
+BLUE_TOOLTIP_WRENCH_34PX_BMP BITMAP "blue_tooltip_wrench_34px.bmp"
+
+/* @makedep: blue_tooltip_wrench_42px.bmp */
+BLUE_TOOLTIP_WRENCH_42PX_BMP BITMAP "blue_tooltip_wrench_42px.bmp"
+
+/* @makedep: blue_tooltip_wrench_51px.bmp */
+BLUE_TOOLTIP_WRENCH_51PX_BMP BITMAP "blue_tooltip_wrench_51px.bmp"
+
+/* @makedep: blue_tooltip_wrench_68px.bmp */
+BLUE_TOOLTIP_WRENCH_68PX_BMP BITMAP "blue_tooltip_wrench_68px.bmp"
 
 /* TrackBar */
 /* @makedep: blue_trackbar_thumb_horizontal.bmp */
