@@ -37,7 +37,7 @@
  */
 BOOL WINAPI SetForegroundWindow( HWND hwnd )
 {
-    return NtUserSetForegroundWindow( hwnd, FALSE );
+    return NtUserSetForegroundWindow( hwnd );
 }
 
 

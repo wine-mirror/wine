@@ -983,6 +983,7 @@ enum
     NtUserCallHwnd_IsWindowEnabled,
     NtUserCallHwnd_IsWindowUnicode,
     NtUserCallHwnd_IsWindowVisible,
+    NtUserCallHwnd_SetForegroundWindow,
 };
 
 static inline UINT NtUserArrangeIconicWindows( HWND parent )
@@ -1041,6 +1042,11 @@ static inline BOOL NtUserIsWindowVisible( HWND hwnd )
     return NtUserCallHwnd( hwnd, NtUserCallHwnd_IsWindowVisible );
 }
 
+static inline BOOL NtUserSetForegroundWindow( HWND hwnd )
+{
+    return NtUserCallHwnd( hwnd, NtUserCallHwnd_SetForegroundWindow );
+}
+
 /* NtUserCallHwndParam codes, not compatible with Windows */
 enum
 {
@@ -1067,7 +1073,6 @@ enum
     NtUserCallHwndParam_MirrorRgn,
     NtUserCallHwndParam_MonitorFromWindow,
     NtUserCallHwndParam_ScreenToClient,
-    NtUserCallHwndParam_SetForegroundWindow,
     NtUserCallHwndParam_SetWindowContextHelpId,
     NtUserCallHwndParam_SetWindowPixelFormat,
     NtUserCallHwndParam_ShowOwnedPopups,
@@ -1205,11 +1210,6 @@ static inline HMONITOR NtUserMonitorFromWindow( HWND hwnd, DWORD flags )
 static inline BOOL NtUserScreenToClient( HWND hwnd, POINT *pt )
 {
     return NtUserCallHwndParam( hwnd, (UINT_PTR)pt, NtUserCallHwndParam_ScreenToClient );
-}
-
-static inline BOOL NtUserSetForegroundWindow( HWND hwnd, BOOL mouse )
-{
-    return NtUserCallHwndParam( hwnd, mouse, NtUserCallHwndParam_SetForegroundWindow );
 }
 
 static inline BOOL NtUserSetWindowContextHelpId( HWND hwnd, DWORD id )

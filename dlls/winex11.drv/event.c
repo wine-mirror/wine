@@ -596,7 +596,7 @@ static void set_focus( Display *display, HWND hwnd, Time time )
     GUITHREADINFO threadinfo;
 
     TRACE( "setting foreground window to %p\n", hwnd );
-    NtUserSetForegroundWindow( hwnd, FALSE );
+    NtUserSetForegroundWindow( hwnd );
 
     threadinfo.cbSize = sizeof(threadinfo);
     NtUserGetGUIThreadInfo( 0, &threadinfo );
@@ -812,7 +812,7 @@ static BOOL X11DRV_FocusIn( HWND hwnd, XEvent *xev )
         if (!hwnd) hwnd = x11drv_thread_data()->last_focus;
         if (hwnd && can_activate_window(hwnd)) set_focus( event->display, hwnd, CurrentTime );
     }
-    else NtUserSetForegroundWindow( hwnd, FALSE );
+    else NtUserSetForegroundWindow( hwnd );
     return TRUE;
 }
 
@@ -858,7 +858,7 @@ static void focus_out( Display *display , HWND hwnd )
         if (hwnd == NtUserGetForegroundWindow())
         {
             TRACE( "lost focus, setting fg to desktop\n" );
-            NtUserSetForegroundWindow( NtUserGetDesktopWindow(), FALSE );
+            NtUserSetForegroundWindow( NtUserGetDesktopWindow() );
         }
     }
  }

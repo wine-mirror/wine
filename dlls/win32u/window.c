@@ -5403,6 +5403,9 @@ ULONG_PTR WINAPI NtUserCallHwnd( HWND hwnd, DWORD code )
     case NtUserCallHwnd_IsWindowVisible:
         return is_window_visible( hwnd );
 
+    case NtUserCallHwnd_SetForegroundWindow:
+        return set_foreground_window( hwnd, FALSE );
+
     default:
         FIXME( "invalid code %u\n", code );
         return 0;
@@ -5488,9 +5491,6 @@ ULONG_PTR WINAPI NtUserCallHwndParam( HWND hwnd, DWORD_PTR param, DWORD code )
 
     case NtUserCallHwndParam_ScreenToClient:
         return screen_to_client( hwnd, (POINT *)param );
-
-    case NtUserCallHwndParam_SetForegroundWindow:
-        return set_foreground_window( hwnd, param );
 
     case NtUserCallHwndParam_SetWindowContextHelpId:
         return set_window_context_help_id( hwnd, param );
