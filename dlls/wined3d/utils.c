@@ -4397,6 +4397,11 @@ static void init_vulkan_format_info(struct wined3d_format_vk *format,
     {
         caps |= WINED3D_FORMAT_CAP_UNORDERED_ACCESS;
     }
+    if ((texture_flags & VK_FORMAT_FEATURE_TRANSFER_SRC_BIT)
+            && (texture_flags & VK_FORMAT_FEATURE_TRANSFER_DST_BIT))
+    {
+        caps |= WINED3D_FORMAT_CAP_BLIT;
+    }
 
     if (!(~caps & (WINED3D_FORMAT_CAP_RENDERTARGET | WINED3D_FORMAT_CAP_FILTERING)))
         caps |= WINED3D_FORMAT_CAP_GEN_MIPMAP;
