@@ -20758,9 +20758,9 @@ static void test_line_antialiasing_blending(void)
     release_test_context(&test_context);
 }
 
-static void check_format_support(const unsigned int *format_support, D3D_FEATURE_LEVEL feature_level,
-        const struct format_support *formats, unsigned int format_count, unsigned int feature_flag,
-        const char *feature_name)
+static void check_format_support(ID3D11Device *device, const unsigned int *format_support,
+        D3D_FEATURE_LEVEL feature_level, const struct format_support *formats,
+        unsigned int format_count, unsigned int feature_flag, const char *feature_name)
 {
     unsigned int i;
 
@@ -20771,8 +20771,9 @@ static void check_format_support(const unsigned int *format_support, D3D_FEATURE
 
         if (formats[i].fl_required <= feature_level)
         {
-            todo_wine_if (feature_flag == D3D11_FORMAT_SUPPORT_DISPLAY)
-                ok(supported, "Format %#x - %s not supported, feature_level %#x, format support %#x.\n",
+            todo_wine_if (feature_flag == D3D11_FORMAT_SUPPORT_DISPLAY || feature_flag == D3D11_FORMAT_SUPPORT_BLENDABLE)
+                ok(supported || broken(is_warp_device(device)),
+                        "Format %#x - %s not supported, feature_level %#x, format support %#x.\n",
                         format, feature_name, feature_level, format_support[format]);
             continue;
         }
@@ -20785,7 +20786,7 @@ static void check_format_support(const unsigned int *format_support, D3D_FEATURE
             continue;
         }
 
-        todo_wine_if (feature_flag != D3D11_FORMAT_SUPPORT_DISPLAY)
+        todo_wine_if (feature_flag != D3D11_FORMAT_SUPPORT_DISPLAY && feature_flag != D3D11_FORMAT_SUPPORT_BLENDABLE)
             ok(!supported, "Format %#x - %s supported, feature level %#x, format support %#x.\n",
                     format, feature_name, feature_level, format_support[format]);
     }
@@ -20812,6 +20813,39 @@ static void test_format_support(const D3D_FEATURE_LEVEL feature_level)
         {DXGI_FORMAT_R8G8_UINT, D3D_FEATURE_LEVEL_10_0},
         {DXGI_FORMAT_R11G11B10_FLOAT, D3D_FEATURE_LEVEL_10_0},
         {DXGI_FORMAT_R16_FLOAT, D3D_FEATURE_LEVEL_10_0},
+    };
+
+    static const struct format_support blend[] =
+    {
+        {DXGI_FORMAT_R16G16B16A16_UNORM,    D3D_FEATURE_LEVEL_10_1, D3D_FEATURE_LEVEL_10_0},
+        {DXGI_FORMAT_R16G16_UNORM,          D3D_FEATURE_LEVEL_10_1, D3D_FEATURE_LEVEL_10_0},
+        {DXGI_FORMAT_R16_UNORM,             D3D_FEATURE_LEVEL_10_1, D3D_FEATURE_LEVEL_10_0},
+        {DXGI_FORMAT_R16G16B16A16_SNORM,    D3D_FEATURE_LEVEL_10_1},
+        {DXGI_FORMAT_R16G16_SNORM,          D3D_FEATURE_LEVEL_10_1},
+        {DXGI_FORMAT_R16_SNORM,             D3D_FEATURE_LEVEL_10_1},
+        {DXGI_FORMAT_R8G8B8A8_SNORM,        D3D_FEATURE_LEVEL_10_1},
+        {DXGI_FORMAT_R8G8_SNORM,            D3D_FEATURE_LEVEL_10_1},
+        {DXGI_FORMAT_R8_SNORM,              D3D_FEATURE_LEVEL_10_1},
+
+        {DXGI_FORMAT_R32G32B32A32_FLOAT,    D3D_FEATURE_LEVEL_10_0},
+        {DXGI_FORMAT_R32G32_FLOAT,          D3D_FEATURE_LEVEL_10_0},
+        {DXGI_FORMAT_R32_FLOAT,             D3D_FEATURE_LEVEL_10_0},
+        {DXGI_FORMAT_R10G10B10A2_UNORM,     D3D_FEATURE_LEVEL_10_0},
+        {DXGI_FORMAT_R11G11B10_FLOAT,       D3D_FEATURE_LEVEL_10_0},
+        {DXGI_FORMAT_R16_FLOAT,             D3D_FEATURE_LEVEL_10_0},
+
+        {DXGI_FORMAT_R16G16B16A16_FLOAT,    D3D_FEATURE_LEVEL_9_3},
+
+        {DXGI_FORMAT_R8G8B8A8_UNORM,        D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,   D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_R8G8_UNORM,            D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_R8_UNORM,              D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_A8_UNORM,              D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_B5G6R5_UNORM,          D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_B8G8R8A8_UNORM,        D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_B8G8R8X8_UNORM,        D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,   D3D_FEATURE_LEVEL_9_1},
+        {DXGI_FORMAT_B8G8R8X8_UNORM_SRGB,   D3D_FEATURE_LEVEL_9_1},
     };
 
     device_desc.feature_level = &feature_level;
@@ -20875,17 +20909,20 @@ static void test_format_support(const D3D_FEATURE_LEVEL feature_level)
                 "SHADER_LOAD is not supported for R32G32B32A32_UINT.\n");
     }
 
-    check_format_support(format_support, feature_level,
+    check_format_support(device, format_support, feature_level,
             index_buffers, ARRAY_SIZE(index_buffers),
             D3D11_FORMAT_SUPPORT_IA_INDEX_BUFFER, "index buffer");
 
-    check_format_support(format_support, feature_level,
+    check_format_support(device, format_support, feature_level,
             vertex_buffers, ARRAY_SIZE(vertex_buffers),
             D3D11_FORMAT_SUPPORT_IA_VERTEX_BUFFER, "vertex buffer");
 
-    check_format_support(format_support, feature_level,
+    check_format_support(device, format_support, feature_level,
             display_format_support, ARRAY_SIZE(display_format_support),
             D3D11_FORMAT_SUPPORT_DISPLAY, "display");
+
+    check_format_support(device, format_support, feature_level, blend, ARRAY_SIZE(blend),
+            D3D11_FORMAT_SUPPORT_BLENDABLE, "blendable");
 
     refcount = ID3D11Device_Release(device);
     ok(!refcount, "Device has %lu references left.\n", refcount);
