@@ -1696,6 +1696,9 @@ static DWORD verify_cert_revocation_from_dist_points_ext(const CRYPT_DATA_BLOB *
         return CRYPT_E_REVOCATION_OFFLINE;
     }
 
+    if (find_cached_revocation_status(&cert->pCertInfo->SerialNumber, time, status))
+        return status->dwError;
+
     if (!CRYPT_GetUrlFromCRLDistPointsExt(value, NULL, &url_array_size, NULL, NULL))
         return GetLastError();
 
@@ -2142,9 +2145,6 @@ static DWORD verify_cert_revocation(const CERT_CONTEXT *cert, FILETIME *pTime,
 {
     DWORD error = ERROR_SUCCESS;
     PCERT_EXTENSION ext;
-
-    if (find_cached_revocation_status(&cert->pCertInfo->SerialNumber, pTime, pRevStatus))
-        return pRevStatus->dwError;
 
     if ((ext = CertFindExtension(szOID_AUTHORITY_INFO_ACCESS, cert->pCertInfo->cExtension, cert->pCertInfo->rgExtension)))
     {
