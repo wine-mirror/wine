@@ -20771,7 +20771,7 @@ static void check_format_support(ID3D11Device *device, const unsigned int *forma
 
         if (formats[i].fl_required <= feature_level)
         {
-            todo_wine_if (feature_flag == D3D11_FORMAT_SUPPORT_DISPLAY || feature_flag == D3D11_FORMAT_SUPPORT_BLENDABLE)
+            todo_wine_if (feature_flag == D3D11_FORMAT_SUPPORT_DISPLAY)
                 ok(supported || broken(is_warp_device(device)),
                         "Format %#x - %s not supported, feature_level %#x, format support %#x.\n",
                         format, feature_name, feature_level, format_support[format]);
@@ -20786,7 +20786,7 @@ static void check_format_support(ID3D11Device *device, const unsigned int *forma
             continue;
         }
 
-        todo_wine_if (feature_flag != D3D11_FORMAT_SUPPORT_DISPLAY && feature_flag != D3D11_FORMAT_SUPPORT_BLENDABLE)
+        todo_wine_if (feature_flag != D3D11_FORMAT_SUPPORT_DISPLAY)
             ok(!supported, "Format %#x - %s supported, feature level %#x, format support %#x.\n",
                     format, feature_name, feature_level, format_support[format]);
     }
