@@ -3180,11 +3180,6 @@ static void X11DRV_WineGL_LoadExtensions(void)
             register_extension("WGL_ARB_create_context_profile");
     }
 
-    if (has_extension( glxExtensions, "GLX_ARB_fbconfig_float"))
-    {
-        register_extension("WGL_ARB_pixel_format_float");
-        register_extension("WGL_ATI_pixel_format_float");
-    }
 
     register_extension( "WGL_ARB_extensions_string" );
     opengl_funcs.ext.p_wglGetExtensionsStringARB = X11DRV_wglGetExtensionsStringARB;
@@ -3213,6 +3208,12 @@ static void X11DRV_WineGL_LoadExtensions(void)
     opengl_funcs.ext.p_wglChoosePixelFormatARB      = X11DRV_wglChoosePixelFormatARB;
     opengl_funcs.ext.p_wglGetPixelFormatAttribfvARB = X11DRV_wglGetPixelFormatAttribfvARB;
     opengl_funcs.ext.p_wglGetPixelFormatAttribivARB = X11DRV_wglGetPixelFormatAttribivARB;
+
+    if (has_extension( glxExtensions, "GLX_ARB_fbconfig_float"))
+    {
+        register_extension("WGL_ARB_pixel_format_float");
+        register_extension("WGL_ATI_pixel_format_float");
+    }
 
     /* Support WGL_ARB_render_texture when there's support or pbuffer based emulation */
     if (has_extension( glxExtensions, "GLX_ARB_render_texture") ||
