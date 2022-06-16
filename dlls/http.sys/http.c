@@ -70,6 +70,7 @@ struct connection
     BOOL available;
     struct request_queue *queue;
     HTTP_REQUEST_ID req_id;
+    HTTP_URL_CONTEXT context;
 
     /* Things we already parsed out of the request header in parse_request().
      * These are valid only if "available" is TRUE. */
@@ -82,13 +83,19 @@ struct connection
 
 static struct list connections = LIST_INIT(connections);
 
+struct url
+{
+    struct list entry;
+    char *url;
+    HTTP_URL_CONTEXT context;
+    SOCKET socket;
+};
+
 struct request_queue
 {
     struct list entry;
     LIST_ENTRY irp_queue;
-    HTTP_URL_CONTEXT context;
-    char *url;
-    SOCKET socket;
+    struct list urls;
 };
 
 static struct list request_queues = LIST_INIT(request_queues);
@@ -319,17 +326,30 @@ static int parse_number(const char *str, const char **endptr, const char *end)
     return n;
 }
 
-static BOOL host_matches(const struct connection *conn, const struct request_queue *queue)
+static struct url *host_matches(const struct connection *conn, const struct request_queue *queue)
 {
     const char *conn_host = (conn->url[0] == '/') ? conn->host : conn->url + 7;
+    struct url *url;
 
-    if (queue->url[7] == '+')
+    LIST_FOR_EACH_ENTRY(url, &queue->urls, struct url, entry)
     {
-        const char *queue_port = strchr(queue->url + 7, ':');
-        return !strncmp(queue_port, strchr(conn_host, ':'), strlen(queue_port) - 1 /* strip final slash */);
+        if (url->url)
+        {
+            if (url->url && url->url[7] == '+')
+            {
+                /* strip final slash */
+                const char *queue_port = strchr(url->url + 7, ':');
+                if (!strncmp(queue_port, strchr(conn_host, ':'), strlen(queue_port) - 1))
+                    return url;
+            }
+
+            /* strip final slash */
+            if (!memicmp(url->url + 7, conn_host, strlen(url->url) - 8))
+                return url;
+        }
     }
 
-    return !memicmp(queue->url + 7, conn_host, strlen(queue->url) - 8 /* strip final slash */);
+    return NULL;
 }
 
 /* Upon receiving a request, parse it to ensure that it is a valid HTTP request,
@@ -339,6 +359,7 @@ static int parse_request(struct connection *conn)
 {
     const char *const req = conn->buffer, *const end = conn->buffer + conn->len;
     struct request_queue *queue;
+    struct url *conn_url;
     const char *p = req, *q;
     int len, ret;
 
@@ -432,10 +453,11 @@ static int parse_request(struct connection *conn)
     /* Find a queue which can receive this request. */
     LIST_FOR_EACH_ENTRY(queue, &request_queues, struct request_queue, entry)
     {
-        if (host_matches(conn, queue))
+        if ((conn_url = host_matches(conn, queue)))
         {
             TRACE("Assigning request to queue %p.\n", queue);
             conn->queue = queue;
+            conn->context = conn_url->context;
             break;
         }
     }
@@ -544,6 +566,7 @@ static DWORD WINAPI request_thread_proc(void *arg)
 {
     struct connection *conn, *cursor;
     struct request_queue *queue;
+    struct url *url;
 
     TRACE("Starting request thread.\n");
 
@@ -553,8 +576,11 @@ static DWORD WINAPI request_thread_proc(void *arg)
 
         LIST_FOR_EACH_ENTRY(queue, &request_queues, struct request_queue, entry)
         {
-            if (queue->socket != -1)
-                accept_connection(queue->socket);
+            LIST_FOR_EACH_ENTRY(url, &queue->urls, struct url, entry)
+            {
+                if (url->socket != -1)
+                    accept_connection(url->socket);
+            }
         }
 
         LIST_FOR_EACH_ENTRY_SAFE(conn, cursor, &connections, struct connection, entry)
@@ -575,6 +601,7 @@ static NTSTATUS http_add_url(struct request_queue *queue, IRP *irp)
     const struct http_add_url_params *params = irp->AssociatedIrp.SystemBuffer;
     struct sockaddr_in addr;
     struct connection *conn;
+    struct url *url_entry, *new_entry;
     unsigned int count = 0;
     char *url, *endptr;
     ULONG true = 1;
@@ -594,7 +621,7 @@ static NTSTATUS http_add_url(struct request_queue *queue, IRP *irp)
     if (!(addr.sin_port = htons(strtol(strchr(params->url + 7, ':') + 1, &endptr, 10))) || *endptr != '/')
         return STATUS_INVALID_PARAMETER;
 
-    if (!(url = heap_alloc(strlen(params->url)+1)))
+    if (!(url = malloc(strlen(params->url)+1)))
         return STATUS_NO_MEMORY;
     strcpy(url, params->url);
 
@@ -603,27 +630,31 @@ static NTSTATUS http_add_url(struct request_queue *queue, IRP *irp)
     if (count > 3)
         FIXME("Binding to relative URIs is not implemented; binding to all URIs instead.\n");
 
+    if (!(new_entry = malloc(sizeof(struct url))))
+    {
+        free(url);
+        return STATUS_NO_MEMORY;
+    }
+
     EnterCriticalSection(&http_cs);
 
-    if (queue->url && !strcmp(queue->url, url))
+    LIST_FOR_EACH_ENTRY(url_entry, &queue->urls, struct url, entry)
     {
-        LeaveCriticalSection(&http_cs);
-        heap_free(url);
-        return STATUS_OBJECT_NAME_COLLISION;
-    }
-    else if (queue->url)
-    {
-        FIXME("Binding to multiple URLs is not implemented.\n");
-        LeaveCriticalSection(&http_cs);
-        heap_free(url);
-        return STATUS_NOT_IMPLEMENTED;
+        if (url_entry->url && !strcmp(url_entry->url, url))
+        {
+            LeaveCriticalSection(&http_cs);
+            free(url);
+            free(new_entry);
+            return STATUS_OBJECT_NAME_COLLISION;
+        }
     }
 
     if ((s = socket(AF_INET, SOCK_STREAM, 0)) == INVALID_SOCKET)
     {
         ERR("Failed to create socket, error %u.\n", WSAGetLastError());
         LeaveCriticalSection(&http_cs);
-        heap_free(url);
+        free(url);
+        free(new_entry);
         return STATUS_UNSUCCESSFUL;
     }
 
@@ -633,7 +664,8 @@ static NTSTATUS http_add_url(struct request_queue *queue, IRP *irp)
     {
         LeaveCriticalSection(&http_cs);
         closesocket(s);
-        heap_free(url);
+        free(url);
+        free(new_entry);
         if (WSAGetLastError() == WSAEADDRINUSE)
         {
             WARN("Address %s is already in use.\n", debugstr_a(params->url));
@@ -653,15 +685,17 @@ static NTSTATUS http_add_url(struct request_queue *queue, IRP *irp)
         ERR("Failed to listen to port %u, error %u.\n", addr.sin_port, WSAGetLastError());
         LeaveCriticalSection(&http_cs);
         closesocket(s);
-        heap_free(url);
+        free(url);
+        free(new_entry);
         return STATUS_OBJECT_NAME_COLLISION;
     }
 
     ioctlsocket(s, FIONBIO, &true);
     WSAEventSelect(s, request_event, FD_ACCEPT);
-    queue->socket = s;
-    queue->url = url;
-    queue->context = params->context;
+    new_entry->url = url;
+    new_entry->context = params->context;
+    new_entry->socket = s;
+    list_add_head(&queue->urls, &new_entry->entry);
 
     /* See if any pending requests now match this queue. */
     LIST_FOR_EACH_ENTRY(conn, &connections, struct connection, entry)
@@ -669,6 +703,7 @@ static NTSTATUS http_add_url(struct request_queue *queue, IRP *irp)
         if (conn->available && !conn->queue && host_matches(conn, queue))
         {
             conn->queue = queue;
+            conn->context = params->context;
             try_complete_irp(conn);
         }
     }
@@ -681,21 +716,33 @@ static NTSTATUS http_add_url(struct request_queue *queue, IRP *irp)
 static NTSTATUS http_remove_url(struct request_queue *queue, IRP *irp)
 {
     const char *url = irp->AssociatedIrp.SystemBuffer;
+    struct url *url_entry;
 
     TRACE("host %s.\n", debugstr_a(url));
 
     EnterCriticalSection(&http_cs);
 
-    if (!queue->url || strcmp(url, queue->url))
+    LIST_FOR_EACH_ENTRY(url_entry, &queue->urls, struct url, entry)
     {
-        LeaveCriticalSection(&http_cs);
-        return STATUS_OBJECT_NAME_NOT_FOUND;
+        if (url_entry->url && !strcmp(url, url_entry->url))
+        {
+            free(url_entry->url);
+            url_entry->url = NULL;
+
+            shutdown(url_entry->socket, SD_BOTH);
+            closesocket(url_entry->socket);
+            url_entry->socket = -1;
+
+            list_remove(&url_entry->entry);
+            free(url_entry);
+
+            LeaveCriticalSection(&http_cs);
+            return STATUS_SUCCESS;
+        }
     }
-    heap_free(queue->url);
-    queue->url = NULL;
 
     LeaveCriticalSection(&http_cs);
-    return STATUS_SUCCESS;
+    return STATUS_OBJECT_NAME_NOT_FOUND;
 }
 
 static struct connection *get_connection(HTTP_REQUEST_ID req_id)
@@ -892,8 +939,9 @@ static NTSTATUS WINAPI dispatch_create(DEVICE_OBJECT *device, IRP *irp)
     IO_STACK_LOCATION *stack = IoGetCurrentIrpStackLocation(irp);
     struct request_queue *queue;
 
-    if (!(queue = heap_alloc_zero(sizeof(*queue))))
+    if (!(queue = calloc(1, sizeof(*queue))))
         return STATUS_NO_MEMORY;
+    list_init(&queue->urls);
     stack->FileObject->FsContext = queue;
     InitializeListHead(&queue->irp_queue);
 
@@ -910,17 +958,22 @@ static NTSTATUS WINAPI dispatch_create(DEVICE_OBJECT *device, IRP *irp)
 
 static void close_queue(struct request_queue *queue)
 {
+    struct url *url, *url_next;
+
     EnterCriticalSection(&http_cs);
     list_remove(&queue->entry);
-    if (queue->socket != -1)
-    {
-        shutdown(queue->socket, SD_BOTH);
-        closesocket(queue->socket);
-    }
-    LeaveCriticalSection(&http_cs);
 
-    heap_free(queue->url);
-    heap_free(queue);
+    LIST_FOR_EACH_ENTRY_SAFE(url, url_next, &queue->urls, struct url, entry)
+    {
+        free(url->url);
+        shutdown(url->socket, SD_BOTH);
+        closesocket(url->socket);
+        list_remove(&url->entry);
+        free(url);
+    }
+    free(queue);
+
+    LeaveCriticalSection(&http_cs);
 }
 
 static NTSTATUS WINAPI dispatch_close(DEVICE_OBJECT *device, IRP *irp)

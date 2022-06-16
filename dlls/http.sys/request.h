@@ -181,9 +181,9 @@ static NTSTATUS complete_irp(struct connection *conn, IRP *irp)
 
     offset = sizeof(*req);
 
+    req->UrlContext = conn->context;
     req->ConnectionId = (ULONG_PTR)conn;
     req->RequestId = conn->req_id;
-    req->UrlContext = conn->queue->context;
     req->Version = conn->version;
     req->Verb = conn->verb;
     req->UnknownVerbLength = conn->unk_verb_len;

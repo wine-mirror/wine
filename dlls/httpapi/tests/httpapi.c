@@ -108,7 +108,7 @@ static unsigned short add_url_v1(HANDLE queue)
         swprintf(url, ARRAY_SIZE(url), L"http://localhost:%u/", port);
         if (!(ret = HttpAddUrl(queue, url, NULL)))
             return port;
-        ok(ret == ERROR_SHARING_VIOLATION, "Failed to add %s, error %u.\n", debugstr_w(url), ret);
+        ok(ret == ERROR_SHARING_VIOLATION || ret == ERROR_ALREADY_EXISTS, "Failed to add %s, error %u.\n", debugstr_w(url), ret);
     }
     ok(0, "Failed to add url %s, error %u.\n", debugstr_w(url), ret);
     return 0;
@@ -1083,6 +1083,44 @@ static void test_v1_unknown_tokens(void)
     ok(ret, "Failed to close queue handle, error %lu.\n", GetLastError());
 }
 
+static void test_v1_multiple_urls(void)
+{
+    char DECLSPEC_ALIGN(8) req_buffer[2048];
+    HTTP_REQUEST_V1 *req = (HTTP_REQUEST_V1 *)req_buffer;
+    unsigned short ports[4];
+    char req_text[200];
+    DWORD ret_size;
+    HANDLE queue;
+    SOCKET s;
+    unsigned int i;
+    int ret;
+
+    ret = HttpCreateHttpHandle(&queue, 0);
+    ok(!ret, "Got error %u.\n", ret);
+
+    for (i = 0; i < 4; ++i)
+        ports[i] = add_url_v1(queue);
+
+    for (i = 0; i < 4; ++i)
+    {
+        s = create_client_socket(ports[i]);
+        sprintf(req_text, simple_req, ports[i]);
+        ret = send(s, req_text, strlen(req_text), 0);
+        ok(ret == strlen(req_text), "send() returned %d.\n", ret);
+
+        memset(req_buffer, 0xcc, sizeof(req_buffer));
+        ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), &ret_size, NULL);
+        ok(!ret, "Got error %u.\n", ret);
+        ok(ret_size > sizeof(*req), "Got size %lu.\n", ret_size);
+
+        send_response_v1(queue, req->RequestId, s);
+        closesocket(s);
+    }
+
+    ret = CloseHandle(queue);
+    ok(ret, "Failed to close queue handle, error %lu.\n", GetLastError());
+}
+
 static void test_v1_urls(void)
 {
     char DECLSPEC_ALIGN(8) req_buffer[2048];
@@ -1643,6 +1681,7 @@ START_TEST(httpapi)
     test_v1_bad_request();
     test_v1_cooked_url();
     test_v1_unknown_tokens();
+    test_v1_multiple_urls();
     test_v1_urls();
 
     ret = HttpTerminate(HTTP_INITIALIZE_SERVER, NULL);
