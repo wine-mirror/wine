@@ -892,6 +892,8 @@ static void sys_command_size_move( HWND hwnd, WPARAM wparam )
 
 static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
 {
+    TRACE( "hwnd %p WM_SYSCOMMAND %lx %lx\n", hwnd, wparam, lparam );
+
     if (!is_window_enabled( hwnd )) return 0;
 
     if (call_hooks( WH_CBT, HCBT_SYSCOMMAND, wparam, lparam, TRUE ))
@@ -917,6 +919,13 @@ static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
         NtUserShowWindow( hwnd, SW_MAXIMIZE );
         break;
 
+    case SC_CLOSE:
+        return send_message( hwnd, WM_CLOSE, 0, 0 );
+
+    case SC_VSCROLL:
+    case SC_HSCROLL:
+        return 1; /* FIXME: handle on client side */
+
     case SC_MOUSEMENU:
         track_mouse_menu_bar( hwnd, wparam & 0x000F, (short)LOWORD(lparam), (short)HIWORD(lparam) );
         break;
@@ -928,6 +937,17 @@ static LRESULT handle_sys_command( HWND hwnd, WPARAM wparam, LPARAM lparam )
     case SC_RESTORE:
         if (is_iconic( hwnd )) show_owned_popups( hwnd, TRUE );
         NtUserShowWindow( hwnd, SW_RESTORE );
+        break;
+
+    case SC_TASKLIST:
+    case SC_SCREENSAVE:
+        return 1; /* FIXME: handle on client side */
+
+    case SC_HOTKEY:
+    case SC_ARRANGE:
+    case SC_NEXTWINDOW:
+    case SC_PREVWINDOW:
+        FIXME( "unimplemented WM_SYSCOMMAND %04lx\n", wparam );
         break;
 
     default:

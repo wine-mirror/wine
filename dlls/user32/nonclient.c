@@ -267,16 +267,11 @@ static void NC_TrackScrollBar( HWND hwnd, WPARAM wParam, POINT pt )
  */
 LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
 {
-    TRACE("hwnd %p WM_SYSCOMMAND %Ix %Ix\n", hwnd, wParam, lParam );
-
     if (!NtUserMessageCall( hwnd, WM_SYSCOMMAND, wParam, lParam, 0, NtUserDefWindowProc, FALSE ))
         return 0;
 
     switch (wParam & 0xfff0)
     {
-    case SC_CLOSE:
-        return SendMessageW( hwnd, WM_CLOSE, 0, 0 );
-
     case SC_VSCROLL:
     case SC_HSCROLL:
         {
@@ -307,13 +302,6 @@ LRESULT NC_HandleSysCommand( HWND hwnd, WPARAM wParam, LPARAM lParam )
                 FreeLibrary( hmodule );
             }
         }
-        break;
-
-    case SC_HOTKEY:
-    case SC_ARRANGE:
-    case SC_NEXTWINDOW:
-    case SC_PREVWINDOW:
-        FIXME("unimplemented WM_SYSCOMMAND %04Ix!\n", wParam);
         break;
     }
     return 0;
