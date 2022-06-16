@@ -1218,6 +1218,122 @@ static void test_HttpCreateUrlGroup(void)
     ok(!ret, "Unexpected return value %u.\n", ret);
 }
 
+static void test_v2_bound_port(void)
+{
+    static const HTTPAPI_VERSION version = {2, 0};
+    struct sockaddr_in sockaddr;
+    HTTP_SERVER_SESSION_ID session;
+    HTTP_BINDING_INFO binding;
+    HTTP_URL_GROUP_ID group;
+    unsigned short port;
+    WCHAR url[50];
+    HANDLE queue, dummy_queue;
+    int ret;
+    SOCKET s, s2;
+
+    ret = pHttpCreateServerSession(version, &session, 0);
+    ok(!ret, "Failed to create session, error %u.\n", ret);
+    ret = pHttpCreateUrlGroup(session, &group, 0);
+    ok(!ret, "Failed to create URL group, error %u.\n", ret);
+
+    ret = pHttpCreateRequestQueue(version, NULL, NULL, 0, &queue);
+    ok(!ret, "Failed to create request queue, error %u.\n", ret);
+    ret = pHttpCreateRequestQueue(version, NULL, NULL, 0, &dummy_queue);
+    ok(!ret, "Failed to create request queue, error %u.\n", ret);
+    binding.Flags.Present = 1;
+    binding.RequestQueueHandle = queue;
+    ret = pHttpSetUrlGroupProperty(group, HttpServerBindingProperty, &binding, sizeof(binding));
+    ok(!ret, "Failed to bind request queue, error %u.\n", ret);
+
+    s2 = socket(AF_INET, SOCK_STREAM, 0);
+    sockaddr.sin_family = AF_INET;
+    sockaddr.sin_addr.S_un.S_addr = inet_addr("127.0.0.1");
+    for (port = 50000; port < 51000; ++port)
+    {
+        sockaddr.sin_port = htons(port);
+        ret = bind(s2, (struct sockaddr *)&sockaddr, sizeof(sockaddr));
+        if (!ret)
+            break;
+    }
+    ok(!ret, "Failed to bind to port\n");
+    swprintf(url, ARRAY_SIZE(url), L"http://localhost:%u/", port);
+    ret = pHttpAddUrlToUrlGroup(group, url, 0xdeadbeef, 0);
+    ok(ret == ERROR_SHARING_VIOLATION, "Unexpected failure adding %s, error %u.\n", debugstr_w(url), ret);
+    shutdown(s2, SD_BOTH);
+    closesocket(s2);
+
+    binding.RequestQueueHandle = dummy_queue;
+    ret = pHttpSetUrlGroupProperty(group, HttpServerBindingProperty, &binding, sizeof(binding));
+    ok(!ret, "Failed to rebind request queue, error %u.\n", ret);
+
+    s = socket(AF_INET, SOCK_STREAM, 0);
+    ret = connect(s, (struct sockaddr *)&sockaddr, sizeof(sockaddr));
+    todo_wine ok(ret, "Connecting to socket succeeded, %lu.\n", GetLastError());
+    todo_wine ok(GetLastError() == WSAECONNREFUSED, "Unexpected error connecting to socket, %lu.\n", GetLastError());
+
+    closesocket(s);
+    ret = pHttpCloseRequestQueue(dummy_queue);
+    ok(!ret, "Failed to close queue handle, error %u.\n", ret);
+    ret = pHttpCloseRequestQueue(queue);
+    ok(!ret, "Failed to close queue handle, error %u.\n", ret);
+    ret = pHttpCloseUrlGroup(group);
+    ok(!ret, "Failed to close group, error %u.\n", ret);
+    ret = pHttpCloseServerSession(session);
+    ok(!ret, "Failed to close group, error %u.\n", ret);
+}
+
+static void test_v2_queue_after_url(void)
+{
+    char DECLSPEC_ALIGN(8) req_buffer[2048];
+    HTTP_REQUEST_V2 *reqv2 = (HTTP_REQUEST_V2 *)req_buffer;
+    static const HTTPAPI_VERSION version = {2, 0};
+    HTTP_REQUEST_V1 *req = &reqv2->s;
+    HTTP_SERVER_SESSION_ID session;
+    HTTP_BINDING_INFO binding;
+    HTTP_URL_GROUP_ID group;
+    unsigned short port;
+    char req_text[100];
+    HANDLE queue;
+    int ret;
+    SOCKET s;
+
+    ret = pHttpCreateServerSession(version, &session, 0);
+    ok(!ret, "Failed to create session, error %u.\n", ret);
+    ret = pHttpCreateUrlGroup(session, &group, 0);
+    ok(!ret, "Failed to create URL group, error %u.\n", ret);
+
+    port = add_url_v2(group);
+
+    ret = pHttpCreateRequestQueue(version, NULL, NULL, 0, &queue);
+    ok(!ret, "Failed to create request queue, error %u.\n", ret);
+    binding.Flags.Present = 1;
+    binding.RequestQueueHandle = queue;
+    ret = pHttpSetUrlGroupProperty(group, HttpServerBindingProperty, &binding, sizeof(binding));
+    ok(!ret, "Failed to bind request queue, error %u.\n", ret);
+
+    s = create_client_socket(port);
+
+    sprintf(req_text, simple_req, port);
+    ret = send(s, req_text, strlen(req_text), 0);
+    ok(ret == strlen(req_text), "send() returned %d.\n", ret);
+
+    ret = HttpReceiveHttpRequest(queue, HTTP_NULL_ID, 0, (HTTP_REQUEST *)req, sizeof(req_buffer), NULL, NULL);
+    ok(!ret, "Got error %u.\n", ret);
+
+    ok(req->BytesReceived == strlen(req_text), "Got %s bytes.\n", wine_dbgstr_longlong(req->BytesReceived));
+
+    ret = remove_url_v2(group, port);
+    ok(!ret, "Got error %u.\n", ret);
+
+    closesocket(s);
+    ret = pHttpCloseRequestQueue(queue);
+    ok(!ret, "Failed to close queue handle, error %u.\n", ret);
+    ret = pHttpCloseUrlGroup(group);
+    ok(!ret, "Failed to close group, error %u.\n", ret);
+    ret = pHttpCloseServerSession(session);
+    ok(!ret, "Failed to close group, error %u.\n", ret);
+}
+
 static void test_v2_server(void)
 {
     char DECLSPEC_ALIGN(8) req_buffer[2048], response_buffer[2048];
@@ -1538,6 +1654,8 @@ START_TEST(httpapi)
         test_HttpCreateServerSession();
         test_HttpCreateUrlGroup();
         test_v2_server();
+        test_v2_queue_after_url();
+        test_v2_bound_port();
         test_v2_completion_port();
 
         ret = HttpTerminate(HTTP_INITIALIZE_SERVER, NULL);
