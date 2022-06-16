@@ -228,16 +228,16 @@ static void test_v1_server(void)
     ret = send(s, req_text, strlen(req_text), 0);
     ok(ret == strlen(req_text), "send() returned %d.\n", ret);
 
-    ret = GetOverlappedResult(queue, &ovl, &ret_size, TRUE);
-    ok(ret, "Got error %lu.\n", GetLastError());
-    ok(ret_size > sizeof(*req), "Got size %lu.\n", ret_size);
-
     /* Various versions of Windows (observed on 64-bit Windows 8 and Windows 10
      * version 1507, but probably affecting others) suffer from a bug where the
      * kernel will report success before completely filling the buffer or
      * reporting the correct buffer size. Wait for a short interval to work
      * around this. */
     Sleep(100);
+
+    ret = GetOverlappedResult(queue, &ovl, &ret_size, TRUE);
+    ok(ret, "Got error %lu.\n", GetLastError());
+    ok(ret_size > sizeof(*req), "Got size %lu.\n", ret_size);
 
     ok(!req->Flags, "Got flags %#lx.\n", req->Flags);
     ok(req->ConnectionId, "Expected nonzero connection ID.\n");
