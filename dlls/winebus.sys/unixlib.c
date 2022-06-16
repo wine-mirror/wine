@@ -163,7 +163,7 @@ static NTSTATUS mouse_device_create(void *args)
 {
     struct device_create_params *params = args;
     params->desc = mouse_device_desc;
-    params->device = hid_device_create(&mouse_vtbl, sizeof(struct mouse_device));
+    params->device = (UINT_PTR)hid_device_create(&mouse_vtbl, sizeof(struct mouse_device));
     return STATUS_SUCCESS;
 }
 
@@ -254,7 +254,7 @@ static NTSTATUS keyboard_device_create(void *args)
 {
     struct device_create_params *params = args;
     params->desc = keyboard_device_desc;
-    params->device = hid_device_create(&keyboard_vtbl, sizeof(struct keyboard_device));
+    params->device = (UINT_PTR)hid_device_create(&keyboard_vtbl, sizeof(struct keyboard_device));
     return STATUS_SUCCESS;
 }
 
@@ -285,7 +285,8 @@ static ULONG unix_device_incref(struct unix_device *iface)
 
 static NTSTATUS unix_device_remove(void *args)
 {
-    struct unix_device *iface = args;
+    struct device_remove_params *params = args;
+    struct unix_device *iface = (struct unix_device *)(UINT_PTR)params->device;
     iface->vtbl->stop(iface);
     unix_device_decref(iface);
     return STATUS_SUCCESS;
@@ -293,21 +294,22 @@ static NTSTATUS unix_device_remove(void *args)
 
 static NTSTATUS unix_device_start(void *args)
 {
-    struct unix_device *iface = args;
+    struct device_start_params *params = args;
+    struct unix_device *iface = (struct unix_device *)(UINT_PTR)params->device;
     return iface->vtbl->start(iface);
 }
 
 static NTSTATUS unix_device_get_report_descriptor(void *args)
 {
     struct device_descriptor_params *params = args;
-    struct unix_device *iface = params->iface;
+    struct unix_device *iface = (struct unix_device *)(UINT_PTR)params->device;
     return iface->vtbl->get_report_descriptor(iface, params->buffer, params->length, params->out_length);
 }
 
 static NTSTATUS unix_device_set_output_report(void *args)
 {
     struct device_report_params *params = args;
-    struct unix_device *iface = params->iface;
+    struct unix_device *iface = (struct unix_device *)(UINT_PTR)params->device;
     iface->vtbl->set_output_report(iface, params->packet, params->io);
     return STATUS_SUCCESS;
 }
@@ -315,7 +317,7 @@ static NTSTATUS unix_device_set_output_report(void *args)
 static NTSTATUS unix_device_get_feature_report(void *args)
 {
     struct device_report_params *params = args;
-    struct unix_device *iface = params->iface;
+    struct unix_device *iface = (struct unix_device *)(UINT_PTR)params->device;
     iface->vtbl->get_feature_report(iface, params->packet, params->io);
     return STATUS_SUCCESS;
 }
@@ -323,7 +325,7 @@ static NTSTATUS unix_device_get_feature_report(void *args)
 static NTSTATUS unix_device_set_feature_report(void *args)
 {
     struct device_report_params *params = args;
-    struct unix_device *iface = params->iface;
+    struct unix_device *iface = (struct unix_device *)(UINT_PTR)params->device;
     iface->vtbl->set_feature_report(iface, params->packet, params->io);
     return STATUS_SUCCESS;
 }
@@ -351,8 +353,9 @@ const unixlib_entry_t __wine_unix_call_funcs[] =
 
 void bus_event_cleanup(struct bus_event *event)
 {
+    struct unix_device *iface = (struct unix_device *)(UINT_PTR)event->device;
     if (event->type == BUS_EVENT_TYPE_NONE) return;
-    unix_device_decref(event->device);
+    unix_device_decref(iface);
 }
 
 struct bus_event_entry
@@ -386,7 +389,7 @@ BOOL bus_event_queue_device_removed(struct list *queue, struct unix_device *devi
     }
 
     entry->event.type = BUS_EVENT_TYPE_DEVICE_REMOVED;
-    entry->event.device = device;
+    entry->event.device = (UINT_PTR)device;
     list_add_tail(queue, &entry->entry);
 
     return TRUE;
@@ -405,7 +408,7 @@ BOOL bus_event_queue_device_created(struct list *queue, struct unix_device *devi
     }
 
     entry->event.type = BUS_EVENT_TYPE_DEVICE_CREATED;
-    entry->event.device = device;
+    entry->event.device = (UINT_PTR)device;
     entry->event.device_created.desc = *desc;
     list_add_tail(queue, &entry->entry);
 
@@ -425,7 +428,7 @@ BOOL bus_event_queue_input_report(struct list *queue, struct unix_device *device
     }
 
     entry->event.type = BUS_EVENT_TYPE_INPUT_REPORT;
-    entry->event.device = device;
+    entry->event.device = (UINT_PTR)device;
     entry->event.input_report.length = length;
     memcpy(entry->event.input_report.buffer, report, length);
     list_add_tail(queue, &entry->entry);

@@ -91,6 +91,8 @@ struct effect_params
     };
 };
 
+struct unix_device;
+
 struct raw_device_vtbl
 {
     void (*destroy)(struct unix_device *iface);
