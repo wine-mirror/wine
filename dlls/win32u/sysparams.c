@@ -4814,13 +4814,6 @@ ULONG_PTR WINAPI NtUserCallOneParam( ULONG_PTR arg, ULONG code )
         return TRUE;
 
     /* temporary exports */
-    case NtUserCallHooks:
-        {
-            const struct win_hook_params *params = (struct win_hook_params *)arg;
-            return call_hooks( params->id, params->code, params->wparam, params->lparam,
-                               params->next_unicode );
-        }
-
     case NtUserGetDeskPattern:
         return get_entry( &entry_DESKPATTERN, 256, (WCHAR *)arg );
 

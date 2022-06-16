@@ -54,8 +54,6 @@ static inline void WIN_ReleasePtr( WND *ptr )
     release_user_handle_ptr( ptr );
 }
 
-extern LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode ) DECLSPEC_HIDDEN;
-
 extern void WINPOS_ActivateOtherWindow( HWND hwnd ) DECLSPEC_HIDDEN;
 
 extern UINT get_monitor_dpi( HMONITOR monitor ) DECLSPEC_HIDDEN;

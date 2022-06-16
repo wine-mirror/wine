@@ -335,21 +335,6 @@ void *get_hook_proc( void *proc, const WCHAR *module, HMODULE *free_module )
 
 
 /***********************************************************************
- *		HOOK_CallHooks
- */
-LRESULT HOOK_CallHooks( INT id, INT code, WPARAM wparam, LPARAM lparam, BOOL unicode )
-{
-    struct win_hook_params params;
-    params.id = id;
-    params.code = code;
-    params.wparam = wparam;
-    params.lparam = lparam;
-    params.next_unicode = unicode;
-    return NtUserCallOneParam( (UINT_PTR)&params, NtUserCallHooks );
-}
-
-
-/***********************************************************************
  *		SetWindowsHookA (USER32.@)
  */
 HHOOK WINAPI SetWindowsHookA( INT id, HOOKPROC proc )

@@ -2549,6 +2549,16 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
             send_message( hwnd, WM_HELP, 0, (LPARAM)&hi );
             break;
         }
+
+    case WM_APPCOMMAND:
+        {
+            HWND parent = get_parent( hwnd );
+            if (!parent)
+                call_hooks( WH_SHELL, HSHELL_APPCOMMAND, wparam, lparam, TRUE );
+            else
+                send_message( parent, msg, wparam, lparam );
+            break;
+        }
     }
 
     return result;
