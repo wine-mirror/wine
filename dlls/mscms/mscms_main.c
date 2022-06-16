@@ -49,7 +49,6 @@ BOOL WINAPI DllMain( HINSTANCE hinst, DWORD reason, void *reserved )
         break;
     case DLL_PROCESS_DETACH:
         if (reserved) break;
-        free_handle_tables();
         break;
     }
     return TRUE;

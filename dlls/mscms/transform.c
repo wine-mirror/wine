@@ -19,6 +19,7 @@
  */
 
 #include <stdarg.h>
+#include <stdlib.h>
 
 #include "windef.h"
 #include "winbase.h"
@@ -103,6 +104,12 @@ HTRANSFORM WINAPI CreateColorTransformA( LPLOGCOLORSPACEA space, HPROFILE dest, 
     return CreateColorTransformW( &spaceW, dest, target, flags );
 }
 
+static void close_transform( struct object *obj )
+{
+    struct transform *transform = (struct transform *)obj;
+    if (transform->cmstransform) cmsDeleteTransform( transform->cmstransform );
+}
+
 /******************************************************************************
  * CreateColorTransformW            [MSCMS.@]
  *
@@ -121,7 +128,8 @@ HTRANSFORM WINAPI CreateColorTransformA( LPLOGCOLORSPACEA space, HPROFILE dest, 
 HTRANSFORM WINAPI CreateColorTransformW( LPLOGCOLORSPACEW space, HPROFILE dest, HPROFILE target, DWORD flags )
 {
     HTRANSFORM ret = NULL;
-    cmsHTRANSFORM transform;
+    struct transform *transform;
+    cmsHTRANSFORM cmstransform;
     struct profile *dst, *tgt = NULL;
     DWORD proofing = 0;
     cmsHPROFILE input;
@@ -129,11 +137,10 @@ HTRANSFORM WINAPI CreateColorTransformW( LPLOGCOLORSPACEW space, HPROFILE dest, 
 
     TRACE( "( %p, %p, %p, %#lx )\n", space, dest, target, flags );
 
-    if (!space || !(dst = grab_profile( dest ))) return FALSE;
-
-    if (target && !(tgt = grab_profile( target )))
+    if (!space || !(dst = (struct profile *)grab_object( dest, OBJECT_TYPE_PROFILE ))) return FALSE;
+    if (target && !(tgt = (struct profile *)grab_object( target, OBJECT_TYPE_PROFILE )))
     {
-        release_profile( dst );
+        release_object( &dst->hdr );
         return FALSE;
     }
     intent = space->lcsIntent > 3 ? INTENT_PERCEPTUAL : space->lcsIntent;
@@ -144,19 +151,25 @@ HTRANSFORM WINAPI CreateColorTransformW( LPLOGCOLORSPACEW space, HPROFILE dest, 
 
     input = cmsCreate_sRGBProfile(); /* FIXME: create from supplied color space */
     if (target) proofing = cmsFLAGS_SOFTPROOFING;
-    transform = cmsCreateProofingTransform( input, 0, dst->cmsprofile, 0, tgt ? tgt->cmsprofile : NULL,
-                                            intent, INTENT_ABSOLUTE_COLORIMETRIC, proofing );
-    if (!transform)
+    cmstransform = cmsCreateProofingTransform( input, 0, dst->cmsprofile, 0, tgt ? tgt->cmsprofile : NULL,
+                                               intent, INTENT_ABSOLUTE_COLORIMETRIC, proofing );
+    if (!cmstransform)
     {
-        if (tgt) release_profile( tgt );
-        release_profile( dst );
+        if (tgt) release_object( &tgt->hdr );
+        release_object( &dst->hdr );
         return FALSE;
     }
 
-    ret = create_transform( transform );
+    if ((transform = calloc( 1, sizeof(*transform) )))
+    {
+        transform->hdr.type  = OBJECT_TYPE_TRANSFORM;
+        transform->hdr.close = close_transform;
+        transform->cmstransform = cmstransform;
+        if (!(ret = alloc_handle( &transform->hdr ))) free( transform );
+    }
 
-    if (tgt) release_profile( tgt );
-    release_profile( dst );
+    if (tgt) release_object( &tgt->hdr );
+    release_object( &dst->hdr );
     return ret;
 }
 
@@ -181,7 +194,8 @@ HTRANSFORM WINAPI CreateMultiProfileTransform( PHPROFILE profiles, DWORD nprofil
 {
     HTRANSFORM ret = NULL;
     cmsHPROFILE cmsprofiles[2];
-    cmsHTRANSFORM transform;
+    cmsHTRANSFORM cmstransform;
+    struct transform *transform;
     struct profile *profile0, *profile1;
 
     TRACE( "( %p, %#lx, %p, %lu, %#lx, %#lx )\n", profiles, nprofiles, intents, nintents, flags, cmm );
@@ -194,23 +208,34 @@ HTRANSFORM WINAPI CreateMultiProfileTransform( PHPROFILE profiles, DWORD nprofil
         return NULL;
     }
 
-    profile0 = grab_profile( profiles[0] );
+    profile0 = (struct profile *)grab_object( profiles[0], OBJECT_TYPE_PROFILE );
     if (!profile0) return NULL;
-    profile1 = grab_profile( profiles[1] );
+    profile1 = (struct profile *)grab_object( profiles[1], OBJECT_TYPE_PROFILE );
     if (!profile1)
     {
-        release_profile( profile0 );
+        release_object( &profile0->hdr );
         return NULL;
     }
 
     cmsprofiles[0] = profile0->cmsprofile;
     cmsprofiles[1] = profile1->cmsprofile;
+    if (!(cmstransform = cmsCreateMultiprofileTransform( cmsprofiles, nprofiles, 0, 0, *intents, 0 )))
+    {
+        release_object( &profile0->hdr );
+        release_object( &profile1->hdr );
+        return FALSE;
+    }
 
-    transform = cmsCreateMultiprofileTransform( cmsprofiles, nprofiles, 0, 0, *intents, 0 );
-    if (transform) ret = create_transform( transform );
+    if ((transform = calloc( 1, sizeof(*transform) )))
+    {
+        transform->hdr.type  = OBJECT_TYPE_TRANSFORM;
+        transform->hdr.close = close_transform;
+        transform->cmstransform = cmstransform;
+        if (!(ret = alloc_handle( &transform->hdr ))) free( transform );
+    }
 
-    release_profile( profile0 );
-    release_profile( profile1 );
+    release_object( &profile0->hdr );
+    release_object( &profile1->hdr );
     return ret;
 }
 
@@ -228,9 +253,14 @@ HTRANSFORM WINAPI CreateMultiProfileTransform( PHPROFILE profiles, DWORD nprofil
  */ 
 BOOL WINAPI DeleteColorTransform( HTRANSFORM handle )
 {
+    struct transform *transform = (struct transform *)grab_object( handle, OBJECT_TYPE_TRANSFORM );
+
     TRACE( "( %p )\n", handle );
 
-    return close_transform( handle );
+    if (!transform) return FALSE;
+    free_handle( handle );
+    release_object( &transform->hdr );
+    return TRUE;
 }
 
 /******************************************************************************
@@ -260,16 +290,16 @@ BOOL WINAPI TranslateBitmapBits( HTRANSFORM handle, PVOID srcbits, BMFORMAT inpu
     DWORD outputstride, PBMCALLBACKFN callback, ULONG data )
 {
     BOOL ret;
-    cmsHTRANSFORM transform = grab_transform( handle );
+    struct transform *transform = (struct transform *)grab_object( handle, OBJECT_TYPE_TRANSFORM );
 
     TRACE( "( %p, %p, %#x, %lu, %lu, %lu, %p, %#x, %lu, %p, %#lx )\n",
            handle, srcbits, input, width, height, inputstride, destbits, output,
            outputstride, callback, data );
 
     if (!transform) return FALSE;
-    ret = cmsChangeBuffersFormat( transform, from_bmformat(input), from_bmformat(output) );
-    if (ret) cmsDoTransform( transform, srcbits, destbits, width * height );
-    release_transform( transform );
+    ret = cmsChangeBuffersFormat( transform->cmstransform, from_bmformat(input), from_bmformat(output) );
+    if (ret) cmsDoTransform( transform->cmstransform, srcbits, destbits, width * height );
+    release_object( &transform->hdr );
     return ret;
 }
 
@@ -295,16 +325,16 @@ BOOL WINAPI TranslateColors( HTRANSFORM handle, PCOLOR in, DWORD count,
 {
     BOOL ret;
     unsigned int i;
-    cmsHTRANSFORM transform = grab_transform( handle );
+    struct transform *transform = (struct transform *)grab_object( handle, OBJECT_TYPE_TRANSFORM );
 
     TRACE( "( %p, %p, %lu, %d, %p, %d )\n", handle, in, count, input_type, out, output_type );
 
     if (!transform) return FALSE;
 
-    ret = cmsChangeBuffersFormat( transform, from_type(input_type), from_type(output_type) );
+    ret = cmsChangeBuffersFormat( transform->cmstransform, from_type(input_type), from_type(output_type) );
     if (ret)
-        for (i = 0; i < count; i++) cmsDoTransform( transform, &in[i], &out[i], 1 );
+        for (i = 0; i < count; i++) cmsDoTransform( transform->cmstransform, &in[i], &out[i], 1 );
 
-    release_transform( transform );
+    release_object( &transform->hdr );
     return ret;
 }

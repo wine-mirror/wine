@@ -27,28 +27,40 @@
 
 #include <lcms2.h>
 
-struct profile
+enum object_type
 {
-    HANDLE      file;
-    DWORD       access;
-    char       *data;
-    DWORD       size;
-    cmsHPROFILE cmsprofile;
+    OBJECT_TYPE_PROFILE,
+    OBJECT_TYPE_TRANSFORM,
 };
 
-extern HPROFILE create_profile( struct profile * ) DECLSPEC_HIDDEN;
-extern BOOL close_profile( HPROFILE ) DECLSPEC_HIDDEN;
+struct object
+{
+    enum object_type type;
+    LONG             refs;
+    void           (*close)( struct object * );
+};
 
-extern HTRANSFORM create_transform( cmsHTRANSFORM ) DECLSPEC_HIDDEN;
-extern BOOL close_transform( HTRANSFORM ) DECLSPEC_HIDDEN;
+struct profile
+{
+    struct object hdr;
+    HANDLE        file;
+    DWORD         access;
+    char         *data;
+    DWORD         size;
+    cmsHPROFILE   cmsprofile;
+};
 
-struct profile *grab_profile( HPROFILE ) DECLSPEC_HIDDEN;
-cmsHTRANSFORM grab_transform( HTRANSFORM ) DECLSPEC_HIDDEN;
+struct transform
+{
+    struct object hdr;
+    cmsHTRANSFORM cmstransform;
+};
 
-void release_profile( struct profile * ) DECLSPEC_HIDDEN;
-void release_transform( cmsHTRANSFORM ) DECLSPEC_HIDDEN;
+extern HANDLE alloc_handle( struct object *obj ) DECLSPEC_HIDDEN;
+extern void free_handle( HANDLE ) DECLSPEC_HIDDEN;
 
-extern void free_handle_tables( void ) DECLSPEC_HIDDEN;
+struct object *grab_object( HANDLE, enum object_type ) DECLSPEC_HIDDEN;
+void release_object( struct object * ) DECLSPEC_HIDDEN;
 
 struct tag_entry
 {

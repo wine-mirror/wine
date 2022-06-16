@@ -323,7 +323,7 @@ BOOL WINAPI GetColorProfileElement( HPROFILE handle, TAGTYPE type, DWORD offset,
                                     PVOID buffer, PBOOL ref )
 {
     BOOL ret;
-    struct profile *profile = grab_profile( handle );
+    struct profile *profile = (struct profile *)grab_object( handle, OBJECT_TYPE_PROFILE );
 
     TRACE( "( %p, %#lx, %lu, %p, %p, %p )\n", handle, type, offset, size, buffer, ref );
 
@@ -331,11 +331,11 @@ BOOL WINAPI GetColorProfileElement( HPROFILE handle, TAGTYPE type, DWORD offset,
 
     if (!size || !ref)
     {
-        release_profile( profile );
+        release_object( &profile->hdr );
         return FALSE;
     }
     ret = get_tag_data( profile, type, offset, buffer, size, ref );
-    release_profile( profile );
+    release_object( &profile->hdr );
     return ret;
 }
 
@@ -360,7 +360,7 @@ BOOL WINAPI GetColorProfileElement( HPROFILE handle, TAGTYPE type, DWORD offset,
 BOOL WINAPI GetColorProfileElementTag( HPROFILE handle, DWORD index, PTAGTYPE type )
 {
     BOOL ret;
-    struct profile *profile = grab_profile( handle );
+    struct profile *profile = (struct profile *)grab_object( handle, OBJECT_TYPE_PROFILE );
     struct tag_entry tag;
 
     TRACE( "( %p, %lu, %p )\n", handle, index, type );
@@ -369,11 +369,11 @@ BOOL WINAPI GetColorProfileElementTag( HPROFILE handle, DWORD index, PTAGTYPE ty
 
     if (!type)
     {
-        release_profile( profile );
+        release_object( &profile->hdr );
         return FALSE;
     }
     if ((ret = get_tag_entry( profile, index, &tag ))) *type = tag.sig;
-    release_profile( profile );
+    release_object( &profile->hdr );
     return ret;
 }
 
@@ -397,7 +397,7 @@ BOOL WINAPI GetColorProfileElementTag( HPROFILE handle, DWORD index, PTAGTYPE ty
  */
 BOOL WINAPI GetColorProfileFromHandle( HPROFILE handle, PBYTE buffer, PDWORD size )
 {
-    struct profile *profile = grab_profile( handle );
+    struct profile *profile = (struct profile *)grab_object( handle, OBJECT_TYPE_PROFILE );
     PROFILEHEADER header;
 
     TRACE( "( %p, %p, %p )\n", handle, buffer, size );
@@ -406,7 +406,7 @@ BOOL WINAPI GetColorProfileFromHandle( HPROFILE handle, PBYTE buffer, PDWORD siz
 
     if (!size)
     {
-        release_profile( profile );
+        release_object( &profile->hdr );
         return FALSE;
     }
     get_profile_header( profile, &header );
@@ -414,7 +414,7 @@ BOOL WINAPI GetColorProfileFromHandle( HPROFILE handle, PBYTE buffer, PDWORD siz
     if (!buffer || header.phSize > *size)
     {
         *size = header.phSize;
-        release_profile( profile );
+        release_object( &profile->hdr );
         return FALSE;
     }
 
@@ -422,7 +422,7 @@ BOOL WINAPI GetColorProfileFromHandle( HPROFILE handle, PBYTE buffer, PDWORD siz
     memcpy( buffer, profile->data, profile->size );
     *size = profile->size;
 
-    release_profile( profile );
+    release_object( &profile->hdr );
     return TRUE;
 }
 
@@ -444,7 +444,7 @@ BOOL WINAPI GetColorProfileFromHandle( HPROFILE handle, PBYTE buffer, PDWORD siz
  */
 BOOL WINAPI GetColorProfileHeader( HPROFILE handle, PPROFILEHEADER header )
 {
-    struct profile *profile = grab_profile( handle );
+    struct profile *profile = (struct profile *)grab_object( handle, OBJECT_TYPE_PROFILE );
 
     TRACE( "( %p, %p )\n", handle, header );
 
@@ -452,11 +452,11 @@ BOOL WINAPI GetColorProfileHeader( HPROFILE handle, PPROFILEHEADER header )
 
     if (!header)
     {
-        release_profile( profile );
+        release_object( &profile->hdr );
         return FALSE;
     }
     get_profile_header( profile, header );
-    release_profile( profile );
+    release_object( &profile->hdr );
     return TRUE;
 }
 
@@ -476,7 +476,7 @@ BOOL WINAPI GetColorProfileHeader( HPROFILE handle, PPROFILEHEADER header )
  */
 BOOL WINAPI GetCountColorProfileElements( HPROFILE handle, PDWORD count )
 {
-    struct profile *profile = grab_profile( handle );
+    struct profile *profile = (struct profile *)grab_object( handle, OBJECT_TYPE_PROFILE );
 
     TRACE( "( %p, %p )\n", handle, count );
 
@@ -484,11 +484,11 @@ BOOL WINAPI GetCountColorProfileElements( HPROFILE handle, PDWORD count )
 
     if (!count)
     {
-        release_profile( profile );
+        release_object( &profile->hdr );
         return FALSE;
     }
     *count = get_tag_count( profile );
-    release_profile( profile );
+    release_object( &profile->hdr );
     return TRUE;
 }
 
@@ -1058,7 +1058,7 @@ BOOL WINAPI InstallColorProfileW( PCWSTR machine, PCWSTR profile )
  */
 BOOL WINAPI IsColorProfileTagPresent( HPROFILE handle, TAGTYPE type, PBOOL present )
 {
-    struct profile *profile = grab_profile( handle );
+    struct profile *profile = (struct profile *)grab_object( handle, OBJECT_TYPE_PROFILE );
     struct tag_entry tag;
 
     TRACE( "( %p, %#lx, %p )\n", handle, type, present );
@@ -1067,11 +1067,11 @@ BOOL WINAPI IsColorProfileTagPresent( HPROFILE handle, TAGTYPE type, PBOOL prese
 
     if (!present)
     {
-        release_profile( profile );
+        release_object( &profile->hdr );
         return FALSE;
     }
     *present = get_adjusted_tag( profile, type, &tag );
-    release_profile( profile );
+    release_object( &profile->hdr );
     return TRUE;
 }
 
@@ -1091,7 +1091,7 @@ BOOL WINAPI IsColorProfileTagPresent( HPROFILE handle, TAGTYPE type, PBOOL prese
  */
 BOOL WINAPI IsColorProfileValid( HPROFILE handle, PBOOL valid )
 {
-    struct profile *profile = grab_profile( handle );
+    struct profile *profile = (struct profile *)grab_object( handle, OBJECT_TYPE_PROFILE );
 
     TRACE( "( %p, %p )\n", handle, valid );
 
@@ -1099,11 +1099,11 @@ BOOL WINAPI IsColorProfileValid( HPROFILE handle, PBOOL valid )
 
     if (!valid)
     {
-        release_profile( profile );
+        release_object( &profile->hdr );
         return FALSE;
     }
     *valid = !!profile->data;
-    release_profile( profile );
+    release_object( &profile->hdr );
     return *valid;
 }
 
@@ -1128,7 +1128,7 @@ BOOL WINAPI SetColorProfileElement( HPROFILE handle, TAGTYPE type, DWORD offset,
                                     PVOID buffer )
 {
     BOOL ret;
-    struct profile *profile = grab_profile( handle );
+    struct profile *profile = (struct profile *)grab_object( handle, OBJECT_TYPE_PROFILE );
 
     TRACE( "( %p, %#lx, %lu, %p, %p )\n", handle, type, offset, size, buffer );
 
@@ -1136,11 +1136,11 @@ BOOL WINAPI SetColorProfileElement( HPROFILE handle, TAGTYPE type, DWORD offset,
 
     if (!size || !buffer || !(profile->access & PROFILE_READWRITE))
     {
-        release_profile( profile );
+        release_object( &profile->hdr );
         return FALSE;
     }
     ret = set_tag_data( profile, type, offset, buffer, size );
-    release_profile( profile );
+    release_object( &profile->hdr );
     return ret;
 }
 
@@ -1159,7 +1159,7 @@ BOOL WINAPI SetColorProfileElement( HPROFILE handle, TAGTYPE type, DWORD offset,
  */
 BOOL WINAPI SetColorProfileHeader( HPROFILE handle, PPROFILEHEADER header )
 {
-    struct profile *profile = grab_profile( handle );
+    struct profile *profile = (struct profile *)grab_object( handle, OBJECT_TYPE_PROFILE );
 
     TRACE( "( %p, %p )\n", handle, header );
 
@@ -1167,11 +1167,11 @@ BOOL WINAPI SetColorProfileHeader( HPROFILE handle, PPROFILEHEADER header )
 
     if (!header || !(profile->access & PROFILE_READWRITE))
     {
-        release_profile( profile );
+        release_object( &profile->hdr );
         return FALSE;
     }
     set_profile_header( profile, header );
-    release_profile( profile );
+    release_object( &profile->hdr );
     return TRUE;
 }
 
@@ -1261,6 +1261,28 @@ HPROFILE WINAPI OpenColorProfileA( PPROFILE profile, DWORD access, DWORD sharing
     return handle;
 }
 
+void close_profile( struct object *obj )
+{
+    struct profile *profile = (struct profile *)obj;
+
+    if (profile->file != INVALID_HANDLE_VALUE)
+    {
+        if (profile->access & PROFILE_READWRITE)
+        {
+            DWORD count;
+            if (SetFilePointer( profile->file, 0, NULL, FILE_BEGIN ) ||
+                !WriteFile( profile->file, profile->data, profile->size, &count, NULL ) || count != profile->size)
+            {
+                ERR( "Unable to write color profile\n" );
+            }
+        }
+        CloseHandle( profile->file );
+    }
+
+    if (profile->cmsprofile) cmsCloseProfile( profile->cmsprofile );
+    free( profile->data );
+}
+
 /******************************************************************************
  * OpenColorProfileW               [MSCMS.@]
  *
@@ -1285,8 +1307,8 @@ HPROFILE WINAPI OpenColorProfileA( PPROFILE profile, DWORD access, DWORD sharing
  */
 HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing, DWORD creation )
 {
-    struct profile prof;
-    HPROFILE hprof;
+    struct profile *prof;
+    HPROFILE ret;
     cmsHPROFILE cmsprofile;
     char *data = NULL;
     HANDLE handle = INVALID_HANDLE_VALUE;
@@ -1377,13 +1399,18 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
         return NULL;
     }
 
-    prof.file       = handle;
-    prof.access     = access;
-    prof.data       = data;
-    prof.size       = size;
-    prof.cmsprofile = cmsprofile;
-
-    if ((hprof = create_profile( &prof ))) return hprof;
+    if ((prof = calloc( 1, sizeof(*prof) )))
+    {
+        prof->hdr.type  = OBJECT_TYPE_PROFILE;
+        prof->hdr.close = close_profile;
+        prof->file       = handle;
+        prof->access     = access;
+        prof->data       = data;
+        prof->size       = size;
+        prof->cmsprofile = cmsprofile;
+        if ((ret = alloc_handle( &prof->hdr ))) return ret;
+        free( prof );
+    }
 
     cmsCloseProfile( cmsprofile );
     free( data );
@@ -1403,10 +1430,16 @@ HPROFILE WINAPI OpenColorProfileW( PPROFILE profile, DWORD access, DWORD sharing
  *  Success: TRUE
  *  Failure: FALSE
  */
-BOOL WINAPI CloseColorProfile( HPROFILE profile )
+BOOL WINAPI CloseColorProfile( HPROFILE handle )
 {
-    TRACE( "( %p )\n", profile );
-    return close_profile( profile );
+    struct profile *profile = (struct profile *)grab_object( handle, OBJECT_TYPE_PROFILE );
+
+    TRACE( "( %p )\n", handle );
+
+    if (!profile) return FALSE;
+    free_handle( handle );
+    release_object( &profile->hdr );
+    return TRUE;
 }
 
 /******************************************************************************
