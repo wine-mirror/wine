@@ -1100,7 +1100,57 @@ static struct Provider
     IRawElementProviderFragment *parent;
     enum ProviderOptions prov_opts;
     HWND hwnd;
-} Provider, Provider2, Provider_child;
+    BOOL ret_invalid_prop_type;
+} Provider, Provider2, Provider_child, Provider_child2;
+
+static const WCHAR *uia_bstr_prop_str = L"uia-string";
+static const ULONG uia_i4_prop_val = 0xdeadbeef;
+static const ULONG uia_i4_arr_prop_val[] = { 0xfeedbeef, 0xdeadcafe, 0xfefedede };
+static const double uia_r8_prop_val = 128.256f;
+static const double uia_r8_arr_prop_val[] = { 2.4, 8.16, 32.64 };
+static const IRawElementProviderSimple *uia_unk_arr_prop_val[] = { &Provider_child.IRawElementProviderSimple_iface,
+                                                                   &Provider_child2.IRawElementProviderSimple_iface };
+static SAFEARRAY *create_i4_safearray(void)
+{
+    SAFEARRAY *sa;
+    LONG idx;
+
+    if (!(sa = SafeArrayCreateVector(VT_I4, 0, ARRAY_SIZE(uia_i4_arr_prop_val))))
+        return NULL;
+
+    for (idx = 0; idx < ARRAY_SIZE(uia_i4_arr_prop_val); idx++)
+        SafeArrayPutElement(sa, &idx, (void *)&uia_i4_arr_prop_val[idx]);
+
+    return sa;
+}
+
+static SAFEARRAY *create_r8_safearray(void)
+{
+    SAFEARRAY *sa;
+    LONG idx;
+
+    if (!(sa = SafeArrayCreateVector(VT_R8, 0, ARRAY_SIZE(uia_r8_arr_prop_val))))
+        return NULL;
+
+    for (idx = 0; idx < ARRAY_SIZE(uia_r8_arr_prop_val); idx++)
+        SafeArrayPutElement(sa, &idx, (void *)&uia_r8_arr_prop_val[idx]);
+
+    return sa;
+}
+
+static SAFEARRAY *create_unk_safearray(void)
+{
+    SAFEARRAY *sa;
+    LONG idx;
+
+    if (!(sa = SafeArrayCreateVector(VT_UNKNOWN, 0, ARRAY_SIZE(uia_unk_arr_prop_val))))
+        return NULL;
+
+    for (idx = 0; idx < ARRAY_SIZE(uia_unk_arr_prop_val); idx++)
+        SafeArrayPutElement(sa, &idx, (void *)uia_unk_arr_prop_val[idx]);
+
+    return sa;
+}
 
 enum {
     PROV_GET_PROVIDER_OPTIONS,
@@ -1422,8 +1472,163 @@ HRESULT WINAPI ProviderSimple_GetPropertyValue(IRawElementProviderSimple *iface,
     switch (prop_id)
     {
     case UIA_NativeWindowHandlePropertyId:
-        V_VT(ret_val) = VT_I4;
-        V_I4(ret_val) = HandleToULong(This->hwnd);
+        if (This->ret_invalid_prop_type)
+        {
+            V_VT(ret_val) = VT_R8;
+            V_R8(ret_val) = uia_r8_prop_val;
+        }
+        else
+        {
+            V_VT(ret_val) = VT_I4;
+            V_I4(ret_val) = HandleToULong(This->hwnd);
+        }
+        break;
+
+    case UIA_ProcessIdPropertyId:
+    case UIA_ControlTypePropertyId:
+    case UIA_CulturePropertyId:
+    case UIA_OrientationPropertyId:
+    case UIA_LiveSettingPropertyId:
+    case UIA_PositionInSetPropertyId:
+    case UIA_SizeOfSetPropertyId:
+    case UIA_LevelPropertyId:
+    case UIA_LandmarkTypePropertyId:
+    case UIA_FillColorPropertyId:
+    case UIA_FillTypePropertyId:
+    case UIA_VisualEffectsPropertyId:
+    case UIA_HeadingLevelPropertyId:
+        if (This->ret_invalid_prop_type)
+        {
+            V_VT(ret_val) = VT_R8;
+            V_R8(ret_val) = uia_r8_prop_val;
+        }
+        else
+        {
+            V_VT(ret_val) = VT_I4;
+            V_I4(ret_val) = uia_i4_prop_val;
+        }
+        break;
+
+    case UIA_RotationPropertyId:
+        if (This->ret_invalid_prop_type)
+        {
+            V_VT(ret_val) = VT_I4;
+            V_I4(ret_val) = uia_i4_prop_val;
+        }
+        else
+        {
+            V_VT(ret_val) = VT_R8;
+            V_R8(ret_val) = uia_r8_prop_val;
+        }
+        break;
+
+    case UIA_LocalizedControlTypePropertyId:
+    case UIA_NamePropertyId:
+    case UIA_AcceleratorKeyPropertyId:
+    case UIA_AccessKeyPropertyId:
+    case UIA_AutomationIdPropertyId:
+    case UIA_ClassNamePropertyId:
+    case UIA_HelpTextPropertyId:
+    case UIA_ItemTypePropertyId:
+    case UIA_FrameworkIdPropertyId:
+    case UIA_ItemStatusPropertyId:
+    case UIA_AriaRolePropertyId:
+    case UIA_AriaPropertiesPropertyId:
+    case UIA_LocalizedLandmarkTypePropertyId:
+    case UIA_FullDescriptionPropertyId:
+        if (This->ret_invalid_prop_type)
+        {
+            V_VT(ret_val) = VT_I4;
+            V_I4(ret_val) = uia_i4_prop_val;
+        }
+        else
+        {
+            V_VT(ret_val) = VT_BSTR;
+            V_BSTR(ret_val) = SysAllocString(uia_bstr_prop_str);
+        }
+        break;
+
+    case UIA_HasKeyboardFocusPropertyId:
+    case UIA_IsKeyboardFocusablePropertyId:
+    case UIA_IsEnabledPropertyId:
+    case UIA_IsControlElementPropertyId:
+    case UIA_IsContentElementPropertyId:
+    case UIA_IsPasswordPropertyId:
+    case UIA_IsOffscreenPropertyId:
+    case UIA_IsRequiredForFormPropertyId:
+    case UIA_IsDataValidForFormPropertyId:
+    case UIA_OptimizeForVisualContentPropertyId:
+    case UIA_IsPeripheralPropertyId:
+    case UIA_IsDialogPropertyId:
+        if (This->ret_invalid_prop_type)
+        {
+            V_VT(ret_val) = VT_R8;
+            V_R8(ret_val) = uia_r8_prop_val;
+        }
+        else
+        {
+            V_VT(ret_val) = VT_BOOL;
+            V_BOOL(ret_val) = VARIANT_TRUE;
+        }
+        break;
+
+    case UIA_AnnotationTypesPropertyId:
+    case UIA_OutlineColorPropertyId:
+        if (This->ret_invalid_prop_type)
+        {
+            V_VT(ret_val) = VT_ARRAY | VT_R8;
+            V_ARRAY(ret_val) = create_r8_safearray();
+        }
+        else
+        {
+            V_VT(ret_val) = VT_ARRAY | VT_I4;
+            V_ARRAY(ret_val) = create_i4_safearray();
+        }
+        break;
+
+    case UIA_OutlineThicknessPropertyId:
+    case UIA_SizePropertyId:
+        if (This->ret_invalid_prop_type)
+        {
+            V_VT(ret_val) = VT_ARRAY | VT_I4;
+            V_ARRAY(ret_val) = create_i4_safearray();
+        }
+        else
+        {
+            V_VT(ret_val) = VT_ARRAY | VT_R8;
+            V_ARRAY(ret_val) = create_r8_safearray();
+        }
+        break;
+
+    case UIA_LabeledByPropertyId:
+        if (This->ret_invalid_prop_type)
+        {
+            V_VT(ret_val) = VT_I4;
+            V_I4(ret_val) = uia_i4_prop_val;
+        }
+        else
+        {
+            V_VT(ret_val) = VT_UNKNOWN;
+            V_UNKNOWN(ret_val) = (IUnknown *)&Provider_child.IRawElementProviderSimple_iface;
+            IUnknown_AddRef(V_UNKNOWN(ret_val));
+        }
+        break;
+
+    case UIA_AnnotationObjectsPropertyId:
+    case UIA_DescribedByPropertyId:
+    case UIA_FlowsFromPropertyId:
+    case UIA_FlowsToPropertyId:
+    case UIA_ControllerForPropertyId:
+        if (This->ret_invalid_prop_type)
+        {
+            V_VT(ret_val) = VT_ARRAY | VT_I4;
+            V_ARRAY(ret_val) = create_i4_safearray();
+        }
+        else
+        {
+            V_VT(ret_val) = VT_UNKNOWN | VT_ARRAY;
+            V_ARRAY(ret_val) = create_unk_safearray();
+        }
         break;
 
     case UIA_ProviderDescriptionPropertyId:
@@ -1563,7 +1768,7 @@ static struct Provider Provider =
     1,
     "Provider",
     NULL,
-    0, 0,
+    0, 0, 0,
 };
 
 static struct Provider Provider2 =
@@ -1573,7 +1778,7 @@ static struct Provider Provider2 =
     1,
     "Provider2",
     NULL,
-    0, 0,
+    0, 0, 0,
 };
 
 static struct Provider Provider_child =
@@ -1583,7 +1788,17 @@ static struct Provider Provider_child =
     1,
     "Provider_child",
     &Provider.IRawElementProviderFragment_iface,
-    0, 0,
+    ProviderOptions_ServerSideProvider, 0, 0,
+};
+
+static struct Provider Provider_child2 =
+{
+    { &ProviderSimpleVtbl },
+    { &ProviderFragmentVtbl },
+    1,
+    "Provider_child2",
+    &Provider.IRawElementProviderFragment_iface,
+    ProviderOptions_ServerSideProvider, 0, 0,
 };
 
 static IAccessible *acc_client;
@@ -3532,6 +3747,18 @@ static const struct prov_method_sequence node_from_prov7[] = {
     { 0 }
 };
 
+static const struct prov_method_sequence node_from_prov8[] = {
+    { &Provider, PROV_GET_PROVIDER_OPTIONS },
+    /* Win10v1507 and below call this. */
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_TODO },
+    { &Provider, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    /* Only called on Windows versions past Win10v1507. */
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
+    { 0 }
+};
+
 static void test_UiaNodeFromProvider(void)
 {
     WNDCLASSA cls;
@@ -3792,6 +4019,338 @@ static void test_UiaNodeFromProvider(void)
     prov_root = NULL;
 }
 
+/* Sequence for types other than UIAutomationType_Element. */
+static const struct prov_method_sequence get_prop_seq[] = {
+    { &Provider, PROV_GET_PROPERTY_VALUE },
+    { 0 }
+};
+
+/* Sequence for getting a property that returns an invalid type. */
+static const struct prov_method_sequence get_prop_invalid_type_seq[] = {
+    { &Provider, PROV_GET_PROPERTY_VALUE },
+    /* Windows 7 calls this. */
+    { &Provider, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
+    { 0 }
+};
+
+/* UIAutomationType_Element sequence. */
+static const struct prov_method_sequence get_elem_prop_seq[] = {
+    { &Provider, PROV_GET_PROPERTY_VALUE },
+    { &Provider_child, PROV_GET_PROVIDER_OPTIONS },
+    /* Win10v1507 and below call this. */
+    { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider_child, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_TODO },
+    { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider_child, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    /* Only called on Windows versions past Win10v1507. */
+    { &Provider_child, PROV_GET_PROVIDER_OPTIONS, METHOD_OPTIONAL },
+    { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL },
+    { 0 }
+};
+
+/* UIAutomationType_ElementArray sequence. */
+static const struct prov_method_sequence get_elem_arr_prop_seq[] = {
+    { &Provider, PROV_GET_PROPERTY_VALUE },
+    { &Provider_child, PROV_GET_PROVIDER_OPTIONS },
+    /* Win10v1507 and below call this. */
+    { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider_child, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_TODO },
+    { &Provider_child, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider_child, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider_child, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider_child2, PROV_GET_PROVIDER_OPTIONS },
+    /* Win10v1507 and below call this. */
+    { &Provider_child2, PROV_GET_PROPERTY_VALUE, METHOD_OPTIONAL }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider_child2, PROV_GET_HOST_RAW_ELEMENT_PROVIDER, METHOD_TODO },
+    { &Provider_child2, PROV_GET_PROPERTY_VALUE, METHOD_TODO }, /* UIA_NativeWindowHandlePropertyId */
+    { &Provider_child2, FRAG_NAVIGATE, METHOD_TODO }, /* NavigateDirection_Parent */
+    { &Provider_child2, PROV_GET_PROVIDER_OPTIONS, METHOD_TODO },
+    { &Provider_child, PROV_GET_PROPERTY_VALUE },
+    { &Provider_child2, PROV_GET_PROPERTY_VALUE },
+    { 0 }
+};
+
+static void check_uia_prop_val(PROPERTYID prop_id, enum UIAutomationType type, VARIANT *v)
+{
+    LONG idx;
+
+    switch (type)
+    {
+    case UIAutomationType_String:
+        todo_wine ok(V_VT(v) == VT_BSTR, "Unexpected VT %d\n", V_VT(v));
+        if (V_VT(v) != VT_BSTR)
+            break;
+
+        ok(!lstrcmpW(V_BSTR(v), uia_bstr_prop_str), "Unexpected BSTR %s\n", wine_dbgstr_w(V_BSTR(v)));
+        ok_method_sequence(get_prop_seq, NULL);
+        break;
+
+    case UIAutomationType_Bool:
+        todo_wine ok(V_VT(v) == VT_BOOL, "Unexpected VT %d\n", V_VT(v));
+        if (V_VT(v) != VT_BOOL)
+            break;
+
+        /* UIA_IsKeyboardFocusablePropertyId is broken on Win8 and Win10v1507. */
+        if (prop_id == UIA_IsKeyboardFocusablePropertyId)
+            ok(check_variant_bool(v, TRUE) || broken(check_variant_bool(v, FALSE)),
+                    "Unexpected BOOL %#x\n", V_BOOL(v));
+        else
+            ok(check_variant_bool(v, TRUE), "Unexpected BOOL %#x\n", V_BOOL(v));
+        ok_method_sequence(get_prop_seq, NULL);
+        break;
+
+    case UIAutomationType_Int:
+        todo_wine ok(V_VT(v) == VT_I4, "Unexpected VT %d\n", V_VT(v));
+        if (V_VT(v) != VT_I4)
+            break;
+
+        if (prop_id == UIA_NativeWindowHandlePropertyId)
+            ok(ULongToHandle(V_I4(v)) == Provider.hwnd, "Unexpected I4 %#lx\n", V_I4(v));
+        else
+            ok(V_I4(v) == uia_i4_prop_val, "Unexpected I4 %#lx\n", V_I4(v));
+        ok_method_sequence(get_prop_seq, NULL);
+        break;
+
+    case UIAutomationType_IntArray:
+        todo_wine ok(V_VT(v) == (VT_ARRAY | VT_I4), "Unexpected VT %d\n", V_VT(v));
+        if (V_VT(v) != (VT_ARRAY | VT_I4))
+            break;
+
+        for (idx = 0; idx < ARRAY_SIZE(uia_i4_arr_prop_val); idx++)
+        {
+            ULONG val;
+
+            SafeArrayGetElement(V_ARRAY(v), &idx, &val);
+            ok(val == uia_i4_arr_prop_val[idx], "Unexpected I4 %#lx at idx %ld\n", val, idx);
+        }
+        ok_method_sequence(get_prop_seq, NULL);
+        break;
+
+    case UIAutomationType_Double:
+        todo_wine ok(V_VT(v) == VT_R8, "Unexpected VT %d\n", V_VT(v));
+        if (V_VT(v) != VT_R8)
+            break;
+
+        ok(V_R8(v) == uia_r8_prop_val, "Unexpected R8 %lf\n", V_R8(v));
+        ok_method_sequence(get_prop_seq, NULL);
+        break;
+
+    case UIAutomationType_DoubleArray:
+        todo_wine ok(V_VT(v) == (VT_ARRAY | VT_R8), "Unexpected VT %d\n", V_VT(v));
+        if (V_VT(v) != (VT_ARRAY | VT_R8))
+            break;
+
+        for (idx = 0; idx < ARRAY_SIZE(uia_r8_arr_prop_val); idx++)
+        {
+            double val;
+
+            SafeArrayGetElement(V_ARRAY(v), &idx, &val);
+            ok(val == uia_r8_arr_prop_val[idx], "Unexpected R8 %lf at idx %ld\n", val, idx);
+        }
+        ok_method_sequence(get_prop_seq, NULL);
+        break;
+
+    case UIAutomationType_Element:
+    {
+        HUIANODE tmp_node;
+        HRESULT hr;
+        VARIANT v1;
+
+#ifdef _WIN64
+        todo_wine ok(V_VT(v) == VT_I8, "Unexpected VT %d\n", V_VT(v));
+        tmp_node = (HUIANODE)V_I8(v);
+        if (V_VT(v) != VT_I8)
+            break;
+#else
+        todo_wine ok(V_VT(v) == VT_I4, "Unexpected VT %d\n", V_VT(v));
+        tmp_node = (HUIANODE)V_I4(v);
+        if (V_VT(v) != VT_I4)
+            break;
+#endif
+        ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+
+        hr = UiaGetPropertyValue(tmp_node, UIA_ControlTypePropertyId, &v1);
+        ok(hr == S_OK, "Unexpected hr %#lx\n", hr);
+        ok(V_VT(&v1) == VT_I4, "Unexpected VT %d\n", V_VT(&v1));
+        ok(V_I4(&v1) == uia_i4_prop_val, "Unexpected I4 %#lx\n", V_I4(&v1));
+
+        ok(UiaNodeRelease(tmp_node), "Failed to release node\n");
+        ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
+        ok_method_sequence(get_elem_prop_seq, NULL);
+        break;
+    }
+
+    case UIAutomationType_ElementArray:
+        todo_wine ok(V_VT(v) == (VT_ARRAY | VT_UNKNOWN), "Unexpected VT %d\n", V_VT(v));
+        if (V_VT(v) != (VT_ARRAY | VT_UNKNOWN))
+            break;
+
+        ok(Provider_child.ref == 2, "Unexpected refcnt %ld\n", Provider_child.ref);
+        ok(Provider_child2.ref == 2, "Unexpected refcnt %ld\n", Provider_child2.ref);
+        for (idx = 0; idx < ARRAY_SIZE(uia_unk_arr_prop_val); idx++)
+        {
+            HUIANODE tmp_node;
+            HRESULT hr;
+            VARIANT v1;
+
+            SafeArrayGetElement(V_ARRAY(v), &idx, &tmp_node);
+
+            hr = UiaGetPropertyValue(tmp_node, UIA_ControlTypePropertyId, &v1);
+            ok(hr == S_OK, "node[%ld] Unexpected hr %#lx\n", idx, hr);
+            ok(V_VT(&v1) == VT_I4, "node[%ld] Unexpected VT %d\n", idx, V_VT(&v1));
+            ok(V_I4(&v1) == uia_i4_prop_val, "node[%ld] Unexpected I4 %#lx\n", idx, V_I4(&v1));
+
+            ok(UiaNodeRelease(tmp_node), "Failed to release node[%ld]\n", idx);
+            VariantClear(&v1);
+        }
+
+        VariantClear(v);
+        ok(Provider_child.ref == 1, "Unexpected refcnt %ld\n", Provider_child.ref);
+        ok(Provider_child2.ref == 1, "Unexpected refcnt %ld\n", Provider_child2.ref);
+        ok_method_sequence(get_elem_arr_prop_seq, NULL);
+        break;
+
+    default:
+        break;
+    }
+
+    VariantClear(v);
+    V_VT(v) = VT_EMPTY;
+}
+
+struct uia_element_property {
+    const GUID *prop_guid;
+    enum UIAutomationType type;
+    BOOL skip_invalid;
+};
+
+static const struct uia_element_property element_properties[] = {
+    { &ProcessId_Property_GUID,                UIAutomationType_Int, TRUE },
+    { &ControlType_Property_GUID,              UIAutomationType_Int },
+    { &LocalizedControlType_Property_GUID,     UIAutomationType_String, TRUE },
+    { &Name_Property_GUID,                     UIAutomationType_String },
+    { &AcceleratorKey_Property_GUID,           UIAutomationType_String },
+    { &AccessKey_Property_GUID,                UIAutomationType_String },
+    { &HasKeyboardFocus_Property_GUID,         UIAutomationType_Bool },
+    { &IsKeyboardFocusable_Property_GUID,      UIAutomationType_Bool },
+    { &IsEnabled_Property_GUID,                UIAutomationType_Bool },
+    { &AutomationId_Property_GUID,             UIAutomationType_String },
+    { &ClassName_Property_GUID,                UIAutomationType_String },
+    { &HelpText_Property_GUID,                 UIAutomationType_String },
+    { &Culture_Property_GUID,                  UIAutomationType_Int },
+    { &IsControlElement_Property_GUID,         UIAutomationType_Bool },
+    { &IsContentElement_Property_GUID,         UIAutomationType_Bool },
+    { &LabeledBy_Property_GUID,                UIAutomationType_Element },
+    { &IsPassword_Property_GUID,               UIAutomationType_Bool },
+    { &NewNativeWindowHandle_Property_GUID,    UIAutomationType_Int },
+    { &ItemType_Property_GUID,                 UIAutomationType_String },
+    { &IsOffscreen_Property_GUID,              UIAutomationType_Bool },
+    { &Orientation_Property_GUID,              UIAutomationType_Int },
+    { &FrameworkId_Property_GUID,              UIAutomationType_String },
+    { &IsRequiredForForm_Property_GUID,        UIAutomationType_Bool },
+    { &ItemStatus_Property_GUID,               UIAutomationType_String },
+    { &AriaRole_Property_GUID,                 UIAutomationType_String },
+    { &AriaProperties_Property_GUID,           UIAutomationType_String },
+    { &IsDataValidForForm_Property_GUID,       UIAutomationType_Bool },
+    { &ControllerFor_Property_GUID,            UIAutomationType_ElementArray },
+    { &DescribedBy_Property_GUID,              UIAutomationType_ElementArray },
+    { &FlowsTo_Property_GUID,                  UIAutomationType_ElementArray },
+    /* Implemented on Win8+ */
+    { &OptimizeForVisualContent_Property_GUID, UIAutomationType_Bool },
+    { &LiveSetting_Property_GUID,              UIAutomationType_Int },
+    { &FlowsFrom_Property_GUID,                UIAutomationType_ElementArray },
+    { &IsPeripheral_Property_GUID,             UIAutomationType_Bool },
+    /* Implemented on Win10v1507+. */
+    { &PositionInSet_Property_GUID,            UIAutomationType_Int },
+    { &SizeOfSet_Property_GUID,                UIAutomationType_Int },
+    { &Level_Property_GUID,                    UIAutomationType_Int },
+    { &AnnotationTypes_Property_GUID,          UIAutomationType_IntArray },
+    { &AnnotationObjects_Property_GUID,        UIAutomationType_ElementArray },
+    /* Implemented on Win10v1809+. */
+    { &LandmarkType_Property_GUID,             UIAutomationType_Int },
+    { &LocalizedLandmarkType_Property_GUID,    UIAutomationType_String, TRUE },
+    { &FullDescription_Property_GUID,          UIAutomationType_String },
+    { &FillColor_Property_GUID,                UIAutomationType_Int },
+    { &OutlineColor_Property_GUID,             UIAutomationType_IntArray },
+    { &FillType_Property_GUID,                 UIAutomationType_Int },
+    { &VisualEffects_Property_GUID,            UIAutomationType_Int },
+    { &OutlineThickness_Property_GUID,         UIAutomationType_DoubleArray },
+    { &Rotation_Property_GUID,                 UIAutomationType_Double },
+    { &Size_Property_GUID,                     UIAutomationType_DoubleArray },
+    { &HeadingLevel_Property_GUID,             UIAutomationType_Int },
+    { &IsDialog_Property_GUID,                 UIAutomationType_Bool },
+};
+
+static void test_UiaGetPropertyValue(void)
+{
+    const struct uia_element_property *elem_prop;
+    IUnknown *unk_ns;
+    unsigned int i;
+    HUIANODE node;
+    int prop_id;
+    HRESULT hr;
+    VARIANT v;
+
+    CoInitializeEx(NULL, COINIT_MULTITHREADED);
+
+    Provider.prov_opts = ProviderOptions_ServerSideProvider;
+    Provider_child.prov_opts = Provider_child2.prov_opts = ProviderOptions_ServerSideProvider;
+    Provider.hwnd = Provider_child.hwnd = Provider_child2.hwnd = NULL;
+    node = (void *)0xdeadbeef;
+    hr = UiaNodeFromProvider(&Provider.IRawElementProviderSimple_iface, &node);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+    ok(Provider.ref == 2, "Unexpected refcnt %ld\n", Provider.ref);
+    ok_method_sequence(node_from_prov8, NULL);
+
+    hr = UiaGetReservedNotSupportedValue(&unk_ns);
+    ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+
+    for (i = 0; i < ARRAY_SIZE(element_properties); i++)
+    {
+        elem_prop = &element_properties[i];
+
+        Provider.ret_invalid_prop_type = FALSE;
+        VariantClear(&v);
+        prop_id = UiaLookupId(AutomationIdentifierType_Property, elem_prop->prop_guid);
+        if (!prop_id)
+        {
+            win_skip("No propertyId for GUID %s, skipping further tests.\n", debugstr_guid(elem_prop->prop_guid));
+            break;
+        }
+        winetest_push_context("prop_id %d", prop_id);
+        hr = UiaGetPropertyValue(node, prop_id, &v);
+        todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+        check_uia_prop_val(prop_id, elem_prop->type, &v);
+
+        /*
+         * Some properties have special behavior if an invalid value is
+         * returned, skip them here.
+         */
+        if (!elem_prop->skip_invalid)
+        {
+            Provider.ret_invalid_prop_type = TRUE;
+            hr = UiaGetPropertyValue(node, prop_id, &v);
+            todo_wine ok(hr == S_OK, "Unexpected hr %#lx.\n", hr);
+            if (SUCCEEDED(hr))
+            {
+                ok_method_sequence(get_prop_invalid_type_seq, NULL);
+                ok(V_VT(&v) == VT_UNKNOWN, "Unexpected vt %d\n", V_VT(&v));
+                ok(V_UNKNOWN(&v) == unk_ns, "unexpected IUnknown %p\n", V_UNKNOWN(&v));
+                VariantClear(&v);
+            }
+        }
+
+        winetest_pop_context();
+    }
+
+    Provider.ret_invalid_prop_type = FALSE;
+    ok(UiaNodeRelease(node), "UiaNodeRelease returned FALSE\n");
+    ok(Provider.ref == 1, "Unexpected refcnt %ld\n", Provider.ref);
+
+    IUnknown_Release(unk_ns);
+    CoUninitialize();
+}
+
 START_TEST(uiautomation)
 {
     HMODULE uia_dll = LoadLibraryA("uiautomationcore.dll");
@@ -3800,6 +4359,7 @@ START_TEST(uiautomation)
     test_uia_reserved_value_ifaces();
     test_UiaLookupId();
     test_UiaNodeFromProvider();
+    test_UiaGetPropertyValue();
     if (uia_dll)
     {
         pUiaProviderFromIAccessible = (void *)GetProcAddress(uia_dll, "UiaProviderFromIAccessible");
