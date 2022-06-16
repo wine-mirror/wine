@@ -236,58 +236,6 @@ LRESULT NC_HandleNCMouseLeave(HWND hwnd)
     return 0;
 }
 
-/***********************************************************************
- *           NC_HandleSetCursor
- *
- * Handle a WM_SETCURSOR message. Called from DefWindowProc().
- */
-LRESULT NC_HandleSetCursor( HWND hwnd, WPARAM wParam, LPARAM lParam )
-{
-    hwnd = WIN_GetFullHandle( (HWND)wParam );
-
-    switch((short)LOWORD(lParam))
-    {
-    case HTERROR:
-        {
-            WORD msg = HIWORD( lParam );
-            if ((msg == WM_LBUTTONDOWN) || (msg == WM_MBUTTONDOWN) ||
-                (msg == WM_RBUTTONDOWN) || (msg == WM_XBUTTONDOWN))
-                MessageBeep(0);
-        }
-        break;
-
-    case HTCLIENT:
-        {
-            HCURSOR hCursor = (HCURSOR)GetClassLongPtrW(hwnd, GCLP_HCURSOR);
-            if(hCursor) {
-                NtUserSetCursor(hCursor);
-                return TRUE;
-            }
-            return FALSE;
-        }
-
-    case HTLEFT:
-    case HTRIGHT:
-        return (LRESULT)NtUserSetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZEWE ) );
-
-    case HTTOP:
-    case HTBOTTOM:
-        return (LRESULT)NtUserSetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZENS ) );
-
-    case HTTOPLEFT:
-    case HTBOTTOMRIGHT:
-        return (LRESULT)NtUserSetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZENWSE ) );
-
-    case HTTOPRIGHT:
-    case HTBOTTOMLEFT:
-        return (LRESULT)NtUserSetCursor( LoadCursorA( 0, (LPSTR)IDC_SIZENESW ) );
-    }
-
-    /* Default cursor: arrow */
-    return (LRESULT)NtUserSetCursor( LoadCursorA( 0, (LPSTR)IDC_ARROW ) );
-}
-
-
 
 /***********************************************************************
  *           NC_TrackScrollBar

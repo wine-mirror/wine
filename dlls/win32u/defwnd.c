@@ -414,6 +414,55 @@ static HICON set_window_icon( HWND hwnd, WPARAM type, HICON icon )
     return ret;
 }
 
+static LRESULT handle_set_cursor( HWND hwnd, WPARAM wparam, LPARAM lparam )
+{
+    UINT cursor_id = IDC_ARROW;
+    HCURSOR cursor;
+
+    hwnd = get_full_window_handle( (HWND)wparam );
+
+    switch((short)LOWORD( lparam ))
+    {
+    case HTERROR:
+        {
+            WORD msg = HIWORD( lparam );
+            if (msg == WM_LBUTTONDOWN || msg == WM_MBUTTONDOWN ||
+                msg == WM_RBUTTONDOWN || msg == WM_XBUTTONDOWN)
+                message_beep( 0 );
+        }
+        break;
+
+    case HTCLIENT:
+        cursor = (HCURSOR)get_class_long_ptr( hwnd, GCLP_HCURSOR, FALSE );
+        if (!cursor) return FALSE;
+        NtUserSetCursor( cursor );
+        return TRUE;
+
+    case HTLEFT:
+    case HTRIGHT:
+        cursor_id = IDC_SIZEWE;
+        break;
+
+    case HTTOP:
+    case HTBOTTOM:
+        cursor_id = IDC_SIZENS;
+        break;
+
+    case HTTOPLEFT:
+    case HTBOTTOMRIGHT:
+        cursor_id = IDC_SIZENWSE;
+        break;
+
+    case HTTOPRIGHT:
+    case HTBOTTOMLEFT:
+        cursor_id = IDC_SIZENESW;
+    }
+
+    cursor = LoadImageW( 0, MAKEINTRESOURCEW( cursor_id ), IMAGE_CURSOR,
+                         0, 0, LR_SHARED | LR_DEFAULTSIZE );
+    return (LRESULT)NtUserSetCursor( cursor );
+}
+
 static LONG handle_window_pos_changing( HWND hwnd, WINDOWPOS *winpos )
 {
     LONG style = get_window_long( hwnd, GWL_STYLE );
@@ -2305,6 +2354,21 @@ LRESULT default_window_proc( HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam, 
 
     case WM_GETICON:
         result = (LRESULT)get_window_icon( hwnd, wparam );
+        break;
+
+    case WM_SETCURSOR:
+        if (get_window_long( hwnd, GWL_STYLE ) & WS_CHILD)
+        {
+            /* with the exception of the border around a resizable window,
+             * give the parent first chance to set the cursor */
+            if ((LOWORD( lparam ) < HTSIZEFIRST) || (LOWORD( lparam ) > HTSIZELAST))
+            {
+                HWND parent = get_parent( hwnd );
+                if (parent != get_desktop_window() &&
+                    send_message( parent, WM_SETCURSOR, wparam, lparam )) return TRUE;
+            }
+        }
+        handle_set_cursor( hwnd, wparam, lparam );
         break;
 
     case WM_SYSCOMMAND:
